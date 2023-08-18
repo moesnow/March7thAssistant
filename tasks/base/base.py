@@ -21,8 +21,10 @@ class Base:
         def switch_window(title):
             window = gw.getWindowsWithTitle(title)
             if window:
-                window[0].restore()
-                window[0].activate()
-                return window[0].isActive
+                for w in window:
+                    if w.title == title:
+                        window[0].restore()
+                        window[0].activate()
+                        return window[0].isActive
             return False
         return auto.retry_with_timeout(switch_window, 2, 1, title)
