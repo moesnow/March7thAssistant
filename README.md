@@ -30,7 +30,7 @@ This software is open source, free of charge and for learning and exchange purpo
 
 ## 使用
 
-只保证支持 Python 3.11.4 可用
+支持 1920*1080 窗口或全屏，只保证 Python 3.11.4 可用
 
 
 ### 一键运行
