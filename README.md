@@ -24,9 +24,9 @@ This software is open source, free of charge and for learning and exchange purpo
 
 ## 功能
 
-见 [配置文件](config.yaml)
+见 [配置文件](config.yaml) 🌟喜欢就给个星星吧|･ω･) 🌟 群号 855392201
 
-锄大地和模拟宇宙因为调用的其他项目，涉及到开源相关的问题，可以加群获取完整版，或自己设置启动命令
+锄大地和模拟宇宙因为调用的其他项目，担心涉及到开源相关的问题，请加群获取完整版，或自己设置启动命令
 
 ## 使用
 
