@@ -56,6 +56,10 @@ pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
 python main.py
 ```
 
+## 运行截图
+
+![screenshot](assets/screenshot/screenshot.png)
+
 ## 相关项目
 
 - 模拟宇宙自动化 [https://github.com/CHNZYX/Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe)
