@@ -1,0 +1,8 @@
+{
+    "lang": "ch",
+    "show_log": false,
+    "use_gpu": false,
+    "det_model_dir": "./assets/model/whl/det",
+    "cls_model_dir": "./assets/model/whl/cls",
+    "rec_model_dir": "./assets/model/whl/rec"
+}

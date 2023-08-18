@@ -1,0 +1,13 @@
+PyYAML
+psutil
+pyautogui
+pygetwindow
+requests
+imageio
+Pillow
+colorama
+onepush==1.2.0
+Numpy==1.23.5
+PyMuPDF==1.21.1
+paddlepaddle==2.5.1
+paddleocr==2.6.0.1
