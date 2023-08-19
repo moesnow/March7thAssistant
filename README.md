@@ -15,17 +15,23 @@ March7thAssistant
 
 详情见 [配置文件](config.yaml) 🌟喜欢就给个星星吧|･ω･) 🌟 群号 855392201
 
-锄大地和模拟宇宙因为调用的其他项目，担心涉及到开源相关的问题，请加群获取完整版，或自己设置启动命令
+锄大地和模拟宇宙因为调用的其他项目，担心涉及到开源相关的问题，可以在群内获取完整版，或自己设置启动命令
 
 ## 使用
 
 支持 1920*1080 窗口或全屏，只保证 Python 3.11.4 可用
 
-
 ### 一键运行
 
-    # 如移动项目需要手动删除 .venv 文件夹
-    双击 one-key-run.exe
+#### 集成Python环境和依赖的版本（适合小白）
+
+前往 [releases](https://github.com/moesnow/March7thAssistant/releases) 下载，缺点是首次启动慢、体积大
+
+如果下载缓慢可以右键复制链接后通过 [https://ghproxy.com](https://ghproxy.com) 加速
+
+#### 源码版本
+
+克隆源代码后，双击 `one-key-run.exe` 会自动安装依赖然后启动
 
 ### 手动运行
 
@@ -37,7 +43,7 @@ python main.py
 ```
 
 ```cmd
-# 更推荐的方式
+# 可选方式（使用虚拟环境）
 python -m venv .venv
 .venv\Scripts\activate
 python -m pip install -i https://mirrors.aliyun.com/pypi/simple/ --upgrade pip
