@@ -51,5 +51,5 @@ class Dispatch:
 
     @staticmethod
     def _click_complete_dispatch(offset, crop=None):
-        return auto.click_element("./assets/images/dispatch/reward.png", "image", 0.95,
+        return auto.click_element("./assets/images/dispatch/reward.png", "image", 0.9,
                                   max_retries=10, offset=offset, crop=crop)
