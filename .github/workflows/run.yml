@@ -1,0 +1,38 @@
+name: Generate application
+on:
+  workflow_dispatch:
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Generate rule.conf file
+        run: |
+          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\March7th.ico --uac-admin -n "March7th Assistant" --hidden-import imghdr --collect-all paddleocr --add-binary ".venv\Lib\site-packages\paddle\libs;paddle\libs" main.py -y
+
+      - name: Move assets to dist directory
+        run: |
+          xcopy .\assets\ .\dist\March7thAssistant\assets\ /E /I /Y
+          xcopy .\config.yaml .\dist\March7thAssistant\ /Y
+          xcopy .\README.md .\dist\March7thAssistant\ /Y
+
+      - name: Create zip archive
+        run: powershell Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: March7thAssistant.zip
+          path: .\dist\March7thAssistant.zip
