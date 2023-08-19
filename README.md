@@ -7,7 +7,7 @@
 March7thAssistant
 </h1>
 
-崩坏：星穹铁道 日常任务自动化｜忘却之庭/混沌回忆自动化｜锄大地/模拟宇宙自动化｜7×24小时运行
+崩坏：星穹铁道 自动日常任务｜自动忘却之庭/混沌回忆｜自动锄大地/模拟宇宙｜7×24小时运行｜消息推送
 
 ## 功能
 
@@ -47,7 +47,9 @@ python main.py
 
 ## 运行截图
 
-![screenshot](assets/screenshot/screenshot.png)
+![terminal](assets/screenshot/terminal.png)
+
+![telegram](assets/screenshot/telegram.png)
 
 ## 相关项目
 
