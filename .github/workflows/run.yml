@@ -41,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: March7thAssistant
-          path: .\dist\March7thAssistant\
+          path: .\dist\
 
       - name: Create zip archive
         if: startsWith(github.ref, 'refs/tags/')
