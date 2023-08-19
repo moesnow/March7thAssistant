@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - "v*.*.*"
+permissions:
+  contents: write
 jobs:
   build:
     name: Build
@@ -51,4 +53,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: .\dist\March7thAssistant.zip
+          files: ./dist/March7thAssistant.zip
+
