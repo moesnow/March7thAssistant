@@ -42,12 +42,12 @@ synthesis_enable: 1 # 启用每日合成/使用 材料/消耗品
 
 fight_enable: 0 # 启用锄大地
 fight_command: powershell "" # 锄大地命令
-fight_timeout: 4 # 锄大地超时（单位小时）
+fight_timeout: 6 # 锄大地超时（单位小时）
 fight_timestamp: 0 # 锄大地战斗结束时间（每天运行）
 
 universe_enable: 0 # 启用模拟宇宙
 universe_command: powershell "" # 模拟宇宙命令
-universe_timeout: 14 # 模拟宇宙超时（单位小时）
+universe_timeout: 20 # 模拟宇宙超时（单位小时）
 universe_timestamp: 0 # 模拟宇宙战斗结束时间（每周运行）
 
 forgottenhall_enable: 1 # 启用忘却之庭
