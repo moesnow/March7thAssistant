@@ -46,7 +46,7 @@ jobs:
           xcopy .\README.md .\dist\March7thAssistant\ /Y
 
       - name: Upload artifact
-        if: startsWith(github.ref, 'refs/heads/')
+        if: startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/pull/')
         uses: actions/upload-artifact@v3
         with:
           name: March7thAssistant
