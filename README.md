@@ -55,9 +55,7 @@ python main.py
 
 ## 运行截图
 
-![terminal](assets/screenshot/terminal.png)
-
-![telegram](assets/screenshot/telegram.png)
+![README](assets/screenshot/README.png)
 
 ## 相关项目
 
