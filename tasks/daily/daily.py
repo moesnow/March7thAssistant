@@ -3,6 +3,7 @@ from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.date import Date
 from tasks.reward.mail import Mail
+from tasks.power.power import Power
 from tasks.reward.assist import Assist
 from tasks.daily.photo import Photo
 from tasks.daily.fight import Fight
@@ -28,8 +29,10 @@ class Daily:
             config.save_timestamp("fight_timestamp")
 
         if Date.is_next_mon_4_am(config.universe_timestamp):
+            Power.start()
             Universe.start()
             config.save_timestamp("universe_timestamp")
+            Power.start()
 
         if Date.is_next_mon_4_am(config.forgottenhall_timestamp):
             ForgottenHall.start()
