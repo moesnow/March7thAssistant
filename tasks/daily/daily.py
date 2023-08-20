@@ -2,16 +2,16 @@ from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.date import Date
-from tasks.daily.mail import Mail
-from tasks.daily.assist import Assist
+from tasks.reward.mail import Mail
+from tasks.reward.assist import Assist
 from tasks.daily.photo import Photo
 from tasks.daily.fight import Fight
-from tasks.daily.universe import Universe
-from tasks.daily.dispatch import Dispatch
-from tasks.daily.quest import Quest
-from tasks.daily.srpass import SRPass
+from tasks.weekly.universe import Universe
+from tasks.reward.dispatch import Dispatch
+from tasks.reward.quest import Quest
+from tasks.reward.srpass import SRPass
 from tasks.daily.synthesis import Synthesis
-from tasks.daily.forgottenhall import ForgottenHall
+from tasks.weekly.forgottenhall import ForgottenHall
 
 
 class Daily:
@@ -19,8 +19,6 @@ class Daily:
     def start():
         logger.hr(_("开始日常任务"), 0)
         if Date.is_next_4_am(config.last_run_timestamp):
-            Mail.get_reward()
-            Assist.get_reward()
             Photo.photograph()
             Synthesis.start()
             config.save_timestamp("last_run_timestamp")
@@ -37,6 +35,8 @@ class Daily:
             ForgottenHall.start()
             config.save_timestamp("forgottenhall_timestamp")
 
+        Mail.get_reward()
+        Assist.get_reward()
         Dispatch.get_reward()
         Quest.get_reward()
         SRPass.get_reward()
