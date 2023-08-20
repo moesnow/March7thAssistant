@@ -10,6 +10,7 @@ class Config:
             cls._instance = super().__new__(cls)
             cls._instance.config_path = config_path
             cls._instance.yaml = YAML()
+            cls._instance.version = "v1.0.3"
             cls._instance.config = cls._instance.yaml.load(cls._instance._default_config())
             cls._instance._load_config()
         return cls._instance
@@ -22,12 +23,11 @@ class Config:
 # https://github.com/moesnow/March7thAssistant
 locales: zh_CN # 语言（支持i18n但目前只有zh_CN）
 log_level: INFO # 日志等级 INFO、DEBUG（显示更多信息）
+check_update: 1 # 自动检测更新
 auto_exit: 1 # 程序运行完后自动退出游戏
 never_stop: 1 # 根据开拓力循环运行程序
 power_limit: 160 # 等待再次运行所需开拓力
 
-program_name: March7th Assistant
-program_version: 1.0
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题
 game_process_name: StarRail # 游戏进程名
 game_path: C:\\Program Files\\Star Rail\\Game\\StarRail.exe # 游戏路径

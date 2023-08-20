@@ -1,12 +1,14 @@
 from tasks.game.game import Game
 from tasks.power.power import Power
 from tasks.daily.daily import Daily
+from tasks.version.version import Version
 from managers.notify_manager import notify
 from managers.logger_manager import logger
 
 
 def main():
     while True:
+        Version.check()
         Game.start()
         Power.start()
         Daily.start()
