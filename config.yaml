@@ -9,7 +9,7 @@ never_stop: 1 # 根据开拓力循环运行程序
 power_limit: 160 # 等待再次运行所需开拓力
 
 program_name: March7th Assistant
-program_version: 1.0.0
+program_version: 1.0
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题
 game_process_name: StarRail # 游戏进程名
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏路径
