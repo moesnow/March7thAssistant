@@ -150,6 +150,7 @@ class ForgottenHall:
                 logger.info(_("挑战成功"))
                 max_level = i
 
+            auto.find_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image", 0.9, max_retries=8)
             if max_level > 0:
                 Base.send_notification_with_screenshot(_("🎉混沌回忆已通关{max_level}层🎉").format(max_level=max_level))
         else:
