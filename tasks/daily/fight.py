@@ -35,3 +35,4 @@ class Fight:
         Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
         screen.change_to('main')
         logger.info(_("锄大地完成"))
+        config.save_timestamp("fight_timestamp")

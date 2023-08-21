@@ -156,3 +156,4 @@ class ForgottenHall:
             logger.info(_("混沌回忆未刷新"))
         screen.change_to('main')
         logger.info(_("混沌回忆完成"))
+        config.save_timestamp("forgottenhall_timestamp")

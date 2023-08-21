@@ -47,3 +47,4 @@ class Universe:
 
         Power.start()
         logger.info(_("模拟宇宙完成"))
+        config.save_timestamp("universe_timestamp")

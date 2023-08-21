@@ -25,15 +25,12 @@ class Daily:
 
         if Date.is_next_4_am(config.fight_timestamp):
             Fight.start()
-            config.save_timestamp("fight_timestamp")
 
         if Date.is_next_mon_4_am(config.universe_timestamp):
             Universe.start()
-            config.save_timestamp("universe_timestamp")
 
         if Date.is_next_mon_4_am(config.forgottenhall_timestamp):
             ForgottenHall.start()
-            config.save_timestamp("forgottenhall_timestamp")
 
         Mail.get_reward()
         Assist.get_reward()
