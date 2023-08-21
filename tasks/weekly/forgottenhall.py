@@ -119,7 +119,10 @@ class ForgottenHall:
             return False
         logger.hr(_("准备混沌回忆"), 2)
         screen.change_to('memory_of_chaos')
-        if not auto.find_element("./assets/images/forgottenhall/30.png", "image", 0.8, max_retries=4):
+        if not auto.find_element("./assets/images/forgottenhall/30.png", "image", 0.8, max_retries=8):
+            if auto.find_element("./assets/images/base/click_close.png", "image", 0.9):
+                time.sleep(1)
+                auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=4)
             max_level = 0
             for i in range(config.forgottenhall_level[0], config.forgottenhall_level[1] + 1):
                 logger.info(_("开始挑战第{i}层").format(i=i))
