@@ -2,8 +2,8 @@
 # 此程序为免费开源项目 欢迎Star
 # QQ交流群 855392201
 # https://github.com/moesnow/March7thAssistant
-locales: zh_CN # 语言（支持i18n但目前只有zh_CN）
-log_level: INFO # 日志等级 INFO、DEBUG（显示更多信息）
+locales: zh_CN # 语言
+log_level: INFO # 日志等级 INFO、DEBUG（如果遇到Bug请修改为DEBUG等级，可以显示更多信息）
 check_update: 1 # 自动检测更新
 auto_exit: 1 # 程序运行完后自动退出游戏
 never_stop: 1 # 根据开拓力循环运行程序
@@ -42,23 +42,23 @@ synthesis_enable: 1 # 启用每日合成/使用 材料/消耗品
 fight_enable: 0 # 启用锄大地
 fight_command: powershell "" # 锄大地命令（需要自己设置）
 fight_timeout: 6 # 锄大地超时（单位小时）
-fight_timestamp: 0 # 锄大地战斗结束时间（每天运行）
+fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: 0 # 启用模拟宇宙
 universe_command: powershell "" # 模拟宇宙命令（需要自己设置）
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
-universe_timestamp: 0 # 模拟宇宙战斗结束时间（每周运行）
+universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
 
 forgottenhall_enable: 1 # 启用忘却之庭
-forgottenhall_level: # 混沌回忆关卡范围
+forgottenhall_level: # 混沌回忆关卡范围（当前不会跳过已经满星的关卡）
 - 1
 - 10
-forgottenhall_retries: 3 # 混沌回忆重试次数
+forgottenhall_retries: 3 # 混沌回忆挑战失败后的重试次数
 
 # 混沌回忆队伍
 # 数字代表秘技使用次数
 # 其中-1代表最后一个放秘技和普攻的角色（当前1-5的双BOSS层必须是远程开怪角色，否则攻击不到第二个BOSS）
-# 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
+# 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看，目前还缺少白露和卡芙卡
 forgottenhall_team1: # 混沌回忆队伍1
 - -
     Asta
@@ -79,7 +79,7 @@ forgottenhall_team2: # 混沌回忆队伍2
   - 0
 - - Qingque
   - 1
-forgottenhall_timestamp: 0 # 混沌回忆战斗结束时间（每周运行，如未刷新跳过）
+forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行，如已经满星则跳过）
 
 # 可选消息通知 Telegram已适配支持发送截图
 # 还支持更多推送查看下面的链接仿照格式配置即可
@@ -98,5 +98,5 @@ boss_enable: 0 # 暂不可用
 boss_name: 不死的神实 # 暂不可用
 boss_kill_required: 3 # 暂不可用
 
-last_run_timestamp: 0 # 上次运行日常时间
+last_run_timestamp: 0 # 上次运行日常的时间戳
 boss_kill_completed: 0 # 暂不可用
