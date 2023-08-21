@@ -1,46 +1,66 @@
+from module.ocr.PPOCR_api import GetOcrApi
 from managers.logger_manager import logger
-from managers.translate_manager import _
-import json
+import os
+import numpy as np
+from PIL import Image
+import io
 
 
 class OCR:
     _instance = None
-    _initialized = False
-    _params = None
 
-    def __new__(cls, config_path):
+    def __new__(cls, exePath):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._params = cls._load_params(config_path)
+            cls._instance.ocr = GetOcrApi(exePath)
         return cls._instance
 
     @staticmethod
-    def _load_params(config_path):
-        with open(config_path, "r") as f:
-            return json.load(f)
+    def convert_format(result):
+        if result['code'] != 100:
+            logger.debug(result)
+            return False
+        converted_result = []
 
-    def _initialize(self):
-        if not self._initialized:
-            logger.debug(_("OCR开始初始化"))
-            # logger.debug(_("OCR starts to initialize..."))
-            from paddleocr import PaddleOCR
-            self.ocr = PaddleOCR(**self._params)  # type: ignore
-            self._initialized = True
-            logger.debug(_("OCR初始化完成"))
-            # logger.debug(_("OCR initialization completed"))
+        for item in result['data']:
+            box = item['box']
+            text = item['text']
+            score = item['score']
+
+            converted_item = [
+                [box[0], box[1], box[2], box[3]],
+                (text, score)
+            ]
+
+            converted_result.append(converted_item)
+
+        return converted_result
+
+    def run(self, image):
+        if isinstance(image, np.ndarray):
+            image = Image.fromarray(image)
+        elif isinstance(image, Image.Image):
+            pass
+        elif isinstance(image, str):
+            return self.ocr.run(os.path.abspath(image))
+        else:
+            return r"{}"
+        image_stream = io.BytesIO()
+        image.save(image_stream, format="PNG")
+        image_bytes = image_stream.getvalue()
+        return self.ocr.runBytes(image_bytes)
 
     def recognize_single_line(self, image, blacklist=None):
-        self._initialize()
-        results = self.ocr.ocr(image, cls=False)
-        for i in range(len(results)):
-            line_text = results[i][1][0] if results and len(results[i]) > 0 else ""
-            if blacklist and any(char in line_text for char in blacklist):
-                continue
-            else:
-                return line_text, results[i][1][1]
+        results = OCR.convert_format(self.run(image))
+        if results:
+            for i in range(len(results)):
+                line_text = results[i][1][0] if results and len(results[i]) > 0 else ""
+                if blacklist and any(char in line_text for char in blacklist):
+                    continue
+                else:
+                    return line_text, results[i][1][1]
         return None
 
     def recognize_multi_lines(self, image):
-        self._initialize()
-        result = self.ocr.ocr(image, cls=False)
+        result = OCR.convert_format(self.run(image))
         return result

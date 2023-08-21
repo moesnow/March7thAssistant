@@ -33,7 +33,7 @@ class Start:
             logger.debug(_("启动游戏失败"))
             return False
 
-        ocr._initialize()  # 利用等待启动的时间提前初始化OCR
+        # ocr._initialize()  # 利用等待启动的时间提前初始化OCR
 
         if not auto.retry_with_timeout(Base.check_and_switch, 30, 1, config.game_title_name):
             return False

@@ -159,13 +159,14 @@ class Automation:
     def find_text_element(self, target):
         try:
             ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
-            for box in ocr_result:
-                text = box[1][0]
-                if target == text:
-                    logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=target, max_val=box[1][1]))
-                    top_left = (box[0][0][0] + self.screenshot_pos[0], box[0][0][1] + self.screenshot_pos[1])
-                    bottom_right = (box[0][2][0] + self.screenshot_pos[0], box[0][2][1] + self.screenshot_pos[1])
-                    return top_left, bottom_right
+            if ocr_result:
+                for box in ocr_result:
+                    text = box[1][0]
+                    if target == text:
+                        logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=target, max_val=box[1][1]))
+                        top_left = (box[0][0][0] + self.screenshot_pos[0], box[0][0][1] + self.screenshot_pos[1])
+                        bottom_right = (box[0][2][0] + self.screenshot_pos[0], box[0][2][1] + self.screenshot_pos[1])
+                        return top_left, bottom_right
         except Exception as e:
             logger.error(_("寻找文本出错：{e}").format(e=e))
         return None, None
@@ -199,7 +200,7 @@ class Automation:
                  bottom - self.screenshot_pos[1]))
             # captured_image.save("test.png")
             ocr_result = ocr.recognize_single_line(np.array(captured_image), blacklist)
-            logger.debug(ocr_result)
+            logger.debug(_("ocr_result: {ocr_result}").format(ocr_result=ocr_result))
             if ocr_result:
                 return ocr_result[0]
         return None
@@ -220,8 +221,9 @@ class Automation:
                  top - self.screenshot_pos[1],
                  right - self.screenshot_pos[0],
                  bottom - self.screenshot_pos[1]))
+            # captured_image.save("test.png")
             ocr_result = ocr.recognize_single_line(np.array(captured_image), blacklist)
-            logger.debug(ocr_result)
+            logger.debug(_("ocr_result: {ocr_result}").format(ocr_result=ocr_result))
             if ocr_result:
                 if ocr_result[0] == target_text:
                     x = (left + right) // 2
