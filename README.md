@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="./assets/logo/March7th.png">
+    <img src="./assets/logo/March7th.ico">
 </p>
 
 <h1 align="center">
