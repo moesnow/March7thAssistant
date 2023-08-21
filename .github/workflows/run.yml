@@ -42,6 +42,7 @@ jobs:
       - name: Move assets to dist directory
         run: |
           xcopy .\assets\ .\dist\March7thAssistant\assets\ /E /I /Y
+          xcopy .\3rdparty\ .\dist\March7thAssistant\3rdparty\ /E /I /Y
           xcopy .\config.yaml .\dist\March7thAssistant\ /Y
           xcopy .\README.md .\dist\March7thAssistant\ /Y
 
