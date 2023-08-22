@@ -49,7 +49,7 @@ universe_command: powershell "" # 模拟宇宙命令（需要自己设置）
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
 
-forgottenhall_enable: 1 # 启用忘却之庭
+forgottenhall_enable: 0 # 启用忘却之庭
 forgottenhall_level: # 混沌回忆关卡范围（当前不会跳过已经满星的关卡）
 - 1
 - 10

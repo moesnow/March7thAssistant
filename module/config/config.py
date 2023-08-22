@@ -21,8 +21,8 @@ class Config:
 # 此程序为免费开源项目 欢迎Star
 # QQ交流群 855392201
 # https://github.com/moesnow/March7thAssistant
-locales: zh_CN # 语言（支持i18n但目前只有zh_CN）
-log_level: INFO # 日志等级 INFO、DEBUG（显示更多信息）
+locales: zh_CN # 语言
+log_level: INFO # 日志等级 INFO、DEBUG（如果遇到Bug请修改为DEBUG等级，可以显示更多信息）
 check_update: 1 # 自动检测更新
 auto_exit: 1 # 程序运行完后自动退出游戏
 never_stop: 1 # 根据开拓力循环运行程序
@@ -61,18 +61,18 @@ synthesis_enable: 1 # 启用每日合成/使用 材料/消耗品
 fight_enable: 0 # 启用锄大地
 fight_command: powershell "" # 锄大地命令（需要自己设置）
 fight_timeout: 6 # 锄大地超时（单位小时）
-fight_timestamp: 0 # 锄大地战斗结束时间（每天运行）
+fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: 0 # 启用模拟宇宙
 universe_command: powershell "" # 模拟宇宙命令（需要自己设置）
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
-universe_timestamp: 0 # 模拟宇宙战斗结束时间（每周运行）
+universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
 
-forgottenhall_enable: 1 # 启用忘却之庭
-forgottenhall_level: # 混沌回忆关卡范围
+forgottenhall_enable: 0 # 启用忘却之庭
+forgottenhall_level: # 混沌回忆关卡范围（当前不会跳过已经满星的关卡）
 - 1
 - 10
-forgottenhall_retries: 3 # 混沌回忆重试次数
+forgottenhall_retries: 3 # 混沌回忆挑战失败后的重试次数
 
 # 混沌回忆队伍
 # 数字代表秘技使用次数
