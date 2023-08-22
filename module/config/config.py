@@ -77,7 +77,7 @@ forgottenhall_retries: 3 # 混沌回忆挑战失败后的重试次数
 # 混沌回忆队伍
 # 数字代表秘技使用次数
 # 其中-1代表最后一个放秘技和普攻的角色（当前1-5的双BOSS层必须是远程开怪角色，否则攻击不到第二个BOSS）
-# 角色对应的英文名字可以在 "March7thAssistant\\assets\\images\\character" 中查看
+# 角色对应的英文名字可以在 "March7thAssistant\\assets\\images\\character" 中查看，目前还缺少白露和卡芙卡
 forgottenhall_team1: # 混沌回忆队伍1
 - - Asta
   - -1
@@ -96,7 +96,7 @@ forgottenhall_team2: # 混沌回忆队伍2
   - 0
 - - Qingque
   - 1
-forgottenhall_timestamp: 0 # 混沌回忆战斗结束时间（每周运行，如未刷新跳过）
+forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行，如已经满星则跳过）
 
 # 可选消息通知 Telegram已适配支持发送截图
 # 还支持更多推送查看下面的链接仿照格式配置即可
@@ -115,7 +115,7 @@ boss_enable: 0 # 暂不可用
 boss_name: 不死的神实 # 暂不可用
 boss_kill_required: 3 # 暂不可用
 
-last_run_timestamp: 0 # 上次运行日常时间
+last_run_timestamp: 0 # 上次运行日常的时间戳
 boss_kill_completed: 0 # 暂不可用
 """
         return yaml_str
