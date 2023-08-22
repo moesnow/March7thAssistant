@@ -53,12 +53,10 @@ class Synthesis:
     def use_consumables():
         logger.hr(_("准备使用消耗品"), 2)
         screen.change_to('bag_consumables')
-        for i in range(10):
-            auto.click_element("./assets/images/synthesis/defensive_medicine.png", "image", 0.95, max_retries=10)
-            if auto.find_element("./assets/images/bag/defensive_medicine_selected.png", "image", 0.95, max_retries=10):
+        if auto.click_element("./assets/images/synthesis/defensive_medicine.png", "image", 0.8, max_retries=10):
+            if auto.find_element("./assets/images/bag/defensive_medicine_selected.png", "image", 0.8, max_retries=10):
                 if auto.click_element("使用", "text", max_retries=10):
-                    auto.click_element("./assets/images/base/confirm.png", "image", 0.95, max_retries=10)
-                    auto.click_element("使用", "text")
+                    auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10)
+                    auto.click_element("使用", "text", max_retries=2)
                     auto.find_element("./assets/images/screen/bag/bag_consumables.png", "image", 0.95, max_retries=10)
-                break
         logger.info(_("使用消耗品完成"))
