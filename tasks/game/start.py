@@ -5,6 +5,7 @@ from managers.config_manager import config
 from managers.ocr_manager import ocr
 from tasks.base.base import Base
 from tasks.game.stop import Stop
+import time
 import os
 
 
@@ -30,16 +31,17 @@ class Start:
         Start.check_game_path(config.game_path)
 
         if os.system(f"powershell -Command \"start '{config.game_path}'\""):
-            logger.debug(_("启动游戏失败"))
             return False
 
-        # ocr._initialize()  # 利用等待启动的时间提前初始化OCR
-
+        time.sleep(10)
         if not auto.retry_with_timeout(Base.check_and_switch, 30, 1, config.game_title_name):
+            logger.error(_("无法切换游戏到前台"))
             return False
         if not auto.click_element("./assets/images/screen/click_enter.png", "image", 0.95, max_retries=600):
+            logger.error(_("无法找到点击进入按钮"))
             return False
         if not auto.retry_with_timeout(Start.check_and_click_monthly_card, 120, 1):
+            logger.error(_("无法进入主界面"))
             return False
 
         return True
@@ -48,8 +50,8 @@ class Start:
     def start_game():
         if not Base.check_and_switch(config.game_title_name):
             if not Start.launch_process():
+                logger.error(_("游戏启动失败，退出游戏进程"))
                 Stop.stop_game()
-                logger.error(_("游戏启动失败"))
                 return False
             else:
                 logger.info(_("游戏启动成功"))

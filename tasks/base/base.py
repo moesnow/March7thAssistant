@@ -1,3 +1,4 @@
+import pyautogui
 from managers.translate_manager import _
 from managers.automation_manager import auto
 from managers.logger_manager import logger
@@ -6,6 +7,7 @@ from managers.notify_manager import notify
 import pygetwindow as gw
 from io import BytesIO
 import time
+import win32gui
 
 
 class Base:
@@ -19,15 +21,35 @@ class Base:
 
     @staticmethod
     def check_and_switch(title):
-        def switch_window(title):
-            window = gw.getWindowsWithTitle(title)
-            if window:
+        def switch_window(title, max_retries):
+            for i in range(max_retries):
+                window = gw.getWindowsWithTitle(title)
+                if not window:
+                    continue
                 for w in window:
                     if w.title == title:
-                        window[0].restore()
-                        window[0].activate()
-                        # 等待两秒 尝试修复 “Error code from Windows: 0”
+                        try:
+                            w.restore()
+                            w.activate()
+                        except Exception as e:
+                            logger.error(e)
                         time.sleep(2)
-                        return window[0].isActive
+                        if w.isActive:
+                            try:
+                                hwnd = win32gui.FindWindow("UnityWndClass", title)
+                                win32gui.GetWindowRect(hwnd)
+                            except Exception as e:
+                                logger.error(e)
+                                logger.debug(_("切换窗口失败，尝试ALT+TAB"))
+                                pyautogui.hotkey('alt', 'tab')
+                                time.sleep(2)
+                                continue
+                        else:
+                            logger.debug(_("切换窗口失败，尝试ALT+TAB"))
+                            pyautogui.hotkey('alt', 'tab')
+                            time.sleep(2)
+                            continue
+
+                        return w.isActive
             return False
-        return auto.retry_with_timeout(switch_window, 2, 1, title)
+        return switch_window(title, max_retries=4)
