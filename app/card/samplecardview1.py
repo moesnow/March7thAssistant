@@ -57,7 +57,7 @@ class SampleCard(CardWidget):
         script_filename = os.path.basename(script_path)  # 获取脚本文件名
 
         if script_filename.endswith(".exe"):
-            os.system(f"start .\\main.exe {self.action}")
+            os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" {self.action}")
         else:
             os.system(f"start python main.py {self.action}")
 

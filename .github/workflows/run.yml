@@ -37,7 +37,7 @@ jobs:
       - name: Generate program
         run: |
           .venv\Scripts\activate
-          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Terminal.ico --uac-admin -n "main" main.py -y
+          pyinstaller -D --distpath .\dist\March7thAssistant\ -i .\assets\logo\Terminal.ico --uac-admin -n "March7th Assistant" main.py -y
           pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\March7th.ico --uac-admin -n "March7th Assistant" app.py -y -w
 
       - name: Move assets to dist directory
