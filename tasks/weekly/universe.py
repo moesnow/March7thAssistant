@@ -3,7 +3,6 @@ from managers.config_manager import config
 from managers.logger_manager import logger
 from managers.automation_manager import auto
 from managers.translate_manager import _
-from tasks.power.power import Power
 import subprocess
 from threading import Thread
 from tasks.base.base import Base
@@ -23,11 +22,7 @@ class Universe:
 
     @staticmethod
     def start():
-        if not config.universe_enable:
-            logger.debug(_("模拟宇宙未开启"))
-            return False
         logger.hr(_("准备模拟宇宙"), 2)
-        Power.start()
 
         screen.change_to('universe_main')
         screen.change_to('main')
@@ -45,6 +40,5 @@ class Universe:
                 auto.click_element("./assets/images/base/click_close.png", "image", 0.95, max_retries=10)
         screen.change_to('main')
 
-        Power.start()
         logger.info(_("模拟宇宙完成"))
         config.save_timestamp("universe_timestamp")

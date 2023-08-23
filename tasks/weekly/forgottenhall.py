@@ -114,9 +114,6 @@ class ForgottenHall:
 
     @staticmethod
     def start():
-        if not config.forgottenhall_enable:
-            logger.info(_("忘却之庭未开启"))
-            return False
         logger.hr(_("准备混沌回忆"), 2)
         screen.change_to('memory_of_chaos')
         if not auto.find_element("./assets/images/forgottenhall/30.png", "image", 0.8, max_retries=8):

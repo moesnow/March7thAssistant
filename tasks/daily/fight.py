@@ -21,9 +21,6 @@ class Fight:
 
     @staticmethod
     def start():
-        if not config.fight_enable:
-            logger.debug(_("锄大地未开启"))
-            return False
         screen.change_to('main')
 
         logger.hr(_("准备锄大地"), 2)

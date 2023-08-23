@@ -12,6 +12,7 @@ from tasks.reward.quest import Quest
 from tasks.reward.srpass import SRPass
 from tasks.daily.synthesis import Synthesis
 from tasks.weekly.forgottenhall import ForgottenHall
+from tasks.power.power import Power
 
 
 class Daily:
@@ -24,13 +25,24 @@ class Daily:
             config.save_timestamp("last_run_timestamp")
 
         if Date.is_next_4_am(config.fight_timestamp):
-            Fight.start()
+            if config.fight_enable:
+                Fight.start()
+            else:
+                logger.debug(_("锄大地未开启"))
 
         if Date.is_next_mon_4_am(config.universe_timestamp):
-            Universe.start()
+            if config.universe_enable:
+                Universe.start()
+            else:
+                logger.debug(_("模拟宇宙未开启"))
 
         if Date.is_next_mon_4_am(config.forgottenhall_timestamp):
-            ForgottenHall.start()
+            if config.forgottenhall_enable:
+                Power.start()
+                ForgottenHall.start()
+                Power.start()
+            else:
+                logger.debug(_("忘却之庭未开启"))
 
         Mail.get_reward()
         Assist.get_reward()
