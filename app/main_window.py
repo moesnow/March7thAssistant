@@ -2,7 +2,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QSize
 
-from qfluentwidgets import (NavigationItemPosition, FluentWindow, SplashScreen)
+from qfluentwidgets import (NavigationItemPosition, FluentWindow, SplashScreen, setThemeColor)
 from qfluentwidgets import FluentIcon as FIF
 
 from .home_interface import HomeInterface
@@ -36,6 +36,8 @@ class MainWindow(FluentWindow):
         self.titleBar.setDoubleClickEnabled(False)
         self.setResizeEnabled(False)
         # self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowMaximizeButtonHint)
+
+        setThemeColor('#f18cb9')
 
         self.resize(960, 780)
         self.setWindowIcon(QIcon('assets\logo\March7th.ico'))
