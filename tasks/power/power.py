@@ -60,6 +60,7 @@ class Power:
                             return
                     if config.borrow_force == True:
                         auto.click_element("入队", "text", max_retries=10)
+                        auto.click_element("取消", "text", max_retries=2)
                         return
                 except Exception as e:
                     logger.warning(_("选择支援角色出错： {e}").format(e=e))
