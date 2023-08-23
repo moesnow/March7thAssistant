@@ -7,25 +7,13 @@ from managers.logger_manager import logger
 from tasks.daily.fight import Fight
 from tasks.weekly.universe import Universe
 from tasks.weekly.forgottenhall import ForgottenHall
+import pyuac
 import sys
-
-
-def perform_action(action):
-    # Implement your logic here based on the provided action
-    if action == "fight":
-        Fight.start()
-    elif action == "universe":
-        Universe.start()
-    elif action == "forgottenhall":
-        ForgottenHall.start()
-    elif action == "main":
-        main()
-    else:
-        print("Unknown action")
+import os
 
 
 def main(action=None):
-    if action is None:
+    if action is None or action == "main":
         while True:
             Version.check()
             Game.start()
@@ -33,12 +21,28 @@ def main(action=None):
             Daily.start()
             Game.stop()
     else:
-        perform_action(action)
+        Version.check()
+        Game.start()
+        if action == "fight":
+            Fight.start()
+        elif action == "universe":
+            Universe.start()
+        elif action == "forgottenhall":
+            ForgottenHall.start()
+        else:
+            logger.warning(f"Unknown action: {action}")
+            os.system("pause")
+            exit(1)
+        os.system("pause")
+        exit(0)
 
 
 if __name__ == "__main__":
-    try:
-        main(sys.argv[1]) if len(sys.argv) > 1 else main()
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
-        notify.notify(f"An error occurred: {e}")
+    if not pyuac.isUserAdmin():
+        sys.exit(pyuac.runAsAdmin(wait=False))
+    else:
+        try:
+            main(sys.argv[1]) if len(sys.argv) > 1 else main()
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
+            notify.notify(f"An error occurred: {e}")
