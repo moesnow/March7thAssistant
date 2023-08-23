@@ -33,6 +33,7 @@ class ForgottenHall:
                     return 3  # 挑战失败，重试后失败
                 else:
                     auto.click_element("./assets/images/forgottenhall/back.png", "image", 0.95, max_retries=2)
+                    # 等待返回关卡选择界面
                     if result:
                         return 3  # 挑战失败，无重试次数
                     return 2  # 挑战成功
@@ -42,37 +43,6 @@ class ForgottenHall:
             logger.error(_("战斗超时"))
             raise Exception(_("战斗超时"))
         return result
-
-    @staticmethod
-    def change_to(number):
-        for i in range(4):
-            if auto.click_element(number, "text", max_retries=1):
-                return True
-            auto.mouse_scroll(2, -1)
-            time.sleep(2)
-        for i in range(4):
-            if auto.click_element(number, "text", max_retries=1):
-                return True
-            auto.mouse_scroll(2, 1)
-            time.sleep(2)
-
-    @staticmethod
-    def select_character():
-        auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10)
-        auto.click_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10)
-        for character in config.forgottenhall_team1:
-            auto.click_element("./assets/images/character/" + character[0] + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2))
-        auto.click_element("./assets/images/forgottenhall/team2.png", "image", 0.8, max_retries=10)
-        for character in config.forgottenhall_team2:
-            auto.click_element("./assets/images/character/" + character[0] + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2))
-        auto.click_element("./assets/images/forgottenhall/start.png", "image", 0.8, max_retries=10)
-
-    @staticmethod
-    def click_message_box():
-        auto.find_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.8, max_retries=20)
-        time.sleep(2)
-        auto.click_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.8, max_retries=10)
-        time.sleep(1)
 
     @staticmethod
     def start_fight(boss_count, max_recursion=config.forgottenhall_retries):
@@ -90,8 +60,9 @@ class ForgottenHall:
                     for i in range(character[1]):
                         auto.press_key("e")
                         time.sleep(1)
-                if character[1] == -1:
+                elif character[1] == -1:
                     last_index = index
+            # 设置了末位角色
             if last_index is not None:
                 auto.press_key(f"{last_index+1}")
                 time.sleep(1)
@@ -99,6 +70,7 @@ class ForgottenHall:
             for i in range(boss_count):
                 logger.info(_("挑战第{i}个boss").format(i=i + 1))
 
+                # 开怪
                 auto.press_key("e")
                 for i in range(3):
                     auto.press_mouse()
@@ -113,45 +85,103 @@ class ForgottenHall:
         return True
 
     @staticmethod
+    def click_message_box():
+        if auto.find_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.8, max_retries=20):
+            time.sleep(3)
+            if auto.click_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.8, max_retries=10):
+                time.sleep(2)
+
+    @staticmethod
+    def select_characters(team_config, team_image_path):
+        if auto.click_element(team_image_path, "image", 0.8, max_retries=10):
+            for character in team_config:
+                if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, scale_range=(0.8, 1.2)):
+                    return False
+            return True
+        return False
+
+    @staticmethod
+    def configure_teams():
+        if auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10):
+            if ForgottenHall.select_characters(config.forgottenhall_team1, "./assets/images/forgottenhall/team1.png"):
+                if ForgottenHall.select_characters(config.forgottenhall_team2, "./assets/images/forgottenhall/team2.png"):
+                    if auto.click_element("./assets/images/forgottenhall/start.png", "image", 0.8, max_retries=10):
+                        return True
+        return False
+
+    @staticmethod
+    def change_to(number):
+        # 先向右滚动4次查找，然后向左
+        for direction in [-1, 1]:
+            for i in range(4):
+                if auto.click_element(number, "text", max_retries=1):
+                    return True
+                auto.mouse_scroll(2, direction)
+                # 等待画面完全静止
+                time.sleep(2)
+
+    @staticmethod
+    def run():
+        # 记录层数
+        max_level = 0
+
+        for i in range(config.forgottenhall_level[0], config.forgottenhall_level[1] + 1):
+            logger.info(_("开始挑战第{i}层").format(i=i))
+            # 进入混沌回忆关卡选择界面
+            if not auto.find_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image", 0.8, max_retries=10):
+                # if not auto.find_element("混沌回忆", "text", max_retries=10):
+                logger.error(_("界面不正确，尝试切换到混沌回忆界面"))
+                if not screen.change_to('memory_of_chaos'):
+                    logger.error(_("切换到混沌回忆界面失败"))
+                    break
+            # 选择关卡
+            if not ForgottenHall.change_to(f"{i:02}"):
+                logger.error(_("切换关卡失败"))
+                break
+            # 选择角色
+            if not ForgottenHall.configure_teams():
+                logger.error(_("配置队伍失败"))
+                break
+            # 点击弹出框
+            ForgottenHall.click_message_box()
+            # 判断关卡BOSS数量
+            boss_count = 2 if i in range(1, 6) else 1
+            if not ForgottenHall.start_fight(boss_count):
+                logger.info(_("挑战失败"))
+                break
+            logger.info(_("挑战成功"))
+            # 记录最高层数
+            max_level = i
+
+        if max_level > 0:
+            screen.change_to('memory_of_chaos')
+            Base.send_notification_with_screenshot(_("🎉混沌回忆已通关{max_level}层🎉").format(max_level=max_level))
+
+    @staticmethod
+    def prepare():
+        if not screen.change_to('memory_of_chaos'):
+            logger.error(_("切换到混沌回忆界面失败"))
+            return False
+
+        if auto.find_element("./assets/images/forgottenhall/30.png", "image", 0.8, max_retries=8):
+            logger.info(_("混沌回忆未刷新"))
+            return False
+
+        # 刷新后打开会出现本期buff的弹窗
+        if auto.find_element("./assets/images/base/click_close.png", "image", 0.8):
+            # 等待不可点击的动画时间
+            time.sleep(2)
+            auto.click_element("./assets/images/base/click_close.png", "image", 0.8, max_retries=8)
+
+        ForgottenHall.run()
+
+        screen.change_to('main')
+        return True
+
+    @staticmethod
     def start():
         logger.hr(_("准备混沌回忆"), 2)
-        screen.change_to('memory_of_chaos')
-        if not auto.find_element("./assets/images/forgottenhall/30.png", "image", 0.8, max_retries=8):
-            if auto.find_element("./assets/images/base/click_close.png", "image", 0.9):
-                time.sleep(1)
-                auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=4)
-            max_level = 0
-            for i in range(config.forgottenhall_level[0], config.forgottenhall_level[1] + 1):
-                logger.info(_("开始挑战第{i}层").format(i=i))
-                # 进入混沌回忆
-                if not auto.find_element("混沌回忆", "text", max_retries=10):
-                    logger.error(_("界面不正确，停止挑战"))
-                    break
-                # 选择关卡
-                if not ForgottenHall.change_to(f"{i:02}"):
-                    logger.warning(_("切换到关卡失败"))
-                    break
-                # 选择角色
-                ForgottenHall.select_character()
-                # 点击弹出框
-                ForgottenHall.click_message_box()
-                # 战斗
-                if i in range(1, 6):
-                    boss_count = 2
-                else:
-                    boss_count = 1
-                # 本层挑战成功
-                if not ForgottenHall.start_fight(boss_count):
-                    logger.info(_("挑战失败"))
-                    break
-                logger.info(_("挑战成功"))
-                max_level = i
 
-            auto.find_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image", 0.9, max_retries=8)
-            if max_level > 0:
-                Base.send_notification_with_screenshot(_("🎉混沌回忆已通关{max_level}层🎉").format(max_level=max_level))
-        else:
-            logger.info(_("混沌回忆未刷新"))
-        screen.change_to('main')
-        logger.info(_("混沌回忆完成"))
-        config.save_timestamp("forgottenhall_timestamp")
+        if ForgottenHall.prepare():
+            config.save_timestamp("forgottenhall_timestamp")
+            logger.info(_("混沌回忆完成"))

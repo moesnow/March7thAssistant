@@ -89,7 +89,7 @@ class Screen:
         if target_screen == self.current_screen:
             # logger.debug(_("already on {target_screen}").format(target_screen=target_screen))
             logger.debug(_("已经在 {target_screen} 界面").format(target_screen=target_screen))
-            return
+            return True
         path = self.find_shortest_path(self.current_screen, target_screen)
         if path:
             for i in range(len(path) - 1):
@@ -119,8 +119,9 @@ class Screen:
             self.current_screen = target_screen  # 更新当前界面
             # logger.debug(_("current screen: {current_screen}").format(current_screen=self.current_screen))
             logger.debug(_("当前界面：{current_screen}").format(current_screen=self.current_screen))
-            return
+            return True
         logger.debug(_("无法从 {current_screen} 切换到 {target_screen}").format(current_screen=self.get_current_screen(), target_screen=target_screen))
+        return False
         # logger.debug(_("cannot change from {current_screen} to {target_screen}").format(current_screen=self.get_current_screen(), target_screen=target_screen))
 
     def check_screen(self, target_screen):
