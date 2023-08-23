@@ -1,0 +1,47 @@
+GalleryInterface,
+ToolBar,
+#view {
+    background-color: transparent;
+}
+
+QScrollArea {
+    border: none;
+}
+
+
+ToolBar>CaptionLabel {
+    color: white;
+}
+
+ExampleCard {
+    background-color: transparent;
+    color: white;
+}
+
+TitleLabel,
+StrongBodyLabel {
+    color: white;
+}
+
+ExampleCard>#card {
+    border: 1px solid rgb(36, 36, 36);
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.1795);
+}
+
+ExampleCard>#card QLabel {
+    font: 14px 'Segoe UI', 'Microsoft YaHei', 'PingFang SC';
+    color: white;
+}
+
+ExampleCard>#card InfoBadge {
+    font-size: 11px;
+}
+
+
+#sourceWidget {
+    background-color: rgba(255, 255, 255, 0.09);
+    border-top: 1px solid rgb(36, 36, 36);
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}

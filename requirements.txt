@@ -10,6 +10,7 @@ ruamel.yaml
 Numpy
 opencv-python
 onepush==1.2.0
+PyQt-Fluent-Widgets[full]
 # PyMuPDF==1.21.1
 # paddlepaddle==2.5.1
 # paddleocr==2.6.0.1

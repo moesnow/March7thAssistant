@@ -1,0 +1,16 @@
+PivotInterface QLabel,
+TabInterface QLabel {
+    padding-left: 10px;
+    font: 14px 'Segoe UI', 'Microsoft YaHei', 'PingFang SC';
+    color: white;
+}
+
+#controlPanel BodyLabel {
+    padding-left: 0px;
+}
+
+#controlPanel {
+    background-color: rgb(43, 43, 43);
+    border-left: 1px solid rgb(50, 50, 50);
+    border-top-right-radius: 10px;
+}

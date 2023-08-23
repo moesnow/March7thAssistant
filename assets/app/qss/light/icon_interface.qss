@@ -1,0 +1,57 @@
+IconCard {
+    background-color: rgb(251, 251, 251);
+    border: 1px solid rgb(229, 229, 229);
+    border-radius: 6px;
+}
+
+IconCard > QLabel {
+    color: rgb(96, 96, 96);
+    font: 11px 'Segoe UI', 'PingFang SC';
+}
+
+IconCard[isSelected=true] {
+    background-color: --ThemeColorPrimary;
+}
+
+IconCard[isSelected=true] > QLabel {
+    color: white;
+}
+
+#scrollWidget, #iconView {
+    background-color: rgb(243, 243, 243);
+}
+
+IconCardView {
+    background-color: transparent;
+}
+
+#iconView {
+    border: 1px solid rgb(234, 234, 234);
+    border-radius: 10px;
+}
+
+
+IconInfoPanel {
+    background-color: rgb(251, 251, 251);
+    border-left: 1px solid rgb(229, 229, 229);
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+
+IconInfoPanel > #nameLabel {
+    font: 15px 'Segoe UI', 'PingFang SC';
+    font-weight: bold;
+    color: black;
+}
+
+IconInfoPanel > #subTitleLabel {
+    font: 14px 'Segoe UI', 'Microsoft YaHei', 'PingFang SC';
+    color: black;
+}
+
+IconInfoPanel > QLabel {
+    font: 12px 'Segoe UI', 'PingFang SC';
+    color: rgb(96, 96, 96);
+}
+
