@@ -5,6 +5,7 @@ from managers.translate_manager import _
 from managers.notify_manager import notify
 import pygetwindow as gw
 from io import BytesIO
+import time
 
 
 class Base:
@@ -25,6 +26,8 @@ class Base:
                     if w.title == title:
                         window[0].restore()
                         window[0].activate()
+                        # 等待两秒 尝试修复 “Error code from Windows: 0”
+                        time.sleep(2)
                         return window[0].isActive
             return False
         return auto.retry_with_timeout(switch_window, 2, 1, title)
