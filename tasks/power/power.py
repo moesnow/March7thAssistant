@@ -49,22 +49,47 @@ class Power:
 
     @staticmethod
     def borrow_character():
-        if config.borrow_character_enable:
-            if auto.click_element("支援", "text", max_retries=10):
-                auto.find_element("入队", "text", max_retries=10)
-                try:
-                    for name in config.borrow_character:
-                        if auto.click_element("./assets/images/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2)):
-                            auto.click_element("入队", "text", max_retries=10)
-                            auto.click_element("取消", "text", max_retries=2, include=True)
-                            return
-                    if config.borrow_force == True:
-                        auto.click_element("入队", "text", max_retries=10)
-                        auto.click_element("取消", "text", max_retries=2)
-                        return
-                except Exception as e:
-                    logger.warning(_("选择支援角色出错： {e}").format(e=e))
-                auto.press_key("esc")
+        if not config.borrow_character_enable:
+            logger.debug(_("支援角色未开启"))
+            return True
+        if not auto.click_element("支援", "text", max_retries=10):
+            logger.error(_("找不到支援按钮"))
+            return False
+        if not auto.find_element("支援列表", "text", max_retries=10):
+            logger.error(_("未进入支援列表"))
+            return False
+        try:
+            for name in config.borrow_character:
+                if auto.click_element("./assets/images/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2)):
+                    if not auto.click_element("入队", "text", max_retries=10):
+                        logger.error(_("找不到入队按钮"))
+                        return False
+                    if auto.find_element("解除支援", "text", max_retries=2):
+                        return True
+                    elif auto.click_element("取消", "text", max_retries=2, include=True):
+                        auto.find_element("支援列表", "text", max_retries=10)
+                        continue
+                    else:
+                        return False
+            if config.borrow_force == True:
+                if not auto.click_element("入队", "text", max_retries=10):
+                    logger.error(_("找不到入队按钮"))
+                    return False
+                if auto.find_element("解除支援", "text", max_retries=2):
+                    return True
+                elif auto.click_element("取消", "text", max_retries=2, include=True):
+                    auto.find_element("支援列表", "text", max_retries=10)
+                    auto.press_key("esc")
+                else:
+                    return False
+        except Exception as e:
+            logger.warning(_("选择支援角色出错： {e}").format(e=e))
+
+        auto.press_key("esc")
+        if auto.find_element("解除支援", "text", max_retries=2):
+            return True
+        else:
+            return False
 
     @staticmethod
     def run_instances(number):
