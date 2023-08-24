@@ -118,7 +118,7 @@ class Automation:
 
         return max_val, max_loc
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, take_screenshot=True, scale_range=None, crop=(0, 0, 0, 0),include=None):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, take_screenshot=True, scale_range=None, crop=(0, 0, 0, 0), include=None):
         max_retries = 1 if not take_screenshot else max_retries
 
         for i in range(max_retries):
@@ -129,7 +129,7 @@ class Automation:
                 if find_type == 'image':
                     top_left, bottom_right = self.find_image_element(target, threshold, scale_range)
                 else:  # find_type == 'text'
-                    top_left, bottom_right = self.find_text_element(target,include)
+                    top_left, bottom_right = self.find_text_element(target, include)
 
                 if top_left and bottom_right:
                     return top_left, bottom_right
@@ -156,7 +156,7 @@ class Automation:
             logger.error(_("寻找图片出错：{e}").format(e=e))
         return None, None
 
-    def find_text_element(self, target,include):
+    def find_text_element(self, target, include):
         try:
             ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
             if not ocr_result:
@@ -175,8 +175,8 @@ class Automation:
             logger.error(_("寻找文本出错：{e}").format(e=e))
             return None, None
 
-    def click_element(self, target, find_type, similarity_threshold=None, max_retries=1, offset=(0, 0), scale_range=None, crop=(0, 0, 0, 0)):
-        coordinates = self.find_element(target, find_type, similarity_threshold, max_retries, scale_range=scale_range, crop=crop)
+    def click_element(self, target, find_type, similarity_threshold=None, max_retries=1, offset=(0, 0), scale_range=None, crop=(0, 0, 0, 0), include=None):
+        coordinates = self.find_element(target, find_type, similarity_threshold, max_retries, scale_range=scale_range, crop=crop, include=include)
         if coordinates:
             (left, top), (right, bottom) = coordinates
             x = (left + right) // 2 + offset[0]
