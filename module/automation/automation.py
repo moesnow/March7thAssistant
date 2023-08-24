@@ -159,17 +159,21 @@ class Automation:
     def find_text_element(self, target):
         try:
             ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
-            if ocr_result:
-                for box in ocr_result:
-                    text = box[1][0]
-                    if target == text:
-                        logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=target, max_val=box[1][1]))
-                        top_left = (box[0][0][0] + self.screenshot_pos[0], box[0][0][1] + self.screenshot_pos[1])
-                        bottom_right = (box[0][2][0] + self.screenshot_pos[0], box[0][2][1] + self.screenshot_pos[1])
-                        return top_left, bottom_right
+            if not ocr_result:
+                logger.debug(_("目标文字：{target} 未找到，没有识别出任何文字").format(target=target))
+                return None, None
+            for box in ocr_result:
+                text = box[1][0]
+                if target == text:
+                    logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=target, max_val=box[1][1]))
+                    top_left = (box[0][0][0] + self.screenshot_pos[0], box[0][0][1] + self.screenshot_pos[1])
+                    bottom_right = (box[0][2][0] + self.screenshot_pos[0], box[0][2][1] + self.screenshot_pos[1])
+                    return top_left, bottom_right
+            logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=target))
+            return None, None
         except Exception as e:
             logger.error(_("寻找文本出错：{e}").format(e=e))
-        return None, None
+            return None, None
 
     def click_element(self, target, find_type, similarity_threshold=None, max_retries=1, offset=(0, 0), scale_range=None, crop=(0, 0, 0, 0)):
         coordinates = self.find_element(target, find_type, similarity_threshold, max_retries, scale_range=scale_range, crop=crop)
