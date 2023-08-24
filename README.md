@@ -41,8 +41,7 @@ March7thAssistant
 <!-- 以管理员身份打开 `cmd` 或者 `powershell`，使用 `cd` 命令进入项目根目录 -->
 
 ```cmd
-# 注意需要同时 Clone 子模块，不要漏了 --recurse-submodules
-
+# 注意需要添加 --recurse-submodules 参数同时 clone 子模块
 git clone https://github.com/moesnow/March7thAssistant --recurse-submodules
 cd March7thAssistant
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
