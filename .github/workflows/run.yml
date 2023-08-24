@@ -60,13 +60,13 @@ jobs:
       - name: Create zip archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          ren .\dist\March7thAssistant .\dist\March7thAssistant_$GITHUB_REF_NAME
-          powershell Compress-Archive -Path .\dist\March7thAssistant_$GITHUB_REF_NAME\ -DestinationPath .\dist\March7thAssistant_$GITHUB_REF_NAME.zip -Force
+          ren .\dist\March7thAssistant .\dist\March7thAssistant_${{ env.GITHUB_REF_NAME }}
+          powershell Compress-Archive -Path .\dist\March7thAssistant_${{ env.GITHUB_REF_NAME }}\ -DestinationPath .\dist\March7thAssistant_${{ env.GITHUB_REF_NAME }}.zip -Force
 
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          name: March7thAssistant $GITHUB_REF_NAME
-          files: ./dist/March7thAssistant_$GITHUB_REF_NAME.zip
+          name: March7thAssistant ${{ env.GITHUB_REF_NAME }}
+          files: ./dist/March7thAssistant_${{ env.GITHUB_REF_NAME }}.zip
 
