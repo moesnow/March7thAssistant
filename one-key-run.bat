@@ -9,7 +9,7 @@ if %errorlevel% equ 0 (
 )
 
 echo Installing dependencies...
-pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 echo Starting GUI application...
 python app.py

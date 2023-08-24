@@ -91,7 +91,7 @@ int main() {
 
     // Install dependencies if not installed
     if (!fs::exists(".venv/pip_installed.txt")) {
-        system(".venv\\Scripts\\activate && python -m pip install -i https://mirrors.aliyun.com/pypi/simple/ --upgrade pip && pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt && echo 1 > .venv\\pip_installed.txt && deactivate");
+        system(".venv\\Scripts\\activate && python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade pip && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt && echo 1 > .venv\\pip_installed.txt && deactivate");
         if (!fs::exists(".venv/pip_installed.txt")) {
             system("pause");
             return 1;

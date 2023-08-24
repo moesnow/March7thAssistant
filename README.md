@@ -41,7 +41,7 @@ March7thAssistant
 <!-- 以管理员身份打开 `cmd` 或者 `powershell`，使用 `cd` 命令进入项目根目录 -->
 
 ```cmd
-pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 python app.py
 ```
 
@@ -49,8 +49,7 @@ python app.py
 # 可选方式（使用虚拟环境）
 python -m venv .venv
 .venv\Scripts\activate
-python -m pip install -i https://mirrors.aliyun.com/pypi/simple/ --upgrade pip
-pip install -i https://mirrors.aliyun.com/pypi/simple/ -r requirements.txt
+pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 python app.py
 ```
 
