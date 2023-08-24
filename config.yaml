@@ -50,7 +50,7 @@ fight_team_number: '2' # 锄大地使用的队伍编号
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: 0 # 启用模拟宇宙
-universe_command: powershell "" # 模拟宇宙命令（需要自己设置）
+universe_command: .\scripts\Auto_Simulated_Universe.bat # 模拟宇宙命令
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
 

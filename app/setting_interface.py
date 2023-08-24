@@ -201,7 +201,7 @@ class SettingInterface(ScrollArea):
         self.universeCommandCard = PushSettingCardStr(
             self.tr('修改'),
             FIF.COMMAND_PROMPT,
-            self.tr("模拟宇宙命令（需要自己设置）"),
+            self.tr("模拟宇宙命令"),
             "universe_command"
         )
         self.universeTimeoutCard = PushSettingCardEval(

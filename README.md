@@ -11,7 +11,7 @@ March7thAssistant
 
 ## 功能简介
 
-> 注意：锄大地和模拟宇宙调用的其他项目，可能涉及到开源相关的问题<br>所以在群文件内提供补丁包，你也可以自己设置启动命令
+> 注意：锄大地调用的非开源项目，在群文件内提供补丁包
 
 自动刷副本｜借支援｜领派遣、邮件、实训等奖励｜拍照、合用材料消耗品｜锄大地、模拟宇宙、混沌回忆
 
@@ -34,24 +34,28 @@ March7thAssistant
 
 ## 源码运行
 
-<!-- 克隆源代码后，双击 `one-key-run.exe` 会自动安装依赖然后启动 -->
+<!-- 克隆源代码后，双击 `one-key-run.bat` 会自动安装依赖然后启动 -->
 
 <!-- ### 手动运行 -->
 
 <!-- 以管理员身份打开 `cmd` 或者 `powershell`，使用 `cd` 命令进入项目根目录 -->
 
 ```cmd
+# 注意需要同时 Clone 子模块，不要漏了 --recurse-submodules
+
+git clone https://github.com/moesnow/March7thAssistant --recurse-submodules
+cd March7thAssistant
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 python app.py
 ```
-
+<!-- 
 ```cmd
 # 可选方式（使用虚拟环境）
 python -m venv .venv
 .venv\Scripts\activate
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 python app.py
-```
+``` -->
 
 ## 相关项目
 

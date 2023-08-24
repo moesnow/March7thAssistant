@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          submodules: 'true'
 
       - name: Set up python
         uses: actions/setup-python@v4
@@ -44,6 +46,7 @@ jobs:
         run: |
           xcopy .\assets\ .\dist\March7thAssistant\assets\ /E /I /Y
           xcopy .\3rdparty\ .\dist\March7thAssistant\3rdparty\ /E /I /Y
+          xcopy .\scripts\ .\dist\March7thAssistant\scripts\ /E /I /Y
           xcopy .\config.yaml .\dist\March7thAssistant\ /Y
           xcopy .\README.md .\dist\March7thAssistant\ /Y
 
