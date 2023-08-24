@@ -1,0 +1,40 @@
+name: 新功能提议
+description: 提出新功能
+title: '[Feat]: '
+labels: [ "enhancement" ]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 感谢您愿意为 March7thAssistant 提出建议！
+        ## 以下是一些注意事项，请务必阅读让我们能够更容易处理
+
+        ### ❗ | 确定没有相同问题的 Feature 已被提出或实现。
+        ### 📝 | 确定现有的PR和代码并没有该功能的实现/相似的功能。 
+        ### 如果您不知道如何有效、精准地表述，我们建议您先阅读《提问的智慧》
+
+        ---
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: 请确保您已阅读以上注意事项，并勾选下方的确认框。
+      options:
+        - label: "我确定这是一个从未被提出和实现过的功能。"
+          required: true
+        - label: "我已经在 [Issue Tracker](https://github.com/moesnow/March7thAssistant/issues) 以及 [Pull Request](https://github.com/moesnow/March7thAssistant/pulls) 中找过我要提出的功能，没有找到相同功能的ISSUE和PR。"
+          required: true
+        - label: 我已知晓并同意，此处仅用于建议新功能。若这个 Issue 是关于其他非主题的问题，则我的 Issue 可能会被无条件自动关闭/锁定。
+          required: true
+        - label: 我已知晓并同意，如果我不按照模板提供的指示进行填写，则我的 Issue 可能会被无条件删除。
+          required: true
+
+  - type: textarea
+    id: feature-to-add
+    attributes:
+      label: 需要添加的功能内容
+      description: |
+        请具体提出想添加的功能，包括实现的模拟（如有）
+        是否有类似的功能已经实现？如有请肯定地提出与该功能不同的地方/想改进/添加该功能的哪一部分。
+    validations:
+      required: true
