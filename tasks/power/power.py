@@ -93,6 +93,9 @@ class Power:
 
     @staticmethod
     def run_instances(number):
+        if config.instance_team_enable:
+            Base.change_team(config.instance_team_number)
+
         screen.change_to('guide3')
         auto.click_element(config.instance_type, "text", max_retries=10)
         # 截图过快会导致结果不可信

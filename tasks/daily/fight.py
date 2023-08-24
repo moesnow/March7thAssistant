@@ -21,6 +21,9 @@ class Fight:
 
     @staticmethod
     def start():
+        if config.fight_team_enable:
+            Base.change_team(config.fight_team_number)
+            
         screen.change_to('main')
 
         logger.hr(_("准备锄大地"), 2)

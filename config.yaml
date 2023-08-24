@@ -20,6 +20,8 @@ dispatch_count: 4 # 派遣次数
 instance_type: 侵蚀隧洞 # 副本类型（目前只支持侵蚀隧洞）
 instance_name: 药使之径·侵蚀隧洞 # 副本名称
 power_need: 40 # 一次副本所需开拓力
+instance_team_enable: 1 # 启用自动切换队伍
+instance_team_number: 2 # 打副本使用的队伍编号
 
 borrow_character_enable: 1 # 自动使用支援角色，建议四号位放无关紧要的角色避免练度导致翻车
 borrow_force: 0 # 无论何时都要使用支援角色，即使设置的角色都没找到
@@ -42,6 +44,8 @@ synthesis_enable: 1 # 启用每日合成/使用 材料/消耗品
 fight_enable: 0 # 启用锄大地
 fight_command: powershell "" # 锄大地命令（需要自己设置）
 fight_timeout: 6 # 锄大地超时（单位小时）
+fight_team_enable: 1 # 启用自动切换队伍
+fight_team_number: 2 # 锄大地使用的队伍编号
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: 0 # 启用模拟宇宙
