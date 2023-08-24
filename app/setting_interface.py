@@ -87,6 +87,19 @@ class SettingInterface(ScrollArea):
             self.tr("副本所需开拓力"),
             "power_need"
         )
+        self.instanceTeamEnableCard = SwitchSettingCard1(
+            FIF.EDIT,
+            self.tr('启用自动切换队伍'),
+            None,
+            "instance_team_enable"
+        )
+        self.instanceTeamNumberCard = ComboBoxSettingCard1(
+            "instance_team_number",
+            FIF.FLAG,
+            self.tr('打副本使用的队伍编号'),
+            None,
+            texts=['1', '2', '3', '4', '5', '6']
+        )
         self.borrowCharacterCard = SwitchSettingCard1(
             FIF.PEOPLE,
             self.tr('启用使用支援角色'),
@@ -157,6 +170,19 @@ class SettingInterface(ScrollArea):
             FIF.HISTORY,
             self.tr("锄大地超时（单位小时）"),
             "fight_timeout"
+        )
+        self.fightTeamEnableCard = SwitchSettingCard1(
+            FIF.EDIT,
+            self.tr('启用自动切换队伍'),
+            None,
+            "fight_team_enable"
+        )
+        self.fightTeamNumberCard = ComboBoxSettingCard1(
+            "fight_team_number",
+            FIF.FLAG,
+            self.tr('锄大地使用的队伍编号'),
+            None,
+            texts=['1', '2', '3', '4', '5', '6']
         )
         self.FightRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
@@ -267,6 +293,8 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.powerNeedCard)
+        self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
+        self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
         self.PowerGroup.addSettingCard(self.borrowCharacterCard)
         self.PowerGroup.addSettingCard(self.borrowForceCard)
 
@@ -280,6 +308,8 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.fightEnableCard)
         self.FightGroup.addSettingCard(self.fightCommandCard)
         self.FightGroup.addSettingCard(self.fightTimeoutCard)
+        self.FightGroup.addSettingCard(self.fightTeamEnableCard)
+        self.FightGroup.addSettingCard(self.fightTeamNumberCard)
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
