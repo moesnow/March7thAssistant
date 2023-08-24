@@ -240,7 +240,7 @@ class SettingInterface(ScrollArea):
             self.tr('打开角色文件夹'),
             FIF.INFO,
             self.tr("↓↓混沌回忆队伍↓↓"),
-            self.tr("数字代表秘技使用次数\n其中-1代表最后一个放秘技和普攻的角色（当前1-5的双BOSS层必须是远程开怪角色，否则攻击不到第二个BOSS）\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\character\" 中查看，目前还缺少白露和卡芙卡")
+            self.tr("数字代表秘技使用次数\n其中-1代表最后一个放秘技和普攻的角色（当前1-5的双BOSS层必须是远程开怪角色，否则攻击不到第二个BOSS）\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\character\" 中查看")
         )
         self.forgottenhallTeam1Card = PushSettingCardEval(
             self.tr('修改'),
