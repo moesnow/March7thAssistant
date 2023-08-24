@@ -118,7 +118,7 @@ class Automation:
 
         return max_val, max_loc
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, take_screenshot=True, scale_range=None, crop=(0, 0, 0, 0)):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, take_screenshot=True, scale_range=None, crop=(0, 0, 0, 0),include=None):
         max_retries = 1 if not take_screenshot else max_retries
 
         for i in range(max_retries):
@@ -129,7 +129,7 @@ class Automation:
                 if find_type == 'image':
                     top_left, bottom_right = self.find_image_element(target, threshold, scale_range)
                 else:  # find_type == 'text'
-                    top_left, bottom_right = self.find_text_element(target)
+                    top_left, bottom_right = self.find_text_element(target,include)
 
                 if top_left and bottom_right:
                     return top_left, bottom_right
@@ -156,7 +156,7 @@ class Automation:
             logger.error(_("寻找图片出错：{e}").format(e=e))
         return None, None
 
-    def find_text_element(self, target):
+    def find_text_element(self, target,include):
         try:
             ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
             if not ocr_result:
@@ -164,7 +164,7 @@ class Automation:
                 return None, None
             for box in ocr_result:
                 text = box[1][0]
-                if target == text:
+                if (include is None and target == text) or (include and target in text) or (not include and target == text):
                     logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=target, max_val=box[1][1]))
                     top_left = (box[0][0][0] + self.screenshot_pos[0], box[0][0][1] + self.screenshot_pos[1])
                     bottom_right = (box[0][2][0] + self.screenshot_pos[0], box[0][2][1] + self.screenshot_pos[1])

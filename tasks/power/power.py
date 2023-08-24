@@ -56,7 +56,7 @@ class Power:
                     for name in config.borrow_character:
                         if auto.click_element("./assets/images/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2)):
                             auto.click_element("入队", "text", max_retries=10)
-                            auto.click_element("取消", "text", max_retries=2)
+                            auto.click_element("取消", "text", max_retries=2, include=True)
                             return
                     if config.borrow_force == True:
                         auto.click_element("入队", "text", max_retries=10)
