@@ -1,17 +1,16 @@
-PyYAML
+ruamel.yaml
+colorama
+pyuac
 psutil
 pyautogui
 pygetwindow
 requests
 imageio
 Pillow
-colorama
-ruamel.yaml
 Numpy
 opencv-python
-onepush==1.2.0
-PyQt-Fluent-Widgets[full]
-pyuac
+onepush
+PyQt-Fluent-Widgets
 # PyMuPDF==1.21.1
 # paddlepaddle==2.5.1
 # paddleocr==2.6.0.1
