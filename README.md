@@ -25,7 +25,7 @@ March7thAssistant
 
 - 支持 `1920*1080` 分辨率窗口或全屏运行游戏
 - 使用锄大地和模拟宇宙功能需要安装 `Python`
-- 如遇到错误或请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
+- 如遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
 
 <!-- ## 一键运行 -->
 
