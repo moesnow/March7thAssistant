@@ -49,7 +49,7 @@ class ForgottenHall:
         logger.debug(_("剩余重试次数:{max_recursion}".format(max_recursion=max_recursion)))
         for i in range(2):
             logger.info(_("进入第{i}间").format(i=i + 1))
-            auto.press_key("w", 4)
+            auto.press_key("w", 3.8)
 
             # 释放秘技
             last_index = None
@@ -69,6 +69,13 @@ class ForgottenHall:
 
             for i in range(boss_count):
                 logger.info(_("挑战第{i}个boss").format(i=i + 1))
+
+                # 适配近战角色开怪
+                if boss_count == 2:
+                    if i == 0:
+                        auto.press_key("a", 1)
+                    elif i == 1:
+                        auto.press_key("d", 2)
 
                 # 开怪
                 auto.press_key("e")

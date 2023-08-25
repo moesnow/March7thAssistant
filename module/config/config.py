@@ -80,9 +80,8 @@ forgottenhall_level: # 混沌回忆关卡范围（当前不会跳过已经满星
 forgottenhall_retries: 3 # 混沌回忆挑战失败后的重试次数
 
 # 混沌回忆队伍
-# 数字代表秘技使用次数
-# 其中-1代表最后一个放秘技和普攻的角色（当前1-5的双BOSS层必须是远程开怪角色，否则攻击不到第二个BOSS）
-# 角色对应的英文名字可以在 "March7thAssistant\\assets\\images\\character" 中查看，目前还缺少白露和卡芙卡
+# 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色
+# 角色对应的英文名字可以在 "March7thAssistant\\assets\\images\\character" 中查看
 forgottenhall_team1: # 混沌回忆队伍1
 - - Asta
   - -1
@@ -94,11 +93,11 @@ forgottenhall_team1: # 混沌回忆队伍1
   - 1
 forgottenhall_team2: # 混沌回忆队伍2
 - - Bronya
-  - -1
+  - 1
 - - Luocha
   - 1
 - - SilverWolf
-  - 0
+  - -1
 - - Qingque
   - 1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行，如已经满星则跳过）
