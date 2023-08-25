@@ -15,13 +15,13 @@ import os
 def main(action=None):
     if action is None or action == "main":
         while True:
-            Version.check()
+            Version.start()
             Game.start()
             Power.start()
             Daily.start()
             Game.stop()
     else:
-        Version.check()
+        Version.start()
         Game.start()
         if action == "fight":
             Fight.start()
