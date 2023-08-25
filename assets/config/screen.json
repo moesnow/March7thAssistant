@@ -25,6 +25,17 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "target_screen": "configure_team",
+                    "actions_list": [
+                        {
+                            "action": "auto.press_key",
+                            "args": [
+                                "T"
+                            ]
+                        }
+                    ]
                 }
             ]
         },
