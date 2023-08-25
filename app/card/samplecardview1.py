@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt, QPropertyAnimation
 from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect
 
-from qfluentwidgets import IconWidget, TextWrap, FlowLayout, CardWidget
+from qfluentwidgets import IconWidget, TextWrap, FlowLayout, CardWidget, Flyout, InfoBarIcon, TeachingTip, TeachingTipTailPosition
 from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
 import os
@@ -51,6 +51,18 @@ class SampleCard(CardWidget):
         self.titleLabel.setObjectName('titleLabel')
         # self.contentLabel.setObjectName('contentLabel')
 
+    def showBottomTeachingTip(self):
+        TeachingTip.create(
+            target=self.iconWidget,
+            icon=InfoBarIcon.SUCCESS,
+            title='启动成功',
+            content="",
+            isClosable=False,
+            tailPosition=TeachingTipTailPosition.BOTTOM,
+            duration=2000,
+            parent=self
+        )
+
     def mouseReleaseEvent(self, e):
         super().mouseReleaseEvent(e)
         script_path = sys.argv[0]  # 获取当前脚本文件的路径，包括文件名
@@ -60,6 +72,7 @@ class SampleCard(CardWidget):
             os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" {self.action}")
         else:
             os.system(f"start python main.py {self.action}")
+        self.showBottomTeachingTip()
 
     def enterEvent(self, event):
         super().enterEvent(event)
