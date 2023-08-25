@@ -32,10 +32,16 @@ class SettingInterface(ScrollArea):
             self.tr('如果遇到问题请修改为DEBUG等级，可以显示更多信息'),
             texts=['INFO', 'DEBUG']
         )
+        self.gameScreenshotCard = PushSettingCard(
+            self.tr('捕获'),
+            FIF.PHOTO,
+            self.tr("游戏截图"),
+            self.tr("检查程序获取的图像是否正确")
+        )
         self.checkUpdateCard = SwitchSettingCard1(
             FIF.UPDATE,
-            self.tr('检测更新'),
-            None,
+            self.tr('启动时检测更新'),
+            "新版本将更加稳定并拥有更多功能（建议启用）",
             "check_update"
         )
         self.autoExitCard = SwitchSettingCard1(
@@ -283,6 +289,7 @@ class SettingInterface(ScrollArea):
         self.settingLabel.move(36, 30)
         # add cards to group
         self.programGroup.addSettingCard(self.logLevelCard)
+        self.programGroup.addSettingCard(self.gameScreenshotCard)
         self.programGroup.addSettingCard(self.checkUpdateCard)
         self.programGroup.addSettingCard(self.autoExitCard)
         self.programGroup.addSettingCard(self.neverStopCard)
@@ -336,6 +343,17 @@ class SettingInterface(ScrollArea):
         self.expandLayout.addWidget(self.UniverseGroup)
         self.expandLayout.addWidget(self.ForgottenhallGroup)
 
+    def __onGameScreenshotCardClicked(self):
+        from tasks.base.base import Base
+        from managers.automation_manager import auto
+        if Base.check_and_switch(config.game_title_name):
+            if auto.take_screenshot():
+                if not os.path.exists("screenshot"):
+                    os.makedirs("screenshot")
+                screenshot_path = os.path.abspath("screenshot\screenshot.png")
+                auto.screenshot.save(screenshot_path)
+                os.startfile(os.path.dirname(screenshot_path))
+
     def __onGamePathCardClicked(self):
         """ download folder card clicked slot """
         game_path, _ = QFileDialog.getOpenFileName(self, "选择游戏路径", "", "All Files (*)")
@@ -352,5 +370,6 @@ class SettingInterface(ScrollArea):
         """ connect signal to slot """
 
         # game settings
+        self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.forgottenhallTeamInfoCard.clicked.connect(self.__onForgottenhallTeamInfoCardClicked)
