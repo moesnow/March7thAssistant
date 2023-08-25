@@ -48,14 +48,12 @@ cd March7thAssistant
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 python app.py
 ```
-<!-- 
+
 ```cmd
-# 可选方式（使用虚拟环境）
+# 可选方式，使用 venv 创建虚拟环境，避免依赖冲突
 python -m venv .venv
 .venv\Scripts\activate
-pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
-python app.py
-``` -->
+```
 
 ## 相关项目
 
