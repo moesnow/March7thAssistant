@@ -15,7 +15,7 @@ March7thAssistant
 
 自动刷副本｜借支援｜领派遣、邮件、实训等奖励｜拍照、合用材料消耗品｜锄大地、模拟宇宙、混沌回忆
 
-详情见 [配置文件](config.yaml) 或下载后打开设置查看｜🌟喜欢就点击右上角给个星星吧|･ω･) 🌟｜群号 855392201
+详情见 [配置文件](config.yaml) 或下载后打开设置查看｜🌟喜欢就点击右上角给个**星星**吧|･ω･) 🌟｜群号 855392201
 
 ## 界面展示
 
@@ -26,10 +26,12 @@ March7thAssistant
 - 支持 `1920*1080` 分辨率窗口或全屏运行游戏
 - 使用锄大地和模拟宇宙功能需要安装 `Python`
 - 如遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
+- **蓝色文字**都是超链接，可以点击
 
 <!-- ## 一键运行 -->
 
 ## 下载安装
+
 前往 [Releases](https://github.com/moesnow/March7thAssistant/releases) 下载后解压双击 `March7th Assistant.exe` 直接运行，如果速度缓慢可以右键复制链接后通过 [https://ghproxy.com](https://ghproxy.com) 加速
 
 ## 源码运行
