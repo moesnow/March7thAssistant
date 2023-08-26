@@ -32,15 +32,15 @@ class Daily:
 
         if Date.is_next_mon_4_am(config.universe_timestamp):
             if config.universe_enable:
+                Power.start()
                 Universe.start()
+                Power.start()
             else:
                 logger.debug(_("模拟宇宙未开启"))
 
         if Date.is_next_mon_4_am(config.forgottenhall_timestamp):
             if config.forgottenhall_enable:
-                Power.start()
                 ForgottenHall.start()
-                Power.start()
             else:
                 logger.debug(_("忘却之庭未开启"))
 
