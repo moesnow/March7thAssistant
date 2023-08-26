@@ -32,9 +32,9 @@ def main(action=None):
         else:
             logger.warning(f"Unknown action: {action}")
             os.system("pause")
-            exit(1)
+            sys.exit(1)
         os.system("pause")
-        exit(0)
+        sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from managers.ocr_manager import ocr
 from tasks.base.base import Base
 from tasks.game.stop import Stop
 import time
+import sys
 import os
 
 
@@ -15,7 +16,7 @@ class Start:
         if not os.path.exists(game_path):
             logger.error(_("游戏路径不存在: {path}\n请修改配置文件 config.yaml，例如系统自带的记事本").format(path=game_path))
             os.system('pause')
-            exit(1)
+            sys.exit(1)
 
     @staticmethod
     def check_and_click_monthly_card():

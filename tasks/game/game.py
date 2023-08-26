@@ -8,6 +8,7 @@ from tasks.base.date import Date
 from tasks.game.start import Start
 from tasks.game.stop import Stop
 import time
+import sys
 
 
 class Game:
@@ -18,7 +19,7 @@ class Game:
         if not auto.retry_with_timeout(Start.start_game, 1200, 1):
             notify.notify(_("⚠️启动游戏超时，退出程序⚠️"))
             logger.error(_("⚠️启动游戏超时，退出程序⚠️"))
-            exit(1)
+            sys.exit(1)
         logger.hr(_("完成"), 2)
 
     @staticmethod
@@ -37,7 +38,7 @@ class Game:
         else:
             if not config.never_stop:
                 logger.hr(_("完成"), 2)
-                exit(0)
+                sys.exit(0)
             if current_power < config.power_limit:
                 wait_time = Stop.get_wait_time(current_power)
                 future_time = Date.calculate_future_time(wait_time)
