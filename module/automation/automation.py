@@ -6,6 +6,9 @@ from managers.ocr_manager import ocr
 from managers.logger_manager import logger
 from managers.translate_manager import _
 
+from .input import Input
+from .screenshot import Screenshot
+
 
 class Automation:
     _instance = None
@@ -15,79 +18,22 @@ class Automation:
             cls._instance = super().__new__(cls)
             cls._instance.window_title = window_title
             cls._instance.screenshot = None
+            cls._instance.init_automation()
+
         return cls._instance
 
-    def mouse_click(self, x, y):
-        try:
-            pyautogui.click(x, y)
-            logger.debug(_("点击 ({x}, {y})").format(x=x, y=y))
-            # logger.debug(_("mouse clicked at ({x}, {y})").format(x=x, y=y))
-        except Exception as e:
-            logger.error(_("点击出错：{e}").format(e=e))
-            # logger.error(_("Error clicking mouse: {e}").format(e=e))
-
-    def mouse_scroll(self, count, direction=-1):
-        for i in range(count):
-            pyautogui.scroll(direction)
-        logger.debug(_("滚动 {x} 次").format(x=count * direction))
-        # logger.debug(_("mouse scrolled {x} times").format(x=count*direction))
-        # time.sleep(1)
-
-    def press_key(self, key, wait_time=0.2):
-        try:
-            pyautogui.keyDown(key)
-            time.sleep(wait_time)
-            pyautogui.keyUp(key)
-            logger.debug(_("按下 {key}").format(key=key))
-            # logger.debug(_("key pressed: {key}").format(key=key))
-        except Exception as e:
-            logger.debug(_("按下 {key} 出错：{e}").format(key=key, e=e))
-            # logger.error(_("An error occurred: {e}").format(e=e))
-
-    def press_mouse(self, wait_time=0.2):
-        try:
-            pyautogui.mouseDown()
-            time.sleep(wait_time)
-            pyautogui.mouseUp()
-            logger.debug(_("按下鼠标左键"))
-        except Exception as e:
-            logger.debug(_("按下鼠标左键出错：{e}").format(e=e))
-            # logger.error(_("An error occurred: {e}").format(e=e))
-
-    @staticmethod
-    def is_application_fullscreen(window):
-        screen_width, screen_height = pyautogui.size()
-        return (window.width, window.height) == (screen_width, screen_height)
-
-    @staticmethod
-    def get_window_region(window):
-        up_border = 58
-        other_border = 13
-        if Automation.is_application_fullscreen(window):
-            return (window.left, window.top, window.width, window.height)
-        else:
-            return (window.left + other_border, window.top + up_border, window.width -
-                    other_border - other_border, window.height - up_border - other_border)
+    # 兼容旧代码
+    def init_automation(self):
+        self.mouse_click = Input.mouse_click
+        self.mouse_scroll = Input.mouse_scroll
+        self.press_key = Input.press_key
+        self.press_mouse = Input.press_mouse
 
     def take_screenshot(self, crop=(0, 0, 0, 0)):
-        try:
-            windows = pyautogui.getWindowsWithTitle(self.window_title)
-            if windows:
-                window = windows[0]
-
-                if crop == (0, 0, 0, 0):
-                    self.screenshot_pos = Automation.get_window_region(window)
-                else:
-                    left, top, width, height = Automation.get_window_region(window)
-                    self.screenshot_pos = left + width * crop[0], top + height * crop[1], width * crop[2], height * crop[3]
-                self.screenshot = pyautogui.screenshot(region=self.screenshot_pos)
-
-                return True
-            return False
-        except Exception as e:
-            logger.error(_("截图出错：{e}").format(e=e))
-            # logger.error(_("An error occurred while taking a screenshot: {e}").format(e=e))
-            return False
+        result = Screenshot.take_screenshot(self.window_title, crop=crop)
+        if result:
+            self.screenshot, self.screenshot_pos = result
+        return result
 
     def get_image_info(self, image_path):
         template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)

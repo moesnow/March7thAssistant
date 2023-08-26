@@ -344,14 +344,15 @@ class SettingInterface(ScrollArea):
         self.expandLayout.addWidget(self.ForgottenhallGroup)
 
     def __onGameScreenshotCardClicked(self):
-        from tasks.base.base import Base
-        from managers.automation_manager import auto
-        if Base.check_and_switch(config.game_title_name):
-            if auto.take_screenshot():
+        from tasks.base.windowswitcher import WindowSwitcher
+        from module.automation.screenshot import Screenshot
+        if WindowSwitcher.check_and_switch(config.game_title_name):
+            result = Screenshot.take_screenshot(config.game_title_name)
+            if result:
                 if not os.path.exists("screenshot"):
                     os.makedirs("screenshot")
                 screenshot_path = os.path.abspath("screenshot\screenshot.png")
-                auto.screenshot.save(screenshot_path)
+                result[0].save(screenshot_path)
                 os.startfile(os.path.dirname(screenshot_path))
 
     def __onGamePathCardClicked(self):
