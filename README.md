@@ -28,8 +28,6 @@ March7thAssistant
 - 如遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
 - **蓝色文字**都是超链接，可以点击
 
-<!-- ## 一键运行 -->
-
 ## 下载安装
 
 前往 [Releases](https://github.com/moesnow/March7thAssistant/releases) 下载后解压双击 `March7th Assistant.exe` 直接运行，
@@ -39,11 +37,6 @@ March7thAssistant
 ## 源码运行
 
 如果你是完全不懂的小白，请通过上面的方式下载安装，不用往下看了。
-<!-- 克隆源代码后，双击 `one-key-run.bat` 会自动安装依赖然后启动 -->
-
-<!-- ### 手动运行 -->
-
-<!-- 以管理员身份打开 `cmd` 或者 `powershell`，使用 `cd` 命令进入项目根目录 -->
 
 ```cmd
 # 注意需要添加 --recurse-submodules 参数同时 clone 子模块
