@@ -13,7 +13,7 @@ class Base:
     # 兼容旧代码
     @staticmethod
     def check_and_switch(title):
-        WindowSwitcher.check_and_switch(title)
+        return WindowSwitcher.check_and_switch(title)
 
     @staticmethod
     def send_notification_with_screenshot(message):
