@@ -155,8 +155,8 @@ class Automation:
                 return ocr_result[0]
         return None
 
-    def click_text_from_matched_screenshot_region(self, text, offset=[(0, 0), (0, 0)], max_retries=1, blacklist=None, target_text=None):
-        result = self.find_element(text, "text", max_retries)
+    def click_text_from_matched_screenshot_region(self, text, offset=[(0, 0), (0, 0)], max_retries=1, blacklist=None, target_text=None, include=None):
+        result = self.find_element(text, "text", max_retries=max_retries, include=include)
         if result:
             width = result[1][0] - result[0][0]
             height = result[1][1] - result[0][1]

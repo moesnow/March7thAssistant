@@ -113,7 +113,7 @@ class Power:
                     # 第三页
                     if not auto.click_text_from_matched_screenshot_region(config.instance_name, offset=offset, target_text="传送"):
                         return False
-            if not auto.find_element(config.instance_name, "text", max_retries=10):
+            if not auto.find_element(config.instance_name, "text", max_retries=10, include=True):
                 Base.send_notification_with_screenshot(_("⚠️侵蚀隧洞未完成⚠️"))
                 return False
             if auto.click_element("挑战", "text", max_retries=10):
