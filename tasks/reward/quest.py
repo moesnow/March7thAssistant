@@ -3,6 +3,7 @@ from managers.automation_manager import auto
 from managers.logger_manager import logger
 from managers.translate_manager import _
 from tasks.base.base import Base
+import time
 
 
 class Quest:
@@ -10,13 +11,15 @@ class Quest:
     def get_reward():
         screen.change_to('menu')
         if auto.find_element("./assets/images/quest/quest_reward.png", "image", 0.95):
-            # if True:
-            # logger.hr(_("检测到每日实训奖励"),2)
-            logger.hr(_("检查每日实训奖励"), 2)
+            logger.hr(_("检测到每日实训奖励"), 2)
             screen.change_to('guide2')
-            while auto.click_element("./assets/images/quest/receive.png", "image",
-                                     0.95) or auto.click_element("./assets/images/quest/receive_hover.png", "image", 0.95):
-                pass
+            while True:
+                result = auto.click_element("./assets/images/quest/receive.png", "image", 0.95)
+                time.sleep(1)
+                result_hover = auto.click_element("./assets/images/quest/receive_hover.png", "image", 0.95)
+                if not result and not result_hover:
+                    break
+                time.sleep(1)
             if auto.click_element("./assets/images/quest/gift.png", "image", 0.95):
                 auto.click_element("./assets/images/base/click_close.png", "image", 0.95, max_retries=10)
             auto.find_element("./assets/images/screen/guide/guide2.png", "image", 0.95, max_retries=10)
