@@ -1,6 +1,5 @@
 import cv2
 import time
-import pyautogui
 import numpy as np
 from managers.ocr_manager import ocr
 from managers.logger_manager import logger

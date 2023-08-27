@@ -5,6 +5,8 @@ import time
 
 
 class Input:
+    pyautogui.FAILSAFE = False
+
     @staticmethod
     def mouse_click(x, y):
         try:
