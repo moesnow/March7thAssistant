@@ -1,6 +1,4 @@
-from urllib import request
 from managers.logger_manager import logger
-from managers.automation_manager import auto
 from managers.translate_manager import _
 from managers.config_manager import config
 from managers.notify_manager import notify
