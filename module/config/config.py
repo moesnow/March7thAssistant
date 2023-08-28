@@ -10,7 +10,7 @@ class Config:
             cls._instance = super().__new__(cls)
             cls._instance.config_path = config_path
             cls._instance.yaml = YAML()
-            cls._instance.version = "v1.2.2"
+            cls._instance.version = "v1.2.3"
             cls._instance.config = cls._instance.yaml.load(cls._instance._default_config())
             cls._instance._load_config()
         return cls._instance
