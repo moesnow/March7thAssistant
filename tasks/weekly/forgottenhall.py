@@ -15,18 +15,18 @@ class ForgottenHall:
         time.sleep(10)
 
         def check_fight():
-            if auto.find_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.95, crop=(64 / 1920, 277 / 1080, 167 / 1920, 38 / 1080)):
+            if auto.find_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.9, crop=(64 / 1920, 277 / 1080, 167 / 1920, 38 / 1080)):
                 # 正常
                 return 1
-            elif auto.find_element("./assets/images/forgottenhall/back.png", "image", 0.95, crop=(560 / 1920, 900 / 1080, 796 / 1920, 76 / 1080)):
+            elif auto.find_element("./assets/images/forgottenhall/back.png", "image", 0.9, crop=(560 / 1920, 900 / 1080, 796 / 1920, 76 / 1080)):
                 logger.info(_("战斗完成"))
                 # 挑战失败
-                result = auto.find_element("./assets/images/forgottenhall/again.png", "image", 0.95,
+                result = auto.find_element("./assets/images/forgottenhall/again.png", "image", 0.9,
                                            max_retries=2, crop=(560 / 1920, 900 / 1080, 796 / 1920, 76 / 1080))
                 if result and max_recursion > 0:
                     # 重新挑战
                     logger.info(_("重新挑战"))
-                    auto.click_element("./assets/images/forgottenhall/again.png", "image", 0.95,
+                    auto.click_element("./assets/images/forgottenhall/again.png", "image", 0.9,
                                        max_retries=10, crop=(560 / 1920, 900 / 1080, 796 / 1920, 76 / 1080))
                     auto.click_element("./assets/images/forgottenhall/start.png", "image", 0.8,
                                        max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080))
@@ -36,7 +36,7 @@ class ForgottenHall:
                         return 4  # 挑战失败，重试后成功
                     return 3  # 挑战失败，重试后失败
                 else:
-                    auto.click_element("./assets/images/forgottenhall/back.png", "image", 0.95,
+                    auto.click_element("./assets/images/forgottenhall/back.png", "image", 0.9,
                                        max_retries=2, crop=(560 / 1920, 900 / 1080, 796 / 1920, 76 / 1080))
                     # 等待返回关卡选择界面
                     if result:

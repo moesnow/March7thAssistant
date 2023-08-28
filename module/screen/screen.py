@@ -137,7 +137,7 @@ class Screen:
         # logger.debug(_("cannot change from {current_screen} to {target_screen}").format(current_screen=self.get_current_screen(), target_screen=target_screen))
 
     def check_screen(self, target_screen):
-        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.95):
+        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
             self.current_screen = target_screen
             return True
         return False
@@ -153,7 +153,7 @@ class Screen:
     def find_screen(self, screen_name, screen):
         # logger.debug(f"对比图片 {screen_name}")
         try:
-            if auto.find_element(screen['image_path'], "image", 0.95, take_screenshot=False):
+            if auto.find_element(screen['image_path'], "image", 0.9, take_screenshot=False):
                 with self.lock:  # 使用锁来保护对共享变量的访问
                     self.current_screen = screen_name
                     logger.debug(_("{screen_name} 匹配成功").format(screen_name=screen_name))

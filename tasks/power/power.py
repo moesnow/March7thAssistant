@@ -41,7 +41,7 @@ class Power:
         time.sleep(10)
 
         def check_fight():
-            return auto.find_element("./assets/images/fight/fight_again.png", "image", 0.95)
+            return auto.find_element("./assets/images/fight/fight_again.png", "image", 0.9)
         if not auto.retry_with_timeout(check_fight, 600, 1):
             logger.error(_("战斗超时"))
             raise Exception(_("战斗超时"))
@@ -137,13 +137,13 @@ class Power:
                     for i in range(number - 1):
                         Power.wait_fight()
                         logger.info(_("第{number}次副本完成").format(number=i + 1))
-                        auto.click_element("./assets/images/fight/fight_again.png", "image", 0.95, max_retries=10)
+                        auto.click_element("./assets/images/fight/fight_again.png", "image", 0.9, max_retries=10)
                     Power.wait_fight()
                     logger.info(_("第{number}次副本完成").format(number=number))
 
                     # 速度太快，点击按钮无效
                     time.sleep(1)
-                    auto.click_element("./assets/images/fight/fight_exit.png", "image", 0.95, max_retries=10)
+                    auto.click_element("./assets/images/fight/fight_exit.png", "image", 0.9, max_retries=10)
                     logger.info(_("副本任务完成"))
 
         elif config.instance_type == "其他":

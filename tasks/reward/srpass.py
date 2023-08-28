@@ -9,18 +9,18 @@ class SRPass:
     @staticmethod
     def get_reward():
         screen.change_to('menu')
-        if auto.find_element("./assets/images/pass/pass_reward.png", "image", 0.95):
+        if auto.find_element("./assets/images/pass/pass_reward.png", "image", 0.9):
             # if True:
             logger.hr(_("检测到无名勋礼奖励"), 2)
             screen.change_to('pass1')
-            if auto.click_element("./assets/images/pass/one_key_receive.png", "image", 0.95):
-                auto.click_element("./assets/images/base/click_close.png", "image", 0.95, max_retries=10)
-            if auto.find_element("./assets/images/pass/50.png", "image", 0.95):
+            if auto.click_element("./assets/images/pass/one_key_receive.png", "image", 0.9):
+                auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
+            if auto.find_element("./assets/images/pass/50.png", "image", 0.9):
                 logger.info("🎉当前版本无名勋礼已满级🎉")
                 notify.notify("🎉当前版本无名勋礼已满级🎉")
-            if auto.find_element("./assets/images/pass/pass_reward.png", "image", 0.95):
+            if auto.find_element("./assets/images/pass/pass_reward.png", "image", 0.9):
                 screen.change_to('pass2')
-                if auto.click_element("./assets/images/pass/one_key_receive.png", "image", 0.95):
-                    auto.click_element("./assets/images/base/click_close.png", "image", 0.95, max_retries=10)
+                if auto.click_element("./assets/images/pass/one_key_receive.png", "image", 0.9):
+                    auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
             screen.change_to('menu')
             logger.info(_("领取无名勋礼奖励完成"))

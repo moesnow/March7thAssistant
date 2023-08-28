@@ -14,7 +14,7 @@ class Dispatch:
             return False
         screen.change_to('menu')
 
-        if auto.find_element("./assets/images/dispatch/dispatch_reward.png", "image", 0.95):
+        if auto.find_element("./assets/images/dispatch/dispatch_reward.png", "image", 0.9):
             logger.hr(_("检测到探索派遣奖励"), 2)
             screen.change_to('dispatch')
 
@@ -37,8 +37,8 @@ class Dispatch:
             if not Dispatch.perform_dispatch_and_check(offset, crop=(660 / 1920, 280 / 1080, 170 / 1920, 600 / 1080)):
                 break
 
-            auto.click_element("./assets/images/dispatch/receive.png", "image", 0.95, max_retries=10)
-            auto.click_element("./assets/images/dispatch/again.png", "image", 0.95, max_retries=10)
+            auto.click_element("./assets/images/dispatch/receive.png", "image", 0.9, max_retries=10)
+            auto.click_element("./assets/images/dispatch/again.png", "image", 0.9, max_retries=10)
             time.sleep(4)
 
     @staticmethod

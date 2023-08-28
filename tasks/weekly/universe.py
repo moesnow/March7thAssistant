@@ -34,10 +34,10 @@ class Universe:
         screen.change_to('main')
         screen.change_to('universe_main')
 
-        if auto.click_element("./assets/images/universe/universe_reward.png", "image", 0.95):
-            if auto.click_element("./assets/images/universe/one_key_receive.png", "image", 0.95, max_retries=10):
+        if auto.click_element("./assets/images/universe/universe_reward.png", "image", 0.9):
+            if auto.click_element("./assets/images/universe/one_key_receive.png", "image", 0.9, max_retries=10):
                 Base.send_notification_with_screenshot(_("🎉模拟宇宙奖励已领取🎉"))
-                auto.click_element("./assets/images/base/click_close.png", "image", 0.95, max_retries=10)
+                auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
         screen.change_to('main')
 
         logger.info(_("模拟宇宙完成"))
