@@ -233,7 +233,7 @@ class SettingInterface(ScrollArea):
         self.forgottenhallLevelCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.MINIMIZE,
-            self.tr("混沌回忆关卡范围（当前不会跳过已经满星的关卡）"),
+            self.tr("混沌回忆关卡范围"),
             "forgottenhall_level"
         )
         self.forgottenhallRetriesCard = PushSettingCardEval(
