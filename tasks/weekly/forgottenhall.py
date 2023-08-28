@@ -225,7 +225,7 @@ class ForgottenHall:
                             if text.split("/")[0] == "30":
                                 logger.info(_("混沌回忆未刷新"))
                                 screen.change_to('menu')
-                                return False
+                                return True
                             else:
                                 break
                     if auto.click_element("传送", "text", max_retries=10, need_ocr=False):
@@ -236,10 +236,8 @@ class ForgottenHall:
                             flag = True
 
         if not flag:
-            if not screen.change_to('memory_of_chaos'):
-                logger.error(_("切换到混沌回忆界面失败"))
-                screen.change_to('menu')
-                return False
+            screen.change_to('menu')
+            return False
 
         # 刷新后打开会出现本期buff的弹窗
         if auto.find_element("./assets/images/base/click_close.png", "image", 0.8):
