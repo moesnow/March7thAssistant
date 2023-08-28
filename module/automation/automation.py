@@ -1,9 +1,11 @@
-import cv2
-import time
-import numpy as np
 from managers.ocr_manager import ocr
 from managers.logger_manager import logger
 from managers.translate_manager import _
+
+import numpy as np
+import time
+import math
+import cv2
 
 from .input import Input
 from .screenshot import Screenshot
@@ -39,18 +41,9 @@ class Automation:
         return template.shape[::-1]
 
     def scale_and_match_template(self, screenshot, template, threshold=None, scale_range=None):
-        max_val = -np.inf
-        max_loc = None
-
-        # 匹配原始尺寸（不缩放）
         result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
-        _, local_max_val, _, local_max_loc = cv2.minMaxLoc(result)
+        _, max_val, _, max_loc = cv2.minMaxLoc(result)
 
-        if threshold is None or local_max_val >= threshold:
-            max_val = local_max_val
-            max_loc = local_max_loc
-
-        # 如果匹配度低于阈值，再进行缩放匹配
         if (threshold is None or max_val < threshold) and scale_range is not None:
             for scale in np.arange(scale_range[0], scale_range[1], 0.1):
                 scaled_template = cv2.resize(template, None, fx=scale, fy=scale)
@@ -63,21 +56,23 @@ class Automation:
 
         return max_val, max_loc
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, take_screenshot=True, scale_range=None, crop=(0, 0, 0, 0), include=None):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None):
+        take_screenshot = False if not need_ocr else take_screenshot
         max_retries = 1 if not take_screenshot else max_retries
-
         for i in range(max_retries):
             if take_screenshot and not self.take_screenshot(crop):
                 continue
-
-            if find_type in ['image', 'text']:
+            if find_type in ['image', 'text', "min_distance_text"]:
                 if find_type == 'image':
                     top_left, bottom_right = self.find_image_element(target, threshold, scale_range)
-                else:  # find_type == 'text'
-                    top_left, bottom_right = self.find_text_element(target, include)
-
+                elif find_type == 'text':
+                    top_left, bottom_right = self.find_text_element(target, include, need_ocr, relative)
+                elif find_type == 'min_distance_text':
+                    top_left, bottom_right = self.find_min_distance_text_element(target, source, include, need_ocr)
                 if top_left and bottom_right:
                     return top_left, bottom_right
+            elif find_type in ['image_count']:
+                return self.find_image_and_count(target, threshold)
             else:
                 raise ValueError(_("错误的类型"))
 
@@ -89,7 +84,7 @@ class Automation:
             template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
             if template is None:
                 raise ValueError(_("读取图片失败"))
-            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2GRAY)
+            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
             max_val, max_loc = self.scale_and_match_template(screenshot, template, threshold, scale_range)
             logger.debug(_("目标图片：{target} 相似度：{max_val}").format(target=target, max_val=max_val))
             if threshold is None or max_val >= threshold:
@@ -101,39 +96,129 @@ class Automation:
             logger.error(_("寻找图片出错：{e}").format(e=e))
         return None, None
 
-    def find_text_element(self, target, include):
+    @staticmethod
+    def intersected(top_left1, botton_right1, top_left2, botton_right2):
+        if top_left1[0] > botton_right2[0] or top_left2[0] > botton_right1[0]:
+            return False
+        if top_left1[1] > botton_right2[1] or top_left2[1] > botton_right1[1]:
+            return False
+        return True
+
+    @staticmethod
+    def count_template_matches(target, template, threshold):
+        result = cv2.matchTemplate(target, template, cv2.TM_CCOEFF_NORMED)
+        locations = np.where(result >= threshold)
+        match_count = 0
+        matches = []
+        for top_left in zip(*locations[::-1]):
+            flag = True
+            for match_top_left in matches:
+                botton_right = (top_left[0] + template.shape[1], top_left[1] + template.shape[0])
+                match_botton_right = (match_top_left[0] + template.shape[1], match_top_left[1] + template.shape[0])
+                result = Automation.intersected(top_left, botton_right, match_top_left, match_botton_right)
+                if result:
+                    flag = False
+                    break
+            if flag == True:
+                matches.append(top_left)
+                match_count += 1
+        return match_count
+
+    def find_image_and_count(self, target, threshold):
         try:
-            ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
-            if not ocr_result:
-                logger.debug(_("目标文字：{target} 未找到，没有识别出任何文字").format(target=target))
+            template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
+            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
+            return Automation.count_template_matches(screenshot, template, threshold)
+        except Exception as e:
+            logger.error(_("寻找图片并计数出错：{e}").format(e=e))
+            return None
+
+    def find_text_element(self, target, include, need_ocr=True, relative=False):
+        # 兼容旧代码
+        if isinstance(target, str):
+            target = (target,)
+        try:
+            if need_ocr:
+                self.ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
+            if not self.ocr_result:
+                logger.debug(_("目标文字：{target} 未找到，没有识别出任何文字").format(target=", ".join(target)))
                 return None, None
-            for box in ocr_result:
+            for box in self.ocr_result:
                 text = box[1][0]
-                if (include is None and target == text) or (include and target in text) or (not include and target == text):
-                    logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=target, max_val=box[1][1]))
-                    top_left = (box[0][0][0] + self.screenshot_pos[0], box[0][0][1] + self.screenshot_pos[1])
-                    bottom_right = (box[0][2][0] + self.screenshot_pos[0], box[0][2][1] + self.screenshot_pos[1])
+                # if (include is None and target == text) or (include and target in text) or (not include and target == text):
+                if ((include is None or not include) and text in target) or (include and any(t in text for t in target)):
+                    self.matched_text = next((t for t in target if t in text), None)
+                    logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=self.matched_text, max_val=box[1][1]))
+                    if relative == False:
+                        top_left = (box[0][0][0] + self.screenshot_pos[0], box[0][0][1] + self.screenshot_pos[1])
+                        bottom_right = (box[0][2][0] + self.screenshot_pos[0], box[0][2][1] + self.screenshot_pos[1])
+                    else:
+                        top_left = (box[0][0][0], box[0][0][1])
+                        bottom_right = (box[0][2][0], box[0][2][1])
                     return top_left, bottom_right
-            logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=target))
+            logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=", ".join(target)))
             return None, None
         except Exception as e:
-            logger.error(_("寻找文本出错：{e}").format(e=e))
+            logger.error(_("寻找文字：{target} 出错：{e}").format(target=", ".join(target), e=e))
             return None, None
 
-    def click_element(self, target, find_type, similarity_threshold=None, max_retries=1, offset=(0, 0), scale_range=None, crop=(0, 0, 0, 0), include=None):
-        coordinates = self.find_element(target, find_type, similarity_threshold, max_retries, scale_range=scale_range, crop=crop, include=include)
+    def find_min_distance_text_element(self, target, source, include, need_ocr=True):
+        if need_ocr:
+            self.ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
+        if not self.ocr_result:
+            logger.debug(_("目标文字：{target} 未找到，没有识别出任何文字").format(target=f"{target}, {source}"))
+            return None, None
+        # logger.debug(self.ocr_result)
+        source_pos = None
+        for box in self.ocr_result:
+            text = box[1][0]
+            if ((include is None or not include) and source == text) or (include and source in text):
+                logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=source, max_val=box[1][1]))
+                source_pos = box[0]
+                break
+        if source_pos is None:
+            logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=source))
+            return None, None
+
+        target_pos = None
+        min_distance = float('inf')
+        for box in self.ocr_result:
+            text = box[1][0]
+            if ((include is None or not include) and target == text) or (include and target in text):
+                pos = box[0]
+                # 如果target不在source右下角
+                if not ((pos[0][0] - source_pos[0][0]) > 0 and (pos[0][1] - source_pos[0][1]) > 0):
+                    continue
+                distance = math.sqrt((pos[0][0] - source_pos[0][0]) ** 2 + (pos[0][1] - source_pos[0][1]) ** 2)
+                logger.debug(_("目标文字：{target} 相似度：{max_val} 距离：{min_distance}").format(target=target, max_val=box[1][1], min_distance=distance))
+                if distance < min_distance:
+                    min_distance = distance
+                    target_pos = pos
+        if target_pos is None:
+            logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=target))
+            return None, None
+        logger.debug(_("目标文字：{target} 最短距离：{min_distance}").format(target=target, min_distance=min_distance))
+        top_left = (target_pos[0][0] + self.screenshot_pos[0], target_pos[0][1] + self.screenshot_pos[1])
+        bottom_right = (target_pos[2][0] + self.screenshot_pos[0], target_pos[2][1] + self.screenshot_pos[1])
+        return top_left, bottom_right
+
+    def click_element_with_pos(self, coordinates, offset=(0, 0)):
+        (left, top), (right, bottom) = coordinates
+        x = (left + right) // 2 + offset[0]
+        y = (top + bottom) // 2 + offset[1]
+        time.sleep(0.5)
+        self.mouse_click(x, y)
+        return True
+
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, offset=(0, 0)):
+        coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot,
+                                        relative, scale_range, include, need_ocr, source)
         if coordinates:
-            (left, top), (right, bottom) = coordinates
-            x = (left + right) // 2 + offset[0]
-            y = (top + bottom) // 2 + offset[1]
-            time.sleep(0.5)
-            self.mouse_click(x, y)
-            return True
+            return self.click_element_with_pos(coordinates, offset)
         return False
 
-    def get_single_line_text_from_matched_screenshot_region(
-            self, target_image_path, offset=[(0, 0), (0, 0)], similarity_threshold=None, blacklist=None):
-        result = self.find_element(target_image_path, 'image', similarity_threshold)
+    def get_single_line_text_from_matched_screenshot_region(self, target_image_path, offset=[(0, 0), (0, 0)], threshold=None, blacklist=None, take_screenshot=True):
+        result = self.find_element(target_image_path, 'image', threshold, take_screenshot=take_screenshot)
         if result:
             width = result[1][0] - result[0][0]
             height = result[1][1] - result[0][1]
@@ -153,33 +238,6 @@ class Automation:
             if ocr_result:
                 return ocr_result[0]
         return None
-
-    def click_text_from_matched_screenshot_region(self, text, offset=[(0, 0), (0, 0)], max_retries=1, blacklist=None, target_text=None, include=None):
-        result = self.find_element(text, "text", max_retries=max_retries, include=include)
-        if result:
-            width = result[1][0] - result[0][0]
-            height = result[1][1] - result[0][1]
-            # print(left,top,right,bottom)
-            left = result[0][0] + width * offset[0][0]
-            top = result[0][1] + height * offset[0][1]
-            right = result[1][0] + width * offset[1][0]
-            bottom = result[1][1] + height * offset[1][1]
-
-            captured_image = self.screenshot.crop(
-                (left - self.screenshot_pos[0],
-                 top - self.screenshot_pos[1],
-                 right - self.screenshot_pos[0],
-                 bottom - self.screenshot_pos[1]))
-            # captured_image.save("test.png")
-            ocr_result = ocr.recognize_single_line(np.array(captured_image), blacklist)
-            logger.debug(_("ocr_result: {ocr_result}").format(ocr_result=ocr_result))
-            if ocr_result:
-                if ocr_result[0] == target_text:
-                    x = (left + right) // 2
-                    y = (top + bottom) // 2
-                    self.mouse_click(x, y)
-                    return True
-        return False
 
     def retry_with_timeout(self, func, timeout=120, interval=1, *args, **kwargs):
         start_time = time.time()

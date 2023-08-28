@@ -20,7 +20,7 @@ class Power:
         offset = [(0.27, 0.1), (0, -0.1)]
         try:
             result = auto.get_single_line_text_from_matched_screenshot_region(
-                "./assets/images/base/trailblaze_power.png", offset=offset, similarity_threshold=0.7, blacklist=['+'])
+                "./assets/images/base/trailblaze_power.png", offset=offset, threshold=0.7, blacklist=['+'], take_screenshot=False)
 
             power_mapping = {
                 '/': lambda r: int(r.split('/')[0]) if 0 <= int(r.split('/')[0]) <= config.power_total else -1,
@@ -52,41 +52,51 @@ class Power:
         if not config.borrow_character_enable:
             logger.debug(_("支援角色未开启"))
             return True
-        if not auto.click_element("支援", "text", max_retries=10):
+        if not auto.click_element("支援", "text", max_retries=10, crop=(1670 / 1920, 700 / 1080, 225 / 1920, 74 / 1080)):
             logger.error(_("找不到支援按钮"))
             return False
-        if not auto.find_element("支援列表", "text", max_retries=10):
+        # 等待界面加载
+        time.sleep(0.5)
+        if not auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080)):
             logger.error(_("未进入支援列表"))
             return False
         try:
             for name in config.borrow_character:
-                if auto.click_element("./assets/images/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2)):
-                    if not auto.click_element("入队", "text", max_retries=10):
+                if auto.click_element("./assets/images/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2), crop=(57 / 1920, 143 / 1080, 140 / 1920, 814 / 1080)):
+                    if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
                         logger.error(_("找不到入队按钮"))
                         return False
-                    if auto.find_element("解除支援", "text", max_retries=2):
-                        return True
-                    elif auto.click_element("取消", "text", max_retries=2, include=True):
-                        auto.find_element("支援列表", "text", max_retries=10)
-                        continue
+                    # 等待界面加载
+                    time.sleep(0.5)
+                    result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
+                    if result:
+                        if auto.matched_text == "解除支援":
+                            return True
+                        elif auto.matched_text == "取消":
+                            auto.click_element_with_pos(result)
+                            auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
+                            continue
                     else:
                         return False
             if config.borrow_force == True:
-                if not auto.click_element("入队", "text", max_retries=10):
+                if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
                     logger.error(_("找不到入队按钮"))
                     return False
-                if auto.find_element("解除支援", "text", max_retries=2):
-                    return True
-                elif auto.click_element("取消", "text", max_retries=2, include=True):
-                    auto.find_element("支援列表", "text", max_retries=10)
-                    auto.press_key("esc")
+                result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
+                if result:
+                    if auto.matched_text == "解除支援":
+                        return True
+                    elif auto.matched_text == "取消":
+                        auto.click_element_with_pos(result)
+                        auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
+                        auto.press_key("esc")
                 else:
                     return False
         except Exception as e:
             logger.warning(_("选择支援角色出错： {e}").format(e=e))
 
         auto.press_key("esc")
-        if auto.find_element("解除支援", "text", max_retries=2):
+        if auto.find_element("解除支援", "text", max_retries=2, crop=(1670 / 1920, 700 / 1080, 225 / 1920, 74 / 1080)):
             return True
         else:
             return False
@@ -97,28 +107,33 @@ class Power:
             Base.change_team(config.instance_team_number)
 
         screen.change_to('guide3')
-        auto.click_element(config.instance_type, "text", max_retries=10)
+        auto.click_element(config.instance_type, "text", max_retries=10, crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080), take_screenshot=False)
         # 截图过快会导致结果不可信
         time.sleep(1)
 
         if config.instance_type == "侵蚀隧洞":
-            offset = [(2.5, 3), (2, 3)]
+            # 兼容旧设置
+            instance_name = config.instance_name
+            if "·" in instance_name:
+                instance_name = instance_name.split("·")[0]
+
+            crop = (850 / 1920, 250 / 1080, 750 / 1920, 620 / 1080)
             # 第一页
-            if not auto.click_text_from_matched_screenshot_region(config.instance_name, offset=offset, target_text="传送"):
+            if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
                 auto.click_element("./assets/images/screen/guide/guide3_40power.png", "image", max_retries=10)
                 auto.mouse_scroll(18, -1)
                 # 第二页
-                if not auto.click_text_from_matched_screenshot_region(config.instance_name, offset=offset, target_text="传送"):
+                if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
                     auto.mouse_scroll(6, -1)
                     # 第三页
-                    if not auto.click_text_from_matched_screenshot_region(config.instance_name, offset=offset, target_text="传送"):
+                    if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
                         return False
-            if not auto.find_element(config.instance_name, "text", max_retries=10, include=True):
+            if not auto.find_element(instance_name, "text", max_retries=10, include=True, crop=(0.5, 0, 0.5, 0)):
                 Base.send_notification_with_screenshot(_("⚠️侵蚀隧洞未完成⚠️"))
                 return False
-            if auto.click_element("挑战", "text", max_retries=10):
+            if auto.click_element("挑战", "text", max_retries=10, need_ocr=False):
                 Power.borrow_character()
-                if auto.click_element("开始挑战", "text", max_retries=10):
+                if auto.click_element("开始挑战", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
                     for i in range(number - 1):
                         Power.wait_fight()
                         logger.info(_("第{number}次副本完成").format(number=i + 1))

@@ -60,6 +60,18 @@ class Screen:
 
         return None
 
+    def parse_args(self, args):
+        parsed_args = []
+        kwargs = {}
+        for arg in args:
+            if isinstance(arg, str):
+                if "=" in arg:
+                    key, value = arg.split("=")
+                    kwargs[key] = eval(value)
+                    continue
+            parsed_args.append(arg)
+        return parsed_args, kwargs
+
     def perform_operations(self, operations):
         """
         执行一系列操作，包括按键操作和鼠标点击操作
@@ -68,19 +80,19 @@ class Screen:
         for operation in operations:
             function_name = operation["action"]
             args = operation["args"]
+            parsed_args, kwargs = self.parse_args(args)
             if hasattr(self, function_name):
                 func = getattr(self, function_name)
-                func(*args)
+                func(*parsed_args, **kwargs)
+                logger.debug(_("执行了一个操作"))
             else:
                 module_name, method_name = function_name.split('.')
                 module = globals().get(module_name)
                 if module and hasattr(module, method_name):
                     method = getattr(module, method_name)
-                    method(*args)
+                    method(*parsed_args, **kwargs)
                     logger.debug(_("执行了一个操作"))
-                    # logger.debug(_("performed an operation"))
                 else:
-                    # logger.debug(_("unknown operation: {function_name}").format(function_name=function_name))
                     logger.debug(_("未知的操作: {function_name}").format(function_name=function_name))
 
     def change_to(self, target_screen, max_retries=10, max_recursion=3):

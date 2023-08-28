@@ -520,22 +520,13 @@
                     "target_screen": "universe_main",
                     "actions_list": [
                         {
-                            "action": "auto.click_text_from_matched_screenshot_region",
+                            "action": "auto.click_element",
                             "args": [
-                                "积分奖励",
-                                [
-                                    [
-                                        5,
-                                        2
-                                    ],
-                                    [
-                                        6,
-                                        2.5
-                                    ]
-                                ],
-                                1,
-                                "None",
-                                "传送"
+                                "传送",
+                                "min_distance_text",
+                                "crop=(879/1920,414/1080,711/1920,154/1080)",
+                                "include=True",
+                                "source=\"积分奖励\""
                             ]
                         }
                     ]
@@ -549,7 +540,8 @@
                                 "侵蚀隧洞",
                                 "text",
                                 null,
-                                10
+                                10,
+                                "crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080)"
                             ]
                         },
                         {
@@ -565,7 +557,8 @@
                                 "忘却之庭",
                                 "text",
                                 null,
-                                10
+                                10,
+                                "crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080)"
                             ]
                         },
                         {
@@ -574,7 +567,8 @@
                                 "传送",
                                 "text",
                                 null,
-                                10
+                                10,
+                                "crop=(708 / 1920, 270 / 1080, 888 / 1920, 426 / 1080)"
                             ]
                         },
                         {
