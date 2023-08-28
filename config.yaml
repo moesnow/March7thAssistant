@@ -18,7 +18,7 @@ power_rec_min: 6 # 每开拓力恢复需要的分钟数
 dispatch_count: 4 # 派遣次数
 
 instance_type: 侵蚀隧洞 # 副本类型（目前只支持侵蚀隧洞）
-instance_name: 药使之径·侵蚀隧洞 # 副本名称
+instance_name: 药使之径 # 副本名称
 power_need: 40 # 一次副本所需开拓力
 instance_team_enable: 0 # 启用自动切换队伍
 instance_team_number: '1' # 打副本使用的队伍编号
