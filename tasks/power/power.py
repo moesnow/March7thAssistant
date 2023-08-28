@@ -128,7 +128,7 @@ class Power:
                     # 第三页
                     if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
                         return False
-            if not auto.find_element(instance_name, "text", max_retries=10, include=True, crop=(0.5, 0, 0.5, 0)):
+            if not auto.find_element(instance_name, "text", max_retries=10, include=True, crop=(0.5, 0, 0.5, 1)):
                 Base.send_notification_with_screenshot(_("⚠️侵蚀隧洞未完成⚠️"))
                 return False
             if auto.click_element("挑战", "text", max_retries=10, need_ocr=False):
