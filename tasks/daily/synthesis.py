@@ -3,7 +3,7 @@ from managers.automation_manager import auto
 from managers.logger_manager import logger
 from managers.translate_manager import _
 from managers.config_manager import config
-
+import time
 
 class Synthesis:
     @staticmethod
@@ -22,6 +22,8 @@ class Synthesis:
         logger.hr(_("准备合成消耗品"), 2)
         screen.change_to('consumables')
         if auto.click_element("./assets/images/synthesis/filter.png", "image", 0.95, max_retries=10):
+            # 等待界面弹出
+            time.sleep(1)
             result = auto.find_element("防御类消耗品", "text", max_retries=10, crop=(480 / 1920, 400 / 1080, 963 / 1920, 136 / 1080))
             if result:
                 auto.click_element_with_pos(result)
@@ -39,6 +41,8 @@ class Synthesis:
         logger.hr(_("准备合成材料"), 2)
         screen.change_to('material')
         if auto.click_element("./assets/images/synthesis/filter.png", "image", 0.95, max_retries=10):
+            # 等待界面弹出
+            time.sleep(1)
             result = auto.find_element("通用培养材料", "text", max_retries=10, crop=(480 / 1920, 400 / 1080, 963 / 1920, 136 / 1080))
             if result:
                 auto.click_element_with_pos(result)
