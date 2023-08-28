@@ -9,7 +9,7 @@ class SRPass:
     @staticmethod
     def get_reward():
         screen.change_to('menu')
-        if auto.find_element("./assets/images/quest/quest_reward.png", "image", 0.95):
+        if auto.find_element("./assets/images/pass/pass_reward.png", "image", 0.95):
             # if True:
             logger.hr(_("检测到无名勋礼奖励"), 2)
             screen.change_to('pass1')
