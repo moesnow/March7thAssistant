@@ -17,5 +17,4 @@ class Assist:
             screen.change_to('visa')
             if auto.click_element("./assets/images/assist/gift.png", "image", 0.9):
                 auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
-            screen.change_to('menu')
             logger.info(_("支援奖励完成"))

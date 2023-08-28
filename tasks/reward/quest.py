@@ -28,5 +28,4 @@ class Quest:
                 Base.send_notification_with_screenshot(_("🎉每日实训已完成🎉"))
             else:
                 Base.send_notification_with_screenshot(_("⚠️每日实训未完成⚠️"))
-            screen.change_to('menu')
             logger.info(_("领取每日实训奖励完成"))

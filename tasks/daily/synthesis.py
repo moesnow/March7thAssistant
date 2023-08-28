@@ -5,6 +5,7 @@ from managers.translate_manager import _
 from managers.config_manager import config
 import time
 
+
 class Synthesis:
     @staticmethod
     def start():
@@ -13,9 +14,7 @@ class Synthesis:
             return False
         Synthesis.consumables()
         Synthesis.material()
-        screen.change_to('menu')
         Synthesis.use_consumables()
-        screen.change_to('menu')
 
     @staticmethod
     def consumables():

@@ -19,5 +19,4 @@ class Photo:
             auto.press_key('f')
             if auto.find_element("./assets/images/screen/photo_preview.png", "image", 0.9):
                 break
-        screen.change_to('menu')
         logger.info(_("拍照完成"))

@@ -17,5 +17,4 @@ class Mail:
             screen.change_to('mail')
             if auto.click_element("./assets/images/mail/receive_all.png", "image", 0.9):
                 auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
-            screen.change_to('menu')
             logger.info(_("邮件奖励完成"))

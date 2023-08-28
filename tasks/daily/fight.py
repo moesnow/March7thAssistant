@@ -23,7 +23,7 @@ class Fight:
     def start():
         if config.fight_team_enable:
             Base.change_team(config.fight_team_number)
-            
+
         screen.change_to('main')
 
         logger.hr(_("准备锄大地"), 2)
@@ -33,6 +33,5 @@ class Fight:
         subprocess_thread.join()
 
         Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
-        screen.change_to('main')
         logger.info(_("锄大地完成"))
         config.save_timestamp("fight_timestamp")

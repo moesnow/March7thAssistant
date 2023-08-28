@@ -22,5 +22,4 @@ class SRPass:
                 screen.change_to('pass2')
                 if auto.click_element("./assets/images/pass/one_key_receive.png", "image", 0.9):
                     auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
-            screen.change_to('menu')
             logger.info(_("领取无名勋礼奖励完成"))

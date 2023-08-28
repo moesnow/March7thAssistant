@@ -212,7 +212,6 @@ class ForgottenHall:
     @staticmethod
     def prepare():
         flag = False
-        # screen.change_to('menu')
         if screen.change_to('guide3'):
             if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080)):
                 auto.mouse_scroll(12, -1)

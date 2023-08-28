@@ -41,6 +41,5 @@ class Base:
                     auto.click_element_with_pos(result)
                     if auto.find_element("已启用", "text", max_retries=10, crop=(1504 / 1920, 947 / 1080, 342 / 1920, 72 / 1080)):
                         logger.info(_("切换到队伍{team}成功").format(team=team_name))
-                        screen.change_to("main")
                         return True
         return False

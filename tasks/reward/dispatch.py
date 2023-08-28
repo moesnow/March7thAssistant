@@ -20,7 +20,6 @@ class Dispatch:
 
             Dispatch._perform_dispatches()
 
-            screen.change_to('menu')
             logger.info(_("探索派遣奖励完成"))
 
     @staticmethod
