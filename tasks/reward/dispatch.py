@@ -14,7 +14,7 @@ class Dispatch:
             return False
         screen.change_to('menu')
 
-        if auto.find_element("./assets/images/dispatch/dispatch_reward.png", "image", 0.9):
+        if auto.find_element("./assets/images/dispatch/dispatch_reward.png", "image", 0.95):
             logger.hr(_("检测到探索派遣奖励"), 2)
             screen.change_to('dispatch')
 

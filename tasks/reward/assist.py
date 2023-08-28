@@ -12,7 +12,7 @@ class Assist:
             logger.info(_("支援奖励未开启"))
             return False
         screen.change_to('menu')
-        if auto.find_element("./assets/images/menu/assist_reward.png", "image", 0.9):
+        if auto.find_element("./assets/images/menu/assist_reward.png", "image", 0.95):
             logger.hr(_("检测到支援奖励"), 2)
             screen.change_to('visa')
             if auto.click_element("./assets/images/assist/gift.png", "image", 0.9):
