@@ -7,6 +7,7 @@ from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
 import os
 import sys
+import time
 
 
 class SampleCard(CardWidget):
@@ -14,6 +15,7 @@ class SampleCard(CardWidget):
 
     def __init__(self, icon, title, action, parent=None):
         super().__init__(parent=parent)
+        self.parent = parent
         self.action = action
 
         self.iconWidget = IconWidget(icon, self)

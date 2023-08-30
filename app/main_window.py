@@ -2,15 +2,11 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt, QSize
 
-from qfluentwidgets import NavigationItemPosition, FluentWindow, SplashScreen, setThemeColor, InfoBar, InfoBarPosition
+from qfluentwidgets import NavigationItemPosition, FluentWindow, SplashScreen, setThemeColor
 from qfluentwidgets import FluentIcon as FIF
 
 from .home_interface import HomeInterface
 from .setting_interface import SettingInterface
-
-from managers.config_manager import config
-import requests
-import json
 
 
 class MainWindow(FluentWindow):
@@ -22,56 +18,8 @@ class MainWindow(FluentWindow):
         self.homeInterface = HomeInterface(self)
         self.settingInterface = SettingInterface(self)
 
-        # import time
-        # time.sleep(0.5)
-
         self.initNavigation()
-        self.checkUpdate()
         self.splashScreen.finish()
-
-    def checkUpdate(self):
-        if not config.check_update:
-            return
-
-        try:
-            url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
-            res = requests.get(url, timeout=3)
-            if res.status_code != 200:
-                return
-
-            data = json.loads(res.text)
-            version = data["tag_name"]
-            if version > config.version:
-                # if True:
-                InfoBar.warning(
-                    title=self.tr(f'发现新版本：{config.version}  ——>  {version}'),
-                    content="",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=-1,
-                    parent=self.homeInterface
-                )
-            else:
-                InfoBar.success(
-                    title=self.tr('当前是最新版本'),
-                    content="",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self.homeInterface
-                )
-        except:
-            InfoBar.warning(
-                title=self.tr('检测更新失败'),
-                content="",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=2000,
-                parent=self.homeInterface
-            )
 
     def initNavigation(self):
         # add navigation items

@@ -17,6 +17,7 @@ class SettingInterface(ScrollArea):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        self.parent = parent
         self.scrollWidget = QWidget()
         self.expandLayout = ExpandLayout(self.scrollWidget)
 
@@ -353,7 +354,14 @@ class SettingInterface(ScrollArea):
                     os.makedirs("screenshot")
                 screenshot_path = os.path.abspath("screenshot\screenshot.png")
                 result[0].save(screenshot_path)
-                os.startfile(os.path.dirname(screenshot_path))
+                # os.startfile(os.path.dirname(screenshot_path))
+
+                import tkinter as tk
+                from .tools.screenshot import ScreenshotApp
+
+                root = tk.Tk()
+                app = ScreenshotApp(root, result[0])
+                root.mainloop()
 
     def __onGamePathCardClicked(self):
         """ download folder card clicked slot """

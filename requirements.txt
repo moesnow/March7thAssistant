@@ -10,4 +10,5 @@ Pillow
 Numpy
 opencv-python
 onepush
+markdown
 PyQt-Fluent-Widgets
