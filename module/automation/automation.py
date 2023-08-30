@@ -81,14 +81,16 @@ class Automation:
 
     def find_image_element(self, target, threshold, scale_range):
         try:
-            template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
+            # template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
+            template = cv2.imread(target)
             if template is None:
                 raise ValueError(_("读取图片失败"))
-            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
+            # screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
+            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
             max_val, max_loc = self.scale_and_match_template(screenshot, template, threshold, scale_range)
             logger.debug(_("目标图片：{target} 相似度：{max_val}").format(target=target, max_val=max_val))
             if threshold is None or max_val >= threshold:
-                width, height = template.shape[::-1]
+                channels, width, height = template.shape[::-1]
                 top_left = (max_loc[0] + self.screenshot_pos[0], max_loc[1] + self.screenshot_pos[1])
                 bottom_right = (top_left[0] + width, top_left[1] + height)
                 return top_left, bottom_right
@@ -110,11 +112,12 @@ class Automation:
         locations = np.where(result >= threshold)
         match_count = 0
         matches = []
+        width, height = template.shape[::-1]
         for top_left in zip(*locations[::-1]):
             flag = True
             for match_top_left in matches:
-                botton_right = (top_left[0] + template.shape[1], top_left[1] + template.shape[0])
-                match_botton_right = (match_top_left[0] + template.shape[1], match_top_left[1] + template.shape[0])
+                botton_right = (top_left[0] + width, top_left[1] + height)
+                match_botton_right = (match_top_left[0] + width, match_top_left[1] + height)
                 result = Automation.intersected(top_left, botton_right, match_top_left, match_botton_right)
                 if result:
                     flag = False
@@ -217,26 +220,12 @@ class Automation:
             return self.click_element_with_pos(coordinates, offset)
         return False
 
-    def get_single_line_text_from_matched_screenshot_region(self, target_image_path, offset=[(0, 0), (0, 0)], threshold=None, blacklist=None, take_screenshot=True):
-        result = self.find_element(target_image_path, 'image', threshold, take_screenshot=take_screenshot)
-        if result:
-            width = result[1][0] - result[0][0]
-            height = result[1][1] - result[0][1]
-            # print(left,top,right,bottom)
-            left = result[0][0] + width * offset[0][0]
-            top = result[0][1] + height * offset[0][1]
-            right = result[1][0] + width * offset[1][0]
-            bottom = result[1][1] + height * offset[1][1]
-            captured_image = self.screenshot.crop(
-                (left - self.screenshot_pos[0],
-                 top - self.screenshot_pos[1],
-                 right - self.screenshot_pos[0],
-                 bottom - self.screenshot_pos[1]))
-            # captured_image.save("test.png")
-            ocr_result = ocr.recognize_single_line(np.array(captured_image), blacklist)
-            logger.debug(_("ocr_result: {ocr_result}").format(ocr_result=ocr_result))
-            if ocr_result:
-                return ocr_result[0]
+    def get_single_line_text(self, crop=(0, 0, 0, 0), blacklist=None):
+        self.take_screenshot(crop)
+        ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)
+        logger.debug(_("ocr_result: {ocr_result}").format(ocr_result=ocr_result))
+        if ocr_result:
+            return ocr_result[0]
         return None
 
     def retry_with_timeout(self, func, timeout=120, interval=1, *args, **kwargs):

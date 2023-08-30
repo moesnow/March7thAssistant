@@ -116,7 +116,8 @@
                             "args": [
                                 "./assets/images/menu/mail.png",
                                 "image",
-                                0.95
+                                0.95,
+                                "crop=(0.95, 0.1, 0.05, 0.6)"
                             ]
                         },
                         {
@@ -124,7 +125,8 @@
                             "args": [
                                 "./assets/images/menu/mail_reward.png",
                                 "image",
-                                0.95
+                                0.95,
+                                "crop=(0.95, 0.1, 0.05, 0.6)"
                             ]
                         }
                     ]
@@ -165,7 +167,8 @@
                             "args": [
                                 "./assets/images/menu/camera.png",
                                 "image",
-                                0.95
+                                0.95,
+                                "crop=(0.95, 0.1, 0.05, 0.6)"
                             ]
                         }
                     ]

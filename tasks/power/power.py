@@ -17,10 +17,8 @@ class Power:
     @staticmethod
     def power():
         screen.change_to('map')
-        offset = [(0.27, 0.1), (0, -0.1)]
         try:
-            result = auto.get_single_line_text_from_matched_screenshot_region(
-                "./assets/images/base/trailblaze_power.png", offset=offset, threshold=0.7, blacklist=['+'], take_screenshot=False)
+            result = auto.get_single_line_text(crop=(1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080), blacklist=['+'])
 
             power_mapping = {
                 '/': lambda r: int(r.split('/')[0]) if 0 <= int(r.split('/')[0]) <= config.power_total else -1,
@@ -107,7 +105,8 @@ class Power:
             Base.change_team(config.instance_team_number)
 
         screen.change_to('guide3')
-        auto.click_element(config.instance_type, "text", max_retries=10, crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080), take_screenshot=False)
+        auto.click_element(config.instance_type, "text", max_retries=10, crop=(
+            262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080), take_screenshot=False)
         # 截图过快会导致结果不可信
         time.sleep(1)
 
@@ -117,7 +116,7 @@ class Power:
             if "·" in instance_name:
                 instance_name = instance_name.split("·")[0]
 
-            crop = (850 / 1920, 250 / 1080, 750 / 1920, 620 / 1080)
+            crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
             # 第一页
             if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
                 auto.click_element("./assets/images/screen/guide/guide3_40power.png", "image", max_retries=10)
@@ -128,7 +127,7 @@ class Power:
                     # 第三页
                     if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
                         return False
-            if not auto.find_element(instance_name, "text", max_retries=10, include=True, crop=(0.5, 0, 0.5, 1)):
+            if not auto.find_element(instance_name, "text", max_retries=10, include=True, crop=(1189.0 / 1920, 102.0 / 1080, 712.0 / 1920, 922.0 / 1080)):
                 Base.send_notification_with_screenshot(_("⚠️侵蚀隧洞未完成⚠️"))
                 return False
             if auto.click_element("挑战", "text", max_retries=10, need_ocr=False):

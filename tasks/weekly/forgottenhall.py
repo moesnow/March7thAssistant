@@ -213,10 +213,10 @@ class ForgottenHall:
     def prepare():
         flag = False
         if screen.change_to('guide3'):
-            if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080)):
+            if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=(262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)):
                 auto.mouse_scroll(12, -1)
-                if auto.click_element("忘却之庭", "text", max_retries=10, crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080)):
-                    auto.find_element("混沌回忆", "text", max_retries=10, crop=(708 / 1920, 270 / 1080, 888 / 1920, 426 / 1080), include=True)
+                if auto.click_element("忘却之庭", "text", max_retries=10, crop=(262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)):
+                    auto.find_element("混沌回忆", "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
                     for box in auto.ocr_result:
                         text = box[1][0]
                         if "/30" in text:

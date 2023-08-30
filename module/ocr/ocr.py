@@ -55,7 +55,7 @@ class OCR:
         if results:
             for i in range(len(results)):
                 line_text = results[i][1][0] if results and len(results[i]) > 0 else ""
-                if blacklist and any(char in line_text for char in blacklist):
+                if blacklist and any(char == line_text for char in blacklist):
                     continue
                 else:
                     return line_text, results[i][1][1]
