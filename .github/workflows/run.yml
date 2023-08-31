@@ -44,12 +44,11 @@ jobs:
 
       - name: Move assets to dist directory
         run: |
-          xcopy .\assets\ .\dist\March7thAssistant\assets\ /E /I /Y
-          xcopy .\assets\config\config.example.yaml .\dist\March7thAssistant\config.yaml /-I /Y
-          xcopy .\3rdparty\ .\dist\March7thAssistant\3rdparty\ /E /I /Y
-          xcopy .\scripts\ .\dist\March7thAssistant\scripts\ /E /I /Y
-          xcopy .\config.yaml .\dist\March7thAssistant\ /Y
-          xcopy .\README.md .\dist\March7thAssistant\ /Y
+          powershell Copy-Item -Path .\assets\ -Destination .\dist\March7thAssistant\assets\ -Force
+          powershell Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Force
+          powershell Copy-Item -Path .\scripts\ -Destination .\dist\March7thAssistant\scripts\ -Force
+          powershell Copy-Item -Path .\assets\config\config.example.yaml -Destination .\dist\March7thAssistant\config.yaml -Force
+          powershell Copy-Item -Path .\README.md -Destination .\dist\March7thAssistant -Force
 
       - name: Upload artifact
         if: startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/pull/')
