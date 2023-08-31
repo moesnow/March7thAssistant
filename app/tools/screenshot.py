@@ -26,10 +26,10 @@ class ScreenshotApp:
 
         self.root.geometry(f"{self.screenshot.width}x{self.screenshot.height}")
 
-        self.show_result_button = tk.Button(root, text="显示结果", command=self.show_result)
+        self.show_result_button = tk.Button(root, text="显示坐标", command=self.show_result)
         self.show_result_button.pack(side=tk.LEFT, padx=5, pady=5)
 
-        self.copy_to_clipboard_button = tk.Button(root, text="复制到剪贴板", command=self.copy_result_to_clipboard)
+        self.copy_to_clipboard_button = tk.Button(root, text="复制坐标到剪贴板（开发用）", command=self.copy_result_to_clipboard)
         self.copy_to_clipboard_button.pack(side=tk.LEFT, padx=5, pady=5)
 
         self.save_screenshot_button = tk.Button(root, text="保存完整截图", command=self.save_screenshot)
@@ -37,6 +37,9 @@ class ScreenshotApp:
 
         self.save_selection_button = tk.Button(root, text="保存选取截图", command=self.save_selection)
         self.save_selection_button.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.ocr_selection_button = tk.Button(root, text="OCR识别选取区域", command=self.ocr_selection)
+        self.ocr_selection_button.pack(side=tk.LEFT, padx=5, pady=5)
 
     def get_selection_info(self):
         end_x, end_y = self.canvas.coords(self.selection_rect)[2:4]
@@ -104,6 +107,23 @@ class ScreenshotApp:
             screenshot_path = os.path.abspath("screenshot\screenshot.png")
             self.screenshot.crop((x, y, x + width, y + height)).save(screenshot_path)
             os.startfile(os.path.dirname(screenshot_path))
+        else:
+            tk.messagebox.showinfo("结果", "还没有选择区域呢")
+
+    def ocr_selection(self):
+        if self.selection_rect:
+            width, height, x, y = self.get_selection_info()
+            from managers.ocr_manager import ocr
+            result = ocr.recognize_multi_lines(self.screenshot.crop((x, y, x + width, y + height)))
+            text = ""
+            Flag = True
+            for box in result:
+                if Flag:
+                    text = text + box[1][0]
+                else:
+                    text = text + "\n" + box[1][0]
+            self.copy_to_clipboard(text)
+            tk.messagebox.showinfo("结果", text + "\n\n复制到剪贴板成功")
         else:
             tk.messagebox.showinfo("结果", "还没有选择区域呢")
 
