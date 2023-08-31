@@ -120,6 +120,7 @@ class ScreenshotApp:
             for box in result:
                 if Flag:
                     text = text + box[1][0]
+                    Flag = False
                 else:
                     text = text + "\n" + box[1][0]
             self.copy_to_clipboard(text)
