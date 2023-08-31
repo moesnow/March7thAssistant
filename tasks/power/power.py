@@ -18,7 +18,7 @@ class Power:
     def power():
         screen.change_to('map')
         try:
-            result = auto.get_single_line_text(crop=(1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080), blacklist=['+'])
+            result = auto.get_single_line_text(crop=(1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080), blacklist=['+']).replace("1240", "/240")
 
             power_mapping = {
                 '/': lambda r: int(r.split('/')[0]) if 0 <= int(r.split('/')[0]) <= config.power_total else -1,
