@@ -110,43 +110,57 @@ class Power:
         # 截图过快会导致结果不可信
         time.sleep(1)
 
-        if config.instance_type == "侵蚀隧洞":
-            # 兼容旧设置
-            instance_name = config.instance_name
-            if "·" in instance_name:
-                instance_name = instance_name.split("·")[0]
+        # 兼容旧设置
+        instance_name = config.instance_name
+        if "·" in instance_name:
+            instance_name = instance_name.split("·")[0]
 
-            crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
-            # 第一页
-            if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
-                auto.click_element("./assets/images/screen/guide/guide3_40power.png", "image", max_retries=10)
-                auto.mouse_scroll(18, -1)
-                # 第二页
-                if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
-                    auto.mouse_scroll(6, -1)
-                    # 第三页
-                    if not auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
-                        return False
-            if not auto.find_element(instance_name, "text", max_retries=10, include=True, crop=(1189.0 / 1920, 102.0 / 1080, 712.0 / 1920, 922.0 / 1080)):
-                Base.send_notification_with_screenshot(_("⚠️侵蚀隧洞未完成⚠️"))
+        # 传送
+        crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
+        auto.click_element("./assets/images/screen/guide/power.png", "image", max_retries=10)
+        Flag = False
+        for i in range(5):
+            if auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
+                Flag = True
+                break
+            auto.mouse_scroll(18, -1)
+        if not Flag:
+            Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
+            return False
+        # 验证传送是否成功
+        if not auto.find_element(instance_name, "text", max_retries=10, include=True, crop=(1189.0 / 1920, 102.0 / 1080, 712.0 / 1920, 922.0 / 1080)):
+            Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
+            return False
+
+        if "拟造花萼" in config.instance_type:
+            count = config.power_need // 10 - 1
+            if not 0 <= count <= 5:
+                Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
                 return False
-            if auto.click_element("挑战", "text", max_retries=10, need_ocr=False):
-                Power.borrow_character()
-                if auto.click_element("开始挑战", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
-                    for i in range(number - 1):
-                        Power.wait_fight()
-                        logger.info(_("第{number}次副本完成").format(number=i + 1))
-                        auto.click_element("./assets/images/fight/fight_again.png", "image", 0.9, max_retries=10)
+            result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.9, max_retries=10)
+            for i in range(count):
+                auto.click_element_with_pos(result)
+                time.sleep(0.5)
+            # time.sleep(1)
+
+        if auto.click_element("挑战", "text", max_retries=10, need_ocr=True):
+            Power.borrow_character()
+            if auto.click_element("开始挑战", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
+                if config.instance_type == "凝滞虚影":
+                    time.sleep(2)
+                    for i in range(3):
+                        auto.press_mouse()
+                for i in range(number - 1):
                     Power.wait_fight()
-                    logger.info(_("第{number}次副本完成").format(number=number))
+                    logger.info(_("第{number}次副本完成").format(number=i + 1))
+                    auto.click_element("./assets/images/fight/fight_again.png", "image", 0.9, max_retries=10)
+                Power.wait_fight()
+                logger.info(_("第{number}次副本完成").format(number=number))
 
-                    # 速度太快，点击按钮无效
-                    time.sleep(1)
-                    auto.click_element("./assets/images/fight/fight_exit.png", "image", 0.9, max_retries=10)
-                    logger.info(_("副本任务完成"))
-
-        elif config.instance_type == "其他":
-            pass
+                # 速度太快，点击按钮无效
+                time.sleep(1)
+                auto.click_element("./assets/images/fight/fight_exit.png", "image", 0.9, max_retries=10)
+                logger.info(_("副本任务完成"))
 
     @staticmethod
     def instance():

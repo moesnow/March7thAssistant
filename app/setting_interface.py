@@ -79,8 +79,8 @@ class SettingInterface(ScrollArea):
             "instance_type",
             FIF.ALIGNMENT,
             self.tr('副本类型'),
-            self.tr('目前只支持侵蚀隧洞'),
-            texts=['侵蚀隧洞']
+            None,
+            texts=['侵蚀隧洞', '凝滞虚影', '拟造花萼（金）', '拟造花萼（赤）']
         )
         self.instanceNameCard = PushSettingCardStr(
             self.tr('修改'),
