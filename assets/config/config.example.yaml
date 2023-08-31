@@ -43,7 +43,7 @@ photo_enable: 1 # 启用每日拍照
 synthesis_enable: 1 # 启用每日合成/使用 材料/消耗品
 
 fight_enable: 0 # 启用锄大地
-fight_command: powershell "" # 锄大地命令（需要自己设置）
+fight_command: .\scripts\Fhoe-Rail.bat # 锄大地命令
 fight_timeout: 6 # 锄大地超时（单位小时）
 fight_team_enable: 0 # 启用自动切换队伍
 fight_team_number: '2' # 锄大地使用的队伍编号

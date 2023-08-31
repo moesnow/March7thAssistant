@@ -169,7 +169,7 @@ class SettingInterface(ScrollArea):
         self.fightCommandCard = PushSettingCardStr(
             self.tr('修改'),
             FIF.COMMAND_PROMPT,
-            self.tr("锄大地命令（需要自己设置）"),
+            self.tr("锄大地命令"),
             "fight_command"
         )
         self.fightTimeoutCard = PushSettingCardEval(
