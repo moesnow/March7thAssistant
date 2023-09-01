@@ -93,18 +93,18 @@ class ScreenshotApp:
             tk.messagebox.showinfo("结果", "还没有选择区域呢")
 
     def save_screenshot(self):
-        if not os.path.exists("screenshot"):
-            os.makedirs("screenshot")
-        screenshot_path = os.path.abspath("screenshot\screenshot.png")
+        if not os.path.exists("screenshots"):
+            os.makedirs("screenshots")
+        screenshot_path = os.path.abspath("screenshots\screenshot.png")
         self.screenshot.save(screenshot_path)
         os.startfile(os.path.dirname(screenshot_path))
 
     def save_selection(self):
         if self.selection_rect:
             width, height, x, y = self.get_selection_info()
-            if not os.path.exists("screenshot"):
-                os.makedirs("screenshot")
-            screenshot_path = os.path.abspath("screenshot\screenshot.png")
+            if not os.path.exists("screenshots"):
+                os.makedirs("screenshots")
+            screenshot_path = os.path.abspath("screenshots\screenshot.png")
             self.screenshot.crop((x, y, x + width, y + height)).save(screenshot_path)
             os.startfile(os.path.dirname(screenshot_path))
         else:
