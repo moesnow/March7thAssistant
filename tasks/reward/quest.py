@@ -19,7 +19,7 @@ class Quest:
                 auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
             auto.find_element("./assets/images/screen/guide/guide2.png", "image", 0.9, max_retries=10)
 
-            if auto.find_element("./assets/images/quest/500.png", "image", 0.9, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
+            if auto.find_element("./assets/images/quest/500.png", "image", 0.95, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
                 Base.send_notification_with_screenshot(_("🎉每日实训已完成🎉"))
             else:
                 Base.send_notification_with_screenshot(_("⚠️每日实训未完成⚠️"))
