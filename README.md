@@ -59,3 +59,7 @@ python -m venv .venv
 - 自动锄大地 [https://github.com/Night-stars-1/Auto_Star_Rail](https://github.com/Night-stars-1/Auto_Star_Rail)
 
 - 星铁副驾驶 [https://github.com/LmeSzinc/StarRailCopilot](https://github.com/LmeSzinc/StarRailCopilot)
+
+## 星光历程
+
+[![星光历程](https://starchart.cc/moesnow/March7thAssistant.svg)](https://starchart.cc/moesnow/March7thAssistant)
