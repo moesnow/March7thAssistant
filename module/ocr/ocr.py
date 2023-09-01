@@ -1,8 +1,7 @@
 from module.ocr.PPOCR_api import GetOcrApi
 from managers.logger_manager import logger
-import os
-import numpy as np
 from PIL import Image
+import os
 import io
 
 
@@ -37,18 +36,20 @@ class OCR:
         return converted_result
 
     def run(self, image):
-        if isinstance(image, np.ndarray):
-            image = Image.fromarray(image)
-        elif isinstance(image, Image.Image):
-            pass
-        elif isinstance(image, str):
-            return self.ocr.run(os.path.abspath(image))
-        else:
+        try:
+            if isinstance(image, Image.Image):
+                pass
+            elif isinstance(image, str):
+                return self.ocr.run(os.path.abspath(image))
+            else:  # 默认为 np.ndarray，避免需要import numpy
+                image = Image.fromarray(image)
+            image_stream = io.BytesIO()
+            image.save(image_stream, format="PNG")
+            image_bytes = image_stream.getvalue()
+            return self.ocr.runBytes(image_bytes)
+        except Exception as e:
+            logger.error(e)
             return r"{}"
-        image_stream = io.BytesIO()
-        image.save(image_stream, format="PNG")
-        image_bytes = image_stream.getvalue()
-        return self.ocr.runBytes(image_bytes)
 
     def recognize_single_line(self, image, blacklist=None):
         results = OCR.convert_format(self.run(image))
