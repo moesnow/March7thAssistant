@@ -124,6 +124,8 @@ class Power:
                 Flag = True
                 break
             auto.mouse_scroll(18, -1)
+            # 等待界面完全停止
+            time.sleep(0.5)
         if not Flag:
             Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
             return False
