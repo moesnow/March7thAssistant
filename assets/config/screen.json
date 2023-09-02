@@ -544,7 +544,7 @@
                                 "text",
                                 null,
                                 10,
-                                "crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080)"
+                                "crop=(262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)"
                             ]
                         },
                         {
@@ -561,7 +561,7 @@
                                 "text",
                                 null,
                                 10,
-                                "crop=(312 / 1920, 261 / 1080, 393 / 1920, 591 / 1080)"
+                                "crop=(262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)"
                             ]
                         },
                         {
@@ -571,7 +571,7 @@
                                 "text",
                                 null,
                                 10,
-                                "crop=(708 / 1920, 270 / 1080, 888 / 1920, 426 / 1080)"
+                                "crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080)"
                             ]
                         },
                         {
@@ -829,6 +829,36 @@
         {
             "name": "memory_of_chaos",
             "image_path": "./assets/images/screen/forgottenhall/memory_of_chaos.png",
+            "actions": [
+                {
+                    "target_screen": "main",
+                    "actions_list": [
+                        {
+                            "action": "auto.press_key",
+                            "args": [
+                                "esc"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "target_screen": "memory",
+                    "actions_list": [
+                        {
+                            "action": "auto.click_element",
+                            "args": [
+                                "./assets/images/forgottenhall/memory.png",
+                                "image",
+                                0.95
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "memory",
+            "image_path": "./assets/images/screen/forgottenhall/memory.png",
             "actions": [
                 {
                     "target_screen": "main",
