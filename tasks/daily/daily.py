@@ -62,6 +62,7 @@ class Daily:
         if Date.is_next_mon_4_am(config.universe_timestamp):
             if config.universe_enable:
                 Power.start()
+                Daily.get_reward()
                 Universe.start()
                 Power.start()
             else:
@@ -73,10 +74,14 @@ class Daily:
             else:
                 logger.debug(_("忘却之庭未开启"))
 
+        Daily.get_reward()
+
+        logger.hr(_("完成"), 2)
+
+    @staticmethod
+    def get_reward():
         Mail.get_reward()
         Assist.get_reward()
         Dispatch.get_reward()
         Quest.get_reward()
         SRPass.get_reward()
-
-        logger.hr(_("完成"), 2)
