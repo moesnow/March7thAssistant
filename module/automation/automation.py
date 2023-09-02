@@ -26,6 +26,7 @@ class Automation:
     # 兼容旧代码
     def init_automation(self):
         self.mouse_click = Input.mouse_click
+        self.mouse_move = Input.mouse_move
         self.mouse_scroll = Input.mouse_scroll
         self.press_key = Input.press_key
         self.press_mouse = Input.press_mouse

@@ -16,6 +16,14 @@ class Input:
             logger.error(_("点击出错：{e}").format(e=e))
 
     @staticmethod
+    def mouse_move(x, y):
+        try:
+            pyautogui.moveTo(x, y)
+            logger.debug(_("移动 ({x}, {y})").format(x=x, y=y))
+        except Exception as e:
+            logger.error(_("移动出错：{e}").format(e=e))
+
+    @staticmethod
     def mouse_scroll(count, direction=-1):
         for i in range(count):
             pyautogui.scroll(direction)
