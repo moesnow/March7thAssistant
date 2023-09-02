@@ -30,7 +30,7 @@ March7thAssistant
 
 ## 下载安装
 
-前往 [Releases](https://github.com/moesnow/March7thAssistant/releases) 下载后解压双击 `March7th Assistant.exe` 直接运行，
+前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下载后解压双击 `March7th Assistant.exe` 直接运行，
 
 如果速度缓慢可以右键复制链接后通过 [https://ghproxy.com](https://ghproxy.com) 加速。
 
