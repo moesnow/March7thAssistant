@@ -11,7 +11,13 @@ class Power:
     @staticmethod
     def start():
         logger.hr(_("开始清体力"), 0)
-        Power.instance()
+
+        # 兼容旧设置
+        instance_name = config.instance_names[config.instance_type]
+        if "·" in instance_name:
+            instance_name = instance_name.split("·")[0]
+
+        Power.instance(config.instance_type, instance_name, config.power_need)
         logger.hr(_("完成"), 2)
 
     @staticmethod
@@ -47,9 +53,11 @@ class Power:
 
     @staticmethod
     def borrow_character():
-        if not config.borrow_character_enable:
-            logger.debug(_("支援角色未开启"))
+        if not config.daily_tasks["使用支援角色并获得战斗胜利1次"]:
             return True
+        # if not config.borrow_character_enable:
+        #     logger.debug(_("支援角色未开启"))
+        #     return True
         if not auto.click_element("支援", "text", max_retries=10, crop=(1670 / 1920, 700 / 1080, 225 / 1920, 74 / 1080)):
             logger.error(_("找不到支援按钮"))
             return False
@@ -69,6 +77,8 @@ class Power:
                     result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
                     if result:
                         if auto.matched_text == "解除支援":
+                            config.daily_tasks["使用支援角色并获得战斗胜利1次"] = False
+                            config.save_config()
                             return True
                         elif auto.matched_text == "取消":
                             auto.click_element_with_pos(result)
@@ -76,20 +86,22 @@ class Power:
                             continue
                     else:
                         return False
-            if config.borrow_force == True:
-                if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
-                    logger.error(_("找不到入队按钮"))
-                    return False
-                result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
-                if result:
-                    if auto.matched_text == "解除支援":
-                        return True
-                    elif auto.matched_text == "取消":
-                        auto.click_element_with_pos(result)
-                        auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
-                        auto.press_key("esc")
-                else:
-                    return False
+            # if config.borrow_force == True:
+            #     if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
+            #         logger.error(_("找不到入队按钮"))
+            #         return False
+            #     result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
+            #     if result:
+            #         if auto.matched_text == "解除支援":
+            #             config.daily_tasks["使用支援角色并获得战斗胜利1次"] = False
+            #             config.save_config()
+            #             return True
+            #         elif auto.matched_text == "取消":
+            #             auto.click_element_with_pos(result)
+            #             auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
+            #             auto.press_key("esc")
+            #     else:
+            #         return False
         except Exception as e:
             logger.warning(_("选择支援角色出错： {e}").format(e=e))
 
@@ -100,20 +112,15 @@ class Power:
             return False
 
     @staticmethod
-    def run_instances(number):
+    def run_instances(instance_type, instance_name, power_need, number):
         if config.instance_team_enable:
             Base.change_team(config.instance_team_number)
 
         screen.change_to('guide3')
-        auto.click_element(config.instance_type, "text", max_retries=10, crop=(
+        auto.click_element(instance_type, "text", max_retries=10, crop=(
             262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080), take_screenshot=False)
         # 截图过快会导致结果不可信
         time.sleep(1)
-
-        # 兼容旧设置
-        instance_name = config.instance_name
-        if "·" in instance_name:
-            instance_name = instance_name.split("·")[0]
 
         # 传送
         crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
@@ -134,8 +141,8 @@ class Power:
             Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
             return False
 
-        if "拟造花萼" in config.instance_type:
-            count = config.power_need // 10 - 1
+        if "拟造花萼" in instance_type:
+            count = power_need // 10 - 1
             if not 0 <= count <= 5:
                 Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
                 return False
@@ -148,7 +155,7 @@ class Power:
         if auto.click_element("挑战", "text", max_retries=10, need_ocr=True):
             Power.borrow_character()
             if auto.click_element("开始挑战", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
-                if config.instance_type == "凝滞虚影":
+                if instance_type == "凝滞虚影":
                     time.sleep(2)
                     for i in range(3):
                         auto.press_mouse()
@@ -163,13 +170,20 @@ class Power:
                 time.sleep(1)
                 auto.click_element("./assets/images/fight/fight_exit.png", "image", 0.9, max_retries=10)
                 logger.info(_("副本任务完成"))
+                return True
 
     @staticmethod
-    def instance():
-        number = Power.power() // config.power_need
-        if number < 1:
-            logger.info(_("🟣开拓力 < {power_need}").format(power_need=config.power_need))
-            return False
+    def instance(instance_type, instance_name, power_need, number=None):
+        power = Power.power()
+        if number is None:
+            number = power // power_need
+            if number < 1:
+                logger.info(_("🟣开拓力 < {power_need}").format(power_need=power_need))
+                return False
+        else:
+            if power_need * number > power:
+                logger.info(_("🟣开拓力 < {power_need}*{number}").format(power_need=power_need, number=number))
+                return False
 
-        logger.hr(_("开始刷副本，总计{number}次").format(number=number), 2)
-        Power.run_instances(number)
+        logger.hr(_("开始刷{type} - {name}，总计{number}次").format(type=instance_type, name=instance_name, number=number), 2)
+        return Power.run_instances(instance_type, instance_name, power_need, number)

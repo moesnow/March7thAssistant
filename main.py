@@ -1,5 +1,4 @@
 from tasks.game.game import Game
-from tasks.power.power import Power
 from tasks.daily.daily import Daily
 from tasks.version.version import Version
 from managers.notify_manager import notify
@@ -17,7 +16,6 @@ def main(action=None):
         while True:
             Version.start()
             Game.start()
-            Power.start()
             Daily.start()
             Game.stop()
     else:

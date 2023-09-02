@@ -1,5 +1,6 @@
 from managers.logger_manager import logger
 from managers.config_manager import config
+from managers.screen_manager import screen
 from managers.translate_manager import _
 from tasks.base.date import Date
 from tasks.reward.mail import Mail
@@ -13,6 +14,7 @@ from tasks.reward.srpass import SRPass
 from tasks.daily.synthesis import Synthesis
 from tasks.weekly.forgottenhall import ForgottenHall
 from tasks.power.power import Power
+from tasks.daily.tasks import Tasks
 
 
 class Daily:
@@ -20,9 +22,36 @@ class Daily:
     def start():
         logger.hr(_("开始日常任务"), 0)
         if Date.is_next_4_am(config.last_run_timestamp):
-            Photo.photograph()
-            Synthesis.start()
+            screen.change_to("guide2")
+            tasks = Tasks("./assets/config/task_mappings.json")
+            tasks.start()
+
+            config.set_value("daily_tasks", tasks.daily_tasks)
             config.save_timestamp("last_run_timestamp")
+
+        task_functions = {
+            "拍照1次": lambda: Photo.photograph,
+            "合成1次消耗品": lambda: Synthesis.consumables,
+            "合成1次材料": lambda: Synthesis.material,
+            "使用1件消耗品": lambda: Synthesis.use_consumables,
+            "完成1次「拟造花萼（金）」": lambda: Power.instance("拟造花萼（金）", config.instance_names["拟造花萼（金）"], 10, 1),
+            "完成1次「拟造花萼（赤）」": lambda: Power.instance("拟造花萼（赤）", config.instance_names["拟造花萼（赤）"], 10, 1),
+            "完成1次「凝滞虚影」": lambda: Power.instance("凝滞虚影", config.instance_names["凝滞虚影"], 30, 1),
+            "完成1次「侵蚀隧洞」": lambda: Power.instance("侵蚀隧洞", config.instance_names["侵蚀隧洞"], 40, 1),
+            "完成1次「忘却之庭」": lambda: ForgottenHall.start_daily,
+        }
+        logger.hr(_("今日实训"), 2)
+        for key, value in config.daily_tasks.items():
+            if value:
+                logger.info(f"{key}: {value}")
+
+        for task_name, task_function in task_functions.items():
+            if config.daily_tasks[task_name]:
+                if task_function():
+                    config.daily_tasks[task_name] = False
+                    config.save_config()
+
+        Power.start()
 
         if Date.is_next_4_am(config.fight_timestamp):
             if config.fight_enable:

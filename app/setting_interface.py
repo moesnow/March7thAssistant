@@ -85,8 +85,9 @@ class SettingInterface(ScrollArea):
         self.instanceNameCard = PushSettingCardStr(
             self.tr('修改'),
             FIF.PALETTE,
-            self.tr("副本名称"),
-            "instance_name"
+            # self.tr("副本名称\n保证唯一即可，例如“孽兽之形”可以填写“兽之形”，低概率下复杂文字会识别错误"),
+            self.tr("副本名称（不同副本类型需单独设置，除清体力外也会用于每日实训完成对应任务）"),
+            "instance_names"
         )
         self.powerNeedCard = PushSettingCardEval(
             self.tr('修改'),
@@ -107,24 +108,24 @@ class SettingInterface(ScrollArea):
             None,
             texts=['1', '2', '3', '4', '5', '6']
         )
-        self.borrowCharacterCard = SwitchSettingCard1(
-            FIF.PEOPLE,
-            self.tr('启用使用支援角色'),
-            self.tr('建议四号位放无关紧要的角色避免练度导致翻车'),
-            "borrow_character_enable"
-        )
-        self.borrowForceCard = SwitchSettingCard1(
-            FIF.CALORIES,
-            self.tr('强制使用支援角色'),
-            self.tr('无论何时都要使用支援角色，即使设置的角色都没找到'),
-            "borrow_force"
-        )
+        # self.borrowCharacterCard = SwitchSettingCard1(
+        #     FIF.PEOPLE,
+        #     self.tr('启用使用支援角色'),
+        #     self.tr('建议四号位放无关紧要的角色避免练度导致翻车'),
+        #     "borrow_character_enable"
+        # )
+        # self.borrowForceCard = SwitchSettingCard1(
+        #     FIF.CALORIES,
+        #     self.tr('强制使用支援角色'),
+        #     self.tr('无论何时都要使用支援角色，即使设置的角色都没找到'),
+        #     "borrow_force"
+        # )
 
         self.DailyGroup = SettingCardGroup(self.tr("日常"), self.scrollWidget)
 
         self.dispatchEnableCard = SwitchSettingCard1(
             FIF.STOP_WATCH,
-            self.tr('启用派遣'),
+            self.tr('启用领取派遣奖励'),
             None,
             "dispatch_enable"
         )
@@ -140,18 +141,18 @@ class SettingInterface(ScrollArea):
             None,
             "assist_enable"
         )
-        self.photoEnableCard = SwitchSettingCard1(
-            FIF.PHOTO,
-            self.tr('启用每日拍照'),
-            None,
-            "photo_enable"
-        )
-        self.synthesisEnableCard = SwitchSettingCard1(
-            FIF.ASTERISK,
-            self.tr('启用每日合成/使用 材料/消耗品'),
-            None,
-            "synthesis_enable"
-        )
+        # self.photoEnableCard = SwitchSettingCard1(
+        #     FIF.PHOTO,
+        #     self.tr('启用每日拍照'),
+        #     None,
+        #     "photo_enable"
+        # )
+        # self.synthesisEnableCard = SwitchSettingCard1(
+        #     FIF.ASTERISK,
+        #     self.tr('启用每日合成/使用 材料/消耗品'),
+        #     None,
+        #     "synthesis_enable"
+        # )
         self.lastRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
@@ -303,14 +304,14 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.powerNeedCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
-        self.PowerGroup.addSettingCard(self.borrowCharacterCard)
-        self.PowerGroup.addSettingCard(self.borrowForceCard)
+        # self.PowerGroup.addSettingCard(self.borrowCharacterCard)
+        # self.PowerGroup.addSettingCard(self.borrowForceCard)
 
         self.DailyGroup.addSettingCard(self.dispatchEnableCard)
         self.DailyGroup.addSettingCard(self.mailEnableCard)
         self.DailyGroup.addSettingCard(self.assistEnableCard)
-        self.DailyGroup.addSettingCard(self.photoEnableCard)
-        self.DailyGroup.addSettingCard(self.synthesisEnableCard)
+        # self.DailyGroup.addSettingCard(self.photoEnableCard)
+        # self.DailyGroup.addSettingCard(self.synthesisEnableCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
 
         self.FightGroup.addSettingCard(self.fightEnableCard)

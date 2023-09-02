@@ -9,14 +9,18 @@ import time
 class Photo:
     @staticmethod
     def photograph():
-        if not config.photo_enable:
-            logger.info(_("拍照未开启"))
+        try:
+            flag = False
+            logger.hr(_("准备拍照"), 2)
+            screen.change_to('camera')
+            time.sleep(1)
+            for i in range(10):
+                auto.press_key('f')
+                if auto.find_element("./assets/images/screen/photo_preview.png", "image", 0.9):
+                    flag = True
+                    break
+            logger.info(_("拍照完成"))
+            return flag
+        except Exception as e:
+            logger.error(_("拍照失败: {error}").format(error=e))
             return False
-        logger.hr(_("准备拍照"), 2)
-        screen.change_to('camera')
-        time.sleep(1)
-        for i in range(10):
-            auto.press_key('f')
-            if auto.find_element("./assets/images/screen/photo_preview.png", "image", 0.9):
-                break
-        logger.info(_("拍照完成"))

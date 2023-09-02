@@ -28,7 +28,7 @@ class SwitchSettingCard1(SettingCard):
     def __onCheckedChanged(self, isChecked: bool):
         """ switch button checked state changed slot """
         self.setValue(isChecked)
-        config.set_value(self.configname, isChecked.real)
+        config.set_value(self.configname, isChecked)
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)

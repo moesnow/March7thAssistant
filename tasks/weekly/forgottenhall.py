@@ -10,7 +10,7 @@ import time
 
 class ForgottenHall:
     @staticmethod
-    def wait_fight(boss_count, max_recursion):
+    def wait_fight(count, boss_count, max_recursion):
         logger.info(_("等待战斗"))
         time.sleep(10)
 
@@ -32,7 +32,7 @@ class ForgottenHall:
                                        max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080))
                     ForgottenHall.click_message_box()
                     # 重新挑战整间
-                    if ForgottenHall.start_fight(boss_count, max_recursion - 1):
+                    if ForgottenHall.start_fight(count, boss_count, max_recursion - 1):
                         return 4  # 挑战失败，重试后成功
                     return 3  # 挑战失败，重试后失败
                 else:
@@ -50,9 +50,9 @@ class ForgottenHall:
         return result
 
     @staticmethod
-    def start_fight(boss_count, max_recursion=config.forgottenhall_retries):
+    def start_fight(count, boss_count, max_recursion=config.forgottenhall_retries):
         logger.debug(_("剩余重试次数:{max_recursion}".format(max_recursion=max_recursion)))
-        for i in range(2):
+        for i in range(count):
             logger.info(_("进入第{i}间").format(i=i + 1))
             auto.press_key("w", 3.8)
 
@@ -87,7 +87,7 @@ class ForgottenHall:
                 for i in range(3):
                     auto.press_mouse()
 
-                result = ForgottenHall.wait_fight(boss_count, max_recursion)
+                result = ForgottenHall.wait_fight(count, boss_count, max_recursion)
 
                 if result == 3:
                     return False
@@ -190,7 +190,7 @@ class ForgottenHall:
             ForgottenHall.click_message_box()
             # 判断关卡BOSS数量
             boss_count = 2 if i in range(1, 6) else 1
-            if not ForgottenHall.start_fight(boss_count):
+            if not ForgottenHall.start_fight(2, boss_count):
                 logger.info(_("挑战失败"))
             else:
                 logger.info(_("挑战成功"))
@@ -258,3 +258,27 @@ class ForgottenHall:
         if ForgottenHall.prepare():
             config.save_timestamp("forgottenhall_timestamp")
             logger.info(_("混沌回忆完成"))
+
+    @staticmethod
+    def start_daily():
+        try:
+            flag = False
+            logger.hr(_("准备回忆一"), 2)
+            screen.change_to("memory")
+            auto.mouse_scroll(30, 1)
+            time.sleep(2)
+            if auto.click_element("01", "text", max_retries=10, crop=(18.0 / 1920, 226.0 / 1080, 1896.0 / 1920, 656.0 / 1080)):
+                if auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10, crop=(610 / 1920, 670 / 1080, 118 / 1920, 218 / 1080)):
+                    auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
+                    for character in config.forgottenhall_team1:
+                        auto.click_element(f"./assets/images/character/{character[0]}.png", "image",
+                                           0.8, max_retries=10, scale_range=(0.8, 1.2), take_screenshot=False)
+                    if auto.click_element("回忆", "text", max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080), include=True):
+                        ForgottenHall.click_message_box()
+                        if ForgottenHall.start_fight(1, 1):
+                            flag = True
+            logger.info(_("回忆一完成"))
+            return flag
+        except Exception as e:
+            logger.error(_("回忆一失败: {error}").format(error=e))
+            return False

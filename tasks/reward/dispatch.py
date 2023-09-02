@@ -18,7 +18,10 @@ class Dispatch:
             logger.hr(_("检测到探索派遣奖励"), 2)
             screen.change_to('dispatch')
 
-            Dispatch._perform_dispatches()
+            if Dispatch._perform_dispatches():
+                if config.daily_tasks["派遣1次委托"]:
+                    config.daily_tasks["派遣1次委托"] = False
+                    config.save_config()
 
             logger.info(_("探索派遣奖励完成"))
 
@@ -31,14 +34,15 @@ class Dispatch:
             logger.info(_("正在进行第{number}次委托").format(number=i + 1))
 
             if not Dispatch.perform_dispatch_and_check(offset, crop=(323 / 1920, 184 / 1080, 814 / 1920, 94 / 1080)):
-                break
+                return False
 
             if not Dispatch.perform_dispatch_and_check(offset, crop=(660 / 1920, 280 / 1080, 170 / 1920, 600 / 1080)):
-                break
+                return False
 
             auto.click_element("./assets/images/dispatch/receive.png", "image", 0.9, max_retries=10)
             auto.click_element("./assets/images/dispatch/again.png", "image", 0.9, max_retries=10)
             time.sleep(4)
+            return True
 
     @staticmethod
     def perform_dispatch_and_check(offset, crop):
