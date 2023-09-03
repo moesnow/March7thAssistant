@@ -93,7 +93,7 @@ class SettingInterface(ScrollArea):
             self.tr('修改'),
             FIF.POWER_BUTTON,
             self.tr("副本所需开拓力"),
-            "power_need"
+            "power_needs"
         )
         self.instanceTeamEnableCard = SwitchSettingCard1(
             FIF.EDIT,

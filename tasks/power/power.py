@@ -17,7 +17,7 @@ class Power:
         if "·" in instance_name:
             instance_name = instance_name.split("·")[0]
 
-        Power.instance(config.instance_type, instance_name, config.power_need)
+        Power.instance(config.instance_type, instance_name, config.power_needs[config.instance_type])
         logger.hr(_("完成"), 2)
 
     @staticmethod

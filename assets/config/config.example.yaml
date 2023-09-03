@@ -18,13 +18,18 @@ power_rec_min: 6 # 每开拓力恢复需要的分钟数
 dispatch_count: 4 # 派遣次数
 
 instance_type: 侵蚀隧洞 # 副本类型：侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
-instance_names:
+instance_names: # 不同副本类型对应副本名称
   拟造花萼（金）: 以太之蕾
   拟造花萼（赤）: 智识之蕾
   凝滞虚影: 孽兽之形
   侵蚀隧洞: 睿治之径
   历战余响: 不死的神实
-power_need: 40 # 一次副本所需开拓力
+power_needs: # 不同副本类型对应所需开拓力
+  拟造花萼（金）: 60
+  拟造花萼（赤）: 60
+  凝滞虚影: 30
+  侵蚀隧洞: 40
+  历战余响: 30
 instance_team_enable: false # 启用自动切换队伍
 instance_team_number: '1' # 打副本使用的队伍编号
 echo_of_war_enable: false # 每周体力优先完成3次「历战余响」
