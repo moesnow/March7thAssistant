@@ -30,15 +30,15 @@ class Daily:
             config.save_timestamp("last_run_timestamp")
 
         task_functions = {
-            "拍照1次": lambda: Photo.photograph,
-            "合成1次消耗品": lambda: Synthesis.consumables,
-            "合成1次材料": lambda: Synthesis.material,
-            "使用1件消耗品": lambda: Synthesis.use_consumables,
+            "拍照1次": lambda: Photo.photograph(),
+            "合成1次消耗品": lambda: Synthesis.consumables(),
+            "合成1次材料": lambda: Synthesis.material(),
+            "使用1件消耗品": lambda: Synthesis.use_consumables(),
             "完成1次「拟造花萼（金）」": lambda: Power.instance("拟造花萼（金）", config.instance_names["拟造花萼（金）"], 10, 1),
             "完成1次「拟造花萼（赤）」": lambda: Power.instance("拟造花萼（赤）", config.instance_names["拟造花萼（赤）"], 10, 1),
             "完成1次「凝滞虚影」": lambda: Power.instance("凝滞虚影", config.instance_names["凝滞虚影"], 30, 1),
             "完成1次「侵蚀隧洞」": lambda: Power.instance("侵蚀隧洞", config.instance_names["侵蚀隧洞"], 40, 1),
-            "完成1次「忘却之庭」": lambda: ForgottenHall.start_daily,
+            "完成1次「忘却之庭」": lambda: ForgottenHall.start_daily(),
         }
         logger.hr(_("今日实训"), 2)
         for key, value in config.daily_tasks.items():

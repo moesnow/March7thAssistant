@@ -174,6 +174,8 @@ class Power:
 
     @staticmethod
     def instance(instance_type, instance_name, power_need, number=None):
+
+        logger.hr(_("准备{type}").format(type=instance_type), 2)
         power = Power.power()
         if number is None:
             number = power // power_need
