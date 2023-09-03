@@ -117,17 +117,20 @@ class Power:
             Base.change_team(config.instance_team_number)
 
         screen.change_to('guide3')
-        auto.click_element(instance_type, "text", max_retries=10, crop=(
-            262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080), take_screenshot=False)
+        instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
+        if not auto.click_element(instance_type, "text", crop=instance_type_crop, take_screenshot=False):
+            if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=instance_type_crop):
+                auto.mouse_scroll(12, -1)
+                auto.click_element(instance_type, "text", crop=instance_type_crop, take_screenshot=True)
         # 截图过快会导致结果不可信
         time.sleep(1)
 
         # 传送
-        crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
+        instance_name_crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
         auto.click_element("./assets/images/screen/guide/power.png", "image", max_retries=10)
         Flag = False
         for i in range(5):
-            if auto.click_element("传送", "min_distance_text", crop=crop, include=True, source=instance_name):
+            if auto.click_element("传送", "min_distance_text", crop=instance_name_crop, include=True, source=instance_name):
                 Flag = True
                 break
             auto.mouse_scroll(18, -1)

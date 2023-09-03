@@ -86,7 +86,7 @@ class SettingInterface(ScrollArea):
             self.tr('修改'),
             FIF.PALETTE,
             # self.tr("副本名称\n保证唯一即可，例如“孽兽之形”可以填写“兽之形”，低概率下复杂文字会识别错误"),
-            self.tr("副本名称（不同副本类型需单独设置，除清体力外也会用于每日实训完成对应任务）"),
+            self.tr("副本名称（不同副本类型需单独设置，除清体力外也会用于每日实训完成对应任务）               "),
             "instance_names"
         )
         self.powerNeedCard = PushSettingCardEval(
@@ -351,10 +351,10 @@ class SettingInterface(ScrollArea):
         if WindowSwitcher.check_and_switch(config.game_title_name):
             result = Screenshot.take_screenshot(config.game_title_name)
             if result:
-                if not os.path.exists("screenshot"):
-                    os.makedirs("screenshot")
-                screenshot_path = os.path.abspath("screenshot\screenshot.png")
-                result[0].save(screenshot_path)
+                # if not os.path.exists("screenshots"):
+                #     os.makedirs("screenshots")
+                # screenshot_path = os.path.abspath("screenshots\screenshot.png")
+                # result[0].save(screenshot_path)
                 # os.startfile(os.path.dirname(screenshot_path))
 
                 import tkinter as tk
