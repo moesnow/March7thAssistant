@@ -39,7 +39,7 @@ class Echoofwar:
                                         return
                                     elif reward_count <= max_count:
                                         config.save_timestamp("echo_of_war_timestamp")
-                                    return Power.run_instances("历战余响", config.instance_names["历战余响"], min(reward_count, max_count))
+                                    return Power.run_instances("历战余响", config.instance_names["历战余响"], 30, min(reward_count, max_count))
             return False
         except Exception as e:
             logger.error(_("历战余响失败: {error}").format(error=e))
