@@ -156,6 +156,9 @@ class Power:
             # time.sleep(1)
 
         if auto.click_element("挑战", "text", max_retries=10, need_ocr=True):
+            if instance_type == "历战余响":
+                time.sleep(1)
+                auto.click_element("./assets/images/base/confirm.png", "image", 0.9)
             Power.borrow_character()
             if auto.click_element("开始挑战", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
                 if instance_type == "凝滞虚影":
@@ -166,6 +169,9 @@ class Power:
                     Power.wait_fight()
                     logger.info(_("第{number}次副本完成").format(number=i + 1))
                     auto.click_element("./assets/images/fight/fight_again.png", "image", 0.9, max_retries=10)
+                    if instance_type == "历战余响":
+                        time.sleep(1)
+                        auto.click_element("./assets/images/base/confirm.png", "image", 0.9)
                 Power.wait_fight()
                 logger.info(_("第{number}次副本完成").format(number=number))
 
