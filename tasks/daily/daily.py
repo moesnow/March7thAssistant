@@ -13,6 +13,7 @@ from tasks.reward.quest import Quest
 from tasks.reward.srpass import SRPass
 from tasks.daily.synthesis import Synthesis
 from tasks.weekly.forgottenhall import ForgottenHall
+from tasks.weekly.echoofwar import Echoofwar
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
 
@@ -51,6 +52,12 @@ class Daily:
                 if task_function():
                     config.daily_tasks[task_name] = False
                     config.save_config()
+
+        if Date.is_next_mon_4_am(config.echo_of_war_timestamp):
+            if config.echo_of_war_enable:
+                Echoofwar.start()
+            else:
+                logger.debug(_("历战余响未开启"))
 
         Power.start()
 

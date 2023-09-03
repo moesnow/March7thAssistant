@@ -213,9 +213,10 @@ class ForgottenHall:
     def prepare():
         flag = False
         if screen.change_to('guide3'):
-            if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=(262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)):
+            guide3_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
+            if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=guide3_crop):
                 auto.mouse_scroll(12, -1)
-                if auto.click_element("忘却之庭", "text", max_retries=10, crop=(262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)):
+                if auto.click_element("忘却之庭", "text", max_retries=10, crop=guide3_crop):
                     auto.find_element("混沌回忆", "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
                     for box in auto.ocr_result:
                         text = box[1][0]
