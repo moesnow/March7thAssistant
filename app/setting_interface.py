@@ -82,7 +82,7 @@ class SettingInterface(ScrollArea):
             None,
             texts=['侵蚀隧洞', '凝滞虚影', '拟造花萼（金）', '拟造花萼（赤）']
         )
-        self.instanceNameCard = PushSettingCardStr(
+        self.instanceNameCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.PALETTE,
             # self.tr("副本名称\n保证唯一即可，例如“孽兽之形”可以填写“兽之形”，低概率下复杂文字会识别错误"),
