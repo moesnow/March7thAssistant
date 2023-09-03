@@ -83,11 +83,11 @@ class Synthesis:
                             auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=2)
                             if auto.find_element("./assets/images/screen/bag/bag_consumables.png", "image", 0.9, max_retries=10):
                                 flag = True
+                logger.info(_("使用消耗品完成"))
             elif recursion:
                 logger.info(_("没有可用的消耗品，尝试合成"))
                 Synthesis.consumables()
                 flag = Synthesis.use_consumables(False)
-            logger.info(_("使用消耗品完成"))
             return flag
         except Exception as e:
             logger.error(_("使用消耗品失败: {error}").format(error=e))
