@@ -42,7 +42,6 @@ class Dispatch:
             auto.click_element("./assets/images/dispatch/receive.png", "image", 0.9, max_retries=10)
             auto.click_element("./assets/images/dispatch/again.png", "image", 0.9, max_retries=10)
             time.sleep(4)
-            return True
 
     @staticmethod
     def perform_dispatch_and_check(offset, crop):
