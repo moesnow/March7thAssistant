@@ -79,13 +79,19 @@ March7thAssistant
 git clone https://github.com/moesnow/March7thAssistant --recurse-submodules
 cd March7thAssistant
 pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+# 启动图形界面
 python app.py
+# 直接启动主程序
+python main.py
 ```
 
 ```cmd
-# 可选方式，使用 venv 创建虚拟环境，避免依赖冲突
+# 可选操作
+# 使用 venv 创建虚拟环境，避免依赖冲突
 python -m venv .venv
 .venv\Scripts\activate
+# 更新子模块为最新版本
+git submodule update --remote
 ```
 
 ## 相关项目
