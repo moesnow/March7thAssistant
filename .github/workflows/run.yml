@@ -49,6 +49,7 @@ jobs:
           xcopy .\scripts\ .\dist\March7thAssistant\scripts\ /E /I /Y
           powershell Copy-Item -Path .\assets\config\config.example.yaml -Destination .\dist\March7thAssistant\config.yaml -Force
           xcopy .\README.md .\dist\March7thAssistant\ /Y
+          xcopy .\Changelog.md .\dist\March7thAssistant\ /Y
 
       - name: Upload artifact
         if: startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/pull/')
