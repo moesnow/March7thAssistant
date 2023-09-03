@@ -132,7 +132,3 @@ notify_wechatworkapp_corpid: ''
 notify_wechatworkapp_corpsecret: ''
 notify_wechatworkapp_agentid: ''
 
-boss_enable: 0 # 暂不可用
-boss_name: 不死的神实 # 暂不可用
-boss_kill_required: 3 # 暂不可用
-boss_kill_completed: 0 # 暂不可用
