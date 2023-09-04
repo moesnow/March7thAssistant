@@ -10,10 +10,14 @@ import time
 class Power:
     @staticmethod
     def start():
+        instance_name = config.instance_names[config.instance_type]
+        if instance_name == "无":
+            logger.info(_("跳过清体力 {type}未开启").format(type=config.instance_type))
+            return False
+
         logger.hr(_("开始清体力"), 0)
 
         # 兼容旧设置
-        instance_name = config.instance_names[config.instance_type]
         if "·" in instance_name:
             instance_name = instance_name.split("·")[0]
 
@@ -113,6 +117,9 @@ class Power:
 
     @staticmethod
     def run_instances(instance_type, instance_name, power_need, number):
+        if instance_name == "无":
+            logger.debug(_("{type}未开启").format(type=instance_type))
+            return False
         if config.instance_team_enable:
             Base.change_team(config.instance_team_number)
 
@@ -183,6 +190,9 @@ class Power:
 
     @staticmethod
     def instance(instance_type, instance_name, power_need, number=None):
+        if instance_name == "无":
+            logger.debug(_("{type}未开启").format(type=instance_type))
+            return False
         logger.hr(_("准备{type}").format(type=instance_type), 2)
         power = Power.power()
         if number is None:
