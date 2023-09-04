@@ -53,7 +53,7 @@ class Power:
 
     @staticmethod
     def borrow_character():
-        if not config.daily_tasks["使用支援角色并获得战斗胜利1次"]:
+        if not config.daily_tasks["使用支援角色并获得战斗胜利1次"] and not config.borrow_character_enable:
             return True
         # if not config.borrow_character_enable:
         #     logger.debug(_("支援角色未开启"))

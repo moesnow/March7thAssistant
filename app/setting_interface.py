@@ -109,7 +109,7 @@ class SettingInterface(ScrollArea):
             texts=['1', '2', '3', '4', '5', '6']
         )
         self.echoofwarEnableCard = SwitchSettingCard1(
-            FIF.PEOPLE,
+            FIF.CAR,
             self.tr('启用历战余响（每周体力优先完成三次「历战余响」）'),
             None,
             "echo_of_war_enable"
@@ -120,12 +120,18 @@ class SettingInterface(ScrollArea):
             self.tr("上次完成三次「历战余响」的时间戳（每周运行）"),
             "echo_of_war_timestamp"
         )
-        # self.borrowCharacterCard = SwitchSettingCard1(
-        #     FIF.PEOPLE,
-        #     self.tr('启用使用支援角色'),
-        #     self.tr('建议四号位放无关紧要的角色避免练度导致翻车'),
-        #     "borrow_character_enable"
-        # )
+        self.borrowCharacterEnableCard = SwitchSettingCard1(
+            FIF.PEOPLE,
+            self.tr('启用使用支援角色'),
+            self.tr('无论何时都要使用支援角色，即使日常实训中没有要求'),
+            "borrow_character_enable"
+        )
+        self.borrowCharacterCard = PushSettingCardEval(
+            self.tr('修改'),
+            FIF.ARROW_DOWN,
+            self.tr("支援角色优先级从高到低"),
+            "borrow_character"
+        )
         # self.borrowForceCard = SwitchSettingCard1(
         #     FIF.CALORIES,
         #     self.tr('强制使用支援角色'),
@@ -318,7 +324,8 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
-        # self.PowerGroup.addSettingCard(self.borrowCharacterCard)
+        self.PowerGroup.addSettingCard(self.borrowCharacterEnableCard)
+        self.PowerGroup.addSettingCard(self.borrowCharacterCard)
         # self.PowerGroup.addSettingCard(self.borrowForceCard)
 
         self.DailyGroup.addSettingCard(self.dispatchEnableCard)
