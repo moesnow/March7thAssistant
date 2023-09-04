@@ -155,7 +155,7 @@ class ForgottenHall:
         window = Screenshot.get_window(config.game_title_name)
         left, top, width, height = Screenshot.get_window_region(window)
         crop = (top_left[0] / width, top_left[1] / height, 120 / 1920, 120 / 1080)
-        count = auto.find_element("./assets/images/forgottenhall/star.png", "image_count", 0.6, crop=crop)
+        count = auto.find_element("./assets/images/forgottenhall/star.png", "image_count", 0.6, crop=crop, pixel_bgr=[112, 200, 255])
         return count if count is not None and 0 <= count <= 3 else None
 
     @staticmethod

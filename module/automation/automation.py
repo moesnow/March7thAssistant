@@ -57,7 +57,8 @@ class Automation:
 
         return max_val, max_loc
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, pixel_bgr=None):
+        # 参数有些太多了，以后改
         take_screenshot = False if not need_ocr else take_screenshot
         max_retries = 1 if not take_screenshot else max_retries
         for i in range(max_retries):
@@ -73,7 +74,7 @@ class Automation:
                 if top_left and bottom_right:
                     return top_left, bottom_right
             elif find_type in ['image_count']:
-                return self.find_image_and_count(target, threshold)
+                return self.find_image_and_count(target, threshold, pixel_bgr)
             else:
                 raise ValueError(_("错误的类型"))
 
@@ -119,8 +120,8 @@ class Automation:
             for match_top_left in matches:
                 botton_right = (top_left[0] + width, top_left[1] + height)
                 match_botton_right = (match_top_left[0] + width, match_top_left[1] + height)
-                result = Automation.intersected(top_left, botton_right, match_top_left, match_botton_right)
-                if result:
+                is_intersected = Automation.intersected(top_left, botton_right, match_top_left, match_botton_right)
+                if is_intersected:
                     flag = False
                     break
             if flag == True:
@@ -128,11 +129,15 @@ class Automation:
                 match_count += 1
         return match_count
 
-    def find_image_and_count(self, target, threshold):
+    def find_image_and_count(self, target, threshold, pixel_bgr):
         try:
             template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
-            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
-            return Automation.count_template_matches(screenshot, template, threshold)
+            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
+            bw_map = np.zeros(screenshot.shape[:2], dtype=np.uint8)
+            # 遍历每个像素并判断与目标像素的相似性
+            bw_map[np.sum((screenshot - pixel_bgr) ** 2, axis=-1) <= 800] = 255
+            cv2.imwrite("saved_template.png", bw_map)
+            return Automation.count_template_matches(bw_map, template, threshold)
         except Exception as e:
             logger.error(_("寻找图片并计数出错：{e}").format(e=e))
             return None
