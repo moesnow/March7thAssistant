@@ -16,10 +16,10 @@ jobs:
       - name: Update Submodule
         run: |
           git submodule update --remote
-          SUBMODULE_CHANGED=$(git diff --quiet || echo "true")
+          echo "SUBMODULE_CHANGED=$(git diff --quiet || echo \"true\")" >> $GITHUB_ENV
           
       - name: Trigger Main Repository Update
-        if: ${{ env.SUBMODULE_CHANGED == 'true' }}
+        if: ${{ env.SUBMODULE_CHANGED }} == 'true'
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
