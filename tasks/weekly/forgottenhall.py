@@ -240,6 +240,7 @@ class ForgottenHall:
             return False
 
         # 刷新后打开会出现本期buff的弹窗
+        time.sleep(2)
         if auto.find_element("./assets/images/base/click_close.png", "image", 0.8):
             # 等待不可点击的动画时间
             time.sleep(2)
