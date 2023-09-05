@@ -3,19 +3,14 @@ from PyQt5.QtCore import Qt, QRectF
 from PyQt5.QtGui import QPixmap, QPainter, QBrush, QPainterPath
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphicsDropShadowEffect
 
-from qfluentwidgets import ScrollArea, FluentIcon, InfoBar, InfoBarPosition, InfoBarIcon
-from qframelesswindow import FramelessDialog
+from qfluentwidgets import ScrollArea, FluentIcon
 
 from .common.style_sheet import StyleSheet
 from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
 
 from managers.config_manager import config
-import markdown
-import requests
-import json
-
-from .card.messagebox2 import MessageBox2
+from .tools.check_update import checkUpdate
 
 
 class BannerWidget(QWidget):
@@ -105,7 +100,9 @@ class HomeInterface(ScrollArea):
 
         self.__initWidget()
         self.loadSamples()
-        self.checkUpdate()
+
+        if config.check_update:
+            checkUpdate(self)
 
     def __initWidget(self):
         self.view.setObjectName('view')
@@ -120,47 +117,6 @@ class HomeInterface(ScrollArea):
         self.vBoxLayout.setSpacing(40)
         self.vBoxLayout.addWidget(self.banner)
         self.vBoxLayout.setAlignment(Qt.AlignTop)
-
-    def checkUpdate(self):
-        if not config.check_update:
-            return
-
-        try:
-            url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
-            res = requests.get(url, timeout=3)
-            if res.status_code != 200:
-                return
-
-            data = json.loads(res.text)
-            version = data["tag_name"]
-            content = data["body"]
-            url = data["html_url"]
-
-            if version > config.version:
-                # if True:
-                w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志", markdown.markdown(content), url, self.window())
-                w.show()
-            else:
-                InfoBar.success(
-                    title=self.tr('当前是最新版本'),
-                    content="",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=1000,
-                    parent=self.view
-                )
-        except Exception as e:
-            print(e)
-            InfoBar.warning(
-                title=self.tr('检测更新失败'),
-                content="",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self.view
-            )
 
     def loadSamples(self):
         """ load samples """

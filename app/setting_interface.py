@@ -1,14 +1,18 @@
 # coding:utf-8
-from qfluentwidgets import (SettingCardGroup, PushSettingCard, ScrollArea, ExpandLayout)
+from qfluentwidgets import (SettingCardGroup, PushSettingCard, ScrollArea, ExpandLayout, PrimaryPushSettingCard)
 from qfluentwidgets import FluentIcon as FIF
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog
+from PyQt5.QtGui import QDesktopServices
 
 from .common.style_sheet import StyleSheet
 from managers.config_manager import config
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate
+
+from .tools.check_update import checkUpdate
+
 import os
 
 
@@ -268,7 +272,7 @@ class SettingInterface(ScrollArea):
             self.tr("混沌回忆挑战失败后的重试次数"),
             "forgottenhall_retries"
         )
-        self.forgottenhallTeamInfoCard = PushSettingCard(
+        self.forgottenhallTeamInfoCard = PrimaryPushSettingCard(
             self.tr('打开角色文件夹'),
             FIF.INFO,
             self.tr("↓↓混沌回忆队伍↓↓"),
@@ -291,6 +295,36 @@ class SettingInterface(ScrollArea):
             FIF.DATE_TIME,
             self.tr("上次运行混沌回忆的时间（每周运行，如已经满星则跳过）"),
             "forgottenhall_timestamp"
+        )
+
+        self.aboutGroup = SettingCardGroup(self.tr('关于'), self.scrollWidget)
+        self.githubCard = PrimaryPushSettingCard(
+            self.tr('项目主页'),
+            FIF.GITHUB,
+            self.tr('项目主页'),
+            "https://github.com/moesnow/March7thAssistant",
+            self.aboutGroup
+        )
+        self.qqGroupCard = PrimaryPushSettingCard(
+            self.tr('加入群聊'),
+            FIF.EXPRESSIVE_INPUT_ENTRY,
+            self.tr('QQ群'),
+            "855392201",
+            self.aboutGroup
+        )
+        self.feedbackCard = PrimaryPushSettingCard(
+            self.tr('提供反馈'),
+            FIF.FEEDBACK,
+            self.tr('提供反馈'),
+            self.tr('帮助我们改进 March7thAssistant'),
+            self.aboutGroup
+        )
+        self.aboutCard = PrimaryPushSettingCard(
+            self.tr('检查更新'),
+            FIF.INFO,
+            self.tr('关于'),
+            self.tr('当前版本：') + " " + config.version,
+            self.aboutGroup
         )
 
         self.__initWidget()
@@ -362,6 +396,11 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
 
+        self.aboutGroup.addSettingCard(self.githubCard)
+        self.aboutGroup.addSettingCard(self.qqGroupCard)
+        self.aboutGroup.addSettingCard(self.feedbackCard)
+        self.aboutGroup.addSettingCard(self.aboutCard)
+
         # add setting card group to layout
         self.expandLayout.setSpacing(28)
         self.expandLayout.setContentsMargins(36, 10, 36, 0)
@@ -372,6 +411,7 @@ class SettingInterface(ScrollArea):
         self.expandLayout.addWidget(self.FightGroup)
         self.expandLayout.addWidget(self.UniverseGroup)
         self.expandLayout.addWidget(self.ForgottenhallGroup)
+        self.expandLayout.addWidget(self.aboutGroup)
 
     def __onGameScreenshotCardClicked(self):
         from tasks.base.windowswitcher import WindowSwitcher
@@ -393,7 +433,6 @@ class SettingInterface(ScrollArea):
                 root.mainloop()
 
     def __onGamePathCardClicked(self):
-        """ download folder card clicked slot """
         game_path, _ = QFileDialog.getOpenFileName(self, "选择游戏路径", "", "All Files (*)")
         if not game_path or config.game_path == game_path:
             return
@@ -401,13 +440,13 @@ class SettingInterface(ScrollArea):
         config.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
-    def __onForgottenhallTeamInfoCardClicked(self):
-        os.system("start /WAIT explorer .\\assets\\images\\character")
-
     def __connectSignalToSlot(self):
         """ connect signal to slot """
 
-        # game settings
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
-        self.forgottenhallTeamInfoCard.clicked.connect(self.__onForgottenhallTeamInfoCardClicked)
+        self.forgottenhallTeamInfoCard.clicked.connect(lambda: os.system("start /WAIT explorer .\\assets\\images\\character"))
+        self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
+        self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
+        self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant/issues")))
+        self.aboutCard.clicked.connect(lambda: checkUpdate(self))
