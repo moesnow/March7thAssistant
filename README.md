@@ -96,6 +96,14 @@ python -m venv .venv
 git submodule update --remote
 ```
 
+---
+
+如果喜欢本项目，可以打赏送作者一杯咖啡~
+
+![sponsor](assets/screenshot/sponsor.jpg)
+
+---
+
 ## 相关项目
 
 - 模拟宇宙自动化 [https://github.com/CHNZYX/Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe)
