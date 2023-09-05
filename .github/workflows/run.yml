@@ -45,18 +45,17 @@ jobs:
       - name: Move assets to dist directory
         run: |
           xcopy .\assets\ .\dist\March7thAssistant\assets\ /E /I /Y
-          xcopy .\3rdparty\ .\dist\March7thAssistant\3rdparty\ /E /I /Y
           xcopy .\scripts\ .\dist\March7thAssistant\scripts\ /E /I /Y
           powershell Copy-Item -Path .\assets\config\config.example.yaml -Destination .\dist\March7thAssistant\config.yaml -Force
           xcopy .\README.md .\dist\March7thAssistant\ /Y
           xcopy .\Changelog.md .\dist\March7thAssistant\ /Y
 
-      - name: Upload artifact
-        if: startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/pull/')
-        uses: actions/upload-artifact@v3
-        with:
-          name: March7thAssistant
-          path: .\dist\
+      # - name: Upload artifact
+      #   if: startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/pull/')
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: March7thAssistant
+      #     path: .\dist\
 
       - name: Create zip archive
         if: startsWith(github.ref, 'refs/tags/')
@@ -64,11 +63,23 @@ jobs:
           ren .\dist\March7thAssistant March7thAssistant_${{ github.ref_name }}
           powershell Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}.zip -Force
 
+      - name: Move 3rdparty to dist directory
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          xcopy .\3rdparty\ .\dist\March7thAssistant_${{ github.ref_name }}\3rdparty\ /E /I /Y
+
+      - name: Create full zip archive
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          powershell Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}_full.zip -Force
+
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           name: March7thAssistant ${{ github.ref_name }}
-          files: ./dist/March7thAssistant_${{ github.ref_name }}.zip
+          files: |
+           ./dist/March7thAssistant_${{ github.ref_name }}_full.zip
+           ./dist/March7thAssistant_${{ github.ref_name }}.zip
           prerelease: true
 
