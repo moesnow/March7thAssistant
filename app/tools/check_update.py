@@ -26,7 +26,7 @@ def checkUpdate(self):
                 continue
             else:
                 assert_url = asset["browser_download_url"]
-                assert_name = asset["name"].split(".")[0]
+                assert_name = asset["name"].rsplit(".", 1)[0]
                 break
 
         if version > config.version:
