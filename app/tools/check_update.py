@@ -21,11 +21,25 @@ def checkUpdate(self):
         version = data["tag_name"]
         content = data["body"]
         url = data["html_url"]
+        for asset in data["assets"]:
+            if "full" in asset["browser_download_url"]:
+                continue
+            else:
+                assert_url = asset["browser_download_url"]
+                assert_name = asset["name"].split(".")[0]
+                break
 
         if version > config.version:
             # if True:
             w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志", markdown.markdown(content), url, self.window())
-            w.show()
+            if w.exec():
+                import tempfile
+                import subprocess
+                source_file = r".\scripts\update_March7thAssistant.bat"
+                temp_dir = tempfile.gettempdir()
+                destination_file = temp_dir + "\\update_March7thAssistant.bat"
+                subprocess.run(['xcopy', source_file, temp_dir, '/Y'], shell=True, check=True)
+                subprocess.run(['start', destination_file, assert_url, assert_name, '/Y'], shell=True, check=True)
         else:
             InfoBar.success(
                 title=self.tr('当前是最新版本'),

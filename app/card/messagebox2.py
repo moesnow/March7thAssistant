@@ -94,7 +94,7 @@ class Ui_MessageBox:
         self.cancelSignal.emit()
 
     def __onYesButtonClicked(self):
-        self.open_url(self.url)
+        # self.open_url(self.url)
         self.accept()
         self.yesSignal.emit()
 

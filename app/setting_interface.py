@@ -13,7 +13,6 @@ from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, Push
 
 from .tools.check_update import checkUpdate
 
-import subprocess
 import os
 
 
@@ -450,7 +449,7 @@ class SettingInterface(ScrollArea):
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.forgottenhallTeamInfoCard.clicked.connect(lambda: os.system("start /WAIT explorer .\\assets\\images\\character"))
-        self.updateUniverseCard.clicked.connect(lambda: subprocess.Popen(r"start .\scripts\update_Auto_Simulated_Universe.bat", shell=True))
+        self.updateUniverseCard.clicked.connect(lambda: os.system(r"start .\scripts\update_Auto_Simulated_Universe.bat"))
         self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
         self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
         self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant/issues")))
