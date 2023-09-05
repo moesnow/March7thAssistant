@@ -73,6 +73,10 @@ March7thAssistant
 
 [Changelog.md](Changelog.md)
 
+## 常见问题
+
+[FQA.md](FQA.md)
+
 ## 源码运行
 
 如果你是完全不懂的小白，请通过上面的方式下载安装，不用往下看了。
