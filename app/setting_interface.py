@@ -30,14 +30,14 @@ class SettingInterface(ScrollArea):
             "log_level",
             FIF.TAG,
             self.tr('日志等级'),
-            self.tr('如果遇到问题请修改为DEBUG等级，可以显示更多信息'),
+            self.tr('如果遇到异常请修改为DEBUG等级（可以显示更多信息）'),
             texts=['INFO', 'DEBUG']
         )
         self.gameScreenshotCard = PushSettingCard(
             self.tr('捕获'),
             FIF.PHOTO,
             self.tr("游戏截图"),
-            self.tr("检查程序获取的图像是否正确")
+            self.tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于复制副本名称）")
         )
         self.checkUpdateCard = SwitchSettingCard1(
             FIF.UPDATE,
@@ -46,21 +46,21 @@ class SettingInterface(ScrollArea):
             "check_update"
         )
         self.autoExitCard = SwitchSettingCard1(
-            FIF.CLOSE,
+            FIF.POWER_BUTTON,
             self.tr('退出游戏'),
-            self.tr('程序运行完后自动退出游戏'),
+            self.tr('程序运行完后自动退出游戏（仅限完整运行生效）'),
             "auto_exit"
         )
         self.neverStopCard = SwitchSettingCard1(
             FIF.SYNC,
             self.tr('循环运行'),
-            self.tr('根据开拓力循环运行程序'),
+            self.tr('保持命令行窗口开启，根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
             "never_stop"
         )
         self.powerLimitCard = PushSettingCardEval(
             self.tr('修改'),
-            FIF.POWER_BUTTON,
-            self.tr("再次运行所需开拓力"),
+            FIF.HEART,
+            self.tr("循环运行再次启动所需开拓力（凌晨四点优先级更高）"),
             "power_limit"
         )
 
@@ -86,14 +86,26 @@ class SettingInterface(ScrollArea):
             self.tr('修改'),
             FIF.PALETTE,
             # self.tr("副本名称\n保证唯一即可，例如“孽兽之形”可以填写“兽之形”，低概率下复杂文字会识别错误"),
-            self.tr("副本名称（不同副本类型需单独设置，除清体力外也会用于每日实训完成对应任务）               "),
+            self.tr("副本名称（不同副本类型需单独设置，同时也会用于完成每日实训，“无”代表不启用）               "),
             "instance_names"
         )
         self.powerNeedCard = PushSettingCardEval(
             self.tr('修改'),
-            FIF.POWER_BUTTON,
-            self.tr("副本所需开拓力"),
+            FIF.HEART,
+            self.tr("副本所需开拓力（其中“拟造花萼”设置为60代表每次刷6轮）               "),
             "power_needs"
+        )
+        self.borrowCharacterEnableCard = SwitchSettingCard1(
+            FIF.PEOPLE,
+            self.tr('启用使用支援角色'),
+            self.tr('无论何时都要使用支援角色，即使日常实训中没有要求'),
+            "borrow_character_enable"
+        )
+        self.borrowCharacterCard = PushSettingCardEval(
+            self.tr('修改'),
+            FIF.ARROW_DOWN,
+            self.tr("支援角色优先级从高到低"),
+            "borrow_character"
         )
         self.instanceTeamEnableCard = SwitchSettingCard1(
             FIF.EDIT,
@@ -109,28 +121,16 @@ class SettingInterface(ScrollArea):
             texts=['1', '2', '3', '4', '5', '6']
         )
         self.echoofwarEnableCard = SwitchSettingCard1(
-            FIF.CAR,
-            self.tr('启用历战余响（每周体力优先完成三次「历战余响」）'),
-            None,
+            FIF.ROBOT,
+            self.tr('启用历战余响'),
+            "每周体力优先完成三次「历战余响」",
             "echo_of_war_enable"
         )
         self.echoofwarRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
-            self.tr("上次完成三次「历战余响」的时间戳（每周运行）"),
+            self.tr("上次完成历战余响的时间（每周运行）"),
             "echo_of_war_timestamp"
-        )
-        self.borrowCharacterEnableCard = SwitchSettingCard1(
-            FIF.PEOPLE,
-            self.tr('启用使用支援角色'),
-            self.tr('无论何时都要使用支援角色，即使日常实训中没有要求'),
-            "borrow_character_enable"
-        )
-        self.borrowCharacterCard = PushSettingCardEval(
-            self.tr('修改'),
-            FIF.ARROW_DOWN,
-            self.tr("支援角色优先级从高到低"),
-            "borrow_character"
         )
         # self.borrowForceCard = SwitchSettingCard1(
         #     FIF.CALORIES,
@@ -223,6 +223,12 @@ class SettingInterface(ScrollArea):
             self.tr('启用模拟宇宙'),
             None,
             "universe_enable"
+        )
+        self.universeBonusEnableCard = SwitchSettingCard1(
+            FIF.IOT,
+            self.tr('启用领取沉浸奖励'),
+            None,
+            "universe_bonus_enable"
         )
         self.universeCommandCard = PushSettingCardStr(
             self.tr('修改'),
@@ -320,12 +326,12 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.powerNeedCard)
+        self.PowerGroup.addSettingCard(self.borrowCharacterEnableCard)
+        self.PowerGroup.addSettingCard(self.borrowCharacterCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
-        self.PowerGroup.addSettingCard(self.borrowCharacterEnableCard)
-        self.PowerGroup.addSettingCard(self.borrowCharacterCard)
         # self.PowerGroup.addSettingCard(self.borrowForceCard)
 
         self.DailyGroup.addSettingCard(self.dispatchEnableCard)
@@ -343,6 +349,7 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
+        self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.universeCommandCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
