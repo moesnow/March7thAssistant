@@ -1,4 +1,4 @@
-# March7thAssistant Changelog
+# Changelog
 
 ## v1.3.0.2
 
