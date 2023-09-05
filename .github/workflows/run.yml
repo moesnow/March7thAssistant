@@ -67,7 +67,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           xcopy .\3rdparty\ .\dist\March7thAssistant_${{ github.ref_name }}\3rdparty\ /E /I /Y
-          powershell Copy-Item -Path .\assets\config\config.example.yaml -Destination .\dist\March7thAssistant\config.yaml -Force
+          powershell Copy-Item -Path .\assets\config\config.example.yaml -Destination .\dist\March7thAssistant_${{ github.ref_name }}\config.yaml -Force
 
       - name: Create full zip archive
         if: startsWith(github.ref, 'refs/tags/')
