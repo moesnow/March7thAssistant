@@ -98,7 +98,7 @@ git submodule update --remote
 
 ---
 
-如果喜欢本项目，可以打赏送作者一杯咖啡~
+如果喜欢本项目，可以微信赞赏送作者一杯咖啡~
 
 ![sponsor](assets/screenshot/sponsor.jpg)
 
