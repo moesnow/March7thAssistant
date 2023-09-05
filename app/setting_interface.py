@@ -13,6 +13,7 @@ from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, Push
 
 from .tools.check_update import checkUpdate
 
+import subprocess
 import os
 
 
@@ -252,6 +253,12 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行模拟宇宙的时间（每周运行）"),
             "universe_timestamp"
         )
+        self.updateUniverseCard = PrimaryPushSettingCard(
+            self.tr('更新'),
+            FIF.UPDATE,
+            self.tr('更新模拟宇宙'),
+            None
+        )
 
         self.ForgottenhallGroup = SettingCardGroup(self.tr("忘却之庭"), self.scrollWidget)
         self.forgottenhallEnableCard = SwitchSettingCard1(
@@ -302,29 +309,25 @@ class SettingInterface(ScrollArea):
             self.tr('项目主页'),
             FIF.GITHUB,
             self.tr('项目主页'),
-            "https://github.com/moesnow/March7thAssistant",
-            self.aboutGroup
+            "https://github.com/moesnow/March7thAssistant"
         )
         self.qqGroupCard = PrimaryPushSettingCard(
             self.tr('加入群聊'),
             FIF.EXPRESSIVE_INPUT_ENTRY,
             self.tr('QQ群'),
-            "855392201",
-            self.aboutGroup
+            "855392201"
         )
         self.feedbackCard = PrimaryPushSettingCard(
             self.tr('提供反馈'),
             FIF.FEEDBACK,
             self.tr('提供反馈'),
-            self.tr('帮助我们改进 March7thAssistant'),
-            self.aboutGroup
+            self.tr('帮助我们改进 March7thAssistant')
         )
         self.aboutCard = PrimaryPushSettingCard(
             self.tr('检查更新'),
             FIF.INFO,
             self.tr('关于'),
-            self.tr('当前版本：') + " " + config.version,
-            self.aboutGroup
+            self.tr('当前版本：') + " " + config.version
         )
 
         self.__initWidget()
@@ -387,6 +390,7 @@ class SettingInterface(ScrollArea):
         self.UniverseGroup.addSettingCard(self.universeCommandCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
+        self.UniverseGroup.addSettingCard(self.updateUniverseCard)
 
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallEnableCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallLevelCard)
@@ -446,6 +450,7 @@ class SettingInterface(ScrollArea):
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.forgottenhallTeamInfoCard.clicked.connect(lambda: os.system("start /WAIT explorer .\\assets\\images\\character"))
+        self.updateUniverseCard.clicked.connect(lambda: subprocess.Popen(r"start .\scripts\update_Auto_Simulated_Universe.bat", shell=True))
         self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
         self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
         self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant/issues")))
