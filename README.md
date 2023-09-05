@@ -44,30 +44,30 @@ March7thAssistant
 | 任务描述                             | 支持情况 | 完成方式  |
 | ----------------------------------- | -------- | -------- |
 | 完成1个日常任务                      |   ❌     |          |
-| 完成1次「拟造花萼（金）」             |   ✔      |          |
-| 完成1次「拟造花萼（赤）」             |   ✔      |          |
-| 完成1次「凝滞虚影」                  |   ✔      |          |
-| 完成1次「侵蚀隧洞」                  |   ✔      |          |
-| 单场战斗中，触发3种不同属性的弱点击破  |   ✔      |  锄大地   |
-| 累计触发弱点击破效果5次               |   ✔      |  锄大地   |
-| 累计消灭20个敌人                     |   ✔      |  锄大地   |
-| 利用弱点进入战斗并获胜3次             |   ✔      |  锄大地   |
-| 累计施放2次秘技                      |   ✔      |  锄大地   |
-| 派遣1次委托                         |   ✔      |          |
-| 拍照1次                             |   ✔      |          |
-| 累计击碎3个可破坏物                  |   ✔      |  锄大地   |
-| 完成1次「忘却之庭」                  |   ✔      |  回忆一   |
-| 完成1次「历战余响」                  |   ✔     |          |
+| 完成1次「拟造花萼（金）」             |   ✅      |          |
+| 完成1次「拟造花萼（赤）」             |   ✅      |          |
+| 完成1次「凝滞虚影」                  |   ✅      |          |
+| 完成1次「侵蚀隧洞」                  |   ✅      |          |
+| 单场战斗中，触发3种不同属性的弱点击破  |   ✅      |  锄大地   |
+| 累计触发弱点击破效果5次               |   ✅      |  锄大地   |
+| 累计消灭20个敌人                     |   ✅      |  锄大地   |
+| 利用弱点进入战斗并获胜3次             |   ✅      |  锄大地   |
+| 累计施放2次秘技                      |   ✅      |  锄大地   |
+| 派遣1次委托                         |   ✅      |          |
+| 拍照1次                             |   ✅      |          |
+| 累计击碎3个可破坏物                  |   ✅      |  锄大地   |
+| 完成1次「忘却之庭」                  |   ✅      |  回忆一   |
+| 完成1次「历战余响」                  |   ✅     |          |
 | 通关「模拟宇宙」（任意世界）的1个区域 |   ❌     |          |
-| 使用支援角色并获得战斗胜利1次         |   ✔      |  清体力   |
-| 施放终结技造成制胜一击1次            |   ✔      |  锄大地   |
+| 使用支援角色并获得战斗胜利1次         |   ✅      |  清体力   |
+| 施放终结技造成制胜一击1次            |   ✅      |  锄大地   |
 | 将任意角色等级提升1次                |   ❌     |          |
 | 将任意光锥等级提升1次                |   ❌     |          |
 | 将任意遗器等级提升1次                |   ❌     |          |
 | 分解任意1件遗器                     |   ❌      |          |
-| 合成1次消耗品                       |   ✔      |          |
-| 合成1次材料                         |   ✔      |          |
-| 使用1件消耗品                       |   ✔      |          |
+| 合成1次消耗品                       |   ✅      |          |
+| 合成1次材料                         |   ✅      |          |
+| 使用1件消耗品                       |   ✅      |          |
 
 ## 更新日志
 
@@ -99,7 +99,7 @@ git submodule update --remote
 
 ---
 
-如果喜欢本项目，可以微信赞赏送作者一杯咖啡~
+个人开发不易，如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕
 
 ![sponsor](assets/screenshot/sponsor.jpg)
 
@@ -107,9 +107,15 @@ git submodule update --remote
 
 ## 相关项目
 
+March7thAssistant 离不开以下开源项目的帮助：
+
+- OCR文字识别 [https://github.com/hiroi-sora/PaddleOCR-json](https://github.com/hiroi-sora/PaddleOCR-json)
+
+- 图形界面组件库 [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
+
 - 模拟宇宙自动化 [https://github.com/CHNZYX/Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe)
 
-- 自动锄大地 [https://github.com/Night-stars-1/Auto_Star_Rail](https://github.com/Night-stars-1/Auto_Star_Rail)
+- 锄大地自动化 [https://github.com/Night-stars-1/Auto_Star_Rail](https://github.com/Night-stars-1/Auto_Star_Rail)
 
 - 星铁副驾驶 [https://github.com/LmeSzinc/StarRailCopilot](https://github.com/LmeSzinc/StarRailCopilot)
 
