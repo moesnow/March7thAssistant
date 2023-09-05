@@ -10,7 +10,6 @@ from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
 
 from managers.config_manager import config
-from .tools.check_update import checkUpdate
 
 
 class BannerWidget(QWidget):
@@ -100,9 +99,6 @@ class HomeInterface(ScrollArea):
 
         self.__initWidget()
         self.loadSamples()
-
-        if config.check_update:
-            checkUpdate(self)
 
     def __initWidget(self):
         self.view.setObjectName('view')

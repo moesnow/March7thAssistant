@@ -13,6 +13,9 @@ from .fqa_interface import FQAInterface
 
 from .card.messagebox3 import MessageBox3
 
+from managers.config_manager import config
+from .tools.check_update import checkUpdate
+
 
 class MainWindow(FluentWindow):
     def __init__(self):
@@ -28,6 +31,9 @@ class MainWindow(FluentWindow):
 
         self.initNavigation()
         self.splashScreen.finish()
+
+        if config.check_update:
+            checkUpdate(self)
 
     def initNavigation(self):
         # add navigation items
