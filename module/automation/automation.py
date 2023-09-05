@@ -136,7 +136,6 @@ class Automation:
             bw_map = np.zeros(screenshot.shape[:2], dtype=np.uint8)
             # 遍历每个像素并判断与目标像素的相似性
             bw_map[np.sum((screenshot - pixel_bgr) ** 2, axis=-1) <= 800] = 255
-            cv2.imwrite("saved_template.png", bw_map)
             return Automation.count_template_matches(bw_map, template, threshold)
         except Exception as e:
             logger.error(_("寻找图片并计数出错：{e}").format(e=e))
