@@ -27,7 +27,8 @@ class Universe:
         screen.change_to('universe_main')
         screen.change_to('main')
 
-        subprocess_thread = Thread(target=Universe.run_subprocess_with_timeout, args=(config.universe_command, config.universe_timeout * 3600))
+        universe_command = config.universe_command + (" --bonus=1" if config.universe_bonus_enable else "")
+        subprocess_thread = Thread(target=Universe.run_subprocess_with_timeout, args=(universe_command, config.universe_timeout * 3600))
         subprocess_thread.start()
         subprocess_thread.join()
 

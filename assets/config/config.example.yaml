@@ -88,6 +88,7 @@ fight_team_number: '2' # 锄大地使用的队伍编号
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: false # 启用模拟宇宙
+universe_bonus_enable: false # 启用领取沉浸奖励
 universe_command: .\scripts\Auto_Simulated_Universe.bat # 模拟宇宙命令
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
@@ -96,7 +97,7 @@ forgottenhall_enable: false # 启用忘却之庭
 forgottenhall_level: # 混沌回忆关卡范围
 - 1
 - 10
-forgottenhall_retries: 3 # 混沌回忆挑战失败后的重试次数
+forgottenhall_retries: 1 # 混沌回忆挑战失败后的重试次数
 # 混沌回忆队伍
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看

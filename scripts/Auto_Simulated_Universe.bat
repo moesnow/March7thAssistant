@@ -8,6 +8,6 @@ pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
 echo Starting application...
 python align_angle.py
-python states.py
+python states.py %*
 
 endlocal
