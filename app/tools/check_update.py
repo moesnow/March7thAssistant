@@ -29,6 +29,9 @@ def checkUpdate(self):
                 assert_name = asset["name"].rsplit(".", 1)[0]
                 break
 
+        if config.speedup_link:
+            assert_url = "https://ghproxy.com/" + assert_url
+
         if version > config.version:
             # if True:
             w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志", markdown.markdown(content), url, self.window())

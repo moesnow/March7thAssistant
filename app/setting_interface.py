@@ -49,6 +49,12 @@ class SettingInterface(ScrollArea):
             "新版本将更加稳定并拥有更多功能（建议启用）",
             "check_update"
         )
+        self.speedupLinkCard = SwitchSettingCard1(
+            FIF.CAR,
+            self.tr('更新时使用加速链接'),
+            "https://ghproxy.com/",
+            "speedup_link"
+        )
         self.autoExitCard = SwitchSettingCard1(
             FIF.POWER_BUTTON,
             self.tr('退出游戏'),
@@ -353,6 +359,7 @@ class SettingInterface(ScrollArea):
         self.programGroup.addSettingCard(self.logLevelCard)
         self.programGroup.addSettingCard(self.gameScreenshotCard)
         self.programGroup.addSettingCard(self.checkUpdateCard)
+        self.programGroup.addSettingCard(self.speedupLinkCard)
         self.programGroup.addSettingCard(self.autoExitCard)
         self.programGroup.addSettingCard(self.neverStopCard)
         self.programGroup.addSettingCard(self.powerLimitCard)
