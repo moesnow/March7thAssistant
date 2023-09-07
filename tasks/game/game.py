@@ -26,23 +26,28 @@ class Game:
     def stop():
         logger.hr(_("停止运行"), 0)
         current_power = Power.power()
-
-        if config.auto_exit:
-            logger.info(_("开始退出游戏"))
-            Stop.stop_game()
-
-        if current_power == -1:
-            logger.info(_("📅将在{power_rec_min}分钟后继续运行").format(power_rec_min=config.power_rec_min))
+ 
+        if current_power >= config.power_limit and config.never_stop:
+            logger.info(_("🟣开拓力 >= {limit}").format(limit=config.power_limit))
+            logger.info(_("即将再次运行"))
             logger.hr(_("完成"), 2)
-            time.sleep(config.power_rec_min * 60)
         else:
-            if not config.never_stop:
+            if config.auto_exit:
+                logger.info(_("开始退出游戏"))
+                Stop.stop_game()
+
+            if current_power == -1:
+                logger.info(_("📅将在{power_rec_min}分钟后继续运行").format(power_rec_min=config.power_rec_min))
                 logger.hr(_("完成"), 2)
-                sys.exit(0)
-            if current_power < config.power_limit:
-                wait_time = Stop.get_wait_time(current_power)
-                future_time = Date.calculate_future_time(wait_time)
-                logger.info(_("📅将在{future_time}继续运行").format(future_time=future_time))
-                notify.notify(_("📅将在{future_time}继续运行").format(future_time=future_time))
-                logger.hr(_("完成"), 2)
-                time.sleep(wait_time)
+                time.sleep(config.power_rec_min * 60)
+            else:
+                if not config.never_stop:
+                    logger.hr(_("完成"), 2)
+                    sys.exit(0)
+                if current_power < config.power_limit:
+                    wait_time = Stop.get_wait_time(current_power)
+                    future_time = Date.calculate_future_time(wait_time)
+                    logger.info(_("📅将在{future_time}继续运行").format(future_time=future_time))
+                    notify.notify(_("📅将在{future_time}继续运行").format(future_time=future_time))
+                    logger.hr(_("完成"), 2)
+                    time.sleep(wait_time)
