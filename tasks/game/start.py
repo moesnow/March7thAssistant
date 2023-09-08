@@ -1,4 +1,5 @@
 from managers.logger_manager import logger
+from managers.screen_manager import screen
 from managers.automation_manager import auto
 from managers.translate_manager import _
 from managers.config_manager import config
@@ -27,7 +28,8 @@ class Start:
 
     @staticmethod
     def check_and_click_monthly_card():
-        if auto.find_element("./assets/images/screen/main.png", "image", 0.9):
+        # if auto.find_element("./assets/images/screen/main.png", "image", 0.9):
+        if screen.get_current_screen():
             return True
         auto.click_element("./assets/images/screen/monthly_card.png", "image", 0.9)
         return False
