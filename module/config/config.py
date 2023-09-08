@@ -49,6 +49,7 @@ class Config:
         return self.config.get(key, default)
 
     def set_value(self, key, value):
+        self._load_config()
         self.config[key] = value
         self.save_config()
 
