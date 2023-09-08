@@ -1,9 +1,9 @@
 @echo off
 setlocal
 
-cd .\3rdparty
-
 chcp 65001
+
+cd .\3rdparty
 
 echo 下载中...
 powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://ghproxy.com/https://github.com/CHNZYX/Auto_Simulated_Universe/archive/main.zip', '.\Auto_Simulated_Universe.zip')"
