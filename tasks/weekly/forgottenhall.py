@@ -12,7 +12,13 @@ class ForgottenHall:
     @staticmethod
     def wait_fight(count, boss_count, max_recursion):
         logger.info(_("等待战斗"))
-        time.sleep(10)
+
+        for i in range(20):
+            if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95):
+                auto.press_key("v")
+                break
+            elif auto.find_element("./assets/images/base/auto.png", "image", 0.95):
+                break
 
         def check_fight():
             if auto.find_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.9, crop=(64 / 1920, 277 / 1080, 167 / 1920, 38 / 1080)):

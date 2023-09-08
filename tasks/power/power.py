@@ -46,7 +46,13 @@ class Power:
     @staticmethod
     def wait_fight():
         logger.info(_("等待战斗"))
-        time.sleep(10)
+
+        for i in range(20):
+            if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95):
+                auto.press_key("v")
+                break
+            elif auto.find_element("./assets/images/base/auto.png", "image", 0.95):
+                break
 
         def check_fight():
             return auto.find_element("./assets/images/fight/fight_again.png", "image", 0.9)
