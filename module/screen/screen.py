@@ -96,10 +96,8 @@ class Screen:
                     logger.debug(_("未知的操作: {function_name}").format(function_name=function_name))
 
     def change_to(self, target_screen, max_retries=10, max_recursion=3):
-        # self.get_current_screen()
         self.display_current_screen()
         if target_screen == self.current_screen:
-            # logger.debug(_("already on {target_screen}").format(target_screen=target_screen))
             logger.debug(_("已经在 {target_screen} 界面").format(target_screen=target_screen))
             return True
         path = self.find_shortest_path(self.current_screen, target_screen)
@@ -117,24 +115,19 @@ class Screen:
                     if self.check_screen(next_screen):
                         break
                     logger.debug(_("继续等待 {next_screen}").format(next_screen=next_screen))
-                    # logger.debug(_("keep waiting for {next_screen}").format(next_screen=next_screen))
 
                 if self.current_screen != next_screen:
                     if max_recursion > 0:
                         self.change_to(next_screen, max_recursion=max_recursion - 1)
                     else:
                         logger.debug(_("无法切换到 {next_screen}"))
-                        # logger.debug(_("cannot change to {next_screen}"))
                         break
-                # logger.debug(_("change to {next_screen}").format(next_screen=next_screen))
                 logger.debug(_("切换到 {next_screen}").format(next_screen=next_screen))
             self.current_screen = target_screen  # 更新当前界面
-            # logger.debug(_("current screen: {current_screen}").format(current_screen=self.current_screen))
             logger.debug(_("当前界面：{current_screen}").format(current_screen=self.current_screen))
             return True
         logger.debug(_("无法从 {current_screen} 切换到 {target_screen}").format(current_screen=self.get_current_screen(), target_screen=target_screen))
         return False
-        # logger.debug(_("cannot change from {current_screen} to {target_screen}").format(current_screen=self.get_current_screen(), target_screen=target_screen))
 
     def check_screen(self, target_screen):
         if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
@@ -144,45 +137,42 @@ class Screen:
 
     def display_current_screen(self):
         if self.get_current_screen():
-            # logger.debug(_("current screen: {current_screen}").format(current_screen=self.current_screen))
             logger.debug(_("当前界面：{current_screen}").format(current_screen=self.current_screen))
             return
         logger.debug(_("当前界面：未知"))
-        # logger.debug(_("current screen: unknown"))
 
     def find_screen(self, screen_name, screen):
-        # logger.debug(f"对比图片 {screen_name}")
         try:
             if auto.find_element(screen['image_path'], "image", 0.9, take_screenshot=False):
                 with self.lock:  # 使用锁来保护对共享变量的访问
                     self.current_screen = screen_name
                     logger.debug(_("{screen_name} 匹配成功").format(screen_name=screen_name))
-                    # logger.debug(_("{screen_name} matched successfully").format(screen_name=screen_name))
                 return True
             # logger.debug(f"{screen_name} 匹配失败")
         except Exception as e:
             logger.debug(_("查找界面出错：{e}").format(e=e))
         return False
 
-    def get_current_screen(self, max_retries=10):
+    def get_current_screen(self, autotry=True, max_retries=10):
         for i in range(max_retries):
             auto.take_screenshot()
-            # logger.debug("截图完成")
-            # logger.debug("screenshot complete")
             threads = []
             self.current_screen = None
             for screen_name, screen in self.screen_map.items():
                 thread = threading.Thread(target=self.find_screen, args=(screen_name, screen))
                 threads.append(thread)
                 thread.start()
-
             for thread in threads:
                 thread.join()
 
             if self.current_screen is not None:
                 return True
-            logger.debug(_("没找到任何界面，按ESC后重试"))
-            # logger.debug(_("no screen found, press ESC to retry"))
-            auto.press_key("esc")
-            time.sleep(1)
+
+            if autotry:
+                logger.debug(_("没找到任何界面，按ESC后重试"))
+                auto.press_key("esc")
+                time.sleep(1)
+            else:
+                logger.debug(_("没找到任何界面"))
+                break
         return False
