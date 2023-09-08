@@ -2,36 +2,24 @@ from managers.screen_manager import screen
 from managers.config_manager import config
 from managers.logger_manager import logger
 from managers.translate_manager import _
-import subprocess
-from threading import Thread
 from tasks.base.base import Base
+from tasks.base.subprocess import Subprocess
 
 
 class Fight:
-    @staticmethod
-    def run_subprocess_with_timeout(command, timeout):
-        process = None
-        try:
-            process = subprocess.Popen(command, shell=True)
-            process.communicate(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            if process is not None:
-                process.terminate()
-                process.wait()
-
     @staticmethod
     def start():
         if config.fight_team_enable:
             Base.change_team(config.fight_team_number)
 
-        screen.change_to('main')
-
         logger.hr(_("准备锄大地"), 2)
 
-        subprocess_thread = Thread(target=Fight.run_subprocess_with_timeout, args=(config.fight_command, config.fight_timeout * 3600))
-        subprocess_thread.start()
-        subprocess_thread.join()
+        screen.change_to('main')
 
-        Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
-        logger.info(_("锄大地完成"))
-        config.save_timestamp("fight_timestamp")
+        if Subprocess.run(config.fight_command, config.fight_timeout * 3600):
+            Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
+            logger.info(_("锄大地完成"))
+            config.save_timestamp("fight_timestamp")
+        else:
+            Base.send_notification_with_screenshot(_("⚠️锄大地未完成⚠️"))
+            logger.info(_("锄大地失败"))
