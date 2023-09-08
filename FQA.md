@@ -2,10 +2,6 @@
 
 ## [完整视频教程](https://www.bilibili.com/video/BV13h4y1m7VP/)
 
-## Q：开始启动游戏后提示“无效的窗口句柄”
-
-A：关闭官方启动器，然后重新运行。或提前启动游戏，进入主界面。
-
 ## Q：pip不是内部或外部命令
 
 A：重新安装Python，勾选 “Add python.exe to PATH”
