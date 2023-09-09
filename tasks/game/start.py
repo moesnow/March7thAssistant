@@ -16,8 +16,9 @@ class Start:
     @staticmethod
     def check_game_path(game_path):
         if not os.path.exists(game_path):
-            logger.error(_("游戏路径不存在: {path}\n请修改配置文件 config.yaml，例如系统自带的记事本").format(path=game_path))
-            os.system('pause')
+            logger.error(_("游戏路径不存在: {path}").format(path=game_path))
+            logger.info(_("请在设置中修改游戏路径"))
+            input(_("按任意键关闭窗口. . ."))
             sys.exit(1)
 
     @staticmethod

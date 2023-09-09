@@ -1,6 +1,8 @@
 from module.ocr.PPOCR_api import GetOcrApi
 from managers.logger_manager import logger
+from managers.translate_manager import _
 from PIL import Image
+import sys
 import os
 import io
 
@@ -10,8 +12,15 @@ class OCR:
 
     def __new__(cls, exePath):
         if cls._instance is None:
+            logger.debug(_("开始初始化OCR..."))
+            if not os.path.exists(exePath):
+                logger.error(_("OCR路径不存在: {path}").format(path=exePath))
+                logger.info(_("请检查下载时是否选择了名称中带有 full 的压缩文件"))
+                input(_("按任意键关闭窗口. . ."))
+                sys.exit(1)
             cls._instance = super().__new__(cls)
             cls._instance.ocr = GetOcrApi(exePath)
+            logger.debug(_("初始化OCR完成"))
         return cls._instance
 
     @staticmethod
