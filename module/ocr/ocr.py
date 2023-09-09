@@ -16,6 +16,7 @@ class OCR:
             if not os.path.exists(exePath):
                 logger.error(_("OCR路径不存在: {path}").format(path=exePath))
                 logger.info(_("请检查下载时是否选择了名称中带有 full 的压缩文件"))
+                logger.info(_("麻烦此类低级问题请不要截图在群内询问，拜托了"))
                 input(_("按任意键关闭窗口. . ."))
                 sys.exit(1)
             cls._instance = super().__new__(cls)
