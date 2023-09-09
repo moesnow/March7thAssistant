@@ -57,7 +57,7 @@ class SampleCard(CardWidget):
         TeachingTip.create(
             target=self.iconWidget,
             icon=InfoBarIcon.SUCCESS,
-            title='启动成功',
+            title='启动成功(＾∀＾●)',
             content="",
             isClosable=False,
             tailPosition=TeachingTipTailPosition.BOTTOM,
@@ -67,6 +67,7 @@ class SampleCard(CardWidget):
 
     def mouseReleaseEvent(self, e):
         super().mouseReleaseEvent(e)
+        self.showBottomTeachingTip()
         script_path = sys.argv[0]  # 获取当前脚本文件的路径，包括文件名
         script_filename = os.path.basename(script_path)  # 获取脚本文件名
 
@@ -74,7 +75,6 @@ class SampleCard(CardWidget):
             os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" {self.action}")
         else:
             os.system(f"start python main.py {self.action}")
-        self.showBottomTeachingTip()
 
     def enterEvent(self, event):
         super().enterEvent(event)

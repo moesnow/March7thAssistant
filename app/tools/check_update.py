@@ -34,7 +34,7 @@ def checkUpdate(self):
 
         if version > config.version:
             # if True:
-            w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志", markdown.markdown(content), url, self.window())
+            w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", markdown.markdown(content), url, self.window())
             if w.exec():
                 import tempfile
                 import subprocess
@@ -45,7 +45,7 @@ def checkUpdate(self):
                 subprocess.run(['start', destination_file, assert_url, assert_name, '/Y'], shell=True, check=True)
         else:
             InfoBar.success(
-                title=self.tr('当前是最新版本'),
+                title=self.tr('当前是最新版本(＾∀＾●)'),
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -56,7 +56,7 @@ def checkUpdate(self):
     except Exception as e:
         # print(e)
         InfoBar.warning(
-            title=self.tr('检测更新失败'),
+            title=self.tr('检测更新失败(╥╯﹏╰╥)'),
             content="",
             orient=Qt.Horizontal,
             isClosable=True,
