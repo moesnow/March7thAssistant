@@ -22,7 +22,7 @@ class FQAInterface(ScrollArea):
                 self.content = file.read()
         except FileNotFoundError:
             exit(1)
-        html_content = markdown.markdown(self.content).replace('<h2>', '<br><h2>')
+        html_content = markdown.markdown(self.content)
         self.contentLabel.setText(html_content)
         self.contentLabel.setOpenExternalLinks(True)
         self.contentLabel.linkActivated.connect(self.open_url)
