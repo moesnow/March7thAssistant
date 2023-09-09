@@ -38,8 +38,9 @@ def main(action=None):
 if __name__ == "__main__":
     if not pyuac.isUserAdmin():
         try:
-            sys.exit(pyuac.runAsAdmin(wait=False))
-        except:
+            pyuac.runAsAdmin(wait=False)
+            sys.exit(0)
+        except Exception:
             logger.error(_("管理员权限获取失败"))
             input(_("按任意键关闭窗口. . ."))
             sys.exit(1)

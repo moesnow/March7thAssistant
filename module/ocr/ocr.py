@@ -19,7 +19,17 @@ class OCR:
                 input(_("按任意键关闭窗口. . ."))
                 sys.exit(1)
             cls._instance = super().__new__(cls)
-            cls._instance.ocr = GetOcrApi(exePath)
+            try:
+                cls._instance.ocr = GetOcrApi(exePath)
+            except:
+                logger.error(_("初始化OCR失败"))
+                import cpufeature
+                if not cpufeature.CPUFeature["AVX2"]:
+                    logger.error(_("CPU不支持AVX2指令集"))
+                else:
+                    logger.info(_("请检查系统是否为 Win10/11 x64"))
+                input(_("按任意键关闭窗口. . ."))
+                sys.exit(1)
             logger.debug(_("初始化OCR完成"))
         return cls._instance
 

@@ -11,4 +11,5 @@ Numpy
 opencv-python
 onepush
 markdown
+cpufeature
 PyQt-Fluent-Widgets
