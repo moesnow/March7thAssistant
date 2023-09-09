@@ -53,6 +53,7 @@ echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳（每�
 dispatch_enable: true # 启用领取派遣奖励
 mail_enable: true # 启用领取邮件奖励
 assist_enable: true # 启用领取支援奖励
+srpass_enable: false # 启用领取无名勋礼奖励
 daily_tasks:
   完成1个日常任务: false
   完成1次「拟造花萼（金）」: false

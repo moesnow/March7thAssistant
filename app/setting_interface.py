@@ -164,10 +164,16 @@ class SettingInterface(ScrollArea):
             "mail_enable"
         )
         self.assistEnableCard = SwitchSettingCard1(
-            FIF.HELP,
+            FIF.BRUSH,
             self.tr('启用领取支援奖励'),
             None,
             "assist_enable"
+        )
+        self.srpassEnableCard = SwitchSettingCard1(
+            FIF.RINGER,
+            self.tr('启用领取无名勋礼奖励'),
+            "此设置不会影响领取无名勋礼经验，大月卡玩家请不要开启此功能",
+            "srpass_enable"
         )
         # self.photoEnableCard = SwitchSettingCard1(
         #     FIF.PHOTO,
@@ -380,6 +386,7 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.dispatchEnableCard)
         self.DailyGroup.addSettingCard(self.mailEnableCard)
         self.DailyGroup.addSettingCard(self.assistEnableCard)
+        self.DailyGroup.addSettingCard(self.srpassEnableCard)
         # self.DailyGroup.addSettingCard(self.photoEnableCard)
         # self.DailyGroup.addSettingCard(self.synthesisEnableCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
