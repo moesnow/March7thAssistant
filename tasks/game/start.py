@@ -6,6 +6,7 @@ from managers.config_manager import config
 from managers.ocr_manager import ocr
 from tasks.base.base import Base
 from tasks.game.stop import Stop
+from tasks.base.resolution import Resolution
 import time
 import sys
 import os
@@ -46,6 +47,8 @@ class Start:
         if not auto.retry_with_timeout(Base.check_and_switch, 30, 1, config.game_title_name):
             logger.error(_("无法切换游戏到前台"))
             return False
+
+        Resolution.check(config.game_title_name)
         # if not auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9, max_retries=600):
         if not auto.retry_with_timeout(Start.check_and_click_enter, 600, 1):
             logger.error(_("无法找到点击进入按钮"))
@@ -67,4 +70,5 @@ class Start:
                 logger.info(_("游戏启动成功"))
         else:
             logger.info(_("游戏已经启动了"))
+            Resolution.check(config.game_title_name)
         return True

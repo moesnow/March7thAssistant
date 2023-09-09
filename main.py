@@ -1,14 +1,14 @@
-from tasks.game.game import Game
-from tasks.daily.daily import Daily
-from tasks.version.version import Version
 from managers.notify_manager import notify
 from managers.logger_manager import logger
+from managers.translate_manager import _
+from tasks.game.game import Game
+from tasks.daily.daily import Daily
 from tasks.daily.fight import Fight
+from tasks.version.version import Version
 from tasks.weekly.universe import Universe
 from tasks.weekly.forgottenhall import ForgottenHall
 import pyuac
 import sys
-import os
 
 
 def main(action=None):
@@ -29,9 +29,9 @@ def main(action=None):
             ForgottenHall.start()
         else:
             logger.warning(f"Unknown action: {action}")
-            os.system("pause")
+            input(_("按任意键关闭窗口. . ."))
             sys.exit(1)
-        os.system("pause")
+        input(_("按任意键关闭窗口. . ."))
         sys.exit(0)
 
 
@@ -41,6 +41,12 @@ if __name__ == "__main__":
     else:
         try:
             main(sys.argv[1]) if len(sys.argv) > 1 else main()
+        except KeyboardInterrupt:
+            logger.error(_("发生错误: {e}").format(e=_("手动强制停止")))
+            input(_("按任意键关闭窗口. . ."))
+            sys.exit(1)
         except Exception as e:
-            logger.error(f"An error occurred: {e}")
-            notify.notify(f"An error occurred: {e}")
+            logger.error(_("发生错误: {e}").format(e=e))
+            notify.notify(_("发生错误: {e}").format(e=e))
+            input(_("按任意键关闭窗口. . ."))
+            sys.exit(1)
