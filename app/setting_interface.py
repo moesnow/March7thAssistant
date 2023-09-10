@@ -201,11 +201,11 @@ class SettingInterface(ScrollArea):
             None,
             "fight_enable"
         )
-        self.fightCommandCard = PushSettingCardStr(
+        self.fightPathCard = PushSettingCardStr(
             self.tr('修改'),
             FIF.COMMAND_PROMPT,
-            self.tr("锄大地命令"),
-            "fight_command"
+            self.tr("锄大地路径"),
+            "fight_path"
         )
         self.fightTimeoutCard = PushSettingCardEval(
             self.tr('修改'),
@@ -246,11 +246,11 @@ class SettingInterface(ScrollArea):
             None,
             "universe_bonus_enable"
         )
-        self.universeCommandCard = PushSettingCardStr(
+        self.universePathCard = PushSettingCardStr(
             self.tr('修改'),
             FIF.COMMAND_PROMPT,
-            self.tr("模拟宇宙命令"),
-            "universe_command"
+            self.tr("模拟宇宙路径"),
+            "universe_path"
         )
         self.universeTimeoutCard = PushSettingCardEval(
             self.tr('修改'),
@@ -392,7 +392,7 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
 
         self.FightGroup.addSettingCard(self.fightEnableCard)
-        self.FightGroup.addSettingCard(self.fightCommandCard)
+        self.FightGroup.addSettingCard(self.fightPathCard)
         self.FightGroup.addSettingCard(self.fightTimeoutCard)
         self.FightGroup.addSettingCard(self.fightTeamEnableCard)
         self.FightGroup.addSettingCard(self.fightTeamNumberCard)
@@ -400,7 +400,7 @@ class SettingInterface(ScrollArea):
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
-        self.UniverseGroup.addSettingCard(self.universeCommandCard)
+        self.UniverseGroup.addSettingCard(self.universePathCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
         self.UniverseGroup.addSettingCard(self.updateUniverseCard)

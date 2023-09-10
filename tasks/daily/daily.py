@@ -71,7 +71,7 @@ class Daily:
             if config.universe_enable:
                 Power.start()
                 Daily.get_reward()
-                Universe.start()
+                Universe.start(get_reward=True)
                 Power.start()
             else:
                 logger.debug(_("模拟宇宙未开启"))

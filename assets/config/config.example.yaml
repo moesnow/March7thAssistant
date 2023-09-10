@@ -83,7 +83,7 @@ daily_tasks:
 last_run_timestamp: 0 # 上次运行日常的时间戳
 
 fight_enable: false # 启用锄大地
-fight_command: .\scripts\Fhoe-Rail.bat # 锄大地命令
+fight_path: .\3rdparty\Fhoe-Rail # 锄大地路径
 fight_timeout: 6 # 锄大地超时（单位小时）
 fight_team_enable: false # 启用自动切换队伍
 fight_team_number: '2' # 锄大地使用的队伍编号
@@ -91,7 +91,7 @@ fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: false # 启用模拟宇宙
 universe_bonus_enable: false # 启用领取沉浸奖励
-universe_command: .\scripts\Auto_Simulated_Universe.bat # 模拟宇宙命令
+universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
 

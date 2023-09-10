@@ -1,7 +1,7 @@
 import subprocess
 
 
-class Subprocess:
+class RunSubprocess:
     @staticmethod
     def run(command, timeout):
         process = None
