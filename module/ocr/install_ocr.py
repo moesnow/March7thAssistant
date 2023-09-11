@@ -7,7 +7,7 @@ import os
 
 class InstallOcr:
     @staticmethod
-    def run(exePath):
+    def run(exePath=config.ocr_path):
         url = f"{config.github_mirror}https://github.com/hiroi-sora/PaddleOCR-json/releases/download/v1.3.0/PaddleOCR-json_v.1.3.0.7z"
         destination = '.\\3rdparty\\PaddleOCR-json_v.1.3.0.7z'
         extracted_folder_path = '.\\3rdparty'

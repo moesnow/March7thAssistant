@@ -9,6 +9,8 @@ speedup_link: true # 更新时使用加速链接
 auto_exit: true # 程序运行完后自动退出游戏
 never_stop: true # 根据开拓力循环运行程序
 power_limit: 160 # 等待再次运行所需开拓力
+
+ocr_path: .\3rdparty\PaddleOCR-json_v.1.3.0\PaddleOCR-json.exe
 python_path: .\3rdparty\python-3.11.5-embed-amd64
 pip_mirror: https://pypi.tuna.tsinghua.edu.cn/simple
 github_mirror: https://github.moeyy.xyz/

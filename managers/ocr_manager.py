@@ -1,3 +1,4 @@
+from managers.config_manager import config
 from module.ocr.ocr import OCR
 
-ocr = OCR(r".\3rdparty\PaddleOCR-json_v.1.3.0\PaddleOCR-json.exe")
+ocr = OCR(config.ocr_path)

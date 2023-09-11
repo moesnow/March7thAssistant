@@ -10,7 +10,7 @@ import os
 
 class PythonChecker:
     @staticmethod
-    def run(python_path):
+    def run(python_path=config.python_path):
         if PythonChecker.check(python_path):
             return True
         else:
