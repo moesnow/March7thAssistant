@@ -187,6 +187,5 @@ pyrightconfig.json
 /logs
 /screenshots
 /3rdparty/PaddleOCR-json_v.1.3.0
-/3rdparty/python-3.11.5-embed-amd64/Scripts
-/3rdparty/python-3.11.5-embed-amd64/share
+/3rdparty/python-3.11.5-embed-amd64
 /3rdparty/Fhoe-Rail
