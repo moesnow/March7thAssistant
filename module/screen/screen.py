@@ -120,7 +120,7 @@ class Screen:
                     if max_recursion > 0:
                         self.change_to(next_screen, max_recursion=max_recursion - 1)
                     else:
-                        logger.debug(_("无法切换到 {next_screen}"))
+                        logger.debug(_("无法切换到 {next_screen}").format(next_screen=next_screen))
                         break
                 logger.debug(_("切换到 {next_screen}").format(next_screen=next_screen))
             self.current_screen = target_screen  # 更新当前界面
