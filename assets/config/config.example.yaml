@@ -14,7 +14,7 @@ game_title_name: 崩坏：星穹铁道 # 游戏窗口标题
 game_process_name: StarRail # 游戏进程名
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏路径
 
-power_total: 240 # 开拓力最大值
+power_total: 999 # 开拓力最大值
 power_rec_min: 6 # 每开拓力恢复需要的分钟数
 dispatch_count: 4 # 派遣次数
 
