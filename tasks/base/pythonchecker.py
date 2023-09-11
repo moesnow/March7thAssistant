@@ -26,6 +26,7 @@ class PythonChecker:
 
         url = "https://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-embed-amd64.zip"
         destination = '.\\3rdparty\\python-3.11.5-embed-amd64.zip'
+        extracted_folder_path = '.\\3rdparty\\python-3.11.5-embed-amd64'
 
         logger.info(_("开始下载：{url}").format(url=url))
         response = requests.get(url)
@@ -37,7 +38,6 @@ class PythonChecker:
             logger.error(_("下载失败：{code}").format(code=response.status_code))
             return False
 
-        extracted_folder_path = '.\\3rdparty\\python-3.11.5-embed-amd64'
         with zipfile.ZipFile(destination, 'r') as zip_ref:
             zip_ref.extractall(extracted_folder_path)
         logger.info(_("解压完成：{path}").format(path=extracted_folder_path))

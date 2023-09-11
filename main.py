@@ -18,6 +18,10 @@ def main(action=None):
             Game.start()
             Daily.start()
             Game.stop()
+    elif action == "universe_update":
+        Universe.update()
+        input(_("按任意键关闭窗口. . ."))
+        sys.exit(0)
     else:
         Version.start()
         Game.start()

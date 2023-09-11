@@ -13,6 +13,7 @@ from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, Push
 
 from .tools.check_update import checkUpdate
 
+import sys
 import os
 
 
@@ -457,13 +458,22 @@ class SettingInterface(ScrollArea):
         config.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
+    def __onUpdateUniverseCardClicked(self):
+        script_path = sys.argv[0]
+        script_filename = os.path.basename(script_path)
+
+        if script_filename.endswith(".exe"):
+            os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" universe_update")
+        else:
+            os.system(f"start python main.py universe_update")
+
     def __connectSignalToSlot(self):
         """ connect signal to slot """
 
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.forgottenhallTeamInfoCard.clicked.connect(lambda: os.system("start /WAIT explorer .\\assets\\images\\character"))
-        self.updateUniverseCard.clicked.connect(lambda: os.system(r"start .\scripts\update_Auto_Simulated_Universe.bat"))
+        self.updateUniverseCard.clicked.connect(self.__onUpdateUniverseCardClicked)
         self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
         self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
         self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant/issues")))
