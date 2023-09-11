@@ -1,4 +1,5 @@
-from module.ocr.PPOCR_api import GetOcrApi
+from .PPOCR_api import GetOcrApi
+from .install_ocr import InstallOcr
 from managers.logger_manager import logger
 from managers.translate_manager import _
 from PIL import Image
@@ -15,10 +16,8 @@ class OCR:
             logger.debug(_("开始初始化OCR..."))
             if not os.path.exists(exePath):
                 logger.error(_("OCR路径不存在: {path}").format(path=exePath))
-                logger.info(_("请检查下载时是否选择了名称中带有 full 的压缩文件"))
-                logger.info(_("麻烦此类低级问题请不要截图在群内询问，拜托了"))
-                input(_("按任意键关闭窗口. . ."))
-                sys.exit(1)
+                if not InstallOcr.run(exePath):
+                    sys.exit(1)
             cls._instance = super().__new__(cls)
             try:
                 cls._instance.ocr = GetOcrApi(exePath)
