@@ -30,7 +30,7 @@ class Fight:
                     logger.info(_("开始锄大地"))
                     if RunSubprocess.run(f"cd {config.fight_path} && {python_path}\\python.exe Fast_Star_Rail.py", config.fight_timeout * 3600):
                         config.save_timestamp("fight_timestamp")
-                        Base.send_notification_with_screenshot(_("🎉锄大地已完成成成🎉"))
+                        Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
                         return
                     else:
                         logger.info(_("锄大地失败"))
