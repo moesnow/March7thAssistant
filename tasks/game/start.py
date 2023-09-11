@@ -84,6 +84,6 @@ class Start:
                 program_path = process.exe()
                 if config.game_path != program_path:
                     config.set_value("game_path", program_path)
-                    logger.info(_("游戏路径更新成功"))
+                    logger.debug(_("游戏路径更新成功：{path}").format(path=program_path))
                 return True
         return False

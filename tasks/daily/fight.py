@@ -13,7 +13,8 @@ class Fight:
     def start():
         logger.hr(_("准备锄大地"), 2)
 
-        if PythonChecker.check():
+        if PythonChecker.run(config.python_path):
+            python_path = os.path.abspath(config.python_path)
             if not os.path.exists(config.fight_path):
                 logger.error(_("锄大地路径不存在: {path}").format(path=config.fight_path))
                 logger.info(_("请先安装锄大地功能后再使用！"))
@@ -25,9 +26,9 @@ class Fight:
                 screen.change_to('main')
 
                 logger.info(_("开始安装依赖"))
-                if RunSubprocess.run(f"cd {config.fight_path} && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt", 3600):
+                if RunSubprocess.run(f"cd {config.fight_path} && {python_path}\\Scripts\\pip.exe install -i {config.pip_mirror} -r requirements.txt --no-warn-script-location", 3600):
                     logger.info(_("开始锄大地"))
-                    if RunSubprocess.run(f"cd {config.fight_path} && python Fast_Star_Rail.py", config.fight_timeout * 3600):
+                    if RunSubprocess.run(f"cd {config.fight_path} && {python_path}\\python.exe Fast_Star_Rail.py", config.fight_timeout * 3600):
                         config.save_timestamp("fight_timestamp")
                         Base.send_notification_with_screenshot(_("🎉锄大地已完成成成🎉"))
                         return

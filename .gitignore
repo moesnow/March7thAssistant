@@ -187,3 +187,5 @@ pyrightconfig.json
 /logs
 /screenshots
 /3rdparty/Fhoe-Rail
+/3rdparty/python-3.11.5-embed-amd64/Scripts
+/3rdparty/python-3.11.5-embed-amd64/share

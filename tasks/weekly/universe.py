@@ -6,6 +6,7 @@ from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.base.pythonchecker import PythonChecker
 from tasks.base.runsubprocess import RunSubprocess
+import os
 
 
 class Universe:
@@ -13,16 +14,17 @@ class Universe:
     def start(get_reward=False):
         logger.hr(_("准备模拟宇宙"), 2)
 
-        if PythonChecker.check():
+        if PythonChecker.run(config.python_path):
+            python_path = os.path.abspath(config.python_path)
             screen.change_to('universe_main')
             screen.change_to('main')
 
             logger.info(_("开始安装依赖"))
-            if RunSubprocess.run(f"cd {config.universe_path} && pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt", 3600):
+            if RunSubprocess.run(f"cd {config.universe_path} && {python_path}\\Scripts\\pip.exe install -i {config.pip_mirror} -r requirements.txt --no-warn-script-location", 3600):
                 logger.info(_("开始校准"))
-                if RunSubprocess.run(f"cd {config.universe_path} && python align_angle.py", 60):
+                if RunSubprocess.run(f"cd {config.universe_path} && {python_path}\\python.exe align_angle.py", 60):
                     logger.info(_("开始模拟宇宙"))
-                    if RunSubprocess.run(f"cd {config.universe_path} && python states.py" + (" --bonus=1" if config.universe_bonus_enable else ""), config.universe_timeout * 3600):
+                    if RunSubprocess.run(f"cd {config.universe_path} && {python_path}\\python.exe states.py" + (" --bonus=1" if config.universe_bonus_enable else ""), config.universe_timeout * 3600):
                         config.save_timestamp("universe_timestamp")
                         if get_reward:
                             Universe.get_reward()

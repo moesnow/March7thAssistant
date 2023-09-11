@@ -9,6 +9,8 @@ speedup_link: true # 更新时使用加速链接
 auto_exit: true # 程序运行完后自动退出游戏
 never_stop: true # 根据开拓力循环运行程序
 power_limit: 160 # 等待再次运行所需开拓力
+python_path: .\3rdparty\python-3.11.5-embed-amd64
+pip_mirror: https://pypi.tuna.tsinghua.edu.cn/simple
 
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题
 game_process_name: StarRail # 游戏进程名
