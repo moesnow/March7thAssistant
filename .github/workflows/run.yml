@@ -21,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          submodules: 'true'
+          submodules: 'false'
 
       - name: Set up python
         uses: actions/setup-python@v4
@@ -36,7 +36,6 @@ jobs:
 
       - name: Generate program
         run: |
-          .venv\Scripts\activate
           pyinstaller -D --distpath .\dist\March7thAssistant\ -i .\assets\logo\Terminal.ico --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
           pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\March7th.ico --exclude-module cv2 --exclude-module numpy --uac-admin -n "March7th Assistant" app.py -y -w
 
