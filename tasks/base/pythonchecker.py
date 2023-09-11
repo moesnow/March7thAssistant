@@ -28,6 +28,7 @@ class PythonChecker:
         destination = '.\\3rdparty\\python-3.11.5-embed-amd64.zip'
         extracted_folder_path = '.\\3rdparty\\python-3.11.5-embed-amd64'
 
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
         logger.info(_("开始下载：{url}").format(url=url))
         response = requests.get(url)
         if response.status_code == 200:

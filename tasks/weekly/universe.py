@@ -65,6 +65,7 @@ class Universe:
         destination = '.\\3rdparty\\Auto_Simulated_Universe.zip'
         extracted_folder_path = '.\\3rdparty'
 
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
         logger.info(_("开始下载：{url}").format(url=url))
         response = requests.get(url)
         if response.status_code == 200:
@@ -86,6 +87,7 @@ class Universe:
         os.remove(destination)
         shutil.rmtree(folder)
         logger.info(_("清理完成：{path}").format(path=destination))
+        return True
 
     @staticmethod
     def copy_and_replace_folder_contents(folder_a, folder_b):

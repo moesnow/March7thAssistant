@@ -12,6 +12,7 @@ class InstallOcr:
         destination = '.\\3rdparty\\PaddleOCR-json_v.1.3.0.7z'
         extracted_folder_path = '.\\3rdparty'
 
+        os.makedirs(os.path.dirname(destination), exist_ok=True)
         logger.info(_("开始下载：{url}").format(url=url))
         response = requests.get(url)
         if response.status_code == 200:
