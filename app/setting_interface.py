@@ -201,7 +201,7 @@ class SettingInterface(ScrollArea):
             "last_run_timestamp"
         )
 
-        self.FightGroup = SettingCardGroup(self.tr("锄大地"), self.scrollWidget)
+        self.FightGroup = SettingCardGroup(self.tr("锄大地 (Fhoe-Rail)"), self.scrollWidget)
         self.fightEnableCard = SwitchSettingCard1(
             FIF.BUS,
             self.tr('启用锄大地'),
@@ -239,8 +239,14 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行锄大地的时间（每天运行）"),
             "fight_timestamp"
         )
+        self.guiFightCard = PrimaryPushSettingCard(
+            self.tr('启动'),
+            FIF.SETTING,
+            self.tr('原版运行'),
+            self.tr('启动调试模式，可以选择指定地图继续锄大地'),
+        )
 
-        self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙"), self.scrollWidget)
+        self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙 (Auto_Simulated_Universe)"), self.scrollWidget)
         self.universeEnableCard = SwitchSettingCard1(
             FIF.VPN,
             self.tr('启用模拟宇宙'),
@@ -270,6 +276,12 @@ class SettingInterface(ScrollArea):
             FIF.DATE_TIME,
             self.tr("上次运行模拟宇宙的时间（每周运行）"),
             "universe_timestamp"
+        )
+        self.guiUniverseCard = PrimaryPushSettingCard(
+            self.tr('启动'),
+            FIF.SETTING,
+            self.tr('原版运行'),
+            self.tr('启动后可以修改命途和难度等'),
         )
         self.updateUniverseCard = PrimaryPushSettingCard(
             self.tr('更新'),
@@ -405,12 +417,14 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.fightTeamEnableCard)
         self.FightGroup.addSettingCard(self.fightTeamNumberCard)
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
+        self.FightGroup.addSettingCard(self.guiFightCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.universePathCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
+        self.UniverseGroup.addSettingCard(self.guiUniverseCard)
         self.UniverseGroup.addSettingCard(self.updateUniverseCard)
 
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallEnableCard)
@@ -465,6 +479,24 @@ class SettingInterface(ScrollArea):
         config.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
+    def __onGuiUniverseCardClicked(self):
+        script_path = sys.argv[0]
+        script_filename = os.path.basename(script_path)
+
+        if script_filename.endswith(".exe"):
+            os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" universe_gui")
+        else:
+            os.system(f"start python main.py universe_gui")
+
+    def __onGuiFightCardClicked(self):
+        script_path = sys.argv[0]
+        script_filename = os.path.basename(script_path)
+
+        if script_filename.endswith(".exe"):
+            os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" fight_gui")
+        else:
+            os.system(f"start python main.py fight_gui")
+
     def __onUpdateUniverseCardClicked(self):
         script_path = sys.argv[0]
         script_filename = os.path.basename(script_path)
@@ -480,6 +512,8 @@ class SettingInterface(ScrollArea):
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.forgottenhallTeamInfoCard.clicked.connect(lambda: os.system("start /WAIT explorer .\\assets\\images\\character"))
+        self.guiFightCard.clicked.connect(self.__onGuiFightCardClicked)
+        self.guiUniverseCard.clicked.connect(self.__onGuiUniverseCardClicked)
         self.updateUniverseCard.clicked.connect(self.__onUpdateUniverseCardClicked)
         self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
         self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))

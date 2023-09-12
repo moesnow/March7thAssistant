@@ -7,6 +7,7 @@ from tasks.base.base import Base
 from tasks.base.pythonchecker import PythonChecker
 from tasks.base.runsubprocess import RunSubprocess
 import urllib.request
+import subprocess
 import shutil
 import os
 
@@ -57,6 +58,19 @@ class Universe:
                 if auto.find_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10):
                     Base.send_notification_with_screenshot(_("🎉模拟宇宙奖励已领取🎉"))
                     auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
+
+    @staticmethod
+    def gui():
+        if PythonChecker.run(config.python_path):
+            python_path = os.path.abspath(config.python_path)
+            if not os.path.exists(config.universe_path):
+                logger.warning(_("模拟宇宙路径不存在: {path}").format(path=config.universe_path))
+                if not Universe.update():
+                    return False
+            if subprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.universe_path} && pip install -i {config.pip_mirror} -r requirements.txt", shell=True, check=True):
+                if subprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.universe_path} && start gui.exe", shell=True, check=True):
+                    return True
+        return False
 
     @staticmethod
     def update():

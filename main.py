@@ -24,6 +24,14 @@ def main(action=None):
         Universe.update()
         input(_("按任意键关闭窗口. . ."))
         sys.exit(0)
+    elif action == "universe_gui":
+        if not Universe.gui():
+            input(_("按任意键关闭窗口. . ."))
+        sys.exit(0)
+    elif action == "fight_gui":
+        if not Fight.gui():
+            input(_("按任意键关闭窗口. . ."))
+        sys.exit(0)
     else:
         Version.start()
         Game.start()
