@@ -9,9 +9,10 @@ class Screenshot:
 
     @staticmethod
     def get_window_region(window):
-        # 1080P分辨率下的数值
-        up_border = 58
-        other_border = 13
+        # 去除边框
+        other_border = (window.width - 1920) // 2
+        up_border = window.height - 1080 - other_border
+
         if Screenshot.is_application_fullscreen(window):
             return (window.left, window.top, window.width, window.height)
         else:
