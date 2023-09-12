@@ -28,7 +28,11 @@ class Power:
     def power():
         screen.change_to('map')
         try:
-            result = auto.get_single_line_text(crop=(1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080), blacklist=['+']).replace("1240", "/240")
+            result = auto.get_single_line_text(
+                crop=(1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080),
+                blacklist=['+'],
+                max_retries=3
+            ).replace("1240", "/240")
 
             power_mapping = {
                 '/': lambda r: int(r.split('/')[0]) if 0 <= int(r.split('/')[0]) <= config.power_total else -1,
@@ -38,6 +42,9 @@ class Power:
             trailblaze_power = power_mapping.get('/', power_mapping['default'])(result)
         except Exception as e:
             logger.error(_("获取开拓力失败: {error}").format(error=e))
+            screenshot_path = ".\\screenshots\\trailblaze_power.png"
+            auto.screenshot.save(screenshot_path)
+            logger.error(_("开拓力识别截图已保存到: {path}").format(path=screenshot_path))
             trailblaze_power = -1
 
         logger.info(_("🟣开拓力: {power}").format(power=trailblaze_power))

@@ -225,12 +225,13 @@ class Automation:
             return self.click_element_with_pos(coordinates, offset)
         return False
 
-    def get_single_line_text(self, crop=(0, 0, 0, 0), blacklist=None):
-        self.take_screenshot(crop)
-        ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)
-        logger.debug(_("ocr_result: {ocr_result}").format(ocr_result=ocr_result))
-        if ocr_result:
-            return ocr_result[0]
+    def get_single_line_text(self, crop=(0, 0, 0, 0), blacklist=None, max_retries=3):
+        for i in range(max_retries):
+            self.take_screenshot(crop)
+            ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)
+            logger.debug(_("ocr识别结果: {ocr_result}").format(ocr_result=ocr_result))
+            if ocr_result:
+                return ocr_result[0]
         return None
 
     def retry_with_timeout(self, func, timeout=120, interval=1, *args, **kwargs):

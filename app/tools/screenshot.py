@@ -104,7 +104,7 @@ class ScreenshotApp:
             width, height, x, y = self.get_selection_info()
             if not os.path.exists("screenshots"):
                 os.makedirs("screenshots")
-            screenshot_path = os.path.abspath("screenshots\screenshot.png")
+            screenshot_path = os.path.abspath("screenshots\selection.png")
             self.screenshot.crop((x, y, x + width, y + height)).save(screenshot_path)
             os.startfile(os.path.dirname(screenshot_path))
         else:
