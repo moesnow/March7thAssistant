@@ -71,11 +71,11 @@ March7thAssistant
 
 ## 更新日志
 
-[Changelog.md](Changelog.md)
+[Changelog.md](assets/docs/Changelog.md)
 
 ## 常见问题
 
-[FQA.md](FQA.md)
+[FQA.md](assets/docs/FQA.md)
 
 ## 源码运行
 

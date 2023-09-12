@@ -4,8 +4,7 @@
 
 ### 新功能
 - 支持丹恒•饮月
-- 不再需要手动安装Python
-- 更新模拟宇宙 Auto_Simulated_Universe v5.4
+- 不再需要手动安装Python（实验性）
 
 ## v1.3.3.1
 

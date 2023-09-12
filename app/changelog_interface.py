@@ -18,7 +18,7 @@ class ChangelogInterface(ScrollArea):
         self.titleLabel = QLabel(self.tr("更新日志"), self)
         self.contentLabel = QLabel("html_content", parent)
         try:
-            with open("Changelog.md", 'r', encoding='utf-8') as file:
+            with open(".\\assets\\docs\\Changelog.md", 'r', encoding='utf-8') as file:
                 self.content = file.read()
         except FileNotFoundError:
             exit(1)

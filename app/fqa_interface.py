@@ -18,7 +18,7 @@ class FQAInterface(ScrollArea):
         self.titleLabel = QLabel(self.tr("常见问题"), self)
         self.contentLabel = QLabel("html_content", parent)
         try:
-            with open("FQA.md", 'r', encoding='utf-8') as file:
+            with open(".\\assets\\docs\\FQA.md", 'r', encoding='utf-8') as file:
                 self.content = file.read()
         except FileNotFoundError:
             exit(1)
