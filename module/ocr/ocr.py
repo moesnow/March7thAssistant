@@ -11,17 +11,21 @@ import io
 class OCR:
     _instance = None
 
-    def __new__(cls, exePath):
-        if cls._instance is None:
-            logger.debug(_("开始初始化OCR..."))
-            if not os.path.exists(exePath):
-                logger.warning(_("OCR路径不存在: {path}").format(path=exePath))
-                if not InstallOcr.run(exePath):
+    def __init__(self, exePath):
+        self.exePath = exePath
+        self.ocr = None
+
+    def instance_ocr(self):
+        if self._instance is None:
+            if not os.path.exists(self.exePath):
+                logger.warning(_("OCR路径不存在: {path}").format(path=self.exePath))
+                if not InstallOcr.run(self.exePath):
                     input(_("按任意键关闭窗口. . ."))
                     sys.exit(1)
-            cls._instance = super().__new__(cls)
             try:
-                cls._instance.ocr = GetOcrApi(exePath)
+                logger.debug(_("开始初始化OCR..."))
+                self.ocr = GetOcrApi(self.exePath)
+                logger.debug(_("初始化OCR完成"))
             except:
                 logger.error(_("初始化OCR失败"))
                 import cpufeature
@@ -31,8 +35,7 @@ class OCR:
                     logger.info(_("请检查系统是否为 Win10/11 x64"))
                 input(_("按任意键关闭窗口. . ."))
                 sys.exit(1)
-            logger.debug(_("初始化OCR完成"))
-        return cls._instance
+            self._instance = True
 
     @staticmethod
     def convert_format(result):
@@ -56,6 +59,7 @@ class OCR:
         return converted_result
 
     def run(self, image):
+        self.instance_ocr()
         try:
             if isinstance(image, Image.Image):
                 pass
