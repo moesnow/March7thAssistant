@@ -35,13 +35,9 @@ def checkUpdate(self):
             # if True:
             w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", markdown.markdown(content), url, self.window())
             if w.exec():
-                import tempfile
                 import subprocess
                 source_file = r".\\Update.exe"
-                temp_dir = tempfile.gettempdir()
-                destination_file = temp_dir + "\\Update.exe"
-                subprocess.run(['xcopy', source_file, temp_dir, '/Y'], shell=True, check=True)
-                subprocess.run(['start', destination_file, assert_url, assert_name], shell=True, check=True)
+                subprocess.run(['start', source_file, assert_url, assert_name], shell=True)
         else:
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),

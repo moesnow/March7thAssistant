@@ -1,4 +1,6 @@
 import urllib.request
+import subprocess
+import tempfile
 import requests
 import shutil
 import json
@@ -6,9 +8,21 @@ import sys
 import os
 
 try:
+    temp_path = tempfile.gettempdir()
+    file_path = os.path.abspath(sys.argv[0])
+    file_name = os.path.basename(file_path)
+    destination_path = os.path.join(temp_path, file_name)
+
+    # 移动程序到临时目录，避免占用导致更新失败
+    if not file_path == destination_path:
+        shutil.copy2(file_path, os.path.join(temp_path, file_name))
+        subprocess.run(["start", os.path.join(temp_path, file_name)] + sys.argv[1:], shell=True)
+        sys.exit(0)
+
     # 获取下载地址和更新目录作为命令行参数
     if len(sys.argv) != 3:
         url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
+        print("开始检测更新")
         res = requests.get(url, timeout=10)
         if res.status_code != 200:
             print("检测更新失败")
@@ -18,7 +32,16 @@ try:
         data = json.loads(res.text)
         version = data["tag_name"]
 
-        print(f"最新版本: {version}")
+        try:
+            with open("./assets/config/version.txt", 'r', encoding='utf-8') as file:
+                current_version = file.read()
+            if version > current_version:
+                print(f"发现新版本：{current_version} ——> {version}")
+            else:
+                print(f"当前是最新版本: {current_version}")
+        except Exception:
+            print(f"本地版本获取失败")
+            print(f"最新版本: {version}")
         input("按任意键开始更新")
 
         for asset in data["assets"]:
