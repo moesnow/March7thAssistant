@@ -30,7 +30,7 @@ def checkUpdate(self):
                 break
 
         if config.speedup_link:
-            assert_url = "https://ghproxy.com/" + assert_url
+            assert_url = config.github_mirror + assert_url
 
         if version > config.version:
             # if True:
@@ -38,11 +38,11 @@ def checkUpdate(self):
             if w.exec():
                 import tempfile
                 import subprocess
-                source_file = r".\scripts\update_March7thAssistant.bat"
+                source_file = r".\\Update.exe"
                 temp_dir = tempfile.gettempdir()
-                destination_file = temp_dir + "\\update_March7thAssistant.bat"
+                destination_file = temp_dir + "\\Update.exe"
                 subprocess.run(['xcopy', source_file, temp_dir, '/Y'], shell=True, check=True)
-                subprocess.run(['start', destination_file, assert_url, assert_name, '/Y'], shell=True, check=True)
+                subprocess.run(['start', destination_file, assert_url, assert_name], shell=True, check=True)
         else:
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),
@@ -54,7 +54,7 @@ def checkUpdate(self):
                 parent=self
             )
     except Exception as e:
-        # print(e)
+        print(e)
         InfoBar.warning(
             title=self.tr('检测更新失败(╥╯﹏╰╥)'),
             content="",
