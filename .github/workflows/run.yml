@@ -38,15 +38,13 @@ jobs:
         run: |
           pyinstaller -D --distpath .\dist\March7thAssistant\ -i .\assets\logo\Terminal.ico --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
           pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\March7th.ico --exclude-module cv2 --exclude-module numpy --uac-admin -n "March7th Assistant" app.py -y -w
+          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Terminal.ico -n "Update" .\update\update.py -y
 
       - name: Move assets to dist directory
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           xcopy .\assets\ .\dist\March7thAssistant\assets\ /E /I /Y
-          xcopy .\scripts\ .\dist\March7thAssistant\scripts\ /E /I /Y
           xcopy .\README.md .\dist\March7thAssistant\ /Y
-          xcopy .\Changelog.md .\dist\March7thAssistant\ /Y
-          xcopy .\FQA.md .\dist\March7thAssistant\ /Y
 
       # - name: Upload artifact
       #   if: startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/pull/')
