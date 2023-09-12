@@ -5,7 +5,6 @@
 locales: zh_CN # 语言
 log_level: INFO # 日志等级 INFO、DEBUG（如果遇到Bug请修改为DEBUG等级，可以显示更多信息）
 check_update: true # 自动检测更新
-speedup_link: true # 更新时使用加速链接
 auto_exit: true # 程序运行完后自动退出游戏
 never_stop: true # 根据开拓力循环运行程序
 power_limit: 160 # 等待再次运行所需开拓力

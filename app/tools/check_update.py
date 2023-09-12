@@ -29,8 +29,7 @@ def checkUpdate(self):
                 assert_name = asset["name"].rsplit(".", 1)[0]
                 break
 
-        if config.speedup_link:
-            assert_url = config.github_mirror + assert_url
+        assert_url = config.github_mirror + assert_url
 
         if version > config.version:
             # if True:

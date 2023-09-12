@@ -50,11 +50,17 @@ class SettingInterface(ScrollArea):
             "新版本将更加稳定并拥有更多功能（建议启用）",
             "check_update"
         )
-        self.speedupLinkCard = SwitchSettingCard1(
-            FIF.CAR,
-            self.tr('更新时使用加速链接'),
-            "https://ghproxy.com/",
-            "speedup_link"
+        self.pipMirrorCard = PushSettingCardStr(
+            self.tr('修改'),
+            FIF.SEARCH_MIRROR,
+            self.tr("PyPI 镜像"),
+            "pip_mirror"
+        )
+        self.githubMirrorCard = PushSettingCardStr(
+            self.tr('修改'),
+            FIF.GITHUB,
+            self.tr("GitHub 镜像（留空代表不启用）"),
+            "github_mirror"
         )
         self.autoExitCard = SwitchSettingCard1(
             FIF.POWER_BUTTON,
@@ -366,7 +372,8 @@ class SettingInterface(ScrollArea):
         self.programGroup.addSettingCard(self.logLevelCard)
         self.programGroup.addSettingCard(self.gameScreenshotCard)
         self.programGroup.addSettingCard(self.checkUpdateCard)
-        self.programGroup.addSettingCard(self.speedupLinkCard)
+        self.programGroup.addSettingCard(self.pipMirrorCard)
+        self.programGroup.addSettingCard(self.githubMirrorCard)
         self.programGroup.addSettingCard(self.autoExitCard)
         self.programGroup.addSettingCard(self.neverStopCard)
         self.programGroup.addSettingCard(self.powerLimitCard)
