@@ -1,5 +1,6 @@
 from managers.notify_manager import notify
 from managers.logger_manager import logger
+from managers.ocr_manager import ocr
 from managers.translate_manager import _
 from tasks.game.game import Game
 from tasks.daily.daily import Daily
@@ -7,6 +8,7 @@ from tasks.daily.fight import Fight
 from tasks.version.version import Version
 from tasks.weekly.universe import Universe
 from tasks.weekly.forgottenhall import ForgottenHall
+import atexit
 import pyuac
 import sys
 
@@ -39,7 +41,12 @@ def main(action=None):
         sys.exit(0)
 
 
+def exit_handler():
+    ocr.ocr.exit()
+
+
 if __name__ == "__main__":
+    atexit.register(exit_handler)
     if not pyuac.isUserAdmin():
         try:
             pyuac.runAsAdmin(wait=False)
