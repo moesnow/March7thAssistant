@@ -2,9 +2,9 @@ from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.runsubprocess import RunSubprocess
+import urllib.request
 import subprocess
-import requests
-import zipfile
+import shutil
 import os
 
 
@@ -22,35 +22,32 @@ class PythonChecker:
                         logger.debug(_("Python路径更新成功：{path}").format(path=path_dir))
                         return True
 
-        logger.error(_("Python路径不存在: {path}").format(path=python_path))
+        logger.warning(_("Python路径不存在: {path}").format(path=python_path))
 
         url = "https://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-embed-amd64.zip"
         destination = '.\\3rdparty\\python-3.11.5-embed-amd64.zip'
         extracted_folder_path = '.\\3rdparty\\python-3.11.5-embed-amd64'
 
-        os.makedirs(os.path.dirname(destination), exist_ok=True)
-        logger.info(_("开始下载：{url}").format(url=url))
-        response = requests.get(url)
-        if response.status_code == 200:
-            with open(destination, 'wb') as file:
-                file.write(response.content)
-                logger.info(_("下载完成：{destination}").format(destination=destination))
-        else:
-            logger.error(_("下载失败：{code}").format(code=response.status_code))
+        try:
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            logger.info(_("开始下载：{url}").format(url=url))
+            urllib.request.urlretrieve(url, destination)
+            logger.info(_("下载完成：{destination}").format(destination=destination))
+
+            shutil.unpack_archive(destination, extracted_folder_path, 'zip')
+            logger.info(_("解压完成：{path}").format(path=extracted_folder_path))
+
+            os.remove(destination)
+            os.remove(f"{extracted_folder_path}\\python311._pth")
+            logger.info(_("清理完成：{path}").format(path=destination))
+
+            if PythonChecker.check(extracted_folder_path):
+                config.set_value("python_path", extracted_folder_path)
+                return True
             return False
-
-        with zipfile.ZipFile(destination, 'r') as zip_ref:
-            zip_ref.extractall(extracted_folder_path)
-        logger.info(_("解压完成：{path}").format(path=extracted_folder_path))
-
-        os.remove(destination)
-        os.remove(f"{extracted_folder_path}\\python311._pth")
-        logger.info(_("清理完成：{path}").format(path=destination))
-
-        if PythonChecker.check(extracted_folder_path):
-            config.set_value("python_path", extracted_folder_path)
-            return True
-        return False
+        except Exception as e:
+            logger.error(_("下载失败：{e}").format(e=e))
+            return False
 
     @staticmethod
     def check(python_path):

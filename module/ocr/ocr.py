@@ -15,8 +15,9 @@ class OCR:
         if cls._instance is None:
             logger.debug(_("开始初始化OCR..."))
             if not os.path.exists(exePath):
-                logger.error(_("OCR路径不存在: {path}").format(path=exePath))
+                logger.warning(_("OCR路径不存在: {path}").format(path=exePath))
                 if not InstallOcr.run(exePath):
+                    input(_("按任意键关闭窗口. . ."))
                     sys.exit(1)
             cls._instance = super().__new__(cls)
             try:

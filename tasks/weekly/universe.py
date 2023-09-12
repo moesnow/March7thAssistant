@@ -6,8 +6,7 @@ from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.base.pythonchecker import PythonChecker
 from tasks.base.runsubprocess import RunSubprocess
-import zipfile
-import requests
+import urllib.request
 import shutil
 import os
 
@@ -21,7 +20,7 @@ class Universe:
             python_path = os.path.abspath(config.python_path)
 
             if not os.path.exists(config.universe_path):
-                logger.error(_("模拟宇宙路径不存在: {path}").format(path=config.universe_path))
+                logger.warning(_("模拟宇宙路径不存在: {path}").format(path=config.universe_path))
                 if not Universe.update():
                     Base.send_notification_with_screenshot(_("⚠️模拟宇宙未完成⚠️"))
                     return False
@@ -65,29 +64,26 @@ class Universe:
         destination = '.\\3rdparty\\Auto_Simulated_Universe.zip'
         extracted_folder_path = '.\\3rdparty'
 
-        os.makedirs(os.path.dirname(destination), exist_ok=True)
-        logger.info(_("开始下载：{url}").format(url=url))
-        response = requests.get(url)
-        if response.status_code == 200:
-            with open(destination, 'wb') as file:
-                file.write(response.content)
-                logger.info(_("下载完成：{destination}").format(destination=destination))
-        else:
-            logger.error(_("下载失败：{code}").format(code=response.status_code))
+        try:
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            logger.info(_("开始下载：{url}").format(url=url))
+            urllib.request.urlretrieve(url, destination)
+            logger.info(_("下载完成：{destination}").format(destination=destination))
+
+            shutil.unpack_archive(destination, extracted_folder_path, 'zip')
+            logger.info(_("解压完成：{path}").format(path=extracted_folder_path))
+
+            folder = '.\\3rdparty\\Auto_Simulated_Universe-main'
+            Universe.copy_and_replace_folder_contents(config.universe_path, folder)
+            logger.info(_("更新完成：{path}").format(path=config.universe_path))
+
+            os.remove(destination)
+            shutil.rmtree(folder)
+            logger.info(_("清理完成：{path}").format(path=destination))
+            return True
+        except Exception as e:
+            logger.error(_("下载失败：{e}").format(e=e))
             return False
-
-        with zipfile.ZipFile(destination, 'r') as zip_ref:
-            zip_ref.extractall(extracted_folder_path)
-        logger.info(_("解压完成：{path}").format(path=extracted_folder_path))
-
-        folder = '.\\3rdparty\\Auto_Simulated_Universe-main'
-        Universe.copy_and_replace_folder_contents(config.universe_path, folder)
-        logger.info(_("更新完成：{path}").format(path=config.universe_path))
-
-        os.remove(destination)
-        shutil.rmtree(folder)
-        logger.info(_("清理完成：{path}").format(path=destination))
-        return True
 
     @staticmethod
     def copy_and_replace_folder_contents(folder_a, folder_b):
