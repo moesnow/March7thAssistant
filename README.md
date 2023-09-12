@@ -29,15 +29,11 @@ March7thAssistant
 ## 注意事项
 
 - 支持 `1920*1080` 分辨率窗口或全屏运行游戏
-- 使用锄大地和模拟宇宙功能需要安装 `Python`
 - 如遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
-- **蓝色文字**都是超链接，可以点击
 
 ## 下载安装
 
 前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下载后解压双击 `March7th Assistant.exe` 直接运行，
-
-如果速度缓慢可以右键复制链接后通过 [https://ghproxy.com](https://ghproxy.com) 加速。
 
 ## 每日实训
 
@@ -82,23 +78,11 @@ March7thAssistant
 如果你是完全不懂的小白，请通过上面的方式下载安装，不用往下看了。
 
 ```cmd
-# 注意需要添加 --recurse-submodules 参数同时 clone 子模块
-git clone https://github.com/moesnow/March7thAssistant --recurse-submodules
+git clone https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
-pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
-# 启动图形界面
+pip install -r requirements.txt
 python app.py
-# 直接启动主程序
 python main.py
-```
-
-```cmd
-# 可选操作
-# 使用 venv 创建虚拟环境，避免依赖冲突
-python -m venv .venv
-.venv\Scripts\activate
-# 更新子模块为最新版本
-git submodule update --remote
 ```
 
 ---
