@@ -2,6 +2,7 @@ from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.runsubprocess import RunSubprocess
+from tasks.base.base import Base
 import urllib.request
 import subprocess
 import shutil
@@ -11,7 +12,7 @@ import os
 class PythonChecker:
     @staticmethod
     def run(python_path=config.python_path):
-        if PythonChecker.check(python_path):
+        if python_path != '' and PythonChecker.check(python_path):
             return True
         else:
             path_dirs = os.environ["PATH"].split(os.pathsep)
@@ -24,9 +25,12 @@ class PythonChecker:
 
         logger.warning(_("Python路径不存在: {path}").format(path=python_path))
 
-        url = "https://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-embed-amd64.zip"
-        destination = '.\\3rdparty\\python-3.11.5-embed-amd64.zip'
-        extracted_folder_path = '.\\3rdparty\\python-3.11.5-embed-amd64'
+        url = "https://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-amd64.exe"
+        destination = '.\\3rdparty\\python-3.11.5-amd64.exe'
+
+        local_app_data = os.getenv('LocalAppData')
+        destination_path = os.path.join(local_app_data, 'Programs\Python\Python311')
+        # extracted_folder_path = '.\\3rdparty\\python-3.11.5-embed-amd64'
 
         try:
             os.makedirs(os.path.dirname(destination), exist_ok=True)
@@ -34,15 +38,20 @@ class PythonChecker:
             urllib.request.urlretrieve(url, destination)
             logger.info(_("下载完成：{destination}").format(destination=destination))
 
-            shutil.unpack_archive(destination, extracted_folder_path, 'zip')
-            logger.info(_("解压完成：{path}").format(path=extracted_folder_path))
+            os.system(f"{destination} /passive InstallAllUsers=0 PrependPath=1 Include_launcher=0 Include_test=0")
+            logger.info(_("安装完成"))
+
+            Base.check_and_switch(config.game_title_name)
+
+            # shutil.unpack_archive(destination, extracted_folder_path, 'zip')
+            # logger.info(_("解压完成：{path}").format(path=extracted_folder_path))
 
             os.remove(destination)
-            os.remove(f"{extracted_folder_path}\\python311._pth")
+            # os.remove(f"{extracted_folder_path}\\python311._pth")
             logger.info(_("清理完成：{path}").format(path=destination))
 
-            if PythonChecker.check(extracted_folder_path):
-                config.set_value("python_path", extracted_folder_path)
+            if PythonChecker.check(destination_path):
+                config.set_value("python_path", destination_path)
                 return True
             return False
         except Exception as e:
