@@ -42,8 +42,10 @@ class Start:
         logger.info(_("🖥️启动游戏中..."))
         Start.check_game_path(config.game_path)
 
-        if os.system(f"powershell -Command \"start '{config.game_path}'\""):
+        logger.debug(f"运行命令: cmd /C start \"\" \"{config.game_path}\"")
+        if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
             return False
+        logger.debug(_("游戏启动成功: {path}").format(path=config.game_path))
 
         time.sleep(10)
         if not auto.retry_with_timeout(Base.check_and_switch, 30, 1, config.game_title_name):
