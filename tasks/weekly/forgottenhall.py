@@ -69,7 +69,7 @@ class ForgottenHall:
                     auto.press_key(f"{index+1}")
                     time.sleep(1)
                     for i in range(character[1]):
-                        auto.press_key("e")
+                        auto.press_key(config.get_value("hotkey_technique"))
                         time.sleep(1)
                 elif character[1] == -1:
                     last_index = index
@@ -89,7 +89,7 @@ class ForgottenHall:
                         auto.press_key("d", 2)
 
                 # 开怪
-                auto.press_key("e")
+                auto.press_key(config.get_value("hotkey_technique"))
                 for i in range(3):
                     auto.press_mouse()
 
