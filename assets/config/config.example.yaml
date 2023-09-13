@@ -142,3 +142,4 @@ notify_wechatworkapp_corpid: ''
 notify_wechatworkapp_corpsecret: ''
 notify_wechatworkapp_agentid: ''
 
+hotkey_technique: e
