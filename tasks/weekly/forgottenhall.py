@@ -16,7 +16,7 @@ class ForgottenHall:
         for i in range(20):
             if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95):
                 auto.press_key("v")
-                break
+                time.sleep(1)
             elif auto.find_element("./assets/images/base/auto.png", "image", 0.95):
                 break
 

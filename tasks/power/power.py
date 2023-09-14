@@ -57,13 +57,13 @@ class Power:
         for i in range(20):
             if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95):
                 auto.press_key("v")
-                break
+                time.sleep(1)
             elif auto.find_element("./assets/images/base/auto.png", "image", 0.95):
                 break
 
         def check_fight():
             return auto.find_element("./assets/images/fight/fight_again.png", "image", 0.9)
-        if not auto.retry_with_timeout(check_fight, 600, 1):
+        if not auto.retry_with_timeout(check_fight, 30 * 60, 1):
             logger.error(_("战斗超时"))
             raise Exception(_("战斗超时"))
         logger.info(_("战斗完成"))
