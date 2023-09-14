@@ -3,6 +3,7 @@
 # QQ交流群 855392201
 # https://github.com/moesnow/March7thAssistant
 locales: zh_CN # 语言
+agreed_to_disclaimer: false
 log_level: INFO # 日志等级 INFO、DEBUG（如果遇到Bug请修改为DEBUG等级，可以显示更多信息）
 check_update: true # 自动检测更新
 auto_exit: true # 程序运行完后自动退出游戏

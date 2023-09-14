@@ -1,5 +1,6 @@
 from managers.notify_manager import notify
 from managers.logger_manager import logger
+from managers.config_manager import config
 from managers.ocr_manager import ocr
 from managers.translate_manager import _
 from tasks.game.game import Game
@@ -14,6 +15,10 @@ import sys
 
 
 def main(action=None):
+    if not config.agreed_to_disclaimer:
+        logger.error("您尚未同意《免责声明》")
+        input(_("按任意键关闭窗口. . ."))
+        sys.exit(0)
     if action is None or action == "main":
         while True:
             Version.start()

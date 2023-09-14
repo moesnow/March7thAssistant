@@ -15,6 +15,7 @@ from .card.messagebox3 import MessageBox3
 
 from managers.config_manager import config
 from .tools.check_update import checkUpdate
+from .tools.disclaimer import disclaimer
 
 
 class MainWindow(FluentWindow):
@@ -31,6 +32,9 @@ class MainWindow(FluentWindow):
 
         self.initNavigation()
         self.splashScreen.finish()
+
+        if not config.agreed_to_disclaimer:
+            disclaimer(self)
 
         if config.check_update:
             checkUpdate(self)
