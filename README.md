@@ -20,7 +20,7 @@ March7thAssistant
 - 锄大地、模拟宇宙、忘却之庭
 - 7×24小时无人值守循环完成以上内容
 
-详情见 [配置文件](assets/config/config.example.yaml) 或下载后打开设置查看｜🌟喜欢就点击右上角给个**星星**吧|･ω･) 🌟｜群号 [855392201](https://qm.qq.com/q/9gFqUrUGVq)
+详情见 [配置文件](assets/config/config.example.yaml) ｜🌟喜欢就点击右上角给个**星星**吧|･ω･) 🌟｜QQ群 [855392201](https://qm.qq.com/q/9gFqUrUGVq) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)
 
 ## 界面展示
 
