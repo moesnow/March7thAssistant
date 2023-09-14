@@ -104,10 +104,10 @@ class ForgottenHall:
 
     @staticmethod
     def click_message_box():
-        if auto.find_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.8, max_retries=20, crop=(64 / 1920, 277 / 1080, 167 / 1920, 38 / 1080)):
+        if auto.find_element("剩余", "text", max_retries=20, crop=(64 / 1920, 277 / 1080, 167 / 1920, 38 / 1080), include=True):
             time.sleep(1)
-            if auto.click_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.8, max_retries=10, crop=(64 / 1920, 277 / 1080, 167 / 1920, 38 / 1080)):
-                time.sleep(1)
+            auto.press_key("esc")
+            time.sleep(1)
 
     @staticmethod
     def select_characters(team_config, team_image_path):

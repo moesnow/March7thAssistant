@@ -130,6 +130,8 @@ forgottenhall_team2: # 混沌回忆队伍2
   - 1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行，如已经满星则跳过）
 
+hotkey_technique: e # 秘技按键
+
 # 可选消息通知 Telegram已适配支持发送截图
 # 还支持更多推送查看下面的链接仿照格式配置即可
 # https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-[CN]
@@ -143,4 +145,3 @@ notify_wechatworkapp_corpid: ''
 notify_wechatworkapp_corpsecret: ''
 notify_wechatworkapp_agentid: ''
 
-hotkey_technique: e
