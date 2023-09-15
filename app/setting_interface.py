@@ -9,7 +9,7 @@ from .common.style_sheet import StyleSheet
 from managers.config_manager import config
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.switchsettingcard1 import SwitchSettingCard1
-from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardPath
+from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey
 
 from .tools.check_update import checkUpdate
 
@@ -31,7 +31,7 @@ class SettingInterface(ScrollArea):
 
         # program group
         self.programGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
-        self.importConfigCard = PushSettingCardPath(
+        self.importConfigCard = PushSettingCard(
             self.tr('导入'),
             FIF.ADD_TO,
             self.tr('导入配置'),
@@ -470,6 +470,13 @@ class SettingInterface(ScrollArea):
         self.expandLayout.addWidget(self.KeybindingGroup)
         self.expandLayout.addWidget(self.aboutGroup)
 
+    def __onImportConfigCardClicked(self):
+        configdir, _ = QFileDialog.getOpenFileName(self, "选取配置文件", "./", "Config Files (*.yaml)")
+        if(configdir != ""):
+            config._load_config(configdir)
+            config.save_config()
+            self.importConfigCard.button.setText("导入完成，请重启小助手")
+
     def __onGameScreenshotCardClicked(self):
         from tasks.base.windowswitcher import WindowSwitcher
         from module.automation.screenshot import Screenshot
@@ -527,6 +534,7 @@ class SettingInterface(ScrollArea):
     def __connectSignalToSlot(self):
         """ connect signal to slot """
 
+        self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.forgottenhallTeamInfoCard.clicked.connect(lambda: os.system("start /WAIT explorer .\\assets\\images\\character"))

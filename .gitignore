@@ -183,7 +183,7 @@ pyrightconfig.json
 /test.py
 
 # March7thAssistant
-/config.yaml
+/*config.yaml
 /logs
 /screenshots
 /3rdparty

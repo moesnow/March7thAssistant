@@ -1,5 +1,5 @@
 from qfluentwidgets import (SettingCard, FluentIconBase)
-from PyQt5.QtWidgets import (QPushButton, QFileDialog)
+from PyQt5.QtWidgets import QPushButton
 from typing import Union
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import (QIcon, QKeyEvent)
@@ -99,24 +99,3 @@ class PushSettingCardKey(SettingCard):
             config.set_value(self.configname, e.text())
             self.contentLabel.setText(e.text())
             self.button.setText(f"已改为 {e.text()}")
-
-
-class PushSettingCardPath(SettingCard):
-    """ Setting card with a push button """
-
-    clicked = pyqtSignal()
-
-    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
-        super().__init__(icon, title, content, parent)
-        self.title = title
-        self.button = QPushButton(text, self)
-        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
-        self.hBoxLayout.addSpacing(16)
-        self.button.clicked.connect(self.__onclicked)
-
-    def __onclicked(self):
-        configdir, _ = QFileDialog.getOpenFileName(None, "选取配置文件", "./", "Config Files (*.yaml)")
-        if(configdir != ""):
-            config._load_config(configdir)
-            config.save_config()
-            self.button.setText("导入完成，请重启小助手")
