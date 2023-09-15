@@ -9,7 +9,7 @@ from .common.style_sheet import StyleSheet
 from managers.config_manager import config
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.switchsettingcard1 import SwitchSettingCard1
-from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey
+from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardPath
 
 from .tools.check_update import checkUpdate
 
@@ -31,6 +31,12 @@ class SettingInterface(ScrollArea):
 
         # program group
         self.programGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
+        self.importConfigCard = PushSettingCardPath(
+            self.tr('导入'),
+            FIF.ADD_TO,
+            self.tr('导入配置'),
+            self.tr('选择需要导入的 config.yaml 文件（重启后生效）')
+        )
         self.logLevelCard = ComboBoxSettingCard1(
             "log_level",
             FIF.TAG,
@@ -389,6 +395,7 @@ class SettingInterface(ScrollArea):
     def __initLayout(self):
         self.settingLabel.move(36, 30)
         # add cards to group
+        self.programGroup.addSettingCard(self.importConfigCard)
         self.programGroup.addSettingCard(self.logLevelCard)
         self.programGroup.addSettingCard(self.gameScreenshotCard)
         self.programGroup.addSettingCard(self.checkUpdateCard)
