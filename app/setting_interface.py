@@ -9,7 +9,7 @@ from .common.style_sheet import StyleSheet
 from managers.config_manager import config
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.switchsettingcard1 import SwitchSettingCard1
-from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate
+from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey
 
 from .tools.check_update import checkUpdate
 
@@ -335,8 +335,8 @@ class SettingInterface(ScrollArea):
         )
 
         self.KeybindingGroup = SettingCardGroup(self.tr("按键绑定"), self.scrollWidget)
-        self.keybindingTechnique = PushSettingCardStr(
-            self.tr('修改'),
+        self.keybindingTechniqueCard = PushSettingCardKey(
+            self.tr('按住以修改'),
             FIF.TILES,
             self.tr("游戏内设置的秘技按键"),
             "hotkey_technique"
@@ -443,7 +443,7 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
 
-        self.KeybindingGroup.addSettingCard(self.keybindingTechnique)
+        self.KeybindingGroup.addSettingCard(self.keybindingTechniqueCard)
 
         self.aboutGroup.addSettingCard(self.githubCard)
         self.aboutGroup.addSettingCard(self.qqGroupCard)
