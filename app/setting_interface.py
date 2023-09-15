@@ -334,6 +334,14 @@ class SettingInterface(ScrollArea):
             "forgottenhall_timestamp"
         )
 
+        self.KeybindingGroup = SettingCardGroup(self.tr("按键绑定"), self.scrollWidget)
+        self.keybindingTechnique = PushSettingCardStr(
+            self.tr('修改'),
+            FIF.TILES,
+            self.tr("游戏内设置的秘技按键"),
+            "hotkey_technique"
+        )
+
         self.aboutGroup = SettingCardGroup(self.tr('关于'), self.scrollWidget)
         self.githubCard = PrimaryPushSettingCard(
             self.tr('项目主页'),
@@ -435,6 +443,8 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
 
+        self.KeybindingGroup.addSettingCard(self.keybindingTechnique)
+
         self.aboutGroup.addSettingCard(self.githubCard)
         self.aboutGroup.addSettingCard(self.qqGroupCard)
         self.aboutGroup.addSettingCard(self.feedbackCard)
@@ -450,6 +460,7 @@ class SettingInterface(ScrollArea):
         self.expandLayout.addWidget(self.FightGroup)
         self.expandLayout.addWidget(self.UniverseGroup)
         self.expandLayout.addWidget(self.ForgottenhallGroup)
+        self.expandLayout.addWidget(self.KeybindingGroup)
         self.expandLayout.addWidget(self.aboutGroup)
 
     def __onGameScreenshotCardClicked(self):
