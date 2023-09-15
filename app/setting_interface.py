@@ -106,12 +106,12 @@ class SettingInterface(ScrollArea):
             self.tr("副本名称（不同副本类型需单独设置，同时也会用于完成每日实训，“无”代表不启用）               "),
             "instance_names"
         )
-        self.powerNeedCard = PushSettingCardEval(
-            self.tr('修改'),
-            FIF.HEART,
-            self.tr("副本所需开拓力（其中“拟造花萼”设置为60代表每次刷6轮）               "),
-            "power_needs"
-        )
+        # self.powerNeedCard = PushSettingCardEval(
+        #     self.tr('修改'),
+        #     FIF.HEART,
+        #     self.tr("副本所需开拓力（其中“拟造花萼”设置为60代表每次刷6轮）               "),
+        #     "power_needs"
+        # )
         self.borrowCharacterEnableCard = SwitchSettingCard1(
             FIF.PEOPLE,
             self.tr('启用使用支援角色'),
@@ -394,7 +394,7 @@ class SettingInterface(ScrollArea):
 
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
-        self.PowerGroup.addSettingCard(self.powerNeedCard)
+        # self.PowerGroup.addSettingCard(self.powerNeedCard)
         self.PowerGroup.addSettingCard(self.borrowCharacterEnableCard)
         self.PowerGroup.addSettingCard(self.borrowCharacterCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
