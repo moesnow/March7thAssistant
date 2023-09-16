@@ -1,3 +1,4 @@
+from tasks.base.download import download_with_progress
 from managers.screen_manager import screen
 from managers.config_manager import config
 from managers.logger_manager import logger
@@ -6,7 +7,6 @@ from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.base.pythonchecker import PythonChecker
 from tasks.base.runsubprocess import RunSubprocess
-import urllib.request
 import subprocess
 import shutil
 import os
@@ -81,7 +81,7 @@ class Universe:
         try:
             os.makedirs(os.path.dirname(destination), exist_ok=True)
             logger.info(_("开始下载：{url}").format(url=url))
-            urllib.request.urlretrieve(url, destination)
+            download_with_progress(url, destination)
             logger.info(_("下载完成：{destination}").format(destination=destination))
 
             shutil.unpack_archive(destination, extracted_folder_path, 'zip')

@@ -1,11 +1,10 @@
+from tasks.base.download import download_with_progress
 from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.runsubprocess import RunSubprocess
 from tasks.base.base import Base
-import urllib.request
 import subprocess
-import shutil
 import os
 
 
@@ -35,7 +34,7 @@ class PythonChecker:
         try:
             os.makedirs(os.path.dirname(destination), exist_ok=True)
             logger.info(_("开始下载：{url}").format(url=url))
-            urllib.request.urlretrieve(url, destination)
+            download_with_progress(url, destination)
             logger.info(_("下载完成：{destination}").format(destination=destination))
 
             os.system(f"{destination} /passive InstallAllUsers=0 PrependPath=1 Include_launcher=0 Include_test=0")

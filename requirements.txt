@@ -1,6 +1,7 @@
 ruamel.yaml
 colorama
 pyuac
+tqdm
 psutil
 pyautogui
 pygetwindow

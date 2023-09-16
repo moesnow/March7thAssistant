@@ -1,3 +1,4 @@
+from tasks.base.download import download_with_progress
 from managers.config_manager import config
 from managers.logger_manager import logger
 from managers.translate_manager import _
@@ -15,7 +16,7 @@ class InstallOcr:
         try:
             os.makedirs(os.path.dirname(destination), exist_ok=True)
             logger.info(_("开始下载：{url}").format(url=url))
-            urllib.request.urlretrieve(url, destination)
+            download_with_progress(url, destination)
             logger.info(_("下载完成：{destination}").format(destination=destination))
 
             os.system(f".\\assets\\7z\\7zr.exe x {destination} -o{extracted_folder_path} -aoa")

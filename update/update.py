@@ -1,4 +1,3 @@
-import urllib.request
 import subprocess
 import tempfile
 import requests
@@ -7,7 +6,26 @@ import json
 import sys
 import os
 
+from tqdm import tqdm
+import urllib.request
+
+
 try:
+    def download_with_progress(download_url, save_path):
+        # 获取文件大小
+        response = urllib.request.urlopen(download_url)
+        file_size = int(response.info().get('Content-Length', -1))
+
+        # 使用 tqdm 创建进度条
+        with tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+            def update_bar(block_count, block_size, total_size):
+                if pbar.total != total_size:
+                    pbar.total = total_size
+                downloaded = block_count * block_size
+                pbar.update(downloaded - pbar.n)
+
+            urllib.request.urlretrieve(download_url, save_path, reporthook=update_bar)
+
     temp_path = tempfile.gettempdir()
     file_path = os.path.abspath(sys.argv[0])
     file_name = os.path.basename(file_path)
@@ -58,9 +76,11 @@ try:
         download_url = sys.argv[1]
         update_directory = sys.argv[2]
 
+    print(f"下载地址：{download_url}")
     # 下载文件
     print("下载中...")
-    urllib.request.urlretrieve(download_url, './March7thAssistant.zip')
+    download_with_progress(download_url, './March7thAssistant.zip')
+    # urllib.request.urlretrieve(download_url, './March7thAssistant.zip')
     print("下载完成")
 
     # 解压文件
@@ -88,7 +108,10 @@ try:
     os.remove('./March7thAssistant.zip')
 
     input("按任意键关闭窗口")
-
+except KeyboardInterrupt:
+    print("手动强制停止")
+    input("按任意键关闭窗口")
 except Exception as e:
     print(f"更新出错: {e}")
+    print("请尝试重试或手动更新")
     input("按任意键关闭窗口")
