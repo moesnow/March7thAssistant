@@ -42,9 +42,9 @@ class Power:
             trailblaze_power = power_mapping.get('/', power_mapping['default'])(result)
         except Exception as e:
             logger.error(_("获取开拓力失败: {error}").format(error=e))
-            screenshot_path = ".\\screenshots\\trailblaze_power.png"
-            auto.screenshot.save(screenshot_path)
-            logger.error(_("开拓力识别截图已保存到: {path}").format(path=screenshot_path))
+            # screenshot_path = ".\\screenshots\\trailblaze_power.png"
+            # auto.screenshot.save(screenshot_path)
+            # logger.error(_("开拓力识别截图已保存到: {path}").format(path=screenshot_path))
             trailblaze_power = -1
 
         logger.info(_("🟣开拓力: {power}").format(power=trailblaze_power))
