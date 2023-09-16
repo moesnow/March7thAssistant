@@ -26,10 +26,10 @@ This software is open source, free of charge and for learning and exchange purpo
 
 - **日常**：清体力、每日实训、领奖励、探索派遣、锄大地
 - **周常**：历战余响、模拟宇宙、忘却之庭
-- 每日实训完成情况支持消息推送
-- 凌晨四点或体力恢复后自动启动
+- 每日实训等任务完成情况支持消息推送
+- 凌晨四点或体力恢复到指定值后自动启动
 
-> 其中模拟宇宙调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目，锄大地调用的 Fhoe-Rail 项目
+> 其中模拟宇宙调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目，锄大地调用的 Fhoe-Rail(by_lin) 项目
 
 详情见 [配置文件](assets/config/config.example.yaml) ｜🌟喜欢就点击右上角给个**星星**吧|･ω･) 🌟｜QQ群 [855392201](https://qm.qq.com/q/9gFqUrUGVq) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)
 
@@ -40,8 +40,9 @@ This software is open source, free of charge and for learning and exchange purpo
 ## 注意事项
 
 - 必须使用PC端 `1920*1080` 分辨率窗口或全屏运行游戏
+- 模拟宇宙相关 [项目文档](https://asu.stysqy.top/) [Q&A](https://asu.stysqy.top/guide/qa.html)
 - 使用锄大地功能，需要安装群文件内提供的补丁包
-- 后台运行可以尝试 `远程本地多用户桌面`
+- 后台运行可以尝试 [远程本地多用户桌面](https://asu.stysqy.top/guide/bs.html)
 - 遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，提问讨论可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊随缘看，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
 
 ## 下载安装
@@ -68,9 +69,18 @@ python app.py
 python main.py
 ```
 
+<details>
+<summary>开发相关</summary>
+
+获取 crop 参数表示的裁剪坐标可以通过图形界面设置内的捕获截图功能
+
+python main.py 后面支持参数 fight/universe/forgottenhall 等
+
+</details>
+
 ---
 
-个人开发不易，如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕
+如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕
 
 您的支持就是作者开发和维护项目的动力🚀
 
@@ -88,6 +98,14 @@ March7thAssistant 离不开以下开源项目的帮助：
 
 - 图形界面组件库 [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
 
-## 星光历程
 
-[![星光历程](https://starchart.cc/moesnow/March7thAssistant.svg)](https://starchart.cc/moesnow/March7thAssistant)
+## Contributors
+<a href="https://github.com/moesnow/March7thAssistant/graphs/contributors">
+
+  <img src="https://contrib.rocks/image?repo=moesnow/March7thAssistant" />
+
+</a>
+
+## Stargazers over time
+
+[![Star History](https://starchart.cc/moesnow/March7thAssistant.svg)](https://starchart.cc/moesnow/March7thAssistant)
