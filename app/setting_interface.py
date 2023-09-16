@@ -9,7 +9,7 @@ from .common.style_sheet import StyleSheet
 from managers.config_manager import config
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.switchsettingcard1 import SwitchSettingCard1
-from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate
+from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey
 
 from .tools.check_update import checkUpdate
 
@@ -31,6 +31,12 @@ class SettingInterface(ScrollArea):
 
         # program group
         self.programGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
+        self.importConfigCard = PushSettingCard(
+            self.tr('导入'),
+            FIF.ADD_TO,
+            self.tr('导入配置'),
+            self.tr('选择需要导入的 config.yaml 文件（重启后生效）')
+        )
         self.logLevelCard = ComboBoxSettingCard1(
             "log_level",
             FIF.TAG,
@@ -334,6 +340,14 @@ class SettingInterface(ScrollArea):
             "forgottenhall_timestamp"
         )
 
+        self.KeybindingGroup = SettingCardGroup(self.tr("按键绑定"), self.scrollWidget)
+        self.keybindingTechniqueCard = PushSettingCardKey(
+            self.tr('按住以修改'),
+            FIF.TILES,
+            self.tr("游戏内设置的秘技按键"),
+            "hotkey_technique"
+        )
+
         self.aboutGroup = SettingCardGroup(self.tr('关于'), self.scrollWidget)
         self.githubCard = PrimaryPushSettingCard(
             self.tr('项目主页'),
@@ -381,6 +395,7 @@ class SettingInterface(ScrollArea):
     def __initLayout(self):
         self.settingLabel.move(36, 30)
         # add cards to group
+        self.programGroup.addSettingCard(self.importConfigCard)
         self.programGroup.addSettingCard(self.logLevelCard)
         self.programGroup.addSettingCard(self.gameScreenshotCard)
         self.programGroup.addSettingCard(self.checkUpdateCard)
@@ -435,6 +450,8 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
 
+        self.KeybindingGroup.addSettingCard(self.keybindingTechniqueCard)
+
         self.aboutGroup.addSettingCard(self.githubCard)
         self.aboutGroup.addSettingCard(self.qqGroupCard)
         self.aboutGroup.addSettingCard(self.feedbackCard)
@@ -450,7 +467,15 @@ class SettingInterface(ScrollArea):
         self.expandLayout.addWidget(self.FightGroup)
         self.expandLayout.addWidget(self.UniverseGroup)
         self.expandLayout.addWidget(self.ForgottenhallGroup)
+        self.expandLayout.addWidget(self.KeybindingGroup)
         self.expandLayout.addWidget(self.aboutGroup)
+
+    def __onImportConfigCardClicked(self):
+        configdir, _ = QFileDialog.getOpenFileName(self, "选取配置文件", "./", "Config Files (*.yaml)")
+        if(configdir != ""):
+            config._load_config(configdir)
+            config.save_config()
+            self.importConfigCard.button.setText("导入完成，请重启小助手")
 
     def __onGameScreenshotCardClicked(self):
         from tasks.base.windowswitcher import WindowSwitcher
@@ -509,6 +534,7 @@ class SettingInterface(ScrollArea):
     def __connectSignalToSlot(self):
         """ connect signal to slot """
 
+        self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.forgottenhallTeamInfoCard.clicked.connect(lambda: os.system("start /WAIT explorer .\\assets\\images\\character"))
