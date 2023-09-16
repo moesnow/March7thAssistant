@@ -12,11 +12,10 @@ class Dispatch:
         if not config.dispatch_enable:
             logger.info(_("探索派遣未开启"))
             return False
-        screen.change_to('menu')
+        screen.change_to('dispatch')
 
-        if auto.find_element("./assets/images/dispatch/dispatch_reward.png", "image", 0.95):
+        if auto.find_element("./assets/images/dispatch/reward.png", "image", 0.9, crop=(323 / 1920, 184 / 1080, 814 / 1920, 94 / 1080)):
             logger.hr(_("检测到探索派遣奖励"), 2)
-            screen.change_to('dispatch')
 
             if Dispatch._perform_dispatches():
                 if config.daily_tasks["派遣1次委托"]:
@@ -50,6 +49,7 @@ class Dispatch:
 
     @staticmethod
     def _click_complete_dispatch(crop):
-        width, height = auto.get_image_info("./assets/images/dispatch/reward.png")
-        offset = (-2 * width, 2 * height)
+        # width, height = auto.get_image_info("./assets/images/dispatch/reward.png")
+        # offset = (-2 * width, 2 * height)
+        offset = (-34, 34)  # 以后改相对坐标偏移
         return auto.click_element("./assets/images/dispatch/reward.png", "image", 0.9, max_retries=10, offset=offset, crop=crop)
