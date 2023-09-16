@@ -124,6 +124,12 @@ class SettingInterface(ScrollArea):
             self.tr('无论何时都要使用支援角色，即使日常实训中没有要求'),
             "borrow_character_enable"
         )
+        self.borrowCharacterFromCard = PushSettingCardEval(
+            self.tr('修改'),
+            FIF.EXPRESSIVE_INPUT_ENTRY,
+            self.tr("使用用户名包含特定文字的支援角色（不为空时优先于使用用户名选择）"),
+            "borrow_character_from"
+        )
         self.borrowCharacterCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.ARROW_DOWN,
@@ -411,6 +417,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         # self.PowerGroup.addSettingCard(self.powerNeedCard)
         self.PowerGroup.addSettingCard(self.borrowCharacterEnableCard)
+        self.PowerGroup.addSettingCard(self.borrowCharacterFromCard)
         self.PowerGroup.addSettingCard(self.borrowCharacterCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
