@@ -13,7 +13,7 @@ from ..card.messagebox2 import MessageBox2
 def checkUpdate(self):
     try:
         url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
-        res = requests.get(url, timeout=3)
+        res = requests.get(url, timeout=3, verify=config.verify_ssl)
         if res.status_code != 200:
             return
 

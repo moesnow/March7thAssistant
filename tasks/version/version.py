@@ -19,7 +19,7 @@ class Version:
         logger.hr(_("开始检测更新"), 0)
         try:
             url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
-            res = requests.get(url, timeout=3)
+            res = requests.get(url, timeout=3, verify=config.verify_ssl)
             res.raise_for_status()
             data = json.loads(res.text)
             version = data["tag_name"]
