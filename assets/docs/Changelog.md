@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.5
+
+### 新功能
+- 支持图形界面中修改秘技按键 [#4](https://github.com/moesnow/March7thAssistant/pull/4)
+- 支持图形界面中导入配置文件 [#4](https://github.com/moesnow/March7thAssistant/pull/4)
+- 支持使用指定好友的支援角色 [#5](https://github.com/moesnow/March7thAssistant/pull/5)
+- 下载过程支持显示进度条
+### 修复
+- 更换手机壁纸，导致探索派遣检测失败
+
 ## v1.3.4.2
 
 ### 新功能
