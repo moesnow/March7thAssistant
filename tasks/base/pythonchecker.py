@@ -21,6 +21,7 @@ class PythonChecker:
                         config.set_value("python_path", path_dir)
                         logger.debug(_("Python路径更新成功：{path}").format(path=path_dir))
                         return True
+            logger.debug(_("没有在环境变量中找到可用的 Python 路径"))
 
         logger.warning(_("Python路径不存在: {path}").format(path=python_path))
 
@@ -52,6 +53,8 @@ class PythonChecker:
             if PythonChecker.check(destination_path):
                 config.set_value("python_path", destination_path)
                 return True
+
+            logger.error(_("仍未找到可用的 Python 路径，请手动卸载后重试"))
             return False
         except Exception as e:
             logger.error(_("下载失败：{e}").format(e=e))
