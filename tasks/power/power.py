@@ -86,11 +86,11 @@ class Power:
 
         try:
             # 尝试优先使用指定用户名的支援角色
-            if config.borrow_character_from.strip():
-                auto.mouse_click(230, 230)
+            if config.borrow_character_from:
+                auto.click_element("UID", "text", max_retries=10, crop=(18.0 / 1920, 15.0 / 1080, 572.0 / 1920, 414.0 / 1080), include=True)
                 time.sleep(0.5)
                 for i in range(5):
-                    if auto.click_element(config.borrow_character_from.strip(), "text", crop=(196 / 1920, 167 / 1080, 427 / 1920, 754 / 1080), include=True,):
+                    if auto.click_element(config.borrow_character_from, "text", crop=(196 / 1920, 167 / 1080, 427 / 1920, 754 / 1080), include=True):
                         # 找到角色的对应处理
                         if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
                             logger.error(_("找不到入队按钮"))
@@ -109,7 +109,7 @@ class Power:
                                 continue
                         else:
                             return False
-                    auto.mouse_scroll(18, -1)
+                    auto.mouse_scroll(27, -1)
                     # 等待界面完全停止
                     time.sleep(0.5)
 
@@ -125,7 +125,6 @@ class Power:
                 if not auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080)):
                     logger.error(_("未进入支援列表"))
                     return False
-                
 
             for name in config.borrow_character:
                 if auto.click_element("./assets/images/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2), crop=(57 / 1920, 143 / 1080, 140 / 1920, 814 / 1080)):

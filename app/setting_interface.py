@@ -127,13 +127,13 @@ class SettingInterface(ScrollArea):
         self.borrowCharacterFromCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.EXPRESSIVE_INPUT_ENTRY,
-            self.tr("使用用户名包含特定文字的支援角色（不为空时优先于使用用户名选择）"),
+            self.tr("指定好友的支援角色（如存在则优先使用）"),
             "borrow_character_from"
         )
         self.borrowCharacterCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.ARROW_DOWN,
-            self.tr("支援角色优先级从高到低"),
+            self.tr("支援角色优先级（从高到低）"),
             "borrow_character"
         )
         self.instanceTeamEnableCard = SwitchSettingCard1(
@@ -479,7 +479,7 @@ class SettingInterface(ScrollArea):
 
     def __onImportConfigCardClicked(self):
         configdir, _ = QFileDialog.getOpenFileName(self, "选取配置文件", "./", "Config Files (*.yaml)")
-        if(configdir != ""):
+        if (configdir != ""):
             config._load_config(configdir)
             config.save_config()
             self.importConfigCard.button.setText("导入完成，请重启小助手")
