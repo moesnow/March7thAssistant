@@ -199,19 +199,20 @@ class Power:
             # 等待界面完全停止
             time.sleep(0.5)
         if not Flag:
-            Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
+            Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 没有找到指定副本名称⚠️"))
             return False
         # 验证传送是否成功
-        if not auto.find_element(instance_name, "text", max_retries=10, include=True, crop=(1189.0 / 1920, 102.0 / 1080, 712.0 / 1920, 922.0 / 1080)):
-            Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
+        if not auto.find_element(instance_name, "text", max_retries=20, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
+            Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 传送可能失败⚠️"))
             return False
 
         if "拟造花萼" in instance_type:
             count = power_need // 10 - 1
             if not 0 <= count <= 5:
-                Base.send_notification_with_screenshot(_("⚠️刷副本未完成⚠️"))
+                Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 拟造花萼次数错误⚠️"))
                 return False
-            result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.9, max_retries=10)
+            result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.9, max_retries=10,
+                                       crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
             for i in range(count):
                 auto.click_element_with_pos(result)
                 time.sleep(0.5)
