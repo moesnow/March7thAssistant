@@ -16,6 +16,10 @@ class StyleSheet(StyleSheetBase, Enum):
     GALLERY_INTERFACE = "gallery_interface"
     NAVIGATION_VIEW_INTERFACE = "navigation_view_interface"
 
+    TASKS_INTERFACE = "tasks_interface"
+    FQA_INTERFACE = "fqa_interface"
+    CHANGELOGS_INTERFACE = "changelogs_interface"
+
     def path(self, theme=Theme.AUTO):
         theme = qconfig.theme if theme == Theme.AUTO else theme
         return f"./assets/app/qss/{theme.value.lower()}/{self.value}.qss"

@@ -4,6 +4,7 @@ from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 
 from qfluentwidgets import ScrollArea
+from .common.style_sheet import StyleSheet
 
 import markdown
 
@@ -17,12 +18,20 @@ class FQAInterface(ScrollArea):
         self.vBoxLayout = QVBoxLayout(self.view)
         self.titleLabel = QLabel(self.tr("常见问题"), self)
         self.contentLabel = QLabel("html_content", parent)
+        html_style = """
+<style>
+a {
+    color: #f18cb9;
+    font-weight: bold;
+}
+</style>
+"""
         try:
             with open(".\\assets\\docs\\FQA.md", 'r', encoding='utf-8') as file:
                 self.content = file.read()
         except FileNotFoundError:
             exit(1)
-        html_content = markdown.markdown(self.content)
+        html_content = html_style + markdown.markdown(self.content)
         self.contentLabel.setText(html_content)
         self.contentLabel.setOpenExternalLinks(True)
         self.contentLabel.linkActivated.connect(self.open_url)
@@ -34,25 +43,7 @@ class FQAInterface(ScrollArea):
         self.setObjectName('FQAsInterface')
         self.contentLabel.setObjectName('contentLabel')
         self.titleLabel.setObjectName('FQAsLabel')
-        self.setStyleSheet("""
-#view {
-    background-color: transparent;
-}
-
-QScrollArea {
-    border: none;
-    background-color: transparent;
-}
-
-QLabel#contentLabel {
-    font: 14px 'Microsoft YaHei Light';
-}
-                           
-QLabel#FQAsLabel {
-    font: 28px 'Microsoft YaHei Light';
-    background-color: transparent;
-}
-        """)
+        StyleSheet.FQA_INTERFACE.apply(self)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidget(self.view)

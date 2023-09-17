@@ -1,0 +1,17 @@
+#view {
+    background-color: transparent;
+}
+
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+QLabel#contentLabel {
+    font: 14px 'Microsoft YaHei Light';
+}
+                           
+QLabel#tasksLabel {
+    font: 28px 'Microsoft YaHei Light';
+    background-color: transparent;
+}

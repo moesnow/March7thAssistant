@@ -31,9 +31,18 @@ def checkUpdate(self):
 
         assert_url = config.github_mirror + assert_url
 
+        html_style = """
+<style>
+a {
+    color: #f18cb9;
+    font-weight: bold;
+}
+</style>
+"""
+
         if version > config.version:
             # if True:
-            w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", markdown.markdown(content), self.window())
+            w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content), self.window())
             if w.exec():
                 import subprocess
                 source_file = r".\\Update.exe"

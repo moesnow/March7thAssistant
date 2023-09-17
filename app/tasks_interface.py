@@ -2,7 +2,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
 
-from qfluentwidgets import ScrollArea
+from qfluentwidgets import ScrollArea, qconfig, darkdetect, isDarkTheme
+from .common.style_sheet import StyleSheet
 
 import markdown
 
@@ -16,6 +17,7 @@ class TasksInterface(ScrollArea):
         self.vBoxLayout = QVBoxLayout(self.view)
         self.titleLabel = QLabel(self.tr("每日实训"), self)
         self.contentLabel = QLabel("html_content", parent)
+        qconfig.themeChanged.connect(self.__themeChanged)
         html_style = """
 <style>
 table {
@@ -60,35 +62,27 @@ th, td {
 | 合成1次材料                         |   ✅      |          |
 | 使用1件消耗品                       |   ✅      |          |
         """
-        html_content = html_style + markdown.markdown(self.content, extensions=['tables'])
-        self.contentLabel.setText(html_content)
+        self.html_content = html_style + markdown.markdown(self.content, extensions=['tables'])
+
+        if qconfig.theme.name == "DARK":
+            self.contentLabel.setText(self.html_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+        else:
+            self.contentLabel.setText(self.html_content)
 
         self.__initWidget()
+
+    def __themeChanged(self):
+        if qconfig.theme.name == "DARK":
+            self.contentLabel.setText(self.html_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+        else:
+            self.contentLabel.setText(self.html_content)
 
     def __initWidget(self):
         self.view.setObjectName('view')
         self.setObjectName('tasksInterface')
         self.contentLabel.setObjectName('contentLabel')
         self.titleLabel.setObjectName('tasksLabel')
-        self.setStyleSheet("""
-#view {
-    background-color: transparent;
-}
-
-QScrollArea {
-    border: none;
-    background-color: transparent;
-}
-
-QLabel#contentLabel {
-    font: 14px 'Microsoft YaHei Light';
-}
-                           
-QLabel#tasksLabel {
-    font: 28px 'Microsoft YaHei Light';
-    background-color: transparent;
-}
-        """)
+        StyleSheet.TASKS_INTERFACE.apply(self)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidget(self.view)

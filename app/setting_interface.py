@@ -69,7 +69,7 @@ class SettingInterface(ScrollArea):
             "github_mirror"
         )
         self.autoExitCard = SwitchSettingCard1(
-            FIF.POWER_BUTTON,
+            FIF.BROOM,
             self.tr('退出游戏'),
             self.tr('程序运行完后自动退出游戏'),
             "auto_exit"
@@ -132,7 +132,7 @@ class SettingInterface(ScrollArea):
         )
         self.borrowCharacterFromCard = PushSettingCardEval(
             self.tr('修改'),
-            FIF.EXPRESSIVE_INPUT_ENTRY,
+            FIF.VIEW,
             self.tr("指定好友的支援角色（如存在则优先使用）"),
             "borrow_character_from"
         )
