@@ -1,49 +1,45 @@
-# 欢迎使用 March7th Assistant
-# 此程序为免费开源项目 欢迎Star
-# QQ交流群 855392201
-# https://github.com/moesnow/March7thAssistant
-locales: zh_CN # 语言
 agreed_to_disclaimer: false
-log_level: INFO # 日志等级 INFO、DEBUG（如果遇到Bug请修改为DEBUG等级，可以显示更多信息）
-check_update: true # 自动检测更新
-verify_ssl: true #启用 SSL 证书验证
-auto_exit: true # 程序运行完后自动退出游戏
-never_stop: true # 根据开拓力循环运行程序
-power_limit: 160 # 等待再次运行所需开拓力
+locales: zh_CN # 语言
+log_level: INFO # 日志等级
+check_update: true # 检测更新
+verify_ssl: true # 更新时检查证书
+auto_exit: true # 自动退出游戏
+auto_shutdown: false # 自动关机
+never_stop: true # 循环运行程序
+power_limit: 160 # 再次运行所需开拓力
 
 ocr_path: .\3rdparty\PaddleOCR-json_v.1.3.0\PaddleOCR-json.exe
 python_path: ''
 pip_mirror: https://mirrors.cloud.tencent.com/pypi/simple
 github_mirror: https://github.moeyy.xyz/
 
-game_title_name: 崩坏：星穹铁道 # 游戏窗口标题
-game_process_name: StarRail # 游戏进程名
+game_title_name: 崩坏：星穹铁道 # 窗口标题
+game_process_name: StarRail # 进程名
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏路径
 
 power_total: 999 # 开拓力最大值
-power_rec_min: 6 # 每开拓力恢复需要的分钟数
+power_rec_min: 6 # 开拓力恢复速度
 dispatch_count: 4 # 派遣次数
 
 instance_type: 侵蚀隧洞 # 副本类型：侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
-instance_names: # 不同副本类型对应副本名称
+instance_names: # 副本名称
   拟造花萼（金）: 以太之蕾
   拟造花萼（赤）: 智识之蕾
   凝滞虚影: 无
   侵蚀隧洞: 睿治之径
   历战余响: 不死的神实
-power_needs: # 不同副本类型对应所需开拓力
+power_needs: # 副本所需开拓力
   拟造花萼（金）: 60
   拟造花萼（赤）: 60
   凝滞虚影: 30
   侵蚀隧洞: 40
   历战余响: 30
-borrow_character_enable: false # 无论何时都要使用支援角色，即使日常实训中没有要求
-# 建议四号位放无关紧要的角色避免练度导致翻车
-borrow_character_from: # 指定好友的支援角色（如存在则优先使用）
+borrow_character_enable: false # 强制使用支援角色
+borrow_character_from: # 使用指定好友的支援角色
 - 好友1
 - 好友2
 - 好友3
-borrow_character: # 支援角色优先级（从高到低）
+borrow_character: # 支援角色优先级
 - Seele
 - Blade
 - JingYuan
@@ -55,16 +51,16 @@ borrow_character: # 支援角色优先级（从高到低）
 - Luocha
 - Gepard
 - Bailu
-instance_team_enable: false # 启用自动切换队伍
-instance_team_number: '1' # 打副本使用的队伍编号
-echo_of_war_enable: false # 每周体力优先完成3次「历战余响」
+instance_team_enable: false # 打副本时自动切换队伍
+instance_team_number: '1' # 队伍编号
+echo_of_war_enable: false # 体力优先完成3次「历战余响」
 echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳（每周运行）
 
-dispatch_enable: true # 启用领取派遣奖励
-mail_enable: true # 启用领取邮件奖励
-assist_enable: true # 启用领取支援奖励
-srpass_enable: false # 启用领取无名勋礼奖励
-daily_tasks:
+dispatch_enable: true # 领取派遣奖励
+mail_enable: true # 领取邮件奖励
+assist_enable: true # 领取支援奖励
+srpass_enable: false # 领取无名勋礼奖励
+daily_tasks: # 每日实训
   完成1个日常任务: false
   完成1次「拟造花萼（金）」: false
   完成1次「拟造花萼（赤）」: false
@@ -95,12 +91,12 @@ last_run_timestamp: 0 # 上次运行日常的时间戳
 fight_enable: false # 启用锄大地
 fight_path: .\3rdparty\Fhoe-Rail # 锄大地路径
 fight_timeout: 6 # 锄大地超时（单位小时）
-fight_team_enable: false # 启用自动切换队伍
-fight_team_number: '2' # 锄大地使用的队伍编号
+fight_team_enable: false # 锄大地时自动切换队伍
+fight_team_number: '2' # 队伍编号
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: false # 启用模拟宇宙
-universe_bonus_enable: false # 启用领取沉浸奖励
+universe_bonus_enable: false # 领取沉浸奖励
 universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
@@ -113,7 +109,7 @@ forgottenhall_retries: 1 # 混沌回忆挑战失败后的重试次数
 # 混沌回忆队伍
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
-forgottenhall_team1: # 混沌回忆队伍1
+forgottenhall_team1: # 队伍1
 - -
     Asta
   - -1
@@ -123,7 +119,7 @@ forgottenhall_team1: # 混沌回忆队伍1
   - 2
 - - JingYuan
   - 1
-forgottenhall_team2: # 混沌回忆队伍2
+forgottenhall_team2: # 队伍2
 - -
     Bronya
   - 1
@@ -149,4 +145,3 @@ notify_wechatworkapp_enable: false # 启用企业微信应用通知
 notify_wechatworkapp_corpid: ''
 notify_wechatworkapp_corpsecret: ''
 notify_wechatworkapp_agentid: ''
-

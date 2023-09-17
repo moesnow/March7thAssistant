@@ -5,6 +5,9 @@ from managers.config_manager import config
 from tasks.base.base import Base
 from tasks.base.date import Date
 import psutil
+import time
+import sys
+import os
 
 
 class Stop:
@@ -23,6 +26,7 @@ class Stop:
 
     @staticmethod
     def stop_game():
+        logger.info(_("开始退出游戏"))
         if Base.check_and_switch(config.game_title_name):
             if not auto.retry_with_timeout(Stop.terminate_process, 10, 1, config.game_process_name):
                 logger.error(_("游戏退出失败"))
@@ -41,3 +45,10 @@ class Stop:
         # 取最小值
         wait_time = min(wait_time_power_limit, wait_time_next_day)
         return wait_time
+
+    @staticmethod
+    def shutdown():
+        logger.warning(_("将在1分钟后自动关机"))
+        time.sleep(60)
+        os.system("shutdown /s /t 0")
+        sys.exit(0)

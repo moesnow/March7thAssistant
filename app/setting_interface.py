@@ -71,8 +71,14 @@ class SettingInterface(ScrollArea):
         self.autoExitCard = SwitchSettingCard1(
             FIF.POWER_BUTTON,
             self.tr('退出游戏'),
-            self.tr('程序运行完后自动退出游戏（仅限完整运行生效）'),
+            self.tr('程序运行完后自动退出游戏'),
             "auto_exit"
+        )
+        self.autoShutdownCard = SwitchSettingCard1(
+            FIF.POWER_BUTTON,
+            self.tr('自动关机'),
+            self.tr('程序运行完后自动关机'),
+            "auto_shutdown"
         )
         self.neverStopCard = SwitchSettingCard1(
             FIF.SYNC,
@@ -408,6 +414,7 @@ class SettingInterface(ScrollArea):
         self.programGroup.addSettingCard(self.pipMirrorCard)
         self.programGroup.addSettingCard(self.githubMirrorCard)
         self.programGroup.addSettingCard(self.autoExitCard)
+        self.programGroup.addSettingCard(self.autoShutdownCard)
         self.programGroup.addSettingCard(self.neverStopCard)
         self.programGroup.addSettingCard(self.powerLimitCard)
 

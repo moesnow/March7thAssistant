@@ -4,6 +4,7 @@ from managers.config_manager import config
 from managers.ocr_manager import ocr
 from managers.translate_manager import _
 from tasks.game.game import Game
+from tasks.game.stop import Stop
 from tasks.daily.daily import Daily
 from tasks.daily.fight import Fight
 from tasks.version.version import Version
@@ -50,6 +51,13 @@ def main(action=None):
             logger.warning(f"Unknown action: {action}")
             input(_("按任意键关闭窗口. . ."))
             sys.exit(1)
+
+        # 自动退出游戏
+        if config.auto_exit or config.auto_shutdown:
+            Stop.stop_game()
+            # 自动关机
+            if config.auto_shutdown:
+                Stop.shutdown()
         input(_("按任意键关闭窗口. . ."))
         sys.exit(0)
 
