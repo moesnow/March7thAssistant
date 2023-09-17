@@ -12,6 +12,14 @@ from ..card.messagebox4 import MessageBox4
 
 
 def disclaimer(self):
+    html_style = """
+<style>
+a {
+    color: #f18cb9;
+    font-weight: bold;
+}
+</style>
+"""
     content = '''
 本软件是一个外部工具旨在自动化崩坏星轨的游戏玩法。它被设计成仅通过现有用户界面与游戏交互,并遵守相关法律法规。
 
@@ -42,7 +50,7 @@ The problems and consequences arising from this software have nothing to do with
     "一经发现，米哈游（下亦称“我们”）将视违规严重程度及违规次数，采取扣除违规收益、冻结游戏账号、永久封禁游戏账号等措施。"
 '''
     try:
-        w = MessageBox4(f"免责声明", markdown.markdown(content), self.window())
+        w = MessageBox4(f"免责声明", html_style + markdown.markdown(content), self.window())
         if w.exec():
             config.set_value("agreed_to_disclaimer", True)
         else:
