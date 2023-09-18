@@ -9,7 +9,7 @@ from .common.style_sheet import StyleSheet
 import markdown
 
 
-class FQAInterface(ScrollArea):
+class FAQInterface(ScrollArea):
     """ Home interface """
 
     def __init__(self, parent=None):
@@ -27,7 +27,7 @@ a {
 </style>
 """
         try:
-            with open(".\\assets\\docs\\FQA.md", 'r', encoding='utf-8') as file:
+            with open(".\\assets\\docs\\FAQ.md", 'r', encoding='utf-8') as file:
                 self.content = file.read()
         except FileNotFoundError:
             exit(1)
@@ -43,7 +43,7 @@ a {
         self.setObjectName('FQAsInterface')
         self.contentLabel.setObjectName('contentLabel')
         self.titleLabel.setObjectName('FQAsLabel')
-        StyleSheet.FQA_INTERFACE.apply(self)
+        StyleSheet.FAQ_INTERFACE.apply(self)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidget(self.view)

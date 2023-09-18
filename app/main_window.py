@@ -9,7 +9,7 @@ from .home_interface import HomeInterface
 from .setting_interface import SettingInterface
 from .tasks_interface import TasksInterface
 from .changelog_interface import ChangelogInterface
-from .fqa_interface import FQAInterface
+from .faq_interface import FAQInterface
 
 from .card.messagebox3 import MessageBox3
 
@@ -30,7 +30,7 @@ class MainWindow(MSFluentWindow):
         self.tasksInterface = TasksInterface(self)
         self.settingInterface = SettingInterface(self)
         self.changelogInterface = ChangelogInterface(self)
-        self.fqaInterface = FQAInterface(self)
+        self.faqInterface = FAQInterface(self)
 
         self.initNavigation()
         self.splashScreen.finish()
@@ -46,7 +46,7 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('主页'))
         self.addSubInterface(self.tasksInterface, FIF.LABEL, self.tr('每日实训'))
         self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
-        self.addSubInterface(self.fqaInterface, FIF.CHAT, self.tr('常见问题'))
+        self.addSubInterface(self.faqInterface, FIF.CHAT, self.tr('常见问题'))
         # self.navigationInterface.addSeparator()
 
         self.navigationInterface.addWidget(

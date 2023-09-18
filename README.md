@@ -55,7 +55,7 @@ This software is open source, free of charge and for learning and exchange purpo
 
 ## 常见问题
 
-[FQA.md](assets/docs/FQA.md)
+[FAQ.md](assets/docs/FAQ.md)
 
 ## 源码运行
 

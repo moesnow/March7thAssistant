@@ -17,7 +17,7 @@ class StyleSheet(StyleSheetBase, Enum):
     NAVIGATION_VIEW_INTERFACE = "navigation_view_interface"
 
     TASKS_INTERFACE = "tasks_interface"
-    FQA_INTERFACE = "fqa_interface"
+    FAQ_INTERFACE = "faq_interface"
     CHANGELOGS_INTERFACE = "changelogs_interface"
 
     def path(self, theme=Theme.AUTO):
