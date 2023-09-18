@@ -26,7 +26,6 @@ def checkUpdate(self):
                 continue
             else:
                 assert_url = asset["browser_download_url"]
-                assert_name = asset["name"].rsplit(".", 1)[0]
                 break
 
         assert_url = config.github_mirror + assert_url
@@ -46,7 +45,7 @@ a {
             if w.exec():
                 import subprocess
                 source_file = r".\\Update.exe"
-                subprocess.run(['start', source_file, assert_url, assert_name], shell=True)
+                subprocess.run(['start', source_file, assert_url], shell=True)
         else:
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),
