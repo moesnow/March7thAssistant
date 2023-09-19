@@ -189,7 +189,7 @@ class ForgottenHall:
             logger.info(_("开始挑战第{i}层").format(i=f"{i:02}"))
             # 选择角色
             if not ForgottenHall.configure_teams():
-                logger.error(_("配置队伍失败"))
+                logger.error(_("配置队伍失败，请检查是否在设置中配置好两个队伍！！！"))
                 break
 
             # 点击弹出框
