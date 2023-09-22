@@ -61,6 +61,8 @@ dispatch_enable: true # 领取派遣奖励
 mail_enable: true # 领取邮件奖励
 assist_enable: true # 领取支援奖励
 srpass_enable: false # 领取无名勋礼奖励
+
+daily_forgottenhall_enable: false # 完成1次「忘却之庭」每日实训
 daily_tasks: # 每日实训
   完成1个日常任务: false
   完成1次「拟造花萼（金）」: false

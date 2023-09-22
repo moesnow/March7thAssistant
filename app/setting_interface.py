@@ -206,6 +206,12 @@ class SettingInterface(ScrollArea):
             "此设置不会影响领取无名勋礼经验，大月卡玩家请不要开启此功能",
             "srpass_enable"
         )
+        self.dailyForgottenhallEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用完成1次「忘却之庭」'),
+            "请解锁混沌回忆并配置了队伍1后再打开该选项",
+            "daily_forgottenhall_enable"
+        )
         # self.photoEnableCard = SwitchSettingCard1(
         #     FIF.PHOTO,
         #     self.tr('启用每日拍照'),
@@ -451,6 +457,7 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.mailEnableCard)
         self.DailyGroup.addSettingCard(self.assistEnableCard)
         self.DailyGroup.addSettingCard(self.srpassEnableCard)
+        self.DailyGroup.addSettingCard(self.dailyForgottenhallEnableCard)
         # self.DailyGroup.addSettingCard(self.photoEnableCard)
         # self.DailyGroup.addSettingCard(self.synthesisEnableCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
