@@ -121,7 +121,7 @@ class SettingInterface(ScrollArea):
             self.tr('修改'),
             FIF.PALETTE,
             # self.tr("副本名称\n保证唯一即可，例如“孽兽之形”可以填写“兽之形”，低概率下复杂文字会识别错误"),
-            self.tr("副本名称（不同副本类型需单独设置，同时也会用于完成每日实训，“无”代表不启用）               "),
+            self.tr("副本名称（必须按照格式修改成自己所需的名称，也会用于完成每日实训，“无”代表不启用）"),
             "instance_names"
         )
         # self.powerNeedCard = PushSettingCardEval(
