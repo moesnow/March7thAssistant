@@ -57,7 +57,9 @@ def main(action=None):
             Stop.stop_game()
             # 自动关机
             if config.auto_shutdown:
+                Stop.play_audio()
                 Stop.shutdown()
+        Stop.play_audio()
         input(_("按任意键关闭窗口. . ."))
         sys.exit(0)
 

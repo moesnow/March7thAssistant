@@ -86,6 +86,12 @@ class SettingInterface(ScrollArea):
             self.tr('保持命令行窗口开启，根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
             "never_stop"
         )
+        self.playAudioCard = SwitchSettingCard1(
+            FIF.ALBUM,
+            self.tr('声音提示'),
+            self.tr('任务完成后列车长唱歌提示帕！'),
+            "play_audio"
+        )
         self.powerLimitCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.HEART,
@@ -416,6 +422,7 @@ class SettingInterface(ScrollArea):
         self.programGroup.addSettingCard(self.autoExitCard)
         self.programGroup.addSettingCard(self.autoShutdownCard)
         self.programGroup.addSettingCard(self.neverStopCard)
+        self.programGroup.addSettingCard(self.playAudioCard)
         self.programGroup.addSettingCard(self.powerLimitCard)
 
         self.GameGroup.addSettingCard(self.gamePathCard)

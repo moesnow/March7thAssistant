@@ -52,3 +52,16 @@ class Stop:
         time.sleep(60)
         os.system("shutdown /s /t 0")
         sys.exit(0)
+
+    @staticmethod
+    def play_audio():
+        if config.play_audio:
+            os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+            import pygame.mixer
+
+            pygame.init()
+            pygame.mixer.music.load('./assets/audio/pa.mp3')
+            pygame.mixer.music.play()
+
+            while pygame.mixer.music.get_busy():
+                pygame.time.Clock().tick(10)

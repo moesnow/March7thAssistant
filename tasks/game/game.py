@@ -39,7 +39,9 @@ class Game:
                 Stop.stop_game()
                 # 自动关机
                 if config.auto_shutdown:
+                    Stop.play_audio()
                     Stop.shutdown()
+            Stop.play_audio()
             # 开拓力识别失败，等待数字变化
             if current_power == -1:
                 logger.info(_("📅将在{power_rec_min}分钟后继续运行").format(power_rec_min=config.power_rec_min))
