@@ -49,6 +49,6 @@ class Fight:
                 logger.info(_("你可以从 QQ 群文件(855392201)获取锄大地补丁包"))
                 return False
             if subprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.fight_path} && pip install -i {config.pip_mirror} -r requirements.txt", shell=True, check=True):
-                if subprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.fight_path} && start gui.exe", shell=True, check=True):
+                if subprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.fight_path} && start 点我点我.exe", shell=True, check=True):
                     return True
         return False
