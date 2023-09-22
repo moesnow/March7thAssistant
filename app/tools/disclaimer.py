@@ -1,14 +1,9 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt
-from qfluentwidgets import InfoBar, InfoBarPosition
-
 from managers.config_manager import config
 import markdown
-import requests
-import json
 import sys
 
-from ..card.messagebox4 import MessageBox4
+from ..card.messageboxdisclaimer import MessageBoxDisclaimer
 
 
 def disclaimer(self):
@@ -50,7 +45,7 @@ The problems and consequences arising from this software have nothing to do with
     "一经发现，米哈游（下亦称“我们”）将视违规严重程度及违规次数，采取扣除违规收益、冻结游戏账号、永久封禁游戏账号等措施。"
 '''
     try:
-        w = MessageBox4(f"免责声明", html_style + markdown.markdown(content), self.window())
+        w = MessageBoxDisclaimer(f"免责声明", html_style + markdown.markdown(content), self.window())
         if w.exec():
             config.set_value("agreed_to_disclaimer", True)
         else:

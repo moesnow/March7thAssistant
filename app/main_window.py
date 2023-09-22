@@ -1,6 +1,6 @@
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import QSize
 
 from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, darkdetect, Theme
 from qfluentwidgets import FluentIcon as FIF
@@ -11,18 +11,20 @@ from .tasks_interface import TasksInterface
 from .changelog_interface import ChangelogInterface
 from .faq_interface import FAQInterface
 
-from .card.messagebox3 import MessageBox3
+from .card.messageboxsupport import MessageBoxSupport
 
-from managers.config_manager import config
 from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
+
+from managers.config_manager import config
 
 
 class MainWindow(MSFluentWindow):
     def __init__(self):
         super().__init__()
+        setThemeColor('#f18cb9')
         setTheme(Theme.DARK if darkdetect.theme() == 'Dark' else Theme.LIGHT)
-        # setTheme(Theme.DARK)
+
         self.initWindow()
 
         # create sub interface
@@ -35,9 +37,11 @@ class MainWindow(MSFluentWindow):
         self.initNavigation()
         self.splashScreen.finish()
 
+        # 免责申明
         if not config.agreed_to_disclaimer:
             disclaimer(self)
 
+        # 检查更新
         if config.check_update:
             checkUpdate(self)
 
@@ -47,7 +51,6 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.tasksInterface, FIF.LABEL, self.tr('每日实训'))
         self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
         self.addSubInterface(self.faqInterface, FIF.CHAT, self.tr('常见问题'))
-        # self.navigationInterface.addSeparator()
 
         self.navigationInterface.addWidget(
             'themeButton',
@@ -64,9 +67,6 @@ class MainWindow(MSFluentWindow):
 
         self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
 
-    def toggleTheme(self):
-        toggleTheme(save=False)
-
     def initWindow(self):
         # 禁用最大化
         self.titleBar.maxBtn.setHidden(True)
@@ -74,8 +74,6 @@ class MainWindow(MSFluentWindow):
         self.titleBar.setDoubleClickEnabled(False)
         self.setResizeEnabled(False)
         # self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowMaximizeButtonHint)
-
-        setThemeColor('#f18cb9')
 
         self.resize(960, 780)
         self.setWindowIcon(QIcon('assets\logo\March7th.ico'))
@@ -92,8 +90,11 @@ class MainWindow(MSFluentWindow):
         self.show()
         QApplication.processEvents()
 
+    def toggleTheme(self):
+        toggleTheme(save=False)
+
     def onSupport(self):
-        w = MessageBox3(
+        w = MessageBoxSupport(
             '支持作者🥰',
             '如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀',
             './assets/app/images/sponsor.jpg',

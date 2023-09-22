@@ -1,13 +1,12 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QEvent, QUrl
-from PyQt5.QtGui import QColor, QDesktopServices
+from PyQt5.QtCore import Qt, pyqtSignal, QObject, QEvent
+from PyQt5.QtGui import QColor, QPixmap
 from PyQt5.QtWidgets import QLabel, QFrame, QVBoxLayout, QHBoxLayout, QPushButton
 from qframelesswindow import FramelessDialog
 
-from qfluentwidgets import LineEdit, TextWrap, FluentStyleSheet, PrimaryPushButton
+from qfluentwidgets import IconWidget, TextWrap, FluentStyleSheet, PrimaryPushButton, LineEdit
 
 from .mask_dialog_base import MaskDialogBase
-import markdown
 
 
 class Ui_MessageBox:
@@ -16,27 +15,22 @@ class Ui_MessageBox:
     yesSignal = pyqtSignal()
     cancelSignal = pyqtSignal()
 
-    def _setUpUi(self, title, content, parent):
+    def _setUpUi(self, title, content, imagePath, parent):
         self.content = content
         self.titleLabel = QLabel(title, parent)
-
-        self.contentLabel = QLabel("html_content", parent)
-
-        # self.lineEdit = LineEdit(self)
-        # self.lineEdit.setText(content)
+        self.contentLabel = QLabel(content, parent)
+        self.iconLabel = QLabel(parent)
+        self.iconLabel.setPixmap(QPixmap(imagePath))
 
         self.buttonGroup = QFrame(parent)
-        self.cancelButton = QPushButton(self.tr('好的'), self.buttonGroup)
-        self.yesButton = PrimaryPushButton(self.tr('下载'), self.buttonGroup)
+        self.yesButton = PrimaryPushButton(self.tr('OK'), self.buttonGroup)
+        self.cancelButton = QPushButton(self.tr('Cancel'), self.buttonGroup)
 
         self.vBoxLayout = QVBoxLayout(parent)
         self.textLayout = QVBoxLayout()
         self.buttonLayout = QHBoxLayout(self.buttonGroup)
 
         self.__initWidget()
-
-    def open_url(self, url):
-        QDesktopServices.openUrl(QUrl(url))
 
     def __initWidget(self):
         self.__setQss()
@@ -65,15 +59,13 @@ class Ui_MessageBox:
             w = max(self.titleLabel.width(), self.window().width())
             chars = max(min(w / 9, 100), 30)
 
-        # self.contentLabel.setText(TextWrap.wrap(self.content, chars, False)[0])
-        self.contentLabel.setText(self.content)
-        self.contentLabel.setOpenExternalLinks(True)  # Enable clicking on links
-        self.contentLabel.linkActivated.connect(self.open_url)
+        self.contentLabel.setText(TextWrap.wrap(self.content, chars, False)[0])
 
     def __initLayout(self):
         self.vBoxLayout.setSpacing(0)
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.addLayout(self.textLayout, 1)
+        self.vBoxLayout.addWidget(self.iconLabel, 0, Qt.AlignCenter)
         self.vBoxLayout.addWidget(self.buttonGroup, 0, Qt.AlignBottom)
         self.vBoxLayout.setSizeConstraint(QVBoxLayout.SetMinimumSize)
 
@@ -81,19 +73,17 @@ class Ui_MessageBox:
         self.textLayout.setContentsMargins(24, 24, 24, 24)
         self.textLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
         self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
-        # self.textLayout.addWidget(self.lineEdit, 0, Qt.AlignTop)
 
         self.buttonLayout.setSpacing(12)
         self.buttonLayout.setContentsMargins(24, 24, 24, 24)
-        self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignVCenter)
         self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignVCenter)
+        self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignVCenter)
 
     def __onCancelButtonClicked(self):
         self.reject()
         self.cancelSignal.emit()
 
     def __onYesButtonClicked(self):
-        # self.open_url(self.url)
         self.accept()
         self.yesSignal.emit()
 
@@ -134,25 +124,26 @@ class Dialog(FramelessDialog, Ui_MessageBox):
         self.windowTitleLabel.setVisible(isVisible)
 
 
-class MessageBox2(MaskDialogBase, Ui_MessageBox):
+class MessageBoxSupport(MaskDialogBase, Ui_MessageBox):
     """ Message box """
 
     yesSignal = pyqtSignal()
     cancelSignal = pyqtSignal()
 
-    def __init__(self, title: str, content: str, parent=None):
+    def __init__(self, title: str, content: str, imagePath: str, parent=None):
         super().__init__(parent=parent)
-        self._setUpUi(title, content, self.widget)
+        self._setUpUi(title, content, imagePath, self.widget)
 
         self.setShadowEffect(60, (0, 10), QColor(0, 0, 0, 50))
         self.setMaskColor(QColor(0, 0, 0, 76))
         self._hBoxLayout.removeWidget(self.widget)
         self._hBoxLayout.addWidget(self.widget, 1, Qt.AlignCenter)
 
-        # self.buttonGroup.setMinimumWidth(480)
         self.buttonGroup.setMinimumWidth(280)
+        # self.buttonGroup.setMinimumWidth(680)
         self.widget.setFixedSize(
-            max(self.contentLabel.width(), self.titleLabel.width()) + 48, self.contentLabel.y() + self.contentLabel.height() + 105
+            max(self.contentLabel.width(), self.titleLabel.width()) + 48,
+            self.contentLabel.y() + self.contentLabel.height() + 105
         )
 
     def eventFilter(self, obj, e: QEvent):
@@ -161,6 +152,3 @@ class MessageBox2(MaskDialogBase, Ui_MessageBox):
                 self._adjustText()
 
         return super().eventFilter(obj, e)
-
-    # def getText(self):
-    #     return self.lineEdit.text()

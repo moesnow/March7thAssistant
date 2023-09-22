@@ -26,8 +26,8 @@ class Ui_MessageBox:
         # self.lineEdit.setText(content)
 
         self.buttonGroup = QFrame(parent)
-        self.cancelButton = QPushButton(self.tr('我已知晓'), self.buttonGroup)
-        self.yesButton = PrimaryPushButton(self.tr('退出'), self.buttonGroup)
+        self.cancelButton = QPushButton(self.tr('好的'), self.buttonGroup)
+        self.yesButton = PrimaryPushButton(self.tr('下载'), self.buttonGroup)
 
         self.vBoxLayout = QVBoxLayout(parent)
         self.textLayout = QVBoxLayout()
@@ -89,12 +89,13 @@ class Ui_MessageBox:
         self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignVCenter)
 
     def __onCancelButtonClicked(self):
-        self.accept()
-        self.yesSignal.emit()
-
-    def __onYesButtonClicked(self):
         self.reject()
         self.cancelSignal.emit()
+
+    def __onYesButtonClicked(self):
+        # self.open_url(self.url)
+        self.accept()
+        self.yesSignal.emit()
 
     def __setQss(self):
         self.titleLabel.setObjectName("titleLabel")
@@ -133,7 +134,7 @@ class Dialog(FramelessDialog, Ui_MessageBox):
         self.windowTitleLabel.setVisible(isVisible)
 
 
-class MessageBox4(MaskDialogBase, Ui_MessageBox):
+class MessageBoxUpdate(MaskDialogBase, Ui_MessageBox):
     """ Message box """
 
     yesSignal = pyqtSignal()
@@ -148,11 +149,11 @@ class MessageBox4(MaskDialogBase, Ui_MessageBox):
         self._hBoxLayout.removeWidget(self.widget)
         self._hBoxLayout.addWidget(self.widget, 1, Qt.AlignCenter)
 
+        # self.buttonGroup.setMinimumWidth(480)
         self.buttonGroup.setMinimumWidth(280)
-        # self.buttonGroup.setMinimumWidth(280)
-        # self.widget.setFixedSize(
-        #     max(self.contentLabel.width(), self.titleLabel.width()) + 48, self.contentLabel.y() + self.contentLabel.height() + 105
-        # )
+        self.widget.setFixedSize(
+            max(self.contentLabel.width(), self.titleLabel.width()) + 48, self.contentLabel.y() + self.contentLabel.height() + 105
+        )
 
     def eventFilter(self, obj, e: QEvent):
         if obj is self.window():

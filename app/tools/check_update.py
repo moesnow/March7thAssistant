@@ -7,7 +7,7 @@ import markdown
 import requests
 import json
 
-from ..card.messagebox2 import MessageBox2
+from ..card.messageboxupdate import MessageBoxUpdate
 
 
 def checkUpdate(self):
@@ -41,7 +41,7 @@ a {
 
         if version > config.version:
             # if True:
-            w = MessageBox2(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content), self.window())
+            w = MessageBoxUpdate(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content), self.window())
             if w.exec():
                 import subprocess
                 source_file = r".\\Update.exe"
