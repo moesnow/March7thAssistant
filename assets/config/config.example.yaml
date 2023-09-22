@@ -137,6 +137,8 @@ hotkey_technique: e # 游戏内设置的秘技按键
 # 可选消息通知 Telegram已适配支持发送截图
 # 还支持更多推送查看下面的链接仿照格式配置即可
 # https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-[CN]
+notify_winotify_enable: false # 启用Windows原生通知
+
 notify_telegram_enable: false # 启用Telegram通知
 notify_telegram_token: ''
 notify_telegram_userid: ''

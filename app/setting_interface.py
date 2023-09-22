@@ -358,6 +358,14 @@ class SettingInterface(ScrollArea):
             "forgottenhall_timestamp"
         )
 
+        self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
+        self.winotifyEnableCard = SwitchSettingCard1(
+            FIF.BACK_TO_WINDOW,
+            self.tr('启用Windows原生通知'),
+            None,
+            "notify_winotify_enable"
+        )
+
         self.KeybindingGroup = SettingCardGroup(self.tr("按键绑定"), self.scrollWidget)
         self.keybindingTechniqueCard = PushSettingCardKey(
             self.tr('按住以修改'),
@@ -471,6 +479,8 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
 
+        self.NotifyGroup.addSettingCard(self.winotifyEnableCard)
+
         self.KeybindingGroup.addSettingCard(self.keybindingTechniqueCard)
 
         self.aboutGroup.addSettingCard(self.githubCard)
@@ -488,6 +498,7 @@ class SettingInterface(ScrollArea):
         self.expandLayout.addWidget(self.FightGroup)
         self.expandLayout.addWidget(self.UniverseGroup)
         self.expandLayout.addWidget(self.ForgottenhallGroup)
+        self.expandLayout.addWidget(self.NotifyGroup)
         self.expandLayout.addWidget(self.KeybindingGroup)
         self.expandLayout.addWidget(self.aboutGroup)
 
