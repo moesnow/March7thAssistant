@@ -1,6 +1,7 @@
 ruamel.yaml
 colorama
 pyuac
+pygame
 tqdm
 psutil
 pyautogui
