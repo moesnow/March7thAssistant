@@ -44,6 +44,9 @@ class Notify:
                 self._send_notification_by_winotify(title, content)
                 return
 
+            if notifier_name == "pushplus":
+                content = " " if content is None else content
+
             notifier_params = getattr(self, notifier_name, None)
             if notifier_params:
                 n = get_notifier(notifier_name)
