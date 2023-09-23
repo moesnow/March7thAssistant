@@ -16,12 +16,13 @@ class PythonChecker:
         else:
             path_dirs = os.environ["PATH"].split(os.pathsep)
             for path_dir in path_dirs:
-                if "Python" in path_dir:
-                    if PythonChecker.check(path_dir):
-                        config.set_value("python_path", path_dir)
-                        logger.debug(_("Python路径更新成功：{path}").format(path=path_dir))
-                        return True
-            logger.debug(_("没有在环境变量中找到可用的 Python 路径"))
+                # if "Python" in path_dir:
+                if PythonChecker.check(path_dir):
+                    config.set_value("python_path", path_dir)
+                    logger.debug(_("Python路径更新成功：{path}").format(path=path_dir))
+                    return True
+            logger.warning(_("没有在环境变量中找到可用的 Python 路径"))
+            logger.warning(_("如果已经修改了环境变量，请尝试重启程序，包括图形界面"))
 
         logger.warning(_("Python路径不存在: {path}").format(path=python_path))
 
@@ -54,7 +55,8 @@ class PythonChecker:
                 config.set_value("python_path", destination_path)
                 return True
 
-            logger.error(_("仍未找到可用的 Python 路径，请手动卸载后重试"))
+            logger.error(_("仍未找到可用的 Python 路径，请尝试重启程序，包括图形界面"))
+            logger.error(_("也可卸载后重新运行或在 config.yaml 中手动修改 python_path（文件夹）"))
             return False
         except Exception as e:
             logger.error(_("下载失败：{e}").format(e=e))
@@ -64,10 +66,15 @@ class PythonChecker:
     def check(python_path):
         python_result = PythonChecker.run_command([f"{python_path}\\python.exe", '-V'])
         if python_result[0:7] == "Python ":
-            logger.debug(f"Python 版本: {python_result.split(' ')[1]}")
+            python_version = python_result.split(' ')[1]
+            if python_version < "3.11.4":
+                logger.warning(f"Python 版本: {python_version} < 3.11.4")
+            else:
+                logger.debug(f"Python 版本: {python_version}")
             pip_result = PythonChecker.run_command([f"{python_path}\\Scripts\\pip.exe", '-V'])
             if pip_result[0:4] == "pip ":
-                logger.debug(f"pip 版本: {pip_result.split(' ')[1]}")
+                pip_version = pip_result.split(' ')[1]
+                logger.debug(f"pip 版本: {pip_version}")
                 return True
             else:
                 logger.debug("开始安装pip")

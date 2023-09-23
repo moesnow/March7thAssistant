@@ -39,8 +39,8 @@ This software is open source, free of charge and for learning and exchange purpo
 
 ## 注意事项
 
-- 必须使用PC端 `1920*1080` 分辨率窗口或全屏运行游戏
-- 模拟宇宙相关 [项目文档](https://asu.stysqy.top/) [Q&A](https://asu.stysqy.top/guide/qa.html)
+- 必须使用PC端 `1920*1080` 分辨率窗口或全屏运行游戏（不支持HDR）
+- 模拟宇宙相关 [项目文档](https://asu.stysqy.top/)  [Q&A](https://asu.stysqy.top/guide/qa.html)
 - 使用锄大地功能，需要安装群文件内提供的补丁包
 - 后台运行可以尝试 [远程本地多用户桌面](https://asu.stysqy.top/guide/bs.html)
 - 遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，提问讨论可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊随缘看，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
