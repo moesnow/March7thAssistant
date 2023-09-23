@@ -35,6 +35,7 @@ class Update:
                 data = json.loads(response.read().decode('utf-8'))
         except urllib.error.URLError as e:
             print(f"检测更新失败: {e}")
+            print(f"GitHub偶尔无法访问是很正常的情况，拜托请不要反馈此类问题了")
             input("按任意键关闭窗口")
             sys.exit(1)
 
