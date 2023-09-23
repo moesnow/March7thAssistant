@@ -1,5 +1,6 @@
 from ruamel.yaml import YAML
 import time
+import sys
 
 
 class Config:
@@ -20,7 +21,7 @@ class Config:
             with open(version_path, 'r', encoding='utf-8') as file:
                 return file.read()
         except FileNotFoundError:
-            exit(1)
+            sys.exit(1)
 
     def _default_config(self, config_example_path):
         try:
@@ -29,7 +30,7 @@ class Config:
                 if loaded_config:
                     return loaded_config
         except FileNotFoundError:
-            exit(1)
+            sys.exit(1)
 
     def _load_config(self, dir=''):
         if dir == '':
