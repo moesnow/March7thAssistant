@@ -7,6 +7,7 @@ from qfluentwidgets import ScrollArea
 from .common.style_sheet import StyleSheet
 
 import markdown
+import sys
 
 
 class FAQInterface(ScrollArea):
@@ -30,7 +31,7 @@ a {
             with open(".\\assets\\docs\\FAQ.md", 'r', encoding='utf-8') as file:
                 self.content = file.read()
         except FileNotFoundError:
-            exit(1)
+            sys.exit(1)
         html_content = html_style + markdown.markdown(self.content)
         self.contentLabel.setText(html_content)
         self.contentLabel.setOpenExternalLinks(True)

@@ -7,7 +7,7 @@ from qfluentwidgets import ScrollArea
 from .common.style_sheet import StyleSheet
 
 import markdown
-
+import sys
 
 class ChangelogInterface(ScrollArea):
     """ Home interface """
@@ -30,7 +30,7 @@ a {
             with open(".\\assets\\docs\\Changelog.md", 'r', encoding='utf-8') as file:
                 self.content = file.read()
         except FileNotFoundError:
-            exit(1)
+            sys.exit(1)
         html_content = html_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>')
         self.contentLabel.setText(html_content)
         self.contentLabel.setOpenExternalLinks(True)

@@ -2,6 +2,7 @@ from managers.automation_manager import auto
 from managers.ocr_manager import ocr
 import time
 import json
+import sys
 
 
 class Tasks:
@@ -15,7 +16,7 @@ class Tasks:
             with open(config_example_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         except FileNotFoundError:
-            exit(1)
+            sys.exit(1)
 
     def start(self):
         self.detect()
