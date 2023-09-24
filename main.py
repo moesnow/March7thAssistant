@@ -30,6 +30,10 @@ def main(action=None):
         Universe.update()
         input(_("按任意键关闭窗口. . ."))
         sys.exit(0)
+    elif action == "fight_update":
+        Fight.update()
+        input(_("按任意键关闭窗口. . ."))
+        sys.exit(0)
     elif action == "universe_gui":
         if not Universe.gui():
             input(_("按任意键关闭窗口. . ."))

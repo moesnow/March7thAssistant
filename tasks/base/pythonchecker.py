@@ -26,7 +26,7 @@ class PythonChecker:
 
         logger.warning(_("Python路径不存在: {path}").format(path=python_path))
 
-        url = "https://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-amd64.exe"
+        url = "http://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-amd64.exe"
         destination = '.\\3rdparty\\python-3.11.5-amd64.exe'
 
         local_app_data = os.getenv('LocalAppData')

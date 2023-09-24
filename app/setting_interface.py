@@ -275,6 +275,12 @@ class SettingInterface(ScrollArea):
             self.tr('原版运行'),
             self.tr('启动调试模式，可以选择指定地图继续锄大地'),
         )
+        self.updateFightCard = PrimaryPushSettingCard(
+            self.tr('更新'),
+            FIF.UPDATE,
+            self.tr('更新锄大地 (Fhoe-Rail)'),
+            None
+        )
 
         self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙 (Auto_Simulated_Universe)"), self.scrollWidget)
         self.universeEnableCard = SwitchSettingCard1(
@@ -316,7 +322,7 @@ class SettingInterface(ScrollArea):
         self.updateUniverseCard = PrimaryPushSettingCard(
             self.tr('更新'),
             FIF.UPDATE,
-            self.tr('更新模拟宇宙'),
+            self.tr('更新模拟宇宙 (Auto_Simulated_Universe)'),
             None
         )
 
@@ -469,6 +475,7 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.fightTeamNumberCard)
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
         self.FightGroup.addSettingCard(self.guiFightCard)
+        self.FightGroup.addSettingCard(self.updateFightCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
@@ -548,7 +555,7 @@ class SettingInterface(ScrollArea):
         script_filename = os.path.basename(script_path)
 
         if script_filename.endswith(".exe"):
-            os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" universe_gui")
+            os.system(f"start ./\"March7th Assistant.exe\" universe_gui")
         else:
             os.system(f"start python main.py universe_gui")
 
@@ -557,7 +564,7 @@ class SettingInterface(ScrollArea):
         script_filename = os.path.basename(script_path)
 
         if script_filename.endswith(".exe"):
-            os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" fight_gui")
+            os.system(f"start ./\"March7th Assistant.exe\" fight_gui")
         else:
             os.system(f"start python main.py fight_gui")
 
@@ -566,9 +573,18 @@ class SettingInterface(ScrollArea):
         script_filename = os.path.basename(script_path)
 
         if script_filename.endswith(".exe"):
-            os.system(f"start ./\"March7th Assistant/March7th Assistant.exe\" universe_update")
+            os.system(f"start ./\"March7th Assistant.exe\" universe_update")
         else:
             os.system(f"start python main.py universe_update")
+
+    def __onUpdateFightCardClicked(self):
+        script_path = sys.argv[0]
+        script_filename = os.path.basename(script_path)
+
+        if script_filename.endswith(".exe"):
+            os.system(f"start ./\"March7th Assistant.exe\" fight_update")
+        else:
+            os.system(f"start python main.py fight_update")
 
     def __connectSignalToSlot(self):
         """ connect signal to slot """
@@ -580,6 +596,7 @@ class SettingInterface(ScrollArea):
         self.guiFightCard.clicked.connect(self.__onGuiFightCardClicked)
         self.guiUniverseCard.clicked.connect(self.__onGuiUniverseCardClicked)
         self.updateUniverseCard.clicked.connect(self.__onUpdateUniverseCardClicked)
+        self.updateFightCard.clicked.connect(self.__onUpdateFightCardClicked)
         self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
         self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
         self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant/issues")))

@@ -101,6 +101,9 @@ class Universe:
 
     @staticmethod
     def copy_and_replace_folder_contents(folder_a, folder_b):
+        # 检查 folder_a 是否存在，如果不存在则创建它
+        if not os.path.exists(folder_a):
+            os.makedirs(folder_a)
         # 复制文件夹B中的所有文件到文件夹A，直接覆盖同名文件
         for item in os.listdir(folder_b):
             source = os.path.join(folder_b, item)
