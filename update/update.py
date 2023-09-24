@@ -15,6 +15,7 @@ class Update:
     def __init__(self, download_url=None):
         self.process_name = "March7th Assistant.exe"
         self.api_url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
+        self.api_mirror_url = "https://api.kkgithub.com/repos/moesnow/March7thAssistant/releases/latest"
 
         if download_url is None:
             self.__get_download_url()
@@ -35,9 +36,19 @@ class Update:
                 data = json.loads(response.read().decode('utf-8'))
         except urllib.error.URLError as e:
             print(f"检测更新失败: {e}")
-            print(f"GitHub偶尔无法访问是很正常的情况，拜托请不要反馈此类问题了")
-            input("按任意键关闭窗口")
-            sys.exit(1)
+            print("开始尝试备用镜像")
+            try:
+                with urllib.request.urlopen(self.api_mirror_url, timeout=10) as response:
+                    if response.getcode() != 200:
+                        print("检测更新失败")
+                        input("按任意键关闭窗口")
+                        sys.exit(1)
+                    data = json.loads(response.read().decode('utf-8'))
+            except urllib.error.URLError as e:
+                print(f"检测更新失败: {e}")
+                print(f"GitHub偶尔无法访问是很正常的情况，拜托请不要反馈此类问题了")
+                input("按任意键关闭窗口")
+                sys.exit(1)
 
         # 获取最新版本
         version = data["tag_name"]
