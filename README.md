@@ -47,7 +47,11 @@ This software is open source, free of charge and for learning and exchange purpo
 
 ## 下载安装
 
-前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下载后解压双击 `March7th Launcher.exe` 直接运行
+前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下载后解压双击三月七图标的 `March7th Launcher.exe` 打开图形界面
+
+如果需要使用 **任务计划程序** 定时运行或直接执行 **完整运行**，可以使用终端图标的 `March7th Assistant.exe`
+
+检测更新可以点击图形界面设置最底下的按钮，或双击 `Update.exe`
 
 ## 更新日志
 
