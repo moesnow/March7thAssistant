@@ -36,19 +36,16 @@ jobs:
 
       - name: Generate program
         run: |
-          pyinstaller -D --distpath .\dist\March7thAssistant\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
-          pyinstaller -D --distpath .\dist\March7thAssistant\ -i .\assets\logo\March7th.ico --contents-directory libraries --exclude-module cv2 --exclude-module numpy --uac-admin -n "March7th Launcher" app.py -y -w
-          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Terminal.ico -n "Update" .\update\update.py -y
+          pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
+          pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --exclude-module cv2 --exclude-module numpy --uac-admin -n "March7th Launcher" app.py -y -w
+          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Update.ico -n "Update" .\update\update.py -y
 
       - name: Move assets to dist directory
         run: |
-          xcopy /E /Y ".\dist\March7thAssistant\March7th Assistant\*" ".\dist\March7thAssistant\"
-          xcopy /E /Y ".\dist\March7thAssistant\March7th Launcher\*" ".\dist\March7thAssistant\"
+          xcopy /E /Y ".\dist\March7th Assistant\*" ".\dist\March7thAssistant\"
+          xcopy /E /Y ".\dist\March7th Launcher\*" ".\dist\March7thAssistant\"
           xcopy /E /I /Y .\assets\ .\dist\March7thAssistant\assets\
           xcopy /Y .\README.md .\dist\March7thAssistant\
-
-          rd /S /Q ".\dist\March7thAssistant\March7th Assistant\"
-          rd /S /Q ".\dist\March7thAssistant\March7th Launcher\"
 
       - name: Upload artifact
         if: startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/pull/')
