@@ -29,13 +29,13 @@ class Start:
         auto.click_element("./assets/images/base/confirm.png", "image", 0.9)
         return False
 
-    @staticmethod
-    def check_and_click_monthly_card():
-        # if auto.find_element("./assets/images/screen/main.png", "image", 0.9):
-        if screen.get_current_screen():
-            return True
-        auto.click_element("./assets/images/screen/monthly_card.png", "image", 0.9)
-        return False
+    # @staticmethod
+    # def check_and_click_monthly_card():
+    #     # if auto.find_element("./assets/images/screen/main.png", "image", 0.9):
+    #     if screen.get_current_screen():
+    #         return True
+    #     auto.click_element("./assets/images/screen/monthly_card.png", "image", 0.9)
+    #     return False
 
     @staticmethod
     def launch_process():
@@ -48,7 +48,7 @@ class Start:
         logger.debug(_("游戏启动成功: {path}").format(path=config.game_path))
 
         time.sleep(10)
-        if not auto.retry_with_timeout(Base.check_and_switch, 30, 1, config.game_title_name):
+        if not auto.retry_with_timeout(Base.check_and_switch, 60, 1, config.game_title_name):
             logger.error(_("无法切换游戏到前台"))
             return False
 
@@ -57,7 +57,8 @@ class Start:
         if not auto.retry_with_timeout(Start.check_and_click_enter, 600, 1):
             logger.error(_("无法找到点击进入按钮"))
             return False
-        if not auto.retry_with_timeout(Start.check_and_click_monthly_card, 120, 1):
+        # if not auto.retry_with_timeout(Start.check_and_click_monthly_card, 180, 1):
+        if not auto.retry_with_timeout(screen.get_current_screen, 180, 1):
             logger.error(_("无法进入主界面"))
             return False
 
