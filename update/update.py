@@ -13,7 +13,7 @@ import urllib.request
 
 class Update:
     def __init__(self, download_url=None):
-        self.process_name = "March7th Assistant.exe"
+        self.process_name = ("March7th Assistant.exe", "March7th Launcher.exe")
         self.api_url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
         self.api_mirror_url = "https://api.kkgithub.com/repos/moesnow/March7thAssistant/releases/latest"
 
@@ -100,13 +100,14 @@ class Update:
 
     def __terminate_process(self):
         for proc in psutil.process_iter(attrs=['pid', 'name']):
-            if self.process_name in proc.info['name']:
-                try:
-                    process = psutil.Process(proc.info['pid'])
-                    process.terminate()
-                    process.wait(timeout=10)
-                except (psutil.NoSuchProcess, psutil.TimeoutExpired, psutil.AccessDenied):
-                    pass
+            for name in self.process_name:
+                if name in proc.info['name']:
+                    try:
+                        process = psutil.Process(proc.info['pid'])
+                        process.terminate()
+                        process.wait(timeout=10)
+                    except (psutil.NoSuchProcess, psutil.TimeoutExpired, psutil.AccessDenied):
+                        pass
 
     def __copy_files(self):
         for root, dirs, files in os.walk(self.update_directory):
@@ -135,7 +136,6 @@ class Update:
             shutil.unpack_archive(self.save_path, './')
             print("解压完成")
 
-            # 关闭图形界面
             self.__terminate_process()
 
             print("开始更新...")
