@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.4.2
+
+### 新功能
+- 内置 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 自动锄大地项目，支持在设置界面单独更新，欢迎给作者点个 Star
+- 调整了目录结构，推荐手动进行本次更新，自动更新不会移除不再使用的文件
+
 ## v1.4.1.1
 
 ### 修复
