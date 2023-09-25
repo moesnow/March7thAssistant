@@ -554,7 +554,7 @@ class SettingInterface(ScrollArea):
         script_path = sys.argv[0]
         script_filename = os.path.basename(script_path)
 
-        if script_filename.endswith(".exe"):
+        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
             os.system(f"start ./\"March7th Assistant.exe\" universe_gui")
         else:
             os.system(f"start python main.py universe_gui")
@@ -563,7 +563,7 @@ class SettingInterface(ScrollArea):
         script_path = sys.argv[0]
         script_filename = os.path.basename(script_path)
 
-        if script_filename.endswith(".exe"):
+        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
             os.system(f"start ./\"March7th Assistant.exe\" fight_gui")
         else:
             os.system(f"start python main.py fight_gui")
@@ -572,7 +572,7 @@ class SettingInterface(ScrollArea):
         script_path = sys.argv[0]
         script_filename = os.path.basename(script_path)
 
-        if script_filename.endswith(".exe"):
+        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
             os.system(f"start ./\"March7th Assistant.exe\" universe_update")
         else:
             os.system(f"start python main.py universe_update")
@@ -581,7 +581,7 @@ class SettingInterface(ScrollArea):
         script_path = sys.argv[0]
         script_filename = os.path.basename(script_path)
 
-        if script_filename.endswith(".exe"):
+        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
             os.system(f"start ./\"March7th Assistant.exe\" fight_update")
         else:
             os.system(f"start python main.py fight_update")
