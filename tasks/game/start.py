@@ -27,6 +27,8 @@ class Start:
         if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
             return True
         auto.click_element("./assets/images/base/confirm.png", "image", 0.9)
+        # 适配国际服，需要点击“开始游戏”
+        auto.click_element("./assets/images/screen/start_game.png", "image", 0.9)
         return False
 
     # @staticmethod
