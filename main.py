@@ -1,14 +1,6 @@
 import os
 import sys
-
-if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
-    # 获取可执行文件所在目录并设置为工作目录
-    app_dir = os.path.dirname(sys.executable)
-else:
-    # 获取脚本所在目录并设置为工作目录
-    app_dir = os.path.dirname(os.path.abspath(__file__))
-
-os.chdir(app_dir)  # 修改工作目录
+os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__)))
 
 from managers.notify_manager import notify
 from managers.logger_manager import logger
