@@ -3,8 +3,8 @@ from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.runsubprocess import RunSubprocess
-from tasks.base.base import Base
-import subprocess
+from tasks.base.windowswitcher import WindowSwitcher
+from tasks.base.command import run_command
 import os
 
 
@@ -14,13 +14,14 @@ class PythonChecker:
         if python_path != '' and PythonChecker.check(python_path):
             return True
         else:
-            path_dirs = os.environ["PATH"].split(os.pathsep)
-            for path_dir in path_dirs:
-                # if "Python" in path_dir:
-                if PythonChecker.check(path_dir):
-                    config.set_value("python_path", path_dir)
-                    logger.debug(_("Python路径更新成功：{path}").format(path=path_dir))
-                    return True
+            paths = run_command("where python")
+            if paths is not None:
+                for path in paths.split("\n"):
+                    path_dir = os.path.dirname(path)
+                    if PythonChecker.check(path_dir):
+                        config.set_value("python_path", path_dir)
+                        logger.debug(_("Python路径更新成功：{path}").format(path=path))
+                        return True
             logger.warning(_("没有在环境变量中找到可用的 Python 路径"))
             logger.warning(_("如果已经修改了环境变量，请尝试重启程序，包括图形界面"))
 
@@ -42,7 +43,7 @@ class PythonChecker:
             os.system(f"{destination} /passive InstallAllUsers=0 PrependPath=1 Include_launcher=0 Include_test=0")
             logger.info(_("安装完成"))
 
-            Base.check_and_switch(config.game_title_name)
+            WindowSwitcher.check_and_switch(config.game_title_name)
 
             # shutil.unpack_archive(destination, extracted_folder_path, 'zip')
             # logger.info(_("解压完成：{path}").format(path=extracted_folder_path))
@@ -64,40 +65,25 @@ class PythonChecker:
 
     @staticmethod
     def check(python_path):
-        python_result = PythonChecker.run_command([f"{python_path}\\python.exe", '-V'])
-        if python_result[0:7] == "Python ":
+        python_result = run_command([f"{python_path}\\python.exe", '-V'])
+        if python_result is not None and python_result[0:7] == "Python ":
+            logger.debug(_("Python 路径: {path}").format(path=python_path))
             python_version = python_result.split(' ')[1]
-            if python_version < "3.11.4":
-                logger.warning(f"Python 版本: {python_version} < 3.11.4")
+            if python_version < "3.11":
+                logger.warning(_("Python 版本: {version} < 3.11 若出现异常请尝试升级").format(version=python_version))
             else:
-                logger.debug(f"Python 版本: {python_version}")
-            pip_result = PythonChecker.run_command([f"{python_path}\\Scripts\\pip.exe", '-V'])
-            if pip_result[0:4] == "pip ":
+                logger.debug(_("Python 版本: {version}").format(version=python_version))
+            pip_result = run_command([f"{python_path}\\Scripts\\pip.exe", '-V'])
+            if pip_result is not None and pip_result[0:4] == "pip ":
                 pip_version = pip_result.split(' ')[1]
-                logger.debug(f"pip 版本: {pip_version}")
+                logger.debug(_("pip 版本: {version}").format(version=pip_version))
                 return True
             else:
-                logger.debug("开始安装pip")
+                logger.debug(_("开始安装 pip"))
                 if RunSubprocess.run(f"{python_path}\\python.exe .\\assets\\config\\get-pip.py -i {config.pip_mirror} --no-warn-script-location", 600):
-                    logger.debug(_("pip安装完成"))
+                    logger.debug(_("pip 安装完成"))
                     return True
                 else:
-                    logger.error(_("pip安装失败"))
+                    logger.error(_("pip 安装失败"))
                     return False
         return False
-
-    @staticmethod
-    def run_command(command):
-        try:
-            # 使用subprocess运行命令并捕获标准输出
-            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-            # 检查命令是否成功执行
-            if result.returncode == 0:
-                # 返回标准输出的内容
-                return result.stdout.strip()
-            else:
-                # 如果命令执行失败，返回错误信息
-                return f"Command execution failed with error: {result.stderr.strip()}"
-        except Exception as e:
-            return str(e)
