@@ -9,6 +9,8 @@ import os
 import sys
 import time
 
+from tasks.base.command import run_command, start_task
+
 
 class SampleCard(CardWidget):
     """ Sample card """
@@ -68,13 +70,7 @@ class SampleCard(CardWidget):
     def mouseReleaseEvent(self, e):
         super().mouseReleaseEvent(e)
         self.showBottomTeachingTip()
-        script_path = sys.argv[0]  # 获取当前脚本文件的路径，包括文件名
-        script_filename = os.path.basename(script_path)  # 获取脚本文件名
-
-        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
-            os.system(f"start ./\"March7th Assistant.exe\" {self.action}")
-        else:
-            os.system(f"start python main.py {self.action}")
+        start_task(self.action)
 
     def enterEvent(self, event):
         super().enterEvent(event)

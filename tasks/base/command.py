@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 
 def run_command(command):
@@ -13,3 +14,15 @@ def run_command(command):
         return None
     except Exception:
         return None
+
+
+def start_task(command):
+    # 检查是否是 PyInstaller 打包的可执行文件
+    if getattr(sys, 'frozen', False):
+        # 检查是否安装了 Windows Terminal
+        if run_command("where wt") is not None:
+            subprocess.check_call(f"wt ./\"March7th Assistant.exe\" {command}", shell=True)
+        else:
+            subprocess.check_call(f"start ./\"March7th Assistant.exe\" {command}", shell=True)
+    else:
+        subprocess.check_call(f"start python main.py {command}", shell=True)

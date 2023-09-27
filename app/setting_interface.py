@@ -12,9 +12,9 @@ from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey
 
 from .tools.check_update import checkUpdate
+from tasks.base.command import run_command, start_task
 
-import sys
-import os
+import subprocess
 
 
 class SettingInterface(ScrollArea):
@@ -529,12 +529,6 @@ class SettingInterface(ScrollArea):
         if WindowSwitcher.check_and_switch(config.game_title_name):
             result = Screenshot.take_screenshot(config.game_title_name)
             if result:
-                # if not os.path.exists("screenshots"):
-                #     os.makedirs("screenshots")
-                # screenshot_path = os.path.abspath("screenshots\screenshot.png")
-                # result[0].save(screenshot_path)
-                # os.startfile(os.path.dirname(screenshot_path))
-
                 import tkinter as tk
                 from .tools.screenshot import ScreenshotApp
 
@@ -550,54 +544,22 @@ class SettingInterface(ScrollArea):
         config.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
-    def __onGuiUniverseCardClicked(self):
-        script_path = sys.argv[0]
-        script_filename = os.path.basename(script_path)
-
-        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
-            os.system(f"start ./\"March7th Assistant.exe\" universe_gui")
-        else:
-            os.system(f"start python main.py universe_gui")
-
-    def __onGuiFightCardClicked(self):
-        script_path = sys.argv[0]
-        script_filename = os.path.basename(script_path)
-
-        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
-            os.system(f"start ./\"March7th Assistant.exe\" fight_gui")
-        else:
-            os.system(f"start python main.py fight_gui")
-
-    def __onUpdateUniverseCardClicked(self):
-        script_path = sys.argv[0]
-        script_filename = os.path.basename(script_path)
-
-        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
-            os.system(f"start ./\"March7th Assistant.exe\" universe_update")
-        else:
-            os.system(f"start python main.py universe_update")
-
-    def __onUpdateFightCardClicked(self):
-        script_path = sys.argv[0]
-        script_filename = os.path.basename(script_path)
-
-        if getattr(sys, 'frozen', False):  # 检查是否是PyInstaller打包的可执行文件
-            os.system(f"start ./\"March7th Assistant.exe\" fight_update")
-        else:
-            os.system(f"start python main.py fight_update")
-
     def __connectSignalToSlot(self):
         """ connect signal to slot """
 
         self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
-        self.forgottenhallTeamInfoCard.clicked.connect(lambda: os.system("start /WAIT explorer .\\assets\\images\\character"))
-        self.guiFightCard.clicked.connect(self.__onGuiFightCardClicked)
-        self.guiUniverseCard.clicked.connect(self.__onGuiUniverseCardClicked)
-        self.updateUniverseCard.clicked.connect(self.__onUpdateUniverseCardClicked)
-        self.updateFightCard.clicked.connect(self.__onUpdateFightCardClicked)
+
+        self.forgottenhallTeamInfoCard.clicked.connect(lambda: subprocess.check_call("start /WAIT explorer .\\assets\\images\\character", shell=True))
+
+        self.guiUniverseCard.clicked.connect(lambda: start_task("universe_gui"))
+        self.guiFightCard.clicked.connect(lambda: start_task("fight_gui"))
+        self.updateUniverseCard.clicked.connect(lambda: start_task("universe_update"))
+        self.updateFightCard.clicked.connect(lambda: start_task("fight_update"))
+
         self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
         self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
         self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant/issues")))
+
         self.aboutCard.clicked.connect(lambda: checkUpdate(self))
