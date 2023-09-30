@@ -14,16 +14,19 @@ class Version:
             logger.debug(_("检测更新未开启"))
             return False
         logger.hr(_("开始检测更新"), 0)
-        response = requests.get(FastestMirror.get_github_api_mirror(1), timeout=3)
-        data = json.loads(response.text) if response.status_code == 200 else None
-        if data:
-            version = data["tag_name"]
-            if version > config.version:
-                notify.notify(_("发现新版本：{v}").format(v=version))
-                logger.info(_("发现新版本：{v0}  ——→  {v}").format(v0=config.version, v=version))
-                logger.info(data["html_url"])
+        try:
+            response = requests.get(FastestMirror.get_github_api_mirror(1), timeout=3)
+            if response.status_code == 200:
+                data = json.loads(response.text)
+                version = data["tag_name"]
+                if version > config.version:
+                    notify.notify(_("发现新版本：{v}").format(v=version))
+                    logger.info(_("发现新版本：{v0}  ——→  {v}").format(v0=config.version, v=version))
+                    logger.info(data["html_url"])
+                else:
+                    logger.info(_("已经是最新版本：{v0}").format(v0=config.version))
             else:
-                logger.info(_("已经是最新版本：{v0}").format(v0=config.version))
-        else:
+                logger.error(_("检测更新失败"))
+        except Exception:
             logger.error(_("检测更新失败"))
         logger.hr(_("完成"), 2)
