@@ -17,13 +17,13 @@ game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏路径
 power_total: 999 # 开拓力最大值
 dispatch_count: 4 # 派遣次数
 
-instance_type: 侵蚀隧洞 # 副本类型: 侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
+instance_type: 拟造花萼（金） # 副本类型: 侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
 instance_names: # 副本名称
-  拟造花萼（金）: 以太之蕾
-  拟造花萼（赤）: 智识之蕾
+  拟造花萼（金）: 回忆之蕾
+  拟造花萼（赤）: 毁灭之蕾
   凝滞虚影: 无
   侵蚀隧洞: 睿治之径
-  历战余响: 不死的神实
+  历战余响: 毁灭的开端
 power_needs: # 副本所需开拓力
   拟造花萼（金）: 60
   拟造花萼（赤）: 60

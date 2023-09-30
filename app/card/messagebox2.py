@@ -1,6 +1,6 @@
 # coding:utf-8
 from PyQt5.QtCore import Qt, pyqtSignal, QObject, QEvent
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QLabel, QFrame, QVBoxLayout, QHBoxLayout, QPushButton
 from qframelesswindow import FramelessDialog
 
@@ -19,9 +19,21 @@ class Ui_MessageBox:
         self.content = content
         self.titleLabel = QLabel(title, parent)
         # self.contentLabel = QLabel(content, parent)
+        self.content_count = len(content)
 
-        self.lineEdit = LineEdit(self)
-        self.lineEdit.setText(self.content)
+        font = QFont()
+        font.setPointSize(15)
+
+        for index, (key, value) in enumerate(self.content.items(), start=0):
+            title_label_name = f'self.titleLabel{index}'
+            setattr(self, title_label_name, QLabel(key, parent))
+            title_label = getattr(self, title_label_name)
+            title_label.setFont(font)
+
+            line_edit_name = f'self.lineEdit{index}'
+            setattr(self, line_edit_name, LineEdit(self))
+            line_edit = getattr(self, line_edit_name)
+            line_edit.setText(value)
 
         self.buttonGroup = QFrame(parent)
         self.yesButton = PrimaryPushButton(self.tr('确认'), self.buttonGroup)
@@ -73,7 +85,12 @@ class Ui_MessageBox:
         self.textLayout.setContentsMargins(24, 24, 24, 24)
         self.textLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
         # self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
-        self.textLayout.addWidget(self.lineEdit, 0, Qt.AlignTop)
+
+        for index in range(self.content_count):
+            title_label_name = f'self.titleLabel{index}'
+            line_edit_name = f'self.lineEdit{index}'
+            self.textLayout.addWidget(getattr(self, title_label_name), 0, Qt.AlignTop)
+            self.textLayout.addWidget(getattr(self, line_edit_name), 0, Qt.AlignTop)
 
         self.buttonLayout.setSpacing(12)
         self.buttonLayout.setContentsMargins(24, 24, 24, 24)
@@ -125,13 +142,13 @@ class Dialog(FramelessDialog, Ui_MessageBox):
         self.windowTitleLabel.setVisible(isVisible)
 
 
-class MessageBox1(MaskDialogBase, Ui_MessageBox):
+class MessageBox2(MaskDialogBase, Ui_MessageBox):
     """ Message box """
 
     yesSignal = pyqtSignal()
     cancelSignal = pyqtSignal()
 
-    def __init__(self, title: str, content: str, parent=None):
+    def __init__(self, title: str, content: dict, parent=None):
         super().__init__(parent=parent)
         self._setUpUi(title, content, self.widget)
 
@@ -152,5 +169,5 @@ class MessageBox1(MaskDialogBase, Ui_MessageBox):
 
         return super().eventFilter(obj, e)
 
-    def getText(self):
-        return self.lineEdit.text()
+    # def getText(self):
+    #     return self.lineEdit.text()
