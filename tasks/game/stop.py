@@ -80,7 +80,10 @@ class Stop:
     def sleep():
         logger.warning(_("将在1分钟后自动睡眠"))
         time.sleep(60)
+        os.system("powercfg -h off")
+        # 必须先关闭休眠，否则下面的指令不会进入睡眠，而是优先休眠，无语了，Windows为什么这么难用
         os.system("rundll32.exe powrprof.dll,SetSuspendState 0,1,0")
+        os.system("powercfg -h on")
 
     @staticmethod
     def after_finish_is_loop():
