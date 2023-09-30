@@ -1,6 +1,8 @@
 name: Generate latest.json
 on:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     name: Build
