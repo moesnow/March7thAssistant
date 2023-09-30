@@ -41,13 +41,13 @@ class Update:
                 end_time = time.time()
                 if response.status_code == 200:
                     response_time = end_time - start_time
-                    print(f"镜像: {urlparse(mirror_url).netloc} 响应时间: {response_time}")
+                    # print(f"镜像: {urlparse(mirror_url).netloc} 响应时间: {response_time}")
                     return mirror_url
             except Exception:
                 pass
             return None
 
-        print("开始测速")
+        # print("开始测速")
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_to_mirror = {executor.submit(check_mirror, mirror_url): mirror_url for mirror_url in mirror_urls}
 
@@ -55,25 +55,24 @@ class Update:
                 result = future.result()
                 if result:
                     executor.shutdown()
-                    print(f"测速完成，最快的镜像为: {urlparse(result).netloc}")
+                    # print(f"测速完成，最快的镜像为: {urlparse(result).netloc}")
                     return result
 
-        print(f"测速失败，使用默认镜像：{urlparse(mirror_urls[0]).netloc}")
+        # print(f"测速失败，使用默认镜像：{urlparse(mirror_urls[0]).netloc}")
         return mirror_urls[0]
 
     def __get_download_url(self):
         print("开始检测更新")
-        try:
-            with urllib.request.urlopen(self.__find_fastest_mirror(self.api_urls), timeout=10) as response:
-                if response.getcode() != 200:
+        while True:
+            try:
+                with urllib.request.urlopen(self.__find_fastest_mirror(self.api_urls), timeout=10) as response:
+                    if response.getcode() == 200:
+                        data = json.loads(response.read().decode('utf-8'))
+                        break
                     print("检测更新失败")
-                    input("按任意键关闭窗口")
-                    sys.exit(1)
-                data = json.loads(response.read().decode('utf-8'))
-        except urllib.error.URLError as e:
-            print(f"检测更新失败: {e}")
-            input("按任意键关闭窗口")
-            sys.exit(1)
+            except urllib.error.URLError as e:
+                print(f"检测更新失败: {e}")
+            input("按任意键重试. . .")
 
         # 获取最新版本
         version = data["tag_name"]
