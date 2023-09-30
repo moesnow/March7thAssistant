@@ -157,6 +157,10 @@ class Power:
         if instance_name == "无":
             logger.debug(_("{type}未开启").format(type=instance_type))
             return False
+        instance_name = instance_name.replace("巽风之形", "风之形")
+        instance_name = instance_name.replace("翼风之形", "风之形")
+        instance_name = instance_name.replace("偃偶之形", "偶之形")
+        instance_name = instance_name.replace("孽兽之形", "兽之形")
         if config.instance_team_enable:
             Base.change_team(config.instance_team_number)
 

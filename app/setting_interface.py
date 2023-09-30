@@ -11,7 +11,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2
 from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardDict
+from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardDictStr, PushSettingCardDictBool
 
 from .tools.check_update import checkUpdate
 from tasks.base.command import start_task
@@ -122,7 +122,7 @@ class SettingInterface(ScrollArea):
             None,
             texts=['侵蚀隧洞', '凝滞虚影', '拟造花萼（金）', '拟造花萼（赤）']
         )
-        self.instanceNameCard = PushSettingCardDict(
+        self.instanceNameCard = PushSettingCardDictStr(
             self.tr('修改'),
             FIF.PALETTE,
             # self.tr("副本名称\n保证唯一即可，例如“孽兽之形”可以填写“兽之形”，低概率下复杂文字会识别错误"),
@@ -204,6 +204,12 @@ class SettingInterface(ScrollArea):
             self.tr('启用完成1次「忘却之庭」'),
             "请解锁混沌回忆并配置了队伍1后再打开该选项",
             "daily_forgottenhall_enable"
+        )
+        self.dailyTasksCard = PushSettingCardDictBool(
+            self.tr('修改'),
+            FIF.PALETTE,
+            self.tr("今日实训"),
+            "daily_tasks"
         )
         self.lastRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
@@ -445,6 +451,7 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.assistEnableCard)
         self.DailyGroup.addSettingCard(self.srpassEnableCard)
         self.DailyGroup.addSettingCard(self.dailyForgottenhallEnableCard)
+        self.DailyGroup.addSettingCard(self.dailyTasksCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
 
         self.FightGroup.addSettingCard(self.fightEnableCard)

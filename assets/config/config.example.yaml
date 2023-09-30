@@ -58,32 +58,7 @@ assist_enable: true # 领取支援奖励
 srpass_enable: false # 领取无名勋礼奖励
 
 daily_forgottenhall_enable: false # 完成1次「忘却之庭」每日实训
-daily_tasks: # 每日实训
-  完成1个日常任务: false
-  完成1次「拟造花萼（金）」: false
-  完成1次「拟造花萼（赤）」: false
-  完成1次「凝滞虚影」: false
-  完成1次「侵蚀隧洞」: false
-  单场战斗中，触发3种不同属性的弱点击破: false
-  累计触发弱点击破效果5次: false
-  累计消灭20个敌人: false
-  利用弱点进入战斗并获胜3次: false
-  累计施放2次秘技: false
-  派遣1次委托: false
-  拍照1次: false
-  累计击碎3个可破坏物: false
-  完成1次「忘却之庭」: false
-  完成1次「历战余响」: false
-  通关「模拟宇宙」（任意世界）的1个区域: false
-  使用支援角色并获得战斗胜利1次: false
-  施放终结技造成制胜一击1次: false
-  将任意角色等级提升1次: false
-  将任意光锥等级提升1次: false
-  将任意遗器等级提升1次: false
-  分解任意1件遗器: false
-  合成1次消耗品: false
-  合成1次材料: false
-  使用1件消耗品: false
+daily_tasks: {} # 每日实训
 last_run_timestamp: 0 # 上次运行日常的时间戳
 
 fight_enable: false # 启用锄大地

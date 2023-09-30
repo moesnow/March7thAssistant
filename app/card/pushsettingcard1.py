@@ -6,6 +6,7 @@ from PyQt5.QtGui import (QIcon, QKeyEvent)
 from managers.config_manager import config
 from .messagebox1 import MessageBox1
 from .messagebox2 import MessageBox2
+from .messagebox3 import MessageBox3
 import datetime
 
 
@@ -102,7 +103,7 @@ class PushSettingCardKey(SettingCard):
             self.button.setText(f"已改为 {e.text()}")
 
 
-class PushSettingCardDict(SettingCard):
+class PushSettingCardDictStr(SettingCard):
     """ Setting card with a push button """
 
     clicked = pyqtSignal()
@@ -127,5 +128,30 @@ class PushSettingCardDict(SettingCard):
                 line_edit = getattr(w, line_edit_name)
                 self.content[title_label.text()] = line_edit.text()
             config.set_value(self.configname, self.content)
-        #     config.set_value(self.configname, eval(w.getText()))
-        #     self.contentLabel.setText(w.getText())
+
+
+class PushSettingCardDictBool(SettingCard):
+    """ Setting card with a push button """
+
+    clicked = pyqtSignal()
+
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname=None, parent=None):
+        super().__init__(icon, title, str(config.get_value(configname)), parent)
+        self.title = title
+        self.configname = configname
+        self.button = QPushButton(text, self)
+        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+        self.button.clicked.connect(self.__onclicked)
+
+    def __onclicked(self):
+        self.content = config.get_value(self.configname)
+        w = MessageBox3(self.title, self.content, self.window())
+        if w.exec():
+            for index in range(w.content_count):
+                title_label_name = f'self.titleLabel{index}'
+                title_label = getattr(w, title_label_name)
+                line_edit_name = f'self.lineEdit{index}'
+                line_edit = getattr(w, line_edit_name)
+                self.content[title_label.text()] = eval(line_edit.text())
+            config.set_value(self.configname, self.content)
