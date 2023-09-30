@@ -14,7 +14,7 @@ class Dispatch:
             return False
         screen.change_to('dispatch')
 
-        if auto.find_element("./assets/images/dispatch/reward.png", "image", 0.9, crop=(323 / 1920, 184 / 1080, 814 / 1920, 94 / 1080)):
+        if auto.find_element("./assets/images/dispatch/reward.png", "image", 0.9, crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080)):
             logger.hr(_("检测到探索派遣奖励"), 2)
 
             if Dispatch._perform_dispatches():
@@ -29,7 +29,7 @@ class Dispatch:
         for i in range(config.dispatch_count):
             logger.info(_("正在进行第{number}次委托").format(number=i + 1))
 
-            if not Dispatch.perform_dispatch_and_check(crop=(323 / 1920, 184 / 1080, 814 / 1920, 94 / 1080)):
+            if not Dispatch.perform_dispatch_and_check(crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080)):
                 return False
 
             if not Dispatch.perform_dispatch_and_check(crop=(660 / 1920, 280 / 1080, 170 / 1920, 600 / 1080)):
