@@ -86,7 +86,7 @@ class Power:
             if config.borrow_character_from:
                 auto.click_element("UID", "text", max_retries=10, crop=(18.0 / 1920, 15.0 / 1080, 572.0 / 1920, 414.0 / 1080), include=True)
                 time.sleep(0.5)
-                for i in range(5):
+                for i in range(3):
                     if auto.click_element(config.borrow_character_from, "text", crop=(196 / 1920, 167 / 1080, 427 / 1920, 754 / 1080), include=True):
                         # 找到角色的对应处理
                         if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
@@ -111,7 +111,7 @@ class Power:
                     # 等待界面完全停止
                     time.sleep(0.5)
 
-                logger.error(_("找不到指定用户名的支援角色，尝试按照优先级选择"))
+                logger.info(_("找不到指定用户名的支援角色，尝试按照优先级选择"))
                 # 重新打开支援页面，防止上一次的滚动位置影响
                 auto.press_key("esc")
                 time.sleep(0.5)
