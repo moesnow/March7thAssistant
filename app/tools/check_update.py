@@ -8,27 +8,24 @@ import requests
 import json
 
 from ..card.messageboxupdate import MessageBoxUpdate
+from tasks.base.fastest_mirror import FastestMirror
 
 
-def checkUpdate(self):
+def checkUpdate(self, timeout=5):
     try:
-        url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
-        res = requests.get(url, timeout=3, verify=config.verify_ssl)
-        if res.status_code != 200:
+        response = requests.get(FastestMirror.get_github_api_mirror(timeout), timeout=3)
+        data = json.loads(response.text) if response.status_code == 200 else None
+        if data is None:
             return
 
-        data = json.loads(res.text)
         version = data["tag_name"]
         content = data["body"]
-        url = data["html_url"]
         for asset in data["assets"]:
             if "full" in asset["browser_download_url"]:
                 continue
             else:
                 assert_url = asset["browser_download_url"]
                 break
-
-        assert_url = config.github_mirror + assert_url
 
         html_style = """
 <style>
@@ -45,6 +42,7 @@ a {
             if w.exec():
                 import subprocess
                 source_file = r".\\Update.exe"
+                assert_url = FastestMirror.get_github_mirror(assert_url)
                 subprocess.run(['start', source_file, assert_url], shell=True)
         else:
             InfoBar.success(

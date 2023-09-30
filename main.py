@@ -20,33 +20,20 @@ import sys
 
 
 def main(action=None):
+    # 免责申明
     if not config.agreed_to_disclaimer:
-        logger.error("您尚未同意《免责声明》")
+        logger.error(_("您尚未同意《免责声明》"))
         input(_("按任意键关闭窗口. . ."))
         sys.exit(0)
+    # 完整运行
     if action is None or action == "main":
         while True:
             Version.start()
             Game.start()
             Daily.start()
-            Game.stop()
-    elif action == "universe_update":
-        Universe.update()
-        input(_("按任意键关闭窗口. . ."))
-        sys.exit(0)
-    elif action == "fight_update":
-        Fight.update()
-        input(_("按任意键关闭窗口. . ."))
-        sys.exit(0)
-    elif action == "universe_gui":
-        if not Universe.gui():
-            input(_("按任意键关闭窗口. . ."))
-        sys.exit(0)
-    elif action == "fight_gui":
-        if not Fight.gui():
-            input(_("按任意键关闭窗口. . ."))
-        sys.exit(0)
-    else:
+            Game.stop(True)
+    # 子任务
+    elif action in ["fight", "universe", "forgottenhall"]:
         Version.start()
         Game.start()
         if action == "fight":
@@ -55,30 +42,35 @@ def main(action=None):
             Universe.start()
         elif action == "forgottenhall":
             ForgottenHall.start()
-        else:
-            logger.warning(f"Unknown action: {action}")
+        Game.stop(False)
+    # 子任务 原生图形界面
+    elif action in ["universe_gui", "fight_gui"]:
+        if action == "universe_gui" and not Universe.gui():
             input(_("按任意键关闭窗口. . ."))
-            sys.exit(1)
-
-        # 自动退出游戏
-        if config.auto_exit or config.auto_shutdown:
-            Stop.stop_game()
-            # 自动关机
-            if config.auto_shutdown:
-                Stop.play_audio()
-                Stop.shutdown()
-        Stop.play_audio()
+        elif action == "fight_gui" and not Fight.gui():
+            input(_("按任意键关闭窗口. . ."))
+        sys.exit(0)
+    # 子任务 更新项目
+    elif action in ["universe_update", "fight_update"]:
+        if action == "universe_update":
+            Universe.update()
+        elif action == "fight_update":
+            Fight.update()
         input(_("按任意键关闭窗口. . ."))
         sys.exit(0)
+    else:
+        logger.error(_("未知任务: {action}").format(action=action))
+        input(_("按任意键关闭窗口. . ."))
+        sys.exit(1)
 
 
 def exit_handler():
+    # 退出 OCR
     if ocr.ocr is not None:
         ocr.ocr.exit()
 
 
 if __name__ == "__main__":
-    atexit.register(exit_handler)
     if not pyuac.isUserAdmin():
         try:
             pyuac.runAsAdmin(wait=False)
@@ -89,6 +81,7 @@ if __name__ == "__main__":
             sys.exit(1)
     else:
         try:
+            atexit.register(exit_handler)
             main(sys.argv[1]) if len(sys.argv) > 1 else main()
         except KeyboardInterrupt:
             logger.error(_("发生错误: {e}").format(e=_("手动强制停止")))

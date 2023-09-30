@@ -1,28 +1,23 @@
-agreed_to_disclaimer: false
 locales: zh_CN # 语言
 log_level: INFO # 日志等级
 check_update: true # 检测更新
-verify_ssl: true # 更新时检查证书
-auto_exit: true # 自动退出游戏
-auto_shutdown: false # 自动关机
-never_stop: true # 循环运行程序
-power_limit: 160 # 再次运行所需开拓力
-play_audio: false # 任务完成后播放声音提示
+agreed_to_disclaimer: false
+
+after_finish: None # 任务完成后: "None"（无）"Exit"（退出）"Loop"（循环）"Shutdown"（关机）"Hibernate"（休眠）"Sleep"（睡眠）
+power_limit: 160 # 循环运行所需开拓力
+play_audio: false # 任务完成后播放提示音
 
 ocr_path: .\3rdparty\PaddleOCR-json_v.1.3.0\PaddleOCR-json.exe
 python_path: ''
-pip_mirror: https://mirrors.cloud.tencent.com/pypi/simple
-github_mirror: https://github.moeyy.xyz/
 
 game_title_name: 崩坏：星穹铁道 # 窗口标题
 game_process_name: StarRail # 进程名
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏路径
 
 power_total: 999 # 开拓力最大值
-power_rec_min: 6 # 开拓力恢复速度
 dispatch_count: 4 # 派遣次数
 
-instance_type: 侵蚀隧洞 # 副本类型：侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
+instance_type: 侵蚀隧洞 # 副本类型: 侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
 instance_names: # 副本名称
   拟造花萼（金）: 以太之蕾
   拟造花萼（赤）: 智识之蕾
@@ -96,12 +91,14 @@ fight_path: .\3rdparty\Fhoe-Rail # 锄大地路径
 fight_timeout: 6 # 锄大地超时（单位小时）
 fight_team_enable: false # 锄大地时自动切换队伍
 fight_team_number: '2' # 队伍编号
+fight_requirements: false # 是否安装过依赖（更新后会重置为false）
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: false # 启用模拟宇宙
 universe_bonus_enable: false # 领取沉浸奖励
 universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
+universe_requirements: false # 是否安装过依赖（更新后会重置为false）
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
 
 forgottenhall_enable: false # 启用忘却之庭

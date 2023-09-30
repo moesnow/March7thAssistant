@@ -5,11 +5,8 @@ from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, Q
 from qfluentwidgets import IconWidget, TextWrap, FlowLayout, CardWidget, Flyout, InfoBarIcon, TeachingTip, TeachingTipTailPosition
 from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
-import os
-import sys
-import time
 
-from tasks.base.command import run_command, start_task
+from tasks.base.command import start_task
 
 
 class SampleCard(CardWidget):

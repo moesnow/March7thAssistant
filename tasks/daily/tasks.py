@@ -8,10 +8,10 @@ import sys
 class Tasks:
     def __init__(self, config_example_path):
         self.crop = (243.0 / 1920, 377.0 / 1080, 1428.0 / 1920, 528.0 / 1080)
-        self.task_mappings = self._default_config(config_example_path)
-        self.daily_tasks = {task: False for task in self.task_mappings.values()}
+        self.task_mappings = self._load_config(config_example_path)
+        self.daily_tasks = {}
 
-    def _default_config(self, config_example_path):
+    def _load_config(self, config_example_path):
         try:
             with open(config_example_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
@@ -22,7 +22,6 @@ class Tasks:
         self.detect()
         self.scroll()
         self.detect()
-        return self.daily_tasks
 
     def detect(self):
         auto.take_screenshot(crop=self.crop)
@@ -31,7 +30,6 @@ class Tasks:
             text = box[1][0]
             for keyword, task_name in self.task_mappings.items():
                 if keyword in text:
-
                     self.daily_tasks[task_name] = True
                     break
 

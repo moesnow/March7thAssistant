@@ -43,7 +43,7 @@ class MainWindow(MSFluentWindow):
 
         # 检查更新
         if config.check_update:
-            checkUpdate(self)
+            checkUpdate(self, timeout=1)
 
     def initNavigation(self):
         # add navigation items

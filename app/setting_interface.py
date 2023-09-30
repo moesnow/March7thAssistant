@@ -8,11 +8,12 @@ from PyQt5.QtGui import QDesktopServices
 from .common.style_sheet import StyleSheet
 from managers.config_manager import config
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
+from .card.comboboxsettingcard2 import ComboBoxSettingCard2
 from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey
 
 from .tools.check_update import checkUpdate
-from tasks.base.command import run_command, start_task
+from tasks.base.command import start_task
 
 import subprocess
 
@@ -56,35 +57,42 @@ class SettingInterface(ScrollArea):
             "新版本将更加稳定并拥有更多功能（建议启用）",
             "check_update"
         )
-        self.pipMirrorCard = PushSettingCardStr(
-            self.tr('修改'),
-            FIF.SEARCH_MIRROR,
-            self.tr("PyPI 镜像"),
-            "pip_mirror"
-        )
-        self.githubMirrorCard = PushSettingCardStr(
-            self.tr('修改'),
-            FIF.GITHUB,
-            self.tr("GitHub 镜像（留空代表不启用）"),
-            "github_mirror"
-        )
-        self.autoExitCard = SwitchSettingCard1(
-            FIF.BROOM,
-            self.tr('退出游戏'),
-            self.tr('程序运行完后自动退出游戏'),
-            "auto_exit"
-        )
-        self.autoShutdownCard = SwitchSettingCard1(
+        # self.pipMirrorCard = PushSettingCardStr(
+        #     self.tr('修改'),
+        #     FIF.SEARCH_MIRROR,
+        #     self.tr("PyPI 镜像"),
+        #     "pip_mirror"
+        # )
+        # self.githubMirrorCard = PushSettingCardStr(
+        #     self.tr('修改'),
+        #     FIF.GITHUB,
+        #     self.tr("GitHub 镜像（留空代表不启用）"),
+        #     "github_mirror"
+        # )
+        # self.autoExitCard = SwitchSettingCard1(
+        #     FIF.BROOM,
+        #     self.tr('退出游戏'),
+        #     self.tr('程序运行完后自动退出游戏'),
+        #     "auto_exit"
+        # )
+        # self.autoShutdownCard = SwitchSettingCard1(
+        #     FIF.POWER_BUTTON,
+        #     self.tr('自动关机'),
+        #     self.tr('程序运行完后自动关机'),
+        #     "auto_shutdown"
+        # )
+        # self.neverStopCard = SwitchSettingCard1(
+        #     FIF.SYNC,
+        #     self.tr('循环运行'),
+        #     self.tr('保持命令行窗口开启，根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
+        #     "never_stop"
+        # )
+        self.afterFinishCard = ComboBoxSettingCard2(
+            "after_finish",
             FIF.POWER_BUTTON,
-            self.tr('自动关机'),
-            self.tr('程序运行完后自动关机'),
-            "auto_shutdown"
-        )
-        self.neverStopCard = SwitchSettingCard1(
-            FIF.SYNC,
-            self.tr('循环运行'),
-            self.tr('保持命令行窗口开启，根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
-            "never_stop"
+            self.tr('任务完成后'),
+            self.tr('其中“退出”指退出游戏，“循环运行”指根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
+            texts={'无': 'None', '退出': 'Exit', '循环': 'Loop', '关机': 'Shutdown', '休眠': 'Hibernate', '睡眠': 'Sleep'}
         )
         self.playAudioCard = SwitchSettingCard1(
             FIF.ALBUM,
@@ -437,11 +445,12 @@ class SettingInterface(ScrollArea):
         self.programGroup.addSettingCard(self.logLevelCard)
         self.programGroup.addSettingCard(self.gameScreenshotCard)
         self.programGroup.addSettingCard(self.checkUpdateCard)
-        self.programGroup.addSettingCard(self.pipMirrorCard)
-        self.programGroup.addSettingCard(self.githubMirrorCard)
-        self.programGroup.addSettingCard(self.autoExitCard)
-        self.programGroup.addSettingCard(self.autoShutdownCard)
-        self.programGroup.addSettingCard(self.neverStopCard)
+        # self.programGroup.addSettingCard(self.pipMirrorCard)
+        # self.programGroup.addSettingCard(self.githubMirrorCard)
+        # self.programGroup.addSettingCard(self.autoExitCard)
+        # self.programGroup.addSettingCard(self.autoShutdownCard)
+        # self.programGroup.addSettingCard(self.neverStopCard)
+        self.programGroup.addSettingCard(self.afterFinishCard)
         self.programGroup.addSettingCard(self.playAudioCard)
         self.programGroup.addSettingCard(self.powerLimitCard)
 

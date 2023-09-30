@@ -24,34 +24,40 @@ class Daily:
         logger.hr(_("开始日常任务"), 0)
         if Date.is_next_4_am(config.last_run_timestamp):
             screen.change_to("guide2")
+
             tasks = Tasks("./assets/config/task_mappings.json")
             tasks.start()
 
             config.set_value("daily_tasks", tasks.daily_tasks)
             config.save_timestamp("last_run_timestamp")
 
-        task_functions = {
-            "拍照1次": lambda: Photo.photograph(),
-            "合成1次消耗品": lambda: Synthesis.consumables(),
-            "合成1次材料": lambda: Synthesis.material(),
-            "使用1件消耗品": lambda: Synthesis.use_consumables(),
-            "完成1次「拟造花萼（金）」": lambda: Power.instance("拟造花萼（金）", config.instance_names["拟造花萼（金）"], 10, 1),
-            "完成1次「拟造花萼（赤）」": lambda: Power.instance("拟造花萼（赤）", config.instance_names["拟造花萼（赤）"], 10, 1),
-            "完成1次「凝滞虚影」": lambda: Power.instance("凝滞虚影", config.instance_names["凝滞虚影"], 30, 1),
-            "完成1次「侵蚀隧洞」": lambda: Power.instance("侵蚀隧洞", config.instance_names["侵蚀隧洞"], 40, 1),
-            "完成1次「历战余响」": lambda: Power.instance("历战余响", config.instance_names["历战余响"], 30, 1),
-            "完成1次「忘却之庭」": lambda: ForgottenHall.start_daily(),
-        }
-        logger.hr(_("今日实训"), 2)
-        for key, value in config.daily_tasks.items():
-            if value:
-                logger.info(f"{key}: {value}")
+        if len(config.daily_tasks) > 0:
+            task_functions = {
+                "拍照1次": lambda: Photo.photograph(),
+                "合成1次消耗品": lambda: Synthesis.consumables(),
+                "合成1次材料": lambda: Synthesis.material(),
+                "使用1件消耗品": lambda: Synthesis.use_consumables(),
+                "完成1次「拟造花萼（金）」": lambda: Power.instance("拟造花萼（金）", config.instance_names["拟造花萼（金）"], 10, 1),
+                "完成1次「拟造花萼（赤）」": lambda: Power.instance("拟造花萼（赤）", config.instance_names["拟造花萼（赤）"], 10, 1),
+                "完成1次「凝滞虚影」": lambda: Power.instance("凝滞虚影", config.instance_names["凝滞虚影"], 30, 1),
+                "完成1次「侵蚀隧洞」": lambda: Power.instance("侵蚀隧洞", config.instance_names["侵蚀隧洞"], 40, 1),
+                "完成1次「历战余响」": lambda: Power.instance("历战余响", config.instance_names["历战余响"], 30, 1),
+                "完成1次「忘却之庭」": lambda: ForgottenHall.start_daily(),
+            }
 
-        for task_name, task_function in task_functions.items():
-            if config.daily_tasks[task_name]:
-                if task_function():
-                    config.daily_tasks[task_name] = False
-                    config.save_config()
+            logger.hr(_("今日实训"), 2)
+            count = 0
+            for key, value in config.daily_tasks.items():
+                state = _("待完成") if value else _("已完成")
+                logger.info(f"{key}: {state}")
+                count = count + 1 if not value else count
+            logger.info(_("已完成：{count}/{total}").format(count=count, total=len(config.daily_tasks)))
+
+            for task_name, task_function in task_functions.items():
+                if task_name in config.daily_tasks and config.daily_tasks[task_name]:
+                    if task_function():
+                        config.daily_tasks[task_name] = False
+                        config.save_config()
 
         if Date.is_next_mon_4_am(config.echo_of_war_timestamp):
             if config.echo_of_war_enable:

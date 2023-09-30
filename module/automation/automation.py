@@ -234,20 +234,17 @@ class Automation:
                 return ocr_result[0]
         return None
 
-    def retry_with_timeout(self, func, timeout=120, interval=1, *args, **kwargs):
+    def retry_with_timeout(self, lambda_func, timeout=120, interval=1):
         start_time = time.time()
+
         while time.time() - start_time < timeout:
             try:
-                result = func(*args, **kwargs)
+                result = lambda_func()
                 if result:
                     return result
             except Exception as e:
                 logger.error(e)
+
             time.sleep(interval)
 
-        return False  # 超时时返回 False
-
-    # def perform_automation(self, action, *args, **kwargs):
-    #     if hasattr(self, action):
-    #         method = getattr(self, action)
-    #         method(*args, **kwargs)
+        return False

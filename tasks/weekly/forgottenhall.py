@@ -49,7 +49,7 @@ class ForgottenHall:
                         return 3  # 挑战失败，无重试次数
                     return 2  # 挑战成功
             return False
-        result = auto.retry_with_timeout(check_fight, 30 * 60, 1)
+        result = auto.retry_with_timeout(lambda: check_fight(), 30 * 60, 1)
         if not result:
             logger.error(_("战斗超时"))
             raise Exception(_("战斗超时"))

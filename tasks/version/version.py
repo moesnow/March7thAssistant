@@ -1,3 +1,4 @@
+from tasks.base.fastest_mirror import FastestMirror
 from managers.logger_manager import logger
 from managers.translate_manager import _
 from managers.config_manager import config
@@ -12,16 +13,10 @@ class Version:
         if not config.check_update:
             logger.debug(_("检测更新未开启"))
             return False
-        Version.check()
-
-    @staticmethod
-    def check():
         logger.hr(_("开始检测更新"), 0)
-        try:
-            url = "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest"
-            res = requests.get(url, timeout=3, verify=config.verify_ssl)
-            res.raise_for_status()
-            data = json.loads(res.text)
+        response = requests.get(FastestMirror.get_github_api_mirror(1), timeout=3)
+        data = json.loads(response.text) if response.status_code == 200 else None
+        if data:
             version = data["tag_name"]
             if version > config.version:
                 notify.notify(_("发现新版本：{v}").format(v=version))
@@ -29,10 +24,6 @@ class Version:
                 logger.info(data["html_url"])
             else:
                 logger.info(_("已经是最新版本：{v0}").format(v0=config.version))
-        except requests.exceptions.Timeout:
-            logger.warning(_("请求超时"))
-        except requests.exceptions.RequestException as e:
-            logger.error(_("请求出错：{e}").format(e=e))
-        except Exception as e:
-            logger.error(_("检测更新出错：{e}").format(e=e))
+        else:
+            logger.error(_("检测更新失败"))
         logger.hr(_("完成"), 2)

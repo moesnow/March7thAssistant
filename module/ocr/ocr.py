@@ -1,5 +1,4 @@
 from .PPOCR_api import GetOcrApi
-from .install_ocr import InstallOcr
 from managers.logger_manager import logger
 from managers.translate_manager import _
 from PIL import Image
@@ -17,17 +16,13 @@ class OCR:
 
     def instance_ocr(self):
         if self._instance is None:
-            if not os.path.exists(self.exePath):
-                logger.warning(_("OCR路径不存在: {path}").format(path=self.exePath))
-                if not InstallOcr.run(self.exePath):
-                    input(_("按任意键关闭窗口. . ."))
-                    sys.exit(1)
             try:
                 logger.debug(_("开始初始化OCR..."))
                 self.ocr = GetOcrApi(self.exePath)
                 logger.debug(_("初始化OCR完成"))
             except:
                 logger.error(_("初始化OCR失败"))
+                self.ocr = None
                 import cpufeature
                 if not cpufeature.CPUFeature["AVX2"]:
                     logger.error(_("CPU不支持AVX2指令集"))

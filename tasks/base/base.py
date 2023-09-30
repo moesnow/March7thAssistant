@@ -10,13 +10,9 @@ from .windowswitcher import WindowSwitcher
 
 
 class Base:
-    # 兼容旧代码
-    @staticmethod
-    def check_and_switch(title):
-        return WindowSwitcher.check_and_switch(title)
-
     @staticmethod
     def send_notification_with_screenshot(message):
+        # 日志显示的同时推送消息
         logger.info(message)
         image_io = BytesIO()
         auto.take_screenshot()
