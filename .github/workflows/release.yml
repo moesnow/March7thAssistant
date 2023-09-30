@@ -15,7 +15,7 @@ jobs:
 
       - name: Generate latest.json file
         run: |
-          wget https://api.github.com/repos/${{ github.actor }}/${{ github.repository }}/releases/latest -O publish/latest.json
+          wget https://api.github.com/repos/${{ github.repository }}/releases/latest -O publish/latest.json
 
       - name: Git push assets to "release" branch
         run: |
