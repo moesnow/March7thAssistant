@@ -18,7 +18,7 @@ class Dispatch:
             logger.hr(_("检测到探索派遣奖励"), 2)
 
             if Dispatch._perform_dispatches():
-                if config.daily_tasks["派遣1次委托"]:
+                if "派遣1次委托" in config.daily_tasks and config.daily_tasks["派遣1次委托"]:
                     config.daily_tasks["派遣1次委托"] = False
                     config.save_config()
 

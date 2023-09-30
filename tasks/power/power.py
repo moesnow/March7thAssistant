@@ -70,11 +70,8 @@ class Power:
 
     @staticmethod
     def borrow_character():
-        if not config.daily_tasks["使用支援角色并获得战斗胜利1次"] and not config.borrow_character_enable:
+        if not (("使用支援角色并获得战斗胜利1次" in config.daily_tasks and config.daily_tasks["使用支援角色并获得战斗胜利1次"]) or config.borrow_character_enable):
             return True
-        # if not config.borrow_character_enable:
-        #     logger.debug(_("支援角色未开启"))
-        #     return True
         if not auto.click_element("支援", "text", max_retries=10, crop=(1670 / 1920, 700 / 1080, 225 / 1920, 74 / 1080)):
             logger.error(_("找不到支援按钮"))
             return False
@@ -100,7 +97,8 @@ class Power:
                         result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
                         if result:
                             if auto.matched_text == "解除支援":
-                                config.daily_tasks["使用支援角色并获得战斗胜利1次"] = False
+                                if "使用支援角色并获得战斗胜利1次" in config.daily_tasks:
+                                    config.daily_tasks["使用支援角色并获得战斗胜利1次"] = False
                                 config.save_config()
                                 return True
                             elif auto.matched_text == "取消":
@@ -145,22 +143,6 @@ class Power:
                             continue
                     else:
                         return False
-            # if config.borrow_force == True:
-            #     if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
-            #         logger.error(_("找不到入队按钮"))
-            #         return False
-            #     result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
-            #     if result:
-            #         if auto.matched_text == "解除支援":
-            #             config.daily_tasks["使用支援角色并获得战斗胜利1次"] = False
-            #             config.save_config()
-            #             return True
-            #         elif auto.matched_text == "取消":
-            #             auto.click_element_with_pos(result)
-            #             auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
-            #             auto.press_key("esc")
-            #     else:
-            #         return False
         except Exception as e:
             logger.warning(_("选择支援角色出错： {e}").format(e=e))
 
