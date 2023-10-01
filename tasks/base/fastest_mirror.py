@@ -27,9 +27,8 @@ class FastestMirror:
     @staticmethod
     def get_pypi_mirror(timeout=5):
         mirror_urls = [
-            "http://mirrors.cloud.tencent.com/pypi/simple/",
-            "http://mirrors.aliyun.com/pypi/simple/",
-            "http://pypi.doubanio.com/simple/",
+            "https://mirrors.cloud.tencent.com/pypi/simple/",
+            "https://mirrors.aliyun.com/pypi/simple/",
             "https://pypi.tuna.tsinghua.edu.cn/simple/",
             "https://pypi.org/simple/",
         ]
