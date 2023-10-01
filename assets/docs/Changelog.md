@@ -12,7 +12,7 @@
 ### 其他
 - 自动测速并选择最快的镜像源
 - 优先使用 Windows Terminal 而不是 conhost
-- 移除 “pip_mirror”、“github_mirror”、“verify_ssl” 等设置项
+- 弃用 “python_path”、“pip_mirror”、“github_mirror” 等设置项
 
 ## v1.4.2
 

@@ -1,9 +1,7 @@
 from tasks.base.download import download_with_progress
 from managers.logger_manager import logger
-from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.runsubprocess import RunSubprocess
-from tasks.base.windowswitcher import WindowSwitcher
 from tasks.base.command import run_command
 import subprocess
 import tempfile
@@ -12,26 +10,20 @@ import os
 
 class PythonChecker:
     @staticmethod
-    def run(python_path=config.python_path):
-        if python_path != '' and PythonChecker.check(python_path):
+    def run():
+        if PythonChecker.check():
             return True
-        else:
-            paths = run_command(["where", "python.exe"])
-            if paths is not None:
-                for path in paths.split("\n"):
-                    path_dir = os.path.dirname(path)
-                    if PythonChecker.check(path_dir):
-                        config.set_value("python_path", path_dir)
-                        logger.debug(_("Python 路径更新成功：{path}").format(path=path_dir))
-                        return True
-            logger.warning(_("没有在环境变量中找到可用的 Python 路径"))
-            logger.warning(_("如果已经修改了环境变量，请尝试重启程序，包括图形界面"))
 
-        logger.warning(_("Python 路径不存在: {path}").format(path=python_path))
+        logger.warning(_("没有在环境变量中找到可用的 Python 路径"))
+        logger.warning(_("如果已经修改了环境变量，请尝试重启程序，包括图形界面"))
+        input(_("按任意键开始自动安装 Python 3.11.5"))
 
+        PythonChecker.install()
+
+    @staticmethod
+    def install():
         download_url = "http://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-amd64.exe"
         download_file_path = os.path.join(tempfile.gettempdir(), os.path.basename(download_url))
-        destination_path = os.path.join(os.getenv('LocalAppData'), 'Programs\Python\Python311')
 
         while True:
             try:
@@ -60,26 +52,18 @@ class PythonChecker:
         except Exception as e:
             logger.error(_("清理失败：{e}").format(e=e))
 
-        if PythonChecker.check(destination_path):
-            config.set_value("python_path", destination_path)
-            WindowSwitcher.check_and_switch(config.game_title_name)
-            return True
-
-        logger.error(_("仍未找到可用的 Python 路径，请尝试重启程序，包括图形界面"))
-        logger.error(_("也可卸载后重新运行或在 config.yaml 中手动修改 python_path（文件夹）"))
-        return False
+        logger.info(_("安装完成，请重启程序，包括图形界面"))
 
     @staticmethod
-    def check(python_path):
-        python_result = run_command([f"{python_path}\\python.exe", '-V'])
+    def check():
+        python_result = run_command(["python.exe", '-V'])
         if python_result is not None and python_result[0:7] == "Python ":
-            logger.debug(_("Python 路径: {path}").format(path=python_path))
             python_version = python_result.split(' ')[1]
             if python_version < "3.11":
                 logger.warning(_("Python 版本: {version} < 3.11 若出现异常请尝试升级").format(version=python_version))
             else:
                 logger.debug(_("Python 版本: {version}").format(version=python_version))
-            pip_result = run_command([f"{python_path}\\Scripts\\pip.exe", '-V'])
+            pip_result = run_command(["pip.exe", '-V'])
             if pip_result is not None and pip_result[0:4] == "pip ":
                 pip_version = pip_result.split(' ')[1]
                 logger.debug(_("pip 版本: {version}").format(version=pip_version))
@@ -87,7 +71,7 @@ class PythonChecker:
             else:
                 logger.debug(_("开始安装 pip"))
                 from tasks.base.fastest_mirror import FastestMirror
-                if RunSubprocess.run(f"{python_path}\\python.exe .\\assets\\config\\get-pip.py -i {FastestMirror.get_pypi_mirror()} --no-warn-script-location", 600):
+                if RunSubprocess.run(f"python.exe .\\assets\\config\\get-pip.py -i {FastestMirror.get_pypi_mirror()}", 600):
                     logger.debug(_("pip 安装完成"))
                     return True
                 else:

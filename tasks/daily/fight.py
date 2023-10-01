@@ -29,10 +29,9 @@ class Fight:
     @staticmethod
     def check_requirements():
         if not config.fight_requirements:
-            python_path = os.path.abspath(config.python_path)
             logger.info(_("开始安装依赖"))
             from tasks.base.fastest_mirror import FastestMirror
-            while not RunSubprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.fight_path} && pip install -i {FastestMirror.get_pypi_mirror()} -r requirements.txt", 3600):
+            while not RunSubprocess.run(f"cd {config.fight_path} && pip install -i {FastestMirror.get_pypi_mirror()} -r requirements.txt", 3600):
                 logger.error(_("依赖安装失败"))
                 input(_("按任意键重试. . ."))
             logger.info(_("依赖安装成功"))
@@ -40,8 +39,7 @@ class Fight:
 
     @staticmethod
     def before_start():
-        if not PythonChecker.run(config.python_path):
-            return False
+        PythonChecker.run()
         Fight.check_path()
         Fight.check_requirements()
         return True
@@ -51,8 +49,6 @@ class Fight:
         logger.hr(_("准备锄大地"), 2)
 
         if Fight.before_start():
-            python_path = os.path.abspath(config.python_path)
-
             # 切换队伍
             if config.fight_team_enable:
                 Base.change_team(config.fight_team_number)
@@ -60,7 +56,7 @@ class Fight:
             screen.change_to('main')
 
             logger.info(_("开始锄大地"))
-            if RunSubprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.fight_path} && python Fast_Star_Rail.py", config.fight_timeout * 3600):
+            if RunSubprocess.run(f"cd {config.fight_path} && python Fast_Star_Rail.py", config.fight_timeout * 3600):
                 config.save_timestamp("fight_timestamp")
                 Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
                 return
@@ -71,7 +67,6 @@ class Fight:
     @staticmethod
     def gui():
         if Fight.before_start():
-            python_path = os.path.abspath(config.python_path)
-            if subprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.fight_path} && start 点我点我.exe", shell=True, check=True):
+            if subprocess.run(f"cd {config.fight_path} && start 点我点我.exe", shell=True, check=True):
                 return True
         return False

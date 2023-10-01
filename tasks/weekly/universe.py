@@ -30,10 +30,9 @@ class Universe:
     @staticmethod
     def check_requirements():
         if not config.universe_requirements:
-            python_path = os.path.abspath(config.python_path)
             logger.info(_("开始安装依赖"))
             from tasks.base.fastest_mirror import FastestMirror
-            while not RunSubprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.universe_path} && pip install -i {FastestMirror.get_pypi_mirror()} -r requirements.txt", 3600):
+            while not RunSubprocess.run(f"cd {config.universe_path} && pip install -i {FastestMirror.get_pypi_mirror()} -r requirements.txt", 3600):
                 logger.error(_("依赖安装失败"))
                 input(_("按任意键重试. . ."))
             logger.info(_("依赖安装成功"))
@@ -41,8 +40,7 @@ class Universe:
 
     @staticmethod
     def before_start():
-        if not PythonChecker.run(config.python_path):
-            return False
+        PythonChecker.run()
         Universe.check_path()
         Universe.check_requirements()
         return True
@@ -52,15 +50,14 @@ class Universe:
         logger.hr(_("准备模拟宇宙"), 2)
 
         if Universe.before_start():
-            python_path = os.path.abspath(config.python_path)
 
             screen.change_to('universe_main')
             screen.change_to('main')
 
             logger.info(_("开始校准"))
-            if RunSubprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.universe_path} && python align_angle.py", 60):
+            if RunSubprocess.run(f"cd {config.universe_path} && python align_angle.py", 60):
                 logger.info(_("开始模拟宇宙"))
-                if RunSubprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.universe_path} && python states.py" + (" --bonus=1" if config.universe_bonus_enable else ""), config.universe_timeout * 3600):
+                if RunSubprocess.run(f"cd {config.universe_path} && python states.py" + (" --bonus=1" if config.universe_bonus_enable else ""), config.universe_timeout * 3600):
                     config.save_timestamp("universe_timestamp")
                     if get_reward:
                         Universe.get_reward()
@@ -86,7 +83,6 @@ class Universe:
     @staticmethod
     def gui():
         if Universe.before_start():
-            python_path = os.path.abspath(config.python_path)
-            if subprocess.run(f"set PATH={python_path};{python_path}\\Scripts;%PATH% && cd {config.universe_path} && start gui.exe", shell=True, check=True):
+            if subprocess.run(f"cd {config.universe_path} && start gui.exe", shell=True, check=True):
                 return True
         return False
