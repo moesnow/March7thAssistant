@@ -1,8 +1,7 @@
 from tasks.base.download import download_with_progress
 from managers.logger_manager import logger
 from managers.translate_manager import _
-from tasks.base.runsubprocess import RunSubprocess
-from tasks.base.command import run_command
+from tasks.base.command import subprocess_with_stdout
 import subprocess
 import tempfile
 import os
@@ -56,14 +55,14 @@ class PythonChecker:
 
     @staticmethod
     def check():
-        python_result = run_command(["python.exe", '-V'])
+        python_result = subprocess_with_stdout(["python.exe", '-V'])
         if python_result is not None and python_result[0:7] == "Python ":
             python_version = python_result.split(' ')[1]
             if python_version < "3.11":
                 logger.warning(_("Python 版本: {version} < 3.11 若出现异常请尝试升级").format(version=python_version))
             else:
                 logger.debug(_("Python 版本: {version}").format(version=python_version))
-            pip_result = run_command(["pip.exe", '-V'])
+            pip_result = subprocess_with_stdout(["pip.exe", '-V'])
             if pip_result is not None and pip_result[0:4] == "pip ":
                 pip_version = pip_result.split(' ')[1]
                 logger.debug(_("pip 版本: {version}").format(version=pip_version))
@@ -71,7 +70,7 @@ class PythonChecker:
             else:
                 logger.debug(_("开始安装 pip"))
                 from tasks.base.fastest_mirror import FastestMirror
-                if RunSubprocess.run(f"python.exe .\\assets\\config\\get-pip.py -i {FastestMirror.get_pypi_mirror()}", 600):
+                if subprocess.run(["python", ".\\assets\\config\\get-pip.py", "-i", FastestMirror.get_pypi_mirror()], check=True):
                     logger.debug(_("pip 安装完成"))
                     return True
                 else:

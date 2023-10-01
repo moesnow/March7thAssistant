@@ -6,8 +6,6 @@ from managers.screen_manager import screen
 from io import BytesIO
 import time
 
-from .windowswitcher import WindowSwitcher
-
 
 class Base:
     @staticmethod

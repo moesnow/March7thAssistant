@@ -4,7 +4,7 @@ from managers.logger_manager import logger
 from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.base.pythonchecker import PythonChecker
-from tasks.base.runsubprocess import RunSubprocess
+from tasks.base.command import subprocess_with_timeout
 import subprocess
 import os
 
@@ -31,7 +31,7 @@ class Fight:
         if not config.fight_requirements:
             logger.info(_("开始安装依赖"))
             from tasks.base.fastest_mirror import FastestMirror
-            while not RunSubprocess.run(f"cd {config.fight_path} && pip install -i {FastestMirror.get_pypi_mirror()} -r requirements.txt", 3600):
+            while not subprocess.run(["pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.fight_path):
                 logger.error(_("依赖安装失败"))
                 input(_("按任意键重试. . ."))
             logger.info(_("依赖安装成功"))
@@ -56,12 +56,12 @@ class Fight:
             screen.change_to('main')
 
             logger.info(_("开始锄大地"))
-            if RunSubprocess.run(f"cd {config.fight_path} && python Fast_Star_Rail.py", config.fight_timeout * 3600):
+            if subprocess_with_timeout(["python", "Fast_Star_Rail.py"], config.fight_timeout * 3600, config.fight_path):
                 config.save_timestamp("fight_timestamp")
                 Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
                 return
             else:
-                logger.info(_("锄大地失败"))
+                logger.error(_("锄大地失败"))
         Base.send_notification_with_screenshot(_("⚠️锄大地未完成⚠️"))
 
     @staticmethod

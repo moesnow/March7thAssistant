@@ -11,6 +11,7 @@
 - 工作目录不正确无法运行（常见于使用任务计划程序）
 ### 其他
 - 自动测速并选择最快的镜像源
+- 现在“超时”功能可以正确强制停止“锄大地”、“模拟宇宙”子任务
 - 优先使用 Windows Terminal 而不是 conhost
 - 弃用 “python_path”、“pip_mirror”、“github_mirror” 等设置项
 

@@ -1,8 +1,8 @@
-from tqdm import tqdm
-import urllib.request
 
 
 def download_with_progress(download_url, save_path):
+    from tqdm import tqdm
+    import urllib.request
     # 获取文件大小
     response = urllib.request.urlopen(download_url)
     file_size = int(response.info().get('Content-Length', -1))

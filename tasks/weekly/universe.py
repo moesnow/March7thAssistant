@@ -5,7 +5,7 @@ from managers.automation_manager import auto
 from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.base.pythonchecker import PythonChecker
-from tasks.base.runsubprocess import RunSubprocess
+from tasks.base.command import subprocess_with_timeout
 import subprocess
 import os
 
@@ -32,7 +32,7 @@ class Universe:
         if not config.universe_requirements:
             logger.info(_("开始安装依赖"))
             from tasks.base.fastest_mirror import FastestMirror
-            while not RunSubprocess.run(f"cd {config.universe_path} && pip install -i {FastestMirror.get_pypi_mirror()} -r requirements.txt", 3600):
+            while not subprocess.run(["pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.universe_path):
                 logger.error(_("依赖安装失败"))
                 input(_("按任意键重试. . ."))
             logger.info(_("依赖安装成功"))
@@ -55,9 +55,12 @@ class Universe:
             screen.change_to('main')
 
             logger.info(_("开始校准"))
-            if RunSubprocess.run(f"cd {config.universe_path} && python align_angle.py", 60):
+            if subprocess_with_timeout(["python", "align_angle.py"], 60, config.universe_path):
                 logger.info(_("开始模拟宇宙"))
-                if RunSubprocess.run(f"cd {config.universe_path} && python states.py" + (" --bonus=1" if config.universe_bonus_enable else ""), config.universe_timeout * 3600):
+                command = ["python", "states.py"]
+                if config.universe_bonus_enable:
+                    command.append("--bonus=1")
+                if subprocess_with_timeout(command, config.universe_timeout * 3600, config.universe_path):
                     config.save_timestamp("universe_timestamp")
                     if get_reward:
                         Universe.get_reward()
@@ -65,9 +68,9 @@ class Universe:
                         Base.send_notification_with_screenshot(_("🎉模拟宇宙已完成🎉"))
                     return
                 else:
-                    logger.info(_("模拟宇宙失败"))
+                    logger.error(_("模拟宇宙失败"))
             else:
-                logger.info(_("校准失败"))
+                logger.error(_("校准失败"))
         Base.send_notification_with_screenshot(_("⚠️模拟宇宙未完成⚠️"))
 
     @staticmethod
