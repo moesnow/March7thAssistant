@@ -1,13 +1,12 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, pyqtSignal, QObject, QEvent, QUrl
+from PyQt5.QtCore import Qt, pyqtSignal, QEvent, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices
 from PyQt5.QtWidgets import QLabel, QFrame, QVBoxLayout, QHBoxLayout, QPushButton
 from qframelesswindow import FramelessDialog
 
-from qfluentwidgets import LineEdit, TextWrap, FluentStyleSheet, PrimaryPushButton
+from qfluentwidgets import FluentStyleSheet, PrimaryPushButton
 
 from .mask_dialog_base import MaskDialogBase
-import markdown
 
 
 class Ui_MessageBox:
@@ -21,9 +20,6 @@ class Ui_MessageBox:
         self.titleLabel = QLabel(title, parent)
 
         self.contentLabel = QLabel("html_content", parent)
-
-        # self.lineEdit = LineEdit(self)
-        # self.lineEdit.setText(content)
 
         self.buttonGroup = QFrame(parent)
         self.cancelButton = QPushButton(self.tr('好的'), self.buttonGroup)
@@ -93,7 +89,6 @@ class Ui_MessageBox:
         self.cancelSignal.emit()
 
     def __onYesButtonClicked(self):
-        # self.open_url(self.url)
         self.accept()
         self.yesSignal.emit()
 
@@ -161,6 +156,3 @@ class MessageBoxUpdate(MaskDialogBase, Ui_MessageBox):
                 self._adjustText()
 
         return super().eventFilter(obj, e)
-
-    # def getText(self):
-    #     return self.lineEdit.text()

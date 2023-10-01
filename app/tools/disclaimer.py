@@ -16,28 +16,15 @@ a {
 </style>
 """
     content = '''
-本软件是一个外部工具旨在自动化崩坏星轨的游戏玩法。它被设计成仅通过现有用户界面与游戏交互,并遵守相关法律法规。
+- 此程序为免费开源项目，如果你付了钱请立刻退款！！！
 
-该软件包旨在提供简化和用户通过功能与游戏交互,并且它不打算以任何方式破坏游戏平衡或提供任何不公平的优势。
+- 本项目已经因倒卖行为受到严重威胁，请帮助我们！！！
 
-该软件包不会以任何方式修改任何游戏文件或游戏代码。
-
-This software is open source, free of charge and for learning and exchange purposes only. 
-
-The developer team has the final right to interpret this project. 
-
-All problems arising from the use of this software are not related to this project and the developer team. 
-
-If you encounter a merchant using this software to practice on your behalf and charging for it, it may be the cost of equipment and time, etc. 
-
-The problems and consequences arising from this software have nothing to do with it.
+- 咸鱼倒狗4000+！你付给倒狗的每一分钱都会让开源自动化更艰难，请退款并举报商家！！！
 
 本软件开源、免费，仅供学习交流使用。开发者团队拥有本项目的最终解释权。
 
 使用本软件产生的所有问题与本项目与开发者团队无关。
-
-若您遇到商家使用本软件进行代练并收费，可能是设备与时间等费用，产生的问题及后果与本软件无关。
-
 
 请注意，根据MiHoYo的 [崩坏:星穹铁道的公平游戏宣言](https://sr.mihoyo.com/news/111246?nav=news&type=notice):
 
@@ -48,6 +35,10 @@ The problems and consequences arising from this software have nothing to do with
         w = MessageBoxDisclaimer(f"免责声明", html_style + markdown.markdown(content), self.window())
         if w.exec():
             config.set_value("agreed_to_disclaimer", True)
+            import os
+            path = os.path.join(os.getenv('LocalAppData'), "March7thAssistant\\disclaimer")
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, 'a').close()
         else:
             sys.exit(0)
     except Exception as e:

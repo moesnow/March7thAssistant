@@ -96,7 +96,7 @@ class MainWindow(MSFluentWindow):
     def onSupport(self):
         w = MessageBoxSupport(
             '支持作者🥰',
-            '如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀',
+            '此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀',
             './assets/app/images/sponsor.jpg',
             self
         )

@@ -21,9 +21,6 @@ class Ui_MessageBox:
 
         self.contentLabel = QLabel("html_content", parent)
 
-        # self.lineEdit = LineEdit(self)
-        # self.lineEdit.setText(content)
-
         self.buttonGroup = QFrame(parent)
         self.cancelButton = QPushButton(self.tr('我已知晓'), self.buttonGroup)
         self.yesButton = PrimaryPushButton(self.tr('退出'), self.buttonGroup)
@@ -149,9 +146,9 @@ class MessageBoxDisclaimer(MaskDialogBase, Ui_MessageBox):
 
         self.buttonGroup.setMinimumWidth(280)
         # self.buttonGroup.setMinimumWidth(280)
-        # self.widget.setFixedSize(
-        #     max(self.contentLabel.width(), self.titleLabel.width()) + 48, self.contentLabel.y() + self.contentLabel.height() + 105
-        # )
+        self.widget.setFixedSize(
+            max(self.contentLabel.width(), self.titleLabel.width()) + 48, self.contentLabel.y() + self.contentLabel.height() + 105
+        )
 
     def eventFilter(self, obj, e: QEvent):
         if obj is self.window():

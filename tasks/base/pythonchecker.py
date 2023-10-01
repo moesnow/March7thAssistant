@@ -4,6 +4,7 @@ from managers.translate_manager import _
 from tasks.base.command import subprocess_with_stdout
 import subprocess
 import tempfile
+import sys
 import os
 
 
@@ -11,7 +12,7 @@ class PythonChecker:
     @staticmethod
     def run():
         if PythonChecker.check():
-            return True
+            return
 
         logger.warning(_("没有在环境变量中找到可用的 Python 路径"))
         logger.warning(_("如果已经修改了环境变量，请尝试重启程序，包括图形界面"))
@@ -52,6 +53,8 @@ class PythonChecker:
             logger.error(_("清理失败：{e}").format(e=e))
 
         logger.info(_("安装完成，请重启程序，包括图形界面"))
+        input(_("按任意键关闭窗口. . ."))
+        sys.exit(0)
 
     @staticmethod
     def check():
