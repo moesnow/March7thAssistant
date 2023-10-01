@@ -276,12 +276,6 @@ class SettingInterface(ScrollArea):
             self.tr('仅限完整运行生效'),
             "universe_enable"
         )
-        self.universeBonusEnableCard = SwitchSettingCard1(
-            FIF.IOT,
-            self.tr('启用领取沉浸奖励'),
-            None,
-            "universe_bonus_enable"
-        )
         self.universePathCard = PushSettingCardStr(
             self.tr('修改'),
             FIF.COMMAND_PROMPT,
@@ -299,6 +293,12 @@ class SettingInterface(ScrollArea):
             FIF.DATE_TIME,
             self.tr("上次运行模拟宇宙的时间（每周运行）"),
             "universe_timestamp"
+        )
+        self.universeBonusEnableCard = SwitchSettingCard1(
+            FIF.IOT,
+            self.tr('启用领取沉浸奖励'),
+            None,
+            "universe_bonus_enable"
         )
         self.guiUniverseCard = PrimaryPushSettingCard(
             self.tr('启动'),
@@ -464,9 +464,9 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.updateFightCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
-        self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.universePathCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
+        self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
         self.UniverseGroup.addSettingCard(self.guiUniverseCard)
         self.UniverseGroup.addSettingCard(self.updateUniverseCard)
