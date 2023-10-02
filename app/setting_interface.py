@@ -24,21 +24,6 @@ class SettingInterface(ScrollArea):
 
     Nav = Pivot
 
-    def addSubInterface(self, widget: QLabel, objectName, text):
-        widget.setObjectName(objectName)
-        # widget.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        self.stackedWidget.addWidget(widget)
-        self.pivot.addItem(
-            routeKey=objectName,
-            text=text,
-            onClick=lambda: self.stackedWidget.setCurrentWidget(widget)
-        )
-
-    def onCurrentIndexChanged(self, index):
-        widget = self.stackedWidget.widget(index)
-        self.pivot.setCurrentItem(widget.objectName())
-        qrouter.push(self.stackedWidget, widget.objectName())
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.parent = parent
@@ -102,6 +87,12 @@ class SettingInterface(ScrollArea):
             [10, 240],
             FIF.HEART,
             self.tr("循环运行再次启动所需开拓力（凌晨四点优先级更高）"),
+        )
+        self.useWindowsTerminalCard = SwitchSettingCard1(
+            FIF.COMMAND_PROMPT,
+            self.tr('优先使用 Windows 终端'),
+            self.tr('界面更好看且支持显示Emoji表情'),
+            "use_windows_terminal"
         )
 
         self.GameGroup = SettingCardGroup(self.tr("游戏设置"), self.scrollWidget)
@@ -433,6 +424,7 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
+        self.ProgramGroup.addSettingCard(self.useWindowsTerminalCard)
 
         self.GameGroup.addSettingCard(self.gamePathCard)
 
@@ -535,6 +527,20 @@ class SettingInterface(ScrollArea):
         # self.vBoxLayout.addWidget(self.NotifyGroup)
         # self.vBoxLayout.addWidget(self.KeybindingGroup)
         # self.vBoxLayout.addWidget(self.AboutGroup)
+
+    def addSubInterface(self, widget: QLabel, objectName, text):
+        widget.setObjectName(objectName)
+        self.stackedWidget.addWidget(widget)
+        self.pivot.addItem(
+            routeKey=objectName,
+            text=text,
+            onClick=lambda: self.stackedWidget.setCurrentWidget(widget)
+        )
+
+    def onCurrentIndexChanged(self, index):
+        widget = self.stackedWidget.widget(index)
+        self.pivot.setCurrentItem(widget.objectName())
+        qrouter.push(self.stackedWidget, widget.objectName())
 
     def __onImportConfigCardClicked(self):
         configdir, _ = QFileDialog.getOpenFileName(self, "选取配置文件", "./", "Config Files (*.yaml)")

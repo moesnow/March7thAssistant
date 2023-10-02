@@ -29,12 +29,16 @@ def subprocess_with_stdout(command):
 
 
 def start_task(command):
+    # 为什么 Windows 这么难用呢
+    from managers.config_manager import config
     import subprocess
     import sys
     # 检查是否是 PyInstaller 打包的可执行文件
     if getattr(sys, 'frozen', False):
         # 检查是否安装了 Windows Terminal
-        if subprocess_with_stdout(["where", "wt.exe"]) is not None:
+        # 因为 https://github.com/microsoft/terminal/issues/7520 问题
+        # 部分用户会出现错误`0x800702e4`，不得不添加一个选项用于控制是否使用 Windows Terminal
+        if config.use_windows_terminal and subprocess_with_stdout(["where", "wt.exe"]) is not None:
             # 因为 https://github.com/microsoft/terminal/issues/10276 问题
             # 管理员模式下，始终优先使用控制台主机而不是新终端
             subprocess.check_call(f"wt ./\"March7th Assistant.exe\" {command}", shell=True)
