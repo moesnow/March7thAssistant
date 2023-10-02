@@ -1,9 +1,9 @@
 
-def subprocess_with_timeout(command, timeout, working_directory):
+def subprocess_with_timeout(command, timeout, working_directory, env):
     import subprocess
     process = None
     try:
-        process = subprocess.Popen(command, cwd=working_directory)
+        process = subprocess.Popen(command, cwd=working_directory, env=env)
         process.communicate(timeout=timeout)
         if process.returncode == 0:
             return True

@@ -11,7 +11,6 @@ import os
 
 
 class Universe:
-
     @staticmethod
     def update():
         config.set_value("universe_requirements", False)
@@ -32,7 +31,7 @@ class Universe:
         if not config.universe_requirements:
             logger.info(_("开始安装依赖"))
             from tasks.base.fastest_mirror import FastestMirror
-            while not subprocess.run(["pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.universe_path):
+            while not subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.universe_path):
                 logger.error(_("依赖安装失败"))
                 input(_("按任意键重试. . ."))
             logger.info(_("依赖安装成功"))
@@ -55,12 +54,12 @@ class Universe:
             screen.change_to('main')
 
             logger.info(_("开始校准"))
-            if subprocess_with_timeout(["python", "align_angle.py"], 60, config.universe_path):
+            if subprocess_with_timeout([config.python_exe_path, "align_angle.py"], 60, config.universe_path, config.env):
                 logger.info(_("开始模拟宇宙"))
-                command = ["python", "states.py"]
+                command = [config.python_exe_path, "states.py"]
                 if config.universe_bonus_enable:
                     command.append("--bonus=1")
-                if subprocess_with_timeout(command, config.universe_timeout * 3600, config.universe_path):
+                if subprocess_with_timeout(command, config.universe_timeout * 3600, config.universe_path, config.env):
                     config.save_timestamp("universe_timestamp")
                     if get_reward:
                         Universe.get_reward()
@@ -86,6 +85,6 @@ class Universe:
     @staticmethod
     def gui():
         if Universe.before_start():
-            if subprocess.run(f"cd {config.universe_path} && start gui.exe", shell=True, check=True):
+            if subprocess.run(["start", "gui.exe"], shell=True, check=True, cwd=config.universe_path, env=config.env):
                 return True
         return False

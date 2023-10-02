@@ -31,7 +31,7 @@ class Fight:
         if not config.fight_requirements:
             logger.info(_("开始安装依赖"))
             from tasks.base.fastest_mirror import FastestMirror
-            while not subprocess.run(["pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.fight_path):
+            while not subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.fight_path):
                 logger.error(_("依赖安装失败"))
                 input(_("按任意键重试. . ."))
             logger.info(_("依赖安装成功"))
@@ -56,7 +56,7 @@ class Fight:
             screen.change_to('main')
 
             logger.info(_("开始锄大地"))
-            if subprocess_with_timeout(["python", "Fast_Star_Rail.py"], config.fight_timeout * 3600, config.fight_path):
+            if subprocess_with_timeout([config.python_exe_path, "Fast_Star_Rail.py"], config.fight_timeout * 3600, config.fight_path, config.env):
                 config.save_timestamp("fight_timestamp")
                 Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
                 return
@@ -67,6 +67,6 @@ class Fight:
     @staticmethod
     def gui():
         if Fight.before_start():
-            if subprocess.run(f"cd {config.fight_path} && start 点我点我.exe", shell=True, check=True):
+            if subprocess.run(["start", "点我点我.exe"], shell=True, check=True, cwd=config.fight_path, env=config.env):
                 return True
         return False
