@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.5.1
+
+### 修复
+- 部分 Windows 终端提示 "Error 0x800702e4"
+- Microsoft Store 污染 Python 环境变量的问题
+
 ## v1.5.0
 
 ### 新功能
