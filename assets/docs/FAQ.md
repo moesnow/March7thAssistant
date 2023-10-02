@@ -2,6 +2,8 @@
 
 <!-- ## [视频教程](https://www.bilibili.com/video/BV13h4y1m7VP/) -->
 
+## 快速上手，请访问：[使用教程](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
+
 ## 三月七小助手 March7thAssistant
 
 ### Q：完整运行的作用是什么

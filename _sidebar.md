@@ -2,3 +2,4 @@
 - [使用教程](assets/docs/Tutorial.md)
 - [常见问题](assets/docs/FAQ.md)
 - [更新记录](assets/docs/Changelog.md)
+- [后台运行](https://asu.stysqy.top/guide/bs.html)
