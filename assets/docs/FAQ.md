@@ -34,7 +34,7 @@ A：快速上手，请访问：[项目文档](https://asu.stysqy.top/)
 
 遇到问题，请在提问前查看：[Q&A](https://asu.stysqy.top/guide/qa.html)
 
-# 锄大地 Fhoe-Rail
+# 锄大地 StarRailAssistant
 
 ## Q：锄大地卡住不动，总是就是不正常运行
 

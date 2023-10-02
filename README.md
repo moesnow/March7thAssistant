@@ -30,7 +30,7 @@ This software is open source, free of charge and for learning and exchange purpo
 - 凌晨四点或体力恢复到指定值后自动启动
 - 任务完成后声音提示、自动关闭游戏或关机
 
-> 其中模拟宇宙调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目，锄大地调用的 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 项目
+> 其中模拟宇宙调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目，锄大地调用的 [StarRailAssistant](https://github.com/Starry-Wind/StarRailAssistant) 项目
 
 详情见 [配置文件](assets/config/config.example.yaml) 或图形界面设置 ｜🌟喜欢就点击右上角给个**星星**吧|･ω･) 🌟｜QQ群 [855392201](https://qm.qq.com/q/9gFqUrUGVq) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)
 
@@ -42,6 +42,7 @@ This software is open source, free of charge and for learning and exchange purpo
 
 - 必须使用**PC端** `1920*1080` 分辨率窗口或全屏运行游戏（不支持HDR）
 - 模拟宇宙相关 [项目文档](https://asu.stysqy.top/)  [Q&A](https://asu.stysqy.top/guide/qa.html)
+- 锄大地相关 [项目文档](https://sra.stysqy.top/)  [Q&A](https://sra.stysqy.top/guide/qa.html)
 - 需要后台运行或多显示器可以尝试 [远程本地多用户桌面](https://asu.stysqy.top/guide/bs.html)
 - 遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，提问讨论可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊随缘看，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
 
@@ -99,6 +100,8 @@ March7thAssistant 离不开以下开源项目的帮助：
 - 模拟宇宙自动化 [https://github.com/CHNZYX/Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe)
 
 - 锄大地自动化 [https://github.com/linruowuyin/Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail)
+
+- 锄大地自动化 [https://github.com/Starry-Wind/StarRailAssistant](https://github.com/Starry-Wind/StarRailAssistant)
 
 - OCR文字识别 [https://github.com/hiroi-sora/PaddleOCR-json](https://github.com/hiroi-sora/PaddleOCR-json)
 

@@ -16,8 +16,8 @@ class Fight:
         config.set_value("fight_requirements", False)
         from module.update.update_handler import UpdateHandler
         from tasks.base.fastest_mirror import FastestMirror
-        url = FastestMirror.get_github_mirror("https://github.com/linruowuyin/Fhoe-Rail/archive/master.zip")
-        update_handler = UpdateHandler(url, config.fight_path, "Fhoe-Rail-master")
+        url = FastestMirror.get_github_mirror("https://github.com/Starry-Wind/StarRailAssistant/archive/refs/tags/latest.zip")
+        update_handler = UpdateHandler(url, config.fight_path, "StarRailAssistant-latest")
         update_handler.run()
 
     @staticmethod
@@ -56,7 +56,7 @@ class Fight:
             screen.change_to('main')
 
             logger.info(_("开始锄大地"))
-            if subprocess_with_timeout([config.python_exe_path, "Fast_Star_Rail.py"], config.fight_timeout * 3600, config.fight_path, config.env):
+            if subprocess_with_timeout([config.python_exe_path, "Honkai_Star_Rail.py"], config.fight_timeout * 3600, config.fight_path, config.env):
                 config.save_timestamp("fight_timestamp")
                 Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
                 return

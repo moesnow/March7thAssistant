@@ -209,7 +209,7 @@ class SettingInterface(ScrollArea):
             "last_run_timestamp"
         )
 
-        self.FightGroup = SettingCardGroup(self.tr("锄大地 (Fhoe-Rail)"), self.scrollWidget)
+        self.FightGroup = SettingCardGroup(self.tr("锄大地 (StarRailAssistant)"), self.scrollWidget)
         self.fightEnableCard = SwitchSettingCard1(
             FIF.BUS,
             self.tr('启用锄大地'),
@@ -256,7 +256,7 @@ class SettingInterface(ScrollArea):
         self.updateFightCard = PrimaryPushSettingCard(
             self.tr('更新'),
             FIF.UPDATE,
-            self.tr('更新锄大地 (Fhoe-Rail)'),
+            self.tr('更新锄大地 (StarRailAssistant)'),
             None
         )
 
