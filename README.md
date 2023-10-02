@@ -32,7 +32,7 @@ This software is open source, free of charge and for learning and exchange purpo
 
 > 其中模拟宇宙调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目，锄大地调用的 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 项目
 
-详情见 [配置文件](assets/config/config.example.yaml) 或图形界面设置 ｜🌟喜欢就点击右上角给个**星星**吧|･ω･) 🌟｜QQ群 [855392201](https://qm.qq.com/q/9gFqUrUGVq) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)
+详情见 [配置文件](assets/config/config.example.yaml) 或图形界面设置 ｜🌟喜欢就给个星星吧|･ω･) 🌟｜QQ群 [855392201](https://qm.qq.com/q/9gFqUrUGVq) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)
 
 ## 界面展示
 

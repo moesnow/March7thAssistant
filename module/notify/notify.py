@@ -26,7 +26,6 @@ class Notify:
                 "telegram": False,
                 "wechatworkapp": False,
                 "wechatworkbot": False,
-                "bark": False,
                 "lark": False
             }
         return cls._instance

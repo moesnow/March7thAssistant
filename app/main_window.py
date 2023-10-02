@@ -31,8 +31,8 @@ class MainWindow(MSFluentWindow):
         self.homeInterface = HomeInterface(self)
         self.tasksInterface = TasksInterface(self)
         self.settingInterface = SettingInterface(self)
-        self.changelogInterface = ChangelogInterface(self)
         self.faqInterface = FAQInterface(self)
+        self.changelogInterface = ChangelogInterface(self)
 
         self.initNavigation()
         self.splashScreen.finish()
@@ -49,8 +49,8 @@ class MainWindow(MSFluentWindow):
         # add navigation items
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('主页'))
         self.addSubInterface(self.tasksInterface, FIF.LABEL, self.tr('每日实训'))
-        self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
         self.addSubInterface(self.faqInterface, FIF.CHAT, self.tr('常见问题'))
+        self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
 
         self.navigationInterface.addWidget(
             'themeButton',

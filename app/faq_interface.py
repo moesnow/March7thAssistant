@@ -17,7 +17,7 @@ class FAQInterface(ScrollArea):
         super().__init__(parent=parent)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel(self.tr("常见问题"), self)
+        # self.titleLabel = QLabel(self.tr("常见问题"), self)
         self.contentLabel = QLabel("html_content", parent)
         html_style = """
 <style>
@@ -43,7 +43,7 @@ a {
         self.view.setObjectName('view')
         self.setObjectName('FQAsInterface')
         self.contentLabel.setObjectName('contentLabel')
-        self.titleLabel.setObjectName('FQAsLabel')
+        # self.titleLabel.setObjectName('FQAsLabel')
         StyleSheet.FAQ_INTERFACE.apply(self)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -53,7 +53,7 @@ a {
         self.vBoxLayout.setContentsMargins(36, 8, 36, 36)
         self.vBoxLayout.setSpacing(8)
         self.vBoxLayout.setAlignment(Qt.AlignTop)
-        self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
+        # self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
         self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
 
     def open_url(self, url):

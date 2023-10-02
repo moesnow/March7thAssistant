@@ -9,6 +9,7 @@ from .common.style_sheet import StyleSheet
 import markdown
 import sys
 
+
 class ChangelogInterface(ScrollArea):
     """ Home interface """
 
@@ -16,7 +17,7 @@ class ChangelogInterface(ScrollArea):
         super().__init__(parent=parent)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel(self.tr("更新日志"), self)
+        # self.titleLabel = QLabel(self.tr("更新日志"), self)
         self.contentLabel = QLabel("html_content", parent)
         html_style = """
 <style>
@@ -42,7 +43,7 @@ a {
         self.view.setObjectName('view')
         self.setObjectName('changelogsInterface')
         self.contentLabel.setObjectName('contentLabel')
-        self.titleLabel.setObjectName('changelogsLabel')
+        # self.titleLabel.setObjectName('changelogsLabel')
         StyleSheet.CHANGELOGS_INTERFACE.apply(self)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -52,7 +53,7 @@ a {
         self.vBoxLayout.setContentsMargins(36, 8, 36, 36)
         self.vBoxLayout.setSpacing(8)
         self.vBoxLayout.setAlignment(Qt.AlignTop)
-        self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
+        # self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
         self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
 
     def open_url(self, url):
