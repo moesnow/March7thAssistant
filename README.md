@@ -8,6 +8,11 @@ March7thAssistant
 </h1>
 
 崩坏：星穹铁道 自动日常｜每日实训｜清体力｜锄大地｜模拟宇宙｜忘却之庭｜图形界面｜消息推送｜循环运行
+
+快速上手，请访问：[使用教程](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
+
+遇到问题，请在提问前查看：[FAQ](https://moesnow.github.io/March7thAssistant/#/assets/docs/FAQ)
+
 <!-- 
 ## 免责声明
 本软件是一个外部工具旨在自动化崩坏星轨的游戏玩法。它被设计成仅通过现有用户界面与游戏交互,并遵守相关法律法规。该软件包旨在提供简化和用户通过功能与游戏交互,并且它不打算以任何方式破坏游戏平衡或提供任何不公平的优势。该软件包不会以任何方式修改任何游戏文件或游戏代码。
@@ -52,14 +57,6 @@ This software is open source, free of charge and for learning and exchange purpo
 如果需要使用 **任务计划程序** 定时运行或直接执行 **完整运行**，可以使用终端图标的 `March7th Assistant.exe`
 
 检测更新可以点击图形界面设置最底下的按钮，或双击 `Update.exe`
-
-## 更新日志
-
-[Changelog.md](assets/docs/Changelog.md)
-
-## 常见问题
-
-[FAQ.md](assets/docs/FAQ.md)
 
 ## 源码运行
 
