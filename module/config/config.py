@@ -32,17 +32,18 @@ class Config:
         except FileNotFoundError:
             sys.exit(1)
 
-    def _load_config(self, dir=''):
-        if dir == '':
-            dir = self.config_path
-        try:  # cls._instance.yaml.load(cls._instance._default_config())
-            with open(dir, 'r', encoding='utf-8') as file:
+    def _load_config(self, path=None):
+        path = self.config_path if path is None else path
+        try:
+            with open(path, 'r', encoding='utf-8') as file:
                 loaded_config = self.yaml.load(file)
                 if loaded_config:
                     self.config.update(loaded_config)
                     self.save_config()
         except FileNotFoundError:
             self.save_config()
+        except Exception as e:
+            print(f"Error loading YAML config from {path}: {e}")
 
     def save_config(self):
         with open(self.config_path, 'w', encoding='utf-8') as file:

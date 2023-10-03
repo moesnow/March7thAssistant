@@ -1,3 +1,4 @@
+from managers.config_manager import config
 from managers.translate_manager import _
 from urllib.parse import urlparse
 import requests
@@ -26,12 +27,7 @@ class FastestMirror:
 
     @staticmethod
     def get_pypi_mirror(timeout=5):
-        mirror_urls = [
-            "https://mirrors.cloud.tencent.com/pypi/simple/",
-            "https://mirrors.aliyun.com/pypi/simple/",
-            "https://pypi.org/simple/",
-        ]
-        return FastestMirror.find_fastest_mirror(mirror_urls, timeout)
+        return FastestMirror.find_fastest_mirror(config.pypi_mirror_urls, timeout)
 
     @staticmethod
     def find_fastest_mirror(mirror_urls, timeout=5):

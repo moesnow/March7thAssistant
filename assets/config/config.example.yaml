@@ -9,8 +9,11 @@ play_audio: false # 任务完成后播放提示音
 use_windows_terminal: false # 使用 Windows 终端
 
 ocr_path: .\3rdparty\PaddleOCR-json_v.1.3.0\PaddleOCR-json.exe
-# 示例 C:\Users\i\AppData\Local\Programs\Python\Python311\python.exe
-python_exe_path: ''
+python_exe_path: '' # 示例 C:\Users\i\AppData\Local\Programs\Python\Python311\python.exe
+pypi_mirror_urls: # pypi 镜像列表
+- https://mirrors.cloud.tencent.com/pypi/simple/
+- https://mirrors.aliyun.com/pypi/simple/
+- https://pypi.org/simple/
 
 game_title_name: 崩坏：星穹铁道 # 窗口标题
 game_process_name: StarRail # 进程名

@@ -1,3 +1,5 @@
+from managers.logger_manager import logger
+from managers.translate_manager import _
 from managers.automation_manager import auto
 from managers.ocr_manager import ocr
 import time
@@ -16,6 +18,7 @@ class Tasks:
             with open(config_example_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         except FileNotFoundError:
+            logger.error(_("配置文件不存在：{path}").format(path=config_example_path))
             sys.exit(1)
 
     def start(self):
