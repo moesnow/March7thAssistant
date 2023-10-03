@@ -3,7 +3,7 @@ from PyQt5.QtCore import Qt
 from qfluentwidgets import InfoBar, InfoBarPosition
 
 from managers.config_manager import config
-from distutils.version import StrictVersion
+from packaging.version import parse
 import markdown
 import requests
 import json
@@ -35,7 +35,7 @@ def checkUpdate(self, timeout=5):
                 </style>
                 """
 
-            if StrictVersion(version.lstrip('v')) > StrictVersion(config.version.lstrip('v')):
+            if parse(version.lstrip('v')) > parse(config.version.lstrip('v')):
                 # if True:
                 w = MessageBoxUpdate(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content), self.window())
                 if w.exec():

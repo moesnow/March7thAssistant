@@ -1,4 +1,4 @@
-from distutils.version import StrictVersion
+from packaging.version import parse
 import concurrent.futures
 import subprocess
 import tempfile
@@ -89,7 +89,7 @@ class Update:
         try:
             with open("./assets/config/version.txt", 'r', encoding='utf-8') as file:
                 current_version = file.read()
-            if StrictVersion(version.lstrip('v')) > StrictVersion(current_version.lstrip('v')):
+            if parse(version.lstrip('v')) > parse(current_version.lstrip('v')):
                 print(f"发现新版本：{current_version} ——> {version}")
             else:
                 print(f"当前已是最新版本: {current_version}")

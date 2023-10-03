@@ -1,6 +1,7 @@
 ruamel.yaml
 pyyaml
 colorama
+packaging
 pyuac
 pygame
 tqdm
