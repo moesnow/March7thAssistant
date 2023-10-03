@@ -4,6 +4,7 @@ from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.command import subprocess_with_stdout
 from tasks.base.windowswitcher import WindowSwitcher
+import distutils.version
 import subprocess
 import tempfile
 import sys
@@ -80,7 +81,7 @@ class PythonChecker:
         python_result = subprocess_with_stdout([path, '-V'])
         if python_result is not None and python_result[0:7] == "Python ":
             python_version = python_result.split(' ')[1]
-            if python_version < "3.7":
+            if distutils.version.StrictVersion(python_version) < distutils.version.StrictVersion("3.7"):
                 logger.error(_("Python 版本过低: {version} < 3.7").format(version=python_version))
                 return False
             else:
