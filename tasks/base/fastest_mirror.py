@@ -29,7 +29,6 @@ class FastestMirror:
         mirror_urls = [
             "https://mirrors.cloud.tencent.com/pypi/simple/",
             "https://mirrors.aliyun.com/pypi/simple/",
-            "https://pypi.tuna.tsinghua.edu.cn/simple/",
             "https://pypi.org/simple/",
         ]
         return FastestMirror.find_fastest_mirror(mirror_urls, timeout)

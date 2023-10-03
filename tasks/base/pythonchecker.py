@@ -28,7 +28,7 @@ class PythonChecker:
         logger.warning(_("如果已经修改了环境变量，请尝试重启程序，包括图形界面"))
         logger.warning(_("可以通过在 cmd 中输入 python -V 自行判断是否成功"))
         logger.warning(_("也可卸载后重新运行或在 config.yaml 中手动修改 python_exe_path"))
-        input(_("如果从未安装过 Python，按任意键开始自动安装 Python 3.11.5"))
+        input(_("按任意键开始自动安装 Python 3.11.5 64bit"))
 
         PythonChecker.install()
 
@@ -80,10 +80,16 @@ class PythonChecker:
         python_result = subprocess_with_stdout([path, '-V'])
         if python_result is not None and python_result[0:7] == "Python ":
             python_version = python_result.split(' ')[1]
-            if python_version < "3.11":
-                logger.warning(_("Python 版本: {version} < 3.11 若出现异常请尝试升级").format(version=python_version))
+            if python_version < "3.7":
+                logger.error(_("Python 版本过低: {version} < 3.7").format(version=python_version))
+                return False
             else:
                 logger.debug(_("Python 版本: {version}").format(version=python_version))
+                python_arch = subprocess_with_stdout([path, '-c','import platform; print(platform.architecture()[0])'])
+                logger.debug(_("Python 架构: {arch}").format(arch=python_arch))
+                if "32" in python_arch:
+                    logger.error(_("不支持 32 位 Python"))
+                    return False
             pip_result = subprocess_with_stdout([path, "-m", "pip", '-V'])
             if pip_result is not None and pip_result[0:4] == "pip ":
                 pip_version = pip_result.split(' ')[1]
