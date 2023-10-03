@@ -31,6 +31,7 @@ class Fight:
         if not config.fight_requirements:
             logger.info(_("开始安装依赖"))
             from tasks.base.fastest_mirror import FastestMirror
+            subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "pip", "--upgrade"])
             while not subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.fight_path):
                 logger.error(_("依赖安装失败"))
                 input(_("按任意键重试. . ."))
