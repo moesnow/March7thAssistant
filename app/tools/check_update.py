@@ -35,7 +35,7 @@ def checkUpdate(self, timeout=5):
                 </style>
                 """
 
-            if StrictVersion(version) > StrictVersion(config.version):
+            if StrictVersion(version.lstrip('v')) > StrictVersion(config.version.lstrip('v')):
                 # if True:
                 w = MessageBoxUpdate(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content), self.window())
                 if w.exec():

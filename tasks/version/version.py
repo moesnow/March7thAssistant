@@ -20,7 +20,7 @@ class Version:
             if response.status_code == 200:
                 data = json.loads(response.text)
                 version = data["tag_name"]
-                if StrictVersion(version) > StrictVersion(config.version):
+                if StrictVersion(version.lstrip('v')) > StrictVersion(config.version.lstrip('v')):
                     notify.notify(_("发现新版本：{v}").format(v=version))
                     logger.info(_("发现新版本：{v0}  ——→  {v}").format(v0=config.version, v=version))
                     logger.info(data["html_url"])
