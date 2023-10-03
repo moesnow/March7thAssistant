@@ -27,9 +27,11 @@
 
 找到下载完毕的名称类似 `March7thAssistant_v1.x.x_full.zip` 的文件，右键选择 "全部解压缩"。
 
+> 如果安装了第三方解压缩软件，操作名称也可能叫做"提取"
+
 ## 运行
 
-找到名称类似 `March7thAssistant_v1.x.x` 的文件夹并双击打开，里面应当至少包含以下文件（夹）：
+找到解压后出现的名称类似 `March7thAssistant_v1.x.x` 的文件夹并双击打开，里面应当至少包含以下文件（夹）：
 
 - `March7th Launcher.exe`
 - `March7th Assistant.exe`
