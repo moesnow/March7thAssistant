@@ -114,5 +114,5 @@ class Stop:
                 Stop.sleep()
         logger.hr(_("完成"), 2)
         if config.after_finish not in ["Shutdown", "Hibernate", "Sleep"]:
-            input(_("按任意键关闭窗口. . ."))
+            input(_("按回车键关闭窗口. . ."))
         sys.exit(0)

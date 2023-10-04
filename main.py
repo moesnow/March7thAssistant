@@ -23,7 +23,7 @@ def main(action=None):
     # 免责申明
     if not config.agreed_to_disclaimer:
         logger.error(_("您尚未同意《免责声明》"))
-        input(_("按任意键关闭窗口. . ."))
+        input(_("按回车键关闭窗口. . ."))
         sys.exit(0)
     # 完整运行
     if action is None or action == "main":
@@ -46,9 +46,9 @@ def main(action=None):
     # 子任务 原生图形界面
     elif action in ["universe_gui", "fight_gui"]:
         if action == "universe_gui" and not Universe.gui():
-            input(_("按任意键关闭窗口. . ."))
+            input(_("按回车键关闭窗口. . ."))
         elif action == "fight_gui" and not Fight.gui():
-            input(_("按任意键关闭窗口. . ."))
+            input(_("按回车键关闭窗口. . ."))
         sys.exit(0)
     # 子任务 更新项目
     elif action in ["universe_update", "fight_update"]:
@@ -56,11 +56,11 @@ def main(action=None):
             Universe.update()
         elif action == "fight_update":
             Fight.update()
-        input(_("按任意键关闭窗口. . ."))
+        input(_("按回车键关闭窗口. . ."))
         sys.exit(0)
     else:
         logger.error(_("未知任务: {action}").format(action=action))
-        input(_("按任意键关闭窗口. . ."))
+        input(_("按回车键关闭窗口. . ."))
         sys.exit(1)
 
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
             sys.exit(0)
         except Exception:
             logger.error(_("管理员权限获取失败"))
-            input(_("按任意键关闭窗口. . ."))
+            input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
     else:
         try:
@@ -85,10 +85,10 @@ if __name__ == "__main__":
             main(sys.argv[1]) if len(sys.argv) > 1 else main()
         except KeyboardInterrupt:
             logger.error(_("发生错误: {e}").format(e=_("手动强制停止")))
-            input(_("按任意键关闭窗口. . ."))
+            input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
         except Exception as e:
             logger.error(_("发生错误: {e}").format(e=e))
             notify.notify(_("发生错误: {e}").format(e=e))
-            input(_("按任意键关闭窗口. . ."))
+            input(_("按回车键关闭窗口. . ."))
             sys.exit(1)

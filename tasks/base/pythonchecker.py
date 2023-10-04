@@ -29,7 +29,7 @@ class PythonChecker:
         logger.warning(_("如果已经修改了环境变量，请尝试重启程序，包括图形界面"))
         logger.warning(_("可以通过在 cmd 中输入 python -V 自行判断是否成功"))
         logger.warning(_("也可卸载后重新运行或在 config.yaml 中手动修改 python_exe_path"))
-        input(_("按任意键开始自动安装 Python 3.11.5 64bit"))
+        input(_("按回车键开始自动安装 Python 3.11.5 64bit"))
 
         PythonChecker.install()
 
@@ -48,7 +48,7 @@ class PythonChecker:
                 break
             except Exception as e:
                 logger.error(_("下载失败：{e}").format(e=e))
-                input(_("按任意键重试. . ."))
+                input(_("按回车键重试. . ."))
 
         while True:
             try:
@@ -58,7 +58,7 @@ class PythonChecker:
                 break
             except Exception as e:
                 logger.error(_("安装失败：{e}").format(e=e))
-                input(_("按任意键重试. . ."))
+                input(_("按回车键重试. . ."))
 
         try:
             os.remove(download_file_path)
@@ -72,7 +72,7 @@ class PythonChecker:
             return
 
         logger.info(_("安装完成，请重启程序，包括图形界面"))
-        input(_("按任意键关闭窗口. . ."))
+        input(_("按回车键关闭窗口. . ."))
         sys.exit(0)
 
     @staticmethod

@@ -21,7 +21,7 @@ class Start:
             logger.error(_("游戏路径不存在: {path}").format(path=game_path))
             logger.info(_("第一次使用请手动启动游戏进入主界面后重新运行，程序会自动保存游戏路径"))
             logger.info(_("注意：程序只支持PC端运行，不支持任何模拟器"))
-            input(_("按任意键关闭窗口. . ."))
+            input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
 
     @staticmethod

@@ -34,7 +34,7 @@ class Fight:
             subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "pip", "--upgrade"])
             while not subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.fight_path):
                 logger.error(_("依赖安装失败"))
-                input(_("按任意键重试. . ."))
+                input(_("按回车键重试. . ."))
             logger.info(_("依赖安装成功"))
             config.set_value("fight_requirements", True)
 

@@ -73,7 +73,7 @@ class Update:
                     print("检测更新失败")
             except urllib.error.URLError as e:
                 print(f"检测更新失败: {e}")
-            input("按任意键重试. . .")
+            input("按回车键重试. . .")
 
         # 获取最新版本
         version = data["tag_name"]
@@ -106,7 +106,7 @@ class Update:
         self.download_url = self.__find_fastest_mirror(api_endpoints)
 
         print(f"下载地址：{self.download_url}")
-        input("按任意键开始更新")
+        input("按回车键开始更新")
 
     def __download_with_progress(self, download_url, save_path):
         # 获取文件大小
@@ -143,7 +143,7 @@ class Update:
                 break
             except Exception as e:
                 print(f"下载失败：{e}")
-                input("按任意键重试. . .")
+                input("按回车键重试. . .")
 
     def __extract_file(self):
         print("开始解压...")
@@ -154,7 +154,7 @@ class Update:
                 break
             except Exception as e:
                 print(f"解压失败：{e}")
-                input("按任意键重试. . .")
+                input("按回车键重试. . .")
 
     def __cover_folder(self):
         print("开始覆盖...")
@@ -165,7 +165,7 @@ class Update:
                 break
             except Exception as e:
                 print(f"覆盖失败：{e}")
-                input("按任意键重试. . .")
+                input("按回车键重试. . .")
 
     def __delete_files(self):
         print("开始清理...")
@@ -193,7 +193,7 @@ class Update:
 
         self.__delete_files()
 
-        input("按任意键关闭窗口")
+        input("按回车键关闭窗口")
 
 
 def check_temp_dir():
@@ -213,7 +213,7 @@ def check_temp_dir():
                 break
             except Exception as e:
                 print(f"复制更新程序到临时目录失败：{e}")
-                input("按任意键重试. . .")
+                input("按回车键重试. . .")
         subprocess.run(["start", os.path.join(temp_path, file_name)] + sys.argv[1:], shell=True)
         sys.exit(0)
 

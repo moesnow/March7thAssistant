@@ -31,7 +31,7 @@ class UpdateHandler:
                 break
             except Exception as e:
                 logger.error(_("下载失败：{e}").format(e=e))
-                input(_("按任意键重试. . ."))
+                input(_("按回车键重试. . ."))
 
     def extract_file(self):
         while True:
@@ -42,7 +42,7 @@ class UpdateHandler:
                 break
             except Exception as e:
                 logger.error(_("解压失败：{e}").format(e=e))
-                input(_("按任意键重试. . ."))
+                input(_("按回车键重试. . ."))
 
     def cover_folder(self):
         while True:
@@ -52,7 +52,7 @@ class UpdateHandler:
                 break
             except Exception as e:
                 logger.error(_("覆盖失败：{e}").format(e=e))
-                input(_("按任意键重试. . ."))
+                input(_("按回车键重试. . ."))
 
     def clean_up(self):
         try:

@@ -28,7 +28,7 @@ class OCR:
                     logger.error(_("CPU不支持AVX2指令集"))
                 else:
                     logger.info(_("请检查系统是否为 Win10/11 x64"))
-                input(_("按任意键关闭窗口. . ."))
+                input(_("按回车键关闭窗口. . ."))
                 sys.exit(1)
             self._instance = True
 
