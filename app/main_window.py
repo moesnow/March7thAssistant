@@ -47,13 +47,6 @@ class MainWindow(MSFluentWindow):
         # 检查更新
         if config.check_update:
             checkUpdate(self, timeout=1)
-        style = """
-            MainWindow::title {
-                background-color: transparent;
-                color: transparent;
-            }
-        """
-        self.setStyleSheet(style)
 
     def initNavigation(self):
         # add navigation items
@@ -97,6 +90,13 @@ class MainWindow(MSFluentWindow):
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
         self.show()
+        style = """
+            MainWindow::title {
+                background-color: transparent;
+                color: transparent;
+            }
+        """
+        self.setStyleSheet(style)
         QApplication.processEvents()
 
     def toggleTheme(self):
