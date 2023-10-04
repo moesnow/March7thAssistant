@@ -1,9 +1,10 @@
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import Qt, QSize
 
 from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, darkdetect, Theme
 from qfluentwidgets import FluentIcon as FIF
+from qfluentwidgets import InfoBar, InfoBarPosition
 
 from .home_interface import HomeInterface
 from .setting_interface import SettingInterface
@@ -103,3 +104,25 @@ class MainWindow(MSFluentWindow):
         w.yesButton.setText('下次一定')
         w.cancelButton.setHidden(True)
         w.exec()
+
+    def handleUpdate(self, status):
+        if status:
+            InfoBar.success(
+                title=self.tr('当前是最新版本(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+        else:
+            InfoBar.warning(
+                title=self.tr('检测更新失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )

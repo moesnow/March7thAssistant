@@ -17,6 +17,5 @@ if __name__ == "__main__":
     app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
 
     w = MainWindow()
-    w.show()
 
     sys.exit(app.exec_())
