@@ -47,6 +47,13 @@ class MainWindow(MSFluentWindow):
         # 检查更新
         if config.check_update:
             checkUpdate(self, timeout=1)
+        style = """
+            MainWindow::title {
+                background-color: transparent;
+                color: transparent;
+            }
+        """
+        self.setStyleSheet(style)
 
     def initNavigation(self):
         # add navigation items
@@ -81,7 +88,6 @@ class MainWindow(MSFluentWindow):
         self.resize(960, 780)
         self.setWindowIcon(QIcon('assets\logo\March7th.ico'))
         self.setWindowTitle("March7th Assistant")
-
         # create splash screen
         self.splashScreen = SplashScreen(self.windowIcon(), self)
         self.splashScreen.setIconSize(QSize(128, 128))
