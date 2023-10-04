@@ -8,14 +8,12 @@ import io
 
 
 class OCR:
-    _instance = None
-
     def __init__(self, exePath):
         self.exePath = exePath
         self.ocr = None
 
     def instance_ocr(self):
-        if self._instance is None:
+        if self.ocr is None:
             try:
                 logger.debug(_("开始初始化OCR..."))
                 self.ocr = GetOcrApi(self.exePath)
@@ -30,7 +28,11 @@ class OCR:
                     logger.info(_("请检查系统是否为 Win10/11 x64"))
                 input(_("按回车键关闭窗口. . ."))
                 sys.exit(1)
-            self._instance = True
+
+    def exit_ocr(self):
+        if self.ocr is not None:
+            self.ocr.exit()
+            self.ocr = None
 
     @staticmethod
     def convert_format(result):

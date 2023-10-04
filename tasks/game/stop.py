@@ -3,6 +3,7 @@ from managers.automation_manager import auto
 from managers.translate_manager import _
 from managers.config_manager import config
 from managers.notify_manager import notify
+from managers.ocr_manager import ocr
 from tasks.power.power import Power
 from tasks.base.date import Date
 from tasks.base.windowswitcher import WindowSwitcher
@@ -100,6 +101,8 @@ class Stop:
             logger.info(_("📅将在{future_time}继续运行").format(future_time=future_time))
             notify.notify(_("📅将在{future_time}继续运行").format(future_time=future_time))
             logger.hr(_("完成"), 2)
+            # 等待状态退出OCR避免内存占用
+            ocr.exit_ocr()
             time.sleep(wait_time)
 
     @staticmethod

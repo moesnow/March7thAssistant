@@ -66,8 +66,7 @@ def main(action=None):
 
 def exit_handler():
     # 退出 OCR
-    if ocr.ocr is not None:
-        ocr.ocr.exit()
+    ocr.exit_ocr()
 
 
 if __name__ == "__main__":
