@@ -1,6 +1,7 @@
 from ruamel.yaml import YAML
 import time
 import sys
+import os
 
 
 class Config:
@@ -23,10 +24,24 @@ class Config:
         except FileNotFoundError:
             sys.exit(1)
 
+    def _detect_game_path(self, config):
+        game_path = config['game_path']
+        if os.path.exists(game_path):
+            return
+        program_config_path = os.path.join(os.getenv('ProgramFiles'), "Star Rail\\config.ini")
+        with open(program_config_path, 'r', encoding='utf-8') as file:
+            for line in file.readlines():
+                if line.startswith("game_install_path="):
+                    game_path = line.split('=')[1].strip()
+                    if os.path.exists(game_path):
+                        config['game_path'] = os.path.join(game_path, "StarRail.exe")
+                        return
+
     def _default_config(self, config_example_path):
         try:
             with open(config_example_path, 'r', encoding='utf-8') as file:
                 loaded_config = self.yaml.load(file)
+                self._detect_game_path(loaded_config)
                 if loaded_config:
                     return loaded_config
         except FileNotFoundError:
