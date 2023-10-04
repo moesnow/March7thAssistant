@@ -13,6 +13,8 @@ from .changelog_interface import ChangelogInterface
 from .faq_interface import FAQInterface
 
 from .card.messageboxsupport import MessageBoxSupport
+from .card.messageboxupdate import MessageBoxUpdate
+from tasks.base.fastest_mirror import FastestMirror
 
 from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
@@ -106,7 +108,14 @@ class MainWindow(MSFluentWindow):
         w.exec()
 
     def handleUpdate(self, status):
-        if status:
+        if status==2:
+            w = MessageBoxUpdate(self.update_thread.title, self.update_thread.content, self.window())
+            if w.exec():
+                import subprocess
+                source_file = r".\\Update.exe"
+                assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
+                subprocess.run(['start', source_file, assert_url], shell=True)
+        elif status==1:
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),
                 content="",

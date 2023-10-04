@@ -7,7 +7,6 @@ import markdown
 import requests
 import json
 
-from ..card.messageboxupdate import MessageBoxUpdate
 from tasks.base.fastest_mirror import FastestMirror
 
 class UpdateThread(QThread):
@@ -40,13 +39,9 @@ class UpdateThread(QThread):
                     """
 
                 if parse(version.lstrip('v')) > parse(config.version.lstrip('v')):
-                    # if True:
-                    w = MessageBoxUpdate(f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content), self.window())
-                    if w.exec():
-                        import subprocess
-                        source_file = r".\\Update.exe"
-                        assert_url = FastestMirror.get_github_mirror(assert_url)
-                        subprocess.run(['start', source_file, assert_url], shell=True)
+                    self.title, self.content = f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content)
+                    self.assert_url = assert_url
+                    self._update_signal.emit(2)
                 else:
                     self._update_signal.emit(1)
         except Exception as e:
