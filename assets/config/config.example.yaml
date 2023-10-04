@@ -20,7 +20,7 @@ game_process_name: StarRail # 进程名
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏路径
 
 power_total: 999 # 开拓力最大值
-dispatch_count: 4 # 派遣次数
+dispatch_count: 4 # 委托次数
 
 instance_type: 拟造花萼（金） # 副本类型: 侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
 instance_names: # 副本名称
@@ -57,7 +57,7 @@ instance_team_number: '1' # 队伍编号
 echo_of_war_enable: false # 体力优先完成3次「历战余响」
 echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳（每周运行）
 
-dispatch_enable: true # 领取派遣奖励
+dispatch_enable: true # 领取委托奖励
 mail_enable: true # 领取邮件奖励
 assist_enable: true # 领取支援奖励
 srpass_enable: false # 领取无名勋礼奖励

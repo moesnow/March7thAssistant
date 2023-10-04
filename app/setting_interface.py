@@ -168,7 +168,7 @@ class SettingInterface(ScrollArea):
 
         self.dispatchEnableCard = SwitchSettingCard1(
             FIF.STOP_WATCH,
-            self.tr('启用领取派遣奖励'),
+            self.tr('启用领取委托奖励'),
             None,
             "dispatch_enable"
         )

@@ -10,19 +10,19 @@ class Dispatch:
     @staticmethod
     def get_reward():
         if not config.dispatch_enable:
-            logger.info(_("探索派遣未开启"))
+            logger.info(_("委托未开启"))
             return False
         screen.change_to('dispatch')
 
         if auto.find_element("./assets/images/dispatch/reward.png", "image", 0.9, crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080)):
-            logger.hr(_("检测到探索派遣奖励"), 2)
+            logger.hr(_("检测到委托奖励"), 2)
 
             if Dispatch._perform_dispatches():
                 if "派遣1次委托" in config.daily_tasks and config.daily_tasks["派遣1次委托"]:
                     config.daily_tasks["派遣1次委托"] = False
                     config.save_config()
 
-            logger.info(_("探索派遣奖励完成"))
+            logger.info(_("委托奖励完成"))
 
     @staticmethod
     def _perform_dispatches():

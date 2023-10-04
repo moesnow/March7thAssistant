@@ -29,7 +29,7 @@ This software is open source, free of charge and for learning and exchange purpo
 
 ## 功能简介
 
-- **日常**：清体力、每日实训、领奖励、探索派遣、锄大地
+- **日常**：清体力、每日实训、领奖励、委托、锄大地
 - **周常**：历战余响、模拟宇宙、忘却之庭
 - 每日实训等任务的完成情况支持消息推送
 - 凌晨四点或体力恢复到指定值后自动启动
