@@ -213,7 +213,15 @@ class ForgottenHall:
 
         if max_level > 0:
             screen.change_to('memory_of_chaos')
+            # 领取星琼
+            if auto.click_element("./assets/images/dispatch/reward.png", "image", 0.9, crop=(1775.0 / 1920, 902.0 / 1080, 116.0 / 1920, 110.0 / 1080)):
+                time.sleep(1)
+                while auto.click_element("./assets/images/forgottenhall/receive.png", "image", 0.9, crop=(1081.0 / 1920, 171.0 / 1080, 500.0 / 1920, 736.0 / 1080)):
+                    auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
+                    time.sleep(1)
             Base.send_notification_with_screenshot(_("🎉混沌回忆已通关{max_level}层🎉").format(max_level=max_level))
+            auto.press_key("esc")
+            time.sleep(1)
 
     @staticmethod
     def prepare():
