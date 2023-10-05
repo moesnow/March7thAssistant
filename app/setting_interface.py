@@ -588,4 +588,4 @@ class SettingInterface(ScrollArea):
         self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
         self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant/issues")))
 
-        self.aboutCard.clicked.connect(lambda: checkUpdate(self))
+        self.aboutCard.clicked.connect(lambda: checkUpdate(self.parent))

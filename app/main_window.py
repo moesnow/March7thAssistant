@@ -27,6 +27,7 @@ class MainWindow(MSFluentWindow):
         super().__init__()
         setThemeColor('#f18cb9')
         setTheme(Theme.DARK if darkdetect.theme() == 'Dark' else Theme.LIGHT)
+        self.setMicaEffectEnabled(False)
 
         self.initWindow()
 
@@ -46,7 +47,7 @@ class MainWindow(MSFluentWindow):
 
         # 检查更新
         if config.check_update:
-            checkUpdate(self, timeout=1)
+            checkUpdate(self)
 
     def initNavigation(self):
         # add navigation items
@@ -90,13 +91,6 @@ class MainWindow(MSFluentWindow):
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
         self.show()
-        style = """
-            MainWindow::title {
-                background-color: transparent;
-                color: transparent;
-            }
-        """
-        self.setStyleSheet(style)
         QApplication.processEvents()
 
     def toggleTheme(self):
@@ -114,14 +108,14 @@ class MainWindow(MSFluentWindow):
         w.exec()
 
     def handleUpdate(self, status):
-        if status==2:
+        if status == 2:
             w = MessageBoxUpdate(self.update_thread.title, self.update_thread.content, self.window())
             if w.exec():
                 import subprocess
                 source_file = r".\\Update.exe"
                 assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
                 subprocess.run(['start', source_file, assert_url], shell=True)
-        elif status==1:
+        elif status == 1:
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),
                 content="",
