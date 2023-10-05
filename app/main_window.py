@@ -1,9 +1,10 @@
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import Qt, QSize
 
 from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, darkdetect, Theme
 from qfluentwidgets import FluentIcon as FIF
+from qfluentwidgets import InfoBar, InfoBarPosition
 
 from .home_interface import HomeInterface
 from .setting_interface import SettingInterface
@@ -12,6 +13,8 @@ from .changelog_interface import ChangelogInterface
 from .faq_interface import FAQInterface
 
 from .card.messageboxsupport import MessageBoxSupport
+from .card.messageboxupdate import MessageBoxUpdate
+from tasks.base.fastest_mirror import FastestMirror
 
 from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
@@ -78,7 +81,6 @@ class MainWindow(MSFluentWindow):
         self.resize(960, 780)
         self.setWindowIcon(QIcon('assets\logo\March7th.ico'))
         self.setWindowTitle("March7th Assistant")
-
         # create splash screen
         self.splashScreen = SplashScreen(self.windowIcon(), self)
         self.splashScreen.setIconSize(QSize(128, 128))
@@ -88,6 +90,13 @@ class MainWindow(MSFluentWindow):
         w, h = desktop.width(), desktop.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
         self.show()
+        style = """
+            MainWindow::title {
+                background-color: transparent;
+                color: transparent;
+            }
+        """
+        self.setStyleSheet(style)
         QApplication.processEvents()
 
     def toggleTheme(self):
@@ -103,3 +112,32 @@ class MainWindow(MSFluentWindow):
         w.yesButton.setText('下次一定')
         w.cancelButton.setHidden(True)
         w.exec()
+
+    def handleUpdate(self, status):
+        if status==2:
+            w = MessageBoxUpdate(self.update_thread.title, self.update_thread.content, self.window())
+            if w.exec():
+                import subprocess
+                source_file = r".\\Update.exe"
+                assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
+                subprocess.run(['start', source_file, assert_url], shell=True)
+        elif status==1:
+            InfoBar.success(
+                title=self.tr('当前是最新版本(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+        else:
+            InfoBar.warning(
+                title=self.tr('检测更新失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
