@@ -9,15 +9,17 @@ import json
 
 from tasks.base.fastest_mirror import FastestMirror
 
+
 class UpdateThread(QThread):
     _update_signal = pyqtSignal(int)
+
     def __init__(self, timeout):
         super().__init__()
         self.timeout = timeout
 
     def run(self):
         try:
-            response = requests.get(FastestMirror.get_github_api_mirror(self.timeout), timeout=3)
+            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", "latest.json", self.timeout), timeout=3)
             if response.status_code == 200:
                 data = json.loads(response.text)
                 version = data["tag_name"]
@@ -47,6 +49,7 @@ class UpdateThread(QThread):
         except Exception as e:
             print(e)
             self._update_signal.emit(0)
+
 
 def checkUpdate(self, timeout=5):
     self.update_thread = UpdateThread(timeout=timeout)

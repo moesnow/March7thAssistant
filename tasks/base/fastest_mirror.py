@@ -16,12 +16,12 @@ class FastestMirror:
         return FastestMirror.find_fastest_mirror(mirror_urls, timeout)
 
     @staticmethod
-    def get_github_api_mirror(timeout=5):
+    def get_github_api_mirror(user, repo, file, timeout=5):
         mirror_urls = [
-            "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-            "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@release/latest.json",
-            "https://ghproxy.com/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/latest.json",
-            "https://github.moeyy.xyz/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/latest.json",
+            f"https://api.github.com/repos/{user}/{repo}/releases/latest",
+            f"https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@release/{file}",
+            f"https://ghproxy.com/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/{file}",
+            f"https://github.moeyy.xyz/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/{file}",
         ]
         return FastestMirror.find_fastest_mirror(mirror_urls, timeout)
 
