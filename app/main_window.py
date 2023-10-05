@@ -26,7 +26,7 @@ class MainWindow(MSFluentWindow):
     def __init__(self):
         super().__init__()
         setThemeColor('#f18cb9')
-        setTheme(Theme.DARK if darkdetect.theme() == 'Dark' else Theme.LIGHT)
+        setTheme(Theme.AUTO)
         self.setMicaEffectEnabled(False)
 
         self.initWindow()
@@ -59,7 +59,7 @@ class MainWindow(MSFluentWindow):
         self.navigationInterface.addWidget(
             'themeButton',
             NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
-            self.toggleTheme,
+            toggleTheme,
             NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
@@ -92,9 +92,6 @@ class MainWindow(MSFluentWindow):
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
         self.show()
         QApplication.processEvents()
-
-    def toggleTheme(self):
-        toggleTheme(save=False)
 
     def onSupport(self):
         w = MessageBoxSupport(
