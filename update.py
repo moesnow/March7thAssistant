@@ -56,7 +56,7 @@ class Update:
                 result = future.result()
                 if result:
                     executor.shutdown()
-                    # print(f"测速完成，最快的镜像为: {urlparse(result).netloc}")
+                    # print(f"最快的镜像为: {urlparse(result).netloc}")
                     return result
 
         # print(f"测速失败，使用默认镜像：{urlparse(mirror_urls[0]).netloc}")

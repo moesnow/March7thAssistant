@@ -55,7 +55,7 @@ class FastestMirror:
                 result = future.result()
                 if result:
                     executor.shutdown()
-                    logger.info(_("测速完成，最快的镜像为: {mirror}").format(mirror=urlparse(result).netloc))
+                    logger.info(_("最快的镜像为: {mirror}").format(mirror=urlparse(result).netloc))
                     return result
 
         logger.warning(_("测速失败，使用默认镜像：{mirror}").format(mirror=urlparse(mirror_urls[0]).netloc))

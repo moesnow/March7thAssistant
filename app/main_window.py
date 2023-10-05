@@ -59,7 +59,7 @@ class MainWindow(MSFluentWindow):
         self.navigationInterface.addWidget(
             'themeButton',
             NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
-            toggleTheme,
+            self.toggleTheme,
             NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
@@ -70,6 +70,9 @@ class MainWindow(MSFluentWindow):
         )
 
         self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
+
+    def toggleTheme(self):
+        toggleTheme()
 
     def initWindow(self):
         # 禁用最大化

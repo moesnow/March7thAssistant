@@ -1,5 +1,5 @@
 
-def subprocess_with_timeout(command, timeout, working_directory, env):
+def subprocess_with_timeout(command, timeout, working_directory=None, env=None):
     import subprocess
     process = None
     try:
