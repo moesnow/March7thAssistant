@@ -10,7 +10,7 @@ import markdown
 import sys
 
 
-class FAQInterface(ScrollArea):
+class TutorialInterface(ScrollArea):
     """ Home interface """
 
     def __init__(self, parent=None):
@@ -28,11 +28,11 @@ a {
 </style>
 """
         try:
-            with open(".\\assets\\docs\\FAQ.md", 'r', encoding='utf-8') as file:
+            with open(".\\assets\\docs\\Tutorial.md", 'r', encoding='utf-8') as file:
                 self.content = file.read()
         except FileNotFoundError:
             sys.exit(1)
-        html_content = html_style + markdown.markdown(self.content)
+        html_content = html_style + markdown.markdown("## 点击跳转 [网页版](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial) 排版更美观")+markdown.markdown(self.content)
         self.contentLabel.setText(html_content)
         self.contentLabel.setOpenExternalLinks(True)
         self.contentLabel.linkActivated.connect(self.open_url)
@@ -41,10 +41,10 @@ a {
 
     def __initWidget(self):
         self.view.setObjectName('view')
-        self.setObjectName('FAQsInterface')
+        self.setObjectName('TutorialsInterface')
         self.contentLabel.setObjectName('contentLabel')
-        # self.titleLabel.setObjectName('FAQsLabel')
-        StyleSheet.FAQ_INTERFACE.apply(self)
+        # self.titleLabel.setObjectName('FQAsLabel')
+        StyleSheet.Tutorial_INTERFACE.apply(self)
 
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setWidget(self.view)

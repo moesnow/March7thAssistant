@@ -18,6 +18,7 @@ class StyleSheet(StyleSheetBase, Enum):
 
     TASKS_INTERFACE = "tasks_interface"
     FAQ_INTERFACE = "faq_interface"
+    Tutorial_INTERFACE = "tutorial_interface"
     CHANGELOGS_INTERFACE = "changelogs_interface"
 
     def path(self, theme=Theme.AUTO):

@@ -11,6 +11,7 @@ from .setting_interface import SettingInterface
 from .tasks_interface import TasksInterface
 from .changelog_interface import ChangelogInterface
 from .faq_interface import FAQInterface
+from .tutorial_interface import TutorialInterface
 
 from .card.messageboxsupport import MessageBoxSupport
 from .card.messageboxupdate import MessageBoxUpdate
@@ -36,6 +37,7 @@ class MainWindow(MSFluentWindow):
         self.tasksInterface = TasksInterface(self)
         self.settingInterface = SettingInterface(self)
         self.faqInterface = FAQInterface(self)
+        self.tutorialInterface = TutorialInterface(self)
         self.changelogInterface = ChangelogInterface(self)
 
         self.initNavigation()
@@ -53,6 +55,7 @@ class MainWindow(MSFluentWindow):
         # add navigation items
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('主页'))
         self.addSubInterface(self.tasksInterface, FIF.LABEL, self.tr('每日实训'))
+        self.addSubInterface(self.tutorialInterface, FIF.BOOK_SHELF, self.tr('使用教程'))
         self.addSubInterface(self.faqInterface, FIF.CHAT, self.tr('常见问题'))
         self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
 
