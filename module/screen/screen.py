@@ -5,6 +5,7 @@ from collections import deque
 import threading
 import time
 import json
+import sys
 
 
 class Screen:
@@ -12,26 +13,43 @@ class Screen:
         self.current_screen = None
         self.screen_map = {}
         self.lock = threading.Lock()  # 创建一个锁，用于线程同步
-        self.setup_screens_from_config(config_path)
+        self._setup_screens_from_config(config_path)
 
-    def add_screen(self, name, image_path, actions):
+    def _setup_screens_from_config(self, config_path):
         """
-        添加一个新界面到界面管理器，并指定其识别图片路径、可切换的目标界面及操作序列
-        :param name: 新界面的名称
-        :param image_path: 用于识别界面的图片路径
-        :param actions: 可切换的目标界面及操作序列
+        从配置文件路径中获取界面配置信息，并添加到界面管理器
+        :param config_path: 配置文件路径
         """
-        self.screen_map[name] = {'image_path': image_path, 'actions': actions}
 
-    def setup_screens_from_config(self, config_path):
-        with open(config_path, 'r', encoding='utf-8') as file:
-            screens_config = json.load(file)
+        def add_screen(self, id, name, image_path, actions):
+            """
+            添加一个新界面到界面管理器，并指定其识别图片路径、可切换的目标界面及操作序列
+            :param id: 新界面的唯一标识
+            :param name: 新界面的名称
+            :param image_path: 用于识别界面的图片路径
+            :param actions: 可切换的目标界面及操作序列
+            """
+            self.screen_map[id] = {'name': name, 'image_path': image_path, 'actions': actions}
 
-        for screen_config in screens_config["screens"]:
-            name = screen_config["name"]
-            image_path = screen_config["image_path"]
-            actions = screen_config["actions"]
-            self.add_screen(name, image_path, actions)
+        try:
+            with open(config_path, 'r', encoding='utf-8') as file:
+                for config in json.load(file):
+                    id = config["id"]
+                    name = config["name"]
+                    image_path = config["image_path"]
+                    actions = config["actions"]
+                    add_screen(self, id, name, image_path, actions)
+        except FileNotFoundError:
+            logger.error(_("配置文件不存在：{path}").format(path=config_path))
+            input(_("按回车键关闭窗口. . ."))
+            sys.exit(1)
+        except Exception as e:
+            logger.error(_("配置文件解析失败：{e}").format(e=e))
+            input(_("按回车键关闭窗口. . ."))
+            sys.exit(1)
+
+    def get_name(self, id):
+        return self.screen_map[id]["name"]
 
     def find_shortest_path(self, start, end):
         """
@@ -60,27 +78,27 @@ class Screen:
 
         return None
 
-    def parse_args(self, args):
-        parsed_args = []
-        kwargs = {}
-        for arg in args:
-            if isinstance(arg, str):
-                if "=" in arg:
-                    key, value = arg.split("=")
-                    kwargs[key] = eval(value)
-                    continue
-            parsed_args.append(arg)
-        return parsed_args, kwargs
-
     def perform_operations(self, operations):
         """
         执行一系列操作，包括按键操作和鼠标点击操作
         :param operations: 操作序列，每个操作是一个元组 (函数名, 参数)
         """
+        def parse_args(args):
+            parsed_args = []
+            kwargs = {}
+            for arg in args:
+                if isinstance(arg, str):
+                    if "=" in arg:
+                        key, value = arg.split("=")
+                        kwargs[key] = eval(value)
+                        continue
+                parsed_args.append(arg)
+            return parsed_args, kwargs
+
         for operation in operations:
             function_name = operation["action"]
             args = operation["args"]
-            parsed_args, kwargs = self.parse_args(args)
+            parsed_args, kwargs = parse_args(args)
             if hasattr(self, function_name):
                 func = getattr(self, function_name)
                 func(*parsed_args, **kwargs)
@@ -95,11 +113,72 @@ class Screen:
                 else:
                     logger.debug(_("未知的操作: {function_name}").format(function_name=function_name))
 
-    def change_to(self, target_screen, max_retries=10, max_recursion=3):
-        self.display_current_screen()
+    def get_current_screen(self, autotry=True, max_retries=10):
+        """
+        获取当前界面
+        :param autotry: 未识别出任何界面自动按ESC
+        :param max_retries: 重试次数
+        :return: True，如果查找失败则返回 False
+        """
+
+        def find_screen(self, screen_name, screen):
+            try:
+                if auto.find_element(screen['image_path'], "image", 0.9, take_screenshot=False):
+                    with self.lock:  # 使用锁来保护对共享变量的访问
+                        self.current_screen = screen_name
+            except Exception as e:
+                logger.debug(_("识别界面出错：{e}").format(e=e))
+
+        for i in range(max_retries):
+            auto.take_screenshot()
+            self.current_screen = None
+
+            threads = []
+            for screen_name, screen in self.screen_map.items():
+                thread = threading.Thread(target=find_screen, args=(self, screen_name, screen))
+                threads.append(thread)
+                thread.start()
+            for thread in threads:
+                thread.join()
+
+            if self.current_screen:
+                logger.debug(_("当前界面：{screen_name}").format(screen_name=self.get_name(self.current_screen)))
+                return True
+
+            if autotry:
+                logger.warning(_("未识别出任何界面，按ESC后重试"))
+                auto.press_key("esc")
+                time.sleep(1)
+            else:
+                logger.debug(_("未识别出任何界面"))
+                break
+        logger.error(_("当前界面：未知"))
+        return False
+
+    def change_to(self, target_screen, max_recursion=5):
+        """
+        切换到目标界面，，如果失败则退出进程
+        :param target_screen: 目标界面
+        :param max_recursion: 重试次数
+        """
+
+        def check_screen(self, target_screen):
+            if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
+                self.current_screen = target_screen
+                return True
+            return False
+
+        if not self.get_current_screen():
+            logger.info(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
+            logger.info(_("如果是多显示器，自动化和游戏需要放在同一个显示器运行，且不支持HDR"))
+            logger.info(_("以及暂时不支持手机壁纸“列车长特供”（KFC）"))
+            input(_("按回车键关闭窗口. . ."))
+            sys.exit(1)
+
         if target_screen == self.current_screen:
-            logger.debug(_("已经在 {target_screen} 界面").format(target_screen=target_screen))
-            return True
+            logger.debug(_("已经在 {target_screen} 界面").format(target_screen=self.get_name(target_screen)))
+            return
+
         path = self.find_shortest_path(self.current_screen, target_screen)
         if path:
             for i in range(len(path) - 1):
@@ -107,72 +186,29 @@ class Screen:
                 next_screen = path[i + 1]
 
                 operations = [action["actions_list"]
-                              for action in self.screen_map[current_screen]['actions'] if action["target_screen"] == next_screen][0]
+                              for action in self.screen_map[current_screen]['actions']
+                              if action["target_screen"] == next_screen][0]
                 self.perform_operations(operations)
-                time.sleep(1)
 
-                for i in range(max_retries):
-                    if self.check_screen(next_screen):
+                for i in range(10):
+                    logger.debug(_("等待 {next_screen}").format(next_screen=self.get_name(next_screen)))
+                    if check_screen(self, next_screen):
                         break
-                    logger.debug(_("继续等待 {next_screen}").format(next_screen=next_screen))
 
                 if self.current_screen != next_screen:
                     if max_recursion > 0:
                         self.change_to(next_screen, max_recursion=max_recursion - 1)
                     else:
-                        logger.debug(_("无法切换到 {next_screen}").format(next_screen=next_screen))
-                        break
-                logger.debug(_("切换到 {next_screen}").format(next_screen=next_screen))
+                        logger.error(_("无法切换到 {next_screen}").format(next_screen=self.get_name(next_screen)))
+                        input(_("按回车键关闭窗口. . ."))
+                        sys.exit(1)
+
+                logger.debug(_("切换到 {next_screen}").format(next_screen=self.get_name(next_screen)))
             self.current_screen = target_screen  # 更新当前界面
-            logger.debug(_("当前界面：{current_screen}").format(current_screen=self.current_screen))
-            return True
-        logger.debug(_("无法从 {current_screen} 切换到 {target_screen}").format(current_screen=self.get_current_screen(), target_screen=target_screen))
-        return False
-
-    def check_screen(self, target_screen):
-        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
-            self.current_screen = target_screen
-            return True
-        return False
-
-    def display_current_screen(self):
-        if self.get_current_screen():
-            logger.debug(_("当前界面：{current_screen}").format(current_screen=self.current_screen))
+            logger.debug(_("当前界面：{current_screen}").format(current_screen=self.get_name(current_screen)))
             return
-        logger.debug(_("当前界面：未知"))
 
-    def find_screen(self, screen_name, screen):
-        try:
-            if auto.find_element(screen['image_path'], "image", 0.9, take_screenshot=False):
-                with self.lock:  # 使用锁来保护对共享变量的访问
-                    self.current_screen = screen_name
-                    logger.debug(_("{screen_name} 匹配成功").format(screen_name=screen_name))
-                return True
-            # logger.debug(f"{screen_name} 匹配失败")
-        except Exception as e:
-            logger.debug(_("查找界面出错：{e}").format(e=e))
-        return False
-
-    def get_current_screen(self, autotry=True, max_retries=10):
-        for i in range(max_retries):
-            auto.take_screenshot()
-            threads = []
-            self.current_screen = None
-            for screen_name, screen in self.screen_map.items():
-                thread = threading.Thread(target=self.find_screen, args=(screen_name, screen))
-                threads.append(thread)
-                thread.start()
-            for thread in threads:
-                thread.join()
-
-            if self.current_screen is not None:
-                return True
-
-            if autotry:
-                logger.debug(_("没找到任何界面，按ESC后重试"))
-                auto.press_key("esc")
-                time.sleep(1)
-            else:
-                logger.debug(_("没找到任何界面"))
-                break
-        return False
+        logger.debug(_("无法从 {current_screen} 切换到 {target_screen}").format(
+            current_screen=self.get_name(self.current_screen), target_screen=self.get_name(target_screen)))
+        input(_("按回车键关闭窗口. . ."))
+        sys.exit(1)

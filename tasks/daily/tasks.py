@@ -19,6 +19,7 @@ class Tasks:
                 return json.load(file)
         except FileNotFoundError:
             logger.error(_("配置文件不存在：{path}").format(path=config_example_path))
+            input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
 
     def start(self):

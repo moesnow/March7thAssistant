@@ -1,3 +1,3 @@
 from module.screen.screen import Screen
 
-screen = Screen("./assets/config/screen.json")
+screen = Screen("./assets/config/screens.json")

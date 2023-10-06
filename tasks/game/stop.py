@@ -68,19 +68,19 @@ class Stop:
 
     @staticmethod
     def shutdown():
-        logger.warning(_("将在1分钟后自动关机"))
+        logger.warning(_("将在{num}分钟后自动关机").format(num=1))
         time.sleep(60)
         os.system("shutdown /s /t 0")
 
     @staticmethod
     def hibernate():
-        logger.warning(_("将在1分钟后自动休眠"))
+        logger.warning(_("将在{num}分钟后自动休眠").format(num=1))
         time.sleep(60)
         os.system("shutdown /h")
 
     @staticmethod
     def sleep():
-        logger.warning(_("将在1分钟后自动睡眠"))
+        logger.warning(_("将在{num}分钟后自动睡眠").format(num=1))
         time.sleep(60)
         os.system("powercfg -h off")
         # 必须先关闭休眠，否则下面的指令不会进入睡眠，而是优先休眠，无语了，Windows为什么这么难用

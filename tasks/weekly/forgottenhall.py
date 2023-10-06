@@ -207,9 +207,7 @@ class ForgottenHall:
             if not auto.find_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image", 0.8, max_retries=10, crop=(36 / 1920, 25 / 1080, 170 / 1920, 80 / 1080)):
                 # if not auto.find_element("混沌回忆", "text", max_retries=10):
                 logger.error(_("界面不正确，尝试切换到混沌回忆界面"))
-                if not screen.change_to('memory_of_chaos'):
-                    logger.error(_("切换到混沌回忆界面失败"))
-                    break
+                screen.change_to('memory_of_chaos')
 
         if max_level > 0:
             screen.change_to('memory_of_chaos')
@@ -226,28 +224,28 @@ class ForgottenHall:
     @staticmethod
     def prepare():
         flag = False
-        if screen.change_to('guide3'):
-            guide3_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
-            if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=guide3_crop):
-                auto.mouse_scroll(12, -1)
-                if auto.click_element("忘却之庭", "text", max_retries=10, crop=guide3_crop):
-                    auto.find_element("混沌回忆", "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
-                    for box in auto.ocr_result:
-                        text = box[1][0]
-                        if "/30" in text:
-                            logger.info(_("星数：{text}").format(text=text))
-                            if text.split("/")[0] == "30":
-                                logger.info(_("混沌回忆未刷新"))
-                                screen.change_to('menu')
-                                return True
-                            else:
-                                break
-                    if auto.click_element("传送", "text", max_retries=10, need_ocr=False):
-                        auto.click_element("./assets/images/forgottenhall/memory_of_chaos.png", "image",
-                                           0.95, max_retries=2, crop=(470 / 1920, 0, 970 / 1920, 114 / 1080))
-                        if auto.click_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image",
-                                              0.95, max_retries=10, crop=(36 / 1920, 25 / 1080, 170 / 1920, 80 / 1080)):
-                            flag = True
+        screen.change_to('guide3')
+        guide3_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
+        if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=guide3_crop):
+            auto.mouse_scroll(12, -1)
+            if auto.click_element("忘却之庭", "text", max_retries=10, crop=guide3_crop):
+                auto.find_element("混沌回忆", "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
+                for box in auto.ocr_result:
+                    text = box[1][0]
+                    if "/30" in text:
+                        logger.info(_("星数：{text}").format(text=text))
+                        if text.split("/")[0] == "30":
+                            logger.info(_("混沌回忆未刷新"))
+                            screen.change_to('menu')
+                            return True
+                        else:
+                            break
+                if auto.click_element("传送", "text", max_retries=10, need_ocr=False):
+                    auto.click_element("./assets/images/forgottenhall/memory_of_chaos.png", "image",
+                                       0.95, max_retries=2, crop=(470 / 1920, 0, 970 / 1920, 114 / 1080))
+                    if auto.click_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image",
+                                          0.95, max_retries=10, crop=(36 / 1920, 25 / 1080, 170 / 1920, 80 / 1080)):
+                        flag = True
 
         if not flag:
             screen.change_to('menu')

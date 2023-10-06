@@ -3,8 +3,6 @@ from managers.automation_manager import auto
 from managers.translate_manager import _
 from managers.config_manager import config
 from managers.notify_manager import notify
-from tasks.power.power import Power
-from tasks.base.date import Date
 from tasks.game.start import Start
 from tasks.game.stop import Stop
 import sys
@@ -18,6 +16,7 @@ class Game:
         if not auto.retry_with_timeout(lambda: Start.start_game(), 1200, 1):
             notify.notify(_("⚠️启动游戏超时，退出程序⚠️"))
             logger.error(_("⚠️启动游戏超时，退出程序⚠️"))
+            input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
         logger.hr(_("完成"), 2)
 
