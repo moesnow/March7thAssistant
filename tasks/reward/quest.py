@@ -26,3 +26,5 @@ class Quest:
             else:
                 Base.send_notification_with_screenshot(_("⚠️每日实训未完成⚠️"))
             logger.info(_("领取每日实训奖励完成"))
+        else:
+            logger.info(_("未检测到每日实训奖励"))

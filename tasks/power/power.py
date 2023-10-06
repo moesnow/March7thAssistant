@@ -52,14 +52,17 @@ class Power:
 
     @staticmethod
     def wait_fight():
-        logger.info(_("等待战斗"))
+        logger.info(_("进入战斗"))
 
         for i in range(20):
             if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95):
+                logger.info(_("尝试开启自动战斗"))
                 auto.press_key("v")
-                time.sleep(1)
-            elif auto.find_element("./assets/images/base/auto.png", "image", 0.95):
+            elif auto.find_element("./assets/images/base/auto.png", "image", 0.95, take_screenshot=False):
+                logger.info(_("自动战斗已开启"))
                 break
+            time.sleep(0.5)
+        logger.info(_("等待战斗"))
 
         def check_fight():
             return auto.find_element("./assets/images/fight/fight_again.png", "image", 0.9)
@@ -227,6 +230,7 @@ class Power:
                 # 速度太快，点击按钮无效
                 time.sleep(1)
                 auto.click_element("./assets/images/fight/fight_exit.png", "image", 0.9, max_retries=10)
+                time.sleep(2)
                 logger.info(_("副本任务完成"))
                 return True
 

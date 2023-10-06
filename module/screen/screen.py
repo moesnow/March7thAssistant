@@ -14,6 +14,8 @@ class Screen:
         self.screen_map = {}
         self.lock = threading.Lock()  # 创建一个锁，用于线程同步
         self._setup_screens_from_config(config_path)
+        self.green = "\033[92m"
+        self.reset = "\033[0m"
 
     def _setup_screens_from_config(self, config_path):
         """
@@ -142,7 +144,7 @@ class Screen:
                 thread.join()
 
             if self.current_screen:
-                logger.debug(_("当前界面：{screen_name}").format(screen_name=self.get_name(self.current_screen)))
+                logger.info(_("当前界面：{screen_name}").format(screen_name=self.green+self.get_name(self.current_screen)+self.reset))
                 return True
 
             if autotry:
@@ -191,7 +193,7 @@ class Screen:
                 self.perform_operations(operations)
 
                 for i in range(10):
-                    logger.debug(_("等待 {next_screen}").format(next_screen=self.get_name(next_screen)))
+                    logger.debug(_("等待：{next_screen}").format(next_screen=self.get_name(next_screen)))
                     if check_screen(self, next_screen):
                         break
 
@@ -203,9 +205,9 @@ class Screen:
                         input(_("按回车键关闭窗口. . ."))
                         sys.exit(1)
 
-                logger.debug(_("切换到 {next_screen}").format(next_screen=self.get_name(next_screen)))
+                logger.info(_("切换到：{next_screen}").format(next_screen=self.green+self.get_name(next_screen)+self.reset))
             self.current_screen = target_screen  # 更新当前界面
-            logger.debug(_("当前界面：{current_screen}").format(current_screen=self.get_name(current_screen)))
+            # logger.info(_("当前界面：{current_screen}").format(current_screen=self.get_name(self.current_screen)))
             return
 
         logger.debug(_("无法从 {current_screen} 切换到 {target_screen}").format(

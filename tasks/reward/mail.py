@@ -18,3 +18,5 @@ class Mail:
             if auto.click_element("./assets/images/mail/receive_all.png", "image", 0.9):
                 auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
             logger.info(_("邮件奖励完成"))
+        else:
+            logger.info(_("未检测到邮件奖励"))

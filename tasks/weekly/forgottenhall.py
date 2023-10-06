@@ -11,14 +11,17 @@ import time
 class ForgottenHall:
     @staticmethod
     def wait_fight(count, boss_count, max_recursion):
-        logger.info(_("等待战斗"))
+        logger.info(_("进入战斗"))
 
         for i in range(20):
             if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95):
+                logger.info(_("尝试开启自动战斗"))
                 auto.press_key("v")
-                time.sleep(1)
-            elif auto.find_element("./assets/images/base/auto.png", "image", 0.95):
+            elif auto.find_element("./assets/images/base/auto.png", "image", 0.95, take_screenshot=False):
+                logger.info(_("自动战斗已开启"))
                 break
+            time.sleep(0.5)
+        logger.info(_("等待战斗"))
 
         def check_fight():
             if auto.find_element("./assets/images/forgottenhall/prepare_fight.png", "image", 0.9, crop=(64 / 1920, 277 / 1080, 167 / 1920, 38 / 1080)):

@@ -27,7 +27,9 @@ class Version:
                 else:
                     logger.info(_("已经是最新版本：{v0}").format(v0=config.version))
             else:
-                logger.error(_("检测更新失败"))
-        except Exception:
-            logger.error(_("检测更新失败"))
+                logger.warning(_("检测更新失败"))
+                logger.debug(response.text)
+        except Exception as e:
+            logger.warning(_("检测更新失败"))
+            logger.debug(e)
         logger.hr(_("完成"), 2)

@@ -23,6 +23,8 @@ class Dispatch:
                     config.save_config()
 
             logger.info(_("委托奖励完成"))
+        else:
+            logger.info(_("未检测到委托奖励"))
 
     @staticmethod
     def _perform_dispatches():
