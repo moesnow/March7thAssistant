@@ -1,10 +1,19 @@
 # Changelog
 
-## v1.5.1
+## v1.6.0
 
+### 新功能
+- 完成混沌回忆后自动领取星琼奖励
+- 支持使用集成模式（默认）运行锄大地（Fhoe-Rail）
+- 支持从官方启动器获取游戏路径 [#10](https://github.com/moesnow/March7thAssistant/pull/10)
+- 使用多线程大大缩短了图形界面的加载时间 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
 ### 修复
-- 部分 Windows 终端提示 "Error 0x800702e4"
-- Microsoft Store 污染 Python 环境变量的问题
+- 开启系统“显示强调色”导致图形界面显示异常 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
+- 优化“发生错误: None”错误提示
+- 低配置电脑检测委托状态偶尔异常
+### 其他
+- 优化Python版本检测和依赖安装
+- 内置“使用教程”，网页版效果更佳
 
 ## v1.5.0
 
