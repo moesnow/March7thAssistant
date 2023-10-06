@@ -115,17 +115,95 @@ forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行
 
 hotkey_technique: e # 游戏内设置的秘技按键
 
-# 可选消息通知 Telegram已适配支持发送截图
-# 还支持更多推送查看下面的链接仿照格式配置即可
-# https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-[CN]
-notify_winotify_enable: true # 启用Windows原生通知
+# 消息通知
+# Windows 原生通知
+notify_winotify_enable: false
 
-notify_telegram_enable: false # 启用Telegram通知
+# Telegram 通知
+# 已适配支持发送截图
+# 依赖科学上网环境
+notify_telegram_enable: false
 notify_telegram_token: ''
 notify_telegram_userid: ''
-notify_telegram_api_url: ''
+notify_telegram_api_url: '' # 可选参数
 
-notify_wechatworkapp_enable: false # 启用企业微信应用通知
+# Server 酱 Turbo 版通知
+# 扫码登陆 微信推送 适合小白 免费版每天限制五条
+# https://sct.ftqq.com/
+notify_serverchanturbo_enable: false
+notify_serverchanturbo_sctkey: ''
+notify_serverchanturbo_channel: '' # 可选参数
+notify_serverchanturbo_openid: '' # 可选参数
+
+# Bark 通知
+# 推荐 iOS 用户使用
+# 直接在 App Store 下载安装
+notify_bark_enable: false
+notify_bark_key: ''
+notify_bark_sound: '' # 可选参数
+notify_bark_isarchive: '1' # 可选参数
+notify_bark_icon: 'https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/app/images/March7th.jpg' # 可选参数
+notify_bark_group: 'March7thAssistant' # 可选参数
+notify_bark_url: '' # 可选参数
+notify_bark_copy: '' # 可选参数
+notify_bark_autocopy: '' # 可选参数
+
+# 邮箱 smtp 通知
+# 注意部分邮箱密码部分需要填写授权码（比如QQ邮箱）
+notify_smtp_enable: false
+notify_smtp_host: ''
+notify_smtp_user: ''
+notify_smtp_password: ''
+notify_smtp_From: '' # 可选参数
+notify_smtp_To: '' # 可选参数
+notify_smtp_port: '' # 可选参数
+notify_smtp_ssl: '' # 可选参数
+
+# 钉钉通知
+notify_dingtalk_enable: false
+notify_dingtalk_token: ''
+
+# pushplus 通知
+notify_pushplus_enable: false
+notify_pushplus_token: ''
+notify_pushplus_channel: '' # 可选参数
+notify_pushplus_webhook: '' # 可选参数
+notify_pushplus_callbackUrl: '' # 可选参数
+
+# 企业微信应用通知
+notify_wechatworkapp_enable: false
 notify_wechatworkapp_corpid: ''
 notify_wechatworkapp_corpsecret: ''
 notify_wechatworkapp_agentid: ''
+notify_wechatworkapp_touser: '' # 可选参数
+
+# 企业微信机器人通知
+notify_wechatworkbot_enable: false
+notify_wechatworkbot_key: ''
+
+# gocqhttp 通知
+notify_gocqhttp_enable: false
+notify_gocqhttp_endpoint: ''
+notify_gocqhttp_message_type: ''
+notify_gocqhttp_token: '' # 可选参数
+notify_gocqhttp_user_id: '' # 可选参数
+notify_gocqhttp_group_id: '' # 可选参数
+
+# discord 通知
+notify_discord_enable: false
+notify_discord_webhook: ''
+notify_discord_username: '' # 可选参数
+notify_discord_avatar_url: '' # 可选参数
+notify_discord_color: '' # 可选参数
+
+# pushdeer 通知
+notify_pushdeer_enable: false
+notify_pushdeer_token: ''
+notify_pushdeer_url: '' # 可选参数
+
+# 飞书通知
+notify_lark_enable: false
+notify_lark_webhook: ''
+notify_lark_content: ''
+notify_lark_keyword: '' # 可选参数
+notify_lark_sign: '' # 可选参数

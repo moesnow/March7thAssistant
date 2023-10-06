@@ -96,7 +96,6 @@ class SettingInterface(ScrollArea):
         )
 
         self.GameGroup = SettingCardGroup(self.tr("游戏设置"), self.scrollWidget)
-
         self.gamePathCard = PushSettingCard(
             self.tr('修改'),
             FIF.GAME,
@@ -369,6 +368,12 @@ class SettingInterface(ScrollArea):
         )
 
         self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
+        self.testNotifyCard = PrimaryPushSettingCard(
+            self.tr('发送消息'),
+            FIF.TILES,
+            self.tr("测试消息推送"),
+            ""
+        )
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
             self.tr('启用Windows原生通知'),
@@ -487,6 +492,7 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
 
+        self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.NotifyGroup.addSettingCard(self.winotifyEnableCard)
 
         self.KeybindingGroup.addSettingCard(self.keybindingTechniqueCard)
@@ -599,6 +605,8 @@ class SettingInterface(ScrollArea):
         self.guiFightCard.clicked.connect(lambda: start_task("fight_gui"))
         self.updateUniverseCard.clicked.connect(lambda: start_task("universe_update"))
         self.updateFightCard.clicked.connect(lambda: start_task("fight_update"))
+
+        self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 
         self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
         self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))

@@ -58,6 +58,14 @@ def main(action=None):
             Fight.update()
         input(_("按回车键关闭窗口. . ."))
         sys.exit(0)
+    elif action == "notify":
+        from io import BytesIO
+        from PIL import Image
+        image_io = BytesIO()
+        Image.open("./assets/app/images/March7th.jpg").save(image_io, format='JPEG')
+        notify.notify(_("三月七小助手|･ω･)"), _("这是一条测试消息"),image_io)
+        input(_("按回车键关闭窗口. . ."))
+        sys.exit(0)
     else:
         logger.error(_("未知任务: {action}").format(action=action))
         input(_("按回车键关闭窗口. . ."))

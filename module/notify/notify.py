@@ -65,7 +65,7 @@ class Notify:
             if notifier_params:
                 token = notifier_params["token"]
                 chat_id = notifier_params["userid"]
-                api_url = notifier_params["api_url"] if notifier_params["api_url"] else "api.telegram.org"
+                api_url = notifier_params["api_url"] if "api_url" in notifier_params else "api.telegram.org"
                 tgurl = f"https://{api_url}/bot{token}/sendPhoto"
                 message = content
                 if title and content:
@@ -101,6 +101,7 @@ class Notify:
                              icon=os.getcwd() + "\\assets\\app\\images\\March7th.jpg")
         toast.set_audio(audio.Mail, loop=False)
         toast.show()
+        logger.info(_("{notifier_name} 通知发送完成").format(notifier_name="winotify"))
 
     def notify(self, title="", content="", image_io=None):
         for notifier_name in self.notifiers:
