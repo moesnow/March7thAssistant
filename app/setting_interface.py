@@ -216,12 +216,19 @@ class SettingInterface(ScrollArea):
             self.tr('仅限完整运行生效'),
             "fight_enable"
         )
-        self.fightPathCard = PushSettingCardStr(
-            self.tr('修改'),
+        self.fightOperationModeCard = ComboBoxSettingCard2(
+            "fight_operation_mode",
             FIF.COMMAND_PROMPT,
-            self.tr("锄大地路径"),
-            "fight_path"
+            self.tr('运行模式'),
+            self.tr('集成模式适合开箱即用。源码运行适合自定义，依赖 Python 环境。'),
+            texts={'源码': 'source', '集成': 'exe'}
         )
+        # self.fightPathCard = PushSettingCardStr(
+        #     self.tr('修改'),
+        #     FIF.COMMAND_PROMPT,
+        #     self.tr("锄大地路径"),
+        #     "fight_path"
+        # )
         self.fightTimeoutCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.HISTORY,
@@ -267,12 +274,19 @@ class SettingInterface(ScrollArea):
             self.tr('仅限完整运行生效'),
             "universe_enable"
         )
-        self.universePathCard = PushSettingCardStr(
-            self.tr('修改'),
-            FIF.COMMAND_PROMPT,
-            self.tr("模拟宇宙路径"),
-            "universe_path"
-        )
+        # self.universeOperationModeCard = ComboBoxSettingCard2(
+        #     "universe_operation_mode",
+        #     FIF.COMMAND_PROMPT,
+        #     self.tr('运行模式'),
+        #     self.tr('集成模式适合开箱即用。源码运行适合自定义，依赖 Python 环境。'),
+        #     texts={'源码': 'source', '集成': 'exe'}
+        # )
+        # self.universePathCard = PushSettingCardStr(
+        #     self.tr('修改'),
+        #     FIF.COMMAND_PROMPT,
+        #     self.tr("模拟宇宙路径"),
+        #     "universe_path"
+        # )
         self.universeTimeoutCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.HISTORY,
@@ -447,7 +461,8 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
 
         self.FightGroup.addSettingCard(self.fightEnableCard)
-        self.FightGroup.addSettingCard(self.fightPathCard)
+        self.FightGroup.addSettingCard(self.fightOperationModeCard)
+        # self.FightGroup.addSettingCard(self.fightPathCard)
         self.FightGroup.addSettingCard(self.fightTimeoutCard)
         self.FightGroup.addSettingCard(self.fightTeamEnableCard)
         self.FightGroup.addSettingCard(self.fightTeamNumberCard)
@@ -456,7 +471,8 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.updateFightCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
-        self.UniverseGroup.addSettingCard(self.universePathCard)
+        # self.UniverseGroup.addSettingCard(self.universeOperationModeCard)
+        # self.UniverseGroup.addSettingCard(self.universePathCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)

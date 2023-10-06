@@ -50,12 +50,10 @@ class Universe:
         logger.hr(_("准备模拟宇宙"), 2)
 
         if Universe.before_start():
-
-            screen.change_to('universe_main')
             screen.change_to('main')
-
             logger.info(_("开始校准"))
             if subprocess_with_timeout([config.python_exe_path, "align_angle.py"], 60, config.universe_path, config.env):
+                screen.change_to('universe_main')
                 logger.info(_("开始模拟宇宙"))
                 command = [config.python_exe_path, "states.py"]
                 if config.universe_bonus_enable:

@@ -67,6 +67,7 @@ daily_tasks: {} # 每日实训
 last_run_timestamp: 0 # 上次运行日常的时间戳
 
 fight_enable: false # 启用锄大地
+fight_operation_mode: exe # 运行方式 源码: source 集成: exe
 fight_path: .\3rdparty\Fhoe-Rail # 锄大地路径
 fight_timeout: 6 # 锄大地超时（单位小时）
 fight_team_enable: false # 锄大地时自动切换队伍
@@ -75,6 +76,7 @@ fight_requirements: false # 是否安装过依赖（更新后会重置为false�
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: false # 启用模拟宇宙
+# universe_operation_mode: exe # 运行方式 源码: source 集成: exe
 universe_bonus_enable: false # 领取沉浸奖励
 universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径
 universe_timeout: 20 # 模拟宇宙超时（单位小时）
