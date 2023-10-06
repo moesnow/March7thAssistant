@@ -33,6 +33,7 @@ def start_task(command):
     from managers.config_manager import config
     import subprocess
     import sys
+    import os
     # 检查是否是 PyInstaller 打包的可执行文件
     if getattr(sys, 'frozen', False):
         # 检查是否安装了 Windows Terminal
@@ -41,8 +42,10 @@ def start_task(command):
         if config.use_windows_terminal and subprocess_with_stdout(["where", "wt.exe"]) is not None:
             # 因为 https://github.com/microsoft/terminal/issues/10276 问题
             # 管理员模式下，始终优先使用控制台主机而不是新终端
-            subprocess.check_call(f"wt ./\"March7th Assistant.exe\" {command}", shell=True)
+            # subprocess.check_call(f"wt ./\"March7th Assistant.exe\" {command}", shell=True)
+            subprocess.check_call(["wt", os.path.abspath("./March7th Assistant.exe"), command], shell=True)
         else:
-            subprocess.check_call(f"start ./\"March7th Assistant.exe\" {command}", shell=True)
+            # subprocess.check_call(f"start ./\"March7th Assistant.exe\" {command}", shell=True)
+            subprocess.check_call(["start", os.path.abspath("./March7th Assistant.exe"), command], shell=True)
     else:
         subprocess.check_call(f"start python main.py {command}", shell=True)
