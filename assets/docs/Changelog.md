@@ -4,14 +4,16 @@
 
 ### 新功能
 - 完成混沌回忆后自动领取星琼奖励
-- 支持使用集成模式（默认）运行锄大地（Fhoe-Rail）
+- 支持使用集成模式运行锄大地（默认）
+- 图形界面新增测试消息推送的功能
+- 补全了大部分推送方式所需的配置项（推荐Bark、Server酱、邮箱Smtp）
 - 支持从官方启动器获取游戏路径 [#10](https://github.com/moesnow/March7thAssistant/pull/10)
-- 使用多线程大大缩短了图形界面的加载时间 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
 ### 修复
-- 开启系统“显示强调色”导致图形界面显示异常 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
-- 优化“发生错误: None”错误提示
 - 低配置电脑检测委托状态偶尔异常
+- 优化了 “发生错误: None” 的错误提示
+- 开启系统设置 “显示强调色” 导致图形界面显示异常 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
 ### 其他
+- 使用多线程大大缩短了图形界面的加载时间 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
 - 优化Python版本检测和依赖安装
 - 内置“使用教程”，网页版效果更佳
 
