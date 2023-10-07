@@ -44,7 +44,7 @@ class Notify:
                 return
 
             if notifier_name == "pushplus":
-                content = "." if content is None else content
+                content = '.' if content is None or content == '' else content
 
             notifier_params = getattr(self, notifier_name, None)
             if notifier_params:
