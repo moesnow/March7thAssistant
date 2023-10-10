@@ -18,8 +18,8 @@ class OCR:
                 logger.debug(_("开始初始化OCR..."))
                 self.ocr = GetOcrApi(self.exePath)
                 logger.debug(_("初始化OCR完成"))
-            except:
-                logger.error(_("初始化OCR失败"))
+            except Exception as e:
+                logger.error(_("初始化OCR失败：{e}").format(e=e))
                 self.ocr = None
                 import cpufeature
                 if not cpufeature.CPUFeature["AVX2"]:
