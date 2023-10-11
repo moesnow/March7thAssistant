@@ -10,12 +10,13 @@ import time
 class SRPass:
     @staticmethod
     def get_reward():
-        screen.change_to('menu')
+        if not screen.check_screen('menu'):
+            screen.change_to('menu')
         if auto.find_element("./assets/images/menu/pass_reward.png", "image", 0.95):
-            # if True:
             logger.hr(_("检测到无名勋礼奖励"), 2)
             screen.change_to('pass1')
-            if config.srpass_enable:
+            # 判断是否解锁了"无名客的荣勋"
+            if auto.find_element("./assets/images/pass/lock.png", "image", 0.9):
                 if auto.click_element("./assets/images/pass/one_key_receive.png", "image", 0.9):
                     auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
             if auto.find_element("./assets/images/pass/50.png", "image", 0.9):

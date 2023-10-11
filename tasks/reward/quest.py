@@ -10,7 +10,8 @@ import time
 class Quest:
     @staticmethod
     def get_reward():
-        screen.change_to('menu')
+        if not screen.check_screen('menu'):
+            screen.change_to('menu')
         if auto.find_element("./assets/images/quest/quest_reward.png", "image", 0.95):
             logger.hr(_("检测到每日实训奖励"), 2)
             screen.change_to('guide2')

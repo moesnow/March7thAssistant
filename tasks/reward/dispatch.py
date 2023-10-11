@@ -56,4 +56,4 @@ class Dispatch:
         # width, height = auto.get_image_info("./assets/images/dispatch/reward.png")
         # offset = (-2 * width, 2 * height)
         offset = (-34, 34)  # 以后改相对坐标偏移
-        return auto.click_element("./assets/images/dispatch/reward.png", "image", 0.9, max_retries=10, offset=offset, crop=crop)
+        return auto.click_element("./assets/images/dispatch/reward.png", "image", 0.9, max_retries=5, offset=offset, crop=crop)
