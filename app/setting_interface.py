@@ -1,5 +1,5 @@
 # coding:utf-8
-from qfluentwidgets import (SettingCardGroup, PushSettingCard, ScrollArea, ExpandLayout, PrimaryPushSettingCard, Pivot, qrouter)
+from qfluentwidgets import (SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard, Pivot, qrouter)
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget
@@ -11,7 +11,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2
 from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardDictStr, PushSettingCardDictBool
+from .card.pushsettingcard1 import PushSettingCardDictInstanceNames, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardDictStr, PushSettingCardDictBool
 
 from .tools.check_update import checkUpdate
 from tasks.base.command import start_task
@@ -38,18 +38,19 @@ class SettingInterface(ScrollArea):
 
         # program group
         self.ProgramGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
+        self.logLevelCard = ComboBoxSettingCard2(
+            "log_level",
+            FIF.TAG,
+            self.tr('日志等级'),
+            # self.tr('如果遇到异常和错误请修改为详细'),
+            "",
+            texts={'简洁': 'INFO', '详细': 'DEBUG'}
+        )
         self.importConfigCard = PushSettingCard(
             self.tr('导入'),
             FIF.ADD_TO,
             self.tr('导入配置'),
             self.tr('选择需要导入的 config.yaml 文件（重启后生效）')
-        )
-        self.logLevelCard = ComboBoxSettingCard1(
-            "log_level",
-            FIF.TAG,
-            self.tr('日志等级'),
-            self.tr('如果遇到异常请修改为DEBUG等级（可以显示更多信息）'),
-            texts=['INFO', 'DEBUG']
         )
         self.gameScreenshotCard = PushSettingCard(
             self.tr('捕获'),
@@ -88,12 +89,12 @@ class SettingInterface(ScrollArea):
             FIF.HEART,
             self.tr("循环运行再次启动所需开拓力（凌晨四点优先级更高）"),
         )
-        self.useWindowsTerminalCard = SwitchSettingCard1(
-            FIF.COMMAND_PROMPT,
-            self.tr('优先使用 Windows 终端'),
-            self.tr('界面更好看且支持显示Emoji表情'),
-            "use_windows_terminal"
-        )
+        # self.useWindowsTerminalCard = SwitchSettingCard1(
+        #     FIF.COMMAND_PROMPT,
+        #     self.tr('优先使用 Windows 终端'),
+        #     self.tr('界面更好看且支持显示Emoji表情'),
+        #     "use_windows_terminal"
+        # )
 
         self.GameGroup = SettingCardGroup(self.tr("游戏设置"), self.scrollWidget)
         self.gamePathCard = PushSettingCard(
@@ -110,13 +111,14 @@ class SettingInterface(ScrollArea):
             FIF.ALIGNMENT,
             self.tr('副本类型'),
             None,
-            texts=['侵蚀隧洞', '凝滞虚影', '拟造花萼（金）', '拟造花萼（赤）']
+            texts=['拟造花萼（金）', '拟造花萼（赤）', '凝滞虚影', '侵蚀隧洞']
         )
-        self.instanceNameCard = PushSettingCardDictStr(
+        self.instanceNameCard = PushSettingCardDictInstanceNames(
             self.tr('修改'),
             FIF.PALETTE,
             # self.tr("副本名称\n保证唯一即可，例如“孽兽之形”可以填写“兽之形”，低概率下复杂文字会识别错误"),
-            self.tr("副本名称（也会用于完成每日实训，“无”代表不启用）"),
+            # self.tr("副本名称（也会用于完成每日实训，“无”代表不启用）"),
+            self.tr("副本名称"),
             "instance_names"
         )
         self.borrowCharacterEnableCard = SwitchSettingCard1(
@@ -139,14 +141,14 @@ class SettingInterface(ScrollArea):
         )
         self.instanceTeamEnableCard = SwitchSettingCard1(
             FIF.EDIT,
-            self.tr('启用自动切换队伍'),
+            self.tr('自动切换队伍'),
             None,
             "instance_team_enable"
         )
         self.instanceTeamNumberCard = ComboBoxSettingCard1(
             "instance_team_number",
             FIF.FLAG,
-            self.tr('打副本使用的队伍编号'),
+            self.tr('队伍编号'),
             None,
             texts=['1', '2', '3', '4', '5', '6']
         )
@@ -159,7 +161,7 @@ class SettingInterface(ScrollArea):
         self.echoofwarRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
-            self.tr("上次完成历战余响的时间（每周运行）"),
+            self.tr("上次完成历战余响的时间"),
             "echo_of_war_timestamp"
         )
 
@@ -167,28 +169,28 @@ class SettingInterface(ScrollArea):
 
         self.dispatchEnableCard = SwitchSettingCard1(
             FIF.STOP_WATCH,
-            self.tr('启用领取委托奖励'),
+            self.tr('领取委托奖励'),
             None,
             "dispatch_enable"
         )
         self.mailEnableCard = SwitchSettingCard1(
             FIF.MAIL,
-            self.tr('启用领取邮件奖励'),
+            self.tr('领取邮件奖励'),
             None,
             "mail_enable"
         )
         self.assistEnableCard = SwitchSettingCard1(
             FIF.BRUSH,
-            self.tr('启用领取支援奖励'),
+            self.tr('领取支援奖励'),
             None,
             "assist_enable"
         )
-        self.srpassEnableCard = SwitchSettingCard1(
-            FIF.RINGER,
-            self.tr('启用领取无名勋礼奖励'),
-            "此设置不会影响领取无名勋礼经验，大月卡玩家请不要开启此功能",
-            "srpass_enable"
-        )
+        # self.srpassEnableCard = SwitchSettingCard1(
+        #     FIF.RINGER,
+        #     self.tr('领取无名勋礼奖励'),
+        #     "取消勾选不会影响领取无名勋礼经验，大月卡玩家不要开启此功能",
+        #     "srpass_enable"
+        # )
         self.dailyForgottenhallEnableCard = SwitchSettingCard1(
             FIF.TILES,
             self.tr('启用完成1次「忘却之庭」'),
@@ -204,7 +206,7 @@ class SettingInterface(ScrollArea):
         self.lastRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
-            self.tr("上次运行日常的时间（每天运行）"),
+            self.tr("上次检测日常的时间"),
             "last_run_timestamp"
         )
 
@@ -212,15 +214,16 @@ class SettingInterface(ScrollArea):
         self.fightEnableCard = SwitchSettingCard1(
             FIF.BUS,
             self.tr('启用锄大地'),
-            self.tr('仅限完整运行生效'),
+            "",
+            # self.tr('仅限完整运行生效'),
             "fight_enable"
         )
         self.fightOperationModeCard = ComboBoxSettingCard2(
             "fight_operation_mode",
             FIF.COMMAND_PROMPT,
             self.tr('运行模式'),
-            self.tr('集成模式适合开箱即用。源码运行适合自定义，依赖 Python 环境。'),
-            texts={'源码': 'source', '集成': 'exe'}
+            self.tr('集成模式适合开箱即用。源码模式适合自定义，依赖 Python 环境。'),
+            texts={'集成': 'exe', '源码': 'source'}
         )
         # self.fightPathCard = PushSettingCardStr(
         #     self.tr('修改'),
@@ -228,29 +231,36 @@ class SettingInterface(ScrollArea):
         #     self.tr("锄大地路径"),
         #     "fight_path"
         # )
-        self.fightTimeoutCard = PushSettingCardEval(
-            self.tr('修改'),
+        # self.fightTimeoutCard = PushSettingCardEval(
+        #     self.tr('修改'),
+        #     FIF.HISTORY,
+        #     self.tr("锄大地超时（单位小时）"),
+        #     "fight_timeout"
+        # )
+        self.fightTimeoutCard = RangeSettingCard1(
+            "fight_timeout",
+            [1, 10],
             FIF.HISTORY,
-            self.tr("锄大地超时（单位小时）"),
-            "fight_timeout"
+            self.tr("锄大地超时"),
+            self.tr("超过设定时间强制停止（单位小时）"),
         )
         self.fightTeamEnableCard = SwitchSettingCard1(
             FIF.EDIT,
-            self.tr('启用自动切换队伍'),
+            self.tr('自动切换队伍'),
             None,
             "fight_team_enable"
         )
         self.fightTeamNumberCard = ComboBoxSettingCard1(
             "fight_team_number",
             FIF.FLAG,
-            self.tr('锄大地使用的队伍编号'),
+            self.tr('队伍编号'),
             None,
             texts=['1', '2', '3', '4', '5', '6']
         )
         self.FightRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
-            self.tr("上次运行锄大地的时间（每天运行）"),
+            self.tr("上次运行锄大地的时间"),
             "fight_timestamp"
         )
         self.guiFightCard = PrimaryPushSettingCard(
@@ -270,15 +280,16 @@ class SettingInterface(ScrollArea):
         self.universeEnableCard = SwitchSettingCard1(
             FIF.VPN,
             self.tr('启用模拟宇宙'),
-            self.tr('仅限完整运行生效'),
+            "",
+            # self.tr('仅限完整运行生效'),
             "universe_enable"
         )
         # self.universeOperationModeCard = ComboBoxSettingCard2(
         #     "universe_operation_mode",
         #     FIF.COMMAND_PROMPT,
         #     self.tr('运行模式'),
-        #     self.tr('集成模式适合开箱即用。源码运行适合自定义，依赖 Python 环境。'),
-        #     texts={'源码': 'source', '集成': 'exe'}
+        #     self.tr('集成模式适合开箱即用。源码模式适合自定义，依赖 Python 环境。'),
+        #     texts={'集成': 'exe', '源码': 'source'}
         # )
         # self.universePathCard = PushSettingCardStr(
         #     self.tr('修改'),
@@ -286,21 +297,28 @@ class SettingInterface(ScrollArea):
         #     self.tr("模拟宇宙路径"),
         #     "universe_path"
         # )
-        self.universeTimeoutCard = PushSettingCardEval(
-            self.tr('修改'),
+        # self.universeTimeoutCard = PushSettingCardEval(
+        #     self.tr('修改'),
+        #     FIF.HISTORY,
+        #     self.tr("模拟宇宙超时（单位小时）"),
+        #     "universe_timeout"
+        # )
+        self.universeTimeoutCard = RangeSettingCard1(
+            "universe_timeout",
+            [1, 24],
             FIF.HISTORY,
-            self.tr("模拟宇宙超时（单位小时）"),
-            "universe_timeout"
+            self.tr("模拟宇宙超时"),
+            self.tr("超过设定时间强制停止（单位小时）"),
         )
         self.universeRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
-            self.tr("上次运行模拟宇宙的时间（每周运行）"),
+            self.tr("上次运行模拟宇宙的时间"),
             "universe_timestamp"
         )
         self.universeBonusEnableCard = SwitchSettingCard1(
             FIF.IOT,
-            self.tr('启用领取沉浸奖励'),
+            self.tr('领取沉浸奖励'),
             None,
             "universe_bonus_enable"
         )
@@ -320,14 +338,15 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup = SettingCardGroup(self.tr("忘却之庭"), self.scrollWidget)
         self.forgottenhallEnableCard = SwitchSettingCard1(
             FIF.TILES,
-            self.tr('启用忘却之庭'),
-            self.tr('仅限完整运行生效'),
+            self.tr('启用混沌回忆'),
+            "",
+            # self.tr('仅限完整运行生效'),
             "forgottenhall_enable"
         )
         self.forgottenhallLevelCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.MINIMIZE,
-            self.tr("混沌回忆关卡范围"),
+            self.tr("关卡范围"),
             "forgottenhall_level"
         )
         # self.forgottenhallRetriesCard = PushSettingCardEval(
@@ -340,7 +359,7 @@ class SettingInterface(ScrollArea):
             "forgottenhall_retries",
             [0, 10],
             FIF.REMOVE_FROM,
-            self.tr("混沌回忆挑战失败后的重试次数"),
+            self.tr("重试次数"),
         )
         self.forgottenhallTeamInfoCard = PrimaryPushSettingCard(
             self.tr('打开角色文件夹'),
@@ -363,7 +382,7 @@ class SettingInterface(ScrollArea):
         self.forgottenhallRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
-            self.tr("上次运行混沌回忆的时间（每周运行，如已经满星则跳过）"),
+            self.tr("上次运行混沌回忆的时间"),
             "forgottenhall_timestamp"
         )
 
@@ -376,16 +395,16 @@ class SettingInterface(ScrollArea):
         )
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
-            self.tr('启用Windows原生通知'),
+            self.tr('启用 Windows 原生通知'),
             None,
             "notify_winotify_enable"
         )
 
-        self.KeybindingGroup = SettingCardGroup(self.tr("按键绑定"), self.scrollWidget)
+        self.KeybindingGroup = SettingCardGroup(self.tr("按键"), self.scrollWidget)
         self.keybindingTechniqueCard = PushSettingCardKey(
             self.tr('按住以修改'),
             FIF.TILES,
-            self.tr("游戏内设置的秘技按键"),
+            self.tr("秘技"),
             "hotkey_technique"
         )
 
@@ -436,14 +455,14 @@ class SettingInterface(ScrollArea):
     def __initLayout(self):
         self.settingLabel.move(36, 30)
         # add cards to group
-        self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.logLevelCard)
+        self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.gameScreenshotCard)
         self.ProgramGroup.addSettingCard(self.checkUpdateCard)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
-        self.ProgramGroup.addSettingCard(self.useWindowsTerminalCard)
+        # self.ProgramGroup.addSettingCard(self.useWindowsTerminalCard)
 
         self.GameGroup.addSettingCard(self.gamePathCard)
 
@@ -460,7 +479,7 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.dispatchEnableCard)
         self.DailyGroup.addSettingCard(self.mailEnableCard)
         self.DailyGroup.addSettingCard(self.assistEnableCard)
-        self.DailyGroup.addSettingCard(self.srpassEnableCard)
+        # self.DailyGroup.addSettingCard(self.srpassEnableCard)
         self.DailyGroup.addSettingCard(self.dailyForgottenhallEnableCard)
         self.DailyGroup.addSettingCard(self.dailyTasksCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
@@ -569,7 +588,8 @@ class SettingInterface(ScrollArea):
         if (configdir != ""):
             config._load_config(configdir)
             config.save_config()
-            self.importConfigCard.button.setText("导入完成，请重启小助手")
+            # self.importConfigCard.button.setText("导入完成，请重启小助手")
+            self.__showRestartTooltip()
 
     def __onGameScreenshotCardClicked(self):
         from tasks.base.windowswitcher import WindowSwitcher
@@ -591,6 +611,15 @@ class SettingInterface(ScrollArea):
 
         config.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
+
+    def __showRestartTooltip(self):
+        """ show restart tooltip """
+        InfoBar.success(
+            self.tr('更新成功'),
+            self.tr('配置在重启软件后生效'),
+            duration=1500,
+            parent=self
+        )
 
     def __connectSignalToSlot(self):
         """ connect signal to slot """

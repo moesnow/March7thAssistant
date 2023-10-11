@@ -19,7 +19,7 @@ class UpdateThread(QThread):
 
     def run(self):
         try:
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", "latest.json", self.timeout), timeout=3)
+            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", "latest.json", self.timeout), timeout=10)
             if response.status_code == 200:
                 data = json.loads(response.text)
                 version = data["tag_name"]
