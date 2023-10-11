@@ -25,17 +25,6 @@
                         ]
                     }
                 ]
-            },
-            {
-                "target_screen": "configure_team",
-                "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "T"
-                        ]
-                    }
-                ]
             }
         ]
     },
@@ -279,7 +268,8 @@
                         "args": [
                             "./assets/images/menu/configure_team.png",
                             "image",
-                            0.95
+                            0.95,
+                            2
                         ]
                     }
                 ]
