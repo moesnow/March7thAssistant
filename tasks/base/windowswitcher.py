@@ -27,7 +27,7 @@ class WindowSwitcher:
                         w.restore()
                         w.activate()
                     except Exception as e:
-                        logger.error(e)
+                        logger.warning(e)
                     time.sleep(2)
                     if w.isActive:
                         try:
@@ -35,8 +35,8 @@ class WindowSwitcher:
                             win32gui.GetWindowRect(hwnd)
                             return True
                         except Exception as e:
-                            logger.error(e)
-                    logger.info(_("切换窗口失败，尝试ALT+TAB"))
+                            logger.warning(e)
+                    logger.warning(_("切换窗口失败，尝试ALT+TAB"))
                     pyautogui.hotkey('alt', 'tab')
                     time.sleep(2)
                     continue

@@ -65,7 +65,7 @@ class Start:
             logger.error(_("无法找到点击进入按钮"))
             return False
         
-        time.sleep(5)
+        time.sleep(10)
         if not auto.retry_with_timeout(lambda: screen.get_current_screen(), 180, 1):
             logger.error(_("无法进入主界面"))
             return False

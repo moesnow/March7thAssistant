@@ -157,19 +157,18 @@ class Screen:
         logger.error(_("当前界面：未知"))
         return False
 
-    def change_to(self, target_screen, max_recursion=5):
+    def check_screen(self, target_screen):
+        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
+            self.current_screen = target_screen
+            return True
+        return False
+
+    def change_to(self, target_screen, max_recursion=2):
         """
         切换到目标界面，，如果失败则退出进程
         :param target_screen: 目标界面
         :param max_recursion: 重试次数
         """
-
-        def check_screen(self, target_screen):
-            if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
-                self.current_screen = target_screen
-                return True
-            return False
-
         if not self.get_current_screen():
             logger.info(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
             logger.info(_("如果是多显示器，自动化和游戏需要放在同一个显示器运行，且不支持HDR"))
@@ -194,11 +193,12 @@ class Screen:
 
                 for i in range(10):
                     logger.debug(_("等待：{next_screen}").format(next_screen=self.get_name(next_screen)))
-                    if check_screen(self, next_screen):
+                    if self.check_screen(next_screen):
                         break
 
                 if self.current_screen != next_screen:
                     if max_recursion > 0:
+                        logger.warning(_("切换到 {next_screen} 超时，准备重试").format(next_screen=self.get_name(next_screen)))
                         self.change_to(next_screen, max_recursion=max_recursion - 1)
                     else:
                         logger.error(_("无法切换到 {next_screen}").format(next_screen=self.get_name(next_screen)))
