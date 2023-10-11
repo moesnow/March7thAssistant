@@ -755,6 +755,22 @@
         ]
     },
     {
+        "name": "开启无名勋礼",
+        "id": "start_srpass",
+        "image_path": "./assets/images/screen/start_srpass.png",
+        "actions": [
+            {
+                "action": "auto.click_element",
+                "args": [
+                    "./assets/images/screen/start_srpass.png",
+                    "image",
+                    0.9,
+                    10
+                ]
+            }
+        ]
+    },
+    {
         "name": "无名勋礼-奖励",
         "id": "pass1",
         "image_path": "./assets/images/screen/pass/pass1.png",
