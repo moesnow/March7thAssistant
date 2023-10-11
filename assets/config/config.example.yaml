@@ -1,12 +1,11 @@
 locales: zh_CN # 语言
-log_level: INFO # 日志等级
+log_level: INFO # 日志等级: INFO、DEBUG
 check_update: true # 检测更新
 agreed_to_disclaimer: false
 
 after_finish: None # 任务完成后: "None"（无）"Exit"（退出）"Loop"（循环）"Shutdown"（关机）"Hibernate"（休眠）"Sleep"（睡眠）
 power_limit: 160 # 循环运行所需开拓力
 play_audio: false # 任务完成后播放提示音
-use_windows_terminal: false # 使用 Windows 终端
 
 ocr_path: .\3rdparty\PaddleOCR-json_v.1.3.0\PaddleOCR-json.exe
 python_exe_path: '' # 示例 C:\Users\i\AppData\Local\Programs\Python\Python311\python.exe
@@ -60,7 +59,6 @@ echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳（每�
 dispatch_enable: true # 领取委托奖励
 mail_enable: true # 领取邮件奖励
 assist_enable: true # 领取支援奖励
-srpass_enable: false # 领取无名勋礼奖励
 
 daily_forgottenhall_enable: false # 完成1次「忘却之庭」每日实训
 daily_tasks: {} # 每日实训
@@ -117,7 +115,7 @@ hotkey_technique: e # 游戏内设置的秘技按键
 
 # 消息通知
 # Windows 原生通知
-notify_winotify_enable: false
+notify_winotify_enable: true
 
 # Telegram 通知
 # 已适配支持发送截图
