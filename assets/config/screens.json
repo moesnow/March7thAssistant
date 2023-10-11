@@ -42,7 +42,7 @@
     {
         "name": "手机菜单",
         "id": "menu",
-        "image_path": "./assets/images/screen/menu.png",
+        "image_path": "./assets/images/menu/more.png",
         "actions": [
             {
                 "target_screen": "main",
@@ -152,10 +152,40 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/visa.png",
+                            "漫游签证",
+                            "text",
+                            null,
+                            2,
+                            "crop=(1261.0 / 1920, 1.0 / 1080, 552.0 / 1920, 346.0 / 1080)"
+                        ]
+                    }
+                ]
+            },
+            {
+                "target_screen": "wallpaper",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/menu/more.png",
                             "image",
-                            0.95,
+                            0.95
+                        ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
                             2
+                        ]
+                    },
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "手机壁纸",
+                            "text",
+                            null,
+                            2,
+                            "crop=(1261.0 / 1920, 1.0 / 1080, 552.0 / 1920, 346.0 / 1080)"
                         ]
                     }
                 ]
@@ -635,6 +665,24 @@
         ]
     },
     {
+        "name": "手机壁纸",
+        "id": "wallpaper",
+        "image_path": "./assets/images/screen/wallpaper.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
         "name": "相机",
         "id": "camera",
         "image_path": "./assets/images/screen/camera.png",
@@ -931,7 +979,7 @@
         ]
     },
     {
-        "name": "忘却之庭-配置队伍",
+        "name": "队伍",
         "id": "configure_team",
         "image_path": "./assets/images/screen/configure_team.png",
         "actions": [
