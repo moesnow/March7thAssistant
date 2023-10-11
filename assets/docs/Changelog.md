@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.6.1
+
+### 新功能
+- 预设“副本名称”（包含解释）
+- 支持“镜流”和“开拓者（星）•毁灭”
+- 支持领取活动“巡星之礼”奖励
+- 支持识别“开启无名勋礼”界面
+### 修复
+- PushPlus推送 [#14](https://github.com/moesnow/March7thAssistant/pull/14)
+### 其他
+- 支持判断手机壁纸状态
+- 支持判断是否购买了“无名客的荣勋”
+- 配置队伍改为从手机界面进入而不是按键
+
 ## v1.6.0
 
 ### 新功能
@@ -9,6 +23,7 @@
 - 补全了大部分推送方式所需的配置项（推荐Bark、Server酱、邮箱Smtp）
 - 支持从官方启动器获取游戏路径 [#10](https://github.com/moesnow/March7thAssistant/pull/10)
 ### 修复
+- Windows终端高版本提示 “错误 2147942402 (0x80070002)” [#12](https://github.com/moesnow/March7thAssistant/pull/12)
 - 低配置电脑检测委托状态偶尔异常
 - 优化了 “发生错误: None” 的错误提示
 - 开启系统设置 “显示强调色” 导致图形界面显示异常 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
