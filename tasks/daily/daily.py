@@ -16,6 +16,7 @@ from tasks.weekly.forgottenhall import ForgottenHall
 from tasks.weekly.echoofwar import Echoofwar
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
+from tasks.activity.giftofodyssey import GiftOfOdyssey
 
 
 class Daily:
@@ -23,6 +24,10 @@ class Daily:
     def start():
         logger.hr(_("开始日常任务"), 0)
         if Date.is_next_4_am(config.last_run_timestamp):
+
+            # 领取巡星之礼
+            GiftOfOdyssey.get_reward()
+
             screen.change_to("guide2")
 
             tasks = Tasks("./assets/config/task_mappings.json")

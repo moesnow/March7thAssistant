@@ -273,6 +273,19 @@
                         ]
                     }
                 ]
+            },
+            {
+                "target_screen": "activity",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/menu/activity.png",
+                            "image",
+                            0.95
+                        ]
+                    }
+                ]
             }
         ]
     },
@@ -988,6 +1001,24 @@
         "name": "队伍",
         "id": "configure_team",
         "image_path": "./assets/images/screen/configure_team.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "活动",
+        "id": "activity",
+        "image_path": "./assets/images/screen/activity.png",
         "actions": [
             {
                 "target_screen": "main",
