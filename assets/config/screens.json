@@ -763,12 +763,17 @@
         "image_path": "./assets/images/screen/start_srpass.png",
         "actions": [
             {
-                "action": "auto.click_element",
-                "args": [
-                    "./assets/images/screen/start_srpass.png",
-                    "image",
-                    0.9,
-                    10
+                "target_screen": "pass1",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/screen/start_srpass.png",
+                            "image",
+                            0.9,
+                            10
+                        ]
+                    }
                 ]
             }
         ]
