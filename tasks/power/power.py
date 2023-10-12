@@ -30,7 +30,7 @@ class Power:
         try:
             result = auto.get_single_line_text(
                 crop=(1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080),
-                blacklist=['+'],
+                blacklist=['+','米'],
                 max_retries=3
             ).replace("1240", "/240")
 
