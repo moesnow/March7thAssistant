@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.6.2
+
+### 新功能
+- 支持使用“后备开拓力”和“燃料”
+- 支持领取活动“巡光之礼”奖励
+- go-cqhttp 支持发送截图 [#21](https://github.com/moesnow/March7thAssistant/pull/21)
+### 修复
+- 有极小概率将开拓力识别成“米”字
+### 其他
+- 移除 power_total、dispatch_count 配置项
+- 使用消耗品前会先筛选类别避免背包物品太多
+
 ## v1.6.1
 
 ### 新功能
