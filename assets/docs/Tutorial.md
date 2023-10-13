@@ -195,7 +195,7 @@
 - wechatworkbot
 - lark
 
-> 其中 Telegram 支持发送截图，欢迎 PR 适配其他推送方式
+> 其中 Telegram 与 go-cqhttp 支持发送截图，欢迎 PR 适配其他推送方式
 
 ### 按键
 

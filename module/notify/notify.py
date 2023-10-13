@@ -1,3 +1,5 @@
+import base64
+
 import requests
 from onepush import get_notifier
 from managers.logger_manager import logger
@@ -60,7 +62,10 @@ class Notify:
                     logger.error(f"{e}")
 
     def _send_notification_with_image(self, notifier_name, title, content, image_io):
-        if self.notifiers.get(notifier_name, False) and notifier_name == "telegram":
+        if not self.notifiers.get(notifier_name, False):
+            return
+
+        if notifier_name == "telegram":
             notifier_params = getattr(self, notifier_name, None)
             if notifier_params:
                 token = notifier_params["token"]
@@ -80,6 +85,20 @@ class Notify:
                 }
                 try:
                     response = requests.post(tgurl, files=files)
+                    logger.info(_("{notifier_name} 通知发送完成").format(notifier_name=notifier_name.capitalize()))
+                except Exception as e:
+                    logger.error(_("{notifier_name} 通知发送失败").format(notifier_name=notifier_name.capitalize()))
+                    logger.error(f"{e}")
+
+        elif notifier_name == "gocqhttp":
+            notifier_params = getattr(self, notifier_name, None)
+            if notifier_params:
+                n = get_notifier(notifier_name)
+                base64_str = base64.b64encode(image_io.getvalue()).decode()
+                cq_code = f"[CQ:image,file=base64://{base64_str}]"
+                content = content + cq_code if content else cq_code
+                try:
+                    response = n.notify(**notifier_params, title=title, content=content)
                     logger.info(_("{notifier_name} 通知发送完成").format(notifier_name=notifier_name.capitalize()))
                 except Exception as e:
                     logger.error(_("{notifier_name} 通知发送失败").format(notifier_name=notifier_name.capitalize()))
@@ -105,7 +124,7 @@ class Notify:
 
     def notify(self, title="", content="", image_io=None):
         for notifier_name in self.notifiers:
-            if image_io and notifier_name == "telegram":
+            if image_io and notifier_name in ["telegram", "gocqhttp"]:
                 self._send_notification_with_image(notifier_name, title, content, image_io)
             else:
                 self._send_notification(notifier_name, title, content)
