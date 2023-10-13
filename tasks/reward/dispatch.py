@@ -14,7 +14,7 @@ class Dispatch:
             return False
         screen.change_to('dispatch')
 
-        auto.find_element("专属材料","text", max_retries=10, crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080))
+        auto.find_element("专属材料", "text", max_retries=10, crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080))
 
         if auto.find_element("./assets/images/dispatch/reward.png", "image", 0.9, crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080)):
             logger.hr(_("检测到委托奖励"), 2)
@@ -30,7 +30,7 @@ class Dispatch:
 
     @staticmethod
     def _perform_dispatches():
-        for i in range(config.dispatch_count):
+        for i in range(4):
             logger.info(_("正在进行第{number}次委托").format(number=i + 1))
 
             if not Dispatch.perform_dispatch_and_check(crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080)):
