@@ -16,7 +16,7 @@ from tasks.weekly.forgottenhall import ForgottenHall
 from tasks.weekly.echoofwar import Echoofwar
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
-from tasks.activity.giftofodyssey import GiftOfOdyssey
+from tasks.activity.activity import Activity
 
 
 class Daily:
@@ -25,8 +25,8 @@ class Daily:
         logger.hr(_("开始日常任务"), 0)
         if Date.is_next_4_am(config.last_run_timestamp):
 
-            # 领取巡星之礼
-            GiftOfOdyssey.get_reward()
+            # 活动
+            Activity.start()
 
             screen.change_to("guide2")
 
@@ -55,7 +55,7 @@ class Daily:
             logger.hr(_("今日实训"), 2)
             count = 0
             for key, value in config.daily_tasks.items():
-                state = "\033[91m"+_("待完成")+"\033[0m" if value else "\033[92m"+_("已完成")+"\033[0m"
+                state = "\033[91m" + _("待完成") + "\033[0m" if value else "\033[92m" + _("已完成") + "\033[0m"
                 logger.info(f"{key}: {state}")
                 count = count + 1 if not value else count
             # logger.info(_("已完成：{count}/{total}").format(count=count, total=len(config.daily_tasks)))
@@ -107,7 +107,6 @@ class Daily:
             logger.info(_("忘却之庭尚未刷新"))
 
         Daily.get_reward()
-
 
     @staticmethod
     def get_reward():
