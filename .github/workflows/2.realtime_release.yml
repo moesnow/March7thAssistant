@@ -50,11 +50,9 @@ jobs:
           ren .\dist\March7thAssistant March7thAssistant_${{ github.run_number }}
           powershell Compress-Archive -Path .\dist\March7thAssistant_${{ github.run_number }}\ -DestinationPath .\dist\March7thAssistant_${{ github.run_number }}.zip -Force
 
-      - name: Create release
-        uses: softprops/action-gh-release@v1
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: March7thAssistant Realtime Release
-          files: |
-           ./dist/March7thAssistant_${{ github.run_number }}.zip
-          prerelease: true
+          name: March7thAssistant_${{ github.run_number }}.zip
+          path: ./dist/March7thAssistant_${{ github.run_number }}.zip
 
