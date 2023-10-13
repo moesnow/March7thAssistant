@@ -89,6 +89,12 @@ class SettingInterface(ScrollArea):
             FIF.HEART,
             self.tr("循环运行再次启动所需开拓力（凌晨四点优先级更高）"),
         )
+        self.gamePathCard = PushSettingCard(
+            self.tr('修改'),
+            FIF.GAME,
+            self.tr("游戏路径"),
+            config.game_path
+        )
         # self.useWindowsTerminalCard = SwitchSettingCard1(
         #     FIF.COMMAND_PROMPT,
         #     self.tr('优先使用 Windows 终端'),
@@ -96,13 +102,13 @@ class SettingInterface(ScrollArea):
         #     "use_windows_terminal"
         # )
 
-        self.GameGroup = SettingCardGroup(self.tr("游戏设置"), self.scrollWidget)
-        self.gamePathCard = PushSettingCard(
-            self.tr('修改'),
-            FIF.GAME,
-            self.tr("游戏路径"),
-            config.game_path
-        )
+        # self.GameGroup = SettingCardGroup(self.tr("游戏设置"), self.scrollWidget)
+        # self.gamePathCard = PushSettingCard(
+        #     self.tr('修改'),
+        #     FIF.GAME,
+        #     self.tr("游戏路径"),
+        #     config.game_path
+        # )
 
         self.PowerGroup = SettingCardGroup(self.tr("体力设置"), self.scrollWidget)
 
@@ -121,6 +127,45 @@ class SettingInterface(ScrollArea):
             self.tr("副本名称"),
             "instance_names"
         )
+        self.instanceTeamEnableCard = SwitchSettingCard1(
+            FIF.EDIT,
+            self.tr('自动切换队伍'),
+            None,
+            "instance_team_enable"
+        )
+        self.instanceTeamNumberCard = ComboBoxSettingCard1(
+            "instance_team_number",
+            FIF.FLAG,
+            self.tr('队伍编号'),
+            None,
+            texts=['1', '2', '3', '4', '5', '6']
+        )
+        self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
+            FIF.HEART,
+            self.tr('使用后备开拓力'),
+            "",
+            "use_reserved_trailblaze_power"
+        )
+        self.useFuelEnableCard = SwitchSettingCard1(
+            FIF.CAFE,
+            self.tr('使用燃料'),
+            "",
+            "use_fuel"
+        )
+        self.echoofwarEnableCard = SwitchSettingCard1(
+            FIF.ROBOT,
+            self.tr('启用历战余响'),
+            "每周体力优先完成三次「历战余响」",
+            "echo_of_war_enable"
+        )
+        self.echoofwarRunTimeCard = PushSettingCardDate(
+            self.tr('修改'),
+            FIF.DATE_TIME,
+            self.tr("上次完成历战余响的时间"),
+            "echo_of_war_timestamp"
+        )
+
+        self.BorrowGroup = SettingCardGroup(self.tr("支援设置"), self.scrollWidget)
         self.borrowCharacterEnableCard = SwitchSettingCard1(
             FIF.PEOPLE,
             self.tr('启用使用支援角色'),
@@ -138,31 +183,6 @@ class SettingInterface(ScrollArea):
             FIF.ARROW_DOWN,
             self.tr("支援角色优先级（从高到低）"),
             "borrow_character"
-        )
-        self.instanceTeamEnableCard = SwitchSettingCard1(
-            FIF.EDIT,
-            self.tr('自动切换队伍'),
-            None,
-            "instance_team_enable"
-        )
-        self.instanceTeamNumberCard = ComboBoxSettingCard1(
-            "instance_team_number",
-            FIF.FLAG,
-            self.tr('队伍编号'),
-            None,
-            texts=['1', '2', '3', '4', '5', '6']
-        )
-        self.echoofwarEnableCard = SwitchSettingCard1(
-            FIF.ROBOT,
-            self.tr('启用历战余响'),
-            "每周体力优先完成三次「历战余响」",
-            "echo_of_war_enable"
-        )
-        self.echoofwarRunTimeCard = PushSettingCardDate(
-            self.tr('修改'),
-            FIF.DATE_TIME,
-            self.tr("上次完成历战余响的时间"),
-            "echo_of_war_timestamp"
         )
 
         self.DailyGroup = SettingCardGroup(self.tr("日常设置"), self.scrollWidget)
@@ -463,18 +483,22 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
         # self.ProgramGroup.addSettingCard(self.useWindowsTerminalCard)
+        self.ProgramGroup.addSettingCard(self.gamePathCard)
 
-        self.GameGroup.addSettingCard(self.gamePathCard)
+        # self.GameGroup.addSettingCard(self.gamePathCard)
 
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
-        self.PowerGroup.addSettingCard(self.borrowCharacterEnableCard)
-        self.PowerGroup.addSettingCard(self.borrowCharacterFromCard)
-        self.PowerGroup.addSettingCard(self.borrowCharacterCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
+        self.PowerGroup.addSettingCard(self.useReservedTrailblazePowerEnableCard)
+        self.PowerGroup.addSettingCard(self.useFuelEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
+
+        self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
+        self.BorrowGroup.addSettingCard(self.borrowCharacterFromCard)
+        self.BorrowGroup.addSettingCard(self.borrowCharacterCard)
 
         self.DailyGroup.addSettingCard(self.dispatchEnableCard)
         self.DailyGroup.addSettingCard(self.mailEnableCard)
@@ -522,8 +546,9 @@ class SettingInterface(ScrollArea):
         self.AboutGroup.addSettingCard(self.aboutCard)
 
         self.ProgramGroup.titleLabel.setHidden(True)
-        self.GameGroup.titleLabel.setHidden(True)
+        # self.GameGroup.titleLabel.setHidden(True)
         self.PowerGroup.titleLabel.setHidden(True)
+        self.BorrowGroup.titleLabel.setHidden(True)
         self.DailyGroup.titleLabel.setHidden(True)
         self.FightGroup.titleLabel.setHidden(True)
         self.UniverseGroup.titleLabel.setHidden(True)
@@ -534,8 +559,9 @@ class SettingInterface(ScrollArea):
 
         # add items to pivot
         self.addSubInterface(self.ProgramGroup, 'programInterface', self.tr('程序'))
-        self.addSubInterface(self.GameGroup, 'GameInterface', self.tr('游戏'))
+        # self.addSubInterface(self.GameGroup, 'GameInterface', self.tr('游戏'))
         self.addSubInterface(self.PowerGroup, 'PowerInterface', self.tr('体力'))
+        self.addSubInterface(self.BorrowGroup, 'BorrowInterface', self.tr('支援'))
         self.addSubInterface(self.DailyGroup, 'DailyInterface', self.tr('日常'))
         self.addSubInterface(self.FightGroup, 'FightInterface', self.tr('锄大地'))
         self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('模拟宇宙'))

@@ -26,26 +26,60 @@ class Power:
 
     @staticmethod
     def power():
+        def get_power(crop, type="trailblaze_power"):
+            try:
+                if type == "trailblaze_power":
+                    result = auto.get_single_line_text(crop=crop, blacklist=['+', '米'], max_retries=3)
+                    power = int(result.replace("1240", "/240").split('/')[0])
+                    return power if 0 <= power <= 999 else -1
+                elif type == "reserved_trailblaze_power":
+                    result = auto.get_single_line_text(crop=crop, blacklist=['+', '米'], max_retries=3)
+                    power = int(result[0])
+                    return power if 0 <= power <= 2400 else -1
+            except Exception as e:
+                logger.error(_("识别开拓力失败: {error}").format(error=e))
+                return -1
+
+        def move_button_and_confirm():
+            if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
+                result = auto.find_element("./assets/images/share/trailblaze_power/button.png", "image", 0.9, max_retries=10)
+                if result:
+                    auto.click_element_with_pos(result, action="down")
+                    time.sleep(0.5)
+                    result = auto.find_element("./assets/images/share/trailblaze_power/plus.png", "image", 0.9)
+                    if result:
+                        auto.click_element_with_pos(result, action="move")
+                        time.sleep(0.5)
+                        auto.mouse_up()
+                        if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
+                            time.sleep(1)
+                            auto.press_key("esc")
+                            if screen.check_screen("map"):
+                                return True
+            return False
+
+        trailblaze_power_crop = (1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080)
+
+        if config.use_reserved_trailblaze_power or config.use_fuel:
+            screen.change_to('map')
+            # 打开开拓力补充界面
+            if auto.click_element("./assets/images/share/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=trailblaze_power_crop):
+                # 等待界面加载
+                if auto.find_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
+                    # 开启使用后备开拓力
+                    if config.use_reserved_trailblaze_power and auto.click_element("./assets/images/share/trailblaze_power/reserved_trailblaze_power.png", "image", 0.9, scale_range=(0.95, 0.95)):
+                        move_button_and_confirm()
+                    # 开启使用燃料
+                    elif config.use_fuel and auto.click_element("./assets/images/share/trailblaze_power/fuel.png", "image", 0.9, scale_range=(0.95, 0.95)):
+                        move_button_and_confirm()
+                    # # 开启使用星琼
+                    # elif config.stellar_jade and auto.click_element("./assets/images/share/trailblaze_power/stellar_jade.png", "image", 0.9, scale_range=(0.95, 0.95)):
+                    #     pass
+                    else:
+                        auto.press_key("esc")
+
         screen.change_to('map')
-        try:
-            result = auto.get_single_line_text(
-                crop=(1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080),
-                blacklist=['+','米'],
-                max_retries=3
-            ).replace("1240", "/240")
-
-            power_mapping = {
-                '/': lambda r: int(r.split('/')[0]) if 0 <= int(r.split('/')[0]) <= config.power_total else -1,
-                'default': lambda r: -1
-            }
-
-            trailblaze_power = power_mapping.get('/', power_mapping['default'])(result)
-        except Exception as e:
-            logger.error(_("获取开拓力失败: {error}").format(error=e))
-            # screenshot_path = ".\\screenshots\\trailblaze_power.png"
-            # auto.screenshot.save(screenshot_path)
-            # logger.error(_("开拓力识别截图已保存到: {path}").format(path=screenshot_path))
-            trailblaze_power = -1
+        trailblaze_power = get_power(trailblaze_power_crop)
 
         logger.info(_("🟣开拓力: {power}").format(power=trailblaze_power))
         return trailblaze_power
@@ -128,7 +162,7 @@ class Power:
                     return False
 
             for name in config.borrow_character:
-                if auto.click_element("./assets/images/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.8, 1.2), crop=(57 / 1920, 143 / 1080, 140 / 1920, 814 / 1080)):
+                if auto.click_element("./assets/images/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.9, 0.9), crop=(57 / 1920, 143 / 1080, 140 / 1920, 814 / 1080)):
                     if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
                         logger.error(_("找不到入队按钮"))
                         return False
@@ -160,7 +194,7 @@ class Power:
         if instance_name == "无":
             logger.debug(_("{type}未开启").format(type=instance_type))
             return False
-        
+
         instance_name = instance_name.replace("巽风之形", "风之形")
         instance_name = instance_name.replace("翼风之形", "风之形")
 
