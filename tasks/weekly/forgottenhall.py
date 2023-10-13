@@ -117,7 +117,7 @@ class ForgottenHall:
         if auto.click_element(team_image_path, "image", 0.8, max_retries=10, crop=(610 / 1920, 670 / 1080, 118 / 1920, 218 / 1080)):
             auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
             for character in team_config:
-                if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, scale_range=(0.8, 1.2), take_screenshot=False):
+                if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
                     return False
             return True
         return False
@@ -146,7 +146,7 @@ class ForgottenHall:
             # 先向右滚动4次查找，然后向左
             for direction in [-1, 1]:
                 for i in range(4):
-                    auto.mouse_scroll(2, direction)
+                    auto.mouse_scroll(3, direction)
                     time.sleep(3)
 
                     result = auto.find_element(number, "text", max_retries=1, crop=crop, relative=True)
@@ -176,10 +176,10 @@ class ForgottenHall:
         for i in range(config.forgottenhall_level[0], config.forgottenhall_level[1] + 1):
             # 选择关卡
             top_left = ForgottenHall.change_to(f"{i:02}")
-            logger.debug(_("选择关卡:{top_left}").format(top_left=top_left))
             if not top_left:
                 logger.error(_("切换关卡失败"))
                 break
+            logger.debug(_("选择关卡:{top_left}").format(top_left=top_left))
             # 判断星数
             star_count = ForgottenHall.check_star(top_left)
             if star_count == 3:
@@ -187,7 +187,7 @@ class ForgottenHall:
                 continue
             else:
                 logger.info(_("第{i}层星数{star_count}").format(i=i, star_count=star_count))
-                auto.click_element(f"{i:02}", "text", max_retries=1, crop=(0, 336 / 1080, 1, 537 / 1080))
+                auto.click_element(f"{i:02}", "text", max_retries=20, crop=(0, 336 / 1080, 1, 537 / 1080))
 
             logger.info(_("开始挑战第{i}层").format(i=f"{i:02}"))
             # 选择角色
@@ -285,12 +285,11 @@ class ForgottenHall:
                 screen.change_to("memory")
                 auto.mouse_scroll(30, 1)
                 time.sleep(2)
-                if auto.click_element("01", "text", max_retries=10, crop=(18.0 / 1920, 226.0 / 1080, 1896.0 / 1920, 656.0 / 1080)):
+                if auto.click_element("01", "text", max_retries=20, crop=(18.0 / 1920, 226.0 / 1080, 1896.0 / 1920, 656.0 / 1080)):
                     if auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10, crop=(610 / 1920, 670 / 1080, 118 / 1920, 218 / 1080)):
                         auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
                         for character in config.forgottenhall_team1:
-                            auto.click_element(f"./assets/images/character/{character[0]}.png", "image",
-                                               0.8, max_retries=10, scale_range=(0.8, 1.2), take_screenshot=False)
+                            auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False)
                         if auto.click_element("回忆", "text", max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080), include=True):
                             ForgottenHall.click_message_box()
                             if ForgottenHall.start_fight(1, 1):
