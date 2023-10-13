@@ -14,13 +14,18 @@ class Activity():
     @staticmethod
     def start():
         # logger.hr(_("开始检测活动"), 0)
-
         screen.change_to('activity')
-        activity_crop = (46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080)
 
-        auto.take_screenshot(crop=activity_crop)
-        result = ocr.recognize_multi_lines(auto.screenshot)
         activity_list = []
+
+        auto.take_screenshot(crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080))
+
+        result = ocr.recognize_multi_lines(auto.screenshot)
+        if not result:
+            logger.info(_("未检测到任何活动"))
+            # logger.hr(_("完成"), 2)
+            return
+
         for box in result:
             text = box[1][0]
             if len(text) >= 4:

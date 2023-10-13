@@ -17,5 +17,3 @@ class GiftOfRadiance:
                     auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
                     time.sleep(1)
                 logger.info(_("领取巡光之礼奖励完成"))
-            else:
-                logger.info(_("未检测到巡光之礼奖励"))

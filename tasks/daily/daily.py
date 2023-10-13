@@ -3,14 +3,10 @@ from managers.config_manager import config
 from managers.screen_manager import screen
 from managers.translate_manager import _
 from tasks.base.date import Date
-from tasks.reward.mail import Mail
-from tasks.reward.assist import Assist
 from tasks.daily.photo import Photo
 from tasks.daily.fight import Fight
 from tasks.weekly.universe import Universe
-from tasks.reward.dispatch import Dispatch
-from tasks.reward.quest import Quest
-from tasks.reward.srpass import SRPass
+from tasks.reward.reward import Reward
 from tasks.daily.synthesis import Synthesis
 from tasks.weekly.forgottenhall import ForgottenHall
 from tasks.weekly.echoofwar import Echoofwar
@@ -90,7 +86,7 @@ class Daily:
         if Date.is_next_mon_4_am(config.universe_timestamp):
             if config.universe_enable:
                 Power.start()
-                Daily.get_reward()
+                Reward.start()
                 Universe.start(get_reward=True)
                 Power.start()
             else:
@@ -106,14 +102,4 @@ class Daily:
         else:
             logger.info(_("忘却之庭尚未刷新"))
 
-        Daily.get_reward()
-
-    @staticmethod
-    def get_reward():
-        logger.hr(_("开始领奖励"), 0)
-        Mail.get_reward()
-        Assist.get_reward()
-        Dispatch.get_reward()
-        Quest.get_reward()
-        SRPass.get_reward()
-        logger.hr(_("完成"), 2)
+        Reward.start()

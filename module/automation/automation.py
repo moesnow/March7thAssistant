@@ -80,7 +80,8 @@ class Automation:
             else:
                 raise ValueError(_("错误的类型"))
 
-            time.sleep(1)
+            if i < max_retries - 1:
+                time.sleep(1)
         return None
 
     def find_image_element(self, target, threshold, scale_range):
