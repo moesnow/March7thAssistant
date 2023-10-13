@@ -26,6 +26,8 @@ class Automation:
     # 兼容旧代码
     def init_automation(self):
         self.mouse_click = Input.mouse_click
+        self.mouse_down = Input.mouse_down
+        self.mouse_up = Input.mouse_up
         self.mouse_move = Input.mouse_move
         self.mouse_scroll = Input.mouse_scroll
         self.press_key = Input.press_key
@@ -46,7 +48,7 @@ class Automation:
         _, max_val, _, max_loc = cv2.minMaxLoc(result)
 
         if (threshold is None or max_val < threshold) and scale_range is not None:
-            for scale in np.arange(scale_range[0], scale_range[1], 0.1):
+            for scale in np.arange(scale_range[0], scale_range[1] + 0.0001, 0.05):
                 scaled_template = cv2.resize(template, None, fx=scale, fy=scale)
                 result = cv2.matchTemplate(screenshot, scaled_template, cv2.TM_CCOEFF_NORMED)
                 _, local_max_val, _, local_max_loc = cv2.minMaxLoc(result)
@@ -210,12 +212,17 @@ class Automation:
         bottom_right = (target_pos[2][0] + self.screenshot_pos[0], target_pos[2][1] + self.screenshot_pos[1])
         return top_left, bottom_right
 
-    def click_element_with_pos(self, coordinates, offset=(0, 0)):
+    def click_element_with_pos(self, coordinates, offset=(0, 0), action="click"):
         (left, top), (right, bottom) = coordinates
         x = (left + right) // 2 + offset[0]
         y = (top + bottom) // 2 + offset[1]
         time.sleep(0.5)
-        self.mouse_click(x, y)
+        if action == "click":
+            self.mouse_click(x, y)
+        elif action == "down":
+            self.mouse_down(x, y)
+        elif action == "move":
+            self.mouse_move(x, y)
         return True
 
     def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, offset=(0, 0)):
