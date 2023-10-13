@@ -1,4 +1,4 @@
-name: Generate latest.json
+name: Update latest.json
 on:
   workflow_dispatch:
   schedule:

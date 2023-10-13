@@ -1,14 +1,7 @@
-name: Generate application
+name: Build & Release App
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - '**.py'
   push:
-    branches:
-      - main
-    paths:
-      - '**.py'
     tags:
       - "v*.*.*"
 permissions:
@@ -47,13 +40,6 @@ jobs:
           xcopy /E /I /Y .\assets\ .\dist\March7thAssistant\assets\
           xcopy /Y .\README.md .\dist\March7thAssistant\
 
-      - name: Upload artifact
-        if: startsWith(github.ref, 'refs/heads/') || startsWith(github.ref, 'refs/pull/')
-        uses: actions/upload-artifact@v3
-        with:
-          name: March7thAssistant
-          path: .\dist\March7thAssistant\
-
       - name: Create zip archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
@@ -81,4 +67,3 @@ jobs:
            ./dist/March7thAssistant_${{ github.ref_name }}_full.zip
            ./dist/March7thAssistant_${{ github.ref_name }}.zip
           prerelease: true
-

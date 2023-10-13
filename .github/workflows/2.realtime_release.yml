@@ -1,0 +1,60 @@
+name: Build realtime release
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '**.py'
+  push:
+    branches:
+      - main
+    paths:
+      - '**.py'
+permissions:
+  contents: write
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: 'false'
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11.4'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Generate program
+        run: |
+          pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
+          pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --exclude-module cv2 --exclude-module numpy --uac-admin -n "March7th Launcher" app.py -y -w
+          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Update.ico -n "Update" update.py -y
+
+      - name: Move assets to dist directory
+        run: |
+          xcopy /E /Y ".\dist\March7th Assistant\*" ".\dist\March7thAssistant\"
+          xcopy /E /Y ".\dist\March7th Launcher\*" ".\dist\March7thAssistant\"
+          xcopy /E /I /Y .\assets\ .\dist\March7thAssistant\assets\
+          xcopy /Y .\README.md .\dist\March7thAssistant\
+
+      - name: Create zip archive
+        run: |
+          ren .\dist\March7thAssistant March7thAssistant_${{ github.run_number }}
+          powershell Compress-Archive -Path .\dist\March7thAssistant_${{ github.run_number }}\ -DestinationPath .\dist\March7thAssistant_${{ github.run_number }}.zip -Force
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: March7thAssistant Realtime Release
+          files: |
+           ./dist/March7thAssistant_${{ github.run_number }}.zip
+          prerelease: true
+
