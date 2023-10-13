@@ -144,7 +144,7 @@ class Screen:
                 thread.join()
 
             if self.current_screen:
-                logger.info(_("当前界面：{screen_name}").format(screen_name=self.green+self.get_name(self.current_screen)+self.reset))
+                logger.info(_("当前界面：{screen_name}").format(screen_name=self.green + self.get_name(self.current_screen) + self.reset))
                 return True
 
             if autotry:
@@ -169,16 +169,16 @@ class Screen:
         :param target_screen: 目标界面
         :param max_recursion: 重试次数
         """
+        if self.check_screen(target_screen):
+            logger.debug(_("已经在 {target_screen} 界面").format(target_screen=self.get_name(target_screen)))
+            return
+
         if not self.get_current_screen():
             logger.info(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
             logger.info(_("如果是多显示器，自动化和游戏需要放在同一个显示器运行，且不支持HDR"))
             logger.info(_("以及暂时不支持手机壁纸“列车长特供”（KFC）"))
             input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
-
-        if target_screen == self.current_screen:
-            logger.debug(_("已经在 {target_screen} 界面").format(target_screen=self.get_name(target_screen)))
-            return
 
         path = self.find_shortest_path(self.current_screen, target_screen)
         if path:
@@ -205,7 +205,7 @@ class Screen:
                         input(_("按回车键关闭窗口. . ."))
                         sys.exit(1)
 
-                logger.info(_("切换到：{next_screen}").format(next_screen=self.green+self.get_name(next_screen)+self.reset))
+                logger.info(_("切换到：{next_screen}").format(next_screen=self.green + self.get_name(next_screen) + self.reset))
             self.current_screen = target_screen  # 更新当前界面
             # logger.info(_("当前界面：{current_screen}").format(current_screen=self.get_name(self.current_screen)))
             return

@@ -10,8 +10,7 @@ import time
 class SRPass:
     @staticmethod
     def get_reward():
-        if not screen.check_screen('menu'):
-            screen.change_to('menu')
+        screen.change_to('menu')
         if auto.find_element("./assets/images/menu/pass_reward.png", "image", 0.95):
             logger.hr(_("检测到无名勋礼奖励"), 2)
             screen.change_to('pass1')

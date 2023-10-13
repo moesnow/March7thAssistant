@@ -11,8 +11,7 @@ class Mail:
         if not config.mail_enable:
             logger.info(_("邮件奖励未开启"))
             return False
-        if not screen.check_screen('menu'):
-            screen.change_to('menu')
+        screen.change_to('menu')
         if auto.find_element("./assets/images/menu/mail_reward.png", "image", 0.95, crop=(0.95, 0.1, 0.05, 0.6)):
             logger.hr(_("检测到邮件奖励"), 2)
             screen.change_to('mail')
