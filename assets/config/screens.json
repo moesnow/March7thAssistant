@@ -95,6 +95,12 @@
                             "image",
                             0.95
                         ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
+                            1
+                        ]
                     }
                 ]
             },

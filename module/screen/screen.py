@@ -191,10 +191,12 @@ class Screen:
                               if action["target_screen"] == next_screen][0]
                 self.perform_operations(operations)
 
-                for i in range(10):
+                for i in range(20):
                     logger.debug(_("等待：{next_screen}").format(next_screen=self.get_name(next_screen)))
                     if self.check_screen(next_screen):
                         break
+                    else:
+                        time.sleep(0.5)
 
                 if self.current_screen != next_screen:
                     if max_recursion > 0:

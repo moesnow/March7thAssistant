@@ -217,7 +217,6 @@ class Automation:
         (left, top), (right, bottom) = coordinates
         x = (left + right) // 2 + offset[0]
         y = (top + bottom) // 2 + offset[1]
-        time.sleep(0.5)
         if action == "click":
             self.mouse_click(x, y)
         elif action == "down":

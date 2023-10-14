@@ -210,10 +210,10 @@ class Power:
 
         screen.change_to('guide3')
         instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
-        if not auto.click_element(instance_type, "text", crop=instance_type_crop, take_screenshot=False):
+        if not auto.click_element(instance_type, "text", crop=instance_type_crop):
             if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=instance_type_crop):
                 auto.mouse_scroll(12, -1)
-                auto.click_element(instance_type, "text", crop=instance_type_crop, take_screenshot=True)
+                auto.click_element(instance_type, "text", crop=instance_type_crop)
         # 截图过快会导致结果不可信
         time.sleep(1)
 
