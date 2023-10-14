@@ -18,8 +18,8 @@ class Reward:
         reward_list = []
 
         reward_mapping = {
-            "mail": lambda: auto.find_element("./assets/images/menu/mail_reward.png", "image", 0.95, take_screenshot=False, crop=(0.95, 0.1, 0.05, 0.6)),
-            "assist": lambda: auto.find_element("./assets/images/menu/assist_reward.png", "image", 0.95, take_screenshot=False),
+            "mail": lambda: auto.find_element("./assets/images/menu/mail_reward.png", "image", 0.9, take_screenshot=False, crop=(0.95, 0.1, 0.05, 0.6)),
+            "assist": lambda: auto.find_element("./assets/images/menu/assist_reward.png", "image", 0.9, take_screenshot=False),
             "dispatch": lambda: auto.find_element("./assets/images/menu/dispatch_reward.png", "image", 0.95, take_screenshot=False),
             "quest": lambda: auto.find_element("./assets/images/menu/quest_reward.png", "image", 0.95, take_screenshot=False),
             "srpass": lambda: auto.find_element("./assets/images/menu/pass_reward.png", "image", 0.95, take_screenshot=False),
