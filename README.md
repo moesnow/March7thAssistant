@@ -15,7 +15,7 @@ March7thAssistant
     <img alt="" src="https://img.shields.io/github/downloads/moesnow/March7thAssistant/total?style=flat-square&color=f18cb9" />
 </p>
 
-**中文** | [English](./README_EN.md)
+**简体中文** | [繁體中文](./README_TW.md) | [English](./README_EN.md)
 
 快速上手，请访问：[使用教程](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
 
