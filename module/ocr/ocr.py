@@ -25,7 +25,9 @@ class OCR:
                 if not cpufeature.CPUFeature["AVX2"]:
                     logger.error(_("CPU不支持AVX2指令集"))
                 else:
-                    logger.info(_("请检查系统是否为 Win10/11 x64"))
+                    logger.info(_("请尝试重新下载或解压"))
+                    logger.info(_("若 Win7 报错计算机中丢失 VCOMP140.DLL，请安装 VC运行库"))
+                    logger.info("https://aka.ms/vs/17/release/vc_redist.x64.exe")
                 input(_("按回车键关闭窗口. . ."))
                 sys.exit(1)
 

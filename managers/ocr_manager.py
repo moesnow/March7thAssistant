@@ -8,8 +8,8 @@ import os
 def install_ocr():
     from module.update.update_handler import UpdateHandler
     from tasks.base.fastest_mirror import FastestMirror
-    url = FastestMirror.get_github_mirror("https://github.com/hiroi-sora/PaddleOCR-json/releases/download/v1.3.0/PaddleOCR-json_v.1.3.0.7z")
-    update_handler = UpdateHandler(url, os.path.dirname(config.ocr_path), "PaddleOCR-json_v.1.3.0")
+    url = FastestMirror.get_github_mirror("https://github.com/hiroi-sora/PaddleOCR-json/releases/download/v1.3.1/PaddleOCR-json_v.1.3.1.7z")
+    update_handler = UpdateHandler(url, os.path.dirname(config.ocr_path), "PaddleOCR-json_v.1.3.1")
     update_handler.run()
 
 
