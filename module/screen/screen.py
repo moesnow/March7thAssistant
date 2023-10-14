@@ -148,11 +148,11 @@ class Screen:
                 return True
 
             if autotry:
-                logger.warning(_("未识别出任何界面，按ESC后重试"))
+                logger.warning(_("未识别出任何界面，请确保游戏画面干净，按ESC后重试"))
                 auto.press_key("esc")
                 time.sleep(1)
             else:
-                logger.debug(_("未识别出任何界面"))
+                logger.debug(_("未识别出任何界面，请确保游戏画面干净"))
                 break
         logger.error(_("当前界面：未知"))
         return False
@@ -175,8 +175,7 @@ class Screen:
 
         if not self.get_current_screen():
             logger.info(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
-            logger.info(_("如果是多显示器，自动化和游戏需要放在同一个显示器运行，且不支持HDR"))
-            logger.info(_("以及暂时不支持手机壁纸“列车长特供”（KFC）"))
+            logger.info(_("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR"))
             input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
 
@@ -204,12 +203,13 @@ class Screen:
                         self.change_to(next_screen, max_recursion=max_recursion - 1)
                     else:
                         logger.error(_("无法切换到 {next_screen}").format(next_screen=self.get_name(next_screen)))
+                        logger.info(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
+                        logger.info(_("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR"))
                         input(_("按回车键关闭窗口. . ."))
                         sys.exit(1)
 
                 logger.info(_("切换到：{next_screen}").format(next_screen=self.green + self.get_name(next_screen) + self.reset))
             self.current_screen = target_screen  # 更新当前界面
-            # logger.info(_("当前界面：{current_screen}").format(current_screen=self.get_name(self.current_screen)))
             return
 
         logger.debug(_("无法从 {current_screen} 切换到 {target_screen}").format(
