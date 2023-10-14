@@ -40,8 +40,8 @@ class RangeSettingCard1(SettingCard):
 
         self.slider.setSingleStep(1)
         self.slider.setRange(Range[0], Range[1])
-        self.slider.setValue(config.get_value(self.configname))
-        self.valueLabel.setNum(config.get_value(self.configname))
+        self.slider.setValue(int(config.get_value(self.configname)))
+        self.valueLabel.setNum(int(config.get_value(self.configname)))
 
         self.hBoxLayout.addStretch(1)
         self.hBoxLayout.addWidget(self.valueLabel, 0, Qt.AlignRight)
