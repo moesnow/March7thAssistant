@@ -37,7 +37,7 @@ class PythonChecker:
     def install():
         download_url = "http://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-amd64.exe"
         download_file_path = os.path.join(tempfile.gettempdir(), os.path.basename(download_url))
-        destination_path = os.path.join(os.getenv('LocalAppData'), 'Programs\Python\Python311\python.exe')
+        destination_path = os.path.join(os.getenv('LocalAppData'), r'Programs\Python\Python311\python.exe')
 
         while True:
             try:
@@ -86,7 +86,7 @@ class PythonChecker:
                 return False
             else:
                 logger.debug(_("Python 版本: {version}").format(version=python_version))
-                python_arch = subprocess_with_stdout([path, '-c','import platform; print(platform.architecture()[0])'])
+                python_arch = subprocess_with_stdout([path, '-c', 'import platform; print(platform.architecture()[0])'])
                 logger.debug(_("Python 架构: {arch}").format(arch=python_arch))
                 if "32" in python_arch:
                     logger.error(_("不支持 32 位 Python"))
