@@ -29,7 +29,7 @@ class Stop:
                     username = process_info['username']
             else:
                 username = ""
-            if name == process_info['name'] and username == current_user:
+            if name in process_info['name'] and username == current_user:
                 try:
                     process = psutil.Process(process_info['pid'])
                     process.terminate()
