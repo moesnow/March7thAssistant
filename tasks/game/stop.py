@@ -21,9 +21,17 @@ class Stop:
         current_user = psutil.users()[0].name
         # 根据进程名中止进程
         for proc in psutil.process_iter(attrs=['pid', 'name', 'username']):
-            if name in proc.info['name'] and proc.info['username'].split('\\')[-1] == current_user:
+            process_info = proc.info
+            if process_info['username']:
+                if '\\' in process_info['username']:
+                    username = process_info['username'].split('\\')[-1]
+                else:
+                    username = process_info['username']
+            else:
+                username = ""
+            if name == process_info['name'] and username == current_user:
                 try:
-                    process = psutil.Process(proc.info['pid'])
+                    process = psutil.Process(process_info['pid'])
                     process.terminate()
                     process.wait(timeout)
                     return True
