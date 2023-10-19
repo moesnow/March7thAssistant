@@ -59,23 +59,35 @@ class ForgottenHall:
         return result
 
     @staticmethod
-    def start_fight(count, boss_count, max_recursion=config.forgottenhall_retries):
+    def start_fight(count, boss_count, max_recursion=config.forgottenhall_retries, team=None):
         logger.debug(_("剩余重试次数:{max_recursion}".format(max_recursion=max_recursion)))
         for i in range(count):
             logger.info(_("进入第{i}间").format(i=i + 1))
             auto.press_key("w", 3.5)
 
             # 释放秘技
-            last_index = None
-            for index, character in enumerate(config.get_value("forgottenhall_team" + str(i + 1))):
-                if character[1] > 0:
-                    auto.press_key(f"{index+1}")
-                    time.sleep(1)
-                    for i in range(character[1]):
-                        auto.press_key(config.get_value("hotkey_technique"))
+            if team:
+                last_index = None
+                for index, character in enumerate(team):
+                    if character[1] > 0:
+                        auto.press_key(f"{index+1}")
                         time.sleep(1)
-                elif character[1] == -1:
-                    last_index = index
+                        for i in range(character[1]):
+                            auto.press_key(config.get_value("hotkey_technique"))
+                            time.sleep(1)
+                    elif character[1] == -1:
+                        last_index = index
+            else:
+                last_index = None
+                for index, character in enumerate(config.get_value("forgottenhall_team" + str(i + 1))):
+                    if character[1] > 0:
+                        auto.press_key(f"{index+1}")
+                        time.sleep(1)
+                        for i in range(character[1]):
+                            auto.press_key(config.get_value("hotkey_technique"))
+                            time.sleep(1)
+                    elif character[1] == -1:
+                        last_index = index
             # 设置了末位角色
             if last_index is not None:
                 auto.press_key(f"{last_index+1}")
@@ -278,25 +290,57 @@ class ForgottenHall:
             logger.info(_("混沌回忆完成"))
 
     @staticmethod
-    def start_daily():
-        if config.daily_forgottenhall_enable:
-            try:
-                flag = False
-                logger.hr(_("准备回忆一"), 2)
-                screen.change_to("memory")
-                auto.mouse_scroll(30, 1)
-                time.sleep(2)
-                if auto.click_element("01", "text", max_retries=20, crop=(18.0 / 1920, 226.0 / 1080, 1896.0 / 1920, 656.0 / 1080)):
-                    if auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10, crop=(610 / 1920, 670 / 1080, 118 / 1920, 218 / 1080)):
-                        auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
-                        for character in config.forgottenhall_team1:
-                            auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False)
-                        if auto.click_element("回忆", "text", max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080), include=True):
-                            ForgottenHall.click_message_box()
-                            if ForgottenHall.start_fight(1, 1):
-                                flag = True
-                logger.info(_("回忆一完成"))
-                return flag
-            except Exception as e:
-                logger.error(_("回忆一失败: {error}").format(error=e))
-                return False
+    def start_memory_one():
+        try:
+            flag = False
+            logger.hr(_("准备回忆一"), 2)
+            screen.change_to("memory")
+            auto.mouse_scroll(30, 1)
+            time.sleep(2)
+            if auto.click_element("01", "text", max_retries=20, crop=(18.0 / 1920, 226.0 / 1080, 1896.0 / 1920, 656.0 / 1080)):
+                if auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10, crop=(610 / 1920, 670 / 1080, 118 / 1920, 218 / 1080)):
+                    auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
+                    for character in config.daily_forgottenhall_team:
+                        if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                            return False
+                        time.sleep(1)
+                    if auto.click_element("回忆", "text", max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080), include=True):
+                        ForgottenHall.click_message_box()
+                        if ForgottenHall.start_fight(1, 1, 0, config.daily_forgottenhall_team):
+                            flag = True
+            time.sleep(2)
+            logger.info(_("回忆一完成"))
+            return flag
+        except Exception as e:
+            logger.error(_("回忆一失败: {error}").format(error=e))
+            return False
+
+    @staticmethod
+    def finish_forgottenhall():
+        if config.daily_memory_one_enable:
+            return ForgottenHall.start_memory_one()
+
+    @staticmethod
+    def weakness_to_fight():
+        if config.daily_memory_one_enable:
+            return ForgottenHall.start_memory_one() and ForgottenHall.start_memory_one() and ForgottenHall.start_memory_one()
+
+    @staticmethod
+    def weakness_3():
+        if config.daily_memory_one_enable:
+            return ForgottenHall.start_memory_one()
+
+    @staticmethod
+    def weakness_5():
+        if config.daily_memory_one_enable:
+            return ForgottenHall.start_memory_one()
+
+    @staticmethod
+    def enemy_20():
+        if config.daily_memory_one_enable:
+            return ForgottenHall.start_memory_one() and ForgottenHall.start_memory_one()
+
+    @staticmethod
+    def ultimate():
+        if config.daily_memory_one_enable:
+            return ForgottenHall.start_memory_one()

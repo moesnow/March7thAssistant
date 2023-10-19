@@ -13,6 +13,7 @@ from tasks.weekly.echoofwar import Echoofwar
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
 from tasks.activity.activity import Activity
+from tasks.daily.himekotry import HimekoTry
 
 
 class Daily:
@@ -45,7 +46,14 @@ class Daily:
                 "完成1次「凝滞虚影」": lambda: Power.instance("凝滞虚影", config.instance_names["凝滞虚影"], 30, 1),
                 "完成1次「侵蚀隧洞」": lambda: Power.instance("侵蚀隧洞", config.instance_names["侵蚀隧洞"], 40, 1),
                 "完成1次「历战余响」": lambda: Power.instance("历战余响", config.instance_names["历战余响"], 30, 1),
-                "完成1次「忘却之庭」": lambda: ForgottenHall.start_daily(),
+                "完成1次「忘却之庭」": lambda: ForgottenHall.finish_forgottenhall(),
+                "单场战斗中，触发3种不同属性的弱点击破": lambda: ForgottenHall.weakness_3(),
+                "累计触发弱点击破效果5次": lambda: ForgottenHall.weakness_5(),
+                "累计消灭20个敌人": lambda: ForgottenHall.enemy_20(),
+                "利用弱点进入战斗并获胜3次": lambda: ForgottenHall.weakness_to_fight(),
+                "累计施放2次秘技": lambda: HimekoTry.technique(),
+                "累计击碎3个可破坏物": lambda: HimekoTry.item(),
+                "施放终结技造成制胜一击1次": lambda: ForgottenHall.ultimate(),
             }
 
             logger.hr(_("今日实训"), 2)

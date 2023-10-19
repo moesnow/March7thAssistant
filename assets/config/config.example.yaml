@@ -59,7 +59,18 @@ dispatch_enable: true # 领取委托奖励
 mail_enable: true # 领取邮件奖励
 assist_enable: true # 领取支援奖励
 
-daily_forgottenhall_enable: false # 完成1次「忘却之庭」每日实训
+daily_himeko_try_enable: false # 通过 “姬子试用” 完成任务
+daily_memory_one_enable: false # 通过 “回忆一” 完成任务
+daily_memory_one_team: # 用于回忆一的队伍
+- -
+    DanHeng
+  - -1
+- - Natasha
+  - 0
+- - March7th
+  - 0
+- - Asta
+  - 0
 daily_tasks: {} # 每日实训
 last_run_timestamp: 0 # 上次运行日常的时间戳
 

@@ -25,6 +25,31 @@
                         ]
                     }
                 ]
+            },
+            {
+                "target_screen": "stellar_warp",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "f3"
+                        ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
+                            2
+                        ]
+                    },
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/warp/stellar_warp.png",
+                            "image",
+                            0.9
+                        ]
+                    }
+                ]
             }
         ]
     },
@@ -1038,6 +1063,148 @@
                         "action": "auto.press_key",
                         "args": [
                             "esc"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "角色活动跃迁",
+        "id": "character_warp",
+        "image_path": "./assets/images/screen/warp/character_warp.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "常驻跃迁",
+        "id": "stellar_warp",
+        "image_path": "./assets/images/screen/warp/stellar_warp.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    }
+                ]
+            },
+            {
+                "target_screen": "himeko_try",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/warp/try.png",
+                            "image",
+                            0.9
+                        ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
+                            2
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "姬子试用",
+        "id": "himeko_try",
+        "image_path": "./assets/images/screen/warp/himeko_try.png",
+        "actions": [
+            {
+                "target_screen": "stellar_warp",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    }
+                ]
+            },
+            {
+                "target_screen": "himeko_try_banner",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/warp/start_try.png",
+                            "image",
+                            0.9
+                        ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
+                            2
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "姬子试用-弹窗",
+        "id": "himeko_try_banner",
+        "image_path": "./assets/images/screen/warp/himeko_try_banner.png",
+        "actions": [
+            {
+                "target_screen": "himeko_prepare",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "姬子试用-准备战斗",
+        "id": "himeko_prepare",
+        "image_path": "./assets/images/screen/warp/himeko_prepare.png",
+        "actions": [
+            {
+                "target_screen": "himeko_try",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
+                            1
+                        ]
+                    },
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/base/confirm.png",
+                            "image",
+                            0.9
                         ]
                     }
                 ]

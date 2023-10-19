@@ -211,11 +211,29 @@ class SettingInterface(ScrollArea):
         #     "取消勾选不会影响领取无名勋礼经验，大月卡玩家不要开启此功能",
         #     "srpass_enable"
         # )
-        self.dailyForgottenhallEnableCard = SwitchSettingCard1(
+        # self.dailyForgottenhallEnableCard = SwitchSettingCard1(
+        #     FIF.TILES,
+        #     self.tr('启用完成1次「忘却之庭」'),
+        #     "请解锁混沌回忆并配置了队伍1后再打开该选项",
+        #     "daily_forgottenhall_enable"
+        # )
+        self.dailyHimekoTryEnableCard = SwitchSettingCard1(
             FIF.TILES,
-            self.tr('启用完成1次「忘却之庭」'),
-            "请解锁混沌回忆并配置了队伍1后再打开该选项",
-            "daily_forgottenhall_enable"
+            self.tr('通过 “姬子试用” 完成任务'),
+            "",
+            "daily_himeko_try_enable"
+        )
+        self.dailyMemoryOneEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('通过 “回忆一” 完成任务'),
+            "请解锁混沌回忆并配置了队伍后再打开该选项",
+            "daily_memory_one_enable"
+        )
+        self.dailyMemoryOneTeamCard = PushSettingCardEval(
+            self.tr('修改'),
+            FIF.FLAG,
+            self.tr("用于 “回忆一” 的队伍"),
+            "daily_memory_one_team"
         )
         self.dailyTasksCard = PushSettingCardDictBool(
             self.tr('修改'),
@@ -504,7 +522,10 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.mailEnableCard)
         self.DailyGroup.addSettingCard(self.assistEnableCard)
         # self.DailyGroup.addSettingCard(self.srpassEnableCard)
-        self.DailyGroup.addSettingCard(self.dailyForgottenhallEnableCard)
+        # self.DailyGroup.addSettingCard(self.dailyForgottenhallEnableCard)
+        self.DailyGroup.addSettingCard(self.dailyHimekoTryEnableCard)
+        self.DailyGroup.addSettingCard(self.dailyMemoryOneEnableCard)
+        self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamCard)
         self.DailyGroup.addSettingCard(self.dailyTasksCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
 
