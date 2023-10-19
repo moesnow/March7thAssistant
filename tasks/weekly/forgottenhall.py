@@ -63,7 +63,7 @@ class ForgottenHall:
         logger.debug(_("剩余重试次数:{max_recursion}".format(max_recursion=max_recursion)))
         for i in range(count):
             logger.info(_("进入第{i}间").format(i=i + 1))
-            auto.press_key("w", 3.8)
+            auto.press_key("w", 3.5)
 
             # 释放秘技
             last_index = None
