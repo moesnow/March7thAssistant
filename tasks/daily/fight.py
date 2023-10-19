@@ -39,7 +39,9 @@ class Fight:
             if not os.path.exists(os.path.join(config.fight_path, "Fhoe-Rail.exe")):
                 status = True
         elif config.fight_operation_mode == "source":
-            if not os.path.exists(os.path.join(config.fight_path, "Fast_Star_Rail.py")):
+            if not os.path.exists(os.path.join(config.fight_path, "Honkai_Star_Rail.py")):
+                status = True
+            if not os.path.exists(os.path.join(config.fight_path, "点这里啦.exe")):
                 status = True
         if status:
             logger.warning(_("锄大地路径不存在: {path}").format(path=config.fight_path))
@@ -82,7 +84,7 @@ class Fight:
                 if subprocess_with_timeout([os.path.join(config.fight_path, "Fhoe-Rail.exe")], config.fight_timeout * 3600, config.fight_path):
                     status = True
             elif config.fight_operation_mode == "source":
-                if subprocess_with_timeout([config.python_exe_path, "Fast_Star_Rail.py"], config.fight_timeout * 3600, config.fight_path, config.env):
+                if subprocess_with_timeout([config.python_exe_path, "Honkai_Star_Rail.py"], config.fight_timeout * 3600, config.fight_path, config.env):
                     status = True
             if status:
                 config.save_timestamp("fight_timestamp")
@@ -99,6 +101,6 @@ class Fight:
                 if subprocess.run(["start", "Fhoe-Rail.exe", "--debug"], shell=True, check=True, cwd=config.fight_path):
                     return True
             elif config.fight_operation_mode == "source":
-                if subprocess.run(["start", "点我点我.exe"], shell=True, check=True, cwd=config.fight_path, env=config.env):
+                if subprocess.run(["start", "点这里啦.exe"], shell=True, check=True, cwd=config.fight_path, env=config.env):
                     return True
         return False
