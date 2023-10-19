@@ -195,7 +195,7 @@ class Screen:
                     if self.check_screen(next_screen):
                         break
                     else:
-                        time.sleep(0.5)
+                        time.sleep(1)
 
                 if self.current_screen != next_screen:
                     if max_recursion > 0:
@@ -209,6 +209,7 @@ class Screen:
                         sys.exit(1)
 
                 logger.info(_("切换到：{next_screen}").format(next_screen=self.green + self.get_name(next_screen) + self.reset))
+                time.sleep(1)
             self.current_screen = target_screen  # 更新当前界面
             return
 

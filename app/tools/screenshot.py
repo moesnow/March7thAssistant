@@ -95,7 +95,7 @@ class ScreenshotApp:
     def save_screenshot(self):
         if not os.path.exists("screenshots"):
             os.makedirs("screenshots")
-        screenshot_path = os.path.abspath("screenshots\screenshot.png")
+        screenshot_path = os.path.abspath(r"screenshots\screenshot.png")
         self.screenshot.save(screenshot_path)
         os.startfile(os.path.dirname(screenshot_path))
 
@@ -104,11 +104,12 @@ class ScreenshotApp:
             width, height, x, y = self.get_selection_info()
             if not os.path.exists("screenshots"):
                 os.makedirs("screenshots")
-            screenshot_path = os.path.abspath("screenshots\selection.png")
+            screenshot_path = os.path.abspath(r"screenshots\selection.png")
             self.screenshot.crop((x, y, x + width, y + height)).save(screenshot_path)
             os.startfile(os.path.dirname(screenshot_path))
         else:
             tk.messagebox.showinfo("结果", "还没有选择区域呢")
+
 
     def ocr_selection(self):
         if self.selection_rect:

@@ -14,6 +14,8 @@ class Dispatch:
             return False
 
         screen.change_to('dispatch')
+        # 适配低性能电脑，中间的界面不一定加载出了
+        auto.find_element("专属材料", "text", max_retries=10, crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080))
         Dispatch._perform_dispatches()
         if "派遣1次委托" in config.daily_tasks and config.daily_tasks["派遣1次委托"]:
             config.daily_tasks["派遣1次委托"] = False

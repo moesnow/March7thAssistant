@@ -119,6 +119,7 @@ class ForgottenHall:
             for character in team_config:
                 if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
                     return False
+                time.sleep(1)
             return True
         return False
 
