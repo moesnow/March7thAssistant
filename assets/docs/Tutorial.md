@@ -172,7 +172,7 @@
 
 角色对应的英文名字可以在 `March7thAssistant\assets\images\character` 中查看
 
-> 目前不支持卡芙卡等同时开2个BOSS的角色
+> 目前不支持卡芙卡等同时开2个BOSS的角色和丹恒·饮月等会改变视角的角色释放秘技
 
 ### 推送
 
