@@ -29,7 +29,7 @@ class Universe:
             logger.error(_("模拟宇宙缺失核心文件，请尝试更新"))
             return False
         # 日常任务需要能够自定义次数的模拟宇宙版本，检测是否存在 nums 参数
-        with open(os.path.join(config.universe_path, 'states.py'), 'r') as f:
+        with open(os.path.join(config.universe_path, 'states.py'), 'r', encoding='utf-8') as f:
             if "nums" not in f.read():
                 logger.warning(_("模拟宇宙版本过低"))
                 Universe.update()
