@@ -238,7 +238,7 @@ class SettingInterface(ScrollArea):
         self.dailyTasksCard = PushSettingCardDictBool(
             self.tr('修改'),
             FIF.PALETTE,
-            self.tr("今日实训"),
+            self.tr("今日实训（False代表已完成）"),
             "daily_tasks"
         )
         self.lastRunTimeCard = PushSettingCardDate(

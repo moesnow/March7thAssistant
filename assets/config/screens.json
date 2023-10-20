@@ -427,7 +427,7 @@
         ]
     },
     {
-        "name": "暂离",
+        "name": "退出「模拟宇宙」",
         "id": "leave_temporarily",
         "image_path": "./assets/images/screen/universe/leave_temporarily.png",
         "actions": [

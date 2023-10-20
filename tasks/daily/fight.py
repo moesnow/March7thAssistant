@@ -89,10 +89,11 @@ class Fight:
             if status:
                 config.save_timestamp("fight_timestamp")
                 Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
-                return
+                return True
 
         logger.error(_("锄大地失败"))
         Base.send_notification_with_screenshot(_("⚠️锄大地未完成⚠️"))
+        return False
 
     @staticmethod
     def gui():

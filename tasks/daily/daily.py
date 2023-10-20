@@ -54,6 +54,7 @@ class Daily:
                 "累计消灭20个敌人": lambda: ForgottenHall.enemy_20(),
                 "利用弱点进入战斗并获胜3次": lambda: ForgottenHall.weakness_to_fight(),
                 "施放终结技造成制胜一击1次": lambda: ForgottenHall.ultimate(),
+                "通关「模拟宇宙」（任意世界）的1个区域": lambda: Universe.start(get_reward=False, nums=1, save=False),
             }
 
             logger.hr(_("今日实训"), 2)
