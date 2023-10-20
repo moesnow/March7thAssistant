@@ -25,6 +25,10 @@ class Universe:
         if not os.path.exists(config.universe_path):
             logger.warning(_("模拟宇宙路径不存在: {path}").format(path=config.universe_path))
             Universe.update()
+        elif not os.path.exists(os.path.join(config.universe_path,'gui.exe')):
+            logger.warning(_("模拟宇宙缺失核心文件"))
+            return False
+        return True
 
     @staticmethod
     def check_requirements():
@@ -40,10 +44,11 @@ class Universe:
 
     @staticmethod
     def before_start():
+        check_result = True
         PythonChecker.run()
-        Universe.check_path()
+        check_result &= Universe.check_path()
         Universe.check_requirements()
-        return True
+        return check_result
 
     @staticmethod
     def start(get_reward=False):
