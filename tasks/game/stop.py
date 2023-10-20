@@ -17,21 +17,11 @@ import os
 class Stop:
     @staticmethod
     def terminate_process(name, timeout=10):
-        # 获取当前用户的用户名
-        current_user = psutil.users()[0].name
         # 根据进程名中止进程
-        for proc in psutil.process_iter(attrs=['pid', 'name', 'username']):
-            process_info = proc.info
-            if process_info['username']:
-                if '\\' in process_info['username']:
-                    username = process_info['username'].split('\\')[-1]
-                else:
-                    username = process_info['username']
-            else:
-                username = ""
-            if name in process_info['name'] and username == current_user:
+        for proc in psutil.process_iter(attrs=['pid', 'name']):
+            if name in proc.info['name']:
                 try:
-                    process = psutil.Process(process_info['pid'])
+                    process = psutil.Process(proc.info['pid'])
                     process.terminate()
                     process.wait(timeout)
                     return True
