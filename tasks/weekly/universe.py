@@ -25,9 +25,14 @@ class Universe:
         if not os.path.exists(config.universe_path):
             logger.warning(_("模拟宇宙路径不存在: {path}").format(path=config.universe_path))
             Universe.update()
-        elif not os.path.exists(os.path.join(config.universe_path,'gui.exe')):
-            logger.warning(_("模拟宇宙缺失核心文件"))
+        elif not os.path.exists(os.path.join(config.universe_path, 'gui.exe')):
+            logger.error(_("模拟宇宙缺失核心文件，请尝试更新"))
             return False
+        # 日常任务需要能够自定义次数的模拟宇宙版本，检测是否存在 nums 参数
+        with open(os.path.join(config.universe_path, 'states.py'), 'r', encoding='utf-8') as f:
+            if "nums" not in f.read():
+                logger.warning(_("模拟宇宙版本过低"))
+                Universe.update()
         return True
 
     @staticmethod
@@ -51,30 +56,39 @@ class Universe:
         return check_result
 
     @staticmethod
-    def start(get_reward=False):
+    def start(get_reward=False, nums=config.universe_count, save=True):
         logger.hr(_("准备模拟宇宙"), 2)
-
         if Universe.before_start():
+
             screen.change_to('main')
+
             logger.info(_("开始校准"))
             if subprocess_with_timeout([config.python_exe_path, "align_angle.py"], 60, config.universe_path, config.env):
+
                 screen.change_to('universe_main')
+
                 logger.info(_("开始模拟宇宙"))
                 command = [config.python_exe_path, "states.py"]
                 if config.universe_bonus_enable:
                     command.append("--bonus=1")
+                if nums:
+                    command.append(f"--nums={nums}")
                 if subprocess_with_timeout(command, config.universe_timeout * 3600, config.universe_path, config.env):
-                    config.save_timestamp("universe_timestamp")
+
+                    if save:
+                        config.save_timestamp("universe_timestamp")
                     if get_reward:
                         Universe.get_reward()
                     else:
                         Base.send_notification_with_screenshot(_("🎉模拟宇宙已完成🎉"))
-                    return
+                    return True
+
                 else:
                     logger.error(_("模拟宇宙失败"))
             else:
                 logger.error(_("校准失败"))
         Base.send_notification_with_screenshot(_("⚠️模拟宇宙未完成⚠️"))
+        return False
 
     @staticmethod
     def get_reward():

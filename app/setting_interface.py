@@ -238,7 +238,7 @@ class SettingInterface(ScrollArea):
         self.dailyTasksCard = PushSettingCardDictBool(
             self.tr('修改'),
             FIF.PALETTE,
-            self.tr("今日实训"),
+            self.tr("今日实训（False代表已完成）"),
             "daily_tasks"
         )
         self.lastRunTimeCard = PushSettingCardDate(
@@ -359,6 +359,13 @@ class SettingInterface(ScrollArea):
             self.tr('领取沉浸奖励'),
             None,
             "universe_bonus_enable"
+        )
+        self.universeCountCard = RangeSettingCard1(
+            "universe_count",
+            [0, 34],
+            FIF.HISTORY,
+            self.tr("运行次数"),
+            self.tr("注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"),
         )
         self.guiUniverseCard = PrimaryPushSettingCard(
             self.tr('启动'),
@@ -544,6 +551,7 @@ class SettingInterface(ScrollArea):
         # self.UniverseGroup.addSettingCard(self.universePathCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
+        self.UniverseGroup.addSettingCard(self.universeCountCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
         self.UniverseGroup.addSettingCard(self.guiUniverseCard)
         self.UniverseGroup.addSettingCard(self.updateUniverseCard)
