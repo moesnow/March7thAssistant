@@ -1,4 +1,5 @@
 from ruamel.yaml import YAML
+from pylnk3 import Lnk
 import time
 import sys
 import os
@@ -28,7 +29,13 @@ class Config:
         game_path = config['game_path']
         if os.path.exists(game_path):
             return
-        program_config_path = os.path.join(os.getenv('ProgramFiles'), "Star Rail\\config.ini")
+        start_menu_path = os.path.join(os.environ["ProgramData"], "Microsoft", "Windows", "Start Menu", "Programs", "崩坏：星穹铁道")
+        try:
+            with open(os.path.join(start_menu_path, "崩坏：星穹铁道.lnk"), "rb") as lnk_file:
+                lnk = Lnk(lnk_file)
+                program_config_path = os.path.join(lnk.work_dir, "config.ini")
+        except:
+            program_config_path = os.path.join(os.getenv('ProgramFiles'), "Star Rail\\config.ini")
         if os.path.exists(program_config_path):
             with open(program_config_path, 'r', encoding='utf-8') as file:
                 for line in file.readlines():
