@@ -107,7 +107,7 @@ class Stop:
 
     @staticmethod
     def after_finish_not_loop():
-        if config.after_finish in ["Exit", "Shutdown", "Hibernate", "Sleep"]:
+        if config.after_finish in ["Exit", "Loop", "Shutdown", "Hibernate", "Sleep"]:
             Stop.stop_game()
             if config.after_finish == "Shutdown":
                 Stop.shutdown()
