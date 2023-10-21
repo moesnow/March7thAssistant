@@ -18,3 +18,4 @@ winotify
 markdown
 cpufeature
 PyQt-Fluent-Widgets
+pylnk3
