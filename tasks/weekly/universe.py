@@ -56,7 +56,7 @@ class Universe:
         return check_result
 
     @staticmethod
-    def start(get_reward=False, nums=None, save=True):
+    def start(get_reward=False, nums=config.universe_count, save=True):
         logger.hr(_("准备模拟宇宙"), 2)
         if Universe.before_start():
 
@@ -75,7 +75,6 @@ class Universe:
                     command.append(f"--nums={nums}")
                 if subprocess_with_timeout(command, config.universe_timeout * 3600, config.universe_path, config.env):
 
-                    screen.change_to('main')
                     if save:
                         config.save_timestamp("universe_timestamp")
                     if get_reward:

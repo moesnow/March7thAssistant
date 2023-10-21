@@ -3,9 +3,10 @@
 ## v1.6.4
 
 ### 新功能
+- 支持自定义模拟宇宙每周运行次数
 - 支持完成“通关「模拟宇宙」（任意世界）的1个区域”
-- 支持“开拓者（穹）•毁灭”和“开拓者（穹）•存护” [#26](https://github.com/moesnow/March7thAssistant/pull/26)
 - 增加模拟宇宙完整性检测 [#27](https://github.com/moesnow/March7thAssistant/pull/27)
+- 支持“开拓者（穹）•毁灭”和“开拓者（穹）•存护” [#26](https://github.com/moesnow/March7thAssistant/pull/26)
 ### 修复
 - 修复“游戏退出失败”的问题（回退实验性改动）
 

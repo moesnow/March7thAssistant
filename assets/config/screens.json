@@ -432,7 +432,7 @@
         "image_path": "./assets/images/screen/universe/leave_temporarily.png",
         "actions": [
             {
-                "target_screen": "main",
+                "target_screen": "universe_report",
                 "actions_list": [
                     {
                         "action": "auto.click_element",
@@ -445,7 +445,40 @@
                     {
                         "action": "time.sleep",
                         "args": [
-                            2
+                            1
+                        ]
+                    },
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/base/confirm.png",
+                            "image",
+                            0.9,
+                            10
+                        ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
+                            4
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "模拟宇宙-分析报告",
+        "id": "universe_report",
+        "image_path": "./assets/images/screen/universe/universe_report.png",
+        "actions": [
+            {
+                "target_screen": "universe_main",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
                         ]
                     }
                 ]
@@ -1210,7 +1243,8 @@
                         "args": [
                             "./assets/images/base/confirm.png",
                             "image",
-                            0.9
+                            0.9,
+                            10
                         ]
                     }
                 ]
