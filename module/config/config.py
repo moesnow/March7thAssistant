@@ -53,8 +53,8 @@ class Config:
             with open(path, 'r', encoding='utf-8') as file:
                 loaded_config = self.yaml.load(file)
                 if loaded_config:
-                    self.config.update(loaded_config)
                     self._detect_game_path(loaded_config)
+                    self.config.update(loaded_config)
                     self.save_config()
         except FileNotFoundError:
             self.save_config()
