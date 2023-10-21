@@ -34,7 +34,6 @@ class Config:
             with open(os.path.join(start_menu_path, "崩坏：星穹铁道.lnk"), "rb") as lnk_file:
                 lnk = Lnk(lnk_file)
                 program_config_path = os.path.join(lnk.work_dir, "config.ini")
-                print(program_config_path)
         except:
             program_config_path = os.path.join(os.getenv('ProgramFiles'), "Star Rail\\config.ini")
         if os.path.exists(program_config_path):
