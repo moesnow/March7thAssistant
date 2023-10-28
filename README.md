@@ -37,7 +37,7 @@ March7thAssistant
 
 ## 界面展示
 
-![README](assets/screenshot/README.png)
+![README](assets/screenshot/README1.png)
 
 ## 注意事项
 
