@@ -19,7 +19,7 @@
 
 > 如果中国大陆下载缓慢可以尝试右键上述文件，选择 "复制链接"。
 >
-> 然后打开其中一个加速站 https://ghproxy.com/ https://github.moeyy.cn/ ，粘贴后点击下载。
+> 然后打开加速站 https://github.moeyy.cn/ ，粘贴后点击下载。
 
 ## 解压
 

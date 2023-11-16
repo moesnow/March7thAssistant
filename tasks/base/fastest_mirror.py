@@ -10,7 +10,6 @@ class FastestMirror:
     def get_github_mirror(download_url, timeout=10):
         mirror_urls = [
             download_url,
-            f"https://ghproxy.com/{download_url}",
             f"https://github.moeyy.xyz/{download_url}",
         ]
         return FastestMirror.find_fastest_mirror(mirror_urls, timeout)
@@ -20,7 +19,6 @@ class FastestMirror:
         mirror_urls = [
             f"https://api.github.com/repos/{user}/{repo}/releases/latest",
             f"https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@release/{file}",
-            f"https://ghproxy.com/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/{file}",
             f"https://github.moeyy.xyz/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/{file}",
         ]
         return FastestMirror.find_fastest_mirror(mirror_urls, timeout)

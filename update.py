@@ -21,7 +21,6 @@ class Update:
         self.api_urls = [
             "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
             "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@release/latest.json",
-            "https://ghproxy.com/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/latest.json",
             "https://github.moeyy.xyz/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/latest.json",
         ]
 
@@ -100,7 +99,6 @@ class Update:
         # 设置镜像
         api_endpoints = [
             self.download_url,
-            f"https://ghproxy.com/{self.download_url}",
             f"https://github.moeyy.xyz/{self.download_url}",
         ]
         self.download_url = self.__find_fastest_mirror(api_endpoints)
