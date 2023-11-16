@@ -4,7 +4,7 @@ from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QLabel, QFrame, QVBoxLayout, QHBoxLayout, QPushButton
 from qframelesswindow import FramelessDialog
 
-from qfluentwidgets import LineEdit, TextWrap, FluentStyleSheet, PrimaryPushButton,EditableComboBox
+from qfluentwidgets import LineEdit, TextWrap, FluentStyleSheet, PrimaryPushButton, EditableComboBox
 
 from .mask_dialog_base import MaskDialogBase
 
@@ -24,7 +24,6 @@ class Ui_MessageBox:
         font = QFont()
         font.setPointSize(15)
 
-
         self.label0 = "拟造花萼（金）"
         self.titleLabel0 = QLabel(f"{self.label0}", parent)
         self.titleLabel0.setFont(font)
@@ -38,7 +37,6 @@ class Ui_MessageBox:
         self.content0 = next((item for item in self.Items0 if self.content[self.label0] in item), self.content[self.label0])
         self.comboBox0.setText(self.content0)
         self.comboBox0._onTextEdited(self.content0)
-
 
         self.label1 = "拟造花萼（赤）"
         self.titleLabel1 = QLabel(f"{self.label1}", parent)
@@ -58,7 +56,6 @@ class Ui_MessageBox:
         self.comboBox1.setText(self.content1)
         self.comboBox1._onTextEdited(self.content1)
 
-
         self.label2 = "凝滞虚影"
         self.titleLabel2 = QLabel(f"{self.label2}", parent)
         self.titleLabel2.setFont(font)
@@ -76,6 +73,7 @@ class Ui_MessageBox:
             "偃偶之形（丹恒·饮月）",
             "孽兽之形（符玄 / 玲可）",
             "天人之形（刃 / 藿藿）",
+            "幽府之形（银枝）",
             "燔灼之形（托帕&账账 / 桂乃芬）",
         ]
         self.comboBox2.addItems(self.Items2)
@@ -83,7 +81,6 @@ class Ui_MessageBox:
         self.comboBox2.setText(self.content2)
         self.comboBox2._onTextEdited(self.content2)
 
-    
         self.label3 = "侵蚀隧洞"
         self.titleLabel3 = QLabel(f"{self.label3}", parent)
         self.titleLabel3.setFont(font)
@@ -96,12 +93,12 @@ class Ui_MessageBox:
             "圣颂之径（防御套+雷套）",
             "野焰之径（火套+虚数套）",
             "药使之径（生命套+速度套）",
+            "幽冥之径（追击套+dot套）",
         ]
         self.comboBox3.addItems(self.Items3)
         self.content3 = next((item for item in self.Items3 if self.content[self.label3] in item), self.content[self.label3])
         self.comboBox3.setText(self.content3)
         self.comboBox3._onTextEdited(self.content3)
-
 
         self.label4 = "历战余响"
         self.titleLabel4 = QLabel(f"{self.label4}", parent)
@@ -180,7 +177,7 @@ class Ui_MessageBox:
         self.textLayout.addWidget(self.comboBox3, 0, Qt.AlignTop)
         self.textLayout.addWidget(self.titleLabel4, 0, Qt.AlignTop)
         self.textLayout.addWidget(self.comboBox4, 0, Qt.AlignTop)
-        
+
         self.textLayout.addWidget(self.titleLabel5, 0, Qt.AlignTop)
 
         self.buttonLayout.setSpacing(12)
