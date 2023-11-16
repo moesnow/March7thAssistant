@@ -35,8 +35,7 @@ class Screenshot:
                 screenshot_pos = Screenshot.get_window_region(window)
             else:
                 left, top, width, height = Screenshot.get_window_region(window)
-                screenshot_pos = left + width * crop[0], top + height * crop[1], width * crop[2], height * crop[3]
-
+                screenshot_pos = int(left + width * crop[0]), int(top + height * crop[1]), int(width * crop[2]), int(height * crop[3])
             screenshot = pyautogui.screenshot(region=screenshot_pos)
             return screenshot, screenshot_pos
 
