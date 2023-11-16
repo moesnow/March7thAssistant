@@ -77,7 +77,8 @@ class Synthesis:
                                             if auto.find_element("./assets/images/screen/bag/bag_consumables.png", "image", 0.9, max_retries=10):
                                                 logger.info(_("使用消耗品完成"))
                                                 return True
-                                break
+                                    break
+                                continue
                             elif recursion:
                                 logger.info(_("没有可用的消耗品，尝试合成"))
                                 if Synthesis.consumables():

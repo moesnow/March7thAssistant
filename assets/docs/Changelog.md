@@ -8,6 +8,7 @@
 - 支持从"开始菜单"的快捷方式获取游戏路径 [#29](https://github.com/moesnow/March7thAssistant/pull/29)
 ### 修复
 - 自动从启动器获取游戏路径
+- “使用消耗品”选中失败后重试逻辑错误 [#41](https://github.com/moesnow/March7thAssistant/pull/41)
 
 ## v1.6.4
 
