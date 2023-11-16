@@ -21,7 +21,7 @@ jobs:
         run: |
           wget https://api.github.com/repos/${{ github.repository }}/releases/latest -O publish/latest.json
           wget https://api.github.com/repos/moesnow/Fhoe-Rail/releases/latest -O publish/fight-latest.json
-          wget https://api.github.com/repos/CHNZYX/Auto_Simulated_Universe/releases/latest -O publish/universe-latest.json
+          wget https://api.github.com/repos/moesnow/Auto_Simulated_Universe/releases/latest -O publish/universe-latest.json
 
       - name: Git push assets to "release" branch
         run: |
