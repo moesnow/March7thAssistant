@@ -13,27 +13,37 @@ import os
 class Universe:
     @staticmethod
     def update():
-        config.set_value("universe_requirements", False)
         from module.update.update_handler import UpdateHandler
         from tasks.base.fastest_mirror import FastestMirror
-        url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/main.zip")
-        update_handler = UpdateHandler(url, config.universe_path, "Auto_Simulated_Universe-main")
-        update_handler.run()
+        if config.universe_operation_mode == "exe":
+            import requests
+            import json
+            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Auto_Simulated_Universe", "universe-latest.json", 1), timeout=3)
+            if response.status_code == 200:
+                data = json.loads(response.text)
+                for asset in data["assets"]:
+                    url = FastestMirror.get_github_mirror(asset["browser_download_url"])
+                    break
+                update_handler = UpdateHandler(url, config.universe_path, "Auto_Simulated_Universe")
+                update_handler.run()
+        elif config.universe_operation_mode == "source":
+            config.set_value("universe_requirements", False)
+            url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/main.zip")
+            update_handler = UpdateHandler(url, config.universe_path, "Auto_Simulated_Universe-main")
+            update_handler.run()
 
     @staticmethod
     def check_path():
-        if not os.path.exists(config.universe_path):
+        status = False
+        if config.universe_operation_mode == "exe":
+            if not os.path.exists(os.path.join(config.universe_path, "states.exe")):
+                status = True
+        elif config.universe_operation_mode == "source":
+            if not os.path.exists(os.path.join(config.universe_path, "states.py")):
+                status = True
+        if status:
             logger.warning(_("模拟宇宙路径不存在: {path}").format(path=config.universe_path))
             Universe.update()
-        elif not os.path.exists(os.path.join(config.universe_path, 'gui.exe')):
-            logger.error(_("模拟宇宙缺失核心文件，请尝试更新"))
-            return False
-        # 日常任务需要能够自定义次数的模拟宇宙版本，检测是否存在 nums 参数
-        with open(os.path.join(config.universe_path, 'states.py'), 'r', encoding='utf-8') as f:
-            if "nums" not in f.read():
-                logger.warning(_("模拟宇宙版本过低"))
-                Universe.update()
-        return True
 
     @staticmethod
     def check_requirements():
@@ -49,11 +59,11 @@ class Universe:
 
     @staticmethod
     def before_start():
-        check_result = True
-        PythonChecker.run()
-        check_result &= Universe.check_path()
-        Universe.check_requirements()
-        return check_result
+        Universe.check_path()
+        if config.universe_operation_mode == "source":
+            PythonChecker.run()
+            Universe.check_requirements()
+        return True
 
     @staticmethod
     def start(get_reward=False, nums=config.universe_count, save=True):
@@ -62,31 +72,58 @@ class Universe:
 
             screen.change_to('main')
 
-            logger.info(_("开始校准"))
-            if subprocess_with_timeout([config.python_exe_path, "align_angle.py"], 60, config.universe_path, config.env):
+            if config.universe_operation_mode == "exe":
+                logger.info(_("开始校准"))
+                if subprocess_with_timeout([os.path.join(config.universe_path, "align_angle.exe")], config.universe_timeout * 3600, config.universe_path):
 
-                screen.change_to('universe_main')
+                    screen.change_to('universe_main')
 
-                logger.info(_("开始模拟宇宙"))
-                command = [config.python_exe_path, "states.py"]
-                if config.universe_bonus_enable:
-                    command.append("--bonus=1")
-                if nums:
-                    command.append(f"--nums={nums}")
-                if subprocess_with_timeout(command, config.universe_timeout * 3600, config.universe_path, config.env):
+                    logger.info(_("开始模拟宇宙"))
+                    command = [os.path.join(config.universe_path, "states.exe")]
+                    if config.universe_bonus_enable:
+                        command.append("--bonus=1")
+                    if nums:
+                        command.append(f"--nums={nums}")
+                    if subprocess_with_timeout(command, config.universe_timeout * 3600, config.universe_path):
 
-                    if save:
-                        config.save_timestamp("universe_timestamp")
-                    if get_reward:
-                        Universe.get_reward()
+                        if save:
+                            config.save_timestamp("universe_timestamp")
+                        if get_reward:
+                            Universe.get_reward()
+                        else:
+                            Base.send_notification_with_screenshot(_("🎉模拟宇宙已完成🎉"))
+                        return True
+
                     else:
-                        Base.send_notification_with_screenshot(_("🎉模拟宇宙已完成🎉"))
-                    return True
-
+                        logger.error(_("模拟宇宙失败"))
                 else:
-                    logger.error(_("模拟宇宙失败"))
-            else:
-                logger.error(_("校准失败"))
+                    logger.error(_("校准失败"))
+            elif config.universe_operation_mode == "source":
+                logger.info(_("开始校准"))
+                if subprocess_with_timeout([config.python_exe_path, "align_angle.py"], 60, config.universe_path, config.env):
+
+                    screen.change_to('universe_main')
+
+                    logger.info(_("开始模拟宇宙"))
+                    command = [config.python_exe_path, "states.py"]
+                    if config.universe_bonus_enable:
+                        command.append("--bonus=1")
+                    if nums:
+                        command.append(f"--nums={nums}")
+                    if subprocess_with_timeout(command, config.universe_timeout * 3600, config.universe_path, config.env):
+
+                        if save:
+                            config.save_timestamp("universe_timestamp")
+                        if get_reward:
+                            Universe.get_reward()
+                        else:
+                            Base.send_notification_with_screenshot(_("🎉模拟宇宙已完成🎉"))
+                        return True
+
+                    else:
+                        logger.error(_("模拟宇宙失败"))
+                else:
+                    logger.error(_("校准失败"))
         Base.send_notification_with_screenshot(_("⚠️模拟宇宙未完成⚠️"))
         return False
 

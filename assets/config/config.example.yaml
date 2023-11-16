@@ -84,7 +84,7 @@ fight_requirements: false # 是否安装过依赖（更新后会重置为false�
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
 universe_enable: false # 启用模拟宇宙
-# universe_operation_mode: exe # 运行方式 源码: source 集成: exe
+universe_operation_mode: exe # 运行方式 源码: source 集成: exe
 universe_bonus_enable: false # 领取沉浸奖励
 universe_count: 34 # 运行次数
 universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径
