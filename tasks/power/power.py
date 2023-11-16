@@ -285,6 +285,11 @@ class Power:
         if number is None:
             number = power // power_need
             if number < 1:
+                # 支持拟造花萼体力小于60的情况
+                if "拟造花萼" in instance_type:
+                    number = 1
+                    logger.hr(_("开始刷{type} - {name}，总计{number}次").format(type=instance_type, name=instance_name, number=number), 2)
+                    return Power.run_instances(instance_type, instance_name, power, number)
                 logger.info(_("🟣开拓力 < {power_need}").format(power_need=power_need))
                 return False
         else:

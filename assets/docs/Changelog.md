@@ -5,6 +5,7 @@
 ### 新功能
 - 支持忘却之庭和支援角色选择“托帕&账账”、“桂乃芬”和“藿藿”
 - 添加副本“幽府之形”和“幽冥之径”
+- 支持拟造花萼体力小于60的情况 [#31](https://github.com/moesnow/March7thAssistant/pull/31)
 - 支持从"开始菜单"的快捷方式获取游戏路径 [#29](https://github.com/moesnow/March7thAssistant/pull/29)
 ### 修复
 - 自动从启动器获取游戏路径
