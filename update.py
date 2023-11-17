@@ -20,7 +20,6 @@ class Update:
         self.process_name = ("March7th Assistant.exe", "March7th Launcher.exe")
         self.api_urls = [
             "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-            "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@release/latest.json",
             "https://github.moeyy.xyz/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/latest.json",
         ]
 
