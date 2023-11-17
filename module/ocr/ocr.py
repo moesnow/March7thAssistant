@@ -65,7 +65,32 @@ class OCR:
             image_stream = io.BytesIO()
             image.save(image_stream, format="PNG")
             image_bytes = image_stream.getvalue()
-            return self.ocr.runBytes(image_bytes)
+            original_dict = self.ocr.runBytes(image_bytes)
+
+            replacements = {
+                "'翼风之形": "'巽风之形",
+                "'风之形": "'巽风之形",
+                "'芒之形": "'锋芒之形",
+                "'嘎偶之形": "'偃偶之形",
+                "'優偶之形": "'偃偶之形",
+                "'厦偶之形": "'偃偶之形",
+                "'偶之形": "'偃偶之形",
+                "'兽之形": "'孽兽之形",
+                "'潘灼之形": "'燔灼之形",
+                "'熠灼之形": "'燔灼之形",
+                "'灼之形": "'燔灼之形",
+                "'幽之径": "'幽冥之径",
+                "'冥之径": "'幽冥之径",
+                "'幽幂之径": "'幽冥之径",
+                "'幽寞之径": "'幽冥之径"
+            }
+
+            original_str = str(original_dict)
+            for old_str, new_str in replacements.items():
+                original_str = original_str.replace(old_str, new_str)
+
+            modified_dict = eval(original_str)
+            return modified_dict
         except Exception as e:
             logger.error(e)
             return r"{}"
