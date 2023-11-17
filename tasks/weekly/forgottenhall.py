@@ -138,10 +138,13 @@ class ForgottenHall:
     @staticmethod
     def configure_teams():
         if auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10, crop=(610 / 1920, 670 / 1080, 118 / 1920, 218 / 1080)):
-            if ForgottenHall.select_characters(config.forgottenhall_team1, "./assets/images/forgottenhall/team1.png"):
-                if ForgottenHall.select_characters(config.forgottenhall_team2, "./assets/images/forgottenhall/team2.png"):
-                    if auto.click_element("./assets/images/forgottenhall/start.png", "image", 0.8, max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080)):
-                        return True
+            if not auto.click_element("./assets/images/forgottenhall/start.png", "image", 0.8, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080)):
+                if ForgottenHall.select_characters(config.forgottenhall_team1, "./assets/images/forgottenhall/team1.png"):
+                    if ForgottenHall.select_characters(config.forgottenhall_team2, "./assets/images/forgottenhall/team2.png"):
+                        if auto.click_element("./assets/images/forgottenhall/start.png", "image", 0.8, max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080)):
+                            return True
+            else:
+                return True
         return False
 
     @staticmethod
@@ -299,12 +302,14 @@ class ForgottenHall:
             time.sleep(2)
             if auto.click_element("01", "text", max_retries=20, crop=(18.0 / 1920, 226.0 / 1080, 1896.0 / 1920, 656.0 / 1080)):
                 if auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10, crop=(610 / 1920, 670 / 1080, 118 / 1920, 218 / 1080)):
-                    auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
-                    for character in config.daily_memory_one_team:
-                        if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
-                            return False
-                        time.sleep(1)
-                    if auto.click_element("回忆", "text", max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080), include=True):
+                    if not auto.find_element("./assets/images/forgottenhall/start2.png", "image", 0.8, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080)):
+                        auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
+                        for character in config.daily_memory_one_team:
+                            print(f"./assets/images/character/{character[0]}.png")
+                            if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                                return False
+                            time.sleep(1)
+                    if auto.click_element("./assets/images/forgottenhall/start2.png", "image", 0.8, max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080)):
                         ForgottenHall.click_message_box()
                         if ForgottenHall.start_fight(1, 1, 0, config.daily_memory_one_team):
                             flag = True
