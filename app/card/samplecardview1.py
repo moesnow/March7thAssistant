@@ -23,7 +23,7 @@ class SampleCard(CardWidget):
         self.iconWidget.setGraphicsEffect(self.iconOpacityEffect)
 
         self.titleLabel = QLabel(title, self)
-        self.titleLabel.setStyleSheet("font-size: 18px; font-weight: 500;")
+        self.titleLabel.setStyleSheet("font-size: 16px; font-weight: 500;")
         self.titleOpacityEffect = QGraphicsOpacityEffect(self)
         self.titleOpacityEffect.setOpacity(1)  # 设置初始半透明度
         self.titleLabel.setGraphicsEffect(self.titleOpacityEffect)
@@ -32,8 +32,8 @@ class SampleCard(CardWidget):
         self.hBoxLayout = QVBoxLayout(self)
         self.vBoxLayout = QVBoxLayout()
 
-        self.setFixedSize(200, 240)
-        self.iconWidget.setFixedSize(170, 170)
+        self.setFixedSize(130, 160)
+        self.iconWidget.setFixedSize(110, 110)
 
         # self.hBoxLayout.setSpacing(28)
         # self.hBoxLayout.setContentsMargins(20, 0, 0, 0)
@@ -91,7 +91,7 @@ class SampleCardView1(QWidget):
         self.vBoxLayout = QVBoxLayout(self)
         self.flowLayout = FlowLayout()
 
-        self.vBoxLayout.setContentsMargins(25, 0, 25, 0)
+        self.vBoxLayout.setContentsMargins(20, 0, 20, 0)
         self.vBoxLayout.setSpacing(10)
         self.flowLayout.setContentsMargins(0, 0, 0, 0)
         self.flowLayout.setHorizontalSpacing(12)

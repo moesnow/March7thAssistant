@@ -21,7 +21,7 @@ class BannerWidget(QWidget):
 
         self.vBoxLayout = QVBoxLayout(self)
         self.galleryLabel = QLabel(f'三月七小助手 {config.version}\nMarch7thAssistant', self)
-        self.galleryLabel.setStyleSheet("color: white;font-size: 32px; font-weight: 600;")
+        self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
         # 创建阴影效果
         shadow = QGraphicsDropShadowEffect()
@@ -124,6 +124,16 @@ class HomeInterface(ScrollArea):
             icon="./assets/app/images/March7th.jpg",
             title="完整运行",
             action="main"
+        )
+        basicInputView.addSampleCard(
+            icon="./assets/app/images/JingYuan.jpg",
+            title="每日实训",
+            action="daily"
+        )
+        basicInputView.addSampleCard(
+            icon="./assets/app/images/Yanqing.jpg",
+            title="清体力",
+            action="power"
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/SilverWolf.jpg",

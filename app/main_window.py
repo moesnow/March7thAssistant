@@ -85,7 +85,7 @@ class MainWindow(MSFluentWindow):
         self.setResizeEnabled(False)
         # self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowMaximizeButtonHint)
 
-        self.resize(960, 780)
+        self.resize(960, 700)
         self.setWindowIcon(QIcon(r'assets\logo\March7th.ico'))
         self.setWindowTitle("March7th Assistant")
         # create splash screen

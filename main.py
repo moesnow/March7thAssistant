@@ -10,7 +10,9 @@ from managers.translate_manager import _
 from tasks.game.game import Game
 from tasks.game.stop import Stop
 from tasks.daily.daily import Daily
+from tasks.reward.reward import Reward
 from tasks.daily.fight import Fight
+from tasks.power.power import Power
 from tasks.version.version import Version
 from tasks.weekly.universe import Universe
 from tasks.weekly.forgottenhall import ForgottenHall
@@ -33,10 +35,15 @@ def main(action=None):
             Daily.start()
             Game.stop(True)
     # 子任务
-    elif action in ["fight", "universe", "forgottenhall"]:
+    elif action in ["daily", "power", "fight", "universe", "forgottenhall"]:
         Version.start()
         Game.start()
-        if action == "fight":
+        if action == "daily":
+            Daily.daily()
+            Reward.start()
+        elif action == "power":
+            Power.start()
+        elif action == "fight":
             Fight.start()
         elif action == "universe":
             Universe.start()
@@ -63,7 +70,7 @@ def main(action=None):
         from PIL import Image
         image_io = BytesIO()
         Image.open("./assets/app/images/March7th.jpg").save(image_io, format='JPEG')
-        notify.notify(_("三月七小助手|･ω･)"), _("这是一条测试消息"),image_io)
+        notify.notify(_("三月七小助手|･ω･)"), _("这是一条测试消息"), image_io)
         input(_("按回车键关闭窗口. . ."))
         sys.exit(0)
     else:

@@ -19,6 +19,48 @@ from tasks.daily.himekotry import HimekoTry
 class Daily:
     @staticmethod
     def start():
+        Daily.daily()
+
+        if Date.is_next_mon_4_am(config.echo_of_war_timestamp):
+            if config.echo_of_war_enable:
+                Echoofwar.start()
+            else:
+                logger.info(_("历战余响未开启"))
+        else:
+            logger.info(_("历战余响尚未刷新"))
+
+        Power.start()
+
+        if Date.is_next_4_am(config.fight_timestamp):
+            if config.fight_enable:
+                Fight.start()
+            else:
+                logger.info(_("锄大地未开启"))
+        else:
+            logger.info(_("锄大地尚未刷新"))
+
+        if Date.is_next_mon_4_am(config.universe_timestamp):
+            if config.universe_enable:
+                Power.start()
+                Reward.start()
+                Universe.start(get_reward=True)
+                Power.start()
+            else:
+                logger.info(_("模拟宇宙未开启"))
+        else:
+            logger.info(_("模拟宇宙尚未刷新"))
+
+        if Date.is_next_mon_4_am(config.forgottenhall_timestamp):
+            if config.forgottenhall_enable:
+                ForgottenHall.start()
+            else:
+                logger.info(_("忘却之庭未开启"))
+        else:
+            logger.info(_("忘却之庭尚未刷新"))
+
+        Reward.start()
+
+    def daily():
         logger.hr(_("开始日常任务"), 0)
         if Date.is_next_4_am(config.last_run_timestamp):
 
@@ -72,42 +114,3 @@ class Daily:
                         config.save_config()
 
         logger.hr(_("完成"), 2)
-
-        if Date.is_next_mon_4_am(config.echo_of_war_timestamp):
-            if config.echo_of_war_enable:
-                Echoofwar.start()
-            else:
-                logger.info(_("历战余响未开启"))
-        else:
-            logger.info(_("历战余响尚未刷新"))
-
-        Power.start()
-
-        if Date.is_next_4_am(config.fight_timestamp):
-            if config.fight_enable:
-                Fight.start()
-            else:
-                logger.info(_("锄大地未开启"))
-        else:
-            logger.info(_("锄大地尚未刷新"))
-
-        if Date.is_next_mon_4_am(config.universe_timestamp):
-            if config.universe_enable:
-                Power.start()
-                Reward.start()
-                Universe.start(get_reward=True)
-                Power.start()
-            else:
-                logger.info(_("模拟宇宙未开启"))
-        else:
-            logger.info(_("模拟宇宙尚未刷新"))
-
-        if Date.is_next_mon_4_am(config.forgottenhall_timestamp):
-            if config.forgottenhall_enable:
-                ForgottenHall.start()
-            else:
-                logger.info(_("忘却之庭未开启"))
-        else:
-            logger.info(_("忘却之庭尚未刷新"))
-
-        Reward.start()
