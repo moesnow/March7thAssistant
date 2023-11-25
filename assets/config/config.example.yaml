@@ -32,6 +32,7 @@ power_needs: # 副本所需开拓力
   历战余响: 30
 instance_team_enable: false # 打副本时自动切换队伍
 instance_team_number: '1' # 队伍编号
+merge_immersifier: False # 优先合成沉浸器
 use_reserved_trailblaze_power: False # 使用后备开拓力
 use_fuel: False # 使用燃料
 echo_of_war_enable: false # 体力优先完成3次「历战余响」

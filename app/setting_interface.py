@@ -140,6 +140,12 @@ class SettingInterface(ScrollArea):
             None,
             texts=['1', '2', '3', '4', '5', '6']
         )
+        self.mergeImmersifierEnableCard = SwitchSettingCard1(
+            FIF.BASKETBALL,
+            self.tr('优先合成沉浸器'),
+            "",
+            "merge_immersifier"
+        )
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
             FIF.HEART,
             self.tr('使用后备开拓力'),
@@ -523,6 +529,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
+        self.PowerGroup.addSettingCard(self.mergeImmersifierEnableCard)
         self.PowerGroup.addSettingCard(self.useReservedTrailblazePowerEnableCard)
         self.PowerGroup.addSettingCard(self.useFuelEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)

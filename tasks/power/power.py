@@ -10,6 +10,9 @@ import time
 class Power:
     @staticmethod
     def start():
+        # 体力优先合成沉浸器
+        Power.merge_immersifier()
+
         instance_name = config.instance_names[config.instance_type]
         if instance_name == "无":
             logger.info(_("跳过清体力 {type}未开启").format(type=config.instance_type))
@@ -83,6 +86,43 @@ class Power:
 
         logger.info(_("🟣开拓力: {power}").format(power=trailblaze_power))
         return trailblaze_power
+
+    def merge_immersifier():
+        if config.merge_immersifier:
+            logger.hr(_("准备合成沉浸器"), 0)
+            screen.change_to("guide3")
+
+            immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
+            text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
+            if "/8" not in text:
+                logger.error(_("沉浸器数量识别失败"))
+                return
+
+            immersifier_count = int(text.split("/")[0])
+            logger.info(_("🟣沉浸器: {count}").format(count=immersifier_count))
+            if immersifier_count >= 8:
+                logger.info(_("沉浸器已满"))
+                return
+
+            screen.change_to("guide3")
+            power = Power.power()
+
+            count = min(power // 40, 8 - immersifier_count)
+            if count <= 0:
+                logger.info(_("体力不足"))
+                return
+
+            logger.hr(_("准备合成 {count} 个沉浸器").format(count=count), 2)
+            screen.change_to("guide3")
+
+            if auto.click_element("./assets/images/share/immersifier/immersifier.png", "image", 0.9, crop=immersifier_crop):
+                time.sleep(1)
+                for i in range(count - 1):
+                    auto.click_element("./assets/images/share/trailblaze_power/plus.png", "image", 0.9)
+                    time.sleep(0.5)
+                if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
+                    time.sleep(1)
+                    auto.press_key("esc")
 
     @staticmethod
     def wait_fight():
