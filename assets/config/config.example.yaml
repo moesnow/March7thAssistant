@@ -86,6 +86,7 @@ fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 universe_enable: false # 启用模拟宇宙
 universe_operation_mode: exe # 运行方式 源码: source 集成: exe
 universe_bonus_enable: false # 领取沉浸奖励
+universe_frequency: weekly # 运行频率 每周: weekly 每天: daily
 universe_count: 34 # 运行次数
 universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径
 universe_timeout: 20 # 模拟宇宙超时（单位小时）

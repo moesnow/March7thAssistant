@@ -39,16 +39,25 @@ class Daily:
         else:
             logger.info(_("锄大地尚未刷新"))
 
-        if Date.is_next_mon_4_am(config.universe_timestamp):
-            if config.universe_enable:
-                Power.start()
-                Reward.start()
-                Universe.start(get_reward=True)
-                Power.start()
+        if config.universeFrequencyCard == "weekly":
+            if Date.is_next_mon_4_am(config.universe_timestamp):
+                if config.universe_enable:
+                    Power.start()
+                    Reward.start()
+                    Universe.start(get_reward=True)
+                    Power.start()
+                else:
+                    logger.info(_("模拟宇宙未开启"))
             else:
-                logger.info(_("模拟宇宙未开启"))
-        else:
-            logger.info(_("模拟宇宙尚未刷新"))
+                logger.info(_("模拟宇宙尚未刷新"))
+        elif config.universeFrequencyCard == "daily":
+            if Date.is_next_4_am(config.universe_timestamp):
+                if config.universe_enable:
+                    Universe.start(get_reward=True)
+                else:
+                    logger.info(_("模拟宇宙未开启"))
+            else:
+                logger.info(_("模拟宇宙尚未刷新"))
 
         if Date.is_next_mon_4_am(config.forgottenhall_timestamp):
             if config.forgottenhall_enable:

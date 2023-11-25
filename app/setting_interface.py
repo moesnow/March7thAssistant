@@ -360,6 +360,13 @@ class SettingInterface(ScrollArea):
             None,
             "universe_bonus_enable"
         )
+        self.universeFrequencyCard = ComboBoxSettingCard2(
+            "universe_frequency",
+            FIF.MINIMIZE,
+            self.tr('运行频率'),
+            '',
+            texts={'每周': 'weekly', '每天': 'daily'}
+        )
         self.universeCountCard = RangeSettingCard1(
             "universe_count",
             [0, 34],
@@ -551,6 +558,7 @@ class SettingInterface(ScrollArea):
         # self.UniverseGroup.addSettingCard(self.universePathCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
+        self.UniverseGroup.addSettingCard(self.universeFrequencyCard)
         self.UniverseGroup.addSettingCard(self.universeCountCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
         self.UniverseGroup.addSettingCard(self.guiUniverseCard)
