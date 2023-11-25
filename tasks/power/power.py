@@ -213,8 +213,10 @@ class Power:
         if not auto.click_element(instance_type, "text", crop=instance_type_crop):
             if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=instance_type_crop):
                 auto.mouse_scroll(12, -1)
+                # 等待界面完全停止
+                time.sleep(1)
                 auto.click_element(instance_type, "text", crop=instance_type_crop)
-        # 截图过快会导致结果不可信
+        # 等待界面切换
         time.sleep(1)
 
         # 传送
@@ -227,7 +229,7 @@ class Power:
                 break
             auto.mouse_scroll(18, -1)
             # 等待界面完全停止
-            time.sleep(0.5)
+            time.sleep(1)
         if not Flag:
             Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 没有找到指定副本名称⚠️"))
             return False
