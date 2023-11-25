@@ -39,7 +39,7 @@ class Daily:
         else:
             logger.info(_("锄大地尚未刷新"))
 
-        if config.universeFrequencyCard == "weekly":
+        if config.universe_frequency == "weekly":
             if Date.is_next_mon_4_am(config.universe_timestamp):
                 if config.universe_enable:
                     Power.start()
@@ -50,7 +50,7 @@ class Daily:
                     logger.info(_("模拟宇宙未开启"))
             else:
                 logger.info(_("模拟宇宙尚未刷新"))
-        elif config.universeFrequencyCard == "daily":
+        elif config.universe_frequency == "daily":
             if Date.is_next_4_am(config.universe_timestamp):
                 if config.universe_enable:
                     Universe.start(get_reward=True)
