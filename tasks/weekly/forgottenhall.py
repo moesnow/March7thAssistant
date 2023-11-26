@@ -305,7 +305,6 @@ class ForgottenHall:
                     if not auto.find_element("./assets/images/forgottenhall/start2.png", "image", 0.8, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080)):
                         auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
                         for character in config.daily_memory_one_team:
-                            print(f"./assets/images/character/{character[0]}.png")
                             if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
                                 return False
                             time.sleep(1)
