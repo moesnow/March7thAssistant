@@ -18,6 +18,8 @@ class Echoofwar:
             guide3_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
             if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=guide3_crop):
                 auto.mouse_scroll(12, -1)
+                # 等待界面完全停止
+                time.sleep(1)
                 if auto.click_element("历战余响", "text", max_retries=10, crop=guide3_crop):
                     auto.find_element("历战余响", "text", max_retries=10, crop=(
                         682.0 / 1920, 275.0 / 1080, 1002.0 / 1920, 184.0 / 1080), include=True)
