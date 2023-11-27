@@ -13,7 +13,7 @@ March7thAssistant · 三月七小助手
     <img alt="" src="https://img.shields.io/github/v/release/moesnow/March7thAssistant?style=flat-square&color=4096d8" />
     <img alt="" src="https://img.shields.io/github/downloads/moesnow/March7thAssistant/total?style=flat-square&color=f18cb9" />
 </p>
-    
+
 **简体中文** | [繁體中文](./README_TW.md) | [English](./README_EN.md)
 
 快速上手，请访问：[使用教程](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
