@@ -1,11 +1,10 @@
-<div align="center">
+<div>  
 <p>
-    <img src="./assets/screenshot/March7th.png">
+    <img src="./assets/screenshot/March7th.png" align="right">
 </p>
 
 <h1>
-三月七小助手<br>
-March7thAssistant
+March7thAssistant · 三月七小助手
 </h1>
 
 <p>

@@ -1,6 +1,6 @@
-<div align="center">
+<div>  
 <p>
-    <img src="./assets/screenshot/March7th.png">
+    <img src="./assets/screenshot/March7th.png" align="right">
 </p>
 
 <h1>

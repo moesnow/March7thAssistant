@@ -1,11 +1,10 @@
-<div align="center">
+<div>  
 <p>
-    <img src="./assets/screenshot/March7th.png">
+    <img src="./assets/screenshot/March7th.png" align="right">
 </p>
 
 <h1>
-三月七小助手<br>
-March7thAssistant
+March7thAssistant · 三月七小助手
 </h1>
 
 <p>
@@ -14,7 +13,7 @@ March7thAssistant
     <img alt="" src="https://img.shields.io/github/v/release/moesnow/March7thAssistant?style=flat-square&color=4096d8" />
     <img alt="" src="https://img.shields.io/github/downloads/moesnow/March7thAssistant/total?style=flat-square&color=f18cb9" />
 </p>
-
+    
 **简体中文** | [繁體中文](./README_TW.md) | [English](./README_EN.md)
 
 快速上手，请访问：[使用教程](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
