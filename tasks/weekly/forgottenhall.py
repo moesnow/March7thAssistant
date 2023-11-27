@@ -214,7 +214,8 @@ class ForgottenHall:
             # 点击弹出框
             ForgottenHall.click_message_box()
             # 判断关卡BOSS数量
-            boss_count = 2 if i in range(1, 6) else 1
+            # boss_count = 2 if i in range(1, 6) else 1
+            boss_count = 1
             if not ForgottenHall.start_fight(2, boss_count):
                 logger.info(_("挑战失败"))
             else:
