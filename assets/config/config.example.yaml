@@ -173,6 +173,7 @@ notify_smtp_ssl: '' # 可选参数
 # 钉钉通知
 notify_dingtalk_enable: false
 notify_dingtalk_token: ''
+notify_dingtalk_secret: '' # 可选参数
 
 # pushplus 通知
 notify_pushplus_enable: false
