@@ -31,7 +31,7 @@ power_needs: # 副本所需开拓力
   侵蚀隧洞: 40
   历战余响: 30
 instance_team_enable: false # 打副本时自动切换队伍
-instance_team_number: '1' # 队伍编号
+instance_team_number: '5' # 队伍编号
 merge_immersifier: False # 优先合成沉浸器
 use_reserved_trailblaze_power: False # 使用后备开拓力
 use_fuel: False # 使用燃料
@@ -80,7 +80,7 @@ fight_operation_mode: exe # 运行方式 源码: source 集成: exe
 fight_path: .\3rdparty\Fhoe-Rail # 锄大地路径
 fight_timeout: 6 # 锄大地超时（单位小时）
 fight_team_enable: false # 锄大地时自动切换队伍
-fight_team_number: '2' # 队伍编号
+fight_team_number: '6' # 队伍编号
 fight_requirements: false # 是否安装过依赖（更新后会重置为false）
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
@@ -96,8 +96,8 @@ universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
 
 forgottenhall_enable: false # 启用忘却之庭
 forgottenhall_level: # 混沌回忆关卡范围
-- 1
-- 10
+- 7
+- 12
 forgottenhall_retries: 1 # 混沌回忆挑战失败后的重试次数
 # 混沌回忆队伍
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色
