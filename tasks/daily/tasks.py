@@ -39,5 +39,5 @@ class Tasks:
 
     def scroll(self):
         auto.click_element("./assets/images/quest/activity.png", "image", 0.95, crop=self.crop)
-        auto.mouse_scroll(18, -1)
-        time.sleep(0.5)
+        auto.mouse_scroll(36, -1)
+        time.sleep(1)
