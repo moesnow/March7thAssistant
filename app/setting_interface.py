@@ -138,7 +138,7 @@ class SettingInterface(ScrollArea):
             FIF.FLAG,
             self.tr('队伍编号'),
             None,
-            texts=['1', '2', '3', '4', '5', '6']
+            texts=['3', '4', '5', '6', '7']
         )
         self.mergeImmersifierEnableCard = SwitchSettingCard1(
             FIF.BASKETBALL,
@@ -299,7 +299,7 @@ class SettingInterface(ScrollArea):
             FIF.FLAG,
             self.tr('队伍编号'),
             None,
-            texts=['1', '2', '3', '4', '5', '6']
+            texts=['3', '4', '5', '6', '7']
         )
         self.FightRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
