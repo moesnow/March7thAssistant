@@ -691,6 +691,21 @@
                         ]
                     }
                 ]
+            },
+            {
+                "target_screen": "universe_main",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "传送",
+                            "min_distance_text",
+                            "crop=(691.0 / 1920, 291.0 / 1080, 968.0 / 1920, 374.0 / 1080)",
+                            "include=True",
+                            "source=\"积分奖励\""
+                        ]
+                    }
+                ]
             }
         ]
     },
@@ -880,6 +895,52 @@
                         "action": "auto.press_key",
                         "args": [
                             "esc"
+                        ]
+                    }
+                ]
+            },
+            {
+                "target_screen": "universe_expansion",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/screen/universe/switch.png",
+                            "image",
+                            0.9,
+                            10
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "模拟宇宙-扩展装置",
+        "id": "universe_expansion",
+        "image_path": "./assets/images/screen/universe/universe_expansion.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    }
+                ]
+            },
+            {
+                "target_screen": "universe_main",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/screen/universe/switch.png",
+                            "image",
+                            0.9,
+                            10
                         ]
                     }
                 ]
