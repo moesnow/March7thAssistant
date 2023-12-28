@@ -88,7 +88,9 @@ class Daily:
 
         if len(config.daily_tasks) > 0:
             task_functions = {
+                "登录游戏": lambda: True,
                 "拍照1次": lambda: Photo.photograph(),
+                "使用1次「万能合成机」": lambda: Synthesis.consumables(),
                 "合成1次消耗品": lambda: Synthesis.consumables(),
                 "合成1次材料": lambda: Synthesis.material(),
                 "使用1件消耗品": lambda: Synthesis.use_consumables(),
@@ -106,6 +108,7 @@ class Daily:
                 "利用弱点进入战斗并获胜3次": lambda: ForgottenHall.weakness_to_fight(),
                 "施放终结技造成制胜一击1次": lambda: ForgottenHall.ultimate(),
                 "通关「模拟宇宙」（任意世界）的1个区域": lambda: Universe.start(get_reward=False, nums=1, save=False),
+                "完成1次「模拟宇宙」": lambda: Universe.start(get_reward=False, nums=1, save=False),
             }
 
             logger.hr(_("今日实训"), 2)
