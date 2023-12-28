@@ -135,8 +135,18 @@ class ForgottenHall:
             auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
             for character in team_config:
                 if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
-                    return False
-                time.sleep(1)
+                    auto.click_element("等级", "text", include=True, action="move")
+                    auto.mouse_scroll(30, -1)
+                    time.sleep(1)
+                    auto.click_element("角色列表", "text", include=True, action="move")
+                    if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                        return False
+                    else:
+                        auto.click_element("等级", "text", include=True, action="move")
+                        auto.mouse_scroll(30, 1)
+                        time.sleep(1)
+                        auto.click_element("角色列表", "text", include=True, action="move")
+                time.sleep(0.5)
             return True
         return False
 
@@ -315,8 +325,18 @@ class ForgottenHall:
                     auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
                     for character in config.daily_memory_one_team:
                         if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
-                            return False
-                        time.sleep(1)
+                            auto.click_element("等级", "text", include=True, action="move")
+                            auto.mouse_scroll(30, -1)
+                            time.sleep(1)
+                            auto.click_element("角色列表", "text", include=True, action="move")
+                            if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                                return False
+                            else:
+                                auto.click_element("等级", "text", include=True, action="move")
+                                auto.mouse_scroll(30, 1)
+                                time.sleep(1)
+                                auto.click_element("角色列表", "text", include=True, action="move")
+                        time.sleep(0.5)
                     if auto.click_element("./assets/images/forgottenhall/start2.png", "image", 0.8, max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080)):
                         ForgottenHall.click_message_box()
                         if ForgottenHall.start_fight(1, 1, 0, config.daily_memory_one_team):

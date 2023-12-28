@@ -225,11 +225,11 @@ class Automation:
             self.mouse_move(x, y)
         return True
 
-    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, offset=(0, 0)):
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, offset=(0, 0), action="click"):
         coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot,
                                         relative, scale_range, include, need_ocr, source)
         if coordinates:
-            return self.click_element_with_pos(coordinates, offset)
+            return self.click_element_with_pos(coordinates, offset, action)
         return False
 
     def get_single_line_text(self, crop=(0, 0, 0, 0), blacklist=None, max_retries=3):
