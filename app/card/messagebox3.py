@@ -22,7 +22,7 @@ class Ui_MessageBox:
         self.content_count = len(content)
 
         font = QFont()
-        font.setPointSize(15)
+        font.setPointSize(10)
 
         for index, (key, value) in enumerate(self.content.items(), start=0):
             title_label_name = f'self.titleLabel{index}'
@@ -81,7 +81,7 @@ class Ui_MessageBox:
         self.vBoxLayout.addWidget(self.buttonGroup, 0, Qt.AlignBottom)
         self.vBoxLayout.setSizeConstraint(QVBoxLayout.SetMinimumSize)
 
-        self.textLayout.setSpacing(12)
+        self.textLayout.setSpacing(10)
         self.textLayout.setContentsMargins(24, 24, 24, 24)
         self.textLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
         # self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
@@ -92,7 +92,7 @@ class Ui_MessageBox:
             self.textLayout.addWidget(getattr(self, title_label_name), 0, Qt.AlignTop)
             self.textLayout.addWidget(getattr(self, line_edit_name), 0, Qt.AlignTop)
 
-        self.buttonLayout.setSpacing(12)
+        self.buttonLayout.setSpacing(10)
         self.buttonLayout.setContentsMargins(24, 24, 24, 24)
         self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignVCenter)
         self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignVCenter)

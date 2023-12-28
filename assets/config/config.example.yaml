@@ -60,6 +60,7 @@ dispatch_enable: true # 领取委托奖励
 mail_enable: true # 领取邮件奖励
 assist_enable: true # 领取支援奖励
 
+daily_universe_enable: false # 通过 “模拟宇宙” 完成任务
 daily_himeko_try_enable: false # 通过 “姬子试用” 完成任务
 daily_memory_one_enable: false # 通过 “回忆一” 完成任务
 daily_memory_one_team: # 用于回忆一的队伍

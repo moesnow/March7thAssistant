@@ -143,3 +143,8 @@ class Universe:
             if subprocess.run(["start", "gui.exe"], shell=True, check=True, cwd=config.universe_path, env=config.env):
                 return True
         return False
+
+    @staticmethod
+    def run_daily():
+        if config.daily_universe_enable:
+            return Universe.start(get_reward=False, nums=1, save=False)
