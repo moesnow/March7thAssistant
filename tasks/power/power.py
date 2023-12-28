@@ -129,7 +129,7 @@ class Power:
         logger.info(_("进入战斗"))
 
         for i in range(20):
-            if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95):
+            if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 logger.info(_("尝试开启自动战斗"))
                 auto.press_key("v")
             elif auto.find_element("./assets/images/base/auto.png", "image", 0.95, take_screenshot=False):
