@@ -245,6 +245,8 @@ class Power:
         instance_name = instance_name.replace("潘灼之形", "灼之形")
         instance_name = instance_name.replace("熠灼之形", "灼之形")
 
+        instance_name = instance_name.replace("蛀星的旧靥", "蛀星的旧")
+
         if config.instance_team_enable:
             Base.change_team(config.instance_team_number)
 

@@ -108,6 +108,7 @@ class Ui_MessageBox:
             "毁灭的开端（末日兽）",
             "寒潮的落幕（可可利亚）",
             "不死的神实（幻胧）",
+            "蛀星的旧靥（碎星王虫）",
         ]
         self.comboBox4.addItems(self.Items4)
         self.content4 = next((item for item in self.Items4 if self.content[self.label4] in item), self.content[self.label4])
