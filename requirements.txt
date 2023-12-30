@@ -17,5 +17,5 @@ onepush
 winotify
 markdown
 cpufeature
-PyQt-Fluent-Widgets
+PyQt-Fluent-Widgets==1.4.3
 pylnk3

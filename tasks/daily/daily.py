@@ -69,20 +69,22 @@ class Daily:
 
         Reward.start()
 
-    def daily():
+    @staticmethod
+    def daily(force=False):
         logger.hr(_("开始日常任务"), 0)
         if Date.is_next_4_am(config.last_run_timestamp):
-
             # 活动
             Activity.start()
 
-            screen.change_to("guide2")
+            config.set_value("daily_tasks", {})
+            if config.daily_enable or force:
+                screen.change_to("guide2")
 
-            tasks = Tasks("./assets/config/task_mappings.json")
-            tasks.start()
+                tasks = Tasks("./assets/config/task_mappings.json")
+                tasks.start()
 
-            config.set_value("daily_tasks", tasks.daily_tasks)
-            config.save_timestamp("last_run_timestamp")
+                config.set_value("daily_tasks", tasks.daily_tasks)
+                config.save_timestamp("last_run_timestamp")
         else:
             logger.info(_("日常任务尚未刷新"))
 

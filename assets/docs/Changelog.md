@@ -3,10 +3,11 @@
 ## v1.7.2
 
 ### 新功能
+- 支持关闭每日实训（可搭配每天一次模拟宇宙来完成500活跃度）
 - 支持新历战余响「蛀星的旧靥」
 - 支持忘却之庭和支援角色选择“阮·梅”
 ### 修复
-- 传送忘却之庭小概率错误点击信用点图标 [#91](https://github.com/moesnow/March7thAssistant/pull/91)
+- 传送忘却之庭小概率错误点击成信用点图标 [#91](https://github.com/moesnow/March7thAssistant/pull/91)
 
 ## v1.7.1
 

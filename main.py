@@ -1,5 +1,6 @@
 import os
 import sys
+
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__)))
 
 from managers.notify_manager import notify
@@ -8,7 +9,6 @@ from managers.config_manager import config
 from managers.ocr_manager import ocr
 from managers.translate_manager import _
 from tasks.game.game import Game
-from tasks.game.stop import Stop
 from tasks.daily.daily import Daily
 from tasks.reward.reward import Reward
 from tasks.daily.fight import Fight
@@ -39,7 +39,7 @@ def main(action=None):
         Version.start()
         Game.start()
         if action == "daily":
-            Daily.daily()
+            Daily.daily(force=True)
             Reward.start()
         elif action == "power":
             Power.start()

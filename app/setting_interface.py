@@ -223,6 +223,12 @@ class SettingInterface(ScrollArea):
         #     "请解锁混沌回忆并配置了队伍1后再打开该选项",
         #     "daily_forgottenhall_enable"
         # )
+        self.dailyEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用每日实训'),
+            "",
+            "daily_enable"
+        )
         self.dailyUniverseEnableCard = SwitchSettingCard1(
             FIF.TILES,
             self.tr('通过 “模拟宇宙” 完成任务'),
@@ -550,6 +556,7 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.assistEnableCard)
         # self.DailyGroup.addSettingCard(self.srpassEnableCard)
         # self.DailyGroup.addSettingCard(self.dailyForgottenhallEnableCard)
+        self.DailyGroup.addSettingCard(self.dailyEnableCard)
         self.DailyGroup.addSettingCard(self.dailyUniverseEnableCard)
         self.DailyGroup.addSettingCard(self.dailyHimekoTryEnableCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneEnableCard)
