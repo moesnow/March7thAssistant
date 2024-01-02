@@ -10,7 +10,7 @@ import time
 
 class ForgottenHall:
     @staticmethod
-    def wait_fight(count, boss_count, max_recursion):
+    def wait_fight(count, boss_count, max_recursion, switch_team):
         logger.info(_("进入战斗"))
 
         # for i in range(20):
@@ -45,7 +45,7 @@ class ForgottenHall:
                                        max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080))
                     ForgottenHall.click_message_box()
                     # 重新挑战整间
-                    if ForgottenHall.start_fight(count, boss_count, max_recursion - 1):
+                    if ForgottenHall.start_fight(count, boss_count, max_recursion - 1, switch_team=not switch_team):
                         return 4  # 挑战失败，重试后成功
                     return 3  # 挑战失败，重试后失败
                 else:
@@ -66,14 +66,13 @@ class ForgottenHall:
         return result
 
     @staticmethod
-    def start_fight(count, boss_count, max_recursion=config.forgottenhall_retries, team=None):
+    def start_fight(count, boss_count, max_recursion=config.forgottenhall_retries, team=None, switch_team=False):
         logger.debug(_("剩余重试次数:{max_recursion}".format(max_recursion=max_recursion)))
         for i in range(count):
             logger.info(_("进入第{i}间").format(i=i + 1))
             auto.press_key("w", 3.5)
 
-            # 释放秘技
-            if team:
+            def use_technique(team):
                 last_index = None
                 for index, character in enumerate(team):
                     if character[1] > 0:
@@ -84,18 +83,17 @@ class ForgottenHall:
                             time.sleep(1)
                     elif character[1] == -1:
                         last_index = index
+
+                return last_index
+
+            # 释放秘技
+            if team:
+                last_index = use_technique(team)
+            elif switch_team:
+                last_index = use_technique(config.get_value("forgottenhall_team" + str(2 - i)))
             else:
-                last_index = None
-                for index, character in enumerate(config.get_value("forgottenhall_team" + str(i + 1))):
-                    if character[1] > 0:
-                        auto.press_key(f"{index+1}")
-                        time.sleep(1)
-                        for i in range(character[1]):
-                            auto.press_key(config.get_value("hotkey_technique"))
-                            time.sleep(1)
-                    elif character[1] == -1:
-                        last_index = index
-            # 设置了末位角色
+                last_index = use_technique(config.get_value("forgottenhall_team" + str(i + 1)))
+            # 切换到开怪角色
             if last_index is not None:
                 auto.press_key(f"{last_index+1}")
                 time.sleep(1)
@@ -115,7 +113,7 @@ class ForgottenHall:
                 for i in range(3):
                     auto.press_mouse()
 
-                result = ForgottenHall.wait_fight(count, boss_count, max_recursion)
+                result = ForgottenHall.wait_fight(count, boss_count, max_recursion, switch_team)
 
                 if result == 3:
                     return False
@@ -181,7 +179,7 @@ class ForgottenHall:
             for direction in [-1, 1]:
                 for i in range(15):
                     auto.mouse_scroll(2, direction)
-                    time.sleep(5)
+                    time.sleep(6)
 
                     result = auto.find_element(number, "text", max_retries=4, crop=crop, relative=True)
                     if result:
@@ -236,6 +234,7 @@ class ForgottenHall:
             boss_count = 1
             if not ForgottenHall.start_fight(2, boss_count):
                 logger.info(_("挑战失败"))
+                break
             else:
                 logger.info(_("挑战成功"))
                 max_level = i

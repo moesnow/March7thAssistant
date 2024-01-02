@@ -280,7 +280,7 @@ class Power:
             Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 没有找到指定副本名称⚠️"))
             return False
         # 验证传送是否成功
-        if not auto.find_element(instance_name, "text", max_retries=20, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
+        if not auto.find_element(instance_name, "text", max_retries=60, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
             Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 传送可能失败⚠️"))
             return False
 
