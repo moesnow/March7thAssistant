@@ -127,19 +127,23 @@ class Power:
     @staticmethod
     def wait_fight():
         logger.info(_("进入战斗"))
-
-        for i in range(20):
-            if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
-                logger.info(_("尝试开启自动战斗"))
-                auto.press_key("v")
-            elif auto.find_element("./assets/images/base/auto.png", "image", 0.95, take_screenshot=False):
-                logger.info(_("自动战斗已开启"))
-                break
-            time.sleep(0.5)
-        logger.info(_("等待战斗"))
+        # for i in range(20):
+        #     if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+        #         logger.info(_("尝试开启自动战斗"))
+        #         auto.press_key("v")
+        #     elif auto.find_element("./assets/images/base/auto.png", "image", 0.95, take_screenshot=False):
+        #         logger.info(_("自动战斗已开启"))
+        #         break
+        #     time.sleep(0.5)
+        # logger.info(_("等待战斗"))
 
         def check_fight():
-            return auto.find_element("./assets/images/fight/fight_again.png", "image", 0.9)
+            if auto.find_element("./assets/images/fight/fight_again.png", "image", 0.9):
+                return True
+            elif config.auto_battle_detect_enable and auto.find_element("./assets/images/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+                logger.info(_("尝试开启自动战斗"))
+                auto.press_key("v")
+            return False
         if not auto.retry_with_timeout(lambda: check_fight(), 30 * 60, 1):
             logger.error(_("战斗超时"))
             raise Exception(_("战斗超时"))

@@ -126,6 +126,7 @@ forgottenhall_team2: # 队伍2
   - 1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行，如已经满星则跳过）
 
+auto_battle_detect_enable: true # 启用自动战斗检测
 hotkey_technique: e # 游戏内设置的秘技按键
 
 # 消息通知

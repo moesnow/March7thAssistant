@@ -471,6 +471,12 @@ class SettingInterface(ScrollArea):
         )
 
         self.KeybindingGroup = SettingCardGroup(self.tr("按键"), self.scrollWidget)
+        self.autoBattleDetectEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用自动战斗检测'),
+            "此处的设置只会对清体力和忘却之庭场景生效",
+            "auto_battle_detect_enable"
+        )
         self.keybindingTechniqueCard = PushSettingCardKey(
             self.tr('按住以修改'),
             FIF.TILES,
@@ -596,6 +602,7 @@ class SettingInterface(ScrollArea):
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.NotifyGroup.addSettingCard(self.winotifyEnableCard)
 
+        self.KeybindingGroup.addSettingCard(self.autoBattleDetectEnableCard)
         self.KeybindingGroup.addSettingCard(self.keybindingTechniqueCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
