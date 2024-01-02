@@ -6,6 +6,18 @@
 
 ## 三月七小助手 March7thAssistant
 
+### Q：总是被杀毒软件删除怎么办
+
+A：将小助手文件夹加入杀毒软件排除项，然后使用 Update.exe 自动更新或手动更新一次。
+
+Windows Defender：病毒和威胁防护→管理设置→添加或删除排除项
+
+### Q：忘却之庭缺少新角色
+
+A：在忘却之庭的界面，用小助手设置中的捕获截图功能，点击保存完整图片后，放入角色文件夹。
+
+同时欢迎用未压缩的方式上传到 [Issue](https://github.com/moesnow/March7thAssistant/issues)，比如压缩包，或者 [PR](https://github.com/moesnow/March7thAssistant/pulls) 也可以。
+
 ### Q：完整运行的作用是什么
 
 A：按照 日常-清体力-锄大地-模拟宇宙(每周)-忘却之庭(每周)-领取奖励 的顺序依次执行
@@ -14,7 +26,7 @@ A：按照 日常-清体力-锄大地-模拟宇宙(每周)-忘却之庭(每周)-
 
 ### Q：开始运行后就不能移动键盘鼠标和切换到后台了吗
 
-A：是的，如果需要后台运行，请尝试 [远程本地多用户桌面](https://asu.stysqy.top/guide/bs.html)
+A：是的，如果需要后台运行，请尝试 [远程本地多用户桌面](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial?id=%e5%90%8e%e5%8f%b0%e8%bf%90%e8%a1%8c%ef%bc%88%e8%bf%9c%e7%a8%8b%e6%9c%ac%e5%9c%b0%e5%a4%9a%e7%94%a8%e6%88%b7%e6%a1%8c%e9%9d%a2%ef%bc%89)
 
 ### Q：添加自定义通知的方式
 
