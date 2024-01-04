@@ -19,7 +19,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12.0'
+          python-version: '3.11.6'
           cache: 'pip'
 
       - name: Install dependencies
