@@ -12,7 +12,7 @@ class ForgottenHall:
     @staticmethod
     def wait_fight(count, boss_count, max_recursion, switch_team):
         logger.info(_("进入战斗"))
-
+        time.sleep(2)
         # for i in range(20):
         #     if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
         #         logger.info(_("尝试开启自动战斗"))

@@ -7,6 +7,8 @@
 - 支持加入预览版更新渠道（设置→关于）
 - 更新时支持调用 aria2 进行多线程下载（速度更快同时减少了下载中断的情况）
 - 更新时不再使用系统临时目录（方便添加杀毒软件白名单 [#86](https://github.com/moesnow/March7thAssistant/discussions/86#discussioncomment-7966897)）
+### 修复
+- 重复挑战副本运行异常
 
 ## v1.7.3
 
