@@ -13,7 +13,7 @@ from tasks.daily.daily import Daily
 from tasks.reward.reward import Reward
 from tasks.daily.fight import Fight
 from tasks.power.power import Power
-from tasks.version.version import Version
+# from tasks.version.version import Version
 from tasks.weekly.universe import Universe
 from tasks.weekly.forgottenhall import ForgottenHall
 import atexit
@@ -30,13 +30,13 @@ def main(action=None):
     # 完整运行
     if action is None or action == "main":
         while True:
-            Version.start()
+            # Version.start()
             Game.start()
             Daily.start()
             Game.stop(True)
     # 子任务
     elif action in ["daily", "power", "fight", "universe", "forgottenhall"]:
-        Version.start()
+        # Version.start()
         Game.start()
         if action == "daily":
             Daily.daily(force=True)
