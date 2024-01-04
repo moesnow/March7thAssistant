@@ -19,17 +19,35 @@ class UpdateThread(QThread):
 
     def run(self):
         try:
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", "latest.json", self.timeout), timeout=10)
+            if config.update_prerelease_enable:
+                response = requests.get("https://api.github.com/repos/moesnow/March7thAssistant/releases", timeout=10)
+            else:
+                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", "latest.json", self.timeout), timeout=10)
             if response.status_code == 200:
-                data = json.loads(response.text)
+                if config.update_prerelease_enable:
+                    data = response.json()[0]
+                else:
+                    data = response.json()
                 version = data["tag_name"]
                 content = data["body"]
+
+                assert_url = None
                 for asset in data["assets"]:
-                    if "full" in asset["browser_download_url"]:
-                        continue
+                    if config.update_full_enable:
+                        if "full" not in asset["browser_download_url"]:
+                            continue
+                        else:
+                            assert_url = asset["browser_download_url"]
+                            break
                     else:
-                        assert_url = asset["browser_download_url"]
-                        break
+                        if "full" in asset["browser_download_url"]:
+                            continue
+                        else:
+                            assert_url = asset["browser_download_url"]
+                            break
+                if assert_url is None:
+                    self._update_signal.emit(1)
+                    return
 
                 html_style = """
                     <style>

@@ -129,6 +129,9 @@ forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行
 auto_battle_detect_enable: true # 启用自动战斗检测
 hotkey_technique: e # 游戏内设置的秘技按键
 
+update_prerelease_enable: false # 加入预览版更新渠道
+update_full_enable: true # 更新时下载完整包
+
 # 消息通知
 # Windows 原生通知
 notify_winotify_enable: true

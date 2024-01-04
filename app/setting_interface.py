@@ -509,6 +509,18 @@ class SettingInterface(ScrollArea):
             self.tr('关于'),
             self.tr('当前版本：') + " " + config.version
         )
+        self.updatePrereleaseEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('加入预览版更新渠道'),
+            "",
+            "update_prerelease_enable"
+        )
+        self.updateFullEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('更新时下载完整包'),
+            "包含模拟宇宙和锄大地等，但压缩包体积更大",
+            "update_full_enable"
+        )
 
         self.__initWidget()
 
@@ -609,6 +621,8 @@ class SettingInterface(ScrollArea):
         self.AboutGroup.addSettingCard(self.qqGroupCard)
         self.AboutGroup.addSettingCard(self.feedbackCard)
         self.AboutGroup.addSettingCard(self.aboutCard)
+        self.AboutGroup.addSettingCard(self.updatePrereleaseEnableCard)
+        self.AboutGroup.addSettingCard(self.updateFullEnableCard)
 
         self.ProgramGroup.titleLabel.setHidden(True)
         # self.GameGroup.titleLabel.setHidden(True)
