@@ -10,7 +10,9 @@ import os
 class UpdateHandler:
     def __init__(self, download_url, cover_folder_path, extract_file_name):
         self.exe_path = os.path.abspath("./assets/7z/7za.exe")
-        self.temp_path = tempfile.gettempdir()
+        self.temp_path = os.path.abspath("./temp")
+        if not os.path.exists(self.temp_path):
+            os.mkdir(self.temp_path)
         self.download_url = download_url
         self.download_file_path = os.path.join(self.temp_path, os.path.basename(download_url))
         self.cover_folder_path = cover_folder_path

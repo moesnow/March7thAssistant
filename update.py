@@ -23,7 +23,9 @@ class Update:
             "https://github.moeyy.xyz/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/latest.json",
         ]
 
-        self.temp_path = tempfile.gettempdir()
+        self.temp_path = os.path.abspath("./temp")
+        if not os.path.exists(self.temp_path):
+            os.mkdir(self.temp_path)
         if download_url is None:
             self.__get_download_url()
         else:
@@ -220,7 +222,9 @@ def check_temp_dir():
         print("更新程序只支持打包成exe后运行")
         sys.exit(1)
 
-    temp_path = tempfile.gettempdir()
+    temp_path = os.path.abspath("./temp")
+    if not os.path.exists(temp_path):
+        os.mkdir(temp_path)
     file_path = os.path.abspath(sys.argv[0])
     file_name = os.path.basename(file_path)
     destination_path = os.path.join(temp_path, file_name)
