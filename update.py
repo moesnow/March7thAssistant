@@ -31,6 +31,7 @@ class Update:
             self.extract_folder_path = os.path.join(self.temp_path, os.path.basename(self.download_url).rsplit(".", 1)[0])
         self.download_file_path = os.path.join(self.temp_path, os.path.basename(self.download_url))
         self.cover_folder_path = os.path.abspath("./")
+        self.aria2_path = os.path.abspath("./assets/aria2/aria2c.exe")
 
     def __find_fastest_mirror(self, mirror_urls, timeout=5):
         def check_mirror(mirror_url):
@@ -106,19 +107,31 @@ class Update:
         input("按回车键开始更新")
 
     def __download_with_progress(self, download_url, save_path):
-        # 获取文件大小
-        response = urllib.request.urlopen(download_url)
-        file_size = int(response.info().get('Content-Length', -1))
+        if os.path.exists(self.aria2_path):
+            if os.path.exists(save_path):
+                subprocess.Popen([self.aria2_path, "--max-connection-per-server=16", "--continue=true",
+                                 f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]).wait()
+            else:
+                subprocess.Popen([self.aria2_path, "--max-connection-per-server=16",
+                                 f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]).wait()
+        else:
+            # 获取文件大小
+            response = requests.head(download_url)
+            file_size = int(response.headers.get('Content-Length', -1))
 
-        # 使用 tqdm 创建进度条
-        with tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
-            def update_bar(block_count, block_size, total_size):
-                if pbar.total != total_size:
-                    pbar.total = total_size
-                downloaded = block_count * block_size
-                pbar.update(downloaded - pbar.n)
+            # 设置请求头，支持断点续传
+            headers = {}
+            if os.path.exists(save_path):
+                headers['Range'] = 'bytes=%d-' % os.path.getsize(save_path)
 
-            urllib.request.urlretrieve(download_url, save_path, reporthook=update_bar)
+            # 使用 tqdm 创建进度条
+            with tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+                with requests.get(download_url, headers=headers, stream=True) as response:
+                    with open(save_path, 'ab' if headers else 'wb') as file:
+                        for chunk in response.iter_content(chunk_size=1024):
+                            if chunk:
+                                file.write(chunk)
+                                pbar.update(len(chunk))
 
     def __terminate_process(self):
         for proc in psutil.process_iter(attrs=['pid', 'name']):
