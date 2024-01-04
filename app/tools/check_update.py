@@ -6,8 +6,19 @@ from packaging.version import parse
 import markdown
 import requests
 import json
+import re
 
 from tasks.base.fastest_mirror import FastestMirror
+
+
+def remove_images_from_markdown(markdown_content):
+    # 定义匹配Markdown图片标记的正则表达式
+    img_pattern = re.compile(r'!\[.*?\]\(.*?\)')
+
+    # 使用sub方法替换所有匹配的图片标记为空字符串
+    cleaned_content = img_pattern.sub('', markdown_content)
+
+    return cleaned_content
 
 
 class UpdateThread(QThread):
@@ -30,6 +41,7 @@ class UpdateThread(QThread):
                     data = response.json()
                 version = data["tag_name"]
                 content = data["body"]
+                content = remove_images_from_markdown(content)
 
                 assert_url = None
                 for asset in data["assets"]:
