@@ -31,6 +31,7 @@ class Update:
             self.extract_folder_path = os.path.join(self.temp_path, os.path.basename(self.download_url).rsplit(".", 1)[0])
         self.download_file_path = os.path.join(self.temp_path, os.path.basename(self.download_url))
         self.cover_folder_path = os.path.abspath("./")
+        self.exe_path = os.path.abspath("./assets/7z/7za.exe")
         self.aria2_path = os.path.abspath("./assets/aria2/aria2c.exe")
 
     def __find_fastest_mirror(self, mirror_urls, timeout=5):
@@ -109,11 +110,15 @@ class Update:
     def __download_with_progress(self, download_url, save_path):
         if os.path.exists(self.aria2_path):
             if os.path.exists(save_path):
-                subprocess.Popen([self.aria2_path, "--max-connection-per-server=16", "--continue=true",
-                                 f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]).wait()
+                command = [self.aria2_path, "--max-connection-per-server=16", "--continue=true",
+                                            f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
             else:
-                subprocess.Popen([self.aria2_path, "--max-connection-per-server=16",
-                                 f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]).wait()
+                command = [self.aria2_path, "--max-connection-per-server=16",
+                                            f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
+            process = subprocess.Popen(command)
+            process.wait()
+            if process.returncode != 0:
+                raise Exception
         else:
             # 获取文件大小
             response = requests.head(download_url)
@@ -159,7 +164,11 @@ class Update:
         print("开始解压...")
         while True:
             try:
-                shutil.unpack_archive(self.download_file_path, self.temp_path)
+                if os.path.exists(self.exe_path):
+                    if not subprocess.run([self.exe_path, "x", self.download_file_path, f"-o{self.temp_path}", "-aoa"], shell=True, check=True):
+                        raise Exception
+                else:
+                    shutil.unpack_archive(self.download_file_path, self.temp_path)
                 print(f"解压完成：{self.extract_folder_path}")
                 break
             except Exception as e:

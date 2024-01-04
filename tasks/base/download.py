@@ -10,11 +10,15 @@ def download_with_progress(download_url, save_path):
 
     if os.path.exists(aria2_path):
         if os.path.exists(save_path):
-            subprocess.Popen([aria2_path, "--max-connection-per-server=16", "--continue=true",
-                              f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]).wait()
+            command = [aria2_path, "--max-connection-per-server=16", "--continue=true",
+                       f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
         else:
-            subprocess.Popen([aria2_path, "--max-connection-per-server=16",
-                              f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]).wait()
+            command = [aria2_path, "--max-connection-per-server=16",
+                       f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
+        process = subprocess.Popen(command)
+        process.wait()
+        if process.returncode != 0:
+            raise Exception
     else:
         # 获取文件大小
         response = urllib.request.urlopen(download_url)
