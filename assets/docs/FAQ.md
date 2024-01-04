@@ -8,15 +8,15 @@
 
 ### Q：总是被杀毒软件删除怎么办
 
-A：将小助手文件夹加入杀毒软件排除项，然后使用 Update.exe 自动更新或手动更新一次。
+A：将`小助手文件夹`加入杀毒软件排除项，然后使用 `Update.exe` 自动更新或手动更新一次。
 
-Windows Defender：病毒和威胁防护→管理设置→添加或删除排除项
+Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删除排除项`
 
 ### Q：忘却之庭缺少新角色
 
-A：在忘却之庭的界面，用小助手设置中的捕获截图功能，点击保存完整图片后，放入角色文件夹。
+A：在忘却之庭的界面，用小助手设置中的`捕获截图`功能，点击`保存完整图片`后，放入`角色文件夹`。
 
-同时欢迎用未压缩的方式上传到 [Issue](https://github.com/moesnow/March7thAssistant/issues)，比如压缩包，或者 [PR](https://github.com/moesnow/March7thAssistant/pulls) 也可以。
+同时欢迎用`未压缩`的方式上传到 [Issue](https://github.com/moesnow/March7thAssistant/issues)，比如压缩包，或者 [PR](https://github.com/moesnow/March7thAssistant/pulls) 也可以。
 
 ### Q：完整运行的作用是什么
 
