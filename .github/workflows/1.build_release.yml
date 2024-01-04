@@ -51,7 +51,7 @@ jobs:
         run: |
           python build.py github-actions
           xcopy .\3rdparty\ .\dist\March7thAssistant_${{ github.ref_name }}\3rdparty\ /E /I /Y
-          powershell Copy-Item -Path .\assets\config\config.example.yaml -Destination .\dist\March7thAssistant_${{ github.ref_name }}\config.yaml -Force
+          ren .\dist\March7thAssistant_${{ github.ref_name }} March7thAssistant_${{ github.ref_name }}_full
 
       - name: Create full zip archive
         if: startsWith(github.ref, 'refs/tags/')
