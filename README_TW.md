@@ -8,14 +8,16 @@ March7thAssistant · 三月七小助手
 </h1>
 
 <p>
-    <img alt="" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square&color=4096d8" />
-    <img alt="" src="https://img.shields.io/github/last-commit/moesnow/March7thAssistant?style=flat-square&color=f18cb9" />
-    <img alt="" src="https://img.shields.io/github/v/release/moesnow/March7thAssistant?style=flat-square&color=4096d8" />
-    <img alt="" src="https://img.shields.io/github/downloads/moesnow/March7thAssistant/total?style=flat-square&color=f18cb9" />
-    <br />
-    <a href="https://trendshift.io/repositories/3892" target="_blank">
-      <img src="https://trendshift.io/api/badge/repositories/3892" alt="moesnow%2FMarch7thAssistant | Trendshift" style="width: 250px; height: 55px; padding-top: 18px" width="250" height="55"/>
-    </a>
+  <img alt="" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square&color=4096d8" />
+  <img alt="" src="https://img.shields.io/github/last-commit/moesnow/March7thAssistant?style=flat-square&color=f18cb9" />
+  <img alt="" src="https://img.shields.io/github/v/release/moesnow/March7thAssistant?style=flat-square&color=4096d8" />
+  <img alt="" src="https://img.shields.io/github/downloads/moesnow/March7thAssistant/total?style=flat-square&color=f18cb9" />
+</p>
+
+<p>
+  <a href="https://trendshift.io/repositories/3892" target="_blank">
+    <img src="https://trendshift.io/api/badge/repositories/3892" alt="moesnow%2FMarch7thAssistant | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
+  </a>
 </p>
 
 [简体中文](./README.md) | **繁體中文** | [English](./README_EN.md)
