@@ -143,25 +143,25 @@ class SettingInterface(ScrollArea):
         self.mergeImmersifierEnableCard = SwitchSettingCard1(
             FIF.BASKETBALL,
             self.tr('优先合成沉浸器'),
-            "",
+            "达到上限八个后停止，可搭配每天一定次数的模拟宇宙实现循环",
             "merge_immersifier"
         )
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
             FIF.HEART,
             self.tr('使用后备开拓力'),
-            "",
+            "单次上限240点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
             "use_reserved_trailblaze_power"
         )
         self.useFuelEnableCard = SwitchSettingCard1(
             FIF.CAFE,
             self.tr('使用燃料'),
-            "",
+            "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
             "use_fuel"
         )
         self.echoofwarEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             self.tr('启用历战余响'),
-            "每周体力优先完成三次「历战余响」",
+            "每周体力优先完成三次「历战余响」，仅限完整运行生效",
             "echo_of_war_enable"
         )
         self.echoofwarRunTimeCard = PushSettingCardDate(
@@ -181,7 +181,7 @@ class SettingInterface(ScrollArea):
         self.borrowCharacterFromCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.VIEW,
-            self.tr("指定好友的支援角色（如存在则优先使用）"),
+            self.tr("指定好友的支援角色（填写昵称，模糊匹配，如存在则优先角色优先级使用）"),
             "borrow_character_from"
         )
         self.borrowCharacterCard = PushSettingCardEval(
@@ -226,7 +226,7 @@ class SettingInterface(ScrollArea):
         self.dailyEnableCard = SwitchSettingCard1(
             FIF.TILES,
             self.tr('启用每日实训'),
-            "",
+            "关闭后可通过配置每天一次模拟宇宙来完成500活跃度",
             "daily_enable"
         )
         self.dailyUniverseEnableCard = SwitchSettingCard1(
