@@ -1,5 +1,6 @@
 # coding:utf-8
-from qfluentwidgets import (SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard, Pivot, qrouter)
+from qfluentwidgets import (SettingCardGroup, PushSettingCard, ScrollArea,
+                            InfoBar, PrimaryPushSettingCard, Pivot, qrouter)
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget
@@ -69,7 +70,8 @@ class SettingInterface(ScrollArea):
             FIF.POWER_BUTTON,
             self.tr('任务完成后'),
             self.tr('其中“退出”指退出游戏，“循环”指根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
-            texts={'无': 'None', '退出': 'Exit', '循环': 'Loop', '关机': 'Shutdown', '休眠': 'Hibernate', '睡眠': 'Sleep'}
+            texts={'无': 'None', '退出': 'Exit', '循环': 'Loop',
+                   '关机': 'Shutdown', '休眠': 'Hibernate', '睡眠': 'Sleep'}
         )
         self.playAudioCard = SwitchSettingCard1(
             FIF.ALBUM,
@@ -332,7 +334,8 @@ class SettingInterface(ScrollArea):
             None
         )
 
-        self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙 (Auto_Simulated_Universe)"), self.scrollWidget)
+        self.UniverseGroup = SettingCardGroup(
+            self.tr("模拟宇宙 (Auto_Simulated_Universe)"), self.scrollWidget)
         self.universeEnableCard = SwitchSettingCard1(
             FIF.VPN,
             self.tr('启用模拟宇宙'),
@@ -435,7 +438,8 @@ class SettingInterface(ScrollArea):
             self.tr('打开角色文件夹'),
             FIF.INFO,
             self.tr("↓↓混沌回忆队伍↓↓"),
-            self.tr("数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\character\" 中查看")
+            self.tr(
+                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\character\" 中查看")
         )
         self.forgottenhallTeam1Card = PushSettingCardEval(
             self.tr('修改'),
@@ -454,6 +458,58 @@ class SettingInterface(ScrollArea):
             FIF.DATE_TIME,
             self.tr("上次运行混沌回忆的时间"),
             "forgottenhall_timestamp"
+        )
+
+        self.PureFictionGroup = SettingCardGroup(self.tr("虚构叙事"), self.scrollWidget)
+        self.purefictionEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用虚构叙事'),
+            "",
+            # self.tr('仅限完整运行生效'),
+            "purefiction_enable"
+        )
+        self.purefictionLevelCard = PushSettingCardEval(
+            self.tr('修改'),
+            FIF.MINIMIZE,
+            self.tr("关卡范围"),
+            "purefiction_level"
+        )
+        # self.forgottenhallRetriesCard = PushSettingCardEval(
+        #     self.tr('修改'),
+        #     FIF.REMOVE_FROM,
+        #     self.tr("混沌回忆挑战失败后的重试次数"),
+        #     "forgottenhall_retries"
+        # )
+        # self.purefictionRetriesCard = RangeSettingCard1(
+        #     "purefiction_retries",
+        #     [0, 10],
+        #     FIF.REMOVE_FROM,
+        #     self.tr("重试次数"),
+        # )
+        self.purefictionTeamInfoCard = PrimaryPushSettingCard(
+            self.tr('打开角色文件夹'),
+            FIF.INFO,
+            self.tr("↓↓混沌回忆队伍↓↓"),
+            self.tr(
+                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\character\" 中查看")
+        )
+        self.purefictionTeam1Card = PushSettingCardEval(
+            self.tr('修改'),
+            FIF.FLAG,
+            self.tr("虚构叙事队伍1"),
+            "purefiction_team1"
+        )
+        self.purefictionTeam2Card = PushSettingCardEval(
+            self.tr('修改'),
+            FIF.FLAG,
+            self.tr("虚构叙事队伍2"),
+            "purefiction_team2"
+        )
+        self.purefictionRunTimeCard = PushSettingCardDate(
+            self.tr('修改'),
+            FIF.DATE_TIME,
+            self.tr("上次运行虚构叙事的时间"),
+            "purefiction_timestamp"
         )
 
         self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
@@ -611,6 +667,14 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
 
+        self.PureFictionGroup.addSettingCard(self.purefictionEnableCard)
+        self.PureFictionGroup.addSettingCard(self.purefictionLevelCard)
+        # self.PureFictionGroup.addSettingCard(self.purefictionRetriesCard)
+        self.PureFictionGroup.addSettingCard(self.purefictionTeamInfoCard)
+        self.PureFictionGroup.addSettingCard(self.purefictionTeam1Card)
+        self.PureFictionGroup.addSettingCard(self.purefictionTeam2Card)
+        self.PureFictionGroup.addSettingCard(self.purefictionRunTimeCard)
+
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.NotifyGroup.addSettingCard(self.winotifyEnableCard)
 
@@ -632,6 +696,7 @@ class SettingInterface(ScrollArea):
         self.FightGroup.titleLabel.setHidden(True)
         self.UniverseGroup.titleLabel.setHidden(True)
         self.ForgottenhallGroup.titleLabel.setHidden(True)
+        self.PureFictionGroup.titleLabel.setHidden(True)
         self.NotifyGroup.titleLabel.setHidden(True)
         self.KeybindingGroup.titleLabel.setHidden(True)
         self.AboutGroup.titleLabel.setHidden(True)
@@ -645,6 +710,7 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.FightGroup, 'FightInterface', self.tr('锄大地'))
         self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('模拟宇宙'))
         self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('忘却之庭'))
+        self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构叙事'))
         self.addSubInterface(self.NotifyGroup, 'NotifyInterface', self.tr('推送'))
         self.addSubInterface(self.KeybindingGroup, 'KeybindingInterface', self.tr('按键'))
         self.addSubInterface(self.AboutGroup, 'AboutInterface', self.tr('关于'))
@@ -733,7 +799,10 @@ class SettingInterface(ScrollArea):
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
-        self.forgottenhallTeamInfoCard.clicked.connect(lambda: subprocess.check_call("start /WAIT explorer .\\assets\\images\\character", shell=True))
+        self.forgottenhallTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
+            "start /WAIT explorer .\\assets\\images\\character", shell=True))
+        self.purefictionTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
+            "start /WAIT explorer .\\assets\\images\\character", shell=True))
 
         self.guiUniverseCard.clicked.connect(lambda: start_task("universe_gui"))
         self.guiFightCard.clicked.connect(lambda: start_task("fight_gui"))
@@ -742,8 +811,11 @@ class SettingInterface(ScrollArea):
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 
-        self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
-        self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
-        self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant/issues")))
+        self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(
+            QUrl("https://github.com/moesnow/March7thAssistant")))
+        self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(
+            QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
+        self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(
+            QUrl("https://github.com/moesnow/March7thAssistant/issues")))
 
         self.aboutCard.clicked.connect(lambda: checkUpdate(self.parent))

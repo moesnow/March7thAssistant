@@ -77,7 +77,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -91,7 +91,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide2.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -110,7 +110,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -124,7 +124,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide3.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -143,7 +143,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -157,7 +157,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide4.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -176,7 +176,7 @@
                         "args": [
                             "./assets/images/menu/mail.png",
                             "image",
-                            0.95,
+                            0.9,
                             "crop=(0.95, 0.1, 0.05, 0.6)"
                         ]
                     },
@@ -185,7 +185,7 @@
                         "args": [
                             "./assets/images/menu/mail_reward.png",
                             "image",
-                            0.95,
+                            0.9,
                             "crop=(0.95, 0.1, 0.05, 0.6)"
                         ]
                     }
@@ -199,7 +199,7 @@
                         "args": [
                             "./assets/images/menu/more.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -228,7 +228,7 @@
                         "args": [
                             "./assets/images/menu/more.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -257,7 +257,7 @@
                         "args": [
                             "./assets/images/menu/camera.png",
                             "image",
-                            0.95,
+                            0.9,
                             "crop=(0.95, 0.1, 0.05, 0.6)"
                         ]
                     }
@@ -271,7 +271,7 @@
                         "args": [
                             "./assets/images/menu/dispatch.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -284,7 +284,7 @@
                         "args": [
                             "./assets/images/menu/pass.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -297,7 +297,7 @@
                         "args": [
                             "./assets/images/menu/synthesis.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -310,7 +310,7 @@
                         "args": [
                             "./assets/images/menu/bag.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -324,7 +324,7 @@
                         "args": [
                             "./assets/images/menu/bag_consumables.png",
                             "image",
-                            0.95,
+                            0.9,
                             2
                         ]
                     }
@@ -338,7 +338,7 @@
                         "args": [
                             "./assets/images/menu/configure_team.png",
                             "image",
-                            0.95,
+                            0.9,
                             2
                         ]
                     }
@@ -352,7 +352,7 @@
                         "args": [
                             "./assets/images/menu/activity.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -426,7 +426,7 @@
                         "args": [
                             "./assets/images/screen/start_game.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -452,7 +452,7 @@
                         "args": [
                             "./assets/images/screen/click_enter.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -567,7 +567,7 @@
                         "args": [
                             "./assets/images/fight/retreat.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -593,7 +593,7 @@
                         "args": [
                             "./assets/images/fight/fight_exit.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     },
                     {
@@ -630,7 +630,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide3.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -643,7 +643,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide4.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -674,7 +674,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide2.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -687,7 +687,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide4.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -733,7 +733,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide2.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -746,7 +746,7 @@
                         "args": [
                             "./assets/images/screen/guide/enter_guide3.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -761,7 +761,7 @@
                             "text",
                             null,
                             10,
-                            "crop=(262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)"
+                            "crop=(231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)"
                         ]
                     },
                     {
@@ -785,8 +785,39 @@
                         "args": [
                             "./assets/images/forgottenhall/memory_of_chaos.png",
                             "image",
-                            0.95,
+                            0.9,
                             2
+                        ]
+                    }
+                ]
+            },
+            {
+                "target_screen": "purefiction",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "虚构叙事",
+                            "text",
+                            null,
+                            10,
+                            "crop=(231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)"
+                        ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
+                            1
+                        ]
+                    },
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "传送",
+                            "text",
+                            null,
+                            10,
+                            "crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080)"
                         ]
                     }
                 ]
@@ -1010,7 +1041,7 @@
                         "args": [
                             "./assets/images/pass/enter_pass2.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -1041,7 +1072,7 @@
                         "args": [
                             "./assets/images/pass/enter_pass1.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -1072,7 +1103,7 @@
                         "args": [
                             "./assets/images/synthesis/enter_material.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -1103,7 +1134,7 @@
                         "args": [
                             "./assets/images/synthesis/enter_consumables.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -1152,7 +1183,7 @@
                         "args": [
                             "./assets/images/forgottenhall/memory.png",
                             "image",
-                            0.95
+                            0.9
                         ]
                     }
                 ]
@@ -1202,8 +1233,26 @@
                         "args": [
                             "./assets/images/base/confirm.png",
                             "image",
-                            0.95,
+                            0.9,
                             2
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "虚构叙事",
+        "id": "purefiction",
+        "image_path": "./assets/images/screen/purefiction/purefiction.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
                         ]
                     }
                 ]

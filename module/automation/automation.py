@@ -70,9 +70,11 @@ class Automation:
                 if find_type == 'image':
                     top_left, bottom_right = self.find_image_element(target, threshold, scale_range)
                 elif find_type == 'text':
-                    top_left, bottom_right = self.find_text_element(target, include, need_ocr, relative)
+                    top_left, bottom_right = self.find_text_element(
+                        target, include, need_ocr, relative)
                 elif find_type == 'min_distance_text':
-                    top_left, bottom_right = self.find_min_distance_text_element(target, source, include, need_ocr)
+                    top_left, bottom_right = self.find_min_distance_text_element(
+                        target, source, include, need_ocr)
                 if top_left and bottom_right:
                     return top_left, bottom_right
             elif find_type in ['image_count']:
@@ -92,11 +94,13 @@ class Automation:
                 raise ValueError(_("读取图片失败"))
             # screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
-            max_val, max_loc = self.scale_and_match_template(screenshot, template, threshold, scale_range)
+            max_val, max_loc = self.scale_and_match_template(
+                screenshot, template, threshold, scale_range)
             logger.debug(_("目标图片：{target} 相似度：{max_val}").format(target=target, max_val=max_val))
             if threshold is None or max_val >= threshold:
                 channels, width, height = template.shape[::-1]
-                top_left = (max_loc[0] + self.screenshot_pos[0], max_loc[1] + self.screenshot_pos[1])
+                top_left = (max_loc[0] + self.screenshot_pos[0],
+                            max_loc[1] + self.screenshot_pos[1])
                 bottom_right = (top_left[0] + width, top_left[1] + height)
                 return top_left, bottom_right
         except Exception as e:
@@ -123,7 +127,8 @@ class Automation:
             for match_top_left in matches:
                 botton_right = (top_left[0] + width, top_left[1] + height)
                 match_botton_right = (match_top_left[0] + width, match_top_left[1] + height)
-                is_intersected = Automation.intersected(top_left, botton_right, match_top_left, match_botton_right)
+                is_intersected = Automation.intersected(
+                    top_left, botton_right, match_top_left, match_botton_right)
                 if is_intersected:
                     flag = False
                     break
@@ -139,6 +144,10 @@ class Automation:
             bw_map = np.zeros(screenshot.shape[:2], dtype=np.uint8)
             # 遍历每个像素并判断与目标像素的相似性
             bw_map[np.sum((screenshot - pixel_bgr) ** 2, axis=-1) <= 800] = 255
+            # cv2.imwrite("test.png", bw_map)
+            # cv2.imshow("test", np.array(bw_map))
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
             return Automation.count_template_matches(bw_map, template, threshold)
         except Exception as e:
             logger.error(_("寻找图片并计数出错：{e}").format(e=e))
@@ -159,10 +168,13 @@ class Automation:
                 # if (include is None and target == text) or (include and target in text) or (not include and target == text):
                 if ((include is None or not include) and text in target) or (include and any(t in text for t in target)):
                     self.matched_text = next((t for t in target if t in text), None)
-                    logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=self.matched_text, max_val=box[1][1]))
+                    logger.debug(_("目标文字：{target} 相似度：{max_val}").format(
+                        target=self.matched_text, max_val=box[1][1]))
                     if relative == False:
-                        top_left = (box[0][0][0] + self.screenshot_pos[0], box[0][0][1] + self.screenshot_pos[1])
-                        bottom_right = (box[0][2][0] + self.screenshot_pos[0], box[0][2][1] + self.screenshot_pos[1])
+                        top_left = (box[0][0][0] + self.screenshot_pos[0],
+                                    box[0][0][1] + self.screenshot_pos[1])
+                        bottom_right = (box[0][2][0] + self.screenshot_pos[0],
+                                        box[0][2][1] + self.screenshot_pos[1])
                     else:
                         top_left = (box[0][0][0], box[0][0][1])
                         bottom_right = (box[0][2][0], box[0][2][1])
@@ -184,7 +196,8 @@ class Automation:
         for box in self.ocr_result:
             text = box[1][0]
             if ((include is None or not include) and source == text) or (include and source in text):
-                logger.debug(_("目标文字：{target} 相似度：{max_val}").format(target=source, max_val=box[1][1]))
+                logger.debug(_("目标文字：{target} 相似度：{max_val}").format(
+                    target=source, max_val=box[1][1]))
                 source_pos = box[0]
                 break
         if source_pos is None:
@@ -200,17 +213,22 @@ class Automation:
                 # 如果target不在source右下角
                 if not ((pos[0][0] - source_pos[0][0]) > 0 and (pos[0][1] - source_pos[0][1]) > 0):
                     continue
-                distance = math.sqrt((pos[0][0] - source_pos[0][0]) ** 2 + (pos[0][1] - source_pos[0][1]) ** 2)
-                logger.debug(_("目标文字：{target} 相似度：{max_val} 距离：{min_distance}").format(target=target, max_val=box[1][1], min_distance=distance))
+                distance = math.sqrt((pos[0][0] - source_pos[0][0]) **
+                                     2 + (pos[0][1] - source_pos[0][1]) ** 2)
+                logger.debug(_("目标文字：{target} 相似度：{max_val} 距离：{min_distance}").format(
+                    target=target, max_val=box[1][1], min_distance=distance))
                 if distance < min_distance:
                     min_distance = distance
                     target_pos = pos
         if target_pos is None:
             logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=target))
             return None, None
-        logger.debug(_("目标文字：{target} 最短距离：{min_distance}").format(target=target, min_distance=min_distance))
-        top_left = (target_pos[0][0] + self.screenshot_pos[0], target_pos[0][1] + self.screenshot_pos[1])
-        bottom_right = (target_pos[2][0] + self.screenshot_pos[0], target_pos[2][1] + self.screenshot_pos[1])
+        logger.debug(_("目标文字：{target} 最短距离：{min_distance}").format(
+            target=target, min_distance=min_distance))
+        top_left = (target_pos[0][0] + self.screenshot_pos[0],
+                    target_pos[0][1] + self.screenshot_pos[1])
+        bottom_right = (target_pos[2][0] + self.screenshot_pos[0],
+                        target_pos[2][1] + self.screenshot_pos[1])
         return top_left, bottom_right
 
     def click_element_with_pos(self, coordinates, offset=(0, 0), action="click"):

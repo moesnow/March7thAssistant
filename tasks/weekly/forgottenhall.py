@@ -181,7 +181,8 @@ class ForgottenHall:
                     auto.mouse_scroll(2, direction)
                     time.sleep(6)
 
-                    result = auto.find_element(number, "text", max_retries=4, crop=crop, relative=True)
+                    result = auto.find_element(
+                        number, "text", max_retries=4, crop=crop, relative=True)
                     if result:
                         return (result[0][0] + width * crop[0], result[0][1] + height * crop[1])
 
@@ -196,7 +197,8 @@ class ForgottenHall:
         window = Screenshot.get_window(config.game_title_name)
         left, top, width, height = Screenshot.get_window_region(window)
         crop = (top_left[0] / width, top_left[1] / height, 120 / 1920, 120 / 1080)
-        count = auto.find_element("./assets/images/forgottenhall/star.png", "image_count", 0.6, crop=crop, pixel_bgr=[112, 200, 255])
+        count = auto.find_element("./assets/images/forgottenhall/star.png",
+                                  "image_count", 0.6, crop=crop, pixel_bgr=[112, 200, 255])
         return count if count is not None and 0 <= count <= 3 else None
 
     @staticmethod
@@ -219,7 +221,8 @@ class ForgottenHall:
                 continue
             else:
                 logger.info(_("第{i}层星数{star_count}").format(i=i, star_count=star_count))
-                auto.click_element(f"{i:02}", "text", max_retries=20, crop=(540.0 / 1920, 406.0 / 1080, 1156.0 / 1920, 516.0 / 1080))
+                auto.click_element(f"{i:02}", "text", max_retries=20, crop=(
+                    540.0 / 1920, 406.0 / 1080, 1156.0 / 1920, 516.0 / 1080))
 
             logger.info(_("开始挑战第{i}层").format(i=f"{i:02}"))
             # 选择角色
@@ -252,30 +255,33 @@ class ForgottenHall:
             if auto.click_element("./assets/images/dispatch/reward.png", "image", 0.9, max_retries=5, crop=(1775.0 / 1920, 902.0 / 1080, 116.0 / 1920, 110.0 / 1080)):
                 time.sleep(1)
                 while auto.click_element("./assets/images/forgottenhall/receive.png", "image", 0.9, crop=(1081.0 / 1920, 171.0 / 1080, 500.0 / 1920, 736.0 / 1080)):
-                    auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
+                    auto.click_element("./assets/images/base/click_close.png",
+                                       "image", 0.9, max_retries=10)
                     time.sleep(1)
-                Base.send_notification_with_screenshot(_("🎉混沌回忆已通关{max_level}层🎉").format(max_level=max_level))
+                Base.send_notification_with_screenshot(
+                    _("🎉混沌回忆已通关{max_level}层🎉").format(max_level=max_level))
                 auto.press_key("esc")
                 time.sleep(1)
             else:
                 logger.error(_("领取星琼失败"))
-                Base.send_notification_with_screenshot(_("🎉混沌回忆已通关{max_level}层🎉\n领取星琼失败").format(max_level=max_level))
+                Base.send_notification_with_screenshot(
+                    _("🎉混沌回忆已通关{max_level}层🎉\n领取星琼失败").format(max_level=max_level))
 
     @staticmethod
     def prepare():
         flag = False
         screen.change_to('guide4')
-        guide4_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
+        guide4_crop = (231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)
         if auto.click_element("忘却之庭", "text", max_retries=10, crop=guide4_crop):
             time.sleep(1)
-            auto.find_element("混沌回忆", "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
+            auto.find_element("混沌回忆", "text", max_retries=10, crop=(
+                689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
             for box in auto.ocr_result:
                 text = box[1][0]
                 if "/36" in text:
                     logger.info(_("星数：{text}").format(text=text))
                     if text.split("/")[0] == "36":
                         logger.info(_("混沌回忆未刷新"))
-                        screen.change_to('menu')
                         return True
                     else:
                         break

@@ -1,7 +1,8 @@
 import os
 import sys
 
-os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__)))
+os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)
+         else os.path.dirname(os.path.abspath(__file__)))
 
 from managers.notify_manager import notify
 from managers.logger_manager import logger
@@ -16,6 +17,7 @@ from tasks.power.power import Power
 # from tasks.version.version import Version
 from tasks.weekly.universe import Universe
 from tasks.weekly.forgottenhall import ForgottenHall
+from tasks.weekly.purefiction import PureFiction
 import atexit
 import pyuac
 import sys
@@ -49,6 +51,7 @@ def main(action=None):
             Universe.start()
         elif action == "forgottenhall":
             ForgottenHall.start()
+            PureFiction.start()
         Game.stop(False)
     # 子任务 原生图形界面
     elif action in ["universe_gui", "fight_gui"]:

@@ -9,6 +9,7 @@ from tasks.weekly.universe import Universe
 from tasks.reward.reward import Reward
 from tasks.daily.synthesis import Synthesis
 from tasks.weekly.forgottenhall import ForgottenHall
+from tasks.weekly.purefiction import PureFiction
 from tasks.weekly.echoofwar import Echoofwar
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
@@ -67,6 +68,14 @@ class Daily:
         else:
             logger.info(_("忘却之庭尚未刷新"))
 
+        if Date.is_next_mon_4_am(config.purefiction_timestamp):
+            if config.purefiction_enable:
+                PureFiction.start()
+            else:
+                logger.info(_("虚构叙事未开启"))
+        else:
+            logger.info(_("虚构叙事尚未刷新"))
+
         Reward.start()
 
     @staticmethod
@@ -116,10 +125,12 @@ class Daily:
             logger.hr(_("今日实训"), 2)
             count = 0
             for key, value in config.daily_tasks.items():
-                state = "\033[91m" + _("待完成") + "\033[0m" if value else "\033[92m" + _("已完成") + "\033[0m"
+                state = "\033[91m" + _("待完成") + \
+                    "\033[0m" if value else "\033[92m" + _("已完成") + "\033[0m"
                 logger.info(f"{key}: {state}")
                 count = count + 1 if not value else count
-            logger.info(_("已完成：{count_total}").format(count_total=f"\033[93m{count}/{len(config.daily_tasks)}\033[0m"))
+            logger.info(_("已完成：{count_total}").format(
+                count_total=f"\033[93m{count}/{len(config.daily_tasks)}\033[0m"))
 
             for task_name, task_function in task_functions.items():
                 if task_name in config.daily_tasks and config.daily_tasks[task_name]:

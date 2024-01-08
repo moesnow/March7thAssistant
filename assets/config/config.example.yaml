@@ -105,26 +105,51 @@ forgottenhall_retries: 1 # 混沌回忆挑战失败后的重试次数
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
 forgottenhall_team1: # 队伍1
-- -
-    Asta
+- - Asta
   - -1
-- - Natasha
-  - 0
-- - Tingyun
-  - 2
 - - JingYuan
   - 1
+- - Tingyun
+  - 2
+- - Huohuo
+  - 1
 forgottenhall_team2: # 队伍2
-- -
-    Bronya
+- - FuXuan
   - 1
-- - Luocha
+- - Bronya
   - 1
-- - SilverWolf
+- - Pela
   - -1
 - - Qingque
   - 1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行，如已经满星则跳过）
+
+purefiction_enable: false # 启用虚构叙事
+purefiction_level: # 虚构叙事关卡范围
+- 3
+- 4
+# 虚构叙事队伍
+# 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色
+# 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
+purefiction_team1: # 队伍1
+- - Asta
+  - -1
+- - JingYuan
+  - 1
+- - Tingyun
+  - 2
+- - Huohuo
+  - 1
+purefiction_team2: # 队伍2
+- - FuXuan
+  - 1
+- - Bronya
+  - 1
+- - Pela
+  - -1
+- - Qingque
+  - 1
+purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳（每周运行，如已经满星则跳过）
 
 auto_battle_detect_enable: true # 启用自动战斗检测
 hotkey_technique: e # 游戏内设置的秘技按键

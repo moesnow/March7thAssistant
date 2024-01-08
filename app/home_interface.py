@@ -83,7 +83,8 @@ class BannerWidget(QWidget):
         image_height = self.width() * self.banner.height() // self.banner.width()
 
         # draw banner image with aspect ratio preservation
-        pixmap = self.banner.scaled(self.width(), image_height, aspectRatioMode=Qt.KeepAspectRatio, transformMode=Qt.SmoothTransformation)
+        pixmap = self.banner.scaled(
+            self.width(), image_height, aspectRatioMode=Qt.KeepAspectRatio, transformMode=Qt.SmoothTransformation)
         path.addRect(QRectF(0, h, w, self.height() - h))
         painter.fillPath(path, QBrush(pixmap))
 
@@ -147,7 +148,7 @@ class HomeInterface(ScrollArea):
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Bronya.jpg",
-            title="忘却之庭",
+            title="逐光捡金",
             action="forgottenhall"
         )
 
