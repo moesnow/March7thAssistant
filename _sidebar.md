@@ -2,4 +2,4 @@
 - [使用教程](assets/docs/Tutorial.md)
 - [常见问题](assets/docs/FAQ.md)
 - [更新记录](assets/docs/Changelog.md)
-- [后台运行](https://asu.stysqy.top/guide/bs.html)
+- [后台运行](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial?id=%e5%90%8e%e5%8f%b0%e8%bf%90%e8%a1%8c%ef%bc%88%e8%bf%9c%e7%a8%8b%e6%9c%ac%e5%9c%b0%e5%a4%9a%e7%94%a8%e6%88%b7%e6%a1%8c%e9%9d%a2%ef%bc%89)
