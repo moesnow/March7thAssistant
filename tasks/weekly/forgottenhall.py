@@ -286,10 +286,10 @@ class ForgottenHall:
                     else:
                         break
             if auto.click_element("传送", "text", max_retries=10, need_ocr=False):
-                auto.click_element("./assets/images/forgottenhall/memory_of_chaos.png", "image",
-                                   0.95, max_retries=2, crop=(470 / 1920, 0, 970 / 1920, 114 / 1080))
+                # auto.click_element("./assets/images/forgottenhall/memory_of_chaos.png", "image",
+                #                    0.95, max_retries=2, crop=(470 / 1920, 0, 970 / 1920, 114 / 1080))
                 if auto.click_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image",
-                                      0.95, max_retries=10, crop=(36 / 1920, 25 / 1080, 170 / 1920, 80 / 1080)):
+                                      0.95, max_retries=20, crop=(36 / 1920, 25 / 1080, 170 / 1920, 80 / 1080)):
                     flag = True
 
         if not flag:
@@ -307,7 +307,6 @@ class ForgottenHall:
 
         ForgottenHall.run()
 
-        screen.change_to('main')
         return True
 
     @staticmethod

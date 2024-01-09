@@ -246,6 +246,7 @@ class PureFiction:
             auto.find_element("虚构叙事", "text", max_retries=10, crop=(
                 689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
             for box in auto.ocr_result:
+                break
                 text = box[1][0]
                 if "/12" in text:
                     logger.info(_("星数：{text}").format(text=text))
@@ -255,7 +256,8 @@ class PureFiction:
                     else:
                         break
             if auto.click_element("传送", "text", max_retries=10, need_ocr=False):
-                if auto.click_element("./assets/images/screen/purefiction/purefiction.png", "image", 0.8, max_retries=10, action="move"):
+                if auto.click_element("虚构叙事", "text", max_retries=20, include=True, action="move", crop=(0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080)):
+                    # if auto.click_element("./assets/images/screen/purefiction/purefiction.png", "image", 0.8, max_retries=10, action="move"):
                     flag = True
 
         if not flag:
@@ -265,12 +267,13 @@ class PureFiction:
         # 刷新后打开会出现本期buff的弹窗
         time.sleep(2)
         if auto.click_element("./assets/images/purefiction/start_story.png", "image", 0.8):
-            auto.click_element("./assets/images/screen/purefiction/purefiction.png",
-                               "image", 0.8, max_retries=10, action="move")
+            auto.click_element("虚构叙事", "text", max_retries=10, include=True, action="move", crop=(
+                0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080))
+            # auto.click_element("./assets/images/screen/purefiction/purefiction.png",
+            #                    "image", 0.8, max_retries=10, action="move")
 
         PureFiction.run()
 
-        screen.change_to('main')
         return True
 
     @staticmethod
