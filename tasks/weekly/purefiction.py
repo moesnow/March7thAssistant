@@ -246,7 +246,6 @@ class PureFiction:
             auto.find_element("虚构叙事", "text", max_retries=10, crop=(
                 689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
             for box in auto.ocr_result:
-                break
                 text = box[1][0]
                 if "/12" in text:
                     logger.info(_("星数：{text}").format(text=text))
