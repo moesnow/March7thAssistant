@@ -24,12 +24,6 @@ instance_names: # 副本名称
   凝滞虚影: 无
   侵蚀隧洞: 睿治之径
   历战余响: 毁灭的开端
-power_needs: # 副本所需开拓力
-  拟造花萼（金）: 60
-  拟造花萼（赤）: 60
-  凝滞虚影: 30
-  侵蚀隧洞: 40
-  历战余响: 30
 instance_team_enable: false # 打副本时自动切换队伍
 instance_team_number: '5' # 队伍编号
 merge_immersifier: False # 优先合成沉浸器
@@ -76,6 +70,14 @@ daily_memory_one_team: # 用于回忆一的队伍
   - 0
 daily_tasks: {} # 每日实训
 last_run_timestamp: 0 # 上次运行日常的时间戳
+
+activity_enable: true # 启用活动
+activity_giftofodyssey_enable: true # 巡星之礼活动
+activity_giftofradiance_enable: true # 巡光之礼活动
+activity_gardenofplenty_enable: false # 花藏繁生活动
+activity_gardenofplenty_instance_type: 拟造花萼（金） # 花藏繁生副本
+activity_realmofthestrange_enable: false # 异器盈界活动
+activity_planarfissure_enable: false # 位面分裂活动
 
 fight_enable: false # 启用锄大地
 fight_operation_mode: exe # 运行方式 源码: source 集成: exe

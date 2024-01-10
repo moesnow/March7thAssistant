@@ -11,7 +11,8 @@ class Power:
     @staticmethod
     def start():
         # 体力优先合成沉浸器
-        Power.merge_immersifier()
+        if config.merge_immersifier:
+            Power.merge_immersifier()
 
         instance_name = config.instance_names[config.instance_type]
         if instance_name == "无":
@@ -24,7 +25,15 @@ class Power:
         if "·" in instance_name:
             instance_name = instance_name.split("·")[0]
 
-        Power.instance(config.instance_type, instance_name, config.power_needs[config.instance_type])
+        power_needs = {
+            "拟造花萼（金）": 60,
+            "拟造花萼（赤）": 60,
+            "凝滞虚影": 30,
+            "侵蚀隧洞": 40,
+            "历战余响": 30
+        }
+
+        Power.instance(config.instance_type, instance_name, power_needs[config.instance_type])
         logger.hr(_("完成"), 2)
 
     @staticmethod
@@ -32,11 +41,13 @@ class Power:
         def get_power(crop, type="trailblaze_power"):
             try:
                 if type == "trailblaze_power":
-                    result = auto.get_single_line_text(crop=crop, blacklist=['+', '米'], max_retries=3)
+                    result = auto.get_single_line_text(
+                        crop=crop, blacklist=['+', '米'], max_retries=3)
                     power = int(result.replace("1240", "/240").split('/')[0])
                     return power if 0 <= power <= 999 else -1
                 elif type == "reserved_trailblaze_power":
-                    result = auto.get_single_line_text(crop=crop, blacklist=['+', '米'], max_retries=3)
+                    result = auto.get_single_line_text(
+                        crop=crop, blacklist=['+', '米'], max_retries=3)
                     power = int(result[0])
                     return power if 0 <= power <= 2400 else -1
             except Exception as e:
@@ -45,11 +56,13 @@ class Power:
 
         def move_button_and_confirm():
             if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
-                result = auto.find_element("./assets/images/share/trailblaze_power/button.png", "image", 0.9, max_retries=10)
+                result = auto.find_element(
+                    "./assets/images/share/trailblaze_power/button.png", "image", 0.9, max_retries=10)
                 if result:
                     auto.click_element_with_pos(result, action="down")
                     time.sleep(0.5)
-                    result = auto.find_element("./assets/images/share/trailblaze_power/plus.png", "image", 0.9)
+                    result = auto.find_element(
+                        "./assets/images/share/trailblaze_power/plus.png", "image", 0.9)
                     if result:
                         auto.click_element_with_pos(result, action="move")
                         time.sleep(0.5)
@@ -84,45 +97,46 @@ class Power:
         screen.change_to('map')
         trailblaze_power = get_power(trailblaze_power_crop)
 
-        logger.info(_("🟣开拓力: {power}").format(power=trailblaze_power))
+        logger.info(_("🟣开拓力: {power}/240").format(power=trailblaze_power))
         return trailblaze_power
 
     def merge_immersifier():
-        if config.merge_immersifier:
-            logger.hr(_("准备合成沉浸器"), 0)
-            screen.change_to("guide3")
+        logger.hr(_("准备合成沉浸器"), 0)
+        screen.change_to("guide3")
 
-            immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
-            text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
-            if "/8" not in text:
-                logger.error(_("沉浸器数量识别失败"))
-                return
+        immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
+        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=[
+            '+', '米'], max_retries=3)
+        if "/8" not in text:
+            logger.error(_("沉浸器数量识别失败"))
+            return
 
-            immersifier_count = int(text.split("/")[0])
-            logger.info(_("🟣沉浸器: {count}").format(count=immersifier_count))
-            if immersifier_count >= 8:
-                logger.info(_("沉浸器已满"))
-                return
+        immersifier_count = int(text.split("/")[0])
+        logger.info(_("🟣沉浸器: {count}/8").format(count=immersifier_count))
+        if immersifier_count >= 8:
+            logger.info(_("沉浸器已满"))
+            return
 
-            screen.change_to("guide3")
-            power = Power.power()
+        screen.change_to("guide3")
+        power = Power.power()
 
-            count = min(power // 40, 8 - immersifier_count)
-            if count <= 0:
-                logger.info(_("体力不足"))
-                return
+        count = min(power // 40, 8 - immersifier_count)
+        if count <= 0:
+            logger.info(_("体力不足"))
+            return
 
-            logger.hr(_("准备合成 {count} 个沉浸器").format(count=count), 2)
-            screen.change_to("guide3")
+        logger.hr(_("准备合成 {count} 个沉浸器").format(count=count), 2)
+        screen.change_to("guide3")
 
-            if auto.click_element("./assets/images/share/immersifier/immersifier.png", "image", 0.9, crop=immersifier_crop):
+        if auto.click_element("./assets/images/share/immersifier/immersifier.png", "image", 0.9, crop=immersifier_crop):
+            time.sleep(1)
+            for i in range(count - 1):
+                auto.click_element(
+                    "./assets/images/share/trailblaze_power/plus.png", "image", 0.9)
+                time.sleep(0.5)
+            if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
                 time.sleep(1)
-                for i in range(count - 1):
-                    auto.click_element("./assets/images/share/trailblaze_power/plus.png", "image", 0.9)
-                    time.sleep(0.5)
-                if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
-                    time.sleep(1)
-                    auto.press_key("esc")
+                auto.press_key("esc")
 
     @staticmethod
     def wait_fight():
@@ -166,7 +180,8 @@ class Power:
         try:
             # 尝试优先使用指定用户名的支援角色
             if config.borrow_character_from:
-                auto.click_element("UID", "text", max_retries=10, crop=(18.0 / 1920, 15.0 / 1080, 572.0 / 1920, 414.0 / 1080), include=True)
+                auto.click_element("UID", "text", max_retries=10, crop=(
+                    18.0 / 1920, 15.0 / 1080, 572.0 / 1920, 414.0 / 1080), include=True)
                 time.sleep(0.5)
                 for i in range(3):
                     if auto.click_element(config.borrow_character_from, "text", crop=(196 / 1920, 167 / 1080, 427 / 1920, 754 / 1080), include=True):
@@ -176,7 +191,8 @@ class Power:
                             return False
                         # 等待界面加载
                         time.sleep(0.5)
-                        result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
+                        result = auto.find_element(
+                            ("解除支援", "取消"), "text", max_retries=10, include=True)
                         if result:
                             if auto.matched_text == "解除支援":
                                 if "使用支援角色并获得战斗胜利1次" in config.daily_tasks:
@@ -185,7 +201,8 @@ class Power:
                                 return True
                             elif auto.matched_text == "取消":
                                 auto.click_element_with_pos(result)
-                                auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
+                                auto.find_element("支援列表", "text", max_retries=10, crop=(
+                                    234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
                                 continue
                         else:
                             return False
@@ -221,7 +238,8 @@ class Power:
                             return True
                         elif auto.matched_text == "取消":
                             auto.click_element_with_pos(result)
-                            auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
+                            auto.find_element("支援列表", "text", max_retries=10, crop=(
+                                234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
                             continue
                     else:
                         return False
@@ -310,7 +328,8 @@ class Power:
                 for i in range(number - 1):
                     Power.wait_fight()
                     logger.info(_("第{number}次副本完成").format(number=i + 1))
-                    auto.click_element("./assets/images/fight/fight_again.png", "image", 0.9, max_retries=10)
+                    auto.click_element("./assets/images/fight/fight_again.png",
+                                       "image", 0.9, max_retries=10)
                     if instance_type == "历战余响":
                         time.sleep(1)
                         auto.click_element("./assets/images/base/confirm.png", "image", 0.9)
@@ -319,7 +338,8 @@ class Power:
 
                 # 速度太快，点击按钮无效
                 time.sleep(1)
-                auto.click_element("./assets/images/fight/fight_exit.png", "image", 0.9, max_retries=10)
+                auto.click_element("./assets/images/fight/fight_exit.png",
+                                   "image", 0.9, max_retries=10)
                 time.sleep(2)
                 logger.info(_("副本任务完成"))
                 return True
@@ -337,14 +357,17 @@ class Power:
                 # 支持拟造花萼体力小于60的情况
                 if "拟造花萼" in instance_type and power >= 10:
                     number = 1
-                    logger.hr(_("开始刷{type} - {name}，总计{number}次").format(type=instance_type, name=instance_name, number=number), 2)
+                    logger.hr(
+                        _("开始刷{type} - {name}，总计{number}次").format(type=instance_type, name=instance_name, number=number), 2)
                     return Power.run_instances(instance_type, instance_name, power, number)
                 logger.info(_("🟣开拓力 < {power_need}").format(power_need=power_need))
                 return False
         else:
             if power_need * number > power:
-                logger.info(_("🟣开拓力 < {power_need}*{number}").format(power_need=power_need, number=number))
+                logger.info(
+                    _("🟣开拓力 < {power_need}*{number}").format(power_need=power_need, number=number))
                 return False
 
-        logger.hr(_("开始刷{type} - {name}，总计{number}次").format(type=instance_type, name=instance_name, number=number), 2)
+        logger.hr(_("开始刷{type} - {name}，总计{number}次").format(type=instance_type,
+                  name=instance_name, number=number), 2)
         return Power.run_instances(instance_type, instance_name, power_need, number)

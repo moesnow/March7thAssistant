@@ -268,6 +268,52 @@ class SettingInterface(ScrollArea):
             "last_run_timestamp"
         )
 
+        self.ActivityGroup = SettingCardGroup(self.tr("活动设置"), self.scrollWidget)
+
+        self.activityEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用活动检测'),
+            None,
+            "activity_enable"
+        )
+        self.activityGiftOfOdysseyEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用巡星之礼'),
+            "自动领取「星轨专票x10」",
+            "activity_giftofodyssey_enable"
+        )
+        self.activityGiftOfRadianceEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用巡光之礼'),
+            "自动领取「星琼x800」",
+            "activity_giftofradiance_enable"
+        )
+        self.activityGardenOfPlentyEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用花藏繁生'),
+            "存在双倍次数时体力优先「拟造花萼」",
+            "activity_gardenofplenty_enable"
+        )
+        self.activityGardenOfPlentyTypeCard = ComboBoxSettingCard1(
+            "activity_gardenofplenty_instance_type",
+            FIF.ALIGNMENT,
+            self.tr('花藏繁生副本类型'),
+            None,
+            texts=['拟造花萼（金）', '拟造花萼（赤）']
+        )
+        self.activityRealmOfTheStrangeEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用异器盈界'),
+            "存在双倍次数时体力优先「侵蚀隧洞」",
+            "activity_realmofthestrange_enable"
+        )
+        self.activityPlanarFissureEnableCard = SwitchSettingCard1(
+            FIF.TILES,
+            self.tr('启用位面分裂'),
+            "存在双倍次数时体力优先「合成沉浸器」",
+            "activity_planarfissure_enable"
+        )
+
         self.FightGroup = SettingCardGroup(self.tr("锄大地 (Fhoe-Rail)"), self.scrollWidget)
         self.fightEnableCard = SwitchSettingCard1(
             FIF.BUS,
@@ -638,6 +684,14 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.dailyTasksCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
 
+        self.ActivityGroup.addSettingCard(self.activityEnableCard)
+        self.ActivityGroup.addSettingCard(self.activityGiftOfOdysseyEnableCard)
+        self.ActivityGroup.addSettingCard(self.activityGiftOfRadianceEnableCard)
+        self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyEnableCard)
+        self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyTypeCard)
+        self.ActivityGroup.addSettingCard(self.activityRealmOfTheStrangeEnableCard)
+        self.ActivityGroup.addSettingCard(self.activityPlanarFissureEnableCard)
+
         self.FightGroup.addSettingCard(self.fightEnableCard)
         self.FightGroup.addSettingCard(self.fightOperationModeCard)
         # self.FightGroup.addSettingCard(self.fightPathCard)
@@ -693,6 +747,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.titleLabel.setHidden(True)
         self.BorrowGroup.titleLabel.setHidden(True)
         self.DailyGroup.titleLabel.setHidden(True)
+        self.ActivityGroup.titleLabel.setHidden(True)
         self.FightGroup.titleLabel.setHidden(True)
         self.UniverseGroup.titleLabel.setHidden(True)
         self.ForgottenhallGroup.titleLabel.setHidden(True)
@@ -707,10 +762,11 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.PowerGroup, 'PowerInterface', self.tr('体力'))
         self.addSubInterface(self.BorrowGroup, 'BorrowInterface', self.tr('支援'))
         self.addSubInterface(self.DailyGroup, 'DailyInterface', self.tr('日常'))
+        self.addSubInterface(self.ActivityGroup, 'ActivityInterface', self.tr('活动'))
         self.addSubInterface(self.FightGroup, 'FightInterface', self.tr('锄大地'))
         self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('模拟宇宙'))
-        self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('忘却之庭'))
-        self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构叙事'))
+        self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('忘却'))
+        self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构'))
         self.addSubInterface(self.NotifyGroup, 'NotifyInterface', self.tr('推送'))
         self.addSubInterface(self.KeybindingGroup, 'KeybindingInterface', self.tr('按键'))
         self.addSubInterface(self.AboutGroup, 'AboutInterface', self.tr('关于'))
