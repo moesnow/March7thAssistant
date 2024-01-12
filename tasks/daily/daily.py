@@ -13,6 +13,8 @@ from tasks.weekly.purefiction import PureFiction
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
 from tasks.daily.himekotry import HimekoTry
+from tasks.base.date import Date
+from tasks.weekly.echoofwar import Echoofwar
 
 
 class Daily:
@@ -20,6 +22,15 @@ class Daily:
     def start():
         if config.daily_enable:
             Daily.run()
+
+        # 优先历战余响
+        if Date.is_next_mon_4_am(config.echo_of_war_timestamp):
+            if config.echo_of_war_enable:
+                Echoofwar.start()
+            else:
+                logger.info(_("历战余响未开启"))
+        else:
+            logger.info(_("历战余响尚未刷新"))
 
         Power.run()
 
