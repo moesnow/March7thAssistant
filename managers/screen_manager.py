@@ -1,3 +1,5 @@
 from module.screen.screen import Screen
 
-screen = Screen("./assets/config/screens.json")
+SCREENS_PATH = "./assets/config/screens.json"
+
+screen = Screen(SCREENS_PATH)

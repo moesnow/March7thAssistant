@@ -11,7 +11,7 @@ from tasks.reward.srpass import SRPass
 
 class Reward:
     @staticmethod
-    def start():
+    def get():
         logger.hr(_("开始领奖励"), 0)
         screen.change_to('menu')
 

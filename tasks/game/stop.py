@@ -89,7 +89,7 @@ class Stop:
 
     @staticmethod
     def after_finish_is_loop():
-        current_power = Power.power()
+        current_power = Power.get()
         if current_power >= config.power_limit:
             logger.info(_("🟣开拓力 >= {limit}").format(limit=config.power_limit))
             logger.info(_("即将再次运行"))

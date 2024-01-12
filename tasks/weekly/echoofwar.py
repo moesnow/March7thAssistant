@@ -4,6 +4,7 @@ from managers.config_manager import config
 from managers.logger_manager import logger
 from managers.translate_manager import _
 from tasks.power.power import Power
+from tasks.power.instance import Instance
 from module.automation.screenshot import Screenshot
 from tasks.base.base import Base
 import time
@@ -34,14 +35,14 @@ class Echoofwar:
                                 screen.change_to('menu')
                                 return True
                             else:
-                                power = Power.power()
+                                power = Power.get()
                                 max_count = power // 30
                                 if max_count == 0:
                                     logger.info(_("🟣开拓力 < 30"))
                                     return
                                 elif reward_count <= max_count:
                                     config.save_timestamp("echo_of_war_timestamp")
-                                return Power.run_instances("历战余响", config.instance_names["历战余响"], 30, min(reward_count, max_count))
+                                return Instance.run("历战余响", config.instance_names["历战余响"], 30, min(reward_count, max_count))
             return False
         except Exception as e:
             logger.error(_("历战余响失败: {error}").format(error=e))

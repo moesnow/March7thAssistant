@@ -7,18 +7,36 @@ import time
 
 
 class GiftOfRadiance:
+    RECEIVE_PATH = "./assets/images/activity/giftof/receive.png"
+    RECEIVE_FIN_PATH = "./assets/images/activity/giftof/receive_fin.png"
+    CLOSE_PATH = "./assets/images/base/click_close.png"
+    IMAGE_SIMILARITY_THRESHOLD = 0.9
+
     @staticmethod
     def get_reward():
-        if config.activity_giftofradiance_enable:
-            screen.change_to('activity')
-            if auto.click_element("巡光之礼", "text", None, crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080)):
-                time.sleep(1)
-                receive_path = "./assets/images/activity/giftof/receive.png"
-                receive_fin_path = "./assets/images/activity/giftof/receive_fin.png"
-                if auto.find_element(receive_path, "image", 0.9) or auto.find_element(receive_fin_path, "image", 0.9):
-                    logger.hr(_("检测到巡光之礼奖励"), 2)
-                    while auto.click_element(receive_path, "image", 0.9) or auto.click_element(receive_fin_path, "image", 0.9):
-                        auto.click_element("./assets/images/base/click_close.png",
-                                           "image", 0.9, max_retries=10)
-                        time.sleep(1)
-                    logger.info(_("领取巡光之礼奖励完成"))
+        if not config.activity_giftofradiance_enable:
+            return
+
+        screen.change_to('activity')
+        if not auto.click_element("巡光之礼", "text", None, crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080)):
+            return
+
+        time.sleep(1)
+        if GiftOfRadiance._has_reward():
+            logger.hr(_("检测到巡光之礼奖励"), 2)
+            GiftOfRadiance._collect_rewards()
+            logger.info(_("领取巡光之礼奖励完成"))
+
+    @staticmethod
+    def _has_reward():
+        return auto.find_element(GiftOfRadiance.RECEIVE_PATH, "image", GiftOfRadiance.IMAGE_SIMILARITY_THRESHOLD) or \
+            auto.find_element(GiftOfRadiance.RECEIVE_FIN_PATH, "image",
+                              GiftOfRadiance.IMAGE_SIMILARITY_THRESHOLD)
+
+    @staticmethod
+    def _collect_rewards():
+        while auto.click_element(GiftOfRadiance.RECEIVE_PATH, "image", GiftOfRadiance.IMAGE_SIMILARITY_THRESHOLD) or \
+                auto.click_element(GiftOfRadiance.RECEIVE_FIN_PATH, "image", GiftOfRadiance.IMAGE_SIMILARITY_THRESHOLD):
+            auto.click_element(GiftOfRadiance.CLOSE_PATH, "image",
+                               GiftOfRadiance.IMAGE_SIMILARITY_THRESHOLD, max_retries=10)
+            time.sleep(1)

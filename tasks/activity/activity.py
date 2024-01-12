@@ -14,35 +14,39 @@ from managers.config_manager import config
 class Activity():
     @staticmethod
     def start():
+        if not config.activity_enable:
+            return
+
         # logger.hr(_("开始检测活动"), 0)
-        if config.activity_enable:
-            screen.change_to('activity')
 
-            activity_list = []
+        screen.change_to('activity')
 
-            auto.take_screenshot(crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080))
+        activity_names = Activity._get_activity_names()
 
-            result = ocr.recognize_multi_lines(auto.screenshot)
-            if not result:
-                logger.info(_("未检测到任何活动"))
-                # logger.hr(_("完成"), 2)
-                return
+        if not activity_names:
+            logger.info(_("未检测到任何活动"))
+            return
 
-            for box in result:
-                text = box[1][0]
-                if len(text) >= 4:
-                    activity_list.append(text)
-                    # logger.info(text)
+        activity_functions = {
+            "巡星之礼": GiftOfOdyssey.get_reward,
+            "巡光之礼": GiftOfRadiance.get_reward,
+            "花藏繁生": GardenOfPlenty.start,
+            "异器盈界": RealmOfTheStrange.start,
+            "位面分裂": PlanarFissure.start,
+        }
 
-            if "巡星之礼" in activity_list:
-                GiftOfOdyssey.get_reward()
-            if "巡光之礼" in activity_list:
-                GiftOfRadiance.get_reward()
-            if "花藏繁生" in activity_list:
-                GardenOfPlenty.start()
-            if "异器盈界" in activity_list:
-                RealmOfTheStrange.start()
-            if "位面分裂" in activity_list:
-                PlanarFissure.start()
+        for activity_name in activity_names:
+            func = activity_functions.get(activity_name)
+            if func:
+                func()
 
-            # logger.hr(_("完成"), 2)
+        # logger.hr(_("完成"), 2)
+
+    @staticmethod
+    def _get_activity_names():
+        auto.take_screenshot(crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080))
+        result = ocr.recognize_multi_lines(auto.screenshot)
+        if not result:
+            return []
+
+        return [box[1][0] for box in result if len(box[1][0]) >= 4]

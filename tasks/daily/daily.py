@@ -30,7 +30,7 @@ class Daily:
         else:
             logger.info(_("历战余响尚未刷新"))
 
-        Power.start()
+        Power.run()
 
         if Date.is_next_4_am(config.fight_timestamp):
             if config.fight_enable:
@@ -43,10 +43,10 @@ class Daily:
         if config.universe_frequency == "weekly":
             if Date.is_next_mon_4_am(config.universe_timestamp):
                 if config.universe_enable:
-                    Power.start()
-                    Reward.start()
+                    Power.run()
+                    Reward.get()
                     Universe.start(get_reward=True)
-                    Power.start()
+                    Power.run()
                 else:
                     logger.info(_("模拟宇宙未开启"))
             else:
@@ -76,7 +76,7 @@ class Daily:
         else:
             logger.info(_("虚构叙事尚未刷新"))
 
-        Reward.start()
+        Reward.get()
 
     @staticmethod
     def daily(force=False):
@@ -105,11 +105,11 @@ class Daily:
                 "合成1次消耗品": lambda: Synthesis.consumables(),
                 "合成1次材料": lambda: Synthesis.material(),
                 "使用1件消耗品": lambda: Synthesis.use_consumables(),
-                "完成1次「拟造花萼（金）」": lambda: Power.instance("拟造花萼（金）", config.instance_names["拟造花萼（金）"], 10, 1),
-                "完成1次「拟造花萼（赤）」": lambda: Power.instance("拟造花萼（赤）", config.instance_names["拟造花萼（赤）"], 10, 1),
-                "完成1次「凝滞虚影」": lambda: Power.instance("凝滞虚影", config.instance_names["凝滞虚影"], 30, 1),
-                "完成1次「侵蚀隧洞」": lambda: Power.instance("侵蚀隧洞", config.instance_names["侵蚀隧洞"], 40, 1),
-                "完成1次「历战余响」": lambda: Power.instance("历战余响", config.instance_names["历战余响"], 30, 1),
+                "完成1次「拟造花萼（金）」": lambda: Power.customize_run("拟造花萼（金）", config.instance_names["拟造花萼（金）"], 10, 1),
+                "完成1次「拟造花萼（赤）」": lambda: Power.customize_run("拟造花萼（赤）", config.instance_names["拟造花萼（赤）"], 10, 1),
+                "完成1次「凝滞虚影」": lambda: Power.customize_run("凝滞虚影", config.instance_names["凝滞虚影"], 30, 1),
+                "完成1次「侵蚀隧洞」": lambda: Power.customize_run("侵蚀隧洞", config.instance_names["侵蚀隧洞"], 40, 1),
+                "完成1次「历战余响」": lambda: Power.customize_run("历战余响", config.instance_names["历战余响"], 30, 1),
                 "累计施放2次秘技": lambda: HimekoTry.technique(),
                 "累计击碎3个可破坏物": lambda: HimekoTry.item(),
                 "完成1次「忘却之庭」": lambda: ForgottenHall.finish_forgottenhall(),

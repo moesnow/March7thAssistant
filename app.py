@@ -1,6 +1,7 @@
 import os
 import sys
-os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__)))
+os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)
+         else os.path.dirname(os.path.abspath(__file__)))
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication

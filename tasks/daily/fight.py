@@ -3,6 +3,7 @@ from managers.config_manager import config
 from managers.logger_manager import logger
 from managers.translate_manager import _
 from tasks.base.base import Base
+from tasks.base.team import Team
 from tasks.base.pythonchecker import PythonChecker
 from tasks.base.command import subprocess_with_timeout
 import subprocess
@@ -21,7 +22,8 @@ class Fight:
         if config.fight_operation_mode == "exe":
             import requests
             import json
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Fhoe-Rail", "fight-latest.json", 1), timeout=3)
+            response = requests.get(FastestMirror.get_github_api_mirror(
+                "moesnow", "Fhoe-Rail", "fight-latest.json", 1), timeout=3)
             if response.status_code == 200:
                 data = json.loads(response.text)
                 for asset in data["assets"]:
@@ -31,7 +33,8 @@ class Fight:
                 update_handler.run()
         elif config.fight_operation_mode == "source":
             config.set_value("fight_requirements", False)
-            url = FastestMirror.get_github_mirror("https://github.com/linruowuyin/Fhoe-Rail/archive/master.zip")
+            url = FastestMirror.get_github_mirror(
+                "https://github.com/linruowuyin/Fhoe-Rail/archive/master.zip")
             update_handler = UpdateHandler(url, config.fight_path, "Fhoe-Rail-master")
             update_handler.run()
 
@@ -55,7 +58,8 @@ class Fight:
         if not config.fight_requirements:
             logger.info(_("开始安装依赖"))
             from tasks.base.fastest_mirror import FastestMirror
-            subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "pip", "--upgrade"])
+            subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i",
+                           FastestMirror.get_pypi_mirror(), "pip", "--upgrade"])
             while not subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.fight_path):
                 logger.error(_("依赖安装失败"))
                 input(_("按回车键重试. . ."))
@@ -76,7 +80,7 @@ class Fight:
         if Fight.before_start():
             # 切换队伍
             if config.fight_team_enable:
-                Base.change_team(config.fight_team_number)
+                Team.change_to(config.fight_team_number)
 
             logger.info(_("开始锄大地"))
             screen.change_to('universe_main')

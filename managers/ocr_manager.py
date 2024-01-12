@@ -18,20 +18,18 @@ def install_ocr():
     from module.update.update_handler import UpdateHandler
     from tasks.base.fastest_mirror import FastestMirror
     if ocr_name == "PaddleOCR-json":
-        url = FastestMirror.get_github_mirror("https://github.com/hiroi-sora/PaddleOCR-json/releases/download/v1.3.1/PaddleOCR-json_v.1.3.1.7z")
+        url = FastestMirror.get_github_mirror(
+            "https://github.com/hiroi-sora/PaddleOCR-json/releases/download/v1.3.1/PaddleOCR-json_v.1.3.1.7z")
         update_handler = UpdateHandler(url, os.path.dirname(ocr_path), "PaddleOCR-json_v.1.3.1")
     elif ocr_name == "RapidOCR-json":
-        url = FastestMirror.get_github_mirror("https://github.com/hiroi-sora/RapidOCR-json/releases/download/v0.2.0/RapidOCR-json_v0.2.0.7z")
+        url = FastestMirror.get_github_mirror(
+            "https://github.com/hiroi-sora/RapidOCR-json/releases/download/v0.2.0/RapidOCR-json_v0.2.0.7z")
         update_handler = UpdateHandler(url, os.path.dirname(ocr_path), "RapidOCR-json_v0.2.0")
     update_handler.run()
 
 
-def check_path():
-    if not os.path.exists(ocr_path):
-        logger.warning(_("OCR 路径不存在: {path}").format(path=ocr_path))
-        install_ocr()
-
-
-check_path()
+if not os.path.exists(ocr_path):
+    logger.warning(_("OCR 路径不存在: {path}").format(path=ocr_path))
+    install_ocr()
 
 ocr = OCR(ocr_path)
