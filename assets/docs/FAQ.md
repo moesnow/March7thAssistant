@@ -4,8 +4,6 @@
 
 ## 快速上手，请访问：[使用教程](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
 
-## 三月七小助手 March7thAssistant
-
 ### Q：总是被杀毒软件删除怎么办
 
 A：将`小助手文件夹`加入杀毒软件排除项，然后使用 `Update.exe` 自动更新或手动更新一次。
@@ -36,8 +34,6 @@ A：在现有的 config.yaml 里面添加，仿造格式 "notify\_+名字+\_enab
 
 [https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-[CN]](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-[CN])
 
-## 模拟宇宙 Auto_Simulated_Universe
-
 ### Q：模拟宇宙能修改第几个世界、角色、命途以及难度吗？
 
 A：选好世界和角色进入一次再退出即可，命途和难度可以在设置中找到模拟宇宙，点击原版运行，在图形界面内修改
@@ -48,13 +44,11 @@ A：快速上手，请访问：[项目文档](https://asu.stysqy.top/)
 
 遇到问题，请在提问前查看：[Q&A](https://asu.stysqy.top/guide/qa.html)
 
-## 锄大地 Fhoe-Rail
-
 ### Q：锄大地卡住不动，总是就是不正常运行
 
 A：请检查是否存在未解锁的传送点、地图大门，未完成的机巧鸟等任务
 
-### Q：锄大地时不会自动战斗吗？还有怎么从指定地图运行呢
+### Q：锄大地时不会自动战斗吗？
 
 A：进入游戏的设置界面，将“是否沿用自动战斗设置”设置为“是”。
 
