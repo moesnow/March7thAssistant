@@ -148,7 +148,7 @@ class Power:
     @staticmethod
     def merge(type):
         if type == "immersifier":
-            logger.hr(_("准备合成沉浸器"), 0)
+            logger.hr(_("准备合成沉浸器"), 2)
             screen.change_to("guide3")
 
             immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
