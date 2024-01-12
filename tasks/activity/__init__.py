@@ -4,10 +4,10 @@ from managers.automation_manager import auto
 from managers.ocr_manager import ocr
 from managers.translate_manager import _
 from managers.config_manager import config
-from tasks.activity.checkInactivity import CheckInActivity
-from tasks.activity.gardenofplenty import GardenOfPlenty
-from tasks.activity.realmofthestrange import RealmOfTheStrange
-from tasks.activity.planarfissure import PlanarFissure
+from .checkInactivity import CheckInActivity
+from .gardenofplenty import GardenOfPlenty
+from .realmofthestrange import RealmOfTheStrange
+from .planarfissure import PlanarFissure
 
 
 class ActivityManager:

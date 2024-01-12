@@ -1,6 +1,6 @@
 from managers.translate_manager import _
 from tasks.power.power import Power
-from tasks.activity.doubleactivity import DoubleActivity
+from .doubleactivity import DoubleActivity
 
 
 class PlanarFissure(DoubleActivity):

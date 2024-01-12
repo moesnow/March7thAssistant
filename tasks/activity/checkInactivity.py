@@ -2,7 +2,7 @@ import time
 from managers.automation_manager import auto
 from managers.logger_manager import logger
 from managers.translate_manager import _
-from tasks.activity.activitytemplate import ActivityTemplate
+from .activitytemplate import ActivityTemplate
 
 
 class CheckInActivity(ActivityTemplate):

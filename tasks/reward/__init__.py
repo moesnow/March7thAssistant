@@ -3,11 +3,11 @@ from managers.screen_manager import screen
 from managers.config_manager import config
 from managers.automation_manager import auto
 from managers.translate_manager import _
-from tasks.reward.mail import Mail
-from tasks.reward.assist import Assist
-from tasks.reward.dispatch import Dispatch
-from tasks.reward.quest import Quest
-from tasks.reward.srpass import SRPass
+from .mail import Mail
+from .assist import Assist
+from .dispatch import Dispatch
+from .quest import Quest
+from .srpass import SRPass
 
 
 class RewardManager:

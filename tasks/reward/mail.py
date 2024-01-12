@@ -1,6 +1,6 @@
 from managers.automation_manager import auto
 from managers.translate_manager import _
-from tasks.reward.rewardtemplate import RewardTemplate
+from .rewardtemplate import RewardTemplate
 
 
 class Mail(RewardTemplate):

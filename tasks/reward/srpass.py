@@ -2,7 +2,7 @@ from managers.screen_manager import screen
 from managers.automation_manager import auto
 from managers.translate_manager import _
 from tasks.base.base import Base
-from tasks.reward.rewardtemplate import RewardTemplate
+from .rewardtemplate import RewardTemplate
 import time
 
 
