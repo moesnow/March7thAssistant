@@ -5,7 +5,7 @@ from managers.translate_manager import _
 from managers.config_manager import config
 from managers.ocr_manager import ocr
 from tasks.game.stop import Stop
-from tasks.base.resolution import Resolution
+from tasks.game.resolution import Resolution
 from tasks.base.windowswitcher import WindowSwitcher
 import psutil
 import time

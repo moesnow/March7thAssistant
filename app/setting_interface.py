@@ -199,19 +199,19 @@ class SettingInterface(ScrollArea):
             FIF.STOP_WATCH,
             self.tr('领取委托奖励'),
             None,
-            "dispatch_enable"
+            "reward_dispatch_enable"
         )
         self.mailEnableCard = SwitchSettingCard1(
             FIF.MAIL,
             self.tr('领取邮件奖励'),
             None,
-            "mail_enable"
+            "reward_mail_enable"
         )
         self.assistEnableCard = SwitchSettingCard1(
             FIF.BRUSH,
             self.tr('领取支援奖励'),
             None,
-            "assist_enable"
+            "reward_assist_enable"
         )
         # self.srpassEnableCard = SwitchSettingCard1(
         #     FIF.RINGER,

@@ -32,8 +32,7 @@ class OCR:
             self.ocr.exit()
             self.ocr = None
 
-    @staticmethod
-    def convert_format(result):
+    def convert_format(self, result):
         if result['code'] != 100:
             logger.debug(result)
             return False
@@ -67,40 +66,48 @@ class OCR:
             image_bytes = image_stream.getvalue()
             original_dict = self.ocr.runBytes(image_bytes)
 
-            replacements = {
-                "'风之形": "'巽风之形",
-                "'翼风之形": "'巽风之形",
-                "'芒之形": "'锋芒之形",
-                "'偶之形": "'偃偶之形",
-                "'嘎偶之形": "'偃偶之形",
-                "'優偶之形": "'偃偶之形",
-                "'厦偶之形": "'偃偶之形",
-                "'兽之形": "'孽兽之形",
-                "'灼之形": "'燔灼之形",
-                "'潘灼之形": "'燔灼之形",
-                "'熠灼之形": "'燔灼之形",
-                "'冥之径": "'幽冥之径",
-                "'幽之径": "'幽冥之径",
-                "'幽幂之径": "'幽冥之径",
-                "'幽寞之径": "'幽冥之径",
-                "'蛀星的旧": "'蛀星的旧靥",
-                "'蛀星的旧履": "'蛀星的旧靥",
-                "'蛀星的旧膚": "'蛀星的旧靥",
-                "'蛀星的旧魔": "'蛀星的旧靥"
-            }
-
-            original_str = str(original_dict)
-            for old_str, new_str in replacements.items():
-                original_str = original_str.replace(old_str, new_str)
-
-            modified_dict = eval(original_str)
+            modified_dict = self.replace_strings(original_dict)
             return modified_dict
         except Exception as e:
             logger.error(e)
             return r"{}"
 
+    def replace_strings(self, original_dict):
+        replacements = {
+            "'风之形": "'巽风之形",
+            "'翼风之形": "'巽风之形",
+            "'芒之形": "'锋芒之形",
+            "'偶之形": "'偃偶之形",
+            "'嘎偶之形": "'偃偶之形",
+            "'優偶之形": "'偃偶之形",
+            "'厦偶之形": "'偃偶之形",
+            "'兽之形": "'孽兽之形",
+            "'灼之形": "'燔灼之形",
+            "'潘灼之形": "'燔灼之形",
+            "'熠灼之形": "'燔灼之形",
+            "'冥之径": "'幽冥之径",
+            "'幽之径": "'幽冥之径",
+            "'幽幂之径": "'幽冥之径",
+            "'幽寞之径": "'幽冥之径",
+            "'蛀星的旧": "'蛀星的旧靥",
+            "'蛀星的旧履": "'蛀星的旧靥",
+            "'蛀星的旧膚": "'蛀星的旧靥",
+            "'蛀星的旧魔": "'蛀星的旧靥"
+        }
+
+        original_str = str(original_dict)
+        replaced_set = set()
+
+        for old_str, new_str in replacements.items():
+            if new_str not in replaced_set:
+                original_str = original_str.replace(old_str, new_str, 1)
+                replaced_set.add(new_str)
+
+        modified_dict = eval(original_str)
+        return modified_dict
+
     def recognize_single_line(self, image, blacklist=None):
-        results = OCR.convert_format(self.run(image))
+        results = self.convert_format(self.run(image))
         if results:
             for i in range(len(results)):
                 line_text = results[i][1][0] if results and len(results[i]) > 0 else ""
@@ -111,5 +118,5 @@ class OCR:
         return None
 
     def recognize_multi_lines(self, image):
-        result = OCR.convert_format(self.run(image))
+        result = self.convert_format(self.run(image))
         return result

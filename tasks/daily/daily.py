@@ -6,29 +6,20 @@ from tasks.base.date import Date
 from tasks.daily.photo import Photo
 from tasks.daily.fight import Fight
 from tasks.weekly.universe import Universe
-from tasks.reward.reward import Reward
+import tasks.reward as reward
 from tasks.daily.synthesis import Synthesis
 from tasks.weekly.forgottenhall import ForgottenHall
 from tasks.weekly.purefiction import PureFiction
-from tasks.weekly.echoofwar import Echoofwar
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
-from tasks.activity.activity import Activity
 from tasks.daily.himekotry import HimekoTry
 
 
 class Daily:
     @staticmethod
     def start():
-        Daily.daily()
-
-        if Date.is_next_mon_4_am(config.echo_of_war_timestamp):
-            if config.echo_of_war_enable:
-                Echoofwar.start()
-            else:
-                logger.info(_("历战余响未开启"))
-        else:
-            logger.info(_("历战余响尚未刷新"))
+        if config.daily_enable:
+            Daily.run()
 
         Power.run()
 
@@ -44,7 +35,7 @@ class Daily:
             if Date.is_next_mon_4_am(config.universe_timestamp):
                 if config.universe_enable:
                     Power.run()
-                    Reward.get()
+                    reward.start()
                     Universe.start(get_reward=True)
                     Power.run()
                 else:
@@ -76,24 +67,18 @@ class Daily:
         else:
             logger.info(_("虚构叙事尚未刷新"))
 
-        Reward.get()
-
     @staticmethod
-    def daily(force=False):
+    def run():
         logger.hr(_("开始日常任务"), 0)
+
         if Date.is_next_4_am(config.last_run_timestamp):
-            # 活动
-            Activity.start()
+            screen.change_to("guide2")
 
-            config.set_value("daily_tasks", {})
-            if config.daily_enable or force:
-                screen.change_to("guide2")
+            tasks = Tasks("./assets/config/task_mappings.json")
+            tasks.start()
 
-                tasks = Tasks("./assets/config/task_mappings.json")
-                tasks.start()
-
-                config.set_value("daily_tasks", tasks.daily_tasks)
-                config.save_timestamp("last_run_timestamp")
+            config.set_value("daily_tasks", tasks.daily_tasks)
+            config.save_timestamp("last_run_timestamp")
         else:
             logger.info(_("日常任务尚未刷新"))
 

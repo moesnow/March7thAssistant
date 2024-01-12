@@ -4,6 +4,8 @@ from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.power.instance import Instance
+from tasks.base.date import Date
+from tasks.weekly.echoofwar import Echoofwar
 import time
 
 
@@ -31,7 +33,16 @@ class Power:
 
     @staticmethod
     def preprocess():
-        # 体力优先合成沉浸器
+        # 优先历战余响
+        if Date.is_next_mon_4_am(config.echo_of_war_timestamp):
+            if config.echo_of_war_enable:
+                Echoofwar.start()
+            else:
+                logger.info(_("历战余响未开启"))
+        else:
+            logger.info(_("历战余响尚未刷新"))
+
+        # 优先合成沉浸器
         if config.merge_immersifier:
             Power.merge("immersifier")
 

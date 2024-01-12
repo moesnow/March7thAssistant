@@ -11,7 +11,8 @@ from managers.ocr_manager import ocr
 from managers.translate_manager import _
 from tasks.game.game import Game
 from tasks.daily.daily import Daily
-from tasks.reward.reward import Reward
+import tasks.activity as activity
+import tasks.reward as reward
 from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
@@ -33,15 +34,18 @@ def run_main_actions():
     while True:
         # Version.start()
         Game.start()
+        # Activity.start()
+        activity.start()
         Daily.start()
+        reward.start()
         Game.stop(True)
 
 
 def run_sub_task(action):
     Game.start()
     if action == "daily":
-        Daily.daily(force=True)
-        Reward.get()
+        Daily.run()
+        reward.start()
     elif action == "power":
         Power.run()
     elif action == "fight":
