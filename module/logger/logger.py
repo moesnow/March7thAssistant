@@ -3,6 +3,7 @@ import logging
 import os
 
 from .coloredformatter import ColoredFormatter
+from .colorcodefilter import ColorCodeFilter
 from .titleformatter import TitleFormatter
 
 
@@ -23,17 +24,17 @@ class Logger:
         self.logger.propagate = False
         self.logger.setLevel(level)
 
-        if not os.path.exists("logs"):
-            os.makedirs("logs")
-        file_handler = logging.FileHandler(f"./logs/{self.current_datetime()}.log", encoding="utf-8")
-        file_formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
-        file_handler.setFormatter(file_formatter)
-        self.logger.addHandler(file_handler)
-
         console_handler = logging.StreamHandler()
         console_formatter = ColoredFormatter('%(asctime)s | %(levelname)s | %(message)s')
         console_handler.setFormatter(console_formatter)
         self.logger.addHandler(console_handler)
+
+        if not os.path.exists("logs"):
+            os.makedirs("logs")
+        file_handler = logging.FileHandler(f"./logs/{self.current_datetime()}.log", encoding="utf-8")
+        file_formatter = ColorCodeFilter('%(asctime)s | %(levelname)s | %(message)s')
+        file_handler.setFormatter(file_formatter)
+        self.logger.addHandler(file_handler)
 
         self.logger.hr = TitleFormatter.format_title
 
