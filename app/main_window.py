@@ -1,10 +1,12 @@
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt, QSize
+from contextlib import redirect_stdout
 
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, darkdetect, Theme
-from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import InfoBar, InfoBarPosition
+with redirect_stdout(None):
+    from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, darkdetect, Theme
+    from qfluentwidgets import FluentIcon as FIF
+    from qfluentwidgets import InfoBar, InfoBarPosition
 
 from .home_interface import HomeInterface
 from .setting_interface import SettingInterface
