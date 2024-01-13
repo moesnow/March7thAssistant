@@ -167,7 +167,7 @@ class Update:
         while True:
             try:
                 if os.path.exists(self.exe_path):
-                    if not subprocess.run([self.exe_path, "x", self.download_file_path, f"-o{self.temp_path}", "-aoa"], shell=True, check=True):
+                    if not subprocess.run([self.exe_path, "x", self.download_file_path, f"-o{self.temp_path}", "-aoa"], check=True):
                         raise Exception
                 else:
                     shutil.unpack_archive(self.download_file_path, self.temp_path)

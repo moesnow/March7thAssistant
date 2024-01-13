@@ -52,7 +52,7 @@ class PythonChecker:
 
         while True:
             try:
-                if not subprocess.run(f"{download_file_path} /passive InstallAllUsers=0 PrependPath=1 Include_launcher=0 Include_test=0", shell=True, check=True):
+                if not subprocess.run(f"{download_file_path} /passive InstallAllUsers=0 PrependPath=1 Include_launcher=0 Include_test=0", check=True):
                     raise Exception
                 logger.info(_("安装完成"))
                 break

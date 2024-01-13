@@ -38,7 +38,7 @@ class UpdateHandler:
     def extract_file(self):
         while True:
             try:
-                if not subprocess.run([self.exe_path, "x", self.download_file_path, f"-o{self.temp_path}", "-aoa"], shell=True, check=True):
+                if not subprocess.run([self.exe_path, "x", self.download_file_path, f"-o{self.temp_path}", "-aoa"], check=True):
                     raise Exception
                 logger.info(_("解压完成：{path}").format(path=self.extract_folder_path))
                 break
