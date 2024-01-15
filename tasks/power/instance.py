@@ -78,6 +78,8 @@ class Instance:
             Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 传送可能失败⚠️"))
             return False
 
+        return True
+
     @staticmethod
     def start_instance(instance_type, power_need):
         if "拟造花萼" in instance_type:
