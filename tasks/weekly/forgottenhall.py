@@ -252,7 +252,7 @@ class ForgottenHall:
         if max_level > 0:
             screen.change_to('memory_of_chaos')
             # 领取星琼
-            if auto.click_element("./assets/images/dispatch/reward.png", "image", 0.9, max_retries=5, crop=(1775.0 / 1920, 902.0 / 1080, 116.0 / 1920, 110.0 / 1080)):
+            if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, max_retries=5, crop=(1775.0 / 1920, 902.0 / 1080, 116.0 / 1920, 110.0 / 1080)):
                 time.sleep(1)
                 while auto.click_element("./assets/images/forgottenhall/receive.png", "image", 0.9, crop=(1081.0 / 1920, 171.0 / 1080, 500.0 / 1920, 736.0 / 1080)):
                     auto.click_element("./assets/images/base/click_close.png",

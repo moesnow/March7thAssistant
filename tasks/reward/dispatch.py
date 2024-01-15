@@ -38,7 +38,7 @@ class Dispatch(RewardTemplate):
         return True
 
     def _click_complete_dispatch(self, crop):
-        # width, height = auto.get_image_info("./assets/images/dispatch/reward.png")
+        # width, height = auto.get_image_info("./assets/images/share/base/RedExclamationMark.png")
         # offset = (-2 * width, 2 * height)
         offset = (-34, 34)  # 以后改相对坐标偏移
-        return auto.click_element("./assets/images/dispatch/reward.png", "image", 0.9, max_retries=8, offset=offset, crop=crop)
+        return auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, max_retries=8, offset=offset, crop=crop)
