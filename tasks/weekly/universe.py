@@ -18,7 +18,7 @@ class Universe:
         if config.universe_operation_mode == "exe":
             import requests
             import json
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Auto_Simulated_Universe", "universe-latest.json", 1), timeout=3)
+            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Auto_Simulated_Universe"), timeout=10, headers=config.useragent)
             if response.status_code == 200:
                 data = json.loads(response.text)
                 for asset in data["assets"]:

@@ -224,4 +224,4 @@
  * [详细教程 by_Rin](https://www.bilibili.com/read/cv24286313/) 中所有相关文件：[下载链接](https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)
    * 备用链接
      * [百度网盘](https://pan.baidu.com/s/13aoll4n1gmKlPT9WwNYeEw?pwd=jbha) 提取码：jbha
-     * [GitHub镜像](https://github.moeyy.xyz/https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)
+     * [GitHub镜像](https://github.kotori.top/https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)

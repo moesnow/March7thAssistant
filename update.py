@@ -20,7 +20,7 @@ class Update:
         self.process_name = ("March7th Assistant.exe", "March7th Launcher.exe")
         self.api_urls = [
             "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-            "https://github.moeyy.xyz/https://raw.githubusercontent.com/moesnow/March7thAssistant/release/latest.json",
+            "https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
         ]
 
         self.temp_path = os.path.abspath("./temp")
@@ -102,7 +102,7 @@ class Update:
         # 设置镜像
         api_endpoints = [
             self.download_url,
-            f"https://github.moeyy.xyz/{self.download_url}",
+            f"https://github.kotori.top/{self.download_url}",
         ]
         self.download_url = self.__find_fastest_mirror(api_endpoints)
 

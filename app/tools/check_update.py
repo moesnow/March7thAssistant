@@ -31,9 +31,9 @@ class UpdateThread(QThread):
     def run(self):
         try:
             if config.update_prerelease_enable:
-                response = requests.get("https://api.github.com/repos/moesnow/March7thAssistant/releases", timeout=10)
+                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False), timeout=10, headers=config.useragent)
             else:
-                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", "latest.json", self.timeout), timeout=10)
+                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant"), timeout=10, headers=config.useragent)
             if response.status_code == 200:
                 if config.update_prerelease_enable:
                     data = response.json()[0]

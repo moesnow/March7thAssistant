@@ -13,3 +13,8 @@ if not os.path.exists(path):
 
 config.env = os.environ.copy()
 config.env['PATH'] = os.path.dirname(config.python_exe_path) + ';' + config.env['PATH']
+
+useragent = {
+    "User-Agent": f"March7thAssistant/{config.version}"
+}
+config.useragent = useragent
