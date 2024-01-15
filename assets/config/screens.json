@@ -44,7 +44,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/warp/stellar_warp.png",
+                            "./assets/images/share/warp/stellar_warp.png",
                             "image",
                             0.9
                         ]
@@ -56,7 +56,7 @@
     {
         "name": "手机菜单",
         "id": "menu",
-        "image_path": "./assets/images/menu/more.png",
+        "image_path": "./assets/images/share/menu/more.png",
         "actions": [
             {
                 "target_screen": "main",
@@ -174,7 +174,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/mail.png",
+                            "./assets/images/share/menu/mail.png",
                             "image",
                             0.9,
                             "crop=(0.95, 0.1, 0.05, 0.6)"
@@ -183,7 +183,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/mail_reward.png",
+                            "./assets/images/share/menu/mail_reward.png",
                             "image",
                             0.9,
                             "crop=(0.95, 0.1, 0.05, 0.6)"
@@ -197,7 +197,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/more.png",
+                            "./assets/images/share/menu/more.png",
                             "image",
                             0.9
                         ]
@@ -226,7 +226,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/more.png",
+                            "./assets/images/share/menu/more.png",
                             "image",
                             0.9
                         ]
@@ -255,7 +255,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/camera.png",
+                            "./assets/images/share/menu/camera.png",
                             "image",
                             0.9,
                             "crop=(0.95, 0.1, 0.05, 0.6)"
@@ -269,7 +269,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/dispatch.png",
+                            "./assets/images/share/menu/dispatch.png",
                             "image",
                             0.9
                         ]
@@ -282,7 +282,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/pass.png",
+                            "./assets/images/share/menu/pass.png",
                             "image",
                             0.9
                         ]
@@ -295,7 +295,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/synthesis.png",
+                            "./assets/images/share/menu/synthesis.png",
                             "image",
                             0.9
                         ]
@@ -308,7 +308,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/bag.png",
+                            "./assets/images/share/menu/bag.png",
                             "image",
                             0.9
                         ]
@@ -322,7 +322,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/bag_consumables.png",
+                            "./assets/images/share/menu/bag_consumables.png",
                             "image",
                             0.9,
                             2
@@ -336,7 +336,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/configure_team.png",
+                            "./assets/images/share/menu/configure_team.png",
                             "image",
                             0.9,
                             2
@@ -350,7 +350,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/menu/activity.png",
+                            "./assets/images/share/menu/activity.png",
                             "image",
                             0.9
                         ]
@@ -490,7 +490,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/base/confirm.png",
+                            "./assets/images/zh_CN/base/confirm.png",
                             "image",
                             0.9,
                             10
@@ -557,7 +557,7 @@
     {
         "name": "撤退",
         "id": "retreat",
-        "image_path": "./assets/images/fight/retreat.png",
+        "image_path": "./assets/images/zh_CN/fight/retreat.png",
         "actions": [
             {
                 "target_screen": "main",
@@ -565,7 +565,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/fight/retreat.png",
+                            "./assets/images/zh_CN/fight/retreat.png",
                             "image",
                             0.9
                         ]
@@ -583,7 +583,7 @@
     {
         "name": "退出关卡",
         "id": "fight_exit",
-        "image_path": "./assets/images/fight/fight_exit.png",
+        "image_path": "./assets/images/zh_CN/fight/fight_exit.png",
         "actions": [
             {
                 "target_screen": "main",
@@ -591,7 +591,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/fight/fight_exit.png",
+                            "./assets/images/zh_CN/fight/fight_exit.png",
                             "image",
                             0.9
                         ]
@@ -1039,7 +1039,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/pass/enter_pass2.png",
+                            "./assets/images/share/reward/pass/enter_pass2.png",
                             "image",
                             0.9
                         ]
@@ -1070,7 +1070,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/pass/enter_pass1.png",
+                            "./assets/images/share/reward/pass/enter_pass1.png",
                             "image",
                             0.9
                         ]
@@ -1101,7 +1101,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/synthesis/enter_material.png",
+                            "./assets/images/share/synthesis/enter_material.png",
                             "image",
                             0.9
                         ]
@@ -1132,7 +1132,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/synthesis/enter_consumables.png",
+                            "./assets/images/share/synthesis/enter_consumables.png",
                             "image",
                             0.9
                         ]
@@ -1231,7 +1231,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/base/confirm.png",
+                            "./assets/images/zh_CN/base/confirm.png",
                             "image",
                             0.9,
                             2
@@ -1335,7 +1335,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/warp/try.png",
+                            "./assets/images/zh_CN/warp/character_trial.png",
                             "image",
                             0.9
                         ]
@@ -1372,7 +1372,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/warp/start_try.png",
+                            "./assets/images/zh_CN/warp/start_trial.png",
                             "image",
                             0.9
                         ]
@@ -1428,7 +1428,7 @@
                     {
                         "action": "auto.click_element",
                         "args": [
-                            "./assets/images/base/confirm.png",
+                            "./assets/images/zh_CN/base/confirm.png",
                             "image",
                             0.9,
                             10

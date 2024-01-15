@@ -97,7 +97,7 @@ class Instance:
         if auto.click_element("挑战", "text", max_retries=10, need_ocr=True):
             if instance_type == "历战余响":
                 time.sleep(1)
-                auto.click_element("./assets/images/base/confirm.png", "image", 0.9)
+                auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
 
             Character.borrow()
 
@@ -113,16 +113,16 @@ class Instance:
 
     @staticmethod
     def start_instance_again(instance_type):
-        auto.click_element("./assets/images/fight/fight_again.png", "image", 0.9, max_retries=10)
+        auto.click_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9, max_retries=10)
         if instance_type == "历战余响":
             time.sleep(1)
-            auto.click_element("./assets/images/base/confirm.png", "image", 0.9)
+            auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
 
     @staticmethod
     def complete_run():
         # 速度太快，点击按钮无效
         time.sleep(1)
-        auto.click_element("./assets/images/fight/fight_exit.png", "image", 0.9, max_retries=10)
+        auto.click_element("./assets/images/zh_CN/fight/fight_exit.png", "image", 0.9, max_retries=10)
         time.sleep(2)
 
     @staticmethod
@@ -148,20 +148,20 @@ class Instance:
         logger.info(_("进入战斗"))
         time.sleep(2)
         # for i in range(20):
-        #     if auto.find_element("./assets/images/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+        #     if auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
         #         logger.info(_("尝试开启自动战斗"))
         #         auto.press_key("v")
-        #     elif auto.find_element("./assets/images/base/auto.png", "image", 0.95, take_screenshot=False):
+        #     elif auto.find_element("./assets/images/zh_CN/base/auto.png", "image", 0.95, take_screenshot=False):
         #         logger.info(_("自动战斗已开启"))
         #         break
         #     time.sleep(0.5)
         # logger.info(_("等待战斗"))
 
         def check_fight():
-            if auto.find_element("./assets/images/fight/fight_again.png", "image", 0.9):
+            if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):
                 return True
 
-            elif config.auto_battle_detect_enable and auto.find_element("./assets/images/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+            elif config.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 logger.info(_("尝试开启自动战斗"))
                 auto.press_key("v")
 

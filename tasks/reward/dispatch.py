@@ -26,8 +26,8 @@ class Dispatch(RewardTemplate):
             if not self.perform_dispatch_and_check(crop=(660 / 1920, 280 / 1080, 170 / 1920, 600 / 1080)):
                 return
 
-            auto.click_element("./assets/images/dispatch/receive.png", "image", 0.9, max_retries=10)
-            auto.click_element("./assets/images/dispatch/again.png", "image", 0.9, max_retries=10)
+            auto.click_element("./assets/images/zh_CN/reward/dispatch/receive.png", "image", 0.9, max_retries=10)
+            auto.click_element("./assets/images/zh_CN/reward/dispatch/again.png", "image", 0.9, max_retries=10)
             time.sleep(4)
 
     def perform_dispatch_and_check(self, crop):

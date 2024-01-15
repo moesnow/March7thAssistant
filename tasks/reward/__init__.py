@@ -22,11 +22,11 @@ class RewardManager:
         logger.hr(_("开始领奖励"), 0)
 
         reward_mapping = {
-            "mail": (self.mail, "./assets/images/menu/mail_reward.png", 0.9),
-            "assist": (self.assist, "./assets/images/menu/assist_reward.png", 0.9),
-            "dispatch": (self.dispatch, "./assets/images/menu/dispatch_reward.png", 0.95),
-            "quest": (self.quest, "./assets/images/menu/quest_reward.png", 0.95),
-            "srpass": (self.srpass, "./assets/images/menu/pass_reward.png", 0.95)
+            "mail": (self.mail, "./assets/images/share/menu/mail_reward.png", 0.9),
+            "assist": (self.assist, "./assets/images/share/menu/assist_reward.png", 0.9),
+            "dispatch": (self.dispatch, "./assets/images/share/menu/dispatch_reward.png", 0.95),
+            "quest": (self.quest, "./assets/images/share/menu/quest_reward.png", 0.95),
+            "srpass": (self.srpass, "./assets/images/share/menu/pass_reward.png", 0.95)
         }
 
         flag = False

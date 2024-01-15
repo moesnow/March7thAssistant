@@ -132,10 +132,10 @@ class Universe:
         logger.info(_("开始领取奖励"))
         screen.change_to('universe_main')
         if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9):
-            if auto.click_element("./assets/images/universe/one_key_receive.png", "image", 0.9, max_retries=10):
-                if auto.find_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10):
+            if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
+                if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.9, max_retries=10):
                     Base.send_notification_with_screenshot(_("🎉模拟宇宙奖励已领取🎉"))
-                    auto.click_element("./assets/images/base/click_close.png", "image", 0.9, max_retries=10)
+                    auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.9, max_retries=10)
 
     @staticmethod
     def gui():

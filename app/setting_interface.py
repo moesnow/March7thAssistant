@@ -485,7 +485,7 @@ class SettingInterface(ScrollArea):
             FIF.INFO,
             self.tr("↓↓混沌回忆队伍↓↓"),
             self.tr(
-                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\character\" 中查看")
+                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
         )
         self.forgottenhallTeam1Card = PushSettingCardEval(
             self.tr('修改'),
@@ -537,7 +537,7 @@ class SettingInterface(ScrollArea):
             FIF.INFO,
             self.tr("↓↓混沌回忆队伍↓↓"),
             self.tr(
-                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\character\" 中查看")
+                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
         )
         self.purefictionTeam1Card = PushSettingCardEval(
             self.tr('修改'),
@@ -856,9 +856,9 @@ class SettingInterface(ScrollArea):
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
         self.forgottenhallTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
-            "start /WAIT explorer .\\assets\\images\\character", shell=True))
+            "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
         self.purefictionTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
-            "start /WAIT explorer .\\assets\\images\\character", shell=True))
+            "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
 
         self.guiUniverseCard.clicked.connect(lambda: start_task("universe_gui"))
         self.guiFightCard.clicked.connect(lambda: start_task("fight_gui"))

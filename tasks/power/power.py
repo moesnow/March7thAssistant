@@ -100,19 +100,19 @@ class Power:
                 return -1
 
         def move_button_and_confirm():
-            if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
+            if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                 result = auto.find_element(
-                    "./assets/images/share/trailblaze_power/button.png", "image", 0.9, max_retries=10)
+                    "./assets/images/share/power/trailblaze_power/button.png", "image", 0.9, max_retries=10)
                 if result:
                     auto.click_element_with_pos(result, action="down")
                     time.sleep(0.5)
                     result = auto.find_element(
-                        "./assets/images/share/trailblaze_power/plus.png", "image", 0.9)
+                        "./assets/images/share/power/trailblaze_power/plus.png", "image", 0.9)
                     if result:
                         auto.click_element_with_pos(result, action="move")
                         time.sleep(0.5)
                         auto.mouse_up()
-                        if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
+                        if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                             time.sleep(1)
                             auto.press_key("esc")
                             if screen.check_screen("map"):
@@ -124,17 +124,17 @@ class Power:
         if config.use_reserved_trailblaze_power or config.use_fuel:
             screen.change_to('map')
             # 打开开拓力补充界面
-            if auto.click_element("./assets/images/share/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=trailblaze_power_crop):
+            if auto.click_element("./assets/images/share/power/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=trailblaze_power_crop):
                 # 等待界面加载
-                if auto.find_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
+                if auto.find_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                     # 开启使用后备开拓力
-                    if config.use_reserved_trailblaze_power and auto.click_element("./assets/images/share/trailblaze_power/reserved_trailblaze_power.png", "image", 0.9, scale_range=(0.95, 0.95)):
+                    if config.use_reserved_trailblaze_power and auto.click_element("./assets/images/share/power/trailblaze_power/reserved_trailblaze_power.png", "image", 0.9, scale_range=(0.95, 0.95)):
                         move_button_and_confirm()
                     # 开启使用燃料
-                    elif config.use_fuel and auto.click_element("./assets/images/share/trailblaze_power/fuel.png", "image", 0.9, scale_range=(0.95, 0.95)):
+                    elif config.use_fuel and auto.click_element("./assets/images/share/power/trailblaze_power/fuel.png", "image", 0.9, scale_range=(0.95, 0.95)):
                         move_button_and_confirm()
                     # # 开启使用星琼
-                    # elif config.stellar_jade and auto.click_element("./assets/images/share/trailblaze_power/stellar_jade.png", "image", 0.9, scale_range=(0.95, 0.95)):
+                    # elif config.stellar_jade and auto.click_element("./assets/images/share/power/trailblaze_power/stellar_jade.png", "image", 0.9, scale_range=(0.95, 0.95)):
                     #     pass
                     else:
                         auto.press_key("esc")
@@ -175,12 +175,12 @@ class Power:
             logger.hr(_("准备合成 {count} 个沉浸器").format(count=count), 2)
             screen.change_to("guide3")
 
-            if auto.click_element("./assets/images/share/immersifier/immersifier.png", "image", 0.9, crop=immersifier_crop):
+            if auto.click_element("./assets/images/share/power/immersifier/immersifier.png", "image", 0.9, crop=immersifier_crop):
                 time.sleep(1)
                 for i in range(count - 1):
                     auto.click_element(
-                        "./assets/images/share/trailblaze_power/plus.png", "image", 0.9)
+                        "./assets/images/share/power/trailblaze_power/plus.png", "image", 0.9)
                     time.sleep(0.5)
-                if auto.click_element("./assets/images/base/confirm.png", "image", 0.9, max_retries=10):
+                if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                     time.sleep(1)
                     auto.press_key("esc")

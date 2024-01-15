@@ -6,9 +6,9 @@ from .activitytemplate import ActivityTemplate
 
 
 class CheckInActivity(ActivityTemplate):
-    RECEIVE_PATH = "./assets/images/activity/giftof/receive.png"
-    RECEIVE_FIN_PATH = "./assets/images/activity/giftof/receive_fin.png"
-    CLOSE_PATH = "./assets/images/base/click_close.png"
+    RECEIVE_PATH = "./assets/images/share/activity/double/receive.png"
+    RECEIVE_FIN_PATH = "./assets/images/share/activity/double/receive_fin.png"
+    CLOSE_PATH = "./assets/images/zh_CN/base/click_close.png"
     IMAGE_SIMILARITY_THRESHOLD = 0.9
 
     def _has_reward(self):

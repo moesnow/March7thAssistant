@@ -39,9 +39,9 @@ class Start:
         if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
             return True
         # 游戏热更新，需要确认重启
-        auto.click_element("./assets/images/base/confirm.png", "image", 0.9)
+        auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
         # 网络异常等问题，需要重新启动
-        auto.click_element("./assets/images/base/restart.png", "image", 0.9)
+        auto.click_element("./assets/images/zh_CN/base/restart.png", "image", 0.9)
         # 适配国际服，需要点击“开始游戏”
         auto.click_element("./assets/images/screen/start_game.png", "image", 0.9)
         return False
@@ -66,7 +66,7 @@ class Start:
         if not auto.retry_with_timeout(lambda: Start.check_and_click_enter(), 600, 1):
             logger.error(_("无法找到点击进入按钮"))
             return False
-        
+
         time.sleep(10)
         if not auto.retry_with_timeout(lambda: screen.get_current_screen(), 180, 1):
             logger.error(_("无法进入主界面"))

@@ -24,7 +24,7 @@ class PureFiction:
                 else:
                     auto.click_element("./assets/images/purefiction/back.png", "image", 0.9)
                     return 2
-            elif config.auto_battle_detect_enable and auto.find_element("./assets/images/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+            elif config.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 logger.info(_("尝试开启自动战斗"))
                 auto.press_key("v")
             return False
@@ -106,12 +106,12 @@ class PureFiction:
             time.sleep(1)
             auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
             for character in team_config:
-                if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
                     auto.click_element("等级", "text", include=True, action="move")
                     auto.mouse_scroll(30, -1)
                     time.sleep(1)
                     auto.click_element("角色列表", "text", include=True, action="move")
-                    if not auto.click_element(f"./assets/images/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                    if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
                         return False
                     else:
                         auto.click_element("等级", "text", include=True, action="move")
@@ -224,7 +224,7 @@ class PureFiction:
             if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, max_retries=5, crop=(1775.0 / 1920, 902.0 / 1080, 116.0 / 1920, 110.0 / 1080)):
                 time.sleep(1)
                 while auto.click_element("./assets/images/forgottenhall/receive.png", "image", 0.9, crop=(1081.0 / 1920, 171.0 / 1080, 500.0 / 1920, 736.0 / 1080)):
-                    auto.click_element("./assets/images/base/click_close.png",
+                    auto.click_element("./assets/images/zh_CN/base/click_close.png",
                                        "image", 0.9, max_retries=10)
                     time.sleep(1)
                 Base.send_notification_with_screenshot(

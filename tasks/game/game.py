@@ -21,10 +21,10 @@ class Game:
             sys.exit(1)
         # 判断手机壁纸
         screen.change_to('menu')
-        if not auto.find_element("./assets/images/menu/journey.png", "image", 0.8):
+        if not auto.find_element("./assets/images/share/menu/journey.png", "image", 0.8):
             logger.info(_("检测到未使用无名路途壁纸"))
             screen.change_to('wallpaper')
-            if auto.click_element("./assets/images/menu/wallpaper/journey.png", "image", 0.8):
+            if auto.click_element("./assets/images/share/menu/wallpaper/journey.png", "image", 0.8):
                 auto.click_element("更换", "text", max_retries=4)
             auto.press_key("esc")
             logger.info(_("更换到无名路途壁纸成功"))
