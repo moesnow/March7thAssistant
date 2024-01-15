@@ -311,11 +311,12 @@ class ForgottenHall:
 
     @staticmethod
     def start():
-        logger.hr(_("准备混沌回忆"), 2)
+        logger.hr(_("准备混沌回忆"), 0)
 
         if ForgottenHall.prepare():
             config.save_timestamp("forgottenhall_timestamp")
-            logger.info(_("混沌回忆完成"))
+
+        logger.hr(_("完成"), 2)
 
     @staticmethod
     def start_memory_one():

@@ -67,7 +67,7 @@ class Universe:
 
     @staticmethod
     def start(get_reward=False, nums=config.universe_count, save=True):
-        logger.hr(_("准备模拟宇宙"), 2)
+        logger.hr(_("准备模拟宇宙"), 0)
         if Universe.before_start():
 
             screen.change_to('main')

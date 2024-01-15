@@ -277,8 +277,9 @@ class PureFiction:
 
     @staticmethod
     def start():
-        logger.hr(_("准备虚构叙事"), 2)
+        logger.hr(_("准备虚构叙事"), 0)
 
         if PureFiction.prepare():
             config.save_timestamp("purefiction_timestamp")
-            logger.info(_("虚构叙事完成"))
+
+        logger.hr(_("完成"), 2)

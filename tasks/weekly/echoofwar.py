@@ -14,7 +14,7 @@ class Echoofwar:
     @staticmethod
     def start():
         try:
-            logger.hr(_("准备历战余响"), 2)
+            logger.hr(_("准备历战余响"), 0)
             screen.change_to('guide3')
             guide3_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
             if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=guide3_crop):
@@ -30,9 +30,8 @@ class Echoofwar:
                             logger.info(_("历战余响本周可领取奖励次数：{text}").format(text=text))
                             reward_count = int(text.split("/")[0])
                             if reward_count == 0:
-                                logger.info(_("历战余响已完成"))
+                                logger.hr(_("完成"), 2)
                                 config.save_timestamp("echo_of_war_timestamp")
-                                screen.change_to('menu')
                                 return True
                             else:
                                 power = Power.get()
