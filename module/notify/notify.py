@@ -17,6 +17,7 @@ class Notify:
                 "bark": False,
                 "custom": False,
                 "gocqhttp": False,
+                "gotify": False,
                 "dingtalk": False,
                 "discord": False,
                 "pushplus": False,
@@ -43,6 +44,10 @@ class Notify:
 
             if notifier_name == "winotify":
                 self._send_notification_by_winotify(title, content)
+                return
+
+            if notifier_name == "gotify":
+                self._send_notification_by_gotify(title, content)
                 return
 
             if notifier_name == "pushplus":
@@ -121,6 +126,18 @@ class Notify:
         toast.set_audio(audio.Mail, loop=False)
         toast.show()
         logger.info(_("{notifier_name} 通知发送完成").format(notifier_name="winotify"))
+
+    def _send_notification_by_gotify(self, title, content):
+        notifier_params = getattr(self, "gotify", None)
+        if notifier_params:
+            n = get_notifier("gotify")
+            try:
+                message = content
+                response = n.notify(**notifier_params, title=title, message=message)
+                logger.info(_("{notifier_name} 通知发送完成").format(notifier_name="gotify"))
+            except Exception as e:
+                logger.error(_("{notifier_name} 通知发送失败").format(notifier_name="gotify"))
+                logger.error(f"{e}")
 
     def notify(self, title="", content="", image_io=None):
         for notifier_name in self.notifiers:

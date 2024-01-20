@@ -255,3 +255,10 @@ notify_lark_webhook: ''
 notify_lark_content: ''
 notify_lark_keyword: '' # 可选参数
 notify_lark_sign: '' # 可选参数
+
+# gotify 通知
+# 推送优先级1-10，越高通知等级越高。以安卓为例，1-3 仅有通知栏图标，4-7 为图标+声音， 8-10 为图标+声音+震动。
+notify_gotify_enable: false
+notify_gotify_url: ''
+notify_gotify_token: ''
+notify_gotify_priority: 3  # 可选参数
