@@ -17,23 +17,34 @@ import os
 class Stop:
     @staticmethod
     def terminate_process(name, timeout=10):
-        # 根据进程名中止进程
-        for proc in psutil.process_iter(attrs=['pid', 'name']):
-            if name in proc.info['name']:
-                try:
-                    process = psutil.Process(proc.info['pid'])
-                    process.terminate()
-                    process.wait(timeout)
-                    return True
-                except (psutil.NoSuchProcess, psutil.TimeoutExpired, psutil.AccessDenied):
-                    pass
+        # 根据进程名和用户名中止进程
+        for proc in psutil.process_iter(attrs=["pid", "name"]):
+            # 判断当前进程是否属于当前用户，防止多用户环境下关闭其他用户进程
+            if name in proc.info["name"]:
+                system_username = os.getlogin()  # 返回的是用户名
+                process_username = proc.username()  # 返回的是设备名\用户名，需要处理
+                process_username = process_username.split("\\")[-1]
+                if system_username == process_username:
+                    try:
+                        process = psutil.Process(proc.info["pid"])
+                        process.terminate()
+                        process.wait(timeout)
+                        return True
+                    except (
+                        psutil.NoSuchProcess,
+                        psutil.TimeoutExpired,
+                        psutil.AccessDenied,
+                    ):
+                        pass
         return False
 
     @staticmethod
     def stop_game():
         logger.info(_("开始退出游戏"))
         if WindowSwitcher.check_and_switch(config.game_title_name):
-            if not auto.retry_with_timeout(lambda: Stop.terminate_process(config.game_process_name), 10, 1):
+            if not auto.retry_with_timeout(
+                lambda: Stop.terminate_process(config.game_process_name), 10, 1
+            ):
                 logger.error(_("游戏退出失败"))
                 return False
             logger.info(_("游戏退出成功"))
@@ -55,11 +66,11 @@ class Stop:
     def play_audio():
         if config.play_audio:
             logger.debug(_("开始播放音频"))
-            os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+            os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
             import pygame.mixer
 
             pygame.init()
-            pygame.mixer.music.load('./assets/audio/pa.mp3')
+            pygame.mixer.music.load("./assets/audio/pa.mp3")
             pygame.mixer.music.play()
 
             while pygame.mixer.music.get_busy():
