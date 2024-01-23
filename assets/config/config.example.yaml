@@ -201,10 +201,10 @@ notify_smtp_enable: false
 notify_smtp_host: ''
 notify_smtp_user: ''
 notify_smtp_password: ''
-notify_smtp_From: '' # 可选参数
-notify_smtp_To: '' # 可选参数
-notify_smtp_port: '' # 可选参数
-notify_smtp_ssl: '' # 可选参数
+notify_smtp_From: '' # 可选参数，默认user
+notify_smtp_To: '' # 可选参数，默认user
+notify_smtp_port: '' # 可选参数，默认465
+notify_smtp_ssl: '' # 可选参数，默认为True，可设置为False关闭
 
 # 钉钉通知
 notify_dingtalk_enable: false
