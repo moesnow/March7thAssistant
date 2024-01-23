@@ -20,18 +20,22 @@ class Stop:
         # 根据进程名和用户名中止进程
         for proc in psutil.process_iter(attrs=["pid", "name"]):
             # 判断当前进程是否属于当前用户，防止多用户环境下关闭其他用户进程
-            if (name in proc.info["name"]) and (os.getlogin() == proc.username()):
-                try:
-                    process = psutil.Process(proc.info["pid"])
-                    process.terminate()
-                    process.wait(timeout)
-                    return True
-                except (
-                    psutil.NoSuchProcess,
-                    psutil.TimeoutExpired,
-                    psutil.AccessDenied,
-                ):
-                    pass
+            if name in proc.info["name"]:
+                system_username = os.getlogin()  # 返回的是用户名
+                process_username = proc.username()  # 返回的是设备名\用户名，需要处理
+                process_username = process_username.split("\\")[-1]
+                if system_username == process_username:
+                    try:
+                        process = psutil.Process(proc.info["pid"])
+                        process.terminate()
+                        process.wait(timeout)
+                        return True
+                    except (
+                        psutil.NoSuchProcess,
+                        psutil.TimeoutExpired,
+                        psutil.AccessDenied,
+                    ):
+                        pass
         return False
 
     @staticmethod
