@@ -17,12 +17,10 @@ import os
 class Stop:
     @staticmethod
     def terminate_process(name, timeout=10):
-        # 获取当前用户名
-        username = os.getlogin()
         # 根据进程名和用户名中止进程
         for proc in psutil.process_iter(attrs=["pid", "name"]):
             # 判断当前进程是否属于当前用户，防止多用户环境下关闭其他用户进程
-            if (name in proc.info["name"]) and (username == proc.username()):
+            if (name in proc.info["name"]) and (os.getlogin() == proc.username()):
                 try:
                     process = psutil.Process(proc.info["pid"])
                     process.terminate()
