@@ -1,5 +1,11 @@
 import base64
 
+import smtplib
+from email.header import Header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+
 import requests
 from onepush import get_notifier
 from managers.logger_manager import logger
@@ -109,6 +115,45 @@ class Notify:
                     logger.error(_("{notifier_name} 通知发送失败").format(notifier_name=notifier_name.capitalize()))
                     logger.error(f"{e}")
 
+        elif notifier_name == "smtp":
+            notifier_params = getattr(self, notifier_name, None)
+            if notifier_params:
+                host = notifier_params["host"]
+                user = notifier_params["user"]
+                password = notifier_params["password"]
+                From = notifier_params["From"] if "From" in notifier_params else user
+                To = notifier_params["To"] if "To" in notifier_params else user
+                port = notifier_params["port"] if "port" in notifier_params else 465
+                ssl = notifier_params["ssl"] if "ssl" in notifier_params else True
+                msg = MIMEMultipart('related')
+                boby = f'<p>{content}<br><img src="cid:image1"></br></p>'
+                msg['Subject'] = Header(title, 'utf-8')
+                msg['From'] = From
+                receivers = To
+                toclause = receivers.split(',')
+                msg['To'] = ",".join(toclause)
+                with open(r"./smtp_temp.bin", "wb") as file:
+                    file.write(image_io.getvalue())
+                f=open(r"./smtp_temp.bin", "rb")
+                img_data = f.read()
+                f.close()
+                img = MIMEImage(img_data)
+                img.add_header('Content-ID', f'<image1>') 
+                msg.attach(img)
+                msg.attach(MIMEText(boby, "html", "utf-8"))
+                if ssl:
+                    smtp = smtplib.SMTP_SSL(host, port)
+                else:
+                    smtp = smtplib.SMTP(host, port)
+                smtp.login(user, password)
+                try:
+                    response = smtp.sendmail(From, toclause, msg.as_string())
+                    smtp.quit()
+                    logger.info(_("{notifier_name} 通知发送完成").format(notifier_name=notifier_name.capitalize()))
+                except Exception as e:
+                    logger.error(_("{notifier_name} 通知发送失败").format(notifier_name=notifier_name.capitalize()))
+                    logger.error(f"{e}")
+
     def _send_notification_by_winotify(self, title, content):
         import os
         from winotify import Notification, audio
@@ -141,7 +186,7 @@ class Notify:
 
     def notify(self, title="", content="", image_io=None):
         for notifier_name in self.notifiers:
-            if image_io and notifier_name in ["telegram", "gocqhttp"]:
+            if image_io and notifier_name in ["telegram", "gocqhttp", "smtp"]:
                 self._send_notification_with_image(notifier_name, title, content, image_io)
             else:
                 self._send_notification(notifier_name, title, content)

@@ -188,3 +188,6 @@ pyrightconfig.json
 /screenshots
 /3rdparty
 /temp
+
+# notify for smtp
+smtp_temp.bin
