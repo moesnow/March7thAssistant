@@ -72,7 +72,7 @@ class UpdateThread(QThread):
 
                 if parse(version.lstrip('v')) > parse(config.version.lstrip('v')):
                     self.title, self.content = f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content)
-                    self.assert_url = FastestMirror.get_github_mirror(assert_url)
+                    self.assert_url = assert_url
                     self._update_signal.emit(2)
                 else:
                     self._update_signal.emit(1)
