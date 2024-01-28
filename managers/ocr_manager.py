@@ -28,8 +28,11 @@ def install_ocr():
     update_handler.run()
 
 
-if not os.path.exists(ocr_path):
-    logger.warning(_("OCR 路径不存在: {path}").format(path=ocr_path))
-    install_ocr()
+def check_path():
+    if not os.path.exists(ocr_path):
+        logger.warning(_("OCR 路径不存在: {path}").format(path=ocr_path))
+        install_ocr()
 
+
+check_path()
 ocr = OCR(ocr_path)
