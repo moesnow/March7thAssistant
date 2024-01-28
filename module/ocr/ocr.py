@@ -74,38 +74,43 @@ class OCR:
 
     def replace_strings(self, original_dict):
         replacements = {
-            "'风之形": "'巽风之形",
             "'翼风之形": "'巽风之形",
+            "'风之形": "'巽风之形",
             "'芒之形": "'锋芒之形",
-            "'偶之形": "'偃偶之形",
             "'嘎偶之形": "'偃偶之形",
             "'優偶之形": "'偃偶之形",
             "'厦偶之形": "'偃偶之形",
+            "'偶之形": "'偃偶之形",
             "'兽之形": "'孽兽之形",
-            "'灼之形": "'燔灼之形",
             "'潘灼之形": "'燔灼之形",
             "'熠灼之形": "'燔灼之形",
-            "'冥之径": "'幽冥之径",
-            "'幽之径": "'幽冥之径",
-            "'幽幂之径": "'幽冥之径",
+            "'灼之形": "'燔灼之形",
             "'幽寞之径": "'幽冥之径",
-            "'蛀星的旧": "'蛀星的旧靥",
+            "'幽幂之径": "'幽冥之径",
+            "'幽之径": "'幽冥之径",
+            "'冥之径": "'幽冥之径",
             "'蛀星的旧履": "'蛀星的旧靥",
             "'蛀星的旧膚": "'蛀星的旧靥",
             "'蛀星的旧魔": "'蛀星的旧靥",
+            "'蛀星的旧": "'蛀星的旧靥",
             "“异器盈界": "异器盈界",
             "“花藏繁生": "花藏繁生",
-            "“位面分裂": "位面分裂"
+            "“位面分裂": "位面分裂",
+            "拟造花萼 （赤)": "拟造花萼（赤）",
+            "拟造花萼 （金)": "拟造花萼（金）",
+            "拟造花萼 (赤)": "拟造花萼（赤）",
+            "拟造花萼 (金)": "拟造花萼（金）"
         }
 
         original_str = str(original_dict)
         replaced_set = set()
 
         for old_str, new_str in replacements.items():
-            if new_str not in replaced_set:
+            if new_str not in replaced_set and old_str in original_str:
                 original_str = original_str.replace(old_str, new_str, 1)
                 replaced_set.add(new_str)
 
+        logger.debug(f"OCR识别结果: {original_str}")
         modified_dict = eval(original_str)
         return modified_dict
 
