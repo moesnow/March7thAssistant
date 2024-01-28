@@ -5,9 +5,10 @@
 ### 新功能
 - SMTP 支持发送截图 [#114](https://github.com/moesnow/March7thAssistant/pull/114)
 - 支持 gotify 推送方式 [#112](https://github.com/moesnow/March7thAssistant/pull/112)
+- 新增“启用使用支援角色”选项（默认开启） [#121](https://github.com/moesnow/March7thAssistant/issues/121)
 ### 修复
 - 远程桌面多开会错误终止其他用户的游戏进程 [#113](https://github.com/moesnow/March7thAssistant/pull/113) [#35](https://github.com/moesnow/March7thAssistant/issues/35)
-- “异器盈界”文字识别异常
+- 部分文字 OCR 识别异常（如 RapidOCR 的拟造花萼相关问题）
 - 路径中含有英文括号导致解压失败
 - 模拟宇宙完成后无法正常领取奖励
 

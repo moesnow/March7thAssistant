@@ -174,9 +174,15 @@ class SettingInterface(ScrollArea):
         )
 
         self.BorrowGroup = SettingCardGroup(self.tr("支援设置"), self.scrollWidget)
-        self.borrowCharacterEnableCard = SwitchSettingCard1(
+        self.borrowEnableCard = SwitchSettingCard1(
             FIF.PEOPLE,
             self.tr('启用使用支援角色'),
+            '',
+            "borrow_enable"
+        )
+        self.borrowCharacterEnableCard = SwitchSettingCard1(
+            FIF.PEOPLE,
+            self.tr('强制使用支援角色'),
             self.tr('无论何时都要使用支援角色，即使日常实训中没有要求'),
             "borrow_character_enable"
         )
@@ -667,6 +673,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
 
+        self.BorrowGroup.addSettingCard(self.borrowEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterFromCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterCard)

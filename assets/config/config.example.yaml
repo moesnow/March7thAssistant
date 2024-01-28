@@ -32,6 +32,7 @@ use_fuel: False # 使用燃料
 echo_of_war_enable: false # 体力优先完成3次「历战余响」
 echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳（每周运行）
 
+borrow_enable: true # 使用支援角色
 borrow_character_enable: false # 强制使用支援角色
 borrow_character_from: # 使用指定好友的支援角色
 - 好友1

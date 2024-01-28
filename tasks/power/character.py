@@ -8,6 +8,8 @@ import time
 class Character:
     @staticmethod
     def borrow():
+        if not config.borrow_enable:
+            return True
         if not (("使用支援角色并获得战斗胜利1次" in config.daily_tasks and config.daily_tasks["使用支援角色并获得战斗胜利1次"]) or config.borrow_character_enable):
             return True
         if not auto.click_element("支援", "text", max_retries=10, crop=(1670 / 1920, 700 / 1080, 225 / 1920, 74 / 1080)):
