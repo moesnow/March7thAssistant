@@ -6,6 +6,7 @@
 - SMTP 支持发送截图 [#114](https://github.com/moesnow/March7thAssistant/pull/114)
 - 支持 gotify 推送方式 [#112](https://github.com/moesnow/March7thAssistant/pull/112)
 - 新增“启用使用支援角色”选项（默认开启） [#121](https://github.com/moesnow/March7thAssistant/issues/121)
+- 修改“指定好友的支援角色”说明（填写用户名和UID都是支持的）
 ### 修复
 - 远程桌面多开会错误终止其他用户的游戏进程 [#113](https://github.com/moesnow/March7thAssistant/pull/113) [#35](https://github.com/moesnow/March7thAssistant/issues/35)
 - 部分文字 OCR 识别异常（如 RapidOCR 的拟造花萼相关问题）

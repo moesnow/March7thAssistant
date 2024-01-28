@@ -189,7 +189,7 @@ class SettingInterface(ScrollArea):
         self.borrowCharacterFromCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.VIEW,
-            self.tr("指定好友的支援角色（填写昵称，模糊匹配，如存在则优先角色优先级使用）"),
+            self.tr("指定好友的支援角色（填写用户名或UID，模糊匹配模式）"),
             "borrow_character_from"
         )
         self.borrowCharacterCard = PushSettingCardEval(
