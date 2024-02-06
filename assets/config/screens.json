@@ -702,7 +702,8 @@
                             "min_distance_text",
                             "crop=(691.0 / 1920, 291.0 / 1080, 968.0 / 1920, 374.0 / 1080)",
                             "include=True",
-                            "source=\"积分奖励\""
+                            "source=\"积分奖励\"",
+                            "source_type=\"text\""
                         ]
                     }
                 ]

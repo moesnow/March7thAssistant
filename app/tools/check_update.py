@@ -24,9 +24,10 @@ def remove_images_from_markdown(markdown_content):
 class UpdateThread(QThread):
     _update_signal = pyqtSignal(int)
 
-    def __init__(self, timeout):
+    def __init__(self, timeout, flag):
         super().__init__()
         self.timeout = timeout
+        self.flag = flag
 
     def run(self):
         try:
@@ -34,6 +35,8 @@ class UpdateThread(QThread):
                 response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False), timeout=10, headers=config.useragent)
             else:
                 response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant"), timeout=10, headers=config.useragent)
+            if self.flag and not config.check_update:
+                return
             if response.status_code == 200:
                 if config.update_prerelease_enable:
                     data = response.json()[0]
@@ -81,7 +84,7 @@ class UpdateThread(QThread):
             self._update_signal.emit(0)
 
 
-def checkUpdate(self, timeout=5):
-    self.update_thread = UpdateThread(timeout=timeout)
+def checkUpdate(self, timeout=5, flag=False):
+    self.update_thread = UpdateThread(timeout, flag)
     self.update_thread._update_signal.connect(self.handleUpdate)
     self.update_thread.start()

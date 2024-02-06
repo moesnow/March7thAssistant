@@ -5,20 +5,24 @@ from managers.config_manager import config
 from managers.notify_manager import notify
 from packaging.version import parse
 import requests
-import json
 
 
 class Version:
     @staticmethod
     def start():
-        if not config.check_update:
-            logger.debug(_("检测更新未开启"))
-            return False
-        logger.hr(_("开始检测更新"), 0)
         try:
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant"), timeout=10, headers=config.useragent)
+            if config.update_prerelease_enable:
+                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False), timeout=10, headers=config.useragent)
+            else:
+                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant"), timeout=10, headers=config.useragent)
+            if not config.check_update:
+                return
+            logger.hr(_("开始检测更新"), 0)
             if response.status_code == 200:
-                data = json.loads(response.text)
+                if config.update_prerelease_enable:
+                    data = response.json()[0]
+                else:
+                    data = response.json()
                 version = data["tag_name"]
                 if parse(version.lstrip('v')) > parse(config.version.lstrip('v')):
                     notify.notify(_("发现新版本：{v}").format(v=version))
@@ -29,7 +33,6 @@ class Version:
             else:
                 logger.warning(_("检测更新失败"))
                 logger.debug(response.text)
-        except Exception as e:
-            logger.warning(_("检测更新失败"))
-            logger.debug(e)
-        logger.hr(_("完成"), 2)
+            logger.hr(_("完成"), 2)
+        except Exception:
+            pass

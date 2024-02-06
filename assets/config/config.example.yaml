@@ -18,6 +18,7 @@ game_process_name: StarRail # 进程名
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏路径
 
 instance_type: 拟造花萼（金） # 副本类型: 侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
+calyx_golden_preference: Jarilo-VI # 拟造花萼（金）偏好地区: "雅利洛-VI"（Jarilo-VI） 仙舟「罗浮」(XianzhouLuofu) 匹诺康尼(Penacony) 
 instance_names: # 副本名称
   拟造花萼（金）: 回忆之蕾
   拟造花萼（赤）: 毁灭之蕾

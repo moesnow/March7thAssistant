@@ -50,8 +50,7 @@ class MainWindow(MSFluentWindow):
             disclaimer(self)
 
         # 检查更新
-        if config.check_update:
-            checkUpdate(self)
+        checkUpdate(self, flag=True)
 
     def initNavigation(self):
         # add navigation items

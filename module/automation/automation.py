@@ -59,8 +59,8 @@ class Automation:
 
         return max_val, max_loc
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, pixel_bgr=None):
-        # 参数有些太多了，以后改
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None):
+        # 参数有些太多了，以后改（大概是懒得改了）
         take_screenshot = False if not need_ocr else take_screenshot
         max_retries = 1 if not take_screenshot else max_retries
         for i in range(max_retries):
@@ -68,13 +68,14 @@ class Automation:
                 continue
             if find_type in ['image', 'text', "min_distance_text"]:
                 if find_type == 'image':
-                    top_left, bottom_right = self.find_image_element(target, threshold, scale_range)
+                    top_left, bottom_right = self.find_image_element(
+                        target, threshold, scale_range, relative)
                 elif find_type == 'text':
                     top_left, bottom_right = self.find_text_element(
                         target, include, need_ocr, relative)
                 elif find_type == 'min_distance_text':
                     top_left, bottom_right = self.find_min_distance_text_element(
-                        target, source, include, need_ocr)
+                        target, source, source_type, include, need_ocr)
                 if top_left and bottom_right:
                     return top_left, bottom_right
             elif find_type in ['image_count']:
@@ -86,7 +87,7 @@ class Automation:
                 time.sleep(1)
         return None
 
-    def find_image_element(self, target, threshold, scale_range):
+    def find_image_element(self, target, threshold, scale_range, relative=False):
         try:
             # template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
             template = cv2.imread(target)
@@ -99,8 +100,11 @@ class Automation:
             logger.debug(_("目标图片：{target} 相似度：{max_val}").format(target=target, max_val=max_val))
             if threshold is None or max_val >= threshold:
                 channels, width, height = template.shape[::-1]
-                top_left = (max_loc[0] + self.screenshot_pos[0],
-                            max_loc[1] + self.screenshot_pos[1])
+                if relative == False:
+                    top_left = (max_loc[0] + self.screenshot_pos[0],
+                                max_loc[1] + self.screenshot_pos[1])
+                else:
+                    top_left = (max_loc[0], max_loc[1])
                 bottom_right = (top_left[0] + width, top_left[1] + height)
                 return top_left, bottom_right
         except Exception as e:
@@ -185,46 +189,58 @@ class Automation:
             logger.error(_("寻找文字：{target} 出错：{e}").format(target=", ".join(target), e=e))
             return None, None
 
-    def find_min_distance_text_element(self, target, source, include, need_ocr=True):
+    def find_min_distance_text_element(self, target, source, source_type, include, need_ocr=True):
         if need_ocr:
             self.ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
-        if not self.ocr_result:
-            logger.debug(_("目标文字：{target} 未找到，没有识别出任何文字").format(target=f"{target}, {source}"))
-            return None, None
-        # logger.debug(self.ocr_result)
         source_pos = None
-        for box in self.ocr_result:
-            text = box[1][0]
-            if ((include is None or not include) and source == text) or (include and source in text):
-                logger.debug(_("目标文字：{target} 相似度：{max_val}").format(
-                    target=source, max_val=box[1][1]))
-                source_pos = box[0]
-                break
-        if source_pos is None:
-            logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=source))
-            return None, None
 
+        if source_type == 'text':
+            if not self.ocr_result:
+                logger.debug(_("目标文字：{source} 未找到，没有识别出任何文字").format(source=source))
+                return None, None
+            # logger.debug(self.ocr_result)
+            for box in self.ocr_result:
+                text = box[1][0]
+                if ((include is None or not include) and source == text) or (include and source in text):
+                    logger.debug(_("目标文字：{source} 相似度：{max_val}").format(
+                        source=source, max_val=box[1][1]))
+                    source_pos = box[0][0]
+                    break
+        elif source_type == 'image':
+            source_pos, i = self.find_image_element(source, 0.9, None, True)
+
+        if source_pos is None:
+            logger.debug(_("目标内容：{source} 未找到").format(source=source))
+            return None, None
+        else:
+            logger.debug(_("目标内容：{source} 坐标：{source_pos}").format(source=source, source_pos=source_pos))
+
+        # 兼容旧代码
+        if isinstance(target, str):
+            target = (target,)
         target_pos = None
         min_distance = float('inf')
         for box in self.ocr_result:
             text = box[1][0]
-            if ((include is None or not include) and target == text) or (include and target in text):
+            if ((include is None or not include) and text in target) or (include and any(t in text for t in target)):
+                matched_text = next((t for t in target if t in text), None)
                 pos = box[0]
                 # 如果target不在source右下角
-                if not ((pos[0][0] - source_pos[0][0]) > 0 and (pos[0][1] - source_pos[0][1]) > 0):
+                if not ((pos[0][0] - source_pos[0]) > 0 and (pos[0][1] - source_pos[1]) > 0):
                     continue
-                distance = math.sqrt((pos[0][0] - source_pos[0][0]) **
-                                     2 + (pos[0][1] - source_pos[0][1]) ** 2)
+                distance = math.sqrt((pos[0][0] - source_pos[0]) **
+                                     2 + (pos[0][1] - source_pos[1]) ** 2)
                 logger.debug(_("目标文字：{target} 相似度：{max_val} 距离：{min_distance}").format(
-                    target=target, max_val=box[1][1], min_distance=distance))
+                    target=matched_text, max_val=box[1][1], min_distance=distance))
                 if distance < min_distance:
+                    min_target = matched_text
                     min_distance = distance
                     target_pos = pos
         if target_pos is None:
-            logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=target))
+            logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=", ".join(target)))
             return None, None
         logger.debug(_("目标文字：{target} 最短距离：{min_distance}").format(
-            target=target, min_distance=min_distance))
+            target=min_target, min_distance=min_distance))
         top_left = (target_pos[0][0] + self.screenshot_pos[0],
                     target_pos[0][1] + self.screenshot_pos[1])
         bottom_right = (target_pos[2][0] + self.screenshot_pos[0],
@@ -243,9 +259,9 @@ class Automation:
             self.mouse_move(x, y)
         return True
 
-    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, offset=(0, 0), action="click"):
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, offset=(0, 0), action="click"):
         coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot,
-                                        relative, scale_range, include, need_ocr, source)
+                                        relative, scale_range, include, need_ocr, source, source_type)
         if coordinates:
             return self.click_element_with_pos(coordinates, offset, action)
         return False
@@ -254,7 +270,6 @@ class Automation:
         for i in range(max_retries):
             self.take_screenshot(crop)
             ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)
-            logger.debug(_("ocr识别结果: {ocr_result}").format(ocr_result=ocr_result))
             if ocr_result:
                 return ocr_result[0]
         return None

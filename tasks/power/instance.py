@@ -61,10 +61,32 @@ class Instance:
 
         # 传送
         instance_name_crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
+        if "拟造花萼（金）" in instance_type:
+            auto.click_element(f"./assets/images/share/calyx/golden/{config.calyx_golden_preference}.png", "image")
+            # 等待界面切换
+            time.sleep(1)
         auto.click_element("./assets/images/screen/guide/power.png", "image", max_retries=10)
+
         Flag = False
-        for i in range(5):
-            if auto.click_element("传送", "min_distance_text", crop=instance_name_crop, include=True, source=instance_name):
+        if "拟造花萼（赤）" in instance_type:
+            crimson_images = {
+                "毁灭之蕾": "./assets/images/share/calyx/crimson/destruction1.png",
+                "存护之蕾": "./assets/images/share/calyx/crimson/preservation1.png",
+                "巡猎之蕾": "./assets/images/share/calyx/crimson/hunt1.png",
+                "丰饶之蕾": "./assets/images/share/calyx/crimson/abundance1.png",
+                "智识之蕾": "./assets/images/share/calyx/crimson/erudition1.png",
+                "同谐之蕾": "./assets/images/share/calyx/crimson/harmony1.png",
+                "虚无之蕾": "./assets/images/share/calyx/crimson/nihility1.png",
+                "毁灭之蕾2": "./assets/images/share/calyx/crimson/destruction2.png",
+                "虚无之蕾2": "./assets/images/share/calyx/crimson/nihility2.png",
+                "同谐之蕾2": "./assets/images/share/calyx/crimson/harmony2.png",
+            }
+            def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=crimson_images[instance_name], source_type="image")
+        else:
+            def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
+
+        for i in range(6):
+            if func():
                 Flag = True
                 break
             auto.mouse_scroll(18, -1)
@@ -74,7 +96,7 @@ class Instance:
             Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 没有找到指定副本名称⚠️"))
             return False
         # 验证传送是否成功
-        if not auto.find_element(instance_name, "text", max_retries=60, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
+        if not auto.find_element(instance_name.replace("2", ""), "text", max_retries=60, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
             Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 传送可能失败⚠️"))
             return False
 

@@ -3,7 +3,7 @@ import sys
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)
          else os.path.dirname(os.path.abspath(__file__)))
 
-# from tasks.version.version import Version
+from tasks.version.version import Version
 from managers.notify_manager import notify
 from managers.logger_manager import logger
 from managers.config_manager import config
@@ -32,9 +32,8 @@ def agreed_to_disclaimer():
 
 def run_main_actions():
     while True:
-        # Version.start()
+        Version.start()
         Game.start()
-        # Activity.start()
         activity.start()
         Daily.start()
         reward.start()

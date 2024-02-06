@@ -7,7 +7,7 @@ from tasks.base.team import Team
 from tasks.base.pythonchecker import PythonChecker
 from tasks.base.command import subprocess_with_timeout
 import subprocess
-import shutil
+# import shutil
 import os
 
 
@@ -15,8 +15,8 @@ class Fight:
 
     @staticmethod
     def update():
-        if os.path.exists(os.path.join(config.fight_path, "map")):
-            shutil.rmtree(os.path.join(config.fight_path, "map"))
+        # if os.path.exists(os.path.join(config.fight_path, "map")):
+        #     shutil.rmtree(os.path.join(config.fight_path, "map"))
         from module.update.update_handler import UpdateHandler
         from tasks.base.fastest_mirror import FastestMirror
         if config.fight_operation_mode == "exe":

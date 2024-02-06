@@ -43,13 +43,16 @@ class Ui_MessageBox:
         self.titleLabel1.setFont(font)
         self.comboBox1 = EditableComboBox()
         self.Items1 = [
-            "毁灭之蕾（行迹）",
-            "存护之蕾（行迹）",
-            "巡猎之蕾（行迹）",
-            "丰饶之蕾（行迹）",
-            "智识之蕾（行迹）",
-            "同谐之蕾（行迹）",
-            "虚无之蕾（行迹）",
+            "毁灭之蕾（收容舱段）",
+            "存护之蕾（支援舱段）",
+            "巡猎之蕾（城郊雪原）",
+            "丰饶之蕾（边缘通路）",
+            "智识之蕾（铆钉镇）",
+            "同谐之蕾（机械聚落）",
+            "虚无之蕾（大矿区）",
+            "毁灭之蕾2（鳞渊境）",
+            "虚无之蕾2（丹鼎司）",
+            "同谐之蕾2（「白日梦」酒店-梦境）",
         ]
         self.comboBox1.addItems(self.Items1)
         self.content1 = next((item for item in self.Items1 if self.content[self.label1] in item), self.content[self.label1])
@@ -70,11 +73,13 @@ class Ui_MessageBox:
             "幻光之形（罗刹 / 瓦尔特 / 驭空）",
             "冰棱之形（镜流 / 彦卿 / 阮·梅）",
             "震厄之形（景元 / 卡芙卡）",
-            "偃偶之形（丹恒·饮月）",
+            "偃偶之形（丹恒·饮月 / 真理医生）",
             "孽兽之形（符玄 / 玲可 / 雪衣）",
             "天人之形（刃 / 藿藿 / 黑天鹅）",
             "幽府之形（银枝 / 寒鸦）",
             "燔灼之形（托帕&账账 / 桂乃芬）",
+            "冰酿之形（米沙）",
+            "焦炙之形（花火）",
         ]
         self.comboBox2.addItems(self.Items2)
         self.content2 = next((item for item in self.Items2 if self.content[self.label2] in item), self.content[self.label2])
@@ -94,6 +99,7 @@ class Ui_MessageBox:
             "野焰之径（火套+虚数套）",
             "药使之径（生命套+速度套）",
             "幽冥之径（追击套+dot套）",
+            "梦潜之径（负面套+新击破套）",
         ]
         self.comboBox3.addItems(self.Items3)
         self.content3 = next((item for item in self.Items3 if self.content[self.label3] in item), self.content[self.label3])

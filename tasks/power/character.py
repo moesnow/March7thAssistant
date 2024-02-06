@@ -24,7 +24,7 @@ class Character:
         try:
             # 尝试优先使用指定用户名的支援角色
             if config.borrow_character_from:
-                auto.click_element("UID", "text", max_retries=10, crop=(
+                auto.click_element("等级", "text", max_retries=10, crop=(
                     18.0 / 1920, 15.0 / 1080, 572.0 / 1920, 414.0 / 1080), include=True)
                 time.sleep(0.5)
                 for i in range(3):

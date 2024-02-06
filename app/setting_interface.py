@@ -121,6 +121,13 @@ class SettingInterface(ScrollArea):
             None,
             texts=['拟造花萼（金）', '拟造花萼（赤）', '凝滞虚影', '侵蚀隧洞']
         )
+        self.calyxGoldenPreferenceCard = ComboBoxSettingCard2(
+            "calyx_golden_preference",
+            FIF.PLAY,
+            self.tr('拟造花萼（金）偏好地区'),
+            '',
+            texts={'雅利洛-VI': 'Jarilo-VI', '仙舟「罗浮」': 'XianzhouLuofu', '匹诺康尼': 'Penacony'}
+        )
         self.instanceNameCard = PushSettingCardDictInstanceNames(
             self.tr('修改'),
             FIF.PALETTE,
@@ -189,7 +196,7 @@ class SettingInterface(ScrollArea):
         self.borrowCharacterFromCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.VIEW,
-            self.tr("指定好友的支援角色（填写用户名或UID，模糊匹配模式）"),
+            self.tr("指定好友的支援角色（填写用户名，模糊匹配模式）"),
             "borrow_character_from"
         )
         self.borrowCharacterCard = PushSettingCardEval(
@@ -664,6 +671,7 @@ class SettingInterface(ScrollArea):
         # self.GameGroup.addSettingCard(self.gamePathCard)
 
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
+        self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
