@@ -22,7 +22,7 @@ class Fight:
         if config.fight_operation_mode == "exe":
             import requests
             import json
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Fhoe-Rail"), timeout=10, headers=config.useragent)
+            response = requests.get(FastestMirror.get_github_api_mirror("linruowuyin", "Fhoe-Rail"), timeout=10, headers=config.useragent)
             if response.status_code == 200:
                 data = json.loads(response.text)
                 for asset in data["assets"]:
