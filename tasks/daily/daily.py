@@ -97,7 +97,7 @@ class Daily:
             task_functions = {
                 "登录游戏": lambda: True,
                 "拍照1次": lambda: Photo.photograph(),
-                "使用1次「万能合成机」": lambda: Synthesis.consumables(),
+                "使用1次「万能合成机」": lambda: Synthesis.material(),
                 "合成1次消耗品": lambda: Synthesis.consumables(),
                 "合成1次材料": lambda: Synthesis.material(),
                 "使用1件消耗品": lambda: Synthesis.use_consumables(),
