@@ -146,5 +146,6 @@ class Universe:
 
     @staticmethod
     def run_daily():
-        if config.daily_universe_enable:
-            return Universe.start(get_reward=False, nums=1, save=False)
+        return False
+        # if config.daily_universe_enable:
+        # return Universe.start(get_reward=False, nums=1, save=False)
