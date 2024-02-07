@@ -239,17 +239,17 @@ class SettingInterface(ScrollArea):
         #     "daily_forgottenhall_enable"
         # )
         self.dailyEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.PLAY,
             self.tr('启用每日实训'),
-            "关闭后可通过配置每天一次模拟宇宙来完成500活跃度",
+            "关闭后可通过手动配置每天一次模拟宇宙来完成500活跃度（推荐每天四次）",
             "daily_enable"
         )
-        self.dailyUniverseEnableCard = SwitchSettingCard1(
-            FIF.TILES,
-            self.tr('通过 “模拟宇宙” 完成任务'),
-            "",
-            "daily_universe_enable"
-        )
+        # self.dailyUniverseEnableCard = SwitchSettingCard1(
+        #     FIF.TILES,
+        #     self.tr('通过 “模拟宇宙” 完成任务'),
+        #     "",
+        #     "daily_universe_enable"
+        # )
         self.dailyHimekoTryEnableCard = SwitchSettingCard1(
             FIF.TILES,
             self.tr('通过 “姬子试用” 完成任务'),
@@ -692,7 +692,7 @@ class SettingInterface(ScrollArea):
         # self.DailyGroup.addSettingCard(self.srpassEnableCard)
         # self.DailyGroup.addSettingCard(self.dailyForgottenhallEnableCard)
         self.DailyGroup.addSettingCard(self.dailyEnableCard)
-        self.DailyGroup.addSettingCard(self.dailyUniverseEnableCard)
+        # self.DailyGroup.addSettingCard(self.dailyUniverseEnableCard)
         self.DailyGroup.addSettingCard(self.dailyHimekoTryEnableCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneEnableCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamCard)

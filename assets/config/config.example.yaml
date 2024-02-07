@@ -60,7 +60,7 @@ reward_quest_enable: true # 领取每日实训奖励
 reward_srpass_enable: true # 领取无名勋礼
 
 daily_enable: true # 启用日常
-daily_universe_enable: false # 通过 “模拟宇宙” 完成任务
+# daily_universe_enable: false # 通过 “模拟宇宙” 完成任务
 daily_himeko_try_enable: false # 通过 “姬子试用” 完成任务
 daily_memory_one_enable: false # 通过 “回忆一” 完成任务
 daily_memory_one_team: # 用于回忆一的队伍
