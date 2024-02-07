@@ -780,15 +780,6 @@
                             10,
                             "crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080)"
                         ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/forgottenhall/memory_of_chaos.png",
-                            "image",
-                            0.9,
-                            2
-                        ]
                     }
                 ]
             },
@@ -1183,6 +1174,14 @@
                         "action": "auto.click_element",
                         "args": [
                             "./assets/images/forgottenhall/memory.png",
+                            "image",
+                            0.9
+                        ]
+                    },
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/forgottenhall/memory-fin.png",
                             "image",
                             0.9
                         ]
