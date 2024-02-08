@@ -207,7 +207,7 @@ class Automation:
                     source_pos = box[0][0]
                     break
         elif source_type == 'image':
-            source_pos, i = self.find_image_element(source, 0.9, None, True)
+            source_pos, i = self.find_image_element(source, 0.7, None, True)
 
         if source_pos is None:
             logger.debug(_("目标内容：{source} 未找到").format(source=source))
