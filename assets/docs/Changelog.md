@@ -4,6 +4,8 @@
 
 ### 新功能
 - 支持自动修改分辨率，并在启动游戏后恢复原分辨率 [#132](https://github.com/moesnow/March7thAssistant/issues/132)
+### 修复
+- 异常状态下历战余响不会打满3次
 
 ## v2.0.0
 

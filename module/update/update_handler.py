@@ -8,7 +8,7 @@ import os
 
 
 class UpdateHandler:
-    def __init__(self, download_url, cover_folder_path, extract_file_name):
+    def __init__(self, download_url, cover_folder_path, extract_file_name, delete_folder_path=None):
         self.exe_path = os.path.abspath("./assets/7z/7za.exe")
         self.temp_path = os.path.abspath("./temp")
         if not os.path.exists(self.temp_path):
@@ -17,6 +17,7 @@ class UpdateHandler:
         self.download_file_path = os.path.join(self.temp_path, os.path.basename(download_url))
         self.cover_folder_path = cover_folder_path
         self.extract_folder_path = os.path.join(self.temp_path, os.path.basename(extract_file_name))
+        self.delete_folder_path = delete_folder_path
 
     def run(self):
         self.download_file()
@@ -49,6 +50,8 @@ class UpdateHandler:
     def cover_folder(self):
         while True:
             try:
+                if self.delete_folder_path and os.path.exists(self.delete_folder_path):
+                    shutil.rmtree(self.delete_folder_path)
                 shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
                 logger.info(_("覆盖完成：{path}").format(path=self.cover_folder_path))
                 break
