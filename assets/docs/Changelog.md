@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.0.1
+
+### 新功能
+- 支持自动修改分辨率，并在启动游戏后恢复原分辨率 [#132](https://github.com/moesnow/March7thAssistant/issues/132)
+
 ## v2.0.0
 
 ### 新功能

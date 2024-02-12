@@ -4,10 +4,14 @@ from managers.automation_manager import auto
 from managers.translate_manager import _
 from managers.config_manager import config
 from managers.ocr_manager import ocr
-from tasks.game.stop import Stop
-from tasks.game.resolution import Resolution
 from tasks.base.windowswitcher import WindowSwitcher
+from .stop import Stop
+from .resolution import Resolution
+from .registry import Registry
+import pyautogui
+import winreg
 import psutil
+import json
 import time
 import sys
 import os
@@ -51,6 +55,31 @@ class Start:
         logger.info(_("🖥️启动游戏中..."))
         Start.check_path(config.game_path)
 
+        # 指定注册表项路径
+        registry_key_path = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
+        # 指定要获取的值的名称
+        value_name = "GraphicsSettings_PCResolution_h431323223"
+        # 读取注册表中指定路径的值
+        value = Registry.read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name)
+
+        if value:
+            # 去除末尾的\x00字符并尝试解析JSON
+            data_dict = json.loads(value.decode('utf-8').strip('\x00'))
+            data_dict['width'] = 1920
+            data_dict['height'] = 1080
+            # 获取屏幕的宽度和高度
+            screen_width, screen_height = pyautogui.size()
+            if screen_width <= 1920 and screen_height <= 1080:
+                data_dict['isFullScreen'] = True
+            elif screen_width > 1920 and screen_height > 1080:
+                data_dict['isFullScreen'] = False
+
+            # 修改数据并添加\x00字符
+            modified_data = (json.dumps(data_dict) + '\x00').encode('utf-8')
+
+            # 写入注册表
+            Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, modified_data)
+
         logger.debug(_("运行命令: cmd /C start \"\" \"{path}\"").format(path=config.game_path))
         if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
             return False
@@ -58,8 +87,13 @@ class Start:
 
         time.sleep(10)
         if not auto.retry_with_timeout(lambda: WindowSwitcher.check_and_switch(config.game_title_name), 60, 1):
+            if value:
+                Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, value)
             logger.error(_("无法切换游戏到前台"))
             return False
+
+        if value:
+            Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, value)
 
         Resolution.check(config.game_title_name, 1920, 1080)
 
