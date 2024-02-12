@@ -12,6 +12,7 @@ from .home_interface import HomeInterface
 from .setting_interface import SettingInterface
 from .tasks_interface import TasksInterface
 from .changelog_interface import ChangelogInterface
+from .tools_interface import ToolsInterface
 from .faq_interface import FAQInterface
 from .tutorial_interface import TutorialInterface
 
@@ -42,6 +43,7 @@ class MainWindow(MSFluentWindow):
         self.faqInterface = FAQInterface(self)
         self.tutorialInterface = TutorialInterface(self)
         self.changelogInterface = ChangelogInterface(self)
+        self.toolsInterface = ToolsInterface(self)
 
         self.initNavigation()
         self.splashScreen.finish()
@@ -60,6 +62,7 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.tutorialInterface, FIF.BOOK_SHELF, self.tr('使用教程'))
         self.addSubInterface(self.faqInterface, FIF.CHAT, self.tr('常见问题'))
         self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
+        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, self.tr('工具箱'))
 
         self.navigationInterface.addWidget(
             'startGameButton',
@@ -120,13 +123,13 @@ class MainWindow(MSFluentWindow):
 
     def initWindow(self):
         # 禁用最大化
-        self.titleBar.maxBtn.setHidden(True)
-        self.titleBar.maxBtn.setDisabled(True)
-        self.titleBar.setDoubleClickEnabled(False)
+        # self.titleBar.maxBtn.setHidden(True)
+        # self.titleBar.maxBtn.setDisabled(True)
+        # self.titleBar.setDoubleClickEnabled(False)
         self.setResizeEnabled(False)
         # self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowMaximizeButtonHint)
 
-        self.resize(960, 700)
+        self.resize(960, 750)
         self.setWindowIcon(QIcon(r'assets\logo\March7th.ico'))
         self.setWindowTitle("March7th Assistant")
         # create splash screen
