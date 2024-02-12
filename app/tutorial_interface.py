@@ -32,7 +32,8 @@ a {
                 self.content = file.read()
         except FileNotFoundError:
             sys.exit(1)
-        html_content = html_style + markdown.markdown("## 点击跳转 [网页版](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial) 排版更美观")+markdown.markdown(self.content)
+        html_content = html_style + markdown.markdown("## 点击跳转 [网页版](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial) 排版更美观") + \
+            markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>')
         self.contentLabel.setText(html_content)
         self.contentLabel.setOpenExternalLinks(True)
         self.contentLabel.linkActivated.connect(self.open_url)
