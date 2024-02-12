@@ -23,6 +23,7 @@ from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
 
 from managers.config_manager import config
+import os
 
 
 class MainWindow(MSFluentWindow):
@@ -61,6 +62,12 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
 
         self.navigationInterface.addWidget(
+            'startGameButton',
+            NavigationBarPushButton(FIF.PLAY, '启动游戏', isSelectable=False),
+            self.startGame,
+            NavigationItemPosition.BOTTOM)
+
+        self.navigationInterface.addWidget(
             'themeButton',
             NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
             self.toggleTheme,
@@ -74,6 +81,39 @@ class MainWindow(MSFluentWindow):
         )
 
         self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
+
+    def startGame(self):
+        try:
+            if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
+                InfoBar.warning(
+                    title=self.tr('启动失败(╥╯﹏╰╥)'),
+                    content="",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self
+                )
+                return False
+            InfoBar.success(
+                title=self.tr('启动成功(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+        except Exception:
+            InfoBar.warning(
+                title=self.tr('启动失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
 
     def toggleTheme(self):
         toggleTheme()
