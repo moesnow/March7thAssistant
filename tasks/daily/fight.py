@@ -82,7 +82,6 @@ class Fight:
                 Team.change_to(config.fight_team_number)
 
             logger.info(_("开始锄大地"))
-            screen.change_to('universe_main')
             screen.change_to('main')
 
             status = False
