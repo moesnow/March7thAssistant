@@ -184,40 +184,33 @@ class Notify:
                 logger.error(_("{notifier_name} 通知发送失败").format(notifier_name="gotify"))
                 logger.error(f"{e}")
 
-    def handle_dict(self,d):
-        d = dict(d)
+    def comment_init(self,d):
         try:
-            for k,v in d.items():
-                if isinstance(v,comments.CommentedSeq):
-                    d[k]=list()
-                    for i in v:
-                        print(i)
-                        if isinstance(i,comments.CommentedMap):
-                            print("test")
-                            j = self.handle_dict(i)
-                            print(j)
-                            d[k].append(j)
-                elif isinstance(v,comments.CommentedMap):
-                    d[k]= self.handle_dict(v)
-
+            if isinstance(v,comments.CommentedMap):
+                d = dict(d)
+                for k,v in d.items():
+                    d[k] = self.comment_init(v)
+            elif isinstance(v,comments.CommentedSeq):
+                d = list(d)
+                for i in d:
+                    d[index(i)] = self.comment_init(i)
             return d
         except Exception as e:
             logger.error(e)
-
     
-    def dict_format(self, d, *args, **kwargs):
-        for key, value in d.items():
-            if isinstance(value, dict):
-                self.dict_format(value, *args, **kwargs)
-            elif isinstance(value, list):
-                for i in value:
-                    self.dict_format(i,*args,**kwargs)
-            elif key in args:
-                try:
-                    d[key] = f"{value}".format(**kwargs)
-                except Exception as e:
-                    logger.error(e)
-        return d
+    def comment_format(self, d, *args, **kwargs):
+        try:
+            if isinstance(d,dict):
+                for k, v in d.items():
+                    d[k] = self.comment_format(v,*args,**kwargs)
+            elif isinstance(d,list):
+                for i in d:
+                    d[index(i)] = self.comment_format(i,*args,**kwargs)
+            elif d in args:
+                d = f"{d}".format(**kwargs)
+            return d
+        except Exception as e:
+            logger.error(e)
 
     def _send_notification_by_custom(self,notifier_name,title,content,image_io):
         notifier_params = getattr(self, notifier_name, None)
@@ -227,13 +220,11 @@ class Notify:
             text = "text"
             file = "file"
             if notifier_params["datatype"] == "json":
-                raw_data = self.handle_dict(notifier_params["data"])
-                data = self.dict_format(raw_data,text,file,title=title,content=content,image=base64_str)
+                raw_data = self.comment_init(notifier_params["data"])
+                data = self.comment_format(raw_data,text,file,title=title,content=content,image=base64_str)
                 notifier_params["data"] = data
             try:
                 response = n.notify(**notifier_params)
-                logger.info(raw_data)
-                
                 logger.info(_("{notifier_name} 通知发送完成").format(notifier_name=notifier_name.capitalize()))
             except Exception as e:
                 logger.error(_("{notifier_name} 通知发送失败").format(notifier_name=notifier_name.capitalize()))
