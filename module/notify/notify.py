@@ -186,14 +186,14 @@ class Notify:
 
     def comment_init(self,d):
         try:
-            if isinstance(v,comments.CommentedMap):
+            if isinstance(d,comments.CommentedMap):
                 d = dict(d)
                 for k,v in d.items():
                     d[k] = self.comment_init(v)
-            elif isinstance(v,comments.CommentedSeq):
+            elif isinstance(d,comments.CommentedSeq):
                 d = list(d)
                 for i in d:
-                    d[index(i)] = self.comment_init(i)
+                    d[d.index(i)] = self.comment_init(i)
             return d
         except Exception as e:
             logger.error(e)
@@ -202,12 +202,12 @@ class Notify:
         try:
             if isinstance(d,dict):
                 for k, v in d.items():
+                    if k in args:
+                         v = v.format(**kwargs)
                     d[k] = self.comment_format(v,*args,**kwargs)
             elif isinstance(d,list):
                 for i in d:
-                    d[index(i)] = self.comment_format(i,*args,**kwargs)
-            elif d in args:
-                d = f"{d}".format(**kwargs)
+                    d[d.index(i)] = self.comment_format(i,*args,**kwargs)
             return d
         except Exception as e:
             logger.error(e)
@@ -217,11 +217,11 @@ class Notify:
         base64_str = base64.b64encode(image_io.getvalue()).decode()
         if notifier_params:
             n = get_notifier(notifier_name)
-            text = "text"
-            file = "file"
+            # text = "text"
+            # file = "file"
             if notifier_params["datatype"] == "json":
                 raw_data = self.comment_init(notifier_params["data"])
-                data = self.comment_format(raw_data,text,file,title=title,content=content,image=base64_str)
+                data = self.comment_format(raw_data,"text","file",title=title,content=content,image=base64_str)
                 notifier_params["data"] = data
             try:
                 response = n.notify(**notifier_params)
