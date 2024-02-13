@@ -12,7 +12,7 @@ Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删�
 
 ### Q：忘却之庭缺少新角色
 
-A：在忘却之庭的界面，用小助手设置中的`捕获截图`功能，点击`保存完整图片`后，放入`角色文件夹`。
+A：在忘却之庭的界面，用小助手工具箱中的`捕获截图`功能，点击`保存完整图片`后，放入`角色文件夹`。
 
 同时欢迎用`未压缩`的方式上传到 [Issue](https://github.com/moesnow/March7thAssistant/issues)，比如压缩包，或者 [PR](https://github.com/moesnow/March7thAssistant/pulls) 也可以。
 

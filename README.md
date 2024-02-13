@@ -74,7 +74,7 @@ python main.py
 <details>
 <summary>开发相关</summary>
 
-获取 crop 参数表示的裁剪坐标可以通过图形界面设置内的捕获截图功能
+获取 crop 参数表示的裁剪坐标可以通过小助手工具箱内的捕获截图功能
 
 python main.py 后面支持参数 fight/universe/forgottenhall 等
 
