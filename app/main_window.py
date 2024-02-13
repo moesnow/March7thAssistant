@@ -161,7 +161,7 @@ class MainWindow(MSFluentWindow):
                 import subprocess
                 source_file = r".\\Update.exe"
                 assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
-                subprocess.run(['start', source_file, assert_url], shell=True)
+                subprocess.run([source_file, assert_url])
         elif status == 1:
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),
