@@ -217,8 +217,6 @@ class Notify:
         base64_str = base64.b64encode(image_io.getvalue()).decode()
         if notifier_params:
             n = get_notifier(notifier_name)
-            # text = "text"
-            # file = "file"
             if notifier_params["datatype"] == "json":
                 raw_data = self.comment_init(notifier_params["data"])
                 data = self.comment_format(raw_data,"text","file",title=title,content=content,image=base64_str)
