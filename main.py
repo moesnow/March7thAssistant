@@ -18,6 +18,8 @@ from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.weekly.forgottenhall import ForgottenHall
 from tasks.weekly.purefiction import PureFiction
+from tasks.tools.game_screenshot import game_screenshot
+from tasks.tools.automatic_plot import automatic_plot
 import atexit
 import pyuac
 import sys
@@ -106,6 +108,12 @@ def main(action=None):
     # 子任务 更新项目
     elif action in ["universe_update", "fight_update"]:
         run_sub_task_update(action)
+
+    elif action == "screenshot":
+        game_screenshot()
+
+    elif action == "plot":
+        automatic_plot()
 
     elif action == "notify":
         run_notify_action()
