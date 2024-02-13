@@ -4,8 +4,8 @@ from managers.automation_manager import auto
 from managers.translate_manager import _
 from managers.config_manager import config
 from managers.notify_manager import notify
-from tasks.game.start import Start
-from tasks.game.stop import Stop
+from .start import Start
+from .stop import Stop
 import sys
 
 

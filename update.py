@@ -35,6 +35,7 @@ class Update:
         self.cover_folder_path = os.path.abspath("./")
         self.exe_path = os.path.abspath("./assets/7z/7za.exe")
         self.aria2_path = os.path.abspath("./assets/aria2/aria2c.exe")
+        self.delete_folder_path = os.path.join("./3rdparty/Fhoe-Rail", "map")
 
     def __find_fastest_mirror(self, mirror_urls, timeout=5):
         def check_mirror(mirror_url):
@@ -181,6 +182,8 @@ class Update:
         print("开始覆盖...")
         while True:
             try:
+                if self.delete_folder_path and os.path.exists(self.delete_folder_path):
+                    shutil.rmtree(self.delete_folder_path)
                 shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
                 print(f"覆盖完成：{self.cover_folder_path}")
                 break

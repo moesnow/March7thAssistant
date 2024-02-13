@@ -111,7 +111,7 @@ class HomeInterface(ScrollArea):
         self.setWidgetResizable(True)
 
         self.vBoxLayout.setContentsMargins(0, 0, 0, 36)
-        self.vBoxLayout.setSpacing(40)
+        self.vBoxLayout.setSpacing(60)
         self.vBoxLayout.addWidget(self.banner)
         self.vBoxLayout.setAlignment(Qt.AlignTop)
 
