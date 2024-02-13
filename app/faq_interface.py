@@ -32,7 +32,7 @@ a {
                 self.content = file.read()
         except FileNotFoundError:
             sys.exit(1)
-        html_content = html_style + markdown.markdown(self.content)
+        html_content = html_style + markdown.markdown(self.content).replace('<h3>', '<br><h3>').replace('</h3>', '</h3><hr>')
         self.contentLabel.setText(html_content)
         self.contentLabel.setOpenExternalLinks(True)
         self.contentLabel.linkActivated.connect(self.open_url)

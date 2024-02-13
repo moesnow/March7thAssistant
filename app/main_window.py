@@ -12,6 +12,7 @@ from .home_interface import HomeInterface
 from .setting_interface import SettingInterface
 from .tasks_interface import TasksInterface
 from .changelog_interface import ChangelogInterface
+from .tools_interface import ToolsInterface
 from .faq_interface import FAQInterface
 from .tutorial_interface import TutorialInterface
 
@@ -23,6 +24,7 @@ from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
 
 from managers.config_manager import config
+import os
 
 
 class MainWindow(MSFluentWindow):
@@ -41,6 +43,7 @@ class MainWindow(MSFluentWindow):
         self.faqInterface = FAQInterface(self)
         self.tutorialInterface = TutorialInterface(self)
         self.changelogInterface = ChangelogInterface(self)
+        self.toolsInterface = ToolsInterface(self)
 
         self.initNavigation()
         self.splashScreen.finish()
@@ -59,6 +62,13 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.tutorialInterface, FIF.BOOK_SHELF, self.tr('使用教程'))
         self.addSubInterface(self.faqInterface, FIF.CHAT, self.tr('常见问题'))
         self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
+        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, self.tr('工具箱'))
+
+        self.navigationInterface.addWidget(
+            'startGameButton',
+            NavigationBarPushButton(FIF.PLAY, '启动游戏', isSelectable=False),
+            self.startGame,
+            NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
             'themeButton',
@@ -75,18 +85,51 @@ class MainWindow(MSFluentWindow):
 
         self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
 
+    def startGame(self):
+        try:
+            if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
+                InfoBar.warning(
+                    title=self.tr('启动失败(╥╯﹏╰╥)'),
+                    content="",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self
+                )
+                return False
+            InfoBar.success(
+                title=self.tr('启动成功(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+        except Exception:
+            InfoBar.warning(
+                title=self.tr('启动失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+
     def toggleTheme(self):
         toggleTheme()
 
     def initWindow(self):
         # 禁用最大化
-        self.titleBar.maxBtn.setHidden(True)
-        self.titleBar.maxBtn.setDisabled(True)
-        self.titleBar.setDoubleClickEnabled(False)
+        # self.titleBar.maxBtn.setHidden(True)
+        # self.titleBar.maxBtn.setDisabled(True)
+        # self.titleBar.setDoubleClickEnabled(False)
         self.setResizeEnabled(False)
         # self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowMaximizeButtonHint)
 
-        self.resize(960, 700)
+        self.resize(960, 750)
         self.setWindowIcon(QIcon(r'assets\logo\March7th.ico'))
         self.setWindowTitle("March7th Assistant")
         # create splash screen

@@ -20,7 +20,6 @@ jobs:
       - name: Generate latest.json file
         run: |
           wget https://api.github.com/repos/${{ github.repository }}/releases/latest -O publish/latest.json
-          wget https://api.github.com/repos/moesnow/Fhoe-Rail/releases/latest -O publish/fight-latest.json
           wget https://api.github.com/repos/moesnow/Auto_Simulated_Universe/releases/latest -O publish/universe-latest.json
 
       - name: Git push assets to "release" branch
@@ -35,9 +34,3 @@ jobs:
           git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
           git push -f -u origin release
 
-      - name: Purge jsdelivr CDN
-        run: |
-          cd publish || exit 1
-          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@release/latest.json"
-          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@release/fight-latest.json"
-          curl -i "https://purge.jsdelivr.net/gh/${{ github.repository }}@release/universe-latest.json"

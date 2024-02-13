@@ -20,6 +20,7 @@ class StyleSheet(StyleSheetBase, Enum):
     FAQ_INTERFACE = "faq_interface"
     Tutorial_INTERFACE = "tutorial_interface"
     CHANGELOGS_INTERFACE = "changelogs_interface"
+    TOOLS_INTERFACE = "tools_interface"
 
     def path(self, theme=Theme.AUTO):
         theme = qconfig.theme if theme == Theme.AUTO else theme

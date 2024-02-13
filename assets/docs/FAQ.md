@@ -1,4 +1,4 @@
-# FAQ
+# 常见问题
 
 <!-- ## [视频教程](https://www.bilibili.com/video/BV13h4y1m7VP/) -->
 
