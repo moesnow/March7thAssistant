@@ -10,7 +10,7 @@ import requests
 from onepush import get_notifier
 from managers.logger_manager import logger
 from managers.translate_manager import _
-
+from ruamel.yaml import comments
 
 class Notify:
     _instance = None
@@ -184,9 +184,59 @@ class Notify:
                 logger.error(_("{notifier_name} 通知发送失败").format(notifier_name="gotify"))
                 logger.error(f"{e}")
 
+    def comment_init(self,d):
+        try:
+            if isinstance(v,comments.CommentedMap):
+                d = dict(d)
+                for k,v in d.items():
+                    d[k] = self.comment_init(v)
+            elif isinstance(v,comments.CommentedSeq):
+                d = list(d)
+                for i in d:
+                    d[index(i)] = self.comment_init(i)
+            return d
+        except Exception as e:
+            logger.error(e)
+    
+    def comment_format(self, d, *args, **kwargs):
+        try:
+            if isinstance(d,dict):
+                for k, v in d.items():
+                    d[k] = self.comment_format(v,*args,**kwargs)
+            elif isinstance(d,list):
+                for i in d:
+                    d[index(i)] = self.comment_format(i,*args,**kwargs)
+            elif d in args:
+                d = f"{d}".format(**kwargs)
+            return d
+        except Exception as e:
+            logger.error(e)
+
+    def _send_notification_by_custom(self,notifier_name,title,content,image_io):
+        notifier_params = getattr(self, notifier_name, None)
+        base64_str = base64.b64encode(image_io.getvalue()).decode()
+        if notifier_params:
+            n = get_notifier(notifier_name)
+            text = "text"
+            file = "file"
+            if notifier_params["datatype"] == "json":
+                raw_data = self.comment_init(notifier_params["data"])
+                data = self.comment_format(raw_data,text,file,title=title,content=content,image=base64_str)
+                notifier_params["data"] = data
+            try:
+                response = n.notify(**notifier_params)
+                logger.info(_("{notifier_name} 通知发送完成").format(notifier_name=notifier_name.capitalize()))
+            except Exception as e:
+                logger.error(_("{notifier_name} 通知发送失败").format(notifier_name=notifier_name.capitalize()))
+                logger.error(f"{e}")
+
+
+
     def notify(self, title="", content="", image_io=None):
         for notifier_name in self.notifiers:
             if image_io and notifier_name in ["telegram", "gocqhttp", "smtp"]:
                 self._send_notification_with_image(notifier_name, title, content, image_io)
+            elif image_io and notifier_name == "custom":
+                self._send_notification_by_custom(notifier_name, title, content, image_io)
             else:
                 self._send_notification(notifier_name, title, content)
