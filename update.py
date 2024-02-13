@@ -182,7 +182,7 @@ class Update:
         print("开始覆盖...")
         while True:
             try:
-                if self.delete_folder_path and os.path.exists(self.delete_folder_path):
+                if "full" in self.download_url and self.delete_folder_path and os.path.exists(self.delete_folder_path):
                     shutil.rmtree(self.delete_folder_path)
                 shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
                 print(f"覆盖完成：{self.cover_folder_path}")
