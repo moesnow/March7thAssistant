@@ -7,18 +7,18 @@ after_finish: None # 任务完成后: "None"（无）"Exit"（退出）"Loop"（
 power_limit: 160 # 循环运行所需开拓力
 play_audio: false # 任务完成后播放提示音
 
-python_exe_path: '' # 示例 C:\Users\i\AppData\Local\Programs\Python\Python311\python.exe
+python_exe_path: "" # 示例 C:\Users\i\AppData\Local\Programs\Python\Python311\python.exe
 pypi_mirror_urls: # pypi 镜像列表
-- https://mirrors.cloud.tencent.com/pypi/simple/
-- https://mirrors.aliyun.com/pypi/simple/
-- https://pypi.org/simple/
+  - https://mirrors.cloud.tencent.com/pypi/simple/
+  - https://mirrors.aliyun.com/pypi/simple/
+  - https://pypi.org/simple/
 
 game_title_name: 崩坏：星穹铁道 # 窗口标题
 game_process_name: StarRail # 进程名
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏路径
 
 instance_type: 拟造花萼（金） # 副本类型: 侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
-calyx_golden_preference: Jarilo-VI # 拟造花萼（金）偏好地区: "雅利洛-VI"（Jarilo-VI） 仙舟「罗浮」(XianzhouLuofu) 匹诺康尼(Penacony) 
+calyx_golden_preference: Jarilo-VI # 拟造花萼（金）偏好地区: "雅利洛-VI"（Jarilo-VI） 仙舟「罗浮」(XianzhouLuofu) 匹诺康尼(Penacony)
 instance_names: # 副本名称
   拟造花萼（金）: 回忆之蕾
   拟造花萼（赤）: 毁灭之蕾
@@ -26,7 +26,7 @@ instance_names: # 副本名称
   侵蚀隧洞: 睿治之径
   历战余响: 毁灭的开端
 instance_team_enable: false # 打副本时自动切换队伍
-instance_team_number: '5' # 队伍编号
+instance_team_number: "5" # 队伍编号
 merge_immersifier: False # 优先合成沉浸器
 use_reserved_trailblaze_power: False # 使用后备开拓力
 use_fuel: False # 使用燃料
@@ -36,21 +36,21 @@ echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳（每�
 borrow_enable: true # 使用支援角色
 borrow_character_enable: false # 强制使用支援角色
 borrow_character_from: # 使用指定好友的支援角色
-- 好友1
-- 好友2
-- 好友3
+  - 好友1
+  - 好友2
+  - 好友3
 borrow_character: # 支援角色优先级
-- Seele
-- Blade
-- JingYuan
-- Kafka
-- Clara
-- Welt
-- Yanqing
-- Himeko
-- Luocha
-- Gepard
-- Bailu
+  - Seele
+  - Blade
+  - JingYuan
+  - Kafka
+  - Clara
+  - Welt
+  - Yanqing
+  - Himeko
+  - Luocha
+  - Gepard
+  - Bailu
 
 reward_enable: true # 启用领奖励
 reward_dispatch_enable: true # 领取委托奖励
@@ -64,15 +64,14 @@ daily_enable: true # 启用日常
 daily_himeko_try_enable: false # 通过 “姬子试用” 完成任务
 daily_memory_one_enable: false # 通过 “回忆一” 完成任务
 daily_memory_one_team: # 用于回忆一的队伍
-- -
-    DanHeng
-  - -1
-- - Natasha
-  - 0
-- - March7th
-  - 0
-- - Asta
-  - 0
+  - - DanHeng
+    - -1
+  - - Natasha
+    - 0
+  - - March7th
+    - 0
+  - - Asta
+    - 0
 daily_tasks: {} # 每日实训
 last_run_timestamp: 0 # 上次运行日常的时间戳
 
@@ -89,7 +88,7 @@ fight_operation_mode: exe # 运行方式 源码: source 集成: exe
 fight_path: .\3rdparty\Fhoe-Rail # 锄大地路径
 fight_timeout: 6 # 锄大地超时（单位小时）
 fight_team_enable: false # 锄大地时自动切换队伍
-fight_team_number: '6' # 队伍编号
+fight_team_number: "6" # 队伍编号
 fight_requirements: false # 是否安装过依赖（更新后会重置为false）
 fight_timestamp: 0 # 上次运行锄大地的时间戳（每天运行）
 
@@ -105,57 +104,57 @@ universe_timestamp: 0 # 上次运行模拟宇宙的时间戳（每周运行）
 
 forgottenhall_enable: false # 启用忘却之庭
 forgottenhall_level: # 混沌回忆关卡范围
-- 7
-- 12
+  - 7
+  - 12
 forgottenhall_retries: 1 # 混沌回忆挑战失败后的重试次数
 # 混沌回忆队伍
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
 forgottenhall_team1: # 队伍1
-- - Asta
-  - -1
-- - JingYuan
-  - 1
-- - Tingyun
-  - 2
-- - Huohuo
-  - 1
+  - - Asta
+    - -1
+  - - JingYuan
+    - 1
+  - - Tingyun
+    - 2
+  - - Huohuo
+    - 1
 forgottenhall_team2: # 队伍2
-- - FuXuan
-  - 1
-- - Bronya
-  - 1
-- - Pela
-  - -1
-- - Qingque
-  - 1
+  - - FuXuan
+    - 1
+  - - Bronya
+    - 1
+  - - Pela
+    - -1
+  - - Qingque
+    - 1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳（每周运行，如已经满星则跳过）
 
 purefiction_enable: false # 启用虚构叙事
 purefiction_level: # 虚构叙事关卡范围
-- 3
-- 4
+  - 3
+  - 4
 # 虚构叙事队伍
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
 purefiction_team1: # 队伍1
-- - Asta
-  - -1
-- - JingYuan
-  - 1
-- - Tingyun
-  - 2
-- - Huohuo
-  - 1
+  - - Asta
+    - -1
+  - - JingYuan
+    - 1
+  - - Tingyun
+    - 2
+  - - Huohuo
+    - 1
 purefiction_team2: # 队伍2
-- - FuXuan
-  - 1
-- - Bronya
-  - 1
-- - Pela
-  - -1
-- - Qingque
-  - 1
+  - - FuXuan
+    - 1
+  - - Bronya
+    - 1
+  - - Pela
+    - -1
+  - - Qingque
+    - 1
 purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳（每周运行，如已经满星则跳过）
 
 auto_battle_detect_enable: true # 启用自动战斗检测
@@ -172,95 +171,105 @@ notify_winotify_enable: true
 # 已适配支持发送截图
 # 依赖科学上网环境
 notify_telegram_enable: false
-notify_telegram_token: ''
-notify_telegram_userid: ''
-notify_telegram_api_url: '' # 可选参数
+notify_telegram_token: ""
+notify_telegram_userid: ""
+notify_telegram_api_url: "" # 可选参数
 
 # Server 酱 Turbo 版通知
 # 扫码登陆 微信推送 适合小白 免费版每天限制五条
 # https://sct.ftqq.com/
 notify_serverchanturbo_enable: false
-notify_serverchanturbo_sctkey: ''
-notify_serverchanturbo_channel: '' # 可选参数
-notify_serverchanturbo_openid: '' # 可选参数
+notify_serverchanturbo_sctkey: ""
+notify_serverchanturbo_channel: "" # 可选参数
+notify_serverchanturbo_openid: "" # 可选参数
 
 # Bark 通知
 # 推荐 iOS 用户使用
 # 直接在 App Store 下载安装
 notify_bark_enable: false
-notify_bark_key: ''
-notify_bark_sound: '' # 可选参数
-notify_bark_isarchive: '1' # 可选参数
-notify_bark_icon: 'https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/app/images/March7th.jpg' # 可选参数
-notify_bark_group: 'March7thAssistant' # 可选参数
-notify_bark_url: '' # 可选参数
-notify_bark_copy: '' # 可选参数
-notify_bark_autocopy: '' # 可选参数
+notify_bark_key: ""
+notify_bark_sound: "" # 可选参数
+notify_bark_isarchive: "1" # 可选参数
+notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/app/images/March7th.jpg" # 可选参数
+notify_bark_group: "March7thAssistant" # 可选参数
+notify_bark_url: "" # 可选参数
+notify_bark_copy: "" # 可选参数
+notify_bark_autocopy: "" # 可选参数
 
 # 邮箱 smtp 通知
 # 注意部分邮箱密码部分需要填写授权码（比如QQ邮箱）
 notify_smtp_enable: false
-notify_smtp_host: ''
-notify_smtp_user: ''
-notify_smtp_password: ''
-notify_smtp_From: '' # 可选参数，默认user
-notify_smtp_To: '' # 可选参数，默认user
-notify_smtp_port: '' # 可选参数，默认465
-notify_smtp_ssl: '' # 可选参数，默认为True，可设置为False关闭
+notify_smtp_host: ""
+notify_smtp_user: ""
+notify_smtp_password: ""
+notify_smtp_From: "" # 可选参数，默认user
+notify_smtp_To: "" # 可选参数，默认user
+notify_smtp_port: "" # 可选参数，默认465
+notify_smtp_ssl: "" # 可选参数，默认为True，可设置为False关闭
 
 # 钉钉通知
 notify_dingtalk_enable: false
-notify_dingtalk_token: ''
-notify_dingtalk_secret: '' # 可选参数
+notify_dingtalk_token: ""
+notify_dingtalk_secret: "" # 可选参数
 
 # pushplus 通知
 notify_pushplus_enable: false
-notify_pushplus_token: ''
-notify_pushplus_channel: '' # 可选参数
-notify_pushplus_webhook: '' # 可选参数
-notify_pushplus_callbackUrl: '' # 可选参数
+notify_pushplus_token: ""
+notify_pushplus_channel: "" # 可选参数
+notify_pushplus_webhook: "" # 可选参数
+notify_pushplus_callbackUrl: "" # 可选参数
 
 # 企业微信应用通知
 notify_wechatworkapp_enable: false
-notify_wechatworkapp_corpid: ''
-notify_wechatworkapp_corpsecret: ''
-notify_wechatworkapp_agentid: ''
-notify_wechatworkapp_touser: '' # 可选参数
+notify_wechatworkapp_corpid: ""
+notify_wechatworkapp_corpsecret: ""
+notify_wechatworkapp_agentid: ""
+notify_wechatworkapp_touser: "" # 可选参数
 
 # 企业微信机器人通知
 notify_wechatworkbot_enable: false
-notify_wechatworkbot_key: ''
+notify_wechatworkbot_key: ""
 
 # gocqhttp 通知
 notify_gocqhttp_enable: false
-notify_gocqhttp_endpoint: ''
-notify_gocqhttp_message_type: ''
-notify_gocqhttp_token: '' # 可选参数
-notify_gocqhttp_user_id: '' # 可选参数
-notify_gocqhttp_group_id: '' # 可选参数
+notify_gocqhttp_endpoint: ""
+notify_gocqhttp_message_type: ""
+notify_gocqhttp_token: "" # 可选参数
+notify_gocqhttp_user_id: "" # 可选参数
+notify_gocqhttp_group_id: "" # 可选参数
 
 # discord 通知
 notify_discord_enable: false
-notify_discord_webhook: ''
-notify_discord_username: '' # 可选参数
-notify_discord_avatar_url: '' # 可选参数
-notify_discord_color: '' # 可选参数
+notify_discord_webhook: ""
+notify_discord_username: "" # 可选参数
+notify_discord_avatar_url: "" # 可选参数
+notify_discord_color: "" # 可选参数
 
 # pushdeer 通知
 notify_pushdeer_enable: false
-notify_pushdeer_token: ''
-notify_pushdeer_url: '' # 可选参数
+notify_pushdeer_token: ""
+notify_pushdeer_url: "" # 可选参数
 
 # 飞书通知
 notify_lark_enable: false
-notify_lark_webhook: ''
-notify_lark_content: ''
-notify_lark_keyword: '' # 可选参数
-notify_lark_sign: '' # 可选参数
+notify_lark_webhook: ""
+notify_lark_content: ""
+notify_lark_keyword: "" # 可选参数
+notify_lark_sign: "" # 可选参数
 
 # gotify 通知
 # 推送优先级1-10，越高通知等级越高。以安卓为例，1-3 仅有通知栏图标，4-7 为图标+声音， 8-10 为图标+声音+震动。
 notify_gotify_enable: false
-notify_gotify_url: ''
-notify_gotify_token: ''
-notify_gotify_priority: 3  # 可选参数
+notify_gotify_url: ""
+notify_gotify_token: ""
+notify_gotify_priority: 3 # 可选参数
+
+# custom 通知
+notify_custom_enable: false
+notify_custom_url: "" # onebot请输入包含api的网址,如http://localhost:3000/send_msg
+notify_custom_method: "" # 请求类型[get/post],onebot请输入post
+notify_custom_datatype: "" # 数据类型[data/json],onebot请输入json,默认data
+# image项如果非空,请确保data项为json对象,并在最外层拥有一个message数组,json类型时{image}将会替换为base64数据
+notify_custom_image: "" #可选参数,图片将转换为base64格式,onebot请参考{type: image, data: {file: 'base64://{image}'}}
+# 如果datatype为json,请确保data为准确的json格式,如果datatype为data则直接输出,json类型时{message}将会替换为title+"\n"+content
+notify_custom_data: "" #onebot请参考{user_id: 114514, message_type: private, message: [{type: text,data: {text: '{message}'}}]}

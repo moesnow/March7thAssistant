@@ -59,14 +59,18 @@ class Notify:
             if notifier_name == "pushplus":
                 content = '.' if content is None or content == '' else content
 
+            if notifier_name == "custom":
+                self._send_notification_by_custom(notifier_name,title,content)
+
             notifier_params = getattr(self, notifier_name, None)
             if notifier_params:
                 n = get_notifier(notifier_name)
                 try:
-                    response = n.notify(**notifier_params,
+                    if notifier_name != "custom":
+                        response = n.notify(**notifier_params,
                                         title=title, content=content)
-                    logger.info(_("{notifier_name} 通知发送完成").format(
-                        notifier_name=notifier_name.capitalize()))
+                        logger.info(_("{notifier_name} 通知发送完成").format(
+                            notifier_name=notifier_name.capitalize()))
                 except Exception as e:
                     logger.error(_("{notifier_name} 通知发送失败").format(
                         notifier_name=notifier_name.capitalize()))
@@ -212,14 +216,25 @@ class Notify:
         except Exception as e:
             logger.error(e)
 
-    def _send_notification_by_custom(self,notifier_name,title,content,image_io):
+    def _send_notification_by_custom(self,notifier_name,title,content,image_io=None):
         notifier_params = getattr(self, notifier_name, None)
-        base64_str = base64.b64encode(image_io.getvalue()).decode()
         if notifier_params:
             n = get_notifier(notifier_name)
             if notifier_params["datatype"] == "json":
                 raw_data = self.comment_init(notifier_params["data"])
-                data = self.comment_format(raw_data,"text","file",title=title,content=content,image=base64_str)
+                base64_str = ""
+                message = ""
+                if title != "":
+                    message += title + "\n"
+                if content != "":
+                    message += content
+                if message == "":
+                    message = " "
+                if notifier_params["image"] != "" and image_io:
+                    base64_str = base64.b64encode(image_io.getvalue()).decode()
+                    raw_data["message"].append(self.comment_init(notifier_params["image"]))
+                    print(raw_data)
+                data = self.comment_format(raw_data,"text","file",message=message,image=base64_str)
                 notifier_params["data"] = data
             try:
                 response = n.notify(**notifier_params)
