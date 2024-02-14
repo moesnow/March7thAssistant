@@ -240,7 +240,7 @@ def check_temp_dir():
             except Exception as e:
                 print(f"复制更新程序到临时目录失败：{e}")
                 input("按回车键重试. . .")
-        subprocess.run([os.path.join(temp_path, file_name)] + sys.argv[1:])
+        os.system(f"cmd /C start \"\" \"{os.path.join(temp_path, file_name)}\" \"{sys.argv[1:][0]}\"")
         sys.exit(0)
 
 
