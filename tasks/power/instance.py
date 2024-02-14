@@ -5,7 +5,8 @@ from managers.config_manager import config
 from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.base.team import Team
-from tasks.power.character import Character
+from .character import Character
+from .relicset import Relicset
 import time
 
 
@@ -34,7 +35,7 @@ class Instance:
             Instance.start_instance_again(instance_type)
         Instance.wait_fight(runs)
 
-        Instance.complete_run()
+        Instance.complete_run(instance_type)
 
         logger.info(_("副本任务完成"))
         return True
@@ -141,11 +142,14 @@ class Instance:
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
 
     @staticmethod
-    def complete_run():
+    def complete_run(instance_type):
         # 速度太快，点击按钮无效
         time.sleep(1)
         auto.click_element("./assets/images/zh_CN/fight/fight_exit.png", "image", 0.9, max_retries=10)
         time.sleep(2)
+
+        if "侵蚀隧洞" in instance_type and config.break_down_level_four_relicset:
+            Relicset.run()
 
     @staticmethod
     def process_instance_name(instance_name):

@@ -136,6 +136,12 @@ class SettingInterface(ScrollArea):
             self.tr("副本名称"),
             "instance_names"
         )
+        self.breakDownLevelFourRelicsetEnableCard = SwitchSettingCard1(
+            FIF.BRIGHTNESS,
+            self.tr('自动分解四星遗器'),
+            self.tr('侵蚀隧洞和模拟宇宙（开启领取沉浸奖励）完成后自动分解四星及以下遗器'),
+            "break_down_level_four_relicset"
+        )
         self.instanceTeamEnableCard = SwitchSettingCard1(
             FIF.EDIT,
             self.tr('自动切换队伍'),
@@ -199,6 +205,12 @@ class SettingInterface(ScrollArea):
             self.tr("指定好友的支援角色（填写用户名，模糊匹配模式）"),
             "borrow_character_from"
         )
+        self.borrowCharacterInfoCard = PrimaryPushSettingCard(
+            self.tr('打开角色文件夹'),
+            FIF.INFO,
+            self.tr("↓↓支援角色↓↓"),
+            self.tr("角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
+        )
         self.borrowCharacterCard = PushSettingCardEval(
             self.tr('修改'),
             FIF.ARROW_DOWN,
@@ -259,8 +271,15 @@ class SettingInterface(ScrollArea):
         self.dailyMemoryOneEnableCard = SwitchSettingCard1(
             FIF.TILES,
             self.tr('通过 “回忆一” 完成任务'),
-            "请解锁混沌回忆并配置了队伍后再打开该选项",
+            "请解锁混沌回忆并配置了队伍后再打开该选项，部分任务需要反复运行至多三次",
             "daily_memory_one_enable"
+        )
+        self.dailyMemoryOneTeamInfoCard = PrimaryPushSettingCard(
+            self.tr('打开角色文件夹'),
+            FIF.INFO,
+            self.tr("↓↓回忆一队伍↓↓"),
+            self.tr(
+                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
         )
         self.dailyMemoryOneTeamCard = PushSettingCardEval(
             self.tr('修改'),
@@ -673,6 +692,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
+        self.PowerGroup.addSettingCard(self.breakDownLevelFourRelicsetEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
         self.PowerGroup.addSettingCard(self.mergeImmersifierEnableCard)
@@ -684,6 +704,7 @@ class SettingInterface(ScrollArea):
         self.BorrowGroup.addSettingCard(self.borrowEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterFromCard)
+        self.BorrowGroup.addSettingCard(self.borrowCharacterInfoCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterCard)
 
         self.DailyGroup.addSettingCard(self.dispatchEnableCard)
@@ -695,6 +716,7 @@ class SettingInterface(ScrollArea):
         # self.DailyGroup.addSettingCard(self.dailyUniverseEnableCard)
         self.DailyGroup.addSettingCard(self.dailyHimekoTryEnableCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneEnableCard)
+        self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamInfoCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamCard)
         self.DailyGroup.addSettingCard(self.dailyTasksCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
@@ -870,6 +892,10 @@ class SettingInterface(ScrollArea):
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
+        self.borrowCharacterInfoCard.clicked.connect(lambda: subprocess.check_call(
+            "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
+        self.dailyMemoryOneTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
+            "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
         self.forgottenhallTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
             "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
         self.purefictionTeamInfoCard.clicked.connect(lambda: subprocess.check_call(

@@ -25,6 +25,7 @@ instance_names: # 副本名称
   凝滞虚影: 无
   侵蚀隧洞: 睿治之径
   历战余响: 毁灭的开端
+break_down_level_four_relicset: false # 侵蚀隧洞和模拟宇宙完成后自动分解四星及以下遗器
 instance_team_enable: false # 打副本时自动切换队伍
 instance_team_number: "5" # 队伍编号
 merge_immersifier: False # 优先合成沉浸器
