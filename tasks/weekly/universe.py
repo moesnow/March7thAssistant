@@ -4,6 +4,7 @@ from managers.logger_manager import logger
 from managers.automation_manager import auto
 from managers.translate_manager import _
 from tasks.base.base import Base
+from tasks.power.relicset import Relicset
 from tasks.base.pythonchecker import PythonChecker
 from tasks.base.command import subprocess_with_timeout
 import subprocess
@@ -92,6 +93,10 @@ class Universe:
                             Universe.get_reward()
                         else:
                             Base.send_notification_with_screenshot(_("🎉模拟宇宙已完成🎉"))
+
+                        if config.universe_bonus_enable and config.break_down_level_four_relicset:
+                            Relicset.run()
+
                         return True
 
                     else:

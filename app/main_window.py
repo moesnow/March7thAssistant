@@ -158,10 +158,9 @@ class MainWindow(MSFluentWindow):
         if status == 2:
             w = MessageBoxUpdate(self.update_thread.title, self.update_thread.content, self.window())
             if w.exec():
-                import subprocess
                 source_file = r".\\Update.exe"
                 assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
-                subprocess.run(['start', source_file, assert_url], shell=True)
+                os.system(f"cmd /C start \"\" \"{source_file}\" \"{assert_url}\"")
         elif status == 1:
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),

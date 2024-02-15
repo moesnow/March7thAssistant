@@ -1,6 +1,6 @@
 import tkinter as tk
+from PIL import ImageTk
 from tkinter import simpledialog
-from PIL import Image, ImageTk
 import os
 
 
@@ -109,7 +109,6 @@ class ScreenshotApp:
             os.startfile(os.path.dirname(screenshot_path))
         else:
             tk.messagebox.showinfo("结果", "还没有选择区域呢")
-
 
     def ocr_selection(self):
         if self.selection_rect:

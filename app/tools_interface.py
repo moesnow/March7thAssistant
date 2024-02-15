@@ -8,6 +8,7 @@ from PyQt5.QtGui import QDesktopServices
 
 from .common.style_sheet import StyleSheet
 from managers.config_manager import config
+from tasks.base.command import start_task
 
 
 class ToolsInterface(ScrollArea):
@@ -22,6 +23,12 @@ class ToolsInterface(ScrollArea):
         self.toolsLabel = QLabel(self.tr("工具箱"), self)
 
         self.ToolsGroup = SettingCardGroup(self.tr('工具箱'), self.scrollWidget)
+        self.automaticPlotCard = PushSettingCard(
+            self.tr('运行'),
+            FIF.IMAGE_EXPORT,
+            self.tr("自动剧情"),
+            ''
+        )
         self.gameScreenshotCard = PushSettingCard(
             self.tr('捕获'),
             FIF.PHOTO,
@@ -50,6 +57,7 @@ class ToolsInterface(ScrollArea):
     def __initLayout(self):
         self.toolsLabel.move(36, 30)
         # add cards to group
+        self.ToolsGroup.addSettingCard(self.automaticPlotCard)
         self.ToolsGroup.addSettingCard(self.gameScreenshotCard)
 
         self.ToolsGroup.titleLabel.setHidden(True)
@@ -60,18 +68,14 @@ class ToolsInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.ToolsGroup)
 
     def __onGameScreenshotCardClicked(self):
-        from tasks.base.windowswitcher import WindowSwitcher
-        from module.automation.screenshot import Screenshot
-        if WindowSwitcher.check_and_switch(config.game_title_name):
-            result = Screenshot.take_screenshot(config.game_title_name)
-            if result:
-                import tkinter as tk
-                from .tools.screenshot import ScreenshotApp
+        from tasks.tools.game_screenshot import game_screenshot
+        game_screenshot()
 
-                root = tk.Tk()
-                app = ScreenshotApp(root, result[0])
-                root.mainloop()
+    def __onAutomaticPlotCardClicked(self):
+        from tasks.tools.automatic_plot import automatic_plot
+        automatic_plot()
 
     def __connectSignalToSlot(self):
         """ connect signal to slot """
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
+        self.automaticPlotCard.clicked.connect(self.__onAutomaticPlotCardClicked)

@@ -331,6 +331,34 @@
                 ]
             },
             {
+                "target_screen": "bag_relicset",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/share/menu/bag.png",
+                            "image",
+                            0.9
+                        ]
+                    },
+                    {
+                        "action": "time.sleep",
+                        "args": [
+                            2
+                        ]
+                    },
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/share/menu/bag_relicset.png",
+                            "image",
+                            0.9,
+                            2
+                        ]
+                    }
+                ]
+            },
+            {
                 "target_screen": "configure_team",
                 "actions_list": [
                     {
@@ -1137,6 +1165,24 @@
         "name": "背包-消耗品",
         "id": "bag_consumables",
         "image_path": "./assets/images/screen/bag/bag_consumables.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    {
+                        "action": "auto.press_key",
+                        "args": [
+                            "esc"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "背包-遗器",
+        "id": "bag_relicset",
+        "image_path": "./assets/images/screen/bag/bag_relicset.png",
         "actions": [
             {
                 "target_screen": "menu",

@@ -182,7 +182,7 @@ class Update:
         print("开始覆盖...")
         while True:
             try:
-                if self.delete_folder_path and os.path.exists(self.delete_folder_path):
+                if "full" in self.download_url and self.delete_folder_path and os.path.exists(self.delete_folder_path):
                     shutil.rmtree(self.delete_folder_path)
                 shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
                 print(f"覆盖完成：{self.cover_folder_path}")
@@ -240,7 +240,7 @@ def check_temp_dir():
             except Exception as e:
                 print(f"复制更新程序到临时目录失败：{e}")
                 input("按回车键重试. . .")
-        subprocess.run(["start", os.path.join(temp_path, file_name)] + sys.argv[1:], shell=True)
+        os.system(f"cmd /C start \"\" \"{os.path.join(temp_path, file_name)}\" \"{sys.argv[1:][0]}\"")
         sys.exit(0)
 
 
