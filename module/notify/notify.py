@@ -221,6 +221,7 @@ class Notify:
         if notifier_params:
             n = get_notifier(notifier_name)
             if notifier_params["datatype"] == "json":
+                backup_data = notifier_params["data"]
                 raw_data = self.comment_init(notifier_params["data"])
                 base64_str = ""
                 message = ""
@@ -233,11 +234,11 @@ class Notify:
                 if notifier_params["image"] != "" and image_io:
                     base64_str = base64.b64encode(image_io.getvalue()).decode()
                     raw_data["message"].append(self.comment_init(notifier_params["image"]))
-                    print(raw_data)
                 data = self.comment_format(raw_data,"text","file",message=message,image=base64_str)
                 notifier_params["data"] = data
             try:
                 response = n.notify(**notifier_params)
+                notifier_params["data"] = backup_data
                 logger.info(_("{notifier_name} 通知发送完成").format(notifier_name=notifier_name.capitalize()))
             except Exception as e:
                 logger.error(_("{notifier_name} 通知发送失败").format(notifier_name=notifier_name.capitalize()))
