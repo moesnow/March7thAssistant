@@ -2,6 +2,7 @@ from managers.automation_manager import auto
 from managers.screen_manager import screen
 from managers.logger_manager import logger
 from managers.translate_manager import _
+import time
 
 
 class Relicset:
@@ -40,6 +41,7 @@ class Relicset:
     @staticmethod
     def prepare_break_down_relicset():
         if auto.click_element(Relicset.SELECT_IMAGE, "image", 0.9, max_retries=10):
+            time.sleep(1)
             if auto.click_element(Relicset.LEVEL_FOUR_IMAGE, "image", 0.9, max_retries=10):
                 if auto.click_element(Relicset.CONFIRM_IMAGE, "image", 0.9, max_retries=10):
                     if auto.find_element(Relicset.SCREEN_IMAGE, "image", 0.9, max_retries=10):
@@ -50,12 +52,16 @@ class Relicset:
 
     @staticmethod
     def start_break_down_relicset():
-        if auto.click_element(Relicset.BREAK_IMAGE, "image", 0.9, max_retries=10):
-            if auto.click_element(Relicset.CONFIRM_IMAGE, "image", 0.9, max_retries=10):
-                if auto.click_element(Relicset.CLICK_CLOSE_IMAGE, "image", 0.9, max_retries=10):
-                    if auto.find_element(Relicset.SCREEN_IMAGE, "image", 0.9, max_retries=10):
-                        auto.press_key("esc")
-                        logger.info("分解遗器成功")
-                        return True
+        if not auto.click_element(Relicset.BREAK_IMAGE, "image", 0.9, max_retries=5):
+            logger.info("不存在可分解的遗器")
+            return False
+
+        time.sleep(1)
+        if auto.click_element(Relicset.CONFIRM_IMAGE, "image", 0.9, max_retries=10):
+            if auto.click_element(Relicset.CLICK_CLOSE_IMAGE, "image", 0.9, max_retries=10):
+                if auto.find_element(Relicset.SCREEN_IMAGE, "image", 0.9, max_retries=10):
+                    auto.press_key("esc")
+                    logger.info("分解遗器成功")
+                    return True
         logger.error("分解遗器失败")
         return False

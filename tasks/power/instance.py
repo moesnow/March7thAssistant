@@ -148,7 +148,7 @@ class Instance:
         auto.click_element("./assets/images/zh_CN/fight/fight_exit.png", "image", 0.9, max_retries=10)
         time.sleep(2)
 
-        if "侵蚀隧洞" in instance_type and config.break_down_level_four_relicset:
+        if ("侵蚀隧洞" or "历战余响") in instance_type and config.break_down_level_four_relicset:
             Relicset.run()
 
     @staticmethod
