@@ -406,6 +406,26 @@
         ]
     },
     {
+        "name": "3D地图",
+        "id": "map3d",
+        "image_path": "./assets/images/screen/map3d.png",
+        "actions": [
+            {
+                "target_screen": "map",
+                "actions_list": [
+                    {
+                        "action": "auto.click_element",
+                        "args": [
+                            "./assets/images/share/map/back.png",
+                            "image",
+                            0.9
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
         "name": "月卡",
         "id": "monthly_card",
         "image_path": "./assets/images/screen/monthly_card.png",
