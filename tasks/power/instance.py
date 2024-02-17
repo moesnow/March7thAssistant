@@ -173,15 +173,6 @@ class Instance:
     def wait_fight(num):
         logger.info(_("进入战斗"))
         time.sleep(2)
-        # for i in range(20):
-        #     if auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
-        #         logger.info(_("尝试开启自动战斗"))
-        #         auto.press_key("v")
-        #     elif auto.find_element("./assets/images/zh_CN/base/auto.png", "image", 0.95, take_screenshot=False):
-        #         logger.info(_("自动战斗已开启"))
-        #         break
-        #     time.sleep(0.5)
-        # logger.info(_("等待战斗"))
 
         def check_fight():
             if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):

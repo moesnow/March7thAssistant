@@ -150,7 +150,19 @@ class Screen:
             if autotry:
                 logger.warning(_("未识别出任何界面，请确保游戏画面干净，按ESC后重试"))
                 auto.press_key("esc")
-                time.sleep(1)
+                time.sleep(2)
+
+                # 异常处理
+
+                # 与服务器断开连接，请重新登录
+                if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
+                    time.sleep(20)
+
+                # 登录异常，请稍后再试
+                if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
+                    time.sleep(20)
             else:
                 logger.debug(_("未识别出任何界面，请确保游戏画面干净"))
                 break
