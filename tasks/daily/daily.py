@@ -78,6 +78,8 @@ class Daily:
         else:
             logger.info(_("虚构叙事尚未刷新"))
 
+        Power.run()
+
     @staticmethod
     def run():
         logger.hr(_("开始日常任务"), 0)
