@@ -241,7 +241,13 @@ def check_temp_dir():
             except Exception as e:
                 print(f"复制更新程序到临时目录失败：{e}")
                 input("按回车键重试. . .")
-        subprocess.Popen([os.path.join(temp_path, file_name), sys.argv[1:][0]], creationflags=subprocess.DETACHED_PROCESS)
+
+        if len(sys.argv) > 1:
+            args = [os.path.join(temp_path, file_name), sys.argv[1]]
+        else:
+            args = [os.path.join(temp_path, file_name)]
+
+        subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)
         sys.exit(0)
 
 

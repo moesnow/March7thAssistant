@@ -40,9 +40,9 @@ def start_task(command):
             # 管理员模式下，始终优先使用控制台主机而不是新终端
             subprocess.Popen(["wt", os.path.abspath("./March7th Assistant.exe"), command], creationflags=subprocess.DETACHED_PROCESS)
         else:
-            subprocess.Popen([os.path.abspath("./March7th Assistant.exe"), command], creationflags=subprocess.DETACHED_PROCESS)
+            subprocess.Popen([os.path.abspath("./March7th Assistant.exe"), command], creationflags=subprocess.CREATE_NEW_CONSOLE)
     else:
         if subprocess_with_stdout(["where", "wt.exe"]) is not None:
             subprocess.Popen(["wt", sys.executable, "main.py", command], creationflags=subprocess.DETACHED_PROCESS)
         else:
-            subprocess.Popen([sys.executable, "main.py", command], creationflags=subprocess.DETACHED_PROCESS)
+            subprocess.Popen([sys.executable, "main.py", command], creationflags=subprocess.CREATE_NEW_CONSOLE)

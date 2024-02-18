@@ -82,7 +82,7 @@ class Start:
             Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, modified_data)
 
         try:
-            subprocess.Popen([config.game_path], creationflags=subprocess.DETACHED_PROCESS)
+            subprocess.Popen(config.game_path, creationflags=subprocess.DETACHED_PROCESS)
             logger.debug(_("游戏启动成功: {path}").format(path=config.game_path))
         except Exception:
             return False

@@ -88,17 +88,7 @@ class MainWindow(MSFluentWindow):
 
     def startGame(self):
         try:
-            if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
-                InfoBar.warning(
-                    title=self.tr('启动失败(╥╯﹏╰╥)'),
-                    content="",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=1000,
-                    parent=self
-                )
-                return False
+            subprocess.Popen(config.game_path, creationflags=subprocess.DETACHED_PROCESS)
             InfoBar.success(
                 title=self.tr('启动成功(＾∀＾●)'),
                 content="",
