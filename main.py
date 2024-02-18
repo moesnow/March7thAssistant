@@ -77,6 +77,15 @@ def run_sub_task_update(action):
     sys.exit(0)
 
 
+def run_sub_task_reset(action):
+    if action == "universe_reset":
+        Universe.reset_config()
+    elif action == "fight_reset":
+        Fight.reset_config()
+    input(_("按回车键关闭窗口. . ."))
+    sys.exit(0)
+
+
 def run_notify_action():
     from io import BytesIO
     from PIL import Image
@@ -109,6 +118,10 @@ def main(action=None):
     # 子任务 更新项目
     elif action in ["universe_update", "fight_update"]:
         run_sub_task_update(action)
+
+    # 子任务 重置项目
+    elif action in ["universe_reset", "fight_reset"]:
+        run_sub_task_reset(action)
 
     elif action == "screenshot":
         game_screenshot()

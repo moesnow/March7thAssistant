@@ -139,7 +139,8 @@ class HomeInterface(ScrollArea):
             action={
                 "快速启动": "fight",
                 "原版运行": "fight_gui",
-                "更新锄大地": "fight_update"
+                "更新锄大地": "fight_update",
+                "重置配置文件": "fight_reset"
             }
         )
         basicInputView.addSampleCard(
@@ -148,7 +149,8 @@ class HomeInterface(ScrollArea):
             action={
                 "快速启动": "universe",
                 "原版运行": "universe_gui",
-                "更新模拟宇宙": "universe_update"
+                "更新模拟宇宙": "universe_update",
+                "重置配置文件": "universe_reset"
             }
         )
         basicInputView.addSampleCard(
