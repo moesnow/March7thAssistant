@@ -1,7 +1,7 @@
 from managers.logger_manager import logger
 from .autoclick import AutoClick
 import tkinter as tk
-import multiprocessing
+import threading
 
 
 def run_gui():
@@ -14,5 +14,5 @@ def run_gui():
 
 
 def automatic_plot():
-    gui_process = multiprocessing.Process(target=run_gui)
-    gui_process.start()
+    gui_thread = threading.Thread(target=run_gui)
+    gui_thread.start()

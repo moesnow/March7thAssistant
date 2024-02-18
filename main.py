@@ -55,6 +55,7 @@ def run_sub_task(action):
         Universe.start()
     elif action == "forgottenhall":
         ForgottenHall.start()
+    elif action == "purefiction":
         PureFiction.start()
     Game.stop(False)
 
@@ -98,7 +99,7 @@ def main(action=None):
         run_main_actions()
 
     # 子任务
-    elif action in ["daily", "power", "fight", "universe", "forgottenhall"]:
+    elif action in ["daily", "power", "fight", "universe", "forgottenhall", "purefiction"]:
         run_sub_task(action)
 
     # 子任务 原生图形界面

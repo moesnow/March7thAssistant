@@ -4,7 +4,7 @@ from managers.config_manager import config
 from managers.logger_manager import logger
 from .screenshot import ScreenshotApp
 import tkinter as tk
-import multiprocessing
+import threading
 
 
 def run_gui():
@@ -24,5 +24,5 @@ def run_gui():
 
 
 def game_screenshot():
-    gui_process = multiprocessing.Process(target=run_gui)
-    gui_process.start()
+    gui_thread = threading.Thread(target=run_gui)
+    gui_thread.start()

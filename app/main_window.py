@@ -24,6 +24,7 @@ from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
 
 from managers.config_manager import config
+import subprocess
 import os
 
 
@@ -31,7 +32,7 @@ class MainWindow(MSFluentWindow):
     def __init__(self):
         super().__init__()
         setThemeColor('#f18cb9')
-        setTheme(Theme.AUTO)
+        setTheme(Theme.AUTO, lazy=True)
         self.setMicaEffectEnabled(False)
 
         self.initWindow()
@@ -119,7 +120,7 @@ class MainWindow(MSFluentWindow):
             )
 
     def toggleTheme(self):
-        toggleTheme()
+        toggleTheme(lazy=True)
 
     def initWindow(self):
         # 禁用最大化
@@ -158,9 +159,9 @@ class MainWindow(MSFluentWindow):
         if status == 2:
             w = MessageBoxUpdate(self.update_thread.title, self.update_thread.content, self.window())
             if w.exec():
-                source_file = r".\\Update.exe"
+                source_file = "./Update.exe"
                 assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
-                os.system(f"cmd /C start \"\" \"{source_file}\" \"{assert_url}\"")
+                subprocess.Popen([os.path.abspath(source_file), assert_url], creationflags=subprocess.DETACHED_PROCESS)
         elif status == 1:
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),

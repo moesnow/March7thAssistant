@@ -36,7 +36,7 @@ class Ui_MessageBox:
         self.comboBox0.addItems(self.Items0)
         self.content0 = next((item for item in self.Items0 if self.content[self.label0] in item), self.content[self.label0])
         self.comboBox0.setText(self.content0)
-        self.comboBox0._onTextEdited(self.content0)
+        self.comboBox0._onComboTextChanged(self.content0)
 
         self.label1 = "拟造花萼（赤）"
         self.titleLabel1 = QLabel(f"{self.label1}", parent)
@@ -57,7 +57,7 @@ class Ui_MessageBox:
         self.comboBox1.addItems(self.Items1)
         self.content1 = next((item for item in self.Items1 if self.content[self.label1] in item), self.content[self.label1])
         self.comboBox1.setText(self.content1)
-        self.comboBox1._onTextEdited(self.content1)
+        self.comboBox1._onComboTextChanged(self.content1)
 
         self.label2 = "凝滞虚影"
         self.titleLabel2 = QLabel(f"{self.label2}", parent)
@@ -84,7 +84,7 @@ class Ui_MessageBox:
         self.comboBox2.addItems(self.Items2)
         self.content2 = next((item for item in self.Items2 if self.content[self.label2] in item), self.content[self.label2])
         self.comboBox2.setText(self.content2)
-        self.comboBox2._onTextEdited(self.content2)
+        self.comboBox2._onComboTextChanged(self.content2)
 
         self.label3 = "侵蚀隧洞"
         self.titleLabel3 = QLabel(f"{self.label3}", parent)
@@ -104,7 +104,7 @@ class Ui_MessageBox:
         self.comboBox3.addItems(self.Items3)
         self.content3 = next((item for item in self.Items3 if self.content[self.label3] in item), self.content[self.label3])
         self.comboBox3.setText(self.content3)
-        self.comboBox3._onTextEdited(self.content3)
+        self.comboBox3._onComboTextChanged(self.content3)
 
         self.label4 = "历战余响"
         self.titleLabel4 = QLabel(f"{self.label4}", parent)
@@ -119,7 +119,7 @@ class Ui_MessageBox:
         self.comboBox4.addItems(self.Items4)
         self.content4 = next((item for item in self.Items4 if self.content[self.label4] in item), self.content[self.label4])
         self.comboBox4.setText(self.content4)
-        self.comboBox4._onTextEdited(self.content4)
+        self.comboBox4._onComboTextChanged(self.content4)
 
         self.titleLabel5 = QLabel("说明：清体力是根据选择的副本类型来判断的,\n此处设置的副本名称也会用于完成每日实训对应的任务,\n如果即使有对应的任务,你也不希望完成,可以手动修改对应的副本名称为“无”", parent)
 

@@ -58,8 +58,7 @@ class BannerWidget(QWidget):
         self.linkCardView.addCard(
             FluentIcon.GITHUB,
             self.tr('GitHub repo'),
-            self.tr(
-                '喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
+            self.tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
             "https://github.com/moesnow/March7thAssistant",
         )
 
@@ -116,8 +115,6 @@ class HomeInterface(ScrollArea):
         self.vBoxLayout.setAlignment(Qt.AlignTop)
 
     def loadSamples(self):
-        """ load samples """
-
         basicInputView = SampleCardView1(
             self.tr("任务 >"), self.view)
 
@@ -139,17 +136,28 @@ class HomeInterface(ScrollArea):
         basicInputView.addSampleCard(
             icon="./assets/app/images/SilverWolf.jpg",
             title="锄大地",
-            action="fight"
+            action={
+                "快速启动": "fight",
+                "原版运行": "fight_gui",
+                "更新锄大地": "fight_update"
+            }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Herta.jpg",
             title="模拟宇宙",
-            action="universe"
+            action={
+                "快速启动": "universe",
+                "原版运行": "universe_gui",
+                "更新模拟宇宙": "universe_update"
+            }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Bronya.jpg",
             title="逐光捡金",
-            action="forgottenhall"
+            action={
+                "混沌回忆": "forgottenhall",
+                "虚构叙事": "purefiction"
+            }
         )
 
         self.vBoxLayout.addWidget(basicInputView)

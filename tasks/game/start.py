@@ -8,6 +8,7 @@ from tasks.base.windowswitcher import WindowSwitcher
 from .stop import Stop
 from .resolution import Resolution
 from .registry import Registry
+import subprocess
 import pyautogui
 import winreg
 import psutil
@@ -80,10 +81,11 @@ class Start:
             # 写入注册表
             Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, modified_data)
 
-        logger.debug(_("运行命令: cmd /C start \"\" \"{path}\"").format(path=config.game_path))
-        if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
+        try:
+            subprocess.Popen([config.game_path], creationflags=subprocess.DETACHED_PROCESS)
+            logger.debug(_("游戏启动成功: {path}").format(path=config.game_path))
+        except Exception:
             return False
-        logger.debug(_("游戏启动成功: {path}").format(path=config.game_path))
 
         time.sleep(10)
         if not auto.retry_with_timeout(lambda: WindowSwitcher.check_and_switch(config.game_title_name), 60, 1):

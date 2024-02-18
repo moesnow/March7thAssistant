@@ -54,7 +54,7 @@ class SettingInterface(ScrollArea):
             self.tr('选择需要导入的 config.yaml 文件（重启后生效）')
         )
         self.checkUpdateCard = SwitchSettingCard1(
-            FIF.UPDATE,
+            FIF.SYNC,
             self.tr('启动时检测更新'),
             "新版本将更加稳定并拥有更多功能（建议启用）",
             "check_update"
@@ -109,7 +109,7 @@ class SettingInterface(ScrollArea):
         )
         self.calyxGoldenPreferenceCard = ComboBoxSettingCard2(
             "calyx_golden_preference",
-            FIF.PLAY,
+            FIF.PIE_SINGLE,
             self.tr('拟造花萼（金）偏好地区'),
             '',
             texts={'雅利洛-VI': 'Jarilo-VI', '仙舟「罗浮」': 'XianzhouLuofu', '匹诺康尼': 'Penacony'}
@@ -123,7 +123,7 @@ class SettingInterface(ScrollArea):
             "instance_names"
         )
         self.breakDownLevelFourRelicsetEnableCard = SwitchSettingCard1(
-            FIF.BRIGHTNESS,
+            FIF.FILTER,
             self.tr('自动分解四星遗器'),
             self.tr('侵蚀隧洞和模拟宇宙（开启领取沉浸奖励）完成后自动分解四星及以下遗器'),
             "break_down_level_four_relicset"
@@ -160,7 +160,7 @@ class SettingInterface(ScrollArea):
             "use_fuel"
         )
         self.echoofwarEnableCard = SwitchSettingCard1(
-            FIF.ROBOT,
+            FIF.MEGAPHONE,
             self.tr('启用历战余响'),
             "每周体力优先完成三次「历战余响」，仅限完整运行生效",
             "echo_of_war_enable"
@@ -174,20 +174,20 @@ class SettingInterface(ScrollArea):
 
         self.BorrowGroup = SettingCardGroup(self.tr("支援设置"), self.scrollWidget)
         self.borrowEnableCard = SwitchSettingCard1(
-            FIF.PEOPLE,
+            FIF.PIN,
             self.tr('启用使用支援角色'),
             '',
             "borrow_enable"
         )
         self.borrowCharacterEnableCard = SwitchSettingCard1(
-            FIF.PEOPLE,
+            FIF.UNPIN,
             self.tr('强制使用支援角色'),
             self.tr('无论何时都要使用支援角色，即使日常实训中没有要求'),
             "borrow_character_enable"
         )
         self.borrowCharacterFromCard = PushSettingCardEval(
             self.tr('修改'),
-            FIF.VIEW,
+            FIF.PEOPLE,
             self.tr("指定好友的支援角色（填写用户名，模糊匹配模式）"),
             "borrow_character_from"
         )
@@ -237,7 +237,7 @@ class SettingInterface(ScrollArea):
         #     "daily_forgottenhall_enable"
         # )
         self.dailyEnableCard = SwitchSettingCard1(
-            FIF.PLAY,
+            FIF.CALENDAR,
             self.tr('启用每日实训'),
             "关闭后可通过手动配置每天一次模拟宇宙来完成500活跃度（推荐每天四次）",
             "daily_enable"
@@ -249,13 +249,13 @@ class SettingInterface(ScrollArea):
         #     "daily_universe_enable"
         # )
         self.dailyHimekoTryEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.CHECKBOX,
             self.tr('通过 “姬子试用” 完成任务'),
             "",
             "daily_himeko_try_enable"
         )
         self.dailyMemoryOneEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.CHECKBOX,
             self.tr('通过 “回忆一” 完成任务'),
             "请解锁混沌回忆并配置了队伍后再打开该选项，部分任务需要反复运行至多三次",
             "daily_memory_one_enable"
@@ -289,44 +289,44 @@ class SettingInterface(ScrollArea):
         self.ActivityGroup = SettingCardGroup(self.tr("活动设置"), self.scrollWidget)
 
         self.activityEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.CERTIFICATE,
             self.tr('启用活动检测'),
             None,
             "activity_enable"
         )
         self.activityGiftOfOdysseyEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.COMPLETED,
             self.tr('启用巡星之礼'),
             "自动领取「星轨专票x10」",
             "activity_giftofodyssey_enable"
         )
         self.activityGiftOfRadianceEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.COMPLETED,
             self.tr('启用巡光之礼'),
             "自动领取「星琼x800」",
             "activity_giftofradiance_enable"
         )
         self.activityGardenOfPlentyEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.CALORIES,
             self.tr('启用花藏繁生'),
             "存在双倍次数时体力优先「拟造花萼」",
             "activity_gardenofplenty_enable"
         )
         self.activityGardenOfPlentyTypeCard = ComboBoxSettingCard1(
             "activity_gardenofplenty_instance_type",
-            FIF.ALIGNMENT,
+            FIF.CLEAR_SELECTION,
             self.tr('花藏繁生副本类型'),
             None,
             texts=['拟造花萼（金）', '拟造花萼（赤）']
         )
         self.activityRealmOfTheStrangeEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.CALORIES,
             self.tr('启用异器盈界'),
             "存在双倍次数时体力优先「侵蚀隧洞」",
             "activity_realmofthestrange_enable"
         )
         self.activityPlanarFissureEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.CALORIES,
             self.tr('启用位面分裂'),
             "存在双倍次数时体力优先「合成沉浸器」",
             "activity_planarfissure_enable"
@@ -387,7 +387,7 @@ class SettingInterface(ScrollArea):
         )
         self.guiFightCard = PrimaryPushSettingCard(
             self.tr('启动'),
-            FIF.SETTING,
+            FIF.SHARE,
             self.tr('原版运行'),
             self.tr('启动调试模式，可以选择指定地图继续锄大地'),
         )
@@ -461,7 +461,7 @@ class SettingInterface(ScrollArea):
         )
         self.guiUniverseCard = PrimaryPushSettingCard(
             self.tr('启动'),
-            FIF.SETTING,
+            FIF.SHARE,
             self.tr('原版运行'),
             self.tr('启动后可以修改命途和难度等'),
         )
@@ -474,7 +474,7 @@ class SettingInterface(ScrollArea):
 
         self.ForgottenhallGroup = SettingCardGroup(self.tr("忘却之庭"), self.scrollWidget)
         self.forgottenhallEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.SPEED_HIGH,
             self.tr('启用混沌回忆'),
             "",
             # self.tr('仅限完整运行生效'),
@@ -526,7 +526,7 @@ class SettingInterface(ScrollArea):
 
         self.PureFictionGroup = SettingCardGroup(self.tr("虚构叙事"), self.scrollWidget)
         self.purefictionEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.SPEED_HIGH,
             self.tr('启用虚构叙事'),
             "",
             # self.tr('仅限完整运行生效'),
@@ -579,7 +579,7 @@ class SettingInterface(ScrollArea):
         self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
         self.testNotifyCard = PrimaryPushSettingCard(
             self.tr('发送消息'),
-            FIF.TILES,
+            FIF.RINGER,
             self.tr("测试消息推送"),
             ""
         )
@@ -592,14 +592,14 @@ class SettingInterface(ScrollArea):
 
         self.KeybindingGroup = SettingCardGroup(self.tr("按键"), self.scrollWidget)
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.ROBOT,
             self.tr('启用自动战斗检测'),
             "此处的设置只会对清体力和忘却之庭场景生效",
             "auto_battle_detect_enable"
         )
         self.keybindingTechniqueCard = PushSettingCardKey(
             self.tr('按住以修改'),
-            FIF.TILES,
+            FIF.LEAF,
             self.tr("秘技"),
             "hotkey_technique"
         )
@@ -630,13 +630,13 @@ class SettingInterface(ScrollArea):
             self.tr('当前版本：') + " " + config.version
         )
         self.updatePrereleaseEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.TRAIN,
             self.tr('加入预览版更新渠道'),
             "",
             "update_prerelease_enable"
         )
         self.updateFullEnableCard = SwitchSettingCard1(
-            FIF.TILES,
+            FIF.GLOBE,
             self.tr('更新时下载完整包'),
             "包含模拟宇宙和锄大地等，但压缩包体积更大",
             "update_full_enable"

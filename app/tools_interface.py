@@ -31,7 +31,7 @@ class ToolsInterface(ScrollArea):
         )
         self.gameScreenshotCard = PushSettingCard(
             self.tr('捕获'),
-            FIF.PHOTO,
+            FIF.CLIPPING_TOOL,
             self.tr("游戏截图"),
             self.tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于复制副本名称）")
         )

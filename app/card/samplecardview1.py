@@ -1,8 +1,9 @@
 # coding:utf-8
 from PyQt5.QtCore import Qt, QPropertyAnimation
-from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect
+from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect, QAction
 
-from qfluentwidgets import IconWidget, TextWrap, FlowLayout, CardWidget, Flyout, InfoBarIcon, TeachingTip, TeachingTipTailPosition
+from qfluentwidgets import RoundMenu, Action, IconWidget, TextWrap, FlowLayout, CardWidget, Flyout, InfoBarIcon, TeachingTip, TeachingTipTailPosition
+from qfluentwidgets import FluentIcon as FIF
 from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
 
@@ -14,7 +15,7 @@ class SampleCard(CardWidget):
 
     def __init__(self, icon, title, action, parent=None):
         super().__init__(parent=parent)
-        self.parent = parent
+
         self.action = action
 
         self.iconWidget = IconWidget(icon, self)
@@ -64,10 +65,29 @@ class SampleCard(CardWidget):
             parent=self
         )
 
+    def createMenu(self, pos):
+        menu = RoundMenu(parent=self)
+
+        def create_triggered_function(task):
+            def triggered_function():
+                self.showBottomTeachingTip()
+                start_task(task)
+            return triggered_function
+
+        for index, (key, value) in enumerate(self.action.items()):
+            menu.addAction(QAction(key, triggered=create_triggered_function(value)))
+            if index != len(self.action) - 1:  # 检查是否是最后一个键值对
+                menu.addSeparator()
+
+        menu.exec(pos, ani=True)
+
     def mouseReleaseEvent(self, e):
         super().mouseReleaseEvent(e)
-        self.showBottomTeachingTip()
-        start_task(self.action)
+        if isinstance(self.action, str):
+            self.showBottomTeachingTip()
+            start_task(self.action)
+        elif isinstance(self.action, dict):
+            self.createMenu(e.globalPos())
 
     def enterEvent(self, event):
         super().enterEvent(event)
