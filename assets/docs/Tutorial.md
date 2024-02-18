@@ -15,7 +15,7 @@
 
 点击 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 打开下载页面，滚动到底部。
 
-找到名称类似 `March7thAssistant_v1.x.x_full.zip` 的文件，点击下载。
+找到名称类似 `March7thAssistant_vx.x.x_full.zip` 的文件，点击下载。
 
 > 如果中国大陆下载缓慢可以尝试右键上述文件，选择 "复制链接"。
 >
@@ -23,13 +23,13 @@
 
 ## 解压
 
-找到下载完毕的名称类似 `March7thAssistant_v1.x.x_full.zip` 的文件，右键选择 "全部解压缩"。
+找到下载完毕的名称类似 `March7thAssistant_vx.x.x_full.zip` 的文件，右键选择 "全部解压缩"。
 
 > 如果安装了第三方解压缩软件，操作名称也可能叫做"提取"
 
 ## 运行
 
-找到解压后出现的名称类似 `March7thAssistant_v1.x.x` 的文件夹并双击打开，里面应当至少包含以下文件（夹）：
+找到解压后出现的名称类似 `March7thAssistant_vx.x.x` 的文件夹并双击打开，里面应当至少包含以下文件（夹）：
 
 - `March7th Launcher.exe`
 - `March7th Assistant.exe`
@@ -207,7 +207,7 @@
 
 出现新版本弹窗后，点击下载即可，或手动双击 `Update.exe`。
 
-手动更新请下载名称类似 `March7thAssistant_v1.x.x.zip` 的文件，
+手动更新请下载名称类似 `March7thAssistant_vx.x.x.zip` 的文件，
 
 解压后，复制所有文件，在旧版本内粘贴覆盖即可。
 
