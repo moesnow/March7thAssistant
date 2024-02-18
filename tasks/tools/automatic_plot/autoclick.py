@@ -9,11 +9,10 @@ class AutoClick:
     def __init__(self, root):
         self.root = root
         self.root.title("自动剧情")
+        self.root.iconbitmap("./assets/logo/March7th.ico")
+
         self.start_img = "./assets/images/share/plot/start.png"
         self.select_img = "./assets/images/share/plot/select.png"
-
-        # 设置窗口关闭时的处理函数
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         # 设置窗口大小
         self.root.geometry("500x220")
@@ -26,7 +25,7 @@ class AutoClick:
         self.status_label = tk.Label(root, text="自动点击状态：已停止", fg="red")
         self.status_label.pack()
 
-        self.check_game_status()  # 开始检查游戏状态
+        self.check_game_status()
 
     def start_clicking(self):
         if not self.is_clicking:
@@ -60,7 +59,4 @@ class AutoClick:
     def click(self):
         if self.is_clicking:
             auto.press_mouse()
-            self.root.after(10, self.click)  # 继续点击
-
-    def on_closing(self):
-        self.root.destroy()
+            self.root.after(10, self.click)

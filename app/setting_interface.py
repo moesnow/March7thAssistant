@@ -17,7 +17,7 @@ from .card.pushsettingcard1 import PushSettingCardDictInstanceNames, PushSetting
 from .tools.check_update import checkUpdate
 from tasks.base.command import start_task
 
-import subprocess
+import os
 
 
 class SettingInterface(ScrollArea):
@@ -52,12 +52,6 @@ class SettingInterface(ScrollArea):
             FIF.ADD_TO,
             self.tr('导入配置'),
             self.tr('选择需要导入的 config.yaml 文件（重启后生效）')
-        )
-        self.gameScreenshotCard = PushSettingCard(
-            self.tr('捕获'),
-            FIF.PHOTO,
-            self.tr("游戏截图"),
-            self.tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于复制副本名称）")
         )
         self.checkUpdateCard = SwitchSettingCard1(
             FIF.UPDATE,
@@ -102,14 +96,6 @@ class SettingInterface(ScrollArea):
         #     self.tr('优先使用 Windows 终端'),
         #     self.tr('界面更好看且支持显示Emoji表情'),
         #     "use_windows_terminal"
-        # )
-
-        # self.GameGroup = SettingCardGroup(self.tr("游戏设置"), self.scrollWidget)
-        # self.gamePathCard = PushSettingCard(
-        #     self.tr('修改'),
-        #     FIF.GAME,
-        #     self.tr("游戏路径"),
-        #     config.game_path
         # )
 
         self.PowerGroup = SettingCardGroup(self.tr("体力设置"), self.scrollWidget)
@@ -287,12 +273,12 @@ class SettingInterface(ScrollArea):
             self.tr("用于 “回忆一” 的队伍"),
             "daily_memory_one_team"
         )
-        self.dailyTasksCard = PushSettingCardDictBool(
-            self.tr('修改'),
-            FIF.PALETTE,
-            self.tr("今日实训（False代表已完成）"),
-            "daily_tasks"
-        )
+        # self.dailyTasksCard = PushSettingCardDictBool(
+        #     self.tr('修改'),
+        #     FIF.PALETTE,
+        #     self.tr("今日实训（False代表已完成）"),
+        #     "daily_tasks"
+        # )
         self.lastRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
@@ -679,15 +665,12 @@ class SettingInterface(ScrollArea):
         # add cards to group
         self.ProgramGroup.addSettingCard(self.logLevelCard)
         self.ProgramGroup.addSettingCard(self.importConfigCard)
-        self.ProgramGroup.addSettingCard(self.gameScreenshotCard)
         self.ProgramGroup.addSettingCard(self.checkUpdateCard)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
         # self.ProgramGroup.addSettingCard(self.useWindowsTerminalCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
-
-        # self.GameGroup.addSettingCard(self.gamePathCard)
 
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
@@ -718,7 +701,7 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.dailyMemoryOneEnableCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamInfoCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamCard)
-        self.DailyGroup.addSettingCard(self.dailyTasksCard)
+        # self.DailyGroup.addSettingCard(self.dailyTasksCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
 
         self.ActivityGroup.addSettingCard(self.activityEnableCard)
@@ -780,7 +763,6 @@ class SettingInterface(ScrollArea):
         self.AboutGroup.addSettingCard(self.updateFullEnableCard)
 
         self.ProgramGroup.titleLabel.setHidden(True)
-        # self.GameGroup.titleLabel.setHidden(True)
         self.PowerGroup.titleLabel.setHidden(True)
         self.BorrowGroup.titleLabel.setHidden(True)
         self.DailyGroup.titleLabel.setHidden(True)
@@ -795,7 +777,6 @@ class SettingInterface(ScrollArea):
 
         # add items to pivot
         self.addSubInterface(self.ProgramGroup, 'programInterface', self.tr('程序'))
-        # self.addSubInterface(self.GameGroup, 'GameInterface', self.tr('游戏'))
         self.addSubInterface(self.PowerGroup, 'PowerInterface', self.tr('体力'))
         self.addSubInterface(self.BorrowGroup, 'BorrowInterface', self.tr('支援'))
         self.addSubInterface(self.DailyGroup, 'DailyInterface', self.tr('日常'))
@@ -823,7 +804,6 @@ class SettingInterface(ScrollArea):
         # self.vBoxLayout.setSpacing(28)
         self.vBoxLayout.setContentsMargins(36, 10, 36, 0)
         # self.vBoxLayout.addWidget(self.programGroup)
-        # self.vBoxLayout.addWidget(self.GameGroup)
         # self.vBoxLayout.addWidget(self.PowerGroup)
         # self.vBoxLayout.addWidget(self.DailyGroup)
         # self.vBoxLayout.addWidget(self.FightGroup)
@@ -855,29 +835,20 @@ class SettingInterface(ScrollArea):
             # self.importConfigCard.button.setText("导入完成，请重启小助手")
             self.__showRestartTooltip()
 
-    def __onGameScreenshotCardClicked(self):
-        from tasks.base.windowswitcher import WindowSwitcher
-        from module.automation.screenshot import Screenshot
-        if WindowSwitcher.check_and_switch(config.game_title_name):
-            result = Screenshot.take_screenshot(config.game_title_name)
-            if result:
-                import tkinter as tk
-                from .tools.screenshot import ScreenshotApp
-
-                root = tk.Tk()
-                app = ScreenshotApp(root, result[0])
-                root.mainloop()
-
     def __onGamePathCardClicked(self):
         game_path, _ = QFileDialog.getOpenFileName(self, "选择游戏路径", "", "All Files (*)")
         if not game_path or config.game_path == game_path:
             return
-
         config.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
+    def __openCharacterFolder(self):
+        return lambda: os.startfile(os.path.abspath("./assets/images/share/character"))
+
+    def __openUrl(self, url):
+        return lambda: QDesktopServices.openUrl(QUrl(url))
+
     def __showRestartTooltip(self):
-        """ show restart tooltip """
         InfoBar.success(
             self.tr('更新成功'),
             self.tr('配置在重启软件后生效'),
@@ -886,20 +857,13 @@ class SettingInterface(ScrollArea):
         )
 
     def __connectSignalToSlot(self):
-        """ connect signal to slot """
-
         self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
-        self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
-        self.borrowCharacterInfoCard.clicked.connect(lambda: subprocess.check_call(
-            "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
-        self.dailyMemoryOneTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
-            "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
-        self.forgottenhallTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
-            "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
-        self.purefictionTeamInfoCard.clicked.connect(lambda: subprocess.check_call(
-            "start /WAIT explorer .\\assets\\images\\share\\character", shell=True))
+        self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
+        self.dailyMemoryOneTeamInfoCard.clicked.connect(self.__openCharacterFolder())
+        self.forgottenhallTeamInfoCard.clicked.connect(self.__openCharacterFolder())
+        self.purefictionTeamInfoCard.clicked.connect(self.__openCharacterFolder())
 
         self.guiUniverseCard.clicked.connect(lambda: start_task("universe_gui"))
         self.guiFightCard.clicked.connect(lambda: start_task("fight_gui"))
@@ -908,11 +872,8 @@ class SettingInterface(ScrollArea):
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 
-        self.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://github.com/moesnow/March7thAssistant")))
-        self.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://qm.qq.com/q/9gFqUrUGVq")))
-        self.feedbackCard.clicked.connect(lambda: QDesktopServices.openUrl(
-            QUrl("https://github.com/moesnow/March7thAssistant/issues")))
+        self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
+        self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/9gFqUrUGVq"))
+        self.feedbackCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant/issues"))
 
         self.aboutCard.clicked.connect(lambda: checkUpdate(self.parent))

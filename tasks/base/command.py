@@ -30,7 +30,6 @@ def subprocess_with_stdout(command):
 
 def start_task(command):
     # 为什么 Windows 这么难用呢
-    from managers.config_manager import config
     import subprocess
     import sys
     import os
