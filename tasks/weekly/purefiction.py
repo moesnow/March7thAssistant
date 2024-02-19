@@ -238,38 +238,35 @@ class PureFiction:
 
     @staticmethod
     def prepare():
-        flag = False
         screen.change_to('guide4')
-        guide4_crop = (231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)
-        if auto.click_element("虚构叙事", "text", max_retries=10, crop=guide4_crop):
-            time.sleep(1)
-            auto.find_element("虚构叙事", "text", max_retries=10, crop=(
-                689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
-            for box in auto.ocr_result:
-                text = box[1][0]
-                if "/12" in text:
-                    logger.info(_("星数：{text}").format(text=text))
-                    if text.split("/")[0] == "12":
-                        logger.info(_("虚构叙事未刷新"))
-                        return True
-                    else:
-                        break
-            if auto.click_element("传送", "text", max_retries=10, need_ocr=False):
-                if auto.click_element("虚构叙事", "text", max_retries=20, include=True, action="move", crop=(0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080)):
-                    # if auto.click_element("./assets/images/screen/purefiction/purefiction.png", "image", 0.8, max_retries=10, action="move"):
-                    flag = True
 
-        if not flag:
-            screen.change_to('menu')
+        if not auto.click_element("虚构叙事", "text", max_retries=10, crop=(231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)):
+            return False
+        time.sleep(1)
+
+        if not auto.find_element("虚构叙事", "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True):
+            return False
+        for box in auto.ocr_result:
+            text = box[1][0]
+            if "/12" in text:
+                logger.info(_("星数：{text}").format(text=text))
+                if text.split("/")[0] == "12":
+                    logger.info(_("虚构叙事未刷新"))
+                    return True
+                else:
+                    break
+
+        if not auto.click_element("传送", "text", max_retries=10, need_ocr=False):
+            return False
+
+        if not auto.click_element("虚构叙事", "text", max_retries=20, include=True, action="move", crop=(0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080)):
             return False
 
         # 刷新后打开会出现本期buff的弹窗
         time.sleep(2)
-        if auto.click_element("./assets/images/purefiction/start_story.png", "image", 0.8):
-            auto.click_element("虚构叙事", "text", max_retries=10, include=True, action="move", crop=(
-                0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080))
-            # auto.click_element("./assets/images/screen/purefiction/purefiction.png",
-            #                    "image", 0.8, max_retries=10, action="move")
+        if auto.click_element("./assets/images/purefiction/start_story.png", "image", 0.7):
+            auto.click_element("虚构叙事", "text", max_retries=10, include=True, action="move", crop=(0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080))
+            # auto.click_element("./assets/images/screen/purefiction/purefiction.png","image", 0.8, max_retries=10, action="move")
 
         PureFiction.run()
 

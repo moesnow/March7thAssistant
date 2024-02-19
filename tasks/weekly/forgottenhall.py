@@ -269,44 +269,31 @@ class ForgottenHall:
 
     @staticmethod
     def prepare():
-        flag = False
         screen.change_to('guide4')
-        guide4_crop = (231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)
-        if auto.click_element("忘却之庭", "text", max_retries=10, crop=guide4_crop):
-            time.sleep(1)
-            auto.find_element("混沌回忆", "text", max_retries=10, crop=(
-                689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True)
-            for box in auto.ocr_result:
-                text = box[1][0]
-                if "/36" in text:
-                    logger.info(_("星数：{text}").format(text=text))
-                    if text.split("/")[0] == "36":
-                        logger.info(_("混沌回忆未刷新"))
-                        return True
-                    else:
-                        break
-            if auto.click_element("传送", "text", max_retries=10, need_ocr=False):
-                # auto.click_element("./assets/images/forgottenhall/memory_of_chaos.png", "image",
-                #                    0.95, max_retries=2, crop=(470 / 1920, 0, 970 / 1920, 114 / 1080))
-                if auto.click_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image",
-                                      0.95, max_retries=20, crop=(36 / 1920, 25 / 1080, 170 / 1920, 80 / 1080)):
-                    flag = True
 
-        if not flag:
-            screen.change_to('menu')
+        if not auto.click_element("忘却之庭", "text", max_retries=10, crop=(231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)):
+            return False
+        time.sleep(1)
+
+        if not auto.find_element("混沌回忆", "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True):
+            return False
+        for box in auto.ocr_result:
+            text = box[1][0]
+            if "/36" in text:
+                logger.info(_("星数：{text}").format(text=text))
+                if text.split("/")[0] == "36":
+                    logger.info(_("混沌回忆未刷新"))
+                    return True
+                else:
+                    break
+
+        if not auto.click_element("传送", "text", max_retries=10, need_ocr=False):
             return False
 
-        # 刷新后打开会出现本期buff的弹窗
         time.sleep(2)
-        if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8):
-            # 等待不可点击的动画时间
-            time.sleep(2)
-            auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=8)
-            auto.click_element("./assets/images/screen/forgottenhall/memory_of_chaos.png", "image",
-                               0.95, max_retries=10, crop=(36 / 1920, 25 / 1080, 170 / 1920, 80 / 1080))
+        screen.change_to('memory_of_chaos')
 
         ForgottenHall.run()
-
         return True
 
     @staticmethod
