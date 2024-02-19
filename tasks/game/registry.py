@@ -14,9 +14,10 @@ class Registry:
             winreg.CloseKey(registry_key)
             return value
         except FileNotFoundError:
-            logger.error("指定的注册表项未找到")
+            logger.debug("指定的注册表项未找到")
         except Exception as e:
             logger.error("发生错误:", e)
+        return None
 
     @staticmethod
     def write_registry_value(key, sub_key, value_name, data):
