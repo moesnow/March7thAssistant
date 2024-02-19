@@ -13,8 +13,6 @@ from managers.config_manager import config
 
 
 class BannerWidget(QWidget):
-    """ Banner widget """
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setFixedHeight(350)
@@ -65,8 +63,7 @@ class BannerWidget(QWidget):
     def paintEvent(self, e):
         super().paintEvent(e)
         painter = QPainter(self)
-        painter.setRenderHints(
-            QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
+        painter.setRenderHints(QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
         painter.setPen(Qt.NoPen)
 
         path = QPainterPath()

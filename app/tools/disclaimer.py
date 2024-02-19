@@ -1,9 +1,8 @@
-# coding:utf-8
+from ..card.messagebox_custom import MessageBoxDisclaimer
 from managers.config_manager import config
 import markdown
 import sys
-
-from ..card.messageboxdisclaimer import MessageBoxDisclaimer
+import os
 
 
 def disclaimer(self):
@@ -33,13 +32,12 @@ a {
 '''
     try:
         w = MessageBoxDisclaimer(f"免责声明", html_style + markdown.markdown(content), self.window())
-        if w.exec():
+        if not w.exec():
             config.set_value("agreed_to_disclaimer", True)
-            import os
-            path = os.path.join(os.getenv('LocalAppData'), "March7thAssistant\\disclaimer")
+            path = os.path.join(os.getenv('LocalAppData'), "March7thAssistant/disclaimer")
             os.makedirs(os.path.dirname(path), exist_ok=True)
             open(path, 'a').close()
         else:
             sys.exit(0)
-    except Exception as e:
+    except Exception:
         sys.exit(0)

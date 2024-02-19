@@ -1,10 +1,10 @@
+from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import Qt, QSize
-from contextlib import redirect_stdout
 
+from contextlib import redirect_stdout
 with redirect_stdout(None):
-    from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, darkdetect, Theme
+    from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, Theme
     from qfluentwidgets import FluentIcon as FIF
     from qfluentwidgets import InfoBar, InfoBarPosition
 
@@ -16,25 +16,17 @@ from .tools_interface import ToolsInterface
 from .faq_interface import FAQInterface
 from .tutorial_interface import TutorialInterface
 
-from .card.messageboxsupport import MessageBoxSupport
-from .card.messageboxupdate import MessageBoxUpdate
-from tasks.base.fastest_mirror import FastestMirror
-
+from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
 
 from managers.config_manager import config
 import subprocess
-import os
 
 
 class MainWindow(MSFluentWindow):
     def __init__(self):
         super().__init__()
-        setThemeColor('#f18cb9')
-        setTheme(Theme.AUTO, lazy=True)
-        self.setMicaEffectEnabled(False)
-
         self.initWindow()
 
         # create sub interface
@@ -55,6 +47,34 @@ class MainWindow(MSFluentWindow):
 
         # 检查更新
         checkUpdate(self, flag=True)
+
+    def initWindow(self):
+        setThemeColor('#f18cb9')
+        setTheme(Theme.AUTO, lazy=True)
+        self.setMicaEffectEnabled(False)
+
+        # 禁用最大化
+        self.titleBar.maxBtn.setHidden(True)
+        self.titleBar.maxBtn.setDisabled(True)
+        self.titleBar.setDoubleClickEnabled(False)
+        self.setResizeEnabled(False)
+        self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
+
+        self.resize(960, 750)
+        self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
+        self.setWindowTitle("March7th Assistant")
+
+        # 创建启动画面
+        self.splashScreen = SplashScreen(self.windowIcon(), self)
+        self.splashScreen.setIconSize(QSize(128, 128))
+        self.splashScreen.raise_()
+
+        desktop = QApplication.desktop().availableGeometry()
+        w, h = desktop.width(), desktop.height()
+        self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
+
+        self.show()
+        QApplication.processEvents()
 
     def initNavigation(self):
         # add navigation items
@@ -112,63 +132,10 @@ class MainWindow(MSFluentWindow):
     def toggleTheme(self):
         toggleTheme(lazy=True)
 
-    def initWindow(self):
-        # 禁用最大化
-        # self.titleBar.maxBtn.setHidden(True)
-        # self.titleBar.maxBtn.setDisabled(True)
-        # self.titleBar.setDoubleClickEnabled(False)
-        self.setResizeEnabled(False)
-        # self.setWindowFlags(self.windowFlags() & ~QtCore.Qt.WindowMaximizeButtonHint)
-
-        self.resize(960, 750)
-        self.setWindowIcon(QIcon(r'assets\logo\March7th.ico'))
-        self.setWindowTitle("March7th Assistant")
-        # create splash screen
-        self.splashScreen = SplashScreen(self.windowIcon(), self)
-        self.splashScreen.setIconSize(QSize(128, 128))
-        self.splashScreen.raise_()
-
-        desktop = QApplication.desktop().availableGeometry()
-        w, h = desktop.width(), desktop.height()
-        self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
-        self.show()
-        QApplication.processEvents()
-
     def onSupport(self):
-        w = MessageBoxSupport(
+        MessageBoxSupport(
             '支持作者🥰',
             '此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀',
             './assets/app/images/sponsor.jpg',
             self
-        )
-        w.yesButton.setText('下次一定')
-        w.cancelButton.setHidden(True)
-        w.exec()
-
-    def handleUpdate(self, status):
-        if status == 2:
-            w = MessageBoxUpdate(self.update_thread.title, self.update_thread.content, self.window())
-            if w.exec():
-                source_file = "./Update.exe"
-                assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
-                subprocess.Popen([os.path.abspath(source_file), assert_url], creationflags=subprocess.DETACHED_PROCESS)
-        elif status == 1:
-            InfoBar.success(
-                title=self.tr('当前是最新版本(＾∀＾●)'),
-                content="",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-        else:
-            InfoBar.warning(
-                title=self.tr('检测更新失败(╥╯﹏╰╥)'),
-                content="",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
+        ).exec()

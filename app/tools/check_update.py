@@ -1,90 +1,117 @@
-# coding:utf-8
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from qfluentwidgets import InfoBar, InfoBarPosition
 
+from ..card.messagebox_custom import MessageBoxUpdate
+from tasks.base.fastest_mirror import FastestMirror
 from managers.config_manager import config
+
 from packaging.version import parse
+from enum import Enum
+import subprocess
 import markdown
 import requests
-import json
 import re
+import os
 
-from tasks.base.fastest_mirror import FastestMirror
 
-
-def remove_images_from_markdown(markdown_content):
-    # 定义匹配Markdown图片标记的正则表达式
-    img_pattern = re.compile(r'!\[.*?\]\(.*?\)')
-
-    # 使用sub方法替换所有匹配的图片标记为空字符串
-    cleaned_content = img_pattern.sub('', markdown_content)
-
-    return cleaned_content
+class UpdateStatus(Enum):
+    SUCCESS = 1
+    UPDATE_AVAILABLE = 2
+    FAILURE = 0
 
 
 class UpdateThread(QThread):
-    _update_signal = pyqtSignal(int)
+    updateSignal = pyqtSignal(UpdateStatus)
 
     def __init__(self, timeout, flag):
         super().__init__()
         self.timeout = timeout
         self.flag = flag
 
+    def remove_images_from_markdown(self, markdown_content):
+        # 定义匹配Markdown图片标记的正则表达式
+        img_pattern = re.compile(r'!\[.*?\]\(.*?\)')
+
+        # 使用sub方法替换所有匹配的图片标记为空字符串
+        cleaned_content = img_pattern.sub('', markdown_content)
+
+        return cleaned_content
+
     def run(self):
         try:
-            if config.update_prerelease_enable:
-                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False), timeout=10, headers=config.useragent)
-            else:
-                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant"), timeout=10, headers=config.useragent)
+            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False if config.update_prerelease_enable else True), timeout=10, headers=config.useragent)
+            response.raise_for_status()
+
             if self.flag and not config.check_update:
                 return
-            if response.status_code == 200:
-                if config.update_prerelease_enable:
-                    data = response.json()[0]
-                else:
-                    data = response.json()
-                version = data["tag_name"]
-                content = data["body"]
-                content = remove_images_from_markdown(content)
 
-                assert_url = None
-                for asset in data["assets"]:
-                    if config.update_full_enable:
-                        if "full" not in asset["browser_download_url"]:
-                            continue
-                        else:
-                            assert_url = asset["browser_download_url"]
-                            break
-                    else:
-                        if "full" in asset["browser_download_url"]:
-                            continue
-                        else:
-                            assert_url = asset["browser_download_url"]
-                            break
-                if assert_url is None:
-                    self._update_signal.emit(1)
-                    return
+            data = response.json()[0] if config.update_prerelease_enable else response.json()
+            version = data["tag_name"]
 
-                html_style = """
-                    <style>
-                    a {
-                        color: #f18cb9;
-                        font-weight: bold;
-                    }
-                    </style>
-                    """
+            content = self.remove_images_from_markdown(data["body"])
 
-                if parse(version.lstrip('v')) > parse(config.version.lstrip('v')):
-                    self.title, self.content = f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)", html_style + markdown.markdown(content)
-                    self.assert_url = assert_url
-                    self._update_signal.emit(2)
-                else:
-                    self._update_signal.emit(1)
+            assert_url = None
+            for asset in data["assets"]:
+                if (config.update_full_enable and "full" in asset["browser_download_url"]) or \
+                   (not config.update_full_enable and "full" not in asset["browser_download_url"]):
+                    assert_url = asset["browser_download_url"]
+                    break
+
+            if assert_url is None:
+                self.updateSignal.emit(UpdateStatus.SUCCESS)
+                return
+
+            html_style = """
+                <style>
+                a {
+                    color: #f18cb9;
+                    font-weight: bold;
+                }
+                </style>
+                """
+
+            if parse(version.lstrip('v')) > parse(config.version.lstrip('v')):
+                self.title = f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)"
+                self.content = html_style + markdown.markdown(content)
+                self.assert_url = assert_url
+                self.updateSignal.emit(UpdateStatus.UPDATE_AVAILABLE)
+            else:
+                self.updateSignal.emit(UpdateStatus.SUCCESS)
         except Exception as e:
             print(e)
-            self._update_signal.emit(0)
+            self.updateSignal.emit(UpdateStatus.FAILURE)
 
 
 def checkUpdate(self, timeout=5, flag=False):
+    def handle_update(status):
+        if status == UpdateStatus.UPDATE_AVAILABLE:
+            message_box = MessageBoxUpdate(self.update_thread.title, self.update_thread.content, self.window())
+            if message_box.exec():
+                source_file = os.path.abspath("./Update.exe")
+                assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
+                subprocess.Popen([source_file, assert_url], creationflags=subprocess.DETACHED_PROCESS)
+        elif status == UpdateStatus.SUCCESS:
+            InfoBar.success(
+                title=self.tr('当前是最新版本(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+        else:
+            print(status)
+            InfoBar.warning(
+                title=self.tr('检测更新失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+
     self.update_thread = UpdateThread(timeout, flag)
-    self.update_thread._update_signal.connect(self.handleUpdate)
+    self.update_thread.updateSignal.connect(handle_update)
     self.update_thread.start()

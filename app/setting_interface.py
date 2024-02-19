@@ -1,6 +1,5 @@
 # coding:utf-8
-from qfluentwidgets import (SettingCardGroup, PushSettingCard, ScrollArea,
-                            InfoBar, PrimaryPushSettingCard, Pivot, qrouter)
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard, Pivot, qrouter
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget
@@ -12,7 +11,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2
 from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardDictInstanceNames, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardDictStr, PushSettingCardDictBool
+from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
 
 from .tools.check_update import checkUpdate
 from tasks.base.command import start_task
@@ -114,13 +113,12 @@ class SettingInterface(ScrollArea):
             '',
             texts={'雅利洛-VI': 'Jarilo-VI', '仙舟「罗浮」': 'XianzhouLuofu', '匹诺康尼': 'Penacony'}
         )
-        self.instanceNameCard = PushSettingCardDictInstanceNames(
+        self.instanceNameCard = PushSettingCardInstance(
             self.tr('修改'),
             FIF.PALETTE,
-            # self.tr("副本名称\n保证唯一即可，例如“孽兽之形”可以填写“兽之形”，低概率下复杂文字会识别错误"),
-            # self.tr("副本名称（也会用于完成每日实训，“无”代表不启用）"),
             self.tr("副本名称"),
-            "instance_names"
+            "instance_names",
+            "./assets/config/instance_names.json"
         )
         self.breakDownLevelFourRelicsetEnableCard = SwitchSettingCard1(
             FIF.FILTER,
@@ -260,17 +258,17 @@ class SettingInterface(ScrollArea):
             "请解锁混沌回忆并配置了队伍后再打开该选项，部分任务需要反复运行至多三次",
             "daily_memory_one_enable"
         )
-        self.dailyMemoryOneTeamInfoCard = PrimaryPushSettingCard(
-            self.tr('打开角色文件夹'),
-            FIF.INFO,
-            self.tr("↓↓回忆一队伍↓↓"),
-            self.tr(
-                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
-        )
-        self.dailyMemoryOneTeamCard = PushSettingCardEval(
+        # self.dailyMemoryOneTeamInfoCard = PrimaryPushSettingCard(
+        #     self.tr('打开角色文件夹'),
+        #     FIF.INFO,
+        #     self.tr("↓↓回忆一队伍↓↓"),
+        #     self.tr(
+        #         "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
+        # )
+        self.dailyMemoryOneTeamCard = PushSettingCardTeam(
             self.tr('修改'),
             FIF.FLAG,
-            self.tr("用于 “回忆一” 的队伍"),
+            self.tr("回忆一队伍"),
             "daily_memory_one_team"
         )
         # self.dailyTasksCard = PushSettingCardDictBool(
@@ -498,20 +496,20 @@ class SettingInterface(ScrollArea):
             FIF.REMOVE_FROM,
             self.tr("重试次数"),
         )
-        self.forgottenhallTeamInfoCard = PrimaryPushSettingCard(
-            self.tr('打开角色文件夹'),
-            FIF.INFO,
-            self.tr("↓↓混沌回忆队伍↓↓"),
-            self.tr(
-                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
-        )
-        self.forgottenhallTeam1Card = PushSettingCardEval(
+        # self.forgottenhallTeamInfoCard = PrimaryPushSettingCard(
+        #     self.tr('打开角色文件夹'),
+        #     FIF.INFO,
+        #     self.tr("↓↓混沌回忆队伍↓↓"),
+        #     self.tr(
+        #         "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
+        # )
+        self.forgottenhallTeam1Card = PushSettingCardTeam(
             self.tr('修改'),
             FIF.FLAG,
             self.tr("混沌回忆队伍1"),
             "forgottenhall_team1"
         )
-        self.forgottenhallTeam2Card = PushSettingCardEval(
+        self.forgottenhallTeam2Card = PushSettingCardTeam(
             self.tr('修改'),
             FIF.FLAG,
             self.tr("混沌回忆队伍2"),
@@ -550,20 +548,20 @@ class SettingInterface(ScrollArea):
         #     FIF.REMOVE_FROM,
         #     self.tr("重试次数"),
         # )
-        self.purefictionTeamInfoCard = PrimaryPushSettingCard(
-            self.tr('打开角色文件夹'),
-            FIF.INFO,
-            self.tr("↓↓混沌回忆队伍↓↓"),
-            self.tr(
-                "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
-        )
-        self.purefictionTeam1Card = PushSettingCardEval(
+        # self.purefictionTeamInfoCard = PrimaryPushSettingCard(
+        #     self.tr('打开角色文件夹'),
+        #     FIF.INFO,
+        #     self.tr("↓↓混沌回忆队伍↓↓"),
+        #     self.tr(
+        #         "数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色\n角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
+        # )
+        self.purefictionTeam1Card = PushSettingCardTeam(
             self.tr('修改'),
             FIF.FLAG,
             self.tr("虚构叙事队伍1"),
             "purefiction_team1"
         )
-        self.purefictionTeam2Card = PushSettingCardEval(
+        self.purefictionTeam2Card = PushSettingCardTeam(
             self.tr('修改'),
             FIF.FLAG,
             self.tr("虚构叙事队伍2"),
@@ -699,7 +697,7 @@ class SettingInterface(ScrollArea):
         # self.DailyGroup.addSettingCard(self.dailyUniverseEnableCard)
         self.DailyGroup.addSettingCard(self.dailyHimekoTryEnableCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneEnableCard)
-        self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamInfoCard)
+        # self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamInfoCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamCard)
         # self.DailyGroup.addSettingCard(self.dailyTasksCard)
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
@@ -736,7 +734,7 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallEnableCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallLevelCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRetriesCard)
-        self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeamInfoCard)
+        # self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeamInfoCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam1Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
@@ -744,7 +742,7 @@ class SettingInterface(ScrollArea):
         self.PureFictionGroup.addSettingCard(self.purefictionEnableCard)
         self.PureFictionGroup.addSettingCard(self.purefictionLevelCard)
         # self.PureFictionGroup.addSettingCard(self.purefictionRetriesCard)
-        self.PureFictionGroup.addSettingCard(self.purefictionTeamInfoCard)
+        # self.PureFictionGroup.addSettingCard(self.purefictionTeamInfoCard)
         self.PureFictionGroup.addSettingCard(self.purefictionTeam1Card)
         self.PureFictionGroup.addSettingCard(self.purefictionTeam2Card)
         self.PureFictionGroup.addSettingCard(self.purefictionRunTimeCard)
@@ -861,9 +859,9 @@ class SettingInterface(ScrollArea):
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
         self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
-        self.dailyMemoryOneTeamInfoCard.clicked.connect(self.__openCharacterFolder())
-        self.forgottenhallTeamInfoCard.clicked.connect(self.__openCharacterFolder())
-        self.purefictionTeamInfoCard.clicked.connect(self.__openCharacterFolder())
+        # self.dailyMemoryOneTeamInfoCard.clicked.connect(self.__openCharacterFolder())
+        # self.forgottenhallTeamInfoCard.clicked.connect(self.__openCharacterFolder())
+        # self.purefictionTeamInfoCard.clicked.connect(self.__openCharacterFolder())
 
         self.guiUniverseCard.clicked.connect(lambda: start_task("universe_gui"))
         self.guiFightCard.clicked.connect(lambda: start_task("fight_gui"))
