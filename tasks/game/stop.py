@@ -57,7 +57,7 @@ class Stop:
         # 距离体力到达配置文件指定的上限剩余秒数
         wait_time_power_limit = (config.power_limit - current_power) * 6 * 60
         # 距离第二天凌晨4点剩余秒数，+30避免显示3点59分不美观，#7
-        wait_time_next_day = Date.get_time_next_4am() + random.randint(30, 600)
+        wait_time_next_day = Date.get_time_next_x_am(config.refresh_hour) + random.randint(30, 600)
         # 取最小值
         wait_time = min(wait_time_power_limit, wait_time_next_day)
         return wait_time

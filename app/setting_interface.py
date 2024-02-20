@@ -82,7 +82,13 @@ class SettingInterface(ScrollArea):
             "power_limit",
             [10, 240],
             FIF.HEART,
-            self.tr("循环运行再次启动所需开拓力（凌晨四点优先级更高）"),
+            self.tr("循环运行再次启动所需开拓力（游戏刷新后优先级更高）"),
+        )
+        self.refreshHourEnableCard = RangeSettingCard1(
+            "refresh_hour",
+            [0, 23],
+            FIF.DATE_TIME,
+            self.tr("游戏刷新时间（用于循环运行及判断任务状态，默认凌晨四点）"),
         )
         self.gamePathCard = PushSettingCard(
             self.tr('修改'),
@@ -588,17 +594,29 @@ class SettingInterface(ScrollArea):
             "notify_winotify_enable"
         )
 
-        self.KeybindingGroup = SettingCardGroup(self.tr("按键"), self.scrollWidget)
+        self.MiscGroup = SettingCardGroup(self.tr("杂项"), self.scrollWidget)
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             self.tr('启用自动战斗检测'),
-            "此处的设置只会对清体力和忘却之庭场景生效",
+            "只对清体力和忘却之庭场景生效",
             "auto_battle_detect_enable"
+        )
+        self.autoSetResolutionEnableCard = SwitchSettingCard1(
+            FIF.FULL_SCREEN,
+            self.tr('启用自动修改分辨率'),
+            "通过软件启动游戏会自动修改 1920x1080 分辨率，不影响手动启动游戏（未测试国际服）",
+            "auto_set_resolution_enable"
+        )
+        self.autoSetGamePathEnableCard = SwitchSettingCard1(
+            FIF.GAME,
+            self.tr('启用自动配置游戏路径'),
+            "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（未测试国际服）",
+            "auto_set_game_path_enable"
         )
         self.keybindingTechniqueCard = PushSettingCardKey(
             self.tr('按住以修改'),
             FIF.LEAF,
-            self.tr("秘技"),
+            self.tr("秘技（只对清体力和忘却之庭场景生效）"),
             "hotkey_technique"
         )
 
@@ -667,6 +685,7 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
+        self.ProgramGroup.addSettingCard(self.refreshHourEnableCard)
         # self.ProgramGroup.addSettingCard(self.useWindowsTerminalCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
 
@@ -750,8 +769,10 @@ class SettingInterface(ScrollArea):
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.NotifyGroup.addSettingCard(self.winotifyEnableCard)
 
-        self.KeybindingGroup.addSettingCard(self.autoBattleDetectEnableCard)
-        self.KeybindingGroup.addSettingCard(self.keybindingTechniqueCard)
+        self.MiscGroup.addSettingCard(self.autoBattleDetectEnableCard)
+        self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
+        self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
+        self.MiscGroup.addSettingCard(self.keybindingTechniqueCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
         self.AboutGroup.addSettingCard(self.qqGroupCard)
@@ -770,7 +791,7 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.titleLabel.setHidden(True)
         self.PureFictionGroup.titleLabel.setHidden(True)
         self.NotifyGroup.titleLabel.setHidden(True)
-        self.KeybindingGroup.titleLabel.setHidden(True)
+        self.MiscGroup.titleLabel.setHidden(True)
         self.AboutGroup.titleLabel.setHidden(True)
 
         # add items to pivot
@@ -784,7 +805,7 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('忘却'))
         self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构'))
         self.addSubInterface(self.NotifyGroup, 'NotifyInterface', self.tr('推送'))
-        self.addSubInterface(self.KeybindingGroup, 'KeybindingInterface', self.tr('按键'))
+        self.addSubInterface(self.MiscGroup, 'KeybindingInterface', self.tr('杂项'))
         self.addSubInterface(self.AboutGroup, 'AboutInterface', self.tr('关于'))
 
         self.vBoxLayout.addWidget(self.pivot, 0, Qt.AlignLeft)
@@ -808,7 +829,7 @@ class SettingInterface(ScrollArea):
         # self.vBoxLayout.addWidget(self.UniverseGroup)
         # self.vBoxLayout.addWidget(self.ForgottenhallGroup)
         # self.vBoxLayout.addWidget(self.NotifyGroup)
-        # self.vBoxLayout.addWidget(self.KeybindingGroup)
+        # self.vBoxLayout.addWidget(self.MiscGroup)
         # self.vBoxLayout.addWidget(self.AboutGroup)
 
     def addSubInterface(self, widget: QLabel, objectName, text):

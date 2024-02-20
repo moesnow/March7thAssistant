@@ -24,7 +24,7 @@ class Daily:
             Daily.run()
 
         # 优先历战余响
-        if Date.is_next_mon_4_am(config.echo_of_war_timestamp):
+        if Date.is_next_mon_x_am(config.echo_of_war_timestamp, config.refresh_hour):
             if config.echo_of_war_enable:
                 Echoofwar.start()
             else:
@@ -34,7 +34,7 @@ class Daily:
 
         Power.run()
 
-        if Date.is_next_4_am(config.fight_timestamp):
+        if Date.is_next_x_am(config.fight_timestamp, config.refresh_hour):
             if config.fight_enable:
                 Fight.start()
             else:
@@ -43,7 +43,7 @@ class Daily:
             logger.info(_("锄大地尚未刷新"))
 
         if config.universe_frequency == "weekly":
-            if Date.is_next_mon_4_am(config.universe_timestamp):
+            if Date.is_next_mon_x_am(config.universe_timestamp, config.refresh_hour):
                 if config.universe_enable:
                     Power.run()
                     reward.start()
@@ -54,7 +54,7 @@ class Daily:
             else:
                 logger.info(_("模拟宇宙尚未刷新"))
         elif config.universe_frequency == "daily":
-            if Date.is_next_4_am(config.universe_timestamp):
+            if Date.is_next_x_am(config.universe_timestamp, config.refresh_hour):
                 if config.universe_enable:
                     Universe.start(get_reward=True)
                 else:
@@ -62,7 +62,7 @@ class Daily:
             else:
                 logger.info(_("模拟宇宙尚未刷新"))
 
-        if Date.is_next_mon_4_am(config.forgottenhall_timestamp):
+        if Date.is_next_mon_x_am(config.forgottenhall_timestamp, config.refresh_hour):
             if config.forgottenhall_enable:
                 ForgottenHall.start()
             else:
@@ -70,7 +70,7 @@ class Daily:
         else:
             logger.info(_("忘却之庭尚未刷新"))
 
-        if Date.is_next_mon_4_am(config.purefiction_timestamp):
+        if Date.is_next_mon_x_am(config.purefiction_timestamp, config.refresh_hour):
             if config.purefiction_enable:
                 PureFiction.start()
             else:
@@ -84,7 +84,7 @@ class Daily:
     def run():
         logger.hr(_("开始日常任务"), 0)
 
-        if Date.is_next_4_am(config.last_run_timestamp):
+        if Date.is_next_x_am(config.last_run_timestamp, config.refresh_hour):
             screen.change_to("guide2")
 
             tasks = Tasks("./assets/config/task_mappings.json")

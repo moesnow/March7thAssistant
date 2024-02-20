@@ -155,6 +155,9 @@ purefiction_team2: # 队伍2
 purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳（每周运行，如已经满星则跳过）
 
 auto_battle_detect_enable: true # 启用自动战斗检测
+auto_set_resolution_enable: true # 启用自动修改分辨率
+auto_set_game_path_enable: true # 启用自动配置游戏路径
+refresh_hour: 4 # 游戏刷新时间
 hotkey_technique: e # 游戏内设置的秘技按键
 
 update_prerelease_enable: false # 加入预览版更新渠道
