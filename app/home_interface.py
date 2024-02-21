@@ -15,7 +15,7 @@ from managers.config_manager import config
 class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setFixedHeight(350)
+        self.setFixedHeight(320)
 
         self.vBoxLayout = QVBoxLayout(self)
         self.galleryLabel = QLabel(f'三月七小助手 {config.version}\nMarch7thAssistant', self)
@@ -106,8 +106,8 @@ class HomeInterface(ScrollArea):
         self.setWidget(self.view)
         self.setWidgetResizable(True)
 
-        self.vBoxLayout.setContentsMargins(0, 0, 0, 36)
-        self.vBoxLayout.setSpacing(60)
+        self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
+        self.vBoxLayout.setSpacing(25)
         self.vBoxLayout.addWidget(self.banner)
         self.vBoxLayout.setAlignment(Qt.AlignTop)
 

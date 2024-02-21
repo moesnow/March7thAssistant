@@ -1,0 +1,27 @@
+HelpInterface, #scrollWidget {
+    background-color: transparent;
+}
+
+QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+
+/* 标签 */
+QLabel#helpLabel {
+    font: 33px 'Microsoft YaHei Light';
+    background-color: transparent;
+}
+
+QLabel#tutorialLabel {
+    font: 14px 'Microsoft YaHei Light';
+}
+
+QLabel#faqLabel {
+    font: 14px 'Microsoft YaHei Light';
+}
+
+QLabel#tasksLabel {
+    font: 14px 'Microsoft YaHei Light';
+}

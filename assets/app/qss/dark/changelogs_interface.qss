@@ -11,9 +11,9 @@ QLabel#contentLabel {
     font: 14px 'Microsoft YaHei Light';
     color: white;
 }
-                           
+              
 QLabel#changelogsLabel {
-    font: 28px 'Microsoft YaHei Light';
+    font: 33px 'Microsoft YaHei Light';
     background-color: transparent;
     color: white;
 }

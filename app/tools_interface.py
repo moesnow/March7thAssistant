@@ -1,19 +1,11 @@
-# coding:utf-8
-from qfluentwidgets import (SettingCardGroup, PushSettingCard, ScrollArea,
-                            InfoBar, PrimaryPushSettingCard, Pivot, qrouter)
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem
 from qfluentwidgets import FluentIcon as FIF
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget
-from PyQt5.QtGui import QDesktopServices
-
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea
 from .common.style_sheet import StyleSheet
-from managers.config_manager import config
-from tasks.base.command import start_task
 
 
 class ToolsInterface(ScrollArea):
-    """ Setting interface """
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.parent = parent
@@ -39,14 +31,12 @@ class ToolsInterface(ScrollArea):
         self.__initWidget()
 
     def __initWidget(self):
-        # self.resize(1000, 800)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setViewportMargins(0, 80, 0, 20)
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)
         self.setObjectName('toolsInterface')
 
-        # initialize style sheet
         self.scrollWidget.setObjectName('scrollWidget')
         self.toolsLabel.setObjectName('toolsLabel')
         StyleSheet.TOOLS_INTERFACE.apply(self)
@@ -56,16 +46,21 @@ class ToolsInterface(ScrollArea):
 
     def __initLayout(self):
         self.toolsLabel.move(36, 30)
-        # add cards to group
+
         self.ToolsGroup.addSettingCard(self.automaticPlotCard)
         self.ToolsGroup.addSettingCard(self.gameScreenshotCard)
 
         self.ToolsGroup.titleLabel.setHidden(True)
 
-        # add setting card group to layout
         self.vBoxLayout.setSpacing(28)
         self.vBoxLayout.setContentsMargins(36, 10, 36, 0)
         self.vBoxLayout.addWidget(self.ToolsGroup)
+
+        for i in range(self.ToolsGroup.vBoxLayout.count()):
+            item = self.ToolsGroup.vBoxLayout.itemAt(i)
+            if isinstance(item, QSpacerItem):
+                self.ToolsGroup.vBoxLayout.removeItem(item)
+                break
 
     def __onGameScreenshotCardClicked(self):
         from tasks.tools.game_screenshot import game_screenshot
@@ -76,6 +71,5 @@ class ToolsInterface(ScrollArea):
         automatic_plot()
 
     def __connectSignalToSlot(self):
-        """ connect signal to slot """
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.automaticPlotCard.clicked.connect(self.__onAutomaticPlotCardClicked)

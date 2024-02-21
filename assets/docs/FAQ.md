@@ -1,9 +1,5 @@
 # 常见问题
 
-<!-- ## [视频教程](https://www.bilibili.com/video/BV13h4y1m7VP/) -->
-
-## 快速上手，请访问：[使用教程](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
-
 ### Q：总是被杀毒软件删除怎么办
 
 A：将`小助手文件夹`加入杀毒软件排除项，然后使用 `Update.exe` 自动更新或手动更新一次。

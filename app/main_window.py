@@ -9,12 +9,10 @@ with redirect_stdout(None):
     from qfluentwidgets import InfoBar, InfoBarPosition
 
 from .home_interface import HomeInterface
-from .setting_interface import SettingInterface
-from .tasks_interface import TasksInterface
+from .help_interface import HelpInterface
 from .changelog_interface import ChangelogInterface
 from .tools_interface import ToolsInterface
-from .faq_interface import FAQInterface
-from .tutorial_interface import TutorialInterface
+from .setting_interface import SettingInterface
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
@@ -29,16 +27,9 @@ class MainWindow(MSFluentWindow):
         super().__init__()
         self.initWindow()
 
-        # create sub interface
-        self.homeInterface = HomeInterface(self)
-        self.tasksInterface = TasksInterface(self)
-        self.settingInterface = SettingInterface(self)
-        self.faqInterface = FAQInterface(self)
-        self.tutorialInterface = TutorialInterface(self)
-        self.changelogInterface = ChangelogInterface(self)
-        self.toolsInterface = ToolsInterface(self)
-
+        self.initInterface()
         self.initNavigation()
+
         self.splashScreen.finish()
 
         # 免责申明
@@ -49,7 +40,7 @@ class MainWindow(MSFluentWindow):
         checkUpdate(self, flag=True)
 
     def initWindow(self):
-        setThemeColor('#f18cb9')
+        setThemeColor('#f18cb9', lazy=True)
         setTheme(Theme.AUTO, lazy=True)
         self.setMicaEffectEnabled(False)
 
@@ -60,7 +51,7 @@ class MainWindow(MSFluentWindow):
         self.setResizeEnabled(False)
         self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
-        self.resize(960, 750)
+        self.resize(960, 640)
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
         self.setWindowTitle("March7th Assistant")
 
@@ -76,12 +67,16 @@ class MainWindow(MSFluentWindow):
         self.show()
         QApplication.processEvents()
 
+    def initInterface(self):
+        self.homeInterface = HomeInterface(self)
+        self.helpInterface = HelpInterface(self)
+        self.changelogInterface = ChangelogInterface(self)
+        self.toolsInterface = ToolsInterface(self)
+        self.settingInterface = SettingInterface(self)
+
     def initNavigation(self):
-        # add navigation items
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('主页'))
-        self.addSubInterface(self.tasksInterface, FIF.LABEL, self.tr('每日实训'))
-        self.addSubInterface(self.tutorialInterface, FIF.BOOK_SHELF, self.tr('使用教程'))
-        self.addSubInterface(self.faqInterface, FIF.CHAT, self.tr('常见问题'))
+        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, self.tr('帮助'))
         self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
         self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, self.tr('工具箱'))
 
@@ -94,13 +89,18 @@ class MainWindow(MSFluentWindow):
         self.navigationInterface.addWidget(
             'themeButton',
             NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
-            self.toggleTheme,
+            lambda: toggleTheme(lazy=True),
             NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
             'avatar',
             NavigationBarPushButton(FIF.HEART, '赞赏', isSelectable=False),
-            self.onSupport,
+            lambda: MessageBoxSupport(
+                '支持作者🥰',
+                '此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀',
+                './assets/app/images/sponsor.jpg',
+                self
+            ).exec(),
             NavigationItemPosition.BOTTOM
         )
 
@@ -128,14 +128,3 @@ class MainWindow(MSFluentWindow):
                 duration=1000,
                 parent=self
             )
-
-    def toggleTheme(self):
-        toggleTheme(lazy=True)
-
-    def onSupport(self):
-        MessageBoxSupport(
-            '支持作者🥰',
-            '此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀',
-            './assets/app/images/sponsor.jpg',
-            self
-        ).exec()
