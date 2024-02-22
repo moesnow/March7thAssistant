@@ -15,7 +15,7 @@ class Quest(RewardTemplate):
 
         # 领取奖励
         if auto.click_element("./assets/images/share/reward/quest/gift.png", "image", 0.9, max_retries=10, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
-            auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.9, max_retries=10)
+            auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
 
         # 判断完成
         auto.find_element("./assets/images/screen/guide/guide2.png", "image", 0.9, max_retries=10)

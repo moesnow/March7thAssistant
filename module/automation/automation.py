@@ -33,10 +33,10 @@ class Automation:
         self.press_key = Input.press_key
         self.press_mouse = Input.press_mouse
 
-    def take_screenshot(self, crop=(0, 0, 0, 0)):
+    def take_screenshot(self, crop=(0, 0, 1, 1)):
         result = Screenshot.take_screenshot(self.window_title, crop=crop)
         if result:
-            self.screenshot, self.screenshot_pos = result
+            self.screenshot, self.screenshot_pos, self.screenshot_scale_factor, self.real_width = result
         return result
 
     def get_image_info(self, image_path):
@@ -59,16 +59,16 @@ class Automation:
 
         return max_val, max_loc
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None):
         # 参数有些太多了，以后改（大概是懒得改了）
         take_screenshot = False if not need_ocr else take_screenshot
         max_retries = 1 if not take_screenshot else max_retries
         for i in range(max_retries):
             if take_screenshot and not self.take_screenshot(crop):
                 continue
-            if find_type in ['image', 'text', "min_distance_text"]:
-                if find_type == 'image':
-                    top_left, bottom_right = self.find_image_element(
+            if find_type in ['image', 'image_threshold', 'text', "min_distance_text"]:
+                if find_type in ['image', 'image_threshold']:
+                    top_left, bottom_right, image_threshold = self.find_image_element(
                         target, threshold, scale_range, relative)
                 elif find_type == 'text':
                     top_left, bottom_right = self.find_text_element(
@@ -77,6 +77,8 @@ class Automation:
                     top_left, bottom_right = self.find_min_distance_text_element(
                         target, source, source_type, include, need_ocr)
                 if top_left and bottom_right:
+                    if find_type == 'image_threshold':
+                        return image_threshold
                     return top_left, bottom_right
             elif find_type in ['image_count']:
                 return self.find_image_and_count(target, threshold, pixel_bgr)
@@ -93,23 +95,30 @@ class Automation:
             template = cv2.imread(target)
             if template is None:
                 raise ValueError(_("读取图片失败"))
+
+            if self.real_width < 1920:
+                screenshot_scale_factor = 1920 / self.real_width
+                # 获取模板的原始宽度和高度
+                template_height, template_width = template.shape[:2]
+                # 缩放模板
+                template = cv2.resize(template, (int(template_width / screenshot_scale_factor), int(template_height / screenshot_scale_factor)))
+
             # screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
-            max_val, max_loc = self.scale_and_match_template(
-                screenshot, template, threshold, scale_range)
+            max_val, max_loc = self.scale_and_match_template(screenshot, template, threshold, scale_range)
             logger.debug(_("目标图片：{target} 相似度：{max_val}").format(target=target, max_val=max_val))
             if threshold is None or max_val >= threshold:
                 channels, width, height = template.shape[::-1]
                 if relative == False:
-                    top_left = (max_loc[0] + self.screenshot_pos[0],
-                                max_loc[1] + self.screenshot_pos[1])
+                    top_left = (int(max_loc[0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
+                                int(max_loc[1] / self.screenshot_scale_factor) + self.screenshot_pos[1])
                 else:
-                    top_left = (max_loc[0], max_loc[1])
-                bottom_right = (top_left[0] + width, top_left[1] + height)
-                return top_left, bottom_right
+                    top_left = (int(max_loc[0] / self.screenshot_scale_factor), int(max_loc[1] / self.screenshot_scale_factor))
+                bottom_right = (top_left[0] + int(width / self.screenshot_scale_factor), top_left[1] + int(height / self.screenshot_scale_factor))
+                return top_left, bottom_right, max_val
         except Exception as e:
             logger.error(_("寻找图片出错：{e}").format(e=e))
-        return None, None
+        return None, None, None
 
     @staticmethod
     def intersected(top_left1, botton_right1, top_left2, botton_right2):
@@ -144,6 +153,16 @@ class Automation:
     def find_image_and_count(self, target, threshold, pixel_bgr):
         try:
             template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
+            if template is None:
+                raise ValueError(_("读取图片失败"))
+
+            if self.real_width < 1920:
+                screenshot_scale_factor = 1920 / self.real_width
+                # 获取模板的原始宽度和高度
+                template_height, template_width = template.shape[:2]
+                # 缩放模板
+                template = cv2.resize(template, (int(template_width / screenshot_scale_factor), int(template_height / screenshot_scale_factor)))
+
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
             bw_map = np.zeros(screenshot.shape[:2], dtype=np.uint8)
             # 遍历每个像素并判断与目标像素的相似性
@@ -175,13 +194,13 @@ class Automation:
                     logger.debug(_("目标文字：{target} 相似度：{max_val}").format(
                         target=self.matched_text, max_val=box[1][1]))
                     if relative == False:
-                        top_left = (box[0][0][0] + self.screenshot_pos[0],
-                                    box[0][0][1] + self.screenshot_pos[1])
-                        bottom_right = (box[0][2][0] + self.screenshot_pos[0],
-                                        box[0][2][1] + self.screenshot_pos[1])
+                        top_left = (int(box[0][0][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
+                                    int(box[0][0][1] / self.screenshot_scale_factor) + self.screenshot_pos[1])
+                        bottom_right = (int(box[0][2][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
+                                        int(box[0][2][1] / self.screenshot_scale_factor) + self.screenshot_pos[1])
                     else:
-                        top_left = (box[0][0][0], box[0][0][1])
-                        bottom_right = (box[0][2][0], box[0][2][1])
+                        top_left = (int(box[0][0][0] / self.screenshot_scale_factor), int(box[0][0][1] / self.screenshot_scale_factor))
+                        bottom_right = (int(box[0][2][0] / self.screenshot_scale_factor), int(box[0][2][1] / self.screenshot_scale_factor))
                     return top_left, bottom_right
             logger.debug(_("目标文字：{target} 未找到，没有识别出匹配文字").format(target=", ".join(target)))
             return None, None
@@ -207,7 +226,7 @@ class Automation:
                     source_pos = box[0][0]
                     break
         elif source_type == 'image':
-            source_pos, i = self.find_image_element(source, 0.7, None, True)
+            source_pos, i, i = self.find_image_element(source, 0.7, None, True)
 
         if source_pos is None:
             logger.debug(_("目标内容：{source} 未找到").format(source=source))
@@ -241,10 +260,10 @@ class Automation:
             return None, None
         logger.debug(_("目标文字：{target} 最短距离：{min_distance}").format(
             target=min_target, min_distance=min_distance))
-        top_left = (target_pos[0][0] + self.screenshot_pos[0],
-                    target_pos[0][1] + self.screenshot_pos[1])
-        bottom_right = (target_pos[2][0] + self.screenshot_pos[0],
-                        target_pos[2][1] + self.screenshot_pos[1])
+        top_left = (int(target_pos[0][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
+                    int(target_pos[0][1] / self.screenshot_scale_factor) + self.screenshot_pos[1])
+        bottom_right = (int(target_pos[2][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
+                        int(target_pos[2][1] / self.screenshot_scale_factor) + self.screenshot_pos[1])
         return top_left, bottom_right
 
     def click_element_with_pos(self, coordinates, offset=(0, 0), action="click"):
@@ -259,14 +278,14 @@ class Automation:
             self.mouse_move(x, y)
         return True
 
-    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 0, 0), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, offset=(0, 0), action="click"):
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, offset=(0, 0), action="click"):
         coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot,
                                         relative, scale_range, include, need_ocr, source, source_type)
         if coordinates:
             return self.click_element_with_pos(coordinates, offset, action)
         return False
 
-    def get_single_line_text(self, crop=(0, 0, 0, 0), blacklist=None, max_retries=3):
+    def get_single_line_text(self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3):
         for i in range(max_retries):
             self.take_screenshot(crop)
             ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)

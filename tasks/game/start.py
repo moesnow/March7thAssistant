@@ -98,7 +98,7 @@ class Start:
         if value:
             Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, value)
 
-        Resolution.check(config.game_title_name, 1920, 1080)
+        Resolution.check_scale(config.game_title_name, 1920, 1080)
 
         if not auto.retry_with_timeout(lambda: Start.check_and_click_enter(), 600, 1):
             logger.error(_("无法找到点击进入按钮"))
@@ -130,5 +130,5 @@ class Start:
                     config.set_value("game_path", program_path)
                     logger.info(_("游戏路径更新成功：{path}").format(path=program_path))
 
-            Resolution.check(config.game_title_name, 1920, 1080)
+            Resolution.check_scale(config.game_title_name, 1920, 1080)
         return True

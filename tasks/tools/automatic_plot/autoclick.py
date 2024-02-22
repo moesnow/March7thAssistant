@@ -15,11 +15,11 @@ class AutoClick:
         self.select_img = "./assets/images/share/plot/select.png"
 
         # 设置窗口大小
-        self.root.geometry("500x220")
+        self.root.geometry("500x200")
 
         self.is_clicking = False
 
-        self.status_label = tk.Label(root, text="\n进入剧情页面后自动开始运行\n支持1080p\n")
+        self.status_label = tk.Label(root, text="\n进入剧情页面后自动开始运行\n")
         self.status_label.pack()
 
         self.status_label = tk.Label(root, text="自动点击状态：已停止", fg="red")

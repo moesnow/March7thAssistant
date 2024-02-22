@@ -110,11 +110,12 @@ class Instance:
             if not 0 <= count <= 5:
                 Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 拟造花萼次数错误⚠️"))
                 return False
-            result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.9, max_retries=10,
+            result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10,
                                        crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
-            for i in range(count):
-                auto.click_element_with_pos(result)
-                time.sleep(0.5)
+            if result:
+                for i in range(count):
+                    auto.click_element_with_pos(result)
+                    time.sleep(0.5)
             # time.sleep(1)
 
         if auto.click_element("挑战", "text", max_retries=10, need_ocr=True):
@@ -178,7 +179,7 @@ class Instance:
             if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):
                 return True
 
-            elif config.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.95, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+            elif config.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 logger.info(_("尝试开启自动战斗"))
                 auto.press_key("v")
 

@@ -17,7 +17,7 @@ class SRPass(RewardTemplate):
         if auto.find_element("./assets/images/share/reward/pass/lock.png", "image", 0.9):
             # 若没解锁则领取奖励
             if auto.click_element("./assets/images/zh_CN/reward/pass/one_key_receive.png", "image", 0.9):
-                auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.9, max_retries=10)
+                auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
 
         # 判断是否满级
         if auto.find_element("./assets/images/share/reward/pass/50.png", "image", 0.9):

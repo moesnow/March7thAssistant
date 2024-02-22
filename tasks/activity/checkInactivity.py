@@ -9,7 +9,7 @@ class CheckInActivity(ActivityTemplate):
     RECEIVE_PATH = "./assets/images/zh_CN/activity/double/receive.png"
     RECEIVE_FIN_PATH = "./assets/images/zh_CN/activity/double/receive_fin.png"
     CLOSE_PATH = "./assets/images/zh_CN/base/click_close.png"
-    IMAGE_SIMILARITY_THRESHOLD = 0.9
+    IMAGE_SIMILARITY_THRESHOLD = 0.8
 
     def _has_reward(self):
         return auto.find_element(CheckInActivity.RECEIVE_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD) or \

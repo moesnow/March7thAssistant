@@ -11,6 +11,7 @@ import sys
 class Screen:
     def __init__(self, config_path):
         self.current_screen = None
+        self.current_screen_threshold = 0
         self.screen_map = {}
         self.lock = threading.Lock()  # 创建一个锁，用于线程同步
         self._setup_screens_from_config(config_path)
@@ -125,15 +126,19 @@ class Screen:
 
         def find_screen(self, screen_name, screen):
             try:
-                if auto.find_element(screen['image_path'], "image", 0.9, take_screenshot=False):
+                result = auto.find_element(screen['image_path'], "image_threshold", 0.85, take_screenshot=False)
+                if result:
                     with self.lock:  # 使用锁来保护对共享变量的访问
-                        self.current_screen = screen_name
+                        if not self.current_screen or self.current_screen_threshold < result:
+                            self.current_screen = screen_name
+                            self.current_screen_threshold = result
             except Exception as e:
                 logger.debug(_("识别界面出错：{e}").format(e=e))
 
         for i in range(max_retries):
             auto.take_screenshot()
             self.current_screen = None
+            self.current_screen_threshold = 0
 
             threads = []
             for screen_name, screen in self.screen_map.items():
@@ -155,13 +160,13 @@ class Screen:
                 # 异常处理
 
                 # 与服务器断开连接，请重新登录
-                if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9):
-                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
+                if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.85):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.85, take_screenshot=False)
                     time.sleep(20)
 
                 # 登录异常，请稍后再试
-                if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9):
-                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
+                if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.85):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.85, take_screenshot=False)
                     time.sleep(20)
             else:
                 logger.debug(_("未识别出任何界面，请确保游戏画面干净"))
@@ -170,7 +175,7 @@ class Screen:
         return False
 
     def check_screen(self, target_screen):
-        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
+        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.85):
             self.current_screen = target_screen
             return True
         return False

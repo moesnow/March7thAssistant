@@ -23,7 +23,7 @@ class Synthesis:
                             if auto.find_element("./assets/images/share/synthesis/defensive_medicine_selected.png", "image", 0.9, max_retries=10):
                                 if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
                                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                                        if auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.9, max_retries=10):
+                                        if auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
                                             logger.info(_("合成消耗品完成"))
                                             return True
                                 break
@@ -48,7 +48,7 @@ class Synthesis:
                             if auto.find_element("./assets/images/share/synthesis/nuclear_selected.png", "image", 0.9, max_retries=10):
                                 if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
                                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                                        if auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.9, max_retries=10):
+                                        if auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
                                             logger.info(_("合成材料完成"))
                                             return True
                                 break

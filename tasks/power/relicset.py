@@ -58,7 +58,7 @@ class Relicset:
 
         time.sleep(1)
         if auto.click_element(Relicset.CONFIRM_IMAGE, "image", 0.9, max_retries=10):
-            if auto.click_element(Relicset.CLICK_CLOSE_IMAGE, "image", 0.9, max_retries=10):
+            if auto.click_element(Relicset.CLICK_CLOSE_IMAGE, "image", 0.8, max_retries=10):
                 if auto.find_element(Relicset.SCREEN_IMAGE, "image", 0.9, max_retries=10):
                     auto.press_key("esc")
                     logger.info("分解遗器成功")
