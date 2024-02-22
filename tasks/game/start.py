@@ -63,6 +63,7 @@ class Start:
             value_name = "GraphicsSettings_PCResolution_h431323223"
             # 读取注册表中指定路径的值
             value = Registry.read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name)
+        value = None
 
         if value:
             # 去除末尾的\x00字符并尝试解析JSON
