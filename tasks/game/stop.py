@@ -65,7 +65,7 @@ class Stop:
     @staticmethod
     def play_audio():
         if config.play_audio:
-            logger.debug(_("开始播放音频"))
+            logger.info(_("开始播放音频"))
             os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
             import pygame.mixer
 
@@ -75,7 +75,7 @@ class Stop:
 
             while pygame.mixer.music.get_busy():
                 pygame.time.Clock().tick(10)
-            logger.debug(_("播放音频完成"))
+            logger.info(_("播放音频完成"))
 
     @staticmethod
     def shutdown():
