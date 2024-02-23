@@ -56,6 +56,7 @@ class Start:
         logger.info(_("🖥️启动游戏中..."))
         Start.check_path(config.game_path)
 
+        value = None
         if config.auto_set_resolution_enable:
             # 指定注册表项路径
             registry_key_path = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
@@ -63,7 +64,6 @@ class Start:
             value_name = "GraphicsSettings_PCResolution_h431323223"
             # 读取注册表中指定路径的值
             value = Registry.read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name)
-        value = None
 
         if value:
             # 去除末尾的\x00字符并尝试解析JSON
