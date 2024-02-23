@@ -21,13 +21,14 @@ from tasks.weekly.purefiction import PureFiction
 from tasks.tools.game_screenshot import game_screenshot
 from tasks.tools.automatic_plot import automatic_plot
 import atexit
+import base64
 import pyuac
 import sys
 
 
-def agreed_to_disclaimer():
-    if not config.agreed_to_disclaimer:
-        logger.error(_("您尚未同意《免责声明》"))
+def first_run():
+    if not config.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
+        logger.error(_("首次使用请先打开图形界面"))
         input(_("按回车键关闭窗口. . ."))
         sys.exit(0)
 
@@ -100,8 +101,7 @@ def run_notify_action():
 
 
 def main(action=None):
-    # 免责申明
-    agreed_to_disclaimer()
+    first_run()
 
     # 完整运行
     if action is None or action == "main":

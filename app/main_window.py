@@ -20,6 +20,7 @@ from .tools.disclaimer import disclaimer
 
 from managers.config_manager import config
 import subprocess
+import base64
 
 
 class MainWindow(MSFluentWindow):
@@ -29,12 +30,6 @@ class MainWindow(MSFluentWindow):
 
         self.initInterface()
         self.initNavigation()
-
-        self.splashScreen.finish()
-
-        # 免责申明
-        if not config.agreed_to_disclaimer:
-            disclaimer(self)
 
         # 检查更新
         checkUpdate(self, flag=True)
@@ -105,6 +100,11 @@ class MainWindow(MSFluentWindow):
         )
 
         self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
+
+        self.splashScreen.finish()
+
+        if not config.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
+            disclaimer(self)
 
     def startGame(self):
         try:

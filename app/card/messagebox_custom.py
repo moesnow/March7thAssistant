@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QLabel, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
-from qfluentwidgets import MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit
+from qfluentwidgets import MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit, BodyLabel, FluentStyleSheet
 import datetime
 import json
 
@@ -33,10 +33,12 @@ class MessageBoxHtml(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.contentLabel = QLabel(content, parent)
+        self.contentLabel = BodyLabel(content, parent)
         self.contentLabel.setObjectName("contentLabel")
         self.contentLabel.setOpenExternalLinks(True)
         self.contentLabel.linkActivated.connect(self.open_url)
+        self.contentLabel.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        FluentStyleSheet.DIALOG.apply(self.contentLabel)
 
         self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignVCenter)
         self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignVCenter)
@@ -60,6 +62,7 @@ class MessageBoxDisclaimer(MessageBoxHtml):
 
         self.yesButton.setText('退出')
         self.cancelButton.setText('我已知晓')
+        self.setContentCopyable(True)
 
 
 class MessageBoxEdit(MessageBox):

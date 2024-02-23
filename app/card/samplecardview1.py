@@ -6,8 +6,12 @@ from qfluentwidgets import RoundMenu, Action, IconWidget, TextWrap, FlowLayout, 
 from qfluentwidgets import FluentIcon as FIF
 from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
+from managers.config_manager import config
 
 from tasks.base.command import start_task
+from ..tools.disclaimer import disclaimer
+
+import base64
 
 
 class SampleCard(CardWidget):
@@ -54,6 +58,8 @@ class SampleCard(CardWidget):
         # self.contentLabel.setObjectName('contentLabel')
 
     def showBottomTeachingTip(self):
+        if not config.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
+            disclaimer(self)
         TeachingTip.create(
             target=self.iconWidget,
             icon=InfoBarIcon.SUCCESS,

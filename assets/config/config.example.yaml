@@ -1,7 +1,6 @@
 locales: zh_CN # 语言
 log_level: INFO # 日志等级: INFO、DEBUG
 check_update: true # 检测更新
-agreed_to_disclaimer: false
 
 after_finish: None # 任务完成后: "None"（无）"Exit"（退出）"Loop"（循环）"Shutdown"（关机）"Hibernate"（休眠）"Sleep"（睡眠）
 power_limit: 160 # 循环运行所需开拓力
@@ -162,6 +161,7 @@ hotkey_technique: e # 游戏内设置的秘技按键
 
 update_prerelease_enable: false # 加入预览版更新渠道
 update_full_enable: true # 更新时下载完整包
+auto_update: false
 
 # 消息通知
 # Windows 原生通知
