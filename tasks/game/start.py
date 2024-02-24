@@ -52,22 +52,19 @@ class Start:
         return False
 
     @staticmethod
-    def launch_process():
-        logger.info(_("🖥️启动游戏中..."))
-        Start.check_path(config.game_path)
-
-        value = None
+    def set_resolution():
+        resolution_value = None
         if config.auto_set_resolution_enable:
             # 指定注册表项路径
             registry_key_path = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
             # 指定要获取的值的名称
             value_name = "GraphicsSettings_PCResolution_h431323223"
             # 读取注册表中指定路径的值
-            value = Registry.read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name)
+            resolution_value = Registry.read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name)
 
-        if value:
+        if resolution_value:
             # 去除末尾的\x00字符并尝试解析JSON
-            data_dict = json.loads(value.decode('utf-8').strip('\x00'))
+            data_dict = json.loads(resolution_value.decode('utf-8').strip('\x00'))
             data_dict['width'] = 1920
             data_dict['height'] = 1080
             # 获取屏幕的宽度和高度
@@ -82,7 +79,23 @@ class Start:
 
             # 写入注册表
             Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, modified_data)
+        return resolution_value
 
+    def restore_resolution(resolution_value):
+        # 指定注册表项路径
+        registry_key_path = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
+        # 指定要获取的值的名称
+        value_name = "GraphicsSettings_PCResolution_h431323223"
+        # 读取注册表中指定路径的值
+        if resolution_value:
+            Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, resolution_value)
+
+    @staticmethod
+    def launch_game():
+        logger.info(_("🖥️启动游戏中..."))
+        Start.check_path(config.game_path)
+
+        resolution_value = Start.set_resolution()
         try:
             subprocess.Popen(config.game_path, creationflags=subprocess.DETACHED_PROCESS)
             logger.debug(_("游戏启动成功: {path}").format(path=config.game_path))
@@ -91,14 +104,15 @@ class Start:
 
         time.sleep(10)
         if not auto.retry_with_timeout(lambda: WindowSwitcher.check_and_switch(config.game_title_name), 60, 1):
-            if value:
-                Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, value)
+            Start.restore_resolution(resolution_value)
             logger.error(_("无法切换游戏到前台"))
             return False
+        else:
+            Start.restore_resolution(resolution_value)
 
-        if value:
-            Registry.write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, value)
-
+    @staticmethod
+    def launch_process():
+        Start.launch_game()
         Resolution.check_scale(config.game_title_name, 1920, 1080)
 
         if not auto.retry_with_timeout(lambda: Start.check_and_click_enter(), 600, 1):

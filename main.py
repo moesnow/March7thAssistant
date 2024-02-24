@@ -10,6 +10,7 @@ from managers.config_manager import config
 from managers.ocr_manager import ocr
 from managers.translate_manager import _
 from tasks.game.game import Game
+from tasks.game.start import Start
 from tasks.daily.daily import Daily
 import tasks.activity as activity
 import tasks.reward as reward
@@ -128,6 +129,9 @@ def main(action=None):
 
     elif action == "plot":
         automatic_plot()
+
+    elif action == "game":
+        Start.launch_game()
 
     elif action == "notify":
         run_notify_action()

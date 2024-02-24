@@ -19,7 +19,7 @@ class AutoClick:
 
         self.is_clicking = False
 
-        self.status_label = tk.Label(root, text="\n进入剧情页面后自动开始运行\n")
+        self.status_label = tk.Label(root, text="\n进入剧情页面后自动开始运行\n支持大于等于 1920*1080 的 16:9 分辨率\n")
         self.status_label.pack()
 
         self.status_label = tk.Label(root, text="自动点击状态：已停止", fg="red")

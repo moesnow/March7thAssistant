@@ -36,18 +36,18 @@ class Automation:
     def take_screenshot(self, crop=(0, 0, 1, 1)):
         result = Screenshot.take_screenshot(self.window_title, crop=crop)
         if result:
-            self.screenshot, self.screenshot_pos, self.screenshot_scale_factor, self.real_width = result
+            self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
         return result
 
     def get_image_info(self, image_path):
         template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
         return template.shape[::-1]
 
-    def scale_and_match_template(self, screenshot, template, threshold=None, scale_range=None):
-        result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+    def scale_and_match_template(self, screenshot, template, threshold=None, scale_range=None, mask=None):
+        result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED, mask=mask)
         _, max_val, _, max_loc = cv2.minMaxLoc(result)
 
-        if (threshold is None or max_val < threshold) and scale_range is not None:
+        if (math.isinf(max_val) or threshold is None or max_val < threshold) and scale_range is not None:
             for scale in np.arange(scale_range[0], scale_range[1] + 0.0001, 0.05):
                 scaled_template = cv2.resize(template, None, fx=scale, fy=scale)
                 result = cv2.matchTemplate(screenshot, scaled_template, cv2.TM_CCOEFF_NORMED)
@@ -92,22 +92,26 @@ class Automation:
     def find_image_element(self, target, threshold, scale_range, relative=False):
         try:
             # template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
-            template = cv2.imread(target)
+            template = cv2.imread(target, cv2.IMREAD_UNCHANGED)
             if template is None:
                 raise ValueError(_("读取图片失败"))
 
-            if self.real_width < 1920:
-                screenshot_scale_factor = 1920 / self.real_width
-                # 获取模板的原始宽度和高度
-                template_height, template_width = template.shape[:2]
-                # 缩放模板
-                template = cv2.resize(template, (int(template_width / screenshot_scale_factor), int(template_height / screenshot_scale_factor)))
+            if template.shape[2] == 4:  # 检查通道数是否为4（含有透明通道）
+                alpha_channel = template[:, :, 3]
+                if cv2.minMaxLoc(alpha_channel)[0] == 0:  # 检查是否所有像素值都是最小值（即完全透明）
+                    mask = alpha_channel
+                else:
+                    mask = None
+            else:
+                mask = None
+            template = cv2.imread(target)
+            # template = cv2.cvtColor(template, cv2.COLOR_BGRA2RGB)
 
             # screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
-            max_val, max_loc = self.scale_and_match_template(screenshot, template, threshold, scale_range)
+            max_val, max_loc = self.scale_and_match_template(screenshot, template, threshold, scale_range, mask)
             logger.debug(_("目标图片：{target} 相似度：{max_val}").format(target=target, max_val=max_val))
-            if threshold is None or max_val >= threshold:
+            if not math.isinf(max_val) and (threshold is None or max_val >= threshold):
                 channels, width, height = template.shape[::-1]
                 if relative == False:
                     top_left = (int(max_loc[0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
@@ -155,13 +159,6 @@ class Automation:
             template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
             if template is None:
                 raise ValueError(_("读取图片失败"))
-
-            if self.real_width < 1920:
-                screenshot_scale_factor = 1920 / self.real_width
-                # 获取模板的原始宽度和高度
-                template_height, template_width = template.shape[:2]
-                # 缩放模板
-                template = cv2.resize(template, (int(template_width / screenshot_scale_factor), int(template_height / screenshot_scale_factor)))
 
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
             bw_map = np.zeros(screenshot.shape[:2], dtype=np.uint8)
@@ -279,8 +276,7 @@ class Automation:
         return True
 
     def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, offset=(0, 0), action="click"):
-        coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot,
-                                        relative, scale_range, include, need_ocr, source, source_type)
+        coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot, relative, scale_range, include, need_ocr, source, source_type)
         if coordinates:
             return self.click_element_with_pos(coordinates, offset, action)
         return False

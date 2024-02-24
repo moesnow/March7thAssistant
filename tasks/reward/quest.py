@@ -10,11 +10,11 @@ import time
 class Quest(RewardTemplate):
     def run(self):
         # 领取活跃度
-        while auto.click_element("./assets/images/zh_CN/reward/quest/receive.png", "image", 0.9, crop=(265.0 / 1920, 394.0 / 1080, 1400.0 / 1920, 504.0 / 1080)):
+        while auto.click_element("./assets/images/zh_CN/reward/quest/receive.png", "image", 0.8, crop=(265.0 / 1920, 394.0 / 1080, 1400.0 / 1920, 504.0 / 1080)):
             time.sleep(0.5)
 
         # 领取奖励
-        if auto.click_element("./assets/images/share/reward/quest/gift.png", "image", 0.9, max_retries=10, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
+        if auto.click_element("./assets/images/share/reward/quest/gift.png", "image", 0.8, max_retries=10, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
             auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
 
         # 判断完成

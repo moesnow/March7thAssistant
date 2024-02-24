@@ -59,6 +59,6 @@ class Screenshot:
                 int(height * crop[3] * screenshot_scale_factor)
             )
 
-            return screenshot, screenshot_pos, screenshot_scale_factor, real_width
+            return screenshot, screenshot_pos, screenshot_scale_factor
 
         return False

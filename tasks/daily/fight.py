@@ -5,6 +5,7 @@ from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.base.team import Team
 from tasks.base.pythonchecker import PythonChecker
+from tasks.game.resolution import Resolution
 from tasks.base.command import subprocess_with_timeout
 import subprocess
 import os
@@ -73,6 +74,7 @@ class Fight:
     @staticmethod
     def start():
         logger.hr(_("准备锄大地"), 0)
+        Resolution.check(config.game_title_name, 1920, 1080)
         if Fight.before_start():
             # 切换队伍
             if config.fight_team_enable:

@@ -17,6 +17,7 @@ class RewardManager:
         self.dispatch = Dispatch("委托", config.reward_dispatch_enable, "dispatch")
         self.quest = Quest("每日实训", config.reward_quest_enable, "guide2")
         self.srpass = SRPass("无名勋礼", config.reward_srpass_enable, "pass2")
+        self.crop = (1263.0 / 1920, 52.0 / 1080, 642.0 / 1920, 982.0 / 1080)
 
     def check_and_collect_rewards(self):
         logger.hr(_("开始领奖励"), 0)
@@ -42,7 +43,7 @@ class RewardManager:
 
     def _find_reward(self, image_path, confidence):
         screen.change_to('menu')
-        return auto.find_element(image_path, "image", confidence)
+        return auto.find_element(image_path, "image", confidence, crop=self.crop)
 
 
 def start():

@@ -126,7 +126,7 @@ class Screen:
 
         def find_screen(self, screen_name, screen):
             try:
-                result = auto.find_element(screen['image_path'], "image_threshold", 0.85, take_screenshot=False)
+                result = auto.find_element(screen['image_path'], "image_threshold", 0.9, take_screenshot=False)
                 if result:
                     with self.lock:  # 使用锁来保护对共享变量的访问
                         if not self.current_screen or self.current_screen_threshold < result:
@@ -150,6 +150,7 @@ class Screen:
 
             if self.current_screen:
                 logger.info(_("当前界面：{screen_name}").format(screen_name=self.green + self.get_name(self.current_screen) + self.reset))
+                logger.debug(_("相似度：{threshold}").format(threshold=self.current_screen_threshold))
                 return True
 
             if autotry:
@@ -160,13 +161,13 @@ class Screen:
                 # 异常处理
 
                 # 与服务器断开连接，请重新登录
-                if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.85):
-                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.85, take_screenshot=False)
+                if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
                     time.sleep(20)
 
                 # 登录异常，请稍后再试
-                if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.85):
-                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.85, take_screenshot=False)
+                if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
                     time.sleep(20)
             else:
                 logger.debug(_("未识别出任何界面，请确保游戏画面干净"))
@@ -175,7 +176,7 @@ class Screen:
         return False
 
     def check_screen(self, target_screen):
-        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.85):
+        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
             self.current_screen = target_screen
             return True
         return False
