@@ -184,6 +184,7 @@ pyrightconfig.json
 
 # March7thAssistant
 /*config.yaml
+/warp.json
 /logs
 /screenshots
 /3rdparty

@@ -16,11 +16,10 @@ class StyleSheet(StyleSheetBase, Enum):
     GALLERY_INTERFACE = "gallery_interface"
     NAVIGATION_VIEW_INTERFACE = "navigation_view_interface"
 
-    # TASKS_INTERFACE = "tasks_interface"
-    # FAQ_INTERFACE = "faq_interface"
     Tutorial_INTERFACE = "tutorial_interface"
     HELP_INTERFACE = "help_interface"
     CHANGELOGS_INTERFACE = "changelogs_interface"
+    WARP_INTERFACE = "warp_interface"
     TOOLS_INTERFACE = "tools_interface"
 
     def path(self, theme=Theme.AUTO):

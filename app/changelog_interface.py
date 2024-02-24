@@ -55,8 +55,8 @@ a {
         # self.vBoxLayout.setAlignment(Qt.AlignTop)
         # self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
 
-        self.vBoxLayout.setSpacing(28)
-        self.vBoxLayout.setContentsMargins(36, 10, 36, 0)
+        # self.vBoxLayout.setSpacing(28)
+        self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
         self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
 
     def open_url(self, url):
