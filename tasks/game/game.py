@@ -15,10 +15,7 @@ class Game:
         logger.hr(_("开始运行"), 0)
         logger.info(_("开始启动游戏"))
         if not auto.retry_with_timeout(lambda: Start.start_game(), 1200, 1):
-            notify.notify(_("⚠️启动游戏超时，退出程序⚠️"))
-            logger.error(_("⚠️启动游戏超时，退出程序⚠️"))
-            input(_("按回车键关闭窗口. . ."))
-            sys.exit(1)
+            raise RuntimeError(_("⚠️启动游戏超时，退出程序⚠️"))
         logger.hr(_("完成"), 2)
 
     @staticmethod

@@ -62,7 +62,7 @@ class ForgottenHall:
         result = auto.retry_with_timeout(lambda: check_fight(), 30 * 60, 1)
         if not result:
             logger.error(_("战斗超时"))
-            raise Exception(_("战斗超时"))
+            raise RuntimeError(_("战斗超时"))
         return result
 
     @staticmethod
@@ -112,8 +112,10 @@ class ForgottenHall:
                 auto.press_key(config.get_value("hotkey_technique"))
                 for i in range(3):
                     auto.press_mouse()
-
-                result = ForgottenHall.wait_fight(count, boss_count, max_recursion, switch_team)
+                try:
+                    result = ForgottenHall.wait_fight(count, boss_count, max_recursion, switch_team)
+                except RuntimeError:
+                    return False
 
                 if result == 3:
                     return False

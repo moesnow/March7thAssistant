@@ -192,10 +192,9 @@ class Screen:
             return
 
         if not self.get_current_screen():
-            logger.info(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
-            logger.info(_("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR"))
-            input(_("按回车键关闭窗口. . ."))
-            sys.exit(1)
+            logger.error(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
+            logger.error(_("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR"))
+            raise RuntimeError("无法识别当前游戏界面")
 
         path = self.find_shortest_path(self.current_screen, target_screen)
         if path:
@@ -221,17 +220,15 @@ class Screen:
                         self.change_to(next_screen, max_recursion=max_recursion - 1)
                     else:
                         logger.error(_("无法切换到 {next_screen}").format(next_screen=self.get_name(next_screen)))
-                        logger.info(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
-                        logger.info(_("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR"))
-                        input(_("按回车键关闭窗口. . ."))
-                        sys.exit(1)
+                        logger.error(_("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件"))
+                        logger.error(_("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR"))
+                        raise RuntimeError("无法切换到指定游戏界面")
 
                 logger.info(_("切换到：{next_screen}").format(next_screen=self.green + self.get_name(next_screen) + self.reset))
                 time.sleep(1)
             self.current_screen = target_screen  # 更新当前界面
             return
 
-        logger.debug(_("无法从 {current_screen} 切换到 {target_screen}").format(
+        logger.error(_("无法从 {current_screen} 切换到 {target_screen}").format(
             current_screen=self.get_name(self.current_screen), target_screen=self.get_name(target_screen)))
-        input(_("按回车键关闭窗口. . ."))
-        sys.exit(1)
+        raise RuntimeError("无法切换到指定游戏界面")

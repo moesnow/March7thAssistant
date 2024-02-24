@@ -30,10 +30,13 @@ class Instance:
         if not Instance.start_instance(instance_type, power_need):
             return False
 
-        for i in range(runs - 1):
-            Instance.wait_fight(i + 1)
-            Instance.start_instance_again(instance_type)
-        Instance.wait_fight(runs)
+        try:
+            for i in range(runs - 1):
+                Instance.wait_fight(i + 1)
+                Instance.start_instance_again(instance_type)
+            Instance.wait_fight(runs)
+        except RuntimeError:
+            return False
 
         Instance.complete_run(instance_type)
 
@@ -187,7 +190,7 @@ class Instance:
 
         if not auto.retry_with_timeout(lambda: check_fight(), 30 * 60, 1):
             logger.error(_("战斗超时"))
-            raise Exception(_("战斗超时"))
+            raise RuntimeError(_("战斗超时"))
 
         logger.info(_("战斗完成"))
         logger.info(_("第{num}次副本完成").format(num=num))

@@ -33,7 +33,7 @@ class PureFiction:
 
         if not result:
             logger.error(_("战斗超时"))
-            raise Exception(_("战斗超时"))
+            raise RuntimeError(_("战斗超时"))
 
         return result
 
@@ -84,7 +84,10 @@ class PureFiction:
                 for i in range(3):
                     auto.press_mouse()
 
-                result = PureFiction.wait_fight()
+                try:
+                    result = PureFiction.wait_fight()
+                except RuntimeError:
+                    return False
 
                 if result == 3:
                     return False

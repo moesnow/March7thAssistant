@@ -34,10 +34,21 @@ class Automation:
         self.press_mouse = Input.press_mouse
 
     def take_screenshot(self, crop=(0, 0, 1, 1)):
-        result = Screenshot.take_screenshot(self.window_title, crop=crop)
-        if result:
-            self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
-        return result
+        start_time = time.time()
+        while True:
+            try:
+                result = Screenshot.take_screenshot(self.window_title, crop=crop)
+                if result:
+                    self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
+                    return result
+                else:
+                    logger.error(_("截图失败：{e}").format(e="没有找到游戏窗口"))
+            except Exception as e:
+                logger.error(_("截图失败：{e}").format(e=e))
+            time.sleep(1)
+            time_used = time.time() - start_time
+            if time_used > 60:
+                raise RuntimeError(_("截图超时"))
 
     def get_image_info(self, image_path):
         template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -293,12 +304,15 @@ class Automation:
         start_time = time.time()
 
         while time.time() - start_time < timeout:
-            try:
-                result = lambda_func()
-                if result:
-                    return result
-            except Exception as e:
-                logger.error(e)
+            # try:
+            #     result = lambda_func()
+            #     if result:
+            #         return result
+            # except Exception as e:
+            #     logger.error(e)
+            result = lambda_func()
+            if result:
+                return result
 
             time.sleep(interval)
 
