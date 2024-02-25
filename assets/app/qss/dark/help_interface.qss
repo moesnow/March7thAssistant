@@ -30,4 +30,9 @@ QLabel#tasksLabel {
     color: white;
 }
 
+QLabel#changelogLabel {
+    font: 14px 'Microsoft YaHei Light';
+    color: white;
+}
+
 

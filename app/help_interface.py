@@ -20,6 +20,7 @@ class HelpInterface(ScrollArea):
         self.tutorialLabel = QLabel(parent)
         self.faqLabel = QLabel(parent)
         self.tasksLabel = QLabel(parent)
+        self.changelogLabel = QLabel(parent)
 
         self.__initWidget()
         self.__initCard()
@@ -131,6 +132,25 @@ th, td {
         else:
             self.tasksLabel.setText(self.tasks_content)
 
+        changelog_style = """
+<style>
+a {
+    color: #f18cb9;
+    font-weight: bold;
+}
+</style>
+"""
+        try:
+            with open("./assets/docs/Changelog.md", 'r', encoding='utf-8') as file:
+                self.content = file.read()
+                self.content = '\n'.join(self.content.split('\n')[1:])
+        except FileNotFoundError:
+            sys.exit(1)
+        changelog_content = changelog_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
+        self.changelogLabel.setText(changelog_content)
+        self.changelogLabel.setOpenExternalLinks(True)
+        self.changelogLabel.linkActivated.connect(self.open_url)
+
     def __initLayout(self):
         self.helpLabel.move(36, 30)
         self.pivot.move(40, 80)
@@ -142,6 +162,7 @@ th, td {
         self.addSubInterface(self.tutorialLabel, 'tutorialLabel', self.tr('使用教程'))
         self.addSubInterface(self.faqLabel, 'faqLabel', self.tr('常见问题'))
         self.addSubInterface(self.tasksLabel, 'tasksLabel', self.tr('每日实训'))
+        self.addSubInterface(self.changelogLabel, 'changelogLabel', self.tr('更新日志'))
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())
