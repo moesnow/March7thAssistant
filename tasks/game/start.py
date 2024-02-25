@@ -95,11 +95,10 @@ class Start:
         Start.check_path(config.game_path)
 
         resolution_value = Start.set_resolution()
-        try:
-            subprocess.Popen(config.game_path, creationflags=subprocess.DETACHED_PROCESS)
-            logger.debug(_("游戏启动成功: {path}").format(path=config.game_path))
-        except Exception:
+        logger.debug(_("运行命令: cmd /C start \"\" \"{path}\"").format(path=config.game_path))
+        if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
             return False
+        logger.debug(_("游戏启动成功: {path}").format(path=config.game_path))
 
         time.sleep(10)
         if not auto.retry_with_timeout(lambda: WindowSwitcher.check_and_switch(config.game_title_name), 60, 1):

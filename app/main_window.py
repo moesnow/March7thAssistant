@@ -21,6 +21,7 @@ from .tools.disclaimer import disclaimer
 from managers.config_manager import config
 import subprocess
 import base64
+import os
 
 
 class MainWindow(MSFluentWindow):
@@ -108,7 +109,17 @@ class MainWindow(MSFluentWindow):
 
     def startGame(self):
         try:
-            subprocess.Popen(config.game_path, creationflags=subprocess.DETACHED_PROCESS)
+            if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
+                InfoBar.warning(
+                    title=self.tr('启动失败(╥╯﹏╰╥)'),
+                    content="",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self
+                )
+                return False
             InfoBar.success(
                 title=self.tr('启动成功(＾∀＾●)'),
                 content="",
