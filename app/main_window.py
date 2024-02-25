@@ -10,7 +10,7 @@ with redirect_stdout(None):
 
 from .home_interface import HomeInterface
 from .help_interface import HelpInterface
-from .changelog_interface import ChangelogInterface
+# from .changelog_interface import ChangelogInterface
 from .warp_interface import WarpInterface
 from .tools_interface import ToolsInterface
 from .setting_interface import SettingInterface
@@ -66,7 +66,7 @@ class MainWindow(MSFluentWindow):
     def initInterface(self):
         self.homeInterface = HomeInterface(self)
         self.helpInterface = HelpInterface(self)
-        self.changelogInterface = ChangelogInterface(self)
+        # self.changelogInterface = ChangelogInterface(self)
         self.warpInterface = WarpInterface(self)
         self.toolsInterface = ToolsInterface(self)
         self.settingInterface = SettingInterface(self)
@@ -74,7 +74,7 @@ class MainWindow(MSFluentWindow):
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('主页'))
         self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, self.tr('帮助'))
-        self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
+        # self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
         self.addSubInterface(self.warpInterface, FIF.SHARE, self.tr('抽卡记录'))
         self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, self.tr('工具箱'))
 

@@ -1,17 +1,14 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFileDialog
 
-from qfluentwidgets import ScrollArea, PrimaryPushButton, StateToolTip
+from qfluentwidgets import ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition
 from .common.style_sheet import StyleSheet
-from .tools.warp_export import warpExport
-
-from datetime import datetime
+from .tools.warp_export import warpExport, WarpExport
+import pyperclip
 import json
 import markdown
-import random
-import sys
+import os
 
 
 class WarpInterface(ScrollArea):
@@ -22,95 +19,37 @@ class WarpInterface(ScrollArea):
         self.titleLabel = QLabel(self.tr("抽卡记录"), self)
 
         self.updateBtn = PrimaryPushButton("更新数据", self)
+        self.importBtn = PrimaryPushButton("导入数据", self)
+        self.exportBtn = PrimaryPushButton("导出数据", self)
+        self.copyLinkBtn = PrimaryPushButton("复制链接", self)
+        self.warplink = None
+
         self.stateTooltip = None
 
-        self.content = ""
         self.contentLabel = QLabel(parent)
 
         try:
-            path = "./warp1.json"
-            with open(path, 'r', encoding='utf-8') as file:
+            with open("./warp.json", 'r', encoding='utf-8') as file:
                 config = json.load(file)
-            self.__warpToHtml(config)
-        except:
-            self.content = "### 抽卡记录为空"
+            warp = WarpExport(config)
+            content = warp.data_to_html()
+        except Exception as e:
+            print(e)
+            content = "### 抽卡记录为空"
 
-        self.contentLabel.setText(markdown.markdown(self.content))
+        self.contentLabel.setText(markdown.markdown(content))
 
         self.__initWidget()
         self.__connectSignalToSlot()
 
-    def __warpToHtml(self, data):
-        self.content = ""
-        info = data.get("info")
-        list = data.get("list")
-
-        uid = info.get("uid")
-        export_time = datetime.fromtimestamp(info['export_timestamp']).strftime('%Y-%m-%d %H:%M:%S')
-        map = {
-            "11": "角色活动跃迁",
-            "12": "光锥活动跃迁",
-            "1": "常驻跃迁",
-            "2": "新手跃迁",
-        }
-
-        gacha_data = {
-            "11": ["角色活动跃迁", []],
-            "12": ["光锥活动跃迁", []],
-            "1": ["常驻跃迁", []],
-            "2": ["新手跃迁", []],
-        }
-        for item in list:
-            type = item["gacha_type"]
-            gacha_data[type][1].append(item)
-
-        def warp_analyze(value):
-            start_time = datetime.strptime(value[0]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y-%m-%d')
-            end_time = datetime.strptime(value[-1]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y-%m-%d')
-            self.content += f"{start_time} - {end_time}\n\n"
-            sum = len(value)
-            rank_type = {
-                "5": 0,
-                "4": 0,
-                "3": 0
-            }
-            rank_5 = []
-            count = 0
-            for item in value:
-                count += 1
-                type = item["rank_type"]
-                name = item["name"]
-                rank_type[type] = rank_type.get(type, 0) + 1
-                if type == "5":
-                    rank_5.append([name, count])
-                    count = 0
-
-            self.content += f"一共 <font color=blue>{sum}</font> 抽 已累计 <font color=green>{count}</font> 抽未出5星\n\n"
-            # for key, value in rank_type.items():
-            #     self.content += f"{key}星: {value:<4d} [{value/sum*100:.2f}%]\n\n"
-            self.content += f"<font color=Orange>5星: {rank_type['5']:<4d} [{rank_type['5']/sum*100:.2f}%]</font>\n\n"
-            self.content += f"<font color=DarkOrchid>4星: {rank_type['4']:<4d} [{rank_type['4']/sum*100:.2f}%]</font>\n\n"
-            self.content += f"<font color=blue>3星: {rank_type['3']:<4d} [{rank_type['3']/sum*100:.2f}%]</font>\n\n"
-            rank_5_str = ""
-            rank_5_avg = ""
-            rank_5_sum = 0
-            colors = ['Red', 'Orange', 'Khaki', 'Green', 'DarkTurquoise', 'DodgerBlue', 'Magenta', 'Crimson', 'Coral', 'Gold', 'PaleGreen', 'DeepSkyBlue', 'RoyalBlue', 'DarkOrchid']
-            previous_color = None
-            for key, value in rank_5:
-                current_color = random.choice([color for color in colors if color != previous_color])
-                rank_5_str += f"<font color={current_color}>{key}[{value}]</font> "
-                rank_5_sum += value
-            rank_5_avg = rank_5_sum / len(rank_5)
-            self.content += f"5星历史记录: {rank_5_str}\n\n"
-            self.content += f"五星平均出货次数为: <font color=green>{rank_5_avg:.2f}</font>\n\n<hr>"
-
-        for key, value in gacha_data.items():
-            self.content += f"## <font color=#f18cb9>{value[0]}</font>\n\n"
-            warp_analyze(value[1])
-
     def __initWidget(self):
         self.titleLabel.move(36, 30)
-        self.updateBtn.move(40, 80)
+        self.updateBtn.move(35, 80)
+        self.importBtn.move(125, 80)
+        self.exportBtn.move(215, 80)
+        self.copyLinkBtn.move(305, 80)
+        self.copyLinkBtn.setEnabled(False)
+
         self.view.setObjectName('view')
         self.setViewportMargins(0, 120, 0, 20)
         self.setObjectName('warpInterface')
@@ -134,6 +73,105 @@ class WarpInterface(ScrollArea):
 
     def __connectSignalToSlot(self):
         self.updateBtn.clicked.connect(self.__onUpdateBtnClicked)
+        self.importBtn.clicked.connect(self.__onImportBtnClicked)
+        self.exportBtn.clicked.connect(self.__onExportBtnClicked)
+        self.copyLinkBtn.clicked.connect(self.__onCopyLinkBtnClicked)
 
     def __onUpdateBtnClicked(self):
         warpExport(self)
+
+    def __onImportBtnClicked(self):
+        try:
+            path, _ = QFileDialog.getOpenFileName(self, "支持 SRGF 数据格式导入", "", "*.json")
+            if not path:
+                return
+
+            with open(path, 'r', encoding='utf-8') as file:
+                config = json.load(file)
+
+            warp = WarpExport(config)
+
+            content = warp.data_to_html()
+            self.contentLabel.setText(markdown.markdown(content))
+
+            config = warp.export_data()
+            with open("./warp.json", 'w', encoding='utf-8') as file:
+                json.dump(config, file, ensure_ascii=False, indent=4)
+
+            InfoBar.success(
+                title=self.tr('导入成功(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+        except Exception:
+            InfoBar.warning(
+                title=self.tr('导入失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+
+    def __onExportBtnClicked(self):
+        try:
+            with open("./warp.json", 'r', encoding='utf-8') as file:
+                config = json.load(file)
+            warp = WarpExport(config)
+            path, _ = QFileDialog.getSaveFileName(self, "支持 SRGF 数据格式导出", f"SRGF_{warp.get_uid()}.json", "*.json")
+            if not path:
+                return
+
+            with open(path, 'w', encoding='utf-8') as file:
+                json.dump(config, file, ensure_ascii=False, indent=4)
+
+            os.startfile(os.path.dirname(path))
+
+            InfoBar.success(
+                title=self.tr('导出成功(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+
+        except Exception:
+            InfoBar.warning(
+                title=self.tr('导出失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+
+    def __onCopyLinkBtnClicked(self):
+        try:
+            pyperclip.copy(self.warplink)
+            InfoBar.success(
+                title=self.tr('复制成功(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+        except Exception:
+            InfoBar.warning(
+                title=self.tr('复制失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )

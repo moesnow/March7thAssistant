@@ -1,13 +1,301 @@
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from qfluentwidgets import InfoBar, InfoBarPosition, StateToolTip
-
+from urllib.parse import urlencode, urlparse, parse_qs
+from win32api import CopyFile
+from datetime import datetime
+from pathlib import Path
 from enum import Enum
-import subprocess
 import markdown
 import requests
+import tempfile
+import random
 import time
+import glob
+import json
 import re
 import os
+
+
+class WarpExport:
+    def __init__(self, config=None, parent=None):
+        self.parent = parent
+        self.gacha_type = {
+            "11": "角色活动跃迁",
+            "12": "光锥活动跃迁",
+            "1": "常驻跃迁",
+            "2": "新手跃迁",
+        }
+        self.info = {
+            "uid": "",
+            "lang": "",
+            "region_time_zone": None,
+            "export_timestamp": 0,
+            "export_app": "",
+            "export_app_version": "",
+            "srgf_version": ""
+        }
+        self.gacha_data = {}
+        for type in self.gacha_type:
+            self.gacha_data[type] = []
+        self.__init_data(config)
+
+    def __init_data(self, config):
+        if config:
+            self.info = config.get("info")
+            for item in config.get("list"):
+                type = item["gacha_type"]
+                self.gacha_data[type].append(item)
+
+    def __set_color(self, content, color):
+        return f"<font color='{color}'>{content}</font>"
+
+    def __get_random_color(self):
+        if not hasattr(self, 'previous_color'):
+            self.previous_color = None
+        colors = ['Red', 'Orange', 'Khaki', 'Green', 'DarkTurquoise', 'DodgerBlue', 'Magenta', 'Crimson', 'Coral', 'Gold', 'PaleGreen', 'DeepSkyBlue', 'RoyalBlue', 'DarkOrchid']
+        self.previous_color = random.choice([color for color in colors if color != self.previous_color])
+        return self.previous_color
+
+    def get_uid(self):
+        return self.info.get("uid")
+
+    def data_to_html(self):
+        content = ""
+
+        def warp_analyze(value, content):
+            start_time = datetime.strptime(value[0]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y-%m-%d')
+            end_time = datetime.strptime(value[-1]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y-%m-%d')
+            content += f"{start_time} - {end_time}\n\n"
+            total = len(value)
+            rank_type = {
+                "5": 0,
+                "4": 0,
+                "3": 0
+            }
+            rank_5 = []
+            grand_total = 0
+            for item in value:
+                grand_total += 1
+                type = item["rank_type"]
+                name = item["name"]
+                rank_type[type] = rank_type.get(type, 0) + 1
+                if type == "5":
+                    rank_5.append([name, grand_total])
+                    grand_total = 0
+
+            content += f"一共 {self.__set_color(total,'blue')} 抽 已累计 {self.__set_color(grand_total,'green')} 抽未出5星\n\n"
+            for star, count in rank_type.items():
+                percentage = count / total * 100
+                color = 'orange' if star == '5' else 'darkorchid' if star == '4' else 'blue'
+                text = f"{star}星: {count:<4d} [{percentage:.2f}%]"
+                content += f"{self.__set_color(text, color)}\n\n"
+            rank_5_str = ' '.join([f"{self.__set_color(f'{key}[{value}]', self.__get_random_color())}" for key, value in rank_5])
+            rank_5_sum = sum(value for _, value in rank_5)
+            rank_5_avg = rank_5_sum / len(rank_5)
+            content += f"5星历史记录: {rank_5_str}\n\n"
+            content += f"五星平均出货次数为: {self.__set_color(f'{rank_5_avg:.2f}', 'green')}\n\n<hr>"
+
+            return content
+
+        for type, list in self.gacha_data.items():
+            if len(list) > 0:
+                content += f"## {self.__set_color(self.gacha_type[type],'#f18cb9')}\n\n"
+                content = warp_analyze(list, content)
+        return content
+
+    def detect_game_locale(self):
+        list = []
+        strs = ['/miHoYo/崩坏：星穹铁道/', '/Cognosphere/Star Rail/']
+        for str in strs:
+            log_file_path = os.path.join(os.getenv('userprofile'), f"AppData/LocalLow{str}Player.log")
+            if not os.path.exists(log_file_path):
+                continue
+
+            with open(log_file_path, 'r', encoding='utf-8') as file:
+                log_content = file.read()
+            regex_pattern = r'\w:\/.*?\/StarRail_Data\/'
+            matches = re.findall(regex_pattern, log_content)
+
+            for match in matches:
+                if match not in list:
+                    list.append(match)
+
+        if len(list) > 0:
+            return list
+        else:
+            return None
+
+    def get_url_from_cache_text(self, game_path):
+        results = glob.glob(os.path.join(game_path, 'webCaches/*/Cache/Cache_Data/data_2'), recursive=True)
+        results_with_mtime = [(file, os.stat(file).st_mtime) for file in results]
+        sorted_results = sorted(results_with_mtime, key=lambda x: x[1], reverse=True)
+
+        if sorted_results:
+            latest_file_path = sorted_results[0][0]
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_file_path = os.path.join(Path(temp_dir), Path(latest_file_path).name)
+                CopyFile(latest_file_path, temp_file_path)
+                cache_text = Path(temp_file_path).read_bytes().decode(errors="ignore")
+
+            regex_pattern = r'https.+?&auth_appid=webview_gacha&.+?authkey=.+?&game_biz=hkrpg_.+?&plat_type=pc'
+            matches = re.findall(regex_pattern, cache_text)
+            return matches[-1]
+        else:
+            return None
+
+    def get_url(self):
+        game_locale = self.detect_game_locale()
+        url_list = [url for locale in game_locale if (url := self.get_url_from_cache_text(locale)) is not None]
+        if url_list:
+            return url_list[0]
+
+    def remove_query_params(self, url):
+        params_to_remove = ['page', 'size', 'gacha_type', 'end_id']
+        # 解析URL
+        parsed_url = urlparse(url)
+
+        # 将查询参数解析为字典
+        query_params = parse_qs(parsed_url.query)
+
+        host = parsed_url.netloc
+        if 'webstatic-sea' in host or 'hkrpg-api-os' in host or 'api-os-takumi' in host or 'hoyoverse.com' in host:
+            apiDomain = 'https://api-os-takumi.mihoyo.com'
+        else:
+            apiDomain = 'https://api-takumi.mihoyo.com'
+
+        # 删除指定的参数
+        for param in params_to_remove:
+            query_params.pop(param, None)
+
+        # 重新构建查询字符串
+        updated_query = urlencode(query_params, doseq=True)
+
+        return apiDomain, updated_query
+
+    def show_info_message(self, content, title=None):
+        if self.parent:
+            self.parent.stateTooltip.setContent(content)
+            if title:
+                self.parent.stateTooltip.setTitle(title)
+
+    def get_gacha_log(self, api_domain, gacha_type, updated_query, page, size, end_id, max_retry=5):
+        url = f'{api_domain}/common/gacha_record/api/getGachaLog?{updated_query}&gacha_type={gacha_type}&page={page}&size={size}&end_id={end_id}'
+        if not hasattr(self, 'warplink'):
+            self.warplink = url
+        for i in range(max_retry):
+            try:
+                response = requests.get(url)
+                response.raise_for_status()
+                retcode = response.json()['retcode']
+                if retcode != 0:
+                    if retcode == -101:
+                        self.show_info_message("请重新打开游戏抽卡记录", "身份认证已过期")
+                        return None
+                    else:
+                        self.show_info_message(response.json()['message'], "请求出错")
+                        return None
+                else:
+                    self.show_info_message(f'正在获取{self.gacha_type[gacha_type]}第{page}页')
+                    return response.json()['data']
+            except Exception:
+                self.show_info_message('等待5秒后重试，剩余重试次数：' + str(max_retry - i) + '', "请求出错")
+                time.sleep(5)
+        return None
+
+    def init_info(self, response):
+        item = response['list'][0]
+        region_time_zone = response['region_time_zone']
+
+        if self.info['uid'] == "":
+            self.info['uid'] = item['uid']
+        elif self.info['uid'] != item['uid']:
+            self.show_info_message("UID与原始数据不一致", "请求出错")
+            return False
+
+        if self.info['lang'] == "":
+            self.info['lang'] = item['lang']
+        elif self.info['lang'] != item['lang']:
+            self.show_info_message("语言与原始数据不一致", "请求出错")
+            return False
+
+        if self.info['region_time_zone'] is None:
+            self.info['region_time_zone'] = region_time_zone
+        elif self.info['region_time_zone'] != region_time_zone:
+            self.show_info_message("时区与原始数据不一致", "请求出错")
+            return False
+
+        return True
+
+    def get_gacha_logs(self, api_domain, gacha_type, updated_query):
+        if len(self.gacha_data[gacha_type]) > 0:
+            last_id = self.gacha_data[gacha_type][-1]['id']
+        else:
+            last_id = "0"
+        gacha_list = []
+        page = 1
+        size = 20
+        end_id = 0
+        init = False
+        while True:
+            if page % 10 == 0:
+                time.sleep(1)
+
+            response = self.get_gacha_log(api_domain, gacha_type, updated_query, page, size, end_id)
+            time.sleep(0.3)
+            if response is None:
+                return None
+
+            list = response['list']
+            if len(list) == 0:
+                return gacha_list[::-1]
+
+            if not init:
+                if not self.init_info(response):
+                    return None
+                init = True
+
+            for item in list:
+                item.pop('uid')
+                item.pop('lang')
+                if item['id'] > last_id:
+                    gacha_list.append(item)
+                else:
+                    return gacha_list[::-1]
+
+            page += 1
+            end_id = list[-1]['id']
+
+    def fetch_data(self, api_domain, updated_query):
+        for type in self.gacha_type:
+            gacha_list = self.get_gacha_logs(api_domain, type, updated_query)
+            if gacha_list is None:
+                return False
+            else:
+                self.gacha_data[type] += gacha_list
+        self.info['export_timestamp'] = int(time.time())
+        self.info['export_app'] = "March7thAssistant"
+        try:
+            with open("./assets/config/version.txt", 'r', encoding='utf-8') as file:
+                version = file.read()
+        except Exception:
+            version = ""
+        self.info['export_app_version'] = version
+        self.info['srgf_version'] = "v1.0"
+        return True
+
+    def export_data(self):
+        gacha_data = []
+        for data in self.gacha_data.values():
+            gacha_data += data
+
+        sorted_list = sorted(gacha_data, key=lambda x: int(x["id"]))
+
+        config = {
+            "info": self.info,
+            "list": sorted_list
+        }
+        return config
 
 
 class WarpStatus(Enum):
@@ -24,14 +312,40 @@ class WarpThread(QThread):
         self.parent = parent
 
     def run(self):
-        time.sleep(1)
+        try:
+            with open("./warp.json", 'r', encoding='utf-8') as file:
+                config = json.load(file)
+                warp = WarpExport(config, self.parent)
+        except Exception:
+            warp = WarpExport(None, self.parent)
 
-        self.parent.content = "### 抽卡记录更新完成"
-        self.parent.contentLabel.setText(markdown.markdown(self.parent.content))
+        # self.parent.stateTooltip.setContent("测试测试(＾∀＾●)")
+        try:
+            url = warp.get_url()
+            if not url:
+                self.parent.stateTooltip.setTitle("未找到URL")
+                self.parent.stateTooltip.setContent("请确认是否已打开游戏抽卡记录")
+                self.warpSignal.emit(WarpStatus.FAILURE)
+                return
 
-        # 获取抽卡记录
+            api_domain, updated_query = warp.remove_query_params(url)
 
-        self.warpSignal.emit(WarpStatus.SUCCESS)
+            if warp.fetch_data(api_domain, updated_query):
+                self.parent.warplink = warp.warplink
+                config = warp.export_data()
+
+                with open("./warp.json", 'w', encoding='utf-8') as file:
+                    json.dump(config, file, ensure_ascii=False, indent=4)
+
+                content = warp.data_to_html()
+                self.parent.contentLabel.setText(markdown.markdown(content))
+                self.parent.copyLinkBtn.setEnabled(True)
+                self.warpSignal.emit(WarpStatus.SUCCESS)
+            else:
+                self.warpSignal.emit(WarpStatus.FAILURE)
+        except Exception:
+            self.parent.stateTooltip.setContent("跃迁数据获取失败(´▔∀▔`)")
+            self.warpSignal.emit(WarpStatus.FAILURE)
 
 
 def warpExport(self):
@@ -44,6 +358,11 @@ def warpExport(self):
     def handle_warp(status):
         if status == WarpStatus.SUCCESS:
             self.stateTooltip.setContent("跃迁数据获取完成(＾∀＾●)")
+            self.stateTooltip.setState(True)
+            self.stateTooltip = None
+            self.updateBtn.setEnabled(True)
+        elif status == WarpStatus.FAILURE:
+            # self.stateTooltip.setContent("跃迁数据获取失败(´▔∀▔`)")
             self.stateTooltip.setState(True)
             self.stateTooltip = None
             self.updateBtn.setEnabled(True)
