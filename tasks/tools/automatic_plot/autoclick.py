@@ -8,7 +8,7 @@ import tkinter as tk
 class AutoClick:
     def __init__(self, root):
         self.root = root
-        self.root.title("自动剧情")
+        self.root.title("自动对话")
         self.root.iconbitmap("./assets/logo/March7th.ico")
 
         self.start_img = "./assets/images/share/plot/start.png"

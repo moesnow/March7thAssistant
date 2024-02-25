@@ -18,7 +18,7 @@ class ToolsInterface(ScrollArea):
         self.automaticPlotCard = PushSettingCard(
             self.tr('运行'),
             FIF.IMAGE_EXPORT,
-            self.tr("自动剧情"),
+            self.tr("自动对话"),
             ''
         )
         self.gameScreenshotCard = PushSettingCard(
