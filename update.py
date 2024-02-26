@@ -163,6 +163,7 @@ class Update:
             except Exception as e:
                 print(f"下载失败：{e}")
                 input("按回车键重试. . .")
+                os.remove(self.download_file_path)
 
     def __extract_file(self):
         print("开始解压...")

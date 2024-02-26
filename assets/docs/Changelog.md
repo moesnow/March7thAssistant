@@ -4,6 +4,8 @@
 
 ### 新功能
 - 抽卡记录导出（支持 [SRGF](https://uigf.org/zh/standards/SRGF.html) 标准）
+### 修复
+- 特殊情况会导致下载失败
 
 ## v2.0.3
 

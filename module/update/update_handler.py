@@ -35,6 +35,7 @@ class UpdateHandler:
             except Exception as e:
                 logger.error(_("下载失败：{e}").format(e=e))
                 input(_("按回车键重试. . ."))
+                os.remove(self.download_file_path)
 
     def extract_file(self):
         while True:
