@@ -177,5 +177,5 @@ class WarpInterface(ScrollArea):
                 content = warp.data_to_html("light")
         except Exception as e:
             print(e)
-            content = "### 抽卡记录为空"
+            content = "抽卡记录为空"
         self.contentLabel.setText(content)
