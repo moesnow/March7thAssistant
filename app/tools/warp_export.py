@@ -157,9 +157,11 @@ class WarpExport:
 
     def get_url(self):
         game_locale = self.detect_game_locale()
-        url_list = [url for locale in game_locale if (url := self.get_url_from_cache_text(locale)) is not None]
-        if url_list:
-            return url_list[0]
+        if game_locale:
+            url_list = [url for locale in game_locale if (url := self.get_url_from_cache_text(locale)) is not None]
+            if url_list:
+                return url_list[0]
+        return None
 
     def remove_query_params(self, url):
         params_to_remove = ['page', 'size', 'gacha_type', 'end_id']
