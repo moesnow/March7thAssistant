@@ -32,9 +32,10 @@ March7thAssistant · 三月七小助手
 
 - **日常**：清体力、每日实训、领奖励、委托、锄大地
 - **周常**：历战余响、模拟宇宙、忘却之庭
-- 每日实训等任务的完成情况支持消息推送
-- 凌晨四点或体力恢复到指定值后自动启动
-- 任务完成后声音提示、自动关闭游戏或关机
+- **抽卡记录导出**：支持 [SRGF](https://uigf.org/zh/standards/SRGF.html) 标准
+- 每日实训等任务的完成情况支持**消息推送**
+- 任务刷新或体力恢复到指定值后**自动启动**
+- 任务完成后**声音提示、自动关闭游戏或关机等**
 
 > 其中模拟宇宙调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目，锄大地调用的 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 项目
 

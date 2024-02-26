@@ -3,7 +3,7 @@
 ## v2.0.4
 
 ### 新功能
-- 支持抽卡记录导出
+- 抽卡记录导出（支持 [SRGF](https://uigf.org/zh/standards/SRGF.html) 标准）
 
 ## v2.0.3
 
