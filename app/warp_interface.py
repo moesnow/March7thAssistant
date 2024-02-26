@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFileDialog
 
-from qfluentwidgets import ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition
+from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition
 from .common.style_sheet import StyleSheet
 from .tools.warp_export import warpExport, WarpExport
 import pyperclip
@@ -28,16 +28,9 @@ class WarpInterface(ScrollArea):
 
         self.contentLabel = QLabel(parent)
 
-        try:
-            with open("./warp.json", 'r', encoding='utf-8') as file:
-                config = json.load(file)
-            warp = WarpExport(config)
-            content = warp.data_to_html()
-        except Exception as e:
-            print(e)
-            content = "### 抽卡记录为空"
+        qconfig.themeChanged.connect(self.setContent)
 
-        self.contentLabel.setText(markdown.markdown(content))
+        self.setContent()
 
         self.__initWidget()
         self.__connectSignalToSlot()
@@ -88,15 +81,12 @@ class WarpInterface(ScrollArea):
 
             with open(path, 'r', encoding='utf-8') as file:
                 config = json.load(file)
-
             warp = WarpExport(config)
-
-            content = warp.data_to_html()
-            self.contentLabel.setText(markdown.markdown(content))
-
             config = warp.export_data()
             with open("./warp.json", 'w', encoding='utf-8') as file:
                 json.dump(config, file, ensure_ascii=False, indent=4)
+
+            self.setContent()
 
             InfoBar.success(
                 title=self.tr('导入成功(＾∀＾●)'),
@@ -175,3 +165,17 @@ class WarpInterface(ScrollArea):
                 duration=1000,
                 parent=self
             )
+
+    def setContent(self):
+        try:
+            with open("./warp.json", 'r', encoding='utf-8') as file:
+                config = json.load(file)
+            warp = WarpExport(config)
+            if qconfig.theme.name == "DARK":
+                content = warp.data_to_html("dark")
+            else:
+                content = warp.data_to_html("light")
+        except Exception as e:
+            print(e)
+            content = "### 抽卡记录为空"
+        self.contentLabel.setText(content)

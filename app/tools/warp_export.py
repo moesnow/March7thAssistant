@@ -49,23 +49,34 @@ class WarpExport:
     def __set_color(self, content, color):
         return f"<font color='{color}'>{content}</font>"
 
-    def __get_random_color(self):
+    def __get_random_color(self, theme="light"):
         if not hasattr(self, 'previous_color'):
             self.previous_color = None
-        colors = ['Red', 'Orange', 'Khaki', 'Green', 'DarkTurquoise', 'DodgerBlue', 'Magenta', 'Crimson', 'Coral', 'Gold', 'PaleGreen', 'DeepSkyBlue', 'RoyalBlue', 'DarkOrchid']
+        if theme == "light":
+            colors = ['DarkRed', 'DarkOrange', 'DarkKhaki', 'DarkGreen', 'DarkCyan', 'DarkBlue', 'DarkMagenta']
+        else:
+            colors = ['Red', 'Orange', 'Yellow', 'Lime', 'Turquoise', 'Cyan', 'Fuchsia']
         self.previous_color = random.choice([color for color in colors if color != self.previous_color])
         return self.previous_color
 
     def get_uid(self):
         return self.info.get("uid")
 
-    def data_to_html(self):
+    def data_to_html(self, theme="light"):
+        css = '''
+        <style>
+        p {
+            font-size: 15px;
+            font-weight: 500;
+        }
+        </style>
+        '''
         content = ""
 
         def warp_analyze(value, content):
-            start_time = datetime.strptime(value[0]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y-%m-%d')
-            end_time = datetime.strptime(value[-1]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y-%m-%d')
-            content += f"{start_time} - {end_time}\n\n"
+            start_time = datetime.strptime(value[0]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y/%m/%d')
+            end_time = datetime.strptime(value[-1]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y/%m/%d')
+            content += f"{start_time}  -  {end_time}\n\n"
             total = len(value)
             rank_type = {
                 "5": 0,
@@ -83,13 +94,13 @@ class WarpExport:
                     rank_5.append([name, grand_total])
                     grand_total = 0
 
-            content += f"一共 {self.__set_color(total,'blue')} 抽 已累计 {self.__set_color(grand_total,'green')} 抽未出5星\n\n"
+            content += f"一共 {self.__set_color(total,'DeepSkyBlue')} 抽 已累计 {self.__set_color(grand_total,'LimeGreen')} 抽未出5星\n\n"
             for star, count in rank_type.items():
                 percentage = count / total * 100
-                color = 'orange' if star == '5' else 'darkorchid' if star == '4' else 'blue'
+                color = 'Goldenrod' if star == '5' else 'darkorchid' if star == '4' else 'DodgerBlue'
                 text = f"{star}星: {count:<4d} [{percentage:.2f}%]"
                 content += f"{self.__set_color(text, color)}\n\n"
-            rank_5_str = ' '.join([f"{self.__set_color(f'{key}[{value}]', self.__get_random_color())}" for key, value in rank_5])
+            rank_5_str = ' '.join([f"{self.__set_color(f'{key}[{value}]', self.__get_random_color(theme))}" for key, value in rank_5])
             rank_5_sum = sum(value for _, value in rank_5)
             rank_5_avg = rank_5_sum / len(rank_5)
             content += f"5星历史记录: {rank_5_str}\n\n"
@@ -101,7 +112,7 @@ class WarpExport:
             if len(list) > 0:
                 content += f"## {self.__set_color(self.gacha_type[type],'#f18cb9')}\n\n"
                 content = warp_analyze(list, content)
-        return content
+        return css + markdown.markdown(content)
 
     def detect_game_locale(self):
         list = []
@@ -337,8 +348,10 @@ class WarpThread(QThread):
                 with open("./warp.json", 'w', encoding='utf-8') as file:
                     json.dump(config, file, ensure_ascii=False, indent=4)
 
-                content = warp.data_to_html()
-                self.parent.contentLabel.setText(markdown.markdown(content))
+                # content = warp.data_to_html()
+                # self.parent.contentLabel.setText(markdown.markdown(content))
+                self.parent.setContent()
+
                 self.parent.copyLinkBtn.setEnabled(True)
                 self.warpSignal.emit(WarpStatus.SUCCESS)
             else:
