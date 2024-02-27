@@ -9,6 +9,7 @@ from tasks.base.pythonchecker import PythonChecker
 from tasks.game.resolution import Resolution
 from tasks.base.command import subprocess_with_timeout
 import subprocess
+import sys
 import os
 
 
@@ -23,9 +24,14 @@ class Universe:
             response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Auto_Simulated_Universe"), timeout=10, headers=config.useragent)
             if response.status_code == 200:
                 data = json.loads(response.text)
+                url = None
                 for asset in data["assets"]:
                     url = FastestMirror.get_github_mirror(asset["browser_download_url"])
                     break
+                if url is None:
+                    logger.error("没有找到可用更新，请稍后再试")
+                    input("按回车键关闭窗口. . .")
+                    sys.exit(0)
                 update_handler = UpdateHandler(url, config.universe_path, "Auto_Simulated_Universe")
                 update_handler.run()
         elif config.universe_operation_mode == "source":

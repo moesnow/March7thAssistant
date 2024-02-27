@@ -175,10 +175,12 @@ class Update:
                 else:
                     shutil.unpack_archive(self.download_file_path, self.temp_path)
                 print(f"解压完成：{self.extract_folder_path}")
-                break
+                return True
             except Exception as e:
                 print(f"解压失败：{e}")
-                input("按回车键重试. . .")
+                input("按回车键重新下载. . .")
+                os.remove(self.download_file_path)
+                return False
 
     def __cover_folder(self):
         print("开始覆盖...")
@@ -211,9 +213,11 @@ class Update:
         self.__terminate_process()
         print("终止进程完成")
 
-        self.__download_file()
+        while True:
+            self.__download_file()
 
-        self.__extract_file()
+            if self.__extract_file():
+                break
 
         self.__cover_folder()
 

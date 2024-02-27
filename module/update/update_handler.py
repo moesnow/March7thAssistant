@@ -20,8 +20,10 @@ class UpdateHandler:
         self.delete_folder_path = delete_folder_path
 
     def run(self):
-        self.download_file()
-        self.extract_file()
+        while True:
+            self.download_file()
+            if self.extract_file():
+                break
         self.cover_folder()
         self.clean_up()
 
@@ -43,10 +45,12 @@ class UpdateHandler:
                 if not subprocess.run([self.exe_path, "x", self.download_file_path, f"-o{self.temp_path}", "-aoa"], check=True):
                     raise Exception
                 logger.info(_("解压完成：{path}").format(path=self.extract_folder_path))
-                break
+                return True
             except Exception as e:
                 logger.error(_("解压失败：{e}").format(e=e))
-                input(_("按回车键重试. . ."))
+                input(_("按回车键重新下载. . ."))
+                os.remove(self.download_file_path)
+                return False
 
     def cover_folder(self):
         while True:
