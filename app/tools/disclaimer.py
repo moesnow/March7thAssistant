@@ -37,7 +37,7 @@ a {
                     isClosable=True,
                     position=InfoBarPosition.TOP,
                     duration=5000,
-                    parent=self
+                    parent=self.window()
                 )
         if not result:
             config.set_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8"), True)
