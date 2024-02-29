@@ -4,6 +4,7 @@
 
 ### 新功能
 - 抽卡记录导出（支持 [SRGF](https://uigf.org/zh/standards/SRGF.html) 标准）
+- 支持忘却之庭和支援角色选择 “花火”
 ### 修复
 - 特殊情况会导致下载失败
 
