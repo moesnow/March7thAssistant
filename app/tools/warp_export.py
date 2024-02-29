@@ -121,15 +121,18 @@ class WarpExport:
             log_file_path = os.path.join(os.getenv('userprofile'), f"AppData/LocalLow{str}Player.log")
             if not os.path.exists(log_file_path):
                 continue
+            
+            try:
+                with open(log_file_path, 'r', encoding='utf-8') as file:
+                    log_content = file.read()
+                regex_pattern = r'\w:\/.*?\/StarRail_Data\/'
+                matches = re.findall(regex_pattern, log_content)
 
-            with open(log_file_path, 'r', encoding='utf-8') as file:
-                log_content = file.read()
-            regex_pattern = r'\w:\/.*?\/StarRail_Data\/'
-            matches = re.findall(regex_pattern, log_content)
-
-            for match in matches:
-                if match not in list:
-                    list.append(match)
+                for match in matches:
+                    if match not in list:
+                        list.append(match)
+            except Exception:
+                pass
 
         if len(list) > 0:
             return list
@@ -137,22 +140,25 @@ class WarpExport:
             return None
 
     def get_url_from_cache_text(self, game_path):
-        results = glob.glob(os.path.join(game_path, 'webCaches/*/Cache/Cache_Data/data_2'), recursive=True)
-        results_with_mtime = [(file, os.stat(file).st_mtime) for file in results]
-        sorted_results = sorted(results_with_mtime, key=lambda x: x[1], reverse=True)
+        try:
+            results = glob.glob(os.path.join(game_path, 'webCaches/*/Cache/Cache_Data/data_2'), recursive=True)
+            results_with_mtime = [(file, os.stat(file).st_mtime) for file in results]
+            sorted_results = sorted(results_with_mtime, key=lambda x: x[1], reverse=True)
 
-        if sorted_results:
-            latest_file_path = sorted_results[0][0]
+            if sorted_results:
+                latest_file_path = sorted_results[0][0]
 
-            with tempfile.TemporaryDirectory() as temp_dir:
-                temp_file_path = os.path.join(Path(temp_dir), Path(latest_file_path).name)
-                CopyFile(latest_file_path, temp_file_path)
-                cache_text = Path(temp_file_path).read_bytes().decode(errors="ignore")
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    temp_file_path = os.path.join(Path(temp_dir), Path(latest_file_path).name)
+                    CopyFile(latest_file_path, temp_file_path)
+                    cache_text = Path(temp_file_path).read_bytes().decode(errors="ignore")
 
-            regex_pattern = r'https.+?&auth_appid=webview_gacha&.+?authkey=.+?&game_biz=hkrpg_.+?&plat_type=pc'
-            matches = re.findall(regex_pattern, cache_text)
-            return matches[-1]
-        else:
+                regex_pattern = r'https.+?&auth_appid=webview_gacha&.+?authkey=.+?&game_biz=hkrpg_.+?&plat_type=pc'
+                matches = re.findall(regex_pattern, cache_text)
+                return matches[-1]
+            else:
+                return None
+        except Exception:
             return None
 
     def get_url(self):
