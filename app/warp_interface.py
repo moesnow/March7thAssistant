@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFileDialog
 
-from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition
+from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton
 from .common.style_sheet import StyleSheet
 from .tools.warp_export import warpExport, WarpExport
 import pyperclip
@@ -19,9 +19,9 @@ class WarpInterface(ScrollArea):
         self.titleLabel = QLabel(self.tr("抽卡记录"), self)
 
         self.updateBtn = PrimaryPushButton("更新数据", self)
-        self.importBtn = PrimaryPushButton("导入数据", self)
-        self.exportBtn = PrimaryPushButton("导出数据", self)
-        self.copyLinkBtn = PrimaryPushButton("复制链接", self)
+        self.importBtn = PushButton("导入数据", self)
+        self.exportBtn = PushButton("导出数据", self)
+        self.copyLinkBtn = PushButton("复制链接", self)
         self.warplink = None
 
         self.stateTooltip = None
@@ -75,7 +75,7 @@ class WarpInterface(ScrollArea):
 
     def __onImportBtnClicked(self):
         try:
-            path, _ = QFileDialog.getOpenFileName(self, "支持 SRGF 数据格式导入", "", "*.json")
+            path, _ = QFileDialog.getOpenFileName(self, "支持 SRGF 数据格式导入", "", "星穹铁道抽卡记录文件 (*.json)")
             if not path:
                 return
 
@@ -113,7 +113,7 @@ class WarpInterface(ScrollArea):
             with open("./warp.json", 'r', encoding='utf-8') as file:
                 config = json.load(file)
             warp = WarpExport(config)
-            path, _ = QFileDialog.getSaveFileName(self, "支持 SRGF 数据格式导出", f"SRGF_{warp.get_uid()}.json", "*.json")
+            path, _ = QFileDialog.getSaveFileName(self, "支持 SRGF 数据格式导出", f"SRGF_{warp.get_uid()}.json", "星穹铁道抽卡记录文件 (*.json)")
             if not path:
                 return
 
