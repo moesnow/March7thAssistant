@@ -20,9 +20,8 @@ from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
 
 from managers.config_manager import config
-import subprocess
+from utils.gamecontroller import GameController
 import base64
-import os
 
 
 class MainWindow(MSFluentWindow):
@@ -111,8 +110,19 @@ class MainWindow(MSFluentWindow):
             disclaimer(self)
 
     def startGame(self):
+        game = GameController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass')
         try:
-            if os.system(f"cmd /C start \"\" \"{config.game_path}\""):
+            if game.start_game():
+                InfoBar.success(
+                    title=self.tr('启动成功(＾∀＾●)'),
+                    content="",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self
+                )
+            else:
                 InfoBar.warning(
                     title=self.tr('启动失败(╥╯﹏╰╥)'),
                     content="",
@@ -122,17 +132,7 @@ class MainWindow(MSFluentWindow):
                     duration=1000,
                     parent=self
                 )
-                return False
-            InfoBar.success(
-                title=self.tr('启动成功(＾∀＾●)'),
-                content="",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-        except Exception:
+        except:
             InfoBar.warning(
                 title=self.tr('启动失败(╥╯﹏╰╥)'),
                 content="",

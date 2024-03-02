@@ -3,14 +3,13 @@ import sys
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)
          else os.path.dirname(os.path.abspath(__file__)))
 
-from tasks.version.version import Version
+from tasks.version import Version
 from managers.notify_manager import notify
 from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.ocr_manager import ocr
 from managers.translate_manager import _
-from tasks.game.game import Game
-from tasks.game.start import Start
+from tasks.game import Game
 from tasks.daily.daily import Daily
 import tasks.activity as activity
 import tasks.reward as reward
@@ -131,7 +130,7 @@ def main(action=None):
         automatic_plot()
 
     elif action == "game":
-        Start.launch_game()
+        Game.start()
 
     elif action == "notify":
         run_notify_action()

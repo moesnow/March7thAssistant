@@ -2,7 +2,7 @@ from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.screen_manager import screen
 from managers.translate_manager import _
-from tasks.base.date import Date
+from utils.date import Date
 from tasks.daily.photo import Photo
 from tasks.daily.fight import Fight
 from tasks.weekly.universe import Universe
@@ -13,7 +13,6 @@ from tasks.weekly.purefiction import PureFiction
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
 from tasks.daily.himekotry import HimekoTry
-from tasks.base.date import Date
 from tasks.weekly.echoofwar import Echoofwar
 
 

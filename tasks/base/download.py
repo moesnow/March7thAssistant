@@ -1,10 +1,10 @@
+from tqdm import tqdm
+import urllib.request
+import subprocess
+import os
 
 
 def download_with_progress(download_url, save_path):
-    from tqdm import tqdm
-    import urllib.request
-    import subprocess
-    import os
 
     aria2_path = os.path.abspath("./assets/aria2/aria2c.exe")
 
