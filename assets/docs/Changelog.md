@@ -2,6 +2,9 @@
 
 ## v2.0.5
 
+### 新功能
+- 工具箱新增帧率解锁 [#161](https://github.com/moesnow/March7thAssistant/pull/161)
+- “启用自动修改分辨率” 选项更改为 “启用自动修改分辨率并关闭自动 HDR” [#156](https://github.com/moesnow/March7thAssistant/pull/156)
 ### 修复
 - 主页三月七背景在高缩放率下模糊的问题
 
