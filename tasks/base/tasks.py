@@ -1,38 +1,11 @@
-
-def subprocess_with_timeout(command, timeout, working_directory=None, env=None):
-    import subprocess
-    process = None
-    try:
-        process = subprocess.Popen(command, cwd=working_directory, env=env)
-        process.communicate(timeout=timeout)
-        if process.returncode == 0:
-            return True
-    except subprocess.TimeoutExpired:
-        if process is not None:
-            process.terminate()
-            process.wait()
-    return False
-
-
-def subprocess_with_stdout(command):
-    import subprocess
-    try:
-        # 使用subprocess运行命令并捕获标准输出
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        # 检查命令是否成功执行
-        if result.returncode == 0:
-            # 返回标准输出的内容
-            return result.stdout.strip()
-        return None
-    except Exception:
-        return None
+from utils.command import subprocess_with_stdout
+import subprocess
+import sys
+import os
 
 
 def start_task(command):
     # 为什么 Windows 这么难用呢
-    import subprocess
-    import sys
-    import os
     # 检查是否是 PyInstaller 打包的可执行文件
     if getattr(sys, 'frozen', False):
         if subprocess_with_stdout(["where", "wt.exe"]) is not None:

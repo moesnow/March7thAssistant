@@ -8,7 +8,7 @@ from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
 from managers.config_manager import config
 
-from tasks.base.command import start_task
+from tasks.base.tasks import start_task
 from ..tools.disclaimer import disclaimer
 
 import base64

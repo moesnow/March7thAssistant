@@ -1,4 +1,4 @@
-from tasks.base.windowswitcher import WindowSwitcher
+from utils.gamecontroller import GameController
 from module.automation.screenshot import Screenshot
 from managers.config_manager import config
 from managers.logger_manager import logger
@@ -8,8 +8,9 @@ import threading
 
 
 def run_gui():
+    game = GameController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass', logger)
     try:
-        if WindowSwitcher.check_and_switch(config.game_title_name):
+        if game.switch_to_game():
             result = Screenshot.take_screenshot(config.game_title_name)
             if result:
                 root = tk.Tk()

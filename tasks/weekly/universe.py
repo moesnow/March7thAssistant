@@ -6,8 +6,8 @@ from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.power.relicset import Relicset
 from tasks.base.pythonchecker import PythonChecker
-from tasks.game.resolution import Resolution
-from tasks.base.command import subprocess_with_timeout
+from tasks.game.starrailcontroller import StarRailController
+from utils.command import subprocess_with_timeout
 import subprocess
 import sys
 import os
@@ -76,7 +76,8 @@ class Universe:
     @staticmethod
     def start(get_reward=False, nums=config.universe_count, save=True):
         logger.hr(_("准备模拟宇宙"), 0)
-        Resolution.check(config.game_title_name, 1920, 1080)
+        game = StarRailController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass', logger)
+        game.check_resolution(1920, 1080)
         if Universe.before_start():
 
             screen.change_to('main')

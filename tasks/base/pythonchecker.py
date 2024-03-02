@@ -2,8 +2,8 @@ from tasks.base.download import download_with_progress
 from managers.logger_manager import logger
 from managers.config_manager import config
 from managers.translate_manager import _
-from tasks.base.command import subprocess_with_stdout
-from tasks.base.windowswitcher import WindowSwitcher
+from utils.command import subprocess_with_stdout
+from utils.gamecontroller import GameController
 from packaging.version import parse
 import subprocess
 import tempfile
@@ -68,7 +68,8 @@ class PythonChecker:
 
         if PythonChecker.check(destination_path):
             config.set_value("python_exe_path", destination_path)
-            WindowSwitcher.check_and_switch(config.game_title_name)
+            game = GameController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass', logger)
+            game.switch_to_game()
             return
 
         logger.info(_("安装完成，请重启程序，包括图形界面"))
