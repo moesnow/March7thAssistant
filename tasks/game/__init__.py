@@ -8,6 +8,7 @@ from tasks.power.power import Power
 from utils.date import Date
 from utils.gamecontroller import GameController
 from utils.registry.star_rail_resolution import get_game_resolution, set_game_resolution
+from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
 from typing import Literal, Optional
 import time
 import logging
@@ -22,6 +23,7 @@ class StarRailController(GameController):
     def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], logger: Optional[logging.Logger] = None) -> None:
         super().__init__(game_path, process_name, window_name, window_class, logger)
         self.game_resolution = None
+        self.game_auto_hdr = None
         self.screen_resolution = pyautogui.size()
 
     def change_resolution(self, width: int, height: int):
@@ -46,6 +48,27 @@ class StarRailController(GameController):
                 self.log_debug(f"恢复游戏分辨率: {self.game_resolution[0]}x{self.game_resolution[1]} ({'全屏' if self.game_resolution[2] else '窗口'})")
         except Exception as e:
             self.log_error("写入注册表值时发生错误:", e)
+
+    def change_auto_hdr(self, status: Literal["enable", "disable", "unset"] = "unset"):
+        """通过注册表修改游戏自动 HDR 设置"""
+        status_map = {"enable": "启用", "disable": "禁用", "unset": "未设置"}
+        try:
+            self.game_auto_hdr = get_game_auto_hdr(self.game_path)
+            set_game_auto_hdr(self.game_path, status)
+            self.log_debug(f"修改游戏自动 HDR: {status_map.get(self.game_auto_hdr)} --> {status_map.get(status)}")
+        except Exception as e:
+            self.log_debug(f"修改游戏自动 HDR 设置时发生错误：{e}")
+
+    def restore_auto_hdr(self):
+        """通过注册表恢复游戏自动 HDR 设置"""
+        status_map = {"enable": "启用", "disable": "禁用", "unset": "未设置"}
+        try:
+            if self.game_auto_hdr:
+                set_game_auto_hdr(self.game_path, self.game_auto_hdr)
+            self.log_debug(f"恢复游戏自动 HDR: {status_map.get(self.game_auto_hdr)}")
+        except Exception as e:
+            self.log_debug(f"恢复游戏自动 HDR 设置时发生错误：{e}")
+
     def check_resolution(self, target_width: int, target_height: int) -> None:
         """
         检查游戏窗口的分辨率是否匹配目标分辨率。
@@ -151,6 +174,7 @@ class Game:
                 if not game.switch_to_game():
                     if config.auto_set_resolution_enable:
                         game.change_resolution(1920, 1080)
+                        game.change_auto_hdr("disable")
 
                     if not game.start_game():
                         raise Exception("启动游戏失败")
@@ -158,10 +182,12 @@ class Game:
 
                     if not wait_until(lambda: game.switch_to_game(), 60):
                         game.restore_resolution()
+                        game.restore_auto_hdr()
                         raise TimeoutError("切换到游戏超时")
 
                     time.sleep(10)
                     game.restore_resolution()
+                    game.restore_auto_hdr()
                     game.check_resolution_ratio(1920, 1080)
 
                     if not wait_until(lambda: check_and_click_enter(), 600):
