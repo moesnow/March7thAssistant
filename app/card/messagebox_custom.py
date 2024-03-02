@@ -11,6 +11,7 @@ class MessageBoxImage(MessageBox):
         super().__init__(title, content, parent)
         self.imageLabel = QLabel(parent)
         self.imageLabel.setPixmap(QPixmap(image))
+        self.imageLabel.setScaledContents(True)
 
         imageIndex = self.vBoxLayout.indexOf(self.textLayout) + 1
         self.vBoxLayout.insertWidget(imageIndex, self.imageLabel, 0, Qt.AlignCenter)
