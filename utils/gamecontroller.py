@@ -1,10 +1,10 @@
-from typing import Literal, Tuple, Optional
 import os
-import logging
 import time
+import logging
 import psutil
 import win32gui
 import ctypes
+from typing import Literal, Tuple, Optional
 
 
 class GameController:

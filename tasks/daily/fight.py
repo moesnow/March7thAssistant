@@ -5,7 +5,7 @@ from managers.translate_manager import _
 from tasks.base.base import Base
 from tasks.base.team import Team
 from tasks.base.pythonchecker import PythonChecker
-from tasks.game import StarRailController
+from tasks.game.starrailcontroller import StarRailController
 from utils.command import subprocess_with_timeout
 import subprocess
 import sys
