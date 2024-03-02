@@ -1,6 +1,6 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QRectF
-from PyQt5.QtGui import QPixmap, QPainter, QBrush, QPainterPath
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPainter, QPainterPath, QImage
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphicsDropShadowEffect
 
 from qfluentwidgets import ScrollArea, FluentIcon
@@ -10,6 +10,9 @@ from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
 
 from managers.config_manager import config
+
+from PIL import Image
+import numpy as np
 
 
 class BannerWidget(QWidget):
@@ -30,7 +33,9 @@ class BannerWidget(QWidget):
         # 将阴影效果应用于小部件
         self.galleryLabel.setGraphicsEffect(shadow)
 
-        self.banner = QPixmap('./assets/app/images/bg37.jpg')
+        self.img = Image.open("./assets/app/images/bg37.jpg")
+        self.banner = None
+        self.path = None
 
         self.linkCardView = LinkCardView(self)
 
@@ -64,25 +69,22 @@ class BannerWidget(QWidget):
         super().paintEvent(e)
         painter = QPainter(self)
         painter.setRenderHints(QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
-        painter.setPen(Qt.NoPen)
 
-        path = QPainterPath()
-        path.setFillRule(Qt.WindingFill)
-        w, h = self.width(), 200
-        path.addRoundedRect(QRectF(0, 0, w, h), 10, 10)
-        path.addRect(QRectF(0, h - 50, 50, 50))
-        path.addRect(QRectF(w - 50, 0, 50, 50))
-        path.addRect(QRectF(w - 50, h - 50, 50, 50))
-        path = path.simplified()
+        if not self.banner or not self.path:
+            image_height = self.img.width * self.height() // self.width()
+            crop_area = (0, 0, self.img.width, image_height)  # (left, upper, right, lower)
+            cropped_img = self.img.crop(crop_area)
+            img_data = np.array(cropped_img)  # Convert PIL Image to numpy array
+            height, width, channels = img_data.shape
+            bytes_per_line = channels * width
+            self.banner = QImage(img_data.data, width, height, bytes_per_line, QImage.Format_RGB888)
 
-        # Calculate the required height for maintaining image aspect ratio
-        image_height = self.width() * self.banner.height() // self.banner.width()
+            path = QPainterPath()
+            path.addRoundedRect(0, 0, width + 50, height + 50, 10, 10)  # 10 is the radius for corners
+            self.path = path.simplified()
 
-        # draw banner image with aspect ratio preservation
-        pixmap = self.banner.scaled(
-            self.width(), image_height, aspectRatioMode=Qt.KeepAspectRatio, transformMode=Qt.SmoothTransformation)
-        path.addRect(QRectF(0, h, w, self.height() - h))
-        painter.fillPath(path, QBrush(pixmap))
+        painter.setClipPath(self.path)
+        painter.drawImage(self.rect(), self.banner)
 
 
 class HomeInterface(ScrollArea):
