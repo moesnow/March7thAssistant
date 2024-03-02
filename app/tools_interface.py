@@ -1,8 +1,9 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition
 from .common.style_sheet import StyleSheet
+from utils.registry.star_rail_setting import get_game_fps, set_game_fps
 
 
 class ToolsInterface(ScrollArea):
@@ -27,6 +28,12 @@ class ToolsInterface(ScrollArea):
             self.tr("游戏截图"),
             self.tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于复制副本名称）")
         )
+        self.unlockfpsCard = PushSettingCard(
+            self.tr('解锁'),
+            FIF.SPEED_HIGH,
+            self.tr("解锁帧率"),
+            self.tr("通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（未测试国际服）")
+        )
 
         self.__initWidget()
 
@@ -49,6 +56,7 @@ class ToolsInterface(ScrollArea):
 
         self.ToolsGroup.addSettingCard(self.automaticPlotCard)
         self.ToolsGroup.addSettingCard(self.gameScreenshotCard)
+        self.ToolsGroup.addSettingCard(self.unlockfpsCard)
 
         self.ToolsGroup.titleLabel.setHidden(True)
 
@@ -70,6 +78,43 @@ class ToolsInterface(ScrollArea):
         from tasks.tools.automatic_plot import automatic_plot
         automatic_plot()
 
+    def __onUnlockfpsCardClicked(self):
+        try:
+            fps = get_game_fps()
+            if fps == 120:
+                set_game_fps(60)
+                InfoBar.success(
+                    title=self.tr('恢复60成功(＾∀＾●)'),
+                    content="",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self
+                )
+            else:
+                set_game_fps(120)
+                InfoBar.success(
+                    title=self.tr('解锁120成功(＾∀＾●)'),
+                    content="",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self
+                )
+        except:
+            InfoBar.warning(
+                title=self.tr('解锁失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+
     def __connectSignalToSlot(self):
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.automaticPlotCard.clicked.connect(self.__onAutomaticPlotCardClicked)
+        self.unlockfpsCard.clicked.connect(self.__onUnlockfpsCardClicked)

@@ -3,7 +3,7 @@ import logging
 import pyautogui
 from typing import Literal, Optional
 from utils.gamecontroller import GameController
-from utils.registry.star_rail_resolution import get_game_resolution, set_game_resolution
+from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution
 from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
 
 

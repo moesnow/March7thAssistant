@@ -5,7 +5,8 @@ import json
 # Specify the registry key path
 registry_key_path = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
 # Specify the value name
-value_name = "GraphicsSettings_PCResolution_h431323223"
+resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
+graphics_value_name = "GraphicsSettings_Model_h2986158309"
 
 
 def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
@@ -18,7 +19,7 @@ def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
     - If the registry value exists and data is valid, it returns a tuple (width, height, isFullScreen) representing the game resolution.
     - If the registry value does not exist or data is invalid, it returns None or raises ValueError.
     """
-    value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name)
+    value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name)
     if value:
         data_dict = json.loads(value.decode('utf-8').strip('\x00'))
 
@@ -49,7 +50,52 @@ def set_game_resolution(width: int, height: int, is_fullscreen: bool) -> None:
         'isFullScreen': is_fullscreen
     }
     data = (json.dumps(data_dict) + '\x00').encode('utf-8')
-    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, value_name, data, winreg.REG_BINARY)
+    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name, data, winreg.REG_BINARY)
+
+
+def get_game_fps() -> Optional[int]:
+    """
+    Return the game FPS settings from the registry value.
+
+    This function does not take any parameters.
+    """
+    value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name)
+    if value:
+        data_dict = json.loads(value.decode('utf-8').strip('\x00'))
+
+        # Validate data format
+        if 'FPS' in data_dict:
+            if isinstance(data_dict['FPS'], int):
+                return data_dict['FPS']
+            else:
+                raise ValueError("Registry data is invalid: FPS must be of type int.")
+        else:
+            raise ValueError("Registry data is missing required fields: FPS.")
+
+    return None
+
+
+def set_game_fps(fps: int) -> None:
+    """
+    Set the FPS of the game.
+
+    Parameters:
+    - fps
+    """
+    value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name)
+
+    data_dict = json.loads(value.decode('utf-8').strip('\x00'))
+
+    # Validate data format
+    if 'FPS' in data_dict:
+        if isinstance(data_dict['FPS'], int):
+            data_dict['FPS'] = fps
+            data = (json.dumps(data_dict) + '\x00').encode('utf-8')
+            write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name, data, winreg.REG_BINARY)
+        else:
+            raise ValueError("Registry data is invalid: FPS must be of type int.")
+    else:
+        raise ValueError("Registry data is missing required fields: FPS.")
 
 
 def read_registry_value(key, sub_key, value_name):
@@ -78,7 +124,7 @@ def read_registry_value(key, sub_key, value_name):
         raise Exception(f"Error reading registry value: {e}")
 
 
-def write_registry_value(key, sub_key, value_name, data, mode):
+def write_registry_value(key, sub_key, value_name, data, mode) -> None:
     """
     Write a registry value to the specified registry key.
 
