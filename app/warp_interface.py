@@ -1,7 +1,7 @@
 # coding:utf-8
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFileDialog
-
+from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton
 from .common.style_sheet import StyleSheet
 from .tools.warp_export import warpExport, WarpExport
@@ -18,10 +18,10 @@ class WarpInterface(ScrollArea):
         self.vBoxLayout = QVBoxLayout(self.view)
         self.titleLabel = QLabel(self.tr("抽卡记录"), self)
 
-        self.updateBtn = PrimaryPushButton("更新数据", self)
-        self.importBtn = PushButton("导入数据", self)
-        self.exportBtn = PushButton("导出数据", self)
-        self.copyLinkBtn = PushButton("复制链接", self)
+        self.updateBtn = PrimaryPushButton(FIF.SYNC, "更新数据", self)
+        self.importBtn = PushButton(FIF.PENCIL_INK, "导入数据", self)
+        self.exportBtn = PushButton(FIF.SAVE_COPY, "导出数据", self)
+        self.copyLinkBtn = PushButton(FIF.SHARE, "复制链接", self)
         self.warplink = None
 
         self.stateTooltip = None
@@ -38,9 +38,9 @@ class WarpInterface(ScrollArea):
     def __initWidget(self):
         self.titleLabel.move(36, 30)
         self.updateBtn.move(35, 80)
-        self.importBtn.move(125, 80)
-        self.exportBtn.move(215, 80)
-        self.copyLinkBtn.move(305, 80)
+        self.importBtn.move(150, 80)
+        self.exportBtn.move(265, 80)
+        self.copyLinkBtn.move(380, 80)
         self.copyLinkBtn.setEnabled(False)
 
         self.view.setObjectName('view')
