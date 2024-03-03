@@ -33,7 +33,6 @@ class OCR:
 
     def convert_format(self, result):
         if result['code'] != 100:
-            logger.debug(result)
             return False
         converted_result = []
 
@@ -111,8 +110,16 @@ class OCR:
                 original_str = original_str.replace(old_str, new_str, 1)
                 replaced_set.add(new_str)
 
-        logger.debug(f"OCR识别结果: {original_str}")
         modified_dict = eval(original_str)
+
+        if "data" in modified_dict and "text" in modified_dict["data"][0]:
+            print_list = []
+            for item in modified_dict["data"]:
+                print_list.append(item["text"])
+            logger.debug(f"OCR识别结果: {print_list}")
+        else:
+            logger.debug(f"OCR识别结果: {modified_dict}")
+
         return modified_dict
 
     def recognize_single_line(self, image, blacklist=None):

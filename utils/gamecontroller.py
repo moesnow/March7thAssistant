@@ -1,14 +1,14 @@
 import os
 import time
-import logging
 import psutil
 import win32gui
 import ctypes
 from typing import Literal, Tuple, Optional
+from module.logger.logger import Logger
 
 
 class GameController:
-    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], logger: Optional[Logger] = None) -> None:
         self.game_path = os.path.normpath(game_path)
         self.process_name = process_name
         self.window_name = window_name

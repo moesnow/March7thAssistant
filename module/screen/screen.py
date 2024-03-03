@@ -150,7 +150,7 @@ class Screen:
 
             if self.current_screen:
                 logger.info(_("当前界面：{screen_name}").format(screen_name=self.green + self.get_name(self.current_screen) + self.reset))
-                logger.debug(_("相似度：{threshold}").format(threshold=self.current_screen_threshold))
+                logger.debug(_("相似度：{threshold}").format(threshold=f"{self.current_screen_threshold:.2f}"))
                 return True
 
             if autotry:

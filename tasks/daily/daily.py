@@ -13,6 +13,7 @@ from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
 from tasks.daily.himekotry import HimekoTry
 from tasks.weekly.echoofwar import Echoofwar
+from utils.color import red, green, yellow
 
 
 class Daily:
@@ -118,15 +119,13 @@ class Daily:
                 "完成1次「模拟宇宙」": lambda: Universe.run_daily(),
             }
 
-            logger.hr(_("今日实训"), 2)
+            logger.hr(f"今日实训", 2)
             count = 0
             for key, value in config.daily_tasks.items():
-                state = "\033[91m" + _("待完成") + \
-                    "\033[0m" if value else "\033[92m" + _("已完成") + "\033[0m"
+                state = red("待完成") if value else green("已完成")
                 logger.info(f"{key}: {state}")
                 count = count + 1 if not value else count
-            logger.info(_("已完成：{count_total}").format(
-                count_total=f"\033[93m{count}/{len(config.daily_tasks)}\033[0m"))
+            logger.info(f"已完成：{yellow(f'{count}/{len(config.daily_tasks)}')}")
 
             for task_name, task_function in task_functions.items():
                 if task_name in config.daily_tasks and config.daily_tasks[task_name]:

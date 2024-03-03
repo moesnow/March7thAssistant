@@ -121,7 +121,7 @@ class Automation:
             # screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
             max_val, max_loc = self.scale_and_match_template(screenshot, template, threshold, scale_range, mask)
-            logger.debug(_("目标图片：{target} 相似度：{max_val}").format(target=target, max_val=max_val))
+            logger.debug(_("目标图片：{target} 相似度：{max_val}").format(target=target.replace("./assets/images/", ""), max_val=f"{max_val:.2f}"))
             if not math.isinf(max_val) and (threshold is None or max_val >= threshold):
                 channels, width, height = template.shape[::-1]
                 if relative == False:
@@ -200,7 +200,7 @@ class Automation:
                 if ((include is None or not include) and text in target) or (include and any(t in text for t in target)):
                     self.matched_text = next((t for t in target if t in text), None)
                     logger.debug(_("目标文字：{target} 相似度：{max_val}").format(
-                        target=self.matched_text, max_val=box[1][1]))
+                        target=self.matched_text, max_val=f"{box[1][1]:.2f}"))
                     if relative == False:
                         top_left = (int(box[0][0][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
                                     int(box[0][0][1] / self.screenshot_scale_factor) + self.screenshot_pos[1])
@@ -230,7 +230,7 @@ class Automation:
                 text = box[1][0]
                 if ((include is None or not include) and source == text) or (include and source in text):
                     logger.debug(_("目标文字：{source} 相似度：{max_val}").format(
-                        source=source, max_val=box[1][1]))
+                        source=source, max_val=f"{box[1][1]:.2f}"))
                     source_pos = box[0][0]
                     break
         elif source_type == 'image':
@@ -258,7 +258,7 @@ class Automation:
                 distance = math.sqrt((pos[0][0] - source_pos[0]) **
                                      2 + (pos[0][1] - source_pos[1]) ** 2)
                 logger.debug(_("目标文字：{target} 相似度：{max_val} 距离：{min_distance}").format(
-                    target=matched_text, max_val=box[1][1], min_distance=distance))
+                    target=matched_text, max_val=f"{box[1][1]:.2f}", min_distance=distance))
                 if distance < min_distance:
                     min_target = matched_text
                     min_distance = distance
