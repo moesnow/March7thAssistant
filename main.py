@@ -13,11 +13,10 @@ from tasks.game import Game
 from tasks.daily.daily import Daily
 import tasks.activity as activity
 import tasks.reward as reward
+import tasks.challenge as challenge
 from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
-from tasks.weekly.forgottenhall import ForgottenHall
-from tasks.weekly.purefiction import PureFiction
 from tasks.tools.game_screenshot import game_screenshot
 from tasks.tools.automatic_plot import automatic_plot
 import atexit
@@ -55,9 +54,9 @@ def run_sub_task(action):
     elif action == "universe":
         Universe.start()
     elif action == "forgottenhall":
-        ForgottenHall.start()
+        challenge.start("memoryofchaos")
     elif action == "purefiction":
-        PureFiction.start()
+        challenge.start("purefiction")
     Game.stop(False)
 
 

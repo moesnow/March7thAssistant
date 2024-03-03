@@ -8,8 +8,7 @@ from tasks.daily.fight import Fight
 from tasks.weekly.universe import Universe
 import tasks.reward as reward
 from tasks.daily.synthesis import Synthesis
-from tasks.weekly.forgottenhall import ForgottenHall
-from tasks.weekly.purefiction import PureFiction
+import tasks.challenge as challenge
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
 from tasks.daily.himekotry import HimekoTry
@@ -63,7 +62,7 @@ class Daily:
 
         if Date.is_next_mon_x_am(config.forgottenhall_timestamp, config.refresh_hour):
             if config.forgottenhall_enable:
-                ForgottenHall.start()
+                challenge.start("memoryofchaos")
             else:
                 logger.info(_("忘却之庭未开启"))
         else:
@@ -71,7 +70,7 @@ class Daily:
 
         if Date.is_next_mon_x_am(config.purefiction_timestamp, config.refresh_hour):
             if config.purefiction_enable:
-                PureFiction.start()
+                challenge.start("purefiction")
             else:
                 logger.info(_("虚构叙事未开启"))
         else:
@@ -109,12 +108,12 @@ class Daily:
                 "完成1次「历战余响」": lambda: Power.customize_run("历战余响", config.instance_names["历战余响"], 30, 1),
                 "累计施放2次秘技": lambda: HimekoTry.technique(),
                 "累计击碎3个可破坏物": lambda: HimekoTry.item(),
-                "完成1次「忘却之庭」": lambda: ForgottenHall.finish_forgottenhall(),
-                "单场战斗中，触发3种不同属性的弱点击破": lambda: ForgottenHall.weakness_3(),
-                "累计触发弱点击破效果5次": lambda: ForgottenHall.weakness_5(),
-                "累计消灭20个敌人": lambda: ForgottenHall.enemy_20(),
-                "利用弱点进入战斗并获胜3次": lambda: ForgottenHall.weakness_to_fight(),
-                "施放终结技造成制胜一击1次": lambda: ForgottenHall.ultimate(),
+                "完成1次「忘却之庭」": lambda: challenge.start_memory_one(1),
+                "单场战斗中，触发3种不同属性的弱点击破": lambda: challenge.start_memory_one(1),
+                "累计触发弱点击破效果5次": lambda: challenge.start_memory_one(1),
+                "累计消灭20个敌人": lambda: challenge.start_memory_one(2),
+                "利用弱点进入战斗并获胜3次": lambda: challenge.start_memory_one(3),
+                "施放终结技造成制胜一击1次": lambda: challenge.start_memory_one(1),
                 "通关「模拟宇宙」（任意世界）的1个区域": lambda: Universe.run_daily(),
                 "完成1次「模拟宇宙」": lambda: Universe.run_daily(),
             }

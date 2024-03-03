@@ -2,7 +2,6 @@ from managers.logger_manager import logger
 from managers.screen_manager import screen
 from managers.config_manager import config
 from managers.automation_manager import auto
-from managers.translate_manager import _
 from .mail import Mail
 from .assist import Assist
 from .dispatch import Dispatch
@@ -20,26 +19,26 @@ class RewardManager:
         self.crop = (1263.0 / 1920, 52.0 / 1080, 642.0 / 1920, 982.0 / 1080)
 
     def check_and_collect_rewards(self):
-        logger.hr(_("开始领奖励"), 0)
+        logger.hr("开始领奖励", 0)
 
         reward_mapping = {
-            "mail": (self.mail, "./assets/images/share/menu/mail_reward.png", 0.9),
-            "assist": (self.assist, "./assets/images/share/menu/assist_reward.png", 0.9),
-            "dispatch": (self.dispatch, "./assets/images/share/menu/dispatch_reward.png", 0.95),
-            "quest": (self.quest, "./assets/images/share/menu/quest_reward.png", 0.95),
-            "srpass": (self.srpass, "./assets/images/share/menu/pass_reward.png", 0.95)
+            self.mail: ("./assets/images/share/menu/mail_reward.png", 0.9),
+            self.assist: ("./assets/images/share/menu/assist_reward.png", 0.9),
+            self.dispatch: ("./assets/images/share/menu/dispatch_reward.png", 0.95),
+            self.quest: ("./assets/images/share/menu/quest_reward.png", 0.95),
+            self.srpass: ("./assets/images/share/menu/pass_reward.png", 0.95)
         }
 
         flag = False
-        for reward, (instance, image_path, confidence) in reward_mapping.items():
+        for instance, (image_path, confidence) in reward_mapping.items():
             if self._find_reward(image_path, confidence):
                 flag = True
                 instance.start()
 
         if not flag:
-            logger.info(_("未检测到任何奖励"))
+            logger.info("未检测到任何奖励")
 
-        logger.hr(_("完成"), 2)
+        logger.hr("完成", 2)
 
     def _find_reward(self, image_path, confidence):
         screen.change_to('menu')
@@ -48,7 +47,7 @@ class RewardManager:
 
 def start():
     if not config.reward_enable:
-        logger.info(_("领奖励未开启"))
+        logger.info("领奖励未开启")
         return
 
     reward_manager = RewardManager()
