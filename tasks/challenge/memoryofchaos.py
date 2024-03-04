@@ -56,7 +56,7 @@ class MemoryOfChaos(BaseChallenge):
             # 查找关卡
             top_left = self.find_level(level)
             if not top_left:
-                logger.error("查找第{level}层失败")
+                logger.error(f"查找第{level}层失败")
                 break
 
             # 判断星数

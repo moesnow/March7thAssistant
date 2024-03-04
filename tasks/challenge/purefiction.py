@@ -48,6 +48,11 @@ class PureFiction(BaseChallenge):
         if auto.click_element("./assets/images/purefiction/start_story.png", "image", 0.7):
             auto.click_element(self.name, "text", max_retries=10, include=True, action="move", crop=(0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080))
 
+        time.sleep(2)
+        if auto.find_element("选择最高解锁关卡", "text", include=True):
+            result = auto.find_element("03", "text")
+            auto.click_element_with_pos((result[0], result[0]))
+
         return True
 
     def save_timestamp_into_config(self):
@@ -59,7 +64,7 @@ class PureFiction(BaseChallenge):
             # 查找关卡
             top_left = self.find_level(level)
             if not top_left:
-                logger.error("查找第{level}层失败")
+                logger.error(f"查找第{level}层失败")
                 break
 
             # 判断星数
