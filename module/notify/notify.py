@@ -53,6 +53,7 @@ class Notify:
                 return
 
             if notifier_name == "gotify":
+                content = '.' if content is None or content == '' else content
                 self._send_notification_by_gotify(title, content)
                 return
 
