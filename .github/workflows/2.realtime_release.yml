@@ -1,4 +1,6 @@
 name: Build realtime release
+
+# 触发条件：手动触发或推送触发
 on:
   workflow_dispatch:
   pull_request:
@@ -7,52 +9,63 @@ on:
   push:
     branches:
       - main
+      - dev
     paths:
       - '**.py'
+
+# 权限设置：需要写入仓库内容的权限
 permissions:
   contents: write
+
 jobs:
   build:
     name: Build
     runs-on: windows-latest
+
     steps:
+      # 步骤1：签出代码
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           submodules: 'false'
 
+      # 步骤2：设置Python环境
       - name: Set up python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11.7'
+          python-version: '3.11'
           cache: 'pip'
 
+      # 步骤3：安装依赖
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
 
+      # 步骤4：生成程序
       - name: Generate program
         run: |
           pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
           pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --uac-admin -n "March7th Launcher" app.py -y -w
           pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Update.ico -n "Update" update.py -y
 
+      # 步骤5：移动资源到dist目录
       - name: Move assets to dist directory
         run: |
-          xcopy /E /Y ".\dist\March7th Assistant\*" ".\dist\March7thAssistant\"
-          xcopy /E /Y ".\dist\March7th Launcher\*" ".\dist\March7thAssistant\"
-          xcopy /E /I /Y .\assets\ .\dist\March7thAssistant\assets\
-          xcopy /Y .\README.md .\dist\March7thAssistant\
+          Copy-Item -Path ".\dist\March7th Assistant\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
+          Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
 
+      # 步骤6：创建压缩包
       - name: Create zip archive
         run: |
-          ren .\dist\March7thAssistant March7thAssistant_${{ github.run_number }}
+          Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_${{ github.run_number }}
           powershell Compress-Archive -Path .\dist\March7thAssistant_${{ github.run_number }}\ -DestinationPath .\dist\March7thAssistant_${{ github.run_number }}.zip -Force
 
+      # 步骤7：上传压缩包
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
           name: March7thAssistant_${{ github.run_number }}.zip
           path: ./dist/March7thAssistant_${{ github.run_number }}.zip
-
