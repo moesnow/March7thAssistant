@@ -11,9 +11,8 @@ import requests
 import psutil
 from urllib.request import urlopen
 from urllib.error import URLError
-from urllib.parse import urlparse
 from utils.color import red, green
-from module.logger.logger import Logger
+from module.logger import Logger
 
 
 class Updater:

@@ -149,10 +149,7 @@ if __name__ == "__main__":
         try:
             pyuac.runAsAdmin(wait=False)
             sys.exit(0)
-
         except Exception:
-            logger.error(_("管理员权限获取失败"))
-            input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
     else:
         try:

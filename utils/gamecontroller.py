@@ -4,7 +4,7 @@ import psutil
 import win32gui
 import ctypes
 from typing import Literal, Tuple, Optional
-from module.logger.logger import Logger
+from module.logger import Logger
 
 
 class GameController:
