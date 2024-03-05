@@ -5,6 +5,7 @@ from module.notify import Notify
 from module.notify.onepush import OnepushNotifier
 from module.notify.winotify import WinotifyNotifier
 from module.notify.telegram import TelegramNotifier
+from module.notify.onebot import OnebotNotifier
 from module.notify.smtp import SMTPNotifier
 from module.notify.gocqhttp import GocqhttpNotifier
 from module.notify.custom import CustomNotifier
@@ -15,6 +16,7 @@ class NotifierFactory:
     notifier_classes = {
         "winotify": WinotifyNotifier,
         "telegram": TelegramNotifier,
+        "onebot": OnebotNotifier,
         "smtp": SMTPNotifier,
         "gocqhttp": GocqhttpNotifier,
         "custom": CustomNotifier,

@@ -24,11 +24,7 @@ A：是的，如果需要后台运行，请尝试 [远程本地多用户桌面](
 
 ### Q：添加自定义通知的方式
 
-A：在现有的 config.yaml 里面添加，仿造格式 "notify\_+名字+\_enable"，参数是 "notify\_+名字+\_+参数"
-
-更多推送查看下面的链接仿照格式配置即可
-
-[https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-[CN]](https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-[CN])
+A：图形界面内只支持启用`Windows原生通知`，需要其他通知请在 `config.yaml` 中开启。
 
 ### Q：模拟宇宙能修改第几个世界、角色、命途以及难度吗？
 
