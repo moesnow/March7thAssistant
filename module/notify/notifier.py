@@ -1,5 +1,5 @@
-from typing import Dict, Any, Optional
 import io
+from typing import Dict, Any, Optional
 from module.logger import Logger
 
 

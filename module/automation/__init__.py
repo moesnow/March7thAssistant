@@ -326,6 +326,7 @@ class Automation(metaclass=SingletonMeta):
         :param source: 查找参照物，用于距离最小化查找。
         :param source_type: 查找参照物的类型。
         :param pixel_bgr: 颜色查找时的BGR值。
+        :param position: 查找方位，'top_left', 'top_right', 'bottom_left', 或 'bottom_right'。
         :return: 查找到的元素位置，或者在图像计数查找时返回计数。
         """
         take_screenshot = take_screenshot and need_ocr
