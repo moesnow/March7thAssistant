@@ -45,7 +45,7 @@ class ImageUtils:
         """
         读取模板图片，并根据需要生成掩码。
         :param target: 目标图片路径。
-        :return: 模板图片，掩码（如果有透明通道）。
+        :return: 掩码（如果有透明通道）。
         """
         template = cv2.imread(target, cv2.IMREAD_UNCHANGED)  # 保留图片的透明通道
         if template is None:

@@ -68,7 +68,7 @@ class Screen(metaclass=SingletonMeta):
         """
         处理自动重试逻辑，包括按ESC键和处理特定的异常情况。
         """
-        self.logger.warning("未识别出任何界面，尝试按ESC键清理屏幕后重试")
+        self.logger.warning("未识别出任何界面，请确保游戏画面干净，按ESC后重试")
         auto.press_key("esc")
         time.sleep(2)  # 等待屏幕变化
 
@@ -220,6 +220,7 @@ class Screen(metaclass=SingletonMeta):
         for _ in range(20):
             self.logger.debug(f"等待：{self.get_name(next_screen)}")
             if self.check_screen(next_screen):
+                self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
                 break
             time.sleep(self.wait_screen_change_time)
         else:
@@ -243,10 +244,11 @@ class Screen(metaclass=SingletonMeta):
         沿着找到的路径导航，执行切换操作
         """
         count = len(path) - 1
-        for i in range(count):
+        if count:
             self.logger.info(f"当前界面：{green(self.get_name(self.current_screen))}")
             self.logger.debug(f"相似度：{self.current_screen_threshold:.2f}")
-            self.switch_screen(path[i], path[i + 1], max_recursion)
+            for i in range(count):
+                self.switch_screen(path[i], path[i + 1], max_recursion)
 
     def change_to(self, target_screen, max_recursion=2):
         """

@@ -88,6 +88,7 @@ class Game:
                         if program_path is not None and program_path != config.game_path:
                             config.set_value("game_path", program_path)
                             logger.info("游戏路径更新成功：{program_path}")
+                    time.sleep(1)
 
                 if not wait_until(lambda: screen.get_current_screen(), 180):
                     raise TimeoutError("获取当前界面超时")
