@@ -13,4 +13,4 @@ class Base:
         image_io = BytesIO()
         auto.take_screenshot()
         auto.screenshot.save(image_io, format='JPEG')
-        notify.notify(message, "", image_io)
+        notify.notify(message, image_io)

@@ -93,7 +93,7 @@ def run_notify_action():
 
     image_io = BytesIO()
     Image.open(IMAGE_PATH).save(image_io, format='JPEG')
-    notify.notify(_("三月七小助手|･ω･)"), _("这是一条测试消息"), image_io)
+    notify.notify("这是一条测试消息", image_io)
 
     input(_("按回车键关闭窗口. . ."))
     sys.exit(0)
@@ -162,7 +162,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
         except Exception as e:
-            logger.error(_("发生错误: {e}").format(e=e))
-            notify.notify(_("发生错误: {e}").format(e=e))
-            input(_("按回车键关闭窗口. . ."))
+            logger.error(f"发生错误: {e}")
+            notify.notify(f"发生错误: {e}")
+            input("按回车键关闭窗口. . .")
             sys.exit(1)

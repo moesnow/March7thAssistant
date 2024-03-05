@@ -25,7 +25,7 @@ class Version:
                     data = response.json()
                 version = data["tag_name"]
                 if parse(version.lstrip('v')) > parse(config.version.lstrip('v')):
-                    notify.notify(_("发现新版本：{v}").format(v=version))
+                    notify.notify(f"发现新版本：{version}")
                     logger.info(_("发现新版本：{v0}  ——→  {v}").format(v0=config.version, v=version))
                     logger.info(data["html_url"])
                 else:

@@ -14,6 +14,9 @@ from managers.translate_manager import _
 
 
 class Automation(metaclass=SingletonMeta):
+    """
+    自动化管理类
+    """
 
     def __init__(self, window_title, logger: Optional[Logger] = None):
         self.window_title = window_title
