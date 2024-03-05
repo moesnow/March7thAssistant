@@ -174,23 +174,21 @@ class Instance:
         return instance_name
 
     @staticmethod
-    def wait_fight(num):
-        logger.info(_("进入战斗"))
-        time.sleep(2)
+    def wait_fight(num, timeout=1800):
+        logger.info("进入战斗")
+        time.sleep(5)
 
-        def check_fight():
+        start_time = time.time()
+        while time.time() - start_time < timeout:
             if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):
+                logger.info("战斗完成")
+                logger.info(f"第{num}次副本完成")
                 return True
-
             elif config.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
-                logger.info(_("尝试开启自动战斗"))
+                logger.info("尝试开启自动战斗")
                 auto.press_key("v")
 
-            return False
+            time.sleep(2)
 
-        if not auto.retry_with_timeout(lambda: check_fight(), 30 * 60, 1):
-            logger.error(_("战斗超时"))
-            raise RuntimeError(_("战斗超时"))
-
-        logger.info(_("战斗完成"))
-        logger.info(_("第{num}次副本完成").format(num=num))
+        logger.error("战斗超时")
+        raise RuntimeError("战斗超时")
