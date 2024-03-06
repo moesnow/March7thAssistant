@@ -71,13 +71,14 @@ class Screen(metaclass=SingletonMeta):
         auto.press_key("esc")
         time.sleep(2)  # 等待屏幕变化
 
+        auto.take_screenshot()
         # 处理与服务器断开连接的异常情况
-        if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9):
+        if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
             time.sleep(20)
 
         # 处理登录异常情况
-        if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9):
+        if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
             time.sleep(20)
 
