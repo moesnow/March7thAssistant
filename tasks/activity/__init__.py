@@ -1,8 +1,8 @@
-from managers.logger_manager import logger
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.ocr_manager import ocr
-from managers.config_manager import config
+from managers.logger import logger
+from managers.screen import screen
+from managers.automation import auto
+from managers.ocr import ocr
+from managers.config import config
 from .checkInactivity import CheckInActivity
 from .gardenofplenty import GardenOfPlenty
 from .realmofthestrange import RealmOfTheStrange
@@ -44,8 +44,8 @@ class ActivityManager:
 
     def _get_activity_names(self):
         screen.change_to('activity')
-        auto.take_screenshot(crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080))
-        result = ocr.recognize_multi_lines(auto.screenshot)
+        screenshot, _, _ = auto.take_screenshot(crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080))
+        result = ocr.recognize_multi_lines(screenshot)
         if not result:
             return []
 

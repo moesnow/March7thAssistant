@@ -8,10 +8,10 @@ import pyuac
 import atexit
 import base64
 
-from managers.config_manager import config
-from managers.logger_manager import logger
-from managers.notify_manager import notify
-from managers.ocr_manager import ocr
+from managers.config import config
+from managers.logger import logger
+from managers.notify import notify
+from managers.ocr import ocr
 
 import tasks.activity as activity
 import tasks.reward as reward

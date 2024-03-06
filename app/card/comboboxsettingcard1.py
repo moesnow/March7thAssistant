@@ -3,7 +3,7 @@ from typing import Union
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 
-from managers.config_manager import config
+from managers.config import config
 
 
 class ComboBoxSettingCard1(SettingCard):

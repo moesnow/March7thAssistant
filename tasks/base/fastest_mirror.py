@@ -1,8 +1,7 @@
-from managers.config_manager import config
-from managers.translate_manager import _
-from urllib.parse import urlparse
-import requests
 import time
+import requests
+import concurrent.futures
+from managers.config import config
 
 
 class FastestMirror:
@@ -12,7 +11,7 @@ class FastestMirror:
         #     download_url,
         #     f"https://github.kotori.top/{download_url}",
         # ]
-        # return FastestMirror.find_fastest_mirror(mirror_urls, 10)
+        # return FastestMirror.find_fastest_mirror(mirror_urls, 5)
         return f"https://github.kotori.top/{download_url}"
 
     @staticmethod
@@ -34,32 +33,20 @@ class FastestMirror:
 
     @staticmethod
     def find_fastest_mirror(mirror_urls, timeout=5):
-        # from managers.logger_manager import logger
-        import concurrent.futures
-
+        """测速并找到最快的镜像。"""
         def check_mirror(mirror_url):
             try:
                 start_time = time.time()
                 response = requests.head(mirror_url, timeout=timeout, allow_redirects=True)
                 end_time = time.time()
                 if response.status_code == 200:
-                    response_time = end_time - start_time
-                    # logger.debug(_("镜像: {mirror} 响应时间: {time}").format(mirror=urlparse(mirror_url).netloc, time=response_time))
-                    return mirror_url
+                    return mirror_url, end_time - start_time
             except Exception:
                 pass
-            return None
+            return None, None
 
-        # logger.info(_("开始测速"))
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            future_to_mirror = {executor.submit(check_mirror, mirror_url): mirror_url for mirror_url in mirror_urls}
+            futures = [executor.submit(check_mirror, url) for url in mirror_urls]
+            fastest_mirror, _ = min((future.result() for future in concurrent.futures.as_completed(futures)), key=lambda x: (x[1] is not None, x[1]), default=(None, None))
 
-            for future in concurrent.futures.as_completed(future_to_mirror):
-                result = future.result()
-                if result:
-                    executor.shutdown()
-                    # logger.info(_("最快的镜像为: {mirror}").format(mirror=urlparse(result).netloc))
-                    return result
-
-        # logger.warning(_("测速失败，使用默认镜像：{mirror}").format(mirror=urlparse(mirror_urls[0]).netloc))
-        return mirror_urls[0]
+        return fastest_mirror if fastest_mirror else mirror_urls[0]

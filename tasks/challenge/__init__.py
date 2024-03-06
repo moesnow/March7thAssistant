@@ -2,7 +2,7 @@ from .memoryofchaos import MemoryOfChaos
 from .memoryone import MemoryOne
 from .purefiction import PureFiction
 from typing import Literal
-from managers.config_manager import config
+from managers.config import config
 
 
 class ChallengeManager:

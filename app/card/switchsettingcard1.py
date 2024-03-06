@@ -3,7 +3,7 @@ from typing import Union
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 
-from managers.config_manager import config
+from managers.config import config
 
 
 class SwitchSettingCard1(SettingCard):

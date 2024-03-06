@@ -1,6 +1,6 @@
-from managers.automation_manager import auto
-from managers.logger_manager import logger
-from managers.screen_manager import screen
+from managers.automation import auto
+from managers.logger import logger
+from managers.screen import screen
 import time
 
 

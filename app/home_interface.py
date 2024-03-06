@@ -9,7 +9,7 @@ from .common.style_sheet import StyleSheet
 from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
 
-from managers.config_manager import config
+from managers.config import config
 
 from PIL import Image
 import numpy as np

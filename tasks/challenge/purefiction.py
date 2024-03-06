@@ -2,10 +2,10 @@ import time
 from tasks.base.base import Base
 from .basechallenge import BaseChallenge
 from module.automation.screenshot import Screenshot
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.config_manager import config
-from managers.logger_manager import logger
+from managers.screen import screen
+from managers.automation import auto
+from managers.config import config
+from managers.logger import logger
 
 
 class PureFiction(BaseChallenge):

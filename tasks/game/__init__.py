@@ -8,12 +8,12 @@ from .starrailcontroller import StarRailController
 
 from utils.date import Date
 from tasks.power.power import Power
-from managers.logger_manager import logger
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.config_manager import config
-from managers.notify_manager import notify
-from managers.ocr_manager import ocr
+from managers.logger import logger
+from managers.screen import screen
+from managers.automation import auto
+from managers.config import config
+from managers.notify import notify
+from managers.ocr import ocr
 
 
 class Game:

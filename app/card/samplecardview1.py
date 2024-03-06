@@ -6,7 +6,7 @@ from qfluentwidgets import RoundMenu, Action, IconWidget, TextWrap, FlowLayout, 
 from qfluentwidgets import FluentIcon as FIF
 from ..common.signal_bus import signalBus
 from ..common.style_sheet import StyleSheet
-from managers.config_manager import config
+from managers.config import config
 
 from tasks.base.tasks import start_task
 from ..tools.disclaimer import disclaimer

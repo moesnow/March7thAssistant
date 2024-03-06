@@ -1,8 +1,7 @@
 import time
-from managers.automation_manager import auto
-from managers.config_manager import config
-from managers.logger_manager import logger
-from managers.translate_manager import _
+from managers.automation import auto
+from managers.config import config
+from managers.logger import logger
 from .rewardtemplate import RewardTemplate
 
 
@@ -18,7 +17,7 @@ class Dispatch(RewardTemplate):
 
     def _perform_dispatches(self):
         for i in range(4):
-            logger.info(_("正在进行第{number}次委托").format(number=i + 1))
+            logger.info(f"正在进行第{i + 1}次委托")
 
             if not self.perform_dispatch_and_check(crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080)):
                 return
@@ -32,7 +31,7 @@ class Dispatch(RewardTemplate):
 
     def perform_dispatch_and_check(self, crop):
         if not self._click_complete_dispatch(crop):
-            logger.warning(_("未检测到已完成的委托"))
+            logger.warning("未检测到已完成的委托")
             return False
         time.sleep(0.5)
         return True

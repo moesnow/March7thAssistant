@@ -29,8 +29,8 @@ class Updater:
         os.makedirs(self.temp_path, exist_ok=True)
         self.download_url = download_url
         self.cover_folder_path = os.path.abspath("./")
-        self.exe_path = os.path.abspath("./assets/7z/7za.exe")
-        self.aria2_path = os.path.abspath("./assets/aria2/aria2c.exe")
+        self.exe_path = os.path.abspath("./assets/binary/7za.exe")
+        self.aria2_path = os.path.abspath("./assets/binary/aria2c.exe")
         self.delete_folder_path = os.path.join("./3rdparty/Fhoe-Rail", "map")
 
         self.logger.hr("获取下载链接", 0)

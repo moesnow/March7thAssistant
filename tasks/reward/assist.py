@@ -1,5 +1,4 @@
-from managers.automation_manager import auto
-from managers.translate_manager import _
+from managers.automation import auto
 from .rewardtemplate import RewardTemplate
 
 

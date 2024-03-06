@@ -7,8 +7,7 @@ from utils.color import green
 from utils.singleton import SingletonMeta
 from module.logger import Logger
 from typing import Optional
-from managers.automation_manager import auto
-from managers.translate_manager import _
+from managers.automation import auto
 
 
 class Screen(metaclass=SingletonMeta):

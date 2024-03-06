@@ -9,7 +9,7 @@ from .card.comboboxsettingcard2 import ComboBoxSettingCard2
 from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
-from managers.config_manager import config
+from managers.config import config
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
 import os

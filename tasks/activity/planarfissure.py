@@ -1,4 +1,3 @@
-from managers.translate_manager import _
 from tasks.power.power import Power
 from .doubleactivity import DoubleActivity
 

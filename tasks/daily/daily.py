@@ -1,7 +1,6 @@
-from managers.logger_manager import logger
-from managers.config_manager import config
-from managers.screen_manager import screen
-from managers.translate_manager import _
+from managers.logger import logger
+from managers.config import config
+from managers.screen import screen
 from utils.date import Date
 from tasks.daily.photo import Photo
 from tasks.daily.fight import Fight
@@ -27,9 +26,9 @@ class Daily:
             if config.echo_of_war_enable:
                 Echoofwar.start()
             else:
-                logger.info(_("历战余响未开启"))
+                logger.info("历战余响未开启")
         else:
-            logger.info(_("历战余响尚未刷新"))
+            logger.info("历战余响尚未刷新")
 
         Power.run()
 
@@ -37,9 +36,9 @@ class Daily:
             if config.fight_enable:
                 Fight.start()
             else:
-                logger.info(_("锄大地未开启"))
+                logger.info("锄大地未开启")
         else:
-            logger.info(_("锄大地尚未刷新"))
+            logger.info("锄大地尚未刷新")
 
         if config.universe_frequency == "weekly":
             if Date.is_next_mon_x_am(config.universe_timestamp, config.refresh_hour):
@@ -49,39 +48,39 @@ class Daily:
                     Universe.start(get_reward=True)
                     Power.run()
                 else:
-                    logger.info(_("模拟宇宙未开启"))
+                    logger.info("模拟宇宙未开启")
             else:
-                logger.info(_("模拟宇宙尚未刷新"))
+                logger.info("模拟宇宙尚未刷新")
         elif config.universe_frequency == "daily":
             if Date.is_next_x_am(config.universe_timestamp, config.refresh_hour):
                 if config.universe_enable:
                     Universe.start(get_reward=True)
                 else:
-                    logger.info(_("模拟宇宙未开启"))
+                    logger.info("模拟宇宙未开启")
             else:
-                logger.info(_("模拟宇宙尚未刷新"))
+                logger.info("模拟宇宙尚未刷新")
 
         if Date.is_next_mon_x_am(config.forgottenhall_timestamp, config.refresh_hour):
             if config.forgottenhall_enable:
                 challenge.start("memoryofchaos")
             else:
-                logger.info(_("忘却之庭未开启"))
+                logger.info("忘却之庭未开启")
         else:
-            logger.info(_("忘却之庭尚未刷新"))
+            logger.info("忘却之庭尚未刷新")
 
         if Date.is_next_mon_x_am(config.purefiction_timestamp, config.refresh_hour):
             if config.purefiction_enable:
                 challenge.start("purefiction")
             else:
-                logger.info(_("虚构叙事未开启"))
+                logger.info("虚构叙事未开启")
         else:
-            logger.info(_("虚构叙事尚未刷新"))
+            logger.info("虚构叙事尚未刷新")
 
         Power.run()
 
     @staticmethod
     def run():
-        logger.hr(_("开始日常任务"), 0)
+        logger.hr("开始日常任务", 0)
 
         if Date.is_next_x_am(config.last_run_timestamp, config.refresh_hour):
             screen.change_to("guide2")
@@ -92,7 +91,7 @@ class Daily:
             config.set_value("daily_tasks", tasks.daily_tasks)
             config.save_timestamp("last_run_timestamp")
         else:
-            logger.info(_("日常任务尚未刷新"))
+            logger.info("日常任务尚未刷新")
 
         if len(config.daily_tasks) > 0:
             task_functions = {
@@ -133,4 +132,4 @@ class Daily:
                         config.daily_tasks[task_name] = False
                         config.save_config()
 
-        logger.hr(_("完成"), 2)
+        logger.hr("完成", 2)

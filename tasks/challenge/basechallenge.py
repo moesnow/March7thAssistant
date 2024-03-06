@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from managers.automation_manager import auto
-from managers.logger_manager import logger
+from managers.automation import auto
+from managers.logger import logger
 import time
 
 

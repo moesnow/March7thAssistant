@@ -1,6 +1,6 @@
-from managers.config_manager import config
-from managers.screen_manager import screen
-from managers.automation_manager import auto
+from managers.config import config
+from managers.screen import screen
+from managers.automation import auto
 import time
 
 

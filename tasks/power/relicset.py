@@ -1,7 +1,6 @@
-from managers.automation_manager import auto
-from managers.screen_manager import screen
-from managers.logger_manager import logger
-from managers.translate_manager import _
+from managers.automation import auto
+from managers.screen import screen
+from managers.logger import logger
 import time
 
 
@@ -17,7 +16,7 @@ class Relicset:
     @staticmethod
     def run():
 
-        logger.hr(_("准备分解四星及以下遗器"), 2)
+        logger.hr("准备分解四星及以下遗器", 2)
 
         # 切换到遗器分解界面
         if not Relicset.change_to_relicset():

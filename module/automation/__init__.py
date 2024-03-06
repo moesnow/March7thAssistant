@@ -10,7 +10,7 @@ from typing import Optional
 from utils.singleton import SingletonMeta
 from utils.image_utils import ImageUtils
 
-from managers.ocr_manager import ocr
+from managers.ocr import ocr
 
 
 class Automation(metaclass=SingletonMeta):

@@ -1,6 +1,6 @@
-from managers.automation_manager import auto
-from managers.config_manager import config
-from managers.logger_manager import logger
+from managers.automation import auto
+from managers.config import config
+from managers.logger import logger
 import pygetwindow as gw
 import tkinter as tk
 

@@ -1,9 +1,8 @@
 import time
 from abc import ABC, abstractmethod
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.logger_manager import logger
-from managers.translate_manager import _
+from managers.screen import screen
+from managers.automation import auto
+from managers.logger import logger
 
 
 class ActivityTemplate(ABC):
@@ -13,7 +12,7 @@ class ActivityTemplate(ABC):
 
     def start(self):
         if not self.enabled:
-            logger.info(_("{name}未开启").format(name=self.name))
+            logger.info(f"{self.name}未开启")
             return
 
         self.prepare()

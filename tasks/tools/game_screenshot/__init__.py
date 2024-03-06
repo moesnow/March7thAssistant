@@ -1,7 +1,7 @@
 from utils.gamecontroller import GameController
 from module.automation.screenshot import Screenshot
-from managers.config_manager import config
-from managers.logger_manager import logger
+from managers.config import config
+from managers.logger import logger
 from .screenshot import ScreenshotApp
 import tkinter as tk
 import threading

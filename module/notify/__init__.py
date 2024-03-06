@@ -1,4 +1,5 @@
 import io
+from PIL import Image
 from typing import Optional
 from module.logger import Logger
 from utils.singleton import SingletonMeta
@@ -30,11 +31,11 @@ class Notify(metaclass=SingletonMeta):
         """
         self.notifiers[notifier_name] = notifier
 
-    def _process_image(self, image: Optional[io.BytesIO | str]) -> Optional[io.BytesIO]:
+    def _process_image(self, image: Optional[io.BytesIO | str | Image.Image]) -> Optional[io.BytesIO]:
         """
         根据image的类型处理图片，以确保它是io.BytesIO对象。
 
-        :param image: 可以是io.BytesIO对象或文件路径字符串，可选。
+        :param image: 可以是io.BytesIO对象、文件路径字符串或PIL.Image对象，可选。
         :return: io.BytesIO对象或None（如果image为None或处理失败）。
         """
         if isinstance(image, str):
@@ -47,6 +48,17 @@ class Notify(metaclass=SingletonMeta):
                 return None
         elif isinstance(image, io.BytesIO):
             return image
+        elif isinstance(image, Image.Image):
+            # 将PIL.Image对象转换为io.BytesIO对象
+            img_byte_arr = io.BytesIO()
+            try:
+                image.save(img_byte_arr, format=image.format or 'PNG')
+                img_byte_arr.seek(0)  # 将游标移动到起始以便读取
+                return img_byte_arr
+            except Exception as e:
+                if hasattr(self, 'logger'):
+                    self.logger.error(f"图片转换失败: {e}")
+                return None
         else:
             return None
 
