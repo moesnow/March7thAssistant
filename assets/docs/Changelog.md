@@ -8,6 +8,7 @@
 - 新增 [OneBot](https://onebot.dev)/[OpenShamrock](https://whitechi73.github.io/OpenShamrock/) 推送方式（QQ 机器人）
 ### 修复
 - 部分情况下无法正常发送 gotify 通知
+- 多个红点导致模拟宇宙领取每周奖励失败
 - 快速解锁教学动画导致虚构叙事异常
 - 主页三月七背景在高缩放率下模糊的问题
 

@@ -144,7 +144,7 @@ class Universe:
     def get_reward():
         logger.info("开始领取奖励")
         screen.change_to('universe_main')
-        if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9):
+        if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
             if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
                 if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
                     Base.send_notification_with_screenshot("🎉模拟宇宙奖励已领取🎉")
