@@ -41,9 +41,7 @@ class MemoryOne(BaseChallenge):
             return False
 
         time.sleep(2)
-        if not auto.find_element("./assets/images/screen/forgottenhall/memory.png", "image", 0.8, max_retries=10):
-            logger.error(f"界面不正确，尝试切换到{self.name}界面")
-            screen.change_to('memory')
+        screen.wait_for_screen_change('memory')
 
         return True
 

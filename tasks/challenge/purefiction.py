@@ -78,9 +78,7 @@ class PureFiction(BaseChallenge):
                 break
 
             time.sleep(2)
-            if not auto.find_element("./assets/images/screen/purefiction/purefiction.png", "image", 0.8, max_retries=10):
-                logger.error(f"界面不正确，尝试切换到{self.name}界面")
-                screen.change_to('purefiction')
+            screen.wait_for_screen_change('purefiction')
 
     def find_level(self, level, max_retries=4):
         '''查找关卡'''
@@ -214,9 +212,7 @@ class PureFiction(BaseChallenge):
         if self.max_level > 0:
             self.save_timestamp_into_config()
             time.sleep(2)
-            if not auto.find_element("./assets/images/screen/purefiction/purefiction.png", "image", 0.8, max_retries=10):
-                logger.error(f"界面不正确，尝试切换到{self.name}界面")
-                screen.change_to('purefiction')
+            screen.wait_for_screen_change('purefiction')
             # 领取星琼
             if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, max_retries=5, crop=(1775.0 / 1920, 902.0 / 1080, 116.0 / 1920, 110.0 / 1080)):
                 time.sleep(1)

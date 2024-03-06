@@ -212,7 +212,7 @@ class Screen(metaclass=SingletonMeta):
             except Exception as e:
                 self.logger.debug(f"未知的操作: {e}")
 
-    def wait_for_screen_change(self, next_screen, max_recursion):
+    def wait_for_screen_change(self, next_screen, max_recursion=2):
         """
         等待界面切换，如果未成功则根据重试次数决定是否重试
         """
@@ -230,7 +230,7 @@ class Screen(metaclass=SingletonMeta):
             else:
                 self.log_and_raise(f"无法切换到 {self.get_name(next_screen)}", "无法切换到指定游戏界面")
 
-    def switch_screen(self, current_screen, next_screen, max_recursion):
+    def _switch_screen(self, current_screen, next_screen, max_recursion):
         """
         执行从当前界面到下一个界面的切换操作，并处理重试逻辑
         """
@@ -238,7 +238,7 @@ class Screen(metaclass=SingletonMeta):
         self.perform_operations(operations)
         self.wait_for_screen_change(next_screen, max_recursion)
 
-    def navigate_through_path(self, path, max_recursion):
+    def _navigate_through_path(self, path, max_recursion):
         """
         沿着找到的路径导航，执行切换操作
         """
@@ -247,7 +247,7 @@ class Screen(metaclass=SingletonMeta):
             self.logger.info(f"当前界面：{green(self.get_name(self.current_screen))}")
             self.logger.debug(f"相似度：{self.current_screen_threshold:.2f}")
             for i in range(count):
-                self.switch_screen(path[i], path[i + 1], max_recursion)
+                self._switch_screen(path[i], path[i + 1], max_recursion)
 
     def change_to(self, target_screen, max_recursion=2):
         """
@@ -262,5 +262,5 @@ class Screen(metaclass=SingletonMeta):
         if not path:
             self.log_and_raise(f"无法从 {self.get_name(self.current_screen)} 切换到 {self.get_name(target_screen)}", "无法切换到指定游戏界面")
 
-        self.navigate_through_path(path, max_recursion)
+        self._navigate_through_path(path, max_recursion)
         self.current_screen = target_screen
