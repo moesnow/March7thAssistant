@@ -19,7 +19,7 @@ from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
 from .tools.disclaimer import disclaimer
 
-from managers.config_manager import config
+from managers.config import config
 from utils.gamecontroller import GameController
 import base64
 

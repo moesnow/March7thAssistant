@@ -1,8 +1,7 @@
-from managers.screen_manager import screen
-from managers.config_manager import config
-from managers.logger_manager import logger
-from managers.automation_manager import auto
-from managers.translate_manager import _
+from managers.screen import screen
+from managers.config import config
+from managers.logger import logger
+from managers.automation import auto
 from tasks.base.base import Base
 from tasks.power.relicset import Relicset
 from tasks.base.pythonchecker import PythonChecker
@@ -50,19 +49,19 @@ class Universe:
             if not os.path.exists(os.path.join(config.universe_path, "states.py")):
                 status = True
         if status:
-            logger.warning(_("模拟宇宙路径不存在: {path}").format(path=config.universe_path))
+            logger.warning(f"模拟宇宙路径不存在: {config.universe_path}")
             Universe.update()
 
     @staticmethod
     def check_requirements():
         if not config.universe_requirements:
-            logger.info(_("开始安装依赖"))
+            logger.info("开始安装依赖")
             from tasks.base.fastest_mirror import FastestMirror
             subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "pip", "--upgrade"])
             while not subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.universe_path):
-                logger.error(_("依赖安装失败"))
-                input(_("按回车键重试. . ."))
-            logger.info(_("依赖安装成功"))
+                logger.error("依赖安装失败")
+                input("按回车键重试. . .")
+            logger.info("依赖安装成功")
             config.set_value("universe_requirements", True)
 
     @staticmethod
@@ -75,7 +74,7 @@ class Universe:
 
     @staticmethod
     def start(get_reward=False, nums=config.universe_count, save=True):
-        logger.hr(_("准备模拟宇宙"), 0)
+        logger.hr("准备模拟宇宙", 0)
         game = StarRailController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass', logger)
         game.check_resolution(1920, 1080)
         if Universe.before_start():
@@ -83,12 +82,12 @@ class Universe:
             screen.change_to('main')
 
             if config.universe_operation_mode == "exe":
-                logger.info(_("开始校准"))
+                logger.info("开始校准")
                 if subprocess_with_timeout([os.path.join(config.universe_path, "align_angle.exe")], config.universe_timeout * 3600, config.universe_path):
 
                     screen.change_to('universe_main')
 
-                    logger.info(_("开始模拟宇宙"))
+                    logger.info("开始模拟宇宙")
                     command = [os.path.join(config.universe_path, "states.exe")]
                     if config.universe_bonus_enable:
                         command.append("--bonus=1")
@@ -101,7 +100,7 @@ class Universe:
                         if get_reward:
                             Universe.get_reward()
                         else:
-                            Base.send_notification_with_screenshot(_("🎉模拟宇宙已完成🎉"))
+                            Base.send_notification_with_screenshot("🎉模拟宇宙已完成🎉")
 
                         if config.universe_bonus_enable and config.break_down_level_four_relicset:
                             Relicset.run()
@@ -109,16 +108,16 @@ class Universe:
                         return True
 
                     else:
-                        logger.error(_("模拟宇宙失败"))
+                        logger.error("模拟宇宙失败")
                 else:
-                    logger.error(_("校准失败"))
+                    logger.error("校准失败")
             elif config.universe_operation_mode == "source":
-                logger.info(_("开始校准"))
+                logger.info("开始校准")
                 if subprocess_with_timeout([config.python_exe_path, "align_angle.py"], 60, config.universe_path, config.env):
 
                     screen.change_to('universe_main')
 
-                    logger.info(_("开始模拟宇宙"))
+                    logger.info("开始模拟宇宙")
                     command = [config.python_exe_path, "states.py"]
                     if config.universe_bonus_enable:
                         command.append("--bonus=1")
@@ -131,24 +130,24 @@ class Universe:
                         if get_reward:
                             Universe.get_reward()
                         else:
-                            Base.send_notification_with_screenshot(_("🎉模拟宇宙已完成🎉"))
+                            Base.send_notification_with_screenshot("🎉模拟宇宙已完成🎉")
                         return True
 
                     else:
-                        logger.error(_("模拟宇宙失败"))
+                        logger.error("模拟宇宙失败")
                 else:
-                    logger.error(_("校准失败"))
-        Base.send_notification_with_screenshot(_("⚠️模拟宇宙未完成⚠️"))
+                    logger.error("校准失败")
+        Base.send_notification_with_screenshot("⚠️模拟宇宙未完成⚠️")
         return False
 
     @staticmethod
     def get_reward():
-        logger.info(_("开始领取奖励"))
+        logger.info("开始领取奖励")
         screen.change_to('universe_main')
-        if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9):
+        if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
             if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
                 if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
-                    Base.send_notification_with_screenshot(_("🎉模拟宇宙奖励已领取🎉"))
+                    Base.send_notification_with_screenshot("🎉模拟宇宙奖励已领取🎉")
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
 
     @staticmethod
@@ -170,6 +169,6 @@ class Universe:
 
         try:
             os.remove(config_path)
-            logger.info(_("重置配置文件完成：{path}").format(path=config_path))
+            logger.info(f"重置配置文件完成：{config_path}")
         except Exception as e:
-            logger.warning(_("重置配置文件失败：{e}").format(e=e))
+            logger.warning(f"重置配置文件失败：{e}")

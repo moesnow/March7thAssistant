@@ -1,7 +1,6 @@
-from managers.config_manager import config
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.translate_manager import _
+from managers.config import config
+from managers.screen import screen
+from managers.automation import auto
 from tasks.base.base import Base
 from .rewardtemplate import RewardTemplate
 import time
@@ -21,6 +20,6 @@ class Quest(RewardTemplate):
         auto.find_element("./assets/images/screen/guide/guide2.png", "image", 0.9, max_retries=10)
         if auto.find_element("./assets/images/share/reward/quest/500.png", "image", 0.95, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
             config.set_value("daily_tasks", {})
-            Base.send_notification_with_screenshot(_("🎉每日实训已完成🎉"))
+            Base.send_notification_with_screenshot("🎉每日实训已完成🎉")
         else:
-            Base.send_notification_with_screenshot(_("⚠️每日实训未完成⚠️"))
+            Base.send_notification_with_screenshot("⚠️每日实训未完成⚠️")

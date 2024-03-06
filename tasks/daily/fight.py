@@ -1,7 +1,6 @@
-from managers.screen_manager import screen
-from managers.config_manager import config
-from managers.logger_manager import logger
-from managers.translate_manager import _
+from managers.screen import screen
+from managers.config import config
+from managers.logger import logger
 from tasks.base.base import Base
 from tasks.base.team import Team
 from tasks.base.pythonchecker import PythonChecker
@@ -53,20 +52,20 @@ class Fight:
             if not os.path.exists(os.path.join(config.fight_path, "点这里啦.exe")):
                 status = True
         if status:
-            logger.warning(_("锄大地路径不存在: {path}").format(path=config.fight_path))
+            logger.warning(f"锄大地路径不存在: {config.fight_path}")
             Fight.update()
 
     @staticmethod
     def check_requirements():
         if not config.fight_requirements:
-            logger.info(_("开始安装依赖"))
+            logger.info("开始安装依赖")
             from tasks.base.fastest_mirror import FastestMirror
             subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i",
                            FastestMirror.get_pypi_mirror(), "pip", "--upgrade"])
             while not subprocess.run([config.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=config.fight_path):
-                logger.error(_("依赖安装失败"))
-                input(_("按回车键重试. . ."))
-            logger.info(_("依赖安装成功"))
+                logger.error("依赖安装失败")
+                input("按回车键重试. . .")
+            logger.info("依赖安装成功")
             config.set_value("fight_requirements", True)
 
     @staticmethod
@@ -79,7 +78,7 @@ class Fight:
 
     @staticmethod
     def start():
-        logger.hr(_("准备锄大地"), 0)
+        logger.hr("准备锄大地", 0)
         game = StarRailController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass', logger)
         game.check_resolution(1920, 1080)
         if Fight.before_start():
@@ -87,7 +86,7 @@ class Fight:
             if config.fight_team_enable:
                 Team.change_to(config.fight_team_number)
 
-            logger.info(_("开始锄大地"))
+            logger.info("开始锄大地")
             screen.change_to('main')
 
             status = False
@@ -99,11 +98,11 @@ class Fight:
                     status = True
             if status:
                 config.save_timestamp("fight_timestamp")
-                Base.send_notification_with_screenshot(_("🎉锄大地已完成🎉"))
+                Base.send_notification_with_screenshot("🎉锄大地已完成🎉")
                 return True
 
-        logger.error(_("锄大地失败"))
-        Base.send_notification_with_screenshot(_("⚠️锄大地未完成⚠️"))
+        logger.error("锄大地失败")
+        Base.send_notification_with_screenshot("⚠️锄大地未完成⚠️")
         return False
 
     @staticmethod
@@ -123,6 +122,6 @@ class Fight:
 
         try:
             os.remove(config_path)
-            logger.info(_("重置配置文件完成：{path}").format(path=config_path))
+            logger.info(f"重置配置文件完成：{config_path}")
         except Exception as e:
-            logger.warning(_("重置配置文件失败：{e}").format(e=e))
+            logger.warning(f"重置配置文件失败：{e}")

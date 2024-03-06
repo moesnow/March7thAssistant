@@ -1,8 +1,7 @@
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.logger_manager import logger
-from managers.config_manager import config
-from managers.translate_manager import _
+from managers.screen import screen
+from managers.automation import auto
+from managers.logger import logger
+from managers.config import config
 from tasks.base.base import Base
 from tasks.base.team import Team
 from .character import Character
@@ -16,8 +15,7 @@ class Instance:
         if not Instance.validate_instance(instance_type, instance_name):
             return False
 
-        logger.hr(_("开始刷{type} - {name}，总计{number}次").format(
-            type=instance_type, name=instance_name, number=runs), 2)
+        logger.hr(f"开始刷{instance_type} - {instance_name}，总计{runs}次", 2)
 
         instance_name = Instance.process_instance_name(instance_name)
 
@@ -40,13 +38,13 @@ class Instance:
 
         Instance.complete_run(instance_type)
 
-        logger.info(_("副本任务完成"))
+        logger.info("副本任务完成")
         return True
 
     @staticmethod
     def validate_instance(instance_type, instance_name):
         if instance_name == "无":
-            logger.info(_("{type}未开启").format(type=instance_type))
+            logger.info(f"{instance_type}未开启")
             return False
         return True
 
@@ -97,11 +95,11 @@ class Instance:
             # 等待界面完全停止
             time.sleep(1)
         if not Flag:
-            Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 没有找到指定副本名称⚠️"))
+            Base.send_notification_with_screenshot("⚠️刷副本未完成 - 没有找到指定副本名称⚠️")
             return False
         # 验证传送是否成功
         if not auto.find_element(instance_name.replace("2", ""), "text", max_retries=60, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
-            Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 传送可能失败⚠️"))
+            Base.send_notification_with_screenshot("⚠️刷副本未完成 - 传送可能失败⚠️")
             return False
 
         return True
@@ -111,7 +109,7 @@ class Instance:
         if "拟造花萼" in instance_type:
             count = power_need // 10 - 1
             if not 0 <= count <= 5:
-                Base.send_notification_with_screenshot(_("⚠️刷副本未完成 - 拟造花萼次数错误⚠️"))
+                Base.send_notification_with_screenshot("⚠️刷副本未完成 - 拟造花萼次数错误⚠️")
                 return False
             result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10,
                                        crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
@@ -151,6 +149,7 @@ class Instance:
         time.sleep(1)
         auto.click_element("./assets/images/zh_CN/fight/fight_exit.png", "image", 0.9, max_retries=10)
         time.sleep(2)
+        screen.wait_for_screen_change('main')
 
         if ("侵蚀隧洞" or "历战余响") in instance_type and config.break_down_level_four_relicset:
             Relicset.run()
@@ -174,23 +173,21 @@ class Instance:
         return instance_name
 
     @staticmethod
-    def wait_fight(num):
-        logger.info(_("进入战斗"))
-        time.sleep(2)
+    def wait_fight(num, timeout=1800):
+        logger.info("进入战斗")
+        time.sleep(5)
 
-        def check_fight():
+        start_time = time.time()
+        while time.time() - start_time < timeout:
             if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):
+                logger.info("战斗完成")
+                logger.info(f"第{num}次副本完成")
                 return True
-
             elif config.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
-                logger.info(_("尝试开启自动战斗"))
+                logger.info("尝试开启自动战斗")
                 auto.press_key("v")
 
-            return False
+            time.sleep(2)
 
-        if not auto.retry_with_timeout(lambda: check_fight(), 30 * 60, 1):
-            logger.error(_("战斗超时"))
-            raise RuntimeError(_("战斗超时"))
-
-        logger.info(_("战斗完成"))
-        logger.info(_("第{num}次副本完成").format(num=num))
+        logger.error("战斗超时")
+        raise RuntimeError("战斗超时")

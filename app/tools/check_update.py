@@ -3,7 +3,7 @@ from qfluentwidgets import InfoBar, InfoBarPosition
 
 from ..card.messagebox_custom import MessageBoxUpdate
 from tasks.base.fastest_mirror import FastestMirror
-from managers.config_manager import config
+from managers.config import config
 
 from packaging.version import parse
 from enum import Enum

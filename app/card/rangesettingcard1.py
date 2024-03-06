@@ -5,7 +5,7 @@ from PyQt5.QtGui import QColor, QIcon, QPainter
 from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QToolButton, QVBoxLayout, QPushButton)
 from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, IndicatorPosition, Slider)
 
-from managers.config_manager import config
+from managers.config import config
 
 
 class RangeSettingCard1(SettingCard):

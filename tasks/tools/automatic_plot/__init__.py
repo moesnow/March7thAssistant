@@ -1,4 +1,4 @@
-from managers.logger_manager import logger
+from managers.logger import logger
 from .autoclick import AutoClick
 import tkinter as tk
 import threading

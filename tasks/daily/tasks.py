@@ -1,7 +1,6 @@
-from managers.logger_manager import logger
-from managers.translate_manager import _
-from managers.automation_manager import auto
-from managers.ocr_manager import ocr
+from managers.logger import logger
+from managers.automation import auto
+from managers.ocr import ocr
 import time
 import json
 import sys
@@ -18,8 +17,8 @@ class Tasks:
             with open(config_example_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         except FileNotFoundError:
-            logger.error(_("配置文件不存在：{path}").format(path=config_example_path))
-            input(_("按回车键关闭窗口. . ."))
+            logger.error(f"配置文件不存在：{config_example_path}")
+            input("按回车键关闭窗口. . .")
             sys.exit(1)
 
     def start(self):
@@ -28,8 +27,8 @@ class Tasks:
         self.detect()
 
     def detect(self):
-        auto.take_screenshot(crop=self.crop)
-        result = ocr.recognize_multi_lines(auto.screenshot)
+        screenshot, _, _ = auto.take_screenshot(crop=self.crop)
+        result = ocr.recognize_multi_lines(screenshot)
         for box in result:
             text = box[1][0]
             for keyword, task_name in self.task_mappings.items():

@@ -1,14 +1,14 @@
 import time
-import logging
 import pyautogui
 from typing import Literal, Optional
 from utils.gamecontroller import GameController
 from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution
 from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
+from module.logger import Logger
 
 
 class StarRailController(GameController):
-    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], logger: Optional[Logger] = None) -> None:
         super().__init__(game_path, process_name, window_name, window_class, logger)
         self.game_resolution = None
         self.game_auto_hdr = None

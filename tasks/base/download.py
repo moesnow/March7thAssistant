@@ -6,15 +6,12 @@ import os
 
 def download_with_progress(download_url, save_path):
 
-    aria2_path = os.path.abspath("./assets/aria2/aria2c.exe")
+    aria2_path = os.path.abspath("./assets/binary/aria2c.exe")
 
     if os.path.exists(aria2_path):
+        command = [aria2_path, "--max-connection-per-server=16", f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
         if os.path.exists(save_path):
-            command = [aria2_path, "--max-connection-per-server=16", "--continue=true",
-                       f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
-        else:
-            command = [aria2_path, "--max-connection-per-server=16",
-                       f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
+            command.insert(2, "--continue=true")
         process = subprocess.Popen(command)
         process.wait()
         if process.returncode != 0:

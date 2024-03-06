@@ -3,7 +3,7 @@ from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
 from qfluentwidgets import SettingCard, FluentIconBase
 from .messagebox_custom import MessageBoxEdit, MessageBoxDate, MessageBoxInstance, MessageBoxTeam
-from managers.config_manager import config
+from managers.config import config
 from typing import Union
 import datetime
 import json

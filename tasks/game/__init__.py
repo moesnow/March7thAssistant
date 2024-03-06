@@ -8,12 +8,12 @@ from .starrailcontroller import StarRailController
 
 from utils.date import Date
 from tasks.power.power import Power
-from managers.logger_manager import logger
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.config_manager import config
-from managers.notify_manager import notify
-from managers.ocr_manager import ocr
+from managers.logger import logger
+from managers.screen import screen
+from managers.automation import auto
+from managers.config import config
+from managers.notify import notify
+from managers.ocr import ocr
 
 
 class Game:
@@ -88,6 +88,7 @@ class Game:
                         if program_path is not None and program_path != config.game_path:
                             config.set_value("game_path", program_path)
                             logger.info("游戏路径更新成功：{program_path}")
+                    time.sleep(1)
 
                 if not wait_until(lambda: screen.get_current_screen(), 180):
                     raise TimeoutError("获取当前界面超时")

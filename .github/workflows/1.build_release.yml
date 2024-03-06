@@ -1,69 +1,84 @@
 name: Build & Release App
+
+# 触发条件：手动触发或标签推送
 on:
   workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
+
+# 权限设置：需要写入仓库内容的权限
 permissions:
   contents: write
+
 jobs:
   build:
     name: Build
     runs-on: windows-latest
+
     steps:
+      # 步骤1：签出代码
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           submodules: 'false'
 
+      # 步骤2：设置Python环境
       - name: Set up python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11.7'
+          python-version: '3.11'
           cache: 'pip'
 
+      # 步骤3：安装依赖
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller
 
+      # 步骤4：生成程序
       - name: Generate program
         run: |
           pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
           pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --uac-admin -n "March7th Launcher" app.py -y -w
           pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Update.ico -n "Update" update.py -y
 
+      # 步骤5：移动资源到dist目录
       - name: Move assets to dist directory
         run: |
-          xcopy /E /Y ".\dist\March7th Assistant\*" ".\dist\March7thAssistant\"
-          xcopy /E /Y ".\dist\March7th Launcher\*" ".\dist\March7thAssistant\"
-          xcopy /E /I /Y .\assets\ .\dist\March7thAssistant\assets\
-          xcopy /Y .\README.md .\dist\March7thAssistant\
+          Copy-Item -Path ".\dist\March7th Assistant\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
+          Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
 
+      # 步骤6：创建压缩包
       - name: Create zip archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          ren .\dist\March7thAssistant March7thAssistant_${{ github.ref_name }}
-          powershell Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}.zip -Force
+          Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_${{ github.ref_name }}
+          Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}.zip -Force
 
+      # 步骤7：移动第三方库到dist目录
       - name: Move 3rdparty to dist directory
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           python build.py github-actions
-          xcopy .\3rdparty\ .\dist\March7thAssistant_${{ github.ref_name }}\3rdparty\ /E /I /Y
-          ren .\dist\March7thAssistant_${{ github.ref_name }} March7thAssistant_${{ github.ref_name }}_full
+          Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant_${{ github.ref_name }}\3rdparty\ -Recurse -Force
+          Rename-Item -Path .\dist\March7thAssistant_${{ github.ref_name }} -NewName March7thAssistant_${{ github.ref_name }}_full
 
+      # 步骤8：创建完整的压缩包
       - name: Create full zip archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          powershell Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}_full\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}_full.zip -Force
+          Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}_full\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}_full.zip -Force
 
+      # 步骤9：创建GitHub发布
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           name: March7thAssistant ${{ github.ref_name }}
           files: |
-           ./dist/March7thAssistant_${{ github.ref_name }}_full.zip
-           ./dist/March7thAssistant_${{ github.ref_name }}.zip
+            ./dist/March7thAssistant_${{ github.ref_name }}_full.zip
+            ./dist/March7thAssistant_${{ github.ref_name }}.zip
           prerelease: true

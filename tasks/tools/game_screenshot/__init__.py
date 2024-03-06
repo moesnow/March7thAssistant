@@ -1,16 +1,18 @@
 from utils.gamecontroller import GameController
 from module.automation.screenshot import Screenshot
-from managers.config_manager import config
-from managers.logger_manager import logger
+from managers.config import config
+from managers.logger import logger
 from .screenshot import ScreenshotApp
 import tkinter as tk
 import threading
+import time
 
 
 def run_gui():
     game = GameController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass', logger)
     try:
         if game.switch_to_game():
+            time.sleep(0.5)
             result = Screenshot.take_screenshot(config.game_title_name)
             if result:
                 root = tk.Tk()

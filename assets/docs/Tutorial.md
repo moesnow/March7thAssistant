@@ -170,26 +170,27 @@
 
 ### 推送
 
-图形界面内只支持启用`Windows原生通知`，需要其他通知请在 `config.yaml` 中添加。
+图形界面内只支持启用`Windows原生通知`，需要其他通知请在 `config.yaml` 中开启。
 
 目前支持：
 
-- bark
-- gocqhttp
-- dingtalk
-- discord
-- pushplus
-- pushdeer
-- qmsg
-- serverchan
-- serverchanturbo
-- smtp
-- telegram
-- wechatworkapp
-- wechatworkbot
-- lark
+- Telegram
+- Serverchan/Turbo （Server酱·Turbo版）
+- Bark
+- Email/SMTP （邮箱）
+- Dingtalk （钉钉）
+- Pushplus
+- Wechatworkapp （企业微信应用通知）
+- Wechatworkbot （企业微信机器人通知）
+- OneBot/OpenShamrock （QQ 机器人）
+- Go-cqhttp （QQ 机器人）
+- Gotify
+- Discord
+- Pushdeer
+- Lark
+- Custom
 
-> 其中 Telegram 与 go-cqhttp 支持发送截图，欢迎 PR 适配其他推送方式
+> 其中 Telegram 、Email/SMTP、OneBot/OpenShamrock、Go-cqhttp 、Custom 支持发送截图，欢迎 PR 适配其他推送方式
 
 ### 按键
 

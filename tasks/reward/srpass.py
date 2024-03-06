@@ -1,6 +1,5 @@
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.translate_manager import _
+from managers.screen import screen
+from managers.automation import auto
 from .rewardtemplate import RewardTemplate
 import time
 

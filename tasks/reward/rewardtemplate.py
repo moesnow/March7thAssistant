@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from managers.screen_manager import screen
-from managers.automation_manager import auto
-from managers.logger_manager import logger
-from managers.translate_manager import _
+from managers.screen import screen
+from managers.automation import auto
+from managers.logger import logger
 
 
 class RewardTemplate(ABC):
@@ -13,13 +12,13 @@ class RewardTemplate(ABC):
 
     def start(self):
         if not self.enabled:
-            logger.info(_("{name}未开启").format(name=self.name))
+            logger.info(f"{self.name}未开启")
             return
 
-        logger.hr(_("检测到{name}奖励").format(name=self.name), 2)
+        logger.hr(f"检测到{self.name}奖励")
         self.prepare()
         self.run()
-        logger.info(_("{name}奖励完成").format(name=self.name))
+        logger.info(f"{self.name}奖励完成")
 
     def prepare(self):
         screen.change_to(self.screen)

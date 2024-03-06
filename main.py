@@ -1,35 +1,36 @@
 import os
 import sys
-os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)
-         else os.path.dirname(os.path.abspath(__file__)))
+# 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
+os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
-from tasks.version import Version
-from managers.notify_manager import notify
-from managers.logger_manager import logger
-from managers.config_manager import config
-from managers.ocr_manager import ocr
-from managers.translate_manager import _
-from tasks.game import Game
-from tasks.daily.daily import Daily
+import sys
+import pyuac
+import atexit
+import base64
+
+from managers.config import config
+from managers.logger import logger
+from managers.notify import notify
+from managers.ocr import ocr
+
 import tasks.activity as activity
 import tasks.reward as reward
+import tasks.challenge as challenge
+
+from tasks.game import Game
+from tasks.version import Version
+from tasks.daily.daily import Daily
 from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
-from tasks.weekly.forgottenhall import ForgottenHall
-from tasks.weekly.purefiction import PureFiction
 from tasks.tools.game_screenshot import game_screenshot
 from tasks.tools.automatic_plot import automatic_plot
-import atexit
-import base64
-import pyuac
-import sys
 
 
 def first_run():
     if not config.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
-        logger.error(_("首次使用请先打开图形界面"))
-        input(_("按回车键关闭窗口. . ."))
+        logger.error("首次使用请先打开图形界面")
+        input("按回车键关闭窗口. . .")
         sys.exit(0)
 
 
@@ -45,58 +46,58 @@ def run_main_actions():
 
 def run_sub_task(action):
     Game.start()
-    if action == "daily":
-        Daily.run()
-        reward.start()
-    elif action == "power":
-        Power.run()
-    elif action == "fight":
-        Fight.start()
-    elif action == "universe":
-        Universe.start()
-    elif action == "forgottenhall":
-        ForgottenHall.start()
-    elif action == "purefiction":
-        PureFiction.start()
+    sub_tasks = {
+        "daily": lambda: (Daily.run(), reward.start()),
+        "power": Power.run,
+        "fight": Fight.start,
+        "universe": Universe.start,
+        "forgottenhall": lambda: challenge.start("memoryofchaos"),
+        "purefiction": lambda: challenge.start("purefiction")
+    }
+    task = sub_tasks.get(action)
+    if task:
+        task()
     Game.stop(False)
 
 
 def run_sub_task_gui(action):
-    if action == "universe_gui" and not Universe.gui():
-        input(_("按回车键关闭窗口. . ."))
-    elif action == "fight_gui" and not Fight.gui():
-        input(_("按回车键关闭窗口. . ."))
+    gui_tasks = {
+        "universe_gui": Universe.gui,
+        "fight_gui": Fight.gui
+    }
+    task = gui_tasks.get(action)
+    if task and not task():
+        input("按回车键关闭窗口. . .")
     sys.exit(0)
 
 
 def run_sub_task_update(action):
-    if action == "universe_update":
-        Universe.update()
-    elif action == "fight_update":
-        Fight.update()
-    input(_("按回车键关闭窗口. . ."))
+    update_tasks = {
+        "universe_update": Universe.update,
+        "fight_update": Fight.update
+    }
+    task = update_tasks.get(action)
+    if task:
+        task()
+    input("按回车键关闭窗口. . .")
     sys.exit(0)
 
 
 def run_sub_task_reset(action):
-    if action == "universe_reset":
-        Universe.reset_config()
-    elif action == "fight_reset":
-        Fight.reset_config()
-    input(_("按回车键关闭窗口. . ."))
+    reset_tasks = {
+        "universe_reset": Universe.reset_config,
+        "fight_reset": Fight.reset_config
+    }
+    task = reset_tasks.get(action)
+    if task:
+        task()
+    input("按回车键关闭窗口. . .")
     sys.exit(0)
 
 
 def run_notify_action():
-    from io import BytesIO
-    from PIL import Image
-    IMAGE_PATH = "./assets/app/images/March7th.jpg"
-
-    image_io = BytesIO()
-    Image.open(IMAGE_PATH).save(image_io, format='JPEG')
-    notify.notify(_("三月七小助手|･ω･)"), _("这是一条测试消息"), image_io)
-
-    input(_("按回车键关闭窗口. . ."))
+    notify.notify("这是一条测试消息", "./assets/app/images/March7th.jpg")
+    input("按回车键关闭窗口. . .")
     sys.exit(0)
 
 
@@ -136,12 +137,14 @@ def main(action=None):
         run_notify_action()
 
     else:
-        logger.error(_("未知任务: {action}").format(action=action))
-        input(_("按回车键关闭窗口. . ."))
+        logger.error(f"未知任务: {action}")
+        input("按回车键关闭窗口. . .")
         sys.exit(1)
 
 
+# 程序结束时的处理器
 def exit_handler():
+    """注册程序退出时的处理函数，用于清理OCR资源."""
     ocr.exit_ocr()
 
 
@@ -150,23 +153,18 @@ if __name__ == "__main__":
         try:
             pyuac.runAsAdmin(wait=False)
             sys.exit(0)
-
         except Exception:
-            logger.error(_("管理员权限获取失败"))
-            input(_("按回车键关闭窗口. . ."))
             sys.exit(1)
     else:
         try:
             atexit.register(exit_handler)
             main(sys.argv[1]) if len(sys.argv) > 1 else main()
-
         except KeyboardInterrupt:
-            logger.error(_("发生错误: 手动强制停止"))
-            input(_("按回车键关闭窗口. . ."))
+            logger.error("发生错误: 手动强制停止")
+            input("按回车键关闭窗口. . .")
             sys.exit(1)
-
         except Exception as e:
-            logger.error(_("发生错误: {e}").format(e=e))
-            notify.notify(_("发生错误: {e}").format(e=e))
-            input(_("按回车键关闭窗口. . ."))
+            logger.error(f"发生错误: {e}")
+            notify.notify(f"发生错误: {e}")
+            input("按回车键关闭窗口. . .")
             sys.exit(1)

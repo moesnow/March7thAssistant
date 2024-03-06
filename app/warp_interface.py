@@ -176,6 +176,5 @@ class WarpInterface(ScrollArea):
             else:
                 content = warp.data_to_html("light")
         except Exception as e:
-            print(e)
-            content = "抽卡记录为空"
+            content = "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n\n你也可以从其他支持 SRGF 数据格式的应用导入数据，例如 StarRail Warp Export 或 Starward 等。\n\n复制链接功能可用于小程序或其他软件。"
         self.contentLabel.setText(content)

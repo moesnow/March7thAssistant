@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from qfluentwidgets import InfoBar, InfoBarPosition
 from ..card.messagebox_custom import MessageBoxDisclaimer
-from managers.config_manager import config
+from managers.config import config
 import markdown
 import base64
 import time

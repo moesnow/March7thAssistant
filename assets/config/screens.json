@@ -7,48 +7,21 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "map",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "m"
-                        ]
-                    }
+                    "auto.press_key('m')"
                 ]
             },
             {
                 "target_screen": "stellar_warp",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "f3"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/warp/stellar_warp.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.press_key('f3')",
+                    "time.sleep(2)",
+                    "auto.click_element('./assets/images/share/warp/stellar_warp.png', 'image', 0.9)"
                 ]
             }
         ]
@@ -61,308 +34,101 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "guide2",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/guide.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide2.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/guide.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))",
+                    "time.sleep(2)",
+                    "auto.click_element('./assets/images/screen/guide/enter_guide2.png', 'image', 0.9)",
+                    "time.sleep(1)"
                 ]
             },
             {
                 "target_screen": "guide3",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/guide.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide3.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/guide.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))",
+                    "time.sleep(2)",
+                    "auto.click_element('./assets/images/screen/guide/enter_guide3.png', 'image', 0.9)",
+                    "time.sleep(1)"
                 ]
             },
             {
                 "target_screen": "guide4",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/guide.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide4.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/guide.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))",
+                    "time.sleep(2)",
+                    "auto.click_element('./assets/images/screen/guide/enter_guide4.png', 'image', 0.9)",
+                    "time.sleep(1)"
                 ]
             },
             {
                 "target_screen": "mail",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/mail.png",
-                            "image",
-                            0.8,
-                            "crop=(0.95, 0.1, 0.05, 0.6)"
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/mail_reward.png",
-                            "image",
-                            0.9,
-                            "crop=(0.95, 0.1, 0.05, 0.6)"
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/mail.png', 'image', 0.8, crop=(0.95, 0.1, 0.05, 0.6))",
+                    "auto.click_element('./assets/images/share/menu/mail_reward.png', 'image', 0.9, crop=(0.95, 0.1, 0.05, 0.6))"
                 ]
             },
             {
                 "target_screen": "visa",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/more.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "漫游签证",
-                            "text",
-                            null,
-                            2,
-                            "crop=(1261.0 / 1920, 1.0 / 1080, 552.0 / 1920, 346.0 / 1080)"
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/more.png', 'image', 0.9)",
+                    "time.sleep(2)",
+                    "auto.click_element('漫游签证', 'text', None, 2, crop=(1261.0 / 1920, 1.0 / 1080, 552.0 / 1920, 346.0 / 1080))"
                 ]
             },
             {
                 "target_screen": "camera",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/camera.png",
-                            "image",
-                            0.8,
-                            "crop=(0.95, 0.1, 0.05, 0.6)"
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/camera.png', 'image', 0.8, crop=(0.95, 0.1, 0.05, 0.6))"
                 ]
             },
             {
                 "target_screen": "dispatch",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/dispatch.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/dispatch.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
                 ]
             },
             {
                 "target_screen": "pass1",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/pass.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/pass.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
                 ]
             },
             {
                 "target_screen": "consumables",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/synthesis.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/synthesis.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
                 ]
             },
             {
                 "target_screen": "bag_consumables",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/bag.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/bag_consumables.png",
-                            "image",
-                            0.9,
-                            2
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/bag.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))",
+                    "time.sleep(2)",
+                    "auto.click_element('./assets/images/share/menu/bag_consumables.png', 'image', 0.9, 2)"
                 ]
             },
             {
                 "target_screen": "bag_relicset",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/bag.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/bag_relicset.png",
-                            "image",
-                            0.9,
-                            2
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/bag.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))",
+                    "time.sleep(2)",
+                    "auto.click_element('./assets/images/share/menu/bag_relicset.png', 'image', 0.9, 2)"
                 ]
             },
             {
                 "target_screen": "configure_team",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/configure_team.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/configure_team.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
                 ]
             },
             {
                 "target_screen": "activity",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/menu/activity.png",
-                            "image",
-                            0.85,
-                            "crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080)"
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/menu/activity.png', 'image', 0.85, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
                 ]
             }
         ]
@@ -375,12 +141,7 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -393,14 +154,7 @@
             {
                 "target_screen": "map",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/map/back.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/map/back.png', 'image', 0.9)"
                 ]
             }
         ]
@@ -413,30 +167,9 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/monthly_card.png",
-                            "image",
-                            0.88,
-                            10
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            4
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/monthly_card.png",
-                            "image",
-                            0.88,
-                            10
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/monthly_card.png', 'image', 0.88, 10)",
+                    "time.sleep(4)",
+                    "auto.click_element('./assets/images/screen/monthly_card.png', 'image', 0.88, 10)"
                 ]
             }
         ]
@@ -449,20 +182,8 @@
             {
                 "target_screen": "click_enter",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/start_game.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            4
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/start_game.png', 'image', 0.9)",
+                    "time.sleep(4)"
                 ]
             }
         ]
@@ -475,20 +196,8 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/click_enter.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            6
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/click_enter.png', 'image', 0.9)",
+                    "time.sleep(6)"
                 ]
             }
         ]
@@ -501,35 +210,10 @@
             {
                 "target_screen": "universe_report",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/universe/leave_temporarily.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/zh_CN/base/confirm.png",
-                            "image",
-                            0.9,
-                            10
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            4
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/universe/leave_temporarily.png', 'image', 0.9)",
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)",
+                    "time.sleep(4)"
                 ]
             }
         ]
@@ -542,12 +226,7 @@
             {
                 "target_screen": "universe_main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -560,24 +239,9 @@
             {
                 "target_screen": "leave_temporarily",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    },
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -590,20 +254,8 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/zh_CN/fight/retreat.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    }
+                    "auto.click_element('./assets/images/zh_CN/fight/retreat.png', 'image', 0.9)",
+                    "time.sleep(2)"
                 ]
             }
         ]
@@ -616,20 +268,8 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/zh_CN/fight/fight_exit.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    }
+                    "auto.click_element('./assets/images/zh_CN/fight/fight_exit.png', 'image', 0.9)",
+                    "time.sleep(2)"
                 ]
             }
         ]
@@ -642,38 +282,19 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "guide3",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide3.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/guide/enter_guide3.png', 'image', 0.9)"
                 ]
             },
             {
                 "target_screen": "guide4",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide4.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/guide/enter_guide4.png', 'image', 0.9)"
                 ]
             }
         ]
@@ -686,54 +307,25 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "guide2",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide2.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/guide/enter_guide2.png', 'image', 0.9)"
                 ]
             },
             {
                 "target_screen": "guide4",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide4.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/guide/enter_guide4.png', 'image', 0.9)"
                 ]
             },
             {
                 "target_screen": "universe_main",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "传送",
-                            "min_distance_text",
-                            "crop=(691.0 / 1920, 291.0 / 1080, 968.0 / 1920, 374.0 / 1080)",
-                            "include=True",
-                            "source=\"积分奖励\"",
-                            "source_type=\"text\""
-                        ]
-                    }
+                    "auto.click_element('传送', 'min_distance_text', crop=(691.0 / 1920, 291.0 / 1080, 968.0 / 1920, 374.0 / 1080), include=True, source=\"积分奖励\", source_type=\"text\")"
                 ]
             }
         ]
@@ -746,100 +338,35 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "guide2",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide2.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/guide/enter_guide2.png', 'image', 0.9)"
                 ]
             },
             {
                 "target_screen": "guide3",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/guide/enter_guide3.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/guide/enter_guide3.png', 'image', 0.9)"
                 ]
             },
             {
                 "target_screen": "memory_of_chaos",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "忘却之庭",
-                            "text",
-                            null,
-                            10,
-                            "crop=(231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "传送",
-                            "text",
-                            null,
-                            10,
-                            "crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080)"
-                        ]
-                    }
+                    "auto.click_element('忘却之庭', 'text', None, 10, crop=(231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080))",
+                    "time.sleep(1)",
+                    "auto.click_element('传送', 'text', None, 10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080))"
                 ]
             },
             {
                 "target_screen": "purefiction",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "虚构叙事",
-                            "text",
-                            null,
-                            10,
-                            "crop=(231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080)"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "传送",
-                            "text",
-                            null,
-                            10,
-                            "crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080)"
-                        ]
-                    }
+                    "auto.click_element('虚构叙事', 'text', None, 10, crop=(231.0 / 1920, 420.0 / 1080, 450.0 / 1920, 536.0 / 1080))",
+                    "time.sleep(1)",
+                    "auto.click_element('传送', 'text', None, 10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080))"
                 ]
             }
         ]
@@ -852,12 +379,7 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -870,12 +392,7 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -888,12 +405,7 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -906,12 +418,7 @@
             {
                 "target_screen": "camera",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -924,26 +431,13 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "universe_expansion",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/universe/switch.png",
-                            "image",
-                            0.9,
-                            10
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/universe/switch.png', 'image', 0.9, 10)"
                 ]
             }
         ]
@@ -956,26 +450,13 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "universe_main",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/universe/switch.png",
-                            "image",
-                            0.9,
-                            10
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/universe/switch.png', 'image', 0.9, 10)"
                 ]
             }
         ]
@@ -988,12 +469,7 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1006,15 +482,7 @@
             {
                 "target_screen": "pass1",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/screen/start_srpass.png",
-                            "image",
-                            0.9,
-                            10
-                        ]
-                    }
+                    "auto.click_element('./assets/images/screen/start_srpass.png', 'image', 0.9, 10)"
                 ]
             }
         ]
@@ -1027,25 +495,13 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "pass2",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/reward/pass/enter_pass2.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/reward/pass/enter_pass2.png', 'image', 0.9)"
                 ]
             }
         ]
@@ -1058,25 +514,13 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "pass1",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/reward/pass/enter_pass1.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/reward/pass/enter_pass1.png', 'image', 0.9)"
                 ]
             }
         ]
@@ -1089,25 +533,13 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "material",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/synthesis/enter_material.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/synthesis/enter_material.png', 'image', 0.9)"
                 ]
             }
         ]
@@ -1120,25 +552,13 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "consumables",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/share/synthesis/enter_consumables.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/share/synthesis/enter_consumables.png', 'image', 0.9)"
                 ]
             }
         ]
@@ -1151,12 +571,7 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1169,12 +584,7 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1187,33 +597,14 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "memory",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/forgottenhall/memory.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/forgottenhall/memory-fin.png",
-                            "image",
-                            0.9
-                        ]
-                    }
+                    "auto.click_element('./assets/images/forgottenhall/memory.png', 'image', 0.9)",
+                    "auto.click_element('./assets/images/forgottenhall/memory-fin.png', 'image', 0.9)"
                 ]
             }
         ]
@@ -1226,12 +617,7 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1244,27 +630,9 @@
             {
                 "target_screen": "memory_of_chaos",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/zh_CN/base/confirm.png",
-                            "image",
-                            0.9,
-                            2
-                        ]
-                    }
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 2)"
                 ]
             }
         ]
@@ -1277,12 +645,7 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1295,12 +658,7 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1313,12 +671,7 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1331,12 +684,7 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1349,31 +697,14 @@
             {
                 "target_screen": "main",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "himeko_try",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/zh_CN/warp/character_trial.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    }
+                    "auto.click_element('./assets/images/zh_CN/warp/character_trial.png', 'image', 0.9)",
+                    "time.sleep(2)"
                 ]
             }
         ]
@@ -1386,31 +717,14 @@
             {
                 "target_screen": "stellar_warp",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             },
             {
                 "target_screen": "himeko_try_banner",
                 "actions_list": [
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/zh_CN/warp/start_trial.png",
-                            "image",
-                            0.9
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            2
-                        ]
-                    }
+                    "auto.click_element('./assets/images/zh_CN/warp/start_trial.png', 'image', 0.9)",
+                    "time.sleep(2)"
                 ]
             }
         ]
@@ -1423,12 +737,7 @@
             {
                 "target_screen": "himeko_prepare",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    }
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -1441,27 +750,9 @@
             {
                 "target_screen": "himeko_try",
                 "actions_list": [
-                    {
-                        "action": "auto.press_key",
-                        "args": [
-                            "esc"
-                        ]
-                    },
-                    {
-                        "action": "time.sleep",
-                        "args": [
-                            1
-                        ]
-                    },
-                    {
-                        "action": "auto.click_element",
-                        "args": [
-                            "./assets/images/zh_CN/base/confirm.png",
-                            "image",
-                            0.9,
-                            10
-                        ]
-                    }
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)"
                 ]
             }
         ]
