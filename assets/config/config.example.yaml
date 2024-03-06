@@ -261,6 +261,7 @@ notify_pushplus_webhook: "" # 可选参数，Pushplus 的 Webhook URL。
 notify_pushplus_callbackUrl: "" # 可选参数，Pushplus 的回调 URL。
 
 # 企业微信应用通知配置
+# 支持发送截图
 notify_wechatworkapp_enable: false # 是否启用企业微信应用通知。true 开启，false 关闭。
 notify_wechatworkapp_corpid: "" # 企业微信的企业ID。
 notify_wechatworkapp_corpsecret: "" # 企业微信应用的密钥。

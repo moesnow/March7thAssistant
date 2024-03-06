@@ -8,6 +8,7 @@ from module.notify.telegram import TelegramNotifier
 from module.notify.onebot import OnebotNotifier
 from module.notify.smtp import SMTPNotifier
 from module.notify.gocqhttp import GocqhttpNotifier
+from module.notify.wechatworkapp import WeChatworkappNotifier
 from module.notify.custom import CustomNotifier
 
 
@@ -19,6 +20,7 @@ class NotifierFactory:
         "onebot": OnebotNotifier,
         "smtp": SMTPNotifier,
         "gocqhttp": GocqhttpNotifier,
+        "wechatworkapp": WeChatworkappNotifier,
         "custom": CustomNotifier,
     }
 

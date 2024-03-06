@@ -6,6 +6,7 @@
 - 工具箱新增帧率解锁 [#161](https://github.com/moesnow/March7thAssistant/pull/161)
 - “启用自动修改分辨率” 选项更改为 “启用自动修改分辨率并关闭自动 HDR” [#156](https://github.com/moesnow/March7thAssistant/pull/156)
 - 新增 [OneBot](https://onebot.dev)/[OpenShamrock](https://whitechi73.github.io/OpenShamrock/) 推送方式（QQ 机器人）
+- 企业微信应用推送方式支持发送图片
 ### 修复
 - 部分情况下无法正常发送 gotify 通知
 - 任务追踪图标导致地图界面无法识别
