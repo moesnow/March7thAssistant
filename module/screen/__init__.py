@@ -184,7 +184,7 @@ class Screen(metaclass=SingletonMeta):
         """
         self.logger.error(log_message)
         self.logger.error("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件")
-        self.logger.error("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR")
+        self.logger.error("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR或游戏滤镜")
         raise Exception(error_message)
 
     def ensure_current_screen_is_clean(self):

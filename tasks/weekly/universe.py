@@ -8,6 +8,7 @@ from tasks.base.pythonchecker import PythonChecker
 from tasks.game.starrailcontroller import StarRailController
 from utils.command import subprocess_with_timeout
 import subprocess
+import time
 import sys
 import os
 
@@ -79,6 +80,10 @@ class Universe:
         game.check_resolution(1920, 1080)
         if Universe.before_start():
 
+            screen.change_to('universe_main')
+            # 等待可能的周一弹窗
+            time.sleep(2)
+            # 进入黑塔办公室
             screen.change_to('main')
 
             if config.universe_operation_mode == "exe":
