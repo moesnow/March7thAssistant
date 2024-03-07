@@ -352,7 +352,8 @@ class Automation(metaclass=SingletonMeta):
             else:
                 raise ValueError("错误的类型")
 
-            time.sleep(1)  # 在重试前等待一定时间
+            if i < max_retries - 1:
+                time.sleep(1)  # 在重试前等待一定时间
         return None
 
     def click_element_with_pos(self, coordinates, offset=(0, 0), action="click"):

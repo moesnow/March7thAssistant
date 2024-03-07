@@ -180,8 +180,8 @@
 - Email/SMTP （邮箱）
 - Dingtalk （钉钉）
 - Pushplus
-- Wechatworkapp （企业微信应用通知）
-- Wechatworkbot （企业微信机器人通知）
+- WeChatworkapp （企业微信应用通知）
+- WeChatworkbot （企业微信机器人通知）
 - OneBot/OpenShamrock （QQ 机器人）
 - Go-cqhttp （QQ 机器人）
 - Gotify
@@ -190,7 +190,7 @@
 - Lark
 - Custom
 
-> 其中 Telegram 、Email/SMTP、OneBot/OpenShamrock、Go-cqhttp 、Custom 支持发送截图，欢迎 PR 适配其他推送方式
+> 其中 Telegram、Email/SMTP、WeChatworkapp、OneBot/OpenShamrock、Go-cqhttp、Custom 支持发送截图，欢迎 PR 适配其他推送方式
 
 ### 按键
 

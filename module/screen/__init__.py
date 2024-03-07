@@ -71,13 +71,14 @@ class Screen(metaclass=SingletonMeta):
         auto.press_key("esc")
         time.sleep(2)  # 等待屏幕变化
 
+        auto.take_screenshot()
         # 处理与服务器断开连接的异常情况
-        if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9):
+        if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
             time.sleep(20)
 
         # 处理登录异常情况
-        if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9):
+        if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
             time.sleep(20)
 
@@ -183,7 +184,7 @@ class Screen(metaclass=SingletonMeta):
         """
         self.logger.error(log_message)
         self.logger.error("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件")
-        self.logger.error("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR")
+        self.logger.error("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR或游戏滤镜")
         raise Exception(error_message)
 
     def ensure_current_screen_is_clean(self):
