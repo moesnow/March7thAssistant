@@ -22,11 +22,13 @@ def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
     value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name)
     if value:
         data_dict = json.loads(value.decode('utf-8').strip('\x00'))
+        # Convert keys to lower case to ensure case-insensitivity
+        data_dict = {k.lower(): v for k, v in data_dict.items()}
 
-        # Validate data format
-        if 'width' in data_dict and 'height' in data_dict and 'isFullScreen' in data_dict:
-            if isinstance(data_dict['width'], int) and isinstance(data_dict['height'], int) and isinstance(data_dict['isFullScreen'], bool):
-                return data_dict['width'], data_dict['height'], data_dict['isFullScreen']
+        # Validate data format with case-insensitive keys
+        if 'width' in data_dict and 'height' in data_dict and 'isfullscreen' in data_dict:
+            if isinstance(data_dict['width'], int) and isinstance(data_dict['height'], int) and isinstance(data_dict['isfullscreen'], bool):
+                return data_dict['width'], data_dict['height'], data_dict['isfullscreen']
             else:
                 raise ValueError("Registry data is invalid: width, height, and isFullScreen must be of type int, int, and bool respectively.")
         else:

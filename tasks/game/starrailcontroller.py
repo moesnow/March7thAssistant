@@ -26,7 +26,7 @@ class StarRailController(GameController):
         except FileNotFoundError:
             self.log_debug("指定的注册表项未找到")
         except Exception as e:
-            self.log_error("读取注册表值时发生错误:", e)
+            self.log_error(f"读取注册表值时发生错误: {e}")
 
     def restore_resolution(self):
         """通过注册表恢复游戏分辨率"""
@@ -35,7 +35,7 @@ class StarRailController(GameController):
                 set_game_resolution(self.game_resolution[0], self.game_resolution[1], self.game_resolution[2])
                 self.log_debug(f"恢复游戏分辨率: {self.game_resolution[0]}x{self.game_resolution[1]} ({'全屏' if self.game_resolution[2] else '窗口'})")
         except Exception as e:
-            self.log_error("写入注册表值时发生错误:", e)
+            self.log_error(f"写入注册表值时发生错误: {e}")
 
     def change_auto_hdr(self, status: Literal["enable", "disable", "unset"] = "unset"):
         """通过注册表修改游戏自动 HDR 设置"""
