@@ -26,7 +26,7 @@ class StarRailController(GameController):
         except FileNotFoundError:
             self.log_debug("指定的注册表项未找到")
         except Exception as e:
-            self.log_debug(f"读取注册表值时发生错误: {e}")
+            self.log_error(f"读取注册表值时发生错误: {e}")
 
     def restore_resolution(self):
         """通过注册表恢复游戏分辨率"""
