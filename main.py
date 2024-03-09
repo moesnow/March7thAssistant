@@ -127,7 +127,7 @@ def main(action=None):
         tool.start(action)
 
     elif action == "game":
-        Game.start()
+        game.start()
 
     elif action == "notify":
         run_notify_action()
