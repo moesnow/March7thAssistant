@@ -1,15 +1,15 @@
-from managers.config import config
-from managers.logger import logger
-from module.notify import Notify
+from module.config import cfg
+from module.logger import log
+from module.notification.notification import Notification
 # 导入所有通知器类型
-from module.notify.onepush import OnepushNotifier
-from module.notify.winotify import WinotifyNotifier
-from module.notify.telegram import TelegramNotifier
-from module.notify.onebot import OnebotNotifier
-from module.notify.smtp import SMTPNotifier
-from module.notify.gocqhttp import GocqhttpNotifier
-from module.notify.wechatworkapp import WeChatworkappNotifier
-from module.notify.custom import CustomNotifier
+from module.notification.onepush import OnepushNotifier
+from module.notification.winotify import WinotifyNotifier
+from module.notification.telegram import TelegramNotifier
+from module.notification.onebot import OnebotNotifier
+from module.notification.smtp import SMTPNotifier
+from module.notification.gocqhttp import GocqhttpNotifier
+from module.notification.wechatworkapp import WeChatworkappNotifier
+from module.notification.custom import CustomNotifier
 
 
 class NotifierFactory:
@@ -40,14 +40,14 @@ class NotifierFactory:
             return OnepushNotifier(notifier_name, params, logger)
 
 
-notify = Notify("三月七小助手|･ω･)", logger)
+notif = Notification("三月七小助手|･ω･)", log)
 
 # 创建并注册Notifier实例
-for key, value in config.config.items():
+for key, value in cfg.config.items():
     if key.startswith("notify_") and key.endswith("_enable") and value:
         notifier_name = key[len("notify_"):-len("_enable")]
         params = {param_key[len("notify_" + notifier_name + "_"):]: param_value
-                  for param_key, param_value in config.config.items()
+                  for param_key, param_value in cfg.config.items()
                   if param_key.startswith(f"notify_{notifier_name}_") and param_key != f"notify_{notifier_name}_enable" and param_value != ""}
-        notifier = NotifierFactory.create_notifier(notifier_name, params, logger)
-        notify.set_notifier(notifier_name, notifier)
+        notifier = NotifierFactory.create_notifier(notifier_name, params, log)
+        notif.set_notifier(notifier_name, notifier)

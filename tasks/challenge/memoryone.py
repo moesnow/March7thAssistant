@@ -1,8 +1,8 @@
 import time
 from .basechallenge import BaseChallenge
-from managers.screen import screen
-from managers.automation import auto
-from managers.logger import logger
+from module.screen import screen
+from module.automation import auto
+from module.logger import log
 
 
 class MemoryOne(BaseChallenge):
@@ -17,12 +17,12 @@ class MemoryOne(BaseChallenge):
 
         count: 挑战次数
         '''
-        logger.hr(f"准备{self.name}", 0)
+        log.hr(f"准备{self.name}", 0)
         for _ in range(count):
             self.prepare()
             if not self.start_challenges():
                 break
-        logger.hr("完成", 2)
+        log.hr("完成", 2)
         return True if self.success else False
 
     def prepare(self):
@@ -36,7 +36,7 @@ class MemoryOne(BaseChallenge):
         level = 1
 
         if not self.start_challenge(level):
-            logger.error(f"第{level}层挑战失败")
+            log.error(f"第{level}层挑战失败")
             self.success = False
             return False
 
@@ -47,26 +47,26 @@ class MemoryOne(BaseChallenge):
 
     def start_challenge(self, level):
         '''开始挑战'''
-        logger.info(f"开始挑战第{level:02}层")
+        log.info(f"开始挑战第{level:02}层")
 
         if not auto.click_element(f"{level:02}", "text", max_retries=20, crop=(540.0 / 1920, 406.0 / 1080, 1156.0 / 1920, 516.0 / 1080)):
-            logger.error("点击关卡失败")
+            log.error("点击关卡失败")
             return False
 
         # 准备关卡
         if not self.prepare_level():
-            logger.error("配置队伍失败")
+            log.error("配置队伍失败")
             return False
 
         if not self.start_level():
-            logger.error("开始关卡失败")
+            log.error("开始关卡失败")
             return False
 
         # 开始战斗
         if self.start_battle():
             return True
         else:
-            logger.error("战斗失败")
+            log.error("战斗失败")
 
         return False
 
@@ -98,7 +98,7 @@ class MemoryOne(BaseChallenge):
 
     def check_fight(self, timeout):
         '''检查战斗是否结束'''
-        logger.info("进入战斗")
+        log.info("进入战斗")
         time.sleep(5)
 
         start_time = time.time()
@@ -116,10 +116,10 @@ class MemoryOne(BaseChallenge):
                     auto.click_element("./assets/images/forgottenhall/back.png", "image", 0.9)
                     return True
             elif self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
-                logger.info("尝试开启自动战斗")
+                log.info("尝试开启自动战斗")
                 auto.press_key("v")
 
             time.sleep(2)
 
-        logger.error("战斗超时")
+        log.error("战斗超时")
         return False

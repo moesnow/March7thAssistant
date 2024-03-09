@@ -1,7 +1,7 @@
 import time
 import requests
 import concurrent.futures
-from managers.config import config
+from module.config import cfg
 
 
 class FastestMirror:
@@ -29,7 +29,7 @@ class FastestMirror:
 
     @staticmethod
     def get_pypi_mirror(timeout=5):
-        return FastestMirror.find_fastest_mirror(config.pypi_mirror_urls, timeout)
+        return FastestMirror.find_fastest_mirror(cfg.pypi_mirror_urls, timeout)
 
     @staticmethod
     def find_fastest_mirror(mirror_urls, timeout=5):

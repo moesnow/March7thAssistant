@@ -1,7 +1,7 @@
 import time
-from managers.automation import auto
-from managers.config import config
-from managers.logger import logger
+from module.automation import auto
+from module.config import cfg
+from module.logger import log
 from .rewardtemplate import RewardTemplate
 
 
@@ -11,13 +11,13 @@ class Dispatch(RewardTemplate):
         auto.find_element("专属材料", "text", max_retries=10, crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080))
 
         self._perform_dispatches()
-        if "派遣1次委托" in config.daily_tasks and config.daily_tasks["派遣1次委托"]:
-            config.daily_tasks["派遣1次委托"] = False
-            config.save_config()
+        if "派遣1次委托" in cfg.daily_tasks and cfg.daily_tasks["派遣1次委托"]:
+            cfg.daily_tasks["派遣1次委托"] = False
+            cfg.save_config()
 
     def _perform_dispatches(self):
         for i in range(4):
-            logger.info(f"正在进行第{i + 1}次委托")
+            log.info(f"正在进行第{i + 1}次委托")
 
             if not self.perform_dispatch_and_check(crop=(298.0 / 1920, 153.0 / 1080, 1094.0 / 1920, 122.0 / 1080)):
                 return
@@ -31,7 +31,7 @@ class Dispatch(RewardTemplate):
 
     def perform_dispatch_and_check(self, crop):
         if not self._click_complete_dispatch(crop):
-            logger.warning("未检测到已完成的委托")
+            log.warning("未检测到已完成的委托")
             return False
         time.sleep(0.5)
         return True

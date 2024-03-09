@@ -3,7 +3,7 @@ from typing import Union
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 
-from managers.config import config
+from module.config import cfg
 
 
 class SwitchSettingCard1(SettingCard):
@@ -17,7 +17,7 @@ class SwitchSettingCard1(SettingCard):
         self.switchButton = SwitchButton(
             self.tr('关'), self, IndicatorPosition.RIGHT)
 
-        self.setValue(config.get_value(self.configname))
+        self.setValue(cfg.get_value(self.configname))
 
         # add switch button to layout
         self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
@@ -28,7 +28,7 @@ class SwitchSettingCard1(SettingCard):
     def __onCheckedChanged(self, isChecked: bool):
         """ switch button checked state changed slot """
         self.setValue(isChecked)
-        config.set_value(self.configname, isChecked)
+        cfg.set_value(self.configname, isChecked)
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)

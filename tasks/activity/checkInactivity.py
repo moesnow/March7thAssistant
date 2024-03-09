@@ -1,6 +1,6 @@
 import time
-from managers.automation import auto
-from managers.logger import logger
+from module.automation import auto
+from module.logger import log
 from .activitytemplate import ActivityTemplate
 
 
@@ -22,6 +22,6 @@ class CheckInActivity(ActivityTemplate):
 
     def run(self):
         if self._has_reward():
-            logger.hr(f"检测到{self.name}奖励", 2)
+            log.hr(f"检测到{self.name}奖励", 2)
             self._collect_rewards()
-            logger.info(f"领取{self.name}奖励完成")
+            log.info(f"领取{self.name}奖励完成")

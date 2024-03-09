@@ -9,7 +9,7 @@ from .card.comboboxsettingcard2 import ComboBoxSettingCard2
 from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
-from managers.config import config
+from module.config import cfg
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
 import os
@@ -452,7 +452,7 @@ class SettingInterface(ScrollArea):
             self.tr('任务完成后'),
             self.tr('其中“退出”指退出游戏，“循环”指根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
             texts={'无': 'None', '退出': 'Exit', '循环': 'Loop',
-                   '关机': 'Shutdown', '休眠': 'Hibernate', '睡眠': 'Sleep'}
+                   '关机': 'Shutdown', '休眠': 'Hibernate', '睡眠': 'Sleep', '注销': 'Logoff'}
         )
         self.playAudioCard = SwitchSettingCard1(
             FIF.ALBUM,
@@ -479,7 +479,7 @@ class SettingInterface(ScrollArea):
             self.tr('修改'),
             FIF.GAME,
             self.tr("游戏路径"),
-            config.game_path
+            cfg.game_path
         )
 
         self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
@@ -545,7 +545,7 @@ class SettingInterface(ScrollArea):
             self.tr('检查更新'),
             FIF.INFO,
             self.tr('关于'),
-            self.tr('当前版本：') + " " + config.version
+            self.tr('当前版本：') + " " + cfg.version
         )
         self.updatePrereleaseEnableCard = SwitchSettingCard1(
             FIF.TRAIN,
@@ -730,15 +730,15 @@ class SettingInterface(ScrollArea):
     def __onImportConfigCardClicked(self):
         configdir, _ = QFileDialog.getOpenFileName(self, "选取配置文件", "./", "Config Files (*.yaml)")
         if (configdir != ""):
-            config._load_config(configdir)
-            config.save_config()
+            cfg._load_config(configdir)
+            cfg.save_config()
             self.__showRestartTooltip()
 
     def __onGamePathCardClicked(self):
         game_path, _ = QFileDialog.getOpenFileName(self, "选择游戏路径", "", "All Files (*)")
-        if not game_path or config.game_path == game_path:
+        if not game_path or cfg.game_path == game_path:
             return
-        config.set_value("game_path", game_path)
+        cfg.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
     def __openCharacterFolder(self):

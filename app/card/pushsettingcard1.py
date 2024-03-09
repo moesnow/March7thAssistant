@@ -3,7 +3,7 @@ from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
 from qfluentwidgets import SettingCard, FluentIconBase
 from .messagebox_custom import MessageBoxEdit, MessageBoxDate, MessageBoxInstance, MessageBoxTeam
-from managers.config import config
+from module.config import cfg
 from typing import Union
 import datetime
 import json
@@ -23,33 +23,33 @@ class PushSettingCard(SettingCard):
 
 class PushSettingCardStr(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        self.configvalue = str(config.get_value(configname))
+        self.configvalue = str(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, self.configvalue, parent)
         self.button.clicked.connect(self.__onclicked)
 
     def __onclicked(self):
         message_box = MessageBoxEdit(self.title, self.configvalue, self.window())
         if message_box.exec():
-            config.set_value(self.configname, message_box.getText())
+            cfg.set_value(self.configname, message_box.getText())
             self.contentLabel.setText(message_box.getText())
 
 
 class PushSettingCardEval(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        self.configvalue = str(config.get_value(configname))
+        self.configvalue = str(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, self.configvalue, parent)
         self.button.clicked.connect(self.__onclicked)
 
     def __onclicked(self):
         message_box = MessageBoxEdit(self.title, self.configvalue, self.window())
         if message_box.exec():
-            config.set_value(self.configname, eval(message_box.getText()))
+            cfg.set_value(self.configname, eval(message_box.getText()))
             self.contentLabel.setText(message_box.getText())
 
 
 class PushSettingCardDate(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        self.configvalue = datetime.datetime.fromtimestamp(config.get_value(configname))
+        self.configvalue = datetime.datetime.fromtimestamp(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, self.configvalue.strftime('%Y-%m-%d %H:%M'), parent)
         self.button.clicked.connect(self.__onclicked)
 
@@ -57,13 +57,13 @@ class PushSettingCardDate(PushSettingCard):
         message_box = MessageBoxDate(self.title, self.configvalue, self.window())
         if message_box.exec():
             time = message_box.getDateTime()
-            config.set_value(self.configname, time.timestamp())
+            cfg.set_value(self.configname, time.timestamp())
             self.contentLabel.setText(time.strftime('%Y-%m-%d %H:%M'))
 
 
 class PushSettingCardKey(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        self.configvalue = str(config.get_value(configname))
+        self.configvalue = str(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, self.configvalue, parent)
         self.button.pressed.connect(self.__onpressed)
         self.button.released.connect(self.__onreleased)
@@ -76,7 +76,7 @@ class PushSettingCardKey(PushSettingCard):
 
     def keyPressEvent(self, e: QKeyEvent):
         if (self.button.isDown()):
-            config.set_value(self.configname, e.text())
+            cfg.set_value(self.configname, e.text())
             self.contentLabel.setText(e.text())
             self.button.setText(f"已改为 {e.text()}")
 
@@ -84,7 +84,7 @@ class PushSettingCardKey(PushSettingCard):
 class PushSettingCardInstance(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, configtemplate, parent=None):
         self.configtemplate = configtemplate
-        self.configvalue = config.get_value(configname)
+        self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, str(self.configvalue), parent)
         self.button.clicked.connect(self.__onclicked)
 
@@ -93,7 +93,7 @@ class PushSettingCardInstance(PushSettingCard):
         if message_box.exec():
             for type, combobox in message_box.comboBox_dict.items():
                 self.configvalue[type] = combobox.text().split('（')[0]
-            config.set_value(self.configname, self.configvalue)
+            cfg.set_value(self.configname, self.configvalue)
             self.contentLabel.setText(str(self.configvalue))
 
 
@@ -101,7 +101,7 @@ class PushSettingCardTeam(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
             self.template = json.load(file)
-        self.configvalue = config.get_value(configname)
+        self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, self.translate_to_chinese(self.configvalue), parent)
         self.button.clicked.connect(self.__onclicked)
 
@@ -126,5 +126,5 @@ class PushSettingCardTeam(PushSettingCard):
                 tech = get_key(comboboxs[1].text(), message_box.tech_map)
                 self.newConfigValue.append([name, tech])
             self.configvalue = self.newConfigValue
-            config.set_value(self.configname, self.newConfigValue)
+            cfg.set_value(self.configname, self.newConfigValue)
             self.contentLabel.setText(self.translate_to_chinese(self.newConfigValue))

@@ -1,6 +1,6 @@
-from managers.logger import logger
-from managers.config import config
-from managers.screen import screen
+from module.logger import log
+from module.config import cfg
+from module.screen import screen
 from utils.date import Date
 from tasks.daily.photo import Photo
 from tasks.daily.fight import Fight
@@ -18,82 +18,82 @@ from utils.color import red, green, yellow
 class Daily:
     @staticmethod
     def start():
-        if config.daily_enable:
+        if cfg.daily_enable:
             Daily.run()
 
         # 优先历战余响
-        if Date.is_next_mon_x_am(config.echo_of_war_timestamp, config.refresh_hour):
-            if config.echo_of_war_enable:
+        if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
+            if cfg.echo_of_war_enable:
                 Echoofwar.start()
             else:
-                logger.info("历战余响未开启")
+                log.info("历战余响未开启")
         else:
-            logger.info("历战余响尚未刷新")
+            log.info("历战余响尚未刷新")
 
         Power.run()
 
-        if Date.is_next_x_am(config.fight_timestamp, config.refresh_hour):
-            if config.fight_enable:
+        if Date.is_next_x_am(cfg.fight_timestamp, cfg.refresh_hour):
+            if cfg.fight_enable:
                 Fight.start()
             else:
-                logger.info("锄大地未开启")
+                log.info("锄大地未开启")
         else:
-            logger.info("锄大地尚未刷新")
+            log.info("锄大地尚未刷新")
 
-        if config.universe_frequency == "weekly":
-            if Date.is_next_mon_x_am(config.universe_timestamp, config.refresh_hour):
-                if config.universe_enable:
+        if cfg.universe_frequency == "weekly":
+            if Date.is_next_mon_x_am(cfg.universe_timestamp, cfg.refresh_hour):
+                if cfg.universe_enable:
                     Power.run()
                     reward.start()
                     Universe.start(get_reward=True)
                     Power.run()
                 else:
-                    logger.info("模拟宇宙未开启")
+                    log.info("模拟宇宙未开启")
             else:
-                logger.info("模拟宇宙尚未刷新")
-        elif config.universe_frequency == "daily":
-            if Date.is_next_x_am(config.universe_timestamp, config.refresh_hour):
-                if config.universe_enable:
+                log.info("模拟宇宙尚未刷新")
+        elif cfg.universe_frequency == "daily":
+            if Date.is_next_x_am(cfg.universe_timestamp, cfg.refresh_hour):
+                if cfg.universe_enable:
                     Universe.start(get_reward=True)
                 else:
-                    logger.info("模拟宇宙未开启")
+                    log.info("模拟宇宙未开启")
             else:
-                logger.info("模拟宇宙尚未刷新")
+                log.info("模拟宇宙尚未刷新")
 
-        if Date.is_next_mon_x_am(config.forgottenhall_timestamp, config.refresh_hour):
-            if config.forgottenhall_enable:
+        if Date.is_next_mon_x_am(cfg.forgottenhall_timestamp, cfg.refresh_hour):
+            if cfg.forgottenhall_enable:
                 challenge.start("memoryofchaos")
             else:
-                logger.info("忘却之庭未开启")
+                log.info("忘却之庭未开启")
         else:
-            logger.info("忘却之庭尚未刷新")
+            log.info("忘却之庭尚未刷新")
 
-        if Date.is_next_mon_x_am(config.purefiction_timestamp, config.refresh_hour):
-            if config.purefiction_enable:
+        if Date.is_next_mon_x_am(cfg.purefiction_timestamp, cfg.refresh_hour):
+            if cfg.purefiction_enable:
                 challenge.start("purefiction")
             else:
-                logger.info("虚构叙事未开启")
+                log.info("虚构叙事未开启")
         else:
-            logger.info("虚构叙事尚未刷新")
+            log.info("虚构叙事尚未刷新")
 
         Power.run()
 
     @staticmethod
     def run():
-        logger.hr("开始日常任务", 0)
+        log.hr("开始日常任务", 0)
 
-        if Date.is_next_x_am(config.last_run_timestamp, config.refresh_hour):
+        if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
             screen.change_to("guide2")
 
             tasks = Tasks("./assets/config/task_mappings.json")
             tasks.start()
 
-            config.set_value("daily_tasks", tasks.daily_tasks)
-            config.save_timestamp("last_run_timestamp")
+            cfg.set_value("daily_tasks", tasks.daily_tasks)
+            cfg.save_timestamp("last_run_timestamp")
         else:
-            logger.info("日常任务尚未刷新")
+            log.info("日常任务尚未刷新")
 
-        if len(config.daily_tasks) > 0:
+        if len(cfg.daily_tasks) > 0:
             task_functions = {
                 "登录游戏": lambda: True,
                 "拍照1次": lambda: Photo.photograph(),
@@ -101,11 +101,11 @@ class Daily:
                 "合成1次消耗品": lambda: Synthesis.consumables(),
                 "合成1次材料": lambda: Synthesis.material(),
                 "使用1件消耗品": lambda: Synthesis.use_consumables(),
-                "完成1次「拟造花萼（金）」": lambda: Power.customize_run("拟造花萼（金）", config.instance_names["拟造花萼（金）"], 10, 1),
-                "完成1次「拟造花萼（赤）」": lambda: Power.customize_run("拟造花萼（赤）", config.instance_names["拟造花萼（赤）"], 10, 1),
-                "完成1次「凝滞虚影」": lambda: Power.customize_run("凝滞虚影", config.instance_names["凝滞虚影"], 30, 1),
-                "完成1次「侵蚀隧洞」": lambda: Power.customize_run("侵蚀隧洞", config.instance_names["侵蚀隧洞"], 40, 1),
-                "完成1次「历战余响」": lambda: Power.customize_run("历战余响", config.instance_names["历战余响"], 30, 1),
+                "完成1次「拟造花萼（金）」": lambda: Power.customize_run("拟造花萼（金）", cfg.instance_names["拟造花萼（金）"], 10, 1),
+                "完成1次「拟造花萼（赤）」": lambda: Power.customize_run("拟造花萼（赤）", cfg.instance_names["拟造花萼（赤）"], 10, 1),
+                "完成1次「凝滞虚影」": lambda: Power.customize_run("凝滞虚影", cfg.instance_names["凝滞虚影"], 30, 1),
+                "完成1次「侵蚀隧洞」": lambda: Power.customize_run("侵蚀隧洞", cfg.instance_names["侵蚀隧洞"], 40, 1),
+                "完成1次「历战余响」": lambda: Power.customize_run("历战余响", cfg.instance_names["历战余响"], 30, 1),
                 "累计施放2次秘技": lambda: HimekoTry.technique(),
                 "累计击碎3个可破坏物": lambda: HimekoTry.item(),
                 "完成1次「忘却之庭」": lambda: challenge.start_memory_one(1),
@@ -118,18 +118,18 @@ class Daily:
                 "完成1次「模拟宇宙」": lambda: Universe.run_daily(),
             }
 
-            logger.hr(f"今日实训", 2)
+            log.hr(f"今日实训", 2)
             count = 0
-            for key, value in config.daily_tasks.items():
+            for key, value in cfg.daily_tasks.items():
                 state = red("待完成") if value else green("已完成")
-                logger.info(f"{key}: {state}")
+                log.info(f"{key}: {state}")
                 count = count + 1 if not value else count
-            logger.info(f"已完成：{yellow(f'{count}/{len(config.daily_tasks)}')}")
+            log.info(f"已完成：{yellow(f'{count}/{len(cfg.daily_tasks)}')}")
 
             for task_name, task_function in task_functions.items():
-                if task_name in config.daily_tasks and config.daily_tasks[task_name]:
+                if task_name in cfg.daily_tasks and cfg.daily_tasks[task_name]:
                     if task_function():
-                        config.daily_tasks[task_name] = False
-                        config.save_config()
+                        cfg.daily_tasks[task_name] = False
+                        cfg.save_config()
 
-        logger.hr("完成", 2)
+        log.hr("完成", 2)

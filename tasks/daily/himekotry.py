@@ -1,24 +1,24 @@
-from managers.config import config
-from managers.screen import screen
-from managers.automation import auto
+from module.config import cfg
+from module.screen import screen
+from module.automation import auto
 import time
 
 
 class HimekoTry:
     @staticmethod
     def technique():
-        if config.daily_himeko_try_enable:
+        if cfg.daily_himeko_try_enable:
             screen.change_to("himeko_prepare")
-            auto.press_key(config.get_value("hotkey_technique"))
+            auto.press_key(cfg.get_value("hotkey_technique"))
             time.sleep(2)
-            auto.press_key(config.get_value("hotkey_technique"))
+            auto.press_key(cfg.get_value("hotkey_technique"))
             time.sleep(2)
             screen.change_to("himeko_try")
             return True
 
     @staticmethod
     def item():
-        if config.daily_himeko_try_enable:
+        if cfg.daily_himeko_try_enable:
             screen.change_to("himeko_prepare")
             auto.press_key("w", 6)
             auto.press_mouse()

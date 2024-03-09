@@ -72,7 +72,7 @@ def get_game_fps() -> Optional[int]:
             else:
                 raise ValueError("Registry data is invalid: FPS must be of type int.")
         else:
-            raise ValueError("Registry data is missing required fields: FPS.")
+            return 60
 
     return None
 
@@ -88,16 +88,9 @@ def set_game_fps(fps: int) -> None:
 
     data_dict = json.loads(value.decode('utf-8').strip('\x00'))
 
-    # Validate data format
-    if 'FPS' in data_dict:
-        if isinstance(data_dict['FPS'], int):
-            data_dict['FPS'] = fps
-            data = (json.dumps(data_dict) + '\x00').encode('utf-8')
-            write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name, data, winreg.REG_BINARY)
-        else:
-            raise ValueError("Registry data is invalid: FPS must be of type int.")
-    else:
-        raise ValueError("Registry data is missing required fields: FPS.")
+    data_dict['FPS'] = fps
+    data = (json.dumps(data_dict) + '\x00').encode('utf-8')
+    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name, data, winreg.REG_BINARY)
 
 
 def read_registry_value(key, sub_key, value_name):

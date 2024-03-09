@@ -1,4 +1,4 @@
-from managers.automation import auto
+from module.automation import auto
 from .rewardtemplate import RewardTemplate
 
 

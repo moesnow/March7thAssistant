@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional
-from managers.automation import auto
-from managers.logger import logger
+from module.automation import auto
+from module.logger import log
 import time
 
 
@@ -57,10 +57,10 @@ class BaseChallenge(ABC):
         for box in ocr_results:
             text = box[1][0]
             if target_format in text:
-                logger.info(f"星数：{text}")
+                log.info(f"星数：{text}")
                 current_star, _ = text.split('/')
                 if current_star == str(self.total_star):
-                    logger.info(f"{self.name}未刷新")
+                    log.info(f"{self.name}未刷新")
                     return True
                 else:
                     return False

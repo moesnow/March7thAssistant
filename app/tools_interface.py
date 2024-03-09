@@ -4,6 +4,7 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition
 from .common.style_sheet import StyleSheet
 from utils.registry.star_rail_setting import get_game_fps, set_game_fps
+import tasks.tool as tool
 
 
 class ToolsInterface(ScrollArea):
@@ -70,14 +71,6 @@ class ToolsInterface(ScrollArea):
                 self.ToolsGroup.vBoxLayout.removeItem(item)
                 break
 
-    def __onGameScreenshotCardClicked(self):
-        from tasks.tools.game_screenshot import game_screenshot
-        game_screenshot()
-
-    def __onAutomaticPlotCardClicked(self):
-        from tasks.tools.automatic_plot import automatic_plot
-        automatic_plot()
-
     def __onUnlockfpsCardClicked(self):
         try:
             fps = get_game_fps()
@@ -115,6 +108,6 @@ class ToolsInterface(ScrollArea):
             )
 
     def __connectSignalToSlot(self):
-        self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
-        self.automaticPlotCard.clicked.connect(self.__onAutomaticPlotCardClicked)
+        self.gameScreenshotCard.clicked.connect(lambda: tool.start("screenshot"))
+        self.automaticPlotCard.clicked.connect(lambda: tool.start("plot"))
         self.unlockfpsCard.clicked.connect(self.__onUnlockfpsCardClicked)

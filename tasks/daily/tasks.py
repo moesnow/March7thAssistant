@@ -1,6 +1,6 @@
-from managers.logger import logger
-from managers.automation import auto
-from managers.ocr import ocr
+from module.logger import log
+from module.automation import auto
+from module.ocr import ocr
 import time
 import json
 import sys
@@ -17,7 +17,7 @@ class Tasks:
             with open(config_example_path, 'r', encoding='utf-8') as file:
                 return json.load(file)
         except FileNotFoundError:
-            logger.error(f"配置文件不存在：{config_example_path}")
+            log.error(f"配置文件不存在：{config_example_path}")
             input("按回车键关闭窗口. . .")
             sys.exit(1)
 

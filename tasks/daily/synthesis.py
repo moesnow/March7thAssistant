@@ -1,6 +1,6 @@
-from managers.screen import screen
-from managers.automation import auto
-from managers.logger import logger
+from module.screen import screen
+from module.automation import auto
+from module.logger import log
 import time
 
 
@@ -8,7 +8,7 @@ class Synthesis:
     @staticmethod
     def consumables():
         try:
-            logger.hr("准备合成消耗品", 2)
+            log.hr("准备合成消耗品", 2)
             screen.change_to('consumables')
             # 筛选规则
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
@@ -23,17 +23,17 @@ class Synthesis:
                                 if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
                                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                                         if auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
-                                            logger.info("合成消耗品完成")
+                                            log.info("合成消耗品完成")
                                             return True
                                 break
-            logger.error("合成消耗品失败")
+            log.error("合成消耗品失败")
         except Exception as e:
-            logger.error(f"合成消耗品失败: {e}")
+            log.error(f"合成消耗品失败: {e}")
         return False
 
     def material():
         try:
-            logger.hr("准备合成材料", 2)
+            log.hr("准备合成材料", 2)
             screen.change_to('material')
             # 筛选规则
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
@@ -48,17 +48,17 @@ class Synthesis:
                                 if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
                                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                                         if auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
-                                            logger.info("合成材料完成")
+                                            log.info("合成材料完成")
                                             return True
                                 break
-            logger.error("合成材料失败")
+            log.error("合成材料失败")
         except Exception as e:
-            logger.error(f"合成材料失败: {e}")
+            log.error(f"合成材料失败: {e}")
         return False
 
     def use_consumables(recursion=True):
         try:
-            logger.hr("准备使用消耗品", 2)
+            log.hr("准备使用消耗品", 2)
             screen.change_to('bag_consumables')
             # 筛选规则
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
@@ -74,19 +74,19 @@ class Synthesis:
                                         if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                                             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=2)
                                             if auto.find_element("./assets/images/screen/bag/bag_consumables.png", "image", 0.9, max_retries=10):
-                                                logger.info("使用消耗品完成")
+                                                log.info("使用消耗品完成")
                                                 return True
                                     break
                                 continue
                             elif recursion:
-                                logger.info("没有可用的消耗品，尝试合成")
+                                log.info("没有可用的消耗品，尝试合成")
                                 if Synthesis.consumables():
                                     return Synthesis.use_consumables(False)
                                 else:
                                     break
                             else:
                                 break
-            logger.error("使用消耗品失败")
+            log.error("使用消耗品失败")
         except Exception as e:
-            logger.error(f"使用消耗品失败: {e}")
+            log.error(f"使用消耗品失败: {e}")
         return False

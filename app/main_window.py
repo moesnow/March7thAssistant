@@ -17,9 +17,10 @@ from .setting_interface import SettingInterface
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
+from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
-from managers.config import config
+from module.config import cfg
 from utils.gamecontroller import GameController
 import base64
 
@@ -34,6 +35,7 @@ class MainWindow(MSFluentWindow):
 
         # 检查更新
         checkUpdate(self, flag=True)
+        checkAnnouncement(self)
 
     def initWindow(self):
         setThemeColor('#f18cb9', lazy=True)
@@ -106,11 +108,11 @@ class MainWindow(MSFluentWindow):
 
         self.splashScreen.finish()
 
-        if not config.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
+        if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
             disclaimer(self)
 
     def startGame(self):
-        game = GameController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass')
+        game = GameController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass')
         try:
             if game.start_game():
                 InfoBar.success(
