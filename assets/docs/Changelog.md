@@ -8,6 +8,7 @@
 - 新增 [OneBot](https://onebot.dev)/[OpenShamrock](https://whitechi73.github.io/OpenShamrock/) 推送方式（QQ 机器人）
 - 企业微信应用推送方式支持发送图片
 ### 修复
+- 部分情况下解锁帧率失败
 - 部分情况下无法正常发送 gotify 通知
 - 任务追踪图标导致地图界面无法识别
 - 多个红点导致模拟宇宙领取每周奖励失败
