@@ -23,7 +23,7 @@ def run_gui():
         else:
             logger.error("游戏尚未启动")
     except Exception as e:
-        logger.error(e)
+        logger.error(f"截图失败: {e}")
 
 
 def game_screenshot():
