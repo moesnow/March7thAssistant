@@ -17,6 +17,7 @@ from .setting_interface import SettingInterface
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
+from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
 from module.config import cfg
@@ -34,6 +35,7 @@ class MainWindow(MSFluentWindow):
 
         # 检查更新
         checkUpdate(self, flag=True)
+        checkAnnouncement(self)
 
     def initWindow(self):
         setThemeColor('#f18cb9', lazy=True)

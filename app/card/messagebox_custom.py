@@ -2,19 +2,26 @@ from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QLabel, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit, BodyLabel, FluentStyleSheet
+from typing import Optional
 import datetime
 import json
 
 
 class MessageBoxImage(MessageBox):
-    def __init__(self, title: str, content: str, image: str, parent=None):
+    def __init__(self, title: str, content: str, image: Optional[str | QPixmap], parent=None):
         super().__init__(title, content, parent)
-        self.imageLabel = QLabel(parent)
-        self.imageLabel.setPixmap(QPixmap(image))
-        self.imageLabel.setScaledContents(True)
+        if image is not None:
+            self.imageLabel = QLabel(parent)
+            if isinstance(image, QPixmap):
+                self.imageLabel.setPixmap(image)
+            elif isinstance(image, str):
+                self.imageLabel.setPixmap(QPixmap(image))
+            else:
+                raise ValueError("Unsupported image type.")
+            self.imageLabel.setScaledContents(True)
 
-        imageIndex = self.vBoxLayout.indexOf(self.textLayout) + 1
-        self.vBoxLayout.insertWidget(imageIndex, self.imageLabel, 0, Qt.AlignCenter)
+            imageIndex = self.vBoxLayout.indexOf(self.textLayout) + 1
+            self.vBoxLayout.insertWidget(imageIndex, self.imageLabel, 0, Qt.AlignCenter)
 
 
 class MessageBoxSupport(MessageBoxImage):
@@ -23,6 +30,15 @@ class MessageBoxSupport(MessageBoxImage):
 
         self.yesButton.setText('下次一定')
         self.cancelButton.setHidden(True)
+
+
+class MessageBoxAnnouncement(MessageBoxImage):
+    def __init__(self, title: str, content: str, image: Optional[str | QPixmap], parent=None):
+        super().__init__(title, content, image, parent)
+
+        self.yesButton.setText('收到')
+        self.cancelButton.setHidden(True)
+        self.setContentCopyable(True)
 
 
 class MessageBoxHtml(MessageBox):
