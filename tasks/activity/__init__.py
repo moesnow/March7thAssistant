@@ -1,8 +1,8 @@
-from managers.logger import logger
-from managers.screen import screen
-from managers.automation import auto
-from managers.ocr import ocr
-from managers.config import config
+from module.logger import log
+from module.screen import screen
+from module.automation import auto
+from module.ocr import ocr
+from module.config import cfg
 from .checkInactivity import CheckInActivity
 from .gardenofplenty import GardenOfPlenty
 from .realmofthestrange import RealmOfTheStrange
@@ -11,11 +11,11 @@ from .planarfissure import PlanarFissure
 
 class ActivityManager:
     def __init__(self):
-        self.giftofodyssey = CheckInActivity("巡星之礼", config.activity_giftofodyssey_enable)
-        self.giftofradiance = CheckInActivity("巡光之礼", config.activity_giftofodyssey_enable)
-        self.gardenofplenty = GardenOfPlenty("花藏繁生", config.activity_gardenofplenty_enable, config.activity_gardenofplenty_instance_type, config.instance_names)
-        self.realmofthestrange = RealmOfTheStrange("异器盈界", config.activity_realmofthestrange_enable, config.instance_names)
-        self.planarfissure = PlanarFissure("位面分裂", config.activity_planarfissure_enable)
+        self.giftofodyssey = CheckInActivity("巡星之礼", cfg.activity_giftofodyssey_enable)
+        self.giftofradiance = CheckInActivity("巡光之礼", cfg.activity_giftofodyssey_enable)
+        self.gardenofplenty = GardenOfPlenty("花藏繁生", cfg.activity_gardenofplenty_enable, cfg.activity_gardenofplenty_instance_type, cfg.instance_names)
+        self.realmofthestrange = RealmOfTheStrange("异器盈界", cfg.activity_realmofthestrange_enable, cfg.instance_names)
+        self.planarfissure = PlanarFissure("位面分裂", cfg.activity_planarfissure_enable)
 
         self.activity_functions = {
             "巡星之礼": self.giftofodyssey.start,
@@ -26,12 +26,12 @@ class ActivityManager:
         }
 
     def check_and_run_activities(self):
-        logger.hr("开始检测活动", 0)
+        log.hr("开始检测活动", 0)
 
         activity_names = self._get_activity_names()
 
         if not activity_names:
-            logger.info("未检测到任何活动")
+            log.info("未检测到任何活动")
             self._finish()
             return
 
@@ -49,16 +49,16 @@ class ActivityManager:
         if not result:
             return []
 
-        logger.debug(result)
+        log.debug(result)
         return [box[1][0] for box in result if len(box[1][0]) >= 4]
 
     def _finish(self):
-        logger.hr("完成", 2)
+        log.hr("完成", 2)
 
 
 def start():
-    if not config.activity_enable:
-        logger.info("活动未开启")
+    if not cfg.activity_enable:
+        log.info("活动未开启")
         return
 
     activity_manager = ActivityManager()

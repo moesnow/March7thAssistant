@@ -1,6 +1,6 @@
 from abc import abstractmethod
-from managers.automation import auto
-from managers.logger import logger
+from module.automation import auto
+from module.logger import log
 from .activitytemplate import ActivityTemplate
 
 
@@ -22,5 +22,5 @@ class DoubleActivity(ActivityTemplate):
         if reward_count == 0:
             return
 
-        logger.info(f"{self.name}剩余次数：{reward_count}")
+        log.info(f"{self.name}剩余次数：{reward_count}")
         self._run_instances(reward_count)

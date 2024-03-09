@@ -2,15 +2,15 @@ from .memoryofchaos import MemoryOfChaos
 from .memoryone import MemoryOne
 from .purefiction import PureFiction
 from typing import Literal
-from managers.config import config
+from module.config import cfg
 
 
 class ChallengeManager:
     def __init__(self):
         self.game_modes = {
-            "memoryofchaos": MemoryOfChaos(config.forgottenhall_team1, config.forgottenhall_team2, config.forgottenhall_level, config.hotkey_technique, config.auto_battle_detect_enable),
-            "purefiction": PureFiction(config.purefiction_team1, config.purefiction_team2, config.purefiction_level, config.hotkey_technique, config.auto_battle_detect_enable),
-            "memoryone": MemoryOne(config.daily_memory_one_team, config.hotkey_technique, config.auto_battle_detect_enable),
+            "memoryofchaos": MemoryOfChaos(cfg.forgottenhall_team1, cfg.forgottenhall_team2, cfg.forgottenhall_level, cfg.hotkey_technique, cfg.auto_battle_detect_enable),
+            "purefiction": PureFiction(cfg.purefiction_team1, cfg.purefiction_team2, cfg.purefiction_level, cfg.hotkey_technique, cfg.auto_battle_detect_enable),
+            "memoryone": MemoryOne(cfg.daily_memory_one_team, cfg.hotkey_technique, cfg.auto_battle_detect_enable),
         }
 
     def run(self, mode: Literal["memoryofchaos", "purefiction", "memoryone"], count=1):
@@ -27,6 +27,6 @@ def start(mode: Literal["memoryofchaos", "purefiction", "memoryone"], count=1):
 
 
 def start_memory_one(count=1):
-    if config.daily_memory_one_enable:
+    if cfg.daily_memory_one_enable:
         challenge_manager = ChallengeManager()
         return challenge_manager.run("memoryone", count)

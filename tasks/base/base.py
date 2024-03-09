@@ -1,12 +1,12 @@
-from managers.logger import logger
-from managers.automation import auto
-from managers.notify import notify
+from module.logger import log
+from module.automation import auto
+from module.notification import notif
 
 
 class Base:
     @staticmethod
     def send_notification_with_screenshot(message):
         # 日志显示的同时推送消息
-        logger.info(message)
+        log.info(message)
         screenshot, _, _ = auto.take_screenshot()
-        notify.notify(message, screenshot)
+        notif.notify(message, screenshot)

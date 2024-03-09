@@ -8,18 +8,18 @@ import pyuac
 import atexit
 import base64
 
-from managers.config import config
-from managers.logger import logger
-from managers.notify import notify
-from managers.ocr import ocr
+from module.config import cfg
+from module.logger import log
+from module.notification import notif
+from module.ocr import ocr
 
+import tasks.game as game
 import tasks.activity as activity
 import tasks.reward as reward
 import tasks.challenge as challenge
 import tasks.tool as tool
+import tasks.version as version
 
-from tasks.game import Game
-from tasks.version import Version
 from tasks.daily.daily import Daily
 from tasks.daily.fight import Fight
 from tasks.power.power import Power
@@ -27,24 +27,24 @@ from tasks.weekly.universe import Universe
 
 
 def first_run():
-    if not config.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
-        logger.error("首次使用请先打开图形界面")
+    if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
+        log.error("首次使用请先打开图形界面")
         input("按回车键关闭窗口. . .")
         sys.exit(0)
 
 
 def run_main_actions():
     while True:
-        Version.start()
-        Game.start()
+        version.start()
+        game.start()
         activity.start()
         Daily.start()
         reward.start()
-        Game.stop(True)
+        game.stop(True)
 
 
 def run_sub_task(action):
-    Game.start()
+    game.start()
     sub_tasks = {
         "daily": lambda: (Daily.run(), reward.start()),
         "power": Power.run,
@@ -56,7 +56,7 @@ def run_sub_task(action):
     task = sub_tasks.get(action)
     if task:
         task()
-    Game.stop(False)
+    game.stop(False)
 
 
 def run_sub_task_gui(action):
@@ -95,7 +95,7 @@ def run_sub_task_reset(action):
 
 
 def run_notify_action():
-    notify.notify("这是一条测试消息", "./assets/app/images/March7th.jpg")
+    notif.notify("这是一条测试消息", "./assets/app/images/March7th.jpg")
     input("按回车键关闭窗口. . .")
     sys.exit(0)
 
@@ -133,7 +133,7 @@ def main(action=None):
         run_notify_action()
 
     else:
-        logger.error(f"未知任务: {action}")
+        log.error(f"未知任务: {action}")
         input("按回车键关闭窗口. . .")
         sys.exit(1)
 
@@ -156,11 +156,11 @@ if __name__ == "__main__":
             atexit.register(exit_handler)
             main(sys.argv[1]) if len(sys.argv) > 1 else main()
         except KeyboardInterrupt:
-            logger.error("发生错误: 手动强制停止")
+            log.error("发生错误: 手动强制停止")
             input("按回车键关闭窗口. . .")
             sys.exit(1)
         except Exception as e:
-            logger.error(f"发生错误: {e}")
-            notify.notify(f"发生错误: {e}")
+            log.error(f"发生错误: {e}")
+            notif.notify(f"发生错误: {e}")
             input("按回车键关闭窗口. . .")
             sys.exit(1)

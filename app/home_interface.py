@@ -9,7 +9,7 @@ from .common.style_sheet import StyleSheet
 from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
 
-from managers.config import config
+from module.config import cfg
 
 from PIL import Image
 import numpy as np
@@ -21,7 +21,7 @@ class BannerWidget(QWidget):
         self.setFixedHeight(320)
 
         self.vBoxLayout = QVBoxLayout(self)
-        self.galleryLabel = QLabel(f'三月七小助手 {config.version}\nMarch7thAssistant', self)
+        self.galleryLabel = QLabel(f'三月七小助手 {cfg.version}\nMarch7thAssistant', self)
         self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
         # 创建阴影效果

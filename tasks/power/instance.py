@@ -1,7 +1,7 @@
-from managers.screen import screen
-from managers.automation import auto
-from managers.logger import logger
-from managers.config import config
+from module.screen import screen
+from module.automation import auto
+from module.logger import log
+from module.config import cfg
 from tasks.base.base import Base
 from tasks.base.team import Team
 from .character import Character
@@ -15,12 +15,12 @@ class Instance:
         if not Instance.validate_instance(instance_type, instance_name):
             return False
 
-        logger.hr(f"开始刷{instance_type} - {instance_name}，总计{runs}次", 2)
+        log.hr(f"开始刷{instance_type} - {instance_name}，总计{runs}次", 2)
 
         instance_name = Instance.process_instance_name(instance_name)
 
-        if config.instance_team_enable:
-            Team.change_to(config.instance_team_number)
+        if cfg.instance_team_enable:
+            Team.change_to(cfg.instance_team_number)
 
         if not Instance.prepare_instance(instance_type, instance_name):
             return False
@@ -38,13 +38,13 @@ class Instance:
 
         Instance.complete_run(instance_type)
 
-        logger.info("副本任务完成")
+        log.info("副本任务完成")
         return True
 
     @staticmethod
     def validate_instance(instance_type, instance_name):
         if instance_name == "无":
-            logger.info(f"{instance_type}未开启")
+            log.info(f"{instance_type}未开启")
             return False
         return True
 
@@ -64,7 +64,7 @@ class Instance:
         # 传送
         instance_name_crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
         if "拟造花萼（金）" in instance_type:
-            auto.click_element(f"./assets/images/share/calyx/golden/{config.calyx_golden_preference}.png", "image")
+            auto.click_element(f"./assets/images/share/calyx/golden/{cfg.calyx_golden_preference}.png", "image")
             # 等待界面切换
             time.sleep(1)
         auto.click_element("./assets/images/screen/guide/power.png", "image", max_retries=10)
@@ -151,7 +151,7 @@ class Instance:
         time.sleep(2)
         screen.wait_for_screen_change('main')
 
-        if ("侵蚀隧洞" or "历战余响") in instance_type and config.break_down_level_four_relicset:
+        if ("侵蚀隧洞" or "历战余响") in instance_type and cfg.break_down_level_four_relicset:
             Relicset.run()
 
     @staticmethod
@@ -174,20 +174,20 @@ class Instance:
 
     @staticmethod
     def wait_fight(num, timeout=1800):
-        logger.info("进入战斗")
+        log.info("进入战斗")
         time.sleep(5)
 
         start_time = time.time()
         while time.time() - start_time < timeout:
             if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):
-                logger.info("战斗完成")
-                logger.info(f"第{num}次副本完成")
+                log.info("战斗完成")
+                log.info(f"第{num}次副本完成")
                 return True
-            elif config.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
-                logger.info("尝试开启自动战斗")
+            elif cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+                log.info("尝试开启自动战斗")
                 auto.press_key("v")
 
             time.sleep(2)
 
-        logger.error("战斗超时")
+        log.error("战斗超时")
         raise RuntimeError("战斗超时")

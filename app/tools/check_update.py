@@ -3,7 +3,7 @@ from qfluentwidgets import InfoBar, InfoBarPosition
 
 from ..card.messagebox_custom import MessageBoxUpdate
 from tasks.base.fastest_mirror import FastestMirror
-from managers.config import config
+from module.config import cfg
 
 from packaging.version import parse
 from enum import Enum
@@ -39,21 +39,21 @@ class UpdateThread(QThread):
 
     def run(self):
         try:
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False if config.update_prerelease_enable else True), timeout=10, headers=config.useragent)
+            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False if cfg.update_prerelease_enable else True), timeout=10, headers=cfg.useragent)
             response.raise_for_status()
 
-            if self.flag and not config.check_update:
+            if self.flag and not cfg.check_update:
                 return
 
-            data = response.json()[0] if config.update_prerelease_enable else response.json()
+            data = response.json()[0] if cfg.update_prerelease_enable else response.json()
             version = data["tag_name"]
 
             content = self.remove_images_from_markdown(data["body"])
 
             assert_url = None
             for asset in data["assets"]:
-                if (config.update_full_enable and "full" in asset["browser_download_url"]) or \
-                   (not config.update_full_enable and "full" not in asset["browser_download_url"]):
+                if (cfg.update_full_enable and "full" in asset["browser_download_url"]) or \
+                   (not cfg.update_full_enable and "full" not in asset["browser_download_url"]):
                     assert_url = asset["browser_download_url"]
                     break
 
@@ -70,8 +70,8 @@ class UpdateThread(QThread):
                 </style>
                 """
 
-            if parse(version.lstrip('v')) > parse(config.version.lstrip('v')):
-                self.title = f"发现新版本：{config.version} ——> {version}\n更新日志 |･ω･)"
+            if parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
+                self.title = f"发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)"
                 self.content = html_style + markdown.markdown(content)
                 self.assert_url = assert_url
                 self.updateSignal.emit(UpdateStatus.UPDATE_AVAILABLE)

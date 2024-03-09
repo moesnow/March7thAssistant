@@ -2,10 +2,10 @@ import time
 from tasks.base.base import Base
 from .basechallenge import BaseChallenge
 from module.automation.screenshot import Screenshot
-from managers.screen import screen
-from managers.automation import auto
-from managers.config import config
-from managers.logger import logger
+from module.screen import screen
+from module.automation import auto
+from module.config import cfg
+from module.logger import log
 
 
 class PureFiction(BaseChallenge):
@@ -17,11 +17,11 @@ class PureFiction(BaseChallenge):
 
     def run(self):
         '''执行挑战'''
-        logger.hr(f"准备{self.name}", 0)
+        log.hr(f"准备{self.name}", 0)
         if self.prepare():
             self.start_challenges()
             self.collect_rewards()
-        logger.hr("完成", 2)
+        log.hr("完成", 2)
 
     def prepare(self):
         '''切换场景并判断是否刷新'''
@@ -56,7 +56,7 @@ class PureFiction(BaseChallenge):
         return True
 
     def save_timestamp_into_config(self):
-        config.save_timestamp("purefiction_timestamp")
+        cfg.save_timestamp("purefiction_timestamp")
 
     def start_challenges(self):
         '''查找关卡并判断星数'''
@@ -64,17 +64,17 @@ class PureFiction(BaseChallenge):
             # 查找关卡
             top_left = self.find_level(level)
             if not top_left:
-                logger.error(f"查找第{level}层失败")
+                log.error(f"查找第{level}层失败")
                 break
 
             # 判断星数
             stars = self.judge_stars(top_left)
-            logger.info(f"第{level}层星数{stars}")
+            log.info(f"第{level}层星数{stars}")
             if stars == self.max_star:
                 continue
 
             if not self.start_challenge(level):
-                logger.error(f"第{level}层挑战失败")
+                log.error(f"第{level}层挑战失败")
                 break
 
             time.sleep(2)
@@ -83,7 +83,7 @@ class PureFiction(BaseChallenge):
     def find_level(self, level, max_retries=4):
         '''查找关卡'''
         crop = (331.0 / 1920, 97.0 / 1080, 1562.0 / 1920, 798.0 / 1080)
-        window = Screenshot.get_window(config.game_title_name)
+        window = Screenshot.get_window(cfg.game_title_name)
         _, _, width, height = Screenshot.get_window_region(window)
 
         for _ in range(max_retries):
@@ -95,7 +95,7 @@ class PureFiction(BaseChallenge):
 
     def judge_stars(self, top_left):
         '''判断星数'''
-        window = Screenshot.get_window(config.game_title_name)
+        window = Screenshot.get_window(cfg.game_title_name)
         _, _, width, height = Screenshot.get_window_region(window)
         crop = (top_left[0] / width, top_left[1] / height, 120 / 1920, 120 / 1080)
         count = auto.find_element("./assets/images/purefiction/star.png", "image_count", 0.6, crop=crop, pixel_bgr=[95, 198, 255])
@@ -105,19 +105,19 @@ class PureFiction(BaseChallenge):
         '''开始挑战'''
         # 每个关卡挑战2次，status 用于判断是否交换配队
         for status in [True, False]:
-            logger.info(f"开始挑战第{level:02}层")
+            log.info(f"开始挑战第{level:02}层")
 
             if not auto.click_element(f"{level:02}", "text", max_retries=20, crop=(331.0 / 1920, 97.0 / 1080, 1562.0 / 1920, 798.0 / 1080)):
-                logger.error("点击关卡失败")
+                log.error("点击关卡失败")
                 return False
 
             # 准备关卡
             if not self.prepare_level(status):
-                logger.error("配置队伍失败")
+                log.error("配置队伍失败")
                 return False
 
             if not self.start_level():
-                logger.error("开始关卡失败")
+                log.error("开始关卡失败")
                 return False
 
             # 开始战斗
@@ -125,7 +125,7 @@ class PureFiction(BaseChallenge):
                 self.max_level = level
                 return True
             else:
-                logger.error("战斗失败")
+                log.error("战斗失败")
 
         return False
 
@@ -169,7 +169,7 @@ class PureFiction(BaseChallenge):
     def start_battle(self, status=True):
         '''开始战斗'''
         for i in [1, 2]:
-            logger.info(f"进入第{i}间")
+            log.info(f"进入第{i}间")
             self.use_technique_and_attack_monster(getattr(self, f"team{i if status else 3-i}"))
 
             if self.check_fight(30 * 60):
@@ -181,7 +181,7 @@ class PureFiction(BaseChallenge):
 
     def check_fight(self, timeout):
         '''检查战斗是否结束'''
-        logger.info("进入战斗")
+        log.info("进入战斗")
         time.sleep(5)
 
         start_time = time.time()
@@ -199,12 +199,12 @@ class PureFiction(BaseChallenge):
                     auto.click_element("./assets/images/purefiction/back.png", "image", 0.9)
                     return True
             elif self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
-                logger.info("尝试开启自动战斗")
+                log.info("尝试开启自动战斗")
                 auto.press_key("v")
 
             time.sleep(2)
 
-        logger.error("战斗超时")
+        log.error("战斗超时")
         return False
 
     def collect_rewards(self):
@@ -226,5 +226,5 @@ class PureFiction(BaseChallenge):
                 auto.press_key("esc")
                 time.sleep(1)
             else:
-                logger.error("领取星琼失败")
+                log.error("领取星琼失败")
                 Base.send_notification_with_screenshot(f"🎉{self.name}已通关{self.max_level}层🎉\n领取星琼失败")

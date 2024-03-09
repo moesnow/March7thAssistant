@@ -1,4 +1,4 @@
-from managers.ocr import ocr
+from module.ocr import ocr
 import tkinter as tk
 from tkinter import messagebox
 from PIL import ImageTk, Image

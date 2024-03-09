@@ -1,10 +1,10 @@
 from typing import Literal
-from managers.config import config
+from module.config import cfg
 from .screenshot import ScreenshotApp
 from .autoplot import AutoPlot
 from utils.gamecontroller import GameController
 from module.automation.screenshot import Screenshot
-from managers.logger import logger
+from module.logger import log
 import tkinter as tk
 import threading
 import time
@@ -18,27 +18,27 @@ class ToolManager:
             elif tool == "plot":
                 self.run_plot()
         except Exception as e:
-            logger.error(e)
+            log.error(e)
 
     def run_screenshot(self):
         """捕获图像"""
-        game = GameController(config.game_path, config.game_process_name, config.game_title_name, 'UnityWndClass', logger)
+        game = GameController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
         if not game.switch_to_game():
-            logger.error("游戏尚未启动")
+            log.error("游戏尚未启动")
         time.sleep(0.5)  # 等待窗口切换
 
-        result = Screenshot.take_screenshot(config.game_title_name)
+        result = Screenshot.take_screenshot(cfg.game_title_name)
         if result:
             root = tk.Tk()
             ScreenshotApp(root, result[0])
             root.mainloop()
         else:
-            logger.error("截图失败")
+            log.error("截图失败")
 
     def run_plot(self):
         """自动对话"""
         root = tk.Tk()
-        AutoPlot(root, config.game_title_name, "./assets/images/share/plot/start.png", "./assets/images/share/plot/select.png")
+        AutoPlot(root, cfg.game_title_name, "./assets/images/share/plot/start.png", "./assets/images/share/plot/select.png")
         root.mainloop()
 
 

@@ -1,12 +1,12 @@
 import io
 from PIL import Image
 from typing import Optional
-from module.logger import Logger
+from module.logger.logger import Logger
 from utils.singleton import SingletonMeta
 from .notifier import Notifier
 
 
-class Notify(metaclass=SingletonMeta):
+class Notification(metaclass=SingletonMeta):
     """
     通知管理类，负责管理和发送不同类型的通知。
     """

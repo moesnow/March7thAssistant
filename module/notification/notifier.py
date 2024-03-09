@@ -1,6 +1,6 @@
 import io
 from typing import Dict, Any, Optional
-from module.logger import Logger
+from module.logger.logger import Logger
 
 
 class Notifier:

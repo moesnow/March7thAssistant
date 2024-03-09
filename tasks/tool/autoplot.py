@@ -1,4 +1,4 @@
-from managers.automation import auto
+from module.automation import auto
 import pygetwindow as gw
 import tkinter as tk
 

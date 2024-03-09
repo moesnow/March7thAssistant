@@ -3,7 +3,7 @@ from typing import Union
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 
-from managers.config import config
+from module.config import cfg
 
 
 class ComboBoxSettingCard1(SettingCard):
@@ -19,8 +19,8 @@ class ComboBoxSettingCard1(SettingCard):
         for text, option in zip(texts, texts):
             self.comboBox.addItem(text, userData=option)
 
-        self.comboBox.setCurrentText(config.get_value(configname))
+        self.comboBox.setCurrentText(cfg.get_value(configname))
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
     def _onCurrentIndexChanged(self, index: int):
-        config.set_value(self.configname, self.comboBox.itemData(index))
+        cfg.set_value(self.configname, self.comboBox.itemData(index))
