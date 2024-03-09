@@ -16,6 +16,7 @@ from managers.ocr import ocr
 import tasks.activity as activity
 import tasks.reward as reward
 import tasks.challenge as challenge
+import tasks.tool as tool
 
 from tasks.game import Game
 from tasks.version import Version
@@ -23,8 +24,6 @@ from tasks.daily.daily import Daily
 from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
-from tasks.tools.game_screenshot import game_screenshot
-from tasks.tools.automatic_plot import automatic_plot
 
 
 def first_run():
@@ -124,11 +123,8 @@ def main(action=None):
     elif action in ["universe_reset", "fight_reset"]:
         run_sub_task_reset(action)
 
-    elif action == "screenshot":
-        game_screenshot()
-
-    elif action == "plot":
-        automatic_plot()
+    elif action in ["screenshot", "plot"]:
+        tool.start(action)
 
     elif action == "game":
         Game.start()
