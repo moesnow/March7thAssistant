@@ -127,7 +127,7 @@ class GameController:
             self.log_debug("游戏窗口未找到")
             return None
 
-    def shutdown(self, action: Literal['Exit', 'Loop', 'Shutdown', 'Sleep', 'Hibernate'], delay: int = 60) -> bool:
+    def shutdown(self, action: Literal['Exit', 'Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Logoff'], delay: int = 60) -> bool:
         """
         终止游戏并在指定的延迟后执行系统操作：关机、休眠、睡眠。
 
@@ -139,7 +139,7 @@ class GameController:
             操作成功执行返回True，否则返回False。
         """
         self.stop_game()
-        if action not in ["Shutdown", "Hibernate", "Sleep"]:
+        if action not in ["Shutdown", "Hibernate", "Sleep", "Logoff"]:
             return True
 
         self.log_warning(f"将在{delay}秒后开始执行系统操作：{action}")
@@ -155,6 +155,8 @@ class GameController:
                 os.system("powercfg -h on")
             elif action == 'Hibernate':
                 os.system("shutdown /h")
+            elif action == 'Logoff':
+                os.system("shutdown /l")
             self.log_info(f"执行系统操作：{action}")
             return True
         except Exception as e:

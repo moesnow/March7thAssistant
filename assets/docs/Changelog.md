@@ -3,6 +3,7 @@
 ## v2.0.5
 
 ### 新功能
+- “任务完成后” 新增 “注销” 选项
 - 工具箱新增帧率解锁 [#161](https://github.com/moesnow/March7thAssistant/pull/161)
 - “启用自动修改分辨率” 选项更改为 “启用自动修改分辨率并关闭自动 HDR” [#156](https://github.com/moesnow/March7thAssistant/pull/156)
 - 新增 [OneBot](https://onebot.dev)/[OpenShamrock](https://whitechi73.github.io/OpenShamrock/) 推送方式（QQ 机器人）

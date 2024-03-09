@@ -452,7 +452,7 @@ class SettingInterface(ScrollArea):
             self.tr('任务完成后'),
             self.tr('其中“退出”指退出游戏，“循环”指根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
             texts={'无': 'None', '退出': 'Exit', '循环': 'Loop',
-                   '关机': 'Shutdown', '休眠': 'Hibernate', '睡眠': 'Sleep'}
+                   '关机': 'Shutdown', '休眠': 'Hibernate', '睡眠': 'Sleep', '注销': 'Logoff'}
         )
         self.playAudioCard = SwitchSettingCard1(
             FIF.ALBUM,
