@@ -1,7 +1,7 @@
 name: 回报错误
 description: 在使用 March7thAssistant 过程中遇到了错误
 title: '[Bug]: '
-labels: [ "bug" ]
+labels: [ "bug / 缺陷" ]
 
 body:
   - type: markdown
