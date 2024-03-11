@@ -1,9 +1,7 @@
 <div>  
-<p>
-    <img src="./assets/screenshot/March7th.png" align="right">
-</p>
 
 <h1>
+<img src="./assets/screenshot/March7th.png" align="right">
 March7thAssistant · 三月七小助手
 </h1>
 
