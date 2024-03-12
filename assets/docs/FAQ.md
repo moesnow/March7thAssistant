@@ -32,18 +32,14 @@ A：选好世界和角色进入一次再退出即可，命途和难度可以在�
 
 ### Q：模拟宇宙其他问题
 
-A：快速上手，请访问：[项目文档](https://asu.stysqy.top/) 
+A：快速上手，请访问：[项目文档](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md) 
 
-遇到问题，请在提问前查看：[Q&A](https://asu.stysqy.top/guide/qa.html)
+遇到问题，请在提问前查看：[Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
 
 ### Q：锄大地卡住不动，总是就是不正常运行
 
-A：请检查是否存在未解锁的传送点、地图大门，未完成的机巧鸟等任务
-
-### Q：锄大地的自动战斗存在异常？
-
-A：进入游戏的设置界面，将“是否沿用自动战斗设置”设置为“是”。或点击重置锄大地配置文件后重新配置。
+A：请检查是否存在未解锁的传送点、地图大门，未完成的机巧鸟等任务。
 
 ### Q：锄大地中途中断了，怎么从指定地图运行呢
 
-A：在设置中找到锄大地，点击原版运行，选择调试模式就可以选地图
+A：在设置中找到锄大地，点击原版运行，选择调试模式就可以选地图。
