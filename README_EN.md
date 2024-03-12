@@ -67,11 +67,16 @@ To check for updates, click the button at the bottom of the graphical interface 
 If you are a complete beginner, please use the download and installation method mentioned above, and there's no need to proceed further.
 
 ```cmd
-git clone https://github.com/moesnow/March7thAssistant
+# Installation (using venv is recommended)
+git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
 python app.py
 python main.py
+
+# Update
+git pull
+git submodule update --init --recursive
 ```
 
 <details>

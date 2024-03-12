@@ -66,11 +66,16 @@ March7thAssistant · 三月七小助手
 如果你是完全不懂的小白，請通過上面的方式下載安裝，不用往下看了。
 
 ```cmd
-git clone https://github.com/moesnow/March7thAssistant
+# Installation (using venv is recommended)
+git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
 python app.py
 python main.py
+
+# Update
+git pull
+git submodule update --init --recursive
 ```
 
 <details>
