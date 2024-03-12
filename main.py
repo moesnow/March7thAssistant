@@ -38,6 +38,7 @@ def run_main_actions():
         version.start()
         game.start()
         activity.start()
+        reward.start_specific("dispatch")
         Daily.start()
         reward.start()
         game.stop(True)
