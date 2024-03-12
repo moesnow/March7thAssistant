@@ -21,14 +21,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          submodules: 'false'
+          submodules: "false"
 
       # 步骤2：设置Python环境
       - name: Set up python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
 
       # 步骤3：安装依赖
       - name: Install dependencies
