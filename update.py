@@ -214,7 +214,8 @@ class Updater:
         self.cover_folder()
         self.cleanup()
         input("按回车键退出并打开软件")
-        os.system(f'cmd /c start "" "{os.path.abspath("./March7th Launcher.exe")}"')
+        if not os.system(f'cmd /c start "" "{os.path.abspath("./March7th Launcher.exe")}"'):
+            subprocess.Popen(os.path.abspath("./March7th Launcher.exe"))
 
 
 def check_temp_dir_and_run():

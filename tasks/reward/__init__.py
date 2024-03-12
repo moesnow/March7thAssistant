@@ -37,17 +37,12 @@ class RewardManager:
     def check_and_collect_rewards(self):
         log.hr("开始领取奖励", 0)
 
-        flag = False
         for reward_type, (image_path, confidence) in self.reward_mapping.items():
             if self._find_reward(image_path, confidence):
-                flag = True
                 self.reward_instances[reward_type].start()
             else:
                 reward_name = self._get_reward_name(reward_type)
                 log.info(f"未检测到{reward_name}奖励")
-
-        if not flag:
-            log.info("未检测到任何奖励")
 
         log.hr("完成", 2)
 

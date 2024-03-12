@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2.0.6
+
+### 新功能
+- 在 “完整运行” 清体力前增加一次 “委托奖励检测” [#171](https://github.com/moesnow/March7thAssistant/pull/171)
+### 修复
+- 部分用户报错 “'cmd' 不是内部或外部命令...” 导致无法启动游戏
+- 部分分辨率全屏状态判断异常 [#183](https://github.com/moesnow/March7thAssistant/pull/183)
+
 ## v2.0.5
 
 ### 新功能
