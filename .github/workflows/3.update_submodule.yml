@@ -1,0 +1,36 @@
+name: Update Submodules
+
+# 触发条件：手动触发或定时触发
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 20 * * *" # 每天运行一次 凌晨4点 CST时间
+
+# 权限设置：需要写入仓库内容的权限
+permissions:
+  contents: write
+
+jobs:
+  update-submodules:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 步骤1：签出代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "true"
+
+      # 步骤2：更新子模块
+      - name: Update submodules
+        run: |
+          git submodule update --remote --recursive
+
+      # 步骤3：提交
+      - name: Commit and push if there are changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .
+          git commit -m "Automated submodule update" || exit 0   # 如果没有更改，退出
+          git push
