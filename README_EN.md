@@ -1,9 +1,7 @@
-<div>  
-<p>
-    <img src="./assets/screenshot/March7th.png" align="right">
-</p>
+<div>
 
 <h1>
+<img src="./assets/screenshot/March7th.png" align="right">
 March7thAssistant
 </h1>
 
@@ -94,7 +92,7 @@ If you like this project, you can show your support by buying the developer a co
 
 Your support is the driving force behind the development and maintenance of this project! 🚀
 
-![sponsor](assets/screenshot/sponsor.jpg)
+![sponsor](assets/app/images/sponsor.jpg)
 
 ## Related Projects
 

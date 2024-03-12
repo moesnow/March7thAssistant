@@ -1,4 +1,4 @@
-<div>  
+<div>
 
 <h1>
 <img src="./assets/screenshot/March7th.png" align="right">
@@ -90,7 +90,7 @@ python main.py 后面支持参数 fight/universe/forgottenhall 等
 
 您的支持就是作者开发和维护项目的动力🚀
 
-![sponsor](assets/screenshot/sponsor.jpg)
+![sponsor](assets/app/images/sponsor.jpg)
 
 ---
 

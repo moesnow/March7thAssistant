@@ -1,9 +1,7 @@
-<div>  
-<p>
-    <img src="./assets/screenshot/March7th.png" align="right">
-</p>
+<div>
 
 <h1>
+<img src="./assets/screenshot/March7th.png" align="right">
 March7thAssistant · 三月七小助手
 </h1>
 
@@ -93,7 +91,7 @@ python main.py 後面支持參數 fight/universe/forgottenhall 等
 
 您的支持就是作者開發和維護項目的動力🚀
 
-![sponsor](assets/screenshot/sponsor.jpg)
+![sponsor](assets/app/images/sponsor.jpg)
 
 ---
 

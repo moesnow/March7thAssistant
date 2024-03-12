@@ -8,10 +8,11 @@
   <meta name="description" content="Description">
   <meta name="viewport"
     content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <meta name="theme-color" content="#e77577" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#181a1b" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="/assets/logo/March7th.ico">
-  <link rel="stylesheet" href="//unpkg.com/docsify/lib/themes/vue.css">
+  <link rel="stylesheet" media="(prefers-color-scheme: dark)"
+    href="//unpkg.com/docsify-themeable/dist/css/theme-simple-dark.css">
+  <link rel="stylesheet" media="(prefers-color-scheme: light)"
+    href="//unpkg.com/docsify-themeable/dist/css/theme-simple.css">
 </head>
 
 <body>
@@ -23,10 +24,8 @@
       loadSidebar: true,
       subMaxLevel: 3,
       auto2top: true,
-      themeColor: '#e77777',
-      alias: {
-        '/.*/_sidebar.md': '/_sidebar.md'
-      }
+      themeColor: '#f18cb9',
+      loadSidebar: './assets/docs/_sidebar.md'
     }
   </script>
   <script src="//unpkg.com/docsify/lib/docsify.min.js"></script>
