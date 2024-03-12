@@ -20,7 +20,7 @@ class StarRailController(GameController):
             self.game_resolution = get_game_resolution()
             if self.game_resolution:
                 screen_width, screen_height = self.screen_resolution
-                is_fullscreen = False if screen_width > width and screen_height > height else True
+                is_fullscreen = False if screen_width > width or screen_height > height else True
                 set_game_resolution(width, height, is_fullscreen)
                 self.log_debug(f"修改游戏分辨率: {self.game_resolution[0]}x{self.game_resolution[1]} ({'全屏' if self.game_resolution[2] else '窗口'}) --> {width}x{height} ({'全屏' if is_fullscreen else '窗口'})")
         except FileNotFoundError:
