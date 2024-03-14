@@ -1,14 +1,11 @@
-# coding:utf-8
-from PyQt5.QtCore import Qt, QPropertyAnimation
-from PyQt5.QtWidgets import QWidget, QFrame, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect, QAction
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect, QAction
 
-from qfluentwidgets import RoundMenu, Action, IconWidget, TextWrap, FlowLayout, CardWidget, Flyout, InfoBarIcon, TeachingTip, TeachingTipTailPosition
-from qfluentwidgets import FluentIcon as FIF
-from ..common.signal_bus import signalBus
+from qfluentwidgets import RoundMenu, IconWidget, FlowLayout, CardWidget, InfoBarIcon, TeachingTip, TeachingTipTailPosition
 from ..common.style_sheet import StyleSheet
 from module.config import cfg
+from module.logger import log
 
-from tasks.base.tasks import start_task
 from ..tools.disclaimer import disclaimer
 
 import base64
@@ -63,7 +60,7 @@ class SampleCard(CardWidget):
         TeachingTip.create(
             target=self.iconWidget,
             icon=InfoBarIcon.SUCCESS,
-            title='启动成功(＾∀＾●)',
+            title='执行完成(＾∀＾●)',
             content="",
             isClosable=False,
             tailPosition=TeachingTipTailPosition.BOTTOM,
@@ -77,7 +74,10 @@ class SampleCard(CardWidget):
         def create_triggered_function(task):
             def triggered_function():
                 self.showBottomTeachingTip()
-                start_task(task)
+                try:
+                    task()
+                except Exception as e:
+                    log.warning(f"执行失败：{e}")
             return triggered_function
 
         for index, (key, value) in enumerate(self.action.items()):
@@ -89,9 +89,12 @@ class SampleCard(CardWidget):
 
     def mouseReleaseEvent(self, e):
         super().mouseReleaseEvent(e)
-        if isinstance(self.action, str):
+        if callable(self.action):
             self.showBottomTeachingTip()
-            start_task(self.action)
+            try:
+                self.action()
+            except Exception as e:
+                log.warning(f"执行失败：{e}")
         elif isinstance(self.action, dict):
             self.createMenu(e.globalPos())
 

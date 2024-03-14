@@ -12,6 +12,8 @@ from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval,
 from module.config import cfg
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
+from tasks.daily.fight import Fight
+from tasks.weekly.universe import Universe
 import os
 
 
@@ -688,8 +690,8 @@ class SettingInterface(ScrollArea):
 
         self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
 
-        self.guiUniverseCard.clicked.connect(lambda: start_task("universe_gui"))
-        self.guiFightCard.clicked.connect(lambda: start_task("fight_gui"))
+        self.guiUniverseCard.clicked.connect(lambda: Universe.gui())
+        self.guiFightCard.clicked.connect(lambda: Fight.gui())
         self.updateUniverseCard.clicked.connect(lambda: start_task("universe_update"))
         self.updateFightCard.clicked.connect(lambda: start_task("fight_update"))
 
