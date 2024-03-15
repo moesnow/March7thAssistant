@@ -168,13 +168,3 @@ class Universe:
         return False
         # if config.daily_universe_enable:
         # return Universe.start(get_reward=False, nums=1, save=False)
-
-    @staticmethod
-    def reset_config():
-        config_path = os.path.join(cfg.universe_path, "info.yml")
-
-        try:
-            os.remove(config_path)
-            log.info(f"重置配置文件完成：{config_path}")
-        except Exception as e:
-            log.warning(f"重置配置文件失败：{e}")

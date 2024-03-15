@@ -115,13 +115,3 @@ class Fight:
                 if subprocess.run(["start", "点这里啦.exe"], shell=True, check=True, cwd=cfg.fight_path, env=cfg.env):
                     return True
         return False
-
-    @staticmethod
-    def reset_config():
-        config_path = os.path.join(cfg.fight_path, "config.json")
-
-        try:
-            os.remove(config_path)
-            log.info(f"重置配置文件完成：{config_path}")
-        except Exception as e:
-            log.warning(f"重置配置文件失败：{e}")

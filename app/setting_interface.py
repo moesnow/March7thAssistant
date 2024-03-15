@@ -12,8 +12,6 @@ from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval,
 from module.config import cfg
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
-from tasks.daily.fight import Fight
-from tasks.weekly.universe import Universe
 import os
 
 
@@ -248,7 +246,7 @@ class SettingInterface(ScrollArea):
         self.FightGroup = SettingCardGroup(self.tr("锄大地"), self.scrollWidget)
         self.fightEnableCard = SwitchSettingCard1(
             FIF.BUS,
-            self.tr('启用锄大地'),
+            self.tr('启用锄大地 (Fhoe-Rail)'),
             "",
             "fight_enable"
         )
@@ -285,23 +283,11 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行锄大地的时间"),
             "fight_timestamp"
         )
-        self.guiFightCard = PrimaryPushSettingCard(
-            self.tr('启动'),
-            FIF.SHARE,
-            self.tr('原版运行'),
-            self.tr('启动调试模式，可以选择指定地图继续锄大地'),
-        )
-        self.updateFightCard = PrimaryPushSettingCard(
-            self.tr('更新'),
-            FIF.UPDATE,
-            self.tr('更新锄大地 (Fhoe-Rail)'),
-            None
-        )
 
         self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙"), self.scrollWidget)
         self.universeEnableCard = SwitchSettingCard1(
             FIF.VPN,
-            self.tr('启用模拟宇宙'),
+            self.tr('启用模拟宇宙 (Auto_Simulated_Universe)'),
             "",
             "universe_enable"
         )
@@ -344,18 +330,6 @@ class SettingInterface(ScrollArea):
             FIF.HISTORY,
             self.tr("运行次数"),
             self.tr("注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"),
-        )
-        self.guiUniverseCard = PrimaryPushSettingCard(
-            self.tr('启动'),
-            FIF.SHARE,
-            self.tr('原版运行'),
-            self.tr('启动后可以修改命途和难度等'),
-        )
-        self.updateUniverseCard = PrimaryPushSettingCard(
-            self.tr('更新'),
-            FIF.UPDATE,
-            self.tr('更新模拟宇宙 (Auto_Simulated_Universe)'),
-            None
         )
 
         self.ForgottenhallGroup = SettingCardGroup(self.tr("忘却之庭"), self.scrollWidget)
@@ -610,8 +584,6 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.fightTeamEnableCard)
         self.FightGroup.addSettingCard(self.fightTeamNumberCard)
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
-        self.FightGroup.addSettingCard(self.guiFightCard)
-        self.FightGroup.addSettingCard(self.updateFightCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.UniverseGroup.addSettingCard(self.universeOperationModeCard)
@@ -620,8 +592,6 @@ class SettingInterface(ScrollArea):
         self.UniverseGroup.addSettingCard(self.universeFrequencyCard)
         self.UniverseGroup.addSettingCard(self.universeCountCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
-        self.UniverseGroup.addSettingCard(self.guiUniverseCard)
-        self.UniverseGroup.addSettingCard(self.updateUniverseCard)
 
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallEnableCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallLevelCard)
@@ -689,11 +659,6 @@ class SettingInterface(ScrollArea):
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
         self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
-
-        self.guiUniverseCard.clicked.connect(lambda: Universe.gui())
-        self.guiFightCard.clicked.connect(lambda: Fight.gui())
-        self.updateUniverseCard.clicked.connect(lambda: start_task("universe_update"))
-        self.updateFightCard.clicked.connect(lambda: start_task("fight_update"))
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 

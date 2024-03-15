@@ -9,8 +9,6 @@ from .common.style_sheet import StyleSheet
 from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
 from tasks.base.tasks import start_task
-from tasks.daily.fight import Fight
-from tasks.weekly.universe import Universe
 
 from module.config import cfg
 
@@ -141,9 +139,9 @@ class HomeInterface(ScrollArea):
             title="锄大地",
             action={
                 "快速启动 ⭐": lambda: start_task("fight"),
-                "原版运行": lambda: Fight.gui(),
+                "原版运行": lambda: start_task("fight_gui"),
                 "更新锄大地": lambda: start_task("fight_update"),
-                "重置配置文件": lambda: Fight.reset_config(),
+                "重置配置文件": lambda: os.remove(os.path.join(cfg.fight_path, "config.json")),
                 "打开程序目录": lambda: os.startfile(cfg.fight_path),
                 "打开项目主页": lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
             }
@@ -153,9 +151,9 @@ class HomeInterface(ScrollArea):
             title="模拟宇宙",
             action={
                 "快速启动 ⭐": lambda: start_task("universe"),
-                "原版运行": lambda: Universe.gui(),
+                "原版运行": lambda: start_task("universe_gui"),
                 "更新模拟宇宙": lambda: start_task("universe_update"),
-                "重置配置文件": lambda: Universe.reset_config(),
+                "重置配置文件": lambda: os.remove(os.path.join(cfg.universe_path, "info.yml")),
                 "打开程序目录": lambda: os.startfile(cfg.universe_path),
                 "打开项目主页": lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
             }

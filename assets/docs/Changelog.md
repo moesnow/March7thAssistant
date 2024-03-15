@@ -4,9 +4,13 @@
 
 ### 新功能
 - 在 “完整运行” 清体力前增加一次 “委托奖励检测” [#171](https://github.com/moesnow/March7thAssistant/pull/171)
+
 ### 修复
 - 部分用户报错 “'cmd' 不是内部或外部命令...” 导致无法启动游戏
 - 部分分辨率全屏状态判断异常 [#183](https://github.com/moesnow/March7thAssistant/pull/183)
+
+### 其他
+- 移除设置内锄大地和模拟宇宙更新等按钮（请改从主页运行相应功能）
 
 ## v2.0.5
 
