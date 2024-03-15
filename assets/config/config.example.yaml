@@ -49,6 +49,7 @@ instance_team_number: "5" # 自动切换的队伍编号。
 
 # 合成设置
 merge_immersifier: False # 是否优先合成沉浸器。true 开启，false 关闭。
+merge_immersifier_limit: "8" # 沉浸器上限。
 
 # 开拓力使用设置
 use_reserved_trailblaze_power: False # 是否使用后备开拓力。true 使用，false 不使用。

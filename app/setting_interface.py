@@ -6,7 +6,7 @@ from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBa
 from .common.style_sheet import StyleSheet
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
-from .card.switchsettingcard1 import SwitchSettingCard1
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardImmersifier
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
 from module.config import cfg
@@ -85,10 +85,10 @@ class SettingInterface(ScrollArea):
             None,
             texts=['3', '4', '5', '6', '7']
         )
-        self.mergeImmersifierEnableCard = SwitchSettingCard1(
+        self.mergeImmersifierEnableCard = SwitchSettingCardImmersifier(
             FIF.BASKETBALL,
             self.tr('优先合成沉浸器'),
-            "达到上限八个后停止，可搭配每天一定次数的模拟宇宙实现循环",
+            "达到指定上限后停止，可搭配每天一定次数的模拟宇宙实现循环",
             "merge_immersifier"
         )
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(

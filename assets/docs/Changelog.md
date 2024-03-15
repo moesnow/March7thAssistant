@@ -3,6 +3,7 @@
 ## v2.0.6
 
 ### 新功能
+- 自定义每日合成沉浸器的个数 [#165](https://github.com/moesnow/March7thAssistant/pull/165)
 - 在 “完整运行” 清体力前增加一次 “委托奖励检测” [#171](https://github.com/moesnow/March7thAssistant/pull/171)
 - 快捷查看日志按钮 [#150](https://github.com/moesnow/March7thAssistant/pull/150)
 

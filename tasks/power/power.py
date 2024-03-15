@@ -147,6 +147,7 @@ class Power:
     def merge(type):
         if type == "immersifier":
             log.hr("准备合成沉浸器", 2)
+            limit = int(cfg.merge_immersifier_limit)
             screen.change_to("guide3")
 
             immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
@@ -158,14 +159,14 @@ class Power:
 
             immersifier_count = int(text.split("/")[0])
             log.info(f"🟣沉浸器: {immersifier_count}/8")
-            if immersifier_count >= 8:
-                log.info("沉浸器已满")
+            if immersifier_count >= limit:
+                log.info("沉浸器已达到上限")
                 return
 
             screen.change_to("guide3")
             power = Power.get()
 
-            count = min(power // 40, 8 - immersifier_count)
+            count = min(power // 40, limit - immersifier_count)
             if count <= 0:
                 log.info("体力不足")
                 return
