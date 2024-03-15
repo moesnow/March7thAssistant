@@ -6,7 +6,7 @@ from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBa
 from .common.style_sheet import StyleSheet
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardImmersifier
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
 from module.config import cfg
@@ -72,19 +72,20 @@ class SettingInterface(ScrollArea):
             self.tr('侵蚀隧洞、历战余响和模拟宇宙（开启领取沉浸奖励）完成后自动分解四星及以下遗器'),
             "break_down_level_four_relicset"
         )
-        self.instanceTeamEnableCard = SwitchSettingCard1(
+        self.instanceTeamEnableCard = SwitchSettingCardTeam(
             FIF.EDIT,
             self.tr('自动切换队伍'),
             None,
-            "instance_team_enable"
+            "instance_team_enable",
+            "instance_team_number"
         )
-        self.instanceTeamNumberCard = ComboBoxSettingCard1(
-            "instance_team_number",
-            FIF.FLAG,
-            self.tr('队伍编号'),
-            None,
-            texts=['3', '4', '5', '6', '7']
-        )
+        # self.instanceTeamNumberCard = ComboBoxSettingCard1(
+        #     "instance_team_number",
+        #     FIF.FLAG,
+        #     self.tr('队伍编号'),
+        #     None,
+        #     texts=['3', '4', '5', '6', '7']
+        # )
         self.mergeImmersifierEnableCard = SwitchSettingCardImmersifier(
             FIF.BASKETBALL,
             self.tr('优先合成沉浸器'),
@@ -217,19 +218,19 @@ class SettingInterface(ScrollArea):
             "自动领取「星琼x800」",
             "activity_giftofradiance_enable"
         )
-        self.activityGardenOfPlentyEnableCard = SwitchSettingCard1(
+        self.activityGardenOfPlentyEnableCard = SwitchSettingCardGardenofplenty(
             FIF.CALORIES,
             self.tr('启用花藏繁生'),
             "存在双倍次数时体力优先「拟造花萼」",
             "activity_gardenofplenty_enable"
         )
-        self.activityGardenOfPlentyTypeCard = ComboBoxSettingCard1(
-            "activity_gardenofplenty_instance_type",
-            FIF.CLEAR_SELECTION,
-            self.tr('花藏繁生副本类型'),
-            None,
-            texts=['拟造花萼（金）', '拟造花萼（赤）']
-        )
+        # self.activityGardenOfPlentyTypeCard = ComboBoxSettingCard1(
+        #     "activity_gardenofplenty_instance_type",
+        #     FIF.CLEAR_SELECTION,
+        #     self.tr('花藏繁生副本类型'),
+        #     None,
+        #     texts=['拟造花萼（金）', '拟造花萼（赤）']
+        # )
         self.activityRealmOfTheStrangeEnableCard = SwitchSettingCard1(
             FIF.CALORIES,
             self.tr('启用异器盈界'),
@@ -264,19 +265,20 @@ class SettingInterface(ScrollArea):
             self.tr("锄大地超时"),
             self.tr("超过设定时间强制停止（单位小时）"),
         )
-        self.fightTeamEnableCard = SwitchSettingCard1(
+        self.fightTeamEnableCard = SwitchSettingCardTeam(
             FIF.EDIT,
             self.tr('自动切换队伍'),
             None,
-            "fight_team_enable"
+            "fight_team_enable",
+            "fight_team_number"
         )
-        self.fightTeamNumberCard = ComboBoxSettingCard1(
-            "fight_team_number",
-            FIF.FLAG,
-            self.tr('队伍编号'),
-            None,
-            texts=['3', '4', '5', '6', '7']
-        )
+        # self.fightTeamNumberCard = ComboBoxSettingCard1(
+        #     "fight_team_number",
+        #     FIF.FLAG,
+        #     self.tr('队伍编号'),
+        #     None,
+        #     texts=['3', '4', '5', '6', '7']
+        # )
         self.FightRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
@@ -548,7 +550,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.breakDownLevelFourRelicsetEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
-        self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
+        # self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
         self.PowerGroup.addSettingCard(self.mergeImmersifierEnableCard)
         self.PowerGroup.addSettingCard(self.useReservedTrailblazePowerEnableCard)
         self.PowerGroup.addSettingCard(self.useFuelEnableCard)
@@ -574,7 +576,7 @@ class SettingInterface(ScrollArea):
         self.ActivityGroup.addSettingCard(self.activityGiftOfOdysseyEnableCard)
         self.ActivityGroup.addSettingCard(self.activityGiftOfRadianceEnableCard)
         self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyEnableCard)
-        self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyTypeCard)
+        # self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyTypeCard)
         self.ActivityGroup.addSettingCard(self.activityRealmOfTheStrangeEnableCard)
         self.ActivityGroup.addSettingCard(self.activityPlanarFissureEnableCard)
 
@@ -582,7 +584,7 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.fightOperationModeCard)
         self.FightGroup.addSettingCard(self.fightTimeoutCard)
         self.FightGroup.addSettingCard(self.fightTeamEnableCard)
-        self.FightGroup.addSettingCard(self.fightTeamNumberCard)
+        # self.FightGroup.addSettingCard(self.fightTeamNumberCard)
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
