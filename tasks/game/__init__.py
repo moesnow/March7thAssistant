@@ -119,7 +119,7 @@ def stop(detect_loop=False):
                 pygame.time.Clock().tick(10)
             log.info("播放音频完成")
         except Exception as e:
-            log.error(f"播放音频时发生错误：{e}")
+            log.warning(f"播放音频时发生错误：{e}")
 
     if cfg.play_audio:
         play_audio()
