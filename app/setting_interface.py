@@ -5,7 +5,7 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard, Pivot
 from .common.style_sheet import StyleSheet
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
-from .card.comboboxsettingcard2 import ComboBoxSettingCard2
+from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
 from .card.switchsettingcard1 import SwitchSettingCard1
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
@@ -403,7 +403,7 @@ class SettingInterface(ScrollArea):
         )
 
         self.ProgramGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
-        self.logLevelCard = ComboBoxSettingCard2(
+        self.logLevelCard = ComboBoxSettingCardLog(
             "log_level",
             FIF.TAG,
             self.tr('日志等级'),
