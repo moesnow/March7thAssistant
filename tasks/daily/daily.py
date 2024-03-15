@@ -45,7 +45,7 @@ class Daily:
                 if cfg.universe_enable:
                     Power.run()
                     reward.start()
-                    Universe.start(get_reward=True)
+                    Universe.start()
                     Power.run()
                 else:
                     log.info("模拟宇宙未开启")
@@ -54,7 +54,7 @@ class Daily:
         elif cfg.universe_frequency == "daily":
             if Date.is_next_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
-                    Universe.start(get_reward=True)
+                    Universe.start()
                 else:
                     log.info("模拟宇宙未开启")
             else:
