@@ -49,7 +49,6 @@ class ActivityManager:
         if not result:
             return []
 
-        log.debug(result)
         return [box[1][0] for box in result if len(box[1][0]) >= 4]
 
     def _finish(self):

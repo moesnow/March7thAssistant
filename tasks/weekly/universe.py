@@ -74,7 +74,7 @@ class Universe:
         return True
 
     @staticmethod
-    def start(get_reward=False, nums=cfg.universe_count, save=True):
+    def start(nums=cfg.universe_count, save=True):
         log.hr("准备模拟宇宙", 0)
         game = StarRailController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
         game.check_resolution(1920, 1080)
@@ -102,10 +102,8 @@ class Universe:
 
                         if save:
                             cfg.save_timestamp("universe_timestamp")
-                        if get_reward:
-                            Universe.get_reward()
-                        else:
-                            Base.send_notification_with_screenshot("🎉模拟宇宙已完成🎉")
+
+                        Universe.get_reward()
 
                         if cfg.universe_bonus_enable and cfg.break_down_level_four_relicset:
                             Relicset.run()
@@ -132,10 +130,12 @@ class Universe:
 
                         if save:
                             cfg.save_timestamp("universe_timestamp")
-                        if get_reward:
-                            Universe.get_reward()
-                        else:
-                            Base.send_notification_with_screenshot("🎉模拟宇宙已完成🎉")
+
+                        Universe.get_reward()
+
+                        if cfg.universe_bonus_enable and cfg.break_down_level_four_relicset:
+                            Relicset.run()
+
                         return True
 
                     else:
@@ -155,6 +155,8 @@ class Universe:
                 if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
                     Base.send_notification_with_screenshot("🎉模拟宇宙奖励已领取🎉")
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
+                    return
+        Base.send_notification_with_screenshot("🎉模拟宇宙已完成🎉")
 
     @staticmethod
     def gui():
@@ -167,14 +169,4 @@ class Universe:
     def run_daily():
         return False
         # if config.daily_universe_enable:
-        # return Universe.start(get_reward=False, nums=1, save=False)
-
-    @staticmethod
-    def reset_config():
-        config_path = os.path.join(cfg.universe_path, "info.yml")
-
-        try:
-            os.remove(config_path)
-            log.info(f"重置配置文件完成：{config_path}")
-        except Exception as e:
-            log.warning(f"重置配置文件失败：{e}")
+        # return Universe.start(nums=1, save=False)

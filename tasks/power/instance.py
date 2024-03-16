@@ -87,11 +87,11 @@ class Instance:
         else:
             def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
 
-        for i in range(6):
+        for i in range(10):
             if func():
                 Flag = True
                 break
-            auto.mouse_scroll(18, -1)
+            auto.mouse_scroll(12, -1)
             # 等待界面完全停止
             time.sleep(1)
         if not Flag:

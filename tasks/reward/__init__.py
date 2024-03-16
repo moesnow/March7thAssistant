@@ -18,27 +18,52 @@ class RewardManager:
         self.srpass = SRPass("无名勋礼", cfg.reward_srpass_enable, "pass2")
         self.crop = (1263.0 / 1920, 52.0 / 1080, 642.0 / 1920, 982.0 / 1080)
 
-    def check_and_collect_rewards(self):
-        log.hr("开始领奖励", 0)
-
-        reward_mapping = {
-            self.mail: ("./assets/images/share/menu/mail_reward.png", 0.9),
-            self.assist: ("./assets/images/share/menu/assist_reward.png", 0.9),
-            self.dispatch: ("./assets/images/share/menu/dispatch_reward.png", 0.95),
-            self.quest: ("./assets/images/share/menu/quest_reward.png", 0.95),
-            self.srpass: ("./assets/images/share/menu/pass_reward.png", 0.95)
+        self.reward_instances = {
+            "mail": self.mail,
+            "assist": self.assist,
+            "dispatch": self.dispatch,
+            "quest": self.quest,
+            "srpass": self.srpass,
         }
 
-        flag = False
-        for instance, (image_path, confidence) in reward_mapping.items():
-            if self._find_reward(image_path, confidence):
-                flag = True
-                instance.start()
+        self.reward_mapping = {
+            "mail": ("./assets/images/share/menu/mail_reward.png", 0.9),
+            "assist": ("./assets/images/share/menu/assist_reward.png", 0.9),
+            "dispatch": ("./assets/images/share/menu/dispatch_reward.png", 0.95),
+            "quest": ("./assets/images/share/menu/quest_reward.png", 0.95),
+            "srpass": ("./assets/images/share/menu/pass_reward.png", 0.95),
+        }
 
-        if not flag:
-            log.info("未检测到任何奖励")
+    def check_and_collect_rewards(self):
+        log.hr("开始领取奖励", 0)
+
+        for reward_type, (image_path, confidence) in self.reward_mapping.items():
+            if self._find_reward(image_path, confidence):
+                self.reward_instances[reward_type].start()
+            else:
+                reward_name = self._get_reward_name(reward_type)
+                log.info(f"未检测到{reward_name}奖励")
 
         log.hr("完成", 2)
+
+    def check_and_collect_specific_reward(self, reward_type):
+        reward_name = self._get_reward_name(reward_type)
+        log.hr(f"开始领取{reward_name}奖励", 0)
+
+        if reward_type in self.reward_mapping:
+            image_path, confidence = self.reward_mapping[reward_type]
+            if self._find_reward(image_path, confidence):
+                self.reward_instances[reward_type].start()
+            else:
+                log.info(f"未检测到{reward_name}奖励")
+        else:
+            log.error(f"未知的奖励类型: {reward_type}")
+
+        log.hr("完成", 2)
+
+    def _get_reward_name(self, reward_type):
+        instance = self.reward_instances.get(reward_type)
+        return instance.name if instance else "未知"
 
     def _find_reward(self, image_path, confidence):
         screen.change_to('menu')
@@ -47,8 +72,17 @@ class RewardManager:
 
 def start():
     if not cfg.reward_enable:
-        log.info("领奖励未开启")
+        log.info("领取奖励未开启")
         return
 
     reward_manager = RewardManager()
     reward_manager.check_and_collect_rewards()
+
+
+def start_specific(reward_type):
+    if not cfg.reward_enable:
+        log.info("领取奖励未开启")
+        return
+
+    reward_manager = RewardManager()
+    reward_manager.check_and_collect_specific_reward(reward_type)

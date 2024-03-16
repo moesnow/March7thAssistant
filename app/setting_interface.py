@@ -5,8 +5,8 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard, Pivot
 from .common.style_sheet import StyleSheet
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
-from .card.comboboxsettingcard2 import ComboBoxSettingCard2
-from .card.switchsettingcard1 import SwitchSettingCard1
+from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
 from module.config import cfg
@@ -72,23 +72,24 @@ class SettingInterface(ScrollArea):
             self.tr('侵蚀隧洞、历战余响和模拟宇宙（开启领取沉浸奖励）完成后自动分解四星及以下遗器'),
             "break_down_level_four_relicset"
         )
-        self.instanceTeamEnableCard = SwitchSettingCard1(
+        self.instanceTeamEnableCard = SwitchSettingCardTeam(
             FIF.EDIT,
             self.tr('自动切换队伍'),
             None,
-            "instance_team_enable"
+            "instance_team_enable",
+            "instance_team_number"
         )
-        self.instanceTeamNumberCard = ComboBoxSettingCard1(
-            "instance_team_number",
-            FIF.FLAG,
-            self.tr('队伍编号'),
-            None,
-            texts=['3', '4', '5', '6', '7']
-        )
-        self.mergeImmersifierEnableCard = SwitchSettingCard1(
+        # self.instanceTeamNumberCard = ComboBoxSettingCard1(
+        #     "instance_team_number",
+        #     FIF.FLAG,
+        #     self.tr('队伍编号'),
+        #     None,
+        #     texts=['3', '4', '5', '6', '7']
+        # )
+        self.mergeImmersifierEnableCard = SwitchSettingCardImmersifier(
             FIF.BASKETBALL,
             self.tr('优先合成沉浸器'),
-            "达到上限八个后停止，可搭配每天一定次数的模拟宇宙实现循环",
+            "达到指定上限后停止，可搭配每天一定次数的模拟宇宙实现循环",
             "merge_immersifier"
         )
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
@@ -217,19 +218,19 @@ class SettingInterface(ScrollArea):
             "自动领取「星琼x800」",
             "activity_giftofradiance_enable"
         )
-        self.activityGardenOfPlentyEnableCard = SwitchSettingCard1(
+        self.activityGardenOfPlentyEnableCard = SwitchSettingCardGardenofplenty(
             FIF.CALORIES,
             self.tr('启用花藏繁生'),
             "存在双倍次数时体力优先「拟造花萼」",
             "activity_gardenofplenty_enable"
         )
-        self.activityGardenOfPlentyTypeCard = ComboBoxSettingCard1(
-            "activity_gardenofplenty_instance_type",
-            FIF.CLEAR_SELECTION,
-            self.tr('花藏繁生副本类型'),
-            None,
-            texts=['拟造花萼（金）', '拟造花萼（赤）']
-        )
+        # self.activityGardenOfPlentyTypeCard = ComboBoxSettingCard1(
+        #     "activity_gardenofplenty_instance_type",
+        #     FIF.CLEAR_SELECTION,
+        #     self.tr('花藏繁生副本类型'),
+        #     None,
+        #     texts=['拟造花萼（金）', '拟造花萼（赤）']
+        # )
         self.activityRealmOfTheStrangeEnableCard = SwitchSettingCard1(
             FIF.CALORIES,
             self.tr('启用异器盈界'),
@@ -246,7 +247,7 @@ class SettingInterface(ScrollArea):
         self.FightGroup = SettingCardGroup(self.tr("锄大地"), self.scrollWidget)
         self.fightEnableCard = SwitchSettingCard1(
             FIF.BUS,
-            self.tr('启用锄大地'),
+            self.tr('启用锄大地 (Fhoe-Rail)'),
             "",
             "fight_enable"
         )
@@ -264,42 +265,31 @@ class SettingInterface(ScrollArea):
             self.tr("锄大地超时"),
             self.tr("超过设定时间强制停止（单位小时）"),
         )
-        self.fightTeamEnableCard = SwitchSettingCard1(
+        self.fightTeamEnableCard = SwitchSettingCardTeam(
             FIF.EDIT,
             self.tr('自动切换队伍'),
             None,
-            "fight_team_enable"
+            "fight_team_enable",
+            "fight_team_number"
         )
-        self.fightTeamNumberCard = ComboBoxSettingCard1(
-            "fight_team_number",
-            FIF.FLAG,
-            self.tr('队伍编号'),
-            None,
-            texts=['3', '4', '5', '6', '7']
-        )
+        # self.fightTeamNumberCard = ComboBoxSettingCard1(
+        #     "fight_team_number",
+        #     FIF.FLAG,
+        #     self.tr('队伍编号'),
+        #     None,
+        #     texts=['3', '4', '5', '6', '7']
+        # )
         self.FightRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
             self.tr("上次运行锄大地的时间"),
             "fight_timestamp"
         )
-        self.guiFightCard = PrimaryPushSettingCard(
-            self.tr('启动'),
-            FIF.SHARE,
-            self.tr('原版运行'),
-            self.tr('启动调试模式，可以选择指定地图继续锄大地'),
-        )
-        self.updateFightCard = PrimaryPushSettingCard(
-            self.tr('更新'),
-            FIF.UPDATE,
-            self.tr('更新锄大地 (Fhoe-Rail)'),
-            None
-        )
 
         self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙"), self.scrollWidget)
         self.universeEnableCard = SwitchSettingCard1(
             FIF.VPN,
-            self.tr('启用模拟宇宙'),
+            self.tr('启用模拟宇宙 (Auto_Simulated_Universe)'),
             "",
             "universe_enable"
         )
@@ -342,18 +332,6 @@ class SettingInterface(ScrollArea):
             FIF.HISTORY,
             self.tr("运行次数"),
             self.tr("注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"),
-        )
-        self.guiUniverseCard = PrimaryPushSettingCard(
-            self.tr('启动'),
-            FIF.SHARE,
-            self.tr('原版运行'),
-            self.tr('启动后可以修改命途和难度等'),
-        )
-        self.updateUniverseCard = PrimaryPushSettingCard(
-            self.tr('更新'),
-            FIF.UPDATE,
-            self.tr('更新模拟宇宙 (Auto_Simulated_Universe)'),
-            None
         )
 
         self.ForgottenhallGroup = SettingCardGroup(self.tr("忘却之庭"), self.scrollWidget)
@@ -427,7 +405,7 @@ class SettingInterface(ScrollArea):
         )
 
         self.ProgramGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
-        self.logLevelCard = ComboBoxSettingCard2(
+        self.logLevelCard = ComboBoxSettingCardLog(
             "log_level",
             FIF.TAG,
             self.tr('日志等级'),
@@ -572,7 +550,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.breakDownLevelFourRelicsetEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
-        self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
+        # self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
         self.PowerGroup.addSettingCard(self.mergeImmersifierEnableCard)
         self.PowerGroup.addSettingCard(self.useReservedTrailblazePowerEnableCard)
         self.PowerGroup.addSettingCard(self.useFuelEnableCard)
@@ -598,7 +576,7 @@ class SettingInterface(ScrollArea):
         self.ActivityGroup.addSettingCard(self.activityGiftOfOdysseyEnableCard)
         self.ActivityGroup.addSettingCard(self.activityGiftOfRadianceEnableCard)
         self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyEnableCard)
-        self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyTypeCard)
+        # self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyTypeCard)
         self.ActivityGroup.addSettingCard(self.activityRealmOfTheStrangeEnableCard)
         self.ActivityGroup.addSettingCard(self.activityPlanarFissureEnableCard)
 
@@ -606,10 +584,8 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.fightOperationModeCard)
         self.FightGroup.addSettingCard(self.fightTimeoutCard)
         self.FightGroup.addSettingCard(self.fightTeamEnableCard)
-        self.FightGroup.addSettingCard(self.fightTeamNumberCard)
+        # self.FightGroup.addSettingCard(self.fightTeamNumberCard)
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
-        self.FightGroup.addSettingCard(self.guiFightCard)
-        self.FightGroup.addSettingCard(self.updateFightCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.UniverseGroup.addSettingCard(self.universeOperationModeCard)
@@ -618,8 +594,6 @@ class SettingInterface(ScrollArea):
         self.UniverseGroup.addSettingCard(self.universeFrequencyCard)
         self.UniverseGroup.addSettingCard(self.universeCountCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
-        self.UniverseGroup.addSettingCard(self.guiUniverseCard)
-        self.UniverseGroup.addSettingCard(self.updateUniverseCard)
 
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallEnableCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallLevelCard)
@@ -687,11 +661,6 @@ class SettingInterface(ScrollArea):
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
         self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
-
-        self.guiUniverseCard.clicked.connect(lambda: start_task("universe_gui"))
-        self.guiFightCard.clicked.connect(lambda: start_task("fight_gui"))
-        self.updateUniverseCard.clicked.connect(lambda: start_task("universe_update"))
-        self.updateFightCard.clicked.connect(lambda: start_task("fight_update"))
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 

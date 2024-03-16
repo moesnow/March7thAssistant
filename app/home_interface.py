@@ -8,11 +8,13 @@ from qfluentwidgets import ScrollArea, FluentIcon
 from .common.style_sheet import StyleSheet
 from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
+from tasks.base.tasks import start_task
 
 from module.config import cfg
 
 from PIL import Image
 import numpy as np
+import os
 
 
 class BannerWidget(QWidget):
@@ -120,44 +122,48 @@ class HomeInterface(ScrollArea):
         basicInputView.addSampleCard(
             icon="./assets/app/images/March7th.jpg",
             title="完整运行",
-            action="main"
+            action=lambda: start_task("main")
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/JingYuan.jpg",
             title="每日实训",
-            action="daily"
+            action=lambda: start_task("daily")
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Yanqing.jpg",
             title="清体力",
-            action="power"
+            action=lambda: start_task("power")
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/SilverWolf.jpg",
             title="锄大地",
             action={
-                "快速启动": "fight",
-                "原版运行": "fight_gui",
-                "更新锄大地": "fight_update",
-                "重置配置文件": "fight_reset"
+                "快速启动 ⭐": lambda: start_task("fight"),
+                "原版运行": lambda: start_task("fight_gui"),
+                "更新锄大地": lambda: start_task("fight_update"),
+                "重置配置文件": lambda: os.remove(os.path.join(cfg.fight_path, "config.json")),
+                "打开程序目录": lambda: os.startfile(cfg.fight_path),
+                "打开项目主页": lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
             }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Herta.jpg",
             title="模拟宇宙",
             action={
-                "快速启动": "universe",
-                "原版运行": "universe_gui",
-                "更新模拟宇宙": "universe_update",
-                "重置配置文件": "universe_reset"
+                "快速启动 ⭐": lambda: start_task("universe"),
+                "原版运行": lambda: start_task("universe_gui"),
+                "更新模拟宇宙": lambda: start_task("universe_update"),
+                "重置配置文件": lambda: os.remove(os.path.join(cfg.universe_path, "info.yml")),
+                "打开程序目录": lambda: os.startfile(cfg.universe_path),
+                "打开项目主页": lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
             }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Bronya.jpg",
             title="逐光捡金",
             action={
-                "混沌回忆": "forgottenhall",
-                "虚构叙事": "purefiction"
+                "混沌回忆": lambda: start_task("forgottenhall"),
+                "虚构叙事": lambda: start_task("purefiction"),
             }
         )
 

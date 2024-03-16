@@ -1,5 +1,21 @@
 # 更新日志
 
+## v2.0.6
+
+### 新功能
+- 支持自定义每日合成沉浸器的个数 [#165](https://github.com/moesnow/March7thAssistant/pull/165)
+- 新增快捷查看日志按钮 [#150](https://github.com/moesnow/March7thAssistant/pull/150)
+- 在 “完整运行” 清体力前增加一次 “委托奖励检测” [#171](https://github.com/moesnow/March7thAssistant/pull/171)
+
+### 修复
+- 降低查找副本时的滚动速度
+- 部分用户报错 “'cmd' 不是内部或外部命令...” 导致无法启动游戏
+- 部分分辨率全屏状态判断异常 [#183](https://github.com/moesnow/March7thAssistant/pull/183)
+
+### 其他
+- 主页点击模拟宇宙快速启动现在也会领取每周奖励
+- 移除设置内锄大地和模拟宇宙更新等按钮（请改从主页运行相应功能）
+
 ## v2.0.5
 
 ### 新功能

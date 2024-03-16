@@ -15,10 +15,10 @@ class RewardTemplate(ABC):
             log.info(f"{self.name}未开启")
             return
 
-        log.hr(f"检测到{self.name}奖励")
+        log.hr(f"检测到{self.name}奖励", 1)
         self.prepare()
         self.run()
-        log.info(f"{self.name}奖励完成")
+        log.hr(f"{self.name}奖励完成", 2)
 
     def prepare(self):
         screen.change_to(self.screen)

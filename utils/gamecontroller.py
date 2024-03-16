@@ -1,6 +1,7 @@
 import os
 import time
 import psutil
+import subprocess
 import win32gui
 import ctypes
 from typing import Literal, Tuple, Optional
@@ -46,6 +47,13 @@ class GameController:
             return True
         else:
             self.log_error("启动游戏时发生错误")
+            try:
+                # 为什么有的用户环境变量内没有cmd呢？
+                subprocess.Popen(self.game_path)
+                self.log_info(f"游戏启动：{self.game_path}")
+                return True
+            except Exception as e:
+                self.log_error(f"启动游戏时发生错误：{e}")
             return False
 
     @staticmethod

@@ -246,7 +246,6 @@ class Screen(metaclass=SingletonMeta):
         count = len(path) - 1
         if count:
             self.logger.info(f"当前界面：{green(self.get_name(self.current_screen))}")
-            self.logger.debug(f"相似度：{self.current_screen_threshold:.2f}")
             for i in range(count):
                 self._switch_screen(path[i], path[i + 1], max_recursion)
 

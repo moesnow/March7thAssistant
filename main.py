@@ -38,6 +38,7 @@ def run_main_actions():
         version.start()
         game.start()
         activity.start()
+        reward.start_specific("dispatch")
         Daily.start()
         reward.start()
         game.stop(True)
@@ -82,18 +83,6 @@ def run_sub_task_update(action):
     sys.exit(0)
 
 
-def run_sub_task_reset(action):
-    reset_tasks = {
-        "universe_reset": Universe.reset_config,
-        "fight_reset": Fight.reset_config
-    }
-    task = reset_tasks.get(action)
-    if task:
-        task()
-    input("按回车键关闭窗口. . .")
-    sys.exit(0)
-
-
 def run_notify_action():
     notif.notify("这是一条测试消息", "./assets/app/images/March7th.jpg")
     input("按回车键关闭窗口. . .")
@@ -118,10 +107,6 @@ def main(action=None):
     # 子任务 更新项目
     elif action in ["universe_update", "fight_update"]:
         run_sub_task_update(action)
-
-    # 子任务 重置项目
-    elif action in ["universe_reset", "fight_reset"]:
-        run_sub_task_reset(action)
 
     elif action in ["screenshot", "plot"]:
         tool.start(action)
