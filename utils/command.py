@@ -1,4 +1,5 @@
 import subprocess
+from module.logger import log
 
 
 def subprocess_with_timeout(command, timeout, working_directory=None, env=None):
@@ -9,6 +10,7 @@ def subprocess_with_timeout(command, timeout, working_directory=None, env=None):
         if process.returncode == 0:
             return True
     except subprocess.TimeoutExpired:
+        log.error(f"超时停止")
         if process is not None:
             process.terminate()
             process.wait()
