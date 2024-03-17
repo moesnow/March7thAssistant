@@ -98,11 +98,11 @@ class Fight:
                     status = True
             if status:
                 cfg.save_timestamp("fight_timestamp")
-                Base.send_notification_with_screenshot("🎉锄大地已完成🎉")
+                Base.send_notification_with_screenshot(cfg.notify_template['FightCompleted'])
                 return True
 
         log.error("锄大地失败")
-        Base.send_notification_with_screenshot("⚠️锄大地未完成⚠️")
+        Base.send_notification_with_screenshot(cfg.notify_template['FightNotCompleted'])
         return False
 
     @staticmethod

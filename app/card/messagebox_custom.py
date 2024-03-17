@@ -167,6 +167,40 @@ class MessageBoxInstance(MessageBox):
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
 
+class MessageBoxNotifyTemplate(MessageBox):
+    def __init__(self, title: str, content: dict, parent=None):
+        super().__init__(title, "", parent)
+        self.content = content
+
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.yesButton.setText('确认')
+        self.cancelButton.setText('取消')
+
+        self.buttonGroup.setMinimumWidth(480)
+
+        font = QFont()
+        font.setPointSize(9)
+        self.textLayout.setSpacing(4)
+
+        self.lineEdit_dict = {}
+        for id, template in self.content.items():
+            lineEdit = LineEdit(self)
+            lineEdit.setText(template.replace("\n", r"\n"))
+            lineEdit.setFont(font)
+
+            lineEdit.setFixedHeight(22)
+            self.buttonLayout.setContentsMargins(24, 10, 24, 10)
+            self.textLayout.setContentsMargins(24, 24, 24, 6)
+            self.textLayout.addWidget(lineEdit, 0, Qt.AlignTop)
+
+            self.lineEdit_dict[id] = lineEdit
+
+        self.titleLabelInfo = QLabel("说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行", parent)
+        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+
 class MessageBoxTeam(MessageBox):
     def __init__(self, title: str, content: dict, template: dict, parent=None):
         super().__init__(title, "", parent)

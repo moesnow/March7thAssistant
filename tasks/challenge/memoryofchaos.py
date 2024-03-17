@@ -159,7 +159,7 @@ class MemoryOfChaos(BaseChallenge):
         '''开始战斗'''
         for i in [1, 2]:
             log.info(f"进入第{i}间")
-            self.use_technique_and_attack_monster(getattr(self, f"team{i if status else 3-i}"))
+            self.use_technique_and_attack_monster(getattr(self, f"team{i if status else 3 - i}"))
 
             if self.check_fight(30 * 60):
                 continue
@@ -210,10 +210,10 @@ class MemoryOfChaos(BaseChallenge):
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.9, max_retries=10)
                     time.sleep(1)
 
-                Base.send_notification_with_screenshot(f"🎉{self.name}已通关{self.max_level}层🎉")
+                Base.send_notification_with_screenshot(cfg.notify_template['LevelCleared'].format(name=self.name, level=self.max_level))
 
                 auto.press_key("esc")
                 time.sleep(1)
             else:
                 log.error("领取星琼失败")
-                Base.send_notification_with_screenshot(f"🎉{self.name}已通关{self.max_level}层🎉\n领取星琼失败")
+                Base.send_notification_with_screenshot(cfg.notify_template['LevelClearedWithIssue'].format(name=self.name, level=self.max_level))

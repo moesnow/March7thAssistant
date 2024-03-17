@@ -8,7 +8,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
+from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
 from module.config import cfg
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
@@ -467,6 +467,12 @@ class SettingInterface(ScrollArea):
             self.tr("测试消息推送"),
             ""
         )
+        self.notifyTemplateCard = PushSettingCardNotifyTemplate(
+            self.tr('修改'),
+            FIF.FONT_SIZE,
+            self.tr("消息推送格式"),
+            "notify_template"
+        )
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
             self.tr('启用 Windows 原生通知'),
@@ -618,6 +624,7 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.gamePathCard)
 
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
+        self.NotifyGroup.addSettingCard(self.notifyTemplateCard)
         self.NotifyGroup.addSettingCard(self.winotifyEnableCard)
 
         self.MiscGroup.addSettingCard(self.autoBattleDetectEnableCard)

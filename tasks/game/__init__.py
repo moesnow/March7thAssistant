@@ -155,8 +155,8 @@ def after_finish_is_loop():
         starrail.stop_game()
         wait_time = get_wait_time(current_power)
         future_time = Date.calculate_future_time(wait_time)
-        log.info(f"📅将在{future_time}继续运行")
-        notif.notify(f"📅将在{future_time}继续运行")
+        log.info(cfg.notify_template['ContinueTime'].format(time=future_time))
+        notif.notify(cfg.notify_template['ContinueTime'].format(time=future_time))
         log.hr("完成", 2)
         # 等待状态退出OCR避免内存占用
         ocr.exit_ocr()

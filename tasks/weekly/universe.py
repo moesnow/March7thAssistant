@@ -142,7 +142,7 @@ class Universe:
                         log.error("模拟宇宙失败")
                 else:
                     log.error("校准失败")
-        Base.send_notification_with_screenshot("⚠️模拟宇宙未完成⚠️")
+        Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseNotCompleted'])
         return False
 
     @staticmethod
@@ -153,10 +153,10 @@ class Universe:
         if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
             if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
                 if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
-                    Base.send_notification_with_screenshot("🎉模拟宇宙奖励已领取🎉")
+                    Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'])
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
                     return
-        Base.send_notification_with_screenshot("🎉模拟宇宙已完成🎉")
+        Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseCompleted'])
 
     @staticmethod
     def gui():

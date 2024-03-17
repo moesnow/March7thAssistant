@@ -206,7 +206,24 @@ update_prerelease_enable: false # 是否加入预览版更新渠道。true 加�
 update_full_enable: true # 更新时是否下载完整包。true 下载，false 不下载。
 auto_update: false
 
-# 消息通知配置
+# 消息推送配置
+# 消息推送格式配置
+notify_template:
+  Title: 三月七小助手|･ω･)
+  TestMessage: "这是一条测试消息"
+  ContinueTime: "将在{time}继续运行"
+  NewVersion: "发现新版本 {version}"
+  ErrorOccurred: "发生错误 {error}"
+  DailyPracticeCompleted: "每日实训已完成"
+  DailyPracticeNotCompleted: "每日实训未完成"
+  InstanceNotCompleted: "清体力未完成 {error}"
+  LevelCleared: "{name}已通关{level}层"
+  LevelClearedWithIssue: "{name}已通关{level}层\n领取星琼失败"
+  SimulatedUniverseCompleted: "模拟宇宙已完成"
+  SimulatedUniverseRewardClaimed: "模拟宇宙奖励已领取"
+  SimulatedUniverseNotCompleted: "模拟宇宙未完成"
+  FightCompleted: "锄大地已完成"
+  FightNotCompleted: "锄大地未完成"
 
 # Windows 原生通知
 notify_winotify_enable: true # 是否启用 Windows 原生通知。true 开启，false 关闭。
