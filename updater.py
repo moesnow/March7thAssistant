@@ -225,12 +225,15 @@ def check_temp_dir_and_run():
         sys.exit(1)
 
     temp_path = os.path.abspath("./temp")
-    os.makedirs(temp_path, exist_ok=True)
     file_path = sys.argv[0]
-    file_name = os.path.basename(file_path)
-    destination_path = os.path.join(temp_path, file_name)
+    destination_path = os.path.join(temp_path, os.path.basename(file_path))
 
     if file_path != destination_path:
+        if os.path.exists(temp_path):
+            shutil.rmtree(temp_path)
+        if os.path.exists("./Update.exe"):
+            os.remove("./Update.exe")
+        os.makedirs(temp_path, exist_ok=True)
         shutil.copy(file_path, destination_path)
         args = [destination_path] + sys.argv[1:]
         subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)
