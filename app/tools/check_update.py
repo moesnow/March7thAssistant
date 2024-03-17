@@ -92,7 +92,7 @@ def checkUpdate(self, timeout=5, flag=False):
             )
             if message_box.exec():
                 # 执行更新操作
-                source_file = os.path.abspath("./Update.exe")
+                source_file = os.path.abspath("./March7th Updater.exe")
                 assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
                 subprocess.Popen([source_file, assert_url], creationflags=subprocess.DETACHED_PROCESS)
         elif status == UpdateStatus.SUCCESS:

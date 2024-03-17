@@ -47,7 +47,7 @@ March7thAssistant · 三月七小助手
 ## 注意事項
 
 - 必須使用**PC端** `1920*1080` 分辨率窗口或全屏運行遊戲（不支援HDR）
-- 模擬宇宙相關 [項目文檔](https://asu.stysqy.top/)  [Q&A](https://asu.stysqy.top/guide/qa.html)
+- 模擬宇宙相關 [項目文檔](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md)  [Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
 - 需要後台運行或多顯示器可以嘗試 [遠程本地多用戶桌面](https://asu.stysqy.top/guide/bs.html)
 - 遇到錯誤請在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反饋，提問討論可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊隨緣看，歡迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
 
@@ -57,7 +57,7 @@ March7thAssistant · 三月七小助手
 
 如果需要使用 **任務計劃程序** 定時運行或直接執行 **完整運行**，可以使用終端圖標的 `March7th Assistant.exe`
 
-檢測更新可以點擊圖形界面設置最底下的按鈕，或雙擊 `Update.exe`
+檢測更新可以點擊圖形界面設置最底下的按鈕，或雙擊 `March7th Updater.exe`
 
 ## 源碼運行
 

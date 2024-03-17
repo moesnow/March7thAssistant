@@ -46,8 +46,8 @@ March7thAssistant · 三月七小助手
 ## 注意事项
 
 - 必须使用**PC端** `1920*1080` 分辨率窗口或全屏运行游戏（不支持HDR）
-- 模拟宇宙相关 [项目文档](https://asu.stysqy.top/)  [Q&A](https://asu.stysqy.top/guide/qa.html)
-- 需要后台运行或多显示器可以尝试 [远程本地多用户桌面](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial?id=%e5%90%8e%e5%8f%b0%e8%bf%90%e8%a1%8c%ef%bc%88%e8%bf%9c%e7%a8%8b%e6%9c%ac%e5%9c%b0%e5%a4%9a%e7%94%a8%e6%88%b7%e6%a1%8c%e9%9d%a2%ef%bc%89)
+- 模拟宇宙相关 [项目文档](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md)  [Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
+- 需要后台运行或多显示器可以尝试 [远程本地多用户桌面](https://moesnow.github.io/March7thAssistant/#/assets/docs/Background)
 - 遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，提问讨论可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊随缘看，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
 
 ## 下载安装
@@ -56,7 +56,7 @@ March7thAssistant · 三月七小助手
 
 如果需要使用 **任务计划程序** 定时运行或直接执行 **完整运行**，可以使用终端图标的 `March7th Assistant.exe`
 
-检测更新可以点击图形界面设置最底下的按钮，或双击 `Update.exe`
+检测更新可以点击图形界面设置最底下的按钮，或双击 `March7th Updater.exe`
 
 ## 源码运行
 

@@ -2,7 +2,7 @@
 
 ### Q：总是被杀毒软件删除怎么办
 
-A：将`小助手文件夹`加入杀毒软件排除项，然后使用 `Update.exe` 自动更新或手动更新一次。
+A：将`小助手文件夹`加入杀毒软件排除项，然后使用 `March7th Updater.exe` 自动更新或手动更新一次。
 
 Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删除排除项`
 
@@ -20,7 +20,7 @@ A：按照 日常-清体力-锄大地-模拟宇宙(每周)-忘却之庭(每周)-
 
 ### Q：开始运行后就不能移动键盘鼠标和切换到后台了吗
 
-A：是的，如果需要后台运行，请尝试 [远程本地多用户桌面](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial?id=%e5%90%8e%e5%8f%b0%e8%bf%90%e8%a1%8c%ef%bc%88%e8%bf%9c%e7%a8%8b%e6%9c%ac%e5%9c%b0%e5%a4%9a%e7%94%a8%e6%88%b7%e6%a1%8c%e9%9d%a2%ef%bc%89)
+A：是的，如果需要后台运行，请尝试 [远程本地多用户桌面](https://moesnow.github.io/March7thAssistant/#/assets/docs/Background)
 
 ### Q：添加自定义通知的方式
 

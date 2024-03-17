@@ -8,7 +8,7 @@
 >
 > 模拟器运行存在卡顿、性能消耗大等缺点，你也不想版本更新时像个傻宝一样更新两份客户端吧。
 >
-> 如果有后台运行的需求，可以使用 [远程本地多用户桌面](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial?id=%e5%90%8e%e5%8f%b0%e8%bf%90%e8%a1%8c%ef%bc%88%e8%bf%9c%e7%a8%8b%e6%9c%ac%e5%9c%b0%e5%a4%9a%e7%94%a8%e6%88%b7%e6%a1%8c%e9%9d%a2%ef%bc%89)，在一台电脑上同时启用多个桌面。
+> 如果有后台运行的需求，可以使用 [远程本地多用户桌面](/assets/docs/Background.md)，在一台电脑上同时启用多个桌面。
 
 
 ## 下载
@@ -33,7 +33,7 @@
 
 - `March7th Launcher.exe`
 - `March7th Assistant.exe`
-- `Update.exe`
+- `March7th Updater.exe`
 - `assets`
 - `libraries`
 
@@ -148,9 +148,9 @@
 
 调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目
 
-快速上手，请访问：[项目文档](https://asu.stysqy.top/) 
+快速上手，请访问：[项目文档](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md) 
 
-遇到问题，请在提问前查看：[Q&A](https://asu.stysqy.top/guide/qa.html)
+遇到问题，请在提问前查看：[Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
 
 小助手使用的是 `命令行使用方法`，请确保 Python 环境变量配置正确
 
@@ -200,21 +200,8 @@
 
 ## 更新
 
-出现新版本弹窗后，点击下载即可，或手动双击 `Update.exe`。
+出现新版本弹窗后，点击下载即可，或手动双击 `March7th Updater.exe`。
 
 手动更新请下载名称类似 `March7thAssistant_vx.x.x.zip` 的文件，
 
 解压后，复制所有文件，在旧版本内粘贴覆盖即可。
-
-## 后台运行（远程本地多用户桌面）
- * 模拟器运行拥有卡顿，性能消耗大等诸多缺点
- * 我们推荐您使用 Windows 自带的远程桌面服务进行该程序
- * 在电脑上直接运行的性能消耗要小于模拟器
- * Windows 开启远程桌面多用户教程：
-   * [详细教程 by_Rin](https://www.bilibili.com/read/cv24286313/)（推荐）
-   * [RDPWrap 方法](https://blog.sena.moe/win10-multiple-RDP/)
-   * [修改文件方法](https://www.wyr.me/post/701)
- * [详细教程 by_Rin](https://www.bilibili.com/read/cv24286313/) 中所有相关文件：[下载链接](https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)
-   * 备用链接
-     * [百度网盘](https://pan.baidu.com/s/13aoll4n1gmKlPT9WwNYeEw?pwd=jbha) 提取码：jbha
-     * [GitHub镜像](https://github.kotori.top/https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)
