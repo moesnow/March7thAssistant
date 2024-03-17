@@ -1,7 +1,7 @@
 import os
 import io
 from .PPOCR_api import GetOcrApi
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 from typing import Optional
 from PIL import Image
 

@@ -5,7 +5,7 @@ import subprocess
 import win32gui
 import ctypes
 from typing import Literal, Tuple, Optional
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 
 
 class GameController:

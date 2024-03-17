@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from .notifier import Notifier
 from onepush import get_notifier
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 
 
 class OnepushNotifier(Notifier):

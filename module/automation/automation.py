@@ -5,7 +5,7 @@ import numpy as np
 
 from .input import Input
 from .screenshot import Screenshot
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 from typing import Optional
 from utils.singleton import SingletonMeta
 from utils.image_utils import ImageUtils

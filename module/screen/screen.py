@@ -5,7 +5,7 @@ import threading
 from collections import deque
 from utils.color import green
 from utils.singleton import SingletonMeta
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 from typing import Optional
 from module.automation import auto
 

@@ -1,7 +1,7 @@
 import io
 from PIL import Image
 from typing import Optional
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 from utils.singleton import SingletonMeta
 from .notifier import Notifier
 
