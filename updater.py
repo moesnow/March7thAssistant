@@ -12,7 +12,7 @@ import psutil
 from urllib.request import urlopen
 from urllib.error import URLError
 from utils.color import red, green
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 
 
 class Updater:
