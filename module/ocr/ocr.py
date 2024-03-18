@@ -4,6 +4,7 @@ from .PPOCR_api import GetOcrApi
 from utils.logger.logger import Logger
 from typing import Optional
 from PIL import Image
+import atexit
 
 
 class OCR:
@@ -20,6 +21,7 @@ class OCR:
                 self.logger.debug("开始初始化OCR...")
                 self.ocr = GetOcrApi(self.exePath)
                 self.logger.debug("初始化OCR完成")
+                atexit.register(self.exit_ocr)
             except Exception as e:
                 self.logger.error(f"初始化OCR失败：{e}")
                 self.logger.error("请尝试重新下载或解压")
