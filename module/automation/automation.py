@@ -250,7 +250,9 @@ class Automation(metaclass=SingletonMeta):
                 pos = box[0]
                 if self.is_position_matched(pos, source_pos, position):
                     distance = math.sqrt((pos[0][0] - source_pos[0]) ** 2 + (pos[0][1] - source_pos[1]) ** 2)
+                    self.logger.debug(f"目标文字：{matched_text} 距离：{distance}")
                     if distance < min_distance:
+                        self.matched_text = matched_text  # 更新匹配的文本变量
                         min_distance = distance
                         target_pos = pos
         if target_pos is None:

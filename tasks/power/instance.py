@@ -90,7 +90,11 @@ class Instance:
         for i in range(10):
             if func():
                 if auto.matched_text == "追踪":
-                    Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="指定副本尚未解锁"))
+                    time.sleep(2)
+                    Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="指定副本未解锁"))
+                    auto.press_key("esc")
+                    time.sleep(2)
+                    auto.press_key("esc")
                     return False
                 Flag = True
                 break
