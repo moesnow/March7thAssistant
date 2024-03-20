@@ -79,8 +79,10 @@ class Fight:
     @staticmethod
     def start():
         log.hr("准备锄大地", 0)
+
         game = StarRailController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
         game.check_resolution(1920, 1080)
+
         if Fight.before_start():
             # 切换队伍
             if cfg.fight_team_enable:
@@ -89,14 +91,8 @@ class Fight:
             log.info("开始锄大地")
             screen.change_to('main')
 
-            status = False
-            if cfg.fight_operation_mode == "exe":
-                if subprocess_with_timeout([os.path.join(cfg.fight_path, "Fhoe-Rail.exe")], cfg.fight_timeout * 3600, cfg.fight_path):
-                    status = True
-            elif cfg.fight_operation_mode == "source":
-                if subprocess_with_timeout([cfg.python_exe_path, "Honkai_Star_Rail.py"], cfg.fight_timeout * 3600, cfg.fight_path, cfg.env):
-                    status = True
-            if status:
+            command = [os.path.join(cfg.fight_path, "Fhoe-Rail.exe")] if cfg.fight_operation_mode == "exe" else [cfg.python_exe_path, "Honkai_Star_Rail.py"]
+            if subprocess_with_timeout(command, cfg.fight_timeout * 3600, cfg.fight_path, None if cfg.fight_operation_mode == "exe" else cfg.env):
                 cfg.save_timestamp("fight_timestamp")
                 Base.send_notification_with_screenshot(cfg.notify_template['FightCompleted'])
                 return True
