@@ -4,6 +4,13 @@ import sys
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
 import pyuac
+if not pyuac.isUserAdmin():
+    try:
+        pyuac.runAsAdmin(False)
+        sys.exit(0)
+    except Exception:
+        sys.exit(1)
+
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
 from app.main_window import MainWindow
@@ -14,16 +21,9 @@ QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
 if __name__ == "__main__":
-    if not pyuac.isUserAdmin():
-        try:
-            pyuac.runAsAdmin(wait=False)
-            sys.exit(0)
-        except Exception:
-            sys.exit(1)
-    else:
-        app = QApplication(sys.argv)
-        app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
+    app = QApplication(sys.argv)
+    app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
 
-        w = MainWindow()
+    w = MainWindow()
 
-        sys.exit(app.exec_())
+    sys.exit(app.exec_())
