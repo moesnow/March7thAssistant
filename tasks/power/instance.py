@@ -89,17 +89,24 @@ class Instance:
 
         for i in range(10):
             if func():
+                if auto.matched_text == "追踪":
+                    time.sleep(2)
+                    Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="指定副本未解锁"))
+                    auto.press_key("esc")
+                    time.sleep(2)
+                    auto.press_key("esc")
+                    return False
                 Flag = True
                 break
             auto.mouse_scroll(12, -1)
             # 等待界面完全停止
             time.sleep(1)
         if not Flag:
-            Base.send_notification_with_screenshot("⚠️刷副本未完成 - 没有找到指定副本名称⚠️")
+            Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="未找到指定副本"))
             return False
         # 验证传送是否成功
         if not auto.find_element(instance_name.replace("2", ""), "text", max_retries=60, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
-            Base.send_notification_with_screenshot("⚠️刷副本未完成 - 传送可能失败⚠️")
+            Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"))
             return False
 
         return True
@@ -109,7 +116,7 @@ class Instance:
         if "拟造花萼" in instance_type:
             count = power_need // 10 - 1
             if not 0 <= count <= 5:
-                Base.send_notification_with_screenshot("⚠️刷副本未完成 - 拟造花萼次数错误⚠️")
+                Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="拟造花萼次数错误"))
                 return False
             result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10,
                                        crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))

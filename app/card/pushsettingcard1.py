@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
 from qfluentwidgets import SettingCard, FluentIconBase
-from .messagebox_custom import MessageBoxEdit, MessageBoxDate, MessageBoxInstance, MessageBoxTeam
+from .messagebox_custom import MessageBoxEdit, MessageBoxDate, MessageBoxInstance, MessageBoxNotifyTemplate, MessageBoxTeam
 from module.config import cfg
 from typing import Union
 import datetime
@@ -95,6 +95,20 @@ class PushSettingCardInstance(PushSettingCard):
                 self.configvalue[type] = combobox.text().split('（')[0]
             cfg.set_value(self.configname, self.configvalue)
             self.contentLabel.setText(str(self.configvalue))
+
+
+class PushSettingCardNotifyTemplate(PushSettingCard):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
+        self.configvalue = cfg.get_value(configname)
+        super().__init__(text, icon, title, configname, "", parent)
+        self.button.clicked.connect(self.__onclicked)
+
+    def __onclicked(self):
+        message_box = MessageBoxNotifyTemplate(self.title, self.configvalue, self.window())
+        if message_box.exec():
+            for id, lineedit in message_box.lineEdit_dict.items():
+                self.configvalue[id] = lineedit.text().replace(r"\n", "\n")
+            cfg.set_value(self.configname, self.configvalue)
 
 
 class PushSettingCardTeam(PushSettingCard):

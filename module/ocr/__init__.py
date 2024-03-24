@@ -1,7 +1,7 @@
 import os
 from module.logger import log
 from module.ocr.ocr import OCR
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 from typing import Optional
 import cpufeature
 

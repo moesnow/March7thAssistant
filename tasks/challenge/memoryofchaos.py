@@ -159,7 +159,7 @@ class MemoryOfChaos(BaseChallenge):
         '''开始战斗'''
         for i in [1, 2]:
             log.info(f"进入第{i}间")
-            self.use_technique_and_attack_monster(getattr(self, f"team{i if status else 3-i}"))
+            self.use_technique_and_attack_monster(getattr(self, f"team{i if status else 3 - i}"))
 
             if self.check_fight(30 * 60):
                 continue
@@ -179,9 +179,16 @@ class MemoryOfChaos(BaseChallenge):
             if auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 0.95, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
                 return True
             elif auto.find_element("./assets/images/forgottenhall/back.png", "image", 0.9):
+                time.sleep(2)
                 # 挑战失败
                 if auto.find_element("./assets/images/forgottenhall/again.png", "image", 0.9):
                     auto.click_element("./assets/images/forgottenhall/back.png", "image", 0.9)
+                    return False
+                # 角色无法战斗
+                elif auto.find_element("./assets/images/forgottenhall/pause.png", "image", 0.9):
+                    auto.click_element("./assets/images/forgottenhall/back.png", "image", 0.9)
+                    time.sleep(2)
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10)
                     return False
                 # 整层完成
                 else:
@@ -190,6 +197,24 @@ class MemoryOfChaos(BaseChallenge):
             elif self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 log.info("尝试开启自动战斗")
                 auto.press_key("v")
+
+            # 判断是否有角色无法战斗
+            try:
+                crop_list = [
+                    (253.0 / 1920, 935.0 / 1080, 100.0 / 1920, 50.0 / 1080),
+                    (475.0 / 1920, 937.0 / 1080, 104.0 / 1920, 44.0 / 1080),
+                    (707.0 / 1920, 937.0 / 1080, 94.0 / 1920, 48.0 / 1080),
+                    (931.0 / 1920, 939.0 / 1080, 94.0 / 1920, 50.0 / 1080)
+                ]
+                for crop in crop_list:
+                    text = auto.get_single_line_text(crop=crop)
+                    # 角色无法战斗
+                    if text and text[0] == '0':
+                        log.info("检测到角色无法战斗")
+                        auto.press_key("esc")
+                        break
+            except Exception as e:
+                log.error(f"角色无法战斗检测失败: {e}")
 
             time.sleep(2)
 
@@ -210,10 +235,10 @@ class MemoryOfChaos(BaseChallenge):
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.9, max_retries=10)
                     time.sleep(1)
 
-                Base.send_notification_with_screenshot(f"🎉{self.name}已通关{self.max_level}层🎉")
+                Base.send_notification_with_screenshot(cfg.notify_template['LevelCleared'].format(name=self.name, level=self.max_level))
 
                 auto.press_key("esc")
                 time.sleep(1)
             else:
                 log.error("领取星琼失败")
-                Base.send_notification_with_screenshot(f"🎉{self.name}已通关{self.max_level}层🎉\n领取星琼失败")
+                Base.send_notification_with_screenshot(cfg.notify_template['LevelClearedWithIssue'].format(name=self.name, level=self.max_level))

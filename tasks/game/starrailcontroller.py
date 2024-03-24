@@ -4,7 +4,7 @@ from typing import Literal, Optional
 from utils.gamecontroller import GameController
 from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution
 from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
-from module.logger.logger import Logger
+from utils.logger.logger import Logger
 
 
 class StarRailController(GameController):

@@ -12,7 +12,7 @@ class Team:
 
         screen.change_to("configure_team")
 
-        if not auto.click_element(team_name, "text", max_retries=10, crop=(311.0 / 1920, 15.0 / 1080, 1376.0 / 1920, 100.0 / 1080)):
+        if not auto.click_element(team_name, "text", max_retries=10, crop=(311.0 / 1920, 15.0 / 1080, 1376.0 / 1920, 100.0 / 1080), include=True):
             return False
 
         # 等待界面切换

@@ -3,8 +3,14 @@ import sys
 # 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
-import sys
 import pyuac
+if not pyuac.isUserAdmin():
+    try:
+        pyuac.runAsAdmin(False)
+        sys.exit(0)
+    except Exception:
+        sys.exit(1)
+
 import atexit
 import base64
 
@@ -84,7 +90,7 @@ def run_sub_task_update(action):
 
 
 def run_notify_action():
-    notif.notify("这是一条测试消息", "./assets/app/images/March7th.jpg")
+    notif.notify(cfg.notify_template['TestMessage'], "./assets/app/images/March7th.jpg")
     input("按回车键关闭窗口. . .")
     sys.exit(0)
 
@@ -130,22 +136,15 @@ def exit_handler():
 
 
 if __name__ == "__main__":
-    if not pyuac.isUserAdmin():
-        try:
-            pyuac.runAsAdmin(wait=False)
-            sys.exit(0)
-        except Exception:
-            sys.exit(1)
-    else:
-        try:
-            atexit.register(exit_handler)
-            main(sys.argv[1]) if len(sys.argv) > 1 else main()
-        except KeyboardInterrupt:
-            log.error("发生错误: 手动强制停止")
-            input("按回车键关闭窗口. . .")
-            sys.exit(1)
-        except Exception as e:
-            log.error(f"发生错误: {e}")
-            notif.notify(f"发生错误: {e}")
-            input("按回车键关闭窗口. . .")
-            sys.exit(1)
+    try:
+        atexit.register(exit_handler)
+        main(sys.argv[1]) if len(sys.argv) > 1 else main()
+    except KeyboardInterrupt:
+        log.error("发生错误: 手动强制停止")
+        input("按回车键关闭窗口. . .")
+        sys.exit(1)
+    except Exception as e:
+        log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
+        notif.notify(cfg.notify_template['ErrorOccurred'].format(error=e))
+        input("按回车键关闭窗口. . .")
+        sys.exit(1)

@@ -34,8 +34,7 @@ class Character:
                             return False
                         # 等待界面加载
                         time.sleep(0.5)
-                        result = auto.find_element(
-                            ("解除支援", "取消"), "text", max_retries=10, include=True)
+                        result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
                         if result:
                             if auto.matched_text == "解除支援":
                                 if "使用支援角色并获得战斗胜利1次" in cfg.daily_tasks:

@@ -24,6 +24,15 @@ class Config(metaclass=SingletonMeta):
         except FileNotFoundError:
             sys.exit("版本文件未找到")
 
+    def _update_config(self, config, new_config):
+        """递归更新配置信息"""
+        for key, value in new_config.items():
+            if key in config:
+                if isinstance(config[key], dict) and isinstance(value, dict):
+                    self._update_config(config[key], value)
+                else:
+                    config[key] = value
+
     def _load_default_config(self, config_example_path):
         """加载默认配置信息"""
         try:
@@ -39,7 +48,8 @@ class Config(metaclass=SingletonMeta):
             with open(path, 'r', encoding='utf-8') as file:
                 loaded_config = self.yaml.load(file)
                 if loaded_config:
-                    self.config.update(loaded_config)
+                    # self.config.update(loaded_config)
+                    self._update_config(self.config, loaded_config)
                     self.save_config()
         except FileNotFoundError:
             self.save_config()

@@ -40,7 +40,7 @@ class NotifierFactory:
             return OnepushNotifier(notifier_name, params, logger)
 
 
-notif = Notification("三月七小助手|･ω･)", log)
+notif = Notification(cfg.notify_template['Title'], log)
 
 # 创建并注册Notifier实例
 for key, value in cfg.config.items():
