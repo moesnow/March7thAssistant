@@ -1,5 +1,10 @@
 # 更新日志
 
+## v2.1.0
+
+### 新功能
+- 完整运行结束推送剩余开拓力和预计恢复时间（未开启循环时） [#197](https://github.com/moesnow/March7thAssistant/pull/197)
+
 ## v2.0.7
 
 ### 新功能
