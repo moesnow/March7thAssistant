@@ -127,6 +127,7 @@ def stop(detect_loop=False):
     if detect_loop and cfg.after_finish == "Loop":
         after_finish_is_loop()
     else:
+        notify_after_finish_not_loop()
         if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Hibernate", "Sleep", "Logoff"]:
             starrail.shutdown(cfg.after_finish)
         log.hr("完成", 2)
@@ -161,3 +162,18 @@ def after_finish_is_loop():
         # 等待状态退出OCR避免内存占用
         ocr.exit_ocr()
         time.sleep(wait_time)
+
+
+def notify_after_finish_not_loop():
+
+    def get_wait_time(current_power):
+        # 距离体力到达240上限剩余秒数
+        wait_time_power_full = (240 - current_power) * 6 * 60
+        return wait_time_power_full
+
+    current_power = Power.get()
+
+    wait_time = get_wait_time(current_power)
+    future_time = Date.calculate_future_time(wait_time)
+    log.info(cfg.notify_template['FullTime'].format(power=current_power,time=future_time))
+    notif.notify(cfg.notify_template['FullTime'].format(power=current_power,time=future_time))
