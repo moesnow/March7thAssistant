@@ -27,11 +27,11 @@ class RewardManager:
         }
 
         self.reward_mapping = {
-            "mail": ("./assets/images/share/menu/mail_reward.png", 0.9),
-            "assist": ("./assets/images/share/menu/assist_reward.png", 0.9),
-            "dispatch": ("./assets/images/share/menu/dispatch_reward.png", 0.95),
-            "quest": ("./assets/images/share/menu/quest_reward.png", 0.95),
-            "srpass": ("./assets/images/share/menu/pass_reward.png", 0.95),
+            "mail": ("./assets/images/share/menu/mail_reward.png", 4000000),
+            "assist": ("./assets/images/share/menu/assist_reward.png", 2000000),
+            "dispatch": ("./assets/images/share/menu/dispatch_reward.png", 2000000),
+            "quest": ("./assets/images/share/menu/quest_reward.png", 2000000),
+            "srpass": ("./assets/images/share/menu/pass_reward.png", 2000000),
         }
 
     def check_and_collect_rewards(self):

@@ -147,6 +147,7 @@ class Power:
     def merge(type):
         if type == "immersifier":
             log.hr("准备合成沉浸器", 2)
+            screen.change_to("menu")
             limit = int(cfg.merge_immersifier_limit)
             screen.change_to("guide3")
 
