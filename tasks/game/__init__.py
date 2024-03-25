@@ -127,7 +127,8 @@ def stop(detect_loop=False):
     if detect_loop and cfg.after_finish == "Loop":
         after_finish_is_loop()
     else:
-        notify_after_finish_not_loop()
+        if detect_loop:
+            notify_after_finish_not_loop()
         if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Hibernate", "Sleep", "Logoff"]:
             starrail.shutdown(cfg.after_finish)
         log.hr("完成", 2)
@@ -175,5 +176,5 @@ def notify_after_finish_not_loop():
 
     wait_time = get_wait_time(current_power)
     future_time = Date.calculate_future_time(wait_time)
-    log.info(cfg.notify_template['FullTime'].format(power=current_power,time=future_time))
-    notif.notify(cfg.notify_template['FullTime'].format(power=current_power,time=future_time))
+    log.info(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))
+    notif.notify(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))

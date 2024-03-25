@@ -212,7 +212,7 @@ notify_template:
   Title: 三月七小助手|･ω･)
   TestMessage: "这是一条测试消息"
   ContinueTime: "将在{time}继续运行"
-  FullTime: "剩余{power}点开拓力, 将在{time}回满"
+  FullTime: "开拓力剩余{power}/240\n预计{time}回满"
   NewVersion: "发现新版本 {version}"
   ErrorOccurred: "发生错误 {error}"
   DailyPracticeCompleted: "每日实训已完成"
