@@ -90,12 +90,35 @@ class Automation(metaclass=SingletonMeta):
             mask = ImageUtils.read_template_with_mask(target)  # 读取模板图片掩码
             template = cv2.imread(target)  # 读取模板图片
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)  # 将截图转换为RGB
-            max_val, max_loc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range, mask)  # 执行缩放并匹配模板
-            self.logger.debug(f"目标图片：{target.replace('./assets/images/', '')} 相似度：{max_val:.2f}")
+            if mask is not None:
+                matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range, mask)  # 执行缩放并匹配模板
+            else:
+                matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range)  # 执行缩放并匹配模板
 
-            if not math.isinf(max_val) and (threshold is None or max_val >= threshold):
-                top_left, bottom_right = self.calculate_positions(template, max_loc, relative)
-                return top_left, bottom_right, max_val
+            self.logger.debug(f"目标图片：{target.replace('./assets/images/', '')} 相似度：{matchVal:.2f}")
+
+            # # 获取模板图像的宽度和高度
+            # template_width = template.shape[1]
+            # template_height = template.shape[0]
+
+            # # 在输入图像上绘制矩形框
+            # top_left = matchLoc
+            # bottom_right = (top_left[0] + template_width, top_left[1] + template_height)
+            # cv2.rectangle(screenshot, top_left, bottom_right, (0, 255, 0), 2)
+
+            # # 显示标记了匹配位置的图像
+            # cv2.imshow('Matched Image', screenshot)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+
+            if mask is not None:
+                if not math.isinf(matchVal) and (threshold is None or matchVal <= threshold):
+                    top_left, bottom_right = self.calculate_positions(template, matchLoc, relative)
+                    return top_left, bottom_right, matchVal
+            else:
+                if not math.isinf(matchVal) and (threshold is None or matchVal >= threshold):
+                    top_left, bottom_right = self.calculate_positions(template, matchLoc, relative)
+                    return top_left, bottom_right, matchVal
         except Exception as e:
             self.logger.error(f"寻找图片出错：{e}")
         return None, None, None

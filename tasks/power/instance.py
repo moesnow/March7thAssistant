@@ -93,8 +93,8 @@ class Instance:
                     time.sleep(2)
                     Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="指定副本未解锁"))
                     auto.press_key("esc")
-                    time.sleep(2)
                     auto.press_key("esc")
+                    screen.wait_for_screen_change('guide3')
                     return False
                 Flag = True
                 break

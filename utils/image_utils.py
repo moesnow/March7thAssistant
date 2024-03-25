@@ -25,7 +25,12 @@ class ImageUtils:
         :param mask: 模板的掩码，用于匹配透明区域。
         :return: 最大匹配值和最佳匹配位置。
         """
-        result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED, mask=mask)
+        if mask is not None:
+            result = cv2.matchTemplate(screenshot, template, cv2.TM_SQDIFF, mask=mask)
+            min_val, _, min_loc, _ = cv2.minMaxLoc(result)
+            return min_val, min_loc
+        else:
+            result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, max_loc = cv2.minMaxLoc(result)
 
         if scale_range and (math.isinf(max_val) or threshold is None or max_val < threshold):
