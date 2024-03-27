@@ -165,6 +165,8 @@ class Instance:
         auto.click_element("./assets/images/zh_CN/fight/fight_exit.png", "image", 0.9, max_retries=10)
         time.sleep(2)
         screen.wait_for_screen_change('main')
+        # 从副本返回主界面后，按esc太快无效
+        time.sleep(2)
 
         if ("侵蚀隧洞" or "历战余响") in instance_type and cfg.break_down_level_four_relicset:
             Relicset.run()
