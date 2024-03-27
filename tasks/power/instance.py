@@ -7,6 +7,7 @@ from tasks.base.team import Team
 from .character import Character
 from .relicset import Relicset
 import time
+import json
 
 
 class Instance:
@@ -16,8 +17,6 @@ class Instance:
             return False
 
         log.hr(f"开始刷{instance_type} - {instance_name}，总计{runs}次", 2)
-
-        instance_name = Instance.process_instance_name(instance_name)
 
         if cfg.instance_team_enable:
             Team.change_to(cfg.instance_team_number)
@@ -83,7 +82,11 @@ class Instance:
                 "虚无之蕾2": "./assets/images/share/calyx/crimson/nihility2.png",
                 "同谐之蕾2": "./assets/images/share/calyx/crimson/harmony2.png",
             }
-            def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=crimson_images[instance_name], source_type="image")
+            # 临时解决方案
+            if instance_name in crimson_images:
+                def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=crimson_images[instance_name], source_type="image")
+            else:
+                def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
         else:
             def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
 
@@ -97,6 +100,11 @@ class Instance:
                     screen.wait_for_screen_change('guide3')
                     return False
                 Flag = True
+                # 临时解决方案
+                if "拟造花萼（赤）" in instance_type:
+                    with open("./assets/config/instance_names.json", 'r', encoding='utf-8') as file:
+                        template = json.load(file)
+                    instance_name = template[instance_type][instance_name]
                 break
             auto.mouse_scroll(12, -1)
             # 等待界面完全停止
@@ -160,24 +168,6 @@ class Instance:
 
         if ("侵蚀隧洞" or "历战余响") in instance_type and cfg.break_down_level_four_relicset:
             Relicset.run()
-
-    @staticmethod
-    def process_instance_name(instance_name):
-        replacements = {
-            "巽风之形": "风之形",
-            "翼风之形": "风之形",
-            "偃偶之形": "偶之形",
-            "孽兽之形": "兽之形",
-            "燔灼之形": "灼之形",
-            "潘灼之形": "灼之形",
-            "熠灼之形": "灼之形",
-            "蛀星的旧靥": "蛀星的旧"
-        }
-
-        for key, value in replacements.items():
-            instance_name = instance_name.replace(key, value)
-
-        return instance_name
 
     @staticmethod
     def wait_fight(num, timeout=1800):

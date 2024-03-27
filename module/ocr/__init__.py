@@ -4,6 +4,7 @@ from module.ocr.ocr import OCR
 from utils.logger.logger import Logger
 from typing import Optional
 import cpufeature
+import json
 
 
 class OCRInstaller:
@@ -15,11 +16,17 @@ class OCRInstaller:
         self.logger = logger
         self.ocr_name, self.ocr_path = self._determine_ocr()
 
+    def _cpu_support_avx2(self):
+        """
+        判断 CPU 是否支持 AVX2 指令集。
+        """
+        return cpufeature.CPUFeature["AVX2"]
+
     def _determine_ocr(self):
         """
         根据 CPU 是否支持 AVX2 指令集来决定使用的 OCR 工具。
         """
-        if cpufeature.CPUFeature["AVX2"]:
+        if self._cpu_support_avx2():
             ocr_name = "PaddleOCR-json"
             ocr_path = r".\3rdparty\PaddleOCR-json_v.1.3.1\PaddleOCR-json.exe"
             self.logger.debug(f"CPU 支持 AVX2 指令集，使用 {ocr_name}")
@@ -60,5 +67,8 @@ class OCRInstaller:
 ocr_installer = OCRInstaller(log)
 # 检查并安装 OCR
 ocr_installer.check_and_install()
+# 读取 OCR 替换配置
+with open("./assets/config/ocr_replacements.json", 'r', encoding='utf-8') as file:
+    replacements = json.load(file)
 # 初始化 OCR 对象
-ocr = OCR(ocr_installer.ocr_path, log)
+ocr = OCR(ocr_installer.ocr_path, log, replacements)
