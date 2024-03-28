@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QLabel, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
-from qfluentwidgets import MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit, BodyLabel, FluentStyleSheet
+from qfluentwidgets import MessageBox, LineEdit, ComboBox, DateTimeEdit, BodyLabel, FluentStyleSheet
 from typing import Optional
 import datetime
 import json
@@ -148,7 +148,7 @@ class MessageBoxInstance(MessageBox):
             titleLabel.setFont(font)
             self.textLayout.addWidget(titleLabel, 0, Qt.AlignTop)
 
-            comboBox = EditableComboBox()
+            comboBox = ComboBox()
 
             has_default = False
             for name, info in names.items():

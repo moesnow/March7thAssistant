@@ -20,7 +20,7 @@ class Updater:
 
     def __init__(self, logger: Logger, download_url=None):
         self.logger = logger
-        self.process_names = ["March7th Assistant.exe", "March7th Launcher.exe"]
+        self.process_names = ["March7th Assistant.exe", "March7th Launcher.exe", "flet.exe", "gui.exe"]
         self.api_urls = [
             "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
             "https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",

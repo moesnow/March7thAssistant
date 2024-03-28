@@ -221,8 +221,9 @@ class Screen(metaclass=SingletonMeta):
             self.logger.debug(f"等待：{self.get_name(next_screen)}")
             if self.check_screen(next_screen):
                 self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
+                time.sleep(self.wait_screen_change_time)
                 break
-            time.sleep(self.wait_screen_change_time)
+            time.sleep(0.5)
         else:
             self.wait_screen_change_time = 1
             if max_recursion > 0:

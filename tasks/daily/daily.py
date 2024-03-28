@@ -6,6 +6,7 @@ from tasks.daily.photo import Photo
 from tasks.daily.fight import Fight
 from tasks.weekly.universe import Universe
 import tasks.reward as reward
+import tasks.activity as activity
 from tasks.daily.synthesis import Synthesis
 import tasks.challenge as challenge
 from tasks.power.power import Power
@@ -18,6 +19,7 @@ from utils.color import red, green, yellow
 class Daily:
     @staticmethod
     def start():
+        activity.start()
         if cfg.daily_enable:
             Daily.run()
 
@@ -76,6 +78,16 @@ class Daily:
         else:
             log.info("虚构叙事尚未刷新")
 
+        activity.start()
+
+        # 优先历战余响
+        if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
+            if cfg.echo_of_war_enable:
+                Echoofwar.start()
+            else:
+                log.info("历战余响未开启")
+        else:
+            log.info("历战余响尚未刷新")
         Power.run()
 
     @staticmethod

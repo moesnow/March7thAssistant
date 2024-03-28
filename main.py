@@ -20,7 +20,6 @@ from module.notification import notif
 from module.ocr import ocr
 
 import tasks.game as game
-import tasks.activity as activity
 import tasks.reward as reward
 import tasks.challenge as challenge
 import tasks.tool as tool
@@ -43,7 +42,6 @@ def run_main_actions():
     while True:
         version.start()
         game.start()
-        activity.start()
         reward.start_specific("dispatch")
         Daily.start()
         reward.start()

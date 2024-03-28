@@ -206,17 +206,11 @@ class SettingInterface(ScrollArea):
             None,
             "activity_enable"
         )
-        self.activityGiftOfOdysseyEnableCard = SwitchSettingCard1(
+        self.activityDailyCheckInEnableCard = SwitchSettingCard1(
             FIF.COMPLETED,
-            self.tr('启用巡星之礼'),
-            "自动领取「星轨专票x10」",
-            "activity_giftofodyssey_enable"
-        )
-        self.activityGiftOfRadianceEnableCard = SwitchSettingCard1(
-            FIF.COMPLETED,
-            self.tr('启用巡光之礼'),
-            "自动领取「星琼x800」",
-            "activity_giftofradiance_enable"
+            self.tr('启用每日签到'),
+            "自动领取「星轨专票」或「星琼」，包含巡光之礼、巡星之礼和庆典祝礼活动",
+            "activity_dailycheckin_enable"
         )
         self.activityGardenOfPlentyEnableCard = SwitchSettingCardGardenofplenty(
             FIF.CALORIES,
@@ -224,13 +218,6 @@ class SettingInterface(ScrollArea):
             "存在双倍次数时体力优先「拟造花萼」",
             "activity_gardenofplenty_enable"
         )
-        # self.activityGardenOfPlentyTypeCard = ComboBoxSettingCard1(
-        #     "activity_gardenofplenty_instance_type",
-        #     FIF.CLEAR_SELECTION,
-        #     self.tr('花藏繁生副本类型'),
-        #     None,
-        #     texts=['拟造花萼（金）', '拟造花萼（赤）']
-        # )
         self.activityRealmOfTheStrangeEnableCard = SwitchSettingCard1(
             FIF.CALORIES,
             self.tr('启用异器盈界'),
@@ -579,10 +566,8 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.lastRunTimeCard)
 
         self.ActivityGroup.addSettingCard(self.activityEnableCard)
-        self.ActivityGroup.addSettingCard(self.activityGiftOfOdysseyEnableCard)
-        self.ActivityGroup.addSettingCard(self.activityGiftOfRadianceEnableCard)
+        self.ActivityGroup.addSettingCard(self.activityDailyCheckInEnableCard)
         self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyEnableCard)
-        # self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyTypeCard)
         self.ActivityGroup.addSettingCard(self.activityRealmOfTheStrangeEnableCard)
         self.ActivityGroup.addSettingCard(self.activityPlanarFissureEnableCard)
 

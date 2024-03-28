@@ -44,11 +44,13 @@ class Relicset:
     def prepare_break_down_relicset():
         if auto.click_element(Relicset.SELECT_IMAGE, "image", 0.9, max_retries=10):
             time.sleep(1)
-            if auto.click_element(Relicset.LEVEL_FOUR_IMAGE, "image", 0.9, max_retries=10):
-                if auto.click_element(Relicset.CONFIRM_IMAGE, "image", 0.9, max_retries=10):
-                    if auto.find_element(Relicset.SCREEN_IMAGE, "image", 0.9, max_retries=10):
-                        log.info("筛选遗器成功")
-                        return True
+            if auto.find_element(Relicset.LEVEL_FOUR_IMAGE, "image", 0.9, max_retries=10):
+                # 多次判断避免误操作
+                if auto.click_element("4星及以下", "text", max_retries=10):
+                    if auto.click_element(Relicset.CONFIRM_IMAGE, "image", 0.9, max_retries=10):
+                        if auto.find_element(Relicset.SCREEN_IMAGE, "image", 0.9, max_retries=10):
+                            log.info("筛选遗器成功")
+                            return True
         log.error("筛选遗器失败")
         return False
 

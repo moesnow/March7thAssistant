@@ -101,8 +101,7 @@ last_run_timestamp: 0 # 上次运行日常任务的时间戳，用于记录和�
 
 # 活动设置
 activity_enable: true # 是否启用活动功能。true 开启，false 关闭。
-activity_giftofodyssey_enable: true # 是否启用巡星之礼活动。true 开启，false 关闭。
-activity_giftofradiance_enable: true # 是否启用巡光之礼活动。true 开启，false 关闭。
+activity_dailycheckin_enable: true # 是否启用每日签到活动。true 开启，false 关闭。
 activity_gardenofplenty_enable: false # 是否启用花藏繁生活动。true 开启，false 关闭。
 activity_gardenofplenty_instance_type: 拟造花萼（金） # 花藏繁生副本类型。
 activity_realmofthestrange_enable: false # 是否启用异器盈界活动。true 开启，false 关闭。

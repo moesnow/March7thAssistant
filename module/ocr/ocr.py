@@ -8,11 +8,12 @@ import atexit
 
 
 class OCR:
-    def __init__(self, exePath, logger: Optional[Logger] = None):
-        """初始化OCR类，设置执行路径和ocr实例为None"""
+    def __init__(self, exePath, logger: Optional[Logger] = None, replacements=None):
+        """初始化OCR类"""
         self.exePath = exePath
         self.ocr = None
         self.logger = logger
+        self.replacements = replacements
 
     def instance_ocr(self):
         """实例化OCR，若ocr实例未创建，则创建之"""
@@ -58,48 +59,22 @@ class OCR:
             self.logger.error(e)
             return "{}"
 
-    def replace_strings(self, original_dict):
+    def replace_strings(self, results):
         """替换OCR结果中的错误字符串"""
-        replacements = {
-            # 替换字符串的字典
-            "'翼风之形": "'巽风之形",
-            "'风之形": "'巽风之形",
-            "'芒之形": "'锋芒之形",
-            "'嘎偶之形": "'偃偶之形",
-            "'優偶之形": "'偃偶之形",
-            "'厦偶之形": "'偃偶之形",
-            "'偶之形": "'偃偶之形",
-            "'兽之形": "'孽兽之形",
-            "'潘灼之形": "'燔灼之形",
-            "'熠灼之形": "'燔灼之形",
-            "'灼之形": "'燔灼之形",
-            "'幽寞之径": "'幽冥之径",
-            "'幽幂之径": "'幽冥之径",
-            "'幽之径": "'幽冥之径",
-            "'冥之径": "'幽冥之径",
-            "'蛀星的旧履": "'蛀星的旧靥",
-            "'蛀星的旧膚": "'蛀星的旧靥",
-            "'蛀星的旧魔": "'蛀星的旧靥",
-            "'蛀星的旧": "'蛀星的旧靥",
-            "“异器盈界": "异器盈界",
-            "“花藏繁生": "花藏繁生",
-            "“位面分裂": "位面分裂",
-            "拟造花萼 （赤)": "拟造花萼（赤）",
-            "拟造花萼 （金)": "拟造花萼（金）",
-            "拟造花萼 (赤)": "拟造花萼（赤）",
-            "拟造花萼 (金)": "拟造花萼（金）",
-            "焦灸之形": "焦炙之形",
-            "集多之形": "焦炙之形"
-        }
-        original_str = str(original_dict)
-        for old_str, new_str in replacements.items():
-            original_str = original_str.replace(old_str, new_str)
+        if "data" not in results or "text" not in results["data"][0] or self.replacements is None:
+            return results
 
-        modified_dict = eval(original_str)
-        self.log_ocr_results(modified_dict)
-        return modified_dict
+        for item in results["data"]:
+            for old_str, new_str in self.replacements["direct"].items():
+                item["text"] = item["text"].replace(old_str, new_str)
+            for old_str, new_str in self.replacements["conditional"].items():
+                if new_str not in item["text"]:
+                    item["text"] = item["text"].replace(old_str, new_str)
 
-    def log_ocr_results(self, modified_dict):
+        self.log_results(results)
+        return results
+
+    def log_results(self, modified_dict):
         """记录OCR识别结果"""
         if "data" in modified_dict and "text" in modified_dict["data"][0]:
             print_list = [item["text"] for item in modified_dict["data"]]
