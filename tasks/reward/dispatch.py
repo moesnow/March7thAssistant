@@ -16,6 +16,12 @@ class Dispatch(RewardTemplate):
             cfg.save_config()
 
     def _perform_dispatches(self):
+        # 检测一键领取
+        if auto.click_element("./assets/images/zh_CN/reward/dispatch/one_key_receive.png", "image", 0.9, max_retries=10):
+            auto.click_element("./assets/images/zh_CN/reward/dispatch/again.png", "image", 0.9, max_retries=10)
+            time.sleep(4)
+            return
+
         for i in range(4):
             log.info(f"正在进行第{i + 1}次委托")
 
