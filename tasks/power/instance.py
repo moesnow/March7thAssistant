@@ -104,7 +104,8 @@ class Instance:
                 if "拟造花萼（赤）" in instance_type:
                     with open("./assets/config/instance_names.json", 'r', encoding='utf-8') as file:
                         template = json.load(file)
-                    instance_name = template[instance_type][instance_name]
+                    if instance_name in template[instance_type]:
+                        instance_name = template[instance_type][instance_name]
                 break
             auto.mouse_scroll(12, -1)
             # 等待界面完全停止
