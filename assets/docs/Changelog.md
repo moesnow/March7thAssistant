@@ -7,6 +7,7 @@
 
 ### 修复
 - 源码运行锄大地 [#211](https://github.com/moesnow/March7thAssistant/pull/211)
+- 部分文字 OCR 识别异常
 
 ## v2.1.0
 
