@@ -47,7 +47,7 @@ class Fight:
             if not os.path.exists(os.path.join(cfg.fight_path, "Fhoe-Rail.exe")):
                 status = True
         elif cfg.fight_operation_mode == "source":
-            if not os.path.exists(os.path.join(cfg.fight_path, "Honkai_Star_Rail.py")):
+            if not os.path.exists(os.path.join(cfg.fight_path, "fhoe.py")):
                 status = True
             if not os.path.exists(os.path.join(cfg.fight_path, "点这里啦.exe")):
                 status = True
@@ -91,7 +91,7 @@ class Fight:
             log.info("开始锄大地")
             screen.change_to('main')
 
-            command = [os.path.join(cfg.fight_path, "Fhoe-Rail.exe")] if cfg.fight_operation_mode == "exe" else [cfg.python_exe_path, "Honkai_Star_Rail.py"]
+            command = [os.path.join(cfg.fight_path, "Fhoe-Rail.exe")] if cfg.fight_operation_mode == "exe" else [cfg.python_exe_path, "fhoe.py"]
             if subprocess_with_timeout(command, cfg.fight_timeout * 3600, cfg.fight_path, None if cfg.fight_operation_mode == "exe" else cfg.env):
                 cfg.save_timestamp("fight_timestamp")
                 Base.send_notification_with_screenshot(cfg.notify_template['FightCompleted'])
