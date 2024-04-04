@@ -133,7 +133,6 @@ forgottenhall_enable: false # 是否启用混沌回忆功能。true 开启，fal
 forgottenhall_level: # 混沌回忆关卡范围，设置允许尝试的关卡等级范围。
   - 7
   - 12
-forgottenhall_retries: 1 # 混沌回忆挑战失败后的重试次数，设置在失败后允许的最大重试次数。
 # 混沌回忆队伍配置，详细配置每个队伍成员及其秘技使用次数。
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色。
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看

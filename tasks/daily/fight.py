@@ -98,6 +98,8 @@ class Fight:
                 return True
 
         log.error("锄大地失败")
+        log_path = os.path.join(cfg.fight_path, "logs")
+        log.error(f"锄大地日志路径: {log_path}")
         Base.send_notification_with_screenshot(cfg.notify_template['FightNotCompleted'])
         return False
 
