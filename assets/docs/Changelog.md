@@ -3,7 +3,7 @@
 ## v2.1.1
 
 ### 新功能
-- 
+- 自动对话适配手柄界面 [#208](https://github.com/moesnow/March7thAssistant/pull/208)
 
 ### 修复
 - 源码运行锄大地 [#211](https://github.com/moesnow/March7thAssistant/pull/211)

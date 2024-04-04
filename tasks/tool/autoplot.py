@@ -4,7 +4,7 @@ import tkinter as tk
 
 
 class AutoPlot:
-    def __init__(self, root, game_title_name: str, start_img: str, select_img: str):
+    def __init__(self, root, game_title_name: str, start_img: list, select_img: str):
         """初始化 AutoPlot 类的实例。
 
         参数:
@@ -70,9 +70,14 @@ class AutoPlot:
     def check_game_status(self):
         """检查游戏状态，并根据状态控制自动点击的开始或停止。"""
         window = gw.getWindowsWithTitle(self.game_title_name)
-        if window and window[0].isActive and auto.find_element(self.start_img, "image", 0.9):
-            self.start_clicking()
-            auto.click_element(self.select_img, "image", 0.9, take_screenshot=False)
+        if window and window[0].isActive:
+            auto.take_screenshot(crop=(122.0 / 1920, 31.0 / 1080, 98.0 / 1920, 58.0 / 1080))
+            for img in self.start_img:
+                if auto.find_element(img, "image", 0.9, take_screenshot=False):
+                    self.start_clicking()
+                    auto.click_element(self.select_img, "image", 0.9, crop=(1290.0 / 1920, 442.0 / 1080, 74.0 / 1920, 400.0 / 1080))
+                    break
+            self.stop_clicking()
         else:
             self.stop_clicking()
 
