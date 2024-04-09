@@ -234,6 +234,7 @@ notify_telegram_enable: false # 是否启用 Telegram 通知。true 开启，fal
 notify_telegram_token: "" # Telegram bot 的 token。
 notify_telegram_userid: "" # 接收通知的用户或群组 ID。
 notify_telegram_api_url: "" # 可选参数，Telegram API 的自定义URL，默认为空。
+notify_telegram_proxies: "" # 可选参数，请求 Telegram API 是否使用代理。默认为空(不使用)。例如："socks5://127.0.0.1:1080/" 。
 
 # Server酱·Turbo版通知配置
 # 微信推送，适合小白，免费版每天限制五条
