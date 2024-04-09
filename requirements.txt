@@ -21,3 +21,4 @@ PyQt-Fluent-Widgets==1.5.1
 pylnk3
 pyperclip
 qrcode
+pysocks
