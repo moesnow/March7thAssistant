@@ -4,6 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from .notifier import Notifier
+import ssl
 
 
 class SMTPNotifier(Notifier):
@@ -18,6 +19,7 @@ class SMTPNotifier(Notifier):
         To = self.params.get("To", user)
         port = self.params.get("port", 465)
         ssl = self.params.get("ssl", True)
+        starttls = self.params.get("starttls", False)
 
         msg = MIMEMultipart('related')
         body = f'<p>{content}<br>'
@@ -33,7 +35,10 @@ class SMTPNotifier(Notifier):
             msg.attach(img)
         msg.attach(MIMEText(body, "html", "utf-8"))
 
-        if ssl:
+        if starttls:
+            smtp = smtplib.SMTP(host, port)
+            smtp.starttls()
+        elif ssl:
             smtp = smtplib.SMTP_SSL(host, port)
         else:
             smtp = smtplib.SMTP(host, port)
