@@ -128,6 +128,7 @@ universe_timeout: 20 # 模拟宇宙超时时间（单位：小时），设置脚
 universe_requirements: false # 是否已安装模拟宇宙依赖。true 表示已安装，false 表示未安装或需要重新安装。
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳，用于记录和控制运行频率。
 universe_fate: '巡猎' # 模拟宇宙使用的命途
+universe_difficulty: 4 # 模拟宇宙使用的难度
 
 # 忘却之庭配置
 forgottenhall_enable: false # 是否启用混沌回忆功能。true 开启，false 关闭。

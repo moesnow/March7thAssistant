@@ -290,6 +290,13 @@ class SettingInterface(ScrollArea):
             '',
             texts=fates
         )
+        self.universeDifficultyCard = RangeSettingCard1(
+            "universe_difficulty",
+            [1, 5],
+            FIF.HISTORY,
+            self.tr("难度"),
+            self.tr(""),
+        )
         self.universeOperationModeCard = ComboBoxSettingCard2(
             "universe_operation_mode",
             FIF.COMMAND_PROMPT,
@@ -590,6 +597,7 @@ class SettingInterface(ScrollArea):
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.UniverseGroup.addSettingCard(self.universeFateCard)
+        self.UniverseGroup.addSettingCard(self.universeDifficultyCard)
         self.UniverseGroup.addSettingCard(self.universeOperationModeCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)

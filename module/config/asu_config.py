@@ -11,8 +11,9 @@ def auto_config():
             cfg.universe_path, "info.yml"))
     with open(os.path.join(cfg.universe_path, "info.yml"), 'r', encoding='utf-8') as f:
         info = yaml.safe_load(f)
-    if info['config']['fate'] != cfg.universe_fate:
+    if info['config']['fate'] != cfg.universe_fate or info['config']['difficulty'] != cfg.universe_difficulty:
         info['config']['fate'] = cfg.universe_fate
+        info['config']['difficulty'] = cfg.universe_difficulty
         with open(os.path.join(cfg.universe_path, "info.yml"), 'w', encoding='utf-8') as f:
             yaml.dump(info, f, default_flow_style=False,
                       allow_unicode=True)
