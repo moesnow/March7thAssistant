@@ -42,15 +42,15 @@ class ActivityManager:
             return
 
         for activity_name in activity_names:
-            func = self.activity_functions.get(activity_name)
-            if func:
-                func()
+            for func_name, func in self.activity_functions.items():
+                if func_name in activity_name:
+                    func()
 
         self._finish()
 
     def _get_activity_names(self):
         screen.change_to('activity')
-        screenshot, _, _ = auto.take_screenshot(crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080))
+        screenshot, _, _ = auto.take_screenshot(crop=(53.0 / 1920, 109.0 / 1080, 190.0 / 1920, 846.0 / 1080))
         result = ocr.recognize_multi_lines(screenshot)
         if not result:
             return []

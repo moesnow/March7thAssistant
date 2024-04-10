@@ -334,12 +334,12 @@ class SettingInterface(ScrollArea):
             self.tr("关卡范围"),
             "forgottenhall_level"
         )
-        self.forgottenhallRetriesCard = RangeSettingCard1(
-            "forgottenhall_retries",
-            [0, 10],
-            FIF.REMOVE_FROM,
-            self.tr("重试次数"),
-        )
+        # self.forgottenhallRetriesCard = RangeSettingCard1(
+        #     "forgottenhall_retries",
+        #     [0, 10],
+        #     FIF.REMOVE_FROM,
+        #     self.tr("重试次数"),
+        # )
         self.forgottenhallTeam1Card = PushSettingCardTeam(
             self.tr('修改'),
             FIF.FLAG,
@@ -588,7 +588,7 @@ class SettingInterface(ScrollArea):
 
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallEnableCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallLevelCard)
-        self.ForgottenhallGroup.addSettingCard(self.forgottenhallRetriesCard)
+        # self.ForgottenhallGroup.addSettingCard(self.forgottenhallRetriesCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam1Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)

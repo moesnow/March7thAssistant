@@ -156,6 +156,8 @@ class Universe:
                 return True
 
         log.error("模拟宇宙失败")
+        log_path = os.path.join(cfg.universe_path, "logs")
+        log.error(f"模拟宇宙日志路径: {log_path}")
         Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseNotCompleted'])
         return False
 

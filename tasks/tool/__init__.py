@@ -38,7 +38,13 @@ class ToolManager:
     def run_plot(self):
         """自动对话"""
         root = tk.Tk()
-        AutoPlot(root, cfg.game_title_name, "./assets/images/share/plot/start.png", "./assets/images/share/plot/select.png")
+        AutoPlot(root, cfg.game_title_name,
+                 [
+                     "./assets/images/share/plot/start.png",
+                     "./assets/images/share/plot/start_ps5.png",
+                     "./assets/images/share/plot/start_xbox.png"
+                 ],
+                 "./assets/images/share/plot/select.png")
         root.mainloop()
 
 
