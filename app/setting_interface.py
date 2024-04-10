@@ -280,6 +280,16 @@ class SettingInterface(ScrollArea):
             "",
             "universe_enable"
         )
+        fates = {}
+        for a in ["存护", "记忆", "虚无", "丰饶", "巡猎", "毁灭", "欢愉", "繁育", "智识"]:
+            fates[a] = a
+        self.universeFateCard = ComboBoxSettingCard2(
+            "universe_fate",
+            FIF.PIE_SINGLE,
+            self.tr('命途'),
+            '',
+            texts=fates
+        )
         self.universeOperationModeCard = ComboBoxSettingCard2(
             "universe_operation_mode",
             FIF.COMMAND_PROMPT,
@@ -579,6 +589,7 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
+        self.UniverseGroup.addSettingCard(self.universeFateCard)
         self.UniverseGroup.addSettingCard(self.universeOperationModeCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
