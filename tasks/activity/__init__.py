@@ -42,9 +42,9 @@ class ActivityManager:
             return
 
         for activity_name in activity_names:
-            func = self.activity_functions.get(activity_name)
-            if func:
-                func()
+            for func_name, func in self.activity_functions.items():
+                if func_name in activity_name:
+                    func()
 
         self._finish()
 
