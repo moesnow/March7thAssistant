@@ -4,7 +4,7 @@
 
 ### 新功能
 - 自动对话适配手柄界面 [#208](https://github.com/moesnow/March7thAssistant/pull/208)
-- Telegram 推送方式支持代理 [#219](https://github.com/moesnow/March7thAssistant/pull/219)
+- Telegram 推送方式支持配置代理或使用PAC [#219](https://github.com/moesnow/March7thAssistant/pull/219) [#222](https://github.com/moesnow/March7thAssistant/pull/222)
 - 邮件推送方式支持 outlook [#220](https://github.com/moesnow/March7thAssistant/pull/220)
 
 ### 修复
