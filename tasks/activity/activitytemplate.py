@@ -20,7 +20,7 @@ class ActivityTemplate(ABC):
 
     def prepare(self):
         screen.change_to('activity')
-        if not auto.click_element(self.name, "text", None, crop=(46.0 / 1920, 107.0 / 1080, 222.0 / 1920, 848.0 / 1080)):
+        if not auto.click_element(self.name, "text", None, crop=(53.0 / 1920, 109.0 / 1080, 190.0 / 1920, 846.0 / 1080), include=True):
             return
         time.sleep(1)
 
