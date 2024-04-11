@@ -38,6 +38,14 @@ def dump_current_account():
     account_reg_file = os.path.join(data_dir, f"{gamereg_uid_value}.reg")
     gamereg_export(account_reg_file)
 
+def delete_account(account_id: int):
+    account_reg_file = os.path.join(data_dir, f"{account_id}.reg")
+    if os.path.exists(account_reg_file):
+        os.remove(account_reg_file)
+    name_file = os.path.join(data_dir, f"{account_id}.name")
+    if os.path.exists(name_file):
+        os.remove(name_file)
+
 def load_account(account_id: int):
     account_reg_file = os.path.join(data_dir, f"{account_id}.reg")
     if not os.path.exists(account_reg_file):
