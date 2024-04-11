@@ -11,6 +11,7 @@ import subprocess
 import time
 import sys
 import os
+from module.config import asu_config
 
 
 class Universe:
@@ -152,6 +153,8 @@ class Universe:
             # 进入黑塔办公室
             screen.change_to('main')
 
+            asu_config.auto_config()
+
             if Universe.start_calibration() and Universe.start_simulation(nums, save):
                 return True
 
@@ -182,6 +185,7 @@ class Universe:
     def gui():
         if Universe.before_start():
             if subprocess.run(["start", "gui.exe"], shell=True, check=True, cwd=cfg.universe_path, env=cfg.env):
+                asu_config.reload_config_from_asu()
                 return True
         return False
 
