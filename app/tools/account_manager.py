@@ -46,6 +46,14 @@ def delete_account(account_id: int):
     if os.path.exists(name_file):
         os.remove(name_file)
 
+def auto_renewal_account():
+    gamereg_uid_value = gamereg_uid()
+    if gamereg_uid_value is None:
+        print("No account found")
+        return
+    if os.path.exists(os.path.join(data_dir, f"{gamereg_uid_value}.reg")):
+        dump_current_account()
+
 def load_account(account_id: int):
     account_reg_file = os.path.join(data_dir, f"{account_id}.reg")
     if not os.path.exists(account_reg_file):
