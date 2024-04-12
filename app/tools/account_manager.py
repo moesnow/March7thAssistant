@@ -1,6 +1,7 @@
 
 import os
 from utils.registry.gameaccount import gamereg_uid, gamereg_export, gamereg_import
+from module.logger import log
 
 data_dir = "settings/accounts"
 
@@ -33,7 +34,7 @@ def load_all_account():
 def dump_current_account():
     gamereg_uid_value = gamereg_uid()
     if gamereg_uid_value is None:
-        print("No account found")
+        log.warning("No account found (dump)")
         return
     account_reg_file = os.path.join(data_dir, f"{gamereg_uid_value}.reg")
     gamereg_export(account_reg_file)
@@ -47,9 +48,13 @@ def delete_account(account_id: int):
         os.remove(name_file)
 
 def auto_renewal_account():
+    """
+    更新保存的账户
+    打开游戏前，游戏结束后调用，无论是否开启了多账户功能
+    及时更新注册表到文件
+    """
     gamereg_uid_value = gamereg_uid()
     if gamereg_uid_value is None:
-        print("No account found")
         return
     if os.path.exists(os.path.join(data_dir, f"{gamereg_uid_value}.reg")):
         dump_current_account()
@@ -57,9 +62,28 @@ def auto_renewal_account():
 def load_account(account_id: int):
     account_reg_file = os.path.join(data_dir, f"{account_id}.reg")
     if not os.path.exists(account_reg_file):
-        print(f"Account {account_id} not found")
-        return None
+        raise FileNotFoundError(f"Account {account_id} not found (load)")
     gamereg_import(account_reg_file)
+
+
+def save_account_name(account_id: int, account_name: str):
+    name_file = os.path.join(data_dir, f"{account_id}.name")
+    with open(name_file, "w") as f:
+        f.write(account_name)
+    reload_all_account()
+
+def load_to_account(account_id: int) -> bool:
+    """
+    将游戏账号切换到account_id
+    return True: 切换成功且需要重新加载游戏
+    return False: 不需要重新加载游戏
+    抛出异常: 切换失败，账号不存在
+    """
+    gamereg_uid_value = gamereg_uid()
+    if gamereg_uid_value != None and gamereg_uid_value == account_id:
+        return False
+    load_account(account_id)
+    return True
 
 accounts = load_all_account()
 
