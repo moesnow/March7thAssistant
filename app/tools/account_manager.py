@@ -89,4 +89,6 @@ accounts = load_all_account()
 
 def reload_all_account():
     global accounts
-    accounts = load_all_account()
+    accounts.clear()
+    for a in load_all_account():
+        accounts.append(a)

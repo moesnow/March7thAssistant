@@ -1,0 +1,115 @@
+
+from typing import Union
+from qfluentwidgets import SettingCard, SettingCardGroup, ListWidget, FluentIconBase, CardWidget, FluentStyleSheet
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QPushButton, QListWidgetItem, QVBoxLayout, QMessageBox, QInputDialog
+from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QFrame
+from qfluentwidgets import FluentIcon as FIF
+from PyQt5.QtGui import QPalette
+from module.config import cfg
+from app.tools.account_manager import accounts, reload_all_account, dump_current_account, delete_account, save_account_name, load_account
+from module.logger import log
+
+class AccountsCard(QFrame):
+
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, texts=None, parent=None):
+        super().__init__(parent=parent)
+        FluentStyleSheet.SETTING_CARD.apply(self)
+        self.setFixedHeight(400)
+        #
+        self.widget = ListWidget()
+        self.wLayout = QGridLayout()
+        self.wLayout.addWidget(self.widget)
+        #
+        self.buttons = QVBoxLayout()
+        self.buttons.setContentsMargins(10, 3, 10, 3)
+        self.addAccountButton = QPushButton("导出当前游戏账户", self)
+        self.importAccountButton = QPushButton("导入选中的账户", self)
+        self.deleteAccountButton = QPushButton("删除账户", self)
+        self.renameAccountButton = QPushButton("账户更名", self)
+        self.refreshAccountButton = QPushButton("刷新", self)
+        self.buttons.addWidget(self.addAccountButton)
+        self.buttons.addWidget(self.importAccountButton)
+        self.buttons.addWidget(self.deleteAccountButton)
+        self.buttons.addWidget(self.renameAccountButton)
+        self.buttons.addWidget(self.refreshAccountButton)
+        _self = self
+        def load_accounts():
+            _self.widget.clear()
+            for account in accounts:
+                item = QListWidgetItem(account.account_name)
+                item.setData(Qt.UserRole, account.account_id)
+                _self.widget.addItem(item)
+        try: 
+            load_accounts()
+        except Exception as e:
+            log.error(f"load_accounts: {e}")
+        def refreshAccountButtonAction(self):
+            reload_all_account()
+            load_accounts()
+        def addAccountButtonAction(self):
+             dump_current_account()
+             refreshAccountButtonAction(self)
+        def deleteAccountButtonAction(self):
+            items = _self.widget.selectedItems()
+            if len(items) == 0:
+                QMessageBox.warning(None, "删除账户", "请选择要删除的账户")
+                return
+            if QMessageBox.question(None, "删除账户", "确定要删除选中的账户吗？", QMessageBox.Yes | QMessageBox.No) == QMessageBox.No:
+                return
+            for item in items:
+                account_id = item.data(Qt.UserRole)
+                delete_account(account_id)
+            refreshAccountButtonAction(self)
+        def renameAccountButtonAction(self):
+            items = _self.widget.selectedItems()
+            if len(items) == 0:
+                QMessageBox.warning(None, "账户更名", "请选择要更名的账户")
+                return
+            if len(items) > 1:
+                QMessageBox.warning(None, "账户更名", "只能选择一个账户")
+                return
+            for item in items:
+                account_id = item.data(Qt.UserRole)
+                account_name, ok = QInputDialog.getText(None, "账户更名", "请输入新的账户名")
+                if ok:
+                    account_name = account_name.strip()
+                    if len(account_name) == 0:
+                        QMessageBox.warning(None, "账户更名", "账户名不能为空")
+                        return
+                    save_account_name(account_id, account_name)
+                    refreshAccountButtonAction(self)
+        def refreshAccountButtonAction(self):
+            items = _self.widget.selectedItems()
+            if len(items) == 0:
+                QMessageBox.warning(None, "导入", "请选择要使用的账户")
+                return
+            if len(items) > 1:
+                QMessageBox.warning(None, "导入", "只能选择一个账户")
+                return
+            for item in items:
+                account_id = item.data(Qt.UserRole)
+                load_account(account_id)
+                QMessageBox.information(None, "导入", "账户导入成功")
+        self.addAccountButton.clicked.connect(addAccountButtonAction)
+        self.importAccountButton.clicked.connect(refreshAccountButtonAction)
+        self.refreshAccountButton.clicked.connect(refreshAccountButtonAction)
+        self.renameAccountButton.clicked.connect(renameAccountButtonAction)
+        self.deleteAccountButton.clicked.connect(deleteAccountButtonAction)
+        #
+        self.mLayout = QGridLayout()
+        self.mLayout.addLayout(self.wLayout, 0, 0, 1, 1)
+        self.mLayout.addLayout(self.buttons, 0, 1, 1, 1)
+        self.mLayout.setColumnStretch(0, 1)  # 第一列的拉伸因子为1，即均分空间
+        self.mLayout.setColumnStretch(1, 1)  # 第二列的拉伸因子为1，即均分空间
+        #
+        self.setLayout(self.mLayout)
+
+
+def accounts_interface(tr, scrollWidget) -> SettingCardGroup:
+    accountsInterface = SettingCardGroup(tr("账户设置"), scrollWidget)
+    accountsInterface.addSettingCard(AccountsCard(
+        FIF.ALBUM, title=tr(""),
+    ))
+    return accountsInterface
