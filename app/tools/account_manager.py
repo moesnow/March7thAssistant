@@ -78,6 +78,10 @@ def auto_renewal_account():
         log.error(f"auto_renewal_account: {e}")
 
 def import_account(account_id: int):
+    auto_renewal_account()
+    gamereg_uid_value = gamereg_uid()
+    if gamereg_uid_value == account_id:
+        return
     account_reg_file = os.path.join(data_dir, f"{account_id}.reg")
     if not os.path.exists(account_reg_file):
         raise FileNotFoundError(f"Account {account_id} not found (load)")

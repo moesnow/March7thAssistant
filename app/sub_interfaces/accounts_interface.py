@@ -60,7 +60,7 @@ class AccountsCard(QFrame):
             if len(items) == 0:
                 QMessageBox.warning(None, "删除账户", "请选择要删除的账户")
                 return
-            if QMessageBox.question(None, "删除账户", "确定要删除选中的账户吗？", QQMessageBox.Yes | QQMessageBox.No) == QQMessageBox.No:
+            if QMessageBox.question(None, "删除账户", "确定要删除选中的账户吗？", QMessageBox.Yes | QMessageBox.No) == QMessageBox.No:
                 return
             for item in items:
                 account_id = item.data(Qt.UserRole)
