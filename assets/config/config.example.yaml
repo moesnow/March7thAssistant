@@ -201,6 +201,12 @@ refresh_hour: 4 # 设置游戏每日刷新的时间（24小时制）。
 # 游戏内秘技按键设置
 hotkey_technique: e # 设置游戏内使用秘技的按键。
 
+# 自动登录设置, 当登录过期时尝试使用该账号自动登录
+# 账号密码在此处明文保存, 请妥善保管, 谨防泄露
+auto_login: false #是否使用自动登录功能
+account_username: "" #用户名
+account_password: "" #密码
+
 # 更新配置
 update_prerelease_enable: false # 是否加入预览版更新渠道。true 加入，false 不加入。
 update_full_enable: true # 更新时是否下载完整包。true 下载，false 不下载。
