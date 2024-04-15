@@ -20,7 +20,7 @@ def gamereg_uid() -> int | None:
 
 
 def gamereg_export(path: str) -> None:
-   subcommand = f"reg export {full_reg_path} {path}"
+   subcommand = f"reg export {full_reg_path} {path} /y"
    result = os.system(subcommand)
 
 

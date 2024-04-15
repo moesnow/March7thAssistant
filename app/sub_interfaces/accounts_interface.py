@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QFrame
 from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import QPalette
 from module.config import cfg
-from app.tools.account_manager import accounts, reload_all_account, dump_current_account, delete_account, save_account_name, load_account
+from app.tools.account_manager import accounts, reload_all_account_from_files, dump_current_account, delete_account, save_account_name, import_account
 from module.logger import log
 
 class AccountsCard(QFrame):
@@ -21,6 +21,7 @@ class AccountsCard(QFrame):
         self.widget = ListWidget()
         self.wLayout = QGridLayout()
         self.wLayout.addWidget(self.widget)
+        self.widget.setStyleSheet("QListWidget{border: 1px solid #d9d9d9;} QListWidget::item{height: 30px;} QListWidget::item:selected{background-color: #f0f0f0;} QListWidget::item:hover{background-color: #f0f0f0;}")
         #
         self.buttons = QVBoxLayout()
         self.buttons.setContentsMargins(10, 3, 10, 3)
@@ -41,27 +42,30 @@ class AccountsCard(QFrame):
                 item = QListWidgetItem(account.account_name)
                 item.setData(Qt.UserRole, account.account_id)
                 _self.widget.addItem(item)
+            _self.widget.clearSelection()
         try: 
             load_accounts()
         except Exception as e:
             log.error(f"load_accounts: {e}")
         def refreshAccountButtonAction(self):
-            reload_all_account()
+            reload_all_account_from_files()
             load_accounts()
+            QMessageBox.information(None, "刷新", "账户列表刷新成功")
         def addAccountButtonAction(self):
              dump_current_account()
-             refreshAccountButtonAction(self)
+             load_accounts()
+             QMessageBox.information(None, "导出", "账户导出成功")
         def deleteAccountButtonAction(self):
             items = _self.widget.selectedItems()
             if len(items) == 0:
                 QMessageBox.warning(None, "删除账户", "请选择要删除的账户")
                 return
-            if QMessageBox.question(None, "删除账户", "确定要删除选中的账户吗？", QMessageBox.Yes | QMessageBox.No) == QMessageBox.No:
+            if QMessageBox.question(None, "删除账户", "确定要删除选中的账户吗？", QQMessageBox.Yes | QQMessageBox.No) == QQMessageBox.No:
                 return
             for item in items:
                 account_id = item.data(Qt.UserRole)
                 delete_account(account_id)
-            refreshAccountButtonAction(self)
+            load_accounts()
         def renameAccountButtonAction(self):
             items = _self.widget.selectedItems()
             if len(items) == 0:
@@ -79,8 +83,8 @@ class AccountsCard(QFrame):
                         QMessageBox.warning(None, "账户更名", "账户名不能为空")
                         return
                     save_account_name(account_id, account_name)
-                    refreshAccountButtonAction(self)
-        def refreshAccountButtonAction(self):
+                    load_accounts()
+        def importAccountButtonAction(self):
             items = _self.widget.selectedItems()
             if len(items) == 0:
                 QMessageBox.warning(None, "导入", "请选择要使用的账户")
@@ -90,10 +94,10 @@ class AccountsCard(QFrame):
                 return
             for item in items:
                 account_id = item.data(Qt.UserRole)
-                load_account(account_id)
+                import_account(account_id)
                 QMessageBox.information(None, "导入", "账户导入成功")
         self.addAccountButton.clicked.connect(addAccountButtonAction)
-        self.importAccountButton.clicked.connect(refreshAccountButtonAction)
+        self.importAccountButton.clicked.connect(importAccountButtonAction)
         self.refreshAccountButton.clicked.connect(refreshAccountButtonAction)
         self.renameAccountButton.clicked.connect(renameAccountButtonAction)
         self.deleteAccountButton.clicked.connect(deleteAccountButtonAction)
