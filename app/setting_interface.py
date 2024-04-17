@@ -3,6 +3,7 @@ from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard, Pivot
+from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
@@ -648,7 +649,7 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.DailyGroup, 'DailyInterface', self.tr('日常'))
         self.addSubInterface(self.ActivityGroup, 'ActivityInterface', self.tr('活动'))
         self.addSubInterface(self.FightGroup, 'FightInterface', self.tr('锄大地'))
-        self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('模拟宇宙'))
+        self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('宇宙'))
         self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('忘却'))
         self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构'))
 
@@ -661,6 +662,11 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.ProgramGroup, 'programInterface', self.tr('程序'))
         self.addSubInterface(self.NotifyGroup, 'NotifyInterface', self.tr('推送'))
         self.addSubInterface(self.MiscGroup, 'KeybindingInterface', self.tr('杂项'))
+        self.addSubInterface(
+            accounts_interface(self.tr, self.scrollWidget),
+            'AccountsInterface',
+            self.tr('账号')
+        )
         self.addSubInterface(self.AboutGroup, 'AboutInterface', self.tr('关于'))
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
