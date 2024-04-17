@@ -4,6 +4,11 @@ import time
 import psutil
 import random
 
+import pyautogui
+import pyperclip
+
+from app.tools.account_manager import load_acc_and_pwd
+from utils.registry.gameaccount import gamereg_uid
 from .starrailcontroller import StarRailController
 
 from utils.date import Date
@@ -49,7 +54,7 @@ def start_game():
         auto.click_element("./assets/images/screen/start_game.png", "image", 0.9, take_screenshot=False)
         # 登录过期
         if auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
-            if cfg.auto_login and cfg.account_username and cfg.account_password:
+            if load_acc_and_pwd(gamereg_uid()):
                 log.info("检测到登录过期，尝试自动登录")
                 auto_login()
             else:
@@ -189,25 +194,17 @@ def notify_after_finish_not_loop():
 
 def auto_login():
     def auto_type(text):
-        after_alpha = False
-        for character in text:
-            if character.isalpha():
-                after_alpha = True
-            else:
-                if after_alpha:
-                    after_alpha = False
-                    # 切换两下中英文模式，避免中文输入法影响英文输入
-                    auto.secretly_press_key("shift", wait_time=0.1)
-                    auto.secretly_press_key("shift", wait_time=0.1)
-            auto.secretly_press_key(character, wait_time=0.1)
-        auto.secretly_press_key("shift", wait_time=0.1)
-        auto.secretly_press_key("shift", wait_time=0.1)
+        pyperclip.copy(text)
+        time.sleep(0.5)
+        pyautogui.hotkey('ctrl', 'v')
+        pyperclip.copy("")
 
+    account, password = load_acc_and_pwd(gamereg_uid())
     if auto.click_element("./assets/images/screen/account_and_password.png", "image", 0.9, max_retries=10):
         if auto.click_element("./assets/images/screen/account_field.png", "image", 0.9, max_retries=10):
-            auto_type(cfg.account_username)
+            auto_type(account)
             if auto.click_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
-                auto_type(cfg.account_password)
+                auto_type(password)
                 if auto.click_element("./assets/images/screen/agree_conditions.png", "image", 0.9, max_retries=10):
                     if auto.click_element("./assets/images/screen/enter_game.png", "image", 0.9, max_retries=10):
                         if not auto.find_element("./assets/images/screen/welcome.png", "image", 0.9, max_retries=10):

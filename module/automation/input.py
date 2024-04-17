@@ -57,17 +57,6 @@ class Input:
         except Exception as e:
             self.logger.error(f"键盘按下 {key} 出错：{e}")
 
-    def secretly_press_key(self, key, wait_time=0.2):
-        '''(不输出具体键位)模拟键盘按键，可以指定按下的时间'''
-        try:
-            pyautogui.write
-            pyautogui.keyDown(key)
-            time.sleep(wait_time)  # 等待指定的时间
-            pyautogui.keyUp(key)
-            self.logger.debug("键盘按下 *")
-        except Exception as e:
-            self.logger.error(f"键盘按下 * 出错：{e}")
-
     def press_mouse(self, wait_time=0.2):
         '''模拟鼠标左键的点击操作，可以指定按下的时间'''
         try:
