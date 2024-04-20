@@ -54,7 +54,7 @@ def start_game():
         auto.click_element("./assets/images/screen/start_game.png", "image", 0.9, take_screenshot=False)
         # 登录过期
         if auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
-            if load_acc_and_pwd(gamereg_uid()):
+            if load_acc_and_pwd(gamereg_uid()) != (None, None):
                 log.info("检测到登录过期，尝试自动登录")
                 auto_login()
             else:
