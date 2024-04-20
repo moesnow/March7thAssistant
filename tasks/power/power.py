@@ -1,9 +1,12 @@
+from module.notification import notif
 from module.screen import screen
 from module.automation import auto
 from module.logger import log
 from module.config import cfg
 from tasks.power.instance import Instance
 import time
+
+from utils.date import Date
 
 
 class Power:
@@ -26,6 +29,17 @@ class Power:
         else:
             Power.process_standard(instance_type, instance_name, power)
 
+        def get_wait_time(current_power):
+            # 距离体力到达240上限剩余秒数
+            wait_time_power_full = (240 - current_power) * 6 * 60
+            return wait_time_power_full
+
+        current_power = Power.get()
+
+        wait_time = get_wait_time(current_power)
+        future_time = Date.calculate_future_time(wait_time)
+        log.info(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))
+        notif.notify(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))
         log.hr("完成", 2)
 
     @staticmethod
