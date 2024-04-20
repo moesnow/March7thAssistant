@@ -4,8 +4,6 @@ import time
 import psutil
 import random
 
-import pyautogui
-import pyperclip
 
 from app.tools.account_manager import load_acc_and_pwd
 from utils.registry.gameaccount import gamereg_uid
@@ -194,10 +192,20 @@ def notify_after_finish_not_loop():
 
 def auto_login():
     def auto_type(text):
-        pyperclip.copy(text)
-        time.sleep(0.5)
-        pyautogui.hotkey('ctrl', 'v')
-        pyperclip.copy("")
+        after_alpha = False
+        for character in text:
+            if character.isalpha():
+                after_alpha = True
+            else:
+                if after_alpha:
+                    after_alpha = False
+                    # 切换两下中英文模式，避免中文输入法影响英文输入
+                    auto.secretly_press_key("shift", wait_time=0.1)
+                    auto.secretly_press_key("shift", wait_time=0.1)
+            auto.secretly_press_key(character, wait_time=0.1)
+        auto.secretly_press_key("shift", wait_time=0.1)
+        auto.secretly_press_key("shift", wait_time=0.1)
+        time.sleep(2)
 
     account, password = load_acc_and_pwd(gamereg_uid())
     if auto.click_element("./assets/images/screen/account_and_password.png", "image", 0.9, max_retries=10):
