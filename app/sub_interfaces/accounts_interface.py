@@ -108,13 +108,17 @@ class AccountsCard(QFrame):
                 if disclaimer_result != QMessageBox.Yes:
                     return
 
-                account_name, ok = QInputDialog.getText(None, "自动登录", "请输入账户名")
-                if not (ok or account_name.strip()):
-                    QMessageBox.warning(None, "自动登录", "账户名不能为空")
+                account_name, ok = QInputDialog.getText(None, "自动登录", "请输入用户名")
+                if not ok:
+                    return
+                if not account_name.strip():
+                    QMessageBox.warning(None, "自动登录", "用户名不能为空")
                     return
 
                 account_pass, ok2 = QInputDialog.getText(None, "自动登录", "请输入密码", QLineEdit.Password)
-                if not (ok2 or account_pass.strip()):
+                if not ok2:
+                    return
+                if not account_pass.strip():
                     QMessageBox.warning(None, "自动登录", "密码不能为空")
                     return
 
