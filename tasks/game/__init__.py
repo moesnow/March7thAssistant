@@ -100,7 +100,7 @@ def start_game():
                         log.info(f"游戏路径更新成功：{program_path}")
                 time.sleep(1)
 
-            if not wait_until(lambda: screen.get_current_screen(), 180):
+            if not wait_until(lambda: screen.get_current_screen(), 360):
                 raise TimeoutError("获取当前界面超时")
             break  # 成功启动游戏，跳出重试循环
         except Exception as e:
@@ -203,8 +203,9 @@ def auto_login():
                     auto.secretly_press_key("shift", wait_time=0.1)
                     auto.secretly_press_key("shift", wait_time=0.1)
             auto.secretly_press_key(character, wait_time=0.1)
-        auto.secretly_press_key("shift", wait_time=0.1)
-        auto.secretly_press_key("shift", wait_time=0.1)
+        if text[-1].isalpha():
+            auto.secretly_press_key("shift", wait_time=0.1)
+            auto.secretly_press_key("shift", wait_time=0.1)
         time.sleep(2)
 
     account, password = load_acc_and_pwd(gamereg_uid())
