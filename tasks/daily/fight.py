@@ -9,6 +9,7 @@ from utils.command import subprocess_with_timeout
 import subprocess
 import sys
 import os
+from module.config import fhoe_config
 
 
 class Fight:
@@ -87,7 +88,8 @@ class Fight:
             # 切换队伍
             if cfg.fight_team_enable:
                 Team.change_to(cfg.fight_team_number)
-
+            
+            fhoe_config.auto_config()
             log.info("开始锄大地")
             screen.change_to('main')
 

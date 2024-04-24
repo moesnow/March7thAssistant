@@ -273,6 +273,25 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行锄大地的时间"),
             "fight_timestamp"
         )
+        self.fightAllowMapBuyCard = SwitchSettingCard1(
+            FIF.BUS,
+            self.tr('购买代币与过期邮包'),
+            "",
+            "fight_allow_map_buy"
+        )
+        self.fightAllowSnackBuyCard = SwitchSettingCard1(
+            FIF.BUS,
+            self.tr('购买秘技零食并合成零食'),
+            "",
+            "fight_allow_snack_buy"
+        )
+        self.fightMainMapCard = ComboBoxSettingCard2(
+            "fight_main_map",
+            FIF.GLOBE,
+            self.tr('优先星球'),
+            '',
+            texts={"空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4"}
+        )
 
         self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙"), self.scrollWidget)
         self.universeEnableCard = SwitchSettingCard1(
@@ -595,6 +614,9 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.fightTeamEnableCard)
         # self.FightGroup.addSettingCard(self.fightTeamNumberCard)
         self.FightGroup.addSettingCard(self.FightRunTimeCard)
+        self.FightGroup.addSettingCard(self.fightAllowMapBuyCard)
+        self.FightGroup.addSettingCard(self.fightAllowSnackBuyCard)
+        self.FightGroup.addSettingCard(self.fightMainMapCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.UniverseGroup.addSettingCard(self.universeFateCard)
