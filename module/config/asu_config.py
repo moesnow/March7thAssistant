@@ -14,7 +14,8 @@ def auto_config():
     if ('不配置' != cfg.universe_fate and info['config']['fate'] != cfg.universe_fate) or (cfg.universe_difficulty != 0 and info['config']['difficulty'] != cfg.universe_difficulty):
         if cfg.universe_fate != "不配置": 
             info['config']['fate'] = cfg.universe_fate
-        info['config']['difficulty'] = cfg.universe_difficulty
+        if cfg.universe_difficulty != 0:
+            info['config']['difficulty'] = cfg.universe_difficulty
         with open(os.path.join(cfg.universe_path, "info.yml"), 'w', encoding='utf-8') as f:
             yaml.dump(info, f, default_flow_style=False,
                       allow_unicode=True)

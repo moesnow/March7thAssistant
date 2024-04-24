@@ -37,9 +37,10 @@ def auto_config():
     else:
         with open(os.path.join(cfg.fight_path, "config.json"), 'r', encoding='utf-8') as f:
             config = json.load(f)
-    if config['allow_map_buy'] != cfg.fight_allow_map_buy or config['allow_snack_buy'] != cfg.fight_allow_snack_buy or config['main_map'] != cfg.fight_main_map:
+    if config['allow_map_buy'] != cfg.fight_allow_map_buy or config['allow_snack_buy'] != cfg.fight_allow_snack_buy or ("0" != cfg.fight_main_map and config['main_map'] != cfg.fight_main_map):
         config['allow_map_buy'] = cfg.fight_allow_map_buy
         config['allow_snack_buy'] = cfg.fight_allow_snack_buy
-        config['main_map'] = cfg.fight_main_map
+        if cfg.fight_main_map != "0":
+            config['main_map'] = cfg.fight_main_map
         with open(os.path.join(cfg.fight_path, "config.json"), 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
