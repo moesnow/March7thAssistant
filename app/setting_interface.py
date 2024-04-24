@@ -301,7 +301,7 @@ class SettingInterface(ScrollArea):
             "universe_enable"
         )
         fates = {}
-        for a in ["存护", "记忆", "虚无", "丰饶", "巡猎", "毁灭", "欢愉", "繁育", "智识"]:
+        for a in ["不配置", "存护", "记忆", "虚无", "丰饶", "巡猎", "毁灭", "欢愉", "繁育", "智识"]:
             fates[a] = a
         self.universeFateCard = ComboBoxSettingCard2(
             "universe_fate",
@@ -312,9 +312,9 @@ class SettingInterface(ScrollArea):
         )
         self.universeDifficultyCard = RangeSettingCard1(
             "universe_difficulty",
-            [1, 5],
+            [0, 5],
             FIF.HISTORY,
-            self.tr("难度"),
+            self.tr("难度 (0为不配置)"),
             self.tr(""),
         )
         self.universeOperationModeCard = ComboBoxSettingCard2(
