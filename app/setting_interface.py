@@ -273,17 +273,19 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行锄大地的时间"),
             "fight_timestamp"
         )
-        self.fightAllowMapBuyCard = SwitchSettingCard1(
-            FIF.BUS,
+        self.fightAllowMapBuyCard = ComboBoxSettingCard2(
+            "fight_allow_map_buy",
+            FIF.GLOBE,
             self.tr('购买代币与过期邮包'),
-            "",
-            "fight_allow_map_buy"
+            '',
+            texts={"不配置": "不配置", "启用": True, "停用": False}
         )
-        self.fightAllowSnackBuyCard = SwitchSettingCard1(
-            FIF.BUS,
+        self.fightAllowSnackBuyCard = ComboBoxSettingCard2(
+            "fight_allow_snack_buy",
+            FIF.GLOBE,
             self.tr('购买秘技零食并合成零食'),
-            "",
-            "fight_allow_snack_buy"
+            '',
+            texts={"不配置": "不配置", "启用": True, "停用": False}
         )
         self.fightMainMapCard = ComboBoxSettingCard2(
             "fight_main_map",
