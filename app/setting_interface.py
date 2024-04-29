@@ -273,24 +273,26 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行锄大地的时间"),
             "fight_timestamp"
         )
-        self.fightAllowMapBuyCard = SwitchSettingCard1(
-            FIF.BUS,
+        self.fightAllowMapBuyCard = ComboBoxSettingCard2(
+            "fight_allow_map_buy",
+            FIF.GLOBE,
             self.tr('购买代币与过期邮包'),
-            "",
-            "fight_allow_map_buy"
+            '',
+            texts={"不配置": "不配置", "启用": True, "停用": False}
         )
-        self.fightAllowSnackBuyCard = SwitchSettingCard1(
-            FIF.BUS,
+        self.fightAllowSnackBuyCard = ComboBoxSettingCard2(
+            "fight_allow_snack_buy",
+            FIF.GLOBE,
             self.tr('购买秘技零食并合成零食'),
-            "",
-            "fight_allow_snack_buy"
+            '',
+            texts={"不配置": "不配置", "启用": True, "停用": False}
         )
         self.fightMainMapCard = ComboBoxSettingCard2(
             "fight_main_map",
             FIF.GLOBE,
             self.tr('优先星球'),
             '',
-            texts={"空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4"}
+            texts={"不配置": "0", "空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4"}
         )
 
         self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙"), self.scrollWidget)
@@ -301,7 +303,7 @@ class SettingInterface(ScrollArea):
             "universe_enable"
         )
         fates = {}
-        for a in ["存护", "记忆", "虚无", "丰饶", "巡猎", "毁灭", "欢愉", "繁育", "智识"]:
+        for a in ["不配置", "存护", "记忆", "虚无", "丰饶", "巡猎", "毁灭", "欢愉", "繁育", "智识"]:
             fates[a] = a
         self.universeFateCard = ComboBoxSettingCard2(
             "universe_fate",
@@ -312,9 +314,9 @@ class SettingInterface(ScrollArea):
         )
         self.universeDifficultyCard = RangeSettingCard1(
             "universe_difficulty",
-            [1, 5],
+            [0, 5],
             FIF.HISTORY,
-            self.tr("难度"),
+            self.tr("难度 (0为不配置)"),
             self.tr(""),
         )
         self.universeOperationModeCard = ComboBoxSettingCard2(
