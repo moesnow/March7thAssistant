@@ -10,6 +10,9 @@
 - 默认将模板图片缓存到内存中 [#244](https://github.com/moesnow/March7thAssistant/pull/244)
 - 支持逐光捡金和支援角色选择 “砂金”
 
+### 修复
+- 最新一期虚构叙事中部分角色开怪失败 [#242](https://github.com/moesnow/March7thAssistant/pull/242)
+
 ## v2.1.1
 
 ### 新功能

@@ -103,7 +103,7 @@ class BaseChallenge(ABC):
     def use_technique_and_attack_monster(self, team):
         '''使用秘技并攻击怪物'''
         # 靠近怪物
-        auto.press_key("w", 3.5)
+        auto.press_key("w", 4)
 
         # 使用秘技
         last_index = None
@@ -126,3 +126,4 @@ class BaseChallenge(ABC):
         auto.press_key(self.hotkey_technique)
         for _ in range(3):
             auto.press_mouse()
+            time.sleep(1)
