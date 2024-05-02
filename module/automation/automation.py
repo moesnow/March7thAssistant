@@ -27,6 +27,7 @@ class Automation(metaclass=SingletonMeta):
         self.logger = logger
         self.screenshot = None
         self._init_input()
+        self.img_cache = {}
 
     def _init_input(self):
         """
@@ -78,7 +79,7 @@ class Automation(metaclass=SingletonMeta):
         bottom_right = (top_left[0] + int(width / scale_factor), top_left[1] + int(height / scale_factor))
         return top_left, bottom_right
 
-    def find_image_element(self, target, threshold, scale_range, relative=False):
+    def find_image_element(self, target, threshold, scale_range, relative=False, cacheable=True):
         """
         查找图像元素。
         :param target: 目标图像路径。
@@ -88,8 +89,14 @@ class Automation(metaclass=SingletonMeta):
         :return: 最佳匹配位置和相似度。
         """
         try:
-            mask = ImageUtils.read_template_with_mask(target)  # 读取模板图片掩码
-            template = cv2.imread(target)  # 读取模板图片
+            if cacheable and target in self.img_cache:
+                mask = self.img_cache[target]['mask']
+                template = self.img_cache[target]['template']
+            else:
+                mask = ImageUtils.read_template_with_mask(target)  # 读取模板图片掩码
+                template = cv2.imread(target)  # 读取模板图片
+                if cacheable:
+                    self.img_cache[target] = {'mask': mask, 'template': template}
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)  # 将截图转换为RGB
             if mask is not None:
                 matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range, mask)  # 执行缩放并匹配模板
