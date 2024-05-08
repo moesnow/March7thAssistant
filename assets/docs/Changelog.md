@@ -8,10 +8,11 @@
 - 设置内新增多账户管理功能 [#224](https://github.com/moesnow/March7thAssistant/pull/224)
 - 支持登录过期时尝试自动登录 [#237](https://github.com/moesnow/March7thAssistant/pull/237)
 - 默认将模板图片缓存到内存中 [#244](https://github.com/moesnow/March7thAssistant/pull/244)
-- 支持逐光捡金和支援角色选择 “砂金”
+- 支持逐光捡金和支援角色选择 “砂金” 和 “知更鸟”
 
 ### 修复
 - 最新一期虚构叙事中部分角色开怪失败 [#242](https://github.com/moesnow/March7thAssistant/pull/242)
+- 无法切换到 “漫游签证” 界面 [#247](https://github.com/moesnow/March7thAssistant/pull/247)
 
 ## v2.1.1
 
