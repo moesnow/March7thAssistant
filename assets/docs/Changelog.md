@@ -11,6 +11,7 @@
 - 支持登录过期时尝试自动登录 [#237](https://github.com/moesnow/March7thAssistant/pull/237)
 - 默认将模板图片缓存到内存中 [#244](https://github.com/moesnow/March7thAssistant/pull/244)
 - 抽卡记录新增 “清空” 按钮
+- 适配支援角色界面的新样式
 
 ### 修复
 - 无法切换到 “漫游签证” 和 “委托” 界面 [#247](https://github.com/moesnow/March7thAssistant/pull/247)

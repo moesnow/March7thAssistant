@@ -16,18 +16,17 @@ class Character:
             return False
         # 等待界面加载
         time.sleep(0.5)
-        if not auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080)):
+        if not auto.find_element("支援列表", "text", max_retries=10, crop=(239.0 / 1920, 66.0 / 1080, 115.0 / 1920, 44.0 / 1080)):
             log.error("未进入支援列表")
             return False
 
         try:
             # 尝试优先使用指定用户名的支援角色
             if cfg.borrow_character_from:
-                auto.click_element("等级", "text", max_retries=10, crop=(
-                    18.0 / 1920, 15.0 / 1080, 572.0 / 1920, 414.0 / 1080), include=True)
+                auto.click_element("等级", "text", max_retries=10, crop=(37.0 / 1920, 188.0 / 1080, 119.0 / 1920, 773.0 / 1080), include=True)
                 time.sleep(0.5)
                 for i in range(3):
-                    if auto.click_element(cfg.borrow_character_from, "text", crop=(196 / 1920, 167 / 1080, 427 / 1920, 754 / 1080), include=True):
+                    if auto.click_element(cfg.borrow_character_from, "text", crop=(153.0 / 1920, 187.0 / 1080, 400.0 / 1920, 767.0 / 1080), include=True):
                         # 找到角色的对应处理
                         if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
                             log.error("找不到入队按钮")
@@ -43,8 +42,7 @@ class Character:
                                 return True
                             elif auto.matched_text == "取消":
                                 auto.click_element_with_pos(result)
-                                auto.find_element("支援列表", "text", max_retries=10, crop=(
-                                    234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
+                                auto.find_element("支援列表", "text", max_retries=10, crop=(239.0 / 1920, 66.0 / 1080, 115.0 / 1920, 44.0 / 1080))
                                 continue
                         else:
                             return False
@@ -61,12 +59,12 @@ class Character:
                     return False
                 # 等待界面加载
                 time.sleep(0.5)
-                if not auto.find_element("支援列表", "text", max_retries=10, crop=(234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080)):
+                if not auto.find_element("支援列表", "text", max_retries=10, crop=(239.0 / 1920, 66.0 / 1080, 115.0 / 1920, 44.0 / 1080)):
                     log.error("未进入支援列表")
                     return False
 
             for name in cfg.borrow_character:
-                if auto.click_element("./assets/images/share/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.9, 0.9), crop=(57 / 1920, 143 / 1080, 140 / 1920, 814 / 1080)):
+                if auto.click_element("./assets/images/share/character/" + name + ".png", "image", 0.8, max_retries=1, scale_range=(0.9, 0.9), crop=(37.0 / 1920, 188.0 / 1080, 119.0 / 1920, 773.0 / 1080)):
                     if not auto.click_element("入队", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
                         log.error("找不到入队按钮")
                         return False
@@ -80,8 +78,7 @@ class Character:
                             return True
                         elif auto.matched_text == "取消":
                             auto.click_element_with_pos(result)
-                            auto.find_element("支援列表", "text", max_retries=10, crop=(
-                                234 / 1920, 78 / 1080, 133 / 1920, 57 / 1080))
+                            auto.find_element("支援列表", "text", max_retries=10, crop=(239.0 / 1920, 66.0 / 1080, 115.0 / 1920, 44.0 / 1080))
                             continue
                     else:
                         return False
