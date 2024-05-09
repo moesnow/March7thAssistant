@@ -10,11 +10,13 @@
 - 设置内新增多账户管理功能 [#224](https://github.com/moesnow/March7thAssistant/pull/224)
 - 支持登录过期时尝试自动登录 [#237](https://github.com/moesnow/March7thAssistant/pull/237)
 - 默认将模板图片缓存到内存中 [#244](https://github.com/moesnow/March7thAssistant/pull/244)
+- 抽卡记录新增 “清空” 按钮
 
 ### 修复
 - 无法切换到 “漫游签证” 和 “委托” 界面 [#247](https://github.com/moesnow/March7thAssistant/pull/247)
 - 最新一期虚构叙事中部分角色开怪失败 [#242](https://github.com/moesnow/March7thAssistant/pull/242)
 - 无法领取 “支援” 和 “巡星之礼” 奖励
+- 特殊情况下抽卡记录无法正常显示和闪退
 
 ## v2.1.1
 

@@ -94,23 +94,26 @@ class WarpExport:
                     rank_5.append([name, grand_total])
                     grand_total = 0
 
-            content += f"一共 {self.__set_color(total,'DeepSkyBlue')} 抽 已累计 {self.__set_color(grand_total,'LimeGreen')} 抽未出5星\n\n"
+            content += f"一共 {self.__set_color(total, 'DeepSkyBlue')} 抽 已累计 {self.__set_color(grand_total, 'LimeGreen')} 抽未出5星\n\n"
             for star, count in rank_type.items():
                 percentage = count / total * 100
                 color = 'Goldenrod' if star == '5' else 'darkorchid' if star == '4' else 'DodgerBlue'
                 text = f"{star}星: {count:<4d} [{percentage:.2f}%]"
                 content += f"{self.__set_color(text, color)}\n\n"
-            rank_5_str = ' '.join([f"{self.__set_color(f'{key}[{value}]', self.__get_random_color(theme))}" for key, value in rank_5])
-            rank_5_sum = sum(value for _, value in rank_5)
-            rank_5_avg = rank_5_sum / len(rank_5)
-            content += f"5星历史记录: {rank_5_str}\n\n"
-            content += f"五星平均出货次数为: {self.__set_color(f'{rank_5_avg:.2f}', 'green')}\n\n<hr>"
+            if len(rank_5) > 0:
+                rank_5_str = ' '.join([f"{self.__set_color(f'{key}[{value}]', self.__get_random_color(theme))}" for key, value in rank_5])
+                rank_5_sum = sum(value for _, value in rank_5)
+                rank_5_avg = rank_5_sum / len(rank_5)
+                content += f"5星历史记录: {rank_5_str}\n\n"
+                content += f"五星平均出货次数为: {self.__set_color(f'{rank_5_avg:.2f}', 'green')}\n\n<hr>"
+            else:
+                content += "<hr>"
 
             return content
 
         for type, list in self.gacha_data.items():
             if len(list) > 0:
-                content += f"## {self.__set_color(self.gacha_type[type],'#f18cb9')}\n\n"
+                content += f"## {self.__set_color(self.gacha_type[type], '#f18cb9')}\n\n"
                 content = warp_analyze(list, content)
         return css + markdown.markdown(content)
 
@@ -121,7 +124,7 @@ class WarpExport:
             log_file_path = os.path.join(os.getenv('userprofile'), f"AppData/LocalLow{str}Player.log")
             if not os.path.exists(log_file_path):
                 continue
-            
+
             try:
                 with open(log_file_path, 'r', encoding='utf-8') as file:
                     log_content = file.read()
@@ -319,8 +322,9 @@ class WarpExport:
 
 class WarpStatus(Enum):
     SUCCESS = 1
-    UPDATE_AVAILABLE = 2
     FAILURE = 0
+    UPDATE = 2
+    COPY = 3
 
 
 class WarpThread(QThread):
@@ -358,9 +362,12 @@ class WarpThread(QThread):
 
                 # content = warp.data_to_html()
                 # self.parent.contentLabel.setText(markdown.markdown(content))
-                self.parent.setContent()
 
-                self.parent.copyLinkBtn.setEnabled(True)
+                # self.parent.setContent()
+                self.warpSignal.emit(WarpStatus.UPDATE)
+
+                # self.parent.copyLinkBtn.setEnabled(True)
+                self.warpSignal.emit(WarpStatus.COPY)
                 self.warpSignal.emit(WarpStatus.SUCCESS)
             else:
                 self.warpSignal.emit(WarpStatus.FAILURE)
@@ -387,6 +394,10 @@ def warpExport(self):
             self.stateTooltip.setState(True)
             self.stateTooltip = None
             self.updateBtn.setEnabled(True)
+        elif status == WarpStatus.UPDATE:
+            self.setContent()
+        elif status == WarpStatus.COPY:
+            self.copyLinkBtn.setEnabled(True)
 
     self.warp_thread = WarpThread(self)
     self.warp_thread.warpSignal.connect(handle_warp)
