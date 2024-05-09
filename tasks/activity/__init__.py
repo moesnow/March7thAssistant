@@ -7,6 +7,7 @@ from .checkInactivity import CheckInActivity
 from .gardenofplenty import GardenOfPlenty
 from .realmofthestrange import RealmOfTheStrange
 from .planarfissure import PlanarFissure
+import time
 
 
 class ActivityManager:
@@ -50,6 +51,9 @@ class ActivityManager:
 
     def _get_activity_names(self):
         screen.change_to('activity')
+        # 部分活动在选中情况下 OCR 识别困难
+        if auto.click_element("锋芒斩露", "text", None, crop=(53.0 / 1920, 109.0 / 1080, 190.0 / 1920, 846.0 / 1080), include=True):
+            time.sleep(2)
         screenshot, _, _ = auto.take_screenshot(crop=(53.0 / 1920, 109.0 / 1080, 190.0 / 1920, 846.0 / 1080))
         result = ocr.recognize_multi_lines(screenshot)
         if not result:

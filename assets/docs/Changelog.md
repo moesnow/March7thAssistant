@@ -14,6 +14,7 @@
 ### 修复
 - 无法切换到 “漫游签证” 和 “委托” 界面 [#247](https://github.com/moesnow/March7thAssistant/pull/247)
 - 最新一期虚构叙事中部分角色开怪失败 [#242](https://github.com/moesnow/March7thAssistant/pull/242)
+- 无法领取 “支援” 和 “巡星之礼” 奖励
 
 ## v2.1.1
 

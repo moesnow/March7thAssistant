@@ -210,7 +210,7 @@ class SettingInterface(ScrollArea):
         self.activityDailyCheckInEnableCard = SwitchSettingCard1(
             FIF.COMPLETED,
             self.tr('启用每日签到'),
-            "自动领取「星轨专票」或「星琼」，包含巡光之礼、巡星之礼和庆典祝礼活动",
+            "自动领取「星轨专票」或「星琼」，包含巡星之礼、巡光之礼和庆典祝礼活动",
             "activity_dailycheckin_enable"
         )
         self.activityGardenOfPlentyEnableCard = SwitchSettingCardGardenofplenty(
