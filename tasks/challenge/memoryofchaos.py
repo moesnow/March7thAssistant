@@ -40,6 +40,10 @@ class MemoryOfChaos(BaseChallenge):
         if not auto.click_element("传送", "text", max_retries=10, need_ocr=False):
             return False
 
+        time.sleep(4)
+        screen.change_to('memory_of_chaos')
+
+        # 等待刷新后首次打开可能会出现的弹窗过程
         time.sleep(2)
         screen.change_to('memory_of_chaos')
 
