@@ -42,8 +42,7 @@ class GameController:
             self.log_error(f"游戏路径不存在：{self.game_path}")
             return False
 
-        game_folder = self.game_path.rpartition('\\')[0]
-        if not os.system(f'cmd /C start "" /D "{game_folder}" "{self.game_path}"'):
+        if not os.system(f'cmd /C start "" "{self.game_path}"'):
             self.log_info(f"游戏启动：{self.game_path}")
             return True
         else:
