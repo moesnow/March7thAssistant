@@ -13,7 +13,9 @@
             {
                 "target_screen": "map",
                 "actions_list": [
-                    "auto.press_key('m')"
+                    "auto.press_key('m')",
+                    "time.sleep(2)",
+                    "auto.click_element('./assets/images/zh_CN/map/back.png', 'image', 0.9)"
                 ]
             },
             {
