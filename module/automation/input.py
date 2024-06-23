@@ -41,10 +41,10 @@ class Input:
         except Exception as e:
             self.logger.error(f"鼠标移动出错：{e}")
 
-    def mouse_scroll(self, count, direction=-1):
+    def mouse_scroll(self, count, direction=-1, pause=True):
         '''滚动鼠标滚轮，方向和次数由参数指定'''
         for _ in range(count):
-            pyautogui.scroll(direction)
+            pyautogui.scroll(direction, _pause=pause)
         self.logger.debug(f"滚轮滚动 {count * direction} 次")
 
     def press_key(self, key, wait_time=0.2):

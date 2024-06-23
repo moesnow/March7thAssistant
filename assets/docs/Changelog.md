@@ -3,6 +3,7 @@
 ## v2.3.0
 
 ### 新功能
+- 适配模拟宇宙新入口（需先解锁差分宇宙）
 - 支持 2.3 版本新增关卡 [#277](https://github.com/moesnow/March7thAssistant/pull/277)
 - 支持B服 [#269](https://github.com/moesnow/March7thAssistant/pull/269)
 - 支持国际服账号操作 [#268](https://github.com/moesnow/March7thAssistant/pull/268)

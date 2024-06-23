@@ -37,8 +37,8 @@ class Universe:
                 update_handler.run()
         elif cfg.universe_operation_mode == "source":
             cfg.set_value("universe_requirements", False)
-            url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/main.zip")
-            update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe-main")
+            url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/refs/heads/old.zip")
+            update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe-old")
             update_handler.run()
 
     @staticmethod
