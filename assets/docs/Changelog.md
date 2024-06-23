@@ -7,6 +7,7 @@
 - 支持B服 [#269](https://github.com/moesnow/March7thAssistant/pull/269)
 - 支持国际服账号操作 [#268](https://github.com/moesnow/March7thAssistant/pull/268)
 - 支持逐光捡金和支援角色选择 “流萤”
+- 支持判断米哈游启动器默认安装路径
 
 ### 修复
 - PAC错误 [#276](https://github.com/moesnow/March7thAssistant/pull/276)
