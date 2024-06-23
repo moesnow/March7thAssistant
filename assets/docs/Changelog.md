@@ -10,8 +10,9 @@
 - 支持判断米哈游启动器默认安装路径
 
 ### 修复
-- PAC错误 [#276](https://github.com/moesnow/March7thAssistant/pull/276)
+- 支持位于城市沙盘时正确进入地图界面
 - 混沌回忆刷新后的弹窗有概率导致失败
+- PAC错误 [#276](https://github.com/moesnow/March7thAssistant/pull/276)
 
 ## v2.2.0
 

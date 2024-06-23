@@ -8,7 +8,7 @@ class SRPass(RewardTemplate):
     def run(self):
         if auto.click_element("./assets/images/zh_CN/reward/pass/one_key_receive.png", "image", 0.8):
             # 等待可能出现的升级动画
-            time.sleep(2)
+            time.sleep(3)
 
         # 判断是否解锁了"无名客的荣勋"
         screen.change_to('pass1')
