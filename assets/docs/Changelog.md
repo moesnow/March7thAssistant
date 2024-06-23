@@ -1,8 +1,15 @@
 # 更新日志
 
-## v2.2.1
+## v2.3.0
+
+### 新功能
+- 支持 2.3 版本新增关卡 [#277](https://github.com/moesnow/March7thAssistant/pull/277)
+- 支持B服 [#269](https://github.com/moesnow/March7thAssistant/pull/269)
+- 支持国际服账号操作 [#268](https://github.com/moesnow/March7thAssistant/pull/268)
+- 支持逐光捡金和支援角色选择 “流萤”
 
 ### 修复
+- PAC错误 [#276](https://github.com/moesnow/March7thAssistant/pull/276)
 - 混沌回忆刷新后的弹窗有概率导致失败
 
 ## v2.2.0
