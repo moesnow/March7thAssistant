@@ -31,8 +31,10 @@ def macth_pac_settings(url: str, pac_url: str):
     :return: proxy or None
     """
     pac = pypac.get_pac(url=pac_url)
-    pac_result = pac.find_proxy_for_url(url=url, host="0.0.0.0")
-    print(type(pac_result), pac_result)
+    if pac is None:
+        pac_result = None
+    else:
+        pac_result = pac.find_proxy_for_url(url=url, host="0.0.0.0")
     if isinstance(pac_result, str):
         pac_result = pac_result.split(";")
         pac_result = map(lambda x: x.strip(), pac_result)
