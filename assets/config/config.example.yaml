@@ -338,8 +338,12 @@ notify_pushdeer_url: "" # 可选参数，自定义 Pushdeer 服务的 URL。
 notify_lark_enable: false # 是否启用飞书通知。true 开启，false 关闭。
 notify_lark_webhook: "" # 飞书通知的 Webhook URL。
 notify_lark_content: "" # 飞书通知的内容。
-notify_lark_keyword: "" # 可选参数，如果设置了关键词安全设置，此处填写关键词。
+notify_lark_keyword: "" # 可选参数，如果设置了关键词安全设置，此处填写关键词， 如无关键词请设置为空，而非空字符串。（因onepush库bug）
 notify_lark_sign: "" # 可选参数，如果设置了签名安全设置，此处填写签名。
+notify_lark_imageenable: false # 是否启用图片信息发送，true 开启，false 关闭，默认为关闭
+notify_lark_appid: "" # 如启用图片信息发送，则必填，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology
+notify_lark_secret: "" # 同上，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology
+
 
 # 自定义通知配置
 # 支持发送截图
