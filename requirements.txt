@@ -23,3 +23,4 @@ pyperclip
 qrcode
 pysocks
 pypac
+requests_toolbelt

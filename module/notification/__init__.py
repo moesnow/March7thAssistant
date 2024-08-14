@@ -10,6 +10,7 @@ from module.notification.smtp import SMTPNotifier
 from module.notification.gocqhttp import GocqhttpNotifier
 from module.notification.wechatworkapp import WeChatworkappNotifier
 from module.notification.custom import CustomNotifier
+from module.notification.lark import LarkNotifier
 
 
 class NotifierFactory:
@@ -22,6 +23,7 @@ class NotifierFactory:
         "gocqhttp": GocqhttpNotifier,
         "wechatworkapp": WeChatworkappNotifier,
         "custom": CustomNotifier,
+        "lark": LarkNotifier
     }
 
     @staticmethod
