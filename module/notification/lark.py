@@ -41,7 +41,6 @@ class LarkNotifier(Notifier):
         if content and (content is None or content == ''):
             content = '.'
         webhook = self.params["webhook"]
-        sign = self.params["sign"]
 
         imageenable = self.params["imageenable"]
         # 如果支持发送图片，并且图片功能已启用
@@ -116,7 +115,8 @@ class LarkNotifier(Notifier):
                 }
             }
         # 如果需要签名
-        if sign:
+        if self.params["sign"] is not None:
+            sign = self.params["sign"]
             timestamp = str(int(time.time()))
             send_message.update({
                 "timestamp": timestamp,
