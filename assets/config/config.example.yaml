@@ -122,6 +122,7 @@ fight_main_map: "0" # 优先星球 {"空间站": "1", "雅利洛": "2", "仙舟"
 
 # 模拟宇宙配置
 universe_enable: false # 是否启用模拟宇宙功能。true 开启，false 关闭。
+universe_category: divergent # 模拟宇宙类型，可选 "差分宇宙"（divergent）或 "模拟宇宙"（universe）。
 universe_operation_mode: exe # 模拟宇宙运行方式，可选 "源码"（source）或 "集成"（exe）。
 universe_bonus_enable: false # 是否领取沉浸奖励。true 开启，false 关闭。
 universe_frequency: weekly # 模拟宇宙运行频率，可选 "每周"（weekly）或 "每天"（daily）。
@@ -130,7 +131,7 @@ universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径，指向�
 universe_timeout: 20 # 模拟宇宙超时时间（单位：小时），设置脚本或程序的最长运行时间。
 universe_requirements: false # 是否已安装模拟宇宙依赖。true 表示已安装，false 表示未安装或需要重新安装。
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳，用于记录和控制运行频率。
-universe_fate: '不配置' # 模拟宇宙使用的命途
+universe_fate: "不配置" # 模拟宇宙使用的命途
 universe_difficulty: 0 # 模拟宇宙使用的难度
 
 # 忘却之庭配置
@@ -343,7 +344,6 @@ notify_lark_sign: "" # 可选参数，如果设置了签名安全设置，此处
 notify_lark_imageenable: false # 是否启用图片信息发送，true 开启，false 关闭，默认为关闭
 notify_lark_appid: "" # 如启用图片信息发送，则必填，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology
 notify_lark_secret: "" # 同上，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology
-
 
 # 自定义通知配置
 # 支持发送截图

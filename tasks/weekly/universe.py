@@ -37,18 +37,18 @@ class Universe:
                 update_handler.run()
         elif cfg.universe_operation_mode == "source":
             cfg.set_value("universe_requirements", False)
-            url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/refs/heads/old.zip")
-            update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe-old")
+            url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/refs/heads/main.zip")
+            update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe-main")
             update_handler.run()
 
     @staticmethod
     def check_path():
         status = False
         if cfg.universe_operation_mode == "exe":
-            if not os.path.exists(os.path.join(cfg.universe_path, "states.exe")):
+            if not os.path.exists(os.path.join(cfg.universe_path, "diver.exe")):
                 status = True
         elif cfg.universe_operation_mode == "source":
-            if not os.path.exists(os.path.join(cfg.universe_path, "states.py")):
+            if not os.path.exists(os.path.join(cfg.universe_path, "diver.py")):
                 status = True
         if status:
             log.warning(f"模拟宇宙路径不存在: {cfg.universe_path}")
@@ -80,13 +80,15 @@ class Universe:
         开始校准流程
         :return: 如果校准成功，返回 True；否则返回 False
         """
-        log.info("开始校准")
-        calibration_command = [os.path.join(cfg.universe_path, "align_angle.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "align_angle.py"]
-        log.debug(f"校准命令: {calibration_command}")
-        if subprocess_with_timeout(calibration_command, 60, cfg.universe_path, None if cfg.universe_operation_mode == "exe" else cfg.env):
-            return True
-        else:
-            return False
+        return True
+        # 不再强制校准
+        # log.info("开始校准")
+        # calibration_command = [os.path.join(cfg.universe_path, "align_angle.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "align_angle.py"]
+        # log.debug(f"校准命令: {calibration_command}")
+        # if subprocess_with_timeout(calibration_command, 60, cfg.universe_path, None if cfg.universe_operation_mode == "exe" else cfg.env):
+        #     return True
+        # else:
+        #     return False
 
     @staticmethod
     def build_simulation_command(nums):
@@ -95,7 +97,10 @@ class Universe:
         :param nums: 运行次数
         :return: 模拟宇宙命令列表
         """
-        command = [os.path.join(cfg.universe_path, "states.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "states.py"]
+        if cfg.universe_category == "divergent":
+            command = [os.path.join(cfg.universe_path, "diver.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "diver.py"]
+        else:
+            command = [os.path.join(cfg.universe_path, "simul.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "simul.py"]
         if cfg.universe_bonus_enable:
             command.append("--bonus=1")
         if nums:
@@ -126,9 +131,15 @@ class Universe:
         """
         if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
             auto.press_key("f")
-            screen.wait_for_screen_change('universe_main')
+            if cfg.universe_category == "divergent":
+                screen.wait_for_screen_change('divergent_main')
+            else:
+                screen.wait_for_screen_change('universe_main')
         else:
-            screen.change_to('universe_main')
+            if cfg.universe_category == "divergent":
+                screen.change_to('divergent_main')
+            else:
+                screen.change_to('universe_main')
         log.info("开始模拟宇宙")
         command = Universe.build_simulation_command(nums)
         log.debug(f"模拟宇宙命令: {command}")
@@ -147,13 +158,16 @@ class Universe:
 
         if Universe.before_start():
 
-            screen.change_to('universe_main')
+            if cfg.universe_category == "divergent":
+                screen.change_to('divergent_main')
+            else:
+                asu_config.auto_config()
+                screen.change_to('universe_main')
+
             # 等待可能的周一弹窗
             time.sleep(2)
-            # 进入黑塔办公室
+            # 进入主界面
             screen.change_to('main')
-
-            asu_config.auto_config()
 
             if Universe.start_calibration() and Universe.start_simulation(nums, save):
                 return True
@@ -166,6 +180,9 @@ class Universe:
 
     @staticmethod
     def get_reward():
+        if cfg.universe_category == "divergent":
+            # 差分宇宙暂不领取奖励
+            return
         log.info("开始领取奖励")
         if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
             auto.press_key("f")

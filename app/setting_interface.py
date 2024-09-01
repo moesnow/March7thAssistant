@@ -302,29 +302,19 @@ class SettingInterface(ScrollArea):
             "",
             "universe_enable"
         )
-        fates = {}
-        for a in ["不配置", "存护", "记忆", "虚无", "丰饶", "巡猎", "毁灭", "欢愉", "繁育", "智识"]:
-            fates[a] = a
-        self.universeFateCard = ComboBoxSettingCard2(
-            "universe_fate",
-            FIF.PIE_SINGLE,
-            self.tr('命途'),
-            '',
-            texts=fates
-        )
-        self.universeDifficultyCard = RangeSettingCard1(
-            "universe_difficulty",
-            [0, 5],
-            FIF.HISTORY,
-            self.tr("难度 (0为不配置)"),
-            self.tr(""),
-        )
         self.universeOperationModeCard = ComboBoxSettingCard2(
             "universe_operation_mode",
             FIF.COMMAND_PROMPT,
             self.tr('运行模式'),
             '',
             texts={'集成': 'exe', '源码': 'source'}
+        )
+        self.universeCategoryCard = ComboBoxSettingCard2(
+            "universe_category",
+            FIF.COMMAND_PROMPT,
+            self.tr('类别'),
+            '',
+            texts={'差分宇宙': 'divergent', '模拟宇宙': 'universe'}
         )
         self.universeTimeoutCard = RangeSettingCard1(
             "universe_timeout",
@@ -358,6 +348,23 @@ class SettingInterface(ScrollArea):
             FIF.HISTORY,
             self.tr("运行次数"),
             self.tr("注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"),
+        )
+        fates = {}
+        for a in ["不配置", "存护", "记忆", "虚无", "丰饶", "巡猎", "毁灭", "欢愉", "繁育", "智识"]:
+            fates[a] = a
+        self.universeFateCard = ComboBoxSettingCard2(
+            "universe_fate",
+            FIF.PIE_SINGLE,
+            self.tr('命途（仅模拟宇宙生效）'),
+            '',
+            texts=fates
+        )
+        self.universeDifficultyCard = RangeSettingCard1(
+            "universe_difficulty",
+            [0, 5],
+            FIF.HISTORY,
+            self.tr("难度 (0为不配置，仅模拟宇宙生效)"),
+            self.tr(""),
         )
 
         self.ForgottenhallGroup = SettingCardGroup(self.tr("忘却之庭"), self.scrollWidget)
@@ -621,14 +628,15 @@ class SettingInterface(ScrollArea):
         self.FightGroup.addSettingCard(self.fightMainMapCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
-        self.UniverseGroup.addSettingCard(self.universeFateCard)
-        self.UniverseGroup.addSettingCard(self.universeDifficultyCard)
         self.UniverseGroup.addSettingCard(self.universeOperationModeCard)
+        self.UniverseGroup.addSettingCard(self.universeCategoryCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.universeFrequencyCard)
         self.UniverseGroup.addSettingCard(self.universeCountCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
+        self.UniverseGroup.addSettingCard(self.universeFateCard)
+        self.UniverseGroup.addSettingCard(self.universeDifficultyCard)
 
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallEnableCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallLevelCard)
