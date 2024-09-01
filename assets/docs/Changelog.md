@@ -7,6 +7,9 @@
 - 支持 “云璃” 、 “三月七（虚数）” 、 “开拓者（虚数）”
 - 飞书 支持发送截图 [#310](https://github.com/moesnow/March7thAssistant/pull/310)
 
+### 修复
+- 新版材料合成页面卡住的问题 [#231](https://github.com/moesnow/March7thAssistant/issues/231)
+
 ## v2.3.0
 
 ### 新功能

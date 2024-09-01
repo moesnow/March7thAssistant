@@ -39,7 +39,7 @@ class Synthesis:
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
                 # 等待筛选界面弹出
                 time.sleep(1)
-                if auto.click_element("通用培养材料", "text", max_retries=10, crop=(480 / 1920, 400 / 1080, 963 / 1920, 136 / 1080)):
+                if auto.click_element("通用培养材料", "text", max_retries=10, crop=(478.0 / 1920, 350.0 / 1080, 981.0 / 1920, 399.0 / 1080)):
                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                         # 多次重试避免选中没反应
                         for i in range(10):
