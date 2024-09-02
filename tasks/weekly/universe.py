@@ -118,7 +118,7 @@ class Universe:
         screen.wait_for_screen_change('main')
         Universe.get_reward()
 
-        if cfg.universe_bonus_enable and cfg.break_down_level_four_relicset:
+        if cfg.universe_category != "divergent" and cfg.universe_bonus_enable and cfg.break_down_level_four_relicset:
             Relicset.run()
 
     @staticmethod
@@ -180,21 +180,26 @@ class Universe:
 
     @staticmethod
     def get_reward():
-        if cfg.universe_category == "divergent":
-            # 差分宇宙暂不领取奖励
-            return
         log.info("开始领取奖励")
         if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
             auto.press_key("f")
-            screen.wait_for_screen_change('universe_main')
+            if cfg.universe_category == "divergent":
+                screen.wait_for_screen_change('divergent_main')
+            else:
+                screen.wait_for_screen_change('universe_main')
         else:
-            screen.change_to('universe_main')
+            if cfg.universe_category == "divergent":
+                screen.change_to('divergent_main')
+            else:
+                screen.change_to('universe_main')
         time.sleep(1)
         if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
             if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
                 if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
                     Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'])
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
+                    time.sleep(1)
+                    auto.press_key("esc")
                     return
         Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseCompleted'])
 
