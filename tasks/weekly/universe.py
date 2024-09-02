@@ -5,7 +5,6 @@ from module.automation import auto
 from tasks.base.base import Base
 from tasks.power.relicset import Relicset
 from tasks.base.pythonchecker import PythonChecker
-from tasks.game.starrailcontroller import StarRailController
 from utils.command import subprocess_with_timeout
 import subprocess
 import time
@@ -152,9 +151,6 @@ class Universe:
     @staticmethod
     def start(nums=cfg.universe_count, save=True, category=cfg.universe_category):
         log.hr("准备模拟宇宙", 0)
-
-        game = StarRailController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
-        game.check_resolution(1920, 1080)
 
         if Universe.before_start():
 
