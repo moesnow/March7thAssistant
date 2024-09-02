@@ -18,7 +18,7 @@ class Instance:
 
         log.hr(f"开始刷{instance_type} - {instance_name}，总计{runs}次", 2)
 
-        if cfg.instance_team_enable:
+        if cfg.instance_team_enable and "饰品提取" not in instance_type:
             Team.change_to(cfg.instance_team_number)
 
         if not Instance.prepare_instance(instance_type, instance_name):
@@ -51,6 +51,7 @@ class Instance:
     def prepare_instance(instance_type, instance_name):
         screen.change_to('guide3')
         instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
+
         if not auto.click_element(instance_type, "text", crop=instance_type_crop):
             if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=instance_type_crop):
                 auto.mouse_scroll(12, -1)
@@ -114,9 +115,14 @@ class Instance:
             Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="未找到指定副本"))
             return False
         # 验证传送是否成功
-        if not auto.find_element(instance_name.replace("2", ""), "text", max_retries=60, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
-            Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"))
-            return False
+        if "饰品提取" in instance_type:
+            if not auto.find_element(instance_name, "text", max_retries=60, include=True, crop=(591.0 / 1920, 98.0 / 1080, 594.0 / 1920, 393.0 / 1080)):
+                Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"))
+                return False
+        else:
+            if not auto.find_element(instance_name.replace("2", ""), "text", max_retries=60, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
+                Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"))
+                return False
 
         return True
 
@@ -135,20 +141,41 @@ class Instance:
                     time.sleep(0.5)
             # time.sleep(1)
 
-        if auto.click_element("挑战", "text", max_retries=10, need_ocr=True):
-            if instance_type == "历战余响":
-                time.sleep(1)
-                auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+        if "饰品提取" in instance_type:
+            time.sleep(1)
 
-            Character.borrow()
+            # 选择角色
+            # 待后续更新支持
 
-            if auto.click_element("开始挑战", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
-                if instance_type == "凝滞虚影":
-                    time.sleep(2)
-                    for i in range(3):
+            if auto.click_element("开始挑战", "text", max_retries=10, need_ocr=True):
+                time.sleep(2)
+                if auto.find_element("差分宇宙", "text", max_retries=60, crop=(8.0 / 1920, 5.0 / 1080, 157.0 / 1920, 38.0 / 1080), include=True):
+                    time.sleep(1)
+
+                    # 使用秘技
+                    # 待后续更新支持
+
+                    # 靠近怪物
+                    auto.press_key("w", 4)
+                    for _ in range(3):
                         auto.press_mouse()
+                        time.sleep(1)
+                    return True
+        else:
+            if auto.click_element("挑战", "text", max_retries=10, need_ocr=True):
+                if instance_type == "历战余响":
+                    time.sleep(1)
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
 
-                return True
+                Character.borrow()
+
+                if auto.click_element("开始挑战", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080)):
+                    if instance_type == "凝滞虚影":
+                        time.sleep(2)
+                        for i in range(3):
+                            auto.press_mouse()
+
+                    return True
 
         return False
 

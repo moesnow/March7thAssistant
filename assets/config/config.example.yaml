@@ -31,13 +31,14 @@ game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
 
 # 副本设置
-instance_type: 拟造花萼（金） # 设置副本类型，可选值：侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）。
+instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造花萼（金）、拟造花萼（赤）、凝滞虚影、侵蚀隧洞、饰品提取。
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
 instance_names:
   拟造花萼（金）: 回忆之蕾
   拟造花萼（赤）: 毁灭之蕾
   凝滞虚影: 无
   侵蚀隧洞: 睿治之径
+  饰品提取: 永恒笑剧
   历战余响: 毁灭的开端 # 配置各副本类型的名称。
 
 # 分解设置

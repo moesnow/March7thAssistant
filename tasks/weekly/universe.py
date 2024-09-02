@@ -91,13 +91,13 @@ class Universe:
         #     return False
 
     @staticmethod
-    def build_simulation_command(nums):
+    def build_simulation_command(nums, category):
         """
         构建模拟宇宙命令
         :param nums: 运行次数
         :return: 模拟宇宙命令列表
         """
-        if cfg.universe_category == "divergent":
+        if category == "divergent":
             command = [os.path.join(cfg.universe_path, "diver.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "diver.py"]
         else:
             command = [os.path.join(cfg.universe_path, "simul.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "simul.py"]
@@ -107,7 +107,7 @@ class Universe:
             command.append(f"--nums={nums}")
         return command
 
-    def finalize_simulation(save):
+    def finalize_simulation(save, category):
         """
         完成模拟宇宙流程的后续处理
         :param save: 是否保存时间戳
@@ -116,13 +116,13 @@ class Universe:
             cfg.save_timestamp("universe_timestamp")
 
         screen.wait_for_screen_change('main')
-        Universe.get_reward()
+        Universe.get_reward(category)
 
-        if cfg.universe_category != "divergent" and cfg.universe_bonus_enable and cfg.break_down_level_four_relicset:
+        if category != "divergent" and cfg.universe_bonus_enable and cfg.break_down_level_four_relicset:
             Relicset.run()
 
     @staticmethod
-    def start_simulation(nums, save):
+    def start_simulation(nums, save, category):
         """
         开始模拟宇宙流程
         :param nums: 运行次数
@@ -131,26 +131,26 @@ class Universe:
         """
         if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
             auto.press_key("f")
-            if cfg.universe_category == "divergent":
+            if category == "divergent":
                 screen.wait_for_screen_change('divergent_main')
             else:
                 screen.wait_for_screen_change('universe_main')
         else:
-            if cfg.universe_category == "divergent":
+            if category == "divergent":
                 screen.change_to('divergent_main')
             else:
                 screen.change_to('universe_main')
         log.info("开始模拟宇宙")
-        command = Universe.build_simulation_command(nums)
+        command = Universe.build_simulation_command(nums, category)
         log.debug(f"模拟宇宙命令: {command}")
         if subprocess_with_timeout(command, cfg.universe_timeout * 3600, cfg.universe_path, None if cfg.universe_operation_mode == "exe" else cfg.env):
-            Universe.finalize_simulation(save)
+            Universe.finalize_simulation(save, category)
             return True
         else:
             return False
 
     @staticmethod
-    def start(nums=cfg.universe_count, save=True):
+    def start(nums=cfg.universe_count, save=True, category=cfg.universe_category):
         log.hr("准备模拟宇宙", 0)
 
         game = StarRailController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
@@ -158,7 +158,7 @@ class Universe:
 
         if Universe.before_start():
 
-            if cfg.universe_category == "divergent":
+            if category == "divergent":
                 screen.change_to('divergent_main')
             else:
                 asu_config.auto_config()
@@ -169,7 +169,7 @@ class Universe:
             # 进入主界面
             screen.change_to('main')
 
-            if Universe.start_calibration() and Universe.start_simulation(nums, save):
+            if Universe.start_calibration() and Universe.start_simulation(nums, save, category):
                 return True
 
         log.error("模拟宇宙失败")
@@ -179,16 +179,16 @@ class Universe:
         return False
 
     @staticmethod
-    def get_reward():
+    def get_reward(category):
         log.info("开始领取奖励")
         if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
             auto.press_key("f")
-            if cfg.universe_category == "divergent":
+            if category == "divergent":
                 screen.wait_for_screen_change('divergent_main')
             else:
                 screen.wait_for_screen_change('universe_main')
         else:
-            if cfg.universe_category == "divergent":
+            if category == "divergent":
                 screen.change_to('divergent_main')
             else:
                 screen.change_to('universe_main')

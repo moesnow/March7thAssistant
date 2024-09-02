@@ -51,7 +51,7 @@ class SettingInterface(ScrollArea):
             FIF.ALIGNMENT,
             self.tr('副本类型'),
             None,
-            texts=['拟造花萼（金）', '拟造花萼（赤）', '凝滞虚影', '侵蚀隧洞']
+            texts=['拟造花萼（金）', '拟造花萼（赤）', '凝滞虚影', '侵蚀隧洞', '饰品提取']
         )
         self.calyxGoldenPreferenceCard = ComboBoxSettingCard2(
             "calyx_golden_preference",

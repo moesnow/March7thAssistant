@@ -137,7 +137,7 @@ class MessageBoxInstance(MessageBox):
         self.buttonGroup.setMinimumWidth(480)
 
         font = QFont()
-        font.setPointSize(14)
+        font.setPointSize(11)
 
         with open(configtemplate, 'r', encoding='utf-8') as file:
             self.template = json.load(file)
