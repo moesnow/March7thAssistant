@@ -100,8 +100,13 @@ class Universe:
             command = [os.path.join(cfg.universe_path, "diver.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "diver.py"]
         else:
             command = [os.path.join(cfg.universe_path, "simul.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "simul.py"]
+
+        if category == "divergent" and cfg.universe_disable_gpu:
+            command.append("--cpu")
+
         if category != "divergent" and cfg.universe_bonus_enable:
             command.append("--bonus=1")
+
         if nums:
             command.append(f"--nums={nums}")
         return command

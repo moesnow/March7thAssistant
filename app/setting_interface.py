@@ -316,6 +316,12 @@ class SettingInterface(ScrollArea):
             '',
             texts={'差分宇宙': 'divergent', '模拟宇宙': 'universe'}
         )
+        self.universeDisableGpuCard = SwitchSettingCard1(
+            FIF.COMMAND_PROMPT,
+            self.tr('禁用GPU加速'),
+            self.tr('差分宇宙无法正常运行时，可尝试打开此选项'),
+            "universe_disable_gpu"
+        )
         self.universeTimeoutCard = RangeSettingCard1(
             "universe_timeout",
             [1, 24],
@@ -630,6 +636,7 @@ class SettingInterface(ScrollArea):
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.UniverseGroup.addSettingCard(self.universeOperationModeCard)
         self.UniverseGroup.addSettingCard(self.universeCategoryCard)
+        self.UniverseGroup.addSettingCard(self.universeDisableGpuCard)
         self.UniverseGroup.addSettingCard(self.universeTimeoutCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.universeFrequencyCard)
