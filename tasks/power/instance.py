@@ -149,6 +149,9 @@ class Instance:
 
             if auto.click_element("开始挑战", "text", max_retries=10, need_ocr=True):
                 time.sleep(2)
+                if auto.find_element("开始挑战", "text", max_retries=10, need_ocr=True):
+                    Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="无法开始挑战"))
+                    return False
                 if auto.find_element("差分宇宙", "text", max_retries=60, crop=(8.0 / 1920, 5.0 / 1080, 157.0 / 1920, 38.0 / 1080), include=True):
                     time.sleep(1)
 
@@ -196,7 +199,7 @@ class Instance:
         # 从副本返回主界面后，按esc太快无效
         time.sleep(2)
 
-        if ("侵蚀隧洞" or "历战余响") in instance_type and cfg.break_down_level_four_relicset:
+        if ("侵蚀隧洞" in instance_type or "饰品提取" in instance_type or "历战余响" in instance_type) and cfg.break_down_level_four_relicset:
             Relicset.run()
 
     @staticmethod

@@ -42,7 +42,7 @@ instance_names:
   历战余响: 毁灭的开端 # 配置各副本类型的名称。
 
 # 分解设置
-break_down_level_four_relicset: false # 完成侵蚀隧洞和模拟宇宙后是否自动分解四星及以下遗器。true 开启，false 关闭。
+break_down_level_four_relicset: false # 完成侵蚀隧洞、饰品提取、历战余响和模拟宇宙后是否自动分解四星及以下遗器。true 开启，false 关闭。
 
 # 队伍配置
 instance_team_enable: false # 是否在打副本时自动切换队伍。true 开启，false 关闭。

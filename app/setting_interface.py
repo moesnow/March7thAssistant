@@ -70,7 +70,7 @@ class SettingInterface(ScrollArea):
         self.breakDownLevelFourRelicsetEnableCard = SwitchSettingCard1(
             FIF.FILTER,
             self.tr('自动分解四星遗器'),
-            self.tr('侵蚀隧洞、历战余响和模拟宇宙（开启领取沉浸奖励）完成后自动分解四星及以下遗器'),
+            self.tr('侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器'),
             "break_down_level_four_relicset"
         )
         self.instanceTeamEnableCard = SwitchSettingCardTeam(
