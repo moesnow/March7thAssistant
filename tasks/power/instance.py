@@ -148,7 +148,8 @@ class Instance:
             # 待后续更新支持
 
             if auto.click_element("开始挑战", "text", max_retries=10, need_ocr=True):
-                time.sleep(2)
+                time.sleep(4)
+                # 判断点击开始挑战是否成功，可能因缺少角色或背包满导致失败
                 if auto.find_element("开始挑战", "text", max_retries=10, need_ocr=True):
                     Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="无法开始挑战"))
                     return False
