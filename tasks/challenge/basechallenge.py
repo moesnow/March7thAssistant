@@ -94,7 +94,7 @@ class BaseChallenge(ABC):
 
     def click_message_box(self):
         '''等待游戏加载并点击弹窗'''
-        if auto.find_element("空白", "text", max_retries=20, crop=(12.0 / 1920, 731.0 / 1080, 1904.0 / 1920, 280.0 / 1080), include=True):
+        if auto.find_element("空白", "text", max_retries=120, crop=(12.0 / 1920, 731.0 / 1080, 1904.0 / 1920, 280.0 / 1080), include=True):
             time.sleep(1)
             # 关闭弹窗
             auto.press_key("esc")
