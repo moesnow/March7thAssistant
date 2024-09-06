@@ -8,7 +8,7 @@
 
 ### 修复
 - 延长逐光捡金等待场景加载的时间 [#322](https://github.com/moesnow/March7thAssistant/issues/322)
-- 延长饰品提取等待开始挑战的时间
+- 优化饰品提取开始挑战的逻辑 [#325](https://github.com/moesnow/March7thAssistant/issues/325)
 
 ## v2.4.0
 
