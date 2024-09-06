@@ -95,6 +95,8 @@ def start_game():
                 if not wait_until(lambda: check_and_click_enter(), 600):
                     raise TimeoutError("查找并点击进入按钮超时")
                 time.sleep(10)
+                # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
+                auto.press_mouse()
             else:
                 starrail.check_resolution_ratio(1920, 1080)
                 if cfg.auto_set_game_path_enable:
