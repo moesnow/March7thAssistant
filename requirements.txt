@@ -17,7 +17,7 @@ onepush
 winotify
 markdown
 cpufeature
-PyQt-Fluent-Widgets==1.5.1
+PyQt-Fluent-Widgets==1.6.3
 pylnk3
 pyperclip
 qrcode
