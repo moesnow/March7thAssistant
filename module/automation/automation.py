@@ -72,7 +72,11 @@ class Automation(metaclass=SingletonMeta):
         :param relative: 是否返回相对位置。
         :return: 匹配位置的顶点坐标和相似度。
         """
-        channels, width, height = template.shape[::-1]
+        try:
+            channels, width, height = template.shape[::-1]
+        except:
+            width, height = template.shape[::-1]
+
         scale_factor = self.screenshot_scale_factor if not relative else 1
         top_left = (int(max_loc[0] / scale_factor) + self.screenshot_pos[0] * (not relative),
                     int(max_loc[1] / scale_factor) + self.screenshot_pos[1] * (not relative))
@@ -165,6 +169,24 @@ class Automation(metaclass=SingletonMeta):
         except Exception as e:
             self.logger.error(f"寻找图片并计数出错：{e}")
             return None
+
+    def find_image_with_multiple_targets(self, target, threshold, scale_range, relative=False):
+        try:
+            template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
+            if template is None:
+                raise ValueError("读取图片失败")
+            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
+            matches = ImageUtils.scale_and_match_template_with_multiple_targets(screenshot, template, threshold, scale_range)
+            if len(matches) == 0:
+                return []
+            new_matches = []
+            for match in matches:
+                top_left, bottom_right = self.calculate_positions(template, match, relative)
+                new_matches.append((top_left, bottom_right))
+            return new_matches
+        except Exception as e:
+            self.logger.error(f"寻找图片出错：{e}")
+            return []
 
     def calculate_text_position(self, box, relative):
         """
@@ -382,6 +404,8 @@ class Automation(metaclass=SingletonMeta):
                     return top_left, bottom_right
             elif find_type in ['image_count']:
                 return self.find_image_and_count(target, threshold, pixel_bgr)
+            elif find_type in ['image_with_multiple_targets']:
+                return self.find_image_with_multiple_targets(target, threshold, scale_range, relative)
             else:
                 raise ValueError("错误的类型")
 

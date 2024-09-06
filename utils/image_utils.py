@@ -46,6 +46,23 @@ class ImageUtils:
         return max_val, max_loc
 
     @staticmethod
+    def scale_and_match_template_with_multiple_targets(screenshot, template, threshold=None, scale=None):
+        """
+        对模板进行缩放并匹配至截图，找出最佳匹配位置。
+        :param screenshot: 截图。
+        :param template: 模板图片。
+        :param threshold: 匹配阈值，小于此值的匹配将被忽略。
+        :param scale: 缩放值。
+        :return: 匹配位置。
+        """
+        if scale is not None:
+            template = cv2.resize(template, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+        result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+        locations = np.where(result >= threshold)
+        matches = ImageUtils.filter_overlapping_matches(locations, template.shape[::-1])
+        return ImageUtils.convert_np_int64_to_int(matches)
+
+    @staticmethod
     def read_template_with_mask(target):
         """
         读取模板图片，并根据需要生成掩码。
@@ -149,3 +166,7 @@ class ImageUtils:
 
         # 返回匹配数量
         return len(matches)
+
+    @staticmethod
+    def convert_np_int64_to_int(matches):
+        return [(int(a), int(b)) for a, b in matches]

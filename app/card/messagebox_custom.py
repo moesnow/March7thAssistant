@@ -251,3 +251,44 @@ class MessageBoxTeam(MessageBox):
 
         self.titleLabelInfo = QLabel("说明：每个队伍中只允许一名角色配置为“秘技 / 开怪”，\n数字代表秘技使用次数，其中-1代表最后一个放秘技并开怪的角色", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+
+class MessageBoxFriends(MessageBox):
+    def __init__(self, title: str, content: dict, template: dict, parent=None):
+        super().__init__(title, "", parent)
+        self.content = content
+
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.yesButton.setText('确认')
+        self.cancelButton.setText('取消')
+
+        self.buttonGroup.setMinimumWidth(400)
+
+        font = QFont()
+        font.setPointSize(12)
+
+        self.template = template
+
+        self.comboBox_list = []
+        for i in range(1, 7):
+
+            charComboBox = ComboBox()
+            charComboBox.setMaximumWidth(150)
+            charComboBox.addItems(self.template.values())
+            charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
+
+            nameLineEdit = LineEdit()
+            nameLineEdit.setMaximumWidth(150)
+            nameLineEdit.setText(self.content[i - 1][1])
+
+            horizontalLayout = QHBoxLayout()
+            horizontalLayout.addWidget(charComboBox)
+            horizontalLayout.addWidget(nameLineEdit)
+            self.textLayout.addLayout(horizontalLayout)
+
+            self.comboBox_list.append((charComboBox, nameLineEdit))
+
+        self.titleLabelInfo = QLabel("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功", parent)
+        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)

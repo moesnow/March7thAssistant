@@ -9,7 +9,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam
+from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from module.config import cfg
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
@@ -131,24 +131,37 @@ class SettingInterface(ScrollArea):
             self.tr('无论何时都要使用支援角色，即使日常实训中没有要求'),
             "borrow_character_enable"
         )
-        self.borrowCharacterFromCard = PushSettingCardEval(
+        self.borrowFriendsCard = PushSettingCardFriends(
             self.tr('修改'),
-            FIF.PEOPLE,
-            self.tr("指定好友的支援角色（填写用户名，模糊匹配模式）"),
-            "borrow_character_from"
+            FIF.FLAG,
+            self.tr("支援列表"),
+            "borrow_friends"
         )
-        self.borrowCharacterInfoCard = PrimaryPushSettingCard(
-            self.tr('打开角色文件夹'),
-            FIF.INFO,
-            self.tr("↓↓支援角色↓↓"),
-            self.tr("角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
+        self.borrowScrollTimesCard = RangeSettingCard1(
+            "borrow_scroll_times",
+            [1, 10],
+            FIF.HISTORY,
+            self.tr("滚动查找次数"),
+            '',
         )
-        self.borrowCharacterCard = PushSettingCardEval(
-            self.tr('修改'),
-            FIF.ARROW_DOWN,
-            self.tr("支援角色优先级（从高到低）"),
-            "borrow_character"
-        )
+        # self.borrowCharacterFromCard = PushSettingCardEval(
+        #     self.tr('修改'),
+        #     FIF.PEOPLE,
+        #     self.tr("指定好友的支援角色（填写用户名，模糊匹配模式）"),
+        #     "borrow_character_from"
+        # )
+        # self.borrowCharacterInfoCard = PrimaryPushSettingCard(
+        #     self.tr('打开角色文件夹'),
+        #     FIF.INFO,
+        #     self.tr("↓↓支援角色↓↓"),
+        #     self.tr("角色对应的英文名字可以在 \"March7thAssistant\\assets\\images\\share\\character\" 中查看")
+        # )
+        # self.borrowCharacterCard = PushSettingCardEval(
+        #     self.tr('修改'),
+        #     FIF.ARROW_DOWN,
+        #     self.tr("支援角色优先级（从高到低）"),
+        #     "borrow_character"
+        # )
 
         self.DailyGroup = SettingCardGroup(self.tr("日常设置"), self.scrollWidget)
         self.dispatchEnableCard = SwitchSettingCard1(
@@ -604,9 +617,11 @@ class SettingInterface(ScrollArea):
 
         self.BorrowGroup.addSettingCard(self.borrowEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
-        self.BorrowGroup.addSettingCard(self.borrowCharacterFromCard)
-        self.BorrowGroup.addSettingCard(self.borrowCharacterInfoCard)
-        self.BorrowGroup.addSettingCard(self.borrowCharacterCard)
+        self.BorrowGroup.addSettingCard(self.borrowFriendsCard)
+        self.BorrowGroup.addSettingCard(self.borrowScrollTimesCard)
+        # self.BorrowGroup.addSettingCard(self.borrowCharacterFromCard)
+        # self.BorrowGroup.addSettingCard(self.borrowCharacterInfoCard)
+        # self.BorrowGroup.addSettingCard(self.borrowCharacterCard)
 
         self.DailyGroup.addSettingCard(self.dispatchEnableCard)
         self.DailyGroup.addSettingCard(self.mailEnableCard)
@@ -716,7 +731,7 @@ class SettingInterface(ScrollArea):
         self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
-        self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
+        # self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 
@@ -766,8 +781,8 @@ class SettingInterface(ScrollArea):
         cfg.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
-    def __openCharacterFolder(self):
-        return lambda: os.startfile(os.path.abspath("./assets/images/share/character"))
+    # def __openCharacterFolder(self):
+    #     return lambda: os.startfile(os.path.abspath("./assets/images/share/character"))
 
     def __openUrl(self, url):
         return lambda: QDesktopServices.openUrl(QUrl(url))

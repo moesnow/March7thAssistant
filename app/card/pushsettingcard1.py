@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
 from qfluentwidgets import SettingCard, FluentIconBase
-from .messagebox_custom import MessageBoxEdit, MessageBoxDate, MessageBoxInstance, MessageBoxNotifyTemplate, MessageBoxTeam
+from .messagebox_custom import MessageBoxEdit, MessageBoxDate, MessageBoxInstance, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends
 from module.config import cfg
 from typing import Union
 import datetime
@@ -136,9 +136,44 @@ class PushSettingCardTeam(PushSettingCard):
         if message_box.exec():
             self.newConfigValue = []
             for comboboxs in message_box.comboBox_list:
-                name = get_key(comboboxs[0].text(), message_box.template)
+                char = get_key(comboboxs[0].text(), message_box.template)
                 tech = get_key(comboboxs[1].text(), message_box.tech_map)
-                self.newConfigValue.append([name, tech])
+                self.newConfigValue.append([char, tech])
+            self.configvalue = self.newConfigValue
+            cfg.set_value(self.configname, self.newConfigValue)
+            self.contentLabel.setText(self.translate_to_chinese(self.newConfigValue))
+
+
+class PushSettingCardFriends(PushSettingCard):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
+        with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
+            self.template = json.load(file)
+            self.template = {'None': '无', **self.template}
+        self.configvalue = cfg.get_value(configname)
+        super().__init__(text, icon, title, configname, self.translate_to_chinese(self.configvalue), parent)
+        self.button.clicked.connect(self.__onclicked)
+
+    def translate_to_chinese(self, configvalue):
+        text = str(configvalue)
+        for key, value in self.template.items():
+            text = text.replace(key, value)
+        return text
+
+    def __onclicked(self):
+        def get_key(val, map):
+            for key, value in map.items():
+                if value == val:
+                    return key
+            return None
+
+        message_box = MessageBoxFriends(self.title, self.configvalue, self.template, self.window())
+        if message_box.exec():
+            self.newConfigValue = []
+            for comboboxs in message_box.comboBox_list:
+                char = get_key(comboboxs[0].text(), message_box.template)
+                # tech = get_key(comboboxs[1].text(), message_box.tech_map)
+                name = comboboxs[1].text()
+                self.newConfigValue.append([char, name])
             self.configvalue = self.newConfigValue
             cfg.set_value(self.configname, self.newConfigValue)
             self.contentLabel.setText(self.translate_to_chinese(self.newConfigValue))

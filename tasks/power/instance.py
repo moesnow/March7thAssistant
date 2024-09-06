@@ -147,10 +147,15 @@ class Instance:
             # 选择角色
             # 待后续更新支持
 
-            if auto.click_element("开始挑战", "text", max_retries=10, need_ocr=True):
+            Character.borrow("ornament")
+
+            if auto.click_element("开始挑战", "text", max_retries=10, crop=(1558.0 / 1920, 939.0 / 1080, 216.0 / 1920, 70.0 / 1080)):
                 time.sleep(4)
                 # 判断点击开始挑战是否成功，可能因缺少角色或背包满导致失败
-                if auto.find_element("开始挑战", "text", max_retries=10, need_ocr=True):
+                if auto.find_element("仍有角色位空缺", "text", max_retries=1, crop=(481.0 / 1920, 361.0 / 1080, 955.0 / 1920, 356.0 / 1080), include=True):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+                    time.sleep(4)
+                if auto.find_element("开始挑战", "text", max_retries=1, crop=(1558.0 / 1920, 939.0 / 1080, 216.0 / 1920, 70.0 / 1080)):
                     Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="无法开始挑战"))
                     return False
                 if auto.find_element("差分宇宙", "text", max_retries=60, crop=(8.0 / 1920, 5.0 / 1080, 157.0 / 1920, 38.0 / 1080), include=True):

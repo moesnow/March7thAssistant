@@ -63,18 +63,20 @@ echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳。用�
 # 支援角色配置
 borrow_enable: true # 是否使用支援角色。true 使用，false 不使用。
 borrow_character_enable: false # 是否强制使用支援角色。true 强制，false 不强制。
-borrow_character_from:
-  - 好友1
-  - 好友2
-  - 好友3 # 指定从哪些好友中使用支援角色。
-borrow_character: # 支援角色优先级列表。
-  - Argenti
-  - Seele
-  - Blade
-  - JingYuan
-  - Kafka
-  - Jingliu
-  - DanHengImbibitorLunae
+borrow_friends:
+  - - March7th
+    - 赵相机
+  - - Qingque
+    - 用牌玩命
+  - - FuXuan
+    - 无情的卜算机器
+  - - None
+    - ""
+  - - None
+    - ""
+  - - None
+    - ""
+borrow_scroll_times: 5 # 支援列表滚动查找次数
 
 # 奖励领取设置
 reward_enable: true # 是否启用领取奖励功能。true 开启，false 关闭。
