@@ -4,12 +4,13 @@
 
 ### 新功能
 - 支持 2.5 版本新增关卡
-- 支援支持指定好友的指定角色且支持饰品提取使用（需重新配置）
-- 支持B服启动后自动点击 “登录”
-- 支持 “翡翠” 、 “椒丘”
-- “任务完成后” 新增 “重启”
+- 支援功能重做（支持指定好友的指定角色且支持饰品提取使用，需重新配置）
+- 支持 “翡翠” 、 “椒丘” 、“飞霄” 、 “貊泽”
+- 支持B服启动后自动点击 “登录” [#321](https://github.com/moesnow/March7thAssistant/discussions/321)
+- “任务完成后” 新增 “重启” 选项
 
 ### 修复
+- 优化 “启动失败” 的报错提示
 - 延长逐光捡金等待场景加载的时间 [#322](https://github.com/moesnow/March7thAssistant/issues/322)
 - 优化饰品提取开始挑战的逻辑 [#325](https://github.com/moesnow/March7thAssistant/issues/325)
 
