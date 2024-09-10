@@ -126,7 +126,7 @@ class MainWindow(MSFluentWindow):
                 )
             else:
                 InfoBar.warning(
-                    title=self.tr('启动失败(╥╯﹏╰╥)'),
+                    title=self.tr('游戏路径配置错误(╥╯﹏╰╥)'),
                     content="",
                     orient=Qt.Horizontal,
                     isClosable=True,

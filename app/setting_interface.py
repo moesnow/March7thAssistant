@@ -464,6 +464,12 @@ class SettingInterface(ScrollArea):
             "",
             texts={'简洁': 'INFO', '详细': 'DEBUG'}
         )
+        self.gamePathCard = PushSettingCard(
+            self.tr('修改'),
+            FIF.GAME,
+            self.tr("游戏路径"),
+            cfg.game_path
+        )
         self.importConfigCard = PushSettingCard(
             self.tr('导入'),
             FIF.ADD_TO,
@@ -482,7 +488,7 @@ class SettingInterface(ScrollArea):
             self.tr('任务完成后'),
             self.tr('其中“退出”指退出游戏，“循环”指根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
             texts={'无': 'None', '退出': 'Exit', '循环': 'Loop',
-                   '关机': 'Shutdown', '休眠': 'Hibernate', '睡眠': 'Sleep', '注销': 'Logoff'}
+                   '关机': 'Shutdown', '睡眠': 'Sleep', '休眠': 'Hibernate', '重启': 'Restart', '注销': 'Logoff'}
         )
         self.playAudioCard = SwitchSettingCard1(
             FIF.ALBUM,
@@ -504,12 +510,6 @@ class SettingInterface(ScrollArea):
             FIF.DATE_TIME,
             self.tr("游戏刷新时间"),
             self.tr("用于循环运行及判断任务状态，默认凌晨四点"),
-        )
-        self.gamePathCard = PushSettingCard(
-            self.tr('修改'),
-            FIF.GAME,
-            self.tr("游戏路径"),
-            cfg.game_path
         )
 
         self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
@@ -674,13 +674,13 @@ class SettingInterface(ScrollArea):
         self.PureFictionGroup.addSettingCard(self.purefictionRunTimeCard)
 
         self.ProgramGroup.addSettingCard(self.logLevelCard)
+        self.ProgramGroup.addSettingCard(self.gamePathCard)
         self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.checkUpdateCard)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
         self.ProgramGroup.addSettingCard(self.refreshHourEnableCard)
-        self.ProgramGroup.addSettingCard(self.gamePathCard)
 
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.NotifyGroup.addSettingCard(self.notifyTemplateCard)
