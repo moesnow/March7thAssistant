@@ -63,10 +63,10 @@ class Instance:
 
         # 传送
         instance_name_crop = (686.0 / 1920, 287.0 / 1080, 980.0 / 1920, 650.0 / 1080)
-        if "拟造花萼（金）" in instance_type:
-            auto.click_element(f"./assets/images/share/calyx/golden/{cfg.calyx_golden_preference}.png", "image")
-            # 等待界面切换
-            time.sleep(1)
+        # if "拟造花萼（金）" in instance_type:
+        #     auto.click_element(f"./assets/images/share/calyx/golden/{cfg.calyx_golden_preference}.png", "image")
+        #     # 等待界面切换
+        #     time.sleep(1)
         auto.click_element("./assets/images/screen/guide/power.png", "image", max_retries=10)
 
         Flag = False

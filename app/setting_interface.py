@@ -53,13 +53,13 @@ class SettingInterface(ScrollArea):
             None,
             texts=['拟造花萼（金）', '拟造花萼（赤）', '凝滞虚影', '侵蚀隧洞', '饰品提取']
         )
-        self.calyxGoldenPreferenceCard = ComboBoxSettingCard2(
-            "calyx_golden_preference",
-            FIF.PIE_SINGLE,
-            self.tr('拟造花萼（金）偏好地区'),
-            '',
-            texts={'雅利洛-VI': 'Jarilo-VI', '仙舟「罗浮」': 'XianzhouLuofu', '匹诺康尼': 'Penacony'}
-        )
+        # self.calyxGoldenPreferenceCard = ComboBoxSettingCard2(
+        #     "calyx_golden_preference",
+        #     FIF.PIE_SINGLE,
+        #     self.tr('拟造花萼（金）偏好地区'),
+        #     '',
+        #     texts={'雅利洛-VI': 'Jarilo-VI', '仙舟「罗浮」': 'XianzhouLuofu', '匹诺康尼': 'Penacony'}
+        # )
         self.instanceNameCard = PushSettingCardInstance(
             self.tr('修改'),
             FIF.PALETTE,
@@ -604,7 +604,7 @@ class SettingInterface(ScrollArea):
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
-        self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
+        # self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.breakDownLevelFourRelicsetEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
