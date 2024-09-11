@@ -213,7 +213,7 @@ class MemoryOfChaos(BaseChallenge):
                 for crop in crop_list:
                     text = auto.get_single_line_text(crop=crop)
                     # 角色无法战斗
-                    if text and text[0] == '0':
+                    if text == '0':
                         log.info("检测到角色无法战斗")
                         auto.press_key("esc")
                         break
