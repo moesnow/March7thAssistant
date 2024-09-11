@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2.5.0
+## v2.5.1
 
 ### 新功能
 - 支持 2.5 版本新增关卡
@@ -11,6 +11,7 @@
 
 ### 修复
 - 优化 “启动失败” 的报错提示
+- 修复拟造花萼（赤）错行 [#328](https://github.com/moesnow/March7thAssistant/issues/328)
 - 延长逐光捡金等待场景加载的时间 [#322](https://github.com/moesnow/March7thAssistant/issues/322)
 - 优化饰品提取开始挑战的逻辑 [#325](https://github.com/moesnow/March7thAssistant/issues/325)
 

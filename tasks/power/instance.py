@@ -70,24 +70,27 @@ class Instance:
         auto.click_element("./assets/images/screen/guide/power.png", "image", max_retries=10)
 
         Flag = False
+        # if "拟造花萼（赤）" in instance_type:
+        #     crimson_images = {
+        #         "毁灭之蕾": "./assets/images/share/calyx/crimson/destruction1.png",
+        #         "存护之蕾": "./assets/images/share/calyx/crimson/preservation1.png",
+        #         "巡猎之蕾": "./assets/images/share/calyx/crimson/hunt1.png",
+        #         "丰饶之蕾": "./assets/images/share/calyx/crimson/abundance1.png",
+        #         "智识之蕾": "./assets/images/share/calyx/crimson/erudition1.png",
+        #         "同谐之蕾": "./assets/images/share/calyx/crimson/harmony1.png",
+        #         "虚无之蕾": "./assets/images/share/calyx/crimson/nihility1.png",
+        #         "毁灭之蕾2": "./assets/images/share/calyx/crimson/destruction2.png",
+        #         "虚无之蕾2": "./assets/images/share/calyx/crimson/nihility2.png",
+        #         "同谐之蕾2": "./assets/images/share/calyx/crimson/harmony2.png",
+        #     }
+        #     # 临时解决方案
+        #     if instance_name in crimson_images:
+        #         def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=crimson_images[instance_name], source_type="image")
+        #     else:
+        #         def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
+
         if "拟造花萼（赤）" in instance_type:
-            crimson_images = {
-                "毁灭之蕾": "./assets/images/share/calyx/crimson/destruction1.png",
-                "存护之蕾": "./assets/images/share/calyx/crimson/preservation1.png",
-                "巡猎之蕾": "./assets/images/share/calyx/crimson/hunt1.png",
-                "丰饶之蕾": "./assets/images/share/calyx/crimson/abundance1.png",
-                "智识之蕾": "./assets/images/share/calyx/crimson/erudition1.png",
-                "同谐之蕾": "./assets/images/share/calyx/crimson/harmony1.png",
-                "虚无之蕾": "./assets/images/share/calyx/crimson/nihility1.png",
-                "毁灭之蕾2": "./assets/images/share/calyx/crimson/destruction2.png",
-                "虚无之蕾2": "./assets/images/share/calyx/crimson/nihility2.png",
-                "同谐之蕾2": "./assets/images/share/calyx/crimson/harmony2.png",
-            }
-            # 临时解决方案
-            if instance_name in crimson_images:
-                def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=crimson_images[instance_name], source_type="image")
-            else:
-                def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
+            def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text", position="top_right")
         else:
             def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
 
