@@ -114,3 +114,4 @@ class StarRailController(GameController):
                 time.sleep(2)
             else:
                 self.log_debug(f"游戏分辨率: {window_width}x{window_height}")
+            self.log_debug(f"桌面分辨率: {screen_width}x{screen_height}")
