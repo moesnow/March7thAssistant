@@ -11,6 +11,7 @@
 
 ### 修复
 - 部分文字 OCR 识别异常
+- 自动登录检测异常 [#336](https://github.com/moesnow/March7thAssistant/issues/336)
 - 支援功能在高分屏下异常 [#329](https://github.com/moesnow/March7thAssistant/issues/329)
 - 修复拟造花萼（赤）错行 [#328](https://github.com/moesnow/March7thAssistant/issues/328)
 - 延长逐光捡金等待场景加载的时间 [#322](https://github.com/moesnow/March7thAssistant/issues/322)
