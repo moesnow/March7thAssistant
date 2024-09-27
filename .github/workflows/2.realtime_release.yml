@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - main
-      - dev
     paths:
       - "**.py"
 
@@ -58,14 +57,14 @@ jobs:
           Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
 
       # 步骤6：创建压缩包
-      - name: Create zip archive
+      - name: Create archive
         run: |
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_${{ github.run_number }}
-          powershell Compress-Archive -Path .\dist\March7thAssistant_${{ github.run_number }}\ -DestinationPath .\dist\March7thAssistant_${{ github.run_number }}.zip -Force
+          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_${{ github.run_number }}.7z .\dist\March7thAssistant_${{ github.run_number }}\
 
       # 步骤7：上传压缩包
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: March7thAssistant_${{ github.run_number }}.zip
-          path: ./dist/March7thAssistant_${{ github.run_number }}.zip
+          name: March7thAssistant_${{ github.run_number }}.7z
+          path: ./dist/March7thAssistant_${{ github.run_number }}.7z
