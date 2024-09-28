@@ -182,9 +182,9 @@ class WarpExport:
 
         host = parsed_url.netloc
         if 'webstatic-sea' in host or 'hkrpg-api-os' in host or 'api-os-takumi' in host or 'hoyoverse.com' in host:
-            apiDomain = 'https://api-os-takumi.mihoyo.com'
+            apiDomain = 'https://public-operation-hkrpg-sg.hoyoverse.com'
         else:
-            apiDomain = 'https://api-takumi.mihoyo.com'
+            apiDomain = 'https://public-operation-hkrpg.mihoyo.com'
 
         # 删除指定的参数
         for param in params_to_remove:
