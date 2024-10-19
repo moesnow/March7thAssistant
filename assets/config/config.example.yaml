@@ -276,6 +276,7 @@ notify_smtp_To: "" # 收件人邮箱，默认为 smtp_user。
 notify_smtp_port: "" # SMTP 服务器端口，默认为 465。
 notify_smtp_ssl: "" # 是否使用 SSL 连接 SMTP 服务器。默认为 True，可设置为 False 关闭。
 notify_smtp_starttls: "" # 是否使用 SSL 连接 SMTP 服务器。默认为 False，可设置为 True 关闭。
+notify_smtp_ssl_unverified: "" # 是否使用不经验证的 SSL 连接。默认为 False，可设置为 True 关闭。除非您使用自签名邮箱,否则不推荐启用。
 
 # 钉钉通知配置
 notify_dingtalk_enable: false # 是否启用钉钉通知。true 开启，false 关闭。
