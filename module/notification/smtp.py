@@ -20,6 +20,8 @@ class SMTPNotifier(Notifier):
         port = self.params.get("port", 465)
         ssl = self.params.get("ssl", True)
         starttls = self.params.get("starttls", False)
+        ssl_unverified = self.params.get("ssl_unverified", False)
+
 
         msg = MIMEMultipart('related')
         body = f'<p>{content}<br>'
@@ -37,11 +39,16 @@ class SMTPNotifier(Notifier):
 
         if starttls:
             smtp = smtplib.SMTP(host, port)
-            smtp.starttls()
+            smtp.starttls(context=sslcontext(ssl_unverified))
         elif ssl:
-            smtp = smtplib.SMTP_SSL(host, port)
+            smtp = smtplib.SMTP_SSL(host, port, context=sslcontext(ssl_unverified))
         else:
             smtp = smtplib.SMTP(host, port)
         smtp.login(user, password)
         smtp.sendmail(From, To, msg.as_string())
         smtp.quit()
+
+def sslcontext(ssl_unverified):
+    if ssl_unverified:
+        return ssl._create_unverified_context()
+    return None
