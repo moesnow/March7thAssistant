@@ -67,6 +67,7 @@ class Config(metaclass=SingletonMeta):
 
     def set_value(self, key, value):
         """设置配置项的值并保存"""
+        self._load_config()
         self.config[key] = value
         self.save_config()
 
