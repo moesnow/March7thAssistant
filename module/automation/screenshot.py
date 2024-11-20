@@ -1,6 +1,6 @@
-from PIL import Image
 import pyautogui
 import win32gui
+from PIL import Image
 
 
 class Screenshot:
@@ -43,7 +43,7 @@ class Screenshot:
                 int(top + height * crop[1]),
                 int(width * crop[2]),
                 int(height * crop[3])
-            ))
+            ), allScreens=True)
 
             real_width, _ = Screenshot.get_window_real_resolution(window)
             if real_width > 1920:
