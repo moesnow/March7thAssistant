@@ -3,6 +3,7 @@ from module.logger import log
 from module.notification.notification import Notification
 # 导入所有通知器类型
 from module.notification.onepush import OnepushNotifier
+from module.notification.serverchan3 import ServerChanNotifier
 from module.notification.winotify import WinotifyNotifier
 from module.notification.telegram import TelegramNotifier
 from module.notification.onebot import OnebotNotifier
@@ -23,7 +24,8 @@ class NotifierFactory:
         "gocqhttp": GocqhttpNotifier,
         "wechatworkapp": WeChatworkappNotifier,
         "custom": CustomNotifier,
-        "lark": LarkNotifier
+        "lark": LarkNotifier,
+        "serverchan3": ServerChanNotifier,
     }
 
     @staticmethod

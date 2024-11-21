@@ -253,6 +253,12 @@ notify_serverchanturbo_sctkey: "" # Server酱·Turbo 版的 SendKey。
 notify_serverchanturbo_channel: "" # 可选参数
 notify_serverchanturbo_openid: "" # 可选参数
 
+# Server酱·3版通知配置
+# Server酱的APP推送
+# https://sc3.ft07.com/
+notify_serverchan3_enable: false # 是否启用 Server酱·3 版通知。true 开启，false 关闭。
+notify_serverchan3_sendkey: "" # Server酱·3 版的 SendKey。
+
 # Bark 通知配置
 # 推荐 iOS 用户使用，直接在 App Store 下载安装
 notify_bark_enable: false # 是否启用 Bark 通知。true 开启，false 关闭。
