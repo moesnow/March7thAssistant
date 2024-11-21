@@ -19,6 +19,7 @@ class WarpInterface(ScrollArea):
         self.titleLabel = QLabel(self.tr("抽卡记录"), self)
 
         self.updateBtn = PrimaryPushButton(FIF.SYNC, "更新数据", self)
+        self.updateFullBtn = PushButton(FIF.SYNC, "更新完整数据", self)
         self.importBtn = PushButton(FIF.PENCIL_INK, "导入数据", self)
         self.exportBtn = PushButton(FIF.SAVE_COPY, "导出数据", self)
         self.copyLinkBtn = PushButton(FIF.SHARE, "复制链接", self)
@@ -39,11 +40,12 @@ class WarpInterface(ScrollArea):
     def __initWidget(self):
         self.titleLabel.move(36, 30)
         self.updateBtn.move(35, 80)
-        self.importBtn.move(150, 80)
-        self.exportBtn.move(265, 80)
-        self.copyLinkBtn.move(380, 80)
+        self.updateFullBtn.move(150, 80)
+        self.importBtn.move(293, 80)
+        self.exportBtn.move(408, 80)
+        self.copyLinkBtn.move(523, 80)
         self.copyLinkBtn.setEnabled(False)
-        self.clearBtn.move(495, 80)
+        self.clearBtn.move(638, 80)
 
         self.view.setObjectName('view')
         self.setViewportMargins(0, 120, 0, 20)
@@ -68,6 +70,7 @@ class WarpInterface(ScrollArea):
 
     def __connectSignalToSlot(self):
         self.updateBtn.clicked.connect(self.__onUpdateBtnClicked)
+        self.updateFullBtn.clicked.connect(self.__onUpdateFullBtnClicked)
         self.importBtn.clicked.connect(self.__onImportBtnClicked)
         self.exportBtn.clicked.connect(self.__onExportBtnClicked)
         self.copyLinkBtn.clicked.connect(self.__onCopyLinkBtnClicked)
@@ -75,6 +78,9 @@ class WarpInterface(ScrollArea):
 
     def __onUpdateBtnClicked(self):
         warpExport(self)
+
+    def __onUpdateFullBtnClicked(self):
+        warpExport(self, "full")
 
     def __onImportBtnClicked(self):
         try:
@@ -205,7 +211,9 @@ class WarpInterface(ScrollArea):
             else:
                 content = warp.data_to_html("light")
             self.clearBtn.setEnabled(True)
+            self.exportBtn.setEnabled(True)
         except Exception as e:
             content = "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n\n你也可以从其他支持 SRGF 数据格式的应用导入数据，例如 StarRail Warp Export 或 Starward 等。\n\n复制链接功能可用于小程序或其他软件。"
             self.clearBtn.setEnabled(False)
+            self.exportBtn.setEnabled(False)
         self.contentLabel.setText(content)
