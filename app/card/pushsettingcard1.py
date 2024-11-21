@@ -84,7 +84,7 @@ class PushSettingCardKey(PushSettingCard):
 class PushSettingCardInstance(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, configtemplate, parent=None):
         self.configtemplate = configtemplate
-        self.configvalue = cfg.get_value(configname)
+        self.configvalue = cfg.get_value(configname).copy()
         super().__init__(text, icon, title, configname, str(self.configvalue), parent)
         self.button.clicked.connect(self.__onclicked)
 
@@ -93,13 +93,13 @@ class PushSettingCardInstance(PushSettingCard):
         if message_box.exec():
             for type, combobox in message_box.comboBox_dict.items():
                 self.configvalue[type] = combobox.text().split('（')[0]
-            cfg.set_value(self.configname, self.configvalue)
+            cfg.set_value(self.configname, self.configvalue.copy())
             self.contentLabel.setText(str(self.configvalue))
 
 
 class PushSettingCardNotifyTemplate(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        self.configvalue = cfg.get_value(configname)
+        self.configvalue = cfg.get_value(configname).copy()
         super().__init__(text, icon, title, configname, "", parent)
         self.button.clicked.connect(self.__onclicked)
 
@@ -108,7 +108,7 @@ class PushSettingCardNotifyTemplate(PushSettingCard):
         if message_box.exec():
             for id, lineedit in message_box.lineEdit_dict.items():
                 self.configvalue[id] = lineedit.text().replace(r"\n", "\n")
-            cfg.set_value(self.configname, self.configvalue)
+            cfg.set_value(self.configname, self.configvalue.copy())
 
 
 class PushSettingCardTeam(PushSettingCard):
