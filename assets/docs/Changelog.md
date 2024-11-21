@@ -1,6 +1,19 @@
 # 更新日志
 
-## v2.5.3
+## v2.6.0
+
+### 新功能
+- 支持 2.6 版本新增关卡
+- “副本名称” 配置项支持手动输入
+- “抽卡记录” 支持 “更新完整数据”（用于修复错误的抽卡数据）
+- 支持 “Server酱3” 推送方式 [#377](https://github.com/moesnow/March7thAssistant/pull/377)
+
+### 修复
+- 更换抽卡记录 API
+- 手动修改配置文件会被图形界面覆盖 [#341](https://github.com/moesnow/March7thAssistant/issues/341) [#379](https://github.com/moesnow/March7thAssistant/issues/379)
+- 游戏窗口位于多显示器副屏时截图内容全黑 [#378](https://github.com/moesnow/March7thAssistant/pull/378)
+
+## v2.5.4
 
 ### 新功能
 - 支持 2.5 版本新增关卡
