@@ -1,5 +1,6 @@
 import sys
 import time
+import copy
 from ruamel.yaml import YAML
 from utils.singleton import SingletonMeta
 
@@ -62,13 +63,20 @@ class Config(metaclass=SingletonMeta):
             self.yaml.dump(self.config, file)
 
     def get_value(self, key, default=None):
-        """获取配置项的值"""
-        return self.config.get(key, default)
+        """获取配置项的值，如果值是可变对象，则返回其拷贝"""
+        value = self.config.get(key, default)
+        # 如果是可变对象（如列表、字典等），返回拷贝
+        if isinstance(value, (list, dict, set)):
+            return copy.deepcopy(value)  # 使用深拷贝确保嵌套对象安全
+        return value
 
     def set_value(self, key, value):
         """设置配置项的值并保存"""
         self._load_config()
-        self.config[key] = value
+        if isinstance(value, (list, dict, set)):
+            self.config[key] = copy.deepcopy(value)
+        else:
+            self.config[key] = value
         self.save_config()
 
     def save_timestamp(self, key):
@@ -78,5 +86,8 @@ class Config(metaclass=SingletonMeta):
     def __getattr__(self, attr):
         """允许通过属性访问配置项的值"""
         if attr in self.config:
-            return self.config[attr]
+            value = self.config[attr]
+            if isinstance(value, (list, dict, set)):
+                return copy.deepcopy(value)
+            return value
         raise AttributeError(f"'{type(self).__name__}' 对象没有属性 '{attr}'")
