@@ -12,14 +12,17 @@ import json
 
 class Instance:
     @staticmethod
-    def run(instance_type, instance_name, power_need, runs):
+    def run(instance_type, instance_name, power_need, runs, from_failure = False, runs_completed = 0):
         if not Instance.validate_instance(instance_type, instance_name):
             return False
-
-        log.hr(f"开始刷{instance_type} - {instance_name}，总计{runs}次", 2)
-
-        if cfg.instance_team_enable and "饰品提取" not in instance_type:
-            Team.change_to(cfg.instance_team_number)
+        
+        # 若是任务失败后的重新运行, 则改变运行逻辑
+        if from_failure:
+            log.hr(f"复活后重新进入副本{instance_type} - {instance_name}，剩余{runs-runs_completed}次", 2)
+        else:
+            log.hr(f"开始刷{instance_type} - {instance_name}，总计{runs}次", 2)
+            if cfg.instance_team_enable and "饰品提取" not in instance_type:
+                Team.change_to(cfg.instance_team_number)
 
         if not Instance.prepare_instance(instance_type, instance_name):
             return False
@@ -28,16 +31,25 @@ class Instance:
             return False
 
         try:
-            for i in range(runs - 1):
-                Instance.wait_fight(i + 1)
-                Instance.start_instance_again(instance_type)
-            Instance.wait_fight(runs)
+            for i in range(runs_completed, runs):
+                fight_result = Instance.wait_fight(i + 1)
+                
+                # 如果战斗失败则重新运行, 并记录成功运行次数
+                if not fight_result:
+                    auto.click_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9, max_retries=10)
+                    Instance.run(instance_type, instance_name, power_need, runs, from_failure = True, runs_completed = i)
+                    break
+                
+                if i < runs-1:
+                    Instance.start_instance_again(instance_type)
         except RuntimeError:
             return False
-
-        Instance.complete_run(instance_type)
-
-        log.info("副本任务完成")
+        
+        # 若是任务失败后的重新运行, 则不再重复这些逻辑
+        if not from_failure:
+            Instance.complete_run(instance_type)
+            log.info("副本任务完成")
+        
         return True
 
     @staticmethod
@@ -226,6 +238,10 @@ class Instance:
                 log.info("战斗完成")
                 log.info(f"第{num}次副本完成")
                 return True
+            elif auto.find_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9):
+                log.info("战斗失败")
+                log.info(f"重新开始第{num}次副本")
+                return False
             elif cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 log.info("尝试开启自动战斗")
                 auto.press_key("v")
