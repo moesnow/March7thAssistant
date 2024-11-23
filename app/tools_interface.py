@@ -1,7 +1,9 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, MessageBox
+from .card.messagebox_custom import MessageBoxEditMultiple
+from .card.pushsettingcard1 import PushSettingCardCode
 from .common.style_sheet import StyleSheet
 from utils.registry.star_rail_setting import get_game_fps, set_game_fps
 import tasks.tool as tool
@@ -35,6 +37,12 @@ class ToolsInterface(ScrollArea):
             self.tr("解锁帧率"),
             self.tr("通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（未测试国际服）")
         )
+        self.redemptionCodeCard = PushSettingCardCode(
+            self.tr('执行'),
+            FIF.SPEED_HIGH,
+            self.tr("兑换码"),
+            "redemption_code"
+        )
 
         self.__initWidget()
 
@@ -58,6 +66,7 @@ class ToolsInterface(ScrollArea):
         self.ToolsGroup.addSettingCard(self.automaticPlotCard)
         self.ToolsGroup.addSettingCard(self.gameScreenshotCard)
         self.ToolsGroup.addSettingCard(self.unlockfpsCard)
+        self.ToolsGroup.addSettingCard(self.redemptionCodeCard)
 
         self.ToolsGroup.titleLabel.setHidden(True)
 

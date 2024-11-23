@@ -2,11 +2,13 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
 from qfluentwidgets import SettingCard, FluentIconBase
-from .messagebox_custom import MessageBoxEdit, MessageBoxDate, MessageBoxInstance, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends
+from .messagebox_custom import MessageBoxEdit, MessageBoxEditMultiple, MessageBoxDate, MessageBoxInstance, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends
+from tasks.base.tasks import start_task
 from module.config import cfg
 from typing import Union
 import datetime
 import json
+import re
 
 
 class PushSettingCard(SettingCard):
@@ -32,6 +34,24 @@ class PushSettingCardStr(PushSettingCard):
         if message_box.exec():
             cfg.set_value(self.configname, message_box.getText())
             self.contentLabel.setText(message_box.getText())
+
+
+class PushSettingCardCode(PushSettingCard):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
+        self.configvalue = '\n'.join(cfg.get_value(configname))
+        super().__init__(text, icon, title, configname, "批量使用兑换码，每行一个，自动过滤空格等无效字符", parent)
+        self.button.clicked.connect(self.__onclicked)
+
+    def __onclicked(self):
+        message_box = MessageBoxEditMultiple(self.title, self.configvalue, self.window())
+        if message_box.exec():
+            text = message_box.getText()
+            code = [line.strip() for line in [''.join(re.findall(r'[A-Za-z0-9]', line)) for line in text.split('\n')] if line.strip()]
+            # code = [''.join(re.findall(r'[A-Za-z0-9]', line.strip())) for line in text.split('\n') if line.strip()]
+            cfg.set_value(self.configname, code)
+            self.configvalue = '\n'.join(code)
+            if code != []:
+                start_task("redemption")
 
 
 class PushSettingCardEval(PushSettingCard):

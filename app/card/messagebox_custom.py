@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtWidgets import QLabel, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
-from qfluentwidgets import MessageBox, LineEdit, ComboBox, DateTimeEdit, BodyLabel, FluentStyleSheet
+from qfluentwidgets import MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit, BodyLabel, FluentStyleSheet, TextEdit
 from typing import Optional
 import datetime
 import json
@@ -102,6 +102,27 @@ class MessageBoxEdit(MessageBox):
         return self.lineEdit.text()
 
 
+class MessageBoxEditMultiple(MessageBox):
+    def __init__(self, title: str, content: str, parent=None):
+        super().__init__(title, content, parent)
+
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.yesButton.setText('确认')
+        self.cancelButton.setText('取消')
+
+        self.textEdit = TextEdit(self)
+        self.textEdit.setFixedHeight(250)
+        self.textEdit.setText(self.content)
+        self.textLayout.addWidget(self.textEdit, 0, Qt.AlignTop)
+
+        self.buttonGroup.setMinimumWidth(480)
+
+    def getText(self):
+        return self.textEdit.toPlainText()
+
+
 class MessageBoxDate(MessageBox):
     def __init__(self, title: str, content: datetime, parent=None):
         super().__init__(title, "", parent)
@@ -148,7 +169,8 @@ class MessageBoxInstance(MessageBox):
             titleLabel.setFont(font)
             self.textLayout.addWidget(titleLabel, 0, Qt.AlignTop)
 
-            comboBox = ComboBox()
+            # comboBox = ComboBox()
+            comboBox = EditableComboBox()
 
             has_default = False
             for name, info in names.items():
@@ -163,7 +185,7 @@ class MessageBoxInstance(MessageBox):
             self.textLayout.addWidget(comboBox, 0, Qt.AlignTop)
             self.comboBox_dict[type] = comboBox
 
-        self.titleLabelInfo = QLabel("说明：清体力是根据选择的副本类型来判断的,\n此处设置的副本名称也会用于完成活动或每日实训对应的任务,\n如果即使有对应的任务,你也不希望完成,可以将对应的副本名称改为“无”", parent)
+        self.titleLabelInfo = QLabel("说明：未更新副本支持手动输入名称，清体力是根据选择的副本类型来判断的,\n此处设置的副本名称也会用于完成活动或每日实训对应的任务,\n如果即使有对应的任务,你也不希望完成,可以将对应的副本名称改为“无”", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
 

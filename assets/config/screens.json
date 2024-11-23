@@ -91,6 +91,14 @@
                 ]
             },
             {
+                "target_screen": "redemption",
+                "actions_list": [
+                    "auto.click_element('./assets/images/share/menu/more.png', 'image', 0.9)",
+                    "time.sleep(2)",
+                    "auto.click_element('兑换码', 'text', None, 2, crop=(1261.0 / 1920, 1.0 / 1080, 552.0 / 1920, 346.0 / 1080))"
+                ]
+            },
+            {
                 "target_screen": "camera",
                 "actions_list": [
                     "auto.click_element('./assets/images/share/menu/camera.png', 'image', 0.8, crop=(0.95, 0.1, 0.05, 0.6))"
@@ -461,6 +469,19 @@
         "name": "漫游签证",
         "id": "visa",
         "image_path": "./assets/images/screen/visa.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "兑换码",
+        "id": "redemption",
+        "image_path": "./assets/images/screen/redemption.png",
         "actions": [
             {
                 "target_screen": "menu",
