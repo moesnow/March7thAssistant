@@ -12,6 +12,7 @@ from app.tools.account_manager import accounts, reload_all_account_from_files, d
     save_account_name, import_account, save_acc_and_pwd
 from module.logger import log
 
+
 class AccountsCard(QFrame):
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, texts=None, parent=None):
@@ -22,7 +23,7 @@ class AccountsCard(QFrame):
         self.widget = ListWidget()
         self.wLayout = QGridLayout()
         self.wLayout.addWidget(self.widget)
-        self.widget.setStyleSheet("QListWidget{border: 1px solid #d9d9d9;} QListWidget::item{height: 30px;} QListWidget::item:selected{background-color: #f0f0f0;} QListWidget::item:hover{background-color: #f0f0f0;}")
+        # self.widget.setStyleSheet("QListWidget{border: 1px solid #d9d9d9;} QListWidget::item{height: 30px;} QListWidget::item:selected{background-color: #f0f0f0;} QListWidget::item:hover{background-color: #f0f0f0;}")
         #
         self.buttons = QVBoxLayout()
         self.buttons.setContentsMargins(10, 3, 10, 3)
@@ -39,6 +40,7 @@ class AccountsCard(QFrame):
         self.buttons.addWidget(self.autologinAccountButton)
         self.buttons.addWidget(self.refreshAccountButton)
         _self = self
+
         def load_accounts():
             _self.widget.clear()
             for account in accounts:
@@ -46,18 +48,21 @@ class AccountsCard(QFrame):
                 item.setData(Qt.UserRole, account.account_id)
                 _self.widget.addItem(item)
             _self.widget.clearSelection()
-        try: 
+        try:
             load_accounts()
         except Exception as e:
             log.error(f"load_accounts: {e}")
+
         def refreshAccountButtonAction(self):
             reload_all_account_from_files()
             load_accounts()
             QMessageBox.information(None, "刷新", "账户列表刷新成功")
+
         def addAccountButtonAction(self):
-             dump_current_account()
-             load_accounts()
-             QMessageBox.information(None, "导出", "账户导出成功")
+            dump_current_account()
+            load_accounts()
+            QMessageBox.information(None, "导出", "账户导出成功")
+
         def deleteAccountButtonAction(self):
             items = _self.widget.selectedItems()
             if len(items) == 0:
@@ -69,6 +74,7 @@ class AccountsCard(QFrame):
                 account_id = item.data(Qt.UserRole)
                 delete_account(account_id)
             load_accounts()
+
         def renameAccountButtonAction(self):
             items = _self.widget.selectedItems()
             if len(items) == 0:
@@ -87,6 +93,7 @@ class AccountsCard(QFrame):
                         return
                     save_account_name(account_id, account_name)
                     load_accounts()
+
         def autologinAccountButtonAction(self):
             items = _self.widget.selectedItems()
             if len(items) == 0:
