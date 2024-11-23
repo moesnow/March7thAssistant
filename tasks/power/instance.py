@@ -9,7 +9,6 @@ from .relicset import Relicset
 import time
 import json
 
-
 class Instance:
     @staticmethod
     def run(instance_type, instance_name, power_need, runs, from_failure = False, runs_completed = 0):
@@ -37,6 +36,7 @@ class Instance:
                 # 如果战斗失败则重新运行, 并记录成功运行次数
                 if not fight_result:
                     auto.click_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9, max_retries=10)
+                    time.sleep(2)
                     Instance.run(instance_type, instance_name, power_need, runs, from_failure = True, runs_completed = i)
                     break
                 
@@ -62,6 +62,8 @@ class Instance:
     @staticmethod
     def prepare_instance(instance_type, instance_name):
         screen.change_to('guide3')
+        time.sleep(1)
+        
         instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
 
         if not auto.click_element(instance_type, "text", crop=instance_type_crop):
@@ -143,18 +145,6 @@ class Instance:
 
     @staticmethod
     def start_instance(instance_type, power_need):
-        if "拟造花萼" in instance_type:
-            count = power_need // 10 - 1
-            if not 0 <= count <= 5:
-                Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="拟造花萼次数错误"))
-                return False
-            result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10,
-                                       crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
-            if result:
-                for i in range(count):
-                    auto.click_element_with_pos(result)
-                    time.sleep(0.5)
-            # time.sleep(1)
 
         if "饰品提取" in instance_type:
             time.sleep(1)
@@ -240,7 +230,86 @@ class Instance:
                 return True
             elif auto.find_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9):
                 log.info("战斗失败")
-                log.info(f"重新开始第{num}次副本")
+                log.info(f"复活并重新开始第{num}次副本")
+                return False
+            elif cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+                log.info("尝试开启自动战斗")
+                auto.press_key("v")
+
+            time.sleep(2)
+
+        log.error("战斗超时")
+        raise RuntimeError("战斗超时")
+
+class CalyxInstance(Instance):
+    def run(instance_type, instance_name, power_need, runs):
+        if not CalyxInstance.validate_instance(instance_type, instance_name):
+            return False
+        
+        log.hr(f"开始刷{instance_type} - {instance_name}，总计{runs}次，每次包含{power_need//10}波次", 2)
+        
+        if cfg.instance_team_enable:
+            Team.change_to(cfg.instance_team_number)
+
+        if not CalyxInstance.prepare_instance(instance_type, instance_name):
+            return False
+        
+        if not CalyxInstance.start_instance(power_need):
+            return False
+
+        try:
+            for i in range(runs):
+                fight_result = CalyxInstance.wait_fight(i + 1)
+                
+                # 如果战斗失败则重新运行, 并记录成功运行次数
+                if not fight_result:
+                    auto.click_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9, max_retries=10)
+                    return "Failed"
+                
+                if i < runs-1:
+                    CalyxInstance.start_instance_again(instance_type)
+            
+        except RuntimeError:
+            return False
+        
+        CalyxInstance.complete_run(instance_type)
+        log.info("副本任务完成")
+        
+        return True
+    
+    def start_instance(power_need):
+        count = power_need // 10 - 1
+        if not 0 <= count <= 5:
+            Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="拟造花萼次数错误"))
+            return False
+        result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10,
+                                    crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
+        if result:
+            for i in range(count):
+                auto.click_element_with_pos(result)
+                time.sleep(0.5)
+        # time.sleep(1)
+        
+        if auto.click_element("挑战", "text", max_retries=10, need_ocr=True):
+            Character.borrow()
+            return auto.click_element("开始挑战", "text", max_retries=10, crop=(1518 / 1920, 960 / 1080, 334 / 1920, 61 / 1080))
+        return False
+
+    
+    @staticmethod
+    def wait_fight(num, timeout=1800):
+        log.info("进入战斗")
+        time.sleep(5)
+
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):
+                log.info("战斗完成")
+                log.info(f"第{num}次副本完成")
+                return True
+            elif auto.find_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9):
+                log.info("战斗失败")
+                log.info(f"获取剩余体力并重新计算轮次")
                 return False
             elif cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 log.info("尝试开启自动战斗")
