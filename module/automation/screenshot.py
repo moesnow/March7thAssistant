@@ -1,6 +1,6 @@
 import pyautogui
 import win32gui
-from PIL import Image
+from desktopmagic.screengrab_win32 import getDisplayRects
 
 
 class Screenshot:
@@ -33,14 +33,23 @@ class Screenshot:
         return False
 
     @staticmethod
+    def get_main_screen_location():
+        rects = getDisplayRects()
+        min_x = min([rect[0] for rect in rects])
+        min_y = min([rect[1] for rect in rects])
+        return -min_x, -min_y
+    
+    @staticmethod
     def take_screenshot(title, crop=(0, 0, 1, 1)):
         window = Screenshot.get_window(title)
         if window:
             left, top, width, height = Screenshot.get_window_region(window)
 
+            offset_x, offset_y = Screenshot.get_main_screen_location()
+            
             screenshot = pyautogui.screenshot(region=(
-                int(left + width * crop[0]),
-                int(top + height * crop[1]),
+                int(left + width * crop[0] + offset_x),
+                int(top + height * crop[1] + offset_y),
                 int(width * crop[2]),
                 int(height * crop[3])
             ), allScreens=True)
