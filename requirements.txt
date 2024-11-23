@@ -24,3 +24,4 @@ qrcode
 pysocks
 pypac
 requests_toolbelt
+desktopmagic
