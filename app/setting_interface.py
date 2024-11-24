@@ -10,6 +10,7 @@ from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCard
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
+from .card.timepickersettingcard1 import TimePickerSettingCard1
 from module.config import cfg
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
@@ -486,9 +487,21 @@ class SettingInterface(ScrollArea):
             "after_finish",
             FIF.POWER_BUTTON,
             self.tr('任务完成后'),
-            self.tr('其中“退出”指退出游戏，“循环”指根据开拓力7×24小时无人值守循环运行程序（仅限完整运行生效）'),
+            self.tr('其中“退出”指退出游戏，“循环”指7×24小时无人值守循环运行程序（仅限完整运行生效）'),
             texts={'无': 'None', '退出': 'Exit', '循环': 'Loop',
                    '关机': 'Shutdown', '睡眠': 'Sleep', '休眠': 'Hibernate', '重启': 'Restart', '注销': 'Logoff'}
+        )
+        self.loopModeCard = ComboBoxSettingCard2(
+            "loop_mode",
+            FIF.COMMAND_PROMPT,
+            self.tr('循环模式'),
+            '',
+            texts={'根据开拓力': 'power', '定时任务': 'scheduled'}
+        )
+        self.scheduledCard = TimePickerSettingCard1(
+            "scheduled_time",
+            FIF.DATE_TIME,
+            "定时任务时间",
         )
         self.playAudioCard = SwitchSettingCard1(
             FIF.ALBUM,
@@ -678,6 +691,8 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.checkUpdateCard)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
+        self.ProgramGroup.addSettingCard(self.loopModeCard)
+        self.ProgramGroup.addSettingCard(self.scheduledCard)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
         self.ProgramGroup.addSettingCard(self.refreshHourEnableCard)

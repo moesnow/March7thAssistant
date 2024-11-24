@@ -2,7 +2,6 @@ import os
 import sys
 import time
 import psutil
-import random
 
 
 from app.tools.account_manager import load_acc_and_pwd
@@ -159,26 +158,34 @@ def after_finish_is_loop():
         # 距离体力到达配置文件指定的上限剩余秒数
         wait_time_power_limit = (cfg.power_limit - current_power) * 6 * 60
         # 距离第二天凌晨4点剩余秒数，+30避免显示3点59分不美观，#7
-        wait_time_next_day = Date.get_time_next_x_am(cfg.refresh_hour) + random.randint(30, 600)
+        wait_time_next_day = Date.get_time_next_x_am(cfg.refresh_hour) + 30
         # 取最小值
         wait_time = min(wait_time_power_limit, wait_time_next_day)
         return wait_time
 
-    current_power = Power.get()
-    if current_power >= cfg.power_limit:
-        log.info(f"🟣开拓力 >= {cfg.power_limit}")
-        log.info("即将再次运行")
-        log.hr("完成", 2)
+    if cfg.loop_mode == "power":
+        current_power = Power.get()
+        if current_power >= cfg.power_limit:
+            log.info(f"🟣开拓力 >= {cfg.power_limit}")
+            log.info("即将再次运行")
+            log.hr("完成", 2)
+            return
+        else:
+            starrail.stop_game()
+            wait_time = get_wait_time(current_power)
+            future_time = Date.calculate_future_time(wait_time)
     else:
         starrail.stop_game()
-        wait_time = get_wait_time(current_power)
-        future_time = Date.calculate_future_time(wait_time)
-        log.info(cfg.notify_template['ContinueTime'].format(time=future_time))
-        notif.notify(cfg.notify_template['ContinueTime'].format(time=future_time))
-        log.hr("完成", 2)
-        # 等待状态退出OCR避免内存占用
-        ocr.exit_ocr()
-        time.sleep(wait_time)
+        scheduled_time = cfg.scheduled_time
+        wait_time = Date.time_to_seconds(scheduled_time)
+        future_time = Date.calculate_future_time(scheduled_time)
+
+    log.info(cfg.notify_template['ContinueTime'].format(time=future_time))
+    notif.notify(cfg.notify_template['ContinueTime'].format(time=future_time))
+    log.hr("完成", 2)
+    # 等待状态退出OCR避免内存占用
+    ocr.exit_ocr()
+    time.sleep(wait_time)
 
 
 def notify_after_finish_not_loop():

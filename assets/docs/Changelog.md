@@ -3,17 +3,18 @@
 ## v2.6.1
 
 ### 新功能
-- 支持 2.6 版本新增关卡
+- 支持 2.6 版本新增关卡和角色（乱破）
 - “副本名称” 配置项支持手动输入
+- 阵亡导致挑战失败后支持自动重试 [#385](https://github.com/moesnow/March7thAssistant/pull/385)
 - 支持自动批量使用兑换码（工具箱）
 - “抽卡记录” 支持 “更新完整数据”（用于修复错误的抽卡数据）
+- 循环模式支持 “根据开拓力”（原有模式） 和 “定时任务”（指定时间）
 - 支持 “Server酱3” 推送方式 [#377](https://github.com/moesnow/March7thAssistant/pull/377)
-- 支持 “乱破”
 
 ### 修复
 - 更换抽卡记录 API
 - 手动修改配置文件会被图形界面覆盖 [#341](https://github.com/moesnow/March7thAssistant/issues/341) [#379](https://github.com/moesnow/March7thAssistant/issues/379)
-- 游戏窗口位于多显示器副屏时截图内容全黑 [#378](https://github.com/moesnow/March7thAssistant/pull/378)
+- 游戏窗口位于多显示器副屏时截图内容全黑或坐标偏移 [#378](https://github.com/moesnow/March7thAssistant/pull/378) [#384](https://github.com/moesnow/March7thAssistant/pull/384)
 
 ## v2.5.4
 

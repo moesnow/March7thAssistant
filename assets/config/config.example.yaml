@@ -203,6 +203,12 @@ auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。tru
 # 自动配置游戏路径
 auto_set_game_path_enable: true # 是否启用自动配置游戏路径。true 开启，false 关闭。
 
+# 循环模式
+loop_mode: power # 可选值："power"（根据开拓力）, "scheduled"（定时任务）
+
+# 指定运行时间
+scheduled_time: 4:00
+
 # 游戏刷新时间设置
 refresh_hour: 4 # 设置游戏每日刷新的时间（24小时制）。
 
