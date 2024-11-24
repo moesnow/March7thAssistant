@@ -28,3 +28,5 @@ class CheckInActivity(ActivityTemplate):
             log.hr(f"检测到{self.name}奖励", 2)
             self._collect_rewards()
             log.info(f"领取{self.name}奖励完成")
+
+        return True

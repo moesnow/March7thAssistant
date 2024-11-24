@@ -18,3 +18,5 @@ class RealmOfTheStrange(DoubleActivity):
         full_runs = power // instance_power
         if full_runs:
             Instance.run(instance_type, instance_name, instance_power, full_runs)
+
+        return True

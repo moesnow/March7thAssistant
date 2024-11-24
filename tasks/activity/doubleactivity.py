@@ -20,7 +20,7 @@ class DoubleActivity(ActivityTemplate):
     def run(self):
         reward_count = self._get_reward_count()
         if reward_count == 0:
-            return
+            return True
 
         log.info(f"{self.name}剩余次数：{reward_count}")
-        self._run_instances(reward_count)
+        return self._run_instances(reward_count)

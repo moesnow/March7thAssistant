@@ -16,7 +16,7 @@ class ActivityTemplate(ABC):
             return
 
         self.prepare()
-        self.run()
+        return self.run()
 
     def prepare(self):
         screen.change_to('activity')
