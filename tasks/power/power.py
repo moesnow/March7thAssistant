@@ -2,7 +2,7 @@ from module.screen import screen
 from module.automation import auto
 from module.logger import log
 from module.config import cfg
-from tasks.power.instance import Instance
+from tasks.power.instance import Instance, CalyxInstance
 from tasks.weekly.universe import Universe
 import time
 
@@ -24,7 +24,7 @@ class Power:
         if "饰品提取" in instance_type:
             Power.process_ornament(instance_type, instance_name, power)
         elif "拟造花萼" in instance_type:
-            Power.process_calyx(instance_type, instance_name, power)
+            Power.process_calyx(instance_type, instance_name)
         else:
             Power.process_standard(instance_type, instance_name, power)
 
@@ -79,19 +79,28 @@ class Power:
             Instance.run(instance_type, instance_name, 40, immersifier_count + full_runs)
 
     @staticmethod
-    def process_calyx(instance_type, instance_name, power):
-        instance_power_max = 60
+    def process_calyx(instance_type, instance_name):
         instance_power_min = 10
-
-        full_runs = power // instance_power_max
-        if full_runs:
-            Instance.run(instance_type, instance_name, instance_power_max, full_runs)
-
-        partial_run_power = power % instance_power_max
-        if partial_run_power >= instance_power_min:
-            Instance.run(instance_type, instance_name, partial_run_power, 1)
-        elif full_runs == 0:
-            log.info(f"🟣开拓力 < {instance_power_max}")
+        instance_power_max = 60
+        while True:
+            power = Power.get()
+            
+            if power<instance_power_min:
+                log.info(f"🟣开拓力 < {instance_power_min}")
+                break
+                
+            full_runs = power//instance_power_max
+            if full_runs>=1:
+                result = CalyxInstance.run(instance_type, instance_name, instance_power_max, full_runs)
+                if result == "Failed":
+                    continue
+                
+            remain_runs = (power%instance_power_max)//instance_power_min
+            if remain_runs>=1:
+                result = CalyxInstance.run(instance_type, instance_name, remain_runs*instance_power_min, 1)
+                if result == "Failed":
+                    continue
+            break
 
     @staticmethod
     def process_standard(instance_type, instance_name, power):
@@ -120,6 +129,8 @@ class Power:
         if power < power_need * runs:
             log.info(f"🟣开拓力 < {power_need}*{runs}")
             return False
+        elif "拟造花萼" in instance_type:
+            return CalyxInstance.run(instance_type, instance_name, power_need * runs)
         else:
             return Instance.run(instance_type, instance_name, power_need, runs)
 
