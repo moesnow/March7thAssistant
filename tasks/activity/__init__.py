@@ -45,7 +45,11 @@ class ActivityManager:
         for activity_name in activity_names:
             for func_name, func in self.activity_functions.items():
                 if func_name in activity_name:
-                    func()
+                    if func_name == "花藏繁生":
+                        while not func():
+                            pass
+                    else:
+                        func()
 
         self._finish()
 
