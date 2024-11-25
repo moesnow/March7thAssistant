@@ -35,7 +35,7 @@ instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造�
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
 instance_names:
   拟造花萼（金）: 回忆之蕾
-  拟造花萼（赤）: 毁灭之蕾
+  拟造花萼（赤）: 收容舱段
   凝滞虚影: 无
   侵蚀隧洞: 睿治之径
   饰品提取: 永恒笑剧
