@@ -13,7 +13,7 @@ class ActivityTemplate(ABC):
     def start(self):
         if not self.enabled:
             log.info(f"{self.name}未开启")
-            return
+            return True
 
         self.prepare()
         return self.run()

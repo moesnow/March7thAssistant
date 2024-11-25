@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2.6.2
+## v2.6.3
 
 ### 新功能
 - 支持 2.6 版本新增关卡和角色（乱破）
@@ -16,6 +16,7 @@
 - 手动修改配置文件会被图形界面覆盖 [#341](https://github.com/moesnow/March7thAssistant/issues/341) [#379](https://github.com/moesnow/March7thAssistant/issues/379)
 - 游戏窗口位于多显示器副屏时截图内容全黑或坐标偏移 [#378](https://github.com/moesnow/March7thAssistant/pull/378) [#384](https://github.com/moesnow/March7thAssistant/pull/384)
 - 暗黑主题下首次启动程序后账号列表背景色异常
+- 存在“花藏繁生”活动但未启用的情况下进入死循环
 
 ## v2.5.4
 
