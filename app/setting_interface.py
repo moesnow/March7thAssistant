@@ -387,7 +387,7 @@ class SettingInterface(ScrollArea):
             self.tr(""),
         )
 
-        self.ForgottenhallGroup = SettingCardGroup(self.tr("忘却之庭"), self.scrollWidget)
+        self.ForgottenhallGroup = SettingCardGroup(self.tr("混沌回忆"), self.scrollWidget)
         self.forgottenhallEnableCard = SwitchSettingCard1(
             FIF.SPEED_HIGH,
             self.tr('启用混沌回忆'),
@@ -549,7 +549,7 @@ class SettingInterface(ScrollArea):
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             self.tr('启用自动战斗检测'),
-            "只对清体力和忘却之庭场景生效",
+            "只对清体力和逐光捡金场景生效",
             "auto_battle_detect_enable"
         )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
@@ -567,7 +567,7 @@ class SettingInterface(ScrollArea):
         self.keybindingTechniqueCard = PushSettingCardKey(
             self.tr('按住以修改'),
             FIF.LEAF,
-            self.tr("秘技（只对清体力和忘却之庭场景生效）"),
+            self.tr("秘技（只对清体力和逐光捡金场景生效）"),
             "hotkey_technique"
         )
 
@@ -719,7 +719,7 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.ActivityGroup, 'ActivityInterface', self.tr('活动'))
         self.addSubInterface(self.FightGroup, 'FightInterface', self.tr('锄大地'))
         self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('宇宙'))
-        self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('忘却'))
+        self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('混沌'))
         self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构'))
 
         self.pivot.addItem(
