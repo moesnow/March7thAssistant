@@ -99,7 +99,7 @@ daily_memory_one_team: # 用于“回忆一”的队伍配置。
     - 0
   - - Asta
     - 0
-daily_tasks: {} # 每日实训任务的配置。
+daily_tasks: [] # 每日实训任务的配置。
 last_run_timestamp: 0 # 上次运行日常任务的时间戳，用于记录和控制运行频率。
 
 # 活动设置
