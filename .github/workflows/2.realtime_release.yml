@@ -64,7 +64,8 @@ jobs:
 
       # 步骤7：上传压缩包
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: March7thAssistant_${{ github.run_number }}.7z
           path: ./dist/March7thAssistant_${{ github.run_number }}.7z
+          compression-level: 0 # no compression
