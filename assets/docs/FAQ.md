@@ -1,22 +1,30 @@
 # 常见问题
 
-### Q：总是被杀毒软件删除怎么办
+视频教程 [https://search.bilibili.com/all?keyword=三月七小助手](https://search.bilibili.com/all?keyword=%E4%B8%89%E6%9C%88%E4%B8%83%E5%B0%8F%E5%8A%A9%E6%89%8B)
+
+### Q：小助手启动慢/总是被杀毒软件删除怎么办？
 
 A：将`小助手文件夹`加入杀毒软件排除项，然后使用 `March7th Updater.exe` 自动更新或手动更新一次。
 
-Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删除排除项`
+Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删除排除项` 可以参考 [#373](https://github.com/moesnow/March7thAssistant/issues/373) 图示操作
 
-### Q：忘却之庭缺少新角色
+### Q：缺少新增加的副本？逐光捡金缺少新角色？
 
-A：在忘却之庭的界面，用小助手工具箱中的`捕获截图`功能，点击`保存完整图片`后，放入`角色文件夹`。
+A：在`副本名称`界面手动输入名称，或编辑 `assets\config\instance_names.json` 文件手动添加。
+
+在忘却之庭的界面，用小助手工具箱中的`捕获截图`功能，勾选角色头像，点击`保存所选截图`后，
+
+放入 `assets\images\share\character` ，并修改 `assets\config\character_names.json` 文件。
 
 同时欢迎用`未压缩`的方式上传到 [Issue](https://github.com/moesnow/March7thAssistant/issues)，比如压缩包，或者 [PR](https://github.com/moesnow/March7thAssistant/pulls) 也可以。
 
 ### Q：完整运行的作用是什么
 
-A：按照 日常-清体力-锄大地-模拟宇宙(每周)-忘却之庭(每周)-领取奖励 的顺序依次执行
+A：按照 `日常`→`清体力`→`锄大地`→`模拟宇宙`→`逐光捡金`→`领取奖励` 的顺序依次执行
 
-模拟宇宙默认运行34次后才会停止，因耗时过长，执行前会额外领取奖励和清体力，执行后也会额外清体力
+已经判断为完成的任务不会重复运行，其中日常和锄大地的重置时间为每天凌晨4点，
+
+模拟宇宙和逐光捡金的重置时间为每周一凌晨4点。
 
 ### Q：开始运行后就不能移动键盘鼠标和切换到后台了吗
 
