@@ -187,6 +187,9 @@ def after_finish_is_loop():
     ocr.exit_ocr()
     time.sleep(wait_time)
 
+    # 启动前重新加载配置 #262
+    cfg._load_config()
+
 
 def notify_after_finish_not_loop():
 
