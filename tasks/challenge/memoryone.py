@@ -31,7 +31,7 @@ class MemoryOne(BaseChallenge):
 
     def start_challenges(self):
         '''查找关卡并判断星数'''
-        auto.mouse_scroll(30, 1)
+        auto.mouse_scroll(30, 1, False)
         time.sleep(2)
         level = 1
 
