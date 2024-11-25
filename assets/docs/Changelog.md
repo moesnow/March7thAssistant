@@ -2,6 +2,9 @@
 
 ## v2.7.0
 
+### 新功能
+- 支持 “灵砂”
+
 ### 修复
 - “日常任务” 会在每次启动时被错误清空
 - 降低角色头像匹配阈值 [#356](https://github.com/moesnow/March7thAssistant/issues/356)
