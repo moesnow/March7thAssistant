@@ -524,12 +524,6 @@ class SettingInterface(ScrollArea):
             self.tr("游戏刷新时间"),
             self.tr("用于循环运行及判断任务状态，默认凌晨四点"),
         )
-        self.allScreensCard = SwitchSettingCard1(
-            FIF.ZOOM,
-            self.tr('在多显示器上进行截屏'),
-            "默认开启，如果正在使用多显示器且无法正常截屏请开关闭这个",
-            "all_screens"
-        )
 
         self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
         self.testNotifyCard = PrimaryPushSettingCard(
@@ -570,16 +564,22 @@ class SettingInterface(ScrollArea):
             "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（未测试国际服）",
             "auto_set_game_path_enable"
         )
-        self.keybindingTechniqueCard = PushSettingCardKey(
-            self.tr('按住以修改'),
-            FIF.LEAF,
-            self.tr("秘技（只对清体力和逐光捡金场景生效）"),
-            "hotkey_technique"
+        self.allScreensCard = SwitchSettingCard1(
+            FIF.ZOOM,
+            self.tr('在多显示器上进行截屏'),
+            "默认开启，如果正在使用多显示器且无法正常截屏请开关闭这个",
+            "all_screens"
         )
         self.StartMarch7thAssistantCard = StartMarch7thAssistantSwitchSettingCard(
             FIF.GAME,
             self.tr('在用户登录时启动'),
             "用于开机后自动执行完整运行模式"
+        )
+        self.keybindingTechniqueCard = PushSettingCardKey(
+            self.tr('按住以修改'),
+            FIF.LEAF,
+            self.tr("秘技（只对清体力和逐光捡金场景生效）"),
+            "hotkey_technique"
         )
 
         self.AboutGroup = SettingCardGroup(self.tr('关于'), self.scrollWidget)
@@ -707,7 +707,6 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
         self.ProgramGroup.addSettingCard(self.refreshHourEnableCard)
-        self.ProgramGroup.addSettingCard(self.allScreensCard)
 
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.NotifyGroup.addSettingCard(self.notifyTemplateCard)
@@ -716,8 +715,9 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoBattleDetectEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
-        self.MiscGroup.addSettingCard(self.keybindingTechniqueCard)
+        self.MiscGroup.addSettingCard(self.allScreensCard)
         self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
+        self.MiscGroup.addSettingCard(self.keybindingTechniqueCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
         self.AboutGroup.addSettingCard(self.qqGroupCard)
