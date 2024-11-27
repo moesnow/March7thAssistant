@@ -1,12 +1,41 @@
 from typing import Tuple, Optional
 import winreg
 import json
+import os
 
 # Specify the registry key path
 registry_key_path = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
 # Specify the value name
 resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
 graphics_value_name = "GraphicsSettings_Model_h2986158309"
+
+
+def get_game_path() -> Optional[str]:
+    """
+    获取游戏路径函数，尝试从注册表中读取指定键值并验证游戏可执行文件是否存在。
+
+    Returns:
+        Optional[str]: 如果找到有效的游戏路径，则返回完整路径，否则返回 None。
+    """
+    # 注册表键路径和键值名称
+    registry_key_path = r"Software\miHoYo\HYP\1_1\hkrpg_cn"  # 游戏相关的注册表键路径
+    registry_value_name = "GameInstallPath"  # 游戏安装路径的键值名称
+
+    # 从注册表中读取键值
+    install_path = read_registry_value(
+        winreg.HKEY_CURRENT_USER,  # 从当前用户的注册表路径中读取
+        registry_key_path,        # 注册表的具体路径
+        registry_value_name       # 需要读取的键值名称
+    )
+
+    # 如果成功读取到路径，检查对应的游戏可执行文件是否存在
+    if install_path:
+        game_executable = os.path.join(install_path, "StarRail.exe")  # 构造完整的游戏可执行文件路径
+        if os.path.exists(game_executable):  # 验证文件路径是否存在
+            return game_executable  # 返回有效的游戏路径
+
+    # 如果路径无效或文件不存在，返回 None
+    return None
 
 
 def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
@@ -114,7 +143,8 @@ def read_registry_value(key, sub_key, value_name):
         winreg.CloseKey(registry_key)
         return value
     except FileNotFoundError:
-        raise FileNotFoundError(f"Specified registry key or value not found: {sub_key}\\{value_name}")
+        # raise FileNotFoundError(f"Specified registry key or value not found: {sub_key}\\{value_name}")
+        return None
     except Exception as e:
         raise Exception(f"Error reading registry value: {e}")
 

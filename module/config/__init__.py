@@ -1,6 +1,7 @@
 import os
 from module.config.config import Config
 from pylnk3 import Lnk
+from utils.registry.star_rail_setting import get_game_path
 
 
 def update_game_path_from_config(program_config_path):
@@ -41,10 +42,10 @@ def detect_from_start_menu():
 
 
 def detect_from_hoyoplay():
-    """从米哈游启动器检测游路径（占位）"""
-    hoyoplay_default_path = os.path.join(os.getenv('ProgramFiles'), "miHoYo Launcher", "games", "Star Rail Game", "StarRail.exe")
-    if os.path.exists(hoyoplay_default_path):
-        cfg.set_value("game_path", os.path.abspath(hoyoplay_default_path))
+    """从米哈游启动器检测游路径"""
+    game_path = get_game_path()
+    if game_path:
+        cfg.set_value("game_path", os.path.abspath(game_path))
         return True
     return False
 
@@ -56,7 +57,7 @@ def detect_game_path():
         return
 
     # 定义检测方式列表
-    detection_methods = [detect_from_default_install_path, detect_from_start_menu, detect_from_hoyoplay]
+    detection_methods = [detect_from_hoyoplay, detect_from_default_install_path, detect_from_start_menu]
 
     # 迭代执行每种检测方式，直到找到有效路径或尝试所有方式
     for method in detection_methods:
