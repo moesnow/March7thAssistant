@@ -524,6 +524,12 @@ class SettingInterface(ScrollArea):
             self.tr("游戏刷新时间"),
             self.tr("用于循环运行及判断任务状态，默认凌晨四点"),
         )
+        self.allScreensCard = SwitchSettingCard1(
+            FIF.ZOOM,
+            self.tr('在多显示器上进行截屏'),
+            "默认关闭，如果正在使用多显示器且无法正常截屏请开启这个",
+            "all_screens"
+        )
 
         self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
         self.testNotifyCard = PrimaryPushSettingCard(
@@ -696,6 +702,7 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.powerLimitCard)
         self.ProgramGroup.addSettingCard(self.refreshHourEnableCard)
+        self.ProgramGroup.addSettingCard(self.allScreensCard)
 
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.NotifyGroup.addSettingCard(self.notifyTemplateCard)

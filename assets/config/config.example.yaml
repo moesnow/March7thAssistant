@@ -215,6 +215,9 @@ refresh_hour: 4 # 设置游戏每日刷新的时间（24小时制）。
 # 游戏内秘技按键设置
 hotkey_technique: e # 设置游戏内使用秘技的按键。
 
+# 是否在多显示器上进行截屏（若开启无法正确运行请关闭）
+all_screens: true
+
 # 更新配置
 redemption_code: [] # 兑换码列表
 update_prerelease_enable: false # 是否加入预览版更新渠道。true 加入，false 不加入。
