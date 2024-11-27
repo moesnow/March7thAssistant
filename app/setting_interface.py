@@ -527,7 +527,7 @@ class SettingInterface(ScrollArea):
         self.allScreensCard = SwitchSettingCard1(
             FIF.ZOOM,
             self.tr('在多显示器上进行截屏'),
-            "默认关闭，如果正在使用多显示器且无法正常截屏请开启这个",
+            "默认开启，如果正在使用多显示器且无法正常截屏请开关闭这个",
             "all_screens"
         )
 
