@@ -126,12 +126,12 @@ class MainWindow(MSFluentWindow):
                 )
             else:
                 InfoBar.warning(
-                    title=self.tr('游戏路径配置错误(╥╯﹏╰╥)'),
+                    title=self.tr('游戏路径配置错误(╥╯﹏╰╥)\n请在“设置”-->“程序”中配置'),
                     content="",
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
-                    duration=1000,
+                    duration=5000,
                     parent=self
                 )
         except:

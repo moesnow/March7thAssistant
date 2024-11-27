@@ -4,6 +4,42 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
 
 from module.config import cfg
+from utils.schedule import create_task, is_task_exists, delete_task
+import os
+
+
+class StartMarch7thAssistantSwitchSettingCard(SettingCard):
+    """ Setting card with switch button """
+
+    checkedChanged = pyqtSignal(bool)
+
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
+        super().__init__(icon, title, content, parent)
+        self.switchButton = SwitchButton(
+            self.tr('关'), self, IndicatorPosition.RIGHT)
+
+        self.task_name = "StartMarch7thAssistant"
+        self.program_path = os.path.abspath("./March7th Assistant.exe")
+
+        self.setValue(is_task_exists(self.task_name))
+
+        # add switch button to layout
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
+
+    def __onCheckedChanged(self, isChecked: bool):
+        """ switch button checked state changed slot """
+        self.setValue(isChecked)
+        if isChecked:
+            create_task(task_name=self.task_name, program_path=self.program_path)
+        else:
+            delete_task(task_name=self.task_name)
+
+    def setValue(self, isChecked: bool):
+        self.switchButton.setChecked(isChecked)
+        self.switchButton.setText(self.tr('开') if isChecked else self.tr('关'))
 
 
 class SwitchSettingCard1(SettingCard):

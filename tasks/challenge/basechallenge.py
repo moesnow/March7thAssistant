@@ -74,18 +74,18 @@ class BaseChallenge(ABC):
             auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
             # 选择角色
             for character in team_config:
-                if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=False):
                     # 尝试向下滚动
                     auto.click_element("等级", "text", include=True, action="move")
-                    auto.mouse_scroll(30, -1)
+                    auto.mouse_scroll(26, -1, False)
                     time.sleep(1)
                     auto.click_element("角色列表", "text", include=True, action="move")
-                    if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                    if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=False):
                         return False
                     else:
                         # 尝试向上滚动 恢复初始位置
                         auto.click_element("等级", "text", include=True, action="move")
-                        auto.mouse_scroll(30, 1)
+                        auto.mouse_scroll(26, 1, False)
                         time.sleep(1)
                         auto.click_element("角色列表", "text", include=True, action="move")
                 time.sleep(0.5)

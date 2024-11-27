@@ -48,6 +48,7 @@ class PureFiction(BaseChallenge):
         if auto.click_element("./assets/images/purefiction/start_story.png", "image", 0.7):
             auto.click_element(self.name, "text", max_retries=10, include=True, action="move", crop=(0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080))
 
+        # 刷新后打开会出现快速解锁弹窗
         time.sleep(2)
         if auto.find_element("选择最高解锁关卡", "text", include=True):
             result = auto.find_element("03", "text")

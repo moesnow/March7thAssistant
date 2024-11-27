@@ -34,7 +34,7 @@ from tasks.daily.redemption import Redemption
 
 def first_run():
     if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
-        log.error("首次使用请先打开图形界面")
+        log.error("首次使用请先打开图形界面 March7th Launcher.exe")
         input("按回车键关闭窗口. . .")
         sys.exit(0)
 

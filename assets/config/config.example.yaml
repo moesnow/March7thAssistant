@@ -35,7 +35,7 @@ instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造�
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
 instance_names:
   拟造花萼（金）: 回忆之蕾
-  拟造花萼（赤）: 毁灭之蕾
+  拟造花萼（赤）: 收容舱段
   凝滞虚影: 无
   侵蚀隧洞: 睿治之径
   饰品提取: 永恒笑剧
@@ -99,7 +99,7 @@ daily_memory_one_team: # 用于“回忆一”的队伍配置。
     - 0
   - - Asta
     - 0
-daily_tasks: {} # 每日实训任务的配置。
+daily_tasks: [] # 每日实训任务的配置。
 last_run_timestamp: 0 # 上次运行日常任务的时间戳，用于记录和控制运行频率。
 
 # 活动设置

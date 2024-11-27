@@ -7,7 +7,7 @@ from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
+from .card.switchsettingcard1 import SwitchSettingCard1, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
@@ -387,7 +387,7 @@ class SettingInterface(ScrollArea):
             self.tr(""),
         )
 
-        self.ForgottenhallGroup = SettingCardGroup(self.tr("忘却之庭"), self.scrollWidget)
+        self.ForgottenhallGroup = SettingCardGroup(self.tr("混沌回忆"), self.scrollWidget)
         self.forgottenhallEnableCard = SwitchSettingCard1(
             FIF.SPEED_HIGH,
             self.tr('启用混沌回忆'),
@@ -471,12 +471,12 @@ class SettingInterface(ScrollArea):
             self.tr("游戏路径"),
             cfg.game_path
         )
-        self.importConfigCard = PushSettingCard(
-            self.tr('导入'),
-            FIF.ADD_TO,
-            self.tr('导入配置'),
-            self.tr('选择需要导入的 config.yaml 文件（重启后生效）')
-        )
+        # self.importConfigCard = PushSettingCard(
+        #     self.tr('导入'),
+        #     FIF.ADD_TO,
+        #     self.tr('导入配置'),
+        #     self.tr('选择需要导入的 config.yaml 文件（重启后生效）')
+        # )
         self.checkUpdateCard = SwitchSettingCard1(
             FIF.SYNC,
             self.tr('启动时检测更新'),
@@ -555,7 +555,7 @@ class SettingInterface(ScrollArea):
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             self.tr('启用自动战斗检测'),
-            "只对清体力和忘却之庭场景生效",
+            "只对清体力和逐光捡金场景生效",
             "auto_battle_detect_enable"
         )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
@@ -573,8 +573,13 @@ class SettingInterface(ScrollArea):
         self.keybindingTechniqueCard = PushSettingCardKey(
             self.tr('按住以修改'),
             FIF.LEAF,
-            self.tr("秘技（只对清体力和忘却之庭场景生效）"),
+            self.tr("秘技（只对清体力和逐光捡金场景生效）"),
             "hotkey_technique"
+        )
+        self.StartMarch7thAssistantCard = StartMarch7thAssistantSwitchSettingCard(
+            FIF.GAME,
+            self.tr('在用户登录时启动'),
+            "用于开机后自动执行完整运行模式"
         )
 
         self.AboutGroup = SettingCardGroup(self.tr('关于'), self.scrollWidget)
@@ -694,7 +699,7 @@ class SettingInterface(ScrollArea):
 
         self.ProgramGroup.addSettingCard(self.logLevelCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
-        self.ProgramGroup.addSettingCard(self.importConfigCard)
+        # self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.checkUpdateCard)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
         self.ProgramGroup.addSettingCard(self.loopModeCard)
@@ -712,6 +717,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
         self.MiscGroup.addSettingCard(self.keybindingTechniqueCard)
+        self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
         self.AboutGroup.addSettingCard(self.qqGroupCard)
@@ -726,7 +732,7 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.ActivityGroup, 'ActivityInterface', self.tr('活动'))
         self.addSubInterface(self.FightGroup, 'FightInterface', self.tr('锄大地'))
         self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('宇宙'))
-        self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('忘却'))
+        self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('混沌'))
         self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构'))
 
         self.pivot.addItem(
@@ -750,7 +756,7 @@ class SettingInterface(ScrollArea):
         self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
 
     def __connectSignalToSlot(self):
-        self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
+        # self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
 
         # self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
@@ -789,12 +795,12 @@ class SettingInterface(ScrollArea):
         self.verticalScrollBar().setValue(0)
         self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
 
-    def __onImportConfigCardClicked(self):
-        configdir, _ = QFileDialog.getOpenFileName(self, "选取配置文件", "./", "Config Files (*.yaml)")
-        if (configdir != ""):
-            cfg._load_config(configdir)
-            cfg.save_config()
-            self.__showRestartTooltip()
+    # def __onImportConfigCardClicked(self):
+    #     configdir, _ = QFileDialog.getOpenFileName(self, "选取配置文件", "./", "Config Files (*.yaml)")
+    #     if (configdir != ""):
+    #         cfg._load_config(configdir)
+    #         cfg.save_config()
+    #         self.__showRestartTooltip()
 
     def __onGamePathCardClicked(self):
         game_path, _ = QFileDialog.getOpenFileName(self, "选择游戏路径", "", "All Files (*)")
@@ -809,10 +815,10 @@ class SettingInterface(ScrollArea):
     def __openUrl(self, url):
         return lambda: QDesktopServices.openUrl(QUrl(url))
 
-    def __showRestartTooltip(self):
-        InfoBar.success(
-            self.tr('更新成功'),
-            self.tr('配置在重启软件后生效'),
-            duration=1500,
-            parent=self
-        )
+    # def __showRestartTooltip(self):
+    #     InfoBar.success(
+    #         self.tr('更新成功'),
+    #         self.tr('配置在重启软件后生效'),
+    #         duration=1500,
+    #         parent=self
+    #     )
