@@ -58,6 +58,7 @@ def run_sub_task(action):
         "universe": Universe.start,
         "forgottenhall": lambda: challenge.start("memoryofchaos"),
         "purefiction": lambda: challenge.start("purefiction"),
+        "apocalyptic": lambda: challenge.start("apocalyptic"),
         "redemption": Redemption.start
     }
     task = sub_tasks.get(action)
@@ -103,7 +104,7 @@ def main(action=None):
         run_main_actions()
 
     # 子任务
-    elif action in ["daily", "power", "fight", "universe", "forgottenhall", "purefiction", "redemption"]:
+    elif action in ["daily", "power", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
         run_sub_task(action)
 
     # 子任务 原生图形界面
