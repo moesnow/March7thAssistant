@@ -27,14 +27,14 @@ class Apocalyptic(BaseChallenge):
         '''切换场景并判断是否刷新'''
         screen.change_to('guide4')
 
-        if not auto.click_element("日幻影", "text", max_retries=10, crop=(274.0 / 1920, 419.0 / 1080, (670.0) / 1920, (419.0+322.0) / 1080), include=True):
+        if not auto.click_element("日幻影", "text", max_retries=10, crop=(274.0 / 1920, 419.0 / 1080, (670.0) / 1920, (419.0 + 322.0) / 1080), include=True):
             return False
         time.sleep(1)
 
         if not auto.find_element("日幻影", "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True):
             return False
         if self.check_star_in_ocr_results(auto.ocr_result):
-            log.info(f"已满星，跳过")
+            # log.info(f"已满星，跳过")
             self.save_timestamp_into_config()
             return False
         time.sleep(1)
@@ -42,18 +42,18 @@ class Apocalyptic(BaseChallenge):
             return False
         # 刷新后打开会出现本期buff的弹窗
         time.sleep(2)
-        if auto.find_element("已更新", "text", max_retries = 10, crop=(0,0,1,1), include=True):
-            auto.click_element("前往挑战", "text", max_retries=10, crop=(0,0,1,1),include=True)
+        if auto.find_element("已更新", "text", max_retries=10, crop=(0, 0, 1, 1), include=True):
+            auto.click_element("前往挑战", "text", max_retries=10, crop=(0, 0, 1, 1), include=True)
             # log.info("当期buff页面,进入游戏 text")
             time.sleep(2)
-        
+
         if auto.find_element("选择最高解锁关卡", "text", include=True):
             # log.info(f"之前打过，最高记录部分")
             result = auto.find_element("03", "text")
             if result:
                 self.level_range[0] = 3
                 auto.click_element_with_pos((result[0], result[0]))
-            time.sleep(2)    
+            time.sleep(2)
         if not auto.click_element("日幻影", "text", max_retries=20, include=True, action="move", crop=(0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080)):
             return False
         return True
@@ -65,7 +65,7 @@ class Apocalyptic(BaseChallenge):
         '''查找关卡并判断星数'''
         for level in range(self.level_range[0], self.level_range[1] + 1):
             # 查找关卡
-            log.info(f"查找level:{level}")
+            # log.info(f"查找level:{level}")
             top_left = self.find_level(level)
             if not top_left:
                 log.error(f"查找第{level}层失败")
@@ -88,30 +88,30 @@ class Apocalyptic(BaseChallenge):
 
     def find_level(self, level, max_retries=4):
         '''查找关卡'''
-        crop=(330.0 / 1920, 90.0 / 1080, 1562.0 / 1920, 1060.0 / 1080)
+        crop = (330.0 / 1920, 90.0 / 1080, 1562.0 / 1920, 1060.0 / 1080)
         # crop = (331.0 / 1920, 97.0 / 1080, 1562.0 / 1920, 798.0 / 1080)
         window = Screenshot.get_window(cfg.game_title_name)
         _, _, width, height = Screenshot.get_window_region(window)
 
         for _ in range(max_retries):
-            result = auto.find_element(f"{level:02}", "text", max_retries=4, crop=crop, relative=True, include= True)
+            result = auto.find_element(f"{level:02}", "text", max_retries=4, crop=crop, relative=True, include=True)
             if result:
                 return (result[0][0] + width * crop[0], result[0][1] + height * crop[1])
 
         return False
-    
+
     def find_node(self, string, max_retries=4):
         '''查找结点'''
-        crop=(755.0 / 1920, 203.0 / 1080, 1014.0 / 1920, 544.0 / 1080)
+        crop = (755.0 / 1920, 203.0 / 1080, 1014.0 / 1920, 544.0 / 1080)
         window = Screenshot.get_window(cfg.game_title_name)
         _, _, width, height = Screenshot.get_window_region(window)
 
         for _ in range(max_retries):
-            result = auto.find_element(f"{string}", "text", max_retries=4, crop=crop, relative=True, include= True)
+            result = auto.find_element(f"{string}", "text", max_retries=4, crop=crop, relative=True, include=True)
             if result:
                 return (result[0][0] + width * crop[0], result[0][1] + height * crop[1])
 
-        return False        
+        return False
 
     def judge_stars(self, top_left):
         '''判断星数'''
@@ -134,14 +134,14 @@ class Apocalyptic(BaseChallenge):
             if auto.click_element("更换编队", "text", max_retries=20, crop=(1624.0 / 1920, 804.0 / 1080, 292.0 / 1920, 68.0 / 1080), include=True):
                 log.info("更换队伍")
             # 如果没有挑战过
-            elif not auto.click_element(f"前往挑战", "text", max_retries=20, crop=(0,0,1,1), include=True):
+            elif not auto.click_element(f"前往挑战", "text", max_retries=20, crop=(0, 0, 1, 1), include=True):
                 log.error("前往挑战失败")
-                return False  
-              
-            if not auto.click_element(f"下一步", "text", max_retries=20, crop=(0,0,1,1), include=True):
+                return False
+
+            if not auto.click_element(f"下一步", "text", max_retries=20, crop=(0, 0, 1, 1), include=True):
                 # log.error("下一步失败")
-                return False                        
-            if not auto.click_element(f"前往编队", "text", max_retries=20, crop=(0,0,1,1), include=True):    
+                return False
+            if not auto.click_element(f"前往编队", "text", max_retries=20, crop=(0, 0, 1, 1), include=True):
                 # log.error("前往编队失败")
                 return False
 
@@ -167,7 +167,7 @@ class Apocalyptic(BaseChallenge):
     def prepare_level(self, status):
         '''配置队伍'''
         # if auto.find_element("./assets/images/forgottenhall/team1.png", "image", 0.8, max_retries=10, crop=(592.0 / 1920, 556.0 / 1080, 256.0 / 1920, 424.0 / 1080)):
-        if auto.find_element("节点一", "text", max_retries=20, crop=(963.0 / 1920, 209.0 / 1080, 798.0 / 1920, 252.0 / 1080),include = True):
+        if auto.find_element("节点一", "text", max_retries=20, crop=(963.0 / 1920, 209.0 / 1080, 798.0 / 1920, 252.0 / 1080), include=True):
             if status:
                 auto.click_element("./assets/images/forgottenhall/reset.png", "image", 0.8, max_retries=10, crop=(1280.0 / 1920, 115.0 / 1080, 215.0 / 1920, 59.0 / 1080))
                 time.sleep(0.5)
@@ -189,10 +189,10 @@ class Apocalyptic(BaseChallenge):
         '''选择角色'''
         # 切换队伍
         if "team1" in team_name:
-            top_left =  self.find_node("节点一")    
+            top_left = self.find_node("节点一")
         else:
-            top_left =  self.find_node("节点二")
-        log.info(top_left)        
+            top_left = self.find_node("节点二")
+        # log.info(top_left)
         time.sleep(0.5)
         if auto.click_element('./assets/images/apocalyptic/team.png', "image", 0.5, max_retries=20, crop=(top_left[0] / 1920, top_left[1] / 1080, 792.0 / 1920, 254.0 / 1080)):
             # log.info("选择角色")
@@ -200,33 +200,33 @@ class Apocalyptic(BaseChallenge):
             auto.take_screenshot(crop=(30 / 1920, 110 / 1080, 550 / 1920, 850 / 1080))
             # 选择角色
             for character in team_config:
-                if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=False):
                     # 尝试向下滚动
                     auto.click_element("等级", "text", include=True, action="move")
-                    auto.mouse_scroll(30, -1)
+                    auto.mouse_scroll(26, -1, False)
                     time.sleep(1)
                     auto.click_element("角色列表", "text", include=True, action="move")
-                    if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.8, max_retries=10, take_screenshot=False):
+                    if not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=False):
                         log.error(f"没有找到角色{character[0]}")
                         return False
                     else:
                         # 尝试向上滚动 恢复初始位置
                         auto.click_element("等级", "text", include=True, action="move")
-                        auto.mouse_scroll(30, 1)
+                        auto.mouse_scroll(26, 1, False)
                         time.sleep(1)
                         auto.click_element("角色列表", "text", include=True, action="move")
                 time.sleep(0.5)
-            auto.click_element("节点一", "text", max_retries=20, crop=(963.0 / 1920, 209.0 / 1080, 798.0 / 1920, 252.0 / 1080),include = True)
+            auto.click_element("节点一", "text", max_retries=20, crop=(963.0 / 1920, 209.0 / 1080, 798.0 / 1920, 252.0 / 1080), include=True)
             return True
         return False
 
     def select_buff(self):
         '''选择增益效果'''
-        top_left =  self.find_node("节点一")    
+        top_left = self.find_node("节点一")
         if auto.click_element("./assets/images/purefiction/plus.png", "image", 0.8, max_retries=10, crop=(top_left[0] / 1920, top_left[1] / 1080, 792.0 / 1920, 254.0 / 1080)):
             if auto.click_element("./assets/images/purefiction/choose.png", "image", 0.8, max_retries=10):
                 if auto.click_element("./assets/images/purefiction/confirm.png", "image", 0.8, max_retries=10):
-                    top_left =  self.find_node("节点二") 
+                    top_left = self.find_node("节点二")
                     if auto.click_element("./assets/images/purefiction/plus.png", "image", 0.8, max_retries=10, crop=(top_left[0] / 1920, top_left[1] / 1080, 792.0 / 1920, 254.0 / 1080)):
                         if auto.click_element("./assets/images/purefiction/choose.png", "image", 0.8, max_retries=10):
                             auto.click_element("./assets/images/purefiction/confirm.png", "image", 0.8, max_retries=10)
@@ -236,9 +236,9 @@ class Apocalyptic(BaseChallenge):
     def start_level(self):
         '''开始关卡'''
         # if auto.click_element("./assets/images/purefiction/start.png", "image", 0.8, max_retries=10, crop=(1546 / 1920, 962 / 1080, 343 / 1920, 62 / 1080)):
-        if auto.click_element(f"前往挑战", "text", max_retries=20, crop=(0,0,1,1), include=True):
-            if auto.find_element("./assets/images/apocalyptic/warning.png","image",max_retries=10,threshold=0.9):
-                auto.click_element(f"确认","text", max_retries=20, crop=(0,0,1,1), include=True)
+        if auto.click_element(f"前往挑战", "text", max_retries=20, crop=(0, 0, 1, 1), include=True):
+            if auto.find_element("./assets/images/apocalyptic/warning.png", "image", max_retries=10, threshold=0.9):
+                auto.click_element(f"确认", "text", max_retries=20, crop=(0, 0, 1, 1), include=True)
             log.info(f"开始挑战")
             self.click_message_box()
             return True
@@ -281,10 +281,10 @@ class Apocalyptic(BaseChallenge):
                     auto.click_element("./assets/images/apocalyptic/back.png", "image", 0.8, 10)
                     return False
                 else:
-                    auto.click_element("挑战结束", "text", max_retries= 10,crop = (0,0,1,1), include=True)
+                    auto.click_element("挑战结束", "text", max_retries=10, crop=(0, 0, 1, 1), include=True)
                     time.sleep(2)
                     if auto.click_element("./assets/images/apocalyptic/back.png", "image", 0.8, 10):
-                        return True                
+                        return True
                     else:
                         return False
             elif self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.8, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
@@ -303,7 +303,7 @@ class Apocalyptic(BaseChallenge):
             time.sleep(1)
         else:
             log.error(f"click error")
-            
+
     def collect_rewards(self):
         '''领取奖励'''
         if self.max_level > 0:
@@ -325,4 +325,3 @@ class Apocalyptic(BaseChallenge):
             else:
                 log.error("领取星琼失败")
                 Base.send_notification_with_screenshot(cfg.notify_template['LevelClearedWithIssue'].format(name=self.name, level=self.max_level))
-                

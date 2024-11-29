@@ -4,9 +4,10 @@
 
 ### 新功能
 - 支持 “灵砂”
+- 支持末日幻影 [#397](https://github.com/moesnow/March7thAssistant/pull/397) 
 - 支持开机后自动运行（设置—杂项）
 - 循环模式每次启动前会重新加载配置文件
-- 增加 “在多显示器上进行截屏” 选项（设置—杂项）
+- 增加 “在多显示器上进行截屏” 选项（设置—杂项） [#392](https://github.com/moesnow/March7thAssistant/pull/392) 
 - 支持自动获取通过米哈游启动器安装游戏的路径
 
 ### 修复

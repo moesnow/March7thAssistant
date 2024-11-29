@@ -164,6 +164,7 @@ class HomeInterface(ScrollArea):
             action={
                 "混沌回忆": lambda: start_task("forgottenhall"),
                 "虚构叙事": lambda: start_task("purefiction"),
+                "末日幻影": lambda: start_task("apocalyptic"),
             }
         )
 
