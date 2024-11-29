@@ -194,6 +194,33 @@ purefiction_team2: # 队伍2配置。
     - 1
 purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳，用于记录和控制运行频率。
 
+# 末日幻影配置
+apocalyptic_enable: true # 是否启用末日幻影功能。true 开启，false 关闭。
+apocalyptic_level: # 末日幻影关卡范围，设置允许尝试的关卡等级范围。
+  - 3
+  - 4
+# 末日幻影队伍配置，详细配置每个队伍成员及其秘技使用次数。
+# 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色。
+# 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
+apocalyptic_team1: # 队伍1配置。
+  - - Asta
+    - -1
+  - - JingYuan
+    - 1
+  - - Tingyun
+    - 2
+  - - Huohuo
+    - 1
+apocalyptic_team2: # 队伍2配置。
+  - - FuXuan
+    - 1
+  - - Bronya
+    - 1
+  - - Pela
+    - -1
+  - - Qingque
+    - 1
+apocalyptic_timestamp: 0 # 上次运行末日幻影的时间戳，用于记录和控制运行频率。
 # 自动战斗检测配置
 auto_battle_detect_enable: true # 是否启用自动战斗检测。true 开启，false 关闭。
 

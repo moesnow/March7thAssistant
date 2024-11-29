@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem
+from PyQt5.QtGui import QDesktopServices, QFont
+from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScrollArea, QSizePolicy
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard, Pivot
 from app.sub_interfaces.accounts_interface import accounts_interface
@@ -24,6 +24,7 @@ class SettingInterface(ScrollArea):
         self.scrollWidget = QWidget()
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
+        self.title_area = QScrollArea(self)
         self.pivot = Pivot(self)
         self.stackedWidget = QStackedWidget(self)
 
@@ -39,7 +40,32 @@ class SettingInterface(ScrollArea):
         self.setWidgetResizable(True)
         self.setViewportMargins(0, 140, 0, 5)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        
+        self.title_area.setWidget(self.pivot)
+        self.title_area.setWidgetResizable(True)
+        self.title_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.title_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.title_area.setMinimumSize(800, 50)
+        self.title_area.setStyleSheet("""
+            QScrollBar:horizontal {
+                height: 4px;  
+                background: #f0f0f0;  
+                border-radius: 10px; 
+            }
 
+            QScrollBar::handle:horizontal {
+                background: #888;  
+                border-radius: 10px;  
+            }
+
+            QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+                background: none; 
+            }
+
+            QScrollBar::handle:horizontal:hover {
+                background: #555;
+            }
+        """)  
         self.setObjectName('settingInterface')
         self.scrollWidget.setObjectName('scrollWidget')
         self.settingLabel.setObjectName('settingLabel')
@@ -457,6 +483,38 @@ class SettingInterface(ScrollArea):
             "purefiction_timestamp"
         )
 
+        self.ApocalypticGroup = SettingCardGroup(self.tr("末日"), self.scrollWidget)
+        self.ApocalypticEnableCard = SwitchSettingCard1(
+            FIF.SPEED_HIGH,
+            self.tr('启用末日'),
+            "",
+            "apocalyptic_enable"
+        )
+        self.ApocalypticLevelCard = PushSettingCardEval(
+            self.tr('修改'),
+            FIF.MINIMIZE,
+            self.tr("关卡范围"),
+            "apocalyptic_level"
+        )
+        self.ApocalypticTeam1Card = PushSettingCardTeam(
+            self.tr('修改'),
+            FIF.FLAG,
+            self.tr("末日队伍1"),
+            "apocalyptic_team1"
+        )
+        self.ApocalypticTeam2Card = PushSettingCardTeam(
+            self.tr('修改'),
+            FIF.FLAG,
+            self.tr("末日队伍2"),
+            "apocalyptic_team2"
+        )
+        self.ApocalypticRunTimeCard = PushSettingCardDate(
+            self.tr('修改'),
+            FIF.DATE_TIME,
+            self.tr("上次运行虚构叙事的时间"),
+            "apocalyptic_timestamp"
+        )
+
         self.ProgramGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
         self.logLevelCard = ComboBoxSettingCardLog(
             "log_level",
@@ -622,7 +680,8 @@ class SettingInterface(ScrollArea):
 
     def __initLayout(self):
         self.settingLabel.move(36, 30)
-        self.pivot.move(40, 80)
+        # self.pivot.move(40, 80)
+        self.title_area.move(36, 80)
         # self.vBoxLayout.addWidget(self.pivot, 0, Qt.AlignTop)
         self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignTop)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
@@ -696,7 +755,13 @@ class SettingInterface(ScrollArea):
         self.PureFictionGroup.addSettingCard(self.purefictionTeam1Card)
         self.PureFictionGroup.addSettingCard(self.purefictionTeam2Card)
         self.PureFictionGroup.addSettingCard(self.purefictionRunTimeCard)
-
+        
+        self.ApocalypticGroup.addSettingCard(self.ApocalypticEnableCard)
+        self.ApocalypticGroup.addSettingCard(self.ApocalypticLevelCard)
+        self.ApocalypticGroup.addSettingCard(self.ApocalypticTeam1Card)
+        self.ApocalypticGroup.addSettingCard(self.ApocalypticTeam2Card)
+        self.ApocalypticGroup.addSettingCard(self.ApocalypticRunTimeCard)
+        
         self.ProgramGroup.addSettingCard(self.logLevelCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
         # self.ProgramGroup.addSettingCard(self.importConfigCard)
@@ -734,7 +799,8 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('宇宙'))
         self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('混沌'))
         self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构'))
-
+        self.addSubInterface(self.ApocalypticGroup, 'ApocalypticInterface', self.tr('末日'))
+   
         self.pivot.addItem(
             routeKey='verticalBar',
             text="|",
@@ -787,6 +853,7 @@ class SettingInterface(ScrollArea):
             text=text,
             onClick=lambda: self.stackedWidget.setCurrentWidget(widget)
         )
+
 
     def onCurrentIndexChanged(self, index):
         widget = self.stackedWidget.widget(index)

@@ -77,7 +77,15 @@ class Daily:
                 log.info("虚构叙事未开启")
         else:
             log.info("虚构叙事尚未刷新")
-
+            
+        if Date.is_next_mon_x_am(cfg.apocalyptic_timestamp, cfg.refresh_hour):
+            if cfg.apocalyptic_enable:
+                challenge.start("apocalyptic")
+            else:
+                log.info("末日幻影未开启")
+        else:
+            log.info("末日幻影尚未刷新")
+            
         activity.start()
 
         # 优先历战余响

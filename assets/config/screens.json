@@ -399,6 +399,14 @@
                     "time.sleep(1)",
                     "auto.click_element('传送', 'text', None, 10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080))"
                 ]
+            },
+            {
+                "target_screen": "apocalyptic",
+                "actions_list": [
+                    "auto.click_element('日幻影', 'text', max_retries=10, crop=(274.0 / 1920, 419.0 / 1080, (670.0) / 1920, (419.0+322.0) / 1080), include=True)",
+                    "time.sleep(1)",
+                    "auto.click_element('传送', 'text', None, 10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080))"
+                ]
             }
         ]
     },
@@ -748,6 +756,19 @@
         "name": "虚构叙事",
         "id": "purefiction",
         "image_path": "./assets/images/screen/purefiction/purefiction.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "末日幻影",
+        "id": "apocalyptic",
+        "image_path": "./assets/images/screen/apocalyptic/apocalyptic.png",
         "actions": [
             {
                 "target_screen": "main",
