@@ -41,7 +41,8 @@ class ToolsInterface(ScrollArea):
             self.tr('执行'),
             FIF.SPEED_HIGH,
             self.tr("兑换码"),
-            "redemption_code"
+            "redemption_code",
+            self
         )
 
         self.__initWidget()
@@ -86,7 +87,7 @@ class ToolsInterface(ScrollArea):
             if fps == 120:
                 set_game_fps(60)
                 InfoBar.success(
-                    title=self.tr('恢复60成功(＾∀＾●)'),
+                    title=self.tr('恢复60成功 (＾∀＾●)'),
                     content="",
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -97,7 +98,7 @@ class ToolsInterface(ScrollArea):
             else:
                 set_game_fps(120)
                 InfoBar.success(
-                    title=self.tr('解锁120成功(＾∀＾●)'),
+                    title=self.tr('解锁120成功 (＾∀＾●)'),
                     content="",
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -107,12 +108,12 @@ class ToolsInterface(ScrollArea):
                 )
         except:
             InfoBar.warning(
-                title=self.tr('解锁失败(╥╯﹏╰╥)'),
-                content="",
+                title=self.tr('解锁失败'),
+                content="可尝试手动切换一次游戏帧率后重试",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=1000,
+                duration=5000,
                 parent=self
             )
 

@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
-from qfluentwidgets import SettingCard, FluentIconBase
+from qfluentwidgets import SettingCard, FluentIconBase, InfoBar, InfoBarPosition
 from .messagebox_custom import MessageBoxEdit, MessageBoxEditMultiple, MessageBoxDate, MessageBoxInstance, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends
 from tasks.base.tasks import start_task
 from module.config import cfg
@@ -39,6 +39,7 @@ class PushSettingCardStr(PushSettingCard):
 class PushSettingCardCode(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = '\n'.join(cfg.get_value(configname))
+        self.parent = parent
         super().__init__(text, icon, title, configname, "批量使用兑换码，每行一个，自动过滤空格等无效字符", parent)
         self.button.clicked.connect(self.__onclicked)
 
@@ -52,6 +53,16 @@ class PushSettingCardCode(PushSettingCard):
             self.configvalue = '\n'.join(code)
             if code != []:
                 start_task("redemption")
+            else:
+                InfoBar.warning(
+                    self.tr('兑换码为空'),
+                    self.tr(''),
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self.parent
+                )
 
 
 class PushSettingCardEval(PushSettingCard):

@@ -12,6 +12,7 @@
 
 ### 修复
 - “日常任务” 会在每次启动时被错误清空
+- “自动对话” 状态不会变化和速度过慢
 - 降低角色头像匹配阈值 [#356](https://github.com/moesnow/March7thAssistant/issues/356)
 
 ## v2.6.3
