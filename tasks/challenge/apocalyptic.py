@@ -44,11 +44,11 @@ class Apocalyptic(BaseChallenge):
         time.sleep(2)
         if auto.find_element("已更新", "text", max_retries = 10, crop=(0,0,1,1), include=True):
             auto.click_element("前往挑战", "text", max_retries=10, crop=(0,0,1,1),include=True)
-            log.info("当期buff页面,进入游戏 text")
+            # log.info("当期buff页面,进入游戏 text")
             time.sleep(2)
         
         if auto.find_element("选择最高解锁关卡", "text", include=True):
-            log.info(f"之前打过，最高记录部分")
+            # log.info(f"之前打过，最高记录部分")
             result = auto.find_element("03", "text")
             if result:
                 self.level_range[0] = 3
@@ -119,7 +119,7 @@ class Apocalyptic(BaseChallenge):
         _, _, width, height = Screenshot.get_window_region(window)
         crop = (top_left[0] / width, top_left[1] / height, 278.0 / 1920, 123.0 / 1080)
         count = auto.find_element("./assets/images/purefiction/star.png", "image_count", 0.5, crop=crop, pixel_bgr=[95, 198, 255])
-        log.info(f"star count:{count}")
+        # log.info(f"star count:{count}")
         return count if count is not None and 0 <= count <= 3 else None
 
     def start_challenge(self, level):
@@ -139,10 +139,10 @@ class Apocalyptic(BaseChallenge):
                 return False  
               
             if not auto.click_element(f"下一步", "text", max_retries=20, crop=(0,0,1,1), include=True):
-                log.error("下一步失败")
+                # log.error("下一步失败")
                 return False                        
             if not auto.click_element(f"前往编队", "text", max_retries=20, crop=(0,0,1,1), include=True):    
-                log.error("前往编队失败")
+                # log.error("前往编队失败")
                 return False
 
             # 准备关卡
@@ -195,7 +195,7 @@ class Apocalyptic(BaseChallenge):
         log.info(top_left)        
         time.sleep(0.5)
         if auto.click_element('./assets/images/apocalyptic/team.png', "image", 0.5, max_retries=20, crop=(top_left[0] / 1920, top_left[1] / 1080, 792.0 / 1920, 254.0 / 1080)):
-            log.info("选择角色")
+            # log.info("选择角色")
             time.sleep(1)
             auto.take_screenshot(crop=(30 / 1920, 110 / 1080, 550 / 1920, 850 / 1080))
             # 选择角色

@@ -49,7 +49,7 @@ class MainWindow(MSFluentWindow):
         self.setResizeEnabled(False)
         self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
-        self.resize(1000, 640)
+        self.resize(960, 640)
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
         self.setWindowTitle("March7th Assistant")
 
