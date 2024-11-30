@@ -8,7 +8,7 @@ A：将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然
 
 Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删除排除项` 可以参考 [#373](https://github.com/moesnow/March7thAssistant/issues/373) 图示操作
 
-火绒：`主界面` → `右上角菜单` → `信任区` 可以参考 [教程](https://cs.xunyou.com/html/282/15252.shtml) 图示操作
+火绒安全软件：`主界面` → `右上角菜单` → `信任区` 可以参考 [教程](https://cs.xunyou.com/html/282/15252.shtml) 图示操作
 
 ### Q：缺少新增加的副本？逐光捡金缺少新角色？
 
