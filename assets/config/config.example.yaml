@@ -195,7 +195,7 @@ purefiction_team2: # 队伍2配置。
 purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳，用于记录和控制运行频率。
 
 # 末日幻影配置
-apocalyptic_enable: true # 是否启用末日幻影功能。true 开启，false 关闭。
+apocalyptic_enable: false # 是否启用末日幻影功能。true 开启，false 关闭。
 apocalyptic_level: # 末日幻影关卡范围，设置允许尝试的关卡等级范围。
   - 3
   - 4
