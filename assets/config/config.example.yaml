@@ -141,7 +141,7 @@ universe_difficulty: 0 # 模拟宇宙使用的难度
 # 忘却之庭配置
 forgottenhall_enable: false # 是否启用混沌回忆功能。true 开启，false 关闭。
 forgottenhall_level: # 混沌回忆关卡范围，设置允许尝试的关卡等级范围。
-  - 7
+  - 9
   - 12
 # 混沌回忆队伍配置，详细配置每个队伍成员及其秘技使用次数。
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色。
@@ -195,7 +195,7 @@ purefiction_team2: # 队伍2配置。
 purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳，用于记录和控制运行频率。
 
 # 末日幻影配置
-apocalyptic_enable: true # 是否启用末日幻影功能。true 开启，false 关闭。
+apocalyptic_enable: false # 是否启用末日幻影功能。true 开启，false 关闭。
 apocalyptic_level: # 末日幻影关卡范围，设置允许尝试的关卡等级范围。
   - 3
   - 4

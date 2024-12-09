@@ -2,11 +2,13 @@
 
 视频教程 [https://search.bilibili.com/all?keyword=三月七小助手](https://search.bilibili.com/all?keyword=%E4%B8%89%E6%9C%88%E4%B8%83%E5%B0%8F%E5%8A%A9%E6%89%8B)
 
-### Q：小助手启动慢/总是被杀毒软件删除怎么办？
+### Q：小助手启动慢/出现错误 2147942402/总是被杀毒软件删除 怎么办？
 
-A：将`小助手文件夹`加入杀毒软件排除项，然后使用 `March7th Updater.exe` 自动更新或手动更新一次。
+A：将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后使用 `March7th Updater.exe` 自动更新或手动更新一次。
 
 Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删除排除项` 可以参考 [#373](https://github.com/moesnow/March7thAssistant/issues/373) 图示操作
+
+火绒安全软件：`主界面` → `右上角菜单` → `信任区` 可以参考 [教程](https://cs.xunyou.com/html/282/15252.shtml) 图示操作
 
 ### Q：缺少新增加的副本？逐光捡金缺少新角色？
 

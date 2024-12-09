@@ -27,18 +27,18 @@ class RewardManager:
         }
 
         self.reward_mapping = {
-            "mail": ("./assets/images/share/menu/mail_reward.png", 4000000),
-            "assist": ("./assets/images/share/menu/assist_reward.png", 2000000),
-            "dispatch": ("./assets/images/share/menu/dispatch_reward.png", 2000000),
-            "quest": ("./assets/images/share/menu/quest_reward.png", 2000000),
-            "srpass": ("./assets/images/share/menu/pass_reward.png", 2000000),
+            "mail": ("./assets/images/share/menu/mail_reward.png", 3000000, (0.95, 0.1, 0.05, 0.6)),
+            "assist": ("./assets/images/share/menu/assist_reward.png", 2000000, self.crop),
+            "dispatch": ("./assets/images/share/menu/dispatch_reward.png", 2000000, self.crop),
+            "quest": ("./assets/images/share/menu/quest_reward.png", 2000000, self.crop),
+            "srpass": ("./assets/images/share/menu/pass_reward.png", 2000000, self.crop),
         }
 
     def check_and_collect_rewards(self):
         log.hr("开始领取奖励", 0)
 
-        for reward_type, (image_path, confidence) in self.reward_mapping.items():
-            if self._find_reward(image_path, confidence):
+        for reward_type, (image_path, confidence, crop) in self.reward_mapping.items():
+            if self._find_reward(image_path, confidence, crop):
                 self.reward_instances[reward_type].start()
             else:
                 reward_name = self._get_reward_name(reward_type)
@@ -51,8 +51,8 @@ class RewardManager:
         log.hr(f"开始领取{reward_name}奖励", 0)
 
         if reward_type in self.reward_mapping:
-            image_path, confidence = self.reward_mapping[reward_type]
-            if self._find_reward(image_path, confidence):
+            image_path, confidence, crop = self.reward_mapping[reward_type]
+            if self._find_reward(image_path, confidence, crop):
                 self.reward_instances[reward_type].start()
             else:
                 log.info(f"未检测到{reward_name}奖励")
@@ -65,9 +65,9 @@ class RewardManager:
         instance = self.reward_instances.get(reward_type)
         return instance.name if instance else "未知"
 
-    def _find_reward(self, image_path, confidence):
+    def _find_reward(self, image_path, confidence, crop):
         screen.change_to('menu')
-        return auto.find_element(image_path, "image", confidence, crop=self.crop)
+        return auto.find_element(image_path, "image", confidence, crop=crop)
 
 
 def start():

@@ -1,0 +1,84 @@
+PivotItem {
+    padding: 10px 12px;
+    color: black;
+    background-color: transparent;
+    border: none;
+    outline: none;
+    margin: 0;
+}
+
+PivotItem[isSelected=true]:hover {
+    color: rgba(0, 0, 0, 0.63);
+}
+
+PivotItem[isSelected=true]:pressed {
+    color: rgba(0, 0, 0, 0.53);
+}
+
+PivotItem[isSelected=false]:pressed {
+    color: rgba(0, 0, 0, 0.75);
+}
+
+PivotItem[hasIcon=false] {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+PivotItem[hasIcon=true] {
+    padding-left: 36px;
+    padding-right: 12px;
+}
+
+Pivot {
+    border: none;
+    background-color: transparent;
+}
+
+#view {
+    background-color: transparent;
+}
+
+SegmentedToolItem {
+    padding: 5px 9px 6px 8px;
+}
+
+SegmentedWidget, SegmentedToolWidget {
+    background-color: rgba(0, 0, 0, 0.0241);
+    border: 1px solid rgba(0, 0, 0, 0.0578);
+    border-radius: 6px;
+}
+
+SegmentedItem[isSelected=false],
+SegmentedToolItem[isSelected=false] {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    background-color: transparent;
+    border: none;
+    border-radius: 6px;
+    margin: 3px 0px;
+}
+
+SegmentedItem[isSelected=false]:hover,
+SegmentedToolItem[isSelected=false]:hover {
+    background-color: rgba(0, 0, 0, 9);
+}
+
+SegmentedItem[isSelected=false]:pressed,
+SegmentedToolItem[isSelected=false]:pressed {
+    background-color: rgba(0, 0, 0, 6);
+}
+
+SegmentedItem[isSelected=true],
+SegmentedToolItem[isSelected=true] {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    margin: 0px;
+    background-color: transparent;
+}
+
+SegmentedItem[isSelected=true]:hover,
+SegmentedItem[isSelected=true]:pressed,
+SegmentedToolItem[isSelected=true]:hover,
+SegmentedToolItem[isSelected=true]:pressed {
+    color: black;
+}

@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import ImageTk, Image
 import pyperclip
+import pyautogui
 import os
 
 
@@ -29,6 +30,21 @@ class ScreenshotApp:
         self.root.iconbitmap("./assets/logo/March7th.ico")
         self.root.geometry(f"{screenshot.width}x{screenshot.height+60}")
         self.screenshot = screenshot
+
+        self.screen_resolution = pyautogui.size()
+        screen_width, screen_height = self.screen_resolution
+        if screen_width <= 1920 and screen_height <= 1080:
+            # 最大化窗口
+            self.root.state('zoomed')
+        # 设置窗口始终位于最前面
+        self.root.attributes("-topmost", 1)
+
+        # 通过延时恢复原始状态（不再保持在最前面）
+        self.root.after(100, self.remove_topmost)
+
+    def remove_topmost(self):
+        # 取消保持最前面状态
+        self.root.attributes("-topmost", 0)
 
     def setup_canvas(self):
         """

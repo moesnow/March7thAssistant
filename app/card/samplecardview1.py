@@ -54,7 +54,7 @@ class SampleCard(CardWidget):
         self.titleLabel.setObjectName('titleLabel')
         # self.contentLabel.setObjectName('contentLabel')
 
-    def showBottomTeachingTip(self):
+    def showSuccessTip(self):
         if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
             disclaimer(self)
         TeachingTip.create(
@@ -68,16 +68,29 @@ class SampleCard(CardWidget):
             parent=self
         )
 
+    def showErrorTip(self, e):
+        TeachingTip.create(
+            target=self.iconWidget,
+            icon=InfoBarIcon.ERROR,
+            title='执行出错',
+            content=str(e),
+            isClosable=False,
+            tailPosition=TeachingTipTailPosition.BOTTOM,
+            duration=5000,
+            parent=self
+        )
+
     def createMenu(self, pos):
         menu = RoundMenu(parent=self)
 
         def create_triggered_function(task):
             def triggered_function():
-                self.showBottomTeachingTip()
                 try:
                     task()
+                    self.showSuccessTip()
                 except Exception as e:
                     log.warning(f"执行失败：{e}")
+                    self.showErrorTip(e)
             return triggered_function
 
         for index, (key, value) in enumerate(self.action.items()):
@@ -90,11 +103,12 @@ class SampleCard(CardWidget):
     def mouseReleaseEvent(self, e):
         super().mouseReleaseEvent(e)
         if callable(self.action):
-            self.showBottomTeachingTip()
             try:
                 self.action()
+                self.showSuccessTip()
             except Exception as e:
                 log.warning(f"执行失败：{e}")
+                self.showErrorTip(e)
         elif isinstance(self.action, dict):
             self.createMenu(e.globalPos())
 

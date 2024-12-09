@@ -56,7 +56,8 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_${{ github.ref_name }}
-          Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}.zip -Force
+          # Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}.zip -Force
+          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_${{ github.ref_name }}.zip .\dist\March7thAssistant_${{ github.ref_name }}\
           .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_${{ github.ref_name }}.7z .\dist\March7thAssistant_${{ github.ref_name }}\
 
       # 步骤7：移动第三方库到dist目录
@@ -71,7 +72,8 @@ jobs:
       - name: Create full zip archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}_full\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}_full.zip -Force
+          # Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}_full\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}_full.zip -Force
+          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_${{ github.ref_name }}_full.zip .\dist\March7thAssistant_${{ github.ref_name }}_full\
           .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_${{ github.ref_name }}_full.7z .\dist\March7thAssistant_${{ github.ref_name }}_full\
 
       # 步骤9：创建GitHub发布

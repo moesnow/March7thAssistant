@@ -50,6 +50,7 @@ class AutoPlot:
         status_color = "green" if is_clicking else "red"
         if hasattr(self, 'status_label'):
             self.status_label.config(text=status_text, fg=status_color)
+            self.root.update()  # 强制刷新界面
         else:
             self.status_label = tk.Label(self.root, text=status_text, fg=status_color)
             self.status_label.pack()
@@ -76,10 +77,10 @@ class AutoPlot:
                 if auto.find_element(img, "image", 0.9, take_screenshot=False):
                     self.start_clicking()
                     auto.click_element(self.select_img, "image", 0.9, crop=(1290.0 / 1920, 442.0 / 1080, 74.0 / 1920, 400.0 / 1080))
-                    break
-            self.stop_clicking()
-        else:
-            self.stop_clicking()
+                    self.root.after(500, self.check_game_status)
+                    return
+
+        self.stop_clicking()
 
         # 每隔一段时间重新检查游戏状态
         self.root.after(500, self.check_game_status)
