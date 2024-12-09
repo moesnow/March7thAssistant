@@ -82,7 +82,7 @@ class Apocalyptic(BaseChallenge):
             if not self.start_challenge(level):
                 log.error(f"第{level}层挑战失败")
                 break
-            time.sleep(1)
+            time.sleep(3)
             if auto.find_element("3星通关所有", 'text', include=True):
                 auto.click_element("确认", 'text', max_retries=10, include=True)
             time.sleep(2)
