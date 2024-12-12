@@ -10,6 +10,11 @@ resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
 graphics_value_name = "GraphicsSettings_Model_h2986158309"
 
 
+def get_graphics_setting() -> Optional[bytes]:
+    value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name)
+    return value if value else None
+
+
 def get_game_path() -> Optional[str]:
     """
     获取游戏路径函数，尝试从注册表中读取指定键值并验证游戏可执行文件是否存在。

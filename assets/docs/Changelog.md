@@ -1,6 +1,13 @@
 # 更新日志
 
-## v2.7.1
+## v2024.12.12
+
+### 更新
+- 支持 “触屏模式（云游戏移动端 UI）” 启动游戏（工具箱）
+- 修复更换新壁纸 “愿今夜无梦” 后无法进入邮箱
+- 修复无法识别并跳过末日幻影快速挑战提示框 [#406](https://github.com/moesnow/March7thAssistant/issues/406) 
+
+## v2.7.0
 
 ### 新功能
 - 支持 “星期日” 、 “灵砂”
@@ -15,7 +22,6 @@
 - “日常任务” 会在每次启动时被错误清空
 - “自动对话” 状态不会变化和速度过慢
 - 降低角色头像匹配阈值 [#356](https://github.com/moesnow/March7thAssistant/issues/356)
-- 更换新壁纸 “愿今夜无梦” 后无法进入邮箱
 
 ## v2.6.3
 
@@ -156,7 +162,7 @@
 - “任务完成后” 新增 “注销” 选项
 - 工具箱新增帧率解锁 [#161](https://github.com/moesnow/March7thAssistant/pull/161)
 - “启用自动修改分辨率” 选项更改为 “启用自动修改分辨率并关闭自动 HDR” [#156](https://github.com/moesnow/March7thAssistant/pull/156)
-- 新增 [OneBot](https://onebot.dev)/[OpenShamrock](https://whitechi73.github.io/OpenShamrock/) 推送方式（QQ 机器人）
+- 新增 [OneBot](https://onebot.dev) 推送方式（QQ 机器人）
 - 企业微信应用推送方式支持发送图片
 
 ### 修复

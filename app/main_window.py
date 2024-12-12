@@ -121,26 +121,26 @@ class MainWindow(MSFluentWindow):
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
-                    duration=1000,
+                    duration=2000,
                     parent=self
                 )
             else:
                 InfoBar.warning(
-                    title=self.tr('游戏路径配置错误(╥╯﹏╰╥)\n请在“设置”-->“程序”中配置'),
-                    content="",
+                    title=self.tr('游戏路径配置错误(╥╯﹏╰╥)'),
+                    content="请在“设置”-->“程序”中配置",
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
                     duration=5000,
                     parent=self
                 )
-        except:
+        except Exception as e:
             InfoBar.warning(
                 title=self.tr('启动失败(╥╯﹏╰╥)'),
-                content="",
+                content=str(e),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=1000,
+                duration=5000,
                 parent=self
             )

@@ -308,9 +308,9 @@ notify_bark_url: "" # 可选参数，自定义 Bark 服务的 URL。
 notify_bark_copy: "" # 可选参数
 notify_bark_autocopy: "" # 可选参数
 
-# Email/SMTP 邮箱通知配置
+# SMTP 邮箱通知配置
 # 支持发送截图，注意部分邮箱密码部分需要填写授权码（比如 QQ邮箱）
-notify_smtp_enable: false # 是否启用 Email/SMTP 邮箱通知。true 开启，false 关闭。
+notify_smtp_enable: false # 是否启用 SMTP 邮箱通知。true 开启，false 关闭。
 notify_smtp_host: "" # SMTP 服务器地址。
 notify_smtp_user: "" # SMTP 用户名/邮箱。
 notify_smtp_password: "" # SMTP 密码或授权码。
@@ -345,11 +345,11 @@ notify_wechatworkapp_touser: "" # 可选参数，企业微信应用通知的目�
 notify_wechatworkbot_enable: false # 是否启用企业微信机器人通知。true 开启，false 关闭。
 notify_wechatworkbot_key: "" # 企业微信机器人的 Key。
 
-# OneBot/OpenShamrock 通知配置（QQ 机器人）
+# OneBot 通知配置（QQ 机器人）
+# 已测试 NapCatQQ(https://github.com/NapNeko/NapCatQQ) 和 OpenShamrock(https://github.com/whitechi73/OpenShamrock) 可用
 # 支持发送截图
-# https://github.com/whitechi73/OpenShamrock
-notify_onebot_enable: false # 是否启用 OneBot/OpenShamrock 通知。true 开启，false 关闭。
-notify_onebot_endpoint: "" # OneBot/OpenShamrock 的服务端点 URL，例如 http://127.0.0.1:5700
+notify_onebot_enable: false # 是否启用 OneBot 通知。true 开启，false 关闭。
+notify_onebot_endpoint: "" # OneBot 的服务端点 URL，例如 http://127.0.0.1:3000
 notify_onebot_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
 notify_onebot_token: "" # 可选参数，验证请求的 Access Token。
 notify_onebot_user_id: "" # 可选参数，私聊消息的接收用户 ID。
