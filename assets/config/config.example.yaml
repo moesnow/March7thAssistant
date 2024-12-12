@@ -128,7 +128,7 @@ universe_enable: false # 是否启用模拟宇宙功能。true 开启，false �
 universe_operation_mode: exe # 模拟宇宙运行方式，可选 "源码"（source）或 "集成"（exe）。
 universe_category: divergent # 模拟宇宙类型，可选 "差分宇宙"（divergent）或 "模拟宇宙"（universe）。
 universe_disable_gpu: false # 是否禁用GPU加速。true 开启，false 关闭。
-universe_bonus_enable: false # 是否领取沉浸奖励。true 开启，false 关闭。
+universe_bonus_enable: false # 类别为“模拟宇宙”时，自动领取沉浸奖励。类别为“差分宇宙”时，在领取积分奖励后自动执行饰品提取消耗沉浸器。true 开启，false 关闭。
 universe_frequency: weekly # 模拟宇宙运行频率，可选 "每周"（weekly）或 "每天"（daily）。
 universe_count: 34 # 模拟宇宙运行次数，设置每次启动时尝试运行的次数。
 universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径，指向模拟宇宙脚本或程序的位置。

@@ -378,8 +378,8 @@ class SettingInterface(ScrollArea):
         )
         self.universeBonusEnableCard = SwitchSettingCard1(
             FIF.IOT,
-            self.tr('领取沉浸奖励'),
-            None,
+            self.tr('领取沉浸奖励/执行饰品提取'),
+            "类别为“模拟宇宙”时，自动领取沉浸奖励。类别为“差分宇宙”时，在领取积分奖励后自动执行饰品提取消耗沉浸器。",
             "universe_bonus_enable"
         )
         self.universeFrequencyCard = ComboBoxSettingCard2(

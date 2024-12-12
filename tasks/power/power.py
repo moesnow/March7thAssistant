@@ -67,8 +67,7 @@ class Power:
         screen.change_to("guide3")
 
         immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
-        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=[
-            '+', '米'], max_retries=3)
+        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
         if "/8" not in text:
             log.error("沉浸器数量识别失败")
             return
