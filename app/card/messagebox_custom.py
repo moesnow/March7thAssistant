@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QLabel, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit, BodyLabel, FluentStyleSheet, TextEdit
 from typing import Optional
+from module.config import cfg
 import datetime
 import json
 
@@ -187,6 +188,37 @@ class MessageBoxInstance(MessageBox):
 
         self.titleLabelInfo = QLabel("说明：未更新副本支持手动输入名称，清体力是根据选择的副本类型来判断的,\n此处设置的副本名称也会用于完成活动或每日实训对应的任务,\n如果即使有对应的任务,你也不希望完成,可以将对应的副本名称改为“无”", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+
+class MessageBoxNotify(MessageBox):
+    def __init__(self, title: str, configlist: dict, parent=None):
+        super().__init__(title.capitalize(), "", parent)
+        self.configlist = configlist
+
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.yesButton.setText('确认')
+        self.cancelButton.setText('取消')
+
+        self.buttonGroup.setMinimumWidth(480)
+
+        font = QFont()
+        font.setPointSize(10)
+        self.textLayout.setSpacing(4)
+
+        self.lineEdit_dict = {}
+        for name, config in self.configlist.items():
+            titleLabel = QLabel(name.capitalize(), parent)
+            titleLabel.setFont(font)
+            self.textLayout.addWidget(titleLabel, 0, Qt.AlignTop)
+
+            lineEdit = LineEdit(self)
+            lineEdit.setText(str(cfg.get_value(config)))
+            lineEdit.setFont(font)
+
+            self.textLayout.addWidget(lineEdit, 0, Qt.AlignTop)
+            self.lineEdit_dict[config] = lineEdit
 
 
 class MessageBoxNotifyTemplate(MessageBox):

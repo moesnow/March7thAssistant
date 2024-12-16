@@ -2,7 +2,8 @@ from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, Indicator
 from typing import Union
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
-
+from PyQt5.QtWidgets import QPushButton
+from .messagebox_custom import MessageBoxNotify
 from module.config import cfg
 from utils.schedule import create_task, is_task_exists, delete_task
 import os
@@ -60,6 +61,62 @@ class SwitchSettingCard1(SettingCard):
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
+
+    def __onCheckedChanged(self, isChecked: bool):
+        """ switch button checked state changed slot """
+        self.setValue(isChecked)
+        cfg.set_value(self.configname, isChecked)
+
+    def setValue(self, isChecked: bool):
+        self.switchButton.setChecked(isChecked)
+        self.switchButton.setText(self.tr('开') if isChecked else self.tr('关'))
+
+
+class SwitchSettingCardNotify(SettingCard):
+    """ Setting card with switch button """
+
+    checkedChanged = pyqtSignal(bool)
+
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, name, configname: str = None, parent=None):
+        super().__init__(icon, title, None, parent)
+        self.name = name
+        self.configname = configname
+
+        self.config_list = {}
+        for key, _ in cfg.config.items():
+            if key.startswith(f"notify_{name}") and (not key.endswith("_enable")):
+                config_name = key[len(f"notify_{name}_"):]
+                self.config_list[config_name] = key
+
+        if len(self.config_list) > 0:
+            self.button = QPushButton("配置", self)
+            self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
+            self.hBoxLayout.addSpacing(10)
+            self.button.clicked.connect(self._onClicked)
+
+        self.switchButton = SwitchButton(self.tr('关'), self, IndicatorPosition.RIGHT)
+
+        self.setValue(cfg.get_value(self.configname))
+
+        # add switch button to layout
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
+
+    def _onClicked(self):
+        def process_lineedit_text(input_text):
+            try:
+                # 尝试通过 eval 转换
+                result = eval(input_text)
+            except (SyntaxError, NameError, ValueError):
+                # 如果转换失败，返回原字符串
+                result = input_text
+            return result
+        message_box = MessageBoxNotify(self.name, self.config_list, self.window())
+        if message_box.exec():
+            for config, lineedit in message_box.lineEdit_dict.items():
+                cfg.set_value(config, process_lineedit_text(lineedit.text()))
 
     def __onCheckedChanged(self, isChecked: bool):
         """ switch button checked state changed slot """

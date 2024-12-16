@@ -321,6 +321,26 @@ notify_smtp_ssl: "" # 是否使用 SSL 连接 SMTP 服务器。默认为 True，
 notify_smtp_starttls: "" # 是否使用 SSL 连接 SMTP 服务器。默认为 False，可设置为 True 关闭。
 notify_smtp_ssl_unverified: "" # 是否使用不经验证的 SSL 连接。默认为 False，可设置为 True 关闭。除非您使用自签名邮箱,否则不推荐启用。
 
+# OneBot 通知配置（QQ 机器人）
+# 已测试 NapCatQQ(https://github.com/NapNeko/NapCatQQ) 和 OpenShamrock(https://github.com/whitechi73/OpenShamrock) 可用
+# 支持发送截图
+notify_onebot_enable: false # 是否启用 OneBot 通知。true 开启，false 关闭。
+notify_onebot_endpoint: "" # OneBot 的服务端点 URL，例如 http://127.0.0.1:3000
+notify_onebot_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
+notify_onebot_token: "" # 可选参数，验证请求的 Access Token。
+notify_onebot_user_id: "" # 可选参数，私聊消息的接收用户 ID。
+notify_onebot_group_id: "" # 可选参数，群消息的接收群组 ID。
+
+# Go-cqhttp 通知配置（已停止维护）
+# 支持发送截图
+# https://github.com/Mrs4s/go-cqhttp
+notify_gocqhttp_enable: false # 是否启用 Go-cqhttp 通知。true 开启，false 关闭。
+notify_gocqhttp_endpoint: "" # Go-cqhttp 的服务端点 URL。
+notify_gocqhttp_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
+notify_gocqhttp_token: "" # 可选参数，验证请求的 Access Token。
+notify_gocqhttp_user_id: "" # 可选参数，私聊消息的接收用户 ID。
+notify_gocqhttp_group_id: "" # 可选参数，群消息的接收群组 ID。
+
 # 钉钉通知配置
 notify_dingtalk_enable: false # 是否启用钉钉通知。true 开启，false 关闭。
 notify_dingtalk_token: "" # 钉钉机器人的 Access Token。
@@ -344,26 +364,6 @@ notify_wechatworkapp_touser: "" # 可选参数，企业微信应用通知的目�
 # 企业微信机器人通知配置
 notify_wechatworkbot_enable: false # 是否启用企业微信机器人通知。true 开启，false 关闭。
 notify_wechatworkbot_key: "" # 企业微信机器人的 Key。
-
-# OneBot 通知配置（QQ 机器人）
-# 已测试 NapCatQQ(https://github.com/NapNeko/NapCatQQ) 和 OpenShamrock(https://github.com/whitechi73/OpenShamrock) 可用
-# 支持发送截图
-notify_onebot_enable: false # 是否启用 OneBot 通知。true 开启，false 关闭。
-notify_onebot_endpoint: "" # OneBot 的服务端点 URL，例如 http://127.0.0.1:3000
-notify_onebot_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
-notify_onebot_token: "" # 可选参数，验证请求的 Access Token。
-notify_onebot_user_id: "" # 可选参数，私聊消息的接收用户 ID。
-notify_onebot_group_id: "" # 可选参数，群消息的接收群组 ID。
-
-# Go-cqhttp 通知配置（已停止维护）
-# 支持发送截图
-# https://github.com/Mrs4s/go-cqhttp
-notify_gocqhttp_enable: false # 是否启用 Go-cqhttp 通知。true 开启，false 关闭。
-notify_gocqhttp_endpoint: "" # Go-cqhttp 的服务端点 URL。
-notify_gocqhttp_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
-notify_gocqhttp_token: "" # 可选参数，验证请求的 Access Token。
-notify_gocqhttp_user_id: "" # 可选参数，私聊消息的接收用户 ID。
-notify_gocqhttp_group_id: "" # 可选参数，群消息的接收群组 ID。
 
 # Gotify 通知配置
 notify_gotify_enable: false # 是否启用 Gotify 通知。true 开启，false 关闭。
