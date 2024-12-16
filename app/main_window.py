@@ -136,7 +136,7 @@ class MainWindow(MSFluentWindow):
                 )
         except Exception as e:
             InfoBar.warning(
-                title=self.tr('启动失败(╥╯﹏╰╥)'),
+                title=self.tr('启动失败'),
                 content=str(e),
                 orient=Qt.Horizontal,
                 isClosable=True,

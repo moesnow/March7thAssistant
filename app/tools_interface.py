@@ -121,7 +121,7 @@ class ToolsInterface(ScrollArea):
         except:
             InfoBar.warning(
                 title=self.tr('解锁失败'),
-                content="可尝试手动切换一次游戏帧率后重试",
+                content="请将游戏图像质量修改为自定义后重试",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -144,7 +144,7 @@ class ToolsInterface(ScrollArea):
                 return
             graphics_setting = get_graphics_setting()
             if graphics_setting is None:
-                raise Exception("无法获取图形设置")
+                raise Exception("请将游戏图像质量修改为自定义后重试")
             args = ["-is_cloud", "1", "-platform_type", "CLOUD_WEB_TOUCH", "-graphics_setting", base64.b64encode(graphics_setting).decode("utf-8")]
             subprocess.Popen([cfg.game_path] + args)
             pyperclip.copy(f'"{cfg.game_path}" {" ".join(args)}')
@@ -159,7 +159,7 @@ class ToolsInterface(ScrollArea):
             )
         except Exception as e:
             InfoBar.warning(
-                title=self.tr('启动失败(╥╯﹏╰╥)'),
+                title=self.tr('启动失败'),
                 content=str(e),
                 orient=Qt.Horizontal,
                 isClosable=True,
