@@ -608,7 +608,7 @@ class SettingInterface(ScrollArea):
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             self.tr('启用自动战斗检测'),
-            "只对清体力和逐光捡金场景生效",
+            "只对清体力和逐光捡金场景生效，并在启动游戏前自动检测并修改注册表值",
             "auto_battle_detect_enable"
         )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(

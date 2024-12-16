@@ -2,7 +2,7 @@ import time
 import pyautogui
 from typing import Literal, Optional
 from utils.gamecontroller import GameController
-from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution
+from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution, get_auto_battle_open_setting, get_is_save_battle_speed_setting, set_auto_battle_open_setting, set_is_save_battle_speed_setting
 from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
 from utils.logger.logger import Logger
 
@@ -21,6 +21,9 @@ class StarRailController(GameController):
             if self.game_resolution:
                 screen_width, screen_height = self.screen_resolution
                 is_fullscreen = False if screen_width > width or screen_height > height else True
+                if self.game_resolution[0] == width and self.game_resolution[1] == height and self.game_resolution[2] == is_fullscreen:
+                    self.game_resolution = None
+                    return
                 set_game_resolution(width, height, is_fullscreen)
                 self.log_debug(f"修改游戏分辨率: {self.game_resolution[0]}x{self.game_resolution[1]} ({'全屏' if self.game_resolution[2] else '窗口'}) --> {width}x{height} ({'全屏' if is_fullscreen else '窗口'})")
         except FileNotFoundError:
@@ -42,6 +45,9 @@ class StarRailController(GameController):
         status_map = {"enable": "启用", "disable": "禁用", "unset": "未设置"}
         try:
             self.game_auto_hdr = get_game_auto_hdr(self.game_path)
+            if self.game_auto_hdr == status:
+                self.game_auto_hdr = None
+                return
             set_game_auto_hdr(self.game_path, status)
             self.log_debug(f"修改游戏自动 HDR: {status_map.get(self.game_auto_hdr)} --> {status_map.get(status)}")
         except Exception as e:
@@ -115,3 +121,13 @@ class StarRailController(GameController):
             else:
                 self.log_debug(f"游戏分辨率: {window_width}x{window_height}")
             self.log_debug(f"桌面分辨率: {screen_width}x{screen_height}")
+
+    def change_auto_battle(self, status: bool) -> None:
+        auto_battle_status = get_auto_battle_open_setting()
+        if auto_battle_status != None and auto_battle_status != status:
+            set_auto_battle_open_setting(status)
+            self.log_debug(f"修改自动战斗状态: {'开启' if auto_battle_status else '关闭'} --> {'开启' if status else '关闭'}")
+        save_battle_status = get_is_save_battle_speed_setting()
+        if save_battle_status != None and save_battle_status != status:
+            set_is_save_battle_speed_setting(status)
+            self.log_debug(f"修改沿用自动战斗设置: {'启用' if save_battle_status else '禁用'} --> {'启用' if status else '禁用'}")

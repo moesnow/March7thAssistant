@@ -77,6 +77,9 @@ def start_game():
                     starrail.change_resolution(1920, 1080)
                     starrail.change_auto_hdr("disable")
 
+                if cfg.auto_battle_detect_enable:
+                    starrail.change_auto_battle(True)
+
                 if not starrail.start_game():
                     raise Exception("启动游戏失败")
                 time.sleep(10)
