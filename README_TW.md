@@ -43,7 +43,7 @@
 
 ## 界面展示
 
-![README](assets/screenshot/README1.png)
+![README](assets/screenshot/README.png)
 
 ## 注意事項
 

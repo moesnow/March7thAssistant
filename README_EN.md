@@ -44,7 +44,7 @@ For more details, refer to the [configuration file](assets/config/config.example
 
 ## Interface Showcase
 
-![README](assets/screenshot/README1.png)
+![README](assets/screenshot/README.png)
 
 ## Important Notes
 
