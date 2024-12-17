@@ -270,7 +270,7 @@ class SettingInterface(ScrollArea):
         self.activityPlanarFissureEnableCard = SwitchSettingCard1(
             FIF.CALORIES,
             self.tr('启用位面分裂'),
-            "存在双倍次数时体力优先「合成沉浸器」",
+            "存在双倍次数时体力优先「饰品提取」",
             "activity_planarfissure_enable"
         )
 

@@ -18,8 +18,8 @@ class ActivityManager:
         self.gardenofplenty = GardenOfPlenty("花藏繁生", cfg.activity_gardenofplenty_enable, cfg.activity_gardenofplenty_instance_type, cfg.instance_names)
         self.realmofthestrange = RealmOfTheStrange("异器盈界", cfg.activity_realmofthestrange_enable, cfg.instance_names)
         self.realmofthestrange3 = RealmOfTheStrange("异器盈界300%", cfg.activity_realmofthestrange_enable, cfg.instance_names)
-        self.planarfissure = PlanarFissure("位面分裂", cfg.activity_planarfissure_enable)
-        self.planarfissure3 = PlanarFissure("位面分裂300%", cfg.activity_planarfissure_enable)
+        self.planarfissure = PlanarFissure("位面分裂", cfg.activity_planarfissure_enable, cfg.instance_names)
+        self.planarfissure3 = PlanarFissure("位面分裂300%", cfg.activity_planarfissure_enable, cfg.instance_names)
 
         self.activity_functions = {
             "巡星之礼": self.giftofodyssey.start,
