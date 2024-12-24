@@ -17,6 +17,7 @@ from .setting_interface import SettingInterface
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
+from .tools.check_theme_change import checkThemeChange
 from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
@@ -109,9 +110,15 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
 
         self.splashScreen.finish()
+        self.themeListener = checkThemeChange(self)
 
         if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
             disclaimer(self)
+
+    def closeEvent(self, e):
+        self.themeListener.terminate()
+        self.themeListener.deleteLater()
+        super().closeEvent(e)
 
     def startGame(self):
         game = GameController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass')
