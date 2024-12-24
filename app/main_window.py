@@ -38,16 +38,17 @@ class MainWindow(MSFluentWindow):
         checkAnnouncement(self)
 
     def initWindow(self):
+        self.setMicaEffectEnabled(False)
         setThemeColor('#f18cb9', lazy=True)
         setTheme(Theme.AUTO, lazy=True)
-        self.setMicaEffectEnabled(False)
 
         # 禁用最大化
         self.titleBar.maxBtn.setHidden(True)
         self.titleBar.maxBtn.setDisabled(True)
         self.titleBar.setDoubleClickEnabled(False)
         self.setResizeEnabled(False)
-        self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        # self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
         self.resize(960, 640)
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
@@ -56,6 +57,7 @@ class MainWindow(MSFluentWindow):
         # 创建启动画面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
         self.splashScreen.setIconSize(QSize(128, 128))
+        self.splashScreen.titleBar.maxBtn.setHidden(True)
         self.splashScreen.raise_()
 
         desktop = QApplication.desktop().availableGeometry()
