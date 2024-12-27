@@ -6,6 +6,7 @@ reg_path_cn = "Software\\miHoYo\\崩坏：星穹铁道"
 reg_path_oversea = "Software\\Cognosphere\\Star Rail"
 uid_key = "App_LastUserID_h2841727341"
 
+
 def get_reg_path() -> str:
     try:
         with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path_cn):
@@ -17,9 +18,10 @@ def get_reg_path() -> str:
         except FileNotFoundError:
             return None
 
+
 reg_path = get_reg_path()
 if reg_path is not None:
-    full_reg_path = "HKEY_CURRENT_USER\{0}".format(reg_path.replace('\\\\', '\\'))
+    full_reg_path = "HKEY_CURRENT_USER\\{0}".format(reg_path.replace('\\\\', '\\'))
 else:
     full_reg_path = None
 
