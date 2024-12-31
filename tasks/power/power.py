@@ -140,17 +140,17 @@ class Power:
             try:
                 if type == "trailblaze_power":
                     result = auto.get_single_line_text(
-                        crop=crop, blacklist=['+', '米'], max_retries=3)
+                        crop=crop, blacklist=['+', '米', '*'], max_retries=3)
                     power = int(result.replace("1240", "/240").replace("?", "").split('/')[0])
-                    return power if 0 <= power <= 999 else -1
+                    return power if 0 <= power <= 999 else 0
                 elif type == "reserved_trailblaze_power":
                     result = auto.get_single_line_text(
                         crop=crop, blacklist=['+', '米'], max_retries=3)
                     power = int(result[0])
-                    return power if 0 <= power <= 2400 else -1
+                    return power if 0 <= power <= 2400 else 0
             except Exception as e:
                 log.error(f"识别开拓力失败: {e}")
-                return -1
+                return 0
 
         def move_button_and_confirm():
             if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
