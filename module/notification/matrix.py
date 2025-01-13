@@ -23,13 +23,8 @@ async def send_text_image_msg(client, room_id, msg, image_io):
     )
     if isinstance(resp, UploadError):
         raise RuntimeError(f"message img upload error : {resp}")
-    rsp = await client.room_send(
-        # Watch out! If you join an old room you'll see lots of old messages
-        room_id=room_id,
-        message_type="m.room.message",
-        content = {
-            "body": msg,
-            "filename": "img.png",  # descriptive title
+
+    content = {
             "msgtype": "m.image",
             "info": {
                 "size": len(v),
@@ -40,18 +35,32 @@ async def send_text_image_msg(client, room_id, msg, image_io):
                 "thumbnail_url": None,
             },
             "url": resp.content_uri,
-        },
+    }
+
+    if msg is not None and msg != "":
+        content["body"] = msg
+        content["filename"] = "img.png"
+    else:
+        content["body"] = "img.png"
+
+
+    rsp = await client.room_send(
+        room_id=room_id,
+        message_type="m.room.message",
+        content = content,
     )
     if isinstance(rsp, RoomSendError):
         raise RuntimeError(f"message send error : {rsp}")
 
 
 async def send_text_msg(client, room_id, msg):
+    if msg is None or msg == '':
+        return
     rsp = await client.room_send(
         # Watch out! If you join an old room you'll see lots of old messages
         room_id=room_id,
         message_type="m.room.message",
-        content={"msgtype": "m.text", "body": "Hello world!"},
+        content={"msgtype": "m.text", "body": msg},
     )
     if isinstance(rsp, RoomSendError):
         raise RuntimeError(f"message send error : {rsp}")
@@ -68,6 +77,7 @@ class MatrixNotifier(Notifier):
         access_token = self.params["access_token"]
         room_id = self.params["room_id"]
         proxy = match_proxy_url(self.params.get("proxy", None), homeserver)
+        separately_text_media = self.params["separately_text_media"]
         # client
         client = AsyncClient(homeserver)
         client.user_id = user_id
@@ -77,10 +87,13 @@ class MatrixNotifier(Notifier):
             client.proxy = proxy
         # 构建消息文本
         message = title if not content else f'{title}\n{content}' if title else content
+        loop = asyncio.get_event_loop()
         if image_io:
-            asyncio.run(send_text_image_msg(client, room_id, message, image_io))
+            if separately_text_media:
+                loop.run_until_complete(send_text_msg(client, room_id, message))
+            loop.run_until_complete(send_text_image_msg(client, room_id, None if separately_text_media else message, image_io))
         else:
             # 只发送文本消息
-            asyncio.run(send_text_msg(client, room_id, message))
+            loop.run_until_complete(send_text_msg(client, room_id, message))
 
 
