@@ -25,3 +25,6 @@ pysocks
 pypac
 requests_toolbelt
 desktopmagic
+matrix-nio
+python-socks[asyncio]
+asyncio
