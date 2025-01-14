@@ -289,7 +289,7 @@ notify_matrix_user_id: "" # 用户ID 例如：@user_id:matrix.org
 notify_matrix_access_token: "" # access_token，登录后由服务器分发，例如 syt_abcdefghijk_lmNOPQRSTUVWXYZ_123Ab4
 notify_matrix_room_id: "" # 消息发到哪个房间， 例如: !abcdefGHIJKlmnoPQRST:matrix.org
 notify_matrix_proxy: "" # 代理，例如 socks5://127.0.0.1:1080 ，不填则用系统PAC代理
-notify_matrix_separately_text_media: false # 分开发送文字和媒体（图片），如果你使用FluffyChat可能不显示Caption，可以设置为True避免不显示文字。 
+notify_matrix_separately_text_media: true # 分开发送文字和媒体（图片），如果你使用FluffyChat可能不显示Caption，可以设置为True避免不显示文字。 
 
 # Server酱·Turbo版通知配置
 # 微信推送，适合小白，免费版每天限制五条
