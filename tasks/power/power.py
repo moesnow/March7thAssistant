@@ -68,12 +68,12 @@ class Power:
 
         immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
         text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
-        if "/8" not in text:
+        if "/12" not in text:
             log.error("沉浸器数量识别失败")
             return
 
         immersifier_count = int(text.split("/")[0])
-        log.info(f"🟣沉浸器: {immersifier_count}/8")
+        log.info(f"🟣沉浸器: {immersifier_count}/12")
 
         if immersifier_count + full_runs > 0:
             Instance.run(instance_type, instance_name, 40, immersifier_count + full_runs)
@@ -214,12 +214,12 @@ class Power:
             immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
             text = auto.get_single_line_text(crop=immersifier_crop, blacklist=[
                 '+', '米'], max_retries=3)
-            if "/8" not in text:
+            if "/12" not in text:
                 log.error("沉浸器数量识别失败")
                 return
 
             immersifier_count = int(text.split("/")[0])
-            log.info(f"🟣沉浸器: {immersifier_count}/8")
+            log.info(f"🟣沉浸器: {immersifier_count}/12")
             if immersifier_count >= limit:
                 log.info("沉浸器已达到上限")
                 return
