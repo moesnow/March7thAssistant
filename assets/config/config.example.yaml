@@ -282,6 +282,15 @@ notify_telegram_userid: "" # 接收通知的用户或群组 ID。
 notify_telegram_api_url: "" # 可选参数，Telegram API 的自定义URL，默认为空。
 notify_telegram_proxies: "" # 可选参数，请求 Telegram API 是否使用代理。默认为空(使用系统PAC或不使用)。例如："127.0.0.1:10808", "socks5://127.0.0.1:1080/" 。
 
+notify_matrix_enable: false # 是否启用 Matrix 通知。true 开启，false 关闭。
+notify_matrix_homeserver: "" # 服务器的地址 例如官方地址 https://matrix.org
+notify_matrix_device_id: "" # 一个十位大写字母或数字组成的设备ID，登录后由服务器分发 例如： 01234ABCDE
+notify_matrix_user_id: "" # 用户ID 例如：@user_id:matrix.org
+notify_matrix_access_token: "" # access_token，登录后由服务器分发，例如 syt_abcdefghijk_lmNOPQRSTUVWXYZ_123Ab4
+notify_matrix_room_id: "" # 消息发到哪个房间， 例如: !abcdefGHIJKlmnoPQRST:matrix.org
+notify_matrix_proxy: "" # 代理，例如 socks5://127.0.0.1:1080 ，不填则用系统PAC代理
+notify_matrix_separately_text_media: true # 分开发送文字和媒体（图片），如果你使用FluffyChat可能不显示Caption，可以设置为True避免不显示文字。 
+
 # Server酱·Turbo版通知配置
 # 微信推送，适合小白，免费版每天限制五条
 # https://sct.ftqq.com/

@@ -619,7 +619,7 @@ class SettingInterface(ScrollArea):
             # "lark": FIF.MAIL,
             # "custom": FIF.MAIL
         }
-        self.notifySupportImage = ["telegram", "smtp", "wechatworkapp", "onebot", "gocqhttp", "lark", "custom"]
+        self.notifySupportImage = ["telegram", "matrix", "smtp", "wechatworkapp", "onebot", "gocqhttp", "lark", "custom"]
 
         for key, _ in cfg.config.items():
             if key.startswith("notify_") and key.endswith("_enable"):
