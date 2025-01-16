@@ -124,10 +124,10 @@ class StarRailController(GameController):
 
     def change_auto_battle(self, status: bool) -> None:
         auto_battle_status = get_auto_battle_open_setting()
-        if auto_battle_status != None and auto_battle_status != status:
+        if auto_battle_status is not None and auto_battle_status != status:
             set_auto_battle_open_setting(status)
             self.log_debug(f"修改自动战斗状态: {'开启' if auto_battle_status else '关闭'} --> {'开启' if status else '关闭'}")
         save_battle_status = get_is_save_battle_speed_setting()
-        if save_battle_status != None and save_battle_status != status:
+        if save_battle_status is not None and save_battle_status != status:
             set_is_save_battle_speed_setting(status)
             self.log_debug(f"修改沿用自动战斗设置: {'启用' if save_battle_status else '禁用'} --> {'启用' if status else '禁用'}")
