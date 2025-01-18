@@ -125,7 +125,7 @@ class SettingInterface(ScrollArea):
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
             FIF.HEART,
             self.tr('使用后备开拓力'),
-            "单次上限240点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
+            "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
             "use_reserved_trailblaze_power"
         )
         self.useFuelEnableCard = SwitchSettingCard1(
@@ -571,7 +571,7 @@ class SettingInterface(ScrollArea):
         )
         self.powerLimitCard = RangeSettingCard1(
             "power_limit",
-            [10, 240],
+            [10, 300],
             FIF.HEART,
             # self.tr("循环运行再次启动所需开拓力（游戏刷新后优先级更高）"),
             self.tr("循环运行再次启动所需开拓力"),

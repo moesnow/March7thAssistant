@@ -141,7 +141,7 @@ class Power:
                 if type == "trailblaze_power":
                     result = auto.get_single_line_text(
                         crop=crop, blacklist=['+', '米', '*'], max_retries=3)
-                    power = int(result.replace("1240", "/240").replace("?", "").split('/')[0])
+                    power = int(result.replace("1300", "/300").replace("?", "").split('/')[0])
                     return power if 0 <= power <= 999 else 0
                 elif type == "reserved_trailblaze_power":
                     result = auto.get_single_line_text(
@@ -195,7 +195,7 @@ class Power:
         screen.change_to('map')
         trailblaze_power = get_power(trailblaze_power_crop)
 
-        log.info(f"🟣开拓力: {trailblaze_power}/240")
+        log.info(f"🟣开拓力: {trailblaze_power}/300")
         return trailblaze_power
 
     @staticmethod

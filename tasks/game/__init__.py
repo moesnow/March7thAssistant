@@ -197,8 +197,8 @@ def after_finish_is_loop():
 def notify_after_finish_not_loop():
 
     def get_wait_time(current_power):
-        # 距离体力到达240上限剩余秒数
-        wait_time_power_full = (240 - current_power) * 6 * 60
+        # 距离体力到达300上限剩余秒数
+        wait_time_power_full = (300 - current_power) * 6 * 60
         return wait_time_power_full
 
     current_power = Power.get()
