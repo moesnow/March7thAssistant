@@ -71,6 +71,8 @@ class Date:
             return f"今天{future_time.hour}时{future_time.minute}分"
         elif future_time.date() == current_time.date() + timedelta(days=1):
             return f"明天{future_time.hour}时{future_time.minute}分"
+        elif future_time.date() == current_time.date() + timedelta(days=2):
+            return f"后天{future_time.hour}时{future_time.minute}分"
         else:
             return "输入秒数或时间超出范围"
 
