@@ -28,3 +28,4 @@ desktopmagic
 matrix-nio
 python-socks[asyncio]
 asyncio
+nio
