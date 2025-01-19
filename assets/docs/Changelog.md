@@ -1,5 +1,14 @@
 # 更新日志
 
+## v2025.1.20
+
+- 支持 3.0 版本新增关卡和角色 [#442](https://github.com/moesnow/March7thAssistant/pull/442)
+- 支持 “Matrix” 推送方式 [#440](https://github.com/moesnow/March7thAssistant/pull/440)
+- 修改开拓力上限至300 [#447](https://github.com/moesnow/March7thAssistant/pull/447)
+- 修复无法识别沉浸器数量 [#441](https://github.com/moesnow/March7thAssistant/issues/441)
+- 修复无法更新抽卡记录
+- 部分代码规范性优化 [#443](https://github.com/moesnow/March7thAssistant/pull/443)
+
 ## v2024.12.18
 
 ### 更新
