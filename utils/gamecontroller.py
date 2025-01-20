@@ -9,11 +9,12 @@ from utils.logger.logger import Logger
 
 
 class GameController:
-    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], logger: Optional[Logger] = None) -> None:
+    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], script_path: Optional[str] = None, logger: Optional[Logger] = None) -> None:
         self.game_path = os.path.normpath(game_path)
         self.process_name = process_name
         self.window_name = window_name
         self.window_class = window_class
+        self.script_path = os.path.normpath(script_path) if script_path and isinstance(script_path, (str, bytes, os.PathLike)) else None
         self.logger = logger
 
     def log_debug(self, message: str) -> None:
@@ -136,7 +137,7 @@ class GameController:
             self.log_debug("游戏窗口未找到")
             return None
 
-    def shutdown(self, action: Literal['Exit', 'Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff'], delay: int = 60) -> bool:
+    def shutdown(self, action: Literal['Exit', 'Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'RunScript'], delay: int = 60) -> bool:
         """
         终止游戏并在指定的延迟后执行系统操作：关机、睡眠、休眠、重启、注销。
 
@@ -148,7 +149,7 @@ class GameController:
             操作成功执行返回True，否则返回False。
         """
         self.stop_game()
-        if action not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff"]:
+        if action not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
             return True
 
         self.log_warning(f"将在{delay}秒后开始执行系统操作：{action}")
@@ -168,8 +169,54 @@ class GameController:
                 os.system("shutdown /r")
             elif action == 'Logoff':
                 os.system("shutdown /l")
+            elif action == 'RunScript':
+                self.run_script()
             self.log_info(f"执行系统操作：{action}")
             return True
         except Exception as e:
             self.log_error(f"执行系统操作时发生错误：{action}, 错误：{e}")
+            return False
+
+    def run_script(self):
+        """运行指定的程序或脚本（支持.exe、.ps1和.bat）"""
+        if not self.script_path or not isinstance(self.script_path, str) or not os.path.exists(
+                self.script_path):
+            self.log_warning(f"指定的路径无效或不存在：{self.script_path}")
+            return False
+
+        try:
+            # 获取脚本所在目录
+            script_dir = os.path.dirname(os.path.abspath(self.script_path))
+            # 保存当前工作目录
+            original_cwd = os.getcwd()
+            
+            try:
+                # 切换到脚本所在目录
+                os.chdir(script_dir)
+                
+                file_ext = os.path.splitext(self.script_path)[1].lower()
+                if file_ext == '.ps1':
+                    # PowerShell脚本
+                    subprocess.Popen(["powershell", "-ExecutionPolicy", "Bypass", "-File", self.script_path], 
+                                  creationflags=subprocess.CREATE_NEW_CONSOLE)
+                    self.log_info(f"已启动PowerShell脚本：{self.script_path}")
+                elif file_ext == '.bat':
+                    # Batch脚本
+                    subprocess.Popen([self.script_path], shell=True, 
+                                  creationflags=subprocess.CREATE_NEW_CONSOLE)
+                    self.log_info(f"已启动Batch脚本：{self.script_path}")
+                elif file_ext == '.exe':
+                    # 可执行文件
+                    subprocess.Popen([self.script_path], 
+                                  creationflags=subprocess.CREATE_NEW_CONSOLE)
+                    self.log_info(f"已启动可执行文件：{self.script_path}")
+                else:
+                    self.log_warning(f"不支持的文件类型：{file_ext}")
+                    return False
+                return True
+            finally:
+                # 恢复原始工作目录
+                os.chdir(original_cwd)
+        except Exception as e:
+            self.log_error(f"启动脚本时发生错误：{str(e)}")
             return False
