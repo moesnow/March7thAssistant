@@ -17,7 +17,7 @@ jobs:
         id: download
         with:
           repository: moesnow/March7thAssistant
-          fileName: "*full.7z"
+          fileName: "*full.zip"
           latest: true
           out-file-path: "downloads"
           extract: false
