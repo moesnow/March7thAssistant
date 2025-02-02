@@ -8,8 +8,8 @@ from utils.logger.logger import Logger
 
 
 class StarRailController(GameController):
-    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], logger: Optional[Logger] = None) -> None:
-        super().__init__(game_path, process_name, window_name, window_class, logger)
+    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], script_path: Optional[str] = None, logger: Optional[Logger] = None) -> None:
+        super().__init__(game_path, process_name, window_name, window_class, script_path=script_path, logger=logger)
         self.game_resolution = None
         self.game_auto_hdr = None
         self.screen_resolution = pyautogui.size()
