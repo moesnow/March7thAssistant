@@ -1,4 +1,4 @@
-name: Upload Release to MirrorChyan
+name: MirrorChyan Uploading
 
 # 触发条件：手动触发或版本发布后
 on:
@@ -11,21 +11,14 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      # 下载 Release 包
-      - name: Download Release
-        uses: robinraju/release-downloader@v1
-        id: download
+      - id: uploading
+        uses: MirrorChyan/uploading-action@v1
         with:
-          repository: moesnow/March7thAssistant
-          fileName: "*full.zip"
-          latest: true
-          out-file-path: "downloads"
-          extract: false
+          filetype: latest-release
+          filename: "*full.zip"
+          mirrorchyan_rid: March7thAssistant
 
-      # 上传到 Mirror酱
-      - name: Upload to MirrorChyan
-        run: |
-          curl --location --request POST 'https://mirrorc.top/api/resources/${{ github.event.repository.name }}/versions' \
-            --header 'Authorization:${{ secrets.MirrorChyanUploadToken }}' \
-            --form 'name="${{steps.download.outputs.tag_name}}"' \
-            --form 'file=@"${{ fromJson(steps.download.outputs.downloaded_files)[0] }}"'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.event.repository.name }}
+          upload_token: ${{ secrets.MirrorChyanUploadToken }}
