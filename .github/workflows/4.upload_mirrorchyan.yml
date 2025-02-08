@@ -1,10 +1,7 @@
 name: MirrorChyan Uploading
 
-# 触发条件：手动触发或版本发布后
 on:
   workflow_dispatch:
-  release:    
-    types: [published]
 
 jobs:
   mirrorchyan:
