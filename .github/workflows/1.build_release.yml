@@ -7,11 +7,6 @@ on:
     tags:
       - "v*.*.*"
 
-# 权限设置：需要写入仓库内容的权限
-permissions:
-  contents: write
-  actions: write
-
 jobs:
   build:
     name: Build
