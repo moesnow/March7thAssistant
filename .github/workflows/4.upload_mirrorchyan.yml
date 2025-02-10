@@ -3,6 +3,10 @@ name: MirrorChyan Uploading
 on:
   workflow_dispatch:
 
+permissions:
+  issues: write
+  actions: write
+
 jobs:
   mirrorchyan:
     runs-on: macos-latest
