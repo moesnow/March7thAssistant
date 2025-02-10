@@ -88,3 +88,10 @@ jobs:
             ./dist/March7thAssistant_${{ github.ref_name }}_full.7z
             ./dist/March7thAssistant_${{ github.ref_name }}.7z
           prerelease: true
+
+      # 步骤10：强制触发 MirrorChyan 上传
+      - name: Trigger MirrorChyanUploading
+        run: |
+          gh workflow run --repo $GITHUB_REPOSITORY 4.upload_mirrorchyan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
