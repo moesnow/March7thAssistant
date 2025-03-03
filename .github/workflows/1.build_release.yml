@@ -89,5 +89,6 @@ jobs:
       - name: Trigger MirrorChyanUploading
         run: |
           gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Uploading'
+          gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Release Note'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
