@@ -14,12 +14,12 @@ class Synthesis:
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
                 # 等待筛选界面弹出
                 time.sleep(1)
-                if auto.click_element("防御类消耗品", "text", max_retries=10, crop=(480 / 1920, 400 / 1080, 963 / 1920, 136 / 1080)):
+                if auto.click_element("防御类消耗品", "text", max_retries=10, crop=(472.0 / 1920, 347.0 / 1080, 970.0 / 1920, 268.0 / 1080)):
                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                         # 多次重试避免选中没反应
                         for _ in range(10):
-                            auto.click_element("./assets/images/share/synthesis/defensive_medicine.png", "image", 0.9, max_retries=10)
-                            if auto.find_element("./assets/images/share/synthesis/defensive_medicine_selected.png", "image", 0.9, max_retries=10):
+                            auto.click_element("./assets/images/share/synthesis/defensive_medicine.png", "image", 0.8, max_retries=10)
+                            if auto.find_element("./assets/images/share/synthesis/defensive_medicine_selected.png", "image", 0.8, max_retries=10):
                                 if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
                                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                                         if auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
@@ -30,6 +30,7 @@ class Synthesis:
         except Exception as e:
             log.error(f"合成消耗品失败: {e}")
         return False
+
     @staticmethod
     def material():
         try:
@@ -55,6 +56,7 @@ class Synthesis:
         except Exception as e:
             log.error(f"合成材料失败: {e}")
         return False
+
     @staticmethod
     def use_consumables(recursion=True):
         try:
@@ -64,7 +66,7 @@ class Synthesis:
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
                 # 等待筛选界面弹出
                 time.sleep(1)
-                if auto.click_element("防御类消耗品", "text", max_retries=10, crop=(480 / 1920, 400 / 1080, 963 / 1920, 136 / 1080)):
+                if auto.click_element("防御类消耗品", "text", max_retries=10, crop=(472.0 / 1920, 347.0 / 1080, 970.0 / 1920, 268.0 / 1080)):
                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                         # 多次重试避免选中没反应
                         for _ in range(10):
