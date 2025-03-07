@@ -168,7 +168,7 @@ class Instance:
                     # 待后续更新支持
 
                     # 靠近怪物
-                    auto.press_key("w", 4)
+                    auto.press_key("w", 3)
                     for _ in range(3):
                         auto.press_mouse()
                         time.sleep(1)
