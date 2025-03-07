@@ -10,7 +10,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
+from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from module.config import cfg
 from module.notification import notif
@@ -713,16 +713,28 @@ class SettingInterface(ScrollArea):
             self.tr('关于'),
             self.tr('当前版本：') + " " + cfg.version
         )
+        self.updateSourceCard = ComboBoxSettingCard2(
+            "update_source",
+            FIF.SPEED_HIGH,
+            '更新源',
+            '',
+            texts={'海外源': 'GitHub', 'Mirror 酱': 'MirrorChyan'}
+        )
+        self.mirrorchyanCdkCard = PushSettingCardStr(
+            self.tr('修改'),
+            FIF.MINIMIZE,
+            self.tr("Mirror 酱 CDK"),
+            "mirrorchyan_cdk"
+        )
         self.updatePrereleaseEnableCard = SwitchSettingCard1(
             FIF.TRAIN,
-            self.tr('加入预览版更新渠道'),
+            self.tr('加入预览版更新渠道（预览版暂不支持Mirror酱）'),
             "",
             "update_prerelease_enable"
         )
-        self.updatePrereleaseEnableCard.setDisabled(True)
         self.updateFullEnableCard = SwitchSettingCard1(
             FIF.GLOBE,
-            self.tr('更新时下载完整包'),
+            self.tr('更新时下载完整包（非完整包暂不支持Mirror酱）'),
             "包含模拟宇宙和锄大地等，但压缩包体积更大",
             "update_full_enable"
         )
@@ -841,6 +853,8 @@ class SettingInterface(ScrollArea):
         self.AboutGroup.addSettingCard(self.qqGroupCard)
         self.AboutGroup.addSettingCard(self.feedbackCard)
         self.AboutGroup.addSettingCard(self.aboutCard)
+        self.AboutGroup.addSettingCard(self.updateSourceCard)
+        self.AboutGroup.addSettingCard(self.mirrorchyanCdkCard)
         self.AboutGroup.addSettingCard(self.updatePrereleaseEnableCard)
         self.AboutGroup.addSettingCard(self.updateFullEnableCard)
 

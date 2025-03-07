@@ -135,6 +135,8 @@ universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径，指向�
 universe_timeout: 20 # 模拟宇宙超时时间（单位：小时），设置脚本或程序的最长运行时间。
 universe_requirements: false # 是否已安装模拟宇宙依赖。true 表示已安装，false 表示未安装或需要重新安装。
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳，用于记录和控制运行频率。
+weekly_divergent_enable: false # 是否启用每周优先运行一次差分宇宙。true 开启，false 关闭。
+weekly_divergent_timestamp: 0 # 上次运行每周一次差分宇宙的时间戳。
 universe_fate: "不配置" # 模拟宇宙使用的命途
 universe_difficulty: 0 # 模拟宇宙使用的难度
 
@@ -251,6 +253,9 @@ update_prerelease_enable: false # 是否加入预览版更新渠道。true 加�
 update_full_enable: true # 更新时是否下载完整包。true 下载，false 不下载。
 auto_update: false
 
+update_source: GitHub # 更新源，可选值："GitHub"（海外源）, "MirrorChyan"（Mirror 酱）
+mirrorchyan_cdk: "" # MirrorChyan CDK
+
 # 消息推送配置
 # 消息推送格式配置
 notify_template:
@@ -289,7 +294,7 @@ notify_matrix_user_id: "" # 用户ID 例如：@user_id:matrix.org
 notify_matrix_access_token: "" # access_token，登录后由服务器分发，例如 syt_abcdefghijk_lmNOPQRSTUVWXYZ_123Ab4
 notify_matrix_room_id: "" # 消息发到哪个房间， 例如: !abcdefGHIJKlmnoPQRST:matrix.org
 notify_matrix_proxy: "" # 代理，例如 socks5://127.0.0.1:1080 ，不填则用系统PAC代理
-notify_matrix_separately_text_media: true # 分开发送文字和媒体（图片），如果你使用FluffyChat可能不显示Caption，可以设置为True避免不显示文字。 
+notify_matrix_separately_text_media: true # 分开发送文字和媒体（图片），如果你使用FluffyChat可能不显示Caption，可以设置为True避免不显示文字。
 
 # Server酱·Turbo版通知配置
 # 微信推送，适合小白，免费版每天限制五条

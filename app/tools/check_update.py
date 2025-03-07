@@ -29,6 +29,7 @@ class UpdateThread(QThread):
         super().__init__()
         self.timeout = timeout  # 超时时间
         self.flag = flag  # 标志位，用于控制是否执行更新检查
+        self.error_msg = ""  # 错误信息
 
     def remove_images_from_markdown(self, markdown_content):
         """从Markdown内容中移除图片标记。"""
@@ -63,15 +64,39 @@ class UpdateThread(QThread):
             version = data["tag_name"]
             content = self.remove_images_from_markdown(data["body"])
             assert_url = self.get_download_url_from_assets(data["assets"])
+            assert_name = assert_url.split("/")[-1]
 
             if assert_url is None:
                 self.updateSignal.emit(UpdateStatus.SUCCESS)
                 return
+            if assert_url is not None and not cfg.update_prerelease_enable and cfg.update_full_enable and cfg.update_source == "MirrorChyan" and cfg.mirrorchyan_cdk != "":
+                # 符合Mirror酱条件
+                response = requests.get(
+                    f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}",
+                    timeout=10,
+                    headers=cfg.useragent
+                )
+                if response.status_code == 200:
+                    mirrorchyan_data = response.json()
+                    if mirrorchyan_data["code"] == 0:
+                        version_name = mirrorchyan_data["data"]["version_name"]
+                        url = mirrorchyan_data["data"]["url"]
+                        if version_name == version:
+                            assert_url = url
+                else:
+                    try:
+                        mirrorchyan_data = response.json()
+                        self.error_msg = mirrorchyan_data["msg"]
+                    except:
+                        self.error_msg = "Mirror酱API请求失败"
+                    self.updateSignal.emit(UpdateStatus.FAILURE)
+                    return
 
             if parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
                 self.title = f"发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)"
                 self.content = "<style>a {color: #f18cb9; font-weight: bold;}</style>" + markdown.markdown(content)
                 self.assert_url = assert_url
+                self.assert_name = assert_name
                 self.updateSignal.emit(UpdateStatus.UPDATE_AVAILABLE)
             else:
                 self.updateSignal.emit(UpdateStatus.SUCCESS)
@@ -93,8 +118,10 @@ def checkUpdate(self, timeout=5, flag=False):
             if message_box.exec():
                 # 执行更新操作
                 source_file = os.path.abspath("./March7th Updater.exe")
-                assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
-                subprocess.Popen([source_file, assert_url], creationflags=subprocess.DETACHED_PROCESS)
+                # assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
+                assert_url = self.update_thread.assert_url
+                assert_name = self.update_thread.assert_name
+                subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
         elif status == UpdateStatus.SUCCESS:
             # 显示当前为最新版本的信息
             InfoBar.success(
@@ -110,11 +137,11 @@ def checkUpdate(self, timeout=5, flag=False):
             # 显示检查更新失败的信息
             InfoBar.warning(
                 title=self.tr('检测更新失败(╥╯﹏╰╥)'),
-                content="",
+                content=self.update_thread.error_msg,
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=1000,
+                duration=5000,
                 parent=self
             )
 
