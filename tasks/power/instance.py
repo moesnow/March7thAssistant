@@ -160,7 +160,7 @@ class Instance:
                 if auto.find_element("仍有角色位空缺", "text", max_retries=1, crop=(481.0 / 1920, 361.0 / 1080, 955.0 / 1920, 356.0 / 1080), include=True):
                     auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
                     time.sleep(2)
-                if auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 10000, max_retries=60, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
+                if auto.find_element("差分宇宙", "text", max_retries=60, crop=(0 / 1920, 0 / 1080, 218.0 / 1920, 53.0 / 1080), include=True):
                     time.sleep(1)
 
                     # 使用秘技
