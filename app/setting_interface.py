@@ -377,6 +377,18 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行模拟宇宙的时间"),
             "universe_timestamp"
         )
+        self.weeklyDivergentEnableCard = SwitchSettingCard1(
+            FIF.VPN,
+            self.tr('每周优先运行一次差分宇宙'),
+            "如需执行周期演算，请自行打开 “主页→模拟宇宙→原版运行”，然后勾选“周期演算”",
+            "weekly_divergent_enable"
+        )
+        self.weeklyDivergentRunTimeCard = PushSettingCardDate(
+            self.tr('修改'),
+            FIF.DATE_TIME,
+            self.tr("上次运行每周一次差分宇宙的时间"),
+            "weekly_divergent_timestamp"
+        )
         self.universeBonusEnableCard = SwitchSettingCard1(
             FIF.IOT,
             self.tr('领取沉浸奖励/执行饰品提取'),
@@ -707,6 +719,7 @@ class SettingInterface(ScrollArea):
             "",
             "update_prerelease_enable"
         )
+        self.updatePrereleaseEnableCard.setDisabled(True)
         self.updateFullEnableCard = SwitchSettingCard1(
             FIF.GLOBE,
             self.tr('更新时下载完整包'),
@@ -776,6 +789,8 @@ class SettingInterface(ScrollArea):
         self.UniverseGroup.addSettingCard(self.universeFrequencyCard)
         self.UniverseGroup.addSettingCard(self.universeCountCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentRunTimeCard)
         self.UniverseGroup.addSettingCard(self.universeFateCard)
         self.UniverseGroup.addSettingCard(self.universeDifficultyCard)
 

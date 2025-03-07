@@ -27,9 +27,9 @@ class AccountsCard(QFrame):
         #
         self.buttons = QVBoxLayout()
         self.buttons.setContentsMargins(10, 3, 10, 3)
-        self.tipsText = QLabel("重要: 请完全进入游戏(看到角色)后再进行导出，否则会读取前一个账号的UID，导致文件和账号不对应")
+        self.tipsText = QLabel("重要：请完全进入游戏（看到角色）后再进行导出，否则会读取前一个账号的UID，导致文件和账号不对应")
         self.tipsText.setWordWrap(True)
-        self.tipsText.setStyleSheet('color: red')
+        self.tipsText.setStyleSheet('color: #f94e9b')
         self.buttons.addWidget(self.tipsText)
         self.tipsText.setFixedHeight(50)
         self.addAccountButton = QPushButton("导出当前游戏账户", self)
