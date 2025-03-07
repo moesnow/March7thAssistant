@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2025.3.7
+
+- 模拟宇宙（Auto_Simulated_Universe）适配新版本差分宇宙
+- 支持 3.1 版本新增关卡和角色 [#486](https://github.com/moesnow/March7thAssistant/pull/486)
+- 支持任务完成后运行指定程序或脚本 [#453](https://github.com/moesnow/March7thAssistant/pull/453)
+- 修复设置培养目标后部分副本异常
+- 触屏模式暂不可用 [#487](https://github.com/moesnow/March7thAssistant/issues/487)
+
 ## v2025.1.20
 
 - 支持 3.0 版本新增关卡和角色 [#442](https://github.com/moesnow/March7thAssistant/pull/442)
