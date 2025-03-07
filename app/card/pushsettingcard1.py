@@ -34,6 +34,21 @@ class PushSettingCardStr(PushSettingCard):
         if message_box.exec():
             cfg.set_value(self.configname, message_box.getText())
             self.contentLabel.setText(message_box.getText())
+            self.configvalue = message_box.getText()
+
+
+class PushSettingCardMirrorchyan(PushSettingCard):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
+        self.configvalue = str(cfg.get_value(configname))
+        super().__init__(text, icon, title, configname, "", parent)
+        self.button.clicked.connect(self.__onclicked)
+
+    def __onclicked(self):
+        message_box = MessageBoxEdit(self.title, self.configvalue, self.window())
+        if message_box.exec():
+            cfg.set_value(self.configname, message_box.getText())
+            self.contentLabel.setText(message_box.getText())
+            self.configvalue = message_box.getText()
 
 
 class PushSettingCardCode(PushSettingCard):

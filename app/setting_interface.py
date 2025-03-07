@@ -10,7 +10,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
+from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from module.config import cfg
 from module.notification import notif
@@ -720,9 +720,9 @@ class SettingInterface(ScrollArea):
             '',
             texts={'海外源': 'GitHub', 'Mirror 酱': 'MirrorChyan'}
         )
-        self.mirrorchyanCdkCard = PushSettingCardStr(
+        self.mirrorchyanCdkCard = PushSettingCardMirrorchyan(
             self.tr('修改'),
-            FIF.MINIMIZE,
+            FIF.BOOK_SHELF,
             self.tr("Mirror 酱 CDK"),
             "mirrorchyan_cdk"
         )
