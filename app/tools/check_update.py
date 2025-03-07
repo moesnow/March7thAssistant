@@ -69,7 +69,7 @@ class UpdateThread(QThread):
             if assert_url is None:
                 self.updateSignal.emit(UpdateStatus.SUCCESS)
                 return
-            if assert_url is not None and not cfg.update_prerelease_enable and cfg.update_full_enable and cfg.update_source == "MirrorChyan" and cfg.mirrorchyan_cdk != "":
+            if not cfg.update_prerelease_enable and cfg.update_full_enable and cfg.update_source == "MirrorChyan" and cfg.mirrorchyan_cdk != "":
                 # 符合Mirror酱条件
                 response = requests.get(
                     f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}",
@@ -78,7 +78,7 @@ class UpdateThread(QThread):
                 )
                 if response.status_code == 200:
                     mirrorchyan_data = response.json()
-                    if mirrorchyan_data["code"] == 0:
+                    if mirrorchyan_data["code"] == 0 and mirrorchyan_data["msg"] == "success":
                         version_name = mirrorchyan_data["data"]["version_name"]
                         url = mirrorchyan_data["data"]["url"]
                         if version_name == version:
