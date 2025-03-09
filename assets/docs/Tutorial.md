@@ -17,9 +17,9 @@
 
 找到名称类似 `March7thAssistant_vx.x.x_full.zip(7z)` 的文件，点击下载。
 
-> 如果中国大陆下载缓慢可以尝试右键上述文件，选择 "复制链接"。
+> March7thAssistant 接入了第三方服务 [Mirror酱](https://mirrorchyan.com/)（一个给开源社区做有偿内容分发的平台）。
 >
-> 然后打开加速站 [https://github.moeyy.xyz/](https://github.moeyy.xyz/) ，粘贴后点击下载。
+> 如果中国大陆下载缓慢可以尝试 [点我前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable)
 
 ## 解压
 
@@ -166,19 +166,17 @@
 
 ### 推送
 
-图形界面内只支持启用`Windows原生通知`，需要其他通知请在 `config.yaml` 中开启。
-
 目前支持：
 
 - Telegram
 - Serverchan/Turbo （Server酱·Turbo版）
 - Bark
-- Email/SMTP （邮箱）
+- SMTP （邮箱）
 - Dingtalk （钉钉）
 - Pushplus
 - WeChatworkapp （企业微信应用通知）
 - WeChatworkbot （企业微信机器人通知）
-- OneBot/OpenShamrock （QQ 机器人）
+- OneBot （QQ 机器人）
 - Go-cqhttp （QQ 机器人）
 - Gotify
 - Discord
@@ -186,7 +184,7 @@
 - Lark（飞书）
 - Custom
 
-> 其中 Telegram、Email/SMTP、WeChatworkapp、OneBot/OpenShamrock、Go-cqhttp、Custom、Lark 支持发送截图，欢迎 PR 适配其他推送方式
+> 其中 Telegram、SMTP、WeChatworkapp、OneBot、Go-cqhttp、Lark、Custom 支持发送截图，欢迎 PR 适配其他推送方式
 
 ### 按键
 

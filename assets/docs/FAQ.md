@@ -2,6 +2,20 @@
 
 视频教程 [https://search.bilibili.com/all?keyword=三月七小助手](https://search.bilibili.com/all?keyword=%E4%B8%89%E6%9C%88%E4%B8%83%E5%B0%8F%E5%8A%A9%E6%89%8B)
 
+### Q：小助手总是更新失败/下载速度缓慢 怎么办？
+
+A：March7thAssistant 接入了第三方服务 [Mirror酱](https://mirrorchyan.com/)（一个给开源社区做有偿内容分发的平台）。
+
+它为我们提供了免费的检查更新接口，但它的下载是有偿的，需要用户付费使用。
+
+不过，即使不购买 Mirror 酱的下载服务，你也可以在检测到更新后，在设置里选择从海外源（GitHub）下载~
+
+如果你购买并填写了 CDK，更新时就再也不用和自己的网络环境斗智斗勇咯，下载更快更稳定！
+
+同时 CDK 也可以用于其他接入 Mirror酱 的项目，例如 MAA 等。
+
+[首次下载可点我前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable)
+
 ### Q：小助手启动慢/出现错误 2147942402/总是被杀毒软件删除 怎么办？
 
 A：将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后使用 `March7th Updater.exe` 自动更新或手动更新一次。

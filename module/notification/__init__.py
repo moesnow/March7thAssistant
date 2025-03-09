@@ -1,5 +1,6 @@
 from module.config import cfg
 from module.logger import log
+from module.notification.matrix import MatrixNotifier
 from module.notification.notification import Notification
 # 导入所有通知器类型
 from module.notification.onepush import OnepushNotifier
@@ -19,6 +20,7 @@ class NotifierFactory:
     notifier_classes = {
         "winotify": WinotifyNotifier,
         "telegram": TelegramNotifier,
+        "matrix": MatrixNotifier,
         "onebot": OnebotNotifier,
         "smtp": SMTPNotifier,
         "gocqhttp": GocqhttpNotifier,

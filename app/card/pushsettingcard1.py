@@ -1,6 +1,7 @@
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QUrl
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtGui import QDesktopServices
 from qfluentwidgets import SettingCard, FluentIconBase, InfoBar, InfoBarPosition
 from .messagebox_custom import MessageBoxEdit, MessageBoxEditMultiple, MessageBoxDate, MessageBoxInstance, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends
 from tasks.base.tasks import start_task
@@ -34,6 +35,37 @@ class PushSettingCardStr(PushSettingCard):
         if message_box.exec():
             cfg.set_value(self.configname, message_box.getText())
             self.contentLabel.setText(message_box.getText())
+            self.configvalue = message_box.getText()
+
+
+class PushSettingCardMirrorchyan(SettingCard):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
+        self.configvalue = str(cfg.get_value(configname))
+        super().__init__(icon, title, "", parent)
+
+        self.title = title
+        self.configname = configname
+
+        self.button2 = QPushButton("获取 CDK", self)
+        self.button2.setObjectName('primaryButton')
+        self.hBoxLayout.addWidget(self.button2, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.button2.clicked.connect(self.__onclicked2)
+
+        self.button = QPushButton(text, self)
+        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+        self.button.clicked.connect(self.__onclicked)
+
+    def __onclicked(self):
+        message_box = MessageBoxEdit(self.title, self.configvalue, self.window())
+        if message_box.exec():
+            cfg.set_value(self.configname, message_box.getText())
+            self.contentLabel.setText(message_box.getText())
+            self.configvalue = message_box.getText()
+
+    def __onclicked2(self):
+        QDesktopServices.openUrl(QUrl("https://mirrorchyan.com/"))
 
 
 class PushSettingCardCode(PushSettingCard):

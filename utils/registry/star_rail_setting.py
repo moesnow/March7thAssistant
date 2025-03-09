@@ -10,6 +10,26 @@ resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
 graphics_value_name = "GraphicsSettings_Model_h2986158309"
 
 
+def set_auto_battle_open_setting(value: bool) -> None:
+    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_AutoBattleOpen_h1164514826", value, winreg.REG_DWORD)
+
+
+def set_is_save_battle_speed_setting(value: bool) -> None:
+    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_IsSaveBattleSpeed_h3606297293", value, winreg.REG_DWORD)
+
+
+def get_auto_battle_open_setting() -> Optional[bytes]:
+    return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_AutoBattleOpen_h1164514826")
+
+
+def get_is_save_battle_speed_setting() -> Optional[bytes]:
+    return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_IsSaveBattleSpeed_h3606297293")
+
+
+def get_graphics_setting() -> Optional[bytes]:
+    return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name)
+
+
 def get_game_path() -> Optional[str]:
     """
     获取游戏路径函数，尝试从注册表中读取指定键值并验证游戏可执行文件是否存在。

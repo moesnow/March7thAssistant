@@ -30,7 +30,7 @@ class OnepushNotifier(Notifier):
             content = '.'
         # 获取对应的通知器实例并发送通知
         notifier_instance = get_notifier(self.notifier_name)
-        if self.notifier_name in ['gotify']:
-            notifier_instance.notify(**self.params, title=title, message=content)
-        else:
-            notifier_instance.notify(**self.params, title=title, content=content)
+        # if self.notifier_name in ['gotify']:
+        #     notifier_instance.notify(**self.params, title=title, message=content)
+        # else:
+        notifier_instance.notify(**self.params, title=title, content=content)

@@ -7,10 +7,6 @@ on:
     tags:
       - "v*.*.*"
 
-# 权限设置：需要写入仓库内容的权限
-permissions:
-  contents: write
-
 jobs:
   build:
     name: Build
@@ -88,3 +84,12 @@ jobs:
             ./dist/March7thAssistant_${{ github.ref_name }}_full.7z
             ./dist/March7thAssistant_${{ github.ref_name }}.7z
           prerelease: true
+
+      # 步骤10：强制触发 MirrorChyan 上传
+      - name: Trigger MirrorChyanUploading
+        shell: bash
+        run: |
+          gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Uploading'
+          gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Release Note'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

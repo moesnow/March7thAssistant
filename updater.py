@@ -18,7 +18,7 @@ from utils.logger.logger import Logger
 class Updater:
     """应用程序更新器，负责检查、下载、解压和安装最新版本的应用程序。"""
 
-    def __init__(self, logger: Logger, download_url=None):
+    def __init__(self, logger: Logger, download_url=None, file_name=None):
         self.logger = logger
         self.process_names = ["March7th Assistant.exe", "March7th Launcher.exe", "flet.exe", "gui.exe"]
         self.api_urls = [
@@ -28,6 +28,7 @@ class Updater:
         self.temp_path = os.path.abspath("./temp")
         os.makedirs(self.temp_path, exist_ok=True)
         self.download_url = download_url
+        self.file_name = file_name
         self.cover_folder_path = os.path.abspath("./")
         self.exe_path = os.path.abspath("./assets/binary/7za.exe")
         self.aria2_path = os.path.abspath("./assets/binary/aria2c.exe")
@@ -42,8 +43,8 @@ class Updater:
         else:
             self.logger.info(f"下载链接: {green(self.download_url)}")
             self.logger.hr("完成", 2)
-        self.download_file_path = os.path.join(self.temp_path, os.path.basename(self.download_url))
-        self.extract_folder_path = os.path.join(self.temp_path, os.path.basename(self.download_url).rsplit(".", 1)[0])
+        self.download_file_path = os.path.join(self.temp_path, self.file_name)
+        self.extract_folder_path = os.path.join(self.temp_path, self.file_name.rsplit(".", 1)[0])
 
     def get_download_url(self):
         """检测更新并获取下载URL。"""
@@ -64,8 +65,9 @@ class Updater:
         version = data["tag_name"]
         download_url = None
         for asset in data["assets"]:
-            if "full" not in asset["browser_download_url"]:
+            if "full" in asset["browser_download_url"]:
                 download_url = asset["browser_download_url"]
+                self.file_name = asset["name"]
                 break
 
         if download_url is None:
@@ -167,7 +169,7 @@ class Updater:
         while True:
             try:
                 self.logger.info("开始覆盖...")
-                if "full" in self.download_url and os.path.exists(self.delete_folder_path):
+                if "full" in self.file_name and os.path.exists(self.delete_folder_path):
                     shutil.rmtree(self.delete_folder_path)
                 shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
                 self.logger.info(f"覆盖完成: {green(self.cover_folder_path)}")
@@ -239,9 +241,10 @@ def check_temp_dir_and_run():
         subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)
         sys.exit(0)
 
-    download_url = sys.argv[1] if len(sys.argv) == 2 else None
+    download_url = sys.argv[1] if len(sys.argv) == 3 else None
+    file_name = sys.argv[2] if len(sys.argv) == 3 else None
     logger = Logger()
-    updater = Updater(logger, download_url)
+    updater = Updater(logger, download_url, file_name)
     updater.run()
 
 

@@ -82,8 +82,12 @@ class Apocalyptic(BaseChallenge):
             if not self.start_challenge(level):
                 log.error(f"第{level}层挑战失败")
                 break
-
+            time.sleep(3)
+            if auto.find_element("3星通关所有", 'text', include=True):
+                auto.click_element("确认", 'text', max_retries=10, include=True)
+                auto.press_key("esc")
             time.sleep(2)
+            
             screen.wait_for_screen_change('apocalyptic')
 
     def find_level(self, level, max_retries=4):

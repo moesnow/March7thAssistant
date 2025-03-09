@@ -8,11 +8,12 @@ from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
-from .card.switchsettingcard1 import SwitchSettingCard1, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
+from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from module.config import cfg
+from module.notification import notif
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
 import os
@@ -124,7 +125,7 @@ class SettingInterface(ScrollArea):
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
             FIF.HEART,
             self.tr('使用后备开拓力'),
-            "单次上限240点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
+            "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
             "use_reserved_trailblaze_power"
         )
         self.useFuelEnableCard = SwitchSettingCard1(
@@ -269,7 +270,7 @@ class SettingInterface(ScrollArea):
         self.activityPlanarFissureEnableCard = SwitchSettingCard1(
             FIF.CALORIES,
             self.tr('启用位面分裂'),
-            "存在双倍次数时体力优先「合成沉浸器」",
+            "存在双倍次数时体力优先「饰品提取」",
             "activity_planarfissure_enable"
         )
 
@@ -376,10 +377,22 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行模拟宇宙的时间"),
             "universe_timestamp"
         )
+        self.weeklyDivergentEnableCard = SwitchSettingCard1(
+            FIF.VPN,
+            self.tr('每周优先运行一次差分宇宙'),
+            "如需执行周期演算，请自行打开 “主页→模拟宇宙→原版运行”，然后勾选“周期演算”",
+            "weekly_divergent_enable"
+        )
+        self.weeklyDivergentRunTimeCard = PushSettingCardDate(
+            self.tr('修改'),
+            FIF.DATE_TIME,
+            self.tr("上次运行每周一次差分宇宙的时间"),
+            "weekly_divergent_timestamp"
+        )
         self.universeBonusEnableCard = SwitchSettingCard1(
             FIF.IOT,
-            self.tr('领取沉浸奖励'),
-            None,
+            self.tr('领取沉浸奖励/执行饰品提取'),
+            "类别为“模拟宇宙”时，自动领取沉浸奖励。类别为“差分宇宙”时，在领取积分奖励后自动执行饰品提取消耗沉浸器。",
             "universe_bonus_enable"
         )
         self.universeFrequencyCard = ComboBoxSettingCard2(
@@ -548,7 +561,13 @@ class SettingInterface(ScrollArea):
             self.tr('任务完成后'),
             self.tr('其中“退出”指退出游戏，“循环”指7×24小时无人值守循环运行程序（仅限完整运行生效）'),
             texts={'无': 'None', '退出': 'Exit', '循环': 'Loop',
-                   '关机': 'Shutdown', '睡眠': 'Sleep', '休眠': 'Hibernate', '重启': 'Restart', '注销': 'Logoff'}
+                   '关机': 'Shutdown', '睡眠': 'Sleep', '休眠': 'Hibernate', '重启': 'Restart', '注销': 'Logoff', '运行脚本': 'RunScript'}
+        )
+        self.ScriptPathCard = PushSettingCard(
+            self.tr('修改'),
+            FIF.CODE,
+            self.tr("脚本或程序路径(选择运行脚本时生效)"),
+            cfg.script_path
         )
         self.loopModeCard = ComboBoxSettingCard2(
             "loop_mode",
@@ -570,7 +589,7 @@ class SettingInterface(ScrollArea):
         )
         self.powerLimitCard = RangeSettingCard1(
             "power_limit",
-            [10, 240],
+            [10, 300],
             FIF.HEART,
             # self.tr("循环运行再次启动所需开拓力（游戏刷新后优先级更高）"),
             self.tr("循环运行再次启动所需开拓力"),
@@ -597,18 +616,46 @@ class SettingInterface(ScrollArea):
             self.tr("消息推送格式"),
             "notify_template"
         )
-        self.winotifyEnableCard = SwitchSettingCard1(
-            FIF.BACK_TO_WINDOW,
-            self.tr('启用 Windows 原生通知'),
-            None,
-            "notify_winotify_enable"
-        )
+
+        self.notifyEnableGroup = []
+        self.notifyLogoDict = {
+            "winotify": FIF.BACK_TO_WINDOW,
+            "telegram": FIF.AIRPLANE,
+            "serverchanturbo": FIF.ROBOT,
+            "serverchan3": FIF.ROBOT,
+            # "bark": FIF.MAIL,
+            "smtp": FIF.MAIL,
+            # "dingtalk": FIF.MAIL,
+            # "pushplus": FIF.MAIL,
+            # "wechatworkapp": FIF.MAIL,
+            # "wechatworkbot": FIF.MAIL,
+            # "onebot": FIF.MAIL,
+            # "gocqhttp": FIF.MAIL,
+            # "gotify": FIF.MAIL,
+            # "discord": FIF.MAIL,
+            # "pushdeer": FIF.MAIL,
+            # "lark": FIF.MAIL,
+            # "custom": FIF.MAIL
+        }
+        self.notifySupportImage = ["telegram", "matrix", "smtp", "wechatworkapp", "onebot", "gocqhttp", "lark", "custom"]
+
+        for key, _ in cfg.config.items():
+            if key.startswith("notify_") and key.endswith("_enable"):
+                notifier_name = key[len("notify_"):-len("_enable")]
+
+                notifyEnableCard = SwitchSettingCardNotify(
+                    self.notifyLogoDict[notifier_name] if notifier_name in self.notifyLogoDict else FIF.MAIL,
+                    self.tr(f'启用 {notifier_name.capitalize()} 通知 {"（支持图片）"if notifier_name in self.notifySupportImage else ""}'),
+                    notifier_name,
+                    key
+                )
+                self.notifyEnableGroup.append(notifyEnableCard)
 
         self.MiscGroup = SettingCardGroup(self.tr("杂项"), self.scrollWidget)
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             self.tr('启用自动战斗检测'),
-            "只对清体力和逐光捡金场景生效",
+            "只对清体力和逐光捡金场景生效，并在启动游戏前自动检测并修改注册表值",
             "auto_battle_detect_enable"
         )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
@@ -666,15 +713,28 @@ class SettingInterface(ScrollArea):
             self.tr('关于'),
             self.tr('当前版本：') + " " + cfg.version
         )
+        self.updateSourceCard = ComboBoxSettingCard2(
+            "update_source",
+            FIF.SPEED_HIGH,
+            '更新源',
+            '',
+            texts={'海外源': 'GitHub', 'Mirror 酱': 'MirrorChyan'}
+        )
+        self.mirrorchyanCdkCard = PushSettingCardMirrorchyan(
+            self.tr('修改'),
+            FIF.BOOK_SHELF,
+            self.tr("Mirror 酱 CDK"),
+            "mirrorchyan_cdk"
+        )
         self.updatePrereleaseEnableCard = SwitchSettingCard1(
             FIF.TRAIN,
-            self.tr('加入预览版更新渠道'),
+            self.tr('加入预览版更新渠道（预览版暂不支持Mirror酱）'),
             "",
             "update_prerelease_enable"
         )
         self.updateFullEnableCard = SwitchSettingCard1(
             FIF.GLOBE,
-            self.tr('更新时下载完整包'),
+            self.tr('更新时下载完整包（非完整包暂不支持Mirror酱）'),
             "包含模拟宇宙和锄大地等，但压缩包体积更大",
             "update_full_enable"
         )
@@ -741,6 +801,8 @@ class SettingInterface(ScrollArea):
         self.UniverseGroup.addSettingCard(self.universeFrequencyCard)
         self.UniverseGroup.addSettingCard(self.universeCountCard)
         self.UniverseGroup.addSettingCard(self.universeRunTimeCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentRunTimeCard)
         self.UniverseGroup.addSettingCard(self.universeFateCard)
         self.UniverseGroup.addSettingCard(self.universeDifficultyCard)
 
@@ -768,6 +830,7 @@ class SettingInterface(ScrollArea):
         # self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.checkUpdateCard)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
+        self.ProgramGroup.addSettingCard(self.ScriptPathCard)
         self.ProgramGroup.addSettingCard(self.loopModeCard)
         self.ProgramGroup.addSettingCard(self.scheduledCard)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
@@ -776,7 +839,8 @@ class SettingInterface(ScrollArea):
 
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.NotifyGroup.addSettingCard(self.notifyTemplateCard)
-        self.NotifyGroup.addSettingCard(self.winotifyEnableCard)
+        for value in self.notifyEnableGroup:
+            self.NotifyGroup.addSettingCard(value)
 
         self.MiscGroup.addSettingCard(self.autoBattleDetectEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
@@ -789,6 +853,8 @@ class SettingInterface(ScrollArea):
         self.AboutGroup.addSettingCard(self.qqGroupCard)
         self.AboutGroup.addSettingCard(self.feedbackCard)
         self.AboutGroup.addSettingCard(self.aboutCard)
+        self.AboutGroup.addSettingCard(self.updateSourceCard)
+        self.AboutGroup.addSettingCard(self.mirrorchyanCdkCard)
         self.AboutGroup.addSettingCard(self.updatePrereleaseEnableCard)
         self.AboutGroup.addSettingCard(self.updateFullEnableCard)
 
@@ -825,7 +891,7 @@ class SettingInterface(ScrollArea):
     def __connectSignalToSlot(self):
         # self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
-
+        self.ScriptPathCard.clicked.connect(self.__onScriptPathCardClicked)
         # self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
@@ -889,3 +955,9 @@ class SettingInterface(ScrollArea):
     #         duration=1500,
     #         parent=self
     #     )
+    def __onScriptPathCardClicked(self):
+        script_path, _ = QFileDialog.getOpenFileName(self, "脚本或程序路径", "", "脚本或可执行文件 (*.ps1 *.bat *.exe)")
+        if not script_path or cfg.script_path == script_path:
+            return
+        cfg.set_value("script_path", script_path)
+        self.ScriptPathCard.setContent(script_path)

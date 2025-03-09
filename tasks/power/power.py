@@ -67,14 +67,13 @@ class Power:
         screen.change_to("guide3")
 
         immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
-        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=[
-            '+', '米'], max_retries=3)
-        if "/8" not in text:
+        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
+        if "/12" not in text:
             log.error("沉浸器数量识别失败")
             return
 
         immersifier_count = int(text.split("/")[0])
-        log.info(f"🟣沉浸器: {immersifier_count}/8")
+        log.info(f"🟣沉浸器: {immersifier_count}/12")
 
         if immersifier_count + full_runs > 0:
             Instance.run(instance_type, instance_name, 40, immersifier_count + full_runs)
@@ -141,17 +140,17 @@ class Power:
             try:
                 if type == "trailblaze_power":
                     result = auto.get_single_line_text(
-                        crop=crop, blacklist=['+', '米'], max_retries=3)
-                    power = int(result.replace("1240", "/240").replace("?", "").split('/')[0])
-                    return power if 0 <= power <= 999 else -1
+                        crop=crop, blacklist=['+', '米', '*'], max_retries=3)
+                    power = int(result.replace("1300", "/300").replace("?", "").split('/')[0])
+                    return power if 0 <= power <= 999 else 0
                 elif type == "reserved_trailblaze_power":
                     result = auto.get_single_line_text(
                         crop=crop, blacklist=['+', '米'], max_retries=3)
                     power = int(result[0])
-                    return power if 0 <= power <= 2400 else -1
+                    return power if 0 <= power <= 2400 else 0
             except Exception as e:
                 log.error(f"识别开拓力失败: {e}")
-                return -1
+                return 0
 
         def move_button_and_confirm():
             if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
@@ -196,7 +195,7 @@ class Power:
         screen.change_to('map')
         trailblaze_power = get_power(trailblaze_power_crop)
 
-        log.info(f"🟣开拓力: {trailblaze_power}/240")
+        log.info(f"🟣开拓力: {trailblaze_power}/300")
         return trailblaze_power
 
     @staticmethod
@@ -215,12 +214,12 @@ class Power:
             immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
             text = auto.get_single_line_text(crop=immersifier_crop, blacklist=[
                 '+', '米'], max_retries=3)
-            if "/8" not in text:
+            if "/12" not in text:
                 log.error("沉浸器数量识别失败")
                 return
 
             immersifier_count = int(text.split("/")[0])
-            log.info(f"🟣沉浸器: {immersifier_count}/8")
+            log.info(f"🟣沉浸器: {immersifier_count}/12")
             if immersifier_count >= limit:
                 log.info("沉浸器已达到上限")
                 return
