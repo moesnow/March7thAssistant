@@ -12,7 +12,8 @@ class FastestMirror:
         #     f"https://github.kotori.top/{download_url}",
         # ]
         # return FastestMirror.find_fastest_mirror(mirror_urls, 5)
-        return f"https://github.kotori.top/{download_url}"
+        # return f"https://github.kotori.top/{download_url}"
+        return f"{download_url}"
 
     @staticmethod
     def get_github_api_mirror(user, repo, latest=True):

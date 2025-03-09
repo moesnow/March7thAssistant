@@ -29,7 +29,7 @@ pypi_mirror_urls:
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
-
+script_path: C:\Path\to\your\Script.bat
 # 副本设置
 instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造花萼（金）、拟造花萼（赤）、凝滞虚影、侵蚀隧洞、饰品提取。
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
@@ -50,7 +50,7 @@ instance_team_number: "5" # 自动切换的队伍编号。
 
 # 合成设置
 merge_immersifier: False # 是否优先合成沉浸器。true 开启，false 关闭。
-merge_immersifier_limit: "8" # 沉浸器上限。
+merge_immersifier_limit: "12" # 沉浸器上限。
 
 # 开拓力使用设置
 use_reserved_trailblaze_power: False # 是否使用后备开拓力。true 使用，false 不使用。
@@ -128,13 +128,15 @@ universe_enable: false # 是否启用模拟宇宙功能。true 开启，false �
 universe_operation_mode: exe # 模拟宇宙运行方式，可选 "源码"（source）或 "集成"（exe）。
 universe_category: divergent # 模拟宇宙类型，可选 "差分宇宙"（divergent）或 "模拟宇宙"（universe）。
 universe_disable_gpu: false # 是否禁用GPU加速。true 开启，false 关闭。
-universe_bonus_enable: false # 是否领取沉浸奖励。true 开启，false 关闭。
+universe_bonus_enable: false # 类别为“模拟宇宙”时，自动领取沉浸奖励。类别为“差分宇宙”时，在领取积分奖励后自动执行饰品提取消耗沉浸器。true 开启，false 关闭。
 universe_frequency: weekly # 模拟宇宙运行频率，可选 "每周"（weekly）或 "每天"（daily）。
 universe_count: 34 # 模拟宇宙运行次数，设置每次启动时尝试运行的次数。
 universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径，指向模拟宇宙脚本或程序的位置。
 universe_timeout: 20 # 模拟宇宙超时时间（单位：小时），设置脚本或程序的最长运行时间。
 universe_requirements: false # 是否已安装模拟宇宙依赖。true 表示已安装，false 表示未安装或需要重新安装。
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳，用于记录和控制运行频率。
+weekly_divergent_enable: false # 是否启用每周优先运行一次差分宇宙。true 开启，false 关闭。
+weekly_divergent_timestamp: 0 # 上次运行每周一次差分宇宙的时间戳。
 universe_fate: "不配置" # 模拟宇宙使用的命途
 universe_difficulty: 0 # 模拟宇宙使用的难度
 
@@ -251,13 +253,16 @@ update_prerelease_enable: false # 是否加入预览版更新渠道。true 加�
 update_full_enable: true # 更新时是否下载完整包。true 下载，false 不下载。
 auto_update: false
 
+update_source: GitHub # 更新源，可选值："GitHub"（海外源）, "MirrorChyan"（Mirror 酱）
+mirrorchyan_cdk: "" # MirrorChyan CDK
+
 # 消息推送配置
 # 消息推送格式配置
 notify_template:
   Title: 三月七小助手|･ω･)
   TestMessage: "这是一条测试消息"
   ContinueTime: "将在{time}继续运行"
-  FullTime: "开拓力剩余{power}/240\n预计{time}回满"
+  FullTime: "开拓力剩余{power}/300\n预计{time}回满"
   NewVersion: "发现新版本 {version}"
   ErrorOccurred: "发生错误 {error}"
   DailyPracticeCompleted: "每日实训已完成"
@@ -281,6 +286,15 @@ notify_telegram_token: "" # Telegram bot 的 token。
 notify_telegram_userid: "" # 接收通知的用户或群组 ID。
 notify_telegram_api_url: "" # 可选参数，Telegram API 的自定义URL，默认为空。
 notify_telegram_proxies: "" # 可选参数，请求 Telegram API 是否使用代理。默认为空(使用系统PAC或不使用)。例如："127.0.0.1:10808", "socks5://127.0.0.1:1080/" 。
+
+notify_matrix_enable: false # 是否启用 Matrix 通知。true 开启，false 关闭。
+notify_matrix_homeserver: "" # 服务器的地址 例如官方地址 https://matrix.org
+notify_matrix_device_id: "" # 一个十位大写字母或数字组成的设备ID，登录后由服务器分发 例如： 01234ABCDE
+notify_matrix_user_id: "" # 用户ID 例如：@user_id:matrix.org
+notify_matrix_access_token: "" # access_token，登录后由服务器分发，例如 syt_abcdefghijk_lmNOPQRSTUVWXYZ_123Ab4
+notify_matrix_room_id: "" # 消息发到哪个房间， 例如: !abcdefGHIJKlmnoPQRST:matrix.org
+notify_matrix_proxy: "" # 代理，例如 socks5://127.0.0.1:1080 ，不填则用系统PAC代理
+notify_matrix_separately_text_media: true # 分开发送文字和媒体（图片），如果你使用FluffyChat可能不显示Caption，可以设置为True避免不显示文字。
 
 # Server酱·Turbo版通知配置
 # 微信推送，适合小白，免费版每天限制五条
@@ -308,9 +322,9 @@ notify_bark_url: "" # 可选参数，自定义 Bark 服务的 URL。
 notify_bark_copy: "" # 可选参数
 notify_bark_autocopy: "" # 可选参数
 
-# Email/SMTP 邮箱通知配置
+# SMTP 邮箱通知配置
 # 支持发送截图，注意部分邮箱密码部分需要填写授权码（比如 QQ邮箱）
-notify_smtp_enable: false # 是否启用 Email/SMTP 邮箱通知。true 开启，false 关闭。
+notify_smtp_enable: false # 是否启用 SMTP 邮箱通知。true 开启，false 关闭。
 notify_smtp_host: "" # SMTP 服务器地址。
 notify_smtp_user: "" # SMTP 用户名/邮箱。
 notify_smtp_password: "" # SMTP 密码或授权码。
@@ -320,6 +334,26 @@ notify_smtp_port: "" # SMTP 服务器端口，默认为 465。
 notify_smtp_ssl: "" # 是否使用 SSL 连接 SMTP 服务器。默认为 True，可设置为 False 关闭。
 notify_smtp_starttls: "" # 是否使用 SSL 连接 SMTP 服务器。默认为 False，可设置为 True 关闭。
 notify_smtp_ssl_unverified: "" # 是否使用不经验证的 SSL 连接。默认为 False，可设置为 True 关闭。除非您使用自签名邮箱,否则不推荐启用。
+
+# OneBot 通知配置（QQ 机器人）
+# 已测试 NapCatQQ(https://github.com/NapNeko/NapCatQQ) 和 OpenShamrock(https://github.com/whitechi73/OpenShamrock) 可用
+# 支持发送截图
+notify_onebot_enable: false # 是否启用 OneBot 通知。true 开启，false 关闭。
+notify_onebot_endpoint: "" # OneBot 的服务端点 URL，例如 http://127.0.0.1:3000
+notify_onebot_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
+notify_onebot_token: "" # 可选参数，验证请求的 Access Token。
+notify_onebot_user_id: "" # 可选参数，私聊消息的接收用户 ID。
+notify_onebot_group_id: "" # 可选参数，群消息的接收群组 ID。
+
+# Go-cqhttp 通知配置（已停止维护）
+# 支持发送截图
+# https://github.com/Mrs4s/go-cqhttp
+notify_gocqhttp_enable: false # 是否启用 Go-cqhttp 通知。true 开启，false 关闭。
+notify_gocqhttp_endpoint: "" # Go-cqhttp 的服务端点 URL。
+notify_gocqhttp_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
+notify_gocqhttp_token: "" # 可选参数，验证请求的 Access Token。
+notify_gocqhttp_user_id: "" # 可选参数，私聊消息的接收用户 ID。
+notify_gocqhttp_group_id: "" # 可选参数，群消息的接收群组 ID。
 
 # 钉钉通知配置
 notify_dingtalk_enable: false # 是否启用钉钉通知。true 开启，false 关闭。
@@ -344,26 +378,6 @@ notify_wechatworkapp_touser: "" # 可选参数，企业微信应用通知的目�
 # 企业微信机器人通知配置
 notify_wechatworkbot_enable: false # 是否启用企业微信机器人通知。true 开启，false 关闭。
 notify_wechatworkbot_key: "" # 企业微信机器人的 Key。
-
-# OneBot/OpenShamrock 通知配置（QQ 机器人）
-# 支持发送截图
-# https://github.com/whitechi73/OpenShamrock
-notify_onebot_enable: false # 是否启用 OneBot/OpenShamrock 通知。true 开启，false 关闭。
-notify_onebot_endpoint: "" # OneBot/OpenShamrock 的服务端点 URL，例如 http://127.0.0.1:5700
-notify_onebot_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
-notify_onebot_token: "" # 可选参数，验证请求的 Access Token。
-notify_onebot_user_id: "" # 可选参数，私聊消息的接收用户 ID。
-notify_onebot_group_id: "" # 可选参数，群消息的接收群组 ID。
-
-# Go-cqhttp 通知配置（已停止维护）
-# 支持发送截图
-# https://github.com/Mrs4s/go-cqhttp
-notify_gocqhttp_enable: false # 是否启用 Go-cqhttp 通知。true 开启，false 关闭。
-notify_gocqhttp_endpoint: "" # Go-cqhttp 的服务端点 URL。
-notify_gocqhttp_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
-notify_gocqhttp_token: "" # 可选参数，验证请求的 Access Token。
-notify_gocqhttp_user_id: "" # 可选参数，私聊消息的接收用户 ID。
-notify_gocqhttp_group_id: "" # 可选参数，群消息的接收群组 ID。
 
 # Gotify 通知配置
 notify_gotify_enable: false # 是否启用 Gotify 通知。true 开启，false 关闭。

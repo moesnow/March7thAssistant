@@ -14,7 +14,7 @@ class Echoofwar:
             log.hr("准备历战余响", 0)
             screen.change_to('guide3')
             guide3_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
-            if auto.click_element("侵蚀隧洞", "text", max_retries=10, crop=guide3_crop):
+            if auto.click_element("凝滞虚影", "text", max_retries=10, crop=guide3_crop):
                 auto.mouse_scroll(12, -1)
                 # 等待界面完全停止
                 time.sleep(1)

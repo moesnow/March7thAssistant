@@ -17,7 +17,7 @@ onepush
 winotify
 markdown
 cpufeature
-PyQt-Fluent-Widgets==1.6.3
+PyQt-Fluent-Widgets==1.7.0
 pylnk3
 pyperclip
 qrcode
@@ -25,3 +25,7 @@ pysocks
 pypac
 requests_toolbelt
 desktopmagic
+matrix-nio
+python-socks[asyncio]
+asyncio
+nio

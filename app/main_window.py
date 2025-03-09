@@ -17,6 +17,7 @@ from .setting_interface import SettingInterface
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
+from .tools.check_theme_change import checkThemeChange
 from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
@@ -38,16 +39,17 @@ class MainWindow(MSFluentWindow):
         checkAnnouncement(self)
 
     def initWindow(self):
+        self.setMicaEffectEnabled(False)
         setThemeColor('#f18cb9', lazy=True)
         setTheme(Theme.AUTO, lazy=True)
-        self.setMicaEffectEnabled(False)
 
         # 禁用最大化
         self.titleBar.maxBtn.setHidden(True)
         self.titleBar.maxBtn.setDisabled(True)
         self.titleBar.setDoubleClickEnabled(False)
         self.setResizeEnabled(False)
-        self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        # self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
         self.resize(960, 640)
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
@@ -56,6 +58,7 @@ class MainWindow(MSFluentWindow):
         # 创建启动画面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
         self.splashScreen.setIconSize(QSize(128, 128))
+        self.splashScreen.titleBar.maxBtn.setHidden(True)
         self.splashScreen.raise_()
 
         desktop = QApplication.desktop().availableGeometry()
@@ -107,9 +110,15 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
 
         self.splashScreen.finish()
+        self.themeListener = checkThemeChange(self)
 
         if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
             disclaimer(self)
+
+    def closeEvent(self, e):
+        self.themeListener.terminate()
+        self.themeListener.deleteLater()
+        super().closeEvent(e)
 
     def startGame(self):
         game = GameController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass')
@@ -121,26 +130,26 @@ class MainWindow(MSFluentWindow):
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
-                    duration=1000,
+                    duration=2000,
                     parent=self
                 )
             else:
                 InfoBar.warning(
-                    title=self.tr('游戏路径配置错误(╥╯﹏╰╥)\n请在“设置”-->“程序”中配置'),
-                    content="",
+                    title=self.tr('游戏路径配置错误(╥╯﹏╰╥)'),
+                    content="请在“设置”-->“程序”中配置",
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
                     duration=5000,
                     parent=self
                 )
-        except:
+        except Exception as e:
             InfoBar.warning(
-                title=self.tr('启动失败(╥╯﹏╰╥)'),
-                content="",
+                title=self.tr('启动失败'),
+                content=str(e),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=1000,
+                duration=5000,
                 parent=self
             )

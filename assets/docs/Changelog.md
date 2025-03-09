@@ -1,9 +1,46 @@
 # 更新日志
 
+## v2025.3.7
+
+- 模拟宇宙（Auto_Simulated_Universe）适配新版本差分宇宙
+- 支持 3.1 版本新增关卡和角色 [#486](https://github.com/moesnow/March7thAssistant/pull/486)
+- 支持任务完成后运行指定程序或脚本 [#453](https://github.com/moesnow/March7thAssistant/pull/453)
+- 支持每周优先运行一次差分宇宙（设置-宇宙）
+- 接入 Mirror酱 第三方应用分发平台（关于 → 更新源）
+- 修复设置培养目标后部分副本异常
+- 修复无法进入经典模拟宇宙界面
+- 修复无法正常合成消耗品 [#482](https://github.com/moesnow/March7thAssistant/issues/482)
+- 触屏模式暂不可用 [#487](https://github.com/moesnow/March7thAssistant/issues/487)
+
+## v2025.1.20
+
+- 支持 3.0 版本新增关卡和角色 [#442](https://github.com/moesnow/March7thAssistant/pull/442)
+- 支持 “Matrix” 推送方式 [#440](https://github.com/moesnow/March7thAssistant/pull/440)
+- 修改开拓力上限至300 [#447](https://github.com/moesnow/March7thAssistant/pull/447)
+- 修复无法识别沉浸器数量 [#441](https://github.com/moesnow/March7thAssistant/issues/441)
+- 修复无法更新抽卡记录
+- 部分代码规范性优化 [#443](https://github.com/moesnow/March7thAssistant/pull/443)
+
+## v2024.12.18
+
+### 更新
+- "启用位面分裂"开启后，存在双倍次数时体力优先「饰品提取」
+- 支持在图形界面中开关所有的推送方式，并修改对应的配置项
+- 优化了“解锁帧率”和“触屏模式”的报错提示（需要将游戏图像质量修改为自定义）
+- “启用自动战斗检测”开启后，会在启动游戏前尝试检查并修改对应的注册表值
+
+## v2024.12.12
+
+### 更新
+- 支持 “触屏模式（云游戏移动端 UI）” 启动游戏（工具箱）
+- “领取沉浸奖励” 选项更改为 “领取沉浸奖励/执行饰品提取”（领取积分奖励后将自动执行饰品提取）
+- 修复更换新壁纸 “愿今夜无梦” 后无法进入邮箱
+- 修复无法识别并跳过末日幻影快速挑战提示框 [#406](https://github.com/moesnow/March7thAssistant/issues/406) 
+
 ## v2.7.0
 
 ### 新功能
-- 支持 “灵砂”
+- 支持 “星期日” 、 “灵砂”
 - 支持末日幻影 [#397](https://github.com/moesnow/March7thAssistant/pull/397) 
 - 支持开机后自动运行（设置—杂项）
 - 循环模式每次启动前会重新加载配置文件
@@ -155,7 +192,7 @@
 - “任务完成后” 新增 “注销” 选项
 - 工具箱新增帧率解锁 [#161](https://github.com/moesnow/March7thAssistant/pull/161)
 - “启用自动修改分辨率” 选项更改为 “启用自动修改分辨率并关闭自动 HDR” [#156](https://github.com/moesnow/March7thAssistant/pull/156)
-- 新增 [OneBot](https://onebot.dev)/[OpenShamrock](https://whitechi73.github.io/OpenShamrock/) 推送方式（QQ 机器人）
+- 新增 [OneBot](https://onebot.dev) 推送方式（QQ 机器人）
 - 企业微信应用推送方式支持发送图片
 
 ### 修复

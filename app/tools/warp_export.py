@@ -156,7 +156,7 @@ class WarpExport:
                     CopyFile(latest_file_path, temp_file_path)
                     cache_text = Path(temp_file_path).read_bytes().decode(errors="ignore")
 
-                regex_pattern = r'https.+?&auth_appid=webview_gacha&.+?authkey=.+?&game_biz=hkrpg_.+?&plat_type=pc'
+                regex_pattern = r'https.+?&auth_appid=webview_gacha&.+?authkey=.+?&game_biz=hkrpg_'
                 matches = re.findall(regex_pattern, cache_text)
                 return matches[-1]
             else:

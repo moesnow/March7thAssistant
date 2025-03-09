@@ -42,6 +42,13 @@ class Daily:
         else:
             log.info("锄大地尚未刷新")
 
+        if cfg.weekly_divergent_enable:
+            if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
+                if Universe.start(1, False, "divergent"):
+                    cfg.save_timestamp("weekly_divergent_timestamp")
+            else:
+                log.info("每周一次差分宇宙尚未刷新")
+
         if cfg.universe_frequency == "weekly":
             if Date.is_next_mon_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
@@ -77,7 +84,7 @@ class Daily:
                 log.info("虚构叙事未开启")
         else:
             log.info("虚构叙事尚未刷新")
-            
+
         if Date.is_next_mon_x_am(cfg.apocalyptic_timestamp, cfg.refresh_hour):
             if cfg.apocalyptic_enable:
                 challenge.start("apocalyptic")
@@ -85,7 +92,7 @@ class Daily:
                 log.info("末日幻影未开启")
         else:
             log.info("末日幻影尚未刷新")
-            
+
         activity.start()
 
         # 优先历战余响

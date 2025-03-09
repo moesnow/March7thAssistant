@@ -11,6 +11,7 @@ import time
 import sys
 import os
 from module.config import asu_config
+from tasks.power.instance import Instance
 
 
 class Universe:
@@ -201,8 +202,24 @@ class Universe:
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
                     time.sleep(1)
                     auto.press_key("esc")
-                    return
+                    if category == "divergent" and cfg.universe_bonus_enable:
+                        Universe.process_ornament()
         Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseCompleted'])
+
+    @staticmethod
+    def process_ornament():
+        screen.change_to("guide3")
+
+        immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
+        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
+        if "/12" not in text:
+            log.error("沉浸器数量识别失败")
+            return
+
+        immersifier_count = int(text.split("/")[0])
+        log.info(f"🟣沉浸器: {immersifier_count}/12")
+        if immersifier_count > 0:
+            Instance.run("饰品提取", cfg.instance_names["饰品提取"], 40, immersifier_count)
 
     @staticmethod
     def gui():

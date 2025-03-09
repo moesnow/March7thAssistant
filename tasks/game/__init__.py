@@ -18,7 +18,7 @@ from module.notification import notif
 from module.ocr import ocr
 
 
-starrail = StarRailController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
+starrail = StarRailController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', logger=log, script_path=cfg.script_path)
 
 
 def start():
@@ -77,6 +77,9 @@ def start_game():
                     starrail.change_resolution(1920, 1080)
                     starrail.change_auto_hdr("disable")
 
+                if cfg.auto_battle_detect_enable:
+                    starrail.change_auto_battle(True)
+
                 if not starrail.start_game():
                     raise Exception("启动游戏失败")
                 time.sleep(10)
@@ -124,7 +127,7 @@ def stop(detect_loop=False):
             os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
             import pygame.mixer
 
-            # 有用户反馈会报错 “mixer not initialized”
+            # 有用户反馈会报错 “mixer not initialized”
             # 不清楚为什么，可能是远程桌面的情况下缺少音频设备吗
             pygame.init()
             pygame.mixer.music.load("./assets/audio/pa.mp3")
@@ -144,10 +147,10 @@ def stop(detect_loop=False):
     else:
         if detect_loop:
             notify_after_finish_not_loop()
-        if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff"]:
+        if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
             starrail.shutdown(cfg.after_finish)
         log.hr("完成", 2)
-        if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff"]:
+        if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
             input("按回车键关闭窗口. . .")
         sys.exit(0)
 
@@ -194,8 +197,8 @@ def after_finish_is_loop():
 def notify_after_finish_not_loop():
 
     def get_wait_time(current_power):
-        # 距离体力到达240上限剩余秒数
-        wait_time_power_full = (240 - current_power) * 6 * 60
+        # 距离体力到达300上限剩余秒数
+        wait_time_power_full = (300 - current_power) * 6 * 60
         return wait_time_power_full
 
     current_power = Power.get()
