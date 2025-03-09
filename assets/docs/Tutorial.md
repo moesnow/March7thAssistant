@@ -17,9 +17,9 @@
 
 找到名称类似 `March7thAssistant_vx.x.x_full.zip(7z)` 的文件，点击下载。
 
-> 如果中国大陆下载缓慢可以尝试右键上述文件，选择 "复制链接"。
+> March7thAssistant 接入了第三方服务 [Mirror酱](https://mirrorchyan.com/)（一个给开源社区做有偿内容分发的平台）。
 >
-> 然后打开加速站 [https://github.moeyy.xyz/](https://github.moeyy.xyz/) ，粘贴后点击下载。
+> 如果中国大陆下载缓慢可以尝试 [点我前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable)
 
 ## 解压
 
@@ -165,8 +165,6 @@
 角色对应的英文名字可以在 `March7thAssistant\assets\images\character` 中查看
 
 ### 推送
-
-图形界面内只支持启用`Windows原生通知`，需要其他通知请在 `config.yaml` 中开启。
 
 目前支持：
 
