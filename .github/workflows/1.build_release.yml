@@ -87,6 +87,7 @@ jobs:
 
       # 步骤10：强制触发 MirrorChyan 上传
       - name: Trigger MirrorChyanUploading
+        shell: bash
         run: |
           gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Uploading'
           gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Release Note'
