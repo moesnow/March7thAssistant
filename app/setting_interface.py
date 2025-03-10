@@ -673,7 +673,7 @@ class SettingInterface(ScrollArea):
         self.allScreensCard = SwitchSettingCard1(
             FIF.ZOOM,
             self.tr('在多显示器上进行截屏'),
-            "默认开启，如果正在使用多显示器且无法正常截屏请开关闭这个",
+            "默认开启，如果正在使用多显示器且无法正常截屏请关闭此选项重试",
             "all_screens"
         )
         self.StartMarch7thAssistantCard = StartMarch7thAssistantSwitchSettingCard(
