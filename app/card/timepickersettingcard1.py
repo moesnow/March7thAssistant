@@ -23,4 +23,4 @@ class TimePickerSettingCard1(SettingCard):
         self.timePicker.timeChanged.connect(self._onTimeChanged)
 
     def _onTimeChanged(self, time: QTime):
-        cfg.set_value(self.configname, time.toString(Qt.DefaultLocaleShortDate))
+        cfg.set_value(self.configname, time.toString("HH:mm"))  # 保存24小时制的时间到配置文件
