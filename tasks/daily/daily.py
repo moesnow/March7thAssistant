@@ -14,7 +14,7 @@ from tasks.daily.tasks import Tasks
 from tasks.daily.himekotry import HimekoTry
 from tasks.weekly.echoofwar import Echoofwar
 from utils.color import red, green, yellow
-
+import datetime
 
 class Daily:
     @staticmethod
@@ -26,7 +26,12 @@ class Daily:
         # 优先历战余响
         if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
             if cfg.echo_of_war_enable:
-                Echoofwar.start()
+                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
+                isoweekday = datetime.date.today().isoweekday()
+                if isoweekday >= cfg.echo_of_war_start_day_of_week:
+                    Echoofwar.start()
+                else:
+                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
             else:
                 log.info("历战余响未开启")
         else:
@@ -98,7 +103,12 @@ class Daily:
         # 优先历战余响
         if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
             if cfg.echo_of_war_enable:
-                Echoofwar.start()
+                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
+                isoweekday = datetime.date.today().isoweekday()
+                if isoweekday >= cfg.echo_of_war_start_day_of_week:
+                    Echoofwar.start()
+                else:
+                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
             else:
                 log.info("历战余响未开启")
         else:
