@@ -9,6 +9,7 @@ import hashlib
 import base64
 import hmac
 import time
+from module.logger import log
 
 # 定义一个通知发送器类，用于发送飞书（Lark）通知
 class LarkNotifier(Notifier):
@@ -44,7 +45,7 @@ class LarkNotifier(Notifier):
 
         imageenable = self.params["imageenable"]
         # 如果支持发送图片，并且图片功能已启用
-        if imageenable:
+        if imageenable and image_io is not None:
             # 获取飞书的认证令牌
             auth_endpoint = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
             auth_headers = {
@@ -63,12 +64,13 @@ class LarkNotifier(Notifier):
                 "Content-Type": "multipart/form-data; boundary=---7MA4YWxkTrZu0gW",
                 "Authorization": f"Bearer {tenant_access_token}"
             }
-            form = {'image_type': 'message',
-            'image': (image_io)}
+            form = {'image_type': 'message', 'image': (image_io)}
             multi_form = MultipartEncoder(form)
             image_headers['Content-Type'] = multi_form.content_type
             image_response = requests.post(image_endpoint , headers=image_headers, data=multi_form)
-            image_response.raise_for_status()
+            if (image_response.status_code % 100 != 2):
+                log.error(image_response.text)
+                image_response.raise_for_status()
             image_key = image_response.json()["data"]["image_key"]
 
             # 构造发送的消息内容
