@@ -44,7 +44,7 @@ class LarkNotifier(Notifier):
         webhook = self.params["webhook"]
 
         imageenable = self.params["imageenable"]
-        # 如果支持发送图片，并且图片功能已启用
+        # 图片功能已启用，且需要发送图片
         if imageenable and image_io is not None:
             # 获取飞书的认证令牌
             auth_endpoint = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
@@ -98,8 +98,8 @@ class LarkNotifier(Notifier):
                 }
             }
 
-        # 如果不支持发送图片
-        if not imageenable:
+        # 不需要发送图片 或图片功能未启用
+        else:
             send_message = {
                 "msg_type": "post",
                 "content": {
