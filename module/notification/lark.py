@@ -72,10 +72,10 @@ class LarkNotifier(Notifier):
             image_key = image_response.json()["data"]["image_key"]
 
             # 构造发送的消息内容
-            if self.params["keyword"] is not None:
-                content = content + '\n' + self.params["keyword"]
-            if self.params["keyword"] == '' or self.params["keyword"] is None:
-                content = content
+            if self.params.get("keyword", None) is not None:
+                if self.params["keyword"] != '':
+                    content = content + '\n' + self.params["keyword"]
+
             send_message = {
                 "msg_type": "post",
                 "content": {
@@ -115,7 +115,7 @@ class LarkNotifier(Notifier):
                 }
             }
         # 如果需要签名
-        if self.params["sign"] is not None:
+        if self.params.get("sign", None) is not None and self.params["sign"] != '':
             sign = self.params["sign"]
             timestamp = str(int(time.time()))
             send_message.update({
