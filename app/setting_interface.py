@@ -146,6 +146,13 @@ class SettingInterface(ScrollArea):
             self.tr("上次完成历战余响的时间"),
             "echo_of_war_timestamp"
         )
+        self.echoofwarStartDayOfWeekCard = RangeSettingCard1(
+            "echo_of_war_start_day_of_week",
+            [1, 7],
+            FIF.HISTORY,
+            self.tr("周几开始执行【历战余响】"),
+            self.tr("假设值为4，那么周1、2、3不执行「历战余响」，周4、5、6、7则执行"),
+        )
 
         self.BorrowGroup = SettingCardGroup(self.tr("支援设置"), self.scrollWidget)
         self.borrowEnableCard = SwitchSettingCard1(
@@ -758,6 +765,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.useFuelEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
+        self.PowerGroup.addSettingCard(self.echoofwarStartDayOfWeekCard)
 
         self.BorrowGroup.addSettingCard(self.borrowEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
