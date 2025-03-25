@@ -59,6 +59,7 @@ use_fuel: False # 是否使用燃料。true 使用，false 不使用。
 # 历战余响设置
 echo_of_war_enable: false # 是否体力优先完成3次「历战余响」。true 开启，false 关闭。
 echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳。用于记录和控制频率。
+echo_of_war_start_day_of_week: 1 # 周几开始执行「历战余响」，假设值为4，那么周1、2、3不执行「历战余响」，周4、5、6、7则执行
 
 # 支援角色配置
 borrow_enable: true # 是否使用支援角色。true 使用，false 不使用。
