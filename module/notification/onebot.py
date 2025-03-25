@@ -49,10 +49,14 @@ class OnebotNotifier(Notifier):
 
         payload = {
             "message_type": message_type,
-            "user_id": user_id if message_type == "private" else "",
-            "group_id": group_id if message_type == "group" else "",
             "message": message
         }
+        
+        # 根据消息类型给载荷添加对应的ID字段
+        if message_type == "private":
+            payload["user_id"] = user_id
+        elif message_type == "group":
+            payload["group_id"] = group_id
 
         # 发送POST请求
         response = requests.post(endpoint, data=json.dumps(payload), headers=headers)
