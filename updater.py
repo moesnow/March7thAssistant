@@ -39,7 +39,9 @@ class Updater:
             self.download_url = self.get_download_url()
             self.logger.info(f"下载链接: {green(self.download_url)}")
             self.logger.hr("完成", 2)
-            input("按回车键开始更新")
+            if compare_versions(self, version)==False:
+                self.logger.info(f"当前已是最新版本")
+                sys.exit()
         else:
             self.logger.info(f"下载链接: {green(self.download_url)}")
             self.logger.hr("完成", 2)
@@ -83,10 +85,12 @@ class Updater:
                 current_version = file.read().strip()
             if parse(version.lstrip('v')) > parse(current_version.lstrip('v')):
                 self.logger.info(f"发现新版本: {current_version} ——> {version}")
+                return True
             else:
                 self.logger.info(f"本地版本: {current_version}")
                 self.logger.info(f"远程版本: {version}")
                 self.logger.info(f"当前已是最新版本")
+                return False
         except Exception as e:
             self.logger.info(f"本地版本获取失败: {e}")
             self.logger.info(f"最新版本: {version}")
