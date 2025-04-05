@@ -35,7 +35,8 @@ from tasks.daily.redemption import Redemption
 def first_run():
     if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
         log.error("首次使用请先打开图形界面 March7th Launcher.exe")
-        input("按回车键关闭窗口. . .")
+        if not auto_mode:
+            input("按回车键关闭窗口. . .")
         sys.exit(0)
 
 
@@ -74,7 +75,8 @@ def run_sub_task_gui(action):
     }
     task = gui_tasks.get(action)
     if task and not task():
-        input("按回车键关闭窗口. . .")
+        if not auto_mode:
+            input("按回车键关闭窗口. . .")
     sys.exit(0)
 
 
@@ -86,13 +88,14 @@ def run_sub_task_update(action):
     task = update_tasks.get(action)
     if task:
         task()
-    input("按回车键关闭窗口. . .")
+    if not auto_mode:
     sys.exit(0)
 
 
 def run_notify_action():
     notif.notify(cfg.notify_template['TestMessage'], "./assets/app/images/March7th.jpg")
-    input("按回车键关闭窗口. . .")
+    if not auto_mode:
+        input("按回车键关闭窗口. . .")
     sys.exit(0)
 
 
@@ -126,7 +129,8 @@ def main(action=None):
 
     else:
         log.error(f"未知任务: {action}")
-        input("按回车键关闭窗口. . .")
+        if not auto_mode:
+            input("按回车键关闭窗口. . .")
         sys.exit(1)
 
 
@@ -137,15 +141,24 @@ def exit_handler():
 
 
 if __name__ == "__main__":
+    global auto_mode
+    auto_mode
+    if len(sys.argv) > 1:
+        auto_mode = True if sys.argv[1] == "/q" else False
     try:
         atexit.register(exit_handler)
-        main(sys.argv[1]) if len(sys.argv) > 1 else main()
+        if not auto_mode:
+            main(sys.argv[1]) if len(sys.argv) > 1 else main()
+        else:
+            main()
     except KeyboardInterrupt:
         log.error("发生错误: 手动强制停止")
-        input("按回车键关闭窗口. . .")
+        if not auto_mode:
+            input("按回车键关闭窗口. . .")
         sys.exit(1)
     except Exception as e:
         log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
         notif.notify(cfg.notify_template['ErrorOccurred'].format(error=e))
-        input("按回车键关闭窗口. . .")
+        if not auto_mode:
+            input("按回车键关闭窗口. . .")
         sys.exit(1)
