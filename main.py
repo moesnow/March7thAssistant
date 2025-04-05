@@ -89,7 +89,7 @@ def run_sub_task_update(action):
     if task:
         task()
     if not auto_mode:
-    sys.exit(0)
+        sys.exit(0) 
 
 
 def run_notify_action():
