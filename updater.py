@@ -39,7 +39,8 @@ class Updater:
             self.download_url = self.get_download_url()
             self.logger.info(f"下载链接: {green(self.download_url)}")
             self.logger.hr("完成", 2)
-            input("按回车键开始更新")
+            if not auto_mode:
+                input("按回车键开始更新")
         else:
             self.logger.info(f"下载链接: {green(self.download_url)}")
             self.logger.hr("完成", 2)
@@ -57,7 +58,14 @@ class Updater:
                     return self.process_release_data(data)
         except URLError as e:
             self.logger.error(f"检测更新失败: {red(e)}")
-            input("按回车键重试...")
+            if not auto_mode:
+                input("按回车键重试...")
+            if max_try == 0:
+                self.logger.info(f"已停止自动重试")
+                sys.exit(1)
+            else:
+                self.logger.info(f"重试中")
+                max_try -= 1
             return self.get_download_url()
 
     def process_release_data(self, data):
@@ -137,7 +145,17 @@ class Updater:
                 break
             except Exception as e:
                 self.logger.error(f"下载失败: {red(e)}")
-                input("按回车键重试. . .")
+                if not auto_mode:
+                    input("按回车键重试. . .")
+                    
+                if max_try == 0:
+                    self.logger.info(f"已停止自动重试")
+                    sys.exit(1)
+                else:
+                    self.logger.info(f"重试中")
+                    max_try -= 1
+                
+                
                 if os.path.exists(self.download_file_path):
                     os.remove(self.download_file_path)
         self.logger.hr("完成", 2)
@@ -158,7 +176,14 @@ class Updater:
             except Exception as e:
                 self.logger.error(f"解压失败: {red(e)}")
                 self.logger.hr("完成", 2)
-                input("按回车键重新下载. . .")
+                if not auto_mode:
+                    input("按回车键重新下载. . .")
+                if max_try == 0:
+                    self.logger.info(f"已停止自动重试")
+                    sys.exit(1)
+                else:
+                    self.logger.info(f"重试中")
+                    max_try -= 1
                 if os.path.exists(self.download_file_path):
                     os.remove(self.download_file_path)
                 return False
@@ -176,7 +201,15 @@ class Updater:
                 break
             except Exception as e:
                 self.logger.error(f"覆盖失败: {red(e)}")
-                input("按回车键重试. . .")
+                
+                if not auto_mode:
+                    input("按回车键重试. . .")
+                if max_try == 0:
+                    self.logger.info(f"已停止自动重试")
+                    sys.exit(1)
+                else:
+                    self.logger.info(f"重试中")
+                    max_try -= 1
         self.logger.hr("完成", 2)
 
     def terminate_processes(self):
@@ -215,6 +248,8 @@ class Updater:
                 break
         self.cover_folder()
         self.cleanup()
+        if  not auto_mode:
+            return
         input("按回车键退出并打开软件")
         if os.system(f'cmd /c start "" "{os.path.abspath("./March7th Launcher.exe")}"'):
             subprocess.Popen(os.path.abspath("./March7th Launcher.exe"))
@@ -225,7 +260,6 @@ def check_temp_dir_and_run():
     if not getattr(sys, 'frozen', False):
         print("更新程序只支持打包成exe后运行")
         sys.exit(1)
-
     temp_path = os.path.abspath("./temp")
     file_path = sys.argv[0]
     destination_path = os.path.join(temp_path, os.path.basename(file_path))
@@ -243,6 +277,18 @@ def check_temp_dir_and_run():
 
     download_url = sys.argv[1] if len(sys.argv) == 3 else None
     file_name = sys.argv[2] if len(sys.argv) == 3 else None
+    global auto_mode
+    global max_try
+    max_try = -1
+    """检查是否以静默模式启动，上面代码保留为了兼容老版本"""
+    if(len(sys.argv) == 2):
+        auto_mode = True if sys.argv[1] == "/q" else False
+        max_try = 5
+    if(len(sys.argv) == 4):
+        download_url = sys.argv[1]
+        file_name = sys.argv[2]
+        auto_mode = True if sys.argv[3] == "/q" else False
+        max_try = 5
     logger = Logger()
     updater = Updater(logger, download_url, file_name)
     updater.run()
