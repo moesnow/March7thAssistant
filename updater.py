@@ -95,9 +95,14 @@ class Updater:
                 self.logger.info(f"本地版本: {current_version}")
                 self.logger.info(f"远程版本: {version}")
                 self.logger.info(f"当前已是最新版本")
+                if auto_mode:
+                    sys.exit(0)
+                
         except Exception as e:
             self.logger.info(f"本地版本获取失败: {e}")
             self.logger.info(f"最新版本: {version}")
+            if auto_mode:
+                    sys.exit(0)
 
     def find_fastest_mirror(self, mirror_urls, timeout=5):
         """测速并找到最快的镜像。"""
