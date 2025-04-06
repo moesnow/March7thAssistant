@@ -18,7 +18,9 @@ from utils.logger.logger import Logger
 class Updater:
     """应用程序更新器，负责检查、下载、解压和安装最新版本的应用程序。"""
 
-    def __init__(self, logger: Logger, download_url=None, file_name=None):
+    def __init__(self, logger: Logger, download_url=None, file_name=None, auto_mode=False, max_try=-1):
+        self.auto_mode = auto_mode
+        self.max_try = max_try
         self.logger = logger
         self.process_names = ["March7th Assistant.exe", "March7th Launcher.exe", "flet.exe", "gui.exe"]
         self.api_urls = [
@@ -39,7 +41,7 @@ class Updater:
             self.download_url = self.get_download_url()
             self.logger.info(f"下载链接: {green(self.download_url)}")
             self.logger.hr("完成", 2)
-            if not auto_mode:
+            if not self.auto_mode:
                 input("按回车键开始更新")
         else:
             self.logger.info(f"下载链接: {green(self.download_url)}")
@@ -58,14 +60,14 @@ class Updater:
                     return self.process_release_data(data)
         except URLError as e:
             self.logger.error(f"检测更新失败: {red(e)}")
-            if not auto_mode:
+            if not self.auto_mode:
                 input("按回车键重试...")
-            if max_try == 0:
+            if self.max_try == 0:
                 self.logger.info(f"已停止自动重试")
                 sys.exit(1)
             else:
                 self.logger.info(f"重试中")
-                max_try -= 1
+                self.max_try -= 1
             return self.get_download_url()
 
     def process_release_data(self, data):
@@ -95,13 +97,13 @@ class Updater:
                 self.logger.info(f"本地版本: {current_version}")
                 self.logger.info(f"远程版本: {version}")
                 self.logger.info(f"当前已是最新版本")
-                if auto_mode:
+                if self.auto_mode:
                     sys.exit(0)
                 
         except Exception as e:
             self.logger.info(f"本地版本获取失败: {e}")
             self.logger.info(f"最新版本: {version}")
-            if auto_mode:
+            if self.auto_mode:
                     sys.exit(0)
 
     def find_fastest_mirror(self, mirror_urls, timeout=5):
@@ -150,15 +152,15 @@ class Updater:
                 break
             except Exception as e:
                 self.logger.error(f"下载失败: {red(e)}")
-                if not auto_mode:
+                if not self.auto_mode:
                     input("按回车键重试. . .")
                     
-                if max_try == 0:
+                if self.max_try == 0:
                     self.logger.info(f"已停止自动重试")
                     sys.exit(1)
                 else:
                     self.logger.info(f"重试中")
-                    max_try -= 1
+                    self.max_try -= 1
                 
                 
                 if os.path.exists(self.download_file_path):
@@ -181,14 +183,14 @@ class Updater:
             except Exception as e:
                 self.logger.error(f"解压失败: {red(e)}")
                 self.logger.hr("完成", 2)
-                if not auto_mode:
+                if not self.auto_mode:
                     input("按回车键重新下载. . .")
-                if max_try == 0:
+                if self.max_try == 0:
                     self.logger.info(f"已停止自动重试")
                     sys.exit(1)
                 else:
                     self.logger.info(f"重试中")
-                    max_try -= 1
+                    self.max_try -= 1
                 if os.path.exists(self.download_file_path):
                     os.remove(self.download_file_path)
                 return False
@@ -207,14 +209,14 @@ class Updater:
             except Exception as e:
                 self.logger.error(f"覆盖失败: {red(e)}")
                 
-                if not auto_mode:
+                if not self.auto_mode:
                     input("按回车键重试. . .")
-                if max_try == 0:
+                if self.max_try == 0:
                     self.logger.info(f"已停止自动重试")
                     sys.exit(1)
                 else:
                     self.logger.info(f"重试中")
-                    max_try -= 1
+                    self.max_try -= 1
         self.logger.hr("完成", 2)
 
     def terminate_processes(self):
@@ -253,7 +255,7 @@ class Updater:
                 break
         self.cover_folder()
         self.cleanup()
-        if  not auto_mode:
+        if  not self.auto_mode:
             return
         input("按回车键退出并打开软件")
         if os.system(f'cmd /c start "" "{os.path.abspath("./March7th Launcher.exe")}"'):
@@ -282,9 +284,8 @@ def check_temp_dir_and_run():
 
     download_url = sys.argv[1] if len(sys.argv) == 3 else None
     file_name = sys.argv[2] if len(sys.argv) == 3 else None
-    global auto_mode
-    global max_try
     max_try = -1
+    auto_mode = False
     """检查是否以静默模式启动，上面代码保留为了兼容老版本"""
     if(len(sys.argv) == 2):
         auto_mode = True if sys.argv[1] == "/q" else False
@@ -295,7 +296,7 @@ def check_temp_dir_and_run():
         auto_mode = True if sys.argv[3] == "/q" else False
         max_try = 5
     logger = Logger()
-    updater = Updater(logger, download_url, file_name)
+    updater = Updater(logger, download_url, file_name, auto_mode, max_try)
     updater.run()
 
 

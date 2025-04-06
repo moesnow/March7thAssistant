@@ -31,7 +31,7 @@ from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
 
-
+auto_mode = False
 def first_run():
     if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
         log.error("首次使用请先打开图形界面 March7th Launcher.exe")
@@ -142,7 +142,6 @@ def exit_handler():
 
 if __name__ == "__main__":
     global auto_mode
-    auto_mode
     if len(sys.argv) > 1:
         auto_mode = True if sys.argv[1] == "/q" else False
     try:
