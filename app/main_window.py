@@ -115,9 +115,11 @@ class MainWindow(MSFluentWindow):
         if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
             disclaimer(self)
 
+    # main_window.py 只需修改关闭事件
     def closeEvent(self, e):
-        self.themeListener.terminate()
-        self.themeListener.deleteLater()
+        if self.themeListener and self.themeListener.isRunning():
+            self.themeListener.terminate()
+            self.themeListener.deleteLater()
         super().closeEvent(e)
 
     def startGame(self):
