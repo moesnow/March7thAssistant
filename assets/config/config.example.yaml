@@ -341,7 +341,6 @@ notify_smtp_ssl_unverified: "" # 是否使用不经验证的 SSL 连接。默认
 # 支持发送截图
 notify_onebot_enable: false # 是否启用 OneBot 通知。true 开启，false 关闭。
 notify_onebot_endpoint: "" # OneBot 的服务端点 URL，例如 http://127.0.0.1:3000
-notify_onebot_message_type: "" # 消息类型，填写 "private"（私聊消息）或 "group"（群消息）。
 notify_onebot_token: "" # 可选参数，验证请求的 Access Token。
 notify_onebot_user_id: "" # 可选参数，私聊消息的接收用户 ID。
 notify_onebot_group_id: "" # 可选参数，群消息的接收群组 ID。
