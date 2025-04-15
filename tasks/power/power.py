@@ -14,7 +14,7 @@ class Power:
 
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names[cfg.instance_type]
-        max_calyx_per_round_power = cfg.max_calyx_per_round_power
+        max_calyx_per_round_power = cfg.max_calyx_per_round_power if hasattr(cfg, 'max_calyx_per_round_power') else 60  #安全获取每轮拟造花萼的最大开拓力消耗
 
         if not Instance.validate_instance(instance_type, instance_name):
             return False
@@ -80,7 +80,7 @@ class Power:
             Instance.run(instance_type, instance_name, 40, immersifier_count + full_runs)
 
     @staticmethod
-    def process_calyx(instance_type, instance_name, max_calyx_per_round_power=60):
+    def process_calyx(instance_type, instance_name, max_calyx_per_round_power):
         # 处理拟造花萼的体力消耗
         instance_power_min = 10
         if (max_calyx_per_round_power % 10 == 0 and max_calyx_per_round_power >= 10 and max_calyx_per_round_power <= 60):
