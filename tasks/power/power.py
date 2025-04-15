@@ -83,7 +83,10 @@ class Power:
     def process_calyx(instance_type, instance_name, max_calyx_per_round_power=60):
         # 处理拟造花萼的体力消耗
         instance_power_min = 10
-        instance_power_max = max_calyx_per_round_power
+        if (max_calyx_per_round_power % 10 == 0 and max_calyx_per_round_power >= 10 and max_calyx_per_round_power <= 60):
+            instance_power_max = max_calyx_per_round_power
+        else:
+            instance_power_max = 60
         while True:
             power = Power.get()
 
