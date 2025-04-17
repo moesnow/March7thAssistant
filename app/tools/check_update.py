@@ -63,7 +63,7 @@ class UpdateThread(QThread):
             data = self.fetch_latest_release_info()
             version = data["tag_name"]
             content = self.remove_images_from_markdown(data["body"])
-            content = content.replace("[已有 Mirror酱 CDK？前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable)", "")
+            content = content.replace("首次安装请下载文件名内含有”full“的压缩包，否则会因为缺少组件无法使用！！！\r\n\r\n[已有 Mirror酱 CDK？前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable)", "")
             if cfg.update_source == "GitHub":
                 content = content + "\n若下载速度较慢，可尝试使用 Mirror酱（关于 → 更新源） 高速下载"
             assert_url = self.get_download_url_from_assets(data["assets"])
