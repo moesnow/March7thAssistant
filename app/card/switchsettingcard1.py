@@ -256,3 +256,47 @@ class SwitchSettingCardGardenofplenty(SettingCard):
 
     def _onCurrentIndexChanged(self, index: int):
         cfg.set_value("activity_gardenofplenty_instance_type", self.comboBox.itemData(index))
+
+
+class SwitchSettingCardEchoofwar(SettingCard):
+    """ Setting card with switch button """
+
+    checkedChanged = pyqtSignal(bool)
+
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, parent=None):
+        super().__init__(icon, title, content, parent)
+        self.configname = configname
+
+        self.comboBox = ComboBox(self)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+
+        texts = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        options = [1, 2, 3, 4, 5, 6, 7]
+        for text, option in zip(texts, options):
+            self.comboBox.addItem(text, userData=option)
+
+        self.comboBox.setCurrentText(cfg.get_value("echo_of_war_start_day_of_week"))
+        self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
+
+        self.switchButton = SwitchButton(self.tr('关'), self, IndicatorPosition.RIGHT)
+
+        self.setValue(cfg.get_value(self.configname))
+
+        # add switch button to layout
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
+
+    def __onCheckedChanged(self, isChecked: bool):
+        """ switch button checked state changed slot """
+        self.setValue(isChecked)
+        cfg.set_value(self.configname, isChecked)
+
+    def setValue(self, isChecked: bool):
+        self.switchButton.setChecked(isChecked)
+        self.switchButton.setText(self.tr('开') if isChecked else self.tr('关'))
+
+    def _onCurrentIndexChanged(self, index: int):
+        cfg.set_value("echo_of_war_start_day_of_week", self.comboBox.itemData(index))
