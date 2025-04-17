@@ -93,9 +93,14 @@ class UpdateThread(QThread):
                 else:
                     try:
                         mirrorchyan_data = response.json()
+                        self.code = mirrorchyan_data["code"]
                         self.error_msg = mirrorchyan_data["msg"]
-                        if self.error_msg == "Please confirm that you have entered the correct cdkey":
+                        if self.code == 7001:
+                            self.error_msg = "Mirror酱 CDK 已过期"
+                        elif self.code == 7002:
                             self.error_msg = "Mirror酱 CDK 错误"
+                        elif self.code == 7003:
+                            self.error_msg = "Mirror酱 CDK 今日下载次数已达上限"
                     except:
                         self.error_msg = "Mirror酱API请求失败"
                     self.updateSignal.emit(UpdateStatus.FAILURE)
