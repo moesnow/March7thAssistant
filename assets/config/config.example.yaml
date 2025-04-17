@@ -122,7 +122,7 @@ fight_requirements: false # 是否已安装锄大地依赖。true 表示已安�
 fight_timestamp: 0 # 上次运行锄大地的时间戳，用于记录和控制运行频率。
 fight_allow_map_buy: 不配置 # 购买代币与过期邮包
 fight_allow_snack_buy: 不配置 # 购买秘技零食并合成零食
-fight_main_map: "0" # 优先星球 {"空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4"}, "不配置": "0"
+fight_main_map: "0" # 优先星球 {"空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4", "翁法罗斯": "5"}, "不配置": "0"
 
 # 模拟宇宙配置
 universe_enable: false # 是否启用模拟宇宙功能。true 开启，false 关闭。

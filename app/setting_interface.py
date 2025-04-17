@@ -341,7 +341,7 @@ class SettingInterface(ScrollArea):
             FIF.GLOBE,
             self.tr('优先星球'),
             '',
-            texts={"不配置": "0", "空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4"}
+            texts={"不配置": "0", "空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4", "翁法罗斯": 5}
         )
 
         self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙"), self.scrollWidget)
