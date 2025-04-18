@@ -40,6 +40,7 @@ instance_names:
   侵蚀隧洞: 睿治之径
   饰品提取: 永恒笑剧
   历战余响: 毁灭的开端 # 配置各副本类型的名称。
+max_calyx_per_round_power: 60 # 设置每轮拟造花萼的最大开拓力消耗。
 
 # 分解设置
 break_down_level_four_relicset: false # 完成侵蚀隧洞、饰品提取、历战余响和模拟宇宙后是否自动分解四星及以下遗器。true 开启，false 关闭。
