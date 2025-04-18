@@ -550,12 +550,12 @@ class SettingInterface(ScrollArea):
             self.tr("游戏路径"),
             cfg.game_path
         )
-        # self.importConfigCard = PushSettingCard(
-        #     self.tr('导入'),
-        #     FIF.ADD_TO,
-        #     self.tr('导入配置'),
-        #     self.tr('选择需要导入的 config.yaml 文件（重启后生效）')
-        # )
+        self.autoExitTerminalCard = SwitchSettingCard1(
+            FIF.POWER_BUTTON,
+            self.tr('终端运行自动退出'),
+            self.tr('启用后，终端运行完成后将自动退出'),
+            "auto_exit_terminal"
+        )
         self.checkUpdateCard = SwitchSettingCard1(
             FIF.SYNC,
             self.tr('启动时检测更新'),
@@ -835,6 +835,7 @@ class SettingInterface(ScrollArea):
 
         self.ProgramGroup.addSettingCard(self.logLevelCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
+        self.ProgramGroup.addSettingCard(self.autoExitTerminalCard)
         # self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.checkUpdateCard)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
