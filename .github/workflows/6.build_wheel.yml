@@ -36,8 +36,9 @@ jobs:
       - name: Generate wheel
         run: |
           
-          .\assets\binary\7za.exe x -y -aos cpufeature-0.2.1.tar.gz -o.\cpufeature
-          pip wheel .\cpufeature\cpufeature-0.2.1
+          .\assets\binary\7za.exe x -y -aos cpufeature-0.2.1.tar.gz -o.\
+          .\assets\binary\7za.exe x -y -aos cpufeature-0.2.1.tar -o.\cpufeature
+          pip wheel .\cpufeature\cpufeature-0.2.1\
           .\assets\binary\7za.exe a -tzip .\cpufeature\cpufeature-0.2.1\build.zip .\cpufeature\cpufeature-0.2.1\build\
 
       # 步骤7：上传压缩包
