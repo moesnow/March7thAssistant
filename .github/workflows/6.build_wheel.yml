@@ -27,13 +27,15 @@ jobs:
       # 步骤3：安装依赖
       - name: Install dependencies
         run: |
+          powershell (new-object System.Net.WebClient).DownloadFile('https://files.pythonhosted.org/packages/87/cb/006cbc9c06de9fafdd8182e1a38d793d89ee89b48eab052053b3e5cb2ddf/cpufeature-0.2.1.tar.gz','cpufeature-0.2.1.tar.gz')
+
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       # 步骤4：生成程序
       - name: Generate wheel
         run: |
-          DownloadFile -u https://files.pythonhosted.org/packages/87/cb/006cbc9c06de9fafdd8182e1a38d793d89ee89b48eab052053b3e5cb2ddf/cpufeature-0.2.1.tar.gz -o cpufeature-0.2.1.tar.gz
+          
           .\assets\binary\7za.exe x -y -aos cpufeature-0.2.1.tar.gz -o.\cpufeature
           pip wheel .\cpufeature\cpufeature-0.2.1
           .\assets\binary\7za.exe a -tzip .\cpufeature\cpufeature-0.2.1\build.zip .\cpufeature\cpufeature-0.2.1\build\
