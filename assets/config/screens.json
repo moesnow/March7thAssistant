@@ -147,7 +147,8 @@
             {
                 "target_screen": "activity",
                 "actions_list": [
-                    "auto.click_element('./assets/images/share/menu/activity.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
+                    "auto.click_element('./assets/images/share/menu/activity.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))",
+                    "auto.click_element('./assets/images/share/menu/activity_2nd.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
                 ]
             }
         ]

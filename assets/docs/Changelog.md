@@ -1,5 +1,18 @@
 # 更新日志
 
+## v2025.4.17
+
+- 适配二周年活动图标
+- 支持遐蝶 [#548](https://github.com/moesnow/March7thAssistant/pull/548)
+- 支持配置从周几后开始执行历战余响（周本） [#479](https://github.com/moesnow/March7thAssistant/pull/479)
+- 当遗器数量达到上限时，将会先执行分解四星遗器 [#524](https://github.com/moesnow/March7thAssistant/pull/524)
+- OneBot 支持同时发送私聊消息和群消息 [#540](https://github.com/moesnow/March7thAssistant/pull/540)
+- 锄大地增加翁法洛斯优先级设置项 [#547](https://github.com/moesnow/March7thAssistant/pull/547)
+- 修复 飞书、Gotify、OneBot 推送 [#520](https://github.com/moesnow/March7thAssistant/pull/520) [#517](https://github.com/moesnow/March7thAssistant/pull/517)
+- 修复未完成全部日常任务时可能无法正确领取奖励
+- 修复系统不支持自动主题时导致的闪退 [#525](https://github.com/moesnow/March7thAssistant/pull/525)
+- 修复定时任务时间读取本地区域设置导致的闪退 [#512](https://github.com/moesnow/March7thAssistant/pull/512)
+
 ## v2025.3.7
 
 - 模拟宇宙（Auto_Simulated_Universe）适配新版本差分宇宙
