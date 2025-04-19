@@ -69,6 +69,10 @@ class Notification(metaclass=SingletonMeta):
         :param content: 通知的内容。
         :param image: 通知的图片，可以是io.BytesIO对象或文件路径字符串，可选。
         """
+        if(content == "nopush"):
+            if self.logger:
+                self.logger.warning("当前通知已禁用，跳过发送。")
+            return
         for notifier_name, notifier in self.notifiers.items():
             processed_image = self._process_image(image)  # 根据image的类型进行处理
             try:

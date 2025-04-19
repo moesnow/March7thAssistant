@@ -251,7 +251,7 @@ class MessageBoxNotifyTemplate(MessageBox):
 
             self.lineEdit_dict[id] = lineEdit
 
-        self.titleLabelInfo = QLabel("说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行", parent)
+        self.titleLabelInfo = QLabel("说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行。\n替换内容为 nopush 可禁用当前推送", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
 
