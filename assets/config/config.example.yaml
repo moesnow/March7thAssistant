@@ -7,6 +7,9 @@ log_level: INFO # 日志等级，可选值：INFO, DEBUG。INFO 仅记录重要�
 # 更新检查
 check_update: true # 是否检查更新。true 检查，false 不检查。
 
+# 终端运行自动退出
+auto_exit_terminal: false # 是否启用终端运行完成后自动退出。true 启用，false 禁用。
+
 # 任务完成后操作
 after_finish: None # 任务完成后的操作，可选值："None"（无操作）, "Exit"（退出程序）, "Loop"（循环执行）, "Shutdown"（关机）, "Sleep"（睡眠）, "Hibernate"（休眠）, "Restart"（重启）, "Logoff"（注销）。
 
