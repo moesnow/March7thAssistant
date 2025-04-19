@@ -38,7 +38,29 @@ class Screenshot:
         min_x = min([rect[0] for rect in rects])
         min_y = min([rect[1] for rect in rects])
         return -min_x, -min_y
-    
+    @staticmethod
+    def take_fullscreen_screenshot():
+        """
+        Captures a screenshot of the entire screen or all screens if configured.
+        """
+        all_screens = cfg.all_screens
+        if all_screens:
+            offset_x, offset_y = Screenshot.get_main_screen_location()
+        else:
+            offset_x, offset_y = 0, 0
+
+        # Get screen dimensions
+        screen_width, screen_height = pyautogui.size()
+
+        # Capture the screenshot
+        screenshot = pyautogui.screenshot(region=(
+            offset_x,
+            offset_y,
+            screen_width,
+            screen_height
+        ), allScreens=all_screens)
+
+        return screenshot
     @staticmethod
     def take_screenshot(title, crop=(0, 0, 1, 1)):
         window = Screenshot.get_window(title)

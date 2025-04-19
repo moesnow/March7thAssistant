@@ -551,7 +551,7 @@ class SettingInterface(ScrollArea):
             cfg.game_path
         )
         self.autoExitTerminalCard = SwitchSettingCard1(
-            FIF.COMMAND_PROMPT,
+            FIF.EMBED,
             self.tr('终端运行自动退出'),
             self.tr('启用后，终端运行完成后将自动退出'),
             "auto_exit_terminal"

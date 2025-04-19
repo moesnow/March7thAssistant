@@ -147,7 +147,7 @@ if __name__ == "__main__":
         sys.exit(1)
     except Exception as e:
         log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
-        screenshot, _, _ = auto.take_screenshot()
-        notif.notify(cfg.notify_template['ErrorOccurred'].format(error=e), screenshot)     
+        fscreenshot= auto.take_fullscreen_screenshot()
+        notif.notify(cfg.notify_template['ErrorOccurred'].format(error=e), fscreenshot)     
         exit_terminal()
         sys.exit(1)

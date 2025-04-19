@@ -39,6 +39,8 @@
 
 双击 `March7th Launcher.exe` 打开图形界面，同意《免责声明》。
 
+如果不想见到 `按回车键关闭窗口. . .` 请在 `设置->程序` 中打开 `终端运行自动退出`
+
 > 此程序为免费开源项目，如果你付了钱请立刻退款！！！
 >
 > 本项目已经因倒卖行为受到严重威胁，请帮助我们！！！
@@ -184,6 +186,7 @@
 - Lark（飞书）
 - Custom
 
+> 输入 nopush 可以禁用当前通知（对于标题无效）
 > 其中 Telegram、SMTP、WeChatworkapp、OneBot、Go-cqhttp、Lark、Custom 支持发送截图，欢迎 PR 适配其他推送方式
 
 ### 按键
@@ -203,3 +206,5 @@
 手动更新请下载名称类似 `March7thAssistant_vx.x.x.zip(7z)` 的文件，
 
 解压后，复制所有文件，在旧版本内粘贴覆盖即可。
+
+> `March7th Updater.exe` 支持参数 `/q` 检查更新并自动更新

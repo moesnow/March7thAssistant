@@ -63,6 +63,26 @@ class Automation(metaclass=SingletonMeta):
             time.sleep(1)
             if time.time() - start_time > 60:
                 raise RuntimeError("截图超时")
+    def take_fullscreen_screenshot(self):
+        """
+        捕获全屏幕截图。
+        :param crop: 截图的裁剪区域，格式为(x1, y1, x2, y2)，默认为全屏。
+        :return: 成功时返回截图及其位置和缩放因子，失败时抛出异常。
+        """
+        start_time = time.time()
+        while True:
+            try:
+                result = Screenshot.take_fullscreen_screenshot()
+                if result:
+                    self.screenshot = result
+                    return result
+                else:
+                    self.logger.error("截图失败：没有找到游戏窗口")
+            except Exception as e:
+                self.logger.error(f"截图失败：{e}")
+            time.sleep(1)
+            if time.time() - start_time > 60:
+                raise RuntimeError("截图超时")
 
     def calculate_positions(self, template, max_loc, relative):
         """
