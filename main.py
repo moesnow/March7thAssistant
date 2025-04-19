@@ -30,7 +30,7 @@ from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
-
+from module.automation import auto
 def exit_terminal():
     if not cfg.auto_exit_terminal:
         input("按回车键关闭窗口. . .")
@@ -147,6 +147,8 @@ if __name__ == "__main__":
         sys.exit(1)
     except Exception as e:
         log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
-        notif.notify(cfg.notify_template['ErrorOccurred'].format(error=e))
+        screenshot, _, _ = auto.take_screenshot()
+        notif.notify(cfg.notify_template['ErrorOccurred'].format(error=e), screenshot)
+        
         exit_terminal()
         sys.exit(1)
