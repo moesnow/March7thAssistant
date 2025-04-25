@@ -95,12 +95,16 @@ class UpdateThread(QThread):
                         mirrorchyan_data = response.json()
                         self.code = mirrorchyan_data["code"]
                         self.error_msg = mirrorchyan_data["msg"]
-                        if self.code == 7001:
-                            self.error_msg = "Mirror酱 CDK 已过期"
-                        elif self.code == 7002:
-                            self.error_msg = "Mirror酱 CDK 错误"
-                        elif self.code == 7003:
-                            self.error_msg = "Mirror酱 CDK 今日下载次数已达上限"
+
+                        cdk_error_messages = {
+                            7001: "Mirror酱 CDK 已过期",
+                            7002: "Mirror酱 CDK 错误",
+                            7003: "Mirror酱 CDK 今日下载次数已达上限",
+                            7004: "Mirror酱 CDK 类型和待下载的资源不匹配",
+                            7005: "Mirror酱 CDK 已被封禁"
+                        }
+                        if self.code in cdk_error_messages:
+                            self.error_msg = cdk_error_messages[self.code]
                     except:
                         self.error_msg = "Mirror酱API请求失败"
                     self.updateSignal.emit(UpdateStatus.FAILURE)
