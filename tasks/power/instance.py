@@ -135,10 +135,16 @@ class Instance:
         # 验证传送是否成功
         if "饰品提取" in instance_type:
             if not auto.find_element(instance_name, "text", max_retries=120, include=True, crop=(591.0 / 1920, 98.0 / 1080, 594.0 / 1920, 393.0 / 1080)):
+                auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False) #避免当前视角异常，尝试点击切换视角
+                if auto.find_element(instance_name, "text", max_retries=120, include=True, crop=(591.0 / 1920, 98.0 / 1080, 594.0 / 1920, 393.0 / 1080)):
+                    return True
                 Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"))
                 return False
         else:
             if not auto.find_element(instance_name.replace("2", ""), "text", max_retries=120, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
+                auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False) #避免当前视角异常，尝试点击切换视角
+                if auto.find_element(instance_name.replace("2", ""), "text", max_retries=120, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
+                    return True
                 Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"))
                 return False
 
