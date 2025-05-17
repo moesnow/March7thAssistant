@@ -9,14 +9,11 @@ import pyperclip
 import json
 import markdown
 import os
-
 import pandas as pd
 import openpyxl
 from openpyxl.styles import Font
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
-
-
 
 class WarpInterface(ScrollArea):
     def __init__(self, parent=None):
@@ -140,13 +137,9 @@ class WarpInterface(ScrollArea):
 
             with open("./warp.json", 'r', encoding='utf-8') as file:
                 config = json.load(file)
-
             records = config.get("list", [])
-
             df = pd.DataFrame(records)
-
             df = df[["time", "name", "item_type", "rank_type", "gacha_type"]]
-
             gacha_map = {
                 "11": "角色活动跃迁",
                 "12": "光锥活动跃迁",
@@ -161,25 +154,18 @@ class WarpInterface(ScrollArea):
                 "rank_type": "星级",
                 "gacha_type": "卡池",
             }, inplace=True)
-
             df["总次数"] = range(1, len(df) + 1)
-
             df["保底内"] = 0
-
             pity_counters = {}
-
             for idx, row in df.iterrows():
                 pool = row["卡池"]
                 star = int(row["星级"])
                 if pool not in pity_counters:
                     pity_counters[pool] = 0
-
                 pity_counters[pool] += 1
                 df.at[idx, "保底内"] = pity_counters[pool]
-
                 if star == 5:
                     pity_counters[pool] = 0
-
             path, _ = QFileDialog.getSaveFileName(
                 self,
                 "导出为 Excel 文件",
@@ -190,10 +176,8 @@ class WarpInterface(ScrollArea):
                 return
 
             df.to_excel(path, index=False)
-
             wb = load_workbook(path)
             ws = wb.active
-
             for row in range(2, ws.max_row + 1):
                 star_cell = ws[f"D{row}"]
                 try:
