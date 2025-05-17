@@ -10,6 +10,13 @@ import json
 import markdown
 import os
 
+import pandas as pd
+import openpyxl
+from openpyxl.styles import Font
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+
+
 
 class WarpInterface(ScrollArea):
     def __init__(self, parent=None):
@@ -119,16 +126,106 @@ class WarpInterface(ScrollArea):
 
     def __onExportBtnClicked(self):
         try:
+            # with open("./warp.json", 'r', encoding='utf-8') as file:
+            #     config = json.load(file)
+            # warp = WarpExport(config)
+            # path, _ = QFileDialog.getSaveFileName(self, "支持 SRGF 数据格式导出", f"SRGF_{warp.get_uid()}.json", "星穹铁道抽卡记录文件 (*.json)")
+            # if not path:
+            #     return
+            #
+            # with open(path, 'w', encoding='utf-8') as file:
+            #     json.dump(config, file, ensure_ascii=False, indent=4)
+            #
+            # os.startfile(os.path.dirname(path))
+
             with open("./warp.json", 'r', encoding='utf-8') as file:
                 config = json.load(file)
-            warp = WarpExport(config)
-            path, _ = QFileDialog.getSaveFileName(self, "支持 SRGF 数据格式导出", f"SRGF_{warp.get_uid()}.json", "星穹铁道抽卡记录文件 (*.json)")
+
+            records = config.get("list", [])
+
+            df = pd.DataFrame(records)
+
+            df = df[["time", "name", "item_type", "rank_type", "gacha_type"]]
+
+            gacha_map = {
+                "11": "角色活动跃迁",
+                "12": "光锥活动跃迁",
+                "1": "常驻跃迁",
+                "2": "新手跃迁"
+            }
+            df["gacha_type"] = df["gacha_type"].map(gacha_map).fillna("未知")
+            df.rename(columns={
+                "time": "时间",
+                "name": "名称",
+                "item_type": "类别",
+                "rank_type": "星级",
+                "gacha_type": "卡池",
+            }, inplace=True)
+
+            df["总次数"] = range(1, len(df) + 1)
+
+            df["保底内"] = 0
+
+            pity_counters = {}
+
+            for idx, row in df.iterrows():
+                pool = row["卡池"]
+                star = int(row["星级"])
+                if pool not in pity_counters:
+                    pity_counters[pool] = 0
+
+                pity_counters[pool] += 1
+                df.at[idx, "保底内"] = pity_counters[pool]
+
+                if star == 5:
+                    pity_counters[pool] = 0
+
+            path, _ = QFileDialog.getSaveFileName(
+                self,
+                "导出为 Excel 文件",
+                f"抽卡记录_{config['info'].get('uid', '未知')}.xlsx",
+                "Excel 文件 (*.xlsx)"
+            )
             if not path:
                 return
 
-            with open(path, 'w', encoding='utf-8') as file:
-                json.dump(config, file, ensure_ascii=False, indent=4)
+            df.to_excel(path, index=False)
 
+            wb = load_workbook(path)
+            ws = wb.active
+
+            for row in range(2, ws.max_row + 1):
+                star_cell = ws[f"D{row}"]
+                try:
+                    star = int(star_cell.value)
+                    if star == 5:
+                        for col in ws[row]:
+                            col.font = Font(color="FFA500")
+                    elif star == 4:
+                        for col in ws[row]:
+                            col.font = Font(color="800080")
+                except:
+                    continue
+
+            for column_cells in ws.columns:
+                max_width = 0
+                col_letter = get_column_letter(column_cells[0].column)
+                for cell in column_cells:
+                    try:
+                        value = str(cell.value) if cell.value else ""
+                        width = 0
+                        for ch in value:
+                            if u'\u4e00' <= ch <= u'\u9fff':
+                                width += 2
+                            else:
+                                width += 1
+                        if width > max_width:
+                            max_width = width
+                    except:
+                        pass
+                ws.column_dimensions[col_letter].width = max_width + 2
+
+            wb.save(path)
             os.startfile(os.path.dirname(path))
 
             InfoBar.success(
