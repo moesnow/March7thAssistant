@@ -44,7 +44,7 @@ def checkThemeChange(self):
         self.themeListener.systemThemeChanged.connect(handle_theme_change)
     else:
         # 自动降级为手动模式
-        qconfig.set(qconfig.themeMode, Theme.LIGHT)  # 或从配置读取
+        # qconfig.set(qconfig.themeMode, Theme.LIGHT)  # 或从配置读取
         self.themeListener = None  # 释放无效监听器
     
     return self.themeListener

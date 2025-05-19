@@ -8,7 +8,7 @@ from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
@@ -134,10 +134,10 @@ class SettingInterface(ScrollArea):
             "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
             "use_fuel"
         )
-        self.echoofwarEnableCard = SwitchSettingCard1(
+        self.echoofwarEnableCard = SwitchSettingCardEchoofwar(
             FIF.MEGAPHONE,
             self.tr('启用历战余响'),
-            "每周体力优先完成三次「历战余响」，仅限完整运行生效",
+            "每周体力优先完成三次「历战余响」，支持配置从周几后开始执行，仅限完整运行生效",
             "echo_of_war_enable"
         )
         self.echoofwarRunTimeCard = PushSettingCardDate(
@@ -146,13 +146,13 @@ class SettingInterface(ScrollArea):
             self.tr("上次完成历战余响的时间"),
             "echo_of_war_timestamp"
         )
-        self.echoofwarStartDayOfWeekCard = RangeSettingCard1(
-            "echo_of_war_start_day_of_week",
-            [1, 7],
-            FIF.HISTORY,
-            self.tr("周几开始执行【历战余响】"),
-            self.tr("假设值为4，那么周1、2、3不执行「历战余响」，周4、5、6、7则执行"),
-        )
+        # self.echoofwarStartDayOfWeekCard = RangeSettingCard1(
+        #     "echo_of_war_start_day_of_week",
+        #     [1, 7],
+        #     FIF.HISTORY,
+        #     self.tr("周几开始执行【历战余响】"),
+        #     self.tr("假设值为4，那么周1、2、3不执行「历战余响」，周4、5、6、7则执行"),
+        # )
 
         self.BorrowGroup = SettingCardGroup(self.tr("支援设置"), self.scrollWidget)
         self.borrowEnableCard = SwitchSettingCard1(
@@ -341,7 +341,7 @@ class SettingInterface(ScrollArea):
             FIF.GLOBE,
             self.tr('优先星球'),
             '',
-            texts={"不配置": "0", "空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4"}
+            texts={"不配置": "0", "空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4", "翁法罗斯": 5}
         )
 
         self.UniverseGroup = SettingCardGroup(self.tr("模拟宇宙"), self.scrollWidget)
@@ -765,7 +765,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.useFuelEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
-        self.PowerGroup.addSettingCard(self.echoofwarStartDayOfWeekCard)
+        # self.PowerGroup.addSettingCard(self.echoofwarStartDayOfWeekCard)
 
         self.BorrowGroup.addSettingCard(self.borrowEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
