@@ -12,7 +12,7 @@ class UpdateHandler:
         self.temp_path = os.path.abspath("./temp")
         os.makedirs(self.temp_path, exist_ok=True)
         self.download_url = download_url
-        self.download_file_path = os.path.join(self.temp_path, os.path.basename(download_url))
+        self.download_file_path = os.path.join(self.temp_path, f"{os.path.basename(extract_file_name)}.zip")
         self.cover_folder_path = cover_folder_path
         self.extract_folder_path = os.path.join(self.temp_path, os.path.basename(extract_file_name))
         self.delete_folder_path = delete_folder_path

@@ -9,7 +9,9 @@ def download_with_progress(download_url, save_path):
     aria2_path = os.path.abspath("./assets/binary/aria2c.exe")
 
     if os.path.exists(aria2_path):
-        command = [aria2_path, "--max-connection-per-server=16", f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
+        command = [aria2_path, f"--dir={os.path.dirname(save_path)}", f"--out={os.path.basename(save_path)}", f"{download_url}"]
+        if "github.com" in download_url:
+            command.insert(2, "--max-connection-per-server=16")
         if os.path.exists(save_path):
             command.insert(2, "--continue=true")
         process = subprocess.Popen(command)
