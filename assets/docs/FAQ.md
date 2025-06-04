@@ -44,7 +44,7 @@ A：按照 `日常`→`清体力`→`锄大地`→`模拟宇宙`→`逐光捡金
 
 ### Q：开始运行后就不能移动键盘鼠标和切换到后台了吗
 
-A：是的，如果需要后台运行，请尝试 [远程本地多用户桌面](https://moesnow.github.io/March7thAssistant/#/assets/docs/Background)
+A：是的，如果需要后台运行，请尝试 [远程本地多用户桌面](https://m7a.top/#/assets/docs/Background)
 
 ### Q：添加自定义通知的方式
 

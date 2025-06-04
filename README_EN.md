@@ -25,9 +25,9 @@
 
 **The in-game language currently only supports Simplified Chinese.**
 
-To get started, please visit: [Tutorial](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
+To get started, please visit: [Tutorial](https://m7a.top/#/assets/docs/Tutorial)
 
-If you encounter any issues, please check the [FAQ](https://moesnow.github.io/March7thAssistant/#/assets/docs/FAQ) before asking your questions.
+If you encounter any issues, please check the [FAQ](https://m7a.top/#/assets/docs/FAQ) before asking your questions.
 
 </div>
 

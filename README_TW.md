@@ -23,9 +23,9 @@
 
 **繁體中文版本由 ChatGPT 生成，遊戲內語言目前僅支援簡體中文**
 
-快速上手，請訪問：[使用教程](https://moesnow.github.io/March7thAssistant/#/assets/docs/Tutorial)
+快速上手，請訪問：[使用教程](https://m7a.top/#/assets/docs/Tutorial)
 
-遇到問題，請在提問前查看：[FAQ](https://moesnow.github.io/March7thAssistant/#/assets/docs/FAQ)
+遇到問題，請在提問前查看：[FAQ](https://m7a.top/#/assets/docs/FAQ)
 
 </div>
 
