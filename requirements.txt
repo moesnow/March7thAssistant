@@ -29,3 +29,5 @@ matrix-nio
 python-socks[asyncio]
 asyncio
 nio
+pandas
+openpyxl

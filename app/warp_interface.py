@@ -15,6 +15,7 @@ from openpyxl.styles import Font
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 
+
 class WarpInterface(ScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -26,6 +27,7 @@ class WarpInterface(ScrollArea):
         self.updateFullBtn = PushButton(FIF.SYNC, "更新完整数据", self)
         self.importBtn = PushButton(FIF.PENCIL_INK, "导入数据", self)
         self.exportBtn = PushButton(FIF.SAVE_COPY, "导出数据", self)
+        self.exportExcelBtn = PushButton(FIF.SAVE_COPY, "导出Excel", self)
         self.copyLinkBtn = PushButton(FIF.SHARE, "复制链接", self)
         self.clearBtn = PushButton(FIF.DELETE, "清空", self)
         self.warplink = None
@@ -47,9 +49,10 @@ class WarpInterface(ScrollArea):
         self.updateFullBtn.move(150, 80)
         self.importBtn.move(293, 80)
         self.exportBtn.move(408, 80)
-        self.copyLinkBtn.move(523, 80)
+        self.exportExcelBtn.move(523, 80)
+        self.copyLinkBtn.move(638, 80)
         self.copyLinkBtn.setEnabled(False)
-        self.clearBtn.move(638, 80)
+        self.clearBtn.move(753, 80)
 
         self.view.setObjectName('view')
         self.setViewportMargins(0, 120, 0, 20)
@@ -77,6 +80,7 @@ class WarpInterface(ScrollArea):
         self.updateFullBtn.clicked.connect(self.__onUpdateFullBtnClicked)
         self.importBtn.clicked.connect(self.__onImportBtnClicked)
         self.exportBtn.clicked.connect(self.__onExportBtnClicked)
+        self.exportExcelBtn.clicked.connect(self.__onExportExcelBtnClicked)
         self.copyLinkBtn.clicked.connect(self.__onCopyLinkBtnClicked)
         self.clearBtn.clicked.connect(self.__onClearBtnClicked)
 
@@ -123,18 +127,41 @@ class WarpInterface(ScrollArea):
 
     def __onExportBtnClicked(self):
         try:
-            # with open("./warp.json", 'r', encoding='utf-8') as file:
-            #     config = json.load(file)
-            # warp = WarpExport(config)
-            # path, _ = QFileDialog.getSaveFileName(self, "支持 SRGF 数据格式导出", f"SRGF_{warp.get_uid()}.json", "星穹铁道抽卡记录文件 (*.json)")
-            # if not path:
-            #     return
-            #
-            # with open(path, 'w', encoding='utf-8') as file:
-            #     json.dump(config, file, ensure_ascii=False, indent=4)
-            #
-            # os.startfile(os.path.dirname(path))
+            with open("./warp.json", 'r', encoding='utf-8') as file:
+                config = json.load(file)
+            warp = WarpExport(config)
+            path, _ = QFileDialog.getSaveFileName(self, "支持 SRGF 数据格式导出", f"SRGF_{warp.get_uid()}.json", "星穹铁道抽卡记录文件 (*.json)")
+            if not path:
+                return
 
+            with open(path, 'w', encoding='utf-8') as file:
+                json.dump(config, file, ensure_ascii=False, indent=4)
+
+            os.startfile(os.path.dirname(path))
+
+            InfoBar.success(
+                title=self.tr('导出成功(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+
+        except Exception:
+            InfoBar.warning(
+                title=self.tr('导出失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+
+    def __onExportExcelBtnClicked(self):
+        try:
             with open("./warp.json", 'r', encoding='utf-8') as file:
                 config = json.load(file)
             records = config.get("list", [])
