@@ -14,7 +14,7 @@ class Power:
 
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names[cfg.instance_type]
-        max_calyx_per_round_power = cfg.max_calyx_per_round_power if hasattr(cfg, 'max_calyx_per_round_power') else 60  #安全获取每轮拟造花萼的最大开拓力消耗
+        max_calyx_per_round_power = cfg.max_calyx_per_round_power
 
         if not Instance.validate_instance(instance_type, instance_name):
             return False
