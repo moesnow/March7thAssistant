@@ -10,6 +10,7 @@ from typing import Union
 import datetime
 import json
 import re
+from ..tools.check_update import checkUpdate
 
 
 class PushSettingCard(SettingCard):
@@ -39,8 +40,9 @@ class PushSettingCardStr(PushSettingCard):
 
 
 class PushSettingCardMirrorchyan(SettingCard):
-    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, update_callback, configname, parent=None):
         self.configvalue = str(cfg.get_value(configname))
+        self.update_callback = update_callback
         super().__init__(icon, title, "", parent)
 
         self.title = title
@@ -63,9 +65,10 @@ class PushSettingCardMirrorchyan(SettingCard):
             cfg.set_value(self.configname, message_box.getText())
             self.contentLabel.setText(message_box.getText())
             self.configvalue = message_box.getText()
+            checkUpdate(self.update_callback)
 
     def __onclicked2(self):
-        QDesktopServices.openUrl(QUrl("https://mirrorchyan.com/"))
+        QDesktopServices.openUrl(QUrl("https://mirrorchyan.com/?source=m7a-app"))
 
 
 class PushSettingCardCode(PushSettingCard):

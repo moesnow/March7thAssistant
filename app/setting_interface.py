@@ -724,6 +724,7 @@ class SettingInterface(ScrollArea):
             "update_source",
             FIF.SPEED_HIGH,
             '更新源',
+            self.parent,
             '',
             texts={'海外源': 'GitHub', 'Mirror 酱': 'MirrorChyan'}
         )
@@ -731,6 +732,7 @@ class SettingInterface(ScrollArea):
             self.tr('修改'),
             FIF.BOOK_SHELF,
             self.tr("Mirror 酱 CDK"),
+            self.parent,
             "mirrorchyan_cdk"
         )
         self.updatePrereleaseEnableCard = SwitchSettingCard1(
