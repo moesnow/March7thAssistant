@@ -48,7 +48,7 @@ a {
 """
         try:
             with open("./assets/docs/Tutorial.md", 'r', encoding='utf-8') as file:
-                self.content = file.read().replace('/assets/docs/Background.md', 'https://moesnow.github.io/March7thAssistant/#/assets/docs/Background')
+                self.content = file.read().replace('/assets/docs/Background.md', 'https://m7a.top/#/assets/docs/Background')
                 self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
             sys.exit(1)

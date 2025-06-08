@@ -83,7 +83,7 @@ jobs:
             ./dist/March7thAssistant_${{ github.ref_name }}.zip
             ./dist/March7thAssistant_${{ github.ref_name }}_full.7z
             ./dist/March7thAssistant_${{ github.ref_name }}.7z
-          prerelease: true
+          prerelease: false
 
       # 步骤10：强制触发 MirrorChyan 上传
       - name: Trigger MirrorChyanUploading
