@@ -1,4 +1,7 @@
 # 更新日志
+## 2025.6.13
+- Github Proxy支持(肯定没有付费的Mirror酱稳定)
+
 ## v2025.6.9
 
 - 支持 3.3 版本新增关卡和角色 [#580](https://github.com/moesnow/March7thAssistant/pull/580)
