@@ -6,6 +6,34 @@ import os
 
 def download_with_progress(download_url, save_path):
 
+
+    # 检查 gh-proxy 和 github 原始链接的可用性
+    test_urls = [
+        "https://gh-proxy.com/https://github.com/github/github-mcp-server/raw/refs/heads/main/README.md",
+        "https://github.com/github/github-mcp-server/raw/refs/heads/main/README.md"
+    ]
+    proxy_available = False
+    origin_available = False
+
+    try:
+        with urllib.request.urlopen(test_urls[0], timeout=5) as resp:
+            if resp.status == 200:
+                proxy_available = True
+    except Exception:
+        pass
+
+    try:
+        with urllib.request.urlopen(test_urls[1], timeout=5) as resp:
+            if resp.status == 200:
+                origin_available = True
+    except Exception:
+        pass
+
+    # 如果都可用，优先用 gh-proxy
+    if proxy_available and origin_available:
+        if download_url.startswith("https://github.com/"):
+            download_url = "https://gh-proxy.com/" + download_url
+
     aria2_path = os.path.abspath("./assets/binary/aria2c.exe")
 
     if os.path.exists(aria2_path):
