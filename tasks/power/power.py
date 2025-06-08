@@ -14,6 +14,7 @@ class Power:
 
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names[cfg.instance_type]
+        max_calyx_per_round_power = cfg.max_calyx_per_round_power
 
         if not Instance.validate_instance(instance_type, instance_name):
             return False
@@ -24,7 +25,7 @@ class Power:
             power = Power.get()
             Power.process_ornament(instance_type, instance_name, power)
         elif "拟造花萼" in instance_type:
-            Power.process_calyx(instance_type, instance_name)
+            Power.process_calyx(instance_type, instance_name, max_calyx_per_round_power)
         else:
             power = Power.get()
             Power.process_standard(instance_type, instance_name, power)
@@ -79,9 +80,13 @@ class Power:
             Instance.run(instance_type, instance_name, 40, immersifier_count + full_runs)
 
     @staticmethod
-    def process_calyx(instance_type, instance_name):
+    def process_calyx(instance_type, instance_name, max_calyx_per_round_power):
+        # 处理拟造花萼的体力消耗
         instance_power_min = 10
-        instance_power_max = 60
+        if (max_calyx_per_round_power % 10 == 0 and max_calyx_per_round_power >= 10 and max_calyx_per_round_power <= 60):
+            instance_power_max = max_calyx_per_round_power
+        else:
+            instance_power_max = 60
         while True:
             power = Power.get()
 

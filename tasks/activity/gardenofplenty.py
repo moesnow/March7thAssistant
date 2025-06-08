@@ -4,16 +4,21 @@ from .doubleactivity import DoubleActivity
 
 
 class GardenOfPlenty(DoubleActivity):
-    def __init__(self, name, enabled, instance_type, instance_names):
+    def __init__(self, name, enabled, instance_type, instance_names, max_calyx_per_round_power):
         super().__init__(name, enabled)
         self.instance_type = instance_type
         self.instance_names = instance_names
+        self.max_calyx_per_round_power = max_calyx_per_round_power
 
     def _run_instances(self, reward_count):
         instance_type = self.instance_type
         instance_name = self.instance_names[instance_type]
-        instance_power_max = 60
+        max_calyx_per_round_power = self.max_calyx_per_round_power
         instance_power_min = 10
+        if (max_calyx_per_round_power % 10 == 0 and max_calyx_per_round_power >= 10 and max_calyx_per_round_power <= 60):
+            instance_power_max = max_calyx_per_round_power
+        else:
+            instance_power_max = 60
 
         power = min(Power.get(), reward_count * instance_power_min)
 
