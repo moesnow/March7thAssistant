@@ -320,8 +320,10 @@ class WarpInterface(ScrollArea):
                 content = warp.data_to_html("light")
             self.clearBtn.setEnabled(True)
             self.exportBtn.setEnabled(True)
+            self.exportExcelBtn.setEnabled(True)
         except Exception as e:
             content = "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n\n你也可以从其他支持 SRGF 数据格式的应用导入数据，例如 StarRail Warp Export 或 Starward 等。\n\n复制链接功能可用于小程序或其他软件。"
             self.clearBtn.setEnabled(False)
             self.exportBtn.setEnabled(False)
+            self.exportExcelBtn.setEnabled(False)
         self.contentLabel.setText(content)
