@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2025.6.8
+## v2025.6.9
 
 - 支持 3.3 版本新增关卡和角色 [#580](https://github.com/moesnow/March7thAssistant/pull/580)
 - 支持将抽卡记录导出为 Excel 文件 [#574](https://github.com/moesnow/March7thAssistant/pull/574)
