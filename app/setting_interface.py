@@ -96,6 +96,13 @@ class SettingInterface(ScrollArea):
             "instance_names",
             "./assets/config/instance_names.json"
         )
+        self.maxCalyxPerRoundPowerCard = RangeSettingCard1(
+            "max_calyx_per_round_num_of_attempts",
+            [1, 6],
+            FIF.HISTORY,
+            self.tr("每轮拟造花萼挑战次数"),
+            '',
+        )
         self.breakDownLevelFourRelicsetEnableCard = SwitchSettingCard1(
             FIF.FILTER,
             self.tr('自动分解四星遗器'),
@@ -759,6 +766,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         # self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
+        self.PowerGroup.addSettingCard(self.maxCalyxPerRoundPowerCard)
         self.PowerGroup.addSettingCard(self.breakDownLevelFourRelicsetEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         # self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
