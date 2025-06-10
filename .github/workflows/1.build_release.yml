@@ -51,7 +51,6 @@ jobs:
       - name: Create archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant
           # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
           .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant.zip .\dist\March7thAssistant\
           .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant.7z .\dist\March7thAssistant\
