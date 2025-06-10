@@ -7,7 +7,7 @@ from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
-from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
+from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
@@ -720,7 +720,7 @@ class SettingInterface(ScrollArea):
             self.tr('关于'),
             self.tr('当前版本：') + " " + cfg.version
         )
-        self.updateSourceCard = ComboBoxSettingCard2(
+        self.updateSourceCard = ComboBoxSettingCardUpdateSource(
             "update_source",
             FIF.SPEED_HIGH,
             '更新源',

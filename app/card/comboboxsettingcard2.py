@@ -12,6 +12,27 @@ from ..tools.check_update import checkUpdate
 class ComboBoxSettingCard2(SettingCard):
     """ Setting card with a combo box """
 
+    def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase], title, content=None, texts=None, parent=None):
+        super().__init__(icon, title, content, parent)
+        self.configname = configname
+        self.comboBox = ComboBox(self)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        for key, value in texts.items():
+            self.comboBox.addItem(key, userData=value)
+            if value == cfg.get_value(configname):
+                self.comboBox.setCurrentText(key)
+
+        self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
+
+    def _onCurrentIndexChanged(self, index: int):
+        cfg.set_value(self.configname, self.comboBox.itemData(index))
+
+
+class ComboBoxSettingCardUpdateSource(SettingCard):
+    """ Setting card with a combo box """
+
     def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase], title, update_callback, content=None, texts=None, parent=None):
         super().__init__(icon, title, content, parent)
         self.configname = configname
