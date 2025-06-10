@@ -1,10 +1,12 @@
 # 更新日志
 
-## v2025.6.9
+## v2025.6.10
 
 - 支持 3.3 版本新增关卡和角色 [#580](https://github.com/moesnow/March7thAssistant/pull/580)
 - 支持将抽卡记录导出为 Excel 文件 [#574](https://github.com/moesnow/March7thAssistant/pull/574)
-- 支持在配置文件中修改每次拟造花萼使用多少体力 [#545](https://github.com/moesnow/March7thAssistant/pull/545)
+- 支持修改每次拟造花萼使用多少体力 [#545](https://github.com/moesnow/March7thAssistant/pull/545)
+- 设置页面的滑块增加按钮以便更精细的控制 [#591](https://github.com/moesnow/March7thAssistant/pull/591)
+- 修复部分选项导致图形界面闪退
 - 模拟宇宙（Auto_Simulated_Universe）v8.04
 - 模拟宇宙支持通过 Mirror酱 进行更新
 
