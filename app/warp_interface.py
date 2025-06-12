@@ -249,8 +249,7 @@ class WarpInterface(ScrollArea):
                 parent=self
             )
 
-        except Exception as e:
-            print(e)
+        except Exception:
             InfoBar.warning(
                 title=self.tr('导出失败(╥╯﹏╰╥)'),
                 content="",
