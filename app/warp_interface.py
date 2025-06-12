@@ -186,12 +186,12 @@ class WarpInterface(ScrollArea):
             pity_counters = {}
             for idx, row in df.iterrows():
                 pool = row["卡池"]
-                star = int(row["星级"])
+                star = row["星级"]
                 if pool not in pity_counters:
                     pity_counters[pool] = 0
                 pity_counters[pool] += 1
                 df.at[idx, "保底内"] = pity_counters[pool]
-                if star == 5:
+                if star == "5":
                     pity_counters[pool] = 0
             path, _ = QFileDialog.getSaveFileName(
                 self,
@@ -208,11 +208,11 @@ class WarpInterface(ScrollArea):
             for row in range(2, ws.max_row + 1):
                 star_cell = ws[f"D{row}"]
                 try:
-                    star = int(star_cell.value)
-                    if star == 5:
+                    star = star_cell.value
+                    if star == "5":
                         for col in ws[row]:
                             col.font = Font(color="FFA500")
-                    elif star == 4:
+                    elif star == "4":
                         for col in ws[row]:
                             col.font = Font(color="800080")
                 except:
