@@ -1,7 +1,7 @@
 ruamel.yaml==0.18.6
 pyyaml==6.0.2
 colorama==0.4.6
-packaging
+packaging==24.2
 pyuac==0.0.3
 pygame==2.6.1
 tqdm==4.67.1
