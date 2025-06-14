@@ -210,11 +210,11 @@ class Updater:
 
     def run(self):
         """运行更新流程。"""
-        self.terminate_processes()
         while True:
             self.download_with_progress()
             if self.extract_file():
                 break
+        self.terminate_processes()
         self.cover_folder()
         self.cleanup()
         input("按回车键退出并打开软件")
