@@ -460,7 +460,7 @@
 - 移除 power_total、dispatch_count、ocr_path 配置项
 - 使用消耗品前会先筛选类别避免背包物品太多
 - 升级 [PaddleOCR-json_v.1.3.1](https://github.com/hiroi-sora/PaddleOCR-json/releases/tag/v1.3.1)，兼容 Win7 x64
-- 支持 [RapidOCR-json_v0.2.0](https://github.com/hiroi-sora/RapidOCR-json/releases/download/v0.2.0/RapidOCR-json_v0.2.0.7z)，兼容没有 AVX2 指令集的 CPU（自动判断）
+- 支持 [RapidOCR-json_v0.2.0](https://github.com/hiroi-sora/RapidOCR-json/releases/download/v0.2.0/RapidOCR-json_v0.2.0.7z)，兼容没有 AVX 指令集的 CPU（自动判断）
 
 ## v1.6.1
 
