@@ -71,7 +71,8 @@ def start_game():
                 process = psutil.Process(proc.info['pid'])
                 return process.exe()
         return None
-
+    
+    check_start_time = time.time()
     for retry in range(MAX_RETRY):
         try:
             if not starrail.switch_to_game():
@@ -96,6 +97,19 @@ def start_game():
                 starrail.restore_auto_hdr()
                 starrail.check_resolution_ratio(1920, 1080)
 
+                srupdating=True
+                
+                max_check_duration = 60 * 60  # 60分钟
+                while(srupdating):
+                    if time.time() - check_start_time > max_check_duration:
+                        log.error("校验完整性超时，超过60分钟")
+                        break
+                    auto.take_screenshot()
+                    srupdating = auto.find_text_element("校验", include=True)[0] is not None
+                    log.info(f"游戏正在校验完整性......")
+                    time.sleep(10)
+                    # 在老电脑上，这是个耗时巨大的过程......
+
                 if not wait_until(lambda: check_and_click_enter(), 600):
                     raise TimeoutError("查找并点击进入按钮超时")
                 time.sleep(10)
@@ -110,7 +124,7 @@ def start_game():
                         log.info(f"游戏路径更新成功：{program_path}")
                 time.sleep(1)
 
-            if not wait_until(lambda: screen.get_current_screen(), 360):
+            if not wait_until(lambda: screen.get_current_screen(), 720):
                 raise TimeoutError("获取当前界面超时")
             break  # 成功启动游戏，跳出重试循环
         except Exception as e:
@@ -121,6 +135,7 @@ def start_game():
 
 
 def stop(detect_loop=False):
+
     log.hr("停止运行", 0)
 
     def play_audio():
