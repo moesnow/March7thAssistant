@@ -16,24 +16,24 @@ class OCRInstaller:
         self.logger = logger
         self.ocr_name, self.ocr_path = self._determine_ocr()
 
-    def _cpu_support_avx2(self):
+    def _cpu_support_avx(self):
         """
-        判断 CPU 是否支持 AVX2 指令集。
+        判断 CPU 是否支持 AVX 指令集。
         """
-        return cpufeature.CPUFeature["AVX2"]
+        return cpufeature.CPUFeature["AVX"]
 
     def _determine_ocr(self):
         """
-        根据 CPU 是否支持 AVX2 指令集来决定使用的 OCR 工具。
+        根据 CPU 是否支持 AVX 指令集来决定使用的 OCR 工具。
         """
-        if self._cpu_support_avx2():
+        if self._cpu_support_avx():
             ocr_name = "PaddleOCR-json"
             ocr_path = r".\3rdparty\PaddleOCR-json_v.1.3.1\PaddleOCR-json.exe"
-            self.logger.debug(f"CPU 支持 AVX2 指令集，使用 {ocr_name}")
+            self.logger.debug(f"CPU 支持 AVX 指令集，使用 {ocr_name}")
         else:
             ocr_name = "RapidOCR-json"
             ocr_path = r".\3rdparty\RapidOCR-json_v0.2.0\RapidOCR-json.exe"
-            self.logger.debug(f"CPU 不支持 AVX2 指令集，使用 {ocr_name}")
+            self.logger.debug(f"CPU 不支持 AVX 指令集，使用 {ocr_name}")
         return ocr_name, ocr_path
 
     def install_ocr(self):
