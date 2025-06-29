@@ -109,26 +109,44 @@ class Instance:
         else:
             def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
 
-        for i in range(10):
-            if func():
-                if auto.matched_text == "追踪":
-                    time.sleep(2)
-                    Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="指定副本未解锁"))
-                    auto.press_key("esc")
-                    auto.press_key("esc")
-                    screen.wait_for_screen_change('guide3')
-                    return False
-                Flag = True
-                # 临时解决方案
-                if "拟造花萼（赤）" in instance_type:
-                    with open("./assets/config/instance_names.json", 'r', encoding='utf-8') as file:
-                        template = json.load(file)
-                    if instance_name in template[instance_type]:
-                        instance_name = template[instance_type][instance_name]
-                break
-            auto.mouse_scroll(12, -1)
-            # 等待界面完全停止
-            time.sleep(1)
+        # First attempt without scrolling
+        if func():
+            if auto.matched_text == "追踪":
+                time.sleep(2)
+                Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="指定副本未解锁"))
+                auto.press_key("esc")
+                auto.press_key("esc")
+                screen.wait_for_screen_change('guide3')
+                return False
+            Flag = True
+            # 临时解决方案
+            if "拟造花萼（赤）" in instance_type:
+                with open("./assets/config/instance_names.json", 'r', encoding='utf-8') as file:
+                    template = json.load(file)
+                if instance_name in template[instance_type]:
+                    instance_name = template[instance_type][instance_name]
+        else:
+            # If not found, then start scrolling and checking
+            for i in range(10): # Iterate 10 times for scrolling
+                auto.mouse_scroll(12, -1)
+                # 等待界面完全停止
+                time.sleep(1)
+                if func():
+                    if auto.matched_text == "追踪":
+                        time.sleep(2)
+                        Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="指定副本未解锁"))
+                        auto.press_key("esc")
+                        auto.press_key("esc")
+                        screen.wait_for_screen_change('guide3')
+                        return False
+                    Flag = True
+                    # 临时解决方案
+                    if "拟造花萼（赤）" in instance_type:
+                        with open("./assets/config/instance_names.json", 'r', encoding='utf-8') as file:
+                            template = json.load(file)
+                        if instance_name in template[instance_type]:
+                            instance_name = template[instance_type][instance_name]
+                    break
         if not Flag:
             Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="未找到指定副本"))
             return False
