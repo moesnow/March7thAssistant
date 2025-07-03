@@ -1,5 +1,9 @@
 # 更新日志
 
+## v2025.7.3
+
+- 支持 3.4 版本新增关卡和角色 [#616](https://github.com/moesnow/March7thAssistant/pull/616)
+
 ## v2025.6.14
 
 - 支持 3.3 版本新增关卡和角色 [#580](https://github.com/moesnow/March7thAssistant/pull/580) [#597](https://github.com/moesnow/March7thAssistant/pull/597)
