@@ -71,6 +71,70 @@ jobs:
           .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
           .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
 
+      # 步骤8.1：下载上一个正式 release 的 March7thAssistant_full.zip 并解压
+      - name: Download previous release full zip
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: 1.build_release.yml
+          name: March7thAssistant_full.zip
+          path: ./dist/prev_release/
+        continue-on-error: true
+
+      - name: Unzip previous release
+        if: startsWith(github.ref, 'refs/tags/') && hashFiles('./dist/prev_release/March7thAssistant_full.zip') != ''
+        run: |
+          mkdir ./dist/prev_release/unzip
+          7z x ./dist/prev_release/March7thAssistant_full.zip -o./dist/prev_release/unzip
+
+      # 步骤8.2：对比文件，生成增量包和 removefile.txt
+      - name: Generate patch package and removefile.txt
+        if: startsWith(github.ref, 'refs/tags/') && hashFiles('./dist/prev_release/March7thAssistant_full.zip') != ''
+        shell: pwsh
+        run: |
+          $old = Get-ChildItem -Path ./dist/prev_release/unzip/March7thAssistant_full -Recurse | Where-Object {!$_.PSIsContainer}
+          $new = Get-ChildItem -Path ./dist/March7thAssistant_full -Recurse | Where-Object {!$_.PSIsContainer}
+          $oldHash = @{
+          foreach ($f in $old) {
+            $rel = $f.FullName.Substring((Resolve-Path ./dist/prev_release/unzip/March7thAssistant_full).Path.Length+1)
+            $oldHash[$rel] = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+          }
+          $newHash = @{
+          foreach ($f in $new) {
+            $rel = $f.FullName.Substring((Resolve-Path ./dist/March7thAssistant_full).Path.Length+1)
+            $newHash[$rel] = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+          }
+          $changed = @()
+          foreach ($k in $newHash.Keys) {
+            if (-not $oldHash.ContainsKey($k) -or $oldHash[$k] -ne $newHash[$k]) {
+              $changed += $k
+            }
+          }
+          $removed = @()
+          foreach ($k in $oldHash.Keys) {
+            if (-not $newHash.ContainsKey($k)) {
+              $removed += $k
+            }
+          }
+          # 复制变更文件到patch目录
+          $patchDir = "./dist/March7thAssistant_patch"
+          mkdir $patchDir -Force | Out-Null
+          foreach ($f in $changed) {
+            $src = Join-Path (Resolve-Path ./dist/March7thAssistant_full).Path $f
+            $dst = Join-Path $patchDir $f
+            mkdir (Split-Path $dst) -Force | Out-Null
+            Copy-Item $src $dst -Force
+          }
+          # 写入removefile.txt
+          $removed | Out-File -Encoding utf8 "$patchDir/removefile.txt"
+
+      # 步骤8.3：打包增量包
+      - name: Create patch zip archive
+        if: startsWith(github.ref, 'refs/tags/') && hashFiles('./dist/prev_release/March7thAssistant_full.zip') != ''
+        run: |
+          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_patch.zip .\dist\March7thAssistant_patch\
+          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_patch.7z .\dist\March7thAssistant_patch\
+
       # 步骤9：创建GitHub发布
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
@@ -82,6 +146,8 @@ jobs:
             ./dist/March7thAssistant.zip
             ./dist/March7thAssistant_full.7z
             ./dist/March7thAssistant.7z
+            ./dist/March7thAssistant_patch.zip
+            ./dist/March7thAssistant_patch.7z
           prerelease: false
 
       # 步骤10：强制触发 MirrorChyan 上传
