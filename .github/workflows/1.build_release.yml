@@ -86,6 +86,7 @@ jobs:
 
       # 步骤10：强制触发 MirrorChyan 上传
       - name: Trigger MirrorChyanUploading
+        if: github.repository == 'moesnow/March7thAssistant'
         shell: bash
         run: |
           gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Uploading'
