@@ -129,12 +129,12 @@ jobs:
         run: |
           $old = Get-ChildItem -Path ./dist/prev_release/unzip/March7thAssistant_full -Recurse | Where-Object {!$_.PSIsContainer}
           $new = Get-ChildItem -Path ./dist/March7thAssistant_full -Recurse | Where-Object {!$_.PSIsContainer}
-          $oldHash = @{
+          $oldHash = @{}
           foreach ($f in $old) {
             $rel = $f.FullName.Substring((Resolve-Path ./dist/prev_release/unzip/March7thAssistant_full).Path.Length+1)
             $oldHash[$rel] = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
           }
-          $newHash = @{
+          $newHash = @{}
           foreach ($f in $new) {
             $rel = $f.FullName.Substring((Resolve-Path ./dist/March7thAssistant_full).Path.Length+1)
             $newHash[$rel] = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
