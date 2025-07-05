@@ -72,17 +72,50 @@ jobs:
           .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
 
       # 步骤8.1：下载上一个正式 release 的 March7thAssistant_full.zip 并解压
-      - name: Download previous release full zip
+      - name: Get previous release tag
+        id: prev_release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: dawidd6/action-download-artifact@v2
+        uses: actions/github-script@v7
         with:
-          workflow: 1.build_release.yml
-          name: March7thAssistant_full.zip
-          path: ./dist/prev_release/
-        continue-on-error: true
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 5
+            });
+            // 当前tag
+            const currentTag = context.ref.replace('refs/tags/', '');
+            // 找到上一个正式release（非prerelease，且tag小于当前tag）
+            let found = false;
+            let prev = null;
+            for (const rel of releases) {
+              if (rel.tag_name === currentTag) {
+                found = true;
+                continue;
+              }
+              if (found && !rel.prerelease) {
+                prev = rel;
+                break;
+              }
+            }
+            if (!prev) {
+              core.setOutput('url', '');
+              core.setOutput('tag', '');
+            } else {
+              // 查找附件
+              const asset = prev.assets.find(a => a.name === 'March7thAssistant_full.zip');
+              core.setOutput('url', asset ? asset.browser_download_url : '');
+              core.setOutput('tag', prev.tag_name);
+            }
+
+      - name: Download previous release full zip
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_release.outputs.url != ''
+        run: |
+          mkdir ./dist/prev_release/
+          curl -L "${{ steps.prev_release.outputs.url }}" -o ./dist/prev_release/March7thAssistant_full.zip
 
       - name: Unzip previous release
-        if: startsWith(github.ref, 'refs/tags/') && hashFiles('./dist/prev_release/March7thAssistant_full.zip') != ''
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_release.outputs.url != ''
         run: |
           mkdir ./dist/prev_release/unzip
           7z x ./dist/prev_release/March7thAssistant_full.zip -o./dist/prev_release/unzip
@@ -130,15 +163,23 @@ jobs:
 
       # 步骤8.3：打包增量包
       - name: Create patch zip archive
-        if: startsWith(github.ref, 'refs/tags/') && hashFiles('./dist/prev_release/March7thAssistant_full.zip') != ''
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_release.outputs.url != ''
+        env:
+          PREV_TAG: ${{ steps.prev_release.outputs.tag }}
+          CUR_TAG: ${{ github.ref_name }}
         run: |
-          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_patch.zip .\dist\March7thAssistant_patch\
-          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_patch.7z .\dist\March7thAssistant_patch\
+          $patchZip = "March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}.zip"
+          $patch7z = "March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}.7z"
+          .\assets\binary\7za.exe a -tzip ".\dist\$patchZip" .\dist\March7thAssistant_patch\
+          .\assets\binary\7za.exe a -t7z ".\dist\$patch7z" .\dist\March7thAssistant_patch\
 
       # 步骤9：创建GitHub发布
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
+        env:
+          PREV_TAG: ${{ steps.prev_release.outputs.tag }}
+          CUR_TAG: ${{ github.ref_name }}
         with:
           name: March7thAssistant ${{ github.ref_name }}
           files: |
@@ -146,8 +187,8 @@ jobs:
             ./dist/March7thAssistant.zip
             ./dist/March7thAssistant_full.7z
             ./dist/March7thAssistant.7z
-            ./dist/March7thAssistant_patch.zip
-            ./dist/March7thAssistant_patch.7z
+            ./dist/March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}.zip
+            ./dist/March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}.7z
           prerelease: false
 
       # 步骤10：强制触发 MirrorChyan 上传
