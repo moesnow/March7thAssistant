@@ -61,11 +61,13 @@ jobs:
         run: |
           mkdir ./dist/prev_release/
           curl -L "${{ steps.prev_release.outputs.url }}" -o ./dist/prev_release/March7thAssistant.zip
+          echo ${{ steps.prev_release.outputs.url }}
 
       - name: Unzip previous 
         run: |
           mkdir ./dist/prev_release/unzip
           7z x ./dist/prev_release/March7thAssistant.zip -odist/prev_release/unzip
+          dir dist/prev_release/unzip
       # 步骤3：安装依赖
       - name: Install dependencies
         run: |
@@ -107,26 +109,40 @@ jobs:
         run: |
           $oldDir = "./dist/prev_release/March7thAssistant"
           $newDir = "./dist/March7thAssistant_${{ github.run_number }}"
+          Write-Host "oldDir: $oldDir"
+          Write-Host "newDir: $newDir"
+          Write-Host "oldDir resolved: $(Resolve-Path ./dist/prev_release/unzip/March7thAssistant)"
+          Write-Host "newDir resolved: $(Resolve-Path ./dist/March7thAssistant)"
+          $old = Get-ChildItem -Path ./dist/prev_release/unzip/March7thAssistant -Recurse | Where-Object {!$_.PSIsContainer}
+          $new = Get-ChildItem -Path ./dist/March7thAssistant -Recurse | Where-Object {!$_.PSIsContainer}
+          Write-Host "old files count: $($old.Count)"
+          Write-Host "new files count: $($new.Count)"
           $oldHash = @{}
           foreach ($f in $old) {
             $rel = $f.FullName.Substring((Resolve-Path ./dist/prev_release/unzip/March7thAssistant).Path.Length+1)
-            $oldHash[$rel] = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+            $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+            $oldHash[$rel] = $hash
+            Write-Host "OLD: $rel $hash"
           }
-          $newHash = @{}
+          $newHash = @{
           foreach ($f in $new) {
             $rel = $f.FullName.Substring((Resolve-Path ./dist/March7thAssistant).Path.Length+1)
-            $newHash[$rel] = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+            $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+            $newHash[$rel] = $hash
+            Write-Host "NEW: $rel $hash"
           }
           $changed = @()
           foreach ($k in $newHash.Keys) {
             if (-not $oldHash.ContainsKey($k) -or $oldHash[$k] -ne $newHash[$k]) {
               $changed += $k
+              Write-Host "CHANGED: $k"
             }
           }
           $removed = @()
           foreach ($k in $oldHash.Keys) {
             if (-not $newHash.ContainsKey($k)) {
               $removed += $k
+              Write-Host "REMOVED: $k"
             }
           }
           # 复制变更文件到patch目录
@@ -137,9 +153,11 @@ jobs:
             $dst = Join-Path $patchDir $f
             mkdir (Split-Path $dst) -Force | Out-Null
             Copy-Item $src $dst -Force
+            Write-Host "COPY: $src -> $dst"
           }
           # 写入removefile.txt
           $removed | Out-File -Encoding utf8 "$patchDir/removefile.txt"
+          Write-Host "removefile.txt written: $patchDir/removefile.txt"
 
       # 步骤9：打包增量包
       - name: Create patch zip archive
