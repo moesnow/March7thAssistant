@@ -124,7 +124,7 @@ jobs:
             $oldHash[$rel] = $hash
             Write-Host "OLD: $rel $hash"
           }
-          $newHash = @{
+          $newHash = @{}
           foreach ($f in $new) {
             $rel = $f.FullName.Substring((Resolve-Path ./dist/March7thAssistant).Path.Length+1)
             $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
