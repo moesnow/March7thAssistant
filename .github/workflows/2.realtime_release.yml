@@ -107,14 +107,15 @@ jobs:
       - name: Generate patch package and removefile.txt
         shell: pwsh
         run: |
-          $oldDir = "./dist/prev_release/March7thAssistant"
+        
+          $oldDir = "./dist/prev_release/unzip/March7thAssistant"
           $newDir = "./dist/March7thAssistant_${{ github.run_number }}"
           Write-Host "oldDir: $oldDir"
           Write-Host "newDir: $newDir"
           Write-Host "oldDir resolved: $(Resolve-Path ./dist/prev_release/unzip/March7thAssistant)"
-          Write-Host "newDir resolved: $(Resolve-Path ./dist/March7thAssistant)"
+          Write-Host "newDir resolved: $(Resolve-Path ./dist/March7thAssistant_${{ github.run_number }})"
           $old = Get-ChildItem -Path ./dist/prev_release/unzip/March7thAssistant -Recurse | Where-Object {!$_.PSIsContainer}
-          $new = Get-ChildItem -Path ./dist/March7thAssistant -Recurse | Where-Object {!$_.PSIsContainer}
+          $new = Get-ChildItem -Path ./dist/March7thAssistant_${{ github.run_number }} -Recurse | Where-Object {!$_.PSIsContainer}
           Write-Host "old files count: $($old.Count)"
           Write-Host "new files count: $($new.Count)"
           $oldHash = @{}
@@ -126,7 +127,7 @@ jobs:
           }
           $newHash = @{}
           foreach ($f in $new) {
-            $rel = $f.FullName.Substring((Resolve-Path ./dist/March7thAssistant).Path.Length+1)
+            $rel = $f.FullName.Substring((Resolve-Path ./dist/March7thAssistant_${{ github.run_number }}).Path.Length+1)
             $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
             $newHash[$rel] = $hash
             Write-Host "NEW: $rel $hash"
@@ -149,7 +150,7 @@ jobs:
           $patchDir = "./dist/March7thAssistant_patch"
           mkdir $patchDir -Force | Out-Null
           foreach ($f in $changed) {
-            $src = Join-Path (Resolve-Path ./dist/March7thAssistant).Path $f
+            $src = Join-Path (Resolve-Path ./dist/March7thAssistant_${{ github.run_number }}).Path $f
             $dst = Join-Path $patchDir $f
             mkdir (Split-Path $dst) -Force | Out-Null
             Copy-Item $src $dst -Force
