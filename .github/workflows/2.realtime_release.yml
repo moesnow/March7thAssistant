@@ -11,6 +11,7 @@ on:
       - main
     paths:
       - "**.py"
+      - "**.yml"
 
 # 权限设置：需要写入仓库内容的权限
 permissions:
@@ -34,7 +35,39 @@ jobs:
         with:
           python-version: "3.13.3"
           cache: "pip"
+      # 步骤8.1：下载上一个正式 release 的 March7thAssistant.zip 并解压
+      - name: Get previous release tag
+        id: prev_release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 1
+            });
+            // 获取最新正式 release（非prerelease）
+            const latest = releases.find(rel => !rel.prerelease);
+            if (!latest) {
+              core.setOutput('url', '');
+              core.setOutput('tag', '');
+            } else {
+              const asset = latest.assets.find(a => a.name === 'March7thAssistant.zip');
+              core.setOutput('url', asset ? asset.browser_download_url : '');
+              core.setOutput('tag', latest.tag_name);
+            }
 
+      - name: Download previous release full zip
+        run: |
+          mkdir ./dist/prev_release/
+          curl -L "${{ steps.prev_release.outputs.url }}" -o ./dist/prev_release/March7thAssistant.zip
+          echo ${{ steps.prev_release.outputs.url }}
+
+      - name: Unzip previous 
+        run: |
+          mkdir ./dist/prev_release/unzip
+          7z x ./dist/prev_release/March7thAssistant.zip -odist/prev_release/unzip
+          dir dist/prev_release/unzip
       # 步骤3：安装依赖
       - name: Install dependencies
         run: |
@@ -69,3 +102,76 @@ jobs:
           name: March7thAssistant_${{ github.run_number }}.7z
           path: ./dist/March7thAssistant_${{ github.run_number }}.7z
           compression-level: 0 # no compression
+
+      # 步骤8：生成增量包和 removefile.txt
+      - name: Generate patch package and removefile.txt
+        shell: pwsh
+        run: |
+        
+          $oldDir = "./dist/prev_release/unzip/March7thAssistant"
+          $newDir = "./dist/March7thAssistant_${{ github.run_number }}"
+          Write-Host "oldDir: $oldDir"
+          Write-Host "newDir: $newDir"
+          Write-Host "oldDir resolved: $(Resolve-Path ./dist/prev_release/unzip/March7thAssistant)"
+          Write-Host "newDir resolved: $(Resolve-Path ./dist/March7thAssistant_${{ github.run_number }})"
+          $old = Get-ChildItem -Path ./dist/prev_release/unzip/March7thAssistant -Recurse | Where-Object {!$_.PSIsContainer}
+          $new = Get-ChildItem -Path ./dist/March7thAssistant_${{ github.run_number }} -Recurse | Where-Object {!$_.PSIsContainer}
+          Write-Host "old files count: $($old.Count)"
+          Write-Host "new files count: $($new.Count)"
+          $oldHash = @{}
+          foreach ($f in $old) {
+            $rel = $f.FullName.Substring((Resolve-Path ./dist/prev_release/unzip/March7thAssistant).Path.Length+1)
+            $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+            $oldHash[$rel] = $hash
+            Write-Host "OLD: $rel $hash"
+          }
+          $newHash = @{}
+          foreach ($f in $new) {
+            $rel = $f.FullName.Substring((Resolve-Path ./dist/March7thAssistant_${{ github.run_number }}).Path.Length+1)
+            $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash
+            $newHash[$rel] = $hash
+            Write-Host "NEW: $rel $hash"
+          }
+          $changed = @()
+          foreach ($k in $newHash.Keys) {
+            if (-not $oldHash.ContainsKey($k) -or $oldHash[$k] -ne $newHash[$k]) {
+              $changed += $k
+              Write-Host "CHANGED: $k"
+            }
+          }
+          $removed = @()
+          foreach ($k in $oldHash.Keys) {
+            if (-not $newHash.ContainsKey($k)) {
+              $removed += $k
+              Write-Host "REMOVED: $k"
+            }
+          }
+          # 复制变更文件到patch目录
+          $patchDir = "./dist/March7thAssistant_patch"
+          mkdir $patchDir -Force | Out-Null
+          foreach ($f in $changed) {
+            $src = Join-Path (Resolve-Path ./dist/March7thAssistant_${{ github.run_number }}).Path $f
+            $dst = Join-Path $patchDir $f
+            mkdir (Split-Path $dst) -Force | Out-Null
+            Copy-Item $src $dst -Force
+            Write-Host "COPY: $src -> $dst"
+          }
+          # 写入removefile.txt
+          $removed | Out-File -Encoding utf8 "$patchDir/removefile.txt"
+          Write-Host "removefile.txt written: $patchDir/removefile.txt"
+
+      # 步骤9：打包增量包
+      - name: Create patch zip archive
+        run: |
+          if (Test-Path .\dist\March7thAssistant_patch) {
+            .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_patch.7z .\dist\March7thAssistant_patch\
+          }
+
+      # 步骤10：上传增量包 artifact
+      - name: Upload patch artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: March7thAssistant_patch
+          path: |
+            ./dist/March7thAssistant_patch.7z
