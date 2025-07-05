@@ -26,51 +26,6 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
-      # 步骤3：安装依赖
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller==6.14.1
-
-      # 步骤4：生成程序
-      - name: Generate program
-        run: |
-          pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
-          pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --uac-admin -n "March7th Launcher" app.py -y -w
-          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Updater.ico -n "March7th Updater" --exclude-module numpy --exclude-module pandas updater.py -y
-
-      # 步骤5：移动资源到dist目录
-      - name: Move assets to dist directory
-        run: |
-          Copy-Item -Path ".\dist\March7th Assistant\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
-          Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
-          Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
-          Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
-
-      # 步骤6：创建压缩包
-      - name: Create archive
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
-          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant.zip .\dist\March7thAssistant\
-          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant.7z .\dist\March7thAssistant\
-
-      # 步骤7：移动第三方库到dist目录
-      - name: Move 3rdparty to dist directory
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          python build.py github-actions
-          Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
-          Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
-
-      # 步骤8：创建完整的压缩包
-      - name: Create full zip archive
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          # Compress-Archive -Path .\dist\March7thAssistant_full\ -DestinationPath .\dist\March7thAssistant_full.zip -Force
-          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
-          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
-
       # 步骤8.1：下载上一个正式 release 的 March7thAssistant_full.zip 并解压
       - name: Get previous release tag
         id: prev_release
@@ -118,7 +73,54 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') && steps.prev_release.outputs.url != ''
         run: |
           mkdir ./dist/prev_release/unzip
-          7z x ./dist/prev_release/March7thAssistant_full.zip -o./dist/prev_release/unzip
+          7z x ./dist/prev_release/March7thAssistant_full.zip -odist/prev_release/unzip
+
+      # 步骤3：安装依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller==6.14.1
+
+      # 步骤4：生成程序
+      - name: Generate program
+        run: |
+          pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
+          pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --uac-admin -n "March7th Launcher" app.py -y -w
+          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Updater.ico -n "March7th Updater" --exclude-module numpy --exclude-module pandas updater.py -y
+
+      # 步骤5：移动资源到dist目录
+      - name: Move assets to dist directory
+        run: |
+          Copy-Item -Path ".\dist\March7th Assistant\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
+          Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
+
+      # 步骤6：创建压缩包
+      - name: Create archive
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
+          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant.zip .\dist\March7thAssistant\
+          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant.7z .\dist\March7thAssistant\
+
+      # 步骤7：移动第三方库到dist目录
+      - name: Move 3rdparty to dist directory
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          python build.py github-actions
+          Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
+          Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
+
+      # 步骤8：创建完整的压缩包
+      - name: Create full zip archive
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          # Compress-Archive -Path .\dist\March7thAssistant_full\ -DestinationPath .\dist\March7thAssistant_full.zip -Force
+          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
+          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
+
+      
 
       # 步骤8.2：对比文件，生成增量包和 removefile.txt
       - name: Generate patch package and removefile.txt
