@@ -25,7 +25,8 @@ class Updater:
         self.process_names = ["March7th Assistant.exe", "March7th Launcher.exe", "flet.exe", "gui.exe"]
         self.api_urls = [
             "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-            "https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
+            #"https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
+            "https://gh-proxy.com/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
         ]
         self.temp_path = os.path.abspath("./temp")
         os.makedirs(self.temp_path, exist_ok=True)
@@ -101,11 +102,11 @@ class Updater:
         # 优先使用增量包
         if patch_url:
             self.use_patch = True
-            self.patch_download_url = self.find_fastest_mirror([patch_url, f"https://github.kotori.top/{patch_url}"])
+            self.patch_download_url = self.find_fastest_mirror([patch_url, f"https://gh-proxy.com/{patch_url}"])
             return self.patch_download_url, patch_name
         elif full_url:
             self.use_patch = False
-            return self.find_fastest_mirror([full_url, f"https://github.kotori.top/{full_url}"]), full_name
+            return self.find_fastest_mirror([full_url, f"https://gh-proxy.com/{full_url}"]), full_name
         else:
             raise Exception("没有找到合适的下载URL")
 
@@ -347,7 +348,15 @@ class Updater:
         exe_path = os.path.abspath("./March7th Assistant.exe")
         try:
             if os.path.exists(exe_path):
-                subprocess.Popen(exe_path)
+                # 使用管理员权限启动独立进程
+                if sys.platform == "win32":
+                    import ctypes
+                    params = ""
+                    ctypes.windll.shell32.ShellExecuteW(
+                        None, "runas", exe_path, params, None, 1
+                    )
+                else:
+                    subprocess.Popen([exe_path])
             else:
                 self.logger.error(f"未找到 {exe_path}")
         except Exception as e:
