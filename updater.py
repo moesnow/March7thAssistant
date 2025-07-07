@@ -13,6 +13,7 @@ from urllib.request import urlopen
 from urllib.error import URLError
 from utils.color import red, green
 from utils.logger.logger import Logger
+from time import sleep
 
 
 class Updater:
@@ -347,11 +348,20 @@ class Updater:
         exe_path = os.path.abspath("./March7th Assistant.exe")
         try:
             if os.path.exists(exe_path):
-                subprocess.Popen(exe_path)
+                # 使用管理员权限启动独立进程
+                if sys.platform == "win32":
+                    import ctypes
+                    params = ""
+                    ctypes.windll.shell32.ShellExecuteW(
+                        None, "runas", exe_path, params, None, 1
+                    )
+                else:
+                    subprocess.Popen([exe_path], creationflags=subprocess.DETACHED_PROCESS)
             else:
                 self.logger.error(f"未找到 {exe_path}")
         except Exception as e:
             self.logger.error(f"启动主程序失败: {e}")
+        sleep(10)  # Debug
         sys.exit(0)
 
 
