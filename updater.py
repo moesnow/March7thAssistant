@@ -241,7 +241,9 @@ class Updater:
         while True:
             try:
                 self.logger.info("开始覆盖...")
-                if self.use_patch:
+                #if self.use_patch:
+                self.apply_patch()
+                if False:
                     # 增量包：apply patch
                     self.apply_patch()
                 else:
@@ -268,6 +270,8 @@ class Updater:
         patch_dir = self.extract_folder_path
         # 1. 删除removefile.txt中列出的文件
         removefile_path = os.path.join(patch_dir, "removefile.txt")
+        remest = os.path.exists(removefile_path)
+        self.logger.info(f"当前removefile存在性:{removefile_path} {remest}")
         if os.path.exists(removefile_path):
             with open(removefile_path, "r", encoding="utf-8") as f:
                 for line in f:
