@@ -26,7 +26,8 @@ class Updater:
         self.process_names = ["March7th Assistant.exe", "March7th Launcher.exe", "flet.exe", "gui.exe"]
         self.api_urls = [
             "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-            "https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
+            #"https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
+            "https://gh-proxy.com/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
         ]
         self.temp_path = os.path.abspath("./temp")
         os.makedirs(self.temp_path, exist_ok=True)
@@ -63,6 +64,7 @@ class Updater:
         """检测更新并获取下载URL和文件名，优先使用增量包。"""
         self.logger.info("开始检测更新")
         fastest_mirror = self.find_fastest_mirror(self.api_urls)
+        self.logger.info(f"最快的镜像: {green(fastest_mirror)}")
         try:
             with urlopen(fastest_mirror, timeout=10) as response:
                 if response.getcode() == 200:
@@ -102,11 +104,11 @@ class Updater:
         # 优先使用增量包
         if patch_url:
             self.use_patch = True
-            self.patch_download_url = self.find_fastest_mirror([patch_url, f"https://github.kotori.top/{patch_url}"])
+            self.patch_download_url = self.find_fastest_mirror([patch_url, f"https://gh-proxy.com/{patch_url}"])
             return self.patch_download_url, patch_name
         elif full_url:
             self.use_patch = False
-            return self.find_fastest_mirror([full_url, f"https://github.kotori.top/{full_url}"]), full_name
+            return self.find_fastest_mirror([full_url, f"https://gh-proxy.com/{full_url}"]), full_name
         else:
             raise Exception("没有找到合适的下载URL")
 
