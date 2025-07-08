@@ -155,7 +155,7 @@ jobs:
             }
           }
           # 复制变更文件到patch目录
-          $patchDir = "./dist/March7thAssistant_patch"
+          $patchDir = "./dist/March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}"
           mkdir $patchDir -Force | Out-Null
           foreach ($f in $changed) {
             $src = Join-Path (Resolve-Path ./dist/March7thAssistant_full).Path $f
@@ -175,8 +175,8 @@ jobs:
         run: |
           $patchZip = "March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}.zip"
           $patch7z = "March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}.7z"
-          .\assets\binary\7za.exe a -tzip ".\dist\$patchZip" .\dist\March7thAssistant_patch\
-          .\assets\binary\7za.exe a -t7z ".\dist\$patch7z" .\dist\March7thAssistant_patch\
+          .\assets\binary\7za.exe a -tzip ".\dist\$patchZip" .\dist\March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}\
+          .\assets\binary\7za.exe a -t7z ".\dist\$patch7z" .\dist\March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}\
 
       # 步骤9：创建GitHub发布
       - name: Create release
