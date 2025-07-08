@@ -281,25 +281,20 @@ class Updater:
                                 os.remove(abs_path)
                             elif os.path.isdir(abs_path):
                                 shutil.rmtree(abs_path)
-                            self.logger.info(f"删除文件: {abs_path}")
                         except Exception as e:
                             self.logger.error(f"删除文件失败: {abs_path} - {e}")
         # 2. 复制patch内容（除removefile.txt）到目标目录
         for root, dirs, files in os.walk(patch_dir):
-            self.logger.info(f"Root Dirs Files: {root} {dirs} {files}")
             for file in files:
                 rel_dir = os.path.relpath(root, patch_dir)
-                self.logger.info(f"正在处理文件: {file}")
                 if file == "removefile.txt":
                     continue
                 src_file = os.path.join(root, file)
-                
                 if rel_dir == ".":
                     dst_file = os.path.join(self.cover_folder_path, file)
                 else:
                     dst_file = os.path.join(self.cover_folder_path, rel_dir, file)
                 os.makedirs(os.path.dirname(dst_file), exist_ok=True)
-                self.logger.info(f"源文件;真实目录;完整目录: {src_file} {rel_dir} {dst_file}")
                 shutil.copy2(src_file, dst_file)
 
     def terminate_processes(self):
