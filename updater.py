@@ -27,9 +27,9 @@ class Updater:
         another = os.getenv("m7a_another", "moesnow")
         repo = os.getenv("m3a_repo", "March7thAssistant")
         self.api_urls = [
-            "https://api.github.com/repos/{another}/{repo}/releases/latest",
-            #"https://github.kotori.top/https://api.github.com/repos/{another}/{repo}/releases/latest",
-            "https://gh-proxy.com/https://api.github.com/repos/{another}/{repo}/releases/latest",
+            f"https://api.github.com/repos/{another}/{repo}/releases/latest",
+            #f"https://github.kotori.top/https://api.github.com/repos/{another}/{repo}/releases/latest",
+            f"https://gh-proxy.com/https://api.github.com/repos/{another}/{repo}/releases/latest",
         ]
         self.temp_path = os.path.abspath("./temp")
         os.makedirs(self.temp_path, exist_ok=True)
