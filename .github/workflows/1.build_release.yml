@@ -11,7 +11,10 @@ jobs:
   build:
     name: Build
     runs-on: windows-latest
-
+    env:
+      # 作业级环境变量（整个作业有效）
+      m7a_another: ${{ github.repository_owner }}
+      m7a_repo: ${{ github.event.repository.name }}
     steps:
       # 步骤1：签出代码
       - name: Checkout code
