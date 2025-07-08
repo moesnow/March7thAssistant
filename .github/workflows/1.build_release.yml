@@ -155,7 +155,7 @@ jobs:
             }
           }
           # 复制变更文件到patch目录
-          $patchDir = "./dist/March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}"
+          $patchDir = "./dist/March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}"
           mkdir $patchDir -Force | Out-Null
           foreach ($f in $changed) {
             $src = Join-Path (Resolve-Path ./dist/March7thAssistant_full).Path $f
