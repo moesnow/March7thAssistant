@@ -67,11 +67,27 @@ class Screen(metaclass=SingletonMeta):
         """
         处理自动重试逻辑，包括按ESC键和处理特定的异常情况。
         """
-        self.logger.warning("未识别出任何界面，请确保游戏画面干净，按ESC后重试")
+        self.logger.warning("未识别出任何界面，请确保游戏画面干净。按ESC后重试")
         auto.press_key("esc")
-        time.sleep(2)  # 等待屏幕变化
+        time.sleep(8)  # 等待屏幕变化
 
         auto.take_screenshot()
+        # 激进的处理方法！——点击确认
+        if auto.find_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到确认按钮，点击确认")
+            auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
+            time.sleep(20)
+        if auto.find_element("./assets/images/zh_CN/base/later.jpg", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到剧情提示，点击稍后")
+            auto.click_element("./assets/images/zh_CN/base/later.jpg", "image", 0.9, take_screenshot=False)
+            time.sleep(2)
+        if auto.find_element("./assets/images/zh_CN/base/tping.jpg", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到正在传送或加载")
+            time.sleep(30)
+        if auto.find_element("./assets/images/zh_CN/base/veryblack.jpg", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到小黑屏幕")
+            time.sleep(10)
+        '''
         # 处理与服务器断开连接的异常情况
         if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
@@ -81,8 +97,9 @@ class Screen(metaclass=SingletonMeta):
         if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
             time.sleep(20)
+        '''
 
-    def get_current_screen(self, autotry=True, max_retries=10):
+    def get_current_screen(self, autotry=True, max_retries=30):
         """
         通过多次尝试来识别并获取当前界面。
         :param autotry: 如果自动重试启用，则在未识别到界面时尝试按ESC键。
