@@ -22,19 +22,58 @@ class Universe:
         if cfg.universe_operation_mode == "exe":
             import requests
             import json
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Auto_Simulated_Universe"), timeout=10, headers=cfg.useragent)
-            if response.status_code == 200:
-                data = json.loads(response.text)
-                url = None
-                for asset in data["assets"]:
-                    url = FastestMirror.get_github_mirror(asset["browser_download_url"])
-                    break
-                if url is None:
-                    log.error("没有找到可用更新，请稍后再试")
+            if cfg.update_source == "MirrorChyan":
+                if cfg.mirrorchyan_cdk == "":
+                    log.error("未设置 Mirror酱 CDK")
                     input("按回车键关闭窗口. . .")
                     sys.exit(0)
-                update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe")
-                update_handler.run()
+                # 符合Mirror酱条件
+                response = requests.get(
+                    f"https://mirrorchyan.com/api/resources/ASU_moe/latest?cdk={cfg.mirrorchyan_cdk}",
+                    timeout=10,
+                    headers=cfg.useragent
+                )
+                if response.status_code == 200:
+                    mirrorchyan_data = response.json()
+                    if mirrorchyan_data["code"] == 0 and mirrorchyan_data["msg"] == "success":
+                        url = mirrorchyan_data["data"]["url"]
+                        update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe")
+                        update_handler.run()
+                else:
+                    try:
+                        mirrorchyan_data = response.json()
+                        code = mirrorchyan_data["code"]
+                        error_msg = mirrorchyan_data["msg"]
+
+                        cdk_error_messages = {
+                            7001: "Mirror酱 CDK 已过期",
+                            7002: "Mirror酱 CDK 错误",
+                            7003: "Mirror酱 CDK 今日下载次数已达上限",
+                            7004: "Mirror酱 CDK 类型和待下载的资源不匹配",
+                            7005: "Mirror酱 CDK 已被封禁"
+                        }
+                        if code in cdk_error_messages:
+                            error_msg = cdk_error_messages[code]
+                        log.error("Mirror酱 API 请求失败")
+                        log.error(error_msg)
+                    except:
+                        log.error("Mirror酱 API 请求失败")
+                    input("按回车键关闭窗口. . .")
+                    sys.exit(0)
+            else:
+                response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Auto_Simulated_Universe"), timeout=10, headers=cfg.useragent)
+                if response.status_code == 200:
+                    data = json.loads(response.text)
+                    url = None
+                    for asset in data["assets"]:
+                        url = FastestMirror.get_github_mirror(asset["browser_download_url"])
+                        break
+                    if url is None:
+                        log.error("没有找到可用更新，请稍后再试")
+                        input("按回车键关闭窗口. . .")
+                        sys.exit(0)
+                    update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe")
+                    update_handler.run()
         elif cfg.universe_operation_mode == "source":
             cfg.set_value("universe_requirements", False)
             url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/refs/heads/main.zip")

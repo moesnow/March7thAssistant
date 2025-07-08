@@ -30,14 +30,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller
+          pip install -r requirements.txt pyinstaller==6.14.1
 
       # 步骤4：生成程序
       - name: Generate program
         run: |
           pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
           pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --uac-admin -n "March7th Launcher" app.py -y -w
-          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Updater.ico -n "March7th Updater" updater.py -y
+          pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Updater.ico -n "March7th Updater" --exclude-module numpy --exclude-module pandas updater.py -y
 
       # 步骤5：移动资源到dist目录
       - name: Move assets to dist directory
@@ -51,26 +51,25 @@ jobs:
       - name: Create archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_${{ github.ref_name }}
-          # Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}.zip -Force
-          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_${{ github.ref_name }}.zip .\dist\March7thAssistant_${{ github.ref_name }}\
-          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_${{ github.ref_name }}.7z .\dist\March7thAssistant_${{ github.ref_name }}\
+          # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
+          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant.zip .\dist\March7thAssistant\
+          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant.7z .\dist\March7thAssistant\
 
       # 步骤7：移动第三方库到dist目录
       - name: Move 3rdparty to dist directory
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           python build.py github-actions
-          Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant_${{ github.ref_name }}\3rdparty\ -Recurse -Force
-          Rename-Item -Path .\dist\March7thAssistant_${{ github.ref_name }} -NewName March7thAssistant_${{ github.ref_name }}_full
+          Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
+          Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
 
       # 步骤8：创建完整的压缩包
       - name: Create full zip archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          # Compress-Archive -Path .\dist\March7thAssistant_${{ github.ref_name }}_full\ -DestinationPath .\dist\March7thAssistant_${{ github.ref_name }}_full.zip -Force
-          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_${{ github.ref_name }}_full.zip .\dist\March7thAssistant_${{ github.ref_name }}_full\
-          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_${{ github.ref_name }}_full.7z .\dist\March7thAssistant_${{ github.ref_name }}_full\
+          # Compress-Archive -Path .\dist\March7thAssistant_full\ -DestinationPath .\dist\March7thAssistant_full.zip -Force
+          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
+          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
 
       # 步骤9：创建GitHub发布
       - name: Create release
@@ -79,11 +78,11 @@ jobs:
         with:
           name: March7thAssistant ${{ github.ref_name }}
           files: |
-            ./dist/March7thAssistant_${{ github.ref_name }}_full.zip
-            ./dist/March7thAssistant_${{ github.ref_name }}.zip
-            ./dist/March7thAssistant_${{ github.ref_name }}_full.7z
-            ./dist/March7thAssistant_${{ github.ref_name }}.7z
-          prerelease: true
+            ./dist/March7thAssistant_full.zip
+            ./dist/March7thAssistant.zip
+            ./dist/March7thAssistant_full.7z
+            ./dist/March7thAssistant.7z
+          prerelease: false
 
       # 步骤10：强制触发 MirrorChyan 上传
       - name: Trigger MirrorChyanUploading

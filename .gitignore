@@ -193,3 +193,6 @@ pyrightconfig.json
 
 # notify for smtp
 smtp_temp.bin
+
+# QFluentWidgets Config
+/config/config.json

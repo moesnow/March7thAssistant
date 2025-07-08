@@ -1,5 +1,37 @@
 # 更新日志
 
+## v2025.7.8
+
+- 支持 3.4 版本新增关卡和角色 [#616](https://github.com/moesnow/March7thAssistant/pull/616)
+- 修复无法正常进入 “溟簇之形” 副本
+
+## v2025.6.14
+
+- 支持 3.3 版本新增关卡和角色 [#580](https://github.com/moesnow/March7thAssistant/pull/580) [#597](https://github.com/moesnow/March7thAssistant/pull/597)
+- 支持将抽卡记录导出为 Excel 文件 [#574](https://github.com/moesnow/March7thAssistant/pull/574)
+- 支持修改每轮拟造花萼挑战次数 [#592](https://github.com/moesnow/March7thAssistant/pull/592)
+- 设置页面的滑块增加按钮以便更精细的控制 [#591](https://github.com/moesnow/March7thAssistant/pull/591)
+- 修复差分宇宙暂退图片 [#594](https://github.com/moesnow/March7thAssistant/pull/594)
+- 修复抽卡数据存在异常时无法正常导出 Excel
+- 修复部分选项导致图形界面闪退
+- 修复 Gotify 推送异常
+- 模拟宇宙（Auto_Simulated_Universe）v8.04
+- 模拟宇宙支持通过 Mirror酱 进行更新
+
+## v2025.4.18
+
+- 适配二周年活动图标
+- 支持遐蝶 [#548](https://github.com/moesnow/March7thAssistant/pull/548)
+- 支持配置从周几后开始执行历战余响（周本） [#479](https://github.com/moesnow/March7thAssistant/pull/479)
+- 当遗器数量达到上限时，将会先执行分解四星遗器 [#524](https://github.com/moesnow/March7thAssistant/pull/524)
+- OneBot 支持同时发送私聊消息和群消息 [#540](https://github.com/moesnow/March7thAssistant/pull/540)
+- 锄大地增加翁法洛斯优先级设置项 [#547](https://github.com/moesnow/March7thAssistant/pull/547)
+- 优化 Mirror酱 使用体验，增加CDK过期等错误提示
+- 修复 飞书、Gotify、OneBot 推送 [#520](https://github.com/moesnow/March7thAssistant/pull/520) [#517](https://github.com/moesnow/March7thAssistant/pull/517)
+- 修复未完成全部日常任务时可能无法正确领取奖励
+- 修复系统不支持自动主题时导致的闪退 [#525](https://github.com/moesnow/March7thAssistant/pull/525)
+- 修复定时任务时间读取本地区域设置导致的闪退 [#512](https://github.com/moesnow/March7thAssistant/pull/512)
+
 ## v2025.3.7
 
 - 模拟宇宙（Auto_Simulated_Universe）适配新版本差分宇宙
@@ -433,7 +465,7 @@
 - 移除 power_total、dispatch_count、ocr_path 配置项
 - 使用消耗品前会先筛选类别避免背包物品太多
 - 升级 [PaddleOCR-json_v.1.3.1](https://github.com/hiroi-sora/PaddleOCR-json/releases/tag/v1.3.1)，兼容 Win7 x64
-- 支持 [RapidOCR-json_v0.2.0](https://github.com/hiroi-sora/RapidOCR-json/releases/download/v0.2.0/RapidOCR-json_v0.2.0.7z)，兼容没有 AVX2 指令集的 CPU（自动判断）
+- 支持 [RapidOCR-json_v0.2.0](https://github.com/hiroi-sora/RapidOCR-json/releases/download/v0.2.0/RapidOCR-json_v0.2.0.7z)，兼容没有 AVX 指令集的 CPU（自动判断）
 
 ## v1.6.1
 

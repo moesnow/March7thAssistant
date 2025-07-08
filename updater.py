@@ -121,8 +121,10 @@ class Updater:
             try:
                 self.logger.info("开始下载...")
                 if os.path.exists(self.aria2_path):
-                    command = [self.aria2_path, "--max-connection-per-server=16", "--dir={}".format(os.path.dirname(self.download_file_path)),
+                    command = [self.aria2_path, "--dir={}".format(os.path.dirname(self.download_file_path)),
                                "--out={}".format(os.path.basename(self.download_file_path)), self.download_url]
+                    if "github.com" in self.download_url:
+                        command.insert(2, "--max-connection-per-server=16")
                     if os.path.exists(self.download_file_path):
                         command.insert(2, "--continue=true")
                     subprocess.run(command, check=True)
@@ -212,11 +214,11 @@ class Updater:
 
     def run(self):
         """运行更新流程。"""
-        self.terminate_processes()
         while True:
             self.download_with_progress()
             if self.extract_file():
                 break
+        self.terminate_processes()
         self.cover_folder()
         self.cleanup()
         input("按回车键退出并打开软件")

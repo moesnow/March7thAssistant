@@ -63,9 +63,10 @@ class UpdateThread(QThread):
             data = self.fetch_latest_release_info()
             version = data["tag_name"]
             content = self.remove_images_from_markdown(data["body"])
-            content = content.replace("[已有 Mirror酱 CDK？前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable)", "")
+            content = re.sub(r"\r\n\r\n首次.*?无法.*?！", "", content, flags=re.DOTALL)
+            content = re.sub(r"\r\n\r\n\[.*?Mirror酱.*?CDK.*?下载\]\(https?://.*?mirrorchyan\.com[^\)]*\)", "", content, flags=re.IGNORECASE)
             if cfg.update_source == "GitHub":
-                content = content + "\n若下载速度较慢，可尝试使用 Mirror酱（关于 → 更新源） 高速下载"
+                content = content + "\n\n若下载速度较慢，可尝试使用 Mirror酱（设置 → 关于 → 更新源） 高速下载"
             assert_url = self.get_download_url_from_assets(data["assets"])
             assert_name = assert_url.split("/")[-1]
 
@@ -93,9 +94,18 @@ class UpdateThread(QThread):
                 else:
                     try:
                         mirrorchyan_data = response.json()
+                        self.code = mirrorchyan_data["code"]
                         self.error_msg = mirrorchyan_data["msg"]
-                        if self.error_msg == "Please confirm that you have entered the correct cdkey":
-                            self.error_msg = "Mirror酱 CDK 错误"
+
+                        cdk_error_messages = {
+                            7001: "Mirror酱 CDK 已过期",
+                            7002: "Mirror酱 CDK 错误",
+                            7003: "Mirror酱 CDK 今日下载次数已达上限",
+                            7004: "Mirror酱 CDK 类型和待下载的资源不匹配",
+                            7005: "Mirror酱 CDK 已被封禁"
+                        }
+                        if self.code in cdk_error_messages:
+                            self.error_msg = cdk_error_messages[self.code]
                     except:
                         self.error_msg = "Mirror酱API请求失败"
                     self.updateSignal.emit(UpdateStatus.FAILURE)

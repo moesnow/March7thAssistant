@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QPushButton
 
 from module.config import cfg
 import os
+from ..tools.check_update import checkUpdate
 
 
 class ComboBoxSettingCard2(SettingCard):
@@ -27,6 +28,29 @@ class ComboBoxSettingCard2(SettingCard):
 
     def _onCurrentIndexChanged(self, index: int):
         cfg.set_value(self.configname, self.comboBox.itemData(index))
+
+
+class ComboBoxSettingCardUpdateSource(SettingCard):
+    """ Setting card with a combo box """
+
+    def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase], title, update_callback, content=None, texts=None, parent=None):
+        super().__init__(icon, title, content, parent)
+        self.configname = configname
+        self.update_callback = update_callback
+        self.comboBox = ComboBox(self)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        for key, value in texts.items():
+            self.comboBox.addItem(key, userData=value)
+            if value == cfg.get_value(configname):
+                self.comboBox.setCurrentText(key)
+
+        self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
+
+    def _onCurrentIndexChanged(self, index: int):
+        cfg.set_value(self.configname, self.comboBox.itemData(index))
+        checkUpdate(self.update_callback)
 
 
 class ComboBoxSettingCardLog(SettingCard):
