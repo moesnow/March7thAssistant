@@ -155,7 +155,7 @@ jobs:
             }
           }
           # 复制变更文件到patch目录
-          $patchDir = "./dist/March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}"
+          $patchDir = "./dist/March7thAssistant_patch"
           mkdir $patchDir -Force | Out-Null
           foreach ($f in $changed) {
             $src = Join-Path (Resolve-Path ./dist/March7thAssistant_full).Path $f
@@ -173,6 +173,7 @@ jobs:
           PREV_TAG: ${{ steps.prev_release.outputs.tag }}
           CUR_TAG: ${{ github.ref_name }}
         run: |
+          Rename-Item -Path .\dist\March7thAssistant_patch -NewName March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}
           $patchZip = "March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}.zip"
           $patch7z = "March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}.7z"
           .\assets\binary\7za.exe a -tzip ".\dist\$patchZip" .\dist\March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}\
