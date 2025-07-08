@@ -25,7 +25,7 @@ class Updater:
         self.logger = logger
         self.process_names = ["March7th Assistant.exe", "March7th Launcher.exe", "flet.exe", "gui.exe"]
         another = os.getenv("m7a_another", "moesnow")
-        repo = os.getenv("m3a_repo", "March7thAssistant")
+        repo = os.getenv("m7a_repo", "March7thAssistant")
         self.api_urls = [
             f"https://api.github.com/repos/{another}/{repo}/releases/latest",
             #f"https://github.kotori.top/https://api.github.com/repos/{another}/{repo}/releases/latest",
