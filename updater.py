@@ -24,10 +24,12 @@ class Updater:
         self.max_try = max_try
         self.logger = logger
         self.process_names = ["March7th Assistant.exe", "March7th Launcher.exe", "flet.exe", "gui.exe"]
+        another = os.getenv("m7a_another", "moesnow")
+        repo = os.getenv("m3a_repo", "March7thAssistant")
         self.api_urls = [
-            "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-            #"https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-            "https://gh-proxy.com/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
+            "https://api.github.com/repos/{another}/{repo}/releases/latest",
+            #"https://github.kotori.top/https://api.github.com/repos/{another}/{repo}/releases/latest",
+            "https://gh-proxy.com/https://api.github.com/repos/{another}/{repo}/releases/latest",
         ]
         self.temp_path = os.path.abspath("./temp")
         os.makedirs(self.temp_path, exist_ok=True)
