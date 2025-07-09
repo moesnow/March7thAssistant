@@ -13,7 +13,7 @@
             {
                 "target_screen": "map",
                 "actions_list": [
-                    "auto.press_key('m')",
+                    "auto.press_key(cfg.get_value('hotkey_map', 'm'))",
                     "time.sleep(2)",
                     "auto.click_element('./assets/images/zh_CN/map/back.png', 'image', 0.9)"
                 ]
@@ -21,7 +21,7 @@
             {
                 "target_screen": "stellar_warp",
                 "actions_list": [
-                    "auto.press_key('f3')",
+                    "auto.press_key(cfg.get_value('hotkey_warp', 'f3'))",
                     "time.sleep(2)",
                     "auto.click_element('./assets/images/share/warp/stellar_warp.png', 'image', 0.9)"
                 ]

@@ -141,10 +141,64 @@ class PushSettingCardKey(PushSettingCard):
         self.button.setText("按住以修改")
 
     def keyPressEvent(self, e: QKeyEvent):
-        if (self.button.isDown()):
-            cfg.set_value(self.configname, e.text())
-            self.contentLabel.setText(e.text())
-            self.button.setText(f"已改为 {e.text()}")
+        if self.button.isDown():
+            key_name = self._get_key_name(e)
+            if key_name:
+                cfg.set_value(self.configname, key_name)
+                self.contentLabel.setText(key_name)
+                self.button.setText(f"已改为 {key_name}")
+
+    def _get_key_name(self, event):
+        function_keys = {
+            Qt.Key_F1: "f1",
+            Qt.Key_F2: "f2",
+            Qt.Key_F3: "f3",
+            Qt.Key_F4: "f4",
+            Qt.Key_F5: "f5",
+            Qt.Key_F6: "f6",
+            Qt.Key_F7: "f7",
+            Qt.Key_F8: "f8",
+            Qt.Key_F9: "f9",
+            Qt.Key_F10: "f10",
+            Qt.Key_F11: "f11",
+            Qt.Key_F12: "f12",
+        }
+
+        special_keys = {
+            Qt.Key_Escape: "esc",
+            Qt.Key_Tab: "tab",
+            Qt.Key_Space: "space",
+            Qt.Key_Return: "enter",
+            Qt.Key_Enter: "enter",
+            Qt.Key_Backspace: "backspace",
+            Qt.Key_Delete: "delete",
+            Qt.Key_Insert: "insert",
+            Qt.Key_Home: "home",
+            Qt.Key_End: "end",
+            Qt.Key_PageUp: "pageup",
+            Qt.Key_PageDown: "pagedown",
+            Qt.Key_Up: "up",
+            Qt.Key_Down: "down",
+            Qt.Key_Left: "left",
+            Qt.Key_Right: "right",
+            Qt.Key_Shift: "shift",
+            Qt.Key_Control: "ctrl",
+            Qt.Key_Alt: "alt",
+        }
+
+        key = event.key()
+
+        if key in function_keys:
+            return function_keys[key]
+
+        if key in special_keys:
+            return special_keys[key]
+
+        text = event.text()
+        if text and text.isprintable() and len(text) == 1:
+            return text.lower()
+
+        return None
 
 
 class PushSettingCardInstance(PushSettingCard):

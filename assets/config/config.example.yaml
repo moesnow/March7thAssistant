@@ -243,8 +243,10 @@ scheduled_time: 4:00
 # 游戏刷新时间设置
 refresh_hour: 4 # 设置游戏每日刷新的时间（24小时制）。
 
-# 游戏内秘技按键设置
+# 游戏内按键设置
 hotkey_technique: e # 设置游戏内使用秘技的按键。
+hotkey_map: m # 设置打开地图的按键。
+hotkey_warp: f3 # 设置打开跃迁的按键。
 
 # 是否在多显示器上进行截屏（若开启无法正确运行请关闭）
 all_screens: true

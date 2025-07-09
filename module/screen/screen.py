@@ -8,6 +8,7 @@ from utils.singleton import SingletonMeta
 from utils.logger.logger import Logger
 from typing import Optional
 from module.automation import auto
+from module.config import cfg
 
 
 class Screen(metaclass=SingletonMeta):
@@ -207,8 +208,16 @@ class Screen(metaclass=SingletonMeta):
         """
         for operation_str in operations:
             try:
-                # 使用eval执行字符串表示的函数调用
-                eval(operation_str)
+                # 使用eval执行字符串表示的函数调用，提供配置变量的访问
+                eval(
+                    operation_str,
+                    {
+                        "__builtins__": __builtins__,
+                        "auto": auto,
+                        "time": time,
+                        "cfg": cfg,
+                    },
+                )
                 self.logger.debug("执行了一个操作")
             except Exception as e:
                 self.logger.debug(f"未知的操作: {e}")
