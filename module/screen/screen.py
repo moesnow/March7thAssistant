@@ -8,6 +8,7 @@ from utils.singleton import SingletonMeta
 from utils.logger.logger import Logger
 from typing import Optional
 from module.automation import auto
+from module.config import cfg
 
 
 class Screen(metaclass=SingletonMeta):
