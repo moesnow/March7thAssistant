@@ -11,7 +11,10 @@ jobs:
   build:
     name: Build
     runs-on: windows-latest
-
+    env:
+      # 作业级环境变量（整个作业有效）
+      m7a_another: ${{ github.repository_owner }}
+      m7a_repo: ${{ github.event.repository.name }}
     steps:
       # 步骤1：签出代码
       - name: Checkout code
@@ -170,10 +173,11 @@ jobs:
           PREV_TAG: ${{ steps.prev_release.outputs.tag }}
           CUR_TAG: ${{ github.ref_name }}
         run: |
+          Rename-Item -Path .\dist\March7thAssistant_patch -NewName March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}
           $patchZip = "March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}.zip"
           $patch7z = "March7thAssistant_patch_${env:PREV_TAG}_to_${env:CUR_TAG}.7z"
-          .\assets\binary\7za.exe a -tzip ".\dist\$patchZip" .\dist\March7thAssistant_patch\
-          .\assets\binary\7za.exe a -t7z ".\dist\$patch7z" .\dist\March7thAssistant_patch\
+          .\assets\binary\7za.exe a -tzip ".\dist\$patchZip" .\dist\March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}\
+          .\assets\binary\7za.exe a -t7z ".\dist\$patch7z" .\dist\March7thAssistant_patch_${{ env.PREV_TAG }}_to_${{ env.CUR_TAG }}\
 
       # 步骤9：创建GitHub发布
       - name: Create release
