@@ -3,7 +3,7 @@ from .notifier import Notifier
 
 from .pac import match_proxy, match_proxy_url
 from .notifier import Notifier
-from nio import AsyncClient # 如果想使用代理则必须使用AsyncClient
+from nio.client import AsyncClient  # 如果想使用代理则必须使用AsyncClient
 from nio.responses import RoomSendError, UploadError
 import asyncio
 from PIL import Image

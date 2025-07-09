@@ -699,7 +699,19 @@ class SettingInterface(ScrollArea):
             self.tr('按住以修改'),
             FIF.LEAF,
             self.tr("秘技（只对清体力和逐光捡金场景生效）"),
-            "hotkey_technique"
+            "hotkey_technique",
+        )
+        self.keybindingMapCard = PushSettingCardKey(
+            self.tr('按住以修改'),
+            FIF.GLOBE,
+            self.tr("打开地图"),
+            "hotkey_map",
+        )
+        self.keybindingWarpCard = PushSettingCardKey(
+            self.tr('按住以修改'),
+            FIF.SHARE,
+            self.tr("打开跃迁"),
+            "hotkey_warp",
         )
 
         self.AboutGroup = SettingCardGroup(self.tr('关于'), self.scrollWidget)
@@ -866,6 +878,8 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.allScreensCard)
         self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
         self.MiscGroup.addSettingCard(self.keybindingTechniqueCard)
+        self.MiscGroup.addSettingCard(self.keybindingMapCard)
+        self.MiscGroup.addSettingCard(self.keybindingWarpCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
         self.AboutGroup.addSettingCard(self.qqGroupCard)
