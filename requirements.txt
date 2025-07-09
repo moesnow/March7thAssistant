@@ -3,7 +3,7 @@ pyyaml==6.0.2
 colorama==0.4.6
 packaging==24.2
 pyuac==0.0.3
-pygame==2.6.1
+playsound3==3.2.4
 tqdm==4.67.1
 psutil==6.1.1
 pyautogui==0.9.54
@@ -16,7 +16,6 @@ opencv-python==4.10.0.84
 onepush==1.4.0
 winotify==1.1.0
 markdown==3.7
-cpufeature==0.2.1
 PyQt-Fluent-Widgets==1.7.0
 pylnk3==0.4.2
 pyperclip==1.9.0
@@ -31,3 +30,4 @@ asyncio==3.4.3
 nio==3.4.2
 pandas==2.2.3
 openpyxl==3.1.5
+py-cpuinfo===9.0.0

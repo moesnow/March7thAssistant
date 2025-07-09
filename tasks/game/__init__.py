@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import psutil
-
+from playsound3 import playsound
 
 from app.tools.account_manager import load_acc_and_pwd
 from utils.registry.gameaccount import gamereg_uid
@@ -173,17 +173,8 @@ def stop(detect_loop=False):
     def play_audio():
         log.info("开始播放音频")
         try:
-            os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
-            import pygame.mixer
-
-            # 有用户反馈会报错 “mixer not initialized”
-            # 不清楚为什么，可能是远程桌面的情况下缺少音频设备吗
-            pygame.init()
-            pygame.mixer.music.load("./assets/audio/pa.mp3")
-            pygame.mixer.music.play()
-
-            while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
+            
+            playsound("./assets/audio/pa.mp3")
             log.info("播放音频完成")
         except Exception as e:
             log.warning(f"播放音频时发生错误：{e}")
