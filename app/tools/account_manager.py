@@ -1,6 +1,6 @@
 import base64
 import os
-from utils.registry.gameaccount import gamereg_uid, gamereg_export, gamereg_import
+from utils.registry.gameaccount import gamereg_uid, gamereg_export, gamereg_import, gamereg_delete_all
 from module.logger import log
 
 data_dir = "settings/accounts"
@@ -154,3 +154,9 @@ def xor_decrypt_from_base64(encrypted_base64: str) -> str:
 
     decrypted_str = decrypted_bytes.decode('utf-8')
     return decrypted_str
+
+def clear_reg():
+    """
+    清除注册表中的账户信息
+    """
+    gamereg_delete_all()
