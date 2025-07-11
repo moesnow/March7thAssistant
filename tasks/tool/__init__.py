@@ -44,7 +44,7 @@ class ToolManager:
                      "./assets/images/share/plot/start_ps5.png",
                      "./assets/images/share/plot/start_xbox.png"
                  ],
-                 "./assets/images/share/plot/select.png")
+                 "./assets/images/share/plot/skip.png",)
         root.mainloop()
 
 
