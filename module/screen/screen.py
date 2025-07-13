@@ -3,7 +3,7 @@ import time
 import json
 import threading
 from collections import deque
-from utils.color import green
+from utils.color import green, yellow
 from utils.singleton import SingletonMeta
 from utils.logger.logger import Logger
 from typing import Optional
@@ -67,11 +67,27 @@ class Screen(metaclass=SingletonMeta):
         """
         处理自动重试逻辑，包括按ESC键和处理特定的异常情况。
         """
-        self.logger.warning("未识别出任何界面，请确保游戏画面干净，按ESC后重试")
+        self.logger.warning("未识别出任何界面，请确保游戏画面干净。按ESC后重试")
         auto.press_key("esc")
-        time.sleep(2)  # 等待屏幕变化
+        time.sleep(8)  # 等待屏幕变化
 
         auto.take_screenshot()
+        # 激进的处理方法！——点击确认
+        if auto.find_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到确认按钮，点击确认")
+            auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
+            time.sleep(20)
+        if auto.find_element("./assets/images/zh_CN/base/later.jpg", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到剧情提示，点击稍后")
+            auto.click_element("./assets/images/zh_CN/base/later.jpg", "image", 0.9, take_screenshot=False)
+            time.sleep(2)
+        if auto.find_element("./assets/images/zh_CN/base/tping.jpg", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到正在传送或加载")
+            time.sleep(30)
+        if auto.find_element("./assets/images/zh_CN/base/veryblack.jpg", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到小黑屏幕")
+            time.sleep(10)
+        '''
         # 处理与服务器断开连接的异常情况
         if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
@@ -81,8 +97,9 @@ class Screen(metaclass=SingletonMeta):
         if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
             time.sleep(20)
+        '''
 
-    def get_current_screen(self, autotry=True, max_retries=10):
+    def get_current_screen(self, autotry=True, max_retries=30):
         """
         通过多次尝试来识别并获取当前界面。
         :param autotry: 如果自动重试启用，则在未识别到界面时尝试按ESC键。
@@ -213,7 +230,7 @@ class Screen(metaclass=SingletonMeta):
             except Exception as e:
                 self.logger.debug(f"未知的操作: {e}")
 
-    def wait_for_screen_change(self, next_screen, max_recursion=2):
+    def wait_for_screen_change(self, next_screen):
         """
         等待界面切换，如果未成功则根据重试次数决定是否重试
         """
@@ -223,14 +240,16 @@ class Screen(metaclass=SingletonMeta):
                 self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
                 time.sleep(self.wait_screen_change_time)
                 break
-            time.sleep(0.5)
+            time.sleep(1)
         else:
             self.wait_screen_change_time = 1
-            if max_recursion > 0:
+            self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，准备重试")
+            return
+            '''if max_recursion > 0:
                 self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，准备重试")
                 self.change_to(next_screen, max_recursion=max_recursion - 1)
             else:
-                self.log_and_raise(f"无法切换到 {self.get_name(next_screen)}", "无法切换到指定游戏界面")
+                self.log_and_raise(f"无法切换到 {self.get_name(next_screen)}", "无法切换到指定游戏界面")'''
 
     def _switch_screen(self, current_screen, next_screen, max_recursion):
         """
@@ -244,11 +263,17 @@ class Screen(metaclass=SingletonMeta):
         """
         沿着找到的路径导航，执行切换操作
         """
-        count = len(path) - 1
-        if count:
-            self.logger.info(f"当前界面：{green(self.get_name(self.current_screen))}")
-            for i in range(count):
-                self._switch_screen(path[i], path[i + 1], max_recursion)
+        self.logger.info(f"当前界面：{green(self.get_name(self.current_screen))}")
+        while self.current_screen != path[-1]:
+            if self.current_screen not in path:
+                self.logger.warning(f"当前界面 {yellow(self.get_name(self.current_screen))} 不在预期的换路径切中，尝试重新切换到目标界面 {green(self.get_name(path[-1]))}")
+                if max_recursion > 0:
+                    self.change_to(path[-1], max_recursion=max_recursion - 1)
+                    return
+                else:
+                    self.log_and_raise(f"无法切换到 {self.get_name(self.get_name(path[-1]))}", "无法切换到指定游戏界面")
+            i = path.index(self.current_screen)
+            self._switch_screen(path[i], path[i + 1], max_recursion)
 
     def change_to(self, target_screen, max_recursion=2):
         """
