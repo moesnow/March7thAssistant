@@ -3,6 +3,7 @@ from module.screen import screen
 from module.automation import auto
 from module.ocr import ocr
 from module.config import cfg
+from utils.color import red
 from .checkInactivity import CheckInActivity
 from .gardenofplenty import GardenOfPlenty
 from .realmofthestrange import RealmOfTheStrange
@@ -73,6 +74,8 @@ def start():
     if not cfg.activity_enable:
         log.info("活动未开启")
         return
-
-    activity_manager = ActivityManager()
-    activity_manager.check_and_run_activities()
+    try:
+        activity_manager = ActivityManager()
+        activity_manager.check_and_run_activities()
+    except Exception as e:
+        log.error(f"活动处理过程中发生错误: {red(e)}")
