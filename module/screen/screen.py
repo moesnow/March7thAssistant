@@ -257,7 +257,7 @@ class Screen(metaclass=SingletonMeta):
         """
         operations = self.get_operations(current_screen, next_screen)
         self.perform_operations(operations)
-        self.wait_for_screen_change(next_screen, max_recursion)
+        self.wait_for_screen_change(next_screen)
 
     def _navigate_through_path(self, path, max_recursion):
         """
