@@ -10,7 +10,8 @@ class DoubleActivity(ActivityTemplate):
         for box in auto.ocr_result:
             text = box[1][0]
             if "/" in text:
-                return int(text.split("/")[0])
+                if text.split("/")[0].isdigit():
+                    return int(text.split("/")[0])
         return 0
 
     @abstractmethod
