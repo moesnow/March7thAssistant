@@ -2,15 +2,24 @@ from module.screen import screen
 from module.automation import auto
 from module.logger import log
 from module.config import cfg
+from module.ocr import ocr
 from tasks.power.instance import Instance, CalyxInstance
 from tasks.weekly.universe import Universe
 import time
-
+import json
 
 class Power:
     @staticmethod
     def run():
+        """
+        主入口，自动根据配置选择体力消耗方式（饰品提取、拟造花萼或常规副本）。
+        """
         Power.preprocess()
+
+        #
+        #添加对配置文件的分析，若有必要，扫描培养计划并制定临时计划
+        #
+        #Power.getplan()
 
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names[cfg.instance_type]
@@ -34,12 +43,18 @@ class Power:
 
     @staticmethod
     def preprocess():
+        """
+        预处理操作，优先合成沉浸器（如配置开启）。
+        """
         # 优先合成沉浸器
         if cfg.merge_immersifier:
             Power.merge("immersifier")
 
     @staticmethod
     def process_ornament(instance_type, instance_name, power):
+        """
+        处理饰品提取副本的体力消耗流程，包括检测存档和沉浸器数量。
+        """
         full_runs = power // 40
 
         screen.change_to('guide3')
@@ -81,6 +96,9 @@ class Power:
 
     @staticmethod
     def process_calyx(instance_type, instance_name, max_calyx_per_round_num_of_attempts):
+        """
+        处理拟造花萼副本的体力消耗流程，自动分批消耗体力。
+        """
         # 处理拟造花萼的体力消耗
         instance_power_min = 10
         if (max_calyx_per_round_num_of_attempts >= 1 and max_calyx_per_round_num_of_attempts <= 6):
@@ -109,6 +127,9 @@ class Power:
 
     @staticmethod
     def process_standard(instance_type, instance_name, power):
+        """
+        处理常规副本（如凝滞虚影、侵蚀隧洞、历战余响）的体力消耗流程。
+        """
         instance_powers = {
             "凝滞虚影": 30,
             "侵蚀隧洞": 40,
@@ -124,6 +145,9 @@ class Power:
 
     # @staticmethod
     # def customize_run(instance_type, instance_name, power_need, runs):
+    #     """
+    #     自定义副本运行流程（已注释）。
+    #     """
     #     if not Instance.validate_instance(instance_type, instance_name):
     #         return False
 
@@ -141,6 +165,9 @@ class Power:
 
     @staticmethod
     def get():
+        """
+        获取当前开拓力值，并根据配置自动补充体力（后备开拓力或燃料）。
+        """
         def get_power(crop, type="trailblaze_power"):
             try:
                 if type == "trailblaze_power":
@@ -205,6 +232,9 @@ class Power:
 
     @staticmethod
     def merge(type, cnt=0):
+        """
+        合成沉浸器，自动判断数量与体力是否足够。
+        """
         if type == "immersifier":
             log.hr("准备合成沉浸器", 2)
             screen.change_to("menu")
@@ -249,3 +279,130 @@ class Power:
                 if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                     time.sleep(1)
                     auto.press_key("esc")
+    def wait_until(condition, timeout, period=1):
+        """等待直到条件满足或超时"""
+        end_time = time.time() + timeout
+        while time.time() < end_time:
+            if condition():
+                return True
+            time.sleep(period)
+        return False
+
+    def _get_instance_names():
+        if not Power.wait_until(lambda: not auto.find_element("培养目标", "text", max_retries=1, crop=(280 / 1920, 280 / 1080, 460 / 1920, 360 / 1080)), 10):
+            log.error("未找到材料详细界面")
+            return None, None
+        auto.mouse_move(960, 540)
+        auto.mouse_scroll(12, -1)
+        # 等待界面完全停止
+        time.sleep(1)
+        screenshot, _, _ = auto.take_screenshot()
+        result = ocr.recognize_multi_lines(screenshot)
+        if not result:
+            auto.click_element_with_pos(coordinates=((1800, 580), (1800, 580)))
+            time.sleep(1)
+            return None, None
+        with open("./assets/config/instance_names.json", 'r', encoding='utf-8') as file:
+            template = json.load(file)
+        '''if instance_name in template[instance_type]:
+            instance_name = template[instance_type][instance_name]'''
+        #遍历template的instance_name中每个元素以及instance_name本身，检查是否被包含在result中。template格式为[instance_type][instance_name]，若是则返回instance_type和instance_name，否则持续循环
+        for instance_type in template:
+            for instance_name in template[instance_type]:
+                if instance_name != '无' and (any(instance_name in box[1][0] for box in result) or any(template[instance_type][instance_name] in box[1][0] for box in result)):
+                    log.debug(f"找到实例: {instance_type} - {instance_name}")
+                    auto.click_element_with_pos(coordinates=((1800, 580), (1800, 580)))
+                    time.sleep(1)
+                    return instance_type, instance_name
+            if any(instance_type in box[1][0] for box in result):
+                log.debug(f"找到实例: {instance_type} - 无")
+                if auto.click_element(instance_type, "text", max_retries=10, include=True):
+                    Power.wait_until(lambda: auto.find_element("介绍", "text", max_retries=1), 30)
+                    screenshot, _, _ = auto.take_screenshot()
+                    result = ocr.recognize_multi_lines(screenshot)
+                    for instance_name in template[instance_type]:
+                        if instance_name != '无' and (any(instance_name in box[1][0] for box in result) or any(template[instance_type][instance_name] in box[1][0] for box in result)):
+                            log.debug(f"找到实例: {instance_type} - {instance_name}")
+                            auto.press_key('esc')
+                            time.sleep(1)
+                            auto.click_element_with_pos(coordinates=((1800, 580), (1800, 580)))
+                            time.sleep(1)
+                            return instance_type, instance_name
+                else:
+                    log.warning(f"未找到 {instance_type} 对应资源")
+
+        
+
+        else:
+            log.warning("未找到实例")
+            auto.click_element_with_pos(coordinates=((1800, 580), (1800, 580)))
+            time.sleep(1)
+        return None, None
+        #return [box[1][0] for box in result if len(box[1][0]) >= 4]
+    
+    
+    def get_all_transfer_positions(crop=(0, 0, 1, 1)):
+        """
+        截图并获取所有“传送”文本的坐标。
+        返回: [(top_left, bottom_right), ...]
+        """
+        auto.take_screenshot(crop)
+        auto.perform_ocr()
+        positions = []
+        for box, (text, confidence) in auto.ocr_result:
+            if "进入" in text:
+                (left, top), (right, bottom) = auto.calculate_text_position(box, relative=False)
+                
+                positions.append(((left-790, top), (right-790, bottom)))
+        log.debug(f"找到 {len(positions)} 个材料位置: {positions}")
+        return positions
+        #找到 3 个传送位置: [((1532, 444), (1582, 476)), ((1532, 579), (1582, 611)), ((1532, 714), (1582, 746))]
+        crop=(726.0 / 1920, 419.0 / 1080, 84.0 / 1920, 86.0 / 1080)#1532 - 742 = 790
+    @staticmethod
+    def getplan():
+        log.hr("正在动态分配任务")
+        
+        screen.change_to("guide3")
+        if not auto.click_element("培养目标", "text", max_retries=10, crop=(280 / 1920, 280 / 1080, 460 / 1920, 360 / 1080)):
+            log.error("找不到培养目标")
+            return
+                
+        
+
+        time.sleep(2)
+        all_ned = []
+        log.info("存在培养目标")
+        positions = Power.get_all_transfer_positions()
+        #print(cfg.instance_type, cfg.instance_names)
+        for i in positions:
+            #如果元素的坐标为((100, 200), (150, 250))，偏移量为(10, -5)，则返回(125, 245)
+            #auto.click_element_with_pos(coordinates=((760 / 1920, i / 1080), (760 / 1920, i / 1080)))
+            auto.click_element_with_pos(coordinates=i)
+            time.sleep(2.5)
+            instance_type, instance_name = Power._get_instance_names()
+            if instance_type and instance_name:
+                log.info(f"开始覆盖配置 {instance_type} 为 {instance_name}")
+                #cfg.instance_type = instance_type
+                
+                #cfg.instance_names[cfg.instance_type] = instance_name
+                cfg.config['instance_names'][instance_type] = instance_name
+                #print('\n',cfg.instance_names[cfg.instance_type])
+                #print(cfg.instance_type, cfg.instance_names,'\n')
+                if(instance_type != '历战余响'):
+                    all_ned.append(instance_type)
+                
+                #print(cfg.config)
+        log.info(f"开始覆盖配置 饰品提取 为 饰品提取")
+        cfg.config['instance_names']['饰品提取'] = '饰品提取'
+        if all_ned != []:
+                    all_ned.append('饰品提取')
+                    cfg.instance_type = all_ned[0]
+                    if cfg.instance_type == '侵蚀隧洞' and cfg.plan_face_mode == '饰品提取':
+                        cfg.instance_type = '饰品提取'
+                    log.debug(f"已在{all_ned}中设置实例类型: {cfg.instance_type}")
+        #print(cfg.instance_type, cfg.instance_names)
+        
+        log.hr("完成", 2)
+        
+            
+            
