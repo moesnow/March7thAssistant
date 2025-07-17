@@ -9,7 +9,7 @@ from qfluentwidgets import FluentIcon as FIF
 from PyQt5.QtGui import QPalette
 from module.config import cfg
 from app.tools.account_manager import accounts, reload_all_account_from_files, dump_current_account, delete_account, \
-    save_account_name, import_account, save_acc_and_pwd
+    save_account_name, import_account, save_acc_and_pwd, clear_reg
 from module.logger import log
 
 
@@ -38,12 +38,14 @@ class AccountsCard(QFrame):
         self.renameAccountButton = QPushButton("账户更名", self)
         self.autologinAccountButton = QPushButton("自动登录", self)
         self.refreshAccountButton = QPushButton("刷新", self)
+        self.clearRegButton = QPushButton("清除注册表", self)
         self.buttons.addWidget(self.addAccountButton)
         self.buttons.addWidget(self.importAccountButton)
         self.buttons.addWidget(self.deleteAccountButton)
         self.buttons.addWidget(self.renameAccountButton)
         self.buttons.addWidget(self.autologinAccountButton)
         self.buttons.addWidget(self.refreshAccountButton)
+        self.buttons.addWidget(self.clearRegButton)
         _self = self
 
         def load_accounts():
@@ -148,12 +150,21 @@ class AccountsCard(QFrame):
                 account_id = item.data(Qt.UserRole)
                 import_account(account_id)
                 QMessageBox.information(None, "导入", "账户导入成功")
+
+        def clearRegButtonAction(self):
+            if QMessageBox.question(None, "清除注册表", "确定要清除注册表中的账户信息吗？", QMessageBox.Yes | QMessageBox.No) == QMessageBox.No:
+                return
+            clear_reg()
+            QMessageBox.information(None, "清除注册表", "注册表中的账户信息已清除")
+            
+        
         self.addAccountButton.clicked.connect(addAccountButtonAction)
         self.importAccountButton.clicked.connect(importAccountButtonAction)
         self.refreshAccountButton.clicked.connect(refreshAccountButtonAction)
         self.renameAccountButton.clicked.connect(renameAccountButtonAction)
         self.autologinAccountButton.clicked.connect(autologinAccountButtonAction)
         self.deleteAccountButton.clicked.connect(deleteAccountButtonAction)
+        self.clearRegButton.clicked.connect(clearRegButtonAction)
         #
         self.mLayout = QGridLayout()
         self.mLayout.addLayout(self.wLayout, 0, 0, 1, 1)

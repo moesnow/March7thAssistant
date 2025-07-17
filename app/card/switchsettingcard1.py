@@ -300,3 +300,20 @@ class SwitchSettingCardEchoofwar(SettingCard):
 
     def _onCurrentIndexChanged(self, index: int):
         cfg.set_value("echo_of_war_start_day_of_week", self.comboBox.itemData(index))
+
+
+class SwitchSettingCardHotkey(SettingCard):
+    """ Setting card with configure button for hotkey settings """
+
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
+        super().__init__(icon, title, content, parent)
+
+        self.button = QPushButton("配置", self)
+        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+        self.button.clicked.connect(self._onClicked)
+
+    def _onClicked(self):
+        from app.sub_interfaces.hotkey_interface import HotkeyInterface
+        hotkey_interface = HotkeyInterface(self.window())
+        hotkey_interface.exec()

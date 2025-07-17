@@ -22,6 +22,8 @@ class WarpExport:
         self.gacha_type = {
             "11": "角色活动跃迁",
             "12": "光锥活动跃迁",
+            "21": "角色联动跃迁",
+            "22": "光锥联动跃迁",
             "1": "常驻跃迁",
             "2": "新手跃迁",
         }
@@ -202,7 +204,10 @@ class WarpExport:
                 self.parent.stateTooltip.setTitle(title)
 
     def get_gacha_log(self, api_domain, gacha_type, updated_query, page, size, end_id, max_retry=5):
-        url = f'{api_domain}/common/gacha_record/api/getGachaLog?{updated_query}&gacha_type={gacha_type}&page={page}&size={size}&end_id={end_id}'
+        gacha_url_path = "getGachaLog"
+        if gacha_type == "21" or gacha_type == "22":
+            gacha_url_path = "getLdGachaLog"
+        url = f'{api_domain}/common/gacha_record/api/{gacha_url_path}?{updated_query}&gacha_type={gacha_type}&page={page}&size={size}&end_id={end_id}'
         if not hasattr(self, 'warplink'):
             self.warplink = url
         for i in range(max_retry):

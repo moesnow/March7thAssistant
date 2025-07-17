@@ -51,3 +51,15 @@ def gamereg_export(path: str) -> None:
 def gamereg_import(path: str) -> None:
     subcommand = f"reg import {path}"
     result = os.system(subcommand)
+
+def gamereg_delete_all() -> None:
+    """
+    删除注册表中的所有账户信息
+    """
+    if full_reg_path is None:
+        return
+    subcommand = f"reg delete \"{full_reg_path}\" /f"
+    result = os.system(subcommand)
+    if result != 0:
+        raise Exception(f"Failed to delete registry key: {full_reg_path}. Error code: {result}")
+

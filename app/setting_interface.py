@@ -8,7 +8,7 @@ from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
@@ -695,11 +695,10 @@ class SettingInterface(ScrollArea):
             self.tr('在用户登录时启动'),
             "用于开机后自动执行完整运行模式"
         )
-        self.keybindingTechniqueCard = PushSettingCardKey(
-            self.tr('按住以修改'),
-            FIF.LEAF,
-            self.tr("秘技（只对清体力和逐光捡金场景生效）"),
-            "hotkey_technique"
+        self.hotkeyCard = SwitchSettingCardHotkey(
+            FIF.SETTING,
+            self.tr('修改按键'),
+            "配置秘技、地图、跃迁等按键设置"
         )
 
         self.AboutGroup = SettingCardGroup(self.tr('关于'), self.scrollWidget)
@@ -866,7 +865,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
         self.MiscGroup.addSettingCard(self.allScreensCard)
         self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
-        self.MiscGroup.addSettingCard(self.keybindingTechniqueCard)
+        self.MiscGroup.addSettingCard(self.hotkeyCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
         self.AboutGroup.addSettingCard(self.qqGroupCard)
@@ -980,3 +979,9 @@ class SettingInterface(ScrollArea):
             return
         cfg.set_value("script_path", script_path)
         self.ScriptPathCard.setContent(script_path)
+        widget = self.stackedWidget.widget(index)
+        self.pivot.setCurrentItem(widget.objectName())
+
+        self.verticalScrollBar().setValue(0)
+        self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
+
