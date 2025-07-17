@@ -6,7 +6,7 @@ from .activitytemplate import ActivityTemplate
 
 class DoubleActivity(ActivityTemplate):
     def _get_reward_count(self):
-        auto.find_element("奖励剩余次数", "text", max_retries=10, include=True)
+        auto.find_element("奖励剩余次数", "text", max_retries=10, crop=(960.0 / 1920, 125.0 / 1080, 940.0 / 1920, 846.0 / 1080), include=True)
         for box in auto.ocr_result:
             text = box[1][0]
             if "/" in text:
