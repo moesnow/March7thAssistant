@@ -228,12 +228,10 @@
         "image_path": "./assets/images/screen/universe/leave_temporarily.png",
         "actions": [
             {
-                "target_screen": "universe_report",
+                "target_screen": "main",
                 "actions_list": [
                     "auto.click_element('./assets/images/screen/universe/leave_temporarily.png', 'image', 0.9)",
-                    "time.sleep(1)",
-                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)",
-                    "time.sleep(4)"
+                    "time.sleep(1)"
                 ]
             }
         ]
