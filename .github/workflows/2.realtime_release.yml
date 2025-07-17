@@ -62,7 +62,12 @@ jobs:
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_${{ github.run_number }}
           .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_${{ github.run_number }}.7z .\dist\March7thAssistant_${{ github.run_number }}\
 
-      # 步骤7：上传压缩包
+      # 步骤7：测试下载第三方库
+      - name: Move 3rdparty to dist directory
+        run: |
+          python build.py github-actions
+
+      # 步骤8：上传压缩包
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
