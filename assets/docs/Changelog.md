@@ -1,5 +1,15 @@
 # 更新日志
 
+## v2025.7.17
+
+- 支持 Fate 联动角色 [#640](https://github.com/moesnow/March7thAssistant/pull/640)
+- 抽卡记录支持联动跃迁
+- 新增支持地图和跃迁的按键修改 [#635](https://github.com/moesnow/March7thAssistant/pull/635)
+- “自动对话” 支持 “自动跳过对话” [#639](https://github.com/moesnow/March7thAssistant/pull/639)
+- 多账号管理功能支持清除注册表 [#636](https://github.com/moesnow/March7thAssistant/pull/636)
+- 修复位面分裂活动导致的错误 [#643](https://github.com/moesnow/March7thAssistant/pull/643)
+- 修复退出模拟宇宙导致的错误
+
 ## v2025.7.8
 
 - 支持 3.4 版本新增关卡和角色 [#616](https://github.com/moesnow/March7thAssistant/pull/616)
