@@ -17,9 +17,9 @@
 
 找到名称类似 `March7thAssistant_full.zip(7z)` 的文件，点击下载。
 
-> March7thAssistant 接入了第三方服务 [Mirror酱](https://mirrorchyan.com/)（一个给开源社区做有偿内容分发的平台）。
+> March7thAssistant 接入了第三方服务 [Mirror酱](https://mirrorchyan.com/?source=m7a-faq)（一个给开源社区做有偿内容分发的平台）。
 >
-> 如果中国大陆下载缓慢可以尝试 [点我前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable)
+> 如果中国大陆下载缓慢可以尝试 [点我前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable&source=m7a-faq)
 
 ## 解压
 
