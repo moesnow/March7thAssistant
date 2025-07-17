@@ -74,6 +74,8 @@ class Universe:
                         sys.exit(0)
                     update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe")
                     update_handler.run()
+                else:
+                    log.error(f"获取更新信息失败：{response.status_code}")
         elif cfg.universe_operation_mode == "source":
             cfg.set_value("universe_requirements", False)
             url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/refs/heads/main.zip")
