@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2025.7.18
+## v2025.7.19
 
 - 支持 Fate 联动角色 [#640](https://github.com/moesnow/March7thAssistant/pull/640)
 - 抽卡记录支持联动跃迁
