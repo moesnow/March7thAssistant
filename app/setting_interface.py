@@ -712,7 +712,7 @@ class SettingInterface(ScrollArea):
             self.tr('加入群聊'),
             FIF.EXPRESSIVE_INPUT_ENTRY,
             self.tr('QQ群'),
-            "855392201"
+            ""
         )
         self.feedbackCard = PrimaryPushSettingCard(
             self.tr('提供反馈'),
@@ -914,7 +914,7 @@ class SettingInterface(ScrollArea):
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
-        self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/9gFqUrUGVq"))
+        self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/LpfAkDPlWa"))
         self.feedbackCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant/issues"))
 
         self.aboutCard.clicked.connect(lambda: checkUpdate(self.parent))
@@ -983,4 +983,3 @@ class SettingInterface(ScrollArea):
 
         self.verticalScrollBar().setValue(0)
         self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
-
