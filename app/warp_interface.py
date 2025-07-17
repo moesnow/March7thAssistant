@@ -170,8 +170,10 @@ class WarpInterface(ScrollArea):
             gacha_map = {
                 "11": "角色活动跃迁",
                 "12": "光锥活动跃迁",
+                "21": "角色联动跃迁",
+                "22": "光锥联动跃迁",
                 "1": "常驻跃迁",
-                "2": "新手跃迁"
+                "2": "新手跃迁",
             }
             df["gacha_type"] = df["gacha_type"].map(gacha_map).fillna("未知")
             df.rename(columns={
