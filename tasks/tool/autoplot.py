@@ -1,11 +1,10 @@
 from module.automation import auto
 import pygetwindow as gw
-import time
 import tkinter as tk
 
 
 class AutoPlot:
-    def __init__(self, root, game_title_name: str, start_img: list, skip_img: str):
+    def __init__(self, root, game_title_name: str, start_img: list, select_img: str, skip_img: str):
         """初始化 AutoPlot 类的实例。
 
         参数:
@@ -13,6 +12,7 @@ class AutoPlot:
         """
         self.game_title_name = game_title_name
         self.start_img = start_img
+        self.select_img = select_img
         self.skip_img = skip_img
         self.setup_root(root)
         self.check_game_status()
@@ -78,8 +78,9 @@ class AutoPlot:
                 if auto.find_element(img, "image", 0.9, take_screenshot=False):
                     self.start_clicking()
                     if auto.click_element(self.skip_img, "image", 0.8, crop=(1563.0 / 1920, 45.0 / 1080, 33.0 / 1920, 28.0 / 1080)):
-                        time.sleep(1.2)
-                        auto.click_element("确认", "text", 0.9, max_retries=5, crop=(1121.0 / 1920, 745.0 / 1080, 93.0 / 1920, 33.0 / 1080))
+                        auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10)
+                    else:
+                        auto.click_element(self.select_img, "image", 0.9, crop=(1290.0 / 1920, 442.0 / 1080, 74.0 / 1920, 400.0 / 1080))
                     self.root.after(500, self.check_game_status)
                     return
 

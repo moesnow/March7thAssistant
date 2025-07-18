@@ -18,7 +18,7 @@
 - 自动切换视角
 - 错误时推送截图
 
-## v2025.7.19
+## v2025.7.20
 
 - 支持 Fate 联动角色 [#640](https://github.com/moesnow/March7thAssistant/pull/640)
 - 抽卡记录支持联动跃迁
@@ -27,6 +27,7 @@
 - 多账号管理功能支持清除注册表 [#636](https://github.com/moesnow/March7thAssistant/pull/636)
 - 修复位面分裂活动导致的错误 [#643](https://github.com/moesnow/March7thAssistant/pull/643)
 - 修复退出模拟宇宙导致的错误
+- 修复自动对话不支持选项
 
 ## v2025.7.8
 
