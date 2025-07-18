@@ -34,6 +34,8 @@ class Fight:
                     sys.exit(0)
                 update_handler = UpdateHandler(url, cfg.fight_path, "Fhoe-Rail", os.path.join(cfg.fight_path, "map"))
                 update_handler.run()
+            else:
+                log.error(f"获取更新信息失败：{response.status_code}")
         elif cfg.fight_operation_mode == "source":
             cfg.set_value("fight_requirements", False)
             url = FastestMirror.get_github_mirror(
@@ -88,7 +90,7 @@ class Fight:
             # 切换队伍
             if cfg.fight_team_enable:
                 Team.change_to(cfg.fight_team_number)
-            
+
             fhoe_config.auto_config()
             log.info("开始锄大地")
             screen.change_to('main')

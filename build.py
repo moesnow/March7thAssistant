@@ -6,5 +6,5 @@ from tasks.daily.fight import Fight
 if __name__ == "__main__":
     ocr_installer = OCRInstaller(log)
     ocr_installer.check_and_install()
-    Universe.check_path()
-    Fight.check_path()
+    Universe.update()
+    Fight.update()

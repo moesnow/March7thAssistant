@@ -198,6 +198,7 @@ class Instance:
 
                     # 靠近怪物
                     auto.press_key("w", 3)
+                    auto.press_key("e")#有总比没有强
                     for _ in range(3):
                         auto.press_mouse()
                         time.sleep(1)

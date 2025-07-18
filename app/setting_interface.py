@@ -8,7 +8,7 @@ from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardPlan, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
@@ -75,6 +75,13 @@ class SettingInterface(ScrollArea):
 
     def __initCard(self):
         self.PowerGroup = SettingCardGroup(self.tr("体力设置"), self.scrollWidget)
+        self.FaceModeCard = SwitchSettingCardPlan(
+            FIF.QUICK_NOTE,
+            self.tr('优先参考培养计划'),
+            self.tr('在游戏中设置培养计划，按照对应计划规划副本。可指定获取足够常规材料后优先遗器类型'),
+            "use_plan",
+            "plan_face_mode"
+        )
         self.instanceTypeCard = ComboBoxSettingCard1(
             "instance_type",
             FIF.ALIGNMENT,
@@ -132,13 +139,13 @@ class SettingInterface(ScrollArea):
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
             FIF.HEART,
             self.tr('使用后备开拓力'),
-            "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
+            "不要和培养计划一起使用！单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
             "use_reserved_trailblaze_power"
         )
         self.useFuelEnableCard = SwitchSettingCard1(
             FIF.CAFE,
             self.tr('使用燃料'),
-            "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
+            "不要和培养计划一起使用！单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
             "use_fuel"
         )
         self.echoofwarEnableCard = SwitchSettingCardEchoofwar(
@@ -712,7 +719,7 @@ class SettingInterface(ScrollArea):
             self.tr('加入群聊'),
             FIF.EXPRESSIVE_INPUT_ENTRY,
             self.tr('QQ群'),
-            "855392201"
+            ""
         )
         self.feedbackCard = PrimaryPushSettingCard(
             self.tr('提供反馈'),
@@ -762,6 +769,7 @@ class SettingInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignTop)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
+        self.PowerGroup.addSettingCard(self.FaceModeCard)
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         # self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
@@ -915,7 +923,7 @@ class SettingInterface(ScrollArea):
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
-        self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/9gFqUrUGVq"))
+        self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/LpfAkDPlWa"))
         self.feedbackCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant/issues"))
 
         self.aboutCard.clicked.connect(lambda: checkUpdate(self.parent))
@@ -984,4 +992,3 @@ class SettingInterface(ScrollArea):
 
         self.verticalScrollBar().setValue(0)
         self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
-

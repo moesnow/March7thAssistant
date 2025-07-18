@@ -34,6 +34,8 @@ game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
 script_path: C:\Path\to\your\Script.bat
 # 副本设置
+use_plan: false # 是否使用计划模式。true 开启，false 关闭。
+plan_face_mode: 侵蚀隧洞 # 饰品提取模式，true 开启，false 关闭，关闭后为侵蚀隧洞模式。
 instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造花萼（金）、拟造花萼（赤）、凝滞虚影、侵蚀隧洞、饰品提取。
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
 instance_names:

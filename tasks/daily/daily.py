@@ -19,6 +19,8 @@ import datetime
 class Daily:
     @staticmethod
     def start():
+        if cfg.use_plan:
+            Power.getplan()
         activity.start()
         if cfg.daily_enable:
             Daily.run()

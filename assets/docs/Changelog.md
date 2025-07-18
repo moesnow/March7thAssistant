@@ -18,7 +18,7 @@
 - 自动切换视角
 - 错误时推送截图
 
-## v2025.7.17
+## v2025.7.19
 
 - 支持 Fate 联动角色 [#640](https://github.com/moesnow/March7thAssistant/pull/640)
 - 抽卡记录支持联动跃迁
