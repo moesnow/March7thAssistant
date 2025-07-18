@@ -3,9 +3,9 @@ from module.logger import log
 from module.ocr.ocr import OCR
 from utils.logger.logger import Logger
 from typing import Optional
-import cpuinfo
+import cpufeature
 import json
-import multiprocessing
+
 
 class OCRInstaller:
     """
@@ -17,13 +17,10 @@ class OCRInstaller:
         self.ocr_name, self.ocr_path = self._determine_ocr()
 
     def _cpu_support_avx(self):
-        #return True
-        multiprocessing.freeze_support()
-        cpu_info = cpuinfo.get_cpu_info()
-        cpu_flags = cpu_info.get('flags', [])
-        avx128_support = 'avx' in cpu_flags
-        return avx128_support
-
+        """
+        判断 CPU 是否支持 AVX 指令集。
+        """
+        return cpufeature.CPUFeature["AVX"]
 
     def _determine_ocr(self):
         """

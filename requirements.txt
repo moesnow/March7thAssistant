@@ -31,3 +31,4 @@ nio==3.4.2
 pandas==2.2.3
 openpyxl==3.1.5
 py-cpuinfo===9.0.0
+cpufeature==0.2.1
