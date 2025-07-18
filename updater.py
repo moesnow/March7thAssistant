@@ -14,6 +14,7 @@ from urllib.error import URLError
 from utils.color import red, green
 from utils.logger.logger import Logger
 from time import sleep
+import multiprocessing
 
 
 class Updater:
@@ -417,4 +418,5 @@ def check_temp_dir_and_run():
 
 
 if __name__ == '__main__':
+    multiprocessing.freeze_support()
     check_temp_dir_and_run()

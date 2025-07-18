@@ -17,7 +17,7 @@ class OCRInstaller:
         self.ocr_name, self.ocr_path = self._determine_ocr()
 
     def _cpu_support_avx(self):
-        return True
+        #return True
         cpu_info = cpuinfo.get_cpu_info()
         cpu_flags = cpu_info.get('flags', [])
         avx128_support = 'avx' in cpu_flags
