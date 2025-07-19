@@ -3,7 +3,7 @@ import time
 import json
 import threading
 from collections import deque
-from utils.color import green, yellow
+from utils.color import green
 from utils.singleton import SingletonMeta
 from utils.logger.logger import Logger
 from typing import Optional
@@ -239,7 +239,7 @@ class Screen(metaclass=SingletonMeta):
             except Exception as e:
                 self.logger.debug(f"未知的操作: {e}")
 
-    def wait_for_screen_change(self, next_screen):
+    def wait_for_screen_change(self, next_screen, max_recursion=2):
         """
         等待界面切换，如果未成功则根据重试次数决定是否重试
         """
@@ -252,13 +252,11 @@ class Screen(metaclass=SingletonMeta):
             time.sleep(1)
         else:
             self.wait_screen_change_time = 1
-            self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，准备重试")
-            return
-            '''if max_recursion > 0:
+            if max_recursion > 0:
                 self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，准备重试")
                 self.change_to(next_screen, max_recursion=max_recursion - 1)
             else:
-                self.log_and_raise(f"无法切换到 {self.get_name(next_screen)}", "无法切换到指定游戏界面")'''
+                self.log_and_raise(f"无法切换到 {self.get_name(next_screen)}", "无法切换到指定游戏界面")
 
     def _switch_screen(self, current_screen, next_screen, max_recursion):
         """
@@ -266,23 +264,17 @@ class Screen(metaclass=SingletonMeta):
         """
         operations = self.get_operations(current_screen, next_screen)
         self.perform_operations(operations)
-        self.wait_for_screen_change(next_screen)
+        self.wait_for_screen_change(next_screen, max_recursion)
 
     def _navigate_through_path(self, path, max_recursion):
         """
         沿着找到的路径导航，执行切换操作
         """
-        self.logger.info(f"当前界面：{green(self.get_name(self.current_screen))}")
-        while self.current_screen != path[-1]:
-            if self.current_screen not in path:
-                self.logger.warning(f"当前界面 {yellow(self.get_name(self.current_screen))} 不在预期的换路径切中，尝试重新切换到目标界面 {green(self.get_name(path[-1]))}")
-                if max_recursion > 0:
-                    self.change_to(path[-1], max_recursion=max_recursion - 1)
-                    return
-                else:
-                    self.log_and_raise(f"无法切换到 {self.get_name(self.get_name(path[-1]))}", "无法切换到指定游戏界面")
-            i = path.index(self.current_screen)
-            self._switch_screen(path[i], path[i + 1], max_recursion)
+        count = len(path) - 1
+        if count:
+            self.logger.info(f"当前界面：{green(self.get_name(self.current_screen))}")
+            for i in range(count):
+                self._switch_screen(path[i], path[i + 1], max_recursion)
 
     def change_to(self, target_screen, max_recursion=2):
         """
