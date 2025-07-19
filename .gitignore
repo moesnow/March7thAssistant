@@ -196,3 +196,4 @@ smtp_temp.bin
 
 # QFluentWidgets Config
 /config/config.json
+getpost.py

@@ -1,4 +1,22 @@
 # 更新日志
+## 2025.6.13
+- Github Proxy支持(肯定没有付费的Mirror酱稳定)
+
+## v2025.6.9
+
+- 支持 3.3 版本新增关卡和角色 [#580](https://github.com/moesnow/March7thAssistant/pull/580)
+- 支持将抽卡记录导出为 Excel 文件 [#574](https://github.com/moesnow/March7thAssistant/pull/574)
+- 支持在配置文件中修改每次拟造花萼使用多少体力 [#545](https://github.com/moesnow/March7thAssistant/pull/545)
+- 模拟宇宙（Auto_Simulated_Universe）v8.04
+- 模拟宇宙支持通过 Mirror酱 进行更新
+
+## v2025.4.19
+
+- 终端运行后自动退出
+- 通知分层推送
+- 静默更新
+- 自动切换视角
+- 错误时推送截图
 
 ## v2025.7.20
 

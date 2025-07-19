@@ -133,6 +133,7 @@ class Instance:
             Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="未找到指定副本"))
             return False
         # 验证传送是否成功
+        auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False) #避免当前视角异常，尝试点击切换视角
         if "饰品提取" in instance_type:
             if not auto.find_element(instance_name, "text", max_retries=120, include=True, crop=(591.0 / 1920, 98.0 / 1080, 594.0 / 1920, 393.0 / 1080)):
                 Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"))
@@ -197,6 +198,7 @@ class Instance:
 
                     # 靠近怪物
                     auto.press_key("w", 3)
+                    auto.press_key("e")#有总比没有强
                     for _ in range(3):
                         auto.press_mouse()
                         time.sleep(1)

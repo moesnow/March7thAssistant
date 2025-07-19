@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import psutil
-
+from playsound3 import playsound
 
 from app.tools.account_manager import load_acc_and_pwd
 from utils.registry.gameaccount import gamereg_uid
@@ -26,7 +26,9 @@ def start():
     start_game()
     log.hr("完成", 2)
 
-
+def exit_terminal():
+    if not cfg.auto_exit_terminal:
+        input("按回车键关闭窗口. . .")
 def start_game():
     MAX_RETRY = 3
 
@@ -40,6 +42,42 @@ def start_game():
         return False
 
     def check_and_click_enter():
+        end_time = time.time() + 600
+        while time.time() < end_time:
+            auto.take_screenshot()
+            if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
+                return True
+            # 游戏热更新，需要确认重启
+            auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
+            # 网络异常等问题，需要重新启动
+            auto.click_element("./assets/images/zh_CN/base/restart.png", "image", 0.9, take_screenshot=False)
+            # 适配国际服，需要点击“开始游戏”
+            auto.click_element("./assets/images/screen/start_game.png", "image", 0.9, take_screenshot=False)
+            # 适配B服，需要点击“登录”
+            auto.click_element("./assets/images/screen/bilibili_login.png", "image", 0.9, take_screenshot=False)
+            # 适配用户协议和隐私政策更新提示，需要点击“同意”
+            auto.click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
+            # 登录过期
+            if auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
+                if load_acc_and_pwd(gamereg_uid()) != (None, None):
+                    log.info("检测到登录过期，尝试自动登录")
+                    auto_login()
+                else:
+                    raise Exception("账号登录过期")
+            if auto.find_text_element("校验", include=True)[0] is not None:
+                log.info("检测到校验完整性")
+                end_time = time.time() + 3600
+                # 等待校验完整性完成
+                # 这里的超时时间设置为60分钟，避免在老电脑上卡死
+                # 60分钟是因为有用户反馈在老电脑上校验完整性需要很长时间
+                # 但如果超过60分钟还没有完成，可能是其他问题导致的卡死
+                # 所以这里设置了一个较长的超时时间
+                if not wait_until(lambda: verify_game_fullness(), 3600, period=10):
+                    raise TimeoutError("校验完整性超时，超过60分钟")
+                    # 在老电脑上，这是个耗时巨大的过程......但是绝对不超过60分钟！
+            time.sleep(1)
+        return False
+        '''
         # 点击进入
         if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
             return True
@@ -61,7 +99,8 @@ def start_game():
             else:
                 raise Exception("账号登录过期")
         return False
-
+        '''
+        
     def get_process_path(name):
         # 通过进程名获取运行路径
         for proc in psutil.process_iter(attrs=['pid', 'name']):
@@ -69,7 +108,10 @@ def start_game():
                 process = psutil.Process(proc.info['pid'])
                 return process.exe()
         return None
-
+    def verify_game_fullness():
+        auto.take_screenshot()
+        log.info("正在校验游戏完整性")
+        return auto.find_text_element("校验", include=True)[0] is None
     for retry in range(MAX_RETRY):
         try:
             if not starrail.switch_to_game():
@@ -94,7 +136,13 @@ def start_game():
                 starrail.restore_auto_hdr()
                 starrail.check_resolution_ratio(1920, 1080)
 
-                if not wait_until(lambda: check_and_click_enter(), 600):
+                
+                '''if not wait_until(lambda: verify_game_fullness(), 3600, period=10):
+                    log.error("校验完整性超时，超过60分钟")
+                    # 在老电脑上，这是个耗时巨大的过程......'''
+
+                #if not wait_until(lambda: check_and_click_enter(), 600):
+                if not check_and_click_enter():
                     raise TimeoutError("查找并点击进入按钮超时")
                 time.sleep(10)
                 # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
@@ -108,7 +156,7 @@ def start_game():
                         log.info(f"游戏路径更新成功：{program_path}")
                 time.sleep(1)
 
-            if not wait_until(lambda: screen.get_current_screen(), 360):
+            if not wait_until(lambda: screen.get_current_screen(), 720):
                 raise TimeoutError("获取当前界面超时")
             break  # 成功启动游戏，跳出重试循环
         except Exception as e:
@@ -119,22 +167,14 @@ def start_game():
 
 
 def stop(detect_loop=False):
+
     log.hr("停止运行", 0)
 
     def play_audio():
         log.info("开始播放音频")
         try:
-            os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
-            import pygame.mixer
-
-            # 有用户反馈会报错 “mixer not initialized”
-            # 不清楚为什么，可能是远程桌面的情况下缺少音频设备吗
-            pygame.init()
-            pygame.mixer.music.load("./assets/audio/pa.mp3")
-            pygame.mixer.music.play()
-
-            while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
+            
+            playsound("./assets/audio/pa.mp3")
             log.info("播放音频完成")
         except Exception as e:
             log.warning(f"播放音频时发生错误：{e}")
@@ -151,7 +191,7 @@ def stop(detect_loop=False):
             starrail.shutdown(cfg.after_finish)
         log.hr("完成", 2)
         if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
-            input("按回车键关闭窗口. . .")
+            exit_terminal()
         sys.exit(0)
 
 
