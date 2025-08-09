@@ -328,15 +328,16 @@ class Power:
                             auto.click_element_with_pos(coordinates=((1800, 580), (1800, 580)))
                             time.sleep(1)
                             return instance_type, instance_name
+                    else:
+                        log.warning(f"查询失败")
+                        auto.press_key('esc')
+                        time.sleep(1)
                 else:
                     log.warning(f"未找到 {instance_type} 对应资源")
-
-        
-
         else:
             log.warning("未找到实例")
-            auto.click_element_with_pos(coordinates=((1800, 580), (1800, 580)))
-            time.sleep(1)
+        auto.click_element_with_pos(coordinates=((1800, 580), (1800, 580)))
+        time.sleep(1)
         return None, None
         #return [box[1][0] for box in result if len(box[1][0]) >= 4]
     
@@ -357,7 +358,7 @@ class Power:
         log.debug(f"找到 {len(positions)} 个材料位置: {positions}")
         return positions
         #找到 3 个传送位置: [((1532, 444), (1582, 476)), ((1532, 579), (1582, 611)), ((1532, 714), (1582, 746))]
-        crop=(726.0 / 1920, 419.0 / 1080, 84.0 / 1920, 86.0 / 1080)#1532 - 742 = 790
+        #crop=(726.0 / 1920, 419.0 / 1080, 84.0 / 1920, 86.0 / 1080)#1532 - 742 = 790
     @staticmethod
     def getplan():
         log.hr("正在动态分配任务")
@@ -383,9 +384,9 @@ class Power:
             if instance_type and instance_name:
                 log.info(f"开始覆盖配置 {instance_type} 为 {instance_name}")
                 #cfg.instance_type = instance_type
-                
+                cfg.set_value('instance_names', instance_type, instance_name)
                 #cfg.instance_names[cfg.instance_type] = instance_name
-                cfg.config['instance_names'][instance_type] = instance_name
+                #cfg.config['instance_names'][instance_type] = instance_name
                 #print('\n',cfg.instance_names[cfg.instance_type])
                 #print(cfg.instance_type, cfg.instance_names,'\n')
                 if(instance_type != '历战余响'):
@@ -393,12 +394,16 @@ class Power:
                 
                 #print(cfg.config)
         log.info(f"开始覆盖配置 饰品提取 为 饰品提取")
-        cfg.config['instance_names']['饰品提取'] = '饰品提取'
+        #cfg.config['instance_names']['饰品提取'] = '饰品提取'
+        cfg.set_value('instance_names', '饰品提取', '饰品提取')
         if all_ned != []:
                     all_ned.append('饰品提取')
-                    cfg.instance_type = all_ned[0]
+                    #cfg.instance_type = all_ned[0]
+                    cfg.set_value('instance_type', all_ned[0])
                     if cfg.instance_type == '侵蚀隧洞' and cfg.plan_face_mode == '饰品提取':
-                        cfg.instance_type = '饰品提取'
+                        #cfg.instance_type = '饰品提取'
+                        cfg.set_value('instance_type', '饰品提取')
+
                     log.debug(f"已在{all_ned}中设置实例类型: {cfg.instance_type}")
         #print(cfg.instance_type, cfg.instance_names)
         
