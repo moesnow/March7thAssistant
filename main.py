@@ -95,36 +95,62 @@ def run_notify_action():
     input("按回车键关闭窗口. . .")
     sys.exit(0)
 
+order_list = [
+    "game", "universe_update", "fight_update", "main", "screenshot", 
+    "plot", "notify", "daily", "power", "fight_gui", "fight", 
+    "universe_gui", "universe", "forgottenhall", "purefiction", 
+    "apocalyptic", "redemption"
+]
+order_dict = {item: idx for idx, item in enumerate(order_list)}
+
 
 def main(action=None):
+    def sort_by_custom_order(input_list):
+        filtered = [item for item in input_list if item in order_dict]
+        return sorted(filtered, key=lambda x: order_dict[x])
+    
+
     first_run()
+    action = list(set(action))
 
     if action is None:  # 无参数
         run_main_actions()
         return None
+    
+    rawLength = len(action)
+    action = sort_by_custom_order(action)
+    procLength = len(action)
 
-    # 完整运行
-    if "main" in action:
-        run_main_actions()
-        return None
+    if rawLength != procLength:
+        log.error("未知任务")
 
-    if "game" in action[1:]:
-        log.error(f"在错误的时候打开游戏: {action}")
-        input("按回车键关闭窗口. . .")
-        sys.exit(1)
-
-    # 子任务 更新项目
-    if "universe_update" in action:
-        run_sub_task_update("universe_update")
-        return None
-
-    if "fight_update" in action:
-        run_sub_task_update("fight_update")
-        return None
+    presentProcess = ["Ready"]
 
     for i in action:
-        # 子任务
-        if i in [
+        # 1. 打开游戏
+        if ("game" == i):
+            game.start()
+            presentProcess.append("InGame")
+        
+        # 2. 更新
+        if ("universe_update" == i or "fight_update" == i):
+            run_sub_task_update(i)
+        
+        # 3. 主程序
+        elif ("main" == i):
+            run_main_actions()
+            presentProcess.append("AfterMain")
+        
+        # 4. 工具
+        elif ("screen_shot" == i or "plot" == i) and "InGame" in presentProcess:
+            tool.start(i)
+        
+        # 5. 通知
+        elif ("notify" == i):
+            run_notify_action()
+        
+        # 6. 非GUI子任务
+        elif (i in [
             "daily",
             "power",
             "fight",
@@ -133,26 +159,12 @@ def main(action=None):
             "purefiction",
             "apocalyptic",
             "redemption",
-        ]:
+        ]) and not ("AfterMain" in presentProcess):
             run_sub_task(action)
-
-        # 子任务 原生图形界面
-        elif action in ["universe_gui", "fight_gui"]:
-            run_sub_task_gui(action)
-
-        elif action in ["screenshot", "plot"]:
-            tool.start(action)
-
-        elif action == "game":
-            game.start()
-
-        elif action == "notify":
-            run_notify_action()
-
-        else:
-            log.error(f"未知任务: {action}")
-            # input("按回车键关闭窗口. . .")
-            # sys.exit(1)
+        
+        # 7. GUI子任务
+        elif (i in ["universe_gui", "fight_gui"]):
+            run_sub_task_gui(i)
 
 
 # 程序结束时的处理器
