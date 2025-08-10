@@ -139,7 +139,7 @@ def exit_handler():
 if __name__ == "__main__":
     try:
         atexit.register(exit_handler)
-        main(sys.argv[1]) if len(sys.argv) > 1 else main()
+        main(sys.argv[1:]) if len(sys.argv) > 1 else main()
     except KeyboardInterrupt:
         log.error("发生错误: 手动强制停止")
         input("按回车键关闭窗口. . .")
