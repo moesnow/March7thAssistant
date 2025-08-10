@@ -384,9 +384,10 @@ class Power:
             if instance_type and instance_name:
                 log.info(f"开始覆盖配置 {instance_type} 为 {instance_name}")
                 #cfg.instance_type = instance_type
-                cfg.set_value('instance_names', instance_type, instance_name)
+                #cfg.set_value('instance_names', instance_type, instance_name)
                 #cfg.instance_names[cfg.instance_type] = instance_name
-                #cfg.config['instance_names'][instance_type] = instance_name
+                cfg.config['instance_names'][instance_type] = instance_name
+                #cfg.save_config()
                 #print('\n',cfg.instance_names[cfg.instance_type])
                 #print(cfg.instance_type, cfg.instance_names,'\n')
                 if(instance_type != '历战余响'):
@@ -394,8 +395,9 @@ class Power:
                 
                 #print(cfg.config)
         log.info(f"开始覆盖配置 饰品提取 为 饰品提取")
-        #cfg.config['instance_names']['饰品提取'] = '饰品提取'
-        cfg.set_value('instance_names', '饰品提取', '饰品提取')
+        cfg.config['instance_names']['饰品提取'] = '饰品提取'
+        cfg.save_config()
+        #cfg.set_value('instance_names', '饰品提取', '饰品提取')
         if all_ned != []:
                     all_ned.append('饰品提取')
                     #cfg.instance_type = all_ned[0]
