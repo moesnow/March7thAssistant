@@ -90,6 +90,7 @@ reward_srpass_enable: true # 是否领取无名勋礼。true 开启，false 关�
 
 # 日常任务设置
 daily_enable: true # 是否启用日常任务。true 开启，false 关闭。
+daily_material_enable: true # 是否通过“合成材料”完成任务。true 开启，false 关闭。
 daily_himeko_try_enable: false # 是否通过“姬子试用”完成任务。true 开启，false 关闭。
 daily_memory_one_enable: false # 是否通过“回忆一”完成任务。true 开启，false 关闭。
 daily_memory_one_team: # 用于“回忆一”的队伍配置。

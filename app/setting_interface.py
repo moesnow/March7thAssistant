@@ -228,8 +228,14 @@ class SettingInterface(ScrollArea):
         self.dailyEnableCard = SwitchSettingCard1(
             FIF.CALENDAR,
             self.tr('启用每日实训'),
-            "关闭后可通过手动配置每天一次模拟宇宙来完成500活跃度（推荐每天四次）",
+            "关闭后可通过手动配置清体力或每天一次模拟宇宙来完成500活跃度",
             "daily_enable"
+        )
+        self.dailyMaterialEnableCard = SwitchSettingCard1(
+            FIF.CHECKBOX,
+            self.tr('通过 “合成材料” 完成任务'),
+            "请确保背包中有足够的 “熄灭原核” 用于合成 “微光原核” ",
+            "daily_material_enable"
         )
         self.dailyHimekoTryEnableCard = SwitchSettingCard1(
             FIF.CHECKBOX,
@@ -788,6 +794,7 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.mailEnableCard)
         self.DailyGroup.addSettingCard(self.assistEnableCard)
         self.DailyGroup.addSettingCard(self.dailyEnableCard)
+        self.DailyGroup.addSettingCard(self.dailyMaterialEnableCard)
         self.DailyGroup.addSettingCard(self.dailyHimekoTryEnableCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneEnableCard)
         self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamCard)
