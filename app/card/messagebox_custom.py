@@ -344,5 +344,5 @@ class MessageBoxFriends(MessageBox):
 
             self.comboBox_list.append((charComboBox, nameLineEdit))
 
-        self.titleLabelInfo = QLabel("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功", parent)
+        self.titleLabelInfo = QLabel("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n若好友名称留空则只查找选择的角色。", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
