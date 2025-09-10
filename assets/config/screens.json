@@ -78,8 +78,8 @@
             {
                 "target_screen": "mail",
                 "actions_list": [
-                    "auto.click_element('./assets/images/share/menu/mail.png', 'image', 0.8, crop=(0.95, 0.1, 0.05, 0.6))",
-                    "auto.click_element('./assets/images/share/menu/mail_reward.png', 'image', 3000000, crop=(0.95, 0.1, 0.05, 0.6))"
+                    "auto.click_element('./assets/images/share/menu/mail.png', 'image', 0.8, crop=(1823.0 / 1920, 224.0 / 1080, 91.0 / 1920, 92.0 / 1080))",
+                    "auto.click_element('./assets/images/share/menu/mail_reward.png', 'image', 3000000, crop=(1823.0 / 1920, 224.0 / 1080, 91.0 / 1920, 92.0 / 1080))"
                 ]
             },
             {
