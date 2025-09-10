@@ -68,13 +68,18 @@ class Character:
     @staticmethod
     def find_character_and_click(key, value, width, height):
         """查找支援角色并点击"""
-        crop = (40.0 / 1920, 152.0 / 1080, 531.0 / 1920, 809.0 / 1080)
+        # crop = (40.0 / 1920, 152.0 / 1080, 531.0 / 1920, 809.0 / 1080)
+        crop = (0 / 1920, 0 / 1080, 593.0 / 1920, 1005.0 / 1080)
         matchs = auto.find_element("./assets/images/share/character/" + key + ".png", "image_with_multiple_targets", 0.8,
                                    max_retries=1, scale_range=0.9, crop=crop, relative=True)
         for match in matchs:
             top_right = (match[1][0] + width * crop[0], match[0][1] + height * crop[1])
             crop_new = (top_right[0] / width, top_right[1] / height, 402.0 / 1920, 43.0 / 1080)
-            if value == "" or auto.click_element(value, "text", crop=crop_new, include=True):
+            if value == "":
+                auto.click_element_with_pos(match)
+                time.sleep(1)
+                return True
+            elif auto.click_element(value, "text", crop=crop_new, include=True):
                 time.sleep(1)
                 return True
         return False
