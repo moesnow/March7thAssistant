@@ -914,7 +914,7 @@ class SettingInterface(ScrollArea):
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
-        self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/LpfAkDPlWa"))
+        self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/HaWEI66m88"))
         self.feedbackCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant/issues"))
 
         self.aboutCard.clicked.connect(lambda: checkUpdate(self.parent))

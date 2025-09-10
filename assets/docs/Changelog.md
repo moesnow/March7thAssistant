@@ -1,5 +1,11 @@
 # 更新日志
 
+## v2025.9.10
+
+- 支持 3.5 版本新增关卡和角色 [#687](https://github.com/moesnow/March7thAssistant/pull/687)
+- 修正多个副本名称识别错误
+- 修复邮箱识别异常
+
 ## v2025.8.13
 
 - 支持 3.5 版本新增关卡和角色 [#671](https://github.com/moesnow/March7thAssistant/pull/671)
