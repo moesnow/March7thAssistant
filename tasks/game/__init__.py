@@ -150,7 +150,8 @@ def stop(detect_loop=False):
         if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
             starrail.shutdown(cfg.after_finish)
         log.hr("完成", 2)
-        if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
+        if (cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"] 
+            and not cfg.no_pause_on_exit):
             input("按回车键关闭窗口. . .")
         sys.exit(0)
 

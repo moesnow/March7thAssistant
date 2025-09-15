@@ -25,7 +25,8 @@ class Universe:
             if cfg.update_source == "MirrorChyan":
                 if cfg.mirrorchyan_cdk == "":
                     log.error("未设置 Mirror酱 CDK")
-                    input("按回车键关闭窗口. . .")
+                    if not cfg.no_pause_on_exit:
+                        input("按回车键关闭窗口. . .")
                     sys.exit(0)
                 # 符合Mirror酱条件
                 response = requests.get(
@@ -58,7 +59,8 @@ class Universe:
                         log.error(error_msg)
                     except:
                         log.error("Mirror酱 API 请求失败")
-                    input("按回车键关闭窗口. . .")
+                    if not cfg.no_pause_on_exit:
+                        input("按回车键关闭窗口. . .")
                     sys.exit(0)
             else:
                 response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Auto_Simulated_Universe"), timeout=10, headers=cfg.useragent)
@@ -70,7 +72,8 @@ class Universe:
                         break
                     if url is None:
                         log.error("没有找到可用更新，请稍后再试")
-                        input("按回车键关闭窗口. . .")
+                        if not cfg.no_pause_on_exit:
+                            input("按回车键关闭窗口. . .")
                         sys.exit(0)
                     update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe")
                     update_handler.run()

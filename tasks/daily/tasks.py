@@ -1,6 +1,7 @@
 from module.logger import log
 from module.automation import auto
 from module.ocr import ocr
+from module.config import cfg
 import time
 import json
 import sys
@@ -18,7 +19,8 @@ class Tasks:
                 return json.load(file)
         except FileNotFoundError:
             log.error(f"配置文件不存在：{config_example_path}")
-            input("按回车键关闭窗口. . .")
+            if not cfg.no_pause_on_exit:
+                input("按回车键关闭窗口. . .")
             sys.exit(1)
 
     def start(self):

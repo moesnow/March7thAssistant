@@ -72,7 +72,8 @@ class PythonChecker:
             return
 
         log.info("安装完成，请重启程序，包括图形界面")
-        input("按回车键关闭窗口. . .")
+        if not cfg.no_pause_on_exit:
+            input("按回车键关闭窗口. . .")
         sys.exit(0)
 
     @staticmethod
