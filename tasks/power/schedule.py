@@ -178,7 +178,7 @@ def check_schedule(
         l == today_tasks.get("_start_line", -1) for l, _ in error_list
     )
     if has_today_error:
-        log_str.append(f"{RED}⚠ 今天计划的任务含有 ERROR，做可能与预期不符{RESET}")
+        log_str.append(f"{RED}⚠ 今天计划的任务含有 ERROR，执行可能与预期不符{RESET}")
 
     if today_tasks:
         today_tasks = {ins: chap for ins, chap in today_tasks.items() if ins != "_start_line"}
