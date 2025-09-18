@@ -184,6 +184,7 @@ pyrightconfig.json
 
 # March7thAssistant
 /*config.yaml
+/*schedule.yaml
 /warp.json
 /logs
 /screenshots
@@ -196,3 +197,10 @@ smtp_temp.bin
 
 # QFluentWidgets Config
 /config/config.json
+
+# Executables
+/March7th Assistant.exe
+/March7th Launcher.exe
+/March7th Updater.exe
+
+/libraries
