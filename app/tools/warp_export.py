@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
 from qfluentwidgets import InfoBar, InfoBarPosition, StateToolTip
 from urllib.parse import urlencode, urlparse, parse_qs
 from win32api import CopyFile
@@ -17,8 +17,9 @@ import os
 
 
 class WarpExport:
-    def __init__(self, config=None, parent=None):
+    def __init__(self, config=None, parent=None, infoSignal=None):
         self.parent = parent
+        self.infoSignal = infoSignal
         self.gacha_type = {
             "11": "角色活动跃迁",
             "12": "光锥活动跃迁",
@@ -198,7 +199,10 @@ class WarpExport:
         return apiDomain, updated_query
 
     def show_info_message(self, content, title=None):
-        if self.parent:
+        # 主线程 UI 操作通过信号发射
+        if self.infoSignal:
+            self.infoSignal.emit(content, title)
+        elif self.parent:
             self.parent.stateTooltip.setContent(content)
             if title:
                 self.parent.stateTooltip.setTitle(title)
@@ -351,6 +355,7 @@ class WarpStatus(Enum):
 
 class WarpThread(QThread):
     warpSignal = pyqtSignal(WarpStatus)
+    infoSignal = pyqtSignal(str, object)  # 新增信号
 
     def __init__(self, parent, type="normal"):
         super().__init__()
@@ -361,16 +366,17 @@ class WarpThread(QThread):
         try:
             with open("./warp.json", 'r', encoding='utf-8') as file:
                 config = json.load(file)
-                warp = WarpExport(config, self.parent)
+                warp = WarpExport(config, self.parent, self.infoSignal)
         except Exception:
-            warp = WarpExport(None, self.parent)
+            warp = WarpExport(None, self.parent, self.infoSignal)
 
         # self.parent.stateTooltip.setContent("测试测试(＾∀＾●)")
         try:
             url = warp.get_url()
             if not url:
-                self.parent.stateTooltip.setTitle("未找到URL")
-                self.parent.stateTooltip.setContent("请确认是否已打开游戏抽卡记录")
+                # self.parent.stateTooltip.setTitle("未找到URL")
+                # self.parent.stateTooltip.setContent("请确认是否已打开游戏抽卡记录")
+                self.infoSignal.emit("请确认是否已打开游戏抽卡记录", "未找到URL")
                 self.warpSignal.emit(WarpStatus.FAILURE)
                 return
 
@@ -395,7 +401,8 @@ class WarpThread(QThread):
             else:
                 self.warpSignal.emit(WarpStatus.FAILURE)
         except Exception:
-            self.parent.stateTooltip.setContent("跃迁数据获取失败(´▔∀▔`)")
+            # self.parent.stateTooltip.setContent("跃迁数据获取失败(´▔∀▔`)")
+            self.infoSignal.emit("跃迁数据获取失败(´▔∀▔`)")
             self.warpSignal.emit(WarpStatus.FAILURE)
 
 
@@ -425,6 +432,13 @@ def warpExport(self, type="normal"):
         elif status == WarpStatus.COPY:
             self.copyLinkBtn.setEnabled(True)
 
+    # 连接 infoSignal 到主线程 UI
+    def handle_info(content, title=None):
+        self.stateTooltip.setContent(content)
+        if title:
+            self.stateTooltip.setTitle(title)
+
     self.warp_thread = WarpThread(self, type)
     self.warp_thread.warpSignal.connect(handle_warp)
+    self.warp_thread.infoSignal.connect(handle_info)
     self.warp_thread.start()
