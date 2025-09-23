@@ -699,7 +699,7 @@ class SettingInterface(ScrollArea):
         self.StartMarch7thAssistantCard = StartMarch7thAssistantSwitchSettingCard(
             FIF.GAME,
             self.tr('在用户登录时启动'),
-            "用于开机后自动执行完整运行模式"
+            "通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）"
         )
         self.hotkeyCard = SwitchSettingCardHotkey(
             FIF.SETTING,
