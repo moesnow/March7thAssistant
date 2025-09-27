@@ -119,8 +119,14 @@ class Updater:
             try:
                 self.logger.info("开始下载...")
                 if os.path.exists(self.aria2_path):
-                    command = [self.aria2_path, "--dir={}".format(os.path.dirname(self.download_file_path)),
-                               "--out={}".format(os.path.basename(self.download_file_path)), self.download_url]
+                    command = [
+                        self.aria2_path,
+                        "--disable-ipv6=true",
+                        "--dir={}".format(os.path.dirname(self.download_file_path)),
+                        "--out={}".format(os.path.basename(self.download_file_path)),
+                        self.download_url
+                    ]
+
                     if "github.com" in self.download_url:
                         command.insert(2, "--max-connection-per-server=16")
                     for scheme, proxy in proxies.items():
