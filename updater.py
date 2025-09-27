@@ -129,12 +129,14 @@ class Updater:
 
                     if "github.com" in self.download_url:
                         command.insert(2, "--max-connection-per-server=16")
+                        if os.path.exists(self.download_file_path):
+                            command.insert(2, "--continue=true")
+
                     for scheme, proxy in proxies.items():
                         if scheme in ("http", "https", "ftp"):
                             command.append(f"--{scheme}-proxy={proxy}")
-                    if os.path.exists(self.download_file_path):
-                        command.insert(2, "--continue=true")
                     subprocess.run(command, check=True)
+
                 else:
                     response = requests.head(self.download_url)
                     file_size = int(response.headers.get('Content-Length', 0))
@@ -151,8 +153,6 @@ class Updater:
             except Exception as e:
                 self.logger.error(f"下载失败: {red(e)}")
                 input("按回车键重试. . .")
-                if os.path.exists(self.download_file_path):
-                    os.remove(self.download_file_path)
         self.logger.hr("完成", 2)
 
     def extract_file(self):
