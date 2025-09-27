@@ -3,7 +3,7 @@ pyyaml==6.0.2
 colorama==0.4.6
 packaging==24.2
 pyuac==0.0.3
-pygame==2.6.1
+playsound3==3.2.6
 tqdm==4.67.1
 psutil==6.1.1
 pyautogui==0.9.54
