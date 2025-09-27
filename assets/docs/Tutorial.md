@@ -136,27 +136,11 @@
 
 支持自动判断历战余响剩余次数，优先级高于清体力，重置时间为每周一凌晨4点
 
-### 锄大地
+#### 设置每日清体力计划
 
-调用的 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 项目
-
-需要从中断的地图继续运行可以点击`原版运行`，会打开锄大地自身的界面，然后选择调试模式即可
-
-`更新锄大地`按钮可以一键更新到最新版
-
-### 模拟宇宙
-
-调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目
-
-快速上手，请访问：[项目文档](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md) 
-
-遇到问题，请在提问前查看：[Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
-
-小助手使用的是 `命令行使用方法`，请确保 Python 环境变量配置正确
-
-需要修改命途和难度等可以点击`原版运行`，会打开模拟宇宙自身的图形界面
-
-`更新模拟宇宙`按钮可以一键更新到最新版
+*该功能还无法通过 GUI 来配置。*
+可以在项目主目录下的 `schedule.yaml` 计划每日清体力要刷什么副本，最小可以精确到天。
+找不到 `schedule.yaml` 文件？可以运行 `python schedule_checker.py` 来生成一个。
 
 ### 忘却之庭
 

@@ -12,9 +12,8 @@ import tasks.challenge as challenge
 from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
 from tasks.daily.himekotry import HimekoTry
-from tasks.weekly.echoofwar import Echoofwar
 from utils.color import red, green, yellow
-import datetime
+from tasks.power.schedule import check_schedule
 
 class Daily:
     @staticmethod
@@ -23,21 +22,12 @@ class Daily:
         if cfg.daily_enable:
             Daily.run()
 
-        # 优先历战余响
-        if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
-            if cfg.echo_of_war_enable:
-                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
-                isoweekday = datetime.date.today().isoweekday()
-                if isoweekday >= cfg.echo_of_war_start_day_of_week:
-                    Echoofwar.start()
-                else:
-                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
-            else:
-                log.info("历战余响未开启")
-        else:
-            log.info("历战余响尚未刷新")
-
-        Power.run()
+        # 优先使用 schedule.yaml 中的配置
+        current_schedule = check_schedule()
+        
+        # 优先每周的历战余响
+        Power.weekly_echo_of_war(current_schedule)
+        Power.run(current_schedule)
 
         if Date.is_next_x_am(cfg.fight_timestamp, cfg.refresh_hour):
             if cfg.fight_enable:
@@ -99,21 +89,10 @@ class Daily:
             log.info("末日幻影尚未刷新")
 
         activity.start()
-
-        # 优先历战余响
-        if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
-            if cfg.echo_of_war_enable:
-                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
-                isoweekday = datetime.date.today().isoweekday()
-                if isoweekday >= cfg.echo_of_war_start_day_of_week:
-                    Echoofwar.start()
-                else:
-                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
-            else:
-                log.info("历战余响未开启")
-        else:
-            log.info("历战余响尚未刷新")
-        Power.run()
+        
+        # 优先每周历战余响
+        Power.weekly_echo_of_war(current_schedule)
+        Power.run(current_schedule)
 
     @staticmethod
     def run():

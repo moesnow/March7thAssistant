@@ -30,7 +30,8 @@ class Fight:
                     break
                 if url is None:
                     log.error("没有找到可用更新，请稍后再试")
-                    input("按回车键关闭窗口. . .")
+                    if not cfg.no_pause_on_exit:
+                        input("按回车键关闭窗口. . .")
                     sys.exit(0)
                 update_handler = UpdateHandler(url, cfg.fight_path, "Fhoe-Rail", os.path.join(cfg.fight_path, "map"))
                 update_handler.run()
