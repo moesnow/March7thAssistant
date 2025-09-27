@@ -26,16 +26,17 @@ class UpdateHandler:
         self.clean_up()
 
     def download_file(self):
+        if os.path.exists(self.download_file_path):
+            os.remove(self.download_file_path)
         while True:
             try:
                 log.info(f"开始下载: {self.download_url}")
                 download_with_progress(self.download_url, self.download_file_path)
                 log.info(f"下载完成: {self.download_file_path}")
                 break
-            except Exception as e:
-                log.error(f"下载失败: {e}")
+            except Exception:
+                log.error(f"下载失败: 请检查网络连接是否正常")
                 input("按回车键重试. . .")
-                os.remove(self.download_file_path)
 
     def extract_file(self):
         while True:
