@@ -9,6 +9,7 @@ from packaging.version import parse
 from tqdm import tqdm
 import requests
 import psutil
+import urllib.request
 from urllib.request import urlopen
 from urllib.error import URLError
 from utils.color import red, green
@@ -113,6 +114,7 @@ class Updater:
     def download_with_progress(self):
         """下载文件并显示进度条。"""
         self.logger.hr("下载", 0)
+        proxies = urllib.request.getproxies()
         while True:
             try:
                 self.logger.info("开始下载...")
@@ -121,6 +123,9 @@ class Updater:
                                "--out={}".format(os.path.basename(self.download_file_path)), self.download_url]
                     if "github.com" in self.download_url:
                         command.insert(2, "--max-connection-per-server=16")
+                    for scheme, proxy in proxies.items():
+                        if scheme in ("http", "https", "ftp"):
+                            command.append(f"--{scheme}-proxy={proxy}")
                     if os.path.exists(self.download_file_path):
                         command.insert(2, "--continue=true")
                     subprocess.run(command, check=True)
