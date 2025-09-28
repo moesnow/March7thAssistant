@@ -9,6 +9,7 @@ from packaging.version import parse
 from tqdm import tqdm
 import requests
 import psutil
+import urllib.request
 from urllib.request import urlopen
 from urllib.error import URLError
 from utils.color import red, green
@@ -74,7 +75,7 @@ class Updater:
             raise Exception("没有找到合适的下载URL")
 
         self.compare_versions(version)
-        return self.find_fastest_mirror([download_url, f"https://github.kotori.top/{download_url}"])
+        return download_url
 
     def compare_versions(self, version):
         """比较本地版本和远程版本。"""
@@ -113,19 +114,33 @@ class Updater:
     def download_with_progress(self):
         """下载文件并显示进度条。"""
         self.logger.hr("下载", 0)
+        proxies = urllib.request.getproxies()
         while True:
             try:
                 self.logger.info("开始下载...")
                 if os.path.exists(self.aria2_path):
-                    command = [self.aria2_path, "--dir={}".format(os.path.dirname(self.download_file_path)),
-                               "--out={}".format(os.path.basename(self.download_file_path)), self.download_url]
+                    command = [
+                        self.aria2_path,
+                        "--disable-ipv6=true",
+                        "--dir={}".format(os.path.dirname(self.download_file_path)),
+                        "--out={}".format(os.path.basename(self.download_file_path)),
+                        self.download_url
+                    ]
+
                     if "github.com" in self.download_url:
                         command.insert(2, "--max-connection-per-server=16")
-                    if os.path.exists(self.download_file_path):
-                        command.insert(2, "--continue=true")
+                        # 仅在下载 GitHub 资源时启用断点续传，避免416错误
+                        if os.path.exists(self.download_file_path):
+                            command.insert(2, "--continue=true")
+                    # 代理设置
+                    for scheme, proxy in proxies.items():
+                        if scheme in ("http", "https", "ftp"):
+                            command.append(f"--{scheme}-proxy={proxy}")
                     subprocess.run(command, check=True)
+
                 else:
-                    response = requests.head(self.download_url)
+                    response = requests.head(self.download_url, allow_redirects=True)
+                    response.raise_for_status()
                     file_size = int(response.headers.get('Content-Length', 0))
 
                     with tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
@@ -135,13 +150,13 @@ class Updater:
                                     if chunk:
                                         f.write(chunk)
                                         pbar.update(len(chunk))
+
                 self.logger.info(f"下载完成: {green(self.download_file_path)}")
                 break
+
             except Exception as e:
-                self.logger.error(f"下载失败: {red(e)}")
+                self.logger.error(f"下载失败: {red('请检查网络连接是否正常，或切换更新源后重试。')}")
                 input("按回车键重试. . .")
-                if os.path.exists(self.download_file_path):
-                    os.remove(self.download_file_path)
         self.logger.hr("完成", 2)
 
     def extract_file(self):

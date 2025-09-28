@@ -141,7 +141,7 @@ class HomeInterface(ScrollArea):
                 "快速启动 ⭐": lambda: start_task("fight"),
                 "原版运行": lambda: start_task("fight_gui"),
                 "更新锄大地": lambda: start_task("fight_update"),
-                "重置配置文件": lambda: os.remove(os.path.join(cfg.fight_path, "config.json")),
+                "重置配置文件": lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json")),
                 "打开程序目录": lambda: os.startfile(cfg.fight_path),
                 "打开项目主页": lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
             }
@@ -153,7 +153,7 @@ class HomeInterface(ScrollArea):
                 "快速启动 ⭐": lambda: start_task("universe"),
                 "原版运行": lambda: start_task("universe_gui"),
                 "更新模拟宇宙": lambda: start_task("universe_update"),
-                "重置配置文件": lambda: os.remove(os.path.join(cfg.universe_path, "info.yml")),
+                "重置配置文件": lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
                 "打开程序目录": lambda: os.startfile(cfg.universe_path),
                 "打开项目主页": lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
             }
