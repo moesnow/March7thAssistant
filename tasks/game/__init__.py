@@ -84,7 +84,7 @@ def start_game():
                     raise Exception("启动游戏失败")
                 time.sleep(10)
 
-                if not wait_until(lambda: starrail.switch_to_game(), 60):
+                if not wait_until(lambda: starrail.switch_to_game(), 360):
                     starrail.restore_resolution()
                     starrail.restore_auto_hdr()
                     raise TimeoutError("切换到游戏超时")
