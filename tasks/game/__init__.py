@@ -125,7 +125,7 @@ def stop(detect_loop=False):
         log.info("开始播放音频")
         try:
             from playsound3 import playsound
-            playsound("./assets/audio/pa.mp3", backend="winmm")
+            playsound("./assets/audio/pa.mp3")
             log.info("播放音频完成")
         except Exception as e:
             log.warning(f"播放音频时发生错误：{e}")
