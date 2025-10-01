@@ -142,10 +142,12 @@ if __name__ == "__main__":
         main(sys.argv[1]) if len(sys.argv) > 1 else main()
     except KeyboardInterrupt:
         log.error("发生错误: 手动强制停止")
-        input("按回车键关闭窗口. . .")
+        if not cfg.exit_after_failure:
+            input("按回车键关闭窗口. . .")
         sys.exit(1)
     except Exception as e:
         log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
         notif.notify(cfg.notify_template['ErrorOccurred'].format(error=e))
-        input("按回车键关闭窗口. . .")
+        if not cfg.exit_after_failure:
+            input("按回车键关闭窗口. . .")
         sys.exit(1)

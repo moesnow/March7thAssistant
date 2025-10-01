@@ -7,6 +7,9 @@ log_level: INFO # 日志等级，可选值：INFO, DEBUG。INFO 仅记录重要�
 # 更新检查
 check_update: true # 是否检查更新。true 检查，false 不检查。
 
+# 失败后直接退出
+exit_after_failure: false # 是否在失败后直接退出。true 直接退出，false 暂停程序。
+
 # 任务完成后操作
 after_finish: None # 任务完成后的操作，可选值："None"（无操作）, "Exit"（退出程序）, "Loop"（循环执行）, "Shutdown"（关机）, "Sleep"（睡眠）, "Hibernate"（休眠）, "Restart"（重启）, "Logoff"（注销）。
 
