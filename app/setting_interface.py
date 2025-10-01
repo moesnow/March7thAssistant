@@ -575,6 +575,12 @@ class SettingInterface(ScrollArea):
             "新版本将更加稳定并拥有更多功能（建议启用）",
             "check_update"
         )
+        self.exitAfterFailure = SwitchSettingCard1(
+            FIF.SYNC,
+            self.tr('失败后直接退出'),
+            "如果勾选，那么失败后直接退出，否则失败后程序暂停。",
+            "exit_after_failure"
+        )
         self.afterFinishCard = ComboBoxSettingCard2(
             "after_finish",
             FIF.POWER_BUTTON,
