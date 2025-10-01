@@ -5,30 +5,43 @@ from module.config import cfg
 from tasks.power.instance import Instance, CalyxInstance
 from tasks.weekly.universe import Universe
 import time
+import datetime
+from utils.date import Date
 
 
 class Power:
     @staticmethod
-    def run():
+    def run(schedule_instance = {}):
         Power.preprocess()
-
-        instance_type = cfg.instance_type
-        instance_name = cfg.instance_names[cfg.instance_type]
-        max_calyx_per_round_num_of_attempts = cfg.max_calyx_per_round_num_of_attempts
-
-        if not Instance.validate_instance(instance_type, instance_name):
-            return False
-
-        log.hr("开始清体力", 0)
-
-        if "饰品提取" in instance_type:
-            power = Power.get()
-            Power.process_ornament(instance_type, instance_name, power)
-        elif "拟造花萼" in instance_type:
-            Power.process_calyx(instance_type, instance_name, max_calyx_per_round_num_of_attempts)
+        instance = {}
+        
+        if schedule_instance:
+            log.info("检测到 schedule.yaml 中有今天的副本安排，优先使用")
+            log.info(f"今天的副本安排：{schedule_instance}")
+            instance = schedule_instance
         else:
-            power = Power.get()
-            Power.process_standard(instance_type, instance_name, power)
+            cfg_instance_type = cfg.instance_type
+            cfg_instance_name = cfg.instance_names[cfg.instance_type]
+            instance = {cfg_instance_type: cfg_instance_name}
+        
+        max_calyx_per_round_num_of_attempts = cfg.max_calyx_per_round_num_of_attempts
+        
+        log.hr("开始清体力", 0)        
+
+        for instance_type, instance_name in instance.items():
+            if not Instance.validate_instance(instance_type, instance_name):
+                continue
+            
+            if "饰品提取" in instance_type:
+                power = Power.get()
+                Power.process_ornament(instance_type, instance_name, power)
+            elif "拟造花萼" in instance_type:
+                Power.process_calyx(instance_type, instance_name, max_calyx_per_round_num_of_attempts)
+            elif "历战余响" in instance_type:
+                Power.echo_of_war(instance_name)
+            else:
+                power = Power.get()
+                Power.process_standard(instance_type, instance_name, power)
 
         log.hr("完成", 2)
 
@@ -111,8 +124,7 @@ class Power:
     def process_standard(instance_type, instance_name, power):
         instance_powers = {
             "凝滞虚影": 30,
-            "侵蚀隧洞": 40,
-            "历战余响": 30
+            "侵蚀隧洞": 40
         }
         instance_power = instance_powers[instance_type]
 
@@ -249,3 +261,57 @@ class Power:
                 if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                     time.sleep(1)
                     auto.press_key("esc")
+    
+    @staticmethod               
+    def weekly_echo_of_war(current_schedule={}):
+        if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
+            if cfg.echo_of_war_enable:
+                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
+                isoweekday = datetime.date.today().isoweekday()
+                if isoweekday >= cfg.echo_of_war_start_day_of_week:
+                    log.hr("准备历战余响", 0)
+                    war_name = cfg.instance_names["历战余响"]
+                    
+                    # 如果当天有计划历战余响，覆盖原来的配置
+                    if current_schedule and "历战余响" in current_schedule:
+                        war_name = current_schedule["历战余响"]
+                    Power.echo_of_war(war_name)
+                else:
+                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
+            else:
+                log.info("历战余响未开启")
+        else:
+            log.info("历战余响尚未刷新") 
+                    
+    @staticmethod
+    def echo_of_war(war_name):
+        try:
+            screen.change_to('guide3')
+            guide3_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
+            if auto.click_element("凝滞虚影", "text", max_retries=10, crop=guide3_crop):
+                auto.mouse_scroll(12, -1)
+                # 等待界面完全停止
+                time.sleep(1)
+                if auto.click_element("历战余响", "text", max_retries=10, crop=guide3_crop):
+                    auto.find_element("历战余响", "text", max_retries=10, crop=(682.0 / 1920, 275.0 / 1080, 1002.0 / 1920, 184.0 / 1080), include=True)
+                    for box in auto.ocr_result:
+                        text = box[1][0]
+                        if "/3" in text:
+                            log.info(f"历战余响本周可领取奖励次数：{text}")
+                            reward_count = int(text.split("/")[0])
+                            if reward_count == 0:
+                                log.hr("完成", 2)
+                                cfg.save_timestamp("echo_of_war_timestamp")
+                                return True
+                            else:
+                                power = Power.get()
+                                max_count = power // 30
+                                if max_count == 0:
+                                    log.info("🟣开拓力 < 30")
+                                    return
+                                return Instance.run("历战余响", war_name, 30, min(reward_count, max_count))
+            return False
+        except Exception as e:
+            log.error(f"历战余响失败: {e}")
+            return False
+
