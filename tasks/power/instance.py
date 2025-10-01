@@ -287,6 +287,9 @@ class Instance:
             elif cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 log.info("尝试开启自动战斗")
                 auto.press_key("v")
+            elif auto.find_element("已处于无法战斗状态", "text", max_retries=1, include=True, threshold=0.7):
+                log.info("队伍中存在无法战斗的角色，尝试继续战斗。")
+                auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
             # 检测遗器背包已满的提示
             # 每次战斗检测循环中进行多次快速检测
             for _ in range(3):
@@ -433,6 +436,9 @@ class CalyxInstance(Instance):
             elif cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 log.info("尝试开启自动战斗")
                 auto.press_key("v")
+            elif auto.find_element("已处于无法战斗状态", "text", max_retries=1, include=True, threshold=0.7):
+                log.info("队伍中存在无法战斗的角色，尝试继续战斗。")
+                auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)     
             # 检测遗器背包已满的提示 - 更快速捕获
             # 每次战斗检测循环中进行多次快速检测
             for _ in range(3):
