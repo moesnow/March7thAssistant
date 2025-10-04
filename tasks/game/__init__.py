@@ -204,7 +204,7 @@ def notify_after_finish_not_loop():
     notif.notify(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))
 
 
-def force_ime_english():
+def ensure_IME_lang_en():
     """
     切换输入法语言/键盘语言至英文
 
@@ -221,7 +221,7 @@ def force_ime_english():
 
 def auto_login():
     def auto_type(text):
-        force_ime_english()
+        ensure_IME_lang_en()
         auto.secretly_write(text, interval=0.1)
 
     account, password = load_acc_and_pwd(gamereg_uid())
@@ -239,7 +239,7 @@ def auto_login():
 
 def auto_login_os():
     def auto_type(text):
-        force_ime_english()
+        ensure_IME_lang_en()
         time.sleep(1)
         auto.secretly_write(text, interval=0.1)
 
