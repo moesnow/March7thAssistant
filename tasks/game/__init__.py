@@ -60,6 +60,10 @@ def start_game():
                 auto_login()
             else:
                 raise Exception("账号登录过期")
+        if auto.find_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
+            if load_acc_and_pwd(gamereg_uid()) != (None, None):
+                log.info("检测到登录过期，尝试自动登录")
+                auto_login_os()
         return False
 
     def get_process_path(name):
@@ -200,23 +204,25 @@ def notify_after_finish_not_loop():
     notif.notify(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))
 
 
+def force_ime_english():
+    """
+    切换输入法语言/键盘语言至英文
+
+    分两种情况，若系统有英语语言，则切换至英语语言，若没有，则切换输入法语言为英文
+    """
+    import win32api
+    import win32gui
+    from win32con import WM_INPUTLANGCHANGEREQUEST
+    EN = 0x0409
+    hwnd = win32gui.GetForegroundWindow()
+    result = win32api.SendMessage(hwnd, WM_INPUTLANGCHANGEREQUEST, 0, EN)
+    return result == 0
+
+
 def auto_login():
     def auto_type(text):
-        after_alpha = False
-        for character in text:
-            if character.isalpha():
-                after_alpha = True
-            else:
-                if after_alpha:
-                    after_alpha = False
-                    # 切换两下中英文模式，避免中文输入法影响英文输入
-                    auto.secretly_press_key("shift", wait_time=0.1)
-                    auto.secretly_press_key("shift", wait_time=0.1)
-            auto.secretly_press_key(character, wait_time=0.1)
-        if text[-1].isalpha():
-            auto.secretly_press_key("shift", wait_time=0.1)
-            auto.secretly_press_key("shift", wait_time=0.1)
-        time.sleep(2)
+        force_ime_english()
+        auto.secretly_write(text, interval=0.1)
 
     account, password = load_acc_and_pwd(gamereg_uid())
     if auto.click_element("./assets/images/screen/account_and_password.png", "image", 0.9, max_retries=10):
@@ -228,4 +234,21 @@ def auto_login():
                     if auto.click_element("./assets/images/screen/enter_game.png", "image", 0.9, max_retries=10):
                         if auto.find_element("./assets/images/screen/welcome.png", "image", 0.9, max_retries=10):
                             return
+    raise Exception("尝试自动登录失败")
+
+
+def auto_login_os():
+    def auto_type(text):
+        force_ime_english()
+        time.sleep(1)
+        auto.secretly_write(text, interval=0.1)
+
+    account, password = load_acc_and_pwd(gamereg_uid())
+    if auto.click_element("./assets/images/screen/account_field_os.png", "image", 0.9, max_retries=10):
+        auto_type(account)
+        if auto.click_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
+            auto_type(password)
+            if auto.click_element("./assets/images/screen/enter_game.png", "image", 0.9, max_retries=10):
+                if auto.find_element("./assets/images/screen/welcome.png", "image", 0.9, max_retries=10):
+                    return
     raise Exception("尝试自动登录失败")
