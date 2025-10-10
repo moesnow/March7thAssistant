@@ -575,10 +575,16 @@ class SettingInterface(ScrollArea):
             "新版本将更加稳定并拥有更多功能（建议启用）",
             "check_update"
         )
+        self.pauseAfterSuccess = SwitchSettingCard1(
+            FIF.SYNC,
+            self.tr('成功后暂停程序'),
+            "如果勾选，除非循环模式，执行成功后暂停程序。",
+            "pause_after_success"
+        )
         self.exitAfterFailure = SwitchSettingCard1(
             FIF.SYNC,
             self.tr('失败后直接退出'),
-            "如果勾选，那么失败后直接退出，否则失败后程序暂停。",
+            "如果勾选，那么失败后直接退出，否则失败后暂停程序。",
             "exit_after_failure"
         )
         self.afterFinishCard = ComboBoxSettingCard2(
@@ -859,6 +865,8 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.gamePathCard)
         # self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.checkUpdateCard)
+        self.ProgramGroup.addSettingCard(self.pauseAfterSuccess)
+        self.ProgramGroup.addSettingCard(self.exitAfterFailure)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
         self.ProgramGroup.addSettingCard(self.ScriptPathCard)
         self.ProgramGroup.addSettingCard(self.loopModeCard)
