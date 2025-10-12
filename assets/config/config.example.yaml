@@ -7,6 +7,9 @@ log_level: INFO # 日志等级，可选值：INFO, DEBUG。INFO 仅记录重要�
 # 更新检查
 check_update: true # 是否检查更新。true 检查，false 不检查。
 
+# 成功后暂停
+pause_after_success: true # 是否在成功后暂停程序。true 若非循环执行则暂停程序，false 直接退出。
+
 # 失败后直接退出
 exit_after_failure: false # 是否在失败后直接退出。true 直接退出，false 暂停程序。
 
