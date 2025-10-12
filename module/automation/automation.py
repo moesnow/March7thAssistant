@@ -42,6 +42,7 @@ class Automation(metaclass=SingletonMeta):
         self.press_key = self.input_handler.press_key
         self.secretly_press_key = self.input_handler.secretly_press_key
         self.press_mouse = self.input_handler.press_mouse
+        self.secretly_write = self.input_handler.secretly_write
 
     def take_screenshot(self, crop=(0, 0, 1, 1)):
         """

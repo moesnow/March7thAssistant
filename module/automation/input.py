@@ -77,3 +77,11 @@ class Input:
             self.logger.debug("按下鼠标左键")
         except Exception as e:
             self.logger.error(f"按下鼠标左键出错：{e}")
+
+    def secretly_write(self, text, interval = 0.1):
+        '''模拟键盘输入字符串，可以指定字符输入间隔'''
+        try:
+            pyautogui.write(text, interval=interval)
+            self.logger.debug("键盘输入 ***")
+        except Exception as e:
+            self.logger.error(f"键盘输入 *** 出错：{e}")
