@@ -24,6 +24,12 @@ Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删�
 
 火绒安全软件：`主界面` → `右上角菜单` → `信任区` 可以参考 [教程](https://cs.xunyou.com/html/282/15252.shtml) 图示操作
 
+### Q：双（多）显示器导致识别异常等其他问题
+
+A：尝试开关选项 设置-杂项-在多显示器上进行截屏
+
+相关讨论见：[#383](https://github.com/moesnow/March7thAssistant/issues/383) [#710](https://github.com/moesnow/March7thAssistant/issues/710)
+
 ### Q：缺少新增加的副本？逐光捡金缺少新角色？
 
 A：在`副本名称`界面手动输入名称，或编辑 `assets\config\instance_names.json` 文件手动添加。
