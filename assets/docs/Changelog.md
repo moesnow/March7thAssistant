@@ -1,5 +1,16 @@
 # 更新日志
 
+## v2025.10.15
+
+- 支持 3.6 版本新增角色
+- 优化自动登录过程并适配国际服 [#706](https://github.com/moesnow/March7thAssistant/pull/706)
+- 支持队伍中有角色死亡时继续挑战副本 [#705](https://github.com/moesnow/March7thAssistant/pull/705)
+- 延迟部分超时时间优化机械硬盘使用体验 [#701](https://github.com/moesnow/March7thAssistant/pull/701)
+- 新增选项 “成功后暂停程序” 和 “失败后直接退出” [#704](https://github.com/moesnow/March7thAssistant/pull/704) [#709](https://github.com/moesnow/March7thAssistant/pull/709)
+- 修复部分用户可能会出现的下载异常
+- 优化下载程序支持自动使用系统代理
+- 优化重置配置文件功能的错误提示信息
+
 ## v2025.9.25
 
 - 支持 3.6 版本新增关卡和角色
