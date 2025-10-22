@@ -366,7 +366,7 @@ class Automation(metaclass=SingletonMeta):
         y = (top + bottom) // 2 + offset[1]
         return x, y
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right"):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0):
         """
         查找元素，并根据指定的查找类型执行不同的查找策略。
         :param target: 查找目标，可以是图像路径或文字。
@@ -383,6 +383,7 @@ class Automation(metaclass=SingletonMeta):
         :param source_type: 查找参照物的类型。
         :param pixel_bgr: 颜色查找时的BGR值。
         :param position: 查找方位，'top_left', 'top_right', 'bottom_left', 或 'bottom_right'。
+        :param retry_delay: 每次重试之间的等待时间（秒），默认1.0秒。
         :return: 查找到的元素位置，或者在图像计数查找时返回计数。
         """
         take_screenshot = take_screenshot and need_ocr
@@ -411,7 +412,7 @@ class Automation(metaclass=SingletonMeta):
                 raise ValueError("错误的类型")
 
             if i < max_retries - 1:
-                time.sleep(1)  # 在重试前等待一定时间
+                time.sleep(retry_delay)  # 在重试前等待一定时间
         return None
 
     def click_element_with_pos(self, coordinates, offset=(0, 0), action="click"):
@@ -441,7 +442,7 @@ class Automation(metaclass=SingletonMeta):
 
         return True
 
-    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click"):
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0):
         """
         查找并点击屏幕上的元素。
 
@@ -449,11 +450,12 @@ class Automation(metaclass=SingletonMeta):
         同 find_element 方法的参数，以及：
         offset: 点击坐标的偏移量。
         action: 执行的动作。
+        retry_delay: 每次重试之间的等待时间（秒），默认1.0秒。
 
         返回:
         如果找到元素并点击成功，则返回True；否则返回False。
         """
-        coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot, relative, scale_range, include, need_ocr, source, source_type, pixel_bgr, position)
+        coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot, relative, scale_range, include, need_ocr, source, source_type, pixel_bgr, position, retry_delay)
         if coordinates:
             return self.click_element_with_pos(coordinates, offset, action)
         return False
