@@ -1,11 +1,120 @@
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtWidgets import QLabel, QHBoxLayout
+from PyQt5.QtCore import Qt, QUrl, QSize
+from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushButton, QToolButton
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
-from qfluentwidgets import MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit, BodyLabel, FluentStyleSheet, TextEdit
+from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
+                            BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
+                            isDarkTheme, Theme)
 from typing import Optional
 from module.config import cfg
 import datetime
 import json
+
+
+class SliderWithSpinBox(QHBoxLayout):
+    def __init__(self, min_value: int, max_value: int, step: int = 1, parent=None):
+        super().__init__()
+
+        font = QFont()
+        font.setPointSize(11)
+
+        # 创建滑块
+        self.slider = Slider(Qt.Horizontal, parent)
+        self.slider.setRange(min_value, max_value)
+        self.slider.setSingleStep(step)
+        self.slider.setMinimumWidth(268)  # 与 RangeSettingCard1 保持一致
+
+        # 创建数字显示
+        self.valueLabel = QLabel(parent)
+        self.valueLabel.setFont(font)
+        self.valueLabel.setNum(min_value)
+        self.valueLabel.setObjectName('valueLabel')
+
+        # 创建加减按钮
+        self.minusButton = QToolButton(parent)
+        self.plusButton = QToolButton(parent)
+
+        # 设置按钮样式
+        self.updateButtonStyle()
+
+        self.minusButton.setFixedSize(28, 28)
+        self.plusButton.setFixedSize(28, 28)
+        self.minusButton.setIconSize(QSize(12, 12))
+        self.plusButton.setIconSize(QSize(12, 12))
+
+        # 布局
+        self.addStretch(1)
+        self.addWidget(self.valueLabel)
+        self.addSpacing(10)
+        self.addWidget(self.minusButton)
+        self.addSpacing(4)
+        self.addWidget(self.slider)
+        self.addSpacing(4)
+        self.addWidget(self.plusButton)
+        self.addSpacing(16)
+
+        # 监听主题变化
+        qconfig.themeChanged.connect(self.updateButtonStyle)
+
+        # 连接信号
+        self.slider.valueChanged.connect(self.__onValueChanged)
+        self.minusButton.clicked.connect(self.decreaseValue)
+        self.plusButton.clicked.connect(self.increaseValue)
+
+    def __onValueChanged(self, value: int):
+        self.valueLabel.setNum(value)
+        self.valueLabel.adjustSize()
+
+    def setValue(self, value: int):
+        self.slider.setValue(value)
+        self.valueLabel.setNum(value)
+        self.valueLabel.adjustSize()
+
+    def value(self) -> int:
+        return self.slider.value()
+
+    def decreaseValue(self):
+        value = self.slider.value()
+        if value > self.slider.minimum():
+            self.slider.setValue(value - 1)
+
+    def increaseValue(self):
+        value = self.slider.value()
+        if value < self.slider.maximum():
+            self.slider.setValue(value + 1)
+
+    def updateButtonStyle(self):
+        """根据当前主题更新按钮样式"""
+        style = '''
+            QToolButton {
+                background-color: transparent;
+                border: 1px solid %s;
+                border-radius: 5px;
+            }
+            QToolButton:hover {
+                background-color: %s;
+            }
+            QToolButton:pressed {
+                background-color: %s;
+            }
+        '''
+
+        if isDarkTheme():
+            # 深色主题
+            border_color = '#424242'
+            hover_color = '#424242'
+            pressed_color = '#333333'
+        else:
+            # 浅色主题
+            border_color = '#E5E5E5'
+            hover_color = '#E5E5E5'
+            pressed_color = '#DDDDDD'
+
+        self.minusButton.setStyleSheet(style % (border_color, hover_color, pressed_color))
+        self.plusButton.setStyleSheet(style % (border_color, hover_color, pressed_color))
+
+        # 更新图标
+        self.minusButton.setIcon(FluentIcon.REMOVE.icon())
+        self.plusButton.setIcon(FluentIcon.ADD.icon())
 
 
 class MessageBoxImage(MessageBox):
@@ -193,6 +302,49 @@ class MessageBoxInstance(MessageBox):
         self.titleLabelInfo = QLabel("说明：未更新副本支持手动输入名称，清体力是根据选择的副本类型来判断的,\n此处设置的副本名称也会用于完成活动或每日实训对应的任务,\n如果即使有对应的任务,你也不希望完成,可以将对应的副本名称改为“无”", parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+
+class MessageBoxInstanceChallengeCount(MessageBox):
+    def __init__(self, title: str, content: dict, parent=None):
+        super().__init__(title, "", parent)
+        self.content = content
+
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.yesButton.setText('确认')
+        self.cancelButton.setText('取消')
+
+        self.buttonGroup.setMinimumWidth(300)
+
+        font = QFont()
+        font.setPointSize(11)
+
+        self.template = {
+            "拟造花萼（金）": 24,
+            "拟造花萼（赤）": 24,
+            "凝滞虚影": 8,
+            "侵蚀隧洞": 6,
+            "饰品提取": 6,
+            "历战余响": 3
+        }
+        self.slider_dict = {}
+        for type, count in self.template.items():
+            horizontalLayout = QHBoxLayout()
+            horizontalLayout.setContentsMargins(24, 8, 24, 8)  # 增加边距使布局更加美观
+
+            # 创建标签
+            titleLabel = QLabel(type, parent)
+            titleLabel.setFont(font)
+            horizontalLayout.addWidget(titleLabel)
+
+            # 创建滑块组件
+            sliderLayout = SliderWithSpinBox(1, count, 1, self)
+            sliderLayout.setValue(self.content[type])
+            horizontalLayout.addLayout(sliderLayout)
+            self.slider_dict[type] = sliderLayout
+
+            self.textLayout.addLayout(horizontalLayout)
 
 
 class MessageBoxNotify(MessageBox):

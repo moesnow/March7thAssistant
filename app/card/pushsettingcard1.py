@@ -3,7 +3,7 @@ from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtGui import QDesktopServices
 from qfluentwidgets import SettingCard, FluentIconBase, InfoBar, InfoBarPosition
-from .messagebox_custom import MessageBoxEdit, MessageBoxEditMultiple, MessageBoxDate, MessageBoxInstance, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends
+from .messagebox_custom import MessageBoxEdit, MessageBoxEditMultiple, MessageBoxDate, MessageBoxInstance, MessageBoxInstanceChallengeCount, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends
 from tasks.base.tasks import start_task
 from module.config import cfg
 from typing import Union
@@ -213,6 +213,21 @@ class PushSettingCardInstance(PushSettingCard):
         if message_box.exec():
             for type, combobox in message_box.comboBox_dict.items():
                 self.configvalue[type] = combobox.text().split('（')[0]
+            cfg.set_value(self.configname, self.configvalue)
+            self.contentLabel.setText(str(self.configvalue))
+
+
+class PushSettingCardInstanceChallengeCount(PushSettingCard):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
+        self.configvalue = cfg.get_value(configname)
+        super().__init__(text, icon, title, configname, str(self.configvalue), parent)
+        self.button.clicked.connect(self.__onclicked)
+
+    def __onclicked(self):
+        message_box = MessageBoxInstanceChallengeCount(self.title, self.configvalue, self.window())
+        if message_box.exec():
+            for type, slider in message_box.slider_dict.items():
+                self.configvalue[type] = slider.value()
             cfg.set_value(self.configname, self.configvalue)
             self.contentLabel.setText(str(self.configvalue))
 

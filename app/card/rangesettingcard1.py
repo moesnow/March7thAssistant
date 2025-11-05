@@ -3,7 +3,8 @@ from typing import Union
 from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QColor, QIcon, QPainter
 from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QToolButton, QVBoxLayout, QPushButton)
-from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, IndicatorPosition, Slider, FluentIcon)
+from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, IndicatorPosition,
+                            Slider, FluentIcon, qconfig, isDarkTheme, Theme)
 
 from module.config import cfg
 
@@ -40,8 +41,9 @@ class RangeSettingCard1(SettingCard):
 
         self.minusButton = QToolButton()  # 新增减按钮
         self.plusButton = QToolButton()   # 新增加按钮
-        self.minusButton.setIcon(FluentIcon.REMOVE.icon())  # 减号按钮图标
-        self.plusButton.setIcon(FluentIcon.ADD.icon())      # 加号按钮图标
+
+        # 设置按钮样式和图标
+        self.updateButtonStyle()
 
         self.minusButton.setFixedSize(28, 28)   # 设置按钮大小
         self.plusButton.setFixedSize(28, 28)    # 设置按钮大小
@@ -49,6 +51,9 @@ class RangeSettingCard1(SettingCard):
         self.plusButton.setIconSize(QSize(12, 12))   # 图标大小
 
         self.slider.setSingleStep(1)
+
+        # 监听主题变化
+        qconfig.themeChanged.connect(self.updateButtonStyle)
         self.slider.setRange(Range[0], Range[1])
         self.slider.setValue(int(cfg.get_value(self.configname)))
         self.valueLabel.setNum(int(cfg.get_value(self.configname)))
@@ -89,3 +94,37 @@ class RangeSettingCard1(SettingCard):
         value = self.slider.value()
         if value < self.slider.maximum():
             self.slider.setValue(value + 1)
+
+    def updateButtonStyle(self):
+        """根据当前主题更新按钮样式"""
+        style = '''
+            QToolButton {
+                background-color: transparent;
+                border: 1px solid %s;
+                border-radius: 5px;
+            }
+            QToolButton:hover {
+                background-color: %s;
+            }
+            QToolButton:pressed {
+                background-color: %s;
+            }
+        '''
+
+        if isDarkTheme():
+            # 深色主题
+            border_color = '#424242'
+            hover_color = '#424242'
+            pressed_color = '#333333'
+        else:
+            # 浅色主题
+            border_color = '#E5E5E5'
+            hover_color = '#E5E5E5'
+            pressed_color = '#DDDDDD'
+
+        self.minusButton.setStyleSheet(style % (border_color, hover_color, pressed_color))
+        self.plusButton.setStyleSheet(style % (border_color, hover_color, pressed_color))
+
+        # 更新图标
+        self.minusButton.setIcon(FluentIcon.REMOVE.icon())
+        self.plusButton.setIcon(FluentIcon.ADD.icon())

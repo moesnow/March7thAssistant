@@ -46,6 +46,13 @@ instance_names:
   侵蚀隧洞: 睿治之径
   饰品提取: 永恒笑剧
   历战余响: 毁灭的开端 # 配置各副本类型的名称。
+instance_names_challenge_count:
+  拟造花萼（金）: 24
+  拟造花萼（赤）: 24
+  凝滞虚影: 8
+  侵蚀隧洞: 6
+  饰品提取: 6
+  历战余响: 3 # 配置各副本类型的连续挑战次数。
 max_calyx_per_round_num_of_attempts: 6 # 设置每轮拟造花萼挑战次数。
 
 # 分解设置
