@@ -441,12 +441,9 @@
             {
                 "target_screen": "universe_main",
                 "actions_list": [
-                    "auto.click_element('模拟宇宙', 'text', None, 10, crop=(238.0 / 1920, 257.0 / 1080, 449.0 / 1920, 525.0 / 1080))",
+                    "auto.click_element('差分宇宙', 'text', None, 10, crop=(238.0 / 1920, 257.0 / 1080, 449.0 / 1920, 525.0 / 1080))",
                     "time.sleep(1)",
-                    "auto.click_element('传送', 'text', None, 10, crop=(684.0 / 1920, 278.0 / 1080, 981.0 / 1920, 656.0 / 1080), action=\"move\")",
-                    "auto.mouse_scroll(50, -1, False)",
-                    "time.sleep(1)",
-                    "auto.click_element('传送', 'min_distance_text', crop=(684.0 / 1920, 278.0 / 1080, 981.0 / 1920, 656.0 / 1080), include=True, source=\"模拟宇宙\", source_type=\"text\")"
+                    "auto.click_element('前往模拟宇宙', 'text', None, 10, crop=(698.0 / 1920, 340.0 / 1080, 203.0 / 1920, 60.0 / 1080))"
                 ]
             },
             {
