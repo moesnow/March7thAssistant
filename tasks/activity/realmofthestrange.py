@@ -7,12 +7,12 @@ class RealmOfTheStrange(DoubleActivity):
     def __init__(self, name, enabled, instance_names, instance_names_challenge_count):
         super().__init__(name, enabled)
         self.instance_names = instance_names
-        self.challenge_count = instance_names_challenge_count[instance_names]
+        self.challenges_count = instance_names_challenge_count
 
     def _run_instances(self, reward_count):
         instance_type = "侵蚀隧洞"
         instance_name = self.instance_names[instance_type]
-        challenge_count = self.challenge_count
+        challenge_count = self.challenges_count[instance_type]
         instance_power_min = 40
         if (challenge_count >= 1 and challenge_count <= 6):
             instance_power_max = challenge_count * 40
