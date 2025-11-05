@@ -4,19 +4,33 @@ from .doubleactivity import DoubleActivity
 
 
 class RealmOfTheStrange(DoubleActivity):
-    def __init__(self, name, enabled, instance_names):
+    def __init__(self, name, enabled, instance_names, instance_names_challenge_count):
         super().__init__(name, enabled)
         self.instance_names = instance_names
+        self.challenge_count = instance_names_challenge_count[instance_names]
 
     def _run_instances(self, reward_count):
         instance_type = "侵蚀隧洞"
         instance_name = self.instance_names[instance_type]
-        instance_power = 40
+        challenge_count = self.challenge_count
+        instance_power_min = 40
+        if (challenge_count >= 1 and challenge_count <= 6):
+            instance_power_max = challenge_count * 40
+        else:
+            instance_power_max = 6 * 40
 
-        power = min(Power.get(), reward_count * instance_power)
+        power = min(Power.get(), reward_count * instance_power_min)
 
-        full_runs = power // instance_power
+        full_runs = power // instance_power_max
         if full_runs:
-            Instance.run(instance_type, instance_name, instance_power, full_runs)
+            result = Instance.run(instance_type, instance_name, instance_power_max, full_runs)
+            if result == "Failed":
+                return False
+
+        partial_run_power = power % instance_power_max
+        if partial_run_power >= instance_power_min:
+            result = Instance.run(instance_type, instance_name, partial_run_power, 1)
+            if result == "Failed":
+                return False
 
         return True

@@ -2,7 +2,7 @@ from module.screen import screen
 from module.automation import auto
 from module.logger import log
 from module.config import cfg
-from tasks.power.instance import Instance, CalyxInstance
+from tasks.power.instance import Instance
 from tasks.weekly.universe import Universe
 import time
 
@@ -14,7 +14,7 @@ class Power:
 
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names[cfg.instance_type]
-        max_calyx_per_round_num_of_attempts = cfg.max_calyx_per_round_num_of_attempts
+        challenge_count = cfg.instance_names_challenge_count[cfg.instance_type]
 
         if not Instance.validate_instance(instance_type, instance_name):
             return False
@@ -24,11 +24,8 @@ class Power:
         if "饰品提取" in instance_type:
             power = Power.get()
             Power.process_ornament(instance_type, instance_name, power)
-        elif "拟造花萼" in instance_type:
-            Power.process_calyx(instance_type, instance_name, max_calyx_per_round_num_of_attempts)
         else:
-            power = Power.get()
-            Power.process_standard(instance_type, instance_name, power)
+            Power.process_standard(instance_type, instance_name, challenge_count)
 
         log.hr("完成", 2)
 
@@ -80,13 +77,27 @@ class Power:
             Instance.run(instance_type, instance_name, 40, immersifier_count + full_runs)
 
     @staticmethod
-    def process_calyx(instance_type, instance_name, max_calyx_per_round_num_of_attempts):
-        # 处理拟造花萼的体力消耗
-        instance_power_min = 10
-        if (max_calyx_per_round_num_of_attempts >= 1 and max_calyx_per_round_num_of_attempts <= 6):
-            instance_power_max = max_calyx_per_round_num_of_attempts * 10
+    def process_standard(instance_type, instance_name, challenge_count):
+        instances_power = {
+            "拟造花萼（金）": 10,
+            "拟造花萼（赤）": 10,
+            "凝滞虚影": 30,
+            "侵蚀隧洞": 40,
+            "历战余响": 30
+        }
+        challenges_count_max = {
+            "拟造花萼（金）": 24,
+            "拟造花萼（赤）": 24,
+            "凝滞虚影": 8,
+            "侵蚀隧洞": 6,
+            "历战余响": 3
+        }
+        instance_power_min = instances_power[instance_type]
+        challenge_count_max = challenges_count_max[instance_type]
+        if (challenge_count >= 1 and challenge_count <= challenge_count_max):
+            instance_power_max = challenge_count * instance_power_min
         else:
-            instance_power_max = 60
+            instance_power_max = challenge_count_max * instance_power_min
         while True:
             power = Power.get()
 
@@ -96,48 +107,16 @@ class Power:
 
             full_runs = power // instance_power_max
             if full_runs >= 1:
-                result = CalyxInstance.run(instance_type, instance_name, instance_power_max, full_runs)
+                result = Instance.run(instance_type, instance_name, instance_power_max, full_runs)
                 if result == "Failed":
                     continue
 
             remain_runs = (power % instance_power_max) // instance_power_min
             if remain_runs >= 1:
-                result = CalyxInstance.run(instance_type, instance_name, remain_runs * instance_power_min, 1)
+                result = Instance.run(instance_type, instance_name, remain_runs * instance_power_min, 1)
                 if result == "Failed":
                     continue
             break
-
-    @staticmethod
-    def process_standard(instance_type, instance_name, power):
-        instance_powers = {
-            "凝滞虚影": 30,
-            "侵蚀隧洞": 40,
-            "历战余响": 30
-        }
-        instance_power = instance_powers[instance_type]
-
-        full_runs = power // instance_power
-        if full_runs:
-            Instance.run(instance_type, instance_name, instance_power, full_runs)
-        else:
-            log.info(f"🟣开拓力 < {instance_power}")
-
-    # @staticmethod
-    # def customize_run(instance_type, instance_name, power_need, runs):
-    #     if not Instance.validate_instance(instance_type, instance_name):
-    #         return False
-
-    #     log.hr(f"准备{instance_type}", 2)
-
-    #     power = Power.get()
-
-    #     if power < power_need * runs:
-    #         log.info(f"🟣开拓力 < {power_need}*{runs}")
-    #         return False
-    #     elif "拟造花萼" in instance_type:
-    #         return CalyxInstance.run(instance_type, instance_name, power_need * runs)
-    #     else:
-    #         return Instance.run(instance_type, instance_name, power_need, runs)
 
     @staticmethod
     def get():
