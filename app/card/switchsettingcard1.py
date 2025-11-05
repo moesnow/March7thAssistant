@@ -276,7 +276,7 @@ class SwitchSettingCardEchoofwar(SettingCard):
         for text, option in zip(texts, options):
             self.comboBox.addItem(text, userData=option)
 
-        self.comboBox.setCurrentText(cfg.get_value("echo_of_war_start_day_of_week"))
+        self.comboBox.setCurrentText(texts[cfg.get_value("echo_of_war_start_day_of_week") - 1])
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
         self.switchButton = SwitchButton(self.tr('关'), self, IndicatorPosition.RIGHT)
