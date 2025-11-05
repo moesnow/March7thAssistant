@@ -166,9 +166,12 @@ class MessageBoxInstance(MessageBox):
 
         self.comboBox_dict = {}
         for type, names in self.template.items():
+            horizontalLayout = QHBoxLayout()
+
             titleLabel = QLabel(type, parent)
-            titleLabel.setFont(font)
-            self.textLayout.addWidget(titleLabel, 0, Qt.AlignTop)
+            # titleLabel.setFont(font)
+            # titleLabel.setMinimumWidth(100)
+            horizontalLayout.addWidget(titleLabel)
 
             # comboBox = ComboBox()
             comboBox = EditableComboBox()
@@ -183,10 +186,12 @@ class MessageBoxInstance(MessageBox):
             if not has_default:
                 comboBox.setText(self.content[type])
 
-            self.textLayout.addWidget(comboBox, 0, Qt.AlignTop)
+            horizontalLayout.addWidget(comboBox)
+            self.textLayout.addLayout(horizontalLayout)
             self.comboBox_dict[type] = comboBox
 
         self.titleLabelInfo = QLabel("说明：未更新副本支持手动输入名称，清体力是根据选择的副本类型来判断的,\n此处设置的副本名称也会用于完成活动或每日实训对应的任务,\n如果即使有对应的任务,你也不希望完成,可以将对应的副本名称改为“无”", parent)
+        self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
 
@@ -269,7 +274,7 @@ class MessageBoxTeam(MessageBox):
         self.buttonGroup.setMinimumWidth(400)
 
         font = QFont()
-        font.setPointSize(12)
+        font.setPointSize(11)
 
         self.template = template
 
@@ -282,28 +287,33 @@ class MessageBoxTeam(MessageBox):
 
         self.comboBox_list = []
         for i in range(1, 5):
+            # 将 titleLabel 与两个下拉框放在同一行
+            horizontalLayout = QHBoxLayout()
+
             titleLabel = QLabel(f"{i}号位", parent)
             titleLabel.setFont(font)
-            self.textLayout.addWidget(titleLabel, 0, Qt.AlignTop)
+            # titleLabel.setMinimumWidth(60)
+            titleLabel.setAlignment(Qt.AlignVCenter)
+            horizontalLayout.addWidget(titleLabel)
 
             charComboBox = ComboBox()
-            charComboBox.setMaximumWidth(150)
+            charComboBox.setMinimumWidth(130)
             charComboBox.addItems(self.template.values())
             charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
+            horizontalLayout.addWidget(charComboBox)
 
             techComboBox = ComboBox()
-            techComboBox.setMaximumWidth(150)
+            techComboBox.setMinimumWidth(130)
             techComboBox.addItems(self.tech_map.values())
             techComboBox.setCurrentText(self.tech_map[self.content[i - 1][1]])
-
-            horizontalLayout = QHBoxLayout()
-            horizontalLayout.addWidget(charComboBox)
             horizontalLayout.addWidget(techComboBox)
+
             self.textLayout.addLayout(horizontalLayout)
 
             self.comboBox_list.append((charComboBox, techComboBox))
 
-        self.titleLabelInfo = QLabel("说明：每个队伍中只允许一名角色配置为“秘技 / 开怪”，\n数字代表秘技使用次数，其中-1代表最后一个放秘技并开怪的角色", parent)
+        self.titleLabelInfo = QLabel("每个队伍只允许一名角色配置为“秘技 / 开怪”", parent)
+        self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
 
