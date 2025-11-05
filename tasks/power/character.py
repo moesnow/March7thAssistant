@@ -37,7 +37,7 @@ class Character:
                 log.error("找不到支援按钮")
                 return False
         elif type == "ornament":
-            if not auto.click_element("支援", "text", max_retries=10, crop=(994.0 / 1920, 765.0 / 1080, 160.0 / 1920, 116.0 / 1080)):
+            if not auto.click_element("支援", "text", max_retries=10, crop=(876.0 / 1920, 868.0 / 1080, 155.0 / 1920, 54.0 / 1080)):
                 log.error("找不到支援按钮")
                 return False
         time.sleep(1)
@@ -118,7 +118,7 @@ class Character:
         Character.complete_daily_task()
         auto.press_key("esc")
         time.sleep(1)
-        auto.find_element("解除支援", "text", max_retries=10, crop=(994.0 / 1920, 765.0 / 1080, 160.0 / 1920, 116.0 / 1080))
+        auto.find_element("解除支援", "text", max_retries=10, crop=(876.0 / 1920, 868.0 / 1080, 155.0 / 1920, 54.0 / 1080))
 
     @staticmethod
     def complete_daily_task():
@@ -142,4 +142,4 @@ class Character:
         if type == "standard":
             auto.find_element("支援", "text", max_retries=10, crop=(1670 / 1920, 700 / 1080, 225 / 1920, 74 / 1080))
         elif type == "ornament":
-            auto.find_element("支援", "text", max_retries=10, crop=(994.0 / 1920, 765.0 / 1080, 160.0 / 1920, 116.0 / 1080))
+            auto.find_element("支援", "text", max_retries=10, crop=(876.0 / 1920, 868.0 / 1080, 155.0 / 1920, 54.0 / 1080))
