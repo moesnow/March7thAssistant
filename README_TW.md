@@ -19,7 +19,7 @@
 
 <div align="center">
 
-[简体中文](./README.md) | **繁體中文** | [English](./README_EN.md)
+[简体中文](./README.md) | **繁體中文** | [English](./README_EN.md) | [日本語](./README_JA.md)
 
 **繁體中文版本由 ChatGPT 生成，遊戲內語言目前僅支援簡體中文**
 
