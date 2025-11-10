@@ -44,7 +44,8 @@ class SMTPNotifier(Notifier):
             smtp = smtplib.SMTP_SSL(host, port, context=sslcontext(ssl_unverified))
         else:
             smtp = smtplib.SMTP(host, port)
-        smtp.login(user, password)
+        if user != '':
+            smtp.login(user, password)
         smtp.sendmail(From, To, msg.as_string())
         smtp.quit()
 
