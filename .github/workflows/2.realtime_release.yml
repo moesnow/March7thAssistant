@@ -31,7 +31,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.13"
+          python-version: "3.12.10"
           cache: "pip"
 
       # 安装依赖
