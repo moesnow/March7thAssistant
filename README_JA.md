@@ -2,7 +2,7 @@
   <h1 align="center">
     <img src="./assets/screenshot/March7th.png" width="200">
     <br/>
-    March7thAssistant · 三月七小助手
+    March7thAssistant
   </h1>
   <a href="https://trendshift.io/repositories/3892" target="_blank"><img src="https://trendshift.io/api/badge/repositories/3892" alt="moesnow%2FMarch7thAssistant | Trendshift" style="width: 200px; height: 46px;" width="250" height="46"/></a>
 </div>
@@ -20,6 +20,8 @@
 <div align="center">
 
 [简体中文](./README.md) | [繁體中文](./README_TW.md) | [English](./README_EN.md) | **日本語**
+
+**ゲーム内の言語は現在、簡体字中国語のみに対応しています。**
 
 クイックスタートガイド：[使用チュートリアル](https://m7a.top/#/assets/docs/Tutorial)
 
