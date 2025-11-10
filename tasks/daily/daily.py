@@ -16,6 +16,7 @@ from tasks.weekly.echoofwar import Echoofwar
 from utils.color import red, green, yellow
 import datetime
 
+
 class Daily:
     @staticmethod
     def start():
@@ -48,11 +49,11 @@ class Daily:
             log.info("锄大地尚未刷新")
 
         if cfg.weekly_divergent_enable:
-            if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
+            if Date.is_next_2weeks_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
                 if Universe.start(1, False, "divergent"):
                     cfg.save_timestamp("weekly_divergent_timestamp")
             else:
-                log.info("每周一次差分宇宙尚未刷新")
+                log.info("每两周一次差分宇宙尚未刷新")
 
         if cfg.universe_frequency == "weekly":
             if Date.is_next_mon_x_am(cfg.universe_timestamp, cfg.refresh_hour):
@@ -135,9 +136,9 @@ class Daily:
                 "登录游戏": lambda: True,
                 "拍照1次": lambda: Photo.photograph(),
                 "使用1次「万能合成机」": lambda: Synthesis.material(),
-                #"合成1次消耗品": lambda: Synthesis.consumables(),
-                #"合成1次材料": lambda: Synthesis.material(),
-                #"使用1件消耗品": lambda: Synthesis.use_consumables(),
+                # "合成1次消耗品": lambda: Synthesis.consumables(),
+                # "合成1次材料": lambda: Synthesis.material(),
+                # "使用1件消耗品": lambda: Synthesis.use_consumables(),
                 # "完成1次「拟造花萼（金）」": lambda: Power.customize_run("拟造花萼（金）", cfg.instance_names["拟造花萼（金）"], 10, 1),
                 # "完成1次「拟造花萼（赤）」": lambda: Power.customize_run("拟造花萼（赤）", cfg.instance_names["拟造花萼（赤）"], 10, 1),
                 # "完成1次「凝滞虚影」": lambda: Power.customize_run("凝滞虚影", cfg.instance_names["凝滞虚影"], 30, 1),

@@ -28,10 +28,22 @@ class Date:
             days_until_next_monday = (7 - dt_object.weekday()) % 7 if dt_object.weekday() != 0 else 7
             next_monday_x_am = dt_object.replace(hour=hour, minute=0, second=0, microsecond=0) + timedelta(days=days_until_next_monday)
 
-        if current_time >= next_monday_x_am:
-            return True
+        return current_time >= next_monday_x_am
 
-        return False
+    @staticmethod
+    def is_next_2weeks_mon_x_am(timestamp, hour=4):
+        dt_object = datetime.fromtimestamp(timestamp)
+        current_time = datetime.now()
+
+        if dt_object.weekday() == 0 and dt_object.hour < hour:
+            next_monday_x_am = dt_object.replace(hour=hour, minute=0, second=0, microsecond=0)
+        else:
+            days_until_next_monday = (7 - dt_object.weekday()) % 7 if dt_object.weekday() != 0 else 7
+            next_monday_x_am = dt_object.replace(hour=hour, minute=0, second=0, microsecond=0) + timedelta(days=days_until_next_monday)
+
+        next_2weeks_monday_x_am = next_monday_x_am + timedelta(days=7)
+
+        return current_time >= next_2weeks_monday_x_am
 
     @staticmethod
     def get_time_next_x_am(hour=4):
