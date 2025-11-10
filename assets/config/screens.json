@@ -95,7 +95,7 @@
                 "actions_list": [
                     "auto.click_element('./assets/images/share/menu/more.png', 'image', 0.9)",
                     "time.sleep(2)",
-                    "auto.click_element('兑换码', 'text', None, 2, crop=(1261.0 / 1920, 1.0 / 1080, 552.0 / 1920, 346.0 / 1080))"
+                    "auto.click_element('兑换码', 'text', None, 2, crop=(1261.0 / 1920, 1.0 / 1080, 552.0 / 1920, 420.0 / 1080))"
                 ]
             },
             {
