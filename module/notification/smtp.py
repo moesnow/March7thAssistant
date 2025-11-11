@@ -13,8 +13,8 @@ class SMTPNotifier(Notifier):
 
     def send(self, title: str, content: str, image_io=None):
         host = self.params["host"]
-        user = self.params["user"]
-        password = self.params["password"]
+        user = self.params.get("user", '')
+        password = self.params.get("password", '')
         From = self.params.get("From", user)
         To = self.params.get("To", user)
         port = self.params.get("port", 465)
