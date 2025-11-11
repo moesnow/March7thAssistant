@@ -30,6 +30,10 @@ A：尝试开关选项 设置-杂项-在多显示器上进行截屏
 
 相关讨论见：[#383](https://github.com/moesnow/March7thAssistant/issues/383) [#710](https://github.com/moesnow/March7thAssistant/issues/710)
 
+### Q：不会自动战斗
+
+A：检查游戏内设置-战斗功能-是否沿用自动战斗设置，修改为“是”
+
 ### Q：缺少新增加的副本？逐光捡金缺少新角色？
 
 A：在`副本名称`界面手动输入名称，或编辑 `assets\config\instance_names.json` 文件手动添加。
