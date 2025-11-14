@@ -184,7 +184,7 @@
 - Lark（飞书）
 - Custom
 
-> 其中 Telegram、SMTP、WeChatworkapp、OneBot、Go-cqhttp、Lark、Custom 支持发送截图，欢迎 PR 适配其他推送方式
+> 其中 Telegram、SMTP、OneBot 等支持发送截图，欢迎 PR 适配其他推送方式
 
 ### 按键
 
