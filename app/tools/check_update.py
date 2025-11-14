@@ -10,6 +10,7 @@ from enum import Enum
 import subprocess
 import markdown
 import requests
+import sys
 import re
 import os
 
@@ -41,7 +42,7 @@ class UpdateThread(QThread):
         response = requests.get(
             FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not cfg.update_prerelease_enable),
             timeout=10,
-            headers=cfg.useragent
+            headers=(cfg.useragent if isinstance(cfg.useragent, dict) else None)
         )
         response.raise_for_status()
         return response.json()[0] if cfg.update_prerelease_enable else response.json()
@@ -68,7 +69,7 @@ class UpdateThread(QThread):
             if cfg.update_source == "GitHub":
                 content = content + "\n\n若下载速度较慢，可尝试使用 Mirror酱（设置 → 关于 → 更新源） 高速下载"
             assert_url = self.get_download_url_from_assets(data["assets"])
-            assert_name = assert_url.split("/")[-1]
+            assert_name = assert_url.split("/")[-1] if assert_url else None
 
             if assert_url is None:
                 self.updateSignal.emit(UpdateStatus.SUCCESS)
@@ -82,7 +83,7 @@ class UpdateThread(QThread):
                 response = requests.get(
                     f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}",
                     timeout=10,
-                    headers=cfg.useragent
+                    headers=(cfg.useragent if isinstance(cfg.useragent, dict) else None)
                 )
                 if response.status_code == 200:
                     mirrorchyan_data = response.json()
@@ -106,12 +107,12 @@ class UpdateThread(QThread):
                         }
                         if self.code in cdk_error_messages:
                             self.error_msg = cdk_error_messages[self.code]
-                    except:
+                    except Exception:
                         self.error_msg = "Mirror酱API请求失败"
                     self.updateSignal.emit(UpdateStatus.FAILURE)
                     return
 
-            if parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
+            if assert_url and parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
                 self.title = f"发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)"
                 self.content = "<style>a {color: #f18cb9; font-weight: bold;}</style>" + markdown.markdown(content)
                 self.assert_url = assert_url
@@ -140,13 +141,20 @@ def checkUpdate(self, timeout=5, flag=False):
                 assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
                 # assert_url = self.update_thread.assert_url
                 assert_name = self.update_thread.assert_name
-                subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
+
+                if os.path.exists(source_file):
+                    # 优先使用打包好的更新器 EXE
+                    subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
+                else:
+                    # 回退：开发/未打包环境，用当前 Python 运行 updater.py
+                    updater_py = os.path.abspath("./updater.py")
+                    subprocess.Popen([sys.executable, updater_py, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
         elif status == UpdateStatus.SUCCESS:
             # 显示当前为最新版本的信息
             InfoBar.success(
                 title=self.tr('当前是最新版本(＾∀＾●)'),
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -157,7 +165,7 @@ def checkUpdate(self, timeout=5, flag=False):
             InfoBar.warning(
                 title=self.tr('检测更新失败(╥╯﹏╰╥)'),
                 content=self.update_thread.error_msg,
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
