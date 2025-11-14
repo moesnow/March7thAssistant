@@ -1006,8 +1006,3 @@ class SettingInterface(ScrollArea):
             return
         cfg.set_value("script_path", script_path)
         self.ScriptPathCard.setContent(script_path)
-        widget = self.stackedWidget.widget(index)
-        self.pivot.setCurrentItem(widget.objectName())
-
-        self.verticalScrollBar().setValue(0)
-        self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
