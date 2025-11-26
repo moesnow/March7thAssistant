@@ -223,11 +223,11 @@ def after_finish_is_loop():
             log.hr("完成", 2)
             return
         else:
-            starrail.stop_game()
+            get_game_controller().stop_game()
             wait_time = get_wait_time(current_power)
             future_time = Date.calculate_future_time(wait_time)
     else:
-        starrail.stop_game()
+        get_game_controller().stop_game()
         scheduled_time = cfg.scheduled_time
         wait_time = Date.time_to_seconds(scheduled_time)
         future_time = Date.calculate_future_time(scheduled_time)
