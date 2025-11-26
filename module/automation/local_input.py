@@ -1,8 +1,10 @@
 import pyautogui
 import time
 
+from module.automation.input_base import InputBase
 
-class Input:
+
+class LocalInput(InputBase):
     # 禁用pyautogui的失败安全特性，防止意外中断
     pyautogui.FAILSAFE = False
 

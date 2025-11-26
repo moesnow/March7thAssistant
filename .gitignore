@@ -196,3 +196,6 @@ smtp_temp.bin
 
 # QFluentWidgets Config
 /config/config.json
+
+# cloud game support
+/3rdparty/WebBrowser

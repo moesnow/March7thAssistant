@@ -2,7 +2,7 @@ from tasks.base.download import download_with_progress
 from module.logger import log
 from module.config import cfg
 from utils.command import subprocess_with_stdout
-from utils.gamecontroller import GameController
+from module.game import get_game_controller
 from packaging.version import parse
 import subprocess
 import tempfile
@@ -67,7 +67,7 @@ class PythonChecker:
 
         if PythonChecker.check(destination_path):
             cfg.set_value("python_exe_path", destination_path)
-            game = GameController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
+            game = get_game_controller()
             game.switch_to_game()
             return
 

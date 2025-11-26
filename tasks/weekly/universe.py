@@ -198,7 +198,10 @@ class Universe:
     @staticmethod
     def start(nums=cfg.universe_count, save=True, category=cfg.universe_category):
         log.hr("准备模拟宇宙", 0)
-
+        if cfg.cloud_game_enable and cfg.browser_headless_enable:
+            log.error("模拟宇宙不支持无界面模式运行")
+            return False
+        
         if Universe.before_start():
 
             if category == "divergent":

@@ -22,7 +22,7 @@ from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
 from module.config import cfg
-from utils.gamecontroller import GameController
+from module.game import get_game_controller
 import base64
 
 
@@ -123,9 +123,9 @@ class MainWindow(MSFluentWindow):
         super().closeEvent(e)
 
     def startGame(self):
-        game = GameController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass')
+        game = get_game_controller()
         try:
-            if game.start_game():
+            if game.start_game_process():
                 InfoBar.success(
                     title=self.tr('启动成功(＾∀＾●)'),
                     content="",

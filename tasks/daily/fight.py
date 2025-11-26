@@ -82,8 +82,11 @@ class Fight:
     @staticmethod
     def start():
         log.hr("准备锄大地", 0)
+        if cfg.cloud_game_enable and cfg.browser_headless_enable:
+            log.error("锄大地不支持无界面模式运行")
+            return False
 
-        game = StarRailController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
+        game = StarRailController(cfg=cfg, logger=log)
         game.check_resolution(1920, 1080)
 
         if Fight.before_start():

@@ -2,7 +2,7 @@ from typing import Literal
 from module.config import cfg
 from .screenshot import ScreenshotApp
 from .autoplot import AutoPlot
-from utils.gamecontroller import GameController
+from module.game import get_game_controller
 from module.automation.screenshot import Screenshot
 from module.logger import log
 import tkinter as tk
@@ -22,7 +22,7 @@ class ToolManager:
 
     def run_screenshot(self):
         """捕获图像"""
-        game = GameController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', log)
+        game = get_game_controller()
         if not game.switch_to_game():
             log.error("游戏尚未启动")
         time.sleep(0.5)  # 等待窗口切换
