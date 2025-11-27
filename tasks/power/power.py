@@ -4,6 +4,7 @@ from module.logger import log
 from module.config import cfg
 from tasks.power.instance import Instance
 from tasks.weekly.universe import Universe
+from tasks.daily.buildtarget import BuildTarget
 import time
 
 
@@ -15,6 +16,9 @@ class Power:
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names[cfg.instance_type]
         challenge_count = cfg.instance_names_challenge_count[cfg.instance_type]
+
+        if cfg.build_target_enable and (target := BuildTarget.get_target_instance()):
+            instance_type, instance_name = target
 
         if not Instance.validate_instance(instance_type, instance_name):
             return False

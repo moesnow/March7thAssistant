@@ -4,6 +4,7 @@ from module.config import cfg
 from module.logger import log
 from tasks.power.power import Power
 from tasks.power.instance import Instance
+from tasks.daily.buildtarget import BuildTarget
 import time
 
 
@@ -35,7 +36,11 @@ class Echoofwar:
                                 if max_count == 0:
                                     log.info("🟣开拓力 < 30")
                                     return
-                                return Instance.run("历战余响", cfg.instance_names["历战余响"], 30, min(reward_count, max_count))
+                                if cfg.build_target_enable and (target := BuildTarget.get_target_echo_instance()):
+                                    instance_name = target[1]
+                                else:
+                                    instance_name = cfg.instance_names["历战余响"]
+                                return Instance.run("历战余响", instance_name, 30, min(reward_count, max_count))
             return False
         except Exception as e:
             log.error(f"历战余响失败: {e}")
