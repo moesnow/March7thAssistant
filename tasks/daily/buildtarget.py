@@ -3,6 +3,7 @@ from module.automation import auto
 from module.logger import log
 from module.config import cfg
 from tasks.base.base import Base
+import json
 import time
 import datetime
 import re
@@ -11,6 +12,7 @@ import re
 class BuildTarget:
     _initialized = False
     _target_instances = []
+    _template_instance_names = {}
 
     @staticmethod
     def get_target_instance() -> tuple[str, str] | None:
@@ -40,7 +42,14 @@ class BuildTarget:
         BuildTarget._target_instances = []
 
         log.hr("开始获取培养目标")
-        BuildTarget._target_instances = BuildTarget._get_build_targets()
+        instances = BuildTarget._get_build_targets()
+
+        for instance in instances:
+            if BuildTarget._is_valid_instance(instance):
+                log.debug(f"副本名称 {instance} 检验通过，加入目标列表")
+                BuildTarget._target_instances.append(instance)
+            else:
+                log.warning(f"目标副本识别错误，{instance} 不在任何已知副本列表中")
 
         if BuildTarget._target_instances:
             Base.send_notification_with_screenshot(f"成功识别到培养目标，计划刷取: {', '.join(f'{k} - {v}' for k,v in BuildTarget._target_instances)}")
@@ -58,7 +67,7 @@ class BuildTarget:
             log.error("未能识别培养目标入口")
             return targets
 
-        if not auto.click_element("./assets/images/screen/guide/power.png", "image", max_retries=5, crop=(688.0 / 1920, 286.0 / 1080, 969.0 / 1920, 676.0 / 1080)):
+        if not auto.click_element("./assets/images/screen/guide/power.png", "image", 0.7, max_retries=5, crop=(688.0 / 1920, 286.0 / 1080, 969.0 / 1920, 676.0 / 1080)):
             log.warning("未检测到任何可进入的培养目标副本")
             return targets
 
@@ -179,3 +188,20 @@ class BuildTarget:
             return raw_instance_name.split("·")[0]
 
         return None
+
+    @staticmethod
+    def _is_valid_instance(instance):
+        instance_type, instance_name = instance
+
+        if not BuildTarget._template_instance_names:
+            with open("./assets/config/instance_names.json", "r", encoding="utf-8") as f:
+                BuildTarget._template_instance_names = json.load(f)
+
+        if not instance_type or not instance_name:
+            return False
+
+        if BuildTarget._template_instance_names.get(instance_type):
+            if BuildTarget._template_instance_names[instance_type].get(instance_name):
+                return True
+
+        return False
