@@ -50,8 +50,8 @@ cloud_game_max_queue_time: 10 # 最大排队等待时间（分钟）
 # cloud_game_fab_pos_y: 0.35  # 云游戏小浮球位置（y 坐标）
 
 # 云崩铁浏览器配置
-# intergrated 模式下，启动时会自己自动下载一个浏览器专门用于执行脚本，
-browser_type: intergrated # 云崩铁使用的浏览器类型，可选值：["intergrated"（集成）, "edge", "chrome"]。
+# integrated 模式下，启动时会自己自动下载一个浏览器专门用于执行脚本，
+browser_type: integrated # 云崩铁使用的浏览器类型，可选值：["integrated"（集成）, "edge", "chrome"]。
 browser_headless_enable: False # 是否启用无窗口模式。
 browser_dump_cookies_enable: False # （用于调试）是否转储 Cookies 
 browser_persistent_enable: True  # 是否允许浏览器保存数据（登录状态/游戏本地数据）

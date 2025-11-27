@@ -25,10 +25,12 @@ class CloudGameController(GameControllerBase):
     COOKIE_PATH = "settings/cookies.enc"          # Cookies 保存地址（仅用于调试）
     GAME_URL = "https://sr.mihoyo.com/cloud"            # 游戏地址
     BROWSER_TAG = "--march-7th-assistant-sr-cloud-game" # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
-    INTERGRATED_BROWSER_VERSION = "140.0.7339.207"      # 浏览器版本
     BROWSER_INSTALL_PATH = os.path.join(os.getcwd(), "3rdparty", "WebBrowser") # 浏览器安装路径
+    INTEGRATED_BROWSER_VERSION = "140.0.7339.207"      # 浏览器版本
+    INTEGRATED_BROWSER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chrome", "win64", INTEGRATED_BROWSER_VERSION, "chrome.exe")
+    INTEGRATED_DRIVER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chromedriver", "win64", INTEGRATED_BROWSER_VERSION, "chromedriver.exe")
     MAX_RETRIES = 3  # 网页加载重试次数，0=不重试
-    DEBUG_PORT = 9222
+    DEBUG_PORT = 9222 # 浏览器 Debug 端口，应确保该端口不被占用
 
     def __init__(self, cfg: Config, logger: Logger):
         super().__init__(script_path=cfg.script_path, logger=logger)
@@ -72,16 +74,16 @@ class CloudGameController(GameControllerBase):
             "mobile": False
         })
     
-    def _prepare_browser_and_driver(self, browser_type: str, intergrated: bool) -> str | str:
+    def _prepare_browser_and_driver(self, browser_type: str, integrated: bool) -> str | str:
         self.user_profile_path = os.path.join(self.BROWSER_INSTALL_PATH, "UserProfile", self.cfg.browser_type.capitalize())
-        if intergrated:
-            browser_path = os.path.join(self.BROWSER_INSTALL_PATH, "chrome", "win64", self.INTERGRATED_BROWSER_VERSION, "chrome.exe")
-            driver_path = os.path.join(self.BROWSER_INSTALL_PATH, "chromedriver", "win64", self.INTERGRATED_BROWSER_VERSION, "chromedriver.exe")
+        if integrated:
+            browser_path = self.INTEGRATED_BROWSER_PATH
+            driver_path = self.INTEGRATED_DRIVER_PATH
             if not os.path.exists(browser_path) or not os.path.exists(driver_path):
                 self.log_info("正在下载浏览器和驱动...")
                 args = ["--browser", browser_type,
                         "--cache-path", self.BROWSER_INSTALL_PATH,
-                        "--browser-version", self.INTERGRATED_BROWSER_VERSION,
+                        "--browser-version", self.INTEGRATED_BROWSER_VERSION,
                         "--force-browser-download"]
                 try:
                     SeleniumManager().binary_paths(args)
@@ -128,10 +130,10 @@ class CloudGameController(GameControllerBase):
 
     def _connect_or_create_browser(self, headless=False) -> None:
         """尝试连接到现有的（由小助手启动的）浏览器，如果没有，那就创建一个"""
-        browser_type = "chrome" if self.cfg.browser_type in ["intergrated", "chrome"] else "edge"
-        intergrated = self.cfg.browser_type=="intergrated"
+        browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge"
+        integrated = self.cfg.browser_type=="integrated"
         first_run = False
-        browser_path, driver_path = self._prepare_browser_and_driver(browser_type, intergrated)
+        browser_path, driver_path = self._prepare_browser_and_driver(browser_type, integrated)
         
         if not os.path.exists(self.user_profile_path):
             first_run = True
@@ -347,6 +349,10 @@ class CloudGameController(GameControllerBase):
         if self.cfg.browser_headless_enable:
             if self.close_all_m7a_browser(headles=True):
                 self.log_info("已关闭所有后台浏览器")
+
+    def is_browser_downloaded(self) -> bool:
+        """当前是否已经下载浏览器"""
+        return os.path.exists(self.INTEGRATED_BROWSER_PATH) and os.path.exists(self.INTEGRATED_DRIVER_PATH)
     
     def get_m7a_browsers(self, headless=None) -> list[psutil.Process]:
         """

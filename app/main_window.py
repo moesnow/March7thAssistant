@@ -3,6 +3,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
 from contextlib import redirect_stdout
+
+from app.tools.game_starter import GameStartStatus, GameLaunchThread
 with redirect_stdout(None):
     from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, Theme
     from qfluentwidgets import FluentIcon as FIF
@@ -123,35 +125,86 @@ class MainWindow(MSFluentWindow):
         super().closeEvent(e)
 
     def startGame(self):
+        start_game_button = self.navigationInterface.widget('startGameButton')
+        if start_game_button:
+            start_game_button.setEnabled(False)
         game = get_game_controller()
-        try:
-            if game.start_game_process():
-                InfoBar.success(
-                    title=self.tr('启动成功(＾∀＾●)'),
-                    content="",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=2000,
-                    parent=self
-                )
-            else:
-                InfoBar.warning(
-                    title=self.tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                    content="请在“设置”-->“程序”中配置",
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=5000,
-                    parent=self
-                )
-        except Exception as e:
+        if cfg.cloud_game_enable and not game.is_browser_downloaded():
+            InfoBar.info(
+                title=self.tr('正在下载内置浏览器(ง •̀_•́)ง'),
+                content="下载成功后，将自动启动云·星穹铁道",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+        else:
+            InfoBar.info(
+                title=self.tr('正在启动游戏(❁´◡`❁)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+        
+        self.game_launch_thread = GameLaunchThread(game, cfg)
+        self.game_launch_thread.finished_signal.connect(self.on_game_launched)
+        self.game_launch_thread.start()
+
+    def on_game_launched(self, result):
+        if result == GameStartStatus.SUCCESS:
+            InfoBar.success(
+                title=self.tr('启动成功(＾∀＾●)'),
+                content="",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+        elif result == GameStartStatus.BROWSER_DOWNLOAD_FAIL:
             InfoBar.warning(
-                title=self.tr('启动失败'),
-                content=str(e),
+                title=self.tr('浏览器下载失败 (╥╯﹏╰╥)'),
+                content="请检查网络连接是否正常",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
                 parent=self
             )
+        elif result == GameStartStatus.BROWSER_LAUNCH_FAIL:
+            InfoBar.warning(
+                title=self.tr('云游戏启动失败(╥╯﹏╰╥)'),
+                content="请检查所选浏览器是否存在，网络连接是否正常",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
+        elif result == GameStartStatus.LOCAL_LAUNCH_FAIL:
+            InfoBar.warning(
+                title=self.tr('游戏路径配置错误(╥╯﹏╰╥)'),
+                content="请在“设置”-->“程序”中配置",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
+        else:
+            InfoBar.warning(
+                title=self.tr('启动失败'),
+                content=str(self.game_launch_thread.error_msg),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
+        start_game_button = self.navigationInterface.widget('startGameButton')
+        if start_game_button:
+            start_game_button.setEnabled(True)

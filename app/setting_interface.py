@@ -608,7 +608,7 @@ class SettingInterface(ScrollArea):
             FIF.GLOBE,
             self.tr("浏览器类型"),
             self.tr("‘集成’ 模式下，会自动下载浏览器"),
-            {"集成（Chrome For Testing）": "intergrated", "Chrome": "chrome", "Edge": "edge"}
+            {"集成（Chrome For Testing）": "integrated", "Chrome": "chrome", "Edge": "edge"}
         )
 
         self.browserHeadlessCard = SwitchSettingCard1(
