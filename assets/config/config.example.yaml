@@ -55,6 +55,10 @@ instance_names_challenge_count:
   历战余响: 3 # 配置各副本类型的连续挑战次数。
 max_calyx_per_round_num_of_attempts: 6 # 设置每轮拟造花萼挑战次数。
 
+# 培养目标设置
+build_target_enable: false # 是否启用培养目标。
+build_target_ornament_weekly_count: 1 # 培养目标每周执行饰品提取的次数，取值范围 0-7。
+
 # 分解设置
 break_down_level_four_relicset: false # 完成侵蚀隧洞、饰品提取、历战余响和模拟宇宙后是否自动分解四星及以下遗器。true 开启，false 关闭。
 

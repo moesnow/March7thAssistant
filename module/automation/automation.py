@@ -460,7 +460,7 @@ class Automation(metaclass=SingletonMeta):
             return self.click_element_with_pos(coordinates, offset, action)
         return False
 
-    def get_single_line_text(self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3):
+    def get_single_line_text(self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3, retry_delay=0.0):
         """
         尝试多次获取屏幕截图中的单行文本。
 
@@ -468,6 +468,7 @@ class Automation(metaclass=SingletonMeta):
         crop: 裁剪区域，格式为(x1, y1, x2, y2)。
         blacklist: 需要过滤掉的字符列表。
         max_retries: 尝试识别的最大次数。
+        retry_delay: 每次重试之间的等待时间（秒），默认0.0秒。
 
         返回:
         识别到的文本，如果多次尝试后仍未识别到，则返回None。
@@ -477,4 +478,6 @@ class Automation(metaclass=SingletonMeta):
             ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)
             if ocr_result:
                 return ocr_result[0]
+            if retry_delay > 0 and i < max_retries - 1:
+                time.sleep(retry_delay)
         return None

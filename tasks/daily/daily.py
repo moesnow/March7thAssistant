@@ -13,6 +13,7 @@ from tasks.power.power import Power
 from tasks.daily.tasks import Tasks
 from tasks.daily.himekotry import HimekoTry
 from tasks.weekly.echoofwar import Echoofwar
+from tasks.daily.buildtarget import BuildTarget
 from utils.color import red, green, yellow
 import datetime
 
@@ -23,6 +24,10 @@ class Daily:
         activity.start()
         if cfg.daily_enable:
             Daily.run()
+
+        # 获取培养目标
+        if cfg.build_target_enable:
+            BuildTarget.init_build_targets()
 
         # 优先历战余响
         if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
