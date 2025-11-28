@@ -1,5 +1,6 @@
 import os
 import psutil
+import getpass
 import subprocess
 import win32gui
 from typing import Optional
@@ -49,16 +50,34 @@ class LocalGameController(GameControllerBase):
         返回值:
         - bool: 如果成功终止进程则返回True，否则返回False。
         """
-        system_username = os.getlogin()  # 获取当前系统用户名
-        # 遍历所有运行中的进程
-        for process in psutil.process_iter(attrs=["pid", "name"]):
-            # 检查当前进程名是否匹配并属于当前用户
-            if target_process_name in process.info["name"]:
-                process_username = process.username().split("\\")[-1]  # 从进程所有者中提取用户名
-                if system_username == process_username:
-                    proc_to_terminate = psutil.Process(process.info["pid"])
-                    proc_to_terminate.terminate()  # 尝试终止进程
-                    proc_to_terminate.wait(termination_timeout)  # 等待进程终止
+        current_user = getpass.getuser()
+        success = False
+
+        for proc in psutil.process_iter(attrs=["pid", "name", "username"]):
+            try:
+                name = proc.info["name"]
+                user = (proc.info["username"] or "").split("\\")[-1]  # 兼容 DOMAIN\\User
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+            # 精准匹配进程名并属于当前用户
+            if target_process_name.lower() in name.lower() and user == current_user:
+                try:
+                    p = psutil.Process(proc.info["pid"])
+                    p.terminate()
+                    try:
+                        p.wait(timeout=termination_timeout)
+                    except psutil.TimeoutExpired:
+                        # 超时直接kill
+                        p.kill()
+                        p.wait(timeout=3)
+
+                    success = True
+
+                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.Error):
+                    continue
+
+        return success
 
     def get_input_handler(self):
         from module.automation.local_input import LocalInput
