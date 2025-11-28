@@ -125,7 +125,8 @@ class Daily:
     def run():
         log.hr("开始日常任务", 0)
 
-        if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
+        #if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
+        if True:
             screen.change_to("guide2")
 
             tasks = Tasks("./assets/config/task_mappings.json")
@@ -138,9 +139,22 @@ class Daily:
 
         if len(cfg.daily_tasks) > 0:
             task_functions = {
-                "登录游戏": lambda: True,
-                "拍照1次": lambda: Photo.photograph(),
-                "使用1次「万能合成机」": lambda: Synthesis.material(),
+                "登录游戏": (lambda: True, 100),
+                "派遣1次委托": (lambda: False, 100), #没有实现但有可能已完成,只检测是否完成
+                "累计消耗120点开拓力": (lambda: False, 200), #没有实现但有可能已完成,只检测是否完成
+                "使用支援角色并获得战斗胜利1次": (lambda: False, 200), #没有实现但有可能已完成,只检测是否完成
+                "完成1次「拟造花萼（金）」":(lambda: False, 100),
+                "完成1次「拟造花萼（赤）」":(lambda: False, 100),
+                "完成1次「凝滞虚影」":(lambda: False, 100),
+                "完成1次「侵蚀隧洞」":(lambda: False, 100),
+                "完成1次「历战余响」":(lambda: False, 100),
+                "将任意角色等级提升1次":(lambda: False, 100),
+                "将任意遗器等级提升1次":(lambda: False, 100),
+                "将任意光锥等级提升1次":(lambda: False, 100),
+                "分解任意1件遗器":(lambda: False, 100),
+                "完成1个日常任务":(lambda: False, 100),
+                "累计消灭20个敌人": (lambda: challenge.start_memory_one(2), 100),
+                "使用1次「万能合成机」": (lambda: Synthesis.material(), 100),
                 # "合成1次消耗品": lambda: Synthesis.consumables(),
                 # "合成1次材料": lambda: Synthesis.material(),
                 # "使用1件消耗品": lambda: Synthesis.use_consumables(),
@@ -149,30 +163,50 @@ class Daily:
                 # "完成1次「凝滞虚影」": lambda: Power.customize_run("凝滞虚影", cfg.instance_names["凝滞虚影"], 30, 1),
                 # "完成1次「侵蚀隧洞」": lambda: Power.customize_run("侵蚀隧洞", cfg.instance_names["侵蚀隧洞"], 40, 1),
                 # "完成1次「历战余响」": lambda: Power.customize_run("历战余响", cfg.instance_names["历战余响"], 30, 1),
-                "累计施放2次秘技": lambda: HimekoTry.technique(),
-                "累计击碎3个可破坏物": lambda: HimekoTry.item(),
-                "完成1次「忘却之庭」": lambda: challenge.start_memory_one(1),
-                "单场战斗中，触发3种不同属性的弱点击破": lambda: challenge.start_memory_one(1),
-                "累计触发弱点击破效果5次": lambda: challenge.start_memory_one(1),
-                "累计消灭20个敌人": lambda: challenge.start_memory_one(2),
-                "利用弱点进入战斗并获胜3次": lambda: challenge.start_memory_one(3),
-                "施放终结技造成制胜一击1次": lambda: challenge.start_memory_one(1),
-                "通关「模拟宇宙」（任意世界）的1个区域": lambda: Universe.run_daily(),
-                "完成1次「差分宇宙」或「模拟宇宙」": lambda: Universe.run_daily(),
+                "拍照1次": (lambda: Photo.photograph(), 100),
+                "累计施放2次秘技": (lambda: HimekoTry.technique(), 200),
+                "累计击碎3个可破坏物": (lambda: HimekoTry.item(), 200),
+                "完成1次「忘却之庭」": (lambda: challenge.start_memory_one(1), 100),
+                "单场战斗中，触发3种不同属性的弱点击破": (lambda: challenge.start_memory_one(1), 100),
+                "累计触发弱点击破效果5次": (lambda: challenge.start_memory_one(1), 100),
+                "利用弱点进入战斗并获胜3次": (lambda: challenge.start_memory_one(3), 100),
+                "施放终结技造成制胜一击1次": (lambda: challenge.start_memory_one(1), 100),
+                "通关「模拟宇宙」（任意世界）的1个区域": (lambda: Universe.run_daily(), 500),
+                "完成1次「差分宇宙」或「模拟宇宙」": (lambda: Universe.run_daily(), 500),
+                "完成1次「差分宇宙」或「货币战争」": (lambda: False, 500) #没有实现但有可能已完成,只检测是否完成
             }
-
+            #用来统计实训分数
+            current_score = 0
+            TARGET_SCORE = 500
             log.hr(f"今日实训", 2)
-            count = 0
+            done_count = 0
             for key, value in cfg.daily_tasks.items():
                 state = red("待完成") if value else green("已完成")
-                log.info(f"{key}: {state}")
-                count = count + 1 if not value else count
-            log.info(f"已完成：{yellow(f'{count}/{len(cfg.daily_tasks)}')}")
-
-            for task_name, task_function in task_functions.items():
+                if not value and key in task_functions:
+                    _ , score = task_functions[key]
+                    done_count = done_count + 1
+                    current_score += score
+                    score_text = yellow(f" (+{score}分)")
+                    log.info(f"{key}: {state} + {score_text}")
+                else:
+                    log.info(f"{key}: {state}")
+                    pass
+                
+            log.info(f"已完成：{yellow(f'{done_count}/{len(cfg.daily_tasks)}')}")
+            log.info(f"当前累计分数：{yellow(f'{current_score}/{TARGET_SCORE}')}")
+        
+            for task_name, (task_function, score) in task_functions.items():
+                if current_score >= TARGET_SCORE:
+                    log.info(f"实训分数已达标")
+                    break
                 if task_name in cfg.daily_tasks and cfg.daily_tasks[task_name]:
                     if task_function():
                         cfg.daily_tasks[task_name] = False
                         cfg.save_config()
+                        current_score += score
+                        log.info(f"完成任务: {task_name} (+{green(f'{score}')}分)，当前分数: {yellow(f'{current_score}/{TARGET_SCORE}')}")
+                    else:
+                        log.info(f"任务无法完成: {task_name}")
+                        pass    
 
         log.hr("完成", 2)
