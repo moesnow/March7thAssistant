@@ -87,7 +87,7 @@ class UpdateThread(QThread):
                     return
                 # 符合Mirror酱条件
                 response = requests.get(
-                    f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}",
+                    f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}&user_agent=m7a_app",
                     timeout=10,
                     headers=cfg.useragent
                 )

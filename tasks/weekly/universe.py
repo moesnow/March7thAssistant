@@ -29,7 +29,7 @@ class Universe:
                     sys.exit(0)
                 # 符合Mirror酱条件
                 response = requests.get(
-                    f"https://mirrorchyan.com/api/resources/ASU_moe/latest?cdk={cfg.mirrorchyan_cdk}",
+                    f"https://mirrorchyan.com/api/resources/ASU_moe/latest?cdk={cfg.mirrorchyan_cdk}&user_agent=m7a_app",
                     timeout=10,
                     headers=cfg.useragent
                 )
@@ -201,7 +201,7 @@ class Universe:
         if cfg.cloud_game_enable and cfg.browser_headless_enable:
             log.error("模拟宇宙不支持无界面模式运行")
             return False
-        
+
         if Universe.before_start():
 
             if category == "divergent":
