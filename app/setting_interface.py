@@ -109,6 +109,19 @@ class SettingInterface(ScrollArea):
         #     self.tr("每轮拟造花萼挑战次数"),
         #     '',
         # )
+        self.buildTargetEnableCard = SwitchSettingCard1(
+            FIF.LEAF,
+            self.tr('启用培养目标'),
+            "根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置",
+            "build_target_enable"
+        )
+        self.buildTargetPlanarOrnamentWeeklyCountCard = RangeSettingCard1(
+            "build_target_ornament_weekly_count",
+            [0, 7],
+            FIF.CALENDAR,
+            self.tr('培养目标：每周饰品提取次数'),
+            self.tr('设置培养目标一周内执行饰品提取的次数，0 表示不执行'),
+        )
         self.breakDownLevelFourRelicsetEnableCard = SwitchSettingCard1(
             FIF.FILTER,
             self.tr('自动分解四星遗器'),
@@ -166,19 +179,6 @@ class SettingInterface(ScrollArea):
         #     self.tr("周几开始执行【历战余响】"),
         #     self.tr("假设值为4，那么周1、2、3不执行「历战余响」，周4、5、6、7则执行"),
         # )
-        self.buildTargetEnableCard = SwitchSettingCard1(
-            FIF.LEAF,
-            self.tr('启用培养目标'),
-            "根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置",
-            "build_target_enable"
-        )
-        self.buildTargetPlanarOrnamentWeeklyCountCard = RangeSettingCard1(
-            "build_target_ornament_weekly_count",
-            [0, 7],
-            FIF.CALENDAR,
-            self.tr('培养目标：每周饰品提取次数'),
-            self.tr('设置培养目标一周内执行饰品提取的次数，0 表示不执行'),
-        )
 
         self.BorrowGroup = SettingCardGroup(self.tr("支援设置"), self.scrollWidget)
         self.borrowEnableCard = SwitchSettingCard1(
@@ -895,6 +895,8 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.instanceNameChallengeCountCard)
         # self.PowerGroup.addSettingCard(self.maxCalyxPerRoundNumOfAttempts)
+        self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
+        self.PowerGroup.addSettingCard(self.buildTargetPlanarOrnamentWeeklyCountCard)
         self.PowerGroup.addSettingCard(self.breakDownLevelFourRelicsetEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         # self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
@@ -904,8 +906,6 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
         # self.PowerGroup.addSettingCard(self.echoofwarStartDayOfWeekCard)
-        self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
-        self.PowerGroup.addSettingCard(self.buildTargetPlanarOrnamentWeeklyCountCard)
 
         self.BorrowGroup.addSettingCard(self.borrowEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
