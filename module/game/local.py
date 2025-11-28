@@ -3,9 +3,10 @@ import psutil
 import subprocess
 import win32gui
 from typing import Optional
-from app.common.config import Config
+from module.config.config import Config
 from module.game.base import GameControllerBase
 from utils.logger.logger import Logger
+
 
 class LocalGameController(GameControllerBase):
     def __init__(self, cfg: Config, logger: Optional[Logger] = None) -> None:
@@ -58,7 +59,7 @@ class LocalGameController(GameControllerBase):
                     proc_to_terminate = psutil.Process(process.info["pid"])
                     proc_to_terminate.terminate()  # 尝试终止进程
                     proc_to_terminate.wait(termination_timeout)  # 等待进程终止
-                    
+
     def get_input_handler(self):
         from module.automation.local_input import LocalInput
         return LocalInput(self.logger)
@@ -73,6 +74,6 @@ class LocalGameController(GameControllerBase):
         except Exception as e:
             self.log_error(f"终止游戏时发生错误：{e}")
             return False
-        
+
     def get_window_handle(self):
         return win32gui.FindWindow(self.window_class, self.window_name)

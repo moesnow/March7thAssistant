@@ -1,7 +1,7 @@
 import time
 import pyautogui
 from typing import Literal, Optional
-from app.common.config import Config
+from module.config.config import Config
 from module.game.local import LocalGameController
 from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution, get_auto_battle_open_setting, get_is_save_battle_speed_setting, set_auto_battle_open_setting, set_is_save_battle_speed_setting
 from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
