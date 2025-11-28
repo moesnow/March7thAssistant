@@ -130,26 +130,26 @@ class MainWindow(MSFluentWindow):
             start_game_button.setEnabled(False)
         game = get_game_controller()
         if cfg.cloud_game_enable and not game.is_browser_downloaded():
-            InfoBar.info(
+            InfoBar.warning(
                 title=self.tr('正在下载内置浏览器(ง •̀_•́)ง'),
                 content="下载成功后，将自动启动云·星穹铁道",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=2000,
+                duration=10000,
                 parent=self
             )
-        else:
-            InfoBar.info(
+        elif cfg.cloud_game_enable:
+            InfoBar.warning(
                 title=self.tr('正在启动游戏(❁´◡`❁)'),
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=2000,
+                duration=5000,
                 parent=self
             )
-        
+
         self.game_launch_thread = GameLaunchThread(game, cfg)
         self.game_launch_thread.finished_signal.connect(self.on_game_launched)
         self.game_launch_thread.start()
