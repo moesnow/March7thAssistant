@@ -195,6 +195,20 @@
         ]
     },
     {
+        "name": "进入云游戏",
+        "id": "enter_cloud_game",
+        "image_path": "./assets/images/screen/cloud/enter_cloud_game.png",
+        "actions": [
+            {
+                "target_screen": "click_enter",
+                "actions_list": [
+                    "auto.click_element('./assets/images/screen/cloud/enter_cloud_game.png', 'image', 0.9)",
+                    "time.sleep(6)"
+                ]
+            }
+        ]
+    },
+    {
         "name": "启动游戏",
         "id": "start_game",
         "image_path": "./assets/images/screen/start_game.png",

@@ -1,19 +1,14 @@
+from abc import abstractmethod
 import os
 import time
-import psutil
 import subprocess
 import win32gui
 import ctypes
 from typing import Literal, Tuple, Optional
 from utils.logger.logger import Logger
 
-
-class GameController:
-    def __init__(self, game_path: str, process_name: str, window_name: str, window_class: Optional[str], script_path: Optional[str] = None, logger: Optional[Logger] = None) -> None:
-        self.game_path = os.path.normpath(game_path)
-        self.process_name = process_name
-        self.window_name = window_name
-        self.window_class = window_class
+class GameControllerBase:
+    def __init__(self, script_path: Optional[str] = None, logger: Optional[Logger] = None) -> None:
         self.script_path = os.path.normpath(script_path) if script_path and isinstance(script_path, (str, bytes, os.PathLike)) else None
         self.logger = logger
 
@@ -37,83 +32,30 @@ class GameController:
         if self.logger is not None:
             self.logger.warning(message)
 
-    def start_game(self) -> bool:
-        """启动游戏"""
-        if not os.path.exists(self.game_path):
-            self.log_error(f"游戏路径不存在：{self.game_path}")
-            return False
+    @abstractmethod
+    def start_game_process(self) -> bool:
+        """启动游戏进程"""
+        ...
 
-        game_folder = self.game_path.rpartition('\\')[0]
-        if not os.system(f'cmd /C start "" /D "{game_folder}" "{self.game_path}"'):
-            self.log_info(f"游戏启动：{self.game_path}")
-            return True
-        else:
-            self.log_error("启动游戏时发生错误")
-            try:
-                # 为什么有的用户环境变量内没有cmd呢？
-                subprocess.Popen(self.game_path)
-                self.log_info(f"游戏启动：{self.game_path}")
-                return True
-            except Exception as e:
-                self.log_error(f"启动游戏时发生错误：{e}")
-            return False
-
-    @staticmethod
-    def terminate_named_process(target_process_name, termination_timeout=10):
-        """
-        根据进程名终止属于当前用户的进程。
-
-        参数:
-        - target_process_name (str): 要终止的进程名。
-        - termination_timeout (int, optional): 终止进程前等待的超时时间（秒）。
-
-        返回值:
-        - bool: 如果成功终止进程则返回True，否则返回False。
-        """
-        system_username = os.getlogin()  # 获取当前系统用户名
-        # 遍历所有运行中的进程
-        for process in psutil.process_iter(attrs=["pid", "name"]):
-            # 检查当前进程名是否匹配并属于当前用户
-            if target_process_name in process.info["name"]:
-                process_username = process.username().split("\\")[-1]  # 从进程所有者中提取用户名
-                if system_username == process_username:
-                    proc_to_terminate = psutil.Process(process.info["pid"])
-                    proc_to_terminate.terminate()  # 尝试终止进程
-                    proc_to_terminate.wait(termination_timeout)  # 等待进程终止
-
+    @abstractmethod
     def stop_game(self) -> bool:
         """终止游戏"""
-        try:
-            # os.system(f'taskkill /f /im {self.process_name}')
-            self.terminate_named_process(self.process_name)
-            self.log_info(f"游戏终止：{self.process_name}")
-            return True
-        except Exception as e:
-            self.log_error(f"终止游戏时发生错误：{e}")
-            return False
+        ...
 
-    @staticmethod
-    def set_foreground_window_with_retry(hwnd):
-        """尝试将窗口设置为前台，失败时先最小化再恢复。"""
-
-        def toggle_window_state(hwnd, minimize=False):
-            """最小化或恢复窗口。"""
-            SW_MINIMIZE = 6
-            SW_RESTORE = 9
-            state = SW_MINIMIZE if minimize else SW_RESTORE
-            ctypes.windll.user32.ShowWindow(hwnd, state)
-
-        toggle_window_state(hwnd, minimize=False)
-        if ctypes.windll.user32.SetForegroundWindow(hwnd) == 0:
-            toggle_window_state(hwnd, minimize=True)
-            toggle_window_state(hwnd, minimize=False)
-            if ctypes.windll.user32.SetForegroundWindow(hwnd) == 0:
-                raise Exception("Failed to set window foreground")
+    @abstractmethod
+    def get_window_handle(self) -> int:
+        """获取 window handle"""
+        ...
+    
+    @abstractmethod
+    def get_input_handler(self): # -> InputBase
+        """获取用于模拟鼠标和键盘操作的类"""
+        ...
 
     def switch_to_game(self) -> bool:
         """将游戏窗口切换到前台"""
         try:
-            hwnd = win32gui.FindWindow(self.window_class, self.window_name)
+            hwnd = self.get_window_handle()
             if hwnd == 0:
                 self.log_debug("游戏窗口未找到")
                 return False
@@ -127,7 +69,7 @@ class GameController:
     def get_resolution(self) -> Optional[Tuple[int, int]]:
         """检查游戏窗口的分辨率"""
         try:
-            hwnd = win32gui.FindWindow(self.window_class, self.window_name)
+            hwnd = self.get_window_handle()
             if hwnd == 0:
                 self.log_debug("游戏窗口未找到")
                 return None
@@ -177,7 +119,7 @@ class GameController:
             self.log_error(f"执行系统操作时发生错误：{action}, 错误：{e}")
             return False
 
-    def run_script(self):
+    def run_script(self) -> bool:
         """运行指定的程序或脚本（支持.exe、.ps1和.bat）"""
         if not self.script_path or not isinstance(self.script_path, str) or not os.path.exists(
                 self.script_path):
@@ -197,7 +139,7 @@ class GameController:
                 file_ext = os.path.splitext(self.script_path)[1].lower()
                 if file_ext == '.ps1':
                     # PowerShell脚本
-                    subprocess.Popen(["powershell", "-ExecutionPolicy", "Bypass", "-File", self.script_path], 
+                    subprocess.Popen(["powershell", "-ExecutionPolicy", "By...", "-File", self.script_path], 
                                   creationflags=subprocess.CREATE_NEW_CONSOLE)
                     self.log_info(f"已启动PowerShell脚本：{self.script_path}")
                 elif file_ext == '.bat':
@@ -220,3 +162,21 @@ class GameController:
         except Exception as e:
             self.log_error(f"启动脚本时发生错误：{str(e)}")
             return False
+        
+    @staticmethod
+    def set_foreground_window_with_retry(hwnd) -> None:
+        """尝试将窗口设置为前台，失败时先最小化再恢复。"""
+
+        def toggle_window_state(hwnd, minimize=False):
+            """最小化或恢复窗口。"""
+            SW_MINIMIZE = 6
+            SW_RESTORE = 9
+            state = SW_MINIMIZE if minimize else SW_RESTORE
+            ctypes.windll.user32.ShowWindow(hwnd, state)
+
+        toggle_window_state(hwnd, minimize=False)
+        if ctypes.windll.user32.SetForegroundWindow(hwnd) == 0:
+            toggle_window_state(hwnd, minimize=True)
+            toggle_window_state(hwnd, minimize=False)
+            if ctypes.windll.user32.SetForegroundWindow(hwnd) == 0:
+                raise Exception("Failed to set window foreground")

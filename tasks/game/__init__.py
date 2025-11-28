@@ -10,15 +10,16 @@ from .starrailcontroller import StarRailController
 
 from utils.date import Date
 from tasks.power.power import Power
+from module.game import cloud_game, get_game_controller
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
 from module.config import cfg
 from module.notification import notif
 from module.ocr import ocr
+from module.screen import screen
 
-
-starrail = StarRailController(cfg.game_path, cfg.game_process_name, cfg.game_title_name, 'UnityWndClass', logger=log, script_path=cfg.script_path)
+starrail = StarRailController(cfg=cfg, logger=log)
 
 
 def start():
@@ -67,6 +68,37 @@ def start_game():
                 log.info("检测到登录过期，尝试自动登录")
                 auto_login_os()
         return False
+    
+    def cloud_game_check_and_enter():
+        # 点击进入
+        if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
+            return True
+        # 同意浏览器授权
+        if auto.click_element("./assets/images/screen/cloud/agree_to_authorize.png", "image", 0.9, take_screenshot=False):
+            time.sleep(0.5)
+            auto.click_element("每次访问时都充许", "text", 0.9)
+        # 是否保存网页地址，点击 x 关闭
+        auto.click_element("./assets/images/screen/cloud/close.png", "image", 0.9, take_screenshot=False)
+        # 是否将《云·星穹铁道》添加到桌面，需要点击“下次再说”
+        auto.click_element("./assets/images/screen/cloud/next_time.png", "image", 0.9, take_screenshot=False)
+        # 免责声明，需要点击“接受”
+        auto.click_element("./assets/images/screen/cloud/accept.png", "image", 0.9, take_screenshot=False)
+        # 适配用户协议和隐私政策更新提示，需要点击“同意”
+        auto.click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
+        # 云游戏设置的引导，需要多次点击 “下一步”
+        if auto.click_element("下一步", "text", 0.9, include=True, take_screenshot=False):
+            time.sleep(0.5)
+            auto.click_element("下一步", "text", 0.9, include=True)
+            time.sleep(0.5)
+            auto.click_element("我知道了", "text", 0.9, include=True)
+        # 由于浏览器语言原因，云游戏启动时可能会是默认英文，需要改成中文
+        if auto.click_element("Settings", "text", 0.9, take_screenshot=False):
+            time.sleep(0.5)
+            auto.click_element("English", "text", 0.9, crop=(1541.0 / 1920, 198.0 / 1080, 156.0 / 1920, 58.0 / 1080))
+            time.sleep(0.5)
+            auto.click_element("简体中文", "text", 0.9)
+            time.sleep(0.5)
+            auto.press_key("esc")
 
     def get_process_path(name):
         # 通过进程名获取运行路径
@@ -75,51 +107,70 @@ def start_game():
                 process = psutil.Process(proc.info['pid'])
                 return process.exe()
         return None
+    
+    def start_local_game():
+        if not starrail.switch_to_game():
+            if cfg.auto_set_resolution_enable:
+                starrail.change_resolution(1920, 1080)
+                starrail.change_auto_hdr("disable")
+
+            if cfg.auto_battle_detect_enable:
+                starrail.change_auto_battle(True)
+
+            if not starrail.start_game_process():
+                raise Exception("启动游戏失败")
+            time.sleep(10)
+
+            if not wait_until(lambda: starrail.switch_to_game(), 360):
+                starrail.restore_resolution()
+                starrail.restore_auto_hdr()
+                raise TimeoutError("切换到游戏超时")
+
+            time.sleep(10)
+            starrail.restore_resolution()
+            starrail.restore_auto_hdr()
+            starrail.check_resolution_ratio(1920, 1080)
+
+            if not wait_until(lambda: check_and_click_enter(), 600):
+                raise TimeoutError("查找并点击进入按钮超时")
+            time.sleep(10)
+            # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
+            auto.press_mouse()
+        else:
+            starrail.check_resolution_ratio(1920, 1080)
+            if cfg.auto_set_game_path_enable:
+                program_path = get_process_path(cfg.game_process_name)
+                if program_path is not None and program_path != cfg.game_path:
+                    cfg.set_value("game_path", program_path)
+                    log.info(f"游戏路径更新成功：{program_path}")
+            time.sleep(1)
+
+    def start_cloud_game():
+        if not cloud_game.start_game_process():
+            raise Exception("启动或连接浏览器失败")
+        if not cloud_game.is_in_game():
+            if not cloud_game.enter_cloud_game():
+                raise Exception("进入云游戏失败")
+            # time.sleep(10)    #dont need to wait
+            if not wait_until(lambda: cloud_game_check_and_enter(), 600):
+                raise TimeoutError("查找并点击进入按钮超时")
 
     for retry in range(MAX_RETRY):
         try:
-            if not starrail.switch_to_game():
-                if cfg.auto_set_resolution_enable:
-                    starrail.change_resolution(1920, 1080)
-                    starrail.change_auto_hdr("disable")
-
-                if cfg.auto_battle_detect_enable:
-                    starrail.change_auto_battle(True)
-
-                if not starrail.start_game():
-                    raise Exception("启动游戏失败")
-                time.sleep(10)
-
-                if not wait_until(lambda: starrail.switch_to_game(), 360):
-                    starrail.restore_resolution()
-                    starrail.restore_auto_hdr()
-                    raise TimeoutError("切换到游戏超时")
-
-                time.sleep(10)
-                starrail.restore_resolution()
-                starrail.restore_auto_hdr()
-                starrail.check_resolution_ratio(1920, 1080)
-
-                if not wait_until(lambda: check_and_click_enter(), 600):
-                    raise TimeoutError("查找并点击进入按钮超时")
-                time.sleep(10)
-                # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
-                auto.press_mouse()
+            if cfg.cloud_game_enable:
+                start_cloud_game()
             else:
-                starrail.check_resolution_ratio(1920, 1080)
-                if cfg.auto_set_game_path_enable:
-                    program_path = get_process_path(cfg.game_process_name)
-                    if program_path is not None and program_path != cfg.game_path:
-                        cfg.set_value("game_path", program_path)
-                        log.info(f"游戏路径更新成功：{program_path}")
-                time.sleep(1)
-
+                start_local_game()
             if not wait_until(lambda: screen.get_current_screen(), 360):
                 raise TimeoutError("获取当前界面超时")
-            break  # 成功启动游戏，跳出重试循环
+            break
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
-            starrail.stop_game()  # 确保在重试前停止游戏
+            # 确保在重试前停止游戏
+            if cfg.cloud_game_enable:
+                cloud_game.stop_game()
+            else:
+                starrail.stop_game() 
             if retry == MAX_RETRY - 1:
                 raise  # 如果是最后一次尝试，则重新抛出异常
 
@@ -145,7 +196,7 @@ def stop(detect_loop=False):
         if detect_loop:
             notify_after_finish_not_loop()
         if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
-            starrail.shutdown(cfg.after_finish)
+            get_game_controller().shutdown(cfg.after_finish)
         log.hr("完成", 2)
         if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
             if cfg.pause_after_success:
@@ -172,11 +223,11 @@ def after_finish_is_loop():
             log.hr("完成", 2)
             return
         else:
-            starrail.stop_game()
+            get_game_controller().stop_game()
             wait_time = get_wait_time(current_power)
             future_time = Date.calculate_future_time(wait_time)
     else:
-        starrail.stop_game()
+        get_game_controller().stop_game()
         scheduled_time = cfg.scheduled_time
         wait_time = Date.time_to_seconds(scheduled_time)
         future_time = Date.calculate_future_time(scheduled_time)

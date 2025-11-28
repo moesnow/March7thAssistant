@@ -31,11 +31,33 @@ pypi_mirror_urls:
   - https://mirrors.aliyun.com/pypi/simple/
   - https://pypi.org/simple/ # 设置 PyPI 镜像列表，用于加速 Python 包的下载。
 
-# 游戏设置
+# 本地运行配置
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
 script_path: C:\Path\to\your\Script.bat
+
+# 云崩铁配置
+cloud_game_enable: False # 是否启动云游戏
+cloud_game_fullscreen_enable: True # 云崩铁是否全屏运行
+cloud_game_max_queue_time: 10 # 最大排队等待时间（分钟）
+# cloud_game_video_quality: '0' # 云崩铁画质 '0'(超高清)，'1'（高清）, '2'（标清）, '3'（低清）
+# cloud_game_smooth_first_enable: False # 是否流畅优先
+# cloud_game_status_bar_enable: False # 是否显示网速
+# cloud_game_status_bar_type: "verbose" # 网速显示类型，可选值 "verbose" (详细), "brief" （简洁）
+# 云游戏无法关闭小浮球，只能将其固定到一个不影响脚本运行的位置
+# cloud_game_fab_pos_x: 0.0   # 云游戏小浮球位置（x 坐标）
+# cloud_game_fab_pos_y: 0.35  # 云游戏小浮球位置（y 坐标）
+
+# 云崩铁浏览器配置
+# integrated 模式下，启动时会自己自动下载一个浏览器专门用于执行脚本，
+browser_type: integrated # 云崩铁使用的浏览器类型，可选值：["integrated"（集成）, "edge", "chrome"]。
+browser_headless_enable: False # 是否启用无窗口模式。
+browser_dump_cookies_enable: False # （用于调试）是否转储 Cookies 
+browser_persistent_enable: True  # 是否允许浏览器保存数据（登录状态/游戏本地数据）
+browser_scale_factor: 1.0 # 浏览器的缩放比，如果云游戏画面过小/过大，可调整这个选项
+browser_launch_argument: [] # 浏览器启动的额外参数，如 "--auto-open-devtools-for-tabs"
+
 # 副本设置
 instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造花萼（金）、拟造花萼（赤）、凝滞虚影、侵蚀隧洞、饰品提取。
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
