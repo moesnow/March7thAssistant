@@ -32,7 +32,6 @@ class Tasks:
         merged_texts = self._merge_ocr_blocks(result, x_gap = 100)
         log.debug(f"每日实训分栏拼接的文本: {merged_texts}")
         progress_pattern = re.compile(r'(\d+)\s*[/／]\s*(\d+)') # 用于匹配“X/Y”格式的正则表达式
-        #progress_pattern = re.compile(r'^进度\s*(\d+)[/／](\d+)')  # 用于匹配“进度 X/Y”格式的正则表达式
         for text in merged_texts:
             for keyword, task_name in self.task_mappings.items():
                 if keyword in text:
@@ -45,13 +44,6 @@ class Tasks:
                         log.debug(f"{task_name}:待完成")
                     break
 
-        # for box in merged_results:
-        #     text = box[1][0]
-        #     for keyword, task_name in self.task_mappings.items():
-        #         if keyword in text:
-        #             self.daily_tasks[task_name] = True
-        #             break
-
     def scroll(self):
         auto.click_element("./assets/images/zh_CN/reward/quest/activity.png", "image", 0.95, crop=self.crop)
         auto.mouse_scroll(40, -1)
@@ -62,7 +54,7 @@ class Tasks:
         return "".join([b['text'] for b in block_list])
     
     def _merge_ocr_blocks(self, raw_ocr_results, x_gap = 100):
-        """按 X 轴将OCR文本片段合并成连续的文本字符串列表。"""
+        """按 X Y 轴将OCR文本片段合并成连续的文本字符串列表。"""
         # 输入检查
         if not raw_ocr_results:
             log.debug("每日实训未识别到任何文本")

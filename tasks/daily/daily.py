@@ -125,8 +125,7 @@ class Daily:
     def run():
         log.hr("开始日常任务", 0)
 
-        #if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
-        if True:
+        if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
             screen.change_to("guide2")
 
             tasks = Tasks("./assets/config/task_mappings.json")
