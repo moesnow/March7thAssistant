@@ -1,4 +1,6 @@
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtCore import QUrl
 from qfluentwidgets import InfoBar, InfoBarPosition
 
 from ..card.messagebox_custom import MessageBoxUpdate
@@ -30,6 +32,9 @@ class UpdateThread(QThread):
         self.timeout = timeout  # 超时时间
         self.flag = flag  # 标志位，用于控制是否执行更新检查
         self.error_msg = ""  # 错误信息
+        self.html_url = ""  # 发布页面URL
+        self.github_assert_url = ""  # GitHub资源下载URL
+        self.mirrorchyan_assert_url = ""  # Mirror酱资源下载URL
 
     def remove_images_from_markdown(self, markdown_content):
         """从Markdown内容中移除图片标记。"""
@@ -62,12 +67,14 @@ class UpdateThread(QThread):
 
             data = self.fetch_latest_release_info()
             version = data["tag_name"]
+            self.html_url = data["html_url"]
             content = self.remove_images_from_markdown(data["body"])
             content = re.sub(r"\r\n\r\n首次.*?无法.*?！", "", content, flags=re.DOTALL)
             content = re.sub(r"\r\n\r\n\[.*?Mirror酱.*?CDK.*?下载\]\(https?://.*?mirrorchyan\.com[^\)]*\)", "", content, flags=re.IGNORECASE)
-            if cfg.update_source == "GitHub":
-                content = content + "\n\n若下载速度较慢，可尝试使用 Mirror酱（设置 → 关于 → 更新源） 高速下载"
+            # if cfg.update_source == "GitHub":
+            #     content = content + "\n\n若下载速度较慢，可尝试使用 Mirror酱（设置 → 关于 → 更新源） 高速下载"
             assert_url = self.get_download_url_from_assets(data["assets"])
+            self.github_assert_url = assert_url
             assert_name = assert_url.split("/")[-1]
 
             if assert_url is None:
@@ -91,6 +98,7 @@ class UpdateThread(QThread):
                         url = mirrorchyan_data["data"]["url"]
                         if version_name == version:
                             assert_url = url
+                            self.mirrorchyan_assert_url = assert_url
                 else:
                     try:
                         mirrorchyan_data = response.json()
@@ -134,13 +142,55 @@ def checkUpdate(self, timeout=5, flag=False):
                 self.update_thread.content,
                 self.window()
             )
-            if message_box.exec():
+            # 预留外部处理的信号方法（占位）
+
+            def handle_github_click():
                 # 执行更新操作
-                source_file = os.path.abspath("./March7th Updater.exe")
-                assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
-                # assert_url = self.update_thread.assert_url
+                assert_url = self.update_thread.github_assert_url
                 assert_name = self.update_thread.assert_name
+                source_file = os.path.abspath("./March7th Updater.exe")
                 subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
+                message_box.reject()
+
+            def handle_mirrorchyan_click():
+                # 执行更新操作
+                assert_url = self.update_thread.mirrorchyan_assert_url
+                if assert_url == "":
+                    InfoBar.error(
+                        title=self.tr('尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)'),
+                        content="请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK",
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=5000,
+                        parent=self
+                    )
+                    return
+                assert_name = self.update_thread.assert_name
+                source_file = os.path.abspath("./March7th Updater.exe")
+                subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
+                message_box.reject()
+
+            # 连接 PrimaryPushSettingCard 的点击信号（若存在）到占位处理函数，外部也可直接访问 message_box.githubUpdateCard / message_box.mirrorchyanUpdateCard
+            try:
+                if hasattr(message_box, 'githubUpdateCard') and message_box.githubUpdateCard is not None:
+                    message_box.githubUpdateCard.clicked.connect(handle_github_click)
+            except Exception:
+                pass
+
+            try:
+                if hasattr(message_box, 'mirrorchyanUpdateCard') and message_box.mirrorchyanUpdateCard is not None:
+                    message_box.mirrorchyanUpdateCard.clicked.connect(handle_mirrorchyan_click)
+            except Exception:
+                pass
+            if message_box.exec():
+                QDesktopServices.openUrl(QUrl(self.update_thread.html_url))
+                # # 执行更新操作
+                # source_file = os.path.abspath("./March7th Updater.exe")
+                # assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
+                # # assert_url = self.update_thread.assert_url
+                # assert_name = self.update_thread.assert_name
+                # subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
         elif status == UpdateStatus.SUCCESS:
             # 显示当前为最新版本的信息
             InfoBar.success(

@@ -48,6 +48,12 @@ class PushSettingCardMirrorchyan(SettingCard):
         self.title = title
         self.configname = configname
 
+        self.button3 = QPushButton("交流反馈", self)
+        self.button3.setObjectName('primaryButton')
+        self.hBoxLayout.addWidget(self.button3, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.button3.clicked.connect(self.__onclicked3)
+
         self.button2 = QPushButton("获取 CDK", self)
         self.button2.setObjectName('primaryButton')
         self.hBoxLayout.addWidget(self.button2, 0, Qt.AlignRight)
@@ -69,6 +75,9 @@ class PushSettingCardMirrorchyan(SettingCard):
 
     def __onclicked2(self):
         QDesktopServices.openUrl(QUrl("https://mirrorchyan.com/?source=m7a-app"))
+
+    def __onclicked3(self):
+        QDesktopServices.openUrl(QUrl("https://pd.qq.com/g/MirrorChyan"))
 
 
 class PushSettingCardCode(PushSettingCard):

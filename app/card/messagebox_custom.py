@@ -3,7 +3,8 @@ from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushBut
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, Theme)
+                            isDarkTheme, PrimaryPushSettingCard)
+from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
 import datetime
@@ -175,11 +176,54 @@ class MessageBoxHtml(MessageBox):
         QDesktopServices.openUrl(QUrl(url))
 
 
-class MessageBoxUpdate(MessageBoxHtml):
+class MessageBoxHtmlUpdate(MessageBox):
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
-        self.yesButton.setText('下载')
+        self.buttonLayout.removeWidget(self.yesButton)
+        self.buttonLayout.removeWidget(self.cancelButton)
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.contentLabel = BodyLabel(content, parent)
+        self.contentLabel.setObjectName("contentLabel")
+        self.contentLabel.setOpenExternalLinks(True)
+        self.contentLabel.linkActivated.connect(self.open_url)
+        self.contentLabel.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.contentLabel.setMinimumWidth(500)
+        FluentStyleSheet.DIALOG.apply(self.contentLabel)
+
+        self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignVCenter)
+        self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignVCenter)
+        self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
+
+        self.githubUpdateCard = PrimaryPushSettingCard(
+            self.tr('立即更新'),
+            FIF.GITHUB,
+            self.tr('开源渠道'),
+            "直接从 GitHub 下载并更新"
+        )
+
+        self.mirrorchyanUpdateCard = PrimaryPushSettingCard(
+            self.tr('立即更新'),
+            FIF.CLOUD,
+            self.tr('Mirror酱 服务 ⚡'),
+            "Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）"
+        )
+        self.textLayout.addWidget(self.githubUpdateCard, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.mirrorchyanUpdateCard, 0, Qt.AlignTop)
+
+        # self.githubUpdateCard.clicked.connect(self._githubupdate())
+
+    def open_url(self, url):
+        QDesktopServices.openUrl(QUrl(url))
+
+
+class MessageBoxUpdate(MessageBoxHtmlUpdate):
+    def __init__(self, title: str, content: str, parent=None):
+        super().__init__(title, content, parent)
+
+        self.yesButton.setText('手动下载')
         self.cancelButton.setText('好的')
 
 
