@@ -425,7 +425,7 @@ class SettingInterface(ScrollArea):
         self.weeklyDivergentRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
             FIF.DATE_TIME,
-            self.tr("上次运行每周一次差分宇宙的时间"),
+            self.tr("上次运行每两周一次差分宇宙的时间"),
             "weekly_divergent_timestamp"
         )
         self.universeBonusEnableCard = SwitchSettingCard1(
@@ -567,7 +567,7 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行末日幻影的时间"),
             "apocalyptic_timestamp"
         )
-        
+
         self.CloudGameGroup = SettingCardGroup(
             self.tr("云崩铁设置"),
             self.scrollWidget
@@ -615,7 +615,7 @@ class SettingInterface(ScrollArea):
         #     "cloud_game_status_bar_enable",
         #     "cloud_game_status_bar_type"
         # )
-        
+
         self.browserTypeCard = ComboBoxSettingCard2(
             "browser_type",
             FIF.GLOBE,
@@ -630,28 +630,28 @@ class SettingInterface(ScrollArea):
             self.tr("不支持模拟宇宙和锄大地"),
             "browser_headless_enable"
         )
-        
+
         # self.browserCookiesCard = SwitchSettingCard1(
         #     FIF.PALETTE,    # 这个画盘长得很像 Cookie
         #     self.tr("保存 Cookies（登录状态）"),
         #     None,
         #     "browser_dump_cookies_enable"
         # )
-        
+
         self.browserPersistentCard = SwitchSettingCard1(
             FIF.DOWNLOAD,
             self.tr("保存浏览器数据（游戏的登录状态和本地数据）"),
             None,
             "browser_persistent_enable"
         )
-        
+
         self.browserScaleCard = PushSettingCardEval(
             self.tr("修改"),
             FIF.ZOOM,
             self.tr("浏览器缩放比例（如果画面过小/过大，可适当增加/减少这个值）"),
             "browser_scale_factor"
         )
-        
+
         self.browserLaunchArgCard = PushSettingCardEval(
             self.tr("修改"),
             FIF.CODE,
@@ -907,7 +907,6 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
         self.PowerGroup.addSettingCard(self.buildTargetPlanarOrnamentWeeklyCountCard)
 
-
         self.BorrowGroup.addSettingCard(self.borrowEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowFriendsCard)
@@ -974,7 +973,7 @@ class SettingInterface(ScrollArea):
         self.ApocalypticGroup.addSettingCard(self.ApocalypticTeam1Card)
         self.ApocalypticGroup.addSettingCard(self.ApocalypticTeam2Card)
         self.ApocalypticGroup.addSettingCard(self.ApocalypticRunTimeCard)
-        
+
         self.CloudGameGroup.addSettingCard(self.cloudGameEnableCard)
         self.CloudGameGroup.addSettingCard(self.browserTypeCard)
         self.CloudGameGroup.addSettingCard(self.cloudGameFullScreenCard)
