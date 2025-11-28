@@ -1,3 +1,5 @@
+from io import BytesIO
+from PIL import Image
 import pyautogui
 import win32gui
 from desktopmagic.screengrab_win32 import getDisplayRects
@@ -6,16 +8,22 @@ from module.config import cfg
 class Screenshot:
     @staticmethod
     def is_application_fullscreen(window):
+        if cfg.cloud_game_enable:
+            return True
         screen_width, screen_height = pyautogui.size()
         return (window.width, window.height) == (screen_width, screen_height)
 
     @staticmethod
     def get_window_real_resolution(window):
+        if cfg.cloud_game_enable:
+            return 1920, 1080
         left, top, right, bottom = win32gui.GetClientRect(window._hWnd)
         return right - left, bottom - top
 
     @staticmethod
     def get_window_region(window):
+        if cfg.cloud_game_enable:
+            return (0, 0, 1920, 1080)
         if Screenshot.is_application_fullscreen(window):
             return (window.left, window.top, window.width, window.height)
         else:
@@ -26,6 +34,8 @@ class Screenshot:
 
     @staticmethod
     def get_window(title):
+        if cfg.cloud_game_enable:
+            return False #TODO
         windows = pyautogui.getWindowsWithTitle(title)
         if windows:
             window = windows[0]
@@ -34,6 +44,8 @@ class Screenshot:
 
     @staticmethod
     def get_main_screen_location():
+        if cfg.cloud_game_enable:
+            return None, None
         rects = getDisplayRects()
         min_x = min([rect[0] for rect in rects])
         min_y = min([rect[1] for rect in rects])
@@ -41,6 +53,25 @@ class Screenshot:
     
     @staticmethod
     def take_screenshot(title, crop=(0, 0, 1, 1)):
+        if cfg.cloud_game_enable:
+            from module.game import cloud_game
+            screenshot = Image.open(BytesIO(cloud_game.take_screenshot()))
+            width, height = screenshot.size
+
+            left = int(width * crop[0])
+            top = int(height * crop[1])
+            crop_width = int(width * crop[2])
+            crop_height = int(height * crop[3])
+
+            screenshot = screenshot.crop((left, top, left + crop_width, top + crop_height))
+
+            # Selenium 截图分辨率一般就是浏览器窗口实际像素，所以 scale_factor 默认为 1
+            screenshot_scale_factor = 1
+
+            screenshot_pos = (left, top, crop_width, crop_height)
+
+            return screenshot, screenshot_pos, screenshot_scale_factor
+            
         window = Screenshot.get_window(title)
         if window:
             left, top, width, height = Screenshot.get_window_region(window)

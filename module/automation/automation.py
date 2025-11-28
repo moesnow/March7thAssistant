@@ -3,13 +3,12 @@ import math
 import cv2
 import numpy as np
 
-from .input import Input
 from .screenshot import Screenshot
 from utils.logger.logger import Logger
 from typing import Optional
 from utils.singleton import SingletonMeta
 from utils.image_utils import ImageUtils
-
+from module.game import get_game_controller
 from module.ocr import ocr
 
 
@@ -33,7 +32,7 @@ class Automation(metaclass=SingletonMeta):
         """
         初始化输入处理器，将输入操作如点击、移动等绑定至实例变量。
         """
-        self.input_handler = Input(self.logger)
+        self.input_handler = get_game_controller().get_input_handler()
         self.mouse_click = self.input_handler.mouse_click
         self.mouse_down = self.input_handler.mouse_down
         self.mouse_up = self.input_handler.mouse_up
@@ -460,7 +459,7 @@ class Automation(metaclass=SingletonMeta):
             return self.click_element_with_pos(coordinates, offset, action)
         return False
 
-    def get_single_line_text(self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3):
+    def get_single_line_text(self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3, retry_delay=0.0):
         """
         尝试多次获取屏幕截图中的单行文本。
 
@@ -468,6 +467,7 @@ class Automation(metaclass=SingletonMeta):
         crop: 裁剪区域，格式为(x1, y1, x2, y2)。
         blacklist: 需要过滤掉的字符列表。
         max_retries: 尝试识别的最大次数。
+        retry_delay: 每次重试之间的等待时间（秒），默认0.0秒。
 
         返回:
         识别到的文本，如果多次尝试后仍未识别到，则返回None。
@@ -477,4 +477,6 @@ class Automation(metaclass=SingletonMeta):
             ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)
             if ocr_result:
                 return ocr_result[0]
+            if retry_delay > 0 and i < max_retries - 1:
+                time.sleep(retry_delay)
         return None

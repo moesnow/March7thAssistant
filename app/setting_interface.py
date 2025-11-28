@@ -8,7 +8,7 @@ from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
@@ -166,6 +166,19 @@ class SettingInterface(ScrollArea):
         #     self.tr("周几开始执行【历战余响】"),
         #     self.tr("假设值为4，那么周1、2、3不执行「历战余响」，周4、5、6、7则执行"),
         # )
+        self.buildTargetEnableCard = SwitchSettingCard1(
+            FIF.LEAF,
+            self.tr('启用培养目标'),
+            "根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置",
+            "build_target_enable"
+        )
+        self.buildTargetPlanarOrnamentWeeklyCountCard = RangeSettingCard1(
+            "build_target_ornament_weekly_count",
+            [0, 7],
+            FIF.CALENDAR,
+            self.tr('培养目标：每周饰品提取次数'),
+            self.tr('设置培养目标一周内执行饰品提取的次数，0 表示不执行'),
+        )
 
         self.BorrowGroup = SettingCardGroup(self.tr("支援设置"), self.scrollWidget)
         self.borrowEnableCard = SwitchSettingCard1(
@@ -554,6 +567,97 @@ class SettingInterface(ScrollArea):
             self.tr("上次运行末日幻影的时间"),
             "apocalyptic_timestamp"
         )
+        
+        self.CloudGameGroup = SettingCardGroup(
+            self.tr("云崩铁设置"),
+            self.scrollWidget
+        )
+        self.cloudGameEnableCard = SwitchSettingCard1(
+            FIF.SPEED_HIGH,
+            self.tr("使用“云·星穹铁道”"),
+            "开启后，将改用云·星穹铁道来执行清体力等自动化任务。无需固定窗口，可在后台运行。（模拟宇宙和锄大地仍需保持窗口全屏）",
+            "cloud_game_enable"
+        )
+        self.cloudGameFullScreenCard = SwitchSettingCard1(
+            FIF.FULL_SCREEN,
+            self.tr("全屏运行"),
+            None,
+            "cloud_game_fullscreen_enable"
+        )
+
+        self.cloudGameMaxQueueTimeCard = RangeSettingCard1(
+            "cloud_game_max_queue_time",
+            [1, 60],
+            FIF.SPEED_MEDIUM,
+            self.tr("最大排队等待时间（分钟）"),
+            ''
+        )
+
+        # self.cloudGameVideoQualityCard = ComboBoxSettingCard2(
+        #     "cloud_game_video_quality",
+        #     FIF.VIDEO,
+        #     self.tr("云游戏画质"),
+        #     None,
+        #     texts={"超高清": "0", "高清": "1", "标清": "2", "低清": "3"}
+        # )
+
+        # self.cloudGameSmoothFirstCard = SwitchSettingCard1(
+        #     FIF.SPEED_HIGH,
+        #     self.tr("画面流畅优先"),
+        #     "启用这个选项后，当网速过慢时，会自动调低画质",
+        #     "cloud_game_smooth_first_enable"
+        # )
+
+        # self.cloudGameShowStatusCard = SwitchSettingCardCloudGameStatus(
+        #     FIF.INFO,
+        #     self.tr("云游戏内显示网络状态"),
+        #     None,
+        #     "cloud_game_status_bar_enable",
+        #     "cloud_game_status_bar_type"
+        # )
+        
+        self.browserTypeCard = ComboBoxSettingCard2(
+            "browser_type",
+            FIF.GLOBE,
+            self.tr("浏览器类型"),
+            self.tr("‘集成’ 模式下，会自动下载浏览器"),
+            {"集成（Chrome For Testing）": "integrated", "Chrome": "chrome", "Edge": "edge"}
+        )
+
+        self.browserHeadlessCard = SwitchSettingCard1(
+            FIF.VIEW,
+            self.tr("无窗口模式（后台运行）"),
+            self.tr("不支持模拟宇宙和锄大地"),
+            "browser_headless_enable"
+        )
+        
+        # self.browserCookiesCard = SwitchSettingCard1(
+        #     FIF.PALETTE,    # 这个画盘长得很像 Cookie
+        #     self.tr("保存 Cookies（登录状态）"),
+        #     None,
+        #     "browser_dump_cookies_enable"
+        # )
+        
+        self.browserPersistentCard = SwitchSettingCard1(
+            FIF.DOWNLOAD,
+            self.tr("保存浏览器数据（游戏的登录状态和本地数据）"),
+            None,
+            "browser_persistent_enable"
+        )
+        
+        self.browserScaleCard = PushSettingCardEval(
+            self.tr("修改"),
+            FIF.ZOOM,
+            self.tr("浏览器缩放比例（如果画面过小/过大，可适当增加/减少这个值）"),
+            "browser_scale_factor"
+        )
+        
+        self.browserLaunchArgCard = PushSettingCardEval(
+            self.tr("修改"),
+            FIF.CODE,
+            self.tr("浏览器启动参数"),
+            "browser_launch_argument"
+        )
 
         self.ProgramGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
         self.logLevelCard = ComboBoxSettingCardLog(
@@ -693,7 +797,7 @@ class SettingInterface(ScrollArea):
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             self.tr('启用自动战斗检测'),
-            "只对清体力和逐光捡金场景生效，并在启动游戏前自动检测并修改注册表值",
+            "（不支持云·星穹铁道）只对清体力和逐光捡金场景生效，并在启动游戏前自动检测并修改注册表值",
             "auto_battle_detect_enable"
         )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
@@ -800,6 +904,9 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
         # self.PowerGroup.addSettingCard(self.echoofwarStartDayOfWeekCard)
+        self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
+        self.PowerGroup.addSettingCard(self.buildTargetPlanarOrnamentWeeklyCountCard)
+
 
         self.BorrowGroup.addSettingCard(self.borrowEnableCard)
         self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
@@ -867,6 +974,19 @@ class SettingInterface(ScrollArea):
         self.ApocalypticGroup.addSettingCard(self.ApocalypticTeam1Card)
         self.ApocalypticGroup.addSettingCard(self.ApocalypticTeam2Card)
         self.ApocalypticGroup.addSettingCard(self.ApocalypticRunTimeCard)
+        
+        self.CloudGameGroup.addSettingCard(self.cloudGameEnableCard)
+        self.CloudGameGroup.addSettingCard(self.browserTypeCard)
+        self.CloudGameGroup.addSettingCard(self.cloudGameFullScreenCard)
+        self.CloudGameGroup.addSettingCard(self.browserHeadlessCard)
+        self.CloudGameGroup.addSettingCard(self.cloudGameMaxQueueTimeCard)
+        # self.CloudGameGroup.addSettingCard(self.cloudGameVideoQualityCard)
+        # self.CloudGameGroup.addSettingCard(self.cloudGameSmoothFirstCard)
+        # self.CloudGameGroup.addSettingCard(self.cloudGameShowStatusCard)
+        # self.CloudGameGroup.addSettingCard(self.browserCookiesCard)
+        self.CloudGameGroup.addSettingCard(self.browserPersistentCard)
+        self.CloudGameGroup.addSettingCard(self.browserScaleCard)
+        self.CloudGameGroup.addSettingCard(self.browserLaunchArgCard)
 
         self.ProgramGroup.addSettingCard(self.logLevelCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
@@ -919,6 +1039,7 @@ class SettingInterface(ScrollArea):
             onClick=lambda: self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName()),
         )
 
+        self.addSubInterface(self.CloudGameGroup, "cloudGameInterface", self.tr('云游戏'))
         self.addSubInterface(self.ProgramGroup, 'programInterface', self.tr('程序'))
         self.addSubInterface(self.NotifyGroup, 'NotifyInterface', self.tr('推送'))
         self.addSubInterface(self.MiscGroup, 'KeybindingInterface', self.tr('杂项'))
