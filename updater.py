@@ -33,7 +33,6 @@ class Updater:
         self.cover_folder_path = os.path.abspath("./")
         self.exe_path = os.path.abspath("./assets/binary/7za.exe")
         self.aria2_path = os.path.abspath("./assets/binary/aria2c.exe")
-        self.delete_folder_path = os.path.join("./3rdparty/Fhoe-Rail", "map")
 
         self.logger.hr("获取下载链接", 0)
         if download_url is None:
@@ -186,8 +185,6 @@ class Updater:
         while True:
             try:
                 self.logger.info("开始覆盖...")
-                if "full" in self.file_name and os.path.exists(self.delete_folder_path):
-                    shutil.rmtree(self.delete_folder_path)
                 shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
                 self.logger.info(f"覆盖完成: {green(self.cover_folder_path)}")
                 break
