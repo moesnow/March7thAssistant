@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import QApplication
 
 from contextlib import redirect_stdout
 
-from app.tools.game_starter import GameStartStatus, GameLaunchThread
 with redirect_stdout(None):
+    from app.tools.game_starter import GameStartStatus, GameLaunchThread
     from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, Theme
     from qfluentwidgets import FluentIcon as FIF
     from qfluentwidgets import InfoBar, InfoBarPosition
