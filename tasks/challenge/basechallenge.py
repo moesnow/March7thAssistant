@@ -57,6 +57,7 @@ class BaseChallenge(ABC):
         for box in ocr_results:
             text = box[1][0]
             if target_format in text:
+                text = text.replace("*", "")
                 log.info(f"星数：{text}")
                 current_star, _ = text.split('/')
                 if current_star == str(self.total_star):
@@ -74,22 +75,22 @@ class BaseChallenge(ABC):
             auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
             # 选择角色
             for character in team_config:
-                scrolling_counter = 0 #统计滚动次数
-                max_scroll_times = 4 #最大滚动次数
-                scroll_line = 19 #26滚动1页，13滚动半页
-                while(not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=False)):
+                scrolling_counter = 0  # 统计滚动次数
+                max_scroll_times = 4  # 最大滚动次数
+                scroll_line = 19  # 26滚动1页，13滚动半页
+                while (not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=False)):
                     if scrolling_counter > max_scroll_times:
-                        #滚动超过2页强制结束
+                        # 滚动超过2页强制结束
                         log.info(f"{character[0]}未找到")
                         return False
                     auto.click_element("等级", "text", include=True, action="move")
-                    #，尝试向下滚动
+                    # ，尝试向下滚动
                     auto.mouse_scroll(scroll_line, -1, False)
                     time.sleep(0.5)
                     auto.click_element("角色列表", "text", include=True, action="move")
                     scrolling_counter += 1
                 for _ in range(scrolling_counter):
-                     # 尝试向上滚动 恢复初始位置
+                    # 尝试向上滚动 恢复初始位置
                     auto.click_element("等级", "text", include=True, action="move")
                     auto.mouse_scroll(scroll_line, 1, False)
                     time.sleep(0.5)
