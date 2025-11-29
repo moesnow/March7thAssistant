@@ -22,8 +22,6 @@ class Daily:
     @staticmethod
     def start():
         activity.start()
-        if cfg.daily_enable:
-            Daily.run()
 
         # 获取培养目标
         if cfg.build_target_enable:
@@ -45,6 +43,9 @@ class Daily:
 
         Power.run()
 
+        if cfg.daily_enable:
+            Daily.run()
+
         if Date.is_next_x_am(cfg.fight_timestamp, cfg.refresh_hour):
             if cfg.fight_enable:
                 Fight.start()
@@ -63,10 +64,7 @@ class Daily:
         if cfg.universe_frequency == "weekly":
             if Date.is_next_mon_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
-                    Power.run()
-                    reward.start()
                     Universe.start()
-                    Power.run()
                 else:
                     log.info("模拟宇宙未开启")
             else:
@@ -103,23 +101,6 @@ class Daily:
                 log.info("末日幻影未开启")
         else:
             log.info("末日幻影尚未刷新")
-
-        activity.start()
-
-        # 优先历战余响
-        if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
-            if cfg.echo_of_war_enable:
-                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
-                isoweekday = datetime.date.today().isoweekday()
-                if isoweekday >= cfg.echo_of_war_start_day_of_week:
-                    Echoofwar.start()
-                else:
-                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
-            else:
-                log.info("历战余响未开启")
-        else:
-            log.info("历战余响尚未刷新")
-        Power.run()
 
     @staticmethod
     def run():
