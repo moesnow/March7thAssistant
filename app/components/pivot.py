@@ -67,7 +67,7 @@ class SettingPivot(Pivot):
         # override global QSS padding for this item to reduce visible gap
         try:
             # smaller vertical/horizontal padding
-            item.setStyleSheet("padding: 10px 7.5px; margin: 0px;")
+            item.setStyleSheet("padding: 10px 7px; margin: 0px;")
         except Exception:
             pass
         if icon:
