@@ -68,7 +68,7 @@ def start_game():
                 log.info("检测到登录过期，尝试自动登录")
                 auto_login_os()
         return False
-    
+
     def cloud_game_check_and_enter():
         # 点击进入
         if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
@@ -107,7 +107,7 @@ def start_game():
                 process = psutil.Process(proc.info['pid'])
                 return process.exe()
         return None
-    
+
     def start_local_game():
         if not starrail.switch_to_game():
             if cfg.auto_set_resolution_enable:
@@ -170,7 +170,7 @@ def start_game():
             if cfg.cloud_game_enable:
                 cloud_game.stop_game()
             else:
-                starrail.stop_game() 
+                starrail.stop_game()
             if retry == MAX_RETRY - 1:
                 raise  # 如果是最后一次尝试，则重新抛出异常
 
@@ -283,6 +283,7 @@ def auto_login():
         if auto.click_element("./assets/images/screen/account_field.png", "image", 0.9, max_retries=10):
             auto_type(account)
             if auto.click_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
+                time.sleep(5)  # 等待切换到密码输入框
                 auto_type(password)
                 if auto.click_element("./assets/images/screen/agree_conditions.png", "image", 0.9, max_retries=10):
                     if auto.click_element("./assets/images/screen/enter_game.png", "image", 0.9, max_retries=10):
@@ -301,6 +302,7 @@ def auto_login_os():
     if auto.click_element("./assets/images/screen/account_field_os.png", "image", 0.9, max_retries=10):
         auto_type(account)
         if auto.click_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
+            time.sleep(5)  # 等待切换到密码输入框
             auto_type(password)
             if auto.click_element("./assets/images/screen/enter_game.png", "image", 0.9, max_retries=10):
                 if auto.find_element("./assets/images/screen/welcome.png", "image", 0.9, max_retries=10):
