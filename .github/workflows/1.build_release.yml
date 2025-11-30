@@ -50,13 +50,14 @@ jobs:
           Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
           Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
 
-      # 创建压缩包
+      # 创建更新压缩包
       - name: Create archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
-          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant.zip .\dist\March7thAssistant\
-          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant.7z .\dist\March7thAssistant\
+          Rename-Item -Path .\dist\March7thAssistant -NewName update
+          .\assets\binary\7za.exe a -t7z .\dist\update.7z .\dist\update\
+          Rename-Item -Path .\dist\update -NewName March7thAssistant
 
       # 移动第三方库到dist目录
       - name: Move 3rdparty to dist directory
