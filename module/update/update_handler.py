@@ -27,16 +27,37 @@ class UpdateHandler:
 
     def download_file(self):
         if os.path.exists(self.download_file_path):
-            os.remove(self.download_file_path)
-        while True:
             try:
-                log.info(f"开始下载: {self.download_url}")
+                os.remove(self.download_file_path)
+            except Exception as e:
+                log.warning(f"无法删除已有下载文件: {e}")
+
+        max_attempts = 5
+        delay_seconds = 60
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                log.info(f"开始下载: {self.download_url} (尝试 {attempt}/{max_attempts})")
                 download_with_progress(self.download_url, self.download_file_path)
                 log.info(f"下载完成: {self.download_file_path}")
-                break
-            except Exception:
-                log.error(f"下载失败: 请检查网络连接是否正常")
-                input("按回车键重试. . .")
+                return
+            except Exception as e:
+                log.error(f"下载失败 (第{attempt}次): {e} — 请检查网络连接是否正常")
+
+                if attempt < max_attempts:
+                    log.info(f"{delay_seconds}秒后重试...")
+                    import time
+                    time.sleep(delay_seconds)
+
+                    if os.path.exists(self.download_file_path):
+                        try:
+                            os.remove(self.download_file_path)
+                        except Exception as ex:
+                            log.warning(f"删除临时下载文件失败: {ex}")
+                    continue
+                else:
+                    log.error("达到最大重试次数，放弃下载")
+                    raise
 
     def extract_file(self):
         while True:

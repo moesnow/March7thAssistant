@@ -24,10 +24,7 @@ def download_with_progress(download_url, save_path):
         for scheme, proxy in proxies.items():
             if scheme in ("http", "https", "ftp"):
                 command.append(f"--{scheme}-proxy={proxy}")
-        process = subprocess.Popen(command)
-        process.wait()
-        if process.returncode != 0:
-            raise Exception
+        subprocess.run(command, check=True)
     else:
         # 获取文件大小
         response = urllib.request.urlopen(download_url)
