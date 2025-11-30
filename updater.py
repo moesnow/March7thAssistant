@@ -236,7 +236,22 @@ class Updater:
         返回被占用的目标路径字符串列表。
         """
         locked = []
+        # 排除当前运行程序自身路径（sys.argv[0]）的检测，避免把自身视为被占用
+        try:
+            self_path = os.path.normcase(os.path.normpath(os.path.abspath(sys.argv[0])))
+        except Exception:
+            self_path = None
+
         for src, dest in files_to_overwrite:
+            try:
+                norm_dest = os.path.normcase(os.path.normpath(os.path.abspath(dest)))
+            except Exception:
+                norm_dest = None
+
+            # 如果目标路径是当前运行文件，跳过检测
+            if self_path and norm_dest and norm_dest == self_path:
+                continue
+
             if os.path.exists(dest) and self.is_file_locked(dest):
                 locked.append(str(dest))
         return locked
@@ -251,6 +266,49 @@ class Updater:
         display = locked_paths[:limit]
         remaining = max(0, len(locked_paths) - len(display))
         return display, remaining
+
+    def ensure_self_renamed_if_target(self, files_to_overwrite) -> bool:
+        """
+        检查文件列表中的目标路径是否包含当前运行的可执行文件（sys.argv[0]）。
+        如果包含，尝试将当前可执行文件重命名为 <name>.old 以避免被覆盖。
+        返回 True 表示要么不涉及自身，要么重命名成功；返回 False 表示尝试失败
+        """
+        try:
+            self_path = os.path.abspath(sys.argv[0])
+        except Exception:
+            # 无法获取当前路径，跳过重命名逻辑
+            return True
+
+        # 标准化路径比较
+        norm_self = os.path.normcase(os.path.normpath(self_path))
+        targets = [os.path.normcase(os.path.normpath(dest)) for _, dest in files_to_overwrite]
+
+        if norm_self not in targets:
+            return True
+
+        # 将 .old 插入到扩展名前：foo.exe -> foo.old.exe
+        root, ext = os.path.splitext(self_path)
+        backup_path = f"{root}.old{ext}"
+
+        # 如果备份文件已经存在，尝试先删除以便创建新的备份
+        if os.path.exists(backup_path):
+            try:
+                os.remove(backup_path)
+            except Exception:
+                # 无法删除旧的 .old 文件，失败并通知上层
+                self.logger.error(f"无法删除旧的备份文件: {backup_path}")
+                return False
+
+        try:
+            # 尝试重命名自身文件为 .old
+            os.replace(self_path, backup_path)
+            # 记录备份路径，以便在更新完成后安排删除
+            self.self_backup_path = backup_path
+            return True
+        except Exception as e:
+            # 无法重命名，返回 False 以便提示用户手动处理
+            self.logger.error(f"重命名自身失败: {e}")
+            return False
 
     def cover_folder(self):
         """覆盖安装最新版本的文件。"""
@@ -270,7 +328,42 @@ class Updater:
 
             try:
                 self.logger.info("开始覆盖...")
-                shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
+
+                # 按文件逐个复制，跳过当前运行的自身文件（self），最后再单独处理它。
+                try:
+                    self_path = os.path.normcase(os.path.normpath(os.path.abspath(sys.argv[0])))
+                except Exception:
+                    self_path = None
+
+                others = []
+                self_items = []
+                for src, dest in files_to_overwrite:
+                    try:
+                        norm_dest = os.path.normcase(os.path.normpath(os.path.abspath(dest)))
+                    except Exception:
+                        norm_dest = None
+
+                    if self_path and norm_dest and norm_dest == self_path:
+                        self_items.append((src, dest))
+                    else:
+                        others.append((src, dest))
+
+                # 复制除自身外的其他文件
+                for src, dest in others:
+                    os.makedirs(os.path.dirname(dest), exist_ok=True)
+                    shutil.copy2(src, dest)
+
+                # 如果覆盖目标包含正在运行的程序自身，尝试重命名自身以避免被覆盖
+                if not self.ensure_self_renamed_if_target(files_to_overwrite):
+                    # 如果无法重命名自身则提示用户并继续重试流程
+                    input("无法为当前执行文件创建备份（.old），请手动关闭相关进程或释放文件后按回车重试...")
+                    continue
+
+                # 复制自身（如果存在于更新包内），此时 ensure_self_renamed_if_target 已经将正在运行的文件改名为 .old
+                for src, dest in self_items:
+                    os.makedirs(os.path.dirname(dest), exist_ok=True)
+                    shutil.copy2(src, dest)
+
                 self.logger.info(f"覆盖完成: {green(self.cover_folder_path)}")
                 break
             except Exception as e:
@@ -335,9 +428,34 @@ class Updater:
         self.terminate_processes()
         self.cover_folder()
         self.cleanup()
-        input("按回车键退出并打开软件")
-        if os.system(f'cmd /c start "" "{os.path.abspath("./March7th Launcher.exe")}"'):
-            subprocess.Popen(os.path.abspath("./March7th Launcher.exe"))
+        # input("按回车键退出并打开软件")
+        launcher_path = os.path.abspath("./March7th Launcher.exe")
+        if os.system(f'cmd /c start "" "{launcher_path}"'):
+            subprocess.Popen(launcher_path)
+
+        # 循环尝试删除直到成功为止，然后删除脚本自身
+        try:
+            backup_to_delete = getattr(self, 'self_backup_path', None)
+            if backup_to_delete and os.path.exists(backup_to_delete):
+                # 创建临时 .bat 文件
+                bat_path = os.path.join(self.temp_path, f"cleanup_delete_{int(time.time())}.bat")
+                bat_content = (
+                    f"@echo off\n"
+                    f":loop\n"
+                    f"del /F /Q \"{backup_to_delete}\" >nul 2>&1\n"
+                    f"if exist \"{backup_to_delete}\" (\n"
+                    f"  timeout /T 1 /NOBREAK >nul\n"
+                    f"  goto loop\n"
+                    f")\n"
+                    f"del /F /Q \"%~f0\" >nul 2>&1\n"
+                )
+                with open(bat_path, 'w', encoding='utf-8') as bf:
+                    bf.write(bat_content)
+
+                subprocess.Popen(f'cmd /c "{bat_path}"', shell=True)
+
+        except Exception as e:
+            self.logger.error(f"删除 .old 备份时出错: {e}")
 
 
 def check_temp_dir_and_run():
@@ -347,19 +465,21 @@ def check_temp_dir_and_run():
         sys.exit(1)
 
     temp_path = os.path.abspath("./temp")
-    file_path = sys.argv[0]
-    destination_path = os.path.join(temp_path, os.path.basename(file_path))
+    if os.path.exists(temp_path):
+        shutil.rmtree(temp_path)
+    # file_path = sys.argv[0]
+    # destination_path = os.path.join(temp_path, os.path.basename(file_path))
 
-    if file_path != destination_path:
-        if os.path.exists(temp_path):
-            shutil.rmtree(temp_path)
-        if os.path.exists("./Update.exe"):
-            os.remove("./Update.exe")
-        os.makedirs(temp_path, exist_ok=True)
-        shutil.copy(file_path, destination_path)
-        args = [destination_path] + sys.argv[1:]
-        subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)
-        sys.exit(0)
+    # if file_path != destination_path:
+    #     if os.path.exists(temp_path):
+    #         shutil.rmtree(temp_path)
+    #     if os.path.exists("./Update.exe"):
+    #         os.remove("./Update.exe")
+    #     os.makedirs(temp_path, exist_ok=True)
+    #     shutil.copy(file_path, destination_path)
+    #     args = [destination_path] + sys.argv[1:]
+    #     subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)
+    #     sys.exit(0)
 
     download_url = sys.argv[1] if len(sys.argv) == 3 else None
     file_name = sys.argv[2] if len(sys.argv) == 3 else None
