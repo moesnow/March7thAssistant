@@ -103,7 +103,7 @@ class Daily:
                 log.info("末日幻影未开启")
         else:
             log.info("末日幻影尚未刷新")
-            
+
     @staticmethod
     def lookup():
         log.hr("开始查询日常任务完成情况", 0)
@@ -113,7 +113,6 @@ class Daily:
         tasks.start()
 
         cfg.set_value("daily_tasks", tasks.daily_tasks)
-        cfg.save_timestamp("last_run_timestamp")
         log.hr("日常任务查询完成", 2)
 
     @staticmethod
@@ -121,6 +120,7 @@ class Daily:
         log.hr("开始日常任务", 0)
         if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour): # 需要查第二次检查清体力完成了什么
             Daily.lookup()
+            cfg.save_timestamp("last_run_timestamp")
         else:
             log.info("日常任务尚未刷新")
         if len(cfg.daily_tasks) > 0:
