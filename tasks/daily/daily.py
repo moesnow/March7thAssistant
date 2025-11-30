@@ -114,15 +114,20 @@ class Daily:
 
         cfg.set_value("daily_tasks", tasks.daily_tasks)
         log.hr("日常任务查询完成", 2)
-
+    
     @staticmethod
     def run():
         log.hr("开始日常任务", 0)
-        if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour): # 需要查第二次检查清体力完成了什么
+        # 先清空，日常任务还没刷新前，避免残留未完成任务导致异常
+        empty_tasks = []
+        cfg.set_value("daily_tasks", empty_tasks)
+        # 再次查任务列表，用于检查清体力后完成了什么
+        if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour): 
             Daily.lookup()
             cfg.save_timestamp("last_run_timestamp")
         else:
             log.info("日常任务尚未刷新")
+
         if len(cfg.daily_tasks) > 0:
             task_functions = {
                 "登录游戏": (lambda: True, 100),
@@ -192,6 +197,6 @@ class Daily:
                         log.info(f"完成任务: {task_name} (+{green(f'{score}')}分)，当前分数: {yellow(f'{current_score}/{TARGET_SCORE}')}")
                     else:
                         log.info(f"任务无法完成: {task_name}")
-            empty_tasks = []
-            cfg.set_value("daily_tasks", empty_tasks) # 清空日常任务，避免提前结束cfg中存在未完成任务导致出现异常
+            # 清空日常任务，避免由于提前结束，而cfg中残留未完成任务导致出现异常
+            cfg.set_value("daily_tasks", empty_tasks) 
         log.hr("完成", 2)
