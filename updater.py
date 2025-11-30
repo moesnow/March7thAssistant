@@ -452,7 +452,23 @@ class Updater:
                 with open(bat_path, 'w', encoding='utf-8') as bf:
                     bf.write(bat_content)
 
-                subprocess.Popen(f'cmd /c "{bat_path}"', shell=True)
+                try:
+                    subprocess.Popen(f'cmd /c "{bat_path}"', shell=True)
+                except Exception as e:
+                    self.logger.warning(f"无法执行 bat 脚本: {e}")
+                    # 删除临时 bat 文件
+                    try:
+                        if os.path.exists(bat_path):
+                            os.remove(bat_path)
+                    except Exception as ex:
+                        self.logger.error(f"删除临时 bat 脚本失败: {ex}")
+                    # 将 backup_to_delete 移动到 temp_path 下
+                    try:
+                        dest_path = os.path.join(self.temp_path, os.path.basename(backup_to_delete))
+                        shutil.move(backup_to_delete, dest_path)
+                        # self.logger.info(f"已将 {backup_to_delete} 移动到 {dest_path}")
+                    except Exception as ex:
+                        self.logger.error(f"移动文件失败: {ex}")
 
         except Exception as e:
             self.logger.error(f"删除 .old 备份时出错: {e}")
