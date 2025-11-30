@@ -797,7 +797,7 @@ class SettingInterface(ScrollArea):
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             self.tr('启用自动战斗检测'),
-            "（不支持云·星穹铁道）只对清体力和逐光捡金场景生效，并在启动游戏前自动检测并修改注册表值",
+            "游戏启动前通过修改注册表或本地存储开启自动战斗，并在清体力和逐光捡金场景中检测并保持自动战斗状态",
             "auto_battle_detect_enable"
         )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
