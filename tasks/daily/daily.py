@@ -103,31 +103,32 @@ class Daily:
                 log.info("末日幻影未开启")
         else:
             log.info("末日幻影尚未刷新")
+            
     @staticmethod
     def lookup():
         log.hr("开始查询日常任务完成情况", 0)
-        if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
-            screen.change_to("guide2")
+        screen.change_to("guide2")
 
-            tasks = Tasks("./assets/config/task_mappings.json")
-            tasks.start()
+        tasks = Tasks("./assets/config/task_mappings.json")
+        tasks.start()
 
-            cfg.set_value("daily_tasks", tasks.daily_tasks)
-            cfg.save_timestamp("last_run_timestamp")
-        else:
-            log.info("日常任务尚未刷新")
+        cfg.set_value("daily_tasks", tasks.daily_tasks)
+        cfg.save_timestamp("last_run_timestamp")
         log.hr("日常任务查询完成", 2)
+
     @staticmethod
     def run():
         log.hr("开始日常任务", 0)
-        if len(cfg.daily_tasks) <= 0: #用于单独运行清日常任务时查询任务
+        if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour): # 需要查第二次检查清体力完成了什么
             Daily.lookup()
+        else:
+            log.info("日常任务尚未刷新")
         if len(cfg.daily_tasks) > 0:
             task_functions = {
                 "登录游戏": (lambda: True, 100),
-                "派遣1次委托": (lambda: False, 100), #没有实现但有可能已完成,只检测是否完成
-                "累计消耗120点开拓力": (lambda: False, 200), #没有实现但有可能已完成,只检测是否完成
-                "使用支援角色并获得战斗胜利1次": (lambda: False, 200), #没有实现但有可能已完成,只检测是否完成
+                "派遣1次委托": (lambda: False, 100), # 没有实现但有可能已完成,只检测是否完成
+                "累计消耗120点开拓力": (lambda: False, 200), # 没有实现但有可能已完成,只检测是否完成
+                "使用支援角色并获得战斗胜利1次": (lambda: False, 200), # 没有实现但有可能已完成,只检测是否完成
                 "完成1次「拟造花萼（金）」":(lambda: False, 100),
                 "完成1次「拟造花萼（赤）」":(lambda: False, 100),
                 "完成1次「凝滞虚影」":(lambda: False, 100),
@@ -158,9 +159,9 @@ class Daily:
                 "施放终结技造成制胜一击1次": (lambda: challenge.start_memory_one(1), 100),
                 "通关「模拟宇宙」（任意世界）的1个区域": (lambda: Universe.run_daily(), 500),
                 "完成1次「差分宇宙」或「模拟宇宙」": (lambda: Universe.run_daily(), 500),
-                "完成1次「差分宇宙」或「货币战争」": (lambda: False, 500) #没有实现但有可能已完成,只检测是否完成
+                "完成1次「差分宇宙」或「货币战争」": (lambda: False, 500) # 没有实现但有可能已完成,只检测是否完成
             }
-            #用来统计实训分数
+            # 用来统计实训分数
             current_score = 0
             TARGET_SCORE = 500
             log.hr(f"今日实训", 2)
@@ -191,8 +192,6 @@ class Daily:
                         log.info(f"完成任务: {task_name} (+{green(f'{score}')}分)，当前分数: {yellow(f'{current_score}/{TARGET_SCORE}')}")
                     else:
                         log.info(f"任务无法完成: {task_name}")
-                        pass
-
             empty_tasks = []
-            cfg.set_value("daily_tasks", empty_tasks) #清空日常任务，避免提前结束cfg中存在未完成任务导致出现异常
+            cfg.set_value("daily_tasks", empty_tasks) # 清空日常任务，避免提前结束cfg中存在未完成任务导致出现异常
         log.hr("完成", 2)
