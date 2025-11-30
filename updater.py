@@ -212,10 +212,62 @@ class Updater:
 
         return len(locked_files) > 0, locked_files
 
+    def get_files_to_overwrite(self):
+        """
+        收集 extract_folder_path 下将被覆盖（复制到 cover_folder_path）的所有文件，返回 (src_path, dest_path) 列表。
+        仅包含文件（不包含目录）；目标路径按相对路径映射到 cover_folder_path。
+        """
+        items = []
+        if not os.path.isdir(self.extract_folder_path):
+            return items
+
+        for root, dirs, files in os.walk(self.extract_folder_path):
+            for fname in files:
+                src = os.path.join(root, fname)
+                rel = os.path.relpath(src, self.extract_folder_path)
+                dest = os.path.join(self.cover_folder_path, rel)
+                items.append((src, dest))
+
+        return items
+
+    def check_target_files_locked(self, files_to_overwrite):
+        """
+        给定 (src, dest) 列表，检查 dest 是否存在且被 is_file_locked 标记为被占用。
+        返回被占用的目标路径字符串列表。
+        """
+        locked = []
+        for src, dest in files_to_overwrite:
+            if os.path.exists(dest) and self.is_file_locked(dest):
+                locked.append(str(dest))
+        return locked
+
+    def get_locked_display_list(self, locked_paths, limit: int = 10):
+        """
+        将被占用的路径列表限制显示个数，返回 (display_list, remaining_count)。
+        用于日志输出时避免一次性打印过多条目。
+        """
+        if not locked_paths:
+            return [], 0
+        display = locked_paths[:limit]
+        remaining = max(0, len(locked_paths) - len(display))
+        return display, remaining
+
     def cover_folder(self):
         """覆盖安装最新版本的文件。"""
         self.logger.hr("覆盖", 0)
         while True:
+            files_to_overwrite = self.get_files_to_overwrite()
+            locked = self.check_target_files_locked(files_to_overwrite)
+            if locked:
+                self.logger.info(f"以下目标文件被占用，无法覆盖:")
+                display, remaining = self.get_locked_display_list(locked, limit=5)
+                for f in display:
+                    self.logger.info(red(f))
+                if remaining > 0:
+                    self.logger.info(red(f"...另外 {remaining} 个文件被占用（未显示）"))
+                input("请手动关闭相关进程后按回车重新检测...")
+                continue
+
             try:
                 self.logger.info("开始覆盖...")
                 shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
@@ -254,8 +306,11 @@ class Updater:
             locked, files = self.is_folder_locked(self.extract_folder_path)
             if locked:
                 self.logger.info(f"文件夹被占用: {red(self.extract_folder_path)}")
-                for f in files:
+                display, remaining = self.get_locked_display_list(files, limit=5)
+                for f in display:
                     self.logger.info(f"被占用文件: {red(f)}")
+                if remaining > 0:
+                    self.logger.info(red(f"...另外 {remaining} 个文件被占用（未显示）"))
                 input("请手动关闭相关进程后按回车重新检测...")
                 continue
 
