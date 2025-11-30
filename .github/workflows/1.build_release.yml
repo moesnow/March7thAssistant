@@ -83,9 +83,8 @@ jobs:
           name: March7thAssistant ${{ github.ref_name }}
           files: |
             ./dist/March7thAssistant_full.zip
-            ./dist/March7thAssistant.zip
             ./dist/March7thAssistant_full.7z
-            ./dist/March7thAssistant.7z
+            ./dist/update.7z
           prerelease: false
           make_latest: true
 
