@@ -27,6 +27,8 @@ class Daily:
         if cfg.build_target_enable:
             BuildTarget.init_build_targets()
 
+        # 在日常任务中检查是否使用支援角色
+        Daily.lookup()
         # 优先历战余响
         if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
             if cfg.echo_of_war_enable:
@@ -101,11 +103,9 @@ class Daily:
                 log.info("末日幻影未开启")
         else:
             log.info("末日幻影尚未刷新")
-
     @staticmethod
-    def run():
-        log.hr("开始日常任务", 0)
-
+    def lookup():
+        log.hr("开始查询日常任务完成情况", 0)
         if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
             screen.change_to("guide2")
 
@@ -116,7 +116,12 @@ class Daily:
             cfg.save_timestamp("last_run_timestamp")
         else:
             log.info("日常任务尚未刷新")
-
+        log.hr("日常任务查询完成", 2)
+    @staticmethod
+    def run():
+        log.hr("开始日常任务", 0)
+        if len(cfg.daily_tasks) <= 0: #用于单独运行清日常任务时查询任务
+            Daily.lookup()
         if len(cfg.daily_tasks) > 0:
             task_functions = {
                 "登录游戏": (lambda: True, 100),
@@ -174,7 +179,6 @@ class Daily:
                 
             log.info(f"已完成：{yellow(f'{done_count}/{len(cfg.daily_tasks)}')}")
             log.info(f"当前累计分数：{yellow(f'{current_score}/{TARGET_SCORE}')}")
-        
             for task_name, (task_function, score) in task_functions.items():
                 if current_score >= TARGET_SCORE:
                     log.info(f"实训分数已达标")
@@ -187,6 +191,8 @@ class Daily:
                         log.info(f"完成任务: {task_name} (+{green(f'{score}')}分)，当前分数: {yellow(f'{current_score}/{TARGET_SCORE}')}")
                     else:
                         log.info(f"任务无法完成: {task_name}")
-                        pass    
+                        pass
 
+            empty_tasks = []
+            cfg.set_value("daily_tasks", empty_tasks) #清空日常任务，避免提前结束cfg中存在未完成任务导致出现异常
         log.hr("完成", 2)
