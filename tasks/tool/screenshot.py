@@ -5,6 +5,7 @@ from PIL import ImageTk, Image
 import pyperclip
 import pyautogui
 import os
+import atexit
 
 
 class ScreenshotApp:
@@ -16,6 +17,7 @@ class ScreenshotApp:
         - screenshot: PIL Image对象，表示要显示的截图。
         """
         self.setup_root(root, screenshot)
+        atexit.register(ocr.exit_ocr)
         self.setup_canvas()
         self.bind_canvas_events()
         self.setup_buttons()
@@ -28,7 +30,7 @@ class ScreenshotApp:
         self.root = root
         self.root.title("游戏截图")
         self.root.iconbitmap("./assets/logo/March7th.ico")
-        self.root.geometry(f"{screenshot.width}x{screenshot.height+60}")
+        self.root.geometry(f"{screenshot.width}x{screenshot.height + 60}")
         self.screenshot = screenshot
 
         self.screen_resolution = pyautogui.size()
@@ -41,6 +43,8 @@ class ScreenshotApp:
 
         # 通过延时恢复原始状态（不再保持在最前面）
         self.root.after(100, self.remove_topmost)
+        # 当窗口被用户关闭时，优先执行 OCR 清理，再销毁窗口
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def remove_topmost(self):
         # 取消保持最前面状态
@@ -83,6 +87,24 @@ class ScreenshotApp:
         self.selection_rect = None
         self.start_x = None
         self.start_y = None
+
+    def on_close(self):
+        """
+        在窗口关闭时调用：先尝试清理 OCR 相关资源，然后销毁窗口。
+        使用 try/except 以防清理函数抛出异常导致界面无法关闭。
+        """
+        try:
+            ocr.exit_ocr()
+        except Exception:
+            pass
+        try:
+            # 先尝试正常退出主循环
+            self.root.destroy()
+        except Exception:
+            try:
+                self.root.quit()
+            except Exception:
+                pass
 
     def on_button_press(self, event):
         """
