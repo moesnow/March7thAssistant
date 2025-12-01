@@ -1,5 +1,5 @@
 PivotItem {
-    padding: 10px 12px;
+    padding: 10px 7px;
     color: black;
     background-color: transparent;
     border: none;
@@ -20,8 +20,8 @@ PivotItem[isSelected=false]:pressed {
 }
 
 PivotItem[hasIcon=false] {
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 7px;
+    padding-right: 7px;
 }
 
 PivotItem[hasIcon=true] {

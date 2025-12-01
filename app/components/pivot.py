@@ -29,16 +29,6 @@ class PivotItem(PushButton):
 class SettingPivot(Pivot):
     def __init__(self, parent=None):
         super().__init__(parent)
-        # Reduce spacing between pivot items: tighten layout spacing and margins
-        try:
-            layout = self.layout()
-            if layout is not None:
-                # smaller gap between items
-                layout.setSpacing(0)
-                # remove extra margins around the layout
-                layout.setContentsMargins(0, 0, 0, 0)
-        except Exception:
-            pass
 
     def insertItem(self, index: int, routeKey: str, text: str, onClick=None, icon=None):
         """ insert item
@@ -64,12 +54,6 @@ class SettingPivot(Pivot):
             return
 
         item = PivotItem(text, self)
-        # override global QSS padding for this item to reduce visible gap
-        try:
-            # smaller vertical/horizontal padding
-            item.setStyleSheet("padding: 10px 7px; margin: 0px;")
-        except Exception:
-            pass
         if icon:
             item.setIcon(icon)
 
