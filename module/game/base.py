@@ -7,6 +7,7 @@ import ctypes
 from typing import Literal, Tuple, Optional
 from utils.logger.logger import Logger
 
+
 class GameControllerBase:
     def __init__(self, script_path: Optional[str] = None, logger: Optional[Logger] = None) -> None:
         self.script_path = os.path.normpath(script_path) if script_path and isinstance(script_path, (str, bytes, os.PathLike)) else None
@@ -46,9 +47,9 @@ class GameControllerBase:
     def get_window_handle(self) -> int:
         """获取 window handle"""
         ...
-    
+
     @abstractmethod
-    def get_input_handler(self): # -> InputBase
+    def get_input_handler(self):  # -> InputBase
         """获取用于模拟鼠标和键盘操作的类"""
         ...
 
@@ -79,7 +80,7 @@ class GameControllerBase:
             self.log_debug("游戏窗口未找到")
             return None
 
-    def shutdown(self, action: Literal['Exit', 'Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'RunScript'], delay: int = 60) -> bool:
+    def shutdown(self, action: Literal['Exit', 'Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay', 'RunScript'], delay: int = 60) -> bool:
         """
         终止游戏并在指定的延迟后执行系统操作：关机、睡眠、休眠、重启、注销。
 
@@ -91,7 +92,7 @@ class GameControllerBase:
             操作成功执行返回True，否则返回False。
         """
         self.stop_game()
-        if action not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "RunScript"]:
+        if action not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             return True
 
         self.log_warning(f"将在{delay}秒后开始执行系统操作：{action}")
@@ -111,6 +112,11 @@ class GameControllerBase:
                 os.system("shutdown /r")
             elif action == 'Logoff':
                 os.system("shutdown /l")
+            elif action == 'TurnOffDisplay':
+                HWND_BROADCAST = 0xFFFF
+                WM_SYSCOMMAND = 0x0112
+                SC_MONITORPOWER = 0xF170
+                ctypes.windll.user32.SendMessageW(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 2)
             elif action == 'RunScript':
                 self.run_script()
             self.log_info(f"执行系统操作：{action}")
@@ -131,26 +137,26 @@ class GameControllerBase:
             script_dir = os.path.dirname(os.path.abspath(self.script_path))
             # 保存当前工作目录
             original_cwd = os.getcwd()
-            
+
             try:
                 # 切换到脚本所在目录
                 os.chdir(script_dir)
-                
+
                 file_ext = os.path.splitext(self.script_path)[1].lower()
                 if file_ext == '.ps1':
                     # PowerShell脚本
-                    subprocess.Popen(["powershell", "-ExecutionPolicy", "By...", "-File", self.script_path], 
-                                  creationflags=subprocess.CREATE_NEW_CONSOLE)
+                    subprocess.Popen(["powershell", "-ExecutionPolicy", "By...", "-File", self.script_path],
+                                     creationflags=subprocess.CREATE_NEW_CONSOLE)
                     self.log_info(f"已启动PowerShell脚本：{self.script_path}")
                 elif file_ext == '.bat':
                     # Batch脚本
-                    subprocess.Popen([self.script_path], shell=True, 
-                                  creationflags=subprocess.CREATE_NEW_CONSOLE)
+                    subprocess.Popen([self.script_path], shell=True,
+                                     creationflags=subprocess.CREATE_NEW_CONSOLE)
                     self.log_info(f"已启动Batch脚本：{self.script_path}")
                 elif file_ext == '.exe':
                     # 可执行文件
-                    subprocess.Popen([self.script_path], 
-                                  creationflags=subprocess.CREATE_NEW_CONSOLE)
+                    subprocess.Popen([self.script_path],
+                                     creationflags=subprocess.CREATE_NEW_CONSOLE)
                     self.log_info(f"已启动可执行文件：{self.script_path}")
                 else:
                     self.log_warning(f"不支持的文件类型：{file_ext}")
@@ -162,7 +168,7 @@ class GameControllerBase:
         except Exception as e:
             self.log_error(f"启动脚本时发生错误：{str(e)}")
             return False
-        
+
     @staticmethod
     def set_foreground_window_with_retry(hwnd) -> None:
         """尝试将窗口设置为前台，失败时先最小化再恢复。"""
