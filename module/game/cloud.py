@@ -180,6 +180,8 @@ class CloudGameController(GameControllerBase):
         
         if first_run or not self.cfg.browser_persistent_enable:
             self._load_initial_local_storage()
+        if self.cfg.auto_battle_detect_enable:
+            self.change_auto_battle(True) 
         if self.cfg.browser_dump_cookies_enable:
             self._load_cookies()
         self._refresh_page()
@@ -542,6 +544,24 @@ class CloudGameController(GameControllerBase):
     def get_input_handler(self):
         from module.automation.cdp_input import CdpInput
         return CdpInput(cloud_game=self, logger=self.logger)
+
+    def change_auto_battle(self, status: bool) -> None:
+        """从 local storage 中读取并修改 auto battle"""
+        ls = json.loads(self.driver.execute_script("return JSON.stringify(localStorage)"))
+        cloud = json.loads(ls.get("cg_hkrpg_cn_cloudData", "{}"))
+        cloud.setdefault("value", {})
+        save = json.loads(cloud["value"].get("RPGCloudSave", "{}") or "{}")
+        int_dicts = save.get("IntDicts", {})
+
+        int_dicts["OtherSettings_AutoBattleOpen"] = int(status)
+        int_dicts["OtherSettings_IsSaveBattleSpeed"] = int(status)
+
+        save["IntDicts"] = int_dicts
+        cloud["value"]["RPGCloudSave"] = json.dumps(save)
+        ls["cg_hkrpg_cn_cloudData"] = json.dumps(cloud)
+
+        for k, v in ls.items():
+            self.driver.execute_script(f"localStorage.setItem('{k}', arguments[0]);", v)
 
     def stop_game(self) -> bool:
         """退出游戏，关闭浏览器"""
