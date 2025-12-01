@@ -317,7 +317,7 @@
 ## v2.0.4
 
 ### 新功能
-- 抽卡记录导出与简单分析（支持 [SRGF](https://uigf.org/zh/standards/SRGF.html) 数据格式导入和导出）
+- 抽卡记录导出与简单分析（支持 [SRGF](https://uigf.org/zh/standards/srgf.html) 数据格式导入和导出）
 - 支持逐光捡金和支援角色选择 “花火”
 
 ### 修复

@@ -36,7 +36,7 @@
 
 - **日常タスク**：開拓力消化、デイリー訓練、報酬受取、委託、フィールド探索
 - **週次タスク**：歴戦余韻、模擬宇宙、忘却の庭
-- **ガチャ記録エクスポート**：[UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/SRGF.html) 標準対応、**自動会話**
+- **ガチャ記録エクスポート**：[UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 標準対応、**自動会話**
 - デイリー訓練などのタスク完了状況を**メッセージ通知**
 - タスク更新時や開拓力が指定値まで回復した際に**自動起動**
 - タスク完了後に**音声通知、ゲーム自動終了、シャットダウンなど**

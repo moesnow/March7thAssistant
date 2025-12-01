@@ -34,7 +34,7 @@
 
 - **日常**：清体力、每日实训、领取奖励、委托、锄大地
 - **周常**：历战余响、模拟宇宙、忘却之庭
-- **抽卡记录导出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/SRGF.html) 标准、**自动对话**
+- **抽卡记录导出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 标准、**自动对话**
 - 每日实训等任务的完成情况支持**消息推送**
 - 任务刷新或体力恢复到指定值后**自动启动**
 - 任务完成后**声音提示、自动关闭游戏或关机等**
