@@ -2,7 +2,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFileDialog
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton
+from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton, MessageBox
 from .common.style_sheet import StyleSheet
 from .tools.warp_export import warpExport, WarpExport
 import pyperclip
@@ -286,29 +286,37 @@ class WarpInterface(ScrollArea):
             )
 
     def __onClearBtnClicked(self):
-        try:
-            os.remove("./warp.json")
-            self.setContent()
-            InfoBar.success(
-                title=self.tr('清空完成(＾∀＾●)'),
-                content="",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-        except Exception as e:
-            print(e)
-            InfoBar.warning(
-                title=self.tr('清空失败(╥╯﹏╰╥)'),
-                content="",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
+        message_box = MessageBox(
+            self.tr("清空抽卡记录"),
+            self.tr("确定要清空抽卡记录吗？此操作不可撤销。"),
+            self.window()
+        )
+        message_box.yesButton.setText('确认')
+        message_box.cancelButton.setText('取消')
+        if message_box.exec():
+            try:
+                os.remove("./warp.json")
+                self.setContent()
+                InfoBar.success(
+                    title=self.tr('清空完成(＾∀＾●)'),
+                    content="",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self
+                )
+            except Exception as e:
+                print(e)
+                InfoBar.warning(
+                    title=self.tr('清空失败(╥╯﹏╰╥)'),
+                    content="",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=1000,
+                    parent=self
+                )
 
     def setContent(self):
         try:
