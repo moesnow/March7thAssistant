@@ -194,7 +194,7 @@ class Instance:
 
                         # 直接回到指南界面，减少中间步骤
                         log.info("切换到指南界面")
-                        screen.change_to('guide3', max_retries=3)
+                        screen.change_to('guide3', 3)
                         time.sleep(1)
 
                         # 重新准备副本并开始挑战
@@ -276,7 +276,7 @@ class Instance:
                                 log.info("遗器分解完成")
 
                                 log.info("切换到指南界面")
-                                screen.change_to('guide3', max_retries=3)  # 增加重试次数
+                                screen.change_to('guide3', 3)  # 增加重试次数
                                 time.sleep(1)
 
                                 # 重新准备副本并开始挑战
