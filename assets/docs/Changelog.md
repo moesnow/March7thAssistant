@@ -2,11 +2,11 @@
 
 ## v2025.12.1
 
-- 支持云·星穹铁道
-- 支持根据培养目标动态选择副本
-- 每日实训现在会读取任务完成情况并调整任务执行
-- 企业微信机器人推送方式支持发送图片
-- 修复特定情况逐光捡金无法正确选取角色
+- 支持云·星穹铁道 [#750](https://github.com/moesnow/March7thAssistant/pull/750)
+- 支持根据培养目标动态选择副本 [#751](https://github.com/moesnow/March7thAssistant/pull/751)
+- 每日实训现在会读取任务完成情况并调整任务执行 [#753](https://github.com/moesnow/March7thAssistant/pull/753)
+- 企业微信机器人推送方式支持发送图片 [#742](https://github.com/moesnow/March7thAssistant/pull/742)
+- 修复特定情况逐光捡金无法正确选取角色 [#747](https://github.com/moesnow/March7thAssistant/pull/747)
 - 修复任务完成后选择脚本时发生闪退
 - 修复偶现无法正常终止游戏进程
 - 修复UI变化导致差分宇宙和模拟宇宙检测自动战斗异常
@@ -17,18 +17,18 @@
 ## v2025.11.11
 
 - 更新“优先运行一次差分宇宙”任务的周期为每两周一次
-- 使用SMTP发送通知时支持不使用用户名
-- 修复 3.7 新周本识别异常
-- 修复兑换码入口识别异常
+- 使用SMTP发送通知时支持不使用用户名 [#730](https://github.com/moesnow/March7thAssistant/pull/730) [#738](https://github.com/moesnow/March7thAssistant/pull/738)
+- 修复 3.7 新周本识别异常 [#728](https://github.com/moesnow/March7thAssistant/pull/728)
+- 修复兑换码入口识别异常 [#734](https://github.com/moesnow/March7thAssistant/pull/734)
 - 修复特定条件下支援角色选择界面点击异常
 
 ## v2025.11.6
 
-- 支持 3.7 版本新增关卡和角色
+- 支持 3.7 版本新增关卡和角色 [#725](https://github.com/moesnow/March7thAssistant/pull/725)
 - 新增部分副本类型支持连续挑战
-- 重构自动对话工具增加配置选项并修复问题
+- 重构自动对话工具增加配置选项并修复问题 [#720](https://github.com/moesnow/March7thAssistant/pull/720)
 - 常见问题中添加多显示器相关问题及解决方案
-- 修复多账号登录界面停滞问题
+- 修复多账号登录界面停滞问题 [#723](https://github.com/moesnow/March7thAssistant/pull/723)
 - 修复前往模拟宇宙 UI 变化导致的异常
 - 修复活动界面 UI 变化导致的异常
 - 修复差分宇宙支援 UI 变化导致的异常
