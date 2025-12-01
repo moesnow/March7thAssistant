@@ -63,7 +63,7 @@ jobs:
       - name: Move 3rdparty to dist directory
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          python build.py github-actions
+          python build.py "${{ github.ref_name }}" changelog_temp.md
           Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
 
@@ -80,7 +80,9 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
           name: March7thAssistant ${{ github.ref_name }}
+          body_path: changelog_temp.md
           files: |
             ./dist/March7thAssistant_full.zip
             ./dist/March7thAssistant_full.7z
