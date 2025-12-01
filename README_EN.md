@@ -10,9 +10,12 @@
 <br/>
 
 <div align="center">
-  <img alt="" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square&color=4096d8" />
-  <img alt="" src="https://img.shields.io/github/v/release/moesnow/March7thAssistant?style=flat-square&color=f18cb9" />
-  <img alt="" src="https://img.shields.io/github/downloads/moesnow/March7thAssistant/total?style=flat-square&color=4096d8" />
+🌟 Click the Star in the top-right corner to get notified about updates on GitHub!
+</div>
+
+<div align="center">
+    <img src="assets/screenshot/star.gif" alt="Star" width="186" height="60">
+  </a>
 </div>
 
 <br/>
@@ -40,7 +43,7 @@ If you encounter any issues, please check the [FAQ](https://m7a.top/#/assets/doc
 
 > The Simulated Universe feature utilizes the [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) project, while farming employs the [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) project.
 
-For more details, refer to the [configuration file](assets/config/config.example.yaml) or the graphical user interface settings. | 🌟 If you like it, please give it a star! |･ω･) 🌟 | Join our QQ group [click here](https://qm.qq.com/q/C3IryUWCQw) or TG group [click here](https://t.me/+ZgH5zpvFS8o0NGI1).
+For more details, refer to the [configuration file](assets/config/config.example.yaml) or the graphical user interface settings. | Join our QQ group [click here](https://qm.qq.com/q/C3IryUWCQw) or TG group [click here](https://t.me/+ZgH5zpvFS8o0NGI1).
 
 ## Interface Showcase
 

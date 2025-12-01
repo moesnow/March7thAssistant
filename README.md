@@ -2,7 +2,7 @@
   <h1 align="center">
     <img src="./assets/screenshot/March7th.png" width="200">
     <br/>
-    March7thAssistant · 三月七小助手
+    March7thAssistant
   </h1>
   <a href="https://trendshift.io/repositories/3892" target="_blank"><img src="https://trendshift.io/api/badge/repositories/3892" alt="moesnow%2FMarch7thAssistant | Trendshift" style="width: 200px; height: 46px;" width="250" height="46"/></a>
 </div>
@@ -10,9 +10,12 @@
 <br/>
 
 <div align="center">
-  <img alt="" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square&color=4096d8" />
-  <img alt="" src="https://img.shields.io/github/v/release/moesnow/March7thAssistant?style=flat-square&color=f18cb9" />
-  <img alt="" src="https://img.shields.io/github/downloads/moesnow/March7thAssistant/total?style=flat-square&color=4096d8" />
+🌟 点一下右上角的 Star，Github 主页就能收到软件更新通知了哦~
+</div>
+
+<div align="center">
+    <img src="assets/screenshot/star.gif" alt="Star" width="186" height="60">
+  </a>
 </div>
 
 <br/>
@@ -38,7 +41,7 @@
 
 > 其中模拟宇宙调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目，锄大地调用的 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 项目
 
-详情见 [配置文件](assets/config/config.example.yaml) 或图形界面设置 ｜🌟喜欢就给个星星吧|･ω･) 🌟｜QQ群 [点击跳转](https://qm.qq.com/q/C3IryUWCQw) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)
+详情见 [配置文件](assets/config/config.example.yaml) 或图形界面设置 ｜QQ群 [点击跳转](https://qm.qq.com/q/C3IryUWCQw) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)
 
 ## 界面展示
 

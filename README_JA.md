@@ -10,9 +10,12 @@
 <br/>
 
 <div align="center">
-  <img alt="" src="https://img.shields.io/badge/platform-Windows-blue?style=flat-square&color=4096d8" />
-  <img alt="" src="https://img.shields.io/github/v/release/moesnow/March7thAssistant?style=flat-square&color=f18cb9" />
-  <img alt="" src="https://img.shields.io/github/downloads/moesnow/March7thAssistant/total?style=flat-square&color=4096d8" />
+🌟 右上のスターをクリックすると、GitHub のホームページでソフトウェアの更新通知を受け取れますよ~
+</div>
+
+<div align="center">
+    <img src="assets/screenshot/star.gif" alt="Star" width="186" height="60">
+  </a>
 </div>
 
 <br/>
@@ -40,7 +43,7 @@
 
 > 模擬宇宙は [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) プロジェクトを、フィールド探索は [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) プロジェクトを使用しています
 
-詳細は [設定ファイル](assets/config/config.example.yaml) またはGUI設定をご覧ください ｜🌟気に入ったらスターをお願いします|･ω･) 🌟｜QQ群 [リンク](https://qm.qq.com/q/C3IryUWCQw) TG群 [リンク](https://t.me/+ZgH5zpvFS8o0NGI1)
+詳細は [設定ファイル](assets/config/config.example.yaml) またはGUI設定をご覧ください ｜QQ群 [リンク](https://qm.qq.com/q/C3IryUWCQw) TG群 [リンク](https://t.me/+ZgH5zpvFS8o0NGI1)
 
 ## インターフェース
 
