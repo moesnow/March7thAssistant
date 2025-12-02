@@ -418,7 +418,7 @@ class SettingInterface(ScrollArea):
         )
         self.weeklyDivergentEnableCard = SwitchSettingCard1(
             FIF.VPN,
-            self.tr('每两周优先运行一次差分宇宙'),
+            self.tr('每两周优先运行一次差分宇宙（独立选项，和顶部启用模拟宇宙选项无关）'),
             "如需执行周期演算，请自行打开 “主页→模拟宇宙→原版运行”，然后勾选“周期演算”",
             "weekly_divergent_enable"
         )
