@@ -26,7 +26,10 @@ class ImageUtils:
         :return: 最大匹配值和最佳匹配位置。
         """
         if mask is not None:
-            result = cv2.matchTemplate(screenshot, template, cv2.TM_SQDIFF, mask=mask)
+            # 我不知道为什么这里要用低分匹配方法，这导致了部分文件识别设置阈值要设置的很大很大（如界域锚点要设置到3,000,000)
+            # 另外，就是用mask的图片和不用mask的图片判断逻辑是完全相反的，一个阈值要设置的高一个阈值要设置的低 带mask的是越低越好
+            # 但是这个代码耦合的内容太多了，我不知道还有什么地方会受到影响，姑且就先这么用着了
+            result = cv2.matchTemplate(screenshot, template, cv2.TM_SQDIFF, mask=mask) 
             min_val, _, min_loc, _ = cv2.minMaxLoc(result)
             return min_val, min_loc
         else:
