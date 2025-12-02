@@ -145,7 +145,7 @@ class GameControllerBase:
                 file_ext = os.path.splitext(self.script_path)[1].lower()
                 if file_ext == '.ps1':
                     # PowerShell脚本
-                    subprocess.Popen(["powershell", "-ExecutionPolicy", "By...", "-File", self.script_path],
+                    subprocess.Popen(["powershell", "-ExecutionPolicy", "Bypass", "-File", self.script_path],
                                      creationflags=subprocess.CREATE_NEW_CONSOLE)
                     self.log_info(f"已启动PowerShell脚本：{self.script_path}")
                 elif file_ext == '.bat':
