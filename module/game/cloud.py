@@ -156,7 +156,7 @@ class CloudGameController(GameControllerBase):
         
         # 关掉 headless 不匹配的浏览器，防止端口冲突
         if self.close_all_m7a_browser(headless=not headless):
-            self.log_info(f"已关闭浏览器正在运行的{"前台" if headless else "后台"}浏览器")
+            self.log_info(f"已关闭浏览器正在运行的{'前台' if headless else '后台'}浏览器")
         if self.get_m7a_browsers(headless=headless):
             # 如果发现已经有浏览器，尝试直接连接
             try:
@@ -377,7 +377,7 @@ class CloudGameController(GameControllerBase):
     def get_m7a_browsers(self, headless=None) -> list[psutil.Process]:
         """
         获取由小助手打开的浏览器
-        headles: None 所有，True 仅 headless 无窗口浏览器，False 仅有窗口浏览器
+        headless: None 所有，True 仅 headless 无窗口浏览器，False 仅有窗口浏览器
         
         return 浏览器的 Process
         """
@@ -392,7 +392,7 @@ class CloudGameController(GameControllerBase):
     def close_all_m7a_browser(self, headless=None) -> list[psutil.Process]:
         """
         关闭所有由小助手打开的浏览器
-        headles: None 所有，True 仅 headless 无窗口浏览器，False 仅 headful 有窗口浏览器
+        headless: None 所有，True 仅 headless 无窗口浏览器，False 仅 headful 有窗口浏览器
         
         return 被关闭浏览器的 Process
         """
