@@ -23,7 +23,7 @@ class GameLaunchThread(QThread):
         try:
             if self.game.start_game_process():
                 self.finished_signal.emit(GameStartStatus.SUCCESS)
-            elif self.cfg.cloud_game_enable and not self.game.is_browser_downloaded():
+            elif self.cfg.cloud_game_enable and not self.game.is_integrated_browser_downloaded():
                 self.finished_signal.emit(GameStartStatus.BROWSER_DOWNLOAD_FAIL)
             elif self.cfg.cloud_game_enable:
                 self.finished_signal.emit(GameStartStatus.BROWSER_LAUNCH_FAIL)

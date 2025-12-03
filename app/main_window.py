@@ -129,7 +129,7 @@ class MainWindow(MSFluentWindow):
         if start_game_button:
             start_game_button.setEnabled(False)
         game = get_game_controller()
-        if cfg.cloud_game_enable and cfg.browser_type == "integrated" and not game.is_browser_downloaded():
+        if cfg.cloud_game_enable and cfg.browser_type == "integrated" and not game.is_integrated_browser_downloaded():
             InfoBar.warning(
                 title=self.tr('正在下载内置浏览器(ง •̀_•́)ง'),
                 content="下载成功后，将自动启动云·星穹铁道",

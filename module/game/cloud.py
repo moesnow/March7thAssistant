@@ -84,7 +84,9 @@ class CloudGameController(GameControllerBase):
                 args = ["--browser", browser_type,
                         "--cache-path", self.BROWSER_INSTALL_PATH,
                         "--browser-version", self.INTEGRATED_BROWSER_VERSION,
-                        "--force-browser-download"]
+                        "--force-browser-download",
+                        "--skip-driver-in-path",
+                        "--skip-browser-in-path"]
                 try:
                     SeleniumManager().binary_paths(args)
                 except WebDriverException as e:
@@ -94,8 +96,7 @@ class CloudGameController(GameControllerBase):
             args = ["--browser", browser_type,
                     "--cache-path", self.BROWSER_INSTALL_PATH,
                     "--avoid-browser-download",
-                    # "--skip-driver-in-path"
-                    ]
+                    "--skip-driver-in-path"]
             try:
                 result = SeleniumManager().binary_paths(args)
             except WebDriverException as e:
