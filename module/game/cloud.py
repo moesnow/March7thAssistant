@@ -181,7 +181,8 @@ class CloudGameController(GameControllerBase):
             self.driver = webdriver_type(service=service, options=options)
         except SessionNotCreatedException as e:
             self.log_error(f"浏览器启动失败: {e}")
-            self.log_error("请去掉所有浏览器启动参数后重试，如果仍然存在问题，请更换浏览器重试")
+            self.log_error("如果设置了浏览器启动参数，请去掉所有浏览器启动参数后重试")
+            self.log_error("如果仍然存在问题，请更换浏览器重试")
             raise Exception("浏览器启动失败")
         
         if first_run or not self.cfg.browser_persistent_enable:
@@ -368,8 +369,8 @@ class CloudGameController(GameControllerBase):
         except Exception as e:
             self.log_warning(f"退出时清理 chromedriver 进程失败: {e}")
 
-    def is_browser_downloaded(self) -> bool:
-        """当前是否已经下载浏览器"""
+    def is_integrated_browser_downloaded(self) -> bool:
+        """当前是否已经下载内置浏览器"""
         return os.path.exists(self.INTEGRATED_BROWSER_PATH) and os.path.exists(self.INTEGRATED_DRIVER_PATH)
     
     def get_m7a_browsers(self, headless=None) -> list[psutil.Process]:
