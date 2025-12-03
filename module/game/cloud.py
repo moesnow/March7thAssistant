@@ -30,7 +30,6 @@ class CloudGameController(GameControllerBase):
     INTEGRATED_BROWSER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chrome", "win64", INTEGRATED_BROWSER_VERSION, "chrome.exe")
     INTEGRATED_DRIVER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chromedriver", "win64", INTEGRATED_BROWSER_VERSION, "chromedriver.exe")
     MAX_RETRIES = 3  # 网页加载重试次数，0=不重试
-    DEBUG_PORT = 19222 # 浏览器 Debug 端口，应确保该端口不被占用
 
     def __init__(self, cfg: Config, logger: Logger):
         super().__init__(script_path=cfg.script_path, logger=logger)
@@ -115,7 +114,7 @@ class CloudGameController(GameControllerBase):
             f"--force-device-scale-factor={float(self.cfg.browser_scale_factor)}",  # 设置缩放
             f"--app={self.GAME_URL}",   # 以应用模式启动
             "--disable-blink-features=AutomationControlled",  # 去除自动化痕迹，防止被人机验证
-            f"--remote-debugging-port=9222",   # 调试端口，可用于复用浏览器
+            f"--remote-debugging-port={self.cfg.browser_debug_port}",   # 调试端口，可用于复用浏览器
         ]
         if self.cfg.browser_persistent_enable:
             args += [
@@ -160,7 +159,7 @@ class CloudGameController(GameControllerBase):
         if self.get_m7a_browsers(headless=headless):
             # 如果发现已经有浏览器，尝试直接连接
             try:
-                options.debugger_address = f"127.0.0.1:{self.DEBUG_PORT}"
+                options.debugger_address = f"127.0.0.1:{self.cfg.browser_debug_port}"
                 self.driver = webdriver_type(service=service, options=options)
                 self.log_info("已连接到现有浏览器")
                 return # 连接成功，直接返回
