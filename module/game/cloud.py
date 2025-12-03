@@ -44,7 +44,7 @@ class CloudGameController(GameControllerBase):
             return
         for retry in range(self.MAX_RETRIES + 1):
             if retry > 0:
-                self.log_warning(f"页面加载超时，正在刷新重试... ({retry + 1}/{self.MAX_RETRIES})")
+                self.log_warning(f"页面加载超时，正在刷新重试... ({retry}/{self.MAX_RETRIES})")
                 self.driver.refresh()
             try:
                 WebDriverWait(self.driver, timeout).until(
