@@ -30,7 +30,6 @@ class CloudGameController(GameControllerBase):
     INTEGRATED_BROWSER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chrome", "win64", INTEGRATED_BROWSER_VERSION, "chrome.exe")
     INTEGRATED_DRIVER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chromedriver", "win64", INTEGRATED_BROWSER_VERSION, "chromedriver.exe")
     MAX_RETRIES = 3  # 网页加载重试次数，0=不重试
-    DEBUG_PORT = 9222 # 浏览器 Debug 端口，应确保该端口不被占用
 
     def __init__(self, cfg: Config, logger: Logger):
         super().__init__(script_path=cfg.script_path, logger=logger)
@@ -45,7 +44,7 @@ class CloudGameController(GameControllerBase):
             return
         for retry in range(self.MAX_RETRIES + 1):
             if retry > 0:
-                self.log_warning(f"页面加载超时，正在刷新重试... ({retry + 1}/{self.MAX_RETRIES})")
+                self.log_warning(f"页面加载超时，正在刷新重试... ({retry}/{self.MAX_RETRIES})")
                 self.driver.refresh()
             try:
                 WebDriverWait(self.driver, timeout).until(
@@ -84,7 +83,9 @@ class CloudGameController(GameControllerBase):
                 args = ["--browser", browser_type,
                         "--cache-path", self.BROWSER_INSTALL_PATH,
                         "--browser-version", self.INTEGRATED_BROWSER_VERSION,
-                        "--force-browser-download"]
+                        "--force-browser-download",
+                        "--skip-driver-in-path",
+                        "--skip-browser-in-path"]
                 try:
                     SeleniumManager().binary_paths(args)
                 except WebDriverException as e:
@@ -93,13 +94,15 @@ class CloudGameController(GameControllerBase):
             # 尝试在本地查找浏览器
             args = ["--browser", browser_type,
                     "--cache-path", self.BROWSER_INSTALL_PATH,
-                    "--avoid-browser-download"]
+                    "--avoid-browser-download",
+                    "--skip-driver-in-path"]
             try:
                 result = SeleniumManager().binary_paths(args)
             except WebDriverException as e:
                 raise Exception(f"查找 {browser_type} 浏览器出错：{e}")
             browser_path = result["browser_path"]
             driver_path = result["driver_path"]
+        self.log_debug(f"browser_path = {browser_path}, driver_path = {driver_path}")
         return browser_path, driver_path
     
     def _get_browser_arguments(self, headless) -> list[str]:
@@ -111,7 +114,7 @@ class CloudGameController(GameControllerBase):
             f"--force-device-scale-factor={float(self.cfg.browser_scale_factor)}",  # 设置缩放
             f"--app={self.GAME_URL}",   # 以应用模式启动
             "--disable-blink-features=AutomationControlled",  # 去除自动化痕迹，防止被人机验证
-            f"--remote-debugging-port=9222",   # 调试端口，可用于复用浏览器
+            f"--remote-debugging-port={self.cfg.browser_debug_port}",   # 调试端口，可用于复用浏览器
         ]
         if self.cfg.browser_persistent_enable:
             args += [
@@ -150,16 +153,19 @@ class CloudGameController(GameControllerBase):
         self.driver_path = driver_path
         self._webdriver_service = service
         
-        if self.get_m7a_browsers():
+        # 关掉 headless 不匹配的浏览器，防止端口冲突
+        if self.close_all_m7a_browser(headless=not headless):
+            self.log_info(f"已关闭浏览器正在运行的{'前台' if headless else '后台'}浏览器")
+        if self.get_m7a_browsers(headless=headless):
             # 如果发现已经有浏览器，尝试直接连接
             try:
-                options.debugger_address = f"127.0.0.1:{self.DEBUG_PORT}"
+                options.debugger_address = f"127.0.0.1:{self.cfg.browser_debug_port}"
                 self.driver = webdriver_type(service=service, options=options)
                 self.log_info("已连接到现有浏览器")
                 return # 连接成功，直接返回
             except Exception:
                 self.log_info(f"连接现有浏览器失败")
-                self.close_all_m7a_browser() # 连接失败，关闭浏览器
+                self.close_all_m7a_browser() # 连接失败，关闭所有浏览器
                 options = None
             
         self.log_info(f"正在启动 {browser_type} 浏览器")
@@ -175,7 +181,8 @@ class CloudGameController(GameControllerBase):
             self.driver = webdriver_type(service=service, options=options)
         except SessionNotCreatedException as e:
             self.log_error(f"浏览器启动失败: {e}")
-            self.log_error("请去掉所有浏览器启动参数后重试，如果仍然存在问题，请更换浏览器重试")
+            self.log_error("如果设置了浏览器启动参数，请去掉所有浏览器启动参数后重试")
+            self.log_error("如果仍然存在问题，请更换浏览器重试")
             raise Exception("浏览器启动失败")
         
         if first_run or not self.cfg.browser_persistent_enable:
@@ -351,9 +358,8 @@ class CloudGameController(GameControllerBase):
     
     def _clean_at_exit(self) -> None:
         """当脚本退出时，关闭所有 headless 浏览器"""
-        if self.cfg.browser_headless_enable:
-            if self.close_all_m7a_browser(headles=True):
-                self.log_info("已关闭所有后台浏览器")
+        if self.close_all_m7a_browser(headless=True):
+            self.log_info("已关闭所有后台浏览器")
 
         # 退出时再尝试清理 chromedriver 进程（防止残留）
         try:
@@ -363,14 +369,14 @@ class CloudGameController(GameControllerBase):
         except Exception as e:
             self.log_warning(f"退出时清理 chromedriver 进程失败: {e}")
 
-    def is_browser_downloaded(self) -> bool:
-        """当前是否已经下载浏览器"""
+    def is_integrated_browser_downloaded(self) -> bool:
+        """当前是否已经下载内置浏览器"""
         return os.path.exists(self.INTEGRATED_BROWSER_PATH) and os.path.exists(self.INTEGRATED_DRIVER_PATH)
     
     def get_m7a_browsers(self, headless=None) -> list[psutil.Process]:
         """
         获取由小助手打开的浏览器
-        headles: None 所有，True 仅 headless 无窗口浏览器，False 仅有窗口浏览器
+        headless: None 所有，True 仅 headless 无窗口浏览器，False 仅有窗口浏览器
         
         return 浏览器的 Process
         """
@@ -382,15 +388,15 @@ class CloudGameController(GameControllerBase):
                     all_proc.append(proc)
         return all_proc
                     
-    def close_all_m7a_browser(self, headles=None) -> list[psutil.Process]:
+    def close_all_m7a_browser(self, headless=None) -> list[psutil.Process]:
         """
         关闭所有由小助手打开的浏览器
-        headles: None 所有，True 仅 headless 无窗口浏览器，False 仅 headful 有窗口浏览器
+        headless: None 所有，True 仅 headless 无窗口浏览器，False 仅 headful 有窗口浏览器
         
         return 被关闭浏览器的 Process
         """
         closed_proc = []
-        for proc in self.get_m7a_browsers(headless=headles) or []:
+        for proc in self.get_m7a_browsers(headless=headless) or []:
             try:
                 proc.terminate()
                 closed_proc.append(proc)
