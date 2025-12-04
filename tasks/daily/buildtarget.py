@@ -158,25 +158,32 @@ class BuildTarget:
 
     @staticmethod
     def _parse_calyx_instance_info() -> str | None:
-        click_offset = (0, -280 / auto.screenshot_scale_factor)
-        if not auto.click_element("./assets/images/share/build_target/power.png", "image", max_retries=5, offset=click_offset, crop=(1223.0 / 1920, 961.0 / 1080, 93.0 / 1920, 44.0 / 1080)):
-            log.error("尝试提取拟造花萼副本信息时失败")
-            return None
+        for i in range(2):
+            click_offset = (i * 85 / auto.screenshot_scale_factor, -280 / auto.screenshot_scale_factor)
+            if not auto.click_element("./assets/images/share/build_target/power.png", "image", max_retries=5, offset=click_offset, crop=(1223.0 / 1920, 961.0 / 1080, 93.0 / 1920, 44.0 / 1080)):
+                log.error("尝试提取拟造花萼副本信息时失败，无法识别特定副本页面")
+                return None
 
-        time.sleep(1)
-        auto.mouse_scroll(6, -1)
-        time.sleep(1)
+            if auto.find_element("信用点", "text", max_retries=3, retry_delay=0.5, include=True, crop=(783.0 / 1920, 318.0 / 1080, 204.0 / 1920, 55.0 / 1080)):
+                log.error("尝试提取拟造花萼副本信息时失败，无法获取光锥晋阶材料信息")
+                return None
 
-        text_crop = (790.0 / 1920, 377.0 / 1080, 694.0 / 1920, 354.0 / 1080)
-        text_pos = auto.find_element("拟造花萼", "text", crop=text_crop, include=True, relative=True)
+            auto.mouse_scroll(6, -1)
+            time.sleep(1)
 
-        if text_pos:
-            text_pos = tuple((x * auto.screenshot_scale_factor, y * auto.screenshot_scale_factor) for (x, y) in text_pos)
-            x1, y1 = text_crop[0] + (text_pos[0][0] + 100) / 1920, text_crop[1] + (text_pos[0][1] - 6) / 1080
-            x2, y2 = text_crop[0] + (text_pos[1][0] + 64) / 1920, text_crop[1] + (text_pos[1][1] + 6) / 1080
-            instance_name_match = re.search(r"【(.+?)】", auto.get_single_line_text(crop=(x1, y1, x2 - x1, y2 - y1)) or "")
-            if instance_name_match:
-                return instance_name_match.group(1)
+            text_crop = (790.0 / 1920, 377.0 / 1080, 694.0 / 1920, 354.0 / 1080)
+            text_pos = auto.find_element("拟造花萼", "text", crop=text_crop, include=True, relative=True)
+
+            if text_pos:
+                text_pos = tuple((x * auto.screenshot_scale_factor, y * auto.screenshot_scale_factor) for (x, y) in text_pos)
+                x1, y1 = text_crop[0] + (text_pos[0][0] - 12) / 1920, text_crop[1] + (text_pos[0][1] - 12) / 1080
+                x2, y2 = text_crop[0] + (text_pos[1][0] + 12) / 1920, text_crop[1] + (text_pos[1][1] + 12) / 1080
+                instance_name_match = re.search(r"[【（\(](.+?)[】）\)]", auto.get_single_line_text(crop=(x1, y1, x2 - x1, y2 - y1)) or "")
+                if instance_name_match:
+                    return instance_name_match.group(1)
+
+            auto.press_key("esc")
+            time.sleep(1)
 
         return None
 
