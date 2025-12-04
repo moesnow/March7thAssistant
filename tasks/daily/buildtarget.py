@@ -159,7 +159,7 @@ class BuildTarget:
     @staticmethod
     def _parse_calyx_instance_info() -> str | None:
         for i in range(2):
-            click_offset = (i * 85, -280 / auto.screenshot_scale_factor)
+            click_offset = (i * 85 / auto.screenshot_scale_factor, -280 / auto.screenshot_scale_factor)
             if not auto.click_element("./assets/images/share/build_target/power.png", "image", max_retries=5, offset=click_offset, crop=(1223.0 / 1920, 961.0 / 1080, 93.0 / 1920, 44.0 / 1080)):
                 log.error("尝试提取拟造花萼副本信息时失败，无法识别特定副本页面")
                 return None
