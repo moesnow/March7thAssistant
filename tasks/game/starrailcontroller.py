@@ -117,7 +117,7 @@ class StarRailController(LocalGameController):
             raise Exception("游戏分辨率比例不正确")
         else:
             if window_width != target_width or window_height != target_height:
-                self.log_warning(f"游戏分辨率: {window_width}x{window_height} ≠ {target_width}x{target_height} 可能出现未预期的错误")
+                self.log_error(f"游戏分辨率: {window_width}x{window_height} ≠ {target_width}x{target_height} 可能出现未预期的错误")
                 time.sleep(2)
             else:
                 self.log_debug(f"游戏分辨率: {window_width}x{window_height}")
