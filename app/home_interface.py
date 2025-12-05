@@ -126,13 +126,19 @@ class HomeInterface(ScrollArea):
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/JingYuan.jpg",
-            title="每日实训",
-            action=lambda: start_task("daily")
+            title="日常",
+            action={
+                "每日实训": lambda: start_task("daily"),
+                "清体力": lambda: start_task("power"),
+            }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Yanqing.jpg",
-            title="清体力",
-            action=lambda: start_task("power")
+            title="货币战争",
+            action={
+                "运行一次": lambda: start_task("currencywars"),
+                "循环运行": lambda: start_task("currencywarsloop"),
+            }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/SilverWolf.jpg",

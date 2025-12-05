@@ -313,7 +313,28 @@ class SettingInterface(ScrollArea):
             "activity_planarfissure_enable"
         )
 
-        self.FightGroup = SettingCardGroup(self.tr("锄大地"), self.scrollWidget)
+        self.CurrencywarsGroup = SettingCardGroup(self.tr("货币"), self.scrollWidget)
+        self.currencywarsEnableCard = SwitchSettingCard1(
+            FIF.BUS,
+            self.tr('启用货币战争【测试版】'),
+            "当前仅支持最低难度，完成「货币战争」积分奖励",
+            "currencywars_enable"
+        )
+        self.currencywarsTypeCard = ComboBoxSettingCard2(
+            "currencywars_type",
+            FIF.COMMAND_PROMPT,
+            self.tr('类别'),
+            '',
+            texts={'标准博弈': 'normal', '超频博弈': 'overclock'}
+        )
+        self.currencywarsRunTimeCard = PushSettingCardDate(
+            self.tr('修改'),
+            FIF.DATE_TIME,
+            self.tr("上次检测到完成货币战争积分奖励的时间"),
+            "currencywars_timestamp"
+        )
+
+        self.FightGroup = SettingCardGroup(self.tr("锄地"), self.scrollWidget)
         self.fightEnableCard = SwitchSettingCard1(
             FIF.BUS,
             self.tr('启用锄大地 (Fhoe-Rail)'),
@@ -930,6 +951,10 @@ class SettingInterface(ScrollArea):
         self.ActivityGroup.addSettingCard(self.activityRealmOfTheStrangeEnableCard)
         self.ActivityGroup.addSettingCard(self.activityPlanarFissureEnableCard)
 
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsRunTimeCard)
+
         self.FightGroup.addSettingCard(self.fightEnableCard)
         self.FightGroup.addSettingCard(self.fightOperationModeCard)
         self.FightGroup.addSettingCard(self.fightTimeoutCard)
@@ -1025,7 +1050,8 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.BorrowGroup, 'BorrowInterface', self.tr('支援'))
         self.addSubInterface(self.DailyGroup, 'DailyInterface', self.tr('日常'))
         self.addSubInterface(self.ActivityGroup, 'ActivityInterface', self.tr('活动'))
-        self.addSubInterface(self.FightGroup, 'FightInterface', self.tr('锄大地'))
+        self.addSubInterface(self.CurrencywarsGroup, 'CurrencywarsInterface', self.tr('货币'))
+        self.addSubInterface(self.FightGroup, 'FightInterface', self.tr('锄地'))
         self.addSubInterface(self.UniverseGroup, 'UniverseInterface', self.tr('宇宙'))
         self.addSubInterface(self.ForgottenhallGroup, 'ForgottenhallInterface', self.tr('混沌'))
         self.addSubInterface(self.PureFictionGroup, 'PureFictionInterface', self.tr('虚构'))

@@ -30,6 +30,7 @@ from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
+from tasks.weekly.currency_wars import CurrencyWars
 
 
 def first_run():
@@ -51,9 +52,20 @@ def run_main_actions():
 
 def run_sub_task(action):
     game.start()
+
+    def currencywars(loop=False):
+        war = CurrencyWars(not loop)
+        if loop:
+            while True:
+                war.start()
+        else:
+            war.start()
+
     sub_tasks = {
         "daily": lambda: (Daily.run(), reward.start()),
         "power": Power.run,
+        "currencywars": lambda: currencywars(),
+        "currencywarsloop": lambda: currencywars(loop=True),
         "fight": Fight.start,
         "universe": Universe.start,
         "forgottenhall": lambda: challenge.start("memoryofchaos"),
@@ -104,7 +116,7 @@ def main(action=None):
         run_main_actions()
 
     # 子任务
-    elif action in ["daily", "power", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
+    elif action in ["daily", "power", "currencywars", "currencywarsloop", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
         run_sub_task(action)
 
     # 子任务 原生图形界面

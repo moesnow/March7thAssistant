@@ -3,6 +3,7 @@ from module.config import cfg
 from module.screen import screen
 from utils.date import Date
 from tasks.daily.photo import Photo
+from tasks.weekly.currency_wars import CurrencyWars
 from tasks.daily.fight import Fight
 from tasks.weekly.universe import Universe
 import tasks.reward as reward
@@ -47,6 +48,17 @@ class Daily:
 
         if cfg.daily_enable:
             Daily.run()
+
+        if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
+            if cfg.currencywars_enable:
+                war = CurrencyWars()
+                screen.change_to("currency_wars_homepage")
+                if not war.check_currency_wars_score():
+                    war.start()
+            else:
+                log.info("货币战争未开启")
+        else:
+            log.info("货币战争尚未刷新")
 
         if Date.is_next_x_am(cfg.fight_timestamp, cfg.refresh_hour):
             if cfg.fight_enable:

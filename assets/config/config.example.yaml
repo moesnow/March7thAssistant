@@ -153,6 +153,11 @@ activity_gardenofplenty_instance_type: 拟造花萼（金） # 花藏繁生副�
 activity_realmofthestrange_enable: false # 是否启用异器盈界活动。true 开启，false 关闭。
 activity_planarfissure_enable: false # 是否启用位面分裂活动。true 开启，false 关闭。
 
+# 货币战争配置
+currencywars_enable: false # 是否启用货币战争功能。true 开启，false 关闭。
+currencywars_type: overclock # 货币战争模式，可选值："normal"（标准博弈）或 "overclock"（超频博弈）。
+currencywars_timestamp: 0 # 上次检测到完成货币战争积分奖励的时间戳，用于记录和控制运行频率。
+
 # 锄大地配置
 fight_enable: false # 是否启用锄大地功能。true 开启，false 关闭。
 fight_operation_mode: exe # 锄大地运行方式，可选 "源码"（source）或 "集成"（exe）。

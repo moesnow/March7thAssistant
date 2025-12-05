@@ -424,7 +424,7 @@
         ]
     },
     {
-        "name": "星际和平指南-模拟宇宙",
+        "name": "星际和平指南-旷宇纷争",
         "id": "guide5",
         "image_path": "./assets/images/screen/guide/guide5.png",
         "actions": [
@@ -453,11 +453,11 @@
                 ]
             },
             {
-                "target_screen": "universe_main",
+                "target_screen": "currency_wars_homepage",
                 "actions_list": [
-                    "auto.click_element('差分宇宙', 'text', None, 10, crop=(238.0 / 1920, 257.0 / 1080, 449.0 / 1920, 525.0 / 1080))",
+                    "auto.click_element('货币战争', 'text', None, 10, crop=(238.0 / 1920, 257.0 / 1080, 449.0 / 1920, 525.0 / 1080))",
                     "time.sleep(1)",
-                    "auto.click_element('前往模拟宇宙', 'text', None, 10, crop=(698.0 / 1920, 340.0 / 1080, 203.0 / 1920, 60.0 / 1080))"
+                    "auto.click_element('前往参与', 'text', None, 10, crop=(684.0 / 1920, 278.0 / 1080, 981.0 / 1920, 656.0 / 1080))"
                 ]
             },
             {
@@ -466,6 +466,14 @@
                     "auto.click_element('差分宇宙', 'text', None, 10, crop=(238.0 / 1920, 257.0 / 1080, 449.0 / 1920, 525.0 / 1080))",
                     "time.sleep(1)",
                     "auto.click_element('前往参与', 'text', None, 10, crop=(684.0 / 1920, 278.0 / 1080, 981.0 / 1920, 656.0 / 1080))"
+                ]
+            },
+            {
+                "target_screen": "universe_main",
+                "actions_list": [
+                    "auto.click_element('差分宇宙', 'text', None, 10, crop=(238.0 / 1920, 257.0 / 1080, 449.0 / 1920, 525.0 / 1080))",
+                    "time.sleep(1)",
+                    "auto.click_element('前往模拟宇宙', 'text', None, 10, crop=(698.0 / 1920, 340.0 / 1080, 203.0 / 1920, 60.0 / 1080))"
                 ]
             }
         ]
@@ -580,6 +588,81 @@
         "actions": [
             {
                 "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "货币战争-主界面",
+        "id": "currency_wars_homepage",
+        "image_path": "./assets/images/screen/currency_wars/homepage.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            },
+            {
+                "target_screen": "currency_wars_mode_select",
+                "actions_list": [
+                    "auto.click_element('./assets/images/screen/currency_wars/homepage.png', 'image', 0.9, 10)",
+                    "time.sleep(2)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "货币战争-模式选择",
+        "id": "currency_wars_mode_select",
+        "image_path": "./assets/images/screen/currency_wars/mode_select.png",
+        "actions": [
+            {
+                "target_screen": "currency_wars_homepage",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            },
+            {
+                "target_screen": "currency_wars_mode_select_normal",
+                "actions_list": [
+                    "auto.click_element('标准博弈', 'text', None, 10, crop=(38.0 / 1920, 111.0 / 1080, 490.0 / 1920, 807.0 / 1080))",
+                    "time.sleep(1)",
+                    "auto.click_element('进入标准博弈', 'text', None, 10, crop=(1396.0 / 1920, 917.0 / 1080, 476.0 / 1920, 75.0 / 1080))"
+                ]
+            },
+            {
+                "target_screen": "currency_wars_mode_select_overclock",
+                "actions_list": [
+                    "auto.click_element('超频博弈', 'text', None, 10, crop=(38.0 / 1920, 111.0 / 1080, 490.0 / 1920, 807.0 / 1080))",
+                    "time.sleep(1)",
+                    "auto.click_element('进入超频博弈', 'text', None, 10, crop=(1396.0 / 1920, 917.0 / 1080, 476.0 / 1920, 75.0 / 1080))"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "货币战争-标准博弈",
+        "id": "currency_wars_mode_select_normal",
+        "image_path": "./assets/images/screen/currency_wars/mode_select_normal.png",
+        "actions": [
+            {
+                "target_screen": "currency_wars_mode_select",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "货币战争-超频博弈",
+        "id": "currency_wars_mode_select_overclock",
+        "image_path": "./assets/images/screen/currency_wars/mode_select_overclock.png",
+        "actions": [
+            {
+                "target_screen": "currency_wars_mode_select",
                 "actions_list": [
                     "auto.press_key('esc')"
                 ]
