@@ -1,5 +1,16 @@
 # 更新日志
 
+## v2025.12.5
+
+- 支持货币战争
+- 抽卡记录支持 UIGF 格式导入和导出
+- 清体力前会传送至任意锚点 [#760](https://github.com/moesnow/March7thAssistant/pull/760) @Xuan-cc
+- 优化和修复云游戏若干问题 [#763](https://github.com/moesnow/March7thAssistant/pull/763) @Patrick16262
+- 任务完成后新增支持关闭显示器
+- 清空抽卡记录时增加二次确认弹窗
+- 修复培养目标拟造花萼副本信息提取失败 [#764](https://github.com/moesnow/March7thAssistant/pull/764) @g60cBQ
+- 修复任务完成后运行 ps1 脚本失败 [#759](https://github.com/moesnow/March7thAssistant/pull/759) @0frostmourne0
+
 ## v2025.12.1
 
 - 支持云·星穹铁道 [#750](https://github.com/moesnow/March7thAssistant/pull/750)
