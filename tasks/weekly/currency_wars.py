@@ -419,14 +419,40 @@ class CurrencyWars:
 
         forward_slots = len(self.forward_characters)
         backward_slots = len(self.backward_characters)
-        all_forward_count = sum(1 for c in all_chars if c["c"].pos in ("forward", "all"))
 
-        # 按 money 降序，金额相同则按 pos 优先级排序 (forward > backward > all)
-        if all_forward_count < min(forward_slots, limit):
-            pos_priority = {"forward": 0, "all": 1, "backward": 2}
-        else:
-            pos_priority = {"forward": 0, "backward": 1, "all": 2}
-        all_chars.sort(key=lambda x: (-x["c"].money, pos_priority.get(x["c"].pos, 3)))
+        # 先从可前台的角色里选出最多 min(forward_slots, limit) 个：按 money 降序，金额相同 pos 优先级 forward > all，去重按名字
+        forward_candidates = [item for item in all_chars if item["c"].pos in ("forward", "all")]
+        forward_candidates.sort(key=lambda x: (-x["c"].money, 0 if x["c"].pos == "forward" else 1))
+        top_forward: list[dict] = []
+        top_forward_names: set[str] = set()
+        duplicates_forward: list[dict] = []
+        for item in forward_candidates:
+            name = item["c"].name
+            if name and name not in top_forward_names and len(top_forward) < min(forward_slots, limit):
+                top_forward.append(item)
+                top_forward_names.add(name)
+            else:
+                duplicates_forward.append(item)
+
+        # 剩余角色按 money 降序，金额相同 pos 优先级 forward > backward > all，同样去重，重复的放末尾
+        pos_priority = {"forward": 0, "backward": 1, "all": 2}
+        remaining_pool = [item for item in all_chars if item not in top_forward and item not in duplicates_forward]
+        remaining_pool.sort(key=lambda x: (-x["c"].money, pos_priority.get(x["c"].pos, 3)))
+
+        remaining_unique: list[dict] = []
+        remaining_names: set[str] = set()
+        duplicates_rest: list[dict] = []
+        for item in remaining_pool:
+            name = item["c"].name
+            if name and name not in top_forward_names and name not in remaining_names:
+                remaining_unique.append(item)
+                remaining_names.add(name)
+            else:
+                duplicates_rest.append(item)
+
+        # 最终排序：前台唯一 -> 其余唯一 -> 所有重复
+        all_chars = top_forward + remaining_unique + duplicates_forward + duplicates_rest
+
         log.debug("按投资金额排序后的角色信息：")
         for item in all_chars:
             log.debug(f"角色 {item['c'].name}: 费用={item['c'].money}, 站位={self.pos_name_localization.get(item['c'].pos, item['c'].pos)}, 区域={self.zone_name_localization[item['zone']]}, 索引={item['idx']}")
@@ -442,7 +468,7 @@ class CurrencyWars:
             name = c.name
 
             # forward
-            if ((c.pos in ("forward", "all") or all_forward_count < min(forward_slots, limit)) and
+            if ((c.pos in ("forward", "all") or len(top_forward) < min(forward_slots, limit)) and
                 len(assigned["forward"]) < forward_slots and
                 used < limit and
                     name not in used_names):
@@ -608,26 +634,26 @@ class CurrencyWars:
 
         self._log_character_status()
 
-        # # 检查前台角色数量，如果为0则从后台和备战席查找角色移动到前台
-        # forward_count = sum(1 for c in self.forward_characters if c.name)
-        # if forward_count == 0:
-        #     log.info("检测到前台角色为0，尝试从后台和备战席查找角色移动到前台")
-        #     # 先在后台查找
-        #     found = False
-        #     for idx, char in enumerate(self.backward_characters):
-        #         if char.name:
-        #             log.info(f"从后台找到角色 {char.name}，移动到前台索引0")
-        #             if self.move_character(("backward", idx), ("forward", 0)):
-        #                 found = True
-        #                 break
+        # 检查前台角色数量，如果为0则从后台和备战席查找角色移动到前台
+        forward_count = sum(1 for c in self.forward_characters if c.name)
+        if forward_count == 0:
+            log.info("检测到前台角色为0，尝试从后台和备战席查找角色移动到前台")
+            # 先在后台查找
+            found = False
+            for idx, char in enumerate(self.backward_characters):
+                if char.name:
+                    log.info(f"从后台找到角色 {char.name}，移动到前台索引0")
+                    if self.move_character(("backward", idx), ("forward", 0)):
+                        found = True
+                        break
 
-        #     # 如果后台没找到，再在备战席查找
-        #     if not found:
-        #         for idx, char in enumerate(self.prepare_characters):
-        #             if char.name:
-        #                 log.info(f"从备战席找到角色 {char.name}，移动到前台索引0")
-        #                 if self.move_character(("prepare", idx), ("forward", 0)):
-        #                     break
+            # 如果后台没找到，再在备战席查找
+            if not found:
+                for idx, char in enumerate(self.prepare_characters):
+                    if char.name:
+                        log.info(f"从备战席找到角色 {char.name}，移动到前台索引0")
+                        if self.move_character(("prepare", idx), ("forward", 0)):
+                            break
 
         log.info("角色移动操作完成")
 
