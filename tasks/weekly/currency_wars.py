@@ -986,7 +986,8 @@ class CurrencyWars:
         """
         点击屏幕原点以取消所有选中状态
         """
-        auto.click_element_with_pos(((0, 0), (0, 0)))
+        pos = (6.0 / 1920, 5.0 / 1080, 12.0 / 1920, 14.0 / 1080)
+        auto.click_element_with_pos(auto.find_element(pos, "crop"))
         time.sleep(0.2)
 
     def check_auto_battle(self):
