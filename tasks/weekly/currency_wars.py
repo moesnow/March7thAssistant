@@ -177,7 +177,7 @@ class CurrencyWars:
         选择关卡难度
         """
         log.info("选择关卡")
-        pos = auto.find_element("./assets/images/screen/currency_wars/level_down.png", "image", 20000)
+        pos = auto.find_element("./assets/images/screen/currency_wars/level_down.png", "image", 100000)
         for _ in range(40):
             if auto.find_element(f"./assets/images/screen/currency_wars/level_1.png", "image", 0.95, crop=(440.0 / 1920, 892.0 / 1080, 385.0 / 1920, 137.0 / 1080)):
                 log.info(f"已选择敌人难度为1的关卡")
