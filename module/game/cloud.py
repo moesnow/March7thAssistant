@@ -30,6 +30,20 @@ class CloudGameController(GameControllerBase):
     INTEGRATED_BROWSER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chrome", "win64", INTEGRATED_BROWSER_VERSION, "chrome.exe")
     INTEGRATED_DRIVER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chromedriver", "win64", INTEGRATED_BROWSER_VERSION, "chromedriver.exe")
     MAX_RETRIES = 3  # 网页加载重试次数，0=不重试
+    PERFERENCES = {
+        "profile": {
+            "content_settings": {
+                "exceptions": {
+                    "keyboard_lock": { # 允许 keyboard_lock 权限
+                        "https://sr.mihoyo.com:443,*": {"setting": 1}
+                    },
+                    "clipboard": {   # 允许剪贴板读取权限
+                        "https://sr.mihoyo.com:443,*": {"setting": 1}
+                    }
+                }
+            }
+        }
+    }
 
     def __init__(self, cfg: Config, logger: Logger):
         super().__init__(script_path=cfg.script_path, logger=logger)
@@ -155,7 +169,7 @@ class CloudGameController(GameControllerBase):
         
         # 关掉 headless 不匹配的浏览器，防止端口冲突
         if self.close_all_m7a_browser(headless=not headless):
-            self.log_info(f"已关闭浏览器正在运行的{'前台' if headless else '后台'}浏览器")
+            self.log_info(f"已关闭正在运行的{'前台' if headless else '后台'}浏览器")
         if self.get_m7a_browsers(headless=headless):
             # 如果发现已经有浏览器，尝试直接连接
             try:
@@ -169,9 +183,8 @@ class CloudGameController(GameControllerBase):
                 options = None
             
         self.log_info(f"正在启动 {browser_type} 浏览器")
-        prefs = {"profile": {"content_settings": {"exceptions": {"keyboard_lock": {"https://sr.mihoyo.com:443 ,*": {"setting": 1}}}}}}
         options.binary_location = browser_path
-        options.add_experimental_option("prefs", prefs)  # 允许 keyboard_lock 权限
+        options.add_experimental_option("prefs", self.PERFERENCES)  # 允许云游戏权限权限
 
         # 设置浏览器启动参数
         for arg in self._get_browser_arguments(headless=headless):
