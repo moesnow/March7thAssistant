@@ -431,7 +431,7 @@ class CurrencyWars:
             if name and name not in top_forward_names and len(top_forward) < min(forward_slots, limit):
                 top_forward.append(item)
                 top_forward_names.add(name)
-            else:
+            elif name in top_forward_names:
                 duplicates_forward.append(item)
 
         # 剩余角色按 money 降序，金额相同 pos 优先级 forward > backward > all，同样去重，重复的放末尾
