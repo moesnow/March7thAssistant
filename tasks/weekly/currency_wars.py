@@ -1058,6 +1058,11 @@ class CurrencyWars:
                 (725.0 / 1920, 196.0 / 1080, 468.0 / 1920, 670.0 / 1080),
                 (1247.0 / 1920, 198.0 / 1080, 465.0 / 1920, 668.0 / 1080),
             ]
+            button_positions_click = [
+                (267.0 / 1920, 200.0 / 1080, 384.0 / 1920, 269.0 / 1080),
+                (765.0 / 1920, 201.0 / 1080, 394.0 / 1920, 271.0 / 1080),
+                (1268.0 / 1920, 204.0 / 1080, 387.0 / 1920, 265.0 / 1080),
+            ]
             has_choose = False
 
             # 不方便判断的选项，暂时跳过处理
@@ -1084,7 +1089,7 @@ class CurrencyWars:
                     if auto.find_element(('深井角斗场', '佩佩客串', '钻石商人', '现金为王', '降本增效', '大裁员', '人力重组', '节省工位'), 'text', crop=pos, include=True):
                         log.debug(f"跳过{auto.matched_text}选项")
                         continue
-                    auto.click_element(pos, 'crop')
+                    auto.click_element(button_positions_click[button_positions.index(pos)], 'crop')
                     has_choose = True
                     log.info(f"未检测到图鉴未收集选项，选择第{button_positions.index(pos) + 1}个按钮")
                     break
@@ -1092,7 +1097,7 @@ class CurrencyWars:
 
             if not has_choose:
                 log.error("所有选项均不可选，尝试退出")
-                auto.click_element(button_positions[0], 'crop')
+                auto.click_element(button_positions_click[0], 'crop')
                 self.need_exit = True
             time.sleep(1)
             auto.click_element('确认', 'text', None, 10, crop=(738.0 / 1920, 927.0 / 1080, 457.0 / 1920, 123.0 / 1080), include=True)
@@ -1126,7 +1131,13 @@ class CurrencyWars:
                 (971.0 / 1920, 293.0 / 1080, 333.0 / 1920, 488.0 / 1080),
                 (1325.0 / 1920, 291.0 / 1080, 333.0 / 1920, 490.0 / 1080),
             ]
-            auto.click_element(button_positions[0], 'crop', None, 10)
+            button_positions_click = [
+                (297.0 / 1920, 349.0 / 1080, 260.0 / 1920, 241.0 / 1080),
+                (651.0 / 1920, 349.0 / 1080, 264.0 / 1920, 242.0 / 1080),
+                (1007.0 / 1920, 347.0 / 1080, 262.0 / 1920, 246.0 / 1080),
+                (1362.0 / 1920, 346.0 / 1080, 262.0 / 1920, 247.0 / 1080),
+            ]
+            auto.click_element(button_positions_click[0], 'crop', None, 10)
             log.info("默认选择第一个补给选项")
             time.sleep(1)
             auto.click_element('确认', 'text', None, 10, crop=(1490.0 / 1920, 943.0 / 1080, 403.0 / 1920, 76.0 / 1080), include=True)
