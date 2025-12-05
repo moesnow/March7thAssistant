@@ -709,10 +709,22 @@ class CurrencyWars:
                 time.sleep(0.5)
             elif "命运卜者" in result:
                 log.info("检测到命运卜者")
-                # 命运卜者默认会选中一个选项
-                # char_crop = (850.0 / 1920, 167.0 / 1080, 395.0 / 1920, 249.0 / 1080)
-                # auto.click_element(char_crop, "crop")
-                # time.sleep(0.5)
+                char_crop = (850.0 / 1920, 167.0 / 1080, 395.0 / 1920, 249.0 / 1080)
+                auto.click_element(char_crop, "crop")
+                time.sleep(0.5)
+                char_crop_pos = [
+                    (800.0 / 1920, 372.0 / 1080, 25.0 / 1920, 36.0 / 1080),
+                    (1208.0 / 1920, 371.0 / 1080, 25.0 / 1920, 36.0 / 1080),
+                    (1617.0 / 1920, 373.0 / 1080, 24.0 / 1920, 35.0 / 1080)
+                ]
+                for pos in char_crop_pos:
+                    result = auto.get_single_line_text(crop=pos)
+                    if result:
+                        # 优先选择0费
+                        if result.isdigit() and int(result) == 0:
+                            auto.click_element(pos, "crop")
+                            time.sleep(0.5)
+                            break
                 auto.click_element("确认选择", "text", crop=(1329.0 / 1920, 572.0 / 1080, 332.0 / 1920, 55.0 / 1080))
                 time.sleep(0.5)
 
