@@ -1,8 +1,9 @@
 # 更新日志
 
-## v2025.12.5
+## v2025.12.6
 
 - 支持货币战争
+- 修复货币战争若干异常问题
 - 抽卡记录支持 UIGF 格式导入和导出
 - 清体力前会传送至任意锚点 [#760](https://github.com/moesnow/March7thAssistant/pull/760) @Xuan-cc
 - 优化和修复云游戏若干问题 [#763](https://github.com/moesnow/March7thAssistant/pull/763) @Patrick16262
