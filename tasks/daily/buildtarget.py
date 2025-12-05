@@ -159,12 +159,13 @@ class BuildTarget:
     @staticmethod
     def _parse_calyx_instance_info() -> str | None:
         for i in range(2):
-            click_offset = (i * 85 / auto.screenshot_scale_factor, -280 / auto.screenshot_scale_factor)
-            if not auto.click_element("./assets/images/share/build_target/power.png", "image", max_retries=5, offset=click_offset, crop=(1223.0 / 1920, 961.0 / 1080, 93.0 / 1920, 44.0 / 1080)):
+            click_offset = (i * 88 / auto.screenshot_scale_factor, 64 / auto.screenshot_scale_factor)
+            if not auto.click_element("可能获取", "text", offset=click_offset, max_retries=5, crop=(1196.0 / 1920, 492.0 / 1080, 705.0 / 1920, 456.0 / 1080)):
                 log.error("尝试提取拟造花萼副本信息时失败，无法识别特定副本页面")
                 return None
 
-            if auto.find_element("信用点", "text", max_retries=3, retry_delay=0.5, include=True, crop=(783.0 / 1920, 318.0 / 1080, 204.0 / 1920, 55.0 / 1080)):
+            item_name = auto.get_single_line_text(crop=(783.0 / 1920, 318.0 / 1080, 204.0 / 1920, 55.0 / 1080), max_retries=3, retry_delay=0.5)
+            if not item_name or "信用点" in item_name:
                 log.error("尝试提取拟造花萼副本信息时失败，无法获取光锥晋阶材料信息")
                 return None
 
