@@ -104,12 +104,12 @@ class CurrencyWars:
     def start(self):
         log.hr('准备货币战争', '0')
         if self.run():
-            self.get_reward()
             Base.send_notification_with_screenshot("货币战争已完成", NotificationLevel.ALL, self.screenshot)
             self.screenshot = None
         else:
             Base.send_notification_with_screenshot("货币战争未完成", NotificationLevel.ERROR, self.screenshot)
             self.screenshot = None
+        self.get_reward()
         if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
             self.check_currency_wars_score()
         log.hr("完成", 2)
