@@ -6,8 +6,9 @@ from module.notification.notification import NotificationLevel
 
 class Base:
     @staticmethod
-    def send_notification_with_screenshot(message, level=NotificationLevel.ERROR):
+    def send_notification_with_screenshot(message, level=NotificationLevel.ERROR, screenshot=None):
         # 日志显示的同时推送消息
         log.info(message)
-        screenshot, _, _ = auto.take_screenshot()
+        if screenshot is None:
+            screenshot, _, _ = auto.take_screenshot()
         notif.notify(content=message, image=screenshot, level=level)

@@ -22,6 +22,7 @@ class CurrencyWarsCharacter:
 class CurrencyWars:
     def __init__(self, send_notification: bool = True):
         self.send_notification = send_notification  # 是否发送通知
+        self.screenshot = None  # 任务截图
         self.peipei_count: int = 0  # 佩佩和叽米
         self.diamond_count: int = 0  # 财富宝钻
         self.current_level: int = 0  # 当前可部署角色等级
@@ -106,10 +107,12 @@ class CurrencyWars:
         if self.run():
             self.get_reward()
             if self.send_notification:
-                Base.send_notification_with_screenshot("货币战争已完成", NotificationLevel.ALL)
+                Base.send_notification_with_screenshot("货币战争已完成", NotificationLevel.ALL, self.screenshot)
+                self.screenshot = None
         else:
             if self.send_notification:
-                Base.send_notification_with_screenshot("货币战争未完成", NotificationLevel.ERROR)
+                Base.send_notification_with_screenshot("货币战争未完成", NotificationLevel.ERROR, self.screenshot)
+                self.screenshot = None
         if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
             self.check_currency_wars_score()
         log.hr("完成", 2)
@@ -1111,9 +1114,11 @@ class CurrencyWars:
             text = box[1][0]
             if "对局胜利" in text:
                 self.result = True
+                self.screenshot = auto.screenshot
                 return
             elif "对局未完成" in text:
                 self.result = False
+                self.screenshot = auto.screenshot
                 return
 
     def check_special_characters(self, crop: Tuple[float, float, float, float]):
