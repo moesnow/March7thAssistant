@@ -371,6 +371,8 @@ notify_bark_sound: "" # 可选参数
 notify_bark_url: "" # 可选参数，自定义 Bark 服务的 URL。
 notify_bark_copy: "" # 可选参数
 notify_bark_autocopy: "" # 可选参数
+notify_bark_cipherkey: "" # 可选参数，推送加密密钥，用于保护推送内容。需先在 Bark APP 中配置相同的密钥。
+notify_bark_ciphermethod: "" # 可选参数，加密算法，可选值：cbc, ecb。需与 Bark APP 中配置的算法一致。
 
 # SMTP 邮箱通知配置
 # 支持发送截图，注意部分邮箱密码部分需要填写授权码（比如 QQ邮箱）
