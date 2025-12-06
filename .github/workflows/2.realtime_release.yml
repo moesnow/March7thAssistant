@@ -9,6 +9,8 @@ on:
   push:
     branches:
       - main
+    tags-ignore:
+      - "v*.*.*"
     paths:
       - "**.py"
 
