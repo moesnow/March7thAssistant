@@ -457,6 +457,14 @@ notify_lark_imageenable: false # 是否启用图片信息发送，true 开启，
 notify_lark_appid: "" # 如启用图片信息发送，则必填，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology
 notify_lark_secret: "" # 同上，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology
 
+# KOOK 通知配置
+# 支持发送截图，无需上线机器人，仅通过HTTP请求即可推送消息
+# https://developer.kookapp.cn/doc/intro
+notify_kook_enable: false # 是否启用 KOOK 通知。true 开启，false 关闭。
+notify_kook_token: "" # KOOK 机器人的 Token。
+notify_kook_target_id: "" # 接收消息的目标ID（用户ID或频道ID）。
+notify_kook_chat_type: "1" # 可选参数，消息类型，"1" 表示私聊，"9" 表示频道聊天，默认为 "1"。
+
 # 自定义通知配置
 # 支持发送截图
 notify_custom_enable: false # 是否启用自定义通知。true 开启，false 关闭。
