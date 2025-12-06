@@ -40,23 +40,22 @@ class WebhookNotifier(Notifier):
             'title': title,
             'content': content
         }
-        
-        headers = {
-            'Content-Type': 'application/json'
-        }
 
         try:
             if image_io:
                 # 如果有图片，使用 multipart/form-data 发送
                 files = {
-                    'image': ('image.jpg', image_io.getvalue(), 'image/jpeg')
+                    'image': ('image.png', image_io.getvalue(), 'image/png')
                 }
                 response = requests.post(self.url, data=data, files=files)
             else:
                 # 只发送文本消息
+                headers = {
+                    'Content-Type': 'application/json'
+                }
                 response = requests.post(self.url, json=data, headers=headers)
             
             response.raise_for_status()  # 检查请求是否成功
-            self.logger.info(f"Webhook 通知发送成功")
+            self.logger.info(f"Webhook 通知发送成功: {self.url}")
         except requests.RequestException as e:
-            self.logger.error(f"Webhook 通知发送失败: {e}")
+            self.logger.error(f"Webhook 通知发送失败 ({self.url}): {e}")
