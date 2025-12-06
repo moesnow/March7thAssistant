@@ -20,8 +20,7 @@ class CurrencyWarsCharacter:
 
 
 class CurrencyWars:
-    def __init__(self, send_notification: bool = True):
-        self.send_notification = send_notification  # 是否发送通知
+    def __init__(self):
         self.screenshot = None  # 任务截图
         self.peipei_count: int = 0  # 佩佩和叽米
         self.diamond_count: int = 0  # 财富宝钻
@@ -106,13 +105,11 @@ class CurrencyWars:
         log.hr('准备货币战争', '0')
         if self.run():
             self.get_reward()
-            if self.send_notification:
-                Base.send_notification_with_screenshot("货币战争已完成", NotificationLevel.ALL, self.screenshot)
-                self.screenshot = None
+            Base.send_notification_with_screenshot("货币战争已完成", NotificationLevel.ALL, self.screenshot)
+            self.screenshot = None
         else:
-            if self.send_notification:
-                Base.send_notification_with_screenshot("货币战争未完成", NotificationLevel.ERROR, self.screenshot)
-                self.screenshot = None
+            Base.send_notification_with_screenshot("货币战争未完成", NotificationLevel.ERROR, self.screenshot)
+            self.screenshot = None
         if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
             self.check_currency_wars_score()
         log.hr("完成", 2)
@@ -150,8 +147,7 @@ class CurrencyWars:
             if auto.click_element("积分", 'text', crop=(28.0 / 1920, 880.0 / 1080, 435.0 / 1920, 175.0 / 1080), include=True):
                 if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
                     if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
-                        if self.send_notification:
-                            Base.send_notification_with_screenshot("货币战争奖励已领取", NotificationLevel.ALL)
+                        Base.send_notification_with_screenshot("货币战争奖励已领取", NotificationLevel.ALL)
                         auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
                         time.sleep(1)
                         auto.press_key("esc")

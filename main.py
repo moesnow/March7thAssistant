@@ -55,7 +55,7 @@ def run_sub_task(action):
     game.start()
 
     def currencywars(loop=False):
-        war = CurrencyWars(not loop)
+        war = CurrencyWars()
         if loop:
             while True:
                 war.start()
