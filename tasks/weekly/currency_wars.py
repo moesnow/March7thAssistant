@@ -359,9 +359,10 @@ class CurrencyWars:
         ]
 
         for characters, positions in character_groups:
-            for idx, char in enumerate(characters):
-                if char.name:
-                    self._equip_single_character(positions[idx])
+            indexed_chars = [(idx, c) for idx, c in enumerate(characters) if c.name]
+            indexed_chars.sort(key=lambda item: (-item[1].money, item[0]))
+            for idx, _ in indexed_chars:
+                self._equip_single_character(positions[idx])
 
     def _equip_single_character(self, position):
         """
@@ -490,8 +491,32 @@ class CurrencyWars:
                 continue
 
             assigned["prepare"].append(item)
+
         log.debug(
             f"计算区域结果: {self.zone_name_localization['forward']}={len(assigned['forward'])}, {self.zone_name_localization['backward']}={len(assigned['backward'])}, {self.zone_name_localization['prepare']}={len(assigned['prepare'])}, total used={used}/{limit}")
+
+        # 无效优化，前台角色放后台不会自动使用技能，保持队伍中有角色空缺即可
+        # # 补充逻辑：如果 forward 已满且 used < limit，从 prepare 移动角色到 backward
+        # if len(assigned['forward']) == min(forward_slots, limit) and used < limit:
+        #     log.debug(f"前台已满({len(assigned['forward'])}个)，但总使用量({used})未达上限({limit})，尝试从备战席补充到后台")
+        #     # 从 prepare 中找出不重名的角色
+        #     to_move = []
+        #     for item in assigned["prepare"]:
+        #         if used >= limit:
+        #             break
+        #         name = item["c"].name
+        #         if name and name not in used_names:  # 不重名
+        #             to_move.append(item)
+        #             used_names.add(name)
+        #             used += 1
+
+        #     # 移动到 backward 末尾
+        #     if to_move:
+        #         assigned["prepare"] = [item for item in assigned["prepare"] if item not in to_move]
+        #         assigned["backward"].extend(to_move)
+        #         log.debug(f"从备战席移动 {len(to_move)} 个角色到后台: {[item['c'].name for item in to_move]}")
+        #         log.debug(
+        #             f"调整后区域结果: {self.zone_name_localization['forward']}={len(assigned['forward'])}, {self.zone_name_localization['backward']}={len(assigned['backward'])}, {self.zone_name_localization['prepare']}={len(assigned['prepare'])}, total used={used}/{limit}")
 
         # 4️⃣ 填充空位
         for zone in ["forward", "backward"]:
@@ -500,6 +525,31 @@ class CurrencyWars:
 
         while len(assigned["prepare"]) < len(self.prepare_characters):
             assigned["prepare"].append({"c": CurrencyWarsCharacter(None, None), "zone": "prepare", "idx": None, "pos_ref": None})
+        # 显示每个区域的角色
+        for zone in ["forward", "backward", "prepare"]:
+            names = [item["c"].name for item in assigned[zone]]
+            log.debug(f"区域 {self.zone_name_localization[zone]} 角色: {names}")
+
+        # 将已在目标区域的角色提前放置到对应索引，减少后续交换
+        for zone in ("forward", "backward"):
+            current_zone_list = getattr(self, f"{zone}_characters")
+            target_list = assigned[zone]
+            for idx, cur_char in enumerate(current_zone_list):
+                cur_name = cur_char.name
+                if not cur_name:
+                    continue
+                if target_list[idx]["c"].name == cur_name:
+                    continue
+                swap_idx = None
+                for j in range(len(target_list)):
+                    if j == idx:
+                        continue
+                    if target_list[j]["c"].name == cur_name:
+                        swap_idx = j
+                        break
+                if swap_idx is not None:
+                    target_list[idx], target_list[swap_idx] = target_list[swap_idx], target_list[idx]
+                    log.debug(f"预先对齐 {self.zone_name_localization[zone]} 索引 {idx}: {cur_name}")
 
         # 显示每个区域的角色
         for zone in ["forward", "backward", "prepare"]:
