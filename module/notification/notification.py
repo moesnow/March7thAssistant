@@ -12,6 +12,11 @@ class NotificationLevel:
     """
     ALL = "all"  # 所有通知
     ERROR = "error"  # 仅错误和异常通知
+    # 用于展示的中文本地化名称
+    DISPLAY = {
+        ALL: "全部",
+        ERROR: "仅错误",
+    }
 
 
 class Notification(metaclass=SingletonMeta):
@@ -31,6 +36,17 @@ class Notification(metaclass=SingletonMeta):
         self.notifiers = {}  # 存储不同类型的通知发送者实例
         self.level_filter = NotificationLevel.ALL  # 默认发送所有通知
 
+    def _localize_level(self, level: Optional[str]) -> str:
+        """
+        将内部级别常量转换为对用户友好的中文描述。
+
+        :param level: 内部级别字符串（例如 'all' 或 'error'）
+        :return: 中文描述（如果找不到对应项则返回原始值或空串）
+        """
+        if level is None:
+            return ""
+        return NotificationLevel.DISPLAY.get(level, str(level))
+
     def set_notifier(self, notifier_name: str, notifier: Notifier):
         """
         设置或更新一个通知发送者实例。
@@ -48,7 +64,11 @@ class Notification(metaclass=SingletonMeta):
         :raises ValueError: 如果提供的级别不是有效的 NotificationLevel 常量。
         """
         if level not in [NotificationLevel.ALL, NotificationLevel.ERROR]:
-            raise ValueError(f"无效的通知级别: {level}. 应为 'all' 或 'error'")
+            allowed = (
+                f"{NotificationLevel.ALL}（{self._localize_level(NotificationLevel.ALL)}）",
+                f"{NotificationLevel.ERROR}（{self._localize_level(NotificationLevel.ERROR)}）",
+            )
+            raise ValueError(f"无效的通知级别: {level}. 可选值: {allowed[0]} 或 {allowed[1]}")
         self.level_filter = level
 
     def _process_image(self, image: Optional[io.BytesIO | str | Image.Image]) -> Optional[io.BytesIO]:
@@ -93,7 +113,10 @@ class Notification(metaclass=SingletonMeta):
         # 检查是否应该发送此通知
         if self.level_filter == NotificationLevel.ERROR and level != NotificationLevel.ERROR:
             if self.logger:
-                self.logger.debug(f"通知被过滤（级别：{level}，过滤器：{self.level_filter}）")
+                localized_level = self._localize_level(level)
+                localized_filter = self._localize_level(self.level_filter)
+                self.logger.info(f"通知被过滤（级别：{localized_level}，过滤器：{localized_filter}）")
+                self.logger.info(f"内容: {content}")
             return
 
         for notifier_name, notifier in self.notifiers.items():

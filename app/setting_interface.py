@@ -772,6 +772,13 @@ class SettingInterface(ScrollArea):
             self.tr("测试消息推送"),
             ""
         )
+        self.notifyLevelCard = ComboBoxSettingCard2(
+            "notify_level",
+            FIF.COMMAND_PROMPT,
+            self.tr('通知级别'),
+            '',
+            texts={'推送所有通知': 'all', '仅推送错误通知': 'error'}
+        )
         self.notifyTemplateCard = PushSettingCardNotifyTemplate(
             self.tr('修改'),
             FIF.FONT_SIZE,
@@ -1026,6 +1033,7 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.refreshHourEnableCard)
 
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
+        self.NotifyGroup.addSettingCard(self.notifyLevelCard)
         self.NotifyGroup.addSettingCard(self.notifyTemplateCard)
         for value in self.notifyEnableGroup:
             self.NotifyGroup.addSettingCard(value)
