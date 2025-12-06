@@ -189,6 +189,8 @@ class Screen(metaclass=SingletonMeta):
         self.logger.error("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR或游戏滤镜")
         self.logger.error("如果是云·星穹铁道：")
         self.logger.error("请确保网络正常，浏览器能正常加载游戏画面")
+        # 保存错误截图
+        self.logger.save_error_screenshot()
         raise Exception(error_message)
 
     def ensure_current_screen_is_clean(self):
