@@ -44,15 +44,18 @@ class WebhookNotifier(Notifier):
         try:
             if image_io:
                 # 如果有图片，使用 multipart/form-data 发送
+                image_io.seek(0)  # 确保从头开始读取
                 files = {
                     'image': ('image.png', image_io.getvalue(), 'image/png')
                 }
-                response = requests.post(self.url, data=data, files=files)
+                response = requests.post(self.url, data=data, files=files, timeout=30)
             else:
                 # 只发送文本消息
-                response = requests.post(self.url, json=data)
+                response = requests.post(self.url, json=data, timeout=30)
             
             response.raise_for_status()  # 检查请求是否成功
             self.logger.info(f"Webhook 通知发送成功: {self.url}")
+        except requests.Timeout:
+            self.logger.error(f"Webhook 通知发送超时 ({self.url})")
         except requests.RequestException as e:
             self.logger.error(f"Webhook 通知发送失败 ({self.url}): {e}")
