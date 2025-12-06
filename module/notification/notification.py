@@ -85,7 +85,7 @@ class Notification(metaclass=SingletonMeta):
 
         :param content: 通知的内容。
         :param image: 通知的图片，可以是io.BytesIO对象或文件路径字符串，可选。
-        :param level: 通知级别，默认为 ALL。如果设置为 ERROR，则只在级别过滤器为 ALL 或 ERROR 时发送。
+        :param level: 通知级别，默认为 ALL。当 level_filter 为 ERROR 时，只有 ERROR 级别的通知会被发送。
         """
         # 检查是否应该发送此通知
         if self.level_filter == NotificationLevel.ERROR and level != NotificationLevel.ERROR:
