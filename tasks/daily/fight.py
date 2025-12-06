@@ -1,6 +1,7 @@
 from module.screen import screen
 from module.config import cfg
 from module.logger import log
+from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from tasks.base.team import Team
 from tasks.base.pythonchecker import PythonChecker
@@ -101,13 +102,13 @@ class Fight:
             command = [os.path.join(cfg.fight_path, "Fhoe-Rail.exe")] if cfg.fight_operation_mode == "exe" else [cfg.python_exe_path, "fhoe.py"]
             if subprocess_with_timeout(command, cfg.fight_timeout * 3600, cfg.fight_path, None if cfg.fight_operation_mode == "exe" else cfg.env):
                 cfg.save_timestamp("fight_timestamp")
-                Base.send_notification_with_screenshot(cfg.notify_template['FightCompleted'])
+                Base.send_notification_with_screenshot(cfg.notify_template['FightCompleted'], NotificationLevel.ALL)
                 return True
 
         log.error("锄大地失败")
         log_path = os.path.join(cfg.fight_path, "logs")
         log.error(f"锄大地日志路径: {log_path}")
-        Base.send_notification_with_screenshot(cfg.notify_template['FightNotCompleted'])
+        Base.send_notification_with_screenshot(cfg.notify_template['FightNotCompleted'], NotificationLevel.ERROR)
         return False
 
     @staticmethod

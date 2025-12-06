@@ -1,7 +1,7 @@
 from module.config import cfg
 from module.logger import log
 from module.notification.matrix import MatrixNotifier
-from module.notification.notification import Notification
+from module.notification.notification import Notification, NotificationLevel
 # 导入所有通知器类型
 from module.notification.onepush import OnepushNotifier
 from module.notification.serverchan3 import ServerChanNotifier
@@ -53,6 +53,10 @@ class NotifierFactory:
 
 
 notif = Notification(cfg.notify_template['Title'], log)
+
+# 设置通知级别过滤器
+notify_level = cfg.get_value('notify_level', NotificationLevel.ALL)
+notif.set_level_filter(notify_level)
 
 # 创建并注册Notifier实例
 for key, value in cfg.config.items():

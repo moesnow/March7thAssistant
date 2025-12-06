@@ -327,6 +327,9 @@ notify_template:
   FightCompleted: "锄大地已完成"
   FightNotCompleted: "锄大地未完成"
 
+# 通知级别设置
+notify_level: all # 通知级别，可选 all（推送所有通知）或 error（仅推送错误和异常通知）。默认为 all。
+
 # Windows 原生通知
 notify_winotify_enable: true # 是否启用 Windows 原生通知。true 开启，false 关闭。
 
