@@ -11,6 +11,30 @@ import datetime
 import json
 
 
+def _cleanup_infobars(widget):
+    """Safely hide/close/delete any InfoBar children of `widget`.
+
+    This helps avoid QPainter warnings when a parent widget is closing
+    while an InfoBar is still animating/painting.
+    """
+    try:
+        for bar in widget.findChildren(InfoBar):
+            try:
+                bar.hide()
+            except Exception:
+                pass
+            try:
+                bar.close()
+            except Exception:
+                pass
+            try:
+                bar.deleteLater()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
 def setup_completer(combo_box, items):
     """
     为 EditableComboBox 设置自动补全器
@@ -352,7 +376,7 @@ class MessageBoxInstance(MessageBox):
                     has_default = True
             if not has_default:
                 comboBox.setText(self.content[type])
-            
+
             # 设置自动补全
             setup_completer(comboBox, item_list)
 
@@ -364,19 +388,18 @@ class MessageBoxInstance(MessageBox):
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
-
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
         for type, comboBox in self.comboBox_dict.items():
             input_text = comboBox.text()
-            
+
             # 构建有效选项列表（包含完整的"名称（信息）"格式）
             valid_options = set()
             for name, info in self.template[type].items():
                 valid_options.add(f"{name}（{info}）")
                 # 也允许只输入名称部分（向后兼容）
                 valid_options.add(name)
-            
+
             # 检查输入是否匹配任一有效选项
             if input_text not in valid_options:
                 InfoBar.error(
@@ -389,13 +412,26 @@ class MessageBoxInstance(MessageBox):
                     parent=self
                 )
                 return False
-        
+
         return True
 
     def accept(self):
-        """重写accept方法以添加验证"""
+        """重写accept方法以添加验证并在关闭前清理 InfoBar，避免 QPainter 冲突"""
         if self.validate_inputs():
+            # 在对话框真正关闭前，清理任何还存在的 InfoBar
+            _cleanup_infobars(self)
             super().accept()
+
+    def reject(self):
+        """在拒绝/取消时也清理 InfoBar，避免在销毁期间 InfoBar 仍在绘制。"""
+        _cleanup_infobars(self)
+        try:
+            super().reject()
+        except Exception:
+            try:
+                self.close()
+            except Exception:
+                pass
 
 
 class MessageBoxInstanceChallengeCount(MessageBox):
@@ -566,16 +602,15 @@ class MessageBoxTeam(MessageBox):
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
-
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
         valid_chars = set(self.template.values())
         valid_techs = set(self.tech_map.values())
-        
+
         for i, (charComboBox, techComboBox) in enumerate(self.comboBox_list, 1):
             char_text = charComboBox.text()
             tech_text = techComboBox.currentText()
-            
+
             if char_text not in valid_chars:
                 InfoBar.error(
                     title='输入错误',
@@ -587,7 +622,7 @@ class MessageBoxTeam(MessageBox):
                     parent=self
                 )
                 return False
-            
+
             if tech_text not in valid_techs:
                 InfoBar.error(
                     title='输入错误',
@@ -599,13 +634,24 @@ class MessageBoxTeam(MessageBox):
                     parent=self
                 )
                 return False
-        
+
         return True
 
     def accept(self):
-        """重写accept方法以添加验证"""
+        """重写accept方法以添加验证并在关闭前清理 InfoBar"""
         if self.validate_inputs():
+            _cleanup_infobars(self)
             super().accept()
+
+    def reject(self):
+        _cleanup_infobars(self)
+        try:
+            super().reject()
+        except Exception:
+            try:
+                self.close()
+            except Exception:
+                pass
 
 
 class MessageBoxFriends(MessageBox):
@@ -652,10 +698,10 @@ class MessageBoxFriends(MessageBox):
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
         valid_chars = set(self.template.values())
-        
+
         for i, (charComboBox, nameLineEdit) in enumerate(self.comboBox_list, 1):
             char_text = charComboBox.text()
-            
+
             if char_text not in valid_chars:
                 InfoBar.error(
                     title='输入错误',
@@ -667,10 +713,21 @@ class MessageBoxFriends(MessageBox):
                     parent=self
                 )
                 return False
-        
+
         return True
 
     def accept(self):
-        """重写accept方法以添加验证"""
+        """重写accept方法以添加验证并在关闭前清理 InfoBar"""
         if self.validate_inputs():
+            _cleanup_infobars(self)
             super().accept()
+
+    def reject(self):
+        _cleanup_infobars(self)
+        try:
+            super().reject()
+        except Exception:
+            try:
+                self.close()
+            except Exception:
+                pass
