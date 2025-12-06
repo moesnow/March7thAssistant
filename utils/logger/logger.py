@@ -81,12 +81,21 @@ class Logger(metaclass=SingletonMeta):
             
             current_time = datetime.now()
             cutoff_time = current_time - timedelta(days=self._retention_days)
+            logs_dir = os.path.abspath("logs")
             
             for filename in os.listdir("logs"):
                 if not filename.endswith(".log"):
                     continue
                 
                 file_path = os.path.join("logs", filename)
+                
+                # 验证文件路径仍在logs目录内，防止目录遍历攻击
+                if not os.path.abspath(file_path).startswith(logs_dir):
+                    continue
+                
+                # 检查文件是否存在，避免竞态条件
+                if not os.path.exists(file_path):
+                    continue
                 
                 # 获取文件修改时间
                 file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
