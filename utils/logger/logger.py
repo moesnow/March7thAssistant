@@ -161,10 +161,13 @@ class Logger(metaclass=SingletonMeta):
             # 尝试捕获截图
             try:
                 auto.take_screenshot()
-                if auto.screenshot:
+                # 验证截图是否成功捕获
+                if auto.screenshot is not None:
                     auto.screenshot.save(filepath)
                     self.info(f"错误截图已保存: {filepath}")
                     return filepath
+                else:
+                    self.debug("截图对象为空，无法保存")
             except Exception as e:
                 self.debug(f"捕获游戏窗口截图失败: {e}")
                 

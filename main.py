@@ -163,10 +163,13 @@ if __name__ == "__main__":
         # 保存错误截图
         screenshot_path = log.save_error_screenshot()
         # 发送通知，如果有截图则附带截图
+        notify_kwargs = {
+            'content': cfg.notify_template['ErrorOccurred'].format(error=e),
+            'level': NotificationLevel.ERROR
+        }
         if screenshot_path:
-            notif.notify(content=cfg.notify_template['ErrorOccurred'].format(error=e), image=screenshot_path, level=NotificationLevel.ERROR)
-        else:
-            notif.notify(content=cfg.notify_template['ErrorOccurred'].format(error=e), level=NotificationLevel.ERROR)
+            notify_kwargs['image'] = screenshot_path
+        notif.notify(**notify_kwargs)
         if not cfg.exit_after_failure:
             input("按回车键关闭窗口. . .")
         sys.exit(1)
