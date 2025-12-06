@@ -3,6 +3,7 @@ locales: zh_CN
 
 # 日志设置
 log_level: INFO # 日志等级，可选值：INFO, DEBUG。INFO 仅记录重要信息，DEBUG 记录详细调试信息。
+log_retention_days: 30 # 日志保留天数，超过此天数的日志文件将被自动删除。
 
 # 更新检查
 check_update: true # 是否检查更新。true 检查，false 不检查。
@@ -371,6 +372,8 @@ notify_bark_sound: "" # 可选参数
 notify_bark_url: "" # 可选参数，自定义 Bark 服务的 URL。
 notify_bark_copy: "" # 可选参数
 notify_bark_autocopy: "" # 可选参数
+notify_bark_cipherkey: "" # 可选参数，推送加密密钥，用于保护推送内容。需先在 Bark APP 中配置相同的密钥。
+notify_bark_ciphermethod: "" # 可选参数，加密算法，可选值：cbc, ecb。需与 Bark APP 中配置的算法一致。
 
 # SMTP 邮箱通知配置
 # 支持发送截图，注意部分邮箱密码部分需要填写授权码（比如 QQ邮箱）
@@ -456,6 +459,19 @@ notify_lark_sign: "" # 可选参数，如果设置了签名安全设置，此处
 notify_lark_imageenable: false # 是否启用图片信息发送，true 开启，false 关闭，默认为关闭
 notify_lark_appid: "" # 如启用图片信息发送，则必填，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology
 notify_lark_secret: "" # 同上，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology
+
+# KOOK 通知配置
+# 支持发送截图，无需上线机器人，仅通过HTTP请求即可推送消息
+# https://developer.kookapp.cn/doc/intro
+notify_kook_enable: false # 是否启用 KOOK 通知。true 开启，false 关闭。
+notify_kook_token: "" # KOOK 机器人的 Token。
+notify_kook_target_id: "" # 接收消息的目标ID（用户ID或频道ID）。
+notify_kook_chat_type: "1" # 可选参数，消息类型，"1" 表示私聊，"9" 表示频道聊天，默认为 "1"。
+
+# Webhook 通知配置
+# 支持发送截图，向指定URL发送HTTP POST请求推送通知
+notify_webhook_enable: false # 是否启用 Webhook 通知。true 开启，false 关闭。
+notify_webhook_url: "" # Webhook 接收地址，例如 http://localhost:8080/notify
 
 # 自定义通知配置
 # 支持发送截图

@@ -13,7 +13,9 @@ from module.notification.gocqhttp import GocqhttpNotifier
 from module.notification.wechatworkapp import WeChatworkappNotifier
 from module.notification.custom import CustomNotifier
 from module.notification.lark import LarkNotifier
-from module.notification.wechatworkbot import WeChatWorkBotNotifier  # 新添加的导入
+from module.notification.wechatworkbot import WeChatWorkBotNotifier
+from module.notification.kook import KOOKNotifier
+from module.notification.webhook import WebhookNotifier
 
 
 class NotifierFactory:
@@ -26,10 +28,12 @@ class NotifierFactory:
         "smtp": SMTPNotifier,
         "gocqhttp": GocqhttpNotifier,
         "wechatworkapp": WeChatworkappNotifier,
-        "wechatworkbot": WeChatWorkBotNotifier,  # 新添加的通知器
+        "wechatworkbot": WeChatWorkBotNotifier,
         "custom": CustomNotifier,
         "lark": LarkNotifier,
         "serverchan3": ServerChanNotifier,
+        "kook": KOOKNotifier,
+        "webhook": WebhookNotifier,
     }
 
     @staticmethod
