@@ -406,6 +406,8 @@ class MessageBoxNotify(MessageBox):
 
         font = QFont()
         font.setPointSize(10)
+        lineEditFont = QFont()
+        lineEditFont.setPointSize(9)
         self.textLayout.setSpacing(4)
 
         self.lineEdit_dict = {}
@@ -416,7 +418,8 @@ class MessageBoxNotify(MessageBox):
 
             lineEdit = LineEdit(self)
             lineEdit.setText(str(cfg.get_value(config)))
-            lineEdit.setFont(font)
+            lineEdit.setFont(lineEditFont)
+            lineEdit.setFixedHeight(22)
 
             self.textLayout.addWidget(lineEdit, 0, Qt.AlignTop)
             self.lineEdit_dict[config] = lineEdit
