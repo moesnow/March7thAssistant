@@ -514,11 +514,10 @@ class MessageBoxTeam(MessageBox):
             setup_completer(charComboBox, list(self.template.values()))
             horizontalLayout.addWidget(charComboBox)
 
-            techComboBox = EditableComboBox()
+            techComboBox = ComboBox()
             techComboBox.setMinimumWidth(130)
             techComboBox.addItems(self.tech_map.values())
             techComboBox.setCurrentText(self.tech_map[self.content[i - 1][1]])
-            setup_completer(techComboBox, list(self.tech_map.values()))
             horizontalLayout.addWidget(techComboBox)
 
             self.textLayout.addLayout(horizontalLayout)
@@ -537,7 +536,7 @@ class MessageBoxTeam(MessageBox):
         
         for i, (charComboBox, techComboBox) in enumerate(self.comboBox_list, 1):
             char_text = charComboBox.text()
-            tech_text = techComboBox.text()
+            tech_text = techComboBox.currentText()
             
             if char_text not in valid_chars:
                 InfoBar.error(
