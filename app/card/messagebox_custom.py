@@ -1,14 +1,26 @@
 from PyQt5.QtCore import Qt, QUrl, QSize
-from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushButton, QToolButton
+from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushButton, QToolButton, QCompleter
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard)
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition)
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
 import datetime
 import json
+
+
+def setup_completer(combo_box, items):
+    """
+    为 EditableComboBox 设置自动补全器
+    :param combo_box: EditableComboBox 实例
+    :param items: 选项列表
+    """
+    completer = QCompleter(items)
+    completer.setCaseSensitivity(Qt.CaseInsensitive)  # 设置大小写不敏感
+    completer.setFilterMode(Qt.MatchContains)  # 设置匹配模式为包含（支持部分匹配）
+    combo_box.setCompleter(completer)
 
 
 class SliderWithSpinBox(QHBoxLayout):
@@ -330,14 +342,19 @@ class MessageBoxInstance(MessageBox):
             comboBox = EditableComboBox()
 
             has_default = False
+            item_list = []
             for name, info in names.items():
                 item_name = f"{name}（{info}）"
                 comboBox.addItem(item_name)
+                item_list.append(item_name)
                 if self.content[type] == name:
                     comboBox.setCurrentText(item_name)
                     has_default = True
             if not has_default:
                 comboBox.setText(self.content[type])
+            
+            # 设置自动补全
+            setup_completer(comboBox, item_list)
 
             horizontalLayout.addWidget(comboBox)
             self.textLayout.addLayout(horizontalLayout)
@@ -346,6 +363,39 @@ class MessageBoxInstance(MessageBox):
         self.titleLabelInfo = QLabel("说明：未更新副本支持手动输入名称，清体力是根据选择的副本类型来判断的,\n此处设置的副本名称也会用于完成活动或每日实训对应的任务,\n如果即使有对应的任务,你也不希望完成,可以将对应的副本名称改为“无”", parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+
+    def validate_inputs(self):
+        """验证所有输入是否匹配可选项"""
+        for type, comboBox in self.comboBox_dict.items():
+            input_text = comboBox.text()
+            
+            # 构建有效选项列表（包含完整的"名称（信息）"格式）
+            valid_options = set()
+            for name, info in self.template[type].items():
+                valid_options.add(f"{name}（{info}）")
+                # 也允许只输入名称部分（向后兼容）
+                valid_options.add(name)
+            
+            # 检查输入是否匹配任一有效选项
+            if input_text not in valid_options:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'"{type}"的输入"{input_text}"不在可选项中，请重新选择',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+        
+        return True
+
+    def accept(self):
+        """重写accept方法以添加验证"""
+        if self.validate_inputs():
+            super().accept()
 
 
 class MessageBoxInstanceChallengeCount(MessageBox):
@@ -495,10 +545,11 @@ class MessageBoxTeam(MessageBox):
             titleLabel.setAlignment(Qt.AlignVCenter)
             horizontalLayout.addWidget(titleLabel)
 
-            charComboBox = ComboBox()
+            charComboBox = EditableComboBox()
             charComboBox.setMinimumWidth(130)
             charComboBox.addItems(self.template.values())
             charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
+            setup_completer(charComboBox, list(self.template.values()))
             horizontalLayout.addWidget(charComboBox)
 
             techComboBox = ComboBox()
@@ -514,6 +565,47 @@ class MessageBoxTeam(MessageBox):
         self.titleLabelInfo = QLabel("每个队伍只允许一名角色配置为“秘技 / 开怪”", parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+
+    def validate_inputs(self):
+        """验证所有输入是否匹配可选项"""
+        valid_chars = set(self.template.values())
+        valid_techs = set(self.tech_map.values())
+        
+        for i, (charComboBox, techComboBox) in enumerate(self.comboBox_list, 1):
+            char_text = charComboBox.text()
+            tech_text = techComboBox.currentText()
+            
+            if char_text not in valid_chars:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'第{i}号位角色"{char_text}"不在可选项中，请重新选择',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+            
+            if tech_text not in valid_techs:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'第{i}号位秘技"{tech_text}"不在可选项中，请重新选择',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+        
+        return True
+
+    def accept(self):
+        """重写accept方法以添加验证"""
+        if self.validate_inputs():
+            super().accept()
 
 
 class MessageBoxFriends(MessageBox):
@@ -537,10 +629,11 @@ class MessageBoxFriends(MessageBox):
         self.comboBox_list = []
         for i in range(1, 7):
 
-            charComboBox = ComboBox()
+            charComboBox = EditableComboBox()
             charComboBox.setMaximumWidth(150)
             charComboBox.addItems(self.template.values())
             charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
+            setup_completer(charComboBox, list(self.template.values()))
 
             nameLineEdit = LineEdit()
             nameLineEdit.setMaximumWidth(150)
@@ -555,3 +648,29 @@ class MessageBoxFriends(MessageBox):
 
         self.titleLabelInfo = QLabel("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n若好友名称留空则只查找选择的角色。", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+    def validate_inputs(self):
+        """验证所有输入是否匹配可选项"""
+        valid_chars = set(self.template.values())
+        
+        for i, (charComboBox, nameLineEdit) in enumerate(self.comboBox_list, 1):
+            char_text = charComboBox.text()
+            
+            if char_text not in valid_chars:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'第{i}个好友角色"{char_text}"不在可选项中，请重新选择',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+        
+        return True
+
+    def accept(self):
+        """重写accept方法以添加验证"""
+        if self.validate_inputs():
+            super().accept()
