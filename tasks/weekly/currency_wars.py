@@ -912,8 +912,12 @@ class CurrencyWars:
 
             money = self.check_money()
             if money >= 4:
-                auto.press_key("f")
-                time.sleep(1)
+                times = min(money // 4, 10)
+                log.info(f"连续购买经验 {times} 次")
+                for _ in range(times):
+                    auto.press_key("f")
+                    time.sleep(0.1)
+                time.sleep(2)
 
                 # 检查货币是否有变化
                 if previous_money is not None and money == previous_money:
