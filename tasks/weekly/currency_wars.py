@@ -1065,7 +1065,8 @@ class CurrencyWars:
                 pos = "all"
             money = auto.get_single_line_text(crop=char_money_crop)
             if not money or not money.isdigit():
-                raise ValueError("无法识别角色投资金额")
+                log.error(f"无法识别角色 {name} 的费用信息，默认为 1")
+                money = "1"
             log.info(f"识别到角色：{name}，站位：{self.pos_name_localization[pos]}，费用：{money}")
 
             # 创建角色对象并缓存
