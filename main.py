@@ -104,7 +104,7 @@ def run_sub_task_update(action):
 
 
 def run_notify_action():
-    notif.notify(cfg.notify_template['TestMessage'], "./assets/app/images/March7th.jpg", NotificationLevel.ALL)
+    notif.notify(content=cfg.notify_template['TestMessage'], image="./assets/app/images/March7th.jpg", level=NotificationLevel.ALL)
     input("按回车键关闭窗口. . .")
     sys.exit(0)
 
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         sys.exit(1)
     except Exception as e:
         log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
-        notif.notify(cfg.notify_template['ErrorOccurred'].format(error=e), level=NotificationLevel.ERROR)
+        notif.notify(content=cfg.notify_template['ErrorOccurred'].format(error=e), level=NotificationLevel.ERROR)
         if not cfg.exit_after_failure:
             input("按回车键关闭窗口. . .")
         sys.exit(1)

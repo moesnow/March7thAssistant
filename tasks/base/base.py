@@ -10,4 +10,4 @@ class Base:
         # 日志显示的同时推送消息
         log.info(message)
         screenshot, _, _ = auto.take_screenshot()
-        notif.notify(message, screenshot, level)
+        notif.notify(content=message, image=screenshot, level=level)
