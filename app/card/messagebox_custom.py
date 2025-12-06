@@ -495,13 +495,13 @@ class MessageBoxTeam(MessageBox):
             titleLabel.setAlignment(Qt.AlignVCenter)
             horizontalLayout.addWidget(titleLabel)
 
-            charComboBox = ComboBox()
+            charComboBox = EditableComboBox()
             charComboBox.setMinimumWidth(130)
             charComboBox.addItems(self.template.values())
             charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
             horizontalLayout.addWidget(charComboBox)
 
-            techComboBox = ComboBox()
+            techComboBox = EditableComboBox()
             techComboBox.setMinimumWidth(130)
             techComboBox.addItems(self.tech_map.values())
             techComboBox.setCurrentText(self.tech_map[self.content[i - 1][1]])
@@ -537,7 +537,7 @@ class MessageBoxFriends(MessageBox):
         self.comboBox_list = []
         for i in range(1, 7):
 
-            charComboBox = ComboBox()
+            charComboBox = EditableComboBox()
             charComboBox.setMaximumWidth(150)
             charComboBox.addItems(self.template.values())
             charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
