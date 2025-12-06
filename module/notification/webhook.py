@@ -50,10 +50,7 @@ class WebhookNotifier(Notifier):
                 response = requests.post(self.url, data=data, files=files)
             else:
                 # 只发送文本消息
-                headers = {
-                    'Content-Type': 'application/json'
-                }
-                response = requests.post(self.url, json=data, headers=headers)
+                response = requests.post(self.url, json=data)
             
             response.raise_for_status()  # 检查请求是否成功
             self.logger.info(f"Webhook 通知发送成功: {self.url}")
