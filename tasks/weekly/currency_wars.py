@@ -1165,8 +1165,10 @@ class CurrencyWars:
             # 大裁员：出售场上和备战席的所有角色
             # 人力重组：移除场上和备战席的所有角色
             # 节省工位：在接下来3个节点只有3个备战席位置
+            # 奋斗协议：购买经验值消耗7点小队生命值而非金币
+            black_list = ('深井角斗场', '佩佩客串', '钻石商人', '现金为王', '降本增效', '大裁员', '人力重组', '节省工位', '奋斗协议')
             for pos in button_positions:
-                if auto.find_element(('深井角斗场', '佩佩客串', '钻石商人', '现金为王', '降本增效', '大裁员', '人力重组', '节省工位'), 'text', crop=pos, include=True):
+                if auto.find_element(black_list, 'text', crop=pos, include=True):
                     log.debug(f"跳过{auto.matched_text}选项")
                     continue
                 if auto.click_element("./assets/images/screen/currency_wars/new.png", "image", 0.9, crop=pos):
@@ -1177,7 +1179,7 @@ class CurrencyWars:
 
             if not has_choose:
                 for pos in button_positions:
-                    if auto.find_element(('深井角斗场', '佩佩客串', '钻石商人', '现金为王', '降本增效', '大裁员', '人力重组', '节省工位'), 'text', crop=pos, include=True):
+                    if auto.find_element(black_list, 'text', crop=pos, include=True):
                         log.debug(f"跳过{auto.matched_text}选项")
                         continue
                     auto.click_element(button_positions_click[button_positions.index(pos)], 'crop')
