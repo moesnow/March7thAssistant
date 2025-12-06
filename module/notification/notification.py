@@ -45,7 +45,10 @@ class Notification(metaclass=SingletonMeta):
         设置通知级别过滤器。
 
         :param level: 通知级别，应为 NotificationLevel 中定义的常量。
+        :raises ValueError: 如果提供的级别不是有效的 NotificationLevel 常量。
         """
+        if level not in [NotificationLevel.ALL, NotificationLevel.ERROR]:
+            raise ValueError(f"无效的通知级别: {level}. 应为 'all' 或 'error'")
         self.level_filter = level
 
     def _process_image(self, image: Optional[io.BytesIO | str | Image.Image]) -> Optional[io.BytesIO]:
