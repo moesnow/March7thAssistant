@@ -16,6 +16,7 @@ from module.screen import screen
 from module.automation import auto
 from module.config import cfg
 from module.notification import notif
+from module.notification.notification import NotificationLevel
 from module.ocr import ocr
 from module.screen import screen
 
@@ -233,7 +234,7 @@ def after_finish_is_loop():
         future_time = Date.calculate_future_time(scheduled_time)
 
     log.info(cfg.notify_template['ContinueTime'].format(time=future_time))
-    notif.notify(cfg.notify_template['ContinueTime'].format(time=future_time))
+    notif.notify(content=cfg.notify_template['ContinueTime'].format(time=future_time), level=NotificationLevel.ALL)
     log.hr("完成", 2)
     # 等待状态退出OCR避免内存占用
     ocr.exit_ocr()
@@ -255,7 +256,7 @@ def notify_after_finish_not_loop():
     wait_time = get_wait_time(current_power)
     future_time = Date.calculate_future_time(wait_time)
     log.info(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))
-    notif.notify(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))
+    notif.notify(content=cfg.notify_template['FullTime'].format(power=current_power, time=future_time), level=NotificationLevel.ALL)
 
 
 def ensure_IME_lang_en():

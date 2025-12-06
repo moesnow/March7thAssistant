@@ -1,6 +1,7 @@
 from module.config import cfg
 from module.screen import screen
 from module.automation import auto
+from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from .rewardtemplate import RewardTemplate
 import time
@@ -20,6 +21,6 @@ class Quest(RewardTemplate):
         auto.find_element("./assets/images/screen/guide/guide2.png", "image", 0.9, max_retries=10)
         if auto.find_element("./assets/images/share/reward/quest/500.png", "image", 0.95, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
             cfg.set_value("daily_tasks", {})
-            Base.send_notification_with_screenshot(cfg.notify_template['DailyPracticeCompleted'])
+            Base.send_notification_with_screenshot(cfg.notify_template['DailyPracticeCompleted'], NotificationLevel.ALL)
         else:
-            Base.send_notification_with_screenshot(cfg.notify_template['DailyPracticeNotCompleted'])
+            Base.send_notification_with_screenshot(cfg.notify_template['DailyPracticeNotCompleted'], NotificationLevel.ERROR)

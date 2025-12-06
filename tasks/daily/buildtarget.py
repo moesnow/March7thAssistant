@@ -2,6 +2,7 @@ from module.screen import screen
 from module.automation import auto
 from module.logger import log
 from module.config import cfg
+from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 import json
 import time
@@ -52,9 +53,9 @@ class BuildTarget:
                 log.warning(f"目标副本识别错误，{instance} 不在任何已知副本列表中")
 
         if BuildTarget._target_instances:
-            Base.send_notification_with_screenshot(f"成功识别到培养目标，计划刷取: {', '.join(f'{k} - {v}' for k,v in BuildTarget._target_instances)}")
+            Base.send_notification_with_screenshot(f"成功识别到培养目标，计划刷取: {', '.join(f'{k} - {v}' for k,v in BuildTarget._target_instances)}", NotificationLevel.ALL)
         else:
-            Base.send_notification_with_screenshot("未能获取到培养目标，回退至默认的设置")
+            Base.send_notification_with_screenshot("未能获取到培养目标，回退至默认的设置", NotificationLevel.ALL)
 
     @staticmethod
     def _get_build_targets():

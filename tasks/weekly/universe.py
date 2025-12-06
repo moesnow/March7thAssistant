@@ -2,6 +2,7 @@ from module.screen import screen
 from module.config import cfg
 from module.logger import log
 from module.automation import auto
+from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from tasks.power.relicset import Relicset
 from tasks.base.pythonchecker import PythonChecker
@@ -221,7 +222,7 @@ class Universe:
         log.error("模拟宇宙失败")
         log_path = os.path.join(cfg.universe_path, "logs")
         log.error(f"模拟宇宙日志路径: {log_path}")
-        Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseNotCompleted'])
+        Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseNotCompleted'], NotificationLevel.ERROR)
         return False
 
     @staticmethod
@@ -242,13 +243,13 @@ class Universe:
         if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
             if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
                 if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
-                    Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'])
+                    Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'], NotificationLevel.ALL)
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
                     time.sleep(1)
                     auto.press_key("esc")
                     if category == "divergent" and cfg.universe_bonus_enable:
                         Universe.process_ornament()
-        Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseCompleted'])
+        Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseCompleted'], NotificationLevel.ALL)
 
     @staticmethod
     def process_ornament():

@@ -2,6 +2,7 @@ from tasks.base.fastest_mirror import FastestMirror
 from module.logger import log
 from module.config import cfg
 from module.notification import notif
+from module.notification.notification import NotificationLevel
 from packaging.version import parse
 import requests
 
@@ -31,7 +32,7 @@ def start():
                     break
 
             if assert_url is not None and parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
-                notif.notify(cfg.notify_template['NewVersion'].format(version=version))
+                notif.notify(content=cfg.notify_template['NewVersion'].format(version=version), level=NotificationLevel.ALL)
                 log.info(f"发现新版本：{cfg.version}  ——→  {version}")
                 log.info(data["html_url"])
             else:
