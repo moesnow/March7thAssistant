@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushBut
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard)
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition)
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
@@ -530,6 +530,47 @@ class MessageBoxTeam(MessageBox):
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
 
+    def validate_inputs(self):
+        """验证所有输入是否匹配可选项"""
+        valid_chars = set(self.template.values())
+        valid_techs = set(self.tech_map.values())
+        
+        for i, (charComboBox, techComboBox) in enumerate(self.comboBox_list, 1):
+            char_text = charComboBox.text()
+            tech_text = techComboBox.text()
+            
+            if char_text not in valid_chars:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'第{i}号位角色"{char_text}"不在可选项中，请重新选择',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+            
+            if tech_text not in valid_techs:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'第{i}号位秘技"{tech_text}"不在可选项中，请重新选择',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+        
+        return True
+
+    def accept(self):
+        """重写accept方法以添加验证"""
+        if self.validate_inputs():
+            super().accept()
+
+
 class MessageBoxFriends(MessageBox):
     def __init__(self, title: str, content: dict, template: dict, parent=None):
         super().__init__(title, "", parent)
@@ -570,3 +611,29 @@ class MessageBoxFriends(MessageBox):
 
         self.titleLabelInfo = QLabel("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n若好友名称留空则只查找选择的角色。", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+    def validate_inputs(self):
+        """验证所有输入是否匹配可选项"""
+        valid_chars = set(self.template.values())
+        
+        for i, (charComboBox, nameLineEdit) in enumerate(self.comboBox_list, 1):
+            char_text = charComboBox.text()
+            
+            if char_text not in valid_chars:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'第{i}个好友角色"{char_text}"不在可选项中，请重新选择',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+        
+        return True
+
+    def accept(self):
+        """重写accept方法以添加验证"""
+        if self.validate_inputs():
+            super().accept()
