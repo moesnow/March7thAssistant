@@ -15,6 +15,7 @@ from module.notification.custom import CustomNotifier
 from module.notification.lark import LarkNotifier
 from module.notification.wechatworkbot import WeChatWorkBotNotifier
 from module.notification.kook import KOOKNotifier
+from module.notification.webhook import WebhookNotifier
 
 
 class NotifierFactory:
@@ -32,6 +33,7 @@ class NotifierFactory:
         "lark": LarkNotifier,
         "serverchan3": ServerChanNotifier,
         "kook": KOOKNotifier,
+        "webhook": WebhookNotifier,
     }
 
     @staticmethod
