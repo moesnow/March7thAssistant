@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal
 import unicodedata
 from utils.singleton import SingletonMeta
@@ -14,8 +14,9 @@ class Logger(metaclass=SingletonMeta):
     日志管理类
     """
 
-    def __init__(self, level="INFO"):
+    def __init__(self, level="INFO", retention_days=30):
         self._level = level
+        self._retention_days = retention_days
         self._init_logger()
         self._initialized = True
 
@@ -23,6 +24,7 @@ class Logger(metaclass=SingletonMeta):
         """根据提供的日志级别初始化日志器及其配置。"""
         self._create_logger()
         self._create_logger_title()
+        self._cleanup_old_logs()
 
     def _current_datetime(self):
         """获取当前日期，格式为YYYY-MM-DD."""
@@ -70,6 +72,36 @@ class Logger(metaclass=SingletonMeta):
         """确保日志目录存在，不存在则创建."""
         if not os.path.exists("logs"):
             os.makedirs("logs")
+
+    def _cleanup_old_logs(self):
+        """清理超过保留天数的旧日志文件."""
+        try:
+            if not os.path.exists("logs"):
+                return
+            
+            current_time = datetime.now()
+            cutoff_time = current_time - timedelta(days=self._retention_days)
+            
+            for filename in os.listdir("logs"):
+                if not filename.endswith(".log"):
+                    continue
+                
+                file_path = os.path.join("logs", filename)
+                
+                # 获取文件修改时间
+                file_mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+                
+                # 如果文件修改时间早于截止时间，删除文件
+                if file_mtime < cutoff_time:
+                    try:
+                        os.remove(file_path)
+                        # 不在这里记录日志，因为logger可能还未完全初始化
+                    except Exception:
+                        # 静默处理删除失败的情况
+                        pass
+        except Exception:
+            # 静默处理清理过程中的任何错误，不影响程序正常运行
+            pass
 
     def info(self, message):
         """记录INFO级别的日志."""

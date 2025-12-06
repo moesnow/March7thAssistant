@@ -3,6 +3,7 @@ locales: zh_CN
 
 # 日志设置
 log_level: INFO # 日志等级，可选值：INFO, DEBUG。INFO 仅记录重要信息，DEBUG 记录详细调试信息。
+log_retention_days: 30 # 日志保留天数，超过此天数的日志文件将被自动删除。
 
 # 更新检查
 check_update: true # 是否检查更新。true 检查，false 不检查。
