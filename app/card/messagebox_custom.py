@@ -1,5 +1,5 @@
 from PyQt5.QtCore import Qt, QUrl, QSize
-from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushButton, QToolButton
+from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushButton, QToolButton, QCompleter
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
@@ -9,6 +9,18 @@ from typing import Optional
 from module.config import cfg
 import datetime
 import json
+
+
+def setup_completer(combo_box, items):
+    """
+    为 EditableComboBox 设置自动补全器
+    :param combo_box: EditableComboBox 实例
+    :param items: 选项列表
+    """
+    completer = QCompleter(items)
+    completer.setCaseSensitivity(Qt.CaseInsensitive)  # 设置大小写不敏感
+    completer.setFilterMode(Qt.MatchContains)  # 设置匹配模式为包含（支持部分匹配）
+    combo_box.setCompleter(completer)
 
 
 class SliderWithSpinBox(QHBoxLayout):
@@ -499,12 +511,14 @@ class MessageBoxTeam(MessageBox):
             charComboBox.setMinimumWidth(130)
             charComboBox.addItems(self.template.values())
             charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
+            setup_completer(charComboBox, list(self.template.values()))
             horizontalLayout.addWidget(charComboBox)
 
             techComboBox = EditableComboBox()
             techComboBox.setMinimumWidth(130)
             techComboBox.addItems(self.tech_map.values())
             techComboBox.setCurrentText(self.tech_map[self.content[i - 1][1]])
+            setup_completer(techComboBox, list(self.tech_map.values()))
             horizontalLayout.addWidget(techComboBox)
 
             self.textLayout.addLayout(horizontalLayout)
@@ -541,6 +555,7 @@ class MessageBoxFriends(MessageBox):
             charComboBox.setMaximumWidth(150)
             charComboBox.addItems(self.template.values())
             charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
+            setup_completer(charComboBox, list(self.template.values()))
 
             nameLineEdit = LineEdit()
             nameLineEdit.setMaximumWidth(150)
