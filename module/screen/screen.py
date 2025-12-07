@@ -190,7 +190,8 @@ class Screen(metaclass=SingletonMeta):
         self.logger.error("如果是云·星穹铁道：")
         self.logger.error("请确保网络正常，浏览器能正常加载游戏画面")
         # 保存错误截图
-        self.logger.save_error_screenshot()
+        from utils.screenshot_util import save_error_screenshot
+        save_error_screenshot(self.logger)
         raise Exception(error_message)
 
     def ensure_current_screen_is_clean(self):

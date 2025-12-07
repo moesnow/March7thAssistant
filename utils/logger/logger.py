@@ -72,13 +72,6 @@ class Logger(metaclass=SingletonMeta):
         """确保日志目录存在，不存在则创建."""
         if not os.path.exists("logs"):
             os.makedirs("logs")
-    
-    def _ensure_screenshot_directory_exists(self):
-        """确保截图目录存在，不存在则创建."""
-        screenshot_dir = os.path.join("logs", "screenshots")
-        if not os.path.exists(screenshot_dir):
-            os.makedirs(screenshot_dir)
-        return screenshot_dir
 
     def _cleanup_old_logs(self):
         """清理超过保留天数的旧日志文件."""
@@ -138,44 +131,6 @@ class Logger(metaclass=SingletonMeta):
     def critical(self, message):
         """记录CRITICAL级别的日志."""
         self.logger.critical(message)
-
-    def save_error_screenshot(self):
-        """
-        保存错误截图到日志目录。
-        尝试捕获当前游戏窗口的截图并保存为错误截图。
-        
-        :return: 截图保存路径，如果失败则返回None。
-        """
-        try:
-            # 延迟导入以避免循环依赖
-            from module.automation import auto
-            
-            # 确保截图目录存在
-            screenshot_dir = self._ensure_screenshot_directory_exists()
-            
-            # 生成带时间戳的文件名
-            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            filename = f"error_{timestamp}.png"
-            filepath = os.path.join(screenshot_dir, filename)
-            
-            # 尝试捕获截图
-            try:
-                auto.take_screenshot()
-                # 验证截图是否成功捕获
-                if auto.screenshot is not None:
-                    auto.screenshot.save(filepath)
-                    self.info(f"错误截图已保存: {filepath}")
-                    return filepath
-                else:
-                    self.debug("截图对象为空，无法保存")
-            except Exception as e:
-                self.debug(f"捕获游戏窗口截图失败: {e}")
-                
-        except Exception as e:
-            # 静默处理截图保存失败，不影响错误处理流程
-            self.debug(f"保存错误截图失败: {e}")
-        
-        return None
 
     def hr(self, title, level: Literal[0, 1, 2] = 0, write=True):
         """
