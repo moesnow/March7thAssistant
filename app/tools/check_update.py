@@ -44,17 +44,17 @@ class UpdateThread(QThread):
     def fetch_latest_release_info(self):
         """获取最新的发布信息。"""
         response = requests.get(
-            FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not cfg.update_prerelease_enable),
+            FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not (cfg.update_prerelease_enable and cfg.update_source == "GitHub")),
             timeout=10,
             headers=cfg.useragent
         )
         response.raise_for_status()
-        return response.json()[0] if cfg.update_prerelease_enable else response.json()
+        return response.json()[0] if (cfg.update_prerelease_enable and cfg.update_source == "GitHub") else response.json()
 
     def get_download_url_from_assets(self, assets):
         """从发布信息中获取下载URL。"""
         for asset in assets:
-            if (cfg.update_full_enable and "full" in asset["browser_download_url"]) or \
+            if ((cfg.update_full_enable or cfg.update_source == "MirrorChyan") and "full" in asset["browser_download_url"]) or \
                (not cfg.update_full_enable and "full" not in asset["browser_download_url"]):
                 return asset["browser_download_url"]
         return None
@@ -80,7 +80,7 @@ class UpdateThread(QThread):
             if assert_url is None:
                 self.updateSignal.emit(UpdateStatus.SUCCESS)
                 return
-            if not cfg.update_prerelease_enable and cfg.update_full_enable and cfg.update_source == "MirrorChyan":
+            if cfg.update_source == "MirrorChyan":
                 if cfg.mirrorchyan_cdk == "":
                     self.error_msg = "未设置 Mirror酱 CDK"
                     self.updateSignal.emit(UpdateStatus.FAILURE)
