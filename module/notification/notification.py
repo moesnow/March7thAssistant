@@ -71,35 +71,71 @@ class Notification(metaclass=SingletonMeta):
             raise ValueError(f"无效的通知级别: {level}. 可选值: {allowed[0]} 或 {allowed[1]}")
         self.level_filter = level
 
-    def _process_image(self, image: Optional[io.BytesIO | str | Image.Image]) -> Optional[io.BytesIO]:
+    def _process_image(self, image: Optional[io.BytesIO | str | Image.Image], max_size: tuple = (1920, 1080), quality: int = 85) -> Optional[io.BytesIO]:
         """
-        根据image的类型处理图片，以确保它是io.BytesIO对象。
+        根据image的类型处理图片，并进行压缩优化，确保它是io.BytesIO对象。
 
         :param image: 可以是io.BytesIO对象、文件路径字符串或PIL.Image对象，可选。
+        :param max_size: 图片最大尺寸(宽, 高)，默认1920x1080。
+        :param quality: JPEG压缩质量，范围1-95，默认85。
         :return: io.BytesIO对象或None（如果image为None或处理失败）。
         """
+        pil_image = None
+
+        # 第一步：将所有类型转换为PIL.Image对象
         if isinstance(image, str):
             try:
-                with open(image, 'rb') as file:
-                    return io.BytesIO(file.read())
+                pil_image = Image.open(image)
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"图片读取失败: {e}")
                 return None
         elif isinstance(image, io.BytesIO):
-            return image
-        elif isinstance(image, Image.Image):
-            # 将PIL.Image对象转换为io.BytesIO对象
-            img_byte_arr = io.BytesIO()
             try:
-                image.save(img_byte_arr, format=image.format or 'PNG')
-                img_byte_arr.seek(0)  # 将游标移动到起始以便读取
-                return img_byte_arr
+                image.seek(0)
+                pil_image = Image.open(image)
             except Exception as e:
-                if hasattr(self, 'logger'):
-                    self.logger.error(f"图片转换失败: {e}")
+                if self.logger:
+                    self.logger.error(f"图片解析失败: {e}")
                 return None
+        elif isinstance(image, Image.Image):
+            pil_image = image
         else:
+            return None
+
+        # 第二步：压缩处理
+        try:
+            # 转换为RGB模式（JPEG不支持透明通道）
+            if pil_image.mode in ('RGBA', 'LA', 'P'):
+                # 创建白色背景
+                background = Image.new('RGB', pil_image.size, (255, 255, 255))
+                if pil_image.mode == 'P':
+                    pil_image = pil_image.convert('RGBA')
+                background.paste(pil_image, mask=pil_image.split()[-1] if pil_image.mode in ('RGBA', 'LA') else None)
+                pil_image = background
+            elif pil_image.mode != 'RGB':
+                pil_image = pil_image.convert('RGB')
+
+            # 调整图片尺寸（如果超过最大尺寸）
+            if pil_image.width > max_size[0] or pil_image.height > max_size[1]:
+                pil_image.thumbnail(max_size, Image.Resampling.LANCZOS)
+                if self.logger:
+                    self.logger.info(f"图片已调整大小至: {pil_image.size}")
+
+            # 保存为压缩后的JPEG格式
+            img_byte_arr = io.BytesIO()
+            pil_image.save(img_byte_arr, format='JPEG', quality=quality, optimize=True)
+            img_byte_arr.seek(0)
+
+            # 记录压缩后的大小
+            compressed_size = img_byte_arr.getbuffer().nbytes
+            if self.logger:
+                self.logger.info(f"图片压缩完成，大小: {compressed_size / 1024:.2f} KB")
+
+            return img_byte_arr
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"图片压缩失败: {e}")
             return None
 
     def notify(self, content: str = "", image: Optional[io.BytesIO | str] = None, level: str = NotificationLevel.ALL):
