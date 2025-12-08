@@ -10,9 +10,13 @@ class RealmOfTheStrange(DoubleActivity):
         self.challenges_count = instance_names_challenge_count
 
     def _run_instances(self, reward_count):
-        instance_type = "侵蚀隧洞"
-        instance_name = self.instance_names[instance_type]
-        challenge_count = self.challenges_count[instance_type]
+        # 使用培养目标的副本配置（如果启用）
+        instance_type, instance_name = self.get_build_target_instance(
+            "侵蚀隧洞",
+            self.instance_names["侵蚀隧洞"]
+        )
+        
+        challenge_count = self.challenges_count["侵蚀隧洞"]
         instance_power_min = 40
         if (challenge_count >= 1 and challenge_count <= 6):
             instance_power_max = challenge_count * 40
