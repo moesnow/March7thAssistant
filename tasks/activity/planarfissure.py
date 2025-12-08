@@ -17,8 +17,11 @@ class PlanarFissure(DoubleActivity):
         if reward_count == 0:
             return True
 
-        instance_type = "饰品提取"
-        instance_name = self.instance_names[instance_type]
+        # 使用培养目标的副本配置（如果启用）
+        instance_type, instance_name = self.get_build_target_instance(
+            "饰品提取",
+            self.instance_names["饰品提取"]
+        )
 
         power = Power.get()
         full_runs = power // 40

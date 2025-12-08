@@ -3,11 +3,36 @@ import winreg
 import json
 import os
 
-# Specify the registry key path
-registry_key_path = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
-# Specify the value name
+# Registry key paths for different server regions
+registry_key_path_cn = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
+registry_key_path_oversea = r"SOFTWARE\Cognosphere\Star Rail"
+
+# Specify the value name (assumed to be the same for both CN and international servers)
+# International server players should verify these key names are correct
 resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
 graphics_value_name = "GraphicsSettings_Model_h2986158309"
+
+
+def get_registry_key_path() -> Optional[str]:
+    """
+    Detect and return the registry key path based on the installed game server.
+    
+    Returns:
+        The registry path for CN server if found, otherwise oversea server path, or None if neither exists.
+    """
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_cn):
+            return registry_key_path_cn
+    except FileNotFoundError:
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_oversea):
+                return registry_key_path_oversea
+        except FileNotFoundError:
+            return None
+
+
+# Detect the registry path at module load time
+registry_key_path = get_registry_key_path()
 
 
 def set_auto_battle_open_setting(value: bool) -> None:
@@ -33,26 +58,31 @@ def get_graphics_setting() -> Optional[bytes]:
 def get_game_path() -> Optional[str]:
     """
     获取游戏路径函数，尝试从注册表中读取指定键值并验证游戏可执行文件是否存在。
+    支持国服和国际服。
 
     Returns:
         Optional[str]: 如果找到有效的游戏路径，则返回完整路径，否则返回 None。
     """
-    # 注册表键路径和键值名称
-    registry_key_path = r"Software\miHoYo\HYP\1_1\hkrpg_cn"  # 游戏相关的注册表键路径
+    # 注册表键路径和键值名称（国服和国际服）
+    registry_paths = [
+        r"Software\miHoYo\HYP\1_1\hkrpg_cn",     # 国服路径
+        r"Software\Cognosphere\HYP\1_0\hkrpg_global"  # 国际服路径
+    ]
     registry_value_name = "GameInstallPath"  # 游戏安装路径的键值名称
 
-    # 从注册表中读取键值
-    install_path = read_registry_value(
-        winreg.HKEY_CURRENT_USER,  # 从当前用户的注册表路径中读取
-        registry_key_path,        # 注册表的具体路径
-        registry_value_name       # 需要读取的键值名称
-    )
+    # 尝试从不同的注册表路径中读取
+    for registry_path in registry_paths:
+        install_path = read_registry_value(
+            winreg.HKEY_CURRENT_USER,  # 从当前用户的注册表路径中读取
+            registry_path,             # 注册表的具体路径
+            registry_value_name        # 需要读取的键值名称
+        )
 
-    # 如果成功读取到路径，检查对应的游戏可执行文件是否存在
-    if install_path:
-        game_executable = os.path.join(install_path, "StarRail.exe")  # 构造完整的游戏可执行文件路径
-        if os.path.exists(game_executable):  # 验证文件路径是否存在
-            return game_executable  # 返回有效的游戏路径
+        # 如果成功读取到路径，检查对应的游戏可执行文件是否存在
+        if install_path:
+            game_executable = os.path.join(install_path, "StarRail.exe")  # 构造完整的游戏可执行文件路径
+            if os.path.exists(game_executable):  # 验证文件路径是否存在
+                return game_executable  # 返回有效的游戏路径
 
     # 如果路径无效或文件不存在，返回 None
     return None
@@ -154,6 +184,8 @@ def read_registry_value(key, sub_key, value_name):
     Returns:
         The content of the specified value in the registry.
     """
+    if sub_key is None:
+        raise Exception("Registry key path not found. Please ensure the game is installed.")
     try:
         # Open the specified registry key
         registry_key = winreg.OpenKey(key, sub_key)
@@ -180,6 +212,8 @@ def write_registry_value(key, sub_key, value_name, data, mode) -> None:
     - data: The data to be written to the registry.
     - mode: The type of data.
     """
+    if sub_key is None:
+        raise Exception("Registry key path not found. Please ensure the game is installed.")
     try:
         # Open or create the specified registry key
         registry_key = winreg.CreateKey(key, sub_key)

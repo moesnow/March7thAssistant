@@ -10,7 +10,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
+from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard
 from module.config import cfg
@@ -513,16 +513,10 @@ class SettingInterface(ScrollArea):
         #     FIF.REMOVE_FROM,
         #     self.tr("重试次数"),
         # )
-        self.forgottenhallTeam1Card = PushSettingCardTeam(
-            self.tr('修改'),
+        self.forgottenhallTeamsCard = PushSettingCardTeamWithSwap(
             FIF.FLAG,
-            self.tr("混沌回忆队伍1"),
-            "forgottenhall_team1"
-        )
-        self.forgottenhallTeam2Card = PushSettingCardTeam(
-            self.tr('修改'),
-            FIF.FLAG,
-            self.tr("混沌回忆队伍2"),
+            self.tr("混沌回忆队伍配置"),
+            "forgottenhall_team1",
             "forgottenhall_team2"
         )
         self.forgottenhallRunTimeCard = PushSettingCardDate(
@@ -545,16 +539,10 @@ class SettingInterface(ScrollArea):
             self.tr("关卡范围"),
             "purefiction_level"
         )
-        self.purefictionTeam1Card = PushSettingCardTeam(
-            self.tr('修改'),
+        self.purefictionTeamsCard = PushSettingCardTeamWithSwap(
             FIF.FLAG,
-            self.tr("虚构叙事队伍1"),
-            "purefiction_team1"
-        )
-        self.purefictionTeam2Card = PushSettingCardTeam(
-            self.tr('修改'),
-            FIF.FLAG,
-            self.tr("虚构叙事队伍2"),
+            self.tr("虚构叙事队伍配置"),
+            "purefiction_team1",
             "purefiction_team2"
         )
         self.purefictionRunTimeCard = PushSettingCardDate(
@@ -577,16 +565,10 @@ class SettingInterface(ScrollArea):
             self.tr("关卡范围"),
             "apocalyptic_level"
         )
-        self.ApocalypticTeam1Card = PushSettingCardTeam(
-            self.tr('修改'),
+        self.ApocalypticTeamsCard = PushSettingCardTeamWithSwap(
             FIF.FLAG,
-            self.tr("末日幻影队伍1"),
-            "apocalyptic_team1"
-        )
-        self.ApocalypticTeam2Card = PushSettingCardTeam(
-            self.tr('修改'),
-            FIF.FLAG,
-            self.tr("末日幻影队伍2"),
+            self.tr("末日幻影队伍配置"),
+            "apocalyptic_team1",
             "apocalyptic_team2"
         )
         self.ApocalypticRunTimeCard = PushSettingCardDate(
@@ -836,13 +818,13 @@ class SettingInterface(ScrollArea):
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
             FIF.FULL_SCREEN,
             self.tr('启用自动修改分辨率并关闭自动 HDR'),
-            "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（未测试国际服）",
+            "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）",
             "auto_set_resolution_enable"
         )
         self.autoSetGamePathEnableCard = SwitchSettingCard1(
             FIF.GAME,
             self.tr('启用自动配置游戏路径'),
-            "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（未测试国际服）",
+            "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）",
             "auto_set_game_path_enable"
         )
         self.allScreensCard = SwitchSettingCard1(
@@ -1008,20 +990,17 @@ class SettingInterface(ScrollArea):
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallEnableCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallLevelCard)
         # self.ForgottenhallGroup.addSettingCard(self.forgottenhallRetriesCard)
-        self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam1Card)
-        self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeam2Card)
+        self.ForgottenhallGroup.addSettingCard(self.forgottenhallTeamsCard)
         self.ForgottenhallGroup.addSettingCard(self.forgottenhallRunTimeCard)
 
         self.PureFictionGroup.addSettingCard(self.purefictionEnableCard)
         self.PureFictionGroup.addSettingCard(self.purefictionLevelCard)
-        self.PureFictionGroup.addSettingCard(self.purefictionTeam1Card)
-        self.PureFictionGroup.addSettingCard(self.purefictionTeam2Card)
+        self.PureFictionGroup.addSettingCard(self.purefictionTeamsCard)
         self.PureFictionGroup.addSettingCard(self.purefictionRunTimeCard)
 
         self.ApocalypticGroup.addSettingCard(self.ApocalypticEnableCard)
         self.ApocalypticGroup.addSettingCard(self.ApocalypticLevelCard)
-        self.ApocalypticGroup.addSettingCard(self.ApocalypticTeam1Card)
-        self.ApocalypticGroup.addSettingCard(self.ApocalypticTeam2Card)
+        self.ApocalypticGroup.addSettingCard(self.ApocalypticTeamsCard)
         self.ApocalypticGroup.addSettingCard(self.ApocalypticRunTimeCard)
 
         self.CloudGameGroup.addSettingCard(self.cloudGameEnableCard)
