@@ -332,11 +332,11 @@ class PushSettingCardTeamWithSwap(SettingCard):
         
         super().__init__(icon, title, self._get_display_text(), parent)
         
-        # Add swap button
-        self.swapButton = QPushButton(self.tr('交换队伍'), self)
-        self.hBoxLayout.addWidget(self.swapButton, 0, Qt.AlignRight)
+        # Add team1 modify button
+        self.team1Button = QPushButton(self.tr('修改队伍1'), self)
+        self.hBoxLayout.addWidget(self.team1Button, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(10)
-        self.swapButton.clicked.connect(self.__onSwapClicked)
+        self.team1Button.clicked.connect(self.__onTeam1Clicked)
         
         # Add team2 modify button
         self.team2Button = QPushButton(self.tr('修改队伍2'), self)
@@ -344,11 +344,11 @@ class PushSettingCardTeamWithSwap(SettingCard):
         self.hBoxLayout.addSpacing(10)
         self.team2Button.clicked.connect(self.__onTeam2Clicked)
         
-        # Add team1 modify button
-        self.team1Button = QPushButton(self.tr('修改队伍1'), self)
-        self.hBoxLayout.addWidget(self.team1Button, 0, Qt.AlignRight)
+        # Add swap button
+        self.swapButton = QPushButton(self.tr('交换队伍'), self)
+        self.hBoxLayout.addWidget(self.swapButton, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(16)
-        self.team1Button.clicked.connect(self.__onTeam1Clicked)
+        self.swapButton.clicked.connect(self.__onSwapClicked)
     
     def translate_to_chinese(self, configvalue):
         text = str(configvalue)
