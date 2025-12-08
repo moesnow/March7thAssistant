@@ -48,7 +48,8 @@ class ActivityTemplate(ABC):
         target_instances = BuildTarget.get_target_instances()
         
         for target_type, target_name in target_instances:
-            if target_type == default_type or (default_type in target_type):
+            # 精确匹配副本类型
+            if target_type == default_type:
                 log.info(f"活动使用培养目标副本: {target_type} - {target_name}")
                 return target_type, target_name
         
