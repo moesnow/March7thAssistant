@@ -371,9 +371,11 @@ class PushSettingCardTeamWithSwap(SettingCard):
         self.contentLabel.setText(self._get_display_text())
     
     def __onSwapClicked(self):
-        # Swap team1 and team2
-        cfg.set_value(self.configname_team1, self.team2_value)
-        cfg.set_value(self.configname_team2, self.team1_value)
+        # Swap team1 and team2 - use temporary variables to avoid overwriting
+        temp_team1 = self.team1_value
+        temp_team2 = self.team2_value
+        cfg.set_value(self.configname_team1, temp_team2)
+        cfg.set_value(self.configname_team2, temp_team1)
         self._update_display()
         
         InfoBar.success(
