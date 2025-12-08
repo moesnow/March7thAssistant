@@ -1,150 +1,296 @@
 from module.ocr import ocr
-import tkinter as tk
-from tkinter import messagebox
-from PIL import ImageTk, Image
+from PyQt5.QtWidgets import QMainWindow, QLabel, QPushButton, QHBoxLayout, QWidget, QMessageBox, QScrollArea, QApplication
+from PyQt5.QtCore import Qt, QRect, QPoint, QTimer
+from PyQt5.QtGui import QPixmap, QPainter, QPen, QImage, QColor
+from PIL import Image
 import pyperclip
 import pyautogui
 import os
 import atexit
 
 
-class ScreenshotApp:
-    def __init__(self, root, screenshot: Image.Image):
+class ScreenshotApp(QMainWindow):
+    def __init__(self, screenshot: Image.Image):
         """
         初始化应用界面和功能。
         参数:
-        - root: tkinter的根窗口。
         - screenshot: PIL Image对象，表示要显示的截图。
         """
-        self.setup_root(root, screenshot)
-        atexit.register(ocr.exit_ocr)
-        self.setup_canvas()
-        self.bind_canvas_events()
-        self.setup_buttons()
-        self.setup_selection_tools()
+        try:
+            from module.logger import log
+            log.info("ScreenshotApp.__init__ 开始")
+            super().__init__()
+            log.debug("QMainWindow 初始化完成")
+            self.screenshot = screenshot
+            log.debug(f"截图尺寸: {screenshot.size}")
+            atexit.register(ocr.exit_ocr)
 
-    def setup_root(self, root, screenshot: Image.Image):
+            # 初始化选择区域工具
+            self.selection_rect = None
+            self.start_x = None
+            self.start_y = None
+            self.current_x = None
+            self.current_y = None
+            self.is_drawing = False
+            self.need_maximize = False  # 是否需要最大化窗口
+
+            log.debug("开始设置 UI...")
+            self.setup_ui()
+            log.info("ScreenshotApp.__init__ 完成")
+        except Exception as e:
+            from module.logger import log
+            log.error(f"ScreenshotApp.__init__ 发生异常: {e}")
+            import traceback
+            log.error(traceback.format_exc())
+            raise
+
+    def setup_ui(self):
         """
-        配置根窗口的基本属性。
+        配置窗口和UI元素。
         """
-        self.root = root
-        self.root.title("游戏截图")
-        self.root.iconbitmap("./assets/logo/March7th.ico")
-        self.root.geometry(f"{screenshot.width}x{screenshot.height + 60}")
-        self.screenshot = screenshot
+        try:
+            from module.logger import log
+            log.info("setup_ui 开始")
+            self.setWindowTitle("游戏截图")
+            log.debug("设置窗口标题完成")
+            self.setWindowIcon(self.style().standardIcon(self.style().SP_DesktopIcon))
+            log.debug("设置窗口图标完成")
 
-        self.screen_resolution = pyautogui.size()
-        screen_width, screen_height = self.screen_resolution
-        if screen_width <= 1920 and screen_height <= 1080:
-            # 最大化窗口
-            self.root.state('zoomed')
-        # 设置窗口始终位于最前面
-        self.root.attributes("-topmost", 1)
+            # 获取屏幕的 DPI 缩放因子
+            screen = QApplication.primaryScreen()
+            self.dpi_scale = screen.devicePixelRatio() if screen else 1.0
+            log.debug(f"DPI 缩放因子: {self.dpi_scale}")
 
-        # 通过延时恢复原始状态（不再保持在最前面）
-        self.root.after(100, self.remove_topmost)
-        # 当窗口被用户关闭时，优先执行 OCR 清理，再销毁窗口
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+            # 转换PIL Image到QPixmap
+            log.debug("开始转换 PIL Image 到 QPixmap...")
+            img_data = self.screenshot.tobytes("raw", "RGB")
+            log.debug(f"图像数据长度: {len(img_data)}")
+            qimage = QImage(img_data, self.screenshot.width, self.screenshot.height,
+                            self.screenshot.width * 3, QImage.Format_RGB888)
+            log.debug(f"QImage 创建成功，尺寸: {qimage.width()}x{qimage.height()}")
+
+            # 计算逻辑尺寸（缩小后在高DPI下显示为原始大小）
+            self.logical_width = int(self.screenshot.width / self.dpi_scale)
+            self.logical_height = int(self.screenshot.height / self.dpi_scale)
+            log.debug(f"逻辑尺寸: {self.logical_width}x{self.logical_height}")
+
+            # 将图像缩放到逻辑尺寸
+            original_pixmap = QPixmap.fromImage(qimage)
+            self.pixmap = original_pixmap.scaled(
+                self.logical_width, self.logical_height,
+                Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+            log.debug(f"QPixmap 缩放后尺寸: {self.pixmap.width()}x{self.pixmap.height()}")
+        except Exception as e:
+            from module.logger import log
+            log.error(f"setup_ui 转换图像时发生异常: {e}")
+            import traceback
+            log.error(traceback.format_exc())
+            raise
+
+        # 创建中心部件和布局
+        try:
+            log.debug("创建中心部件和布局...")
+            central_widget = QWidget()
+            self.setCentralWidget(central_widget)
+
+            # 创建垂直布局
+            from PyQt5.QtWidgets import QVBoxLayout
+            main_layout = QVBoxLayout(central_widget)
+            main_layout.setContentsMargins(0, 0, 0, 0)
+            main_layout.setSpacing(0)
+            log.debug("布局创建完成")
+
+            # 创建滚动区域
+            log.debug("创建滚动区域...")
+            scroll_area = QScrollArea()
+            scroll_area.setWidgetResizable(False)  # 不自动调整大小
+            scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+            # 创建画布标签
+            log.debug("创建画布标签...")
+            self.canvas_label = QLabel()
+            self.canvas_label.setPixmap(self.pixmap)
+            self.canvas_label.setScaledContents(False)  # 不缩放内容
+            self.canvas_label.setMouseTracking(True)
+            self.canvas_label.mousePressEvent = self.on_mouse_press
+            self.canvas_label.mouseMoveEvent = self.on_mouse_move
+            self.canvas_label.mouseReleaseEvent = self.on_mouse_release
+
+            # 将标签放入滚动区域
+            scroll_area.setWidget(self.canvas_label)
+            main_layout.addWidget(scroll_area)
+            log.debug("画布标签创建完成")
+
+            # 创建按钮布局
+            log.debug("创建按钮...")
+            button_layout = QHBoxLayout()
+            button_layout.setContentsMargins(5, 5, 5, 5)
+            button_layout.setSpacing(5)
+
+            # 创建按钮
+            buttons_config = [
+                ("显示坐标", self.show_coordinate_result),
+                ("复制坐标到剪贴板", self.copy_coordinate_result_to_clipboard),
+                ("保存完整截图", self.save_full_screenshot),
+                ("保存选取截图", self.save_selection_screenshot),
+                ("OCR识别选取区域", self.show_ocr_selection)
+            ]
+
+            for text, slot in buttons_config:
+                btn = QPushButton(text)
+                btn.clicked.connect(slot)
+                button_layout.addWidget(btn)
+
+            button_layout.addStretch()
+            main_layout.addLayout(button_layout)
+            log.debug("按钮创建完成")
+
+            # 按钮区域高度
+            button_area_height = 40
+
+            # 设置窗口大小
+            log.debug("设置窗口大小和位置...")
+
+            # 获取可用屏幕区域（排除任务栏等）
+            screen = QApplication.primaryScreen()
+            available_geometry = screen.availableGeometry()
+            available_width = available_geometry.width()
+            available_height = available_geometry.height()
+            log.debug(f"可用屏幕区域: {available_width}x{available_height}")
+            log.debug(f"截图逻辑尺寸: {self.logical_width}x{self.logical_height}")
+
+            # 计算窗口所需的尺寸（包括边框等额外空间）
+            window_frame_width = 20  # 窗口边框宽度估计
+            window_frame_height = 40  # 窗口标题栏高度估计
+            needed_width = self.logical_width + window_frame_width
+            needed_height = self.logical_height + button_area_height + window_frame_height
+
+            # 判断截图是否能在屏幕内完整显示
+            if needed_width <= available_width and needed_height <= available_height:
+                # 截图不大，可以完整显示，调整窗口大小使截图刚好显示全
+                log.debug("截图可以完整显示，调整窗口大小")
+                # 额外增加一些像素避免滚动条出现
+                extra_padding = 4
+                window_width = self.logical_width + extra_padding
+                window_height = self.logical_height + button_area_height + extra_padding
+                # 计算居中位置
+                pos_x = (available_width - window_width) // 2
+                pos_y = (available_height - window_height) // 2
+                self.setGeometry(pos_x, pos_y, window_width, window_height)
+            else:
+                # 截图太大，使用最大化或设置为可用区域大小
+                log.info("截图太大，将窗口设置为最大化")
+                self.setGeometry(100, 100, self.logical_width, self.logical_height + button_area_height)
+                self.need_maximize = True  # 标记需要最大化，在外部调用
+
+            # 设置窗口置顶标志（不在这里显示窗口）
+            log.debug("设置窗口置顶标志...")
+            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+            # 使用定时器来移除置顶
+            QTimer.singleShot(100, self.remove_topmost)
+            log.info("setup_ui 完成")
+        except Exception as e:
+            log.error(f"setup_ui 创建UI时发生异常: {e}")
+            import traceback
+            log.error(traceback.format_exc())
+            raise
 
     def remove_topmost(self):
-        # 取消保持最前面状态
-        self.root.attributes("-topmost", 0)
+        """取消保持最前面状态"""
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+        self.show()
 
-    def setup_canvas(self):
+    def closeEvent(self, event):
         """
-        在根窗口中创建并配置画布用于显示截图。
-        """
-        self.canvas = tk.Canvas(self.root)
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-        self.photo = ImageTk.PhotoImage(master=self.root, image=self.screenshot)
-        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.photo)
-
-    def bind_canvas_events(self):
-        """
-        绑定画布事件，用于处理鼠标点击和拖动。
-        """
-        self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-        self.canvas.bind("<B1-Motion>", self.on_mouse_drag)
-
-    def setup_buttons(self):
-        """
-        在根窗口中创建操作按钮。
-        """
-        buttons = [
-            ("显示坐标", self.show_coordinate_result),
-            ("复制坐标到剪贴板", self.copy_coordinate_result_to_clipboard),
-            ("保存完整截图", self.save_full_screenshot),
-            ("保存选取截图", self.save_selection_screenshot),
-            ("OCR识别选取区域", self.show_ocr_selection)
-        ]
-        for text, command in buttons:
-            tk.Button(self.root, text=text, command=command).pack(side=tk.LEFT, padx=5, pady=5)
-
-    def setup_selection_tools(self):
-        """
-        初始化用于选取截图区域的工具。
-        """
-        self.selection_rect = None
-        self.start_x = None
-        self.start_y = None
-
-    def on_close(self):
-        """
-        在窗口关闭时调用：先尝试清理 OCR 相关资源，然后销毁窗口。
-        使用 try/except 以防清理函数抛出异常导致界面无法关闭。
+        在窗口关闭时调用：先尝试清理 OCR 相关资源。
         """
         try:
             ocr.exit_ocr()
         except Exception:
             pass
-        try:
-            # 先尝试正常退出主循环
-            self.root.destroy()
-        except Exception:
-            try:
-                self.root.quit()
-            except Exception:
-                pass
+        event.accept()
 
-    def on_button_press(self, event):
+    def on_mouse_press(self, event):
         """
         处理鼠标按下事件，记录开始选择的坐标。
-        参数:
-        - event: 鼠标事件，包含鼠标的位置。
         """
-        self.start_x = self.canvas.canvasx(event.x)
-        self.start_y = self.canvas.canvasy(event.y)
+        if event.button() == Qt.LeftButton:
+            self.start_x = event.x()
+            self.start_y = event.y()
+            self.current_x = event.x()
+            self.current_y = event.y()
+            self.is_drawing = True
 
-    def on_mouse_drag(self, event):
+    def on_mouse_move(self, event):
         """
-        处理鼠标拖动事件，用于绘制选择区域。
-        参数:
-        - event: 鼠标事件。
+        处理鼠标移动事件，用于绘制选择区域。
         """
-        cur_x = self.canvas.canvasx(event.x)
-        cur_y = self.canvas.canvasy(event.y)
+        if self.is_drawing:
+            self.current_x = event.x()
+            self.current_y = event.y()
+            self.update_canvas()
 
-        if self.selection_rect:
-            self.canvas.coords(self.selection_rect, self.start_x, self.start_y, cur_x, cur_y)
-        else:
-            self.selection_rect = self.canvas.create_rectangle(
-                self.start_x, self.start_y, cur_x, cur_y,
-                outline="#f18cb9", width=3
-            )
+    def on_mouse_release(self, event):
+        """
+        处理鼠标释放事件。
+        """
+        if event.button() == Qt.LeftButton:
+            self.is_drawing = False
+            self.current_x = event.x()
+            self.current_y = event.y()
+            self.update_canvas()
+
+    def update_canvas(self):
+        """
+        更新画布，重绘截图和选择框。
+        """
+        if self.start_x is not None and self.current_x is not None:
+            # 创建新的QPixmap并绘制
+            new_pixmap = self.pixmap.copy()
+            painter = QPainter(new_pixmap)
+
+            # 设置画笔 - 使用 QColor 创建自定义颜色
+            pen = QPen(QColor(0xf1, 0x8c, 0xb9))  # RGB格式
+            pen.setWidth(3)
+            painter.setPen(pen)
+
+            # 绘制矩形
+            x = min(self.start_x, self.current_x)
+            y = min(self.start_y, self.current_y)
+            width = abs(self.current_x - self.start_x)
+            height = abs(self.current_y - self.start_y)
+            painter.drawRect(x, y, width, height)
+
+            painter.end()
+            self.canvas_label.setPixmap(new_pixmap)
 
     def get_selection_info(self):
         """
-        获取当前选择区域的坐标和尺寸。
+        获取当前选择区域的坐标和尺寸（转换为原始截图的像素坐标）。
         返回:
-        - 选择区域的起始x, y坐标，以及宽度和高度。
+        - 选择区域的起始x, y坐标，以及宽度和高度（原始像素坐标）。
         """
-        if not self.selection_rect:
+        if self.start_x is None or self.current_x is None:
             return None
-        coords = self.canvas.coords(self.selection_rect)
-        start_x, start_y, end_x, end_y = coords
-        width = abs(end_x - start_x)
-        height = abs(end_y - start_y)
-        return start_x, start_y, width, height
+
+        # 逻辑坐标（缩放后的坐标）
+        logical_x = min(self.start_x, self.current_x)
+        logical_y = min(self.start_y, self.current_y)
+        logical_width = abs(self.current_x - self.start_x)
+        logical_height = abs(self.current_y - self.start_y)
+
+        if logical_width == 0 or logical_height == 0:
+            return None
+
+        # 转换为原始截图的像素坐标
+        x = int(logical_x * self.dpi_scale)
+        y = int(logical_y * self.dpi_scale)
+        width = int(logical_width * self.dpi_scale)
+        height = int(logical_height * self.dpi_scale)
+
+        return x, y, width, height
 
     def show_coordinate_result(self):
         """
@@ -154,9 +300,9 @@ class ScreenshotApp:
         if selection_info:
             x, y, width, height = selection_info
             result = f"X: {x}, Y: {y}, Width: {width}, Height: {height}"
-            messagebox.showinfo("结果", result)
+            QMessageBox.information(self, "结果", result)
         else:
-            messagebox.showinfo("结果", "还没有选择区域呢")
+            QMessageBox.information(self, "结果", "还没有选择区域呢")
 
     def copy_coordinate_result_to_clipboard(self):
         """
@@ -165,27 +311,29 @@ class ScreenshotApp:
         selection_info = self.get_selection_info()
         if selection_info:
             x, y, width, height = selection_info
-            text = f"crop=({x} / {self.screenshot.width}, {y} / {self.screenshot.height}, {width} / {self.screenshot.width}, {height} / {self.screenshot.height})"
+            text = f"({x} / {self.screenshot.width}, {y} / {self.screenshot.height}, {width} / {self.screenshot.width}, {height} / {self.screenshot.height})"
             pyperclip.copy(text)
-            messagebox.showinfo("结果", f"{text}\n复制到剪贴板成功")
+            QMessageBox.information(self, "结果", f"{text}\n复制到剪贴板成功")
         else:
-            messagebox.showinfo("结果", "还没有选择区域呢")
+            QMessageBox.information(self, "结果", "还没有选择区域呢")
 
     def save_full_screenshot(self):
         """
-        保存截图到本地文件夹。
+        保存截图到本地文件夹，文件名带时间戳。
         """
+        import datetime
         folder_path = "screenshots"
         os.makedirs(folder_path, exist_ok=True)
-        screenshot_path = os.path.join(os.path.abspath(folder_path), "screenshot.png")
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        screenshot_path = os.path.join(os.path.abspath(folder_path), f"screenshot_{timestamp}.png")
         self.screenshot.save(screenshot_path)
         os.startfile(os.path.dirname(screenshot_path))
-        # messagebox.showinfo("保存截图", f"截图已保存至: {screenshot_path}")
 
     def save_selection_screenshot(self):
         """
-        保存用户选择区域的截图到本地文件夹。
+        保存用户选择区域的截图到本地文件夹，文件名带时间戳。
         """
+        import datetime
         selection_info = self.get_selection_info()
         if selection_info:
             x, y, width, height = selection_info
@@ -194,12 +342,12 @@ class ScreenshotApp:
             folder_path = "screenshots"
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
-            screenshot_path = os.path.join(os.path.abspath(folder_path), "selection.png")
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            screenshot_path = os.path.join(os.path.abspath(folder_path), f"selection_{timestamp}.png")
             cropped_image.save(screenshot_path)
             os.startfile(os.path.dirname(screenshot_path))
-            # messagebox.showinfo("保存选区截图", f"选区截图已保存至: {screenshot_path}")
         else:
-            messagebox.showinfo("保存选区截图", "还没有选择区域呢")
+            QMessageBox.information(self, "保存选区截图", "还没有选择区域呢")
 
     def format_ocr_result(self, result):
         """
@@ -229,8 +377,8 @@ class ScreenshotApp:
                 # 如果识别出结果，处理并显示结果
                 text = self.format_ocr_result(result)  # 格式化OCR识别的结果
                 pyperclip.copy(text)  # 将结果复制到剪贴板
-                messagebox.showinfo("OCR识别结果", f"{text}\n\n复制到剪贴板成功")
+                QMessageBox.information(self, "OCR识别结果", f"{text}\n\n复制到剪贴板成功")
             else:
-                messagebox.showinfo("OCR识别结果", "没有识别出任何内容")
+                QMessageBox.information(self, "OCR识别结果", "没有识别出任何内容")
         else:
-            messagebox.showinfo("OCR识别结果", "还没有选择区域呢")
+            QMessageBox.information(self, "OCR识别结果", "还没有选择区域呢")

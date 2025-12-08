@@ -129,9 +129,6 @@ def main(action=None):
     elif action in ["universe_update", "fight_update"]:
         run_sub_task_update(action)
 
-    elif action in ["screenshot", "plot"]:
-        tool.start(action)
-
     elif action == "game":
         game.start()
 
