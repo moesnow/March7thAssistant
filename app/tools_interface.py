@@ -40,7 +40,7 @@ class ToolsInterface(ScrollArea):
             self.tr('解锁'),
             FIF.SPEED_HIGH,
             self.tr("解锁帧率"),
-            self.tr("通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（未测试国际服）（不支持云·星穹铁道）")
+            self.tr("通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）（不支持云·星穹铁道）")
         )
         self.redemptionCodeCard = PushSettingCardCode(
             self.tr('执行'),

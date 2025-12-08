@@ -830,13 +830,13 @@ class SettingInterface(ScrollArea):
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
             FIF.FULL_SCREEN,
             self.tr('启用自动修改分辨率并关闭自动 HDR'),
-            "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（未测试国际服）",
+            "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）",
             "auto_set_resolution_enable"
         )
         self.autoSetGamePathEnableCard = SwitchSettingCard1(
             FIF.GAME,
             self.tr('启用自动配置游戏路径'),
-            "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（未测试国际服）",
+            "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）",
             "auto_set_game_path_enable"
         )
         self.allScreensCard = SwitchSettingCard1(
