@@ -7,7 +7,8 @@ import os
 registry_key_path_cn = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
 registry_key_path_oversea = r"SOFTWARE\Cognosphere\Star Rail"
 
-# Specify the value name
+# Specify the value name (assumed to be the same for both CN and international servers)
+# International server players should verify these key names are correct
 resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
 graphics_value_name = "GraphicsSettings_Model_h2986158309"
 
