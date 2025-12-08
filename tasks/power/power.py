@@ -11,7 +11,6 @@ import time
 class Power:
     @staticmethod
     def run():
-        Power.heal_teams()
         Power.preprocess()
 
         instance_type = cfg.instance_type
@@ -233,28 +232,3 @@ class Power:
                 if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
                     time.sleep(1)
                     auto.press_key("esc")
-
-    @staticmethod
-    def _detect_space_anchor():
-        threshold = 3000000
-        if auto.click_element("./assets/images/share/power/space_anchor/SpaceAnchor1.png", "image", threshold, action="click", max_retries=2):
-            if auto.click_element("传送", "text", max_retries=10, need_ocr=True):
-                return True
-        if auto.click_element("./assets/images/share/power/space_anchor/SpaceAnchor2.png", "image", threshold, action="click", max_retries=2):
-            if auto.click_element("传送", "text", max_retries=10, need_ocr=True):
-                return True
-        return False
-    
-    @staticmethod
-    def heal_teams():
-        log.hr("正在寻找传送锚点", 2)
-        screen.change_to("map") # 此处如果出现异常无返回值，不知道会有什么问题
-        if not Power._detect_space_anchor():
-            # 一般情况下只有在星穹列车内才会找不到传送锚点，此时传送至模拟宇宙再试
-            # 不使用差分宇宙是避免部分小号没有开差分宇宙的锚点
-            log.info("未找到传送锚点，传送至模拟宇宙再试")
-            screen.change_to('universe_main')
-            # screen.change_to('divergent_main')
-            screen.change_to("map")
-            Power._detect_space_anchor()
-            return

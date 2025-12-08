@@ -37,6 +37,9 @@ class Instance:
             if cfg.instance_team_enable and "饰品提取" not in instance_type:
                 Team.change_to(cfg.instance_team_number)
 
+            if cfg.tp_before_instance:
+                Instance.heal_teams()
+
         if not Instance.prepare_instance(instance_type, instance_name):
             return False
 
@@ -370,3 +373,28 @@ class Instance:
         if instance_type in cfg.instance_names:
             return cfg.instance_names[instance_type]
         return "默认副本"  # 如果找不到，返回默认值
+
+    @staticmethod
+    def _detect_space_anchor():
+        threshold = 3000000
+        if auto.click_element("./assets/images/share/power/space_anchor/SpaceAnchor1.png", "image", threshold, action="click", max_retries=2):
+            if auto.click_element("传送", "text", max_retries=10, need_ocr=True):
+                return True
+        if auto.click_element("./assets/images/share/power/space_anchor/SpaceAnchor2.png", "image", threshold, action="click", max_retries=2):
+            if auto.click_element("传送", "text", max_retries=10, need_ocr=True):
+                return True
+        return False
+
+    @staticmethod
+    def heal_teams():
+        log.hr("正在寻找传送锚点", 2)
+        screen.change_to("map")  # 此处如果出现异常无返回值，不知道会有什么问题
+        if not Instance._detect_space_anchor():
+            # 一般情况下只有在星穹列车内才会找不到传送锚点，此时传送至模拟宇宙再试
+            # 不使用差分宇宙是避免部分小号没有开差分宇宙的锚点
+            log.info("未找到传送锚点，传送至模拟宇宙再试")
+            screen.change_to('universe_main')
+            # screen.change_to('divergent_main')
+            screen.change_to("map")
+            Instance._detect_space_anchor()
+            return

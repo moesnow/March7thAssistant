@@ -77,7 +77,7 @@ instance_names_challenge_count:
   侵蚀隧洞: 6
   饰品提取: 6
   历战余响: 3 # 配置各副本类型的连续挑战次数。
-max_calyx_per_round_num_of_attempts: 6 # 设置每轮拟造花萼挑战次数。
+tp_before_instance: false # 是否在进入副本前进行传送至任意锚点。true 传送，false 不传送。
 
 # 培养目标设置
 build_target_enable: false # 是否启用培养目标。

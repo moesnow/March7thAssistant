@@ -109,6 +109,12 @@ class SettingInterface(ScrollArea):
         #     self.tr("每轮拟造花萼挑战次数"),
         #     '',
         # )
+        self.tpBeforeInstanceEnableCard = SwitchSettingCard1(
+            FIF.LEAF,
+            self.tr('清体力前传送至任意锚点'),
+            "",
+            "tp_before_instance"
+        )
         self.buildTargetEnableCard = SwitchSettingCard1(
             FIF.LEAF,
             self.tr('启用培养目标'),
@@ -144,8 +150,8 @@ class SettingInterface(ScrollArea):
         # )
         self.mergeImmersifierEnableCard = SwitchSettingCardImmersifier(
             FIF.BASKETBALL,
-            self.tr('优先合成沉浸器'),
-            "达到指定上限后停止，可搭配每天一定次数的模拟宇宙实现循环",
+            self.tr('体力优先合成沉浸器'),
+            "达到指定上限后停止",
             "merge_immersifier"
         )
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
@@ -753,7 +759,6 @@ class SettingInterface(ScrollArea):
             "power_limit",
             [10, 300],
             FIF.HEART,
-            # self.tr("循环运行再次启动所需开拓力（游戏刷新后优先级更高）"),
             self.tr("循环运行再次启动所需开拓力"),
             self.tr("游戏刷新后优先级更高"),
         )
@@ -922,6 +927,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.instanceNameChallengeCountCard)
         # self.PowerGroup.addSettingCard(self.maxCalyxPerRoundNumOfAttempts)
+        self.PowerGroup.addSettingCard(self.tpBeforeInstanceEnableCard)
         self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
         self.PowerGroup.addSettingCard(self.buildTargetPlanarOrnamentWeeklyCountCard)
         self.PowerGroup.addSettingCard(self.breakDownLevelFourRelicsetEnableCard)
