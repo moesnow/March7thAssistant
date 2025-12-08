@@ -1,8 +1,5 @@
 from tasks.power.power import Power
 from tasks.power.instance import Instance
-from tasks.daily.buildtarget import BuildTarget
-from module.config import cfg
-from module.logger import log
 from .doubleactivity import DoubleActivity
 
 
@@ -14,20 +11,13 @@ class GardenOfPlenty(DoubleActivity):
         self.challenges_count = instance_names_challenge_count
 
     def _run_instances(self, reward_count):
-        # 优先使用培养目标的副本配置
-        instance_type = self.instance_type
-        instance_name = self.instance_names[instance_type]
+        # 使用培养目标的副本配置（如果启用）
+        instance_type, instance_name = self.get_build_target_instance(
+            self.instance_type, 
+            self.instance_names[self.instance_type]
+        )
         
-        if cfg.build_target_enable:
-            # 只有拟造花萼类型的活动才尝试使用培养目标
-            target_instances = BuildTarget.get_target_instances()
-            for target_type, target_name in target_instances:
-                if "拟造花萼" in target_type and target_type == instance_type:
-                    instance_name = target_name
-                    log.info(f"花藏繁生使用培养目标副本: {target_type} - {target_name}")
-                    break
-        
-        challenge_count = self.challenges_count[instance_type]
+        challenge_count = self.challenges_count[self.instance_type]
         instance_power_min = 10
         if (challenge_count >= 1 and challenge_count <= 6):
             instance_power_max = challenge_count * 10
