@@ -13,6 +13,14 @@ import re
 from ..tools.check_update import checkUpdate
 
 
+def get_key_from_value(val, map):
+    """Helper function to get key from value in a dictionary"""
+    for key, value in map.items():
+        if value == val:
+            return key
+    return None
+
+
 class PushSettingCard(SettingCard):
     clicked = pyqtSignal()
 
@@ -270,18 +278,12 @@ class PushSettingCardTeam(PushSettingCard):
         return text
 
     def __onclicked(self):
-        def get_key(val, map):
-            for key, value in map.items():
-                if value == val:
-                    return key
-            return None
-
         message_box = MessageBoxTeam(self.title, self.configvalue, self.template, self.window())
         if message_box.exec():
             self.newConfigValue = []
             for comboboxs in message_box.comboBox_list:
-                char = get_key(comboboxs[0].text(), message_box.template)
-                tech = get_key(comboboxs[1].text(), message_box.tech_map)
+                char = get_key_from_value(comboboxs[0].text(), message_box.template)
+                tech = get_key_from_value(comboboxs[1].text(), message_box.tech_map)
                 self.newConfigValue.append([char, tech])
             self.configvalue = self.newConfigValue
             cfg.set_value(self.configname, self.newConfigValue)
@@ -304,18 +306,12 @@ class PushSettingCardFriends(PushSettingCard):
         return text
 
     def __onclicked(self):
-        def get_key(val, map):
-            for key, value in map.items():
-                if value == val:
-                    return key
-            return None
-
         message_box = MessageBoxFriends(self.title, self.configvalue, self.template, self.window())
         if message_box.exec():
             self.newConfigValue = []
             for comboboxs in message_box.comboBox_list:
-                char = get_key(comboboxs[0].text(), message_box.template)
-                # tech = get_key(comboboxs[1].text(), message_box.tech_map)
+                char = get_key_from_value(comboboxs[0].text(), message_box.template)
+                # tech = get_key_from_value(comboboxs[1].text(), message_box.tech_map)
                 name = comboboxs[1].text()
                 self.newConfigValue.append([char, name])
             self.configvalue = self.newConfigValue
@@ -371,9 +367,9 @@ class PushSettingCardTeamWithSwap(SettingCard):
         self.contentLabel.setText(self._get_display_text())
     
     def __onSwapClicked(self):
-        # Swap team1 and team2 - use temporary variables to avoid overwriting
-        temp_team1 = self.team1_value
-        temp_team2 = self.team2_value
+        # Swap team1 and team2 - get fresh values from config to avoid stale data
+        temp_team1 = cfg.get_value(self.configname_team1)
+        temp_team2 = cfg.get_value(self.configname_team2)
         cfg.set_value(self.configname_team1, temp_team2)
         cfg.set_value(self.configname_team2, temp_team1)
         self._update_display()
@@ -395,19 +391,13 @@ class PushSettingCardTeamWithSwap(SettingCard):
         self._edit_team(self.configname_team2, "队伍2")
     
     def _edit_team(self, configname, team_name):
-        def get_key(val, map):
-            for key, value in map.items():
-                if value == val:
-                    return key
-            return None
-        
         configvalue = cfg.get_value(configname)
         message_box = MessageBoxTeam(team_name, configvalue, self.template, self.window())
         if message_box.exec():
             newConfigValue = []
             for comboboxs in message_box.comboBox_list:
-                char = get_key(comboboxs[0].text(), message_box.template)
-                tech = get_key(comboboxs[1].text(), message_box.tech_map)
+                char = get_key_from_value(comboboxs[0].text(), message_box.template)
+                tech = get_key_from_value(comboboxs[1].text(), message_box.tech_map)
                 newConfigValue.append([char, tech])
             cfg.set_value(configname, newConfigValue)
             self._update_display()
