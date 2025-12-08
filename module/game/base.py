@@ -8,6 +8,20 @@ from typing import Literal, Tuple, Optional
 from utils.logger.logger import Logger
 
 
+# Set process as DPI-aware to get actual pixel dimensions instead of scaled values
+# This needs to be called once before any window operations
+try:
+    # Try to set DPI awareness (Windows 8.1+)
+    ctypes.windll.shcore.SetProcessDpiAwareness(1)
+except Exception:
+    try:
+        # Fallback for older Windows versions
+        ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        # If both fail, continue without DPI awareness
+        pass
+
+
 class GameControllerBase:
     def __init__(self, script_path: Optional[str] = None, logger: Optional[Logger] = None) -> None:
         self.script_path = os.path.normpath(script_path) if script_path and isinstance(script_path, (str, bytes, os.PathLike)) else None
