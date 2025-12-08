@@ -10,15 +10,17 @@ from utils.logger.logger import Logger
 
 # Set process as DPI-aware to get actual pixel dimensions instead of scaled values
 # This needs to be called once before any window operations
+# PROCESS_PER_MONITOR_DPI_AWARE = 1 (Windows 8.1+)
+PROCESS_PER_MONITOR_DPI_AWARE = 1
 try:
     # Try to set DPI awareness (Windows 8.1+)
-    ctypes.windll.shcore.SetProcessDpiAwareness(1)
-except Exception:
+    ctypes.windll.shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
+except (OSError, AttributeError):
     try:
         # Fallback for older Windows versions
         ctypes.windll.user32.SetProcessDPIAware()
-    except Exception:
-        # If both fail, continue without DPI awareness
+    except (OSError, AttributeError):
+        # If both fail, continue without DPI awareness (likely not on Windows)
         pass
 
 
