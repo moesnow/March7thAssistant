@@ -12,6 +12,7 @@ from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends
 from .card.timepickersettingcard1 import TimePickerSettingCard1
+from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard
 from module.config import cfg
 from module.notification import notif
 from tasks.base.tasks import start_task
@@ -115,11 +116,11 @@ class SettingInterface(ScrollArea):
             "",
             "tp_before_instance"
         )
-        self.buildTargetEnableCard = SwitchSettingCard1(
+        self.buildTargetEnableCard = ExpandableSwitchSettingCard(
+            "build_target_enable",
             FIF.LEAF,
             self.tr('启用培养目标'),
-            "根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置",
-            "build_target_enable"
+            "根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置"
         )
         self.buildTargetPlanarOrnamentWeeklyCountCard = RangeSettingCard1(
             "build_target_ornament_weekly_count",
@@ -166,11 +167,11 @@ class SettingInterface(ScrollArea):
             "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”",
             "use_fuel"
         )
-        self.echoofwarEnableCard = SwitchSettingCardEchoofwar(
+        self.echoofwarEnableCard = ExpandableSwitchSettingCard(
+            "echo_of_war_enable",
             FIF.MEGAPHONE,
             self.tr('启用历战余响'),
-            "每周体力优先完成三次「历战余响」，支持配置从周几后开始执行，仅限完整运行生效",
-            "echo_of_war_enable"
+            "每周体力优先完成三次「历战余响」，支持配置从周几后开始执行，仅限完整运行生效"
         )
         self.echoofwarRunTimeCard = PushSettingCardDate(
             self.tr('修改'),
@@ -187,11 +188,11 @@ class SettingInterface(ScrollArea):
         # )
 
         self.BorrowGroup = SettingCardGroup(self.tr("支援设置"), self.scrollWidget)
-        self.borrowEnableCard = SwitchSettingCard1(
+        self.borrowEnableCard = ExpandableSwitchSettingCard(
+            "borrow_enable",
             FIF.PIN,
             self.tr('启用使用支援角色'),
-            '',
-            "borrow_enable"
+            ''
         )
         self.borrowCharacterEnableCard = SwitchSettingCard1(
             FIF.UNPIN,
@@ -250,11 +251,11 @@ class SettingInterface(ScrollArea):
             None,
             "reward_assist_enable"
         )
-        self.dailyEnableCard = SwitchSettingCard1(
+        self.dailyEnableCard = ExpandableSwitchSettingCard(
+            "daily_enable",
             FIF.CALENDAR,
             self.tr('启用每日实训'),
-            "",
-            "daily_enable"
+            ""
         )
         self.dailyMaterialEnableCard = SwitchSettingCard1(
             FIF.CHECKBOX,
@@ -288,11 +289,11 @@ class SettingInterface(ScrollArea):
         )
 
         self.ActivityGroup = SettingCardGroup(self.tr("活动设置"), self.scrollWidget)
-        self.activityEnableCard = SwitchSettingCard1(
+        self.activityEnableCard = ExpandableSwitchSettingCard(
+            "activity_enable",
             FIF.CERTIFICATE,
             self.tr('启用活动检测'),
-            None,
-            "activity_enable"
+            None
         )
         self.activityDailyCheckInEnableCard = SwitchSettingCard1(
             FIF.COMPLETED,
@@ -929,7 +930,10 @@ class SettingInterface(ScrollArea):
         # self.PowerGroup.addSettingCard(self.maxCalyxPerRoundNumOfAttempts)
         self.PowerGroup.addSettingCard(self.tpBeforeInstanceEnableCard)
         self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
-        self.PowerGroup.addSettingCard(self.buildTargetPlanarOrnamentWeeklyCountCard)
+        self.buildTargetEnableCard.addSettingCards([
+            self.buildTargetPlanarOrnamentWeeklyCountCard
+        ])
+        # self.PowerGroup.addSettingCard(self.buildTargetPlanarOrnamentWeeklyCountCard)
         self.PowerGroup.addSettingCard(self.breakDownLevelFourRelicsetEnableCard)
         self.PowerGroup.addSettingCard(self.instanceTeamEnableCard)
         # self.PowerGroup.addSettingCard(self.instanceTeamNumberCard)
@@ -937,13 +941,18 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.useReservedTrailblazePowerEnableCard)
         self.PowerGroup.addSettingCard(self.useFuelEnableCard)
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
-        self.PowerGroup.addSettingCard(self.echoofwarRunTimeCard)
+        self.echoofwarEnableCard.addSettingCards([
+            self.echoofwarRunTimeCard
+        ])
         # self.PowerGroup.addSettingCard(self.echoofwarStartDayOfWeekCard)
 
         self.BorrowGroup.addSettingCard(self.borrowEnableCard)
-        self.BorrowGroup.addSettingCard(self.borrowCharacterEnableCard)
-        self.BorrowGroup.addSettingCard(self.borrowFriendsCard)
-        self.BorrowGroup.addSettingCard(self.borrowScrollTimesCard)
+        # 将子卡片添加到 borrowEnableCard 的可展开区域
+        self.borrowEnableCard.addSettingCards([
+            self.borrowCharacterEnableCard,
+            self.borrowFriendsCard,
+            self.borrowScrollTimesCard
+        ])
         # self.BorrowGroup.addSettingCard(self.borrowCharacterFromCard)
         # self.BorrowGroup.addSettingCard(self.borrowCharacterInfoCard)
         # self.BorrowGroup.addSettingCard(self.borrowCharacterCard)
@@ -952,17 +961,21 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.mailEnableCard)
         self.DailyGroup.addSettingCard(self.assistEnableCard)
         self.DailyGroup.addSettingCard(self.dailyEnableCard)
-        self.DailyGroup.addSettingCard(self.dailyMaterialEnableCard)
-        self.DailyGroup.addSettingCard(self.dailyHimekoTryEnableCard)
-        self.DailyGroup.addSettingCard(self.dailyMemoryOneEnableCard)
-        self.DailyGroup.addSettingCard(self.dailyMemoryOneTeamCard)
-        self.DailyGroup.addSettingCard(self.lastRunTimeCard)
+        self.dailyEnableCard.addSettingCards([
+            self.dailyMaterialEnableCard,
+            self.dailyHimekoTryEnableCard,
+            self.dailyMemoryOneEnableCard,
+            self.dailyMemoryOneTeamCard,
+            self.lastRunTimeCard
+        ])
 
         self.ActivityGroup.addSettingCard(self.activityEnableCard)
-        self.ActivityGroup.addSettingCard(self.activityDailyCheckInEnableCard)
-        self.ActivityGroup.addSettingCard(self.activityGardenOfPlentyEnableCard)
-        self.ActivityGroup.addSettingCard(self.activityRealmOfTheStrangeEnableCard)
-        self.ActivityGroup.addSettingCard(self.activityPlanarFissureEnableCard)
+        self.activityEnableCard.addSettingCards([
+            self.activityDailyCheckInEnableCard,
+            self.activityGardenOfPlentyEnableCard,
+            self.activityRealmOfTheStrangeEnableCard,
+            self.activityPlanarFissureEnableCard
+        ])
 
         self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
@@ -1106,6 +1119,13 @@ class SettingInterface(ScrollArea):
 
         self.aboutCard.clicked.connect(lambda: checkUpdate(self.parent))
 
+        # 连接可展开卡片的展开状态改变信号，在动画前调整 stackedWidget 高度
+        self.borrowEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.buildTargetEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.echoofwarEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.dailyEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.activityEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+
     def addSubInterface(self, widget: QLabel, objectName, text):
         def remove_spacing(layout):
             for i in range(layout.count()):
@@ -1165,3 +1185,21 @@ class SettingInterface(ScrollArea):
             return
         cfg.set_value("script_path", script_path)
         self.ScriptPathCard.setContent(script_path)
+
+    def __onExpandableCardStateChanged(self, is_expanding: bool):
+        """可展开卡片状态改变时，调整 stackedWidget 高度以包含子卡片"""
+        # 获取发送信号的卡片对象
+        sender_card = self.sender()
+
+        # 根据展开的卡片获取其 viewLayout 的高度
+        if sender_card:
+            card_weight = sender_card.viewLayout.sizeHint().height()
+        else:
+            # 如果无法获取发送者，使用默认高度（向后兼容）
+            card_weight = 0
+
+        # 在动画执行前调整 stackedWidget 高度
+        if is_expanding:
+            self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height() + card_weight)
+        else:
+            self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
