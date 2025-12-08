@@ -130,7 +130,8 @@ def start_game():
             time.sleep(10)
             starrail.restore_resolution()
             starrail.restore_auto_hdr()
-            starrail.check_resolution_ratio(1920, 1080)
+            # starrail.check_resolution_ratio(1920, 1080)
+            starrail.check_resolution(1920, 1080)
 
             if not wait_until(lambda: check_and_click_enter(), 600):
                 raise TimeoutError("查找并点击进入按钮超时")
@@ -138,7 +139,8 @@ def start_game():
             # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
             auto.press_mouse()
         else:
-            starrail.check_resolution_ratio(1920, 1080)
+            # starrail.check_resolution_ratio(1920, 1080)
+            starrail.check_resolution(1920, 1080)
             if cfg.auto_set_game_path_enable:
                 program_path = get_process_path(cfg.game_process_name)
                 if program_path is not None and program_path != cfg.game_path:

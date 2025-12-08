@@ -82,9 +82,9 @@ class StarRailController(LocalGameController):
 
         screen_width, screen_height = self.screen_resolution
         if window_width != target_width or window_height != target_height:
-            self.log_error(f"游戏分辨率: {window_width}x{window_height}，请在游戏设置内切换为 {target_width}x{target_height} 窗口或全屏运行")
+            self.log_error(f"游戏分辨率: {window_width}x{window_height}，请在游戏设置内切换为 {target_width}x{target_height} 窗口（没有窗口再选择全屏幕）运行")
             if screen_width < target_width or screen_height < target_height:
-                self.log_error(f"桌面分辨率: {screen_width}x{screen_height}，你可能需要更大的显示器或使用 HDMI/VGA 显卡欺骗器")
+                self.log_error(f"桌面分辨率: {screen_width}x{screen_height}，你可能需要更大的显示器或使用 HDMI/VGA 显卡欺骗器（或尝试将显示器缩放修改为 100%）")
             raise Exception("游戏分辨率过低")
         else:
             self.log_debug(f"游戏分辨率: {window_width}x{window_height}")
