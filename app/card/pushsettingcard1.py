@@ -321,3 +321,91 @@ class PushSettingCardFriends(PushSettingCard):
             self.configvalue = self.newConfigValue
             cfg.set_value(self.configname, self.newConfigValue)
             self.contentLabel.setText(self.translate_to_chinese(self.newConfigValue))
+
+
+class PushSettingCardTeamWithSwap(SettingCard):
+    """Setting card with swap button for team1 and team2 configuration"""
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, configname_team1, configname_team2, parent=None):
+        with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
+            self.template = json.load(file)
+        
+        self.configname_team1 = configname_team1
+        self.configname_team2 = configname_team2
+        self.team1_value = cfg.get_value(configname_team1)
+        self.team2_value = cfg.get_value(configname_team2)
+        
+        super().__init__(icon, title, self._get_display_text(), parent)
+        
+        # Add swap button
+        self.swapButton = QPushButton(self.tr('交换队伍'), self)
+        self.hBoxLayout.addWidget(self.swapButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.swapButton.clicked.connect(self.__onSwapClicked)
+        
+        # Add team2 modify button
+        self.team2Button = QPushButton(self.tr('修改队伍2'), self)
+        self.hBoxLayout.addWidget(self.team2Button, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.team2Button.clicked.connect(self.__onTeam2Clicked)
+        
+        # Add team1 modify button
+        self.team1Button = QPushButton(self.tr('修改队伍1'), self)
+        self.hBoxLayout.addWidget(self.team1Button, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+        self.team1Button.clicked.connect(self.__onTeam1Clicked)
+    
+    def translate_to_chinese(self, configvalue):
+        text = str(configvalue)
+        for key, value in self.template.items():
+            text = text.replace(key, value)
+        return text
+    
+    def _get_display_text(self):
+        team1_text = self.translate_to_chinese(self.team1_value)
+        team2_text = self.translate_to_chinese(self.team2_value)
+        return f"队伍1: {team1_text}\n队伍2: {team2_text}"
+    
+    def _update_display(self):
+        self.team1_value = cfg.get_value(self.configname_team1)
+        self.team2_value = cfg.get_value(self.configname_team2)
+        self.contentLabel.setText(self._get_display_text())
+    
+    def __onSwapClicked(self):
+        # Swap team1 and team2
+        cfg.set_value(self.configname_team1, self.team2_value)
+        cfg.set_value(self.configname_team2, self.team1_value)
+        self._update_display()
+        
+        InfoBar.success(
+            self.tr('交换成功'),
+            self.tr('队伍1和队伍2已成功交换'),
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self.window()
+        )
+    
+    def __onTeam1Clicked(self):
+        self._edit_team(self.configname_team1, "队伍1")
+    
+    def __onTeam2Clicked(self):
+        self._edit_team(self.configname_team2, "队伍2")
+    
+    def _edit_team(self, configname, team_name):
+        def get_key(val, map):
+            for key, value in map.items():
+                if value == val:
+                    return key
+            return None
+        
+        configvalue = cfg.get_value(configname)
+        message_box = MessageBoxTeam(team_name, configvalue, self.template, self.window())
+        if message_box.exec():
+            newConfigValue = []
+            for comboboxs in message_box.comboBox_list:
+                char = get_key(comboboxs[0].text(), message_box.template)
+                tech = get_key(comboboxs[1].text(), message_box.tech_map)
+                newConfigValue.append([char, tech])
+            cfg.set_value(configname, newConfigValue)
+            self._update_display()
