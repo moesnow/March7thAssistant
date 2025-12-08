@@ -184,14 +184,13 @@ class Screen(metaclass=SingletonMeta):
         记录错误日志并抛出异常
         """
         self.logger.error(log_message)
-        self.logger.error("如果游戏是从本地启动：")
-        self.logger.error("请确保游戏画面干净，关闭帧率监控HUD、网速监控等一切可能影响游戏界面截图的组件")
-        self.logger.error("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR或游戏滤镜")
-        self.logger.error("如果是云·星穹铁道：")
-        self.logger.error("请确保网络正常，浏览器能正常加载游戏画面")
-        # 保存错误截图
-        from utils.screenshot_util import save_error_screenshot
-        save_error_screenshot(self.logger)
+        # self.logger.error("如果游戏是从本地启动：")
+        if not cfg.cloud_game_enable:
+            self.logger.error("请确保游戏画面干净，关闭帧率监控HUD、微星小飞机、游戏加加等影响游戏画面的软件")
+            self.logger.error("如果是多显示器，游戏需要放在主显示器运行，且不支持HDR或N卡游戏滤镜等")
+        # self.logger.error("如果是云·星穹铁道：")
+        else:
+            self.logger.error("使用云·星穹铁道请确保网络正常，浏览器能正常加载游戏画面")
         raise Exception(error_message)
 
     def ensure_current_screen_is_clean(self):

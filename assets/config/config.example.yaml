@@ -163,7 +163,7 @@ currencywars_timestamp: 0 # 上次检测到完成货币战争积分奖励的时�
 fight_enable: false # 是否启用锄大地功能。true 开启，false 关闭。
 fight_operation_mode: exe # 锄大地运行方式，可选 "源码"（source）或 "集成"（exe）。
 fight_path: .\3rdparty\Fhoe-Rail # 锄大地路径，指向锄大地脚本或程序的位置。
-fight_timeout: 6 # 锄大地超时时间（单位：小时），设置脚本或程序的最长运行时间。
+fight_timeout: 12 # 锄大地超时时间（单位：小时），设置脚本或程序的最长运行时间。
 fight_team_enable: false # 是否在锄大地时自动切换队伍。true 开启，false 关闭。
 fight_team_number: "6" # 自动切换到的队伍编号。
 fight_requirements: false # 是否已安装锄大地依赖。true 表示已安装，false 表示未安装或需要重新安装。

@@ -253,7 +253,7 @@ class SettingInterface(ScrollArea):
         self.dailyEnableCard = SwitchSettingCard1(
             FIF.CALENDAR,
             self.tr('启用每日实训'),
-            "关闭后可通过手动配置清体力或每天一次模拟宇宙来完成500活跃度",
+            "",
             "daily_enable"
         )
         self.dailyMaterialEnableCard = SwitchSettingCard1(
@@ -356,7 +356,7 @@ class SettingInterface(ScrollArea):
         )
         self.fightTimeoutCard = RangeSettingCard1(
             "fight_timeout",
-            [1, 10],
+            [1, 24],
             FIF.HISTORY,
             self.tr("锄大地超时"),
             self.tr("超过设定时间强制停止（单位小时）"),
