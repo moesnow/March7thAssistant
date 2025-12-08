@@ -3,8 +3,10 @@ from .doubleactivity import DoubleActivity
 from module.screen import screen
 from module.automation import auto
 from module.logger import log
+from module.config import cfg
 from tasks.power.instance import Instance
 from tasks.weekly.universe import Universe
+from tasks.daily.buildtarget import BuildTarget
 import time
 
 
@@ -19,6 +21,15 @@ class PlanarFissure(DoubleActivity):
 
         instance_type = "饰品提取"
         instance_name = self.instance_names[instance_type]
+        
+        # 优先使用培养目标的副本配置
+        if cfg.build_target_enable:
+            target_instances = BuildTarget.get_target_instances()
+            for target_type, target_name in target_instances:
+                if "饰品提取" in target_type:
+                    instance_name = target_name
+                    log.info(f"位面分裂使用培养目标副本: {target_type} - {target_name}")
+                    break
 
         power = Power.get()
         full_runs = power // 40
