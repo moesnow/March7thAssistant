@@ -16,7 +16,7 @@ class CheckInActivity(ActivityTemplate):
             auto.find_element(CheckInActivity.RECEIVE_FIN_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD) or \
             auto.find_element(CheckInActivity.RECEIVE2_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD)
 
-    def _has_reward(self):
+    def _collect_rewards(self):
         while auto.click_element(CheckInActivity.RECEIVE_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD) or \
                 auto.click_element(CheckInActivity.RECEIVE_FIN_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD) or \
                 auto.click_element(CheckInActivity.RECEIVE2_PATH, "image", CheckInActivity.IMAGE_SIMILARITY_THRESHOLD):
