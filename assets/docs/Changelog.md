@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2025.12.11
+## v2025.12.12
 
 - 设置界面优化
 - 双倍活动支持读取培养计划 [#751](https://github.com/moesnow/March7thAssistant/pull/751) @g60cBQ
