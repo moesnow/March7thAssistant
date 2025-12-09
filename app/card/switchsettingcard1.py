@@ -1,4 +1,4 @@
-from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, IndicatorPosition, ComboBox)
+from qfluentwidgets import SettingCard, FluentIconBase, SwitchButton, IndicatorPosition, ComboBox, PushButton
 from typing import Union
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QIcon
@@ -89,7 +89,7 @@ class SwitchSettingCardNotify(SettingCard):
                 self.config_list[config_name] = key
 
         if len(self.config_list) > 0:
-            self.button = QPushButton("配置", self)
+            self.button = PushButton("配置", self)
             self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
             self.hBoxLayout.addSpacing(10)
             self.button.clicked.connect(self._onClicked)
@@ -317,6 +317,7 @@ class SwitchSettingCardHotkey(SettingCard):
         from app.sub_interfaces.hotkey_interface import HotkeyInterface
         hotkey_interface = HotkeyInterface(self.window())
         hotkey_interface.exec()
+
 
 class SwitchSettingCardCloudGameStatus(SettingCard):
     """ Setting card with switch button """

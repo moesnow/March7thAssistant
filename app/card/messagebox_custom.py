@@ -384,7 +384,7 @@ class MessageBoxInstance(MessageBox):
             self.textLayout.addLayout(horizontalLayout)
             self.comboBox_dict[type] = comboBox
 
-        self.titleLabelInfo = QLabel("说明：未更新副本支持手动输入名称，清体力是根据选择的副本类型来判断的,\n此处设置的副本名称也会用于完成活动或每日实训对应的任务,\n如果即使有对应的任务,你也不希望完成,可以将对应的副本名称改为“无”", parent)
+        self.titleLabelInfo = QLabel("说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动", parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 

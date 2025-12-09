@@ -17,9 +17,6 @@ exit_after_failure: false # 是否在失败后直接退出。true 直接退出�
 # 任务完成后操作
 after_finish: None # 任务完成后的操作，可选值："None"（无操作）, "Exit"（退出程序）, "Loop"（循环执行）, "Shutdown"（关机）, "Sleep"（睡眠）, "Hibernate"（休眠）, "Restart"（重启）, "Logoff"（注销）, "TurnOffDisplay"（关闭显示器）, "RunScript"（运行脚本）。
 
-# 循环运行所需开拓力
-power_limit: 160 # 设置循环运行模式时所需的最低开拓力。
-
 # 任务完成后是否播放提示音
 play_audio: false # true 播放，false 不播放。
 
@@ -36,7 +33,6 @@ pypi_mirror_urls:
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
-script_path: C:\Path\to\your\Script.bat
 
 # 云崩铁配置
 cloud_game_enable: False # 是否启动云游戏
@@ -282,13 +278,19 @@ auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。tru
 auto_set_game_path_enable: true # 是否启用自动配置游戏路径。true 开启，false 关闭。
 
 # 循环模式
-loop_mode: power # 可选值："power"（根据开拓力）, "scheduled"（定时任务）
+loop_mode: scheduled # 可选值："power"（根据开拓力）, "scheduled"（定时任务）
 
 # 指定运行时间
 scheduled_time: 4:00
 
+# 循环运行所需开拓力
+power_limit: 160 # 设置循环运行模式时所需的最低开拓力。
+
 # 游戏刷新时间设置
 refresh_hour: 4 # 设置游戏每日刷新的时间（24小时制）。
+
+# 任务完成后执行脚本
+script_path: C:\Path\to\your\Script.bat
 
 # 游戏内按键设置
 hotkey_technique: e # 设置游戏内使用秘技的按键。
