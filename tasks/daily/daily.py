@@ -28,12 +28,18 @@ class Daily:
 
         # 在日常任务中检查是否使用支援角色
         if cfg.daily_enable:
-            Daily.lookup()
+            if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
+                Daily.lookup()
+            else:
+                log.info("每日实训尚未刷新")
+        else:
+            log.info("每日实训未开启")
 
         activity.start()
+
         # 优先历战余响
-        if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
-            if cfg.echo_of_war_enable:
+        if cfg.echo_of_war_enable:
+            if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
                 # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
                 isoweekday = datetime.date.today().isoweekday()
                 if isoweekday >= cfg.echo_of_war_start_day_of_week:
@@ -41,57 +47,66 @@ class Daily:
                 else:
                     log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
             else:
-                log.info("历战余响未开启")
+                log.info("历战余响尚未刷新")
         else:
-            log.info("历战余响尚未刷新")
+            log.info("历战余响未开启")
 
         Power.run()
 
         if cfg.daily_enable:
-            Daily.run()
+            if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
+                Daily.run()
+            else:
+                log.info("每日实训尚未刷新")
+        else:
+            log.info("每日实训未开启")
 
-        if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
-            if cfg.currencywars_enable:
+        if cfg.currencywars_enable:
+            if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
                 war = CurrencyWars()
                 screen.change_to("currency_wars_homepage")
                 if not war.check_currency_wars_score():
                     war.start()
             else:
-                log.info("货币战争未开启")
+                log.info("「货币战争」积分奖励尚未刷新")
         else:
-            log.info("货币战争尚未刷新")
+            log.info("「货币战争」积分奖励未开启")
 
-        if Date.is_next_x_am(cfg.fight_timestamp, cfg.refresh_hour):
-            if cfg.fight_enable:
+        if cfg.fight_enable:
+            if Date.is_next_x_am(cfg.fight_timestamp, cfg.refresh_hour):
                 Fight.start()
             else:
-                log.info("锄大地未开启")
+                log.info("锄大地尚未刷新")
         else:
-            log.info("锄大地尚未刷新")
+            log.info("锄大地未开启")
 
         if cfg.weekly_divergent_enable:
-            if Date.is_next_2weeks_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
-                if Universe.start(1, False, "divergent"):
-                    cfg.save_timestamp("weekly_divergent_timestamp")
+            if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
+                screen.change_to("divergent_main")
+                if not Universe.check_universe_score():
+                    if Universe.start(1, False, "divergent"):
+                        cfg.save_timestamp("weekly_divergent_timestamp")
             else:
-                log.info("每两周一次差分宇宙尚未刷新")
+                log.info("「差分宇宙」积分奖励尚未刷新")
+        else:
+            log.info("「差分宇宙」积分奖励未开启")
 
         if cfg.universe_frequency == "weekly":
             if Date.is_next_mon_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
                     Universe.start()
                 else:
-                    log.info("模拟宇宙未开启")
+                    log.info("模拟宇宙/差分宇宙未开启")
             else:
-                log.info("模拟宇宙尚未刷新")
+                log.info("模拟宇宙/差分宇宙尚未刷新")
         elif cfg.universe_frequency == "daily":
             if Date.is_next_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
                     Universe.start()
                 else:
-                    log.info("模拟宇宙未开启")
+                    log.info("模拟宇宙/差分宇宙未开启")
             else:
-                log.info("模拟宇宙尚未刷新")
+                log.info("模拟宇宙/差分宇宙尚未刷新")
 
         if Date.is_next_mon_x_am(cfg.forgottenhall_timestamp, cfg.refresh_hour):
             if cfg.forgottenhall_enable:
@@ -119,14 +134,14 @@ class Daily:
 
     @staticmethod
     def lookup():
-        log.hr("开始查询日常任务完成情况", 0)
+        log.hr("开始查询日常任务完成情况", 1)
         screen.change_to("guide2")
 
         tasks = Tasks("./assets/config/task_mappings.json")
         tasks.start()
 
         cfg.set_value("daily_tasks", tasks.daily_tasks)
-        log.hr("日常任务查询完成", 2)
+        log.hr("完成", 2)
 
     @staticmethod
     def run():
@@ -135,11 +150,7 @@ class Daily:
         empty_tasks = []
         cfg.set_value("daily_tasks", empty_tasks)
         # 再次查任务列表，用于检查清体力后完成了什么
-        if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
-            Daily.lookup()
-            cfg.save_timestamp("last_run_timestamp")
-        else:
-            log.info("日常任务尚未刷新")
+        Daily.lookup()
 
         if len(cfg.daily_tasks) > 0:
             task_functions = {
@@ -201,6 +212,10 @@ class Daily:
             for task_name, (task_function, score) in task_functions.items():
                 if current_score >= TARGET_SCORE:
                     log.info(f"实训分数已达标")
+                    # 确定完成后提前领取奖励
+                    reward.start_specific("quest")
+                    # 记录完成时间
+                    cfg.save_timestamp("last_run_timestamp")
                     break
                 if task_name in cfg.daily_tasks and cfg.daily_tasks[task_name]:
                     if task_function():

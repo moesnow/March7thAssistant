@@ -206,6 +206,11 @@ class Universe:
         if Universe.before_start():
 
             if category == "divergent":
+                asu_config.auto_config_divergent()
+                screen.change_to('divergent_main')
+            elif category == "divergent_weekly":
+                category = "divergent"
+                asu_config.auto_config_divergent_weekly()
                 screen.change_to('divergent_main')
             else:
                 asu_config.auto_config()
@@ -243,6 +248,7 @@ class Universe:
         if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
             if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
                 if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
+                    time.sleep(2)
                     Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'], NotificationLevel.ALL)
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
                     time.sleep(1)
@@ -270,7 +276,6 @@ class Universe:
     def gui():
         if Universe.before_start():
             if subprocess.run(["start", "gui.exe"], shell=True, check=True, cwd=cfg.universe_path, env=cfg.env):
-                asu_config.reload_config_from_asu()
                 return True
         return False
 
@@ -279,3 +284,26 @@ class Universe:
         return False
         # if config.daily_universe_enable:
         # return Universe.start(nums=1, save=False)
+
+    @staticmethod
+    def check_universe_score() -> bool:
+        """
+        检查模拟宇宙积分，达到 14000 时记录时间戳
+        """
+        screen.wait_for_screen_change("divergent_main")
+        score_pos = (182 / 1920, 977 / 1080, 209 / 1920, 43 / 1080)
+        score = auto.get_single_line_text(score_pos)
+        if not score:
+            log.warning("未识别到模拟宇宙积分")
+            return False
+
+        score_parts = score.split('/')
+        if len(score_parts) == 2 and score_parts[0].isdigit() and score_parts[1].isdigit() and score_parts[1] == "14000":
+            log.info(f"模拟宇宙积分：{score_parts[0]} / {score_parts[1]}")
+            if score_parts[0] == "14000":
+                cfg.save_timestamp("weekly_divergent_timestamp")
+                log.info("已达到最高积分 14000，记录时间")
+                return True
+        else:
+            log.warning(f"无法解析模拟宇宙积分: {score}")
+        return False

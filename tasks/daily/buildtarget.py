@@ -65,22 +65,27 @@ class BuildTarget:
 
         log.hr("开始获取培养目标")
 
+        screenshot = None
         instances = []
 
         if BuildTarget._enter_build_target_page():
+            # 提前截图培养目标界面
+            auto.take_screenshot()
+            screenshot = auto.screenshot
+
             instances = BuildTarget._get_target_instances_all()
             # instances = BuildTarget._get_target_instances_by_fixed_strategy()
 
-        for instance in instances:
-            if BuildTarget._is_valid_instance(instance):
-                log.debug(f"副本名称 {instance} 检验通过，加入目标列表")
-                BuildTarget._target_instances.append(instance)
-            else:
-                log.warning(f"目标副本识别错误，{instance} 不在任何已知副本列表中")
+            for instance in instances:
+                if BuildTarget._is_valid_instance(instance):
+                    log.debug(f"副本名称 {instance} 检验通过，加入目标列表")
+                    BuildTarget._target_instances.append(instance)
+                else:
+                    log.warning(f"目标副本识别错误，{instance} 不在任何已知副本列表中")
 
         if BuildTarget._target_instances:
-            message = f"识别到培养目标 {BuildTarget._build_target_name or 'None'} 的待刷副本信息: {', '.join(f'{k} - {v}' for k,v in BuildTarget._target_instances)}"
-            Base.send_notification_with_screenshot(message, NotificationLevel.ALL)
+            message = f"培养目标{BuildTarget._build_target_name or 'None'}的待刷副本: \n{'\n'.join(f'{k} - {v}' for k, v in BuildTarget._target_instances)}"
+            Base.send_notification_with_screenshot(message, NotificationLevel.ALL, screenshot)
         else:
             Base.send_notification_with_screenshot("未能获取到任何培养目标副本信息，回退至默认的设置", NotificationLevel.ALL)
 

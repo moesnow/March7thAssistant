@@ -120,7 +120,7 @@ class Notification(metaclass=SingletonMeta):
             if pil_image.width > max_size[0] or pil_image.height > max_size[1]:
                 pil_image.thumbnail(max_size, Image.Resampling.LANCZOS)
                 if self.logger:
-                    self.logger.info(f"图片已调整大小至: {pil_image.size}")
+                    self.logger.debug(f"图片已调整大小至: {pil_image.size}")
 
             # 保存为压缩后的JPEG格式
             img_byte_arr = io.BytesIO()
@@ -130,7 +130,7 @@ class Notification(metaclass=SingletonMeta):
             # 记录压缩后的大小
             compressed_size = img_byte_arr.getbuffer().nbytes
             if self.logger:
-                self.logger.info(f"图片压缩完成，大小: {compressed_size / 1024:.2f} KB")
+                self.logger.debug(f"图片压缩完成，大小: {compressed_size / 1024:.2f} KB")
 
             return img_byte_arr
         except Exception as e:

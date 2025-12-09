@@ -154,7 +154,7 @@ class HomeInterface(ScrollArea):
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Herta.jpg",
-            title="模拟宇宙",
+            title="差分宇宙",
             action={
                 "快速启动 ⭐": lambda: start_task("universe"),
                 "原版运行": lambda: start_task("universe_gui"),

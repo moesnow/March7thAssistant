@@ -34,13 +34,13 @@ class ToolsInterface(ScrollArea):
             self.tr('捕获'),
             FIF.CLIPPING_TOOL,
             self.tr("游戏截图"),
-            self.tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于复制副本名称）")
+            self.tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）")
         )
         self.unlockfpsCard = PushSettingCard(
             self.tr('解锁'),
             FIF.SPEED_HIGH,
             self.tr("解锁帧率"),
-            self.tr("通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）（不支持云·星穹铁道）")
+            self.tr("通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）")
         )
         self.redemptionCodeCard = PushSettingCardCode(
             self.tr('执行'),
@@ -99,7 +99,7 @@ class ToolsInterface(ScrollArea):
             fps = get_game_fps()
             if fps == 120:
                 set_game_fps(60)
-                InfoBar.success(
+                InfoBar.info(
                     title=self.tr('恢复60成功 (＾∀＾●)'),
                     content="",
                     orient=Qt.Horizontal,
@@ -175,7 +175,7 @@ class ToolsInterface(ScrollArea):
         self.automaticPlotCard.optionsChanged.connect(self.__onAutoPlotOptionsChanged)
         self.unlockfpsCard.clicked.connect(self.__onUnlockfpsCardClicked)
         self.cloudTouchCard.clicked.connect(self.__onCloudTouchCardClicked)
-    
+
     def __onAutoPlotSwitchChanged(self, isChecked: bool):
         """Handle auto plot switch state change"""
         if isChecked:
@@ -205,7 +205,7 @@ class ToolsInterface(ScrollArea):
                 duration=1000,
                 parent=self
             )
-    
+
     def __onAutoPlotOptionsChanged(self, options: dict):
         """Handle auto plot options change"""
         # Update options if auto plot is running
