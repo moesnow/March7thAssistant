@@ -170,6 +170,16 @@ class Instance:
             # 选择角色
             # 待后续更新支持
 
+            if auto.click_element("./assets/images/share/universe/empty_character_slot.png", "image", 0.9, crop=(624.0 / 1920, 772.0 / 1080, 267.0 / 1920, 91.0 / 1080)):
+                if auto.click_element("预设编队", "text", max_retries=4, retry_delay=0.5, crop=(27.0 / 1920, 103.0 / 1080, 557.0 / 1920, 64.0 / 1080)):
+                    click_x = auto.screenshot_pos[0] + 260 / auto.screenshot_scale_factor
+                    click_y = auto.screenshot_pos[1] + 175 / auto.screenshot_scale_factor
+                    time.sleep(1.0)
+                    if auto.click_element_with_pos(((click_x, click_y), (click_x, click_y))):
+                        time.sleep(1.0)
+                        auto.press_key("esc")
+                time.sleep(1.0)
+
             Character.borrow("ornament")
 
             if auto.click_element("开始挑战", "text", max_retries=10, crop=(1558.0 / 1920, 939.0 / 1080, 216.0 / 1920, 70.0 / 1080)):
