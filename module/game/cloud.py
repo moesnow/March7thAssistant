@@ -87,7 +87,7 @@ class CloudGameController(GameControllerBase):
             "mobile": False
         })
     
-    def _prepare_browser_and_driver(self, browser_type: str, integrated: bool) -> str | str:
+    def _prepare_browser_and_driver(self, browser_type: str, integrated: bool) -> tuple[str, str]:
         self.user_profile_path = os.path.join(self.BROWSER_INSTALL_PATH, "UserProfile", self.cfg.browser_type.capitalize())
         if integrated:
             browser_path = self.INTEGRATED_BROWSER_PATH
