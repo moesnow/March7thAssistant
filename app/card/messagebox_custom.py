@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushBut
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition)
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox)
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
@@ -761,6 +761,233 @@ class MessageBoxFriends(MessageBox):
             super().accept()
 
     def reject(self):
+        _cleanup_infobars(self)
+        try:
+            super().reject()
+        except Exception:
+            try:
+                self.close()
+            except Exception:
+                pass
+
+
+class MessageBoxPowerPlan(MessageBox):
+    """体力计划配置对话框"""
+
+    def __init__(self, title: str, content: list, configtemplate: str, parent=None):
+        super().__init__(title, "", parent)
+        self.content = content if content else []
+
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.yesButton.setText('确认')
+        self.cancelButton.setText('取消')
+
+        self.buttonGroup.setMinimumWidth(500)
+
+        font = QFont()
+        font.setPointSize(11)
+
+        # 加载副本模板
+        with open(configtemplate, 'r', encoding='utf-8') as file:
+            self.template = json.load(file)
+
+        # 副本类型列表
+        blacklist_type = ["历战余响"]
+        self.instance_types = list(self.template.keys())
+        for btype in blacklist_type:
+            if btype in self.instance_types:
+                self.instance_types.remove(btype)
+
+        # 存储所有计划行的控件
+        self.plan_rows = []
+
+        # 添加说明
+        self.titleLabelInfo = QLabel("体力计划会在清体力前优先执行，完成后自动从列表中删除", parent)
+        self.titleLabelInfo.setFont(font)
+        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+
+        # 计划列表容器
+        self.planLayout = QVBoxLayout()
+        self.textLayout.addLayout(self.planLayout)
+
+        # 根据已有内容添加计划行
+        for plan in self.content:
+            if len(plan) == 3:
+                self.add_plan_row(plan[0], plan[1], plan[2])
+
+        # 添加按钮
+        addButtonLayout = QHBoxLayout()
+        self.addButton = PushButton("添加计划", self)
+        self.addButton.clicked.connect(self.add_plan_row)
+        addButtonLayout.addWidget(self.addButton)
+        addButtonLayout.addStretch(1)
+        self.textLayout.addLayout(addButtonLayout)
+
+    def add_plan_row(self, instance_type=None, instance_name=None, count=1):
+        """添加一行体力计划配置"""
+        # 检查是否已达到最大数量限制
+        if len(self.plan_rows) >= 8:
+            InfoBar.warning(
+                title='无法添加',
+                content='已达到最大计划数量',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+            return
+
+        horizontalLayout = QHBoxLayout()
+
+        # 副本类型下拉框
+        typeComboBox = ComboBox()
+        typeComboBox.setMinimumWidth(140)
+        typeComboBox.addItems(self.instance_types)
+        if instance_type and instance_type in self.instance_types:
+            typeComboBox.setCurrentText(instance_type)
+        else:
+            typeComboBox.setCurrentIndex(0)
+
+        # 副本名称下拉框
+        nameComboBox = EditableComboBox()
+        nameComboBox.setMinimumWidth(320)
+
+        # 次数输入框
+        countSpinBox = SpinBox()
+        countSpinBox.setMinimum(1)
+        countSpinBox.setMaximum(999)
+        countSpinBox.setValue(count if count else 1)
+        countSpinBox.setMinimumWidth(120)
+
+        # 删除按钮
+        deleteButton = PushButton("删除", self)
+        deleteButton.setMaximumWidth(60)
+
+        # 更新副本名称选项的函数
+        def update_instance_names(selected_type):
+            nameComboBox.clear()
+            if selected_type in self.template:
+                item_list = []
+                for name, info in self.template[selected_type].items():
+                    item_name = f"{name}（{info}）"
+                    nameComboBox.addItem(item_name)
+                    item_list.append(item_name)
+                setup_completer(nameComboBox, item_list)
+
+        # 初始化副本名称
+        current_type = typeComboBox.currentText()
+        update_instance_names(current_type)
+        if instance_name:
+            # 如果instance_name已包含括号说明，直接使用；否则尝试匹配并格式化
+            if "（" in instance_name and "）" in instance_name:
+                nameComboBox.setCurrentText(instance_name)
+            else:
+                # 查找对应的说明并格式化
+                if current_type in self.template and instance_name in self.template[current_type]:
+                    formatted_name = f"{instance_name}（{self.template[current_type][instance_name]}）"
+                    nameComboBox.setCurrentText(formatted_name)
+                else:
+                    nameComboBox.setText(instance_name)
+
+        # 连接副本类型改变信号
+        typeComboBox.currentTextChanged.connect(update_instance_names)
+
+        # 删除按钮功能
+        def delete_row():
+            # 从界面移除
+            horizontalLayout.setParent(None)
+            for i in reversed(range(horizontalLayout.count())):
+                widget = horizontalLayout.itemAt(i).widget()
+                if widget:
+                    widget.setParent(None)
+                    widget.deleteLater()
+
+            # 从列表中移除
+            if (typeComboBox, nameComboBox, countSpinBox, deleteButton) in self.plan_rows:
+                self.plan_rows.remove((typeComboBox, nameComboBox, countSpinBox, deleteButton))
+
+        deleteButton.clicked.connect(delete_row)
+
+        # 添加到布局
+        horizontalLayout.addWidget(QLabel("类型:"))
+        horizontalLayout.addWidget(typeComboBox)
+        horizontalLayout.addWidget(QLabel("名称:"))
+        horizontalLayout.addWidget(nameComboBox)
+        horizontalLayout.addWidget(QLabel("次数:"))
+        horizontalLayout.addWidget(countSpinBox)
+        horizontalLayout.addWidget(deleteButton)
+
+        self.planLayout.addLayout(horizontalLayout)
+
+        # 保存到列表
+        self.plan_rows.append((typeComboBox, nameComboBox, countSpinBox, deleteButton))
+
+    def get_plans(self):
+        """获取所有计划"""
+        plans = []
+        for typeCombo, nameCombo, countSpin, _ in self.plan_rows:
+            instance_type = typeCombo.currentText()
+            instance_name = nameCombo.text()
+
+            # 如果输入包含括号说明，提取实际名称
+            if "（" in instance_name and "）" in instance_name:
+                instance_name = instance_name.split("（")[0]
+
+            count = countSpin.value()
+            if instance_type and instance_name and count > 0:
+                plans.append([instance_type, instance_name, count])
+        return plans
+
+    def validate_inputs(self):
+        """验证所有输入是否匹配可选项"""
+        for i, (typeCombo, nameCombo, countSpin, _) in enumerate(self.plan_rows, 1):
+            instance_type = typeCombo.currentText()
+            input_text = nameCombo.text()
+
+            if not instance_type or instance_type not in self.template:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'第{i}个计划的副本类型无效',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+
+            # 构建有效选项列表
+            valid_options = set()
+            for name, info in self.template[instance_type].items():
+                valid_options.add(f"{name}（{info}）")
+                valid_options.add(name)
+
+            # 检查输入是否匹配任一有效选项
+            if input_text not in valid_options:
+                InfoBar.error(
+                    title='输入错误',
+                    content=f'第{i}个计划的副本名称"{input_text}"不在可选项中，请重新选择',
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
+                return False
+
+        return True
+
+    def accept(self):
+        """确认并保存"""
+        if self.validate_inputs():
+            _cleanup_infobars(self)
+            super().accept()
+
+    def reject(self):
+        """取消"""
         _cleanup_infobars(self)
         try:
             super().reject()

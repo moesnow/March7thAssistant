@@ -94,6 +94,10 @@ merge_immersifier_limit: "12" # 沉浸器上限。
 use_reserved_trailblaze_power: False # 是否使用后备开拓力。true 使用，false 不使用。
 use_fuel: False # 是否使用燃料。true 使用，false 不使用。
 
+# 体力计划设置
+# 体力计划列表，每项包含副本类型、副本名称和剩余次数，例如：[["拟造花萼（金）", "回忆之蕾", 10], ["侵蚀隧洞", "睿治之径", 5]]
+power_plan: []
+
 # 历战余响设置
 echo_of_war_enable: false # 是否体力优先完成3次「历战余响」。true 开启，false 关闭。
 echo_of_war_timestamp: 0 # 上次完成3次「历战余响」的时间戳。用于记录和控制频率。

@@ -10,7 +10,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap
+from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandablePushSettingCard, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCard1, ExpandableSwitchSettingCardEchoofwar
 from module.config import cfg
@@ -76,6 +76,13 @@ class SettingInterface(ScrollArea):
 
     def __initCard(self):
         self.PowerGroup = SettingCardGroup(self.tr("体力设置"), self.scrollWidget)
+        self.powerPlanCard = PushSettingCardPowerPlan(
+            self.tr('配置'),
+            FIF.CALENDAR,
+            self.tr("体力计划【测试版】"),
+            "power_plan",
+            "./assets/config/instance_names.json"
+        )
         self.instanceTypeCard = ExpandableComboBoxSettingCard1(
             "instance_type",
             FIF.ALIGNMENT,
@@ -938,6 +945,7 @@ class SettingInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignTop)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
+        self.PowerGroup.addSettingCard(self.powerPlanCard)
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         # self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
         self.PowerGroup.addSettingCard(self.instanceTypeCard)

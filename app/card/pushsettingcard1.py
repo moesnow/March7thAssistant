@@ -3,7 +3,7 @@ from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtGui import QDesktopServices
 from qfluentwidgets import SettingCard, FluentIconBase, InfoBar, InfoBarPosition
-from .messagebox_custom import MessageBoxEdit, MessageBoxEditMultiple, MessageBoxDate, MessageBoxInstance, MessageBoxInstanceChallengeCount, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends
+from .messagebox_custom import MessageBoxEdit, MessageBoxEditMultiple, MessageBoxDate, MessageBoxInstance, MessageBoxInstanceChallengeCount, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends, MessageBoxPowerPlan
 from tasks.base.tasks import start_task
 from module.config import cfg
 from typing import Union
@@ -404,3 +404,27 @@ class PushSettingCardTeamWithSwap(SettingCard):
                 newConfigValue.append([char, tech])
             cfg.set_value(configname, newConfigValue)
             self._update_display()
+
+
+class PushSettingCardPowerPlan(PushSettingCard):
+    """体力计划设置卡片"""
+
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, configtemplate, parent=None):
+        self.configtemplate = configtemplate
+        self.configvalue = cfg.get_value(configname)
+        super().__init__(text, icon, title, configname, self._get_display_text(), parent)
+        self.button.clicked.connect(self.__onclicked)
+
+    def _get_display_text(self):
+        """获取显示文本"""
+        if not self.configvalue:
+            return "暂无计划"
+        return f"已配置 {len(self.configvalue)} 项计划"
+
+    def __onclicked(self):
+        message_box = MessageBoxPowerPlan(self.title, self.configvalue, self.configtemplate, self.window())
+        if message_box.exec():
+            plans = message_box.get_plans()
+            self.configvalue = plans
+            cfg.set_value(self.configname, plans)
+            self.contentLabel.setText(self._get_display_text())
