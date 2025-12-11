@@ -1,12 +1,14 @@
 # 更新日志
 
-## v2025.12.12
+## v2025.12.13
 
+- 支持体力计划
 - 设置界面优化
 - 双倍活动支持读取培养计划 [#751](https://github.com/moesnow/March7thAssistant/pull/751) @g60cBQ
 - 现在判断每日实训完成后会立即领取奖励
 - 饰品提取未配置角色时自动选择第一个队伍 [#788](https://github.com/moesnow/March7thAssistant/pull/788) @g60cBQ
 - 解锁帧率和自动修改分辨率功能适配国际服
+- 配置文件变化后自动重载图形界面
 
 ## v2025.12.10
 
