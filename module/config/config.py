@@ -42,7 +42,7 @@ class Config(metaclass=SingletonMeta):
         except FileNotFoundError:
             sys.exit("默认配置文件未找到")
 
-    def _load_config(self, path=None):
+    def _load_config(self, path=None, save=True):
         """加载用户配置信息，如未找到则保存默认配置"""
         path = path or self.config_path
         try:
@@ -51,11 +51,64 @@ class Config(metaclass=SingletonMeta):
                 if loaded_config:
                     # self.config.update(loaded_config)
                     self._update_config(self.config, loaded_config)
-                    self.save_config()
+            if save:
+                self.save_config()
         except FileNotFoundError:
             self.save_config()
         except Exception as e:
             print(f"配置文件 {path} 加载错误: {e}")
+
+    def _read_file_config(self, path=None):
+        """读取配置文件内容（不修改内存中的 self.config），返回 dict 或 None"""
+        path = path or self.config_path
+        try:
+            with open(path, 'r', encoding='utf-8') as file:
+                return self.yaml.load(file) or {}
+        except FileNotFoundError:
+            return None
+        except Exception:
+            return None
+
+    def _configs_equal(self, a, b):
+        """递归比较两个配置结构是否相等（逐项比较）"""
+        # 统一 None -> {}
+        if a is None:
+            a = {}
+        if b is None:
+            b = {}
+
+        if isinstance(a, dict) and isinstance(b, dict):
+            # 比较所有键和值（对字典中每个键进行递归比较）
+            a_keys = set(a.keys())
+            b_keys = set(b.keys())
+            if a_keys != b_keys:
+                return False
+            for k in a_keys:
+                if not self._configs_equal(a[k], b[k]):
+                    return False
+            return True
+
+        if isinstance(a, list) and isinstance(b, list):
+            if len(a) != len(b):
+                return False
+            for x, y in zip(a, b):
+                if not self._configs_equal(x, y):
+                    return False
+            return True
+
+        # 其他可直接比较（数值、字符串、布尔等）
+        return a == b
+
+    def is_config_changed(self):
+        """
+        按照读取配置文件的方式逐项比较文件内容与内存中的 self.config，
+        若存在差异则返回 True（表示外部已修改）
+        """
+        file_conf = self._read_file_config()
+        if file_conf is None:
+            return False
+        changed = not self._configs_equal(file_conf, self.config)
+        return changed
 
     def save_config(self):
         """保存配置到文件"""

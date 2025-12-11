@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QFileSystemWatcher, pyqtSignal, QObject
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication
 
@@ -26,6 +26,43 @@ from .tools.disclaimer import disclaimer
 from module.config import cfg
 from module.game import get_game_controller
 import base64
+import os
+
+
+class ConfigWatcher(QObject):
+    """配置文件监视器"""
+    config_changed = pyqtSignal()
+
+    def __init__(self, config_path, parent=None):
+        super().__init__(parent)
+        self.config_path = config_path
+        self.watcher = QFileSystemWatcher()
+        self.debounce_timer = None
+
+        # 监视配置
+        if os.path.exists(self.config_path):
+            self.watcher.addPath(self.config_path)
+            self.watcher.fileChanged.connect(self._on_config_changed)
+
+    def _on_config_changed(self, path):
+        """检测到文件变化，延迟处理避免频繁触发"""
+        from PyQt5.QtCore import QTimer
+
+        # 清除之前的定时器
+        if self.debounce_timer:
+            self.debounce_timer.stop()
+            self.debounce_timer.deleteLater()
+
+        # 创建新的定时器，延迟1秒处理（避免文件写入过程中多次触发）
+        self.debounce_timer = QTimer()
+        self.debounce_timer.setSingleShot(True)
+        self.debounce_timer.timeout.connect(self._emit_change)
+        self.debounce_timer.start(1000)
+
+    def _emit_change(self):
+        """检查文件是否真的改变，然后发送信号"""
+        if os.path.exists(self.config_path) and cfg.is_config_changed():
+            self.config_changed.emit()
 
 
 class MainWindow(MSFluentWindow):
@@ -35,6 +72,10 @@ class MainWindow(MSFluentWindow):
 
         self.initInterface()
         self.initNavigation()
+
+        # 初始化配置文件监视器
+        self.config_watcher = ConfigWatcher(os.path.abspath(cfg.config_path), self)
+        self.config_watcher.config_changed.connect(self._on_config_file_changed)
 
         # 检查更新
         checkUpdate(self, flag=True)
@@ -91,6 +132,12 @@ class MainWindow(MSFluentWindow):
             self.startGame,
             NavigationItemPosition.BOTTOM)
 
+        # self.navigationInterface.addWidget(
+        #     'refreshButton',
+        #     NavigationBarPushButton(FIF.SYNC, '刷新', isSelectable=False),
+        #     self._on_config_file_changed,
+        #     NavigationItemPosition.BOTTOM)
+
         self.navigationInterface.addWidget(
             'themeButton',
             NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
@@ -116,6 +163,55 @@ class MainWindow(MSFluentWindow):
 
         if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
             disclaimer(self)
+
+    def _on_config_file_changed(self):
+        """重新加载配置文件并刷新界面"""
+        try:
+            # 检查当前是否在设置界面
+            is_in_setting_interface = self.stackedWidget.currentWidget() == self.settingInterface
+
+            # 重新加载配置
+            cfg._load_config(None, save=False)
+
+            # 保存旧的设置界面引用
+            old_setting_interface = self.settingInterface
+            route_key = old_setting_interface.objectName()
+
+            # 创建新的设置界面
+            self.settingInterface = SettingInterface(self)
+
+            # 必须先把旧的导航栏隐藏，否则会导致最后的高度增加（bug）
+            self.navigationInterface.items[route_key].hide()
+
+            # 移除旧的设置界面
+            self.removeInterface(old_setting_interface, isDelete=True)
+
+            # 添加新的设置界面
+            self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
+
+            # 只有在重新加载配置前是在设置界面时，才切换到新的设置界面
+            if is_in_setting_interface:
+                self.switchTo(self.settingInterface)
+
+            InfoBar.success(
+                title=self.tr('配置已更新'),
+                content="检测到配置文件变化，已自动重新加载",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+        except Exception as e:
+            InfoBar.warning(
+                title=self.tr('配置加载失败'),
+                content=str(e),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
 
     # main_window.py 只需修改关闭事件
     def closeEvent(self, e):

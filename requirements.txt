@@ -17,7 +17,7 @@ onepush==1.4.0
 winotify==1.1.0
 markdown==3.7
 cpufeature==0.2.1
-PyQt-Fluent-Widgets==1.7.0
+PyQt-Fluent-Widgets==1.9.2
 pylnk3==0.4.2
 pyperclip==1.9.0
 qrcode==8.0
