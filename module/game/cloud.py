@@ -93,14 +93,21 @@ class CloudGameController(GameControllerBase):
             browser_path = self.INTEGRATED_BROWSER_PATH
             driver_path = self.INTEGRATED_DRIVER_PATH
             if not os.path.exists(browser_path) or not os.path.exists(driver_path):
-                self.log_info("正在下载浏览器和驱动...")
                 args = ["--browser", browser_type,
                         "--cache-path", self.BROWSER_INSTALL_PATH,
                         "--browser-version", self.INTEGRATED_BROWSER_VERSION,
                         "--force-browser-download",
                         "--skip-driver-in-path",
                         "--skip-browser-in-path"]
+                if self.cfg.browser_download_use_mirror:
+                    self.log_info(f"正在使用镜像源，浏览器镜像源：{self.cfg.browser_mirror_urls['chrome']}，"
+                                  f"驱动镜像源：{self.cfg.browser_mirror_urls['chromedriver']}")
+                    args.extend([
+                        "--browser-mirror-url", self.cfg.browser_mirror_urls["chrome"],
+                        "--driver-mirror-url", self.cfg.browser_mirror_urls["chromedriver"],
+                    ])
                 try:
+                    self.log_info("正在下载浏览器和驱动...")
                     SeleniumManager().binary_paths(args)
                 except WebDriverException as e:
                     raise Exception(f"浏览器和驱动下载失败：{e}")
@@ -110,6 +117,15 @@ class CloudGameController(GameControllerBase):
                     "--cache-path", self.BROWSER_INSTALL_PATH,
                     "--avoid-browser-download",
                     "--skip-driver-in-path"]
+            if self.cfg.browser_download_use_mirror:
+                if browser_type == "chrome":
+                    args.extend([
+                        "--driver-mirror-url", self.cfg.browser_mirror_urls["chromedriver"]
+                    ])
+                elif browser_type == "edge":
+                    args.extend([
+                        "--driver-mirror-url", self.cfg.browser_mirror_urls["edgedriver"]
+                    ])
             try:
                 result = SeleniumManager().binary_paths(args)
             except WebDriverException as e:
@@ -198,6 +214,7 @@ class CloudGameController(GameControllerBase):
             self.log_error("如果仍然存在问题，请更换浏览器重试")
             raise Exception("浏览器启动失败")
         
+        self.driver.set_window_size(1920, 1120)
         if first_run or not self.cfg.browser_persistent_enable:
             self._load_initial_local_storage()
         if self.cfg.auto_battle_detect_enable:
