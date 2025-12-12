@@ -634,7 +634,6 @@ class SettingInterface(ScrollArea):
             None,
             "cloud_game_fullscreen_enable"
         )
-
         self.cloudGameMaxQueueTimeCard = RangeSettingCard1(
             "cloud_game_max_queue_time",
             [1, 60],
@@ -642,7 +641,12 @@ class SettingInterface(ScrollArea):
             self.tr("最大排队等待时间（分钟）"),
             ''
         )
-
+        self.browserDownloadUseMirrorCard = SwitchSettingCard1(
+            FIF.CLOUD_DOWNLOAD,
+            self.tr("使用国内镜像下载浏览器和驱动"),
+            None,
+            "browser_download_use_mirror"
+        )
         # self.cloudGameVideoQualityCard = ComboBoxSettingCard2(
         #     "cloud_game_video_quality",
         #     FIF.VIDEO,
@@ -650,14 +654,12 @@ class SettingInterface(ScrollArea):
         #     None,
         #     texts={"超高清": "0", "高清": "1", "标清": "2", "低清": "3"}
         # )
-
         # self.cloudGameSmoothFirstCard = SwitchSettingCard1(
         #     FIF.SPEED_HIGH,
         #     self.tr("画面流畅优先"),
         #     "启用这个选项后，当网速过慢时，会自动调低画质",
         #     "cloud_game_smooth_first_enable"
         # )
-
         # self.cloudGameShowStatusCard = SwitchSettingCardCloudGameStatus(
         #     FIF.INFO,
         #     self.tr("云游戏内显示网络状态"),
@@ -665,7 +667,6 @@ class SettingInterface(ScrollArea):
         #     "cloud_game_status_bar_enable",
         #     "cloud_game_status_bar_type"
         # )
-
         self.browserTypeCard = ComboBoxSettingCard2(
             "browser_type",
             FIF.GLOBE,
@@ -673,35 +674,32 @@ class SettingInterface(ScrollArea):
             self.tr("‘集成’ 模式下，会自动下载浏览器"),
             {"集成（Chrome For Testing）": "integrated", "Chrome": "chrome", "Edge": "edge"}
         )
-
         self.browserHeadlessCard = SwitchSettingCard1(
             FIF.VIEW,
             self.tr("无窗口模式（后台运行）"),
             self.tr("不支持模拟宇宙和锄大地"),
             "browser_headless_enable"
         )
-
         # self.browserCookiesCard = SwitchSettingCard1(
         #     FIF.PALETTE,    # 这个画盘长得很像 Cookie
         #     self.tr("保存 Cookies（登录状态）"),
         #     None,
         #     "browser_dump_cookies_enable"
         # )
-
         self.browserPersistentCard = SwitchSettingCard1(
             FIF.DOWNLOAD,
             self.tr("保存浏览器数据（游戏的登录状态和本地数据）"),
             None,
             "browser_persistent_enable"
         )
-
-        self.browserScaleCard = PushSettingCardEval(
-            self.tr("修改"),
+        self.browserScaleCard = ComboBoxSettingCard2(
+            "browser_scale_factor",
             FIF.ZOOM,
-            self.tr("浏览器缩放比例（如果画面过小/过大，可适当增加/减少这个值）"),
-            "browser_scale_factor"
+            self.tr("浏览器画面缩放（DPI）"),
+            self.tr("非 1920x1080 屏幕下，云游戏画面无法铺满屏幕，可以调整这个值改变画面缩放"),
+            texts={'50%': 0.5, '67%': 0.67, '75%': 0.75, '80%': 0.80, '90%': 0.90, '无缩放（100%）': 1.0,
+                   '110%': 1.10,'125%': 1.25, '150%': 1.5, '175%': 1.75, '200%': 2.0}
         )
-
         self.browserLaunchArgCard = PushSettingCardEval(
             self.tr("修改"),
             FIF.CODE,
@@ -1063,6 +1061,7 @@ class SettingInterface(ScrollArea):
         ])
 
         self.CloudGameGroup.addSettingCard(self.cloudGameEnableCard)
+        self.CloudGameGroup.addSettingCard(self.browserDownloadUseMirrorCard)
         self.CloudGameGroup.addSettingCard(self.browserTypeCard)
         self.CloudGameGroup.addSettingCard(self.cloudGameFullScreenCard)
         self.CloudGameGroup.addSettingCard(self.browserHeadlessCard)
