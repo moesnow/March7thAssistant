@@ -698,7 +698,7 @@ class SettingInterface(ScrollArea):
             self.tr("浏览器画面缩放（DPI）"),
             self.tr("非 1920x1080 屏幕下，云游戏画面无法铺满屏幕，可以调整这个值改变画面缩放"),
             texts={'50%': 0.5, '67%': 0.67, '75%': 0.75, '80%': 0.80, '90%': 0.90, '无缩放（100%）': 1.0,
-                   '110%': 1.10,'125%': 1.25, '150%': 1.5, '175%': 1.75, '200%': 2.0}
+                   '110%': 1.10, '125%': 1.25, '150%': 1.5, '175%': 1.75, '200%': 2.0}
         )
         self.browserLaunchArgCard = PushSettingCardEval(
             self.tr("修改"),
@@ -783,6 +783,13 @@ class SettingInterface(ScrollArea):
             self.tr('声音提示'),
             self.tr('任务完成后列车长唱歌提示帕！'),
             "play_audio"
+        )
+        self.closeWindowActionCard = ComboBoxSettingCard2(
+            "close_window_action",
+            FIF.CLOSE,
+            self.tr('关闭窗口时'),
+            self.tr('选择关闭窗口时的默认行为，也可以在关闭时由对话框询问'),
+            texts={'询问': 'ask', '最小化到托盘': 'minimize', '关闭程序': 'close'}
         )
 
         self.NotifyGroup = SettingCardGroup(self.tr("消息推送"), self.scrollWidget)
@@ -1088,6 +1095,7 @@ class SettingInterface(ScrollArea):
             self.ScriptPathCard
         ])
         self.ProgramGroup.addSettingCard(self.playAudioCard)
+        self.ProgramGroup.addSettingCard(self.closeWindowActionCard)
 
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.testNotifyCard.addSettingCards([

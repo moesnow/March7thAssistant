@@ -1,9 +1,9 @@
 from PyQt5.QtCore import Qt, QUrl, QSize
-from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushButton, QToolButton, QCompleter
+from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushButton, QToolButton, QCompleter, QCheckBox
 from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox)
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox)
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
@@ -996,3 +996,41 @@ class MessageBoxPowerPlan(MessageBox):
                 self.close()
             except Exception:
                 pass
+
+
+class MessageBoxCloseWindow(MessageBox):
+    """关闭窗口询问对话框"""
+
+    def __init__(self, parent=None):
+        super().__init__(
+            '关闭确认',
+            '您希望如何处理程序?',
+            parent
+        )
+
+        # 修改按钮文本
+        self.yesButton.setText('最小化到托盘')
+        self.cancelButton.setText('关闭程序')
+
+        # 添加记住选择的复选框
+        self.rememberCheckBox = CheckBox('记住我的选择,下次不再询问', self)
+        self.textLayout.addWidget(self.rememberCheckBox)
+
+        # 存储用户的选择
+        self.action = None  # 'minimize' 或 'close'
+
+    def accept(self):
+        """用户选择最小化到托盘"""
+        self.action = 'minimize'
+        if self.rememberCheckBox.isChecked():
+            cfg.set_value('close_window_action', 'minimize')
+        _cleanup_infobars(self)
+        super().accept()
+
+    def reject(self):
+        """用户选择关闭程序"""
+        self.action = 'close'
+        if self.rememberCheckBox.isChecked():
+            cfg.set_value('close_window_action', 'close')
+        _cleanup_infobars(self)
+        super().reject()

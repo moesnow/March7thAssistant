@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QSize, QFileSystemWatcher, pyqtSignal, QObject
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QAction
 
 from contextlib import redirect_stdout
 
@@ -8,7 +8,7 @@ with redirect_stdout(None):
     from app.tools.game_starter import GameStartStatus, GameLaunchThread
     from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, Theme
     from qfluentwidgets import FluentIcon as FIF
-    from qfluentwidgets import InfoBar, InfoBarPosition
+    from qfluentwidgets import InfoBar, InfoBarPosition, SystemTrayMenu
 
 from .home_interface import HomeInterface
 from .help_interface import HelpInterface
@@ -72,6 +72,7 @@ class MainWindow(MSFluentWindow):
 
         self.initInterface()
         self.initNavigation()
+        self.initSystemTray()
 
         # 初始化配置文件监视器
         self.config_watcher = ConfigWatcher(os.path.abspath(cfg.config_path), self)
@@ -164,6 +165,61 @@ class MainWindow(MSFluentWindow):
         if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
             disclaimer(self)
 
+    def initSystemTray(self):
+        """初始化系统托盘"""
+        self.tray_icon = QSystemTrayIcon(self)
+        self.tray_icon.setIcon(QIcon('./assets/logo/March7th.ico'))
+        self.tray_icon.setToolTip('March7th Assistant')
+
+        # 创建托盘菜单
+        tray_menu = SystemTrayMenu(parent=self)
+        tray_menu.aboutToShow.connect(self._on_tray_menu_about_to_show)
+
+        # 显示主界面
+        show_action = QAction('显示主界面', self)
+        show_action.triggered.connect(self.showNormal)
+        show_action.triggered.connect(self.activateWindow)
+        tray_menu.addAction(show_action)
+
+        # 完整运行
+        run_action = QAction('完整运行', self)
+        run_action.triggered.connect(self.startFullTask)
+        tray_menu.addAction(run_action)
+
+        tray_menu.addSeparator()
+
+        # 退出程序
+        quit_action = QAction('退出', self)
+        quit_action.triggered.connect(self.quitApp)
+        tray_menu.addAction(quit_action)
+
+        self.tray_icon.setContextMenu(tray_menu)
+        self.tray_icon.activated.connect(self.onTrayIconActivated)
+        self.tray_icon.show()
+
+    def onTrayIconActivated(self, reason):
+        """托盘图标被激活时的处理"""
+        if reason == QSystemTrayIcon.Trigger:
+            if self.isVisible():
+                self.hide()
+            else:
+                self.showNormal()
+                self.activateWindow()
+
+    def _on_tray_menu_about_to_show(self):
+        """托盘菜单即将显示时激活窗口，解决 Windows 上点击外部区域无法关闭菜单的问题"""
+        self.activateWindow()
+
+    def startFullTask(self):
+        """启动完整运行任务"""
+        from tasks.base.tasks import start_task
+        start_task("main")
+
+    def quitApp(self):
+        """退出应用程序"""
+        self.tray_icon.hide()
+        QApplication.quit()
+
     def _on_config_file_changed(self):
         """重新加载配置文件并刷新界面"""
         try:
@@ -215,10 +271,69 @@ class MainWindow(MSFluentWindow):
 
     # main_window.py 只需修改关闭事件
     def closeEvent(self, e):
-        if self.themeListener and self.themeListener.isRunning():
-            self.themeListener.terminate()
-            self.themeListener.deleteLater()
-        super().closeEvent(e)
+        # if self.themeListener and self.themeListener.isRunning():
+        #     self.themeListener.terminate()
+        #     self.themeListener.deleteLater()
+        # super().closeEvent(e)
+        """关闭窗口时根据配置执行对应操作"""
+        from .card.messagebox_custom import MessageBoxCloseWindow
+
+        close_action = cfg.get_value('close_window_action', 'ask')
+
+        if close_action == 'ask':
+            # 弹出询问对话框
+            dialog = MessageBoxCloseWindow(self)
+            dialog.exec()
+
+            if dialog.action == 'minimize':
+                # 最小化到托盘
+                e.ignore()
+                self.hide()
+                self.tray_icon.showMessage(
+                    'March7th Assistant',
+                    '程序已最小化到托盘',
+                    QSystemTrayIcon.Information,
+                    2000
+                )
+                # 若用户选择记住，则刷新设置界面以同步显示
+                try:
+                    if dialog.rememberCheckBox.isChecked():
+                        self._on_config_file_changed()
+                except Exception:
+                    pass
+            elif dialog.action == 'close':
+                # 关闭程序
+                self.tray_icon.hide()
+                e.accept()
+                QApplication.quit()
+            else:
+                # 用户取消操作（例如点击了 X 按钮）
+                e.ignore()
+        elif close_action == 'minimize':
+            # 直接最小化到托盘
+            e.ignore()
+            self.hide()
+            # self.tray_icon.showMessage(
+            #     'March7th Assistant',
+            #     '程序已最小化到托盘',
+            #     QSystemTrayIcon.Information,
+            #     2000
+            # )
+        elif close_action == 'close':
+            # 直接关闭程序
+            self.tray_icon.hide()
+            e.accept()
+            QApplication.quit()
+        else:
+            # 默认行为：最小化到托盘
+            e.ignore()
+            self.hide()
+            self.tray_icon.showMessage(
+                'March7th Assistant',
+                '程序已最小化到托盘',
+                QSystemTrayIcon.Information,
+                2000
+            )
 
     def startGame(self):
         start_game_button = self.navigationInterface.widget('startGameButton')

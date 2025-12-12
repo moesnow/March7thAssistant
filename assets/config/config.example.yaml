@@ -312,6 +312,9 @@ hotkey_warp: f3 # 设置打开跃迁的按键。
 # 是否在多显示器上进行截屏（若开启无法正确运行请关闭）
 all_screens: true
 
+# 关闭窗口行为设置
+close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问）, "minimize"（最小化到托盘）, "close"（关闭程序）
+
 # 更新配置
 redemption_code: [] # 兑换码列表
 update_prerelease_enable: false # 是否加入预览版更新渠道。true 加入，false 不加入。
