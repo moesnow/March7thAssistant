@@ -214,7 +214,8 @@ class CloudGameController(GameControllerBase):
             self.log_error("如果仍然存在问题，请更换浏览器重试")
             raise Exception("浏览器启动失败")
         
-        self.driver.set_window_size(1920, 1120)
+        if not self.cfg.cloud_game_fullscreen_enable:
+            self.driver.set_window_size(1920, 1120)
         if first_run or not self.cfg.browser_persistent_enable:
             self._load_initial_local_storage()
         if self.cfg.auto_battle_detect_enable:
