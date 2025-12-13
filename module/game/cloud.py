@@ -22,7 +22,8 @@ from module.logger import Logger
 from utils.encryption import wdp_encrypt, wdp_decrypt
 
 class CloudGameController(GameControllerBase):
-    COOKIE_PATH = "settings/cookies.enc"          # Cookies 保存地址（仅用于调试）
+    COOKIE_PATH = "settings/cookies.enc"          # Cookies 保存地址
+    localStorage_PATH = "settings/local_storage.enc"  # localStorage 保存地址
     GAME_URL = "https://sr.mihoyo.com/cloud"            # 游戏地址
     BROWSER_TAG = "--march-7th-assistant-sr-cloud-game" # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
     BROWSER_INSTALL_PATH = os.path.join(os.getcwd(), "3rdparty", "WebBrowser") # 浏览器安装路径
@@ -165,11 +166,7 @@ class CloudGameController(GameControllerBase):
         """尝试连接到现有的（由小助手启动的）浏览器，如果没有，那就创建一个"""
         browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge"
         integrated = self.cfg.browser_type=="integrated"
-        first_run = False
         browser_path, driver_path = self._prepare_browser_and_driver(browser_type, integrated)
-        
-        if not os.path.exists(self.user_profile_path):
-            first_run = True
         
         if browser_type == "chrome":
             options = ChromeOptions()
@@ -216,12 +213,14 @@ class CloudGameController(GameControllerBase):
         
         if not self.cfg.cloud_game_fullscreen_enable:
             self.driver.set_window_size(1920, 1120)
-        if first_run or not self.cfg.browser_persistent_enable:
-            self._load_initial_local_storage()
+        '''if not self.cfg.browser_persistent_enable:
+            self._load_initial_local_storage()'''
         if self.cfg.auto_battle_detect_enable:
             self.change_auto_battle(True) 
-        if self.cfg.browser_dump_cookies_enable:
+        if self.cfg.browser_userdata_enable:
             self._load_cookies()
+            self._load_local_storage()
+            
         self._refresh_page()
 
     def _restart_browser(self, headless=False) -> None:
@@ -229,6 +228,48 @@ class CloudGameController(GameControllerBase):
         self.stop_game()
         self._connect_or_create_browser(headless=headless)
     
+    def _save_local_storage(self) -> bool:
+        """保存 localStorage"""
+        if not self.driver:
+            return
+        try:
+            ls_json = json.dumps(self.driver.execute_script("return JSON.stringify(localStorage);"), ensure_ascii=False, indent=4)
+            with open(self.localStorage_PATH, "wb") as f:
+                # f.write(wdp_encrypt(ls_json.encode()))
+                f.write(ls_json.encode())
+            self.log_info("本地存储信息保存成功。")
+        except Exception as e:
+            self.log_error(f"保存 localStorage 失败: {e}")
+    def _load_local_storage(self) -> bool:
+        """加载 localStorage"""
+        if not self.driver:
+            return False
+
+        try:
+            with open(self.localStorage_PATH, "rb") as f:
+                # ls = json.loads(wdp_decrypt(f.read()).decode())
+                ls = json.loads(f.read().decode())
+
+            for key, value in ls.items():
+                try:
+                    self.driver.execute_script(
+                        "window.localStorage.setItem(arguments[0], arguments[1]);",
+                        key,
+                        value,
+                    )
+                except Exception:
+                    pass  # 忽略无效项
+
+            self.driver.refresh()
+            self.log_info("本地存储信息加载成功。")
+            return True
+        except FileNotFoundError:
+            self.log_info("localStorage 文件不存在。正在加载默认配置...")
+            self._load_initial_local_storage()
+            return False
+        except Exception as e:
+            self.log_error(f"加载 localStorage 失败: {e}")
+            return False
     def _load_initial_local_storage(self) -> bool:
         """加载初始配置，去除初始引导，免责协议等弹窗"""
 
@@ -263,7 +304,7 @@ class CloudGameController(GameControllerBase):
             return False
 
     def _save_cookies(self) -> bool:
-        """保存 Cookies （Debug only）""" 
+        """保存 Cookies""" 
         if not self.driver:
             return
         try:
@@ -276,7 +317,7 @@ class CloudGameController(GameControllerBase):
             self.log_error(f"保存 cookies 失败: {e}")
 
     def _load_cookies(self) -> bool:
-        """加载 Cookies （Debug only）"""
+        """加载 Cookies"""
         if not self.driver:
             return False
         try:
@@ -540,12 +581,14 @@ class CloudGameController(GameControllerBase):
                 
                 # 如果为 headless 模式，则重启浏览器回到 headless 模式
                 if self.cfg.browser_headless_enable:
-                    if self.cfg.browser_dump_cookies_enable:
+                    if self.cfg.browser_userdata_enable:
                         self._save_cookies()
+                        self._save_local_storage()
                     self._restart_browser(headless=True)
             
-            if self.cfg.browser_dump_cookies_enable:
+            if self.cfg.browser_userdata_enable:
                 self._save_cookies()
+                self._save_local_storage()
             self._click_enter_game()
             if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
                 return False

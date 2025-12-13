@@ -680,15 +680,15 @@ class SettingInterface(ScrollArea):
             self.tr("不支持模拟宇宙和锄大地"),
             "browser_headless_enable"
         )
-        # self.browserCookiesCard = SwitchSettingCard1(
-        #     FIF.PALETTE,    # 这个画盘长得很像 Cookie
-        #     self.tr("保存 Cookies（登录状态）"),
-        #     None,
-        #     "browser_dump_cookies_enable"
-        # )
+        self.browserCookiesCard = SwitchSettingCard1(
+            FIF.PALETTE,    # 这个画盘长得很像 Cookie
+            self.tr("保存 Cookies 和 localStorage 信息（登录状态）"),
+            None,
+            "browser_userdata_enable"
+        )
         self.browserPersistentCard = SwitchSettingCard1(
             FIF.DOWNLOAD,
-            self.tr("保存浏览器数据（游戏的登录状态和本地数据）"),
+            self.tr("保存浏览器数据（仅供调试）"),
             None,
             "browser_persistent_enable"
         )
@@ -1069,7 +1069,7 @@ class SettingInterface(ScrollArea):
         # self.CloudGameGroup.addSettingCard(self.cloudGameVideoQualityCard)
         # self.CloudGameGroup.addSettingCard(self.cloudGameSmoothFirstCard)
         # self.CloudGameGroup.addSettingCard(self.cloudGameShowStatusCard)
-        # self.CloudGameGroup.addSettingCard(self.browserCookiesCard)
+        self.CloudGameGroup.addSettingCard(self.browserCookiesCard)
         self.CloudGameGroup.addSettingCard(self.browserPersistentCard)
         self.CloudGameGroup.addSettingCard(self.browserScaleCard)
         self.CloudGameGroup.addSettingCard(self.browserLaunchArgCard)

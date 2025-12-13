@@ -50,8 +50,8 @@ cloud_game_max_queue_time: 10 # 最大排队等待时间（分钟）
 # integrated 模式下，启动时会自己自动下载一个浏览器专门用于执行脚本，
 browser_type: integrated # 云崩铁使用的浏览器类型，可选值：["integrated"（集成）, "edge", "chrome"]。
 browser_headless_enable: False # 是否启用无窗口模式。
-browser_dump_cookies_enable: False # （用于调试）是否转储 Cookies
-browser_persistent_enable: True # 是否允许浏览器保存数据（登录状态/游戏本地数据）
+browser_userdata_enable: True # 是否保存用户信息（登录状态/游戏本地数据）
+browser_persistent_enable: False # 是否允许浏览器保存数据（仅调试）
 browser_scale_factor: 1.0 # 浏览器的缩放比，如果云游戏画面过小/过大，可调整这个选项
 browser_launch_argument: [] # 浏览器启动的额外参数，如 "--auto-open-devtools-for-tabs"
 browser_debug_port: 9222 # 浏览器 Debug 端口，应确保该端口不被占用
