@@ -486,9 +486,13 @@ notify_kook_target_id: "" # 接收消息的目标ID（用户ID或频道ID）。
 notify_kook_chat_type: "1" # 可选参数，消息类型，"1" 表示私聊，"9" 表示频道聊天，默认为 "1"。
 
 # Webhook 通知配置
-# 支持发送截图，向指定URL发送HTTP POST请求推送通知
+# 支持发送截图，支持自定义HTTP请求方法、Headers和Body
+# 如果不配置 notify_webhook_method、notify_webhook_headers、notify_webhook_body，则默认使用POST方法发送JSON格式数据 {title, content}
 notify_webhook_enable: false # 是否启用 Webhook 通知。true 开启，false 关闭。
 notify_webhook_url: "" # Webhook 接收地址，例如 http://localhost:8080/notify
+notify_webhook_method: "" # 可选参数，HTTP请求方法，支持 GET/POST/PUT/DELETE 等，默认为 POST
+notify_webhook_headers: "" # 可选参数，自定义HTTP Headers，JSON格式字符串，例如 {"Authorization": "Bearer token", "Custom-Header": "value"}。如果body为字符串且需要特定Content-Type，请明确指定。
+notify_webhook_body: "" # 可选参数，自定义请求体模板，JSON格式或字符串。支持占位符 {title}、{content}、{image}（Base64编码）。例如 {"msg": "{title}: {content}", "img": "{image}"}
 
 # 自定义通知配置
 # 支持发送截图
