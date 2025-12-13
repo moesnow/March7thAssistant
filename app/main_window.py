@@ -217,6 +217,7 @@ class MainWindow(MSFluentWindow):
 
     def quitApp(self):
         """退出应用程序"""
+        self._stopThemeListener()
         self.tray_icon.hide()
         QApplication.quit()
 
@@ -269,12 +270,13 @@ class MainWindow(MSFluentWindow):
                 parent=self
             )
 
-    # main_window.py 只需修改关闭事件
+    def _stopThemeListener(self):
+        """停止主题监听线程"""
+        if hasattr(self, 'themeListener') and self.themeListener:
+            self.themeListener.stop()
+            self.themeListener = None
+
     def closeEvent(self, e):
-        # if self.themeListener and self.themeListener.isRunning():
-        #     self.themeListener.terminate()
-        #     self.themeListener.deleteLater()
-        # super().closeEvent(e)
         """关闭窗口时根据配置执行对应操作"""
         from .card.messagebox_custom import MessageBoxCloseWindow
 
@@ -303,6 +305,7 @@ class MainWindow(MSFluentWindow):
                     pass
             elif dialog.action == 'close':
                 # 关闭程序
+                self._stopThemeListener()
                 self.tray_icon.hide()
                 e.accept()
                 QApplication.quit()
@@ -321,6 +324,7 @@ class MainWindow(MSFluentWindow):
             # )
         elif close_action == 'close':
             # 直接关闭程序
+            self._stopThemeListener()
             self.tray_icon.hide()
             e.accept()
             QApplication.quit()

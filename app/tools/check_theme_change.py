@@ -1,50 +1,85 @@
-# check_theme_change.py 修改如下
+# check_theme_change.py
 from qfluentwidgets import setTheme, Theme, qconfig
 from PyQt5.QtCore import QThread, pyqtSignal
 import darkdetect
-import sys
+
 
 class SystemThemeListener(QThread):
-    systemThemeChanged = pyqtSignal()
-    
+    """系统主题监听线程
+
+    darkdetect.listener() 是阻塞调用，会一直运行监听系统主题变化，
+    需要在单独的线程中运行。
+    """
+    systemThemeChanged = pyqtSignal(Theme)  # 系统主题变化信号
+    initCompleted = pyqtSignal(bool)  # 初始化完成信号，参数表示是否支持
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self._isSupported = False  # 初始设为不支持
+        self._isSupported = False
+        self._stopFlag = False
 
     def run(self):
-        # 运行时检测监听能力
         try:
-            # 测试性调用检测实际支持情况
-            darkdetect.listener(lambda _: None)
+            # darkdetect.listener() 是阻塞调用
+            # 如果平台不支持会抛出 NotImplementedError
+            # 如果支持则会一直阻塞运行
             self._isSupported = True
-        except NotImplementedError:
-            return
+            self.initCompleted.emit(True)
 
-        # 正式注册监听（仅当支持时）
-        darkdetect.listener(self._onThemeChanged)
+            # 这个调用会阻塞，直到线程被终止
+            darkdetect.listener(self._onThemeChanged)
+        except NotImplementedError as e:
+            self._isSupported = False
+            self.initCompleted.emit(False)
+        except Exception as e:
+            self._isSupported = False
+            self.initCompleted.emit(False)
 
     def _onThemeChanged(self, theme: str):
-        theme = Theme.DARK if theme.lower() == "dark" else Theme.LIGHT
-        if qconfig.themeMode.value != Theme.AUTO or theme == qconfig.theme:
+        """系统主题变化回调"""
+        if self._stopFlag:
             return
-        qconfig.theme = Theme.AUTO
-        qconfig._cfg.themeChanged.emit(Theme.AUTO)
-        self.systemThemeChanged.emit()
+
+        new_theme = Theme.DARK if theme.lower() == "dark" else Theme.LIGHT
+
+        # 避免重复触发
+        if new_theme == qconfig.theme:
+            return
+
+        self.systemThemeChanged.emit(new_theme)
+
+    def stop(self):
+        """停止监听线程"""
+        self._stopFlag = True
+        # darkdetect.listener 无法被中断，只能等待或强制终止
+        if self.isRunning():
+            self.terminate()  # 强制终止线程
+            self.wait(500)  # 等待最多500ms
 
 
 def checkThemeChange(self):
-    def handle_theme_change():
-        setTheme(Theme.AUTO, lazy=True)
+    """初始化系统主题监听
 
-    # 先创建监听器（总是创建以保持接口一致）
+    在 MainWindow 中调用，self 是 MainWindow 实例
+    """
+    def handle_theme_change(theme):
+        setTheme(theme, lazy=True)
+
+    def on_init_completed(is_supported):
+        if is_supported:
+            pass
+        else:
+            # 清理不支持的监听器
+            if hasattr(self, 'themeListener') and self.themeListener:
+                self.themeListener.quit()
+                self.themeListener = None
+
+    # 创建监听器
     self.themeListener = SystemThemeListener(self)
-    
-    # 仅在检测到支持时启用
-    if self.themeListener.isRunning():  # 通过运行状态判断
-        self.themeListener.systemThemeChanged.connect(handle_theme_change)
-    else:
-        # 自动降级为手动模式
-        # qconfig.set(qconfig.themeMode, Theme.LIGHT)  # 或从配置读取
-        self.themeListener = None  # 释放无效监听器
-    
+    self.themeListener.systemThemeChanged.connect(handle_theme_change)
+    self.themeListener.initCompleted.connect(on_init_completed)
+
+    # 启动线程（阻塞调用会在线程中运行）
+    self.themeListener.start()
+
     return self.themeListener
