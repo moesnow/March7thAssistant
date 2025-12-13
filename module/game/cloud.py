@@ -569,7 +569,8 @@ class CloudGameController(GameControllerBase):
         return self.driver.execute_cdp_cmd(cmd, cmd_args)
     
     def get_window_handle(self) -> int:
-        return self.driver.current_window_handle
+        import win32gui
+        return win32gui.FindWindow(None, "云·星穹铁道")
     
     def switch_to_game(self) -> bool:
         if self.cfg.browser_headless_enable:
