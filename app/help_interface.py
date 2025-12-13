@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QUrl
 from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem
+from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties
 from qfluentwidgets import qconfig, ScrollArea, Pivot
 from .common.style_sheet import StyleSheet
 import markdown
@@ -36,6 +36,14 @@ class HelpInterface(ScrollArea):
         self.scrollWidget.setObjectName('scrollWidget')
         self.helpLabel.setObjectName('helpLabel')
         StyleSheet.HELP_INTERFACE.apply(self)
+
+        QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
+        scroller = QScroller.scroller(self.viewport())
+        scroller_props = scroller.scrollerProperties()
+        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.OvershootDragDistanceFactor, 0.05)
+        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.OvershootScrollDistanceFactor, 0.05)
+        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.DecelerationFactor, 0.5)
+        scroller.setScrollerProperties(scroller_props)
 
     def __initCard(self):
         tutorial_style = """
