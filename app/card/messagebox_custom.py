@@ -363,13 +363,33 @@ class MessageBoxDate(MessageBox):
 
         self.datePicker = DateTimeEdit(self)
         self.datePicker.setDateTime(content)
+        self._default_datetime = content
+        self._epoch_datetime = datetime.datetime.fromtimestamp(0)
+
+        shortcutLayout = QHBoxLayout()
+        self.resetButton = PushButton("重置时间", self)
+        self.nowButton = PushButton("设置为当前时间", self)
+        shortcutLayout.addWidget(self.resetButton)
+        shortcutLayout.addWidget(self.nowButton)
+        shortcutLayout.addStretch(1)
 
         self.textLayout.addWidget(self.datePicker, 0, Qt.AlignTop)
+        self.textLayout.addLayout(shortcutLayout)
 
         self.buttonGroup.setMinimumWidth(480)
 
+        self.resetButton.clicked.connect(self.reset_default_time)
+        self.nowButton.clicked.connect(self.set_current_time)
+
     def getDateTime(self):
         return self.datePicker.dateTime().toPyDateTime()
+
+    def reset_default_time(self):
+        # Reset to epoch start to match timestamp 0
+        self.datePicker.setDateTime(self._epoch_datetime)
+
+    def set_current_time(self):
+        self.datePicker.setDateTime(datetime.datetime.now())
 
 
 class MessageBoxInstance(MessageBox):

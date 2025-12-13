@@ -140,8 +140,28 @@ class PushSettingCardDate(PushSettingCard):
         message_box = MessageBoxDate(self.title, self.configvalue, self.window())
         if message_box.exec():
             time = message_box.getDateTime()
-            cfg.set_value(self.configname, time.timestamp())
-            self.contentLabel.setText(time.strftime('%Y-%m-%d %H:%M'))
+            # Make naive datetime explicit to local timezone to avoid negative timestamps on Windows
+            if time.tzinfo is None or time.tzinfo.utcoffset(time) is None:
+                local_offset = datetime.datetime.now().astimezone().utcoffset() or datetime.timedelta()
+                time = time.replace(tzinfo=datetime.timezone(local_offset))
+            try:
+                timestamp = time.timestamp()
+                display_time = time
+            except (OSError, OverflowError, ValueError):
+                timestamp = 0
+                display_time = datetime.datetime.fromtimestamp(timestamp)
+                InfoBar.warning(
+                    self.tr('时间无效'),
+                    self.tr('所选时间无法转换为时间戳，已使用默认时间'),
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self.window()
+                )
+            cfg.set_value(self.configname, timestamp)
+            self.configvalue = display_time
+            self.contentLabel.setText(display_time.strftime('%Y-%m-%d %H:%M'))
 
 
 class PushSettingCardKey(PushSettingCard):
