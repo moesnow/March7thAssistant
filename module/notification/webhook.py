@@ -2,6 +2,7 @@ import requests
 import io
 import base64
 import json
+import copy
 from typing import Dict, Any, Optional
 from utils.logger.logger import Logger
 from .notifier import Notifier
@@ -24,7 +25,7 @@ class WebhookNotifier(Notifier):
         if not self.url:
             raise ValueError("URL is required for WebhookNotifier")
         
-        # 解析 headers 如果是字符串格式（支持JSON字符串）
+        # 解析 headers，如果是字符串格式（支持JSON字符串）
         if isinstance(self.headers, str):
             try:
                 self.headers = json.loads(self.headers)
@@ -32,7 +33,7 @@ class WebhookNotifier(Notifier):
                 self.logger.warning(f"无法解析 headers JSON: {self.headers}，将使用空headers")
                 self.headers = {}
         
-        # 解析 body_template 如果是字符串格式（支持JSON字符串）
+        # 解析 body_template，如果是字符串格式（支持JSON字符串）
         if isinstance(self.body_template, str):
             try:
                 self.body_template = json.loads(self.body_template)
@@ -84,9 +85,9 @@ class WebhookNotifier(Notifier):
             
             # 如果有自定义的 body 模板，使用自定义模板
             if self.body_template:
-                # 复制模板以避免修改原始模板
+                # 使用深拷贝避免修改原始模板（处理嵌套结构）
                 if isinstance(self.body_template, dict):
-                    body = self._replace_placeholders(self.body_template.copy(), title, content, image_base64)
+                    body = self._replace_placeholders(copy.deepcopy(self.body_template), title, content, image_base64)
                 elif isinstance(self.body_template, str):
                     body = self._replace_placeholders(self.body_template, title, content, image_base64)
                 else:
@@ -107,9 +108,8 @@ class WebhookNotifier(Notifier):
                         timeout=30
                     )
                 else:
-                    # 如果body是字符串，直接发送
-                    if 'Content-Type' not in headers:
-                        headers['Content-Type'] = 'application/json'
+                    # 如果body是字符串，发送为文本数据
+                    # 注意：如果需要特定的Content-Type，请在headers中明确指定
                     response = requests.request(
                         method=self.method,
                         url=self.url,
