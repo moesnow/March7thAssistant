@@ -262,7 +262,7 @@ class CloudGameController(GameControllerBase):
 
         // 添加倒计时功能
         var countdown = 10;
-        alertDiv.innerHTML = '手动运行时为保存用户信息，请退出游戏后等待至少 <span id="countdown">10</span> 秒再关闭浏览器';
+        alertDiv.innerHTML = '手动运行请通过悬浮球退出游戏，且等待至少 <span id="countdown">10</span> 秒再关闭浏览器';
 
         // 添加到页面
         document.body.appendChild(alertDiv);
@@ -692,7 +692,6 @@ class CloudGameController(GameControllerBase):
                     current_url = self.driver.current_url
                     
                 except Exception:
-                    print("浏览器已关闭，无效操作")
                     break
                 try:
                     self._save_local_storage()
