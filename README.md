@@ -88,6 +88,13 @@ python main.py 后面支持参数 fight/universe/forgottenhall 等
 
 </details>
 
+## Docker 运行
+March7thAssistant for Docker并不由开发者moesnow维护，有诸多限制，且仅适配了部分功能。
+
+如果你想在Linux服务器和NAS上使用March7thAssistant，或想要探索March7thAssistant的更多可能性，那么[了解详细](https://github.com/liuziheng20091106/March7thAssistant-docker)
+
+
+
 ---
 
 如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕
