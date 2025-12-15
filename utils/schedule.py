@@ -3,13 +3,14 @@ import getpass
 import win32com.client
 
 
-def create_task(task_name, program_path, delay_seconds=30):
+def create_task(task_name, program_path, program_args=None, delay_seconds=30):
     """
     创建计划任务，指定在用户登录时启动指定程序。
 
     参数:
     - task_name (str): 任务的名称。
     - program_path (str): 要启动的程序的绝对路径。
+    - program_args (str): 程序启动参数，默认为 None。
     - delay_seconds (int): 延迟时间，单位为秒，默认为30秒。
     """
     # 获取当前用户
@@ -33,6 +34,8 @@ def create_task(task_name, program_path, delay_seconds=30):
     # 配置任务操作（启动程序）
     action = task_def.Actions.Create(0)  # 0 表示启动程序
     action.Path = program_path
+    if program_args:
+        action.Arguments = program_args
 
     # 配置任务的运行设置
     task_def.RegistrationInfo.Description = f"启动 {os.path.basename(program_path)}"
