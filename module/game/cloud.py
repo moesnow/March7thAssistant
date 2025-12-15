@@ -415,7 +415,7 @@ class CloudGameController(GameControllerBase):
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             if proc.info['name'] in ('chrome.exe', 'msedge.exe'):
                 cmdline = proc.info['cmdline']
-                if self.BROWSER_TAG in cmdline and (headless is None or (headless and "--headless=new" in cmdline)):
+                if self.BROWSER_TAG in cmdline and (headless is None or (headless == ("--headless=new" in cmdline))):
                     all_proc.append(proc)
         return all_proc
                     

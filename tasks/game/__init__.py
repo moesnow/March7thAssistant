@@ -157,6 +157,7 @@ def start_game():
             # time.sleep(10)    #dont need to wait
             if not wait_until(lambda: cloud_game_check_and_enter(), 600):
                 raise TimeoutError("查找并点击进入按钮超时")
+            time.sleep(10)
 
     for retry in range(MAX_RETRY):
         try:
