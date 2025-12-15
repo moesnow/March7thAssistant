@@ -84,7 +84,7 @@ class Daily:
             if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
                 screen.change_to("divergent_main")
                 if not Universe.check_universe_score():
-                    if Universe.start(1, False, "divergent"):
+                    if Universe.start(1, False, "divergent_weekly"):
                         cfg.save_timestamp("weekly_divergent_timestamp")
             else:
                 log.info("「差分宇宙」积分奖励尚未刷新")
