@@ -212,12 +212,12 @@ class LogInterface(ScrollArea):
                 self._updateFinishedStatus(-1)
                 return
             self.process.start(executable_path, [command])
+            self.appendLog(f"命令: {executable_path} {command}\n")
         else:
             executable_path = sys.executable
             main_script = os.path.abspath("main.py")
             self.process.start(executable_path, [main_script, command])
-
-        self.appendLog(f"命令: {executable_path} {main_script} {command}\n")
+            self.appendLog(f"命令: {executable_path} {main_script} {command}\n")
         # self.appendLog("-" * 117 + "\n")
 
     def stopTask(self):
