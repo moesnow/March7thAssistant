@@ -312,6 +312,10 @@ hotkey_warp: f3 # 设置打开跃迁的按键。
 # 图形界面快捷键设置
 hotkey_stop_task: f10 # 设置停止任务的全局快捷键（支持后台）。
 
+# 定时运行设置
+scheduled_run_enable: false # 是否启用定时运行。true 启用，false 不启用。
+scheduled_run_time: "04:00" # 定时运行时间，格式为 HH:mm（24小时制）。
+
 # 是否在多显示器上进行截屏（若开启无法正确运行请关闭）
 all_screens: true
 

@@ -1,11 +1,12 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, pyqtSignal, QTimer
+from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, pyqtSignal, QTimer, QTime, QDateTime
 from PyQt5.QtGui import QFont, QTextCursor, QKeySequence
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit,
                              QShortcut, QSizePolicy)
 from qfluentwidgets import (ScrollArea, PrimaryPushButton, PushButton,
                             FluentIcon, InfoBar, InfoBarPosition, CardWidget,
-                            BodyLabel, StrongBodyLabel, PlainTextEdit)
+                            BodyLabel, StrongBodyLabel, PlainTextEdit,
+                            SwitchButton, IndicatorPosition, TimePicker)
 import sys
 import os
 import keyboard
@@ -29,6 +30,10 @@ class LogInterface(ScrollArea):
         self._hotkey_registered = False
         self._current_hotkey = None
 
+        # 定时运行相关
+        self._schedule_timer = QTimer(self)
+        self._schedule_timer.timeout.connect(self._checkScheduledTime)
+
         self.scrollWidget = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
@@ -37,6 +42,9 @@ class LogInterface(ScrollArea):
 
         # 连接停止任务信号
         self.stopTaskRequested.connect(self.stopTask)
+
+        # 启动定时检查器（每30秒检查一次）
+        self._schedule_timer.start(30000)
 
     def __initWidget(self):
         self.scrollWidget.setObjectName('scrollWidget')
@@ -78,6 +86,30 @@ class LogInterface(ScrollArea):
 
         self.buttonLayout.addWidget(self.stopButton)
         self.buttonLayout.addWidget(self.clearButton)
+        self.buttonLayout.addSpacing(20)
+
+        # 定时运行区域（与按钮同一行）
+        self.scheduleLabel = BodyLabel(self.tr('定时运行:'))
+
+        self.scheduleSwitch = SwitchButton(self.tr('关'), self, IndicatorPosition.RIGHT)
+        self.scheduleSwitch.setChecked(cfg.get_value("scheduled_run_enable", False))
+        self.scheduleSwitch.setText(self.tr('开') if self.scheduleSwitch.isChecked() else self.tr('关'))
+        self.scheduleSwitch.checkedChanged.connect(self._onScheduleSwitchChanged)
+
+        self.scheduleTimePicker = TimePicker(self)
+        time_str = cfg.get_value("scheduled_run_time", "04:00")
+        time_parts = list(map(int, time_str.split(":")))
+        qtime = QTime(*time_parts)
+        self.scheduleTimePicker.setTime(qtime)
+        self.scheduleTimePicker.timeChanged.connect(self._onScheduleTimeChanged)
+
+        self.scheduleStatusLabel = BodyLabel()
+        self._updateScheduleStatusLabel()
+
+        self.buttonLayout.addWidget(self.scheduleLabel)
+        self.buttonLayout.addWidget(self.scheduleSwitch)
+        self.buttonLayout.addWidget(self.scheduleTimePicker)
+        self.buttonLayout.addWidget(self.scheduleStatusLabel)
         self.buttonLayout.addStretch()
 
         # 日志显示区域
@@ -151,6 +183,48 @@ class LogInterface(ScrollArea):
         # 更新按钮文本
         hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
         self.stopButton.setText(self.tr(f'停止任务 ({hotkey})'))
+
+    def _onScheduleSwitchChanged(self, isChecked: bool):
+        """定时开关状态改变"""
+        self.scheduleSwitch.setText(self.tr('开') if isChecked else self.tr('关'))
+        cfg.set_value("scheduled_run_enable", isChecked)
+        self._updateScheduleStatusLabel()
+
+    def _onScheduleTimeChanged(self, time: QTime):
+        """定时时间改变"""
+        cfg.set_value("scheduled_run_time", time.toString("HH:mm"))
+        self._updateScheduleStatusLabel()
+
+    def _updateScheduleStatusLabel(self):
+        """更新定时状态标签"""
+        if cfg.get_value("scheduled_run_enable", False):
+            time_str = cfg.get_value("scheduled_run_time", "04:00")
+            self.scheduleStatusLabel.setText(self.tr(f'下次运行: {time_str}'))
+        else:
+            self.scheduleStatusLabel.setText(self.tr('定时执行完整运行任务'))
+
+    def _checkScheduledTime(self):
+        """检查是否到达定时运行时间"""
+        if not cfg.get_value("scheduled_run_enable", False):
+            return
+
+        # 如果有任务正在运行，跳过本次检查
+        if self.isTaskRunning():
+            return
+
+        current_time = QTime.currentTime()
+        scheduled_time_str = cfg.get_value("scheduled_run_time", "04:00")
+        time_parts = list(map(int, scheduled_time_str.split(":")))
+        scheduled_time = QTime(*time_parts)
+
+        # 检查当前时间是否在定时时间的60秒窗口内
+        secs_diff = abs(current_time.secsTo(scheduled_time))
+
+        # 如果时间差在60秒内（因为每30秒检查一次）
+        if secs_diff <= 60 or secs_diff >= 86340:  # 86340 = 24*60*60 - 60，处理跨天情况
+            # 启动完整运行任务
+            self.appendLog(f"\n========== 定时任务触发 ({scheduled_time_str}) ==========\n")
+            self.startTask("main")
 
     def startTask(self, command):
         """启动任务"""
@@ -327,3 +401,6 @@ class LogInterface(ScrollArea):
     def cleanup(self):
         """清理资源（在应用退出时调用）"""
         self._unregisterGlobalHotkey()
+        # 停止定时检查器
+        if self._schedule_timer:
+            self._schedule_timer.stop()

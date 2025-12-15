@@ -20,6 +20,7 @@ from module.notification import notif
 from module.notification.notification import NotificationLevel
 from module.ocr import ocr
 from module.screen import screen
+from utils.console import is_gui_started
 
 starrail = StarRailController(cfg=cfg, logger=log)
 
@@ -235,6 +236,14 @@ def after_finish_is_loop():
         scheduled_time = cfg.scheduled_time
         wait_time = Date.time_to_seconds(scheduled_time)
         future_time = Date.calculate_future_time(scheduled_time)
+
+    # 图形界面不支持循环模式，提前检查并退出
+    if is_gui_started():
+        msg = "通过图形界面启动，程序不支持循环模式，请使用日志界面的定时运行功能"
+        log.error(msg)
+        notif.notify(content=msg, level=NotificationLevel.ERROR)
+        log.hr("完成", 2)
+        sys.exit(0)
 
     log.info(cfg.notify_template['ContinueTime'].format(time=future_time))
     notif.notify(content=cfg.notify_template['ContinueTime'].format(time=future_time), level=NotificationLevel.ALL)
