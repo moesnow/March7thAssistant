@@ -64,6 +64,52 @@
 
 更新確認は、GUI設定の最下部にあるボタンをクリックするか、`March7th Updater.exe` をダブルクリックしてください
 
+### コマンドライン引数
+
+GUI の `March7th Launcher.exe` はコマンドライン引数に対応しており、起動時に指定したタスクを自動実行できます：
+
+```bash
+# ヘルプを表示
+March7th Launcher.exe -h
+
+# すべてのタスクを一覧表示
+March7th Launcher.exe -l
+
+# GUI を起動してフル実行
+March7th Launcher.exe main
+
+# GUI を起動してデイリー訓練を実行
+March7th Launcher.exe daily
+
+# タスク完了後に自動終了（TASK と併用）
+March7th Launcher.exe main -e
+```
+
+<details>
+<summary>利用可能なタスク一覧</summary>
+
+| タスク | 説明 |
+|-------|------|
+| main | フル実行 |
+| daily | デイリー訓練 |
+| power | 開拓力消化 |
+| currencywars | クレジット戦闘 |
+| currencywarsloop | クレジット戦闘ループ |
+| fight | フィールド探索 |
+| universe | 模擬宇宙 |
+| forgottenhall | 忘却の庭 |
+| purefiction | 虚構叙事 |
+| apocalyptic | 末日幻影 |
+| redemption | 交換コード |
+| universe_gui | 模擬宇宙（ネイティブUI） |
+| fight_gui | フィールド探索（ネイティブUI） |
+| universe_update | 模擬宇宙アップデート |
+| fight_update | フィールド探索アップデート |
+| game | ゲーム起動 |
+| notify | 通知テスト |
+
+</details>
+
 ## ソースコードから実行
 
 初心者の方は、上記の方法でダウンロードとインストールを行ってください。以下の手順は不要です。

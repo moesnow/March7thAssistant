@@ -63,6 +63,52 @@
 
 檢測更新可以點擊圖形界面設置最底下的按鈕，或雙擊 `March7th Updater.exe`
 
+### 命令列參數
+
+圖形界面 `March7th Launcher.exe` 支援命令列參數，啟動時即可自動執行指定任務：
+
+```bash
+# 查看說明
+March7th Launcher.exe -h
+
+# 列出所有可用任務
+March7th Launcher.exe -l
+
+# 啟動圖形界面並執行完整運行
+March7th Launcher.exe main
+
+# 啟動圖形界面並執行每日實訓
+March7th Launcher.exe daily
+
+# 任務正常完成後自動退出（需配合任務參數）
+March7th Launcher.exe main -e
+```
+
+<details>
+<summary>可用任務列表</summary>
+
+| 任務名稱 | 說明 |
+|---------|------|
+| main | 完整運行 |
+| daily | 每日實訓 |
+| power | 清體力 |
+| currencywars | 貨幣戰爭 |
+| currencywarsloop | 貨幣戰爭循環 |
+| fight | 鋤大地 |
+| universe | 模擬宇宙 |
+| forgottenhall | 混沌回憶 |
+| purefiction | 虛構敘事 |
+| apocalyptic | 末日幻影 |
+| redemption | 兌換碼 |
+| universe_gui | 模擬宇宙原生界面 |
+| fight_gui | 鋤大地原生界面 |
+| universe_update | 模擬宇宙更新 |
+| fight_update | 鋤大地更新 |
+| game | 啟動遊戲 |
+| notify | 測試消息推送 |
+
+</details>
+
 ## 源碼運行
 
 如果你是完全不懂的小白，請通過上面的方式下載安裝，不用往下看了。

@@ -64,6 +64,52 @@ If you need to use the **Task Scheduler** for scheduled runs or want to execute 
 
 To check for updates, click the button at the bottom of the graphical interface settings or double-click `March7th Updater.exe`.
 
+### Command Line Arguments
+
+The GUI `March7th Launcher.exe` supports command line arguments so you can launch directly into a specific task:
+
+```bash
+# Show help
+March7th Launcher.exe -h
+
+# List all tasks
+March7th Launcher.exe -l
+
+# Launch GUI and run full workflow
+March7th Launcher.exe main
+
+# Launch GUI and run Daily Training
+March7th Launcher.exe daily
+
+# Auto-exit after task completes successfully (use with TASK)
+March7th Launcher.exe main -e
+```
+
+<details>
+<summary>Available Tasks</summary>
+
+| Task | Description |
+|------|-------------|
+| main | Full run |
+| daily | Daily Training |
+| power | Spend stamina |
+| currencywars | Credit Battle |
+| currencywarsloop | Credit Battle loop |
+| fight | Cavern farming |
+| universe | Simulated Universe |
+| forgottenhall | Forgotten Hall |
+| purefiction | Pure Fiction |
+| apocalyptic | Apocalyptic Shadow |
+| redemption | Redeem codes |
+| universe_gui | Simulated Universe (native GUI) |
+| fight_gui | Cavern (native GUI) |
+| universe_update | Simulated Universe update |
+| fight_update | Cavern update |
+| game | Launch game |
+| notify | Test notification |
+
+</details>
+
 ## Running from Source
 
 If you are a complete beginner, please use the download and installation method mentioned above, and there's no need to proceed further.

@@ -68,8 +68,11 @@ class ConfigWatcher(QObject):
 
 
 class MainWindow(MSFluentWindow):
-    def __init__(self):
+    def __init__(self, task=None, exit_on_complete=False):
         super().__init__()
+        self.startup_task = task  # 保存启动时要执行的任务
+        self.exit_on_complete = exit_on_complete  # 任务完成后是否退出
+
         self.initWindow()
 
         self.initInterface()
@@ -80,9 +83,20 @@ class MainWindow(MSFluentWindow):
         self.config_watcher = ConfigWatcher(os.path.abspath(cfg.config_path), self)
         self.config_watcher.config_changed.connect(self._on_config_file_changed)
 
-        # 检查更新
-        checkUpdate(self, flag=True)
-        checkAnnouncement(self)
+        # 如果有启动任务，延迟执行
+        if self.startup_task:
+            from PyQt5.QtCore import QTimer
+            QTimer.singleShot(1000, self._executeStartupTask)
+        else:
+            # 检查更新
+            checkUpdate(self, flag=True)
+            checkAnnouncement(self)
+
+    def _executeStartupTask(self):
+        """执行启动时指定的任务"""
+        if self.startup_task:
+            from tasks.base.tasks import start_task
+            start_task(self.startup_task)
 
     def initWindow(self):
         self.setMicaEffectEnabled(False)
@@ -127,6 +141,8 @@ class MainWindow(MSFluentWindow):
         signalBus.startTaskSignal.connect(self._onStartTask)
         # 连接热键配置改变信号
         signalBus.hotkeyChangedSignal.connect(self._onHotkeyChanged)
+        # 连接任务完成信号
+        self.logInterface.taskFinished.connect(self._onTaskFinished)
 
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('主页'))
@@ -250,6 +266,17 @@ class MainWindow(MSFluentWindow):
         """处理热键配置改变信号"""
         if hasattr(self, 'logInterface'):
             self.logInterface.updateHotkey()
+
+    def _onTaskFinished(self, exit_code):
+        """处理任务完成信号"""
+        # 如果是启动任务且设置了完成后退出，则在任务成功完成时退出程序
+        if self.exit_on_complete and self.startup_task and exit_code == 0:
+            from PyQt5.QtCore import QTimer
+            # 延迟一小段时间让用户看到完成状态
+            QTimer.singleShot(5000, self.quitApp)
+        else:
+            # 任务失败或未指定退出时，清除自动退出标记
+            self.exit_on_complete = False
 
     def quitApp(self):
         """退出应用程序"""
