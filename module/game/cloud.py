@@ -415,7 +415,7 @@ class CloudGameController(GameControllerBase):
         for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
             if proc.info['name'] in ('chrome.exe', 'msedge.exe'):
                 cmdline = proc.info['cmdline']
-                if self.BROWSER_TAG in cmdline and (headless is None or (headless and "--headless=new" in cmdline)):
+                if self.BROWSER_TAG in cmdline and (headless is None or (headless == ("--headless=new" in cmdline))):
                     all_proc.append(proc)
         return all_proc
                     
@@ -569,7 +569,8 @@ class CloudGameController(GameControllerBase):
         return self.driver.execute_cdp_cmd(cmd, cmd_args)
     
     def get_window_handle(self) -> int:
-        return self.driver.current_window_handle
+        import win32gui
+        return win32gui.FindWindow(None, "云·星穹铁道")
     
     def switch_to_game(self) -> bool:
         if self.cfg.browser_headless_enable:
