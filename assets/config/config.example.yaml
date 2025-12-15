@@ -37,7 +37,7 @@ game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
 # 云崩铁配置
 cloud_game_enable: False # 是否启动云游戏
 cloud_game_fullscreen_enable: True # 云崩铁是否全屏运行
-cloud_game_max_queue_time: 10 # 最大排队等待时间（分钟）
+cloud_game_max_queue_time: 60 # 最大排队等待时间（分钟）
 # cloud_game_video_quality: '0' # 云崩铁画质 '0'(超高清)，'1'（高清）, '2'（标清）, '3'（低清）
 # cloud_game_smooth_first_enable: False # 是否流畅优先
 # cloud_game_status_bar_enable: False # 是否显示网速

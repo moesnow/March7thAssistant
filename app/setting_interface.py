@@ -649,12 +649,6 @@ class SettingInterface(ScrollArea):
             self.tr("最大排队等待时间（分钟）"),
             ''
         )
-        self.browserDownloadUseMirrorCard = SwitchSettingCard1(
-            FIF.CLOUD_DOWNLOAD,
-            self.tr("使用国内镜像下载浏览器和驱动"),
-            None,
-            "browser_download_use_mirror"
-        )
         # self.cloudGameVideoQualityCard = ComboBoxSettingCard2(
         #     "cloud_game_video_quality",
         #     FIF.VIDEO,
@@ -675,25 +669,19 @@ class SettingInterface(ScrollArea):
         #     "cloud_game_status_bar_enable",
         #     "cloud_game_status_bar_type"
         # )
-        self.browserTypeCard = ComboBoxSettingCard2(
+        self.browserTypeCard = ExpandableComboBoxSettingCard(
             "browser_type",
             FIF.GLOBE,
             self.tr("浏览器类型"),
             self.tr("‘集成’ 模式下，会自动下载浏览器"),
             {"集成（Chrome For Testing）": "integrated", "Chrome": "chrome", "Edge": "edge"}
         )
-        self.browserHeadlessCard = SwitchSettingCard1(
-            FIF.VIEW,
-            self.tr("无窗口模式（后台运行）"),
-            self.tr("不支持模拟宇宙和锄大地"),
-            "browser_headless_enable"
+        self.browserDownloadUseMirrorCard = SwitchSettingCard1(
+            FIF.CLOUD_DOWNLOAD,
+            self.tr("使用国内镜像下载浏览器和驱动"),
+            None,
+            "browser_download_use_mirror"
         )
-        # self.browserCookiesCard = SwitchSettingCard1(
-        #     FIF.PALETTE,    # 这个画盘长得很像 Cookie
-        #     self.tr("保存 Cookies（登录状态）"),
-        #     None,
-        #     "browser_dump_cookies_enable"
-        # )
         self.browserPersistentCard = SwitchSettingCard1(
             FIF.DOWNLOAD,
             self.tr("保存浏览器数据（游戏的登录状态和本地数据）"),
@@ -714,6 +702,18 @@ class SettingInterface(ScrollArea):
             self.tr("浏览器启动参数"),
             "browser_launch_argument"
         )
+        self.browserHeadlessCard = SwitchSettingCard1(
+            FIF.VIEW,
+            self.tr("无窗口模式（后台运行）"),
+            self.tr("不支持模拟宇宙和锄大地"),
+            "browser_headless_enable"
+        )
+        # self.browserCookiesCard = SwitchSettingCard1(
+        #     FIF.PALETTE,    # 这个画盘长得很像 Cookie
+        #     self.tr("保存 Cookies（登录状态）"),
+        #     None,
+        #     "browser_dump_cookies_enable"
+        # )
 
         self.ProgramGroup = SettingCardGroup(self.tr('程序设置'), self.scrollWidget)
         self.logLevelCard = ComboBoxSettingCardLog(
@@ -1076,8 +1076,13 @@ class SettingInterface(ScrollArea):
         ])
 
         self.CloudGameGroup.addSettingCard(self.cloudGameEnableCard)
-        self.CloudGameGroup.addSettingCard(self.browserDownloadUseMirrorCard)
         self.CloudGameGroup.addSettingCard(self.browserTypeCard)
+        self.browserTypeCard.addSettingCards([
+            self.browserDownloadUseMirrorCard,
+            self.browserPersistentCard,
+            self.browserScaleCard,
+            self.browserLaunchArgCard
+        ])
         self.CloudGameGroup.addSettingCard(self.cloudGameFullScreenCard)
         self.CloudGameGroup.addSettingCard(self.browserHeadlessCard)
         self.CloudGameGroup.addSettingCard(self.cloudGameMaxQueueTimeCard)
@@ -1085,9 +1090,9 @@ class SettingInterface(ScrollArea):
         # self.CloudGameGroup.addSettingCard(self.cloudGameSmoothFirstCard)
         # self.CloudGameGroup.addSettingCard(self.cloudGameShowStatusCard)
         # self.CloudGameGroup.addSettingCard(self.browserCookiesCard)
-        self.CloudGameGroup.addSettingCard(self.browserPersistentCard)
-        self.CloudGameGroup.addSettingCard(self.browserScaleCard)
-        self.CloudGameGroup.addSettingCard(self.browserLaunchArgCard)
+        # self.CloudGameGroup.addSettingCard(self.browserPersistentCard)
+        # self.CloudGameGroup.addSettingCard(self.browserScaleCard)
+        # self.CloudGameGroup.addSettingCard(self.browserLaunchArgCard)
 
         self.ProgramGroup.addSettingCard(self.logLevelCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
@@ -1193,6 +1198,7 @@ class SettingInterface(ScrollArea):
         self.testNotifyCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.instanceTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.echoofwarEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.browserTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
 
     def addSubInterface(self, widget: QLabel, objectName, text):
         def remove_spacing(layout):
