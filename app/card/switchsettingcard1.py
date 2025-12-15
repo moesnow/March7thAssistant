@@ -315,8 +315,11 @@ class SwitchSettingCardHotkey(SettingCard):
 
     def _onClicked(self):
         from app.sub_interfaces.hotkey_interface import HotkeyInterface
+        from app.common.signal_bus import signalBus
         hotkey_interface = HotkeyInterface(self.window())
-        hotkey_interface.exec()
+        if hotkey_interface.exec():
+            # 用户点击确认，发送热键更新信号
+            signalBus.hotkeyChangedSignal.emit()
 
 
 class SwitchSettingCardCloudGameStatus(SettingCard):

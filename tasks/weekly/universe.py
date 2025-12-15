@@ -12,6 +12,7 @@ import time
 import sys
 import os
 from module.config import asu_config
+from utils.console import pause_on_error, pause_and_retry
 from tasks.power.instance import Instance
 
 
@@ -26,7 +27,7 @@ class Universe:
             if cfg.update_source == "MirrorChyan":
                 if cfg.mirrorchyan_cdk == "":
                     log.error("未设置 Mirror酱 CDK")
-                    input("按回车键关闭窗口. . .")
+                    pause_on_error()
                     sys.exit(0)
                 # 符合Mirror酱条件
                 response = requests.get(
@@ -59,7 +60,7 @@ class Universe:
                         log.error(error_msg)
                     except:
                         log.error("Mirror酱 API 请求失败")
-                    input("按回车键关闭窗口. . .")
+                    pause_on_error()
                     sys.exit(0)
             else:
                 response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "Auto_Simulated_Universe"), timeout=10, headers=cfg.useragent)
@@ -71,7 +72,7 @@ class Universe:
                         break
                     if url is None:
                         log.error("没有找到可用更新，请稍后再试")
-                        input("按回车键关闭窗口. . .")
+                        pause_on_error()
                         sys.exit(0)
                     update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe")
                     update_handler.run()
@@ -104,7 +105,7 @@ class Universe:
             subprocess.run([cfg.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "pip", "--upgrade"])
             while not subprocess.run([cfg.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=cfg.universe_path):
                 log.error("依赖安装失败")
-                input("按回车键重试. . .")
+                pause_and_retry()
             log.info("依赖安装成功")
             cfg.set_value("universe_requirements", True)
 
@@ -268,7 +269,7 @@ class Universe:
             return
 
         immersifier_count = int(text.split("/")[0])
-        log.info(f"🟣沉浸器: {immersifier_count}/12")
+        log.info(f"沉浸器: {immersifier_count}/12")
         if immersifier_count > 0:
             Instance.run("饰品提取", cfg.instance_names["饰品提取"], 40, immersifier_count)
 

@@ -13,13 +13,14 @@ class HotkeyInterface(MessageBox):
     def __init__(self, parent=None):
         configlist = {
             "秘技（只对清体力和逐光捡金场景生效）": "hotkey_technique",
-            "地图": "hotkey_map", 
-            "跃迁": "hotkey_warp"
+            "地图": "hotkey_map",
+            "跃迁": "hotkey_warp",
+            "停止任务（全局热键，支持后台）": "hotkey_stop_task"
         }
-        
+
         super().__init__("按键设置", "", parent)
         self.configlist = configlist
-        
+
         self.backup_config = {}
         for config in self.configlist.values():
             self.backup_config[config] = cfg.get_value(config)
@@ -69,5 +70,5 @@ class HotkeyInterface(MessageBox):
         """ 取消按钮点击处理 - 恢复备份配置 """
         for config, value in self.backup_config.items():
             cfg.set_value(config, value)
-        
+
         self.reject()

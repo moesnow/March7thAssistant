@@ -1,5 +1,6 @@
 from tasks.base.download import download_with_progress
 from module.logger import log
+from utils.console import pause_and_retry
 import subprocess
 import tempfile
 import shutil
@@ -68,7 +69,7 @@ class UpdateHandler:
                 return True
             except Exception as e:
                 log.error(f"解压失败: {e}")
-                input("按回车键重新下载. . .")
+                pause_and_retry()
                 os.remove(self.download_file_path)
                 return False
 
@@ -82,7 +83,7 @@ class UpdateHandler:
                 break
             except Exception as e:
                 log.error(f"覆盖失败: {e}")
-                input("按回车键重试. . .")
+                pause_and_retry()
 
     def clean_up(self):
         try:

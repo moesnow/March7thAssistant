@@ -9,6 +9,7 @@ from utils.registry.gameaccount import gamereg_uid
 from .starrailcontroller import StarRailController
 
 from utils.date import Date
+from utils.console import pause_on_success
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
 from module.logger import log
@@ -202,8 +203,7 @@ def stop(detect_loop=False):
             get_game_controller().shutdown(cfg.after_finish)
         log.hr("完成", 2)
         if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
-            if cfg.pause_after_success:
-                input("按回车键关闭窗口. . .")
+            pause_on_success()
         sys.exit(0)
 
 
@@ -221,7 +221,7 @@ def after_finish_is_loop():
     if cfg.loop_mode == "power":
         current_power = Power.get()
         if current_power >= cfg.power_limit:
-            log.info(f"🟣开拓力 >= {cfg.power_limit}")
+            log.info(f"开拓力 >= {cfg.power_limit}")
             log.info("即将再次运行")
             log.hr("完成", 2)
             return

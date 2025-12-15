@@ -4,7 +4,9 @@ from module.ocr import ocr
 import time
 import json
 import sys
-import re # 用于加载正则表达式
+import re  # 用于加载正则表达式
+from utils.console import pause_on_error
+
 
 class Tasks:
     def __init__(self, config_example_path):
@@ -18,7 +20,7 @@ class Tasks:
                 return json.load(file)
         except FileNotFoundError:
             log.error(f"配置文件不存在：{config_example_path}")
-            input("按回车键关闭窗口. . .")
+            pause_on_error()
             sys.exit(1)
 
     def start(self):
@@ -29,9 +31,9 @@ class Tasks:
     def detect(self):
         screenshot, _, _ = auto.take_screenshot(crop=self.crop)
         result = ocr.recognize_multi_lines(screenshot)
-        merged_texts = self._merge_ocr_blocks(result, x_gap = 100)
+        merged_texts = self._merge_ocr_blocks(result, x_gap=100)
         log.debug(f"每日实训分栏拼接的文本: {merged_texts}")
-        progress_pattern = re.compile(r'(\d+)\s*[/／]\s*(\d+)') # 用于匹配“X/Y”格式的正则表达式
+        progress_pattern = re.compile(r'(\d+)\s*[/／]\s*(\d+)')  # 用于匹配“X/Y”格式的正则表达式
         for text in merged_texts:
             for keyword, task_name in self.task_mappings.items():
                 if keyword in text:
@@ -52,44 +54,44 @@ class Tasks:
     def _merge_block_data(self, block_list):
         """合并一个块内所有小元素的文本"""
         return "".join([b['text'] for b in block_list])
-    
-    def _merge_ocr_blocks(self, raw_ocr_results, x_gap = 100):
+
+    def _merge_ocr_blocks(self, raw_ocr_results, x_gap=100):
         """按 X Y 轴将OCR文本片段合并成连续的文本字符串列表。"""
         # 输入检查
         if not raw_ocr_results:
             log.debug("每日实训未识别到任何文本")
             return []
-        
+
         # 提取文本；X 轴边界用于判断同一块；Y 轴边界用于排序
         parsed_data = []
         for coords_list, text_data in raw_ocr_results:
-            text, _ = text_data # 忽略置信度
-            point_x = [c[0] for c in coords_list] # 提取X轴坐标
-            point_y = [c[1] for c in coords_list] # 提取Y轴坐标
+            text, _ = text_data  # 忽略置信度
+            point_x = [c[0] for c in coords_list]  # 提取X轴坐标
+            point_y = [c[1] for c in coords_list]  # 提取Y轴坐标
             parsed_data.append({
-                'x_min': min(point_x), # 用于X轴分栏和排序
-                'x_max': max(point_x), # 用于X轴间距判断
-                'y_min': min(point_y), # 用于块内文本拼接的顺序
+                'x_min': min(point_x),  # 用于X轴分栏和排序
+                'x_max': max(point_x),  # 用于X轴间距判断
+                'y_min': min(point_y),  # 用于块内文本拼接的顺序
                 'text': text,
             })
         # 按X轴从左到右，按Y轴从上到下排序(X轴优先，Y轴次之)
         parsed_data.sort(key=lambda item: (item['x_min'], item['y_min']))
         # 合并文本块
         merged_texts = []  # 存储最终合并的文本结果
-        current_block = [] # 当前正在合并的文本块
+        current_block = []  # 当前正在合并的文本块
         last_x_max = -1
         for item in parsed_data:
             x_min_current = item['x_min']
             if last_x_max == -1 or (x_min_current - last_x_max) > x_gap:
                 # 与上一个块间隔过大，视为新块
                 if current_block:
-                    current_block.sort(key=lambda b: b['y_min']) # 确保一个块内的文本顺序正确
+                    current_block.sort(key=lambda b: b['y_min'])  # 确保一个块内的文本顺序正确
                     merged_texts.append(self._merge_block_data(current_block))
-                current_block = [item] # 开始新块
+                current_block = [item]  # 开始新块
             else:
-                current_block.append(item) # 属于同一块，合并
-            last_x_max = item['x_max'] # 更新最新X轴右边界
+                current_block.append(item)  # 属于同一块，合并
+            last_x_max = item['x_max']  # 更新最新X轴右边界
         if current_block:
-            current_block.sort(key=lambda b: b['y_min']) # 确保一个块内的文本顺序正确
+            current_block.sort(key=lambda b: b['y_min'])  # 确保一个块内的文本顺序正确
             merged_texts.append(self._merge_block_data(current_block))
         return merged_texts

@@ -158,7 +158,7 @@ class Power:
             return 0
 
         immersifier_count = int(text.split("/")[0])
-        log.info(f"🟣沉浸器: {immersifier_count}/12")
+        log.info(f"沉浸器: {immersifier_count}/12")
 
         # 获取当前体力
         power = Power.get()
@@ -174,7 +174,7 @@ class Power:
             # 返回实际消耗的计划次数（优先使用沉浸器）
             return executable_count
         else:
-            log.info(f"🟣开拓力不足且无沉浸器")
+            log.info(f"开拓力不足且无沉浸器")
             return 0
 
     @staticmethod
@@ -202,7 +202,7 @@ class Power:
             power = Power.get()
 
             if power < instance_power_min:
-                log.info(f"🟣开拓力 < {instance_power_min}")
+                log.info(f"开拓力 < {instance_power_min}")
                 break
 
             full_runs = min(power // instance_power_max, count // challenge_count)
@@ -272,7 +272,7 @@ class Power:
             return
 
         immersifier_count = int(text.split("/")[0])
-        log.info(f"🟣沉浸器: {immersifier_count}/12")
+        log.info(f"沉浸器: {immersifier_count}/12")
 
         if immersifier_count + full_runs > 0:
             Instance.run(instance_type, instance_name, 40, immersifier_count + full_runs)
@@ -303,7 +303,7 @@ class Power:
             power = Power.get()
 
             if power < instance_power_min:
-                log.info(f"🟣开拓力 < {instance_power_min}")
+                log.info(f"开拓力 < {instance_power_min}")
                 break
 
             full_runs = power // instance_power_max
@@ -380,7 +380,7 @@ class Power:
         screen.change_to('map')
         trailblaze_power = get_power(trailblaze_power_crop)
 
-        log.info(f"🟣开拓力: {trailblaze_power}/300")
+        log.info(f"开拓力: {trailblaze_power}/300")
         return trailblaze_power
 
     @staticmethod
@@ -404,7 +404,7 @@ class Power:
                 return
 
             immersifier_count = int(text.split("/")[0])
-            log.info(f"🟣沉浸器: {immersifier_count}/12")
+            log.info(f"沉浸器: {immersifier_count}/12")
             if immersifier_count >= limit:
                 log.info("沉浸器已达到上限")
                 return

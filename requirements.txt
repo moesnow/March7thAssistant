@@ -32,3 +32,4 @@ nio==3.4.2
 pandas==2.2.3
 openpyxl==3.1.5
 selenium==4.38.0
+keyboard==0.13.5

@@ -309,6 +309,9 @@ hotkey_technique: e # 设置游戏内使用秘技的按键。
 hotkey_map: m # 设置打开地图的按键。
 hotkey_warp: f3 # 设置打开跃迁的按键。
 
+# 图形界面快捷键设置
+hotkey_stop_task: f10 # 设置停止任务的全局快捷键（支持后台）。
+
 # 是否在多显示器上进行截屏（若开启无法正确运行请关闭）
 all_screens: true
 

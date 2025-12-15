@@ -11,6 +11,7 @@ import subprocess
 import sys
 import os
 from module.config import fhoe_config
+from utils.console import pause_on_error, pause_and_retry
 
 
 class Fight:
@@ -31,7 +32,7 @@ class Fight:
                     break
                 if url is None:
                     log.error("没有找到可用更新，请稍后再试")
-                    input("按回车键关闭窗口. . .")
+                    pause_on_error()
                     sys.exit(0)
                 update_handler = UpdateHandler(url, cfg.fight_path, "Fhoe-Rail", os.path.join(cfg.fight_path, "map"))
                 update_handler.run()
@@ -68,7 +69,7 @@ class Fight:
                            FastestMirror.get_pypi_mirror(), "pip", "--upgrade"])
             while not subprocess.run([cfg.python_exe_path, "-m", "pip", "install", "-i", FastestMirror.get_pypi_mirror(), "-r", "requirements.txt"], check=True, cwd=cfg.fight_path):
                 log.error("依赖安装失败")
-                input("按回车键重试. . .")
+                pause_and_retry()
             log.info("依赖安装成功")
             cfg.set_value("fight_requirements", True)
 

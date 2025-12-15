@@ -880,7 +880,7 @@ class SettingInterface(ScrollArea):
         self.hotkeyCard = SwitchSettingCardHotkey(
             FIF.SETTING,
             self.tr('修改按键'),
-            "配置秘技、地图、跃迁等按键设置"
+            "配置秘技、地图、跃迁、停止任务等按键设置"
         )
 
         self.AboutGroup = SettingCardGroup(self.tr('关于'), self.scrollWidget)

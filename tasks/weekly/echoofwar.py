@@ -34,7 +34,7 @@ class Echoofwar:
                                 power = Power.get()
                                 max_count = power // 30
                                 if max_count == 0:
-                                    log.info("🟣开拓力 < 30")
+                                    log.info("开拓力 < 30")
                                     return
                                 if cfg.build_target_enable and (target := BuildTarget.get_target_echo_instance()):
                                     instance_name = target[1]

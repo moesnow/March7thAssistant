@@ -27,17 +27,15 @@ class PPOCR_pipe:
                 else:
                     exePath += f" --{key}={value}"
         # 设置子进程启用静默模式，不显示控制台窗口
-        startupinfo = None
+        creationflags = 0
         if "win32" in str(sysPlatform).lower():
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags = subprocess.CREATE_NEW_CONSOLE | subprocess.STARTF_USESHOWWINDOW
-            startupinfo.wShowWindow = subprocess.SW_HIDE
+            creationflags = subprocess.CREATE_NO_WINDOW
         self.ret = subprocess.Popen(  # 打开管道
             exePath, cwd=cwd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,  # 丢弃stderr的内容
-            startupinfo=startupinfo  # 开启静默模式
+            creationflags=creationflags  # 开启静默模式
         )
         # 启动子进程
         while True:

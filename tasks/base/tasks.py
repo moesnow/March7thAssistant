@@ -37,7 +37,15 @@ def execute_command_in_new_environment(command, use_windows_terminal=False):
 
 def start_task(command):
     """
-    根据当前环境，启动任务。
+    通过信号总线启动任务，在日志界面中显示输出。
+    """
+    from app.common.signal_bus import signalBus
+    signalBus.startTaskSignal.emit(command)
+
+
+def start_task_in_new_window(command):
+    """
+    根据当前环境，在新窗口中启动任务（旧方式）。
     """
     # 检查 Windows Terminal 的可用性
     wt_available = is_windows_terminal_available()

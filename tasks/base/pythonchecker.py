@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import sys
 import os
+from utils.console import pause_always, pause_and_retry, pause_and_continue
 
 
 class PythonChecker:
@@ -28,7 +29,8 @@ class PythonChecker:
         log.warning("如果已经修改了环境变量，请尝试重启程序，包括图形界面")
         log.warning("可以通过在 cmd 中输入 python -V 自行判断是否成功")
         log.warning("也可卸载后重新运行或在 config.yaml 中手动修改 python_exe_path")
-        input("按回车键开始自动安装 Python 3.11.5 64bit")
+        log.warning("== 即将开始自动安装 Python 3.11.5 64bit ==")
+        pause_and_continue()
 
         PythonChecker.install()
 
@@ -47,7 +49,7 @@ class PythonChecker:
                 break
             except Exception as e:
                 log.error(f"下载失败: {e}")
-                input("按回车键重试. . .")
+                pause_and_retry()
 
         while True:
             try:
@@ -57,7 +59,7 @@ class PythonChecker:
                 break
             except Exception as e:
                 log.error(f"安装失败: {e}")
-                input("按回车键重试. . .")
+                pause_and_retry()
 
         try:
             os.remove(download_file_path)
@@ -72,7 +74,7 @@ class PythonChecker:
             return
 
         log.info("安装完成，请重启程序，包括图形界面")
-        input("按回车键关闭窗口. . .")
+        pause_always()
         sys.exit(0)
 
     @staticmethod

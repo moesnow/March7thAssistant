@@ -16,6 +16,8 @@ from .help_interface import HelpInterface
 from .warp_interface import WarpInterface
 from .tools_interface import ToolsInterface
 from .setting_interface import SettingInterface
+from .log_interface import LogInterface
+from .common.signal_bus import signalBus
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
@@ -118,7 +120,13 @@ class MainWindow(MSFluentWindow):
         # self.changelogInterface = ChangelogInterface(self)
         self.warpInterface = WarpInterface(self)
         self.toolsInterface = ToolsInterface(self)
+        self.logInterface = LogInterface(self)
         self.settingInterface = SettingInterface(self)
+
+        # 连接任务启动信号
+        signalBus.startTaskSignal.connect(self._onStartTask)
+        # 连接热键配置改变信号
+        signalBus.hotkeyChangedSignal.connect(self._onHotkeyChanged)
 
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('主页'))
@@ -133,17 +141,19 @@ class MainWindow(MSFluentWindow):
             self.startGame,
             NavigationItemPosition.BOTTOM)
 
+        self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, self.tr('日志'), position=NavigationItemPosition.BOTTOM)
+
         # self.navigationInterface.addWidget(
         #     'refreshButton',
         #     NavigationBarPushButton(FIF.SYNC, '刷新', isSelectable=False),
         #     self._on_config_file_changed,
         #     NavigationItemPosition.BOTTOM)
 
-        self.navigationInterface.addWidget(
-            'themeButton',
-            NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
-            lambda: toggleTheme(lazy=True),
-            NavigationItemPosition.BOTTOM)
+        # self.navigationInterface.addWidget(
+        #     'themeButton',
+        #     NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
+        #     lambda: toggleTheme(lazy=True),
+        #     NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
             'avatar',
@@ -210,14 +220,44 @@ class MainWindow(MSFluentWindow):
         """托盘菜单即将显示时激活窗口，解决 Windows 上点击外部区域无法关闭菜单的问题"""
         self.activateWindow()
 
+    def _onStartTask(self, command):
+        """处理任务启动信号"""
+        # 检查是否有任务正在运行
+        if self.logInterface.isTaskRunning():
+            InfoBar.warning(
+                title=self.tr('任务正在运行'),
+                content="请先停止当前任务后再启动新任务",
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
+            # 切换到日志界面
+            self.switchTo(self.logInterface)
+            return
+        # 切换到日志界面
+        self.switchTo(self.logInterface)
+        # 启动任务
+        self.logInterface.startTask(command)
+
     def startFullTask(self):
         """启动完整运行任务"""
         from tasks.base.tasks import start_task
         start_task("main")
 
+    def _onHotkeyChanged(self):
+        """处理热键配置改变信号"""
+        if hasattr(self, 'logInterface'):
+            self.logInterface.updateHotkey()
+
     def quitApp(self):
         """退出应用程序"""
+        self._stopRunningTask()
         self._stopThemeListener()
+        # 清理日志界面的资源（如全局热键）
+        if hasattr(self, 'logInterface'):
+            self.logInterface.cleanup()
         self.tray_icon.hide()
         QApplication.quit()
 
@@ -229,6 +269,10 @@ class MainWindow(MSFluentWindow):
 
             # 重新加载配置
             cfg._load_config(None, save=False)
+
+            # 更新日志界面的热键
+            if hasattr(self, 'logInterface'):
+                self.logInterface.updateHotkey()
 
             # 保存旧的设置界面引用
             old_setting_interface = self.settingInterface
@@ -250,31 +294,47 @@ class MainWindow(MSFluentWindow):
             if is_in_setting_interface:
                 self.switchTo(self.settingInterface)
 
-            InfoBar.success(
-                title=self.tr('配置已更新'),
-                content="检测到配置文件变化，已自动重新加载",
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=2000,
-                parent=self
-            )
+            # 只有在窗口可见时才显示提示
+            if self.isVisible():
+                InfoBar.success(
+                    title=self.tr('配置已更新'),
+                    content="检测到配置文件变化，已自动重新加载",
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=2000,
+                    parent=self
+                )
         except Exception as e:
-            InfoBar.warning(
-                title=self.tr('配置加载失败'),
-                content=str(e),
-                orient=Qt.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=3000,
-                parent=self
-            )
+            # 只有在窗口可见时才显示提示
+            if self.isVisible():
+                InfoBar.warning(
+                    title=self.tr('配置加载失败'),
+                    content=str(e),
+                    orient=Qt.Horizontal,
+                    isClosable=True,
+                    position=InfoBarPosition.TOP,
+                    duration=3000,
+                    parent=self
+                )
 
     def _stopThemeListener(self):
         """停止主题监听线程"""
         if hasattr(self, 'themeListener') and self.themeListener:
             self.themeListener.stop()
             self.themeListener = None
+
+    def _stopRunningTask(self):
+        """停止正在运行的任务"""
+        if hasattr(self, 'logInterface') and self.logInterface.isTaskRunning():
+            self.logInterface.stopTask()
+            # 等待进程结束
+            if self.logInterface.process:
+                self.logInterface.process.waitForFinished(3000)
+                # 如果还没结束，强制结束
+                if self.logInterface.process.state() != 0:  # QProcess.NotRunning
+                    self.logInterface.process.kill()
+                    self.logInterface.process.waitForFinished(1000)
 
     def closeEvent(self, e):
         """关闭窗口时根据配置执行对应操作"""
@@ -305,6 +365,7 @@ class MainWindow(MSFluentWindow):
                     pass
             elif dialog.action == 'close':
                 # 关闭程序
+                self._stopRunningTask()
                 self._stopThemeListener()
                 self.tray_icon.hide()
                 e.accept()
@@ -324,6 +385,7 @@ class MainWindow(MSFluentWindow):
             # )
         elif close_action == 'close':
             # 直接关闭程序
+            self._stopRunningTask()
             self._stopThemeListener()
             self.tray_icon.hide()
             e.accept()

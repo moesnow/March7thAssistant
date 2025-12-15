@@ -21,6 +21,7 @@ class StyleSheet(StyleSheetBase, Enum):
     CHANGELOGS_INTERFACE = "changelogs_interface"
     WARP_INTERFACE = "warp_interface"
     TOOLS_INTERFACE = "tools_interface"
+    LOG_INTERFACE = "log_interface"
     PIVOT = "pivot"
 
     def path(self, theme=Theme.AUTO):

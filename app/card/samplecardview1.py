@@ -1,7 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect, QAction
 
-from qfluentwidgets import RoundMenu, IconWidget, FlowLayout, CardWidget, InfoBarIcon, TeachingTip, TeachingTipTailPosition
+from qfluentwidgets import RoundMenu, IconWidget, FlowLayout, CardWidget, InfoBarIcon, TeachingTip, TeachingTipTailPosition, InfoBar, InfoBarPosition
 from ..common.style_sheet import StyleSheet
 from module.config import cfg
 from module.logger import log
@@ -64,7 +64,7 @@ class SampleCard(CardWidget):
             content="",
             isClosable=False,
             tailPosition=TeachingTipTailPosition.BOTTOM,
-            duration=2000,
+            duration=1000,
             parent=self
         )
 
