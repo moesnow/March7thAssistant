@@ -1,5 +1,15 @@
 # 更新日志
 
+## v2025.12.15
+- 新增日志界面并优化任务执行方式
+- 图形界面添加触摸滚动支持 [#799](https://github.com/moesnow/March7thAssistant/pull/799) @g60cBQ
+- 图形界面支持最小化到托盘
+- 云游戏下载使用国内镜像源加速 [#792](https://github.com/moesnow/March7thAssistant/pull/792) @Patrick16262
+- 优化和修复云游戏若干问题 [#800](https://github.com/moesnow/March7thAssistant/pull/800) [#804](https://github.com/moesnow/March7thAssistant/pull/804) @Patrick16262
+- 优化 WebHook 推送支持更多配置项
+- 修复自动主题功能未正常运行
+- 修复执行差分宇宙积分奖励时类别选择错误
+
 ## v2025.12.13
 
 - 支持体力计划
