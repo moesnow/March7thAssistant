@@ -3,40 +3,31 @@ import sys
 # 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
+import ctypes
 import argparse
+from utils.tasks import AVAILABLE_TASKS
 
-# 可用的任务列表
-AVAILABLE_TASKS = {
-    "main": "完整运行",
-    "daily": "每日实训",
-    "power": "清体力",
-    "currencywars": "货币战争",
-    "currencywarsloop": "货币战争循环",
-    "fight": "锄大地",
-    "universe": "模拟宇宙",
-    "forgottenhall": "混沌回忆",
-    "purefiction": "虚构叙事",
-    "apocalyptic": "末日幻影",
-    "redemption": "兑换码",
-    "universe_gui": "模拟宇宙原生界面",
-    "fight_gui": "锄大地原生界面",
-    "universe_update": "模拟宇宙更新",
-    "fight_update": "锄大地更新",
-    "game": "启动游戏",
-    "notify": "测试消息推送",
-}
+
+def hide_console():
+    """隐藏控制台窗口（仅 Windows）"""
+    if sys.platform == 'win32':
+        hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+        if hwnd:
+            ctypes.windll.user32.ShowWindow(hwnd, 0)  # SW_HIDE = 0
 
 
 def parse_args():
     """解析命令行参数"""
     parser = argparse.ArgumentParser(
         prog='March7th Launcher',
-        description='三月七小助手 - 崩坏：星穹铁道全自动化工具',
-        epilog='更多信息请访问: https://m7a.top'
+        description='三月七小助手 - 崩坏：星穹铁道自动化工具',
+        epilog='更多信息请访问: https://m7a.top',
+        add_help=False
     )
 
-    # 任务参数
-    parser.add_argument(
+    # 位置参数组
+    positional = parser.add_argument_group('位置参数')
+    positional.add_argument(
         'task',
         nargs='?',
         choices=list(AVAILABLE_TASKS.keys()),
@@ -44,15 +35,19 @@ def parse_args():
         help='要执行的任务名称（可选，不指定则仅启动图形界面）'
     )
 
-    # 列出所有任务
-    parser.add_argument(
+    # 可选参数组
+    optional = parser.add_argument_group('可选参数')
+    optional.add_argument(
+        '-h', '--help',
+        action='help',
+        help='显示此帮助信息并退出'
+    )
+    optional.add_argument(
         '-l', '--list',
         action='store_true',
         help='列出所有可用的任务'
     )
-
-    # 任务完成后退出
-    parser.add_argument(
+    optional.add_argument(
         '-e', '--exit',
         action='store_true',
         help='任务正常完成后自动退出程序（需配合 TASK 参数使用）'
@@ -78,6 +73,9 @@ def parse_args():
 
 # 解析命令行参数（在请求管理员权限之前）
 args = parse_args()
+
+# 如果不需要命令行输出，隐藏控制台窗口
+hide_console()
 
 import pyuac
 if not pyuac.isUserAdmin():

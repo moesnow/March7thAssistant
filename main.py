@@ -1,7 +1,66 @@
 import os
 import sys
+import argparse
 # 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
+
+from utils.tasks import AVAILABLE_TASKS
+
+
+def parse_args():
+    """解析命令行参数"""
+    parser = argparse.ArgumentParser(
+        prog='March7th Assistant',
+        description='三月七小助手 - 崩坏：星穹铁道自动化工具 (CLI)',
+        epilog='更多信息请访问: https://m7a.top',
+        add_help=False
+    )
+
+    # 位置参数组
+    positional = parser.add_argument_group('位置参数')
+    positional.add_argument(
+        'task',
+        nargs='?',
+        choices=list(AVAILABLE_TASKS.keys()),
+        metavar='TASK',
+        help='要执行的任务名称（可选，不指定则执行完整运行）'
+    )
+
+    # 可选参数组
+    optional = parser.add_argument_group('可选参数')
+    optional.add_argument(
+        '-h', '--help',
+        action='help',
+        help='显示此帮助信息并退出'
+    )
+    optional.add_argument(
+        '-l', '--list',
+        action='store_true',
+        help='列出所有可用的任务'
+    )
+
+    args = parser.parse_args()
+
+    # 处理 --list 参数
+    if args.list:
+        print("\n可用的任务列表:")
+        print("-" * 40)
+        for task_id, task_name in AVAILABLE_TASKS.items():
+            print(f"  {task_id:<20} {task_name}")
+        print("-" * 40)
+        print("\n使用示例:")
+        print("  启动并执行完整运行:     March7th Assistant.exe main")
+        print("  执行每日实训:           March7th Assistant.exe daily")
+        sys.exit(0)
+
+    return args
+
+
+args = parse_args()
+
+
+import atexit
+import base64
 
 import pyuac
 if not pyuac.isUserAdmin():
@@ -10,9 +69,6 @@ if not pyuac.isUserAdmin():
         sys.exit(0)
     except Exception:
         sys.exit(1)
-
-import atexit
-import base64
 
 from module.config import cfg
 from module.logger import log
@@ -152,7 +208,7 @@ def exit_handler():
 if __name__ == "__main__":
     try:
         atexit.register(exit_handler)
-        main(sys.argv[1]) if len(sys.argv) > 1 else main()
+        main(args.task) if args.task else main()
     except KeyboardInterrupt:
         log.error("发生错误: 手动强制停止")
         pause_on_error()
