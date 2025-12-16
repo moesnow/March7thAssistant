@@ -219,11 +219,14 @@ class LogInterface(ScrollArea):
         time_parts = list(map(int, scheduled_time_str.split(":")))
         scheduled_time = QTime(*time_parts)
 
-        # 检查当前时间是否在定时时间的60秒窗口内
-        secs_diff = abs(current_time.secsTo(scheduled_time))
-
-        # 如果时间差在60秒内（因为每30秒检查一次）
-        if secs_diff <= 60 or secs_diff >= 86340:  # 86340 = 24*60*60 - 60，处理跨天情况
+        # 计算从定时时间到当前时间经过的秒数，确保不会在定时时间之前触发
+        secs = scheduled_time.secsTo(current_time)
+        # 如果为负，说明定时时间在当天晚些时候或已跨天，调整到 0..86399 范围
+        if secs < 0:
+            secs += 24 * 60 * 60
+            
+        # 仅在当前时间晚于定时时间并且在60秒窗口内触发（因为每30秒检查一次）
+        if 0 <= secs <= 60:
             # 启动完整运行任务
             self.appendLog(f"\n========== 定时任务触发 ({scheduled_time_str}) ==========\n")
             self.startTask("main")
