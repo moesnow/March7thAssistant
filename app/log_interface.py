@@ -9,6 +9,8 @@ from qfluentwidgets import (ScrollArea, PrimaryPushButton, PushButton,
                             SwitchButton, IndicatorPosition, TimePicker)
 import sys
 import os
+import locale
+import re
 import keyboard
 from .common.style_sheet import StyleSheet
 from module.config import cfg
@@ -345,19 +347,38 @@ class LogInterface(ScrollArea):
                 self.appendLog(text)
 
     def _decodeOutput(self, data):
-        """解码输出，优先尝试 UTF-8，失败则使用系统默认编码（GBK）"""
-        # 优先尝试 UTF-8
-        try:
-            return data.decode('utf-8')
-        except UnicodeDecodeError:
-            pass
-        # 尝试 GBK（Windows 中文系统默认编码）
-        try:
-            return data.decode('gbk')
-        except UnicodeDecodeError:
-            pass
-        # 最后使用 UTF-8 并替换错误字符
-        return data.decode('utf-8', errors='replace')
+        """解码输出，优先尝试系统默认编码，再尝试 UTF-8，最后处理 Unicode 转义序列"""
+        # 获取系统默认编码（根据「非 Unicode 程序的语言」设置）
+        system_encoding = locale.getpreferredencoding(False)
+        decoded = None
+
+        # 优先尝试系统默认编码（Windows 子进程通常使用 ANSI 代码页输出）
+        if system_encoding:
+            try:
+                decoded = data.decode(system_encoding)
+            except (UnicodeDecodeError, LookupError):
+                pass
+
+        # 再尝试 UTF-8
+        if decoded is None:
+            try:
+                decoded = data.decode('utf-8')
+            except UnicodeDecodeError:
+                pass
+
+        # 最后使用系统编码或 UTF-8 并替换错误字符
+        if decoded is None:
+            fallback = system_encoding if system_encoding else 'utf-8'
+            decoded = data.decode(fallback, errors='replace')
+
+        # 处理 Unicode 转义序列（例如 \u5f00\u68c0\u6d4b）
+        def unicode_escape_replace(match):
+            return chr(int(match.group()[2:], 16))
+
+        _unicode_escape_re = re.compile(r'\\u[0-9a-fA-F]{4}')
+        decoded = _unicode_escape_re.sub(unicode_escape_replace, decoded)
+
+        return decoded
 
     def _onProcessFinished(self, exit_code, exit_status):
         """进程结束"""
