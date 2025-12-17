@@ -19,11 +19,12 @@ class Power:
         log.hr("开始清体力", 0)
 
         instance_type = cfg.instance_type
-        instance_name = cfg.instance_names[cfg.instance_type]
-        challenge_count = cfg.instance_names_challenge_count[cfg.instance_type]
+        instance_name = cfg.instance_names[instance_type]
+        challenge_count = cfg.instance_names_challenge_count[instance_type]
 
         if cfg.build_target_enable and (target := BuildTarget.get_target_instance()):
             instance_type, instance_name = target
+            challenge_count = cfg.instance_names_challenge_count[instance_type]
 
         if not Instance.validate_instance(instance_type, instance_name):
             log.hr("完成", 2)
