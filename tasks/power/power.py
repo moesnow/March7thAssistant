@@ -212,10 +212,11 @@ class Power:
                 if result != "Failed":
                     executed_count += executable_count
                     count -= executable_count
+                    power -= instance_power_max * full_runs
                 else:
                     break
 
-            remain_runs = min((power % instance_power_max) // instance_power_min, count)
+            remain_runs = min(power // instance_power_min, count)
             if remain_runs >= 1 and count > 0:
                 result = Instance.run(instance_type, instance_name, remain_runs * instance_power_min, 1)
                 if result != "Failed":
