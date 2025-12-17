@@ -7,6 +7,7 @@ from .assist import Assist
 from .dispatch import Dispatch
 from .quest import Quest
 from .srpass import SRPass
+from .achievement import Achievement
 
 
 class RewardManager:
@@ -16,6 +17,7 @@ class RewardManager:
         self.dispatch = Dispatch("委托", cfg.reward_dispatch_enable, "dispatch")
         self.quest = Quest("每日实训", cfg.reward_quest_enable, "guide2")
         self.srpass = SRPass("无名勋礼", cfg.reward_srpass_enable, "pass2")
+        self.achievement = Achievement("成就", cfg.reward_achievement_enable, "achievement")
         self.crop = (1263.0 / 1920, 52.0 / 1080, 642.0 / 1920, 982.0 / 1080)
 
         self.reward_instances = {
@@ -24,6 +26,7 @@ class RewardManager:
             "dispatch": self.dispatch,
             "quest": self.quest,
             "srpass": self.srpass,
+            "achievement": self.achievement,
         }
 
         self.reward_mapping = {
@@ -32,6 +35,7 @@ class RewardManager:
             "dispatch": ("./assets/images/share/menu/dispatch_reward.png", 2000000, self.crop),
             "quest": ("./assets/images/share/menu/quest_reward.png", 2000000, self.crop),
             "srpass": ("./assets/images/share/menu/pass_reward.png", 2000000, self.crop),
+            "achievement": ("./assets/images/share/menu/achievement_reward.png", 2000000, self.crop),
         }
 
     def check_and_collect_rewards(self):

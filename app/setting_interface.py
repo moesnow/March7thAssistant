@@ -348,6 +348,12 @@ class SettingInterface(ScrollArea):
             None,
             "reward_srpass_enable"
         )
+        self.achievementEnableCard = SwitchSettingCard1(
+            FIF.CERTIFICATE,
+            self.tr('成就'),
+            None,
+            "reward_achievement_enable"
+        )
 
         # 兑换码奖励开关
         self.redemptionEnableCard = SwitchSettingCard1(
@@ -1023,7 +1029,8 @@ class SettingInterface(ScrollArea):
             self.assistEnableCard,
             self.questEnableCard,
             self.srpassEnableCard,
-            self.redemptionEnableCard
+            self.redemptionEnableCard,
+            self.achievementEnableCard
         ])
 
         self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)
