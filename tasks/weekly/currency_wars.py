@@ -157,6 +157,13 @@ class CurrencyWars:
 
     def start_war(self, type: Literal["normal", "overclock"] = "normal") -> bool:
         log.info("开始「货币战争」")
+        screen.change_to("currency_wars_mode_select")
+
+        if auto.click_element("结束并结算", "text", crop=(1253 / 1920, 915 / 1080, 271 / 1920, 95 / 1080)):
+            log.warning("检测到未结算的对局，放弃并结算中")
+            if auto.click_element("放弃并结算", "text", max_retries=10, crop=(761 / 1920, 697 / 1080, 399 / 1920, 90 / 1080)):
+                self.loop()
+
         if type == "normal":
             log.info("选择标准博弈")
             screen.change_to("currency_wars_mode_select_normal")
@@ -198,6 +205,7 @@ class CurrencyWars:
         """
         货币战争任务主循环
         """
+        self.screenshot = None  # 任务截图
         self.result = None  # 重置结果
         self.peipei_count = 0  # 重置佩佩计数
         self.diamond_count = 0  # 重置财富宝钻计数
