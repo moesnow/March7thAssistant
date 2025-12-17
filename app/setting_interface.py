@@ -349,6 +349,14 @@ class SettingInterface(ScrollArea):
             "reward_srpass_enable"
         )
 
+        # 兑换码奖励开关
+        self.redemptionEnableCard = SwitchSettingCard1(
+            FIF.BOOK_SHELF,
+            self.tr('兑换码'),
+            None,
+            "reward_redemption_code_enable"
+        )
+
         self.CurrencywarsGroup = SettingCardGroup(self.tr("货币"), self.scrollWidget)
         self.currencywarsEnableCard = SwitchSettingCard1(
             FIF.DICTIONARY,
@@ -1014,7 +1022,8 @@ class SettingInterface(ScrollArea):
             self.mailEnableCard,
             self.assistEnableCard,
             self.questEnableCard,
-            self.srpassEnableCard
+            self.srpassEnableCard,
+            self.redemptionEnableCard
         ])
 
         self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)

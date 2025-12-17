@@ -13,10 +13,28 @@ resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
 graphics_value_name = "GraphicsSettings_Model_h2986158309"
 
 
+def get_server_by_registry() -> Optional[str]:
+    """
+    Detect and return the server region based on the installed game server.
+
+    Returns:
+        "cn" for CN server, "oversea" for international server, or None if neither exists.
+    """
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_cn):
+            return "cn"
+    except FileNotFoundError:
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_oversea):
+                return "global"
+        except FileNotFoundError:
+            return None
+
+
 def get_registry_key_path() -> Optional[str]:
     """
     Detect and return the registry key path based on the installed game server.
-    
+
     Returns:
         The registry path for CN server if found, otherwise oversea server path, or None if neither exists.
     """

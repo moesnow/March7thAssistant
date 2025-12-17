@@ -131,6 +131,7 @@ reward_mail_enable: true # 是否领取邮件奖励。true 开启，false 关闭
 reward_assist_enable: true # 是否领取支援奖励。true 开启，false 关闭。
 reward_quest_enable: true # 是否领取每日实训奖励。true 开启，false 关闭。
 reward_srpass_enable: true # 是否领取无名勋礼奖励。true 开启，false 关闭。
+reward_redemption_code_enable: true # 是否领取兑换码奖励。true 开启，false 关闭。
 
 # 日常任务设置
 daily_enable: true # 是否启用日常任务。true 开启，false 关闭。
@@ -322,6 +323,7 @@ close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问
 
 # 更新配置
 redemption_code: [] # 兑换码列表
+already_used_codes: [] # 已使用兑换码列表
 update_prerelease_enable: false # 是否加入预览版更新渠道。true 加入，false 不加入。
 update_full_enable: true # 更新时是否下载完整包。true 下载，false 不下载。
 auto_update: false

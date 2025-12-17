@@ -15,6 +15,7 @@ from tasks.daily.tasks import Tasks
 from tasks.daily.himekotry import HimekoTry
 from tasks.weekly.echoofwar import Echoofwar
 from tasks.daily.buildtarget import BuildTarget
+from tasks.daily.redemption import Redemption
 from utils.color import red, green, yellow
 import datetime
 
@@ -22,6 +23,9 @@ import datetime
 class Daily:
     @staticmethod
     def start():
+        if cfg.reward_enable and cfg.reward_redemption_code_enable:
+            Redemption.get()
+
         # 获取培养目标（在活动前初始化，以便活动可以使用培养目标）
         if cfg.build_target_enable:
             BuildTarget.init_build_targets()
