@@ -6,6 +6,7 @@ import psutil
 
 from app.tools.account_manager import load_acc_and_pwd
 from utils.registry.gameaccount import gamereg_uid
+from utils.registry.star_rail_setting import get_launcher_path
 from .starrailcontroller import StarRailController
 
 from utils.date import Date
@@ -70,6 +71,11 @@ def start_game():
             if load_acc_and_pwd(gamereg_uid()) != (None, None):
                 log.info("检测到登录过期，尝试自动登录")
                 auto_login_os()
+
+        # 游戏已有新版本，请前往启动器下载最新客户端，完成本次更新后登录游戏即可获
+        # 得300星琼奖励。
+        if auto.find_element("前往启动器下载最新客户端", "text", take_screenshot=False, include=True):
+            raise Exception("检测到游戏客户端版本过低，请前往启动器下载最新客户端")
         return False
 
     def cloud_game_check_and_enter():
@@ -177,6 +183,32 @@ def start_game():
                 cloud_game.stop_game()
             else:
                 starrail.stop_game()
+            if str(e).startswith("检测到游戏客户端版本过低"):
+                from module.game.launcher import LauncherController
+                # 尝试通过启动器更新最新客户端
+                # 打开启动器（可能启动器自身需要更新 暂未处理）
+                path = get_launcher_path()
+                process_name = "HYP.exe"
+                window_name = "米哈游启动器"
+                launcher = LauncherController(path=path, process_name=process_name, window_name=window_name, logger=log)
+                launcher.start_game_process()
+                time.sleep(10)
+                launcher.switch_to_game()
+                time.sleep(2)
+                # 查找更新按钮并点击，等待完成
+                from module.automation.launcher_automation import LauncherAutomation
+                launcher_auto = LauncherAutomation(window_name, log)
+                if launcher_auto.click_element("更新游戏", "text", include=True):
+                    log.info("已点击更新游戏按钮，等待更新完成...")
+                    # 等待更新完成，最长等待120分钟
+                    if not wait_until(lambda: launcher_auto.find_element("开始游戏", "text", include=True), 7200, period=60):
+                        launcher.stop_game()
+                        raise TimeoutError("等待游戏更新超时")
+                    log.info("游戏更新完成")
+                else:
+                    log.info("未找到更新游戏按钮，可能已是最新版本")
+                # 关闭启动器
+                launcher.stop_game()
             if retry == MAX_RETRY - 1:
                 raise  # 如果是最后一次尝试，则重新抛出异常
 
