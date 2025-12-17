@@ -115,13 +115,13 @@ class PushSettingCardCode(PushSettingCard):
 
     def __init__(self, text, icon, title, configname, parent=None):
         self.parent = parent
-        self.configvalue = '\n'.join(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, "批量使用兑换码，每行一个，自动过滤空格等无效字符", parent)
         self.button.clicked.connect(self.__onclicked)
 
     # ===================== 主入口 =====================
 
     def __onclicked(self):
+        self.configvalue = '\n'.join(cfg.get_value(self.configname))
         self.message_box = MessageBoxEditCode(
             self.title,
             self.configvalue,
