@@ -35,7 +35,7 @@ class Screen(metaclass=SingletonMeta):
         添加一个新界面到界面管理器。
         :param id: 新界面的唯一标识。
         :param name: 新界面的名称。
-        :param image_path: 用于识别界面的图片路径。
+        :param image_path: 用于识别界面的图片路径，可以是字符串或字符串列表（任一匹配即可）。
         :param actions: 可切换的目标界面及操作序列。
         """
         self.screen_map[id] = {'name': name, 'image_path': image_path, 'actions': actions}
@@ -94,7 +94,7 @@ class Screen(metaclass=SingletonMeta):
         # 定义内部函数用于在线程中识别界面
         def find_screen(screen_name, screen):
             try:
-                result = auto.find_element(screen['image_path'], "image_threshold", 0.9, take_screenshot=False)
+                result = self._find_image(screen['image_path'], "image_threshold", 0.9, take_screenshot=False)
                 if result:
                     with self.lock:
                         if not self.current_screen or self.current_screen_threshold < result:
@@ -103,7 +103,7 @@ class Screen(metaclass=SingletonMeta):
             except Exception as e:
                 self.logger.debug(f"识别界面出错：{e}")
 
-        if self.current_screen is not None and auto.find_element(self.screen_map[self.current_screen]['image_path'], "image_threshold", 0.9):
+        if self.current_screen is not None and self._find_image(self.screen_map[self.current_screen]['image_path'], "image_threshold", 0.9):
             return True
 
         for i in range(max_retries):
@@ -173,11 +173,41 @@ class Screen(metaclass=SingletonMeta):
         :param target_screen: 目标界面的标识符。
         :return: 如果当前界面是目标界面，则返回True；否则返回False。
         """
-        if auto.find_element(self.screen_map[target_screen]['image_path'], "image", 0.9):
+        if self._find_image(self.screen_map[target_screen]['image_path'], "image", 0.9):
             # 如果找到了目标界面的图像，则更新当前界面状态为目标界面
             self.current_screen = target_screen
             return True
         return False
+
+    def _find_image(self, image_path, find_type, threshold=None, **kwargs):
+        """
+        支持 image_path 为字符串或字符串列表（或元组）。
+        当 image_path 为列表时，对列表内的图片进行“或”匹配：
+        - 对于 'image_threshold' 类型，返回最高的匹配阈值（float）或 None。
+        - 对于其他类型，返回第一个被匹配到的结果（与 auto.find_element 的返回值一致）或 None。
+        其他参数会透传给 auto.find_element。
+        """
+        try:
+            if isinstance(image_path, (list, tuple)):
+                best = None
+                for p in image_path:
+                    try:
+                        r = auto.find_element(p, find_type, threshold, **kwargs)
+                    except Exception as e:
+                        self.logger.debug(f"查找图片 {p} 出错: {e}")
+                        r = None
+                    if r:
+                        if find_type == 'image_threshold':
+                            if best is None or r > best:
+                                best = r
+                        else:
+                            return r
+                return best
+            else:
+                return auto.find_element(image_path, find_type, threshold, **kwargs)
+        except Exception as e:
+            self.logger.debug(f"_find_image 出错: {e}")
+            return None
 
     def log_and_raise(self, log_message, error_message):
         """

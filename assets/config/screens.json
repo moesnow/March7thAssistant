@@ -887,7 +887,10 @@
     {
         "name": "活动",
         "id": "activity",
-        "image_path": "./assets/images/screen/activity.png",
+        "image_path": [
+            "./assets/images/screen/activity.png",
+            "./assets/images/screen/activity_2.png"
+        ],
         "actions": [
             {
                 "target_screen": "menu",
