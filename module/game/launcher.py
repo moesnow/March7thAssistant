@@ -16,22 +16,35 @@ class LauncherController(GameControllerBase):
         self.process_name = process_name
         self.window_name = window_name
 
-    def start_game_process(self) -> bool:
-        """启动启动器"""
+    def start_game_process(self, args: Optional[str] = None) -> bool:
+        """启动启动器
+
+        参数:
+        - args (Optional[str]): 可选的命令行参数，例如 "--game=hkrpg_cn"，会附加到启动命令末尾。
+        """
         if not os.path.exists(self.game_path):
             self.log_error(f"启动器路径不存在：{self.game_path}")
             return False
 
         game_folder = self.game_path.rpartition('\\')[0]
-        if not os.system(f'cmd /C start "" /D "{game_folder}" "{self.game_path}"'):
-            self.log_info(f"启动器启动：{self.game_path}")
+        args_str = f' {args.strip()}' if args else ''
+
+        # 使用 cmd start 启动（带工作目录），并附加参数
+        cmd = f'cmd /C start "" /D "{game_folder}" "{self.game_path}"{args_str}'
+        if not os.system(cmd):
+            self.log_info(f"启动器启动：{self.game_path}{args_str}")
             return True
         else:
             self.log_error("启动启动器时发生错误")
             try:
                 # 为什么有的用户环境变量内没有cmd呢？
-                subprocess.Popen(self.game_path)
-                self.log_info(f"启动器启动：{self.game_path}")
+                if args:
+                    import shlex
+                    args_list = shlex.split(args)
+                    subprocess.Popen([self.game_path] + args_list)
+                else:
+                    subprocess.Popen(self.game_path)
+                self.log_info(f"启动器启动：{self.game_path}{args_str}")
                 return True
             except Exception as e:
                 self.log_error(f"启动启动器时发生错误：{e}")

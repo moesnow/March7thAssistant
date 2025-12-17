@@ -191,7 +191,7 @@ def start_game():
                 process_name = "HYP.exe"
                 window_name = "米哈游启动器"
                 launcher = LauncherController(path=path, process_name=process_name, window_name=window_name, logger=log)
-                launcher.start_game_process()
+                launcher.start_game_process("--game=hkrpg_cn")
                 time.sleep(10)
                 launcher.switch_to_game()
                 time.sleep(2)
