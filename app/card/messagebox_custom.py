@@ -330,7 +330,7 @@ class MessageBoxEdit(MessageBox):
         return self.lineEdit.text()
 
 
-class MessageBoxEditMultiple(MessageBox):
+class MessageBoxEditCode(MessageBox):
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
@@ -339,6 +339,17 @@ class MessageBoxEditMultiple(MessageBox):
 
         self.yesButton.setText('确认')
         self.cancelButton.setText('取消')
+
+        # 操作按钮：获取最新兑换码 / 查看已使用 / 清空已使用
+        buttonRow = QHBoxLayout()
+        self.fetchButton = PushButton(self.tr('获取最新兑换码'), self)
+        self.viewUsedButton = PushButton(self.tr('查看已使用兑换码'), self)
+        self.clearUsedButton = PushButton(self.tr('清空已使用兑换码'), self)
+        buttonRow.addWidget(self.fetchButton)
+        buttonRow.addWidget(self.viewUsedButton)
+        buttonRow.addWidget(self.clearUsedButton)
+        buttonRow.addStretch(1)
+        self.textLayout.addLayout(buttonRow)
 
         self.textEdit = TextEdit(self)
         self.textEdit.setFixedHeight(250)
@@ -349,6 +360,14 @@ class MessageBoxEditMultiple(MessageBox):
 
     def getText(self):
         return self.textEdit.toPlainText()
+
+    def accept(self):
+        _cleanup_infobars(self)
+        super().accept()
+
+    def reject(self):
+        _cleanup_infobars(self)
+        super().reject()
 
 
 class MessageBoxDate(MessageBox):

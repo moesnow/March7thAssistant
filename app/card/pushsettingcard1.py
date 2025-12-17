@@ -1,9 +1,9 @@
-from PyQt5.QtCore import Qt, pyqtSignal, QUrl
+from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QObject, QThread
 from PyQt5.QtGui import QIcon, QKeyEvent
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtGui import QDesktopServices
 from qfluentwidgets import SettingCard, FluentIconBase, InfoBar, InfoBarPosition
-from .messagebox_custom import MessageBoxEdit, MessageBoxEditMultiple, MessageBoxDate, MessageBoxInstance, MessageBoxInstanceChallengeCount, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends, MessageBoxPowerPlan
+from .messagebox_custom import MessageBoxEdit, MessageBoxEditCode, MessageBoxDate, MessageBoxInstance, MessageBoxInstanceChallengeCount, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends, MessageBoxPowerPlan
 from tasks.base.tasks import start_task
 from module.config import cfg
 from typing import Union
@@ -88,33 +88,232 @@ class PushSettingCardMirrorchyan(SettingCard):
         QDesktopServices.openUrl(QUrl("https://pd.qq.com/g/MirrorChyan"))
 
 
+class FetchLatestCodesWorker(QObject):
+    finished = pyqtSignal(list, str)
+
+    def __init__(self, server):
+        super().__init__()
+        self.server = server
+
+    def run(self):
+        try:
+            from tasks.daily.redemption import valid_codes_for_server
+            codes = valid_codes_for_server(self.server)
+
+            try:
+                used = cfg.already_used_codes or []
+            except AttributeError:
+                used = []
+
+            codes = [c for c in codes if c not in used]
+            self.finished.emit(codes, "")
+        except Exception as e:
+            self.finished.emit([], str(e))
+
+
 class PushSettingCardCode(PushSettingCard):
-    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        self.configvalue = '\n'.join(cfg.get_value(configname))
+
+    def __init__(self, text, icon, title, configname, parent=None):
         self.parent = parent
+        self.configvalue = '\n'.join(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, "批量使用兑换码，每行一个，自动过滤空格等无效字符", parent)
         self.button.clicked.connect(self.__onclicked)
 
+    # ===================== 主入口 =====================
+
     def __onclicked(self):
-        message_box = MessageBoxEditMultiple(self.title, self.configvalue, self.window())
-        if message_box.exec():
-            text = message_box.getText()
-            code = [line.strip() for line in [''.join(re.findall(r'[A-Za-z0-9]', line)) for line in text.split('\n')] if line.strip()]
-            # code = [''.join(re.findall(r'[A-Za-z0-9]', line.strip())) for line in text.split('\n') if line.strip()]
-            cfg.set_value(self.configname, code)
-            self.configvalue = '\n'.join(code)
-            if code != []:
-                start_task("redemption")
-            else:
-                InfoBar.warning(
-                    self.tr('兑换码为空'),
-                    self.tr(''),
-                    orient=Qt.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=1000,
-                    parent=self.parent
+        self.message_box = MessageBoxEditCode(
+            self.title,
+            self.configvalue,
+            self.window()
+        )
+        self.message_box._fetch_cancelled = False
+        self.message_box._fetch_thread = None
+
+        self._connect_buttons()
+        self._connect_lifecycle()
+
+        if self.message_box.exec():
+            self._save_codes()
+
+    # ===================== 按钮绑定 =====================
+
+    def _connect_buttons(self):
+        mb = self.message_box
+        mb.fetchButton.clicked.connect(self._fetch_latest)
+        mb.viewUsedButton.clicked.connect(self._show_used)
+        mb.clearUsedButton.clicked.connect(self._clear_used)
+
+    def _connect_lifecycle(self):
+        mb = self.message_box
+        mb.accepted.connect(self._mark_cancelled)
+        mb.rejected.connect(self._mark_cancelled)
+        # mb.destroyed.connect(self._mark_cancelled)
+
+    # ===================== 获取兑换码 =====================
+
+    def _fetch_latest(self):
+        mb = self.message_box
+
+        if self._is_fetching():
+            self._info_warning('正在获取', '请等待当前获取完成', mb)
+            return
+
+        server = self._get_server()
+        if not server:
+            return
+
+        worker = FetchLatestCodesWorker(server)
+        thread = QThread(self)
+
+        worker.moveToThread(thread)
+        thread.started.connect(worker.run)
+
+        worker.finished.connect(self._on_fetch_finished)
+        worker.finished.connect(thread.quit)
+
+        thread.finished.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+
+        mb.fetchButton.setEnabled(False)
+        mb._fetch_thread = thread
+
+        thread.start()
+
+        self._info_success('开始获取', '正在获取最新兑换码...', mb)
+
+    def _on_fetch_finished(self, codes, err):
+        mb = self.message_box
+
+        if mb._fetch_cancelled:
+            self._cleanup_fetch()
+            return
+
+        if err:
+            self._info_warning('获取最新兑换码失败', err, mb)
+        elif not codes:
+            self._info_warning('未获取到兑换码', '', mb)
+        else:
+            mb.textEdit.setText('\n'.join(codes))
+            self._info_success(
+                '获取成功',
+                f'已获取{len(codes)}个兑换码',
+                mb
+            )
+
+        self._cleanup_fetch()
+
+    # ===================== 已使用兑换码 =====================
+
+    def _show_used(self):
+        used = cfg.get_value('already_used_codes') or []
+        if not used:
+            self._info_warning('暂无已使用兑换码', '', self.message_box)
+            return
+
+        mb = MessageBoxEditCode(
+            self.tr('已使用兑换码'),
+            '\n'.join(used),
+            self.window()
+        )
+        mb.yesButton.setText('关闭')
+        mb.cancelButton.hide()
+        mb.fetchButton.hide()
+        mb.viewUsedButton.hide()
+        mb.clearUsedButton.hide()
+        mb.textEdit.setReadOnly(True)
+        mb.exec()
+
+    def _clear_used(self):
+        from qfluentwidgets import MessageBox
+
+        confirm = MessageBox(
+            self.tr('确认清空已使用兑换码'),
+            self.tr('此操作不可撤销，是否继续？'),
+            self.window()
+        )
+        confirm.yesButton.setText('确认')
+        confirm.cancelButton.setText('取消')
+
+        if confirm.exec():
+            cfg.set_value('already_used_codes', [])
+            self._info_success('', '已清空已使用兑换码', self.message_box)
+
+    # ===================== 保存兑换码 =====================
+
+    def _save_codes(self):
+        text = self.message_box.getText()
+        code = [
+            line.strip()
+            for line in (
+                ''.join(re.findall(r'[A-Za-z0-9]', l))
+                for l in text.splitlines()
+            )
+            if line.strip()
+        ]
+
+        cfg.set_value(self.configname, code)
+        self.configvalue = '\n'.join(code)
+
+        if code:
+            start_task("redemption")
+        else:
+            self._info_warning('兑换码为空', '', self.parent)
+
+    # ===================== 工具方法 =====================
+
+    def _get_server(self):
+        try:
+            from utils.registry.star_rail_setting import get_server_by_registry
+            server = get_server_by_registry()
+            if not server:
+                self._info_warning(
+                    '无法判断服务器类型',
+                    '无法获取最新兑换码',
+                    self.message_box
                 )
+            return server
+        except Exception as e:
+            self._info_warning('获取服务器信息失败', str(e), self.message_box)
+            return None
+
+    def _is_fetching(self):
+        t = getattr(self.message_box, '_fetch_thread', None)
+        return t and t.isRunning()
+
+    def _mark_cancelled(self):
+        mb = self.message_box
+        mb._fetch_cancelled = True
+        t = getattr(mb, '_fetch_thread', None)
+        if t:
+            t.requestInterruption()
+
+    def _cleanup_fetch(self):
+        mb = self.message_box
+        mb.fetchButton.setEnabled(True)
+        mb._fetch_thread = None
+
+    def _info_warning(self, title, content, parent):
+        InfoBar.warning(
+            self.tr(title),
+            self.tr(content),
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=1500,
+            parent=parent
+        )
+
+    def _info_success(self, title, content, parent):
+        InfoBar.success(
+            self.tr(title),
+            self.tr(content),
+            orient=Qt.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=1500,
+            parent=parent
+        )
 
 
 class PushSettingCardEval(PushSettingCard):

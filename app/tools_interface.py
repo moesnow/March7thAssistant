@@ -1,8 +1,7 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem, QScroller, QScrollerProperties
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, MessageBox
-from .card.messagebox_custom import MessageBoxEditMultiple
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition
 from .card.pushsettingcard1 import PushSettingCardCode
 from .card.autoplot_setting_card import AutoPlotSettingCard
 from .common.style_sheet import StyleSheet
