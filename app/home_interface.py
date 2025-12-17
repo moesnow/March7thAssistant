@@ -138,6 +138,7 @@ class HomeInterface(ScrollArea):
             action={
                 "运行一次": lambda: start_task("currencywars"),
                 "循环运行": lambda: start_task("currencywarsloop"),
+                # "中途接管": lambda: start_task("currencywarstemp"),
             }
         )
         basicInputView.addSampleCard(

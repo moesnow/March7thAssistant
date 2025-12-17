@@ -8,6 +8,7 @@ AVAILABLE_TASKS = {
     "power": "清体力",
     "currencywars": "货币战争",
     "currencywarsloop": "货币战争循环",
+    "currencywarstemp": "货币战争中途接管",
     "fight": "锄大地",
     "universe": "模拟宇宙",
     "forgottenhall": "混沌回忆",

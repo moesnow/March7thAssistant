@@ -111,13 +111,16 @@ def run_main_actions():
 
 
 def run_sub_task(action):
-    game.start()
+    if action != "currencywarstemp":
+        game.start()
 
-    def currencywars(loop=False):
+    def currencywars(mode=None):
         war = CurrencyWars()
-        if loop:
+        if mode == "loop":
             while True:
                 war.start()
+        elif mode == "temp":
+            war.loop()
         else:
             war.start()
 
@@ -125,7 +128,8 @@ def run_sub_task(action):
         "daily": lambda: (Daily.run(), reward.start()),
         "power": Power.run,
         "currencywars": lambda: currencywars(),
-        "currencywarsloop": lambda: currencywars(loop=True),
+        "currencywarsloop": lambda: currencywars("loop"),
+        "currencywarstemp": lambda: currencywars("temp"),
         "fight": Fight.start,
         "universe": Universe.start,
         "forgottenhall": lambda: challenge.start("memoryofchaos"),
@@ -176,7 +180,7 @@ def main(action=None):
         run_main_actions()
 
     # 子任务
-    elif action in ["daily", "power", "currencywars", "currencywarsloop", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
+    elif action in ["daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
         run_sub_task(action)
 
     # 子任务 原生图形界面
