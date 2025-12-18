@@ -116,6 +116,8 @@ March7th Launcher.exe main -e
 
 If you are a complete beginner, please use the download and installation method mentioned above, and there's no need to proceed further.
 
+We recommend using Python 3.12 or newer.
+
 ```cmd
 # Installation (using venv is recommended)
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant

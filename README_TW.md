@@ -114,6 +114,7 @@ March7th Launcher.exe main -e
 
 如果你是完全不懂的小白，請通過上面的方式下載安裝，不用往下看了。
 
+推薦使用 Python 3.12 或更高版本。
 ```cmd
 # Installation (using venv is recommended)
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
