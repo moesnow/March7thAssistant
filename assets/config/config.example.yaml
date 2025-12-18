@@ -197,6 +197,10 @@ fight_allow_map_buy: 不配置 # 购买代币与过期邮包
 fight_allow_snack_buy: 不配置 # 购买秘技零食并合成零食
 fight_main_map: "0" # 优先星球 {"空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4", "翁法罗斯": "5"}, "不配置": "0"
 
+# Genshin_StarRail_fps_unlocker 配置
+genshin_starRail_fps_unlocker_allow: false
+genshin_starRail_fps_unlocker_path: .\3rdparty\Genshin_StarRail_fps_unlocker
+
 # 忘却之庭配置
 forgottenhall_enable: false # 是否启用混沌回忆功能。true 开启，false 关闭。
 forgottenhall_level: # 混沌回忆关卡范围，设置允许尝试的关卡等级范围。

@@ -11,6 +11,7 @@ import base64
 import subprocess
 import pyperclip
 from module.config import cfg
+from tasks.base.tasks import start_task
 import os
 
 
@@ -51,10 +52,9 @@ class ToolsInterface(ScrollArea):
         self.cloudTouchCard = PushSettingCard(
             self.tr('启动'),
             FIF.CLOUD,
-            self.tr("触屏模式（暂不可用）"),
+            self.tr("触屏模式"),
             self.tr("以云游戏移动端 UI 的方式启动游戏，可搭配 Sunshine 和 Moonlight 使用，启动后会将命令复制到剪贴板内")
         )
-        self.cloudTouchCard.setDisabled(True)
 
         self.__initWidget()
 
@@ -138,11 +138,36 @@ class ToolsInterface(ScrollArea):
             )
 
     def __onCloudTouchCardClicked(self):
+        exe_path = os.path.abspath(os.path.join(cfg.genshin_starRail_fps_unlocker_path, "unlocker.exe"))
+        config_path = os.path.abspath(os.path.join(cfg.genshin_starRail_fps_unlocker_path, "hoyofps_config.ini"))
+        game_path = os.path.abspath(cfg.game_path)
         try:
-            if not os.path.exists(cfg.game_path):
+            if cfg.genshin_starRail_fps_unlocker_allow is False:
+                from qfluentwidgets import MessageBox
+                # 依次展示多次确认对话框，每次提示更严肃，任意一次取消即返回
+                confirm_messages = [
+                    (self.tr('此功能依赖第三方程序实现'),
+                     self.tr('https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？')),
+                    (self.tr('再次确认：可能存在风险'),
+                     self.tr('工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？')),
+                    (self.tr('最终确认：请谨慎操作'),
+                     self.tr('确认继续并允许启用触屏模式？')),
+                ]
+
+                for title, message in confirm_messages:
+                    from qfluentwidgets import MessageBox
+                    step_confirm = MessageBox(title, message, self.window())
+                    step_confirm.yesButton.setText('确认')
+                    step_confirm.cancelButton.setText('取消')
+                    if not step_confirm.exec():
+                        return
+
+                cfg.set_value("genshin_starRail_fps_unlocker_allow", True)
+
+            if not game_path or not os.path.exists(game_path):
                 InfoBar.warning(
                     title=self.tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                    content="请在“设置”-->“程序”中配置",
+                    content="请在“设置”-->“程序”中配置正确的游戏路径",
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -150,12 +175,34 @@ class ToolsInterface(ScrollArea):
                     parent=self
                 )
                 return
-            graphics_setting = get_graphics_setting()
-            if graphics_setting is None:
-                raise Exception("请将游戏图像质量修改为自定义后重试")
-            args = ["-is_cloud", "1", "-platform_type", "CLOUD_WEB_TOUCH", "-graphics_setting", base64.b64encode(graphics_setting).decode("utf-8")]
-            subprocess.Popen([cfg.game_path] + args)
-            pyperclip.copy(f'"{cfg.game_path}" {" ".join(args)}')
+
+            if not os.path.exists(exe_path):
+                start_task("mobileui_update")
+                return
+
+            config_dir = os.path.dirname(config_path)
+            if not os.path.exists(config_dir):
+                os.makedirs(config_dir, exist_ok=True)
+
+            import configparser
+            cp = configparser.ConfigParser()
+
+            if os.path.exists(config_path):
+                cp.read(config_path, encoding='utf-16')
+                if 'Setting' not in cp:
+                    cp['Setting'] = {}
+                old_path = cp['Setting'].get('HKSRPath', '')
+                if old_path != game_path:
+                    cp['Setting']['HKSRPath'] = game_path
+                    with open(config_path, 'w', encoding='utf-16') as f:
+                        cp.write(f)
+            else:
+                cp['Setting'] = {'HKSRPath': game_path}
+                with open(config_path, 'w', encoding='utf-16') as f:
+                    cp.write(f)
+            args = ["-HKSR", "-EnableMobileUI"]
+            subprocess.Popen([exe_path] + args, cwd=config_dir)
+            pyperclip.copy(f'cd "{config_dir}" && "{exe_path}" {" ".join(args)}')
             InfoBar.success(
                 title=self.tr('启动成功(＾∀＾●)'),
                 content="已将命令复制到剪贴板",

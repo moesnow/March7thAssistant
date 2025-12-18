@@ -19,6 +19,7 @@ AVAILABLE_TASKS = {
     "fight_gui": "锄大地原生界面",
     "universe_update": "模拟宇宙更新",
     "fight_update": "锄大地更新",
+    "mobileui_update": "触屏模式更新",
     "game": "启动游戏",
     "notify": "测试消息推送",
 }
