@@ -88,7 +88,7 @@ from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
 from tasks.weekly.currency_wars import CurrencyWars
-from tasks.tool.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
+from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 
 
 from utils.console import pause_on_error, pause_on_success, pause_always

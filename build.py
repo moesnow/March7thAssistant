@@ -2,7 +2,7 @@ from module.logger import log
 from module.ocr import OCRInstaller
 from tasks.weekly.universe import Universe
 from tasks.daily.fight import Fight
-from tasks.tool.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
+from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 import re
 import sys
 from pathlib import Path
