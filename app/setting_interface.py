@@ -87,7 +87,7 @@ class SettingInterface(ScrollArea):
         self.powerPlanCard = PushSettingCardPowerPlan(
             self.tr('配置'),
             FIF.CALENDAR,
-            self.tr("体力计划【测试版】"),
+            self.tr("体力计划"),
             "power_plan",
             "./assets/config/instance_names.json"
         )

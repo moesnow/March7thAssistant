@@ -52,8 +52,8 @@ class ToolsInterface(ScrollArea):
         self.cloudTouchCard = PushSettingCard(
             self.tr('启动'),
             FIF.CLOUD,
-            self.tr("触屏模式"),
-            self.tr("以云游戏移动端 UI 的方式启动游戏，可搭配 Sunshine 和 Moonlight 使用，启动后会将命令复制到剪贴板内")
+            self.tr("触屏模式【测试版】"),
+            self.tr("以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内")
         )
 
         self.__initWidget()
