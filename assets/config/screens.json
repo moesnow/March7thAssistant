@@ -150,6 +150,12 @@
                     "auto.click_element('./assets/images/share/menu/activity.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))",
                     "auto.click_element('./assets/images/share/menu/activity_2nd.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
                 ]
+            },
+            {
+                "target_screen": "achievement",
+                "actions_list": [
+                    "auto.click_element('./assets/images/share/menu/achievement_reward.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
+                ]
             }
         ]
     },
@@ -977,6 +983,21 @@
                     "auto.press_key('esc')",
                     "time.sleep(1)",
                     "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "成就",
+        "id": "achievement",
+        "image_path": "./assets/images/screen/achievement.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.press_key('esc')"
                 ]
             }
         ]
