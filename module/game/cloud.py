@@ -585,6 +585,23 @@ class CloudGameController(GameControllerBase):
     def get_input_handler(self):
         from module.automation.cdp_input import CdpInput
         return CdpInput(cloud_game=self, logger=self.logger)
+    
+    def copy(self, text):
+        self.driver.execute_script("""
+            (function copy(text) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+
+                ta.focus();
+                ta.select();
+                document.execCommand('copy');
+
+                document.body.removeChild(ta);
+            })(arguments[0]);
+        """, text)
 
     def change_auto_battle(self, status: bool) -> None:
         """从 local storage 中读取并修改 auto battle"""

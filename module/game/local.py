@@ -3,11 +3,11 @@ import psutil
 import getpass
 import subprocess
 import win32gui
+import pyperclip
 from typing import Optional
 from module.config.config import Config
 from module.game.base import GameControllerBase
 from utils.logger.logger import Logger
-
 
 class LocalGameController(GameControllerBase):
     def __init__(self, cfg: Config, logger: Optional[Logger] = None) -> None:
@@ -96,3 +96,6 @@ class LocalGameController(GameControllerBase):
 
     def get_window_handle(self):
         return win32gui.FindWindow(self.window_class, self.window_name)
+    
+    def copy(self, text):
+        pyperclip.copy(text)
