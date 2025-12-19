@@ -1,6 +1,7 @@
 # 更新日志
 
-## v2025.12.19
+## v2025.12.20
+- 支持大丽花和三月七·冬去煦至 [#813](https://github.com/moesnow/March7thAssistant/pull/813) @loader3229
 - 添加成就奖励领取功能 [#811](https://github.com/moesnow/March7thAssistant/pull/811) @g60cBQ
 - 添加自动获取兑换码并领取功能
 - 恢复触屏模式功能支持
