@@ -2,6 +2,7 @@ from module.screen import screen
 from module.automation import auto
 from module.config import cfg
 from module.logger import log
+from module.game import get_game_controller
 from utils.color import red, green, yellow
 import tasks.reward as reward
 import pyperclip
@@ -124,7 +125,8 @@ class Redemption:
         for idx, code in enumerate(codes_to_use, start=1):
             log.info(f"开始使用兑换码: {green(code)} ({idx}/{len(codes_to_use)})")
             screen.change_to('redemption')
-            pyperclip.copy(code)
+            game = get_game_controller()
+            game.copy(code)
             if auto.click_element("./assets/images/share/redemption/paste.png", "image", 0.9):
                 time.sleep(0.5)
                 if auto.find_element("./assets/images/share/redemption/clear.png", "image", 0.9):
