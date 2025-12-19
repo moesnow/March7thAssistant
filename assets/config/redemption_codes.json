@@ -28,5 +28,55 @@
         "server": "global",
         "expires_at": "2025-12-06T23:59:59+08:00",
         "code": "MTKQEAJAUZWB"
+    },
+    {
+        "server": "cn",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "SR8888"
+    },
+    {
+        "server": "cn",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "IFYOUAREREADINGTHIS"
+    },
+    {
+        "server": "cn",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "farewell"
+    },
+    {
+        "server": "cn",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "creationnymph"
+    },
+    {
+        "server": "cn",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "omega"
+    },
+    {
+        "server": "global",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "STARRAILGIFT"
+    },
+    {
+        "server": "global",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "IFYOUAREREADINGTHIS"
+    },
+    {
+        "server": "global",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "farewell"
+    },
+    {
+        "server": "global",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "creationnymph"
+    },
+    {
+        "server": "global",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "omega"
     }
 ]
