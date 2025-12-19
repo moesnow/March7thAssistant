@@ -399,6 +399,9 @@ class CloudGameController(GameControllerBase):
                 self.log_info("已关闭残留的 chromedriver 进程")
         except Exception as e:
             self.log_warning(f"退出时清理 chromedriver 进程失败: {e}")
+    
+    def download_intergrated_browser(self) -> bool:
+        self._prepare_browser_and_driver(browser_type="chrome", integrated=True)
 
     def is_integrated_browser_downloaded(self) -> bool:
         """当前是否已经下载内置浏览器"""
