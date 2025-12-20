@@ -953,7 +953,7 @@ class SettingInterface(ScrollArea):
         self.updateFullEnableCard = SwitchSettingCard1(
             FIF.GLOBE,
             self.tr('更新时下载完整包'),
-            "包含模拟宇宙和锄大地更新",
+            "更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。",
             "update_full_enable"
         )
         self.mirrorchyanCdkCard = PushSettingCardMirrorchyan(
