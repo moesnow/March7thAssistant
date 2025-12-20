@@ -1,15 +1,18 @@
 # 更新日志
 
-## v2025.12.20
+## v2025.12.21
 - 支持大丽花和三月七·冬去煦至 [#813](https://github.com/moesnow/March7thAssistant/pull/813) @loader3229
 - 添加成就奖励领取功能 [#811](https://github.com/moesnow/March7thAssistant/pull/811) @g60cBQ
 - 添加自动获取兑换码并领取功能
 - 恢复触屏模式功能支持
 - 优化定时运行任务的触发逻辑
 - 优化货币战争支持未结算对局处理
+- 完整包现在内置云游戏专用浏览器 [#815](https://github.com/moesnow/March7thAssistant/pull/815) @Patrick16262
 - 修复回归用户无法正确识别活动页面
 - 修复特定情况下体力计划错误判定无法执行
 - 修复启用培养计划后副本连续挑战次数错误
+- 修复云·星穹铁道后台运行时剪贴板失效的问题 [#816](https://github.com/moesnow/March7thAssistant/pull/816) @Patrick16262
+- 修复使用云游戏无法快速启动锄大地
 
 ## v2025.12.16
 - 新增日志界面并优化任务执行方式
