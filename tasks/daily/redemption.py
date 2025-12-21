@@ -83,11 +83,6 @@ class Redemption:
             log.warning(f"获取兑换码失败: {e}")
             codes = []
 
-        if not codes:
-            log.info("没有找到有效的兑换码")
-            log.hr("完成", 2)
-            return False
-
         # 判断哪些兑换码是未使用过的
         try:
             used = cfg.already_used_codes
@@ -96,6 +91,11 @@ class Redemption:
         if used is None:
             used = []
         codes = [code for code in codes if code not in used]
+
+        if not codes:
+            log.info("没有找到有效的兑换码")
+            log.hr("完成", 2)
+            return False
 
         log.info(f"当前服务器类型为{"国服" if server == "cn" else "国际服"}，找到{len(codes)}个有效兑换码，开始尝试兑换")
         log.hr("完成", 2)
