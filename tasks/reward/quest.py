@@ -22,8 +22,9 @@ class Quest(RewardTemplate):
 
         # 判断完成
         auto.find_element("./assets/images/screen/guide/guide2.png", "image", 0.9, max_retries=10)
-        if get_reward and auto.find_element("./assets/images/share/reward/quest/500.png", "image", 0.95, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
+        if auto.find_element("./assets/images/share/reward/quest/500.png", "image", 0.95, crop=(415.0 / 1920, 270.0 / 1080, 1252.0 / 1920, 114.0 / 1080)):
             cfg.set_value("daily_tasks", {})
-            Base.send_notification_with_screenshot(cfg.notify_template['DailyPracticeCompleted'], NotificationLevel.ALL)
+            if get_reward:
+                Base.send_notification_with_screenshot(cfg.notify_template['DailyPracticeCompleted'], NotificationLevel.ALL)
         else:
             Base.send_notification_with_screenshot(cfg.notify_template['DailyPracticeNotCompleted'], NotificationLevel.ERROR)
