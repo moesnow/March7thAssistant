@@ -16,7 +16,7 @@ SPECIAL_PROGRAMS = []
 _SPECIAL_BY_DISPLAY = {}
 _SPECIAL_BY_EXEC = {}
 try:
-    cfg_path = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', 'assets', 'config', 'special_programs.json'))
+    cfg_path = "./assets/config/special_programs.json"
     if os.path.exists(cfg_path):
         with open(cfg_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
