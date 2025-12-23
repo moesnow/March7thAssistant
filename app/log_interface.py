@@ -214,7 +214,8 @@ class LogInterface(ScrollArea):
                 st = QTime(*parts)
             except Exception:
                 continue
-            secs = st.secsTo(current_time)
+            secs = current_time.secsTo(st)
+            # secs = st.secsTo(current_time)
             if secs < 0:
                 secs += 24 * 60 * 60
             if next_secs is None or secs < next_secs:
@@ -358,8 +359,11 @@ class LogInterface(ScrollArea):
                 self._pending_task_meta = t
                 try:
                     self.startTask(task_for_start)
+                    return  # 一次只触发一个任务
                 except Exception as e:
                     self.appendLog(f"启动任务失败: {e}\n")
+
+        self._updateScheduleStatusLabel()
 
     def startTask(self, command_or_task):
         """启动任务"""
