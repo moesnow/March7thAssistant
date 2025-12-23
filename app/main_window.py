@@ -280,13 +280,7 @@ class MainWindow(MSFluentWindow):
 
     def quitApp(self):
         """退出应用程序"""
-        self._stopRunningTask()
-        self._stopThemeListener()
-        # 清理日志界面的资源（如全局热键）
-        if hasattr(self, 'logInterface'):
-            self.logInterface.cleanup()
-        self.tray_icon.hide()
-        QApplication.quit()
+        self._do_quit()
 
     def _on_config_file_changed(self):
         """重新加载配置文件并刷新界面"""
@@ -363,6 +357,37 @@ class MainWindow(MSFluentWindow):
                     self.logInterface.process.kill()
                     self.logInterface.process.waitForFinished(1000)
 
+    def _do_quit(self, e=None):
+        """执行退出前的清理并退出程序
+        e: 可选的 QCloseEvent，用于调用 e.accept()
+        """
+        try:
+            self.hide()
+            self.tray_icon.hide()
+            QApplication.processEvents()
+        except Exception:
+            pass
+
+        # 停止运行任务和主题监听
+        self._stopRunningTask()
+        self._stopThemeListener()
+
+        # 可选地清理日志界面资源
+        if hasattr(self, 'logInterface'):
+            try:
+                self.logInterface.cleanup()
+            except Exception:
+                pass
+
+        # 如果传入了事件，接受它
+        if e is not None:
+            try:
+                e.accept()
+            except Exception:
+                pass
+
+        QApplication.quit()
+
     def closeEvent(self, e):
         """关闭窗口时根据配置执行对应操作"""
         from .card.messagebox_custom import MessageBoxCloseWindow
@@ -392,11 +417,7 @@ class MainWindow(MSFluentWindow):
                     pass
             elif dialog.action == 'close':
                 # 关闭程序
-                self._stopRunningTask()
-                self._stopThemeListener()
-                self.tray_icon.hide()
-                e.accept()
-                QApplication.quit()
+                self._do_quit(e)
             else:
                 # 用户取消操作（例如点击了 X 按钮）
                 e.ignore()
@@ -412,11 +433,7 @@ class MainWindow(MSFluentWindow):
             # )
         elif close_action == 'close':
             # 直接关闭程序
-            self._stopRunningTask()
-            self._stopThemeListener()
-            self.tray_icon.hide()
-            e.accept()
-            QApplication.quit()
+            self._do_quit(e)
         else:
             # 默认行为：最小化到托盘
             e.ignore()
