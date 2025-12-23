@@ -229,9 +229,10 @@ class LogInterface(ScrollArea):
             else:
                 # 计算具体时间
                 time_str = next_task.get('time')
-            self.scheduleStatusLabel.setText(self.tr(f'启用定时任务: {len(enabled)}，下次: {time_str} ({next_task.get("name", "")})'))
+            self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}，下次: {time_str} ({next_task.get("name", "")})'))
         else:
-            self.scheduleStatusLabel.setText(self.tr(f'启用定时任务: {len(enabled)}'))
+            # self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}'))
+            self.scheduleStatusLabel.setText(self.tr('尚未配置定时任务'))
 
     def _openScheduleManager(self):
         """打开定时任务管理对话框"""
