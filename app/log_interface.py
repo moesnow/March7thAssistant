@@ -195,14 +195,14 @@ class LogInterface(ScrollArea):
         """更新定时状态标签：展示启用的定时任务数量和下次运行时间（若有）"""
         tasks = cfg.get_value("scheduled_tasks", []) or []
         enabled = [t for t in tasks if t.get('enabled', True)]
-        if not enabled:
-            # 兼容旧配置：如果开启了旧的单一定时配置，显示旧配置内容
-            if cfg.get_value('scheduled_run_enable', False):
-                time_str = cfg.get_value('scheduled_run_time', '04:00')
-                self.scheduleStatusLabel.setText(self.tr(f'旧单一定时启用: {time_str}'))
-            else:
-                self.scheduleStatusLabel.setText(self.tr('未配置定时任务'))
-            return
+        # if not enabled:
+        #     # 兼容旧配置：如果开启了旧的单一定时配置，显示旧配置内容
+        #     if cfg.get_value('scheduled_run_enable', False):
+        #         time_str = cfg.get_value('scheduled_run_time', '04:00')
+        #         self.scheduleStatusLabel.setText(self.tr(f'旧单一定时启用: {time_str}'))
+        #     else:
+        #         self.scheduleStatusLabel.setText(self.tr('未配置定时任务'))
+        #     return
 
         # 找到接下来最近要运行的任务时间
         current_time = QTime.currentTime()
@@ -288,26 +288,26 @@ class LogInterface(ScrollArea):
     def _checkScheduledTime(self):
         """检查是否到达任意已启用的定时任务时间并触发对应任务"""
         tasks = cfg.get_value('scheduled_tasks', []) or []
-        if not tasks:
-            # 兼容旧单一定时任务配置
-            if cfg.get_value('scheduled_run_enable', False):
-                # 避免和多任务逻辑冲突，按旧逻辑触发完整运行
-                if self.isTaskRunning():
-                    return
-                current_time = QTime.currentTime()
-                scheduled_time_str = cfg.get_value('scheduled_run_time', '04:00')
-                try:
-                    parts = list(map(int, scheduled_time_str.split(':')))
-                    scheduled_time = QTime(*parts)
-                except Exception:
-                    return
-                secs = scheduled_time.secsTo(current_time)
-                if secs < 0:
-                    secs += 24 * 60 * 60
-                if 0 <= secs <= 60:
-                    self.appendLog(f"\n========== 定时任务触发 (旧配置: {scheduled_time_str}) ==========\n")
-                    self.startTask('main')
-            return
+        # if not tasks:
+        #     # 兼容旧单一定时任务配置
+        #     if cfg.get_value('scheduled_run_enable', False):
+        #         # 避免和多任务逻辑冲突，按旧逻辑触发完整运行
+        #         if self.isTaskRunning():
+        #             return
+        #         current_time = QTime.currentTime()
+        #         scheduled_time_str = cfg.get_value('scheduled_run_time', '04:00')
+        #         try:
+        #             parts = list(map(int, scheduled_time_str.split(':')))
+        #             scheduled_time = QTime(*parts)
+        #         except Exception:
+        #             return
+        #         secs = scheduled_time.secsTo(current_time)
+        #         if secs < 0:
+        #             secs += 24 * 60 * 60
+        #         if 0 <= secs <= 60:
+        #             self.appendLog(f"\n========== 定时任务触发 (旧配置: {scheduled_time_str}) ==========\n")
+        #             self.startTask('main')
+        #     return
 
         # 多任务处理
         if self.isTaskRunning():
