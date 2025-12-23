@@ -1,5 +1,5 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QTime
+from PyQt5.QtCore import Qt, QTime, QDateTime
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QLineEdit, QTableWidget, QTableWidgetItem,
                              QWidget, QFileDialog, QHeaderView, QComboBox,
@@ -505,9 +505,11 @@ class ScheduleManagerDialog(MessageBox):
         self.add_btn = PushButton(self.tr('添加'), self)
         self.edit_btn = PushButton(self.tr('编辑'), self)
         self.del_btn = PushButton(self.tr('删除'), self)
+        self.run_btn = PushButton(self.tr('立即运行'), self)
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.edit_btn)
         btn_layout.addWidget(self.del_btn)
+        btn_layout.addWidget(self.run_btn)
         btn_layout.addStretch()
 
         # 插入到 textLayout
@@ -518,6 +520,7 @@ class ScheduleManagerDialog(MessageBox):
         self.add_btn.clicked.connect(self._on_add)
         self.edit_btn.clicked.connect(self._on_edit)
         self.del_btn.clicked.connect(self._on_delete)
+        self.run_btn.clicked.connect(self._on_run_now)
         # 双击行打开编辑（等价于按编辑按钮）
         self.table.cellDoubleClicked.connect(self._on_row_double_clicked)
 
@@ -613,6 +616,74 @@ class ScheduleManagerDialog(MessageBox):
             self._reload_table()
             if self.save_callback:
                 self.save_callback(self.scheduled_tasks)
+
+    def _on_run_now(self):
+        """立即运行所选任务（带确认），触发流程与 _checkScheduledTime 保持一致。"""
+        row = self.table.currentRow()
+        if row < 0 or row >= len(self.scheduled_tasks):
+            m = MessageBox(self.tr('提示'), self.tr('请先选择要运行的任务'), self)
+            m.cancelButton.hide()
+            m.yesButton.setText(self.tr('确认'))
+            m.exec()
+            return
+        t = self.scheduled_tasks[row]
+        # 确认
+        m = MessageBox(self.tr('确认'), self.tr(f'确认立即运行任务 "{t.get("name", "")}" 吗？'), self)
+        m.yesButton.setText(self.tr('确认'))
+        m.cancelButton.setText(self.tr('取消'))
+        if not m.exec():
+            return
+
+        # 构建与 _checkScheduledTime 一致的任务字典
+        task_for_start = {
+            'program': t.get('program', 'self'),
+            'args': t.get('args', ''),
+            'timeout': int(t.get('timeout', 0) or 0),
+            'name': t.get('name', ''),
+            'notify': bool(t.get('notify', False)),
+            'post_action': t.get('post_action', 'None'),
+            'id': t.get('id'),
+        }
+
+        try:
+            parent = self.parent()
+            # 记录 pending meta 与触发时间戳（避免与定时器冲突）
+            now_ts = QDateTime.currentDateTime().toSecsSinceEpoch()
+            try:
+                if hasattr(parent, '_pending_task_meta'):
+                    parent._pending_task_meta = t
+            except Exception:
+                pass
+            try:
+                if hasattr(parent, '_last_triggered_ts') and t.get('id'):
+                    parent._last_triggered_ts[t.get('id')] = now_ts
+            except Exception:
+                pass
+
+            # 写日志（如果父组件支持）
+            try:
+                if hasattr(parent, 'appendLog'):
+                    parent.appendLog(f"\n========== 定时任务手动触发 ({t.get('name', '未命名')} @ {t.get('time', '')}) ==========")
+            except Exception:
+                pass
+
+            # 启动任务
+            if hasattr(parent, 'startTask'):
+                parent.startTask(task_for_start)
+                try:
+                    self.close()
+                except Exception:
+                    pass
+            else:
+                info = MessageBox(self.tr('错误'), self.tr('无法运行任务：父组件不支持 startTask'), self)
+                info.cancelButton.hide()
+                info.yesButton.setText(self.tr('确认'))
+                info.exec()
+        except Exception as e:
+            m = MessageBox(self.tr('错误'), self.tr(f'启动任务失败: {e}'), self)
+            m.cancelButton.hide()
+            m.yesButton.setText(self.tr('确认'))
+            m.exec()
 
     def _on_row_double_clicked(self, row: int, column: int):
         """双击表格任意单元格时触发编辑（等效于按编辑按钮）。"""
