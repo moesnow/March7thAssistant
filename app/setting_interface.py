@@ -658,7 +658,7 @@ class SettingInterface(ScrollArea):
         )
         self.cloudGameMaxQueueTimeCard = RangeSettingCard1(
             "cloud_game_max_queue_time",
-            [1, 60],
+            [1, 120],
             FIF.SPEED_MEDIUM,
             self.tr("最大排队等待时间（分钟）"),
             ''
@@ -687,7 +687,7 @@ class SettingInterface(ScrollArea):
             "browser_type",
             FIF.GLOBE,
             self.tr("浏览器类型"),
-            self.tr("‘集成’ 模式下，会自动下载浏览器"),
+            self.tr("建议保持默认的“集成（Chrome For Testing）”效果最好"),
             {"集成（Chrome For Testing）": "integrated", "Chrome": "chrome", "Edge": "edge"}
         )
         self.browserDownloadUseMirrorCard = SwitchSettingCard1(
