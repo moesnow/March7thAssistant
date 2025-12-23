@@ -45,8 +45,8 @@ class LogInterface(ScrollArea):
         # 定时运行相关
         self._schedule_timer = QTimer(self)
         self._schedule_timer.timeout.connect(self._checkScheduledTime)
-        # 用于记录每个定时任务最后触发的日期（yyyy-MM-dd），避免同一任务在同一日重复触发
-        self._last_triggered = {}
+        # 记录每个定时任务最后触发的时间戳（秒），避免同一任务在短时间内重复触发
+        self._last_triggered_ts = {}
 
         self.scrollWidget = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
@@ -245,9 +245,9 @@ class LogInterface(ScrollArea):
     def _saveScheduledTasks(self, tasks):
         """保存定时任务列表到配置文件"""
         cfg.set_value('scheduled_tasks', tasks)
-        # 清理 last_triggered 中已删除任务的条目
+        # 清理 last_triggered_ts 中已删除任务的条目
         valid_ids = set(t.get('id') for t in tasks if t.get('id'))
-        self._last_triggered = {k: v for k, v in self._last_triggered.items() if k in valid_ids}
+        self._last_triggered_ts = {k: v for k, v in self._last_triggered_ts.items() if k in valid_ids}
 
     def _migrate_legacy_schedule(self):
         """如果开启了旧的单一定时配置且没有新的定时任务，则将旧配置迁移为新的定时任务列表中的一项。"""
@@ -315,7 +315,6 @@ class LogInterface(ScrollArea):
             return
 
         current_time = QTime.currentTime()
-        today_str = QDateTime.currentDateTime().toString('yyyy-MM-dd')
 
         for t in tasks:
             if not t.get('enabled', True):
@@ -333,14 +332,15 @@ class LogInterface(ScrollArea):
 
             if 0 <= secs <= 60:
                 tid = t.get('id')
-                last = self._last_triggered.get(tid)
-                if last == today_str:
-                    # 当天已触发过，跳过
+                now_ts = QDateTime.currentDateTime().toSecsSinceEpoch()
+                last_ts = self._last_triggered_ts.get(tid) if tid else None
+                if last_ts and (now_ts - last_ts) < 60:
+                    # 在 60 秒内已触发过，跳过
                     continue
 
-                # 标记为已触发
+                # 标记为已触发（记录时间戳）
                 if tid:
-                    self._last_triggered[tid] = today_str
+                    self._last_triggered_ts[tid] = now_ts
 
                 # 触发任务
                 pname = t.get('program', 'self')
