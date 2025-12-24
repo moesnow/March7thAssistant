@@ -336,6 +336,9 @@ scheduled_run_time: "04:00" # 旧配置：单一定时运行时间（仅用于�
 # - post_action: 完成后操作（None/Shutdown/Sleep/Hibernate/Restart/Logoff/TurnOffDisplay/RunScript）
 # - kill_processes: 完成后要终止的进程名列表（可选），例如 ["StarRail.exe", "YuanShen.exe"]
 # - enabled: 是否启用
+# 定时任务冲突处理：当计划任务触发且当前已有任务在运行时的处理策略
+# 可选值：skip（跳过需要运行的任务），stop（停止正在运行的任务并启动计划任务）
+scheduled_on_conflict: skip
 scheduled_tasks: [] # 示例：
 # scheduled_tasks:
 #   - id: "0001-..."

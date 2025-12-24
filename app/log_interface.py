@@ -37,10 +37,12 @@ class LogInterface(ScrollArea):
         self._current_hotkey = None
         # 当前运行的定时任务元数据（如果是由定时触发），在进程结束时用于发送通知与执行后续操作
         self._pending_task_meta = None
+        # 用于在强制停止当前任务后排队延迟启动的任务（tuple: (task_meta, task_dict)）
+        self._pending_start_task_after_stop = None
         # 可取消的超时定时器（用于在任务超时时停止任务）
         self._timeout_timer = None
-        # 标记任务是否因超时被停止
-        self._stopped_by_timeout = False
+        # 标记任务是否因异常被停止（非正常结束，如超时、进程错误或异常退出）
+        self._stopped_abnormally = False
 
         # 定时运行相关
         self._schedule_timer = QTimer(self)
@@ -310,9 +312,9 @@ class LogInterface(ScrollArea):
         #             self.startTask('main')
         #     return
 
-        # 多任务处理
-        if self.isTaskRunning():
-            return
+        # 多任务处理：不提前返回，按每个任务的冲突处理策略执行
+        # 先更新状态展示
+        self._updateScheduleStatusLabel()
 
         current_time = QTime.currentTime()
 
@@ -356,6 +358,28 @@ class LogInterface(ScrollArea):
                     'post_action': t.get('post_action', 'None'),
                     'id': tid,
                 }
+
+                # 冲突处理：如果当前已有任务在运行，根据配置决定跳过或停止正在运行的任务
+                try:
+                    conflict_mode = cfg.get_value('scheduled_on_conflict', 'skip') or 'skip'
+                except Exception:
+                    conflict_mode = 'skip'
+
+                if self.isTaskRunning():
+                    if conflict_mode == 'skip':
+                        self.appendLog(self.tr(f"已有任务在运行，按配置跳过计划任务: {task_for_start.get('name')}\n"))
+                        continue
+                    elif conflict_mode == 'stop':
+                        self.appendLog(self.tr(f"已有任务在运行，按配置停止当前任务并在其结束后启动: {task_for_start.get('name')}\n"))
+                        # 排队延迟启动：保存元数据与任务字典，调用 stopTask 停止当前任务
+                        try:
+                            self._pending_start_task_after_stop = (t, task_for_start)
+                            self.stopTask()
+                        except Exception as e:
+                            self.appendLog(f"停止当前任务失败: {e}\n")
+                        # 返回以避免在同一轮触发其它任务
+                        return
+
                 # 记录 pending meta（供进程结束时判断是否通知/执行完成后操作）
                 self._pending_task_meta = t
                 try:
@@ -416,8 +440,11 @@ class LogInterface(ScrollArea):
 
             # 记录当前进程以便其它方法管理
             self.process = proc
-            # 重置超时停止标记（新任务开始）
-            self._stopped_by_timeout = False
+            # 重置异常停止标记（新任务开始）
+            try:
+                self._stopped_abnormally = False
+            except Exception:
+                pass
             self.current_task = program
             self.statusLabel.setText(self.tr(f'正在运行: {name}'))
             self.stopButton.setEnabled(True)
@@ -488,8 +515,11 @@ class LogInterface(ScrollArea):
 
         # 如果设置了超时，使用可取消的单次 QTimer在超时后统一停止任务
         if timeout > 0:
-            # 新任务开始，重置超时停止标记
-            self._stopped_by_timeout = False
+            # 新任务开始，重置异常停止标记
+            try:
+                self._stopped_abnormally = False
+            except Exception:
+                pass
 
             if self._timeout_timer:
                 try:
@@ -517,6 +547,12 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             self._timeout_timer = None
+
+        # 用户主动停止视为异常停止（用于通知/后续处理判定）
+        try:
+            self._stopped_abnormally = True
+        except Exception:
+            pass
 
         if self.process and self.process.state() == QProcess.Running:
             self.appendLog("\n" + "=" * 117 + "\n")
@@ -563,7 +599,11 @@ class LogInterface(ScrollArea):
         try:
             if proc is not self.process:
                 return
-            self._stopped_by_timeout = True
+            # 标记为异常停止（超时）
+            try:
+                self._stopped_abnormally = True
+            except Exception:
+                pass
             try:
                 self.appendLog("任务超时，正在停止...\n")
             except Exception:
@@ -650,6 +690,11 @@ class LogInterface(ScrollArea):
         if exit_status == QProcess.NormalExit:
             self.appendLog(f"任务完成，退出码: {exit_code}\n")
         else:
+            # 非正常退出，标记为异常停止以便后续处理
+            try:
+                self._stopped_abnormally = True
+            except Exception:
+                pass
             self.appendLog(f"任务异常结束，退出码: {exit_code}\n")
 
         self._updateFinishedStatus(exit_code)
@@ -659,28 +704,6 @@ class LogInterface(ScrollArea):
         try:
             pm = getattr(self, '_pending_task_meta', None)
             if pm:
-                # 发送通知（仅当 notify 为 True）
-                try:
-                    if bool(pm.get('notify', False)):
-                        try:
-                            # 若因超时停止或退出状态非正常，则视为异常结束
-                            if getattr(self, '_stopped_by_timeout', False) or exit_status != QProcess.NormalExit:
-                                note = f"定时任务异常结束: {pm.get('name', '')}"
-                            else:
-                                note = f"定时任务完成: {pm.get('name', '')}"
-                            notif.notify(note)
-                            self.appendLog(f"已发送通知: {note}\n")
-                        except Exception:
-                            pass
-                except Exception:
-                    pass
-
-                # 清理超时标记（若存在）
-                try:
-                    self._stopped_by_timeout = False
-                except Exception:
-                    pass
-
                 # 终止指定进程（若有）
                 try:
                     kp = pm.get('kill_processes', []) or []
@@ -700,6 +723,22 @@ class LogInterface(ScrollArea):
                 except Exception:
                     pass
 
+                # 发送通知（仅当 notify 为 True）
+                try:
+                    if bool(pm.get('notify', False)):
+                        try:
+                            # 若因异常停止或退出状态非正常，则视为异常结束
+                            if getattr(self, '_stopped_abnormally', False) or exit_status != QProcess.NormalExit:
+                                note = f"定时任务异常结束: {pm.get('name', '')}"
+                            else:
+                                note = f"定时任务完成: {pm.get('name', '')}"
+                            notif.notify(note)
+                            self.appendLog(f"已发送通知: {note}\n")
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
                 # 记录或触发 post_action（当前仅记录日志，实际动作由其他模块实现）
                 try:
                     post_action = pm.get('post_action', 'None')
@@ -716,6 +755,32 @@ class LogInterface(ScrollArea):
         except Exception:
             pass
 
+        # 清理异常停止标记（若存在）
+        try:
+            self._stopped_abnormally = False
+        except Exception:
+            pass
+
+        # 如果有排队的延迟启动任务（由于冲突设置导致在停止当前任务后再启动），在进程结束处理完成后启动它
+        try:
+            pending = getattr(self, '_pending_start_task_after_stop', None)
+            if pending:
+                t_meta, task_dict = pending
+                # 清除排队标记
+                try:
+                    self._pending_start_task_after_stop = None
+                except Exception:
+                    pass
+                # 记录 pending meta 并启动任务
+                try:
+                    self._pending_task_meta = t_meta
+                    self.appendLog(self.tr(f"延迟启动任务: {t_meta.get('name', '')}\n"))
+                    self.startTask(task_dict)
+                except Exception as e:
+                    self.appendLog(f"延迟启动任务失败: {e}\n")
+        except Exception:
+            pass
+
     def _onProcessError(self, error):
         """进程错误"""
         error_messages = {
@@ -727,6 +792,11 @@ class LogInterface(ScrollArea):
             QProcess.UnknownError: "未知错误"
         }
         msg = error_messages.get(error, f"错误代码: {error}")
+        # 标记为异常停止
+        try:
+            self._stopped_abnormally = True
+        except Exception:
+            pass
         self.appendLog(f"\n错误: {msg}\n")
         self._updateFinishedStatus(-1)
 

@@ -10,6 +10,7 @@ from utils.tasks import TASK_NAMES
 import uuid
 import os
 import json
+from module.config import cfg
 
 # 从 assets/config/special_programs.json 加载特殊程序定义（若存在）
 SPECIAL_PROGRAMS = []
@@ -510,6 +511,32 @@ class ScheduleManagerDialog(MessageBox):
         btn_layout.addWidget(self.edit_btn)
         btn_layout.addWidget(self.del_btn)
         btn_layout.addWidget(self.run_btn)
+
+        # 冲突处理：当定时任务触发且已有任务在运行时如何处理（skip/stop）
+        conflict_label = BodyLabel(self.tr('冲突处理:'))
+        # conflict_label.setFixedWidth(90)
+        self.conflict_combo = ComboBox(self)
+        # options: key, label
+        self._conflict_options = [('skip', self.tr('跳过需要运行的任务')), ('stop', self.tr('停止正在运行的任务'))]
+        for key, label in self._conflict_options:
+            self.conflict_combo.addItem(label, userData=key)
+        # 设定为配置里保存的值（默认 skip）
+        try:
+            cur = cfg.get_value('scheduled_on_conflict', 'skip')
+            for i in range(self.conflict_combo.count()):
+                if self.conflict_combo.itemData(i) == cur:
+                    self.conflict_combo.setCurrentIndex(i)
+                    break
+        except Exception:
+            pass
+        # 保存设置到配置（用户更改时即时保存）
+        try:
+            self.conflict_combo.currentIndexChanged.connect(lambda i: cfg.set_value('scheduled_on_conflict', self.conflict_combo.itemData(i) or 'skip'))
+        except Exception:
+            pass
+
+        btn_layout.addWidget(conflict_label)
+        btn_layout.addWidget(self.conflict_combo)
         btn_layout.addStretch()
 
         # 插入到 textLayout
