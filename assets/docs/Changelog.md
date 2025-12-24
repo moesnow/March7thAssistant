@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2025.12.24-beta
+- 定时运行支持添加多个定时任务和外部程序
+- 优化没有找到任何兑换码时的处理逻辑
+- 调整云游戏设置项允许的最大排队时间范围
+- 修复B服登录界面UI变化导致的启动异常
+- 修复部分情况下领取每日实训奖励误报未完成 [#820](https://github.com/moesnow/March7thAssistant/pull/820) @g60cBQ
+- 修复培养目标在未能识别副本的情况下仍继续执行 [#819](https://github.com/moesnow/March7thAssistant/pull/819) @g60cBQ
+
 ## v2025.12.21
 - 支持大丽花和三月七·冬去煦至 [#813](https://github.com/moesnow/March7thAssistant/pull/813) @loader3229
 - 添加成就奖励领取功能 [#811](https://github.com/moesnow/March7thAssistant/pull/811) @g60cBQ
