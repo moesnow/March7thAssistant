@@ -118,11 +118,23 @@ class SwitchSettingCardNotify(SettingCard):
         if message_box.exec():
             for config, lineedit in message_box.lineEdit_dict.items():
                 cfg.set_value(config, process_lineedit_text(lineedit.text()))
+            # 配置修改后重新初始化通知器以应用变更
+            try:
+                from module.notification import init_notifiers
+                init_notifiers()
+            except Exception:
+                pass
 
     def __onCheckedChanged(self, isChecked: bool):
         """ switch button checked state changed slot """
         self.setValue(isChecked)
         cfg.set_value(self.configname, isChecked)
+        # 启用/禁用切换后重新初始化通知器
+        try:
+            from module.notification import init_notifiers
+            init_notifiers()
+        except Exception:
+            pass
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)

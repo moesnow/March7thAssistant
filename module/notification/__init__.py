@@ -54,16 +54,39 @@ class NotifierFactory:
 
 notif = Notification(cfg.notify_template['Title'], log)
 
-# 设置通知级别过滤器
-notify_level = cfg.get_value('notify_level', NotificationLevel.ALL)
-notif.set_level_filter(notify_level)
 
-# 创建并注册Notifier实例
-for key, value in cfg.config.items():
-    if key.startswith("notify_") and key.endswith("_enable") and value:
-        notifier_name = key[len("notify_"):-len("_enable")]
-        params = {param_key[len("notify_" + notifier_name + "_"):]: param_value
-                  for param_key, param_value in cfg.config.items()
-                  if param_key.startswith(f"notify_{notifier_name}_") and param_key != f"notify_{notifier_name}_enable" and param_value != ""}
-        notifier = NotifierFactory.create_notifier(notifier_name, params, log)
-        notif.set_notifier(notifier_name, notifier)
+def init_notifiers():
+    """(Re)initialize notifiers from current configuration.
+
+    This updates the existing global `notif` instance in-place: clears previous notifiers,
+    sets the level filter, and (re)creates notifier instances based on `cfg`.
+    """
+    # 清理已有的notifiers
+    try:
+        notif.notifiers.clear()
+    except Exception:
+        pass
+
+    # 设置通知级别过滤器
+    try:
+        notify_level = cfg.get_value('notify_level', NotificationLevel.ALL)
+        notif.set_level_filter(notify_level)
+    except Exception:
+        pass
+
+    # 创建并注册Notifier实例
+    try:
+        for key, value in cfg.config.items():
+            if key.startswith("notify_") and key.endswith("_enable") and value:
+                notifier_name = key[len("notify_"):-len("_enable")]
+                params = {param_key[len("notify_" + notifier_name + "_"):]: param_value
+                          for param_key, param_value in cfg.config.items()
+                          if param_key.startswith(f"notify_{notifier_name}_") and param_key != f"notify_{notifier_name}_enable" and param_value != ""}
+                notifier = NotifierFactory.create_notifier(notifier_name, params, log)
+                notif.set_notifier(notifier_name, notifier)
+    except Exception:
+        pass
+
+
+# 首次初始化
+init_notifiers()

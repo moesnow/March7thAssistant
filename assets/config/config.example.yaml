@@ -317,11 +317,42 @@ hotkey_warp: f3 # 设置打开跃迁的按键。
 hotkey_stop_task: f10 # 设置停止任务的全局快捷键（支持后台）。
 
 # 定时运行设置
-scheduled_run_enable: false # 是否启用定时运行。true 启用，false 不启用。
-scheduled_run_time: "04:00" # 定时运行时间，格式为 HH:mm（24小时制）。
+# 说明：
+# - 旧的单一定时配置（下面两个字段）会在程序启动时迁移为新的 `scheduled_tasks` 结构：
+#   如果 `scheduled_run_enable` 为 true 且 `scheduled_tasks` 为空，则会自动创建一个名为 "完整运行" 的任务
+#  （program='self', args='main'，时间使用 `scheduled_run_time`），并将 `scheduled_run_enable` 设为 false 以避免重复迁移。
+# - 建议直接使用 `scheduled_tasks` 来配置多个定时任务；旧字段仅用于一次性迁移。
+scheduled_run_enable: false # 旧配置：是否启用单一定时（仅用于迁移，迁移后自动置为 false）
+scheduled_run_time: "04:00" # 旧配置：单一定时运行时间（仅用于迁移），格式 HH:mm（24小时制）
 
-# 是否在多显示器上进行截屏（若开启无法正确运行请关闭）
-all_screens: true
+# 新版定时任务配置：支持多个任务，每个任务为一个对象，包含以下字段：
+# - id: 唯一ID（自动生成）
+# - name: 任务显示名称
+# - time: 运行时间，HH:mm（24小时制）
+# - program: 程序路径，填写 'self' 表示启动程序自身（即 March7th Assistant）
+# - args: 启动参数（可选），当 program 为 'self' 时填写任务ID（如 main/daily）
+# - timeout: 超时（秒），0 表示不启用
+# - notify: 是否在任务完成后推送通知（布尔值，true/false）
+# - post_action: 完成后操作（None/Shutdown/Sleep/Hibernate/Restart/Logoff/TurnOffDisplay/RunScript）
+# - kill_processes: 完成后要终止的进程名列表（可选），例如 ["StarRail.exe", "YuanShen.exe"]
+# - enabled: 是否启用
+# 定时任务冲突处理：当计划任务触发且当前已有任务在运行时的处理策略
+# 可选值：skip（跳过需要运行的任务），stop（停止正在运行的任务并启动计划任务）
+scheduled_on_conflict: skip
+scheduled_tasks: [] # 示例：
+# scheduled_tasks:
+#   - id: "0001-..."
+#     name: "每日实训"
+#     time: "07:30"
+#     program: "self"
+#     args: "daily"
+#     timeout: 3600
+#     notify: false
+#     post_action: "None"
+#     kill_processes: ["StarRail.exe"]
+#     enabled: true
+
+all_screens: true # 是否在多显示器上进行截屏（若开启无法正确运行请关闭）
 
 # 关闭窗口行为设置
 close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问）, "minimize"（最小化到托盘）, "close"（关闭程序）

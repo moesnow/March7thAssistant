@@ -291,6 +291,13 @@ class MainWindow(MSFluentWindow):
             # 重新加载配置
             cfg._load_config(None, save=False)
 
+            # 重新初始化通知器
+            try:
+                from module.notification import init_notifiers
+                init_notifiers()
+            except Exception:
+                pass
+
             # 更新日志界面的热键
             if hasattr(self, 'logInterface'):
                 self.logInterface.updateHotkey()

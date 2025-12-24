@@ -1,0 +1,42 @@
+{
+    "special_programs": [
+        {
+            "key": "bettergi",
+            "display_name": "原神 BetterGI",
+            "short_name": "原神",
+            "executable": "BetterGI.exe",
+            "default_args": "startOneDragon",
+            "kill_processes": [
+                "YuanShen.exe"
+            ]
+        },
+        {
+            "key": "zzz_onedragon",
+            "display_name": "绝区零 一条龙",
+            "short_name": "绝区零",
+            "executable": "OneDragon-Launcher.exe",
+            "default_args": "-o -c",
+            "kill_processes": [
+                "ZenlessZoneZero.exe"
+            ]
+        },
+        {
+            "key": "ok_ww",
+            "display_name": "鸣潮 ok-ww",
+            "short_name": "鸣潮",
+            "executable": "ok-ww.exe",
+            "default_args": "-t 1 -e",
+            "kill_processes": [
+                "Client-Win64-Shipping.exe"
+            ]
+        },
+        {
+            "key": "mfaavalonia",
+            "display_name": "MFAAvalonia",
+            "short_name": "",
+            "executable": "MFAAvalonia.exe",
+            "default_args": "",
+            "kill_processes": []
+        }
+    ]
+}
