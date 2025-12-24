@@ -55,10 +55,12 @@ def start_game():
         auto.click_element("./assets/images/screen/start_game.png", "image", 0.9, take_screenshot=False)
         # 适配B服，需要点击“登录”
         auto.click_element("./assets/images/screen/bilibili_login.png", "image", 0.9, take_screenshot=False)
+        auto.click_element("./assets/images/screen/bilibili_login_2.png", "image", 0.9, take_screenshot=False)
         # 出现多账号登录页时，需要点击“登录其他账号”
         auto.click_element("./assets/images/screen/login_switch_account.png", "image", 0.9, take_screenshot=False)
         # 适配用户协议和隐私政策更新提示，需要点击“同意”
         auto.click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
+        auto.click_element("./assets/images/screen/bilibili_agree_update.png", "image", 0.9, take_screenshot=False)
         # 登录过期
         if auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
             if load_acc_and_pwd(gamereg_uid()) != (None, None):
