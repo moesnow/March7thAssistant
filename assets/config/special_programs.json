@@ -29,6 +29,14 @@
             "kill_processes": [
                 "Client-Win64-Shipping.exe"
             ]
+        },
+        {
+            "key": "mfaavalonia",
+            "display_name": "MFAAvalonia",
+            "short_name": "",
+            "executable": "MFAAvalonia.exe",
+            "default_args": "",
+            "kill_processes": []
         }
     ]
 }
