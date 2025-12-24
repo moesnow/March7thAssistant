@@ -19,6 +19,9 @@ from utils.tasks import TASK_NAMES
 from .schedule_dialog import ScheduleManagerDialog
 from module.notification import notif
 import shlex
+import threading
+import subprocess as sp
+import ctypes
 
 
 class LogInterface(ScrollArea):
@@ -28,6 +31,8 @@ class LogInterface(ScrollArea):
     taskFinished = pyqtSignal(int)  # exit_code
     # 信号：请求停止任务（用于从全局热键线程安全调用）
     stopTaskRequested = pyqtSignal()
+    # 线程安全的日志信号（用于从后台线程发送日志）
+    logMessage = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -41,6 +46,9 @@ class LogInterface(ScrollArea):
         self._pending_start_task_after_stop = None
         # 可取消的超时定时器（用于在任务超时时停止任务）
         self._timeout_timer = None
+        # 在任务完成后可能排队的系统操作（post_action）以及用于取消的 QTimer
+        self._pending_post_action = None
+        self._pending_post_action_timer = None
         # 标记任务是否因异常被停止（非正常结束，如超时、进程错误或异常退出）
         self._stopped_abnormally = False
 
@@ -58,6 +66,8 @@ class LogInterface(ScrollArea):
 
         # 连接停止任务信号
         self.stopTaskRequested.connect(self.stopTask)
+        # 线程安全日志信号连接（用于从后台线程发送日志）
+        self.logMessage.connect(self.appendLog)
 
         # 在启动定时器前，迁移旧的单一定时配置（若开启且未配置新任务）
         self._migrate_legacy_schedule()
@@ -548,6 +558,27 @@ class LogInterface(ScrollArea):
                 pass
             self._timeout_timer = None
 
+        # 如果当前没有运行的任务，但存在等待执行的完成后操作，则把本次停止视为取消该操作
+        if not (self.process and self.process.state() == QProcess.Running):
+            if getattr(self, '_pending_post_action_timer', None):
+                try:
+                    # 取消等待中的完成后操作
+                    try:
+                        self._pending_post_action_timer.stop()
+                        self._pending_post_action_timer.deleteLater()
+                    except Exception:
+                        pass
+                    self._pending_post_action_timer = None
+                    self._pending_post_action = None
+                    self.logMessage.emit("已取消完成后操作\n")
+                    try:
+                        self.stopButton.setEnabled(False)
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+                return
+
         # 用户主动停止视为异常停止（用于通知/后续处理判定）
         try:
             self._stopped_abnormally = True
@@ -723,7 +754,7 @@ class LogInterface(ScrollArea):
                 except Exception:
                     pass
 
-                # 发送通知（仅当 notify 为 True）
+                # 发送通知（仅当 notify 为 True），改为在后台线程中发送以避免阻塞主线程
                 try:
                     if bool(pm.get('notify', False)):
                         try:
@@ -732,18 +763,87 @@ class LogInterface(ScrollArea):
                                 note = f"定时任务异常结束: {pm.get('name', '')}"
                             else:
                                 note = f"定时任务完成: {pm.get('name', '')}"
-                            notif.notify(note)
-                            self.appendLog(f"已发送通知: {note}\n")
+
+                            def _send_notify(n):
+                                try:
+                                    notif.notify(n)
+                                except Exception as e:
+                                    self.logMessage.emit(f"发送通知失败: {n}, 错误: {e}\n")
+                                else:
+                                    self.logMessage.emit(f"已发送通知: {n}\n")
+                            threading.Thread(target=_send_notify, args=(note,), daemon=True).start()
                         except Exception:
                             pass
                 except Exception:
                     pass
 
-                # 记录或触发 post_action（当前仅记录日志，实际动作由其他模块实现）
+                # 清理异常停止标记（若存在）
+                try:
+                    self._stopped_abnormally = False
+                except Exception:
+                    pass
+
+                # 记录或触发 post_action（现在实际执行支持的操作）
                 try:
                     post_action = pm.get('post_action', 'None')
                     if post_action and post_action != 'None':
-                        self.appendLog(f"任务完成后操作: {post_action}（将在任务完成后执行）\n")
+                        try:
+                            label = self._post_action_label(post_action)
+                        except Exception:
+                            label = post_action
+                        # 使用可取消的 QTimer 在 60 秒后执行 post_action，并允许用户在等待期间取消
+                        self.appendLog(f"任务完成后操作: {label}（将在60秒后执行，可通过停止按钮取消）\n")
+                        try:
+                            # 如果已有未清理的 post action，先取消它
+                            try:
+                                if self._pending_post_action_timer:
+                                    try:
+                                        self._pending_post_action_timer.stop()
+                                        self._pending_post_action_timer.deleteLater()
+                                    except Exception:
+                                        pass
+                                    self._pending_post_action_timer = None
+                                    self._pending_post_action = None
+                            except Exception:
+                                pass
+
+                            timer = QTimer(self)
+                            timer.setSingleShot(True)
+
+                            def _on_post_action_timeout(act=post_action, lbl=label, t=timer):
+                                # 在主线程记录开始执行的信息并启动后台线程执行操作
+                                try:
+                                    self.logMessage.emit(f"开始执行完成后操作: {lbl}\n")
+                                except Exception:
+                                    pass
+                                try:
+                                    threading.Thread(target=self._perform_post_action, args=(act,), daemon=True).start()
+                                finally:
+                                    try:
+                                        t.stop()
+                                        t.deleteLater()
+                                    except Exception:
+                                        pass
+                                    self._pending_post_action_timer = None
+                                    self._pending_post_action = None
+                                    # 若没有正在运行的任务，将停止按钮恢复为不可用
+                                    if not self.isTaskRunning():
+                                        try:
+                                            self.stopButton.setEnabled(False)
+                                        except Exception:
+                                            pass
+
+                            timer.timeout.connect(_on_post_action_timeout)
+                            timer.start(60000)
+                            self._pending_post_action = post_action
+                            self._pending_post_action_timer = timer
+                            # 使停止按钮可用以便用户取消等待的完成后操作（热键同样适用）
+                            try:
+                                self.stopButton.setEnabled(True)
+                            except Exception:
+                                pass
+                        except Exception as e:
+                            self.appendLog(f"触发完成后操作失败: {e}\n")
                 except Exception:
                     pass
 
@@ -752,12 +852,12 @@ class LogInterface(ScrollArea):
                     self._pending_task_meta = None
                 except Exception:
                     pass
-        except Exception:
-            pass
-
-        # 清理异常停止标记（若存在）
-        try:
-            self._stopped_abnormally = False
+            else:
+                # 清理异常停止标记（若存在）
+                try:
+                    self._stopped_abnormally = False
+                except Exception:
+                    pass
         except Exception:
             pass
 
@@ -800,9 +900,76 @@ class LogInterface(ScrollArea):
         self.appendLog(f"\n错误: {msg}\n")
         self._updateFinishedStatus(-1)
 
+    def _post_action_label(self, action: str) -> str:
+        """返回 post_action 的本地化标签"""
+        mapping = {
+            'None': self.tr('无操作'),
+            'Shutdown': self.tr('关机'),
+            'Sleep': self.tr('睡眠'),
+            'Hibernate': self.tr('休眠'),
+            'Restart': self.tr('重启'),
+            'Logoff': self.tr('注销'),
+            'TurnOffDisplay': self.tr('关闭显示器'),
+        }
+        return mapping.get(action, str(action))
+
+    def _perform_post_action(self, action: str) -> None:
+        """执行任务完成后的系统操作：Shutdown, Sleep, Hibernate, Restart, Logoff, TurnOffDisplay"""
+        try:
+            act = str(action)
+            label = self._post_action_label(act)
+            try:
+                self.logMessage.emit(f"执行完成后操作: {label}\n")
+            except Exception:
+                pass
+
+            # 其他系统操作（Windows）
+            if act == 'Shutdown':
+                sp.run(['shutdown', '/s', '/t', '0'])
+            elif act == 'Sleep':
+                try:
+                    os.system('powercfg -h off')
+                    os.system('rundll32.exe powrprof.dll,SetSuspendState 0,1,0')
+                    os.system('powercfg -h on')
+                except Exception as e:
+                    self.logMessage.emit(f"进入睡眠失败: {e}\n")
+            elif act == 'Hibernate':
+                sp.run(['shutdown', '/h'])
+            elif act == 'Restart':
+                sp.run(['shutdown', '/r'])
+            elif act == 'Logoff':
+                sp.run(['shutdown', '/l'])
+            elif act == 'TurnOffDisplay':
+                try:
+                    HWND_BROADCAST = 0xFFFF
+                    WM_SYSCOMMAND = 0x0112
+                    SC_MONITORPOWER = 0xF170
+                    ctypes.windll.user32.SendMessageW(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 2)
+                except Exception as e:
+                    self.logMessage.emit(f"关闭显示器失败: {e}\n")
+        except Exception as e:
+            try:
+                self.logMessage.emit(f"执行完成后操作时出错: {e}\n")
+            except Exception:
+                pass
+
     def _updateFinishedStatus(self, exit_code):
-        """更新完成状态"""
-        self.stopButton.setEnabled(False)
+        """更新完成状态
+
+        如果存在等待的完成后操作（_pending_post_action_timer），保持停止按钮可用以便用户取消；否则禁用。
+        """
+        # 若有等待的完成后操作，允许用户取消（开启停止按钮），否则禁用停止按钮
+        try:
+            if getattr(self, '_pending_post_action_timer', None):
+                self.stopButton.setEnabled(True)
+            else:
+                self.stopButton.setEnabled(False)
+        except Exception:
+            try:
+                self.stopButton.setEnabled(False)
+            except Exception:
+                pass
+
         if exit_code == 0:
             self.statusLabel.setText(self.tr('任务完成'))
             # self.statusLabel.setStyleSheet("color: green;")
@@ -820,3 +987,15 @@ class LogInterface(ScrollArea):
         # 停止定时检查器
         if self._schedule_timer:
             self._schedule_timer.stop()
+        # 取消等待中的完成后操作（若有）
+        try:
+            if getattr(self, '_pending_post_action_timer', None):
+                try:
+                    self._pending_post_action_timer.stop()
+                    self._pending_post_action_timer.deleteLater()
+                except Exception:
+                    pass
+                self._pending_post_action_timer = None
+                self._pending_post_action = None
+        except Exception:
+            pass
