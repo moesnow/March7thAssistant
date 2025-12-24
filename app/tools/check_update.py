@@ -44,12 +44,12 @@ class UpdateThread(QThread):
     def fetch_latest_release_info(self):
         """获取最新的发布信息。"""
         response = requests.get(
-            FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not (cfg.update_prerelease_enable and cfg.update_source == "GitHub")),
+            FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not cfg.update_prerelease_enable),
             timeout=10,
             headers=cfg.useragent
         )
         response.raise_for_status()
-        return response.json()[0] if (cfg.update_prerelease_enable and cfg.update_source == "GitHub") else response.json()
+        return response.json()[0] if cfg.update_prerelease_enable else response.json()
 
     def get_download_url_from_assets(self, assets):
         """从发布信息中获取下载URL。"""
@@ -86,8 +86,11 @@ class UpdateThread(QThread):
                     self.updateSignal.emit(UpdateStatus.FAILURE)
                     return
                 # 符合Mirror酱条件
+                url = f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}&user_agent=m7a_app"
+                if cfg.update_prerelease_enable:
+                    url += "&channel=beta"
                 response = requests.get(
-                    f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}&user_agent=m7a_app",
+                    url,
                     timeout=10,
                     headers=cfg.useragent
                 )

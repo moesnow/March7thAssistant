@@ -9,7 +9,7 @@ import requests
 
 def start():
     try:
-        if cfg.update_prerelease_enable and cfg.update_source == "GitHub":
+        if cfg.update_prerelease_enable:
             response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False), timeout=10, headers=cfg.useragent)
         else:
             response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant"), timeout=10, headers=cfg.useragent)
@@ -17,7 +17,7 @@ def start():
             return
         log.hr("开始检测更新", 0)
         if response.status_code == 200:
-            if cfg.update_prerelease_enable and cfg.update_source == "GitHub":
+            if cfg.update_prerelease_enable:
                 data = response.json()[0]
             else:
                 data = response.json()
