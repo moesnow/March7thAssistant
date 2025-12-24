@@ -87,8 +87,8 @@ jobs:
             ./dist/March7thAssistant_full.zip
             ./dist/March7thAssistant_full.7z
             ./dist/update.7z
-          prerelease: false
-          make_latest: true
+          prerelease: ${{ contains(github.ref_name, 'beta') }}
+          make_latest: ${{ not(contains(github.ref_name, 'beta')) }}
 
       # 强制触发 MirrorChyan 上传
       - name: Trigger MirrorChyanUploading
