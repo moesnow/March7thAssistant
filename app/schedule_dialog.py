@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                              QSpinBox, QCheckBox, QAbstractItemView)
 from qfluentwidgets import TimePicker, BodyLabel, PushButton, TableWidget, MaskDialogBase, MessageBox, Dialog
 from qfluentwidgets import LineEdit, ComboBox, CheckBox, SpinBox
+from qfluentwidgets import InfoBar, InfoBarPosition
 from utils.tasks import TASK_NAMES
 import uuid
 import os
@@ -709,11 +710,28 @@ class ScheduleManagerDialog(MessageBox):
 
             # 启动任务
             if hasattr(parent, 'startTask'):
-                parent.startTask(task_for_start)
-                try:
-                    self.close()
-                except Exception:
-                    pass
+                # 检查是否有任务正在运行
+                if parent.isTaskRunning():
+                    InfoBar.warning(
+                        title=self.tr('任务正在运行'),
+                        content="请先停止当前任务后再启动新任务",
+                        orient=Qt.Horizontal,
+                        isClosable=True,
+                        position=InfoBarPosition.TOP,
+                        duration=5000,
+                        parent=parent
+                    )
+                    # 切换到日志界面
+                    try:
+                        self.close()
+                    except Exception:
+                        pass
+                else:
+                    parent.startTask(task_for_start)
+                    try:
+                        self.close()
+                    except Exception:
+                        pass
             else:
                 info = MessageBox(self.tr('错误'), self.tr('无法运行任务：父组件不支持 startTask'), self)
                 info.cancelButton.hide()
