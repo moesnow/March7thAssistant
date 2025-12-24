@@ -432,6 +432,14 @@ class LogInterface(ScrollArea):
             env = QProcessEnvironment.systemEnvironment()
             env.insert("PYTHONUNBUFFERED", "1")
             env.insert("MARCH7TH_GUI_STARTED", "1")
+            # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
+            try:
+                _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH']
+                for rk in _remove_keys:
+                    if env.contains(rk):
+                        env.remove(rk)
+            except Exception:
+                pass
             proc.setProcessEnvironment(env)
 
             # 参数拆分
@@ -445,6 +453,14 @@ class LogInterface(ScrollArea):
                 self.appendLog(f"错误: 未找到可执行文件 {executable_path}\n")
                 self._updateFinishedStatus(-1)
                 return
+            # 将工作目录设置为程序所在目录，确保相对路径正常工作
+            try:
+                cwd = os.path.dirname(executable_path) or os.getcwd()
+                if not os.path.exists(cwd):
+                    cwd = os.getcwd()
+                proc.setWorkingDirectory(cwd)
+            except Exception:
+                pass
             proc.start(executable_path, args_list)
             self.appendLog(f"命令: {executable_path} {' '.join(args_list)}\n")
 
@@ -506,6 +522,14 @@ class LogInterface(ScrollArea):
         env = QProcessEnvironment.systemEnvironment()
         env.insert("PYTHONUNBUFFERED", "1")
         env.insert("MARCH7TH_GUI_STARTED", "1")  # 标记为图形界面启动
+        # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
+        try:
+            _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH']
+            for rk in _remove_keys:
+                if env.contains(rk):
+                    env.remove(rk)
+        except Exception:
+            pass
         self.process.setProcessEnvironment(env)
 
         # 构建命令
@@ -515,11 +539,27 @@ class LogInterface(ScrollArea):
                 self.appendLog("错误: 未找到可执行文件 March7th Assistant.exe\n")
                 self._updateFinishedStatus(-1)
                 return
+            # 将工作目录设置为可执行文件所在目录
+            try:
+                cwd = os.path.dirname(executable_path) or os.getcwd()
+                if not os.path.exists(cwd):
+                    cwd = os.getcwd()
+                self.process.setWorkingDirectory(cwd)
+            except Exception:
+                pass
             self.process.start(executable_path, [command])
             self.appendLog(f"命令: {executable_path} {command}\n")
         else:
             executable_path = sys.executable
             main_script = os.path.abspath("main.py")
+            # 将工作目录设置为 main.py 所在目录，确保相对路径在子进程中有效
+            try:
+                cwd = os.path.dirname(main_script) or os.getcwd()
+                if not os.path.exists(cwd):
+                    cwd = os.getcwd()
+                self.process.setWorkingDirectory(cwd)
+            except Exception:
+                pass
             self.process.start(executable_path, [main_script, command])
             self.appendLog(f"命令: {executable_path} {main_script} {command}\n")
 
