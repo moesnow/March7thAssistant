@@ -492,8 +492,21 @@ class ScheduleManagerDialog(MessageBox):
         # 新增一列：完成后终止进程
         self.table.setColumnCount(7)
         # 列顺序：启用, 名称, 时间, 程序, 参数/任务, 推送通知, 终止进程
-        self.table.setHorizontalHeaderLabels([self.tr('启用'), self.tr('名称'), self.tr('时间'), self.tr('程序'), self.tr('参数/任务'), self.tr('推送通知'), self.tr('终止进程')])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setHorizontalHeaderLabels([self.tr('启用'), self.tr('名称'), self.tr('时间'), self.tr('程序'), self.tr('参数/任务'), self.tr('通知'), self.tr('终止进程')])
+        # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Fixed)
+        self.table.setColumnWidth(0, 50)
+        header.setSectionResizeMode(1, QHeaderView.Fixed)
+        self.table.setColumnWidth(1, 90)
+        header.setSectionResizeMode(2, QHeaderView.Fixed)
+        self.table.setColumnWidth(2, 70)
+        header.setSectionResizeMode(3, QHeaderView.Stretch)
+        header.setSectionResizeMode(4, QHeaderView.Fixed)
+        self.table.setColumnWidth(4, 150)
+        header.setSectionResizeMode(5, QHeaderView.Fixed)
+        self.table.setColumnWidth(5, 50)
+        header.setSectionResizeMode(6, QHeaderView.Stretch)
         self.table.setMinimumWidth(800)
         self.table.setMinimumHeight(350)
         # 只读表格设定：禁止直接编辑，整行选择，单选模式（只能通过按钮编辑）
