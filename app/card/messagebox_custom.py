@@ -1003,6 +1003,8 @@ class MessageBoxPowerPlan(MessageBox):
             for name, info in self.template[instance_type].items():
                 valid_options.add(f"{name}（{info}）")
                 valid_options.add(name)
+            valid_options.remove("无（跳过）")  # 移除“无（跳过）”选项
+            valid_options.remove("无")  # 移除“无”选项
 
             # 检查输入是否匹配任一有效选项
             if input_text not in valid_options:
