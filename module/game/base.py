@@ -79,13 +79,13 @@ class GameControllerBase:
         try:
             hwnd = self.get_window_handle()
             if hwnd == 0:
-                self.log_debug("游戏窗口未找到")
+                self.log_debug("窗口未找到")
                 return False
             self.set_foreground_window_with_retry(hwnd)
-            self.log_info("游戏窗口已切换到前台")
+            self.log_info("窗口已切换到前台")
             return True
         except Exception as e:
-            self.log_error(f"激活游戏窗口时发生错误：{e}")
+            self.log_error(f"激活窗口时发生错误：{e}")
             return False
 
     def get_resolution(self) -> Optional[Tuple[int, int]]:
