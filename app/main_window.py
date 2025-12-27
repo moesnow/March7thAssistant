@@ -145,11 +145,11 @@ class MainWindow(MSFluentWindow):
         self.logInterface.taskFinished.connect(self._onTaskFinished)
 
     def initNavigation(self):
-        self.addSubInterface(self.homeInterface, FIF.HOME, self.tr('主页'))
-        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, self.tr('帮助'))
-        # self.addSubInterface(self.changelogInterface, FIF.UPDATE, self.tr('更新日志'))
-        self.addSubInterface(self.warpInterface, FIF.SHARE, self.tr('抽卡记录'))
-        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, self.tr('工具箱'))
+        self.addSubInterface(self.homeInterface, FIF.HOME, '主页')
+        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, '帮助')
+        # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
+        self.addSubInterface(self.warpInterface, FIF.SHARE, '抽卡记录')
+        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, '工具箱')
 
         self.navigationInterface.addWidget(
             'startGameButton',
@@ -157,7 +157,7 @@ class MainWindow(MSFluentWindow):
             self.startGame,
             NavigationItemPosition.BOTTOM)
 
-        self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, self.tr('日志'), position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, '日志', position=NavigationItemPosition.BOTTOM)
 
         # self.navigationInterface.addWidget(
         #     'refreshButton',
@@ -183,7 +183,7 @@ class MainWindow(MSFluentWindow):
             NavigationItemPosition.BOTTOM
         )
 
-        self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
 
         self.splashScreen.finish()
         self.themeListener = checkThemeChange(self)
@@ -241,7 +241,7 @@ class MainWindow(MSFluentWindow):
         # 检查是否有任务正在运行
         if self.logInterface.isTaskRunning():
             InfoBar.warning(
-                title=self.tr('任务正在运行'),
+                title='任务正在运行',
                 content="请先停止当前任务后再启动新任务",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -316,7 +316,7 @@ class MainWindow(MSFluentWindow):
             self.removeInterface(old_setting_interface, isDelete=True)
 
             # 添加新的设置界面
-            self.addSubInterface(self.settingInterface, FIF.SETTING, self.tr('设置'), position=NavigationItemPosition.BOTTOM)
+            self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
 
             # 只有在重新加载配置前是在设置界面时，才切换到新的设置界面
             if is_in_setting_interface:
@@ -325,7 +325,7 @@ class MainWindow(MSFluentWindow):
             # 只有在窗口可见时才显示提示
             if self.isVisible():
                 InfoBar.success(
-                    title=self.tr('配置已更新'),
+                    title='配置已更新',
                     content="检测到配置文件变化，已自动重新加载",
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -337,7 +337,7 @@ class MainWindow(MSFluentWindow):
             # 只有在窗口可见时才显示提示
             if self.isVisible():
                 InfoBar.warning(
-                    title=self.tr('配置加载失败'),
+                    title='配置加载失败',
                     content=str(e),
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -459,7 +459,7 @@ class MainWindow(MSFluentWindow):
         game = get_game_controller()
         if cfg.cloud_game_enable and cfg.browser_type == "integrated" and not game.is_integrated_browser_downloaded():
             InfoBar.warning(
-                title=self.tr('正在下载内置浏览器(ง •̀_•́)ง'),
+                title='正在下载内置浏览器(ง •̀_•́)ง',
                 content="下载成功后，将自动启动云·星穹铁道",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -469,7 +469,7 @@ class MainWindow(MSFluentWindow):
             )
         elif cfg.cloud_game_enable:
             InfoBar.warning(
-                title=self.tr('正在启动游戏(❁´◡`❁)'),
+                title='正在启动游戏(❁´◡`❁)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -485,7 +485,7 @@ class MainWindow(MSFluentWindow):
     def on_game_launched(self, result):
         if result == GameStartStatus.SUCCESS:
             InfoBar.success(
-                title=self.tr('启动成功(＾∀＾●)'),
+                title='启动成功(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -495,7 +495,7 @@ class MainWindow(MSFluentWindow):
             )
         elif result == GameStartStatus.BROWSER_DOWNLOAD_FAIL:
             InfoBar.warning(
-                title=self.tr('浏览器或驱动下载失败 (╥╯﹏╰╥)'),
+                title='浏览器或驱动下载失败 (╥╯﹏╰╥)',
                 content="请检查网络连接是否正常",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -505,7 +505,7 @@ class MainWindow(MSFluentWindow):
             )
         elif result == GameStartStatus.BROWSER_LAUNCH_FAIL:
             InfoBar.warning(
-                title=self.tr('云游戏启动失败(╥╯﹏╰╥)'),
+                title='云游戏启动失败(╥╯﹏╰╥)',
                 content="请检查所选浏览器是否存在，网络连接是否正常",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -515,7 +515,7 @@ class MainWindow(MSFluentWindow):
             )
         elif result == GameStartStatus.LOCAL_LAUNCH_FAIL:
             InfoBar.warning(
-                title=self.tr('游戏路径配置错误(╥╯﹏╰╥)'),
+                title='游戏路径配置错误(╥╯﹏╰╥)',
                 content="请在“设置”-->“程序”中配置",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -525,7 +525,7 @@ class MainWindow(MSFluentWindow):
             )
         else:
             InfoBar.warning(
-                title=self.tr('启动失败'),
+                title='启动失败',
                 content=str(self.game_launch_thread.error_msg),
                 orient=Qt.Horizontal,
                 isClosable=True,

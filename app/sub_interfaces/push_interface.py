@@ -39,9 +39,9 @@ class PushToolsBox(QWidget):
         self.tabBar = QTabBar(parent=self)
         self.tabBar.setStyleSheet(style_sheet)
         FluentStyleSheet.TAB_VIEW.apply(self.tabBar)
-        self.tabBar.addTab(self.tr('Windows'))
-        self.tabBar.addTab(self.tr('Telegram'))
-        self.tabBar.addTab(self.tr('Smtp'))
+        self.tabBar.addTab('Windows')
+        self.tabBar.addTab('Telegram')
+        self.tabBar.addTab('Smtp')
         self.vLayout = QVBoxLayout()
         self.vLayout.addWidget(self.tabBar)
         for card in self.pushCars:
@@ -67,7 +67,7 @@ class WindowsPushCard(QWidget):
         super().__init__(parent=parent)
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
-            self.tr('启用 Windows 通知'),
+            '启用 Windows 通知',
             None,
             "notify_winotify_enable"
         )
@@ -81,14 +81,14 @@ class TelegramPushCard(QWidget):
         super().__init__(parent=parent)
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
-            self.tr('启用 Telegram 通知'),
+            '启用 Telegram 通知',
             None,
             "notify_telegram_enable"
         )
         self.telegramTokenCard = PushSettingCard(
-            self.tr('修改'),
+            '修改',
             FIF.GAME,
-            self.tr("Telegram Token"),
+            "Telegram Token",
             "notify_telegram_token",
             cfg.notify_telegram_token,
             self,
@@ -110,7 +110,7 @@ class SmtpPushCard(QFrame):
         super().__init__(parent=parent)
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
-            self.tr('启用 Smtp 通知'),
+            '启用 Smtp 通知',
             None,
             "notify_smtp_enable"
         )

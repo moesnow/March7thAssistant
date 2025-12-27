@@ -88,10 +88,10 @@ class LogInterface(ScrollArea):
         self.headerLayout = QHBoxLayout(self.headerWidget)
         self.headerLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.titleLabel = StrongBodyLabel(self.tr('任务日志'))
+        self.titleLabel = StrongBodyLabel('任务日志')
         self.titleLabel.setFont(QFont('Microsoft YaHei', 16, QFont.Bold))
 
-        self.statusLabel = BodyLabel(self.tr('等待任务...'))
+        self.statusLabel = BodyLabel('等待任务...')
         # self.statusLabel.setStyleSheet("color: gray;")
 
         self.headerLayout.addWidget(self.titleLabel)
@@ -109,7 +109,7 @@ class LogInterface(ScrollArea):
         self.stopButton.clicked.connect(self.stopTask)
         self.stopButton.setEnabled(False)
 
-        self.clearButton = PushButton(FluentIcon.DELETE, self.tr('清空日志'))
+        self.clearButton = PushButton(FluentIcon.DELETE, '清空日志')
         self.clearButton.clicked.connect(self.clearLog)
 
         self.buttonLayout.addWidget(self.stopButton)
@@ -117,10 +117,10 @@ class LogInterface(ScrollArea):
         self.buttonLayout.addSpacing(20)
 
         # 定时任务配置（支持多个定时任务）
-        self.scheduleLabel = BodyLabel(self.tr('定时任务'))
+        self.scheduleLabel = BodyLabel('定时任务')
 
         # 打开定时任务管理配置弹窗
-        self.manageScheduleButton = PushButton(self.tr('配置定时任务'))
+        self.manageScheduleButton = PushButton('配置定时任务')
         self.manageScheduleButton.clicked.connect(self._openScheduleManager)
 
         self.scheduleStatusLabel = BodyLabel()
@@ -213,7 +213,7 @@ class LogInterface(ScrollArea):
         #         time_str = cfg.get_value('scheduled_run_time', '04:00')
         #         self.scheduleStatusLabel.setText(self.tr(f'旧单一定时启用: {time_str}'))
         #     else:
-        #         self.scheduleStatusLabel.setText(self.tr('未配置定时任务'))
+        #         self.scheduleStatusLabel.setText('未配置定时任务')
         #     return
 
         # 找到接下来最近要运行的任务时间
@@ -244,7 +244,7 @@ class LogInterface(ScrollArea):
             self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}，下次: {time_str} ({next_task.get("name", "")})'))
         else:
             # self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}'))
-            self.scheduleStatusLabel.setText(self.tr('尚未配置定时任务'))
+            self.scheduleStatusLabel.setText('尚未配置定时任务')
 
     def _openScheduleManager(self):
         """打开定时任务管理对话框"""
@@ -272,7 +272,7 @@ class LogInterface(ScrollArea):
                 # 生成新的任务项（完整运行）
                 task = {
                     'id': str(uuid.uuid4()),
-                    'name': self.tr('完整运行'),
+                    'name': '完整运行',
                     'time': scheduled_time,
                     'program': 'self',
                     'args': 'main',
@@ -943,13 +943,13 @@ class LogInterface(ScrollArea):
     def _post_action_label(self, action: str) -> str:
         """返回 post_action 的本地化标签"""
         mapping = {
-            'None': self.tr('无操作'),
-            'Shutdown': self.tr('关机'),
-            'Sleep': self.tr('睡眠'),
-            'Hibernate': self.tr('休眠'),
-            'Restart': self.tr('重启'),
-            'Logoff': self.tr('注销'),
-            'TurnOffDisplay': self.tr('关闭显示器'),
+            'None': '无操作',
+            'Shutdown': '关机',
+            'Sleep': '睡眠',
+            'Hibernate': '休眠',
+            'Restart': '重启',
+            'Logoff': '注销',
+            'TurnOffDisplay': '关闭显示器',
         }
         return mapping.get(action, str(action))
 
@@ -1011,10 +1011,10 @@ class LogInterface(ScrollArea):
                 pass
 
         if exit_code == 0:
-            self.statusLabel.setText(self.tr('任务完成'))
+            self.statusLabel.setText('任务完成')
             # self.statusLabel.setStyleSheet("color: green;")
         else:
-            self.statusLabel.setText(self.tr('任务已停止'))
+            self.statusLabel.setText('任务已停止')
             # self.statusLabel.setStyleSheet("color: orange;")
 
     def isTaskRunning(self):

@@ -15,7 +15,7 @@ class ChangelogInterface(ScrollArea):
         super().__init__(parent=parent)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel(self.tr("更新日志"), self)
+        self.titleLabel = QLabel("更新日志", self)
         self.contentLabel = QLabel("html_content", parent)
         html_style = """
 <style>

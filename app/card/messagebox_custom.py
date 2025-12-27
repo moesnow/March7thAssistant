@@ -236,16 +236,16 @@ class MessageBoxHtmlUpdate(MessageBox):
         self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
 
         self.githubUpdateCard = PrimaryPushSettingCard(
-            self.tr('立即更新'),
+            '立即更新',
             FIF.GITHUB,
-            self.tr('开源渠道'),
+            '开源渠道',
             "直接从 GitHub 下载并更新"
         )
 
         self.mirrorchyanUpdateCard = PrimaryPushSettingCard(
-            self.tr('立即更新'),
+            '立即更新',
             FIF.CLOUD,
-            self.tr('Mirror酱 服务 ⚡'),
+            'Mirror酱 服务 ⚡',
             "Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）"
         )
         self.textLayout.addWidget(self.githubUpdateCard, 0, Qt.AlignTop)
@@ -342,9 +342,9 @@ class MessageBoxEditCode(MessageBox):
 
         # 操作按钮：获取最新兑换码 / 查看已使用 / 清空已使用
         buttonRow = QHBoxLayout()
-        self.fetchButton = PushButton(self.tr('获取最新兑换码'), self)
-        self.viewUsedButton = PushButton(self.tr('查看已使用兑换码'), self)
-        self.clearUsedButton = PushButton(self.tr('清空已使用兑换码'), self)
+        self.fetchButton = PushButton('获取最新兑换码', self)
+        self.viewUsedButton = PushButton('查看已使用兑换码', self)
+        self.clearUsedButton = PushButton('清空已使用兑换码', self)
         buttonRow.addWidget(self.fetchButton)
         buttonRow.addWidget(self.viewUsedButton)
         buttonRow.addWidget(self.clearUsedButton)

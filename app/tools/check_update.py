@@ -160,7 +160,7 @@ def checkUpdate(self, timeout=5, flag=False):
                 assert_url = self.update_thread.mirrorchyan_assert_url
                 if assert_url == "":
                     InfoBar.error(
-                        title=self.tr('尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)'),
+                        title='尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)',
                         content="请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK",
                         orient=Qt.Horizontal,
                         isClosable=True,
@@ -197,7 +197,7 @@ def checkUpdate(self, timeout=5, flag=False):
         elif status == UpdateStatus.SUCCESS:
             # 显示当前为最新版本的信息
             InfoBar.success(
-                title=self.tr('当前是最新版本(＾∀＾●)'),
+                title='当前是最新版本(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -208,7 +208,7 @@ def checkUpdate(self, timeout=5, flag=False):
         else:
             # 显示检查更新失败的信息
             InfoBar.warning(
-                title=self.tr('检测更新失败(╥╯﹏╰╥)'),
+                title='检测更新失败(╥╯﹏╰╥)',
                 content=self.update_thread.error_msg,
                 orient=Qt.Horizontal,
                 isClosable=True,

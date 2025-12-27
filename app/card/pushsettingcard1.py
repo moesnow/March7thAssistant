@@ -212,7 +212,7 @@ class PushSettingCardCode(PushSettingCard):
             return
 
         mb = MessageBoxEditCode(
-            self.tr('已使用兑换码'),
+            '已使用兑换码',
             '\n'.join(used),
             self.window()
         )
@@ -228,8 +228,8 @@ class PushSettingCardCode(PushSettingCard):
         from qfluentwidgets import MessageBox
 
         confirm = MessageBox(
-            self.tr('确认清空已使用兑换码'),
-            self.tr('此操作不可撤销，是否继续？'),
+            '确认清空已使用兑换码',
+            '此操作不可撤销，是否继续？',
             self.window()
         )
         confirm.yesButton.setText('确认')
@@ -350,8 +350,8 @@ class PushSettingCardDate(PushSettingCard):
                 timestamp = 0
                 display_time = datetime.datetime.fromtimestamp(timestamp)
                 InfoBar.warning(
-                    self.tr('时间无效'),
-                    self.tr('所选时间无法转换为时间戳，已使用默认时间'),
+                    '时间无效',
+                    '所选时间无法转换为时间戳，已使用默认时间',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -555,19 +555,19 @@ class PushSettingCardTeamWithSwap(SettingCard):
         super().__init__(icon, title, self._get_display_text(), parent)
 
         # Add team1 modify button
-        self.team1Button = QPushButton(self.tr('修改队伍1'), self)
+        self.team1Button = QPushButton('修改队伍1', self)
         self.hBoxLayout.addWidget(self.team1Button, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.team1Button.clicked.connect(self.__onTeam1Clicked)
 
         # Add team2 modify button
-        self.team2Button = QPushButton(self.tr('修改队伍2'), self)
+        self.team2Button = QPushButton('修改队伍2', self)
         self.hBoxLayout.addWidget(self.team2Button, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.team2Button.clicked.connect(self.__onTeam2Clicked)
 
         # Add swap button
-        self.swapButton = QPushButton(self.tr('交换队伍'), self)
+        self.swapButton = QPushButton('交换队伍', self)
         self.hBoxLayout.addWidget(self.swapButton, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(16)
         self.swapButton.clicked.connect(self.__onSwapClicked)
@@ -597,8 +597,8 @@ class PushSettingCardTeamWithSwap(SettingCard):
         self._update_display()
 
         InfoBar.success(
-            self.tr('交换成功'),
-            self.tr('队伍1和队伍2已成功交换'),
+            '交换成功',
+            '队伍1和队伍2已成功交换',
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
