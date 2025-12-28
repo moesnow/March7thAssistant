@@ -52,7 +52,8 @@
 - 必须使用**PC端** `1920*1080` 分辨率窗口或全屏运行游戏（不支持HDR）
 - 模拟宇宙相关 [项目文档](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md)  [Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
 - 需要后台运行或多显示器可以尝试 [远程本地多用户桌面](https://m7a.top/#/assets/docs/Background)
-- 遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，提问讨论可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊随缘看，欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)
+- 遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，提问讨论可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊随缘看
+- 欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)，如果是首次参与开源项目，建议可以先查看 [这个视频](https://www.bilibili.com/video/BV15C411r7uD/)
 
 ## 下载安装
 
