@@ -63,7 +63,12 @@ def checkThemeChange(self):
     在 MainWindow 中调用，self 是 MainWindow 实例
     """
     def handle_theme_change(theme):
-        setTheme(theme, lazy=True)
+        """根据程序是否最小化到托盘决定 lazy 参数：
+        - 如果窗口不可见且托盘图标可见（认为已最小化到托盘），则立即应用主题（lazy=False）
+        - 否则使用默认延迟应用（lazy=True）
+        """
+        is_minimized_to_tray = hasattr(self, 'tray_icon') and (not self.isVisible()) and self.tray_icon.isVisible()
+        setTheme(theme, lazy=not is_minimized_to_tray)
 
     def on_init_completed(is_supported):
         if is_supported:
