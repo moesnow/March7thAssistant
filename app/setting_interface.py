@@ -743,6 +743,32 @@ class SettingInterface(ScrollArea):
             "游戏路径",
             cfg.game_path
         )
+        self.updateViaLauncherEnableCard = ExpandableSwitchSettingCard(
+            "update_via_launcher",
+            FIF.UPDATE,
+            '通过启动器更新游戏【测试版】',
+            ""
+        )
+        self.launcherPathCard = PushSettingCard(
+            '修改',
+            FIF.GAME,
+            "米哈游启动器路径",
+            cfg.launcher_path
+        )
+        self.startGameTimeoutCard = RangeSettingCard1(
+            "start_game_timeout",
+            [10, 60],
+            FIF.DATE_TIME,
+            "启动游戏超时时间（分）",
+            "",
+        )
+        self.updateGameTimeoutCard = RangeSettingCard1(
+            "update_game_timeout",
+            [1, 24],
+            FIF.DATE_TIME,
+            "更新游戏超时时间（时）",
+            "",
+        )
         # self.importConfigCard = PushSettingCard(
         #     '导入',
         #     FIF.ADD_TO,
@@ -1112,6 +1138,12 @@ class SettingInterface(ScrollArea):
 
         self.ProgramGroup.addSettingCard(self.logLevelCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
+        self.ProgramGroup.addSettingCard(self.updateViaLauncherEnableCard)
+        self.updateViaLauncherEnableCard.addSettingCards([
+            self.launcherPathCard,
+            self.updateGameTimeoutCard
+        ])
+        self.ProgramGroup.addSettingCard(self.startGameTimeoutCard)
         # self.ProgramGroup.addSettingCard(self.importConfigCard)
         self.ProgramGroup.addSettingCard(self.pauseAfterSuccess)
         self.ProgramGroup.addSettingCard(self.exitAfterFailure)
@@ -1185,6 +1217,7 @@ class SettingInterface(ScrollArea):
     def __connectSignalToSlot(self):
         # self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
+        self.launcherPathCard.clicked.connect(self.__onLauncherPathCardClicked)
         self.ScriptPathCard.clicked.connect(self.__onScriptPathCardClicked)
         # self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
 
@@ -1210,6 +1243,7 @@ class SettingInterface(ScrollArea):
         self.forgottenhallEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.purefictionEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.ApocalypticEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.updateViaLauncherEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.updateSourceCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.testNotifyCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.instanceTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
@@ -1255,6 +1289,13 @@ class SettingInterface(ScrollArea):
             return
         cfg.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
+
+    def __onLauncherPathCardClicked(self):
+        launcher_path, _ = QFileDialog.getOpenFileName(self, "选择米哈游启动器路径", "", "All Files (*)")
+        if not launcher_path or cfg.launcher_path == launcher_path:
+            return
+        cfg.set_value("launcher_path", launcher_path)
+        self.launcherPathCard.setContent(launcher_path)
 
     # def __openCharacterFolder(self):
     #     return lambda: os.startfile(os.path.abspath("./assets/images/share/character"))

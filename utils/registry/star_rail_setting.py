@@ -106,6 +106,38 @@ def get_game_path() -> Optional[str]:
     return None
 
 
+def get_launcher_path() -> Optional[str]:
+    """
+    获取启动器路径函数，尝试从注册表中读取指定键值并验证启动器可执行文件是否存在。
+    支持国服和国际服。
+
+    Returns:
+        Optional[str]: 如果找到有效的启动器路径，则返回完整路径，否则返回 None。
+    """
+    # 注册表键路径和键值名称（国服和国际服）
+    registry_paths = [
+        r"Software\miHoYo\HYP\1_1",     # 国服路径
+        r"Software\Cognosphere\HYP\1_0"  # 国际服路径
+    ]
+    registry_value_name = "InstallPath"  # 启动器安装路径的键值名称
+
+    # 尝试从不同的注册表路径中读取
+    for registry_path in registry_paths:
+        install_path = read_registry_value(
+            winreg.HKEY_CURRENT_USER,  # 从当前用户的注册表路径中读取
+            registry_path,             # 注册表的具体路径
+            registry_value_name        # 需要读取的键值名称
+        )
+
+        # 如果成功读取到路径，检查对应的启动器可执行文件是否存在
+        if install_path:
+            launcher_executable = os.path.join(install_path, "launcher.exe")  # 构造完整的启动器可执行文件路径
+            if os.path.exists(launcher_executable):  # 验证文件路径是否存在
+                return launcher_executable  # 返回有效的启动器路径
+    # 如果路径无效或文件不存在，返回 None
+    return None
+
+
 def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
     """
     Return the game resolution from the registry value.

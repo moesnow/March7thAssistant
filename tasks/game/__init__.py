@@ -6,6 +6,7 @@ import psutil
 
 from app.tools.account_manager import load_acc_and_pwd
 from utils.registry.gameaccount import gamereg_uid
+from utils.registry.star_rail_setting import get_launcher_path
 from .starrailcontroller import StarRailController
 
 from utils.date import Date
@@ -18,11 +19,21 @@ from module.automation import auto
 from module.config import cfg
 from module.notification import notif
 from module.notification.notification import NotificationLevel
+from tasks.base.base import Base
 from module.ocr import ocr
-from module.screen import screen
 from utils.console import is_gui_started
 
 starrail = StarRailController(cfg=cfg, logger=log)
+
+
+def wait_until(condition, timeout, period=1):
+    """等待直到条件满足或超时"""
+    end_time = time.time() + timeout
+    while time.time() < end_time:
+        if condition():
+            return True
+        time.sleep(period)
+    return False
 
 
 def start():
@@ -33,15 +44,6 @@ def start():
 
 def start_game():
     MAX_RETRY = 3
-
-    def wait_until(condition, timeout, period=1):
-        """等待直到条件满足或超时"""
-        end_time = time.time() + timeout
-        while time.time() < end_time:
-            if condition():
-                return True
-            time.sleep(period)
-        return False
 
     def check_and_click_enter():
         # 点击进入
@@ -72,6 +74,11 @@ def start_game():
             if load_acc_and_pwd(gamereg_uid()) != (None, None):
                 log.info("检测到登录过期，尝试自动登录")
                 auto_login_os()
+
+        # 游戏已有新版本，请前往启动器下载最新客户端，完成本次更新后登录游戏即可获
+        # 得300星琼奖励。
+        if auto.find_element("前往启动器下载最新客户端", "text", take_screenshot=False, include=True):
+            raise Exception("检测到游戏客户端版本过低，请前往启动器下载最新客户端")
         return False
 
     def cloud_game_check_and_enter():
@@ -137,7 +144,7 @@ def start_game():
             # starrail.check_resolution_ratio(1920, 1080)
             starrail.check_resolution(1920, 1080)
 
-            if not wait_until(lambda: check_and_click_enter(), 600):
+            if not wait_until(lambda: check_and_click_enter(), cfg.start_game_timeout * 60):
                 raise TimeoutError("查找并点击进入按钮超时")
             time.sleep(10)
             # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
@@ -159,7 +166,7 @@ def start_game():
             if not cloud_game.enter_cloud_game():
                 raise Exception("进入云游戏失败")
             # time.sleep(10)    #dont need to wait
-            if not wait_until(lambda: cloud_game_check_and_enter(), 600):
+            if not wait_until(lambda: cloud_game_check_and_enter(), cfg.start_game_timeout * 60):
                 raise TimeoutError("查找并点击进入按钮超时")
             time.sleep(10)
 
@@ -169,8 +176,14 @@ def start_game():
                 start_cloud_game()
             else:
                 start_local_game()
-            if not wait_until(lambda: screen.get_current_screen(), 360):
-                raise TimeoutError("获取当前界面超时")
+            if not wait_until(lambda: screen.get_current_screen(), 6 * 60):
+                log.error("获取当前界面超时")
+                # 确保在重试前停止游戏
+                if cfg.cloud_game_enable:
+                    cloud_game.stop_game()
+                else:
+                    starrail.stop_game()
+                continue
             break
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
@@ -179,6 +192,9 @@ def start_game():
                 cloud_game.stop_game()
             else:
                 starrail.stop_game()
+                # 非云游戏模式下，若检测到是版本过低则尝试通过启动器更新
+                if str(e).startswith("检测到游戏客户端版本过低") and cfg.update_via_launcher:
+                    update_via_launcher()
             if retry == MAX_RETRY - 1:
                 raise  # 如果是最后一次尝试，则重新抛出异常
 
@@ -256,6 +272,130 @@ def after_finish_is_loop():
 
     # 启动前重新加载配置 #262
     cfg._load_config()
+
+
+def _start_launcher_and_get_automation(game):
+    """启动米哈游启动器并返回 (launcher, launcher_auto)。
+    若无法找到路径，返回 (None, None)。若启动器未切换到窗口，返回 (launcher, None)。"""
+    from module.game.launcher import LauncherController
+    if os.path.exists(cfg.launcher_path):
+        path = cfg.launcher_path
+    else:
+        path = get_launcher_path()
+        if path is None:
+            log.error("未找到米哈游启动器路径")
+            return None, None
+    launcher = LauncherController(path=path, process_name=cfg.launcher_process_name, window_name=cfg.launcher_title_name, logger=log)
+    launcher.start_game_process(f"--game={game}")
+    time.sleep(10)
+    if launcher.switch_to_game():
+        time.sleep(5)
+        from module.automation.launcher_automation import LauncherAutomation
+        launcher_auto = LauncherAutomation(cfg.launcher_title_name, log)
+        return launcher, launcher_auto
+    return launcher, None
+
+
+def _handle_launcher_self_update(launcher, launcher_auto):
+    """处理启动器自身更新：优先点击“稍后”，否则点击“立即更新”并等待完成。"""
+    # 查找启动器自身更新按钮并点击，如有稍后按钮优先点击
+    if launcher_auto.click_element("稍后", "text"):
+        log.info("已点击稍后更新启动器按钮")
+        time.sleep(5)
+        return True
+
+    if launcher_auto.click_element("立即更新", "text"):
+        log.info("已点击启动器更新按钮，等待更新完成...")
+        Base.send_notification_with_screenshot("检测到启动器可更新已开始下载", NotificationLevel.ALL, launcher_auto.screenshot)
+        time.sleep(10)
+        # 等待启动器更新完成，最长等待60分钟
+        if not wait_until(lambda: launcher_auto.find_element(("更新游戏", "开始游戏"), "text"), 60 * 60, period=30):
+            launcher.stop_game()
+            log.error("等待启动器更新超时")
+            return False
+        log.info("启动器更新完成")
+    return True
+
+
+def _click_update_game_and_wait(launcher, launcher_auto):
+    """点击“更新游戏”并等待完成，失败或超时返回 False。"""
+    if launcher_auto.click_element("更新游戏", "text"):
+        log.info("已点击更新游戏按钮，等待更新完成...")
+        Base.send_notification_with_screenshot("检测到游戏可更新已开始下载", NotificationLevel.ALL, launcher_auto.screenshot)
+        # 等待更新完成，最长等待 cfg.update_game_timeout 小时
+        if not wait_until(lambda: launcher_auto.find_element("开始游戏", "text"), cfg.update_game_timeout * 60 * 60, period=60):
+            launcher.stop_game()
+            log.error("等待游戏更新超时")
+            return False
+        log.info("游戏更新完成")
+        return True
+    log.info("未找到更新游戏按钮，可能已是最新版本")
+    return False
+
+
+def _click_pre_download(launcher, launcher_auto):
+    """点击“预下载”并确认下载，成功返回 True。"""
+    if launcher_auto.click_element("预下载", "text"):
+        time.sleep(10)
+        if launcher_auto.click_element("确认下载", "text"):
+            log.info("已点击预下载按钮...")
+            Base.send_notification_with_screenshot("检测到预下载已开始下载", NotificationLevel.ALL, launcher_auto.screenshot)
+            # 暂不等待预下载完成（按钮：已完成）
+            return True
+    log.info("未找到预下载按钮，可能已是最新版本")
+    return False
+
+
+def update_via_launcher(game="hkrpg_cn"):
+    """
+    通过米哈游启动器尝试更新指定游戏到最新客户端
+    'hkrpg_cn'（崩坏：星穹铁道国服）、'hk4e_cn'（原神国服）、'nap_cn'（绝区零国服）
+    """
+
+    launcher, launcher_auto = _start_launcher_and_get_automation(game)
+    if launcher is None:
+        return
+
+    # 如果无法切换到启动器窗口，则直接关闭并返回
+    if launcher_auto is None:
+        launcher.stop_game()
+        return
+
+    # 处理启动器自身更新（点击稍后或立即更新并等待）
+    if not _handle_launcher_self_update(launcher, launcher_auto):
+        return
+
+    # 查找更新按钮并点击，等待完成
+    _click_update_game_and_wait(launcher, launcher_auto)
+
+    # 关闭启动器
+    launcher.stop_game()
+
+
+def pre_download_via_launcher(game="hkrpg_cn"):
+    """
+    通过米哈游启动器尝试预下载指定游戏的最新客户端
+    'hkrpg_cn'（崩坏：星穹铁道国服）、'hk4e_cn'（原神国服）、'nap_cn'（绝区零国服）
+    """
+    launcher, launcher_auto = _start_launcher_and_get_automation(game)
+    if launcher is None:
+        return
+
+    # 如果无法切换到启动器窗口，则直接关闭并返回
+    if launcher_auto is None:
+        launcher.stop_game()
+        return
+
+    # 先处理启动器自身更新（若有）
+    if not _handle_launcher_self_update(launcher, launcher_auto):
+        return
+
+    # 触发预下载（暂不处理等待下载过程，直接返回不关闭启动器）
+    if _click_pre_download(launcher, launcher_auto):
+        return
+
+    # 关闭启动器
+    launcher.stop_game()
 
 
 def notify_after_finish_not_loop():
