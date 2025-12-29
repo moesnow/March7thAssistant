@@ -21,7 +21,6 @@ from module.notification import notif
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from module.ocr import ocr
-from module.screen import screen
 from utils.console import is_gui_started
 
 starrail = StarRailController(cfg=cfg, logger=log)
