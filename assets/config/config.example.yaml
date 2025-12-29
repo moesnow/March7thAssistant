@@ -39,7 +39,7 @@ launcher_process_name: HYP # 米哈游启动器进程名。
 launcher_path: C:\Program Files\miHoYo Launcher\launcher.exe # 米哈游启动器安装路径。
 
 update_via_launcher: False # 是否通过启动器更新游戏。 true 通过启动器更新，false 不更新。
-start_game_timeout: 30 # 启动游戏超时时间（分）。
+start_game_timeout: 10 # 启动游戏超时时间（分）。
 update_game_timeout: 12 # 更新游戏超时时间（时）。
 
 # 云崩铁配置
