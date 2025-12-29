@@ -21,6 +21,8 @@ AVAILABLE_TASKS = {
     "fight_update": "锄大地更新",
     "mobileui_update": "触屏模式更新",
     "game": "启动游戏",
+    "game_update": "更新游戏",
+    "game_pre_download": "预下载游戏",
     "notify": "测试消息推送",
 }
 

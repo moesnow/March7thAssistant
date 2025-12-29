@@ -196,6 +196,12 @@ def main(action=None):
     elif action == "game":
         game.start()
 
+    elif action == "game_update":
+        game.update_via_launcher()
+
+    elif action == "game_pre_download":
+        game.pre_download_via_launcher()
+
     elif action == "notify":
         run_notify_action()
 
