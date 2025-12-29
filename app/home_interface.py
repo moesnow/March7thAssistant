@@ -62,8 +62,8 @@ class BannerWidget(QWidget):
 
         self.linkCardView.addCard(
             FluentIcon.GITHUB,
-            self.tr('GitHub repo'),
-            self.tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
+            'GitHub repo',
+            '喜欢就给个星星吧\n拜托求求你啦|･ω･)',
             "https://github.com/moesnow/March7thAssistant",
         )
 
@@ -117,7 +117,7 @@ class HomeInterface(ScrollArea):
 
     def loadSamples(self):
         basicInputView = SampleCardView1(
-            self.tr("任务 >"), self.view)
+            "任务 >", self.view)
 
         basicInputView.addSampleCard(
             icon="./assets/app/images/March7th.jpg",

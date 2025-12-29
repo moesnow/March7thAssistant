@@ -399,6 +399,9 @@ class CloudGameController(GameControllerBase):
                 self.log_info("已关闭残留的 chromedriver 进程")
         except Exception as e:
             self.log_warning(f"退出时清理 chromedriver 进程失败: {e}")
+    
+    def download_intergrated_browser(self) -> bool:
+        self._prepare_browser_and_driver(browser_type="chrome", integrated=True)
 
     def is_integrated_browser_downloaded(self) -> bool:
         """当前是否已经下载内置浏览器"""
@@ -582,6 +585,23 @@ class CloudGameController(GameControllerBase):
     def get_input_handler(self):
         from module.automation.cdp_input import CdpInput
         return CdpInput(cloud_game=self, logger=self.logger)
+    
+    def copy(self, text):
+        self.driver.execute_script("""
+            (function copy(text) {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+
+                ta.focus();
+                ta.select();
+                document.execCommand('copy');
+
+                document.body.removeChild(ta);
+            })(arguments[0]);
+        """, text)
 
     def change_auto_battle(self, status: bool) -> None:
         """从 local storage 中读取并修改 auto battle"""

@@ -87,7 +87,7 @@ jobs:
             ./dist/March7thAssistant_full.zip
             ./dist/March7thAssistant_full.7z
             ./dist/update.7z
-          prerelease: false
+          prerelease: ${{ contains(github.ref_name, 'beta') }}
           make_latest: true
 
       # 强制触发 MirrorChyan 上传

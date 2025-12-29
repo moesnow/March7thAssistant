@@ -30,7 +30,7 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
         self.configname = configname
 
         # Switch button
-        self.switchButton = SwitchButton(self.tr('关'), self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
 
         # Add switch button to card layout using addWidget method
         self.card.addWidget(self.switchButton)
@@ -54,7 +54,7 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
     def setValue(self, isChecked: bool):
         """Set switch button state"""
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText(self.tr('开') if isChecked else self.tr('关'))
+        self.switchButton.setText('开' if isChecked else '关')
 
     def getSwitchState(self) -> bool:
         """Get current switch state"""
@@ -504,7 +504,7 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
         # 开关按钮
-        self.switchButton = SwitchButton(self.tr('关'), self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
         self.card.addWidget(self.switchButton)
 
         self.setValue(self.cfg.get_value(self.configname))
@@ -519,7 +519,7 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
     def setValue(self, isChecked: bool):
         """设置开关状态"""
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText(self.tr('开') if isChecked else self.tr('关'))
+        self.switchButton.setText('开' if isChecked else '关')
 
     def _onCurrentIndexChanged(self, index: int):
         self.cfg.set_value("echo_of_war_start_day_of_week", self.comboBox.itemData(index))

@@ -2,6 +2,7 @@ from module.screen import screen
 from module.automation import auto
 from module.config import cfg
 from module.logger import log
+from module.game import get_game_controller
 from utils.color import red, green, yellow
 import tasks.reward as reward
 import pyperclip
@@ -10,6 +11,8 @@ import json
 import datetime
 from typing import List, Dict, Optional
 from utils.registry.star_rail_setting import get_server_by_registry
+from module.notification import notif
+from module.notification.notification import NotificationLevel
 
 
 def load_codes(path: str) -> List[Dict]:
@@ -26,7 +29,7 @@ def load_codes_from_url(url: str) -> List[Dict]:
     return response.json()
 
 
-def valid_codes_for_server(server: str, now: Optional[datetime.datetime] = None) -> List[Dict]:
+def valid_codes_for_server(server: str, now: Optional[datetime.datetime] = None) -> List[str]:
     """
     返回指定服务器的未过期兑换码列表。
     expires_at 使用 ISO 8601 格式；为 null 表示不过期。
@@ -49,7 +52,13 @@ def valid_codes_for_server(server: str, now: Optional[datetime.datetime] = None)
         if exp is None:
             res.append(c.get("code"))
             continue
-        dt = datetime.datetime.fromisoformat(exp)
+        if exp.endswith("Z"):
+            exp = exp.replace("Z", "+00:00")
+        try:
+            dt = datetime.datetime.fromisoformat(exp)
+        except ValueError:
+            log.warning(f"无法解析过期时间: {exp}，跳过该兑换码")
+            continue
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=datetime.timezone.utc)
         if dt > now:
@@ -74,11 +83,6 @@ class Redemption:
             log.warning(f"获取兑换码失败: {e}")
             codes = []
 
-        if not codes:
-            log.info("没有找到有效的兑换码")
-            log.hr("完成", 2)
-            return False
-
         # 判断哪些兑换码是未使用过的
         try:
             used = cfg.already_used_codes
@@ -88,12 +92,17 @@ class Redemption:
             used = []
         codes = [code for code in codes if code not in used]
 
+        if not codes:
+            log.info("没有找到有效的兑换码")
+            log.hr("完成", 2)
+            return False
+
         log.info(f"当前服务器类型为{"国服" if server == "cn" else "国际服"}，找到{len(codes)}个有效兑换码，开始尝试兑换")
         log.hr("完成", 2)
-        return Redemption.start(codes=codes)
+        return Redemption.start(codes=codes, send_notification=True)
 
     @staticmethod
-    def start(codes: Optional[List[str]] = None):
+    def start(codes: Optional[List[str]] = None, send_notification: bool = False) -> bool:
         """使用给定的兑换码列表（若为 None，则使用配置中的 `cfg.redemption_code`）。"""
         log.hr("准备使用兑换码", 0)
 
@@ -111,10 +120,13 @@ class Redemption:
         if used is None:
             used = []
 
+        successful_codes = []
+
         for idx, code in enumerate(codes_to_use, start=1):
             log.info(f"开始使用兑换码: {green(code)} ({idx}/{len(codes_to_use)})")
             screen.change_to('redemption')
-            pyperclip.copy(code)
+            game = get_game_controller()
+            game.copy(code)
             if auto.click_element("./assets/images/share/redemption/paste.png", "image", 0.9):
                 time.sleep(0.5)
                 if auto.find_element("./assets/images/share/redemption/clear.png", "image", 0.9):
@@ -125,17 +137,34 @@ class Redemption:
                         log.info(f"兑换码使用成功: {green(code)} ({idx}/{len(codes_to_use)})")
                         if code not in used:
                             used.append(code)
+                            successful_codes.append(code)
                             cfg.set_value("already_used_codes", used)
                         auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
-                        screen.wait_for_screen_change('menu')
-                        time.sleep(3)
-                        continue
-            log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
-            auto.press_key("esc")
-            screen.wait_for_screen_change('menu')
+                    elif auto.find_element(("兑换码已过期", "无效的兑换码", "兑换码已被使用"), "text", take_screenshot=False, include=True):
+                        log.info(f"{auto.matched_text}: {yellow(code)} ({idx}/{len(codes_to_use)})")
+                        if code not in used:
+                            used.append(code)
+                            cfg.set_value("already_used_codes", used)
+                        auto.press_key("esc")
+                    else:
+                        log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
+                        auto.press_key("esc")
+                    screen.wait_for_screen_change('menu')
+                    time.sleep(3)
+
+        if successful_codes:
+            msg = f"成功使用了{len(successful_codes)}个兑换码: \n{'\n'.join(successful_codes)}"
+            msg_parts = msg.split('\n')
+            for part in msg_parts:
+                if part.strip():  # 确保非空字符串
+                    log.info(part.strip())
+            if send_notification:
+                notif.notify(content=msg, level=NotificationLevel.ALL)
+
+            reward.start_specific("mail")
+            log.hr("完成", 2)
+            return True
+        else:
+            log.info("没有成功使用任何兑换码")
             log.hr("完成", 2)
             return False
-
-        reward.start_specific("mail")
-        log.hr("完成", 2)
-        return True

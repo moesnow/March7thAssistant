@@ -1,7 +1,7 @@
 name: 新功能提议
 description: 提出新功能
-title: '[Feat]: '
-labels: [ "enhancement / 功能请求" ]
+title: "[Feat]: "
+labels: ["enhancement / 功能请求"]
 
 body:
   - type: markdown
@@ -36,5 +36,14 @@ body:
       description: |
         请具体提出想添加的功能，包括实现的模拟（如有）
         是否有类似的功能已经实现？如有请肯定地提出与该功能不同的地方/想改进/添加该功能的哪一部分。
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: 什么场景下需要该功能？
+      description: |
+        请描述具体的使用场景或需求背景，以帮助我们更好地理解该功能的重要性和应用范围。
     validations:
       required: true

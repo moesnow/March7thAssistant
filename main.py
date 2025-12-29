@@ -88,6 +88,7 @@ from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
 from tasks.weekly.currency_wars import CurrencyWars
+from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 
 
 from utils.console import pause_on_error, pause_on_success, pause_always
@@ -157,7 +158,8 @@ def run_sub_task_gui(action):
 def run_sub_task_update(action):
     update_tasks = {
         "universe_update": Universe.update,
-        "fight_update": Fight.update
+        "fight_update": Fight.update,
+        "mobileui_update": Genshin_StarRail_fps_unlocker.update
     }
     task = update_tasks.get(action)
     if task:
@@ -188,7 +190,7 @@ def main(action=None):
         run_sub_task_gui(action)
 
     # 子任务 更新项目
-    elif action in ["universe_update", "fight_update"]:
+    elif action in ["universe_update", "fight_update", "mobileui_update"]:
         run_sub_task_update(action)
 
     elif action == "game":

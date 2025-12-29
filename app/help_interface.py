@@ -16,7 +16,7 @@ class HelpInterface(ScrollArea):
         self.pivot = Pivot(self)
         self.stackedWidget = QStackedWidget(self)
 
-        self.helpLabel = QLabel(self.tr("帮助"), self)
+        self.helpLabel = QLabel("帮助", self)
         self.tutorialLabel = QLabel(parent)
         self.faqLabel = QLabel(parent)
         self.tasksLabel = QLabel(parent)
@@ -168,10 +168,10 @@ a {
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
         # self.vBoxLayout.addWidget(self.tutorialLabel, 0, Qt.AlignTop)
-        self.addSubInterface(self.tutorialLabel, 'tutorialLabel', self.tr('使用教程'))
-        self.addSubInterface(self.faqLabel, 'faqLabel', self.tr('常见问题'))
-        self.addSubInterface(self.tasksLabel, 'tasksLabel', self.tr('每日实训'))
-        self.addSubInterface(self.changelogLabel, 'changelogLabel', self.tr('更新日志'))
+        self.addSubInterface(self.tutorialLabel, 'tutorialLabel', '使用教程')
+        self.addSubInterface(self.faqLabel, 'faqLabel', '常见问题')
+        self.addSubInterface(self.tasksLabel, 'tasksLabel', '每日实训')
+        self.addSubInterface(self.changelogLabel, 'changelogLabel', '更新日志')
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())

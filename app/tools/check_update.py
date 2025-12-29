@@ -44,12 +44,12 @@ class UpdateThread(QThread):
     def fetch_latest_release_info(self):
         """获取最新的发布信息。"""
         response = requests.get(
-            FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not (cfg.update_prerelease_enable and cfg.update_source == "GitHub")),
+            FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not cfg.update_prerelease_enable),
             timeout=10,
             headers=cfg.useragent
         )
         response.raise_for_status()
-        return response.json()[0] if (cfg.update_prerelease_enable and cfg.update_source == "GitHub") else response.json()
+        return response.json()[0] if cfg.update_prerelease_enable else response.json()
 
     def get_download_url_from_assets(self, assets):
         """从发布信息中获取下载URL。"""
@@ -86,8 +86,11 @@ class UpdateThread(QThread):
                     self.updateSignal.emit(UpdateStatus.FAILURE)
                     return
                 # 符合Mirror酱条件
+                url = f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}&user_agent=m7a_app"
+                if cfg.update_prerelease_enable:
+                    url += "&channel=beta"
                 response = requests.get(
-                    f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}&user_agent=m7a_app",
+                    url,
                     timeout=10,
                     headers=cfg.useragent
                 )
@@ -157,7 +160,7 @@ def checkUpdate(self, timeout=5, flag=False):
                 assert_url = self.update_thread.mirrorchyan_assert_url
                 if assert_url == "":
                     InfoBar.error(
-                        title=self.tr('尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)'),
+                        title='尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)',
                         content="请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK",
                         orient=Qt.Horizontal,
                         isClosable=True,
@@ -194,7 +197,7 @@ def checkUpdate(self, timeout=5, flag=False):
         elif status == UpdateStatus.SUCCESS:
             # 显示当前为最新版本的信息
             InfoBar.success(
-                title=self.tr('当前是最新版本(＾∀＾●)'),
+                title='当前是最新版本(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -205,7 +208,7 @@ def checkUpdate(self, timeout=5, flag=False):
         else:
             # 显示检查更新失败的信息
             InfoBar.warning(
-                title=self.tr('检测更新失败(╥╯﹏╰╥)'),
+                title='检测更新失败(╥╯﹏╰╥)',
                 content=self.update_thread.error_msg,
                 orient=Qt.Horizontal,
                 isClosable=True,

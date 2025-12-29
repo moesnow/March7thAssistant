@@ -5,7 +5,6 @@ from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from tasks.base.team import Team
 from tasks.base.pythonchecker import PythonChecker
-from tasks.game.starrailcontroller import StarRailController
 from utils.command import subprocess_with_timeout
 import subprocess
 import sys
@@ -87,9 +86,6 @@ class Fight:
         if cfg.cloud_game_enable and cfg.browser_headless_enable:
             log.error("锄大地不支持无界面模式运行")
             return False
-
-        game = StarRailController(cfg=cfg, logger=log)
-        game.check_resolution(1920, 1080)
 
         if Fight.before_start():
             # 切换队伍

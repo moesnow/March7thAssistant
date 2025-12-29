@@ -1,7 +1,10 @@
 from module.logger import log
+from module.config import cfg
 from module.ocr import OCRInstaller
+from module.game import cloud_game
 from tasks.weekly.universe import Universe
 from tasks.daily.fight import Fight
+from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 import re
 import sys
 from pathlib import Path
@@ -27,6 +30,9 @@ if __name__ == "__main__":
     ocr_installer.check_and_install()
     Universe.update()
     Fight.update()
+    Genshin_StarRail_fps_unlocker.update()
+    cfg.set_value("browser_download_use_mirror", False)
+    cloud_game.download_intergrated_browser()
 
     if len(sys.argv) < 3:
         print("Usage: python build.py <version> <output_file>")

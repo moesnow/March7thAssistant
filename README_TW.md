@@ -34,11 +34,12 @@
 
 ## 功能簡介
 
-- **日常**：清體力、每日實訓、領獎勵、委託、鋤大地
-- **周常**：歷戰餘響、模擬宇宙、忘卻之庭
-- 每日實訓等任務的完成情況支持消息推送
-- 凌晨四點或體力恢復到指定值後自動啟動
-- 任務完成後聲音提示、自動關閉遊戲或關機
+- **日常**：清體力、每日實訓、領取獎勵、委託、鋤大地
+- **周常**：歷戰餘響、貨幣戰爭、模擬宇宙、忘卻之庭
+- **抽卡記錄導出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 標準、**自動對話**
+- 每日實訓等任務的完成情況支持**消息推送**
+- 任務刷新或體力恢復到指定值後**自動啟動**
+- 任務完成後**聲音提示、遊戲自動關閉或關機等**
 
 > 其中模擬宇宙調用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 項目，鋤大地調用的 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 項目
 
@@ -113,6 +114,7 @@ March7th Launcher.exe main -e
 
 如果你是完全不懂的小白，請通過上面的方式下載安裝，不用往下看了。
 
+推薦使用 Python 3.12 或更高版本。
 ```cmd
 # Installation (using venv is recommended)
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant

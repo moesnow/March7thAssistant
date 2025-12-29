@@ -26,7 +26,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
         super().__init__(icon, title, content, parent)
 
         # Switch button
-        self.switchButton = SwitchButton(self.tr('关'), self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
 
         # Add switch button to card layout using addWidget method
         self.card.addWidget(self.switchButton)
@@ -47,10 +47,10 @@ class AutoPlotSettingCard(ExpandSettingCard):
         mode_widget = QWidget(self.view)
         mode_layout = QHBoxLayout(mode_widget)
         mode_layout.setContentsMargins(0, 0, 0, 0)
-        self.modeLabel = QLabel(self.tr("对话模式:"), mode_widget)
+        self.modeLabel = QLabel("对话模式:", mode_widget)
         self.modeButtonGroup = QButtonGroup(self.view)
-        self.periodModeButton = RadioButton(self.tr("固定间隔"), self.view)
-        self.adaptiveModeButton = RadioButton(self.tr("自适应"), self.view)
+        self.periodModeButton = RadioButton("固定间隔", self.view)
+        self.adaptiveModeButton = RadioButton("自适应", self.view)
         self.modeButtonGroup.addButton(self.periodModeButton)
         self.modeButtonGroup.addButton(self.adaptiveModeButton)
         self.periodModeButton.setChecked(True)
@@ -61,12 +61,12 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.viewLayout.addWidget(mode_widget)
 
         # Auto skip checkbox
-        self.autoSkipCheckBox = CheckBox(self.tr("自动跳过 (当出现跳过按钮时自动点击)"), self.view)
+        self.autoSkipCheckBox = CheckBox("自动跳过 (当出现跳过按钮时自动点击)", self.view)
         self.autoSkipCheckBox.setChecked(True)
         self.viewLayout.addWidget(self.autoSkipCheckBox)
 
         # Auto click dialog options checkbox
-        self.autoClickCheckBox = CheckBox(self.tr("自动选择 (自动选择任意对话选项)"), self.view)
+        self.autoClickCheckBox = CheckBox("自动选择 (自动选择任意对话选项)", self.view)
         self.autoClickCheckBox.setChecked(True)
         self.viewLayout.addWidget(self.autoClickCheckBox)
 
@@ -74,12 +74,12 @@ class AutoPlotSettingCard(ExpandSettingCard):
         adaptive_widget = QWidget(self.view)
         adaptive_layout = QHBoxLayout(adaptive_widget)
         adaptive_layout.setContentsMargins(0, 0, 0, 0)
-        self.adaptiveDelayLabel = QLabel(self.tr("阅读延迟:"), adaptive_widget)
+        self.adaptiveDelayLabel = QLabel("阅读延迟:", adaptive_widget)
         self.adaptiveDelaySpinBox = SpinBox(adaptive_widget)
         self.adaptiveDelaySpinBox.setRange(100, 5000)
         self.adaptiveDelaySpinBox.setSingleStep(100)
         self.adaptiveDelaySpinBox.setValue(10)
-        self.adaptiveUnitLabel = QLabel(self.tr("毫秒"), adaptive_widget)
+        self.adaptiveUnitLabel = QLabel("毫秒", adaptive_widget)
         adaptive_layout.addWidget(self.adaptiveDelayLabel)
         adaptive_layout.addWidget(self.adaptiveDelaySpinBox)
         adaptive_layout.addWidget(self.adaptiveUnitLabel)
@@ -91,12 +91,12 @@ class AutoPlotSettingCard(ExpandSettingCard):
         period_widget = QWidget(self.view)
         period_layout = QHBoxLayout(period_widget)
         period_layout.setContentsMargins(0, 0, 0, 0)
-        self.periodIntervalLabel = QLabel(self.tr("点击间隔:"), period_widget)
+        self.periodIntervalLabel = QLabel("点击间隔:", period_widget)
         self.periodIntervalSpinBox = SpinBox(period_widget)
         self.periodIntervalSpinBox.setRange(10, 5000)
         self.periodIntervalSpinBox.setSingleStep(10)
         self.periodIntervalSpinBox.setValue(50)
-        self.periodUnitLabel = QLabel(self.tr("毫秒"), period_widget)
+        self.periodUnitLabel = QLabel("毫秒", period_widget)
         period_layout.addWidget(self.periodIntervalLabel)
         period_layout.addWidget(self.periodIntervalSpinBox)
         period_layout.addWidget(self.periodUnitLabel)
@@ -134,7 +134,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
     def setValue(self, isChecked: bool):
         """Set switch button state"""
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText(self.tr('开') if isChecked else self.tr('关'))
+        self.switchButton.setText('开' if isChecked else '关')
 
     def getSwitchState(self) -> bool:
         """Get current switch state"""

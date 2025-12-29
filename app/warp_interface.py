@@ -22,7 +22,7 @@ class WarpInterface(ScrollArea):
         super().__init__(parent=parent)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel(self.tr("抽卡记录"), self)
+        self.titleLabel = QLabel("抽卡记录", self)
 
         self.updateBtn = PrimaryPushButton(FIF.SYNC, "更新数据", self)
         self.updateFullBtn = PushButton(FIF.SYNC, "更新完整数据", self)
@@ -128,7 +128,7 @@ class WarpInterface(ScrollArea):
             self.setContent()
 
             InfoBar.success(
-                title=self.tr('导入成功(＾∀＾●)'),
+                title='导入成功(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -138,7 +138,7 @@ class WarpInterface(ScrollArea):
             )
         except Exception:
             InfoBar.warning(
-                title=self.tr('导入失败(╥╯﹏╰╥)'),
+                title='导入失败(╥╯﹏╰╥)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -177,7 +177,7 @@ class WarpInterface(ScrollArea):
             os.startfile(os.path.dirname(path))
 
             InfoBar.success(
-                title=self.tr('导出成功(＾∀＾●)'),
+                title='导出成功(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -188,7 +188,7 @@ class WarpInterface(ScrollArea):
 
         except Exception:
             InfoBar.warning(
-                title=self.tr('导出失败(╥╯﹏╰╥)'),
+                title='导出失败(╥╯﹏╰╥)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -279,7 +279,7 @@ class WarpInterface(ScrollArea):
             os.startfile(os.path.dirname(path))
 
             InfoBar.success(
-                title=self.tr('导出成功(＾∀＾●)'),
+                title='导出成功(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -290,7 +290,7 @@ class WarpInterface(ScrollArea):
 
         except Exception:
             InfoBar.warning(
-                title=self.tr('导出失败(╥╯﹏╰╥)'),
+                title='导出失败(╥╯﹏╰╥)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -303,7 +303,7 @@ class WarpInterface(ScrollArea):
         try:
             pyperclip.copy(self.warplink)
             InfoBar.success(
-                title=self.tr('复制成功(＾∀＾●)'),
+                title='复制成功(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -313,7 +313,7 @@ class WarpInterface(ScrollArea):
             )
         except Exception:
             InfoBar.warning(
-                title=self.tr('复制失败(╥╯﹏╰╥)'),
+                title='复制失败(╥╯﹏╰╥)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -324,8 +324,8 @@ class WarpInterface(ScrollArea):
 
     def __onClearBtnClicked(self):
         message_box = MessageBox(
-            self.tr("清空抽卡记录"),
-            self.tr("确定要清空抽卡记录吗？此操作不可撤销。"),
+            "清空抽卡记录",
+            "确定要清空抽卡记录吗？此操作不可撤销。",
             self.window()
         )
         message_box.yesButton.setText('确认')
@@ -335,7 +335,7 @@ class WarpInterface(ScrollArea):
                 os.remove("./warp.json")
                 self.setContent()
                 InfoBar.success(
-                    title=self.tr('清空完成(＾∀＾●)'),
+                    title='清空完成(＾∀＾●)',
                     content="",
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -346,7 +346,7 @@ class WarpInterface(ScrollArea):
             except Exception as e:
                 print(e)
                 InfoBar.warning(
-                    title=self.tr('清空失败(╥╯﹏╰╥)'),
+                    title='清空失败(╥╯﹏╰╥)',
                     content="",
                     orient=Qt.Horizontal,
                     isClosable=True,

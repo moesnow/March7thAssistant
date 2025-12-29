@@ -68,6 +68,11 @@ class GameControllerBase:
     def get_input_handler(self):  # -> InputBase
         """获取用于模拟鼠标和键盘操作的类"""
         ...
+        
+    @abstractmethod
+    def copy(self, text: str) -> None:
+        """复制文本到剪贴板"""
+        ...
 
     def switch_to_game(self) -> bool:
         """将游戏窗口切换到前台"""

@@ -1,7 +1,7 @@
 name: 回报错误
 description: 在使用 March7thAssistant 过程中遇到了错误
-title: '[Bug]: '
-labels: [ "bug / 缺陷" ]
+title: "[Bug]: "
+labels: ["bug / 缺陷"]
 
 body:
   - type: markdown
@@ -70,10 +70,11 @@ body:
     attributes:
       label: 日志记录
       description: |
-        将日志等级(log_level)修改为 DEBUG 后再次运行，
-        从 logs 文件夹内获取日志文件，按照日期命名。
+        将 `设置 → 程序 → 日志等级` 修改为详细后再次运行，
+        从日志文件夹内获取日志文件，通常按照日期命名。
+        如果日志内提示错误截图已保存请一并附上。
 
   - type: textarea
     id: extra-desc
     attributes:
-      label: 补充说明（可选）
+      label: 补充说明（可选）例如电脑操作系统版本、是否非中文系统等等
