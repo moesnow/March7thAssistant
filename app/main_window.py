@@ -232,6 +232,26 @@ class MainWindow(MSFluentWindow):
                 self.showNormal()
                 self.activateWindow()
 
+    def handle_external_activate(self, task=None, exit_on_complete=False):
+        """响应来自其他实例的激活请求：置顶窗口并根据需要启动任务或设置退出行为"""
+        from PyQt5.QtCore import QTimer
+        try:
+            # 显示并置顶窗口
+            self.showNormal()
+            self.raise_()
+            self.activateWindow()
+        except Exception:
+            pass
+
+        # 如果指定了任务，延迟执行以保证界面初始化完成
+        if task:
+            self.startup_task = task
+            QTimer.singleShot(200, self._executeStartupTask)
+
+        # 设置任务完成后是否退出的标志
+        if exit_on_complete:
+            self.exit_on_complete = exit_on_complete
+
     def _on_tray_menu_about_to_show(self):
         """托盘菜单即将显示时激活窗口，解决 Windows 上点击外部区域无法关闭菜单的问题"""
         self.activateWindow()
