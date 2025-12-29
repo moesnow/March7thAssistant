@@ -42,7 +42,7 @@ def detect_from_start_menu():
 
 
 def detect_from_hoyoplay():
-    """从米哈游启动器检测游路径"""
+    """从注册表检测游戏路径"""
     game_path = get_game_path()
     if game_path:
         cfg.set_value("game_path", os.path.abspath(game_path))
@@ -65,7 +65,7 @@ def detect_game_path():
             break
 
 def detect_launcher_path():
-    """从米哈游启动器检测游路径"""
+    """从注册表检测检测启动器路径"""
     path = cfg.launcher_path
     if os.path.exists(path):
         return
