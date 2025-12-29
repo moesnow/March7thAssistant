@@ -1,7 +1,7 @@
 import os
 from module.config.config import Config
 from pylnk3 import Lnk
-from utils.registry.star_rail_setting import get_game_path
+from utils.registry.star_rail_setting import get_game_path, get_launcher_path
 
 
 def update_game_path_from_config(program_config_path):
@@ -42,7 +42,7 @@ def detect_from_start_menu():
 
 
 def detect_from_hoyoplay():
-    """从米哈游启动器检测游路径"""
+    """从注册表检测游戏路径"""
     game_path = get_game_path()
     if game_path:
         cfg.set_value("game_path", os.path.abspath(game_path))
@@ -64,6 +64,17 @@ def detect_game_path():
         if method():  # 如果检测成功，method() 返回 True，提前退出
             break
 
+def detect_launcher_path():
+    """从注册表检测检测启动器路径"""
+    path = cfg.launcher_path
+    if os.path.exists(path):
+        return
+    launcher_path = get_launcher_path()
+    if launcher_path:
+        cfg.set_value("launcher_path", os.path.abspath(launcher_path))
+        return True
+    return False
+
 
 VERSION_PATH = "./assets/config/version.txt"
 EXAMPLE_PATH = "./assets/config/config.example.yaml"
@@ -77,3 +88,4 @@ cfg.useragent = {"User-Agent": f"March7thAssistant/{cfg.version}"}
 
 if cfg.auto_set_game_path_enable:
     detect_game_path()
+    detect_launcher_path()
