@@ -5,6 +5,7 @@ import win32gui
 from desktopmagic.screengrab_win32 import getDisplayRects
 from module.config import cfg
 
+
 class Screenshot:
     @staticmethod
     def is_application_fullscreen(window):
@@ -35,11 +36,12 @@ class Screenshot:
     @staticmethod
     def get_window(title):
         if cfg.cloud_game_enable:
-            return False #TODO
+            return False  # TODO
         windows = pyautogui.getWindowsWithTitle(title)
         if windows:
-            window = windows[0]
-            return window
+            for window in windows:
+                if window.title == title:
+                    return window
         return False
 
     @staticmethod
@@ -50,7 +52,7 @@ class Screenshot:
         min_x = min([rect[0] for rect in rects])
         min_y = min([rect[1] for rect in rects])
         return -min_x, -min_y
-    
+
     @staticmethod
     def take_screenshot(title, crop=(0, 0, 1, 1)):
         if cfg.cloud_game_enable:
@@ -71,17 +73,17 @@ class Screenshot:
             screenshot_pos = (left, top, crop_width, crop_height)
 
             return screenshot, screenshot_pos, screenshot_scale_factor
-            
+
         window = Screenshot.get_window(title)
         if window:
             left, top, width, height = Screenshot.get_window_region(window)
-            
+
             all_screens = cfg.all_screens
             if all_screens:
                 offset_x, offset_y = Screenshot.get_main_screen_location()
             else:
-                offset_x, offset_y = 0,0
-                
+                offset_x, offset_y = 0, 0
+
             screenshot = pyautogui.screenshot(region=(
                 int(left + width * crop[0] + offset_x),
                 int(top + height * crop[1] + offset_y),
