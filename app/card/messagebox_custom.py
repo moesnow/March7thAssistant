@@ -833,7 +833,11 @@ class MessageBoxPowerPlan(MessageBox):
             self.template = json.load(file)
 
         # 副本类型列表
+        blacklist_type = ["历战余响"]
         self.instance_types = list(self.template.keys())
+        for btype in blacklist_type:
+            if btype in self.instance_types:
+                self.instance_types.remove(btype)
 
         # 存储所有计划行的控件
         self.plan_rows = []
