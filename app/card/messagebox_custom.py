@@ -39,13 +39,13 @@ def _cleanup_infobars(widget):
 
 def setup_completer(combo_box, items):
     """
-    为 EditableComboBox 设置自动补全器
-    :param combo_box: EditableComboBox 实例
-    :param items: 选项列表
+    EditableComboBox를 위한 자동 완성 설정
+    :param combo_box: EditableComboBox 인스턴스
+    :param items: 옵션 목록
     """
     completer = QCompleter(items)
-    completer.setCaseSensitivity(Qt.CaseInsensitive)  # 设置大小写不敏感
-    completer.setFilterMode(Qt.MatchContains)  # 设置匹配模式为包含（支持部分匹配）
+    completer.setCaseSensitivity(Qt.CaseInsensitive)  # 대소문자 구분 안 함
+    completer.setFilterMode(Qt.MatchContains)  # 포함 모드 (부분 일치 지원)
     combo_box.setCompleter(completer)
 
 
@@ -56,23 +56,23 @@ class SliderWithSpinBox(QHBoxLayout):
         font = QFont()
         font.setPointSize(11)
 
-        # 创建滑块
+        # 슬라이더 생성
         self.slider = Slider(Qt.Horizontal, parent)
         self.slider.setRange(min_value, max_value)
         self.slider.setSingleStep(step)
-        self.slider.setMinimumWidth(268)  # 与 RangeSettingCard1 保持一致
+        self.slider.setMinimumWidth(268)  # RangeSettingCard1과 일치시킴
 
-        # 创建数字显示
+        # 숫자 표시 생성
         self.valueLabel = QLabel(parent)
         self.valueLabel.setFont(font)
         self.valueLabel.setNum(min_value)
         self.valueLabel.setObjectName('valueLabel')
 
-        # 创建加减按钮
+        # 증감 버튼 생성
         self.minusButton = QToolButton(parent)
         self.plusButton = QToolButton(parent)
 
-        # 设置按钮样式
+        # 버튼 스타일 설정
         self.updateButtonStyle()
 
         self.minusButton.setFixedSize(28, 28)
@@ -80,7 +80,7 @@ class SliderWithSpinBox(QHBoxLayout):
         self.minusButton.setIconSize(QSize(12, 12))
         self.plusButton.setIconSize(QSize(12, 12))
 
-        # 布局
+        # 레이아웃
         self.addStretch(1)
         self.addWidget(self.valueLabel)
         self.addSpacing(10)
@@ -91,10 +91,10 @@ class SliderWithSpinBox(QHBoxLayout):
         self.addWidget(self.plusButton)
         self.addSpacing(16)
 
-        # 监听主题变化
+        # 테마 변경 감지
         qconfig.themeChanged.connect(self.updateButtonStyle)
 
-        # 连接信号
+        # 신호 연결
         self.slider.valueChanged.connect(self.__onValueChanged)
         self.minusButton.clicked.connect(self.decreaseValue)
         self.plusButton.clicked.connect(self.increaseValue)
@@ -122,7 +122,7 @@ class SliderWithSpinBox(QHBoxLayout):
             self.slider.setValue(value + 1)
 
     def updateButtonStyle(self):
-        """根据当前主题更新按钮样式"""
+        """현재 테마에 따라 버튼 스타일 업데이트"""
         style = '''
             QToolButton {
                 background-color: transparent;
@@ -138,12 +138,12 @@ class SliderWithSpinBox(QHBoxLayout):
         '''
 
         if isDarkTheme():
-            # 深色主题
+            # 다크 테마
             border_color = '#424242'
             hover_color = '#424242'
             pressed_color = '#333333'
         else:
-            # 浅色主题
+            # 라이트 테마
             border_color = '#E5E5E5'
             hover_color = '#E5E5E5'
             pressed_color = '#DDDDDD'
@@ -151,7 +151,7 @@ class SliderWithSpinBox(QHBoxLayout):
         self.minusButton.setStyleSheet(style % (border_color, hover_color, pressed_color))
         self.plusButton.setStyleSheet(style % (border_color, hover_color, pressed_color))
 
-        # 更新图标
+        # 아이콘 업데이트
         self.minusButton.setIcon(FluentIcon.REMOVE.icon())
         self.plusButton.setIcon(FluentIcon.ADD.icon())
 
@@ -177,7 +177,7 @@ class MessageBoxSupport(MessageBoxImage):
     def __init__(self, title: str, content: str, image: str, parent=None):
         super().__init__(title, content, image, parent)
 
-        self.yesButton.setText('下次一定')
+        self.yesButton.setText('다음에 할게요')
         self.cancelButton.setHidden(True)
 
 
@@ -185,7 +185,7 @@ class MessageBoxAnnouncement(MessageBoxImage):
     def __init__(self, title: str, content: str, image: Optional[str | QPixmap], parent=None):
         super().__init__(title, content, image, parent)
 
-        self.yesButton.setText('收到')
+        self.yesButton.setText('확인')
         self.cancelButton.setHidden(True)
         self.setContentCopyable(True)
 
@@ -236,17 +236,17 @@ class MessageBoxHtmlUpdate(MessageBox):
         self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
 
         self.githubUpdateCard = PrimaryPushSettingCard(
-            '立即更新',
+            '즉시 업데이트',
             FIF.GITHUB,
-            '开源渠道',
-            "直接从 GitHub 下载并更新"
+            '오픈 소스 채널',
+            "GitHub에서 직접 다운로드 및 업데이트"
         )
 
         self.mirrorchyanUpdateCard = PrimaryPushSettingCard(
-            '立即更新',
+            '즉시 업데이트',
             FIF.CLOUD,
-            'Mirror酱 服务 ⚡',
-            "Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）"
+            'MirrorChyan 서비스 ⚡',
+            "MirrorChyan 사용자는 CDK를 통해 고속 업데이트 가능 (버전 간 증분 업데이트 지원)"
         )
         self.textLayout.addWidget(self.githubUpdateCard, 0, Qt.AlignTop)
         self.textLayout.addWidget(self.mirrorchyanUpdateCard, 0, Qt.AlignTop)
@@ -261,22 +261,22 @@ class MessageBoxUpdate(MessageBoxHtmlUpdate):
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
-        self.yesButton.setText('手动下载')
-        self.cancelButton.setText('好的')
+        self.yesButton.setText('수동 다운로드')
+        self.cancelButton.setText('확인')
 
 
 class MessageBoxDisclaimer(MessageBoxHtml):
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
-        self.yesButton.setText('退出')
-        self.cancelButton.setText('我已知晓')
+        self.yesButton.setText('종료')
+        self.cancelButton.setText('숙지했습니다')
         self.setContentCopyable(True)
         self._opened_at: float | None = time.time()
         self._min_confirm_seconds = 10
 
     def exec(self):
-        """记录打开时间后再阻塞式显示。"""
+        """열린 시간을 기록한 후 차단 방식으로 표시합니다."""
         self._opened_at = time.time()
         return super().exec()
 
@@ -285,7 +285,7 @@ class MessageBoxDisclaimer(MessageBoxHtml):
 
     def _show_fast_warning(self):
         InfoBar.error(
-            title=base64.b64decode("6ZiF6K+75pe26Ze05aSq55+t5LqG77yM5aSa5YGc55WZ5LiA5Lya5ZCnKO+8vuKIgO+8vuKXjyk=").decode("utf-8"),
+            title="읽는 시간이 너무 짧아요, 조금만 더 머물러주세요(>∀<)",
             content="",
             orient=Qt.Horizontal,
             isClosable=True,
@@ -317,8 +317,8 @@ class MessageBoxEdit(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.lineEdit = LineEdit(self)
         self.lineEdit.setText(self.content)
@@ -337,14 +337,14 @@ class MessageBoxEditCode(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
-        # 操作按钮：获取最新兑换码 / 查看已使用 / 清空已使用
+        # 작업 버튼: 최신 리딤코드 가져오기 / 사용된 것 보기 / 사용된 것 비우기
         buttonRow = QHBoxLayout()
-        self.fetchButton = PushButton('获取最新兑换码', self)
-        self.viewUsedButton = PushButton('查看已使用兑换码', self)
-        self.clearUsedButton = PushButton('清空已使用兑换码', self)
+        self.fetchButton = PushButton('최신 리딤코드 가져오기', self)
+        self.viewUsedButton = PushButton('사용된 리딤코드 보기', self)
+        self.clearUsedButton = PushButton('사용된 리딤코드 비우기', self)
         buttonRow.addWidget(self.fetchButton)
         buttonRow.addWidget(self.viewUsedButton)
         buttonRow.addWidget(self.clearUsedButton)
@@ -377,8 +377,8 @@ class MessageBoxDate(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.datePicker = DateTimeEdit(self)
         self.datePicker.setDateTime(content)
@@ -386,8 +386,8 @@ class MessageBoxDate(MessageBox):
         self._epoch_datetime = datetime.datetime.fromtimestamp(0)
 
         shortcutLayout = QHBoxLayout()
-        self.resetButton = PushButton("重置时间", self)
-        self.nowButton = PushButton("设置为当前时间", self)
+        self.resetButton = PushButton("시간 초기화", self)
+        self.nowButton = PushButton("현재 시간으로 설정", self)
         shortcutLayout.addWidget(self.resetButton)
         shortcutLayout.addWidget(self.nowButton)
         shortcutLayout.addStretch(1)
@@ -404,7 +404,7 @@ class MessageBoxDate(MessageBox):
         return self.datePicker.dateTime().toPyDateTime()
 
     def reset_default_time(self):
-        # Reset to epoch start to match timestamp 0
+        # 타임스탬프 0과 일치하도록 에포크 시작으로 재설정
         self.datePicker.setDateTime(self._epoch_datetime)
 
     def set_current_time(self):
@@ -419,8 +419,8 @@ class MessageBoxInstance(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -454,34 +454,34 @@ class MessageBoxInstance(MessageBox):
             if not has_default:
                 comboBox.setText(self.content[type])
 
-            # 设置自动补全
+            # 자동 완성 설정
             setup_completer(comboBox, item_list)
 
             horizontalLayout.addWidget(comboBox)
             self.textLayout.addLayout(horizontalLayout)
             self.comboBox_dict[type] = comboBox
 
-        self.titleLabelInfo = QLabel("说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动", parent)
+        self.titleLabelInfo = QLabel("설명: 개척력 소모는 선택한 던전 유형에 따라 판단되며, 던전 이름은 2배 이벤트에도 사용됩니다", parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
     def validate_inputs(self):
-        """验证所有输入是否匹配可选项"""
+        """모든 입력이 옵션과 일치하는지 확인"""
         for type, comboBox in self.comboBox_dict.items():
             input_text = comboBox.text()
 
-            # 构建有效选项列表（包含完整的"名称（信息）"格式）
+            # 유효한 옵션 목록 생성 (전체 "이름(정보)" 형식 포함)
             valid_options = set()
             for name, info in self.template[type].items():
                 valid_options.add(f"{name}（{info}）")
-                # 也允许只输入名称部分（向后兼容）
+                # 이름 부분만 입력하는 것도 허용 (하위 호환성)
                 valid_options.add(name)
 
-            # 检查输入是否匹配任一有效选项
+            # 입력이 유효한 옵션 중 하나와 일치하는지 확인
             if input_text not in valid_options:
                 InfoBar.error(
-                    title='输入错误',
-                    content=f'"{type}"的输入"{input_text}"不在可选项中，请重新选择',
+                    title='입력 오류',
+                    content=f'"{type}"의 입력 "{input_text}"이(가) 옵션에 없습니다. 다시 선택해주세요.',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -493,14 +493,14 @@ class MessageBoxInstance(MessageBox):
         return True
 
     def accept(self):
-        """重写accept方法以添加验证并在关闭前清理 InfoBar，避免 QPainter 冲突"""
+        """유효성 검사를 추가하고 닫기 전에 InfoBar를 정리하기 위해 accept 메서드 재정의"""
         if self.validate_inputs():
-            # 在对话框真正关闭前，清理任何还存在的 InfoBar
+            # 대화 상자가 실제로 닫히기 전에 존재하는 모든 InfoBar 정리
             _cleanup_infobars(self)
             super().accept()
 
     def reject(self):
-        """在拒绝/取消时也清理 InfoBar，避免在销毁期间 InfoBar 仍在绘制。"""
+        """거부/취소 시에도 InfoBar를 정리하여 소멸 중에 InfoBar가 계속 그려지는 것을 방지"""
         _cleanup_infobars(self)
         try:
             super().reject()
@@ -519,8 +519,8 @@ class MessageBoxInstanceChallengeCount(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.buttonGroup.setMinimumWidth(300)
 
@@ -528,24 +528,35 @@ class MessageBoxInstanceChallengeCount(MessageBox):
         font.setPointSize(11)
 
         self.template = {
-            "拟造花萼（金）": 24,
-            "拟造花萼（赤）": 24,
-            "凝滞虚影": 8,
-            "侵蚀隧洞": 6,
-            "饰品提取": 6,
-            "历战余响": 3
+            "拟造花萼（金）": 24,  # 고치 (금)
+            "拟造花萼（赤）": 24,  # 고치 (적)
+            "凝滞虚影": 8,        # 정체된 허영
+            "侵蚀隧洞": 6,        # 침식된 터널
+            "饰品提取": 6,        # 장신구 추출
+            "历战余响": 3         # 전쟁의 여운
         }
+        # 한국어 라벨 매핑 (config 키는 유지하고 표시만 변경)
+        self.display_names = {
+            "拟造花萼（金）": "고치 (금)",
+            "拟造花萼（赤）": "고치 (적)",
+            "凝滞虚影": "정체된 허영",
+            "侵蚀隧洞": "침식된 터널",
+            "饰品提取": "장신구 추출",
+            "历战余响": "전쟁의 여운"
+        }
+
         self.slider_dict = {}
         for type, count in self.template.items():
             horizontalLayout = QHBoxLayout()
-            horizontalLayout.setContentsMargins(24, 8, 24, 8)  # 增加边距使布局更加美观
+            horizontalLayout.setContentsMargins(24, 8, 24, 8)  # 여백을 늘려 레이아웃을 더 예쁘게 만듦
 
-            # 创建标签
-            titleLabel = QLabel(type, parent)
+            # 라벨 생성
+            display_text = self.display_names.get(type, type)
+            titleLabel = QLabel(display_text, parent)
             titleLabel.setFont(font)
             horizontalLayout.addWidget(titleLabel)
 
-            # 创建滑块组件
+            # 슬라이더 컴포넌트 생성
             sliderLayout = SliderWithSpinBox(1, count, 1, self)
             sliderLayout.setValue(self.content[type])
             horizontalLayout.addLayout(sliderLayout)
@@ -562,8 +573,8 @@ class MessageBoxNotify(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -596,8 +607,8 @@ class MessageBoxNotifyTemplate(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -618,7 +629,7 @@ class MessageBoxNotifyTemplate(MessageBox):
 
             self.lineEdit_dict[id] = lineEdit
 
-        self.titleLabelInfo = QLabel("说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行", parent)
+        self.titleLabelInfo = QLabel("설명: { } 안의 내용은 실제 전송 시 대체되며, \\n은 줄바꿈을 나타냅니다.", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
 
@@ -630,8 +641,8 @@ class MessageBoxTeam(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.buttonGroup.setMinimumWidth(400)
 
@@ -641,18 +652,18 @@ class MessageBoxTeam(MessageBox):
         self.template = template
 
         self.tech_map = {
-            -1: "秘技 / 开怪",
-            0: "无操作",
-            1: "秘技 1 次",
-            2: "秘技 2 次",
+            -1: "비술 / 진입",
+            0: "조작 없음",
+            1: "비술 1회",
+            2: "비술 2회",
         }
 
         self.comboBox_list = []
         for i in range(1, 5):
-            # 将 titleLabel 与两个下拉框放在同一行
+            # titleLabel과 두 개의 콤보박스를 같은 줄에 배치
             horizontalLayout = QHBoxLayout()
 
-            titleLabel = QLabel(f"{i}号位", parent)
+            titleLabel = QLabel(f"{i}번 자리", parent)
             titleLabel.setFont(font)
             # titleLabel.setMinimumWidth(60)
             titleLabel.setAlignment(Qt.AlignVCenter)
@@ -675,12 +686,12 @@ class MessageBoxTeam(MessageBox):
 
             self.comboBox_list.append((charComboBox, techComboBox))
 
-        self.titleLabelInfo = QLabel("每个队伍只允许一名角色配置为“秘技 / 开怪”", parent)
+        self.titleLabelInfo = QLabel("각 파티당 한 명의 캐릭터만 '비술 / 진입'으로 설정할 수 있습니다.", parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
     def validate_inputs(self):
-        """验证所有输入是否匹配可选项"""
+        """모든 입력이 옵션과 일치하는지 확인"""
         valid_chars = set(self.template.values())
         valid_techs = set(self.tech_map.values())
 
@@ -690,8 +701,8 @@ class MessageBoxTeam(MessageBox):
 
             if char_text not in valid_chars:
                 InfoBar.error(
-                    title='输入错误',
-                    content=f'第{i}号位角色"{char_text}"不在可选项中，请重新选择',
+                    title='입력 오류',
+                    content=f'{i}번 자리 캐릭터 "{char_text}"이(가) 옵션에 없습니다. 다시 선택해주세요.',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -702,8 +713,8 @@ class MessageBoxTeam(MessageBox):
 
             if tech_text not in valid_techs:
                 InfoBar.error(
-                    title='输入错误',
-                    content=f'第{i}号位秘技"{tech_text}"不在可选项中，请重新选择',
+                    title='입력 오류',
+                    content=f'{i}번 자리 비술 설정 "{tech_text}"이(가) 옵션에 없습니다. 다시 선택해주세요.',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -715,7 +726,7 @@ class MessageBoxTeam(MessageBox):
         return True
 
     def accept(self):
-        """重写accept方法以添加验证并在关闭前清理 InfoBar"""
+        """유효성 검사를 추가하고 닫기 전에 InfoBar를 정리하기 위해 accept 메서드 재정의"""
         if self.validate_inputs():
             _cleanup_infobars(self)
             super().accept()
@@ -739,8 +750,8 @@ class MessageBoxFriends(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.buttonGroup.setMinimumWidth(400)
 
@@ -769,11 +780,11 @@ class MessageBoxFriends(MessageBox):
 
             self.comboBox_list.append((charComboBox, nameLineEdit))
 
-        self.titleLabelInfo = QLabel("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n若好友名称留空则只查找选择的角色。", parent)
+        self.titleLabelInfo = QLabel("설명: 왼쪽에서 캐릭터 선택 후 오른쪽 텍스트 상자에 친구 이름을 입력하세요.\n예: 친구 이름이 'SilverWolf'인 경우 'Silver'만 입력해도 매칭됩니다.\n친구 이름을 비워두면 선택한 캐릭터만 검색합니다.", parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
     def validate_inputs(self):
-        """验证所有输入是否匹配可选项"""
+        """모든 입력이 옵션과 일치하는지 확인"""
         valid_chars = set(self.template.values())
 
         for i, (charComboBox, nameLineEdit) in enumerate(self.comboBox_list, 1):
@@ -781,8 +792,8 @@ class MessageBoxFriends(MessageBox):
 
             if char_text not in valid_chars:
                 InfoBar.error(
-                    title='输入错误',
-                    content=f'第{i}个好友角色"{char_text}"不在可选项中，请重新选择',
+                    title='입력 오류',
+                    content=f'{i}번째 지원 캐릭터 "{char_text}"이(가) 옵션에 없습니다. 다시 선택해주세요.',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -794,7 +805,7 @@ class MessageBoxFriends(MessageBox):
         return True
 
     def accept(self):
-        """重写accept方法以添加验证并在关闭前清理 InfoBar"""
+        """유효성 검사를 추가하고 닫기 전에 InfoBar를 정리하기 위해 accept 메서드 재정의"""
         if self.validate_inputs():
             _cleanup_infobars(self)
             super().accept()
@@ -811,7 +822,7 @@ class MessageBoxFriends(MessageBox):
 
 
 class MessageBoxPowerPlan(MessageBox):
-    """体力计划配置对话框"""
+    """체력 계획 설정 대화 상자"""
 
     def __init__(self, title: str, content: list, configtemplate: str, parent=None):
         super().__init__(title, "", parent)
@@ -820,57 +831,57 @@ class MessageBoxPowerPlan(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText('확인')
+        self.cancelButton.setText('취소')
 
         self.buttonGroup.setMinimumWidth(500)
 
         font = QFont()
         font.setPointSize(11)
 
-        # 加载副本模板
+        # 副本模板(던전 템플릿) 로드
         with open(configtemplate, 'r', encoding='utf-8') as file:
             self.template = json.load(file)
 
-        # 副本类型列表
-        blacklist_type = ["历战余响"]
+        # 副本类型列表(던전 유형 목록)
+        blacklist_type = ["历战余响"]  # 필터링할 항목 (전쟁의 여운)
         self.instance_types = list(self.template.keys())
         for btype in blacklist_type:
             if btype in self.instance_types:
                 self.instance_types.remove(btype)
 
-        # 存储所有计划行的控件
+        # 모든 계획 행 컨트롤 저장
         self.plan_rows = []
 
-        # 添加说明
-        self.titleLabelInfo = QLabel("体力计划会在清体力前优先执行，完成后自动从列表中删除", parent)
+        # 설명 추가
+        self.titleLabelInfo = QLabel("체력 계획은 개척력 소모 전 우선 실행되며, 완료 후 목록에서 자동 삭제됩니다.", parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
 
-        # 计划列表容器
+        # 계획 목록 컨테이너
         self.planLayout = QVBoxLayout()
         self.textLayout.addLayout(self.planLayout)
 
-        # 根据已有内容添加计划行
+        # 기존 내용에 따라 계획 행 추가
         for plan in self.content:
             if len(plan) == 3:
                 self.add_plan_row(plan[0], plan[1], plan[2])
 
-        # 添加按钮
+        # 버튼 추가
         addButtonLayout = QHBoxLayout()
-        self.addButton = PushButton("添加计划", self)
+        self.addButton = PushButton("계획 추가", self)
         self.addButton.clicked.connect(self.add_plan_row)
         addButtonLayout.addWidget(self.addButton)
         addButtonLayout.addStretch(1)
         self.textLayout.addLayout(addButtonLayout)
 
     def add_plan_row(self, instance_type=None, instance_name=None, count=1):
-        """添加一行体力计划配置"""
-        # 检查是否已达到最大数量限制
+        """체력 계획 설정 행 추가"""
+        # 최대 수량 제한 확인
         if len(self.plan_rows) >= 8:
             InfoBar.warning(
-                title='无法添加',
-                content='已达到最大计划数量',
+                title='추가 불가',
+                content='최대 계획 수량에 도달했습니다',
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -881,7 +892,7 @@ class MessageBoxPowerPlan(MessageBox):
 
         horizontalLayout = QHBoxLayout()
 
-        # 副本类型下拉框
+        # 던전 유형 콤보박스
         typeComboBox = ComboBox()
         typeComboBox.setMinimumWidth(140)
         typeComboBox.addItems(self.instance_types)
@@ -890,22 +901,22 @@ class MessageBoxPowerPlan(MessageBox):
         else:
             typeComboBox.setCurrentIndex(0)
 
-        # 副本名称下拉框
+        # 던전 이름 콤보박스
         nameComboBox = EditableComboBox()
         nameComboBox.setMinimumWidth(320)
 
-        # 次数输入框
+        # 횟수 입력 상자
         countSpinBox = SpinBox()
         countSpinBox.setMinimum(1)
         countSpinBox.setMaximum(999)
         countSpinBox.setValue(count if count else 1)
         countSpinBox.setMinimumWidth(120)
 
-        # 删除按钮
-        deleteButton = PushButton("删除", self)
+        # 삭제 버튼
+        deleteButton = PushButton("삭제", self)
         deleteButton.setMaximumWidth(60)
 
-        # 更新副本名称选项的函数
+        # 던전 이름 옵션 업데이트 함수
         def update_instance_names(selected_type):
             nameComboBox.clear()
             if selected_type in self.template:
@@ -916,27 +927,27 @@ class MessageBoxPowerPlan(MessageBox):
                     item_list.append(item_name)
                 setup_completer(nameComboBox, item_list)
 
-        # 初始化副本名称
+        # 던전 이름 초기화
         current_type = typeComboBox.currentText()
         update_instance_names(current_type)
         if instance_name:
-            # 如果instance_name已包含括号说明，直接使用；否则尝试匹配并格式化
+            # instance_name에 이미 괄호 설명이 포함된 경우 직접 사용; 그렇지 않으면 일치 및 포맷 시도
             if "（" in instance_name and "）" in instance_name:
                 nameComboBox.setCurrentText(instance_name)
             else:
-                # 查找对应的说明并格式化
+                # 해당 설명 찾기 및 포맷
                 if current_type in self.template and instance_name in self.template[current_type]:
                     formatted_name = f"{instance_name}（{self.template[current_type][instance_name]}）"
                     nameComboBox.setCurrentText(formatted_name)
                 else:
                     nameComboBox.setText(instance_name)
 
-        # 连接副本类型改变信号
+        # 던전 유형 변경 신호 연결
         typeComboBox.currentTextChanged.connect(update_instance_names)
 
-        # 删除按钮功能
+        # 삭제 버튼 기능
         def delete_row():
-            # 从界面移除
+            # 인터페이스에서 제거
             horizontalLayout.setParent(None)
             for i in reversed(range(horizontalLayout.count())):
                 widget = horizontalLayout.itemAt(i).widget()
@@ -944,34 +955,34 @@ class MessageBoxPowerPlan(MessageBox):
                     widget.setParent(None)
                     widget.deleteLater()
 
-            # 从列表中移除
+            # 목록에서 제거
             if (typeComboBox, nameComboBox, countSpinBox, deleteButton) in self.plan_rows:
                 self.plan_rows.remove((typeComboBox, nameComboBox, countSpinBox, deleteButton))
 
         deleteButton.clicked.connect(delete_row)
 
-        # 添加到布局
-        horizontalLayout.addWidget(QLabel("类型:"))
+        # 레이아웃에 추가
+        horizontalLayout.addWidget(QLabel("유형:"))
         horizontalLayout.addWidget(typeComboBox)
-        horizontalLayout.addWidget(QLabel("名称:"))
+        horizontalLayout.addWidget(QLabel("이름:"))
         horizontalLayout.addWidget(nameComboBox)
-        horizontalLayout.addWidget(QLabel("次数:"))
+        horizontalLayout.addWidget(QLabel("횟수:"))
         horizontalLayout.addWidget(countSpinBox)
         horizontalLayout.addWidget(deleteButton)
 
         self.planLayout.addLayout(horizontalLayout)
 
-        # 保存到列表
+        # 목록에 저장
         self.plan_rows.append((typeComboBox, nameComboBox, countSpinBox, deleteButton))
 
     def get_plans(self):
-        """获取所有计划"""
+        """모든 계획 가져오기"""
         plans = []
         for typeCombo, nameCombo, countSpin, _ in self.plan_rows:
             instance_type = typeCombo.currentText()
             instance_name = nameCombo.text()
 
-            # 如果输入包含括号说明，提取实际名称
+            # 입력에 괄호 설명이 포함된 경우 실제 이름 추출
             if "（" in instance_name and "）" in instance_name:
                 instance_name = instance_name.split("（")[0]
 
@@ -981,15 +992,15 @@ class MessageBoxPowerPlan(MessageBox):
         return plans
 
     def validate_inputs(self):
-        """验证所有输入是否匹配可选项"""
+        """모든 입력이 옵션과 일치하는지 확인"""
         for i, (typeCombo, nameCombo, countSpin, _) in enumerate(self.plan_rows, 1):
             instance_type = typeCombo.currentText()
             input_text = nameCombo.text()
 
             if not instance_type or instance_type not in self.template:
                 InfoBar.error(
-                    title='输入错误',
-                    content=f'第{i}个计划的副本类型无效',
+                    title='입력 오류',
+                    content=f'{i}번째 계획의 던전 유형이 유효하지 않습니다',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -998,19 +1009,21 @@ class MessageBoxPowerPlan(MessageBox):
                 )
                 return False
 
-            # 构建有效选项列表
+            # 유효한 옵션 목록 생성
             valid_options = set()
             for name, info in self.template[instance_type].items():
                 valid_options.add(f"{name}（{info}）")
                 valid_options.add(name)
-            valid_options.remove("无（跳过）")  # 移除“无（跳过）”选项
-            valid_options.remove("无")  # 移除“无”选项
+            
+            # 중국어 키워드 제거 (필요시 한국어로 대체 가능하지만, 템플릿 데이터가 중국어일 수 있음)
+            if "无（跳过）" in valid_options: valid_options.remove("无（跳过）")
+            if "无" in valid_options: valid_options.remove("无")
 
-            # 检查输入是否匹配任一有效选项
+            # 입력이 유효한 옵션 중 하나와 일치하는지 확인
             if input_text not in valid_options:
                 InfoBar.error(
-                    title='输入错误',
-                    content=f'第{i}个计划的副本名称"{input_text}"不在可选项中，请重新选择',
+                    title='입력 오류',
+                    content=f'{i}번째 계획의 던전 이름 "{input_text}"이(가) 옵션에 없습니다. 다시 선택해주세요.',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -1022,13 +1035,13 @@ class MessageBoxPowerPlan(MessageBox):
         return True
 
     def accept(self):
-        """确认并保存"""
+        """확인 및 저장"""
         if self.validate_inputs():
             _cleanup_infobars(self)
             super().accept()
 
     def reject(self):
-        """取消"""
+        """취소"""
         _cleanup_infobars(self)
         try:
             super().reject()
@@ -1040,28 +1053,28 @@ class MessageBoxPowerPlan(MessageBox):
 
 
 class MessageBoxCloseWindow(MessageBox):
-    """关闭窗口询问对话框"""
+    """창 닫기 확인 대화 상자"""
 
     def __init__(self, parent=None):
         super().__init__(
-            '关闭确认',
-            '您希望如何处理程序?',
+            '종료 확인',
+            '프로그램을 어떻게 처리하시겠습니까?',
             parent
         )
 
-        # 修改按钮文本
-        self.yesButton.setText('最小化到托盘')
-        self.cancelButton.setText('关闭程序')
+        # 버튼 텍스트 수정
+        self.yesButton.setText('트레이로 최소화')
+        self.cancelButton.setText('프로그램 종료')
 
-        # 添加记住选择的复选框
-        self.rememberCheckBox = CheckBox('记住我的选择,下次不再询问', self)
+        # 선택 기억 확인란 추가
+        self.rememberCheckBox = CheckBox('선택 사항 기억하기 (다음부터 묻지 않음)', self)
         self.textLayout.addWidget(self.rememberCheckBox)
 
-        # 存储用户的选择
-        self.action = None  # 'minimize' 或 'close'
+        # 사용자 선택 저장
+        self.action = None  # 'minimize' 또는 'close'
 
     def accept(self):
-        """用户选择最小化到托盘"""
+        """사용자가 트레이로 최소화 선택"""
         self.action = 'minimize'
         if self.rememberCheckBox.isChecked():
             cfg.set_value('close_window_action', 'minimize')
@@ -1069,7 +1082,7 @@ class MessageBoxCloseWindow(MessageBox):
         super().accept()
 
     def reject(self):
-        """用户选择关闭程序"""
+        """사용자가 프로그램 종료 선택"""
         self.action = 'close'
         if self.rememberCheckBox.isChecked():
             cfg.set_value('close_window_action', 'close')

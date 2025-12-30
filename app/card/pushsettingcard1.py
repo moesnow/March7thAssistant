@@ -56,13 +56,13 @@ class PushSettingCardMirrorchyan(SettingCard):
         self.title = title
         self.configname = configname
 
-        self.button3 = QPushButton("交流反馈", self)
+        self.button3 = QPushButton("커뮤니티/피드백", self)
         self.button3.setObjectName('primaryButton')
         self.hBoxLayout.addWidget(self.button3, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.button3.clicked.connect(self.__onclicked3)
 
-        self.button2 = QPushButton("获取 CDK", self)
+        self.button2 = QPushButton("CDK 받기", self)
         self.button2.setObjectName('primaryButton')
         self.hBoxLayout.addWidget(self.button2, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(10)
@@ -115,7 +115,7 @@ class PushSettingCardCode(PushSettingCard):
 
     def __init__(self, text, icon, title, configname, parent=None):
         self.parent = parent
-        super().__init__(text, icon, title, configname, "批量使用兑换码，每行一个，自动过滤空格等无效字符", parent)
+        super().__init__(text, icon, title, configname, "리딤코드를 일괄 사용합니다. 한 줄에 하나씩 입력하며, 공백 등 유효하지 않은 문자는 자동으로 필터링됩니다.", parent)
         self.button.clicked.connect(self.__onclicked)
 
     # ===================== 主入口 =====================
@@ -156,7 +156,7 @@ class PushSettingCardCode(PushSettingCard):
         mb = self.message_box
 
         if self._is_fetching():
-            self._info_warning('正在获取', '请等待当前获取完成', mb)
+            self._info_warning('가져오는 중', '현재 작업이 완료될 때까지 기다려주세요', mb)
             return
 
         server = self._get_server()
@@ -180,7 +180,7 @@ class PushSettingCardCode(PushSettingCard):
 
         thread.start()
 
-        self._info_success('开始获取', '正在获取最新兑换码...', mb)
+        self._info_success('가져오기 시작', '최신 리딤코드를 가져오는 중...', mb)
 
     def _on_fetch_finished(self, codes, err):
         mb = self.message_box
@@ -190,14 +190,14 @@ class PushSettingCardCode(PushSettingCard):
             return
 
         if err:
-            self._info_warning('获取最新兑换码失败', err, mb)
+            self._info_warning('최신 리딤코드 가져오기 실패', err, mb)
         elif not codes:
-            self._info_warning('未获取到兑换码', '', mb)
+            self._info_warning('리딤코드를 가져오지 못했습니다', '', mb)
         else:
             mb.textEdit.setText('\n'.join(codes))
             self._info_success(
-                '获取成功',
-                f'已获取{len(codes)}个兑换码',
+                '가져오기 성공',
+                f'{len(codes)}개의 리딤코드를 가져왔습니다',
                 mb
             )
 
@@ -208,15 +208,15 @@ class PushSettingCardCode(PushSettingCard):
     def _show_used(self):
         used = cfg.get_value('already_used_codes') or []
         if not used:
-            self._info_warning('暂无已使用兑换码', '', self.message_box)
+            self._info_warning('사용된 리딤코드 없음', '', self.message_box)
             return
 
         mb = MessageBoxEditCode(
-            '已使用兑换码',
+            '사용된 리딤코드',
             '\n'.join(used),
             self.window()
         )
-        mb.yesButton.setText('关闭')
+        mb.yesButton.setText('닫기')
         mb.cancelButton.hide()
         mb.fetchButton.hide()
         mb.viewUsedButton.hide()
@@ -228,16 +228,16 @@ class PushSettingCardCode(PushSettingCard):
         from qfluentwidgets import MessageBox
 
         confirm = MessageBox(
-            '确认清空已使用兑换码',
-            '此操作不可撤销，是否继续？',
+            '사용된 리딤코드 기록 비우기 확인',
+            '이 작업은 취소할 수 없습니다. 계속하시겠습니까?',
             self.window()
         )
-        confirm.yesButton.setText('确认')
-        confirm.cancelButton.setText('取消')
+        confirm.yesButton.setText('확인')
+        confirm.cancelButton.setText('취소')
 
         if confirm.exec():
             cfg.set_value('already_used_codes', [])
-            self._info_success('', '已清空已使用兑换码', self.message_box)
+            self._info_success('', '사용된 리딤코드 기록을 비웠습니다', self.message_box)
 
     # ===================== 保存兑换码 =====================
 
@@ -258,7 +258,7 @@ class PushSettingCardCode(PushSettingCard):
         if code:
             start_task("redemption")
         else:
-            self._info_warning('兑换码为空', '', self.parent)
+            self._info_warning('리딤코드가 비어 있습니다', '', self.parent)
 
     # ===================== 工具方法 =====================
 
@@ -268,13 +268,13 @@ class PushSettingCardCode(PushSettingCard):
             server = get_server_by_registry()
             if not server:
                 self._info_warning(
-                    '无法判断服务器类型',
-                    '无法获取最新兑换码',
+                    '서버 유형을 판단할 수 없음',
+                    '최신 리딤코드를 가져올 수 없습니다',
                     self.message_box
                 )
             return server
         except Exception as e:
-            self._info_warning('获取服务器信息失败', str(e), self.message_box)
+            self._info_warning('서버 정보 가져오기 실패', str(e), self.message_box)
             return None
 
     def _is_fetching(self):
@@ -350,8 +350,8 @@ class PushSettingCardDate(PushSettingCard):
                 timestamp = 0
                 display_time = datetime.datetime.fromtimestamp(timestamp)
                 InfoBar.warning(
-                    '时间无效',
-                    '所选时间无法转换为时间戳，已使用默认时间',
+                    '시간이 유효하지 않음',
+                    '선택한 시간을 타임스탬프로 변환할 수 없어 기본 시간을 사용합니다',
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -371,10 +371,10 @@ class PushSettingCardKey(PushSettingCard):
         self.button.released.connect(self.__onreleased)
 
     def __onpressed(self):
-        self.button.setText("按下要绑定的按键")
+        self.button.setText("설정할 키를 누르세요")
 
     def __onreleased(self):
-        self.button.setText("按住以修改")
+        self.button.setText("누르고 있어 수정")
 
     def keyPressEvent(self, e: QKeyEvent):
         if self.button.isDown():
@@ -382,7 +382,7 @@ class PushSettingCardKey(PushSettingCard):
             if key_name:
                 cfg.set_value(self.configname, key_name)
                 self.contentLabel.setText(key_name)
-                self.button.setText(f"已改为 {key_name}")
+                self.button.setText(f"{key_name}(으)로 변경됨")
 
     def _get_key_name(self, event):
         function_keys = {
@@ -555,19 +555,19 @@ class PushSettingCardTeamWithSwap(SettingCard):
         super().__init__(icon, title, self._get_display_text(), parent)
 
         # Add team1 modify button
-        self.team1Button = QPushButton('修改队伍1', self)
+        self.team1Button = QPushButton('파티 1 수정', self)
         self.hBoxLayout.addWidget(self.team1Button, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.team1Button.clicked.connect(self.__onTeam1Clicked)
 
         # Add team2 modify button
-        self.team2Button = QPushButton('修改队伍2', self)
+        self.team2Button = QPushButton('파티 2 수정', self)
         self.hBoxLayout.addWidget(self.team2Button, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.team2Button.clicked.connect(self.__onTeam2Clicked)
 
         # Add swap button
-        self.swapButton = QPushButton('交换队伍', self)
+        self.swapButton = QPushButton('파티 교체', self)
         self.hBoxLayout.addWidget(self.swapButton, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(16)
         self.swapButton.clicked.connect(self.__onSwapClicked)
@@ -581,7 +581,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
     def _get_display_text(self):
         team1_text = self.translate_to_chinese(self.team1_value)
         team2_text = self.translate_to_chinese(self.team2_value)
-        return f"队伍1: {team1_text}\n队伍2: {team2_text}"
+        return f"파티 1: {team1_text}\n파티 2: {team2_text}"
 
     def _update_display(self):
         self.team1_value = cfg.get_value(self.configname_team1)
@@ -597,8 +597,8 @@ class PushSettingCardTeamWithSwap(SettingCard):
         self._update_display()
 
         InfoBar.success(
-            '交换成功',
-            '队伍1和队伍2已成功交换',
+            '교체 성공',
+            '파티 1과 파티 2가 성공적으로 교체되었습니다',
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
@@ -607,10 +607,10 @@ class PushSettingCardTeamWithSwap(SettingCard):
         )
 
     def __onTeam1Clicked(self):
-        self._edit_team(self.configname_team1, "队伍1")
+        self._edit_team(self.configname_team1, "파티 1")
 
     def __onTeam2Clicked(self):
-        self._edit_team(self.configname_team2, "队伍2")
+        self._edit_team(self.configname_team2, "파티 2")
 
     def _edit_team(self, configname, team_name):
         configvalue = cfg.get_value(configname)
@@ -637,8 +637,8 @@ class PushSettingCardPowerPlan(PushSettingCard):
     def _get_display_text(self):
         """获取显示文本"""
         if not self.configvalue:
-            return "暂无计划"
-        return f"已配置 {len(self.configvalue)} 项计划"
+            return "계획 없음"
+        return f"{len(self.configvalue)}개의 계획이 구성됨"
 
     def __onclicked(self):
         message_box = MessageBoxPowerPlan(self.title, self.configvalue, self.configtemplate, self.window())

@@ -1,56 +1,56 @@
 import os
 import sys
 import argparse
-# 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
+# 현재 작업 디렉터리를 프로그램이 있는 디렉터리로 설정하여, 어디서 실행하든 작업 디렉터리가 프로그램 자체의 위치로 올바르게 설정되도록 하여 경로 오류를 방지합니다.
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
 from utils.tasks import AVAILABLE_TASKS
 
 
 def parse_args():
-    """解析命令行参数"""
+    """명령줄 인수 파싱"""
     parser = argparse.ArgumentParser(
         prog='March7th Assistant',
-        description='三月七小助手 - 崩坏：星穹铁道自动化工具 (CLI)',
-        epilog='更多信息请访问: https://m7a.top',
+        description='March 7th Assistant - 붕괴: 스타레일 자동화 도구 (CLI)',
+        epilog='자세한 정보는 다음을 방문하세요: https://m7a.top',
         add_help=False
     )
 
-    # 位置参数组
-    positional = parser.add_argument_group('位置参数')
+    # 위치 인자 그룹
+    positional = parser.add_argument_group('위치 인자 (Positional Arguments)')
     positional.add_argument(
         'task',
         nargs='?',
         choices=list(AVAILABLE_TASKS.keys()),
         metavar='TASK',
-        help='要执行的任务名称（可选，不指定则执行完整运行）'
+        help='실행할 작업 이름 (선택 사항, 지정하지 않으면 전체 실행)'
     )
 
-    # 可选参数组
-    optional = parser.add_argument_group('可选参数')
+    # 선택 인자 그룹
+    optional = parser.add_argument_group('선택 인자 (Optional Arguments)')
     optional.add_argument(
         '-h', '--help',
         action='help',
-        help='显示此帮助信息并退出'
+        help='이 도움말 메시지를 표시하고 종료'
     )
     optional.add_argument(
         '-l', '--list',
         action='store_true',
-        help='列出所有可用的任务'
+        help='사용 가능한 모든 작업 나열'
     )
 
     args = parser.parse_args()
 
-    # 处理 --list 参数
+    # --list 인수 처리
     if args.list:
-        print("\n可用的任务列表:")
+        print("\n사용 가능한 작업 목록:")
         print("-" * 40)
         for task_id, task_name in AVAILABLE_TASKS.items():
             print(f"  {task_id:<20} {task_name}")
         print("-" * 40)
-        print("\n使用示例:")
-        print("  启动并执行完整运行:     March7th Assistant.exe main")
-        print("  执行每日实训:           March7th Assistant.exe daily")
+        print("\n사용 예시:")
+        print("  GUI 시작 및 전체 실행:          March7th Assistant.exe main")
+        print("  일일 훈련 수행:                 March7th Assistant.exe daily")
         sys.exit(0)
 
     return args
@@ -96,7 +96,7 @@ from utils.console import pause_on_error, pause_on_success, pause_always
 
 def first_run():
     if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
-        log.error("首次使用请先打开图形界面 March7th Launcher.exe")
+        log.error("처음 사용하는 경우 먼저 그래픽 인터페이스 March7th Launcher.exe를 열어주세요.")
         pause_always()
         sys.exit(0)
 
@@ -177,19 +177,19 @@ def run_notify_action():
 def main(action=None):
     first_run()
 
-    # 完整运行
+    # 전체 실행
     if action is None or action == "main":
         run_main_actions()
 
-    # 子任务
+    # 서브 태스크 (하위 작업)
     elif action in ["daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
         run_sub_task(action)
 
-    # 子任务 原生图形界面
+    # 서브 태스크 원본 GUI
     elif action in ["universe_gui", "fight_gui"]:
         run_sub_task_gui(action)
 
-    # 子任务 更新项目
+    # 서브 태스크 프로젝트 업데이트
     elif action in ["universe_update", "fight_update", "mobileui_update"]:
         run_sub_task_update(action)
 
@@ -206,14 +206,14 @@ def main(action=None):
         run_notify_action()
 
     else:
-        log.error(f"未知任务: {action}")
+        log.error(f"알 수 없는 작업: {action}")
         pause_on_error()
         sys.exit(1)
 
 
-# 程序结束时的处理器
+# 프로그램 종료 시 처리기
 def exit_handler():
-    """注册程序退出时的处理函数，用于清理OCR资源."""
+    """프로그램 종료 시 처리 함수를 등록하여 OCR 리소스를 정리합니다."""
     ocr.exit_ocr()
 
 
@@ -222,14 +222,14 @@ if __name__ == "__main__":
         atexit.register(exit_handler)
         main(args.task) if args.task else main()
     except KeyboardInterrupt:
-        log.error("发生错误: 手动强制停止")
+        log.error("오류 발생: 수동으로 강제 중지됨")
         pause_on_error()
         sys.exit(1)
     except Exception as e:
         log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
-        # 保存错误截图
+        # 오류 스크린샷 저장
         screenshot_path = save_error_screenshot(log)
-        # 发送通知，如果有截图则附带截图
+        # 알림 전송, 스크린샷이 있으면 포함
         notify_kwargs = {
             'content': cfg.notify_template['ErrorOccurred'].format(error=e),
             'level': NotificationLevel.ERROR

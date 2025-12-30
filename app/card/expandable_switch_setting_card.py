@@ -7,99 +7,99 @@ from qfluentwidgets import ExpandSettingCard, FluentIconBase, SwitchButton, Indi
 
 
 class ExpandableSwitchSettingCard(ExpandSettingCard):
-    """ 可展开的开关设置卡片 - 通用实现
+    """ 확장 가능한 스위치 설정 카드 - 범용 구현
 
-    这是一个通用的可展开开关卡片，可以包含任意子设置卡片。
-    用户点击卡片可以展开/收起子选项，右侧的开关控制功能启用/禁用。
+    이것은 임의의 하위 설정 카드를 포함할 수 있는 범용 확장 가능한 스위치 카드입니다.
+    사용자가 카드를 클릭하여 하위 옵션을 펼치거나 접을 수 있으며, 오른쪽의 스위치로 기능을 활성화/비활성화할 수 있습니다.
     """
 
     switchChanged = pyqtSignal(bool)
-    expandStateChanged = pyqtSignal(bool)  # 新增信号：展开状态改变时发出，参数为是否展开
+    expandStateChanged = pyqtSignal(bool)  # 새로운 신호: 펼침 상태가 변경될 때 발생, 매개변수는 펼침 여부
 
     def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase],
                  title: str, content: str = None, parent=None):
         """
-        参数:
-        - configname: 配置项名称
-        - icon: 图标
-        - title: 标题
-        - content: 内容描述
-        - parent: 父组件
+        매개변수:
+        - configname: 구성 항목 이름
+        - icon: 아이콘
+        - title: 제목
+        - content: 내용 설명
+        - parent: 부모 구성 요소
         """
         super().__init__(icon, title, content, parent)
         self.configname = configname
 
-        # Switch button
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        # 스위치 버튼
+        self.switchButton = SwitchButton('꺼짐', self, IndicatorPosition.RIGHT)
 
-        # Add switch button to card layout using addWidget method
+        # addWidget 메서드를 사용하여 카드 레이아웃에 스위치 버튼 추가
         self.card.addWidget(self.switchButton)
 
-        # Import config here to avoid circular import
+        # 순환 참조를 피하기 위해 여기서 config 가져오기
         from module.config import cfg
         self.cfg = cfg
 
-        # Set initial value
+        # 초기값 설정
         self.setValue(self.cfg.get_value(self.configname))
 
-        # Connect signals
+        # 신호 연결
         self.switchButton.checkedChanged.connect(self.__onSwitchChanged)
 
     def __onSwitchChanged(self, isChecked: bool):
-        """Switch button checked state changed slot"""
+        """스위치 버튼 상태 변경 슬롯"""
         self.setValue(isChecked)
         self.cfg.set_value(self.configname, isChecked)
         self.switchChanged.emit(isChecked)
 
     def setValue(self, isChecked: bool):
-        """Set switch button state"""
+        """스위치 버튼 상태 설정"""
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText('켜짐' if isChecked else '꺼짐')
 
     def getSwitchState(self) -> bool:
-        """Get current switch state"""
+        """현재 스위치 상태 가져오기"""
         return self.switchButton.isChecked()
 
     def addSettingCard(self, card: SettingCard):
-        """添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 추가"""
         self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
     def addSettingCards(self, cards: List[SettingCard]):
-        """批量添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 일괄 추가"""
         for card in cards:
             self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
     def setExpand(self, isExpand: bool):
-        """重写展开/收起方法，在动画前/后发送信号调整父容器高度"""
+        """펼치기/접기 메서드 재정의, 애니메이션 전/후에 신호를 보내 부모 컨테이너 높이 조정"""
         is_expanding = not self.isExpand
 
-        # 如果是展开操作，在动画前发送信号（需要提前扩大容器）
+        # 펼치기 작업인 경우, 애니메이션 전에 신호 전송 (컨테이너를 미리 확장해야 함)
         if is_expanding:
             self.expandStateChanged.emit(True)
 
-        # 调用父类方法执行动画
+        # 부모 클래스 메서드 호출하여 애니메이션 실행
         super().setExpand(isExpand)
 
-        # 如果是收起操作，在动画完成后发送信号（等动画播放完再缩小容器）
+        # 접기 작업인 경우, 애니메이션 완료 후 신호 전송 (애니메이션이 끝난 후 컨테이너 축소)
         if not is_expanding:
-            # 连接动画完成信号
+            # 애니메이션 완료 신호 연결
             self.expandAni.finished.connect(lambda: self._onCollapseFinished())
 
     def _onCollapseFinished(self):
-        """收起动画完成后的回调"""
-        # 断开信号，避免重复连接
+        """접기 애니메이션 완료 후 콜백"""
+        # 중복 연결을 피하기 위해 신호 연결 해제
         try:
             self.expandAni.finished.disconnect()
         except:
             pass
-        # 发送收起信号
+        # 접기 신호 전송
         self.expandStateChanged.emit(False)
 
 
 class ExpandablePushSettingCard(ExpandSettingCard):
-    """可展开的按钮设置卡片 - 用于测试通知等操作"""
+    """확장 가능한 버튼 설정 카드 - 테스트 알림 등 작업에 사용"""
 
     expandStateChanged = pyqtSignal(bool)
     clicked = pyqtSignal()
@@ -107,88 +107,62 @@ class ExpandablePushSettingCard(ExpandSettingCard):
     def __init__(self, title: str, icon: Union[str, QIcon, FluentIconBase],
                  content: str = None, button_text: str = "Click", parent=None):
         """
-        参数:
-        - title: 标题
-        - icon: 图标
-        - content: 内容描述
-        - button_text: 按钮文字
-        - parent: 父组件
+        매개변수:
+        - title: 제목
+        - icon: 아이콘
+        - content: 내용 설명
+        - button_text: 버튼 텍스트
+        - parent: 부모 구성 요소
         """
         super().__init__(icon, title, content, parent)
 
-        # Push button
+        # 푸시 버튼
         self.pushButton = PrimaryPushButton(button_text, self)
         self.card.addWidget(self.pushButton)
 
-        # Connect signals
+        # 신호 연결
         self.pushButton.clicked.connect(self.clicked.emit)
 
     def setExpand(self, isExpand: bool):
-        """重写展开/收起方法，在动画前/后发送信号调整父容器高度"""
+        """펼치기/접기 메서드 재정의, 애니메이션 전/후에 신호를 보내 부모 컨테이너 높이 조정"""
         is_expanding = not self.isExpand
 
-        # 如果是展开操作，在动画前发送信号（需要提前扩大容器）
+        # 펼치기 작업인 경우, 애니메이션 전에 신호 전송 (컨테이너를 미리 확장해야 함)
         if is_expanding:
             self.expandStateChanged.emit(True)
 
-        # 调用父类方法执行动画
+        # 부모 클래스 메서드 호출하여 애니메이션 실행
         super().setExpand(isExpand)
 
-        # 如果是收起操作，在动画完成后发送信号（等动画播放完再缩小容器）
+        # 접기 작업인 경우, 애니메이션 완료 후 신호 전송 (애니메이션이 끝난 후 컨테이너 축소)
         if not is_expanding:
-            # 连接动画完成信号
+            # 애니메이션 완료 신호 연결
             self.expandAni.finished.connect(lambda: self._onCollapseFinished())
 
     def _onCollapseFinished(self):
-        """收起动画完成后的回调"""
-        # 断开信号，避免重复连接
+        """접기 애니메이션 완료 후 콜백"""
+        # 중복 연결을 피하기 위해 신호 연결 해제
         try:
             self.expandAni.finished.disconnect()
         except:
             pass
-        # 发送收起信号
+        # 접기 신호 전송
         self.expandStateChanged.emit(False)
 
     def addSettingCard(self, card: SettingCard):
-        """添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 추가"""
         self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
     def addSettingCards(self, cards: List[SettingCard]):
-        """批量添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 일괄 추가"""
         for card in cards:
             self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
-    def setExpand(self, isExpand: bool):
-        """重写展开/收起方法，在动画前/后发送信号调整父容器高度"""
-        is_expanding = not self.isExpand
-
-        # 如果是展开操作，在动画前发送信号（需要提前扩大容器）
-        if is_expanding:
-            self.expandStateChanged.emit(True)
-
-        # 调用父类方法执行动画
-        super().setExpand(isExpand)
-
-        # 如果是收起操作，在动画完成后发送信号（等动画播放完再缩小容器）
-        if not is_expanding:
-            # 连接动画完成信号
-            self.expandAni.finished.connect(lambda: self._onCollapseFinished())
-
-    def _onCollapseFinished(self):
-        """收起动画完成后的回调"""
-        # 断开信号，避免重复连接
-        try:
-            self.expandAni.finished.disconnect()
-        except:
-            pass
-        # 发送收起信号
-        self.expandStateChanged.emit(False)
-
 
 class ExpandableComboBoxSettingCard(ExpandSettingCard):
-    """可展开的下拉菜单设置卡片 - 通用实现"""
+    """확장 가능한 콤보박스(드롭다운) 설정 카드 - 범용 구현"""
 
     expandStateChanged = pyqtSignal(bool)
     currentIndexChanged = pyqtSignal(int)
@@ -196,190 +170,164 @@ class ExpandableComboBoxSettingCard(ExpandSettingCard):
     def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase],
                  title: str, content: str = None, texts: dict = None, parent=None):
         """
-        参数:
-        - configname: 配置项名称
-        - icon: 图标
-        - title: 标题
-        - content: 内容描述
-        - texts: 下拉菜单选项 {'显示名': '值'}
-        - parent: 父组件
+        매개변수:
+        - configname: 구성 항목 이름
+        - icon: 아이콘
+        - title: 제목
+        - content: 내용 설명
+        - texts: 드롭다운 메뉴 옵션 {'표시 이름': '값'}
+        - parent: 부모 구성 요소
         """
         super().__init__(icon, title, content, parent)
         self.configname = configname
 
-        # ComboBox
+        # 콤보박스
         self.comboBox = ComboBox(self)
         self.card.addWidget(self.comboBox)
 
-        # Import config here to avoid circular import
+        # 순환 참조를 피하기 위해 여기서 config 가져오기
         from module.config import cfg
         self.cfg = cfg
 
-        # Set combo box items
+        # 콤보박스 항목 설정
         if texts:
             for key, value in texts.items():
                 self.comboBox.addItem(key, userData=value)
                 if value == self.cfg.get_value(configname):
                     self.comboBox.setCurrentText(key)
 
-        # Connect signals
+        # 신호 연결
         self.comboBox.currentIndexChanged.connect(self.__onComboBoxChanged)
 
     def __onComboBoxChanged(self, index: int):
-        """ComboBox changed slot"""
+        """콤보박스 변경 슬롯"""
         self.cfg.set_value(self.configname, self.comboBox.itemData(index))
         self.currentIndexChanged.emit(index)
 
     def setExpand(self, isExpand: bool):
-        """重写展开/收起方法，在动画前/后发送信号调整父容器高度"""
+        """펼치기/접기 메서드 재정의, 애니메이션 전/후에 신호를 보내 부모 컨테이너 높이 조정"""
         is_expanding = not self.isExpand
 
-        # 如果是展开操作，在动画前发送信号（需要提前扩大容器）
+        # 펼치기 작업인 경우, 애니메이션 전에 신호 전송 (컨테이너를 미리 확장해야 함)
         if is_expanding:
             self.expandStateChanged.emit(True)
 
-        # 调用父类方法执行动画
+        # 부모 클래스 메서드 호출하여 애니메이션 실행
         super().setExpand(isExpand)
 
-        # 如果是收起操作，在动画完成后发送信号（等动画播放完再缩小容器）
+        # 접기 작업인 경우, 애니메이션 완료 후 신호 전송 (애니메이션이 끝난 후 컨테이너 축소)
         if not is_expanding:
-            # 连接动画完成信号
+            # 애니메이션 완료 신호 연결
             self.expandAni.finished.connect(lambda: self._onCollapseFinished())
 
     def _onCollapseFinished(self):
-        """收起动画完成后的回调"""
-        # 断开信号，避免重复连接
+        """접기 애니메이션 완료 후 콜백"""
+        # 중복 연결을 피하기 위해 신호 연결 해제
         try:
             self.expandAni.finished.disconnect()
         except:
             pass
-        # 发送收起信号
+        # 접기 신호 전송
         self.expandStateChanged.emit(False)
 
     def addSettingCard(self, card: SettingCard):
-        """添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 추가"""
         self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
     def addSettingCards(self, cards: List[SettingCard]):
-        """批量添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 일괄 추가"""
         for card in cards:
             self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
-    def setExpand(self, isExpand: bool):
-        """重写展开/收起方法，在动画前/后发送信号调整父容器高度"""
-        is_expanding = not self.isExpand
-
-        # 如果是展开操作，在动画前发送信号（需要提前扩大容器）
-        if is_expanding:
-            self.expandStateChanged.emit(True)
-
-        # 调用父类方法执行动画
-        super().setExpand(isExpand)
-
-        # 如果是收起操作，在动画完成后发送信号（等动画播放完再缩小容器）
-        if not is_expanding:
-            # 连接动画完成信号
-            self.expandAni.finished.connect(lambda: self._onCollapseFinished())
-
-    def _onCollapseFinished(self):
-        """收起动画完成后的回调"""
-        # 断开信号，避免重复连接
-        try:
-            self.expandAni.finished.disconnect()
-        except:
-            pass
-        # 发送收起信号
-        self.expandStateChanged.emit(False)
-
 
 class ExpandableComboBoxSettingCardUpdateSource(ExpandSettingCard):
-    """可展开的下拉菜单设置卡片 - 用于更新源选择"""
+    """확장 가능한 콤보박스 설정 카드 - 업데이트 소스 선택용"""
 
     expandStateChanged = pyqtSignal(bool)
 
     def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase],
                  title: str, update_callback, content: str = None, texts: dict = None, parent=None):
         """
-        参数:
-        - configname: 配置项名称
-        - icon: 图标
-        - title: 标题
-        - update_callback: 更新回调函数
-        - content: 内容描述
-        - texts: 下拉菜单选项 {'显示名': '值'}
-        - parent: 父组件
+        매개변수:
+        - configname: 구성 항목 이름
+        - icon: 아이콘
+        - title: 제목
+        - update_callback: 업데이트 콜백 함수
+        - content: 내용 설명
+        - texts: 드롭다운 메뉴 옵션 {'표시 이름': '값'}
+        - parent: 부모 구성 요소
         """
         super().__init__(icon, title, content, parent)
         self.configname = configname
         self.update_callback = update_callback
 
-        # ComboBox
+        # 콤보박스
         self.comboBox = ComboBox(self)
         self.card.addWidget(self.comboBox)
 
-        # Import config here to avoid circular import
+        # 순환 참조를 피하기 위해 여기서 config 가져오기
         from module.config import cfg
         from app.tools.check_update import checkUpdate
         self.cfg = cfg
         self.checkUpdate = checkUpdate
 
-        # Set combo box items
+        # 콤보박스 항목 설정
         if texts:
             for key, value in texts.items():
                 self.comboBox.addItem(key, userData=value)
                 if value == self.cfg.get_value(configname):
                     self.comboBox.setCurrentText(key)
 
-        # Connect signals
+        # 신호 연결
         self.comboBox.currentIndexChanged.connect(self.__onComboBoxChanged)
 
     def __onComboBoxChanged(self, index: int):
-        """ComboBox changed slot"""
+        """콤보박스 변경 슬롯"""
         self.cfg.set_value(self.configname, self.comboBox.itemData(index))
         self.checkUpdate(self.update_callback)
 
     def setExpand(self, isExpand: bool):
-        """重写展开/收起方法，在动画前/后发送信号调整父容器高度"""
+        """펼치기/접기 메서드 재정의, 애니메이션 전/후에 신호를 보내 부모 컨테이너 높이 조정"""
         is_expanding = not self.isExpand
 
-        # 如果是展开操作，在动画前发送信号（需要提前扩大容器）
+        # 펼치기 작업인 경우, 애니메이션 전에 신호 전송 (컨테이너를 미리 확장해야 함)
         if is_expanding:
             self.expandStateChanged.emit(True)
 
-        # 调用父类方法执行动画
+        # 부모 클래스 메서드 호출하여 애니메이션 실행
         super().setExpand(isExpand)
 
-        # 如果是收起操作，在动画完成后发送信号（等动画播放完再缩小容器）
+        # 접기 작업인 경우, 애니메이션 완료 후 신호 전송 (애니메이션이 끝난 후 컨테이너 축소)
         if not is_expanding:
-            # 连接动画完成信号
+            # 애니메이션 완료 신호 연결
             self.expandAni.finished.connect(lambda: self._onCollapseFinished())
 
     def _onCollapseFinished(self):
-        """收起动画完成后的回调"""
-        # 断开信号，避免重复连接
+        """접기 애니메이션 완료 후 콜백"""
+        # 중복 연결을 피하기 위해 신호 연결 해제
         try:
             self.expandAni.finished.disconnect()
         except:
             pass
-        # 发送收起信号
+        # 접기 신호 전송
         self.expandStateChanged.emit(False)
 
     def addSettingCard(self, card: SettingCard):
-        """添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 추가"""
         self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
     def addSettingCards(self, cards: List[SettingCard]):
-        """批量添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 일괄 추가"""
         for card in cards:
             self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
 
 class ExpandableComboBoxSettingCard1(ExpandSettingCard):
-    """可展开的下拉菜单设置卡片 - 用于 ComboBoxSettingCard1 类型"""
+    """확장 가능한 콤보박스 설정 카드 - ComboBoxSettingCard1 유형용"""
 
     expandStateChanged = pyqtSignal(bool)
     currentIndexChanged = pyqtSignal(int)
@@ -387,90 +335,90 @@ class ExpandableComboBoxSettingCard1(ExpandSettingCard):
     def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase],
                  title: str, content: str = None, texts: list = None, parent=None):
         """
-        参数:
-        - configname: 配置项名称
-        - icon: 图标
-        - title: 标题
-        - content: 内容描述
-        - texts: 下拉菜单选项列表
-        - parent: 父组件
+        매개변수:
+        - configname: 구성 항목 이름
+        - icon: 아이콘
+        - title: 제목
+        - content: 내용 설명
+        - texts: 드롭다운 메뉴 옵션 목록
+        - parent: 부모 구성 요소
         """
         super().__init__(icon, title, content, parent)
         self.configname = configname
 
-        # ComboBox
+        # 콤보박스
         self.comboBox = ComboBox(self)
         self.card.addWidget(self.comboBox)
 
-        # Import config here to avoid circular import
+        # 순환 참조를 피하기 위해 여기서 config 가져오기
         from module.config import cfg
         self.cfg = cfg
 
-        # Set combo box items
+        # 콤보박스 항목 설정
         if texts:
             if isinstance(texts, list):
-                # 如果是列表，直接添加
+                # 리스트인 경우 직접 추가
                 for item in texts:
                     self.comboBox.addItem(item)
-                # 尝试从配置中设置当前项
+                # 구성에서 현재 항목 설정 시도
                 current_value = self.cfg.get_value(configname)
                 if current_value and current_value in texts:
                     self.comboBox.setCurrentText(current_value)
             else:
-                # 如果是字典，按照字典方式处理
+                # 딕셔너리인 경우 딕셔너리 방식대로 처리
                 for key, value in texts.items():
                     self.comboBox.addItem(key, userData=value)
                     if value == self.cfg.get_value(configname):
                         self.comboBox.setCurrentText(key)
 
-        # Connect signals
+        # 신호 연결
         self.comboBox.currentIndexChanged.connect(self.__onComboBoxChanged)
 
     def __onComboBoxChanged(self, index: int):
-        """ComboBox changed slot"""
+        """콤보박스 변경 슬롯"""
         self.cfg.set_value(self.configname, self.comboBox.currentText())
         self.currentIndexChanged.emit(index)
 
     def setExpand(self, isExpand: bool):
-        """重写展开/收起方法，在动画前/后发送信号调整父容器高度"""
+        """펼치기/접기 메서드 재정의, 애니메이션 전/후에 신호를 보내 부모 컨테이너 높이 조정"""
         is_expanding = not self.isExpand
 
-        # 如果是展开操作，在动画前发送信号（需要提前扩大容器）
+        # 펼치기 작업인 경우, 애니메이션 전에 신호 전송 (컨테이너를 미리 확장해야 함)
         if is_expanding:
             self.expandStateChanged.emit(True)
 
-        # 调用父类方法执行动画
+        # 부모 클래스 메서드 호출하여 애니메이션 실행
         super().setExpand(isExpand)
 
-        # 如果是收起操作，在动画完成后发送信号（等动画播放完再缩小容器）
+        # 접기 작업인 경우, 애니메이션 완료 후 신호 전송 (애니메이션이 끝난 후 컨테이너 축소)
         if not is_expanding:
-            # 连接动画完成信号
+            # 애니메이션 완료 신호 연결
             self.expandAni.finished.connect(lambda: self._onCollapseFinished())
 
     def _onCollapseFinished(self):
-        """收起动画完成后的回调"""
-        # 断开信号，避免重复连接
+        """접기 애니메이션 완료 후 콜백"""
+        # 중복 연결을 피하기 위해 신호 연결 해제
         try:
             self.expandAni.finished.disconnect()
         except:
             pass
-        # 发送收起信号
+        # 접기 신호 전송
         self.expandStateChanged.emit(False)
 
     def addSettingCard(self, card: SettingCard):
-        """添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 추가"""
         self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
     def addSettingCards(self, cards: List[SettingCard]):
-        """批量添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 일괄 추가"""
         for card in cards:
             self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
 
 class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
-    """可展开的历战余响开关设置卡片，带周几开始执行的下拉框"""
+    """확장 가능한 전쟁의 여운 스위치 설정 카드, 실행 시작 요일 선택 콤보박스 포함"""
 
     switchChanged = pyqtSignal(bool)
     expandStateChanged = pyqtSignal(bool)
@@ -481,20 +429,20 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
         super().__init__(icon, title, content, parent)
         self.configname = configname
 
-        # 下拉框：选择从周几开始执行历战余响
+        # 콤보박스: 전쟁의 여운을 시작할 요일 선택
         self.comboBox = ComboBox(self)
         self.card.addWidget(self.comboBox)
 
-        # 配置读取
+        # 구성 읽기
         from module.config import cfg
         self.cfg = cfg
 
-        texts = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        texts = ['월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일']
         options = [1, 2, 3, 4, 5, 6, 7]
         for text, option in zip(texts, options):
             self.comboBox.addItem(text, userData=option)
 
-        # 安全设置当前值，默认回退到第一项
+        # 안전하게 현재 값 설정, 기본값은 첫 번째 항목으로 폴백
         current_day = self.cfg.get_value("echo_of_war_start_day_of_week")
         if isinstance(current_day, int) and 1 <= current_day <= 7:
             self.comboBox.setCurrentText(texts[current_day - 1])
@@ -503,41 +451,41 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
 
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
-        # 开关按钮
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        # 스위치 버튼
+        self.switchButton = SwitchButton('꺼짐', self, IndicatorPosition.RIGHT)
         self.card.addWidget(self.switchButton)
 
         self.setValue(self.cfg.get_value(self.configname))
         self.switchButton.checkedChanged.connect(self.__onSwitchChanged)
 
     def __onSwitchChanged(self, isChecked: bool):
-        """开关状态改变槽函数"""
+        """스위치 상태 변경 슬롯"""
         self.setValue(isChecked)
         self.cfg.set_value(self.configname, isChecked)
         self.switchChanged.emit(isChecked)
 
     def setValue(self, isChecked: bool):
-        """设置开关状态"""
+        """스위치 상태 설정"""
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText('켜짐' if isChecked else '꺼짐')
 
     def _onCurrentIndexChanged(self, index: int):
         self.cfg.set_value("echo_of_war_start_day_of_week", self.comboBox.itemData(index))
         self.currentIndexChanged.emit(index)
 
     def addSettingCard(self, card: SettingCard):
-        """添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 추가"""
         self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
     def addSettingCards(self, cards: List[SettingCard]):
-        """批量添加子设置卡片到可展开区域"""
+        """확장 가능한 영역에 하위 설정 카드 일괄 추가"""
         for card in cards:
             self.viewLayout.addWidget(card)
         self._adjustViewSize()
 
     def setExpand(self, isExpand: bool):
-        """重写展开/收起方法，在动画前/后发送信号调整父容器高度"""
+        """펼치기/접기 메서드 재정의, 애니메이션 전/후에 신호를 보내 부모 컨테이너 높이 조정"""
         is_expanding = not self.isExpand
 
         if is_expanding:
@@ -549,7 +497,7 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
             self.expandAni.finished.connect(lambda: self._onCollapseFinished())
 
     def _onCollapseFinished(self):
-        """收起动画完成后的回调"""
+        """접기 애니메이션 완료 후 콜백"""
         try:
             self.expandAni.finished.disconnect()
         except Exception:
