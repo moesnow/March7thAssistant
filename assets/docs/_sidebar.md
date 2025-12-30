@@ -3,3 +3,4 @@
 - [常见问题](/assets/docs/FAQ.md)
 - [更新日志](/assets/docs/Changelog.md)
 - [后台运行](/assets/docs/Background.md)
+- [贡献指南](/CONTRIBUTING.md)
