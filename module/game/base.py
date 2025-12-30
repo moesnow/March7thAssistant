@@ -68,7 +68,7 @@ class GameControllerBase:
     def get_input_handler(self):  # -> InputBase
         """获取用于模拟鼠标和键盘操作的类"""
         ...
-        
+
     @abstractmethod
     def copy(self, text: str) -> None:
         """复制文本到剪贴板"""
@@ -192,18 +192,71 @@ class GameControllerBase:
 
     @staticmethod
     def set_foreground_window_with_retry(hwnd) -> None:
-        """尝试将窗口设置为前台，失败时先最小化再恢复。"""
+        """尝试将窗口设置为前台。
 
-        def toggle_window_state(hwnd, minimize=False):
-            """最小化或恢复窗口。"""
-            SW_MINIMIZE = 6
-            SW_RESTORE = 9
-            state = SW_MINIMIZE if minimize else SW_RESTORE
-            ctypes.windll.user32.ShowWindow(hwnd, state)
+        逻辑：
+        1. 校验句柄并在最小化时恢复窗口
+        2. 直接尝试 SetForegroundWindow
+        3. 使用 AttachThreadInput 将当前线程与前台线程挂接后重试
+        """
 
-        toggle_window_state(hwnd, minimize=False)
-        if ctypes.windll.user32.SetForegroundWindow(hwnd) == 0:
-            toggle_window_state(hwnd, minimize=True)
-            toggle_window_state(hwnd, minimize=False)
-            if ctypes.windll.user32.SetForegroundWindow(hwnd) == 0:
-                raise Exception("Failed to set window foreground")
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+
+        # 常量
+        SW_MINIMIZE = 6
+        SW_RESTORE = 9
+        VK_MENU = 0x12  # Alt
+        KEYEVENTF_KEYUP = 0x0002
+
+        # 基本检查
+        if not hwnd:
+            raise Exception("Invalid window handle: 0")
+        if user32.IsWindow(hwnd) == 0:
+            raise Exception(f"Invalid window handle: {hwnd}")
+
+        # 如果被图标化，先还原（常见场景）
+        if user32.IsIconic(hwnd):
+            user32.ShowWindow(hwnd, SW_RESTORE)
+            time.sleep(0.1)
+
+        # 尝试直接激活
+        if user32.SetForegroundWindow(hwnd):
+            return
+
+        # 尝试 BringWindowToTop + ShowWindow
+        try:
+            user32.BringWindowToTop(hwnd)
+            user32.ShowWindow(hwnd, SW_RESTORE)
+            time.sleep(0.05)
+            if user32.SetForegroundWindow(hwnd):
+                return
+        except Exception:
+            # 再试下一种方法
+            pass
+
+        # 尝试 AttachThreadInput 回退（将当前线程与前台窗口线程挂接）
+        fg = user32.GetForegroundWindow()
+        if fg:
+            try:
+                fg_tid = user32.GetWindowThreadProcessId(fg, None)
+                this_tid = kernel32.GetCurrentThreadId()
+                # Attach 把当前线程和前台线程联接，允许切换前台
+                attached = False
+                if user32.AttachThreadInput(this_tid, fg_tid, True):
+                    attached = True
+                # 也尝试把目标窗口的线程和当前线程挂接再激活
+                try:
+                    user32.BringWindowToTop(hwnd)
+                    user32.SetForegroundWindow(hwnd)
+                    time.sleep(0.05)
+                    if user32.GetForegroundWindow() == hwnd:
+                        return
+                finally:
+                    if attached:
+                        user32.AttachThreadInput(this_tid, fg_tid, False)
+            except Exception:
+                pass
+
+        # 如果都失败，抛出异常以便调用方记录或处理
+        raise Exception("Failed to set window foreground after multiple attempts")
