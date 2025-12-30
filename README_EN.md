@@ -56,7 +56,9 @@ For more details, refer to the [configuration file](assets/config/config.example
 - You must run the game on the **PC desktop** at a resolution of `1920*1080` in either windowed mode or full screen (HDR is not supported).
 - For information related to the Simulated Universe, refer to the [project documentation](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md) and [Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md).
 - For running in the background or on multiple monitors, you can try [Remote Local Multi-User Desktop](https://asu.stysqy.top/guide/bs.html).
-- If you encounter errors, please provide feedback in the [Issue](https://github.com/moesnow/March7thAssistant/issues) section. Questions and discussions can be conducted in the [Discussions](https://github.com/moesnow/March7thAssistant/discussions) section. Feel free to contribute through [PR](https://github.com/moesnow/March7thAssistant/pulls).
+- If you encounter errors, please provide feedback in the [Issue](https://github.com/moesnow/March7thAssistant/issues) section. Questions and discussions can be conducted in the [Discussions](https://github.com/moesnow/March7thAssistant/discussions) section.
+
+- Contributions are welcome through [PR](https://github.com/moesnow/March7thAssistant/pulls); please read the [Contributing Guide](CONTRIBUTING.md) before submitting.
 
 ## Download and Installation
 
