@@ -322,8 +322,18 @@ def _click_update_game_and_wait(launcher, launcher_auto):
     if launcher_auto.click_element("更新游戏", "text"):
         log.info("已点击更新游戏按钮，等待更新完成...")
         Base.send_notification_with_screenshot("检测到游戏可更新已开始下载", NotificationLevel.ALL, launcher_auto.screenshot)
+
+        def check_update_complete():
+            """检查更新是否完成，同时处理重试按钮"""
+            # 检查是否有重试按钮，如果有则点击
+            if launcher_auto.click_element("重试", "text"):
+                log.info("检测到重试按钮，正在点击...")
+                return False
+            # 检查是否已出现开始游戏按钮（表示更新完成）
+            return launcher_auto.find_element("开始游戏", "text")
+
         # 等待更新完成，最长等待 cfg.update_game_timeout 小时
-        if not wait_until(lambda: launcher_auto.find_element("开始游戏", "text"), cfg.update_game_timeout * 60 * 60, period=60):
+        if not wait_until(check_update_complete, cfg.update_game_timeout * 60 * 60, period=60):
             launcher.stop_game()
             log.error("等待游戏更新超时")
             return False
