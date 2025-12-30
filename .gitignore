@@ -190,6 +190,10 @@ pyrightconfig.json
 /3rdparty/*OCR-json*
 /temp
 /settings/*
+March7th*.exe
+
+# Libraries
+/libraries
 
 # notify for smtp
 smtp_temp.bin
