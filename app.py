@@ -1,7 +1,8 @@
 import os
 import sys
-# 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
-os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
+# 현재 작업 디렉토리를 프로그램이 위치한 디렉토리로 설정하여, 
+# 어디서 실행하든 작업 디렉토리가 올바르게 설정되도록 하고 경로 오류를 방지합니다.
+os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else os.path.dirname(os.path.abspath(__file__)))
 
 import ctypes
 import argparse
@@ -9,7 +10,7 @@ from utils.tasks import AVAILABLE_TASKS
 
 
 def hide_console():
-    """隐藏控制台窗口（仅 Windows）"""
+    """콘솔 창 숨기기 (Windows 전용)"""
     if sys.platform == 'win32':
         hwnd = ctypes.windll.kernel32.GetConsoleWindow()
         if hwnd:
@@ -17,64 +18,64 @@ def hide_console():
 
 
 def parse_args():
-    """解析命令行参数"""
+    """명령줄 인자 파싱"""
     parser = argparse.ArgumentParser(
         prog='March7th Launcher',
-        description='三月七小助手 - 崩坏：星穹铁道自动化工具',
-        epilog='更多信息请访问: https://m7a.top',
+        description='March 7th Assistant - 붕괴: 스타레일 자동화 도구',
+        epilog='더 많은 정보는 https://m7a.top 방문',
         add_help=False
     )
 
-    # 位置参数组
-    positional = parser.add_argument_group('位置参数')
+    # 위치 인자 그룹
+    positional = parser.add_argument_group('위치 인자')
     positional.add_argument(
         'task',
         nargs='?',
         choices=list(AVAILABLE_TASKS.keys()),
         metavar='TASK',
-        help='要执行的任务名称（可选，不指定则仅启动图形界面）'
+        help='실행할 작업 이름 (선택 사항, 지정하지 않으면 GUI만 시작)'
     )
 
-    # 可选参数组
-    optional = parser.add_argument_group('可选参数')
+    # 선택적 인자 그룹
+    optional = parser.add_argument_group('선택적 인자')
     optional.add_argument(
         '-h', '--help',
         action='help',
-        help='显示此帮助信息并退出'
+        help='이 도움말 메시지를 표시하고 종료'
     )
     optional.add_argument(
         '-l', '--list',
         action='store_true',
-        help='列出所有可用的任务'
+        help='사용 가능한 모든 작업 나열'
     )
     optional.add_argument(
         '-e', '--exit',
         action='store_true',
-        help='任务正常完成后自动退出程序（需配合 TASK 参数使用）'
+        help='작업이 정상적으로 완료되면 프로그램 자동 종료 (TASK 매개변수와 함께 사용해야 함)'
     )
 
     args = parser.parse_args()
 
-    # 处理 --list 参数
+    # --list 매개변수 처리
     if args.list:
-        print("\n可用的任务列表:")
+        print("\n사용 가능한 작업 목록:")
         print("-" * 40)
         for task_id, task_name in AVAILABLE_TASKS.items():
             print(f"  {task_id:<20} {task_name}")
         print("-" * 40)
-        print("\n使用示例:")
-        print("  启动图形界面:           March7th Launcher.exe")
-        print("  启动并执行完整运行:     March7th Launcher.exe main")
-        print("  启动并执行每日实训:     March7th Launcher.exe daily")
+        print("\n사용 예시:")
+        print("  GUI 시작:               March7th Launcher.exe")
+        print("  시작 및 전체 실행:      March7th Launcher.exe main")
+        print("  시작 및 일일 훈련 실행: March7th Launcher.exe daily")
         sys.exit(0)
 
     return args
 
 
-# 解析命令行参数（在请求管理员权限之前）
+# 명령줄 인자 파싱 (관리자 권한 요청 전)
 args = parse_args()
 
-# 如果不需要命令行输出，隐藏控制台窗口
+# 명령줄 출력이 필요 없는 경우 콘솔 창 숨기기
 hide_console()
 
 import pyuac
@@ -93,20 +94,20 @@ import hashlib
 
 from app.main_window import MainWindow
 
-# 单实例相关变量
+# 단일 인스턴스 관련 변수
 _main_window = None
 _pending_messages = []
 
 
 def _get_server_key():
-    """根据程序路径生成唯一的本地 socket 名称，保证“相同路径”视为同一应用实例。"""
+    """프로그램 경로를 기반으로 고유한 로컬 소켓 이름을 생성하여 '동일 경로'를 동일한 앱 인스턴스로 간주하도록 보장합니다."""
     path = os.path.abspath(sys.executable) if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
     h = hashlib.sha1(path.encode('utf-8')).hexdigest()
     return f"March7thAssistant_{h}"
 
 
 def notify_existing_instance(key, payload_bytes, timeout=500):
-    """尝试连接已有实例并发送 payload（bytes），成功返回 True，否则 False。"""
+    """기존 인스턴스 연결 및 payload(bytes) 전송 시도. 성공 시 True, 실패 시 False 반환."""
     try:
         sock = QLocalSocket()
         sock.connectToServer(key)
@@ -123,7 +124,7 @@ def notify_existing_instance(key, payload_bytes, timeout=500):
 
 
 def start_local_server(key):
-    """启动 QLocalServer，接收其他实例消息并交给主窗口处理。"""
+    """QLocalServer를 시작하여 다른 인스턴스의 메시지를 수신하고 메인 창으로 전달하여 처리합니다."""
     try:
         try:
             QLocalServer.removeServer(key)
@@ -146,10 +147,10 @@ def start_local_server(key):
                     try:
                         msg = json.loads(raw.decode('utf-8'))
                     except Exception:
-                        # 兼容性：如果不是 JSON，则当作简单激活请求处理
+                        # 호환성: JSON이 아닌 경우 단순 활성화 요청으로 처리
                         msg = {'action': 'activate', 'raw': raw.decode('utf-8', errors='ignore')}
 
-                    # 如果主窗口已就绪，直接调用处理方法，否则缓存起来等待主窗口创建
+                    # 메인 창이 준비되었으면 처리 메서드를 직접 호출하고, 그렇지 않으면 메인 창 생성을 기다리기 위해 캐싱합니다.
                     if _main_window is not None:
                         try:
                             _main_window.handle_external_activate(task=msg.get('task'), exit_on_complete=msg.get('exit', False))
@@ -172,7 +173,7 @@ def start_local_server(key):
         return None
 
 
-# 启用 DPI 缩放
+# DPI 스케일링 활성화
 QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
@@ -181,7 +182,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
 
-    # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server
+    # 단일 인스턴스: 기존 인스턴스 알림 시도 (존재하는 경우). 성공 시 종료, 그렇지 않으면 이 인스턴스에서 서버 시작.
     _key = _get_server_key()
     try:
         payload = json.dumps({'action': 'activate', 'task': args.task, 'exit': args.exit}).encode('utf-8')
@@ -189,15 +190,15 @@ if __name__ == "__main__":
         payload = b'ACTIVATE'
 
     if notify_existing_instance(_key, payload):
-        print("已有程序实例在运行，已将激活请求发送给它，退出当前实例。")
+        print("이미 프로그램 인스턴스가 실행 중입니다. 활성화 요청을 전송하고 현재 인스턴스를 종료합니다.")
         sys.exit(0)
     else:
         _server = start_local_server(_key)
 
-    # 传递任务参数给主窗口
+    # 작업 매개변수를 메인 창으로 전달
     w = MainWindow(task=args.task, exit_on_complete=args.exit)
 
-    # 注册主窗口并处理启动期间收到的挂起消息
+    # 메인 창 등록 및 시작 중 수신된 대기 메시지 처리
     _main_window = w
     if _pending_messages:
         for msg in _pending_messages:

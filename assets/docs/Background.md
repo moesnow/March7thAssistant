@@ -1,36 +1,35 @@
-# 后台运行
+# 백그라운드 실행
 
-> 远程本地多用户桌面（是一台电脑，不需要两台电脑）
+> 원격 로컬 멀티 유저 데스크톱 (컴퓨터 한 대로 가능, 두 대 필요 없음)
 
- * 模拟器运行拥有卡顿，性能消耗大等诸多缺点
- * 我们推荐您使用 Windows 自带的远程桌面服务进行该程序
- * 在电脑上直接运行的性能消耗要小于模拟器
- * Windows 开启远程桌面多用户教程：
-   * [详细教程 by_Rin](https://www.bilibili.com/read/cv24286313/)（⭐推荐⭐）
-   * [RDPWrap 方法](https://blog.sena.moe/win10-multiple-RDP/)
-   * [修改文件方法](https://www.wyr.me/post/701)
- * [详细教程 by_Rin](https://www.bilibili.com/read/cv24286313/) 中所有相关文件：[下载链接](https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)
-   * 备用链接
-     * [百度网盘](https://pan.baidu.com/s/13aoll4n1gmKlPT9WwNYeEw?pwd=jbha) 提取码：jbha
-     * [GitHub镜像](https://github.kotori.top/https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)
+ * 에뮬레이터(앱플레이어) 실행은 끊김 현상(렉)이 있고, 성능 소모가 심한 등 여러 단점이 있습니다.
+ * Windows 자체 원격 데스크톱 서비스를 사용하여 이 프로그램을 실행하는 것을 권장합니다.
+ * 컴퓨터에서 직접 실행하는 것이 에뮬레이터보다 성능 소모가 적습니다.
+ * Windows 원격 데스크톱 다중 사용자 활성화 튜토리얼:
+   * [상세 튜토리얼 by_Rin](https://www.bilibili.com/read/cv24286313/) (⭐추천⭐)
+   * [RDPWrap 방법](https://blog.sena.moe/win10-multiple-RDP/)
+   * [파일 수정 방법](https://www.wyr.me/post/701)
+ * [상세 튜토리얼 by_Rin](https://www.bilibili.com/read/cv24286313/) 의 모든 관련 파일: [다운로드 링크](https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)
+   * 예비 링크 (백업)
+     * [Baidu Netdisk (바이두 클라우드)](https://pan.baidu.com/s/13aoll4n1gmKlPT9WwNYeEw?pwd=jbha) 추출 코드: jbha
+     * [GitHub 미러](https://github.kotori.top/https://github.com/CHNZYX/asu_version_latest/releases/download/RDP/LocalRemoteDesktop1.191_by_lin.zip)
 
 
 
-## 对于 Windows 11 用户
+## Windows 11 사용자
 
-在 [详细教程 by_Rin](https://www.bilibili.com/read/cv24286313/) 中提到的 `SuperRDP` 软件可能已无法使用，建议改用 [TermsrvPatcher](https://github.com/fabianosrc/TermsrvPatcher)。如果你在国内使用，可以通过备用链接下载：[蓝奏云](https://wwsj.lanzout.com/i4V8u2np8dna)。
+[상세 튜토리얼 by_Rin](https://www.bilibili.com/read/cv24286313/)에서 언급된 `SuperRDP` 소프트웨어는 더 이상 사용할 수 없을 수 있으므로, [TermsrvPatcher](https://github.com/fabianosrc/TermsrvPatcher)를 대신 사용하는 것을 권장합니다. 중국 내에서 접속하여 다운로드가 어려운 경우 예비 링크를 통해 다운로드하세요: [Lanzou Cloud](https://wwsj.lanzout.com/i4V8u2np8dna).
 
-**注意：** 此方法仅实现了[详细教程 by_Rin](https://www.bilibili.com/read/cv24286313/)中`4. 多用户同时登陆补丁`的功能，其余步骤请继续按照原教程进行。
+**주의:** 이 방법은 [상세 튜토리얼 by_Rin](https://www.bilibili.com/read/cv24286313/)의 `4. 다중 사용자 동시 로그인 패치` 기능만 수행하므로, 나머지 단계는 원본 튜토리얼을 계속 따라주세요.
 
-**使用方法：**
+**사용 방법:**
 
-1. 使用 `git clone` 克隆仓库，或直接下载压缩包。
-2. 下载完成后，解压压缩包，找到 `TermsrvPatcher.ps1` 文件，右键点击选择“运行”，脚本将自动完成所有操作。
+1. `git clone`을 사용하여 저장소를 복제하거나, 압축 파일을 직접 다운로드합니다.
+2. 다운로드가 완료되면 압축을 풀고 `TermsrvPatcher.ps1` 파일을 찾아 우클릭 후 "PowerShell에서 실행"을 선택하면 스크립트가 모든 작업을 자동으로 완료합니다.
 
-此外，如果你希望手动修改文件，可以参考博客文章：[修改文件方法](https://www.wyr.me/post/701)。不过需要注意的是，该博客中的部分操作在 Windows 11 上可能不适用，具体如下：
+또한, 파일을 수동으로 수정하고 싶다면 블로그 게시물: [파일 수정 방법](https://www.wyr.me/post/701)을 참고할 수 있습니다. 단, 해당 블로그의 일부 작업은 Windows 11에서 적용되지 않을 수 있으며, 구체적인 내용은 다음과 같습니다:
 
-- **在 Windows 11 中需搜索的字符串（正则）：**
-   `39 81 3C 06 00 00 0F (?:[0-9A-F]{2} ){4}00`（实际操作中，仅需搜索`39 81 3C 06 00 00 0F`即可，剩下的两个16进制数符合正则表达式再进行修改）
-- **替换为的字符串：**
+- **Windows 11에서 검색해야 할 문자열 (정규식):**
+   `39 81 3C 06 00 00 0F (?:[0-9A-F]{2} ){4}00` (실제 작업 시에는 `39 81 3C 06 00 00 0F`만 검색하면 되며, 나머지 16진수 숫자가 정규식과 일치하는지 확인 후 수정하세요)
+- **교체할 문자열:**
    `8B 81 38 06 00 00 39 81 3C 06 00 00 75`
-

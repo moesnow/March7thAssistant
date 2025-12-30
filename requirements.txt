@@ -11,7 +11,7 @@ pygetwindow==0.0.9
 requests==2.32.4
 imageio==2.36.1
 Pillow==11.0.0
-Numpy==2.3.0
+Numpy
 opencv-python==4.10.0.84
 onepush==1.4.0
 winotify==1.1.0

@@ -22,7 +22,7 @@
 
 <div align="center">
 
-[简体中文](./README.md) | [繁體中文](./README_TW.md) | [English](./README_EN.md) | **日本語**
+[简体中文](./README.md) | [繁體中文](./README_TW.md) | [English](./README_EN.md) | **日本語**| [한국어](./README_KR.md)
 
 **ゲーム内の言語は現在、簡体字中国語のみに対応しています。**
 

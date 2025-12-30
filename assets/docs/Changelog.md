@@ -1,894 +1,891 @@
-# 更新日志
+# 업데이트 내역
 
 ## v2025.12.29-beta
-- 支持通过米哈游启动器自动更新游戏
-- 修复切换主题后从托盘区恢复需要重新加载界面
+- HoYoPlay(미호요 런처)를 통한 게임 자동 업데이트 지원
+- 테마 변경 후 트레이 영역에서 복원 시 인터페이스를 다시 로드해야 하는 문제 수정
 
 ## v2025.12.26
-- 定时运行支持添加多个定时任务和外部程序
-- 优化没有找到任何兑换码时的处理逻辑
-- 调整云游戏设置项允许的最大排队时间范围
-- 修复B服登录界面UI变化导致的启动异常
-- 修复部分情况下领取每日实训奖励误报未完成 [#820](https://github.com/moesnow/March7thAssistant/pull/820) @g60cBQ
-- 修复培养目标在未能识别副本的情况下仍继续执行 [#819](https://github.com/moesnow/March7thAssistant/pull/819) @g60cBQ
+- 예약 실행에 다중 작업 및 외부 프로그램 추가 지원
+- 리딤코드를 찾지 못했을 때의 처리 로직 최적화
+- 클라우드 게임 설정에서 허용되는 최대 대기 시간 범위 조정
+- B서버(비리비리 서버) 로그인 UI 변경으로 인한 실행 오류 수정
+- 일부 상황에서 일일 훈련 보상 수령이 미완료로 잘못 보고되는 문제 수정 [#820](https://github.com/moesnow/March7thAssistant/pull/820) @g60cBQ
+- 육성 목표가 던전을 인식하지 못한 경우에도 계속 실행되는 문제 수정 [#819](https://github.com/moesnow/March7thAssistant/pull/819) @g60cBQ
 
 ## v2025.12.21
-- 支持大丽花和三月七·冬去煦至 [#813](https://github.com/moesnow/March7thAssistant/pull/813) @loader3229
-- 添加成就奖励领取功能 [#811](https://github.com/moesnow/March7thAssistant/pull/811) @g60cBQ
-- 添加自动获取兑换码并领取功能
-- 恢复触屏模式功能支持
-- 优化定时运行任务的触发逻辑
-- 优化货币战争支持未结算对局处理
-- 完整包现在内置云游戏专用浏览器 [#815](https://github.com/moesnow/March7thAssistant/pull/815) @Patrick16262
-- 修复回归用户无法正确识别活动页面
-- 修复特定情况下体力计划错误判定无法执行
-- 修复启用培养计划后副本连续挑战次数错误
-- 修复云·星穹铁道后台运行时剪贴板失效的问题 [#816](https://github.com/moesnow/March7thAssistant/pull/816) @Patrick16262
-- 修复使用云游戏无法快速启动锄大地
+- 다알리아 및 Mar. 7th·겨울이 가고 봄이 오면 스킨 지원 [#813](https://github.com/moesnow/March7thAssistant/pull/813) @loader3229
+- 업적 보상 수령 기능 추가 [#811](https://github.com/moesnow/March7thAssistant/pull/811) @g60cBQ
+- 리딤코드 자동 획득 및 수령 기능 추가
+- 터치스크린 모드 기능 지원 복구
+- 예약 실행 작업의 트리거 로직 최적화
+- 화폐 전쟁(이벤트) 미정산 대국 처리 지원 최적화
+- 전체 설치 패키지에 클라우드 게임 전용 브라우저 내장 [#815](https://github.com/moesnow/March7thAssistant/pull/815) @Patrick16262
+- 복귀 유저가 이벤트 페이지를 올바르게 인식하지 못하는 문제 수정
+- 특정 상황에서 개척력 계획(Stamina Plan)이 잘못 판단하여 실행되지 않는 문제 수정
+- 육성 계획 활성화 후 던전 연속 도전 횟수 오류 수정
+- 클라우드·붕괴: 스타레일 백그라운드 실행 시 클립보드가 작동하지 않는 문제 수정 [#816](https://github.com/moesnow/March7thAssistant/pull/816) @Patrick16262
+- 클라우드 게임 사용 시 필드 토벌(토벌런) 빠른 시작이 불가능한 문제 수정
 
 ## v2025.12.16
-- 新增日志界面并优化任务执行方式
-- 图形界面添加触摸滚动支持 [#799](https://github.com/moesnow/March7thAssistant/pull/799) @g60cBQ
-- 图形界面支持最小化到托盘
-- 云游戏下载使用国内镜像源加速 [#792](https://github.com/moesnow/March7thAssistant/pull/792) @Patrick16262
-- 优化和修复云游戏若干问题 [#800](https://github.com/moesnow/March7thAssistant/pull/800) [#804](https://github.com/moesnow/March7thAssistant/pull/804) @Patrick16262
-- 优化 WebHook 推送支持更多配置项
-- 修复自动主题功能未正常运行
-- 修复执行差分宇宙积分奖励时类别选择错误
-- 修复语言非中文时日志界面显示异常
+- 로그 인터페이스 신규 추가 및 작업 실행 방식 최적화
+- 그래픽 인터페이스(GUI) 터치 스크롤 지원 추가 [#799](https://github.com/moesnow/March7thAssistant/pull/799) @g60cBQ
+- 그래픽 인터페이스 시스템 트레이로 최소화 지원
+- 클라우드 게임 다운로드 시 국내(중국) 미러 소스 가속 사용 [#792](https://github.com/moesnow/March7thAssistant/pull/792) @Patrick16262
+- 클라우드 게임 관련 여러 문제 최적화 및 수정 [#800](https://github.com/moesnow/March7thAssistant/pull/800) [#804](https://github.com/moesnow/March7thAssistant/pull/804) @Patrick16262
+- WebHook 푸시 알림 설정 항목 추가 최적화
+- 자동 테마 기능이 정상 작동하지 않는 문제 수정
+- 차분화 우주 포인트 보상 실행 시 카테고리 선택 오류 수정
+- 언어가 중국어가 아닐 때 로그 인터페이스 표시 이상 수정
 
 ## v2025.12.13
 
-- 支持体力计划
-- 设置界面优化
-- 双倍活动支持读取培养计划 [#751](https://github.com/moesnow/March7thAssistant/pull/751) @g60cBQ
-- 现在判断每日实训完成后会立即领取奖励
-- 饰品提取未配置角色时自动选择第一个队伍 [#788](https://github.com/moesnow/March7thAssistant/pull/788) @g60cBQ
-- 解锁帧率和自动修改分辨率功能适配国际服
-- 配置文件变化后自动重载图形界面
+- 개척력 계획(Stamina Plan) 지원
+- 설정 인터페이스 최적화
+- 2배 이벤트에서 육성 계획 읽기 지원 [#751](https://github.com/moesnow/March7thAssistant/pull/751) @g60cBQ
+- 이제 일일 훈련 완료 판단 후 즉시 보상을 수령합니다
+- 장신구 추출 시 캐릭터가 설정되지 않은 경우 자동으로 첫 번째 파티 선택 [#788](https://github.com/moesnow/March7thAssistant/pull/788) @g60cBQ
+- 프레임 잠금 해제 및 해상도 자동 수정 기능 국제 서버(Global) 호환
+- 설정 파일 변경 시 그래픽 인터페이스 자동 새로고침
 
 ## v2025.12.10
 
-- 优化和修复货币战争若干问题
-- 副本名称和队伍角色支持手动输入和实时自动补全
-- 支持通知级别配置（如仅推送错误通知）
-- 推送通知前会对截图进行压缩减小体积
-- 新增 KOOK、WebHook 推送支持
-- 新增 Bark 推送加密支持
-- 新增自动清理超过 30 天的日志文件
+- 화폐 전쟁 관련 여러 문제 최적화 및 수정
+- 던전 이름 및 파티 캐릭터 수동 입력 및 실시간 자동 완성 지원
+- 알림 레벨 설정 지원 (예: 오류 알림만 푸시)
+- 푸시 알림 전송 전 스크린샷 압축으로 용량 감소
+- KOOK, WebHook 푸시 지원 추가
+- Bark 푸시 암호화 지원 추가
+- 30일 이상 된 로그 파일 자동 정리 기능 추가
 
 ## v2025.12.8
 
-- 支持货币战争
-- 修复货币战争若干异常问题
-- 抽卡记录支持 UIGF 格式导入和导出
-- 清体力前会传送至任意锚点 [#760](https://github.com/moesnow/March7thAssistant/pull/760) @Xuan-cc
-- 优化和修复云游戏若干问题 [#763](https://github.com/moesnow/March7thAssistant/pull/763) @Patrick16262
-- 任务完成后新增支持关闭显示器
-- 清空抽卡记录时增加二次确认弹窗
-- 修复培养目标拟造花萼副本信息提取失败 [#764](https://github.com/moesnow/March7thAssistant/pull/764) @g60cBQ
-- 修复任务完成后运行 ps1 脚本失败 [#759](https://github.com/moesnow/March7thAssistant/pull/759) @0frostmourne0
+- 화폐 전쟁 지원
+- 화폐 전쟁 관련 여러 이상 문제 수정
+- 워프(뽑기) 기록 UIGF 형식 가져오기 및 내보내기 지원
+- 개척력 소모 전 임의의 닻(텔레포트)으로 이동 [#760](https://github.com/moesnow/March7thAssistant/pull/760) @Xuan-cc
+- 클라우드 게임 관련 여러 문제 최적화 및 수정 [#763](https://github.com/moesnow/March7thAssistant/pull/763) @Patrick16262
+- 작업 완료 후 모니터 끄기 지원 추가
+- 워프 기록 삭제 시 2차 확인 팝업 추가
+- 육성 목표의 고치(Calyx) 던전 정보 추출 실패 수정 [#764](https://github.com/moesnow/March7thAssistant/pull/764) @g60cBQ
+- 작업 완료 후 ps1 스크립트 실행 실패 수정 [#759](https://github.com/moesnow/March7thAssistant/pull/759) @0frostmourne0
 
 ## v2025.12.1
 
-- 支持云·星穹铁道 [#750](https://github.com/moesnow/March7thAssistant/pull/750)
-- 支持根据培养目标动态选择副本 [#751](https://github.com/moesnow/March7thAssistant/pull/751)
-- 每日实训现在会读取任务完成情况并调整任务执行 [#753](https://github.com/moesnow/March7thAssistant/pull/753)
-- 企业微信机器人推送方式支持发送图片 [#742](https://github.com/moesnow/March7thAssistant/pull/742)
-- 修复特定情况逐光捡金无法正确选取角色 [#747](https://github.com/moesnow/March7thAssistant/pull/747)
-- 修复任务完成后选择脚本时发生闪退
-- 修复偶现无法正常终止游戏进程
-- 修复UI变化导致差分宇宙和模拟宇宙检测自动战斗异常
-- 优化完整运行时任务的执行顺序
-- 优化更新程序存在的一些问题
-- 优化自动登录流程
+- 클라우드·붕괴: 스타레일 지원 [#750](https://github.com/moesnow/March7thAssistant/pull/750)
+- 육성 목표에 따른 동적 던전 선택 지원 [#751](https://github.com/moesnow/March7thAssistant/pull/751)
+- 일일 훈련 시 임무 완료 상황을 읽고 작업 실행 조정 [#753](https://github.com/moesnow/March7thAssistant/pull/753)
+- 기업용 위챗(WeChatWork) 봇 푸시 방식 이미지 전송 지원 [#742](https://github.com/moesnow/March7thAssistant/pull/742)
+- 특정 상황에서 빛 따라 금 찾아(逐光捡金) 시 캐릭터 선택 실패 수정 [#747](https://github.com/moesnow/March7thAssistant/pull/747)
+- 작업 완료 후 스크립트 선택 시 튕김 현상 수정
+- 간헐적으로 게임 프로세스가 정상 종료되지 않는 문제 수정
+- UI 변화로 인한 차분화 우주 및 시뮬레이션 우주 자동 전투 감지 이상 수정
+- 전체 실행 시 작업 실행 순서 최적화
+- 업데이트 프로그램의 일부 문제 최적화
+- 자동 로그인 프로세스 최적화
 
 ## v2025.11.11
 
-- 更新“优先运行一次差分宇宙”任务的周期为每两周一次
-- 使用SMTP发送通知时支持不使用用户名 [#730](https://github.com/moesnow/March7thAssistant/pull/730) [#738](https://github.com/moesnow/March7thAssistant/pull/738)
-- 修复 3.7 新周本识别异常 [#728](https://github.com/moesnow/March7thAssistant/pull/728)
-- 修复兑换码入口识别异常 [#734](https://github.com/moesnow/March7thAssistant/pull/734)
-- 修复特定条件下支援角色选择界面点击异常
+- "차분화 우주 1회 우선 실행" 작업 주기를 2주 1회로 업데이트
+- SMTP 알림 발송 시 사용자 이름 미사용 지원 [#730](https://github.com/moesnow/March7thAssistant/pull/730) [#738](https://github.com/moesnow/March7thAssistant/pull/738)
+- 3.7 신규 주간 보스(전쟁의 여운) 인식 이상 수정 [#728](https://github.com/moesnow/March7thAssistant/pull/728)
+- 리딤코드 입력창 인식 이상 수정 [#734](https://github.com/moesnow/March7thAssistant/pull/734)
+- 특정 조건에서 지원 캐릭터 선택 화면 클릭 이상 수정
 
 ## v2025.11.6
 
-- 支持 3.7 版本新增关卡和角色 [#725](https://github.com/moesnow/March7thAssistant/pull/725)
-- 新增部分副本类型支持连续挑战
-- 重构自动对话工具增加配置选项并修复问题 [#720](https://github.com/moesnow/March7thAssistant/pull/720)
-- 常见问题中添加多显示器相关问题及解决方案
-- 修复多账号登录界面停滞问题 [#723](https://github.com/moesnow/March7thAssistant/pull/723)
-- 修复前往模拟宇宙 UI 变化导致的异常
-- 修复活动界面 UI 变化导致的异常
-- 修复差分宇宙支援 UI 变化导致的异常
-- 修复历战余响执行日在设置界面显示错误
-- 图形界面布局优化
+- 3.7 버전 신규 스테이지 및 캐릭터 지원 [#725](https://github.com/moesnow/March7thAssistant/pull/725)
+- 일부 던전 유형 연속 도전 지원 추가
+- 자동 대화 도구 리팩토링: 설정 옵션 추가 및 문제 수정 [#720](https://github.com/moesnow/March7thAssistant/pull/720)
+- FAQ(자주 묻는 질문)에 다중 모니터 관련 문제 및 해결책 추가
+- 다계정 로그인 화면 멈춤 문제 수정 [#723](https://github.com/moesnow/March7thAssistant/pull/723)
+- 시뮬레이션 우주 진입 UI 변화로 인한 이상 수정
+- 이벤트 화면 UI 변화로 인한 이상 수정
+- 차분화 우주 지원 UI 변화로 인한 이상 수정
+- 전쟁의 여운 실행 요일이 설정 화면에 잘못 표시되는 문제 수정
+- 그래픽 인터페이스 레이아웃 최적화
 
 ## v2025.10.15
 
-- 支持 3.6 版本新增角色
-- 优化自动登录过程并适配国际服 [#706](https://github.com/moesnow/March7thAssistant/pull/706)
-- 支持队伍中有角色死亡时继续挑战副本 [#705](https://github.com/moesnow/March7thAssistant/pull/705)
-- 延迟部分超时时间优化机械硬盘使用体验 [#701](https://github.com/moesnow/March7thAssistant/pull/701)
-- 新增选项 “成功后暂停程序” 和 “失败后直接退出” [#704](https://github.com/moesnow/March7thAssistant/pull/704) [#709](https://github.com/moesnow/March7thAssistant/pull/709)
-- 修复部分用户可能会出现的下载异常
-- 优化下载程序支持自动使用系统代理
-- 优化重置配置文件功能的错误提示信息
+- 3.6 버전 신규 캐릭터 지원
+- 자동 로그인 과정 최적화 및 국제 서버(Global) 호환 [#706](https://github.com/moesnow/March7thAssistant/pull/706)
+- 파티원 사망 시 던전 도전 계속 진행 지원 [#705](https://github.com/moesnow/March7thAssistant/pull/705)
+- 일부 타임아웃 시간 지연을 통해 HDD 사용 경험 최적화 [#701](https://github.com/moesnow/March7thAssistant/pull/701)
+- "성공 후 프로그램 일시 정지" 및 "실패 후 즉시 종료" 옵션 추가 [#704](https://github.com/moesnow/March7thAssistant/pull/704) [#709](https://github.com/moesnow/March7thAssistant/pull/709)
+- 일부 사용자에게 발생할 수 있는 다운로드 이상 수정
+- 다운로더가 시스템 프록시를 자동 사용하도록 최적화
+- 설정 파일 초기화 기능의 오류 메시지 최적화
 
 ## v2025.9.25
 
-- 支持 3.6 版本新增关卡和角色
-- 优化日常“合成材料”的流程，且支持在设置中关闭
-- 支持“支援列表”好友名称留空，则仅查找选择的角色
-- 修复配置支援角色“星期日”后偶现识别好友名称异常
-- 修复偶现“抽卡记录”更新数据发生闪退
-- 优化“在用户登录时启动”的选项说明
-- 修正多个副本名称识别错误
+- 3.6 버전 신규 스테이지 및 캐릭터 지원
+- 일일 "합성 재료" 흐름 최적화 및 설정에서 끄기 지원
+- "지원 목록" 친구 이름을 비워둘 경우 선택한 캐릭터만 검색 지원
+- 지원 캐릭터 "선데이" 설정 후 간헐적으로 친구 이름 인식 이상 수정
+- "워프 기록" 데이터 업데이트 시 간헐적 튕김 수정
+- "사용자 로그인 시 시작" 옵션 설명 최적화
+- 여러 던전 이름 인식 오류 수정
 
 ## v2025.9.10
 
-- 支持 3.5 版本新增关卡和角色 [#687](https://github.com/moesnow/March7thAssistant/pull/687)
-- 修正多个副本名称识别错误
-- 修复邮箱识别异常
+- 3.5 버전 신규 스테이지 및 캐릭터 지원 [#687](https://github.com/moesnow/March7thAssistant/pull/687)
+- 여러 던전 이름 인식 오류 수정
+- 우편함 인식 이상 수정
 
 ## v2025.8.13
 
-- 支持 3.5 版本新增关卡和角色 [#671](https://github.com/moesnow/March7thAssistant/pull/671)
-- 修正多个副本名称识别错误
+- 3.5 버전 신규 스테이지 및 캐릭터 지원 [#671](https://github.com/moesnow/March7thAssistant/pull/671)
+- 여러 던전 이름 인식 오류 수정
 
 ## v2025.7.20
 
-- 支持 Fate 联动角色 [#640](https://github.com/moesnow/March7thAssistant/pull/640)
-- 抽卡记录支持联动跃迁
-- 新增支持地图和跃迁的按键修改 [#635](https://github.com/moesnow/March7thAssistant/pull/635)
-- “自动对话” 支持 “自动跳过对话” [#639](https://github.com/moesnow/March7thAssistant/pull/639)
-- 多账号管理功能支持清除注册表 [#636](https://github.com/moesnow/March7thAssistant/pull/636)
-- 修复位面分裂活动导致的错误 [#643](https://github.com/moesnow/March7thAssistant/pull/643)
-- 修复退出模拟宇宙导致的错误
-- 修复自动对话不支持选项
+- Fate 콜라보 캐릭터 지원 [#640](https://github.com/moesnow/March7thAssistant/pull/640)
+- 워프 기록 콜라보 워프 지원
+- 지도 및 워프 키 설정 변경 지원 추가 [#635](https://github.com/moesnow/March7thAssistant/pull/635)
+- "자동 대화" 기능에 "대화 자동 스킵" 지원 [#639](https://github.com/moesnow/March7thAssistant/pull/639)
+- 다계정 관리 기능 레지스트리 정리 지원 [#636](https://github.com/moesnow/March7thAssistant/pull/636)
+- 차원 분열 이벤트로 인한 오류 수정 [#643](https://github.com/moesnow/March7thAssistant/pull/643)
+- 시뮬레이션 우주 종료 시 발생하는 오류 수정
+- 자동 대화가 선택지를 지원하지 않는 문제 수정
 
 ## v2025.7.8
 
-- 支持 3.4 版本新增关卡和角色 [#616](https://github.com/moesnow/March7thAssistant/pull/616)
-- 修复无法正常进入 “溟簇之形” 副本
+- 3.4 버전 신규 스테이지 및 캐릭터 지원 [#616](https://github.com/moesnow/March7thAssistant/pull/616)
+- "명족의 형상" 던전 진입 불가 수정
 
 ## v2025.6.14
 
-- 支持 3.3 版本新增关卡和角色 [#580](https://github.com/moesnow/March7thAssistant/pull/580) [#597](https://github.com/moesnow/March7thAssistant/pull/597)
-- 支持将抽卡记录导出为 Excel 文件 [#574](https://github.com/moesnow/March7thAssistant/pull/574)
-- 支持修改每轮拟造花萼挑战次数 [#592](https://github.com/moesnow/March7thAssistant/pull/592)
-- 设置页面的滑块增加按钮以便更精细的控制 [#591](https://github.com/moesnow/March7thAssistant/pull/591)
-- 修复差分宇宙暂退图片 [#594](https://github.com/moesnow/March7thAssistant/pull/594)
-- 修复抽卡数据存在异常时无法正常导出 Excel
-- 修复部分选项导致图形界面闪退
-- 修复 Gotify 推送异常
-- 模拟宇宙（Auto_Simulated_Universe）v8.04
-- 模拟宇宙支持通过 Mirror酱 进行更新
+- 3.3 버전 신규 스테이지 및 캐릭터 지원 [#580](https://github.com/moesnow/March7thAssistant/pull/580) [#597](https://github.com/moesnow/March7thAssistant/pull/597)
+- 워프 기록을 Excel 파일로 내보내기 지원 [#574](https://github.com/moesnow/March7thAssistant/pull/574)
+- 고치(Calyx) 매 회차 도전 횟수 수정 지원 [#592](https://github.com/moesnow/March7thAssistant/pull/592)
+- 설정 페이지 슬라이더에 버튼을 추가하여 미세 조정 지원 [#591](https://github.com/moesnow/March7thAssistant/pull/591)
+- 차분화 우주 일시 후퇴 이미지 수정 [#594](https://github.com/moesnow/March7thAssistant/pull/594)
+- 워프 데이터에 이상이 있을 때 Excel 내보내기 실패 수정
+- 일부 옵션으로 인한 그래픽 인터페이스 튕김 수정
+- Gotify 푸시 이상 수정
+- 시뮬레이션 우주(Auto_Simulated_Universe) v8.04
+- Mirrorchyan을 통한 시뮬레이션 우주 업데이트 지원
 
 ## v2025.4.18
 
-- 适配二周年活动图标
-- 支持遐蝶 [#548](https://github.com/moesnow/March7thAssistant/pull/548)
-- 支持配置从周几后开始执行历战余响（周本） [#479](https://github.com/moesnow/March7thAssistant/pull/479)
-- 当遗器数量达到上限时，将会先执行分解四星遗器 [#524](https://github.com/moesnow/March7thAssistant/pull/524)
-- OneBot 支持同时发送私聊消息和群消息 [#540](https://github.com/moesnow/March7thAssistant/pull/540)
-- 锄大地增加翁法洛斯优先级设置项 [#547](https://github.com/moesnow/March7thAssistant/pull/547)
-- 优化 Mirror酱 使用体验，增加CDK过期等错误提示
-- 修复 飞书、Gotify、OneBot 推送 [#520](https://github.com/moesnow/March7thAssistant/pull/520) [#517](https://github.com/moesnow/March7thAssistant/pull/517)
-- 修复未完成全部日常任务时可能无法正确领取奖励
-- 修复系统不支持自动主题时导致的闪退 [#525](https://github.com/moesnow/March7thAssistant/pull/525)
-- 修复定时任务时间读取本地区域设置导致的闪退 [#512](https://github.com/moesnow/March7thAssistant/pull/512)
+- 2주년 이벤트 아이콘 적용
+- 아글라에아 지원 [#548](https://github.com/moesnow/March7thAssistant/pull/548)
+- 전쟁의 여운(주간 보스) 실행 요일 설정 지원 [#479](https://github.com/moesnow/March7thAssistant/pull/479)
+- 유물 수량이 상한에 도달하면 4성 유물 분해 우선 실행 [#524](https://github.com/moesnow/March7thAssistant/pull/524)
+- OneBot 개인 메시지와 그룹 메시지 동시 전송 지원 [#540](https://github.com/moesnow/March7thAssistant/pull/540)
+- 필드 토벌(토벌런) 옴팔로스 우선순위 설정 항목 추가 [#547](https://github.com/moesnow/March7thAssistant/pull/547)
+- Mirrorchyan 사용 경험 최적화, CDK 만료 등 오류 팁 추가
+- Lark(페이슈), Gotify, OneBot 푸시 수정 [#520](https://github.com/moesnow/March7thAssistant/pull/520) [#517](https://github.com/moesnow/March7thAssistant/pull/517)
+- 모든 일일 임무 미완료 시 보상 수령이 올바르지 않은 문제 수정
+- 시스템이 자동 테마를 지원하지 않을 때 발생하는 튕김 수정 [#525](https://github.com/moesnow/March7thAssistant/pull/525)
+- 예약 작업 시간 로딩 시 로컬 지역 설정으로 인한 튕김 수정 [#512](https://github.com/moesnow/March7thAssistant/pull/512)
 
 ## v2025.3.7
 
-- 模拟宇宙（Auto_Simulated_Universe）适配新版本差分宇宙
-- 支持 3.1 版本新增关卡和角色 [#486](https://github.com/moesnow/March7thAssistant/pull/486)
-- 支持任务完成后运行指定程序或脚本 [#453](https://github.com/moesnow/March7thAssistant/pull/453)
-- 支持每周优先运行一次差分宇宙（设置-宇宙）
-- 接入 Mirror酱 第三方应用分发平台（关于 → 更新源）
-- 修复设置培养目标后部分副本异常
-- 修复无法进入经典模拟宇宙界面
-- 修复无法正常合成消耗品 [#482](https://github.com/moesnow/March7thAssistant/issues/482)
-- 触屏模式暂不可用 [#487](https://github.com/moesnow/March7thAssistant/issues/487)
+- 시뮬레이션 우주(Auto_Simulated_Universe) 신규 버전 차분화 우주 적용
+- 3.1 버전 신규 스테이지 및 캐릭터 지원 [#486](https://github.com/moesnow/March7thAssistant/pull/486)
+- 작업 완료 후 지정된 프로그램 또는 스크립트 실행 지원 [#453](https://github.com/moesnow/March7thAssistant/pull/453)
+- 매주 1회 차분화 우주 우선 실행 지원 (설정-우주)
+- Mirrorchyan 타사 앱 배포 플랫폼 연동 (정보 → 업데이트 소스)
+- 육성 목표 설정 후 일부 던전 이상 수정
+- 일반 시뮬레이션 우주 인터페이스 진입 불가 수정
+- 소모품 합성이 정상적으로 되지 않는 문제 수정 [#482](https://github.com/moesnow/March7thAssistant/issues/482)
+- 터치스크린 모드 일시적 사용 불가 [#487](https://github.com/moesnow/March7thAssistant/issues/487)
 
 ## v2025.1.20
 
-- 支持 3.0 版本新增关卡和角色 [#442](https://github.com/moesnow/March7thAssistant/pull/442)
-- 支持 “Matrix” 推送方式 [#440](https://github.com/moesnow/March7thAssistant/pull/440)
-- 修改开拓力上限至300 [#447](https://github.com/moesnow/March7thAssistant/pull/447)
-- 修复无法识别沉浸器数量 [#441](https://github.com/moesnow/March7thAssistant/issues/441)
-- 修复无法更新抽卡记录
-- 部分代码规范性优化 [#443](https://github.com/moesnow/March7thAssistant/pull/443)
+- 3.0 버전 신규 스테이지 및 캐릭터 지원 [#442](https://github.com/moesnow/March7thAssistant/pull/442)
+- "Matrix" 푸시 방식 지원 [#440](https://github.com/moesnow/March7thAssistant/pull/440)
+- 개척력 상한 300으로 수정 [#447](https://github.com/moesnow/March7thAssistant/pull/447)
+- 몰입기 수량 인식 불가 수정 [#441](https://github.com/moesnow/March7thAssistant/issues/441)
+- 워프 기록 업데이트 불가 수정
+- 일부 코드 규범성 최적화 [#443](https://github.com/moesnow/March7thAssistant/pull/443)
 
 ## v2024.12.18
 
-### 更新
-- "启用位面分裂"开启后，存在双倍次数时体力优先「饰品提取」
-- 支持在图形界面中开关所有的推送方式，并修改对应的配置项
-- 优化了“解锁帧率”和“触屏模式”的报错提示（需要将游戏图像质量修改为自定义）
-- “启用自动战斗检测”开启后，会在启动游戏前尝试检查并修改对应的注册表值
+### 업데이트
+- "차원 분열 활성화" 시 2배 횟수가 존재하면 개척력을 「장신구 추출」에 우선 사용
+- 그래픽 인터페이스에서 모든 푸시 방식 온/오프 및 설정 수정 지원
+- "프레임 잠금 해제" 및 "터치스크린 모드" 오류 메시지 최적화 (게임 화질을 사용자 정의로 변경 필요)
+- "자동 전투 감지 활성화" 시 게임 시작 전 해당 레지스트리 값 검사 및 수정 시도
 
 ## v2024.12.12
 
-### 更新
-- 支持 “触屏模式（云游戏移动端 UI）” 启动游戏（工具箱）
-- “领取沉浸奖励” 选项更改为 “领取沉浸奖励/执行饰品提取”（领取积分奖励后将自动执行饰品提取）
-- 修复更换新壁纸 “愿今夜无梦” 后无法进入邮箱
-- 修复无法识别并跳过末日幻影快速挑战提示框 [#406](https://github.com/moesnow/March7thAssistant/issues/406) 
+### 업데이트
+- "터치스크린 모드(클라우드 게임 모바일 UI)"로 게임 실행 지원 (도구 상자)
+- "몰입 보상 수령" 옵션을 "몰입 보상 수령/장신구 추출 실행"으로 변경 (포인트 보상 수령 후 자동으로 장신구 추출 실행)
+- 신규 배경화면 "꿈 없는 긴 밤" 변경 후 우편함 진입 불가 수정
+- 종말의 환영 빠른 도전 팁 인식 및 건너뛰기 불가 수정 [#406](https://github.com/moesnow/March7thAssistant/issues/406) 
 
 ## v2.7.0
 
-### 新功能
-- 支持 “星期日” 、 “灵砂”
-- 支持末日幻影 [#397](https://github.com/moesnow/March7thAssistant/pull/397) 
-- 支持开机后自动运行（设置—杂项）
-- 循环模式每次启动前会重新加载配置文件
-- 增加 “在多显示器上进行截屏” 选项（设置—杂项） [#392](https://github.com/moesnow/March7thAssistant/pull/392) 
-- 支持自动获取通过米哈游启动器安装游戏的路径
-- 优化主程序缺失后的报错信息
+### 새로운 기능
+- "선데이", "영사" 지원
+- 종말의 환영 지원 [#397](https://github.com/moesnow/March7thAssistant/pull/397) 
+- 부팅 후 자동 실행 지원 (설정-기타)
+- 반복(Loop) 모드 매 실행 전 설정 파일 다시 로드
+- "다중 모니터에서 스크린샷 캡처" 옵션 추가 (설정-기타) [#392](https://github.com/moesnow/March7thAssistant/pull/392) 
+- 미호요 런처를 통해 설치된 게임 경로 자동 획득 지원
+- 메인 프로그램 누락 시 오류 메시지 최적화
 
-### 修复
-- “日常任务” 会在每次启动时被错误清空
-- “自动对话” 状态不会变化和速度过慢
-- 降低角色头像匹配阈值 [#356](https://github.com/moesnow/March7thAssistant/issues/356)
+### 수정
+- "일일 임무"가 매번 시작 시 잘못 초기화되는 문제
+- "자동 대화" 상태가 변경되지 않거나 속도가 너무 느린 문제
+- 캐릭터 프로필 매칭 임계값 낮춤 [#356](https://github.com/moesnow/March7thAssistant/issues/356)
 
 ## v2.6.3
 
-### 新功能
-- 支持 2.6 版本新增关卡和角色（乱破）
-- “副本名称” 配置项支持手动输入
-- 阵亡导致挑战失败后支持自动重试 [#385](https://github.com/moesnow/March7thAssistant/pull/385)
-- 支持自动批量使用兑换码（工具箱）
-- “抽卡记录” 支持 “更新完整数据”（用于修复错误的抽卡数据）
-- 循环模式支持 “根据开拓力”（原有模式） 和 “定时任务”（指定时间）
-- 支持 “Server酱3” 推送方式 [#377](https://github.com/moesnow/March7thAssistant/pull/377)
+### 새로운 기능
+- 2.6 버전 신규 스테이지 및 캐릭터(라파) 지원
+- "던전 이름" 설정 항목 수동 입력 지원
+- 사망으로 인한 도전 실패 후 자동 재시도 지원 [#385](https://github.com/moesnow/March7thAssistant/pull/385)
+- 리딤코드 일괄 자동 사용 지원 (도구 상자)
+- "워프 기록"의 "전체 데이터 업데이트" 지원 (잘못된 워프 데이터 수정용)
+- 반복(Loop) 모드에서 "개척력 기준"(기존) 및 "예약 작업"(지정 시간) 지원
+- "ServerChan 3" 푸시 방식 지원 [#377](https://github.com/moesnow/March7thAssistant/pull/377)
 
-### 修复
-- 更换抽卡记录 API
-- 手动修改配置文件会被图形界面覆盖 [#341](https://github.com/moesnow/March7thAssistant/issues/341) [#379](https://github.com/moesnow/March7thAssistant/issues/379)
-- 游戏窗口位于多显示器副屏时截图内容全黑或坐标偏移 [#378](https://github.com/moesnow/March7thAssistant/pull/378) [#384](https://github.com/moesnow/March7thAssistant/pull/384)
-- 暗黑主题下首次启动程序后账号列表背景色异常
-- 存在“花藏繁生”活动但未启用的情况下进入死循环
+### 수정
+- 워프 기록 API 교체
+- 수동으로 수정한 설정 파일이 그래픽 인터페이스에 의해 덮어씌워지는 문제 [#341](https://github.com/moesnow/March7thAssistant/issues/341) [#379](https://github.com/moesnow/March7thAssistant/issues/379)
+- 게임 창이 다중 모니터 보조 화면에 있을 때 스크린샷이 검게 나오거나 좌표가 밀리는 문제 [#378](https://github.com/moesnow/March7thAssistant/pull/378) [#384](https://github.com/moesnow/March7thAssistant/pull/384)
+- 다크 모드에서 프로그램 최초 실행 시 계정 목록 배경색 이상
+- "꽃이 피는 정원" 이벤트가 있지만 활성화하지 않은 경우 무한 루프 진입 문제
 
 ## v2.5.4
 
-### 新功能
-- 支持 2.5 版本新增关卡
-- 支援功能重做（支持指定好友的指定角色且支持饰品提取使用，需重新配置）
-- 支持 “翡翠” 、 “椒丘” 、“飞霄” 、 “貊泽”
-- 支持B服启动后自动点击 “登录” [#321](https://github.com/moesnow/March7thAssistant/discussions/321)
-- “任务完成后” 新增 “重启” 选项
+### 새로운 기능
+- 2.5 버전 신규 스테이지 지원
+- 지원(Support) 기능 리메이크 (지정 친구의 지정 캐릭터 지원 및 장신구 추출 사용 지원, 재설정 필요)
+- "비소", "초구", "맥택", "제이드" 지원
+- B서버 실행 후 "로그인" 자동 클릭 지원 [#321](https://github.com/moesnow/March7thAssistant/discussions/321)
+- "작업 완료 후"에 "재부팅" 옵션 추가
 
-### 修复
-- 部分文字 OCR 识别异常
-- 自动登录检测异常 [#336](https://github.com/moesnow/March7thAssistant/issues/336)
-- 支援功能在高分屏下异常 [#329](https://github.com/moesnow/March7thAssistant/issues/329)
-- 修复拟造花萼（赤）错行 [#328](https://github.com/moesnow/March7thAssistant/issues/328)
-- 延长逐光捡金等待场景加载的时间 [#322](https://github.com/moesnow/March7thAssistant/issues/322)
-- 优化饰品提取开始挑战的逻辑 [#325](https://github.com/moesnow/March7thAssistant/issues/325)
-- 优化 “启动失败” 的报错提示
+### 수정
+- 일부 문자 OCR 인식 이상
+- 자동 로그인 감지 이상 [#336](https://github.com/moesnow/March7thAssistant/issues/336)
+- 고해상도(High DPI)에서 지원 기능 이상 [#329](https://github.com/moesnow/March7thAssistant/issues/329)
+- 고치(적) 줄바꿈 오류 수정 [#328](https://github.com/moesnow/March7thAssistant/issues/328)
+- 빛 따라 금 찾아(逐光捡金) 장면 로딩 대기 시간 연장 [#322](https://github.com/moesnow/March7thAssistant/issues/322)
+- 장신구 추출 도전 시작 로직 최적화 [#325](https://github.com/moesnow/March7thAssistant/issues/325)
+- "실행 실패" 오류 메시지 최적화
 
 ## v2.4.0
 
-### 新功能
-- 支持差分宇宙和饰品提取
-- 支持 “智识之蕾•匹诺康尼大剧院” 关卡
-- 支持 “云璃” 、 “三月七（虚数）” 、 “开拓者（虚数）”
-- 飞书 支持发送截图 [#310](https://github.com/moesnow/March7thAssistant/pull/310)
+### 새로운 기능
+- 차분화 우주 및 장신구 추출 지원
+- "지식의 봉오리•페나코니 대극장" 스테이지 지원
+- "운리", "Mar. 7th (허수)", "개척자 (허수)" 지원
+- Lark(페이슈) 스크린샷 전송 지원 [#310](https://github.com/moesnow/March7thAssistant/pull/310)
 
-### 修复
-- 新版材料合成页面卡住的问题 [#231](https://github.com/moesnow/March7thAssistant/issues/231)
+### 수정
+- 구버전 재료 합성 페이지 멈춤 문제 [#231](https://github.com/moesnow/March7thAssistant/issues/231)
 
 ## v2.3.0
 
-### 新功能
-- 适配模拟宇宙新入口（需先解锁差分宇宙）
-- 支持 2.3 版本新增关卡 [#277](https://github.com/moesnow/March7thAssistant/pull/277)
-- 支持B服 [#269](https://github.com/moesnow/March7thAssistant/pull/269)
-- 支持国际服账号操作 [#268](https://github.com/moesnow/March7thAssistant/pull/268)
-- 支持逐光捡金和支援角色选择 “流萤”
-- 支持判断米哈游启动器默认安装路径
+### 새로운 기능
+- 시뮬레이션 우주 신규 진입로 적용 (차분화 우주 잠금 해제 필요)
+- 2.3 버전 신규 스테이지 지원 [#277](https://github.com/moesnow/March7thAssistant/pull/277)
+- B서버 지원 [#269](https://github.com/moesnow/March7thAssistant/pull/269)
+- 국제 서버(Global) 계정 작업 지원 [#268](https://github.com/moesnow/March7thAssistant/pull/268)
+- 빛 따라 금 찾아 및 지원 캐릭터 "반디" 선택 지원
+- 미호요 런처 기본 설치 경로 판단 지원
 
-### 修复
-- 支持位于城市沙盘时正确进入地图界面
-- 混沌回忆刷新后的弹窗有概率导致失败
-- PAC错误 [#276](https://github.com/moesnow/March7thAssistant/pull/276)
+### 수정
+- 도시 샌드박스에 위치할 때 지도 인터페이스 진입 지원
+- 혼돈의 기억 갱신 팝업이 실패를 유발할 확률 수정
+- PAC 오류 [#276](https://github.com/moesnow/March7thAssistant/pull/276)
 
 ## v2.2.0
 
-### 新功能
-- 支持 2.2 版本新增关卡
-- 支持逐光捡金和支援角色选择 “砂金” 和 “知更鸟”
-- 支持在设置配置模拟宇宙的命途和难度 [#223](https://github.com/moesnow/March7thAssistant/pull/223)
-- 支持在设置配置锄大地的购买选项 [#238](https://github.com/moesnow/March7thAssistant/pull/238)
-- 设置内新增多账户管理功能 [#224](https://github.com/moesnow/March7thAssistant/pull/224)
-- 支持登录过期时尝试自动登录 [#237](https://github.com/moesnow/March7thAssistant/pull/237)
-- 默认将模板图片缓存到内存中 [#244](https://github.com/moesnow/March7thAssistant/pull/244)
-- 抽卡记录新增 “清空” 按钮
-- 适配支援角色界面的新样式
+### 새로운 기능
+- 2.2 버전 신규 스테이지 지원
+- 빛 따라 금 찾아 및 지원 캐릭터 "어벤츄린" 및 "로빈" 선택 지원
+- 설정에서 시뮬레이션 우주 운명의 길 및 난이도 설정 지원 [#223](https://github.com/moesnow/March7thAssistant/pull/223)
+- 설정에서 필드 토벌(토벌런) 구매 옵션 설정 지원 [#238](https://github.com/moesnow/March7thAssistant/pull/238)
+- 설정 내 다중 계정 관리 기능 추가 [#224](https://github.com/moesnow/March7thAssistant/pull/224)
+- 로그인 만료 시 자동 로그인 시도 지원 [#237](https://github.com/moesnow/March7thAssistant/pull/237)
+- 템플릿 이미지를 기본적으로 메모리에 캐시 [#244](https://github.com/moesnow/March7thAssistant/pull/244)
+- 워프 기록 "비우기" 버튼 추가
+- 지원 캐릭터 인터페이스 신규 스타일 적용
 
-### 修复
-- 无法切换到 “漫游签证” 和 “委托” 界面 [#247](https://github.com/moesnow/March7thAssistant/pull/247)
-- 最新一期虚构叙事中部分角色开怪失败 [#242](https://github.com/moesnow/March7thAssistant/pull/242)
-- 无法领取 “支援” 和 “巡星之礼” 奖励
-- 特殊情况下抽卡记录无法正常显示和闪退
+### 수정
+- "개척자 지원" 및 "의뢰" 인터페이스로 전환 불가 문제 [#247](https://github.com/moesnow/March7thAssistant/pull/247)
+- 최신 허구 이야기에서 일부 캐릭터 공격 시작 실패 [#242](https://github.com/moesnow/March7thAssistant/pull/242)
+- "지원" 및 "별의 선물" 보상 수령 불가 문제
+- 특수 상황에서 워프 기록이 정상 표시되지 않거나 튕기는 문제
 
 ## v2.1.1
 
-### 新功能
-- 自动对话适配手柄界面 [#208](https://github.com/moesnow/March7thAssistant/pull/208)
-- Telegram 推送方式支持配置代理或使用PAC [#219](https://github.com/moesnow/March7thAssistant/pull/219) [#222](https://github.com/moesnow/March7thAssistant/pull/222)
-- 邮件推送方式支持 outlook [#220](https://github.com/moesnow/March7thAssistant/pull/220)
+### 새로운 기능
+- 자동 대화 패드(컨트롤러) 인터페이스 지원 [#208](https://github.com/moesnow/March7thAssistant/pull/208)
+- Telegram 푸시 방식 프록시 또는 PAC 설정 지원 [#219](https://github.com/moesnow/March7thAssistant/pull/219) [#222](https://github.com/moesnow/March7thAssistant/pull/222)
+- 이메일 푸시 방식 Outlook 지원 [#220](https://github.com/moesnow/March7thAssistant/pull/220)
 
-### 修复
-- 源码运行锄大地 [#211](https://github.com/moesnow/March7thAssistant/pull/211)
-- 部分文字 OCR 识别异常
+### 수정
+- 소스 코드로 필드 토벌 실행 [#211](https://github.com/moesnow/March7thAssistant/pull/211)
+- 일부 문자 OCR 인식 이상
 
 ## v2.1.0
 
-### 新功能
-- 支持2.1新增副本和活动
-- 委托奖励更改为一键领取
-- “拟造花萼（赤）”改为通过地点进行查找
-- 签到活动开关合并
-- 支持逐光捡金和支援角色选择 “黄泉”和“加拉赫”
+### 새로운 기능
+- 2.1 신규 던전 및 이벤트 지원
+- 의뢰 보상 일괄 수령으로 변경
+- "고치(적)"을 지역 기반 검색으로 변경
+- 출석 체크 이벤트 스위치 통합
+- 빛 따라 금 찾아 및 지원 캐릭터 "아케론" 및 "갤러거" 선택 지원
 
-### 修复
-- 红点会导致逐光捡金判断第二间失败
-- 合成任务因界面变化而无法完成
-- “拟造花萼（赤）”向后兼容
+### 수정
+- 빨간 점(Red dot)으로 인해 빛 따라 금 찾아이 두 번째 구역 판단 실패
+- 합성 임무가 인터페이스 변화로 인해 완료되지 않는 문제
+- "고치(적)" 하위 호환성
 
 ## v2.0.7
 
-### 新功能
-- 支持自定义消息推送格式
-- 混沌回忆检测到角色阵亡自动重试
-- 优化部分执行逻辑
-- 完整运行结束推送剩余开拓力和预计恢复时间（未开启循环时） [#197](https://github.com/moesnow/March7thAssistant/pull/197)
+### 새로운 기능
+- 사용자 정의 메시지 푸시 형식 지원
+- 혼돈의 기억에서 캐릭터 사망 감지 시 자동 재시도
+- 일부 실행 로직 최적화
+- 전체 실행 종료 후 남은 개척력 및 예상 회복 시간 푸시 (반복 모드 미사용 시) [#197](https://github.com/moesnow/March7thAssistant/pull/197)
 
-### 修复
-- 手机菜单点击图标异常
+### 수정
+- 모바일 메뉴 아이콘 클릭 이상
 
 ## v2.0.6
 
-### 新功能
-- 支持自定义每日合成沉浸器的个数 [#165](https://github.com/moesnow/March7thAssistant/pull/165)
-- 新增快捷查看日志按钮 [#150](https://github.com/moesnow/March7thAssistant/pull/150)
-- 在 “完整运行” 清体力前增加一次 “委托奖励检测” [#171](https://github.com/moesnow/March7thAssistant/pull/171)
+### 새로운 기능
+- 일일 몰입기 합성 개수 사용자 정의 지원 [#165](https://github.com/moesnow/March7thAssistant/pull/165)
+- 로그 빠른 보기 버튼 추가 [#150](https://github.com/moesnow/March7thAssistant/pull/150)
+- "전체 실행" 개척력 소모 전 "의뢰 보상 감지" 1회 추가 [#171](https://github.com/moesnow/March7thAssistant/pull/171)
 
-### 修复
-- 降低查找副本时的滚动速度
-- 部分用户报错 “'cmd' 不是内部或外部命令...” 导致无法启动游戏
-- 部分分辨率全屏状态判断异常 [#183](https://github.com/moesnow/March7thAssistant/pull/183)
+### 수정
+- 던전 검색 시 스크롤 속도 감소
+- 일부 사용자의 "'cmd'는 내부 또는 외부 명령이 아닙니다..." 오류로 인한 게임 실행 불가 문제
+- 일부 해상도에서 전체 화면 상태 판단 이상 [#183](https://github.com/moesnow/March7thAssistant/pull/183)
 
-### 其他
-- 主页点击模拟宇宙快速启动现在也会领取每周奖励
-- 移除设置内锄大地和模拟宇宙更新等按钮（请改从主页运行相应功能）
+### 기타
+- 홈 화면에서 시뮬레이션 우주 빠른 시작 클릭 시 주간 보상도 수령
+- 설정 내 필드 토벌 및 시뮬레이션 우주 업데이트 버튼 제거 (홈 화면에서 해당 기능 실행 권장)
 
 ## v2.0.5
 
-### 新功能
-- “任务完成后” 新增 “注销” 选项
-- 工具箱新增帧率解锁 [#161](https://github.com/moesnow/March7thAssistant/pull/161)
-- “启用自动修改分辨率” 选项更改为 “启用自动修改分辨率并关闭自动 HDR” [#156](https://github.com/moesnow/March7thAssistant/pull/156)
-- 新增 [OneBot](https://onebot.dev) 推送方式（QQ 机器人）
-- 企业微信应用推送方式支持发送图片
+### 새로운 기능
+- "작업 완료 후"에 "로그아웃" 옵션 추가
+- 도구 상자에 프레임 잠금 해제 추가 [#161](https://github.com/moesnow/March7thAssistant/pull/161)
+- "해상도 자동 수정 활성화" 옵션을 "해상도 자동 수정 및 자동 HDR 끄기 활성화"로 변경 [#156](https://github.com/moesnow/March7thAssistant/pull/156)
+- [OneBot](https://onebot.dev) 푸시 방식(QQ 봇) 추가
+- 기업용 위챗 앱 푸시 방식 이미지 전송 지원
 
-### 修复
-- 部分情况下解锁帧率失败
-- 部分情况下无法正常发送 gotify 通知
-- 任务追踪图标导致地图界面无法识别
-- 多个红点导致模拟宇宙领取每周奖励失败
-- 快速解锁教学动画导致虚构叙事异常
-- 主页三月七背景在高缩放率下模糊的问题
-- 某启动器修改分辨率注册表项后会导致注册表读取错误
+### 수정
+- 일부 상황에서 프레임 잠금 해제 실패
+- 일부 상황에서 Gotify 알림 발송 불가
+- 임무 추적 아이콘으로 인한 지도 인터페이스 인식 불가
+- 다중 빨간 점으로 인한 시뮬레이션 우주 주간 보상 수령 실패
+- 교육 애니메이션 빠른 잠금 해제로 인한 허구 이야기 이상
+- 홈 화면 Mar. 7th 배경이 높은 배율에서 흐리게 나오는 문제
+- 특정 런처가 해상도 레지스트리 항목을 수정하여 레지스트리 읽기 오류 발생
 
 ## v2.0.4
 
-### 新功能
-- 抽卡记录导出与简单分析（支持 [SRGF](https://uigf.org/zh/standards/srgf.html) 数据格式导入和导出）
-- 支持逐光捡金和支援角色选择 “花火”
+### 새로운 기능
+- 워프 기록 내보내기 및 간단 분석 ([SRGF](https://uigf.org/zh/standards/srgf.html) 데이터 형식 가져오기 및 내보내기 지원)
+- 빛 따라 금 찾아 및 지원 캐릭터 "스파클" 선택 지원
 
-### 修复
-- 特殊情况会导致下载失败
+### 수정
+- 특수 상황에서 다운로드 실패
 
 ## v2.0.3
 
-### 新功能
-- 支持所有手机壁纸
-- “自动剧情” 更名 “自动对话”
-- 副本名称新增 “无（跳过）” 选项
-- 支持大于等于 1920*1080 的 16:9 分辨率（实验性功能）
+### 새로운 기능
+- 모든 모바일 배경화면 지원
+- "자동 스토리" 명칭을 "자동 대화"로 변경
+- 던전 이름에 "없음(건너뛰기)" 옵션 추가
+- 1920*1080 이상의 16:9 해상도 지원 (실험적 기능)
 
-### 修复
-- 地图界面判断失败
-- “自动修改分辨率” 失效
-- 关闭 “启用自动修改分辨率” 选项会导致无法启动游戏
+### 수정
+- 지도 인터페이스 판단 실패
+- "해상도 자동 수정" 실패
+- "해상도 자동 수정 활성화" 옵션 해제 시 게임 실행 불가 문제
 
 ## v2.0.2
 
-### 新功能
-- 配队界面优化
-- 主页部分模块支持多选项（锄大地、模拟宇宙、逐光捡金）
-- 支持重置锄大地和模拟宇宙的配置文件
-- 新增 “游戏刷新时间”、“启用自动修改分辨率”、“启用自动配置游戏路径” 选项
-- 部分界面支持断网重连
+### 새로운 기능
+- 파티 편성 인터페이스 최적화
+- 홈 화면 일부 모듈 다중 옵션 지원 (필드 토벌, 시뮬레이션 우주, 빛 따라 금 찾아)
+- 필드 토벌 및 시뮬레이션 우주 설정 파일 초기화 지원
+- "게임 갱신 시간", "해상도 자동 수정 활성화", "게임 경로 자동 설정 활성화" 옵션 추가
+- 일부 인터페이스 네트워크 재연결 지원
 
-### 修复
-- 支持识别3D地图界面
-- 适配混沌回忆刷新后首次进入的新弹窗
+### 수정
+- 3D 지도 인터페이스 인식 지원
+- 혼돈의 기억 갱신 후 첫 진입 시 신규 팝업 적용
 
 ## v2.0.1
 
-### 新功能
-- 新增遗器副本完成后“自动分解四星及以下遗器”功能（默认关闭）
-- 新增“自动剧情”功能（侧栏工具箱内开启）
-- 新增“启动游戏”按钮（你可以将小助手当作启动器来用了）
-- 支持自动修改分辨率，并在启动游戏后恢复原分辨率
-- 支持自定义推送方式 [#136](https://github.com/moesnow/March7thAssistant/pull/136)
+### 새로운 기능
+- 유물 던전 완료 후 "4성 이하 유물 자동 분해" 기능 추가 (기본값 꺼짐)
+- "자동 스토리" 기능 추가 (사이드바 도구 상자 내 활성화)
+- "게임 실행" 버튼 추가 (어시스턴트를 런처로 사용 가능)
+- 해상도 자동 수정 지원 및 게임 실행 후 원본 해상도 복구 지원
+- 사용자 정의 푸시 방식 지원 [#136](https://github.com/moesnow/March7thAssistant/pull/136)
 
-### 修复
-- 更新程序覆盖失败
-- 异常状态下历战余响不会打满3次
-- 路径中含有空格导致更新会跳转到浏览器
-- 更新程序会错误删除 Fhoe-Rail\map 目录（遇到此问题手动点一次单独更新即可）
+### 수정
+- 업데이트 프로그램 덮어쓰기 실패
+- 이상 상태에서 전쟁의 여운 3회 미완료 문제
+- 경로에 공백이 포함된 경우 업데이트 시 브라우저로 이동하는 문제
+- 업데이트 프로그램이 Fhoe-Rail\map 디렉터리를 잘못 삭제하는 문제 (이 문제 발생 시 수동으로 개별 업데이트 클릭 필요)
 
 ## v2.0.0
 
-### 新功能
-- 支持 2.0 版本新增关卡
-- 支持 “限时提前解锁” 关卡
-- 支持选择 “拟造花萼（金）偏好地区”
-- 支持忘却之庭和支援角色选择 “真理医生”、“黑天鹅”、“米沙”
+### 새로운 기능
+- 2.0 버전 신규 스테이지 지원
+- "한정 조기 해금" 스테이지 지원
+- "고치(금) 선호 지역" 선택 지원
+- 망각의 정원 및 지원 캐릭터 "Dr. 레이시오", "블랙 스완", "미샤" 선택 지원
 
-### 修复
-- 部分设备 “焦炙之形” 关卡 OCR 识别异常
-- 降低 “拟造花萼（赤）” 阈值要求
-- “使用1次「万能合成机」” 合成材料更改为 “微光原核”
-- 版本更新后切换到 “回忆” 异常
-- 版本更新后切换到 “逐光捡金” 异常
-- 签到活动读取图片失败
+### 수정
+- 일부 기기에서 "타오르는 형상" 스테이지 OCR 인식 이상
+- "고치(적)" 임계값 요구 사항 완화
+- "「만능 합성기」 1회 사용" 합성 재료를 "미광 원핵"으로 변경
+- 버전 업데이트 후 "기억" 전환 이상
+- 버전 업데이트 후 "빛 따라 금 찾아" 전환 이상
+- 출석 체크 이벤트 이미지 읽기 실패
 
 ## v1.7.7
 
-### 新功能
-- SMTP 支持发送截图 [#114](https://github.com/moesnow/March7thAssistant/pull/114)
-- 支持 gotify 推送方式 [#112](https://github.com/moesnow/March7thAssistant/pull/112)
-- 新增“启用使用支援角色”选项（默认开启） [#121](https://github.com/moesnow/March7thAssistant/issues/121)
-- 修改“指定好友的支援角色”说明（填写用户名和UID都是支持的）
+### 새로운 기능
+- SMTP 스크린샷 전송 지원 [#114](https://github.com/moesnow/March7thAssistant/pull/114)
+- Gotify 푸시 방식 지원 [#112](https://github.com/moesnow/March7thAssistant/pull/112)
+- "지원 캐릭터 사용 활성화" 옵션 추가 (기본값 켜짐) [#121](https://github.com/moesnow/March7thAssistant/issues/121)
+- "지정 친구의 지원 캐릭터" 설명 수정 (사용자 이름과 UID 모두 지원)
 
-### 修复
-- 远程桌面多开会错误终止其他用户的游戏进程 [#113](https://github.com/moesnow/March7thAssistant/pull/113) [#35](https://github.com/moesnow/March7thAssistant/issues/35)
-- 部分文字 OCR 识别异常（如 RapidOCR 的拟造花萼相关问题）
-- 路径中含有英文括号导致解压失败
-- 模拟宇宙完成后无法正常领取奖励
+### 수정
+- 원격 데스크톱 다중 실행 시 다른 사용자의 게임 프로세스를 잘못 종료하는 문제 [#113](https://github.com/moesnow/March7thAssistant/pull/113) [#35](https://github.com/moesnow/March7thAssistant/issues/35)
+- 일부 문자 OCR 인식 이상 (예: RapidOCR의 고치 관련 문제)
+- 경로에 영문 괄호가 포함된 경우 압축 해제 실패
+- 시뮬레이션 우주 완료 후 보상 수령 불가 문제
 
 ## v1.7.6
 
-### 新功能
-- 支持活动花藏繁生、异器盈界、位面分裂（默认关闭）
+### 새로운 기능
+- 이벤트 꽃이 피는 정원, 기묘한 영역, 차원 분열 지원 (기본값 꺼짐)
 
 ## v1.7.5
 
-### 新功能
-- 支持虚构叙事（默认关卡范围 3-4）
+### 새로운 기능
+- 허구 이야기 지원 (기본 스테이지 범위 3-4)
 
 ## v1.7.4
 
-### 新功能
-- 支持更新时下载完整包（默认开启，设置→关于）
-- 支持加入预览版更新渠道（设置→关于）
-- 更新时支持调用 aria2 进行多线程下载（速度更快同时减少了下载中断的情况）
-- 更新时不再使用系统临时目录（方便添加杀毒软件白名单 [#86](https://github.com/moesnow/March7thAssistant/discussions/86#discussioncomment-7966897)）
+### 새로운 기능
+- 업데이트 시 전체 패키지 다운로드 지원 (기본값 켜짐, 설정→정보)
+- 미리보기(Preview) 버전 업데이트 채널 가입 지원 (설정→정보)
+- 업데이트 시 aria2를 호출하여 멀티스레드 다운로드 지원 (속도 향상 및 다운로드 중단 감소)
+- 업데이트 시 더 이상 시스템 임시 디렉터리를 사용하지 않음 (백신 화이트리스트 추가 용이 [#86](https://github.com/moesnow/March7thAssistant/discussions/86#discussioncomment-7966897))
 
-### 修复
-- 重复挑战副本运行异常
+### 수정
+- 반복 도전 던전 실행 이상
 
 ## v1.7.3
 
-### 新功能
-- 支持忘却之庭和支援角色选择“银枝”
-- 支持关闭“启用自动战斗检测”（设置→按键）
-- “自动战斗检测”时间更改为无限制（临时修复 [#96](https://github.com/moesnow/March7thAssistant/pull/96)）
+### 새로운 기능
+- 망각의 정원 및 지원 캐릭터 "아젠티" 선택 지원
+- "자동 전투 감지 활성화" 끄기 지원 (설정→키)
+- "자동 전투 감지" 시간을 무제한으로 변경 (임시 수정 [#96](https://github.com/moesnow/March7thAssistant/pull/96))
 
-### 修复
-- 忘却之庭交换队伍后未交换秘技释放顺序
-- 忘却之庭挑战失败后会尝试挑战下一层
+### 수정
+- 망각의 정원 파티 교체 후 비술 사용 순서 미교체
+- 망각의 정원 도전 실패 후 다음 층 도전 시도
 
 ## v1.7.2
 
-### 新功能
-- 支持关闭每日实训（可搭配每天一次模拟宇宙来完成500活跃度）
-- 支持新历战余响「蛀星的旧靥」
-- 支持忘却之庭和支援角色选择“阮·梅”
+### 새로운 기능
+- 일일 훈련 끄기 지원 (매일 시뮬레이션 우주 1회로 활약도 500 달성 가능)
+- 신규 전쟁의 여운 「별을 갉아먹는 옛 정원」 지원
+- 망각의 정원 및 지원 캐릭터 "완·매" 선택 지원
 
-### 修复
-- 传送忘却之庭小概率错误点击成信用点图标 [#91](https://github.com/moesnow/March7thAssistant/pull/91)
+### 수정
+- 망각의 정원 전송 시 드물게 신용 포인트 아이콘을 잘못 클릭하는 문제 [#91](https://github.com/moesnow/March7thAssistant/pull/91)
 
 ## v1.7.1
 
 
-### 修复
-- 锄大地和模拟宇宙运行异常
+### 수정
+- 필드 토벌 및 시뮬레이션 우주 실행 이상
 
 ## v1.7.0
 
-### 新功能
-- 适配每日实训新任务
-- 适配混沌回忆新界面（首次通关7层后需要手动完成教学动画）
-- 混沌回忆选角色界面支持滚动查找
-- 混沌回忆挑战失败后自动交换队伍
-- 混沌回忆默认关卡范围更改为 7-12
-- 支持的队伍编号更改为 3-7
-- 支持忘却之庭和支援角色选择“寒鸦”和“雪衣”
-- 钉钉推送默认配置添加 secret 参数
+### 새로운 기능
+- 일일 훈련 신규 임무 적용
+- 혼돈의 기억 신규 인터페이스 적용 (7층 최초 클리어 후 수동으로 교육 애니메이션 완료 필요)
+- 혼돈의 기억 캐릭터 선택 화면 스크롤 검색 지원
+- 혼돈의 기억 도전 실패 후 자동 파티 교체
+- 혼돈의 기억 기본 스테이지 범위 7-12로 변경
+- 지원되는 파티 번호 3-7로 변경
+- 망각의 정원 및 지원 캐릭터 "한아" 및 "설의" 선택 지원
+- 딩톡(Dingtalk) 푸시 기본 설정에 secret 파라미터 추가
 
-### 修复
-- 混沌回忆完成后领取奖励失败
+### 수정
+- 혼돈의 기억 완료 후 보상 수령 실패
 
 ## v1.6.9
 
-### 新功能
-- 适配混沌回忆1-5层更改为单个BOSS
+### 새로운 기능
+- 혼돈의 기억 1-5층 단일 보스 변경 적용
 
-### 修复
-- 滚动后缺少延迟导致部分界面识别位置产生偏移（再一次）
-- 移除部分测试代码
+### 수정
+- 스크롤 후 지연 부족으로 일부 인터페이스 인식 위치 이탈 (다시 발생)
+- 일부 테스트 코드 제거
 
 ## v1.6.8
 
 
-### 修复
-- 模拟宇宙运行频率配置名错误
+### 수정
+- 시뮬레이션 우주 실행 빈도 설정 이름 오류
 
 ## v1.6.7
 
-### 新功能
-- 支持开拓力优先合成沉浸器（默认关闭）
-- 模拟宇宙支持修改运行频率（默认每周一次）
+### 새로운 기능
+- 개척력으로 몰입기 우선 합성 지원 (기본값 꺼짐)
+- 시뮬레이션 우주 실행 빈도 수정 지원 (기본값 매주 1회)
 
-### 修复
-- 滚动后缺少延迟导致部分界面识别位置产生偏移
+### 수정
+- 스크롤 후 지연 부족으로 일부 인터페이스 인식 위치 이탈
 
 ## v1.6.6
 
-### 新功能
-- 支持单独运行“每日实训”和“清体力”任务
-- 更新 Fhoe-Rail 前会自动删除旧的 map 文件夹
+### 새로운 기능
+- "일일 훈련" 및 "개척력 소모" 작업 개별 실행 지원
+- Fhoe-Rail 업데이트 전 구버전 map 폴더 자동 삭제
 
-### 修复
-- 自动保存阵容导致“回忆”和“混沌回忆”无法正常运行
-- 部分含生僻字的副本名称小概率识别错误
+### 수정
+- 라인업 자동 저장으로 인한 "기억" 및 "혼돈의 기억" 실행 불가
+- 일부 생소한 글자가 포함된 던전 이름 인식 실패 확률 감소
 
 ## v1.6.5
 
-### 新功能
-- 支持使用集成模式运行模拟宇宙（默认）
-- 支持忘却之庭和支援角色选择“托帕&账账”、“桂乃芬”和“藿藿”
-- 添加副本“幽府之形”和“幽冥之径”
-- 支持拟造花萼体力小于60的情况 [#31](https://github.com/moesnow/March7thAssistant/pull/31)
-- 支持从"开始菜单"的快捷方式获取游戏路径 [#29](https://github.com/moesnow/March7thAssistant/pull/29)
+### 새로운 기능
+- 통합 모드로 시뮬레이션 우주 실행 지원 (기본값)
+- 망각의 정원 및 지원 캐릭터 "토파즈&복순이", "계네빈", "곽향" 선택 지원
+- 던전 "유부의 형상" 및 "유명의 길" 추가
+- 고치 개척력 60 미만 상황 지원 [#31](https://github.com/moesnow/March7thAssistant/pull/31)
+- "시작 메뉴" 바로가기에서 게임 경로 획득 지원 [#29](https://github.com/moesnow/March7thAssistant/pull/29)
 
-### 修复
-- 自动从启动器获取游戏路径
-- “使用消耗品”选中失败后重试逻辑错误 [#41](https://github.com/moesnow/March7thAssistant/pull/41)
+### 수정
+- 런처에서 게임 경로 자동 획득 수정
+- "소모품 사용" 선택 실패 후 재시도 로직 오류 [#41](https://github.com/moesnow/March7thAssistant/pull/41)
 
 ## v1.6.4
 
-### 新功能
-- 支持自定义模拟宇宙每周运行次数
-- 支持完成“通关「模拟宇宙」（任意世界）的1个区域”
-- 增加模拟宇宙完整性检测 [#27](https://github.com/moesnow/March7thAssistant/pull/27)
-- 支持“开拓者（穹）•毁灭”和“开拓者（穹）•存护” [#26](https://github.com/moesnow/March7thAssistant/pull/26)
+### 새로운 기능
+- 시뮬레이션 우주 매주 실행 횟수 사용자 정의 지원
+- "「시뮬레이션 우주」(임의의 세계) 1개 구역 통과" 완료 지원
+- 시뮬레이션 우주 무결성 검사 추가 [#27](https://github.com/moesnow/March7thAssistant/pull/27)
+- "개척자(남)•파멸" 및 "개척자(남)•보존" 지원 [#26](https://github.com/moesnow/March7thAssistant/pull/26)
 
-### 修复
-- 修复“游戏退出失败”的问题（回退实验性改动）
+### 수정
+- "게임 종료 실패" 문제 수정 (실험적 변경 사항 롤백)
 
 ## v1.6.3
 
-### 新功能
-- 支持通过“姬子试用”完成部分每日实训（实验性）
-- 支持通过“回忆一”完成部分每日实训（实验性）
-- Python 3.12.0 强力驱动
-- 适配 Fhoe-Rail 的最新改动
+### 새로운 기능
+- "히메코 체험"을 통한 일부 일일 훈련 완료 지원 (실험적)
+- "기억 1"을 통한 일부 일일 훈련 완료 지원 (실험적)
+- Python 3.12.0 기반 구동
+- Fhoe-Rail 최신 변경 사항 적용
 
-### 修复
-- “超时时间”修改为小数会导致图形界面启动崩溃
-- 无法领取巡光之礼和巡星之礼最后一天的奖励
-### 其他
-- 优化了现有功能的稳定性
-- 现在只会停止当前用户下的游戏进程（实验性）
+### 수정
+- "타임아웃 시간"을 소수로 수정 시 그래픽 인터페이스 충돌
+- 별의 선물 및 7일 출석 마지막 날 보상 수령 불가
+### 기타
+- 기존 기능 안정성 최적화
+- 이제 현재 사용자의 게임 프로세스만 중지 (실험적)
 
 ## v1.6.2
 
-### 新功能
-- 支持使用“后备开拓力”和“燃料”
-- 支持领取活动“巡光之礼”奖励
-- go-cqhttp 支持发送截图 [#21](https://github.com/moesnow/March7thAssistant/pull/21)
+### 새로운 기능
+- "예비 개척력" 및 "연료" 사용 지원
+- 이벤트 "별의 선물" 보상 수령 지원
+- go-cqhttp 스크린샷 전송 지원 [#21](https://github.com/moesnow/March7thAssistant/pull/21)
 
-### 修复
-- 有极小概率将开拓力识别成“米”字
-### 其他
-- 移除 power_total、dispatch_count、ocr_path 配置项
-- 使用消耗品前会先筛选类别避免背包物品太多
-- 升级 [PaddleOCR-json_v.1.3.1](https://github.com/hiroi-sora/PaddleOCR-json/releases/tag/v1.3.1)，兼容 Win7 x64
-- 支持 [RapidOCR-json_v0.2.0](https://github.com/hiroi-sora/RapidOCR-json/releases/download/v0.2.0/RapidOCR-json_v0.2.0.7z)，兼容没有 AVX 指令集的 CPU（自动判断）
+### 수정
+- 개척력을 "미" 글자로 인식할 확률 감소
+### 기타
+- power_total, dispatch_count, ocr_path 설정 항목 제거
+- 소모품 사용 전 가방 아이템 과다 방지를 위해 카테고리 우선 필터링
+- [PaddleOCR-json_v.1.3.1](https://github.com/hiroi-sora/PaddleOCR-json/releases/tag/v1.3.1) 업그레이드, Win7 x64 호환
+- [RapidOCR-json_v0.2.0](https://github.com/hiroi-sora/RapidOCR-json/releases/download/v0.2.0/RapidOCR-json_v0.2.0.7z) 지원, AVX 명령어 집합 미지원 CPU 호환 (자동 판단)
 
 ## v1.6.1
 
-### 新功能
-- 预设“副本名称”（包含解释）
-- 支持“镜流”和“开拓者（星）•毁灭”
-- 支持领取活动“巡星之礼”奖励
-- 支持识别“开启无名勋礼”界面
+### 새로운 기능
+- "던전 이름" 프리셋 (설명 포함)
+- "경류" 및 "개척자(여)•파멸" 지원
+- 이벤트 "별의 선물" 보상 수령 지원
+- "무명의 공훈 열기" 인터페이스 인식 지원
 
-### 修复
-- PushPlus推送 [#14](https://github.com/moesnow/March7thAssistant/pull/14)
-### 其他
-- 支持判断手机壁纸状态
-- 支持判断是否购买了“无名客的荣勋”
-- 配置队伍改为从手机界面进入而不是按键
+### 수정
+- PushPlus 푸시 [#14](https://github.com/moesnow/March7thAssistant/pull/14)
+### 기타
+- 모바일 배경화면 상태 판단 지원
+- "무명객의 영광" 구매 여부 판단 지원
+- 파티 설정 방식을 키 입력 대신 모바일 화면 진입으로 변경
 
 ## v1.6.0
 
-### 新功能
-- 完成混沌回忆后自动领取星琼奖励
-- 支持使用集成模式运行锄大地（默认）
-- 图形界面新增测试消息推送的功能
-- 补全了大部分推送方式所需的配置项（推荐Bark、Server酱、邮箱Smtp）
-- 支持从官方启动器获取游戏路径 [#10](https://github.com/moesnow/March7thAssistant/pull/10)
+### 새로운 기능
+- 혼돈의 기억 완료 후 성옥 보상 자동 수령
+- 통합 모드로 필드 토벌 실행 지원 (기본값)
+- 그래픽 인터페이스 테스트 메시지 푸시 기능 추가
+- 대부분의 푸시 방식에 필요한 설정 항목 보완 (Bark, ServerChan, 이메일 SMTP 추천)
+- 공식 런처에서 게임 경로 획득 지원 [#10](https://github.com/moesnow/March7thAssistant/pull/10)
 
-### 修复
-- Windows终端高版本提示 “错误 2147942402 (0x80070002)” [#12](https://github.com/moesnow/March7thAssistant/pull/12)
-- 低配置电脑检测委托状态偶尔异常
-- 优化了 “发生错误: None” 的错误提示
-- 开启系统设置 “显示强调色” 导致图形界面显示异常 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
-### 其他
-- 使用多线程大大缩短了图形界面的加载时间 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
-- 优化Python版本检测和依赖安装
-- 内置“使用教程”，网页版效果更佳
+### 수정
+- Windows 터미널 상위 버전 "오류 2147942402 (0x80070002)" 팁 [#12](https://github.com/moesnow/March7thAssistant/pull/12)
+- 저사양 PC에서 의뢰 상태 감지 간헐적 이상
+- "오류 발생: None" 오류 메시지 최적화
+- 시스템 설정 "강조 색 표시" 켜기 시 그래픽 인터페이스 표시 이상 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
+### 기타
+- 멀티스레딩 사용하여 그래픽 인터페이스 로딩 시간 대폭 단축 [#11](https://github.com/moesnow/March7thAssistant/pull/11)
+- Python 버전 감지 및 의존성 설치 최적화
+- "사용 튜토리얼" 내장 (웹 버전 권장)
 
 ## v1.5.0
 
-### 新功能
-- 优化了“副本名称”、“今日实训”在图形界面的显示方式
-- 尝试支持国际服启动界面（简体中文）
-- 合并 “退出游戏”、“自动关机” 等功能为 “任务完成后”，默认 “无”
-- 循环运行4点启动现在会随机延迟0-10分钟执行
+### 새로운 기능
+- 그래픽 인터페이스의 "던전 이름", "오늘의 훈련" 표시 방식 최적화
+- 국제 서버(Global) 런처 인터페이스 지원 시도 (간체 중문)
+- "게임 종료", "자동 종료" 등 기능을 "작업 완료 후"로 통합, 기본값 "없음"
+- 반복 실행 4시 시작 시 0-10분 무작위 지연 실행
 
-### 修复
-- 更新时不会自动关闭图形界面（文件占用导致更新失败）
-- 工作目录不正确无法运行（常见于使用任务计划程序）
-### 其他
-- 自动测速并选择最快的镜像源
-- 现在“超时”功能可以正确强制停止“锄大地”、“模拟宇宙”子任务
-- 优先使用 Windows Terminal 而不是 conhost
-- 弃用 “python_path”、“pip_mirror”、“github_mirror” 等设置项
+### 수정
+- 업데이트 시 그래픽 인터페이스 자동 종료 안 됨 (파일 점유로 인한 업데이트 실패)
+- 작업 디렉터리가 올바르지 않아 실행 불가 (작업 스케줄러 사용 시 흔함)
+### 기타
+- 가장 빠른 미러 소스 자동 속도 측정 및 선택
+- 이제 "타임아웃" 기능이 "필드 토벌", "시뮬레이션 우주" 하위 작업을 올바르게 강제 중지
+- conhost 대신 Windows Terminal 우선 사용
+- "python_path", "pip_mirror", "github_mirror" 등 설정 항목 폐기
 
 ## v1.4.2
 
-### 新功能
-- 内置 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 自动锄大地项目，支持在设置界面单独更新，欢迎给作者点个 Star
-- 调整了目录结构，推荐手动进行本次更新，自动更新不会移除不再使用的文件
+### 새로운 기능
+- [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 자동 필드 토벌 프로젝트 내장, 설정 인터페이스에서 개별 업데이트 지원 (제작자에게 Star 부탁드려요)
+- 디렉터리 구조 조정, 수동 업데이트 권장 (자동 업데이트는 미사용 파일을 삭제하지 않음)
 
 ## v1.4.1.1
 
 
-### 修复
-- 偶尔无法正常领取月卡
-- 从环境变量自动获取Python路径失败
-- pushplus推送问题（再一次）
+### 수정
+- 간헐적으로 월정액 수령 불가
+- 환경 변수에서 Python 경로 자동 획득 실패
+- pushplus 푸시 문제 (다시 발생)
 
 ## v1.4.1
 
-### 新功能
-- 支持忘却之庭和支援角色选择“符玄”和“玲可”
-- 增加选项用于开关实训“完成1次「忘却之庭」”（默认关闭）
-- 支持任务完成后播放声音提示（默认关闭）
-- 支持Windows原生通知（默认开启）
-- 优化部分错误提示
+### 새로운 기능
+- 망각의 정원 및 지원 캐릭터 "부현" 및 "링스" 선택 지원
+- 훈련 "「망각의 정원」 1회 완료" 스위치 옵션 추가 (기본값 꺼짐)
+- 작업 완료 후 소리 알림 재생 지원 (기본값 꺼짐)
+- Windows 기본 알림 지원 (기본값 켜짐)
+- 일부 오류 메시지 최적화
 
-### 修复
-- 锄大地原版启动报错
-- pushplus推送问题
+### 수정
+- 필드 토벌 원본 실행 오류
+- pushplus 푸시 문제
 
 ## v1.4.0
 
-### 新功能
-- 支持任务完成后自动关机（默认关闭）
-- 图形界面导航栏优化
-- 图形界面支持深色模式
+### 새로운 기능
+- 작업 완료 후 자동 종료(Shutdown) 지원 (기본값 꺼짐)
+- 그래픽 인터페이스 탐색 바 최적화
+- 그래픽 인터페이스 다크 모드 지원
 
-### 修复
-- 延长了点击传送副本后的等待时间
+### 수정
+- 던전 전송 클릭 후 대기 시간 연장
 
 ## v1.3.5
 
-### 新功能
-- 支持图形界面中修改秘技按键 [#4](https://github.com/moesnow/March7thAssistant/pull/4)
-- 支持图形界面中导入配置文件 [#4](https://github.com/moesnow/March7thAssistant/pull/4)
-- 支持使用指定好友的支援角色 [#5](https://github.com/moesnow/March7thAssistant/pull/5)
-- 下载过程支持显示进度条
+### 새로운 기능
+- 그래픽 인터페이스에서 비술 키 수정 지원 [#4](https://github.com/moesnow/March7thAssistant/pull/4)
+- 그래픽 인터페이스에서 설정 파일 가져오기 지원 [#4](https://github.com/moesnow/March7thAssistant/pull/4)
+- 지정 친구의 지원 캐릭터 사용 지원 [#5](https://github.com/moesnow/March7thAssistant/pull/5)
+- 다운로드 과정 진행률 표시 지원
 
-### 修复
-- 更换手机壁纸，导致委托检测失败
+### 수정
+- 모바일 배경화면 변경 시 의뢰 감지 실패
 
 ## v1.3.4.2
 
-### 新功能
-- 配置文件中新增修改秘技按键 [#3](https://github.com/moesnow/March7thAssistant/pull/3)
+### 새로운 기능
+- 설정 파일에 비술 키 수정 추가 [#3](https://github.com/moesnow/March7thAssistant/pull/3)
 
-### 修复
-- 位面分裂活动横幅导致无法自动进入黑塔办公室
-- 在图形界面中隐藏“副本所需开拓力”设置项避免误修改
-- 尝试解决卡在日常任务“完成1次「忘却之庭」”的问题
-- 尝试解决自动战斗未自动开启的问题
+### 수정
+- 차원 분열 이벤트 배너로 인해 헤르타 사무실 자동 진입 불가
+- 그래픽 인터페이스에서 "던전 필요 개척력" 설정 항목 숨김 (오수정 방지)
+- 일일 임무 "「망각의 정원」 1회 완료"에서 멈추는 문제 해결 시도
+- 자동 전투가 자동 켜지지 않는 문제 해결 시도
 
 ## v1.3.4.1
 
 
-### 修复
-- 修改 powershell 命令改用 cmd 运行
-- 自动安装 Python 的一些问题，现在可以正常安装（实验性）
+### 수정
+- powershell 명령을 cmd 실행으로 수정
+- Python 자동 설치 관련 일부 문제 수정 (실험적)
 
 ## v1.3.4
 
-### 新功能
-- 支持忘却之庭和支援角色选择 “丹恒•饮月”
-- 支持在设置中打开模拟宇宙和锄大地的原版图形界面（用于设置命途等）
-- 支持自动下载安装 Python、PaddleOCR-json （实验性）
-- 优化三月七小助手和模拟宇宙的更新功能（实验性）
+### 새로운 기능
+- 망각의 정원 및 지원 캐릭터 "단항•음월" 선택 지원
+- 설정에서 시뮬레이션 우주 및 필드 토벌 원본 그래픽 인터페이스 열기 지원 (운명의 길 설정 등 용도)
+- Python, PaddleOCR-json 자동 다운로드 및 설치 지원 (실험적)
+- March7thAssistant 및 시뮬레이션 우주 업데이트 기능 최적화 (실험적)
 
-### 修复
-- 非4K分辨率下窗口运行游戏导致功能异常
+### 수정
+- 비 4K 해상도 창 모드 실행 시 기능 이상
 
 ## v1.3.3.1
 
-### 新功能
-- 支持在游戏启动后自动检测并保存游戏路径
-- 更新常见问题（FQA）
+### 새로운 기능
+- 게임 시작 후 게임 경로 자동 감지 및 저장 지원
+- 자주 묻는 질문(FAQ) 업데이트
 
 ## v1.3.3
 
-### 新功能
-- 支持设置是否领取无名勋礼奖励（默认关闭）
-- 添加了更多的错误检测
-- 更新常见问题（FQA）
+### 새로운 기능
+- 무명의 공훈 보상 수령 여부 설정 지원 (기본값 꺼짐)
+- 더 많은 오류 감지 추가
+- 자주 묻는 질문(FAQ) 업데이트
 
 ## v1.3.2
 
-### 新功能
-- 支持自动开启“自动战斗”
-- 支持识别锄大地和模拟宇宙运行状态
-- 支持识别游戏更新所导致的需要重启
-- 支持在官方启动器打开的情况下启动游戏
-- 锄大地和模拟宇宙的脚本遇到错误现在会立即终止
+### 새로운 기능
+- "자동 전투" 자동 켜기 지원
+- 필드 토벌 및 시뮬레이션 우주 실행 상태 인식 지원
+- 게임 업데이트로 인한 재부팅 필요 인식 지원
+- 공식 런처가 열려 있는 상태에서 게임 실행 지원
+- 필드 토벌 및 시뮬레이션 우주 스크립트 오류 발생 시 즉시 종료
 
-### 修复
-- 运行任务后且图形界面未关闭，修改配置会导致时间和日常状态被覆盖
-- 启动游戏后未处于主界面判定启动失败（现支持任意已知界面）
+### 수정
+- 작업 실행 후 그래픽 인터페이스가 닫히지 않은 상태에서 설정 수정 시 시간 및 일일 상태가 덮어씌워지는 문제
+- 게임 시작 후 메인 화면이 아닐 때 시작 실패 판정 (이제 알려진 임의의 화면 지원)
 
 ## v1.3.1
 
-### 新功能
-- 支持模拟宇宙“领取沉浸奖励”，在设置中开启，默认关闭
-- 支持单独更新模拟宇宙版本（实验性）
-- 图形界面支持自动更新版本（实验性）
-- 图形界面支持手动检测更新
-- 图形界面增加“更新日志”、“常见问题”等子页面
+### 새로운 기능
+- 시뮬레이션 우주 "몰입 보상 수령" 지원, 설정에서 켜기 (기본값 꺼짐)
+- 시뮬레이션 우주 버전 개별 업데이트 지원 (실험적)
+- 그래픽 인터페이스 버전 자동 업데이트 지원 (실험적)
+- 그래픽 인터페이스 수동 업데이트 확인 지원
+- 그래픽 인터페이스 "업데이트 내역", "자주 묻는 질문" 등 하위 페이지 추가
 
-### 修复
-- 优化模拟宇宙完成后的通知截图
+### 수정
+- 시뮬레이션 우주 완료 후 알림 스크린샷 최적화
 
 ## v1.3.0.2
 
-### 新功能
-- 恢复 v1.3.0 中移除的使用支援角色（borrow_character_enable）选项
-- 副本名称设置为"无"代表即使有对应的实训任务也不会去完成
-
-### 修复
-- v1.3.0 混沌回忆星数检测异常
+### 새로운 기능
+- v1.3.0에서 제거된 지원 캐릭터 사용(borrow_character_enable) 옵션 복구
+- 던전 이름을 "없음"으로 설정 시 해당 훈련 임무가 있어도 수행하지 않음
 
 ## v1.3.0.1
 
 
-### 修复
-- v1.3.0 通过图形界面生成的配置文件不正确
+### 수정
+- v1.3.0 그래픽 인터페이스를 통해 생성된 설정 파일이 올바르지 않음
 
 ## v1.3.0
 
-### 新功能
-- 支持识别每日实训内容并尝试完成，而不是全部做一遍 [点击查看支持任务](https://github.com/moesnow/March7thAssistant#%E6%AF%8F%E6%97%A5%E5%AE%9E%E8%AE%AD)
-- 新增选项每周优先完成三次「历战余响」（默认关闭）
-- 副本名称（instance_names）更改为根据副本类型单独设置，同时也会用于“完成1次xxx”的实训任务中
-- 移除“使用支援角色”、“强制使用支援角色”、“启用每日拍照”和“启用每日合成/使用 材料/消耗品”配置选项
-- 每周模拟宇宙运行前先检查一遍可领取的奖励
+### 새로운 기능
+- 일일 훈련 내용을 인식하고 전부 수행하는 대신 시도하여 완료 지원 [지원 임무 보기](https://github.com/moesnow/March7thAssistant#%E6%AF%8F%E6%97%A5%E5%AE%9E%E8%AE%AD)
+- 매주 「전쟁의 여운」 3회 우선 완료 옵션 추가 (기본값 꺼짐)
+- 던전 이름(instance_names)을 던전 유형별 개별 설정으로 변경, "xxx 1회 완료" 실전 임무에도 사용됨
+- "지원 캐릭터 사용", "강제 지원 캐릭터 사용", "일일 사진 촬영 활성화", "일일 재료/소모품 합성/사용 활성화" 설정 옵션 제거
+- 매주 시뮬레이션 우주 실행 전 수령 가능한 보상 우선 확인
 
-### 修复
-- 尝试解决低概率下识别副本名称失败
-- 彻底解决每日实训是否全部完成检测不可信
+### 수정
+- 낮은 확률로 던전 이름 인식 실패 문제 해결 시도
+- 일일 훈련 전체 완료 감지 신뢰 불가 문제 완전 해결
 
 ## v1.2.6
 
-### 新功能
-- 支持更多副本类型：侵蚀隧洞、凝滞虚影、拟造花萼（金）、拟造花萼（赤）
-- 设置中的捕获截图功能支持OCR识别文字，可用于复制副本名称
+### 새로운 기능
+- 더 많은 던전 유형 지원: 침식된 터널, 정체된 허영, 고치(금), 고치(적)
+- 설정의 스크린샷 캡처 기능 OCR 문자 인식 지원 (던전 이름 복사 용도)
 
 ## v1.2.5
 
-### 新功能
-- 内置锄大地命令
+### 새로운 기능
+- 필드 토벌 명령 내장
 
 
-### 修复
-- 开拓力偶尔识别成“1240”而不是“/240”
-- 每日实训是否全部完成检测失败
+### 수정
+- 개척력을 "/240" 대신 "1240"으로 인식하는 문제
+- 일일 훈련 전체 완료 감지 실패
 
 ## v1.2.4
 
-### 新功能
-- 图形界面支持显示更新日志
-- 更新模拟宇宙 [Auto_Simulated_Universe  v5.30](https://github.com/CHNZYX/Auto_Simulated_Universe/tree/f17c5db33a42d7f6e6204cb3e6e83ec2fd208e5e)
+### 새로운 기능
+- 그래픽 인터페이스 업데이트 내역 표시 지원
+- 시뮬레이션 우주 [Auto_Simulated_Universe  v5.30](https://github.com/CHNZYX/Auto_Simulated_Universe/tree/f17c5db33a42d7f6e6204cb3e6e83ec2fd208e5e) 업데이트
 
 
-### 修复
-- 1.3版本的各种UI变化导致的异常
+### 수정
+- 1.3 버전의 각종 UI 변화로 인한 이상
 
 ## v1.2.3
 
-### 新功能
-- 混沌回忆支持检测每关星数
-- 副本名称支持简写，例如【睿治之径】
+### 새로운 기능
+- 혼돈의 기억 매 층 별(Star) 개수 감지 지원
+- 던전 이름 약어 지원 (예: 【지혜의 길】)
 
 
-### 修复
-- 偶尔点击速度过快导致领取实训奖励失败
-- 鼠标位于屏幕左上角触发安全策略导致点击失效
-- 偶尔界面切换速度太慢导致消耗品识别点击位置偏移
-- 检测无名勋礼奖励模板图片错误
-- 降低部分阈值要求，提高操作成功率
-- 移除部分多余的界面检测，提高速度
+### 수정
+- 간헐적 클릭 속도 과다로 인한 훈련 보상 수령 실패
+- 마우스가 화면 좌측 상단에 위치하여 보안 정책 트리거로 인한 클릭 실패
+- 간헐적 인터페이스 전환 속도 지연으로 인한 소모품 인식 클릭 위치 이탈
+- 무명의 공훈 보상 템플릿 이미지 오류 감지
+- 일부 임계값 요구 사항 완화, 작업 성공률 향상
+- 일부 불필요한 인터페이스 감지 제거, 속도 향상
 
 ## v1.2.2
 
 ### Features
 - feat: add Bailu and Kafka
-适配白露和卡芙卡
+백로 및 카프카 적용
 - feat: forgottenhall support melee character
-混沌回忆支持近战角色开怪
+혼돈의 기억 근접 캐릭터 공격 시작 지원
 - feat: add take_screenshot to gui
-图形界面设置中新增捕获截图功能
+그래픽 인터페이스 설정에 스크린샷 캡처 기능 추가
 - feat: add check update to gui
-图形界面启动时检测更新
+그래픽 인터페이스 시작 시 업데이트 확인
 - feat: add tip when start
 
 ### Fixes
 - fix: use consumables when repeat
-消耗品效果未过期导致无法使用
+소모품 효과 미만료로 인한 사용 불가 수정
 - fix: check_update option not available
-更新检测开关不可用
+업데이트 확인 스위치 사용 불가 수정
 - fix: avoid trailblaze_power overflow
-模拟宇宙前后清一次体力避免溢出
+시뮬레이션 우주 전후 개척력 1회 소모하여 넘침 방지
 - fix: space cause text ocr fail
-偶尔会识别出空格导致判断文字失败
+간헐적으로 공백 인식으로 인한 문자 판단 실패 수정
 - fix: exit function
 
 ## v1.2.1
 
 ### Features
 - feat: auto change team
-在打副本和锄大地前可以自动切换队伍
+던전 및 필드 토벌 전 자동 파티 교체 가능
 - feat: add submodule Auto_Simulated_Universe
-添加模拟宇宙子模块
+시뮬레이션 우주 서브 모듈 추가
 
 ### Fixes
 - fix: switch window problem
-游戏窗口偶尔无法切换到前台
+게임 창이 간헐적으로 전경으로 전환되지 않는 문제
 - fix: same borrow character
-支援角色和原队伍角色相同
+지원 캐릭터와 원본 파티 캐릭터가 동일한 문제
 
 ## v1.2.0
 
 ### Features
 - feat: graphical user interface
-增加图形用户界面
+그래픽 사용자 인터페이스(GUI) 추가

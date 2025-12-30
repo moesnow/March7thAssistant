@@ -23,16 +23,16 @@ class BannerWidget(QWidget):
         self.setFixedHeight(320)
 
         self.vBoxLayout = QVBoxLayout(self)
-        self.galleryLabel = QLabel(f'三月七小助手 {cfg.version}\nMarch7thAssistant', self)
+        self.galleryLabel = QLabel(f'March 7th Assistant {cfg.version}\n붕괴: 스타레일 자동화 도구', self)
         self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
-        # 创建阴影效果
+        # 그림자 효과 생성
         shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)  # 阴影模糊半径
-        shadow.setColor(Qt.black)  # 阴影颜色
-        shadow.setOffset(1.2, 1.2)     # 阴影偏移量
+        shadow.setBlurRadius(20)  # 그림자 흐림 반경
+        shadow.setColor(Qt.black)  # 그림자 색상
+        shadow.setOffset(1.2, 1.2)     # 그림자 오프셋
 
-        # 将阴影效果应用于小部件
+        # 위젯에 그림자 효과 적용
         self.galleryLabel.setGraphicsEffect(shadow)
 
         self.img = Image.open("./assets/app/images/bg37.jpg")
@@ -47,10 +47,10 @@ class BannerWidget(QWidget):
 
         self.galleryLabel.setObjectName('galleryLabel')
 
-        # Create a horizontal layout for the linkCardView with bottom alignment and margin
+        # LinkCardView를 위한 수평 레이아웃 생성 (하단 정렬 및 여백 포함)
         linkCardLayout = QHBoxLayout()
         linkCardLayout.addWidget(self.linkCardView)
-        # linkCardLayout.setContentsMargins(0, 0, 0, 0)  # Add bottom margin of 20 units
+        # linkCardLayout.setContentsMargins(0, 0, 0, 0)  # 20 단위 하단 여백 추가
         linkCardLayout.setAlignment(Qt.AlignBottom)
 
         self.vBoxLayout.setSpacing(0)
@@ -62,8 +62,8 @@ class BannerWidget(QWidget):
 
         self.linkCardView.addCard(
             FluentIcon.GITHUB,
-            'GitHub repo',
-            '喜欢就给个星星吧\n拜托求求你啦|･ω･)',
+            'GitHub 저장소',
+            '마음에 드신다면 Star를 눌러주세요\n부탁드립니다 제발요 |･ω･)',
             "https://github.com/moesnow/March7thAssistant",
         )
 
@@ -76,13 +76,13 @@ class BannerWidget(QWidget):
             image_height = self.img.width * self.height() // self.width()
             crop_area = (0, 0, self.img.width, image_height)  # (left, upper, right, lower)
             cropped_img = self.img.crop(crop_area)
-            img_data = np.array(cropped_img)  # Convert PIL Image to numpy array
+            img_data = np.array(cropped_img)  # PIL 이미지를 numpy 배열로 변환
             height, width, channels = img_data.shape
             bytes_per_line = channels * width
             self.banner = QImage(img_data.data, width, height, bytes_per_line, QImage.Format_RGB888)
 
             path = QPainterPath()
-            path.addRoundedRect(0, 0, width + 50, height + 50, 10, 10)  # 10 is the radius for corners
+            path.addRoundedRect(0, 0, width + 50, height + 50, 10, 10)  # 10은 모서리 반경
             self.path = path.simplified()
 
         painter.setClipPath(self.path)
@@ -90,7 +90,7 @@ class BannerWidget(QWidget):
 
 
 class HomeInterface(ScrollArea):
-    """ Home interface """
+    """ 홈 인터페이스 """
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -117,61 +117,61 @@ class HomeInterface(ScrollArea):
 
     def loadSamples(self):
         basicInputView = SampleCardView1(
-            "任务 >", self.view)
+            "작업 >", self.view)
 
         basicInputView.addSampleCard(
             icon="./assets/app/images/March7th.jpg",
-            title="完整运行",
+            title="전체 실행",
             action=lambda: start_task("main")
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/JingYuan.jpg",
-            title="日常",
+            title="일일",
             action={
-                "每日实训": lambda: start_task("daily"),
-                "清体力": lambda: start_task("power"),
+                "일일 훈련": lambda: start_task("daily"),
+                "개척력 소모": lambda: start_task("power"),
             }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Yanqing.jpg",
-            title="货币战争",
+            title="화폐 전쟁",
             action={
-                "运行一次": lambda: start_task("currencywars"),
-                "循环运行": lambda: start_task("currencywarsloop"),
-                # "中途接管": lambda: start_task("currencywarstemp"),
+                "1회 실행": lambda: start_task("currencywars"),
+                "반복 실행": lambda: start_task("currencywarsloop"),
+                # "중도 실행": lambda: start_task("currencywarstemp"),
             }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/SilverWolf.jpg",
-            title="锄大地",
+            title="필드 토벌",
             action={
-                "快速启动 ⭐": lambda: start_task("fight"),
-                "原版运行": lambda: start_task("fight_gui"),
-                "更新锄大地": lambda: start_task("fight_update"),
-                "重置配置文件": lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json")),
-                "打开程序目录": lambda: os.startfile(cfg.fight_path),
-                "打开项目主页": lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
+                "빠른 실행 ⭐": lambda: start_task("fight"),
+                "원본 실행": lambda: start_task("fight_gui"),
+                "토벌런 업데이트": lambda: start_task("fight_update"),
+                "설정 파일 초기화": lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json")),
+                "프로그램 폴더 열기": lambda: os.startfile(cfg.fight_path),
+                "프로젝트 홈페이지 열기": lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
             }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Herta.jpg",
-            title="差分宇宙",
+            title="차분화 우주",
             action={
-                "快速启动 ⭐": lambda: start_task("universe"),
-                "原版运行": lambda: start_task("universe_gui"),
-                "更新模拟宇宙": lambda: start_task("universe_update"),
-                "重置配置文件": lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
-                "打开程序目录": lambda: os.startfile(cfg.universe_path),
-                "打开项目主页": lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
+                "빠른 실행 ⭐": lambda: start_task("universe"),
+                "원본 실행": lambda: start_task("universe_gui"),
+                "시뮬레이션 우주 업데이트": lambda: start_task("universe_update"),
+                "설정 파일 초기화": lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
+                "프로그램 폴더 열기": lambda: os.startfile(cfg.universe_path),
+                "프로젝트 홈페이지 열기": lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
             }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Bronya.jpg",
-            title="逐光捡金",
+            title="빛 따라 금 찾아",
             action={
-                "混沌回忆": lambda: start_task("forgottenhall"),
-                "虚构叙事": lambda: start_task("purefiction"),
-                "末日幻影": lambda: start_task("apocalyptic"),
+                "혼돈의 기억": lambda: start_task("forgottenhall"),
+                "허구 이야기": lambda: start_task("purefiction"),
+                "종말의 환영": lambda: start_task("apocalyptic"),
             }
         )
 

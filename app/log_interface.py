@@ -25,13 +25,13 @@ import ctypes
 
 
 class LogInterface(ScrollArea):
-    """日志界面"""
+    """로그 인터페이스"""
 
-    # 信号：任务完成
+    # 신호: 작업 완료
     taskFinished = pyqtSignal(int)  # exit_code
-    # 信号：请求停止任务（用于从全局热键线程安全调用）
+    # 신호: 작업 중지 요청 (글로벌 단축키에서 스레드 안전하게 호출하기 위함)
     stopTaskRequested = pyqtSignal()
-    # 线程安全的日志信号（用于从后台线程发送日志）
+    # 스레드 안전한 로그 신호 (백그라운드 스레드에서 로그 전송용)
     logMessage = pyqtSignal(str)
 
     def __init__(self, parent=None):
@@ -40,22 +40,22 @@ class LogInterface(ScrollArea):
         self.current_task = None
         self._hotkey_registered = False
         self._current_hotkey = None
-        # 当前运行的定时任务元数据（如果是由定时触发），在进程结束时用于发送通知与执行后续操作
+        # 현재 실행 중인 예약 작업 메타데이터 (예약 실행인 경우), 프로세스 종료 시 알림 전송 및 후속 작업 실행에 사용
         self._pending_task_meta = None
-        # 用于在强制停止当前任务后排队延迟启动的任务（tuple: (task_meta, task_dict)）
+        # 현재 작업을 강제 중지한 후 지연 시작할 작업 대기열 (tuple: (task_meta, task_dict))
         self._pending_start_task_after_stop = None
-        # 可取消的超时定时器（用于在任务超时时停止任务）
+        # 취소 가능한 타임아웃 타이머 (작업 시간 초과 시 중지용)
         self._timeout_timer = None
-        # 在任务完成后可能排队的系统操作（post_action）以及用于取消的 QTimer
+        # 작업 완료 후 대기 중인 시스템 작업 (post_action) 및 취소용 QTimer
         self._pending_post_action = None
         self._pending_post_action_timer = None
-        # 标记任务是否因异常被停止（非正常结束，如超时、进程错误或异常退出）
+        # 작업이 비정상적으로 중지되었는지 여부 표시 (타임아웃, 프로세스 오류 또는 비정상 종료 등)
         self._stopped_abnormally = False
 
-        # 定时运行相关
+        # 예약 실행 관련
         self._schedule_timer = QTimer(self)
         self._schedule_timer.timeout.connect(self._checkScheduledTime)
-        # 记录每个定时任务最后触发的时间戳（秒），避免同一任务在短时间内重复触发
+        # 각 예약 작업의 마지막 트리거 타임스탬프(초) 기록, 동일 작업의 단시간 내 중복 트리거 방지
         self._last_triggered_ts = {}
 
         self.scrollWidget = QWidget(self)
@@ -64,14 +64,14 @@ class LogInterface(ScrollArea):
         self.__initWidget()
         self.__initShortcut()
 
-        # 连接停止任务信号
+        # 작업 중지 신호 연결
         self.stopTaskRequested.connect(self.stopTask)
-        # 线程安全日志信号连接（用于从后台线程发送日志）
+        # 스레드 안전 로그 신호 연결 (백그라운드 스레드에서 로그 전송용)
         self.logMessage.connect(self.appendLog)
 
-        # 在启动定时器前，迁移旧的单一定时配置（若开启且未配置新任务）
+        # 타이머 시작 전, 구형 단일 예약 설정을 마이그레이션 (활성화되어 있고 새 작업이 없는 경우)
         self._migrate_legacy_schedule()
-        # 启动定时检查器（每30秒检查一次）
+        # 예약 확인 타이머 시작 (30초마다 확인)
         self._schedule_timer.start(30000)
 
     def __initWidget(self):
@@ -83,44 +83,44 @@ class LogInterface(ScrollArea):
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)
 
-        # 标题区域
+        # 헤더 영역
         self.headerWidget = QWidget()
         self.headerLayout = QHBoxLayout(self.headerWidget)
         self.headerLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.titleLabel = StrongBodyLabel('任务日志')
+        self.titleLabel = StrongBodyLabel('작업 로그')
         self.titleLabel.setFont(QFont('Microsoft YaHei', 16, QFont.Bold))
 
-        self.statusLabel = BodyLabel('等待任务...')
+        self.statusLabel = BodyLabel('작업 대기 중...')
         # self.statusLabel.setStyleSheet("color: gray;")
 
         self.headerLayout.addWidget(self.titleLabel)
         self.headerLayout.addWidget(self.statusLabel)
         self.headerLayout.addStretch()
 
-        # 按钮区域
+        # 버튼 영역
         self.buttonWidget = QWidget()
         self.buttonLayout = QHBoxLayout(self.buttonWidget)
         self.buttonLayout.setContentsMargins(0, 0, 0, 0)
         self.buttonLayout.setSpacing(10)
 
         hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
-        self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, self.tr(f'停止任务 ({hotkey})'))
+        self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, self.tr(f'작업 중지 ({hotkey})'))
         self.stopButton.clicked.connect(self.stopTask)
         self.stopButton.setEnabled(False)
 
-        self.clearButton = PushButton(FluentIcon.DELETE, '清空日志')
+        self.clearButton = PushButton(FluentIcon.DELETE, '로그 비우기')
         self.clearButton.clicked.connect(self.clearLog)
 
         self.buttonLayout.addWidget(self.stopButton)
         self.buttonLayout.addWidget(self.clearButton)
         self.buttonLayout.addSpacing(20)
 
-        # 定时任务配置（支持多个定时任务）
-        self.scheduleLabel = BodyLabel('定时任务')
+        # 예약 작업 설정 (다중 예약 작업 지원)
+        self.scheduleLabel = BodyLabel('예약 작업')
 
-        # 打开定时任务管理配置弹窗
-        self.manageScheduleButton = PushButton('配置定时任务')
+        # 예약 작업 관리 설정 팝업 열기
+        self.manageScheduleButton = PushButton('예약 작업 설정')
         self.manageScheduleButton.clicked.connect(self._openScheduleManager)
 
         self.scheduleStatusLabel = BodyLabel()
@@ -131,7 +131,7 @@ class LogInterface(ScrollArea):
         self.buttonLayout.addWidget(self.scheduleStatusLabel)
         self.buttonLayout.addStretch()
 
-        # 日志显示区域
+        # 로그 표시 영역
         self.logCard = CardWidget()
         self.logCardLayout = QVBoxLayout(self.logCard)
         self.logCardLayout.setContentsMargins(0, 0, 0, 0)
@@ -155,7 +155,7 @@ class LogInterface(ScrollArea):
 
         self.logCardLayout.addWidget(self.logTextEdit)
 
-        # 布局
+        # 레이아웃
         self.vBoxLayout.setContentsMargins(20, 20, 20, 10)
         self.vBoxLayout.setSpacing(15)
         self.vBoxLayout.addWidget(self.headerWidget)
@@ -164,12 +164,12 @@ class LogInterface(ScrollArea):
         self.vBoxLayout.setAlignment(Qt.AlignTop)
 
     def __initShortcut(self):
-        """初始化快捷键（全局热键，支持后台）"""
+        """단축키 초기화 (글로벌 단축키, 백그라운드 지원)"""
         self._registerGlobalHotkey()
 
     def _registerGlobalHotkey(self):
-        """注册全局热键"""
-        # 先取消之前的热键
+        """글로벌 단축키 등록"""
+        # 이전 단축키 등록 해제
         self._unregisterGlobalHotkey()
 
         try:
@@ -178,11 +178,11 @@ class LogInterface(ScrollArea):
             self._hotkey_registered = True
             self._current_hotkey = hotkey
         except Exception as e:
-            print(f"注册全局热键失败: {e}")
+            print(f"글로벌 단축키 등록 실패: {e}")
             self._hotkey_registered = False
 
     def _unregisterGlobalHotkey(self):
-        """取消注册全局热键"""
+        """글로벌 단축키 등록 해제"""
         if self._hotkey_registered and self._current_hotkey:
             try:
                 keyboard.remove_hotkey(self._current_hotkey)
@@ -192,31 +192,31 @@ class LogInterface(ScrollArea):
             self._current_hotkey = None
 
     def _onGlobalHotkeyPressed(self):
-        """全局热键被按下"""
-        # 使用信号来线程安全地调用停止任务
+        """글로벌 단축키 눌림"""
+        # 신호를 사용하여 스레드 안전하게 작업 중지 호출
         self.stopTaskRequested.emit()
 
     def updateHotkey(self):
-        """更新热键（当配置改变时调用）"""
+        """단축키 업데이트 (설정 변경 시 호출)"""
         self._registerGlobalHotkey()
-        # 更新按钮文本
+        # 버튼 텍스트 업데이트
         hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
-        self.stopButton.setText(self.tr(f'停止任务 ({hotkey})'))
+        self.stopButton.setText(self.tr(f'작업 중지 ({hotkey})'))
 
     def _updateScheduleStatusLabel(self):
-        """更新定时状态标签：展示启用的定时任务数量和下次运行时间（若有）"""
+        """예약 상태 라벨 업데이트: 활성화된 예약 작업 수와 다음 실행 시간(있는 경우) 표시"""
         tasks = cfg.get_value("scheduled_tasks", []) or []
         enabled = [t for t in tasks if t.get('enabled', True)]
         # if not enabled:
-        #     # 兼容旧配置：如果开启了旧的单一定时配置，显示旧配置内容
+        #     # 구형 설정 호환: 구형 단일 예약 설정이 켜져있다면 해당 내용 표시
         #     if cfg.get_value('scheduled_run_enable', False):
         #         time_str = cfg.get_value('scheduled_run_time', '04:00')
-        #         self.scheduleStatusLabel.setText(self.tr(f'旧单一定时启用: {time_str}'))
+        #         self.scheduleStatusLabel.setText(self.tr(f'구형 단일 예약 활성화: {time_str}'))
         #     else:
-        #         self.scheduleStatusLabel.setText('未配置定时任务')
+        #         self.scheduleStatusLabel.setText('예약 작업이 설정되지 않았습니다')
         #     return
 
-        # 找到接下来最近要运行的任务时间
+        # 다음에 실행될 가장 가까운 작업 시간 찾기
         current_time = QTime.currentTime()
         next_secs = None
         next_task = None
@@ -235,44 +235,44 @@ class LogInterface(ScrollArea):
                 next_task = t
 
         if next_task and next_secs is not None:
-            # 计算下次时间点的时刻
+            # 다음 시간 계산
             if next_secs == 0:
                 time_str = next_task.get('time')
             else:
-                # 计算具体时间
+                # 구체적인 시간 계산
                 time_str = next_task.get('time')
-            self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}，下次: {time_str} ({next_task.get("name", "")})'))
+            self.scheduleStatusLabel.setText(self.tr(f'활성화된 예약 작업: {len(enabled)}개, 다음 실행: {time_str} ({next_task.get("name", "")})'))
         else:
-            # self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}'))
-            self.scheduleStatusLabel.setText('尚未配置定时任务')
+            # self.scheduleStatusLabel.setText(self.tr(f'활성화된 예약 작업: {len(enabled)}개'))
+            self.scheduleStatusLabel.setText('예약 작업이 설정되지 않았습니다')
 
     def _openScheduleManager(self):
-        """打开定时任务管理对话框"""
+        """예약 작업 관리 대화 상자 열기"""
         tasks = cfg.get_value('scheduled_tasks', []) or []
         dlg = ScheduleManagerDialog(self, scheduled_tasks=tasks, save_callback=self._saveScheduledTasks)
         dlg.exec_()
-        # 重新刷新状态标签
+        # 상태 라벨 새로고침
         self._updateScheduleStatusLabel()
 
     def _saveScheduledTasks(self, tasks):
-        """保存定时任务列表到配置文件"""
+        """예약 작업 목록을 설정 파일에 저장"""
         cfg.set_value('scheduled_tasks', tasks)
-        # 清理 last_triggered_ts 中已删除任务的条目
+        # last_triggered_ts에서 삭제된 작업 항목 정리
         valid_ids = set(t.get('id') for t in tasks if t.get('id'))
         self._last_triggered_ts = {k: v for k, v in self._last_triggered_ts.items() if k in valid_ids}
 
     def _migrate_legacy_schedule(self):
-        """如果开启了旧的单一定时配置且没有新的定时任务，则将旧配置迁移为新的定时任务列表中的一项。"""
+        """구형 단일 예약 설정이 켜져 있고 새로운 예약 작업이 없는 경우, 구형 설정을 새 예약 작업 목록의 항목으로 마이그레이션합니다."""
         try:
             tasks = cfg.get_value('scheduled_tasks', []) or []
             if tasks:
                 return
             if cfg.get_value('scheduled_run_enable', False):
                 scheduled_time = cfg.get_value('scheduled_run_time', '04:00')
-                # 生成新的任务项（完整运行）
+                # 새로운 작업 항목 생성 (전체 실행)
                 task = {
                     'id': str(uuid.uuid4()),
-                    'name': '完整运行',
+                    'name': '전체 실행',
                     'time': scheduled_time,
                     'program': 'self',
                     'args': 'main',
@@ -282,29 +282,29 @@ class LogInterface(ScrollArea):
                     'enabled': True,
                 }
                 cfg.set_value('scheduled_tasks', [task])
-                # 关闭旧配置标记，避免重复迁移
+                # 구형 설정 플래그 끄기 (중복 마이그레이션 방지)
                 cfg.set_value('scheduled_run_enable', False)
-                # 写日志以提醒用户迁移已完成
+                # 마이그레이션 완료 로그 기록
                 try:
-                    self.appendLog(f"\n已将旧单一定时迁移为新的定时任务: {task['name']} @ {scheduled_time}\n")
+                    self.appendLog(f"\n구형 단일 예약 설정을 새로운 예약 작업으로 마이그레이션했습니다: {task['name']} @ {scheduled_time}\n")
                 except Exception:
                     pass
-                # 更新状态展示
+                # 상태 표시 업데이트
                 try:
                     self._updateScheduleStatusLabel()
                 except Exception:
                     pass
         except Exception:
-            # 忽略迁移过程中的任何错误
+            # 마이그레이션 중 오류는 무시
             pass
 
     def _checkScheduledTime(self):
-        """检查是否到达任意已启用的定时任务时间并触发对应任务"""
+        """활성화된 예약 작업 시간에 도달했는지 확인하고 해당 작업을 트리거"""
         tasks = cfg.get_value('scheduled_tasks', []) or []
         # if not tasks:
-        #     # 兼容旧单一定时任务配置
+        #     # 구형 단일 예약 작업 호환
         #     if cfg.get_value('scheduled_run_enable', False):
-        #         # 避免和多任务逻辑冲突，按旧逻辑触发完整运行
+        #         # 다중 작업 로직 충돌 방지, 구형 로직대로 전체 실행 트리거
         #         if self.isTaskRunning():
         #             return
         #         current_time = QTime.currentTime()
@@ -318,12 +318,12 @@ class LogInterface(ScrollArea):
         #         if secs < 0:
         #             secs += 24 * 60 * 60
         #         if 0 <= secs <= 60:
-        #             self.appendLog(f"\n========== 定时任务触发 (旧配置: {scheduled_time_str}) ==========\n")
+        #             self.appendLog(f"\n========== 예약 작업 트리거 (구형 설정: {scheduled_time_str}) ==========\n")
         #             self.startTask('main')
         #     return
 
-        # 多任务处理：不提前返回，按每个任务的冲突处理策略执行
-        # 先更新状态展示
+        # 다중 작업 처리: 미리 반환하지 않고 각 작업의 충돌 처리 정책에 따라 실행
+        # 먼저 상태 표시 업데이트
         self._updateScheduleStatusLabel()
 
         current_time = QTime.currentTime()
@@ -347,17 +347,17 @@ class LogInterface(ScrollArea):
                 now_ts = QDateTime.currentDateTime().toSecsSinceEpoch()
                 last_ts = self._last_triggered_ts.get(tid) if tid else None
                 if last_ts and (now_ts - last_ts) < 60:
-                    # 在 60 秒内已触发过，跳过
+                    # 60초 내에 이미 트리거됨, 건너뜀
                     continue
 
-                # 标记为已触发（记录时间戳）
+                # 트리거됨으로 표시 (타임스탬프 기록)
                 if tid:
                     self._last_triggered_ts[tid] = now_ts
 
-                # 触发任务
+                # 작업 트리거
                 pname = t.get('program', 'self')
                 args = t.get('args', '')
-                self.appendLog(f"\n========== 定时任务触发 ({t.get('name', '未命名')} @ {time_str}) ==========\n")
+                self.appendLog(f"\n========== 예약 작업 트리거 ({t.get('name', '이름 없음')} @ {time_str}) ==========\n")
 
                 task_for_start = {
                     'program': pname,
@@ -369,7 +369,7 @@ class LogInterface(ScrollArea):
                     'id': tid,
                 }
 
-                # 冲突处理：如果当前已有任务在运行，根据配置决定跳过或停止正在运行的任务
+                # 충돌 처리: 현재 작업이 실행 중인 경우 설정에 따라 건너뛰거나 중지
                 try:
                     conflict_mode = cfg.get_value('scheduled_on_conflict', 'skip') or 'skip'
                 except Exception:
@@ -377,38 +377,38 @@ class LogInterface(ScrollArea):
 
                 if self.isTaskRunning():
                     if conflict_mode == 'skip':
-                        self.appendLog(self.tr(f"已有任务在运行，按配置跳过计划任务: {task_for_start.get('name')}\n"))
+                        self.appendLog(self.tr(f"이미 작업이 실행 중이므로 설정에 따라 예약된 작업을 건너뜁니다: {task_for_start.get('name')}\n"))
                         continue
                     elif conflict_mode == 'stop':
-                        self.appendLog(self.tr(f"已有任务在运行，按配置停止当前任务并在其结束后启动: {task_for_start.get('name')}\n"))
-                        # 排队延迟启动：保存元数据与任务字典，调用 stopTask 停止当前任务
+                        self.appendLog(self.tr(f"이미 작업이 실행 중이므로 설정에 따라 현재 작업을 중지하고 종료 후 시작합니다: {task_for_start.get('name')}\n"))
+                        # 지연 시작 대기열에 추가: 메타데이터와 작업 딕셔너리 저장 후 stopTask 호출
                         try:
                             self._pending_start_task_after_stop = (t, task_for_start)
                             self.stopTask()
                         except Exception as e:
-                            self.appendLog(f"停止当前任务失败: {e}\n")
-                        # 返回以避免在同一轮触发其它任务
+                            self.appendLog(f"현재 작업 중지 실패: {e}\n")
+                        # 같은 라운드에 다른 작업 트리거 방지를 위해 반환
                         return
 
-                # 记录 pending meta（供进程结束时判断是否通知/执行完成后操作）
+                # pending meta 기록 (프로세스 종료 시 알림/완료 후 작업 판단용)
                 self._pending_task_meta = t
                 try:
                     self.startTask(task_for_start)
-                    return  # 一次只触发一个任务
+                    return  # 한 번에 하나의 작업만 트리거
                 except Exception as e:
-                    self.appendLog(f"启动任务失败: {e}\n")
+                    self.appendLog(f"작업 시작 실패: {e}\n")
 
         self._updateScheduleStatusLabel()
 
     def startTask(self, command_or_task):
-        """启动任务"""
-        # 如果有正在运行的任务，先停止
+        """작업 시작"""
+        # 실행 중인 작업이 있으면 먼저 중지
         if self.process and self.process.state() == QProcess.Running:
             self.stopTask()
-            # 等待进程结束
+            # 프로세스 종료 대기
             self.process.waitForFinished(3000)
 
-        # 如果传入的是任务字典，则作为外部/自定义任务处理
+        # 작업 딕셔너리가 전달된 경우 외부/사용자 지정 작업으로 처리
         if isinstance(command_or_task, dict):
             task = command_or_task
             program = str(task.get('program', '')).strip()
@@ -420,7 +420,7 @@ class LogInterface(ScrollArea):
             name = task.get('name') or os.path.basename(program) or program
 
             self.logTextEdit.clear()
-            self.appendLog(f"========== 开始任务: {name} ==========\n")
+            self.appendLog(f"========== 작업 시작: {name} ==========\n")
 
             proc = QProcess(self)
             proc.setProcessChannelMode(QProcess.MergedChannels)
@@ -432,7 +432,7 @@ class LogInterface(ScrollArea):
             env = QProcessEnvironment.systemEnvironment()
             env.insert("PYTHONUNBUFFERED", "1")
             env.insert("MARCH7TH_GUI_STARTED", "1")
-            # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
+            # 현재 프로세스의 Qt 환경 변수가 자식 프로세스로 전달되는 것을 방지 ("no qt platform plugin could be initialized" 오류 방지)
             try:
                 _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH']
                 for rk in _remove_keys:
@@ -442,7 +442,7 @@ class LogInterface(ScrollArea):
                 pass
             proc.setProcessEnvironment(env)
 
-            # 参数拆分
+            # 인수 분할
             try:
                 args_list = shlex.split(args) if args else []
             except Exception:
@@ -450,10 +450,10 @@ class LogInterface(ScrollArea):
 
             executable_path = os.path.abspath(program)
             if not os.path.exists(executable_path):
-                self.appendLog(f"错误: 未找到可执行文件 {executable_path}\n")
+                self.appendLog(f"오류: 실행 파일 {executable_path}을(를) 찾을 수 없습니다\n")
                 self._updateFinishedStatus(-1)
                 return
-            # 将工作目录设置为程序所在目录，确保相对路径正常工作
+            # 작업 디렉터리를 프로그램이 있는 곳으로 설정하여 상대 경로가 정상 작동하도록 함
             try:
                 cwd = os.path.dirname(executable_path) or os.getcwd()
                 if not os.path.exists(cwd):
@@ -462,22 +462,22 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             proc.start(executable_path, args_list)
-            self.appendLog(f"命令: {executable_path} {' '.join(args_list)}\n")
+            self.appendLog(f"명령: {executable_path} {' '.join(args_list)}\n")
 
-            # 记录当前进程以便其它方法管理
+            # 다른 메서드에서 관리할 수 있도록 현재 프로세스 기록
             self.process = proc
-            # 重置异常停止标记（新任务开始）
+            # 이상 중지 플래그 초기화 (새 작업 시작)
             try:
                 self._stopped_abnormally = False
             except Exception:
                 pass
             self.current_task = program
-            self.statusLabel.setText(self.tr(f'正在运行: {name}'))
+            self.statusLabel.setText(self.tr(f'실행 중: {name}'))
             self.stopButton.setEnabled(True)
 
             if timeout > 0:
-                # 使用可取消的单次 QTimer，并绑定到当前启动的进程实例
-                # 如果任务结束或被替换，定时器会在 stopTask 或进程结束时被停止
+                # 취소 가능한 단일 QTimer 사용, 현재 시작된 프로세스 인스턴스에 바인딩
+                # 작업이 종료되거나 교체되면 stopTask 또는 프로세스 종료 시 타이머가 중지됨
                 if self._timeout_timer:
                     try:
                         self._timeout_timer.stop()
@@ -493,8 +493,8 @@ class LogInterface(ScrollArea):
                 self._timeout_timer = t
 
             return
-        # 否则作为内置任务处理
-        # 非定时触发的手动/内置任务，清除 pending meta
+        # 그렇지 않으면 내장 작업으로 처리
+        # 예약 트리거가 아닌 수동/내장 작업이므로 pending meta 제거
         self._pending_task_meta = None
         self._startTask(command_or_task)
 
@@ -503,14 +503,14 @@ class LogInterface(ScrollArea):
         command = str(task)
         task_display_name = TASK_NAMES.get(command, command)
         self.logTextEdit.clear()
-        self.appendLog(f"========== 开始任务: {task_display_name} ==========\n")
+        self.appendLog(f"========== 작업 시작: {task_display_name} ==========\n")
 
-        # 更新状态
-        self.statusLabel.setText(self.tr(f'正在运行: {task_display_name}'))
+        # 상태 업데이트
+        self.statusLabel.setText(self.tr(f'실행 중: {task_display_name}'))
         # self.statusLabel.setStyleSheet("color: #0078d4;")
         self.stopButton.setEnabled(True)
 
-        # 创建进程
+        # 프로세스 생성
         self.process = QProcess(self)
         self.process.setProcessChannelMode(QProcess.MergedChannels)
         self.process.readyReadStandardOutput.connect(self._onReadyRead)
@@ -518,11 +518,11 @@ class LogInterface(ScrollArea):
         self.process.finished.connect(self._onProcessFinished)
         self.process.errorOccurred.connect(self._onProcessError)
 
-        # 设置环境变量，继承系统环境变量并确保 Python 输出不缓冲
+        # 환경 변수 설정, 시스템 환경 변수 상속 및 Python 출력 버퍼링 비활성화
         env = QProcessEnvironment.systemEnvironment()
         env.insert("PYTHONUNBUFFERED", "1")
-        env.insert("MARCH7TH_GUI_STARTED", "1")  # 标记为图形界面启动
-        # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
+        env.insert("MARCH7TH_GUI_STARTED", "1")  # 그래픽 인터페이스 시작으로 표시
+        # 현재 프로세스의 Qt 환경 변수가 자식 프로세스로 전달되는 것을 방지 ("no qt platform plugin could be initialized" 오류 방지)
         try:
             _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH']
             for rk in _remove_keys:
@@ -532,14 +532,14 @@ class LogInterface(ScrollArea):
             pass
         self.process.setProcessEnvironment(env)
 
-        # 构建命令
+        # 명령 구축
         if getattr(sys, 'frozen', False):
             executable_path = os.path.abspath("./March7th Assistant.exe")
             if not os.path.exists(executable_path):
-                self.appendLog("错误: 未找到可执行文件 March7th Assistant.exe\n")
+                self.appendLog("오류: 실행 파일 March7th Assistant.exe를 찾을 수 없습니다\n")
                 self._updateFinishedStatus(-1)
                 return
-            # 将工作目录设置为可执行文件所在目录
+            # 작업 디렉터리를 실행 파일이 있는 곳으로 설정
             try:
                 cwd = os.path.dirname(executable_path) or os.getcwd()
                 if not os.path.exists(cwd):
@@ -548,11 +548,11 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             self.process.start(executable_path, [command])
-            self.appendLog(f"命令: {executable_path} {command}\n")
+            self.appendLog(f"명령: {executable_path} {command}\n")
         else:
             executable_path = sys.executable
             main_script = os.path.abspath("main.py")
-            # 将工作目录设置为 main.py 所在目录，确保相对路径在子进程中有效
+            # 작업 디렉터리를 main.py가 있는 곳으로 설정, 자식 프로세스에서 상대 경로가 유효하도록 함
             try:
                 cwd = os.path.dirname(main_script) or os.getcwd()
                 if not os.path.exists(cwd):
@@ -561,11 +561,11 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             self.process.start(executable_path, [main_script, command])
-            self.appendLog(f"命令: {executable_path} {main_script} {command}\n")
+            self.appendLog(f"명령: {executable_path} {main_script} {command}\n")
 
-        # 如果设置了超时，使用可取消的单次 QTimer在超时后统一停止任务
+        # 타임아웃이 설정된 경우, 취소 가능한 단일 QTimer를 사용하여 타임아웃 후 작업 일괄 중지
         if timeout > 0:
-            # 新任务开始，重置异常停止标记
+            # 새 작업 시작, 이상 중지 플래그 초기화
             try:
                 self._stopped_abnormally = False
             except Exception:
@@ -588,8 +588,8 @@ class LogInterface(ScrollArea):
         # self.appendLog("-" * 117 + "\n")
 
     def stopTask(self):
-        """停止任务"""
-        # 取消任何挂起的超时定时器
+        """작업 중지"""
+        # 걸려있는 타임아웃 타이머 취소
         if getattr(self, '_timeout_timer', None):
             try:
                 self._timeout_timer.stop()
@@ -598,11 +598,11 @@ class LogInterface(ScrollArea):
                 pass
             self._timeout_timer = None
 
-        # 如果当前没有运行的任务，但存在等待执行的完成后操作，则把本次停止视为取消该操作
+        # 현재 실행 중인 작업이 없지만 대기 중인 완료 후 작업이 있다면, 이번 중지 요청을 해당 작업 취소로 간주
         if not (self.process and self.process.state() == QProcess.Running):
             if getattr(self, '_pending_post_action_timer', None):
                 try:
-                    # 取消等待中的完成后操作
+                    # 대기 중인 완료 후 작업 취소
                     try:
                         self._pending_post_action_timer.stop()
                         self._pending_post_action_timer.deleteLater()
@@ -610,7 +610,7 @@ class LogInterface(ScrollArea):
                         pass
                     self._pending_post_action_timer = None
                     self._pending_post_action = None
-                    self.logMessage.emit("已取消完成后操作\n")
+                    self.logMessage.emit("완료 후 작업이 취소되었습니다\n")
                     try:
                         self.stopButton.setEnabled(False)
                     except Exception:
@@ -619,7 +619,7 @@ class LogInterface(ScrollArea):
                     pass
                 return
 
-        # 用户主动停止视为异常停止（用于通知/后续处理判定）
+        # 사용자가 능동적으로 중지한 경우 비정상 종료로 간주 (알림/후속 처리 판정용)
         try:
             self._stopped_abnormally = True
         except Exception:
@@ -627,38 +627,38 @@ class LogInterface(ScrollArea):
 
         if self.process and self.process.state() == QProcess.Running:
             self.appendLog("\n" + "=" * 117 + "\n")
-            self.appendLog("用户请求停止任务...\n")
+            self.appendLog("사용자가 작업 중지를 요청했습니다...\n")
 
-            # 在 Windows 上使用 taskkill 来终止进程树
+            # Windows에서 taskkill을 사용하여 프로세스 트리 종료
             pid = self.process.processId()
             if pid > 0:
                 self._killProcessTree(pid)
             else:
                 self.process.terminate()
-                # 等待一段时间，如果还没结束就强制杀死
+                # 잠시 대기 후 종료되지 않으면 강제 종료
                 QTimer.singleShot(3000, self._forceKillProcess)
 
     def _killProcessTree(self, pid):
-        """杀死进程树（包括所有子进程）"""
+        """프로세스 트리 종료 (모든 자식 프로세스 포함)"""
         import subprocess as sp
         try:
-            # 使用 taskkill /T /F 强制终止进程树
+            # taskkill /T /F 로 프로세스 트리 강제 종료
             sp.run(
                 ['taskkill', '/T', '/F', '/PID', str(pid)],
                 capture_output=True,
                 creationflags=sp.CREATE_NO_WINDOW
             )
-            self.appendLog(f"已终止进程树 (PID: {pid})\n")
+            self.appendLog(f"프로세스 트리 종료됨 (PID: {pid})\n")
         except Exception as e:
-            self.appendLog(f"终止进程树失败: {e}\n")
-            # 回退到普通终止
+            self.appendLog(f"프로세스 트리 종료 실패: {e}\n")
+            # 일반 종료로 회귀
             if self.process:
                 self.process.kill()
 
     def _forceKillProcess(self):
-        """强制结束进程"""
+        """프로세스 강제 종료"""
         if self.process and self.process.state() == QProcess.Running:
-            self.appendLog("强制终止进程...\n")
+            self.appendLog("프로세스 강제 종료 중...\n")
             pid = self.process.processId()
             if pid > 0:
                 self._killProcessTree(pid)
@@ -666,78 +666,78 @@ class LogInterface(ScrollArea):
                 self.process.kill()
 
     def _onTimeout(self, proc):
-        """处理任务超时：如果 proc 仍是当前进程则标记并停止任务"""
+        """작업 타임아웃 처리: proc이 여전히 현재 프로세스라면 플래그 설정 및 작업 중지"""
         try:
             if proc is not self.process:
                 return
-            # 标记为异常停止（超时）
+            # 비정상 중지(타임아웃)로 표시
             try:
                 self._stopped_abnormally = True
             except Exception:
                 pass
             try:
-                self.appendLog("任务超时，正在停止...\n")
+                self.appendLog("작업 시간 초과, 중지 중...\n")
             except Exception:
                 pass
         except Exception:
             pass
-        # 使用 stopTask 统一停止（stopTask 会清理定时器）
+        # stopTask로 통일하여 중지 (stopTask는 타이머를 정리함)
         self.stopTask()
 
     def clearLog(self):
-        """清空日志"""
+        """로그 비우기"""
         self.logTextEdit.clear()
 
     def appendLog(self, text):
-        """追加日志"""
+        """로그 추가"""
         self.logTextEdit.moveCursor(QTextCursor.End)
         self.logTextEdit.insertPlainText(text)
         self.logTextEdit.moveCursor(QTextCursor.End)
-        # 自动滚动到底部
+        # 자동으로 맨 아래로 스크롤
         scrollbar = self.logTextEdit.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
     def _onReadyRead(self):
-        """读取进程输出"""
+        """프로세스 출력 읽기"""
         if self.process:
-            # 读取标准输出
+            # 표준 출력 읽기
             data = self.process.readAllStandardOutput()
             if data:
                 text = self._decodeOutput(bytes(data))
                 self.appendLog(text)
 
-            # 读取错误输出
+            # 오류 출력 읽기
             data = self.process.readAllStandardError()
             if data:
                 text = self._decodeOutput(bytes(data))
                 self.appendLog(text)
 
     def _decodeOutput(self, data):
-        """解码输出，优先尝试系统默认编码，再尝试 UTF-8，最后处理 Unicode 转义序列"""
-        # 获取系统默认编码（根据「非 Unicode 程序的语言」设置）
+        """출력 디코딩, 시스템 기본 인코딩 우선 시도 후 UTF-8 시도, 마지막으로 유니코드 이스케이프 시퀀스 처리"""
+        # 시스템 기본 인코딩 가져오기 ('비 유니코드 프로그램 언어' 설정에 따름)
         system_encoding = locale.getpreferredencoding(False)
         decoded = None
 
-        # 优先尝试系统默认编码（Windows 子进程通常使用 ANSI 代码页输出）
+        # 시스템 기본 인코딩 우선 시도 (Windows 자식 프로세스는 보통 ANSI 코드 페이지 사용)
         if system_encoding:
             try:
                 decoded = data.decode(system_encoding)
             except (UnicodeDecodeError, LookupError):
                 pass
 
-        # 再尝试 UTF-8
+        # 그 다음 UTF-8 시도
         if decoded is None:
             try:
                 decoded = data.decode('utf-8')
             except UnicodeDecodeError:
                 pass
 
-        # 最后使用系统编码或 UTF-8 并替换错误字符
+        # 마지막으로 시스템 인코딩이나 UTF-8을 사용하고 오류 문자는 대체
         if decoded is None:
             fallback = system_encoding if system_encoding else 'utf-8'
             decoded = data.decode(fallback, errors='replace')
 
-        # 处理 Unicode 转义序列（例如 \u5f00\u68c0\u6d4b）
+        # 유니코드 이스케이프 시퀀스 처리 (예: \u5f00\u68c0\u6d4b)
         def unicode_escape_replace(match):
             return chr(int(match.group()[2:], 16))
 
@@ -747,8 +747,8 @@ class LogInterface(ScrollArea):
         return decoded
 
     def _onProcessFinished(self, exit_code, exit_status):
-        """进程结束"""
-        # 终止并清理任何和当前任务绑定的超时定时器
+        """프로세스 종료"""
+        # 현재 작업과 연결된 타임아웃 타이머 종료 및 정리
         if getattr(self, '_timeout_timer', None):
             try:
                 self._timeout_timer.stop()
@@ -759,26 +759,26 @@ class LogInterface(ScrollArea):
 
         self.appendLog("\n" + "=" * 117 + "\n")
         if exit_status == QProcess.NormalExit:
-            self.appendLog(f"任务完成，退出码: {exit_code}\n")
+            self.appendLog(f"작업 완료, 종료 코드: {exit_code}\n")
         else:
-            # 非正常退出，标记为异常停止以便后续处理
+            # 비정상 종료, 후속 처리를 위해 이상 중지로 표시
             try:
                 self._stopped_abnormally = True
             except Exception:
                 pass
-            self.appendLog(f"任务异常结束，退出码: {exit_code}\n")
+            self.appendLog(f"작업 비정상 종료, 종료 코드: {exit_code}\n")
 
         self._updateFinishedStatus(exit_code)
         self.taskFinished.emit(exit_code)
 
-        # 如果此次运行是由定时任务触发并且有上下文信息，则在进程结束后发送通知与记录完成后操作
+        # 이번 실행이 예약 작업에 의해 트리거되었고 컨텍스트 정보가 있다면, 프로세스 종료 후 알림 전송 및 완료 후 동작 수행
         try:
             pm = getattr(self, '_pending_task_meta', None)
             if pm:
-                # 终止指定进程（若有）
+                # 지정된 프로세스 종료 (있을 경우)
                 try:
                     kp = pm.get('kill_processes', []) or []
-                    # 兼容字符串或列表形式
+                    # 문자열 또는 리스트 형식 호환
                     if kp:
                         import subprocess as sp
                         proc_list = kp if isinstance(kp, list) else [p.strip() for p in str(kp).split(',') if p.strip()]
@@ -788,42 +788,42 @@ class LogInterface(ScrollArea):
                                     sp.run(['taskkill', '/IM', proc_name, '/F'], capture_output=True, creationflags=sp.CREATE_NO_WINDOW)
                                 else:
                                     sp.run(['pkill', '-f', proc_name], capture_output=True)
-                                self.appendLog(f"已终止进程: {proc_name}\n")
+                                self.appendLog(f"프로세스 종료됨: {proc_name}\n")
                             except Exception as e:
-                                self.appendLog(f"终止进程 {proc_name} 失败: {e}\n")
+                                self.appendLog(f"프로세스 {proc_name} 종료 실패: {e}\n")
                 except Exception:
                     pass
 
-                # 发送通知（仅当 notify 为 True），改为在后台线程中发送以避免阻塞主线程
+                # 알림 전송 (notify가 True일 때만), 메인 스레드 차단을 피하기 위해 백그라운드 스레드에서 전송
                 try:
                     if bool(pm.get('notify', False)):
                         try:
-                            # 若因异常停止或退出状态非正常，则视为异常结束
+                            # 비정상 중지 또는 종료 상태가 정상이 아닌 경우 비정상 종료로 간주
                             if getattr(self, '_stopped_abnormally', False) or exit_status != QProcess.NormalExit:
-                                note = f"定时任务异常结束: {pm.get('name', '')}"
+                                note = f"예약 작업 비정상 종료: {pm.get('name', '')}"
                             else:
-                                note = f"定时任务完成: {pm.get('name', '')}"
+                                note = f"예약 작업 완료: {pm.get('name', '')}"
 
                             def _send_notify(n):
                                 try:
                                     notif.notify(n)
                                 except Exception as e:
-                                    self.logMessage.emit(f"发送通知失败: {n}, 错误: {e}\n")
+                                    self.logMessage.emit(f"알림 전송 실패: {n}, 오류: {e}\n")
                                 else:
-                                    self.logMessage.emit(f"已发送通知: {n}\n")
+                                    self.logMessage.emit(f"알림 전송됨: {n}\n")
                             threading.Thread(target=_send_notify, args=(note,), daemon=True).start()
                         except Exception:
                             pass
                 except Exception:
                     pass
 
-                # 清理异常停止标记（若存在）
+                # 이상 중지 플래그 정리 (존재할 경우)
                 try:
                     self._stopped_abnormally = False
                 except Exception:
                     pass
 
-                # 记录或触发 post_action（现在实际执行支持的操作）
+                # post_action 기록 또는 트리거 (이제 지원되는 동작을 실제로 실행)
                 try:
                     post_action = pm.get('post_action', 'None')
                     if post_action and post_action != 'None':
@@ -831,10 +831,10 @@ class LogInterface(ScrollArea):
                             label = self._post_action_label(post_action)
                         except Exception:
                             label = post_action
-                        # 使用可取消的 QTimer 在 60 秒后执行 post_action，并允许用户在等待期间取消
-                        self.appendLog(f"任务完成后操作: {label}（将在60秒后执行，可通过停止按钮取消）\n")
+                        # 취소 가능한 QTimer를 사용하여 60초 후 post_action 실행, 대기 중 취소 가능
+                        self.appendLog(f"작업 완료 후 동작: {label} (60초 후 실행, 중지 버튼으로 취소 가능)\n")
                         try:
-                            # 如果已有未清理的 post action，先取消它
+                            # 이미 정리되지 않은 post action이 있다면 먼저 취소
                             try:
                                 if self._pending_post_action_timer:
                                     try:
@@ -851,9 +851,9 @@ class LogInterface(ScrollArea):
                             timer.setSingleShot(True)
 
                             def _on_post_action_timeout(act=post_action, lbl=label, t=timer):
-                                # 在主线程记录开始执行的信息并启动后台线程执行操作
+                                # 메인 스레드에 실행 시작 정보를 기록하고 백그라운드 스레드에서 작업 실행
                                 try:
-                                    self.logMessage.emit(f"开始执行完成后操作: {lbl}\n")
+                                    self.logMessage.emit(f"완료 후 동작 실행 시작: {lbl}\n")
                                 except Exception:
                                     pass
                                 try:
@@ -866,7 +866,7 @@ class LogInterface(ScrollArea):
                                         pass
                                     self._pending_post_action_timer = None
                                     self._pending_post_action = None
-                                    # 若没有正在运行的任务，将停止按钮恢复为不可用
+                                    # 실행 중인 작업이 없다면 중지 버튼을 비활성화로 복구
                                     if not self.isTaskRunning():
                                         try:
                                             self.stopButton.setEnabled(False)
@@ -877,23 +877,23 @@ class LogInterface(ScrollArea):
                             timer.start(60000)
                             self._pending_post_action = post_action
                             self._pending_post_action_timer = timer
-                            # 使停止按钮可用以便用户取消等待的完成后操作（热键同样适用）
+                            # 사용자가 대기 중인 완료 후 작업을 취소할 수 있도록 중지 버튼 활성화 (단축키도 적용됨)
                             try:
                                 self.stopButton.setEnabled(True)
                             except Exception:
                                 pass
                         except Exception as e:
-                            self.appendLog(f"触发完成后操作失败: {e}\n")
+                            self.appendLog(f"완료 후 동작 트리거 실패: {e}\n")
                 except Exception:
                     pass
 
-                # 清理 pending meta
+                # pending meta 정리
                 try:
                     self._pending_task_meta = None
                 except Exception:
                     pass
             else:
-                # 清理异常停止标记（若存在）
+                # 이상 중지 플래그 정리 (존재할 경우)
                 try:
                     self._stopped_abnormally = False
                 except Exception:
@@ -901,69 +901,69 @@ class LogInterface(ScrollArea):
         except Exception:
             pass
 
-        # 如果有排队的延迟启动任务（由于冲突设置导致在停止当前任务后再启动），在进程结束处理完成后启动它
+        # 충돌 설정으로 인해 현재 작업을 중지한 후 시작해야 하는 지연 시작 작업이 대기 중이라면, 프로세스 종료 처리 후 시작
         try:
             pending = getattr(self, '_pending_start_task_after_stop', None)
             if pending:
                 t_meta, task_dict = pending
-                # 清除排队标记
+                # 대기 플래그 지우기
                 try:
                     self._pending_start_task_after_stop = None
                 except Exception:
                     pass
-                # 记录 pending meta 并启动任务
+                # pending meta 기록 및 작업 시작
                 try:
                     self._pending_task_meta = t_meta
-                    self.appendLog(self.tr(f"延迟启动任务: {t_meta.get('name', '')}\n"))
+                    self.appendLog(self.tr(f"지연된 작업 시작: {t_meta.get('name', '')}\n"))
                     self.startTask(task_dict)
                 except Exception as e:
-                    self.appendLog(f"延迟启动任务失败: {e}\n")
+                    self.appendLog(f"지연된 작업 시작 실패: {e}\n")
         except Exception:
             pass
 
     def _onProcessError(self, error):
-        """进程错误"""
+        """프로세스 오류"""
         error_messages = {
-            QProcess.FailedToStart: "进程启动失败",
-            QProcess.Crashed: "进程崩溃",
-            QProcess.Timedout: "进程超时",
-            QProcess.WriteError: "写入错误",
-            QProcess.ReadError: "读取错误",
-            QProcess.UnknownError: "未知错误"
+            QProcess.FailedToStart: "프로세스 시작 실패",
+            QProcess.Crashed: "프로세스 충돌",
+            QProcess.Timedout: "프로세스 시간 초과",
+            QProcess.WriteError: "쓰기 오류",
+            QProcess.ReadError: "읽기 오류",
+            QProcess.UnknownError: "알 수 없는 오류"
         }
-        msg = error_messages.get(error, f"错误代码: {error}")
-        # 标记为异常停止
+        msg = error_messages.get(error, f"오류 코드: {error}")
+        # 이상 중지로 표시
         try:
             self._stopped_abnormally = True
         except Exception:
             pass
-        self.appendLog(f"\n错误: {msg}\n")
+        self.appendLog(f"\n오류: {msg}\n")
         self._updateFinishedStatus(-1)
 
     def _post_action_label(self, action: str) -> str:
-        """返回 post_action 的本地化标签"""
+        """post_action의 로컬라이즈된 라벨 반환"""
         mapping = {
-            'None': '无操作',
-            'Shutdown': '关机',
-            'Sleep': '睡眠',
-            'Hibernate': '休眠',
-            'Restart': '重启',
-            'Logoff': '注销',
-            'TurnOffDisplay': '关闭显示器',
+            'None': '작업 없음',
+            'Shutdown': '시스템 종료',
+            'Sleep': '절전 모드',
+            'Hibernate': '최대 절전 모드',
+            'Restart': '다시 시작',
+            'Logoff': '로그아웃',
+            'TurnOffDisplay': '모니터 끄기',
         }
         return mapping.get(action, str(action))
 
     def _perform_post_action(self, action: str) -> None:
-        """执行任务完成后的系统操作：Shutdown, Sleep, Hibernate, Restart, Logoff, TurnOffDisplay"""
+        """작업 완료 후 시스템 작업 실행: Shutdown, Sleep, Hibernate, Restart, Logoff, TurnOffDisplay"""
         try:
             act = str(action)
             label = self._post_action_label(act)
             try:
-                self.logMessage.emit(f"执行完成后操作: {label}\n")
+                self.logMessage.emit(f"완료 후 작업 실행: {label}\n")
             except Exception:
                 pass
 
-            # 其他系统操作（Windows）
+            # 기타 시스템 작업 (Windows)
             if act == 'Shutdown':
                 sp.run(['shutdown', '/s', '/t', '0'])
             elif act == 'Sleep':
@@ -972,7 +972,7 @@ class LogInterface(ScrollArea):
                     os.system('rundll32.exe powrprof.dll,SetSuspendState 0,1,0')
                     os.system('powercfg -h on')
                 except Exception as e:
-                    self.logMessage.emit(f"进入睡眠失败: {e}\n")
+                    self.logMessage.emit(f"절전 모드 진입 실패: {e}\n")
             elif act == 'Hibernate':
                 sp.run(['shutdown', '/h'])
             elif act == 'Restart':
@@ -986,19 +986,19 @@ class LogInterface(ScrollArea):
                     SC_MONITORPOWER = 0xF170
                     ctypes.windll.user32.SendMessageW(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 2)
                 except Exception as e:
-                    self.logMessage.emit(f"关闭显示器失败: {e}\n")
+                    self.logMessage.emit(f"모니터 끄기 실패: {e}\n")
         except Exception as e:
             try:
-                self.logMessage.emit(f"执行完成后操作时出错: {e}\n")
+                self.logMessage.emit(f"완료 후 작업 실행 중 오류 발생: {e}\n")
             except Exception:
                 pass
 
     def _updateFinishedStatus(self, exit_code):
-        """更新完成状态
+        """완료 상태 업데이트
 
-        如果存在等待的完成后操作（_pending_post_action_timer），保持停止按钮可用以便用户取消；否则禁用。
+        대기 중인 완료 후 작업(_pending_post_action_timer)이 있으면 사용자가 취소할 수 있도록 중지 버튼을 활성 상태로 유지하고, 그렇지 않으면 비활성화합니다.
         """
-        # 若有等待的完成后操作，允许用户取消（开启停止按钮），否则禁用停止按钮
+        # 대기 중인 완료 후 작업이 있으면 사용자가 취소할 수 있도록 허용(중지 버튼 켜기), 아니면 끄기
         try:
             if getattr(self, '_pending_post_action_timer', None):
                 self.stopButton.setEnabled(True)
@@ -1011,23 +1011,23 @@ class LogInterface(ScrollArea):
                 pass
 
         if exit_code == 0:
-            self.statusLabel.setText('任务完成')
+            self.statusLabel.setText('작업 완료')
             # self.statusLabel.setStyleSheet("color: green;")
         else:
-            self.statusLabel.setText('任务已停止')
+            self.statusLabel.setText('작업 중지됨')
             # self.statusLabel.setStyleSheet("color: orange;")
 
     def isTaskRunning(self):
-        """检查任务是否正在运行"""
+        """작업이 실행 중인지 확인"""
         return self.process and self.process.state() == QProcess.Running
 
     def cleanup(self):
-        """清理资源（在应用退出时调用）"""
+        """리소스 정리 (앱 종료 시 호출)"""
         self._unregisterGlobalHotkey()
-        # 停止定时检查器
+        # 예약 검사기 중지
         if self._schedule_timer:
             self._schedule_timer.stop()
-        # 取消等待中的完成后操作（若有）
+        # 대기 중인 완료 후 작업 취소 (있는 경우)
         try:
             if getattr(self, '_pending_post_action_timer', None):
                 try:

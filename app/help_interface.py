@@ -16,7 +16,7 @@ class HelpInterface(ScrollArea):
         self.pivot = Pivot(self)
         self.stackedWidget = QStackedWidget(self)
 
-        self.helpLabel = QLabel("帮助", self)
+        self.helpLabel = QLabel("도움말", self)
         self.tutorialLabel = QLabel(parent)
         self.faqLabel = QLabel(parent)
         self.tasksLabel = QLabel(parent)
@@ -100,39 +100,40 @@ th, td {
 }
 </style>
 """
+        # 일일 훈련 임무 목록 (한국어 번역)
         self.content = """
-| 任务描述                             | 活跃度 | 支持情况 |
+| 임무 설명                             | 활약도 | 지원 여부 |
 | ----------------------------------- | -------- | -------- |
-| 登录游戏                             |   +100   |   ✅     |
-| 派遣1次委托                          |   +100   |   ✅     |
-| 累计消耗120点开拓力                   |   +200   |   ✅     |
-| 累计消灭20个敌人                      |   +100   |   ✅     |
-| 使用支援角色并获得战斗胜利1次          |   +200   |   ✅     |
-| 使用1次「万能合成机」                  |   +100   |   ✅    |
-| 将任意遗器等级提升1次                  |   +100   |   ❌    |
-| 完成1次「差分宇宙」或「货币战争」       |   +500   |   ✅    |
-| 完成1个日常任务                       |   +200  |   已移除  |
-| 拍照1次                              |   +100   |   已移除  |
-| 完成1次「拟造花萼（金）」               |   +100  |   已移除  |
-| 完成1次「拟造花萼（赤）」               |   +100  |   已移除  |
-| 完成1次「凝滞虚影」                    |   +100  |   已移除  |
-| 完成1次「侵蚀隧洞」                    |   +100  |   已移除  |
-| 完成1次「历战余响」                    |   +200  |   已移除  |
-| 完成1次「忘却之庭」                    |   +200  |   已移除  |
-| 通关「模拟宇宙」（任意世界）的1个区域   |   +200  |   已移除  |
-| 完成1次「模拟宇宙」                    |   +500  |   已移除  |
-| 累计触发弱点击破效果5次                |   +100  |   已移除  |
-| 单场战斗中，触发3种不同属性的弱点击破   |   +100  |   已移除  |
-| 累计施放2次秘技                       |   +100  |   已移除  |
-| 利用弱点进入战斗并获胜3次              |   +100  |   已移除  |
-| 累计击碎3个可破坏物                   |   +200  |   已移除  |
-| 施放终结技造成制胜一击1次              |   +200  |   已移除  |
-| 将任意角色等级提升1次                  |   +100  |   已移除  |
-| 将任意光锥等级提升1次                  |   +100  |   已移除  |
-| 分解任意1件遗器                       |   +100  |   已移除  |
-| 合成1次消耗品                         |   +100  |   已移除  |
-| 合成1次材料                          |   +100  |   已移除  |
-| 使用1件消耗品                         |   +100  |   已移除  |
+| 게임 로그인                             |   +100   |   ✅     |
+| 의뢰 1회 파견                          |   +100   |   ✅     |
+| 개척력 120pt 누적 소모                  |   +200   |   ✅     |
+| 적 20기 누적 처치                      |   +100   |   ✅     |
+| 지원 캐릭터를 사용하여 전투 1회 승리      |   +200   |   ✅     |
+| 「만능 합성기」 1회 사용                 |   +100   |   ✅    |
+| 임의의 유물 레벨 1회 강화               |   +100   |   ❌    |
+| 「차분화 우주」 또는 「화폐 전쟁」 1회 완료 |   +500   |   ✅    |
+| 일일 임무 1개 완료                      |   +200  |   제거됨  |
+| 사진 촬영 1회                          |   +100   |   제거됨  |
+| 「고치(금)」 1회 완료                    |   +100  |   제거됨  |
+| 「고치(적)」 1회 완료                    |   +100  |   제거됨  |
+| 「정체된 허영」 1회 완료                 |   +100  |   제거됨  |
+| 「침식된 터널」 1회 완료                 |   +100  |   제거됨  |
+| 「전쟁의 여운」 1회 완료                 |   +200  |   제거됨  |
+| 「망각의 정원」 1회 완료                 |   +200  |   제거됨  |
+| 「시뮬레이션 우주」(임의의 세계) 1개 구역 통과 |   +200  |   제거됨  |
+| 「시뮬레이션 우주」 1회 완료              |   +500  |   제거됨  |
+| 약점 격파 효과 5회 누적 발동            |   +100  |   제거됨  |
+| 단일 전투에서 서로 다른 속성의 약점 격파 3회 발동 |   +100  |   제거됨  |
+| 비술 2회 누적 발동                      |   +100  |   제거됨  |
+| 약점을 이용하여 전투 진입 및 승리 3회    |   +100  |   제거됨  |
+| 파괴 가능한 물체 3개 누적 파괴          |   +200  |   제거됨  |
+| 필살기를 발동해 제승의 일격 1회 가하기   |   +200  |   제거됨  |
+| 임의의 캐릭터 레벨 1회 강화             |   +100  |   제거됨  |
+| 임의의 광추 레벨 1회 강화               |   +100  |   제거됨  |
+| 임의의 유물 1개 분해                    |   +100  |   제거됨  |
+| 소모품 1회 합성                        |   +100  |   제거됨  |
+| 재료 1회 합성                          |   +100  |   제거됨  |
+| 소모품 1개 사용                        |   +100  |   제거됨  |
         """
         self.tasks_content = tasks_style + markdown.markdown(self.content, extensions=['tables'])
 
@@ -168,10 +169,10 @@ a {
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
         # self.vBoxLayout.addWidget(self.tutorialLabel, 0, Qt.AlignTop)
-        self.addSubInterface(self.tutorialLabel, 'tutorialLabel', '使用教程')
-        self.addSubInterface(self.faqLabel, 'faqLabel', '常见问题')
-        self.addSubInterface(self.tasksLabel, 'tasksLabel', '每日实训')
-        self.addSubInterface(self.changelogLabel, 'changelogLabel', '更新日志')
+        self.addSubInterface(self.tutorialLabel, 'tutorialLabel', '사용 튜토리얼')
+        self.addSubInterface(self.faqLabel, 'faqLabel', '자주 묻는 질문')
+        self.addSubInterface(self.tasksLabel, 'tasksLabel', '일일 훈련')
+        self.addSubInterface(self.changelogLabel, 'changelogLabel', '업데이트 내역')
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())

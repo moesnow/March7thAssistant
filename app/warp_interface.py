@@ -22,15 +22,15 @@ class WarpInterface(ScrollArea):
         super().__init__(parent=parent)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel("抽卡记录", self)
+        self.titleLabel = QLabel("워프 기록", self)
 
-        self.updateBtn = PrimaryPushButton(FIF.SYNC, "更新数据", self)
-        self.updateFullBtn = PushButton(FIF.SYNC, "更新完整数据", self)
-        self.importBtn = PushButton(FIF.PENCIL_INK, "导入数据", self)
-        self.exportBtn = PushButton(FIF.SAVE_COPY, "导出数据", self)
-        self.exportExcelBtn = PushButton(FIF.SAVE_COPY, "导出Excel", self)
-        self.copyLinkBtn = PushButton(FIF.SHARE, "复制链接", self)
-        self.clearBtn = PushButton(FIF.DELETE, "清空", self)
+        self.updateBtn = PrimaryPushButton(FIF.SYNC, "데이터 업데이트", self)
+        self.updateFullBtn = PushButton(FIF.SYNC, "전체 데이터 업데이트", self)
+        self.importBtn = PushButton(FIF.PENCIL_INK, "데이터 가져오기", self)
+        self.exportBtn = PushButton(FIF.SAVE_COPY, "데이터 내보내기", self)
+        self.exportExcelBtn = PushButton(FIF.SAVE_COPY, "Excel 내보내기", self)
+        self.copyLinkBtn = PushButton(FIF.SHARE, "링크 복사", self)
+        self.clearBtn = PushButton(FIF.DELETE, "비우기", self)
         self.warplink = None
 
         self.stateTooltip = None
@@ -101,7 +101,7 @@ class WarpInterface(ScrollArea):
 
     def __onImportBtnClicked(self):
         try:
-            path, _ = QFileDialog.getOpenFileName(self, "导入抽卡记录", "", "UIGF / SRGF 格式 (*.json)")
+            path, _ = QFileDialog.getOpenFileName(self, "워프 기록 가져오기", "", "UIGF / SRGF 형식 (*.json)")
             if not path:
                 return
 
@@ -128,7 +128,7 @@ class WarpInterface(ScrollArea):
             self.setContent()
 
             InfoBar.success(
-                title='导入成功(＾∀＾●)',
+                title='가져오기 성공(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -138,7 +138,7 @@ class WarpInterface(ScrollArea):
             )
         except Exception:
             InfoBar.warning(
-                title='导入失败(╥╯﹏╰╥)',
+                title='가져오기 실패(╥╯﹏╰╥)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -156,9 +156,9 @@ class WarpInterface(ScrollArea):
 
             path, _ = QFileDialog.getSaveFileName(
                 self,
-                "导出抽卡记录",
+                "워프 기록 내보내기",
                 f"{default_name}",
-                "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
+                "UIGF 형식 (*.json);;SRGF 형식 (*.srgf.json)"
             )
             if not path:
                 return
@@ -177,7 +177,7 @@ class WarpInterface(ScrollArea):
             os.startfile(os.path.dirname(path))
 
             InfoBar.success(
-                title='导出成功(＾∀＾●)',
+                title='내보내기 성공(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -188,7 +188,7 @@ class WarpInterface(ScrollArea):
 
         except Exception:
             InfoBar.warning(
-                title='导出失败(╥╯﹏╰╥)',
+                title='내보내기 실패(╥╯﹏╰╥)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -205,38 +205,38 @@ class WarpInterface(ScrollArea):
             df = pd.DataFrame(records)
             df = df[["time", "name", "item_type", "rank_type", "gacha_type"]]
             gacha_map = {
-                "11": "角色活动跃迁",
-                "12": "光锥活动跃迁",
-                "21": "角色联动跃迁",
-                "22": "光锥联动跃迁",
-                "1": "常驻跃迁",
-                "2": "新手跃迁",
+                "11": "캐릭터 이벤트 워프",
+                "12": "광추 이벤트 워프",
+                "21": "캐릭터 컬래버 워프",
+                "22": "광추 컬래버 워프",
+                "1": "일반 워프",
+                "2": "초행길 워프",
             }
-            df["gacha_type"] = df["gacha_type"].map(gacha_map).fillna("未知")
+            df["gacha_type"] = df["gacha_type"].map(gacha_map).fillna("알 수 없음")
             df.rename(columns={
-                "time": "时间",
-                "name": "名称",
-                "item_type": "类别",
-                "rank_type": "星级",
-                "gacha_type": "卡池",
+                "time": "시간",
+                "name": "이름",
+                "item_type": "유형",
+                "rank_type": "등급",
+                "gacha_type": "워프 유형",
             }, inplace=True)
-            df["总次数"] = range(1, len(df) + 1)
-            df["保底内"] = 0
+            df["총 횟수"] = range(1, len(df) + 1)
+            df["천장 내 횟수"] = 0
             pity_counters = {}
             for idx, row in df.iterrows():
-                pool = row["卡池"]
-                star = row["星级"]
+                pool = row["워프 유형"]
+                star = row["등급"]
                 if pool not in pity_counters:
                     pity_counters[pool] = 0
                 pity_counters[pool] += 1
-                df.at[idx, "保底内"] = pity_counters[pool]
+                df.at[idx, "천장 내 횟수"] = pity_counters[pool]
                 if star == "5":
                     pity_counters[pool] = 0
             path, _ = QFileDialog.getSaveFileName(
                 self,
-                "导出为 Excel 文件",
-                f"抽卡记录_{config['info'].get('uid', '未知')}.xlsx",
-                "Excel 文件 (*.xlsx)"
+                "Excel 파일로 내보내기",
+                f"워프_기록_{config['info'].get('uid', '알수없음')}.xlsx",
+                "Excel 파일 (*.xlsx)"
             )
             if not path:
                 return
@@ -279,7 +279,7 @@ class WarpInterface(ScrollArea):
             os.startfile(os.path.dirname(path))
 
             InfoBar.success(
-                title='导出成功(＾∀＾●)',
+                title='내보내기 성공(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -290,7 +290,7 @@ class WarpInterface(ScrollArea):
 
         except Exception:
             InfoBar.warning(
-                title='导出失败(╥╯﹏╰╥)',
+                title='내보내기 실패(╥╯﹏╰╥)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -303,7 +303,7 @@ class WarpInterface(ScrollArea):
         try:
             pyperclip.copy(self.warplink)
             InfoBar.success(
-                title='复制成功(＾∀＾●)',
+                title='복사 성공(＾∀＾●)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -313,7 +313,7 @@ class WarpInterface(ScrollArea):
             )
         except Exception:
             InfoBar.warning(
-                title='复制失败(╥╯﹏╰╥)',
+                title='복사 실패(╥╯﹏╰╥)',
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -324,18 +324,18 @@ class WarpInterface(ScrollArea):
 
     def __onClearBtnClicked(self):
         message_box = MessageBox(
-            "清空抽卡记录",
-            "确定要清空抽卡记录吗？此操作不可撤销。",
+            "워프 기록 비우기",
+            "정말 워프 기록을 비우시겠습니까? 이 작업은 취소할 수 없습니다.",
             self.window()
         )
-        message_box.yesButton.setText('确认')
-        message_box.cancelButton.setText('取消')
+        message_box.yesButton.setText('확인')
+        message_box.cancelButton.setText('취소')
         if message_box.exec():
             try:
                 os.remove("./warp.json")
                 self.setContent()
                 InfoBar.success(
-                    title='清空完成(＾∀＾●)',
+                    title='비우기 완료(＾∀＾●)',
                     content="",
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -346,7 +346,7 @@ class WarpInterface(ScrollArea):
             except Exception as e:
                 print(e)
                 InfoBar.warning(
-                    title='清空失败(╥╯﹏╰╥)',
+                    title='비우기 실패(╥╯﹏╰╥)',
                     content="",
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -369,7 +369,7 @@ class WarpInterface(ScrollArea):
             self.exportBtn.setEnabled(True)
             self.exportExcelBtn.setEnabled(True)
         except Exception as e:
-            content = "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n\n你也可以从其他支持 UIGF/SRGF 数据格式的应用导入数据，例如 StarRail Warp Export 或 Starward 等。\n\n复制链接功能可用于小程序或其他软件。"
+            content = "워프 기록이 비어있습니다. 먼저 게임 내 워프 기록을 연 다음, 데이터 업데이트를 클릭하세요.\n\nStarRail Warp Export 또는 Starward와 같은 UIGF/SRGF 데이터 형식을 지원하는 다른 앱에서 데이터를 가져올 수도 있습니다.\n\n링크 복사 기능은 미니 프로그램이나 다른 소프트웨어에서 사용할 수 있습니다."
             self.clearBtn.setEnabled(False)
             self.exportBtn.setEnabled(False)
             self.exportExcelBtn.setEnabled(False)
