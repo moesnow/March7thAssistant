@@ -356,6 +356,7 @@ class CloudGameController(GameControllerBase):
         """排队等待进入"""
         in_queue_selector = "[class*='waiting-in-queue']"
         cloud_game_selector = ".game-player"
+        select_queue_selector = "[aria-labelledby*='请选择排队队列']"
         
         try:
             # 检查是否需要排队
@@ -363,10 +364,33 @@ class CloudGameController(GameControllerBase):
                 lambda d: d.execute_script("""
                     if (document.querySelector(arguments[0])) return "game_running";
                     else if (document.querySelector(arguments[1])) return "in_queue";
+                    else if (document.querySelector(arguments[2])) return "select_queue";
                     else return null;
-                """, cloud_game_selector, in_queue_selector)
+                """, cloud_game_selector, in_queue_selector, select_queue_selector)
             )
-
+            
+            select_retries = 0
+            while status == "select_queue":
+                select_retries += 1
+                if select_retries >= 5:
+                    self.log_error("选择排队队列超时")
+                    return False
+                self.log_info("检测到选择排队队列界面，选择普通队列")
+                self.driver.execute_script("""
+                    try {
+                        document.getElementsByClassName("coin-prior-choose-item-include-info")[1].click();
+                    } catch(e) {}
+                """)
+                sleep(2)
+                status = WebDriverWait(self.driver, 10).until(
+                    lambda d: d.execute_script("""
+                        if (document.querySelector(arguments[0])) return "game_running";
+                        else if (document.querySelector(arguments[1])) return "in_queue";
+                        else if (document.querySelector(arguments[2])) return "select_queue";
+                        else return null;
+                    """, cloud_game_selector, in_queue_selector, select_queue_selector)
+                )
+            
             if status == "game_running":
                 self.log_info("游戏已启动，无需排队")
                 return True
