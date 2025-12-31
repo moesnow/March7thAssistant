@@ -214,6 +214,20 @@ class MainWindow(MSFluentWindow):
 
         tray_menu.addSeparator()
 
+        # 打开设置界面
+        setting_action = QAction('设置', self)
+
+        def _open_settings():
+            try:
+                self.showNormal()
+                self.activateWindow()
+                if hasattr(self, 'settingInterface'):
+                    self.switchTo(self.settingInterface)
+            except Exception:
+                pass
+        setting_action.triggered.connect(_open_settings)
+        tray_menu.addAction(setting_action)
+
         # 退出程序
         quit_action = QAction('退出', self)
         quit_action.triggered.connect(self.quitApp)
