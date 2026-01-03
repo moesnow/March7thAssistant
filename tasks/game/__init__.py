@@ -219,6 +219,8 @@ def stop(detect_loop=False):
     else:
         if detect_loop:
             notify_after_finish_not_loop()
+        # 在关闭游戏前优先退出 OCR 避免内存占用
+        ocr.exit_ocr()
         if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             get_game_controller().shutdown(cfg.after_finish)
         log.hr("完成", 2)
