@@ -9,6 +9,101 @@ from json import loads as jsonLoads, dumps as jsonDumps
 from sys import platform as sysPlatform  # popen静默模式
 from base64 import b64encode  # base64 编码
 
+# 为了在父进程被强制结束时让子进程也退出，分别实现：
+# - Windows: 使用 Job Object 并设置 JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+# - Linux: 在子进程 preexec_fn 中调用 prctl(PR_SET_PDEATHSIG, SIGTERM)
+import ctypes
+import signal
+
+
+def _set_pdeathsig():
+    """在 Linux 子进程中设置父进程死亡信号，父进程退出时子进程将收到 SIGTERM。"""
+    try:
+        libc = ctypes.CDLL("libc.so.6")
+        PR_SET_PDEATHSIG = 1
+        libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+    except Exception:
+        # 不影响主流程，失败则忽略
+        pass
+
+
+def _assign_process_to_jobobj(popen_obj):
+    """在 Windows 下将进程分配到一个 Job 对象，并设置在 Job 关闭时杀死子进程的标志。
+    返回 True 表示成功，失败返回 False（不抛出异常）。"""
+    try:
+        if "win32" not in str(sysPlatform).lower():
+            return False
+        kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+        JobObjectExtendedLimitInformation = 9
+        JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
+
+        class JOBOBJECT_BASIC_LIMIT_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ('PerProcessUserTimeLimit', ctypes.c_longlong),
+                ('PerJobUserTimeLimit', ctypes.c_longlong),
+                ('LimitFlags', ctypes.c_uint32),
+                ('MinimumWorkingSetSize', ctypes.c_size_t),
+                ('MaximumWorkingSetSize', ctypes.c_size_t),
+                ('ActiveProcessLimit', ctypes.c_uint32),
+                ('Affinity', ctypes.c_size_t),
+                ('PriorityClass', ctypes.c_uint32),
+                ('SchedulingClass', ctypes.c_uint32),
+            ]
+
+        class IO_COUNTERS(ctypes.Structure):
+            _fields_ = [
+                ('ReadOperationCount', ctypes.c_ulonglong),
+                ('WriteOperationCount', ctypes.c_ulonglong),
+                ('OtherOperationCount', ctypes.c_ulonglong),
+                ('ReadTransferCount', ctypes.c_ulonglong),
+                ('WriteTransferCount', ctypes.c_ulonglong),
+                ('OtherTransferCount', ctypes.c_ulonglong),
+            ]
+
+        class JOBOBJECT_EXTENDED_LIMIT_INFORMATION(ctypes.Structure):
+            _fields_ = [
+                ('BasicLimitInformation', JOBOBJECT_BASIC_LIMIT_INFORMATION),
+                ('IoInfo', IO_COUNTERS),
+                ('ProcessMemoryLimit', ctypes.c_size_t),
+                ('JobMemoryLimit', ctypes.c_size_t),
+                ('PeakProcessMemoryUsed', ctypes.c_size_t),
+                ('PeakJobMemoryUsed', ctypes.c_size_t),
+            ]
+
+        CreateJobObject = kernel32.CreateJobObjectW
+        CreateJobObject.restype = ctypes.c_void_p
+        SetInformationJobObject = kernel32.SetInformationJobObject
+        SetInformationJobObject.restype = ctypes.c_bool
+        AssignProcessToJobObject = kernel32.AssignProcessToJobObject
+        AssignProcessToJobObject.restype = ctypes.c_bool
+
+        job = CreateJobObject(None, None)
+        if not job:
+            return False
+        info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
+        info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        res = SetInformationJobObject(job, JobObjectExtendedLimitInformation, ctypes.byref(info), ctypes.sizeof(info))
+        if not res:
+            return False
+        # 尝试直接使用 Popen 的内部 handle，否则使用 OpenProcess
+        try:
+            process_handle = ctypes.c_void_p(popen_obj._handle)
+        except Exception:
+            PROCESS_ALL_ACCESS = (0x000F0000 | 0x00100000 | 0xFFF)
+            OpenProcess = kernel32.OpenProcess
+            OpenProcess.restype = ctypes.c_void_p
+            process_handle = OpenProcess(PROCESS_ALL_ACCESS, False, popen_obj.pid)
+            if not process_handle:
+                return False
+        ok = AssignProcessToJobObject(job, process_handle)
+        if ok:
+            # 保留 job 对象句柄以免被回收，确保在父进程句柄关闭时 Job 被关闭从而杀死子进程
+            popen_obj._job_object = job
+            return True
+    except Exception:
+        return False
+    return False
+
 
 class PPOCR_pipe:
     """调用OCR（管道模式）"""
@@ -30,13 +125,28 @@ class PPOCR_pipe:
         creationflags = 0
         if "win32" in str(sysPlatform).lower():
             creationflags = subprocess.CREATE_NO_WINDOW
-        self.ret = subprocess.Popen(  # 打开管道
-            exePath, cwd=cwd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,  # 丢弃stderr的内容
-            creationflags=creationflags  # 开启静默模式
+        # 在 Linux 下希望子进程在父进程死亡时收到 SIGTERM
+        preexec_fn = None
+        if "linux" in str(sysPlatform).lower():
+            preexec_fn = _set_pdeathsig
+        # 通过 kwargs 传递可选参数以保持兼容
+        popen_kwargs = dict(cwd=cwd,
+                            stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.DEVNULL)
+        if creationflags:
+            popen_kwargs['creationflags'] = creationflags
+        if preexec_fn is not None:
+            popen_kwargs['preexec_fn'] = preexec_fn
+        self.ret = subprocess.Popen(
+            exePath,
+            **popen_kwargs
         )
+        # Windows 下将子进程与 Job 对象绑定，确保父进程句柄关闭时杀死子进程
+        try:
+            _assign_process_to_jobobj(self.ret)
+        except Exception:
+            pass
         # 启动子进程
         while True:
             if not self.ret.poll() is None:  # 子进程已退出，初始化失败
