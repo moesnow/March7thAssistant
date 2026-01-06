@@ -1,5 +1,5 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, pyqtSignal, QTimer, QTime, QDateTime
+from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, pyqtSignal, QTimer, QTime, QDateTime, QEvent
 from PyQt5.QtGui import QFont, QTextCursor, QKeySequence
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit,
                              QShortcut, QSizePolicy)
@@ -51,6 +51,11 @@ class LogInterface(ScrollArea):
         self._pending_post_action_timer = None
         # 标记任务是否因异常被停止（非正常结束，如超时、进程错误或异常退出）
         self._stopped_abnormally = False
+
+        # 缓冲在窗口不可见时收到的日志（在窗口恢复可见时一次性追加）
+        self._buffered_logs = ""
+        # 延迟安装窗口事件过滤器（确保 window() 已可用）
+        QTimer.singleShot(0, self._install_window_event_filter)
 
         # 定时运行相关
         self._schedule_timer = QTimer(self)
@@ -685,17 +690,116 @@ class LogInterface(ScrollArea):
         self.stopTask()
 
     def clearLog(self):
-        """清空日志"""
-        self.logTextEdit.clear()
+        """清空日志并清空缓冲"""
+        try:
+            self.logTextEdit.clear()
+        except Exception:
+            pass
+        try:
+            self._buffered_logs = ""
+        except Exception:
+            pass
 
     def appendLog(self, text):
-        """追加日志"""
-        self.logTextEdit.moveCursor(QTextCursor.End)
-        self.logTextEdit.insertPlainText(text)
-        self.logTextEdit.moveCursor(QTextCursor.End)
-        # 自动滚动到底部
-        scrollbar = self.logTextEdit.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        """追加日志
+
+        变更：当日志界面或主窗口不可见时，缓冲日志；在恢复可见时一次性追加并滚动到底部。
+        """
+        if not text:
+            return
+        s = str(text)
+
+        # 如果当前不应立即追加，则缓冲并返回
+        try:
+            if not self._should_append_now():
+                try:
+                    self._buffered_logs += s
+                except Exception:
+                    self._buffered_logs = s
+                return
+        except Exception:
+            # 若检查可见性失败，则继续追加以保证日志不丢失
+            pass
+
+        # 如果有缓冲内容，先追加它
+        try:
+            if getattr(self, '_buffered_logs', None):
+                s = self._buffered_logs + s
+                self._buffered_logs = ''
+        except Exception:
+            pass
+
+        # 执行追加并滚动到底部
+        try:
+            # self.logTextEdit.moveCursor(QTextCursor.End)
+            self.logTextEdit.insertPlainText(s)
+            # self.logTextEdit.moveCursor(QTextCursor.End)
+            scrollbar = self.logTextEdit.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+        except Exception:
+            # 如果追加失败，尽量保留内容到缓冲中
+            try:
+                self._buffered_logs = (getattr(self, '_buffered_logs', '') or '') + s
+            except Exception:
+                pass
+
+    def _should_append_now(self):
+        """判断当前是否应该立即追加日志：要求当前控件和顶层窗口都可见"""
+        try:
+            if not self.isVisible():
+                return False
+            w = self.window()
+            if w and not w.isVisible():
+                return False
+            return True
+        except Exception:
+            # 在不确定时返回 True 以避免丢失日志
+            return True
+
+    def _flush_buffered_logs(self):
+        """把缓冲的日志一次性追加到日志编辑器并清空缓冲"""
+        try:
+            if not getattr(self, '_buffered_logs', None):
+                return
+            # self.logTextEdit.moveCursor(QTextCursor.End)
+            self.logTextEdit.insertPlainText(self._buffered_logs)
+            # self.logTextEdit.moveCursor(QTextCursor.End)
+            scrollbar = self.logTextEdit.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+            self._buffered_logs = ''
+        except Exception:
+            # 忽略任何刷新错误并清理缓冲
+            self._buffered_logs = ''
+
+    def showEvent(self, event):
+        """控件被显示时刷新缓冲日志"""
+        try:
+            super().showEvent(event)
+        except Exception:
+            pass
+        self._flush_buffered_logs()
+
+    def eventFilter(self, obj, event):
+        """监听父窗口的可见性/状态变化，在窗口恢复可见时刷新缓冲日志"""
+        try:
+            w = self.window()
+            if obj is w:
+                et = event.type()
+                if et in (QEvent.Show, QEvent.WindowStateChange, QEvent.ActivationChange):
+                    if self._should_append_now():
+                        self._flush_buffered_logs()
+        except Exception:
+            pass
+        return super().eventFilter(obj, event)
+
+    def _install_window_event_filter(self):
+        """延迟安装顶层窗口事件过滤器以监听窗口显示/隐藏等事件"""
+        try:
+            w = self.window()
+            if w:
+                w.installEventFilter(self)
+        except Exception:
+            pass
 
     def _onReadyRead(self):
         """读取进程输出"""
