@@ -1,5 +1,6 @@
 import os
 import io
+import platform
 from rapidocr import EngineType, LangDet, ModelType, OCRVersion, RapidOCR
 from utils.logger.logger import Logger
 from typing import Optional
@@ -15,21 +16,39 @@ class OCR:
         self.logger = logger
         self.replacements = replacements
 
+    def _check_windows_version(self):
+        """检查是否为 Windows 10 Build 18362 及以上"""
+        try:
+            if platform.system() != "Windows":
+                return False
+
+            # 获取 Windows Build 版本
+            build = int(platform.win32_ver()[1].split('.')[-1]) if platform.win32_ver()[1] else 0
+            return build >= 18362
+        except Exception as e:
+            self.logger.warning(f"检查 Windows 版本失败：{e}，将关闭 DML")
+            return False
+
     def instance_ocr(self, log_level: str = "error"):
         """实例化OCR，若ocr实例未创建，则创建之"""
         if self.ocr is None:
             try:
                 self.logger.debug("开始初始化OCR...")
+                use_dml = self._check_windows_version()
+                self.logger.debug(f"DML 支持：{use_dml}")
+
                 self.ocr = RapidOCR(
                     params={
                         # "Global.use_det": False,
                         "Global.use_cls": False,
                         # "Global.use_rec": False,
+                        # min_height (int) : 图像最小高度（单位是像素），低于这个值，会跳过文本检测阶段，直接进行后续识别
+                        # 用于过滤只有一行文本的图像，为了兼容之前使用的 PaddleOCR-json 的情况，大概值是 155
                         "Global.min_height": 155,
                         # "Global.width_height_ratio": -1,
                         # "Global.text_score": 0.7,
                         "Global.log_level": log_level,
-                        "EngineConfig.onnxruntime.use_dml": True,
+                        "EngineConfig.onnxruntime.use_dml": use_dml,
                         "Det.lang_type": LangDet.CH,
                         "Det.ocr_version": OCRVersion.PPOCRV4,
                         "Cls.ocr_version": OCRVersion.PPOCRV4,
@@ -39,19 +58,12 @@ class OCR:
                         "Det.engine_type": EngineType.ONNXRUNTIME,
                         "Cls.engine_type": EngineType.ONNXRUNTIME,
                         "Rec.engine_type": EngineType.ONNXRUNTIME,
-                        # "Det.engine_type": EngineType.OPENVINO,
-                        # "Cls.engine_type": EngineType.OPENVINO,
-                        # "Rec.engine_type": EngineType.OPENVINO,
-                        # "Det.engine_type": EngineType.PADDLE,
-                        # "Cls.engine_type": EngineType.PADDLE,
-                        # "Rec.engine_type": EngineType.PADDLE,
                     }
                 )
                 self.logger.debug("初始化OCR完成")
                 atexit.register(self.exit_ocr)
             except Exception as e:
                 self.logger.error(f"初始化OCR失败：{e}")
-                # self.logger.error("请尝试重新下载或解压")
                 raise Exception("初始化OCR失败")
 
     def exit_ocr(self):
