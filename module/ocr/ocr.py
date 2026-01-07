@@ -104,7 +104,7 @@ class OCR:
 
     def replace_strings(self, results):
         """替换OCR结果中的错误字符串"""
-        if results is None or self.replacements is None:
+        if results is None or len(results) == 0 or self.replacements is None:
             return results
 
         for item in results:
@@ -119,7 +119,7 @@ class OCR:
 
     def log_results(self, modified_dict):
         """记录OCR识别结果"""
-        if modified_dict and "txt" in modified_dict[0]:
+        if modified_dict and len(modified_dict) > 0 and "txt" in modified_dict[0]:
             print_list = [item["txt"] for item in modified_dict]
             self.logger.debug(f"OCR识别结果: {print_list}")
         else:
