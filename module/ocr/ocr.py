@@ -23,7 +23,8 @@ class OCR:
                 return False
 
             # 获取 Windows Build 版本
-            build = int(platform.win32_ver()[1].split('.')[-1]) if platform.win32_ver()[1] else 0
+            version_info = platform.win32_ver()[1]
+            build = int(version_info.split('.')[-1]) if version_info else 0
             return build >= 18362
         except Exception as e:
             self.logger.warning(f"检查 Windows 版本失败：{e}，将关闭 DML")
