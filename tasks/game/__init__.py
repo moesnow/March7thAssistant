@@ -211,14 +211,15 @@ def stop(detect_loop=False):
         except Exception as e:
             log.warning(f"播放音频时发生错误：{e}")
 
-    if cfg.play_audio:
-        play_audio()
-
     if detect_loop and cfg.after_finish == "Loop":
+        if cfg.play_audio:
+            play_audio()
         after_finish_is_loop()
     else:
         if detect_loop:
             notify_after_finish_not_loop()
+        if cfg.play_audio:
+            play_audio()
         # 在关闭游戏前优先退出 OCR 避免内存占用
         ocr.exit_ocr()
         if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
