@@ -15,7 +15,7 @@ class OCR:
         self.logger = logger
         self.replacements = replacements
 
-    def instance_ocr(self):
+    def instance_ocr(self, log_level: str = "error"):
         """实例化OCR，若ocr实例未创建，则创建之"""
         if self.ocr is None:
             try:
@@ -28,7 +28,7 @@ class OCR:
                         "Global.min_height": 155,
                         # "Global.width_height_ratio": -1,
                         # "Global.text_score": 0.7,
-                        "Global.log_level": "error",
+                        "Global.log_level": log_level,
                         "EngineConfig.onnxruntime.use_dml": True,
                         "Det.lang_type": LangDet.CH,
                         "Det.ocr_version": OCRVersion.PPOCRV4,

@@ -45,7 +45,7 @@ def generate_changelog(version: str, output_file: Path) -> None:
 def init_ocr() -> None:
     """初始化OCR"""
     log.info("[*] 初始化OCR...")
-    ocr.instance_ocr()
+    ocr.instance_ocr(log_level="info")
     log.info("[✓] OCR初始化完成")
 
 
