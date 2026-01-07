@@ -181,7 +181,7 @@ def main():
             execute_all_tasks(version, output_file)
 
     except Exception as e:
-        log.error(f"[✗] 错误: {e}", file=sys.stderr)
+        log.error(f"[✗] 错误: {e}")
         sys.exit(1)
 
 
