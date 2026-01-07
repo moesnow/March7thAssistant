@@ -424,7 +424,7 @@ class LogInterface(ScrollArea):
                 return
             name = task.get('name') or os.path.basename(program) or program
 
-            self.logTextEdit.clear()
+            self.clearLog()
             self.appendLog(f"========== 开始任务: {name} ==========\n")
 
             proc = QProcess(self)
@@ -507,7 +507,7 @@ class LogInterface(ScrollArea):
         self.current_task = task
         command = str(task)
         task_display_name = TASK_NAMES.get(command, command)
-        self.logTextEdit.clear()
+        self.clearLog()
         self.appendLog(f"========== 开始任务: {task_display_name} ==========\n")
 
         # 更新状态
