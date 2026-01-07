@@ -144,6 +144,9 @@ def main():
         if output_file:
             execute_all_tasks(version, Path(output_file))
             return
+        else:
+            log.error("错误: 旧格式用法需要同时提供版本号和输出文件: python build.py <version> <output_file>")
+            sys.exit(1)
 
     args = parser.parse_args()
 
