@@ -28,7 +28,7 @@ def get_changelog(version: str) -> str:
 
 def generate_changelog(version: str, output_file: Path) -> None:
     """生成并输出日志内容"""
-    print(f"[*] 生成版本 {version} 的日志内容...")
+    log.info(f"[*] 生成版本 {version} 的日志内容...")
     log_content = get_changelog(version)
 
     # 生成最终内容
@@ -39,50 +39,50 @@ def generate_changelog(version: str, output_file: Path) -> None:
 [已有 Mirror酱 CDK？前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable&source=m7a-release)"""
 
     output_file.write_text(final_output, encoding="utf-8")
-    print(f"[✓] 日志内容已输出到 {output_file}")
+    log.info(f"[✓] 日志内容已输出到 {output_file}")
 
 
 def init_ocr() -> None:
     """初始化OCR"""
-    print("[*] 初始化OCR...")
+    log.info("[*] 初始化OCR...")
     ocr.instance_ocr()
-    print("[✓] OCR初始化完成")
+    log.info("[✓] OCR初始化完成")
 
 
 def update_universe() -> None:
     """更新Universe"""
-    print("[*] 更新Universe...")
+    log.info("[*] 更新Universe...")
     Universe.update()
-    print("[✓] Universe更新完成")
+    log.info("[✓] Universe更新完成")
 
 
 def update_fight() -> None:
     """更新Fight"""
-    print("[*] 更新Fight...")
+    log.info("[*] 更新Fight...")
     Fight.update()
-    print("[✓] Fight更新完成")
+    log.info("[✓] Fight更新完成")
 
 
 def update_fps_unlocker() -> None:
     """更新FPS解锁器"""
-    print("[*] 更新Genshin StarRail FPS解锁器...")
+    log.info("[*] 更新Genshin StarRail FPS解锁器...")
     Genshin_StarRail_fps_unlocker.update()
-    print("[✓] FPS解锁器更新完成")
+    log.info("[✓] FPS解锁器更新完成")
 
 
 def download_browser() -> None:
     """下载集成浏览器"""
-    print("[*] 下载集成浏览器...")
+    log.info("[*] 下载集成浏览器...")
     cfg.set_value("browser_download_use_mirror", False)
     cloud_game.download_intergrated_browser()
-    print("[✓] 浏览器下载完成")
+    log.info("[✓] 浏览器下载完成")
 
 
 def execute_all_tasks(version: str = None, output_file: Path = None) -> None:
     """执行所有任务"""
-    print("=" * 50)
-    print("执行全部构建任务")
-    print("=" * 50)
+    log.info("=" * 50)
+    log.info("执行全部构建任务")
+    log.info("=" * 50)
 
     init_ocr()
     update_universe()
@@ -93,9 +93,9 @@ def execute_all_tasks(version: str = None, output_file: Path = None) -> None:
     if version and output_file:
         generate_changelog(version, output_file)
 
-    print("=" * 50)
-    print("[✓] 所有任务执行完成")
-    print("=" * 50)
+    log.info("=" * 50)
+    log.info("[✓] 所有任务执行完成")
+    log.info("=" * 50)
 
 
 def main():
@@ -163,8 +163,8 @@ def main():
             download_browser()
         elif task == "changelog":
             if not args.version or not args.output:
-                print("错误: changelog 任务需要 --version 和 --output 参数")
-                parser.print_help()
+                log.error("错误: changelog 任务需要 --version 和 --output 参数")
+                parser.log.info_help()
                 sys.exit(1)
             generate_changelog(args.version, Path(args.output))
         elif task == "all":
@@ -172,13 +172,13 @@ def main():
             output_file = Path(args.output) if args.output else None
 
             if args.version and not args.output:
-                print("警告: 指定了版本但未指定输出文件，将跳过日志生成")
+                log.warning("警告: 指定了版本但未指定输出文件，将跳过日志生成")
                 output_file = None
 
             execute_all_tasks(version, output_file)
 
     except Exception as e:
-        print(f"[✗] 错误: {e}", file=sys.stderr)
+        log.error(f"[✗] 错误: {e}", file=sys.stderr)
         sys.exit(1)
 
 
