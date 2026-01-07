@@ -153,7 +153,7 @@ March7thAssistant 离不开以下开源项目的帮助：
 
 - 锄大地自动化 [https://github.com/linruowuyin/Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail)
 
-- OCR文字识别 [https://github.com/hiroi-sora/PaddleOCR-json](https://github.com/hiroi-sora/PaddleOCR-json)
+- OCR文字识别 [https://github.com/RapidAI/RapidOCR](https://github.com/RapidAI/RapidOCR)
 
 - 图形界面组件库 [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
 

@@ -157,7 +157,7 @@ March7thAssistant 離不開以下開源項目的幫助：
 
 - 鋤大地自動化 [https://github.com/linruowuyin/Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail)
 
-- OCR文字識別 [https://github.com/hiroi-sora/PaddleOCR-json](https://github.com/hiroi-sora/PaddleOCR-json)
+- OCR文字識別 [https://github.com/RapidAI/RapidOCR](https://github.com/RapidAI/RapidOCR)
 
 - 圖形界面組件庫 [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
 

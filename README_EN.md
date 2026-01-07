@@ -158,7 +158,7 @@ March7thAssistant wouldn't have been possible without the assistance of these op
 
 - Automation for farming [https://github.com/linruowuyin/Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail)
 
-- OCR Text Recognition [https://github.com/hiroi-sora/PaddleOCR-json](https://github.com/hiroi-sora/PaddleOCR-json)
+- OCR Text Recognition [https://github.com/RapidAI/RapidOCR](https://github.com/RapidAI/RapidOCR)
 
 - Graphic Interface Component Library [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
 

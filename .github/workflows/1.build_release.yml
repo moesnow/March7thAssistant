@@ -34,12 +34,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt pyinstaller==6.14.1
+          python build.py --task ocr
 
       # 生成程序
       - name: Generate program
         run: |
-          pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
-          pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --uac-admin -n "March7th Launcher" app.py -y
+          pyinstaller -D --distpath .\dist\ -i .\assets\logo\Terminal.ico --contents-directory libraries --collect-all rapidocr --exclude-module PyQt5 --uac-admin -n "March7th Assistant" main.py -y
+          pyinstaller -D --distpath .\dist\ -i .\assets\logo\March7th.ico --contents-directory libraries --collect-all rapidocr --uac-admin -n "March7th Launcher" app.py -y
           pyinstaller -F --distpath .\dist\March7thAssistant\ -i .\assets\logo\Updater.ico -n "March7th Updater" --exclude-module numpy --exclude-module pandas --uac-admin updater.py -y
 
       # 移动资源到dist目录
@@ -63,7 +64,7 @@ jobs:
       - name: Move 3rdparty to dist directory
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          python build.py "${{ github.ref_name }}" changelog_temp.md
+          python build.py --task all -v "${{ github.ref_name }}" -o changelog_temp.md
           Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
 
