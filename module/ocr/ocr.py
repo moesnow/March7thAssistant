@@ -118,7 +118,7 @@ class OCR:
 
     def log_results(self, modified_dict):
         """记录OCR识别结果"""
-        if "txt" in modified_dict[0]:
+        if modified_dict and "txt" in modified_dict[0]:
             print_list = [item["txt"] for item in modified_dict]
             self.logger.debug(f"OCR识别结果: {print_list}")
         else:
