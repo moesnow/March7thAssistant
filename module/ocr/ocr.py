@@ -1,16 +1,16 @@
 import os
 import io
-from .PPOCR_api import GetOcrApi
+from rapidocr import EngineType, LangDet, ModelType, OCRVersion, RapidOCR
 from utils.logger.logger import Logger
 from typing import Optional
 from PIL import Image
 import atexit
+import gc
 
 
 class OCR:
-    def __init__(self, exePath, logger: Optional[Logger] = None, replacements=None):
+    def __init__(self, logger: Optional[Logger] = None, replacements=None):
         """初始化OCR类"""
-        self.exePath = exePath
         self.ocr = None
         self.logger = logger
         self.replacements = replacements
@@ -20,25 +20,55 @@ class OCR:
         if self.ocr is None:
             try:
                 self.logger.debug("开始初始化OCR...")
-                self.ocr = GetOcrApi(self.exePath)
+                self.ocr = RapidOCR(
+                    params={
+                        # "Global.use_det": False,
+                        "Global.use_cls": False,
+                        # "Global.use_rec": False,
+                        "Global.min_height": 155,
+                        # "Global.width_height_ratio": -1,
+                        # "Global.text_score": 0.7,
+                        "Global.log_level": "error",
+                        "EngineConfig.onnxruntime.use_dml": True,
+                        "Det.lang_type": LangDet.CH,
+                        "Det.ocr_version": OCRVersion.PPOCRV4,
+                        "Cls.ocr_version": OCRVersion.PPOCRV4,
+                        "Rec.ocr_version": OCRVersion.PPOCRV4,
+                        "Det.model_type": ModelType.MOBILE,
+                        "Rec.model_type": ModelType.MOBILE,
+                        "Det.engine_type": EngineType.ONNXRUNTIME,
+                        "Cls.engine_type": EngineType.ONNXRUNTIME,
+                        "Rec.engine_type": EngineType.ONNXRUNTIME,
+                        # "Det.engine_type": EngineType.OPENVINO,
+                        # "Cls.engine_type": EngineType.OPENVINO,
+                        # "Rec.engine_type": EngineType.OPENVINO,
+                        # "Det.engine_type": EngineType.PADDLE,
+                        # "Cls.engine_type": EngineType.PADDLE,
+                        # "Rec.engine_type": EngineType.PADDLE,
+                    }
+                )
                 self.logger.debug("初始化OCR完成")
                 atexit.register(self.exit_ocr)
             except Exception as e:
                 self.logger.error(f"初始化OCR失败：{e}")
-                self.logger.error("请尝试重新下载或解压")
+                # self.logger.error("请尝试重新下载或解压")
                 raise Exception("初始化OCR失败")
 
     def exit_ocr(self):
         """退出OCR实例，清理资源"""
         if self.ocr is not None:
-            self.ocr.exit()
-            self.ocr = None
+            try:
+                self.ocr = None
+                gc.collect()
+                self.logger.debug("OCR资源已释放")
+            except Exception as e:
+                self.logger.error(f"清理OCR资源失败：{e}")
 
     def convert_format(self, result):
         """转换OCR结果格式，返回统一的数据格式"""
-        if result['code'] != 100:
+        if result is None:
             return False
-        return [[item['box'], (item['text'], item['score'])] for item in result['data']]
+        return [[item['box'], (item['txt'], item['score'])] for item in result]
 
     def run(self, image):
         """执行OCR识别，支持Image对象、文件路径和np.ndarray对象"""
@@ -52,7 +82,7 @@ class OCR:
             image_stream = io.BytesIO()
             image.save(image_stream, format="PNG")
             image_bytes = image_stream.getvalue()
-            original_dict = self.ocr.runBytes(image_bytes)
+            original_dict = self.ocr(image_bytes).to_json()
 
             return self.replace_strings(original_dict)
         except Exception as e:
@@ -61,23 +91,23 @@ class OCR:
 
     def replace_strings(self, results):
         """替换OCR结果中的错误字符串"""
-        if "data" not in results or "text" not in results["data"][0] or self.replacements is None:
+        if results is None or self.replacements is None:
             return results
 
-        for item in results["data"]:
+        for item in results:
             for old_str, new_str in self.replacements["direct"].items():
-                item["text"] = item["text"].replace(old_str, new_str)
+                item["txt"] = item["txt"].replace(old_str, new_str)
             for old_str, new_str in self.replacements["conditional"].items():
-                if new_str not in item["text"]:
-                    item["text"] = item["text"].replace(old_str, new_str)
+                if new_str not in item["txt"]:
+                    item["txt"] = item["txt"].replace(old_str, new_str)
 
         self.log_results(results)
         return results
 
     def log_results(self, modified_dict):
         """记录OCR识别结果"""
-        if "data" in modified_dict and "text" in modified_dict["data"][0]:
-            print_list = [item["text"] for item in modified_dict["data"]]
+        if "txt" in modified_dict[0]:
+            print_list = [item["txt"] for item in modified_dict]
             self.logger.debug(f"OCR识别结果: {print_list}")
         else:
             self.logger.debug(f"OCR识别结果: {modified_dict}")
