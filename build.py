@@ -167,7 +167,7 @@ def main():
         elif task == "changelog":
             if not args.version or not args.output:
                 log.error("错误: changelog 任务需要 --version 和 --output 参数")
-                parser.log.info_help()
+                parser.print_help()
                 sys.exit(1)
             generate_changelog(args.version, Path(args.output))
         elif task == "all":
