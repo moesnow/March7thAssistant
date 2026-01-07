@@ -21,11 +21,11 @@ class OCR:
         try:
             if platform.system() != "Windows":
                 return False
-
-            # 获取 Windows Build 版本
-            version_info = platform.win32_ver()[1]
-            build = int(version_info.split('.')[-1]) if version_info else 0
-            return build >= 18362
+            window_build_number_str = platform.version().split(".")[-1]
+            window_build_number = (
+                int(window_build_number_str) if window_build_number_str.isdigit() else 0
+            )
+            return window_build_number >= 18362
         except Exception as e:
             self.logger.warning(f"检查 Windows 版本失败：{e}，将关闭 DML")
             return False
@@ -37,7 +37,6 @@ class OCR:
                 self.logger.debug("开始初始化OCR...")
                 use_dml = self._check_windows_version()
                 self.logger.debug(f"DML 支持：{use_dml}")
-
                 self.ocr = RapidOCR(
                     params={
                         # "Global.use_det": False,
