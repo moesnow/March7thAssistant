@@ -739,14 +739,14 @@ class CloudGameController(GameControllerBase):
             self.log_error(f"详细错误:\n{traceback.format_exc()}")
             try:
                 self.try_dump_page()
-            except Exception:
-                pass
+            except Exception as dump_err:
+                self.log_warning(f"尝试导出页面失败: {dump_err}")
         finally:
             try:
                 self.driver.switch_to.default_content()
                 self.log_info("已切换回主文档")
-            except Exception:
-                pass
+            except Exception as switch_err:
+                self.log_warning(f"切回主文档失败: {switch_err}")
 
     def start_game_process(self) -> bool:
         """启动浏览器进程"""

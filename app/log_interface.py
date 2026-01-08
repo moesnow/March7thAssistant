@@ -211,8 +211,9 @@ class LogInterface(ScrollArea):
             if self._hotkey_registered and self._current_hotkey:
                 try:
                     keyboard.remove_hotkey(self._current_hotkey)
-                except Exception:
-                    pass
+                except Exception as e:
+                    # 忽略注销热键时的异常，但打印日志以便排查问题
+                    print(f"取消注册全局热键失败: {e}")
                 self._hotkey_registered = False
                 self._current_hotkey = None
 
