@@ -15,7 +15,7 @@ onepush==1.4.0
 pyperclip==1.9.0
 pysocks==1.7.1
 pypac==0.16.5
-requests_toolbelt
+requests_toolbelt==1.0.0
 matrix-nio==0.25.2
 python-socks[asyncio]==2.6.1
 asyncio==3.4.3
