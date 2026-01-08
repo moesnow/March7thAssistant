@@ -38,7 +38,7 @@ if sys.platform == 'win32':
             with open(lnk_path, "rb") as lnk_file:
                 lnk = Lnk(lnk_file)
                 return os.path.join(lnk.work_dir, "config.ini")
-        except:
+        except Exception:
             return None
 
 

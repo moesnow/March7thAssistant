@@ -211,7 +211,7 @@ class LogInterface(ScrollArea):
             if self._hotkey_registered and self._current_hotkey:
                 try:
                     keyboard.remove_hotkey(self._current_hotkey)
-                except:
+                except Exception:
                     pass
                 self._hotkey_registered = False
                 self._current_hotkey = None
