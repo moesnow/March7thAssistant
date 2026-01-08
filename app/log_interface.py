@@ -1,5 +1,4 @@
 # coding:utf-8
-import platform
 from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, pyqtSignal, QTimer, QTime, QDateTime, QEvent
 from PyQt5.QtGui import QFont, QTextCursor, QKeySequence
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit,
