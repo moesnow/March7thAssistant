@@ -47,7 +47,7 @@ RUN \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/* \
     && python -m venv $VIRTUAL_ENV \
-    && pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir -r requirements-docker.txt \
     # -i https://mirrors.cloud.tencent.com/pypi/simple/ \
     && python build.py --task ocr \
     && python build.py --task browser
