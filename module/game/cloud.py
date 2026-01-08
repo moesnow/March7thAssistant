@@ -217,6 +217,7 @@ class CloudGameController(GameControllerBase):
             args += [
                 "--headless=new",  # 无窗口模式
                 "--mute-audio",    # 后台静音
+                "--no-sandbox",
             ]
         if self.cfg.cloud_game_fullscreen_enable and not headless:
             args.append("--start-fullscreen")  # 全屏启动
