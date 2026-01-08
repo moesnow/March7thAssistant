@@ -22,37 +22,22 @@ from module.notification.webhook import WebhookNotifier
 
 class NotifierFactory:
     # 创建通知器类型到其类的映射字典
+    notifier_classes = {
+        "telegram": TelegramNotifier,
+        "matrix": MatrixNotifier,
+        "onebot": OnebotNotifier,
+        "smtp": SMTPNotifier,
+        "gocqhttp": GocqhttpNotifier,
+        "wechatworkapp": WeChatworkappNotifier,
+        "wechatworkbot": WeChatWorkBotNotifier,
+        "custom": CustomNotifier,
+        "lark": LarkNotifier,
+        "serverchan3": ServerChanNotifier,
+        "kook": KOOKNotifier,
+        "webhook": WebhookNotifier,
+    }
     if sys.platform == 'win32':
-        notifier_classes = {
-            "winotify": WinotifyNotifier,
-            "telegram": TelegramNotifier,
-            "matrix": MatrixNotifier,
-            "onebot": OnebotNotifier,
-            "smtp": SMTPNotifier,
-            "gocqhttp": GocqhttpNotifier,
-            "wechatworkapp": WeChatworkappNotifier,
-            "wechatworkbot": WeChatWorkBotNotifier,
-            "custom": CustomNotifier,
-            "lark": LarkNotifier,
-            "serverchan3": ServerChanNotifier,
-            "kook": KOOKNotifier,
-            "webhook": WebhookNotifier,
-        }
-    else:
-        notifier_classes = {
-            "telegram": TelegramNotifier,
-            "matrix": MatrixNotifier,
-            "onebot": OnebotNotifier,
-            "smtp": SMTPNotifier,
-            "gocqhttp": GocqhttpNotifier,
-            "wechatworkapp": WeChatworkappNotifier,
-            "wechatworkbot": WeChatWorkBotNotifier,
-            "custom": CustomNotifier,
-            "lark": LarkNotifier,
-            "serverchan3": ServerChanNotifier,
-            "kook": KOOKNotifier,
-            "webhook": WebhookNotifier,
-        }
+        notifier_classes["winotify"] = WinotifyNotifier
 
     @staticmethod
     def create_notifier(notifier_name, params, logger):
