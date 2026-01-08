@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QPushButton
 
 from module.config import cfg
 import os
+import sys
 from ..tools.check_update import checkUpdate
 
 
@@ -81,4 +82,9 @@ class ComboBoxSettingCardLog(SettingCard):
         cfg.set_value(self.configname, self.comboBox.itemData(index))
 
     def _onClicked(self):
-        os.startfile(os.path.abspath("./logs"))
+        if sys.platform == 'win32':
+            os.startfile(os.path.abspath("./logs"))
+        elif sys.platform == 'darwin':
+            os.system(f'open "{os.path.abspath("./logs")}"')
+        else:
+            os.system(f'xdg-open "{os.path.abspath("./logs")}"')

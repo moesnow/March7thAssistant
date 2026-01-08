@@ -15,6 +15,7 @@ from module.config import cfg
 from PIL import Image
 import numpy as np
 import os
+import sys
 
 
 class BannerWidget(QWidget):
@@ -141,30 +142,46 @@ class HomeInterface(ScrollArea):
                 # "中途接管": lambda: start_task("currencywarstemp"),
             }
         )
-        basicInputView.addSampleCard(
-            icon="./assets/app/images/SilverWolf.jpg",
-            title="锄大地",
-            action={
-                "快速启动 ⭐": lambda: start_task("fight"),
-                "原版运行": lambda: start_task("fight_gui"),
-                "更新锄大地": lambda: start_task("fight_update"),
-                "重置配置文件": lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json")),
-                "打开程序目录": lambda: os.startfile(cfg.fight_path),
-                "打开项目主页": lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
-            }
-        )
-        basicInputView.addSampleCard(
-            icon="./assets/app/images/Herta.jpg",
-            title="差分宇宙",
-            action={
-                "快速启动 ⭐": lambda: start_task("universe"),
-                "原版运行": lambda: start_task("universe_gui"),
-                "更新模拟宇宙": lambda: start_task("universe_update"),
-                "重置配置文件": lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
-                "打开程序目录": lambda: os.startfile(cfg.universe_path),
-                "打开项目主页": lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
-            }
-        )
+        if sys.platform == 'win32':
+            basicInputView.addSampleCard(
+                icon="./assets/app/images/SilverWolf.jpg",
+                title="锄大地",
+                action={
+                    "快速启动 ⭐": lambda: start_task("fight"),
+                    "原版运行": lambda: start_task("fight_gui"),
+                    "更新锄大地": lambda: start_task("fight_update"),
+                    "重置配置文件": lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json")),
+                    "打开程序目录": lambda: os.startfile(cfg.fight_path),
+                    "打开项目主页": lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
+                }
+            )
+            basicInputView.addSampleCard(
+                icon="./assets/app/images/Herta.jpg",
+                title="差分宇宙",
+                action={
+                    "快速启动 ⭐": lambda: start_task("universe"),
+                    "原版运行": lambda: start_task("universe_gui"),
+                    "更新模拟宇宙": lambda: start_task("universe_update"),
+                    "重置配置文件": lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
+                    "打开程序目录": lambda: os.startfile(cfg.universe_path),
+                    "打开项目主页": lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
+                }
+            )
+        else:
+            basicInputView.addSampleCard(
+                icon="./assets/app/images/SilverWolf.jpg",
+                title="锄大地",
+                action={
+                    "暂不支持": lambda: None,
+                }
+            )
+            basicInputView.addSampleCard(
+                icon="./assets/app/images/Herta.jpg",
+                title="差分宇宙",
+                action={
+                    "暂不支持": lambda: None,
+                }
+            )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Bronya.jpg",
             title="逐光捡金",

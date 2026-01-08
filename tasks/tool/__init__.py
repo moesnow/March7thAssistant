@@ -5,13 +5,9 @@ from .autoplot import AutoPlot
 from module.game import get_game_controller
 from module.automation.screenshot import Screenshot
 from module.logger import log
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QTimer, QObject, pyqtSignal
-import tkinter as tk
+from PyQt5.QtCore import QObject, pyqtSignal
 import threading
 import time
-import sys
-import pyautogui
 
 
 class ScreenshotSignals(QObject):
@@ -70,6 +66,7 @@ class ToolManager:
             self.screenshot_window = ScreenshotApp(screenshot_image)
 
             # 检查屏幕分辨率决定是否最大化
+            import pyautogui
             screen_resolution = pyautogui.size()
             screen_width, screen_height = screen_resolution
             if screen_width <= 1920 and screen_height <= 1080:
@@ -100,12 +97,12 @@ class ToolManager:
         """自动对话（后台运行，无窗口）"""
         instance = self.get_autoplot_instance()
         instance.start()
-    
+
     def stop_plot(self):
         """停止自动对话"""
         if self.autoplot_instance is not None:
             self.autoplot_instance.stop()
-    
+
     def update_plot_options(self, options: dict):
         """更新自动对话配置"""
         instance = self.get_autoplot_instance()

@@ -1,6 +1,8 @@
 
 import pypac
-import winreg
+import sys
+if sys.platform == 'win32':
+    import winreg
 
 PAC_REG_KEY = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings"
 

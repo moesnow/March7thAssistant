@@ -6,7 +6,6 @@ import psutil
 
 from app.tools.account_manager import load_acc_and_pwd
 from utils.registry.gameaccount import gamereg_uid
-from utils.registry.star_rail_setting import get_launcher_path
 from .starrailcontroller import StarRailController
 
 from utils.date import Date
@@ -22,8 +21,6 @@ from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from module.ocr import ocr
 from utils.console import is_gui_started
-
-starrail = StarRailController(cfg=cfg, logger=log)
 
 
 def wait_until(condition, timeout, period=1):
@@ -120,7 +117,7 @@ def start_game():
                 return process.exe()
         return None
 
-    def start_local_game():
+    def start_local_game(starrail):
         if not starrail.switch_to_game():
             if cfg.auto_set_resolution_enable:
                 starrail.change_resolution(1920, 1080)
@@ -175,7 +172,8 @@ def start_game():
             if cfg.cloud_game_enable:
                 start_cloud_game()
             else:
-                start_local_game()
+                starrail = StarRailController(cfg=cfg, logger=log)
+                start_local_game(starrail)
             if not wait_until(lambda: screen.get_current_screen(), 6 * 60):
                 log.error("获取当前界面超时")
                 # 确保在重试前停止游戏
@@ -284,6 +282,7 @@ def _start_launcher_and_get_automation(game):
     if os.path.exists(cfg.launcher_path):
         path = cfg.launcher_path
     else:
+        from utils.registry.star_rail_setting import get_launcher_path
         path = get_launcher_path()
         if path is None:
             log.error("未找到米哈游启动器路径")

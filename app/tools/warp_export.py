@@ -1,7 +1,6 @@
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
 from qfluentwidgets import InfoBar, InfoBarPosition, StateToolTip
 from urllib.parse import urlencode, urlparse, parse_qs
-from win32api import CopyFile
 from datetime import datetime
 from pathlib import Path
 from enum import Enum
@@ -249,6 +248,7 @@ class WarpExport:
 
                 with tempfile.TemporaryDirectory() as temp_dir:
                     temp_file_path = os.path.join(Path(temp_dir), Path(latest_file_path).name)
+                    from win32api import CopyFile  # 延迟导入，避免非 Windows 平台报错
                     CopyFile(latest_file_path, temp_file_path)
                     cache_text = Path(temp_file_path).read_bytes().decode(errors="ignore")
 

@@ -1,20 +1,21 @@
 from module.automation.input_base import InputBase
 import time
 
+
 class CdpInput(InputBase):
     SPECIAL_KEY_MAP = {
-        "esc":      {"key": "Escape",      "code": "Escape",      "vk": 27},
-        "enter":    {"key": "Enter",       "code": "Enter",       "vk": 13},
-        "space":    {"key": " ",           "code": "Space",       "vk": 32},
-        "tab":      {"key": "Tab",         "code": "Tab",         "vk": 9},
-        "backspace":{"key": "Backspace",   "code": "Backspace",   "vk": 8},
-        "delete":   {"key": "Delete",      "code": "Delete",      "vk": 46},
-        "arrowup":    {"key": "ArrowUp",    "code": "ArrowUp",    "vk": 38},
-        "arrowdown":  {"key": "ArrowDown",  "code": "ArrowDown",  "vk": 40},
-        "arrowleft":  {"key": "ArrowLeft",  "code": "ArrowLeft",  "vk": 37},
+        "esc": {"key": "Escape", "code": "Escape", "vk": 27},
+        "enter": {"key": "Enter", "code": "Enter", "vk": 13},
+        "space": {"key": " ", "code": "Space", "vk": 32},
+        "tab": {"key": "Tab", "code": "Tab", "vk": 9},
+        "backspace": {"key": "Backspace", "code": "Backspace", "vk": 8},
+        "delete": {"key": "Delete", "code": "Delete", "vk": 46},
+        "arrowup": {"key": "ArrowUp", "code": "ArrowUp", "vk": 38},
+        "arrowdown": {"key": "ArrowDown", "code": "ArrowDown", "vk": 40},
+        "arrowleft": {"key": "ArrowLeft", "code": "ArrowLeft", "vk": 37},
         "arrowright": {"key": "ArrowRight", "code": "ArrowRight", "vk": 39},
     }
-    
+
     for i in range(1, 13):
         SPECIAL_KEY_MAP[f"f{i}"] = {
             "key": f"F{i}",
@@ -45,7 +46,7 @@ class CdpInput(InputBase):
         self.logger = logger
         self.last_x = 0
         self.last_y = 0
-    
+
     def focus(self):
         """当鼠标移浏览器时，失去焦点时，键盘输入命令可能失效，这时候需要让浏览器判定鼠标还留在云游戏内"""
         try:

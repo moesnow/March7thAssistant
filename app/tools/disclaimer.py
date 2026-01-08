@@ -22,7 +22,10 @@ a {
         if result:
             sys.exit(0)
         cfg.set_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8"), True)
-        path = os.path.join(os.environ[base64.b64decode("UHJvZ3JhbURhdGE=").decode("utf-8")],base64.b64decode("TWFyY2g3dGhBc3Npc3RhbnQvZGlzY2xhaW1lcg==").decode("utf-8"))
+        if sys.platform == 'win32':
+            path = os.path.join(os.environ[base64.b64decode("UHJvZ3JhbURhdGE=").decode("utf-8")],base64.b64decode("TWFyY2g3dGhBc3Npc3RhbnQvZGlzY2xhaW1lcg==").decode("utf-8"))
+        else:
+            path = os.path.join(os.path.expanduser("~"),base64.b64decode("Lm1hcmNoN3RoYXNzaXN0YW50L2Rpc2NsYWltZXI=").decode("utf-8"))
         os.makedirs(os.path.dirname(path), exist_ok=True)
         open(path, 'a').close()
     except Exception:

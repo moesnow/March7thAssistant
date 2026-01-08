@@ -2,6 +2,9 @@ import atexit
 import os
 import json
 import psutil
+import platform
+import sys
+import base64
 from time import sleep
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, SessionNotCreatedException
@@ -21,20 +24,73 @@ from module.game.base import GameControllerBase
 from module.logger import Logger
 from utils.encryption import wdp_encrypt, wdp_decrypt
 
+
 class CloudGameController(GameControllerBase):
     COOKIE_PATH = "settings/cookies.enc"          # Cookies 保存地址（仅用于调试）
     GAME_URL = "https://sr.mihoyo.com/cloud"            # 游戏地址
-    BROWSER_TAG = "--march-7th-assistant-sr-cloud-game" # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
-    BROWSER_INSTALL_PATH = os.path.join(os.getcwd(), "3rdparty", "WebBrowser") # 浏览器安装路径
+    BROWSER_TAG = "--march-7th-assistant-sr-cloud-game"  # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
+    BROWSER_INSTALL_PATH = os.path.join(os.getcwd(), "3rdparty", "WebBrowser")  # 浏览器安装路径
     INTEGRATED_BROWSER_VERSION = "140.0.7339.207"      # 浏览器版本
-    INTEGRATED_BROWSER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chrome", "win64", INTEGRATED_BROWSER_VERSION, "chrome.exe")
-    INTEGRATED_DRIVER_PATH = os.path.join(BROWSER_INSTALL_PATH, "chromedriver", "win64", INTEGRATED_BROWSER_VERSION, "chromedriver.exe")
+
+    @staticmethod
+    def _get_platform_dir() -> str:
+        """获取当前平台对应的目录名称"""
+        system = platform.system()
+        machine = platform.machine()
+
+        if system == "Windows":
+            if machine in ("AMD64", "x86_64"):
+                return "win64"
+            elif machine in ("ARM64", "aarch64"):
+                return "win-arm64"  # 未验证
+            else:
+                return "win64"
+        elif system == "Darwin":
+            if machine == "arm64":
+                return "mac-arm64"
+            else:
+                return "mac64"  # 未验证
+        elif system == "Linux":
+            if machine in ("ARM64", "aarch64"):
+                return "linux-arm64"  # 未验证
+            else:
+                return "linux64"  # 未验证
+        else:
+            return "win64"
+
+    @staticmethod
+    def _get_integrated_browser_path() -> str:
+        """获取内置浏览器路径"""
+        platform_dir = CloudGameController._get_platform_dir()
+        browser_install_path = CloudGameController.BROWSER_INSTALL_PATH
+        browser_version = CloudGameController.INTEGRATED_BROWSER_VERSION
+
+        if platform.system() == "Darwin":
+            return os.path.join(browser_install_path, "chrome", platform_dir, browser_version, "Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing")
+        elif platform.system() == "Windows":
+            return os.path.join(browser_install_path, "chrome", platform_dir, browser_version, "chrome.exe")
+        else:  # Linux
+            return os.path.join(browser_install_path, "chrome", platform_dir, browser_version, "chrome")  # 未验证
+
+    @staticmethod
+    def _get_integrated_driver_path() -> str:
+        """获取内置驱动路径"""
+        platform_dir = CloudGameController._get_platform_dir()
+        browser_install_path = CloudGameController.BROWSER_INSTALL_PATH
+        browser_version = CloudGameController.INTEGRATED_BROWSER_VERSION
+
+        if platform.system() == "Darwin":  # macOS
+            return os.path.join(browser_install_path, "chromedriver", platform_dir, browser_version, "chromedriver")
+        elif platform.system() == "Windows":
+            return os.path.join(browser_install_path, "chromedriver", platform_dir, browser_version, "chromedriver.exe")
+        else:  # Linux
+            return os.path.join(browser_install_path, "chromedriver", platform_dir, browser_version, "chromedriver")  # 未验证
     MAX_RETRIES = 3  # 网页加载重试次数，0=不重试
     PERFERENCES = {
         "profile": {
             "content_settings": {
                 "exceptions": {
-                    "keyboard_lock": { # 允许 keyboard_lock 权限
+                    "keyboard_lock": {  # 允许 keyboard_lock 权限
                         "https://sr.mihoyo.com:443,*": {"setting": 1}
                     },
                     "clipboard": {   # 允许剪贴板读取权限
@@ -51,7 +107,7 @@ class CloudGameController(GameControllerBase):
         self.cfg = cfg
         self.logger = logger
         atexit.register(self._clean_at_exit)
-    
+
     def _wait_game_page_loaded(self, timeout=5) -> None:
         """等待云崩铁网页加载出来，这里以背景图是否加载出来为准"""
         if not self.driver:
@@ -86,12 +142,17 @@ class CloudGameController(GameControllerBase):
             "deviceScaleFactor": 1,
             "mobile": False
         })
-    
+
     def _prepare_browser_and_driver(self, browser_type: str, integrated: bool) -> tuple[str, str]:
         self.user_profile_path = os.path.join(self.BROWSER_INSTALL_PATH, "UserProfile", self.cfg.browser_type.capitalize())
+
+        # 输出平台信息
+        platform_dir = self._get_platform_dir()
+        self.log_debug(f"检测到系统平台: {platform.system()} {platform.machine()}, 使用目录: {platform_dir}")
+
         if integrated:
-            browser_path = self.INTEGRATED_BROWSER_PATH
-            driver_path = self.INTEGRATED_DRIVER_PATH
+            browser_path = self._get_integrated_browser_path()
+            driver_path = self._get_integrated_driver_path()
             if not os.path.exists(browser_path) or not os.path.exists(driver_path):
                 args = ["--browser", browser_type,
                         "--cache-path", self.BROWSER_INSTALL_PATH,
@@ -132,9 +193,10 @@ class CloudGameController(GameControllerBase):
                 raise Exception(f"查找 {browser_type} 浏览器出错：{e}")
             browser_path = result["browser_path"]
             driver_path = result["driver_path"]
-        self.log_debug(f"browser_path = {browser_path}, driver_path = {driver_path}")
+        self.log_debug(f"browser_path = {browser_path}")
+        self.log_debug(f"driver_path = {driver_path}")
         return browser_path, driver_path
-    
+
     def _get_browser_arguments(self, headless) -> list[str]:
         args = [
             self.BROWSER_TAG,   # 标记浏览器是由脚本启动
@@ -155,34 +217,35 @@ class CloudGameController(GameControllerBase):
             args += [
                 "--headless=new",  # 无窗口模式
                 "--mute-audio",    # 后台静音
+                "--no-sandbox",
             ]
         if self.cfg.cloud_game_fullscreen_enable and not headless:
             args.append("--start-fullscreen")  # 全屏启动
-        args.extend(self.cfg.browser_launch_argument) # 用户自定义参数
+        args.extend(self.cfg.browser_launch_argument)  # 用户自定义参数
         return args
 
     def _connect_or_create_browser(self, headless=False) -> None:
         """尝试连接到现有的（由小助手启动的）浏览器，如果没有，那就创建一个"""
         browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge"
-        integrated = self.cfg.browser_type=="integrated"
+        integrated = self.cfg.browser_type == "integrated"
         first_run = False
         browser_path, driver_path = self._prepare_browser_and_driver(browser_type, integrated)
-        
+
         if not os.path.exists(self.user_profile_path):
             first_run = True
-        
+
         if browser_type == "chrome":
             options = ChromeOptions()
             service = ChromeService(executable_path=driver_path, log_path=os.devnull)
             webdriver_type = webdriver.Chrome
-        else: #edge
+        else:  # edge
             options = EdgeOptions()
             service = EdgeService(executable_path=driver_path, log_path=os.devnull)
             webdriver_type = webdriver.Edge
         # 记录 driver 可执行路径和 service，以便后续清理 chromedriver 进程
         self.driver_path = driver_path
         self._webdriver_service = service
-        
+
         # 关掉 headless 不匹配的浏览器，防止端口冲突
         if self.close_all_m7a_browser(headless=not headless):
             self.log_info(f"已关闭正在运行的{'前台' if headless else '后台'}浏览器")
@@ -192,34 +255,40 @@ class CloudGameController(GameControllerBase):
                 options.debugger_address = f"127.0.0.1:{self.cfg.browser_debug_port}"
                 self.driver = webdriver_type(service=service, options=options)
                 self.log_info("已连接到现有浏览器")
-                return # 连接成功，直接返回
+                return  # 连接成功，直接返回
             except Exception:
                 self.log_info(f"连接现有浏览器失败")
-                self.close_all_m7a_browser() # 连接失败，关闭所有浏览器
+                self.close_all_m7a_browser()  # 连接失败，关闭所有浏览器
                 options = None
-            
+
         self.log_info(f"正在启动 {browser_type} 浏览器")
         options.binary_location = browser_path
         options.add_experimental_option("prefs", self.PERFERENCES)  # 允许云游戏权限权限
 
+        self.log_debug(f"启动参数: {self._get_browser_arguments(headless=headless)}")
         # 设置浏览器启动参数
         for arg in self._get_browser_arguments(headless=headless):
             options.add_argument(arg)
-        
+
         try:
+            self.log_debug("启动浏览器中...")
             self.driver = webdriver_type(service=service, options=options)
+            self.log_debug("浏览器启动成功")
         except SessionNotCreatedException as e:
             self.log_error(f"浏览器启动失败: {e}")
             self.log_error("如果设置了浏览器启动参数，请去掉所有浏览器启动参数后重试")
             self.log_error("如果仍然存在问题，请更换浏览器重试")
             raise Exception("浏览器启动失败")
-        
+        except Exception as e:
+            self.log_error(f"浏览器启动失败: {e}")
+            raise Exception("浏览器启动失败")
+
         if not self.cfg.cloud_game_fullscreen_enable:
             self.driver.set_window_size(1920, 1120)
         if first_run or not self.cfg.browser_persistent_enable:
             self._load_initial_local_storage()
         if self.cfg.auto_battle_detect_enable:
-            self.change_auto_battle(True) 
+            self.change_auto_battle(True)
         if self.cfg.browser_dump_cookies_enable:
             self._load_cookies()
         self._refresh_page()
@@ -228,7 +297,7 @@ class CloudGameController(GameControllerBase):
         """重启浏览器"""
         self.stop_game()
         self._connect_or_create_browser(headless=headless)
-    
+
     def _load_initial_local_storage(self) -> bool:
         """加载初始配置，去除初始引导，免责协议等弹窗"""
 
@@ -263,7 +332,7 @@ class CloudGameController(GameControllerBase):
             return False
 
     def _save_cookies(self) -> bool:
-        """保存 Cookies （Debug only）""" 
+        """保存 Cookies （Debug only）"""
         if not self.driver:
             return
         try:
@@ -299,7 +368,7 @@ class CloudGameController(GameControllerBase):
         except Exception as e:
             self.log_error(f"加载 cookies 失败: {e}")
             return False
-    
+
     def _refresh_page(self) -> None:
         if self.driver:
             self.driver.refresh()
@@ -309,7 +378,7 @@ class CloudGameController(GameControllerBase):
         """检查是否已经登录"""
         if not self.driver:
             return None
-        
+
         logged_in_selector = "div.user-aid.wel-card__aid, .game-player, [class*='waiting-in-queue']"
         not_logged_in_id = "mihoyo-login-platform-iframe"
 
@@ -330,20 +399,20 @@ class CloudGameController(GameControllerBase):
         except TimeoutException:
             self.log_warning("检测登录状态超时：未出现登录或未登录标志元素")
             return None
-            
+
     def _click_enter_game(self, timeout=5) -> None:
         """
         点击‘进入游戏’按钮。
         """
         if not self.driver:
             return
-        
+
         game_selector = ".game-player"
         enter_button_selector = "div.wel-card__content--start"
         try:
             if self.driver.find_elements(By.CSS_SELECTOR, game_selector):
                 self.log_info("已在游戏中")
-                return 
+                return
             enter_button = WebDriverWait(self.driver, timeout).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, enter_button_selector))
             )
@@ -351,13 +420,13 @@ class CloudGameController(GameControllerBase):
         except Exception as e:
             self.log_error(f"点击进入游戏按钮游戏异常: {e}")
             raise e
-        
+
     def _wait_in_queue(self, timeout=600) -> bool:
         """排队等待进入"""
         in_queue_selector = "[class*='waiting-in-queue']"
         cloud_game_selector = ".game-player"
         select_queue_selector = "[aria-labelledby*='请选择排队队列']"
-        
+
         try:
             # 检查是否需要排队
             status = WebDriverWait(self.driver, 10).until(
@@ -368,7 +437,7 @@ class CloudGameController(GameControllerBase):
                     else return null;
                 """, cloud_game_selector, in_queue_selector, select_queue_selector)
             )
-            
+
             select_retries = 0
             while status == "select_queue":
                 select_retries += 1
@@ -390,7 +459,7 @@ class CloudGameController(GameControllerBase):
                         else return null;
                     """, cloud_game_selector, in_queue_selector, select_queue_selector)
                 )
-            
+
             if status == "game_running":
                 self.log_info("游戏已启动，无需排队")
                 return True
@@ -410,7 +479,7 @@ class CloudGameController(GameControllerBase):
             traceback.print_exc()
             self.log_error(f"等待排队异常: {e}")
             return False
-    
+
     def _clean_at_exit(self) -> None:
         """当脚本退出时，关闭所有 headless 浏览器"""
         if self.close_all_m7a_browser(headless=True):
@@ -423,19 +492,19 @@ class CloudGameController(GameControllerBase):
                 self.log_info("已关闭残留的 chromedriver 进程")
         except Exception as e:
             self.log_warning(f"退出时清理 chromedriver 进程失败: {e}")
-    
+
     def download_intergrated_browser(self) -> bool:
         self._prepare_browser_and_driver(browser_type="chrome", integrated=True)
 
     def is_integrated_browser_downloaded(self) -> bool:
         """当前是否已经下载内置浏览器"""
-        return os.path.exists(self.INTEGRATED_BROWSER_PATH) and os.path.exists(self.INTEGRATED_DRIVER_PATH)
-    
+        return os.path.exists(self._get_integrated_browser_path()) and os.path.exists(self._get_integrated_driver_path())
+
     def get_m7a_browsers(self, headless=None) -> list[psutil.Process]:
         """
         获取由小助手打开的浏览器
         headless: None 所有，True 仅 headless 无窗口浏览器，False 仅有窗口浏览器
-        
+
         return 浏览器的 Process
         """
         all_proc = []
@@ -445,12 +514,12 @@ class CloudGameController(GameControllerBase):
                 if self.BROWSER_TAG in cmdline and (headless is None or (headless == ("--headless=new" in cmdline))):
                     all_proc.append(proc)
         return all_proc
-                    
+
     def close_all_m7a_browser(self, headless=None) -> list[psutil.Process]:
         """
         关闭所有由小助手打开的浏览器
         headless: None 所有，True 仅 headless 无窗口浏览器，False 仅 headful 有窗口浏览器
-        
+
         return 被关闭浏览器的 Process
         """
         closed_proc = []
@@ -516,7 +585,7 @@ class CloudGameController(GameControllerBase):
             except Exception:
                 continue
         return closed
-        
+
     def try_dump_page(self, dump_dir="logs/webdump") -> None:
         if self.driver:
             os.makedirs(dump_dir, exist_ok=True)
@@ -531,7 +600,154 @@ class CloudGameController(GameControllerBase):
                 f.write(self.driver.page_source)
 
             self.log_error(f"相关页面和截图已经保存到：{dump_dir}")
-    
+
+    def _switch_to_login_iframe(self) -> None:
+        iframe = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.ID, "mihoyo-login-platform-iframe"))
+        )
+        self.driver.switch_to.frame(iframe)
+
+    def _click_qr_login_button(self) -> None:
+        qr_login_button = WebDriverWait(self.driver, 5).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div.qr-login-btn"))
+        )
+        try:
+            qr_login_button.click()
+            sleep(0.5)
+        except Exception as click_err:
+            self.log_warning(f"点击二维码登录按钮失败: {click_err}")
+
+    def _wait_and_get_qr_img(self):
+        self.log_debug("等待二维码加载...")
+        qr_img = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "img.qr-loaded"))
+        )
+        self.log_debug("二维码已加载")
+        sleep(1)
+        return qr_img
+
+    def _save_qr_img(self, qr_img) -> str:
+        import os
+        qr_filename = "qrcode_login.png"
+        qr_img.screenshot(qr_filename)
+        self.log_debug(f"二维码已保存到: {os.path.abspath(qr_filename)}")
+        self.log_info("=" * 60)
+        self.log_info("请使用手机米游社 APP 扫描二维码登录")
+        self.log_info(f"二维码图片位置: {os.path.abspath(qr_filename)}")
+        return qr_filename
+
+    def _decode_qr_from_element(self, qr_img, qr_filename: str, prefix: str = "二维码") -> None:
+        try:
+            import base64
+            import numpy as np
+            import cv2
+            from pyzbar.pyzbar import decode as zbar_decode
+
+            qr_src = qr_img.get_attribute("src")
+            img_bytes = None
+            if qr_src and qr_src.startswith("data:image"):
+                b64_data = qr_src.split(",", 1)[1]
+                img_bytes = base64.b64decode(b64_data)
+            else:
+                with open(qr_filename, "rb") as f:
+                    img_bytes = f.read()
+
+            if img_bytes:
+                nparr = np.frombuffer(img_bytes, np.uint8)
+                img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+                if img is not None:
+                    results = zbar_decode(img)
+                    if results:
+                        try:
+                            data = results[0].data.decode("utf-8", errors="ignore")
+                        except Exception:
+                            data = results[0].data.decode(errors="ignore")
+                        self.log_info(f"{prefix}内容：")
+                        self.log_info(data)
+                        self.log_info("提示：你也可以将该内容自行生成二维码后再扫码登录。")
+                    else:
+                        self.log_debug("未能解析二维码内容。")
+                else:
+                    self.log_debug("二维码图片解码失败")
+        except Exception as decode_err:
+            self.log_warning(f"解析二维码内容失败: {decode_err}")
+
+    def _wait_scan_success_with_refresh(self, qr_filename: str) -> None:
+        import os
+        check_interval = 2
+        while True:
+            # 成功
+            if self.driver.find_elements(By.XPATH, "//*[contains(text(), '扫码成功')]"):
+                try:
+                    if os.path.exists(qr_filename):
+                        os.remove(qr_filename)
+                        self.log_debug(f"已删除二维码图片: {os.path.abspath(qr_filename)}")
+                except Exception as del_err:
+                    self.log_warning(f"删除二维码图片失败: {del_err}")
+                self.log_info("扫码成功！请在手机上点击【确认登录】")
+                break
+
+            # 过期刷新
+            expired_elements = self.driver.find_elements(By.CSS_SELECTOR, "div.qr-expired")
+            if expired_elements and expired_elements[0].is_displayed():
+                self.log_warning("二维码已过期，正在刷新...")
+                try:
+                    qr_wrap = self.driver.find_element(By.CSS_SELECTOR, "div.qr-wrap")
+                    qr_wrap.click()
+                    sleep(1)
+
+                    WebDriverWait(self.driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "img.qr-loaded"))
+                    )
+                    self.log_info("二维码已刷新，请重新扫描")
+
+                    try:
+                        qr_img = self.driver.find_element(By.CSS_SELECTOR, "img.qr-loaded")
+                        qr_img.screenshot(qr_filename)
+                        self.log_info("新二维码已保存到: %s", os.path.abspath(qr_filename))
+                        self._decode_qr_from_element(qr_img, qr_filename, prefix="新二维码")
+                    except Exception as refresh_err:
+                        self.log_warning(f"保存刷新后的二维码失败: {refresh_err}")
+                except Exception as refresh_err:
+                    self.log_error(f"刷新二维码失败: {refresh_err}")
+                    break
+
+            sleep(check_interval)
+
+    def _run_qr_login_flow(self) -> None:
+        self.log_info("正在切换到二维码登录...")
+        try:
+            self._switch_to_login_iframe()
+            self._click_qr_login_button()
+            qr_img = self._wait_and_get_qr_img()
+            try:
+                qr_filename = self._save_qr_img(qr_img)
+            except Exception as save_err:
+                self.log_warning(f"保存二维码截图失败: {save_err}")
+                qr_filename = "qrcode_login.png"
+
+            # 初次解码
+            self._decode_qr_from_element(qr_img, qr_filename, prefix="二维码")
+            self.log_info("=" * 60)
+            self.log_info("等待扫码（二维码过期将自动刷新）...")
+            self._wait_scan_success_with_refresh(qr_filename)
+        except TimeoutException:
+            self.log_warning("等待二维码加载超时")
+        except Exception as e:
+            import traceback
+            self.log_error(f"切换二维码登录失败: {e}")
+            self.log_error(f"详细错误:\n{traceback.format_exc()}")
+            try:
+                self.try_dump_page()
+            except Exception as dump_err:
+                self.log_warning(f"尝试导出页面失败: {dump_err}")
+        finally:
+            try:
+                self.driver.switch_to.default_content()
+                self.log_info("已切换回主文档")
+            except Exception as switch_err:
+                self.log_warning(f"切回主文档失败: {switch_err}")
+
     def start_game_process(self) -> bool:
         """启动浏览器进程"""
         try:
@@ -541,75 +757,96 @@ class CloudGameController(GameControllerBase):
         except Exception as e:
             self.log_error(f"启动或连接浏览器失败 {e}")
             return False
-    
+
     def is_in_game(self) -> bool:
         if self.driver:
             return True if self.driver.find_elements(By.CSS_SELECTOR, ".game-player") else False
-        
+
     def enter_cloud_game(self) -> bool:
         """进入云游戏"""
-        try:            
+        try:
             # 检测登录状态
             while not self._check_login():
                 self.log_info("未登录")
-                
-                # 如果是 headless，则以非 headless 模式重启启动让用户登录
-                if self.cfg.browser_headless_enable:
+
+                # 如果是 headless 且配置了自动重启，则以非 headless 模式重启启动让用户登录
+                if self.cfg.browser_headless_enable and self.cfg.browser_headless_restart_on_not_logged_in:
+                    self.log_info("无窗口模式下检测到未登录，将以有窗口模式重启浏览器")
                     self._restart_browser(headless=False)
-                    
+
+                # 如果是 headless 且配置了不重启，则尝试二维码登录
+                if self.cfg.browser_headless_enable and (not self.cfg.browser_headless_restart_on_not_logged_in):
+                    self._run_qr_login_flow()
+
                 self.log_info("请在浏览器中完成登录操作")
-                
+
                 # 循环检测用户是否登录
                 while not self._check_login():
                     sleep(2)
-                    
+
                 self.log_info("检测到登录成功")
-                
+
                 # 如果为 headless 模式，则重启浏览器回到 headless 模式
-                if self.cfg.browser_headless_enable:
+                if self.cfg.browser_headless_enable and self.cfg.browser_headless_restart_on_not_logged_in:
                     if self.cfg.browser_dump_cookies_enable:
                         self._save_cookies()
+                    self.log_info("登录完成，将重启为无窗口模式")
                     self._restart_browser(headless=True)
-            
+
             if self.cfg.browser_dump_cookies_enable:
                 self._save_cookies()
             self._click_enter_game()
             if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
                 return False
-            self._confirm_viewport_resolution() # 将浏览器内部分辨率设置为 1920x1080
-            
+            self._confirm_viewport_resolution()  # 将浏览器内部分辨率设置为 1920x1080
+
             self.log_info("进入云游戏成功")
-            return True 
+            return True
         except Exception as e:
             self.try_dump_page()
             self.log_error(f"进入云游戏失败: {e}")
             return False
-    
+
     def take_screenshot(self) -> bytes:
         """浏览器内截图"""
         if not self.driver:
             return None
-        png = self.driver.get_screenshot_as_png()
-        return png
-    
+        if platform.system() == "Darwin":
+            # Chrome/Chromium 在非 headless 模式下调用 get_screenshot_as_png() 时，
+            # 会先确保窗口“可见且未被遮挡”，否则截图内容可能为空或全黑。
+            # macOS 的窗口管理要求被截取的 NSWindow 处于前台/可见状态，
+            # Chromium 的实现会自动把窗口置前。
+            # 改用 CDP 截图接口可以避免这个问题。
+            try:
+                result = self.driver.execute_cdp_cmd("Page.captureScreenshot", {"format": "png"})
+                data = result.get("data") if result else None
+                if data:
+                    return base64.b64decode(data)
+            except Exception as e:
+                self.log_warning(f"CDP 截图失败，回退 WebDriver 截图: {e}")
+        return self.driver.get_screenshot_as_png()
+
     def execute_cdp_cmd(self, cmd: str, cmd_args: dict):
         return self.driver.execute_cdp_cmd(cmd, cmd_args)
-    
+
     def get_window_handle(self) -> int:
+        if sys.platform != "win32":
+            self.log_warning("当前平台不支持获取云游戏窗口句柄，将返回 None")
+            return None
         import win32gui
         return win32gui.FindWindow(None, "云·星穹铁道")
-    
+
     def switch_to_game(self) -> bool:
         if self.cfg.browser_headless_enable:
             self.log_warning("游戏切换至前台失败：当前为无窗口模式")
             return False
         else:
             return super().switch_to_game()
-    
+
     def get_input_handler(self):
         from module.automation.cdp_input import CdpInput
         return CdpInput(cloud_game=self, logger=self.logger)
-    
+
     def copy(self, text):
         self.driver.execute_script("""
             (function copy(text) {
@@ -647,6 +884,15 @@ class CloudGameController(GameControllerBase):
 
     def stop_game(self) -> bool:
         """退出游戏，关闭浏览器"""
+        # 删除可能残留的二维码图片
+        try:
+            qr_filename = "qrcode_login.png"
+            if os.path.exists(qr_filename):
+                os.remove(qr_filename)
+                self.log_debug(f"已删除残留的二维码图片: {os.path.abspath(qr_filename)}")
+        except Exception as e:
+            self.log_debug(f"删除二维码图片失败（可忽略）: {e}")
+
         if self.driver:
             try:
                 self.driver.execute(Command.CLOSE)
@@ -655,7 +901,7 @@ class CloudGameController(GameControllerBase):
                 pass
             self.driver.quit()
             self.driver = None
-            
+
         # 清理所有未正常退出的浏览器
         try:
             if self.close_all_m7a_browser():
@@ -663,6 +909,5 @@ class CloudGameController(GameControllerBase):
         except Exception as e:
             self.log_warning(f"检测到由小助手启动的浏览器，关闭失败: {e}")
             return False
-        
+
         return True
-            

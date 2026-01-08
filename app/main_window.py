@@ -29,6 +29,7 @@ from module.config import cfg
 from module.game import get_game_controller
 import base64
 import os
+import sys
 
 
 class ConfigWatcher(QObject):
@@ -203,8 +204,7 @@ class MainWindow(MSFluentWindow):
 
         # 显示主界面
         show_action = QAction('显示主界面', self)
-        show_action.triggered.connect(self.showNormal)
-        show_action.triggered.connect(self.activateWindow)
+        show_action.triggered.connect(self._show_main_window)
         tray_menu.addAction(show_action)
 
         # 完整运行
@@ -234,8 +234,22 @@ class MainWindow(MSFluentWindow):
         tray_menu.addAction(quit_action)
 
         self.tray_icon.setContextMenu(tray_menu)
-        self.tray_icon.activated.connect(self.onTrayIconActivated)
+        if sys.platform == 'win32':
+            self.tray_icon.activated.connect(self.onTrayIconActivated)
         self.tray_icon.show()
+
+    def _show_main_window(self):
+        """显示主界面，macOS 下确保窗口置顶"""
+        self.showNormal()
+        try:
+            if sys.platform == 'darwin':
+                self.raise_()
+                self.activateWindow()
+                QApplication.setActiveWindow(self)
+            else:
+                self.activateWindow()
+        except Exception:
+            pass
 
     def onTrayIconActivated(self, reason):
         """托盘图标被激活时的处理"""

@@ -4,7 +4,6 @@ from PyQt5.QtCore import Qt, QRect, QPoint, QTimer
 from PyQt5.QtGui import QPixmap, QPainter, QPen, QImage, QColor
 from PIL import Image
 import pyperclip
-import pyautogui
 import os
 import atexit
 

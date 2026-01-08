@@ -62,13 +62,14 @@ args = parse_args()
 import atexit
 import base64
 
-import pyuac
-if not pyuac.isUserAdmin():
-    try:
-        pyuac.runAsAdmin(False)
-        sys.exit(0)
-    except Exception:
-        sys.exit(1)
+if sys.platform == 'win32':
+    import pyuac
+    if not pyuac.isUserAdmin():
+        try:
+            pyuac.runAsAdmin(False)
+            sys.exit(0)
+        except Exception:
+            sys.exit(1)
 
 from module.config import cfg
 from module.logger import log
@@ -95,8 +96,8 @@ from utils.console import pause_on_error, pause_on_success, pause_always
 
 
 def first_run():
-    if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
-        log.error("首次使用请先打开图形界面 March7th Launcher.exe")
+    if os.environ.get("MARCH7TH_GUI_STARTED") != "1" and not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
+        log.error("首次使用请先打开图形界面 March7th Launcher")
         pause_always()
         sys.exit(0)
 

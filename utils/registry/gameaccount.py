@@ -1,5 +1,7 @@
 import os
-import winreg
+import sys
+if sys.platform == 'win32':
+    import winreg
 import itertools
 
 reg_path_cn = "Software\\miHoYo\\崩坏：星穹铁道"
@@ -19,10 +21,14 @@ def get_reg_path() -> str:
             return None
 
 
-reg_path = get_reg_path()
-if reg_path is not None:
-    full_reg_path = "HKEY_CURRENT_USER\\{0}".format(reg_path.replace('\\\\', '\\'))
+if sys.platform == 'win32':
+    reg_path = get_reg_path()
+    if reg_path is not None:
+        full_reg_path = "HKEY_CURRENT_USER\\{0}".format(reg_path.replace('\\\\', '\\'))
+    else:
+        full_reg_path = None
 else:
+    reg_path = None
     full_reg_path = None
 
 
@@ -52,6 +58,7 @@ def gamereg_import(path: str) -> None:
     subcommand = f"reg import {path}"
     result = os.system(subcommand)
 
+
 def gamereg_delete_all() -> None:
     """
     删除注册表中的所有账户信息
@@ -62,4 +69,3 @@ def gamereg_delete_all() -> None:
     result = os.system(subcommand)
     if result != 0:
         raise Exception(f"Failed to delete registry key: {full_reg_path}. Error code: {result}")
-

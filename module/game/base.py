@@ -2,7 +2,6 @@ from abc import abstractmethod
 import os
 import time
 import subprocess
-import win32gui
 import ctypes
 from typing import Literal, Tuple, Optional
 from utils.logger.logger import Logger
@@ -95,6 +94,7 @@ class GameControllerBase:
             if hwnd == 0:
                 self.log_debug("游戏窗口未找到")
                 return None
+            import win32gui  # 延迟导入，避免非 Windows 平台报错
             _, _, window_width, window_height = win32gui.GetClientRect(hwnd)
             return window_width, window_height
         except IndexError:

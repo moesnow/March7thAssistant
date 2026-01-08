@@ -9,8 +9,8 @@ import pyperclip
 import time
 import json
 import datetime
+import sys
 from typing import List, Dict, Optional
-from utils.registry.star_rail_setting import get_server_by_registry
 from module.notification import notif
 from module.notification.notification import NotificationLevel
 
@@ -72,10 +72,14 @@ class Redemption:
         """尝试从本地或远程加载有效的兑换码，并兑换它们。"""
         log.hr("获取最新兑换码", 0)
 
-        server = get_server_by_registry()
-        if server is None:
-            log.error("无法判断游戏服务器类型，跳过兑换码任务")
-            return False
+        if sys.platform == 'win32':
+            from utils.registry.star_rail_setting import get_server_by_registry
+            server = get_server_by_registry()
+            if server is None:
+                log.error("无法判断游戏服务器类型，跳过兑换码任务")
+                return False
+        else:
+            server = 'cn'  # 云游戏默认国服
 
         try:
             codes = valid_codes_for_server(server)
