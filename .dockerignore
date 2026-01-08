@@ -1,0 +1,37 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# System
+.DS_Store
+Thumbs.db
+.git
+.gitignore
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# WebBrowser UserProfile (very large)
+3rdparty/WebBrowser/UserProfile/
+
+# Test and temporary files
+tests/
+temp/
+logs/
+*.zip.aria2
+__pycache__/

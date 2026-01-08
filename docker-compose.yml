@@ -1,0 +1,15 @@
+services:
+  march7thassistant:
+    container_name: m7a
+    build: .
+    # image: ghcr.io/moesnow/march7thassistant:latest
+    volumes:
+      - ./config.yaml:/m7a/config.yaml
+      - ./logs:/m7a/logs
+      - ./3rdparty/WebBrowser/UserProfile:/m7a/3rdparty/WebBrowser/UserProfile
+    network_mode: "bridge"
+    environment:
+      - TZ=Asia/Shanghai
+      - MARCH7TH_GUI_STARTED=1
+    shm_size: 1g
+    restart: unless-stopped
