@@ -15,6 +15,7 @@ from openpyxl.styles import Font
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 import time
+import sys
 
 
 class WarpInterface(ScrollArea):
@@ -31,6 +32,11 @@ class WarpInterface(ScrollArea):
         self.exportExcelBtn = PushButton(FIF.SAVE_COPY, "导出Excel", self)
         self.copyLinkBtn = PushButton(FIF.SHARE, "复制链接", self)
         self.clearBtn = PushButton(FIF.DELETE, "清空", self)
+        if sys.platform != 'win32':
+            self.updateBtn.setEnabled(False)
+            self.updateFullBtn.setEnabled(False)
+            self.copyLinkBtn.setEnabled(False)
+
         self.warplink = None
 
         self.stateTooltip = None

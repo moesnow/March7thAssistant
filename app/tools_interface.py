@@ -5,7 +5,6 @@ from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBa
 from .card.pushsettingcard1 import PushSettingCardCode
 from .card.autoplot_setting_card import AutoPlotSettingCard
 from .common.style_sheet import StyleSheet
-from utils.registry.star_rail_setting import get_game_fps, set_game_fps, get_graphics_setting
 import tasks.tool as tool
 import base64
 import subprocess
@@ -13,6 +12,7 @@ import pyperclip
 from module.config import cfg
 from tasks.base.tasks import start_task
 import os
+import sys
 
 
 class ToolsInterface(ScrollArea):
@@ -89,6 +89,11 @@ class ToolsInterface(ScrollArea):
         self.ToolsGroup.addSettingCard(self.redemptionCodeCard)
         self.ToolsGroup.addSettingCard(self.cloudTouchCard)
 
+        if sys.platform != 'win32':
+            self.automaticPlotCard.setDisabled(True)
+            self.unlockfpsCard.setDisabled(True)
+            self.cloudTouchCard.setDisabled(True)
+
         self.ToolsGroup.titleLabel.setHidden(True)
 
         self.vBoxLayout.setSpacing(28)
@@ -102,6 +107,7 @@ class ToolsInterface(ScrollArea):
                 break
 
     def __onUnlockfpsCardClicked(self):
+        from utils.registry.star_rail_setting import get_game_fps, set_game_fps  # 延迟导入，避免非 Windows 平台报错
         try:
             fps = get_game_fps()
             if fps == 120:

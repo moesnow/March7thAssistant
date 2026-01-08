@@ -18,6 +18,7 @@ from module.notification import notif
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
 import os
+import sys
 
 
 class SettingInterface(ScrollArea):
@@ -886,7 +887,8 @@ class SettingInterface(ScrollArea):
         for key, _ in cfg.config.items():
             if key.startswith("notify_") and key.endswith("_enable"):
                 notifier_name = key[len("notify_"):-len("_enable")]
-
+                if sys.platform != 'win32' and notifier_name == 'winotify':
+                    continue
                 notifyEnableCard = SwitchSettingCardNotify(
                     self.notifyLogoDict[notifier_name] if notifier_name in self.notifyLogoDict else FIF.MAIL,
                     self.tr(f'启用 {notifier_name.capitalize()} 通知 {"（支持图片）"if notifier_name in self.notifySupportImage else ""}'),
@@ -920,11 +922,12 @@ class SettingInterface(ScrollArea):
             "默认开启，如果正在使用多显示器且无法正常截屏请关闭此选项重试",
             "all_screens"
         )
-        self.StartMarch7thAssistantCard = StartMarch7thAssistantSwitchSettingCard(
-            FIF.GAME,
-            '在用户登录时启动',
-            "通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）"
-        )
+        if sys.platform == 'win32':
+            self.StartMarch7thAssistantCard = StartMarch7thAssistantSwitchSettingCard(
+                FIF.GAME,
+                '在用户登录时启动',
+                "通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）"
+            )
         self.hotkeyCard = SwitchSettingCardHotkey(
             FIF.SETTING,
             '修改按键',
@@ -1170,7 +1173,8 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
         self.MiscGroup.addSettingCard(self.allScreensCard)
-        self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
+        if sys.platform == 'win32':
+            self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
         self.MiscGroup.addSettingCard(self.hotkeyCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
@@ -1185,12 +1189,24 @@ class SettingInterface(ScrollArea):
         ])
         self.AboutGroup.addSettingCard(self.mirrorchyanCdkCard)
 
+        if sys.platform != 'win32':
+            self.gamePathCard.setHidden(True)
+            self.updateViaLauncherEnableCard.setHidden(True)
+            self.autoSetResolutionEnableCard.setHidden(True)
+            self.autoSetGamePathEnableCard.setHidden(True)
+            self.allScreensCard.setHidden(True)
+            self.cloudGameEnableCard.setDisabled(True)  # 在配置文件中强制启用，禁止用户修改
+
         self.addSubInterface(self.PowerGroup, 'PowerInterface', '体力')
         # self.addSubInterface(self.BorrowGroup, 'BorrowInterface', '支援')
         self.addSubInterface(self.DailyGroup, 'DailyInterface', '日常')
         self.addSubInterface(self.CurrencywarsGroup, 'CurrencywarsInterface', '货币战争')
-        self.addSubInterface(self.UniverseGroup, 'UniverseInterface', '差分宇宙')
-        self.addSubInterface(self.FightGroup, 'FightInterface', '锄大地')
+        if sys.platform == 'win32':
+            self.addSubInterface(self.UniverseGroup, 'UniverseInterface', '差分宇宙')
+            self.addSubInterface(self.FightGroup, 'FightInterface', '锄大地')
+        else:
+            self.UniverseGroup.setHidden(True)
+            self.FightGroup.setHidden(True)
         self.addSubInterface(self.ImmortalGameGroup, 'ImmortalGameInterface', '逐光捡金')
 
         self.pivot.addItem(
@@ -1203,11 +1219,12 @@ class SettingInterface(ScrollArea):
         self.addSubInterface(self.CloudGameGroup, "cloudGameInterface", '云游戏')
         self.addSubInterface(self.NotifyGroup, 'NotifyInterface', '推送')
         self.addSubInterface(self.MiscGroup, 'KeybindingInterface', '杂项')
-        self.addSubInterface(
-            accounts_interface(self.tr, self.scrollWidget),
-            'AccountsInterface',
-            '账号'
-        )
+        if sys.platform == 'win32':
+            self.addSubInterface(
+                accounts_interface(self.tr, self.scrollWidget),
+                'AccountsInterface',
+                '账号'
+            )
         self.addSubInterface(self.AboutGroup, 'AboutInterface', '关于')
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)

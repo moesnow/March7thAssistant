@@ -62,13 +62,14 @@ args = parse_args()
 import atexit
 import base64
 
-import pyuac
-if not pyuac.isUserAdmin():
-    try:
-        pyuac.runAsAdmin(False)
-        sys.exit(0)
-    except Exception:
-        sys.exit(1)
+if sys.platform == 'win32':
+    import pyuac
+    if not pyuac.isUserAdmin():
+        try:
+            pyuac.runAsAdmin(False)
+            sys.exit(0)
+        except Exception:
+            sys.exit(1)
 
 from module.config import cfg
 from module.logger import log

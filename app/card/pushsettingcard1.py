@@ -10,6 +10,7 @@ from typing import Union
 import datetime
 import json
 import re
+import sys
 from ..tools.check_update import checkUpdate
 
 
@@ -264,14 +265,17 @@ class PushSettingCardCode(PushSettingCard):
 
     def _get_server(self):
         try:
-            from utils.registry.star_rail_setting import get_server_by_registry
-            server = get_server_by_registry()
-            if not server:
-                self._info_warning(
-                    '无法判断服务器类型',
-                    '无法获取最新兑换码',
-                    self.message_box
-                )
+            if sys.platform == 'win32':
+                from utils.registry.star_rail_setting import get_server_by_registry
+                server = get_server_by_registry()
+                if not server:
+                    self._info_warning(
+                        '无法判断服务器类型',
+                        '无法获取最新兑换码',
+                        self.message_box
+                    )
+            else:
+                server = 'cn'  # 云游戏默认国服
             return server
         except Exception as e:
             self._info_warning('获取服务器信息失败', str(e), self.message_box)

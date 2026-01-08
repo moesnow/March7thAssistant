@@ -1,6 +1,8 @@
 import os
+import sys
 import getpass
-import win32com.client
+if sys.platform == 'win32':
+    import win32com.client
 
 
 def create_task(task_name, program_path, program_args=None, delay_seconds=30):

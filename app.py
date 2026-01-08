@@ -77,13 +77,14 @@ args = parse_args()
 # 如果不需要命令行输出，隐藏控制台窗口
 hide_console()
 
-import pyuac
-if not pyuac.isUserAdmin():
-    try:
-        pyuac.runAsAdmin(False)
-        sys.exit(0)
-    except Exception:
-        sys.exit(1)
+if sys.platform == 'win32':
+    import pyuac
+    if not pyuac.isUserAdmin():
+        try:
+            pyuac.runAsAdmin(False)
+            sys.exit(0)
+        except Exception:
+            sys.exit(1)
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
@@ -194,6 +195,9 @@ if __name__ == "__main__":
     else:
         _server = start_local_server(_key)
 
+    if sys.platform == 'darwin':
+        from qfluentwidgets import setFontFamilies
+        setFontFamilies(['PingFang SC'])
     # 传递任务参数给主窗口
     w = MainWindow(task=args.task, exit_on_complete=args.exit)
 

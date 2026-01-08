@@ -6,7 +6,6 @@ import psutil
 
 from app.tools.account_manager import load_acc_and_pwd
 from utils.registry.gameaccount import gamereg_uid
-from utils.registry.star_rail_setting import get_launcher_path
 from .starrailcontroller import StarRailController
 
 from utils.date import Date
@@ -283,6 +282,7 @@ def _start_launcher_and_get_automation(game):
     if os.path.exists(cfg.launcher_path):
         path = cfg.launcher_path
     else:
+        from utils.registry.star_rail_setting import get_launcher_path
         path = get_launcher_path()
         if path is None:
             log.error("未找到米哈游启动器路径")

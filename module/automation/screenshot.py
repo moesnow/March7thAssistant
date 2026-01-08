@@ -1,8 +1,6 @@
 from io import BytesIO
 from PIL import Image
 import pyautogui
-import win32gui
-from desktopmagic.screengrab_win32 import getDisplayRects
 from module.config import cfg
 
 
@@ -18,6 +16,7 @@ class Screenshot:
     def get_window_real_resolution(window):
         if cfg.cloud_game_enable:
             return 1920, 1080
+        import win32gui  # 延迟导入，避免非 Windows 平台报错
         left, top, right, bottom = win32gui.GetClientRect(window._hWnd)
         return right - left, bottom - top
 
@@ -48,6 +47,7 @@ class Screenshot:
     def get_main_screen_location():
         if cfg.cloud_game_enable:
             return None, None
+        from desktopmagic.screengrab_win32 import getDisplayRects  # 延迟导入，避免非 Windows 平台报错
         rects = getDisplayRects()
         min_x = min([rect[0] for rect in rects])
         min_y = min([rect[1] for rect in rects])
