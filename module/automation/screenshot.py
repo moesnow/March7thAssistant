@@ -1,6 +1,5 @@
 from io import BytesIO
 from PIL import Image
-import pyautogui
 from module.config import cfg
 
 
@@ -9,6 +8,7 @@ class Screenshot:
     def is_application_fullscreen(window):
         if cfg.cloud_game_enable:
             return True
+        import pyautogui
         screen_width, screen_height = pyautogui.size()
         return (window.width, window.height) == (screen_width, screen_height)
 
@@ -36,6 +36,7 @@ class Screenshot:
     def get_window(title):
         if cfg.cloud_game_enable:
             return False  # TODO
+        import pyautogui
         windows = pyautogui.getWindowsWithTitle(title)
         if windows:
             for window in windows:
@@ -83,7 +84,7 @@ class Screenshot:
                 offset_x, offset_y = Screenshot.get_main_screen_location()
             else:
                 offset_x, offset_y = 0, 0
-
+            import pyautogui
             screenshot = pyautogui.screenshot(region=(
                 int(left + width * crop[0] + offset_x),
                 int(top + height * crop[1] + offset_y),

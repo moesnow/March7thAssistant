@@ -1,5 +1,4 @@
 import time
-import pyautogui
 from typing import Literal, Optional
 from module.config.config import Config
 from module.game.local import LocalGameController
@@ -15,6 +14,7 @@ class StarRailController(LocalGameController):
         super().__init__(cfg=cfg, logger=logger)
         self.game_resolution = None
         self.game_auto_hdr = None
+        import pyautogui
         self.screen_resolution = pyautogui.size()
 
     def change_resolution(self, width: int, height: int):

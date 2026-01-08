@@ -22,8 +22,6 @@ from tasks.base.base import Base
 from module.ocr import ocr
 from utils.console import is_gui_started
 
-starrail = StarRailController(cfg=cfg, logger=log)
-
 
 def wait_until(condition, timeout, period=1):
     """等待直到条件满足或超时"""
@@ -119,7 +117,7 @@ def start_game():
                 return process.exe()
         return None
 
-    def start_local_game():
+    def start_local_game(starrail):
         if not starrail.switch_to_game():
             if cfg.auto_set_resolution_enable:
                 starrail.change_resolution(1920, 1080)
@@ -175,6 +173,7 @@ def start_game():
                 start_cloud_game()
             else:
                 start_local_game()
+                starrail = StarRailController(cfg=cfg, logger=log)
             if not wait_until(lambda: screen.get_current_screen(), 6 * 60):
                 log.error("获取当前界面超时")
                 # 确保在重试前停止游戏

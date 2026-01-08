@@ -8,7 +8,6 @@ from module.logger import log
 from PyQt5.QtCore import QObject, pyqtSignal
 import threading
 import time
-import pyautogui
 
 
 class ScreenshotSignals(QObject):
@@ -67,6 +66,7 @@ class ToolManager:
             self.screenshot_window = ScreenshotApp(screenshot_image)
 
             # 检查屏幕分辨率决定是否最大化
+            import pyautogui
             screen_resolution = pyautogui.size()
             screen_width, screen_height = screen_resolution
             if screen_width <= 1920 and screen_height <= 1080:
