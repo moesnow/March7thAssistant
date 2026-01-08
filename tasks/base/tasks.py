@@ -17,7 +17,7 @@ def execute_command_in_new_environment(command, use_windows_terminal=False):
     """
     if getattr(sys, 'frozen', False):
         if not os.path.exists("./March7th Assistant.exe"):
-            exception = Exception("未找到可执行文件：March7th Assistant.exe，\n请将`小助手文件夹`加入杀毒软件排除项/信任区后，\n使用 March7th Updater.exe 更新或手动更新一次")
+            exception = Exception("未找到可执行文件：March7th Assistant.exe，\n请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区后，\n然后重新解压覆盖一次")
             raise exception
 
     executable_path = os.path.abspath("./March7th Assistant.exe") if getattr(sys, 'frozen', False) else sys.executable

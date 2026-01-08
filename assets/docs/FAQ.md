@@ -18,7 +18,7 @@ A：March7thAssistant 接入了第三方服务 [Mirror酱](https://mirrorchyan.c
 
 ### Q：小助手启动慢/出现错误 2147942402/总是被杀毒软件删除 怎么办？
 
-A：将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后使用 `March7th Updater.exe` 自动更新或手动更新一次。
+A：请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次。
 
 Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删除排除项` 可以参考 [#373](https://github.com/moesnow/March7thAssistant/issues/373) 图示操作
 

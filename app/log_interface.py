@@ -542,6 +542,8 @@ class LogInterface(ScrollArea):
             executable_path = os.path.abspath("./March7th Assistant.exe")
             if not os.path.exists(executable_path):
                 self.appendLog("错误: 未找到可执行文件 March7th Assistant.exe\n")
+                self.appendLog("请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次\n")
+                self.appendLog("具体操作方法可以参考“常见问题”（FAQ）\n")
                 self._updateFinishedStatus(-1)
                 return
             # 将工作目录设置为可执行文件所在目录
