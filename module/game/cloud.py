@@ -600,6 +600,153 @@ class CloudGameController(GameControllerBase):
 
             self.log_error(f"相关页面和截图已经保存到：{dump_dir}")
 
+    def _switch_to_login_iframe(self) -> None:
+        iframe = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.ID, "mihoyo-login-platform-iframe"))
+        )
+        self.driver.switch_to.frame(iframe)
+
+    def _click_qr_login_button(self) -> None:
+        qr_login_button = WebDriverWait(self.driver, 5).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "div.qr-login-btn"))
+        )
+        try:
+            qr_login_button.click()
+            sleep(0.5)
+        except Exception as click_err:
+            self.log_warning(f"点击二维码登录按钮失败: {click_err}")
+
+    def _wait_and_get_qr_img(self):
+        self.log_debug("等待二维码加载...")
+        qr_img = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "img.qr-loaded"))
+        )
+        self.log_debug("二维码已加载")
+        sleep(1)
+        return qr_img
+
+    def _save_qr_img(self, qr_img) -> str:
+        import os
+        qr_filename = "qrcode_login.png"
+        qr_img.screenshot(qr_filename)
+        self.log_debug(f"二维码已保存到: {os.path.abspath(qr_filename)}")
+        self.log_info("=" * 60)
+        self.log_info("请使用手机米游社 APP 扫描二维码登录")
+        self.log_info(f"二维码图片位置: {os.path.abspath(qr_filename)}")
+        return qr_filename
+
+    def _decode_qr_from_element(self, qr_img, qr_filename: str, prefix: str = "二维码") -> None:
+        try:
+            import base64
+            import numpy as np
+            import cv2
+            from pyzbar.pyzbar import decode as zbar_decode
+
+            qr_src = qr_img.get_attribute("src")
+            img_bytes = None
+            if qr_src and qr_src.startswith("data:image"):
+                b64_data = qr_src.split(",", 1)[1]
+                img_bytes = base64.b64decode(b64_data)
+            else:
+                with open(qr_filename, "rb") as f:
+                    img_bytes = f.read()
+
+            if img_bytes:
+                nparr = np.frombuffer(img_bytes, np.uint8)
+                img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+                if img is not None:
+                    results = zbar_decode(img)
+                    if results:
+                        try:
+                            data = results[0].data.decode("utf-8", errors="ignore")
+                        except Exception:
+                            data = results[0].data.decode(errors="ignore")
+                        self.log_info(f"{prefix}内容：")
+                        self.log_info(data)
+                        self.log_info("提示：你也可以将该内容自行生成二维码后再扫码登录。")
+                    else:
+                        self.log_debug("未能解析二维码内容。")
+                else:
+                    self.log_debug("二维码图片解码失败")
+        except Exception as decode_err:
+            self.log_warning(f"解析二维码内容失败: {decode_err}")
+
+    def _wait_scan_success_with_refresh(self, qr_filename: str) -> None:
+        import os
+        check_interval = 2
+        while True:
+            # 成功
+            if self.driver.find_elements(By.XPATH, "//*[contains(text(), '扫码成功')]"):
+                try:
+                    if os.path.exists(qr_filename):
+                        os.remove(qr_filename)
+                        self.log_debug(f"已删除二维码图片: {os.path.abspath(qr_filename)}")
+                except Exception as del_err:
+                    self.log_warning(f"删除二维码图片失败: {del_err}")
+                self.log_info("扫码成功！请在手机上点击【确认登录】")
+                break
+
+            # 过期刷新
+            expired_elements = self.driver.find_elements(By.CSS_SELECTOR, "div.qr-expired")
+            if expired_elements and expired_elements[0].is_displayed():
+                self.log_warning("二维码已过期，正在刷新...")
+                try:
+                    qr_wrap = self.driver.find_element(By.CSS_SELECTOR, "div.qr-wrap")
+                    qr_wrap.click()
+                    sleep(1)
+
+                    WebDriverWait(self.driver, 10).until(
+                        EC.presence_of_element_located((By.CSS_SELECTOR, "img.qr-loaded"))
+                    )
+                    self.log_info("二维码已刷新，请重新扫描")
+
+                    try:
+                        qr_img = self.driver.find_element(By.CSS_SELECTOR, "img.qr-loaded")
+                        qr_img.screenshot(qr_filename)
+                        self.log_info("新二维码已保存到: %s", os.path.abspath(qr_filename))
+                        self._decode_qr_from_element(qr_img, qr_filename, prefix="新二维码")
+                    except Exception as refresh_err:
+                        self.log_warning(f"保存刷新后的二维码失败: {refresh_err}")
+                except Exception as refresh_err:
+                    self.log_error(f"刷新二维码失败: {refresh_err}")
+                    break
+
+            sleep(check_interval)
+
+    def _run_qr_login_flow(self) -> None:
+        self.log_info("正在切换到二维码登录...")
+        try:
+            self._switch_to_login_iframe()
+            self._click_qr_login_button()
+            qr_img = self._wait_and_get_qr_img()
+            try:
+                qr_filename = self._save_qr_img(qr_img)
+            except Exception as save_err:
+                self.log_warning(f"保存二维码截图失败: {save_err}")
+                qr_filename = "qrcode_login.png"
+
+            # 初次解码
+            self._decode_qr_from_element(qr_img, qr_filename, prefix="二维码")
+            self.log_info("=" * 60)
+            self.log_info("等待扫码（二维码过期将自动刷新）...")
+            self._wait_scan_success_with_refresh(qr_filename)
+        except TimeoutException:
+            self.log_warning("等待二维码加载超时")
+        except Exception as e:
+            import traceback
+            self.log_error(f"切换二维码登录失败: {e}")
+            self.log_error(f"详细错误:\n{traceback.format_exc()}")
+            try:
+                self.try_dump_page()
+            except Exception:
+                pass
+        finally:
+            try:
+                self.driver.switch_to.default_content()
+                self.log_info("已切换回主文档")
+            except Exception:
+                pass
+
     def start_game_process(self) -> bool:
         """启动浏览器进程"""
         try:
@@ -621,9 +768,14 @@ class CloudGameController(GameControllerBase):
             while not self._check_login():
                 self.log_info("未登录")
 
-                # 如果是 headless，则以非 headless 模式重启启动让用户登录
-                if self.cfg.browser_headless_enable:
+                # 如果是 headless 且配置了自动重启，则以非 headless 模式重启启动让用户登录
+                if self.cfg.browser_headless_enable and self.cfg.browser_headless_restart_on_not_logged_in:
+                    self.log_info("无窗口模式下检测到未登录，将以有窗口模式重启浏览器")
                     self._restart_browser(headless=False)
+
+                # 如果是 headless 且配置了不重启，则尝试二维码登录
+                if self.cfg.browser_headless_enable and (not self.cfg.browser_headless_restart_on_not_logged_in):
+                    self._run_qr_login_flow()
 
                 self.log_info("请在浏览器中完成登录操作")
 
@@ -634,9 +786,10 @@ class CloudGameController(GameControllerBase):
                 self.log_info("检测到登录成功")
 
                 # 如果为 headless 模式，则重启浏览器回到 headless 模式
-                if self.cfg.browser_headless_enable:
+                if self.cfg.browser_headless_enable and self.cfg.browser_headless_restart_on_not_logged_in:
                     if self.cfg.browser_dump_cookies_enable:
                         self._save_cookies()
+                    self.log_info("登录完成，将重启为无窗口模式")
                     self._restart_browser(headless=True)
 
             if self.cfg.browser_dump_cookies_enable:
@@ -727,6 +880,15 @@ class CloudGameController(GameControllerBase):
 
     def stop_game(self) -> bool:
         """退出游戏，关闭浏览器"""
+        # 删除可能残留的二维码图片
+        try:
+            qr_filename = "qrcode_login.png"
+            if os.path.exists(qr_filename):
+                os.remove(qr_filename)
+                self.log_debug(f"已删除残留的二维码图片: {os.path.abspath(qr_filename)}")
+        except Exception as e:
+            self.log_debug(f"删除二维码图片失败（可忽略）: {e}")
+
         if self.driver:
             try:
                 self.driver.execute(Command.CLOSE)

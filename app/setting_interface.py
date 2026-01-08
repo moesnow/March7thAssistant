@@ -717,11 +717,17 @@ class SettingInterface(ScrollArea):
             "浏览器启动参数",
             "browser_launch_argument"
         )
-        self.browserHeadlessCard = SwitchSettingCard1(
+        self.browserHeadlessCard = ExpandableSwitchSettingCard(
+            "browser_headless_enable",
             FIF.VIEW,
-            "无窗口模式（后台运行）",
-            "不支持模拟宇宙和锄大地",
-            "browser_headless_enable"
+            "启用无窗口模式（后台运行）",
+            "不支持模拟宇宙和锄大地"
+        )
+        self.browserHeadlessRestartCard = SwitchSettingCard1(
+            FIF.SYNC,
+            "未登录时自动切换为有窗口模式",
+            "开启后：在无窗口模式检测到未登录时，将自动以有窗口模式重启浏览器以便登录；关闭后：将在无窗口模式下尝试二维码登录。",
+            "browser_headless_restart_on_not_logged_in"
         )
         # self.browserCookiesCard = SwitchSettingCard1(
         #     FIF.PALETTE,    # 这个画盘长得很像 Cookie
@@ -1130,6 +1136,7 @@ class SettingInterface(ScrollArea):
         ])
         self.CloudGameGroup.addSettingCard(self.cloudGameFullScreenCard)
         self.CloudGameGroup.addSettingCard(self.browserHeadlessCard)
+        self.browserHeadlessCard.addSettingCards([self.browserHeadlessRestartCard])
         self.CloudGameGroup.addSettingCard(self.cloudGameMaxQueueTimeCard)
         # self.CloudGameGroup.addSettingCard(self.cloudGameVideoQualityCard)
         # self.CloudGameGroup.addSettingCard(self.cloudGameSmoothFirstCard)
@@ -1266,6 +1273,7 @@ class SettingInterface(ScrollArea):
         self.instanceTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.echoofwarEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.browserTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.browserHeadlessCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
 
     def addSubInterface(self, widget: QLabel, objectName, text):
         def remove_spacing(layout):

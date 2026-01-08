@@ -13,6 +13,7 @@ imageio==2.36.1
 Pillow==11.0.0
 Numpy==2.3.0
 opencv-python==4.10.0.84
+pyzbar==0.1.9
 onepush==1.4.0
 winotify==1.1.0; sys_platform == 'win32'
 markdown==3.7
