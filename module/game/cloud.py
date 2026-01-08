@@ -830,6 +830,9 @@ class CloudGameController(GameControllerBase):
         return self.driver.execute_cdp_cmd(cmd, cmd_args)
 
     def get_window_handle(self) -> int:
+        if sys.platform != "win32":
+            self.log_warning("当前平台不支持获取云游戏窗口句柄，将返回 None")
+            return None
         import win32gui
         return win32gui.FindWindow(None, "云·星穹铁道")
 
