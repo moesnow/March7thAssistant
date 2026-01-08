@@ -87,5 +87,4 @@ class ComboBoxSettingCardLog(SettingCard):
         elif sys.platform == 'darwin':
             os.system(f'open "{os.path.abspath("./logs")}"')
         else:
-            # Linux
-            pass
+            os.system(f'xdg-open "{os.path.abspath("./logs")}"')
