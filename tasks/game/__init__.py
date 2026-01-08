@@ -172,8 +172,8 @@ def start_game():
             if cfg.cloud_game_enable:
                 start_cloud_game()
             else:
-                start_local_game()
                 starrail = StarRailController(cfg=cfg, logger=log)
+                start_local_game(starrail)
             if not wait_until(lambda: screen.get_current_screen(), 6 * 60):
                 log.error("获取当前界面超时")
                 # 确保在重试前停止游戏
