@@ -17,6 +17,7 @@ WORKDIR /m7a
 COPY . /m7a/
 
 RUN \
+    # 如果需要使用国内源，可以取消下面一行的注释
     # sed -i 's/deb.debian.org/mirrors.cloud.tencent.com/g' /etc/apt/sources.list.d/debian.sources && \
     apt-get update && apt-get install -yq --no-install-recommends \
     # Dependencies for pyzbar
@@ -48,6 +49,7 @@ RUN \
     && rm -rf /var/lib/apt/lists/* \
     && python -m venv $VIRTUAL_ENV \
     && pip install --no-cache-dir -r requirements-docker.txt \
+    # 如果需要使用国内源，可以取消下面一行的注释
     # -i https://mirrors.cloud.tencent.com/pypi/simple/ \
     && python build.py --task ocr \
     && python build.py --task browser
