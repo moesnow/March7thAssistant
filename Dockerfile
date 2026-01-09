@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM python:3.13.11-slim-trixie
 
 # Avoid interactive prompts from debconf during apt operations
 ARG DEBIAN_FRONTEND=noninteractive
@@ -23,7 +23,7 @@ ENV MARCH7TH_GUI_STARTED=1
 
 WORKDIR /m7a
 
-COPY . /m7a/
+COPY requirements-docker.txt ./
 
 RUN \
     # 如果需要使用国内源，可以取消下面一行的注释
@@ -55,12 +55,17 @@ RUN \
     libgtk-3-0 \
     ca-certificates \
     fonts-liberation \
-    && rm -rf /var/lib/apt/lists/* \
-    && python -m venv $VIRTUAL_ENV \
-    && pip install --no-cache-dir -r requirements-docker.txt \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv $VIRTUAL_ENV \
+    && pip install --no-cache-dir \
     # 如果需要使用国内源，可以取消下面一行的注释
     # -i https://mirrors.cloud.tencent.com/pypi/simple/ \
-    && python build.py --task ocr \
+    -r requirements-docker.txt
+
+COPY . .
+
+RUN python build.py --task ocr \
     && python build.py --task browser
 
 CMD ["python", "main.py"]
