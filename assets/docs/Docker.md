@@ -190,7 +190,11 @@ please specify a unique value for --user-data-dir argument
 - 上一次 Chrome 异常退出，锁文件未清理
 - 文件权限问题
 
-解决方法：尝试删除浏览器数据目录后重试：
+解决方法：
+
+1.尝试多重启几次
+
+2.尝试删除浏览器数据目录后重试：
 
 ```bash
 rm -rf ./3rdparty/WebBrowser/UserProfile
