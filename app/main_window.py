@@ -26,6 +26,7 @@ from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
 from module.config import cfg
+from module.logger import log
 from module.game import get_game_controller
 import base64
 import os
@@ -525,6 +526,11 @@ class MainWindow(MSFluentWindow):
                 duration=5000,
                 parent=self
             )
+        else:
+            from tasks.game.starrailcontroller import StarRailController
+            starrail = StarRailController(cfg=cfg, logger=log)
+            if cfg.auto_battle_detect_enable:
+                starrail.change_auto_battle(True)
 
         self.game_launch_thread = GameLaunchThread(game, cfg)
         self.game_launch_thread.finished_signal.connect(self.on_game_launched)
