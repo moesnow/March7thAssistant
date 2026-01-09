@@ -707,7 +707,7 @@ class CloudGameController(GameControllerBase):
                     try:
                         qr_img = self.driver.find_element(By.CSS_SELECTOR, "img.qr-loaded")
                         qr_img.screenshot(qr_filename)
-                        self.log_info("新二维码已保存到: %s", os.path.abspath(qr_filename))
+                        self.log_info("新二维码已保存到: %s" % os.path.abspath(qr_filename))
                         self._decode_qr_from_element(qr_img, qr_filename, prefix="新二维码")
                     except Exception as refresh_err:
                         self.log_warning(f"保存刷新后的二维码失败: {refresh_err}")
