@@ -7,6 +7,8 @@ services:
       - ./config.yaml:/m7a/config.yaml
       - ./logs:/m7a/logs
       - ./3rdparty/WebBrowser/UserProfile:/m7a/3rdparty/WebBrowser/UserProfile
+    environment:
+      - MARCH7TH_LOG_LEVEL=DEBUG
     network_mode: "bridge"
     shm_size: 1g
     restart: unless-stopped
