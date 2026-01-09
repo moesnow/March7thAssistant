@@ -15,6 +15,7 @@ jobs:
       PYTHONHASHSEED: 0
       SOURCE_DATE_EPOCH: 315532800
       MARCH7TH_LOG_LEVEL: DEBUG
+      MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR: false
 
     steps:
       # 签出代码

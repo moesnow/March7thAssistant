@@ -73,7 +73,8 @@ def update_fps_unlocker() -> None:
 def download_browser() -> None:
     """下载集成浏览器"""
     log.info("[*] 下载集成浏览器...")
-    cfg.set_value("browser_download_use_mirror", False)
+    # 通过环境变量 MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR 控制是否使用镜像
+    # CI/CD 构建时设置为 false 使用官方源，Docker 构建时设置为 true 使用镜像
     cloud_game.download_intergrated_browser()
     log.info("[✓] 浏览器下载完成")
 
