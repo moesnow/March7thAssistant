@@ -52,6 +52,7 @@
 ## 注意事項
 
 - 必須使用**PC端** `1920*1080` 分辨率窗口或全屏運行遊戲（不支援HDR）
+- 支援 **macOS** 和 **Linux**（僅陸服雲遊戲模式），也支援 [Docker 部署](https://m7a.top/#/assets/docs/Docker)
 - 模擬宇宙相關 [項目文檔](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md)  [Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
 - 需要後台運行或多顯示器可以嘗試 [遠程本地多用戶桌面](https://asu.stysqy.top/guide/bs.html)
 - 遇到錯誤請在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反饋，提問討論可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊隨緣看。
