@@ -814,7 +814,8 @@ class CloudGameController(GameControllerBase):
         """浏览器内截图"""
         if not self.driver:
             return None
-        if platform.system() == "Darwin":
+        # 仅在 macOS 非 headless 模式下使用 CDP 截图，避免浏览器被切换到前台
+        if not self.cfg.browser_headless_enable and platform.system() == "Darwin":
             # Chrome/Chromium 在非 headless 模式下调用 get_screenshot_as_png() 时，
             # 会先确保窗口“可见且未被遮挡”，否则截图内容可能为空或全黑。
             # macOS 的窗口管理要求被截取的 NSWindow 处于前台/可见状态，
