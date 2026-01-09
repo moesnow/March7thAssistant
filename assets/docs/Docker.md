@@ -15,7 +15,7 @@
 
 ## 方式一：使用预编译镜像（推荐）
 
-预编译镜像托管在 GitHub Container Registry，开箱即用。
+预编译镜像托管在 [GitHub Container Registry](https://ghcr.io/moesnow/march7thassistant)，开箱即用。
 
 ### 1. 创建项目目录
 
@@ -215,8 +215,3 @@ services:
 ```
 
 如果仍然出错，可以尝试增大该值，例如 `shm_size: 2g`。
-
-## 参考链接
-
-- [Docker 官方文档](https://docs.docker.com/)
-- [GitHub Container Registry](https://ghcr.io/moesnow/march7thassistant)
