@@ -16,11 +16,13 @@ A：March7thAssistant 接入了第三方服务 [Mirror酱](https://mirrorchyan.c
 
 [首次下载可点我前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable&source=m7a-faq)
 
-### Q：小助手启动慢/出现错误 2147942402/总是被杀毒软件删除 怎么办？
+### Q：小助手启动慢/未找到可执行文件/出现错误 2147942402/总是被杀毒软件删除 怎么办？
 
 A：请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次。
 
 Windows Defender：`病毒和威胁防护` → `管理设置` → `添加或删除排除项` 可以参考 [#373](https://github.com/moesnow/March7thAssistant/issues/373) 图示操作
+
+（可能还需要将 `应用和浏览器控制` → `智能应用控制设置` → `切换为关闭` ）
 
 火绒安全软件：`主界面` → `右上角菜单` → `信任区` 可以参考 [教程](https://cs.xunyou.com/html/282/15252.shtml) 图示操作
 
