@@ -34,8 +34,6 @@ def generate_changelog(version: str, output_file: Path) -> None:
     # 生成最终内容
     final_output = f"""{log_content}
 
-首次安装请下载文件名内含有"full"的压缩包，否则会因为缺少组件无法使用！
-
 [已有 Mirror酱 CDK？前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable&source=m7a-release)"""
 
     output_file.write_text(final_output, encoding="utf-8")
