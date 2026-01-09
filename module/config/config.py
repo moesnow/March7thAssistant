@@ -1,8 +1,35 @@
 import sys
 import time
 import copy
+import os
 from ruamel.yaml import YAML
 from utils.singleton import SingletonMeta
+
+# 环境变量覆盖映射：环境变量名 -> (配置键, 转换函数)
+# 环境变量值为 "true"/"1" 时为 True，"false"/"0" 时为 False
+_ENV_OVERRIDE_MAP = {
+    "MARCH7TH_CLOUD_GAME_ENABLE": ("cloud_game_enable", lambda v: v.lower() in ("true", "1")),
+    "MARCH7TH_BROWSER_HEADLESS_ENABLE": ("browser_headless_enable", lambda v: v.lower() in ("true", "1")),
+    "MARCH7TH_BROWSER_HEADLESS_RESTART_ON_NOT_LOGGED_IN": ("browser_headless_restart_on_not_logged_in", lambda v: v.lower() in ("true", "1")),
+}
+
+# 反向映射：配置键 -> 环境变量名
+_CONFIG_KEY_TO_ENV = {v[0]: k for k, v in _ENV_OVERRIDE_MAP.items()}
+
+
+def _get_env_override(config_key):
+    """
+    检查配置键是否有环境变量覆盖
+    :param config_key: 配置键名
+    :return: (has_override, value) 如果有覆盖返回 (True, 覆盖值)，否则返回 (False, None)
+    """
+    env_name = _CONFIG_KEY_TO_ENV.get(config_key)
+    if env_name:
+        env_value = os.environ.get(env_name)
+        if env_value is not None:
+            _, converter = _ENV_OVERRIDE_MAP[env_name]
+            return True, converter(env_value)
+    return False, None
 
 
 class Config(metaclass=SingletonMeta):
@@ -116,7 +143,11 @@ class Config(metaclass=SingletonMeta):
             self.yaml.dump(self.config, file)
 
     def get_value(self, key, default=None):
-        """获取配置项的值，如果值是可变对象，则返回其拷贝"""
+        """获取配置项的值，环境变量优先，如果值是可变对象，则返回其拷贝"""
+        # 先检查环境变量覆盖
+        has_override, override_value = _get_env_override(key)
+        if has_override:
+            return override_value
         value = self.config.get(key, default)
         # 如果是可变对象（如列表、字典等），返回拷贝
         if isinstance(value, (list, dict, set)):
@@ -137,8 +168,12 @@ class Config(metaclass=SingletonMeta):
         self.set_value(key, time.time())
 
     def __getattr__(self, attr):
-        """允许通过属性访问配置项的值"""
+        """允许通过属性访问配置项的值，环境变量优先"""
         if attr in self.config:
+            # 先检查环境变量覆盖
+            has_override, override_value = _get_env_override(attr)
+            if has_override:
+                return override_value
             value = self.config[attr]
             if isinstance(value, (list, dict, set)):
                 return copy.deepcopy(value)

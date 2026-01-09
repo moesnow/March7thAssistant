@@ -12,6 +12,15 @@ ENV PYTHONUNBUFFERED 1
 ENV VIRTUAL_ENV="/opt/venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+# Set timezone
+ENV TZ=Asia/Shanghai
+
+# Set environment variables to enable specific features in the application
+ENV MARCH7TH_CLOUD_GAME_ENABLE=true
+ENV MARCH7TH_BROWSER_HEADLESS_ENABLE=true
+ENV MARCH7TH_BROWSER_HEADLESS_RESTART_ON_NOT_LOGGED_IN=false
+ENV MARCH7TH_GUI_STARTED=1
+
 WORKDIR /m7a
 
 COPY . /m7a/
