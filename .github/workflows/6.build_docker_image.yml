@@ -55,6 +55,8 @@ jobs:
             type=sha,prefix={{branch}}-,enable=${{ github.ref_type != 'tag' }}  # 非标签推送时生成分支名-commit SHA 标签（如 main-abc1234）
             type=ref,event=tag                       # 标签推送时保留完整标签名（如 v1.0.0）
             type=raw,value=latest,enable=${{ github.ref_type == 'tag' && !contains(github.ref, '-') }}  # 仅在推送稳定版标签时添加 latest 标签（不包含 -beta、-rc 等预发布版本）
+          flavor: |
+            latest=false
 
       # 步骤 5: 构建并推送 Docker 镜像
       - name: Build and push Docker image
