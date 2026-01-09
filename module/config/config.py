@@ -11,6 +11,7 @@ _ENV_OVERRIDE_MAP = {
     "MARCH7TH_CLOUD_GAME_ENABLE": ("cloud_game_enable", lambda v: v.lower() in ("true", "1")),
     "MARCH7TH_BROWSER_HEADLESS_ENABLE": ("browser_headless_enable", lambda v: v.lower() in ("true", "1")),
     "MARCH7TH_BROWSER_HEADLESS_RESTART_ON_NOT_LOGGED_IN": ("browser_headless_restart_on_not_logged_in", lambda v: v.lower() in ("true", "1")),
+    "MARCH7TH_LOG_LEVEL": ("log_level", lambda v: v.upper()),  # 日志等级：INFO, DEBUG, WARNING, ERROR
 }
 
 # 反向映射：配置键 -> 环境变量名

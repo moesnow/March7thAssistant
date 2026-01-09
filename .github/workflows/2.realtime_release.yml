@@ -19,6 +19,7 @@ jobs:
     env:
       PYTHONHASHSEED: 0
       SOURCE_DATE_EPOCH: 315532800
+      MARCH7TH_LOG_LEVEL: DEBUG
 
     steps:
       # 签出代码
