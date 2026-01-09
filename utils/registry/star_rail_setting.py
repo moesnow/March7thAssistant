@@ -61,12 +61,20 @@ def set_is_save_battle_speed_setting(value: bool) -> None:
     write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_IsSaveBattleSpeed_h3606297293", value, winreg.REG_DWORD)
 
 
+def set_user_speed_up_open_setting(uid: str, value: bool) -> None:
+    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, f"User_{uid}_SpeedUpOpen_h3552997784", value, winreg.REG_DWORD)
+
+
 def get_auto_battle_open_setting() -> Optional[bytes]:
     return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_AutoBattleOpen_h1164514826")
 
 
 def get_is_save_battle_speed_setting() -> Optional[bytes]:
     return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_IsSaveBattleSpeed_h3606297293")
+
+
+def get_user_speed_up_open_setting(uid: str) -> Optional[bytes]:
+    return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, f"User_{uid}_SpeedUpOpen_h3552997784")
 
 
 def get_graphics_setting() -> Optional[bytes]:

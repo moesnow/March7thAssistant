@@ -876,7 +876,17 @@ class CloudGameController(GameControllerBase):
         int_dicts = save.get("IntDicts", {})
 
         int_dicts["OtherSettings_AutoBattleOpen"] = int(status)
+        self.log_debug(f"设置自动战斗为 {'开启' if status else '关闭'}")
         int_dicts["OtherSettings_IsSaveBattleSpeed"] = int(status)
+        self.log_debug(f"设置自动战斗状态为 {'保存' if status else '不保存'}")
+
+        # 如果存在 App_LastUserID，添加 User_{UID}_SpeedUpOpen 配置
+        uid = int_dicts.get("App_LastUserID")
+        if uid:
+            int_dicts[f"User_{uid}_SpeedUpOpen"] = int(status)
+            self.log_debug(f"设置战斗二倍速为 {'开启' if status else '关闭'}")
+        else:
+            self.log_debug("未检测到 UID，跳过设置战斗二倍速")
 
         save["IntDicts"] = int_dicts
         cloud["value"]["RPGCloudSave"] = json.dumps(save)

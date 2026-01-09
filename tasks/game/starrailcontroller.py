@@ -4,8 +4,9 @@ from module.config.config import Config
 from module.game.local import LocalGameController
 import sys
 if sys.platform == 'win32':
-    from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution, get_auto_battle_open_setting, get_is_save_battle_speed_setting, set_auto_battle_open_setting, set_is_save_battle_speed_setting
+    from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution, get_auto_battle_open_setting, get_is_save_battle_speed_setting, get_user_speed_up_open_setting, set_auto_battle_open_setting, set_is_save_battle_speed_setting, set_user_speed_up_open_setting
     from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
+    from utils.registry.gameaccount import gamereg_uid
 from utils.logger.logger import Logger
 
 
@@ -134,3 +135,11 @@ class StarRailController(LocalGameController):
         if save_battle_status is not None and save_battle_status != status:
             set_is_save_battle_speed_setting(status)
             self.log_debug(f"修改沿用自动战斗设置: {'启用' if save_battle_status else '禁用'} --> {'启用' if status else '禁用'}")
+        gamereg_uid_value = gamereg_uid()
+        if gamereg_uid_value:
+            user_speed_up_status = get_user_speed_up_open_setting(str(gamereg_uid_value))
+            if user_speed_up_status is not None and user_speed_up_status != status:
+                set_user_speed_up_open_setting(str(gamereg_uid_value), status)
+                self.log_debug(f"修改战斗二倍速状态: {'开启' if user_speed_up_status else '关闭'} --> {'开启' if status else '关闭'}")
+        else:
+            self.log_debug("未检测到 UID，跳过修改战斗二倍速设置")

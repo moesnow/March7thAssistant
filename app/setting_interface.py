@@ -906,8 +906,8 @@ class SettingInterface(ScrollArea):
         self.MiscGroup = SettingCardGroup("杂项", self.scrollWidget)
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
-            '启用自动战斗检测',
-            "游戏启动前通过修改注册表或本地存储开启自动战斗，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态",
+            '启用自动战斗和二倍速检测',
+            "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态",
             "auto_battle_detect_enable"
         )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
