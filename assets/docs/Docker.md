@@ -192,9 +192,9 @@ please specify a unique value for --user-data-dir argument
 
 解决方法：
 
-1.尝试多重启几次
+1. 尝试多重启几次
 
-2.尝试删除浏览器数据目录后重试：
+2. 尝试删除浏览器数据目录后重试：
 
 ```bash
 rm -rf ./3rdparty/WebBrowser/UserProfile
