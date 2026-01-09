@@ -1,61 +1,72 @@
 name: Build & Publish Docker Image
 
-# 触发条件：手动触发或标签推送
+# 触发条件：
+# 1. workflow_dispatch: 支持在 GitHub Actions 页面手动触发
+# 2. push.tags: 当推送符合 v*.*.* 格式的标签时自动触发（如 v1.0.0）
 on:
   workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
 
+# 环境变量：定义 Docker 镜像仓库和镜像名称
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  REGISTRY: ghcr.io # 使用 GitHub Container Registry
+  IMAGE_NAME: ${{ github.repository }} # 镜像名称使用仓库全名
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # 权限设置：需要读取仓库内容和写入 GitHub Packages
     permissions:
-      contents: read
-      packages: write
+      contents: read # 读取仓库代码
+      packages: write # 推送镜像到 GitHub Container Registry
     steps:
+      # 步骤 1: 检出代码
+      # submodules: "false" - 不检出子模块，减少构建时间
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: "false"
 
+      # 步骤 2: 设置 Docker Buildx
+      # Buildx 是 Docker 的扩展构建工具，支持多平台构建和缓存优化
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # 步骤 3: 登录到容器镜像仓库
+      # 使用 GitHub Token 自动登录到 ghcr.io
       - name: Log in to Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ github.actor }} # 当前触发工作流的用户
+          password: ${{ secrets.GITHUB_TOKEN }} # GitHub 自动提供的 Token
 
+      # 步骤 4: 提取镜像元数据（标签和标注）
+      # 根据不同的触发条件自动生成合适的镜像标签
       - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable=${{ github.ref_type == 'tag' && !contains(github.ref, '-') }}
+            type=ref,event=branch                    # 分支推送时使用分支名作为标签（如 main）
+            type=sha,prefix={{branch}}-              # 生成分支名-commit SHA 标签（如 main-abc1234）
+            type=ref,event=tag                       # 标签推送时保留完整标签名（如 v1.0.0）
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' && !contains(github.ref, '-') }}  # 仅在推送稳定版标签时添加 latest 标签（不包含 -beta、-rc 等预发布版本）
 
+      # 步骤 5: 构建并推送 Docker 镜像
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          push: true
+          context: . # 构建上下文为当前目录
+          push: true # 构建完成后自动推送到镜像仓库
           # Chrome for Testing 当前仅支持 linux/amd64，因此在此显式限制构建平台
-          platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          sbom: false
+          platforms: linux/amd64 # 仅构建 amd64 架构镜像
+          tags: ${{ steps.meta.outputs.tags }} # 使用上一步生成的标签
+          labels: ${{ steps.meta.outputs.labels }} # 使用上一步生成的标注（包含版本、提交信息等元数据）
+          cache-from: type=gha # 从 GitHub Actions 缓存读取构建缓存，加速构建
+          cache-to: type=gha,mode=max # 将构建缓存写入 GitHub Actions，mode=max 表示缓存所有层
+          provenance: false # 禁用 provenance 元数据生成，避免产生额外的 unknown/unknown 镜像
+          sbom: false # 禁用 SBOM（软件物料清单）生成，避免产生额外的 unknown/unknown 镜像
