@@ -83,6 +83,11 @@ class Fight:
     @staticmethod
     def start():
         log.hr("准备锄大地", 0)
+
+        if sys.platform != 'win32':
+            log.warning("锄大地功能仅支持 Windows 平台")
+            return False
+
         if cfg.cloud_game_enable and cfg.browser_headless_enable:
             log.error("锄大地不支持无界面模式运行")
             return False

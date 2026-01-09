@@ -200,6 +200,11 @@ class Universe:
     @staticmethod
     def start(nums=cfg.universe_count, save=True, category=cfg.universe_category):
         log.hr("准备模拟宇宙", 0)
+
+        if sys.platform != 'win32':
+            log.warning("模拟宇宙功能仅支持 Windows 平台")
+            return False
+
         if cfg.cloud_game_enable and cfg.browser_headless_enable:
             log.error("模拟宇宙不支持无界面模式运行")
             return False
