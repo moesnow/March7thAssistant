@@ -628,7 +628,10 @@ class CloudGameController(GameControllerBase):
 
     def _save_qr_img(self, qr_img) -> str:
         import os
-        qr_filename = "qrcode_login.png"
+        # 将二维码保存到 logs 目录，方便 Docker 挂载访问
+        logs_dir = "logs"
+        os.makedirs(logs_dir, exist_ok=True)
+        qr_filename = os.path.join(logs_dir, "qrcode_login.png")
         qr_img.screenshot(qr_filename)
         self.log_debug(f"二维码已保存到: {os.path.abspath(qr_filename)}")
         self.log_info("=" * 60)
@@ -724,7 +727,7 @@ class CloudGameController(GameControllerBase):
                 qr_filename = self._save_qr_img(qr_img)
             except Exception as save_err:
                 self.log_warning(f"保存二维码截图失败: {save_err}")
-                qr_filename = "qrcode_login.png"
+                qr_filename = os.path.join("logs", "qrcode_login.png")
 
             # 初次解码
             self._decode_qr_from_element(qr_img, qr_filename, prefix="二维码")
@@ -886,7 +889,7 @@ class CloudGameController(GameControllerBase):
         """退出游戏，关闭浏览器"""
         # 删除可能残留的二维码图片
         try:
-            qr_filename = "qrcode_login.png"
+            qr_filename = os.path.join("logs", "qrcode_login.png")
             if os.path.exists(qr_filename):
                 os.remove(qr_filename)
                 self.log_debug(f"已删除残留的二维码图片: {os.path.abspath(qr_filename)}")
