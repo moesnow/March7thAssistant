@@ -39,7 +39,7 @@ def start():
                 log.info(f"已经是最新版本：{cfg.version}")
         else:
             log.warning("检测更新失败")
-            log.debug(response.text)
+            log.debug(f"状态码: {response.status_code}")
         log.hr("完成", 2)
     except Exception:
         pass
