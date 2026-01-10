@@ -408,11 +408,16 @@ class CloudGameController(GameControllerBase):
             return
 
         game_selector = ".game-player"
+        guide_close_selector = "div.guide-close-btn__x"
         enter_button_selector = "div.wel-card__content--start"
         try:
             if self.driver.find_elements(By.CSS_SELECTOR, game_selector):
                 self.log_info("已在游戏中")
                 return
+            guide_close_btn = self.driver.find_elements(By.CSS_SELECTOR, guide_close_selector)
+            if guide_close_btn:
+                # 先关闭 “保存网页地址，下次可一键游玩” 引导弹窗，避免遮挡后续游戏画面
+                self.driver.execute_script("arguments[0].click();", guide_close_btn[0])
             enter_button = WebDriverWait(self.driver, timeout).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, enter_button_selector))
             )
