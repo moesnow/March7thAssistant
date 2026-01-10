@@ -86,13 +86,14 @@ if sys.platform == 'win32':
         except Exception:
             sys.exit(1)
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QLocale
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtNetwork import QLocalServer, QLocalSocket
 import json
 import hashlib
 
 from app.main_window import MainWindow
+from qfluentwidgets import FluentTranslator
 
 # 单实例相关变量
 _main_window = None
@@ -178,8 +179,14 @@ QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPo
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    # 创建翻译器实例，生命周期必须和 app 相同
+    translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
+    app.installTranslator(translator)
+
     app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
 
     # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server
