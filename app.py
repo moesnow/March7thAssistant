@@ -197,13 +197,14 @@ QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPo
 
 
 if __name__ == "__main__":
+    # 设置应用属性，必须在创建 QApplication 之前调用
+    QApplication.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
+    
     app = QApplication(sys.argv)
 
     # 创建翻译器实例，生命周期必须和 app 相同
     translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
     app.installTranslator(translator)
-
-    app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
 
     # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server
     _key = _get_server_key()

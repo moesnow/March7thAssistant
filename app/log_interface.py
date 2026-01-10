@@ -1,7 +1,7 @@
 # coding:utf-8
 from PySide6.QtCore import Qt, QProcess, QProcessEnvironment, Signal, QTimer, QTime, QDateTime, QEvent
-from PySide6.QtGui import QFont, QTextCursor, QKeySequence, QShortcut
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit,
+from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy)
 from qfluentwidgets import (ScrollArea, PrimaryPushButton, PushButton,
                             FluentIcon, InfoBar, InfoBarPosition, CardWidget,

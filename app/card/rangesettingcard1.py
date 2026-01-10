@@ -1,8 +1,8 @@
 from typing import Union
 
 from PySide6.QtCore import Qt, Signal, QSize
-from PySide6.QtGui import QColor, QIcon, QPainter
-from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QToolButton, QVBoxLayout, QPushButton)
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QLabel, QToolButton
 from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, IndicatorPosition,
                             Slider, FluentIcon, qconfig, isDarkTheme, Theme)
 
