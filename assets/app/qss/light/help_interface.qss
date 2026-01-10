@@ -10,22 +10,27 @@ QScrollArea {
 
 /* 标签 */
 QLabel#helpLabel {
-    font: 33px 'Microsoft YaHei Light';
+    font: 33px 'Microsoft YaHei';
+    font-weight: 300;
     background-color: transparent;
 }
 
 QLabel#tutorialLabel {
-    font: 14px 'Microsoft YaHei Light';
+    font: 14px 'Microsoft YaHei';
+    font-weight: 300;
 }
 
 QLabel#faqLabel {
-    font: 14px 'Microsoft YaHei Light';
+    font: 14px 'Microsoft YaHei';
+    font-weight: 300;
 }
 
 QLabel#tasksLabel {
-    font: 14px 'Microsoft YaHei Light';
+    font: 14px 'Microsoft YaHei';
+    font-weight: 300;
 }
 
 QLabel#changelogLabel {
-    font: 14px 'Microsoft YaHei Light';
+    font: 14px 'Microsoft YaHei';
+    font-weight: 300;
 }

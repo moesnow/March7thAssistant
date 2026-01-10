@@ -1,14 +1,11 @@
-from PyQt5.QtCore import Qt, QSize, QFileSystemWatcher, pyqtSignal, QObject
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QAction
+from PySide6.QtCore import Qt, QSize, QFileSystemWatcher, Signal, QObject
+from PySide6.QtGui import QIcon, QAction
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
-from contextlib import redirect_stdout
-
-with redirect_stdout(None):
-    from app.tools.game_starter import GameStartStatus, GameLaunchThread
-    from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, Theme
-    from qfluentwidgets import FluentIcon as FIF
-    from qfluentwidgets import InfoBar, InfoBarPosition, SystemTrayMenu
+from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, Theme
+from qfluentwidgets import FluentIcon as FIF
+from qfluentwidgets import InfoBar, InfoBarPosition, SystemTrayMenu
+from app.tools.game_starter import GameStartStatus, GameLaunchThread
 
 from .home_interface import HomeInterface
 from .help_interface import HelpInterface
@@ -35,7 +32,7 @@ import sys
 
 class ConfigWatcher(QObject):
     """配置文件监视器"""
-    config_changed = pyqtSignal()
+    config_changed = Signal()
 
     def __init__(self, config_path, parent=None):
         super().__init__(parent)
@@ -50,7 +47,7 @@ class ConfigWatcher(QObject):
 
     def _on_config_changed(self, path):
         """检测到文件变化，延迟处理避免频繁触发"""
-        from PyQt5.QtCore import QTimer
+        from PySide6.QtCore import QTimer
 
         # 清除之前的定时器
         if self.debounce_timer:
@@ -87,7 +84,7 @@ class MainWindow(MSFluentWindow):
 
         # 如果有启动任务，延迟执行
         if self.startup_task:
-            from PyQt5.QtCore import QTimer
+            from PySide6.QtCore import QTimer
             QTimer.singleShot(1000, self._executeStartupTask)
         else:
             # 检查更新
@@ -101,7 +98,11 @@ class MainWindow(MSFluentWindow):
             start_task(self.startup_task)
 
     def initWindow(self):
-        self.setMicaEffectEnabled(False)
+        # 开启 “在标题栏和窗口边框上显示强调色” 后，会导致窗口顶部出现异色横条 bug 已经修复
+        # https://github.com/zhiyiYo/PyQt-Frameless-Window/pull/186
+        # 要求 PySideSix-Frameless-Window>=0.7.0
+        # self.setMicaEffectEnabled(False)
+
         setThemeColor('#f18cb9', lazy=True)
         setTheme(Theme.AUTO, lazy=True)
 
@@ -123,8 +124,8 @@ class MainWindow(MSFluentWindow):
         self.splashScreen.titleBar.maxBtn.setHidden(True)
         self.splashScreen.raise_()
 
-        desktop = QApplication.desktop().availableGeometry()
-        w, h = desktop.width(), desktop.height()
+        screen = QApplication.primaryScreen().availableGeometry()
+        w, h = screen.width(), screen.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
         self.show()
@@ -263,7 +264,7 @@ class MainWindow(MSFluentWindow):
 
     def handle_external_activate(self, task=None, exit_on_complete=False):
         """响应来自其他实例的激活请求：置顶窗口并根据需要启动任务或设置退出行为"""
-        from PyQt5.QtCore import QTimer
+        from PySide6.QtCore import QTimer
         try:
             # 显示并置顶窗口
             self.showNormal()
@@ -320,7 +321,7 @@ class MainWindow(MSFluentWindow):
         """处理任务完成信号"""
         # 如果是启动任务且设置了完成后退出，则在任务成功完成时退出程序
         if self.exit_on_complete and self.startup_task and exit_code == 0:
-            from PyQt5.QtCore import QTimer
+            from PySide6.QtCore import QTimer
             # 延迟一小段时间让用户看到完成状态
             QTimer.singleShot(5000, self.quitApp)
         else:

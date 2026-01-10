@@ -1,7 +1,7 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 
 from qfluentwidgets import ScrollArea
 from .common.style_sheet import StyleSheet
@@ -47,17 +47,17 @@ a {
         self.titleLabel.setObjectName('changelogsLabel')
         StyleSheet.CHANGELOGS_INTERFACE.apply(self)
 
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setWidget(self.view)
         self.setWidgetResizable(True)
 
         # self.vBoxLayout.setSpacing(8)
-        # self.vBoxLayout.setAlignment(Qt.AlignTop)
-        # self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
+        # self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        # self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignmentFlag.AlignTop)
 
         # self.vBoxLayout.setSpacing(28)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
-        self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
+        self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignTop)
 
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))

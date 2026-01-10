@@ -8,10 +8,12 @@ QScrollArea {
 }
 
 QLabel#contentLabel {
-    font: 14px 'Microsoft YaHei Light';
+    font: 14px 'Microsoft YaHei';
+    font-weight: 300;
 }
                            
 QLabel#changelogsLabel {
-    font: 33px 'Microsoft YaHei Light';
+    font: 33px 'Microsoft YaHei';
+    font-weight: 300;
     background-color: transparent;
 }

@@ -1,7 +1,7 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPainter, QPainterPath, QImage
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphicsDropShadowEffect
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPainter, QPainterPath, QImage
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphicsDropShadowEffect
 
 from qfluentwidgets import ScrollArea, FluentIcon
 
@@ -28,13 +28,15 @@ class BannerWidget(QWidget):
         self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
         # 创建阴影效果
-        shadow = QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(20)  # 阴影模糊半径
-        shadow.setColor(Qt.black)  # 阴影颜色
-        shadow.setOffset(1.2, 1.2)     # 阴影偏移量
+        # 修复 PySide6 阴影不生效的问题参考了 “[PySide6 练习笔记] 添加阴影及动画效果”
+        # https://medium.com/@benson890720/pyside6%E7%B7%B4%E7%BF%92%E7%AD%86%E8%A8%98-%E6%B7%BB%E5%8A%A0%E9%99%B0%E5%BD%B1%E5%8F%8A%E5%8B%95%E7%95%AB%E6%95%88%E6%9E%9C-83f1d2f888d
+        self.galleryLabel.shadow = QGraphicsDropShadowEffect()
+        self.galleryLabel.shadow.setBlurRadius(20)  # 阴影模糊半径
+        self.galleryLabel.shadow.setColor(Qt.GlobalColor.black)  # 阴影颜色
+        self.galleryLabel.shadow.setOffset(1.2, 1.2)     # 阴影偏移量
 
         # 将阴影效果应用于小部件
-        self.galleryLabel.setGraphicsEffect(shadow)
+        self.galleryLabel.setGraphicsEffect(self.galleryLabel.shadow)
 
         self.img = Image.open("./assets/app/images/bg37.jpg")
         self.banner = None
@@ -52,14 +54,14 @@ class BannerWidget(QWidget):
         linkCardLayout = QHBoxLayout()
         linkCardLayout.addWidget(self.linkCardView)
         # linkCardLayout.setContentsMargins(0, 0, 0, 0)  # Add bottom margin of 20 units
-        linkCardLayout.setAlignment(Qt.AlignBottom)
+        linkCardLayout.setAlignment(Qt.AlignmentFlag.AlignBottom)
 
         self.vBoxLayout.setSpacing(0)
         self.vBoxLayout.setContentsMargins(0, 20, 0, 0)
         self.vBoxLayout.addWidget(self.galleryLabel)
         # self.vBoxLayout.addWidget(self.linkCardView, 1, Qt.AlignBottom)
         self.vBoxLayout.addLayout(linkCardLayout)
-        self.vBoxLayout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         self.linkCardView.addCard(
             FluentIcon.GITHUB,
@@ -80,7 +82,7 @@ class BannerWidget(QWidget):
             img_data = np.array(cropped_img)  # Convert PIL Image to numpy array
             height, width, channels = img_data.shape
             bytes_per_line = channels * width
-            self.banner = QImage(img_data.data, width, height, bytes_per_line, QImage.Format_RGB888)
+            self.banner = QImage(img_data.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
 
             path = QPainterPath()
             path.addRoundedRect(0, 0, width + 50, height + 50, 10, 10)  # 10 is the radius for corners
@@ -107,14 +109,14 @@ class HomeInterface(ScrollArea):
         self.setObjectName('homeInterface')
         StyleSheet.HOME_INTERFACE.apply(self)
 
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setWidget(self.view)
         self.setWidgetResizable(True)
 
         self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
         self.vBoxLayout.setSpacing(25)
         self.vBoxLayout.addWidget(self.banner)
-        self.vBoxLayout.setAlignment(Qt.AlignTop)
+        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
     def loadSamples(self):
         basicInputView = SampleCardView1(

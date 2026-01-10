@@ -10,7 +10,8 @@ QScrollArea {
 
 /* 标签 */
 QLabel#toolsLabel {
-    font: 33px 'Microsoft YaHei Light';
+    font: 33px 'Microsoft YaHei';
+    font-weight: 300;
     background-color: transparent;
     color: white;
 }

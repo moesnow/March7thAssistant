@@ -10,7 +10,8 @@ QScrollArea {
 
 
 BannerWidget > #galleryLabel {
-    font: 42px 'Segoe UI SemiBold', 'Microsoft YaHei SemiBold';
+    font: 42px 'Segoe UI', 'Microsoft YaHei';
+    font-weight: 600;
     background-color: transparent;
     color: black;
     padding-left: 28px;

@@ -1,12 +1,12 @@
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 from ..common.style_sheet import StyleSheet
-from qfluentwidgets import PushButton, pyqtSignal, setFont, Pivot
+from qfluentwidgets import PushButton, Signal, setFont, Pivot
 
 
 class PivotItem(PushButton):
     """ Pivot item """
 
-    itemClicked = pyqtSignal(bool)
+    itemClicked = Signal(bool)
 
     def _postInit(self):
         self.isSelected = False

@@ -5,7 +5,7 @@ import numpy as np
 import pygetwindow as gw
 from module.automation import auto
 from module.logger import log
-from PyQt5.QtCore import QObject, QTimer
+from PySide6.QtCore import QObject, QTimer
 
 
 class ClickMode(Enum):
@@ -33,7 +33,7 @@ class AutoPlot(QObject):
         self.is_clicking = False
         self.adaptive_last_text_pixels = 0
         self.is_running = False
-        
+
         # Default configuration
         self.mode = ClickMode.Period
         self.auto_skip = True
@@ -50,7 +50,7 @@ class AutoPlot(QObject):
             self.is_running = True
             log.info("自动对话已启动")
             self._monitor_timer.start(500)
-    
+
     def stop(self):
         """Stop auto plot"""
         if self.is_running:
@@ -58,7 +58,7 @@ class AutoPlot(QObject):
             self.is_clicking = False
             log.info("自动对话已停止")
             self._monitor_timer.stop()
-    
+
     def update_options(self, options: dict):
         """Update configuration options"""
         mode_str = options.get('mode', 'period')
@@ -92,7 +92,7 @@ class AutoPlot(QObject):
     def _monitor_loop(self):
         if not self.is_running:
             return
-            
+
         if self._is_game_window_active() and self._is_dialog_scene():
             if not self.is_clicking:
                 QTimer.singleShot(500, self._dialog_loop)

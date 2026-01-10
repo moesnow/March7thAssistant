@@ -86,14 +86,32 @@ if sys.platform == 'win32':
         except Exception:
             sys.exit(1)
 
-from PyQt5.QtCore import Qt, QLocale
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtNetwork import QLocalServer, QLocalSocket
+from PySide6.QtCore import Qt, QLocale, qInstallMessageHandler, QtMsgType
+from PySide6.QtWidgets import QApplication
+from PySide6.QtNetwork import QLocalServer, QLocalSocket
 import json
 import hashlib
+from contextlib import redirect_stdout
+with redirect_stdout(None):
+    from qfluentwidgets import FluentTranslator
 
-from app.main_window import MainWindow
-from qfluentwidgets import FluentTranslator
+
+# 自定义消息处理器，过滤掉特定的 Qt 警告
+def qt_message_handler(mode, context, message):
+    # SwitchButton 组件在某些环境下会触发以下警告，暂时忽略：
+    # QFont::setPointSize: Point size <= 0 (-1), must be greater than 0
+    if "QFont::setPointSize: Point size <= 0" in message:
+        return  # 忽略这个警告
+    # 其他消息正常输出
+    if mode == QtMsgType.QtWarningMsg:
+        print(f"Qt Warning: {message}")
+    elif mode == QtMsgType.QtCriticalMsg:
+        print(f"Qt Critical: {message}")
+    elif mode == QtMsgType.QtFatalMsg:
+        print(f"Qt Fatal: {message}")
+
+
+qInstallMessageHandler(qt_message_handler)
 
 # 单实例相关变量
 _main_window = None
@@ -174,17 +192,15 @@ def start_local_server(key):
         return None
 
 
-# 启用 DPI 缩放
+# 启用 DPI 缩放 (PySide6 默认启用高 DPI 缩放)
 QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
-QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     # 创建翻译器实例，生命周期必须和 app 相同
-    translator = FluentTranslator(QLocale(QLocale.Chinese, QLocale.China))
+    translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
     app.installTranslator(translator)
 
     app.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
@@ -206,6 +222,7 @@ if __name__ == "__main__":
         from qfluentwidgets import setFontFamilies
         setFontFamilies(['PingFang SC'])
     # 传递任务参数给主窗口
+    from app.main_window import MainWindow
     w = MainWindow(task=args.task, exit_on_complete=args.exit)
 
     # 注册主窗口并处理启动期间收到的挂起消息
@@ -218,4 +235,4 @@ if __name__ == "__main__":
                 pass
         _pending_messages.clear()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

@@ -1,8 +1,8 @@
 from qfluentwidgets import SettingCard, FluentIconBase, SwitchButton, IndicatorPosition, ComboBox, PushButton
 from typing import Union
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QPushButton
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QPushButton
 from .messagebox_custom import MessageBoxNotify
 from module.config import cfg
 from utils.schedule import create_task, is_task_exists, delete_task
@@ -12,7 +12,7 @@ import os
 class StartMarch7thAssistantSwitchSettingCard(SettingCard):
     """ Setting card with switch button """
 
-    checkedChanged = pyqtSignal(bool)
+    checkedChanged = Signal(bool)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
         super().__init__(icon, title, content, parent)
@@ -26,7 +26,7 @@ class StartMarch7thAssistantSwitchSettingCard(SettingCard):
         self.setValue(is_task_exists(self.task_name))
 
         # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
@@ -47,7 +47,7 @@ class StartMarch7thAssistantSwitchSettingCard(SettingCard):
 class SwitchSettingCard1(SettingCard):
     """ Setting card with switch button """
 
-    checkedChanged = pyqtSignal(bool)
+    checkedChanged = Signal(bool)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, parent=None):
         super().__init__(icon, title, content, parent)
@@ -58,7 +58,7 @@ class SwitchSettingCard1(SettingCard):
         self.setValue(cfg.get_value(self.configname))
 
         # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
@@ -76,7 +76,7 @@ class SwitchSettingCard1(SettingCard):
 class SwitchSettingCardNotify(SettingCard):
     """ Setting card with switch button """
 
-    checkedChanged = pyqtSignal(bool)
+    checkedChanged = Signal(bool)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, name, configname: str = None, parent=None):
         super().__init__(icon, title, None, parent)
@@ -91,7 +91,7 @@ class SwitchSettingCardNotify(SettingCard):
 
         if len(self.config_list) > 0:
             self.button = PushButton("配置", self)
-            self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
+            self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
             self.hBoxLayout.addSpacing(10)
             self.button.clicked.connect(self._onClicked)
 
@@ -100,7 +100,7 @@ class SwitchSettingCardNotify(SettingCard):
         self.setValue(cfg.get_value(self.configname))
 
         # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
@@ -144,7 +144,7 @@ class SwitchSettingCardNotify(SettingCard):
 class SwitchSettingCardTeam(SettingCard):
     """ Setting card with switch button """
 
-    checkedChanged = pyqtSignal(bool)
+    checkedChanged = Signal(bool)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, configname2: str = None, parent=None):
         super().__init__(icon, title, content, parent)
@@ -152,7 +152,7 @@ class SwitchSettingCardTeam(SettingCard):
         self.configname2 = configname2
 
         self.comboBox = ComboBox(self)
-        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
 
         texts = ['3', '4', '5', '6', '7']
@@ -167,7 +167,7 @@ class SwitchSettingCardTeam(SettingCard):
         self.setValue(cfg.get_value(self.configname))
 
         # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
@@ -188,14 +188,14 @@ class SwitchSettingCardTeam(SettingCard):
 class SwitchSettingCardImmersifier(SettingCard):
     """ Setting card with switch button """
 
-    checkedChanged = pyqtSignal(bool)
+    checkedChanged = Signal(bool)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, parent=None):
         super().__init__(icon, title, content, parent)
         self.configname = configname
 
         self.comboBox = ComboBox(self)
-        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
 
         texts = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
@@ -210,7 +210,7 @@ class SwitchSettingCardImmersifier(SettingCard):
         self.setValue(cfg.get_value(self.configname))
 
         # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
@@ -231,14 +231,14 @@ class SwitchSettingCardImmersifier(SettingCard):
 class SwitchSettingCardGardenofplenty(SettingCard):
     """ Setting card with switch button """
 
-    checkedChanged = pyqtSignal(bool)
+    checkedChanged = Signal(bool)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, parent=None):
         super().__init__(icon, title, content, parent)
         self.configname = configname
 
         self.comboBox = ComboBox(self)
-        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
 
         texts = ['拟造花萼（金）', '拟造花萼（赤）']
@@ -253,7 +253,7 @@ class SwitchSettingCardGardenofplenty(SettingCard):
         self.setValue(cfg.get_value(self.configname))
 
         # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
@@ -274,14 +274,14 @@ class SwitchSettingCardGardenofplenty(SettingCard):
 class SwitchSettingCardEchoofwar(SettingCard):
     """ Setting card with switch button """
 
-    checkedChanged = pyqtSignal(bool)
+    checkedChanged = Signal(bool)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, parent=None):
         super().__init__(icon, title, content, parent)
         self.configname = configname
 
         self.comboBox = ComboBox(self)
-        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
 
         texts = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
@@ -297,7 +297,7 @@ class SwitchSettingCardEchoofwar(SettingCard):
         self.setValue(cfg.get_value(self.configname))
 
         # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
@@ -338,7 +338,7 @@ class SwitchSettingCardHotkey(SettingCard):
 class SwitchSettingCardCloudGameStatus(SettingCard):
     """ Setting card with switch button """
 
-    checkedChanged = pyqtSignal(bool)
+    checkedChanged = Signal(bool)
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, configname2: str = None, parent=None):
         super().__init__(icon, title, content, parent)
@@ -346,7 +346,7 @@ class SwitchSettingCardCloudGameStatus(SettingCard):
         self.configname2 = configname2
 
         self.comboBox = ComboBox(self)
-        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
 
         texts = {'简洁': 'brief', '详细': 'verbose'}
@@ -361,7 +361,7 @@ class SwitchSettingCardCloudGameStatus(SettingCard):
         self.setValue(cfg.get_value(self.configname))
 
         # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)

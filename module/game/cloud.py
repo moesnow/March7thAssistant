@@ -781,10 +781,12 @@ class CloudGameController(GameControllerBase):
             except Exception as switch_err:
                 self.log_warning(f"切回主文档失败: {switch_err}")
 
-    def start_game_process(self) -> bool:
+    def start_game_process(self, headless=None) -> bool:
         """启动浏览器进程"""
         try:
-            self._connect_or_create_browser(headless=self.cfg.browser_headless_enable)
+            if headless is None:
+                headless = self.cfg.browser_headless_enable
+            self._connect_or_create_browser(headless=headless)
             self._confirm_viewport_resolution()
             return True
         except Exception as e:

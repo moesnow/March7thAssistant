@@ -17,7 +17,8 @@ pyzbar==0.1.9
 onepush==1.4.0
 winotify==1.1.0; sys_platform == 'win32'
 markdown==3.7
-PyQt-Fluent-Widgets==1.9.2
+PySide6-Fluent-Widgets==1.10.5
+PySideSix-Frameless-Window>=0.7.0
 pylnk3==0.4.2
 pyperclip==1.9.0
 qrcode==8.0
@@ -34,11 +35,12 @@ openpyxl==3.1.5
 selenium==4.38.0
 keyboard==0.13.5
 rapidocr==3.5.0
-# 1.21.0 —— 1.23.0 版本和 PyQt5 有兼容性问题，导致报错：
+# onnxruntime 1.21.x —— 1.23.x 版本和 PyQt5 有兼容性问题，导致报错：
 # DLL load failed while importing onnxruntime_pybind11_state
-onnxruntime-directml==1.20.1; sys_platform == 'win32'
-onnxruntime==1.20.1; sys_platform == 'darwin' or sys_platform == 'linux'
+# PySide6 没有这个问题
+onnxruntime-directml==1.23.0; sys_platform == 'win32'
+onnxruntime==1.23.2; sys_platform == 'darwin' or sys_platform == 'linux'
 # openvino==2025.4.1
-# 3.2.0 —— 3.2.2 版本有问题，报错：
+# paddlepaddle 3.2.0 —— 3.2.2 版本有问题，报错：
 # RuntimeError: (NotFound) OneDnnContext does not have the input
 # paddlepaddle==3.1.1
