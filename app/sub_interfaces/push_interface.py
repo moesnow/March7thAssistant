@@ -1,11 +1,12 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QToolBox, QWidget, QVBoxLayout, QTabBar, QInputDialog
-from PyQt5.QtWidgets import QFrame
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabBar, QInputDialog
+from PySide6.QtWidgets import QFrame
 from qfluentwidgets import FluentStyleSheet
 from qfluentwidgets import FluentIcon as FIF
 from app.card.pushsettingcard1 import PushSettingCard
 from app.card.switchsettingcard1 import SwitchSettingCard1
 from module.config import cfg
+
 
 class PushToolsBox(QWidget):
     def __init__(self, parent: QWidget | None = ..., flags: Qt.WindowFlags | Qt.WindowType = ...):
@@ -49,6 +50,7 @@ class PushToolsBox(QWidget):
             card.hide()
         self.windowPushCard.show()
         _self = self
+
         def currentChanged(self):
             for card in _self.pushCars:
                 if (card.isVisible()):
@@ -61,6 +63,7 @@ class PushToolsBox(QWidget):
         self.tabBar.currentChanged.connect(currentChanged)
         self.setLayout(self.vLayout)
         self.adjustSize()
+
 
 class WindowsPushCard(QWidget):
     def __init__(self, parent: QWidget | None = ..., flags: Qt.WindowFlags | Qt.WindowType = ...):
@@ -104,6 +107,7 @@ class TelegramPushCard(QWidget):
         if not token is None:
             cfg.set_value("notify_telegram_token", token)
             self.telegramTokenCard.setContent(token)
+
 
 class SmtpPushCard(QFrame):
     def __init__(self, parent: QWidget | None = ..., flags: Qt.WindowFlags | Qt.WindowType = ...):

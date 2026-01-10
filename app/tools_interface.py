@@ -1,5 +1,5 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem, QScroller, QScrollerProperties
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem, QScroller, QScrollerProperties
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition
 from .card.pushsettingcard1 import PushSettingCardCode
@@ -59,7 +59,7 @@ class ToolsInterface(ScrollArea):
         self.__initWidget()
 
     def __initWidget(self):
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setViewportMargins(0, 80, 0, 20)
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)
@@ -115,7 +115,7 @@ class ToolsInterface(ScrollArea):
                 InfoBar.info(
                     title='恢复60成功 (＾∀＾●)',
                     content="",
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
                     duration=1000,
@@ -126,7 +126,7 @@ class ToolsInterface(ScrollArea):
                 InfoBar.success(
                     title='解锁120成功 (＾∀＾●)',
                     content="",
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
                     duration=1000,
@@ -136,7 +136,7 @@ class ToolsInterface(ScrollArea):
             InfoBar.warning(
                 title='解锁失败',
                 content="请将游戏图像质量修改为自定义后重试",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
@@ -174,7 +174,7 @@ class ToolsInterface(ScrollArea):
                 InfoBar.warning(
                     title='游戏路径配置错误(╥╯﹏╰╥)',
                     content="请在“设置”-->“程序”中配置正确的游戏路径",
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
                     duration=5000,
@@ -212,7 +212,7 @@ class ToolsInterface(ScrollArea):
             InfoBar.success(
                 title='启动成功(＾∀＾●)',
                 content="已将命令复制到剪贴板",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=2000,
@@ -222,7 +222,7 @@ class ToolsInterface(ScrollArea):
             InfoBar.warning(
                 title='启动失败',
                 content=str(e),
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
@@ -247,7 +247,7 @@ class ToolsInterface(ScrollArea):
             InfoBar.success(
                 title='自动对话已启动',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -259,7 +259,7 @@ class ToolsInterface(ScrollArea):
             InfoBar.info(
                 title='自动对话已停止',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,

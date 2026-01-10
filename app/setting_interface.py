@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QUrl
-from PyQt5.QtGui import QDesktopServices, QFont
-from PyQt5.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScrollArea, QSizePolicy, QScroller, QScrollerProperties
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard
 from app.sub_interfaces.accounts_interface import accounts_interface
@@ -43,7 +43,7 @@ class SettingInterface(ScrollArea):
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)
         self.setViewportMargins(0, 140, 0, 5)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         # self.title_area.setWidget(self.pivot)
         # self.title_area.setWidgetResizable(True)
@@ -1004,7 +1004,7 @@ class SettingInterface(ScrollArea):
         self.pivot.move(40, 80)
         # self.title_area.move(36, 80)
         # self.vBoxLayout.addWidget(self.pivot, 0, Qt.AlignTop)
-        self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignTop)
+        self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignmentFlag.AlignTop)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
         self.PowerGroup.addSettingCard(self.powerPlanCard)

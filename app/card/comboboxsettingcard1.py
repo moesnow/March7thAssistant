@@ -1,7 +1,7 @@
 from qfluentwidgets import (ComboBox, SettingCard, FluentIconBase)
 from typing import Union
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 
 from module.config import cfg
 
@@ -13,7 +13,7 @@ class ComboBoxSettingCard1(SettingCard):
         super().__init__(icon, title, content, parent)
         self.configname = configname
         self.comboBox = ComboBox(self)
-        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
         for text, option in zip(texts, texts):

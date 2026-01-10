@@ -1,6 +1,6 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QFileDialog, QScroller, QScrollerProperties
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFileDialog, QScroller, QScrollerProperties
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton, MessageBox
 from .common.style_sheet import StyleSheet
@@ -68,7 +68,7 @@ class WarpInterface(ScrollArea):
         self.titleLabel.setObjectName('warpLabel')
         StyleSheet.WARP_INTERFACE.apply(self)
 
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setWidget(self.view)
         self.setWidgetResizable(True)
         self.contentLabel.setWordWrap(True)
@@ -80,7 +80,7 @@ class WarpInterface(ScrollArea):
 
         # self.vBoxLayout.setSpacing(28)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
-        self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
+        self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignTop)
 
         QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
         scroller = QScroller.scroller(self.viewport())
@@ -136,7 +136,7 @@ class WarpInterface(ScrollArea):
             InfoBar.success(
                 title='导入成功(＾∀＾●)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -146,7 +146,7 @@ class WarpInterface(ScrollArea):
             InfoBar.warning(
                 title='导入失败(╥╯﹏╰╥)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -193,7 +193,7 @@ class WarpInterface(ScrollArea):
             InfoBar.success(
                 title='导出成功(＾∀＾●)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -204,7 +204,7 @@ class WarpInterface(ScrollArea):
             InfoBar.warning(
                 title='导出失败(╥╯﹏╰╥)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -295,7 +295,7 @@ class WarpInterface(ScrollArea):
             InfoBar.success(
                 title='导出成功(＾∀＾●)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -306,7 +306,7 @@ class WarpInterface(ScrollArea):
             InfoBar.warning(
                 title='导出失败(╥╯﹏╰╥)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -319,7 +319,7 @@ class WarpInterface(ScrollArea):
             InfoBar.success(
                 title='复制成功(＾∀＾●)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -329,7 +329,7 @@ class WarpInterface(ScrollArea):
             InfoBar.warning(
                 title='复制失败(╥╯﹏╰╥)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -351,7 +351,7 @@ class WarpInterface(ScrollArea):
                 InfoBar.success(
                     title='清空完成(＾∀＾●)',
                     content="",
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
                     duration=1000,
@@ -362,7 +362,7 @@ class WarpInterface(ScrollArea):
                 InfoBar.warning(
                     title='清空失败(╥╯﹏╰╥)',
                     content="",
-                    orient=Qt.Horizontal,
+                    orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
                     duration=1000,

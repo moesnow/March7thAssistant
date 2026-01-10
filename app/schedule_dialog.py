@@ -1,9 +1,8 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QTime, QDateTime
-from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-                             QPushButton, QLineEdit, QTableWidget, QTableWidgetItem,
-                             QWidget, QFileDialog, QHeaderView, QComboBox,
-                             QSpinBox, QCheckBox, QAbstractItemView)
+from PySide6.QtCore import Qt, QTime, QDateTime
+from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
+                               QTableWidgetItem, QFileDialog, QHeaderView,
+                               QAbstractItemView)
 from qfluentwidgets import TimePicker, BodyLabel, PushButton, TableWidget, MaskDialogBase, MessageBox, Dialog
 from qfluentwidgets import LineEdit, ComboBox, CheckBox, SpinBox
 from qfluentwidgets import InfoBar, InfoBarPosition
@@ -220,11 +219,6 @@ class AddEditScheduleDialog(MessageBox):
 
         # 当程序类型改变时切换参数输入模式
         # 已在构造中连接：self.program_type_combo.currentTextChanged -> _on_program_type_changed
-
-    def exec_(self):
-        """兼容旧调用：返回 QDialog.Accepted 或 QDialog.Rejected"""
-        result = super().exec()
-        return QDialog.Accepted if result else QDialog.Rejected
 
     def accept(self):
         """在确认前执行字段校验：名称非空，时间不重复，外部程序路径非空。"""
@@ -554,7 +548,7 @@ class ScheduleManagerDialog(MessageBox):
         btn_layout.addStretch()
 
         # 插入到 textLayout
-        self.textLayout.addWidget(self.table, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.table, 0, Qt.AlignmentFlag.AlignTop)
         self.textLayout.addLayout(btn_layout)
 
         # 连接
@@ -567,11 +561,6 @@ class ScheduleManagerDialog(MessageBox):
 
         # 加载数据
         self._reload_table()
-
-    def exec_(self):
-        """兼容旧调用"""
-        result = super().exec()
-        return QDialog.Accepted if result else QDialog.Rejected
 
     def _reload_table(self):
         self.table.setRowCount(len(self.scheduled_tasks))
@@ -618,7 +607,7 @@ class ScheduleManagerDialog(MessageBox):
 
     def _on_add(self):
         dlg = AddEditScheduleDialog(self, scheduled_tasks=self.scheduled_tasks)
-        if dlg.exec_() == QDialog.Accepted:
+        if dlg.exec() == QDialog.DialogCode.Accepted:
             task = dlg.get_task()
             self.scheduled_tasks.append(task)
             self._reload_table()
@@ -635,7 +624,7 @@ class ScheduleManagerDialog(MessageBox):
             return
         task = self.scheduled_tasks[row]
         dlg = AddEditScheduleDialog(self, task=task, scheduled_tasks=self.scheduled_tasks)
-        if dlg.exec_() == QDialog.Accepted:
+        if dlg.exec() == QDialog.DialogCode.Accepted:
             self.scheduled_tasks[row] = dlg.get_task()
             self._reload_table()
             if self.save_callback:

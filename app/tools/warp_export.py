@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QObject
+from PySide6.QtCore import QThread, Signal
 from qfluentwidgets import InfoBar, InfoBarPosition, StateToolTip
 from urllib.parse import urlencode, urlparse, parse_qs
 from datetime import datetime
@@ -447,8 +447,8 @@ class WarpStatus(Enum):
 
 
 class WarpThread(QThread):
-    warpSignal = pyqtSignal(WarpStatus)
-    infoSignal = pyqtSignal(str, object)  # 新增信号
+    warpSignal = Signal(WarpStatus)
+    infoSignal = Signal(str, object)  # 新增信号
 
     def __init__(self, parent, type="normal"):
         super().__init__()

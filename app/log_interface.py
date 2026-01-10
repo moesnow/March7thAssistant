@@ -1,8 +1,8 @@
 # coding:utf-8
-from PyQt5.QtCore import Qt, QProcess, QProcessEnvironment, pyqtSignal, QTimer, QTime, QDateTime, QEvent
-from PyQt5.QtGui import QFont, QTextCursor, QKeySequence
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPlainTextEdit,
-                             QShortcut, QSizePolicy)
+from PySide6.QtCore import Qt, QProcess, QProcessEnvironment, Signal, QTimer, QTime, QDateTime, QEvent
+from PySide6.QtGui import QFont, QTextCursor
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
+                               QSizePolicy)
 from qfluentwidgets import (ScrollArea, PrimaryPushButton, PushButton,
                             FluentIcon, InfoBar, InfoBarPosition, CardWidget,
                             BodyLabel, StrongBodyLabel, PlainTextEdit,
@@ -28,11 +28,11 @@ class LogInterface(ScrollArea):
     """日志界面"""
 
     # 信号：任务完成
-    taskFinished = pyqtSignal(int)  # exit_code
+    taskFinished = Signal(int)  # exit_code
     # 信号：请求停止任务（用于从全局热键线程安全调用）
-    stopTaskRequested = pyqtSignal()
+    stopTaskRequested = Signal()
     # 线程安全的日志信号（用于从后台线程发送日志）
-    logMessage = pyqtSignal(str)
+    logMessage = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -88,7 +88,7 @@ class LogInterface(ScrollArea):
         self.setObjectName('logInterface')
         StyleSheet.LOG_INTERFACE.apply(self)
 
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setWidget(self.scrollWidget)
         self.setWidgetResizable(True)
 
@@ -184,7 +184,7 @@ class LogInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.headerWidget)
         self.vBoxLayout.addWidget(self.buttonWidget)
         self.vBoxLayout.addWidget(self.logCard, 1)
-        self.vBoxLayout.setAlignment(Qt.AlignTop)
+        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
     def __initShortcut(self):
         """初始化快捷键（全局热键，支持后台）"""
@@ -279,7 +279,7 @@ class LogInterface(ScrollArea):
         """打开定时任务管理对话框"""
         tasks = cfg.get_value('scheduled_tasks', []) or []
         dlg = ScheduleManagerDialog(self, scheduled_tasks=tasks, save_callback=self._saveScheduledTasks)
-        dlg.exec_()
+        dlg.exec()
         # 重新刷新状态标签
         self._updateScheduleStatusLabel()
 
@@ -902,14 +902,8 @@ class LogInterface(ScrollArea):
     def _onReadyRead(self):
         """读取进程输出"""
         if self.process:
-            # 读取标准输出
+            # 读取标准输出（由于设置了 MergedChannels，标准错误也会合并到这里）
             data = self.process.readAllStandardOutput()
-            if data:
-                text = self._decodeOutput(bytes(data))
-                self.appendLog(text)
-
-            # 读取错误输出
-            data = self.process.readAllStandardError()
             if data:
                 text = self._decodeOutput(bytes(data))
                 self.appendLog(text)

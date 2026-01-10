@@ -1,5 +1,6 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect, QAction
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect
+from PySide6.QtGui import QAction, QPixmap
 
 from qfluentwidgets import RoundMenu, IconWidget, FlowLayout, CardWidget, InfoBarIcon, TeachingTip, TeachingTipTailPosition, InfoBar, InfoBarPosition
 from ..common.style_sheet import StyleSheet
@@ -19,16 +20,12 @@ class SampleCard(CardWidget):
 
         self.action = action
 
-        self.iconWidget = IconWidget(icon, self)
-        self.iconOpacityEffect = QGraphicsOpacityEffect(self)
-        self.iconOpacityEffect.setOpacity(1)  # 设置初始半透明度
-        self.iconWidget.setGraphicsEffect(self.iconOpacityEffect)
+        self.iconWidget = QLabel(parent)
+        self.iconWidget.setPixmap(QPixmap(icon))
+        self.iconWidget.setScaledContents(True)
 
         self.titleLabel = QLabel(title, self)
         self.titleLabel.setStyleSheet("font-size: 16px; font-weight: 500;")
-        self.titleOpacityEffect = QGraphicsOpacityEffect(self)
-        self.titleOpacityEffect.setOpacity(1)  # 设置初始半透明度
-        self.titleLabel.setGraphicsEffect(self.titleOpacityEffect)
         # self.contentLabel = QLabel(TextWrap.wrap(content, 45, False)[0], self)
 
         self.hBoxLayout = QVBoxLayout(self)
@@ -41,13 +38,13 @@ class SampleCard(CardWidget):
         # self.hBoxLayout.setContentsMargins(20, 0, 0, 0)
         self.vBoxLayout.setSpacing(2)
         # self.vBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self.vBoxLayout.setAlignment(Qt.AlignVCenter)
+        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        self.hBoxLayout.setAlignment(Qt.AlignVCenter)
-        self.hBoxLayout.addWidget(self.iconWidget, alignment=Qt.AlignCenter)
+        self.hBoxLayout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        self.hBoxLayout.addWidget(self.iconWidget, alignment=Qt.AlignmentFlag.AlignCenter)
         self.hBoxLayout.addLayout(self.vBoxLayout)
         self.vBoxLayout.addStretch(1)
-        self.vBoxLayout.addWidget(self.titleLabel, alignment=Qt.AlignCenter)
+        self.vBoxLayout.addWidget(self.titleLabel, alignment=Qt.AlignmentFlag.AlignCenter)
         # self.vBoxLayout.addWidget(self.contentLabel)
         self.vBoxLayout.addStretch(1)
 
@@ -114,15 +111,19 @@ class SampleCard(CardWidget):
 
     def enterEvent(self, event):
         super().enterEvent(event)
+        self.iconOpacityEffect = QGraphicsOpacityEffect(self)
         self.iconOpacityEffect.setOpacity(0.75)
+        self.titleOpacityEffect = QGraphicsOpacityEffect(self)
         self.titleOpacityEffect.setOpacity(0.75)
-        self.setCursor(Qt.PointingHandCursor)  # 设置鼠标指针为手形
+        self.iconWidget.setGraphicsEffect(self.iconOpacityEffect)
+        self.titleLabel.setGraphicsEffect(self.titleOpacityEffect)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)  # 设置鼠标指针为手形
 
     def leaveEvent(self, event):
         super().leaveEvent(event)
-        self.iconOpacityEffect.setOpacity(1)
-        self.titleOpacityEffect.setOpacity(1)
-        self.setCursor(Qt.ArrowCursor)  # 恢复鼠标指针的默认形状
+        self.iconWidget.setGraphicsEffect(None)
+        self.titleLabel.setGraphicsEffect(None)
+        self.setCursor(Qt.CursorShape.ArrowCursor)  # 恢复鼠标指针的默认形状
 
 
 class SampleCardView1(QWidget):

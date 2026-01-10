@@ -1,7 +1,7 @@
-from PyQt5.QtCore import Qt, pyqtSignal, QUrl, QObject, QThread
-from PyQt5.QtGui import QIcon, QKeyEvent
-from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtGui import QDesktopServices
+from PySide6.QtCore import Qt, Signal, QUrl, QObject, QThread
+from PySide6.QtGui import QIcon, QKeyEvent
+from PySide6.QtWidgets import QPushButton
+from PySide6.QtGui import QDesktopServices
 from qfluentwidgets import SettingCard, FluentIconBase, InfoBar, InfoBarPosition
 from .messagebox_custom import MessageBoxEdit, MessageBoxEditCode, MessageBoxDate, MessageBoxInstance, MessageBoxInstanceChallengeCount, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends, MessageBoxPowerPlan
 from tasks.base.tasks import start_task
@@ -23,14 +23,14 @@ def get_key_from_value(val, map):
 
 
 class PushSettingCard(SettingCard):
-    clicked = pyqtSignal()
+    clicked = Signal()
 
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, configvalue, parent=None):
         super().__init__(icon, title, configvalue, parent)
         self.title = title
         self.configname = configname
         self.button = QPushButton(text, self)
-        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
 
@@ -59,18 +59,18 @@ class PushSettingCardMirrorchyan(SettingCard):
 
         self.button3 = QPushButton("交流反馈", self)
         self.button3.setObjectName('primaryButton')
-        self.hBoxLayout.addWidget(self.button3, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.button3, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.button3.clicked.connect(self.__onclicked3)
 
         self.button2 = QPushButton("获取 CDK", self)
         self.button2.setObjectName('primaryButton')
-        self.hBoxLayout.addWidget(self.button2, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.button2, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.button2.clicked.connect(self.__onclicked2)
 
         self.button = QPushButton(text, self)
-        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
         self.button.clicked.connect(self.__onclicked)
 
@@ -90,7 +90,7 @@ class PushSettingCardMirrorchyan(SettingCard):
 
 
 class FetchLatestCodesWorker(QObject):
-    finished = pyqtSignal(list, str)
+    finished = Signal(list, str)
 
     def __init__(self, server):
         super().__init__()
@@ -560,19 +560,19 @@ class PushSettingCardTeamWithSwap(SettingCard):
 
         # Add team1 modify button
         self.team1Button = QPushButton('修改队伍1', self)
-        self.hBoxLayout.addWidget(self.team1Button, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.team1Button, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.team1Button.clicked.connect(self.__onTeam1Clicked)
 
         # Add team2 modify button
         self.team2Button = QPushButton('修改队伍2', self)
-        self.hBoxLayout.addWidget(self.team2Button, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.team2Button, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.team2Button.clicked.connect(self.__onTeam2Clicked)
 
         # Add swap button
         self.swapButton = QPushButton('交换队伍', self)
-        self.hBoxLayout.addWidget(self.swapButton, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.swapButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
         self.swapButton.clicked.connect(self.__onSwapClicked)
 

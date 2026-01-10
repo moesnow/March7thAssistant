@@ -1,6 +1,6 @@
 from enum import Enum
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from qfluentwidgets import InfoBar, InfoBarPosition
+from PySide6.QtCore import QThread, Signal
+
 
 class GameStartStatus(Enum):
     SUCCESS = 1
@@ -8,10 +8,10 @@ class GameStartStatus(Enum):
     BROWSER_LAUNCH_FAIL = 3
     BROWSER_DOWNLOAD_FAIL = 4
     UNKNOWN_FAIL = 5
-    
+
 
 class GameLaunchThread(QThread):
-    finished_signal = pyqtSignal(GameStartStatus)  # 传回结果状态
+    finished_signal = Signal(GameStartStatus)  # 传回结果状态
 
     def __init__(self, game, cfg):
         super().__init__()
@@ -21,14 +21,23 @@ class GameLaunchThread(QThread):
 
     def run(self):
         try:
-            if self.game.start_game_process():
+            # 根据是否启用云游戏决定启动方式
+            if self.cfg.cloud_game_enable:
+                success = self.game.start_game_process(headless=False)
+            else:
+                success = self.game.start_game_process()
+
+            # 根据结果发送信号
+            if success:
                 self.finished_signal.emit(GameStartStatus.SUCCESS)
-            elif self.cfg.cloud_game_enable and not self.game.is_integrated_browser_downloaded():
-                self.finished_signal.emit(GameStartStatus.BROWSER_DOWNLOAD_FAIL)
             elif self.cfg.cloud_game_enable:
-                self.finished_signal.emit(GameStartStatus.BROWSER_LAUNCH_FAIL)
+                # 云游戏启动失败，判断是下载问题还是启动问题
+                if not self.game.is_integrated_browser_downloaded():
+                    self.finished_signal.emit(GameStartStatus.BROWSER_DOWNLOAD_FAIL)
+                else:
+                    self.finished_signal.emit(GameStartStatus.BROWSER_LAUNCH_FAIL)
             else:
                 self.finished_signal.emit(GameStartStatus.LOCAL_LAUNCH_FAIL)
         except Exception as e:
             self.error_msg = str(e)
-            self.finished_signal.emit(GameStartStatus.UNKNOWN_FAIL)    
+            self.finished_signal.emit(GameStartStatus.UNKNOWN_FAIL)

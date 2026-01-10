@@ -1,5 +1,5 @@
-from PyQt5.QtGui import QPixmap, QImage
-from PyQt5.QtCore import QThread, pyqtSignal
+from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtCore import QThread, Signal
 from ..card.messagebox_custom import MessageBoxAnnouncement
 from module.config import cfg
 from io import BytesIO
@@ -40,7 +40,7 @@ class AnnouncementStatus(Enum):
 
 
 class AnnouncementThread(QThread):
-    announcementSignal = pyqtSignal(AnnouncementStatus)
+    announcementSignal = Signal(AnnouncementStatus)
 
     def __init__(self):
         super().__init__()

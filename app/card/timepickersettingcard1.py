@@ -1,7 +1,7 @@
 from qfluentwidgets import (TimePicker, SettingCard, FluentIconBase)
 from typing import Union
-from PyQt5.QtCore import Qt, QTime
-from PyQt5.QtGui import QIcon
+from PySide6.QtCore import Qt, QTime
+from PySide6.QtGui import QIcon
 
 from module.config import cfg
 
@@ -13,7 +13,7 @@ class TimePickerSettingCard1(SettingCard):
         super().__init__(icon, title, content, parent)
         self.configname = configname
         self.timePicker = TimePicker(self)
-        self.hBoxLayout.addWidget(self.timePicker, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.timePicker, 0, Qt.AlignmentFlag.AlignRight)
 
         time_str = cfg.get_value(configname)
         time_parts = list(map(int, time_str.split(":")))  # 分割小时和分钟

@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtCore import QUrl
+from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtCore import QUrl
 from qfluentwidgets import InfoBar, InfoBarPosition
 
 from ..card.messagebox_custom import MessageBoxUpdate
@@ -25,7 +25,7 @@ class UpdateStatus(Enum):
 
 class UpdateThread(QThread):
     """负责后台检查更新的线程类。"""
-    updateSignal = pyqtSignal(UpdateStatus)
+    updateSignal = Signal(UpdateStatus)
 
     def __init__(self, timeout, flag):
         super().__init__()
@@ -162,7 +162,7 @@ def checkUpdate(self, timeout=5, flag=False):
                     InfoBar.error(
                         title='尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)',
                         content="请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK",
-                        orient=Qt.Horizontal,
+                        orient=Qt.Orientation.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP,
                         duration=5000,
@@ -199,7 +199,7 @@ def checkUpdate(self, timeout=5, flag=False):
             InfoBar.success(
                 title='当前是最新版本(＾∀＾●)',
                 content="",
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
@@ -210,7 +210,7 @@ def checkUpdate(self, timeout=5, flag=False):
             InfoBar.warning(
                 title='检测更新失败(╥╯﹏╰╥)',
                 content=self.update_thread.error_msg,
-                orient=Qt.Horizontal,
+                orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,

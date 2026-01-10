@@ -1,6 +1,6 @@
-from PyQt5.QtCore import Qt, QUrl, QSize
-from PyQt5.QtWidgets import QLabel, QHBoxLayout, QSpinBox, QVBoxLayout, QPushButton, QToolButton, QCompleter, QCheckBox
-from PyQt5.QtGui import QPixmap, QDesktopServices, QFont
+from PySide6.QtCore import Qt, QUrl, QSize
+from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter
+from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
                             isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox)
@@ -170,7 +170,7 @@ class MessageBoxImage(MessageBox):
             self.imageLabel.setScaledContents(True)
 
             imageIndex = self.vBoxLayout.indexOf(self.textLayout) + 1
-            self.vBoxLayout.insertWidget(imageIndex, self.imageLabel, 0, Qt.AlignCenter)
+            self.vBoxLayout.insertWidget(imageIndex, self.imageLabel, 0, Qt.AlignmentFlag.AlignCenter)
 
 
 class MessageBoxSupport(MessageBoxImage):
@@ -206,9 +206,9 @@ class MessageBoxHtml(MessageBox):
         self.contentLabel.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         FluentStyleSheet.DIALOG.apply(self.contentLabel)
 
-        self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignVCenter)
-        self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignVCenter)
-        self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
+        self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignmentFlag.AlignVCenter)
+        self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignmentFlag.AlignVCenter)
+        self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignTop)
 
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
@@ -231,9 +231,9 @@ class MessageBoxHtmlUpdate(MessageBox):
         self.contentLabel.setMinimumWidth(500)
         FluentStyleSheet.DIALOG.apply(self.contentLabel)
 
-        self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignVCenter)
-        self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignVCenter)
-        self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignTop)
+        self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignmentFlag.AlignVCenter)
+        self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignmentFlag.AlignVCenter)
+        self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignTop)
 
         self.githubUpdateCard = PrimaryPushSettingCard(
             '立即更新',
@@ -248,8 +248,8 @@ class MessageBoxHtmlUpdate(MessageBox):
             'Mirror酱 服务 ⚡',
             "Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）"
         )
-        self.textLayout.addWidget(self.githubUpdateCard, 0, Qt.AlignTop)
-        self.textLayout.addWidget(self.mirrorchyanUpdateCard, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.githubUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
+        self.textLayout.addWidget(self.mirrorchyanUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
 
         # self.githubUpdateCard.clicked.connect(self._githubupdate())
 
@@ -322,7 +322,7 @@ class MessageBoxEdit(MessageBox):
 
         self.lineEdit = LineEdit(self)
         self.lineEdit.setText(self.content)
-        self.textLayout.addWidget(self.lineEdit, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.lineEdit, 0, Qt.AlignmentFlag.AlignTop)
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -354,7 +354,7 @@ class MessageBoxEditCode(MessageBox):
         self.textEdit = TextEdit(self)
         self.textEdit.setFixedHeight(250)
         self.textEdit.setText(self.content)
-        self.textLayout.addWidget(self.textEdit, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.textEdit, 0, Qt.AlignmentFlag.AlignTop)
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -392,7 +392,7 @@ class MessageBoxDate(MessageBox):
         shortcutLayout.addWidget(self.nowButton)
         shortcutLayout.addStretch(1)
 
-        self.textLayout.addWidget(self.datePicker, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.datePicker, 0, Qt.AlignmentFlag.AlignTop)
         self.textLayout.addLayout(shortcutLayout)
 
         self.buttonGroup.setMinimumWidth(480)
@@ -463,7 +463,7 @@ class MessageBoxInstance(MessageBox):
 
         self.titleLabelInfo = QLabel("说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动", parent)
         self.titleLabelInfo.setFont(font)
-        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
@@ -577,14 +577,14 @@ class MessageBoxNotify(MessageBox):
         for name, config in self.configlist.items():
             titleLabel = QLabel(name.capitalize(), parent)
             titleLabel.setFont(font)
-            self.textLayout.addWidget(titleLabel, 0, Qt.AlignTop)
+            self.textLayout.addWidget(titleLabel, 0, Qt.AlignmentFlag.AlignTop)
 
             lineEdit = LineEdit(self)
             lineEdit.setText(str(cfg.get_value(config)))
             lineEdit.setFont(lineEditFont)
             lineEdit.setFixedHeight(22)
 
-            self.textLayout.addWidget(lineEdit, 0, Qt.AlignTop)
+            self.textLayout.addWidget(lineEdit, 0, Qt.AlignmentFlag.AlignTop)
             self.lineEdit_dict[config] = lineEdit
 
 
@@ -614,12 +614,12 @@ class MessageBoxNotifyTemplate(MessageBox):
             lineEdit.setFixedHeight(22)
             self.buttonLayout.setContentsMargins(24, 10, 24, 10)
             self.textLayout.setContentsMargins(24, 24, 24, 6)
-            self.textLayout.addWidget(lineEdit, 0, Qt.AlignTop)
+            self.textLayout.addWidget(lineEdit, 0, Qt.AlignmentFlag.AlignTop)
 
             self.lineEdit_dict[id] = lineEdit
 
         self.titleLabelInfo = QLabel("说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行", parent)
-        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
 
 class MessageBoxTeam(MessageBox):
@@ -655,7 +655,7 @@ class MessageBoxTeam(MessageBox):
             titleLabel = QLabel(f"{i}号位", parent)
             titleLabel.setFont(font)
             # titleLabel.setMinimumWidth(60)
-            titleLabel.setAlignment(Qt.AlignVCenter)
+            titleLabel.setAlignment(Qt.AlignmentFlag.AlignVCenter)
             horizontalLayout.addWidget(titleLabel)
 
             charComboBox = EditableComboBox()
@@ -677,7 +677,7 @@ class MessageBoxTeam(MessageBox):
 
         self.titleLabelInfo = QLabel("每个队伍只允许一名角色配置为“秘技 / 开怪”", parent)
         self.titleLabelInfo.setFont(font)
-        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
@@ -770,7 +770,7 @@ class MessageBoxFriends(MessageBox):
             self.comboBox_list.append((charComboBox, nameLineEdit))
 
         self.titleLabelInfo = QLabel("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n若好友名称留空则只查找选择的角色。", parent)
-        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
@@ -845,7 +845,7 @@ class MessageBoxPowerPlan(MessageBox):
         # 添加说明
         self.titleLabelInfo = QLabel("体力计划会在清体力前优先执行，完成后自动从列表中删除", parent)
         self.titleLabelInfo.setFont(font)
-        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignTop)
+        self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
         # 计划列表容器
         self.planLayout = QVBoxLayout()

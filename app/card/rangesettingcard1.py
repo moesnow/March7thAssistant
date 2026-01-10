@@ -1,8 +1,8 @@
 from typing import Union
 
-from PyQt5.QtCore import Qt, pyqtSignal, QSize
-from PyQt5.QtGui import QColor, QIcon, QPainter
-from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QToolButton, QVBoxLayout, QPushButton)
+from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QLabel, QToolButton
 from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, IndicatorPosition,
                             Slider, FluentIcon, qconfig, isDarkTheme, Theme)
 
@@ -12,7 +12,7 @@ from module.config import cfg
 class RangeSettingCard1(SettingCard):
     """ Setting card with a slider """
 
-    valueChanged = pyqtSignal(int)
+    valueChanged = Signal(int)
 
     def __init__(self, configname: str, Range: dict, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
         """
@@ -59,13 +59,13 @@ class RangeSettingCard1(SettingCard):
         self.valueLabel.setNum(int(cfg.get_value(self.configname)))
 
         self.hBoxLayout.addStretch(1)
-        self.hBoxLayout.addWidget(self.valueLabel, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.valueLabel, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
-        self.hBoxLayout.addWidget(self.minusButton, 0, Qt.AlignRight)  # 加入减号按钮
+        self.hBoxLayout.addWidget(self.minusButton, 0, Qt.AlignmentFlag.AlignRight)  # 加入减号按钮
         self.hBoxLayout.addSpacing(4)  # 在减号按钮和滑块之间增加4像素间隔
-        self.hBoxLayout.addWidget(self.slider, 0, Qt.AlignRight)
+        self.hBoxLayout.addWidget(self.slider, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(4)  # 在滑块和加号按钮之间增加4像素间隔
-        self.hBoxLayout.addWidget(self.plusButton, 0, Qt.AlignRight)   # 加入加号按钮
+        self.hBoxLayout.addWidget(self.plusButton, 0, Qt.AlignmentFlag.AlignRight)   # 加入加号按钮
         self.hBoxLayout.addSpacing(16)
 
         self.valueLabel.setObjectName('valueLabel')

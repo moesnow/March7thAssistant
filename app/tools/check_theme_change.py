@@ -1,6 +1,6 @@
 # check_theme_change.py
 from qfluentwidgets import setTheme, Theme, qconfig
-from PyQt5.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 import darkdetect
 
 
@@ -10,8 +10,8 @@ class SystemThemeListener(QThread):
     darkdetect.listener() 是阻塞调用，会一直运行监听系统主题变化，
     需要在单独的线程中运行。
     """
-    systemThemeChanged = pyqtSignal(Theme)  # 系统主题变化信号
-    initCompleted = pyqtSignal(bool)  # 初始化完成信号，参数表示是否支持
+    systemThemeChanged = Signal(Theme)  # 系统主题变化信号
+    initCompleted = Signal(bool)  # 初始化完成信号，参数表示是否支持
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)

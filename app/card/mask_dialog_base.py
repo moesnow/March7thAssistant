@@ -1,8 +1,8 @@
 # coding:utf-8
-from PyQt5.QtCore import QEasingCurve, QPropertyAnimation, Qt, QEvent
-from PyQt5.QtGui import QColor, QResizeEvent
-from PyQt5.QtWidgets import (QDialog, QGraphicsDropShadowEffect,
-                             QGraphicsOpacityEffect, QHBoxLayout, QWidget, QFrame)
+from PySide6.QtCore import QEasingCurve, QPropertyAnimation, Qt, QEvent
+from PySide6.QtGui import QColor, QResizeEvent
+from PySide6.QtWidgets import (QDialog, QGraphicsDropShadowEffect,
+                               QGraphicsOpacityEffect, QHBoxLayout, QWidget, QFrame)
 
 
 class MaskDialogBase(QDialog):
@@ -15,8 +15,8 @@ class MaskDialogBase(QDialog):
 
         # dialog box in the center of mask, all widgets take it as parent
         self.widget = QFrame(self, objectName='centerWidget')
-        self.setWindowFlags(Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setGeometry(0, 0, parent.width(), parent.height())
 
         self.windowMask.resize(self.size())

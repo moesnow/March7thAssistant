@@ -1,12 +1,11 @@
 
 from typing import Union
 from qfluentwidgets import SettingCard, SettingCardGroup, ListWidget, FluentIconBase, CardWidget, FluentStyleSheet
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QPushButton, QListWidgetItem, QVBoxLayout, QMessageBox, QInputDialog, QLineEdit, QLabel
-from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QFrame
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QPushButton, QListWidgetItem, QVBoxLayout, QMessageBox, QInputDialog, QLineEdit, QLabel
+from PySide6.QtWidgets import QGridLayout, QFrame
 from qfluentwidgets import FluentIcon as FIF
-from PyQt5.QtGui import QPalette
 from module.config import cfg
 from app.tools.account_manager import accounts, reload_all_account_from_files, dump_current_account, delete_account, \
     save_account_name, import_account, save_acc_and_pwd, clear_reg
@@ -57,7 +56,7 @@ class AccountsCard(QFrame):
             _self.widget.clear()
             for account in accounts:
                 item = QListWidgetItem(account.account_name)
-                item.setData(Qt.UserRole, account.account_id)
+                item.setData(Qt.ItemDataRole.UserRole, account.account_id)
                 _self.widget.addItem(item)
             _self.widget.clearSelection()
         try:
@@ -80,10 +79,10 @@ class AccountsCard(QFrame):
             if len(items) == 0:
                 QMessageBox.warning(None, "删除账户", "请选择要删除的账户")
                 return
-            if QMessageBox.question(None, "删除账户", "确定要删除选中的账户吗？", QMessageBox.Yes | QMessageBox.No) == QMessageBox.No:
+            if QMessageBox.question(None, "删除账户", "确定要删除选中的账户吗？", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.No:
                 return
             for item in items:
-                account_id = item.data(Qt.UserRole)
+                account_id = item.data(Qt.ItemDataRole.UserRole)
                 delete_account(account_id)
             load_accounts()
 
@@ -96,7 +95,7 @@ class AccountsCard(QFrame):
                 QMessageBox.warning(None, "账户更名", "只能选择一个账户")
                 return
             for item in items:
-                account_id = item.data(Qt.UserRole)
+                account_id = item.data(Qt.ItemDataRole.UserRole)
                 account_name, ok = QInputDialog.getText(None, "账户更名", "请输入新的账户名")
                 if ok:
                     account_name = account_name.strip()
@@ -115,16 +114,16 @@ class AccountsCard(QFrame):
                 QMessageBox.warning(None, "自动登录", "只能选择一个账户")
                 return
             for item in items:
-                account_id = item.data(Qt.UserRole)
+                account_id = item.data(Qt.ItemDataRole.UserRole)
 
                 disclaimer_result = QMessageBox.question(
                     None,
                     "自动登录",
                     "当登录过期时尝试自动重新填写账号密码\n *此功能存在一定风险，请谨慎使用*",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.No
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No
                 )
-                if disclaimer_result != QMessageBox.Yes:
+                if disclaimer_result != QMessageBox.StandardButton.Yes:
                     return
 
                 account_name, ok = QInputDialog.getText(None, "自动登录", "请输入用户名")
@@ -134,7 +133,7 @@ class AccountsCard(QFrame):
                     QMessageBox.warning(None, "自动登录", "用户名不能为空")
                     return
 
-                account_pass, ok2 = QInputDialog.getText(None, "自动登录", "请输入密码", QLineEdit.Password)
+                account_pass, ok2 = QInputDialog.getText(None, "自动登录", "请输入密码", QLineEdit.EchoMode.Password)
                 if not ok2:
                     return
                 if not account_pass.strip():
@@ -152,17 +151,16 @@ class AccountsCard(QFrame):
                 QMessageBox.warning(None, "导入", "只能选择一个账户")
                 return
             for item in items:
-                account_id = item.data(Qt.UserRole)
+                account_id = item.data(Qt.ItemDataRole.UserRole)
                 import_account(account_id)
                 QMessageBox.information(None, "导入", "账户导入成功")
 
         def clearRegButtonAction(self):
-            if QMessageBox.question(None, "清除注册表", "确定要清除注册表中的账户信息吗？", QMessageBox.Yes | QMessageBox.No) == QMessageBox.No:
+            if QMessageBox.question(None, "清除注册表", "确定要清除注册表中的账户信息吗？", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.No:
                 return
             clear_reg()
             QMessageBox.information(None, "清除注册表", "注册表中的账户信息已清除")
-            
-        
+
         self.addAccountButton.clicked.connect(addAccountButtonAction)
         self.importAccountButton.clicked.connect(importAccountButtonAction)
         self.refreshAccountButton.clicked.connect(refreshAccountButtonAction)

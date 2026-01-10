@@ -11,5 +11,5 @@
 
 #viewTitleLabel {
     color: white;
-    font: 20px "Segoe UI SemiBold", "Microsoft YaHei", 'PingFang SC';
+    font: 20px 'Segoe UI', 'Microsoft YaHei', 'PingFang SC';
 }

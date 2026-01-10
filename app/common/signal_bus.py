@@ -1,17 +1,17 @@
 # coding: utf-8
-from PyQt5.QtCore import QObject, pyqtSignal
+from PySide6.QtCore import QObject, Signal
 
 
 class SignalBus(QObject):
     """ Signal bus """
 
-    switchToSampleCard = pyqtSignal(str, int)
-    micaEnableChanged = pyqtSignal(bool)
-    supportSignal = pyqtSignal()
+    switchToSampleCard = Signal(str, int)
+    micaEnableChanged = Signal(bool)
+    supportSignal = Signal()
 
     # 任务相关信号
-    startTaskSignal = pyqtSignal(str)  # 启动任务信号，参数为任务命令
-    hotkeyChangedSignal = pyqtSignal()  # 热键配置改变信号
+    startTaskSignal = Signal(str)  # 启动任务信号，参数为任务命令
+    hotkeyChangedSignal = Signal()  # 热键配置改变信号
 
 
 signalBus = SignalBus()

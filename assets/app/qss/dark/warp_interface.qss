@@ -8,12 +8,14 @@ QScrollArea {
 }
 
 QLabel#contentLabel {
-    font: 14px 'Microsoft YaHei Light';
+    font: 14px 'Microsoft YaHei';
+    font-weight: 300;
     color: white;
 }
               
 QLabel#warpLabel {
-    font: 33px 'Microsoft YaHei Light';
+    font: 33px 'Microsoft YaHei';
+    font-weight: 300;
     background-color: transparent;
     color: white;
 }
