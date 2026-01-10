@@ -109,12 +109,14 @@ class MainWindow(MSFluentWindow):
         # 禁用最大化
         self.titleBar.maxBtn.setHidden(True)
         self.titleBar.maxBtn.setDisabled(True)
-        self.titleBar.setDoubleClickEnabled(False)
+        # self.titleBar.setDoubleClickEnabled(False)
         self.setResizeEnabled(False)
         self.setWindowFlags(Qt.WindowCloseButtonHint)
         # self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
         self.resize(960, 640)
+        self.setMinimumHeight(640)
+        self.setMinimumWidth(960)
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
         self.setWindowTitle("March7th Assistant")
 

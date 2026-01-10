@@ -41,6 +41,8 @@ class BannerWidget(QWidget):
         self.img = Image.open("./assets/app/images/bg37.jpg")
         self.banner = None
         self.path = None
+        self.parent_height = 0
+        self.parent_width = 0
 
         self.linkCardView = LinkCardView(self)
 
@@ -75,7 +77,11 @@ class BannerWidget(QWidget):
         painter = QPainter(self)
         painter.setRenderHints(QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
 
-        if not self.banner or not self.path:
+        if not self.banner or not self.path or self.parent_height != self.parent().parent().height() or self.parent_width != self.parent().parent().width():
+            self.parent_height = self.parent().parent().height()
+            self.parent_width = self.parent().parent().width()
+            min_height = min(self.parent().parent().height() - 271, self.width() * self.img.height // self.img.width)
+            self.setFixedHeight(min_height)
             image_height = self.img.width * self.height() // self.width()
             crop_area = (0, 0, self.img.width, image_height)  # (left, upper, right, lower)
             cropped_img = self.img.crop(crop_area)
