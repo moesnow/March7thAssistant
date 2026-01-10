@@ -186,8 +186,8 @@ class PureFiction(BaseChallenge):
         log.info("进入战斗")
         time.sleep(5)
 
-        start_time = time.time()
-        while time.time() - start_time < timeout:
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < timeout:
             # 整间完成
             if auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 50000, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
                 return True

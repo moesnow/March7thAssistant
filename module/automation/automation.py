@@ -49,7 +49,7 @@ class Automation(metaclass=SingletonMeta):
         :param crop: 截图的裁剪区域，格式为(x1, y1, x2, y2)，默认为全屏。
         :return: 成功时返回截图及其位置和缩放因子，失败时抛出异常。
         """
-        start_time = time.time()
+        start_time = time.monotonic()
         while True:
             try:
                 result = Screenshot.take_screenshot(self.window_title, crop=crop)
@@ -61,7 +61,7 @@ class Automation(metaclass=SingletonMeta):
             except Exception as e:
                 self.logger.error(f"截图失败：{e}")
             time.sleep(1)
-            if time.time() - start_time > 60:
+            if time.monotonic() - start_time > 60:
                 raise RuntimeError("截图超时")
 
     def calculate_positions(self, template, max_loc, relative):

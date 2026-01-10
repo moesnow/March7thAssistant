@@ -268,8 +268,8 @@ class Apocalyptic(BaseChallenge):
     def check_fight(self, timeout):
         '''检查战斗是否结束'''
         time.sleep(5)
-        start_time = time.time()
-        while time.time() - start_time < timeout:
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < timeout:
             # 一节点完成
             if auto.find_element("./assets/images/apocalyptic/next_node.png", "image", 0.9):
                 # 挑战失败

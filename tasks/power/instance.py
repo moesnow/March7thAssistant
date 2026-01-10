@@ -340,8 +340,8 @@ class Instance:
         log.info("进入战斗")
         time.sleep(5)
 
-        start_time = time.time()
-        while time.time() - start_time < timeout:
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < timeout:
             if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):
                 log.info("战斗完成")
                 log.info(f"第{num}次副本完成")

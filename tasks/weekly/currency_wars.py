@@ -217,11 +217,11 @@ class CurrencyWars:
         self.prepare_characters = []  # 重置备战席角色
         self.update_backward()
 
-        start_time = time.time()
+        start_time = time.monotonic()
         timeout = 60 * 120  # 120分钟超时
         while True:
             # 检查超时
-            if time.time() - start_time > timeout:
+            if time.monotonic() - start_time > timeout:
                 log.error("货币战争主循环超时（120分钟），强制退出")
                 return False
 
@@ -245,7 +245,7 @@ class CurrencyWars:
             self.check_click_continue()
             self.check_supply_phase()
             if self.check_return_home():
-                end_time = time.time()
+                end_time = time.monotonic()
                 elapsed_time = end_time - start_time
                 minutes = int(elapsed_time // 60)
                 seconds = int(elapsed_time % 60)
@@ -258,8 +258,8 @@ class CurrencyWars:
         """
         exit_crop = (3.0 / 1920, 37.0 / 1080, 104.0 / 1920, 57.0 / 1080)
         if auto.find_element("./assets/images/screen/currency_wars/exit.png", "image", 0.9, crop=exit_crop):
-            start_time = time.time()
-            while time.time() - start_time < 7:
+            start_time = time.monotonic()
+            while time.monotonic() - start_time < 7:
                 self.click_origin()
                 time.sleep(0.1)
             if auto.find_element("./assets/images/screen/currency_wars/exit.png", "image", 0.9, crop=exit_crop):
@@ -1012,10 +1012,10 @@ class CurrencyWars:
         """
         # 游戏存在bug，点击开启的速度太快无法弹出选择界面 :(
         res = auto.find_element("开启", "text", None, crop=(376.0 / 1920, 839.0 / 1080, 1125.0 / 1920, 148.0 / 1080), include=True)
-        start_time = time.time()
+        start_time = time.monotonic()
         while res:
             # 检查超时（30秒）
-            if time.time() - start_time > 30:
+            if time.monotonic() - start_time > 30:
                 log.error("开启宝箱操作超时，退出循环")
                 break
 

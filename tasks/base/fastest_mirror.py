@@ -37,9 +37,9 @@ class FastestMirror:
         """测速并找到最快的镜像。"""
         def check_mirror(mirror_url):
             try:
-                start_time = time.time()
+                start_time = time.monotonic()
                 response = requests.head(mirror_url, timeout=timeout, allow_redirects=True)
-                end_time = time.time()
+                end_time = time.monotonic()
                 if response.status_code == 200:
                     return mirror_url, end_time - start_time
             except Exception:

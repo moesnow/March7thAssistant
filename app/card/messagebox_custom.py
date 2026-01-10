@@ -272,16 +272,16 @@ class MessageBoxDisclaimer(MessageBoxHtml):
         self.yesButton.setText('退出')
         self.cancelButton.setText('我已知晓')
         self.setContentCopyable(True)
-        self._opened_at: float | None = time.time()
+        self._opened_at: float | None = time.monotonic()
         self._min_confirm_seconds = 10
 
     def exec(self):
         """记录打开时间后再阻塞式显示。"""
-        self._opened_at = time.time()
+        self._opened_at = time.monotonic()
         return super().exec()
 
     def _confirm_waited_long_enough(self) -> bool:
-        return self._opened_at is not None and (time.time() - self._opened_at) >= self._min_confirm_seconds
+        return self._opened_at is not None and (time.monotonic() - self._opened_at) >= self._min_confirm_seconds
 
     def _show_fast_warning(self):
         InfoBar.error(
@@ -304,7 +304,7 @@ class MessageBoxDisclaimer(MessageBoxHtml):
     def reject(self):
         if not self._confirm_waited_long_enough():
             self._show_fast_warning()
-            self._opened_at = time.time()
+            self._opened_at = time.monotonic()
             return
         _cleanup_infobars(self)
         super().reject()
