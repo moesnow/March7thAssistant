@@ -1,6 +1,6 @@
 import os
 import io
-import platform
+import sys
 from rapidocr import EngineType, LangDet, ModelType, OCRVersion, RapidOCR
 from utils.logger.logger import Logger
 from typing import Optional
@@ -19,13 +19,9 @@ class OCR:
     def _check_windows_version(self):
         """检查是否为 Windows 10 Build 18362 及以上"""
         try:
-            if platform.system() != "Windows":
+            if sys.platform != "win32":
                 return False
-            window_build_number_str = platform.version().split(".")[-1]
-            window_build_number = (
-                int(window_build_number_str) if window_build_number_str.isdigit() else 0
-            )
-            return window_build_number >= 18362
+            return sys.getwindowsversion().build >= 18362
         except Exception as e:
             self.logger.warning(f"检查 Windows 版本失败：{e}，将关闭 DML")
             return False
