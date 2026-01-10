@@ -153,14 +153,24 @@ class Instance:
             Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="未找到指定副本"), NotificationLevel.ERROR)
             return False
         # 验证传送是否成功
+        timeout = 120
+        start_time = time.monotonic()
+        success = False
         if "饰品提取" in instance_type:
-            if not auto.find_element(instance_name, "text", max_retries=120, include=True, crop=(591.0 / 1920, 98.0 / 1080, 594.0 / 1920, 393.0 / 1080)):
-                Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"), NotificationLevel.ERROR)
-                return False
+            while time.monotonic() - start_time < timeout:
+                if auto.find_element(instance_name, "text", max_retries=1, include=True, crop=(591.0 / 1920, 98.0 / 1080, 594.0 / 1920, 393.0 / 1080)):
+                    success = True
+                    break
+                time.sleep(2)
         else:
-            if not auto.find_element(instance_name.replace("2", ""), "text", max_retries=120, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
-                Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"), NotificationLevel.ERROR)
-                return False
+            while time.monotonic() - start_time < timeout:
+                if auto.find_element(instance_name.replace("2", ""), "text", max_retries=1, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
+                    success = True
+                    break
+                time.sleep(2)
+        if not success:
+            Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"), NotificationLevel.ERROR)
+            return False
 
         return True
 
