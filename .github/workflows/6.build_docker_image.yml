@@ -54,7 +54,8 @@ jobs:
             type=ref,event=branch                    # 分支推送时使用分支名作为标签（如 main）
             type=sha,prefix={{branch}}-,enable=${{ github.ref_type != 'tag' }}  # 非标签推送时生成分支名-commit SHA 标签（如 main-abc1234）
             type=ref,event=tag                       # 标签推送时保留完整标签名（如 v1.0.0）
-            type=raw,value=latest,enable=${{ github.ref_type == 'tag' && !contains(github.ref, '-') }}  # 仅在推送稳定版标签时添加 latest 标签（不包含 -beta、-rc 等预发布版本）
+            # type=raw,value=latest,enable=${{ github.ref_type == 'tag' && !contains(github.ref, '-') }}  # 仅在推送稳定版标签时添加 latest 标签（不包含 -beta、-rc 等预发布版本）
+            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}  # 在推送第一个支持 Docker 的稳定版前，预发布版也添加 latest 标签
           flavor: |
             latest=false
 
