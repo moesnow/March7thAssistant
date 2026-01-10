@@ -160,12 +160,20 @@ class WarpInterface(ScrollArea):
             warp = WarpExport(config)
             default_name = f"UIGF_{warp.get_uid()}"
 
-            path, _ = QFileDialog.getSaveFileName(
-                self,
-                "导出抽卡记录",
-                f"{default_name}",
-                "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
-            )
+            if sys.platform == 'win32':
+                path, _ = QFileDialog.getSaveFileName(
+                    self,
+                    "导出抽卡记录",
+                    f"{default_name}",
+                    "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
+                )
+            else:
+                path, _ = QFileDialog.getSaveFileName(
+                    self,
+                    "导出抽卡记录",
+                    f"{default_name}.json",
+                    "UIGF 格式 (*.json)"
+                )
             if not path:
                 return
 
@@ -180,7 +188,7 @@ class WarpInterface(ScrollArea):
             with open(path, 'w', encoding='utf-8') as file:
                 json.dump(data_to_save, file, ensure_ascii=False, indent=4)
 
-            os.startfile(os.path.dirname(path))
+            self._start_file(os.path.dirname(path))
 
             InfoBar.success(
                 title='导出成功(＾∀＾●)',
@@ -282,7 +290,7 @@ class WarpInterface(ScrollArea):
                 ws.column_dimensions[col_letter].width = max_width + 2
 
             wb.save(path)
-            os.startfile(os.path.dirname(path))
+            self._start_file(os.path.dirname(path))
 
             InfoBar.success(
                 title='导出成功(＾∀＾●)',
@@ -360,6 +368,14 @@ class WarpInterface(ScrollArea):
                     duration=1000,
                     parent=self
                 )
+
+    def _start_file(self, path):
+        if sys.platform == 'win32':
+            os.startfile(path)
+        elif sys.platform == 'darwin':
+            os.system(f'open "{path}"')
+        else:
+            os.system(f'xdg-open "{path}"')
 
     def setContent(self):
         try:

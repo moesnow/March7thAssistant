@@ -5,6 +5,7 @@ from PyQt5.QtGui import QPixmap, QPainter, QPen, QImage, QColor
 from PIL import Image
 import pyperclip
 import os
+import sys
 import atexit
 
 
@@ -326,7 +327,7 @@ class ScreenshotApp(QMainWindow):
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         screenshot_path = os.path.join(os.path.abspath(folder_path), f"screenshot_{timestamp}.png")
         self.screenshot.save(screenshot_path)
-        os.startfile(os.path.dirname(screenshot_path))
+        self._start_file(os.path.dirname(screenshot_path))
 
     def save_selection_screenshot(self):
         """
@@ -344,7 +345,7 @@ class ScreenshotApp(QMainWindow):
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             screenshot_path = os.path.join(os.path.abspath(folder_path), f"selection_{timestamp}.png")
             cropped_image.save(screenshot_path)
-            os.startfile(os.path.dirname(screenshot_path))
+            self._start_file(os.path.dirname(screenshot_path))
         else:
             QMessageBox.information(self, "保存选区截图", "还没有选择区域呢")
 
@@ -381,3 +382,11 @@ class ScreenshotApp(QMainWindow):
                 QMessageBox.information(self, "OCR识别结果", "没有识别出任何内容")
         else:
             QMessageBox.information(self, "OCR识别结果", "还没有选择区域呢")
+
+    def _start_file(self, path):
+        if sys.platform == 'win32':
+            os.startfile(path)
+        elif sys.platform == 'darwin':
+            os.system(f'open "{path}"')
+        else:
+            os.system(f'xdg-open "{path}"')
