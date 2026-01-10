@@ -562,11 +562,6 @@ class ScheduleManagerDialog(MessageBox):
         # 加载数据
         self._reload_table()
 
-    def exec_(self):
-        """兼容旧调用"""
-        result = super().exec()
-        return QDialog.DialogCode.Accepted if result else QDialog.DialogCode.Rejected
-
     def _reload_table(self):
         self.table.setRowCount(len(self.scheduled_tasks))
         for i, t in enumerate(self.scheduled_tasks):
