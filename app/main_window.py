@@ -107,11 +107,11 @@ class MainWindow(MSFluentWindow):
         setTheme(Theme.AUTO, lazy=True)
 
         # 禁用最大化
-        self.titleBar.maxBtn.setHidden(True)
-        self.titleBar.maxBtn.setDisabled(True)
+        # self.titleBar.maxBtn.setHidden(True)
+        # self.titleBar.maxBtn.setDisabled(True)
         # self.titleBar.setDoubleClickEnabled(False)
-        self.setResizeEnabled(False)
-        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        # self.setResizeEnabled(False)
+        # self.setWindowFlags(Qt.WindowCloseButtonHint)
         # self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
         self.resize(960, 640)
