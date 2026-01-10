@@ -1,8 +1,7 @@
 # coding:utf-8
 from typing import Union, List
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QWidget
 from qfluentwidgets import ExpandSettingCard, FluentIconBase, SwitchButton, IndicatorPosition, SettingCard, ComboBox, PrimaryPushButton
 
 

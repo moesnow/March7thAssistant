@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QThread, Signal, QObject
+from PySide6.QtCore import QThread, Signal
 from qfluentwidgets import InfoBar, InfoBarPosition, StateToolTip
 from urllib.parse import urlencode, urlparse, parse_qs
 from datetime import datetime

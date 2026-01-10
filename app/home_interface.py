@@ -1,7 +1,7 @@
 # coding:utf-8
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPainterPath, QImage
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect
 
 from qfluentwidgets import ScrollArea, FluentIcon
 
@@ -68,7 +68,7 @@ class BannerWidget(QWidget):
     def paintEvent(self, e):
         super().paintEvent(e)
         painter = QPainter(self)
-        painter.setRenderHints(QPainter.SmoothPixmapTransform | QPainter.Antialiasing)
+        painter.setRenderHints(QPainter.RenderHint.SmoothPixmapTransform | QPainter.RenderHint.Antialiasing)
 
         if not self.banner or not self.path or self.parent_height != self.parent().parent().height() or self.parent_width != self.parent().parent().width():
             self.parent_height = self.parent().parent().height()

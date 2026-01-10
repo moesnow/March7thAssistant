@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QSize, QFileSystemWatcher, Signal, QObject
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, toggleTheme, setTheme, Theme
+from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, Theme
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarPosition, SystemTrayMenu
 from app.tools.game_starter import GameStartStatus, GameLaunchThread

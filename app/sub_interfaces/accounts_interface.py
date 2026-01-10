@@ -4,9 +4,8 @@ from qfluentwidgets import SettingCard, SettingCardGroup, ListWidget, FluentIcon
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QPushButton, QListWidgetItem, QVBoxLayout, QMessageBox, QInputDialog, QLineEdit, QLabel
-from PySide6.QtWidgets import QHBoxLayout, QGridLayout, QFrame
+from PySide6.QtWidgets import QGridLayout, QFrame
 from qfluentwidgets import FluentIcon as FIF
-from PySide6.QtGui import QPalette
 from module.config import cfg
 from app.tools.account_manager import accounts, reload_all_account_from_files, dump_current_account, delete_account, \
     save_account_name, import_account, save_acc_and_pwd, clear_reg

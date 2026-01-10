@@ -1,9 +1,8 @@
 # coding:utf-8
 from PySide6.QtCore import Qt, QTime, QDateTime
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-                               QPushButton, QLineEdit, QTableWidget, QTableWidgetItem,
-                               QWidget, QFileDialog, QHeaderView, QComboBox,
-                               QSpinBox, QCheckBox, QAbstractItemView)
+                               QTableWidgetItem, QFileDialog, QHeaderView,
+                               QAbstractItemView)
 from qfluentwidgets import TimePicker, BodyLabel, PushButton, TableWidget, MaskDialogBase, MessageBox, Dialog
 from qfluentwidgets import LineEdit, ComboBox, CheckBox, SpinBox
 from qfluentwidgets import InfoBar, InfoBarPosition
@@ -220,11 +219,6 @@ class AddEditScheduleDialog(MessageBox):
 
         # 当程序类型改变时切换参数输入模式
         # 已在构造中连接：self.program_type_combo.currentTextChanged -> _on_program_type_changed
-
-    def exec_(self):
-        """兼容旧调用：返回 QDialog.DialogCode.Accepted 或 QDialog.DialogCode.Rejected"""
-        result = super().exec()
-        return QDialog.DialogCode.Accepted if result else QDialog.DialogCode.Rejected
 
     def accept(self):
         """在确认前执行字段校验：名称非空，时间不重复，外部程序路径非空。"""

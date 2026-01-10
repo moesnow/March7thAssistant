@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QToolBox, QWidget, QVBoxLayout, QTabBar, QInputDialog
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabBar, QInputDialog
 from PySide6.QtWidgets import QFrame
 from qfluentwidgets import FluentStyleSheet
 from qfluentwidgets import FluentIcon as FIF

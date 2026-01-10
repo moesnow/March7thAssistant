@@ -1,6 +1,6 @@
 from module.ocr import ocr
 from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QHBoxLayout, QWidget, QMessageBox, QScrollArea, QApplication, QStyle
-from PySide6.QtCore import Qt, QRect, QPoint, QTimer
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QPen, QImage, QColor
 from PIL import Image
 import pyperclip
