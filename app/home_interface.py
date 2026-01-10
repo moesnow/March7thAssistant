@@ -21,7 +21,8 @@ import sys
 class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.setFixedHeight(320)
+        self.img = Image.open("./assets/app/images/bg37.jpg")
+        self.setFixedHeight(min(self.parent().parent().height() - 271, self.width() * self.img.height // self.img.width))
 
         self.vBoxLayout = QVBoxLayout(self)
         self.galleryLabel = QLabel(f'三月七小助手 {cfg.version}\nMarch7thAssistant', self)
@@ -38,7 +39,6 @@ class BannerWidget(QWidget):
         # 将阴影效果应用于小部件
         self.galleryLabel.setGraphicsEffect(self.galleryLabel.shadow)
 
-        self.img = Image.open("./assets/app/images/bg37.jpg")
         self.banner = None
         self.path = None
         self.parent_height = 0

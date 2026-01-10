@@ -114,9 +114,19 @@ class MainWindow(MSFluentWindow):
         # self.setWindowFlags(Qt.WindowCloseButtonHint)
         # self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
-        self.resize(960, 640)
-        self.setMinimumHeight(640)
-        self.setMinimumWidth(960)
+        # 设置最小尺寸
+        min_width = 960
+        min_height = 640
+        self.setMinimumWidth(min_width)
+        self.setMinimumHeight(min_height)
+
+        # 从配置文件读取窗口尺寸，确保不低于最小值
+        saved_width = cfg.get_value('window_width', min_width)
+        saved_height = cfg.get_value('window_height', min_height)
+        window_width = max(saved_width, min_width)
+        window_height = max(saved_height, min_height)
+        self.resize(window_width, window_height)
+
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
         self.setWindowTitle("March7th Assistant")
 
@@ -130,7 +140,12 @@ class MainWindow(MSFluentWindow):
         w, h = screen.width(), screen.height()
         self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
-        self.show()
+        # 根据配置决定窗口显示方式
+        if cfg.get_value('window_maximized', False):
+            self.showMaximized()
+        else:
+            self.show()
+
         QApplication.processEvents()
 
     def initInterface(self):
@@ -334,6 +349,19 @@ class MainWindow(MSFluentWindow):
         """退出应用程序"""
         self._do_quit()
 
+    def _saveWindowState(self):
+        """保存窗口尺寸和最大化状态到配置文件"""
+        try:
+            is_maximized = self.isMaximized()
+            cfg.set_value('window_maximized', is_maximized)
+
+            # 只在非最大化状态下保存窗口尺寸
+            if not is_maximized:
+                cfg.set_value('window_width', self.width())
+                cfg.set_value('window_height', self.height())
+        except Exception:
+            pass
+
     def _on_config_file_changed(self):
         """重新加载配置文件并刷新界面"""
         try:
@@ -420,6 +448,9 @@ class MainWindow(MSFluentWindow):
         """执行退出前的清理并退出程序
         e: 可选的 QCloseEvent，用于调用 e.accept()
         """
+        # 保存窗口尺寸和最大化状态
+        self._saveWindowState()
+
         try:
             self.hide()
             self.tray_icon.hide()
