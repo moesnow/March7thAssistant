@@ -45,32 +45,25 @@ class BannerWidget(QWidget):
         self.parent_width = 0
 
         self.linkCardView = LinkCardView(self)
-
         self.linkCardView.setContentsMargins(0, 0, 0, 36)
+        self.linkCardView.addCard(
+            FluentIcon.GITHUB,
+            'GitHub repo',
+            '喜欢就给个星星吧\n拜托求求你啦|･ω･)',
+
+            "https://github.com/moesnow/March7thAssistant",
+        )
+        self.linkCardView.setHidden(True)
         # self.vBoxLayout.setContentsMargins(0, 0, 0, 36)
         # self.vBoxLayout.setSpacing(40)
 
         self.galleryLabel.setObjectName('galleryLabel')
 
-        # Create a horizontal layout for the linkCardView with bottom alignment and margin
-        linkCardLayout = QHBoxLayout()
-        linkCardLayout.addWidget(self.linkCardView)
-        # linkCardLayout.setContentsMargins(0, 0, 0, 0)  # Add bottom margin of 20 units
-        linkCardLayout.setAlignment(Qt.AlignmentFlag.AlignBottom)
-
         self.vBoxLayout.setSpacing(0)
-        self.vBoxLayout.setContentsMargins(0, 20, 0, 0)
+        self.vBoxLayout.setContentsMargins(0, 20, 0, 10)
         self.vBoxLayout.addWidget(self.galleryLabel)
-        # self.vBoxLayout.addWidget(self.linkCardView, 1, Qt.AlignBottom)
-        self.vBoxLayout.addLayout(linkCardLayout)
-        self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
-
-        self.linkCardView.addCard(
-            FluentIcon.GITHUB,
-            'GitHub repo',
-            '喜欢就给个星星吧\n拜托求求你啦|･ω･)',
-            "https://github.com/moesnow/March7thAssistant",
-        )
+        self.vBoxLayout.addStretch(1)  # 添加弹性空间，将 linkCardView 推到底部
+        self.vBoxLayout.addWidget(self.linkCardView, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom)
 
     def paintEvent(self, e):
         super().paintEvent(e)
