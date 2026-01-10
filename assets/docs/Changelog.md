@@ -9,6 +9,7 @@
 - 优化 “未找到可执行文件” 时的报错信息 [解决方法](https://m7a.top/#/assets/docs/FAQ)
 - 修复托盘区恢复时日志窗口显示异常空白
 - 修复特定情况下 OCR 进程异常残留
+- 修复二维码过期后无法正确刷新 [#843](https://github.com/moesnow/March7thAssistant/pull/843) @eloay
 
 ## v2025.12.31
 - 支持通过米哈游启动器自动更新游戏（“设置→程序”内开启）

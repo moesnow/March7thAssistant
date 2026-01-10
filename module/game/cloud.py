@@ -660,13 +660,12 @@ class CloudGameController(GameControllerBase):
         os.makedirs(logs_dir, exist_ok=True)
         qr_filename = os.path.join(logs_dir, "qrcode_login.png")
         qr_img.screenshot(qr_filename)
-        self.log_debug(f"二维码已保存到: {os.path.abspath(qr_filename)}")
         self.log_info("=" * 60)
         self.log_info("请使用手机米游社 APP 扫描二维码登录")
         self.log_info(f"二维码图片位置: {os.path.abspath(qr_filename)}")
         return qr_filename
 
-    def _decode_qr_from_element(self, qr_img, qr_filename: str, prefix: str = "二维码") -> None:
+    def _decode_qr_from_element(self, qr_img, qr_filename: str) -> None:
         try:
             import base64
             import numpy as np
@@ -692,7 +691,7 @@ class CloudGameController(GameControllerBase):
                             data = results[0].data.decode("utf-8", errors="ignore")
                         except Exception:
                             data = results[0].data.decode(errors="ignore")
-                        self.log_info(f"{prefix}内容：")
+                        self.log_info(f"二维码内容：")
                         self.log_info(data)
                         self.log_info("提示：你也可以将该内容自行生成二维码后再扫码登录。")
                     else:
@@ -734,8 +733,12 @@ class CloudGameController(GameControllerBase):
                     try:
                         qr_img = self.driver.find_element(By.CSS_SELECTOR, "img.qr-loaded")
                         qr_img.screenshot(qr_filename)
-                        self.log_info("新二维码已保存到: %s" % os.path.abspath(qr_filename))
-                        self._decode_qr_from_element(qr_img, qr_filename, prefix="新二维码")
+                        self.log_info("=" * 60)
+                        self.log_info("请使用手机米游社 APP 扫描二维码登录")
+                        self.log_info(f"二维码图片位置: {os.path.abspath(qr_filename)}")
+                        self._decode_qr_from_element(qr_img, qr_filename)
+                        self.log_info("=" * 60)
+                        self.log_info("等待扫码（二维码过期将自动刷新）...")
                     except Exception as refresh_err:
                         self.log_warning(f"保存刷新后的二维码失败: {refresh_err}")
                 except Exception as refresh_err:
@@ -757,7 +760,7 @@ class CloudGameController(GameControllerBase):
                 qr_filename = os.path.join("logs", "qrcode_login.png")
 
             # 初次解码
-            self._decode_qr_from_element(qr_img, qr_filename, prefix="二维码")
+            self._decode_qr_from_element(qr_img, qr_filename)
             self.log_info("=" * 60)
             self.log_info("等待扫码（二维码过期将自动刷新）...")
             self._wait_scan_success_with_refresh(qr_filename)
