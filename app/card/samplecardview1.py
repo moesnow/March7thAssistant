@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QPixmap
 
 from qfluentwidgets import RoundMenu, IconWidget, FlowLayout, CardWidget, InfoBarIcon, TeachingTip, TeachingTipTailPosition, InfoBar, InfoBarPosition
 from ..common.style_sheet import StyleSheet
@@ -20,7 +20,9 @@ class SampleCard(CardWidget):
 
         self.action = action
 
-        self.iconWidget = IconWidget(icon, self)
+        self.iconWidget = QLabel(parent)
+        self.iconWidget.setPixmap(QPixmap(icon))
+        self.iconWidget.setScaledContents(True)
         self.iconOpacityEffect = QGraphicsOpacityEffect(self)
         self.iconOpacityEffect.setOpacity(1)  # 设置初始半透明度
         self.iconWidget.setGraphicsEffect(self.iconOpacityEffect)
