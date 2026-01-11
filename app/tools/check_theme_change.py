@@ -1,6 +1,7 @@
 # check_theme_change.py
 from qfluentwidgets import setTheme, Theme, qconfig
 from PySide6.QtCore import QThread, Signal
+from PySide6.QtCore import QTimer
 import darkdetect
 
 
@@ -69,6 +70,9 @@ def checkThemeChange(self):
         """
         is_minimized_to_tray = hasattr(self, 'tray_icon') and (not self.isVisible()) and self.tray_icon.isVisible()
         setTheme(theme, lazy=not is_minimized_to_tray)
+        # 从 Light 主题切换至 Dark 主题时窗口背景无法正常切换
+        # 解决方法 https://github.com/zhiyiYo/PyQt-Frameless-Window/issues/158
+        QTimer.singleShot(500, lambda: self.setMicaEffectEnabled(True))
 
     def on_init_completed(is_supported):
         if is_supported:
