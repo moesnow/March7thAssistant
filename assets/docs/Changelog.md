@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2026.1.11-beta
+## v2026.1.12
 - 对图形界面进行了全面升级优化
 - 新增启动游戏前自动检测并开启战斗二倍速功能
 - 源码运行适配 macOS/Linux 并支持 [Docker 部署](https://m7a.top/#/assets/docs/Docker)
