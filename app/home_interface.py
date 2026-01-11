@@ -22,7 +22,8 @@ class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.img = Image.open("./assets/app/images/bg37.jpg")
-        self.setFixedHeight(min(self.parent().parent().height() - 271, self.width() * self.img.height // self.img.width))
+        min_height = min(self.parent().parent().height() - 271, self.parent().parent().width() * self.img.height // self.img.width) - 33
+        self.setFixedHeight(min_height)
 
         self.vBoxLayout = QVBoxLayout(self)
         self.galleryLabel = QLabel(f'三月七小助手 {cfg.version}\nMarch7thAssistant', self)
