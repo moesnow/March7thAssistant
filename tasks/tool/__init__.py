@@ -38,11 +38,12 @@ class ToolManager:
         """捕获图像"""
         try:
             log.info("开始捕获图像...")
-            game = get_game_controller()
-            if not game.switch_to_game():
-                log.error("游戏尚未启动")
-                return False
-            time.sleep(0.5)  # 等待窗口切换
+            if not cfg.cloud_game_enable:
+                game = get_game_controller()
+                if not game.switch_to_game():
+                    log.error("游戏尚未启动")
+                    return False
+                time.sleep(0.5)  # 等待窗口切换
 
             log.info("开始截图...")
             result = Screenshot.take_screenshot(cfg.game_title_name)
