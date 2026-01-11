@@ -112,8 +112,7 @@ class MainWindow(MSFluentWindow):
         # self.titleBar.setDoubleClickEnabled(False)
         # self.setResizeEnabled(False)
 
-        # 缺少这行会导致云母效果无法正常显示
-        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        # self.setWindowFlags(Qt.WindowCloseButtonHint)
         # self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
         # 设置最小尺寸

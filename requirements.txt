@@ -19,6 +19,8 @@ winotify==1.1.0; sys_platform == 'win32'
 markdown==3.7
 PySide6-Fluent-Widgets==1.10.5
 PySideSix-Frameless-Window>=0.7.0
+# PySide6 6.10.X 及以上云母效果不生效，暂时回退到 6.9.3 版本
+PySide6==6.9.3
 pylnk3==0.4.2
 pyperclip==1.9.0
 qrcode==8.0
