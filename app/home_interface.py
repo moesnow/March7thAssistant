@@ -22,7 +22,7 @@ class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.menu = RoundMenu(parent=self)
-        self.menu.addAction(QAction("更换横幅图片", self, triggered=lambda: on_change_banner_image()))
+        self.menu.addAction(QAction("更换背景图片", self, triggered=lambda: on_change_banner_image()))
 
         self.default_banner_path = "./assets/app/images/bg37.jpg"
         banner_path = cfg.get_value("banner_path", self.default_banner_path)
@@ -69,7 +69,7 @@ class BannerWidget(QWidget):
         # self.vBoxLayout.setContentsMargins(0, 0, 0, 36)
         # self.vBoxLayout.setSpacing(40)
 
-        # 点击标签可以选择新的横幅图片
+        # 点击标签可以选择新的背景图片
         def _on_gallery_label_clicked(event):
             self.menu.exec(event.globalPos(), ani=True)
 

@@ -370,7 +370,7 @@ close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问
 window_width: 960 # 窗口宽度
 window_height: 640 # 窗口高度
 window_maximized: false # 窗口是否最大化
-banner_path: ./assets/app/images/bg37.jpg # 横幅图片路径
+banner_path: ./assets/app/images/bg37.jpg # 背景图片路径
 
 # 更新配置
 redemption_code: [] # 兑换码列表
