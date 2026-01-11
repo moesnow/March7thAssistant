@@ -1,9 +1,9 @@
 # coding:utf-8
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPainterPath, QImage
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect
+from PySide6.QtGui import QPainter, QPainterPath, QImage, QAction
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QFileDialog
 
-from qfluentwidgets import ScrollArea, FluentIcon
+from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu
 
 from .common.style_sheet import StyleSheet
 from .components.link_card import LinkCardView
@@ -21,8 +21,17 @@ import sys
 class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.img = Image.open("./assets/app/images/bg37.jpg")
-        min_height = min(self.parent().parent().height() - 271, self.parent().parent().width() * self.img.height // self.img.width) - 33
+        self.menu = RoundMenu(parent=self)
+        self.menu.addAction(QAction("更换横幅图片", self, triggered=lambda: on_change_banner_image()))
+
+        self.default_banner_path = "./assets/app/images/bg37.jpg"
+        banner_path = cfg.get_value("banner_path", self.default_banner_path)
+        if not os.path.exists(banner_path):
+            banner_path = self.default_banner_path
+        if os.path.abspath(banner_path) != os.path.abspath(self.default_banner_path):
+            self.menu.addAction(QAction("恢复默认图片", self, triggered=lambda: on_restore_default_banner_image()))
+        self.banner_image = Image.open(banner_path)
+        min_height = min(self.parent().parent().height() - 271 - 49, (self.parent().parent().width() - 73) * self.banner_image.height // self.banner_image.width)
         self.setFixedHeight(min_height)
 
         self.vBoxLayout = QVBoxLayout(self)
@@ -39,6 +48,8 @@ class BannerWidget(QWidget):
 
         # 将阴影效果应用于小部件
         self.galleryLabel.setGraphicsEffect(self.galleryLabel.shadow)
+        # 设置手型光标以提示用户该标签可点击
+        self.galleryLabel.setCursor(Qt.CursorShape.PointingHandCursor)
 
         self.banner = None
         self.path = None
@@ -58,6 +69,45 @@ class BannerWidget(QWidget):
         # self.vBoxLayout.setContentsMargins(0, 0, 0, 36)
         # self.vBoxLayout.setSpacing(40)
 
+        # 点击标签可以选择新的横幅图片
+        def _on_gallery_label_clicked(event):
+            self.menu.exec(event.globalPos(), ani=True)
+
+        def on_change_banner_image():
+            file_path, _ = QFileDialog.getOpenFileName(self, "选择图片", os.getcwd(), "Images (*.png *.jpg *.jpeg *.bmp *.gif);;All Files (*)")
+            if file_path:
+                if os.path.abspath(file_path) != os.path.abspath(self.default_banner_path):
+                    # 如果没有恢复默认按钮，添加一个
+                    has_restore_action = any(action.text() == "恢复默认图片" for action in self.menu.actions())
+                    if not has_restore_action:
+                        self.menu.addAction(QAction("恢复默认图片", self, triggered=lambda: on_restore_default_banner_image()))
+                try:
+                    self.banner_image = Image.open(file_path)
+                    cfg.set_value("banner_path", file_path)
+                except Exception:
+                    return
+                self.banner = None
+                self.path = None
+                self.update()
+
+        def on_restore_default_banner_image():
+            try:
+                self.banner_image = Image.open(self.default_banner_path)
+                cfg.set_value("banner_path", self.default_banner_path)
+            except Exception:
+                return
+            self.banner = None
+            self.path = None
+            # 移除恢复默认按钮
+            for action in self.menu.actions():
+                if action.text() == "恢复默认图片":
+                    self.menu.removeAction(action)
+                    break
+            self.update()
+
+        self._on_gallery_label_clicked = _on_gallery_label_clicked
+        self.galleryLabel.mousePressEvent = self._on_gallery_label_clicked
+
         self.galleryLabel.setObjectName('galleryLabel')
 
         self.vBoxLayout.setSpacing(0)
@@ -74,11 +124,11 @@ class BannerWidget(QWidget):
         if not self.banner or not self.path or self.parent_height != self.parent().parent().height() or self.parent_width != self.parent().parent().width():
             self.parent_height = self.parent().parent().height()
             self.parent_width = self.parent().parent().width()
-            min_height = min(self.parent().parent().height() - 271, self.width() * self.img.height // self.img.width)
+            min_height = min(self.parent().parent().height() - 271, self.width() * self.banner_image.height // self.banner_image.width)
             self.setFixedHeight(min_height)
-            image_height = self.img.width * self.height() // self.width()
-            crop_area = (0, 0, self.img.width, image_height)  # (left, upper, right, lower)
-            cropped_img = self.img.crop(crop_area)
+            image_height = self.banner_image.width * self.height() // self.width()
+            crop_area = (0, 0, self.banner_image.width, image_height)  # (left, upper, right, lower)
+            cropped_img = self.banner_image.crop(crop_area).convert("RGB")
             img_data = np.array(cropped_img)  # Convert PIL Image to numpy array
             height, width, channels = img_data.shape
             bytes_per_line = channels * width
