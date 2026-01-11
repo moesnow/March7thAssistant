@@ -3,7 +3,6 @@ services:
     container_name: m7a
     build: .
     # image: ghcr.io/moesnow/march7thassistant:latest
-    # image: ghcr.io/moesnow/march7thassistant:main
     volumes:
       - ./config.yaml:/m7a/config.yaml
       - ./logs:/m7a/logs
