@@ -179,6 +179,20 @@ class OCR:
                         last_error = e
                         self.logger.warning(f"OCR 执行出现编码错误，正在重试 ({attempt + 1}/{max_retries})")
                         continue
+                    # 其他 ONNXRuntimeError 直接降级到 CPU 模式，不重试
+                    if "ONNXRuntimeError" in type(e).__name__ or "ONNXRuntimeError" in str(e):
+                        if self._use_dml and not self._dml_fallback:
+                            self.logger.warning(f"OCR 执行出现 ONNX 错误: {e}，直接降级到 CPU 模式...")
+                            self._disable_gpu_acceleration()
+                            self.exit_ocr()
+                            self.instance_ocr(force_cpu=True)
+                            try:
+                                original_dict = self.ocr(image_bytes).to_json()
+                                self.logger.info("CPU 模式执行成功")
+                                return self.replace_strings(original_dict)
+                            except Exception as cpu_e:
+                                self.logger.error(f"CPU 模式仍然失败: {cpu_e}")
+                                return "{}"
                     raise  # 其他异常继续抛出
 
             # 所有重试都失败，尝试关闭 DML 重新初始化
