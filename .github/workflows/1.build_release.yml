@@ -60,7 +60,7 @@ jobs:
         run: |
           # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
           Rename-Item -Path .\dist\March7thAssistant -NewName update
-          .\assets\binary\7za.exe a -t7z .\dist\update.7z .\dist\update\
+          .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\update.7z .\dist\update\
           Rename-Item -Path .\dist\update -NewName March7thAssistant
 
       # 移动第三方库到dist目录
@@ -77,7 +77,7 @@ jobs:
         run: |
           # Compress-Archive -Path .\dist\March7thAssistant_full\ -DestinationPath .\dist\March7thAssistant_full.zip -Force
           .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
-          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
+          .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
 
       # 创建GitHub发布
       - name: Create release

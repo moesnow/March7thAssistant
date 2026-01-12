@@ -82,7 +82,7 @@ jobs:
         if: steps.check_version.outputs.should_build == 'true'
         run: |
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_${{ github.run_number }}
-          .\assets\binary\7za.exe a -t7z .\dist\March7thAssistant_${{ github.run_number }}.7z .\dist\March7thAssistant_${{ github.run_number }}\
+          .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\March7thAssistant_${{ github.run_number }}.7z .\dist\March7thAssistant_${{ github.run_number }}\
 
       # 上传压缩包
       - name: Upload artifact
