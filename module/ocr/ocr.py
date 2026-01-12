@@ -15,6 +15,8 @@ class OCR:
         self.ocr = None
         self.logger = logger
         self.replacements = replacements
+        self._use_dml = None  # None 表示未初始化，True/False 表示是否使用 DML
+        self._dml_fallback = False  # 是否已降级到 CPU 模式
 
     def _check_windows_version(self):
         """检查是否为 Windows 10 Build 18362 及以上"""
@@ -26,12 +28,18 @@ class OCR:
             self.logger.warning(f"检查 Windows 版本失败：{e}，将关闭 DML")
             return False
 
-    def instance_ocr(self, log_level: str = "error"):
+    def instance_ocr(self, log_level: str = "error", force_cpu: bool = False):
         """实例化OCR，若ocr实例未创建，则创建之"""
         if self.ocr is None:
             try:
                 self.logger.debug("开始初始化OCR...")
-                use_dml = self._check_windows_version()
+                if force_cpu:
+                    use_dml = False
+                    self._dml_fallback = True
+                    self.logger.warning("强制使用 CPU 模式初始化 OCR")
+                else:
+                    use_dml = self._check_windows_version()
+                self._use_dml = use_dml
                 self.logger.debug(f"DML 支持：{use_dml}")
                 self.ocr = RapidOCR(
                     params={
@@ -78,7 +86,7 @@ class OCR:
             return False
         return [[item['box'], (item['txt'], item['score'])] for item in result]
 
-    def run(self, image):
+    def run(self, image, max_retries=3):
         """执行OCR识别，支持Image对象、文件路径和np.ndarray对象"""
         self.instance_ocr()
         try:
@@ -90,9 +98,33 @@ class OCR:
             image_stream = io.BytesIO()
             image.save(image_stream, format="PNG")
             image_bytes = image_stream.getvalue()
-            original_dict = self.ocr(image_bytes).to_json()
 
-            return self.replace_strings(original_dict)
+            # 重试机制，处理 DML 偶发的 UnicodeDecodeError
+            last_error = None
+            for attempt in range(max_retries):
+                try:
+                    original_dict = self.ocr(image_bytes).to_json()
+                    return self.replace_strings(original_dict)
+                except UnicodeDecodeError as e:
+                    last_error = e
+                    self.logger.warning(f"OCR 执行出现编码错误，正在重试 ({attempt + 1}/{max_retries})")
+                    continue
+
+            # 所有重试都失败，尝试关闭 DML 重新初始化
+            if self._use_dml and not self._dml_fallback:
+                self.logger.warning("DML 模式多次失败，尝试降级到 CPU 模式...")
+                self.exit_ocr()
+                self.instance_ocr(force_cpu=True)
+                try:
+                    original_dict = self.ocr(image_bytes).to_json()
+                    self.logger.info("CPU 模式执行成功")
+                    return self.replace_strings(original_dict)
+                except UnicodeDecodeError as e:
+                    self.logger.error(f"CPU 模式仍然失败: {e}")
+                    return "{}"
+
+            self.logger.error(f"OCR 重试 {max_retries} 次后仍失败: {last_error}")
+            return "{}"
         except Exception as e:
             self.logger.error(e)
             return "{}"
