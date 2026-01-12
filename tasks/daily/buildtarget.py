@@ -235,7 +235,15 @@ class BuildTarget:
 
     @staticmethod
     def _parse_ornament_instance_info() -> str | None:
-        return auto.get_single_line_text(max_retries=5, retry_delay=1.0, crop=(584.0 / 1920, 112.0 / 1080, 614.0 / 1920, 52.0 / 1080))
+        name = auto.get_single_line_text(max_retries=5, retry_delay=1.0, crop=(584.0 / 1920, 112.0 / 1080, 614.0 / 1920, 52.0 / 1080))
+        if not name:
+            return None
+
+        # 移除“难度”及其之后的内容（例如“难度V”或“难度VI”），并去掉首尾空白
+        parsed = re.sub(r'难度.*$', '', name).strip()
+
+        # 如果解析后为空字符串，则返回原始去空白的名称
+        return parsed or name.strip()
 
     @staticmethod
     def _parse_calyx_instance_info() -> str | None:
