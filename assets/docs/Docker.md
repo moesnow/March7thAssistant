@@ -13,6 +13,10 @@
 - 有效的米哈游账号（用于云崩铁登录）
 - **x86_64 (amd64) 架构**的 Linux 主机或虚拟机
 
+> **关于 `docker compose` 与 `docker-compose` 命令**：
+> - 本文档使用 `docker compose`（带空格），这是 **Docker Compose V2** 的命令格式，作为 Docker CLI 的插件运行。
+> - 如果执行时提示命令不存在，请尝试使用 `docker-compose`（带连字符），这是 **Docker Compose V1** 的独立命令格式。
+
 ## 方式一：使用预编译镜像（推荐）
 
 预编译镜像托管在 [GitHub Container Registry](https://ghcr.io/moesnow/march7thassistant)，开箱即用。
