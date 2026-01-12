@@ -28,6 +28,18 @@ class OCR:
             self.logger.warning(f"检查 Windows 版本失败：{e}，将关闭 DML")
             return False
 
+    def _is_unicode_error(self, e: Exception) -> bool:
+        """检查异常是否为 UnicodeDecodeError（直接或通过异常链）"""
+        if isinstance(e, UnicodeDecodeError):
+            return True
+        # 检查异常链中的原始异常
+        if e.__cause__ is not None and isinstance(e.__cause__, UnicodeDecodeError):
+            return True
+        # 检查异常消息中是否包含 UnicodeDecodeError
+        if "UnicodeDecodeError" in str(e):
+            return True
+        return False
+
     def instance_ocr(self, log_level: str = "error", force_cpu: bool = False):
         """实例化OCR，若ocr实例未创建，则创建之"""
         if self.ocr is None:
@@ -100,15 +112,19 @@ class OCR:
             image_bytes = image_stream.getvalue()
 
             # 重试机制，处理 DML 偶发的 UnicodeDecodeError
+            # 注意：UnicodeDecodeError 会被 rapidocr 包装成 ONNXRuntimeError，需要检查异常链
             last_error = None
             for attempt in range(max_retries):
                 try:
                     original_dict = self.ocr(image_bytes).to_json()
                     return self.replace_strings(original_dict)
-                except UnicodeDecodeError as e:
-                    last_error = e
-                    self.logger.warning(f"OCR 执行出现编码错误，正在重试 ({attempt + 1}/{max_retries})")
-                    continue
+                except Exception as e:
+                    # 检查是否为编码错误（直接或通过异常链）
+                    if self._is_unicode_error(e):
+                        last_error = e
+                        self.logger.warning(f"OCR 执行出现编码错误，正在重试 ({attempt + 1}/{max_retries})")
+                        continue
+                    raise  # 其他异常继续抛出
 
             # 所有重试都失败，尝试关闭 DML 重新初始化
             if self._use_dml and not self._dml_fallback:
@@ -119,9 +135,11 @@ class OCR:
                     original_dict = self.ocr(image_bytes).to_json()
                     self.logger.info("CPU 模式执行成功")
                     return self.replace_strings(original_dict)
-                except UnicodeDecodeError as e:
-                    self.logger.error(f"CPU 模式仍然失败: {e}")
-                    return "{}"
+                except Exception as e:
+                    if self._is_unicode_error(e):
+                        self.logger.error(f"CPU 模式仍然失败: {e}")
+                        return "{}"
+                    raise
 
             self.logger.error(f"OCR 重试 {max_retries} 次后仍失败: {last_error}")
             return "{}"
