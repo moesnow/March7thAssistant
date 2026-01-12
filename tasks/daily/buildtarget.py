@@ -216,7 +216,8 @@ class BuildTarget:
 
     @staticmethod
     def _get_instance_info() -> tuple[str, str] | None:
-        if not auto.find_element(["挑战", "开始挑战"], "text", max_retries=10, crop=(1520.0 / 1920, 933.0 / 1080, 390.0 / 1920, 111.0 / 1080)):
+        # 机械硬盘加载慢，可能需要较长时间等待挑战按钮出现
+        if not auto.find_element(["挑战", "开始挑战"], "text", max_retries=60, crop=(1520.0 / 1920, 933.0 / 1080, 390.0 / 1920, 111.0 / 1080)):
             log.error("未能检测到挑战按钮")
             return None
 
