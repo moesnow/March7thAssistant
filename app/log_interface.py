@@ -550,7 +550,7 @@ class LogInterface(ScrollArea):
         # 设置环境变量，继承系统环境变量并确保 Python 输出不缓冲
         env = QProcessEnvironment.systemEnvironment()
         env.insert("PYTHONUNBUFFERED", "1")
-        env.insert("MARCH7TH_GUI_STARTED", "1")  # 标记为图形界面启动
+        env.insert("MARCH7TH_GUI_STARTED", "true")  # 标记为图形界面启动
         # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
         try:
             _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH']

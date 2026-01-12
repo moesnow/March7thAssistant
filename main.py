@@ -77,6 +77,7 @@ from module.notification import notif
 from module.notification.notification import NotificationLevel
 from module.ocr import ocr
 from utils.screenshot_util import save_error_screenshot
+from utils.console import is_docker_started
 
 import tasks.game as game
 import tasks.reward as reward
@@ -96,7 +97,7 @@ from utils.console import pause_on_error, pause_on_success, pause_always
 
 
 def first_run():
-    if os.environ.get("MARCH7TH_GUI_STARTED") != "1" and not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
+    if not is_docker_started() and not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
         log.error("首次使用请先打开图形界面 March7th Launcher")
         pause_always()
         sys.exit(0)
