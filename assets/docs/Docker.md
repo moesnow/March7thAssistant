@@ -43,8 +43,14 @@ services:
     container_name: m7a
     # build: .
     image: ghcr.io/moesnow/march7thassistant:latest
+    # image: ghcr.nju.edu.cn/moesnow/march7thassistant:latest
     # ...
 ```
+
+> **中国大陆用户**：如果从 GitHub Container Registry 下载镜像速度较慢，可以使用南京大学镜像源：
+> ```yaml
+> image: ghcr.nju.edu.cn/moesnow/march7thassistant:latest
+> ```
 
 ### 4. 首次启动（登录云游戏账号）
 
