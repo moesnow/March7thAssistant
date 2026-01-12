@@ -25,7 +25,14 @@ class BuildTarget:
         if not BuildTarget._initialized:
             BuildTarget.init_build_targets()
 
-        require_ornament = datetime.date.today().weekday() >= (7 - cfg.build_target_ornament_weekly_count)
+        require_ornament = False
+        if BuildTarget._target_instances:
+            only_erosion_and_ornament = all(
+                ("侵蚀隧洞" in instance_type) or ("饰品提取" in instance_type)
+                for instance_type, _ in BuildTarget._target_instances
+            )
+            if only_erosion_and_ornament:
+                require_ornament = datetime.date.today().weekday() >= (7 - cfg.build_target_ornament_weekly_count)
 
         for instance_type, instance_name in BuildTarget._target_instances:
             if "历战余响" in instance_type:
