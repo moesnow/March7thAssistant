@@ -11,7 +11,7 @@ import gc
 
 
 # OCR 耗时阈值（秒），超过此值时自动禁用 DML
-OCR_SLOW_THRESHOLD = 3.0
+OCR_SLOW_THRESHOLD = 5.0
 
 
 class OCR:
