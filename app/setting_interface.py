@@ -910,6 +910,12 @@ class SettingInterface(ScrollArea):
             "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态",
             "auto_battle_detect_enable"
         )
+        self.ocrGpuAccelerationCard = SwitchSettingCard1(
+            FIF.SPEED_HIGH,
+            '启用 OCR GPU 加速',
+            "使用 DirectML 加速 OCR 识别，若 GPU 负载高导致 OCR 过慢会自动关闭（仅 Windows 10 Build 18362 及以上支持）",
+            "ocr_gpu_acceleration"
+        )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
             FIF.FULL_SCREEN,
             '启用自动修改分辨率并关闭自动 HDR',
@@ -1177,6 +1183,7 @@ class SettingInterface(ScrollArea):
             self.NotifyGroup.addSettingCard(value)
 
         self.MiscGroup.addSettingCard(self.autoBattleDetectEnableCard)
+        self.MiscGroup.addSettingCard(self.ocrGpuAccelerationCard)
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
         self.MiscGroup.addSettingCard(self.allScreensCard)

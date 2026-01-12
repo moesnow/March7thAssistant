@@ -296,6 +296,9 @@ apocalyptic_timestamp: 0 # 上次运行末日幻影的时间戳，用于记录�
 # 自动战斗和二倍速检测配置
 auto_battle_detect_enable: true # 是否启用自动战斗和二倍速检测。true 开启，false 关闭。
 
+# OCR GPU 加速配置
+ocr_gpu_acceleration: true # 是否启用 OCR GPU 加速（DML）。true 开启，false 关闭。若 GPU 负载高导致 OCR 过慢会自动关闭。
+
 # 自动修改分辨率配置
 auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。true 开启，false 关闭。
 

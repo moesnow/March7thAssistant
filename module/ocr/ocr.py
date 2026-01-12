@@ -1,12 +1,17 @@
 import os
 import io
 import sys
+import time
 from rapidocr import EngineType, LangDet, ModelType, OCRVersion, RapidOCR
 from utils.logger.logger import Logger
 from typing import Optional
 from PIL import Image
 import atexit
 import gc
+
+
+# OCR 耗时阈值（秒），超过此值时自动禁用 DML
+OCR_SLOW_THRESHOLD = 3.0
 
 
 class OCR:
@@ -17,6 +22,37 @@ class OCR:
         self.replacements = replacements
         self._use_dml = None  # None 表示未初始化，True/False 表示是否使用 DML
         self._dml_fallback = False  # 是否已降级到 CPU 模式
+        self._cfg = None  # 配置对象引用，延迟获取避免循环导入
+
+    def _get_config(self):
+        """延迟获取配置对象，避免循环导入"""
+        if self._cfg is None:
+            try:
+                from module.config import cfg
+                self._cfg = cfg
+            except Exception as e:
+                self.logger.warning(f"获取配置失败：{e}，将使用默认设置")
+        return self._cfg
+
+    def _is_gpu_acceleration_enabled(self) -> bool:
+        """检查配置中是否启用 GPU 加速"""
+        cfg = self._get_config()
+        if cfg is not None:
+            try:
+                return cfg.ocr_gpu_acceleration
+            except Exception:
+                pass
+        return True  # 默认启用
+
+    def _disable_gpu_acceleration(self):
+        """禁用 GPU 加速并保存配置"""
+        cfg = self._get_config()
+        if cfg is not None:
+            try:
+                cfg.set_value("ocr_gpu_acceleration", False)
+                self.logger.info("已自动禁用 OCR GPU 加速配置")
+            except Exception as e:
+                self.logger.warning(f"保存配置失败：{e}")
 
     def _check_windows_version(self):
         """检查是否为 Windows 10 Build 18362 及以上"""
@@ -50,7 +86,12 @@ class OCR:
                     self._dml_fallback = True
                     self.logger.warning("强制使用 CPU 模式初始化 OCR")
                 else:
-                    use_dml = self._check_windows_version()
+                    # 检查配置和 Windows 版本
+                    gpu_enabled = self._is_gpu_acceleration_enabled()
+                    windows_supported = self._check_windows_version()
+                    use_dml = gpu_enabled and windows_supported
+                    if not gpu_enabled:
+                        self.logger.debug("配置中已禁用 OCR GPU 加速")
                 self._use_dml = use_dml
                 self.logger.debug(f"DML 支持：{use_dml}")
                 self.ocr = RapidOCR(
@@ -116,7 +157,21 @@ class OCR:
             last_error = None
             for attempt in range(max_retries):
                 try:
+                    # 记录开始时间，用于检测 DML 是否过慢
+                    start_time = time.time()
                     original_dict = self.ocr(image_bytes).to_json()
+                    elapsed_time = time.time() - start_time
+
+                    # 检测 DML 是否过慢，若超过阈值则自动降级
+                    if self._use_dml and not self._dml_fallback and elapsed_time > OCR_SLOW_THRESHOLD:
+                        self.logger.warning(f"OCR 执行耗时 {elapsed_time:.2f}s 超过阈值 {OCR_SLOW_THRESHOLD}s，正在降级到 CPU 模式...")
+                        self._disable_gpu_acceleration()
+                        self.exit_ocr()
+                        self.instance_ocr(force_cpu=True)
+                        # 用 CPU 模式重新执行一次
+                        original_dict = self.ocr(image_bytes).to_json()
+                        self.logger.info("已切换到 CPU 模式")
+
                     return self.replace_strings(original_dict)
                 except Exception as e:
                     # 检查是否为编码错误（直接或通过异常链）
@@ -129,6 +184,7 @@ class OCR:
             # 所有重试都失败，尝试关闭 DML 重新初始化
             if self._use_dml and not self._dml_fallback:
                 self.logger.warning("DML 模式多次失败，尝试降级到 CPU 模式...")
+                self._disable_gpu_acceleration()
                 self.exit_ocr()
                 self.instance_ocr(force_cpu=True)
                 try:
