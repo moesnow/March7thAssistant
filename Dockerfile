@@ -93,14 +93,17 @@ RUN python -m venv $VIRTUAL_ENV \
     # -i https://mirrors.cloud.tencent.com/pypi/simple/ \
     -r requirements-docker.txt
 
-COPY . .
+COPY build.py ./
 
-RUN python build.py --task ocr \
-    && if [ "$TARGETARCH" != "arm64" ]; then \
+RUN if [ "$TARGETARCH" != "arm64" ]; then \
         python build.py --task browser ; \
     else \
         echo "Skipping browser build on arm64"; \
     fi
+
+COPY . .
+
+RUN python build.py --task ocr
 
 # ======================
 # arm64 browser env
