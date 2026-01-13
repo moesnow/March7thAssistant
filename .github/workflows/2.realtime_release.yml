@@ -6,11 +6,6 @@ on:
   pull_request:
     paths:
       - "**.py"
-  push:
-    branches:
-      - main
-    paths:
-      - "**.py"
 
 jobs:
   build:
