@@ -289,17 +289,18 @@ class CloudGameController(GameControllerBase):
         for arg in self._get_browser_arguments(headless=headless):
             options.add_argument(arg)
 
-        # 清理残留文件，防止浏览器无法启动
+        # 清理失效的断链 (Broken Symlinks) 防止浏览器无法启动
         if is_docker_started():
             singleton_files = ["SingletonCookie", "SingletonLock", "SingletonSocket"]
             for filename in singleton_files:
                 file_path = os.path.join(self.user_profile_path, filename)
-                try:
-                    if os.path.exists(file_path):
+                try:  
+                    # 逻辑：是一个链接，但指向的目标不存在
+                    if os.path.islink(file_path) and not os.path.exists(file_path):
                         os.remove(file_path)
-                        self.log_debug(f"已删除残留文件: {file_path}")
+                        self.log_debug(f"已清理断开的软链接: {file_path}")
                 except Exception as e:
-                    self.log_warning(f"删除残留文件失败: {file_path}, 错误: {e}")
+                    self.log_warning(f"处理残留链接失败: {file_path}, 错误: {e}")
 
         try:
             self.log_debug("启动浏览器中...")
