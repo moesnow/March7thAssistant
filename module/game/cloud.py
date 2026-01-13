@@ -25,7 +25,9 @@ from selenium.common.exceptions import WebDriverException
 from module.config import Config
 from module.game.base import GameControllerBase
 from module.logger import Logger
-from utils.encryption import wdp_encrypt, wdp_decrypt
+# from utils.encryption import wdp_encrypt, wdp_decrypt
+
+from utils.console import is_docker_started
 
 
 class CloudGameController(GameControllerBase):
@@ -228,8 +230,10 @@ class CloudGameController(GameControllerBase):
             args += [
                 "--headless=new",  # 无窗口模式
                 "--mute-audio",    # 后台静音
-                "--no-sandbox",
             ]
+            if is_docker_started():
+                # Docker 环境下需要额外参数
+                args.append("--no-sandbox")
         if self.cfg.cloud_game_fullscreen_enable and not headless:
             args.append("--start-fullscreen")  # 全屏启动
         args.extend(self.cfg.browser_launch_argument)  # 用户自定义参数
@@ -284,6 +288,18 @@ class CloudGameController(GameControllerBase):
         # 设置浏览器启动参数
         for arg in self._get_browser_arguments(headless=headless):
             options.add_argument(arg)
+
+        # 清理残留文件，防止浏览器无法启动
+        if is_docker_started():
+            singleton_files = ["SingletonCookie", "SingletonLock", "SingletonSocket"]
+            for filename in singleton_files:
+                file_path = os.path.join(self.user_profile_path, filename)
+                try:
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                        self.log_debug(f"已删除残留文件: {file_path}")
+                except Exception as e:
+                    self.log_warning(f"删除残留文件失败: {file_path}, 错误: {e}")
 
         try:
             self.log_debug("启动浏览器中...")

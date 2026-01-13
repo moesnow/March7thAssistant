@@ -77,7 +77,6 @@ from module.notification import notif
 from module.notification.notification import NotificationLevel
 from module.ocr import ocr
 from utils.screenshot_util import save_error_screenshot
-from utils.console import is_docker_started
 
 import tasks.game as game
 import tasks.reward as reward
@@ -93,7 +92,7 @@ from tasks.weekly.currency_wars import CurrencyWars
 from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 
 
-from utils.console import pause_on_error, pause_on_success, pause_always
+from utils.console import pause_on_error, pause_on_success, pause_always, is_docker_started
 
 
 def first_run():
