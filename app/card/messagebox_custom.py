@@ -401,7 +401,7 @@ class MessageBoxDate(MessageBox):
         self.nowButton.clicked.connect(self.set_current_time)
 
     def getDateTime(self):
-        return self.datePicker.dateTime().toPyDateTime()
+        return self.datePicker.dateTime().toPython()
 
     def reset_default_time(self):
         # Reset to epoch start to match timestamp 0
