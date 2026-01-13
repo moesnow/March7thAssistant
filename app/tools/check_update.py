@@ -209,7 +209,7 @@ def checkUpdate(self, timeout=5, flag=False):
             # 显示检查更新失败的信息
             InfoBar.warning(
                 title='检测更新失败(╥╯﹏╰╥)',
-                content=self.update_thread.error_msg,
+                content=getattr(self, 'update_thread', None).error_msg if getattr(self, 'update_thread', None) is not None else '',
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -217,6 +217,45 @@ def checkUpdate(self, timeout=5, flag=False):
                 parent=self
             )
 
+    # 若已有检查线程并且正在运行，则不再重复启动
+    existing_thread = getattr(self, 'update_thread', None)
+    if existing_thread is not None:
+        if existing_thread.isRunning():
+            InfoBar.warning(
+                title='正在检测更新',
+                content='请稍候，更新检查仍在进行中',
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1000,
+                parent=self
+            )
+            return
+        else:
+            try:
+                existing_thread.deleteLater()
+            except Exception:
+                pass
+            self.update_thread = None
+
+    # 创建并启动新线程，启动后在 finished 时进行清理
     self.update_thread = UpdateThread(timeout, flag)
+    # 将线程归属于当前窗口，避免在 Python 端无引用时被意外销毁
+    try:
+        self.update_thread.setParent(self)
+    except Exception:
+        pass
+
     self.update_thread.updateSignal.connect(handle_update)
+
+    def _on_finished():
+        # 线程结束后清理引用和删除对象
+        try:
+            if getattr(self, 'update_thread', None) is not None:
+                self.update_thread.deleteLater()
+        except Exception:
+            pass
+        self.update_thread = None
+
+    self.update_thread.finished.connect(_on_finished)
     self.update_thread.start()
