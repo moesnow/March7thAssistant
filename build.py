@@ -1,10 +1,4 @@
 from module.logger import log
-from module.config import cfg
-from module.ocr import ocr
-from module.game import cloud_game
-from tasks.weekly.universe import Universe
-from tasks.daily.fight import Fight
-from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 import re
 import sys
 import argparse
@@ -43,6 +37,7 @@ def generate_changelog(version: str, output_file: Path) -> None:
 def init_ocr() -> None:
     """初始化OCR"""
     log.info("[*] 初始化OCR...")
+    from module.ocr import ocr
     ocr.instance_ocr(log_level="info")
     log.info("[✓] OCR初始化完成")
 
@@ -50,6 +45,7 @@ def init_ocr() -> None:
 def update_universe() -> None:
     """更新Universe"""
     log.info("[*] 更新Universe...")
+    from tasks.weekly.universe import Universe
     Universe.update()
     log.info("[✓] Universe更新完成")
 
@@ -57,6 +53,7 @@ def update_universe() -> None:
 def update_fight() -> None:
     """更新Fight"""
     log.info("[*] 更新Fight...")
+    from tasks.daily.fight import Fight
     Fight.update()
     log.info("[✓] Fight更新完成")
 
@@ -64,6 +61,7 @@ def update_fight() -> None:
 def update_fps_unlocker() -> None:
     """更新FPS解锁器"""
     log.info("[*] 更新Genshin StarRail FPS解锁器...")
+    from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
     Genshin_StarRail_fps_unlocker.update()
     log.info("[✓] FPS解锁器更新完成")
 
@@ -73,6 +71,7 @@ def download_browser() -> None:
     log.info("[*] 下载集成浏览器...")
     # 通过环境变量 MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR 控制是否使用镜像
     # CI/CD 构建时设置为 false 使用官方源，Docker 构建时设置为 true 使用镜像
+    from module.game import cloud_game
     cloud_game.download_intergrated_browser()
     log.info("[✓] 浏览器下载完成")
 
