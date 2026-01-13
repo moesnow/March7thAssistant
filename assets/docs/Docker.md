@@ -4,12 +4,12 @@
 
 > **注意**：
 > - Docker 部署仅支持**云游戏模式**，不支持本地游戏客户端。
-> - 目前仅支持 **linux/amd64** 架构，暂不支持 ARM64（如 Apple Silicon Mac、树莓派等），后续可能会适配。
+> - 支持 **linux/amd64** 和 **linux/arm64**（如 Apple Silicon Mac、树莓派等） 架构
 
 ## 前置要求
 
 - 已安装 [Docker](https://docs.docker.com/get-docker/) 和 [Docker Compose](https://docs.docker.com/compose/install/)（通常已包含在 Docker Desktop 中）
-- **x86_64 (amd64) 架构**的 Linux 主机或虚拟机
+- **amd64/arm64 架构** 的 Linux 主机或虚拟机
 - 可用内存 1G 以上
 
 > **关于 `docker compose` 与 `docker-compose` 命令**：
@@ -60,7 +60,7 @@ docker compose up -d
 
 首次运行时，程序会自动切换到**二维码登录**模式。
 
-二维码图片会保存在 `./logs/qrcode_login.png`，使用手机**米游社 APP** 扫描完成登录。
+二维码图片会保存在 `./logs/qrcode_login.png`，使用手机 **米游社 APP** 扫描完成登录。
 
 查看日志也可以获取二维码内容：
 
