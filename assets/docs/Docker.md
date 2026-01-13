@@ -8,10 +8,9 @@
 
 ## 前置要求
 
-- 已安装 [Docker](https://docs.docker.com/get-docker/)
-- 已安装 [Docker Compose](https://docs.docker.com/compose/install/)（通常已包含在 Docker Desktop 中）
-- 有效的米哈游账号（用于云崩铁登录）
+- 已安装 [Docker](https://docs.docker.com/get-docker/) 和 [Docker Compose](https://docs.docker.com/compose/install/)（通常已包含在 Docker Desktop 中）
 - **x86_64 (amd64) 架构**的 Linux 主机或虚拟机
+- 可用内存 1G 以上
 
 > **关于 `docker compose` 与 `docker-compose` 命令**：
 > - 本文档使用 `docker compose`（带空格），这是 **Docker Compose V2** 的命令格式，作为 Docker CLI 的插件运行。
