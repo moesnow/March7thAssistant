@@ -219,15 +219,17 @@ class OCR:
 
     def replace_strings(self, results):
         """替换OCR结果中的错误字符串"""
-        if results is None or len(results) == 0 or self.replacements is None:
+        if results is None or len(results) == 0:
+            self.logger.debug("OCR识别结果为空")
             return results
 
-        for item in results:
-            for old_str, new_str in self.replacements["direct"].items():
-                item["txt"] = item["txt"].replace(old_str, new_str)
-            for old_str, new_str in self.replacements["conditional"].items():
-                if new_str not in item["txt"]:
+        if self.replacements is not None:
+            for item in results:
+                for old_str, new_str in self.replacements["direct"].items():
                     item["txt"] = item["txt"].replace(old_str, new_str)
+                for old_str, new_str in self.replacements["conditional"].items():
+                    if new_str not in item["txt"]:
+                        item["txt"] = item["txt"].replace(old_str, new_str)
 
         self.log_results(results)
         return results

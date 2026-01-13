@@ -481,7 +481,6 @@ class LauncherAutomation():
             self.take_screenshot(crop)
             ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)
             if ocr_result:
-                self.logger.debug(f"OCR识别结果：{ocr_result[0]}")
                 return ocr_result[0]
             if retry_delay > 0 and i < max_retries - 1:
                 time.sleep(retry_delay)
