@@ -24,9 +24,9 @@ class Synthesis:
                             time.sleep(2)
                             # 多次重试避免选中没反应
                             for _ in range(4):
-                                auto.click_element("./assets/images/share/synthesis/nuclear.png", "image", 0.9, max_retries=10)
+                                auto.click_element("./assets/images/share/synthesis/nuclear.png", "image", 0.85, max_retries=10)
                                 time.sleep(2)
-                                if auto.find_element("./assets/images/share/synthesis/nuclear_selected.png", "image", 0.9, max_retries=10):
+                                if auto.find_element("./assets/images/share/synthesis/nuclear_selected.png", "image", 0.85, max_retries=10):
                                     if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
                                         time.sleep(2)
                                         if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
