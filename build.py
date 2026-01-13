@@ -80,10 +80,7 @@ def download_browser() -> None:
         cloud_game.download_intergrated_browser()
     except ImportError:
         import sys
-        if sys.platform == "linux" and sys.arch == "aarch64":
-            log.info("[✓] ARM64 平台跳过浏览器下载")
-            return
-        elif sys.platform == "linux" and sys.arch == "x86_64":
+        if sys.platform == "linux":
             import os
             from selenium.webdriver.common.selenium_manager import SeleniumManager
             browser_path = "./3rdparty/WebBrowser/chrome/linux64/140.0.7339.207/chrome"
@@ -104,6 +101,8 @@ def download_browser() -> None:
                     ])
                 log.info("正在下载浏览器和驱动...")
                 SeleniumManager().binary_paths(args)
+        else:
+            raise
     log.info("[✓] 浏览器下载完成")
 
 
