@@ -103,7 +103,9 @@ RUN if [ "$TARGETARCH" != "arm64" ]; then \
 
 COPY . .
 
-RUN python build.py --task ocr
+RUN python build.py --task ocr \
+    && rm -rf ./logs \
+    && rm -f config.yaml
 
 # ======================
 # arm64 browser env
