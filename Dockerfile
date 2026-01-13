@@ -1,21 +1,32 @@
 FROM python:3.13.11-slim-trixie
 
-# Avoid interactive prompts from debconf during apt operations
+# ======================
+# Build args (architecture)
+# ======================
+ARG TARGETARCH
 ARG DEBIAN_FRONTEND=noninteractive
 ENV DEBIAN_FRONTEND=${DEBIAN_FRONTEND}
 
-# Python optimization for containerized apps
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# ======================
+# Python optimization
+# ======================
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# Activate venv by updating PATH
+# ======================
+# Virtualenv
+# ======================
 ENV VIRTUAL_ENV="/opt/venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Set timezone
+# ======================
+# Timezone
+# ======================
 ENV TZ=Asia/Shanghai
 
-# Set environment variables to enable specific features in the application
+# ======================
+# App environment variables
+# ======================
 ENV MARCH7TH_CLOUD_GAME_ENABLE=true
 ENV MARCH7TH_BROWSER_HEADLESS_ENABLE=true
 ENV MARCH7TH_BROWSER_HEADLESS_RESTART_ON_NOT_LOGGED_IN=false
@@ -30,6 +41,9 @@ WORKDIR /m7a
 
 COPY requirements-docker.txt ./
 
+# ======================
+# System dependencies
+# ======================
 RUN \
     # 如果需要使用国内源，可以取消下面一行的注释
     # sed -i 's/deb.debian.org/mirrors.cloud.tencent.com/g' /etc/apt/sources.list.d/debian.sources && \
@@ -60,8 +74,19 @@ RUN \
     libgtk-3-0 \
     ca-certificates \
     fonts-liberation \
+    \
+    # -------- arm64 only --------
+    && if [ "$TARGETARCH" = "arm64" ]; then \
+        apt-get install -yq --no-install-recommends \
+            chromium \
+            chromium-driver ; \
+    fi \
+    \
     && rm -rf /var/lib/apt/lists/*
 
+# ======================
+# Python deps
+# ======================
 RUN python -m venv $VIRTUAL_ENV \
     && pip install --no-cache-dir \
     # 如果需要使用国内源，可以取消下面一行的注释
@@ -71,6 +96,17 @@ RUN python -m venv $VIRTUAL_ENV \
 COPY . .
 
 RUN python build.py --task ocr \
-    && python build.py --task browser
+    && if [ "$TARGETARCH" != "arm64" ]; then \
+        python build.py --task browser ; \
+    else \
+        echo "Skipping browser build on arm64"; \
+    fi
 
+# ======================
+# arm64 browser env
+# ======================
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["python", "main.py"]
