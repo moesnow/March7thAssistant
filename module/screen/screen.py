@@ -110,11 +110,19 @@ class Screen(metaclass=SingletonMeta):
             auto.take_screenshot()
             self._reset_screen_state()
 
-            threads = [threading.Thread(target=find_screen, args=(name, screen)) for name, screen in self.screen_map.items()]
-            for thread in threads:
-                thread.start()
-            for thread in threads:
-                thread.join()
+            import psutil
+            mem = psutil.virtual_memory()
+            if mem.available > 2 * 1024**3:
+                threads = [threading.Thread(target=find_screen, args=(name, screen)) for name, screen in self.screen_map.items()]
+                for thread in threads:
+                    thread.start()
+                for thread in threads:
+                    thread.join()
+            else:
+                for name, screen in self.screen_map.items():
+                    find_screen(name, screen)
+                    if self.current_screen:
+                        break
 
             if self.current_screen:
                 return True
