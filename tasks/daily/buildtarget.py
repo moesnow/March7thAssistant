@@ -84,13 +84,15 @@ class BuildTarget:
                     Base.send_notification_with_screenshot("获取培养目标副本时出错，已提前返回当前已获取列表。\n详细情况请检查日志。", NotificationLevel.ERROR)
                     break
 
-                if BuildTarget._is_valid_instance(instance):
-                    log.debug(f"副本名称 {instance} 检验通过，加入目标列表")
-                    BuildTarget._target_instances.append(instance)
+                validated = BuildTarget._is_valid_instance(instance)
+                if validated:
+                    log.debug(f"副本名称 {validated} 检验通过，加入目标列表")
+                    BuildTarget._target_instances.append(validated)
                 else:
                     log.warning(f"目标副本识别错误，{instance} 不在任何已知副本列表中")
 
-                if "饰品提取" in instance[0]:
+                # 如果验证通过并且为饰品提取，则提前停止（保持原有逻辑）
+                if validated and "饰品提取" in validated[0]:
                     break
 
         if BuildTarget._target_instances:
@@ -296,6 +298,7 @@ class BuildTarget:
 
     @staticmethod
     def _is_valid_instance(instance):
+        """验证并返回标准化的副本元组 (instance_type, instance_name) ，若无法验证返回 None。"""
         instance_type, instance_name = instance
 
         if not BuildTarget._valid_instance_names:
@@ -303,13 +306,23 @@ class BuildTarget:
                 BuildTarget._valid_instance_names = json.load(f)
 
         if not instance_type or not instance_name:
-            return False
+            return None
 
-        if BuildTarget._valid_instance_names.get(instance_type):
-            if BuildTarget._valid_instance_names[instance_type].get(instance_name):
-                return True
+        known_names = BuildTarget._valid_instance_names.get(instance_type)
+        if not known_names:
+            return None
 
-        return False
+        # 完全匹配优先
+        if known_names.get(instance_name):
+            return (instance_type, instance_name)
+
+        # 模糊匹配：如果识别名称包含某个已知名称的子串，则使用该已知名称作为标准名
+        for valid_name in known_names.keys():
+            if valid_name in instance_name:
+                log.debug(f"副本名称模糊匹配成功: 识别名称 '{instance_name}' 包含已知名称 '{valid_name}'，使用标准名称 '{valid_name}'")
+                return (instance_type, valid_name)
+
+        return None
 
     # @staticmethod
     # def _get_target_instances_by_fixed_strategy():
