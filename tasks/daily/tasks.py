@@ -24,13 +24,17 @@ class Tasks:
             sys.exit(1)
 
     def start(self):
-        self.detect()
-        self.scroll()
-        self.detect()
+        if self.detect():
+            self.scroll()
+            self.detect()
 
     def detect(self):
         screenshot, _, _ = auto.take_screenshot(crop=self.crop)
         result = ocr.recognize_multi_lines(screenshot)
+        for coords, text_data in result:
+            if "本日活跃度已满" in text_data[0]:
+                log.info("检测到本日活跃度已满提示，跳过后续任务检测")
+                return False
         merged_texts = self._merge_ocr_blocks(result, x_gap=100)
         log.debug(f"每日实训分栏拼接的文本: {merged_texts}")
         progress_pattern = re.compile(r'(\d+)\s*[/／]\s*(\d+)')  # 用于匹配“X/Y”格式的正则表达式
@@ -45,6 +49,7 @@ class Tasks:
                         self.daily_tasks[task_name] = True
                         log.debug(f"{task_name}:待完成")
                     break
+        return True
 
     def scroll(self):
         auto.click_element("./assets/images/zh_CN/reward/quest/activity.png", "image", 0.95, crop=self.crop)

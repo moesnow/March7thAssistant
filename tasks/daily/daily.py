@@ -231,4 +231,7 @@ class Daily:
                         log.info(f"任务无法完成: {task_name}")
             # 清空日常任务，避免由于提前结束，而cfg中残留未完成任务导致出现异常
             cfg.set_value("daily_tasks", empty_tasks)
+        else:
+            reward.start_specific("quest")
+            cfg.save_timestamp("last_run_timestamp")
         log.hr("完成", 2)
