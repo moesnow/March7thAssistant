@@ -5,6 +5,7 @@ import psutil
 import platform
 import sys
 import base64
+import requests
 import time
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, SessionNotCreatedException
@@ -653,13 +654,43 @@ class CloudGameController(GameControllerBase):
         time.sleep(1)
         return qr_img
 
+    def _save_qr_from_src(self, qr_img, qr_filename) -> None:
+        """从元素的 src 保存二维码图片（支持 data URI 与 HTTP URL）。"""
+        try:
+            qr_src = qr_img.get_attribute("src")
+            # data URI 形式
+            if qr_src and qr_src.startswith("data:image"):
+                b64_data = qr_src.split(",", 1)[1]
+                img_bytes = base64.b64decode(b64_data)
+                with open(qr_filename, "wb") as f:
+                    f.write(img_bytes)
+                return
+
+            # 网络图片，使用 requests 下载
+            if qr_src and qr_src.startswith("http"):
+                resp = requests.get(qr_src, timeout=10)
+                resp.raise_for_status()
+                with open(qr_filename, "wb") as f:
+                    f.write(resp.content)
+                return
+
+            # 其他情况回退为元素截图
+            qr_img.screenshot(qr_filename)
+        except Exception as e:
+            self.log_warning(f"保存二维码失败，尝试截图保存: {e}")
+            try:
+                qr_img.screenshot(qr_filename)
+            except Exception as err:
+                self.log_error(f"保存二维码失败: {err}")
+                raise
+
     def _save_qr_img(self, qr_img) -> str:
         import os
         # 将二维码保存到 logs 目录，方便 Docker 挂载访问
         logs_dir = "logs"
         os.makedirs(logs_dir, exist_ok=True)
         qr_filename = os.path.join(logs_dir, "qrcode_login.png")
-        qr_img.screenshot(qr_filename)
+        self._save_qr_from_src(qr_img, qr_filename)
         self.log_info("=" * 60)
         self.log_info("请使用手机米游社 APP 扫描二维码登录")
         self.log_info(f"二维码图片位置: {os.path.abspath(qr_filename)}")
@@ -667,7 +698,6 @@ class CloudGameController(GameControllerBase):
 
     def _decode_qr_from_element(self, qr_img, qr_filename: str) -> None:
         try:
-            import base64
             import numpy as np
             import cv2
             from pyzbar.pyzbar import decode as zbar_decode
@@ -732,7 +762,7 @@ class CloudGameController(GameControllerBase):
 
                     try:
                         qr_img = self.driver.find_element(By.CSS_SELECTOR, "img.qr-loaded")
-                        qr_img.screenshot(qr_filename)
+                        self._save_qr_from_src(qr_img, qr_filename)
                         self.log_info("=" * 60)
                         self.log_info("请使用手机米游社 APP 扫描二维码登录")
                         self.log_info(f"二维码图片位置: {os.path.abspath(qr_filename)}")
