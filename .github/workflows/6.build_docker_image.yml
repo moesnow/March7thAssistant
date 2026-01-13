@@ -64,8 +64,7 @@ jobs:
         with:
           context: . # 构建上下文为当前目录
           push: true # 构建完成后自动推送到镜像仓库
-          # Chrome for Testing 当前仅支持 linux/amd64，因此在此显式限制构建平台
-          platforms: linux/amd64 # 仅构建 amd64 架构镜像
+          platforms: linux/amd64,linux/arm64 # 构建多平台镜像，支持 amd64 和 arm64
           tags: ${{ steps.meta.outputs.tags }} # 使用上一步生成的标签
           labels: ${{ steps.meta.outputs.labels }} # 使用上一步生成的标注（包含版本、提交信息等元数据）
           cache-from: type=gha # 从 GitHub Actions 缓存读取构建缓存，加速构建

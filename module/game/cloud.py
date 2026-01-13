@@ -13,6 +13,8 @@ from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.edge.service import Service as EdgeService
+from selenium.webdriver.chromium.options import ChromiumOptions
+from selenium.webdriver.chromium.service import ChromiumService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -146,6 +148,14 @@ class CloudGameController(GameControllerBase):
 
     def _prepare_browser_and_driver(self, browser_type: str, integrated: bool) -> tuple[str, str]:
         self.user_profile_path = os.path.join(self.BROWSER_INSTALL_PATH, "UserProfile", self.cfg.browser_type.capitalize())
+        # 判断环境变量 MARCH7TH_BROWSER_PATH 和 MARCH7TH_DRIVER_PATH，同时存在时优先使用
+        env_browser_path = os.environ.get("MARCH7TH_BROWSER_PATH")
+        env_driver_path = os.environ.get("MARCH7TH_DRIVER_PATH")
+        if env_browser_path and env_driver_path:
+            self.log_debug("检测到环境变量 MARCH7TH_BROWSER_PATH 和 MARCH7TH_DRIVER_PATH，优先使用指定路径")
+            self.log_debug(f"browser_path = {env_browser_path}")
+            self.log_debug(f"driver_path = {env_driver_path}")
+            return env_browser_path, env_driver_path
 
         # 输出平台信息
         platform_dir = self._get_platform_dir()
@@ -227,7 +237,7 @@ class CloudGameController(GameControllerBase):
 
     def _connect_or_create_browser(self, headless=False) -> None:
         """尝试连接到现有的（由小助手启动的）浏览器，如果没有，那就创建一个"""
-        browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge"
+        browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge" if self.cfg.browser_type == "edge" else "chromium"
         integrated = self.cfg.browser_type == "integrated"
         first_run = False
         browser_path, driver_path = self._prepare_browser_and_driver(browser_type, integrated)
@@ -239,10 +249,14 @@ class CloudGameController(GameControllerBase):
             options = ChromeOptions()
             service = ChromeService(executable_path=driver_path, log_path=os.devnull)
             webdriver_type = webdriver.Chrome
-        else:  # edge
+        elif browser_type == "edge":
             options = EdgeOptions()
             service = EdgeService(executable_path=driver_path, log_path=os.devnull)
             webdriver_type = webdriver.Edge
+        else:  # chromium
+            options = ChromiumOptions()
+            service = ChromiumService(executable_path=driver_path, log_path=os.devnull)
+            webdriver_type = webdriver.Chrome
         # 记录 driver 可执行路径和 service，以便后续清理 chromedriver 进程
         self.driver_path = driver_path
         self._webdriver_service = service
