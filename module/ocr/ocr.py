@@ -158,9 +158,9 @@ class OCR:
             for attempt in range(max_retries):
                 try:
                     # 记录开始时间，用于检测 DML 是否过慢
-                    start_time = time.time()
+                    start_time = time.monotonic()
                     original_dict = self.ocr(image_bytes).to_json()
-                    elapsed_time = time.time() - start_time
+                    elapsed_time = time.monotonic() - start_time
 
                     # 检测 DML 是否过慢，若超过阈值则自动降级
                     if self._use_dml and not self._dml_fallback and elapsed_time > OCR_SLOW_THRESHOLD:
