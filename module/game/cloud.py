@@ -294,7 +294,7 @@ class CloudGameController(GameControllerBase):
             singleton_files = ["SingletonCookie", "SingletonLock", "SingletonSocket"]
             for filename in singleton_files:
                 file_path = os.path.join(self.user_profile_path, filename)
-                try:  
+                try:
                     # 逻辑：是一个链接，但指向的目标不存在
                     if os.path.islink(file_path) and not os.path.exists(file_path):
                         os.remove(file_path)
@@ -308,6 +308,17 @@ class CloudGameController(GameControllerBase):
             self.log_debug("浏览器启动成功")
         except SessionNotCreatedException as e:
             self.log_error(f"浏览器启动失败: {e}")
+            # 清理残留文件，防止浏览器无法启动
+            if is_docker_started():
+                singleton_files = ["SingletonCookie", "SingletonLock", "SingletonSocket"]
+                for filename in singleton_files:
+                    file_path = os.path.join(self.user_profile_path, filename)
+                    try:
+                        if os.path.lexists(file_path):
+                            os.remove(file_path)
+                            self.log_debug(f"已删除残留文件: {file_path}")
+                    except Exception as e:
+                        self.log_warning(f"删除残留文件失败: {file_path}, 错误: {e}")
             self.log_error("如果设置了浏览器启动参数，请去掉所有浏览器启动参数后重试")
             self.log_error("如果仍然存在问题，请更换浏览器重试")
             raise Exception("浏览器启动失败")
