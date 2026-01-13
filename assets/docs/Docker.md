@@ -184,6 +184,35 @@ docker compose ps
 docker compose down
 ```
 
+### Q: 卡在"启动浏览器中..."怎么办？
+
+如果程序一直卡在"启动浏览器中..."无法继续，尝试删除浏览器数据目录后重试：
+
+```bash
+rm -rf ./3rdparty/WebBrowser/UserProfile
+docker compose restart
+```
+
+### Q: 日志内容直接截断怎么办？
+
+如果日志内容直接截断、不完整，很可能是容器内存不足进程被系统强制终止导致的。
+
+可以通过以下方式确认：
+
+```bash
+docker inspect m7a | grep -i oom
+```
+
+如果看到：
+
+```text
+"OOMKilled": true
+```
+
+则说明容器曾因内存不足被系统直接杀死，日志会因此被截断。
+
+可尝试启用或增大 swap / zram 以缓解瞬时内存压力，或增加物理内存以从根本上解决问题。
+
 ### Q: 报错 "session not created: probably user data directory is already in use"？
 
 如果遇到类似以下错误：
@@ -210,9 +239,9 @@ docker compose restart
 
 ### Q: 报错 "Message: tab crashed" 或 shm 相关错误？
 
-如果遇到类似 `Message: tab crashed` 的错误，通常是共享内存（shm）不足导致的。
+如果遇到类似 `Message: tab crashed` 的错误，可能是内存或共享内存（shm）不足导致的。
 
-确保 `docker-compose.yml` 中设置了 `shm_size`：
+首先确保 `docker-compose.yml` 中设置了 `shm_size`：
 
 ```yaml
 services:
