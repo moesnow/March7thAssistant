@@ -218,18 +218,50 @@ class OCR:
             return "{}"
 
     def replace_strings(self, results):
-        """替换OCR结果中的错误字符串"""
+        """替换OCR结果中的错误字符串，并记录所有替换详情到日志"""
         if results is None or len(results) == 0:
             self.logger.debug("OCR识别结果为空")
             return results
 
         if self.replacements is not None:
+            direct = self.replacements.get("direct", {}) or {}
+            conditional = self.replacements.get("conditional", {}) or {}
             for item in results:
-                for old_str, new_str in self.replacements["direct"].items():
-                    item["txt"] = item["txt"].replace(old_str, new_str)
-                for old_str, new_str in self.replacements["conditional"].items():
-                    if new_str not in item["txt"]:
-                        item["txt"] = item["txt"].replace(old_str, new_str)
+                # 跳过没有文本键的项
+                if not isinstance(item, dict) or "txt" not in item:
+                    continue
+                orig = item["txt"]
+                new_text = orig
+                details = []
+
+                # 直接替换：无条件替换所有匹配项
+                for old_str, new_str in direct.items():
+                    if not old_str:
+                        continue
+                    count = new_text.count(old_str)
+                    if count > 0:
+                        new_text = new_text.replace(old_str, new_str)
+                        details.append(f'direct: "{old_str}" -> "{new_str}" ({count}次)')
+
+                # 条件替换：仅在目标替换字符串不已存在时才执行
+                for old_str, new_str in conditional.items():
+                    if not old_str:
+                        continue
+                    # 只有在 new_str 不在文本中且 old_str 存在时才替换
+                    if new_str not in new_text and old_str in new_text:
+                        count = new_text.count(old_str)
+                        new_text = new_text.replace(old_str, new_str)
+                        details.append(f'conditional: "{old_str}" -> "{new_str}" ({count}次)')
+
+                # 如果发生了替换，更新并记录详细信息
+                if new_text != orig:
+                    item["txt"] = new_text
+                    try:
+                        self.logger.debug(f'OCR文本已替换: 原始内容 "{orig}" 替换内容 "{new_text}"')
+                        self.logger.debug(f'替换细节: {details}')
+                    except Exception:
+                        # 避免日志记录本身抛出异常影响流程
+                        self.logger.debug(f'OCR文本已替换 (日志格式化失败)')
 
         self.log_results(results)
         return results
