@@ -45,10 +45,10 @@ class ToolManager:
                     return False
                 time.sleep(0.5)  # 等待窗口切换
 
-            log.info("开始截图...")
+            log.debug("开始截图...")
             result = Screenshot.take_screenshot(cfg.game_title_name)
             if result:
-                log.info(f"截图成功，图像尺寸: {result[0].size}")
+                log.debug(f"截图成功，图像尺寸: {result[0].size}")
                 self.screenshot_data = result[0]
                 return True
             else:
@@ -63,7 +63,6 @@ class ToolManager:
     def _show_screenshot_window_slot(self, screenshot_image):
         """槽函数：显示截图窗口（自动在主线程中调用）"""
         try:
-            log.info("正在创建 ScreenshotApp 窗口...")
             self.screenshot_window = ScreenshotApp(screenshot_image)
 
             # 检查屏幕分辨率决定是否最大化
@@ -71,13 +70,13 @@ class ToolManager:
             screen_resolution = pyautogui.size()
             screen_width, screen_height = screen_resolution
             if screen_width <= 1920 and screen_height <= 1080:
-                log.info("最大化显示窗口")
+                log.debug("最大化显示窗口")
                 self.screenshot_window.showMaximized()
             else:
-                log.info("正常显示窗口")
+                log.debug("正常显示窗口")
                 self.screenshot_window.show()
 
-            log.info("截图窗口已显示")
+            log.debug("截图窗口已显示")
         except Exception as e:
             log.error(f"_show_screenshot_window_slot 发生异常: {e}")
             import traceback
@@ -85,7 +84,6 @@ class ToolManager:
 
     def show_screenshot_window(self):
         """触发显示截图窗口的信号（可从任何线程调用）"""
-        log.info("发送显示窗口信号...")
         self.signals.show_window.emit(self.screenshot_data)
 
     def get_autoplot_instance(self):
@@ -124,7 +122,6 @@ def start(tool: Literal["screenshot", "plot"]):
         def capture_and_show():
             if _tool_manager.run_screenshot():
                 # 截图成功后，通过信号在主线程中显示窗口
-                log.info("截图完成，准备在主线程显示窗口...")
                 _tool_manager.show_screenshot_window()
 
         # 在后台线程执行截图，不阻塞主线程
