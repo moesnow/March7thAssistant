@@ -42,7 +42,7 @@ class Tasks:
             for keyword, task_name in self.task_mappings.items():
                 if keyword in text:
                     match = progress_pattern.search(text)
-                    if match and match.group(1) == match.group(2):
+                    if (match and match.group(1) == match.group(2)) or "已领取" in text:
                         self.daily_tasks[task_name] = False
                         log.debug(f"{task_name}:已完成")
                     else:
