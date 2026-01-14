@@ -23,6 +23,8 @@ class OCR:
         self._use_dml = None  # None 表示未初始化，True/False 表示是否使用 DML
         self._dml_fallback = False  # 是否已降级到 CPU 模式
         self._cfg = None  # 配置对象引用，延迟获取避免循环导入
+        self.ocr_time = 0.0
+        self.ocr_count = 0
 
     def _get_config(self):
         """延迟获取配置对象，避免循环导入"""
@@ -133,6 +135,12 @@ class OCR:
             except Exception as e:
                 self.logger.error(f"清理OCR资源失败：{e}")
 
+            if self.ocr_count > 0:
+                avg_time = self.ocr_time / self.ocr_count
+                self.logger.debug(f"共执行 {self.ocr_count} 次 OCR，平均用时 {avg_time:.2f} 秒")
+                self.ocr_time = 0.0
+                self.ocr_count = 0
+
     def convert_format(self, result):
         """转换OCR结果格式，返回统一的数据格式"""
         if result is None:
@@ -161,6 +169,8 @@ class OCR:
                     start_time = time.monotonic()
                     original_dict = self.ocr(image_bytes).to_json()
                     elapsed_time = time.monotonic() - start_time
+                    self.ocr_time += elapsed_time
+                    self.ocr_count += 1
 
                     # 检测 DML 是否过慢，若超过阈值则自动降级
                     if self._use_dml and not self._dml_fallback and elapsed_time > OCR_SLOW_THRESHOLD:
