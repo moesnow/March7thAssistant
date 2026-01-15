@@ -18,6 +18,7 @@ from module.notification.lark import LarkNotifier
 from module.notification.wechatworkbot import WeChatWorkBotNotifier
 from module.notification.kook import KOOKNotifier
 from module.notification.webhook import WebhookNotifier
+from module.notification.meow import MeoWNotifier
 
 
 class NotifierFactory:
@@ -35,6 +36,7 @@ class NotifierFactory:
         "serverchan3": ServerChanNotifier,
         "kook": KOOKNotifier,
         "webhook": WebhookNotifier,
+        "meow": MeoWNotifier,
     }
     if sys.platform == 'win32':
         notifier_classes["winotify"] = WinotifyNotifier

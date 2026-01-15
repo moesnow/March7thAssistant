@@ -195,6 +195,7 @@
 - Pushdeer
 - Lark（飞书）
 - Custom
+- MeoW
 
 > 其中 Telegram、SMTP、OneBot 等支持发送截图，欢迎 PR 适配其他推送方式
 

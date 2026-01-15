@@ -886,7 +886,8 @@ class SettingInterface(ScrollArea):
             # "discord": FIF.MAIL,
             # "pushdeer": FIF.MAIL,
             # "lark": FIF.MAIL,
-            # "custom": FIF.MAIL
+            # "custom": FIF.MAIL,
+            "meow": FIF.ROBOT,
         }
         self.notifySupportImage = ["telegram", "matrix", "smtp", "wechatworkapp", "wechatworkbot", "onebot", "gocqhttp", "lark", "custom"]
 

@@ -568,3 +568,7 @@ notify_custom_datatype: "" # 数据类型 [data/json], onebot 请输入 json,默
 notify_custom_image: "" #可选参数, 图片将转换为 base64 格式, onebot请参考 {type: image, data: {file: 'base64://{image}'}}
 # 如果 datatype 为 json,请确保 data 为准确的 json 格式,如果 datatype 为 data 则直接输出, json类型时 {message} 将会替换为 title+"\n"+content
 notify_custom_data: "" #onebot 请参考{user_id: 114514, message_type: private, message: [{type: text,data: {text: '{message}'}}]}
+
+# MeoW 溶质配置
+notify_meow_enable: false
+notify_meow_nickname: ""
