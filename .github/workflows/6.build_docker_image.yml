@@ -16,6 +16,8 @@ env:
 
 jobs:
   build-and-push:
+    # 如果是 tag 且 tag 名称包含 'beta'（例如 v1.2.3-beta），则跳过此 job（手动触发除外）
+    if: github.event_name == 'workflow_dispatch' || github.ref_type != 'tag' || !contains(github.ref_name, 'beta')
     runs-on: ubuntu-latest
     # 权限设置：需要读取仓库内容和写入 GitHub Packages
     permissions:
