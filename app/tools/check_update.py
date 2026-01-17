@@ -238,7 +238,7 @@ def checkUpdate(self, timeout=5, flag=False):
                 pass
             self.update_thread = None
 
-    # 创建并启动新线程，启动后在 finished 时进行清理
+    # 创建并启动新线程
     self.update_thread = UpdateThread(timeout, flag)
     # 将线程归属于当前窗口，避免在 Python 端无引用时被意外销毁
     try:
@@ -248,14 +248,14 @@ def checkUpdate(self, timeout=5, flag=False):
 
     self.update_thread.updateSignal.connect(handle_update)
 
-    def _on_finished():
-        # 线程结束后清理引用和删除对象
-        try:
-            if getattr(self, 'update_thread', None) is not None:
-                self.update_thread.deleteLater()
-        except Exception:
-            pass
-        self.update_thread = None
+    # def _on_finished():
+    #     # 线程结束后清理引用和删除对象
+    #     try:
+    #         if getattr(self, 'update_thread', None) is not None:
+    #             self.update_thread.deleteLater()
+    #     except Exception:
+    #         pass
+    #     self.update_thread = None
 
-    self.update_thread.finished.connect(_on_finished)
+    # self.update_thread.finished.connect(_on_finished)
     self.update_thread.start()
