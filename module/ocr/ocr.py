@@ -2,7 +2,6 @@ import os
 import io
 import sys
 import time
-from rapidocr import EngineType, LangDet, ModelType, OCRVersion, RapidOCR
 from utils.logger.logger import Logger
 from typing import Optional
 from PIL import Image
@@ -84,6 +83,7 @@ class OCR:
             try:
                 self.logger.debug("开始初始化OCR...")
                 start_time = time.monotonic()
+                from rapidocr import EngineType, LangDet, ModelType, OCRVersion, RapidOCR
                 if force_cpu:
                     use_dml = False
                     self._dml_fallback = True

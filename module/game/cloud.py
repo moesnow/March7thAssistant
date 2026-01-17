@@ -555,14 +555,6 @@ class CloudGameController(GameControllerBase):
         if self.close_all_m7a_browser(headless=True):
             self.log_info("已关闭所有后台浏览器")
 
-        # 退出时再尝试清理 chromedriver 进程（防止残留）
-        try:
-            closed = self._terminate_chromedriver_processes()
-            if closed:
-                self.log_info("已关闭残留的 chromedriver 进程")
-        except Exception as e:
-            self.log_warning(f"退出时清理 chromedriver 进程失败: {e}")
-
     def download_intergrated_browser(self) -> bool:
         self._prepare_browser_and_driver(browser_type="chrome", integrated=True)
 
@@ -601,6 +593,14 @@ class CloudGameController(GameControllerBase):
                 pass
 
         # 也尝试关闭与当前 driver_path 对应的 chromedriver 进程
+        closed = self._terminate_chromedriver_processes()
+        if closed:
+            closed_proc.extend(closed)
+        return closed_proc
+
+    def _terminate_chromedriver_processes(self) -> list[psutil.Process]:
+        """单独清理 chromedriver 进程并返回被关闭的进程列表"""
+        closed = []
         try:
             chromedrivers = []
             for proc in psutil.process_iter(['pid', 'name', 'exe', 'ppid']):
@@ -621,39 +621,16 @@ class CloudGameController(GameControllerBase):
                     # 如果我们有记录的 driver_path，优先匹配可执行文件路径
                     if hasattr(self, 'driver_path') and self.driver_path and exe_path and os.path.normcase(exe_path) == os.path.normcase(self.driver_path):
                         proc.terminate()
-                        closed_proc.append(proc)
+                        closed.append(proc)
                     else:
                         # 否则，若 chromedriver 的父进程是当前进程，认为是残留并终止
                         if proc.info.get('ppid') == os.getpid():
                             proc.terminate()
-                            closed_proc.append(proc)
+                            closed.append(proc)
                 except Exception:
                     continue
         except Exception:
             pass
-
-        return closed_proc
-
-    def _terminate_chromedriver_processes(self) -> list[psutil.Process]:
-        """单独清理 chromedriver 进程并返回被关闭的进程列表"""
-        closed = []
-        for proc in psutil.process_iter(['pid', 'name', 'exe', 'ppid']):
-            try:
-                if proc.info['name'] and proc.info['name'].lower() == 'chromedriver.exe':
-                    exe_path = None
-                    try:
-                        exe_path = proc.info.get('exe') or proc.exe()
-                    except Exception:
-                        exe_path = None
-
-                    if hasattr(self, 'driver_path') and self.driver_path and exe_path and os.path.normcase(exe_path) == os.path.normcase(self.driver_path):
-                        proc.terminate()
-                        closed.append(proc)
-                    elif proc.info.get('ppid') == os.getpid():
-                        proc.terminate()
-                        closed.append(proc)
-            except Exception:
-                continue
         return closed
 
     def try_dump_page(self, dump_dir="logs/webdump") -> None:

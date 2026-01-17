@@ -1,10 +1,7 @@
 from io import BytesIO
 from .notifier import Notifier
-from nio.client import AsyncClient  # 如果想使用代理则必须使用AsyncClient
-from nio.responses import RoomSendError, UploadError
 import asyncio
 from PIL import Image
-from module.logger import log
 import sys
 
 
@@ -20,6 +17,7 @@ async def send_text_image_msg(client, room_id, msg, image_io):
         filename="img.png",
         filesize=len(v),
     )
+    from nio.responses import UploadError
     if isinstance(resp, UploadError):
         raise RuntimeError(f"message img upload error : {resp}")
 
@@ -47,6 +45,7 @@ async def send_text_image_msg(client, room_id, msg, image_io):
         message_type="m.room.message",
         content=content,
     )
+    from nio.responses import RoomSendError
     if isinstance(rsp, RoomSendError):
         raise RuntimeError(f"message send error : {rsp}")
 
@@ -60,6 +59,7 @@ async def send_text_msg(client, room_id, msg):
         message_type="m.room.message",
         content={"msgtype": "m.text", "body": msg},
     )
+    from nio.responses import RoomSendError
     if isinstance(rsp, RoomSendError):
         raise RuntimeError(f"message send error : {rsp}")
 
@@ -82,6 +82,7 @@ class MatrixNotifier(Notifier):
             proxy = None
         separately_text_media = self.params["separately_text_media"]
         # client
+        from nio.client import AsyncClient  # 如果想使用代理则必须使用AsyncClient
         client = AsyncClient(homeserver)
         client.user_id = user_id
         client.access_token = access_token

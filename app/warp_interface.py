@@ -7,10 +7,7 @@ from .common.style_sheet import StyleSheet
 from .tools.warp_export import warpExport, WarpExport, detect_format, uigf_to_srgf_hkrpg, srgf_to_uigf_hkrpg
 import pyperclip
 import json
-import markdown
 import os
-import pandas as pd
-import openpyxl
 from openpyxl.styles import Font
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
@@ -215,6 +212,17 @@ class WarpInterface(ScrollArea):
         try:
             with open("./warp.json", 'r', encoding='utf-8') as file:
                 config = json.load(file)
+
+            path, _ = QFileDialog.getSaveFileName(
+                self,
+                "导出为 Excel 文件",
+                f"抽卡记录_{config['info'].get('uid', '未知')}.xlsx",
+                "Excel 文件 (*.xlsx)"
+            )
+            if not path:
+                return
+
+            import pandas as pd
             records = config.get("list", [])
             df = pd.DataFrame(records)
             df = df[["time", "name", "item_type", "rank_type", "gacha_type"]]
@@ -246,14 +254,6 @@ class WarpInterface(ScrollArea):
                 df.at[idx, "保底内"] = pity_counters[pool]
                 if star == "5":
                     pity_counters[pool] = 0
-            path, _ = QFileDialog.getSaveFileName(
-                self,
-                "导出为 Excel 文件",
-                f"抽卡记录_{config['info'].get('uid', '未知')}.xlsx",
-                "Excel 文件 (*.xlsx)"
-            )
-            if not path:
-                return
 
             df.to_excel(path, index=False)
             wb = load_workbook(path)

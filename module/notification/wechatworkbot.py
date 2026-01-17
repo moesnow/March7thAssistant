@@ -1,7 +1,5 @@
 import base64
 import hashlib
-import json
-import io
 import requests
 from .notifier import Notifier
 

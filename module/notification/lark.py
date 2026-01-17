@@ -1,7 +1,6 @@
 # 导入所需的模块和类
 import io
 from typing import Dict, Any, Optional
-from utils.logger.logger import Logger
 from .notifier import Notifier
 import requests
 from requests_toolbelt import MultipartEncoder

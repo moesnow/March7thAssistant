@@ -1,7 +1,6 @@
 import sys
 from module.config import cfg
 from module.logger import log
-from module.notification.matrix import MatrixNotifier
 from module.notification.notification import Notification, NotificationLevel
 # 导入所有通知器类型
 from module.notification.onepush import OnepushNotifier
@@ -9,6 +8,7 @@ from module.notification.serverchan3 import ServerChanNotifier
 if sys.platform == 'win32':
     from module.notification.winotify import WinotifyNotifier
 from module.notification.telegram import TelegramNotifier
+from module.notification.matrix import MatrixNotifier
 from module.notification.onebot import OnebotNotifier
 from module.notification.smtp import SMTPNotifier
 from module.notification.gocqhttp import GocqhttpNotifier

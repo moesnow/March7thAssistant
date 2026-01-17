@@ -1,6 +1,5 @@
 from typing import Dict, Any
 from .notifier import Notifier
-from onepush import get_notifier
 from utils.logger.logger import Logger
 
 
@@ -29,6 +28,7 @@ class OnepushNotifier(Notifier):
         if self.require_content and (content is None or content == ''):
             content = '.'
         # 获取对应的通知器实例并发送通知
+        from onepush import get_notifier
         notifier_instance = get_notifier(self.notifier_name)
         # if self.notifier_name in ['gotify']:
         #     notifier_instance.notify(**self.params, title=title, message=content)
