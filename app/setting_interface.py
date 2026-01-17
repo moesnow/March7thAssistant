@@ -365,11 +365,17 @@ class SettingInterface(ScrollArea):
         )
 
         self.CurrencywarsGroup = SettingCardGroup("货币", self.scrollWidget)
-        self.currencywarsEnableCard = SwitchSettingCard1(
+        self.currencywarsEnableCard = ExpandableSwitchSettingCard(
+            "currencywars_enable",
             FIF.DICTIONARY,
             '启用「货币战争」积分奖励',
-            "",
-            "currencywars_enable"
+            ""
+        )
+        self.currencywarsRunTimeCard = PushSettingCardDate(
+            '修改',
+            FIF.DATE_TIME,
+            "上次检测到完成货币战争积分奖励的时间",
+            "currencywars_timestamp"
         )
         self.currencywarsTypeCard = ComboBoxSettingCard2(
             "currencywars_type",
@@ -378,11 +384,11 @@ class SettingInterface(ScrollArea):
             '',
             texts={'标准博弈': 'normal', '超频博弈': 'overclock'}
         )
-        self.currencywarsRunTimeCard = PushSettingCardDate(
-            '修改',
-            FIF.DATE_TIME,
-            "上次检测到完成货币战争积分奖励的时间",
-            "currencywars_timestamp"
+        self.currencywarsBonusEnableCard = SwitchSettingCard1(
+            FIF.IOT,
+            '自动执行位面饰品快速提取',
+            "在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器",
+            "currencywars_bonus_enable"
         )
 
         self.UniverseGroup = SettingCardGroup("模拟宇宙", self.scrollWidget)
@@ -1076,8 +1082,11 @@ class SettingInterface(ScrollArea):
         ])
 
         self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)
+        self.currencywarsEnableCard.addSettingCards([
+            self.currencywarsRunTimeCard
+        ])
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
-        self.CurrencywarsGroup.addSettingCard(self.currencywarsRunTimeCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
 
         self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
         self.weeklyDivergentEnableCard.addSettingCards([
@@ -1269,6 +1278,7 @@ class SettingInterface(ScrollArea):
         self.dailyEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.activityEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.rewardEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.currencywarsEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.fightEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.weeklyDivergentEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.universeEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)

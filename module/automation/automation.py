@@ -290,6 +290,14 @@ class Automation(metaclass=SingletonMeta):
             return dx < 0 and dy > 0
         elif position == 'top_right':
             return dx > 0 and dy < 0
+        elif position == 'right':
+            return dx > 0 and abs(dy) < 10  # 允许一定的垂直偏差
+        elif position == 'left':
+            return dx < 0 and abs(dy) < 10  # 允许一定的垂直偏差
+        elif position == 'top':
+            return dy < 0 and abs(dx) < 10  # 允许一定的水平偏差
+        elif position == 'bottom':
+            return dy > 0 and abs(dx) < 10  # 允许一定的水平偏差
         return False
 
     def find_target_near_source(self, target, include, source_pos, position):

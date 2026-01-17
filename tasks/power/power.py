@@ -22,9 +22,13 @@ class Power:
         instance_name = cfg.instance_names[instance_type]
         challenge_count = cfg.instance_names_challenge_count[instance_type]
 
-        if cfg.build_target_enable and (target := BuildTarget.get_target_instance()):
-            instance_type, instance_name = target
-            challenge_count = cfg.instance_names_challenge_count[instance_type]
+        try:
+            if cfg.build_target_enable and (target := BuildTarget.get_target_instance()):
+                instance_type, instance_name = target
+                challenge_count = cfg.instance_names_challenge_count[instance_type]
+                log.info(f"使用培养目标副本: {instance_type} - {instance_name}")
+        except Exception as e:
+            log.error(f"获取培养目标副本失败: {e}")
 
         if not Instance.validate_instance(instance_type, instance_name):
             log.hr("完成", 2)
@@ -341,13 +345,11 @@ class Power:
 
         def move_button_and_confirm():
             if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                result = auto.find_element(
-                    "./assets/images/share/power/trailblaze_power/button.png", "image", 0.9, max_retries=10)
+                result = auto.find_element("./assets/images/share/power/trailblaze_power/button.png", "image", 0.9, max_retries=10)
                 if result:
                     auto.click_element_with_pos(result, action="down")
                     time.sleep(0.5)
-                    result = auto.find_element(
-                        "./assets/images/share/power/trailblaze_power/plus.png", "image", 0.9)
+                    result = auto.find_element("./assets/images/share/power/trailblaze_power/plus.png", "image", 0.9)
                     if result:
                         auto.click_element_with_pos(result, action="move")
                         time.sleep(0.5)
@@ -357,6 +359,10 @@ class Power:
                             auto.press_key("esc")
                             if screen.check_screen("map"):
                                 return True
+                    else:
+                        auto.mouse_up()
+                else:
+                    auto.mouse_up()
             return False
 
         trailblaze_power_crop = (1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080)

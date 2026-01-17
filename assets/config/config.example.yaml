@@ -172,6 +172,7 @@ activity_planarfissure_enable: false # 是否启用位面分裂活动。true 开
 currencywars_enable: false # 是否启用「货币战争」积分奖励。true 开启，false 关闭。
 currencywars_type: overclock # 货币战争模式，可选值："normal"（标准博弈）或 "overclock"（超频博弈）。
 currencywars_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的时间戳，用于记录和控制运行频率。
+currencywars_bonus_enable: false # 在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器。true 开启，false 关闭。
 
 # 模拟宇宙配置
 weekly_divergent_enable: false # 是否启用「差分宇宙」积分奖励。true 开启，false 关闭。

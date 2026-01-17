@@ -33,24 +33,28 @@ class ActivityTemplate(ABC):
     def get_build_target_instance(default_type, default_name):
         """
         获取培养目标中匹配的副本实例
-        
+
         Args:
             default_type: 默认副本类型
             default_name: 默认副本名称
-            
+
         Returns:
             tuple: (instance_type, instance_name) 副本类型和名称
         """
-        if not cfg.build_target_enable:
+        try:
+            if not cfg.build_target_enable:
+                return default_type, default_name
+
+            from tasks.daily.buildtarget import BuildTarget
+            target_instances = BuildTarget.get_target_instances()
+
+            for target_type, target_name in target_instances:
+                # 精确匹配副本类型
+                if target_type == default_type:
+                    log.info(f"活动使用培养目标副本: {target_type} - {target_name}")
+                    return target_type, target_name
+
             return default_type, default_name
-            
-        from tasks.daily.buildtarget import BuildTarget
-        target_instances = BuildTarget.get_target_instances()
-        
-        for target_type, target_name in target_instances:
-            # 精确匹配副本类型
-            if target_type == default_type:
-                log.info(f"活动使用培养目标副本: {target_type} - {target_name}")
-                return target_type, target_name
-        
-        return default_type, default_name
+        except Exception as e:
+            log.error(f"获取培养目标副本失败: {e}")
+            return default_type, default_name
