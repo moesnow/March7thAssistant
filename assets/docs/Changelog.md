@@ -1,9 +1,11 @@
 # 更新日志
 
-## v2026.1.20-beta
+## v2026.1.21
 - 支持货币战争领取积分奖励后自动使用深度沉浸器
 - 新增 MeoW 推送支持 [#850](https://github.com/moesnow/March7thAssistant/pull/850) @pboymt
 - 优化性能和稳定性并修复若干已知问题
+- 注意：因为 v2026.1.18 更新存在 bug，需要 [手动下载](https://github.com/moesnow/March7thAssistant/releases/tag/v2026.1.21) 覆盖更新到新版本！！！
+- [若已有 Mirror酱 CDK 可点此处高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable&source=m7a-release)
 
 ## v2026.1.19
 - 对图形界面进行了全面升级优化
