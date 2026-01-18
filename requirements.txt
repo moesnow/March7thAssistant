@@ -38,5 +38,5 @@ keyboard==0.13.5
 rapidocr==3.5.0
 onnxruntime-directml==1.23.0; sys_platform == 'win32' and python_version <= '3.13'
 onnxruntime==1.23.2; (sys_platform == 'darwin' or sys_platform == 'linux') and python_version <= '3.13'
-openvino==2025.4.1
+openvino==2025.4.1; python_version == '3.14'
 # paddlepaddle==3.3.0; python_version <= '3.13'
