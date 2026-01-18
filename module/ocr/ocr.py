@@ -96,7 +96,15 @@ class OCR:
                     if not gpu_enabled:
                         self.logger.debug("配置中已禁用 OCR GPU 加速")
                 self._use_dml = use_dml
-                self.logger.debug(f"DML 支持：{use_dml}")
+                self.logger.debug(f"DML 支持：{"启用" if use_dml else "禁用"}")
+
+                import importlib.util
+                prefer_engine = EngineType.ONNXRUNTIME
+                if force_cpu or not use_dml or importlib.util.find_spec("onnxruntime") is None:
+                    if importlib.util.find_spec("openvino") is not None:
+                        prefer_engine = EngineType.OPENVINO
+                        self.logger.debug("优先使用 OpenVINO")
+
                 self.ocr = RapidOCR(
                     params={
                         # "Global.use_det": False,
@@ -115,12 +123,9 @@ class OCR:
                         "Rec.ocr_version": OCRVersion.PPOCRV4,
                         "Det.model_type": ModelType.MOBILE,
                         "Rec.model_type": ModelType.MOBILE,
-                        "Det.engine_type": EngineType.ONNXRUNTIME,
-                        "Cls.engine_type": EngineType.ONNXRUNTIME,
-                        "Rec.engine_type": EngineType.ONNXRUNTIME,
-                        # "Det.engine_type": EngineType.OPENVINO,
-                        # "Cls.engine_type": EngineType.OPENVINO,
-                        # "Rec.engine_type": EngineType.OPENVINO,
+                        "Det.engine_type": prefer_engine,
+                        "Cls.engine_type": prefer_engine,
+                        "Rec.engine_type": prefer_engine,
                     }
                 )
                 self.logger.debug("初始化OCR完成")
