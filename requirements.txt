@@ -1,47 +1,42 @@
-ruamel.yaml==0.18.6
-pyyaml==6.0.2
+ruamel.yaml==0.19.1
+pyyaml==6.0.3
 colorama==0.4.6
-packaging==24.2
+packaging==25.0
 pyuac==0.0.3; sys_platform == 'win32'
-playsound3==3.2.7
+playsound3==3.3.0
 tqdm==4.67.1
-psutil==6.1.1
+psutil==7.2.1
 pyautogui==0.9.54
 pygetwindow==0.0.9
-requests==2.32.4
-imageio==2.36.1
-Pillow==11.0.0
-Numpy==2.3.0
-opencv-python==4.10.0.84
+requests==2.32.5
+imageio==2.37.2
+Pillow==12.1.0
+numpy==2.2.6
+opencv-python==4.12.0.88
 pyzbar==0.1.9
 onepush==1.4.0
 winotify==1.1.0; sys_platform == 'win32'
-markdown==3.7
+Markdown==3.10
 PySide6-Fluent-Widgets==1.10.5
 PySideSix-Frameless-Window==0.7.6
 PySide6==6.10.1
-pylnk3==0.4.2
-pyperclip==1.9.0
-qrcode==8.0
-pysocks==1.7.1
-pypac==0.16.5
-requests_toolbelt==1.0.0
-desktopmagic==14.3.11; sys_platform == 'win32'
+pylnk3==0.4.3
+pyperclip==1.11.0
+qrcode==8.2
+PySocks==1.7.1
+PyPAC==0.17.2
+requests-toolbelt==1.0.0
+Desktopmagic==14.3.11; sys_platform == 'win32'
 matrix-nio==0.25.2
-python-socks[asyncio]==2.6.1
-asyncio==3.4.3
+python-socks[asyncio]==2.8.0
+asyncio==4.0.0
 nio==3.4.2
-pandas==2.2.3
+pandas==2.3.3
 openpyxl==3.1.5
-selenium==4.38.0
+selenium==4.39.0
 keyboard==0.13.5
 rapidocr==3.5.0
-# onnxruntime 1.21.x —— 1.23.x 版本和 PyQt5 有兼容性问题，导致报错：
-# DLL load failed while importing onnxruntime_pybind11_state
-# PySide6 没有这个问题
-onnxruntime-directml==1.23.0; sys_platform == 'win32'
-onnxruntime==1.23.2; sys_platform == 'darwin' or sys_platform == 'linux'
-# openvino==2025.4.1
-# paddlepaddle 3.2.0 —— 3.2.2 版本有问题，报错：
-# RuntimeError: (NotFound) OneDnnContext does not have the input
-# paddlepaddle==3.1.1
+onnxruntime-directml==1.23.0; sys_platform == 'win32' and python_version <= '3.13'
+onnxruntime==1.23.2; (sys_platform == 'darwin' or sys_platform == 'linux') and python_version <= '3.13'
+openvino==2025.4.1
+# paddlepaddle==3.3.0; python_version <= '3.13'
