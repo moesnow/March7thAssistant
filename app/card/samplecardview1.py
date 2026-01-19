@@ -101,6 +101,9 @@ class SampleCard(CardWidget):
         super().mouseReleaseEvent(e)
         if callable(self.action):
             try:
+                # 避免 segmentation fault 导致程序崩溃 :(
+                self.leaveEvent(e)
+
                 self.action()
                 self.showSuccessTip()
             except Exception as e:
