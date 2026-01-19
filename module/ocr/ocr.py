@@ -132,9 +132,9 @@ class OCR:
                     self.ocr = RapidOCR(params=params)
                 except Exception as e_engine:
                     if prefer_engine == EngineType.OPENVINO:
-                        self.logger.warning(f"使用引擎 {prefer_engine} 初始化 OCR 失败: {e_engine}")
+                        self.logger.debug(f"使用引擎 OpenVINO 初始化 OCR 失败: {e_engine}")
                         prefer_engine = EngineType.ONNXRUNTIME
-                        self.logger.info(f"尝试回退到 {prefer_engine} 并重新初始化 OCR")
+                        self.logger.debug(f"尝试回退到 ONNXRuntime 并重新初始化 OCR")
                         params["Det.engine_type"] = prefer_engine
                         params["Cls.engine_type"] = prefer_engine
                         params["Rec.engine_type"] = prefer_engine
