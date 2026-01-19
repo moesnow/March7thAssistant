@@ -753,9 +753,9 @@ class CloudGameController(GameControllerBase):
 
     def _decode_qr_from_element(self, qr_img, qr_filename: str) -> None:
         try:
+            import base64
             import numpy as np
             import cv2
-            from pyzbar.pyzbar import decode as zbar_decode
 
             qr_src = qr_img.get_attribute("src")
             img_bytes = None
@@ -766,25 +766,39 @@ class CloudGameController(GameControllerBase):
                 with open(qr_filename, "rb") as f:
                     img_bytes = f.read()
 
-            if img_bytes:
-                nparr = np.frombuffer(img_bytes, np.uint8)
-                img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
-                if img is not None:
-                    results = zbar_decode(img)
-                    if results:
-                        try:
-                            data = results[0].data.decode("utf-8", errors="ignore")
-                        except Exception:
-                            data = results[0].data.decode(errors="ignore")
-                        self.log_info(f"二维码内容：")
-                        self.log_info(data)
-                        self.log_info("提示：你也可以将该内容自行生成二维码后再扫码登录。")
-                    else:
-                        self.log_debug("未能解析二维码内容。")
-                else:
-                    self.log_debug("二维码图片解码失败")
-        except Exception as decode_err:
-            self.log_warning(f"解析二维码内容失败: {decode_err}")
+            if not img_bytes:
+                self.log_debug("二维码图片为空")
+                return
+
+            nparr = np.frombuffer(img_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_GRAYSCALE)
+            if img is None:
+                self.log_debug("二维码图片解码失败")
+                return
+
+            # 手动补白边
+            h, w = img.shape[:2]
+            pad = max(10, min(h, w) // 10)  # 10% 尺寸，至少 10px
+
+            img = cv2.copyMakeBorder(
+                img,
+                pad, pad, pad, pad,
+                cv2.BORDER_CONSTANT,
+                value=255  # 白色静区
+            )
+
+            detector = cv2.QRCodeDetector()
+            data, points, _ = detector.detectAndDecode(img)
+
+            if data:
+                self.log_info("二维码内容：")
+                self.log_info(data)
+                self.log_info("提示：你也可以将该内容自行生成二维码后再扫码登录。")
+            else:
+                self.log_debug("未能解析二维码内容。")
+
+        except Exception as e:
+            self.log_warning(f"解析二维码内容失败: {e}")
 
     def _wait_scan_success_with_refresh(self, qr_filename: str) -> None:
         import os

@@ -13,7 +13,6 @@ imageio==2.37.2
 Pillow==12.1.0
 numpy==2.2.6
 opencv-python==4.12.0.88
-pyzbar==0.1.9
 onepush==1.4.0
 winotify==1.1.0; sys_platform == 'win32'
 Markdown==3.10
@@ -38,5 +37,5 @@ keyboard==0.13.5
 rapidocr==3.5.0
 onnxruntime-directml==1.23.0; sys_platform == 'win32' and python_version <= '3.13'
 onnxruntime==1.23.2; (sys_platform == 'darwin' or sys_platform == 'linux') and python_version <= '3.13'
-openvino==2025.4.1
+openvino==2025.4.1; sys_platform == 'win32' or sys_platform == 'linux'
 # paddlepaddle==3.3.0; python_version <= '3.13'

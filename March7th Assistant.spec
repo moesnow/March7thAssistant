@@ -5,7 +5,6 @@ binaries = []
 datas = []
 
 binaries += collect_dynamic_libs('openvino', search_patterns=['openvino_intel_cpu_plugin.dll', 'openvino_onnx_frontend.dll'])
-binaries += collect_dynamic_libs('pyzbar', search_patterns=['libzbar-64.dll'])
 
 datas += collect_data_files('rapidocr')
 
