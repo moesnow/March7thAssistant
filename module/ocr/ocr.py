@@ -98,10 +98,10 @@ class OCR:
                 self._use_dml = use_dml
                 self.logger.debug(f"DML 支持：{'启用' if use_dml else '禁用'}")
 
-                # 目前 OpenVINO 在 macOS 上有点问题，暂时不启用，Linux 未测试
+                # 目前 OpenVINO 在 macOS 上有点问题，暂时不启用
                 import importlib.util
                 prefer_engine = EngineType.ONNXRUNTIME
-                if sys.platform == "win32" and (force_cpu or not use_dml or importlib.util.find_spec("onnxruntime") is None):
+                if sys.platform != "darwin" and (force_cpu or not use_dml or importlib.util.find_spec("onnxruntime") is None):
                     if importlib.util.find_spec("openvino") is not None:
                         prefer_engine = EngineType.OPENVINO
                         self.logger.debug("优先使用 OpenVINO")
