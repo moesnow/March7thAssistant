@@ -96,7 +96,7 @@ class OCR:
                     if not gpu_enabled:
                         self.logger.debug("配置中已禁用 OCR GPU 加速")
                 self._use_dml = use_dml
-                self.logger.debug(f"DML 支持：{"启用" if use_dml else "禁用"}")
+                self.logger.debug(f"DML 支持：{'启用' if use_dml else '禁用'}")
 
                 # 目前 OpenVINO 在 macOS 上有点问题，暂时不启用，Linux 未测试
                 import importlib.util
@@ -106,29 +106,42 @@ class OCR:
                         prefer_engine = EngineType.OPENVINO
                         self.logger.debug("优先使用 OpenVINO")
 
-                self.ocr = RapidOCR(
-                    params={
-                        # "Global.use_det": False,
-                        "Global.use_cls": False,
-                        # "Global.use_rec": False,
-                        # min_height (int) : 图像最小高度（单位是像素），低于这个值，会跳过文本检测阶段，直接进行后续识别
-                        # 用于过滤只有一行文本的图像，为了兼容之前使用的 PaddleOCR-json 的情况，大概值是 155
-                        "Global.min_height": 155,
-                        # "Global.width_height_ratio": -1,
-                        # "Global.text_score": 0.7,
-                        "Global.log_level": log_level,
-                        "EngineConfig.onnxruntime.use_dml": use_dml,
-                        "Det.lang_type": LangDet.CH,
-                        "Det.ocr_version": OCRVersion.PPOCRV4,
-                        "Cls.ocr_version": OCRVersion.PPOCRV4,
-                        "Rec.ocr_version": OCRVersion.PPOCRV4,
-                        "Det.model_type": ModelType.MOBILE,
-                        "Rec.model_type": ModelType.MOBILE,
-                        "Det.engine_type": prefer_engine,
-                        "Cls.engine_type": prefer_engine,
-                        "Rec.engine_type": prefer_engine,
-                    }
-                )
+                params = {
+                    # "Global.use_det": False,
+                    "Global.use_cls": False,
+                    # "Global.use_rec": False,
+                    # min_height (int) : 图像最小高度（单位是像素），低于这个值，会跳过文本检测阶段，直接进行后续识别
+                    # 用于过滤只有一行文本的图像，为了兼容之前使用的 PaddleOCR-json 的情况，大概值是 155
+                    "Global.min_height": 155,
+                    # "Global.width_height_ratio": -1,
+                    # "Global.text_score": 0.7,
+                    "Global.log_level": log_level,
+                    "EngineConfig.onnxruntime.use_dml": use_dml,
+                    "Det.lang_type": LangDet.CH,
+                    "Det.ocr_version": OCRVersion.PPOCRV4,
+                    "Cls.ocr_version": OCRVersion.PPOCRV4,
+                    "Rec.ocr_version": OCRVersion.PPOCRV4,
+                    "Det.model_type": ModelType.MOBILE,
+                    "Rec.model_type": ModelType.MOBILE,
+                    "Det.engine_type": prefer_engine,
+                    "Cls.engine_type": prefer_engine,
+                    "Rec.engine_type": prefer_engine,
+                }
+
+                try:
+                    self.ocr = RapidOCR(params=params)
+                except Exception as e_engine:
+                    if prefer_engine == EngineType.OPENVINO:
+                        self.logger.warning(f"使用引擎 {prefer_engine} 初始化 OCR 失败: {e_engine}")
+                        prefer_engine = EngineType.ONNXRUNTIME
+                        self.logger.info(f"尝试回退到 {prefer_engine} 并重新初始化 OCR")
+                        params["Det.engine_type"] = prefer_engine
+                        params["Cls.engine_type"] = prefer_engine
+                        params["Rec.engine_type"] = prefer_engine
+                        self.ocr = RapidOCR(params=params)
+                    else:
+                        raise
+
                 self.logger.debug("初始化OCR完成")
                 elapsed_time = time.monotonic() - start_time
                 self.logger.debug(f"OCR初始化耗时: {elapsed_time:.2f} 秒")
