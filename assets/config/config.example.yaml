@@ -25,9 +25,9 @@ python_exe_path: "" # 设置 Python 解释器路径，示例："C:\Users\i\AppDa
 
 # pypi 镜像列表
 pypi_mirror_urls:
-  - https://mirrors.cloud.tencent.com/pypi/simple/
-  - https://mirrors.aliyun.com/pypi/simple/
-  - https://pypi.org/simple/ # 设置 PyPI 镜像列表，用于加速 Python 包的下载。
+    - https://mirrors.cloud.tencent.com/pypi/simple/
+    - https://mirrors.aliyun.com/pypi/simple/
+    - https://pypi.org/simple/ # 设置 PyPI 镜像列表，用于加速 Python 包的下载。
 
 # 本地运行配置
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
@@ -66,9 +66,9 @@ browser_launch_argument: [] # 浏览器启动的额外参数，如 "--auto-open-
 browser_debug_port: 9222 # 浏览器 Debug 端口，应确保该端口不被占用
 browser_download_use_mirror: True # 是否使用镜像下载浏览器和驱动
 browser_mirror_urls:
-  chrome: https://registry.npmmirror.com/-/binary/chrome-for-testing/
-  chromedriver: https://registry.npmmirror.com/-/binary/chrome-for-testing/
-  edgedriver: https://registry.npmmirror.com/-/binary/edgedriver/
+    chrome: https://registry.npmmirror.com/-/binary/chrome-for-testing/
+    chromedriver: https://registry.npmmirror.com/-/binary/chrome-for-testing/
+    edgedriver: https://registry.npmmirror.com/-/binary/edgedriver/
 
 # 副本设置
 # 体力计划列表，每项包含副本类型、副本名称和剩余次数，例如：[["拟造花萼（金）", "回忆之蕾", 10], ["侵蚀隧洞", "睿治之径", 5]]
@@ -76,19 +76,19 @@ power_plan: []
 instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造花萼（金）、拟造花萼（赤）、凝滞虚影、侵蚀隧洞、饰品提取。
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
 instance_names:
-  拟造花萼（金）: 回忆之蕾
-  拟造花萼（赤）: 收容舱段
-  凝滞虚影: 无
-  侵蚀隧洞: 睿治之径
-  饰品提取: 永恒笑剧
-  历战余响: 毁灭的开端 # 配置各副本类型的名称。
+    拟造花萼（金）: 回忆之蕾
+    拟造花萼（赤）: 收容舱段
+    凝滞虚影: 无
+    侵蚀隧洞: 睿治之径
+    饰品提取: 永恒笑剧
+    历战余响: 毁灭的开端 # 配置各副本类型的名称。
 instance_names_challenge_count:
-  拟造花萼（金）: 24
-  拟造花萼（赤）: 24
-  凝滞虚影: 8
-  侵蚀隧洞: 6
-  饰品提取: 6
-  历战余响: 3 # 配置各副本类型的连续挑战次数。
+    拟造花萼（金）: 24
+    拟造花萼（赤）: 24
+    凝滞虚影: 8
+    侵蚀隧洞: 6
+    饰品提取: 6
+    历战余响: 3 # 配置各副本类型的连续挑战次数。
 tp_before_instance: false # 是否在进入副本前进行传送至任意锚点。true 传送，false 不传送。
 
 # 培养目标设置
@@ -119,18 +119,18 @@ echo_of_war_start_day_of_week: 1 # 周几开始执行「历战余响」，假设
 borrow_enable: true # 是否使用支援角色。true 使用，false 不使用。
 borrow_character_enable: false # 是否强制使用支援角色。true 强制，false 不强制。
 borrow_friends:
-  - - March7th
-    - 赵相机
-  - - Qingque
-    - 用牌玩命
-  - - FuXuan
-    - 无情的卜算机器
-  - - None
-    - ""
-  - - None
-    - ""
-  - - None
-    - ""
+    - - March7th
+      - 赵相机
+    - - Qingque
+      - 用牌玩命
+    - - FuXuan
+      - 无情的卜算机器
+    - - None
+      - ""
+    - - None
+      - ""
+    - - None
+      - ""
 borrow_scroll_times: 10 # 支援列表滚动查找次数
 
 # 奖励领取设置
@@ -149,14 +149,14 @@ daily_material_enable: true # 是否通过“合成材料”完成任务。true 
 daily_himeko_try_enable: false # 是否通过“姬子试用”完成任务。true 开启，false 关闭。
 daily_memory_one_enable: false # 是否通过“回忆一”完成任务。true 开启，false 关闭。
 daily_memory_one_team: # 用于“回忆一”的队伍配置。
-  - - DanHeng
-    - -1
-  - - Natasha
-    - 0
-  - - March7th
-    - 0
-  - - Asta
-    - 0
+    - - DanHeng
+      - -1
+    - - Natasha
+      - 0
+    - - March7th
+      - 0
+    - - Asta
+      - 0
 daily_tasks: [] # 每日实训任务的配置。
 last_run_timestamp: 0 # 上次运行日常任务的时间戳，用于记录和控制运行频率。
 
@@ -167,6 +167,13 @@ activity_gardenofplenty_enable: false # 是否启用花藏繁生活动。true �
 activity_gardenofplenty_instance_type: 拟造花萼（金） # 花藏繁生副本类型。
 activity_realmofthestrange_enable: false # 是否启用异器盈界活动。true 开启，false 关闭。
 activity_planarfissure_enable: false # 是否启用位面分裂活动。true 开启，false 关闭。
+
+# 资产设置
+asset_manager_enable: false # 是否启用资产管理功能。true 开启，false 关闭。
+asset_lc3_star_superimpose_enable: false # 是否启用「三星光锥自动叠加」功能。true 开启，false 关闭。
+asset_official_relic_salvage_enable: false # 是否启用「智能弃置」功能。true 开启，false 关闭。
+asset_special_pass_exchange_enable: false # 是否启用「专票自动兑换」功能。true 开启，false 关闭。
+asset_standard_pass_usage_enable: false # 是否启用「通票自动使用」功能。true 开启，false 关闭。
 
 # 货币战争配置
 currencywars_enable: false # 是否启用「货币战争」积分奖励。true 开启，false 关闭。
@@ -214,85 +221,85 @@ genshin_starRail_fps_unlocker_path: .\3rdparty\Genshin_StarRail_fps_unlocker
 # 忘却之庭配置
 forgottenhall_enable: false # 是否启用混沌回忆功能。true 开启，false 关闭。
 forgottenhall_level: # 混沌回忆关卡范围，设置允许尝试的关卡等级范围。
-  - 9
-  - 12
+    - 9
+    - 12
 # 混沌回忆队伍配置，详细配置每个队伍成员及其秘技使用次数。
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色。
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
 forgottenhall_team1: # 队伍1配置。
-  - - Asta
-    - -1
-  - - JingYuan
-    - 1
-  - - Tingyun
-    - 2
-  - - Huohuo
-    - 1
+    - - Asta
+      - -1
+    - - JingYuan
+      - 1
+    - - Tingyun
+      - 2
+    - - Huohuo
+      - 1
 forgottenhall_team2: # 队伍2配置。
-  - - FuXuan
-    - 1
-  - - Bronya
-    - 1
-  - - Pela
-    - -1
-  - - Qingque
-    - 1
+    - - FuXuan
+      - 1
+    - - Bronya
+      - 1
+    - - Pela
+      - -1
+    - - Qingque
+      - 1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳，用于记录和控制运行频率。
 
 # 虚构叙事配置
 purefiction_enable: false # 是否启用虚构叙事功能。true 开启，false 关闭。
 purefiction_level: # 虚构叙事关卡范围，设置允许尝试的关卡等级范围。
-  - 3
-  - 4
+    - 3
+    - 4
 # 虚构叙事队伍配置，详细配置每个队伍成员及其秘技使用次数。
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色。
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
 purefiction_team1: # 队伍1配置。
-  - - Asta
-    - -1
-  - - JingYuan
-    - 1
-  - - Tingyun
-    - 2
-  - - Huohuo
-    - 1
+    - - Asta
+      - -1
+    - - JingYuan
+      - 1
+    - - Tingyun
+      - 2
+    - - Huohuo
+      - 1
 purefiction_team2: # 队伍2配置。
-  - - FuXuan
-    - 1
-  - - Bronya
-    - 1
-  - - Pela
-    - -1
-  - - Qingque
-    - 1
+    - - FuXuan
+      - 1
+    - - Bronya
+      - 1
+    - - Pela
+      - -1
+    - - Qingque
+      - 1
 purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳，用于记录和控制运行频率。
 
 # 末日幻影配置
 apocalyptic_enable: false # 是否启用末日幻影功能。true 开启，false 关闭。
 apocalyptic_level: # 末日幻影关卡范围，设置允许尝试的关卡等级范围。
-  - 3
-  - 4
+    - 3
+    - 4
 # 末日幻影队伍配置，详细配置每个队伍成员及其秘技使用次数。
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色。
 # 角色对应的英文名字可以在 "March7thAssistant\assets\images\character" 中查看
 apocalyptic_team1: # 队伍1配置。
-  - - Asta
-    - -1
-  - - JingYuan
-    - 1
-  - - Tingyun
-    - 2
-  - - Huohuo
-    - 1
+    - - Asta
+      - -1
+    - - JingYuan
+      - 1
+    - - Tingyun
+      - 2
+    - - Huohuo
+      - 1
 apocalyptic_team2: # 队伍2配置。
-  - - FuXuan
-    - 1
-  - - Bronya
-    - 1
-  - - Pela
-    - -1
-  - - Qingque
-    - 1
+    - - FuXuan
+      - 1
+    - - Bronya
+      - 1
+    - - Pela
+      - -1
+    - - Qingque
+      - 1
 apocalyptic_timestamp: 0 # 上次运行末日幻影的时间戳，用于记录和控制运行频率。
 # 自动战斗和二倍速检测配置
 auto_battle_detect_enable: true # 是否启用自动战斗和二倍速检测。true 开启，false 关闭。
@@ -389,22 +396,22 @@ mirrorchyan_cdk: "" # MirrorChyan CDK
 # 消息推送配置
 # 消息推送格式配置
 notify_template:
-  Title: 三月七小助手|･ω･)
-  TestMessage: "这是一条测试消息"
-  ContinueTime: "将在{time}继续运行"
-  FullTime: "开拓力剩余{power}/300\n预计{time}回满"
-  NewVersion: "发现新版本 {version}"
-  ErrorOccurred: "发生错误 {error}"
-  DailyPracticeCompleted: "每日实训已完成"
-  DailyPracticeNotCompleted: "每日实训未完成"
-  InstanceNotCompleted: "清体力未完成 {error}"
-  LevelCleared: "{name}已通关{level}层"
-  LevelClearedWithIssue: "{name}已通关{level}层\n领取星琼失败"
-  SimulatedUniverseCompleted: "模拟宇宙已完成"
-  SimulatedUniverseRewardClaimed: "模拟宇宙奖励已领取"
-  SimulatedUniverseNotCompleted: "模拟宇宙未完成"
-  FightCompleted: "锄大地已完成"
-  FightNotCompleted: "锄大地未完成"
+    Title: 三月七小助手|･ω･)
+    TestMessage: "这是一条测试消息"
+    ContinueTime: "将在{time}继续运行"
+    FullTime: "开拓力剩余{power}/300\n预计{time}回满"
+    NewVersion: "发现新版本 {version}"
+    ErrorOccurred: "发生错误 {error}"
+    DailyPracticeCompleted: "每日实训已完成"
+    DailyPracticeNotCompleted: "每日实训未完成"
+    InstanceNotCompleted: "清体力未完成 {error}"
+    LevelCleared: "{name}已通关{level}层"
+    LevelClearedWithIssue: "{name}已通关{level}层\n领取星琼失败"
+    SimulatedUniverseCompleted: "模拟宇宙已完成"
+    SimulatedUniverseRewardClaimed: "模拟宇宙奖励已领取"
+    SimulatedUniverseNotCompleted: "模拟宇宙未完成"
+    FightCompleted: "锄大地已完成"
+    FightNotCompleted: "锄大地未完成"
 
 # 通知级别设置
 notify_level: all # 通知级别，可选 all（推送所有通知）或 error（仅推送错误和异常通知）。默认为 all。

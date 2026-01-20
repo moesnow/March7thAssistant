@@ -1,8 +1,13 @@
 import os
 import sys
 import argparse
+
 # 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
-os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
+os.chdir(
+    os.path.dirname(sys.executable)
+    if getattr(sys, "frozen", False)
+    else os.path.dirname(os.path.abspath(__file__))
+)
 
 from utils.tasks import AVAILABLE_TASKS
 
@@ -10,33 +15,27 @@ from utils.tasks import AVAILABLE_TASKS
 def parse_args():
     """解析命令行参数"""
     parser = argparse.ArgumentParser(
-        prog='March7th Assistant',
-        description='三月七小助手 - 崩坏：星穹铁道自动化工具 (CLI)',
-        epilog='更多信息请访问: https://m7a.top',
-        add_help=False
+        prog="March7th Assistant",
+        description="三月七小助手 - 崩坏：星穹铁道自动化工具 (CLI)",
+        epilog="更多信息请访问: https://m7a.top",
+        add_help=False,
     )
 
     # 位置参数组
-    positional = parser.add_argument_group('位置参数')
+    positional = parser.add_argument_group("位置参数")
     positional.add_argument(
-        'task',
-        nargs='?',
+        "task",
+        nargs="?",
         choices=list(AVAILABLE_TASKS.keys()),
-        metavar='TASK',
-        help='要执行的任务名称（可选，不指定则执行完整运行）'
+        metavar="TASK",
+        help="要执行的任务名称（可选，不指定则执行完整运行）",
     )
 
     # 可选参数组
-    optional = parser.add_argument_group('可选参数')
+    optional = parser.add_argument_group("可选参数")
+    optional.add_argument("-h", "--help", action="help", help="显示此帮助信息并退出")
     optional.add_argument(
-        '-h', '--help',
-        action='help',
-        help='显示此帮助信息并退出'
-    )
-    optional.add_argument(
-        '-l', '--list',
-        action='store_true',
-        help='列出所有可用的任务'
+        "-l", "--list", action="store_true", help="列出所有可用的任务"
     )
 
     args = parser.parse_args()
@@ -62,8 +61,9 @@ args = parse_args()
 import atexit
 import base64
 
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import pyuac
+
     if not pyuac.isUserAdmin():
         try:
             pyuac.runAsAdmin(False)
@@ -92,11 +92,18 @@ from tasks.weekly.currency_wars import CurrencyWars
 from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 
 
-from utils.console import pause_on_error, pause_on_success, pause_always, is_docker_started
+from utils.console import (
+    pause_on_error,
+    pause_on_success,
+    pause_always,
+    is_docker_started,
+)
 
 
 def first_run():
-    if not is_docker_started() and not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
+    if not is_docker_started() and not cfg.get_value(
+        base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")
+    ):
         log.error("首次使用请先打开图形界面 March7th Launcher")
         pause_always()
         sys.exit(0)
@@ -137,7 +144,7 @@ def run_sub_task(action):
         "forgottenhall": lambda: challenge.start("memoryofchaos"),
         "purefiction": lambda: challenge.start("purefiction"),
         "apocalyptic": lambda: challenge.start("apocalyptic"),
-        "redemption": Redemption.start
+        "redemption": Redemption.start,
     }
     task = sub_tasks.get(action)
     if task:
@@ -146,10 +153,7 @@ def run_sub_task(action):
 
 
 def run_sub_task_gui(action):
-    gui_tasks = {
-        "universe_gui": Universe.gui,
-        "fight_gui": Fight.gui
-    }
+    gui_tasks = {"universe_gui": Universe.gui, "fight_gui": Fight.gui}
     task = gui_tasks.get(action)
     if task and not task():
         pause_always()
@@ -160,7 +164,7 @@ def run_sub_task_update(action):
     update_tasks = {
         "universe_update": Universe.update,
         "fight_update": Fight.update,
-        "mobileui_update": Genshin_StarRail_fps_unlocker.update
+        "mobileui_update": Genshin_StarRail_fps_unlocker.update,
     }
     task = update_tasks.get(action)
     if task:
@@ -170,7 +174,11 @@ def run_sub_task_update(action):
 
 
 def run_notify_action():
-    notif.notify(content=cfg.notify_template['TestMessage'], image="./assets/app/images/March7th.jpg", level=NotificationLevel.ALL)
+    notif.notify(
+        content=cfg.notify_template["TestMessage"],
+        image="./assets/app/images/March7th.jpg",
+        level=NotificationLevel.ALL,
+    )
     pause_always()
     sys.exit(0)
 
@@ -183,7 +191,19 @@ def main(action=None):
         run_main_actions()
 
     # 子任务
-    elif action in ["daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
+    elif action in [
+        "daily",
+        "power",
+        "currencywars",
+        "currencywarsloop",
+        "currencywarstemp",
+        "fight",
+        "universe",
+        "forgottenhall",
+        "purefiction",
+        "apocalyptic",
+        "redemption",
+    ]:
         run_sub_task(action)
 
     # 子任务 原生图形界面
@@ -227,16 +247,16 @@ if __name__ == "__main__":
         pause_on_error()
         sys.exit(1)
     except Exception as e:
-        log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
+        log.error(cfg.notify_template["ErrorOccurred"].format(error=e))
         # 保存错误截图
         screenshot_path = save_error_screenshot(log)
         # 发送通知，如果有截图则附带截图
         notify_kwargs = {
-            'content': cfg.notify_template['ErrorOccurred'].format(error=e),
-            'level': NotificationLevel.ERROR
+            "content": cfg.notify_template["ErrorOccurred"].format(error=e),
+            "level": NotificationLevel.ERROR,
         }
         if screenshot_path:
-            notify_kwargs['image'] = screenshot_path
+            notify_kwargs["image"] = screenshot_path
         notif.notify(**notify_kwargs)
         pause_on_error()
         sys.exit(1)
