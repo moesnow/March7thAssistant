@@ -389,27 +389,6 @@ class SettingInterface(ScrollArea):
             "asset_lc3_star_superimpose_enable",
         )
 
-        self.officialRelicSalvageEnableCard = SwitchSettingCard1(
-            FIF.REMOVE,
-            "启用「智能弃置」",
-            "自动使用官方智能弃置遗器以节省背包空间",
-            "asset_official_relic_salvage_enable",
-        )
-
-        self.specialPassExchangeEnableCard = SwitchSettingCard1(
-            FIF.CAMERA,
-            "启用「专票自动兑换」",
-            "自动把星穹兑换成专票",
-            "asset_special_pass_exchange_enable",
-        )
-
-        self.standardPassUsageEnableCard = SwitchSettingCard1(
-            FIF.ADD,
-            "启用「通票自动使用」",
-            "自动使用通票",
-            "asset_standard_pass_usage_enable",
-        )
-
         self.CurrencywarsGroup = SettingCardGroup("货币", self.scrollWidget)
         self.currencywarsEnableCard = ExpandableSwitchSettingCard(
             "currencywars_enable", FIF.DICTIONARY, "启用「货币战争」积分奖励", ""
@@ -1095,9 +1074,6 @@ class SettingInterface(ScrollArea):
         self.assetEnableCard.addSettingCards(
             [
                 self.lc3StarSuperimposeEnableCard,
-                self.officialRelicSalvageEnableCard,
-                self.specialPassExchangeEnableCard,
-                self.standardPassUsageEnableCard,
             ]
         )
 

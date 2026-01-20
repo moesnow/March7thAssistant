@@ -171,9 +171,6 @@ activity_planarfissure_enable: false # 是否启用位面分裂活动。true 开
 # 资产设置
 asset_manager_enable: false # 是否启用资产管理功能。true 开启，false 关闭。
 asset_lc3_star_superimpose_enable: false # 是否启用「三星光锥自动叠加」功能。true 开启，false 关闭。
-asset_official_relic_salvage_enable: false # 是否启用「智能弃置」功能。true 开启，false 关闭。
-asset_special_pass_exchange_enable: false # 是否启用「专票自动兑换」功能。true 开启，false 关闭。
-asset_standard_pass_usage_enable: false # 是否启用「通票自动使用」功能。true 开启，false 关闭。
 
 # 货币战争配置
 currencywars_enable: false # 是否启用「货币战争」积分奖励。true 开启，false 关闭。
