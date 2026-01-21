@@ -180,7 +180,7 @@ class Synthesis:
                                     t = tgt
                                     break
 
-                            if not t is None:
+                            if t is not None:
                                 find_target = True
                                 log.info(f"找到3星光锥位置: {t}")
                                 auto.click_element_with_pos(t)
