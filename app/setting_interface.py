@@ -364,6 +364,20 @@ class SettingInterface(ScrollArea):
             "reward_redemption_code_enable"
         )
 
+        self.assetEnableCard = ExpandableSwitchSettingCard(
+            "asset_manager_enable", 
+            FIF.LIBRARY, 
+            "启用资产管理", 
+            ""
+        )
+
+        self.lc3StarSuperimposeEnableCard = SwitchSettingCard1(
+            FIF.ZIP_FOLDER,
+            "启用「3星光锥自动叠加」",
+            "自动将3星光锥进行叠加以节省背包空间",
+            "asset_lc3_star_superimpose_enable",
+        )
+
         self.CurrencywarsGroup = SettingCardGroup("货币", self.scrollWidget)
         self.currencywarsEnableCard = ExpandableSwitchSettingCard(
             "currencywars_enable",
@@ -1080,6 +1094,12 @@ class SettingInterface(ScrollArea):
             self.redemptionEnableCard,
             self.achievementEnableCard
         ])
+        self.DailyGroup.addSettingCard(self.assetEnableCard)
+        self.assetEnableCard.addSettingCards(
+            [
+                self.lc3StarSuperimposeEnableCard,
+            ]
+        )
 
         self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)
         self.currencywarsEnableCard.addSettingCards([
@@ -1278,6 +1298,7 @@ class SettingInterface(ScrollArea):
         self.dailyEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.activityEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.rewardEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.assetEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.currencywarsEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.fightEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.weeklyDivergentEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)

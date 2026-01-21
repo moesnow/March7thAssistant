@@ -52,6 +52,11 @@ def parse_args():
         action='store_true',
         help='任务正常完成后自动退出程序（需配合 TASK 参数使用）'
     )
+    optional.add_argument(
+        "-S", "--no-silent",
+        action="store_true",
+        help="不隐藏控制台窗口，显示命令行输出（仅 Windows）"
+    )
 
     args = parser.parse_args()
 
@@ -75,7 +80,8 @@ def parse_args():
 args = parse_args()
 
 # 如果不需要命令行输出，隐藏控制台窗口
-hide_console()
+if not args.no_silent:
+    hide_console()
 
 if sys.platform == 'win32':
     import pyuac

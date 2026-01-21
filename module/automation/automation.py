@@ -43,6 +43,24 @@ class Automation(metaclass=SingletonMeta):
         self.press_mouse = self.input_handler.press_mouse
         self.secretly_write = self.input_handler.secretly_write
 
+    def calculate_crop_with_pos(self, left_top, size):
+        """
+        通过大小和左上角位置计算出 take_screenshot 所需的 crop 参数。
+        :param left_top: 左上角坐标，格式为(x, y)。
+        :param size: 截图的大小，格式为(width, height)。
+        温馨提示: 下加上减，左减右加
+        """
+        left, top, width, height = Screenshot.get_window_region(
+            Screenshot.get_window(self.window_title)
+        )
+        return (
+            (left_top[0] - left) / width,
+            (left_top[1] - top) / height,
+            (size[0]) / width,
+            (size[1]) / height,
+        )
+
+
     def take_screenshot(self, crop=(0, 0, 1, 1)):
         """
         捕获游戏窗口的截图。

@@ -136,6 +136,13 @@ class Daily:
         else:
             log.info("末日幻影尚未刷新")
 
+        # 3星光锥自动叠加（需开启资产管理和对应功能）
+        if cfg.asset_manager_enable:
+            if cfg.asset_lc3_star_superimpose_enable:
+                Synthesis.lc3star_superimpose()
+            else:
+                log.info("3星光锥自动合成未开启")
+
     @staticmethod
     def lookup():
         log.hr("开始查询日常任务完成情况", 1)

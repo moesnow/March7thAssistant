@@ -139,6 +139,14 @@
                 ]
             },
             {
+                "target_screen": "bag_lc",
+                "actions_list": [
+                    "auto.click_element('./assets/images/share/menu/bag.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))",
+                    "time.sleep(2)",
+                    "auto.click_element('./assets/images/share/menu/bag_lc.png', 'image', 0.9, 2)"
+                ]
+            },
+            {
                 "target_screen": "configure_team",
                 "actions_list": [
                     "auto.click_element('./assets/images/share/menu/configure_team.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
@@ -794,6 +802,19 @@
         "name": "背包-遗器",
         "id": "bag_relicset",
         "image_path": "./assets/images/screen/bag/bag_relicset.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name":"背包-光锥",
+        "id":"bag_lc",
+        "image_path": "./assets/images/screen/bag/bag_lc.png",
         "actions": [
             {
                 "target_screen": "menu",

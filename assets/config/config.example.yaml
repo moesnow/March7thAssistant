@@ -168,6 +168,10 @@ activity_gardenofplenty_instance_type: 拟造花萼（金） # 花藏繁生副�
 activity_realmofthestrange_enable: false # 是否启用异器盈界活动。true 开启，false 关闭。
 activity_planarfissure_enable: false # 是否启用位面分裂活动。true 开启，false 关闭。
 
+# 资产设置
+asset_manager_enable: false # 是否启用资产管理功能。true 开启，false 关闭。
+asset_lc3_star_superimpose_enable: false # 是否启用「三星光锥自动叠加」功能。true 开启，false 关闭。
+
 # 货币战争配置
 currencywars_enable: false # 是否启用「货币战争」积分奖励。true 开启，false 关闭。
 currencywars_type: overclock # 货币战争模式，可选值："normal"（标准博弈）或 "overclock"（超频博弈）。
