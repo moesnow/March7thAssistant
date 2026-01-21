@@ -60,6 +60,7 @@ class Automation(metaclass=SingletonMeta):
             (size[1]) / height,
         )
 
+
     def take_screenshot(self, crop=(0, 0, 1, 1)):
         """
         捕获游戏窗口的截图。
@@ -70,15 +71,8 @@ class Automation(metaclass=SingletonMeta):
         while True:
             try:
                 result = Screenshot.take_screenshot(self.window_title, crop=crop)
-                # if crop != (0, 0, 1, 1):
-                #    cv2.imshow("Screenshot", np.array(result[0]))
-                #    cv2.waitKey()
                 if result:
-                    (
-                        self.screenshot,
-                        self.screenshot_pos,
-                        self.screenshot_scale_factor,
-                    ) = result
+                    self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
                     return result
                 else:
                     self.logger.error("截图失败：没有找到游戏窗口")
@@ -102,19 +96,12 @@ class Automation(metaclass=SingletonMeta):
             width, height = template.shape[::-1]
 
         scale_factor = self.screenshot_scale_factor if not relative else 1
-        top_left = (
-            int(max_loc[0] / scale_factor) + self.screenshot_pos[0] * (not relative),
-            int(max_loc[1] / scale_factor) + self.screenshot_pos[1] * (not relative),
-        )
-        bottom_right = (
-            top_left[0] + int(width / scale_factor),
-            top_left[1] + int(height / scale_factor),
-        )
+        top_left = (int(max_loc[0] / scale_factor) + self.screenshot_pos[0] * (not relative),
+                    int(max_loc[1] / scale_factor) + self.screenshot_pos[1] * (not relative))
+        bottom_right = (top_left[0] + int(width / scale_factor), top_left[1] + int(height / scale_factor))
         return top_left, bottom_right
 
-    def find_image_element(
-        self, target, threshold, scale_range, relative=False, cacheable=True
-    ):
+    def find_image_element(self, target, threshold, scale_range, relative=False, cacheable=True):
         """
         查找图像元素。
         :param target: 目标图像路径。
@@ -125,29 +112,21 @@ class Automation(metaclass=SingletonMeta):
         """
         try:
             if cacheable and target in self.img_cache:
-                mask = self.img_cache[target]["mask"]
-                template = self.img_cache[target]["template"]
+                mask = self.img_cache[target]['mask']
+                template = self.img_cache[target]['template']
             else:
                 mask = ImageUtils.read_template_with_mask(target)  # 读取模板图片掩码
                 template = cv2.imread(target)  # 读取模板图片
                 if cacheable:
-                    self.img_cache[target] = {"mask": mask, "template": template}
-            screenshot = cv2.cvtColor(
-                np.array(self.screenshot), cv2.COLOR_BGR2RGB
-            )  # 将截图转换为RGB
+                    self.img_cache[target] = {'mask': mask, 'template': template}
+            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)  # 将截图转换为RGB
             if mask is not None:
-                matchVal, matchLoc = ImageUtils.scale_and_match_template(
-                    screenshot, template, threshold, scale_range, mask
-                )  # 执行缩放并匹配模板
+                matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range, mask)  # 执行缩放并匹配模板
             else:
-                matchVal, matchLoc = ImageUtils.scale_and_match_template(
-                    screenshot, template, threshold, scale_range
-                )  # 执行缩放并匹配模板
+                matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range)  # 执行缩放并匹配模板
 
             # 这里的相似度文本说明有问题，对于无mask匹配相似度越高越好。有mask匹配则是越低越好
-            self.logger.debug(
-                f"目标图片：{target.replace('./assets/images/', '')} 相似度：{matchVal:.2f} 匹配阈值：{threshold}"
-            )
+            self.logger.debug(f"目标图片：{target.replace('./assets/images/', '')} 相似度：{matchVal:.2f} 匹配阈值：{threshold}")
 
             # # 获取模板图像的宽度和高度
             # template_width = template.shape[1]
@@ -164,20 +143,12 @@ class Automation(metaclass=SingletonMeta):
             # cv2.destroyAllWindows()
 
             if mask is not None:
-                if not math.isinf(matchVal) and (
-                    threshold is None or matchVal <= threshold
-                ):
-                    top_left, bottom_right = self.calculate_positions(
-                        template, matchLoc, relative
-                    )
+                if not math.isinf(matchVal) and (threshold is None or matchVal <= threshold):
+                    top_left, bottom_right = self.calculate_positions(template, matchLoc, relative)
                     return top_left, bottom_right, matchVal
             else:
-                if not math.isinf(matchVal) and (
-                    threshold is None or matchVal >= threshold
-                ):
-                    top_left, bottom_right = self.calculate_positions(
-                        template, matchLoc, relative
-                    )
+                if not math.isinf(matchVal) and (threshold is None or matchVal >= threshold):
+                    top_left, bottom_right = self.calculate_positions(template, matchLoc, relative)
                     return top_left, bottom_right, matchVal
         except Exception as e:
             self.logger.error(f"寻找图片出错：{e}")
@@ -218,24 +189,18 @@ class Automation(metaclass=SingletonMeta):
             self.logger.error(f"寻找图片并计数出错：{e}")
             return None
 
-    def find_image_with_multiple_targets(
-        self, target, threshold, scale_range, relative=False
-    ):
+    def find_image_with_multiple_targets(self, target, threshold, scale_range, relative=False):
         try:
             template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
             if template is None:
                 raise ValueError("读取图片失败")
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
-            matches = ImageUtils.scale_and_match_template_with_multiple_targets(
-                screenshot, template, threshold, scale_range
-            )
+            matches = ImageUtils.scale_and_match_template_with_multiple_targets(screenshot, template, threshold, scale_range)
             if len(matches) == 0:
                 return []
             new_matches = []
             for match in matches:
-                top_left, bottom_right = self.calculate_positions(
-                    template, match, relative
-                )
+                top_left, bottom_right = self.calculate_positions(template, match, relative)
                 new_matches.append((top_left, bottom_right))
             return new_matches
         except Exception as e:
@@ -250,25 +215,13 @@ class Automation(metaclass=SingletonMeta):
         :return: 文本的顶点和底点坐标。
         """
         # 先计算相对坐标
-        top_left_relative = (
-            int(box[0][0] / self.screenshot_scale_factor),
-            int(box[0][1] / self.screenshot_scale_factor),
-        )
-        bottom_right_relative = (
-            int(box[2][0] / self.screenshot_scale_factor),
-            int(box[2][1] / self.screenshot_scale_factor),
-        )
+        top_left_relative = (int(box[0][0] / self.screenshot_scale_factor), int(box[0][1] / self.screenshot_scale_factor))
+        bottom_right_relative = (int(box[2][0] / self.screenshot_scale_factor), int(box[2][1] / self.screenshot_scale_factor))
 
         if not relative:
             # 如果需要返回绝对位置，就加上偏移量
-            top_left = (
-                top_left_relative[0] + self.screenshot_pos[0],
-                top_left_relative[1] + self.screenshot_pos[1],
-            )
-            bottom_right = (
-                bottom_right_relative[0] + self.screenshot_pos[0],
-                bottom_right_relative[1] + self.screenshot_pos[1],
-            )
+            top_left = (top_left_relative[0] + self.screenshot_pos[0], top_left_relative[1] + self.screenshot_pos[1])
+            bottom_right = (bottom_right_relative[0] + self.screenshot_pos[0], bottom_right_relative[1] + self.screenshot_pos[1])
         else:
             # 否则直接返回相对坐标
             top_left = top_left_relative
@@ -329,9 +282,7 @@ class Automation(metaclass=SingletonMeta):
         :param relative: 如果为True，返回相对于截图的位置；如果为False，返回绝对位置。
         :return: 文本的位置坐标，如果找到的话。
         """
-        target_texts = (
-            [target] if isinstance(target, str) else list(target)
-        )  # 确保目标文本是列表格式
+        target_texts = [target] if isinstance(target, str) else list(target)  # 确保目标文本是列表格式
         if need_ocr:
             self.perform_ocr()  # 执行OCR识别
 
@@ -339,44 +290,38 @@ class Automation(metaclass=SingletonMeta):
 
     def calculate_text_position2(self, pos):
         """计算文本的位置坐标。"""
-        top_left = (
-            int(pos[0][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
-            int(pos[0][1] / self.screenshot_scale_factor) + self.screenshot_pos[1],
-        )
-        bottom_right = (
-            int(pos[2][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
-            int(pos[2][1] / self.screenshot_scale_factor) + self.screenshot_pos[1],
-        )
+        top_left = (int(pos[0][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
+                    int(pos[0][1] / self.screenshot_scale_factor) + self.screenshot_pos[1])
+        bottom_right = (int(pos[2][0] / self.screenshot_scale_factor) + self.screenshot_pos[0],
+                        int(pos[2][1] / self.screenshot_scale_factor) + self.screenshot_pos[1])
         return top_left, bottom_right
 
     def is_position_matched(self, target_pos, source_pos, position):
         """根据方位判断目标位置是否符合条件。"""
         dx = target_pos[0][0] - source_pos[0]
         dy = target_pos[0][1] - source_pos[1]
-        if position == "bottom_right":
+        if position == 'bottom_right':
             return dx > 0 and dy > 0
-        elif position == "top_left":
+        elif position == 'top_left':
             return dx < 0 and dy < 0
-        elif position == "bottom_left":
+        elif position == 'bottom_left':
             return dx < 0 and dy > 0
-        elif position == "top_right":
+        elif position == 'top_right':
             return dx > 0 and dy < 0
-        elif position == "right":
+        elif position == 'right':
             return dx > 0 and abs(dy) < 10  # 允许一定的垂直偏差
-        elif position == "left":
+        elif position == 'left':
             return dx < 0 and abs(dy) < 10  # 允许一定的垂直偏差
-        elif position == "top":
+        elif position == 'top':
             return dy < 0 and abs(dx) < 10  # 允许一定的水平偏差
-        elif position == "bottom":
+        elif position == 'bottom':
             return dy > 0 and abs(dx) < 10  # 允许一定的水平偏差
         return False
 
     def find_target_near_source(self, target, include, source_pos, position):
         """在指定方位查找距离源最近的目标文本。"""
-        target_texts = (
-            [target] if isinstance(target, str) else list(target)
-        )  # 确保目标文本是列表格式
-        min_distance = float("inf")
+        target_texts = [target] if isinstance(target, str) else list(target)  # 确保目标文本是列表格式
+        min_distance = float('inf')
         target_pos = None
         for box in self.ocr_result:
             text, _ = box[1]
@@ -384,10 +329,7 @@ class Automation(metaclass=SingletonMeta):
             if match:
                 pos = box[0]
                 if self.is_position_matched(pos, source_pos, position):
-                    distance = math.sqrt(
-                        (pos[0][0] - source_pos[0]) ** 2
-                        + (pos[0][1] - source_pos[1]) ** 2
-                    )
+                    distance = math.sqrt((pos[0][0] - source_pos[0]) ** 2 + (pos[0][1] - source_pos[1]) ** 2)
                     self.logger.debug(f"目标文字：{matched_text} 距离：{distance}")
                     if distance < min_distance:
                         self.matched_text = matched_text  # 更新匹配的文本变量
@@ -400,27 +342,19 @@ class Automation(metaclass=SingletonMeta):
 
     def find_source_position(self, source, source_type, include):
         """根据源类型查找源位置。"""
-        if source_type == "text":
+        if source_type == 'text':
             for box in self.ocr_result:
                 text, confidence = box[1]
                 match, matched_text = self.is_text_match(text, [source], include)
                 if match:
                     self.logger.debug(f"目标文字：{source} 相似度：{confidence:.2f}")
                     return box[0][0]  # 返回文本的起始位置
-        elif source_type == "image":
+        elif source_type == 'image':
             top_left, _, _ = self.find_image_element(source, 0.7, None, True)
             return top_left
         return None
 
-    def find_min_distance_text_element(
-        self,
-        target,
-        source,
-        source_type,
-        include,
-        need_ocr=True,
-        position="bottom_right",
-    ):
+    def find_min_distance_text_element(self, target, source, source_type, include, need_ocr=True, position='bottom_right'):
         """
         查找距离特定源最近的文本元素。
         :param target: 目标文本或包含目标文本的元组。
@@ -437,9 +371,7 @@ class Automation(metaclass=SingletonMeta):
         source_pos = self.find_source_position(source, source_type, include)
 
         if source_pos is None:
-            self.logger.debug(
-                f"目标内容：{source.replace('./assets/images/', '')} 未找到"
-            )
+            self.logger.debug(f"目标内容：{source.replace('./assets/images/', '')} 未找到")
             return None, None
 
         return self.find_target_near_source(target, include, source_pos, position)
@@ -460,24 +392,7 @@ class Automation(metaclass=SingletonMeta):
         y = (top + bottom) // 2 + offset[1]
         return x, y
 
-    def find_element(
-        self,
-        target,
-        find_type,
-        threshold=None,
-        max_retries=1,
-        crop=(0, 0, 1, 1),
-        take_screenshot=True,
-        relative=False,
-        scale_range=None,
-        include=None,
-        need_ocr=True,
-        source=None,
-        source_type=None,
-        pixel_bgr=None,
-        position="bottom_right",
-        retry_delay: float = 1.0,
-    ):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0):
         """
         查找元素，并根据指定的查找类型执行不同的查找策略。
         :param target: 查找目标，可以是图像路径或文字。
@@ -504,47 +419,24 @@ class Automation(metaclass=SingletonMeta):
                 screenshot_result = self.take_screenshot(crop)
                 if not screenshot_result:
                     continue  # 如果截图失败，则跳过本次循环
-            if find_type in [
-                "image",
-                "image_threshold",
-                "text",
-                "min_distance_text",
-                "crop",
-            ]:
-                if find_type in ["image", "image_threshold"]:
-                    top_left, bottom_right, image_threshold = self.find_image_element(
-                        target, threshold, scale_range, relative
-                    )
-                elif find_type == "text":
-                    top_left, bottom_right = self.find_text_element(
-                        target, include, need_ocr, relative
-                    )
-                elif find_type == "min_distance_text":
-                    top_left, bottom_right = self.find_min_distance_text_element(
-                        target, source, source_type, include, need_ocr, position
-                    )
-                elif find_type == "crop":
-                    top_left = (
-                        int(target[0] * self.screenshot.width) + self.screenshot_pos[0],
-                        int(target[1] * self.screenshot.height)
-                        + self.screenshot_pos[1],
-                    )
-                    bottom_right = (
-                        int((target[0] + target[2]) * self.screenshot.width)
-                        + self.screenshot_pos[0],
-                        int((target[1] + target[3]) * self.screenshot.height)
-                        + self.screenshot_pos[1],
-                    )
+            if find_type in ['image', 'image_threshold', 'text', "min_distance_text", 'crop']:
+                if find_type in ['image', 'image_threshold']:
+                    top_left, bottom_right, image_threshold = self.find_image_element(target, threshold, scale_range, relative)
+                elif find_type == 'text':
+                    top_left, bottom_right = self.find_text_element(target, include, need_ocr, relative)
+                elif find_type == 'min_distance_text':
+                    top_left, bottom_right = self.find_min_distance_text_element(target, source, source_type, include, need_ocr, position)
+                elif find_type == 'crop':
+                    top_left = (int(target[0] * self.screenshot.width) + self.screenshot_pos[0], int(target[1] * self.screenshot.height) + self.screenshot_pos[1])
+                    bottom_right = (int((target[0] + target[2]) * self.screenshot.width) + self.screenshot_pos[0], int((target[1] + target[3]) * self.screenshot.height) + self.screenshot_pos[1])
                 if top_left and bottom_right:
-                    if find_type == "image_threshold":
+                    if find_type == 'image_threshold':
                         return image_threshold
                     return top_left, bottom_right
-            elif find_type in ["image_count"]:
+            elif find_type in ['image_count']:
                 return self.find_image_and_count(target, threshold, pixel_bgr)
-            elif find_type in ["image_with_multiple_targets"]:
-                return self.find_image_with_multiple_targets(
-                    target, threshold, scale_range, relative
-                )
+            elif find_type in ['image_with_multiple_targets']:
+                return self.find_image_with_multiple_targets(target, threshold, scale_range, relative)
             else:
                 raise ValueError("错误的类型")
 
@@ -580,26 +472,7 @@ class Automation(metaclass=SingletonMeta):
 
         return True
 
-    def click_element(
-        self,
-        target,
-        find_type,
-        threshold=None,
-        max_retries=1,
-        crop=(0, 0, 1, 1),
-        take_screenshot=True,
-        relative=False,
-        scale_range=None,
-        include=None,
-        need_ocr=True,
-        source=None,
-        source_type=None,
-        pixel_bgr=None,
-        position="bottom_right",
-        offset=(0, 0),
-        action="click",
-        retry_delay: float = 1.0,
-    ):
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0):
         """
         查找并点击屏幕上的元素。
 
@@ -612,30 +485,12 @@ class Automation(metaclass=SingletonMeta):
         返回:
         如果找到元素并点击成功，则返回True；否则返回False。
         """
-        coordinates = self.find_element(
-            target,
-            find_type,
-            threshold,
-            max_retries,
-            crop,
-            take_screenshot,
-            relative,
-            scale_range,
-            include,
-            need_ocr,
-            source,
-            source_type,
-            pixel_bgr,
-            position,
-            retry_delay,
-        )
+        coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot, relative, scale_range, include, need_ocr, source, source_type, pixel_bgr, position, retry_delay)
         if coordinates:
             return self.click_element_with_pos(coordinates, offset, action)
         return False
 
-    def get_single_line_text(
-        self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3, retry_delay=0.0
-    ):
+    def get_single_line_text(self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3, retry_delay=0.0):
         """
         尝试多次获取屏幕截图中的单行文本。
 

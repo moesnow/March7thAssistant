@@ -49,9 +49,7 @@ class Daily:
                 if isoweekday >= cfg.echo_of_war_start_day_of_week:
                     Echoofwar.start()
                 else:
-                    log.info(
-                        f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行"
-                    )
+                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
             else:
                 log.info("历战余响尚未刷新")
         else:
@@ -168,18 +166,9 @@ class Daily:
         if len(cfg.daily_tasks) > 0:
             task_functions = {
                 "登录游戏": (lambda: True, 100),
-                "派遣1次委托": (
-                    lambda: False,
-                    100,
-                ),  # 没有实现但有可能已完成,只检测是否完成
-                "累计消耗120点开拓力": (
-                    lambda: False,
-                    200,
-                ),  # 没有实现但有可能已完成,只检测是否完成
-                "使用支援角色并获得战斗胜利1次": (
-                    lambda: False,
-                    200,
-                ),  # 没有实现但有可能已完成,只检测是否完成
+                "派遣1次委托": (lambda: False, 100),  # 没有实现但有可能已完成,只检测是否完成
+                "累计消耗120点开拓力": (lambda: False, 200),  # 没有实现但有可能已完成,只检测是否完成
+                "使用支援角色并获得战斗胜利1次": (lambda: False, 200),  # 没有实现但有可能已完成,只检测是否完成
                 "完成1次「拟造花萼（金）」": (lambda: False, 100),
                 "完成1次「拟造花萼（赤）」": (lambda: False, 100),
                 "完成1次「凝滞虚影」": (lambda: False, 100),
@@ -204,31 +193,13 @@ class Daily:
                 "累计施放2次秘技": (lambda: HimekoTry.technique(), 200),
                 "累计击碎3个可破坏物": (lambda: HimekoTry.item(), 200),
                 "完成1次「忘却之庭」": (lambda: challenge.start_memory_one(1), 100),
-                "单场战斗中，触发3种不同属性的弱点击破": (
-                    lambda: challenge.start_memory_one(1),
-                    100,
-                ),
+                "单场战斗中，触发3种不同属性的弱点击破": (lambda: challenge.start_memory_one(1), 100),
                 "累计触发弱点击破效果5次": (lambda: challenge.start_memory_one(1), 100),
-                "利用弱点进入战斗并获胜3次": (
-                    lambda: challenge.start_memory_one(3),
-                    100,
-                ),
-                "施放终结技造成制胜一击1次": (
-                    lambda: challenge.start_memory_one(1),
-                    100,
-                ),
-                "通关「模拟宇宙」（任意世界）的1个区域": (
-                    lambda: Universe.run_daily(),
-                    500,
-                ),
-                "完成1次「差分宇宙」或「模拟宇宙」": (
-                    lambda: Universe.run_daily(),
-                    500,
-                ),
-                "完成1次「差分宇宙」或「货币战争」": (
-                    lambda: False,
-                    500,
-                ),  # 没有实现但有可能已完成,只检测是否完成
+                "利用弱点进入战斗并获胜3次": (lambda: challenge.start_memory_one(3), 100),
+                "施放终结技造成制胜一击1次": (lambda: challenge.start_memory_one(1), 100),
+                "通关「模拟宇宙」（任意世界）的1个区域": (lambda: Universe.run_daily(), 500),
+                "完成1次「差分宇宙」或「模拟宇宙」": (lambda: Universe.run_daily(), 500),
+                "完成1次「差分宇宙」或「货币战争」": (lambda: False, 500)  # 没有实现但有可能已完成,只检测是否完成
             }
             # 用来统计实训分数
             current_score = 0
@@ -262,9 +233,7 @@ class Daily:
                         cfg.daily_tasks[task_name] = False
                         cfg.save_config()
                         current_score += score
-                        log.info(
-                            f"完成任务: {task_name} (+{green(f'{score}')}分)，当前分数: {yellow(f'{current_score}/{TARGET_SCORE}')}"
-                        )
+                        log.info(f"完成任务: {task_name} (+{green(f'{score}')}分)，当前分数: {yellow(f'{current_score}/{TARGET_SCORE}')}")
                     else:
                         log.info(f"任务无法完成: {task_name}")
             # 清空日常任务，避免由于提前结束，而cfg中残留未完成任务导致出现异常
