@@ -120,7 +120,7 @@ class Synthesis:
                 time.sleep(1)
                 log.info("按稀有度排序")
                 if auto.click_element(
-                    "./assets/images/zh_CN/lc/raity.png", "image", 0.9
+                    "./assets/images/zh_CN/lc/rarity.png", "image", 0.9
                 ):
                     log.info("升序排序光锥")
                     auto.click_element(
@@ -152,20 +152,20 @@ class Synthesis:
                                 )
 
                                 image_detail_three = auto.find_element(
-                                    f"./assets/images/share/lc/three_raity.png",
+                                    f"./assets/images/share/lc/three_rarity.png",
                                     "image",
                                     threshold=0.85,
                                     crop=crop_box,
                                 )
                                 image_detail_four = auto.find_element(
-                                    f"./assets/images/share/lc/four_raity.png",
+                                    f"./assets/images/share/lc/four_rarity.png",
                                     "image",
                                     threshold=0.85,
                                     crop=crop_box,
                                 )
 
                                 image_detail_five = auto.find_element(
-                                    f"./assets/images/share/lc/five_raity.png",
+                                    f"./assets/images/share/lc/five_rarity.png",
                                     "image",
                                     threshold=0.86,
                                     crop=crop_box,
