@@ -241,10 +241,10 @@ class Synthesis:
             log.error(f"3星光锥自动叠加失败: {e}")
         return False
 
-    @staticmethod
-    def asset_special_pass_exchange():
-        try:
-            log.hr("准备自动兑换专票", 2)
-        except Exception as e:
-            log.error(f"专票自动兑换失败: {e}")
-        return False
+    # @staticmethod
+    # def asset_special_pass_exchange():
+    #     try:
+    #         log.hr("准备自动兑换专票", 2)
+    #     except Exception as e:
+    #         log.error(f"专票自动兑换失败: {e}")
+    #     return False
