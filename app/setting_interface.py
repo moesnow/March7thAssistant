@@ -87,7 +87,7 @@ class SettingInterface(ScrollArea):
     def __initCard(self):
         self.PowerGroup = SettingCardGroup(tr("体力设置"), self.scrollWidget)
         self.powerPlanCard = PushSettingCardPowerPlan(
-            '配置',
+            tr('配置'),
             FIF.CALENDAR,
             tr("体力计划"),
             "power_plan",
@@ -98,7 +98,7 @@ class SettingInterface(ScrollArea):
             FIF.ALIGNMENT,
             tr("副本类型"),
             None,
-            texts=['拟造花萼（金）', '拟造花萼（赤）', '凝滞虚影', '侵蚀隧洞', '饰品提取']
+            texts=[tr('拟造花萼（金）'), tr('拟造花萼（赤）'), tr('凝滞虚影'), tr('侵蚀隧洞'), tr('饰品提取')]
         )
         # self.calyxGoldenPreferenceCard = ComboBoxSettingCard2(
         #     "calyx_golden_preference",
@@ -108,7 +108,7 @@ class SettingInterface(ScrollArea):
         #     texts={'雅利洛-VI': 'Jarilo-VI', '仙舟「罗浮」': 'XianzhouLuofu', '匹诺康尼': 'Penacony'}
         # )
         self.instanceNameCard = PushSettingCardInstance(
-            '修改',
+            tr('修改'),
             FIF.PALETTE,
             tr("副本名称"),
             "instance_names",
@@ -166,7 +166,7 @@ class SettingInterface(ScrollArea):
             "merge_immersifier"
         )
         self.instanceNameChallengeCountCard = PushSettingCardInstanceChallengeCount(
-            '修改',
+            tr('修改'),
             FIF.HISTORY,
             tr("副本最大连续挑战次数（通常不建议修改保持默认即可）"),
             "instance_names_challenge_count"
@@ -184,7 +184,7 @@ class SettingInterface(ScrollArea):
             "borrow_character_enable"
         )
         self.borrowFriendsCard = PushSettingCardFriends(
-            '修改',
+            tr('修改'),
             FIF.FLAG,
             tr("支援列表"),
             "borrow_friends"
@@ -216,7 +216,7 @@ class SettingInterface(ScrollArea):
             tr("每周体力优先完成三次「历战余响」，支持配置从周几后开始执行，仅限完整运行生效"),
         )
         self.echoofwarRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次完成历战余响的时间"),
             "echo_of_war_timestamp"
@@ -273,13 +273,13 @@ class SettingInterface(ScrollArea):
             "daily_memory_one_enable"
         )
         self.dailyMemoryOneTeamCard = PushSettingCardTeam(
-            '修改',
+            tr('修改'),
             FIF.FLAG,
             tr("回忆一队伍"),
             "daily_memory_one_team"
         )
         self.lastRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次检测到完成日常的时间"),
             "last_run_timestamp"
@@ -387,7 +387,7 @@ class SettingInterface(ScrollArea):
             ""
         )
         self.currencywarsRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次检测到完成货币战争积分奖励的时间"),
             "currencywars_timestamp"
@@ -421,7 +421,7 @@ class SettingInterface(ScrollArea):
             texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'}
         )
         self.weeklyDivergentRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次检测到完成差分宇宙积分奖励的时间"),
             "weekly_divergent_timestamp"
@@ -467,7 +467,7 @@ class SettingInterface(ScrollArea):
             tr("超过设定时间强制停止（单位小时）"),
         )
         self.universeRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次运行模拟宇宙/差分宇宙的时间"),
             "universe_timestamp"
@@ -497,7 +497,7 @@ class SettingInterface(ScrollArea):
             FIF.FLAG,
             tr('差分宇宙队伍类型'),
             '',
-            texts={tr('追击'): '追击', 'dot': 'dot', tr('终结技'): '终结技', tr('击破'): '击破', tr('盾反'): '盾反'}
+            texts={tr('追击'): '追击', tr('持续伤害 (DoT)'): 'dot', tr('终结技'): '终结技', tr('击破'): '击破', tr('盾反'): '盾反'}
         )
         fates = {}
         fates = {}
@@ -554,7 +554,7 @@ class SettingInterface(ScrollArea):
         #     texts=['3', '4', '5', '6', '7']
         # )
         self.FightRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次运行锄大地的时间"),
             "fight_timestamp"
@@ -589,7 +589,7 @@ class SettingInterface(ScrollArea):
             ""
         )
         self.forgottenhallLevelCard = PushSettingCardEval(
-            '修改',
+            tr('修改'),
             FIF.MINIMIZE,
             tr("关卡范围"),
             "forgottenhall_level"
@@ -607,7 +607,7 @@ class SettingInterface(ScrollArea):
             "forgottenhall_team2"
         )
         self.forgottenhallRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次运行混沌回忆的时间"),
             "forgottenhall_timestamp"
@@ -620,7 +620,7 @@ class SettingInterface(ScrollArea):
             ""
         )
         self.purefictionLevelCard = PushSettingCardEval(
-            '修改',
+            tr('修改'),
             FIF.MINIMIZE,
             tr("关卡范围"),
             "purefiction_level"
@@ -632,7 +632,7 @@ class SettingInterface(ScrollArea):
             "purefiction_team2"
         )
         self.purefictionRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次运行虚构叙事的时间"),
             "purefiction_timestamp"
@@ -645,7 +645,7 @@ class SettingInterface(ScrollArea):
             ""
         )
         self.ApocalypticLevelCard = PushSettingCardEval(
-            '修改',
+            tr('修改'),
             FIF.MINIMIZE,
             tr("关卡范围"),
             "apocalyptic_level"
@@ -657,7 +657,7 @@ class SettingInterface(ScrollArea):
             "apocalyptic_team2"
         )
         self.ApocalypticRunTimeCard = PushSettingCardDate(
-            '修改',
+            tr('修改'),
             FIF.DATE_TIME,
             tr("上次运行末日幻影的时间"),
             "apocalyptic_timestamp"
@@ -711,7 +711,7 @@ class SettingInterface(ScrollArea):
             FIF.GLOBE,
             tr("浏览器类型"),
             tr("建议保持默认的“集成（Chrome For Testing）”效果最好"),
-            {tr("集成（Chrome For Testing）"): "integrated", "Chrome": "chrome", "Edge": "edge"}
+            {tr("集成（Chrome For Testing）"): "integrated", tr("Chrome"): "chrome", tr("Edge"): "edge"}
         )
         self.browserDownloadUseMirrorCard = SwitchSettingCard1(
             FIF.CLOUD_DOWNLOAD,
@@ -767,7 +767,7 @@ class SettingInterface(ScrollArea):
             texts={tr('简洁'): 'INFO', tr('详细'): 'DEBUG'}
         )
         self.gamePathCard = PushSettingCard(
-            '修改',
+            tr('修改'),
             FIF.GAME,
             tr("游戏路径"),
             cfg.game_path
@@ -779,7 +779,7 @@ class SettingInterface(ScrollArea):
             ""
         )
         self.launcherPathCard = PushSettingCard(
-            '修改',
+            tr('修改'),
             FIF.GAME,
             tr("米哈游启动器路径"),
             cfg.launcher_path
@@ -850,7 +850,7 @@ class SettingInterface(ScrollArea):
             tr("用于循环运行及判断任务状态，默认凌晨四点"),
         )
         self.ScriptPathCard = PushSettingCard(
-            '修改',
+            tr('修改'),
             FIF.CODE,
             tr("脚本或程序路径(选择运行脚本时生效)"),
             cfg.script_path
@@ -884,7 +884,7 @@ class SettingInterface(ScrollArea):
             texts={tr('推送所有通知'): 'all', tr('仅推送错误通知'): 'error'}
         )
         self.notifyTemplateCard = PushSettingCardNotifyTemplate(
-            '修改',
+            tr('修改'),
             FIF.FONT_SIZE,
             tr("消息推送格式"),
             "notify_template"
@@ -918,9 +918,19 @@ class SettingInterface(ScrollArea):
                 notifier_name = key[len("notify_"):-len("_enable")]
                 if sys.platform != 'win32' and notifier_name == 'winotify':
                     continue
+                if notifier_name == "serverchanturbo":
+                    display_name = "ServerChanTurbo"
+                elif notifier_name == "serverchan3":
+                    display_name = "ServerChan3"
+                else:
+                    display_name = notifier_name.capitalize()
+                
+                support_image = tr("（支持图片）") if notifier_name in self.notifySupportImage else ""
+                title_text = tr('启用 {} 通知').format(display_name) + support_image
+                
                 notifyEnableCard = SwitchSettingCardNotify(
                     self.notifyLogoDict[notifier_name] if notifier_name in self.notifyLogoDict else FIF.MAIL,
-                    tr(f'启用 {notifier_name.capitalize()} 通知 {"（支持图片）"if notifier_name in self.notifySupportImage else ""}'),
+                    title_text,
                     notifier_name,
                     key
                 )
@@ -1021,9 +1031,9 @@ class SettingInterface(ScrollArea):
             "update_full_enable"
         )
         self.mirrorchyanCdkCard = PushSettingCardMirrorchyan(
-            '修改',
+            tr('修改'),
             FIF.BOOK_SHELF,
-            "Mirror 酱 CDK",
+            tr("Mirror 酱 CDK"),
             self.parent,
             "mirrorchyan_cdk"
         )
@@ -1032,7 +1042,7 @@ class SettingInterface(ScrollArea):
             FIF.LANGUAGE,
             '界面语言 / UI Language',
             '需要重启程序生效 / 변경 사항을 적용하려면 재시작 필요',
-            texts={'简体中文': 'zh_CN', '한국어': 'ko_KR'}
+            texts={'简体中文': 'zh_CN', '한국어': 'ko_KR', 'English': 'en_US'}
         )
 
     def __initLayout(self):
@@ -1358,14 +1368,14 @@ class SettingInterface(ScrollArea):
     #         self.__showRestartTooltip()
 
     def __onGamePathCardClicked(self):
-        game_path, _ = QFileDialog.getOpenFileName(self, "选择游戏路径", "", "All Files (*)")
+        game_path, _ = QFileDialog.getOpenFileName(self, tr("选择游戏路径"), "", tr("所有文件 (*)") + ";;All Files (*)")
         if not game_path or cfg.game_path == game_path:
             return
         cfg.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
     def __onLauncherPathCardClicked(self):
-        launcher_path, _ = QFileDialog.getOpenFileName(self, "选择米哈游启动器路径", "", "All Files (*)")
+        launcher_path, _ = QFileDialog.getOpenFileName(self, tr("选择米哈游启动器路径"), "", tr("所有文件 (*)") + ";;All Files (*)")
         if not launcher_path or cfg.launcher_path == launcher_path:
             return
         cfg.set_value("launcher_path", launcher_path)
@@ -1385,7 +1395,7 @@ class SettingInterface(ScrollArea):
     #         parent=self
     #     )
     def __onScriptPathCardClicked(self):
-        script_path, _ = QFileDialog.getOpenFileName(self, "脚本或程序路径", "", "脚本或可执行文件 (*.ps1 *.bat *.exe)")
+        script_path, _ = QFileDialog.getOpenFileName(self, tr("脚本或程序路径"), "", tr("脚本或可执行文件 (*.ps1 *.bat *.exe)"))
         if not script_path or cfg.script_path == script_path:
             return
         cfg.set_value("script_path", script_path)

@@ -101,7 +101,7 @@
 - 육성 목표에 따른 동적 던전 선택 지원 [#751](https://github.com/moesnow/March7thAssistant/pull/751)
 - 일일 훈련이 이제 임무 완료 상태를 읽고 작업 실행을 조정합니다 [#753](https://github.com/moesnow/March7thAssistant/pull/753)
 - 기업용 위챗 봇 푸시 방식 이미지 전송 지원 [#742](https://github.com/moesnow/March7thAssistant/pull/742)
-- 특정 상황에서 빛을 쫓아 금을 줍다 캐릭터 선택 오류 수정 [#747](https://github.com/moesnow/March7thAssistant/pull/747)
+- 특정 상황에서 상시 도전 캐릭터 선택 오류 수정 [#747](https://github.com/moesnow/March7thAssistant/pull/747)
 - 임무 완료 후 스크립트 선택 시 튕김 현상 수정
 - 가끔 게임 프로세스를 정상적으로 종료하지 못하던 문제 수정
 - UI 변경으로 인한 차분 우주 및 시뮬레이션 우주 자동 전투 감지 이상 수정
@@ -290,7 +290,7 @@
 - 자동 로그인 감지 이상 [#336](https://github.com/moesnow/March7thAssistant/issues/336)
 - 고해상도 화면에서 지원 기능 이상 [#329](https://github.com/moesnow/March7thAssistant/issues/329)
 - 고치(적) 줄바꿈 오류 수정 [#328](https://github.com/moesnow/March7thAssistant/issues/328)
-- 빛을 쫓아 금을 줍다 장면 로딩 대기 시간 연장 [#322](https://github.com/moesnow/March7thAssistant/issues/322)
+- 상시 도전 장면 로딩 대기 시간 연장 [#322](https://github.com/moesnow/March7thAssistant/issues/322)
 - 장신구 추출 도전 시작 로직 최적화 [#325](https://github.com/moesnow/March7thAssistant/issues/325)
 - "시작 실패" 오류 메시지 최적화
 
@@ -312,7 +312,7 @@
 - 2.3 버전 신규 스테이지 지원 [#277](https://github.com/moesnow/March7thAssistant/pull/277)
 - Bilibili 서버 지원 [#269](https://github.com/moesnow/March7thAssistant/pull/269)
 - 글로벌 서버 계정 조작 지원 [#268](https://github.com/moesnow/March7thAssistant/pull/268)
-- 빛을 쫓아 금을 줍다 및 지원 캐릭터 "반디" 선택 지원
+- 상시 도전 및 지원 캐릭터 "반디" 선택 지원
 - HoYoPlay 런처 기본 설치 경로 판단 지원
 
 ### 수정
@@ -324,7 +324,7 @@
 
 ### 새로운 기능
 - 2.2 버전 신규 스테이지 지원
-- 빛을 쫓아 금을 줍다 및 지원 캐릭터 "어벤츄린", "로빈" 선택 지원
+- 상시 도전 및 지원 캐릭터 "어벤츄린", "로빈" 선택 지원
 - 설정에서 시뮬레이션 우주 운명의 길 및 난이도 설정 지원 [#223](https://github.com/moesnow/March7thAssistant/pull/223)
 - 설정에서 필드 정리 구매 옵션 설정 지원 [#238](https://github.com/moesnow/March7thAssistant/pull/238)
 - 설정 내 다중 계정 관리 기능 추가 [#224](https://github.com/moesnow/March7thAssistant/pull/224)
@@ -357,10 +357,10 @@
 - 의뢰 보상 일괄 수령으로 변경
 - "고치 (적)" 지역 검색으로 변경
 - 출석 이벤트 스위치 병합
-- 빛을 쫓아 금을 줍다 및 지원 캐릭터 "아케론", "갤러거" 선택 지원
+- 상시 도전 및 지원 캐릭터 "아케론", "갤러거" 선택 지원
 
 ### 수정
-- 레드 닷이 빛을 쫓아 금을 줍다 2번째 방 판단 실패 유발
+- 레드 닷이 상시 도전 2번째 방 판단 실패 유발
 - 합성 임무가 인터페이스 변경으로 인해 완료 불가
 - "고치 (적)" 하위 호환
 
@@ -413,7 +413,7 @@
 
 ### 새로운 기능
 - 뽑기 기록 내보내기 및 간단 분석 ([SRGF](https://uigf.org/zh/standards/srgf.html) 데이터 형식 가져오기 및 내보내기 지원)
-- 빛을 쫓아 금을 줍다 및 지원 캐릭터 "스파클" 선택 지원
+- 상시 도전 및 지원 캐릭터 "스파클" 선택 지원
 
 ### 수정
 - 특수 상황에서 다운로드 실패
@@ -435,7 +435,7 @@
 
 ### 새로운 기능
 - 파티 편성 인터페이스 최적화
-- 홈 화면 일부 모듈 다중 옵션 지원 (필드 정리, 시뮬레이션 우주, 빛을 쫓아 금을 줍다)
+- 홈 화면 일부 모듈 다중 옵션 지원 (필드 정리, 시뮬레이션 우주, 상시 도전)
 - 필드 정리 및 시뮬레이션 우주 설정 파일 초기화 지원
 - "게임 리셋 시간", "자동 해상도 변경 활성화", "게임 경로 자동 설정 활성화" 옵션 추가
 - 일부 인터페이스 인터넷 재연결 지원
@@ -472,7 +472,7 @@
 - "고치 (적)" 임계값 요구사항 낮춤
 - "「만능 합성기」 1회 사용" 합성 재료 "미광 원핵"으로 변경
 - 버전 업데이트 후 "기억" 전환 이상
-- 버전 업데이트 후 "빛을 쫓아 금을 줍다" 전환 이상
+- 버전 업데이트 후 "상시 도전" 전환 이상
 - 출석 이벤트 이미지 읽기 실패
 
 ## v1.7.7

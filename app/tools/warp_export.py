@@ -12,7 +12,9 @@ import time
 import glob
 import json
 import re
+import re
 import os
+from module.localization import tr
 
 
 def srgf_to_uigf_hkrpg(srgf: dict) -> dict:
@@ -189,18 +191,18 @@ class WarpExport:
                     rank_5.append([name, grand_total])
                     grand_total = 0
 
-            content += f"一共 {self.__set_color(total, 'DeepSkyBlue')} 抽 已累计 {self.__set_color(grand_total, 'LimeGreen')} 抽未出5星\n\n"
+            content += f"一共 {self.__set_color(total, 'DeepSkyBlue')} {tr('抽')} {tr('已累计')} {self.__set_color(grand_total, 'LimeGreen')} {tr('抽未出5星')}\n\n"
             for star, count in rank_type.items():
                 percentage = count / total * 100
                 color = 'Goldenrod' if star == '5' else 'darkorchid' if star == '4' else 'DodgerBlue'
-                text = f"{star}星: {count:<4d} [{percentage:.2f}%]"
+                text = f"{star}{tr('星')}: {count:<4d} [{percentage:.2f}%]"
                 content += f"{self.__set_color(text, color)}\n\n"
             if len(rank_5) > 0:
                 rank_5_str = ' '.join([f"{self.__set_color(f'{key}[{value}]', self.__get_random_color(theme))}" for key, value in rank_5])
                 rank_5_sum = sum(value for _, value in rank_5)
                 rank_5_avg = rank_5_sum / len(rank_5)
-                content += f"5星历史记录: {rank_5_str}\n\n"
-                content += f"五星平均出货次数为: {self.__set_color(f'{rank_5_avg:.2f}', 'green')}\n\n<hr>"
+                content += f"{tr('5星历史记录')}: {rank_5_str}\n\n"
+                content += f"{tr('五星平均出货次数为')}: {self.__set_color(f'{rank_5_avg:.2f}', 'green')}\n\n<hr>"
             else:
                 content += "<hr>"
 
@@ -314,16 +316,16 @@ class WarpExport:
                 retcode = response.json()['retcode']
                 if retcode != 0:
                     if retcode == -101:
-                        self.show_info_message("请重新打开游戏抽卡记录", "身份认证已过期")
+                        self.show_info_message(tr("请重新打开游戏抽卡记录"), tr("身份认证已过期"))
                         return None
                     else:
-                        self.show_info_message(response.json()['message'], "请求出错")
+                        self.show_info_message(response.json()['message'], tr("请求出错"))
                         return None
                 else:
-                    self.show_info_message(f'正在获取{self.gacha_type[gacha_type]}第{page}页')
+                    self.show_info_message(tr('正在获取{self.gacha_type[gacha_type]}第{page}页').format(self=self, gacha_type=gacha_type, page=page))
                     return response.json()['data']
             except Exception:
-                self.show_info_message('等待5秒后重试，剩余重试次数：' + str(max_retry - i) + '', "请求出错")
+                self.show_info_message(tr('等待5秒后重试，剩余重试次数：') + str(max_retry - i) + '', tr("请求出错"))
                 time.sleep(5)
         return None
 
@@ -334,19 +336,19 @@ class WarpExport:
         if self.info['uid'] == "":
             self.info['uid'] = item['uid']
         elif self.info['uid'] != item['uid']:
-            self.show_info_message("UID与原始数据不一致", "请求出错")
+            self.show_info_message(tr("UID与原始数据不一致"), tr("请求出错"))
             return False
 
         if self.info['lang'] == "":
             self.info['lang'] = item['lang']
         elif self.info['lang'] != item['lang']:
-            self.show_info_message("语言与原始数据不一致", "请求出错")
+            self.show_info_message(tr("语言与原始数据不一致"), tr("请求出错"))
             return False
 
         if self.info['region_time_zone'] is None:
             self.info['region_time_zone'] = region_time_zone
         elif self.info['region_time_zone'] != region_time_zone:
-            self.show_info_message("时区与原始数据不一致", "请求出错")
+            self.show_info_message(tr("时区与原始数据不一致"), tr("请求出错"))
             return False
 
         return True
@@ -469,7 +471,7 @@ class WarpThread(QThread):
             if not url:
                 # self.parent.stateTooltip.setTitle("未找到URL")
                 # self.parent.stateTooltip.setContent("请确认是否已打开游戏抽卡记录")
-                self.infoSignal.emit("请确认是否已打开游戏抽卡记录", "未找到URL")
+                self.infoSignal.emit(tr("请确认是否已打开游戏抽卡记录"), tr("未找到URL"))
                 self.warpSignal.emit(WarpStatus.FAILURE)
                 return
 
@@ -495,12 +497,12 @@ class WarpThread(QThread):
                 self.warpSignal.emit(WarpStatus.FAILURE)
         except Exception:
             # self.parent.stateTooltip.setContent("跃迁数据获取失败(´▔∀▔`)")
-            self.infoSignal.emit("跃迁数据获取失败(´▔∀▔`)")
+            self.infoSignal.emit(tr("跃迁数据获取失败(´▔∀▔`)"))
             self.warpSignal.emit(WarpStatus.FAILURE)
 
 
 def warpExport(self, type="normal"):
-    self.stateTooltip = StateToolTip("抽卡记录", "正在获取跃迁数据...", self.window())
+    self.stateTooltip = StateToolTip(tr("抽卡记录"), tr("正在获取跃迁数据..."), self.window())
     self.stateTooltip.closeButton.setVisible(False)
     self.stateTooltip.move(self.stateTooltip.getSuitablePos())
     self.stateTooltip.show()
@@ -509,7 +511,7 @@ def warpExport(self, type="normal"):
 
     def handle_warp(status):
         if status == WarpStatus.SUCCESS:
-            self.stateTooltip.setContent("跃迁数据获取完成(＾∀＾●)")
+            self.stateTooltip.setContent(tr("跃迁数据获取完成(＾∀＾●)"))
             self.stateTooltip.setState(True)
             self.stateTooltip = None
             self.updateBtn.setEnabled(True)

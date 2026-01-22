@@ -274,7 +274,7 @@ class LogInterface(ScrollArea):
             else:
                 # 计算具体时间
                 time_str = next_task.get('time')
-            self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}，下次: {time_str} ({next_task.get("name", "")})'))
+            self.scheduleStatusLabel.setText(self.tr('已启用定时任务数: {count}，下次: {time} ({name})').format(count=len(enabled), time=time_str, name=next_task.get("name", "")))
         else:
             # self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}'))
             self.scheduleStatusLabel.setText(self.tr('尚未配置定时任务'))
@@ -410,10 +410,10 @@ class LogInterface(ScrollArea):
 
                 if self.isTaskRunning():
                     if conflict_mode == 'skip':
-                        self.appendLog(self.tr(f"已有任务在运行，按配置跳过计划任务: {task_for_start.get('name')}\n"))
+                        self.appendLog(self.tr("已有任务在运行，按配置跳过计划任务: {}").format(task_for_start.get('name')) + "\n")
                         continue
                     elif conflict_mode == 'stop':
-                        self.appendLog(self.tr(f"已有任务在运行，按配置停止当前任务并在其结束后启动: {task_for_start.get('name')}\n"))
+                        self.appendLog(self.tr("已有任务在运行，按配置停止当前任务并在其结束后启动: {}").format(task_for_start.get('name')) + "\n")
                         # 排队延迟启动：保存元数据与任务字典，调用 stopTask 停止当前任务
                         try:
                             self._pending_start_task_after_stop = (t, task_for_start)
@@ -483,7 +483,7 @@ class LogInterface(ScrollArea):
 
             executable_path = os.path.abspath(program)
             if not os.path.exists(executable_path):
-                self.appendLog(f"错误: 未找到可执行文件 {executable_path}\n")
+                self.appendLog(self.tr("错误: 未找到可执行文件 {}").format(executable_path) + "\n")
                 self._updateFinishedStatus(-1)
                 return
             # 将工作目录设置为程序所在目录，确保相对路径正常工作
@@ -505,7 +505,7 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             self.current_task = program
-            self.statusLabel.setText(self.tr(f'正在运行: {name}'))
+            self.statusLabel.setText(self.tr('正在运行: {}').format(name))
             self.stopButton.setEnabled(True)
 
             if timeout > 0:
@@ -536,10 +536,10 @@ class LogInterface(ScrollArea):
         command = str(task)
         task_display_name = TASK_NAMES.get(command, command)
         self.clearLog()
-        self.appendLog(f"========== 开始任务: {task_display_name} ==========\n")
+        self.appendLog(self.tr("========== 开始任务: {} ==========").format(task_display_name) + "\n")
 
         # 更新状态
-        self.statusLabel.setText(self.tr(f'正在运行: {task_display_name}'))
+        self.statusLabel.setText(self.tr('正在运行: {}').format(task_display_name))
         # self.statusLabel.setStyleSheet("color: #0078d4;")
         self.stopButton.setEnabled(True)
 
@@ -569,9 +569,9 @@ class LogInterface(ScrollArea):
         if getattr(sys, 'frozen', False):
             executable_path = os.path.abspath("./March7th Assistant.exe")
             if not os.path.exists(executable_path):
-                self.appendLog("错误: 未找到可执行文件 March7th Assistant.exe\n")
-                self.appendLog("请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次\n")
-                self.appendLog("具体操作方法可以参考“常见问题”（FAQ）\n")
+                self.appendLog(self.tr("错误: 未找到可执行文件 March7th Assistant.exe") + "\n")
+                self.appendLog(self.tr("请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次") + "\n")
+                self.appendLog(self.tr("具体操作方法可以参考“常见问题”（FAQ）") + "\n")
                 self._updateFinishedStatus(-1)
                 return
             # 将工作目录设置为可执行文件所在目录
@@ -1172,13 +1172,13 @@ class LogInterface(ScrollArea):
     def _post_action_label(self, action: str) -> str:
         """返回 post_action 的本地化标签"""
         mapping = {
-            'None': '无操作',
-            'Shutdown': '关机',
-            'Sleep': '睡眠',
-            'Hibernate': '休眠',
-            'Restart': '重启',
-            'Logoff': '注销',
-            'TurnOffDisplay': '关闭显示器',
+            'None': self.tr('无操作'),
+            'Shutdown': self.tr('关机'),
+            'Sleep': self.tr('睡眠'),
+            'Hibernate': self.tr('休眠'),
+            'Restart': self.tr('重启'),
+            'Logoff': self.tr('注销'),
+            'TurnOffDisplay': self.tr('关闭显示器'),
         }
         return mapping.get(action, str(action))
 

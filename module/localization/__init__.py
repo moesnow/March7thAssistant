@@ -1,7 +1,7 @@
 # coding:utf-8
 """
-로컬라이제이션 모듈
-한국어/중국어 UI 언어 지원
+Localization Module
+Support for Chinese/Korean/English UI languages
 """
 import json
 import os
@@ -13,8 +13,8 @@ _locale_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__fil
 
 def load_language(lang_code: str = None):
     """
-    언어 파일 로드
-    :param lang_code: 언어 코드 (zh_CN, ko_KR)
+    Load language file
+    :param lang_code: Language code (zh_CN, ko_KR, en_US)
     """
     global _current_lang, _translations
     
@@ -39,10 +39,10 @@ def load_language(lang_code: str = None):
 
 def tr(text: str) -> str:
     """
-    번역 함수
-    키가 없으면 원본 텍스트 반환 (중국어 원본 유지)
-    :param text: 번역할 텍스트 (중국어 원본)
-    :return: 번역된 텍스트
+    Translation function
+    Returns original text if key is missing (Keeps Chinese source)
+    :param text: Text to translate (Chinese source)
+    :return: Translated text
     """
     if not text:
         return text
@@ -50,13 +50,14 @@ def tr(text: str) -> str:
 
 
 def get_current_language() -> str:
-    """현재 언어 코드 반환"""
+    """Get current language code"""
     return _current_lang
 
 
 def get_available_languages() -> dict:
-    """사용 가능한 언어 목록 반환"""
+    """Get list of available languages"""
     return {
         "简体中文": "zh_CN",
-        "한국어": "ko_KR"
+        "한국어": "ko_KR",
+        "English": "en_US"
     }

@@ -58,13 +58,13 @@ class PushSettingCardMirrorchyan(SettingCard):
         self.title = title
         self.configname = configname
 
-        self.button3 = QPushButton("交流反馈", self)
+        self.button3 = QPushButton(tr("交流反馈"), self)
         self.button3.setObjectName('primaryButton')
         self.hBoxLayout.addWidget(self.button3, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
         self.button3.clicked.connect(self.__onclicked3)
 
-        self.button2 = QPushButton("获取 CDK", self)
+        self.button2 = QPushButton(tr("获取 CDK"), self)
         self.button2.setObjectName('primaryButton')
         self.hBoxLayout.addWidget(self.button2, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
@@ -117,7 +117,7 @@ class PushSettingCardCode(PushSettingCard):
 
     def __init__(self, text, icon, title, configname, parent=None):
         self.parent = parent
-        super().__init__(text, icon, title, configname, "批量使用兑换码，每行一个，自动过滤空格等无效字符", parent)
+        super().__init__(text, icon, title, configname, tr("批量使用兑换码，每行一个，自动过滤空格等无效字符"), parent)
         self.button.clicked.connect(self.__onclicked)
 
     # ===================== 主入口 =====================
@@ -158,7 +158,7 @@ class PushSettingCardCode(PushSettingCard):
         mb = self.message_box
 
         if self._is_fetching():
-            self._info_warning('正在获取', '请等待当前获取完成', mb)
+            self._info_warning(tr('正在获取'), tr('请等待当前获取完成'), mb)
             return
 
         server = self._get_server()
@@ -182,7 +182,7 @@ class PushSettingCardCode(PushSettingCard):
 
         thread.start()
 
-        self._info_success('开始获取', '正在获取最新兑换码...', mb)
+        self._info_success(tr('开始获取'), tr('正在获取最新兑换码...'), mb)
 
     def _on_fetch_finished(self, codes, err):
         mb = self.message_box
@@ -192,14 +192,14 @@ class PushSettingCardCode(PushSettingCard):
             return
 
         if err:
-            self._info_warning('获取最新兑换码失败', err, mb)
+            self._info_warning(tr('获取最新兑换码失败'), err, mb)
         elif not codes:
-            self._info_warning('未获取到兑换码', '', mb)
+            self._info_warning(tr('未获取到兑换码'), '', mb)
         else:
             mb.textEdit.setText('\n'.join(codes))
             self._info_success(
-                '获取成功',
-                f'已获取{len(codes)}个兑换码',
+                tr('获取成功'),
+                tr('已获取 {} 个兑换码').format(len(codes)),
                 mb
             )
 

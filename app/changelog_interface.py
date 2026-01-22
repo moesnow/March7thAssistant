@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 
 from qfluentwidgets import ScrollArea
 from .common.style_sheet import StyleSheet
+from module.localization import tr
 
 import markdown
 import sys
@@ -15,7 +16,7 @@ class ChangelogInterface(ScrollArea):
         super().__init__(parent=parent)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel("更新日志", self)
+        self.titleLabel = QLabel(tr("更新日志"), self)
         self.contentLabel = QLabel("html_content", parent)
         html_style = """
 <style>
@@ -25,8 +26,21 @@ a {
 }
 </style>
 """
+        from module.config import cfg
+        changelog_file = "./assets/docs/Changelog.md"
+        if hasattr(cfg, 'ui_language'):
+            if cfg.ui_language == "ko_KR":
+                import os
+                ko_changelog_file = "./assets/docs/Changelog_ko.md"
+                if os.path.exists(ko_changelog_file):
+                    changelog_file = ko_changelog_file
+            elif cfg.ui_language == "en_US":
+                import os
+                en_changelog_file = "./assets/docs/Changelog_en.md"
+                if os.path.exists(en_changelog_file):
+                    changelog_file = en_changelog_file
         try:
-            with open("./assets/docs/Changelog.md", 'r', encoding='utf-8') as file:
+            with open(changelog_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
                 self.content = '\n'.join(self.content.split('\n')[2:])
         except FileNotFoundError:

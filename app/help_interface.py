@@ -70,11 +70,17 @@ th, td {
         # Load Tutorial based on language setting
         from module.config import cfg
         tutorial_file = "./assets/docs/Tutorial.md"
-        if hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR":
-            import os
-            ko_file = "./assets/docs/Tutorial_ko.md"
-            if os.path.exists(ko_file):
-                tutorial_file = ko_file
+        if hasattr(cfg, 'ui_language'):
+            if cfg.ui_language == "ko_KR":
+                import os
+                ko_file = "./assets/docs/Tutorial_ko.md"
+                if os.path.exists(ko_file):
+                    tutorial_file = ko_file
+            elif cfg.ui_language == "en_US":
+                import os
+                en_file = "./assets/docs/Tutorial_en.md"
+                if os.path.exists(en_file):
+                    tutorial_file = en_file
         try:
             with open(tutorial_file, 'r', encoding='utf-8') as file:
                 self.content = file.read().replace('/assets/docs/Background.md', 'https://m7a.top/#/assets/docs/Background').replace('/assets/docs/Docker.md', 'https://m7a.top/#/assets/docs/Docker')
@@ -100,11 +106,17 @@ a {
 """
         # Load FAQ based on language setting
         faq_file = "./assets/docs/FAQ.md"
-        if hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR":
-            import os
-            ko_faq_file = "./assets/docs/FAQ_ko.md"
-            if os.path.exists(ko_faq_file):
-                faq_file = ko_faq_file
+        if hasattr(cfg, 'ui_language'):
+            if cfg.ui_language == "ko_KR":
+                import os
+                ko_faq_file = "./assets/docs/FAQ_ko.md"
+                if os.path.exists(ko_faq_file):
+                    faq_file = ko_faq_file
+            elif cfg.ui_language == "en_US":
+                import os
+                en_faq_file = "./assets/docs/FAQ_en.md"
+                if os.path.exists(en_faq_file):
+                    faq_file = en_faq_file
         try:
             with open(faq_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
@@ -168,6 +180,41 @@ th, td {
 | 재료 1회 합성                          |   +100  |   삭제됨  |
 | 소모품 1개 사용                         |   +100  |   삭제됨  |
         """
+        elif hasattr(cfg, 'ui_language') and cfg.ui_language == "en_US":
+            self.content = """
+| Task Description                      | Activity | Support  |
+| ------------------------------------- | -------- | -------- |
+| Log in to game                        |   +100   |   ✅     |
+| Dispatch 1 assignment                 |   +100   |   ✅     |
+| Consume 120 Trailblaze Power          |   +200   |   ✅     |
+| Defeat 20 enemies                     |   +100   |   ✅     |
+| Win 1 battle with support character   |   +200   |   ✅     |
+| Use Omni-Synthesizer 1 time           |   +100   |   ✅    |
+| Level up any Relic 1 time             |   +100   |   ❌    |
+| Complete Divergent Universe or Currency Wars |   +500   |   ✅    |
+| Complete 1 Daily Quest                |   +200  |   Removed  |
+| Take 1 Photo                          |   +100   |   Removed  |
+| Complete Calyx (Golden) 1 time        |   +100  |   Removed  |
+| Complete Calyx (Crimson) 1 time       |   +100  |   Removed  |
+| Complete Stagnant Shadow 1 time       |   +100  |   Removed  |
+| Complete Cavern of Corrosion 1 time   |   +100  |   Removed  |
+| Complete Echo of War 1 time           |   +200  |   Removed  |
+| Complete Forgotten Hall 1 time        |   +200  |   Removed  |
+| Clear 1 area in Simulated Universe    |   +200  |   Removed  |
+| Complete Simulated Universe 1 time    |   +500  |   Removed  |
+| Trigger Weakness Break 5 times        |   +100  |   Removed  |
+| Trigger 3 different Weakness Breaks   |   +100  |   Removed  |
+| Use Technique 2 times                 |   +100  |   Removed  |
+| Enter battle with Weakness & win 3 times |   +100  |   Removed  |
+| Destroy 3 destructible objects        |   +200  |   Removed  |
+| Deal finishing blow with Ultimate 1 time |   +200  |   Removed  |
+| Level up any Character 1 time         |   +100  |   Removed  |
+| Level up any Light Cone 1 time        |   +100  |   Removed  |
+| Salvage any Relic 1 time              |   +100  |   Removed  |
+| Synthesize Consumable 1 time          |   +100  |   Removed  |
+| Synthesize Material 1 time            |   +100  |   Removed  |
+| Use Consumable 1 time                 |   +100  |   Removed  |
+        """
         else:
             self.content = """
 | 任务描述                             | 活跃度 | 支持情况 |
@@ -220,11 +267,17 @@ a {
 """
         # Load Changelog based on language setting
         changelog_file = "./assets/docs/Changelog.md"
-        if hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR":
-            import os
-            ko_changelog_file = "./assets/docs/Changelog_ko.md"
-            if os.path.exists(ko_changelog_file):
-                changelog_file = ko_changelog_file
+        if hasattr(cfg, 'ui_language'):
+            if cfg.ui_language == "ko_KR":
+                import os
+                ko_changelog_file = "./assets/docs/Changelog_ko.md"
+                if os.path.exists(ko_changelog_file):
+                    changelog_file = ko_changelog_file
+            elif cfg.ui_language == "en_US":
+                import os
+                en_changelog_file = "./assets/docs/Changelog_en.md"
+                if os.path.exists(en_changelog_file):
+                    changelog_file = en_changelog_file
         try:
             with open(changelog_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()

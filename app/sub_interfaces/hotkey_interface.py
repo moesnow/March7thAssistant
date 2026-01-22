@@ -5,6 +5,7 @@ from qfluentwidgets import MessageBox
 
 from app.card.pushsettingcard1 import PushSettingCardKey
 from module.config import cfg
+from module.localization import tr
 
 
 class HotkeyInterface(MessageBox):
@@ -12,13 +13,13 @@ class HotkeyInterface(MessageBox):
 
     def __init__(self, parent=None):
         configlist = {
-            "秘技（只对清体力和逐光捡金场景生效）": "hotkey_technique",
-            "地图": "hotkey_map",
-            "跃迁": "hotkey_warp",
-            "停止任务（全局热键，支持后台）": "hotkey_stop_task"
+            tr("秘技（只对清体力和逐光捡金场景生效）"): "hotkey_technique",
+            tr("地图"): "hotkey_map",
+            tr("跃迁"): "hotkey_warp",
+            tr("停止任务（全局热键，支持后台）"): "hotkey_stop_task"
         }
 
-        super().__init__("按键设置", "", parent)
+        super().__init__(tr("按键设置"), "", parent)
         self.configlist = configlist
 
         self.backup_config = {}
@@ -28,8 +29,8 @@ class HotkeyInterface(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -49,7 +50,7 @@ class HotkeyInterface(MessageBox):
                 icon = FIF.SETTING
 
             pushButton = PushSettingCardKey(
-                '按住以修改',
+                tr('按住以修改'),
                 icon,
                 name,
                 config,

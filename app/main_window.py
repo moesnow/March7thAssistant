@@ -198,7 +198,7 @@ class MainWindow(MSFluentWindow):
             NavigationBarPushButton(FIF.HEART, tr('赞赏'), isSelectable=False),
             lambda: MessageBoxSupport(
                 tr('支持作者🥰'),
-                tr('此程序为免费开源项目，如果你付了钱请立刻退款\\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\\n您的支持就是作者开发和维护项目的动力🚀'),
+                tr('此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀'),
                 './assets/app/images/sponsor.jpg',
                 self
             ).exec(),
@@ -310,8 +310,8 @@ class MainWindow(MSFluentWindow):
         # 检查是否有任务正在运行
         if self.logInterface.isTaskRunning():
             InfoBar.warning(
-                title='任务正在运行',
-                content="请先停止当前任务后再启动新任务",
+                title=tr('任务正在运行'),
+                content=tr("请先停止当前任务后再启动新任务"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -407,8 +407,8 @@ class MainWindow(MSFluentWindow):
             # 只有在窗口可见时才显示提示
             if self.isVisible():
                 InfoBar.success(
-                    title='配置已更新',
-                    content="检测到配置文件变化，已自动重新加载",
+                    title=tr('配置已更新'),
+                    content=tr("检测到配置文件变化，已自动重新加载"),
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -419,7 +419,7 @@ class MainWindow(MSFluentWindow):
             # 只有在窗口可见时才显示提示
             if self.isVisible():
                 InfoBar.warning(
-                    title='配置加载失败',
+                    title=tr('配置加载失败'),
                     content=str(e),
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -497,7 +497,7 @@ class MainWindow(MSFluentWindow):
                 self.hide()
                 self.tray_icon.showMessage(
                     'March7th Assistant',
-                    '程序已最小化到托盘',
+                    tr('程序已最小化到托盘'),
                     QSystemTrayIcon.Information,
                     2000
                 )
@@ -532,7 +532,7 @@ class MainWindow(MSFluentWindow):
             self.hide()
             self.tray_icon.showMessage(
                 'March7th Assistant',
-                '程序已最小化到托盘',
+                tr('程序已最小化到托盘'),
                 QSystemTrayIcon.Information,
                 2000
             )
@@ -544,8 +544,8 @@ class MainWindow(MSFluentWindow):
         game = get_game_controller()
         if cfg.cloud_game_enable and cfg.browser_type == "integrated" and not game.is_integrated_browser_downloaded():
             InfoBar.warning(
-                title='正在下载内置浏览器(ง •̀_•́)ง',
-                content="下载成功后，将自动启动云·星穹铁道",
+                title=tr('正在下载内置浏览器(ง •̀_•́)ง'),
+                content=tr("下载成功后，将自动启动云·星穹铁道"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -554,7 +554,7 @@ class MainWindow(MSFluentWindow):
             )
         elif cfg.cloud_game_enable:
             InfoBar.warning(
-                title='正在启动游戏(❁´◡`❁)',
+                title=tr('正在启动游戏(❁´◡`❁)'),
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -575,7 +575,7 @@ class MainWindow(MSFluentWindow):
     def on_game_launched(self, result):
         if result == GameStartStatus.SUCCESS:
             InfoBar.success(
-                title='启动成功(＾∀＾●)',
+                title=tr('启动成功(＾∀＾●)'),
                 content="",
                 orient=Qt.Horizontal,
                 isClosable=True,
@@ -585,8 +585,8 @@ class MainWindow(MSFluentWindow):
             )
         elif result == GameStartStatus.BROWSER_DOWNLOAD_FAIL:
             InfoBar.warning(
-                title='浏览器或驱动下载失败 (╥╯﹏╰╥)',
-                content="请检查网络连接是否正常",
+                title=tr('浏览器或驱动下载失败 (╥╯﹏╰╥)'),
+                content=tr("请检查网络连接是否正常"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -595,8 +595,8 @@ class MainWindow(MSFluentWindow):
             )
         elif result == GameStartStatus.BROWSER_LAUNCH_FAIL:
             InfoBar.warning(
-                title='云游戏启动失败(╥╯﹏╰╥)',
-                content="请检查所选浏览器是否存在，网络连接是否正常",
+                title=tr('云游戏启动失败(╥╯﹏╰╥)'),
+                content=tr("请检查所选浏览器是否存在，网络连接是否正常"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -605,8 +605,8 @@ class MainWindow(MSFluentWindow):
             )
         elif result == GameStartStatus.LOCAL_LAUNCH_FAIL:
             InfoBar.warning(
-                title='游戏路径配置错误(╥╯﹏╰╥)',
-                content="请在“设置”-->“程序”中配置",
+                title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
+                content=tr("请在“设置”-->“程序”中配置"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -615,7 +615,7 @@ class MainWindow(MSFluentWindow):
             )
         else:
             InfoBar.warning(
-                title='启动失败',
+                title=tr('启动失败'),
                 content=str(self.game_launch_thread.error_msg),
                 orient=Qt.Horizontal,
                 isClosable=True,

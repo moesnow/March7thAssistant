@@ -24,7 +24,7 @@
 
 [简体中文](./README.md) | [繁體中文](./README_TW.md) | [English](./README_EN.md) | [日本語](./README_JA.md) | **한국어**
 
-**현재 게임 내 언어 설정은 간체 중국어만 지원합니다.**
+**게임 내 언어는 간체 중국어만 지원하지만, 프로그램 인터페이스는 한국어와 영어를 지원합니다.**
 
 시작하려면, 다음을 방문하세요: [사용 튜토리얼](https://m7a.top/#/assets/docs/Tutorial)
 
@@ -39,6 +39,7 @@
 - **가챠 기록 내보내기**: [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 표준 지원, **자동 대화**
 - 일일 훈련 등 임무 완료 시 **푸시 알림** 지원
 - 임무가 초기화되거나 개척력이 지정된 값까지 회복되면 **자동 시작**
+- **다국어 지원**: 한국어 및 영어 인터페이스 지원 (설정에서 변경 가능)
 - 임무 완료 후 **알림음 재생, 게임 자동 종료 또는 컴퓨터 종료 등**
 
 > 시뮬레이션 우주는 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 프로젝트를, 토벌은 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 프로젝트를 호출하여 사용합니다.
