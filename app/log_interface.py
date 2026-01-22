@@ -18,6 +18,7 @@ from module.config import cfg
 from utils.tasks import TASK_NAMES
 from .schedule_dialog import ScheduleManagerDialog
 from module.notification import notif
+from module.localization import tr as ltr
 import shlex
 import threading
 import subprocess as sp
@@ -33,6 +34,9 @@ class LogInterface(ScrollArea):
     stopTaskRequested = Signal()
     # 线程安全的日志信号（用于从后台线程发送日志）
     logMessage = Signal(str)
+
+    def tr(self, text: str) -> str:
+        return ltr(text)
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -97,13 +101,13 @@ class LogInterface(ScrollArea):
         self.headerLayout = QHBoxLayout(self.headerWidget)
         self.headerLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.titleLabel = StrongBodyLabel('任务日志')
+        self.titleLabel = StrongBodyLabel(self.tr('任务日志'))
         if sys.platform == 'win32':
             self.titleLabel.setFont(QFont('Microsoft YaHei', 16, QFont.Bold))
         else:
             self.titleLabel.setFont(QFont('PingFang SC', 16, QFont.Bold))
 
-        self.statusLabel = BodyLabel('等待任务...')
+        self.statusLabel = BodyLabel(self.tr('等待任务...'))
         # self.statusLabel.setStyleSheet("color: gray;")
 
         self.headerLayout.addWidget(self.titleLabel)
@@ -118,13 +122,13 @@ class LogInterface(ScrollArea):
 
         if sys.platform == 'win32':
             hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
-            self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, self.tr(f'停止任务 ({hotkey})'))
+            self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, f"{self.tr('停止任务')} ({hotkey})")
         else:
             self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, self.tr('停止任务'))
         self.stopButton.clicked.connect(lambda: self.stopTask(user_initiated=True))
         self.stopButton.setEnabled(False)
 
-        self.clearButton = PushButton(FluentIcon.DELETE, '清空日志')
+        self.clearButton = PushButton(FluentIcon.DELETE, self.tr('清空日志'))
         self.clearButton.clicked.connect(self.clearLog)
 
         self.buttonLayout.addWidget(self.stopButton)
@@ -132,10 +136,10 @@ class LogInterface(ScrollArea):
         self.buttonLayout.addSpacing(20)
 
         # 定时任务配置（支持多个定时任务）
-        self.scheduleLabel = BodyLabel('定时任务')
+        self.scheduleLabel = BodyLabel(self.tr('定时任务'))
 
         # 打开定时任务管理配置弹窗
-        self.manageScheduleButton = PushButton('配置定时任务')
+        self.manageScheduleButton = PushButton(self.tr('配置定时任务'))
         self.manageScheduleButton.clicked.connect(self._openScheduleManager)
 
         self.scheduleStatusLabel = BodyLabel()
@@ -228,7 +232,7 @@ class LogInterface(ScrollArea):
         if sys.platform == 'win32':
             # 更新按钮文本
             hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
-            self.stopButton.setText(self.tr(f'停止任务 ({hotkey})'))
+            self.stopButton.setText(f"{self.tr('停止任务')} ({hotkey})")
         else:
             self.stopButton.setText(self.tr('停止任务'))
 
@@ -273,7 +277,7 @@ class LogInterface(ScrollArea):
             self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}，下次: {time_str} ({next_task.get("name", "")})'))
         else:
             # self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}'))
-            self.scheduleStatusLabel.setText('尚未配置定时任务')
+            self.scheduleStatusLabel.setText(self.tr('尚未配置定时任务'))
 
     def _openScheduleManager(self):
         """打开定时任务管理对话框"""
@@ -1236,10 +1240,10 @@ class LogInterface(ScrollArea):
                 pass
 
         if exit_code == 0:
-            self.statusLabel.setText('任务完成')
+            self.statusLabel.setText(self.tr('任务完成'))
             # self.statusLabel.setStyleSheet("color: green;")
         else:
-            self.statusLabel.setText('任务已停止')
+            self.statusLabel.setText(self.tr('任务已停止'))
             # self.statusLabel.setStyleSheet("color: orange;")
 
     def isTaskRunning(self):

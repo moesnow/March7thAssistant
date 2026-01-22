@@ -7,6 +7,7 @@ from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, Da
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
+from module.localization import tr
 import datetime
 import json
 import time
@@ -1044,17 +1045,17 @@ class MessageBoxCloseWindow(MessageBox):
 
     def __init__(self, parent=None):
         super().__init__(
-            '关闭确认',
-            '您希望如何处理程序?',
+            tr('关闭确认'),
+            tr('您希望如何处理程序?'),
             parent
         )
 
         # 修改按钮文本
-        self.yesButton.setText('最小化到托盘')
-        self.cancelButton.setText('关闭程序')
+        self.yesButton.setText(tr('最小化到托盘'))
+        self.cancelButton.setText(tr('关闭程序'))
 
         # 添加记住选择的复选框
-        self.rememberCheckBox = CheckBox('记住我的选择,下次不再询问', self)
+        self.rememberCheckBox = CheckBox(tr('记住我的选择,下次不再询问'), self)
         self.textLayout.addWidget(self.rememberCheckBox)
 
         # 存储用户的选择

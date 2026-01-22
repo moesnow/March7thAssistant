@@ -3,6 +3,7 @@ from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties
 from qfluentwidgets import qconfig, ScrollArea, Pivot
 from .common.style_sheet import StyleSheet
+from module.localization import tr
 import markdown
 import sys
 
@@ -16,7 +17,7 @@ class HelpInterface(ScrollArea):
         self.pivot = Pivot(self)
         self.stackedWidget = QStackedWidget(self)
 
-        self.helpLabel = QLabel("帮助", self)
+        self.helpLabel = QLabel(tr("帮助"), self)
         self.tutorialLabel = QLabel(parent)
         self.faqLabel = QLabel(parent)
         self.tasksLabel = QLabel(parent)
@@ -66,8 +67,16 @@ th, td {
 }
 </style>
 """
+        # Load Tutorial based on language setting
+        from module.config import cfg
+        tutorial_file = "./assets/docs/Tutorial.md"
+        if hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR":
+            import os
+            ko_file = "./assets/docs/Tutorial_ko.md"
+            if os.path.exists(ko_file):
+                tutorial_file = ko_file
         try:
-            with open("./assets/docs/Tutorial.md", 'r', encoding='utf-8') as file:
+            with open(tutorial_file, 'r', encoding='utf-8') as file:
                 self.content = file.read().replace('/assets/docs/Background.md', 'https://m7a.top/#/assets/docs/Background').replace('/assets/docs/Docker.md', 'https://m7a.top/#/assets/docs/Docker')
                 self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
@@ -89,8 +98,15 @@ a {
 }
 </style>
 """
+        # Load FAQ based on language setting
+        faq_file = "./assets/docs/FAQ.md"
+        if hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR":
+            import os
+            ko_faq_file = "./assets/docs/FAQ_ko.md"
+            if os.path.exists(ko_faq_file):
+                faq_file = ko_faq_file
         try:
-            with open("./assets/docs/FAQ.md", 'r', encoding='utf-8') as file:
+            with open(faq_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
                 self.content = '\n'.join(self.content.split('\n')[2:])
         except FileNotFoundError:
@@ -116,7 +132,44 @@ th, td {
 }
 </style>
 """
-        self.content = """
+        # Daily training tasks table - language based
+        if hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR":
+            self.content = """
+| 작업 설명                             | 활성도 | 지원 상태 |
+| ----------------------------------- | -------- | -------- |
+| 게임 로그인                             |   +100   |   ✅     |
+| 의뢰 1회 수행                          |   +100   |   ✅     |
+| 개척력 120pt 누적 소모                  |   +200   |   ✅     |
+| 적 20기 누적 처치                      |   +100   |   ✅     |
+| 지원 캐릭터 포함 전투 1회 승리          |   +200   |   ✅     |
+| '만능 합성기' 1회 사용                  |   +100   |   ✅    |
+| 임의 유물 레벨 1회 강화                  |   +100   |   ❌    |
+| '차분 우주' 또는 '화폐 전쟁' 1회 완료       |   +500   |   ✅    |
+| 일일 퀘스트 1개 완료                       |   +200  |   삭제됨  |
+| 사진 1회 촬영                              |   +100   |   삭제됨  |
+| '고치(금)' 1회 완료               |   +100  |   삭제됨  |
+| '고치(적)' 1회 완료               |   +100  |   삭제됨  |
+| '응결 허영' 1회 완료                    |   +100  |   삭제됨  |
+| '침식된 터널' 1회 완료                    |   +100  |   삭제됨  |
+| '전쟁의 여운' 1회 완료                    |   +200  |   삭제됨  |
+| '망각의 정원' 1회 완료                    |   +200  |   삭제됨  |
+| '시뮬레이션 우주'(임의 세계) 1개 구역 클리어   |   +200  |   삭제됨  |
+| '시뮬레이션 우주' 1회 완료                    |   +500  |   삭제됨  |
+| 약점 격파 효과 5회 누적 발동                |   +100  |   삭제됨  |
+| 한 전투에서 3가지 속성 약점 격파 발동   |   +100  |   삭제됨  |
+| 비술 2회 누적 사용                       |   +100  |   삭제됨  |
+| 약점 이용 전투 진입 후 3회 승리              |   +100  |   삭제됨  |
+| 파괴 가능 물체 3개 누적 파괴                   |   +200  |   삭제됨  |
+| 필살기로 결정타 1회 가하기              |   +200  |   삭제됨  |
+| 임의 캐릭터 레벨 1회 상승                  |   +100  |   삭제됨  |
+| 임의 광추 레벨 1회 상승                  |   +100  |   삭제됨  |
+| 임의 유물 1개 분해                       |   +100  |   삭제됨  |
+| 소모품 1회 합성                         |   +100  |   삭제됨  |
+| 재료 1회 합성                          |   +100  |   삭제됨  |
+| 소모품 1개 사용                         |   +100  |   삭제됨  |
+        """
+        else:
+            self.content = """
 | 任务描述                             | 活跃度 | 支持情况 |
 | ----------------------------------- | -------- | -------- |
 | 登录游戏                             |   +100   |   ✅     |
@@ -165,8 +218,15 @@ a {
 }
 </style>
 """
+        # Load Changelog based on language setting
+        changelog_file = "./assets/docs/Changelog.md"
+        if hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR":
+            import os
+            ko_changelog_file = "./assets/docs/Changelog_ko.md"
+            if os.path.exists(ko_changelog_file):
+                changelog_file = ko_changelog_file
         try:
-            with open("./assets/docs/Changelog.md", 'r', encoding='utf-8') as file:
+            with open(changelog_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
                 self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
@@ -184,10 +244,10 @@ a {
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
         # self.vBoxLayout.addWidget(self.tutorialLabel, 0, Qt.AlignTop)
-        self.addSubInterface(self.tutorialLabel, 'tutorialLabel', '使用教程')
-        self.addSubInterface(self.faqLabel, 'faqLabel', '常见问题')
-        self.addSubInterface(self.tasksLabel, 'tasksLabel', '每日实训')
-        self.addSubInterface(self.changelogLabel, 'changelogLabel', '更新日志')
+        self.addSubInterface(self.tutorialLabel, 'tutorialLabel', tr('使用教程'))
+        self.addSubInterface(self.faqLabel, 'faqLabel', tr('常见问题'))
+        self.addSubInterface(self.tasksLabel, 'tasksLabel', tr('每日实训'))
+        self.addSubInterface(self.changelogLabel, 'changelogLabel', tr('更新日志'))
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())

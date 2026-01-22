@@ -15,6 +15,8 @@ import os
 import sys
 
 
+from module.localization import tr
+
 class ToolsInterface(ScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -22,38 +24,38 @@ class ToolsInterface(ScrollArea):
         self.scrollWidget = QWidget()
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
-        self.toolsLabel = QLabel("工具箱", self)
+        self.toolsLabel = QLabel(tr("工具箱"), self)
 
-        self.ToolsGroup = SettingCardGroup('工具箱', self.scrollWidget)
+        self.ToolsGroup = SettingCardGroup(tr('工具箱'), self.scrollWidget)
         self.automaticPlotCard = AutoPlotSettingCard(
             FIF.IMAGE_EXPORT,
-            "自动对话",
-            "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
+            tr("自动对话"),
+            tr("进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道")
         )
         self.gameScreenshotCard = PushSettingCard(
-            '捕获',
+            tr('捕获'),
             FIF.CLIPPING_TOOL,
-            "游戏截图",
-            "检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）"
+            tr("游戏截图"),
+            tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）")
         )
         self.unlockfpsCard = PushSettingCard(
-            '解锁',
+            tr('解锁'),
             FIF.SPEED_HIGH,
-            "解锁帧率",
-            "通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）"
+            tr("解锁帧率"),
+            tr("通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）")
         )
         self.redemptionCodeCard = PushSettingCardCode(
-            '执行',
+            tr('执行'),
             FIF.BOOK_SHELF,
-            "兑换码",
+            tr("兑换码"),
             "redemption_code",
             self
         )
         self.cloudTouchCard = PushSettingCard(
-            '启动',
+            tr('启动'),
             FIF.CLOUD,
-            "触屏模式【测试版】",
-            "以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内"
+            tr("触屏模式【测试版】"),
+            tr("以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内")
         )
 
         self.__initWidget()
@@ -113,7 +115,7 @@ class ToolsInterface(ScrollArea):
             if fps == 120:
                 set_game_fps(60)
                 InfoBar.info(
-                    title='恢复60成功 (＾∀＾●)',
+                    title=tr('恢复60成功 (＾∀＾●)'),
                     content="",
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
@@ -124,7 +126,7 @@ class ToolsInterface(ScrollArea):
             else:
                 set_game_fps(120)
                 InfoBar.success(
-                    title='解锁120成功 (＾∀＾●)',
+                    title=tr('解锁120成功 (＾∀＾●)'),
                     content="",
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
@@ -134,8 +136,8 @@ class ToolsInterface(ScrollArea):
                 )
         except:
             InfoBar.warning(
-                title='解锁失败',
-                content="请将游戏图像质量修改为自定义后重试",
+                title=tr('解锁失败'),
+                content=tr("请将游戏图像质量修改为自定义后重试"),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -152,19 +154,19 @@ class ToolsInterface(ScrollArea):
                 from qfluentwidgets import MessageBox
                 # 依次展示多次确认对话框，每次提示更严肃，任意一次取消即返回
                 confirm_messages = [
-                    ('此功能依赖第三方程序实现',
-                     'https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？'),
-                    ('再次确认：可能存在风险',
-                     '工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？'),
-                    ('最终确认：请谨慎操作',
-                     '确认继续并允许启用触屏模式？'),
+                    (tr('此功能依赖第三方程序实现'),
+                     tr('https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？')),
+                    (tr('再次确认：可能存在风险'),
+                     tr('工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？')),
+                    (tr('最终确认：请谨慎操作'),
+                     tr('确认继续并允许启用触屏模式？')),
                 ]
 
                 for title, message in confirm_messages:
                     from qfluentwidgets import MessageBox
                     step_confirm = MessageBox(title, message, self.window())
-                    step_confirm.yesButton.setText('确认')
-                    step_confirm.cancelButton.setText('取消')
+                    step_confirm.yesButton.setText(tr('确认'))
+                    step_confirm.cancelButton.setText(tr('取消'))
                     if not step_confirm.exec():
                         return
 
@@ -172,8 +174,8 @@ class ToolsInterface(ScrollArea):
 
             if not game_path or not os.path.exists(game_path):
                 InfoBar.warning(
-                    title='游戏路径配置错误(╥╯﹏╰╥)',
-                    content="请在“设置”-->“程序”中配置正确的游戏路径",
+                    title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
+                    content=tr("请在“设置”-->“程序”中配置正确的游戏路径"),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -210,8 +212,8 @@ class ToolsInterface(ScrollArea):
             subprocess.Popen([exe_path] + args, cwd=config_dir)
             pyperclip.copy(f'cd "{config_dir}" && "{exe_path}" {" ".join(args)}')
             InfoBar.success(
-                title='启动成功(＾∀＾●)',
-                content="已将命令复制到剪贴板",
+                title=tr('启动成功(＾∀＾●)'),
+                content=tr("已将命令复制到剪贴板"),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -220,7 +222,7 @@ class ToolsInterface(ScrollArea):
             )
         except Exception as e:
             InfoBar.warning(
-                title='启动失败',
+                title=tr('启动失败'),
                 content=str(e),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
@@ -245,7 +247,7 @@ class ToolsInterface(ScrollArea):
             # Start auto plot
             tool.start("plot")
             InfoBar.success(
-                title='自动对话已启动',
+                title=tr('自动对话已启动'),
                 content="",
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
@@ -257,7 +259,7 @@ class ToolsInterface(ScrollArea):
             # Stop auto plot
             tool.stop_plot()
             InfoBar.info(
-                title='自动对话已停止',
+                title=tr('自动对话已停止'),
                 content="",
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,

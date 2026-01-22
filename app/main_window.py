@@ -25,6 +25,7 @@ from .tools.disclaimer import disclaimer
 from module.config import cfg
 from module.logger import log
 from module.game import get_game_controller
+from module.localization import tr
 import base64
 import os
 import sys
@@ -166,19 +167,19 @@ class MainWindow(MSFluentWindow):
         self.logInterface.taskFinished.connect(self._onTaskFinished)
 
     def initNavigation(self):
-        self.addSubInterface(self.homeInterface, FIF.HOME, '主页')
-        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, '帮助')
+        self.addSubInterface(self.homeInterface, FIF.HOME, tr('主页'))
+        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
         # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
-        self.addSubInterface(self.warpInterface, FIF.SHARE, '抽卡记录')
-        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, '工具箱')
+        self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
+        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'))
 
         self.navigationInterface.addWidget(
             'startGameButton',
-            NavigationBarPushButton(FIF.PLAY, '启动游戏', isSelectable=False),
+            NavigationBarPushButton(FIF.PLAY, tr('启动游戏'), isSelectable=False),
             self.startGame,
             NavigationItemPosition.BOTTOM)
 
-        self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, '日志', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, tr('日志'), position=NavigationItemPosition.BOTTOM)
 
         # self.navigationInterface.addWidget(
         #     'refreshButton',
@@ -194,17 +195,17 @@ class MainWindow(MSFluentWindow):
 
         self.navigationInterface.addWidget(
             'avatar',
-            NavigationBarPushButton(FIF.HEART, '赞赏', isSelectable=False),
+            NavigationBarPushButton(FIF.HEART, tr('赞赏'), isSelectable=False),
             lambda: MessageBoxSupport(
-                '支持作者🥰',
-                '此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀',
+                tr('支持作者🥰'),
+                tr('此程序为免费开源项目，如果你付了钱请立刻退款\\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\\n您的支持就是作者开发和维护项目的动力🚀'),
                 './assets/app/images/sponsor.jpg',
                 self
             ).exec(),
             NavigationItemPosition.BOTTOM
         )
 
-        self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
+        self.addSubInterface(self.settingInterface, FIF.SETTING, tr('设置'), position=NavigationItemPosition.BOTTOM)
 
         self.splashScreen.finish()
         self.themeListener = checkThemeChange(self)
@@ -223,19 +224,19 @@ class MainWindow(MSFluentWindow):
         tray_menu.aboutToShow.connect(self._on_tray_menu_about_to_show)
 
         # 显示主界面
-        show_action = QAction('显示主界面', self)
+        show_action = QAction(tr('显示主界面'), self)
         show_action.triggered.connect(self._show_main_window)
         tray_menu.addAction(show_action)
 
         # 完整运行
-        run_action = QAction('完整运行', self)
+        run_action = QAction(tr('完整运行'), self)
         run_action.triggered.connect(self.startFullTask)
         tray_menu.addAction(run_action)
 
         tray_menu.addSeparator()
 
         # 打开设置界面
-        setting_action = QAction('设置', self)
+        setting_action = QAction(tr('设置'), self)
 
         def _open_settings():
             try:
@@ -249,7 +250,7 @@ class MainWindow(MSFluentWindow):
         tray_menu.addAction(setting_action)
 
         # 退出程序
-        quit_action = QAction('退出', self)
+        quit_action = QAction(tr('退出'), self)
         quit_action.triggered.connect(self.quitApp)
         tray_menu.addAction(quit_action)
 
