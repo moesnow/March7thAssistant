@@ -70,13 +70,13 @@ th, td {
         # Load Tutorial based on language setting
         from module.config import cfg
         tutorial_file = "./assets/docs/Tutorial.md"
-        if hasattr(cfg, 'ui_language'):
-            if cfg.ui_language == "ko_KR":
+        if hasattr(cfg, 'ui_language_now'):
+            if cfg.ui_language_now == "ko_KR":
                 import os
                 ko_file = "./assets/docs/Tutorial_ko.md"
                 if os.path.exists(ko_file):
                     tutorial_file = ko_file
-            elif cfg.ui_language == "en_US":
+            elif cfg.ui_language_now == "en_US":
                 import os
                 en_file = "./assets/docs/Tutorial_en.md"
                 if os.path.exists(en_file):
@@ -106,13 +106,13 @@ a {
 """
         # Load FAQ based on language setting
         faq_file = "./assets/docs/FAQ.md"
-        if hasattr(cfg, 'ui_language'):
-            if cfg.ui_language == "ko_KR":
+        if hasattr(cfg, 'ui_language_now'):
+            if cfg.ui_language_now == "ko_KR":
                 import os
                 ko_faq_file = "./assets/docs/FAQ_ko.md"
                 if os.path.exists(ko_faq_file):
                     faq_file = ko_faq_file
-            elif cfg.ui_language == "en_US":
+            elif cfg.ui_language_now == "en_US":
                 import os
                 en_faq_file = "./assets/docs/FAQ_en.md"
                 if os.path.exists(en_faq_file):
@@ -145,7 +145,7 @@ th, td {
 </style>
 """
         # Daily training tasks table - language based
-        if hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR":
+        if hasattr(cfg, 'ui_language_now') and cfg.ui_language_now == "ko_KR":
             self.content = """
 | 작업 설명                             | 활성도 | 지원 상태 |
 | ----------------------------------- | -------- | -------- |
@@ -180,7 +180,7 @@ th, td {
 | 재료 1회 합성                          |   +100  |   삭제됨  |
 | 소모품 1개 사용                         |   +100  |   삭제됨  |
         """
-        elif hasattr(cfg, 'ui_language') and cfg.ui_language == "en_US":
+        elif hasattr(cfg, 'ui_language_now') and cfg.ui_language_now == "en_US":
             self.content = """
 | Task Description                      | Activity | Support  |
 | ------------------------------------- | -------- | -------- |
@@ -267,13 +267,13 @@ a {
 """
         # Load Changelog based on language setting
         changelog_file = "./assets/docs/Changelog.md"
-        if hasattr(cfg, 'ui_language'):
-            if cfg.ui_language == "ko_KR":
+        if hasattr(cfg, 'ui_language_now'):
+            if cfg.ui_language_now == "ko_KR":
                 import os
                 ko_changelog_file = "./assets/docs/Changelog_ko.md"
                 if os.path.exists(ko_changelog_file):
                     changelog_file = ko_changelog_file
-            elif cfg.ui_language == "en_US":
+            elif cfg.ui_language_now == "en_US":
                 import os
                 en_changelog_file = "./assets/docs/Changelog_en.md"
                 if os.path.exists(en_changelog_file):
