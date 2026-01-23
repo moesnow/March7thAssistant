@@ -163,6 +163,8 @@ class MainWindow(MSFluentWindow):
         signalBus.startTaskSignal.connect(self._onStartTask)
         # 连接热键配置改变信号
         signalBus.hotkeyChangedSignal.connect(self._onHotkeyChanged)
+        # 连接 UI 语言改变信号（用于提示重启生效）
+        signalBus.uiLanguageChanged.connect(self._on_ui_language_changed)
         # 连接任务完成信号
         self.logInterface.taskFinished.connect(self._onTaskFinished)
 
@@ -335,6 +337,21 @@ class MainWindow(MSFluentWindow):
         """处理热键配置改变信号"""
         if hasattr(self, 'logInterface'):
             self.logInterface.updateHotkey()
+
+    def _on_ui_language_changed(self, lang_code: str):
+        """处理 UI 语言改变信号：显示需要重启的提示"""
+        try:
+            InfoBar.success(
+                title=tr('更新成功'),
+                content=tr('配置在重启软件后生效'),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self
+            )
+        except Exception:
+            pass
 
     def _onTaskFinished(self, exit_code):
         """处理任务完成信号"""

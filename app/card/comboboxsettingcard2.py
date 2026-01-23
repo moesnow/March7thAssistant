@@ -1,4 +1,4 @@
-from qfluentwidgets import (ComboBox, SettingCard, FluentIconBase)
+from qfluentwidgets import (ComboBox, SettingCard, FluentIconBase, InfoBar, InfoBarPosition)
 from typing import Union
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
@@ -9,6 +9,7 @@ from module.localization import tr
 import os
 import sys
 from ..tools.check_update import checkUpdate
+from app.common.signal_bus import signalBus
 
 
 class ComboBoxSettingCard2(SettingCard):
@@ -89,3 +90,23 @@ class ComboBoxSettingCardLog(SettingCard):
             os.system(f'open "{os.path.abspath("./logs")}"')
         else:
             os.system(f'xdg-open "{os.path.abspath("./logs")}"')
+
+
+class ComboBoxSettingCardLanguage(ComboBoxSettingCard2):
+    """Combo box setting card specialized for UI language changes.
+
+    Shows an InfoBar notifying that a restart is required when the language changes.
+    """
+
+    def _onCurrentIndexChanged(self, index: int):
+        old_val = cfg.get_value(self.configname)
+        new_val = self.comboBox.itemData(index)
+        if old_val == new_val:
+            return
+        # set value (reuse base behavior)
+        cfg.set_value(self.configname, new_val)
+        # Emit a signal to notify top-level window to show restart InfoBar
+        try:
+            signalBus.uiLanguageChanged.emit(new_val)
+        except Exception:
+            pass

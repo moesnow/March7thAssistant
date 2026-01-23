@@ -7,7 +7,7 @@ from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
-from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog
+from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan
@@ -1035,11 +1035,11 @@ class SettingInterface(ScrollArea):
             self.parent,
             "mirrorchyan_cdk"
         )
-        self.languageCard = ComboBoxSettingCard2(
+        self.languageCard = ComboBoxSettingCardLanguage(
             "ui_language",
             FIF.LANGUAGE,
-            '界面语言 / UI Language',
-            '需要重启程序生效 / 변경 사항을 적용하려면 재시작 필요',
+            '界面语言 / 界面語言 / 인터페이스 언어 / UI Language',
+            '需要重启程序生效 / 需要重啟程式生效 / 변경 사항을 적용하려면 재시작 필요 / Requires restart to take effect',
             texts={'简体中文': 'zh_CN', '繁體中文': 'zh_TW', '한국어': 'ko_KR', 'English': 'en_US'}
         )
 
