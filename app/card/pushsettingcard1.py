@@ -12,7 +12,7 @@ import json
 import re
 import sys
 from ..tools.check_update import checkUpdate
-from module.localization import tr
+from module.localization import tr, get_character_names
 
 
 def get_key_from_value(val, map):
@@ -491,8 +491,7 @@ class PushSettingCardNotifyTemplate(PushSettingCard):
 
 class PushSettingCardTeam(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
-            self.template = json.load(file)
+        self.template = get_character_names()
         self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, self.translate_to_chinese(self.configvalue), parent)
         self.button.clicked.connect(self.__onclicked)
@@ -518,9 +517,8 @@ class PushSettingCardTeam(PushSettingCard):
 
 class PushSettingCardFriends(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
-            self.template = json.load(file)
-            self.template = {'None': '无', **self.template}
+        # include 'None' mapping for friends list
+        self.template = get_character_names(include_none=True)
         self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, self.translate_to_chinese(self.configvalue), parent)
         self.button.clicked.connect(self.__onclicked)
@@ -549,8 +547,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
     """Setting card with swap button for team1 and team2 configuration"""
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, configname_team1, configname_team2, parent=None):
-        with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
-            self.template = json.load(file)
+        self.template = get_character_names()
 
         self.configname_team1 = configname_team1
         self.configname_team2 = configname_team2

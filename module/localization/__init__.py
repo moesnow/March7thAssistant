@@ -10,6 +10,9 @@ _current_lang = "zh_CN"
 _translations = {}
 _locale_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "locales")
 
+# cache for character names
+_character_names_cache = None
+
 
 def load_language(lang_code: str = None):
     """
@@ -131,3 +134,39 @@ def sync_translations():
                     json.dump(translations, f, ensure_ascii=False, indent=4)
     except Exception:
         pass
+
+
+def get_character_names(include_none: bool = False) -> dict:
+    """
+    Load character names from assets/config/character_names.json and wrap values with `tr()`.
+    Caches the result to avoid repeated file reads.
+
+    :param include_none: whether to include a 'None' -> '无' mapping
+    :return: dict of character_key -> translated_name
+    """
+    global _character_names_cache
+    if _character_names_cache is None:
+        names_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "config", "character_names.json")
+        try:
+            if os.path.exists(names_path):
+                with open(names_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            else:
+                data = {}
+        except Exception:
+            data = {}
+
+        # Wrap values with tr() so they are localized at runtime
+        try:
+            _character_names_cache = {k: tr(v) for k, v in data.items()}
+        except Exception:
+            # Fallback: keep raw values
+            _character_names_cache = {k: v for k, v in data.items()}
+
+    result = dict(_character_names_cache)
+    if include_none:
+        try:
+            result = {'None': tr('无'), **result}
+        except Exception:
+            result = {'None': '无', **result}
+    return result
