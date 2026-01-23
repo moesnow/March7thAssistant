@@ -5,6 +5,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QPushButton
 from .messagebox_custom import MessageBoxNotify
 from module.config import cfg
+from module.localization import tr
 from utils.schedule import create_task, is_task_exists, delete_task
 import os
 
@@ -17,7 +18,7 @@ class StartMarch7thAssistantSwitchSettingCard(SettingCard):
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
         super().__init__(icon, title, content, parent)
         self.switchButton = SwitchButton(
-            '关', self, IndicatorPosition.RIGHT)
+            tr('关'), self, IndicatorPosition.RIGHT)
 
         self.task_name = "StartMarch7thAssistant"
         self.program_path = os.path.abspath("./March7th Launcher.exe")
@@ -41,7 +42,7 @@ class StartMarch7thAssistantSwitchSettingCard(SettingCard):
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
 
 class SwitchSettingCard1(SettingCard):
@@ -53,7 +54,7 @@ class SwitchSettingCard1(SettingCard):
         super().__init__(icon, title, content, parent)
         self.configname = configname
         self.switchButton = SwitchButton(
-            '关', self, IndicatorPosition.RIGHT)
+            tr('关'), self, IndicatorPosition.RIGHT)
 
         self.setValue(cfg.get_value(self.configname))
 
@@ -70,7 +71,7 @@ class SwitchSettingCard1(SettingCard):
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
 
 class SwitchSettingCardNotify(SettingCard):
@@ -90,12 +91,12 @@ class SwitchSettingCardNotify(SettingCard):
                 self.config_list[config_name] = key
 
         if len(self.config_list) > 0:
-            self.button = PushButton("配置", self)
+            self.button = PushButton(tr("配置"), self)
             self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
             self.hBoxLayout.addSpacing(10)
             self.button.clicked.connect(self._onClicked)
 
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
         self.setValue(cfg.get_value(self.configname))
 
@@ -138,7 +139,7 @@ class SwitchSettingCardNotify(SettingCard):
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
 
 class SwitchSettingCardTeam(SettingCard):
@@ -162,7 +163,7 @@ class SwitchSettingCardTeam(SettingCard):
         self.comboBox.setCurrentText(cfg.get_value(configname2))
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
         self.setValue(cfg.get_value(self.configname))
 
@@ -179,7 +180,7 @@ class SwitchSettingCardTeam(SettingCard):
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
         cfg.set_value(self.configname2, self.comboBox.itemData(index))
@@ -205,7 +206,7 @@ class SwitchSettingCardImmersifier(SettingCard):
         self.comboBox.setCurrentText(cfg.get_value("merge_immersifier_limit"))
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
         self.setValue(cfg.get_value(self.configname))
 
@@ -222,7 +223,7 @@ class SwitchSettingCardImmersifier(SettingCard):
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
         cfg.set_value("merge_immersifier_limit", self.comboBox.itemData(index))
@@ -248,7 +249,7 @@ class SwitchSettingCardGardenofplenty(SettingCard):
         self.comboBox.setCurrentText(cfg.get_value("activity_gardenofplenty_instance_type"))
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
         self.setValue(cfg.get_value(self.configname))
 
@@ -265,7 +266,7 @@ class SwitchSettingCardGardenofplenty(SettingCard):
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
         cfg.set_value("activity_gardenofplenty_instance_type", self.comboBox.itemData(index))
@@ -292,7 +293,7 @@ class SwitchSettingCardEchoofwar(SettingCard):
         self.comboBox.setCurrentText(texts[cfg.get_value("echo_of_war_start_day_of_week") - 1])
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
         self.setValue(cfg.get_value(self.configname))
 
@@ -309,7 +310,7 @@ class SwitchSettingCardEchoofwar(SettingCard):
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
         cfg.set_value("echo_of_war_start_day_of_week", self.comboBox.itemData(index))
@@ -321,7 +322,7 @@ class SwitchSettingCardHotkey(SettingCard):
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
         super().__init__(icon, title, content, parent)
 
-        self.button = QPushButton("配置", self)
+        self.button = QPushButton(tr("配置"), self)
         self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
         self.button.clicked.connect(self._onClicked)
@@ -356,7 +357,7 @@ class SwitchSettingCardCloudGameStatus(SettingCard):
         self.comboBox.setCurrentText(cfg.get_value(configname2))
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
         self.setValue(cfg.get_value(self.configname))
 
@@ -373,7 +374,7 @@ class SwitchSettingCardCloudGameStatus(SettingCard):
 
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
         cfg.set_value(self.configname2, self.comboBox.itemData(index))

@@ -5,6 +5,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QPushButton
 
 from module.config import cfg
+from module.localization import tr
 import os
 import sys
 from ..tools.check_update import checkUpdate
@@ -61,7 +62,7 @@ class ComboBoxSettingCardLog(SettingCard):
         super().__init__(icon, title, content, parent)
         self.configname = configname
 
-        self.button = QPushButton("打开日志文件夹", self)
+        self.button = QPushButton(tr("打开日志文件夹"), self)
         self.button.setObjectName('primaryButton')
         self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)

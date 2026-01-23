@@ -3,6 +3,7 @@ from typing import Union, List
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 from qfluentwidgets import ExpandSettingCard, FluentIconBase, SwitchButton, IndicatorPosition, SettingCard, ComboBox, PrimaryPushButton
+from module.localization import tr
 
 
 class ExpandableSwitchSettingCard(ExpandSettingCard):
@@ -29,7 +30,7 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
         self.configname = configname
 
         # Switch button
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
         # Add switch button to card layout using addWidget method
         self.card.addWidget(self.switchButton)
@@ -53,7 +54,7 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
     def setValue(self, isChecked: bool):
         """Set switch button state"""
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def getSwitchState(self) -> bool:
         """Get current switch state"""
@@ -488,7 +489,7 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
         from module.config import cfg
         self.cfg = cfg
 
-        texts = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        texts = [tr('周一'), tr('周二'), tr('周三'), tr('周四'), tr('周五'), tr('周六'), tr('周日')]
         options = [1, 2, 3, 4, 5, 6, 7]
         for text, option in zip(texts, options):
             self.comboBox.addItem(text, userData=option)
@@ -503,7 +504,7 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
         # 开关按钮
-        self.switchButton = SwitchButton('关', self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
         self.card.addWidget(self.switchButton)
 
         self.setValue(self.cfg.get_value(self.configname))
@@ -518,7 +519,7 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
     def setValue(self, isChecked: bool):
         """设置开关状态"""
         self.switchButton.setChecked(isChecked)
-        self.switchButton.setText('开' if isChecked else '关')
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
         self.cfg.set_value("echo_of_war_start_day_of_week", self.comboBox.itemData(index))

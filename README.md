@@ -22,7 +22,7 @@
 
 <div align="center">
 
-**简体中文** | [繁體中文](./README_TW.md) | [English](./README_EN.md) | [日本語](./README_JA.md)
+**简体中文** | [繁體中文](./README_TW.md) | [English](./README_EN.md) | [日本語](./README_JA.md) | [한국어](./README_KR.md)
 
 快速上手，请访问：[使用教程](https://m7a.top/#/assets/docs/Tutorial)
 

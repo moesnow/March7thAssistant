@@ -228,6 +228,16 @@ if __name__ == "__main__":
     if sys.platform == 'darwin':
         from qfluentwidgets import setFontFamilies
         setFontFamilies(['PingFang SC'])
+
+    # 加载界面语言 / Load UI language
+    try:
+        from module.config import cfg
+        from module.localization import load_language
+        ui_lang = cfg.get_value("ui_language", "zh_CN")
+        load_language(ui_lang)
+    except Exception:
+        pass  # 如果加载失败，使用默认中文
+
     # 传递任务参数给主窗口
     from app.main_window import MainWindow
     w = MainWindow(task=args.task, exit_on_complete=args.exit)

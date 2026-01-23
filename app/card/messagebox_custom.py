@@ -7,6 +7,7 @@ from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, Da
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
+from module.localization import tr
 import datetime
 import json
 import time
@@ -177,7 +178,7 @@ class MessageBoxSupport(MessageBoxImage):
     def __init__(self, title: str, content: str, image: str, parent=None):
         super().__init__(title, content, image, parent)
 
-        self.yesButton.setText('下次一定')
+        self.yesButton.setText(tr('下次一定'))
         self.cancelButton.setHidden(True)
 
 
@@ -185,7 +186,7 @@ class MessageBoxAnnouncement(MessageBoxImage):
     def __init__(self, title: str, content: str, image: Optional[str | QPixmap], parent=None):
         super().__init__(title, content, image, parent)
 
-        self.yesButton.setText('收到')
+        self.yesButton.setText(tr('收到'))
         self.cancelButton.setHidden(True)
         self.setContentCopyable(True)
 
@@ -236,17 +237,17 @@ class MessageBoxHtmlUpdate(MessageBox):
         self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignTop)
 
         self.githubUpdateCard = PrimaryPushSettingCard(
-            '立即更新',
+            tr('立即更新'),
             FIF.GITHUB,
-            '开源渠道',
-            "直接从 GitHub 下载并更新"
+            tr('开源渠道'),
+            tr("直接从 GitHub 下载并更新")
         )
 
         self.mirrorchyanUpdateCard = PrimaryPushSettingCard(
-            '立即更新',
+            tr('立即更新'),
             FIF.CLOUD,
-            'Mirror酱 服务 ⚡',
-            "Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）"
+            tr('Mirror酱 服务 ⚡'),
+            tr("Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）")
         )
         self.textLayout.addWidget(self.githubUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
         self.textLayout.addWidget(self.mirrorchyanUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
@@ -261,16 +262,16 @@ class MessageBoxUpdate(MessageBoxHtmlUpdate):
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
-        self.yesButton.setText('手动下载')
-        self.cancelButton.setText('好的')
+        self.yesButton.setText(tr('手动下载'))
+        self.cancelButton.setText(tr('好的'))
 
 
 class MessageBoxDisclaimer(MessageBoxHtml):
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
-        self.yesButton.setText('退出')
-        self.cancelButton.setText('我已知晓')
+        self.yesButton.setText(tr('退出'))
+        self.cancelButton.setText(tr('我已知晓'))
         self.setContentCopyable(True)
         self._opened_at: float | None = time.monotonic()
         self._min_confirm_seconds = 10
@@ -317,8 +318,8 @@ class MessageBoxEdit(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.lineEdit = LineEdit(self)
         self.lineEdit.setText(self.content)
@@ -337,14 +338,14 @@ class MessageBoxEditCode(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         # 操作按钮：获取最新兑换码 / 查看已使用 / 清空已使用
         buttonRow = QHBoxLayout()
-        self.fetchButton = PushButton('获取最新兑换码', self)
-        self.viewUsedButton = PushButton('查看已使用兑换码', self)
-        self.clearUsedButton = PushButton('清空已使用兑换码', self)
+        self.fetchButton = PushButton(tr('获取最新兑换码'), self)
+        self.viewUsedButton = PushButton(tr('查看已使用兑换码'), self)
+        self.clearUsedButton = PushButton(tr('清空已使用兑换码'), self)
         buttonRow.addWidget(self.fetchButton)
         buttonRow.addWidget(self.viewUsedButton)
         buttonRow.addWidget(self.clearUsedButton)
@@ -377,8 +378,8 @@ class MessageBoxDate(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.datePicker = DateTimeEdit(self)
         self.datePicker.setDateTime(content)
@@ -386,8 +387,8 @@ class MessageBoxDate(MessageBox):
         self._epoch_datetime = datetime.datetime.fromtimestamp(0)
 
         shortcutLayout = QHBoxLayout()
-        self.resetButton = PushButton("重置时间", self)
-        self.nowButton = PushButton("设置为当前时间", self)
+        self.resetButton = PushButton(tr("重置时间"), self)
+        self.nowButton = PushButton(tr("设置为当前时间"), self)
         shortcutLayout.addWidget(self.resetButton)
         shortcutLayout.addWidget(self.nowButton)
         shortcutLayout.addStretch(1)
@@ -419,8 +420,8 @@ class MessageBoxInstance(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -434,7 +435,7 @@ class MessageBoxInstance(MessageBox):
         for type, names in self.template.items():
             horizontalLayout = QHBoxLayout()
 
-            titleLabel = QLabel(type, parent)
+            titleLabel = QLabel(tr(type), parent)
             # titleLabel.setFont(font)
             # titleLabel.setMinimumWidth(100)
             horizontalLayout.addWidget(titleLabel)
@@ -461,7 +462,7 @@ class MessageBoxInstance(MessageBox):
             self.textLayout.addLayout(horizontalLayout)
             self.comboBox_dict[type] = comboBox
 
-        self.titleLabelInfo = QLabel("说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动", parent)
+        self.titleLabelInfo = QLabel(tr("说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动"), parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
@@ -481,7 +482,7 @@ class MessageBoxInstance(MessageBox):
             if input_text not in valid_options:
                 InfoBar.error(
                     title='输入错误',
-                    content=f'"{type}"的输入"{input_text}"不在可选项中，请重新选择',
+                    content=tr('"{type}"的输入"{input_text}"不在可选项中，请重新选择').format(type=type, input_text=input_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -519,8 +520,8 @@ class MessageBoxInstanceChallengeCount(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.buttonGroup.setMinimumWidth(300)
 
@@ -541,7 +542,7 @@ class MessageBoxInstanceChallengeCount(MessageBox):
             horizontalLayout.setContentsMargins(24, 8, 24, 8)  # 增加边距使布局更加美观
 
             # 创建标签
-            titleLabel = QLabel(type, parent)
+            titleLabel = QLabel(tr(type), parent)
             titleLabel.setFont(font)
             horizontalLayout.addWidget(titleLabel)
 
@@ -562,8 +563,8 @@ class MessageBoxNotify(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -596,8 +597,8 @@ class MessageBoxNotifyTemplate(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.buttonGroup.setMinimumWidth(480)
 
@@ -618,7 +619,7 @@ class MessageBoxNotifyTemplate(MessageBox):
 
             self.lineEdit_dict[id] = lineEdit
 
-        self.titleLabelInfo = QLabel("说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行", parent)
+        self.titleLabelInfo = QLabel(tr("说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行"), parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
 
@@ -630,8 +631,8 @@ class MessageBoxTeam(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.buttonGroup.setMinimumWidth(400)
 
@@ -641,10 +642,10 @@ class MessageBoxTeam(MessageBox):
         self.template = template
 
         self.tech_map = {
-            -1: "秘技 / 开怪",
-            0: "无操作",
-            1: "秘技 1 次",
-            2: "秘技 2 次",
+            -1: tr("秘技 / 开怪"),
+            0: tr("无操作"),
+            1: tr("秘技 1 次"),
+            2: tr("秘技 2 次"),
         }
 
         self.comboBox_list = []
@@ -652,7 +653,7 @@ class MessageBoxTeam(MessageBox):
             # 将 titleLabel 与两个下拉框放在同一行
             horizontalLayout = QHBoxLayout()
 
-            titleLabel = QLabel(f"{i}号位", parent)
+            titleLabel = QLabel(tr("{}号位").format(i), parent)
             titleLabel.setFont(font)
             # titleLabel.setMinimumWidth(60)
             titleLabel.setAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -675,7 +676,7 @@ class MessageBoxTeam(MessageBox):
 
             self.comboBox_list.append((charComboBox, techComboBox))
 
-        self.titleLabelInfo = QLabel("每个队伍只允许一名角色配置为“秘技 / 开怪”", parent)
+        self.titleLabelInfo = QLabel(tr("每个队伍只允许一名角色配置为“秘技 / 开怪”"), parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
@@ -691,7 +692,7 @@ class MessageBoxTeam(MessageBox):
             if char_text not in valid_chars:
                 InfoBar.error(
                     title='输入错误',
-                    content=f'第{i}号位角色"{char_text}"不在可选项中，请重新选择',
+                    content=tr('第{i}号位角色"{char_text}"不在可选项中，请重新选择').format(i=i, char_text=char_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -703,7 +704,7 @@ class MessageBoxTeam(MessageBox):
             if tech_text not in valid_techs:
                 InfoBar.error(
                     title='输入错误',
-                    content=f'第{i}号位秘技"{tech_text}"不在可选项中，请重新选择',
+                    content=tr('第{i}号位秘技"{tech_text}"不在可选项中，请重新选择').format(i=i, tech_text=tech_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -739,8 +740,8 @@ class MessageBoxFriends(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.buttonGroup.setMinimumWidth(400)
 
@@ -769,7 +770,7 @@ class MessageBoxFriends(MessageBox):
 
             self.comboBox_list.append((charComboBox, nameLineEdit))
 
-        self.titleLabelInfo = QLabel("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n若好友名称留空则只查找选择的角色。", parent)
+        self.titleLabelInfo = QLabel(tr("说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n若好友名称留空则只查找选择的角色。"), parent)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
     def validate_inputs(self):
@@ -782,7 +783,7 @@ class MessageBoxFriends(MessageBox):
             if char_text not in valid_chars:
                 InfoBar.error(
                     title='输入错误',
-                    content=f'第{i}个好友角色"{char_text}"不在可选项中，请重新选择',
+                    content=tr('第{i}个好友角色"{char_text}"不在可选项中，请重新选择').format(i=i, char_text=char_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -820,8 +821,8 @@ class MessageBoxPowerPlan(MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
 
-        self.yesButton.setText('确认')
-        self.cancelButton.setText('取消')
+        self.yesButton.setText(tr('确认'))
+        self.cancelButton.setText(tr('取消'))
 
         self.buttonGroup.setMinimumWidth(500)
 
@@ -843,7 +844,7 @@ class MessageBoxPowerPlan(MessageBox):
         self.plan_rows = []
 
         # 添加说明
-        self.titleLabelInfo = QLabel("体力计划会在清体力前优先执行，完成后自动从列表中删除", parent)
+        self.titleLabelInfo = QLabel(tr("体力计划会在清体力前优先执行，完成后自动从列表中删除"), parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
@@ -858,7 +859,7 @@ class MessageBoxPowerPlan(MessageBox):
 
         # 添加按钮
         addButtonLayout = QHBoxLayout()
-        self.addButton = PushButton("添加计划", self)
+        self.addButton = PushButton(tr("添加计划"), self)
         self.addButton.clicked.connect(self.add_plan_row)
         addButtonLayout.addWidget(self.addButton)
         addButtonLayout.addStretch(1)
@@ -869,8 +870,8 @@ class MessageBoxPowerPlan(MessageBox):
         # 检查是否已达到最大数量限制
         if len(self.plan_rows) >= 8:
             InfoBar.warning(
-                title='无法添加',
-                content='已达到最大计划数量',
+                title=tr('无法添加'),
+                content=tr('已达到最大计划数量'),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -902,7 +903,7 @@ class MessageBoxPowerPlan(MessageBox):
         countSpinBox.setMinimumWidth(120)
 
         # 删除按钮
-        deleteButton = PushButton("删除", self)
+        deleteButton = PushButton(tr("删除"), self)
         deleteButton.setMaximumWidth(60)
 
         # 更新副本名称选项的函数
@@ -951,11 +952,11 @@ class MessageBoxPowerPlan(MessageBox):
         deleteButton.clicked.connect(delete_row)
 
         # 添加到布局
-        horizontalLayout.addWidget(QLabel("类型:"))
+        horizontalLayout.addWidget(QLabel(tr("类型:")))
         horizontalLayout.addWidget(typeComboBox)
-        horizontalLayout.addWidget(QLabel("名称:"))
+        horizontalLayout.addWidget(QLabel(tr("名称:")))
         horizontalLayout.addWidget(nameComboBox)
-        horizontalLayout.addWidget(QLabel("次数:"))
+        horizontalLayout.addWidget(QLabel(tr("次数:")))
         horizontalLayout.addWidget(countSpinBox)
         horizontalLayout.addWidget(deleteButton)
 
@@ -989,7 +990,7 @@ class MessageBoxPowerPlan(MessageBox):
             if not instance_type or instance_type not in self.template:
                 InfoBar.error(
                     title='输入错误',
-                    content=f'第{i}个计划的副本类型无效',
+                    content=tr('第{i}个计划的副本类型无效').format(i=i),
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -1009,8 +1010,8 @@ class MessageBoxPowerPlan(MessageBox):
             # 检查输入是否匹配任一有效选项
             if input_text not in valid_options:
                 InfoBar.error(
-                    title='输入错误',
-                    content=f'第{i}个计划的副本名称"{input_text}"不在可选项中，请重新选择',
+                    title=tr('输入错误'),
+                    content=tr('第{i}个计划的副本名称"{input_text}"不在可选项中，请重新选择').format(i=i, input_text=input_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -1044,17 +1045,17 @@ class MessageBoxCloseWindow(MessageBox):
 
     def __init__(self, parent=None):
         super().__init__(
-            '关闭确认',
-            '您希望如何处理程序?',
+            tr('关闭确认'),
+            tr('您希望如何处理程序?'),
             parent
         )
 
         # 修改按钮文本
-        self.yesButton.setText('最小化到托盘')
-        self.cancelButton.setText('关闭程序')
+        self.yesButton.setText(tr('最小化到托盘'))
+        self.cancelButton.setText(tr('关闭程序'))
 
         # 添加记住选择的复选框
-        self.rememberCheckBox = CheckBox('记住我的选择,下次不再询问', self)
+        self.rememberCheckBox = CheckBox(tr('记住我的选择,下次不再询问'), self)
         self.textLayout.addWidget(self.rememberCheckBox)
 
         # 存储用户的选择

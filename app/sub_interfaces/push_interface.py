@@ -6,6 +6,7 @@ from qfluentwidgets import FluentIcon as FIF
 from app.card.pushsettingcard1 import PushSettingCard
 from app.card.switchsettingcard1 import SwitchSettingCard1
 from module.config import cfg
+from module.localization import tr
 
 
 class PushToolsBox(QWidget):
@@ -70,7 +71,7 @@ class WindowsPushCard(QWidget):
         super().__init__(parent=parent)
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
-            '启用 Windows 通知',
+            tr('启用 Windows 通知'),
             None,
             "notify_winotify_enable"
         )
@@ -84,14 +85,14 @@ class TelegramPushCard(QWidget):
         super().__init__(parent=parent)
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
-            '启用 Telegram 通知',
+            tr('启用 Telegram 通知'),
             None,
             "notify_telegram_enable"
         )
         self.telegramTokenCard = PushSettingCard(
-            '修改',
+            tr('修改'),
             FIF.GAME,
-            "Telegram Token",
+            tr("Telegram Token"),
             "notify_telegram_token",
             cfg.notify_telegram_token,
             self,
@@ -103,7 +104,7 @@ class TelegramPushCard(QWidget):
         self.setLayout(self.vLayout)
 
     def inputToken(self):
-        token = QInputDialog.getText(self, "输入 Telegram Token", "Token")
+        token = QInputDialog.getText(self, tr("输入 Telegram Token"), tr("Token"))
         if not token is None:
             cfg.set_value("notify_telegram_token", token)
             self.telegramTokenCard.setContent(token)
@@ -114,7 +115,7 @@ class SmtpPushCard(QFrame):
         super().__init__(parent=parent)
         self.winotifyEnableCard = SwitchSettingCard1(
             FIF.BACK_TO_WINDOW,
-            '启用 Smtp 通知',
+            tr('启用 Smtp 通知'),
             None,
             "notify_smtp_enable"
         )

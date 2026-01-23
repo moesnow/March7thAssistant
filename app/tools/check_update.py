@@ -14,6 +14,7 @@ import markdown
 import requests
 import re
 import os
+from module.localization import tr
 
 
 class UpdateStatus(Enum):
@@ -82,7 +83,7 @@ class UpdateThread(QThread):
                 return
             if cfg.update_source == "MirrorChyan":
                 if cfg.mirrorchyan_cdk == "":
-                    self.error_msg = "未设置 Mirror酱 CDK"
+                    self.error_msg = tr("未设置 Mirror酱 CDK")
                     self.updateSignal.emit(UpdateStatus.FAILURE)
                     return
                 # 符合Mirror酱条件
@@ -109,21 +110,21 @@ class UpdateThread(QThread):
                         self.error_msg = mirrorchyan_data["msg"]
 
                         cdk_error_messages = {
-                            7001: "Mirror酱 CDK 已过期",
-                            7002: "Mirror酱 CDK 错误",
-                            7003: "Mirror酱 CDK 今日下载次数已达上限",
-                            7004: "Mirror酱 CDK 类型和待下载的资源不匹配",
-                            7005: "Mirror酱 CDK 已被封禁"
+                            7001: tr("Mirror酱 CDK 已过期"),
+                            7002: tr("Mirror酱 CDK 错误"),
+                            7003: tr("Mirror酱 CDK 今日下载次数已达上限"),
+                            7004: tr("Mirror酱 CDK 类型和待下载的资源不匹配"),
+                            7005: tr("Mirror酱 CDK 已被封禁")
                         }
                         if self.code in cdk_error_messages:
                             self.error_msg = cdk_error_messages[self.code]
                     except:
-                        self.error_msg = "Mirror酱API请求失败"
+                        self.error_msg = tr("Mirror酱API请求失败")
                     self.updateSignal.emit(UpdateStatus.FAILURE)
                     return
 
             if parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
-                self.title = f"发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)"
+                self.title = tr("发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)").format(cfg=cfg, version=version)
                 self.content = "<style>a {color: #f18cb9; font-weight: bold;}</style>" + markdown.markdown(content)
                 self.assert_url = assert_url
                 self.assert_name = assert_name
@@ -160,8 +161,8 @@ def checkUpdate(self, timeout=5, flag=False):
                 assert_url = self.update_thread.mirrorchyan_assert_url
                 if assert_url == "":
                     InfoBar.error(
-                        title='尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)',
-                        content="请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK",
+                        title=tr('尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)'),
+                        content=tr("请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK"),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP,
@@ -197,7 +198,7 @@ def checkUpdate(self, timeout=5, flag=False):
         elif status == UpdateStatus.SUCCESS:
             # 显示当前为最新版本的信息
             InfoBar.success(
-                title='当前是最新版本(＾∀＾●)',
+                title=tr('当前是最新版本(＾∀＾●)'),
                 content="",
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
@@ -208,7 +209,7 @@ def checkUpdate(self, timeout=5, flag=False):
         else:
             # 显示检查更新失败的信息
             InfoBar.warning(
-                title='检测更新失败(╥╯﹏╰╥)',
+                title=tr('检测更新失败(╥╯﹏╰╥)'),
                 content=getattr(self, 'update_thread', None).error_msg if getattr(self, 'update_thread', None) is not None else '',
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
@@ -222,8 +223,8 @@ def checkUpdate(self, timeout=5, flag=False):
     if existing_thread is not None:
         if existing_thread.isRunning():
             InfoBar.warning(
-                title='正在检测更新',
-                content='请稍候，更新检查仍在进行中',
+                title=tr('正在检测更新'),
+                content=tr('请稍候，更新检查仍在进行中'),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,

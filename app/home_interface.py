@@ -11,6 +11,7 @@ from .card.samplecardview1 import SampleCardView1
 from tasks.base.tasks import start_task
 
 from module.config import cfg
+from module.localization import tr
 
 from PIL import Image
 import numpy as np
@@ -22,20 +23,20 @@ class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.menu = RoundMenu(parent=self)
-        self.menu.addAction(QAction("更换背景图片", self, triggered=lambda: on_change_banner_image()))
+        self.menu.addAction(QAction(tr("更换背景图片"), self, triggered=lambda: on_change_banner_image()))
 
         self.default_banner_path = "./assets/app/images/bg37.jpg"
         banner_path = cfg.get_value("banner_path", self.default_banner_path)
         if not os.path.exists(banner_path):
             banner_path = self.default_banner_path
         if os.path.abspath(banner_path) != os.path.abspath(self.default_banner_path):
-            self.menu.addAction(QAction("恢复默认图片", self, triggered=lambda: on_restore_default_banner_image()))
+            self.menu.addAction(QAction(tr("恢复默认图片"), self, triggered=lambda: on_restore_default_banner_image()))
         self.banner_image = Image.open(banner_path)
         min_height = min(self.parent().parent().height() - 271 - 49, (self.parent().parent().width() - 73) * self.banner_image.height // self.banner_image.width)
         self.setFixedHeight(min_height)
 
         self.vBoxLayout = QVBoxLayout(self)
-        self.galleryLabel = QLabel(f'三月七小助手 {cfg.version}\nMarch7thAssistant', self)
+        self.galleryLabel = QLabel(f'{tr("三月七小助手")} {cfg.version}\nMarch7thAssistant', self)
         self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
         # 创建阴影效果
@@ -61,7 +62,7 @@ class BannerWidget(QWidget):
         self.linkCardView.addCard(
             FluentIcon.GITHUB,
             'GitHub repo',
-            '喜欢就给个星星吧\n拜托求求你啦|･ω･)',
+            tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
 
             "https://github.com/moesnow/March7thAssistant",
         )
@@ -74,13 +75,13 @@ class BannerWidget(QWidget):
             self.menu.exec(event.globalPos(), ani=True)
 
         def on_change_banner_image():
-            file_path, _ = QFileDialog.getOpenFileName(self, "选择图片", os.getcwd(), "Images (*.png *.jpg *.jpeg *.bmp *.gif);;All Files (*)")
+            file_path, _ = QFileDialog.getOpenFileName(self, tr("选择图片"), os.getcwd(), "Images (*.png *.jpg *.jpeg *.bmp *.gif);;All Files (*)")
             if file_path:
                 if os.path.abspath(file_path) != os.path.abspath(self.default_banner_path):
                     # 如果没有恢复默认按钮，添加一个
-                    has_restore_action = any(action.text() == "恢复默认图片" for action in self.menu.actions())
+                    has_restore_action = any(action.text() == tr("恢复默认图片") for action in self.menu.actions())
                     if not has_restore_action:
-                        self.menu.addAction(QAction("恢复默认图片", self, triggered=lambda: on_restore_default_banner_image()))
+                        self.menu.addAction(QAction(tr("恢复默认图片"), self, triggered=lambda: on_restore_default_banner_image()))
                 try:
                     self.banner_image = Image.open(file_path)
                     cfg.set_value("banner_path", file_path)
@@ -100,7 +101,7 @@ class BannerWidget(QWidget):
             self.path = None
             # 移除恢复默认按钮
             for action in self.menu.actions():
-                if action.text() == "恢复默认图片":
+                if action.text() == tr("恢复默认图片"):
                     self.menu.removeAction(action)
                     break
             self.update()
@@ -170,77 +171,77 @@ class HomeInterface(ScrollArea):
 
     def loadSamples(self):
         basicInputView = SampleCardView1(
-            "任务 >", self.view)
+            tr("任务 >"), self.view)
 
         basicInputView.addSampleCard(
             icon="./assets/app/images/March7th.jpg",
-            title="完整运行",
+            title=tr("完整运行"),
             action=lambda: start_task("main")
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/JingYuan.jpg",
-            title="日常",
+            title=tr("日常"),
             action={
-                "每日实训": lambda: start_task("daily"),
-                "清体力": lambda: start_task("power"),
+                tr("每日实训"): lambda: start_task("daily"),
+                tr("清体力"): lambda: start_task("power"),
             }
         )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Yanqing.jpg",
-            title="货币战争",
+            title=tr("货币战争"),
             action={
-                "运行一次": lambda: start_task("currencywars"),
-                "循环运行": lambda: start_task("currencywarsloop"),
+                tr("运行一次"): lambda: start_task("currencywars"),
+                tr("循环运行"): lambda: start_task("currencywarsloop"),
                 # "中途接管": lambda: start_task("currencywarstemp"),
             }
         )
         if sys.platform == 'win32':
             basicInputView.addSampleCard(
                 icon="./assets/app/images/SilverWolf.jpg",
-                title="锄大地",
+                title=tr("锄大地"),
                 action={
-                    "快速启动 ⭐": lambda: start_task("fight"),
-                    "原版运行": lambda: start_task("fight_gui"),
-                    "更新锄大地": lambda: start_task("fight_update"),
-                    "重置配置文件": lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json")),
-                    "打开程序目录": lambda: os.startfile(cfg.fight_path),
-                    "打开项目主页": lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
+                    tr("快速启动 ⭐"): lambda: start_task("fight"),
+                    tr("原版运行"): lambda: start_task("fight_gui"),
+                    tr("更新锄大地"): lambda: start_task("fight_update"),
+                    tr("重置配置文件"): lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json")),
+                    tr("打开程序目录"): lambda: os.startfile(cfg.fight_path),
+                    tr("打开项目主页"): lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
                 }
             )
             basicInputView.addSampleCard(
                 icon="./assets/app/images/Herta.jpg",
-                title="差分宇宙",
+                title=tr("差分宇宙"),
                 action={
-                    "快速启动 ⭐": lambda: start_task("universe"),
-                    "原版运行": lambda: start_task("universe_gui"),
-                    "更新模拟宇宙": lambda: start_task("universe_update"),
-                    "重置配置文件": lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
-                    "打开程序目录": lambda: os.startfile(cfg.universe_path),
-                    "打开项目主页": lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
+                    tr("快速启动 ⭐"): lambda: start_task("universe"),
+                    tr("原版运行"): lambda: start_task("universe_gui"),
+                    tr("更新模拟宇宙"): lambda: start_task("universe_update"),
+                    tr("重置配置文件"): lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
+                    tr("打开程序目录"): lambda: os.startfile(cfg.universe_path),
+                    tr("打开项目主页"): lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
                 }
             )
         else:
             basicInputView.addSampleCard(
                 icon="./assets/app/images/SilverWolf.jpg",
-                title="锄大地",
+                title=tr("锄大地"),
                 action={
-                    "暂不支持": lambda: None,
+                    tr("暂不支持"): lambda: None,
                 }
             )
             basicInputView.addSampleCard(
                 icon="./assets/app/images/Herta.jpg",
-                title="差分宇宙",
+                title=tr("差分宇宙"),
                 action={
-                    "暂不支持": lambda: None,
+                    tr("暂不支持"): lambda: None,
                 }
             )
         basicInputView.addSampleCard(
             icon="./assets/app/images/Bronya.jpg",
-            title="逐光捡金",
+            title=tr("逐光捡金"),
             action={
-                "混沌回忆": lambda: start_task("forgottenhall"),
-                "虚构叙事": lambda: start_task("purefiction"),
-                "末日幻影": lambda: start_task("apocalyptic"),
+                tr("混沌回忆"): lambda: start_task("forgottenhall"),
+                tr("虚构叙事"): lambda: start_task("purefiction"),
+                tr("末日幻影"): lambda: start_task("apocalyptic"),
             }
         )
 
