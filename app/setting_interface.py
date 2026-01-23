@@ -90,8 +90,7 @@ class SettingInterface(ScrollArea):
             tr('配置'),
             FIF.CALENDAR,
             tr("体力计划"),
-            "power_plan",
-            "./assets/config/instance_names.json"
+            "power_plan"
         )
         self.instanceTypeCard = ExpandableComboBoxSettingCard1(
             "instance_type",
@@ -111,8 +110,7 @@ class SettingInterface(ScrollArea):
             tr('修改'),
             FIF.PALETTE,
             tr("副本名称"),
-            "instance_names",
-            "./assets/config/instance_names.json"
+            "instance_names"
         )
         # self.maxCalyxPerRoundNumOfAttempts = RangeSettingCard1(
         #     "max_calyx_per_round_num_of_attempts",

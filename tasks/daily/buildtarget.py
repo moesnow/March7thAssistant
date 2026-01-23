@@ -8,6 +8,7 @@ from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from utils.image_utils import ImageUtils
 import json
+from module.localization import get_raw_instance_names
 import time
 import datetime
 import re
@@ -302,8 +303,7 @@ class BuildTarget:
         instance_type, instance_name = instance
 
         if not BuildTarget._valid_instance_names:
-            with open("./assets/config/instance_names.json", "r", encoding="utf-8") as f:
-                BuildTarget._valid_instance_names = json.load(f)
+            BuildTarget._valid_instance_names = get_raw_instance_names()
 
         if not instance_type or not instance_name:
             return None

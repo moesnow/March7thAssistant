@@ -7,7 +7,7 @@ from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, Da
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
-from module.localization import tr
+from module.localization import tr, get_instance_names, instance_display_to_raw
 import datetime
 import json
 import time
@@ -413,7 +413,7 @@ class MessageBoxDate(MessageBox):
 
 
 class MessageBoxInstance(MessageBox):
-    def __init__(self, title: str, content: dict, configtemplate: str, parent=None):
+    def __init__(self, title: str, content: dict, parent=None):
         super().__init__(title, "", parent)
         self.content = content
 
@@ -428,14 +428,14 @@ class MessageBoxInstance(MessageBox):
         font = QFont()
         font.setPointSize(11)
 
-        with open(configtemplate, 'r', encoding='utf-8') as file:
-            self.template = json.load(file)
+        # Load localized instance names (keys are raw Chinese, values' descriptions are localized)
+        self.template = get_instance_names()
 
         self.comboBox_dict = {}
         for type, names in self.template.items():
             horizontalLayout = QHBoxLayout()
 
-            titleLabel = QLabel(tr(type), parent)
+            titleLabel = QLabel(type, parent)
             # titleLabel.setFont(font)
             # titleLabel.setMinimumWidth(100)
             horizontalLayout.addWidget(titleLabel)
@@ -449,12 +449,12 @@ class MessageBoxInstance(MessageBox):
                 item_name = f"{name}（{info}）"
                 comboBox.addItem(item_name)
                 item_list.append(item_name)
-                if self.content[type] == name:
+                raw_type, raw_name = instance_display_to_raw(type, name)
+                if self.content[instance_display_to_raw(type)] == raw_name:
                     comboBox.setCurrentText(item_name)
                     has_default = True
             if not has_default:
-                comboBox.setText(self.content[type])
-
+                comboBox.setText(type)
             # 设置自动补全
             setup_completer(comboBox, item_list)
 
@@ -814,7 +814,7 @@ class MessageBoxFriends(MessageBox):
 class MessageBoxPowerPlan(MessageBox):
     """体力计划配置对话框"""
 
-    def __init__(self, title: str, content: list, configtemplate: str, parent=None):
+    def __init__(self, title: str, content: list, parent=None):
         super().__init__(title, "", parent)
         self.content = content if content else []
 
@@ -829,12 +829,11 @@ class MessageBoxPowerPlan(MessageBox):
         font = QFont()
         font.setPointSize(11)
 
-        # 加载副本模板
-        with open(configtemplate, 'r', encoding='utf-8') as file:
-            self.template = json.load(file)
+        # Load localized instance names (keys are raw Chinese, values' descriptions are localized)
+        self.template = get_instance_names()
 
         # 副本类型列表
-        blacklist_type = ["历战余响"]
+        blacklist_type = [tr("历战余响")]
         self.instance_types = list(self.template.keys())
         for btype in blacklist_type:
             if btype in self.instance_types:
@@ -855,7 +854,7 @@ class MessageBoxPowerPlan(MessageBox):
         # 根据已有内容添加计划行
         for plan in self.content:
             if len(plan) == 3:
-                self.add_plan_row(plan[0], plan[1], plan[2])
+                self.add_plan_row(tr(plan[0]), tr(plan[1]), plan[2])
 
         # 添加按钮
         addButtonLayout = QHBoxLayout()
@@ -930,6 +929,7 @@ class MessageBoxPowerPlan(MessageBox):
                     formatted_name = f"{instance_name}（{self.template[current_type][instance_name]}）"
                     nameComboBox.setCurrentText(formatted_name)
                 else:
+                    print(f"Warning: Could not find description for instance name '{instance_name}' under type '{current_type}'")
                     nameComboBox.setText(instance_name)
 
         # 连接副本类型改变信号
@@ -966,19 +966,18 @@ class MessageBoxPowerPlan(MessageBox):
         self.plan_rows.append((typeComboBox, nameComboBox, countSpinBox, deleteButton))
 
     def get_plans(self):
-        """获取所有计划"""
+        """获取所有计划，并把显示文本还原为中文原始值"""
         plans = []
         for typeCombo, nameCombo, countSpin, _ in self.plan_rows:
             instance_type = typeCombo.currentText()
             instance_name = nameCombo.text()
 
-            # 如果输入包含括号说明，提取实际名称
-            if "（" in instance_name and "）" in instance_name:
-                instance_name = instance_name.split("（")[0]
+            # 将显示的（可能已本地化）文本恢复为原始中文
+            raw_type, raw_name = instance_display_to_raw(instance_type, instance_name)
 
             count = countSpin.value()
-            if instance_type and instance_name and count > 0:
-                plans.append([instance_type, instance_name, count])
+            if raw_type and raw_name and count > 0:
+                plans.append([raw_type, raw_name, count])
         return plans
 
     def validate_inputs(self):
@@ -1004,8 +1003,8 @@ class MessageBoxPowerPlan(MessageBox):
             for name, info in self.template[instance_type].items():
                 valid_options.add(f"{name}（{info}）")
                 valid_options.add(name)
-            valid_options.remove("无（跳过）")  # 移除“无（跳过）”选项
-            valid_options.remove("无")  # 移除“无”选项
+            valid_options.remove(f"{tr('无')}（{tr('跳过')}）")  # 移除“无（跳过）”选项
+            valid_options.remove(tr("无"))  # 移除“无”选项
 
             # 检查输入是否匹配任一有效选项
             if input_text not in valid_options:

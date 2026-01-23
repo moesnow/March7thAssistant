@@ -34,6 +34,7 @@ pandas==2.3.3
 openpyxl==3.1.5
 selenium==4.39.0
 keyboard==0.13.5
+opencc==1.2.0
 rapidocr==3.5.0
 onnxruntime-directml==1.23.0; sys_platform == 'win32' and python_version <= '3.13'
 onnxruntime==1.23.2; (sys_platform == 'darwin' or sys_platform == 'linux') and python_version <= '3.13'
