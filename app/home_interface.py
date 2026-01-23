@@ -65,7 +65,8 @@ class BannerWidget(QWidget):
         self.linkCardView.addCard(
             FluentIcon.GITHUB,
             'GitHub repo',
-            tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
+            # tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
+            f"tr('喜欢就给个星星吧')\ntr('拜托求求你啦|･ω･)')",
 
             "https://github.com/moesnow/March7thAssistant",
         )
