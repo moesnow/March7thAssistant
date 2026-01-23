@@ -12,7 +12,6 @@ import time
 import glob
 import json
 import re
-import re
 import os
 from module.localization import tr
 
