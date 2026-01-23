@@ -284,3 +284,95 @@ def instance_display_to_raw(display_type: str, display_name: str = None) -> tupl
 
     # Not resolved, return cleaned inputs
     return (display_type, name_base)
+
+
+def _detect_lang_windows():
+    try:
+        import ctypes
+
+        lang_id = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+        primary = lang_id & 0x3FF
+
+        # https://learn.microsoft.com/en-us/windows/win32/intl/language-identifier-constants-and-strings
+        if primary == 0x04:  # Chinese
+            # 再判断是否繁体
+            if lang_id in (0x0404, 0x0C04, 0x1404):  # zh-TW / zh-HK / zh-MO
+                return "zh_TW"
+            return "zh_CN"
+
+        if primary == 0x12:  # Korean
+            return "ko_KR"
+        if primary == 0x11:  # Japanese
+            return "ja_JP"
+        if primary == 0x09:  # English
+            return "en_US"
+    except Exception:
+        pass
+
+    return _detect_lang_locale()
+
+
+def _detect_lang_macos():
+    try:
+        import subprocess
+
+        out = subprocess.check_output(
+            ["defaults", "read", "-g", "AppleLanguages"],
+            stderr=subprocess.DEVNULL,
+        ).decode("utf-8")
+
+        lang = out.split('"')[1].lower()
+
+        if "zh-hant" in lang or "zh-tw" in lang or "zh-hk" in lang:
+            return "zh_TW"
+        if lang.startswith("ko"):
+            return "ko_KR"
+        if lang.startswith("ja"):
+            return "ja_JP"
+        if lang.startswith("en"):
+            return "en_US"
+    except Exception:
+        pass
+
+    return "zh_CN"
+
+
+def _detect_lang_locale():
+    import locale
+
+    lang, _ = locale.getdefaultlocale()
+    if not lang:
+        return "zh_CN"
+
+    lang = lang.lower()
+
+    if lang.startswith("zh"):
+        if "tw" in lang or "hk" in lang or "hant" in lang:
+            return "zh_TW"
+        return "zh_CN"
+    if lang.startswith("ko"):
+        return "ko_KR"
+    if lang.startswith("ja"):
+        return "ja_JP"
+    if lang.startswith("en"):
+        return "en_US"
+    return "zh_CN"
+
+
+def detect_lang():
+    """
+    返回值约定：
+    - zh_CN  简体中文（默认）
+    - zh_TW  繁体中文
+    - ko_KR  韩语
+    - ja_JP  日语
+    - en_US  英语
+    """
+    import sys
+
+    if sys.platform == "win32":
+        return _detect_lang_windows()
+    elif sys.platform == "darwin":
+        return _detect_lang_macos()
+    else:
+        return _detect_lang_locale()

@@ -8,7 +8,7 @@ def _is_korean_language():
     """한국어 설정 여부 확인"""
     try:
         from module.config import cfg
-        return hasattr(cfg, 'ui_language') and cfg.ui_language == "ko_KR"
+        return hasattr(cfg, 'ui_language_now') and cfg.ui_language_now == "ko_KR"
     except Exception:
         return False
 

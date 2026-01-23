@@ -36,7 +36,7 @@ class BannerWidget(QWidget):
         self.setFixedHeight(min_height)
 
         self.vBoxLayout = QVBoxLayout(self)
-        if hasattr(cfg, 'ui_language') and cfg.ui_language not in ['zh_CN', 'zh_TW']:
+        if hasattr(cfg, 'ui_language_now') and cfg.ui_language_now not in ['zh_CN', 'zh_TW']:
             self.galleryLabel = QLabel(f'{tr("三月七小助手")} {cfg.version}', self)
         else:
             self.galleryLabel = QLabel(f'{tr("三月七小助手")} {cfg.version}\nMarch7thAssistant', self)

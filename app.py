@@ -229,25 +229,36 @@ if __name__ == "__main__":
     translator = None
     try:
         from module.config import cfg
-        from module.localization import load_language
-        ui_lang = cfg.get_value("ui_language", "zh_CN")
+        from module.localization import load_language, detect_lang
+        ui_language = cfg.get_value("ui_language", "zh_CN")
+
+        if ui_language == "auto":
+            ui_language = detect_lang()
+
+            # 暂不支持
+            if ui_language == "ja_JP":
+                ui_language = "en_US"
+
+        cfg.ui_language_now = ui_language
 
         # 创建翻译器实例，生命周期必须和 app 相同
-        if ui_lang == "zh_TW":
+        if ui_language == "zh_TW":
             translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
-        elif ui_lang == "ko_KR":
+        elif ui_language == "ko_KR":
             translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
-        elif ui_lang == "en_US":
+        elif ui_language == "en_US":
             translator = FluentTranslator(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
         else:  # 默认使用中文
             translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
 
-        load_language(ui_lang)
+        load_language(ui_language)
     except Exception:
         pass  # 如果加载失败，使用默认中文
 
-    if translator:
-        app.installTranslator(translator)
+    if translator is None:
+        translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
+
+    app.installTranslator(translator)
 
     # 传递任务参数给主窗口
     from app.main_window import MainWindow
