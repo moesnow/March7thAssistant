@@ -1042,7 +1042,7 @@ class SettingInterface(ScrollArea):
             FIF.LANGUAGE,
             '界面语言 / UI Language',
             '需要重启程序生效 / 변경 사항을 적용하려면 재시작 필요',
-            texts={'简体中文': 'zh_CN', '한국어': 'ko_KR', 'English': 'en_US'}
+            texts={'简体中文': 'zh_CN', '繁體中文': 'zh_TW', '한국어': 'ko_KR', 'English': 'en_US'}
         )
 
     def __initLayout(self):

@@ -58,6 +58,7 @@ def get_available_languages() -> dict:
     """Get list of available languages"""
     return {
         "简体中文": "zh_CN",
+        "繁體中文": "zh_TW",
         "한국어": "ko_KR",
         "English": "en_US"
     }

@@ -2,7 +2,7 @@
 locales: zh_CN
 
 # UI 인터페이스 언어 설정 / UI 界面语言设置
-ui_language: zh_CN  # 可选值 / 가능한 값: zh_CN (简体中文), ko_KR (한국어)
+ui_language: zh_CN  # 可选值 / 가능한 값: zh_CN (简体中文),  zh_TW (繁體中文), ko_KR (한국어) , en_US (English)
 
 # 日志设置
 log_level: INFO # 日志等级，可选值：INFO, DEBUG。INFO 仅记录重要信息，DEBUG 记录详细调试信息。
