@@ -36,7 +36,10 @@ class BannerWidget(QWidget):
         self.setFixedHeight(min_height)
 
         self.vBoxLayout = QVBoxLayout(self)
-        self.galleryLabel = QLabel(f'{tr("三月七小助手")} {cfg.version}\nMarch7thAssistant', self)
+        if hasattr(cfg, 'ui_language') and cfg.ui_language not in ['zh_CN', 'zh_TW']:
+            self.galleryLabel = QLabel(f'{tr("三月七小助手")} {cfg.version}', self)
+        else:
+            self.galleryLabel = QLabel(f'{tr("三月七小助手")} {cfg.version}\nMarch7thAssistant', self)
         self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
         # 创建阴影效果
@@ -62,7 +65,8 @@ class BannerWidget(QWidget):
         self.linkCardView.addCard(
             FluentIcon.GITHUB,
             'GitHub repo',
-            tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
+            # tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
+            f"tr('喜欢就给个星星吧')\ntr('拜托求求你啦|･ω･)')",
 
             "https://github.com/moesnow/March7thAssistant",
         )

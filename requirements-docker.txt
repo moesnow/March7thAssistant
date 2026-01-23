@@ -20,5 +20,6 @@ python-socks[asyncio]==2.6.1
 asyncio==3.4.3
 nio==3.4.2
 selenium==4.38.0
+opencc==1.2.0
 rapidocr==3.5.0
 onnxruntime==1.23.2

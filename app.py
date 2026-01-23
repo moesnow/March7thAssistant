@@ -205,12 +205,8 @@ QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPo
 if __name__ == "__main__":
     # 设置应用属性，必须在创建 QApplication 之前调用
     QApplication.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
-    
-    app = QApplication(sys.argv)
 
-    # 创建翻译器实例，生命周期必须和 app 相同
-    translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
-    app.installTranslator(translator)
+    app = QApplication(sys.argv)
 
     # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server
     _key = _get_server_key()
@@ -230,13 +226,28 @@ if __name__ == "__main__":
         setFontFamilies(['PingFang SC'])
 
     # 加载界面语言 / Load UI language
+    translator = None
     try:
         from module.config import cfg
         from module.localization import load_language
         ui_lang = cfg.get_value("ui_language", "zh_CN")
+
+        # 创建翻译器实例，生命周期必须和 app 相同
+        if ui_lang == "zh_TW":
+            translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
+        elif ui_lang == "ko_KR":
+            translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
+        elif ui_lang == "en_US":
+            translator = FluentTranslator(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        else:  # 默认使用中文
+            translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
+
         load_language(ui_lang)
     except Exception:
         pass  # 如果加载失败，使用默认中文
+
+    if translator:
+        app.installTranslator(translator)
 
     # 传递任务参数给主窗口
     from app.main_window import MainWindow

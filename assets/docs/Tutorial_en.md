@@ -50,7 +50,7 @@ Find the unzipped folder named like `March7thAssistant` and double-click to open
 
 Double-click `March7th Launcher.exe` to open the graphical interface and agree to the "Disclaimer".
 
-> This program is a free open-source project. If you paid for it, lease request a refund immediately!!!
+> This program is a free open-source project. If you paid for it, please request a refund immediately!!!
 >
 > This project has been seriously threatened by reselling behaviors. Please help us!!!
 >

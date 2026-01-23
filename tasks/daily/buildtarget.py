@@ -8,6 +8,7 @@ from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from utils.image_utils import ImageUtils
 import json
+from module.localization import get_raw_instance_names
 import time
 import datetime
 import re
@@ -225,20 +226,21 @@ class BuildTarget:
 
         instance_type = auto.get_single_line_text(max_retries=5, retry_delay=1.0, crop=(93.0 / 1920, 33.0 / 1080, 150.0 / 1920, 68.0 / 1080))
 
-        if "饰品提取" in instance_type:
-            instance_type = "饰品提取"
-            instance_name = BuildTarget._parse_ornament_instance_info()
-        elif "拟造花萼" in instance_type:
-            instance_type = "拟造花萼（赤）"
-            instance_name = BuildTarget._parse_calyx_instance_info()
-        else:
-            instance_name = BuildTarget._parse_standard_instance_info()
+        if instance_type is not None:
+            if "饰品提取" in instance_type:
+                instance_type = "饰品提取"
+                instance_name = BuildTarget._parse_ornament_instance_info()
+            elif "拟造花萼" in instance_type:
+                instance_type = "拟造花萼（赤）"
+                instance_name = BuildTarget._parse_calyx_instance_info()
+            else:
+                instance_name = BuildTarget._parse_standard_instance_info()
 
-        instance_type = (instance_type or "").strip()
-        instance_name = (instance_name or "").strip()
+            instance_type = (instance_type or "").strip()
+            instance_name = (instance_name or "").strip()
 
-        if instance_type and instance_name:
-            return (instance_type, instance_name)
+            if instance_type and instance_name:
+                return (instance_type, instance_name)
 
         log.warning("未能识别到副本信息")
         return None
@@ -290,6 +292,8 @@ class BuildTarget:
     @staticmethod
     def _parse_standard_instance_info() -> str | None:
         raw_instance_name = auto.get_single_line_text(max_retries=5, retry_delay=1.0, crop=(1173.0 / 1920, 113.0 / 1080, 735.0 / 1920, 53.0 / 1080))
+        if not raw_instance_name:
+            return None
 
         if "·" in raw_instance_name:
             return raw_instance_name.split("·")[0]
@@ -302,8 +306,7 @@ class BuildTarget:
         instance_type, instance_name = instance
 
         if not BuildTarget._valid_instance_names:
-            with open("./assets/config/instance_names.json", "r", encoding="utf-8") as f:
-                BuildTarget._valid_instance_names = json.load(f)
+            BuildTarget._valid_instance_names = get_raw_instance_names()
 
         if not instance_type or not instance_name:
             return None

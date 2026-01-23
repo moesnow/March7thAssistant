@@ -8,6 +8,7 @@ from tasks.base.team import Team
 from .character import Character
 from .relicset import Relicset
 import time
+from module.localization import get_raw_instance_names
 import json
 
 
@@ -141,9 +142,8 @@ class Instance:
                 Flag = True
                 # 临时解决方案
                 if "拟造花萼（赤）" in instance_type:
-                    with open("./assets/config/instance_names.json", 'r', encoding='utf-8') as file:
-                        template = json.load(file)
-                    if instance_name in template[instance_type]:
+                    template = get_raw_instance_names()
+                    if instance_name in template.get(instance_type, {}):
                         instance_name = template[instance_type][instance_name]
                 break
             auto.mouse_scroll(12, -1)

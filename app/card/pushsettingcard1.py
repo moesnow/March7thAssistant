@@ -12,7 +12,7 @@ import json
 import re
 import sys
 from ..tools.check_update import checkUpdate
-from module.localization import tr
+from module.localization import tr, get_character_names, instance_display_to_raw
 
 
 def get_key_from_value(val, map):
@@ -443,18 +443,20 @@ class PushSettingCardKey(PushSettingCard):
 
 
 class PushSettingCardInstance(PushSettingCard):
-    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, configtemplate, parent=None):
-        self.configtemplate = configtemplate
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = cfg.get_value(configname)
         # super().__init__(text, icon, title, configname, str(self.configvalue), parent)
         super().__init__(text, icon, title, configname, "", parent)
         self.button.clicked.connect(self.__onclicked)
 
     def __onclicked(self):
-        message_box = MessageBoxInstance(self.title, self.configvalue, self.configtemplate, self.window())
+        message_box = MessageBoxInstance(self.title, self.configvalue, self.window())
         if message_box.exec():
+            new_config = {}
             for type, combobox in message_box.comboBox_dict.items():
-                self.configvalue[type] = combobox.text().split('（')[0]
+                raw_type, raw_name = instance_display_to_raw(type, combobox.text())
+                new_config[raw_type] = raw_name
+            self.configvalue = new_config
             cfg.set_value(self.configname, self.configvalue)
             # self.contentLabel.setText(str(self.configvalue))
 
@@ -491,8 +493,7 @@ class PushSettingCardNotifyTemplate(PushSettingCard):
 
 class PushSettingCardTeam(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
-            self.template = json.load(file)
+        self.template = get_character_names()
         self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, self.translate_to_chinese(self.configvalue), parent)
         self.button.clicked.connect(self.__onclicked)
@@ -518,9 +519,8 @@ class PushSettingCardTeam(PushSettingCard):
 
 class PushSettingCardFriends(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
-            self.template = json.load(file)
-            self.template = {'None': '无', **self.template}
+        # include 'None' mapping for friends list
+        self.template = get_character_names(include_none=True)
         self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, self.translate_to_chinese(self.configvalue), parent)
         self.button.clicked.connect(self.__onclicked)
@@ -549,8 +549,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
     """Setting card with swap button for team1 and team2 configuration"""
 
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, configname_team1, configname_team2, parent=None):
-        with open("./assets/config/character_names.json", 'r', encoding='utf-8') as file:
-            self.template = json.load(file)
+        self.template = get_character_names()
 
         self.configname_team1 = configname_team1
         self.configname_team2 = configname_team2
@@ -633,8 +632,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
 class PushSettingCardPowerPlan(PushSettingCard):
     """体力计划设置卡片"""
 
-    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, configtemplate, parent=None):
-        self.configtemplate = configtemplate
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, self._get_display_text(), parent)
         self.button.clicked.connect(self.__onclicked)
@@ -646,7 +644,7 @@ class PushSettingCardPowerPlan(PushSettingCard):
         return tr("已配置 {} 项计划").format(len(self.configvalue))
 
     def __onclicked(self):
-        message_box = MessageBoxPowerPlan(self.title, self.configvalue, self.configtemplate, self.window())
+        message_box = MessageBoxPowerPlan(self.title, self.configvalue, self.window())
         if message_box.exec():
             plans = message_box.get_plans()
             self.configvalue = plans
