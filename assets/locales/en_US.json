@@ -41,7 +41,7 @@
     "自动切换队伍": "Auto Switch Team",
     "清体力前传送至任意锚点": "Teleport to anchor before clearing power",
     "使用后备开拓力": "Use Reserved Trailblaze Power",
-    "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”": "Max 300 points per run. To use all, change 'After Task' to 'Loop' and click 'Full Run'",
+    "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”": "Max 300 power per run. To use all, change 'After Task' to 'Loop' and click 'Full Run'",
     "使用燃料": "Use Fuel",
     "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”": "Max 5 per run. To use all, change 'After Task' to 'Loop' and click 'Full Run'",
     "自动分解四星遗器（建议在游戏内配置结算遗器时自动分解）": "Auto salvage 4-star Relics (Recommended to config in-game auto salvage)",
