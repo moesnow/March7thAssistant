@@ -244,7 +244,7 @@ class SwitchSettingCardGardenofplenty(SettingCard):
 
         texts = ['拟造花萼（金）', '拟造花萼（赤）']
         for text, option in zip(texts, texts):
-            self.comboBox.addItem(text, userData=option)
+            self.comboBox.addItem(tr(text), userData=option)
 
         self.comboBox.setCurrentText(cfg.get_value("activity_gardenofplenty_instance_type"))
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
