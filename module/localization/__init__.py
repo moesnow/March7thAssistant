@@ -6,10 +6,15 @@ Support for Chinese/Korean/English UI languages
 import json
 import os
 import re
+import sys
 
 _current_lang = "zh_CN"
 _translations = {}
-_locale_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "locales")
+
+if getattr(sys, 'frozen', False):
+    _locale_dir = os.path.join(os.path.dirname(sys.executable), "assets", "locales")
+else:
+    _locale_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "locales")
 
 # simple s2t converter (use opencc if available, fallback to simple mapping)
 
@@ -174,7 +179,10 @@ def get_character_names(include_none: bool = False) -> dict:
     """
     global _character_names_cache
     if _character_names_cache is None:
-        names_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "config", "character_names.json")
+        if getattr(sys, 'frozen', False):
+            names_path = os.path.join(os.path.dirname(sys.executable), "assets", "config", "character_names.json")
+        else:
+            names_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "config", "character_names.json")
         try:
             if os.path.exists(names_path):
                 with open(names_path, 'r', encoding='utf-8') as f:
@@ -209,7 +217,10 @@ def get_raw_instance_names() -> dict:
     """Load raw instance names mapping from JSON file (no localization)."""
     global _instance_names_cache_raw
     if _instance_names_cache_raw is None:
-        names_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "config", "instance_names.json")
+        if getattr(sys, 'frozen', False):
+            names_path = os.path.join(os.path.dirname(sys.executable), "assets", "config", "instance_names.json")
+        else:
+            names_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "config", "instance_names.json")
         try:
             if os.path.exists(names_path):
                 with open(names_path, 'r', encoding='utf-8') as f:
