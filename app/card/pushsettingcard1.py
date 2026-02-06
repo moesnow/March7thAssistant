@@ -248,7 +248,7 @@ class PushSettingCardCode(PushSettingCard):
         code = [
             line.strip()
             for line in (
-                ''.join(re.findall(r'[A-Za-z0-9]', l))
+                ''.join(re.findall(r'[A-Za-z0-9\u4e00-\u9fff]', l))
                 for l in text.splitlines()
             )
             if line.strip()
