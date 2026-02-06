@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2026.2.7
+- 支持中文格式的兑换码
+- 图形界面支持多语言 [#856](https://github.com/moesnow/March7thAssistant/pull/856) @hohofught
+- 新增支持三星光锥自动合成 [#854](https://github.com/moesnow/March7thAssistant/pull/854) @vintcessun
+- 修复偶现获取培养目标副本出错 [#857(https://github.com/moesnow/March7thAssistant/pull/857) @g60cBQ
+- 修正一些本地化翻译错误 @loader3229 @g60cBQ @hohofught
+- 优化性能和稳定性并修复若干已知问题
+
 ## v2026.1.21
 - 支持货币战争领取积分奖励后自动使用深度沉浸器
 - 新增 MeoW 推送支持 [#850](https://github.com/moesnow/March7thAssistant/pull/850) @pboymt
