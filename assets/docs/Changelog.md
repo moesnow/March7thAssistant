@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2026.2.8
+## v2026.2.9
 - 支持中文格式的兑换码
 - 图形界面支持多语言 [#856](https://github.com/moesnow/March7thAssistant/pull/856) @hohofught
 - 新增支持三星光锥自动合成 [#854](https://github.com/moesnow/March7thAssistant/pull/854) @vintcessun
