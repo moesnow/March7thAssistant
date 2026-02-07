@@ -21,5 +21,5 @@ asyncio==3.4.3
 nio==3.4.2
 selenium==4.38.0
 rapidocr==3.6.0
-onnxruntime==1.23.2
+onnxruntime==1.24.1
 openvino==2025.4.1

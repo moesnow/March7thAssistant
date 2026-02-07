@@ -36,7 +36,7 @@ selenium==4.39.0
 keyboard==0.13.5
 opencc==1.2.0
 rapidocr==3.6.0
-onnxruntime-directml==1.23.0; sys_platform == 'win32' and python_version <= '3.13'
-onnxruntime==1.23.2; (sys_platform == 'darwin' or sys_platform == 'linux') and python_version <= '3.13'
-openvino==2025.4.1; sys_platform == 'win32' or sys_platform == 'linux'
+onnxruntime-directml==1.24.1; sys_platform == 'win32'
+onnxruntime==1.24.1; sys_platform == 'darwin' or sys_platform == 'linux'
+openvino==2025.4.1
 # paddlepaddle==3.3.0; python_version <= '3.13'
