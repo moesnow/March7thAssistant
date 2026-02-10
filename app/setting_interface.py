@@ -1056,7 +1056,6 @@ class SettingInterface(ScrollArea):
         # self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         self.instanceTypeCard.addSettingCards([
-            self.instanceNameCard,
             self.instanceTeamEnableCard,
             self.tpBeforeInstanceEnableCard,
             self.useReservedTrailblazePowerEnableCard,
@@ -1065,6 +1064,7 @@ class SettingInterface(ScrollArea):
             self.mergeImmersifierEnableCard,
             self.instanceNameChallengeCountCard
         ])
+        self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.borrowEnableCard)
         # 将子卡片添加到 borrowEnableCard 的可展开区域
         self.borrowEnableCard.addSettingCards([

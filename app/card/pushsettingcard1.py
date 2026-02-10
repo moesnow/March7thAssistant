@@ -445,8 +445,8 @@ class PushSettingCardKey(PushSettingCard):
 class PushSettingCardInstance(PushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = cfg.get_value(configname)
-        # super().__init__(text, icon, title, configname, str(self.configvalue), parent)
-        super().__init__(text, icon, title, configname, "", parent)
+        super().__init__(text, icon, title, configname, tr("说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动"), parent)
+        # super().__init__(text, icon, title, configname, "", parent)
         self.button.clicked.connect(self.__onclicked)
 
     def __onclicked(self):
