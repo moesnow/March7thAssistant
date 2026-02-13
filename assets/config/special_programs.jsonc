@@ -1,15 +1,15 @@
 {
     "special_programs": [
-        {
-            "key": "bettergi",
-            "display_name": "原神 BetterGI",
-            "short_name": "原神",
-            "executable": "BetterGI.exe",
-            "default_args": "startOneDragon",
-            "kill_processes": [
-                "YuanShen.exe"
-            ]
-        },
+        // {
+        //     "key": "bettergi",
+        //     "display_name": "原神 BetterGI",
+        //     "short_name": "原神",
+        //     "executable": "BetterGI.exe",
+        //     "default_args": "startOneDragon",
+        //     "kill_processes": [
+        //         "YuanShen.exe"
+        //     ]
+        // },
         {
             "key": "zzz_onedragon",
             "display_name": "绝区零 一条龙",

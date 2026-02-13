@@ -13,15 +13,80 @@ import json
 from module.config import cfg
 from module.localization import tr
 
+
+def _strip_jsonc_comments(text: str) -> str:
+    """Strip // and /* */ comments while preserving string literals."""
+    out = []
+    i = 0
+    in_str = False
+    str_ch = ''
+    escape = False
+    in_line = False
+    in_block = False
+    n = len(text)
+
+    while i < n:
+        ch = text[i]
+        nxt = text[i + 1] if i + 1 < n else ''
+
+        if in_line:
+            if ch == '\n':
+                in_line = False
+                out.append(ch)
+            i += 1
+            continue
+
+        if in_block:
+            if ch == '*' and nxt == '/':
+                in_block = False
+                i += 2
+            else:
+                i += 1
+            continue
+
+        if in_str:
+            out.append(ch)
+            if escape:
+                escape = False
+            elif ch == '\\':
+                escape = True
+            elif ch == str_ch:
+                in_str = False
+            i += 1
+            continue
+
+        if ch in ('"', "'"):
+            in_str = True
+            str_ch = ch
+            out.append(ch)
+            i += 1
+            continue
+
+        if ch == '/' and nxt == '/':
+            in_line = True
+            i += 2
+            continue
+
+        if ch == '/' and nxt == '*':
+            in_block = True
+            i += 2
+            continue
+
+        out.append(ch)
+        i += 1
+
+    return ''.join(out)
+
 # 从 assets/config/special_programs.json 加载特殊程序定义（若存在）
 SPECIAL_PROGRAMS = []
 _SPECIAL_BY_DISPLAY = {}
 _SPECIAL_BY_EXEC = {}
 try:
-    cfg_path = "./assets/config/special_programs.json"
+    cfg_path = "./assets/config/special_programs.jsonc"
     if os.path.exists(cfg_path):
         with open(cfg_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+            raw = f.read()
+            data = json.loads(_strip_jsonc_comments(raw))
             SPECIAL_PROGRAMS = data.get('special_programs', []) or []
             for p in SPECIAL_PROGRAMS:
                 _SPECIAL_BY_DISPLAY[p.get('display_name')] = p
