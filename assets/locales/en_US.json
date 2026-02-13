@@ -596,7 +596,7 @@
     "请重新打开游戏抽卡记录": "Please re-open in-game warp history",
     "身份认证已过期": "Auth Expired",
     "请求出错": "Request Error",
-    "正在获取{self.gacha_type[gacha_type]}第{page}页": "Fetching {self.gacha_type[gacha_type]} Page {page}",
+    "正在获取{gacha_name}第{page}页": "Fetching {gacha_name} Page {page}",
     "等待5秒后重试，剩余重试次数：": "Retrying in 5s, remaining tries: ",
     "UID与原始数据不一致": "UID mismatch with original data",
     "语言与原始数据不一致": "Language mismatch with original data",

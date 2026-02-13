@@ -321,7 +321,7 @@ class WarpExport:
                         self.show_info_message(response.json()['message'], tr("请求出错"))
                         return None
                 else:
-                    self.show_info_message(tr('正在获取{self.gacha_type[gacha_type]}第{page}页').format(self=self, gacha_type=gacha_type, page=page))
+                    self.show_info_message(tr('正在获取{gacha_name}第{page}页').format(gacha_name=self.gacha_type[gacha_type], page=page))
                     return response.json()['data']
             except Exception:
                 self.show_info_message(tr('等待5秒后重试，剩余重试次数：') + str(max_retry - i) + '', tr("请求出错"))
