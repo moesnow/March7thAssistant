@@ -166,7 +166,7 @@ class Daily:
         if len(cfg.daily_tasks) > 0:
             task_functions = {
                 "登录游戏": (lambda: True, 100),
-                "派遣1次委托": (lambda: False, 100),  # 没有实现但有可能已完成,只检测是否完成
+                "派遣委托或收取1次委托奖励": (lambda: False, 100),  # 没有实现但有可能已完成,只检测是否完成
                 "累计消耗120点开拓力": (lambda: False, 200),  # 没有实现但有可能已完成,只检测是否完成
                 "使用支援角色并获得战斗胜利1次": (lambda: False, 200),  # 没有实现但有可能已完成,只检测是否完成
                 "完成1次「拟造花萼（金）」": (lambda: False, 100),

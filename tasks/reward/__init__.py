@@ -32,7 +32,7 @@ class RewardManager:
         self.reward_mapping = {
             "mail": ("./assets/images/share/menu/mail_reward.png", 3000000, (1823.0 / 1920, 224.0 / 1080, 91.0 / 1920, 92.0 / 1080)),
             "assist": ("./assets/images/share/menu/assist_reward.png", 2000000, self.crop),
-            "dispatch": ("./assets/images/share/menu/dispatch_reward.png", 2000000, self.crop),
+            "dispatch": ("./assets/images/share/menu/dispatch.png", 2000000, self.crop),
             "quest": ("./assets/images/share/menu/quest_reward.png", 2000000, self.crop),
             "srpass": ("./assets/images/share/menu/pass_reward.png", 2000000, self.crop),
             "achievement": ("./assets/images/share/menu/achievement_reward.png", 2000000, self.crop),
