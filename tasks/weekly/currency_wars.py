@@ -976,7 +976,12 @@ class CurrencyWars:
         first_norm = to_norm(*path_pixels[0])
         first_crop = make_crop_box(first_norm)
         pos_start = auto.find_element(first_crop, "crop")
-        auto.click_element_with_pos(pos_start, action="down")
+
+        # 避免装备过多时，收集奖励失败
+        pos = (6.0 / 1920, 5.0 / 1080, 12.0 / 1920, 14.0 / 1080)
+        auto.click_element_with_pos(auto.find_element(pos, "crop"), action="down")
+
+        auto.click_element_with_pos(pos_start, action="move")
 
         # 连续移动
         for px, py in path_pixels[1:]:
