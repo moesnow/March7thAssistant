@@ -7,7 +7,7 @@ tqdm==4.67.1
 psutil==6.1.1
 requests==2.32.4
 imageio==2.36.1
-Pillow==11.0.0
+Pillow==12.1.1
 Numpy==2.3.0
 opencv-python==4.10.0.84
 onepush==1.4.0

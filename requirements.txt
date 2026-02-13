@@ -10,7 +10,7 @@ pyautogui==0.9.54
 pygetwindow==0.0.9
 requests==2.32.5
 imageio==2.37.2
-Pillow==12.1.0
+Pillow==12.1.1
 numpy==2.2.6
 opencv-python==4.12.0.88
 onepush==1.4.0
