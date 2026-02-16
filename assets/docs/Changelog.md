@@ -1,11 +1,13 @@
 # 更新日志
 
-## v2026.2.16
+## v2026.2.17
 - 支持 4.0 版本新增关卡
 - 适配 4.0 版本支援新界面 [#882](https://github.com/moesnow/March7thAssistant/pull/882) @g60cBQ
 - 适配 4.0 版本委托奖励新界面
 - 添加新版本本地化翻译 [#883](https://github.com/moesnow/March7thAssistant/pull/883) @g60cBQ
+- 补充一些遗漏的本地化翻译 [#868](https://github.com/moesnow/March7thAssistant/pull/868) @loader3229
 - 修复获取抽卡记录时请求出错
+- 修复货币战争补给阶段选择异常
 - 修复非简体中文语言修改副本类型后导致清体力出错 [#881](https://github.com/moesnow/March7thAssistant/pull/881)
 - 优化性能和稳定性并修复若干已知问题
 
