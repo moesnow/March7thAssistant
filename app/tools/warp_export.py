@@ -190,7 +190,7 @@ class WarpExport:
                     rank_5.append([name, grand_total])
                     grand_total = 0
 
-            content += f"一共 {self.__set_color(total, 'DeepSkyBlue')} {tr('抽')} {tr('已累计')} {self.__set_color(grand_total, 'LimeGreen')} {tr('抽未出5星')}\n\n"
+            content += f"{tr('一共')} {self.__set_color(total, 'DeepSkyBlue')} {tr('抽')} {tr('已累计')} {self.__set_color(grand_total, 'LimeGreen')} {tr('抽未出5星')}\n\n"
             for star, count in rank_type.items():
                 percentage = count / total * 100
                 color = 'Goldenrod' if star == '5' else 'darkorchid' if star == '4' else 'DodgerBlue'
