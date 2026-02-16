@@ -20,8 +20,6 @@ and close any software that might affect the game display, such as FPS monitorin
 >
 > If you need to run in the background, you can use [Remote Local Multi-User Desktop](/assets/docs/Background.md) to enable multiple desktops on one computer simultaneously.
 
-## Platform Support
-
 ## Download
 
 Click [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) to open the download page and scroll to the bottom.

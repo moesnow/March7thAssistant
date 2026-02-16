@@ -20,9 +20,6 @@
 >
 > 백그라운드 실행이 필요하다면 [원격 로컬 멀티 데스크톱](/assets/docs/Background.md) 기능을 사용하여 한 PC에서 여러 데스크톱을 동시에 실행해 보세요.
 
-## 플랫폼 지원
-
-
 ## 다운로드
 
 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest)를 클릭하여 다운로드 페이지를 열고 하단으로 스크롤하세요.

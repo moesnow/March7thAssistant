@@ -20,9 +20,6 @@
 >
 > 如果有后台运行的需求，可以使用 [远程本地多用户桌面](/assets/docs/Background.md)，在一台电脑上同时启用多个桌面。
 
-## 平台支持
-
-
 ## 下载
 
 点击 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 打开下载页面，滚动到底部。
