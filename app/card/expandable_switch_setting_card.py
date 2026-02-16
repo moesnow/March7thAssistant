@@ -3,7 +3,7 @@ from typing import Union, List
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
 from qfluentwidgets import ExpandSettingCard, FluentIconBase, SwitchButton, IndicatorPosition, SettingCard, ComboBox, PrimaryPushButton
-from module.localization import tr
+from module.localization import tr, instance_display_to_raw
 
 
 class ExpandableSwitchSettingCard(ExpandSettingCard):
@@ -378,7 +378,7 @@ class ExpandableComboBoxSettingCardUpdateSource(ExpandSettingCard):
         self._adjustViewSize()
 
 
-class ExpandableComboBoxSettingCard1(ExpandSettingCard):
+class ExpandableComboBoxSettingCardInstanceType(ExpandSettingCard):
     """可展开的下拉菜单设置卡片 - 用于 ComboBoxSettingCard1 类型"""
 
     expandStateChanged = Signal(bool)
@@ -413,14 +413,14 @@ class ExpandableComboBoxSettingCard1(ExpandSettingCard):
                 for item in texts:
                     self.comboBox.addItem(item)
                 # 尝试从配置中设置当前项
-                current_value = self.cfg.get_value(configname)
+                current_value = tr(self.cfg.get_value(configname))
                 if current_value and current_value in texts:
                     self.comboBox.setCurrentText(current_value)
             else:
                 # 如果是字典，按照字典方式处理
                 for key, value in texts.items():
                     self.comboBox.addItem(key, userData=value)
-                    if value == self.cfg.get_value(configname):
+                    if value == tr(self.cfg.get_value(configname)):
                         self.comboBox.setCurrentText(key)
 
         # Connect signals
@@ -428,7 +428,7 @@ class ExpandableComboBoxSettingCard1(ExpandSettingCard):
 
     def __onComboBoxChanged(self, index: int):
         """ComboBox changed slot"""
-        self.cfg.set_value(self.configname, self.comboBox.currentText())
+        self.cfg.set_value(self.configname, instance_display_to_raw(self.comboBox.currentText()))
         self.currentIndexChanged.emit(index)
 
     def setExpand(self, isExpand: bool):

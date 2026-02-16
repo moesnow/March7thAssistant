@@ -12,7 +12,7 @@ from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan
 from .card.timepickersettingcard1 import TimePickerSettingCard1
-from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandablePushSettingCard, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCard1, ExpandableSwitchSettingCardEchoofwar
+from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandablePushSettingCard, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from module.config import cfg
 from module.notification import notif
 from module.localization import tr
@@ -92,7 +92,7 @@ class SettingInterface(ScrollArea):
             tr("体力计划"),
             "power_plan"
         )
-        self.instanceTypeCard = ExpandableComboBoxSettingCard1(
+        self.instanceTypeCard = ExpandableComboBoxSettingCardInstanceType(
             "instance_type",
             FIF.ALIGNMENT,
             tr("副本类型"),
@@ -364,9 +364,9 @@ class SettingInterface(ScrollArea):
         )
 
         self.assetEnableCard = ExpandableSwitchSettingCard(
-            "asset_manager_enable", 
-            FIF.LIBRARY, 
-            tr("启用资产管理"), 
+            "asset_manager_enable",
+            FIF.LIBRARY,
+            tr("启用资产管理"),
             ""
         )
 
@@ -819,7 +819,8 @@ class SettingInterface(ScrollArea):
             FIF.POWER_BUTTON,
             tr('任务完成后'),
             tr('“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能'),
-            texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
+            texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启')
+                      : 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
         )
         self.loopModeCard = ComboBoxSettingCard2(
             "loop_mode",
@@ -922,10 +923,10 @@ class SettingInterface(ScrollArea):
                     display_name = "ServerChan3"
                 else:
                     display_name = notifier_name.capitalize()
-                
+
                 support_image = tr("（支持图片）") if notifier_name in self.notifySupportImage else ""
                 title_text = tr('启用 {} 通知').format(display_name) + support_image
-                
+
                 notifyEnableCard = SwitchSettingCardNotify(
                     self.notifyLogoDict[notifier_name] if notifier_name in self.notifyLogoDict else FIF.MAIL,
                     title_text,
