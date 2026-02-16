@@ -197,7 +197,7 @@ class WarpExport:
                 text = f"{star}{tr('星')}: {count:<4d} [{percentage:.2f}%]"
                 content += f"{self.__set_color(text, color)}\n\n"
             if len(rank_5) > 0:
-                rank_5_str = ' '.join([f"{self.__set_color(f'{tr(key)}[{value}]', self.__get_random_color(theme))}" for key, value in rank_5])
+                rank_5_str = ' '.join([f"{self.__set_color(f'{key}[{value}]', self.__get_random_color(theme))}" for key, value in rank_5])
                 rank_5_sum = sum(value for _, value in rank_5)
                 rank_5_avg = rank_5_sum / len(rank_5)
                 content += f"{tr('5星历史记录')}: {rank_5_str}\n\n"
