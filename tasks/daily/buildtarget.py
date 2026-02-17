@@ -202,7 +202,7 @@ class BuildTarget:
             auto.press_key("esc")
             return True
 
-        if "拟造花萼" in instance_type:
+        if "拟造花萼（赤）" in instance_type:
             time.sleep(0.5)
             auto.press_key("esc")
 
@@ -231,10 +231,9 @@ class BuildTarget:
                 instance_type = "饰品提取"
                 instance_name = BuildTarget._parse_ornament_instance_info()
             elif "拟造花萼" in instance_type:
-                instance_type = "拟造花萼（赤）"
-                instance_name = BuildTarget._parse_calyx_instance_info()
+                instance_name, instance_type = BuildTarget._parse_calyx_instance_info()
             else:
-                instance_name = BuildTarget._parse_standard_instance_info()
+                instance_name, _ = BuildTarget._parse_standard_instance_info()
 
             instance_type = (instance_type or "").strip()
             instance_name = (instance_name or "").strip()
@@ -258,47 +257,56 @@ class BuildTarget:
         return parsed or name.strip()
 
     @staticmethod
-    def _parse_calyx_instance_info() -> str | None:
-        for i in range(2):
-            click_offset = (i * 88 / auto.screenshot_scale_factor, 64 / auto.screenshot_scale_factor)
-            if not auto.click_element("可能获取", "text", offset=click_offset, max_retries=5, crop=(1196.0 / 1920, 492.0 / 1080, 705.0 / 1920, 456.0 / 1080)):
-                log.error("尝试提取拟造花萼副本信息时失败，无法识别特定副本页面")
-                return None
+    def _parse_calyx_instance_info() -> tuple[str | None, str | None]:
+        calyx_instance, calyx_type = BuildTarget._parse_standard_instance_info()
 
-            item_name = auto.get_single_line_text(crop=(783.0 / 1920, 318.0 / 1080, 204.0 / 1920, 55.0 / 1080), max_retries=3, retry_delay=0.5)
-            if not item_name or "信用点" in item_name:
-                log.error("尝试提取拟造花萼副本信息时失败，无法获取光锥晋阶材料信息")
-                return None
+        if "金" in calyx_type:
+            calyx_type = "拟造花萼（金）"
+        else:
+            calyx_type = "拟造花萼（赤）"
+            for i in range(2):
+                click_offset = (i * 88 / auto.screenshot_scale_factor, 64 / auto.screenshot_scale_factor)
+                if not auto.click_element("可能获取", "text", offset=click_offset, max_retries=5, crop=(1196.0 / 1920, 492.0 / 1080, 705.0 / 1920, 456.0 / 1080)):
+                    log.error("尝试提取拟造花萼副本信息时失败，无法识别特定副本页面")
+                    break
 
-            auto.mouse_scroll(6, -1)
-            time.sleep(1)
+                item_name = auto.get_single_line_text(crop=(783.0 / 1920, 318.0 / 1080, 204.0 / 1920, 55.0 / 1080), max_retries=3, retry_delay=0.5)
+                if not item_name or "信用点" in item_name:
+                    log.error("尝试提取拟造花萼副本信息时失败，无法获取光锥晋阶材料信息")
+                    break
 
-            text_crop = (790.0 / 1920, 377.0 / 1080, 694.0 / 1920, 354.0 / 1080)
-            text_pos = auto.find_element("拟造花萼", "text", crop=text_crop, include=True, relative=True)
+                auto.mouse_scroll(6, -1)
+                time.sleep(1)
 
-            if text_pos:
-                text_pos = tuple((x * auto.screenshot_scale_factor, y * auto.screenshot_scale_factor) for (x, y) in text_pos)
-                x1, y1 = text_crop[0] + (text_pos[0][0] - 12) / 1920, text_crop[1] + (text_pos[0][1] - 12) / 1080
-                x2, y2 = text_crop[0] + (text_pos[1][0] + 12) / 1920, text_crop[1] + (text_pos[1][1] + 12) / 1080
-                instance_name_match = re.search(r"[【（\(](.+?)[】）\)]", auto.get_single_line_text(crop=(x1, y1, x2 - x1, y2 - y1)) or "")
-                if instance_name_match:
-                    return instance_name_match.group(1)
+                text_crop = (790.0 / 1920, 377.0 / 1080, 694.0 / 1920, 354.0 / 1080)
+                text_pos = auto.find_element("拟造花萼", "text", crop=text_crop, include=True, relative=True)
 
-            auto.press_key("esc")
-            time.sleep(1)
+                if text_pos:
+                    text_pos = tuple((x * auto.screenshot_scale_factor, y * auto.screenshot_scale_factor) for (x, y) in text_pos)
+                    x1, y1 = text_crop[0] + (text_pos[0][0] - 12) / 1920, text_crop[1] + (text_pos[0][1] - 12) / 1080
+                    x2, y2 = text_crop[0] + (text_pos[1][0] + 12) / 1920, text_crop[1] + (text_pos[1][1] + 12) / 1080
+                    instance_name_match = re.search(r"[【（\(](.+?)[】）\)]", auto.get_single_line_text(crop=(x1, y1, x2 - x1, y2 - y1)) or "")
+                    if instance_name_match:
+                        calyx_instance = instance_name_match.group(1)
+                        break
+                    else:
+                        log.error("尝试提取拟造花萼副本信息时失败，无法获取副本地点名称")
 
-        return None
+                auto.press_key("esc")
+                time.sleep(1)
+
+        return calyx_instance, calyx_type
 
     @staticmethod
-    def _parse_standard_instance_info() -> str | None:
+    def _parse_standard_instance_info() -> tuple[str | None, str | None]:
+        """解析普通副本标题，返回元组的副本名称与副本类型的排列顺序对应 OCR 识别到的顺序。通常情况下是 (副本名称, 副本类型)"""
         raw_instance_name = auto.get_single_line_text(max_retries=5, retry_delay=1.0, crop=(1173.0 / 1920, 113.0 / 1080, 735.0 / 1920, 53.0 / 1080))
-        if not raw_instance_name:
-            return None
+        if raw_instance_name and "·" in raw_instance_name:
+            blocks = raw_instance_name.split("·")
+            if len(blocks) > 1:
+                return (blocks[0], blocks[1])
 
-        if "·" in raw_instance_name:
-            return raw_instance_name.split("·")[0]
-
-        return None
+        return None, None
 
     @staticmethod
     def _is_valid_instance(instance):
