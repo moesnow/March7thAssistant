@@ -78,5 +78,10 @@
         "server": "global",
         "expires_at": "2099-12-31T23:59:59+08:00",
         "code": "omega"
+    },
+    {
+        "server": "cn",
+        "expires_at": "2099-12-31T23:59:59+08:00",
+        "code": "恭喜发财好运来"
     }
 ]
