@@ -112,6 +112,14 @@ class CloudGameController(GameControllerBase):
         self.driver = None
         self.cfg = cfg
         self.logger = logger
+
+        # 二维码登录通知限流（避免夜间定时任务反复刷屏）
+        self._qr_notify_sent_count = 0
+        self._qr_notify_max_count = 3
+        self._qr_notify_last_link = ""
+        self._qr_notify_last_sent_ts = 0.0
+        self._qr_notify_min_interval_sec = 60
+
         atexit.register(self._clean_at_exit)
 
     def _wait_game_page_loaded(self, timeout=5) -> None:
@@ -756,18 +764,39 @@ class CloudGameController(GameControllerBase):
         """通过已配置的通知渠道发送二维码图片
         
         支持所有启用图片发送的通知渠道（飞书、Telegram、企业微信等）
+        并带有限流，避免二维码刷新时重复推送过多通知。
         """
         from module.notification import notif
         from module.notification.notification import NotificationLevel
-        
+
+        now_ts = time.time()
+
+        # 达到上限后不再推送（直到本轮登录结束）
+        if self._qr_notify_sent_count >= self._qr_notify_max_count:
+            self.log_info(f"二维码登录通知已达上限（{self._qr_notify_max_count}次），本轮不再推送")
+            return False
+
+        # 短时间内同链接重复刷新，跳过推送
+        if (
+            qr_link
+            and qr_link == self._qr_notify_last_link
+            and (now_ts - self._qr_notify_last_sent_ts) < self._qr_notify_min_interval_sec
+        ):
+            self.log_debug("二维码链接短时间内重复，跳过本次通知")
+            return False
+
         # 将图片字节转换为 BytesIO
         image_io = io.BytesIO(img_bytes)
-        
+
         # 发送通知到所有已配置的渠道
         message = "请使用米游社APP扫描二维码登录\n\n链接：" + qr_link
         notif.notify(content=message, image=image_io, level=NotificationLevel.ALL)
-        
-        self.log_info("二维码登录通知已发送")
+
+        self._qr_notify_sent_count += 1
+        self._qr_notify_last_link = qr_link or ""
+        self._qr_notify_last_sent_ts = now_ts
+
+        self.log_info(f"二维码登录通知已发送（{self._qr_notify_sent_count}/{self._qr_notify_max_count}）")
         return True
 
 
@@ -874,6 +903,12 @@ class CloudGameController(GameControllerBase):
 
     def _run_qr_login_flow(self) -> None:
         self.log_info("正在切换到二维码登录...")
+
+        # 每次进入二维码登录流程时重置通知限流状态
+        self._qr_notify_sent_count = 0
+        self._qr_notify_last_link = ""
+        self._qr_notify_last_sent_ts = 0.0
+
         try:
             self._switch_to_login_iframe()
             self._click_qr_login_button()
