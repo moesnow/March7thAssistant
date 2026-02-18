@@ -7,6 +7,7 @@ import sys
 import base64
 import requests
 import time
+import io
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, SessionNotCreatedException
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -751,6 +752,25 @@ class CloudGameController(GameControllerBase):
         self.log_info(f"二维码图片位置: {os.path.abspath(qr_filename)}")
         return qr_filename
 
+    def _send_qr_notification(self, img_bytes: bytes, qr_link: str) -> bool:
+        """通过已配置的通知渠道发送二维码图片
+        
+        支持所有启用图片发送的通知渠道（飞书、Telegram、企业微信等）
+        """
+        from module.notification import notif
+        from module.notification.notification import NotificationLevel
+        
+        # 将图片字节转换为 BytesIO
+        image_io = io.BytesIO(img_bytes)
+        
+        # 发送通知到所有已配置的渠道
+        message = "请使用米游社APP扫描二维码登录\n\n链接：" + qr_link
+        notif.notify(content=message, image=image_io, level=NotificationLevel.ALL)
+        
+        self.log_info("二维码登录通知已发送")
+        return True
+
+
     def _decode_qr_from_element(self, qr_img, qr_filename: str) -> None:
         try:
             import base64
@@ -794,6 +814,12 @@ class CloudGameController(GameControllerBase):
                 self.log_info("二维码内容：")
                 self.log_info(data)
                 self.log_info("提示：你也可以将该内容自行生成二维码后再扫码登录。")
+                
+                # 发送二维码登录通知
+                try:
+                    self._send_qr_notification(img_bytes, data)
+                except Exception as e:
+                    self.log_warning(f"发送二维码登录通知失败: {e}")
             else:
                 self.log_debug("未能解析二维码内容。")
 
