@@ -106,7 +106,7 @@ class BuildTarget:
     def _enter_build_target_page():
         screen.change_to("guide3")
 
-        if not auto.click_element("培养目标", "text", max_retries=5, crop=(300.0 / 1920, 291.0 / 1080, 147.0 / 1920, 104.0 / 1080)):
+        if not auto.click_element("培养目标", "text", max_retries=5, include=True, crop=(300 / 1920, 250 / 1080, 147 / 1920, 160 / 1080)):
             log.error("未能识别培养目标入口")
             return False
 
