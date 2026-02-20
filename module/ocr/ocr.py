@@ -2,6 +2,7 @@ import os
 import io
 import sys
 import time
+import platform
 from utils.logger.logger import Logger
 from typing import Optional
 from PIL import Image
@@ -127,7 +128,9 @@ class OCR:
                     "Rec.engine_type": prefer_engine,
                 }
 
-                if sys.platform == "darwin" and prefer_engine == EngineType.OPENVINO:
+                # 891
+                machine = platform.machine().lower()
+                if machine.startswith(("arm", "aarch")) and prefer_engine == EngineType.OPENVINO:
                     params["Det.engine_type"] = EngineType.ONNXRUNTIME
 
                 try:
