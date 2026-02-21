@@ -117,38 +117,15 @@ class Updater:
         while True:
             try:
                 self.logger.info("开始下载...")
-                if os.path.exists(self.aria2_path):
-                    command = [
-                        self.aria2_path,
-                        "--disable-ipv6=true",
-                        "--dir={}".format(os.path.dirname(self.download_file_path)),
-                        "--out={}".format(os.path.basename(self.download_file_path)),
-                        self.download_url
-                    ]
-
-                    if "github.com" in self.download_url:
-                        command.insert(2, "--max-connection-per-server=16")
-                        # 仅在下载 GitHub 资源时启用断点续传，避免416错误
-                        if os.path.exists(self.download_file_path):
-                            command.insert(2, "--continue=true")
-                    # 代理设置
-                    for scheme, proxy in proxies.items():
-                        if scheme in ("http", "https", "ftp"):
-                            command.append(f"--{scheme}-proxy={proxy}")
-                    subprocess.run(command, check=True)
-
-                else:
-                    response = requests.head(self.download_url, allow_redirects=True)
-                    response.raise_for_status()
-                    file_size = int(response.headers.get('Content-Length', 0))
-
-                    with tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
-                        with requests.get(self.download_url, stream=True) as r:
-                            with open(self.download_file_path, 'wb') as f:
-                                for chunk in r.iter_content(chunk_size=1024):
-                                    if chunk:
-                                        f.write(chunk)
-                                        pbar.update(len(chunk))
+                try:
+                    self.download_with_requests()
+                except Exception as e:
+                    if os.path.exists(self.aria2_path):
+                        self.logger.warning(f"下载失败: {red(e)}，尝试使用外部下载工具")
+                        self.download_with_aria2(proxies)
+                    else:
+                        self.logger.error(red(e))
+                        raise e
 
                 self.logger.info(f"下载完成: {green(self.download_file_path)}")
                 break
@@ -157,6 +134,42 @@ class Updater:
                 self.logger.error(f"下载失败: {red('请检查网络连接是否正常，或切换更新源后重试。')}")
                 input("按回车键重试. . .")
         self.logger.hr("完成", 2)
+
+    def download_with_aria2(self, proxies):
+        # 偶现报错
+        # [SocketCore.cc:1019] errorCode=1 SSL/TLS handshake failure: Error: 由于吊销服务器已脱机，吊销功能无法检查吊销。 (80092013)
+        
+        command = [
+            self.aria2_path,
+            "--disable-ipv6=true",
+            "--dir={}".format(os.path.dirname(self.download_file_path)),
+            "--out={}".format(os.path.basename(self.download_file_path)),
+            self.download_url
+        ]
+
+        if "github.com" in self.download_url:
+            command.insert(2, "--max-connection-per-server=16")
+            # 仅在下载 GitHub 资源时启用断点续传，避免416错误
+            if os.path.exists(self.download_file_path):
+                command.insert(2, "--continue=true")
+        # 代理设置
+        for scheme, proxy in proxies.items():
+            if scheme in ("http", "https", "ftp"):
+                command.append(f"--{scheme}-proxy={proxy}")
+        subprocess.run(command, check=True)
+
+    def download_with_requests(self):
+        with requests.get(self.download_url, stream=True) as r:
+            r.raise_for_status()
+
+            total = int(r.headers.get("content-length", 0)) or None
+
+            with tqdm(total=total, unit="B", unit_scale=True, unit_divisor=1024) as pbar:
+                with open(self.download_file_path, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+                            pbar.update(len(chunk))
 
     def extract_file(self):
         """解压下载的文件。"""
