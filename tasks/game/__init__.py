@@ -269,7 +269,13 @@ def after_finish_is_loop():
     log.hr("完成", 2)
     # 等待状态退出OCR避免内存占用
     ocr.exit_ocr()
-    time.sleep(wait_time)
+    # 使用wall clock轮询等待，避免系统休眠后time.sleep剩余时间不准确的问题
+    target_time = time.time() + wait_time
+    while True:
+        remaining = target_time - time.time()
+        if remaining <= 0:
+            break
+        time.sleep(min(60, remaining))
 
     # 启动前重新加载配置 #262
     cfg._load_config()
