@@ -186,7 +186,7 @@ class Instance:
             team_slot_crop = (624.0 / 1920, 772.0 / 1080, 267.0 / 1920, 91.0 / 1080)
             if auto.find_element("./assets/images/share/universe/empty_character_slot.png", "image_count", 0.8, crop=team_slot_crop, pixel_bgr=[233, 233, 233]) == 3:
                 if auto.click_element("./assets/images/share/universe/empty_character_slot.png", "image", 0.8, crop=team_slot_crop, take_screenshot=False):
-                    if auto.click_element("预设编队", "text", max_retries=4, retry_delay=0.5, crop=(27.0 / 1920, 103.0 / 1080, 557.0 / 1920, 64.0 / 1080)):
+                    if auto.click_element("预设编队", "text", max_retries=4, retry_delay=0.5, crop=(6 / 1920, 8 / 1080, 578 / 1920, 168 / 1080)):
                         click_x = auto.screenshot_pos[0] + 260 / auto.screenshot_scale_factor
                         click_y = auto.screenshot_pos[1] + 175 / auto.screenshot_scale_factor
                         time.sleep(1.0)
