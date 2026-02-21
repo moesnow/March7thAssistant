@@ -143,6 +143,10 @@ def start_game():
 
             if not wait_until(lambda: check_and_click_enter(), cfg.start_game_timeout * 60):
                 raise TimeoutError("查找并点击进入按钮超时")
+
+            # 偶现加载慢时分辨率修改不成功，进入游戏前增加一次分辨率检查
+            starrail.check_resolution(1920, 1080)
+
             time.sleep(10)
             # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
             auto.press_mouse()
