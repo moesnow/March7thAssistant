@@ -138,7 +138,7 @@ class Updater:
     def download_with_aria2(self, proxies):
         # 偶现报错
         # [SocketCore.cc:1019] errorCode=1 SSL/TLS handshake failure: Error: 由于吊销服务器已脱机，吊销功能无法检查吊销。 (80092013)
-        
+
         command = [
             self.aria2_path,
             "--disable-ipv6=true",
@@ -158,18 +158,79 @@ class Updater:
                 command.append(f"--{scheme}-proxy={proxy}")
         subprocess.run(command, check=True)
 
-    def download_with_requests(self):
-        with requests.get(self.download_url, stream=True) as r:
-            r.raise_for_status()
+    def download_with_requests(self, max_retries=5, retry_delay=2):
+        attempt = 0
+        while attempt < max_retries:
+            existing_size = os.path.getsize(self.download_file_path) if os.path.exists(self.download_file_path) else 0
+            try:
+                headers = {}
+                mode = "wb"
 
-            total = int(r.headers.get("content-length", 0)) or None
+                if existing_size > 0:
+                    headers["Range"] = f"bytes={existing_size}-"
 
-            with tqdm(total=total, unit="B", unit_scale=True, unit_divisor=1024) as pbar:
-                with open(self.download_file_path, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        if chunk:
-                            f.write(chunk)
-                            pbar.update(len(chunk))
+                with requests.get(self.download_url, stream=True, headers=headers, timeout=(10, 30)) as r:
+                    # 支持断点续传时会返回 206，不支持时通常返回 200（需要重下）
+                    if existing_size > 0 and r.status_code == 206:
+                        mode = "ab"
+                    elif existing_size > 0 and r.status_code == 200:
+                        existing_size = 0
+                        mode = "wb"
+
+                    r.raise_for_status()
+
+                    total = None
+                    content_range = r.headers.get("content-range")
+                    if content_range and "/" in content_range:
+                        total_str = content_range.rsplit("/", 1)[-1].strip()
+                        if total_str.isdigit():
+                            total = int(total_str)
+
+                    if total is None:
+                        content_length = int(r.headers.get("content-length", 0)) or None
+                        if content_length is not None:
+                            total = content_length + existing_size if mode == "ab" else content_length
+
+                    with tqdm(total=total, initial=existing_size if mode == "ab" else 0, unit="B", unit_scale=True, unit_divisor=1024) as pbar:
+                        with open(self.download_file_path, mode) as f:
+                            for chunk in r.iter_content(chunk_size=8192):
+                                if chunk:
+                                    f.write(chunk)
+                                    pbar.update(len(chunk))
+                return
+            except requests.HTTPError as e:
+                response = e.response
+                if response is not None and response.status_code == 416:
+                    # 服务端通常返回: Content-Range: bytes */<total>
+                    total_size = None
+                    content_range = response.headers.get("content-range", "")
+                    if "/" in content_range:
+                        total_str = content_range.rsplit("/", 1)[-1].strip()
+                        if total_str.isdigit():
+                            total_size = int(total_str)
+
+                    if total_size is not None and existing_size == total_size:
+                        self.logger.info("检测到本地文件已完整，无需继续下载")
+                        return
+
+                    if os.path.exists(self.download_file_path):
+                        try:
+                            os.remove(self.download_file_path)
+                            self.logger.warning("检测到无效续传区间(416)，已清理分片并从头重试")
+                        except Exception as remove_error:
+                            self.logger.warning(f"清理分片失败，继续按重试处理: {red(remove_error)}")
+
+                attempt += 1
+                if attempt >= max_retries:
+                    raise
+                self.logger.warning(f"下载中断，准备重试 ({attempt}/{max_retries}): {red(e)}")
+                time.sleep(retry_delay)
+            except Exception as e:
+                attempt += 1
+                if attempt >= max_retries:
+                    raise
+                self.logger.warning(f"下载中断，准备重试 ({attempt}/{max_retries}): {red(e)}")
+                time.sleep(retry_delay)
 
     def extract_file(self):
         """解压下载的文件。"""
