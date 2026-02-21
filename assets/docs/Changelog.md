@@ -1,9 +1,10 @@
 # 更新日志
 
-## v2026.2.20
+## v2026.2.21
 - 支持 4.0 版本新增关卡
 - 适配 4.0 版本支援新界面 [#882](https://github.com/moesnow/March7thAssistant/pull/882) @g60cBQ
 - 适配 4.0 版本委托奖励新界面
+- 适配 4.0 版本饰品提取编队新界面 [#896](https://github.com/moesnow/March7thAssistant/pull/896) @g60cBQ
 - 添加新版本本地化翻译 [#883](https://github.com/moesnow/March7thAssistant/pull/883) @g60cBQ
 - 补充一些遗漏的本地化翻译 [#868](https://github.com/moesnow/March7thAssistant/pull/868) @loader3229
 - 云游戏二维码登录支持消息推送 [#893](https://github.com/moesnow/March7thAssistant/pull/893) @architect9331
@@ -12,6 +13,7 @@
 - 修复培养目标无法正确识别拟造花萼金 [#888](https://github.com/moesnow/March7thAssistant/pull/888) @g60cBQ
 - 修复非简体中文语言修改副本类型后导致清体力出错 [#881](https://github.com/moesnow/March7thAssistant/pull/881)
 - 修复 macOS 通过 docker 运行时 OCR 识别异常 [#891](https://github.com/moesnow/March7thAssistant/issues/891)
+- 修复系统睡眠或休眠后循环模式未按时执行的问题
 - 优化性能和稳定性并修复若干已知问题
 
 ## v2026.2.9
