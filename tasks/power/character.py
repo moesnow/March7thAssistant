@@ -156,6 +156,6 @@ class Character:
         auto.press_key("esc")
         time.sleep(1)
         if type == "standard":
-            auto.find_element("支援", "text", max_retries=10, crop=(1670 / 1920, 700 / 1080, 225 / 1920, 74 / 1080))
+            auto.find_element("支援", "text", max_retries=10, crop=(966 / 1920, 954 / 1080, 176 / 1920, 60 / 1080))
         elif type == "ornament":
-            auto.find_element("支援", "text", max_retries=10, crop=(876.0 / 1920, 868.0 / 1080, 155.0 / 1920, 54.0 / 1080))
+            auto.find_element("支援", "text", max_retries=10, crop=(610 / 1920, 864 / 1080, 184 / 1920, 64 / 1080))
