@@ -16,11 +16,6 @@ class Character:
         if not Character.click_support_button(type):
             return False
 
-        if type == "standard":
-            auto.click_element((1654 / 1920, 506 / 1080, 106 / 1920, 108 / 1080), "crop")
-        elif type == "ornament":
-            auto.click_element((908 / 1920, 794 / 1080, 48 / 1920, 46 / 1080), "crop")
-
         # 开始查找支援角色
         return Character.find_and_select_support(type)
 
@@ -59,12 +54,29 @@ class Character:
                 if key == "None":
                     continue
                 if Character.find_character_and_click(key, value, left, top, width, height):
-                    if Character.confirm_selection(type):
-                        return True
+                    break
+            else:
+                # 若未找到角色，尝试滚动页面
+                if i < cfg.borrow_scroll_times - 1:
+                    Character.scroll_support_list()
+                continue
 
-            # 若未找到角色，尝试滚动页面
-            if i < cfg.borrow_scroll_times - 1:
-                Character.scroll_support_list()
+            # 当队伍已满时点击编队界面的最后一个槽位，踢出最后一个角色
+            if auto.find_element(
+                "已满",
+                "text",
+                include=True,
+                retry_delay=0.5,
+                max_retries=4,
+                crop=(796 / 1920, 84 / 1080, 322 / 1920, 270 / 1080),
+            ):
+                if type == "standard":
+                    auto.click_element((1654 / 1920, 506 / 1080, 106 / 1920, 108 / 1080), "crop")
+                elif type == "ornament":
+                    auto.click_element((908 / 1920, 794 / 1080, 48 / 1920, 46 / 1080), "crop")
+
+            elif Character.confirm_selection(type):
+                return True
 
         # 未找到支援角色，退出
         Character.exit_support_list(type)
@@ -144,6 +156,6 @@ class Character:
         auto.press_key("esc")
         time.sleep(1)
         if type == "standard":
-            auto.find_element("支援", "text", max_retries=10, crop=(1670 / 1920, 700 / 1080, 225 / 1920, 74 / 1080))
+            auto.find_element("支援", "text", max_retries=10, crop=(966 / 1920, 954 / 1080, 176 / 1920, 60 / 1080))
         elif type == "ornament":
-            auto.find_element("支援", "text", max_retries=10, crop=(876.0 / 1920, 868.0 / 1080, 155.0 / 1920, 54.0 / 1080))
+            auto.find_element("支援", "text", max_retries=10, crop=(610 / 1920, 864 / 1080, 184 / 1920, 64 / 1080))
