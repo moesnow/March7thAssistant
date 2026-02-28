@@ -1,5 +1,10 @@
 # 更新日志
 
+## v2026.2.28
+- 适配 4.0 版本货币战争新增投资环境
+- 适配支援界面支持替换队伍中已有角色 [#900](https://github.com/moesnow/March7thAssistant/pull/900) @g60cBQ
+- 优化性能和稳定性并修复若干已知问题
+
 ## v2026.2.21
 - 支持 4.0 版本新增关卡
 - 适配 4.0 版本支援新界面 [#882](https://github.com/moesnow/March7thAssistant/pull/882) @g60cBQ
