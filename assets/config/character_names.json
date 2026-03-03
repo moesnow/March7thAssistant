@@ -32,7 +32,7 @@
     "Rappa": "乱破",
     "Lingsha": "灵砂",
     "Firefly": "流萤",
-    "FireflySpringMissive": "流萤·春日手信",
+    "FireflySpringMissive": "流萤「春日手信」",
     "Misha": "米沙",
     "Moze": "貊泽",
     "Natasha": "娜塔莎",
@@ -44,12 +44,13 @@
     "CaelumRemembrance": "穹（记忆）",
     "Blade": "刃",
     "RuanMei": "阮·梅",
+	"RuanMeiPlumblossomLetter": "阮·梅「雪绽梅笺」",
     "Sampo": "桑博",
     "Aventurine": "砂金",
     "Sushang": "素裳",
     "March7th": "三月七（冰）",
     "March7thImaginary": "三月七（虚数）",
-    "March7thNascentSpring": "三月七·冬去煦至",
+    "March7thNascentSpring": "三月七「冬去煦至」",
     "TopazandNumby": "托帕&账账",
     "Tingyun": "停云",
     "Welt": "瓦尔特",
@@ -84,5 +85,7 @@
     "Cerydra": "刻律德菈",
     "Evernight": "长夜月",
     "Cyrene": "昔涟",
-    "TheDahlia": "大丽花"
+    "TheDahlia": "大丽花",
+	"YaoGuang": "爻光",
+	"Sparxie": "火花"
 }
