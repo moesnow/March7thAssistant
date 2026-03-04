@@ -666,7 +666,7 @@
     "乱破": "Rappa",
     "灵砂": "Lingsha",
     "流萤": "Firefly",
-    "流萤·春日手信": "Firefly • Spring Missive",
+    "流萤「春日手信」": "Firefly: Spring Missive",
     "米沙": "Misha",
     "貊泽": "Moze",
     "娜塔莎": "Natasha",
@@ -683,7 +683,7 @@
     "素裳": "Sushang",
     "三月七（冰）": "March 7th (Ice)",
     "三月七（虚数）": "March 7th (Imaginary)",
-    "三月七·冬去煦至": "March 7th (Nascent Spring)",
+    "三月七「冬去煦至」": "March 7th: Nascent Spring",
     "托帕&账账": "Topaz & Numby",
     "停云": "Tingyun",
     "瓦尔特": "Welt",
@@ -860,5 +860,7 @@
     "魔占之径": "Path of Possession",
     "爻光": "Yao Guang",
     "火花": "Sparxie",
-    "一共": "Total"
+    "一共": "Total",
+    "阮·梅「雪绽梅笺」": "",
+    "不死途": ""
 }
