@@ -145,7 +145,7 @@ class Universe:
         else:
             command = [os.path.join(cfg.universe_path, "simul.exe")] if cfg.universe_operation_mode == "exe" else [cfg.python_exe_path, "simul.py"]
 
-        if category == "divergent" and cfg.universe_disable_gpu:
+        if category == "divergent" and not cfg.universe_enable_gpu:
             command.append("--cpu")
 
         if category != "divergent" and cfg.universe_bonus_enable:
@@ -330,3 +330,4 @@ class Universe:
         else:
             log.warning(f"无法解析模拟宇宙积分: {score}")
         return False
+

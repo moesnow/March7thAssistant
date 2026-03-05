@@ -451,11 +451,11 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'}
         )
-        self.universeDisableGpuCard = SwitchSettingCard1(
+        self.universeEnableGpuCard = SwitchSettingCard1(
             FIF.COMMAND_PROMPT,
-            tr('禁用GPU加速'),
-            tr('差分宇宙无法正常运行时，可尝试打开此选项'),
-            "universe_disable_gpu"
+            tr('启用差分宇宙 GPU 加速'),
+            tr('开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项'),
+            "universe_enable_gpu"
         )
         self.universeTimeoutCard = RangeSettingCard1(
             "universe_timeout",
@@ -1145,7 +1145,7 @@ class SettingInterface(ScrollArea):
         ])
         self.UniverseGroup.addSettingCard(self.divergentTeamTypeCard)
         self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
-        self.UniverseGroup.addSettingCard(self.universeDisableGpuCard)
+        self.UniverseGroup.addSettingCard(self.universeEnableGpuCard)
 
         self.FightGroup.addSettingCard(self.fightEnableCard)
         self.fightEnableCard.addSettingCards([
