@@ -1367,14 +1367,24 @@ class SettingInterface(ScrollArea):
     #         self.__showRestartTooltip()
 
     def __onGamePathCardClicked(self):
-        game_path, _ = QFileDialog.getOpenFileName(self, tr("选择游戏路径"), "", tr("所有文件 (*)") + ";;All Files (*)")
+        game_path, _ = QFileDialog.getOpenFileName(
+            self,
+            tr("选择游戏路径"),
+            "",
+            tr("脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)")
+        )
         if not game_path or cfg.game_path == game_path:
             return
         cfg.set_value("game_path", game_path)
         self.gamePathCard.setContent(game_path)
 
     def __onLauncherPathCardClicked(self):
-        launcher_path, _ = QFileDialog.getOpenFileName(self, tr("选择米哈游启动器路径"), "", tr("所有文件 (*)") + ";;All Files (*)")
+        launcher_path, _ = QFileDialog.getOpenFileName(
+            self,
+            tr("选择米哈游启动器路径"),
+            "",
+            tr("脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)")
+        )
         if not launcher_path or cfg.launcher_path == launcher_path:
             return
         cfg.set_value("launcher_path", launcher_path)
@@ -1394,7 +1404,12 @@ class SettingInterface(ScrollArea):
     #         parent=self
     #     )
     def __onScriptPathCardClicked(self):
-        script_path, _ = QFileDialog.getOpenFileName(self, tr("脚本或程序路径"), "", tr("脚本或可执行文件 (*.ps1 *.bat *.exe)"))
+        script_path, _ = QFileDialog.getOpenFileName(
+            self,
+            tr("脚本或程序路径"),
+            "",
+            tr("脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)")
+        )
         if not script_path or cfg.script_path == script_path:
             return
         cfg.set_value("script_path", script_path)
