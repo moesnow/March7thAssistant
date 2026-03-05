@@ -12,4 +12,5 @@ def get_game_controller() -> GameControllerBase:
     if cfg.cloud_game_enable:
         return cloud_game
     else:
+        local_game.reload_config(cfg)
         return local_game

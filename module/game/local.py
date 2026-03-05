@@ -11,11 +11,19 @@ from utils.logger.logger import Logger
 
 class LocalGameController(GameControllerBase):
     def __init__(self, cfg: Config, logger: Optional[Logger] = None) -> None:
-        super().__init__(script_path=cfg.script_path, logger=logger)
+        super().__init__(script_path=None, logger=logger)
+        self.game_path = ""
+        self.process_name = ""
+        self.window_name = ""
+        self.window_class = 'UnityWndClass'
+        self.reload_config(cfg)
+
+    def reload_config(self, cfg: Config) -> None:
+        """从最新配置同步本地游戏控制器参数。"""
+        self.script_path = os.path.normpath(cfg.script_path) if cfg.script_path else None
         self.game_path = os.path.normpath(cfg.game_path)
         self.process_name = cfg.game_process_name
         self.window_name = cfg.game_title_name
-        self.window_class = 'UnityWndClass'
 
     def start_game_process(self) -> bool:
         """启动游戏"""
