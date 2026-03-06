@@ -96,6 +96,10 @@ class BaseChallenge(ABC):
                     time.sleep(0.5)
                     auto.click_element("角色列表", "text", include=True, action="move")
                 time.sleep(0.5)
+            time.sleep(0.5)
+            # 尝试关闭命途切换窗口
+            if auto.click_element("切换命途", "text", offset=(0, -68), crop=(804 / 1920, 8 / 1080, 154 / 1920, 294 / 1080)):
+                time.sleep(0.5)
             return True
         return False
 
