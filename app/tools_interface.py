@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem, QScroller, QScrollerProperties
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem, QScroller, QScrollerProperties, QFileDialog
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, MessageBox, PushButton
 from .card.pushsettingcard1 import PushSettingCardCode
 from .card.autoplot_setting_card import AutoPlotSettingCard
 from .common.style_sheet import StyleSheet
@@ -16,6 +16,7 @@ import sys
 
 
 from module.localization import tr
+
 
 class ToolsInterface(ScrollArea):
     def __init__(self, parent=None):
@@ -231,8 +232,43 @@ class ToolsInterface(ScrollArea):
                 parent=self
             )
 
+    def __onGameScreenshotCardClicked(self):
+        """点击截图卡片后先选择来源：游戏窗口或本地图片。"""
+        message_box = MessageBox(tr("截图来源"), tr("请选择截图方式"), self.window())
+        message_box.contentLabel.setMinimumWidth(500)
+
+        message_box.yesButton.setText(tr("捕获游戏窗口"))
+        message_box.cancelButton.setText(tr("取消"))
+
+        choose_file_button = PushButton(tr("手动选择图片"), message_box)
+        message_box.buttonLayout.insertWidget(1, choose_file_button, 1, Qt.AlignmentFlag.AlignVCenter)
+
+        action = {"value": None}
+
+        def _choose_local_file():
+            action["value"] = "file"
+            message_box.reject()
+
+        choose_file_button.clicked.connect(_choose_local_file)
+
+        accepted = message_box.exec()
+
+        if action["value"] == "file":
+            file_path, _ = QFileDialog.getOpenFileName(
+                self,
+                tr("选择图片"),
+                "",
+                "Image Files (*.png *.jpg *.jpeg *.bmp *.webp)"
+            )
+            if file_path:
+                tool.start_screenshot_from_file(file_path)
+            return
+
+        if accepted:
+            tool.start("screenshot")
+
     def __connectSignalToSlot(self):
-        self.gameScreenshotCard.clicked.connect(lambda: tool.start("screenshot"))
+        self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
         self.automaticPlotCard.switchChanged.connect(self.__onAutoPlotSwitchChanged)
         self.automaticPlotCard.optionsChanged.connect(self.__onAutoPlotOptionsChanged)
         self.unlockfpsCard.clicked.connect(self.__onUnlockfpsCardClicked)

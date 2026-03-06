@@ -11,6 +11,8 @@ from qfluentwidgets import InfoBar, InfoBarPosition
 from module.localization import tr
 import threading
 import time
+import os
+from PIL import Image
 
 
 class ScreenshotSignals(QObject):
@@ -60,13 +62,35 @@ class ToolManager:
                 return True
             else:
                 log.error("截图失败")
-                self.screenshot_error_message = "无法获取游戏窗口截图，请确认游戏窗口可见且未被遮挡。"
+                self.screenshot_error_message = tr("无法获取游戏窗口截图，请确认游戏窗口已打开")
                 return False
         except Exception as e:
             log.error(f"run_screenshot 发生异常: {e}")
             import traceback
             log.error(traceback.format_exc())
             self.screenshot_error_message = f"截图时发生异常：{e}"
+            return False
+
+    def run_screenshot_from_file(self, file_path: str):
+        """从本地文件加载图像"""
+        try:
+            self.screenshot_error_message = ""
+
+            if not file_path or not os.path.exists(file_path):
+                self.screenshot_error_message = tr("图片文件不存在，请重新选择")
+                return False
+
+            with Image.open(file_path) as image:
+                # 统一转为 RGB，避免后续 QImage 转换时因模式不一致报错
+                self.screenshot_data = image.convert("RGB").copy()
+
+            log.debug(f"加载本地图片成功，图像尺寸: {self.screenshot_data.size}")
+            return True
+        except Exception as e:
+            log.error(f"run_screenshot_from_file 发生异常: {e}")
+            import traceback
+            log.error(traceback.format_exc())
+            self.screenshot_error_message = f"读取图片时发生异常：{e}"
             return False
 
     def _show_screenshot_window_slot(self, screenshot_image):
@@ -173,3 +197,18 @@ def stop_plot():
 def update_plot_options(options: dict):
     """更新自动对话配置"""
     _tool_manager.update_plot_options(options)
+
+
+def start_screenshot_from_file(file_path: str):
+    """从本地图片启动截图工具"""
+
+    def load_and_show():
+        if _tool_manager.run_screenshot_from_file(file_path):
+            _tool_manager.show_screenshot_window()
+        else:
+            _tool_manager.show_error_dialog(
+                _tool_manager.screenshot_error_message or "读取图片失败，请稍后重试。"
+            )
+
+    load_thread = threading.Thread(target=load_and_show, daemon=True)
+    load_thread.start()

@@ -867,5 +867,9 @@
     "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项": "May improve performance. If errors, exceptions, or instability occur, please disable this option.",
     "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)": "Script or executable files (*.exe *.bat *.cmd *.ps1)",
     "截图失败(╥╯﹏╰╥)": "Screenshot Failed (╥╯﹏╰╥)",
-    "无法获取游戏窗口截图，请确认游戏窗口已打开": "Unable to capture the game window screenshot. Please make sure the game window is open."
+    "无法获取游戏窗口截图，请确认游戏窗口已打开": "Unable to capture the game window screenshot. Please make sure the game window is open.",
+    "截图来源": "Screenshot Source",
+    "请选择截图方式": "Please choose a screenshot method",
+    "捕获游戏窗口": "Capture game window",
+    "手动选择图片": "Choose image manually"
 }
