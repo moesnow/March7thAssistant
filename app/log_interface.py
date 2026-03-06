@@ -71,7 +71,8 @@ class LogInterface(ScrollArea):
         # 定时运行相关
         self._schedule_timer = QTimer(self)
         self._schedule_timer.timeout.connect(self._checkScheduledTime)
-        # 记录每个定时任务最后触发的时间戳（秒），避免同一任务在短时间内重复触发
+        # 记录每个定时任务最后触发的“计划时间槽”时间戳（秒）
+        # 用于避免在触发窗口边界（例如恰好 +60s）出现同一计划点重复触发
         self._last_triggered_ts = {}
 
         self.scrollWidget = QWidget(self)
@@ -381,14 +382,16 @@ class LogInterface(ScrollArea):
             if 0 <= secs <= 60:
                 tid = t.get('id')
                 now_ts = QDateTime.currentDateTime().toSecsSinceEpoch()
-                last_ts = self._last_triggered_ts.get(tid) if tid else None
-                if last_ts and (now_ts - last_ts) < 60:
-                    # 在 60 秒内已触发过，跳过
+                # 以“计划时间点”作为去重键，而不是“当前触发时刻”
+                # 这样可避免恰好在 +60s 边界再次触发同一计划任务
+                scheduled_slot_ts = now_ts - secs
+                last_slot_ts = self._last_triggered_ts.get(tid) if tid else None
+                if last_slot_ts is not None and last_slot_ts == scheduled_slot_ts:
                     continue
 
-                # 标记为已触发（记录时间戳）
+                # 标记为已触发（记录计划时间槽）
                 if tid:
-                    self._last_triggered_ts[tid] = now_ts
+                    self._last_triggered_ts[tid] = scheduled_slot_ts
 
                 # 触发任务
                 pname = t.get('program', 'self')
