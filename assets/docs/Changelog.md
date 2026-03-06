@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2026.3.7
+- 支持爻光、火花、阮梅时装 [#905](https://github.com/moesnow/March7thAssistant/pull/905) @0frostmourne0
+- 更新差分宇宙配置选项现在默认禁用 GPU 加速
+- 修复特定条件下会重复触发同一定时任务
+- 修复设置游戏路径后侧边栏启动游戏按钮不会实时生效
+- 修复逐光捡金选择角色时命途切换窗口阻碍后续流程 [#907](https://github.com/moesnow/March7thAssistant/pull/907) @g60cBQ
+- 优化性能和稳定性并修复若干已知问题
+
 ## v2026.2.28
 - 适配 4.0 版本货币战争新增投资环境
 - 适配支援界面支持替换队伍中已有角色 [#900](https://github.com/moesnow/March7thAssistant/pull/900) @g60cBQ
