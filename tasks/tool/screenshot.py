@@ -124,8 +124,8 @@ class ScreenshotApp(QMainWindow):
                 ("复制坐标到剪贴板", self.copy_coordinate_result_to_clipboard),
                 ("保存完整截图", self.save_full_screenshot),
                 ("保存选取截图", self.save_selection_screenshot),
-                ("OCR识别选取区域", self.show_ocr_selection),
-                ("模板匹配", self.match_template)
+                ("模板匹配", self.match_template),
+                ("OCR识别选取区域", self.show_ocr_selection)
             ]
 
             for text, slot in buttons_config:
