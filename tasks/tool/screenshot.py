@@ -1,8 +1,10 @@
 from module.ocr import ocr
-from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QHBoxLayout, QWidget, QMessageBox, QScrollArea, QApplication, QStyle
+from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QHBoxLayout, QWidget, QMessageBox, QScrollArea, QApplication, QStyle, QFileDialog
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QPen, QImage, QColor
 from PIL import Image
+import cv2
+import numpy as np
 import pyperclip
 import os
 import sys
@@ -30,6 +32,7 @@ class ScreenshotApp(QMainWindow):
             self.current_x = None
             self.current_y = None
             self.is_drawing = False
+            self.template_match_rect = None
             self.need_maximize = False  # 是否需要最大化窗口
 
             self.setup_ui()
@@ -121,7 +124,8 @@ class ScreenshotApp(QMainWindow):
                 ("复制坐标到剪贴板", self.copy_coordinate_result_to_clipboard),
                 ("保存完整截图", self.save_full_screenshot),
                 ("保存选取截图", self.save_selection_screenshot),
-                ("OCR识别选取区域", self.show_ocr_selection)
+                ("OCR识别选取区域", self.show_ocr_selection),
+                ("模板匹配", self.match_template)
             ]
 
             for text, slot in buttons_config:
@@ -242,25 +246,32 @@ class ScreenshotApp(QMainWindow):
         """
         更新画布，重绘截图和选择框。
         """
+        # 创建新的QPixmap并绘制
+        new_pixmap = self.pixmap.copy()
+        painter = QPainter(new_pixmap)
+
+        # 绘制手动框选区域（粉色）
         if self.start_x is not None and self.current_x is not None:
-            # 创建新的QPixmap并绘制
-            new_pixmap = self.pixmap.copy()
-            painter = QPainter(new_pixmap)
+            selection_pen = QPen(QColor(0xf1, 0x8c, 0xb9))
+            selection_pen.setWidth(3)
+            painter.setPen(selection_pen)
 
-            # 设置画笔 - 使用 QColor 创建自定义颜色
-            pen = QPen(QColor(0xf1, 0x8c, 0xb9))  # RGB格式
-            pen.setWidth(3)
-            painter.setPen(pen)
-
-            # 绘制矩形
             x = min(self.start_x, self.current_x)
             y = min(self.start_y, self.current_y)
             width = abs(self.current_x - self.start_x)
             height = abs(self.current_y - self.start_y)
             painter.drawRect(x, y, width, height)
 
-            painter.end()
-            self.canvas_label.setPixmap(new_pixmap)
+        # 绘制模板匹配区域（绿色）
+        if self.template_match_rect is not None:
+            x, y, width, height = self.template_match_rect
+            match_pen = QPen(QColor(0x2e, 0xcc, 0x71))
+            match_pen.setWidth(3)
+            painter.setPen(match_pen)
+            painter.drawRect(x, y, width, height)
+
+        painter.end()
+        self.canvas_label.setPixmap(new_pixmap)
 
     def get_selection_info(self):
         """
@@ -386,6 +397,55 @@ class ScreenshotApp(QMainWindow):
             QMessageBox.information(self, "OCR识别结果", "没有识别出任何内容")
         # else:
         #     QMessageBox.information(self, "OCR识别结果", "还没有选择区域呢")
+
+    def match_template(self):
+        """
+        选择模板图片并在当前截图中进行模板匹配，显示最高置信度并绘制匹配区域。
+        """
+        template_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "选择模板图片",
+            "",
+            "Image Files (*.png *.jpg *.jpeg *.bmp *.webp)"
+        )
+
+        if not template_path:
+            return
+
+        # 使用 imdecode 兼容中文路径
+        template_data = np.fromfile(template_path, dtype=np.uint8)
+        template_bgr = cv2.imdecode(template_data, cv2.IMREAD_COLOR)
+
+        if template_bgr is None:
+            QMessageBox.warning(self, "模板匹配", "模板图片加载失败")
+            return
+
+        screenshot_bgr = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
+
+        screen_h, screen_w = screenshot_bgr.shape[:2]
+        template_h, template_w = template_bgr.shape[:2]
+        if template_w > screen_w or template_h > screen_h:
+            QMessageBox.warning(self, "模板匹配", "模板尺寸大于截图尺寸，无法匹配")
+            return
+
+        result = cv2.matchTemplate(screenshot_bgr, template_bgr, cv2.TM_CCOEFF_NORMED)
+        _, max_val, _, max_loc = cv2.minMaxLoc(result)
+
+        top_left_x, top_left_y = max_loc
+        logical_x = int(top_left_x / self.dpi_scale)
+        logical_y = int(top_left_y / self.dpi_scale)
+        logical_w = max(1, int(template_w / self.dpi_scale))
+        logical_h = max(1, int(template_h / self.dpi_scale))
+        self.template_match_rect = (logical_x, logical_y, logical_w, logical_h)
+        self.update_canvas()
+
+        QMessageBox.information(
+            self,
+            "模板匹配结果",
+            f"最高置信度: {max_val:.4f}\n"
+            f"匹配区域: X={top_left_x}, Y={top_left_y}, Width={template_w}, Height={template_h}\n"
+            f"（已使用绿色矩形标记）"
+        )
 
     def _start_file(self, path):
         if sys.platform == 'win32':
