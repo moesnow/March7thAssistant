@@ -865,5 +865,7 @@
     "不死途": "",
     "启用差分宇宙 GPU 加速": "Enable Divergent Universe GPU Acceleration",
     "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项": "May improve performance. If errors, exceptions, or instability occur, please disable this option.",
-    "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)": "Script or executable files (*.exe *.bat *.cmd *.ps1)"
+    "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)": "Script or executable files (*.exe *.bat *.cmd *.ps1)",
+    "截图失败(╥╯﹏╰╥)": "Screenshot Failed (╥╯﹏╰╥)",
+    "无法获取游戏窗口截图，请确认游戏窗口已打开": "Unable to capture the game window screenshot. Please make sure the game window is open."
 }
