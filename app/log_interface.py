@@ -11,7 +11,7 @@ import sys
 import os
 import locale
 import re
-import keyboard
+
 import uuid
 from .common.style_sheet import StyleSheet
 from module.config import cfg
@@ -23,6 +23,9 @@ import shlex
 import threading
 import subprocess as sp
 import ctypes
+
+if sys.platform == 'win32':
+    import keyboard
 
 
 class LogInterface(ScrollArea):
