@@ -864,6 +864,34 @@ class MessageBoxPowerPlan(MessageBox):
         addButtonLayout.addStretch(1)
         self.textLayout.addLayout(addButtonLayout)
 
+    def _update_plan_row_actions(self):
+        """同步更新每一行操作按钮状态"""
+        for index, row in enumerate(self.plan_rows):
+            row["move_up_button"].setEnabled(index > 0)
+
+    def _remove_plan_layout(self, row_layout):
+        """从计划布局中移除指定行布局"""
+        for index in range(self.planLayout.count()):
+            item = self.planLayout.itemAt(index)
+            if item and item.layout() is row_layout:
+                self.planLayout.takeAt(index)
+                return
+
+    def _move_plan_row_up(self, row):
+        """将指定计划上移一行"""
+        try:
+            current_index = self.plan_rows.index(row)
+        except ValueError:
+            return
+
+        if current_index <= 0:
+            return
+
+        self._remove_plan_layout(row["layout"])
+        self.plan_rows.insert(current_index - 1, self.plan_rows.pop(current_index))
+        self.planLayout.insertLayout(current_index - 1, row["layout"])
+        self._update_plan_row_actions()
+
     def add_plan_row(self, instance_type=None, instance_name=None, count=1):
         """添加一行体力计划配置"""
         # 检查是否已达到最大数量限制
@@ -905,6 +933,12 @@ class MessageBoxPowerPlan(MessageBox):
         deleteButton = PushButton(tr("删除"), self)
         deleteButton.setMaximumWidth(60)
 
+        # 上移按钮
+        moveUpButton = PushButton(tr("上移"), self)
+        moveUpButton.setMaximumWidth(60)
+
+        row = {}
+
         # 更新副本名称选项的函数
         def update_instance_names(selected_type):
             nameComboBox.clear()
@@ -937,6 +971,8 @@ class MessageBoxPowerPlan(MessageBox):
 
         # 删除按钮功能
         def delete_row():
+            self._remove_plan_layout(horizontalLayout)
+
             # 从界面移除
             horizontalLayout.setParent(None)
             for i in reversed(range(horizontalLayout.count())):
@@ -946,9 +982,11 @@ class MessageBoxPowerPlan(MessageBox):
                     widget.deleteLater()
 
             # 从列表中移除
-            if (typeComboBox, nameComboBox, countSpinBox, deleteButton) in self.plan_rows:
-                self.plan_rows.remove((typeComboBox, nameComboBox, countSpinBox, deleteButton))
+            if row in self.plan_rows:
+                self.plan_rows.remove(row)
+                self._update_plan_row_actions()
 
+        moveUpButton.clicked.connect(lambda: self._move_plan_row_up(row))
         deleteButton.clicked.connect(delete_row)
 
         # 添加到布局
@@ -958,17 +996,30 @@ class MessageBoxPowerPlan(MessageBox):
         horizontalLayout.addWidget(nameComboBox)
         horizontalLayout.addWidget(QLabel(tr("次数:")))
         horizontalLayout.addWidget(countSpinBox)
+        horizontalLayout.addWidget(moveUpButton)
         horizontalLayout.addWidget(deleteButton)
 
         self.planLayout.addLayout(horizontalLayout)
 
         # 保存到列表
-        self.plan_rows.append((typeComboBox, nameComboBox, countSpinBox, deleteButton))
+        row.update({
+            "layout": horizontalLayout,
+            "type_combo": typeComboBox,
+            "name_combo": nameComboBox,
+            "count_spin": countSpinBox,
+            "move_up_button": moveUpButton,
+            "delete_button": deleteButton,
+        })
+        self.plan_rows.append(row)
+        self._update_plan_row_actions()
 
     def get_plans(self):
         """获取所有计划，并把显示文本还原为中文原始值"""
         plans = []
-        for typeCombo, nameCombo, countSpin, _ in self.plan_rows:
+        for row in self.plan_rows:
+            typeCombo = row["type_combo"]
+            nameCombo = row["name_combo"]
+            countSpin = row["count_spin"]
             instance_type = typeCombo.currentText()
             instance_name = nameCombo.text()
 
@@ -982,7 +1033,9 @@ class MessageBoxPowerPlan(MessageBox):
 
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
-        for i, (typeCombo, nameCombo, countSpin, _) in enumerate(self.plan_rows, 1):
+        for i, row in enumerate(self.plan_rows, 1):
+            typeCombo = row["type_combo"]
+            nameCombo = row["name_combo"]
             instance_type = typeCombo.currentText()
             input_text = nameCombo.text()
 

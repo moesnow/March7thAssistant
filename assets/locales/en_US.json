@@ -483,7 +483,7 @@
     "终止进程": "Kill Process",
     "添加": "Add",
     "编辑": "Edit",
-    "删除": "Delete",
+    "删除": "Del",
     "立即运行": "Run Now",
     "冲突处理:": "Conflict Handling:",
     "跳过需要运行的任务": "Skip required task",
@@ -871,5 +871,6 @@
     "截图来源": "Screenshot Source",
     "请选择截图方式": "Please choose a screenshot method",
     "捕获游戏窗口": "Capture game window",
-    "手动选择图片": "Choose image manually"
+    "手动选择图片": "Choose image manually",
+    "上移": "Up"
 }
