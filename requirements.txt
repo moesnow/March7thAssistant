@@ -18,9 +18,9 @@ opencv-python==4.12.0.88
 onepush==1.4.0
 winotify==1.1.0; sys_platform == 'win32'
 Markdown==3.10
-PySide6-Fluent-Widgets==1.10.5
-PySideSix-Frameless-Window==0.7.6
-PySide6==6.10.1
+PySide6-Fluent-Widgets==1.11.1
+PySideSix-Frameless-Window==0.8.0
+PySide6==6.10.2
 pylnk3==0.4.3
 pyperclip==1.11.0
 qrcode==8.2
@@ -38,7 +38,7 @@ selenium==4.39.0
 keyboard==0.13.5
 opencc==1.2.0
 rapidocr==3.6.0
-onnxruntime-directml==1.24.2; sys_platform == 'win32'
-onnxruntime==1.24.2; sys_platform == 'darwin' or sys_platform == 'linux'
+onnxruntime-directml==1.24.3; sys_platform == 'win32'
+onnxruntime==1.24.3; sys_platform == 'darwin' or sys_platform == 'linux'
 openvino==2025.4.1
 # paddlepaddle==3.3.0; python_version <= '3.13'
