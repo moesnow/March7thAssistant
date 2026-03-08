@@ -580,10 +580,12 @@ class ScheduleManagerDialog(MessageBox):
         btn_layout = QHBoxLayout()
         self.add_btn = PushButton(tr('添加'), self)
         self.edit_btn = PushButton(tr('编辑'), self)
+        self.move_up_btn = PushButton(tr('上移'), self)
         self.del_btn = PushButton(tr('删除'), self)
         self.run_btn = PushButton(tr('立即运行'), self)
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.edit_btn)
+        btn_layout.addWidget(self.move_up_btn)
         btn_layout.addWidget(self.del_btn)
         btn_layout.addWidget(self.run_btn)
 
@@ -620,6 +622,7 @@ class ScheduleManagerDialog(MessageBox):
 
         # 连接
         self.add_btn.clicked.connect(self._on_add)
+        self.move_up_btn.clicked.connect(self._on_move_up)
         self.edit_btn.clicked.connect(self._on_edit)
         self.del_btn.clicked.connect(self._on_delete)
         self.run_btn.clicked.connect(self._on_run_now)
@@ -680,6 +683,39 @@ class ScheduleManagerDialog(MessageBox):
             self._reload_table()
             if self.save_callback:
                 self.save_callback(self.scheduled_tasks)
+
+    def _move_task(self, row: int, target_row: int):
+        if row < 0 or row >= len(self.scheduled_tasks):
+            return False
+        if target_row < 0 or target_row >= len(self.scheduled_tasks):
+            return False
+        if row == target_row:
+            return False
+
+        task = self.scheduled_tasks.pop(row)
+        self.scheduled_tasks.insert(target_row, task)
+        self._reload_table()
+        self.table.selectRow(target_row)
+        self.table.setCurrentCell(target_row, 0)
+        if self.save_callback:
+            self.save_callback(self.scheduled_tasks)
+        return True
+
+    def _on_move_up(self):
+        row = self.table.currentRow()
+        if row < 0 or row >= len(self.scheduled_tasks):
+            m = MessageBox(tr('提示'), tr('请先选择要上移的任务'), self)
+            m.cancelButton.hide()
+            m.yesButton.setText(tr('确认'))
+            m.exec()
+            return
+        if row == 0:
+            m = MessageBox(tr('提示'), tr('当前任务已经位于最上方'), self)
+            m.cancelButton.hide()
+            m.yesButton.setText(tr('确认'))
+            m.exec()
+            return
+        self._move_task(row, row - 1)
 
     def _on_edit(self):
         row = self.table.currentRow()

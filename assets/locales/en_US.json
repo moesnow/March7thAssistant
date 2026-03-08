@@ -872,5 +872,7 @@
     "请选择截图方式": "Please choose a screenshot method",
     "捕获游戏窗口": "Capture game window",
     "手动选择图片": "Choose image manually",
-    "上移": "Up"
+    "上移": "Up",
+    "请先选择要上移的任务": "Select task to move up first",
+    "当前任务已经位于最上方": "The selected task is already at the top"
 }
