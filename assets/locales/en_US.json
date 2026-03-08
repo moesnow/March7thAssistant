@@ -874,5 +874,9 @@
     "手动选择图片": "Choose image manually",
     "上移": "Up",
     "请先选择要上移的任务": "Select task to move up first",
-    "当前任务已经位于最上方": "The selected task is already at the top"
+    "当前任务已经位于最上方": "The selected task is already at the top",
+    "为特定的副本配置队伍": "Configure teams for specific dungeons",
+    "当没有匹配到任何规则时，默认出战队伍：": "Default team when no rules match: ",
+    "队伍:": "Team: ",
+    "已配置 {} 项规则": "{} rule(s) configured"
 }
