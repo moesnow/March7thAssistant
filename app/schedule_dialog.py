@@ -77,6 +77,7 @@ def _strip_jsonc_comments(text: str) -> str:
 
     return ''.join(out)
 
+
 # 从 assets/config/special_programs.json 加载特殊程序定义（若存在）
 SPECIAL_PROGRAMS = []
 _SPECIAL_BY_DISPLAY = {}
@@ -557,16 +558,16 @@ class ScheduleManagerDialog(MessageBox):
         # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Fixed)
-        self.table.setColumnWidth(0, 50)
+        self.table.setColumnWidth(0, 60)
         header.setSectionResizeMode(1, QHeaderView.Fixed)
-        self.table.setColumnWidth(1, 100)
+        self.table.setColumnWidth(1, 110)
         header.setSectionResizeMode(2, QHeaderView.Fixed)
         self.table.setColumnWidth(2, 80)
         header.setSectionResizeMode(3, QHeaderView.Stretch)
         header.setSectionResizeMode(4, QHeaderView.Fixed)
         self.table.setColumnWidth(4, 150)
         header.setSectionResizeMode(5, QHeaderView.Fixed)
-        self.table.setColumnWidth(5, 50)
+        self.table.setColumnWidth(5, 60)
         header.setSectionResizeMode(6, QHeaderView.Stretch)
         self.table.setMinimumWidth(800)
         self.table.setMinimumHeight(350)
