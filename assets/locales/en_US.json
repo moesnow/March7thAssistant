@@ -874,5 +874,7 @@
     "手动选择图片": "Choose image manually",
     "上移": "Up",
     "请先选择要上移的任务": "Select task to move up first",
-    "当前任务已经位于最上方": "The selected task is already at the top"
+    "当前任务已经位于最上方": "The selected task is already at the top",
+    "优先使用后台截图": "Prefer Background Screenshot",
+    "默认开启，可以避免悬浮窗等干扰": "Enabled by default to avoid interference from floating windows and similar overlays"
 }

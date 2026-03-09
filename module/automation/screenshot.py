@@ -44,15 +44,23 @@ class Screenshot:
                     return window
         return False
 
+    # @staticmethod
+    # def get_virtual_screen_offset():
+    #     if cfg.cloud_game_enable:
+    #         return None, None
+    #     from desktopmagic.screengrab_win32 import getDisplayRects  # 延迟导入，避免非 Windows 平台报错
+    #     rects = getDisplayRects()
+    #     min_x = min([rect[0] for rect in rects])
+    #     min_y = min([rect[1] for rect in rects])
+    #     return -min_x, -min_y
+
     @staticmethod
-    def get_virtual_screen_offset():
-        if cfg.cloud_game_enable:
-            return None, None
-        from desktopmagic.screengrab_win32 import getDisplayRects  # 延迟导入，避免非 Windows 平台报错
-        rects = getDisplayRects()
-        min_x = min([rect[0] for rect in rects])
-        min_y = min([rect[1] for rect in rects])
-        return -min_x, -min_y
+    def capture_screen_with_mss(region):
+        import mss
+
+        with mss.mss() as sct:
+            screenshot = sct.grab(region)
+            return Image.frombytes('RGB', screenshot.size, screenshot.rgb)
 
     @staticmethod
     def capture_window_background(hwnd, region, crop_params, offset=(0, 0)):
@@ -145,20 +153,36 @@ class Screenshot:
                     screenshot = None
 
             if screenshot is None:
-                import pyautogui
+                # import pyautogui
 
-                all_screens = cfg.all_screens
-                if all_screens:
-                    offset_x, offset_y = Screenshot.get_virtual_screen_offset()
-                else:
-                    offset_x, offset_y = 0, 0
+                # all_screens = cfg.all_screens
+                # if all_screens:
+                #     offset_x, offset_y = Screenshot.get_virtual_screen_offset()
+                # else:
+                #     offset_x, offset_y = 0, 0
 
-                screenshot = pyautogui.screenshot(region=(
-                    int(left + width * crop[0] + offset_x),
-                    int(top + height * crop[1] + offset_y),
-                    int(width * crop[2]),
-                    int(height * crop[3])
-                ), allScreens=all_screens)
+                # screenshot = pyautogui.screenshot(region=(
+                #     int(left + width * crop[0] + offset_x),
+                #     int(top + height * crop[1] + offset_y),
+                #     int(width * crop[2]),
+                #     int(height * crop[3])
+                # ), allScreens=all_screens)
+
+                capture_left = int(left + width * crop[0])
+                capture_top = int(top + height * crop[1])
+                capture_width = int(width * crop[2])
+                capture_height = int(height * crop[3])
+
+                monitor = {
+                    "left": capture_left,
+                    "top": capture_top,
+                    "width": capture_width,
+                    "height": capture_height
+                }
+                try:
+                    screenshot = Screenshot.capture_screen_with_mss(monitor)
+                except Exception:
+                    return False
 
             real_width, _ = Screenshot.get_window_real_resolution(window)
             if real_width > 1920:

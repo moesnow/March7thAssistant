@@ -960,12 +960,6 @@ class SettingInterface(ScrollArea):
             tr("通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）"),
             "auto_set_game_path_enable"
         )
-        self.allScreensCard = SwitchSettingCard1(
-            FIF.ZOOM,
-            tr('在多显示器上进行截屏'),
-            tr("默认开启，如果正在使用多显示器且无法正常截屏请关闭此选项重试"),
-            "all_screens"
-        )
         self.useBackgroundScreenshotCard = SwitchSettingCard1(
             FIF.CAMERA,
             tr('优先使用后台截图'),
@@ -1240,7 +1234,6 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.ocrGpuAccelerationCard)
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
-        self.MiscGroup.addSettingCard(self.allScreensCard)
         self.MiscGroup.addSettingCard(self.useBackgroundScreenshotCard)
         if sys.platform == 'win32':
             self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
@@ -1264,7 +1257,6 @@ class SettingInterface(ScrollArea):
             self.updateViaLauncherEnableCard.setHidden(True)
             self.autoSetResolutionEnableCard.setHidden(True)
             self.autoSetGamePathEnableCard.setHidden(True)
-            self.allScreensCard.setHidden(True)
             self.cloudGameEnableCard.setDisabled(True)  # 在配置文件中强制启用，禁止用户修改
 
         self.addSubInterface(self.PowerGroup, 'PowerInterface', tr('体力'))

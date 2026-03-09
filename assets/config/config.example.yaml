@@ -372,7 +372,6 @@ scheduled_tasks: [] # 示例：
 #     kill_processes: ["StarRail.exe"]
 #     enabled: true
 
-all_screens: true # 是否在多显示器上进行截屏（若开启无法正确运行请关闭）
 use_background_screenshot: true # 是否优先使用后台截图
 
 # 关闭窗口行为设置

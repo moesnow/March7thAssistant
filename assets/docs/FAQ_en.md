@@ -26,12 +26,6 @@ Windows Defender: `Virus & threat protection` → `Manage settings` → `Exclusi
 
 Huorong Security: `Main Interface` → `Menu (top right)` → `Trust List`. See [Tutorial](https://cs.xunyou.com/html/282/15252.shtml).
 
-### Q: Recognition issues or other problems with Dual (Multi) Monitors.
-
-A: Try toggling **Settings - Misc - Screenshot on multi-monitor**.
-
-Related discussions: [#383](https://github.com/moesnow/March7thAssistant/issues/383) [#710](https://github.com/moesnow/March7thAssistant/issues/710)
-
 ### Q: Auto-battle does not work.
 
 A: Check in-game **Settings - Battle - Retain Auto-Battle Setting** and set it to **"Yes"**.

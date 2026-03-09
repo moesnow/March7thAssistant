@@ -7,6 +7,7 @@ playsound3==3.3.0
 tqdm==4.67.1
 psutil==7.2.1
 pyautogui==0.9.54
+mss==10.1.0
 pygetwindow==0.0.9
 requests==2.32.5
 # charset_normalizer==3.4.5 会导致 RequestsDependencyWarning: Unable to find acceptable character detection dependency (chardet or charset_normalizer).
@@ -27,7 +28,7 @@ qrcode==8.2
 PySocks==1.7.1
 PyPAC==0.17.2
 requests-toolbelt==1.0.0
-Desktopmagic==14.3.11; sys_platform == 'win32'
+# Desktopmagic==14.3.11; sys_platform == 'win32'
 matrix-nio==0.25.2
 python-socks[asyncio]==2.8.0
 asyncio==4.0.0
