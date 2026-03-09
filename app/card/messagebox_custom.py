@@ -3,11 +3,11 @@ from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCo
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox)
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox, SimpleCardWidget)
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
-from module.localization import tr, get_instance_names, instance_display_to_raw
+from module.localization import tr, get_raw_instance_names, get_instance_names, instance_display_to_raw
 import datetime
 import json
 import time
@@ -1128,3 +1128,178 @@ class MessageBoxCloseWindow(MessageBox):
             cfg.set_value('close_window_action', 'close')
         _cleanup_infobars(self)
         super().reject()
+
+
+class MessageBoxInstanceTeam(MessageBox):
+    """副本队伍映射配置对话框"""
+
+    def __init__(self, title: str, default_team: int, teams: list[dict], parent=None):
+        super().__init__(title, "", parent)
+        self.default_team = default_team
+        self.teams = teams or []
+
+        self.instance_names = get_raw_instance_names()
+
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.yesButton.setText(tr("确认"))
+        self.cancelButton.setText(tr("取消"))
+
+        self.buttonGroup.setMinimumWidth(600)
+
+        self.defaultTeamSpinbox = None
+        self.ruleLayout = None
+        self.rule_widgets = []
+
+        self._setup_layouts()
+        self._setup_datas()
+    
+    def _setup_layouts(self):
+        top_section = self._setup_top_section()
+        table_section = self._setup_table_section()
+        self.textLayout.addLayout(top_section)
+        self.textLayout.addLayout(table_section)
+
+    def _setup_datas(self):
+        for team in self.teams:
+            self._add_rule_row(team.get("instance_name"), team.get("team_number", self.default_team))
+
+    def _setup_top_section(self):
+        """设置全局区域 - 默认队伍"""
+        self.defaultTeamSpinbox = SpinBox()
+        self.defaultTeamSpinbox.setMinimum(3)
+        self.defaultTeamSpinbox.setMaximum(7)
+        self.defaultTeamSpinbox.setValue(self.default_team)
+        self.defaultTeamSpinbox.setMinimumWidth(120)
+
+        hLayout = QHBoxLayout()
+        hLayout.addWidget(QLabel(tr("当没有匹配到任何规则时，默认出战队伍：")))
+        hLayout.addStretch(1)
+        hLayout.addWidget(self.defaultTeamSpinbox)
+
+        # 应用布局
+        cardContainer = SimpleCardWidget(self)
+        vLayout = QVBoxLayout(cardContainer)
+        vLayout.addLayout(hLayout)
+
+        layoutWrapper = QVBoxLayout()
+        layoutWrapper.addWidget(cardContainer)
+        return layoutWrapper
+
+    def _setup_table_section(self):
+        """设置表格区域 - 规则列表"""
+
+        # 规则列表容器
+        self.ruleLayout = QVBoxLayout()
+
+        # 添加按钮
+        buttonLayout = QHBoxLayout()
+        addButton = PushButton(tr("添加"), self)
+        addButton.clicked.connect(self._add_rule_row)
+        buttonLayout.addWidget(addButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        # 应用布局
+        cardContainer = SimpleCardWidget(self)
+        vLayout = QVBoxLayout(cardContainer)
+        vLayout.addLayout(self.ruleLayout)
+        vLayout.addLayout(buttonLayout)
+
+        layoutWrapper = QVBoxLayout()
+        layoutWrapper.addWidget(cardContainer)
+        return layoutWrapper
+
+    def _add_rule_row(self, instance_name=None, team_number=None):
+        """添加一行副本队伍规则配置"""
+        horizontalLayout = QHBoxLayout()
+
+        # 副本名称下拉框
+        nameComboBox = EditableComboBox()
+        nameComboBox.setMinimumWidth(280)
+
+        # 加载所有副本名称选项
+        for itype, names_dict in self.instance_names.items():
+            for iname in names_dict:
+                if iname == "无":
+                    continue
+                display_type = tr(itype)
+                display_name = tr(iname)
+                if not display_type.endswith(("）", "」")):
+                    display_type = display_type + " "
+                if not display_name.startswith(("（", "「")):
+                    display_name = " " + display_name
+                nameComboBox.addItem(f"{display_type}-{display_name}", userData=iname)
+
+        if instance_name:
+            index = nameComboBox.findData(instance_name)
+            if index >= 0:
+                nameComboBox.setCurrentIndex(index)
+
+        setup_completer(nameComboBox, [item.text for item in nameComboBox.items])
+
+        # 队伍编号选择框
+        teamSpinBox = SpinBox()
+        teamSpinBox.setMinimum(3)
+        teamSpinBox.setMaximum(7)
+        teamSpinBox.setValue(team_number or 3)
+        teamSpinBox.setMinimumWidth(120)
+
+        # 删除按钮
+        deleteButton = PushButton(tr("删除"), self)
+        deleteButton.setMaximumWidth(60)
+
+        def delete_row():
+            horizontalLayout.setParent(None)
+            for i in reversed(range(horizontalLayout.count())):
+                widget = horizontalLayout.itemAt(i).widget()
+                if widget:
+                    widget.setParent(None)
+                    widget.deleteLater()
+            if (nameComboBox, teamSpinBox, deleteButton) in self.rule_widgets:
+                self.rule_widgets.remove((nameComboBox, teamSpinBox, deleteButton))
+
+        deleteButton.clicked.connect(delete_row)
+
+        # 应用布局
+        horizontalLayout.addWidget(QLabel(tr("名称:")))
+        horizontalLayout.addWidget(nameComboBox)
+        horizontalLayout.addWidget(QLabel(tr("队伍:")))
+        horizontalLayout.addWidget(teamSpinBox)
+        horizontalLayout.addWidget(deleteButton)
+
+        self.ruleLayout.addLayout(horizontalLayout)
+        self.rule_widgets.append((nameComboBox, teamSpinBox, deleteButton))
+
+    def get_rules(self):
+        """获取所有规则配置"""
+        teams = []
+        for nameCombo, teamSpin, _ in self.rule_widgets:
+            instance_name = nameCombo.currentData()
+            team_number = teamSpin.value()
+
+            if instance_name and team_number > 0:
+                teams.append({"instance_name": instance_name, "team_number": team_number})
+
+        return teams
+
+    def get_default_team(self):
+        """获取默认队伍编号"""
+        if self.defaultTeamSpinbox:
+            return self.defaultTeamSpinbox.value()
+        return 3
+
+    def accept(self):
+        """确认并保存"""
+        _cleanup_infobars(self)
+        super().accept()
+
+    def reject(self):
+        """取消"""
+        _cleanup_infobars(self)
+        try:
+            super().reject()
+        except Exception:
+            try:
+                self.close()
+            except Exception:
+                pass
