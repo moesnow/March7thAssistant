@@ -47,12 +47,13 @@ class ToolManager:
         try:
             self.screenshot_error_message = ""
             log.info("开始捕获图像...")
-            # if not cfg.cloud_game_enable:
-            #     game = get_game_controller()
-            #     if not game.switch_to_game():
-            #         log.error("游戏尚未启动")
-            #         return False
-            #     time.sleep(0.5)  # 等待窗口切换
+            if not cfg.cloud_game_enable and not cfg.use_background_screenshot:
+                game = get_game_controller()
+                if not game.switch_to_game():
+                    log.error("游戏尚未启动")
+                    self.screenshot_error_message = tr("无法获取游戏窗口截图，请确认游戏窗口已打开")
+                    return False
+                time.sleep(0.5)  # 等待窗口切换
 
             log.debug("开始截图...")
             result = Screenshot.take_screenshot(cfg.game_title_name)

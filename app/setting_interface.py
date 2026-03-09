@@ -966,6 +966,12 @@ class SettingInterface(ScrollArea):
             tr("默认开启，如果正在使用多显示器且无法正常截屏请关闭此选项重试"),
             "all_screens"
         )
+        self.useBackgroundScreenshotCard = SwitchSettingCard1(
+            FIF.CAMERA,
+            tr('优先使用后台截图'),
+            tr("默认开启，可以避免悬浮窗等干扰"),
+            "use_background_screenshot"
+        )
         if sys.platform == 'win32':
             self.StartMarch7thAssistantCard = StartMarch7thAssistantSwitchSettingCard(
                 FIF.GAME,
@@ -1235,6 +1241,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
         self.MiscGroup.addSettingCard(self.allScreensCard)
+        self.MiscGroup.addSettingCard(self.useBackgroundScreenshotCard)
         if sys.platform == 'win32':
             self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
         self.MiscGroup.addSettingCard(self.hotkeyCard)

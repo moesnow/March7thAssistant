@@ -45,7 +45,7 @@ class Screenshot:
         return False
 
     @staticmethod
-    def get_main_screen_location():
+    def get_virtual_screen_offset():
         if cfg.cloud_game_enable:
             return None, None
         from desktopmagic.screengrab_win32 import getDisplayRects  # 延迟导入，避免非 Windows 平台报错
@@ -53,6 +53,63 @@ class Screenshot:
         min_x = min([rect[0] for rect in rects])
         min_y = min([rect[1] for rect in rects])
         return -min_x, -min_y
+
+    @staticmethod
+    def capture_window_background(hwnd, region, crop_params, offset=(0, 0)):
+        """
+        后台截取指定窗口，不会包含覆盖在其上的其他窗口（如浮窗）
+        crop_params: (left_ratio, top_ratio, width_ratio, height_ratio)
+        offset: (offset_x, offset_y)
+        """
+        import win32gui
+        import win32ui
+        import win32con
+        from PIL import Image
+
+        # 获取窗口坐标
+        # left, top, right, bot = win32gui.GetWindowRect(hwnd)
+        left, top, width, height = region
+
+        # 创建设备上下文
+        hwndDC = win32gui.GetWindowDC(hwnd)
+        mfcDC = win32ui.CreateDCFromHandle(hwndDC)
+        saveDC = mfcDC.CreateCompatibleDC()
+
+        # 创建位图对象
+        saveBitMap = win32ui.CreateBitmap()
+        saveBitMap.CreateCompatibleBitmap(mfcDC, width, height)
+        saveDC.SelectObject(saveBitMap)
+
+        # 使用 PrintWindow 截取后台内容
+        win32gui.SendMessage(hwnd, win32con.WM_PAINT, 0, 0)  # 触发重绘
+        import ctypes
+        # 0	默认模式，抓取整个窗口（含边框）
+        # 1	只抓取客户区，不含标题栏
+        # 2	强制完整渲染（部分游戏需要这个标志）
+        # 3	强制渲染 + 只抓客户区
+        result = ctypes.windll.user32.PrintWindow(hwnd, saveDC.GetSafeHdc(), 3)
+
+        # 转换为 PIL 图像
+        bmpinfo = saveBitMap.GetInfo()
+        bmpstr = saveBitMap.GetBitmapBits(True)
+        img = Image.frombuffer('RGB', (bmpinfo['bmWidth'], bmpinfo['bmHeight']), bmpstr, 'raw', 'BGRX', 0, 1)
+
+        # 清理内存
+        win32gui.DeleteObject(saveBitMap.GetHandle())
+        saveDC.DeleteDC()
+        mfcDC.DeleteDC()
+        win32gui.ReleaseDC(hwnd, hwndDC)
+
+        if result != 1:
+            return None  # 截图失败
+
+        # 执行原来的 crop 逻辑
+        crop_left = int(width * crop_params[0] + offset[0])
+        crop_top = int(height * crop_params[1] + offset[1])
+        crop_width = int(width * crop_params[2])
+        crop_height = int(height * crop_params[3])
+
+        return img.crop((crop_left, crop_top, crop_left + crop_width, crop_top + crop_height))
 
     @staticmethod
     def take_screenshot(title, crop=(0, 0, 1, 1)):
@@ -79,18 +136,29 @@ class Screenshot:
         if window:
             left, top, width, height = Screenshot.get_window_region(window)
 
-            all_screens = cfg.all_screens
-            if all_screens:
-                offset_x, offset_y = Screenshot.get_main_screen_location()
-            else:
-                offset_x, offset_y = 0, 0
-            import pyautogui
-            screenshot = pyautogui.screenshot(region=(
-                int(left + width * crop[0] + offset_x),
-                int(top + height * crop[1] + offset_y),
-                int(width * crop[2]),
-                int(height * crop[3])
-            ), allScreens=all_screens)
+            screenshot = None
+
+            if cfg.use_background_screenshot:
+                try:
+                    screenshot = Screenshot.capture_window_background(window._hWnd, (left, top, width, height), crop)
+                except Exception:
+                    screenshot = None
+
+            if screenshot is None:
+                import pyautogui
+
+                all_screens = cfg.all_screens
+                if all_screens:
+                    offset_x, offset_y = Screenshot.get_virtual_screen_offset()
+                else:
+                    offset_x, offset_y = 0, 0
+
+                screenshot = pyautogui.screenshot(region=(
+                    int(left + width * crop[0] + offset_x),
+                    int(top + height * crop[1] + offset_y),
+                    int(width * crop[2]),
+                    int(height * crop[3])
+                ), allScreens=all_screens)
 
             real_width, _ = Screenshot.get_window_real_resolution(window)
             if real_width > 1920:
