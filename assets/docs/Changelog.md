@@ -1,5 +1,11 @@
 # 更新日志
 
+## v2026.3.9-beta
+- 体力计划和定时任务新增了排序功能
+- 允许为特定的副本配置不同的出战队伍 [#913](https://github.com/moesnow/March7thAssistant/pull/913) @g60cBQ
+- 针对多显示器环境和悬浮窗遮挡问题优化了截图方式
+- 优化性能和稳定性并修复若干已知问题
+
 ## v2026.3.7
 - 支持爻光、火花、阮梅时装 [#905](https://github.com/moesnow/March7thAssistant/pull/905) @0frostmourne0
 - 更新差分宇宙配置选项现在默认禁用 GPU 加速
