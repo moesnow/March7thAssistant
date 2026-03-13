@@ -53,10 +53,12 @@ class SwitchSettingCard1(SettingCard):
     def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, parent=None):
         super().__init__(icon, title, content, parent)
         self.configname = configname
-        self.switchButton = SwitchButton(
-            tr('关'), self, IndicatorPosition.RIGHT)
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
-        self.setValue(cfg.get_value(self.configname))
+        try:
+            self.setValue(cfg.get_value(self.configname))
+        except Exception:
+            self.setValue(False)
 
         # add switch button to layout
         self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)

@@ -23,7 +23,7 @@ def get_key_from_value(val, map):
     return None
 
 
-class PushSettingCard(SettingCard):
+class CustomPushSettingCard(SettingCard):
     clicked = Signal()
 
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, configvalue, parent=None):
@@ -35,7 +35,7 @@ class PushSettingCard(SettingCard):
         self.hBoxLayout.addSpacing(16)
 
 
-class PushSettingCardStr(PushSettingCard):
+class PushSettingCardStr(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = str(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, self.configvalue, parent)
@@ -113,7 +113,7 @@ class FetchLatestCodesWorker(QObject):
             self.finished.emit([], str(e))
 
 
-class PushSettingCardCode(PushSettingCard):
+class PushSettingCardCode(CustomPushSettingCard):
 
     def __init__(self, text, icon, title, configname, parent=None):
         self.parent = parent
@@ -321,7 +321,7 @@ class PushSettingCardCode(PushSettingCard):
         )
 
 
-class PushSettingCardEval(PushSettingCard):
+class PushSettingCardEval(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = str(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, self.configvalue, parent)
@@ -334,7 +334,7 @@ class PushSettingCardEval(PushSettingCard):
             self.contentLabel.setText(message_box.getText())
 
 
-class PushSettingCardDate(PushSettingCard):
+class PushSettingCardDate(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = datetime.datetime.fromtimestamp(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, self.configvalue.strftime('%Y-%m-%d %H:%M'), parent)
@@ -368,7 +368,7 @@ class PushSettingCardDate(PushSettingCard):
             self.contentLabel.setText(display_time.strftime('%Y-%m-%d %H:%M'))
 
 
-class PushSettingCardKey(PushSettingCard):
+class PushSettingCardKey(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = str(cfg.get_value(configname))
         super().__init__(text, icon, title, configname, self.configvalue, parent)
@@ -442,7 +442,7 @@ class PushSettingCardKey(PushSettingCard):
         return None
 
 
-class PushSettingCardInstance(PushSettingCard):
+class PushSettingCardInstance(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, tr("说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动"), parent)
@@ -461,7 +461,7 @@ class PushSettingCardInstance(PushSettingCard):
             # self.contentLabel.setText(str(self.configvalue))
 
 
-class PushSettingCardInstanceChallengeCount(PushSettingCard):
+class PushSettingCardInstanceChallengeCount(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = cfg.get_value(configname)
         # super().__init__(text, icon, title, configname, str(self.configvalue), parent)
@@ -477,7 +477,7 @@ class PushSettingCardInstanceChallengeCount(PushSettingCard):
             # self.contentLabel.setText(str(self.configvalue))
 
 
-class PushSettingCardNotifyTemplate(PushSettingCard):
+class PushSettingCardNotifyTemplate(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = cfg.get_value(configname)
         super().__init__(text, icon, title, configname, "", parent)
@@ -491,7 +491,7 @@ class PushSettingCardNotifyTemplate(PushSettingCard):
             cfg.set_value(self.configname, self.configvalue)
 
 
-class PushSettingCardTeam(PushSettingCard):
+class PushSettingCardTeam(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.template = get_character_names()
         self.configvalue = cfg.get_value(configname)
@@ -517,7 +517,7 @@ class PushSettingCardTeam(PushSettingCard):
             self.contentLabel.setText(self.translate_to_chinese(self.newConfigValue))
 
 
-class PushSettingCardFriends(PushSettingCard):
+class PushSettingCardFriends(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         # include 'None' mapping for friends list
         self.template = get_character_names(include_none=True)
@@ -629,7 +629,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
             self._update_display()
 
 
-class PushSettingCardPowerPlan(PushSettingCard):
+class PushSettingCardPowerPlan(CustomPushSettingCard):
     """体力计划设置卡片"""
 
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):

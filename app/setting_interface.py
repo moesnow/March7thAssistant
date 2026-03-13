@@ -8,13 +8,14 @@ from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardNotify, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
+from .card.switchsettingcard1 import SwitchSettingCard1, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
+from .card.pushsettingcard1 import CustomPushSettingCard, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandablePushSettingCard, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
+from .card.messagebox_custom import MessageBoxEdit
 from module.config import cfg
-from module.notification import notif
+from module.notification import init_notifiers
 from module.localization import tr
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
@@ -817,8 +818,7 @@ class SettingInterface(ScrollArea):
             FIF.POWER_BUTTON,
             tr('任务完成后'),
             tr('“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能'),
-            texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启')
-                      : 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
+            texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
         )
         self.loopModeCard = ComboBoxSettingCard2(
             "loop_mode",
@@ -888,50 +888,284 @@ class SettingInterface(ScrollArea):
         )
 
         self.notifyEnableGroup = []
-        self.notifyLogoDict = {
-            "winotify": FIF.BACK_TO_WINDOW,
-            "telegram": FIF.AIRPLANE,
-            "serverchanturbo": FIF.ROBOT,
-            "serverchan3": FIF.ROBOT,
-            # "bark": FIF.MAIL,
-            "smtp": FIF.MAIL,
-            # "dingtalk": FIF.MAIL,
-            # "pushplus": FIF.MAIL,
-            # "wechatworkapp": FIF.MAIL,
-            # "wechatworkbot": FIF.MAIL,
-            # "onebot": FIF.MAIL,
-            # "gocqhttp": FIF.MAIL,
-            # "gotify": FIF.MAIL,
-            # "discord": FIF.MAIL,
-            # "pushdeer": FIF.MAIL,
-            # "lark": FIF.MAIL,
-            # "custom": FIF.MAIL,
-            "meow": FIF.ROBOT,
+        self.notifyProviderMeta = {
+            "winotify": {
+                "icon": FIF.BACK_TO_WINDOW,
+                "display_name": "Windows",
+                "description": tr("Windows 原生通知"),
+            },
+            "telegram": {
+                "icon": FIF.AIRPLANE,
+                "display_name": "Telegram",
+                "description": tr("通常需要可访问 Telegram 网络"),
+                "support_image": True,
+                "params": {
+                    "token": {"title": tr("机器人令牌"), "description": tr("获取方式：创建 Bot → @BotFather → /newbot → 获取 Token")},
+                    "userid": {"title": tr("用户/群组 ID"), "description": tr("接收通知的用户 ID 或群组 ID（以 - 开头）")},
+                    "api_url": {"title": tr("自定义 API 地址"), "description": tr("可选参数，自定义 Telegram API 地址，例如 api.telegram.org")},
+                    "proxies": {"title": tr("代理配置"), "description": tr("可选参数，例如 127.0.0.1:10808 或 socks5://127.0.0.1:1080，不填则使用系统 PAC 代理")},
+                }
+            },
+            "matrix": {
+                "icon": FIF.GLOBE,
+                "display_name": "Matrix",
+                "description": tr("适用于 Matrix 协议"),
+                "support_image": True,
+                "params": {
+                    "homeserver": {"title": tr("服务器地址"), "description": tr("服务器地址，例如 https://matrix.org")},
+                    "device_id": {"title": tr("设备 ID"), "description": tr("设备 ID，通常是 10 位大写字母或数字")},
+                    "user_id": {"title": tr("用户 ID"), "description": tr("用户 ID，例如 @user:matrix.org")},
+                    "access_token": {"title": tr("访问令牌"), "description": tr("登录后分配的 Access Token")},
+                    "room_id": {"title": tr("房间 ID"), "description": tr("目标房间 ID，例如 !xxx:matrix.org")},
+                    "proxy": {"title": tr("代理配置"), "description": tr("可选参数，例如 127.0.0.1:10808 或 socks5://127.0.0.1:1080，不填则使用系统 PAC 代理")},
+                    "separately_text_media": {"title": tr("文字与图片分开发送"), "description": tr("是否分开发送文字和图片，避免部分客户端不显示文字"), "type": "bool"},
+                }
+            },
+            "serverchanturbo": {
+                "icon": FIF.ROBOT,
+                "display_name": tr("Server酱·Turbo版"),
+                "description": tr("微信推送，适合轻量通知"),
+                "params": {
+                    "sctkey": {"title": tr("SendKey"), "description": tr("在 https://sct.ftqq.com/ 获取的 SendKey")},
+                    "channel": {"title": tr("发送通道"), "description": tr("可选参数")},
+                    "openid": {"title": tr("接收人 OpenID"), "description": tr("可选参数")},
+                }
+            },
+            "serverchan3": {
+                "icon": FIF.ROBOT,
+                "display_name": tr("Server酱³"),
+                "description": tr("Server酱³ APP 推送"),
+                "params": {
+                    "sendkey": {"title": tr("SendKey",), "description": tr("在 https://sc3.ft07.com/ 获取的 SendKey")},
+                }
+            },
+            "bark": {
+                "icon": FIF.MAIL,
+                "display_name": "Bark",
+                "description": tr("适合 iOS 设备推送"),
+                "params": {
+                    "key": {"title": tr("推送密钥"), "description": tr("在 Bark APP 中获取的唯一标识符")},
+                    "group": {"title": tr("分组名"), "description": tr("可选参数，Bark 通知的分组名")},
+                    "icon": {"title": tr("图标地址"), "description": tr("可选参数，通知图标的 URL")},
+                    "isarchive": {"title": tr("归档"), "description": tr("可选参数：1 归档，0 不归档")},
+                    "sound": {"title": tr("提示音"), "description": tr("可选参数，自定义提示音名称")},
+                    "url": {"title": tr("服务地址"), "description": tr("可选参数，自定义 Bark 服务的 URL")},
+                    "copy": {"title": tr("复制内容"), "description": tr("可选参数，通知点击后复制内容")},
+                    "autocopy": {"title": tr("自动复制"), "description": tr("可选参数，是否自动复制")},
+                    "cipherkey": {"title": tr("加密密钥"), "description": tr("可选参数，推送加密密钥，需在 Bark APP 中配置相同的密钥")},
+                    "ciphermethod": {"title": tr("加密算法"), "description": tr("可选参数，支持 cbc 或 ecb，需与 Bark APP 中配置的算法一致")},
+                }
+            },
+            "smtp": {
+                "icon": FIF.MAIL,
+                "display_name": "SMTP",
+                "description": tr("常用于邮箱提醒"),
+                "support_image": True,
+                "params": {
+                    "host": {"title": tr("SMTP 服务器")},
+                    "user": {"title": tr("用户名/邮箱")},
+                    "password": {"title": tr("密码/授权码"), "description": tr("部分邮箱需要填写授权码（如 QQ 邮箱）")},
+                    "From": {"title": tr("发件人"), "description": tr("可选参数，发件人邮箱，默认使用 user")},
+                    "To": {"title": tr("收件人"), "description": tr("可选参数，收件人邮箱，默认使用 user")},
+                    "port": {"title": tr("端口"), "description": tr("可选参数，端口，默认 465")},
+                    "ssl": {"title": tr("启用 SSL"), "description": tr("可选参数，是否启用 SSL"), "type": "bool"},
+                    "starttls": {"title": tr("启用 STARTTLS"), "description": tr("可选参数，是否启用 STARTTLS"), "type": "bool"},
+                    "ssl_unverified": {"title": tr("跳过证书验证"), "description": tr("可选参数，是否跳过 SSL 证书验证"), "type": "bool"},
+                }
+            },
+            "onebot": {
+                "icon": FIF.ROBOT,
+                "display_name": "OneBot",
+                "description": tr("适用于 OneBot 协议"),
+                "support_image": True,
+                "params": {
+                    "endpoint": {"title": tr("服务地址"), "description": tr("OneBot 服务端点地址，例如 http://127.0.0.1:3000")},
+                    "token": {"title": tr("访问令牌"), "description": tr("可选参数，Access Token")},
+                    "user_id": {"title": tr("私聊用户 ID"), "description": tr("可选参数，私聊接收用户 ID")},
+                    "group_id": {"title": tr("群组 ID"), "description": tr("可选参数，群聊接收群组 ID")},
+                }
+            },
+            "gocqhttp": {
+                "icon": FIF.ROBOT,
+                "display_name": "Go-cqhttp",
+                "description": tr("Go-cqhttp 项目已停止维护"),
+                "support_image": True,
+                "params": {
+                    "endpoint": {"title": tr("服务地址")},
+                    "message_type": {"title": tr("消息类型"), "description": tr("消息类型：private 或 group")},
+                    "token": {"title": tr("访问令牌"), "description": tr("可选参数，Access Token")},
+                    "user_id": {"title": tr("私聊用户 ID"), "description": tr("可选参数，私聊接收用户 ID")},
+                    "group_id": {"title": tr("群组 ID"), "description": tr("可选参数，群聊接收群组 ID")},
+                }
+            },
+            "dingtalk": {
+                "icon": FIF.MAIL,
+                "display_name": tr("钉钉"),
+                "description": tr("钉钉机器人推送"),
+                "params": {
+                    "token": {"title": tr("机器人令牌")},
+                    "secret": {"title": tr("加签密钥"), "description": tr("可选参数，安全加签密钥")},
+                }
+            },
+            "pushplus": {
+                "icon": FIF.MAIL,
+                "display_name": "Pushplus",
+                "description": tr("Pushplus 通知服务"),
+                "params": {
+                    "token": {"title": tr("推送令牌")},
+                    "channel": {"title": tr("推送渠道"), "description": tr("可选参数")},
+                    "webhook": {"title": tr("Webhook 地址"), "description": tr("可选参数，Webhook URL")},
+                    "callbackUrl": {"title": tr("回调地址"), "description": tr("可选参数，回调 URL")},
+                }
+            },
+            "wechatworkbot": {
+                "icon": FIF.MAIL,
+                "display_name": tr("企业微信机器人"),
+                "description": tr("企业微信机器人消息推送"),
+                "support_image": True,
+                "params": {
+                    "key": {"title": tr("机器人 Key")},
+                    "webhook_url": {"title": tr("Webhook 地址"), "description": tr("可选参数，企业微信机器人 Webhook URL")},
+                }
+            },
+            "wechatworkapp": {
+                "icon": FIF.MAIL,
+                "display_name": tr("企业微信应用"),
+                "description": tr("企业微信应用消息推送"),
+                "support_image": True,
+                "params": {
+                    "corpid": {"title": tr("企业 ID")},
+                    "corpsecret": {"title": tr("应用密钥")},
+                    "agentid": {"title": tr("应用 AgentId")},
+                    "touser": {"title": tr("接收用户"), "description": tr("可选参数，接收用户，@all 表示全员")},
+                }
+            },
+            "gotify": {
+                "icon": FIF.MAIL,
+                "display_name": "Gotify",
+                "description": tr("Gotify 私有通知服务"),
+                "params": {
+                    "url": {"title": tr("服务地址"), "description": tr("Gotify 服务器 URL，例如 https://gotify.example.com")},
+                    "token": {"title": tr("访问令牌"), "description": tr("Gotify 应用的 Access Token")},
+                    "priority": {"title": tr("优先级"), "description": tr("可选参数，通知优先级，范围 1-10，越高优先级越高。1-3:仅图标，4-7:图标 + 声音，8-10:图标 + 声音 + 震动")},
+                }
+            },
+            "discord": {
+                "icon": FIF.MAIL,
+                "display_name": "Discord",
+                "description": tr("Discord Webhook 推送"),
+                "params": {
+                    "webhook": {"title": tr("Webhook 地址")},
+                    "username": {"title": tr("显示用户名"), "description": tr("可选参数，显示用户名")},
+                    "avatar_url": {"title": tr("头像地址"), "description": tr("可选参数，头像 URL")},
+                    "color": {"title": tr("消息颜色"), "description": tr("可选参数，嵌入消息颜色，十六进制颜色值（如：0x3498db）")},
+                }
+            },
+            "pushdeer": {
+                "icon": FIF.MAIL,
+                "display_name": "Pushdeer",
+                "description": tr("Pushdeer 通知服务"),
+                "params": {
+                    "token": {"title": tr("推送令牌"), "description": tr("Pushdeer Token")},
+                    "url": {"title": tr("服务地址"), "description": tr("可选参数，自定义 Pushdeer 服务地址")},
+                }
+            },
+            "lark": {
+                "icon": FIF.MAIL,
+                "display_name": tr("飞书"),
+                "description": tr("飞书机器人推送"),
+                "support_image": True,
+                "params": {
+                    "webhook": {"title": tr("Webhook 地址")},
+                    "content": {"title": tr("消息内容")},
+                    "keyword": {"title": tr("关键词"), "description": tr("可选参数，关键词安全校验内容")},
+                    "sign": {"title": tr("签名"), "description": tr("可选参数，签名安全校验参数")},
+                    "imageenable": {"title": tr("启用图片"), "description": tr("是否发送图片"), "type": "bool"},
+                    "appid": {"title": tr("应用 AppId"), "description": tr("发送图片时必填：飞书应用 AppId")},
+                    "secret": {"title": tr("应用 Secret"), "description": tr("发送图片时必填：飞书应用 Secret")},
+                }
+            },
+            "meow": {
+                "icon": FIF.ROBOT,
+                "display_name": "MeoW",
+                "description": tr("适合 鸿蒙NEXT 设备推送"),
+                "params": {
+                    "nickname": {"title": tr("昵称")},
+                }
+            },
+            "kook": {
+                "icon": FIF.ROBOT,
+                "display_name": "KOOK",
+                "description": tr("KOOK 机器人推送"),
+                "support_image": True,
+                "params": {
+                    "token": {"title": tr("机器人令牌"), "description": tr("KOOK 机器人的 Token")},
+                    "target_id": {"title": tr("目标 ID"), "description": tr("接收消息的用户 ID 或频道 ID")},
+                    "chat_type": {"title": tr("聊天类型"), "description": tr("可选参数，1 为私聊，9 为频道")},
+                }
+            },
+            "webhook": {
+                "icon": FIF.CODE,
+                "display_name": "Webhook",
+                "description": tr("可自定义请求方法、请求头和请求体"),
+                "support_image": True,
+                "params": {
+                    "url": {"title": tr("接收地址")},
+                    "method": {"title": tr("请求方法"), "description": tr("可选参数，HTTP 方法，默认 POST")},
+                    "headers": {"title": tr("请求头"), "description": tr('可选参数，请求头 JSON 格式字符串，如：{"Authorization": "Bearer token"}')},
+                    "body": {"title": tr("请求体"), "description": tr("可选参数，请求体模板 JSON 格式字符串，支持 {title}/{content}/{image} 占位符")},
+                }
+            },
+            "custom": {
+                "icon": FIF.CODE,
+                "display_name": tr("自定义通知"),
+                "description": tr("自定义 HTTP 请求推送"),
+                "support_image": True,
+                "params": {
+                    "url": {"title": tr("请求地址"), "description": tr("请求地址，OneBot 可填写 send_msg 接口 URL")},
+                    "method": {"title": tr("请求方法"), "description": tr("请求方法，通常 get 或 post")},
+                    "datatype": {"title": tr("数据类型"), "description": tr("数据类型，通常为 data 或 json")},
+                    "image": {"title": tr("图片模板"), "description": tr("可选参数，图片消息模板，{image} 会替换为 Base64")},
+                    "data": {"title": tr("数据模板"), "description": tr("请求体模板，{message} 会替换为标题和内容")},
+                }
+            },
         }
-        self.notifySupportImage = ["telegram", "matrix", "smtp", "wechatworkapp", "wechatworkbot", "onebot", "gocqhttp", "lark", "custom"]
 
-        for key, _ in cfg.config.items():
-            if key.startswith("notify_") and key.endswith("_enable"):
-                notifier_name = key[len("notify_"):-len("_enable")]
-                if sys.platform != 'win32' and notifier_name == 'winotify':
-                    continue
-                if notifier_name == "serverchanturbo":
-                    display_name = "ServerChanTurbo"
-                elif notifier_name == "serverchan3":
-                    display_name = "ServerChan3"
-                else:
-                    display_name = notifier_name.capitalize()
+        self.notifyEnableGroup = []
+        provider_names = self.__getNotifyProviderNames()
+        for notifier_name in provider_names:
+            enable_key = f"notify_{notifier_name}_enable"
+            provider_meta = self.notifyProviderMeta.get(notifier_name, {})
+            display_name = provider_meta.get("display_name", notifier_name.capitalize())
+            support_image = tr("（支持图片）") if provider_meta.get("support_image", False) else ""
+            provider_description = provider_meta.get("description", "")
+            has_params = bool(provider_meta.get("params"))
+            if support_image:
+                provider_description = f"{provider_description} {support_image}".strip()
 
-                support_image = tr("（支持图片）") if notifier_name in self.notifySupportImage else ""
-                title_text = tr('启用 {} 通知').format(display_name) + support_image
-
-                notifyEnableCard = SwitchSettingCardNotify(
-                    self.notifyLogoDict[notifier_name] if notifier_name in self.notifyLogoDict else FIF.MAIL,
-                    title_text,
-                    notifier_name,
-                    key
+            if has_params:
+                notifyEnableCard = ExpandableSwitchSettingCard(
+                    enable_key,
+                    provider_meta.get("icon", FIF.MAIL),
+                    tr('启用 {} 通知').format(display_name),
+                    provider_description
                 )
-                self.notifyEnableGroup.append(notifyEnableCard)
+                notifyEnableCard.switchChanged.connect(self.__refreshNotifiers)
+
+                notifyParamCards = self.__createNotifyParamCards(notifier_name)
+                if notifyParamCards:
+                    notifyEnableCard.addSettingCards(notifyParamCards)
+            else:
+                notifyEnableCard = SwitchSettingCard1(
+                    provider_meta.get("icon", FIF.MAIL),
+                    tr('启用 {} 通知').format(display_name),
+                    provider_description,
+                    enable_key,
+                    self
+                )
+                notifyEnableCard.switchButton.checkedChanged.connect(self.__refreshNotifiers)
+
+            self.notifyEnableGroup.append(notifyEnableCard)
 
         self.MiscGroup = SettingCardGroup(tr("杂项"), self.scrollWidget)
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
@@ -1255,6 +1489,7 @@ class SettingInterface(ScrollArea):
             self.updateViaLauncherEnableCard.setHidden(True)
             self.autoSetResolutionEnableCard.setHidden(True)
             self.autoSetGamePathEnableCard.setHidden(True)
+            self.useBackgroundScreenshotCard.setHidden(True)
             self.cloudGameEnableCard.setDisabled(True)  # 在配置文件中强制启用，禁止用户修改
 
         self.addSubInterface(self.PowerGroup, 'PowerInterface', tr('体力'))
@@ -1325,10 +1560,109 @@ class SettingInterface(ScrollArea):
         self.updateViaLauncherEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.updateSourceCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.testNotifyCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        for notify_card in self.notifyEnableGroup:
+            if hasattr(notify_card, "expandStateChanged"):
+                notify_card.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.instanceTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.echoofwarEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.browserTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.browserHeadlessCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+
+    def __getNotifyProviderNames(self):
+        provider_names = []
+        for key in cfg.config.keys():
+            if key.startswith("notify_") and key.endswith("_enable"):
+                notifier_name = key[len("notify_"):-len("_enable")]
+                if sys.platform != 'win32' and notifier_name == 'winotify':
+                    continue
+                provider_names.append(notifier_name)
+
+        order_map = {name: index for index, name in enumerate(self.notifyProviderMeta.keys())}
+        return sorted(provider_names, key=lambda name: (order_map.get(name, 999), name))
+
+    def __createNotifyParamCards(self, notifier_name):
+        param_cards = []
+        prefix = f"notify_{notifier_name}_"
+        enable_key = f"notify_{notifier_name}_enable"
+
+        for key in cfg.config.keys():
+            if not key.startswith(prefix) or key == enable_key:
+                continue
+
+            param_name = key[len(prefix):]
+            param_meta = self.notifyProviderMeta.get(notifier_name, {}).get("params", {}).get(param_name, {})
+            if "description" in param_meta:
+                param_description = param_meta.get("description", "")
+            elif param_meta:
+                param_description = ""
+            else:
+                param_description = tr("该参数用于配置该通知方式的请求字段")
+            param_title = param_meta.get("title", param_name)
+            param_type = param_meta.get("type", "text")
+
+            if param_type == "bool":
+                # self.__normalizeNotifyBoolConfigValue(key)
+                notify_param_card = SwitchSettingCard1(
+                    FIF.CHECKBOX,
+                    param_title,
+                    param_description,
+                    key,
+                    self
+                )
+                notify_param_card.switchButton.checkedChanged.connect(self.__refreshNotifiers)
+            else:
+                notify_param_card = CustomPushSettingCard(
+                    tr('修改'),
+                    FIF.EDIT,
+                    param_title,
+                    key,
+                    param_description,
+                    self
+                )
+                notify_param_card.button.clicked.connect(
+                    lambda _, card=notify_param_card: self.__onNotifyParamCardClicked(card)
+                )
+            param_cards.append(notify_param_card)
+
+        return param_cards
+
+    def __onNotifyParamCardClicked(self, card):
+        current_value = cfg.get_value(card.configname)
+        message_box = MessageBoxEdit(card.title, str(current_value), self.window())
+        if message_box.exec():
+            cfg.set_value(card.configname, self.__parseNotifyValue(message_box.getText()))
+            self.__refreshNotifiers()
+
+    def __parseNotifyValue(self, input_text):
+        try:
+            return eval(input_text)
+        except (SyntaxError, NameError, ValueError):
+            return input_text
+
+    def __normalizeNotifyBoolConfigValue(self, configname):
+        value = cfg.get_value(configname)
+        if isinstance(value, bool):
+            return
+
+        normalized = False
+        if isinstance(value, str):
+            text = value.strip().lower()
+            if text in {"1", "true", "yes", "on"}:
+                normalized = True
+            elif text in {"0", "false", "no", "off", "", "none", "null"}:
+                normalized = False
+            else:
+                normalized = bool(text)
+        else:
+            normalized = bool(value)
+
+        cfg.set_value(configname, normalized)
+
+    def __refreshNotifiers(self, *_):
+        try:
+            init_notifiers()
+        except Exception:
+            pass
 
     def addSubInterface(self, widget: QLabel, objectName, text):
         def remove_spacing(layout):

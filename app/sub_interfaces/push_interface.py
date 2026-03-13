@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabBar, QInputDialog
 from PySide6.QtWidgets import QFrame
 from qfluentwidgets import FluentStyleSheet
 from qfluentwidgets import FluentIcon as FIF
-from app.card.pushsettingcard1 import PushSettingCard
+from app.card.pushsettingcard1 import CustomPushSettingCard
 from app.card.switchsettingcard1 import SwitchSettingCard1
 from module.config import cfg
 from module.localization import tr
@@ -89,7 +89,7 @@ class TelegramPushCard(QWidget):
             None,
             "notify_telegram_enable"
         )
-        self.telegramTokenCard = PushSettingCard(
+        self.telegramTokenCard = CustomPushSettingCard(
             tr('修改'),
             FIF.GAME,
             tr("Telegram Token"),
