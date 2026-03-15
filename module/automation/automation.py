@@ -60,8 +60,7 @@ class Automation(metaclass=SingletonMeta):
             (size[1]) / height,
         )
 
-
-    def take_screenshot(self, crop=(0, 0, 1, 1)):
+    def take_screenshot(self, crop=(0, 0, 1, 1), use_background_screenshot=None):
         """
         捕获游戏窗口的截图。
         :param crop: 截图的裁剪区域，格式为(x1, y1, x2, y2)，默认为全屏。
@@ -70,7 +69,11 @@ class Automation(metaclass=SingletonMeta):
         start_time = time.monotonic()
         while True:
             try:
-                result = Screenshot.take_screenshot(self.window_title, crop=crop)
+                result = Screenshot.take_screenshot(
+                    self.window_title,
+                    crop=crop,
+                    use_background_screenshot=use_background_screenshot,
+                )
                 if result:
                     self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
                     return result
@@ -392,7 +395,7 @@ class Automation(metaclass=SingletonMeta):
         y = (top + bottom) // 2 + offset[1]
         return x, y
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0, use_background_screenshot=None):
         """
         查找元素，并根据指定的查找类型执行不同的查找策略。
         :param target: 查找目标，可以是图像路径或文字。
@@ -410,13 +413,14 @@ class Automation(metaclass=SingletonMeta):
         :param pixel_bgr: 颜色查找时的BGR值。
         :param position: 查找方位，'top_left', 'top_right', 'bottom_left', 或 'bottom_right'。
         :param retry_delay: 每次重试之间的等待时间（秒），默认1.0秒。
+        :param use_background_screenshot: 是否使用后台截图。为None时沿用配置文件设置。
         :return: 查找到的元素位置，或者在图像计数查找时返回计数。
         """
         take_screenshot = take_screenshot and need_ocr
         max_retries = 1 if not take_screenshot else max_retries
         for i in range(max_retries):
             if take_screenshot:
-                screenshot_result = self.take_screenshot(crop)
+                screenshot_result = self.take_screenshot(crop, use_background_screenshot)
                 if not screenshot_result:
                     continue  # 如果截图失败，则跳过本次循环
             if find_type in ['image', 'image_threshold', 'text', "min_distance_text", 'crop']:
@@ -472,7 +476,7 @@ class Automation(metaclass=SingletonMeta):
 
         return True
 
-    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0):
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None):
         """
         查找并点击屏幕上的元素。
 
@@ -481,11 +485,13 @@ class Automation(metaclass=SingletonMeta):
         offset: 点击坐标的偏移量。
         action: 执行的动作。
         retry_delay: 每次重试之间的等待时间（秒），默认1.0秒。
+        use_background_screenshot: 是否使用后台截图。为None时沿用配置文件设置。
 
         返回:
         如果找到元素并点击成功，则返回True；否则返回False。
         """
-        coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot, relative, scale_range, include, need_ocr, source, source_type, pixel_bgr, position, retry_delay)
+        coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot, relative, scale_range, include,
+                                        need_ocr, source, source_type, pixel_bgr, position, retry_delay, use_background_screenshot)
         if coordinates:
             return self.click_element_with_pos(coordinates, offset, action)
         return False

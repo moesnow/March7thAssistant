@@ -120,7 +120,7 @@ class Screenshot:
         return img.crop((crop_left, crop_top, crop_left + crop_width, crop_top + crop_height))
 
     @staticmethod
-    def take_screenshot(title, crop=(0, 0, 1, 1)):
+    def take_screenshot(title, crop=(0, 0, 1, 1), use_background_screenshot=None):
         if cfg.cloud_game_enable:
             from module.game import cloud_game
             screenshot = Image.open(BytesIO(cloud_game.take_screenshot()))
@@ -146,7 +146,9 @@ class Screenshot:
 
             screenshot = None
 
-            if cfg.use_background_screenshot:
+            use_background = cfg.use_background_screenshot if use_background_screenshot is None else use_background_screenshot
+
+            if use_background:
                 try:
                     screenshot = Screenshot.capture_window_background(window._hWnd, (left, top, width, height), crop)
                 except Exception:

@@ -52,14 +52,10 @@ def start_game():
         auto.click_element("./assets/images/zh_CN/base/restart.png", "image", 0.9, take_screenshot=False)
         # 适配国际服，需要点击“开始游戏”
         auto.click_element("./assets/images/screen/start_game.png", "image", 0.9, take_screenshot=False)
-        # 适配B服，需要点击“登录”
-        auto.click_element("./assets/images/screen/bilibili_login.png", "image", 0.9, take_screenshot=False)
-        auto.click_element("./assets/images/screen/bilibili_login_2.png", "image", 0.9, take_screenshot=False)
         # 出现多账号登录页时，需要点击“登录其他账号”
         auto.click_element("./assets/images/screen/login_switch_account.png", "image", 0.9, take_screenshot=False)
         # 适配用户协议和隐私政策更新提示，需要点击“同意”
         auto.click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
-        auto.click_element("./assets/images/screen/bilibili_agree_update.png", "image", 0.9, take_screenshot=False)
         # 登录过期
         if auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
             if load_acc_and_pwd(gamereg_uid()) != (None, None):
@@ -71,11 +67,23 @@ def start_game():
             if load_acc_and_pwd(gamereg_uid()) != (None, None):
                 log.info("检测到登录过期，尝试自动登录")
                 auto_login_os()
-
         # 游戏已有新版本，请前往启动器下载最新客户端，完成本次更新后登录游戏即可获
         # 得300星琼奖励。
         if auto.find_element("前往启动器下载最新客户端", "text", take_screenshot=False, include=True):
             raise Exception("检测到游戏客户端版本过低，请前往启动器下载最新客户端")
+
+        # 适配B服，需要点击“登录”，强制使用前台截图方式（#901）
+        if auto.find_element(("bilibili游戏隐私政策提示", "登录记录"), "text", use_background_screenshot=False):
+            if auto.matched_text == "bilibili游戏隐私政策提示":
+                auto.click_element("同意", "text", take_screenshot=False)
+            elif auto.matched_text == "登录记录":
+                auto.click_element("登录", "text", take_screenshot=False)
+        auto.click_element("./assets/images/screen/bilibili_login.png", "image", 0.9, take_screenshot=False)
+        auto.click_element("./assets/images/screen/bilibili_login_2.png", "image", 0.9, take_screenshot=False)
+        auto.click_element("./assets/images/screen/bilibili_login_3.png", "image", 0.9, take_screenshot=False)
+        auto.click_element("./assets/images/screen/bilibili_agree_update.png", "image", 0.9, take_screenshot=False)
+        auto.click_element("./assets/images/screen/bilibili_agree_update_2.png", "image", 0.9, take_screenshot=False)
+
         return False
 
     def cloud_game_check_and_enter():
