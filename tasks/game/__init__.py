@@ -78,11 +78,12 @@ def start_game():
                 auto.click_element("同意", "text", take_screenshot=False)
             elif auto.matched_text == "登录记录":
                 auto.click_element("登录", "text", take_screenshot=False)
-        auto.click_element("./assets/images/screen/bilibili_login.png", "image", 0.9, take_screenshot=False)
-        auto.click_element("./assets/images/screen/bilibili_login_2.png", "image", 0.9, take_screenshot=False)
-        auto.click_element("./assets/images/screen/bilibili_login_3.png", "image", 0.9, take_screenshot=False)
-        auto.click_element("./assets/images/screen/bilibili_agree_update.png", "image", 0.9, take_screenshot=False)
-        auto.click_element("./assets/images/screen/bilibili_agree_update_2.png", "image", 0.9, take_screenshot=False)
+        else:
+            auto.click_element("./assets/images/screen/bilibili_login.png", "image", 0.9, take_screenshot=False)
+            auto.click_element("./assets/images/screen/bilibili_login_2.png", "image", 0.9, take_screenshot=False)
+            auto.click_element("./assets/images/screen/bilibili_login_3.png", "image", 0.9, take_screenshot=False)
+            auto.click_element("./assets/images/screen/bilibili_agree_update.png", "image", 0.9, take_screenshot=False)
+            auto.click_element("./assets/images/screen/bilibili_agree_update_2.png", "image", 0.9, take_screenshot=False)
 
         return False
 
