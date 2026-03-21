@@ -92,22 +92,19 @@ class Notification(metaclass=SingletonMeta):
         """
         was_batching = self._batch_mode
         self._batch_mode = False
+        messages = self._batch_messages
+        has_error = self._batch_has_error
+        self._batch_messages = []
+        self._batch_has_error = False
 
-        if was_batching and self._batch_messages:
-            merged = "\n".join(self._batch_messages)
+        if was_batching and messages:
+            merged = "\n".join(messages)
             if extra_content:
                 merged += "\n" + extra_content
-            batch_level = NotificationLevel.ERROR if self._batch_has_error else level
-            self._batch_messages = []
-            self._batch_has_error = False
+            batch_level = NotificationLevel.ERROR if has_error else level
             self.notify(content=merged, level=batch_level)
         elif extra_content:
-            self._batch_messages = []
-            self._batch_has_error = False
             self.notify(content=extra_content, level=level)
-        else:
-            self._batch_messages = []
-            self._batch_has_error = False
 
     def _process_image(self, image: Optional[io.BytesIO | str | Image.Image], max_size: tuple = (1920, 1080), quality: int = 85) -> Optional[io.BytesIO]:
         """
