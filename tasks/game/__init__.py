@@ -257,6 +257,7 @@ def after_finish_is_loop():
             log.info(f"开拓力 >= {cfg.power_limit}")
             log.info("即将再次运行")
             log.hr("完成", 2)
+            notif.flush_batch()
             return
         else:
             get_game_controller().stop_game()
@@ -272,12 +273,13 @@ def after_finish_is_loop():
     if is_gui_started():
         msg = "通过图形界面启动，程序不支持循环模式，请使用日志界面的定时运行功能"
         log.error(msg)
-        notif.notify(content=msg, level=NotificationLevel.ERROR)
+        notif.flush_batch(extra_content=msg, level=NotificationLevel.ERROR)
         log.hr("完成", 2)
         sys.exit(0)
 
-    log.info(cfg.notify_template['ContinueTime'].format(time=future_time))
-    notif.notify(content=cfg.notify_template['ContinueTime'].format(time=future_time), level=NotificationLevel.ALL)
+    final_content = cfg.notify_template['ContinueTime'].format(time=future_time)
+    log.info(final_content)
+    notif.flush_batch(extra_content=final_content, level=NotificationLevel.ALL)
     log.hr("完成", 2)
     # 等待状态退出OCR避免内存占用
     ocr.exit_ocr()
@@ -439,8 +441,9 @@ def notify_after_finish_not_loop():
 
     wait_time = get_wait_time(current_power)
     future_time = Date.calculate_future_time(wait_time)
-    log.info(cfg.notify_template['FullTime'].format(power=current_power, time=future_time))
-    notif.notify(content=cfg.notify_template['FullTime'].format(power=current_power, time=future_time), level=NotificationLevel.ALL)
+    final_content = cfg.notify_template['FullTime'].format(power=current_power, time=future_time)
+    log.info(final_content)
+    notif.flush_batch(extra_content=final_content, level=NotificationLevel.ALL)
 
 
 def ensure_IME_lang_en():

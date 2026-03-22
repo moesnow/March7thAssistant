@@ -35,6 +35,9 @@ class Notification(metaclass=SingletonMeta):
         self.logger = logger
         self.notifiers = {}  # 存储不同类型的通知发送者实例
         self.level_filter = NotificationLevel.ALL  # 默认发送所有通知
+        self._batch_mode = False  # 是否处于合并通知模式
+        self._batch_messages = []  # 合并模式下收集的通知内容
+        self._batch_has_error = False  # 合并模式下是否包含错误级别通知
 
     def _localize_level(self, level: Optional[str]) -> str:
         """
@@ -70,6 +73,39 @@ class Notification(metaclass=SingletonMeta):
             )
             raise ValueError(f"无效的通知级别: {level}. 可选值: {allowed[0]} 或 {allowed[1]}")
         self.level_filter = level
+
+    def start_batch(self):
+        """
+        开启通知合并模式。在此模式下，notify() 调用不会立即发送通知，
+        而是将内容收集起来，等待 flush_batch() 时合并为一条通知发送。
+        """
+        self._batch_mode = True
+        self._batch_messages = []
+        self._batch_has_error = False
+
+    def flush_batch(self, extra_content: str = "", level: str = NotificationLevel.ALL):
+        """
+        结束通知合并模式并发送合并后的通知。
+
+        :param extra_content: 额外的内容，追加到合并通知的末尾（如最终状态信息）。
+        :param level: 额外内容的通知级别，默认为 ALL。
+        """
+        was_batching = self._batch_mode
+        self._batch_mode = False
+        messages = self._batch_messages
+        has_error = self._batch_has_error
+        self._batch_messages = []
+        self._batch_has_error = False
+
+        if was_batching and messages:
+            numbered = [f"{i}. {msg}" for i, msg in enumerate(messages, 1)]
+            merged = "\n".join(numbered)
+            if extra_content:
+                merged += "\n" + extra_content
+            batch_level = NotificationLevel.ERROR if has_error else level
+            self.notify(content=merged, level=batch_level)
+        elif extra_content:
+            self.notify(content=extra_content, level=level)
 
     def _process_image(self, image: Optional[io.BytesIO | str | Image.Image], max_size: tuple = (1920, 1080), quality: int = 85) -> Optional[io.BytesIO]:
         """
@@ -146,6 +182,14 @@ class Notification(metaclass=SingletonMeta):
         :param image: 通知的图片，可以是io.BytesIO对象或文件路径字符串，可选。
         :param level: 通知级别，默认为 ALL。当 level_filter 为 ERROR 时，只有 ERROR 级别的通知会被发送。
         """
+        # 合并通知模式：收集内容而不立即发送
+        if self._batch_mode:
+            if content:
+                self._batch_messages.append(content)
+            if level == NotificationLevel.ERROR:
+                self._batch_has_error = True
+            return
+
         # 检查是否应该发送此通知
         if self.level_filter == NotificationLevel.ERROR and level != NotificationLevel.ERROR:
             if self.logger:
