@@ -98,7 +98,8 @@ class Notification(metaclass=SingletonMeta):
         self._batch_has_error = False
 
         if was_batching and messages:
-            merged = "\n".join(messages)
+            numbered = [f"{i}. {msg}" for i, msg in enumerate(messages, 1)]
+            merged = "\n".join(numbered)
             if extra_content:
                 merged += "\n" + extra_content
             batch_level = NotificationLevel.ERROR if has_error else level
