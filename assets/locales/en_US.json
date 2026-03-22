@@ -1038,5 +1038,7 @@
     "图片模板": "Image template",
     "可选参数，图片消息模板，{image} 会替换为 Base64": "Optional: image message template, {image} will be replaced with Base64",
     "数据模板": "Data template",
-    "请求体模板，{message} 会替换为标题和内容": "Request body template, {message} will be replaced with title and content"
+    "请求体模板，{message} 会替换为标题和内容": "Request body template, {message} will be replaced with title and content",
+    "通知合并": "Notification merge",
+    "开启后，完整运行结束时将所有通知合并为一条发送": "When enabled, all notifications are merged and sent as one message after a full run completes."
 }
