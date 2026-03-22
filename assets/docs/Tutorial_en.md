@@ -10,6 +10,8 @@
 
 To run locally, you must use the PC client with a 1920*1080 resolution window (or full screen if windowed is not available),
 
+and set the in-game language to Simplified Chinese,
+
 and close any software that might affect the game display, such as FPS monitoring HUDs, MSI Afterburner, GamePP, HDR, or NVIDIA Game Filters.
 
 **macOS / Linux Users**: You can use Cloud Game mode via source code execution, or use [Docker Deployment](/assets/docs/Docker.md).
@@ -45,6 +47,7 @@ Find the unzipped folder named like `March7thAssistant` and double-click to open
 - `March7th Updater.exe`
 - `assets`
 - `libraries`
+- `3rdparty`
 
 Double-click `March7th Launcher.exe` to open the graphical interface and agree to the "Disclaimer".
 

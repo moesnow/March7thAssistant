@@ -10,6 +10,8 @@
 
 로컬 구동 시 반드시 **PC 클라이언트 1920×1080 해상도 창 모드**(창 모드가 불가한 경우 전체 화면)로 게임을 실행해야 합니다.
 
+또한 게임 내 언어는 반드시 중국어 간체로 설정해야 합니다.
+
 또한 프레임 모니터링 HUD, MSI Afterburner, Game++, HDR, NVIDIA 게임 필터 등 **게임 화면에 영향을 줄 수 있는 모든 소프트웨어**를 종료해 주세요.
 
 **macOS / Linux 사용자**: 소스 코드를 통해 클라우드 게임 모드를 사용하거나 [Docker 배포](/assets/docs/Docker.md)를 이용할 수 있습니다.
@@ -45,6 +47,7 @@
 - `March7th Updater.exe`
 - `assets`
 - `libraries`
+- `3rdparty`
 
 `March7th Launcher.exe`를 더블 클릭하여 실행하고, "면책 조항"에 동의해 주세요.
 

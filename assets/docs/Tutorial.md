@@ -10,6 +10,8 @@
 
 本地运行必须使用PC端 1920*1080 分辨率窗口（没有窗口再选择全屏幕）运行游戏，
 
+游戏内语言必须设置为简体中文，
+
 并关闭帧率监控HUD、微星小飞机、游戏加加、HDR或N卡游戏滤镜等等任何可能影响游戏画面的软件。
 
 **macOS / Linux 用户**：可通过源码运行使用云游戏模式，也可以使用 [Docker 部署](/assets/docs/Docker.md)。
@@ -45,6 +47,7 @@
 - `March7th Updater.exe`
 - `assets`
 - `libraries`
+- `3rdparty`
 
 双击 `March7th Launcher.exe` 打开图形界面，同意《免责声明》。
 

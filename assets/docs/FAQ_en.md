@@ -30,6 +30,10 @@ Huorong Security: `Main Interface` → `Menu (top right)` → `Trust List`. See 
 
 A: Check in-game **Settings - Battle - Retain Auto-Battle Setting** and set it to **"Yes"**.
 
+### Q: The prompt window cannot be found.
+
+A: Please check whether the in-game language is set to Simplified Chinese.
+
 ### Q: Missing newly added dungeons? "Chase the Light" missing new characters?
 
 A: You can manually enter the name in the `Dungeon Name` interface, or edit the `assets\config\instance_names.json` file to add it manually.
