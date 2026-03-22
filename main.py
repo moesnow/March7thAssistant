@@ -104,6 +104,8 @@ def first_run():
 
 def run_main_actions():
     while True:
+        if cfg.notify_merge:
+            notif.start_batch()
         version.start()
         game.start()
         reward.start_specific("dispatch")
@@ -230,6 +232,8 @@ if __name__ == "__main__":
         log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
         # 保存错误截图
         screenshot_path = save_error_screenshot(log)
+        # 合并模式下先发送已收集的通知
+        notif.flush_batch()
         # 发送通知，如果有截图则附带截图
         notify_kwargs = {
             'content': cfg.notify_template['ErrorOccurred'].format(error=e),

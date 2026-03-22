@@ -880,6 +880,12 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('推送所有通知'): 'all', tr('仅推送错误通知'): 'error'}
         )
+        self.notifyMergeCard = SwitchSettingCard1(
+            FIF.PASTE,
+            tr('通知合并'),
+            tr('开启后，完整运行结束时将所有通知合并为一条发送'),
+            "notify_merge"
+        )
         self.notifyTemplateCard = PushSettingCardNotifyTemplate(
             tr('修改'),
             FIF.FONT_SIZE,
@@ -1457,6 +1463,7 @@ class SettingInterface(ScrollArea):
         self.NotifyGroup.addSettingCard(self.testNotifyCard)
         self.testNotifyCard.addSettingCards([
             self.notifyLevelCard,
+            self.notifyMergeCard,
             self.notifyTemplateCard
         ])
         for value in self.notifyEnableGroup:
