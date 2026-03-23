@@ -79,6 +79,13 @@ def init_notifiers():
     except Exception:
         pass
 
+    # 设置是否发送图片
+    try:
+        notify_image_enable = cfg.get_value('notify_image_enable', True)
+        notif.set_image_enable(notify_image_enable)
+    except Exception:
+        pass
+
     # 创建并注册Notifier实例
     try:
         for key, value in cfg.config.items():

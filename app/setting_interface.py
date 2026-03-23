@@ -886,6 +886,12 @@ class SettingInterface(ScrollArea):
             tr('开启后，完整运行结束时将所有通知合并为一条发送'),
             "notify_merge"
         )
+        self.notifyImageEnableCard = SwitchSettingCard1(
+            FIF.CAMERA,
+            tr('推送图片'),
+            tr('关闭后推送消息时不再发送截图'),
+            "notify_image_enable"
+        )
         self.notifyTemplateCard = PushSettingCardNotifyTemplate(
             tr('修改'),
             FIF.FONT_SIZE,
@@ -1464,6 +1470,7 @@ class SettingInterface(ScrollArea):
         self.testNotifyCard.addSettingCards([
             self.notifyLevelCard,
             self.notifyMergeCard,
+            self.notifyImageEnableCard,
             self.notifyTemplateCard
         ])
         for value in self.notifyEnableGroup:

@@ -35,6 +35,7 @@ class Notification(metaclass=SingletonMeta):
         self.logger = logger
         self.notifiers = {}  # 存储不同类型的通知发送者实例
         self.level_filter = NotificationLevel.ALL  # 默认发送所有通知
+        self.image_enable = True  # 是否在推送消息时发送图片
         self._batch_mode = False  # 是否处于合并通知模式
         self._batch_messages = []  # 合并模式下收集的通知内容
         self._batch_has_error = False  # 合并模式下是否包含错误级别通知
@@ -73,6 +74,14 @@ class Notification(metaclass=SingletonMeta):
             )
             raise ValueError(f"无效的通知级别: {level}. 可选值: {allowed[0]} 或 {allowed[1]}")
         self.level_filter = level
+
+    def set_image_enable(self, enable: bool):
+        """
+        设置是否在推送消息时发送图片。
+
+        :param enable: True 发送图片，False 不发送图片。
+        """
+        self.image_enable = enable
 
     def start_batch(self):
         """
@@ -200,7 +209,8 @@ class Notification(metaclass=SingletonMeta):
             return
 
         for notifier_name, notifier in self.notifiers.items():
-            processed_image = self._process_image(image)  # 根据image的类型进行处理
+            if not self.image_enable:
+                processed_image = None
             try:
                 if processed_image and notifier.supports_image:
                     notifier.send(self.title, content, processed_image)
