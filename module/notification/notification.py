@@ -38,6 +38,7 @@ class Notification(metaclass=SingletonMeta):
         self.image_enable = True  # 是否在推送消息时发送图片
         self._batch_mode = False  # 是否处于合并通知模式
         self._batch_messages = []  # 合并模式下收集的通知内容
+        self._batch_images = []  # 合并模式下收集的图片
         self._batch_has_error = False  # 合并模式下是否包含错误级别通知
 
     def _localize_level(self, level: Optional[str]) -> str:
@@ -59,6 +60,14 @@ class Notification(metaclass=SingletonMeta):
         :param notifier: 通知发送者的实例，应当实现Notifier接口。
         """
         self.notifiers[notifier_name] = notifier
+
+    def _has_image_notifier(self) -> bool:
+        """
+        判断当前已启用的通知发送者中，是否存在支持图片的渠道。
+
+        :return: 存在支持图片的通知器时返回True，否则返回False。
+        """
+        return any(notifier.supports_image for notifier in self.notifiers.values())
 
     def set_level_filter(self, level: str):
         """
@@ -90,6 +99,7 @@ class Notification(metaclass=SingletonMeta):
         """
         self._batch_mode = True
         self._batch_messages = []
+        self._batch_images = []
         self._batch_has_error = False
 
     def flush_batch(self, extra_content: str = "", level: str = NotificationLevel.ALL):
@@ -102,9 +112,17 @@ class Notification(metaclass=SingletonMeta):
         was_batching = self._batch_mode
         self._batch_mode = False
         messages = self._batch_messages
+        images = self._batch_images
         has_error = self._batch_has_error
         self._batch_messages = []
+        self._batch_images = []
         self._batch_has_error = False
+
+        image_supported = self.image_enable and self._has_image_notifier()
+        merged_image = self._merge_images(images) if image_supported and images else None
+        # 合并图片仅限制宽度，不限制高度，以保留长截图完整内容
+        if merged_image is not None:
+            merged_image = self._process_image(merged_image, max_size=None)
 
         if was_batching and messages:
             numbered = [f"{i}. {msg}" for i, msg in enumerate(messages, 1)]
@@ -112,25 +130,20 @@ class Notification(metaclass=SingletonMeta):
             if extra_content:
                 merged += "\n" + extra_content
             batch_level = NotificationLevel.ERROR if has_error else level
-            self.notify(content=merged, level=batch_level)
+            self.notify(content=merged, image=merged_image, level=batch_level, _image_already_processed=True)
         elif extra_content:
-            self.notify(content=extra_content, level=level)
+            self.notify(content=extra_content, image=merged_image, level=level, _image_already_processed=True)
 
-    def _process_image(self, image: Optional[io.BytesIO | str | Image.Image], max_size: tuple = (1920, 1080), quality: int = 85) -> Optional[io.BytesIO]:
+    def _to_pil_image(self, image: Optional[io.BytesIO | str | Image.Image]) -> Optional[Image.Image]:
         """
-        根据image的类型处理图片，并进行压缩优化，确保它是io.BytesIO对象。
+        将各种类型的图片转换为PIL.Image对象。
 
         :param image: 可以是io.BytesIO对象、文件路径字符串或PIL.Image对象，可选。
-        :param max_size: 图片最大尺寸(宽, 高)，默认1920x1080。
-        :param quality: JPEG压缩质量，范围1-95，默认85。
-        :return: io.BytesIO对象或None（如果image为None或处理失败）。
+        :return: PIL.Image对象或None。
         """
-        pil_image = None
-
-        # 第一步：将所有类型转换为PIL.Image对象
         if isinstance(image, str):
             try:
-                pil_image = Image.open(image)
+                return Image.open(image)
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"图片读取失败: {e}")
@@ -138,14 +151,71 @@ class Notification(metaclass=SingletonMeta):
         elif isinstance(image, io.BytesIO):
             try:
                 image.seek(0)
-                pil_image = Image.open(image)
+                return Image.open(image)
             except Exception as e:
                 if self.logger:
                     self.logger.error(f"图片解析失败: {e}")
                 return None
         elif isinstance(image, Image.Image):
-            pil_image = image
-        else:
+            return image
+        return None
+
+    def _merge_images(self, images: list) -> Optional[Image.Image]:
+        """
+        将多张图片垂直合并为一张长截图。
+        按照所有图片中最大的宽度进行等比缩放后再拼接。
+
+        :param images: 图片列表，每项可以是io.BytesIO、文件路径或PIL.Image。
+        :return: 合并后的PIL.Image对象，或None。
+        """
+        pil_images = []
+        for img in images:
+            pil = self._to_pil_image(img)
+            if pil is not None:
+                pil_images.append(pil)
+        if not pil_images:
+            return None
+        if len(pil_images) == 1:
+            return pil_images[0]
+
+        try:
+            max_width = max(img.width for img in pil_images)
+            resized = []
+            for img in pil_images:
+                if img.width != max_width:
+                    ratio = max_width / img.width
+                    new_height = int(img.height * ratio)
+                    img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+                resized.append(img)
+
+            total_height = sum(img.height for img in resized)
+            merged = Image.new('RGB', (max_width, total_height), (255, 255, 255))
+            y_offset = 0
+            for img in resized:
+                if img.mode != 'RGB':
+                    img = img.convert('RGB')
+                merged.paste(img, (0, y_offset))
+                y_offset += img.height
+
+            if self.logger:
+                self.logger.debug(f"图片合并完成，共 {len(resized)} 张，尺寸: {merged.size}")
+            return merged
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"图片合并失败: {e}")
+            return None
+
+    def _process_image(self, image: Optional[io.BytesIO | str | Image.Image], max_size: tuple = (1920, 1080), quality: int = 85) -> Optional[io.BytesIO]:
+        """
+        根据image的类型处理图片，并进行压缩优化，确保它是io.BytesIO对象。
+
+        :param image: 可以是io.BytesIO对象、文件路径字符串或PIL.Image对象，可选。
+        :param max_size: 图片最大尺寸(宽, 高)，默认1920x1080。传入None则不限制尺寸。
+        :param quality: JPEG压缩质量，范围1-95，默认85。
+        :return: io.BytesIO对象或None（如果image为None或处理失败）。
+        """
+        pil_image = self._to_pil_image(image)
+        if pil_image is None:
             return None
 
         # 第二步：压缩处理
@@ -162,7 +232,7 @@ class Notification(metaclass=SingletonMeta):
                 pil_image = pil_image.convert('RGB')
 
             # 调整图片尺寸（如果超过最大尺寸）
-            if pil_image.width > max_size[0] or pil_image.height > max_size[1]:
+            if max_size and (pil_image.width > max_size[0] or pil_image.height > max_size[1]):
                 pil_image.thumbnail(max_size, Image.Resampling.LANCZOS)
                 if self.logger:
                     self.logger.debug(f"图片已调整大小至: {pil_image.size}")
@@ -183,18 +253,21 @@ class Notification(metaclass=SingletonMeta):
                 self.logger.error(f"图片压缩失败: {e}")
             return None
 
-    def notify(self, content: str = "", image: Optional[io.BytesIO | str] = None, level: str = NotificationLevel.ALL):
+    def notify(self, content: str = "", image: Optional[io.BytesIO | str] = None, level: str = NotificationLevel.ALL, _image_already_processed: bool = False):
         """
         遍历所有设置的通知发送者，发送通知。
 
         :param content: 通知的内容。
         :param image: 通知的图片，可以是io.BytesIO对象或文件路径字符串，可选。
         :param level: 通知级别，默认为 ALL。当 level_filter 为 ERROR 时，只有 ERROR 级别的通知会被发送。
+        :param _image_already_processed: 内部参数，标记图片是否已经过处理，避免重复压缩。
         """
         # 合并通知模式：收集内容而不立即发送
         if self._batch_mode:
             if content:
                 self._batch_messages.append(content)
+            if image is not None:
+                self._batch_images.append(image)
             if level == NotificationLevel.ERROR:
                 self._batch_has_error = True
             return
@@ -208,11 +281,19 @@ class Notification(metaclass=SingletonMeta):
                 self.logger.info(f"内容: {content}")
             return
 
+        image_supported = self.image_enable and self._has_image_notifier()
+
         for notifier_name, notifier in self.notifiers.items():
-            if not self.image_enable:
+            if not image_supported:
                 processed_image = None
+            elif _image_already_processed:
+                processed_image = image
+            else:
+                processed_image = self._process_image(image)
             try:
                 if processed_image and notifier.supports_image:
+                    if isinstance(processed_image, io.BytesIO):
+                        processed_image.seek(0)
                     notifier.send(self.title, content, processed_image)
                 else:
                     notifier.send(self.title, content)
