@@ -12,7 +12,7 @@ from .card.switchsettingcard1 import SwitchSettingCard1, StartMarch7thAssistantS
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import CustomPushSettingCard, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
-from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandablePushSettingCard, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
+from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
 from module.config import cfg
 from module.notification import init_notifiers
@@ -867,11 +867,17 @@ class SettingInterface(ScrollArea):
         )
 
         self.NotifyGroup = SettingCardGroup(tr("消息推送"), self.scrollWidget)
-        self.testNotifyCard = ExpandablePushSettingCard(
-            tr("测试消息推送"),
+        self.notifyMasterEnableCard = ExpandableSwitchSettingCard(
+            "notification_enable",
             FIF.RINGER,
-            "",
-            tr("发送消息")
+            tr("启用消息推送"),
+            tr("消息推送总开关")
+        )
+        self.testNotifyCard = PrimaryPushSettingCard(
+            tr("发送消息"),
+            FIF.SEND,
+            tr("测试消息推送"),
+            ""
         )
         self.notifyLevelCard = ComboBoxSettingCard2(
             "notify_level",
@@ -1466,8 +1472,9 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.closeWindowActionCard)
 
-        self.NotifyGroup.addSettingCard(self.testNotifyCard)
-        self.testNotifyCard.addSettingCards([
+        self.NotifyGroup.addSettingCard(self.notifyMasterEnableCard)
+        self.notifyMasterEnableCard.addSettingCards([
+            self.testNotifyCard,
             self.notifyLevelCard,
             self.notifyMergeCard,
             self.notifyImageEnableCard,
@@ -1548,6 +1555,7 @@ class SettingInterface(ScrollArea):
         # self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
+        self.notifyMasterEnableCard.switchChanged.connect(self.__refreshNotifiers)
 
         self.afterFinishCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
 
@@ -1573,7 +1581,7 @@ class SettingInterface(ScrollArea):
         self.ApocalypticEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.updateViaLauncherEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.updateSourceCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
-        self.testNotifyCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.notifyMasterEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         for notify_card in self.notifyEnableGroup:
             if hasattr(notify_card, "expandStateChanged"):
                 notify_card.expandStateChanged.connect(self.__onExpandableCardStateChanged)

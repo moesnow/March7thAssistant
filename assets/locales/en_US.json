@@ -1042,5 +1042,7 @@
     "通知合并": "Notification merge",
     "开启后，完整运行结束时将所有通知合并为一条发送": "When enabled, all notifications are merged and sent as one message after a full run completes.",
     "推送图片": "Send images with notifications",
-    "关闭后推送消息时不再发送截图": "Do not include screenshots when sending notifications"
+    "关闭后推送消息时不再发送截图": "Do not include screenshots when sending notifications",
+    "启用消息推送": "Enable notifications",
+    "消息推送总开关": "Notification master switch"
 }

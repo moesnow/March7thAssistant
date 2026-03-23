@@ -72,6 +72,10 @@ def init_notifiers():
     except Exception:
         pass
 
+    # 检查消息推送总开关
+    if not cfg.get_value('notification_enable', True):
+        return
+
     # 设置通知级别过滤器
     try:
         notify_level = cfg.get_value('notify_level', NotificationLevel.ALL)
