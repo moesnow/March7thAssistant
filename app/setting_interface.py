@@ -890,7 +890,7 @@ class SettingInterface(ScrollArea):
             FIF.CAMERA,
             tr('推送图片'),
             tr('关闭后推送消息时不再发送截图'),
-            "notify_image_enable"
+            "notify_send_images"
         )
         self.notifyTemplateCard = PushSettingCardNotifyTemplate(
             tr('修改'),

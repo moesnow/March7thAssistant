@@ -81,8 +81,8 @@ def init_notifiers():
 
     # 设置是否发送图片
     try:
-        notify_image_enable = cfg.get_value('notify_image_enable', True)
-        notif.set_image_enable(notify_image_enable)
+        notify_send_images = cfg.get_value('notify_send_images', True)
+        notif.set_image_enable(notify_send_images)
     except Exception:
         pass
 
