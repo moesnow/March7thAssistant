@@ -124,11 +124,12 @@ class Notification(metaclass=SingletonMeta):
         if merged_image is not None:
             merged_image = self._process_image(merged_image, max_size=None)
 
-        if was_batching and messages:
-            numbered = [f"{i}. {msg}" for i, msg in enumerate(messages, 1)]
-            merged = "\n".join(numbered)
+        if was_batching and (messages or extra_content):
+            merged_items = list(messages)
             if extra_content:
-                merged += "\n" + extra_content
+                merged_items.append(extra_content)
+            numbered = [f"{i}. {msg}" for i, msg in enumerate(merged_items, 1)]
+            merged = "\n".join(numbered)
             batch_level = NotificationLevel.ERROR if has_error else level
             self.notify(content=merged, image=merged_image, level=batch_level, _image_already_processed=True)
         elif extra_content:
