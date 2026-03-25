@@ -122,14 +122,15 @@ class AutoPlot(QObject):
                     return
 
         if self.auto_skip and auto.click_element("./assets/images/share/plot/skip.png", "image", 0.8, crop=(1563.0 / 1920, 45.0 / 1080, 33.0 / 1920, 28.0 / 1080)):
-            auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10, retry_delay=0.1)
+            auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=30, retry_delay=0.1)
+            QTimer.singleShot(500, self._dialog_loop)
         else:
             auto.click_element("./assets/images/share/plot/select.png", "image", 0.9, crop=(1290.0 / 1920, 442.0 / 1080, 74.0 / 1920, 400.0 / 1080))
 
-        if self.mode == ClickMode.Period:
-            self._period_click()
-        else:
-            self._adaptive_click()
+            if self.mode == ClickMode.Period:
+                self._period_click()
+            else:
+                self._adaptive_click()
 
     def _period_click(self):
         auto.press_mouse()
