@@ -71,6 +71,11 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.autoClickCheckBox.setChecked(True)
         self.viewLayout.addWidget(self.autoClickCheckBox)
 
+        # Auto battle detect checkbox
+        self.autoBattleDetectCheckBox = CheckBox(tr("自动战斗检测 (检测到未自动战斗时按V开启)"), self.view)
+        self.autoBattleDetectCheckBox.setChecked(True)
+        self.viewLayout.addWidget(self.autoBattleDetectCheckBox)
+
         # Adaptive delay (for adaptive mode)
         adaptive_widget = QWidget(self.view)
         adaptive_layout = QHBoxLayout(adaptive_widget)
@@ -109,6 +114,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.modeButtonGroup.buttonClicked.connect(self._onModeChanged)
         self.autoSkipCheckBox.stateChanged.connect(self._emit_options_changed)
         self.autoClickCheckBox.stateChanged.connect(self._emit_options_changed)
+        self.autoBattleDetectCheckBox.stateChanged.connect(self._emit_options_changed)
         self.adaptiveDelaySpinBox.valueChanged.connect(self._emit_options_changed)
         self.periodIntervalSpinBox.valueChanged.connect(self._emit_options_changed)
         qconfig.themeChanged.connect(self._updateLabelColors)
@@ -147,6 +153,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
             'mode': 'adaptive' if self.adaptiveModeButton.isChecked() else 'period',
             'auto_skip': self.autoSkipCheckBox.isChecked(),
             'auto_click': self.autoClickCheckBox.isChecked(),
+            'auto_battle_detect_enable': self.autoBattleDetectCheckBox.isChecked(),
             'adaptive_delay': self.adaptiveDelaySpinBox.value(),
             'period_interval': self.periodIntervalSpinBox.value()
         }

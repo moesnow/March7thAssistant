@@ -1044,5 +1044,6 @@
     "推送图片": "Send images with notifications",
     "关闭后推送消息时不再发送截图": "Do not include screenshots when sending notifications",
     "启用消息推送": "Enable notifications",
-    "消息推送总开关": "Notification master switch"
+    "消息推送总开关": "Notification master switch",
+    "自动战斗检测 (检测到未自动战斗时按V开启)": "Auto Battle Detection (Press V when auto-battle is off)"
 }

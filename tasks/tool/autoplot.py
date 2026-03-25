@@ -1,13 +1,13 @@
 
 from enum import Enum
 from typing import Callable
+import time
 import cv2
 import numpy as np
 import pygetwindow as gw
 from module.automation import auto
 from module.logger import log
 from PySide6.QtCore import QObject, QTimer
-from module.config import cfg
 
 
 class ClickMode(Enum):
@@ -36,11 +36,13 @@ class AutoPlot(QObject):
         self.adaptive_last_text_pixels = 0
         self.is_running = False
         self._dialog_session = 0
+        self._last_not_auto_detect_time = 0.0
 
         # Default configuration
         self.mode = ClickMode.Period
         self.auto_skip = True
         self.auto_click = True
+        self.auto_battle_detect_enable = True
         self.adaptive_delay = 10
         self.period_interval = 50
 
@@ -82,6 +84,7 @@ class AutoPlot(QObject):
         self.mode = ClickMode.Adaptive if mode_str == 'adaptive' else ClickMode.Period
         self.auto_skip = options.get('auto_skip', True)
         self.auto_click = options.get('auto_click', True)
+        self.auto_battle_detect_enable = options.get('auto_battle_detect_enable', True)
         self.adaptive_delay = options.get('adaptive_delay', 10)
         self.period_interval = options.get('period_interval', 50)
         log.debug(f"自动对话配置已更新: {options}")
@@ -126,9 +129,12 @@ class AutoPlot(QObject):
             if self.is_clicking:
                 self.is_clicking = False
                 self._invalidate_dialog_session()
-            if cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.8, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
-                log.info("尝试开启自动战斗")
-                auto.press_key("v")
+            if self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.8, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+                now = time.monotonic()
+                if now - self._last_not_auto_detect_time >= 10:
+                    log.info("尝试开启自动战斗")
+                    auto.press_key("v")
+                self._last_not_auto_detect_time = now
 
     def _dialog_loop(self, session: int):
         if not self.is_clicking or not self.is_running or session != self._dialog_session:
@@ -143,7 +149,10 @@ class AutoPlot(QObject):
                     return
 
         if self.auto_skip and auto.click_element("./assets/images/share/plot/skip.png", "image", 0.8, crop=(1563.0 / 1920, 45.0 / 1080, 33.0 / 1920, 28.0 / 1080)):
-            auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=30, retry_delay=0.1)
+            if not auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=30, retry_delay=0.1):
+                # 点击失败，移动鼠标位置避免影响下次匹配
+                pos = (940 / 1920, 993 / 1080, 39 / 1920, 29 / 1080)
+                auto.click_element(pos, "crop", action="move")
             self._schedule_dialog_step(500, self._dialog_loop, session)
         else:
             auto.click_element("./assets/images/share/plot/select.png", "image", 0.9, crop=(1290.0 / 1920, 442.0 / 1080, 74.0 / 1920, 400.0 / 1080))
