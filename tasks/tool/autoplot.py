@@ -1,5 +1,6 @@
 
 from enum import Enum
+from typing import Callable
 import cv2
 import numpy as np
 import pygetwindow as gw
@@ -34,6 +35,7 @@ class AutoPlot(QObject):
         self.is_clicking = False
         self.adaptive_last_text_pixels = 0
         self.is_running = False
+        self._dialog_session = 0
 
         # Default configuration
         self.mode = ClickMode.Period
@@ -49,6 +51,7 @@ class AutoPlot(QObject):
         """Start auto plot"""
         if not self.is_running:
             self.is_running = True
+            self._invalidate_dialog_session()
             log.info("自动对话已启动")
             self._monitor_timer.start(500)
 
@@ -57,8 +60,21 @@ class AutoPlot(QObject):
         if self.is_running:
             self.is_running = False
             self.is_clicking = False
+            self._invalidate_dialog_session()
             log.info("自动对话已停止")
             self._monitor_timer.stop()
+
+    def _invalidate_dialog_session(self) -> int:
+        self._dialog_session += 1
+        return self._dialog_session
+
+    def _schedule_dialog_step(self, delay_ms: int, callback: Callable[[int], None], session: int):
+        def _run_if_valid():
+            if not self.is_running or not self.is_clicking or session != self._dialog_session:
+                return
+            callback(session)
+
+        QTimer.singleShot(delay_ms, _run_if_valid)
 
     def update_options(self, options: dict):
         """Update configuration options"""
@@ -96,21 +112,26 @@ class AutoPlot(QObject):
 
         window_active = self._is_game_window_active()
         if not window_active:
-            self.is_clicking = False
+            if self.is_clicking:
+                self.is_clicking = False
+                self._invalidate_dialog_session()
             return
 
         if self._is_dialog_scene():
             if not self.is_clicking:
-                QTimer.singleShot(500, self._dialog_loop)
-            self.is_clicking = True
+                self.is_clicking = True
+                session = self._invalidate_dialog_session()
+                self._schedule_dialog_step(500, self._dialog_loop, session)
         else:
-            self.is_clicking = False
+            if self.is_clicking:
+                self.is_clicking = False
+                self._invalidate_dialog_session()
             if cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.8, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 log.info("尝试开启自动战斗")
                 auto.press_key("v")
 
-    def _dialog_loop(self):
-        if not self.is_clicking or not self.is_running:
+    def _dialog_loop(self, session: int):
+        if not self.is_clicking or not self.is_running or session != self._dialog_session:
             return
 
         if not self.auto_click:
@@ -118,25 +139,28 @@ class AutoPlot(QObject):
             for func_img in self._DIALOG_OPTIONS_IMGS:
                 if auto.find_element(func_img, "image", 0.8, take_screenshot=False):
                     log.debug("根据设置，暂停点击以等待用户选择对话选项")
-                    QTimer.singleShot(500, self._dialog_loop)
+                    self._schedule_dialog_step(500, self._dialog_loop, session)
                     return
 
         if self.auto_skip and auto.click_element("./assets/images/share/plot/skip.png", "image", 0.8, crop=(1563.0 / 1920, 45.0 / 1080, 33.0 / 1920, 28.0 / 1080)):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=30, retry_delay=0.1)
-            QTimer.singleShot(500, self._dialog_loop)
+            self._schedule_dialog_step(500, self._dialog_loop, session)
         else:
             auto.click_element("./assets/images/share/plot/select.png", "image", 0.9, crop=(1290.0 / 1920, 442.0 / 1080, 74.0 / 1920, 400.0 / 1080))
 
             if self.mode == ClickMode.Period:
-                self._period_click()
+                self._period_click(session)
             else:
-                self._adaptive_click()
+                self._adaptive_click(session)
 
-    def _period_click(self):
+    def _period_click(self, session: int):
         auto.press_mouse()
-        QTimer.singleShot(self.period_interval, self._dialog_loop)
+        self._schedule_dialog_step(self.period_interval, self._dialog_loop, session)
 
-    def _adaptive_click(self):
+    def _adaptive_click(self, session: int):
+        if not self.is_clicking or not self.is_running or session != self._dialog_session:
+            return
+
         text_pixels = self._adaptive_count_text_pixels()
         pixel_diff = abs(text_pixels - self.adaptive_last_text_pixels)
         threshold = max(50, text_pixels * 0.01)
@@ -148,10 +172,10 @@ class AutoPlot(QObject):
 
         if is_finished:
             delay = self.adaptive_delay
-            QTimer.singleShot(delay, self._adaptive_click_continue)
+            self._schedule_dialog_step(delay, self._adaptive_click_continue, session)
             log.debug(f"文本显示完成，延迟 {delay} 毫秒后点击")
         else:
-            QTimer.singleShot(50, self._adaptive_click)
+            self._schedule_dialog_step(50, self._adaptive_click, session)
 
     def _adaptive_count_text_pixels(self) -> int:
         """统计文本区域的文本像素数量。
@@ -177,11 +201,14 @@ class AutoPlot(QObject):
             log.error(f"统计文本像素失败: {e}")
             return 0
 
-    def _adaptive_click_continue(self):
+    def _adaptive_click_continue(self, session: int):
+        if not self.is_clicking or not self.is_running or session != self._dialog_session:
+            return
+
         log.debug("执行计划的点击，切换到下一个对话文本")
         for _ in range(5):
             if not auto.find_element("./assets/images/share/plot/continue.png", "image", 0.8, crop=(946.0 / 1920, 996.0 / 1080, 28.0 / 1920, 21.0 / 1080)):
                 break
             auto.press_mouse()
         self.adaptive_last_text_pixels = 0
-        QTimer.singleShot(500, self._dialog_loop)
+        self._schedule_dialog_step(500, self._dialog_loop, session)
