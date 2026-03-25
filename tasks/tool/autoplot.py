@@ -154,7 +154,8 @@ class AutoPlot(QObject):
                 self._adaptive_click(session)
 
     def _period_click(self, session: int):
-        auto.press_mouse()
+        pos = (940 / 1920, 993 / 1080, 39 / 1920, 29 / 1080)
+        auto.click_element(pos, "crop")
         self._schedule_dialog_step(self.period_interval, self._dialog_loop, session)
 
     def _adaptive_click(self, session: int):
@@ -209,6 +210,7 @@ class AutoPlot(QObject):
         for _ in range(5):
             if not auto.find_element("./assets/images/share/plot/continue.png", "image", 0.8, crop=(946.0 / 1920, 996.0 / 1080, 28.0 / 1920, 21.0 / 1080)):
                 break
-            auto.press_mouse()
+            pos = (940 / 1920, 993 / 1080, 39 / 1920, 29 / 1080)
+            auto.click_element(pos, "crop")
         self.adaptive_last_text_pixels = 0
         self._schedule_dialog_step(500, self._dialog_loop, session)
