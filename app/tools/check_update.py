@@ -43,6 +43,14 @@ class UpdateThread(QThread):
         return img_pattern.sub('', markdown_content)
 
     def fetch_latest_release_info(self):
+        # Implement incremental update by checking the last updated version
+        last_updated_version = cfg.get_value('last_updated_version', '0.0.0')
+        response = requests.get(
+            FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not cfg.update_prerelease_enable),
+            timeout=10,
+            headers=cfg.useragent,
+            params={'since': last_updated_version}
+        )
         """获取最新的发布信息。"""
         response = requests.get(
             FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not cfg.update_prerelease_enable),
@@ -124,6 +132,8 @@ class UpdateThread(QThread):
                     return
 
             if parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
+            # Update the last updated version
+            cfg.set_value('last_updated_version', version)
                 self.title = tr("发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)").format(cfg=cfg, version=version)
                 self.content = "<style>a {color: #f18cb9; font-weight: bold;}</style>" + markdown.markdown(content)
                 self.assert_url = assert_url
