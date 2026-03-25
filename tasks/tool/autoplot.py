@@ -6,6 +6,7 @@ import pygetwindow as gw
 from module.automation import auto
 from module.logger import log
 from PySide6.QtCore import QObject, QTimer
+from module.config import cfg
 
 
 class ClickMode(Enum):
@@ -93,12 +94,20 @@ class AutoPlot(QObject):
         if not self.is_running:
             return
 
-        if self._is_game_window_active() and self._is_dialog_scene():
+        window_active = self._is_game_window_active()
+        if not window_active:
+            self.is_clicking = False
+            return
+
+        if self._is_dialog_scene():
             if not self.is_clicking:
                 QTimer.singleShot(500, self._dialog_loop)
             self.is_clicking = True
         else:
             self.is_clicking = False
+            if cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.8, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+                log.info("尝试开启自动战斗")
+                auto.press_key("v")
 
     def _dialog_loop(self):
         if not self.is_clicking or not self.is_running:
