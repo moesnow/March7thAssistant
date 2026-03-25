@@ -218,6 +218,10 @@ class Instance:
                     auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
                     time.sleep(0.5)
 
+                if auto.find_element("当前不存在任何存档，是否直接开始战斗", "text", include=True):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+                    time.sleep(0.5)
+
                 # 检测遗器背包已满的提示
                 for _ in range(5):  # 连续快速检测5次
                     if auto.find_element("背包内遗器持有数量已达上限", "text", max_retries=1, include=True, threshold=0.7):
