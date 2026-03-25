@@ -11,6 +11,9 @@ class GameStartStatus(Enum):
 
 
 class GameLaunchThread(QThread):
+    def record_game_time(self):
+        # Add starward game time recording functionality here
+        pass
     finished_signal = Signal(GameStartStatus)  # 传回结果状态
 
     def __init__(self, game, cfg):
@@ -20,6 +23,7 @@ class GameLaunchThread(QThread):
         self.error_msg = ""
 
     def run(self):
+        self.record_game_time()
         try:
             # 根据是否启用云游戏决定启动方式
             if self.cfg.cloud_game_enable:
