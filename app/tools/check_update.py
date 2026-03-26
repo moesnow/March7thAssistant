@@ -53,12 +53,25 @@ class UpdateThread(QThread):
         return response.json()[0] if cfg.update_prerelease_enable else response.json()
 
     def get_download_url_from_assets(self, assets):
-        """从发布信息中获取下载URL。"""
+        """从发布信息中获取下载URL。
+
+        优先使用增量更新包（不含full的压缩包），若无则回退到完整更新包。
+        MirrorChyan源强制使用完整更新包以确保CDK验证兼容性。
+        """
+        incremental_url = None
+        full_url = None
+
         for asset in assets:
-            if ((cfg.update_full_enable or cfg.update_source == "MirrorChyan") and "full" in asset["browser_download_url"]) or \
-               (not cfg.update_full_enable and "full" not in asset["browser_download_url"]):
-                return asset["browser_download_url"]
-        return None
+            url = asset["browser_download_url"]
+            if "full" in url:
+                full_url = url
+            else:
+                incremental_url = url
+
+        if cfg.update_source == "MirrorChyan":
+            return full_url
+
+        return incremental_url if incremental_url else full_url
 
     def run(self):
         """执行更新检查逻辑。"""
@@ -99,10 +112,12 @@ class UpdateThread(QThread):
                     mirrorchyan_data = response.json()
                     if mirrorchyan_data["code"] == 0 and mirrorchyan_data["msg"] == "success":
                         version_name = mirrorchyan_data["data"]["version_name"]
-                        url = mirrorchyan_data["data"]["url"]
+                        full_url = mirrorchyan_data["data"].get("full_url")
+                        incremental_url = mirrorchyan_data["data"].get("url")
                         if version_name == version:
-                            assert_url = url
-                            self.mirrorchyan_assert_url = assert_url
+                            selected_url = incremental_url if incremental_url else full_url
+                            assert_url = selected_url
+                            self.mirrorchyan_assert_url = selected_url
                 else:
                     try:
                         mirrorchyan_data = response.json()
