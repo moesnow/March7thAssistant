@@ -12,6 +12,8 @@ class ImageUtils:
         :return: 图片的宽度和高度。
         """
         template = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        if template is None:
+            raise ValueError(f"读取图片失败：{image_path}")
         return template.shape[::-1]
 
     @staticmethod
