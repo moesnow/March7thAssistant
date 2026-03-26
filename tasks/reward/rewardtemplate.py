@@ -5,10 +5,10 @@ from module.logger import log
 
 
 class RewardTemplate(ABC):
-    def __init__(self, name, enabled, screen):
+    def __init__(self, name: str, enabled: bool, screen_name: str):
         self.name = name
         self.enabled = enabled
-        self.screen = screen
+        self.screen_name = screen_name
 
     def start(self):
         if not self.enabled:
@@ -21,7 +21,7 @@ class RewardTemplate(ABC):
         log.hr(f"{self.name}奖励完成", 2)
 
     def prepare(self):
-        screen.change_to(self.screen)
+        screen.change_to(self.screen_name)
 
     @abstractmethod
     def run(self):
