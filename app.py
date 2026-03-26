@@ -57,6 +57,11 @@ def parse_args():
         action="store_true",
         help="不隐藏控制台窗口，显示命令行输出（仅 Windows）"
     )
+    optional.add_argument(
+        "--force-1080p",
+        action="store_true",
+        help="强制设置游戏分辨率为 1920x1080"
+    )
 
     args = parser.parse_args()
 
@@ -76,8 +81,16 @@ def parse_args():
     return args
 
 
+def apply_force_1080p():
+    """如果指定了 --force-1080p 参数，则强制设置游戏分辨率为 1920x1080"""
+    if args.force_1080p:
+        os.environ['MARCH7TH_RESOLUTION_WIDTH'] = '1920'
+        os.environ['MARCH7TH_RESOLUTION_HEIGHT'] = '1080'
+
+
 # 解析命令行参数（在请求管理员权限之前）
 args = parse_args()
+apply_force_1080p()
 
 # 如果不需要命令行输出，隐藏控制台窗口
 if not args.no_silent:
