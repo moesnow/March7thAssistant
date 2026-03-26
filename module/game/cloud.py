@@ -1022,6 +1022,13 @@ class CloudGameController(GameControllerBase):
                 time.sleep(1)
             if remaining is None:
                 self.log_warning("无法识别剩余时长，将继续尝试进入游戏")
+                # 在无法识别剩余时长的情况下，仍然按原逻辑尝试进入并排队
+                self._click_enter_game()
+                if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
+                    return False
+                self._confirm_viewport_resolution()  # 将浏览器内部分辨率设置为 1920x1080
+                self.log_info("进入云游戏成功")
+                return True
             elif remaining == 0:
                 self.log_error("云游戏剩余时长为 0，停止运行")
             else:
