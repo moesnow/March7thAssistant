@@ -426,7 +426,7 @@ class CloudGameController(GameControllerBase):
             self.driver.refresh()
             self._wait_game_page_loaded()
 
-    def _get_remaining_playtime(self) -> int:
+    def _get_remaining_playtime(self):
         """
         获取云游戏剩余时长（分钟），付费时长 + 免费时长之和。
         若两者均无法识别则返回 None。
