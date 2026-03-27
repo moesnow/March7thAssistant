@@ -1,0 +1,24 @@
+name: Auto Close Quality PR
+
+on:
+  pull_request:
+    types:
+      - opened
+
+jobs:
+  close-quality-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    if: "${{ startsWith(github.event.pull_request.title, '✨ Quality: ') }}"
+    steps:
+      - name: Close pull request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              state: 'closed'
+            })
