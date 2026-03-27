@@ -426,6 +426,27 @@ class CloudGameController(GameControllerBase):
             self.driver.refresh()
             self._wait_game_page_loaded()
 
+    def _get_remaining_playtime(self):
+        """
+        获取云游戏剩余时长（分钟），付费时长 + 免费时长之和。
+        若两者均无法识别则返回 None。
+        """
+        if not self.driver:
+            return None
+        try:
+            paid_selector = "#app > div.home-wrapper > div.welcome > div.welcome-wrapper > div > div.wel-card__content > div.wel-card__content--wallet > div.wallet-item.coin > div.left > span:nth-child(1) > span.left__value > span:nth-child(1)"
+            free_selector = "#app > div.home-wrapper > div.welcome > div.welcome-wrapper > div > div.wel-card__content > div.wel-card__content--wallet > div.wallet-item.ft > div.left > span > span:nth-child(2)"
+            paid_els = self.driver.find_elements(By.CSS_SELECTOR, paid_selector)
+            free_els = self.driver.find_elements(By.CSS_SELECTOR, free_selector)
+            paid = int(paid_els[0].text.strip()) if paid_els else None
+            free = int(free_els[0].text.strip()) if free_els else None
+            if paid is None and free is None:
+                return None
+            return (paid or 0) + (free or 0)
+        except Exception as e:
+            self.log_warning(f"获取剩余时长失败: {e}")
+            return None
+
     def _check_login(self, timeout=5) -> bool:
         """检查是否已经登录"""
         if not self.driver:
@@ -990,17 +1011,42 @@ class CloudGameController(GameControllerBase):
 
             if self.cfg.browser_dump_cookies_enable:
                 self._save_cookies()
-            self._click_enter_game()
-            if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
-                return False
-            self._confirm_viewport_resolution()  # 将浏览器内部分辨率设置为 1920x1080
 
-            self.log_info("进入云游戏成功")
-            return True
+            # 检测剩余时长，为 0 则直接终止（等待钱包区域渲染，最多 5 秒）
+            self.log_info("正在检测云游戏剩余时长...")
+            remaining = None
+            for _ in range(5):
+                remaining = self._get_remaining_playtime()
+                if remaining is not None:
+                    break
+                time.sleep(1)
+            if remaining is None:
+                self.log_warning("无法识别剩余时长，将继续尝试进入游戏")
+                # 在无法识别剩余时长的情况下，仍然按原逻辑尝试进入并排队
+                self._click_enter_game()
+                if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
+                    return False
+                self._confirm_viewport_resolution()  # 将浏览器内部分辨率设置为 1920x1080
+                self.log_info("进入云游戏成功")
+                return True
+            elif remaining == 0:
+                self.log_error("云游戏剩余时长为 0，停止运行")
+            else:
+                self.log_info(f"云游戏剩余时长：{remaining} 分钟")
+                self._click_enter_game()
+                if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
+                    return False
+                self._confirm_viewport_resolution()  # 将浏览器内部分辨率设置为 1920x1080
+                self.log_info("进入云游戏成功")
+                return True
         except Exception as e:
             self.try_dump_page()
             self.log_error(f"进入云游戏失败: {e}")
             return False
+
+        if remaining == 0:
+            raise Exception("云游戏剩余时长为 0，停止运行")
+        return False
 
     def take_screenshot(self) -> bytes:
         """浏览器内截图"""

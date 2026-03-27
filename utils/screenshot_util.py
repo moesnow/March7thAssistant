@@ -14,6 +14,14 @@ def save_error_screenshot(logger):
         # 延迟导入以避免循环依赖
         from module.automation import auto
 
+        # 云游戏模式下，若浏览器已关闭则跳过截图
+        from module.config import cfg
+        if cfg.cloud_game_enable:
+            from module.game import cloud_game
+            if not cloud_game.driver:
+                logger.debug("云游戏浏览器未运行，跳过错误截图")
+                return None
+
         # 确保截图目录存在
         screenshot_dir = os.path.join("logs", "screenshots")
         if not os.path.exists(screenshot_dir):
