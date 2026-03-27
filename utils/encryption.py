@@ -1,9 +1,20 @@
 import ctypes
+import sys
+
+if sys.platform == 'win32':
+    import ctypes.windll
+
+
+def _check_windows():
+    if sys.platform != 'win32':
+        raise NotImplementedError("Windows Data Protection API is only available on Windows")
+
 
 class DATA_BLOB(ctypes.Structure):
     _fields_ = [('cbData', ctypes.c_uint), ('pbData', ctypes.POINTER(ctypes.c_ubyte))]
 
 def wdp_encrypt(data_bytes: bytes) -> bytes:
+    _check_windows()
     blob_in = DATA_BLOB(len(data_bytes), ctypes.cast(ctypes.create_string_buffer(data_bytes), ctypes.POINTER(ctypes.c_ubyte)))
     blob_out = DATA_BLOB()
     if not ctypes.windll.crypt32.CryptProtectData(ctypes.byref(blob_in), None, None, None, None, 0, ctypes.byref(blob_out)):
@@ -13,6 +24,7 @@ def wdp_encrypt(data_bytes: bytes) -> bytes:
     return encrypted
 
 def wdp_decrypt(enc_bytes: bytes) -> bytes:
+    _check_windows()
     blob_in = DATA_BLOB(len(enc_bytes), ctypes.cast(ctypes.create_string_buffer(enc_bytes), ctypes.POINTER(ctypes.c_ubyte)))
     blob_out = DATA_BLOB()
     if not ctypes.windll.crypt32.CryptUnprotectData(ctypes.byref(blob_in), None, None, None, None, 0, ctypes.byref(blob_out)):
