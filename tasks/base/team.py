@@ -7,7 +7,7 @@ import time
 class Team:
     @staticmethod
     def change_to(team):
-        team_name = f"0{str(team)}"
+        team_name = str(team).zfill(2)
         log.info(f"准备切换到队伍{team_name}")
 
         screen.change_to("configure_team")
