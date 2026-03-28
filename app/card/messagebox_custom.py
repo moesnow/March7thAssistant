@@ -1240,7 +1240,7 @@ class MessageBoxInstanceTeam(MessageBox):
         # 队伍编号选择框
         teamSpinBox = SpinBox()
         teamSpinBox.setMinimum(3)
-        teamSpinBox.setMaximum(7)
+        teamSpinBox.setMaximum(12)
         teamSpinBox.setValue(team_number or 3)
         teamSpinBox.setMinimumWidth(120)
 
