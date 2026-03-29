@@ -158,7 +158,7 @@ class SwitchSettingCardTeam(SettingCard):
         self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(10)
 
-        texts = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
+        texts = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
         for text, option in zip(texts, texts):
             self.comboBox.addItem(text, userData=option)
 

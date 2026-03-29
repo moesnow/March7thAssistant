@@ -1168,8 +1168,8 @@ class MessageBoxInstanceTeam(MessageBox):
     def _setup_top_section(self):
         """设置全局区域 - 默认队伍"""
         self.defaultTeamSpinbox = SpinBox()
-        self.defaultTeamSpinbox.setMinimum(3)
-        self.defaultTeamSpinbox.setMaximum(7)
+        self.defaultTeamSpinbox.setMinimum(1)
+        self.defaultTeamSpinbox.setMaximum(12)
         self.defaultTeamSpinbox.setValue(self.default_team)
         self.defaultTeamSpinbox.setMinimumWidth(120)
 
