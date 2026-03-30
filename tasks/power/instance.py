@@ -207,7 +207,9 @@ class Instance:
                     click_x = auto.screenshot_pos[0] + 260 / auto.screenshot_scale_factor
                     click_y = auto.screenshot_pos[1] + 175 / auto.screenshot_scale_factor
                     auto.click_element_with_pos(((click_x, click_y), (click_x, click_y)))
-                    while not auto.click_element(team_name, "text", max_retries=4, retry_delay=0.5, crop=team_name_crop):
+                    for _ in range(4): # 尝试滚动寻找队伍
+                        if auto.click_element(team_name, "text", max_retries=4, retry_delay=0.5, crop=team_name_crop):
+                            break
                         auto.mouse_scroll(20, -1)
                         time.sleep(1)
                     time.sleep(1.0)
