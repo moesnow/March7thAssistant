@@ -203,7 +203,7 @@ class Instance:
                     team_name = f"队伍{int(team_name)}"
                 if auto.click_element("预设编队", "text", max_retries=4, retry_delay=0.5, crop=(6 / 1920, 8 / 1080, 578 / 1920, 168 / 1080)):
                     time.sleep(1.0)
-                    team_name_crop = (6 / 1920, 116 / 1080, 300 / 1920, 1030 / 1080)
+                    team_name_crop = (6 / 1920, 116 / 1080, 300 / 1920, 900 / 1080)
                     click_x = auto.screenshot_pos[0] + 260 / auto.screenshot_scale_factor
                     click_y = auto.screenshot_pos[1] + 175 / auto.screenshot_scale_factor
                     auto.click_element_with_pos(((click_x, click_y), (click_x, click_y)))
