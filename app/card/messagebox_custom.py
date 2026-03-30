@@ -12,6 +12,7 @@ import datetime
 import json
 import time
 import base64
+import re
 
 
 def _cleanup_infobars(widget):
@@ -1239,9 +1240,9 @@ class MessageBoxInstanceTeam(MessageBox):
 
         # 队伍编号选择框
         teamSpinBox = EditableComboBox()
-        texts = [str(i) for i in range(1, 13)]
-        for text, option in zip(texts, texts):
-            teamSpinBox.addItem(text, userData=option)
+        teamSpinBox.addItems([str(i) for i in range(1, 13)])
+        if not re.match(r"^\d+$", str(team_number)):
+            teamSpinBox.addItem(str(team_number)) # 添加非数字选项以显示原始值
         teamSpinBox.setCurrentText(str(team_number or 3))
         teamSpinBox.setMinimumWidth(120)
 
@@ -1276,17 +1277,18 @@ class MessageBoxInstanceTeam(MessageBox):
         teams = []
         for nameCombo, teamSpin, _ in self.rule_widgets:
             instance_name = nameCombo.currentData()
-            team_number = teamSpin.value()
-
-            if instance_name and team_number > 0:
-                teams.append({"instance_name": instance_name, "team_number": team_number})
+            instance_text = nameCombo.currentText()
+            team_name = teamSpin.currentText()
+            if instance_name:
+                if ("饰品提取" in instance_text and team_name.strip()) or int(team_name) > 0:
+                    teams.append({"instance_name": instance_name, "team_number": team_name})
 
         return teams
 
     def get_default_team(self):
         """获取默认队伍编号"""
-        if self.defaultTeamWidget:
-            return self.defaultTeamWidget.value()
+        if self.defaultTeamSpinbox:
+            return self.defaultTeamSpinbox.value()
         return 3
 
     def accept(self):
