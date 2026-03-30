@@ -1238,10 +1238,11 @@ class MessageBoxInstanceTeam(MessageBox):
         setup_completer(nameComboBox, [item.text for item in nameComboBox.items])
 
         # 队伍编号选择框
-        teamSpinBox = SpinBox()
-        teamSpinBox.setMinimum(3)
-        teamSpinBox.setMaximum(7)
-        teamSpinBox.setValue(team_number or 3)
+        teamSpinBox = EditableComboBox()
+        texts = [str(i) for i in range(1, 13)]
+        for text, option in zip(texts, texts):
+            teamSpinBox.addItem(text, userData=option)
+        teamSpinBox.setCurrentText(str(team_number or 3))
         teamSpinBox.setMinimumWidth(120)
 
         # 删除按钮
@@ -1284,8 +1285,8 @@ class MessageBoxInstanceTeam(MessageBox):
 
     def get_default_team(self):
         """获取默认队伍编号"""
-        if self.defaultTeamSpinbox:
-            return self.defaultTeamSpinbox.value()
+        if self.defaultTeamWidget:
+            return self.defaultTeamWidget.value()
         return 3
 
     def accept(self):
