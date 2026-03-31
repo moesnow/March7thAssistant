@@ -407,7 +407,7 @@ class SettingInterface(ScrollArea):
         self.weeklyDivergentEnableCard = ExpandableSwitchSettingCard(
             "weekly_divergent_enable",
             FIF.DICTIONARY,
-            tr('启用「差分宇宙」积分奖励'),
+            tr('启用「差分宇宙」积分奖励【测试版】'),
             ""
         )
         self.weeklyDivergentRunTimeCard = PushSettingCardDate(
@@ -485,8 +485,8 @@ class SettingInterface(ScrollArea):
         )
         self.universeBonusEnableCard = SwitchSettingCard1(
             FIF.IOT,
-            tr('自动执行饰品提取/领取沉浸奖励'),
-            tr("类别为“差分宇宙”时，在领取积分奖励后自动执行饰品提取消耗沉浸器。类别为“模拟宇宙”时，自动领取沉浸奖励。"),
+            tr('自动领取模拟宇宙沉浸奖励'),
+            tr("类别为“模拟宇宙”时，自动领取沉浸奖励"),
             "universe_bonus_enable"
         )
         self.universeFrequencyCard = ComboBoxSettingCard2(
