@@ -423,6 +423,13 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'}
         )
+        self.weeklyDivergentLevelCard = RangeSettingCard1(
+            "weekly_divergent_level",
+            [1, 5],
+            FIF.HISTORY,
+            tr("难度等级"),
+            "",
+        )
         self.weeklyDivergentBonusEnableCard = SwitchSettingCard1(
             FIF.IOT,
             tr('自动执行饰品提取'),
@@ -1395,6 +1402,7 @@ class SettingInterface(ScrollArea):
             self.weeklyDivergentRunTimeCard
         ])
         self.UniverseGroup.addSettingCard(self.weeklyDivergentTypeCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentLevelCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentStableModeCard)
 

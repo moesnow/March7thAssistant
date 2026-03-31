@@ -124,13 +124,16 @@ class DivergentUniverse:
             log.info("选择周期演算")
             screen.change_to("divergent_mode_select_cycle")
 
-        if not self.choose_level(5):
+        if not self.choose_level(int(cfg.weekly_divergent_level)):
             log.error("选择关卡失败，结束任务")
             return False
 
         if not auto.click_element("./assets/images/screen/divergent_universe/start.png", "image", 0.9, 10):
             log.error("未找到开始对局按钮，结束任务")
             return False
+        else:
+            time.sleep(1)
+            auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=4)
 
         log.info("开始对局")
         return True
