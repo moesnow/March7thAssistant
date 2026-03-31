@@ -89,6 +89,7 @@ from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
 from tasks.weekly.currency_wars import CurrencyWars
+from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 
 
@@ -115,7 +116,7 @@ def run_main_actions():
 
 
 def run_sub_task(action):
-    if action != "currencywarstemp":
+    if action != "currencywarstemp" and action != "divergenttemp":
         game.start()
 
     def currencywars(mode=None):
@@ -128,12 +129,25 @@ def run_sub_task(action):
         else:
             war.start()
 
+    def divergent(mode=None):
+        universe = DivergentUniverse()
+        if mode == "loop":
+            while True:
+                universe.start()
+        elif mode == "temp":
+            universe.loop()
+        else:
+            universe.start()
+
     sub_tasks = {
         "daily": lambda: (Daily.run(), reward.start()),
         "power": Power.run,
         "currencywars": lambda: currencywars(),
         "currencywarsloop": lambda: currencywars("loop"),
         "currencywarstemp": lambda: currencywars("temp"),
+        "divergent": lambda: divergent(),
+        "divergentloop": lambda: divergent("loop"),
+        "divergenttemp": lambda: divergent("temp"),
         "fight": Fight.start,
         "universe": Universe.start,
         "forgottenhall": lambda: challenge.start("memoryofchaos"),
@@ -185,7 +199,7 @@ def main(action=None):
         run_main_actions()
 
     # 子任务
-    elif action in ["daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
+    elif action in ["daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
         run_sub_task(action)
 
     # 子任务 原生图形界面

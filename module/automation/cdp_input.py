@@ -131,18 +131,16 @@ class CdpInput(InputBase):
             self.logger.error(f"鼠标滚轮出错：{e}")
 
     # ---------------- Keyboard ----------------
-    def press_key(self, key, wait_time=0.2):
-        self.focus()
+    def _get_key_payload(self, key):
         k = key.lower()
         if k in self.SPECIAL_KEY_MAP:
             info = self.SPECIAL_KEY_MAP[k]
         elif k in self.CHAR_KEY_MAP:
             info = self.CHAR_KEY_MAP[k]
         else:
-            self.logger.error(f"未知按键：{key}")
-            return
+            return None
 
-        payload = {
+        return {
             "key": info["key"],
             "code": info["code"],
             "windowsVirtualKeyCode": info["vk"],
@@ -151,38 +149,62 @@ class CdpInput(InputBase):
             "text": ""
         }
 
+    def _dispatch_key_event(self, key, event_type):
+        payload = self._get_key_payload(key)
+        if payload is None:
+            return False
+
+        self.cloud_game.execute_cdp_cmd("Input.dispatchKeyEvent", {"type": event_type, **payload})
+        return True
+
+    def press_key(self, key, wait_time=0.2):
+        self.focus()
+        if self._get_key_payload(key) is None:
+            self.logger.error(f"未知按键：{key}")
+            return
+
         try:
-            self.cloud_game.execute_cdp_cmd("Input.dispatchKeyEvent", {"type": "keyDown", **payload})
+            self._dispatch_key_event(key, "keyDown")
             time.sleep(wait_time)
-            self.cloud_game.execute_cdp_cmd("Input.dispatchKeyEvent", {"type": "keyUp", **payload})
+            self._dispatch_key_event(key, "keyUp")
             self.logger.debug(f"按键按下：{key}, 持续 {wait_time}s")
         except Exception as e:
             self.logger.error(f"按键 {key} 出错：{e}")
 
+    def press_key_down(self, key):
+        self.focus()
+        if self._get_key_payload(key) is None:
+            self.logger.error(f"未知按键：{key}")
+            return
+
+        try:
+            self._dispatch_key_event(key, "keyDown")
+            self.logger.debug(f"按键按下：{key}")
+        except Exception as e:
+            self.logger.error(f"按键按下 {key} 出错：{e}")
+
+    def press_key_up(self, key):
+        self.focus()
+        if self._get_key_payload(key) is None:
+            self.logger.error(f"未知按键：{key}")
+            return
+
+        try:
+            self._dispatch_key_event(key, "keyUp")
+            self.logger.debug(f"按键释放：{key}")
+        except Exception as e:
+            self.logger.error(f"按键释放 {key} 出错：{e}")
+
     def secretly_press_key(self, key, wait_time=0.2):
         self.focus()
-        k = key.lower()
-        if k in self.SPECIAL_KEY_MAP:
-            info = self.SPECIAL_KEY_MAP[k]
-        elif k in self.CHAR_KEY_MAP:
-            info = self.CHAR_KEY_MAP[k]
-        else:
+        if self._get_key_payload(key) is None:
             self.logger.error(f"未知按键")
             return
 
-        payload = {
-            "key": info["key"],
-            "code": info["code"],
-            "windowsVirtualKeyCode": info["vk"],
-            "nativeVirtualKeyCode": info["vk"],
-            "modifiers": 0,
-            "text": ""
-        }
-
         try:
-            self.cloud_game.execute_cdp_cmd("Input.dispatchKeyEvent", {"type": "keyDown", **payload})
+            self._dispatch_key_event(key, "keyDown")
             time.sleep(wait_time)
-            self.cloud_game.execute_cdp_cmd("Input.dispatchKeyEvent", {"type": "keyUp", **payload})
+            self._dispatch_key_event(key, "keyUp")
             self.logger.debug(f"按键按下, 持续 {wait_time}s")
         except Exception as e:
             self.logger.error(f"按键出错：{e}")

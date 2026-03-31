@@ -39,6 +39,8 @@ class Automation(metaclass=SingletonMeta):
         self.mouse_move = self.input_handler.mouse_move
         self.mouse_scroll = self.input_handler.mouse_scroll
         self.press_key = self.input_handler.press_key
+        self.press_key_down = self.input_handler.press_key_down
+        self.press_key_up = self.input_handler.press_key_up
         self.secretly_press_key = self.input_handler.secretly_press_key
         self.press_mouse = self.input_handler.press_mouse
         self.secretly_write = self.input_handler.secretly_write
@@ -395,11 +397,49 @@ class Automation(metaclass=SingletonMeta):
         y = (top + bottom) // 2 + offset[1]
         return x, y
 
+    def find_hsv_element(self, target, relative=False):
+        """
+        通过HSV颜色范围查找最大连通区域的外接矩形。
+        :param target: 元组 (lower, upper)，分别为HSV下界和上界的numpy数组。
+        :param relative: 是否返回相对位置。
+        :return: (top_left, bottom_right) 或 (None, None)。
+        """
+        lower, upper = target
+        img = np.array(self.screenshot)
+        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, lower, upper)
+
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
+        if num_labels <= 1:
+            return None, None
+
+        max_area = 0
+        best_box = None
+        for i in range(1, num_labels):
+            x, y, bw, bh, area = stats[i]
+            if area > max_area:
+                max_area = area
+                best_box = (x, y, bw, bh)
+
+        x, y, bw, bh = best_box
+
+        scale_factor = self.screenshot_scale_factor if not relative else 1
+        top_left = (int(x / scale_factor) + self.screenshot_pos[0] * (not relative),
+                    int(y / scale_factor) + self.screenshot_pos[1] * (not relative))
+        bottom_right = (int((x + bw) / scale_factor) + self.screenshot_pos[0] * (not relative),
+                        int((y + bh) / scale_factor) + self.screenshot_pos[1] * (not relative))
+        return top_left, bottom_right
+
     def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0, use_background_screenshot=None):
         """
         查找元素，并根据指定的查找类型执行不同的查找策略。
         :param target: 查找目标，可以是图像路径或文字。
-        :param find_type: 查找类型，例如'image', 'text'等。
+        :param find_type: 查找类型，例如'image', 'text', 'hsv'等。
         :param threshold: 查找阈值，用于图像查找时的相似度匹配。
         :param max_retries: 最大重试次数。
         :param crop: 截图的裁剪区域，格式为（x坐标百分比，y坐标百分比，长百分比，宽百分比）。
@@ -423,7 +463,7 @@ class Automation(metaclass=SingletonMeta):
                 screenshot_result = self.take_screenshot(crop, use_background_screenshot)
                 if not screenshot_result:
                     continue  # 如果截图失败，则跳过本次循环
-            if find_type in ['image', 'image_threshold', 'text', "min_distance_text", 'crop']:
+            if find_type in ['image', 'image_threshold', 'text', "min_distance_text", 'crop', 'hsv']:
                 if find_type in ['image', 'image_threshold']:
                     top_left, bottom_right, image_threshold = self.find_image_element(target, threshold, scale_range, relative)
                 elif find_type == 'text':
@@ -433,6 +473,8 @@ class Automation(metaclass=SingletonMeta):
                 elif find_type == 'crop':
                     top_left = (int(target[0] * self.screenshot.width) + self.screenshot_pos[0], int(target[1] * self.screenshot.height) + self.screenshot_pos[1])
                     bottom_right = (int((target[0] + target[2]) * self.screenshot.width) + self.screenshot_pos[0], int((target[1] + target[3]) * self.screenshot.height) + self.screenshot_pos[1])
+                elif find_type == 'hsv':
+                    top_left, bottom_right = self.find_hsv_element(target, relative)
                 if top_left and bottom_right:
                     if find_type == 'image_threshold':
                         return image_threshold

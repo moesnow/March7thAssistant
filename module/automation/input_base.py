@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class InputBase(ABC):
 
     @abstractmethod
@@ -33,6 +34,16 @@ class InputBase(ABC):
         pass
 
     @abstractmethod
+    def press_key_down(self, key):
+        '''模拟键盘按下指定按键'''
+        pass
+
+    @abstractmethod
+    def press_key_up(self, key):
+        '''模拟键盘释放指定按键'''
+        pass
+
+    @abstractmethod
     def secretly_press_key(self, key, wait_time=0.2):
         '''(不输出具体键位)模拟键盘按键，可以指定按下的时间'''
         pass
@@ -43,6 +54,6 @@ class InputBase(ABC):
         pass
 
     @abstractmethod
-    def secretly_write(self, text, interval = 0.1):
+    def secretly_write(self, text, interval=0.1):
         '''模拟键盘输入字符串，可以指定字符输入间隔'''
         pass

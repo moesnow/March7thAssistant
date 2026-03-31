@@ -33,6 +33,7 @@ class ScreenshotApp(QMainWindow):
             self.current_y = None
             self.is_drawing = False
             self.template_match_rect = None
+            self.door_rect = None
             self.need_maximize = False  # 是否需要最大化窗口
 
             self.setup_ui()
@@ -125,7 +126,8 @@ class ScreenshotApp(QMainWindow):
                 ("保存完整截图", self.save_full_screenshot),
                 ("保存选取截图", self.save_selection_screenshot),
                 ("模板匹配", self.match_template),
-                ("OCR识别选取区域", self.show_ocr_selection)
+                ("OCR识别选取区域", self.show_ocr_selection),
+                ("识别随意门", self.detect_random_door)
             ]
 
             for text, slot in buttons_config:
@@ -268,6 +270,14 @@ class ScreenshotApp(QMainWindow):
             match_pen = QPen(QColor(0x2e, 0xcc, 0x71))
             match_pen.setWidth(3)
             painter.setPen(match_pen)
+            painter.drawRect(x, y, width, height)
+
+        # 绘制随意门检测区域（黄色）
+        if self.door_rect is not None:
+            x, y, width, height = self.door_rect
+            door_pen = QPen(QColor(0xff, 0xd7, 0x00))
+            door_pen.setWidth(3)
+            painter.setPen(door_pen)
             painter.drawRect(x, y, width, height)
 
         painter.end()
@@ -445,6 +455,51 @@ class ScreenshotApp(QMainWindow):
             f"最高置信度: {max_val:.4f}\n"
             f"匹配区域: X={top_left_x}, Y={top_left_y}, Width={template_w}, Height={template_h}\n"
             f"（已使用绿色矩形标记）"
+        )
+
+    def detect_random_door(self):
+        """
+        通过HSV颜色范围检测截图中的随意门区域，并绘制矩形标记。
+        """
+        LOWER = np.array([126, 84, 174])
+        UPPER = np.array([170, 127, 228])
+
+        screenshot_bgr = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
+        hsv = cv2.cvtColor(screenshot_bgr, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, LOWER, UPPER)
+
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
+
+        if num_labels <= 1:
+            QMessageBox.information(self, "识别随意门", "没有检测到随意门")
+            return
+
+        max_area = 0
+        best_box = None
+        for i in range(1, num_labels):
+            x, y, bw, bh, area = stats[i]
+            if area > max_area:
+                max_area = area
+                best_box = (x, y, bw, bh)
+
+        x, y, bw, bh = best_box
+
+        logical_x = int(x / self.dpi_scale)
+        logical_y = int(y / self.dpi_scale)
+        logical_w = max(1, int(bw / self.dpi_scale))
+        logical_h = max(1, int(bh / self.dpi_scale))
+        self.door_rect = (logical_x, logical_y, logical_w, logical_h)
+        self.update_canvas()
+
+        QMessageBox.information(
+            self,
+            "识别随意门",
+            f"检测区域: X={x}, Y={y}, Width={bw}, Height={bh}\n"
+            f"（已使用黄色矩形标记）"
         )
 
     def _start_file(self, path):
