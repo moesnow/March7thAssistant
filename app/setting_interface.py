@@ -447,6 +447,14 @@ class SettingInterface(ScrollArea):
             "reward_redemption_code_enable"
         )
 
+        # 短信奖励开关
+        self.messageEnableCard = SwitchSettingCard1(
+            FIF.CHAT,
+            tr('短信'),
+            None,
+            "reward_message_enable"
+        )
+
         self.assetEnableCard = ExpandableSwitchSettingCard(
             "asset_manager_enable",
             FIF.LIBRARY,
@@ -1505,7 +1513,8 @@ class SettingInterface(ScrollArea):
             self.questEnableCard,
             self.srpassEnableCard,
             self.redemptionEnableCard,
-            self.achievementEnableCard
+            self.achievementEnableCard,
+            self.messageEnableCard
         ])
         self.DailyGroup.addSettingCard(self.assetEnableCard)
         self.assetEnableCard.addSettingCards(
