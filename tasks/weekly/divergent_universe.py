@@ -221,6 +221,14 @@ class DivergentUniverse:
                 if "首领" in station or "战斗" in station or "精英" in station:
                     self.process_battle_stage()
                 elif "空白" in station or "休整" in station or "商店" in station or "财富" in station:
+                    auto.press_mouse()
+                    time.sleep(2)
+                    for _ in range(5):
+                        if self.check_click_close():
+                            time.sleep(2)
+                        else:
+                            break
+                    auto.press_key("w", 2)
                     self.process_battle_stage_finish()
                 else:
                     log.info("检测到暂不支持的区域类型")
