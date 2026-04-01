@@ -322,6 +322,20 @@ class DivergentUniverse:
         if self.process_random_door(stable_mode=True):
             return
 
+        auto.press_key("a", 0.5)
+        time.sleep(0.2)
+        auto.press_key("w", 0.5)
+        if self.process_random_door(stable_mode=True):
+            return
+
+        auto.press_key("d", 0.5)
+        time.sleep(0.2)
+        auto.press_key("w", 1)
+        time.sleep(0.2)
+        auto.press_key("d", 0.5)
+        if self.process_random_door(stable_mode=True):
+            return
+
         self.process_leave()
 
     def process_leave(self):
