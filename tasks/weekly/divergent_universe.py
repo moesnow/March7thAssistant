@@ -340,7 +340,7 @@ class DivergentUniverse:
                     time.sleep(0.1)
                     result = self.detect_random_door()
                     if not result:
-                        break
+                        return False
                     top_left, bottom_right = result
                     door_center_x = (top_left[0] + bottom_right[0]) // 2
                     if abs(door_center_x - screen_center_x) <= tolerance:
@@ -402,7 +402,7 @@ class DivergentUniverse:
                 # 检测随意门位置，细微调整方向
                 result = self.detect_random_door()
                 if not result:
-                    continue
+                    return False
                 top_left, bottom_right = result
                 door_center_x = (top_left[0] + bottom_right[0]) // 2
                 offset = door_center_x - screen_center_x
