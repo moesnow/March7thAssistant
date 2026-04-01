@@ -268,6 +268,13 @@ class DivergentUniverse:
             return
 
         auto.press_mouse()
+        time.sleep(2)
+        for _ in range(5):
+            if self.check_click_close():
+                time.sleep(2)
+            else:
+                break
+
         if self.process_random_door():
             return
 
@@ -277,6 +284,13 @@ class DivergentUniverse:
         if self.process_random_door():
             return
 
+        auto.press_mouse()
+        time.sleep(2)
+        for _ in range(5):
+            if self.check_click_close():
+                time.sleep(2)
+            else:
+                break
         self.process_re_enter()
         if self.process_random_door():
             return
@@ -287,6 +301,13 @@ class DivergentUniverse:
         if self.process_random_door():
             return
 
+        auto.press_mouse()
+        time.sleep(2)
+        for _ in range(5):
+            if self.check_click_close():
+                time.sleep(2)
+            else:
+                break
         self.process_re_enter()
         if self.process_random_door(stable_mode=True):
             return
@@ -301,6 +322,7 @@ class DivergentUniverse:
 
     def process_re_enter(self):
         log.info("尝试重新进入当前关卡")
+        for
         auto.press_key("esc")
         if auto.click_element("暂离", "text", max_retries=10, crop=(1238 / 1920, 859 / 1080, 562 / 1920, 165 / 1080)):
             screen.wait_for_screen_change("main")
