@@ -297,7 +297,9 @@ class DivergentUniverse:
 
         auto.press_key("d", 0.5)
         time.sleep(0.2)
-        auto.press_key("w", 0.5)
+        auto.press_key("w", 1)
+        time.sleep(0.2)
+        auto.press_key("d", 0.5)
         if self.process_random_door():
             return
 
