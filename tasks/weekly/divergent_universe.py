@@ -254,6 +254,8 @@ class DivergentUniverse:
                 if auto.find_element("./assets/images/screen/divergent_universe/enemy.png", "image", 0.9, crop=enemy_crop):
                     break
             time.sleep(0.8)
+            if cfg.cloud_game_enable or cfg.weekly_divergent_stable_mode:
+                time.sleep(0.5)
             auto.press_key_up("w")
             if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
                 auto.press_key_up("shift")
@@ -282,14 +284,38 @@ class DivergentUniverse:
             else:
                 self.process_stage = True
                 return
-        log.info("多次尝试进入战斗失败，放弃当前关卡")
-        self.process_leave()
+        log.info("多次尝试进入战斗失败")
+        self.process_stage = True
 
     def process_battle_stage_finish(self):
         time.sleep(2)
         self.process_stage = False
+
+        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("贵重战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080)):
+            log.info("检测到贵重战利品，尝试点击")
+            auto.press_key("f")
+            time.sleep(2)
+            for _ in range(30):
+                if self.check_click_close():
+                    time.sleep(2)
+                else:
+                    break
+
         if self.process_random_door():
             return
+
+        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("贵重战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080)):
+            log.info("检测到贵重战利品，尝试点击")
+            auto.press_key("f")
+            time.sleep(2)
+            for _ in range(30):
+                if self.check_click_close():
+                    time.sleep(2)
+                else:
+                    break
+            self.process_re_enter()
+            if self.process_random_door():
+                return
 
         auto.press_mouse()
         time.sleep(2)
@@ -387,6 +413,8 @@ class DivergentUniverse:
         return auto.find_element((LOWER, UPPER), "hsv")
 
     def process_random_door(self, stable_mode=False):
+        if cfg.cloud_game_enable or cfg.weekly_divergent_stable_mode:
+            stable_mode = True
         window = Screenshot.get_window(cfg.game_title_name)
         win_x, _, width, _ = Screenshot.get_window_region(window)
         screen_center_x = win_x + width // 2
@@ -425,16 +453,16 @@ class DivergentUniverse:
         # 向随意门走去，边走边检测F图标和门的位置
         f_crop = (1078 / 1920, 595 / 1080, 37 / 1920, 37 / 1080)
         door_crop = (1146 / 1920, 585 / 1080, 57 / 1920, 57 / 1080)
-        # fine_tolerance = width // 40  # 细微调整用更小的容差
-        fine_tolerance = width // 10  # 屏幕宽度10%作为容差
 
-        if cfg.cloud_game_enable or cfg.weekly_divergent_stable_mode:
-            stable_mode = True
+        if stable_mode:
+            fine_tolerance = width // 15
+        else:
+            fine_tolerance = width // 12  # 屏幕宽度10%作为容差
 
         if not stable_mode:
             auto.press_key_down("w")
         else:
-            auto.press_key("w", 2)
+            auto.press_key("w", 1.5)
 
         timeout = 15
         if stable_mode:
@@ -484,7 +512,7 @@ class DivergentUniverse:
                     adjust_key = "a" if offset < 0 else "d"
                     if stable_mode:
                         auto.press_key_down("w")
-                    auto.press_key(adjust_key, wait_time=0.1)
+                    auto.press_key(adjust_key, wait_time=0.15)
                     if stable_mode:
                         auto.press_key_up("w")
         finally:
