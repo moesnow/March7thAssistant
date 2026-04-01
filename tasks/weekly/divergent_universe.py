@@ -624,7 +624,7 @@ class DivergentUniverse:
         ]
         re_extract_crop = (560 / 1920, 940 / 1080, 374 / 1920, 56 / 1080)
 
-        for _ in range(10):
+        for _ in range(20):
             time.sleep(2)
             has_priority_station = False
 
@@ -664,7 +664,7 @@ class DivergentUniverse:
                     station_priorities.append(priority_map.get(tag, 7))  # 其他标签优先级同为 7
 
             if not has_priority_station:
-                if not auto.find_element("0", "text", crop=re_extract_crop, include=True):
+                if not auto.find_element("重抽0", "text", crop=re_extract_crop):
                     auto.click_element(re_extract_crop, 'crop')
                     time.sleep(2)
                     auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
