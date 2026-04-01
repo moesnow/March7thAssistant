@@ -322,20 +322,20 @@ class DivergentUniverse:
 
     def process_re_enter(self):
         log.info("尝试重新进入当前关卡")
-        for
-        auto.press_key("esc")
-        if auto.click_element("暂离", "text", max_retries=10, crop=(1238 / 1920, 859 / 1080, 562 / 1920, 165 / 1080)):
-            screen.wait_for_screen_change("main")
-            if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
-                auto.press_key("f")
-                screen.wait_for_screen_change('divergent_main')
-            screen.change_to("divergent_mode_select")
-            if auto.click_element("继续进度", "text", crop=(39 / 1920, 215 / 1080, 748 / 1920, 597 / 1080)):
-                auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, max_retries=10)
-            else:
-                raise Exception("未找到继续进度按钮")
-        else:
+        for _ in range(3):
             auto.press_key("esc")
+            if auto.click_element("暂离", "text", max_retries=10, crop=(1238 / 1920, 859 / 1080, 562 / 1920, 165 / 1080)):
+                screen.wait_for_screen_change("main")
+                if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
+                    auto.press_key("f")
+                    screen.wait_for_screen_change('divergent_main')
+                screen.change_to("divergent_mode_select")
+                if auto.click_element("继续进度", "text", crop=(39 / 1920, 215 / 1080, 748 / 1920, 597 / 1080)):
+                    auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, max_retries=10)
+                    return
+                else:
+                    raise Exception("未找到继续进度按钮")
+        log.error("多次尝试重新进入关卡失败")
 
     def detect_random_door(self):
         # LOWER = np.array([112, 82, 174])
