@@ -231,25 +231,35 @@ class DivergentUniverse:
             return
 
     def process_battle_stage(self):
-        time.sleep(2)
-        enemy_crop = (675 / 1920, 41 / 1080, 274 / 1920, 37 / 1080)
-        auto.press_key_down("w")
-        time.sleep(0.2)
-        if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
-            auto.press_key_down("shift")
-        start_time = time.monotonic()
-        while time.monotonic() - start_time < 3:  # 最多等待3秒
-            if auto.find_element("./assets/images/screen/divergent_universe/enemy.png", "image", 0.9, crop=enemy_crop):
-                break
-        time.sleep(0.8)
-        auto.press_key_up("w")
-        if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
-            auto.press_key_up("shift")
-        for _ in range(5):
-            auto.press_mouse()
-            time.sleep(1)
-        time.sleep(2)
-        self.process_stage = True
+        for _ in range(3):
+            time.sleep(2)
+            enemy_crop = (675 / 1920, 41 / 1080, 274 / 1920, 37 / 1080)
+            auto.press_key_down("w")
+            time.sleep(0.2)
+            if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
+                auto.press_key_down("shift")
+            start_time = time.monotonic()
+            while time.monotonic() - start_time < 3:  # 最多等待3秒
+                if auto.find_element("./assets/images/screen/divergent_universe/enemy.png", "image", 0.9, crop=enemy_crop):
+                    break
+            time.sleep(0.8)
+            auto.press_key_up("w")
+            if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
+                auto.press_key_up("shift")
+            for _ in range(5):
+                auto.press_mouse()
+                time.sleep(1)
+            time.sleep(2)
+
+            # 进入战斗失败，尝试重新进入
+            if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9):
+                self.process_re_enter()
+                continue
+            else:
+                self.process_stage = True
+                return
+        log.info("多次尝试进入战斗失败，放弃当前关卡")
+        self.process_leave()
 
     def process_battle_stage_finish(self):
         time.sleep(2)
