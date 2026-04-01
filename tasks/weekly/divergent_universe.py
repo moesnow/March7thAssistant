@@ -223,7 +223,7 @@ class DivergentUniverse:
                 elif "空白" in station or "休整" in station or "商店" in station or "财富" in station:
                     auto.press_mouse()
                     time.sleep(2)
-                    for _ in range(5):
+                    for _ in range(30):
                         if self.check_click_close():
                             time.sleep(2)
                         else:
@@ -254,6 +254,19 @@ class DivergentUniverse:
             auto.press_key_up("w")
             if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
                 auto.press_key_up("shift")
+
+            if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("贵重战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080)):
+                log.info("检测到贵重战利品，尝试点击")
+                auto.press_key("f")
+                time.sleep(2)
+                for _ in range(30):
+                    if self.check_click_close():
+                        time.sleep(2)
+                    else:
+                        break
+                self.process_re_enter()
+                continue
+
             for _ in range(5):
                 auto.press_mouse()
                 time.sleep(1)
@@ -277,7 +290,7 @@ class DivergentUniverse:
 
         auto.press_mouse()
         time.sleep(2)
-        for _ in range(5):
+        for _ in range(30):
             if self.check_click_close():
                 time.sleep(2)
             else:
@@ -294,7 +307,7 @@ class DivergentUniverse:
 
         auto.press_mouse()
         time.sleep(2)
-        for _ in range(5):
+        for _ in range(30):
             if self.check_click_close():
                 time.sleep(2)
             else:
@@ -313,7 +326,7 @@ class DivergentUniverse:
 
         auto.press_mouse()
         time.sleep(2)
-        for _ in range(5):
+        for _ in range(30):
             if self.check_click_close():
                 time.sleep(2)
             else:
