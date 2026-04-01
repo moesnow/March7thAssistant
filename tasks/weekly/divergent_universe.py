@@ -283,11 +283,13 @@ class DivergentUniverse:
         self.process_leave()
 
     def process_leave(self):
+        log.info("尝试离开当前关卡")
         auto.press_key("esc")
         if auto.click_element("结束并结算", "text", max_retries=10, crop=(1238 / 1920, 859 / 1080, 562 / 1920, 165 / 1080)):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10)
 
     def process_re_enter(self):
+        log.info("尝试重新进入当前关卡")
         auto.press_key("esc")
         if auto.click_element("暂离", "text", max_retries=10, crop=(1238 / 1920, 859 / 1080, 562 / 1920, 165 / 1080)):
             screen.wait_for_screen_change("main")
