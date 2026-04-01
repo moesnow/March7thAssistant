@@ -214,6 +214,9 @@ class DivergentUniverse:
         if stage_match:
             current, total, plane, station = stage_match.groups()
             station = station.strip() if station else "未知"
+            # 修复OCR错误
+            if station == "财":
+                station = "财富"
             new_stage = f"{current}/{total}|第{plane}位面|{station}"
             if new_stage != self.current_stage:
                 self.current_stage = new_stage
