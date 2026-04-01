@@ -409,7 +409,11 @@ class DivergentUniverse:
 
                 if abs(offset) > fine_tolerance:
                     adjust_key = "a" if offset < 0 else "d"
+                    if stable_mode:
+                        auto.press_key_down("w")
                     auto.press_key(adjust_key, wait_time=0.1)
+                    if stable_mode:
+                        auto.press_key_up("w")
         finally:
             auto.press_key_up("w")
         return False
