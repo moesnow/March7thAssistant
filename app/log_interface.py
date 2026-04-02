@@ -1173,6 +1173,8 @@ class LogInterface(ScrollArea):
         except Exception:
             pass
         self.appendLog(f"\n错误: {msg}\n")
+        if error == QProcess.Crashed:
+            self.appendLog(f"\n可尝试关闭 “设置-杂项-启用 OCR GPU 加速” 选项后重新运行\n")
         self._updateFinishedStatus(-1)
 
     def _post_action_label(self, action: str) -> str:

@@ -4,6 +4,7 @@ from module.screen import screen
 from utils.date import Date
 from tasks.daily.photo import Photo
 from tasks.weekly.currency_wars import CurrencyWars
+from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.daily.fight import Fight
 from tasks.weekly.universe import Universe
 import tasks.reward as reward
@@ -76,6 +77,17 @@ class Daily:
         else:
             log.info("「货币战争」积分奖励未开启")
 
+        divergent = DivergentUniverse()
+        if cfg.weekly_divergent_enable:
+            if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
+                screen.change_to("divergent_main")
+                if not divergent.check_divergent_universe_score():
+                    divergent.start()
+            else:
+                log.info("「差分宇宙」积分奖励尚未刷新")
+        else:
+            log.info("「差分宇宙」积分奖励未开启")
+
         if cfg.fight_enable:
             if Date.is_next_x_am(cfg.fight_timestamp, cfg.refresh_hour):
                 Fight.start()
@@ -84,21 +96,14 @@ class Daily:
         else:
             log.info("锄大地未开启")
 
-        if cfg.weekly_divergent_enable:
-            if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
-                screen.change_to("divergent_main")
-                if not Universe.check_universe_score():
-                    if Universe.start(1, False, "divergent_weekly"):
-                        cfg.save_timestamp("weekly_divergent_timestamp")
-            else:
-                log.info("「差分宇宙」积分奖励尚未刷新")
-        else:
-            log.info("「差分宇宙」积分奖励未开启")
-
         if cfg.universe_frequency == "weekly":
             if Date.is_next_mon_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
-                    Universe.start()
+                    if cfg.universe_category == "divergent":
+                        for _ in range(cfg.universe_count):
+                            divergent.start()
+                    else:
+                        Universe.start()
                 else:
                     log.info("模拟宇宙/差分宇宙未开启")
             else:
@@ -106,7 +111,11 @@ class Daily:
         elif cfg.universe_frequency == "daily":
             if Date.is_next_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
-                    Universe.start()
+                    if cfg.universe_category == "divergent":
+                        for _ in range(cfg.universe_count):
+                            divergent.start()
+                    else:
+                        Universe.start()
                 else:
                     log.info("模拟宇宙/差分宇宙未开启")
             else:

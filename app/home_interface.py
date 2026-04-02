@@ -201,6 +201,20 @@ class HomeInterface(ScrollArea):
         )
         if sys.platform == 'win32':
             basicInputView.addSampleCard(
+                icon="./assets/app/images/Herta.jpg",
+                title=tr("差分宇宙"),
+                action={
+                    tr("差分宇宙运行一次【测试版】 ⭐"): lambda: start_task("divergent"),
+                    tr("差分宇宙循环运行【测试版】 ⭐"): lambda: start_task("divergentloop"),
+                    tr("模拟宇宙快速启动（停止维护）"): lambda: start_task("universe"),
+                    tr("模拟宇宙原版运行（停止维护）"): lambda: start_task("universe_gui"),
+                    tr("更新模拟宇宙（停止维护）"): lambda: start_task("universe_update"),
+                    tr("重置模拟宇宙配置文件（停止维护）"): lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
+                    tr("打开模拟宇宙目录（停止维护）"): lambda: os.startfile(cfg.universe_path),
+                    tr("打开模拟宇宙项目主页（停止维护）"): lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
+                }
+            )
+            basicInputView.addSampleCard(
                 icon="./assets/app/images/SilverWolf.jpg",
                 title=tr("锄大地"),
                 action={
@@ -212,29 +226,17 @@ class HomeInterface(ScrollArea):
                     tr("打开项目主页"): lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
                 }
             )
+        else:
             basicInputView.addSampleCard(
                 icon="./assets/app/images/Herta.jpg",
                 title=tr("差分宇宙"),
-                action={
-                    tr("快速启动 ⭐"): lambda: start_task("universe"),
-                    tr("原版运行"): lambda: start_task("universe_gui"),
-                    tr("更新模拟宇宙"): lambda: start_task("universe_update"),
-                    tr("重置配置文件"): lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
-                    tr("打开程序目录"): lambda: os.startfile(cfg.universe_path),
-                    tr("打开项目主页"): lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
-                }
-            )
-        else:
-            basicInputView.addSampleCard(
-                icon="./assets/app/images/SilverWolf.jpg",
-                title=tr("锄大地"),
                 action={
                     tr("暂不支持"): lambda: None,
                 }
             )
             basicInputView.addSampleCard(
-                icon="./assets/app/images/Herta.jpg",
-                title=tr("差分宇宙"),
+                icon="./assets/app/images/SilverWolf.jpg",
+                title=tr("锄大地"),
                 action={
                     tr("暂不支持"): lambda: None,
                 }

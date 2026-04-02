@@ -59,6 +59,22 @@ class LocalInput(InputBase):
         except Exception as e:
             self.logger.error(f"键盘按下 {key} 出错：{e}")
 
+    def press_key_down(self, key):
+        '''模拟键盘按下指定按键'''
+        try:
+            pyautogui.keyDown(key)
+            self.logger.debug(f"键盘按下 {key}")
+        except Exception as e:
+            self.logger.error(f"键盘按下 {key} 出错：{e}")
+
+    def press_key_up(self, key):
+        '''模拟键盘释放指定按键'''
+        try:
+            pyautogui.keyUp(key)
+            self.logger.debug(f"键盘释放 {key}")
+        except Exception as e:
+            self.logger.error(f"键盘释放 {key} 出错：{e}")
+
     def secretly_press_key(self, key, wait_time=0.2):
         '''(不输出具体键位)模拟键盘按键，可以指定按下的时间'''
         try:
@@ -80,7 +96,7 @@ class LocalInput(InputBase):
         except Exception as e:
             self.logger.error(f"按下鼠标左键出错：{e}")
 
-    def secretly_write(self, text, interval = 0.1):
+    def secretly_write(self, text, interval=0.1):
         '''模拟键盘输入字符串，可以指定字符输入间隔'''
         try:
             pyautogui.write(text, interval=interval)

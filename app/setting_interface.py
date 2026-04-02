@@ -403,12 +403,18 @@ class SettingInterface(ScrollArea):
             "currencywars_bonus_enable"
         )
 
-        self.UniverseGroup = SettingCardGroup(tr("模拟宇宙"), self.scrollWidget)
+        self.UniverseGroup = SettingCardGroup(tr("差分宇宙"), self.scrollWidget)
         self.weeklyDivergentEnableCard = ExpandableSwitchSettingCard(
             "weekly_divergent_enable",
-            FIF.VPN,
-            tr('启用「差分宇宙」积分奖励'),
+            FIF.DICTIONARY,
+            tr('启用「差分宇宙」积分奖励【测试版】'),
             ""
+        )
+        self.weeklyDivergentRunTimeCard = PushSettingCardDate(
+            tr('修改'),
+            FIF.DATE_TIME,
+            tr("上次检测到完成差分宇宙积分奖励的时间"),
+            "weekly_divergent_timestamp"
         )
         self.weeklyDivergentTypeCard = ComboBoxSettingCard2(
             "weekly_divergent_type",
@@ -417,12 +423,26 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'}
         )
-        self.weeklyDivergentRunTimeCard = PushSettingCardDate(
-            tr('修改'),
-            FIF.DATE_TIME,
-            tr("上次检测到完成差分宇宙积分奖励的时间"),
-            "weekly_divergent_timestamp"
+        self.weeklyDivergentLevelCard = RangeSettingCard1(
+            "weekly_divergent_level",
+            [1, 5],
+            FIF.HISTORY,
+            tr("难度等级"),
+            "",
         )
+        self.weeklyDivergentBonusEnableCard = SwitchSettingCard1(
+            FIF.IOT,
+            tr('自动执行饰品提取'),
+            tr("在领取积分奖励后自动执行饰品提取消耗沉浸器"),
+            "weekly_divergent_bonus_enable"
+        )
+        self.weeklyDivergentStableModeCard = SwitchSettingCard1(
+            FIF.SPEED_OFF,
+            tr('启用稳定模式'),
+            tr("运行若出现问题可尝试开启，适配低性能环境，云游戏默认使用此模式"),
+            "weekly_divergent_stable_mode"
+        )
+
         self.universeEnableCard = ExpandableSwitchSettingCard(
             "universe_enable",
             FIF.VPN,
@@ -450,12 +470,6 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'}
         )
-        self.universeEnableGpuCard = SwitchSettingCard1(
-            FIF.COMMAND_PROMPT,
-            tr('启用差分宇宙 GPU 加速'),
-            tr('开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项'),
-            "universe_enable_gpu"
-        )
         self.universeTimeoutCard = RangeSettingCard1(
             "universe_timeout",
             [1, 24],
@@ -471,8 +485,8 @@ class SettingInterface(ScrollArea):
         )
         self.universeBonusEnableCard = SwitchSettingCard1(
             FIF.IOT,
-            tr('自动执行饰品提取/领取沉浸奖励'),
-            tr("类别为“差分宇宙”时，在领取积分奖励后自动执行饰品提取消耗沉浸器。类别为“模拟宇宙”时，自动领取沉浸奖励。"),
+            tr('自动领取模拟宇宙沉浸奖励'),
+            tr("类别为“模拟宇宙”时，自动领取沉浸奖励"),
             "universe_bonus_enable"
         )
         self.universeFrequencyCard = ComboBoxSettingCard2(
@@ -489,13 +503,13 @@ class SettingInterface(ScrollArea):
             tr("运行次数"),
             tr("注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"),
         )
-        self.divergentTeamTypeCard = ComboBoxSettingCard2(
-            "divergent_team_type",
-            FIF.FLAG,
-            tr('差分宇宙队伍类型'),
-            '',
-            texts={tr('追击'): '追击', tr('持续伤害 (DoT)'): 'dot', tr('终结技'): '终结技', tr('击破'): '击破', tr('盾反'): '盾反'}
-        )
+        # self.divergentTeamTypeCard = ComboBoxSettingCard2(
+        #     "divergent_team_type",
+        #     FIF.FLAG,
+        #     tr('差分宇宙队伍类型'),
+        #     '',
+        #     texts={tr('追击'): '追击', tr('持续伤害 (DoT)'): 'dot', tr('终结技'): '终结技', tr('击破'): '击破', tr('盾反'): '盾反'}
+        # )
         fates = {}
         fates = {}
         for a in [tr("不配置"), tr("存护"), tr("记忆"), tr("虚无"), tr("丰饶"), tr("巡猎"), tr("毁灭"), tr("欢愉"), tr("繁育"), tr("智识")]:
@@ -529,6 +543,13 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('集成'): 'exe', tr('源码'): 'source'}
         )
+        self.universeEnableGpuCard = SwitchSettingCard1(
+            FIF.COMMAND_PROMPT,
+            tr('启用模拟宇宙 GPU 加速'),
+            tr('开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项'),
+            "universe_enable_gpu"
+        )
+
         self.fightTimeoutCard = RangeSettingCard1(
             "fight_timeout",
             [1, 24],
@@ -1378,24 +1399,28 @@ class SettingInterface(ScrollArea):
 
         self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
         self.weeklyDivergentEnableCard.addSettingCards([
-            self.weeklyDivergentTypeCard,
             self.weeklyDivergentRunTimeCard
         ])
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentTypeCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentLevelCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentBonusEnableCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentStableModeCard)
+
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.universeEnableCard.addSettingCards([
             self.universeCategoryCard,
             self.divergentTypeCard,
+            self.universeBonusEnableCard,
             self.universeFrequencyCard,
             self.universeCountCard,
             self.universeFateCard,
             self.universeDifficultyCard,
             self.universeOperationModeCard,
+            self.universeEnableGpuCard,
             self.universeTimeoutCard,
             self.universeRunTimeCard,
         ])
-        self.UniverseGroup.addSettingCard(self.divergentTeamTypeCard)
-        self.UniverseGroup.addSettingCard(self.universeBonusEnableCard)
-        self.UniverseGroup.addSettingCard(self.universeEnableGpuCard)
+        # self.UniverseGroup.addSettingCard(self.divergentTeamTypeCard)
 
         self.FightGroup.addSettingCard(self.fightEnableCard)
         self.fightEnableCard.addSettingCards([

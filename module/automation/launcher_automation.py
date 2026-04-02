@@ -38,6 +38,8 @@ class LauncherAutomation():
         self.mouse_move = self.input_handler.mouse_move
         self.mouse_scroll = self.input_handler.mouse_scroll
         self.press_key = self.input_handler.press_key
+        self.press_key_down = self.input_handler.press_key_down
+        self.press_key_up = self.input_handler.press_key_up
         self.secretly_press_key = self.input_handler.secretly_press_key
         self.press_mouse = self.input_handler.press_mouse
         self.secretly_write = self.input_handler.secretly_write
