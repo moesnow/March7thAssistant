@@ -214,9 +214,14 @@ class DivergentUniverse:
         if stage_match:
             current, total, plane, station = stage_match.groups()
             station = station.strip() if station else "未知"
-            # 修复OCR错误
-            if station == "财":
-                station = "财富"
+
+            if station and len(station) == 1:
+                keywords = ["战斗", "精英", "事件", "异常", "奖励", "财富", "冒险", "商店", "铸造", "空白", "首领", "休整", "转化"]
+                for keyword in keywords:
+                    if station in keyword:
+                        station = keyword
+                        break
+
             new_stage = f"{current}/{total}|第{plane}位面|{station}"
             if new_stage != self.current_stage:
                 self.current_stage = new_stage
