@@ -280,7 +280,6 @@ class DivergentUniverse:
             for _ in range(5):
                 auto.press_mouse()
                 time.sleep(0.5)
-            time.sleep(2)
             for _ in range(30):
                 if self.check_click_close() or self.check_title():
                     time.sleep(2)
@@ -293,7 +292,6 @@ class DivergentUniverse:
                 for _ in range(5):
                     auto.press_mouse()
                     time.sleep(0.5)
-                time.sleep(2)
                 for _ in range(30):
                     if self.check_click_close() or self.check_title():
                         time.sleep(2)
