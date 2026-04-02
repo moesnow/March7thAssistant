@@ -245,6 +245,15 @@ class Screen(metaclass=SingletonMeta):
         """
         return [action["actions_list"] for action in self.screen_map[current_screen]['actions'] if action["target_screen"] == next_screen][0]
 
+    def get_timeout_operations(self, current_screen, next_screen):
+        """
+        获取从当前界面切换到下一个界面超时后的操作序列（可选）
+        """
+        for action in self.screen_map[current_screen]['actions']:
+            if action["target_screen"] == next_screen:
+                return action.get("actions_list_on_timeout", [])
+        return []
+
     def perform_operations(self, operations):
         """
         执行一系列操作，每个操作是一个可执行的函数调用字符串
@@ -266,9 +275,10 @@ class Screen(metaclass=SingletonMeta):
             except Exception as e:
                 self.logger.debug(f"未知的操作: {e}")
 
-    def wait_for_screen_change(self, next_screen, max_recursion=2):
+    def wait_for_screen_change(self, next_screen, max_recursion=2, timeout_operations=None):
         """
         等待界面切换，如果未成功则根据重试次数决定是否重试
+        :param timeout_operations: 超时后执行的可选操作列表，执行后会再次检测界面
         """
         for _ in range(20):
             self.logger.debug(f"等待：{self.get_name(next_screen)}")
@@ -278,6 +288,16 @@ class Screen(metaclass=SingletonMeta):
                 break
             time.sleep(0.5)
         else:
+            if timeout_operations:
+                self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，执行超时操作后重新检测")
+                self.perform_operations(timeout_operations)
+                for _ in range(20):
+                    self.logger.debug(f"等待：{self.get_name(next_screen)}")
+                    if self.check_screen(next_screen):
+                        self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
+                        time.sleep(self.wait_screen_change_time)
+                        return
+                    time.sleep(0.5)
             self.wait_screen_change_time = 1
             if max_recursion > 0:
                 self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，准备重试")
@@ -290,8 +310,9 @@ class Screen(metaclass=SingletonMeta):
         执行从当前界面到下一个界面的切换操作，并处理重试逻辑
         """
         operations = self.get_operations(current_screen, next_screen)
+        timeout_operations = self.get_timeout_operations(current_screen, next_screen)
         self.perform_operations(operations)
-        self.wait_for_screen_change(next_screen, max_recursion)
+        self.wait_for_screen_change(next_screen, max_recursion, timeout_operations or None)
 
     def _navigate_through_path(self, path, max_recursion):
         """
