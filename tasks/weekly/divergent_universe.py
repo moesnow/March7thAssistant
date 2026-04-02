@@ -260,7 +260,7 @@ class DivergentUniverse:
             if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
                 auto.press_key_up("shift")
 
-            if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("贵重战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080)):
+            if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
                 log.info("检测到贵重战利品，尝试点击")
                 auto.press_key("f")
                 time.sleep(2)
@@ -291,7 +291,7 @@ class DivergentUniverse:
         time.sleep(2)
         self.process_stage = False
 
-        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("贵重战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080)):
+        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
             log.info("检测到贵重战利品，尝试点击")
             auto.press_key("f")
             time.sleep(2)
@@ -304,7 +304,7 @@ class DivergentUniverse:
         if self.process_random_door():
             return
 
-        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("贵重战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080)):
+        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
             log.info("检测到贵重战利品，尝试点击")
             auto.press_key("f")
             time.sleep(2)
