@@ -279,13 +279,29 @@ class DivergentUniverse:
 
             for _ in range(5):
                 auto.press_mouse()
-                time.sleep(1)
+                time.sleep(0.5)
             time.sleep(2)
+            for _ in range(30):
+                if self.check_click_close() or self.check_title():
+                    time.sleep(2)
+                else:
+                    break
 
             # 进入战斗失败，尝试重新进入
             if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9):
-                self.process_re_enter()
-                continue
+                auto.press_key("s")
+                for _ in range(5):
+                    auto.press_mouse()
+                    time.sleep(0.5)
+                time.sleep(2)
+                for _ in range(30):
+                    if self.check_click_close() or self.check_title():
+                        time.sleep(2)
+                    else:
+                        break
+                if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9):
+                    self.process_re_enter()
+                    continue
             else:
                 self.process_stage = True
                 return
@@ -466,8 +482,8 @@ class DivergentUniverse:
 
         if not stable_mode:
             auto.press_key_down("w")
-        else:
-            auto.press_key("w", 1.5)
+        # else:
+        #     auto.press_key("w", 1.5)
 
         timeout = 15
         if stable_mode:
@@ -478,9 +494,6 @@ class DivergentUniverse:
             # time.sleep(1)
             while time.monotonic() - start_time < timeout:
                 # time.sleep(0.1)
-
-                if stable_mode:
-                    auto.press_key("w")
 
                 # 检测F交互图标
                 if auto.find_element("./assets/images/screen/divergent_universe/f.png", "image", 0.9, crop=f_crop):
@@ -520,6 +533,9 @@ class DivergentUniverse:
                     auto.press_key(adjust_key, wait_time=0.15)
                     if stable_mode:
                         auto.press_key_up("w")
+                else:
+                    if stable_mode:
+                        auto.press_key("w")
         finally:
             auto.press_key_up("w")
         return False
