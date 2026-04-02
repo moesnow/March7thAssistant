@@ -1256,18 +1256,24 @@ class SettingInterface(ScrollArea):
             tr('项目主页'),
             "https://github.com/moesnow/March7thAssistant"
         )
+        self.bilibiliCard = PrimaryPushSettingCard(
+            tr('立即前往'),
+            FIF.MOVIE,
+            tr('哔哩哔哩'),
+            tr('欢迎关注我们的B站账号，获取最新动态和教程')
+        )
         self.qqGroupCard = PrimaryPushSettingCard(
             tr('加入群聊'),
             FIF.EXPRESSIVE_INPUT_ENTRY,
             tr('QQ群'),
             ""
         )
-        self.feedbackCard = PrimaryPushSettingCard(
-            tr('提供反馈'),
-            FIF.FEEDBACK,
-            tr('提供反馈'),
-            tr('帮助我们改进 March7thAssistant')
-        )
+        # self.feedbackCard = PrimaryPushSettingCard(
+        #     tr('提供反馈'),
+        #     FIF.FEEDBACK,
+        #     tr('提供反馈'),
+        #     tr('帮助我们改进 March7thAssistant')
+        # )
         self.aboutCard = PrimaryPushSettingCard(
             tr('检查更新'),
             FIF.INFO,
@@ -1518,8 +1524,9 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.hotkeyCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
+        self.AboutGroup.addSettingCard(self.bilibiliCard)
         self.AboutGroup.addSettingCard(self.qqGroupCard)
-        self.AboutGroup.addSettingCard(self.feedbackCard)
+        # self.AboutGroup.addSettingCard(self.feedbackCard)
         self.AboutGroup.addSettingCard(self.aboutCard)
         self.AboutGroup.addSettingCard(self.updateSourceCard)
         self.updateSourceCard.addSettingCards([
@@ -1586,7 +1593,8 @@ class SettingInterface(ScrollArea):
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
         self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/C3IryUWCQw"))
-        self.feedbackCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant/issues"))
+        # self.feedbackCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant/issues"))
+        self.bilibiliCard.clicked.connect(self.__openUrl("https://space.bilibili.com/3706960664857075"))
 
         self.aboutCard.clicked.connect(lambda: checkUpdate(self.parent))
 
