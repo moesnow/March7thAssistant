@@ -361,6 +361,7 @@ class DivergentUniverse:
             else:
                 break
         self.process_re_enter()
+        auto.press_key("w", 2)
         if self.process_random_door():
             return
 
@@ -380,6 +381,7 @@ class DivergentUniverse:
             else:
                 break
         self.process_re_enter()
+        auto.press_key("w", 2)
         if self.process_random_door(stable_mode=True):
             return
 
