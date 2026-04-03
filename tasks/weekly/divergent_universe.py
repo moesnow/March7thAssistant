@@ -124,7 +124,7 @@ class DivergentUniverse:
             log.info("选择周期演算")
             screen.change_to("divergent_mode_select_cycle")
 
-        if not self.choose_level(int(cfg.weekly_divergent_level)):
+        if not self.choose_level(int(cfg.weekly_divergent_level), type):
             log.error("选择关卡失败，结束任务")
             return False
 
@@ -138,7 +138,7 @@ class DivergentUniverse:
         log.info("开始对局")
         return True
 
-    def choose_level(self, level: int) -> bool:
+    def choose_level(self, level: int, type: Literal["normal", "cycle"] = "normal") -> bool:
         """
         选择关卡难度
         """
@@ -155,6 +155,13 @@ class DivergentUniverse:
         if auto.click_element(level_positions[level - 1], 'crop'):
             log.info(f"已选择难度 {level} 的关卡")
             time.sleep(1)
+            if type == "cycle":
+                for _ in range(10):
+                    if auto.find_element("阈值协议", "text", crop=(1616 / 1920, 822 / 1080, 92 / 1920, 32 / 1080)):
+                        auto.click_element((1492 / 1920, 868 / 1080, 75 / 1920, 39 / 1080), "crop")
+                        time.sleep(1)
+                    else:
+                        break
             return True
 
         return False
@@ -926,7 +933,7 @@ class DivergentUniverse:
         """
         检查并点击 “终止战斗并结算” 和 “返回主界面” 的按钮
         """
-        if result := auto.find_element(("终止战斗并结算", "返回主界面"), 'text', None, crop=(574 / 1920, 949 / 1080, 790 / 1920, 59 / 1080), include=True):
+        if result := auto.find_element(("终止战斗并结算", "返回主界面", "确认结算"), 'text', None, crop=(573 / 1920, 947 / 1080, 792 / 1920, 85 / 1080), include=True):
 
             if auto.matched_text == "终止战斗并结算":
                 log.info(f"检测到 “终止战斗并结算” 的按钮，尝试点击")
@@ -939,12 +946,17 @@ class DivergentUniverse:
             elif auto.matched_text == "返回主界面":
                 log.info(f"检测到 “返回主界面” 的按钮，尝试点击")
                 self._check_battle_result()
+                time.sleep(2)
                 auto.click_element_with_pos(result)
                 if self.result is not None:
                     log.info(f"本次对局结果：{'成功' if self.result else '失败'}")
                 else:
                     log.info("本次对局结果：未知")
                 self.end_loop = True
+
+            elif auto.matched_text == "确认结算":
+                log.info(f"检测到 “确认结算” 的按钮，尝试点击")
+                auto.click_element_with_pos(result)
 
         return False
 
