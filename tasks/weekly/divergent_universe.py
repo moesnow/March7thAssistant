@@ -205,22 +205,60 @@ class DivergentUniverse:
         if not stage_text:
             return
 
+        stage_pattern = r"[（(]\s*(\d+)\s*/\s*(13|17|20)\s*[)）]\s*第\s*([一二三])\s*位面(?:\s*[-—－]\s*(.+))?"
+        keywords = ["战斗", "精英", "事件", "异常", "奖励", "财富", "冒险", "商店", "铸造", "空白", "首领", "休整", "转化"]
+
+        def normalize_station(raw_station):
+            station_name = raw_station.strip() if raw_station else "未知"
+            if station_name and station_name not in keywords:
+                for keyword in keywords:
+                    if any(char in keyword for char in station_name):
+                        return keyword
+            return station_name
+
+        def parse_stage_info(stage_value):
+            if not stage_value:
+                return None
+            stage_info_match = re.match(r"^(\d+)/(\d+)\|第([一二三])位面\|(.+)$", stage_value)
+            if not stage_info_match:
+                return None
+            return stage_info_match.groups()
+
         # 示例："（1/13）第一位面-战斗"
         stage_match = re.search(
             # r"[（(]\s*(\d+)\s*/\s*(13)\s*[)）]\s*第\s*([^位\s]+)\s*位面(?:\s*[-—－]\s*(.+))?",
-            r"[（(]\s*(\d+)\s*/\s*(13|17|20)\s*[)）]\s*第\s*([一二三])\s*位面(?:\s*[-—－]\s*(.+))?",
+            stage_pattern,
             stage_text
         )
         if stage_match:
             current, total, plane, station = stage_match.groups()
-            station = station.strip() if station else "未知"
+            station = normalize_station(station)
 
-            keywords = ["战斗", "精英", "事件", "异常", "奖励", "财富", "冒险", "商店", "铸造", "空白", "首领", "休整", "转化"]
-            if station and station not in keywords:
-                for keyword in keywords:
-                    if any(char in keyword for char in station):
-                        station = keyword
-                        break
+            if station == "未知":
+                previous_stage_info = parse_stage_info(self.current_stage)
+                if previous_stage_info:
+                    prev_current, prev_total, prev_plane, prev_station = previous_stage_info
+                    if (current, total, plane) == (prev_current, prev_total, prev_plane):
+                        station = prev_station
+                        log.debug(f"区域识别为未知且关卡未变化，沿用上一阶段区域：{station}")
+
+                if station == "未知":
+                    for retry in range(3):
+                        time.sleep(1)
+                        retry_stage_text = auto.get_single_line_text(crop=stage_crop)
+                        if not retry_stage_text:
+                            continue
+
+                        retry_stage_match = re.search(stage_pattern, retry_stage_text)
+                        if not retry_stage_match:
+                            continue
+
+                        _, _, _, retry_station = retry_stage_match.groups()
+                        retry_station = normalize_station(retry_station)
+                        if retry_station != "未知":
+                            station = retry_station
+                            log.debug(f"区域识别重试成功（第 {retry + 1} 次）：{station}")
+                            break
 
             new_stage = f"{current}/{total}|第{plane}位面|{station}"
             if new_stage != self.current_stage:
