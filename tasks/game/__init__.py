@@ -39,6 +39,13 @@ def start():
     log.hr("完成", 2)
 
 
+def switch_to_game():
+    log.hr("切换到游戏窗口", 0)
+    starrail = StarRailController(cfg=cfg, logger=log)
+    starrail.switch_to_game()
+    log.hr("完成", 2)
+
+
 def start_game():
     MAX_RETRY = 3
 

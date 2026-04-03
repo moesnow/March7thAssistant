@@ -206,6 +206,7 @@ class HomeInterface(ScrollArea):
                 action={
                     tr("差分宇宙运行一次【测试版】 ⭐"): lambda: start_task("divergent"),
                     tr("差分宇宙循环运行【测试版】 ⭐"): lambda: start_task("divergentloop"),
+                    tr("差分宇宙中途接管【测试版】"): lambda: start_task("divergenttemp"),
                     tr("模拟宇宙快速启动（停止维护）"): lambda: start_task("universe"),
                     tr("模拟宇宙原版运行（停止维护）"): lambda: start_task("universe_gui"),
                     tr("更新模拟宇宙（停止维护）"): lambda: start_task("universe_update"),

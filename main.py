@@ -118,6 +118,8 @@ def run_main_actions():
 def run_sub_task(action):
     if action != "currencywarstemp" and action != "divergenttemp":
         game.start()
+    else:
+        game.switch_to_game()
 
     def currencywars(mode=None):
         war = CurrencyWars()
