@@ -960,9 +960,17 @@ class DivergentUniverse:
                     log.info("本次对局结果：未知")
                 self.end_loop = True
 
+                # 由于部分用户有时点击返回主界面后界面会卡在结算界面，无法继续点击返回主界面，因此增加一个循环持续点击返回主界面
+                for _ in range(30):
+                    if auto.click_element("返回主界面", 'text', None, crop=(573 / 1920, 947 / 1080, 792 / 1920, 85 / 1080), include=True):
+                        time.sleep(2)
+                    else:
+                        break
+
             elif auto.matched_text == "确认结算":
                 log.info(f"检测到 “确认结算” 的按钮，尝试点击")
                 auto.click_element_with_pos(result)
+                return True
 
         return False
 
