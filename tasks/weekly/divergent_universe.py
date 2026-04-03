@@ -21,6 +21,7 @@ class DivergentUniverse:
         self.current_stage: str = ""  # 当前关卡阶段
         self.process_stage: bool = False  # 是否正在处理关卡中
         self.end_loop: bool = False  # 是否结束主循环
+        self.stage_finish: bool = False  # 是否完成当前阶段
 
     def start(self):
         log.hr('准备差分宇宙', '0')
@@ -175,6 +176,7 @@ class DivergentUniverse:
         self.current_stage = ""  # 重置当前关卡阶段
         self.process_stage = False  # 重置关卡处理状态
         self.end_loop = False  # 重置结束循环标志
+        self.stage_finish = False  # 重置阶段完成标志
 
         start_time = time.monotonic()
         timeout = 60 * 120  # 120分钟超时
@@ -268,7 +270,8 @@ class DivergentUniverse:
                             break
 
             new_stage = f"{current}/{total}|第{plane}位面|{station}"
-            if new_stage != self.current_stage:
+            if self.stage_finish or new_stage != self.current_stage:
+                self.stage_finish = False
                 self.current_stage = new_stage
                 log.hr(f"当前阶段 {current}/{total}，第{plane}位面，区域：{station}", 2)
                 if "首领" in station or "战斗" in station or "精英" in station or "转化" in station:
@@ -451,6 +454,8 @@ class DivergentUniverse:
         auto.press_key("esc")
         if auto.click_element("结束并结算", "text", max_retries=10, crop=(1238 / 1920, 859 / 1080, 562 / 1920, 165 / 1080)):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10)
+        else:
+            self.stage_finish = True
 
     def process_re_enter(self):
         log.info("尝试重新进入当前关卡")
@@ -555,6 +560,7 @@ class DivergentUniverse:
                         time.sleep(2)
                         if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9):
                             return False
+                        self.stage_finish = True
                         return True
                     else:
                         if not stable_mode:
