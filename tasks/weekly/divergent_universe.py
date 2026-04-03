@@ -208,7 +208,7 @@ class DivergentUniverse:
         # 示例："（1/13）第一位面-战斗"
         stage_match = re.search(
             # r"[（(]\s*(\d+)\s*/\s*(13)\s*[)）]\s*第\s*([^位\s]+)\s*位面(?:\s*[-—－]\s*(.+))?",
-            r"[（(]\s*(\d+)\s*/\s*(13)\s*[)）]\s*第\s*([一二三])\s*位面(?:\s*[-—－]\s*(.+))?",
+            r"[（(]\s*(\d+)\s*/\s*(13|17|20)\s*[)）]\s*第\s*([一二三])\s*位面(?:\s*[-—－]\s*(.+))?",
             stage_text
         )
         if stage_match:
@@ -226,7 +226,7 @@ class DivergentUniverse:
             if new_stage != self.current_stage:
                 self.current_stage = new_stage
                 log.hr(f"当前阶段 {current}/{total}，第{plane}位面，区域：{station}", 2)
-                if "首领" in station or "战斗" in station or "精英" in station:
+                if "首领" in station or "战斗" in station or "精英" in station or "转化" in station:
                     self.process_battle_stage()
                 elif "空白" in station or "休整" in station or "商店" in station or "财富" in station:
                     auto.press_mouse()
@@ -242,7 +242,7 @@ class DivergentUniverse:
                     log.info("检测到暂不支持的区域类型")
                     self.process_leave()
             elif self.process_stage:
-                if "首领" in station or "战斗" in station or "精英" in station:
+                if "首领" in station or "战斗" in station or "精英" in station or "转化" in station:
                     self.process_battle_stage_finish()
             return
 
@@ -589,6 +589,7 @@ class DivergentUniverse:
                         return
                 log.info("默认选择中间的面具")
                 auto.click_element(mask_positions[1], 'crop')
+                time.sleep(2)
 
     def process_equation(self):
         """
@@ -771,12 +772,13 @@ class DivergentUniverse:
             # 根据优先级选择点击哪个站点，若优先级相同，点击中间的站点
             priority_map = {
                 "首领": 0,
+                "转化": 0,
                 "战斗": 1,
-                "精英": 2,
+                "精英": 1,
+                "休整": 2,
                 "空白": 3,
-                "休整": 4,
-                "商店": 5,
-                "财富": 6,
+                "商店": 3,
+                "财富": 4,
                 # "异常": 7,
                 # "事件": 8,
             }
@@ -877,7 +879,7 @@ class DivergentUniverse:
         """
         检查并点击 “点击空白处关闭” 的按钮
         """
-        if auto.click_element("点击空白处关闭", 'text', None, crop=(820 / 1920, 831 / 1080, 277 / 1920, 245 / 1080), include=True):
+        if auto.click_element("点击空白处关闭", 'text', None, crop=(818 / 1920, 797 / 1080, 281 / 1920, 281 / 1080), include=True):
             log.info(f"检测到 “点击空白处关闭” 的按钮，尝试点击")
             return True
         return False
