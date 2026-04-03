@@ -225,8 +225,7 @@ class Screen(metaclass=SingletonMeta):
         # self.logger.error("如果游戏是从本地启动：")
         if not cfg.cloud_game_enable:
             self.logger.error("请关闭帧率监控HUD、微星小飞机、游戏加加、HDR或N卡游戏滤镜等等任何可能影响游戏画面的软件")
-            self.logger.error("如果是多显示器，可尝试开关选项 设置-杂项-在多显示器上进行截屏")
-            self.logger.error("你还可以通过 工具箱-游戏截图 判断当前游戏画面是否被正确获取")
+            self.logger.error("你可以通过 工具箱-游戏截图 判断当前游戏画面是否被正确获取")
         # self.logger.error("如果是云·星穹铁道：")
         else:
             self.logger.error("使用云·星穹铁道请确保网络正常，浏览器能正常加载游戏画面")
@@ -326,7 +325,7 @@ class Screen(metaclass=SingletonMeta):
 
     def change_to(self, target_screen, max_recursion=2):
         """
-        切换到目标界面，，如果失败则退出进程
+        切换到目标界面，如果失败则退出进程
         :param target_screen: 目标界面
         :param max_recursion: 重试次数
         """
