@@ -215,10 +215,10 @@ class DivergentUniverse:
             current, total, plane, station = stage_match.groups()
             station = station.strip() if station else "未知"
 
-            if station and len(station) == 1:
-                keywords = ["战斗", "精英", "事件", "异常", "奖励", "财富", "冒险", "商店", "铸造", "空白", "首领", "休整", "转化"]
+            keywords = ["战斗", "精英", "事件", "异常", "奖励", "财富", "冒险", "商店", "铸造", "空白", "首领", "休整", "转化"]
+            if station and station not in keywords:
                 for keyword in keywords:
-                    if station in keyword:
+                    if any(char in keyword for char in station):
                         station = keyword
                         break
 
