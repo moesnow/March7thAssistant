@@ -125,7 +125,7 @@ class ScreenshotApp(QMainWindow):
             buttons_config = [
                 ("显示坐标", self.show_coordinate_result),
                 ("复制坐标到剪贴板", self.copy_coordinate_result_to_clipboard),
-                ("输入Crop绘制区域", self.draw_crop_rect),
+                ("输入坐标绘制区域", self.draw_crop_rect),
                 ("保存完整截图", self.save_full_screenshot),
                 ("保存选取截图", self.save_selection_screenshot),
                 ("模板匹配", self.match_template),
