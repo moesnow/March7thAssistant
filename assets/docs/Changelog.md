@@ -1,9 +1,11 @@
 # 更新日志
 
-## v2026.4.4
+## v2026.4.5
 - 适配差分宇宙-乐园漫记
 - 云游戏支持检测剩余时长 [#931](https://github.com/moesnow/March7thAssistant/pull/931) @awsl1110
 - 自动切换队伍支持所有预设编号 [#937](https://github.com/moesnow/March7thAssistant/pull/937) @Alex3236
+- 修复差分宇宙小概率卡在结算界面未返回主页
+- 修复特定情况下区域类型和实际类型不匹配导致循环卡死
 - 优化性能和稳定性并修复若干已知问题
 - [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
 
