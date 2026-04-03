@@ -1,5 +1,5 @@
 from module.ocr import ocr
-from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QHBoxLayout, QWidget, QMessageBox, QScrollArea, QApplication, QStyle, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QHBoxLayout, QWidget, QMessageBox, QScrollArea, QApplication, QStyle, QFileDialog, QInputDialog
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QPen, QImage, QColor
 from PIL import Image
@@ -9,6 +9,7 @@ import pyperclip
 import os
 import sys
 import atexit
+import re
 
 
 class ScreenshotApp(QMainWindow):
@@ -34,6 +35,7 @@ class ScreenshotApp(QMainWindow):
             self.is_drawing = False
             self.template_match_rect = None
             self.door_rect = None
+            self.crop_rect = None
             self.need_maximize = False  # 是否需要最大化窗口
 
             self.setup_ui()
@@ -123,6 +125,7 @@ class ScreenshotApp(QMainWindow):
             buttons_config = [
                 ("显示坐标", self.show_coordinate_result),
                 ("复制坐标到剪贴板", self.copy_coordinate_result_to_clipboard),
+                ("输入Crop绘制区域", self.draw_crop_rect),
                 ("保存完整截图", self.save_full_screenshot),
                 ("保存选取截图", self.save_selection_screenshot),
                 ("模板匹配", self.match_template),
@@ -280,6 +283,14 @@ class ScreenshotApp(QMainWindow):
             painter.setPen(door_pen)
             painter.drawRect(x, y, width, height)
 
+        # 绘制输入的 Crop 区域（蓝色）
+        if self.crop_rect is not None:
+            x, y, width, height = self.crop_rect
+            crop_pen = QPen(QColor(0x34, 0x98, 0xdb))
+            crop_pen.setWidth(3)
+            painter.setPen(crop_pen)
+            painter.drawRect(x, y, width, height)
+
         painter.end()
         self.canvas_label.setPixmap(new_pixmap)
 
@@ -333,6 +344,89 @@ class ScreenshotApp(QMainWindow):
             QMessageBox.information(self, "结果", f"{text}\n复制到剪贴板成功")
         else:
             QMessageBox.information(self, "结果", "还没有选择区域呢")
+
+    def _parse_crop_value(self, crop_text):
+        """
+        解析 crop 文本，支持比例表达式和逗号分隔的像素坐标。
+
+        支持格式：
+        - (x / screen_w, y / screen_h, width / screen_w, height / screen_h)
+        - x, y, width, height
+        """
+        if not crop_text:
+            raise ValueError("请输入 crop 值")
+
+        normalized_text = crop_text.strip()
+        if normalized_text.startswith("(") and normalized_text.endswith(")"):
+            normalized_text = normalized_text[1:-1].strip()
+
+        parts = [part.strip() for part in normalized_text.split(",")]
+        if len(parts) != 4:
+            raise ValueError("crop 值必须包含 4 个部分")
+
+        values = []
+        denominators = [self.screenshot.width, self.screenshot.height, self.screenshot.width, self.screenshot.height]
+        for index, part in enumerate(parts):
+            if "/" in part:
+                match = re.fullmatch(r"(-?\d+(?:\.\d+)?)\s*/\s*(-?\d+(?:\.\d+)?)", part)
+                if not match:
+                    raise ValueError("比例格式不正确")
+                numerator = float(match.group(1))
+                denominator = float(match.group(2))
+                if denominator <= 0:
+                    raise ValueError("比例分母必须大于 0")
+
+                expected_denominator = denominators[index]
+                if abs(denominator - expected_denominator) > 1e-6:
+                    raise ValueError(f"第 {index + 1} 项分母应为 {expected_denominator}")
+                values.append(int(round(numerator)))
+            else:
+                try:
+                    values.append(int(round(float(part))))
+                except ValueError as exc:
+                    raise ValueError("像素坐标格式不正确") from exc
+
+        x, y, width, height = values
+        if width <= 0 or height <= 0:
+            raise ValueError("宽度和高度必须大于 0")
+        if x < 0 or y < 0:
+            raise ValueError("X 和 Y 不能小于 0")
+        if x + width > self.screenshot.width or y + height > self.screenshot.height:
+            raise ValueError("crop 区域超出截图范围")
+
+        return x, y, width, height
+
+    def draw_crop_rect(self):
+        """
+        输入 crop 值并在画面中绘制对应区域。
+        """
+        crop_text, ok = QInputDialog.getText(
+            self,
+            "输入 Crop 值",
+            "请输入 crop 值：\n支持 (x / 宽, y / 高, width / 宽, height / 高) 或 x, y, width, height"
+        )
+
+        if not ok:
+            return
+
+        try:
+            x, y, width, height = self._parse_crop_value(crop_text)
+        except ValueError as exc:
+            QMessageBox.warning(self, "输入 Crop 值", str(exc))
+            return
+
+        logical_x = int(x / self.dpi_scale)
+        logical_y = int(y / self.dpi_scale)
+        logical_w = max(1, int(width / self.dpi_scale))
+        logical_h = max(1, int(height / self.dpi_scale))
+        self.crop_rect = (logical_x, logical_y, logical_w, logical_h)
+        self.update_canvas()
+
+        QMessageBox.information(
+            self,
+            "输入 Crop 值",
+            f"已绘制区域: X={x}, Y={y}, Width={width}, Height={height}\n（已使用蓝色矩形标记）"
+        )
 
     def save_full_screenshot(self):
         """
