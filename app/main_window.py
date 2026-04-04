@@ -146,9 +146,11 @@ class MainWindow(MSFluentWindow):
         saved_y = cfg.get_value('window_y', None)
 
         if window_memory in ('position', 'size_and_position') and saved_x is not None and saved_y is not None:
-            # 确保窗口在屏幕可见范围内
-            restored_x = max(screen.left(), min(int(saved_x), screen.right() - self.width()))
-            restored_y = max(screen.top(), min(int(saved_y), screen.bottom() - self.height()))
+            # 确保窗口在屏幕可见范围内（当窗口比屏幕大时退回到左上角）
+            max_x = max(screen.left(), screen.right() - self.width())
+            max_y = max(screen.top(), screen.bottom() - self.height())
+            restored_x = max(screen.left(), min(int(saved_x), max_x))
+            restored_y = max(screen.top(), min(int(saved_y), max_y))
             self.move(restored_x, restored_y)
         else:
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
