@@ -385,9 +385,14 @@ use_background_screenshot: true # 是否优先使用后台截图
 # 关闭窗口行为设置
 close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问）, "minimize"（最小化到托盘）, "close"（关闭程序）
 
-# 窗口尺寸设置（自动保存，一般无需手动修改）
+# 窗口记忆设置
+window_memory: size # 记忆窗口大小和位置，可选值："size"（记忆窗口大小）, "position"（记忆窗口位置）, "size_and_position"（记忆窗口大小和位置）, "none"（都不记忆）
+
+# 窗口尺寸和位置设置（自动保存，一般无需手动修改）
 window_width: 960 # 窗口宽度
 window_height: 640 # 窗口高度
+window_x: null # 窗口左上角 X 坐标
+window_y: null # 窗口左上角 Y 坐标
 window_maximized: false # 窗口是否最大化
 banner_path: ./assets/app/images/bg37.jpg # 背景图片路径
 
