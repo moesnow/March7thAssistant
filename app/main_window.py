@@ -122,12 +122,16 @@ class MainWindow(MSFluentWindow):
         self.setMinimumWidth(min_width)
         self.setMinimumHeight(min_height)
 
+        window_memory = cfg.get_value('window_memory', 'size')
         # 从配置文件读取窗口尺寸，确保不低于最小值
-        saved_width = cfg.get_value('window_width', min_width)
-        saved_height = cfg.get_value('window_height', min_height)
-        window_width = max(saved_width, min_width)
-        window_height = max(saved_height, min_height)
-        self.resize(window_width, window_height)
+        if window_memory in ('size', 'size_and_position'):
+            saved_width = cfg.get_value('window_width', min_width)
+            saved_height = cfg.get_value('window_height', min_height)
+            window_width = max(saved_width, min_width)
+            window_height = max(saved_height, min_height)
+            self.resize(window_width, window_height)
+        else:
+            self.resize(min_width, min_height)
 
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
         self.setWindowTitle("March7th Assistant")
@@ -141,7 +145,6 @@ class MainWindow(MSFluentWindow):
         screen = QApplication.primaryScreen().availableGeometry()
         w, h = screen.width(), screen.height()
 
-        window_memory = cfg.get_value('window_memory', 'size')
         saved_x = cfg.get_value('window_x', None)
         saved_y = cfg.get_value('window_y', None)
 
@@ -156,7 +159,7 @@ class MainWindow(MSFluentWindow):
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
         # 根据配置决定窗口显示方式
-        if cfg.get_value('window_maximized', False):
+        if window_memory in ('size', 'size_and_position') and cfg.get_value('window_maximized', False):
             self.showMaximized()
         else:
             self.show()
