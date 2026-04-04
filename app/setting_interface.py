@@ -402,6 +402,12 @@ class SettingInterface(ScrollArea):
             tr("在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器"),
             "currencywars_bonus_enable"
         )
+        self.currencywarsFastModeCard = SwitchSettingCard1(
+            FIF.SPEED_HIGH,
+            tr('启用速通模式'),
+            tr("开启后，仅在首领节点尝试装备武器"),
+            "currencywars_fast_mode"
+        )
 
         self.UniverseGroup = SettingCardGroup(tr("差分宇宙"), self.scrollWidget)
         self.weeklyDivergentEnableCard = ExpandableSwitchSettingCard(
@@ -1402,6 +1408,7 @@ class SettingInterface(ScrollArea):
         ])
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsFastModeCard)
 
         self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
         self.weeklyDivergentEnableCard.addSettingCards([

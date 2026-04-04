@@ -361,6 +361,8 @@ class CurrencyWars:
                 self.equip_weapons()
                 auto.click_element('出战', 'text', None, 10, crop=(1744.0 / 1920, 737.0 / 1080, 165.0 / 1920, 71.0 / 1080))
                 time.sleep(2)
+                if auto.click_element("本局不再提示", "text", crop=(905 / 1920, 571 / 1080, 171 / 1920, 50 / 1080)):
+                    time.sleep(1)
                 auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
 
     def give_up_and_settle(self):
@@ -447,6 +449,14 @@ class CurrencyWars:
         """
         装备武器
         """
+        if cfg.currencywars_fast_mode:
+            if ((cfg.currencywars_type == "normal"
+                 and self.current_stage not in ("1-9", "2-7", "3-7"))
+                    or (cfg.currencywars_type == "overclock"
+                        and self.current_stage not in ("1-6", "2-5", "3-5"))):
+                log.info("当前为速通模式且非首领节点，跳过装备武器步骤")
+                return
+
         character_groups = [
             (self.forward_characters, self.forward_pos),
             (self.backward_characters, self.backward_pos)
