@@ -323,8 +323,8 @@ class DivergentUniverse:
             if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
                 auto.press_key_up("shift")
 
-            if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
-                log.info("检测到战利品，尝试点击")
+            if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element(("战利品", "混沌药箱"), "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
+                log.info(f"检测到{auto.matched_text}，尝试点击")
                 auto.press_key("f")
                 time.sleep(2)
                 for _ in range(30):
@@ -368,8 +368,8 @@ class DivergentUniverse:
         time.sleep(2)
         self.process_stage = False
 
-        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
-            log.info("检测到战利品，尝试点击")
+        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element(("战利品", "混沌药箱"), "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
+            log.info(f"检测到{auto.matched_text}，尝试点击")
             auto.press_key("f")
             time.sleep(2)
             for _ in range(30):
@@ -381,8 +381,8 @@ class DivergentUniverse:
         if self.process_random_door():
             return
 
-        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element("战利品", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
-            log.info("检测到战利品，尝试点击")
+        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element(("战利品", "混沌药箱"), "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
+            log.info(f"检测到{auto.matched_text}，尝试点击")
             auto.press_key("f")
             time.sleep(2)
             for _ in range(30):
@@ -923,7 +923,8 @@ class DivergentUniverse:
 
     def process_chaos_box(self):
         time.sleep(2)
-        auto.click_element('离开', 'text', None, 10, crop=(1105 / 1920, 94 / 1080, 702 / 1920, 858 / 1080), include=False)
+        if not auto.click_element('获得', 'text', None, 10, crop=(1105 / 1920, 94 / 1080, 702 / 1920, 858 / 1080), include=True):
+            auto.click_element('离开', 'text', None, 10, crop=(1105 / 1920, 94 / 1080, 702 / 1920, 858 / 1080), include=False)
         time.sleep(1)
         auto.click_element('确定', 'text', None, 10, crop=(1105 / 1920, 94 / 1080, 702 / 1920, 858 / 1080), include=False)
         time.sleep(2)
