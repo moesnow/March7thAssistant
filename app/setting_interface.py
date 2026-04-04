@@ -892,6 +892,13 @@ class SettingInterface(ScrollArea):
             tr('选择关闭窗口时的默认行为，也可以在关闭时由对话框询问'),
             texts={tr('询问'): 'ask', tr('最小化到托盘'): 'minimize', tr('关闭程序'): 'close'}
         )
+        self.windowMemoryCard = ComboBoxSettingCard2(
+            "window_memory",
+            FIF.LAYOUT,
+            tr('窗口记忆'),
+            tr('选择启动时恢复的窗口状态'),
+            texts={tr('记忆窗口大小'): 'size', tr('记忆窗口位置'): 'position', tr('记忆窗口大小和位置'): 'size_and_position', tr('都不记忆'): 'none'}
+        )
 
         self.NotifyGroup = SettingCardGroup(tr("消息推送"), self.scrollWidget)
         self.notifyMasterEnableCard = ExpandableSwitchSettingCard(
@@ -1509,6 +1516,7 @@ class SettingInterface(ScrollArea):
         ])
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.closeWindowActionCard)
+        self.ProgramGroup.addSettingCard(self.windowMemoryCard)
 
         self.NotifyGroup.addSettingCard(self.notifyMasterEnableCard)
         self.notifyMasterEnableCard.addSettingCards([
