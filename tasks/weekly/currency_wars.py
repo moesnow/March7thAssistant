@@ -1304,8 +1304,8 @@ class CurrencyWars:
                     auto.click_element(button_positions_click[button_positions.index(pos)], 'crop')
                     has_choose = True
                     log.info(f"未检测到图鉴未收集选项，选择第{button_positions.index(pos) + 1}个按钮")
+                    self.check_special_characters(button_positions[button_positions.index(pos)])
                     break
-                self.check_special_characters(button_positions[0])
 
             if not has_choose:
                 log.error("所有选项均不可选，尝试退出")
