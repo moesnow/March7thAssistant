@@ -486,8 +486,8 @@ class DivergentUniverse:
         # UPPER = np.array([170, 126, 239])
         # crop = (68 / 1920, 4 / 1080, 1718 / 1920, 818 / 1080)
         # return auto.find_element((LOWER, UPPER), "hsv", crop=crop)
-        LOWER = np.array([126, 84, 174])
-        UPPER = np.array([170, 127, 228])
+        LOWER = np.array([129, 57, 143])
+        UPPER = np.array([174, 163, 229])
         return auto.find_element((LOWER, UPPER), "hsv")
 
     def process_random_door(self, stable_mode=False):

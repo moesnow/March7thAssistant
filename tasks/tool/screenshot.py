@@ -555,8 +555,8 @@ class ScreenshotApp(QMainWindow):
         """
         通过HSV颜色范围检测截图中的随意门区域，并绘制矩形标记。
         """
-        LOWER = np.array([126, 84, 174])
-        UPPER = np.array([170, 127, 228])
+        LOWER = np.array([129, 57, 143])
+        UPPER = np.array([174, 163, 229])
 
         screenshot_bgr = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
         hsv = cv2.cvtColor(screenshot_bgr, cv2.COLOR_BGR2HSV)
