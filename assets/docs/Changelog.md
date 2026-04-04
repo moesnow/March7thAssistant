@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2026.4.6
+## v2026.4.7
 - 适配差分宇宙-乐园漫记
 - 云游戏支持检测剩余时长 [#931](https://github.com/moesnow/March7thAssistant/pull/931) @awsl1110
 - 自动切换队伍支持所有预设编号 [#937](https://github.com/moesnow/March7thAssistant/pull/937) @Alex3236
