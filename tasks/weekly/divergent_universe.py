@@ -491,7 +491,9 @@ class DivergentUniverse:
         # return auto.find_element((LOWER, UPPER), "hsv", crop=crop)
         LOWER = np.array([129, 57, 143])
         UPPER = np.array([174, 163, 229])
-        return auto.find_element((LOWER, UPPER), "hsv")
+        remove_crop = (1494 / 1920, 0 / 1080, 424 / 1920, 268 / 1080)
+        auto.fill_crop_with_color(remove_crop, (0, 0, 0))
+        return auto.find_element((LOWER, UPPER), "hsv", take_screenshot=False)
 
     def process_random_door(self, stable_mode=False):
         if cfg.cloud_game_enable or cfg.weekly_divergent_stable_mode:

@@ -2,6 +2,7 @@ import time
 import math
 import cv2
 import numpy as np
+from PIL import Image
 
 from .screenshot import Screenshot
 from utils.logger.logger import Logger
@@ -560,3 +561,42 @@ class Automation(metaclass=SingletonMeta):
                 time.sleep(retry_delay)
         self.logger.debug("OCR未识别到任何文字")
         return None
+
+    def fill_crop_with_color(self, crop, color, use_background_screenshot=None):
+        """截图后将指定 crop 区域填充为给定颜色。
+
+        参数:
+        - crop: 裁剪区域，格式为(x, y, w, h)，使用相对比例(0~1)。
+        - color: 颜色值。灰度图传 int；彩色图传 (R, G, B) 或 (R, G, B, A)。
+        - use_background_screenshot: 是否使用后台截图。为None时沿用配置文件设置。
+
+        返回:
+        - 处理后的截图对象（PIL Image）。
+        """
+        self.take_screenshot((0, 0, 1, 1), use_background_screenshot)
+
+        img_np = np.array(self.screenshot).copy()
+        h, w = img_np.shape[:2]
+
+        x1 = max(0, min(w, int(crop[0] * w)))
+        y1 = max(0, min(h, int(crop[1] * h)))
+        x2 = max(0, min(w, int((crop[0] + crop[2]) * w)))
+        y2 = max(0, min(h, int((crop[1] + crop[3]) * h)))
+
+        if x2 <= x1 or y2 <= y1:
+            raise ValueError("无效的 crop 区域")
+
+        if img_np.ndim == 2:
+            fill_value = int(color)
+        else:
+            channel_count = img_np.shape[2]
+            if isinstance(color, int):
+                fill_value = [color] * channel_count
+            else:
+                fill_value = list(color)[:channel_count]
+                if len(fill_value) < channel_count:
+                    fill_value.extend([fill_value[-1]] * (channel_count - len(fill_value)))
+
+        img_np[y1:y2, x1:x2] = fill_value
+        self.screenshot = Image.fromarray(img_np)
+        return self.screenshot
