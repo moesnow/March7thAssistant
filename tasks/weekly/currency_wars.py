@@ -269,7 +269,8 @@ class CurrencyWars:
         log.info("选择关卡")
         # 避免低性能设备加载过慢
         time.sleep(6)  # 等待界面加载
-        pos = auto.find_element("./assets/images/screen/currency_wars/level_down.png", "image", 100000)
+        # pos = auto.find_element("./assets/images/screen/currency_wars/level_down.png", "image", 100000)
+        pos = auto.find_element((936 / 1920, 830 / 1080, 45 / 1920, 31 / 1080), "crop")
         for _ in range(40):
             if auto.find_element(f"./assets/images/screen/currency_wars/level_1.png", "image", 0.95, crop=(440.0 / 1920, 892.0 / 1080, 385.0 / 1920, 137.0 / 1080)):
                 log.info(f"已选择敌人难度为1的关卡")
