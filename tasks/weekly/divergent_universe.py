@@ -293,8 +293,11 @@ class DivergentUniverse:
             elif self.stage_finish:
                 # 选中特定 “惊世奇迹” 例如 “财猫面具·破” 以后，存在 bug，虽然不计算区域进度，但是左上角的区域类型不会变化
                 # 此时只需要暂离，重新进入，左上角就会显示正确的区域类型
+                # 火箭喷射信标也有类似效果
                 log.info("发现阶段完成但区域未变化，可能存在区域类型显示错误")
                 self.process_re_enter()
+                # 避免区域相同 反复重进
+                self.current_stage = ""  # 重置当前关卡阶段
 
             elif self.process_stage:
                 if "首领" in station or "战斗" in station or "精英" in station or "转化" in station:
