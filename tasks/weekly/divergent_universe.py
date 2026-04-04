@@ -241,6 +241,16 @@ class DivergentUniverse:
         )
         if stage_match:
             current, total, plane, station = stage_match.groups()
+            
+            # 修复 OCR 识别错误问题，“第二位面” 在特定场景下小概率会识别成 “第三位面”
+            if total == "13":
+                if current in ["1", "2", "3", "4"]:
+                    plane = "一"
+                elif current in ["5", "6", "7", "8", "9"]:
+                    plane = "二"
+                elif current in ["10", "11", "12", "13"]:
+                    plane = "三"
+
             station = normalize_station(station)
 
             if station == "未知":
