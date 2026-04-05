@@ -22,6 +22,7 @@ class DivergentUniverse:
         self.process_stage: bool = False  # 是否正在处理关卡中
         self.end_loop: bool = False  # 是否结束主循环
         self.stage_finish: bool = False  # 是否完成当前阶段
+        self.unsupported_area: bool = False  # 是否遇到暂不支持区域
 
     def start(self):
         log.hr('准备差分宇宙', '0')
@@ -29,7 +30,10 @@ class DivergentUniverse:
             Base.send_notification_with_screenshot("差分宇宙已完成", NotificationLevel.ALL, self.screenshot)
             self.screenshot = None
         else:
-            Base.send_notification_with_screenshot("差分宇宙未完成", NotificationLevel.ERROR, self.screenshot)
+            if self.unsupported_area:
+                Base.send_notification_with_screenshot("差分宇宙未完成\n遇到暂不支持的区域", NotificationLevel.ERROR, self.screenshot)
+            else:
+                Base.send_notification_with_screenshot("差分宇宙未完成", NotificationLevel.ERROR, self.screenshot)
             self.screenshot = None
         has_reward = self.get_reward()
         if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
@@ -177,6 +181,7 @@ class DivergentUniverse:
         self.process_stage = False  # 重置关卡处理状态
         self.end_loop = False  # 重置结束循环标志
         self.stage_finish = False  # 重置阶段完成标志
+        self.unsupported_area = False  # 重置暂不支持区域标志
 
         start_time = time.monotonic()
         timeout = 60 * 120  # 120分钟超时
@@ -298,6 +303,7 @@ class DivergentUniverse:
                     self.process_battle_stage_finish()
                 else:
                     log.info("检测到暂不支持的区域类型")
+                    self.unsupported_area = True
                     if "冒险" in station:
                         time.sleep(5)
                         if self.check_click_close():
