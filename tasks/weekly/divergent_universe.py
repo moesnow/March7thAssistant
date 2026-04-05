@@ -298,6 +298,22 @@ class DivergentUniverse:
                     self.process_battle_stage_finish()
                 else:
                     log.info("检测到暂不支持的区域类型")
+                    if "冒险" in station:
+                        time.sleep(5)
+                        if self.check_click_close():
+                            log.info("检测到冒险区域且存在教学弹窗，尝试关闭")
+                            time.sleep(2)
+                            for _ in range(10):
+                                if not auto.click_element("关闭", "text", crop=(926 / 1920, 869 / 1080, 65 / 1920, 38 / 1080)):
+                                    auto.click_element((1811 / 1920, 461 / 1080, 70 / 1920, 94 / 1080), "crop")
+                                    time.sleep(2)
+                                else:
+                                    time.sleep(2)
+                                    break
+                            else:
+                                if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                                    log.error("多次尝试关闭冒险教学弹窗失败")
+                                    raise Exception("多次尝试关闭冒险教学弹窗失败")
                     self.process_leave()
 
             elif self.stage_finish:
@@ -958,7 +974,7 @@ class DivergentUniverse:
         """
         检查并点击 “点击空白处关闭” 的按钮
         """
-        if auto.click_element("点击空白处关闭", 'text', None, crop=(818 / 1920, 797 / 1080, 281 / 1920, 281 / 1080), include=True):
+        if auto.click_element("点击空白处关闭", 'text', None, crop=(816 / 1920, 778 / 1080, 284 / 1920, 298 / 1080), include=True):
             log.info(f"检测到 “点击空白处关闭” 的按钮，尝试点击")
             return True
         return False
