@@ -206,7 +206,7 @@ class DivergentUniverse:
                 return self.result if self.result is not None else False
 
     def check_stage(self):
-        if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9):
+        if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
             return
 
         stage_crop = (57 / 1920, 15 / 1080, 260 / 1920, 27 / 1080)
@@ -241,7 +241,7 @@ class DivergentUniverse:
         )
         if stage_match:
             current, total, plane, station = stage_match.groups()
-            
+
             # 修复 OCR 识别错误问题，“第二位面” 在特定场景下小概率会识别成 “第三位面”
             if total == "13":
                 if current in ["1", "2", "3", "4"]:
@@ -289,7 +289,7 @@ class DivergentUniverse:
                 elif "空白" in station or "休整" in station or "商店" in station or "财富" in station:
                     auto.press_mouse()
                     time.sleep(2)
-                    for _ in range(30):
+                    for _ in range(100):
                         if self.check_click_close() or self.check_title():
                             time.sleep(2)
                         else:
@@ -337,7 +337,7 @@ class DivergentUniverse:
                 log.info(f"检测到{auto.matched_text}，尝试点击")
                 auto.press_key("f")
                 time.sleep(2)
-                for _ in range(30):
+                for _ in range(100):
                     if self.check_click_close() or self.check_title():
                         time.sleep(2)
                     else:
@@ -348,24 +348,28 @@ class DivergentUniverse:
             for _ in range(5):
                 auto.press_mouse()
                 time.sleep(0.5)
-            for _ in range(30):
+                if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                    break
+            for _ in range(100):
                 if self.check_click_close() or self.check_title():
                     time.sleep(2)
                 else:
                     break
 
             # 进入战斗失败，尝试重新进入
-            if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9):
+            if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
                 auto.press_key("s")
                 for _ in range(5):
                     auto.press_mouse()
                     time.sleep(0.5)
-                for _ in range(30):
+                    if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                        break
+                for _ in range(100):
                     if self.check_click_close() or self.check_title():
                         time.sleep(2)
                     else:
                         break
-                if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9):
+                if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
                     self.process_re_enter()
                     continue
             else:
@@ -382,7 +386,7 @@ class DivergentUniverse:
             log.info(f"检测到{auto.matched_text}，尝试点击")
             auto.press_key("f")
             time.sleep(2)
-            for _ in range(30):
+            for _ in range(100):
                 if self.check_click_close() or self.check_title():
                     time.sleep(2)
                 else:
@@ -395,7 +399,7 @@ class DivergentUniverse:
             log.info(f"检测到{auto.matched_text}，尝试点击")
             auto.press_key("f")
             time.sleep(2)
-            for _ in range(30):
+            for _ in range(100):
                 if self.check_click_close() or self.check_title():
                     time.sleep(2)
                 else:
@@ -406,7 +410,7 @@ class DivergentUniverse:
 
         auto.press_mouse()
         time.sleep(2)
-        for _ in range(30):
+        for _ in range(100):
             if self.check_click_close() or self.check_title():
                 time.sleep(2)
             else:
@@ -423,7 +427,7 @@ class DivergentUniverse:
 
         auto.press_mouse()
         time.sleep(2)
-        for _ in range(30):
+        for _ in range(100):
             if self.check_click_close() or self.check_title():
                 time.sleep(2)
             else:
@@ -443,7 +447,7 @@ class DivergentUniverse:
 
         auto.press_mouse()
         time.sleep(2)
-        for _ in range(30):
+        for _ in range(100):
             if self.check_click_close() or self.check_title():
                 time.sleep(2)
             else:
@@ -488,7 +492,8 @@ class DivergentUniverse:
                     screen.wait_for_screen_change('divergent_main')
                 screen.change_to("divergent_mode_select")
                 if auto.click_element("继续进度", "text", crop=(39 / 1920, 215 / 1080, 748 / 1920, 597 / 1080)):
-                    auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, max_retries=10)
+                    if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, max_retries=120, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                        raise Exception("重新进入关卡失败")
                     return
                 else:
                     raise Exception("未找到继续进度按钮")
@@ -580,7 +585,7 @@ class DivergentUniverse:
                         auto.press_key("f")
                         auto.press_key("f")
                         time.sleep(2)
-                        if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9):
+                        if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
                             return False
                         self.stage_finish = True
                         return True
