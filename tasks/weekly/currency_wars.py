@@ -1128,6 +1128,10 @@ class CurrencyWars:
                 pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
                 auto.click_element(pos, "crop")
                 time.sleep(1)
+            if auto.find_element("专家邀请函", "text", None, crop=(949 / 1920, 27 / 1080, 153 / 1920, 56 / 1080), include=True):
+                pos = (769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080)
+                auto.click_element(pos, "crop")
+                time.sleep(1)
             res = auto.find_element("开启", "text", None, crop=(376.0 / 1920, 839.0 / 1080, 1125.0 / 1920, 148.0 / 1080), include=True)
 
     def check_character_status(self):
