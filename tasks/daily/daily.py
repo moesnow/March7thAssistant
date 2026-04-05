@@ -81,8 +81,15 @@ class Daily:
         if cfg.weekly_divergent_enable:
             if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
                 screen.change_to("divergent_main")
-                if not divergent.check_divergent_universe_score():
-                    divergent.start()
+                for _ in range(3):
+                    if not divergent.check_divergent_universe_score():
+                        divergent.start()
+                        if not Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
+                            break
+                    else:
+                        break
+                else:
+                    log.warning("尝试运行了多轮差分宇宙，但积分奖励仍未完成，可能遇到未知问题，请检查日志")
             else:
                 log.info("「差分宇宙」积分奖励尚未刷新")
         else:
