@@ -1122,16 +1122,16 @@ class CurrencyWars:
             if auto.find_element(('武装箱', '星徽秘典'), "text", None, crop=(1012.0 / 1920, 27.0 / 1080, 173.0 / 1920, 56.0 / 1080), include=True):
                 pos = (533.0 / 1920, 135.0 / 1080, 258.0 / 1920, 181.0 / 1080)
                 auto.click_element(pos, "crop")
-                time.sleep(1)
+                time.sleep(2)
             # 聘用书坐标尚未经过测试
             if auto.find_element("聘用书", "text", None, crop=(923.0 / 1920, 21.0 / 1080, 168.0 / 1920, 74.0 / 1080), include=True):
                 pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
                 auto.click_element(pos, "crop")
-                time.sleep(1)
+                time.sleep(2)
             if auto.find_element("专家邀请函", "text", None, crop=(949 / 1920, 27 / 1080, 153 / 1920, 56 / 1080), include=True):
                 pos = (769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080)
                 auto.click_element(pos, "crop")
-                time.sleep(1)
+                time.sleep(2)
             res = auto.find_element("开启", "text", None, crop=(376.0 / 1920, 839.0 / 1080, 1125.0 / 1920, 148.0 / 1080), include=True)
 
     def check_character_status(self):
