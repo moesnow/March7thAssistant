@@ -201,12 +201,14 @@ class ToolsInterface(ScrollArea):
                 if 'Setting' not in cp:
                     cp['Setting'] = {}
                 old_path = cp['Setting'].get('HKSRPath', '')
-                if old_path != game_path:
+                old_fps = cp['Setting'].get('FPS', '')
+                if old_path != game_path or old_fps != '60':
                     cp['Setting']['HKSRPath'] = game_path
+                    cp['Setting']['FPS'] = '60'
                     with open(config_path, 'w', encoding='utf-16') as f:
                         cp.write(f)
             else:
-                cp['Setting'] = {'HKSRPath': game_path}
+                cp['Setting'] = {'HKSRPath': game_path, 'FPS': '60'}
                 with open(config_path, 'w', encoding='utf-16') as f:
                     cp.write(f)
             args = ["-HKSR", "-EnableMobileUI"]
