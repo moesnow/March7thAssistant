@@ -305,7 +305,7 @@ class WarpExport:
         gacha_url_path = "getGachaLog"
         if gacha_type == "21" or gacha_type == "22":
             gacha_url_path = "getLdGachaLog"
-        url = f'{api_domain}/common/gacha_record/api/{gacha_url_path}?{updated_query}&gacha_type={gacha_type}&page={page}&size={size}&end_id={end_id}'
+        url = f'{api_domain}/common/hkrpg_gacha_record/api/{gacha_url_path}?{updated_query}&gacha_type={gacha_type}&page={page}&size={size}&end_id={end_id}'
         if not hasattr(self, 'warplink'):
             self.warplink = url
         for i in range(max_retry):
