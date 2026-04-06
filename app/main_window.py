@@ -419,9 +419,9 @@ class MainWindow(MSFluentWindow):
             except Exception:
                 pass
 
-            # 更新日志界面的热键
+            # 更新日志界面的热键与日志悬浮窗开关
             if hasattr(self, 'logInterface'):
-                self.logInterface.updateHotkey()
+                self.logInterface.reloadConfigState()
 
             # 保存旧的设置界面引用
             old_setting_interface = self.settingInterface

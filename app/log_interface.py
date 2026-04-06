@@ -1,8 +1,10 @@
 # coding:utf-8
+from collections import deque
+
 from PySide6.QtCore import Qt, QProcess, QProcessEnvironment, Signal, QTimer, QTime, QDateTime, QEvent
 from PySide6.QtGui import QFont, QTextCursor
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
-                               QSizePolicy)
+                               QSizePolicy, QFrame, QLabel)
 from qfluentwidgets import (ScrollArea, PrimaryPushButton, PushButton,
                             FluentIcon, InfoBar, InfoBarPosition, CardWidget,
                             BodyLabel, StrongBodyLabel, PlainTextEdit,
@@ -15,6 +17,7 @@ import re
 import uuid
 from .common.style_sheet import StyleSheet
 from module.config import cfg
+from module.game import get_game_controller
 from utils.tasks import TASK_NAMES
 from .schedule_dialog import ScheduleManagerDialog
 from module.notification import notif
@@ -26,6 +29,197 @@ import ctypes
 
 if sys.platform == 'win32':
     import keyboard
+    import ctypes.wintypes as wintypes
+
+    GWL_EXSTYLE = -20
+    WS_EX_LAYERED = 0x00080000
+    WS_EX_TRANSPARENT = 0x00000020
+    WS_EX_TOOLWINDOW = 0x00000080
+    WS_EX_NOACTIVATE = 0x08000000
+    HWND_TOPMOST = -1
+    SWP_NOSIZE = 0x0001
+    SWP_NOMOVE = 0x0002
+    SWP_NOACTIVATE = 0x0010
+    SWP_SHOWWINDOW = 0x0040
+
+
+class GameLogOverlay(QWidget):
+    """显示在游戏窗口左下角的只读日志悬浮窗。"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._lines = deque(maxlen=14)
+        self._pending_line = ""
+        self._ansi_escape_re = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
+        self._margin = 14
+
+        self._initWidget()
+
+    def _initWidget(self):
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.Tool
+        )
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        try:
+            self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, True)
+        except Exception:
+            pass
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
+        rootLayout = QVBoxLayout(self)
+        rootLayout.setContentsMargins(0, 0, 0, 0)
+
+        self.panel = QFrame(self)
+        self.panel.setObjectName('gameLogOverlayPanel')
+        self.panel.setStyleSheet("""
+            QFrame#gameLogOverlayPanel {
+                background-color: rgba(16, 20, 28, 186);
+                border: 1px solid rgba(255, 255, 255, 38);
+                border-radius: 16px;
+            }
+            QLabel#gameLogOverlayTitle {
+                color: rgba(255, 244, 250, 240);
+                font-size: 14px;
+                font-weight: 700;
+            }
+            QLabel#gameLogOverlayBadge {
+                color: rgb(41, 22, 34);
+                background-color: rgba(241, 140, 185, 220);
+                border-radius: 9px;
+                padding: 1px 8px;
+                font-size: 11px;
+                font-weight: 700;
+            }
+            QLabel#gameLogOverlayBody {
+                color: rgba(244, 247, 252, 235);
+                background-color: transparent;
+            }
+        """)
+
+        panelLayout = QVBoxLayout(self.panel)
+        panelLayout.setContentsMargins(16, 14, 16, 14)
+        panelLayout.setSpacing(10)
+
+        headerLayout = QHBoxLayout()
+        headerLayout.setContentsMargins(0, 0, 0, 0)
+        headerLayout.setSpacing(8)
+
+        self.titleLabel = QLabel('任务日志', self.panel)
+        self.titleLabel.setObjectName('gameLogOverlayTitle')
+
+        self.liveBadge = QLabel('LIVE', self.panel)
+        self.liveBadge.setObjectName('gameLogOverlayBadge')
+        self.liveBadge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        headerLayout.addWidget(self.titleLabel)
+        headerLayout.addWidget(self.liveBadge)
+        headerLayout.addStretch()
+
+        self.logLabel = QLabel('', self.panel)
+        self.logLabel.setObjectName('gameLogOverlayBody')
+        self.logLabel.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        self.logLabel.setTextFormat(Qt.TextFormat.PlainText)
+        self.logLabel.setWordWrap(False)
+        if sys.platform == 'win32':
+            self.logLabel.setFont(QFont('NSimSun', 10))
+        else:
+            self.logLabel.setFont(QFont('DejaVu Sans Mono', 10))
+
+        panelLayout.addLayout(headerLayout)
+        panelLayout.addWidget(self.logLabel, 1)
+        rootLayout.addWidget(self.panel)
+
+        self.resize(420, 188)
+        self.hide()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._apply_click_through()
+
+    def _apply_click_through(self):
+        if sys.platform != 'win32':
+            return
+        try:
+            hwnd = int(self.winId())
+            user32 = ctypes.windll.user32
+            ex_style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+            ex_style |= WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE
+            user32.SetWindowLongW(hwnd, GWL_EXSTYLE, ex_style)
+            user32.SetWindowPos(
+                hwnd,
+                HWND_TOPMOST,
+                0,
+                0,
+                0,
+                0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW,
+            )
+        except Exception:
+            pass
+
+    def clear_logs(self):
+        self._lines.clear()
+        self._pending_line = ''
+        self.logLabel.setText('')
+
+    def append_log(self, text: str):
+        if not text:
+            return
+        normalized = self._ansi_escape_re.sub('', str(text))
+        normalized = normalized.replace('\r\n', '\n').replace('\r', '\n')
+        combined = self._pending_line + normalized
+        parts = combined.split('\n')
+
+        if normalized.endswith('\n'):
+            self._pending_line = ''
+        else:
+            self._pending_line = parts.pop() if parts else combined
+
+        for line in parts:
+            self._lines.append(line)
+
+        preview_lines = list(self._lines)
+        if self._pending_line:
+            preview_lines.append(self._pending_line)
+        self.logLabel.setText('\n'.join(preview_lines[-self._lines.maxlen:]))
+
+    def update_geometry(self, left: int, top: int, right: int, bottom: int):
+        # Win32 API 返回物理像素，Qt move/resize 使用逻辑像素，需要按 DPI 缩放转换
+        from PySide6.QtWidgets import QApplication
+        dpr = 1.0
+        try:
+            screen = QApplication.screenAt(self.pos()) or QApplication.primaryScreen()
+            if screen:
+                dpr = screen.devicePixelRatio() or 1.0
+        except Exception:
+            pass
+
+        phys_w = right - left
+        phys_h = bottom - top
+        # width = max(360, min(560, int(phys_w * 0.34 / dpr)))
+        # height = max(172, min(240, int(phys_h * 0.26 / dpr)))
+        width = int(phys_w * 0.34 / dpr)
+        height = int(phys_h * 0.26 / dpr)
+
+        if self.width() != width or self.height() != height:
+            self.resize(width, height)
+
+        x = int((left + self._margin) / dpr)
+        y = int(max(top + self._margin, bottom - self.height() * dpr - self._margin) / dpr)
+        if self.x() != x or self.y() != y:
+            self.move(x, y)
+
+    def show_overlay(self):
+        self._apply_click_through()
+        if not self.isVisible():
+            self.show()
+
+    def hide_overlay(self):
+        if self.isVisible():
+            self.hide()
 
 
 class LogInterface(ScrollArea):
@@ -74,6 +268,9 @@ class LogInterface(ScrollArea):
         # 记录每个定时任务最后触发的“计划时间槽”时间戳（秒）
         # 用于避免在触发窗口边界（例如恰好 +60s）出现同一计划点重复触发
         self._last_triggered_ts = {}
+        self._overlay_enabled = bool(cfg.get_value('log_overlay_enable', False)) if sys.platform == 'win32' else False
+        self._log_overlay = GameLogOverlay() if sys.platform == 'win32' else None
+        self._overlay_timer = None
 
         self.scrollWidget = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
@@ -90,6 +287,7 @@ class LogInterface(ScrollArea):
         self._migrate_legacy_schedule()
         # 启动定时检查器（每30秒检查一次）
         self._schedule_timer.start(30000)
+        self._initOverlayMonitor()
 
     def __initWidget(self):
         self.scrollWidget.setObjectName('scrollWidget')
@@ -135,8 +333,17 @@ class LogInterface(ScrollArea):
         self.clearButton = PushButton(FluentIcon.DELETE, self.tr('清空日志'))
         self.clearButton.clicked.connect(self.clearLog)
 
+        self.logOverlayLabel = BodyLabel(self.tr('在游戏内显示日志'))
+        self.logOverlaySwitch = SwitchButton(self.tr('关'), self.buttonWidget, IndicatorPosition.RIGHT)
+        self.logOverlaySwitch.checkedChanged.connect(self._onLogOverlayToggled)
+        self._setLogOverlaySwitchValue(self._overlay_enabled)
+        if sys.platform != 'win32':
+            self.logOverlaySwitch.setEnabled(False)
+
         self.buttonLayout.addWidget(self.stopButton)
         self.buttonLayout.addWidget(self.clearButton)
+        self.buttonLayout.addWidget(self.logOverlayLabel)
+        self.buttonLayout.addWidget(self.logOverlaySwitch)
         self.buttonLayout.addSpacing(20)
 
         # 定时任务配置（支持多个定时任务）
@@ -197,6 +404,98 @@ class LogInterface(ScrollArea):
     def __initShortcut(self):
         """初始化快捷键（全局热键，支持后台）"""
         self._registerGlobalHotkey()
+
+    def _initOverlayMonitor(self):
+        if sys.platform != 'win32':
+            return
+        self._overlay_timer = QTimer(self)
+        self._overlay_timer.timeout.connect(self._updateLogOverlay)
+        self._overlay_timer.start(150)
+
+    def _setLogOverlaySwitchValue(self, enabled: bool):
+        try:
+            self.logOverlaySwitch.blockSignals(True)
+            self.logOverlaySwitch.setChecked(enabled)
+            self.logOverlaySwitch.setText(self.tr('开') if enabled else self.tr('关'))
+        finally:
+            self.logOverlaySwitch.blockSignals(False)
+
+    def _onLogOverlayToggled(self, enabled: bool):
+        enabled = bool(enabled) and sys.platform == 'win32'
+        self._overlay_enabled = enabled
+        self._setLogOverlaySwitchValue(enabled)
+        cfg.set_value('log_overlay_enable', enabled)
+        if not enabled:
+            self._hideLogOverlay()
+
+    def reloadConfigState(self):
+        self.updateHotkey()
+        enabled = bool(cfg.get_value('log_overlay_enable', False)) if sys.platform == 'win32' else False
+        self._overlay_enabled = enabled
+        self._setLogOverlaySwitchValue(enabled)
+        if not enabled:
+            self._hideLogOverlay()
+
+    def _hideLogOverlay(self):
+        if self._log_overlay:
+            self._log_overlay.hide_overlay()
+
+    def _getClientScreenRect(self, hwnd):
+        if sys.platform != 'win32' or not hwnd:
+            return None
+        try:
+            user32 = ctypes.windll.user32
+            rect = wintypes.RECT()
+            top_left = wintypes.POINT(0, 0)
+            if not user32.GetClientRect(hwnd, ctypes.byref(rect)):
+                return None
+            bottom_right = wintypes.POINT(rect.right, rect.bottom)
+            if not user32.ClientToScreen(hwnd, ctypes.byref(top_left)):
+                return None
+            if not user32.ClientToScreen(hwnd, ctypes.byref(bottom_right)):
+                return None
+            if bottom_right.x <= top_left.x or bottom_right.y <= top_left.y:
+                return None
+            return top_left.x, top_left.y, bottom_right.x, bottom_right.y
+        except Exception:
+            return None
+
+    def _getForegroundGameWindowHandle(self):
+        if sys.platform != 'win32':
+            return None
+        try:
+            controller = get_game_controller()
+            hwnd = controller.get_window_handle()
+            if not hwnd:
+                return None
+            user32 = ctypes.windll.user32
+            if user32.GetForegroundWindow() != hwnd:
+                return None
+            if not user32.IsWindowVisible(hwnd) or user32.IsIconic(hwnd):
+                return None
+            return hwnd
+        except Exception:
+            return None
+
+    def _updateLogOverlay(self):
+        if sys.platform != 'win32' or not self._log_overlay:
+            return
+        if not self._overlay_enabled or not self.isTaskRunning():
+            self._hideLogOverlay()
+            return
+
+        hwnd = self._getForegroundGameWindowHandle()
+        if not hwnd:
+            self._hideLogOverlay()
+            return
+
+        rect = self._getClientScreenRect(hwnd)
+        if not rect:
+            self._hideLogOverlay()
+            return
+
+        self._log_overlay.update_geometry(*rect)
+        self._log_overlay.show_overlay()
 
     def _registerGlobalHotkey(self):
         """注册全局热键"""
@@ -804,6 +1103,11 @@ class LogInterface(ScrollArea):
         except Exception:
             pass
         try:
+            if self._log_overlay:
+                self._log_overlay.clear_logs()
+        except Exception:
+            pass
+        try:
             self._buffered_logs = ""
         except Exception:
             pass
@@ -816,6 +1120,12 @@ class LogInterface(ScrollArea):
         if not text:
             return
         s = str(text)
+
+        try:
+            if self._log_overlay:
+                self._log_overlay.append_log(s)
+        except Exception:
+            pass
 
         # 如果当前不应立即追加，则缓冲并返回
         try:
@@ -989,6 +1299,7 @@ class LogInterface(ScrollArea):
                 self.appendLog(f"任务异常结束，退出码: {exit_code}\n")
 
         self._updateFinishedStatus(exit_code)
+        self._hideLogOverlay()
         self.taskFinished.emit(exit_code)
 
         # 如果此次运行是由定时任务触发并且有上下文信息，则在进程结束后发送通知与记录完成后操作
@@ -1176,6 +1487,7 @@ class LogInterface(ScrollArea):
         if error == QProcess.Crashed:
             self.appendLog(f"\n可尝试关闭 “设置-杂项-启用 OCR GPU 加速” 选项后重新运行\n")
         self._updateFinishedStatus(-1)
+        self._hideLogOverlay()
 
     def _post_action_label(self, action: str) -> str:
         """返回 post_action 的本地化标签"""
@@ -1264,6 +1576,8 @@ class LogInterface(ScrollArea):
         # 停止定时检查器
         if self._schedule_timer:
             self._schedule_timer.stop()
+        if self._overlay_timer:
+            self._overlay_timer.stop()
         # 取消等待中的完成后操作（若有）
         try:
             if getattr(self, '_pending_post_action_timer', None):
@@ -1276,3 +1590,4 @@ class LogInterface(ScrollArea):
                 self._pending_post_action = None
         except Exception:
             pass
+            self._hideLogOverlay()
