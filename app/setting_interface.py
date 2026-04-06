@@ -431,9 +431,9 @@ class SettingInterface(ScrollArea):
         )
         self.weeklyDivergentLevelCard = RangeSettingCard1(
             "weekly_divergent_level",
-            [1, 5],
+            [1, 6],
             FIF.HISTORY,
-            tr("难度等级"),
+            tr("难度等级（难度6对应常规演算星阶模式）"),
             "",
         )
         self.weeklyDivergentBonusEnableCard = SwitchSettingCard1(

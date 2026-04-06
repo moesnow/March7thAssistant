@@ -189,7 +189,7 @@ currencywars_fast_mode: false # 是否启用货币战争速通模式，仅在首
 # 差分宇宙配置
 weekly_divergent_enable: false # 是否启用「差分宇宙」积分奖励。true 开启，false 关闭。
 weekly_divergent_type: cycle # 积分奖励时执行的差分宇宙模式，可选值："normal"（常规演算）或 "cycle"（周期演算）。
-weekly_divergent_level: 5 # 执行差分宇宙时的难度等级，取值范围 1-5，数值越大难度越高。
+weekly_divergent_level: 5 # 执行差分宇宙时的难度等级，取值范围 1-6，数值越大难度越高，其中难度 6 对应常规演算星阶模式。
 weekly_divergent_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的时间戳，用于记录和控制运行频率。
 weekly_divergent_bonus_enable: false # 在领取积分奖励后自动执行饰品提取消耗沉浸器。true 开启，false 关闭。
 weekly_divergent_stable_mode: false # 是否启用差分宇宙稳定模式，运行若出现问题可尝试开启，适配低性能环境，云游戏默认使用此模式。true 开启，false 关闭。
