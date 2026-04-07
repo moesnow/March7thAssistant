@@ -1,4 +1,4 @@
-import os
+import subprocess
 import sys
 if sys.platform == 'win32':
     import winreg
@@ -50,13 +50,11 @@ def gamereg_uid() -> int | None:
 
 def gamereg_export(path: str) -> None:
     if full_reg_path is not None:
-        subcommand = f"reg export \"{full_reg_path}\" {path} /y"
-        result = os.system(subcommand)
+        result = subprocess.run(['reg', 'export', full_reg_path, path, '/y'], check=False)
 
 
 def gamereg_import(path: str) -> None:
-    subcommand = f"reg import {path}"
-    result = os.system(subcommand)
+    result = subprocess.run(['reg', 'import', path], check=False)
 
 
 def gamereg_delete_all() -> None:
@@ -65,7 +63,6 @@ def gamereg_delete_all() -> None:
     """
     if full_reg_path is None:
         return
-    subcommand = f"reg delete \"{full_reg_path}\" /f"
-    result = os.system(subcommand)
-    if result != 0:
-        raise Exception(f"Failed to delete registry key: {full_reg_path}. Error code: {result}")
+    result = subprocess.run(['reg', 'delete', full_reg_path, '/f'], check=False)
+    if result.returncode != 0:
+        raise Exception(f"Failed to delete registry key: {full_reg_path}. Error code: {result.returncode}")
