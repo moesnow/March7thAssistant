@@ -4,7 +4,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from .notifier import Notifier
-import ssl
 
 
 class SMTPNotifier(Notifier):
@@ -20,7 +19,6 @@ class SMTPNotifier(Notifier):
         port = self.params.get("port", 465)
         ssl = self.params.get("ssl", True)
         starttls = self.params.get("starttls", False)
-        ssl_unverified = self.params.get("ssl_unverified", False)
 
 
         msg = MIMEMultipart('related')
@@ -39,17 +37,12 @@ class SMTPNotifier(Notifier):
 
         if starttls:
             smtp = smtplib.SMTP(host, port)
-            smtp.starttls(context=sslcontext(ssl_unverified))
+            smtp.starttls()
         elif ssl:
-            smtp = smtplib.SMTP_SSL(host, port, context=sslcontext(ssl_unverified))
+            smtp = smtplib.SMTP_SSL(host, port)
         else:
             smtp = smtplib.SMTP(host, port)
         if user != '':
             smtp.login(user, password)
         smtp.sendmail(From, To, msg.as_string())
         smtp.quit()
-
-def sslcontext(ssl_unverified):
-    if ssl_unverified:
-        return ssl._create_unverified_context()
-    return None
