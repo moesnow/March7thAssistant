@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties
+from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard
 from app.sub_interfaces.accounts_interface import accounts_interface
@@ -47,35 +47,33 @@ class SettingInterface(ScrollArea):
         self.setViewportMargins(0, 140, 0, 5)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        # self.title_area.setWidget(self.pivot)
-        # self.title_area.setWidgetResizable(True)
-        # self.title_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        # self.title_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # self.title_area.setMinimumSize(800, 50)
-        # self.title_area.setStyleSheet("""
-        #     QScrollBar:horizontal {
-        #         height: 4px;
-        #         background: #f0f0f0;
-        #         border-radius: 10px;
-        #     }
-
-        #     QScrollBar::handle:horizontal {
-        #         background: #888;
-        #         border-radius: 10px;
-        #     }
-
-        #     QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
-        #         background: none;
-        #     }
-
-        #     QScrollBar::handle:horizontal:hover {
-        #         background: #555;
-        #     }
-        # """)
         self.setObjectName('settingInterface')
         self.scrollWidget.setObjectName('scrollWidget')
         self.settingLabel.setObjectName('settingLabel')
         StyleSheet.SETTING_INTERFACE.apply(self)
+
+        # 选项卡滚动区域：当标签文字较长（如英语）时允许横向滚动
+        self.pivotScrollArea = QScrollArea(self)
+        self.pivotScrollArea.setWidget(self.pivot)
+        self.pivotScrollArea.setWidgetResizable(False)
+        self.pivotScrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.pivotScrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.pivotScrollArea.setFrameShape(QFrame.Shape.NoFrame)
+        self.pivotScrollArea.setStyleSheet("""
+            QScrollBar:horizontal {
+                height: 3px;
+                background: transparent;
+            }
+            QScrollBar::handle:horizontal {
+                background: rgba(134, 134, 134, 0.45);
+                border-radius: 1px;
+                min-width: 24px;
+            }
+            QScrollBar::add-line:horizontal,
+            QScrollBar::sub-line:horizontal {
+                width: 0px;
+            }
+        """)
 
         QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
         scroller = QScroller.scroller(self.viewport())
@@ -1330,13 +1328,16 @@ class SettingInterface(ScrollArea):
             "ui_language",
             FIF.LANGUAGE,
             '界面语言 / 界面語言 / 인터페이스 언어 / UI Language',
-            '需要重启程序生效 / 需要重啟程式生效 / 변경 사항을 적용하려면 재시작 필요 / Requires restart to take effect',
+            '切换后即时生效 / 切換後即時生效 / 변경 즉시 적용 / Takes effect immediately',
             texts={'自动': 'auto', '简体中文': 'zh_CN', '繁體中文': 'zh_TW', '한국어': 'ko_KR', 'English': 'en_US'}
         )
 
     def __initLayout(self):
         self.settingLabel.move(36, 30)
-        self.pivot.move(40, 80)
+        # pivot 放置在 pivotScrollArea 内，后者覆盖选项卡区域
+        self.pivotScrollArea.move(0, 68)
+        self.pivotScrollArea.setFixedHeight(62)
+        self.pivotScrollArea.setFixedWidth(self.width())
         # self.title_area.move(36, 80)
         # self.vBoxLayout.addWidget(self.pivot, 0, Qt.AlignTop)
         self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignmentFlag.AlignTop)
@@ -1593,6 +1594,10 @@ class SettingInterface(ScrollArea):
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())
         self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.pivotScrollArea.setFixedWidth(self.width())
 
     def __connectSignalToSlot(self):
         # self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)

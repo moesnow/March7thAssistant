@@ -355,19 +355,156 @@ class MainWindow(MSFluentWindow):
             self.logInterface.updateHotkey()
 
     def _on_ui_language_changed(self, lang_code: str):
-        """处理 UI 语言改变信号：显示需要重启的提示"""
+        """热重载 UI 语言，无需重启"""
         try:
-            InfoBar.success(
-                title=tr('更新成功'),
-                content=tr('配置在重启软件后生效'),
+            from module.localization import load_language, detect_lang
+
+            actual_lang = lang_code
+            if actual_lang == 'auto':
+                actual_lang = detect_lang()
+                if actual_lang == 'ja_JP':
+                    actual_lang = 'en_US'
+
+            cfg.ui_language_now = actual_lang
+            load_language(actual_lang)
+
+            # 更新 FluentTranslator
+            self._reinstall_fluent_translator(actual_lang)
+
+            # 延迟执行，确保当前信号处理完毕后再重建界面
+            from PySide6.QtCore import QTimer
+            QTimer.singleShot(50, self._rebuild_interfaces_for_language)
+        except Exception as e:
+            InfoBar.warning(
+                title='语言切换失败',
+                content=str(e),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=2000,
+                duration=3000,
                 parent=self
             )
-        except Exception:
-            pass
+
+    def _reinstall_fluent_translator(self, lang_code: str):
+        """重新安装 FluentTranslator 以使 Qt 内置翻译同步更新"""
+        from PySide6.QtCore import QLocale
+        from qfluentwidgets import FluentTranslator
+        app = QApplication.instance()
+        if hasattr(self, '_fluent_translator') and self._fluent_translator:
+            try:
+                app.removeTranslator(self._fluent_translator)
+            except Exception:
+                pass
+        if lang_code == 'zh_TW':
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
+        elif lang_code == 'ko_KR':
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
+        elif lang_code == 'en_US':
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        else:
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
+        app.installTranslator(self._fluent_translator)
+
+    def _rebuild_interfaces_for_language(self):
+        """重建所有子界面以应用新语言"""
+        try:
+            current_widget = self.stackedWidget.currentWidget()
+
+            # ── TOP 界面（按导航顺序重建）──────────────────────────────
+            top_specs = [
+                ('homeInterface',  FIF.HOME,             tr('主页'),     HomeInterface),
+                ('helpInterface',  FIF.BOOK_SHELF,       tr('帮助'),     HelpInterface),
+                ('warpInterface',  FIF.SHARE,            tr('抽卡记录'), WarpInterface),
+                ('toolsInterface', FIF.DEVELOPER_TOOLS,  tr('工具箱'),   ToolsInterface),
+            ]
+
+            # 记录哪个界面是当前激活的
+            was_current = {attr: (current_widget is getattr(self, attr)) for attr, *_ in top_specs}
+
+            # 先隐藏并移除所有旧 TOP 界面（保持顺序：先全部移除，再按序添加）
+            for attr, _icon, _label, _cls in top_specs:
+                old = getattr(self, attr)
+                route_key = old.objectName()
+                if route_key in self.navigationInterface.items:
+                    self.navigationInterface.items[route_key].hide()
+                self.removeInterface(old, isDelete=True)
+
+            # 按顺序创建并重新添加 TOP 界面
+            new_current = None
+            for attr, icon, label, cls in top_specs:
+                new_iface = cls(self)
+                setattr(self, attr, new_iface)
+                self.addSubInterface(new_iface, icon, label)
+                if was_current.get(attr):
+                    new_current = new_iface
+
+            # ── BOTTOM：日志界面（可能有运行中任务，仅更新导航标签）──
+            try:
+                log_key = self.logInterface.objectName()
+                log_item = self.navigationInterface.items.get(log_key)
+                if log_item is not None and hasattr(log_item, 'setText'):
+                    log_item.setText(tr('日志'))
+            except Exception:
+                pass
+
+            if current_widget is self.logInterface:
+                new_current = self.logInterface
+
+            # ── BOTTOM：设置界面 ────────────────────────────────────────
+            was_setting = (current_widget is self.settingInterface)
+            old_setting = self.settingInterface
+            route_key = old_setting.objectName()
+            if route_key in self.navigationInterface.items:
+                self.navigationInterface.items[route_key].hide()
+            self.removeInterface(old_setting, isDelete=True)
+            self.settingInterface = SettingInterface(self)
+            self.addSubInterface(
+                self.settingInterface, FIF.SETTING, tr('设置'),
+                position=NavigationItemPosition.BOTTOM
+            )
+            if was_setting:
+                new_current = self.settingInterface
+
+            # ── 导航栏自定义按钮文本 ───────────────────────────────────
+            for widget_key, text_key in [('startGameButton', '启动游戏'), ('avatar', '赞赏')]:
+                try:
+                    btn = self.navigationInterface.widget(widget_key)
+                    if btn and hasattr(btn, 'setText'):
+                        btn.setText(tr(text_key))
+                except Exception:
+                    pass
+
+            # ── 重新连接信号 ───────────────────────────────────────────
+            signalBus.startTaskSignal.connect(self._onStartTask)
+            signalBus.hotkeyChangedSignal.connect(self._onHotkeyChanged)
+            signalBus.uiLanguageChanged.connect(self._on_ui_language_changed)
+            self.logInterface.taskFinished.connect(self._onTaskFinished)
+
+            # 还原激活的界面
+            if new_current is not None:
+                self.switchTo(new_current)
+
+            InfoBar.success(
+                title=tr('更新成功'),
+                content='',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1500,
+                parent=self
+            )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            InfoBar.warning(
+                title=tr('配置加载失败'),
+                content=str(e),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
 
     def _onTaskFinished(self, exit_code):
         """处理任务完成信号"""
