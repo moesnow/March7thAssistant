@@ -1,0 +1,39 @@
+name: fast-forward for PR
+# GitHub doesn't support fast-forward merge of PR, 
+# which causes GPG signatures overriden by GitHub's key.
+# This workflow allows maintainers to do a fast-forward merge
+# by replying anything containing `/fast-forward` to the PR.
+#
+# Contributors must first rebase onto the latest commit before PR to make fast-forward possible.
+on:
+  # issue / PR comment
+  issue_comment:
+    types: [created, edited]
+  # PR comment in review
+  pull_request_review_comment:
+    types: [created, edited]
+jobs:
+  fast-forward:
+    if: ${{ contains(github.event.comment.body, '/fast-forward')
+            && github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check User Permission
+        id: check-perm
+        uses: actions-cool/check-user-permission@v2.2.0
+        with:
+          require: write
+
+      - name: Fast forwarding
+        if: steps.check-perm.outputs.require-result == 'true'
+        # As GitHub actions use actor's permission, it's not possible
+        # for anyone without write permission to perform a merge.
+        # This check is merely for skipping it silently.
+        uses: sequoia-pgp/fast-forward@v1
+        with:
+          merge: true
+          comment: on-error
