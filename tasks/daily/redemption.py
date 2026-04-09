@@ -21,23 +21,70 @@ def load_codes(path: str) -> List[Dict]:
         return json.load(f)
 
 
-def load_codes_from_url(url: str) -> List[Dict]:
-    """从指定 URL 加载兑换码列表（JSON 格式）。请求超时后重试最多 3 次；若仍失败，原样抛出异常。"""
+def load_codes_from_url(urls: list[str]) -> list[dict]:
+    """
+    并发从多个 URL 获取 JSON 数据：
+    - 抗 DNS 劫持 / SNI 阻断 / 超时 / 证书错误 / 过滤非 JSON
+    """
     import requests
-    from requests.exceptions import Timeout
+    from requests.exceptions import (
+        Timeout, ConnectionError, SSLError, TooManyRedirects
+    )
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    import json
+    import threading
 
-    attempts = 0
-    while True:
+    stop_event = threading.Event()
+
+    def fetch(url: str):
+        if stop_event.is_set():
+            return None
         try:
-            response = requests.get(url, headers=cfg.useragent, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except Timeout:
-            attempts += 1
-            if attempts >= 3:
-                # 达到最大重试次数，原样抛出 Timeout 异常
-                raise
-            # 否则静默重试
+            resp = requests.get(url, headers=cfg.useragent, timeout=10)
+            if stop_event.is_set():
+                return None
+            resp.raise_for_status()
+
+            ct = resp.headers.get("Content-Type", "")
+            if "application/json" not in ct:
+                raise ValueError(f"非 JSON: {ct}")
+
+            try:
+                data = resp.json()
+            except json.JSONDecodeError:
+                raise ValueError("JSON 解析失败")
+
+            if not isinstance(data, list):
+                raise ValueError("JSON 结构不符合预期")
+
+            return data
+
+        except (Timeout, ConnectionError, SSLError, TooManyRedirects) as e:
+            if not stop_event.is_set():
+                log.warning(f"[{url}] 网络错误: {e}")
+        except Exception as e:
+            if not stop_event.is_set():
+                log.warning(f"[{url}] 数据异常: {e}")
+
+        return None
+
+    executor = ThreadPoolExecutor(max_workers=min(5, len(urls)))
+    futures = {executor.submit(fetch, url): url for url in urls}
+
+    try:
+        for future in as_completed(futures):
+            result = future.result()
+            if result is not None:
+                stop_event.set()
+                executor.shutdown(wait=False, cancel_futures=True)
+                return result
+    except Exception:
+        stop_event.set()
+        executor.shutdown(wait=False, cancel_futures=True)
+        raise
+
+    executor.shutdown(wait=False)
+    raise RuntimeError("所有 URL 均不可用（可能被 DNS 劫持 / SNI 阻断 / 网络异常）")
 
 
 def valid_codes_for_server(server: str, now: Optional[datetime.datetime] = None) -> List[str]:
@@ -45,7 +92,11 @@ def valid_codes_for_server(server: str, now: Optional[datetime.datetime] = None)
     返回指定服务器的未过期兑换码列表。
     expires_at 使用 ISO 8601 格式；为 null 表示不过期。
     """
-    url = "https://m7a.top/assets/config/redemption_codes.json"
+    url = [
+        "https://m7a.top/assets/config/redemption_codes.json",
+        "https://github.kotori.top/https://m7a.top/assets/config/redemption_codes.json",
+        "https://raw.githubusercontent.com/moesnow/March7thAssistant/refs/heads/main/assets/config/redemption_codes.json"
+    ]
     path = "assets/config/redemption_codes.json"
     try:
         codes = load_codes_from_url(url)

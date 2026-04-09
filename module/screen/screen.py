@@ -90,18 +90,26 @@ class Screen(metaclass=SingletonMeta):
         :param max_retries: 最大重试次数。
         :return: 如果成功识别到界面则返回True，否则返回False。
         """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        found_event = threading.Event()
 
         # 定义内部函数用于在线程中识别界面
         def find_screen(screen_name, screen):
+            if found_event.is_set():
+                return None
             try:
                 result = self._find_image(screen['image_path'], "image_threshold", 0.9, take_screenshot=False)
-                if result:
+                if result and not found_event.is_set():
                     with self.lock:
                         if not self.current_screen or self.current_screen_threshold < result:
                             self.current_screen = screen_name
                             self.current_screen_threshold = result
+                    found_event.set()
+                    return screen_name
             except Exception as e:
                 self.logger.debug(f"识别界面出错：{e}")
+            return None
 
         if self.current_screen is not None and self._find_image(self.screen_map[self.current_screen]['image_path'], "image_threshold", 0.9):
             return True
@@ -109,15 +117,20 @@ class Screen(metaclass=SingletonMeta):
         for i in range(max_retries):
             auto.take_screenshot()
             self._reset_screen_state()
+            found_event.clear()
 
             import psutil
             mem = psutil.virtual_memory()
             if mem.available > 2 * 1024**3:
-                threads = [threading.Thread(target=find_screen, args=(name, screen)) for name, screen in self.screen_map.items()]
-                for thread in threads:
-                    thread.start()
-                for thread in threads:
-                    thread.join()
+                executor = ThreadPoolExecutor(max_workers=len(self.screen_map))
+                futures = [executor.submit(find_screen, name, screen) for name, screen in self.screen_map.items()]
+
+                for future in as_completed(futures):
+                    if future.result() is not None:
+                        executor.shutdown(wait=False, cancel_futures=True)
+                        break
+                else:
+                    executor.shutdown(wait=False)
             else:
                 for name, screen in self.screen_map.items():
                     find_screen(name, screen)
