@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGraphicsOpacityEffect
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGraphicsOpacityEffect
 from PySide6.QtGui import QAction, QPixmap
 
 from qfluentwidgets import RoundMenu, IconWidget, FlowLayout, CardWidget, InfoBarIcon, TeachingTip, TeachingTipTailPosition, InfoBar, InfoBarPosition
@@ -136,6 +136,7 @@ class SampleCardView1(QWidget):
         super().__init__(parent=parent)
         self.titleLabel = QLabel(title, self)
         self.vBoxLayout = QVBoxLayout(self)
+        self.headerLayout = QHBoxLayout()
         self.flowLayout = FlowLayout()
 
         self.vBoxLayout.setContentsMargins(20, 0, 20, 0)
@@ -144,7 +145,9 @@ class SampleCardView1(QWidget):
         self.flowLayout.setHorizontalSpacing(12)
         self.flowLayout.setVerticalSpacing(12)
 
-        self.vBoxLayout.addWidget(self.titleLabel)
+        self.headerLayout.addWidget(self.titleLabel)
+        self.headerLayout.addStretch()
+        self.vBoxLayout.addLayout(self.headerLayout)
         self.vBoxLayout.addLayout(self.flowLayout, 1)
 
         self.titleLabel.setObjectName('viewTitleLabel')
@@ -154,3 +157,12 @@ class SampleCardView1(QWidget):
         """ add sample card """
         card = SampleCard(icon, title, action, self)
         self.flowLayout.addWidget(card)
+
+    def clearCards(self):
+        """ remove all sample cards """
+        while self.flowLayout.count():
+            item = self.flowLayout.takeAt(0)
+            widget = item.widget() if hasattr(item, 'widget') else item
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()

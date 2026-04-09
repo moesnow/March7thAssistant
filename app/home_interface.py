@@ -1,13 +1,16 @@
 # coding:utf-8
+import copy
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPainterPath, QImage, QAction
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QFileDialog
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QFileDialog, QDialog
 
-from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu
+from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton
 
 from .common.style_sheet import StyleSheet
 from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
+from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog
 from tasks.base.tasks import start_task
 
 from module.config import cfg
@@ -174,82 +177,92 @@ class HomeInterface(ScrollArea):
         self.vBoxLayout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
     def loadSamples(self):
-        basicInputView = SampleCardView1(
+        self.basicInputView = SampleCardView1(
             tr("任务 >"), self.view)
 
-        basicInputView.addSampleCard(
-            icon="./assets/app/images/March7th.jpg",
-            title=tr("完整运行"),
-            action=lambda: start_task("main")
-        )
-        basicInputView.addSampleCard(
-            icon="./assets/app/images/JingYuan.jpg",
-            title=tr("日常"),
-            action={
-                tr("每日实训"): lambda: start_task("daily"),
-                tr("清体力"): lambda: start_task("power"),
-            }
-        )
-        basicInputView.addSampleCard(
-            icon="./assets/app/images/Yanqing.jpg",
-            title=tr("货币战争"),
-            action={
-                tr("运行一次"): lambda: start_task("currencywars"),
-                tr("循环运行"): lambda: start_task("currencywarsloop"),
-                # "中途接管": lambda: start_task("currencywarstemp"),
-            }
-        )
-        if sys.platform == 'win32':
-            basicInputView.addSampleCard(
-                icon="./assets/app/images/Herta.jpg",
-                title=tr("差分宇宙"),
-                action={
-                    tr("差分宇宙运行一次【测试版】 ⭐"): lambda: start_task("divergent"),
-                    tr("差分宇宙循环运行【测试版】 ⭐"): lambda: start_task("divergentloop"),
-                    tr("差分宇宙中途接管【测试版】"): lambda: start_task("divergenttemp"),
-                    tr("模拟宇宙快速启动（停止维护）"): lambda: start_task("universe"),
-                    tr("模拟宇宙原版运行（停止维护）"): lambda: start_task("universe_gui"),
-                    tr("更新模拟宇宙（停止维护）"): lambda: start_task("universe_update"),
-                    tr("重置模拟宇宙配置文件（停止维护）"): lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)],
-                    tr("打开模拟宇宙目录（停止维护）"): lambda: os.startfile(cfg.universe_path),
-                    tr("打开模拟宇宙项目主页（停止维护）"): lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe"),
-                }
-            )
-            basicInputView.addSampleCard(
-                icon="./assets/app/images/SilverWolf.jpg",
-                title=tr("锄大地"),
-                action={
-                    tr("快速启动 ⭐"): lambda: start_task("fight"),
-                    tr("原版运行"): lambda: start_task("fight_gui"),
-                    tr("更新锄大地"): lambda: start_task("fight_update"),
-                    tr("重置配置文件"): lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json")),
-                    tr("打开程序目录"): lambda: os.startfile(cfg.fight_path),
-                    tr("打开项目主页"): lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail"),
-                }
-            )
-        else:
-            basicInputView.addSampleCard(
-                icon="./assets/app/images/Herta.jpg",
-                title=tr("差分宇宙"),
-                action={
-                    tr("暂不支持"): lambda: None,
-                }
-            )
-            basicInputView.addSampleCard(
-                icon="./assets/app/images/SilverWolf.jpg",
-                title=tr("锄大地"),
-                action={
-                    tr("暂不支持"): lambda: None,
-                }
-            )
-        basicInputView.addSampleCard(
-            icon="./assets/app/images/Bronya.jpg",
-            title=tr("逐光捡金"),
-            action={
-                tr("混沌回忆"): lambda: start_task("forgottenhall"),
-                tr("虚构叙事"): lambda: start_task("purefiction"),
-                tr("末日幻影"): lambda: start_task("apocalyptic"),
-            }
-        )
+        # 添加编辑按钮到标题栏
+        edit_btn = PushButton(FluentIcon.EDIT, tr("编辑"))
+        edit_btn.setFixedHeight(30)
+        edit_btn.clicked.connect(self._on_edit_cards)
+        self.basicInputView.headerLayout.addWidget(edit_btn)
 
-        self.vBoxLayout.addWidget(basicInputView)
+        # 从配置加载卡片数据
+        cards_data = cfg.get_value("home_cards")
+        if cards_data is None:
+            cards_data = copy.deepcopy(DEFAULT_CARDS)
+
+        for card in cards_data:
+            action = self._build_card_action(card)
+            self.basicInputView.addSampleCard(
+                icon=card.get("icon", ""),
+                title=card.get("title", ""),
+                action=action
+            )
+
+        self.vBoxLayout.addWidget(self.basicInputView)
+
+    def _build_card_action(self, card_data):
+        """根据卡片配置数据构建动作"""
+        if card_data.get("action_type") == "single":
+            task_id = card_data.get("task_id", "main")
+            if task_id in HOME_EXTRA_TASKS:
+                return self._get_extra_task_action(task_id)
+            return lambda tid=task_id: start_task(tid)
+        else:
+            result = {}
+            for item in card_data.get("menu_items", []):
+                task_id = item.get("task_id", "")
+                label = item.get("label", "")
+                if task_id in HOME_EXTRA_TASKS:
+                    result[label] = self._get_extra_task_action(task_id)
+                else:
+                    result[label] = lambda tid=task_id: start_task(tid)
+            return result
+
+    @staticmethod
+    def _get_extra_task_action(task_id):
+        """获取特殊主页操作的 lambda"""
+        if task_id == "_reset_universe_config":
+            return lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)]
+        elif task_id == "_open_universe_dir":
+            return lambda: os.startfile(cfg.universe_path)
+        elif task_id == "_open_universe_homepage":
+            return lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe")
+        elif task_id == "_reset_fight_config":
+            return lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json"))
+        elif task_id == "_open_fight_dir":
+            return lambda: os.startfile(cfg.fight_path)
+        elif task_id == "_open_fight_homepage":
+            return lambda: os.startfile("https://github.com/linruowuyin/Fhoe-Rail")
+        return lambda: None
+
+    def _on_edit_cards(self):
+        """打开卡片编辑对话框"""
+        cards_data = cfg.get_value("home_cards")
+        if cards_data is None:
+            cards_data = copy.deepcopy(DEFAULT_CARDS)
+
+        dialog = CardEditDialog(cards_data, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.result_cards is not None:
+            # 检查是否与默认配置相同，如果相同则不保存（清除自定义配置）
+            if dialog.result_cards == DEFAULT_CARDS:
+                cfg.set_value("home_cards", None)
+            else:
+                cfg.set_value("home_cards", dialog.result_cards)
+            self._rebuild_cards()
+
+    def _rebuild_cards(self):
+        """重建卡片视图"""
+        self.basicInputView.clearCards()
+
+        cards_data = cfg.get_value("home_cards")
+        if cards_data is None:
+            cards_data = copy.deepcopy(DEFAULT_CARDS)
+
+        for card in cards_data:
+            action = self._build_card_action(card)
+            self.basicInputView.addSampleCard(
+                icon=card.get("icon", ""),
+                title=card.get("title", ""),
+                action=action
+            )
