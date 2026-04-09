@@ -31,6 +31,14 @@
             ]
         },
         {
+            "key": "m9a",
+            "display_name": "重返未来 M9A",
+            "short_name": "1999",
+            "executable": "M9A.exe",
+            "default_args": "",
+            "kill_processes": []
+        },
+        {
             "key": "mfaavalonia",
             "display_name": "MFAAvalonia",
             "short_name": "",

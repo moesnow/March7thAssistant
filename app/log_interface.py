@@ -347,7 +347,7 @@ class LogInterface(ScrollArea):
         self.buttonLayout.addSpacing(20)
 
         # 定时任务配置（支持多个定时任务）
-        self.scheduleLabel = BodyLabel(self.tr('定时任务'))
+        # self.scheduleLabel = BodyLabel(self.tr('定时任务'))
 
         # 打开定时任务管理配置弹窗
         self.manageScheduleButton = PushButton(self.tr('配置定时任务'))
@@ -356,7 +356,7 @@ class LogInterface(ScrollArea):
         self.scheduleStatusLabel = BodyLabel()
         self._updateScheduleStatusLabel()
 
-        self.buttonLayout.addWidget(self.scheduleLabel)
+        # self.buttonLayout.addWidget(self.scheduleLabel)
         self.buttonLayout.addWidget(self.manageScheduleButton)
         self.buttonLayout.addWidget(self.scheduleStatusLabel)
         self.buttonLayout.addStretch()
@@ -577,7 +577,7 @@ class LogInterface(ScrollArea):
             else:
                 # 计算具体时间
                 time_str = next_task.get('time')
-            self.scheduleStatusLabel.setText(self.tr('已启用定时任务数: {count}，下次: {time} ({name})').format(count=len(enabled), time=time_str, name=next_task.get("name", "")))
+            self.scheduleStatusLabel.setText(self.tr('已启用: {count}，下次: {time}').format(count=len(enabled), time=time_str))
         else:
             # self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}'))
             self.scheduleStatusLabel.setText(self.tr('尚未配置定时任务'))
