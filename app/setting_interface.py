@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame
 from qfluentwidgets import FluentIcon as FIF
@@ -21,6 +21,53 @@ from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
 import os
 import sys
+
+
+class _PivotDragFilter(QObject):
+    """为 pivot 滚动区域的 viewport 提供鼠标拖拽横向滚动。
+
+    设计原则：
+    - 按下时记录起点，不消费事件（pivot tab 的 hover/press 状态正常触发）
+    - 移动超过阈值后进入拖拽模式，消费 Move 事件防止 pivot hover 抖动
+    - 释放时：拖拽模式下消费事件（防止误触 tab 切换），点击模式下放行
+    """
+    _THRESHOLD = 6  # px，低于此距离视为点击
+
+    def __init__(self, scroll_area: QScrollArea):
+        super().__init__(scroll_area)
+        self._sa = scroll_area
+        self._press_pos: QPoint | None = None
+        self._scroll_origin: int = 0
+        self._dragging: bool = False
+
+    def eventFilter(self, obj, event: QEvent) -> bool:
+        t = event.type()
+        if t == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
+            self._press_pos = event.position().toPoint()
+            self._scroll_origin = self._sa.horizontalScrollBar().value()
+            self._dragging = False
+            return False  # 放行，pivot 正常接收 press
+
+        if t == QEvent.Type.MouseMove and (event.buttons() & Qt.MouseButton.LeftButton):
+            if self._press_pos is not None:
+                dx = event.position().toPoint().x() - self._press_pos.x()
+                if not self._dragging and abs(dx) > self._THRESHOLD:
+                    self._dragging = True
+                    # 覆盖光标提示用户正在拖拽
+                    self._sa.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
+                if self._dragging:
+                    self._sa.horizontalScrollBar().setValue(self._scroll_origin - dx)
+                    return True  # 拖拽期间消费，避免 pivot hover 闪烁
+            return False
+
+        if t == QEvent.Type.MouseButtonRelease and event.button() == Qt.MouseButton.LeftButton:
+            was_dragging = self._dragging
+            self._press_pos = None
+            self._dragging = False
+            self._sa.viewport().unsetCursor()
+            return was_dragging  # 拖拽后消费 release，防止误切 tab
+
+        return False
 
 
 class SettingInterface(ScrollArea):
@@ -52,28 +99,45 @@ class SettingInterface(ScrollArea):
         self.settingLabel.setObjectName('settingLabel')
         StyleSheet.SETTING_INTERFACE.apply(self)
 
-        # 选项卡滚动区域：当标签文字较长（如英语）时允许横向滚动
+        # ── 选项卡滚动容器 ──────────────────────────────────────────────
+        # 当标签文字较长（如英语）时允许横向滚动；拖拽由 _PivotDragFilter 处理。
+        # QScroller.LeftMouseButtonGesture 不用于此处：它会在 drag 检测期间拦截
+        # 所有鼠标事件，导致 pivot tab 点击无法触发。
         self.pivotScrollArea = QScrollArea(self)
         self.pivotScrollArea.setWidget(self.pivot)
         self.pivotScrollArea.setWidgetResizable(False)
-        self.pivotScrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.pivotScrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.pivotScrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.pivotScrollArea.setFrameShape(QFrame.Shape.NoFrame)
-        self.pivotScrollArea.setStyleSheet("""
+        # 滚动条：10px 高，轨道有底色便于识别，handle 高对比，hover/press 加深
+        self.pivotScrollArea.horizontalScrollBar().setStyleSheet("""
             QScrollBar:horizontal {
-                height: 3px;
-                background: transparent;
+                height: 10px;
+                background: rgba(128, 128, 128, 0.18);
+                border-radius: 5px;
+                margin: 0px;
             }
             QScrollBar::handle:horizontal {
-                background: rgba(134, 134, 134, 0.45);
-                border-radius: 1px;
-                min-width: 24px;
+                background: rgba(90, 90, 90, 0.65);
+                border-radius: 5px;
+                min-width: 40px;
+            }
+            QScrollBar::handle:horizontal:hover {
+                background: rgba(60, 60, 60, 0.85);
+            }
+            QScrollBar::handle:horizontal:pressed {
+                background: rgba(30, 30, 30, 0.98);
             }
             QScrollBar::add-line:horizontal,
             QScrollBar::sub-line:horizontal {
                 width: 0px;
             }
         """)
+        # 鼠标拖拽横向滚动（区分拖拽 vs 点击，不干扰 tab 切换）
+        self._pivot_drag_filter = _PivotDragFilter(self.pivotScrollArea)
+        self.pivotScrollArea.viewport().installEventFilter(self._pivot_drag_filter)
+        # 鼠标悬停时显示手型光标，提示可拖拽
+        self.pivotScrollArea.viewport().setCursor(Qt.CursorShape.OpenHandCursor)
 
         QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
         scroller = QScroller.scroller(self.viewport())
@@ -1328,17 +1392,16 @@ class SettingInterface(ScrollArea):
             "ui_language",
             FIF.LANGUAGE,
             '界面语言 / 界面語言 / 인터페이스 언어 / UI Language',
-            '切换后即时生效 / 切換後即時生效 / 변경 즉시 적용 / Takes effect immediately',
+            '需要重启程序生效 / 需要重啟程式生效 / 변경 사항을 적용하려면 재시작 필요 / Requires restart to take effect',
             texts={'自动': 'auto', '简体中文': 'zh_CN', '繁體中文': 'zh_TW', '한국어': 'ko_KR', 'English': 'en_US'}
         )
 
     def __initLayout(self):
         self.settingLabel.move(36, 30)
-        # pivot 放置在 pivotScrollArea 内，后者覆盖选项卡区域
-        # x=40 与 settingLabel 对齐，y=80 与原 pivot 位置一致
-        # 宽度 = 窗口宽 - 40，由 resizeEvent 保持同步
+        # pivot 现在位于 pivotScrollArea 内，直接定位 scroll area 即可
+        # y=80, height=60 → 底边 y=140，与 setViewportMargins(0, 140, ...) 对齐
         self.pivotScrollArea.move(40, 80)
-        self.pivotScrollArea.setFixedHeight(50)
+        self.pivotScrollArea.setFixedHeight(60)
         self.pivotScrollArea.setFixedWidth(max(self.width() - 40, 200))
         # self.title_area.move(36, 80)
         # self.vBoxLayout.addWidget(self.pivot, 0, Qt.AlignTop)
@@ -1596,10 +1659,6 @@ class SettingInterface(ScrollArea):
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())
         self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.pivotScrollArea.setFixedWidth(max(self.width() - 40, 200))
 
     def __connectSignalToSlot(self):
         # self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)

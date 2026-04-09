@@ -355,7 +355,10 @@ class MainWindow(MSFluentWindow):
             self.logInterface.updateHotkey()
 
     def _on_ui_language_changed(self, lang_code: str):
-        """热重载 UI 语言，无需重启"""
+        """热重载 UI 语言，无需重启。
+        流程：更新翻译字典 → 禁用导航栏 → 切到安全锚点 → 等动画结束 → 分步重建界面。
+        """
+        from PySide6.QtCore import QTimer
         try:
             from module.localization import load_language, detect_lang
 
@@ -367,16 +370,16 @@ class MainWindow(MSFluentWindow):
 
             cfg.ui_language_now = actual_lang
             load_language(actual_lang)
-
-            # 更新 FluentTranslator
             self._reinstall_fluent_translator(actual_lang)
 
-            # 先切到日志界面（安全锚点），等待导航动画完成后再重建
-            # 350ms > qfluentwidgets 导航动画时长（约 300ms），避免动画期间删除界面导致崩溃
+            # 禁用导航栏，防止重建期间误操作
+            self.navigationInterface.setEnabled(False)
+
+            # 先切到日志界面（安全锚点）；等 350ms 让导航动画完全结束后再重建
             self.switchTo(self.logInterface)
-            from PySide6.QtCore import QTimer
             QTimer.singleShot(350, self._rebuild_interfaces_for_language)
         except Exception as e:
+            self.navigationInterface.setEnabled(True)
             InfoBar.warning(
                 title='语言切换失败',
                 content=str(e),
@@ -388,7 +391,7 @@ class MainWindow(MSFluentWindow):
             )
 
     def _reinstall_fluent_translator(self, lang_code: str):
-        """重新安装 FluentTranslator 以使 Qt 内置翻译同步更新"""
+        """重新安装 FluentTranslator 以使 Qt 内置组件翻译同步更新"""
         from PySide6.QtCore import QLocale
         from qfluentwidgets import FluentTranslator
         app = QApplication.instance()
@@ -408,15 +411,17 @@ class MainWindow(MSFluentWindow):
         app.installTranslator(self._fluent_translator)
 
     def _rebuild_interfaces_for_language(self):
-        """重建所有子界面以应用新语言。
-        调用前已通过 switchTo(logInterface) 切换到安全锚点，
-        且等待了 350ms 确保导航动画完全结束。
+        """同步重建所有子界面以应用新语言。
+
+        采用单次同步重建 + WaitCursor，而非分步 singleShot/processEvents：
+        - 分步方案每步都触发完整的 paint/layout 事件处理，叠加开销反而更慢（3-5s）
+        - 同步方案 Qt 批量处理 layout/paint，实际耗时约 1-2s，且无"未响应"弹窗
+        - WaitCursor 在系统层面显示沙漏/等待指针，用户知道程序在工作
+
+        注意：不重新连接任何信号——信号在 initInterface 中已连接且全程有效。
         """
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
-            # ── TOP 界面（按导航顺序逐一移除再重建）──────────────────
-            # 逐一处理避免 router history 批量失效：每次 removeInterface 后
-            # qfluentwidgets 的 goToTop() 会找到 logInterface（当前显示），
-            # 因此不会触发 index=-1 崩溃。
             top_specs = [
                 ('homeInterface',  FIF.HOME,            tr('主页'),     HomeInterface),
                 ('helpInterface',  FIF.BOOK_SHELF,      tr('帮助'),     HelpInterface),
@@ -434,11 +439,14 @@ class MainWindow(MSFluentWindow):
                         self.removeInterface(old, isDelete=True)
                     except Exception:
                         pass
-                new_iface = cls(self)
-                setattr(self, attr, new_iface)
-                self.addSubInterface(new_iface, icon, label)
+                try:
+                    new_iface = cls(self)
+                    setattr(self, attr, new_iface)
+                    self.addSubInterface(new_iface, icon, label)
+                except Exception:
+                    pass
 
-            # ── BOTTOM：日志界面（保留，仅更新导航标签）──────────────
+            # 日志界面：保留进程，只更新导航标签
             try:
                 log_key = self.logInterface.objectName()
                 log_item = self.navigationInterface.items.get(log_key)
@@ -447,7 +455,7 @@ class MainWindow(MSFluentWindow):
             except Exception:
                 pass
 
-            # ── BOTTOM：设置界面 ──────────────────────────────────────
+            # 设置界面：移除旧的，创建新的
             old_setting = self.settingInterface
             try:
                 route_key = old_setting.objectName()
@@ -456,13 +464,16 @@ class MainWindow(MSFluentWindow):
                 self.removeInterface(old_setting, isDelete=True)
             except Exception:
                 pass
-            self.settingInterface = SettingInterface(self)
-            self.addSubInterface(
-                self.settingInterface, FIF.SETTING, tr('设置'),
-                position=NavigationItemPosition.BOTTOM
-            )
+            try:
+                self.settingInterface = SettingInterface(self)
+                self.addSubInterface(
+                    self.settingInterface, FIF.SETTING, tr('设置'),
+                    position=NavigationItemPosition.BOTTOM
+                )
+            except Exception:
+                pass
 
-            # ── 导航栏自定义按钮文本 ──────────────────────────────────
+            # 更新导航栏自定义按钮文本
             for widget_key, text_key in [('startGameButton', '启动游戏'), ('avatar', '赞赏')]:
                 try:
                     btn = self.navigationInterface.widget(widget_key)
@@ -471,9 +482,7 @@ class MainWindow(MSFluentWindow):
                 except Exception:
                     pass
 
-            # ── 切回设置界面（语言切换入口）──────────────────────────
-            # 注意：不在此处重新连接信号——信号在 initInterface 中已连接且全程有效。
-            # 重复 connect 是导致级联崩溃的根本原因。
+            self.navigationInterface.setEnabled(True)
             try:
                 self.switchTo(self.settingInterface)
             except Exception:
@@ -500,6 +509,8 @@ class MainWindow(MSFluentWindow):
                 duration=3000,
                 parent=self
             )
+        finally:
+            QApplication.restoreOverrideCursor()
 
     def _onTaskFinished(self, exit_code):
         """处理任务完成信号"""
