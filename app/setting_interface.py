@@ -1335,9 +1335,11 @@ class SettingInterface(ScrollArea):
     def __initLayout(self):
         self.settingLabel.move(36, 30)
         # pivot 放置在 pivotScrollArea 内，后者覆盖选项卡区域
-        self.pivotScrollArea.move(0, 68)
-        self.pivotScrollArea.setFixedHeight(62)
-        self.pivotScrollArea.setFixedWidth(self.width())
+        # x=40 与 settingLabel 对齐，y=80 与原 pivot 位置一致
+        # 宽度 = 窗口宽 - 40，由 resizeEvent 保持同步
+        self.pivotScrollArea.move(40, 80)
+        self.pivotScrollArea.setFixedHeight(50)
+        self.pivotScrollArea.setFixedWidth(max(self.width() - 40, 200))
         # self.title_area.move(36, 80)
         # self.vBoxLayout.addWidget(self.pivot, 0, Qt.AlignTop)
         self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignmentFlag.AlignTop)
@@ -1597,7 +1599,7 @@ class SettingInterface(ScrollArea):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        self.pivotScrollArea.setFixedWidth(self.width())
+        self.pivotScrollArea.setFixedWidth(max(self.width() - 40, 200))
 
     def __connectSignalToSlot(self):
         # self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)

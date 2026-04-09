@@ -371,9 +371,11 @@ class MainWindow(MSFluentWindow):
             # 更新 FluentTranslator
             self._reinstall_fluent_translator(actual_lang)
 
-            # 延迟执行，确保当前信号处理完毕后再重建界面
+            # 先切到日志界面（安全锚点），等待导航动画完成后再重建
+            # 350ms > qfluentwidgets 导航动画时长（约 300ms），避免动画期间删除界面导致崩溃
+            self.switchTo(self.logInterface)
             from PySide6.QtCore import QTimer
-            QTimer.singleShot(50, self._rebuild_interfaces_for_language)
+            QTimer.singleShot(350, self._rebuild_interfaces_for_language)
         except Exception as e:
             InfoBar.warning(
                 title='语言切换失败',
@@ -406,39 +408,37 @@ class MainWindow(MSFluentWindow):
         app.installTranslator(self._fluent_translator)
 
     def _rebuild_interfaces_for_language(self):
-        """重建所有子界面以应用新语言"""
+        """重建所有子界面以应用新语言。
+        调用前已通过 switchTo(logInterface) 切换到安全锚点，
+        且等待了 350ms 确保导航动画完全结束。
+        """
         try:
-            current_widget = self.stackedWidget.currentWidget()
-
-            # ── TOP 界面（按导航顺序重建）──────────────────────────────
+            # ── TOP 界面（按导航顺序逐一移除再重建）──────────────────
+            # 逐一处理避免 router history 批量失效：每次 removeInterface 后
+            # qfluentwidgets 的 goToTop() 会找到 logInterface（当前显示），
+            # 因此不会触发 index=-1 崩溃。
             top_specs = [
-                ('homeInterface',  FIF.HOME,             tr('主页'),     HomeInterface),
-                ('helpInterface',  FIF.BOOK_SHELF,       tr('帮助'),     HelpInterface),
-                ('warpInterface',  FIF.SHARE,            tr('抽卡记录'), WarpInterface),
-                ('toolsInterface', FIF.DEVELOPER_TOOLS,  tr('工具箱'),   ToolsInterface),
+                ('homeInterface',  FIF.HOME,            tr('主页'),     HomeInterface),
+                ('helpInterface',  FIF.BOOK_SHELF,      tr('帮助'),     HelpInterface),
+                ('warpInterface',  FIF.SHARE,           tr('抽卡记录'), WarpInterface),
+                ('toolsInterface', FIF.DEVELOPER_TOOLS, tr('工具箱'),   ToolsInterface),
             ]
 
-            # 记录哪个界面是当前激活的
-            was_current = {attr: (current_widget is getattr(self, attr)) for attr, *_ in top_specs}
-
-            # 先隐藏并移除所有旧 TOP 界面（保持顺序：先全部移除，再按序添加）
-            for attr, _icon, _label, _cls in top_specs:
-                old = getattr(self, attr)
-                route_key = old.objectName()
-                if route_key in self.navigationInterface.items:
-                    self.navigationInterface.items[route_key].hide()
-                self.removeInterface(old, isDelete=True)
-
-            # 按顺序创建并重新添加 TOP 界面
-            new_current = None
             for attr, icon, label, cls in top_specs:
+                old = getattr(self, attr, None)
+                if old is not None:
+                    try:
+                        route_key = old.objectName()
+                        if route_key in self.navigationInterface.items:
+                            self.navigationInterface.items[route_key].hide()
+                        self.removeInterface(old, isDelete=True)
+                    except Exception:
+                        pass
                 new_iface = cls(self)
                 setattr(self, attr, new_iface)
                 self.addSubInterface(new_iface, icon, label)
-                if was_current.get(attr):
-                    new_current = new_iface
 
-            # ── BOTTOM：日志界面（可能有运行中任务，仅更新导航标签）──
+            # ── BOTTOM：日志界面（保留，仅更新导航标签）──────────────
             try:
                 log_key = self.logInterface.objectName()
                 log_item = self.navigationInterface.items.get(log_key)
@@ -447,25 +447,22 @@ class MainWindow(MSFluentWindow):
             except Exception:
                 pass
 
-            if current_widget is self.logInterface:
-                new_current = self.logInterface
-
-            # ── BOTTOM：设置界面 ────────────────────────────────────────
-            was_setting = (current_widget is self.settingInterface)
+            # ── BOTTOM：设置界面 ──────────────────────────────────────
             old_setting = self.settingInterface
-            route_key = old_setting.objectName()
-            if route_key in self.navigationInterface.items:
-                self.navigationInterface.items[route_key].hide()
-            self.removeInterface(old_setting, isDelete=True)
+            try:
+                route_key = old_setting.objectName()
+                if route_key in self.navigationInterface.items:
+                    self.navigationInterface.items[route_key].hide()
+                self.removeInterface(old_setting, isDelete=True)
+            except Exception:
+                pass
             self.settingInterface = SettingInterface(self)
             self.addSubInterface(
                 self.settingInterface, FIF.SETTING, tr('设置'),
                 position=NavigationItemPosition.BOTTOM
             )
-            if was_setting:
-                new_current = self.settingInterface
 
-            # ── 导航栏自定义按钮文本 ───────────────────────────────────
+            # ── 导航栏自定义按钮文本 ──────────────────────────────────
             for widget_key, text_key in [('startGameButton', '启动游戏'), ('avatar', '赞赏')]:
                 try:
                     btn = self.navigationInterface.widget(widget_key)
@@ -474,15 +471,13 @@ class MainWindow(MSFluentWindow):
                 except Exception:
                     pass
 
-            # ── 重新连接信号 ───────────────────────────────────────────
-            signalBus.startTaskSignal.connect(self._onStartTask)
-            signalBus.hotkeyChangedSignal.connect(self._onHotkeyChanged)
-            signalBus.uiLanguageChanged.connect(self._on_ui_language_changed)
-            self.logInterface.taskFinished.connect(self._onTaskFinished)
-
-            # 还原激活的界面
-            if new_current is not None:
-                self.switchTo(new_current)
+            # ── 切回设置界面（语言切换入口）──────────────────────────
+            # 注意：不在此处重新连接信号——信号在 initInterface 中已连接且全程有效。
+            # 重复 connect 是导致级联崩溃的根本原因。
+            try:
+                self.switchTo(self.settingInterface)
+            except Exception:
+                pass
 
             InfoBar.success(
                 title=tr('更新成功'),
