@@ -118,7 +118,32 @@ class SettingInterface(ScrollArea):
         self.setWidgetResizable(True)
         self.setViewportMargins(0, 140, 0, 5)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        
+        # self.title_area.setWidget(self.pivot)
+        # self.title_area.setWidgetResizable(True)
+        # self.title_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        # self.title_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.title_area.setMinimumSize(800, 50)
+        # self.title_area.setStyleSheet("""
+        #     QScrollBar:horizontal {
+        #         height: 4px;
+        #         background: #f0f0f0;
+        #         border-radius: 10px;
+        #     }
 
+        #     QScrollBar::handle:horizontal {
+        #         background: #888;
+        #         border-radius: 10px;
+        #     }
+
+        #     QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+        #         background: none;
+        #     }
+
+        #     QScrollBar::handle:horizontal:hover {
+        #         background: #555;
+        #     }
+        # """)
         self.setObjectName('settingInterface')
         self.scrollWidget.setObjectName('scrollWidget')
         self.settingLabel.setObjectName('settingLabel')
