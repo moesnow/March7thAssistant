@@ -354,7 +354,7 @@ class DivergentUniverse:
         return auto.find_element(
             target={"model_path": "./assets/model/divergent.onnx", "names": ["door", "event"], "target_class": "event"},
             find_type="yolo_with_multiple_targets",
-            threshold=0
+            threshold=0.01
         )
 
     def find_closest_event(self, events, screen_center_x):
@@ -372,6 +372,7 @@ class DivergentUniverse:
         return closest
 
     def process_event_stage(self):
+        stable_mode = cfg.cloud_game_enable or cfg.weekly_divergent_stable_mode
         window = Screenshot.get_window(cfg.game_title_name)
         win_x, _, width, _ = Screenshot.get_window_region(window)
         screen_center_x = win_x + width // 2
@@ -403,11 +404,10 @@ class DivergentUniverse:
             if abs(event_center_x - screen_center_x) > tolerance:
                 key = "a" if event_center_x < screen_center_x else "d"
                 log.debug(f"事件在屏幕{'左边' if key == 'a' else '右边'}，正在调整位置")
-                auto.press_key_down(key)
-                try:
+                if stable_mode:
                     start_time = time.monotonic()
                     while time.monotonic() - start_time < 10:
-                        time.sleep(0.1)
+                        auto.press_key(key, wait_time=0.15)
                         events = self.detect_events()
                         if not events:
                             break
@@ -419,21 +419,44 @@ class DivergentUniverse:
                         if abs(event_center_x - screen_center_x) <= tolerance:
                             log.debug("事件已调整到屏幕中间")
                             break
-                finally:
-                    auto.press_key_up(key)
+                else:
+                    auto.press_key_down(key)
+                    try:
+                        start_time = time.monotonic()
+                        while time.monotonic() - start_time < 10:
+                            time.sleep(0.1)
+                            events = self.detect_events()
+                            if not events:
+                                break
+                            closest = self.find_closest_event(events, screen_center_x)
+                            if not closest:
+                                break
+                            top_left, bottom_right = closest
+                            event_center_x = (top_left[0] + bottom_right[0]) // 2
+                            if abs(event_center_x - screen_center_x) <= tolerance:
+                                log.debug("事件已调整到屏幕中间")
+                                break
+                    finally:
+                        auto.press_key_up(key)
             else:
                 log.debug("事件已在屏幕中间")
 
             # 向事件走去，边走边检测F图标和事件位置
             event_interacted = False
-            auto.press_key_down("w")
+
+            timeout = 60 if stable_mode else 15
+
+            if not stable_mode:
+                auto.press_key_down("w")
+
             try:
                 start_time = time.monotonic()
-                while time.monotonic() - start_time < 15:
+                while time.monotonic() - start_time < timeout:
                     # 检测F交互图标
                     if auto.find_element("./assets/images/screen/divergent_universe/f.png", "image", 0.9, crop=f_crop):
-                        auto.press_key_up("w")
                         log.debug("检测到F交互图标")
+                        if not stable_mode:
+                            auto.press_key_up("w")
                         if auto.find_element("事件", "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
                             auto.press_key("f")
                             time.sleep(2)
@@ -449,7 +472,8 @@ class DivergentUniverse:
                             event_interacted = True
                             break
                         else:
-                            auto.press_key_down("w")
+                            if not stable_mode:
+                                auto.press_key_down("w")
                             time.sleep(0.5)
 
                     # 细微调整方向
@@ -462,9 +486,17 @@ class DivergentUniverse:
                             offset = event_center_x - screen_center_x
                             if abs(offset) > fine_tolerance:
                                 adjust_key = "a" if offset < 0 else "d"
+                                if stable_mode:
+                                    auto.press_key_down("w")
                                 auto.press_key(adjust_key, wait_time=0.15)
+                                if stable_mode:
+                                    auto.press_key_up("w")
+                            else:
+                                if stable_mode:
+                                    auto.press_key("w")
             finally:
-                auto.press_key_up("w")
+                if not stable_mode:
+                    auto.press_key_up("w")
 
             if event_interacted:
                 # 事件交互后视角会变化，且不容易判断是否还有其他事件
@@ -684,7 +716,7 @@ class DivergentUniverse:
         return auto.find_element(
             target={"model_path": "./assets/model/divergent.onnx", "names": ["door", "event"], "target_class": "door"},
             find_type="yolo",
-            threshold=0
+            threshold=0.01
         )
         # LOWER = np.array([112, 82, 174])
         # UPPER = np.array([170, 126, 239])
@@ -718,11 +750,10 @@ class DivergentUniverse:
             key = "a" if door_center_x < screen_center_x else "d"
             log.debug(f"随意门在屏幕{'左边' if key == 'a' else '右边'}，正在调整位置")
 
-            auto.press_key_down(key)
-            try:
+            if stable_mode:
                 start_time = time.monotonic()
                 while time.monotonic() - start_time < 10:
-                    time.sleep(0.1)
+                    auto.press_key(key, wait_time=0.15)
                     result = self.detect_random_door()
                     if not result:
                         return False
@@ -731,8 +762,22 @@ class DivergentUniverse:
                     if abs(door_center_x - screen_center_x) <= tolerance:
                         log.debug("随意门已调整到屏幕中间")
                         break
-            finally:
-                auto.press_key_up(key)
+            else:
+                auto.press_key_down(key)
+                try:
+                    start_time = time.monotonic()
+                    while time.monotonic() - start_time < 10:
+                        time.sleep(0.1)
+                        result = self.detect_random_door()
+                        if not result:
+                            return False
+                        top_left, bottom_right = result
+                        door_center_x = (top_left[0] + bottom_right[0]) // 2
+                        if abs(door_center_x - screen_center_x) <= tolerance:
+                            log.debug("随意门已调整到屏幕中间")
+                            break
+                finally:
+                    auto.press_key_up(key)
 
         # 向随意门走去，边走边检测F图标和门的位置
         f_crop = (1078 / 1920, 595 / 1080, 37 / 1920, 37 / 1080)
