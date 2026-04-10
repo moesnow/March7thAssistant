@@ -464,7 +464,7 @@ class DivergentUniverse:
                             event_start_time = time.monotonic()
                             # for _ in range(100):
                             while time.monotonic() - event_start_time < 30 * 60:  # 最多等待30分钟 应该不会有人战斗能打半小时吧
-                                if self.check_click_close() or self.check_title():
+                                if self.check_click_close() or self.check_title() or self.check_auto_battle():
                                     time.sleep(2)
                                 elif auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
                                     break
