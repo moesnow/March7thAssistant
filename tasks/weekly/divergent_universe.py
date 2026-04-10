@@ -354,7 +354,7 @@ class DivergentUniverse:
         return auto.find_element(
             target={"model_path": "./assets/model/divergent.onnx", "names": ["door", "event"], "target_class": "event"},
             find_type="yolo_with_multiple_targets",
-            threshold=0.01
+            threshold=0.1
         )
 
     def find_closest_event(self, events, screen_center_x):
