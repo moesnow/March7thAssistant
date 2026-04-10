@@ -1,5 +1,5 @@
-import os
 import sys
+import subprocess
 if sys.platform == 'win32':
     import winreg
 import itertools
@@ -48,15 +48,22 @@ def gamereg_uid() -> int | None:
         return None
 
 
+def _validate_reg_path(path: str) -> None:
+    if not path.lower().endswith('.reg'):
+        raise ValueError("Invalid registry file path")
+    if any(char in path for char in ('&', '|', ';', '>', '<')):
+        raise ValueError("Invalid registry file path")
+
+
 def gamereg_export(path: str) -> None:
     if full_reg_path is not None:
-        subcommand = f"reg export \"{full_reg_path}\" {path} /y"
-        result = os.system(subcommand)
+        _validate_reg_path(path)
+        subprocess.run(["reg", "export", full_reg_path, path, "/y"], check=False)
 
 
 def gamereg_import(path: str) -> None:
-    subcommand = f"reg import {path}"
-    result = os.system(subcommand)
+    _validate_reg_path(path)
+    subprocess.run(["reg", "import", path], check=False)
 
 
 def gamereg_delete_all() -> None:
