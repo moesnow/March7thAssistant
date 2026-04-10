@@ -355,19 +355,170 @@ class MainWindow(MSFluentWindow):
             self.logInterface.updateHotkey()
 
     def _on_ui_language_changed(self, lang_code: str):
-        """处理 UI 语言改变信号：显示需要重启的提示"""
+        """热重载 UI 语言，无需重启。
+        流程：更新翻译字典 → 禁用导航栏 → 切到安全锚点 → 等动画结束 → 分步重建界面。
+        """
+        from PySide6.QtCore import QTimer
         try:
-            InfoBar.success(
-                title=tr('更新成功'),
-                content=tr('配置在重启软件后生效'),
+            from module.localization import load_language, detect_lang
+
+            actual_lang = lang_code
+            if actual_lang == 'auto':
+                actual_lang = detect_lang()
+                if actual_lang == 'ja_JP':
+                    actual_lang = 'en_US'
+
+            cfg.ui_language_now = actual_lang
+            load_language(actual_lang)
+            self._reinstall_fluent_translator(actual_lang)
+
+            # 禁用导航栏，防止重建期间误操作
+            self.navigationInterface.setEnabled(False)
+
+            # 先切到日志界面（安全锚点）；等 350ms 让导航动画完全结束后再重建
+            self.switchTo(self.logInterface)
+            QTimer.singleShot(350, self._rebuild_interfaces_for_language)
+        except Exception as e:
+            self.navigationInterface.setEnabled(True)
+            InfoBar.warning(
+                title='语言切换失败',
+                content=str(e),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
-                duration=2000,
+                duration=3000,
                 parent=self
             )
-        except Exception:
-            pass
+
+    def _reinstall_fluent_translator(self, lang_code: str):
+        """重新安装 FluentTranslator 以使 Qt 内置组件翻译同步更新"""
+        from PySide6.QtCore import QLocale
+        from qfluentwidgets import FluentTranslator
+        app = QApplication.instance()
+        if hasattr(self, '_fluent_translator') and self._fluent_translator:
+            try:
+                app.removeTranslator(self._fluent_translator)
+            except Exception:
+                pass
+        if lang_code == 'zh_TW':
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
+        elif lang_code == 'ko_KR':
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
+        elif lang_code == 'en_US':
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
+        else:
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
+        app.installTranslator(self._fluent_translator)
+
+    def _rebuild_interfaces_for_language(self):
+        """同步重建所有子界面以应用新语言。
+
+        性能策略：
+        - TOP 界面（Home/Help/Warp/Tools）构造轻量，先重建完毕
+        - 重建完 TOP 界面后调用一次 processEvents()，让 Windows 消息队列清空，
+          防止在最重的 SettingInterface 构建期间出现"(不响应)"标题
+        - SettingInterface 构建完成后立即 switchTo 并还原光标
+        - 全程不重新连接信号（initInterface 中已连接且永久有效）
+        """
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        QApplication.processEvents()  # 立即刷新，让光标实际渲染后再开始重建
+        try:
+            # ── 轻量 TOP 界面：逐一移除旧→添加新 ───────────────────────
+            top_specs = [
+                ('homeInterface',  FIF.HOME,            tr('主页'),     HomeInterface),
+                ('helpInterface',  FIF.BOOK_SHELF,      tr('帮助'),     HelpInterface),
+                ('warpInterface',  FIF.SHARE,           tr('抽卡记录'), WarpInterface),
+                ('toolsInterface', FIF.DEVELOPER_TOOLS, tr('工具箱'),   ToolsInterface),
+            ]
+            for attr, icon, label, cls in top_specs:
+                old = getattr(self, attr, None)
+                if old is not None:
+                    try:
+                        route_key = old.objectName()
+                        if route_key in self.navigationInterface.items:
+                            self.navigationInterface.items[route_key].hide()
+                        self.removeInterface(old, isDelete=True)
+                    except Exception:
+                        pass
+                try:
+                    new_iface = cls(self)
+                    setattr(self, attr, new_iface)
+                    self.addSubInterface(new_iface, icon, label)
+                except Exception:
+                    pass
+
+            # ── 轻量界面完成后清空 Windows 消息队列 ──────────────────
+            # 调用一次 processEvents()，避免在随后最重的 SettingInterface
+            # 构建期间因 WM_PAINT 积压 >5s 而触发系统"(不响应)"弹窗。
+            # 仅此一次，不在循环中调用，不会引起多余重绘。
+            QApplication.processEvents()
+
+            # ── 日志界面：保留进程，只更新导航标签 ──────────────────
+            try:
+                log_key = self.logInterface.objectName()
+                log_item = self.navigationInterface.items.get(log_key)
+                if log_item is not None and hasattr(log_item, 'setText'):
+                    log_item.setText(tr('日志'))
+            except Exception:
+                pass
+
+            # ── 设置界面（最重）：移除旧→创建新 ──────────────────────
+            old_setting = self.settingInterface
+            try:
+                route_key = old_setting.objectName()
+                if route_key in self.navigationInterface.items:
+                    self.navigationInterface.items[route_key].hide()
+                self.removeInterface(old_setting, isDelete=True)
+            except Exception:
+                pass
+            try:
+                self.settingInterface = SettingInterface(self)
+                self.addSubInterface(
+                    self.settingInterface, FIF.SETTING, tr('设置'),
+                    position=NavigationItemPosition.BOTTOM
+                )
+            except Exception:
+                pass
+
+            # ── 导航栏自定义按钮文本 ──────────────────────────────────
+            for widget_key, text_key in [('startGameButton', '启动游戏'), ('avatar', '赞赏')]:
+                try:
+                    btn = self.navigationInterface.widget(widget_key)
+                    if btn and hasattr(btn, 'setText'):
+                        btn.setText(tr(text_key))
+                except Exception:
+                    pass
+
+            self.navigationInterface.setEnabled(True)
+            try:
+                self.switchTo(self.settingInterface)
+            except Exception:
+                pass
+
+            InfoBar.success(
+                title=tr('更新成功'),
+                content='',
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=1500,
+                parent=self
+            )
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            InfoBar.warning(
+                title=tr('配置加载失败'),
+                content=str(e),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        finally:
+            self.navigationInterface.setEnabled(True)
+            QApplication.restoreOverrideCursor()
 
     def _onTaskFinished(self, exit_code):
         """处理任务完成信号"""
