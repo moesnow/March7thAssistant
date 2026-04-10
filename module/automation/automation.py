@@ -436,6 +436,131 @@ class Automation(metaclass=SingletonMeta):
                         int((y + bh) / scale_factor) + self.screenshot_pos[1] * (not relative))
         return top_left, bottom_right
 
+    def _get_yolo_session(self, model_path):
+        """获取或创建YOLO ONNX推理会话（带缓存）。"""
+        if not hasattr(self, '_yolo_sessions'):
+            self._yolo_sessions = {}
+        if model_path not in self._yolo_sessions:
+            import onnxruntime as ort
+            # providers = ort.get_available_providers()
+            preferred = []
+            # if "DmlExecutionProvider" in providers:
+            #     preferred.append("DmlExecutionProvider")
+            preferred.append("CPUExecutionProvider")
+            self._yolo_sessions[model_path] = ort.InferenceSession(model_path, providers=preferred)
+        return self._yolo_sessions[model_path]
+
+    def _yolo_preprocess(self, img, input_size=640):
+        """YOLO letterbox预处理。返回 (input_tensor, scale)。"""
+        orig_h, orig_w = img.shape[:2]
+        scale = min(input_size / orig_w, input_size / orig_h)
+        new_w, new_h = int(orig_w * scale), int(orig_h * scale)
+        resized = cv2.resize(img, (new_w, new_h))
+        canvas = np.full((input_size, input_size, 3), 114, dtype=np.uint8)
+        canvas[:new_h, :new_w] = resized
+        input_img = canvas[:, :, ::-1].transpose(2, 0, 1).astype(np.float32) / 255.0
+        return np.expand_dims(input_img, axis=0), scale
+
+    def _yolo_postprocess(self, preds, scale, names, target_classes, threshold):
+        """YOLO后处理，返回按置信度降序排列的检测结果列表 [(cls_name, score, x1, y1, x2, y2), ...]。"""
+        results = []
+        for det in preds:
+            x1, y1, x2, y2, score, cls_id = det
+            if score < threshold:
+                continue
+            cls_id = int(cls_id)
+            if cls_id >= len(names):
+                continue
+            cls_name = names[cls_id]
+            if target_classes is not None and cls_name not in target_classes:
+                continue
+            results.append((cls_name, float(score), x1 / scale, y1 / scale, x2 / scale, y2 / scale))
+        results.sort(key=lambda r: r[1], reverse=True)
+        return results
+
+    def _yolo_box_to_pos(self, x1, y1, x2, y2, relative):
+        """将YOLO检测框坐标转换为与其他find方法一致的 (top_left, bottom_right) 格式。"""
+        scale_factor = self.screenshot_scale_factor if not relative else 1
+        offset_x = self.screenshot_pos[0] * (not relative)
+        offset_y = self.screenshot_pos[1] * (not relative)
+        top_left = (int(x1 / scale_factor) + offset_x, int(y1 / scale_factor) + offset_y)
+        bottom_right = (int(x2 / scale_factor) + offset_x, int(y2 / scale_factor) + offset_y)
+        return top_left, bottom_right
+
+    def find_yolo_element(self, target, threshold=0.25, relative=False):
+        """
+        使用YOLO模型查找置信度最高的目标对象。
+        :param target: dict，包含 model_path（模型路径）, names（类别名列表）, target_class（目标类名，str或list，可选）。
+        :param threshold: 置信度阈值。
+        :param relative: 是否返回相对位置。
+        :return: (top_left, bottom_right) 或 (None, None)。
+        """
+        try:
+            model_path = target["model_path"]
+            names = target["names"]
+            target_class = target.get("target_class")
+            if isinstance(target_class, str):
+                target_class = [target_class]
+
+            session = self._get_yolo_session(model_path)
+            img = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
+            input_tensor, scale = self._yolo_preprocess(img)
+
+            input_name = session.get_inputs()[0].name
+            outputs = session.run(None, {input_name: input_tensor})
+            preds = outputs[0][0]
+
+            results = self._yolo_postprocess(preds, scale, names, target_class, threshold)
+            if not results:
+                target_desc = ', '.join(target_class) if target_class else 'any'
+                self.logger.debug(f"YOLO未检测到目标：{target_desc} 阈值：{threshold}")
+                return None, None
+
+            cls_name, score, x1, y1, x2, y2 = results[0]
+            self.logger.debug(f"YOLO检测：{cls_name} 置信度：{score:.5f}")
+            return self._yolo_box_to_pos(x1, y1, x2, y2, relative)
+        except Exception as e:
+            self.logger.error(f"YOLO查找出错：{e}")
+            return None, None
+
+    def find_yolo_with_multiple_targets(self, target, threshold=0.25, relative=False):
+        """
+        使用YOLO模型查找所有匹配的目标对象。
+        :param target: dict，包含 model_path（模型路径）, names（类别名列表）, target_class（目标类名，str或list，可选）。
+        :param threshold: 置信度阈值。
+        :param relative: 是否返回相对位置。
+        :return: [(top_left, bottom_right), ...] 列表。
+        """
+        try:
+            model_path = target["model_path"]
+            names = target["names"]
+            target_class = target.get("target_class")
+            if isinstance(target_class, str):
+                target_class = [target_class]
+
+            session = self._get_yolo_session(model_path)
+            img = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
+            input_tensor, scale = self._yolo_preprocess(img)
+
+            input_name = session.get_inputs()[0].name
+            outputs = session.run(None, {input_name: input_tensor})
+            preds = outputs[0][0]
+
+            results = self._yolo_postprocess(preds, scale, names, target_class, threshold)
+            if not results:
+                target_desc = ', '.join(target_class) if target_class else 'any'
+                self.logger.debug(f"YOLO未检测到目标：{target_desc} 阈值：{threshold}")
+                return []
+
+            matches = []
+            for cls_name, score, x1, y1, x2, y2 in results:
+                self.logger.debug(f"YOLO检测：{cls_name} 置信度：{score:.5f}")
+                matches.append(self._yolo_box_to_pos(x1, y1, x2, y2, relative))
+            return matches
+        except Exception as e:
+            self.logger.error(f"YOLO查找出错：{e}")
+            return []
+
     def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0, use_background_screenshot=None):
         """
         查找元素，并根据指定的查找类型执行不同的查找策略。
@@ -464,7 +589,7 @@ class Automation(metaclass=SingletonMeta):
                 screenshot_result = self.take_screenshot(crop, use_background_screenshot)
                 if not screenshot_result:
                     continue  # 如果截图失败，则跳过本次循环
-            if find_type in ['image', 'image_threshold', 'text', "min_distance_text", 'crop', 'hsv']:
+            if find_type in ['image', 'image_threshold', 'text', "min_distance_text", 'crop', 'hsv', 'yolo']:
                 if find_type in ['image', 'image_threshold']:
                     top_left, bottom_right, image_threshold = self.find_image_element(target, threshold, scale_range, relative)
                 elif find_type == 'text':
@@ -476,6 +601,8 @@ class Automation(metaclass=SingletonMeta):
                     bottom_right = (int((target[0] + target[2]) * self.screenshot.width) + self.screenshot_pos[0], int((target[1] + target[3]) * self.screenshot.height) + self.screenshot_pos[1])
                 elif find_type == 'hsv':
                     top_left, bottom_right = self.find_hsv_element(target, relative)
+                elif find_type == 'yolo':
+                    top_left, bottom_right = self.find_yolo_element(target, threshold or 0.25, relative)
                 if top_left and bottom_right:
                     if find_type == 'image_threshold':
                         return image_threshold
@@ -484,6 +611,8 @@ class Automation(metaclass=SingletonMeta):
                 return self.find_image_and_count(target, threshold, pixel_bgr)
             elif find_type in ['image_with_multiple_targets']:
                 return self.find_image_with_multiple_targets(target, threshold, scale_range, relative)
+            elif find_type == 'yolo_with_multiple_targets':
+                return self.find_yolo_with_multiple_targets(target, threshold or 0.25, relative)
             else:
                 raise ValueError("错误的类型")
 
@@ -566,7 +695,8 @@ class Automation(metaclass=SingletonMeta):
         """截图后将指定 crop 区域填充为给定颜色。
 
         参数:
-        - crop: 裁剪区域，格式为(x, y, w, h)，使用相对比例(0~1)。
+        - crop: 裁剪区域。可传单个(x, y, w, h)或多个[(x, y, w, h), ...]，
+          均使用相对比例(0~1)。
         - color: 颜色值。灰度图传 int；彩色图传 (R, G, B) 或 (R, G, B, A)。
         - use_background_screenshot: 是否使用后台截图。为None时沿用配置文件设置。
 
@@ -578,13 +708,20 @@ class Automation(metaclass=SingletonMeta):
         img_np = np.array(self.screenshot).copy()
         h, w = img_np.shape[:2]
 
-        x1 = max(0, min(w, int(crop[0] * w)))
-        y1 = max(0, min(h, int(crop[1] * h)))
-        x2 = max(0, min(w, int((crop[0] + crop[2]) * w)))
-        y2 = max(0, min(h, int((crop[1] + crop[3]) * h)))
+        is_single_crop = (
+            isinstance(crop, (list, tuple))
+            and len(crop) == 4
+            and all(isinstance(v, (int, float)) for v in crop)
+        )
+        if is_single_crop:
+            crop_list = [crop]
+        elif isinstance(crop, (list, tuple)):
+            crop_list = list(crop)
+        else:
+            raise ValueError("crop 参数必须是 (x, y, w, h) 或其列表")
 
-        if x2 <= x1 or y2 <= y1:
-            raise ValueError("无效的 crop 区域")
+        if not crop_list:
+            raise ValueError("crop 列表不能为空")
 
         if img_np.ndim == 2:
             fill_value = int(color)
@@ -597,6 +734,26 @@ class Automation(metaclass=SingletonMeta):
                 if len(fill_value) < channel_count:
                     fill_value.extend([fill_value[-1]] * (channel_count - len(fill_value)))
 
-        img_np[y1:y2, x1:x2] = fill_value
+        has_valid_crop = False
+        for index, item in enumerate(crop_list):
+            if not isinstance(item, (list, tuple)) or len(item) != 4 or not all(isinstance(v, (int, float)) for v in item):
+                self.logger.warning(f"无效的 crop 格式，已跳过: index={index}, crop={item}")
+                continue
+
+            x1 = max(0, min(w, int(item[0] * w)))
+            y1 = max(0, min(h, int(item[1] * h)))
+            x2 = max(0, min(w, int((item[0] + item[2]) * w)))
+            y2 = max(0, min(h, int((item[1] + item[3]) * h)))
+
+            if x2 <= x1 or y2 <= y1:
+                self.logger.warning(f"无效的 crop 区域，已跳过: index={index}, crop={item}")
+                continue
+
+            img_np[y1:y2, x1:x2] = fill_value
+            has_valid_crop = True
+
+        if not has_valid_crop:
+            self.logger.warning("未找到有效的 crop 区域，截图未修改")
+
         self.screenshot = Image.fromarray(img_np)
         return self.screenshot

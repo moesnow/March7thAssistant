@@ -35,6 +35,7 @@ class ScreenshotApp(QMainWindow):
             self.is_drawing = False
             self.template_match_rect = None
             self.door_rect = None
+            self.event_rects = []
             self.crop_rect = None
             self.need_maximize = False  # 是否需要最大化窗口
 
@@ -130,7 +131,8 @@ class ScreenshotApp(QMainWindow):
                 ("保存选取截图", self.save_selection_screenshot),
                 ("模板匹配", self.match_template),
                 ("OCR识别选取区域", self.show_ocr_selection),
-                ("识别随意门", self.detect_random_door)
+                ("识别随意门", self.detect_random_door),
+                ("识别事件", self.detect_events)
             ]
 
             for text, slot in buttons_config:
@@ -282,6 +284,15 @@ class ScreenshotApp(QMainWindow):
             door_pen.setWidth(3)
             painter.setPen(door_pen)
             painter.drawRect(x, y, width, height)
+
+        # 绘制事件检测区域（橙色）
+        if self.event_rects:
+            event_pen = QPen(QColor(0xff, 0x8c, 0x00))
+            event_pen.setWidth(3)
+            painter.setPen(event_pen)
+            for rect in self.event_rects:
+                x, y, width, height = rect
+                painter.drawRect(x, y, width, height)
 
         # 绘制输入的 Crop 区域（蓝色）
         if self.crop_rect is not None:
@@ -551,49 +562,70 @@ class ScreenshotApp(QMainWindow):
             f"（已使用绿色矩形标记）"
         )
 
+    def _run_yolo_on_screenshot(self, target, method="single"):
+        """在截图工具内部的截图上运行YOLO，不重新截图。"""
+        from module.automation import auto
+        old_screenshot = auto.screenshot
+        old_scale = getattr(auto, 'screenshot_scale_factor', 1)
+        old_pos = getattr(auto, 'screenshot_pos', (0, 0))
+        auto.screenshot = self.screenshot
+        auto.screenshot_scale_factor = 1
+        auto.screenshot_pos = (0, 0)
+        try:
+            if method == "single":
+                return auto.find_yolo_element(target, threshold=0.25, relative=True)
+            else:
+                return auto.find_yolo_with_multiple_targets(target, threshold=0.25, relative=True)
+        finally:
+            auto.screenshot = old_screenshot
+            auto.screenshot_scale_factor = old_scale
+            auto.screenshot_pos = old_pos
+
+    def _yolo_box_to_logical(self, top_left, bottom_right):
+        """将YOLO返回的像素坐标转换为逻辑显示坐标。"""
+        logical_x = int(top_left[0] / self.dpi_scale)
+        logical_y = int(top_left[1] / self.dpi_scale)
+        logical_w = max(1, int((bottom_right[0] - top_left[0]) / self.dpi_scale))
+        logical_h = max(1, int((bottom_right[1] - top_left[1]) / self.dpi_scale))
+        return logical_x, logical_y, logical_w, logical_h
+
     def detect_random_door(self):
-        """
-        通过HSV颜色范围检测截图中的随意门区域，并绘制矩形标记。
-        """
-        LOWER = np.array([129, 57, 143])
-        UPPER = np.array([174, 163, 229])
-
-        screenshot_bgr = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
-        hsv = cv2.cvtColor(screenshot_bgr, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, LOWER, UPPER)
-
-        kernel = np.ones((5, 5), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-
-        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask)
-
-        if num_labels <= 1:
+        top_left, bottom_right = self._run_yolo_on_screenshot(
+            target={"model_path": "./assets/model/divergent.onnx", "names": ["door", "event"], "target_class": "door"},
+            method="single",
+        )
+        if top_left is None:
             QMessageBox.information(self, "识别随意门", "没有检测到随意门")
             return
-
-        max_area = 0
-        best_box = None
-        for i in range(1, num_labels):
-            x, y, bw, bh, area = stats[i]
-            if area > max_area:
-                max_area = area
-                best_box = (x, y, bw, bh)
-
-        x, y, bw, bh = best_box
-
-        logical_x = int(x / self.dpi_scale)
-        logical_y = int(y / self.dpi_scale)
-        logical_w = max(1, int(bw / self.dpi_scale))
-        logical_h = max(1, int(bh / self.dpi_scale))
+        logical_x, logical_y, logical_w, logical_h = self._yolo_box_to_logical(top_left, bottom_right)
         self.door_rect = (logical_x, logical_y, logical_w, logical_h)
         self.update_canvas()
 
         QMessageBox.information(
             self,
             "识别随意门",
-            f"检测区域: X={x}, Y={y}, Width={bw}, Height={bh}\n"
+            f"检测区域: X={int(top_left[0])}, Y={int(top_left[1])}, "
+            f"Width={int(bottom_right[0] - top_left[0])}, Height={int(bottom_right[1] - top_left[1])}\n"
             f"（已使用黄色矩形标记）"
+        )
+
+    def detect_events(self):
+        results = self._run_yolo_on_screenshot(
+            target={"model_path": "./assets/model/divergent.onnx", "names": ["door", "event"], "target_class": "event"},
+            method="multiple",
+        )
+        if not results:
+            QMessageBox.information(self, "识别事件", "没有检测到事件")
+            return
+        self.event_rects = []
+        for top_left, bottom_right in results:
+            self.event_rects.append(self._yolo_box_to_logical(top_left, bottom_right))
+        self.update_canvas()
+
+        QMessageBox.information(
+            self,
+            "识别事件",
+            f"检测到 {len(results)} 个事件\n（已使用橙色矩形标记）"
         )
 
     def _start_file(self, path):
