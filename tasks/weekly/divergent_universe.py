@@ -354,7 +354,7 @@ class DivergentUniverse:
         return auto.find_element(
             target={"model_path": "./assets/model/divergent.onnx", "names": ["door", "event"], "target_class": "event"},
             find_type="yolo_with_multiple_targets",
-            threshold=0.1
+            threshold=0.2
         )
 
     def find_closest_event(self, events, screen_center_x):
@@ -387,6 +387,7 @@ class DivergentUniverse:
             log.info(f"事件处理第 {event_count + 1}/5 轮（超时重试 {timeout_retries}/3）")
 
             # 检测所有事件
+            time.sleep(4)
             events = self.detect_events()
             if not events:
                 log.info("未检测到任何事件，事件处理完成")
