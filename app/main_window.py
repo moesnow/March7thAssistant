@@ -413,22 +413,23 @@ class MainWindow(MSFluentWindow):
     def _rebuild_interfaces_for_language(self):
         """同步重建所有子界面以应用新语言。
 
-        采用单次同步重建 + WaitCursor，而非分步 singleShot/processEvents：
-        - 分步方案每步都触发完整的 paint/layout 事件处理，叠加开销反而更慢（3-5s）
-        - 同步方案 Qt 批量处理 layout/paint，实际耗时约 1-2s，且无"未响应"弹窗
-        - WaitCursor 在系统层面显示沙漏/等待指针，用户知道程序在工作
-
-        注意：不重新连接任何信号——信号在 initInterface 中已连接且全程有效。
+        性能策略：
+        - TOP 界面（Home/Help/Warp/Tools）构造轻量，先重建完毕
+        - 重建完 TOP 界面后调用一次 processEvents()，让 Windows 消息队列清空，
+          防止在最重的 SettingInterface 构建期间出现"(不响应)"标题
+        - SettingInterface 构建完成后立即 switchTo 并还原光标
+        - 全程不重新连接信号（initInterface 中已连接且永久有效）
         """
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        QApplication.processEvents()  # 立即刷新，让光标实际渲染后再开始重建
         try:
+            # ── 轻量 TOP 界面：逐一移除旧→添加新 ───────────────────────
             top_specs = [
                 ('homeInterface',  FIF.HOME,            tr('主页'),     HomeInterface),
                 ('helpInterface',  FIF.BOOK_SHELF,      tr('帮助'),     HelpInterface),
                 ('warpInterface',  FIF.SHARE,           tr('抽卡记录'), WarpInterface),
                 ('toolsInterface', FIF.DEVELOPER_TOOLS, tr('工具箱'),   ToolsInterface),
             ]
-
             for attr, icon, label, cls in top_specs:
                 old = getattr(self, attr, None)
                 if old is not None:
@@ -446,7 +447,13 @@ class MainWindow(MSFluentWindow):
                 except Exception:
                     pass
 
-            # 日志界面：保留进程，只更新导航标签
+            # ── 轻量界面完成后清空 Windows 消息队列 ──────────────────
+            # 调用一次 processEvents()，避免在随后最重的 SettingInterface
+            # 构建期间因 WM_PAINT 积压 >5s 而触发系统"(不响应)"弹窗。
+            # 仅此一次，不在循环中调用，不会引起多余重绘。
+            QApplication.processEvents()
+
+            # ── 日志界面：保留进程，只更新导航标签 ──────────────────
             try:
                 log_key = self.logInterface.objectName()
                 log_item = self.navigationInterface.items.get(log_key)
@@ -455,7 +462,7 @@ class MainWindow(MSFluentWindow):
             except Exception:
                 pass
 
-            # 设置界面：移除旧的，创建新的
+            # ── 设置界面（最重）：移除旧→创建新 ──────────────────────
             old_setting = self.settingInterface
             try:
                 route_key = old_setting.objectName()
@@ -473,7 +480,7 @@ class MainWindow(MSFluentWindow):
             except Exception:
                 pass
 
-            # 更新导航栏自定义按钮文本
+            # ── 导航栏自定义按钮文本 ──────────────────────────────────
             for widget_key, text_key in [('startGameButton', '启动游戏'), ('avatar', '赞赏')]:
                 try:
                     btn = self.navigationInterface.widget(widget_key)
@@ -510,6 +517,7 @@ class MainWindow(MSFluentWindow):
                 parent=self
             )
         finally:
+            self.navigationInterface.setEnabled(True)
             QApplication.restoreOverrideCursor()
 
     def _onTaskFinished(self, exit_code):
