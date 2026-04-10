@@ -992,6 +992,10 @@ class DivergentUniverse:
             (757 / 1920, 242 / 1080, 410 / 1920, 610 / 1080),
             (1235 / 1920, 242 / 1080, 410 / 1920, 610 / 1080),
         ]
+        relic2_positions = [
+            (517 / 1920, 242 / 1080, 409 / 1920, 610 / 1080),
+            (997 / 1920, 241 / 1080, 405 / 1920, 609 / 1080)
+        ]
 
         time.sleep(2)
         has_choose = False
@@ -1004,6 +1008,7 @@ class DivergentUniverse:
 
         if not has_choose:
             log.info("未检测到优先可选项，默认选择中间的奇物")
+            auto.click_element(relic2_positions[0], 'crop')
             auto.click_element(relic_positions[1], 'crop')
             has_choose = True
 
@@ -1020,8 +1025,13 @@ class DivergentUniverse:
             (757 / 1920, 242 / 1080, 410 / 1920, 610 / 1080),
             (1235 / 1920, 242 / 1080, 410 / 1920, 610 / 1080),
         ]
+        relic2_positions = [
+            (517 / 1920, 242 / 1080, 409 / 1920, 610 / 1080),
+            (997 / 1920, 241 / 1080, 405 / 1920, 609 / 1080)
+        ]
 
         log.info("尝试丢弃中间的奇物")
+        auto.click_element(relic2_positions[0], 'crop')
         auto.click_element(relic_positions[1], 'crop')
         time.sleep(1)
         auto.click_element('丢弃', 'text', None, 10, crop=(1695 / 1920, 948 / 1080, 69 / 1920, 50 / 1080), include=True)
