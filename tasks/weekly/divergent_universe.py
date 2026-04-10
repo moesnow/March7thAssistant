@@ -513,6 +513,16 @@ class DivergentUniverse:
                     return
                 log.info(f"事件超时（第 {timeout_retries}/3 次），重新进入关卡重试")
 
+                if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)) and auto.find_element(("战利品", "混沌药箱"), "text", crop=(1205 / 1920, 589 / 1080, 193 / 1920, 49 / 1080), include=True):
+                    log.info(f"检测到{auto.matched_text}，尝试点击")
+                    auto.press_key("f")
+                    time.sleep(2)
+                    for _ in range(100):
+                        if self.check_click_close() or self.check_title():
+                            time.sleep(2)
+                        else:
+                            break
+
                 time.sleep(1)
                 auto.press_mouse()
                 time.sleep(2)
