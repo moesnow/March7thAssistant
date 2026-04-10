@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame
+from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame, QApplication
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard
 from app.sub_interfaces.accounts_interface import accounts_interface
@@ -24,27 +24,24 @@ import sys
 
 
 class _PivotScrollFilter(QObject):
-    """为 pivot 及其所有子控件（tab 按钮）提供横向滚动支持。
+    """为 pivot 及其所有子控件（tab 按钮）提供横向拖拽滚动支持。
 
     安装方式（在所有 addItem 完成后）：
         self.pivot.installEventFilter(filter)
         for child in self.pivot.findChildren(QWidget):
             child.installEventFilter(filter)
 
-    之所以安装在子控件而非 viewport：Qt 鼠标事件直接投递给目标 widget
-    （tab 按钮），不经过 QScrollArea.viewport()，viewport 上的 filter 无效。
-
-    行为：
-    - Wheel → 横向滚动，消费事件（防止冒泡到外层纵向 ScrollArea）
-    - Press  → 记录全局起点，放行（tab hover/press 正常触发）
-    - Move>阈值 → 拖拽模式，消费 Move，滚动 scrollbar，显示 ClosedHandCursor
-    - Release → 拖拽后消费（防误切 tab），点击放行
+    拖拽后防止误切 tab 的机制：
+        进入拖拽模式后立即对 pivot 调用 grabMouse()，把后续所有鼠标事件
+        路由到 pivot 而非 tab 子控件。松开时 releaseMouse() 还原路由，
+        并对 pivot 发送 Leave 事件重置 hover 状态，完全杜绝误切 tab。
     """
-    _DRAG_THRESHOLD = 5  # px；低于此值视为点击
+    _DRAG_THRESHOLD = 5  # px；低于此值视为点击，不进入拖拽模式
 
-    def __init__(self, scroll_area: QScrollArea):
+    def __init__(self, scroll_area: QScrollArea, pivot):
         super().__init__(scroll_area)
         self._sa = scroll_area
+        self._pivot = pivot
         self._press_global: QPoint | None = None
         self._drag_origin: int = 0
         self._is_dragging: bool = False
@@ -55,40 +52,44 @@ class _PivotScrollFilter(QObject):
         # ── 滚轮 → 横向滚动（消费，不冒泡给外层纵向 ScrollArea）───────
         if t == QEvent.Type.Wheel:
             delta = event.angleDelta()
-            # 触控板可能有原生水平 delta，优先使用；否则用垂直 delta 映射
             scroll = delta.x() if delta.x() != 0 else delta.y()
             sb = self._sa.horizontalScrollBar()
             sb.setValue(sb.value() - scroll // 3)
             return True
 
-        # ── 按下 → 记录全局起点，不消费（tab 正常收到 press）────────────
+        # ── 按下 → 记录全局起点，放行（tab 正常 press/hover）────────────
         if t == QEvent.Type.MouseButtonPress and event.button() == Qt.MouseButton.LeftButton:
             self._press_global = event.globalPosition().toPoint()
             self._drag_origin = self._sa.horizontalScrollBar().value()
             self._is_dragging = False
             return False
 
-        # ── 移动 → 超阈值进入拖拽，消费 Move ────────────────────────────
+        # ── 移动 → 超阈值进入拖拽，grabMouse 接管后续事件 ───────────────
         if t == QEvent.Type.MouseMove and (event.buttons() & Qt.MouseButton.LeftButton):
             if self._press_global is not None:
                 dx = event.globalPosition().toPoint().x() - self._press_global.x()
                 if not self._is_dragging and abs(dx) > self._DRAG_THRESHOLD:
                     self._is_dragging = True
-                    QApplication.setOverrideCursor(Qt.CursorShape.ClosedHandCursor)
+                    # grabMouse：把所有后续鼠标事件路由到 pivot，
+                    # 子控件（tab 按钮）不再收到 Release/Click，彻底防止误切 tab
+                    self._pivot.grabMouse(Qt.CursorShape.ClosedHandCursor)
                 if self._is_dragging:
                     self._sa.horizontalScrollBar().setValue(self._drag_origin - dx)
-                    return True  # 消费：避免 tab hover 闪动
+                    return True
             return False
 
-        # ── 释放 → 拖拽后消费（防误切 tab），点击放行 ────────────────────
+        # ── 释放 → 拖拽：releaseMouse + 发送 Leave，清理状态 ────────────
         if t == QEvent.Type.MouseButtonRelease and event.button() == Qt.MouseButton.LeftButton:
             if self._press_global is not None:
                 was_dragging = self._is_dragging
                 self._press_global = None
                 self._is_dragging = False
                 if was_dragging:
-                    QApplication.restoreOverrideCursor()
-                    return True  # 消费：拖拽结束不触发 tab 切换
+                    self._pivot.releaseMouse()
+                    # 发送 Leave 事件让 pivot 及子控件重置 hover 样式
+                    leave = QEvent(QEvent.Type.Leave)
+                    QApplication.sendEvent(self._pivot, leave)
+                    return True  # 消费 Release，不触发 tab 切换
             return False
 
         return False
@@ -124,42 +125,16 @@ class SettingInterface(ScrollArea):
         StyleSheet.SETTING_INTERFACE.apply(self)
 
         # ── 选项卡滚动容器 ──────────────────────────────────────────────
-        # 当标签文字较长（如英语）时允许横向滚动。
+        # 当标签文字较长（如英语）时允许横向滚动。滚动条隐藏，仅保留拖拽交互。
         # 注意：不在此处安装 _PivotScrollFilter，因为 pivot 的 tab 子控件
         # 尚未创建（addItem 在 __initLayout 中调用）。filter 在 __initLayout
         # 最后通过 pivot.findChildren(QWidget) 递归安装，覆盖所有 tab 子控件。
         self.pivotScrollArea = QScrollArea(self)
         self.pivotScrollArea.setWidget(self.pivot)
         self.pivotScrollArea.setWidgetResizable(False)
-        # AsNeeded：中文下不显示（清洁），英文下溢出时自动出现
-        self.pivotScrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.pivotScrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.pivotScrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.pivotScrollArea.setFrameShape(QFrame.Shape.NoFrame)
-        # 滚动条：8px 药丸形，轨道有底色便于发现，hover/press 加深
-        self.pivotScrollArea.horizontalScrollBar().setStyleSheet("""
-            QScrollBar:horizontal {
-                height: 8px;
-                background: rgba(128, 128, 128, 0.15);
-                border-radius: 4px;
-                margin: 0px;
-            }
-            QScrollBar::handle:horizontal {
-                background: rgba(100, 100, 100, 0.55);
-                border-radius: 4px;
-                min-width: 36px;
-            }
-            QScrollBar::handle:horizontal:hover {
-                background: rgba(70, 70, 70, 0.80);
-            }
-            QScrollBar::handle:horizontal:pressed {
-                background: rgba(40, 40, 40, 0.96);
-            }
-            QScrollBar::add-line:horizontal,
-            QScrollBar::sub-line:horizontal {
-                width: 0px;
-                background: none;
-            }
-        """)
 
         QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
         scroller = QScroller.scroller(self.viewport())
@@ -1424,7 +1399,7 @@ class SettingInterface(ScrollArea):
         # height=54：pivot ~46px + 8px 供 AsNeeded 滚动条偶尔占用，底边 y=134
         # setViewportMargins(0, 140, ...) 保留 6px 间距，不影响内容区域
         self.pivotScrollArea.move(40, 80)
-        self.pivotScrollArea.setFixedHeight(54)
+        self.pivotScrollArea.setFixedHeight(46)  # pivot 本身高度，无需为滚动条留空
         # ── 关键修复：构造时必须给 scroll area 设置初始宽度 ──────────────
         # self.width() 在 __init__ 期间为 0（QWidget 尚未布局），
         # 但 self.parent 是已显示的 MainWindow，其宽度有效（≥960）。
@@ -1697,7 +1672,7 @@ class SettingInterface(ScrollArea):
         self.pivot.adjustSize()
         # 将滚动/拖拽过滤器安装到 pivot 本身及其所有子控件（tab 按钮）
         # 只在 viewport 上安装不够：tab 子控件直接收到鼠标事件，不经过 viewport
-        self._pivot_scroll_filter = _PivotScrollFilter(self.pivotScrollArea)
+        self._pivot_scroll_filter = _PivotScrollFilter(self.pivotScrollArea, self.pivot)
         self.pivot.installEventFilter(self._pivot_scroll_filter)
         for child in self.pivot.findChildren(QWidget):
             child.installEventFilter(self._pivot_scroll_filter)
