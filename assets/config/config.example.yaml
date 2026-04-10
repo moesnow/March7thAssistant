@@ -194,6 +194,20 @@ weekly_divergent_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的
 weekly_divergent_bonus_enable: false # 在领取积分奖励后自动执行饰品提取消耗沉浸器。true 开启，false 关闭。
 weekly_divergent_stable_mode: false # 是否启用差分宇宙稳定模式，运行若出现问题可尝试开启，适配低性能环境，云游戏默认使用此模式。true 开启，false 关闭。
 
+# 差分宇宙站点优先级配置
+divergent_station_priority_enable: false # 是否启用自定义站点优先级。true 开启，false 关闭。关闭时使用默认优先级。
+divergent_station_priority:
+  战斗: 1
+  精英: 1
+  事件: 2
+  奖励: 2
+  异常: 2
+  铸造: 2
+  空白: 3
+  商店: 3
+  财富: 3
+divergent_station_disabled: [] # 禁用的站点列表，在有重抽次数时会尝试重抽避开这些站点
+
 universe_enable: false # 是否启用模拟宇宙功能。true 开启，false 关闭。
 universe_operation_mode: exe # 模拟宇宙运行方式，可选 "源码"（source）或 "集成"（exe）。
 universe_category: divergent # 模拟宇宙类型，可选 "差分宇宙"（divergent）或 "模拟宇宙"（universe）。

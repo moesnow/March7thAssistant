@@ -132,12 +132,12 @@ class DivergentUniverse:
         if not self.choose_level(int(cfg.weekly_divergent_level), type):
             log.error("选择关卡失败，结束任务")
             return False
-        
+
         if type == "normal" and int(cfg.weekly_divergent_level) == 6:
             if not auto.click_element("./assets/images/screen/divergent_universe/astronomical.png", "image", 0.9, 10):
                 log.error("未找到进入星阶模式按钮，结束任务")
                 return False
-            
+
         if not auto.click_element("./assets/images/screen/divergent_universe/start.png", "image", 0.9, 10):
             log.error("未找到开始对局按钮，结束任务")
             return False
@@ -1045,26 +1045,39 @@ class DivergentUniverse:
                 "首领": 0,
                 "休整": 0,
                 "转化": 0,
-                "战斗": 1,
-                "精英": 1,
-                "异常": 2,
-                "事件": 2,
-                "奖励": 2,
-                "铸造": 2,
-                "空白": 3,
-                "商店": 3,
-                "财富": 3,
             }
+            disabled_stations = set()
+
+            if cfg.divergent_station_priority_enable:
+                custom_priority = cfg.divergent_station_priority
+                for name, prio in custom_priority.items():
+                    priority_map[name] = prio
+                disabled_stations = set(cfg.divergent_station_disabled)
+            else:
+                priority_map.update({
+                    "战斗": 1,
+                    "精英": 1,
+                    "事件": 2,
+                    "奖励": 2,
+                    "异常": 2,
+                    "铸造": 2,
+                    "空白": 3,
+                    "商店": 3,
+                    "财富": 3,
+                })
 
             # 获取每个站点的优先级，None 的优先级设为最低（优先级最高）
+            # 禁用的站点优先级设为极高值（仅在没有重抽次数时才会被选择）
             station_priorities = []
             for tag in station_tags:
                 if tag is None:
                     station_priorities.append(float('inf'))
+                elif tag in disabled_stations:
+                    station_priorities.append(99)
                 else:
                     if tag in priority_map:
                         has_priority_station = True
-                    station_priorities.append(priority_map.get(tag, 7))  # 其他标签优先级同为 7
+                    station_priorities.append(priority_map.get(tag, 100))
 
             if not has_priority_station:
                 if not auto.find_element("重抽0", "text", crop=re_extract_crop) and not auto.find_element("0", "text", crop=re_extract_crop):

@@ -14,6 +14,7 @@ from .card.pushsettingcard1 import CustomPushSettingCard, PushSettingCardInstanc
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
+from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
 from module.notification import init_notifiers
 from module.localization import tr
@@ -118,7 +119,7 @@ class SettingInterface(ScrollArea):
         self.setWidgetResizable(True)
         self.setViewportMargins(0, 140, 0, 5)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        
+
         # self.title_area.setWidget(self.pivot)
         # self.title_area.setWidgetResizable(True)
         # self.title_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -531,6 +532,12 @@ class SettingInterface(ScrollArea):
             tr('启用稳定模式'),
             tr("运行若出现问题可尝试开启，适配低性能环境，云游戏默认使用此模式"),
             "weekly_divergent_stable_mode"
+        )
+
+        self.stationPriorityCard = StationPrioritySettingCard(
+            FIF.MENU,
+            tr('站点优先级'),
+            tr("自定义差分宇宙「选择下一站」的站点优先级"),
         )
 
         self.universeEnableCard = ExpandableSwitchSettingCard(
@@ -1520,8 +1527,9 @@ class SettingInterface(ScrollArea):
             self.weeklyDivergentRunTimeCard
         ])
         self.UniverseGroup.addSettingCard(self.weeklyDivergentTypeCard)
-        self.UniverseGroup.addSettingCard(self.weeklyDivergentLevelCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentBonusEnableCard)
+        self.UniverseGroup.addSettingCard(self.weeklyDivergentLevelCard)
+        self.UniverseGroup.addSettingCard(self.stationPriorityCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentStableModeCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
