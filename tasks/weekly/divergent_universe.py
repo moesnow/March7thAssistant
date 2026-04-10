@@ -132,7 +132,12 @@ class DivergentUniverse:
         if not self.choose_level(int(cfg.weekly_divergent_level), type):
             log.error("选择关卡失败，结束任务")
             return False
-
+        
+        if type == "normal" and int(cfg.weekly_divergent_level) == 6:
+            if not auto.click_element("./assets/images/screen/divergent_universe/astronomical.png", "image", 0.9, 10):
+                log.error("未找到进入星阶模式按钮，结束任务")
+                return False
+            
         if not auto.click_element("./assets/images/screen/divergent_universe/start.png", "image", 0.9, 10):
             log.error("未找到开始对局按钮，结束任务")
             return False
@@ -154,8 +159,13 @@ class DivergentUniverse:
             (93 / 1920, 253 / 1080, 68 / 1920, 68 / 1080),
             (92 / 1920, 362 / 1080, 68 / 1920, 67 / 1080),
             (94 / 1920, 469 / 1080, 67 / 1920, 67 / 1080),
-            (93 / 1920, 580 / 1080, 68 / 1920, 64 / 1080)
+            (93 / 1920, 580 / 1080, 68 / 1920, 64 / 1080),
+            (93 / 1920, 689 / 1080, 68 / 1920, 64 / 1080)
         ]
+
+        if type == "cycle" and level == 6:
+            log.info("周期演算不开启阈值协议，难度 6 视为难度 5")
+            level = 5
 
         if auto.click_element(level_positions[level - 1], 'crop'):
             log.info(f"已选择难度 {level} 的关卡")
@@ -168,7 +178,6 @@ class DivergentUniverse:
                     else:
                         break
             return True
-
         return False
 
     def loop(self) -> bool:
