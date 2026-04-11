@@ -149,6 +149,7 @@ reward_quest_enable: true # 是否领取每日实训奖励。true 开启，false
 reward_srpass_enable: true # 是否领取无名勋礼奖励。true 开启，false 关闭。
 reward_redemption_code_enable: true # 是否领取兑换码奖励。true 开启，false 关闭。
 reward_achievement_enable: false # 是否领取成就奖励。true 开启，false 关闭。
+reward_message_enable: false # 是否领取短信奖励。true 开启，false 关闭。
 
 # 日常任务设置
 daily_enable: true # 是否启用日常任务。true 开启，false 关闭。
