@@ -54,11 +54,12 @@ class DivergentUniverse:
             return False
 
         score_parts = score.split('/')
-        if len(score_parts) == 2 and score_parts[0].isdigit() and score_parts[1].isdigit() and score_parts[1] == "14000":
-            log.info(f"差分宇宙积分：{score_parts[0]} / {score_parts[1]}")
-            if score_parts[0] == "14000":
+        if len(score_parts) == 2 and score_parts[0].isdigit() and score_parts[1].isdigit() and score_parts[1] in ("12000", "14000"):
+            max_score = score_parts[1]
+            log.info(f"差分宇宙积分：{score_parts[0]} / {max_score}")
+            if score_parts[0] == max_score:
                 cfg.save_timestamp("weekly_divergent_timestamp")
-                log.info("已达到最高积分 14000，记录时间")
+                log.info(f"已达到最高积分 {max_score}，记录时间")
                 return True
         else:
             log.warning(f"无法解析差分宇宙积分: {score}")
