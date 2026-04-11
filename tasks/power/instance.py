@@ -10,7 +10,7 @@ from .relicset import Relicset
 import time
 from module.localization import get_raw_instance_names
 import json
-
+import re
 
 class Instance:
     @staticmethod
@@ -191,21 +191,29 @@ class Instance:
 
         if "饰品提取" in instance_type:
             time.sleep(1)
+            instance_name = Instance.get_current_instance_name(instance_type)
 
             # 选择角色
             # 待后续更新支持
 
-            team_slot_crop = (624.0 / 1920, 772.0 / 1080, 267.0 / 1920, 91.0 / 1080)
-            if auto.find_element("./assets/images/share/universe/empty_character_slot.png", "image_count", 0.8, crop=team_slot_crop, pixel_bgr=[233, 233, 233]) == 3:
-                if auto.click_element("./assets/images/share/universe/empty_character_slot.png", "image", 0.8, crop=team_slot_crop, take_screenshot=False):
-                    if auto.click_element("预设编队", "text", max_retries=4, retry_delay=0.5, crop=(6 / 1920, 8 / 1080, 578 / 1920, 168 / 1080)):
-                        click_x = auto.screenshot_pos[0] + 260 / auto.screenshot_scale_factor
-                        click_y = auto.screenshot_pos[1] + 175 / auto.screenshot_scale_factor
-                        time.sleep(1.0)
-                        if auto.click_element_with_pos(((click_x, click_y), (click_x, click_y))):
-                            time.sleep(1.0)
-                            auto.press_key("esc")
-                time.sleep(1.0)
+            # 选择队伍
+            if auto.click_element("支援", "text", max_retries=10, crop = (610 / 1920, 864 / 1080, 184 / 1920, 64 / 1080), offset=(32, -80)):
+                team_name = Instance.get_target_team(instance_type, instance_name)
+                if re.match(r"^[01]?[0-9]$", team_name):
+                    team_name = f"队伍{int(team_name)}"
+                if auto.click_element("预设编队", "text", max_retries=4, retry_delay=0.5, crop=(6 / 1920, 8 / 1080, 578 / 1920, 168 / 1080)):
+                    time.sleep(1.0)
+                    team_name_crop = (6 / 1920, 116 / 1080, 300 / 1920, 900 / 1080)
+                    click_x = auto.screenshot_pos[0] + 260 / auto.screenshot_scale_factor
+                    click_y = auto.screenshot_pos[1] + 175 / auto.screenshot_scale_factor
+                    auto.click_element_with_pos(((click_x, click_y), (click_x, click_y)))
+                    for _ in range(4): # 尝试滚动寻找队伍
+                        if auto.click_element(team_name, "text", max_retries=4, retry_delay=0.5, crop=team_name_crop):
+                            break
+                        auto.mouse_scroll(20, -1)
+                        time.sleep(1)
+                    time.sleep(1.0)
+                    auto.press_key("esc")
 
             Character.borrow("ornament")
 
@@ -241,7 +249,6 @@ class Instance:
 
                         # 重新准备副本并开始挑战
                         # 通过instance_type获取对应的副本名称
-                        instance_name = Instance.get_current_instance_name(instance_type)
                         if Instance.prepare_instance(instance_type, instance_name):
                             return Instance.start_instance(instance_type, power_need)
                         return False

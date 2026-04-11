@@ -2,11 +2,16 @@ from module.automation import auto
 from module.logger import log
 from module.screen import screen
 import time
+import re
 
 
 class Team:
     @staticmethod
     def change_to(team):
+        if not re.match(r"^[01]?[0-9]$", str(team)):
+            log.error(f"队伍编号 {team} 格式错误，应为数字")
+            return False
+
         team_name = str(team).zfill(2)
         log.info(f"准备切换到队伍{team_name}")
 
