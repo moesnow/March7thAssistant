@@ -260,7 +260,7 @@ def after_finish_is_loop():
         return wait_time
 
     if cfg.loop_mode == "power":
-        current_power = Power.get()
+        current_power = Power.get(use_supplement=False)
         if current_power >= cfg.power_limit:
             log.info(f"开拓力 >= {cfg.power_limit}")
             log.info("即将再次运行")
@@ -445,7 +445,7 @@ def notify_after_finish_not_loop():
         wait_time_power_full = (300 - current_power) * 6 * 60
         return wait_time_power_full
 
-    current_power = Power.get()
+    current_power = Power.get(use_supplement=False)
 
     wait_time = get_wait_time(current_power)
     future_time = Date.calculate_future_time(wait_time)

@@ -327,7 +327,7 @@ class Power:
             break
 
     @staticmethod
-    def get():
+    def get(use_supplement=True):
         def get_power(crop, type="trailblaze_power"):
             try:
                 if type == "trailblaze_power":
@@ -368,7 +368,7 @@ class Power:
 
         trailblaze_power_crop = (1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080)
 
-        if cfg.use_reserved_trailblaze_power or cfg.use_fuel:
+        if use_supplement and (cfg.use_reserved_trailblaze_power or cfg.use_fuel):
             screen.change_to('map')
             # 打开开拓力补充界面
             if auto.click_element("./assets/images/share/power/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=trailblaze_power_crop):
