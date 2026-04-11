@@ -390,9 +390,13 @@ class DivergentUniverse:
             time.sleep(4)
             events = self.detect_events()
             if not events:
-                log.info("未检测到任何事件，事件处理完成")
-                self.process_stage = True
-                return
+                log.info("未检测到任何事件，尝试向前移动后重试")
+                auto.press_key("w", 1)
+                events = self.detect_events()
+                if not events:
+                    log.info("未检测到任何事件，事件处理完成")
+                    self.process_stage = True
+                    return
 
             log.info(f"检测到 {len(events)} 个事件")
 
