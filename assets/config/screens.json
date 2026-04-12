@@ -25,6 +25,12 @@
                     "time.sleep(2)",
                     "auto.click_element('./assets/images/share/warp/stellar_warp.png', 'image', 0.9)"
                 ]
+            },
+            {
+                "target_screen": "incoming_message",
+                "actions_list": [
+                    "auto.press_key('p')"
+                ]
             }
         ]
     },
@@ -1079,6 +1085,19 @@
                 "actions_list": [
                     "auto.press_key('esc')",
                     "time.sleep(1)",
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "新消息通知",
+        "id": "incoming_message",
+        "image_path": "./assets/images/screen/incoming_message.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
                     "auto.press_key('esc')"
                 ]
             }
