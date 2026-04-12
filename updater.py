@@ -9,11 +9,11 @@ from packaging.version import parse
 from tqdm import tqdm
 import requests
 import psutil
-import urllib.request
 from urllib.request import urlopen
 from urllib.error import URLError
 from utils.color import red, green
 from utils.logger.logger import Logger
+from module.update.download_proxy import get_update_download_aria2_args, get_update_download_requests_proxies
 
 
 class Updater:
@@ -113,16 +113,17 @@ class Updater:
     def download_with_progress(self):
         """下载文件并显示进度条。"""
         self.logger.hr("下载", 0)
-        proxies = urllib.request.getproxies()
+        request_proxies = get_update_download_requests_proxies()
+        aria2_proxy_args = get_update_download_aria2_args()
         while True:
             try:
                 self.logger.info("开始下载...")
                 try:
-                    self.download_with_requests()
+                    self.download_with_requests(request_proxies)
                 except Exception as e:
                     if os.path.exists(self.aria2_path):
                         self.logger.warning(f"下载失败: {red(e)}，尝试使用外部下载工具")
-                        self.download_with_aria2(proxies)
+                        self.download_with_aria2(aria2_proxy_args)
                     else:
                         self.logger.error(red(e))
                         raise e
@@ -135,7 +136,7 @@ class Updater:
                 input("按回车键重试. . .")
         self.logger.hr("完成", 2)
 
-    def download_with_aria2(self, proxies):
+    def download_with_aria2(self, proxy_args):
         # 偶现报错
         # [SocketCore.cc:1019] errorCode=1 SSL/TLS handshake failure: Error: 由于吊销服务器已脱机，吊销功能无法检查吊销。 (80092013)
 
@@ -144,7 +145,6 @@ class Updater:
             "--disable-ipv6=true",
             "--dir={}".format(os.path.dirname(self.download_file_path)),
             "--out={}".format(os.path.basename(self.download_file_path)),
-            self.download_url
         ]
 
         if "github.com" in self.download_url:
@@ -152,13 +152,11 @@ class Updater:
             # 仅在下载 GitHub 资源时启用断点续传，避免416错误
             if os.path.exists(self.download_file_path):
                 command.insert(2, "--continue=true")
-        # 代理设置
-        for scheme, proxy in proxies.items():
-            if scheme in ("http", "https", "ftp"):
-                command.append(f"--{scheme}-proxy={proxy}")
+        command.extend(proxy_args)
+        command.append(self.download_url)
         subprocess.run(command, check=True)
 
-    def download_with_requests(self, max_retries=5, retry_delay=2):
+    def download_with_requests(self, request_proxies=None, max_retries=5, retry_delay=2):
         attempt = 0
         while attempt < max_retries:
             existing_size = os.path.getsize(self.download_file_path) if os.path.exists(self.download_file_path) else 0
@@ -169,7 +167,7 @@ class Updater:
                 if existing_size > 0:
                     headers["Range"] = f"bytes={existing_size}-"
 
-                with requests.get(self.download_url, stream=True, headers=headers, timeout=(10, 30)) as r:
+                with requests.get(self.download_url, stream=True, headers=headers, timeout=(10, 30), proxies=request_proxies) as r:
                     # 支持断点续传时会返回 206，不支持时通常返回 200（需要重下）
                     if existing_size > 0 and r.status_code == 206:
                         mode = "ab"

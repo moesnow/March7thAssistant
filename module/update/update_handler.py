@@ -39,7 +39,7 @@ class UpdateHandler:
         for attempt in range(1, max_attempts + 1):
             try:
                 log.info(f"开始下载: {self.download_url} (尝试 {attempt}/{max_attempts})")
-                download_with_progress(self.download_url, self.download_file_path)
+                download_with_progress(self.download_url, self.download_file_path, use_update_proxy=True)
                 log.info(f"下载完成: {self.download_file_path}")
                 return
             except Exception as e:

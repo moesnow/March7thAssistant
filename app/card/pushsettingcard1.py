@@ -36,17 +36,23 @@ class CustomPushSettingCard(SettingCard):
 
 
 class PushSettingCardStr(CustomPushSettingCard):
-    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None, empty_content=None):
+        self.empty_content = empty_content
         self.configvalue = str(cfg.get_value(configname))
-        super().__init__(text, icon, title, configname, self.configvalue, parent)
+        super().__init__(text, icon, title, configname, self._display_value(self.configvalue), parent)
         self.button.clicked.connect(self.__onclicked)
+
+    def _display_value(self, value):
+        if value == "" and self.empty_content is not None:
+            return self.empty_content
+        return value
 
     def __onclicked(self):
         message_box = MessageBoxEdit(self.title, self.configvalue, self.window())
         if message_box.exec():
             cfg.set_value(self.configname, message_box.getText())
-            self.contentLabel.setText(message_box.getText())
             self.configvalue = message_box.getText()
+            self.contentLabel.setText(self._display_value(self.configvalue))
 
 
 class PushSettingCardMirrorchyan(SettingCard):

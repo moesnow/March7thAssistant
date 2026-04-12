@@ -10,7 +10,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
 from .card.switchsettingcard1 import SwitchSettingCard1, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import CustomPushSettingCard, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
+from .card.pushsettingcard1 import CustomPushSettingCard, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
@@ -1418,6 +1418,13 @@ class SettingInterface(ScrollArea):
             tr("更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。"),
             "update_full_enable"
         )
+        self.updateDownloadProxyCard = PushSettingCardStr(
+            tr('修改'),
+            FIF.GLOBE,
+            tr("下载代理"),
+            "update_download_proxy",
+            empty_content=tr("留空则使用系统代理；支持 http:// 和 socks5://")
+        )
         self.mirrorchyanCdkCard = PushSettingCardMirrorchyan(
             tr('修改'),
             FIF.BOOK_SHELF,
@@ -1662,7 +1669,8 @@ class SettingInterface(ScrollArea):
         self.updateSourceCard.addSettingCards([
             self.checkUpdateCard,
             self.updatePrereleaseEnableCard,
-            self.updateFullEnableCard
+            self.updateFullEnableCard,
+            self.updateDownloadProxyCard
         ])
         self.AboutGroup.addSettingCard(self.mirrorchyanCdkCard)
         self.AboutGroup.addSettingCard(self.languageCard)

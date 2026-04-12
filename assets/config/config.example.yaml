@@ -421,6 +421,7 @@ auto_update: false
 
 update_source: GitHub # 更新源，可选值："GitHub"（海外源）, "MirrorChyan"（Mirror 酱）
 mirrorchyan_cdk: "" # MirrorChyan CDK
+update_download_proxy: "" # 更新下载代理，留空则使用系统代理。支持 http://127.0.0.1:7890 和 socks5://127.0.0.1:1080，仅在下载更新文件时生效，且优先于系统代理。
 
 # 消息推送配置
 # 消息推送格式配置

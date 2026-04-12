@@ -54,7 +54,7 @@ class Config(metaclass=SingletonMeta):
             with open(version_path, 'r', encoding='utf-8') as file:
                 return file.read().strip()
         except FileNotFoundError:
-            sys.exit("版本文件未找到")
+            raise FileNotFoundError("版本文件未找到")
 
     def _update_config(self, config, new_config):
         """递归更新配置信息"""
