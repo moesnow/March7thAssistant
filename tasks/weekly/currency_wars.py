@@ -154,14 +154,14 @@ class CurrencyWars:
         return False
 
     def run(self) -> bool:
-        if self.start_war(cfg.currencywars_type):
-            while True:
+        while True:
+            if self.start_war(cfg.currencywars_type):
                 result = self.loop()
                 if self.need_restart:
                     continue
                 else:
                     return result
-        return False
+            return False
 
     def get_reward(self):
         log.info("开始领取奖励")
