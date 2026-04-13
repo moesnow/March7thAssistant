@@ -1112,6 +1112,14 @@ class CurrencyWars:
                         if self.move_character(("prepare", idx), ("forward", 0)):
                             break
 
+        if cfg.currencywars_strategy == "aglaea":
+            for idx, char in enumerate(self.backward_characters[1:], start=1):
+                if char.name == "藿藿":
+                    log.info("阿格莱雅策略下检测到藿藿不在后台首位，尝试交换到第一个位置")
+                    if not self.move_character(("backward", idx), ("backward", 0)):
+                        log.error("藿藿调整到后台首位失败")
+                    break
+
         log.info("角色移动操作完成")
 
     def _log_character_status(self):
