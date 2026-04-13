@@ -495,11 +495,31 @@ class SettingInterface(ScrollArea):
             tr("在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器"),
             "currencywars_bonus_enable"
         )
+        self.currencywarsRankDifficultyCard = ComboBoxSettingCard2(
+            "currencywars_rank_difficulty",
+            FIF.HISTORY,
+            tr('职级难度'),
+            '',
+            texts={tr('最低职级'): 'lowest', tr('最高职级'): 'highest'}
+        )
         self.currencywarsFastModeCard = SwitchSettingCard1(
             FIF.SPEED_HIGH,
             tr('启用速通模式'),
             tr("开启后，仅在首领节点尝试装备武器"),
             "currencywars_fast_mode"
+        )
+        self.currencywarsStrategyCard = ExpandableComboBoxSettingCard(
+            "currencywars_strategy",
+            FIF.BOOK_SHELF,
+            tr('货币战争策略'),
+            '',
+            {tr('默认'): 'default', tr('阿格莱雅'): 'aglaea'}
+        )
+        self.currencywarsStrategyRestartOnSpecialTagsCard = SwitchSettingCard1(
+            FIF.SYNC,
+            tr('遇到特定词条时接受重开'),
+            tr('根据所选策略，在遇到特定词条或词条组合时允许重开'),
+            "currencywars_strategy_restart_on_special_tags"
         )
 
         self.UniverseGroup = SettingCardGroup(tr("差分宇宙"), self.scrollWidget)
@@ -1536,7 +1556,12 @@ class SettingInterface(ScrollArea):
         ])
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
-        self.CurrencywarsGroup.addSettingCard(self.currencywarsFastModeCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategyCard)
+        self.currencywarsStrategyCard.addSettingCards([
+            self.currencywarsStrategyRestartOnSpecialTagsCard,
+            self.currencywarsFastModeCard
+        ])
 
         self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
         self.weeklyDivergentEnableCard.addSettingCards([
@@ -1760,6 +1785,7 @@ class SettingInterface(ScrollArea):
         self.rewardEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.assetEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.currencywarsEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.currencywarsStrategyCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.fightEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.weeklyDivergentEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.universeEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
