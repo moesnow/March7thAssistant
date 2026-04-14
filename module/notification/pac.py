@@ -10,6 +10,8 @@ def query_system_pac_settings() -> str | None:
     Query system pac settings from registry.
     :return: pac url or None
     """
+    if sys.platform != 'win32':
+        return None
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, PAC_REG_KEY)
         value, _ = winreg.QueryValueEx(key, "AutoConfigURL")
