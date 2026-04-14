@@ -29,6 +29,11 @@ def parse_args():
     # 可选参数组
     optional = parser.add_argument_group('可选参数')
     optional.add_argument(
+        '--no-run-immediately',
+        action='store_true',
+        help='禁用立即运行'
+    )
+    optional.add_argument(
         '-h', '--help',
         action='help',
         help='显示此帮助信息并退出'
@@ -103,8 +108,13 @@ def first_run():
         sys.exit(0)
 
 
-def run_main_actions():
+def run_main_actions(no_run_immediately=False):
+    is_first_run = no_run_immediately
     while True:
+        if is_first_run:
+            is_first_run = False
+            game.after_finish_is_loop()
+            continue
         if cfg.notify_merge:
             notif.start_batch()
         version.start()
@@ -193,12 +203,12 @@ def run_notify_action():
     sys.exit(0)
 
 
-def main(action=None):
+def main(action=None, no_run_immediately=False):
     first_run()
 
     # 完整运行
     if action is None or action == "main":
-        run_main_actions()
+        run_main_actions(no_run_immediately)
 
     # 子任务
     elif action in ["daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
@@ -239,7 +249,10 @@ def exit_handler():
 if __name__ == "__main__":
     try:
         atexit.register(exit_handler)
-        main(args.task) if args.task else main()
+        if args.task:
+            main(action=args.task, no_run_immediately=args.no_run_immediately)
+        else:
+            main(no_run_immediately=args.no_run_immediately)
     except KeyboardInterrupt:
         log.error("发生错误: 手动强制停止")
         pause_on_error()
