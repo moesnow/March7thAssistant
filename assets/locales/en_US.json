@@ -1118,5 +1118,7 @@
     "货币战争策略": "Currency Wars Strategy",
     "默认": "Default",
     "遇到特定词条时接受重开": "Allow restart on specific tags",
-    "根据所选策略，在遇到特定词条或词条组合时允许重开": "Allow restart when specific tags or tag combinations appear based on the selected strategy"
+    "根据所选策略，在遇到特定词条或词条组合时允许重开": "Allow restart when specific tags or tag combinations appear based on the selected strategy",
+    "「开拓者•记忆」名称": "Remembrance Trailblazer Name",
+    "未配置，阿格莱雅策略下将跳过该角色，需要填入自己游戏名称": "Not configured. This character will be skipped in Aglaea strategy. Enter the name shown in your game."
 }
