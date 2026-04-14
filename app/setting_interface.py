@@ -515,6 +515,13 @@ class SettingInterface(ScrollArea):
             '',
             {tr('默认'): 'default', tr('阿格莱雅'): 'aglaea'}
         )
+        self.currencywarsRemembranceTrailblazerNameCard = PushSettingCardStr(
+            tr('修改'),
+            FIF.EDIT,
+            tr('「开拓者•记忆」名称'),
+            "currencywars_remembrance_trailblazer_name",
+            empty_content=tr('未配置，阿格莱雅策略下将跳过该角色，需要填入自己游戏名称')
+        )
         self.currencywarsStrategyRestartOnSpecialTagsCard = SwitchSettingCard1(
             FIF.SYNC,
             tr('遇到特定词条时接受重开'),
@@ -1559,6 +1566,7 @@ class SettingInterface(ScrollArea):
         self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategyCard)
         self.currencywarsStrategyCard.addSettingCards([
+            self.currencywarsRemembranceTrailblazerNameCard,
             self.currencywarsStrategyRestartOnSpecialTagsCard,
             self.currencywarsFastModeCard
         ])

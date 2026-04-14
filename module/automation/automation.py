@@ -691,6 +691,70 @@ class Automation(metaclass=SingletonMeta):
         self.logger.debug("OCR未识别到任何文字")
         return None
 
+    def is_rgb_ratio_above_threshold(self, crop, rgb, threshold, tolerance=0.0):
+        """判断指定 crop 区域内目标 RGB 像素占比是否超过阈值。
+
+        参数:
+        - crop: 裁剪区域，格式为 (x, y, w, h)，使用相对比例(0~1)。
+        - rgb: 目标颜色，格式为 (R, G, B)。
+        - threshold: 占比阈值，支持 0~1 的比例值或 0~100 的百分比值。
+        - tolerance: RGB 通道允许偏差，支持 0~1 的比例值或 0~100 的百分比值。
+          例如 0.05 或 5 表示每个通道允许约 13 的偏差。
+
+        返回:
+        - 若目标 RGB 像素占比超过阈值则返回 True，否则返回 False。
+        """
+        if not isinstance(rgb, (list, tuple)) or len(rgb) != 3 or not all(isinstance(v, (int, float)) for v in rgb):
+            raise ValueError("rgb 参数必须是 (R, G, B)")
+
+        if not isinstance(threshold, (int, float)):
+            raise ValueError("threshold 参数必须是数字")
+        if not isinstance(tolerance, (int, float)):
+            raise ValueError("tolerance 参数必须是数字")
+
+        ratio_threshold = float(threshold)
+        if ratio_threshold > 1:
+            if ratio_threshold <= 100:
+                ratio_threshold /= 100
+            else:
+                raise ValueError("threshold 参数必须在 0~1 或 0~100 范围内")
+        if ratio_threshold < 0:
+            raise ValueError("threshold 参数不能小于 0")
+
+        ratio_tolerance = float(tolerance)
+        if ratio_tolerance > 1:
+            if ratio_tolerance <= 100:
+                ratio_tolerance /= 100
+            else:
+                raise ValueError("tolerance 参数必须在 0~1 或 0~100 范围内")
+        if ratio_tolerance < 0:
+            raise ValueError("tolerance 参数不能小于 0")
+
+        self.take_screenshot(crop)
+
+        img_np = np.array(self.screenshot)
+        if img_np.size == 0:
+            self.logger.warning("截图为空，无法计算 RGB 占比")
+            return False
+        if img_np.ndim == 2:
+            self.logger.warning("当前截图为灰度图，无法按 RGB 计算占比")
+            return False
+
+        rgb_tuple = tuple(int(v) for v in rgb)
+        channel_tolerance = 255 * ratio_tolerance
+        target_rgb = np.array(rgb_tuple, dtype=np.int16)
+        rgb_img = img_np[:, :, :3].astype(np.int16)
+        matched_pixels = np.count_nonzero(
+            np.all(np.abs(rgb_img - target_rgb) <= channel_tolerance, axis=-1)
+        )
+        total_pixels = rgb_img.shape[0] * rgb_img.shape[1]
+        ratio = matched_pixels / total_pixels if total_pixels else 0
+
+        self.logger.debug(
+            f"RGB占比判断：rgb={rgb_tuple} 容差={ratio_tolerance:.4f} 占比={ratio:.4f} 阈值={ratio_threshold:.4f}"
+        )
+        return ratio > ratio_threshold
+
     def fill_crop_with_color(self, crop, color, use_background_screenshot=None):
         """截图后将指定 crop 区域填充为给定颜色。
 
