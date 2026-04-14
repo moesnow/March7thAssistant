@@ -727,6 +727,7 @@ class CurrencyWars:
                     log.info("检测到好运令牌，尝试使用好运令牌")
                     try_equip(result, aglaea_position)
                     if auto.click_element("反重力皮靴", "text", crop=(534 / 1920, 247 / 1080, 1129 / 1920, 45 / 1080)):
+                        time.sleep(2)
                         log.info("成功使用好运令牌，获得了反重力皮靴")
                         cnt += 1
                         # 只需要一双皮靴
