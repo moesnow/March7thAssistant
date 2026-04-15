@@ -32,7 +32,7 @@ def start():
                     break
 
             if assert_url is not None and parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
-                notif.notify(content=cfg.notify_template['NewVersion'].format(version=version), level=NotificationLevel.ALL)
+                notif.notify(content=cfg.notify_template['NewVersion'].format(version=version), level=NotificationLevel.ERROR)
                 log.info(f"发现新版本：{cfg.version}  ——→  {version}")
                 log.info(data["html_url"])
             else:
