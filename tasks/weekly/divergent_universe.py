@@ -500,6 +500,13 @@ class DivergentUniverse:
                             else:
                                 if stable_mode:
                                     auto.press_key("w")
+                    else:
+                        if timeout_retries > 1 and self.detect_random_door:
+                            # 可能将随意门识别成事件了，尝试一次直接找门
+                            if self.process_random_door():
+                                log.info("中断事件处理，已检测到随机门并成功进入")
+                                return
+
             finally:
                 if not stable_mode:
                     auto.press_key_up("w")
@@ -838,6 +845,7 @@ class DivergentUniverse:
                         if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
                             return False
                         self.stage_finish = True
+                        log.info("成功进入随意门")
                         return True
                     else:
                         if not stable_mode:

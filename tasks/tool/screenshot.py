@@ -562,7 +562,7 @@ class ScreenshotApp(QMainWindow):
             f"（已使用绿色矩形标记）"
         )
 
-    def _run_yolo_on_screenshot(self, target, method="single"):
+    def _run_yolo_on_screenshot(self, target, method="single", threshold=0.25):
         """在截图工具内部的截图上运行YOLO，不重新截图。"""
         from module.automation import auto
         old_screenshot = auto.screenshot
@@ -573,9 +573,9 @@ class ScreenshotApp(QMainWindow):
         auto.screenshot_pos = (0, 0)
         try:
             if method == "single":
-                return auto.find_yolo_element(target, threshold=0.25, relative=True)
+                return auto.find_yolo_element(target, threshold=threshold, relative=True)
             else:
-                return auto.find_yolo_with_multiple_targets(target, threshold=0.25, relative=True)
+                return auto.find_yolo_with_multiple_targets(target, threshold=threshold, relative=True)
         finally:
             auto.screenshot = old_screenshot
             auto.screenshot_scale_factor = old_scale
@@ -593,6 +593,7 @@ class ScreenshotApp(QMainWindow):
         top_left, bottom_right = self._run_yolo_on_screenshot(
             target={"model_path": "./assets/model/divergent.onnx", "names": ["door", "event"], "target_class": "door"},
             method="single",
+            threshold=0.01
         )
         if top_left is None:
             QMessageBox.information(self, "识别随意门", "没有检测到随意门")
@@ -613,6 +614,7 @@ class ScreenshotApp(QMainWindow):
         results = self._run_yolo_on_screenshot(
             target={"model_path": "./assets/model/divergent.onnx", "names": ["door", "event"], "target_class": "event"},
             method="multiple",
+            threshold=0.2
         )
         if not results:
             QMessageBox.information(self, "识别事件", "没有检测到事件")
