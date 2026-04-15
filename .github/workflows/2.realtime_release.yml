@@ -44,7 +44,7 @@ jobs:
         if: steps.check_version.outputs.should_build == 'true'
         uses: actions/setup-python@v4
         with:
-          python-version: "3.13.11"
+          python-version: "3.14.4"
           cache: "pip"
 
       # 安装依赖
