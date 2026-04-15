@@ -12,6 +12,14 @@ import gc
 
 # OCR 耗时阈值（秒），超过此值时自动禁用 DML
 OCR_SLOW_THRESHOLD = 5.0
+# 固定图片压测表明，RapidOCR 在连续多次识别时会创建大量中间 ndarray、
+# RapidOCROutput、以及 to_json 生成的 Python 容器对象。它们并非真正泄漏，
+# 但往往要等到 full GC 才会集中回收，所以任务管理器里会表现为 RSS 快速
+# 爬升、达到高点后瞬间回落的锯齿。这里通过周期性 full GC 优先压低峰值内存。
+#
+# 这个值越小，峰值越低，但 full GC 触发越频繁；这里先取一个对 OCR 热路径
+# 较低侵入的经验值 20，优先解决长时间任务中的内存峰值问题。
+OCR_PERIODIC_FULL_GC_INTERVAL = 20
 
 
 class OCR:
@@ -25,6 +33,23 @@ class OCR:
         self._cfg = None  # 配置对象引用，延迟获取避免循环导入
         self.ocr_time = 0.0
         self.ocr_count = 0
+        self._periodic_gc_interval = OCR_PERIODIC_FULL_GC_INTERVAL
+
+    def _maybe_collect_garbage(self):
+        """在长时间 OCR 循环下定期触发 full GC，优先压低峰值内存。
+
+        根据固定图复现结果，内存的快速上涨主要不是输入图片被重复拷贝，
+        而是 RapidOCR 在输出构造阶段堆积了大量短生命周期对象。这些对象
+        在引用关系彻底断开前，RSS 会维持在高位，看起来像“内存泄漏”；
+        实际上执行一次 full GC 后会明显回落。
+
+        因此这里不在每次 OCR 后都强制回收，而是按次数做周期性 full GC，
+        在控制峰值内存和避免过高额外开销之间做折中。
+        """
+        if self._periodic_gc_interval <= 0 or self.ocr_count <= 0:
+            return
+        if self.ocr_count % self._periodic_gc_interval == 0:
+            gc.collect()
 
     def _get_config(self):
         """延迟获取配置对象，避免循环导入"""
@@ -203,6 +228,10 @@ class OCR:
                 try:
                     # 记录开始时间，用于检测 DML 是否过慢
                     start_time = time.monotonic()
+                    # 连续 OCR 压测表明，峰值内存主要就在这一条调用链里产生：
+                    # RapidOCR 会先构造包含原图引用和中间结果的输出对象，再转换
+                    # 为 JSON 风格的 Python 结构。后续 replace_strings/convert_format
+                    # 只是在此基础上继续处理，并不是主要的内存来源。
                     original_dict = self.ocr(img).to_json()
                     elapsed_time = time.monotonic() - start_time
                     # self.logger.debug(f"OCR执行耗时: {elapsed_time:.2f} 秒")
@@ -219,7 +248,11 @@ class OCR:
                         original_dict = self.ocr(img).to_json()
                         self.logger.info("已切换到 CPU 模式")
 
-                    return self.replace_strings(original_dict)
+                    results = self.replace_strings(original_dict)
+                    # 成功路径最适合触发周期性回收：此时本轮 OCR 的业务处理已经完成，
+                    # 主流程通常不会再需要 RapidOCR 生成的中间对象，可以优先压低峰值。
+                    self._maybe_collect_garbage()
+                    return results
                 except Exception as e:
                     # 检查是否为编码错误（直接或通过异常链）
                     if self._is_unicode_error(e):
@@ -236,7 +269,11 @@ class OCR:
                             try:
                                 original_dict = self.ocr(img).to_json()
                                 self.logger.info("CPU 模式执行成功")
-                                return self.replace_strings(original_dict)
+                                results = self.replace_strings(original_dict)
+                                # 降级到 CPU 后仍会走同样的输出构造流程，因此同样保留
+                                # 周期性 full GC 以控制长时间循环时的峰值内存。
+                                self._maybe_collect_garbage()
+                                return results
                             except Exception as cpu_e:
                                 self.logger.error(f"CPU 模式仍然失败: {cpu_e}")
                                 return "{}"
