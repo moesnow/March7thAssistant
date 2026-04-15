@@ -1749,6 +1749,8 @@ class CurrencyWars:
                     time.sleep(2)  # 等待BOSS词条加载完成
                     if auto.click_element("下一步", 'text', None, include=True):
                         self._check_boss_tag()
+                else:
+                    auto.click_element_with_pos(result)
             else:
                 auto.click_element_with_pos(result)
 
