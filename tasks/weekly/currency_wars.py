@@ -1738,14 +1738,19 @@ class CurrencyWars:
         """
         检查并点击继续类别的按钮
         """
-        if auto.click_element(("点击空白处继续", "下一步", "继续挑战", "前往结算", "下一页", "确认选择"), 'text', None, include=True):
+        if result := auto.find_element(("点击空白处继续", "下一步", "继续挑战", "前往结算", "下一页", "确认选择"), 'text', None, include=True):
             log.info(f"检测到{auto.matched_text}按钮，尝试点击")
+
             if auto.matched_text == "下一页":
                 self._check_battle_result()
-
-            if cfg.currencywars_strategy == "aglaea" and cfg.currencywars_strategy_restart_on_special_tags:
+                auto.click_element_with_pos(result)
+            elif cfg.currencywars_strategy == "aglaea" and cfg.currencywars_strategy_restart_on_special_tags:
                 if auto.matched_text == "下一步":
-                    self._check_boss_tag()
+                    time.sleep(2)  # 等待BOSS词条加载完成
+                    if auto.click_element("下一步", 'text', None, include=True):
+                        self._check_boss_tag()
+            else:
+                auto.click_element_with_pos(result)
 
     def _check_boss_tag(self):
         # 沉重脚步：敌人攻击我方队员后，使受到攻击的我方队员行动延后8%。
