@@ -504,6 +504,7 @@ class CurrencyWars:
         aglaea3_img = "./assets/images/share/aglaea/aglaea3.png"
         remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
         # 打开商店
+        log.info("打开商店购买角色")
         auto.click_element(shop_button_crop, "crop")
         time.sleep(2)
         money = self.check_money()
@@ -577,6 +578,7 @@ class CurrencyWars:
             else:
                 break
         # 关闭商店
+        log.info("关闭商店")
         auto.click_element(shop_button_crop, "crop")
         time.sleep(2)
         if buy_anything:
@@ -589,6 +591,7 @@ class CurrencyWars:
         shop_crop = (344 / 1920, 19 / 1080, 1370 / 1920, 336 / 1080)
         remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
         # 打开商店
+        log.info("打开商店购买角色")
         auto.click_element(shop_button_crop, "crop")
         time.sleep(2)
         money = self.check_money()
@@ -677,6 +680,7 @@ class CurrencyWars:
                     break
 
         # 关闭商店
+        log.info("关闭商店")
         auto.click_element(shop_button_crop, "crop")
         time.sleep(2)
         if buy_anything:
@@ -779,12 +783,14 @@ class CurrencyWars:
         for _ in range(4):
             if self.shoe_count < 4:
                 if result := auto.find_element(shoe_img, "image", 0.9, crop=equip_crop):
+                    log.info("检测到轮滑鞋，尝试装备轮滑鞋")
                     try_equip(result, aglaea_position)
                     self.shoe_count += 1
                 else:
                     break
 
         if result := auto.find_element(propeller_img, "image", 0.9, crop=equip_crop):
+            log.info("检测到螺旋桨，尝试装备螺旋桨")
             try_equip(result, aglaea_position)
             self.propeller_count = 1
 
@@ -1559,12 +1565,17 @@ class CurrencyWars:
                 log.error("开启宝箱操作超时，退出循环")
                 break
 
+            log.info("检测到开启按钮，尝试点击")
             auto.click_element_with_pos(res, action="down")
             time.sleep(0.2)
             auto.mouse_up()
-            time.sleep(2)
+            time.sleep(4)
+
+            success = False
             if auto.find_element(('武装箱', '星徽秘典'), "text", None, crop=(1012.0 / 1920, 27.0 / 1080, 173.0 / 1920, 56.0 / 1080), include=True):
-                if cfg.currencywars_strategy == "aglaea" and self.shoe_count < 4 and auto.click_element("轮滑鞋", "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080)):
+                log.info(f"检测到{auto.matched_text}选项，尝试点击")
+                success = True
+                if cfg.currencywars_strategy == "aglaea" and self.shoe_count < 4 and auto.click_element("轮滑鞋", "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080), include=True):
                     log.info("检测到轮滑鞋选项，尝试点击")
                 else:
                     pos = (533.0 / 1920, 135.0 / 1080, 258.0 / 1920, 181.0 / 1080)
@@ -1572,6 +1583,8 @@ class CurrencyWars:
                 time.sleep(2)
             # 聘用书坐标尚未经过测试
             if auto.find_element("聘用书", "text", None, crop=(923.0 / 1920, 21.0 / 1080, 168.0 / 1920, 74.0 / 1080), include=True):
+                log.info("检测到聘用书选项，尝试点击")
+                success = True
                 if cfg.currencywars_strategy == "aglaea":
                     remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
                     preferred_characters = ["瓦尔特", "昔涟"]
@@ -1585,9 +1598,14 @@ class CurrencyWars:
                     auto.click_element(pos, "crop")
                 time.sleep(2)
             if auto.find_element("专家邀请函", "text", None, crop=(949 / 1920, 27 / 1080, 153 / 1920, 56 / 1080), include=True):
+                log.info("检测到专家邀请函选项，尝试点击")
+                success = True
                 pos = (769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080)
                 auto.click_element(pos, "crop")
                 time.sleep(2)
+            if not success:
+                log.warning("未检测到可点击的选项")
+                continue
             res = auto.find_element("开启", "text", None, crop=(376.0 / 1920, 839.0 / 1080, 1125.0 / 1920, 148.0 / 1080), include=True)
 
     def check_character_status(self):
