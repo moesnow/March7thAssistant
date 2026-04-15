@@ -502,17 +502,11 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('最低职级'): 'lowest', tr('最高职级'): 'highest'}
         )
-        self.currencywarsFastModeCard = SwitchSettingCard1(
-            FIF.SPEED_HIGH,
-            tr('启用速通模式'),
-            tr("开启后，仅在首领节点尝试装备武器"),
-            "currencywars_fast_mode"
-        )
         self.currencywarsStrategyCard = ExpandableComboBoxSettingCard(
             "currencywars_strategy",
             FIF.BOOK_SHELF,
             tr('货币战争策略'),
-            '',
+            tr('提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅策略。'),
             {tr('默认'): 'default', tr('阿格莱雅'): 'aglaea'}
         )
         self.currencywarsRemembranceTrailblazerNameCard = PushSettingCardStr(
@@ -527,6 +521,12 @@ class SettingInterface(ScrollArea):
             tr('遇到特定词条时接受重开'),
             tr('根据所选策略，在遇到特定词条或词条组合时允许重开'),
             "currencywars_strategy_restart_on_special_tags"
+        )
+        self.currencywarsFastModeCard = SwitchSettingCard1(
+            FIF.SPEED_HIGH,
+            tr('启用速通模式'),
+            tr("开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"),
+            "currencywars_fast_mode"
         )
 
         self.UniverseGroup = SettingCardGroup(tr("差分宇宙"), self.scrollWidget)
