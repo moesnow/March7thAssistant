@@ -1121,5 +1121,11 @@
     "「开拓者•记忆」名称": "Remembrance Trailblazer Name",
     "未配置，阿格莱雅策略下将跳过该角色，需要填入自己游戏名称": "Not configured. This character will be skipped in Aglaea strategy. Enter the name shown in your game.",
     "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅策略。": "To level up promotion rank, use the default strategy at the lowest rank. To level up rank, use the Aglaea strategy at the highest rank.",
-    "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启": "When enabled, weapon equip is only attempted at boss nodes. Only recommended to enable at the lowest rank."
+    "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启": "When enabled, weapon equip is only attempted at boss nodes. Only recommended to enable at the lowest rank.",
+    "提升晋升等级": "Raise Promotion Tier",
+    "提升职级等级": "Raise Rank Level",
+    "快捷配置": "Quick Preset",
+    "已应用快捷配置": "Quick Preset Applied",
+    "当前为“提升晋升等级”模式": "Now using 'Raise Promotion Tier' mode",
+    "当前为“提升职级等级”模式": "Now using 'Raise Rank Level' mode"
 }

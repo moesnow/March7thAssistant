@@ -35,6 +35,28 @@ class CustomPushSettingCard(SettingCard):
         self.hBoxLayout.addSpacing(16)
 
 
+class DualPushSettingCard(SettingCard):
+    leftClicked = Signal()
+    rightClicked = Signal()
+
+    def __init__(self, left_text, right_text, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
+        super().__init__(icon, title, content, parent)
+
+        self.leftButton = QPushButton(left_text, self)
+        self.rightButton = QPushButton(right_text, self)
+
+        for button in (self.leftButton, self.rightButton):
+            button.setObjectName('primaryButton')
+
+        self.hBoxLayout.addWidget(self.leftButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.hBoxLayout.addWidget(self.rightButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        self.leftButton.clicked.connect(self.leftClicked.emit)
+        self.rightButton.clicked.connect(self.rightClicked.emit)
+
+
 class PushSettingCardStr(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None, empty_content=None):
         self.empty_content = empty_content

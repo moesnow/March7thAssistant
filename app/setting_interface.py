@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame, QApplication
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, PrimaryPushSettingCard
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard
 from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
@@ -10,7 +10,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
 from .card.switchsettingcard1 import SwitchSettingCard1, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import CustomPushSettingCard, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
+from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
@@ -475,6 +475,12 @@ class SettingInterface(ScrollArea):
             FIF.DICTIONARY,
             tr('启用「货币战争」积分奖励'),
             ""
+        )
+        self.currencywarsPresetCard = DualPushSettingCard(
+            tr('提升晋升等级'),
+            tr('提升职级等级'),
+            FIF.SYNC,
+            tr('快捷配置')
         )
         self.currencywarsRunTimeCard = PushSettingCardDate(
             tr('修改'),
@@ -1561,6 +1567,7 @@ class SettingInterface(ScrollArea):
         self.currencywarsEnableCard.addSettingCards([
             self.currencywarsRunTimeCard
         ])
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsPresetCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
@@ -1771,6 +1778,8 @@ class SettingInterface(ScrollArea):
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.launcherPathCard.clicked.connect(self.__onLauncherPathCardClicked)
         self.ScriptPathCard.clicked.connect(self.__onScriptPathCardClicked)
+        self.currencywarsPresetCard.leftClicked.connect(self.__applyCurrencywarsPromotionPreset)
+        self.currencywarsPresetCard.rightClicked.connect(self.__applyCurrencywarsRankPreset)
         # self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
@@ -1988,6 +1997,57 @@ class SettingInterface(ScrollArea):
             return
         cfg.set_value("script_path", script_path)
         self.ScriptPathCard.setContent(script_path)
+
+    def __setComboBoxCardValue(self, card, value):
+        for index in range(card.comboBox.count()):
+            if card.comboBox.itemData(index) != value:
+                continue
+
+            if card.comboBox.currentIndex() != index:
+                card.comboBox.setCurrentIndex(index)
+            else:
+                cfg.set_value(card.configname, value)
+            return
+
+        cfg.set_value(card.configname, value)
+
+    def __setSwitchCardValue(self, card, value):
+        if card.switchButton.isChecked() != value:
+            card.switchButton.setChecked(value)
+            return
+
+        card.setValue(value)
+        cfg.set_value(card.configname, value)
+
+    def __applyCurrencywarsPromotionPreset(self):
+        self.__setComboBoxCardValue(self.currencywarsTypeCard, 'overclock')
+        self.__setComboBoxCardValue(self.currencywarsRankDifficultyCard, 'lowest')
+        self.__setComboBoxCardValue(self.currencywarsStrategyCard, 'default')
+        self.__setSwitchCardValue(self.currencywarsFastModeCard, True)
+        InfoBar.success(
+            title=tr('已应用快捷配置'),
+            content=tr('当前为“提升晋升等级”模式'),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self
+        )
+
+    def __applyCurrencywarsRankPreset(self):
+        self.__setComboBoxCardValue(self.currencywarsTypeCard, 'normal')
+        self.__setComboBoxCardValue(self.currencywarsRankDifficultyCard, 'highest')
+        self.__setComboBoxCardValue(self.currencywarsStrategyCard, 'aglaea')
+        self.__setSwitchCardValue(self.currencywarsFastModeCard, False)
+        InfoBar.success(
+            title=tr('已应用快捷配置'),
+            content=tr('当前为“提升职级等级”模式'),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self
+        )
 
     def __onExpandableCardStateChanged(self, is_expanding: bool):
         """可展开卡片状态改变时，调整 stackedWidget 高度以包含子卡片"""
