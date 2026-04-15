@@ -46,8 +46,9 @@ def load_codes_from_url(urls: list[str]) -> list[dict]:
             resp.raise_for_status()
 
             ct = resp.headers.get("Content-Type", "")
-            if "application/json" not in ct:
-                raise ValueError(f"非 JSON: {ct}")
+            mime = ct.split(";")[0].strip().lower()
+            if mime not in ("application/json", "text/plain"):
+                raise ValueError(f"非预期的 Content-Type: {ct}")
 
             try:
                 data = resp.json()
