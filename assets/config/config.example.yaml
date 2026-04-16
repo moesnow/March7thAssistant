@@ -401,10 +401,7 @@ scheduled_tasks: [] # 示例：
 #     enabled: true
 
 use_background_screenshot: true # 是否优先使用后台截图
-
 home_cards:
-
-# 关闭窗口行为设置
 close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问）, "minimize"（最小化到托盘）, "close"（关闭程序）
 
 # 窗口记忆设置
