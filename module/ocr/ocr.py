@@ -30,6 +30,8 @@ class OCR:
         self.replacements = replacements
         self._use_dml = None  # None 表示未初始化，True/False 表示是否使用 DML
         self._dml_fallback = False  # 是否已降级到 CPU 模式
+        self._using_openvino = False  # 当前是否使用 OpenVINO 引擎
+        self._openvino_fallback = False  # 是否已从 OpenVINO 降级到 ONNXRuntime
         self._cfg = None  # 配置对象引用，延迟获取避免循环导入
         self.ocr_time = 0.0
         self.ocr_count = 0
@@ -103,7 +105,7 @@ class OCR:
             return True
         return False
 
-    def instance_ocr(self, log_level: str = "error", force_cpu: bool = False):
+    def instance_ocr(self, log_level: str = "error", force_cpu: bool = False, force_onnx: bool = False):
         """实例化OCR，若ocr实例未创建，则创建之"""
         if self.ocr is None:
             try:
@@ -130,6 +132,13 @@ class OCR:
                     if importlib.util.find_spec("openvino") is not None:
                         prefer_engine = EngineType.OPENVINO
                         self.logger.debug("优先使用 OpenVINO")
+
+                if force_onnx:
+                    prefer_engine = EngineType.ONNXRUNTIME
+                    self._openvino_fallback = True
+                    self.logger.warning("强制使用 ONNXRuntime 引擎初始化 OCR")
+
+                self._using_openvino = (prefer_engine == EngineType.OPENVINO)
 
                 params = {
                     # "Global.use_det": False,
@@ -276,7 +285,21 @@ class OCR:
                                 return results
                             except Exception as cpu_e:
                                 self.logger.error(f"CPU 模式仍然失败: {cpu_e}")
-                                return "{}"
+                                raise
+                    # OpenVINO 执行失败时降级到 ONNXRuntime
+                    if self._using_openvino and not self._openvino_fallback:
+                        self.logger.warning(f"OpenVINO 执行失败: {e}，尝试降级到 ONNXRuntime...")
+                        self.exit_ocr()
+                        self.instance_ocr(force_onnx=True)
+                        try:
+                            original_dict = self.ocr(img).to_json()
+                            self.logger.info("已切换到 ONNXRuntime 模式")
+                            results = self.replace_strings(original_dict)
+                            self._maybe_collect_garbage()
+                            return results
+                        except Exception as onnx_e:
+                            self.logger.error(f"ONNXRuntime 模式仍然失败: {onnx_e}")
+                            raise
                     raise  # 其他异常继续抛出
 
             # 所有重试都失败，尝试关闭 DML 重新初始化
