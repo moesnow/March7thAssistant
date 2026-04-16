@@ -1941,7 +1941,7 @@ class CurrencyWars:
 
             if not has_choose:
                 log.error("所有选项均不可选，尝试退出")
-                auto.click_element(button_positions_click[0], 'crop')
+                auto.click_element(button_positions_click[1], 'crop')
                 self.need_exit = True
             time.sleep(1)
             auto.click_element('确认', 'text', None, 10, crop=(738.0 / 1920, 927.0 / 1080, 457.0 / 1920, 123.0 / 1080), include=True)
