@@ -9,11 +9,11 @@ psutil==7.2.1
 pyautogui==0.9.54
 mss==10.1.0
 pygetwindow==0.0.9
-requests[socks]==2.32.5
+requests[socks]==2.33.0
 # charset_normalizer==3.4.5 会导致 RequestsDependencyWarning: Unable to find acceptable character detection dependency (chardet or charset_normalizer).
 charset_normalizer==3.4.4
 imageio==2.37.2
-Pillow==12.1.1
+Pillow==12.2.0
 numpy==2.2.6
 opencv-python==4.12.0.88
 onepush==1.4.0
