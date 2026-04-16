@@ -1471,23 +1471,28 @@ class CurrencyWars:
 
             money = self.check_money()
             if money >= 4:
+                required_buy_times = None
                 if cfg.currencywars_type == "normal":
                     need_exp_crop = (235 / 1920, 930 / 1080, 124 / 1920, 38 / 1080)
                     need_exp_text = auto.get_single_line_text(crop=need_exp_crop)
                     if need_exp_text and re.match(r"^\d+/\d+$", need_exp_text):
                         current_exp, total_exp = map(int, need_exp_text.split('/'))
                         need_exp = total_exp - current_exp
-                        if money < need_exp:
-                            log.info(f"当前经验 {current_exp}，距离升级还需 {need_exp} 经验，货币数量 {money} 不足以购买到升级")
+                        # 每次购买消耗4货币并提供4经验
+                        required_buy_times = (need_exp + 3) // 4
+                        affordable_buy_times = money // 4
+                        if affordable_buy_times < required_buy_times:
+                            log.info(
+                                f"当前经验 {current_exp}，距离升级还需 {need_exp} 经验，"
+                                f"需购买 {required_buy_times} 次(可购买 {affordable_buy_times} 次)，货币数量 {money} 不足以购买到升级"
+                            )
                             break
 
-                times = min(money // 4, 10)
-                if cfg.currencywars_strategy == "aglaea" and self.current_level == 8:
-                    times = 1
+                times = required_buy_times if required_buy_times is not None else min(money // 4, 10)
                 log.info(f"连续购买经验 {times} 次")
                 for _ in range(times):
                     auto.press_key("f")
-                    time.sleep(0.1)
+                    time.sleep(0.3)
                 time.sleep(2)
 
                 # 检查货币是否有变化
