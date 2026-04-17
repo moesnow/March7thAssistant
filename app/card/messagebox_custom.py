@@ -12,6 +12,7 @@ import datetime
 import json
 import time
 import base64
+import re
 
 
 def _cleanup_infobars(widget):
@@ -1238,10 +1239,11 @@ class MessageBoxInstanceTeam(MessageBox):
         setup_completer(nameComboBox, [item.text for item in nameComboBox.items])
 
         # 队伍编号选择框
-        teamSpinBox = SpinBox()
-        teamSpinBox.setMinimum(1)
-        teamSpinBox.setMaximum(12)
-        teamSpinBox.setValue(team_number or 3)
+        teamSpinBox = EditableComboBox()
+        teamSpinBox.addItems([str(i) for i in range(1, 13)])
+        if not re.match(r"^\d+$", str(team_number)):
+            teamSpinBox.addItem(str(team_number)) # 添加非数字选项以显示原始值
+        teamSpinBox.setCurrentText(str(team_number or 3))
         teamSpinBox.setMinimumWidth(120)
 
         # 删除按钮
@@ -1275,10 +1277,11 @@ class MessageBoxInstanceTeam(MessageBox):
         teams = []
         for nameCombo, teamSpin, _ in self.rule_widgets:
             instance_name = nameCombo.currentData()
-            team_number = teamSpin.value()
-
-            if instance_name and team_number > 0:
-                teams.append({"instance_name": instance_name, "team_number": team_number})
+            instance_text = nameCombo.currentText()
+            team_name = teamSpin.currentText()
+            if instance_name:
+                if ("饰品提取" in instance_text and team_name.strip()) or int(team_name) > 0:
+                    teams.append({"instance_name": instance_name, "team_number": team_name})
 
         return teams
 
