@@ -134,6 +134,8 @@ class DivergentUniverse:
             log.error("选择关卡失败，结束任务")
             return False
 
+        self.choose_team()
+
         if type == "normal" and int(cfg.weekly_divergent_level) == 6:
             if not auto.click_element("./assets/images/screen/divergent_universe/astronomical.png", "image", 0.9, 10):
                 log.error("未找到进入星阶模式按钮，结束任务")
@@ -180,6 +182,20 @@ class DivergentUniverse:
                         break
             return True
         return False
+
+    def choose_team(self):
+        team_slot_crop = (1098 / 1920, 922 / 1080, 375 / 1920, 96 / 1080)
+        if auto.find_element("./assets/images/share/universe/empty_character_slot.png", "image_count", 0.8, crop=team_slot_crop, pixel_bgr=[233, 233, 233]) == 4:
+            if auto.click_element("./assets/images/share/universe/empty_character_slot.png", "image", 0.8, crop=team_slot_crop, take_screenshot=False):
+                time.sleep(2)
+                if auto.click_element("预设编队", "text", max_retries=4, retry_delay=0.5, crop=(6 / 1920, 8 / 1080, 578 / 1920, 168 / 1080)):
+                    click_x = auto.screenshot_pos[0] + 260 / auto.screenshot_scale_factor
+                    click_y = auto.screenshot_pos[1] + 175 / auto.screenshot_scale_factor
+                    time.sleep(1.0)
+                    if auto.click_element_with_pos(((click_x, click_y), (click_x, click_y))):
+                        time.sleep(1.0)
+                        auto.press_key("esc")
+            time.sleep(1.0)
 
     def loop(self) -> bool:
         """

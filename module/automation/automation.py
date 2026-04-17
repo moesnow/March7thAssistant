@@ -190,7 +190,9 @@ class Automation(metaclass=SingletonMeta):
             if template is None:
                 raise ValueError("读取图片失败")
             bw_map = self.generate_black_white_map(pixel_bgr)
-            return ImageUtils.count_template_matches(bw_map, template, threshold)
+            cnt = ImageUtils.count_template_matches(bw_map, template, threshold)
+            self.logger.debug(f"目标图片：{target.replace('./assets/images/', '')} 匹配数量：{cnt} 匹配阈值：{threshold} 目标像素BGR：{pixel_bgr}")
+            return cnt
         except Exception as e:
             self.logger.error(f"寻找图片并计数出错：{e}")
             return None
