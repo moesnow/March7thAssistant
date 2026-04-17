@@ -1,14 +1,15 @@
 # 更新日志
 
-## v2026.4.18
+## v2026.4.19
 - 货币战争新增职级选择
 - 货币战争新增阿格莱雅策略
 - 货币战争支持开拓者•记忆（需手动配置名称）
+- 现在差分宇宙在缺少队伍时会自动尝试选择队伍1
 - 新增短信奖励领取功能 [#964](https://github.com/moesnow/March7thAssistant/pull/964) @g60cBQ
 - 新增更新支持手动配置代理
 - 主页新增编辑按钮支持自定义卡片
 - 添加命令行参数允许启动时不立即执行 [#970](https://github.com/moesnow/March7thAssistant/pull/970) @sgpublic
-- 修复部分文字OCR识别错误 [#966](https://github.com/moesnow/March7thAssistant/pull/966) @JackyTang1
+- 修复部分文字OCR识别错误 [#966](https://github.com/moesnow/March7thAssistant/pull/966) [#988](https://github.com/moesnow/March7thAssistant/pull/988) @JackyTang1
 - 优化运行时内存峰值占用，减少发生内存溢出的情况
 - 优化性能和稳定性并修复若干已知问题
 - [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)

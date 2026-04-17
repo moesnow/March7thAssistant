@@ -62,9 +62,9 @@ DEFAULT_CARDS = [
         "action_type": "menu",
         "task_id": "",
         "menu_items": [
-            {"label": tr("差分宇宙运行一次【测试版】 ⭐"), "task_id": "divergent"},
-            {"label": tr("差分宇宙循环运行【测试版】 ⭐"), "task_id": "divergentloop"},
-            {"label": tr("差分宇宙中途接管【测试版】"), "task_id": "divergenttemp"},
+            {"label": tr("差分宇宙运行一次 ⭐"), "task_id": "divergent"},
+            {"label": tr("差分宇宙循环运行 ⭐"), "task_id": "divergentloop"},
+            {"label": tr("差分宇宙中途接管"), "task_id": "divergenttemp"},
             {"label": tr("模拟宇宙快速启动（停止维护）"), "task_id": "universe"},
             {"label": tr("模拟宇宙原版运行（停止维护）"), "task_id": "universe_gui"},
             {"label": tr("更新模拟宇宙（停止维护）"), "task_id": "universe_update"},

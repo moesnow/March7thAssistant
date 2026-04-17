@@ -539,7 +539,7 @@ class SettingInterface(ScrollArea):
         self.weeklyDivergentEnableCard = ExpandableSwitchSettingCard(
             "weekly_divergent_enable",
             FIF.DICTIONARY,
-            tr('启用「差分宇宙」积分奖励【测试版】'),
+            tr('启用「差分宇宙」积分奖励'),
             ""
         )
         self.weeklyDivergentRunTimeCard = PushSettingCardDate(
@@ -931,7 +931,7 @@ class SettingInterface(ScrollArea):
         self.updateViaLauncherEnableCard = ExpandableSwitchSettingCard(
             "update_via_launcher",
             FIF.UPDATE,
-            tr('通过启动器更新游戏【测试版】'),
+            tr('通过启动器更新游戏'),
             ""
         )
         self.launcherPathCard = PushSettingCard(
