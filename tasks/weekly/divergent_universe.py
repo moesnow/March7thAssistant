@@ -236,6 +236,8 @@ class DivergentUniverse:
                 log.info("已返回差分宇宙首页")
                 return self.result if self.result is not None else False
 
+            time.sleep(2)
+
     def check_stage(self):
         if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
             return
