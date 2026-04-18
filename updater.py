@@ -386,6 +386,7 @@ class Updater:
         """覆盖安装最新版本的文件。"""
         self.logger.hr("覆盖", 0)
         while True:
+            self.logger.info("检查是否有文件被占用...")
             files_to_overwrite = self.get_files_to_overwrite()
             locked = self.check_target_files_locked(files_to_overwrite)
             if locked:
@@ -397,6 +398,8 @@ class Updater:
                     self.logger.info(red(f"...另外 {remaining} 个文件被占用（未显示）"))
                 input("请手动关闭相关进程后按回车重新检测...")
                 continue
+            else:
+                self.logger.info("没有文件被占用，准备覆盖...")
 
             try:
                 self.logger.info("开始覆盖...")
