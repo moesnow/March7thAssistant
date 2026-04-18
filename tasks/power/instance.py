@@ -230,7 +230,13 @@ class Instance:
                         auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
                         time.sleep(0.5)
                         # 执行分解四星遗器的操作
-                        Relicset.run()
+                        relicset_result = Relicset.run()
+
+                        if not relicset_result:
+                            # 没有可分解的低星遗器，触发死循环保护，停止任务
+                            log.warning("背包已满且无可分解的低星遗器，停止任务")
+                            Base.send_notification_with_screenshot(cfg.notify_template['RelicBagFull'], NotificationLevel.ERROR)
+                            return False
 
                         # 简化的界面恢复逻辑
                         log.info("遗器分解完成")
@@ -313,7 +319,13 @@ class Instance:
                                 auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
                                 time.sleep(0.5)
                                 # 执行分解四星遗器的操作
-                                Relicset.run()
+                                relicset_result = Relicset.run()
+
+                                if not relicset_result:
+                                    # 没有可分解的低星遗器，触发死循环保护，停止任务
+                                    log.warning("背包已满且无可分解的低星遗器，停止任务")
+                                    Base.send_notification_with_screenshot(cfg.notify_template['RelicBagFull'], NotificationLevel.ERROR)
+                                    return False
 
                                 # 简化的界面恢复逻辑
                                 log.info("遗器分解完成")
@@ -391,7 +403,13 @@ class Instance:
                     auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
                     time.sleep(0.5)
                     # 执行分解四星遗器的操作
-                    Relicset.run()
+                    relicset_result = Relicset.run()
+
+                    if not relicset_result:
+                        # 没有可分解的低星遗器，触发死循环保护，停止任务
+                        log.warning("背包已满且无可分解的低星遗器，停止任务")
+                        Base.send_notification_with_screenshot(cfg.notify_template['RelicBagFull'], NotificationLevel.ERROR)
+                        raise RuntimeError("背包已满且无可分解的低星遗器")
 
                     # 简化处理：直接返回失败允许重试
                     log.info("战斗中检测到遗器已满并完成分解，返回战斗失败状态")

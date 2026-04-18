@@ -15,21 +15,28 @@ class Relicset:
 
     @staticmethod
     def run():
-
+        """
+        执行分解四星及以下遗器操作。
+        返回值：
+          True  - 成功分解了遗器
+          False - 未找到可分解的遗器（背包内无低星遗器）或流程出错
+        """
         log.hr("准备分解四星及以下遗器", 2)
 
         # 切换到遗器分解界面
         if not Relicset.change_to_relicset():
-            return
+            return False
 
         # 筛选并确认
         if not Relicset.prepare_break_down_relicset():
-            return
+            return False
 
-        Relicset.start_break_down_relicset()
+        result = Relicset.start_break_down_relicset()
 
         auto.press_key("esc")
         screen.wait_for_screen_change('bag_relicset')
+
+        return result
 
     @staticmethod
     def change_to_relicset():
