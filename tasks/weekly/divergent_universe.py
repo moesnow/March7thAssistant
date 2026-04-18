@@ -1259,10 +1259,10 @@ class DivergentUniverse:
 
     def check_click_close(self):
         """
-        检查并点击 “点击空白处关闭” 的按钮
+        检查并点击 “点击空白处关闭” 或 “点击领取今日补给” 的按钮
         """
-        if auto.click_element("点击空白处关闭", 'text', None, crop=(816 / 1920, 778 / 1080, 284 / 1920, 298 / 1080), include=True):
-            log.info(f"检测到 “点击空白处关闭” 的按钮，尝试点击")
+        if auto.click_element(("点击空白处关闭", "点击领取今日补给"), 'text', None, crop=(816 / 1920, 778 / 1080, 284 / 1920, 298 / 1080), include=True):
+            log.info(f"检测到 “{auto.matched_text}” 的按钮，尝试点击")
             return True
         return False
 
