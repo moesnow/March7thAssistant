@@ -1597,7 +1597,10 @@ class CurrencyWars:
                         preferred_characters.append(remembrance_trailblazer_name)
                     preferred_characters.extend(["星期日", "符玄", "银狼", "花火", "风堇", "藿藿", "缇宝"])
                     if auto.click_element(tuple(preferred_characters), "text", crop=(501 / 1920, 362 / 1080, 1047 / 1920, 42 / 1080)):
-                        log.info(f"检测到{auto.matched_text}选项，尝试点击")
+                        log.info(f"检测到{auto.matched_text}选项，优先点击")
+                    else:
+                        pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
+                        auto.click_element(pos, "crop")
                 else:
                     pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
                     auto.click_element(pos, "crop")
