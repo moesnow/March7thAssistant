@@ -445,7 +445,7 @@ notify_template:
   SimulatedUniverseNotCompleted: "模拟宇宙未完成"
   FightCompleted: "锄大地已完成"
   FightNotCompleted: "锄大地未完成"
-  RelicBagFull: "遗器背包已满，且无可分解的低星遗器，请手动清理五星及以上遗器后重新运行"
+  RelicBagFull: "遗器背包已满"
 
 # 消息推送总开关
 notification_enable: true # 是否启用消息推送。true 开启，false 关闭。关闭后所有消息推送将被禁用。
