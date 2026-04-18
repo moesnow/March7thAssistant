@@ -2026,6 +2026,7 @@ class CurrencyWars:
                 log.info("默认选择中间补给选项")
                 time.sleep(1)
             auto.click_element('确认', 'text', None, 10, crop=(1490.0 / 1920, 943.0 / 1080, 403.0 / 1920, 76.0 / 1080), include=True)
+            time.sleep(2)
 
     def check_return_home(self) -> bool:
         """

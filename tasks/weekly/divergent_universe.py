@@ -938,11 +938,11 @@ class DivergentUniverse:
         ]
         if auto.click_element(("选择一张面具", "确定"), 'text'):
             if auto.matched_text == "选择一张面具":
-                for pos in mask_positions:
-                    if auto.click_element("战车面具", "text", crop=pos):
-                        log.info("检测到战车面具，优先选择")
-                        time.sleep(2)
-                        return
+                # for pos in mask_positions:
+                #     if auto.click_element("战车面具", "text", crop=pos):
+                #         log.info("检测到战车面具，优先选择")
+                #         time.sleep(2)
+                #         return
                 log.info("默认选择中间的面具")
                 auto.click_element(mask_positions[1], 'crop')
                 time.sleep(2)
@@ -1232,7 +1232,7 @@ class DivergentUniverse:
 
     def process_station_card(self):
         if auto.find_element(("删除", "使其变为【空白】区域"), "text", crop=(110 / 1920, 136 / 1080, 1226 / 1920, 48 / 1080), include=True):
-            auto.click_element(("异常", "事件", "奖励", "冒险", "铸造"), "text", crop=(59 / 1920, 243 / 1080, 1262 / 1920, 786 / 1080), include=True)
+            auto.click_element(("冒险", "铸造"), "text", crop=(59 / 1920, 243 / 1080, 1262 / 1920, 786 / 1080), include=True)
         auto.click_element('确定', 'text', None, 10, crop=(1589 / 1920, 919 / 1080, 73 / 1920, 38 / 1080), include=True)
         time.sleep(2)
 
@@ -1306,6 +1306,7 @@ class DivergentUniverse:
         """
         检查并记录对局结果
         """
+        time.sleep(2)  # 等待分析报告加载完成后再截图
         if auto.find_element(("探索成功", "探索中断"), 'text', include=True):
             if auto.matched_text == "探索成功":
                 self.result = True
