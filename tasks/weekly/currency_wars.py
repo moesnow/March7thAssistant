@@ -1302,6 +1302,7 @@ class CurrencyWars:
         self._log_character_status()
 
         # 检查可能弹出的特殊选择框
+        time.sleep(1)
         self.check_festival_star_popup()
         return True
 
