@@ -1007,11 +1007,11 @@ class DivergentUniverse:
         ]
         if auto.click_element(("选择一张面具", "确定"), 'text'):
             if auto.matched_text == "选择一张面具":
-                for pos in mask_positions:
-                    if auto.click_element(("战车面具", "斗士面具"), "text", crop=pos):
-                        log.info(f"检测到{auto.matched_text}，优先选择")
-                        time.sleep(2)
-                        return
+                # for pos in mask_positions:
+                #     if auto.click_element(("战车面具", "斗士面具"), "text", crop=pos):
+                #         log.info(f"检测到{auto.matched_text}，优先选择")
+                #         time.sleep(2)
+                #         return
                 log.info("默认选择中间的面具")
                 auto.click_element(mask_positions[1], 'crop')
                 time.sleep(2)
@@ -1029,14 +1029,14 @@ class DivergentUniverse:
         has_choose = False
 
         time.sleep(2)
-        if auto.click_element(("繁育", "巡猎"), "text", 0.9, crop=(274 / 1920, 790 / 1080, 1371 / 1920, 59 / 1080), include=True):
-            log.info(f"检测到“{auto.matched_text}”选项，尝试点击")
-            has_choose = True
+        # if auto.click_element(("繁育", "巡猎"), "text", 0.9, crop=(274 / 1920, 790 / 1080, 1371 / 1920, 59 / 1080), include=True):
+        #     log.info(f"检测到“{auto.matched_text}”选项，尝试点击")
+        #     has_choose = True
 
-        if not has_choose:
-            if auto.click_element(("欢愉", "智识"), "text", 0.9, crop=(274 / 1920, 790 / 1080, 1371 / 1920, 59 / 1080), include=True):
-                log.info(f"检测到“{auto.matched_text}”选项，尝试点击")
-                has_choose = True
+        # if not has_choose:
+        #     if auto.click_element(("欢愉", "智识"), "text", 0.9, crop=(274 / 1920, 790 / 1080, 1371 / 1920, 59 / 1080), include=True):
+        #         log.info(f"检测到“{auto.matched_text}”选项，尝试点击")
+        #         has_choose = True
 
         if not has_choose:
             for pos in equation_positions:
@@ -1079,14 +1079,14 @@ class DivergentUniverse:
         has_choose = False
 
         time.sleep(2)
-        if auto.click_element(("繁育", "巡猎"), "text", 0.9, crop=(274 / 1920, 790 / 1080, 1371 / 1920, 59 / 1080), include=True):
-            log.info(f"检测到“{auto.matched_text}”选项，尝试点击")
-            has_choose = True
+        # if auto.click_element(("繁育", "巡猎"), "text", 0.9, crop=(274 / 1920, 790 / 1080, 1371 / 1920, 59 / 1080), include=True):
+        #     log.info(f"检测到“{auto.matched_text}”选项，尝试点击")
+        #     has_choose = True
 
-        if not has_choose:
-            if auto.click_element(("欢愉", "智识"), "text", 0.9, crop=(274 / 1920, 790 / 1080, 1371 / 1920, 59 / 1080), include=True):
-                log.info(f"检测到“{auto.matched_text}”选项，尝试点击")
-                has_choose = True
+        # if not has_choose:
+        #     if auto.click_element(("欢愉", "智识"), "text", 0.9, crop=(274 / 1920, 790 / 1080, 1371 / 1920, 59 / 1080), include=True):
+        #         log.info(f"检测到“{auto.matched_text}”选项，尝试点击")
+        #         has_choose = True
 
         if not has_choose:
             for pos in blessing_positions:
@@ -1386,8 +1386,17 @@ class DivergentUniverse:
                     log.info("本次对局结果：未知")
                 self.end_loop = True
 
-                # 没有存档会显示一个弹窗，需要点击确认
                 time.sleep(2)
+                for _ in range(30):
+                    if auto.click_element("返回主界面", 'text', None, crop=(573 / 1920, 947 / 1080, 792 / 1920, 85 / 1080), include=True):
+                        log.info(f"检测到 “返回主界面” 的按钮，尝试点击")
+                        time.sleep(2)
+                    else:
+                        break
+                else:
+                    log.warning("多次点击返回主界面失败，请确认是否已成功返回主界面")
+
+                # 没有存档会显示一个弹窗，需要点击确认
                 auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
 
             elif auto.matched_text == "确认结算":
