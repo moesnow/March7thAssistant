@@ -444,7 +444,7 @@ class CloudGameController(GameControllerBase):
                 return None
             return (paid or 0) + (free or 0)
         except Exception as e:
-            self.log_warning(f"获取剩余时长失败: {e}")
+            self.log_debug(f"获取剩余时长失败: {e}")
             return None
 
     def _check_login(self, timeout=5) -> bool:
@@ -783,7 +783,7 @@ class CloudGameController(GameControllerBase):
 
     def _send_qr_notification(self, img_bytes: bytes, qr_link: str) -> bool:
         """通过已配置的通知渠道发送二维码图片
-        
+
         支持所有启用图片发送的通知渠道（飞书、Telegram、企业微信等）
         并带有限流，避免二维码刷新时重复推送过多通知。
         """
@@ -819,7 +819,6 @@ class CloudGameController(GameControllerBase):
 
         self.log_info(f"二维码登录通知已发送（{self._qr_notify_sent_count}/{self._qr_notify_max_count}）")
         return True
-
 
     def _decode_qr_from_element(self, qr_img, qr_filename: str) -> None:
         try:
@@ -864,7 +863,7 @@ class CloudGameController(GameControllerBase):
                 self.log_info("二维码内容：")
                 self.log_info(data)
                 self.log_info("提示：你也可以将该内容自行生成二维码后再扫码登录。")
-                
+
                 # 发送二维码登录通知
                 try:
                     self._send_qr_notification(img_bytes, data)
