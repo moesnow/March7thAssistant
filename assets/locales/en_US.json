@@ -225,6 +225,13 @@
     "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态": "Enables Auto-Battle/2x Speed via registry/storage before launch. Checks/maintains state during Power runs, Currency Wars, and Treasures Lightward",
     "启用 OCR GPU 加速": "Enable OCR GPU Acceleration",
     "使用 DirectML 加速 OCR 识别，若 GPU 负载高导致 OCR 过慢会自动关闭（仅 Windows 10 Build 18362 及以上支持）": "Use DirectML for OCR. Auto disables if GPU load high causes slow OCR (Win 10 18362+ only)",
+    "OCR 加速模式": "OCR Acceleration Mode",
+    "设置 OCR 引擎与加速后端。自动模式会优先尝试 DirectML，若不可用则回退到 CPU 引擎。": "Choose OCR engine/backend. Auto tries DirectML first, then falls back to a CPU engine if unavailable.",
+    "GPU": "GPU",
+    "ONNXRuntime（DirectML）": "ONNXRuntime (DirectML)",
+    "CPU": "CPU",
+    "OpenVINO（CPU）": "OpenVINO (CPU)",
+    "ONNXRuntime（CPU）": "ONNXRuntime (CPU)",
     "启用自动修改分辨率并关闭自动 HDR": "Auto Change Resolution & Disable Auto HDR",
     "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）": "Auto set 1920x1080 & disable Auto HDR when launching via app. Doesn't affect manual launch (CN & Global supported)",
     "启用自动配置游戏路径": "Auto Config Game Path",
@@ -1125,5 +1132,13 @@
     "快捷配置": "Quick Preset",
     "已应用快捷配置": "Quick Preset Applied",
     "当前为“提升晋升等级”模式": "Now using 'Raise Promotion Tier' mode",
-    "当前为“提升职级等级”模式": "Now using 'Raise Rank Level' mode"
+    "当前为“提升职级等级”模式": "Now using 'Raise Rank Level' mode",
+    "站点优先级配置": "Station Priority Configuration",
+    "调整站点优先级顺序，数字越小优先级越高。\n没有重抽次数后仍会选择禁用的站点。": "Adjust station priority order. Smaller numbers mean higher priority.\nDisabled stations may still be selected when no rerolls remain.",
+    "固定站点（始终最高优先级）：首领、休整、转化": "Fixed stations (always highest priority): Boss, Rest, Conversion",
+    "站点": "Station",
+    "排序": "Order",
+    "使用默认优先级": "Use Default Priority",
+    "已启用自定义优先级": "Custom Priority Enabled",
+    "自动": "Auto"
 }

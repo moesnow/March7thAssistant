@@ -1358,11 +1358,19 @@ class SettingInterface(ScrollArea):
             tr("游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态"),
             "auto_battle_detect_enable"
         )
-        self.ocrGpuAccelerationCard = SwitchSettingCard1(
+        self.ocrGpuAccelerationCard = ComboBoxSettingCard2(
+            "ocr_gpu_acceleration",
             FIF.SPEED_HIGH,
-            tr('启用 OCR GPU 加速'),
-            tr("使用 DirectML 加速 OCR 识别，若 GPU 负载高导致 OCR 过慢会自动关闭（仅 Windows 10 Build 18362 及以上支持）"),
-            "ocr_gpu_acceleration"
+            tr('OCR 加速模式'),
+            tr("设置 OCR 引擎与加速后端。自动模式会优先尝试 DirectML，若不可用则回退到 CPU 引擎。"),
+            texts={
+                tr('自动'): 'auto',
+                tr('GPU'): 'gpu',
+                tr('ONNXRuntime（DirectML）'): 'onnx_dml',
+                tr('CPU'): 'cpu',
+                tr('OpenVINO（CPU）'): 'openvino_cpu',
+                tr('ONNXRuntime（CPU）'): 'onnx_cpu',
+            }
         )
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
             FIF.FULL_SCREEN,
