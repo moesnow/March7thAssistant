@@ -242,6 +242,14 @@ class DivergentUniverse:
         if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
             return
 
+        if result := auto.find_element("./assets/images/screen/divergent_universe/show.png", "image", 0.9, crop=(383 / 1920, 57 / 1080, 71 / 1920, 48 / 1080)):
+            auto.press_key_down("alt")
+            time.sleep(1)
+            auto.click_element_with_pos(result)
+            time.sleep(1)
+            auto.press_key_up("alt")
+            time.sleep(2)
+
         stage_crop = (57 / 1920, 15 / 1080, 260 / 1920, 27 / 1080)
         stage_text = auto.get_single_line_text(crop=stage_crop)
         if not stage_text:
