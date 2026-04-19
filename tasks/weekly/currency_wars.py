@@ -298,7 +298,10 @@ class CurrencyWars:
         # 避免低性能设备加载过慢
         time.sleep(6)  # 等待界面加载
 
-        if cfg.currencywars_rank_difficulty == "highest":
+        if cfg.currencywars_rank_difficulty == "current":
+            log.info("保持当前职级，不调整关卡难度")
+            return True
+        elif cfg.currencywars_rank_difficulty == "highest":
             for _ in range(10):
                 if auto.click_element("返回最高职级", "text", crop=(1326 / 1920, 947 / 1080, 137 / 1920, 37 / 1080)):
                     time.sleep(2)

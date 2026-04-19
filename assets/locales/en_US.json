@@ -1117,6 +1117,7 @@
     "留空则使用系统代理；支持 http:// 和 socks5://": "Leave empty to use system proxy; supports http:// and socks5://",
     "选择图标": "Select Icon",
     "职级难度": "Rank Difficulty",
+    "当前职级": "Current Rank",
     "最低职级": "Lowest Rank",
     "最高职级": "Highest Rank",
     "货币战争策略": "Currency Wars Strategy",
