@@ -284,6 +284,16 @@ class SettingInterface(ScrollArea):
             tr("启用培养目标"),
             tr("根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置")
         )
+        self.buildTargetSchemeCard = ComboBoxSettingCard2(
+            "build_target_scheme",
+            FIF.SEARCH,
+            tr("识别方案"),
+            tr("副本名称识别会进入挑战页读取副本信息；掉落物识别根据列表中的掉落物匹配副本，异常时可尝试切换方案"),
+            texts={
+                tr("副本名称识别"): "instance",
+                tr("掉落物识别"): "drop"
+            }
+        )
         self.buildTargetPlanarOrnamentWeeklyCountCard = RangeSettingCard1(
             "build_target_ornament_weekly_count",
             [0, 7],
@@ -1528,6 +1538,7 @@ class SettingInterface(ScrollArea):
         # self.PowerGroup.addSettingCard(self.maxCalyxPerRoundNumOfAttempts)
         self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
         self.buildTargetEnableCard.addSettingCards([
+            self.buildTargetSchemeCard,
             self.buildTargetPlanarOrnamentWeeklyCountCard
         ])
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
