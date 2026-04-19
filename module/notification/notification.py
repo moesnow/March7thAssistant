@@ -161,6 +161,20 @@ class Notification(metaclass=SingletonMeta):
             return image
         return None
 
+    def _get_processed_image(self, image: Optional[io.BytesIO | str | Image.Image], image_already_processed: bool = False) -> Optional[io.BytesIO | str | Image.Image]:
+        """
+        仅在存在已启用且支持图片的通知器时处理图片，避免无意义的压缩。
+
+        :param image: 原始图片对象。
+        :param image_already_processed: 图片是否已完成处理。
+        :return: 处理后的图片对象，或None。
+        """
+        if image is None or not self.image_enable or not self._has_image_notifier():
+            return None
+        if image_already_processed:
+            return image
+        return self._process_image(image)
+
     def _merge_images(self, images: list) -> Optional[Image.Image]:
         """
         将多张图片垂直合并为一张长截图。
@@ -282,16 +296,15 @@ class Notification(metaclass=SingletonMeta):
                 self.logger.info(f"内容: {content}")
             return
 
-        image_supported = self.image_enable and self._has_image_notifier()
+        processed_image = self._get_processed_image(image, _image_already_processed)
 
         for notifier_name, notifier in self.notifiers.items():
-            if not image_supported:
-                processed_image = None
-            elif _image_already_processed:
-                processed_image = image
-            else:
-                processed_image = self._process_image(image)
             try:
+                will_send_image = bool(processed_image and notifier.supports_image)
+                if self.logger:
+                    self.logger.info(
+                        f"准备发送 {notifier_name} 通知（级别：{self._localize_level(level)}，图片：{'是' if will_send_image else '否'}）"
+                    )
                 if processed_image and notifier.supports_image:
                     if isinstance(processed_image, io.BytesIO):
                         processed_image.seek(0)
