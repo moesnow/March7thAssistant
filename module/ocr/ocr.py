@@ -20,6 +20,8 @@ OCR_SLOW_THRESHOLD = 5.0
 # 这个值越小，峰值越低，但 full GC 触发越频繁；这里先取一个对 OCR 热路径
 # 较低侵入的经验值 20，优先解决长时间任务中的内存峰值问题。
 OCR_PERIODIC_FULL_GC_INTERVAL = 20
+# OpenVINO 存在内存泄漏问题，每隔此时间（秒）重新初始化一次 OCR 实例以释放内存
+OCR_OPENVINO_REINIT_INTERVAL = 300
 
 OCR_MODE_AUTO = "auto"
 OCR_MODE_GPU = "gpu"
@@ -54,6 +56,7 @@ class OCR:
         self.ocr_time = 0.0
         self.ocr_count = 0
         self._periodic_gc_interval = OCR_PERIODIC_FULL_GC_INTERVAL
+        self._openvino_last_reinit = 0.0  # 上次 OpenVINO 重初始化的时间戳
 
     def _maybe_collect_garbage(self):
         """在长时间 OCR 循环下定期触发 full GC，优先压低峰值内存。
@@ -70,6 +73,49 @@ class OCR:
             return
         if self.ocr_count % self._periodic_gc_interval == 0:
             gc.collect()
+
+    def _is_memory_low(self, threshold_gb: float = 2.0) -> bool:
+        """检查当前可用物理内存是否低于阈值（默认 2GB）。"""
+        try:
+            import psutil
+            available_gb = psutil.virtual_memory().available / (1024 ** 3)
+            if available_gb < threshold_gb:
+                self.logger.warning(f"可用物理内存不足：{available_gb:.2f} GB < {threshold_gb} GB")
+                return True
+            return False
+        except Exception as e:
+            self.logger.warning(f"检查内存失败：{e}")
+            return False
+
+    def _maybe_fallback_openvino_due_to_memory(self):
+        """若当前使用 OpenVINO 且可用物理内存不足 2GB，立即降级到 ONNXRuntime(CPU)。"""
+        if not self._using_openvino or self._openvino_fallback:
+            return
+        if self._is_memory_low():
+            self.logger.warning("可用内存不足，正在从 OpenVINO 降级到 ONNXRuntime(CPU)...")
+            self.exit_ocr()
+            self.instance_ocr(force_onnx=True)
+            self.logger.info("已因内存不足切换到 ONNXRuntime(CPU) 模式")
+
+    def _maybe_reinit_openvino(self):
+        """若当前使用 OpenVINO 且距上次（重）初始化已超过阈值，则重新初始化以释放内存。
+
+        OpenVINO 推理引擎存在内存持续增长问题，定期销毁并重建实例是目前
+        最直接的缓解手段。重初始化期间不影响当前正在处理的识别结果。
+        """
+        if not self._using_openvino or self._openvino_fallback:
+            return
+        now = time.monotonic()
+        if self._openvino_last_reinit == 0.0:
+            # 首次记录初始化时间，不立即重建
+            self._openvino_last_reinit = now
+            return
+        if now - self._openvino_last_reinit >= OCR_OPENVINO_REINIT_INTERVAL:
+            self.logger.info("OpenVINO 内存回收：正在重新初始化 OCR 实例...")
+            self.exit_ocr()
+            self.instance_ocr()
+            self._openvino_last_reinit = time.monotonic()
+            self.logger.info("OpenVINO OCR 实例已重新初始化")
 
     def _get_config(self):
         """延迟获取配置对象，避免循环导入"""
@@ -278,6 +324,10 @@ class OCR:
                 self.logger.debug("初始化OCR完成")
                 elapsed_time = time.monotonic() - start_time
                 self.logger.debug(f"OCR初始化耗时: {elapsed_time:.2f} 秒")
+                if self._using_openvino:
+                    self._openvino_last_reinit = time.monotonic()
+                    # 初始化后立即检查可用内存，不足 2GB 则降级
+                    self._maybe_fallback_openvino_due_to_memory()
                 atexit.register(self.exit_ocr)
             except Exception as e:
                 self.logger.error(f"初始化OCR失败：{e}")
@@ -355,6 +405,10 @@ class OCR:
                     # 成功路径最适合触发周期性回收：此时本轮 OCR 的业务处理已经完成，
                     # 主流程通常不会再需要 RapidOCR 生成的中间对象，可以优先压低峰值。
                     self._maybe_collect_garbage()
+                    # OpenVINO 存在内存泄漏，定期重新初始化以释放内存
+                    self._maybe_reinit_openvino()
+                    # OpenVINO 执行后检查可用内存，不足 2GB 则降级
+                    self._maybe_fallback_openvino_due_to_memory()
                     return results
                 except Exception as e:
                     # 检查是否为编码错误（直接或通过异常链）
