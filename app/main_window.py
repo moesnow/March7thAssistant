@@ -135,6 +135,9 @@ class MainWindow(MSFluentWindow):
 
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
         self.setWindowTitle("March7th Assistant")
+        # 分离系统窗口标题与应用内标题栏文本
+        if hasattr(self, 'titleBar') and hasattr(self.titleBar, 'setTitle'):
+            self.titleBar.setTitle(f"March7th Assistant {cfg.version}")
 
         # 创建启动画面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
@@ -425,10 +428,10 @@ class MainWindow(MSFluentWindow):
         try:
             # ── 轻量 TOP 界面：逐一移除旧→添加新 ───────────────────────
             top_specs = [
-                ('homeInterface',  FIF.HOME,            tr('主页'),     HomeInterface),
-                ('helpInterface',  FIF.BOOK_SHELF,      tr('帮助'),     HelpInterface),
-                ('warpInterface',  FIF.SHARE,           tr('抽卡记录'), WarpInterface),
-                ('toolsInterface', FIF.DEVELOPER_TOOLS, tr('工具箱'),   ToolsInterface),
+                ('homeInterface', FIF.HOME, tr('主页'), HomeInterface),
+                ('helpInterface', FIF.BOOK_SHELF, tr('帮助'), HelpInterface),
+                ('warpInterface', FIF.SHARE, tr('抽卡记录'), WarpInterface),
+                ('toolsInterface', FIF.DEVELOPER_TOOLS, tr('工具箱'), ToolsInterface),
             ]
             for attr, icon, label, cls in top_specs:
                 old = getattr(self, attr, None)

@@ -40,9 +40,9 @@ class BannerWidget(QWidget):
 
         self.vBoxLayout = QVBoxLayout(self)
         if hasattr(cfg, 'ui_language_now') and cfg.ui_language_now not in ['zh_CN', 'zh_TW']:
-            self.galleryLabel = QLabel(f'{tr("三月七小助手")} {cfg.version}', self)
+            self.galleryLabel = QLabel(f'{tr("三月七小助手")}', self)
         else:
-            self.galleryLabel = QLabel(f'{tr("三月七小助手")} {cfg.version}\nMarch7thAssistant', self)
+            self.galleryLabel = QLabel(f'{tr("三月七小助手")}\nMarch7thAssistant', self)
         self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
         # 创建阴影效果
