@@ -47,6 +47,13 @@ class DivergentUniverse:
         检查差分宇宙积分，达到 14000 时记录时间戳
         """
         screen.wait_for_screen_change("divergent_main")
+
+        # 4.2版本周期积分将合并。本期积分奖励已由邮件发放。
+        if auto.find_element("奖励已由邮件发放", "text", crop=(33 / 1920, 911 / 1080, 397 / 1920, 103 / 1080), include=True):
+            log.info("检测到积分奖励已由邮件发放，跳过积分检查")
+            cfg.save_timestamp("weekly_divergent_timestamp")
+            return True
+
         score_pos = (182 / 1920, 977 / 1080, 209 / 1920, 43 / 1080)
         score = auto.get_single_line_text(score_pos)
         if not score:
