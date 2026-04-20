@@ -664,7 +664,10 @@
     {
         "name": "差分宇宙-周期演算",
         "id": "divergent_mode_select_cycle",
-        "image_path": "./assets/images/screen/universe/mode_select_cycle.png",
+        "image_path": [
+            "./assets/images/screen/universe/mode_select_cycle.png",
+            "./assets/images/screen/universe/mode_select_cycle2.png"
+        ],
         "actions": [
             {
                 "target_screen": "divergent_mode_select",
