@@ -239,6 +239,9 @@ class LogInterface(ScrollArea):
         super().__init__(parent=parent)
         self.process = None
         self.current_task = None
+        # 清理日志中的 ANSI 控制序列，兼容标准 ESC 序列与缺失 ESC 的残留序列（如 [36m）
+        self._ansi_escape_re = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        self._orphan_ansi_re = re.compile(r'(?<!\x1b)\[(?:\d{1,3}(?:;\d{1,3})*)?[A-Za-z]')
         self._hotkey_registered = False
         self._current_hotkey = None
         # 当前运行的定时任务元数据（如果是由定时触发），在进程结束时用于发送通知与执行后续操作
@@ -1119,7 +1122,9 @@ class LogInterface(ScrollArea):
         """
         if not text:
             return
-        s = str(text)
+        s = self._strip_ansi_sequences(str(text))
+        if not s:
+            return
 
         try:
             if self._log_overlay:
@@ -1160,6 +1165,15 @@ class LogInterface(ScrollArea):
                 self._buffered_logs = (getattr(self, '_buffered_logs', '') or '') + s
             except Exception:
                 pass
+
+    def _strip_ansi_sequences(self, text: str) -> str:
+        """移除 ANSI 转义序列，避免在 GUI 文本框中显示颜色控制码。"""
+        try:
+            cleaned = self._ansi_escape_re.sub('', text)
+            cleaned = self._orphan_ansi_re.sub('', cleaned)
+            return cleaned
+        except Exception:
+            return text
 
     def _should_append_now(self):
         """判断当前是否应该立即追加日志：要求当前控件和顶层窗口都可见"""
