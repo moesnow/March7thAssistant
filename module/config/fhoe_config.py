@@ -38,12 +38,14 @@ def auto_config():
         with open(os.path.join(cfg.fight_path, "config.json"), 'r', encoding='utf-8') as f:
             config = json.load(f)
             
-    if ("不配置" != cfg.fight_allow_map_buy and config['allow_map_buy'] != cfg.fight_allow_map_buy) or ("不配置" != cfg.fight_allow_snack_buy and config['allow_snack_buy'] != cfg.fight_allow_snack_buy) or ("0" != cfg.fight_main_map and config['main_map'] != cfg.fight_main_map):
+    if ("不配置" != cfg.fight_allow_map_buy and config.get('allow_map_buy') != cfg.fight_allow_map_buy) or ("不配置" != cfg.fight_allow_snack_buy and config.get('allow_snack_buy') != cfg.fight_allow_snack_buy) or ("0" != cfg.fight_main_map and config.get('main_map') != cfg.fight_main_map) or ("不配置" != cfg.fight_map_version and config.get('map_version') != cfg.fight_map_version):
         if cfg.fight_allow_map_buy != "不配置":
             config['allow_map_buy'] = cfg.fight_allow_map_buy
         if cfg.fight_allow_snack_buy != "不配置":
             config['allow_snack_buy'] = cfg.fight_allow_snack_buy
         if cfg.fight_main_map != "0":
             config['main_map'] = cfg.fight_main_map
+        if cfg.fight_map_version != "不配置":
+            config['map_version'] = cfg.fight_map_version
         with open(os.path.join(cfg.fight_path, "config.json"), 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=4)
