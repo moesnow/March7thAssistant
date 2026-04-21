@@ -26,6 +26,7 @@ import shlex
 import threading
 import subprocess as sp
 import ctypes
+import time
 
 if sys.platform == 'win32':
     import keyboard
@@ -256,6 +257,9 @@ class LogInterface(ScrollArea):
         self._hotkey_registered = False
         self._current_hotkey = None
         self._hotkey_handler = None
+        self._parsed_hotkey_groups = []
+        self._hotkey_trigger_key = None
+        self._last_hotkey_trigger_ts = 0.0
         # 当前运行的定时任务元数据（如果是由定时触发），在进程结束时用于发送通知与执行后续操作
         self._pending_task_meta = None
         # 用于在强制停止当前任务后排队延迟启动的任务（tuple: (task_meta, task_dict)）
@@ -520,26 +524,105 @@ class LogInterface(ScrollArea):
 
             try:
                 hotkey = cfg.get_value("hotkey_stop_task", "f10")
-                self._hotkey_handler = keyboard.add_hotkey(hotkey, self._onGlobalHotkeyPressed)
+                parsed_groups, trigger_key = self._parseHotkeyForHook(hotkey)
+                if not parsed_groups or not trigger_key:
+                    raise ValueError(f"无法解析热键: {hotkey}")
+
+                self._parsed_hotkey_groups = parsed_groups
+                self._hotkey_trigger_key = trigger_key
+                self._hotkey_handler = keyboard.on_press_key(trigger_key, self._onGlobalHotkeyEvent, suppress=False)
                 self._hotkey_registered = True
                 self._current_hotkey = hotkey
             except Exception as e:
                 print(f"注册全局热键失败: {e}")
                 self._hotkey_registered = False
                 self._hotkey_handler = None
+                self._parsed_hotkey_groups = []
+                self._hotkey_trigger_key = None
 
     def _unregisterGlobalHotkey(self):
         """取消注册全局热键"""
         if sys.platform == 'win32':
             if self._hotkey_registered and self._hotkey_handler is not None:
                 try:
-                    keyboard.remove_hotkey(self._hotkey_handler)
+                    keyboard.unhook(self._hotkey_handler)
                 except Exception as e:
                     # 忽略注销热键时的异常，但打印日志以便排查问题
                     print(f"取消注册全局热键失败: {e}")
                 self._hotkey_registered = False
                 self._current_hotkey = None
                 self._hotkey_handler = None
+                self._parsed_hotkey_groups = []
+                self._hotkey_trigger_key = None
+
+    def _parseHotkeyForHook(self, hotkey: str):
+        """解析热键为按键组，并返回建议绑定的触发键。"""
+        hotkey_text = str(hotkey or '').strip().lower()
+        if not hotkey_text:
+            return [], None
+
+        # keyboard 库允许逗号表示序列热键。此处仅保留第一段，保证简单配置稳定工作。
+        first_step = hotkey_text.split(',')[0].strip()
+        parts = [p.strip() for p in first_step.split('+') if p.strip()]
+        if not parts:
+            return [], None
+
+        alias_map = {
+            'control': 'ctrl',
+            'left control': 'left ctrl',
+            'right control': 'right ctrl',
+            'alt gr': 'alt gr',
+            'return': 'enter',
+            'esc': 'escape',
+            'win': 'windows',
+            'left win': 'left windows',
+            'right win': 'right windows',
+            'command': 'windows',
+            'option': 'alt',
+            'plus': '+',
+        }
+
+        normalized = [alias_map.get(p, p) for p in parts]
+        group = set(normalized)
+
+        modifiers = {
+            'ctrl', 'left ctrl', 'right ctrl',
+            'shift', 'left shift', 'right shift',
+            'alt', 'left alt', 'right alt', 'alt gr',
+            'windows', 'left windows', 'right windows',
+        }
+        non_modifiers = [k for k in normalized if k not in modifiers]
+        trigger_key = non_modifiers[-1] if non_modifiers else normalized[-1]
+        return [group], trigger_key
+
+    def _isGroupPressed(self, group):
+        """判断按键组是否均处于按下状态。"""
+        for key_name in group:
+            try:
+                if not keyboard.is_pressed(key_name):
+                    return False
+            except Exception:
+                return False
+        return True
+
+    def _onGlobalHotkeyEvent(self, _event):
+        """按键事件回调：只要目标热键键集合被满足即可触发（允许额外按键存在）。"""
+        try:
+            if not self._parsed_hotkey_groups:
+                return
+
+            now = time.monotonic()
+            if now - self._last_hotkey_trigger_ts < 0.12:
+                return
+
+            for group in self._parsed_hotkey_groups:
+                if self._isGroupPressed(group):
+                    self._last_hotkey_trigger_ts = now
+                    self._onGlobalHotkeyPressed()
+                    return
+        except Exception:
+            # 回退：保证热键功能可用
+            self._onGlobalHotkeyPressed()
 
     @Slot()
     def _emitStopTaskRequestedMainThread(self):
