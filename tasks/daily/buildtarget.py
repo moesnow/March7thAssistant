@@ -456,10 +456,15 @@ class BuildTarget:
             BuildTarget.init_build_targets()
 
         require_ornament = False
+        only_erosion_and_ornament = False
         if BuildTarget._target_instances:
             only_erosion_and_ornament = all(("侵蚀隧洞" in instance_type) or ("饰品提取" in instance_type) for instance_type in BuildTarget._target_instances)
             if only_erosion_and_ornament:
                 require_ornament = datetime.date.today().weekday() >= (7 - cfg.build_target_ornament_weekly_count)
+
+        if only_erosion_and_ornament and cfg.build_target_use_user_instance_when_only_erosion_and_ornament:
+            log.info("培养目标仅识别到侵蚀隧洞/饰品提取，按配置回退至自定义副本")
+            return None
 
         for instance_type, instance_names in BuildTarget._target_instances.items():
             if "历战余响" in instance_type:

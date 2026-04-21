@@ -301,6 +301,12 @@ class SettingInterface(ScrollArea):
             tr("每周饰品提取次数"),
             tr("目标有足够资源后，执行饰品提取的次数，其余时间执行侵蚀隧洞"),
         )
+        self.buildTargetUseUserInstanceWhenOnlyErosionAndOrnamentCard = SwitchSettingCard1(
+            FIF.SYNC,
+            tr("仅识别到侵蚀隧洞/饰品提取时使用自定义副本"),
+            tr("开启后，当培养目标仅包含侵蚀隧洞和饰品提取时，清体力将改用你在体力设置中配置的副本"),
+            "build_target_use_user_instance_when_only_erosion_and_ornament"
+        )
         self.echoofwarEnableCard = ExpandableSwitchSettingCardEchoofwar(
             "echo_of_war_enable",
             FIF.MEGAPHONE,
@@ -1546,7 +1552,8 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
         self.buildTargetEnableCard.addSettingCards([
             self.buildTargetSchemeCard,
-            self.buildTargetPlanarOrnamentWeeklyCountCard
+            self.buildTargetPlanarOrnamentWeeklyCountCard,
+            self.buildTargetUseUserInstanceWhenOnlyErosionAndOrnamentCard
         ])
         self.PowerGroup.addSettingCard(self.echoofwarEnableCard)
         self.echoofwarEnableCard.addSettingCards([
