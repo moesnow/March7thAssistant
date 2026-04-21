@@ -64,10 +64,57 @@ class Screen(metaclass=SingletonMeta):
         self.current_screen = None
         self.current_screen_threshold = 0
 
+    def _detect_overlay_monitor_text(self):
+        """
+        通过 OCR 检测是否存在常见帧率/硬件监控悬浮窗文字。
+        :return: 命中的关键词标签列表。
+        """
+        keyword_map = {
+            "FPS": ["fps", "帧率", "framerate", "frame"],
+            "CPU": ["cpu", "处理器", "占用", "usage"],
+            "GPU": ["gpu", "显卡", "vram", "温度", "显存"],
+            "RTSS": ["rtss", "rivatuner", "afterburner", "msi"],
+        }
+
+        try:
+            auto.take_screenshot()
+            auto.perform_ocr()
+            ocr_result = getattr(auto, "ocr_result", []) or []
+            if not ocr_result:
+                return []
+
+            matched = set()
+            for box, (text, confidence) in ocr_result:
+                if not text:
+                    continue
+                normalized_text = text.lower().replace(" ", "")
+                for label, keywords in keyword_map.items():
+                    if any(keyword in normalized_text for keyword in keywords):
+                        matched.add(label)
+
+            return sorted(matched)
+        except Exception as e:
+            self.logger.debug(f"检测监控悬浮窗文本失败：{e}")
+            return []
+
+    def _warn_overlay_monitor_text_if_needed(self):
+        """
+        若检测到常见监控悬浮窗关键词，则给出针对性提示。
+        """
+        matched_labels = self._detect_overlay_monitor_text()
+        if matched_labels:
+            self.logger.warning(
+                f"检测到疑似监控悬浮窗文字：{', '.join(matched_labels)}，这可能导致界面识别失败"
+            )
+            self.logger.warning(
+                "建议关闭帧率/硬件监控悬浮窗（如 FPS、CPU、GPU、RTSS、Afterburner 等）后重试"
+            )
+
     def _handle_autotry(self):
         """
         处理自动重试逻辑，包括按ESC键和处理特定的异常情况。
         """
+        self._warn_overlay_monitor_text_if_needed()
         self.logger.warning("未识别出任何界面，请确保游戏画面干净，按ESC后重试")
         auto.press_key("esc")
         time.sleep(2)  # 等待屏幕变化
