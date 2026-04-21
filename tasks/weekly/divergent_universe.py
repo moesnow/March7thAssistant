@@ -548,7 +548,7 @@ class DivergentUniverse:
                             offset = event_center_x - screen_center_x
                             if abs(offset) > fine_tolerance:
                                 adjust_key = "a" if offset < 0 else "d"
-                                has_f_or_adjusted_in_window = True
+                                # has_f_or_adjusted_in_window = True
                                 if stable_mode:
                                     auto.press_key_down("w")
                                 auto.press_key(adjust_key, wait_time=0.15)
@@ -571,6 +571,8 @@ class DivergentUniverse:
                             and area_window_latest_value is not None
                             and area_window_latest_value >= area_window_start_value * area_growth_ratio
                         )
+                        log.debug(
+                            f"事件区域面积增长检测 - 起始值: {area_window_start_value}, 最新值: {area_window_latest_value}, 增长率: {area_window_latest_value / area_window_start_value if area_window_start_value else 'N/A'}, 是否满足增长条件: {area_growth_ok}")
 
                         if (not has_f_or_adjusted_in_window) and (not area_growth_ok):
                             log.info("可能遇到可破坏物遮挡，尝试攻击")
