@@ -96,6 +96,7 @@ def valid_codes_for_server(server: str, now: Optional[datetime.datetime] = None)
     url = [
         "https://m7a.top/assets/config/redemption_codes.json",
         "https://github.kotori.top/https://m7a.top/assets/config/redemption_codes.json",
+        "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/config/redemption_codes.json",
         "https://raw.githubusercontent.com/moesnow/March7thAssistant/refs/heads/main/assets/config/redemption_codes.json"
     ]
     path = "assets/config/redemption_codes.json"
