@@ -44,7 +44,7 @@ class DivergentUniverse:
 
     def check_divergent_universe_score(self) -> bool:
         """
-        检查差分宇宙积分，达到 14000 时记录时间戳
+        检查差分宇宙积分，达到 18000 时记录时间戳
         """
         screen.wait_for_screen_change("divergent_main")
 
@@ -61,7 +61,7 @@ class DivergentUniverse:
             return False
 
         score_parts = score.split('/')
-        if len(score_parts) == 2 and score_parts[0].isdigit() and score_parts[1].isdigit() and score_parts[1] in ("12000", "14000"):
+        if len(score_parts) == 2 and score_parts[0].isdigit() and score_parts[1].isdigit() and score_parts[1] in ("12000", "14000", "18000"):
             max_score = score_parts[1]
             log.info(f"差分宇宙积分：{score_parts[0]} / {max_score}")
             if score_parts[0] == max_score:
