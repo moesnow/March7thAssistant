@@ -29,6 +29,10 @@ class AutoPlot(QObject):
     ]
     _DILATE_KERNEL = cv2.getStructuringElement(cv2.MORPH_RECT, (8, 8))
 
+    _PHONE_CROP = (1146 / 1920, 694 / 1080, 610 / 1920, 51 / 1080)
+    _PHONE2_CROP = (801 / 1920, 703 / 1080, 797 / 1920, 48 / 1080)
+    _WHITE_CROP = (6.0 / 1920, 5.0 / 1080, 12.0 / 1920, 14.0 / 1080)
+
     def __init__(self, game_title_name: str):
         super().__init__()
         self.game_title_name = game_title_name
@@ -136,6 +140,37 @@ class AutoPlot(QObject):
                     auto.press_key("v")
                 self._last_not_auto_detect_time = now
 
+            # 尝试判断手机对话页面
+            if auto.is_rgb_ratio_above_threshold(self._PHONE_CROP, (233, 233, 233), 0.6, tolerance=0.01):
+                auto.click_element(self._PHONE_CROP, "crop")
+                auto.click_element(self._WHITE_CROP, "crop", action="move")
+            auto.click_element("./assets/images/share/plot/close_phone.png", "image", 0.9, crop=(1689 / 1920, 186 / 1080, 112 / 1920, 86 / 1080))
+
+            if auto.is_rgb_ratio_above_threshold(self._PHONE2_CROP, (233, 233, 233), 0.65, tolerance=0.01):
+                auto.click_element(self._PHONE2_CROP, "crop")
+                auto.click_element(self._WHITE_CROP, "crop", action="move")
+
+            # 点击空白处关闭
+            auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8)
+
+    def detect_skip_button(self) -> bool:
+        _target = {"model_path": "./assets/model/skip.onnx", "names": ["skip"], "target_class": "skip"}
+        _crop = (1506 / 1920, 36 / 1080, 400 / 1920, 47 / 1080)
+        clicked = auto.click_element(
+            target=_target,
+            find_type="yolo",
+            threshold=0.25,
+            crop=_crop,
+        )
+        if not clicked:
+            return False
+        deadline = time.monotonic() + 1.0
+        while time.monotonic() < deadline:
+            time.sleep(0.05)
+            if not auto.find_element(_target, "yolo", 0.25, crop=_crop):
+                return True
+        return False
+
     def _dialog_loop(self, session: int):
         if not self.is_clicking or not self.is_running or session != self._dialog_session:
             return
@@ -148,7 +183,7 @@ class AutoPlot(QObject):
                     self._schedule_dialog_step(500, self._dialog_loop, session)
                     return
 
-        if self.auto_skip and auto.click_element("./assets/images/share/plot/skip.png", "image", 0.8, crop=(1563.0 / 1920, 45.0 / 1080, 33.0 / 1920, 28.0 / 1080)):
+        if self.auto_skip and self.detect_skip_button():
             if not auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=30, retry_delay=0.1):
                 # 点击失败，移动鼠标位置避免影响下次匹配
                 pos = (940 / 1920, 993 / 1080, 39 / 1920, 29 / 1080)
