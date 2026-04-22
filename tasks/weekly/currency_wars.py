@@ -1440,6 +1440,17 @@ class CurrencyWars:
 
         auto.mouse_up()
 
+        # 检查是否弹出 “我来当策划”
+        result = auto.get_single_line_text(crop=(972 / 1920, 57 / 1080, 151 / 1920, 44 / 1080))
+        if result:
+            if "我来当策划" in result:
+                log.info("检测到我来当策划")
+                choose_crop = (564 / 1920, 191 / 1080, 449 / 1920, 225 / 1080)
+                auto.click_element(choose_crop, "crop")
+                time.sleep(0.5)
+                auto.click_element("确认选择", "text", crop=(1424 / 1920, 573 / 1080, 134 / 1920, 51 / 1080))
+                time.sleep(0.5)
+
     # 识别等级
     def get_level(self):
         """
