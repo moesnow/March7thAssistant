@@ -8,6 +8,7 @@ from .checkInactivity import CheckInActivity
 from .gardenofplenty import GardenOfPlenty
 from .realmofthestrange import RealmOfTheStrange
 from .planarfissure import PlanarFissure
+from .journey_highlights_notification import send_journey_highlights_notification
 import time
 
 
@@ -74,6 +75,10 @@ def start():
     if not cfg.activity_enable:
         log.info("活动未开启")
         return
+
+    if cfg.activity_journey_highlights_notification_enable:
+        send_journey_highlights_notification()
+    
     try:
         activity_manager = ActivityManager()
         activity_manager.check_and_run_activities()

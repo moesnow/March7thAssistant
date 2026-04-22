@@ -412,6 +412,12 @@ class SettingInterface(ScrollArea):
             tr("存在双倍次数时体力优先「饰品提取」"),
             "activity_planarfissure_enable"
         )
+        self.activityJourneyHighlightsNotificationEnableCard = SwitchSettingCard1(
+            FIF.CALENDAR,
+            tr('活动热点通知'),
+            tr("每次运行时发送带有活动热点截图的通知"),
+            "activity_journey_highlights_notification_enable"
+        )
         self.rewardEnableCard = ExpandableSwitchSettingCard(
             "reward_enable",
             FIF.TRANSPARENT,
@@ -1577,7 +1583,8 @@ class SettingInterface(ScrollArea):
             self.activityDailyCheckInEnableCard,
             self.activityGardenOfPlentyEnableCard,
             self.activityRealmOfTheStrangeEnableCard,
-            self.activityPlanarFissureEnableCard
+            self.activityPlanarFissureEnableCard,
+            self.activityJourneyHighlightsNotificationEnableCard
         ])
         self.DailyGroup.addSettingCard(self.rewardEnableCard)
         self.rewardEnableCard.addSettingCards([

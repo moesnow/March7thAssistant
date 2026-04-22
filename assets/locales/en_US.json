@@ -1153,5 +1153,7 @@
     "仅识别到侵蚀隧洞/饰品提取时使用自定义副本": "Use custom dungeon when only Cavern of Corrosion/Ornament Extraction is detected",
     "开启后，当培养目标仅包含侵蚀隧洞和饰品提取时，清体力将改用你在体力设置中配置的副本": "When enabled, if cultivation targets only include Cavern of Corrosion and Ornament Extraction, Power farming will use the dungeon configured in your Power settings",
     "银狼LV.999": "Silver Wolf LV.999",
-    "「辉痕圣林」神悟树庭": ""
+    "「辉痕圣林」神悟树庭": "",
+    "活动热点通知": "Journey Highlights Notification",
+    "每次运行时发送带有活动热点截图的通知": "Send notification with Journey Highlights screenshot every run"
 }
