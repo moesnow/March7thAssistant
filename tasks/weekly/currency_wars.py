@@ -1625,8 +1625,13 @@ class CurrencyWars:
             if auto.find_element("专家邀请函", "text", None, crop=(949 / 1920, 27 / 1080, 153 / 1920, 56 / 1080), include=True):
                 log.info("检测到专家邀请函选项，尝试点击")
                 success = True
-                pos = (769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080)
-                auto.click_element(pos, "crop")
+                if cfg.currencywars_strategy == "aglaea" and auto.click_element("银狼", "text", crop=(366 / 1920, 363 / 1080, 1318 / 1920, 40 / 1080)):
+                    pass
+                else:
+                    # 4个
+                    auto.click_element((769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080), "crop")
+                    # 5个
+                    auto.click_element((900 / 1920, 135 / 1080, 249 / 1920, 275 / 1080), "crop")
                 time.sleep(2)
             if not success:
                 log.warning("未检测到可点击的选项")
