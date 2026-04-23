@@ -37,6 +37,10 @@ class Updater:
         self.logger.hr("获取下载链接", 0)
         if download_url is None:
             self.download_url = self.get_download_url()
+            if not self.download_url:
+                self.logger.info("当前已是最新版本，自动停止更新并退出。")
+                self.logger.hr("完成", 2)
+                sys.exit(0)
             self.logger.info(f"下载链接: {green(self.download_url)}")
             self.logger.hr("完成", 2)
             input("按回车键开始更新")
@@ -73,7 +77,8 @@ class Updater:
         if download_url is None:
             raise Exception("没有找到合适的下载URL")
 
-        self.compare_versions(version)
+        if not self.compare_versions(version):
+            return None
         return download_url
 
     def compare_versions(self, version):
@@ -83,13 +88,16 @@ class Updater:
                 current_version = file.read().strip()
             if parse(version.lstrip('v')) > parse(current_version.lstrip('v')):
                 self.logger.info(f"发现新版本: {current_version} ——> {version}")
+                return True
             else:
                 self.logger.info(f"本地版本: {current_version}")
                 self.logger.info(f"远程版本: {version}")
                 self.logger.info(f"当前已是最新版本")
+                return False
         except Exception as e:
             self.logger.info(f"本地版本获取失败: {e}")
             self.logger.info(f"最新版本: {version}")
+            return True
 
     def find_fastest_mirror(self, mirror_urls, timeout=5):
         """测速并找到最快的镜像。"""
