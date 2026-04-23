@@ -993,6 +993,14 @@
                 "actions_list": [
                     "auto.press_key('esc')"
                 ]
+            },
+            {
+                "target_screen": "reward_guide",
+                "actions_list": [
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/screen/activity.png', 'image', 0.9, 5)",
+                    "auto.click_element('./assets/images/screen/activity_2.png', 'image', 0.9, 1)"
+                ]
             }
         ]
     },
@@ -1100,6 +1108,19 @@
             {
                 "target_screen": "main",
                 "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name":"奖励指南",
+        "id":"reward_guide",
+        "image_path":"./assets/images/screen/reward_guide.png",
+        "actions":[
+            {
+                "target_screen":"activity",
+                "actions_list":[
                     "auto.press_key('esc')"
                 ]
             }
