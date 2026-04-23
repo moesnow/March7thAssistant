@@ -100,6 +100,24 @@ A：首先确保是最新版本，如果仍然缺少副本，编辑 `assets\conf
 
 同时欢迎用`未压缩`的方式上传到 [Issue](https://github.com/moesnow/March7thAssistant/issues)，比如压缩包，或者 [PR](https://github.com/moesnow/March7thAssistant/pulls) 也可以。
 
+### Q：运行过程中内存占用持续升高 / 游戏突然无响应或闪退 / 系统崩溃重启怎么办？
+
+A：如果出现内存占用异常偏高、程序无故闪退，或运行途中游戏画面出现异常，优先排查 OCR 加速模式的兼容性。
+
+小助手默认在 Windows 10 18362 及以上使用 ONNXRuntime DirectML GPU 加速；
+
+在不支持 DirectML 的环境（如 Linux、部分 ARM 设备）下，若检测到 OpenVINO 则自动使用 OpenVINO CPU 推理。
+
+**OpenVINO 在某些机器上存在内存持续增长的问题**，程序会定期重建推理引擎来释放内存，
+
+并在可用物理内存低于 4GB 时自动切换到 ONNXRuntime CPU；但如果机器本身内存较小，仍可能出现明显波动。
+
+**建议先将 OCR 加速模式手动切换为 `CPU (ONNXRuntime)`**（设置 → 杂项 → OCR 加速模式），
+
+切换后重新运行，观察内存和稳定性是否改善。如果问题消失，说明原模式与当前环境存在兼容问题，保持 ONNXRuntime CPU 即可。
+
+如果使用 DirectML GPU 加速时出现闪退或识别异常，同样建议先回退到 `CPU (ONNXRuntime)` 排查。
+
 ### Q：双击启动后窗口一闪而过 / 图形界面根本打不开 / 终端里运行命令时窗口一闪而过怎么办？
 
 A：这几种现象通常可以放在一起排查。

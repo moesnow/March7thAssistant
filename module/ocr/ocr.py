@@ -21,7 +21,7 @@ OCR_SLOW_THRESHOLD = 5.0
 # 较低侵入的经验值 20，优先解决长时间任务中的内存峰值问题。
 OCR_PERIODIC_FULL_GC_INTERVAL = 20
 # OpenVINO 存在内存泄漏问题，每隔此时间（秒）重新初始化一次 OCR 实例以释放内存
-OCR_OPENVINO_REINIT_INTERVAL = 300
+OCR_OPENVINO_REINIT_INTERVAL = 240
 
 OCR_MODE_AUTO = "auto"
 OCR_MODE_GPU = "gpu"
@@ -74,8 +74,8 @@ class OCR:
         if self.ocr_count % self._periodic_gc_interval == 0:
             gc.collect()
 
-    def _is_memory_low(self, threshold_gb: float = 2.0) -> bool:
-        """检查当前可用物理内存是否低于阈值（默认 2GB）。"""
+    def _is_memory_low(self, threshold_gb: float = 4.0) -> bool:
+        """检查当前可用物理内存是否低于阈值（默认 4GB）。"""
         try:
             import psutil
             available_gb = psutil.virtual_memory().available / (1024 ** 3)
@@ -88,7 +88,7 @@ class OCR:
             return False
 
     def _maybe_fallback_openvino_due_to_memory(self):
-        """若当前使用 OpenVINO 且可用物理内存不足 2GB，立即降级到 ONNXRuntime(CPU)。"""
+        """若当前使用 OpenVINO 且可用物理内存不足，立即降级到 ONNXRuntime(CPU)。"""
         if not self._using_openvino or self._openvino_fallback:
             return
         if self._is_memory_low():
@@ -326,7 +326,7 @@ class OCR:
                 self.logger.debug(f"OCR初始化耗时: {elapsed_time:.2f} 秒")
                 if self._using_openvino:
                     self._openvino_last_reinit = time.monotonic()
-                    # 初始化后立即检查可用内存，不足 2GB 则降级
+                    # 初始化后立即检查可用内存，不足 4GB 则降级
                     self._maybe_fallback_openvino_due_to_memory()
                 atexit.register(self.exit_ocr)
             except Exception as e:
@@ -407,7 +407,7 @@ class OCR:
                     self._maybe_collect_garbage()
                     # OpenVINO 存在内存泄漏，定期重新初始化以释放内存
                     self._maybe_reinit_openvino()
-                    # OpenVINO 执行后检查可用内存，不足 2GB 则降级
+                    # OpenVINO 执行后检查可用内存，判断是否降级
                     self._maybe_fallback_openvino_due_to_memory()
                     return results
                 except Exception as e:
