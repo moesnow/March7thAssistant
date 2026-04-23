@@ -120,6 +120,48 @@ Docker 部署时已预配置为**自动循环运行模式**，无需手动操作
 
 如需修改可通过编辑配置文件或环境变量进行调整（见下方环境变量配置）。
 
+## 启动非完整运行任务
+
+默认情况下，镜像会使用 Dockerfile 中的默认命令：
+
+```bash
+python main.py
+```
+
+这等价于启动 **完整运行**。如果你想只执行某个子任务，可以在 `docker-compose.yml` 的服务配置里增加 `command`，覆盖 Dockerfile 内的默认命令。
+
+例如，只运行一次 **每日实训**：
+
+```yaml
+services:
+  march7thassistant:
+    container_name: m7a
+    build: .
+    volumes:
+      - ./config.yaml:/m7a/config.yaml
+      - ./logs:/m7a/logs
+      - ./3rdparty/WebBrowser/UserProfile:/m7a/3rdparty/WebBrowser/UserProfile
+    environment:
+      - MARCH7TH_LOG_LEVEL=DEBUG
+    command: ["python", "main.py", "daily"]
+    network_mode: "bridge"
+    shm_size: 1g
+    restart: "no"
+```
+
+常见示例：
+
+- `command: ["python", "main.py", "daily"]`：仅执行每日实训
+- `command: ["python", "main.py", "power"]`：仅执行清体力
+- `command: ["python", "main.py", "currencywars"]`：仅执行货币战争
+- `command: ["python", "main.py", "divergent"]`：仅执行差分宇宙
+- `command: ["python", "main.py", "notify"]`：测试消息推送
+
+> **注意**：
+> - 如果只是临时执行一次子任务，建议同时将 `restart: unless-stopped` 改为 `restart: "no"`，否则任务执行完后容器会被自动拉起并再次执行。
+> - 任务名称与桌面版命令行一致；如果想查看完整列表，可以临时改成 `command: ["python", "main.py", "-l"]` 后再执行一次 `docker compose up`。
+> - 想恢复默认的完整运行模式时，删除 `command` 配置即可。
+
 ## 环境变量配置
 
 Docker 部署支持通过环境变量覆盖配置文件中的设置，环境变量优先级高于配置文件。

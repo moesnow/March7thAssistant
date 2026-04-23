@@ -12,4 +12,13 @@ services:
       - MARCH7TH_LOG_LEVEL=DEBUG
     network_mode: "bridge"
     shm_size: 1g
+    # 默认命令为 python main.py，即完整运行。
+    # 如需只执行某个子任务，可取消下面其中一行的注释以覆盖 Dockerfile 内的默认命令：
+    # command: ["python", "main.py", "daily"]
+    # command: ["python", "main.py", "power"]
+    # command: ["python", "main.py", "currencywars"]
+    # command: ["python", "main.py", "divergent"]
+    # command: ["python", "main.py", "notify"]
     restart: unless-stopped
+    # 如果只是临时执行一次子任务，建议改为：
+    # restart: "no"
