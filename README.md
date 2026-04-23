@@ -15,7 +15,6 @@
 
 <div align="center">
     <img src="assets/screenshot/star.gif" alt="Star" width="186" height="60">
-  </a>
 </div>
 
 <br/>
@@ -33,15 +32,15 @@
 ## 功能简介
 
 - **日常**：清体力、每日实训、领取奖励、委托、锄大地
-- **周常**：历战余响、货币战争、模拟宇宙、忘却之庭
-- **抽卡记录导出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 标准、**自动对话**
+- **周常**：历战余响、货币战争、差分宇宙、混沌回忆、虚构叙事、末日幻影
+- **云·星穹铁道**：支持后台运行、无窗口运行和 Docker 运行
+- **抽卡记录导出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 标准
+- **工具箱**：自动对话、解锁帧率、兑换码
 - 每日实训等任务的完成情况支持**消息推送**
 - 任务刷新或体力恢复到指定值后**自动启动**
 - 任务完成后**声音提示、自动关闭游戏或关机等**
 
-> 其中模拟宇宙调用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 项目，锄大地调用的 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 项目
-
-详情见 [配置文件](assets/config/config.example.yaml) 或图形界面设置 ｜QQ群 [点击跳转](https://qm.qq.com/q/C3IryUWCQw) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)
+详情见 图形界面设置 或 [配置文件](assets/config/config.example.yaml)｜QQ群 [点击跳转](https://qm.qq.com/q/C3IryUWCQw) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)  哔哩哔哩 [点击跳转](https://space.bilibili.com/3706960664857075) 
 
 ## 界面展示
 
@@ -49,10 +48,6 @@
 
 ## 注意事项
 
-- 必须使用**PC端** `1920*1080` 分辨率窗口或全屏运行游戏（不支持HDR）
-- 支持 **macOS** 和 **Linux**（仅云游戏模式），也支持 [Docker 部署](https://m7a.top/#/assets/docs/Docker)
-- 模拟宇宙相关 [项目文档](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md)  [Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
-- 需要后台运行或多显示器可以尝试 [远程本地多用户桌面](https://m7a.top/#/assets/docs/Background)
 - 遇到错误请在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反馈，提问讨论可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊随缘看
 - 欢迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)，提交前请先阅读 [贡献指南](CONTRIBUTING.md)
 
@@ -60,61 +55,13 @@
 
 前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下载后解压双击三月七图标的 `March7th Launcher.exe` 打开图形界面
 
-如果需要使用 **任务计划程序** 定时运行或直接执行 **完整运行**，可以使用终端图标的 `March7th Assistant.exe`
-
-检测更新可以点击图形界面设置最底下的按钮，或双击 `March7th Updater.exe`
-
-### 命令行参数
-
-图形界面 `March7th Launcher.exe` 支持命令行参数，可以在启动时自动执行指定任务：
-
-```bash
-# 查看帮助
-March7th Launcher.exe -h
-
-# 列出所有可用任务
-March7th Launcher.exe -l
-
-# 启动图形界面并执行完整运行
-March7th Launcher.exe main
-
-# 启动图形界面并执行每日实训
-March7th Launcher.exe daily
-
-# 任务正常完成后自动退出（需配合任务参数）
-March7th Launcher.exe main -e
-```
-
-<details>
-<summary>可用任务列表</summary>
-
-| 任务名称 | 说明 |
-|---------|------|
-| main | 完整运行 |
-| daily | 每日实训 |
-| power | 清体力 |
-| currencywars | 货币战争 |
-| currencywarsloop | 货币战争循环 |
-| fight | 锄大地 |
-| universe | 模拟宇宙 |
-| forgottenhall | 混沌回忆 |
-| purefiction | 虚构叙事 |
-| apocalyptic | 末日幻影 |
-| redemption | 兑换码 |
-| universe_gui | 模拟宇宙原生界面 |
-| fight_gui | 锄大地原生界面 |
-| universe_update | 模拟宇宙更新 |
-| fight_update | 锄大地更新 |
-| game | 启动游戏 |
-| notify | 测试消息推送 |
-
-</details>
-
 ## 源码运行
 
 如果你是完全不懂的小白，请通过上面的方式下载安装，可以不用往下看了。
 
 推荐使用 Python 3.12 或更高版本。
+
+Windows 下如果通过终端启动，建议使用管理员模式打开 PowerShell、Windows Terminal 或 CMD；Windows 11 24H2 及以上也可以按 [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/) 的方式执行。
 
 ```cmd
 # Installation (using venv is recommended)
@@ -148,15 +95,17 @@ git submodule update --init --recursive
 
 ## 相关项目
 
-March7thAssistant 离不开以下开源项目的帮助：
+March7thAssistant 离不开以下开源项目和运行时依赖的帮助，感谢所有维护者与贡献者：
 
-- 模拟宇宙自动化 [https://github.com/CHNZYX/Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe)
+- 模拟宇宙自动化 [https://github.com/CHNZYX/Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) ：提供模拟宇宙相关能力
+- 锄大地自动化 [https://github.com/linruowuyin/Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) ：提供锄大地相关能力
+- OCR 文字识别 [https://github.com/RapidAI/RapidOCR](https://github.com/RapidAI/RapidOCR) ：提供游戏内文字识别能力
+- 图形界面组件库 [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets) ：提供主要界面组件与交互体验
+- Mirror酱 [https://github.com/MirrorChyan/docs](https://github.com/MirrorChyan/docs) ：提供更新检查与下载分发以及 CDN 加速相关能力
+- 图像处理与自动化相关依赖 `OpenCV`、`PyAutoGUI` 等：提供截图采集、图像处理与基础自动化能力
+- 推理加速相关依赖 `ONNX Runtime`、`OpenVINO` ：为 OCR 和模型推理提供 CPU / GPU 加速支持
 
-- 锄大地自动化 [https://github.com/linruowuyin/Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail)
-
-- OCR文字识别 [https://github.com/RapidAI/RapidOCR](https://github.com/RapidAI/RapidOCR)
-
-- 图形界面组件库 [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
+此外，`requirements.txt` 中还包含大量底层依赖，在这里不一一列出；同样感谢这些项目对本项目的支持。
 
 
 ## Contributors
