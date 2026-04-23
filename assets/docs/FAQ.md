@@ -130,11 +130,17 @@ A：这几种现象通常可以放在一起排查。
 
 例如可以先尝试：
 
-`March7th Launcher.exe`
+PowerShell 使用：
 
-或源码模式下执行：
+```powershell
+& '.\March7th Launcher.exe' -S
+```
 
-`python app.py`
+CMD 使用：
+
+```cmd
+"March7th Launcher.exe" -S
+```
 
 如果你的系统支持 [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/)，也可以直接使用 `sudo`。
 
