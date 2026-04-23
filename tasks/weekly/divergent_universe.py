@@ -54,7 +54,7 @@ class DivergentUniverse:
             cfg.save_timestamp("weekly_divergent_timestamp")
             return True
 
-        score_pos = (182 / 1920, 977 / 1080, 209 / 1920, 43 / 1080)
+        score_pos = (443 / 1920, 872 / 1080, 221 / 1920, 51 / 1080)
         score = auto.get_single_line_text(score_pos)
         if not score:
             log.warning("未识别到差分宇宙积分")
