@@ -1,12 +1,15 @@
 # 更新日志
 
-## v2026.4.26
+## v2026.4.27
 - 支持 4.2 新角色和副本
+- 针对A840对阿格莱雅策略进行了优化
+- 修复了货币战争的若干已知问题
 - 更新了使用教程和常见问题适配当前版本
 - 优化自动对话功能，提高稳定性，新增短信支持
 - 培养目标支持当目标仅剩下遗器时改用自定义副本
 - 新增活动热点通知，包含剩余天数和完成情况 [#1007](https://github.com/moesnow/March7thAssistant/pull/1007) @g60cBQ
 - 更新程序支持命令行参数在最新版本时自动退出 [#1006](https://github.com/moesnow/March7thAssistant/pull/1006) @xinjiajuan
+- 新增 uv 源码工作流 [#1003](https://github.com/moesnow/March7thAssistant/pull/1003) @Bot1822
 - 修复无法正常进入活动和漫游签证界面
 - 优化差分宇宙和货币战争适配新版本
 - 优化性能和稳定性并修复若干已知问题
