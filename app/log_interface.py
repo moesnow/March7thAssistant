@@ -1620,7 +1620,9 @@ class LogInterface(ScrollArea):
             pass
         self.appendLog(f"\n错误: {msg}\n")
         if error == QProcess.Crashed:
-            self.appendLog(f"\n可尝试关闭 “设置-杂项-启用 OCR GPU 加速” 选项后重新运行\n")
+            self.appendLog(f"\n可尝试将 “设置-杂项-OCR加速模式” 修改为 CPU 后重新运行\n")
+        elif error == QProcess.FailedToStart:
+            self.appendLog(f"\n请查看 “帮助-常见问题” 中关于杀毒软件的处理方式，必要时将小助手文件夹加入排除项/白名单\n")
         self._updateFinishedStatus(-1)
         self._hideLogOverlay()
 
