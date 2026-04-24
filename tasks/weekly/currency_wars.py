@@ -754,7 +754,7 @@ class CurrencyWars:
             for _ in range(3):
                 if self.shoe_count < 4:
                     if result := auto.find_element(boots_img, "image", 0.9, crop=equip_crop):
-                        if self.shoe_count in (0, 2):
+                        if self.shoe_count in (0, 1, 2):
                             log.info("检测到反重力皮靴，尝试装备反重力皮靴")
                             try_equip(result, aglaea_position)
                             self.shoe_count += 2
