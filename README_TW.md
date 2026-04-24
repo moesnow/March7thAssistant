@@ -10,114 +10,63 @@
 <br/>
 
 <div align="center">
-🌟 點一下右上角的 Star，Github 主頁就能收到軟件更新通知了哦~
+🌟 點一下右上角的 Star，Github 首頁就能收到軟體更新通知了。
 </div>
 
 <div align="center">
     <img src="assets/screenshot/star.gif" alt="Star" width="186" height="60">
-  </a>
 </div>
 
 <br/>
 
 <div align="center">
 
-[简体中文](./README.md) | **繁體中文** | [English](./README_EN.md) | [日本語](./README_JA.md)
+[简体中文](./README.md) | **繁體中文** | [English](./README_EN.md) | [日本語](./README_JA.md) | [한국어](./README_KR.md)
 
-**繁體中文版本由 ChatGPT 生成，遊戲內語言目前僅支援簡體中文**
+**此文件由 AI 根據簡體中文版翻譯。最後更新：2026-04-24。如有差異，請以簡體中文版為準。**
+
+**遊戲內語言目前僅支援簡體中文。**
 
 快速上手，請訪問：[使用教程](https://m7a.top/#/assets/docs/Tutorial)
 
-遇到問題，請在提問前查看：[FAQ](https://m7a.top/#/assets/docs/FAQ)
+遇到問題，請先查看：[FAQ](https://m7a.top/#/assets/docs/FAQ)
 
 </div>
 
 ## 功能簡介
 
 - **日常**：清體力、每日實訓、領取獎勵、委託、鋤大地
-- **周常**：歷戰餘響、貨幣戰爭、模擬宇宙、忘卻之庭
-- **抽卡記錄導出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 標準、**自動對話**
-- 每日實訓等任務的完成情況支持**消息推送**
-- 任務刷新或體力恢復到指定值後**自動啟動**
-- 任務完成後**聲音提示、遊戲自動關閉或關機等**
+- **周常**：歷戰餘響、貨幣戰爭、差分宇宙、混沌回憶、虛構敘事、末日幻影
+- **雲·星穹鐵道**：支援背景執行、無視窗執行與 Docker 執行
+- **抽卡記錄導出**：支援 [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) 標準
+- **工具箱**：自動對話、解鎖幀率、兌換碼
+- 每日實訓等任務的完成情況支援 **訊息推送**
+- 任務刷新或體力恢復到指定值後支援 **自動啟動**
+- 任務完成後支援 **聲音提示、自動關閉遊戲或關機等**
 
-> 其中模擬宇宙調用的 [Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe) 項目，鋤大地調用的 [Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail) 項目
+詳情見圖形介面設定或 [配置文件](assets/config/config.example.yaml)｜QQ群 [點擊跳轉](https://qm.qq.com/q/C3IryUWCQw) TG群 [點擊跳轉](https://t.me/+ZgH5zpvFS8o0NGI1) 哔哩哔哩 [點擊跳轉](https://space.bilibili.com/3706960664857075)
 
-詳情見 [配置文件](assets/config/config.example.yaml) 或圖形界面設置 ｜QQ群 [點擊跳轉](https://qm.qq.com/q/C3IryUWCQw) TG群 [點擊跳轉](https://t.me/+ZgH5zpvFS8o0NGI1)
-
-## 界面展示
+## 介面展示
 
 ![README](assets/screenshot/README.png)
 
 ## 注意事項
 
-- 必須使用**PC端** `1920*1080` 分辨率窗口或全屏運行遊戲（不支援HDR）
-- 支援 **macOS** 和 **Linux**（僅陸服雲遊戲模式），也支援 [Docker 部署](https://m7a.top/#/assets/docs/Docker)
-- 模擬宇宙相關 [項目文檔](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/index.md)  [Q&A](https://github.com/Night-stars-1/Auto_Simulated_Universe_Docs/blob/docs/docs/guide/qa.md)
-- 需要後台運行或多顯示器可以嘗試 [遠程本地多用戶桌面](https://asu.stysqy.top/guide/bs.html)
-- 遇到錯誤請在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反饋，提問討論可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions) ，群聊隨緣看。
-
-- 歡迎通過 [PR](https://github.com/moesnow/March7thAssistant/pulls) 貢獻，提交前請先閱讀 [貢獻指南](CONTRIBUTING.md)
+- 遇到錯誤請在 [Issue](https://github.com/moesnow/March7thAssistant/issues) 反饋，提問討論可以在 [Discussions](https://github.com/moesnow/March7thAssistant/discussions)，群聊隨緣看。
+- 歡迎 [PR](https://github.com/moesnow/March7thAssistant/pulls)，提交前請先閱讀 [貢獻指南](CONTRIBUTING.md)。
 
 ## 下載安裝
 
-前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下載後解壓雙擊三月七圖標的 `March7th Launcher.exe` 打開圖形界面
+前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下載後解壓，雙擊三月七圖示的 `March7th Launcher.exe` 打開圖形介面。
 
-如果需要使用 **任務計劃程序** 定時運行或直接執行 **完整運行**，可以使用終端圖標的 `March7th Assistant.exe`
+## 原始碼執行
 
-檢測更新可以點擊圖形界面設置最底下的按鈕，或雙擊 `March7th Updater.exe`
+如果你是完全不懂的小白，請直接使用上面的方式下載安裝，可以不用往下看。
 
-### 命令列參數
+建議使用 Python 3.12 或更高版本。
 
-圖形界面 `March7th Launcher.exe` 支援命令列參數，啟動時即可自動執行指定任務：
+Windows 下如果透過終端啟動，建議使用系統管理員模式開啟 PowerShell、Windows Terminal 或 CMD；Windows 11 24H2 及以上也可以依照 [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/) 的方式執行。
 
-```bash
-# 查看說明
-March7th Launcher.exe -h
-
-# 列出所有可用任務
-March7th Launcher.exe -l
-
-# 啟動圖形界面並執行完整運行
-March7th Launcher.exe main
-
-# 啟動圖形界面並執行每日實訓
-March7th Launcher.exe daily
-
-# 任務正常完成後自動退出（需配合任務參數）
-March7th Launcher.exe main -e
-```
-
-<details>
-<summary>可用任務列表</summary>
-
-| 任務名稱 | 說明 |
-|---------|------|
-| main | 完整運行 |
-| daily | 每日實訓 |
-| power | 清體力 |
-| currencywars | 貨幣戰爭 |
-| currencywarsloop | 貨幣戰爭循環 |
-| fight | 鋤大地 |
-| universe | 模擬宇宙 |
-| forgottenhall | 混沌回憶 |
-| purefiction | 虛構敘事 |
-| apocalyptic | 末日幻影 |
-| redemption | 兌換碼 |
-| universe_gui | 模擬宇宙原生界面 |
-| fight_gui | 鋤大地原生界面 |
-| universe_update | 模擬宇宙更新 |
-| fight_update | 鋤大地更新 |
-| game | 啟動遊戲 |
-| notify | 測試消息推送 |
-
-</details>
-
-## 源碼運行
-
-如果你是完全不懂的小白，請通過上面的方式下載安裝，不用往下看了。
-
-推薦使用 Python 3.12 或更高版本。
 ```cmd
 # Installation (using venv is recommended)
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
@@ -139,7 +88,7 @@ git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 uv sync
 
-# 啟動圖形界面
+# 啟動圖形介面
 uv run python app.py
 
 # 查看命令列說明
@@ -155,34 +104,33 @@ uv run python main.py daily
 <details>
 <summary>開發相關</summary>
 
-獲取 crop 參數表示的裁剪坐標可以通過圖形界面設置內的捕獲截圖功能
-
-python main.py 後面支持參數 fight/universe/forgottenhall 等
+如需取得 crop 參數表示的裁切座標，可以使用小助手工具箱中的擷取截圖功能。
 
 </details>
 
 ---
 
-如果喜歡本項目，可以微信贊贊送作者一杯咖啡☕
+如果喜歡本專案，可以微信贊助請作者喝一杯咖啡 ☕
 
-您的支持就是作者開發和維護項目的動力🚀
+你的支持就是作者開發與維護專案的動力。
 
 ![sponsor](assets/app/images/sponsor.jpg)
 
 ---
 
-## 相關項目
+## 相關專案
 
-March7thAssistant 離不開以下開源項目的幫助：
+March7thAssistant 離不開以下開源專案與執行期依賴的幫助，感謝所有維護者與貢獻者：
 
-- 模擬宇宙自動化 [https://github.com/CHNZYX/Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe)
+- 模擬宇宙自動化 [https://github.com/CHNZYX/Auto_Simulated_Universe](https://github.com/CHNZYX/Auto_Simulated_Universe)：提供模擬宇宙相關能力
+- 鋤大地自動化 [https://github.com/linruowuyin/Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail)：提供鋤大地相關能力
+- OCR 文字識別 [https://github.com/RapidAI/RapidOCR](https://github.com/RapidAI/RapidOCR)：提供遊戲內文字識別能力
+- 圖形介面元件庫 [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)：提供主要介面元件與互動體驗
+- Mirror醬 [https://github.com/MirrorChyan/docs](https://github.com/MirrorChyan/docs)：提供更新檢查、下載分發與 CDN 加速相關能力
+- 圖像處理與自動化相關依賴 `OpenCV`、`PyAutoGUI` 等：提供截圖採集、圖像處理與基礎自動化能力
+- 推理加速相關依賴 `ONNX Runtime`、`OpenVINO`：為 OCR 和模型推理提供 CPU / GPU 加速支援
 
-- 鋤大地自動化 [https://github.com/linruowuyin/Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail)
-
-- OCR文字識別 [https://github.com/RapidAI/RapidOCR](https://github.com/RapidAI/RapidOCR)
-
-- 圖形界面組件庫 [https://github.com/zhiyiYo/PyQt-Fluent-Widgets](https://github.com/zhiyiYo/PyQt-Fluent-Widgets)
-
+此外，`requirements.txt` 中還包含大量底層依賴，這裡不一一列出；同樣感謝這些專案對本專案的支援。
 
 ## Contributors
 <a href="https://github.com/moesnow/March7thAssistant/graphs/contributors">
