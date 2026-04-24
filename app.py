@@ -235,15 +235,13 @@ if __name__ == "__main__":
         if ui_language == "auto":
             ui_language = detect_lang()
 
-            # 暂不支持
-            if ui_language == "ja_JP":
-                ui_language = "en_US"
-
         cfg.ui_language_now = ui_language
 
         # 创建翻译器实例，生命周期必须和 app 相同
         if ui_language == "zh_TW":
             translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
+        elif ui_language == "ja_JP":
+            translator = FluentTranslator(QLocale(QLocale.Language.Japanese, QLocale.Country.Japan))
         elif ui_language == "ko_KR":
             translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
         elif ui_language == "en_US":

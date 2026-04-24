@@ -71,7 +71,12 @@ th, td {
         from module.config import cfg
         tutorial_file = "./assets/docs/Tutorial.md"
         if hasattr(cfg, 'ui_language_now'):
-            if cfg.ui_language_now == "ko_KR":
+            if cfg.ui_language_now == "ja_JP":
+                import os
+                ja_file = "./assets/docs/Tutorial_ja.md"
+                if os.path.exists(ja_file):
+                    tutorial_file = ja_file
+            elif cfg.ui_language_now == "ko_KR":
                 import os
                 ko_file = "./assets/docs/Tutorial_ko.md"
                 if os.path.exists(ko_file):
@@ -107,7 +112,12 @@ a {
         # Load FAQ based on language setting
         faq_file = "./assets/docs/FAQ.md"
         if hasattr(cfg, 'ui_language_now'):
-            if cfg.ui_language_now == "ko_KR":
+            if cfg.ui_language_now == "ja_JP":
+                import os
+                ja_faq_file = "./assets/docs/FAQ_ja.md"
+                if os.path.exists(ja_faq_file):
+                    faq_file = ja_faq_file
+            elif cfg.ui_language_now == "ko_KR":
                 import os
                 ko_faq_file = "./assets/docs/FAQ_ko.md"
                 if os.path.exists(ko_faq_file):
@@ -145,7 +155,42 @@ th, td {
 </style>
 """
         # Daily training tasks table - language based
-        if hasattr(cfg, 'ui_language_now') and cfg.ui_language_now == "ko_KR":
+        if hasattr(cfg, 'ui_language_now') and cfg.ui_language_now == "ja_JP":
+            self.content = """
+| タスク内容 | 活躍度 | 対応状況 |
+| ----------------------------------- | -------- | -------- |
+| ゲームにログイン |   +100   |   ✅     |
+| 委託を1回実行または報酬を1回受け取る |   +100   |   ✅     |
+| 開拓力を累計120消費 |   +200   |   ✅     |
+| 敵を累計20体倒す |   +100   |   ✅     |
+| サポートキャラを使用して戦闘に1回勝利 |   +200   |   ✅     |
+| 「万能合成機」を1回使用 |   +100   |   ✅    |
+| 任意の遺物を1回強化 |   +100   |   ❌    |
+| 「差分宇宙」または「貨幣戦争」を1回完了 |   +500   |   ✅    |
+| デイリー任務を1個完了 |   +200  |   削除済み  |
+| 写真を1回撮る |   +100   |   削除済み  |
+| 「疑似花萼（金）」を1回完了 |   +100  |   削除済み  |
+| 「疑似花萼（赤）」を1回完了 |   +100  |   削除済み  |
+| 「凝滞虚影」を1回完了 |   +100  |   削除済み  |
+| 「侵蝕トンネル」を1回完了 |   +100  |   削除済み  |
+| 「歴戦余韻」を1回完了 |   +200  |   削除済み  |
+| 「忘却の庭」を1回完了 |   +200  |   削除済み  |
+| 「模擬宇宙」（任意世界）の1エリアをクリア |   +200  |   削除済み  |
+| 「模擬宇宙」を1回完了 |   +500  |   削除済み  |
+| 弱点撃破効果を累計5回発動 |   +100  |   削除済み  |
+| 1回の戦闘で3種類の属性弱点撃破を発動 |   +100  |   削除済み  |
+| 秘技を累計2回使用 |   +100  |   削除済み  |
+| 弱点で戦闘に入り3回勝利 |   +100  |   削除済み  |
+| 破壊可能オブジェクトを累計3個破壊 |   +200  |   削除済み  |
+| 必殺技でとどめを1回刺す |   +200  |   削除済み  |
+| 任意のキャラを1回レベルアップ |   +100  |   削除済み  |
+| 任意の光円錐を1回レベルアップ |   +100  |   削除済み  |
+| 任意の遺物を1個分解 |   +100  |   削除済み  |
+| 消耗品を1回合成 |   +100  |   削除済み  |
+| 素材を1回合成 |   +100  |   削除済み  |
+| 消耗品を1個使用 |   +100  |   削除済み  |
+        """
+        elif hasattr(cfg, 'ui_language_now') and cfg.ui_language_now == "ko_KR":
             self.content = """
 | 작업 설명                             | 활성도 | 지원 상태 |
 | ----------------------------------- | -------- | -------- |
@@ -268,7 +313,12 @@ a {
         # Load Changelog based on language setting
         changelog_file = "./assets/docs/Changelog.md"
         if hasattr(cfg, 'ui_language_now'):
-            if cfg.ui_language_now == "ko_KR":
+            if cfg.ui_language_now == "ja_JP":
+                import os
+                ja_changelog_file = "./assets/docs/Changelog_ja.md"
+                if os.path.exists(ja_changelog_file):
+                    changelog_file = ja_changelog_file
+            elif cfg.ui_language_now == "ko_KR":
                 import os
                 ko_changelog_file = "./assets/docs/Changelog_ko.md"
                 if os.path.exists(ko_changelog_file):

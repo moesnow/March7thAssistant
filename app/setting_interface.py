@@ -1506,9 +1506,9 @@ class SettingInterface(ScrollArea):
         self.languageCard = ComboBoxSettingCardLanguage(
             "ui_language",
             FIF.LANGUAGE,
-            '界面语言 / 界面語言 / 인터페이스 언어 / UI Language',
-            '切换后即时生效 / 切換後即時生效 / 변경 즉시 적용 / Takes effect immediately',
-            texts={'自动': 'auto', '简体中文': 'zh_CN', '繁體中文': 'zh_TW', '한국어': 'ko_KR', 'English': 'en_US'}
+            '界面语言 / 界面語言 / 日本語 / 인터페이스 언어 / UI Language',
+            '切换后即时生效 / 切換後即時生效 / 切り替え後すぐ適用 / 변경 즉시 적용 / Takes effect immediately',
+            texts={'自动': 'auto', '简体中文': 'zh_CN', '繁體中文': 'zh_TW', '日本語': 'ja_JP', '한국어': 'ko_KR', 'English': 'en_US'}
         )
 
     def __initLayout(self):

@@ -368,8 +368,6 @@ class MainWindow(MSFluentWindow):
             actual_lang = lang_code
             if actual_lang == 'auto':
                 actual_lang = detect_lang()
-                if actual_lang == 'ja_JP':
-                    actual_lang = 'en_US'
 
             cfg.ui_language_now = actual_lang
             load_language(actual_lang)
@@ -405,6 +403,8 @@ class MainWindow(MSFluentWindow):
                 pass
         if lang_code == 'zh_TW':
             self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
+        elif lang_code == 'ja_JP':
+            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Japanese, QLocale.Country.Japan))
         elif lang_code == 'ko_KR':
             self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
         elif lang_code == 'en_US':
