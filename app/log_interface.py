@@ -875,9 +875,19 @@ class LogInterface(ScrollArea):
             self.appendLog(f"========== 开始任务: {name} ==========\n")
 
             proc = QProcess(self)
-            proc.setProcessChannelMode(QProcess.MergedChannels)
-            proc.readyReadStandardOutput.connect(self._onReadyRead)
-            proc.readyReadStandardError.connect(self._onReadyRead)
+            # BetterGI（.NET 应用）启动时会调用 AllocateConsole 并将继承的标准
+            # 句柄包装为同步 FileStream，与 QProcess 创建的 overlapped I/O 管道
+            # 不兼容，导致 "Handle does not support synchronous operations" 错误。
+            # 仅对 BetterGI 将标准流重定向到 NUL 以避免创建管道。
+            if os.path.basename(program).lower() == 'bettergi.exe':
+                null = QProcess.nullDevice()
+                proc.setStandardInputFile(null)
+                proc.setStandardOutputFile(null)
+                proc.setStandardErrorFile(null)
+            else:
+                proc.setProcessChannelMode(QProcess.MergedChannels)
+                proc.readyReadStandardOutput.connect(self._onReadyRead)
+                proc.readyReadStandardError.connect(self._onReadyRead)
             proc.finished.connect(self._onProcessFinished)
             proc.errorOccurred.connect(self._onProcessError)
 
