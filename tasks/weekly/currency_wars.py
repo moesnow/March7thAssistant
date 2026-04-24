@@ -950,82 +950,100 @@ class CurrencyWars:
         for item in all_chars:
             log.debug(f"角色 {item['c'].name}: 费用={item['c'].money}, 站位={self.pos_name_localization.get(item['c'].pos, item['c'].pos)}, 区域={self.zone_name_localization[item['zone']]}, 索引={item['idx']}")
 
+        source_chars = all_chars
         forward_slots = len(self.forward_characters)
         backward_slots = len(self.backward_characters)
 
-        # 先从可前台的角色里选出最多 min(forward_slots, limit) 个：按 money 降序，金额相同 pos 优先级 forward > all，去重按名字
-        forward_candidates = [item for item in all_chars if item["c"].pos in ("forward", "all")]
-        forward_candidates.sort(key=lambda x: (-x["c"].money, 0 if x["c"].pos == "forward" else 1))
-        top_forward: list[dict] = []
-        top_forward_names: set[str] = set()
-        duplicates_forward: list[dict] = []
-        for item in forward_candidates:
+        def _get_effective_pos(item, forced_forward_names=None):
             name = item["c"].name
-            if name and name not in top_forward_names and len(top_forward) < min(forward_slots, limit):
-                top_forward.append(item)
-                top_forward_names.add(name)
-            elif name in top_forward_names:
-                duplicates_forward.append(item)
+            if forced_forward_names and name in forced_forward_names:
+                return "forward"
+            return item["c"].pos
 
-        # 剩余角色按 money 降序，金额相同 pos 优先级 forward > backward > all，同样去重，重复的放末尾
-        pos_priority = {"forward": 0, "backward": 1, "all": 2}
-        remaining_pool = [item for item in all_chars if item not in top_forward and item not in duplicates_forward]
-        remaining_pool.sort(key=lambda x: (-x["c"].money, pos_priority.get(x["c"].pos, 3)))
+        def _build_assignment(forced_forward_names=None):
+            forced_forward_names = forced_forward_names or set()
 
-        remaining_unique: list[dict] = []
-        remaining_names: set[str] = set()
-        duplicates_rest: list[dict] = []
-        for item in remaining_pool:
-            name = item["c"].name
-            if name and name not in top_forward_names and name not in remaining_names:
-                remaining_unique.append(item)
-                remaining_names.add(name)
-            else:
-                duplicates_rest.append(item)
+            forward_candidates = [item for item in source_chars if _get_effective_pos(item, forced_forward_names) in ("forward", "all")]
+            forward_candidates.sort(key=lambda x: (-x["c"].money, 0 if _get_effective_pos(x, forced_forward_names) == "forward" else 1))
+            top_forward: list[dict] = []
+            top_forward_names: set[str] = set()
+            duplicates_forward: list[dict] = []
+            for item in forward_candidates:
+                name = item["c"].name
+                if name and name not in top_forward_names and len(top_forward) < min(forward_slots, limit):
+                    top_forward.append(item)
+                    top_forward_names.add(name)
+                elif name in top_forward_names:
+                    duplicates_forward.append(item)
 
-        # 最终排序：前台唯一 -> 其余唯一 -> 所有重复
-        all_chars = top_forward + remaining_unique + duplicates_forward + duplicates_rest
+            pos_priority = {"forward": 0, "backward": 1, "all": 2}
+            remaining_pool = [item for item in source_chars if item not in top_forward and item not in duplicates_forward]
+            remaining_pool.sort(key=lambda x: (-x["c"].money, pos_priority.get(_get_effective_pos(x, forced_forward_names), 3)))
 
-        log.debug("按投资金额排序后的角色信息：")
-        for item in all_chars:
-            log.debug(f"角色 {item['c'].name}: 费用={item['c'].money}, 站位={self.pos_name_localization.get(item['c'].pos, item['c'].pos)}, 区域={self.zone_name_localization[item['zone']]}, 索引={item['idx']}")
+            remaining_unique: list[dict] = []
+            remaining_names: set[str] = set()
+            duplicates_rest: list[dict] = []
+            for item in remaining_pool:
+                name = item["c"].name
+                if name and name not in top_forward_names and name not in remaining_names:
+                    remaining_unique.append(item)
+                    remaining_names.add(name)
+                else:
+                    duplicates_rest.append(item)
 
-        # 按规则分配 forward/backward/prepare
-        used = 0  # forward + backward 已使用数量
+            ordered_chars = top_forward + remaining_unique + duplicates_forward + duplicates_rest
 
-        assigned = {"forward": [], "backward": [], "prepare": []}
-        used_names = set()  # forward/backward 已分配的名字
+            log.debug("按投资金额排序后的角色信息：")
+            for item in ordered_chars:
+                effective_pos = _get_effective_pos(item, forced_forward_names)
+                log.debug(f"角色 {item['c'].name}: 费用={item['c'].money}, 站位={self.pos_name_localization.get(effective_pos, effective_pos)}, 区域={self.zone_name_localization[item['zone']]}, 索引={item['idx']}")
 
-        for item in all_chars:
-            c = item["c"]
-            name = c.name
+            used = 0
+            assigned = {"forward": [], "backward": [], "prepare": []}
+            used_names = set()
 
-            # forward
-            if ((c.pos in ("forward", "all") or len(top_forward) < min(forward_slots, limit)) and
-                len(assigned["forward"]) < forward_slots and
-                used < limit and
-                    name not in used_names):
-                assigned["forward"].append(item)
-                used_names.add(name)
-                used += 1
-                continue
+            for item in ordered_chars:
+                name = item["c"].name
+                effective_pos = _get_effective_pos(item, forced_forward_names)
 
-            # backward
-            if (c.pos in ("backward", "all") and
-                len(assigned["backward"]) < backward_slots and
-                used < limit and
-                    name not in used_names):
-                assigned["backward"].append(item)
-                used_names.add(name)
-                used += 1
-                continue
+                if ((effective_pos in ("forward", "all") or len(top_forward) < min(forward_slots, limit)) and
+                    len(assigned["forward"]) < forward_slots and
+                    used < limit and
+                        name not in used_names):
+                    assigned["forward"].append(item)
+                    used_names.add(name)
+                    used += 1
+                    continue
 
-            assigned["prepare"].append(item)
+                if (effective_pos in ("backward", "all") and
+                    len(assigned["backward"]) < backward_slots and
+                    used < limit and
+                        name not in used_names):
+                    assigned["backward"].append(item)
+                    used_names.add(name)
+                    used += 1
+                    continue
 
-        log.debug(
-            f"计算区域结果: {self.zone_name_localization['forward']}={len(assigned['forward'])}, {self.zone_name_localization['backward']}={len(assigned['backward'])}, {self.zone_name_localization['prepare']}={len(assigned['prepare'])}, total used={used}/{limit}")
+                assigned["prepare"].append(item)
 
-        # 无效优化，前台角色放后台不会自动使用技能，保持队伍中有角色空缺即可
+            log.debug(
+                f"计算区域结果: {self.zone_name_localization['forward']}={len(assigned['forward'])}, {self.zone_name_localization['backward']}={len(assigned['backward'])}, {self.zone_name_localization['prepare']}={len(assigned['prepare'])}, total used={used}/{limit}")
+            return ordered_chars, assigned, used
+
+        all_chars, assigned, used = _build_assignment()
+
+        if cfg.currencywars_strategy == "aglaea":
+            deployed_names = {
+                item["c"].name
+                for zone in ("forward", "backward")
+                for item in assigned[zone]
+                if item["c"].name
+            }
+            if "风堇" in deployed_names and "藿藿" not in deployed_names:
+                # 阿格莱雅策略下检测到风堇已上场但藿藿未上场，强制将风堇视为前台角色后重新排序
+                all_chars, assigned, used = _build_assignment({"风堇"})
+
+        # 无效优化，前台角色放后台不会自动使用技能，保持队伍中有角色空缺即可（好像能凑羁绊 也未必是无效优化，但是我懒得改了^_^）
         # # 补充逻辑：如果 forward 已满且 used < limit，从 prepare 移动角色到 backward
         # if len(assigned['forward']) == min(forward_slots, limit) and used < limit:
         #     log.debug(f"前台已满({len(assigned['forward'])}个)，但总使用量({used})未达上限({limit})，尝试从备战席补充到后台")
@@ -1717,10 +1735,11 @@ class CurrencyWars:
                     money = "10"
                     self.has_aglaea = True
                 elif name == "风堇":
-                    money = "9"
+                    money = "8"
+                    cpos = "backward"
                     self.has_hyacine = True
                 elif name == "缇宝":
-                    money = "8"
+                    money = "9"
                     cpos = "backward"
                     self.has_tribbie = True
                 elif name == "藿藿":
@@ -1730,6 +1749,7 @@ class CurrencyWars:
                 elif name == "星期日":
                     self.has_sunday = True
                 elif remembrance_trailblazer_name and name == remembrance_trailblazer_name:
+                    cpos = "forward"
                     self.has_remembrance_trailblazer = True
                 elif name == "符玄":
                     self.has_fuxuan = True
@@ -1737,6 +1757,7 @@ class CurrencyWars:
                     money = "2"
                     self.has_silverwolf = True
                 elif name == "花火":
+                    cpos = "all"
                     self.has_sparkle = True
                 elif name == "瓦尔特":
                     self.has_welt = True
