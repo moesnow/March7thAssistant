@@ -1770,6 +1770,9 @@ class CurrencyWars:
 
             self.click_origin()
             return character
+        else:
+            # 部分用户开拓者名字非中英语，导致 OCR 失败，但是角色信息界面仍然打开，需要点击空白处关闭界面否则特定情况下会影响后续操作（比如点进开拓者角色界面）
+            self.click_origin()
         return CurrencyWarsCharacter(None, None)
 
     def click_origin(self):
