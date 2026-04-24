@@ -1333,11 +1333,10 @@ class CurrencyWars:
         log.info(f"已移动角色: {list2[i2].name}({self.zone_name_localization[z1]}({i1})) <-> {list1[i1].name}({self.zone_name_localization[z2]}({i2}))")
         self._log_character_status()
 
-        if cfg.currencywars_strategy == "aglaea" and (list2[i2].name in ("星期日", "花火") or list1[i1].name in ("星期日", "花火")):
+        # 盛会之星羁绊角色
+        star_characters = {"星期日", "花火", "大丽花", "知更鸟", "黑天鹅"}
+        if list2[i2].name in star_characters or list1[i1].name in star_characters:
             time.sleep(4)  # 等待选择框出现
-        else:
-            # 检查可能弹出的特殊选择框
-            time.sleep(1)
         self.check_festival_star_popup()
         return True
 
