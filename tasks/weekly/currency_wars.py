@@ -30,6 +30,7 @@ class CurrencyWars:
         self.result: Optional[bool] = None  # 对局结果
         self.need_exit: bool = False  # 是否需要退出
         self.need_restart: bool = False  # 是否重开
+        self._stage_unchanged_count: int = 0  # 连续未发生阶段变化计数
         self.forward_characters: list[CurrencyWarsCharacter] = []  # 存储前台角色
         self.backward_characters: list[CurrencyWarsCharacter] = []  # 存储后台角色
         self.prepare_characters: list[CurrencyWarsCharacter] = []  # 存储备战席角色
@@ -333,6 +334,7 @@ class CurrencyWars:
         self.current_level = 0  # 重置当前可部署角色等级
         self.current_stage = "0-0"  # 重置当前关卡阶段
         self.need_exit = False  # 是否需要退出
+        self._stage_unchanged_count = 0  # 重置阶段未变化计数
         self.need_restart = False  # 是否需要重开
         self.forward_characters = []  # 重置前台角色
         self.backward_characters = []  # 重置后台角色
@@ -406,11 +408,11 @@ class CurrencyWars:
                 if auto.click_element('收起', 'text', None, 1, crop=(1593.0 / 1920, 959.0 / 1080, 60.0 / 1920, 43.0 / 1080)):
                     time.sleep(2)
                 self.check_festival_star_popup()
+                self.identify_current_stage()
                 if self.need_exit:
                     self.give_up_and_settle()
                     self.need_exit = False
                     return
-                self.identify_current_stage()
                 self.collect_reward()
                 self.check_box()
                 self.check_character_status()
@@ -806,9 +808,16 @@ class CurrencyWars:
         """
         放弃并结算：按ESC键并点击放弃并结算按钮
         """
+        log.info("尝试放弃并结算当前对局")
         auto.press_key('esc')
         time.sleep(2)
-        auto.click_element('放弃并结算', 'text', include=True)
+        if not auto.click_element('放弃并结算', 'text', include=True):
+            log.warning("放弃并结算失败，等待一段时间后重试")
+            time.sleep(5)
+            auto.press_key('esc')
+            if not auto.click_element('放弃并结算', 'text', include=True):
+                log.error("放弃并结算失败，请检查游戏状态")
+                raise RuntimeError("放弃并结算失败")
 
     def sell_characters(self):
         """
@@ -1374,7 +1383,15 @@ class CurrencyWars:
         stage_text = auto.get_single_line_text(crop=stage_crop)
         if stage_text and re.match(r"^\d-\d$", stage_text):
             log.hr(f"当前阶段：{stage_text}", 2)
+            if stage_text == self.current_stage:
+                self._stage_unchanged_count += 1
+                log.debug(f"当前阶段连续未变化次数：{self._stage_unchanged_count}")
+            else:
+                self._stage_unchanged_count = 0
             self.current_stage = stage_text
+            if self._stage_unchanged_count >= 5:
+                log.warning("检测到当前阶段连续5次未发生变化，判定为卡死")
+                self.need_exit = True
         else:
             log.warning("未能识别当前货币战争阶段")
 
