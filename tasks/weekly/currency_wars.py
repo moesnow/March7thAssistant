@@ -1615,8 +1615,11 @@ class CurrencyWars:
             time.sleep(4)
 
             success = False
-            if auto.find_element(('武装箱', '星徽秘典'), "text", None, crop=(1012.0 / 1920, 27.0 / 1080, 173.0 / 1920, 56.0 / 1080), include=True):
-                log.info(f"检测到{auto.matched_text}选项，尝试点击")
+            if auto.find_element(('武装箱', '星徽秘典', '阿哈'), "text", None, crop=(1012.0 / 1920, 27.0 / 1080, 173.0 / 1920, 56.0 / 1080), include=True):
+                if auto.matched_text == "阿哈":
+                    log.info(f"检测到为「阿哈」选择装备，尝试点击")
+                else:
+                    log.info(f"检测到{auto.matched_text}，尝试点击")
                 success = True
                 if cfg.currencywars_strategy == "aglaea" and self.shoe_count < 4 and auto.click_element("轮滑鞋", "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080), include=True):
                     log.info("检测到轮滑鞋选项，尝试点击")
