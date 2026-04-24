@@ -76,6 +76,27 @@ git pull
 git submodule update --init --recursive
 ```
 
+如果使用 `uv`，推荐直接使用项目自带的 `pyproject.toml` 工作流：
+
+```cmd
+# Installation (using uv)
+git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
+cd March7thAssistant
+uv sync
+
+# 启动图形界面
+uv run python app.py
+
+# 查看命令行帮助
+uv run python main.py -h
+
+# 执行完整运行
+uv run python main.py
+
+# 执行每日实训
+uv run python main.py daily
+```
+
 <details>
 <summary>开发相关</summary>
 

@@ -132,6 +132,27 @@ git pull
 git submodule update --init --recursive
 ```
 
+`uv` を使う場合は、プロジェクト内の `pyproject.toml` ワークフローをそのまま使うことを推奨します：
+
+```cmd
+# インストール (uv を使用)
+git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
+cd March7thAssistant
+uv sync
+
+# GUI を起動
+uv run python app.py
+
+# CLI ヘルプを表示
+uv run python main.py -h
+
+# 全タスクを実行
+uv run python main.py
+
+# デイリー実訓を実行
+uv run python main.py daily
+```
+
 <details>
 <summary>開発関連</summary>
 
