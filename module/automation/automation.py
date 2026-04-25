@@ -686,7 +686,7 @@ class Automation(metaclass=SingletonMeta):
         参数:
         - coordinates: 元素的坐标。
         - offset: 坐标的偏移量。
-        - action: 执行的动作，包括'click', 'down', 'move'。
+        - action: 执行的动作，包括'click', 'down', 'up', 'move'。
 
         返回:
         - 如果操作成功，则返回True；否则返回False。
@@ -696,6 +696,7 @@ class Automation(metaclass=SingletonMeta):
         action_map = {
             "click": self.mouse_click,
             "down": self.mouse_down,
+            "up": self.mouse_up,
             "move": self.mouse_move,
         }
 

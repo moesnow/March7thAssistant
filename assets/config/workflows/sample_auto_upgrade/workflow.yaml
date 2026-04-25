@@ -1,0 +1,74 @@
+name: 示例流程——自动升级角色和强化光锥
+steps:
+- type: click_text
+  text: 升级; 强化
+  template_path: ''
+  threshold: 0.9
+  crop: (1490 / 1920, 958 / 1080, 391 / 1920, 65 / 1080)
+  include: false
+  max_retries: 1
+  seconds: 1.0
+  count: 1
+  condition_type: text_exists
+  max_iterations: 20
+  children: []
+- type: for
+  text: ''
+  template_path: ''
+  threshold: 0.9
+  crop: ''
+  include: true
+  max_retries: 1
+  seconds: 1.0
+  count: 0
+  condition_type: text_exists
+  max_iterations: 20
+  children:
+  - type: click_text
+    text: 自动置入
+    template_path: ''
+    threshold: 0.9
+    crop: (1482 / 1920, 587 / 1080, 403 / 1920, 176 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
+  - type: click_text
+    text: 升级; 晋阶; 使用通用材料补全
+    template_path: ''
+    threshold: 0.9
+    crop: (1489 / 1920, 962 / 1080, 392 / 1920, 57 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
+  - type: click_text
+    text: 点击空白处关闭
+    template_path: ''
+    threshold: 0.9
+    crop: (860 / 1920, 772 / 1080, 200 / 1920, 78 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
+  - type: click_text
+    text: 确认
+    template_path: ''
+    threshold: 0.9
+    crop: (987 / 1920, 682 / 1080, 362 / 1920, 60 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []

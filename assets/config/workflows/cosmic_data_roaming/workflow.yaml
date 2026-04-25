@@ -1,0 +1,119 @@
+name: 示例流程——银河信号漫游（半自动）
+steps:
+- type: for
+  text: ''
+  audio_path: ./assets/audio/pa.mp3
+  template_path: ''
+  threshold: 0.9
+  crop: ''
+  include: false
+  max_retries: 1
+  seconds: 1.0
+  count: 0
+  condition_type: text_exists
+  max_iterations: 20
+  children:
+  - type: click_text
+    text: 更换
+    audio_path: ./assets/audio/pa.mp3
+    template_path: ''
+    threshold: 0.9
+    crop: (1026 / 1920, 826 / 1080, 325 / 1920, 63 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
+  - type: click_text
+    text: 进入关卡
+    audio_path: ./assets/audio/pa.mp3
+    template_path: ''
+    threshold: 0.9
+    crop: (978 / 1920, 868 / 1080, 363 / 1920, 64 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
+  - type: click_text
+    text: 确认; 返回; 进入关卡; 点击加速; 点击空白处继续
+    audio_path: ./assets/audio/pa.mp3
+    template_path: ''
+    threshold: 0.9
+    crop: (862 / 1920, 814 / 1080, 197 / 1920, 130 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
+  - type: click_text
+    text: 解锁
+    audio_path: ./assets/audio/pa.mp3
+    template_path: ''
+    threshold: 0.9
+    crop: (1471 / 1920, 854 / 1080, 157 / 1920, 50 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
+  - type: click_image
+    text: ''
+    audio_path: ./assets/audio/pa.mp3
+    template_path: templates/receive.png
+    threshold: 0.9
+    crop: (1342 / 1920, 416 / 1080, 216 / 1920, 411 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
+  - type: if
+    text: 前往编队; 开始连线
+    audio_path: ./assets/audio/pa.mp3
+    template_path: ''
+    threshold: 0.9
+    crop: (766 / 1920, 862 / 1080, 387 / 1920, 119 / 1080)
+    include: false
+    max_retries: 1
+    seconds: 1.0
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children:
+    - type: play_audio
+      text: ''
+      audio_path: ./assets/audio/pa.mp3
+      template_path: ''
+      threshold: 0.9
+      crop: ''
+      include: false
+      max_retries: 1
+      seconds: 1.0
+      count: 1
+      condition_type: text_exists
+      max_iterations: 20
+      children: []
+  - type: wait
+    text: ''
+    audio_path: ./assets/audio/pa.mp3
+    template_path: ''
+    threshold: 0.9
+    crop: ''
+    include: false
+    max_retries: 1
+    seconds: 0.5
+    count: 1
+    condition_type: text_exists
+    max_iterations: 20
+    children: []
