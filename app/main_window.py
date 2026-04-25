@@ -12,6 +12,7 @@ from .help_interface import HelpInterface
 # from .changelog_interface import ChangelogInterface
 from .warp_interface import WarpInterface
 from .tools_interface import ToolsInterface
+from .workflow_interface import WorkflowInterface
 from .setting_interface import SettingInterface
 from .log_interface import LogInterface
 from .common.signal_bus import signalBus
@@ -175,6 +176,7 @@ class MainWindow(MSFluentWindow):
         # self.changelogInterface = ChangelogInterface(self)
         self.warpInterface = WarpInterface(self)
         self.toolsInterface = ToolsInterface(self)
+        self.workflowInterface = WorkflowInterface(self)
         self.logInterface = LogInterface(self)
         self.settingInterface = SettingInterface(self)
 
@@ -193,6 +195,7 @@ class MainWindow(MSFluentWindow):
         # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
         self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
         self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'))
+        self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'))
 
         self.navigationInterface.addWidget(
             'startGameButton',

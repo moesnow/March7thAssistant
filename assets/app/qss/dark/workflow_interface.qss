@@ -1,0 +1,42 @@
+CardWidget, #view {
+    background-color: transparent;
+}
+
+QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+QLabel#workflowLabel {
+    font: 33px 'Microsoft YaHei';
+    font-weight: 300;
+    background-color: transparent;
+    color: white;
+}
+
+QLabel#workflowSummaryTitle {
+    font: 22px 'Microsoft YaHei';
+    font-weight: 600;
+    background-color: transparent;
+    color: white;
+}
+
+QTreeWidget {
+    background-color: rgba(39, 39, 39, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+QTreeWidget::item {
+    height: 34px;
+}
+
+QHeaderView::section {
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px 8px;
+    font: 13px 'Microsoft YaHei';
+    color: rgba(255, 255, 255, 0.78);
+}

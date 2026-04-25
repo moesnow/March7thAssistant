@@ -1,5 +1,7 @@
 from module.ocr import ocr
-from PySide6.QtWidgets import QMainWindow, QLabel, QPushButton, QHBoxLayout, QWidget, QMessageBox, QScrollArea, QApplication, QStyle, QFileDialog, QInputDialog
+from module.workflow import build_crop_expression, generate_capture_path, to_workflow_relative_path
+from module.localization import tr
+from PySide6.QtWidgets import QMainWindow, QLabel, QHBoxLayout, QWidget, QScrollArea, QApplication, QStyle, QFileDialog
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPixmap, QPainter, QPen, QImage, QColor
 from PIL import Image
@@ -11,9 +13,39 @@ import sys
 import atexit
 import re
 
+from qfluentwidgets import LineEdit, MessageBox, MessageBoxBase, PushButton, SubtitleLabel
+
+
+def _show_msg(parent, title: str, content: str):
+    """显示 Fluent 风格消息框（仅确定）"""
+    w = MessageBox(title, content, parent)
+    w.hideCancelButton()
+    w.yesButton.setText("确定")
+    w.exec()
+
+
+class _InputDialog(MessageBoxBase):
+    """带输入框的 Fluent 风格对话框"""
+
+    def __init__(self, title: str, placeholder: str = "", parent=None):
+        super().__init__(parent)
+        self.titleLabel = SubtitleLabel(title, self.widget)
+        self.inputEdit = LineEdit(self.widget)
+        self.inputEdit.setPlaceholderText(placeholder)
+        self.inputEdit.setClearButtonEnabled(True)
+        self.inputEdit.returnPressed.connect(self.yesButton.click)
+        self.viewLayout.addWidget(self.titleLabel)
+        self.viewLayout.addWidget(self.inputEdit)
+        self.widget.setMinimumWidth(420)
+        self.yesButton.setText("确定")
+        self.cancelButton.setText("取消")
+
+    def validate(self) -> bool:
+        return bool(self.inputEdit.text().strip())
+
 
 class ScreenshotApp(QMainWindow):
-    def __init__(self, screenshot: Image.Image):
+    def __init__(self, screenshot: Image.Image, window_options=None):
         """
         初始化应用界面和功能。
         参数:
@@ -23,6 +55,7 @@ class ScreenshotApp(QMainWindow):
             from module.logger import log
             super().__init__()
             self.screenshot = screenshot
+            self.window_options = window_options or {}
             log.debug(f"截图尺寸: {screenshot.size}")
             atexit.register(ocr.exit_ocr)
 
@@ -124,19 +157,20 @@ class ScreenshotApp(QMainWindow):
 
             # 创建按钮
             buttons_config = [
-                ("显示坐标", self.show_coordinate_result),
-                ("复制坐标到剪贴板", self.copy_coordinate_result_to_clipboard),
-                ("输入坐标绘制区域", self.draw_crop_rect),
-                ("保存完整截图", self.save_full_screenshot),
-                ("保存选取截图", self.save_selection_screenshot),
-                ("模板匹配", self.match_template),
-                ("OCR识别选取区域", self.show_ocr_selection),
-                ("识别随意门", self.detect_random_door),
-                ("识别事件", self.detect_events)
+                (tr("显示坐标"), self.show_coordinate_result),
+                (tr("复制坐标"), self.copy_coordinate_result_to_clipboard),
+                (tr("输入坐标"), self.draw_crop_rect),
+                (tr("模板匹配"), self.match_template),
+                (tr("OCR识别"), self.show_ocr_selection),
+                (tr("识别随意门"), self.detect_random_door),
+                (tr("识别事件"), self.detect_events),
+                (tr("保存完整截图"), self.save_full_screenshot),
+                (tr("保存选取截图"), self.save_selection_screenshot),
+                *self._build_workflow_capture_buttons()
             ]
 
             for text, slot in buttons_config:
-                btn = QPushButton(text)
+                btn = PushButton(text)
                 btn.clicked.connect(slot)
                 button_layout.addWidget(btn)
 
@@ -197,6 +231,14 @@ class ScreenshotApp(QMainWindow):
             import traceback
             log.error(traceback.format_exc())
             raise
+
+    def _build_workflow_capture_buttons(self):
+        workflow_capture_kind = self.window_options.get("workflow_capture_kind")
+        if workflow_capture_kind == "template":
+            return [(tr("⭐保存为流程图像模板⭐"), self.save_workflow_template)]
+        if workflow_capture_kind == "ocr":
+            return [(tr("⭐保存为流程 OCR 区域⭐"), self.save_workflow_ocr_region)]
+        return []
 
     def remove_topmost(self):
         """取消保持最前面状态"""
@@ -339,9 +381,9 @@ class ScreenshotApp(QMainWindow):
         if selection_info:
             x, y, width, height = selection_info
             result = f"X: {x}, Y: {y}, Width: {width}, Height: {height}"
-            QMessageBox.information(self, "结果", result)
+            _show_msg(self, "结果", result)
         else:
-            QMessageBox.information(self, "结果", "还没有选择区域呢")
+            _show_msg(self, "结果", "还没有选择区域呢")
 
     def copy_coordinate_result_to_clipboard(self):
         """
@@ -352,9 +394,9 @@ class ScreenshotApp(QMainWindow):
             x, y, width, height = selection_info
             text = f"({x} / {self.screenshot.width}, {y} / {self.screenshot.height}, {width} / {self.screenshot.width}, {height} / {self.screenshot.height})"
             pyperclip.copy(text)
-            QMessageBox.information(self, "结果", f"{text}\n复制到剪贴板成功")
+            _show_msg(self, "结果", f"{text}\n复制到剪贴板成功")
         else:
-            QMessageBox.information(self, "结果", "还没有选择区域呢")
+            _show_msg(self, "结果", "还没有选择区域呢")
 
     def _parse_crop_value(self, crop_text):
         """
@@ -411,19 +453,19 @@ class ScreenshotApp(QMainWindow):
         """
         输入 crop 值并在画面中绘制对应区域。
         """
-        crop_text, ok = QInputDialog.getText(
-            self,
+        _dialog = _InputDialog(
             "输入 Crop 值",
-            "请输入 crop 值：\n支持 (x / 宽, y / 高, width / 宽, height / 高) 或 x, y, width, height"
+            "支持 (x / 宽, y / 高, width / 宽, height / 高) 或 x, y, width, height",
+            parent=self
         )
-
-        if not ok:
+        if not _dialog.exec():
             return
+        crop_text = _dialog.inputEdit.text()
 
         try:
             x, y, width, height = self._parse_crop_value(crop_text)
         except ValueError as exc:
-            QMessageBox.warning(self, "输入 Crop 值", str(exc))
+            _show_msg(self, "输入 Crop 值", str(exc))
             return
 
         logical_x = int(x / self.dpi_scale)
@@ -433,7 +475,7 @@ class ScreenshotApp(QMainWindow):
         self.crop_rect = (logical_x, logical_y, logical_w, logical_h)
         self.update_canvas()
 
-        QMessageBox.information(
+        _show_msg(
             self,
             "输入 Crop 值",
             f"已绘制区域: X={x}, Y={y}, Width={width}, Height={height}\n（已使用蓝色矩形标记）"
@@ -469,7 +511,43 @@ class ScreenshotApp(QMainWindow):
             cropped_image.save(screenshot_path)
             self._start_file(os.path.dirname(screenshot_path))
         else:
-            QMessageBox.information(self, "保存选区截图", "还没有选择区域呢")
+            _show_msg(self, "保存选区截图", "还没有选择区域呢")
+
+    def save_workflow_template(self):
+        self._save_workflow_capture("template")
+
+    def save_workflow_ocr_region(self):
+        self._save_workflow_capture("ocr")
+
+    def _save_workflow_capture(self, kind: str):
+        selection_info = self.get_selection_info()
+        if not selection_info:
+            _show_msg(self, tr("保存流程素材"), tr("请先框选一个区域"))
+            return
+
+        x, y, width, height = selection_info
+        cropped_image = self.screenshot.crop((x, y, x + width, y + height))
+        workflow_name = self.window_options.get("workflow_name")
+        file_path = generate_capture_path(kind, workflow_name)
+        cropped_image.save(file_path)
+
+        relative_path = to_workflow_relative_path(file_path, workflow_name)
+        crop_expression = build_crop_expression(x, y, width, height, self.screenshot.width, self.screenshot.height)
+
+        if kind == "template":
+            pyperclip.copy(relative_path)
+            clipboard_hint = tr("模板路径")
+            title = tr("流程图像模板")
+        else:
+            pyperclip.copy(crop_expression)
+            clipboard_hint = tr("Crop 表达式")
+            title = tr("流程 OCR 区域")
+
+        _show_msg(
+            self,
+            title,
+            tr("已保存到") + f"：{relative_path}\nCrop：{crop_expression}\n" + tr("已复制到剪贴板") + f"：{clipboard_hint}"
+        )
 
     def format_ocr_result(self, result):
         """
@@ -507,9 +585,9 @@ class ScreenshotApp(QMainWindow):
             # 如果识别出结果，处理并显示结果
             text = self.format_ocr_result(result)  # 格式化OCR识别的结果
             pyperclip.copy(text)  # 将结果复制到剪贴板
-            QMessageBox.information(self, "OCR识别结果", f"{text}\n\n复制到剪贴板成功\n识别耗时: {end_time - start_time:.2f} 秒")
+            _show_msg(self, "OCR识别结果", f"{text}\n\n复制到剪贴板成功\n识别耗时: {end_time - start_time:.2f} 秒")
         else:
-            QMessageBox.information(self, "OCR识别结果", "没有识别出任何内容")
+            _show_msg(self, "OCR识别结果", "没有识别出任何内容")
         # else:
         #     QMessageBox.information(self, "OCR识别结果", "还没有选择区域呢")
 
@@ -532,7 +610,7 @@ class ScreenshotApp(QMainWindow):
         template_bgr = cv2.imdecode(template_data, cv2.IMREAD_COLOR)
 
         if template_bgr is None:
-            QMessageBox.warning(self, "模板匹配", "模板图片加载失败")
+            _show_msg(self, "模板匹配", "模板图片加载失败")
             return
 
         screenshot_bgr = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
@@ -540,7 +618,7 @@ class ScreenshotApp(QMainWindow):
         screen_h, screen_w = screenshot_bgr.shape[:2]
         template_h, template_w = template_bgr.shape[:2]
         if template_w > screen_w or template_h > screen_h:
-            QMessageBox.warning(self, "模板匹配", "模板尺寸大于截图尺寸，无法匹配")
+            _show_msg(self, "模板匹配", "模板尺寸大于截图尺寸，无法匹配")
             return
 
         result = cv2.matchTemplate(screenshot_bgr, template_bgr, cv2.TM_CCOEFF_NORMED)
@@ -554,7 +632,7 @@ class ScreenshotApp(QMainWindow):
         self.template_match_rect = (logical_x, logical_y, logical_w, logical_h)
         self.update_canvas()
 
-        QMessageBox.information(
+        _show_msg(
             self,
             "模板匹配结果",
             f"最高置信度: {max_val:.4f}\n"
@@ -596,13 +674,13 @@ class ScreenshotApp(QMainWindow):
             threshold=0.01
         )
         if top_left is None:
-            QMessageBox.information(self, "识别随意门", "没有检测到随意门")
+            _show_msg(self, "识别随意门", "没有检测到随意门")
             return
         logical_x, logical_y, logical_w, logical_h = self._yolo_box_to_logical(top_left, bottom_right)
         self.door_rect = (logical_x, logical_y, logical_w, logical_h)
         self.update_canvas()
 
-        QMessageBox.information(
+        _show_msg(
             self,
             "识别随意门",
             f"检测区域: X={int(top_left[0])}, Y={int(top_left[1])}, "
@@ -617,14 +695,14 @@ class ScreenshotApp(QMainWindow):
             threshold=0.2
         )
         if not results:
-            QMessageBox.information(self, "识别事件", "没有检测到事件")
+            _show_msg(self, "识别事件", "没有检测到事件")
             return
         self.event_rects = []
         for top_left, bottom_right in results:
             self.event_rects.append(self._yolo_box_to_logical(top_left, bottom_right))
         self.update_canvas()
 
-        QMessageBox.information(
+        _show_msg(
             self,
             "识别事件",
             f"检测到 {len(results)} 个事件\n（已使用橙色矩形标记）"

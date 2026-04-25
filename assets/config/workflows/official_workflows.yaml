@@ -1,0 +1,4 @@
+allowed_workflows:
+  - sample_auto_upgrade
+  - cosmic_data_roaming
+default_workflow: cosmic_data_roaming

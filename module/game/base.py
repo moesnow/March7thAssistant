@@ -87,6 +87,13 @@ class GameControllerBase:
             self.log_error(f"激活窗口时发生错误：{e}")
             return False
 
+    def is_game_running(self) -> bool:
+        """判断游戏窗口是否已经可用。"""
+        try:
+            return bool(self.get_window_handle())
+        except Exception:
+            return False
+
     def get_resolution(self) -> Optional[Tuple[int, int]]:
         """检查游戏窗口的分辨率"""
         try:
