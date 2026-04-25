@@ -1,5 +1,9 @@
 # 更新日志
 
+## v2026.4.28-beta
+- 新增 “流程编排” 功能，支持创建简单的自动化流程
+- 修复定时任务中的外部程序对 BetterGI 的支持 [#1011](https://github.com/moesnow/March7thAssistant/pull/1011) @Daydreamer114
+
 ## v2026.4.27
 - 支持 4.2 新角色和副本
 - 针对A840对阿格莱雅策略进行了优化
