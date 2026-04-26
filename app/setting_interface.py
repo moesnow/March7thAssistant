@@ -577,12 +577,12 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'}
         )
-        self.weeklyDivergentLevelCard = RangeSettingCard1(
+        self.weeklyDivergentLevelCard = ComboBoxSettingCard2(
             "weekly_divergent_level",
-            [1, 6],
             FIF.HISTORY,
-            tr("难度等级（难度6对应常规演算星阶模式）"),
+            tr("难度等级"),
             "",
+            texts={f"{tr('难度')} Ⅰ": 1, f"{tr('难度')} Ⅱ": 2, f"{tr('难度')} Ⅲ": 3, f"{tr('难度')} Ⅳ": 4, f"{tr('难度')} Ⅴ": 5, f"{tr('难度')} Ⅹ{tr('（星阶模式）')}": 6}
         )
         self.weeklyDivergentBonusEnableCard = SwitchSettingCard1(
             FIF.IOT,

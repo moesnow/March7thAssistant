@@ -1246,5 +1246,7 @@
     "请输入消息内容": "Please enter message content",
     "请输入按键名": "Please enter key name",
     "ZIP 文件 (*.zip)": "ZIP Files (*.zip)",
-    "导出成功": "Export Successful"
+    "导出成功": "Export Successful",
+    "难度": "Difficulty",
+    "（星阶模式）": " (Star-Rank Mode)"
 }
