@@ -1248,5 +1248,14 @@
     "ZIP 文件 (*.zip)": "ZIP Files (*.zip)",
     "导出成功": "Export Successful",
     "难度": "Difficulty",
-    "（星阶模式）": " (Star-Rank Mode)"
+    "（星阶模式）": " (Star-Rank Mode)",
+    "显示坐标": "Show Coordinates",
+    "复制坐标": "Copy Coordinates",
+    "输入坐标": "Enter Coordinates",
+    "模板匹配": "Template Matching",
+    "OCR识别": "OCR Recognition",
+    "识别随意门": "Detect Portal",
+    "识别事件": "Detect Event",
+    "保存完整截图": "Save Full Screenshot",
+    "保存选取截图": "Save Selected Screenshot"
 }
