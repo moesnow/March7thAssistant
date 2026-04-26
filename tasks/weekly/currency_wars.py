@@ -487,7 +487,7 @@ class CurrencyWars:
                 self.sell_characters()
                 if not (cfg.currencywars_strategy == "aglaea" and not self.allow_equip_weapons):
                     self.equip_weapons()
-                auto.click_element('出战', 'text', None, 10, crop=(1744.0 / 1920, 737.0 / 1080, 165.0 / 1920, 71.0 / 1080))
+                auto.click_element(('出战', '跳过'), 'text', None, 10, crop=(1740 / 1920, 709 / 1080, 177 / 1920, 80 / 1080), include=True)
                 time.sleep(2)
                 if auto.click_element("本局不再提示", "text", crop=(905 / 1920, 571 / 1080, 171 / 1920, 50 / 1080)):
                     time.sleep(1)
