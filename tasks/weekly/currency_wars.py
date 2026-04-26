@@ -1333,8 +1333,8 @@ class CurrencyWars:
         log.info(f"已移动角色: {list2[i2].name}({self.zone_name_localization[z1]}({i1})) <-> {list1[i1].name}({self.zone_name_localization[z2]}({i2}))")
         self._log_character_status()
 
-        # 盛会之星羁绊角色
-        star_characters = {"星期日", "花火", "大丽花", "知更鸟", "黑天鹅"}
+        # 特殊会弹窗角色
+        star_characters = {"星期日", "花火", "大丽花", "知更鸟", "黑天鹅", "银狼LV.999"}
         if list2[i2].name in star_characters or list1[i1].name in star_characters:
             time.sleep(4)  # 等待选择框出现
         self.check_festival_star_popup()
@@ -1372,6 +1372,13 @@ class CurrencyWars:
                             time.sleep(0.5)
                             break
                 auto.click_element("确认选择", "text", crop=(1329.0 / 1920, 572.0 / 1080, 332.0 / 1920, 55.0 / 1080))
+                time.sleep(0.5)
+            elif "我来当策划" in result:
+                log.info("检测到我来当策划")
+                choose_crop = (564 / 1920, 191 / 1080, 449 / 1920, 225 / 1080)
+                auto.click_element(choose_crop, "crop")
+                time.sleep(0.5)
+                auto.click_element("确认选择", "text", crop=(1424 / 1920, 573 / 1080, 134 / 1920, 51 / 1080))
                 time.sleep(0.5)
 
     def identify_current_stage(self):
