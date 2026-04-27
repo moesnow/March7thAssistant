@@ -1,6 +1,6 @@
 # 更新日志
 
-## v2026.4.29
+## v2026.4.30
 - 新增 “流程编排” 功能，支持创建简单的自动化流程
 - 修复定时任务中的外部程序对 BetterGI 的支持 [#1011](https://github.com/moesnow/March7thAssistant/pull/1011) @Daydreamer114
 - 优化了云游戏的截图性能，提高了差分宇宙任务的稳定性
