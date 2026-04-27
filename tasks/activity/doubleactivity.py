@@ -31,6 +31,9 @@ class DoubleActivity(ActivityTemplate):
         )
         
         Power.process(instance_type, instance_name, planned_attempts = reward_count)
+        
+        # 暂时先return True保证不会无限循环，还需要分析如何处理可能的错误
+        return True
 
     def run(self):
         reward_count = self._get_reward_count()
