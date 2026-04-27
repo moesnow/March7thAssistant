@@ -63,7 +63,7 @@ class Automation(metaclass=SingletonMeta):
             (size[1]) / height,
         )
 
-    def take_screenshot(self, crop=(0, 0, 1, 1), use_background_screenshot=None):
+    def take_screenshot(self, crop=(0, 0, 1, 1), use_background_screenshot=None, prefer_frame_screenshot=True):
         """
         捕获游戏窗口的截图。
         :param crop: 截图的裁剪区域，格式为(x1, y1, x2, y2)，默认为全屏。
@@ -76,6 +76,7 @@ class Automation(metaclass=SingletonMeta):
                     self.window_title,
                     crop=crop,
                     use_background_screenshot=use_background_screenshot,
+                    prefer_frame_screenshot=prefer_frame_screenshot,
                 )
                 if result:
                     self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
@@ -620,7 +621,7 @@ class Automation(metaclass=SingletonMeta):
             self.logger.error(f"YOLO查找出错：{e}")
             return []
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0, use_background_screenshot=None):
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0, use_background_screenshot=None, prefer_frame_screenshot=True):
         """
         查找元素，并根据指定的查找类型执行不同的查找策略。
         :param target: 查找目标，可以是图像路径或文字。
@@ -645,7 +646,7 @@ class Automation(metaclass=SingletonMeta):
         max_retries = 1 if not take_screenshot else max_retries
         for i in range(max_retries):
             if take_screenshot:
-                screenshot_result = self.take_screenshot(crop, use_background_screenshot)
+                screenshot_result = self.take_screenshot(crop, use_background_screenshot, prefer_frame_screenshot)
                 if not screenshot_result:
                     continue  # 如果截图失败，则跳过本次循环
             if find_type in ['image', 'image_threshold', 'text', "min_distance_text", 'crop', 'hsv', 'yolo']:
@@ -718,7 +719,7 @@ class Automation(metaclass=SingletonMeta):
 
         return True
 
-    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None, press_duration: float = 0.0):
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None, press_duration: float = 0.0, prefer_frame_screenshot=True):
         """
         查找并点击屏幕上的元素。
 
@@ -733,7 +734,7 @@ class Automation(metaclass=SingletonMeta):
         如果找到元素并点击成功，则返回True；否则返回False。
         """
         coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot, relative, scale_range, include,
-                                        need_ocr, source, source_type, pixel_bgr, position, retry_delay, use_background_screenshot)
+                                        need_ocr, source, source_type, pixel_bgr, position, retry_delay, use_background_screenshot, prefer_frame_screenshot)
         if coordinates:
             return self.click_element_with_pos(coordinates, offset, action, press_duration=press_duration)
         return False

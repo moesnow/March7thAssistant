@@ -126,10 +126,10 @@ class Screenshot:
         return img.crop((crop_left, crop_top, crop_left + crop_width, crop_top + crop_height))
 
     @staticmethod
-    def take_screenshot(title, crop=(0, 0, 1, 1), use_background_screenshot=None):
+    def take_screenshot(title, crop=(0, 0, 1, 1), use_background_screenshot=None, prefer_frame_screenshot=True):
         if cfg.cloud_game_enable:
             from module.game import cloud_game
-            screenshot_result = cloud_game.take_screenshot(crop=crop)
+            screenshot_result = cloud_game.take_screenshot(crop=crop, prefer_frame=prefer_frame_screenshot)
             if not screenshot_result:
                 return False
 

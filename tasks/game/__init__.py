@@ -95,33 +95,37 @@ def start_game():
         return False
 
     def cloud_game_check_and_enter():
+        def cloud_click_element(*args, **kwargs):
+            kwargs.setdefault("prefer_frame_screenshot", False)
+            return auto.click_element(*args, **kwargs)
+
         # 点击进入
-        if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
+        if cloud_click_element("./assets/images/screen/click_enter.png", "image", 0.9):
             return True
         # 同意浏览器授权
-        if auto.click_element("./assets/images/screen/cloud/agree_to_authorize.png", "image", 0.9, take_screenshot=False):
+        if cloud_click_element("./assets/images/screen/cloud/agree_to_authorize.png", "image", 0.9, take_screenshot=False):
             time.sleep(0.5)
-            auto.click_element("每次访问时都充许", "text", 0.9)
+            cloud_click_element("每次访问时都充许", "text", 0.9)
         # 是否保存网页地址，点击 x 关闭
-        auto.click_element("./assets/images/screen/cloud/close.png", "image", 0.9, take_screenshot=False)
+        cloud_click_element("./assets/images/screen/cloud/close.png", "image", 0.9, take_screenshot=False)
         # 是否将《云·星穹铁道》添加到桌面，需要点击“下次再说”
-        auto.click_element("./assets/images/screen/cloud/next_time.png", "image", 0.9, take_screenshot=False)
+        cloud_click_element("./assets/images/screen/cloud/next_time.png", "image", 0.9, take_screenshot=False)
         # 免责声明，需要点击“接受”
-        auto.click_element("./assets/images/screen/cloud/accept.png", "image", 0.9, take_screenshot=False)
+        cloud_click_element("./assets/images/screen/cloud/accept.png", "image", 0.9, take_screenshot=False)
         # 适配用户协议和隐私政策更新提示，需要点击“同意”
-        auto.click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
+        cloud_click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
         # 云游戏设置的引导，需要多次点击 “下一步”
-        if auto.click_element("下一步", "text", 0.9, include=True, take_screenshot=False):
+        if cloud_click_element("下一步", "text", 0.9, include=True, take_screenshot=False):
             time.sleep(0.5)
-            auto.click_element("下一步", "text", 0.9, include=True)
+            cloud_click_element("下一步", "text", 0.9, include=True)
             time.sleep(0.5)
-            auto.click_element("我知道了", "text", 0.9, include=True)
+            cloud_click_element("我知道了", "text", 0.9, include=True)
         # 由于浏览器语言原因，云游戏启动时可能会是默认英文，需要改成中文
-        if auto.click_element("Settings", "text", 0.9, take_screenshot=False):
+        if cloud_click_element("Settings", "text", 0.9, take_screenshot=False):
             time.sleep(0.5)
-            auto.click_element("English", "text", 0.9, crop=(1541.0 / 1920, 198.0 / 1080, 156.0 / 1920, 58.0 / 1080))
+            cloud_click_element("English", "text", 0.9, crop=(1541.0 / 1920, 198.0 / 1080, 156.0 / 1920, 58.0 / 1080))
             time.sleep(0.5)
-            auto.click_element("简体中文", "text", 0.9)
+            cloud_click_element("简体中文", "text", 0.9)
             time.sleep(0.5)
             auto.press_key("esc")
 
