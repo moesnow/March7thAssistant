@@ -153,6 +153,21 @@ class Power:
             
             
             if "饰品提取" in instance_type:
+                
+                # 进入“生存索引”界面后，（经个人测试）默认优先处于“培养目标”/“饰品提取”标签，都可获取沉浸器数量，无需切换。如果因此产生bug则取消此段注释
+                # screen.change_to('guide3')
+                # instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
+
+                # auto.click_element(instance_type, "text", crop=instance_type_crop)
+                # # 等待界面完全停止
+                # time.sleep(1)
+
+                # immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
+                # text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
+                # if "/12" not in text:
+                #     log.error("沉浸器数量识别失败")
+                #     return True
+
                 immersifier_count = Power.get_immersifier_count()
                 attempts += immersifier_count
                 log.info(f"开拓力: {power} + 沉浸器: {immersifier_count} = {attempts} 次挑战")
