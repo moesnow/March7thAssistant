@@ -122,7 +122,7 @@ If you enabled `Divergent Universe score rewards` in settings, the full workflow
 
 If they are not finished, it will enter Divergent Universe and complete the weekly score.
 
-In settings, you can further configure `Ordinary Extrapolation / Cyclical Extrapolation`, difficulty level, station priority, stable mode,
+In settings, you can further configure `Ordinary Extrapolation / Cyclical Extrapolation`, difficulty level, station priority, low-performance compatibility mode,
 
 and whether to automatically run ornament extraction after claiming score rewards.
 
@@ -250,7 +250,7 @@ If you only want to automatically claim all weekly Divergent Universe score rewa
 
 The `Divergent Universe` page is mainly for weekly score rewards, index unlocks, and level progression,
 
-including Ordinary Extrapolation / Cyclical Extrapolation, difficulty, stable mode, ornament extraction after rewards, station priority, and more.
+including Ordinary Extrapolation / Cyclical Extrapolation, difficulty, low-performance compatibility mode, ornament extraction after rewards, station priority, and more.
 
 The `Simulated Universe / Divergent Universe` page is used for farming relic EXP and Lost Crystal until the weekly cap of 100 elite enemies. Available options include:
 

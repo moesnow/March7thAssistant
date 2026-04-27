@@ -592,8 +592,8 @@ class SettingInterface(ScrollArea):
         )
         self.weeklyDivergentStableModeCard = SwitchSettingCard1(
             FIF.SPEED_OFF,
-            tr('启用稳定模式'),
-            tr("运行若出现问题可尝试开启，适配低性能环境，云游戏默认使用此模式"),
+            tr('启用低性能兼容模式'),
+            tr("建议仅在低性能设备开启，可以提高事件和随意门交互的成功率（云游戏强制使用此模式）"),
             "weekly_divergent_stable_mode"
         )
 
