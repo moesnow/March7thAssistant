@@ -45,7 +45,7 @@ class Instance:
                 if not fight_result:
                     if "拟造花萼" in instance_type or "凝滞虚影" in instance_type or "侵蚀隧洞" in instance_type:
                         auto.click_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9, max_retries=10)
-                        return "Failed"
+                        return False
                     else:
                         auto.click_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9, max_retries=10)
                         time.sleep(2)

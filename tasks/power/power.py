@@ -147,7 +147,9 @@ class Power:
         
         
         executed_attempts = 0
-        while True:
+        failed_runs = 0
+        FAILED_LIMIT = 3
+        while failed_runs <= FAILED_LIMIT:
             power = Power.get()
             attempts = power // instance_power_min
             
@@ -191,18 +193,22 @@ class Power:
             full_runs = attempts // attempts_per_run
             if full_runs >= 1:
                 result = Instance.run(instance_type, instance_name, attempts_per_run, full_runs)
-                if result == "Failed":
-                    continue
-                else:
+                if result == True:
                     executed_attempts += full_runs * attempts_per_run
+                else:
+                    failed_runs += 1
+                    log.error(f"检测到该次副本未正常运行，重试：{failed_runs}/{FAILED_LIMIT}")
+                    continue
 
             remain_attempts = attempts % attempts_per_run
             if remain_attempts >= 1:
                 result = Instance.run(instance_type, instance_name, remain_attempts, 1)
-                if result == "Failed":
-                    continue
-                else:
+                if result == True:
                     executed_attempts += remain_attempts
+                else:
+                    failed_runs += 1
+                    log.error(f"检测到该次副本未正常运行，重试：{failed_runs}/{FAILED_LIMIT}")
+                    continue
             break
         return executed_attempts
     
