@@ -1769,11 +1769,10 @@ class SettingInterface(ScrollArea):
         # self.addSubInterface(self.BorrowGroup, 'BorrowInterface', '支援')
         self.addSubInterface(self.DailyGroup, 'DailyInterface', tr('日常'))
         self.addSubInterface(self.CurrencywarsGroup, 'CurrencywarsInterface', tr('货币战争'))
+        self.addSubInterface(self.UniverseGroup, 'UniverseInterface', tr('差分宇宙'))
         if sys.platform == 'win32':
-            self.addSubInterface(self.UniverseGroup, 'UniverseInterface', tr('差分宇宙'))
             self.addSubInterface(self.FightGroup, 'FightInterface', tr('锄大地'))
         else:
-            self.UniverseGroup.setHidden(True)
             self.FightGroup.setHidden(True)
         self.addSubInterface(self.ImmortalGameGroup, 'ImmortalGameInterface', tr('逐光捡金'))
 
