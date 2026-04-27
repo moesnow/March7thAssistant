@@ -19,12 +19,10 @@ class Power:
 
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names[instance_type]
-        challenge_count = cfg.instance_names_challenge_count[instance_type]
 
         try:
             if cfg.build_target_enable and (target := BuildTarget.get_target_instance()):
                 instance_type, instance_name = target
-                challenge_count = cfg.instance_names_challenge_count[instance_type]
                 log.info(f"使用培养目标副本: {instance_type} - {instance_name}")
         except Exception as e:
             log.error(f"获取培养目标副本失败: {e}")
@@ -33,11 +31,7 @@ class Power:
             log.hr("完成", 2)
             return False
 
-        if "饰品提取" in instance_type:
-            power = Power.get()
-            Power.process_ornament(instance_type, instance_name, power)
-        else:
-            Power.process_standard(instance_type, instance_name, challenge_count)
+        Power.process(instance_type, instance_name)
 
         log.hr("完成", 2)
 
@@ -77,20 +71,11 @@ class Power:
                 updated_plan.append(plan)
                 continue
 
-            # 获取副本所需体力
-            instance_power = instances_power.get(instance_type, 10)
-
             log.info(f"执行体力计划 [{i + 1}/{len(power_plan)}]: {instance_type} - {instance_name}, 计划次数: {count}")
 
             try:
                 # 执行副本
-                if "饰品提取" in instance_type:
-                    # 饰品提取特殊处理
-                    executed_count = Power._execute_ornament_plan(instance_type, instance_name, count)
-                else:
-                    # 标准副本处理
-                    challenge_count = cfg.instance_names_challenge_count.get(instance_type, 1)
-                    executed_count = Power._execute_standard_plan(instance_type, instance_name, instance_power, challenge_count, count)
+                executed_count = Power.process(instance_type, instance_name, planned_attempts = count)
 
                 if executed_count > 0:
                     has_executed = True
@@ -128,204 +113,123 @@ class Power:
         return True
 
     @staticmethod
-    def _execute_ornament_plan(instance_type, instance_name, count):
-        """执行饰品提取计划"""
-        screen.change_to('guide3')
-        instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
-
-        auto.click_element(instance_type, "text", crop=instance_type_crop)
-        # 等待界面完全停止
-        time.sleep(1)
-
-        # 版本更新后，饰品提取不再需要存档
-        # # 需要判断是否有可用存档
-        # if auto.find_element("无可用存档", "text", crop=(688.0 / 1920, 289.0 / 1080, 972.0 / 1920, 369.0 / 1080), include=True):
-        #     # 刷差分宇宙存档
-        #     if Universe.start(nums=1, save=False, category="divergent"):
-        #         # 验证存档
-        #         screen.change_to('guide3')
-        #         auto.click_element(instance_type, "text", crop=instance_type_crop)
-        #         # 等待界面完全停止
-        #         time.sleep(1)
-        #         if auto.find_element("无可用存档", "text", crop=(688.0 / 1920, 289.0 / 1080, 972.0 / 1920, 369.0 / 1080), include=True):
-        #             log.error("暂无可用存档")
-        #             return 0
-        #     else:
-        #         return 0
-
-        screen.change_to("guide3")
-
-        # 获取沉浸器数量
-        immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
-        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
-        if "/12" not in text:
-            log.error("沉浸器数量识别失败")
-            return 0
-
-        immersifier_count = int(text.split("/")[0])
-        log.info(f"沉浸器: {immersifier_count}/12")
-
-        # 获取当前体力
-        power = Power.get()
-        full_runs = power // 40
-
-        # 计算可执行次数（沉浸器 + 体力次数，但不超过计划次数）
-        executable_count = min(immersifier_count + full_runs, count)
-
-        if executable_count > 0:
-            result = Instance.run(instance_type, instance_name, 40, executable_count)
-            if result == "Failed":
-                return 0
-            # 返回实际消耗的计划次数（优先使用沉浸器）
-            return executable_count
-        else:
-            log.info(f"开拓力不足且无沉浸器")
-            return 0
-
-    @staticmethod
-    def _execute_standard_plan(instance_type, instance_name, instance_power, challenge_count, count):
-        """执行标准副本计划"""
-        challenges_count_max = {
-            "拟造花萼（金）": 24,
-            "拟造花萼（赤）": 24,
-            "凝滞虚影": 8,
-            "侵蚀隧洞": 6,
-            "历战余响": 3
-        }
-
-        instance_power_min = instance_power
-        challenge_count_max_val = challenges_count_max.get(instance_type, 3)
-
-        # 根据 challenge_count 计算 instance_power_max
-        if not (challenge_count >= 1 and challenge_count <= challenge_count_max_val):
-            challenge_count = challenge_count_max_val
-        instance_power_max = challenge_count * instance_power_min
-
-        executed_count = 0
-
-        while count > 0:
-            power = Power.get()
-
-            if power < instance_power_min:
-                log.info(f"开拓力 < {instance_power_min}")
-                break
-
-            full_runs = min(power // instance_power_max, count // challenge_count)
-            if full_runs >= 1:
-                executable_count = challenge_count * full_runs
-                result = Instance.run(instance_type, instance_name, instance_power_max, full_runs)
-                if result != "Failed":
-                    executed_count += executable_count
-                    count -= executable_count
-                    power -= instance_power_max * full_runs
-                else:
-                    break
-
-            remain_runs = min(power // instance_power_min, count)
-            if remain_runs >= 1 and count > 0:
-                result = Instance.run(instance_type, instance_name, remain_runs * instance_power_min, 1)
-                if result != "Failed":
-                    executed_count += remain_runs
-                    count -= remain_runs
-                else:
-                    break
-
-            # 如果既没有满次数也没有剩余次数，则退出
-            if full_runs < 1 and remain_runs < 1:
-                break
-
-        return executed_count
-
-    @staticmethod
     def preprocess():
         # 优先合成沉浸器
         if cfg.merge_immersifier:
             Power.merge("immersifier")
 
     @staticmethod
-    def process_ornament(instance_type, instance_name, power):
-        full_runs = power // 40
-
-        screen.change_to('guide3')
-        instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
-
-        if "饰品提取" in instance_type:
-            auto.click_element(instance_type, "text", crop=instance_type_crop)
-            # 等待界面完全停止
-            time.sleep(1)
-
-            # 版本更新后，饰品提取不再需要存档
-            # # 需要判断是否有可用存档
-            # if auto.find_element("无可用存档", "text", crop=(688.0 / 1920, 289.0 / 1080, 972.0 / 1920, 369.0 / 1080), include=True):
-            #     # 刷差分宇宙存档
-            #     if Universe.start(nums=1, save=False, category="divergent"):
-            #         # 验证存档
-            #         screen.change_to('guide3')
-            #         auto.click_element(instance_type, "text", crop=instance_type_crop)
-            #         # 等待界面完全停止
-            #         time.sleep(1)
-            #         if auto.find_element("无可用存档", "text", crop=(688.0 / 1920, 289.0 / 1080, 972.0 / 1920, 369.0 / 1080), include=True):
-            #             log.error("暂无可用存档")
-            #             return
-            #     else:
-            #         return
-
-        screen.change_to("guide3")
-
-        immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
-        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
-        if "/12" not in text:
-            log.error("沉浸器数量识别失败")
-            return
-
-        immersifier_count = int(text.split("/")[0])
-        log.info(f"沉浸器: {immersifier_count}/12")
-
-        if immersifier_count + full_runs > 0:
-            Instance.run(instance_type, instance_name, 40, immersifier_count + full_runs)
-
-    @staticmethod
-    def process_standard(instance_type, instance_name, challenge_count):
+    def process(instance_type: str, instance_name: str, planned_attempts: int = 0, immersifier_only: bool = False):
         instances_power = {
             "拟造花萼（金）": 10,
             "拟造花萼（赤）": 10,
             "凝滞虚影": 30,
             "侵蚀隧洞": 40,
+            "饰品提取": 40,
             "历战余响": 30
         }
-        challenges_count_max = {
+        attempts_per_run_max = {
             "拟造花萼（金）": 24,
             "拟造花萼（赤）": 24,
             "凝滞虚影": 8,
             "侵蚀隧洞": 6,
+            "饰品提取": 6,
             "历战余响": 3
         }
         instance_power_min = instances_power[instance_type]
-        challenge_count_max = challenges_count_max[instance_type]
-        if (challenge_count >= 1 and challenge_count <= challenge_count_max):
-            instance_power_max = challenge_count * instance_power_min
-        else:
-            instance_power_max = challenge_count_max * instance_power_min
-        while True:
-            power = Power.get()
+        attempts_per_run = cfg.instance_names_challenge_count[instance_type]
+        if not 0 < attempts_per_run <= attempts_per_run_max[instance_type]:
+            attempts_per_run = attempts_per_run_max[instance_type]
+            log.warning(f"{instance_type} 挑战次数设置错误，已自动调整为 {attempts_per_run}")
+        
+        
+        executed_attempts = 0
+        failed_runs = 0
+        FAILED_LIMIT = 3
+        while failed_runs < FAILED_LIMIT:
+            
+            
+            
+            if "饰品提取" in instance_type:
+                
+                # 进入“生存索引”界面后，（经个人测试）默认优先处于“培养目标”/“饰品提取”标签，都可获取沉浸器数量，无需切换。如果因此产生bug则取消此段注释
+                # screen.change_to('guide3')
+                # instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
 
-            if power < instance_power_min:
+                # auto.click_element(instance_type, "text", crop=instance_type_crop)
+                # # 等待界面完全停止
+                # time.sleep(1)
+
+                # immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
+                # text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
+                # if "/12" not in text:
+                #     log.error("沉浸器数量识别失败")
+                #     return True
+
+                immersifier_count = Power.get_immersifier_count()
+                if immersifier_only:
+                    attempts = immersifier_count
+                    log.info(f"只使用沉浸器进行 {attempts} 次挑战")
+                else:
+                    power = Power.get()
+                    attempts = power // instance_power_min
+                    attempts += immersifier_count
+                    log.info(f"开拓力: {power} + 沉浸器: {immersifier_count} = {attempts} 次挑战")
+            else:
+                power = Power.get()
+                attempts = power // instance_power_min
+                log.info(f"开拓力: {power} = {attempts} 次挑战")
+                
+            if attempts == 0:
                 log.info(f"开拓力 < {instance_power_min}")
                 break
+            
+            if planned_attempts - executed_attempts > 0:
+                attempts = min(attempts, planned_attempts - executed_attempts)
+                log.info(f"剩余计划挑战次数: {planned_attempts - executed_attempts}，实际可挑战次数调整为: {attempts}")
+            elif planned_attempts > 0:
+                    log.info(f"该计划挑战次数已完成")
+                    break
+            else:
+                log.info(f"未设置计划挑战次数，按照当前开拓力可挑战次数: {attempts}")
 
-            full_runs = power // instance_power_max
+            
+            full_runs = attempts // attempts_per_run
             if full_runs >= 1:
-                result = Instance.run(instance_type, instance_name, instance_power_max, full_runs)
-                if result == "Failed":
+                result = Instance.run(instance_type, instance_name, attempts_per_run, full_runs)
+                if result == True:
+                    executed_attempts += full_runs * attempts_per_run
+                else:
+                    failed_runs += 1
+                    log.error(f"检测到该次副本未正常运行，重试：{failed_runs}/{FAILED_LIMIT}")
                     continue
 
-            remain_runs = (power % instance_power_max) // instance_power_min
-            if remain_runs >= 1:
-                result = Instance.run(instance_type, instance_name, remain_runs * instance_power_min, 1)
-                if result == "Failed":
+            remain_attempts = attempts % attempts_per_run
+            if remain_attempts >= 1:
+                result = Instance.run(instance_type, instance_name, remain_attempts, 1)
+                if result == True:
+                    executed_attempts += remain_attempts
+                else:
+                    failed_runs += 1
+                    log.error(f"检测到该次副本未正常运行，重试：{failed_runs}/{FAILED_LIMIT}")
                     continue
             break
+        return executed_attempts
+    
+    @staticmethod
+    def get_immersifier_count():
+        screen.change_to('guide3')
+        immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
+        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
+        if "/12" not in text:
+            log.error("沉浸器数量识别失败")
+            return 0
 
+        immersifier_count = int(text.split("/")[0])
+        log.info(f"沉浸器: {immersifier_count}/12")
+        return immersifier_count
+    
+    
     @staticmethod
     def get(use_supplement=True):
         def get_power(crop, type="trailblaze_power"):

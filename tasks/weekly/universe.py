@@ -13,7 +13,7 @@ import sys
 import os
 from module.config import asu_config
 from utils.console import pause_on_error, pause_and_retry
-from tasks.power.instance import Instance
+from tasks.power.power import Power
 
 
 class Universe:
@@ -293,7 +293,7 @@ class Universe:
             except Exception as e:
                 log.error(f"获取培养目标副本失败: {e}")
 
-            Instance.run("饰品提取", instance_name, 40, immersifier_count)
+            Power.process("饰品提取", instance_name, immersifier_only = True)
 
     @staticmethod
     def gui():

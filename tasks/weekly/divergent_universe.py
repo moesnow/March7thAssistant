@@ -11,7 +11,7 @@ import numpy as np
 import time
 import os
 import re
-from tasks.power.instance import Instance
+from tasks.power.power import Power
 
 
 class DivergentUniverse:
@@ -119,7 +119,7 @@ class DivergentUniverse:
             except Exception as e:
                 log.error(f"获取培养目标副本失败: {e}")
 
-            Instance.run("饰品提取", instance_name, 40, immersifier_count)
+            Power.process("饰品提取", instance_name, immersifier_only = True)
 
     def start_war(self, type: Literal["normal", "cycle"] = "normal") -> bool:
         log.info("开始「差分宇宙」")

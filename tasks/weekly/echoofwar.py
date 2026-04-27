@@ -40,7 +40,7 @@ class Echoofwar:
                                     instance_name = target[1]
                                 else:
                                     instance_name = cfg.instance_names["历战余响"]
-                                return Instance.run("历战余响", instance_name, 30, min(reward_count, max_count))
+                                return Instance.run("历战余响", instance_name, min(reward_count, max_count), 1)
             return False
         except Exception as e:
             log.error(f"历战余响失败: {e}")
