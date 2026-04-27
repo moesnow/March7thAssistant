@@ -231,13 +231,13 @@ class CloudGameController(GameControllerBase):
             "--disable-blink-features=AutomationControlled",  # 去除自动化痕迹，防止被人机验证
             f"--remote-debugging-port={self.cfg.browser_debug_port}",   # 调试端口，可用于复用浏览器
         ]
-        if not headless:
-            args += [
-                "--disable-backgrounding-occluded-windows",  # 避免窗口被遮挡/最小化后页面降速
-                "--disable-renderer-backgrounding",          # 避免渲染进程在后台被降级
-                "--disable-background-timer-throttling",     # 避免后台定时器被节流
-                "--disable-features=CalculateNativeWinOcclusion",  # 关闭 Windows 原生遮挡检测
-            ]
+        # if not headless:
+        #     args += [
+        #         "--disable-backgrounding-occluded-windows",  # 避免窗口被遮挡/最小化后页面降速
+        #         "--disable-renderer-backgrounding",          # 避免渲染进程在后台被降级
+        #         "--disable-background-timer-throttling",     # 避免后台定时器被节流
+        #         "--disable-features=CalculateNativeWinOcclusion",  # 关闭 Windows 原生遮挡检测
+        #     ]
         if self.cfg.browser_persistent_enable:
             args += [
                 f"--user-data-dir={self.user_profile_path}",   # UserProfile 路径
@@ -1305,19 +1305,22 @@ class CloudGameController(GameControllerBase):
             return None
 
         # 仅在 macOS 非 headless 模式下使用 CDP 截图，避免浏览器被切换到前台
-        if not self.cfg.browser_headless_enable and platform.system() == "Darwin":
+        # if not self.cfg.browser_headless_enable and platform.system() == "Darwin":
             # Chrome/Chromium 在非 headless 模式下调用 get_screenshot_as_png() 时，
             # 会先确保窗口“可见且未被遮挡”，否则截图内容可能为空或全黑。
             # macOS 的窗口管理要求被截取的 NSWindow 处于前台/可见状态，
             # Chromium 的实现会自动把窗口置前。
             # 改用 CDP 截图接口可以避免这个问题。
-            try:
-                result = self.driver.execute_cdp_cmd("Page.captureScreenshot", {"format": "png"})
-                data = result.get("data") if result else None
-                if data:
-                    return base64.b64decode(data)
-            except Exception as e:
-                self.log_debug(f"CDP 截图失败，回退 WebDriver 截图: {e}")
+        try:
+            self._ensure_window_not_minimized_for_frame_capture()
+            # 未知原因，PNG 格式截图特别慢，改用 JPEG 格式可以显著提升截图速度
+            # result = self.driver.execute_cdp_cmd("Page.captureScreenshot", {"format": "png"})
+            result = self.driver.execute_cdp_cmd("Page.captureScreenshot", {"format": "jpeg", "quality": 100})
+            data = result.get("data") if result else None
+            if data:
+                return base64.b64decode(data)
+        except Exception as e:
+            self.log_debug(f"CDP 截图失败，回退 WebDriver 截图: {e}")
 
         return self.driver.get_screenshot_as_png()
 
@@ -1345,6 +1348,9 @@ class CloudGameController(GameControllerBase):
         if not self.driver:
             return None
 
+        return self._take_browser_screenshot()
+
+        # 帧截图有内存占用问题，暂不使用
         if prefer_frame:
             try:
                 self._ensure_window_not_minimized_for_frame_capture()
