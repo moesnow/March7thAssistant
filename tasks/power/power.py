@@ -78,7 +78,7 @@ class Power:
 
             try:
                 # 执行副本
-                executed_count = Power.process(instance_type, instance_name, count)
+                executed_count = Power.process(instance_type, instance_name, planned_attempts = count)
 
                 if executed_count > 0:
                     has_executed = True
