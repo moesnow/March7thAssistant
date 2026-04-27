@@ -226,6 +226,41 @@ class Screen(metaclass=SingletonMeta):
         # 如果遍历完所有可能的路径都没有找到目标界面，返回 None
         return None
 
+    def can_change_from(self, start_screen, target_screen):
+        """
+        判断是否能从指定界面主动切换到目标界面。
+        """
+        if start_screen not in self.screen_map or target_screen not in self.screen_map:
+            return False
+        return self.find_shortest_path(start_screen, target_screen) is not None
+
+    def get_switchable_screens(self, start_screen="main", include_start=True):
+        """
+        获取从指定界面可主动切换到的所有界面，按 BFS 顺序返回。
+        :return: [(screen_id, screen_name), ...]
+        """
+        if start_screen not in self.screen_map:
+            return []
+
+        visited = {start_screen}
+        queue = deque([start_screen])
+        result = []
+
+        if include_start:
+            result.append((start_screen, self.get_name(start_screen)))
+
+        while queue:
+            current_screen = queue.popleft()
+            for action in self.screen_map[current_screen]['actions']:
+                next_screen = action.get("target_screen")
+                if next_screen in visited or next_screen not in self.screen_map:
+                    continue
+                visited.add(next_screen)
+                result.append((next_screen, self.get_name(next_screen)))
+                queue.append(next_screen)
+
+        return result
+
     def get_name(self, id):
         """
         根据界面ID获取界面名称。

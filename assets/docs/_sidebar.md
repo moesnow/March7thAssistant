@@ -1,5 +1,6 @@
 - [主页](/README.md)
 - [使用教程](/assets/docs/Tutorial.md)
+- [流程编排](/assets/docs/Workflow.md)
 - [常见问题](/assets/docs/FAQ.md)
 - [更新日志](/assets/docs/Changelog.md)
 - [后台运行](/assets/docs/Background.md)

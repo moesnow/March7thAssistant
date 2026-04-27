@@ -1,3 +1,4 @@
+import copy
 import io
 import os
 import shutil
@@ -36,21 +37,28 @@ WORKFLOW_META_KEYS = (
 STEP_TYPE_LABELS = {
     "click_image": "点击图片",
     "click_text": "点击文字",
+    "click_crop": "点击坐标",
     "find_image": "查找图片",
     "find_text": "查找文字",
     "play_audio": "播放音频",
     "send_message": "消息推送",
+    "switch_screen": "切换界面",
     "press_key": "按下按键",
     "wait": "等待",
     "if": "如果",
     "for": "循环次数",
     "while": "条件循环",
+    "break": "结束循环",
+    "continue": "继续循环",
 }
 
 CONDITION_TYPE_LABELS = {
     "image_exists": "图片存在",
+    "image_not_exists": "图片不存在",
     "text_exists": "文字存在",
+    "text_not_exists": "文字不存在",
     "last_result": "上一步成功",
+    "last_result_failed": "上一步失败",
 }
 
 
@@ -202,6 +210,94 @@ def _find_workflow_by_name(name: str, workflows: list[dict] | None = None):
         if workflow["name"] == name:
             return workflow
     return None
+
+
+def get_workflow_by_name(name: str, workflows: list[dict] | None = None):
+    workflow = _find_workflow_by_name(name, workflows)
+    if workflow is None:
+        return None
+    return normalize_workflow(workflow)
+
+
+def parse_workflow_step_path(step_path) -> tuple[int, ...] | None:
+    if step_path in (None, "", [], ()):
+        return None
+
+    if isinstance(step_path, str):
+        normalized = step_path.strip().replace("\\", "/").strip("/")
+        if not normalized:
+            return None
+        parts = [part.strip() for part in normalized.split("/") if part.strip()]
+    elif isinstance(step_path, (list, tuple)):
+        parts = list(step_path)
+    else:
+        raise ValueError(f"invalid workflow step path: {step_path}")
+
+    parsed = []
+    for part in parts:
+        if isinstance(part, int):
+            index = part
+        else:
+            text = str(part).strip()
+            if not text or not text.isdigit():
+                raise ValueError(f"invalid workflow step path: {step_path}")
+            index = int(text)
+        if index < 0:
+            raise ValueError(f"invalid workflow step path: {step_path}")
+        parsed.append(index)
+
+    return tuple(parsed) if parsed else None
+
+
+def get_workflow_step_by_path(workflow: dict, step_path) -> dict:
+    parsed_path = parse_workflow_step_path(step_path)
+    if not parsed_path:
+        raise ValueError("workflow step path is required")
+
+    normalized_workflow = normalize_workflow(workflow)
+    steps = normalized_workflow["steps"]
+    current_step = None
+    for depth, index in enumerate(parsed_path):
+        if index >= len(steps):
+            raise IndexError(f"workflow step path out of range: {step_path}")
+        current_step = steps[index]
+        if depth < len(parsed_path) - 1:
+            steps = current_step.get("children", [])
+
+    return current_step
+
+
+def build_selected_step_workflow(workflow: dict, step_path) -> dict | None:
+    parsed_path = parse_workflow_step_path(step_path)
+    if not parsed_path:
+        return None
+
+    normalized_workflow = normalize_workflow(workflow)
+    step = copy.deepcopy(get_workflow_step_by_path(normalized_workflow, parsed_path))
+    title, _ = summarize_step(step)
+    selected_workflow = {
+        "name": f"{normalized_workflow['name']} - {title}",
+        "steps": [step],
+    }
+    for key in WORKFLOW_META_KEYS:
+        if key in normalized_workflow:
+            selected_workflow[key] = normalized_workflow[key]
+    return selected_workflow
+
+
+def load_workflow_execution_payload(workflow_name: str, step_path=None) -> dict:
+    workflow = get_workflow_by_name(workflow_name)
+    if workflow is None:
+        raise ValueError(f"workflow not found: {workflow_name}")
+
+    parsed_path = parse_workflow_step_path(step_path)
+    if parsed_path is None:
+        return workflow
+
+    selected_workflow = build_selected_step_workflow(workflow, parsed_path)
+    if selected_workflow is None:
+        raise ValueError(f"invalid workflow step path: {step_path}")
+    return selected_workflow
 
 
 def get_workflow_directory(workflow=None) -> str | None:
@@ -435,6 +531,41 @@ def format_crop_expression(crop_text) -> str:
     return str(crop_text)
 
 
+def get_switchable_screen_targets(start_screen: str = "main", include_start: bool = True) -> list[tuple[str, str]]:
+    try:
+        from module.screen import screen as screen_manager
+
+        return screen_manager.get_switchable_screens(start_screen, include_start=include_start)
+    except Exception:
+        log.error(traceback.format_exc())
+        return []
+
+
+def get_switchable_screen_name(screen_id: str) -> str:
+    if not screen_id:
+        return ""
+
+    try:
+        from module.screen import screen as screen_manager
+
+        return screen_manager.get_name(screen_id)
+    except Exception:
+        return screen_id
+
+
+def can_change_to_screen_from_main(screen_id: str) -> bool:
+    if not screen_id:
+        return False
+
+    try:
+        from module.screen import screen as screen_manager
+
+        return screen_manager.can_change_from("main", screen_id)
+    except Exception:
+        log.error(traceback.format_exc())
+        return False
+
+
 def normalize_step(step: dict) -> dict:
     if not isinstance(step, dict):
         return {"type": "wait", "seconds": 1.0}
@@ -447,6 +578,7 @@ def normalize_step(step: dict) -> dict:
         "type": step_type,
         "text": str(step.get("text", "") or ""),
         "audio_path": str(step.get("audio_path", "./assets/audio/pa.mp3") or "./assets/audio/pa.mp3"),
+        "target_screen": str(step.get("target_screen", "") or ""),
         "template_path": str(step.get("template_path", "") or ""),
         "threshold": parse_float(step.get("threshold", 0.9), 0.9, 0.0),
         "crop": step.get("crop", "") or "",
@@ -668,6 +800,9 @@ def summarize_step(step: dict) -> tuple[str, str]:
     step_type = normalized["type"]
     label = tr(STEP_TYPE_LABELS.get(step_type, step_type))
 
+    if step_type in {"break", "continue"}:
+        return label, ""
+
     if step_type == "click_image":
         title = f"{label} · {os.path.basename(normalized['template_path']) or tr('未选择模板')}"
         action_label = _get_click_action_label(normalized["click_action"])
@@ -680,6 +815,11 @@ def summarize_step(step: dict) -> tuple[str, str]:
         action_label = _get_click_action_label(normalized["click_action"])
         detail = f"{compare_text}{tr('匹配')} / {action_label} / {tr('重试')} {normalized['max_retries']} {tr('次')} / {format_crop_expression(normalized['crop'])}"
         return title, detail
+
+    if step_type == "click_crop":
+        title = f"{label} · {format_crop_expression(normalized['crop'])}"
+        action_label = _get_click_action_label(normalized["click_action"])
+        return title, action_label
 
     if step_type == "find_image":
         title = f"{label} · {os.path.basename(normalized['template_path']) or tr('未选择模板')}"
@@ -703,6 +843,13 @@ def summarize_step(step: dict) -> tuple[str, str]:
         screenshot_text = tr("包含截图") if normalized["with_screenshot"] else tr("不含截图")
         return f"{label} · {message_text}", screenshot_text
 
+    if step_type == "switch_screen":
+        screen_id = normalized["target_screen"]
+        screen_name = get_switchable_screen_name(screen_id)
+        target_text = screen_name or screen_id or tr("未选择目标界面")
+        detail = screen_id if screen_name and screen_name != screen_id else ""
+        return f"{label} · {target_text}", detail
+
     if step_type == "press_key":
         action_labels = {
             "press": tr("按下"),
@@ -725,10 +872,12 @@ def summarize_step(step: dict) -> tuple[str, str]:
     if step_type in {"if", "while"}:
         condition_type = normalized["condition_type"]
         condition_label = tr(CONDITION_TYPE_LABELS.get(condition_type, condition_type))
-        if condition_type == "image_exists":
+        if condition_type in {"image_exists", "image_not_exists"}:
             condition_value = os.path.basename(normalized["template_path"]) or tr("未选择模板")
         elif condition_type == "last_result":
             condition_value = tr("上一步返回 True")
+        elif condition_type == "last_result_failed":
+            condition_value = tr("上一步返回 False")
         else:
             condition_value = normalized["text"] or tr("未填写文字")
         child_count = len(normalized["children"])
@@ -742,9 +891,13 @@ def summarize_step(step: dict) -> tuple[str, str]:
 
 
 class WorkflowRunner:
-    def __init__(self, log_callback=None, sleep_func=None):
+    LOOP_CONTROL_BREAK = "break"
+    LOOP_CONTROL_CONTINUE = "continue"
+
+    def __init__(self, log_callback=None, sleep_func=None, mirror_to_project_log: bool = True):
         self.log_callback = log_callback or (lambda message: None)
         self.sleep_func = sleep_func or time.sleep
+        self.mirror_to_project_log = mirror_to_project_log
         self.stop_requested = False
         self.last_result = False
         self.current_workflow = None
@@ -758,7 +911,7 @@ class WorkflowRunner:
         self.last_result = False
         self.current_workflow = normalized
         self._log(tr("开始执行流程：") + normalized['name'])
-        success = self._execute_steps(normalized["steps"], 0)
+        success, _ = self._execute_steps(normalized["steps"], 0)
         if self.stop_requested:
             self._log(tr("流程已停止"))
             return False
@@ -767,50 +920,60 @@ class WorkflowRunner:
 
     def _log(self, message: str):
         self.log_callback(message)
-        log.info(f"[Workflow] {message}")
+        if self.mirror_to_project_log:
+            log.info(f"[Workflow] {message}")
 
-    def _execute_steps(self, steps: list[dict], depth: int) -> bool:
+    def _execute_steps(self, steps: list[dict], depth: int, in_loop: bool = False) -> tuple[bool, str | None]:
         for index, step in enumerate(steps, start=1):
             if self.stop_requested:
-                return False
+                return False, None
             title, _ = summarize_step(step)
             self._log(f"{'  ' * depth}[{index}/{len(steps)}] {title}")
             try:
-                self.last_result = self._execute_step(step, depth)
+                self.last_result, loop_control = self._execute_step(step, depth, in_loop)
             except Exception as exc:
                 self.last_result = False
+                loop_control = None
                 self._log(tr("步骤执行异常：") + str(exc))
                 log.error(traceback.format_exc())
+            if loop_control is not None:
+                return self.last_result, loop_control
             if self.stop_requested:
-                return False
-        return True
+                return False, None
+        return True, None
 
-    def _execute_step(self, step: dict, depth: int) -> bool:
+    def _execute_step(self, step: dict, depth: int, in_loop: bool = False) -> tuple[bool, str | None]:
         normalized = normalize_step(step)
         step_type = normalized["type"]
 
         if step_type == "click_image":
-            return self._click_image(normalized)
+            return self._click_image(normalized), None
         if step_type == "click_text":
-            return self._click_text(normalized)
+            return self._click_text(normalized), None
+        if step_type == "click_crop":
+            return self._click_crop(normalized), None
         if step_type == "find_image":
-            return self._find_image(normalized)
+            return self._find_image(normalized), None
         if step_type == "find_text":
-            return self._find_text(normalized)
+            return self._find_text(normalized), None
         if step_type == "play_audio":
-            return self._play_audio(normalized)
+            return self._play_audio(normalized), None
         if step_type == "send_message":
-            return self._send_message(normalized)
+            return self._send_message(normalized), None
+        if step_type == "switch_screen":
+            return self._switch_screen(normalized), None
         if step_type == "press_key":
-            return self._press_key(normalized)
+            return self._press_key(normalized), None
         if step_type == "wait":
             self.sleep_func(normalized["seconds"])
-            return True
+            return True, None
+        if step_type in {self.LOOP_CONTROL_BREAK, self.LOOP_CONTROL_CONTINUE}:
+            return self._handle_loop_control_step(step_type, depth, in_loop)
         if step_type == "if":
             condition_result = self._evaluate_condition(normalized)
             if condition_result:
-                return self._execute_steps(normalized["children"], depth + 1)
-            return False
+                return self._execute_steps(normalized["children"], depth + 1, in_loop=in_loop)
+            return False, None
         if step_type == "for":
             result = True
             if normalized["count"] == 0:
@@ -818,14 +981,22 @@ class WorkflowRunner:
                 while not self.stop_requested:
                     iteration += 1
                     self._log(f"{'  ' * depth}{tr('第')} {iteration} {tr('次循环')}")
-                    result = self._execute_steps(normalized["children"], depth + 1)
+                    result, loop_control = self._execute_steps(normalized["children"], depth + 1, in_loop=True)
+                    if loop_control == self.LOOP_CONTROL_BREAK:
+                        break
+                    if loop_control == self.LOOP_CONTROL_CONTINUE:
+                        continue
             else:
                 for iteration in range(normalized["count"]):
                     if self.stop_requested:
-                        return False
+                        return False, None
                     self._log(f"{'  ' * depth}{tr('第')} {iteration + 1}/{normalized['count']} {tr('次循环')}")
-                    result = self._execute_steps(normalized["children"], depth + 1)
-            return result
+                    result, loop_control = self._execute_steps(normalized["children"], depth + 1, in_loop=True)
+                    if loop_control == self.LOOP_CONTROL_BREAK:
+                        break
+                    if loop_control == self.LOOP_CONTROL_CONTINUE:
+                        continue
+            return result, None
         if step_type == "while":
             iteration = 0
             result = False
@@ -836,20 +1007,37 @@ class WorkflowRunner:
                 iteration += 1
                 iter_label = f"∞ ({iteration})" if max_iter == 0 else f"{iteration}/{max_iter}"
                 self._log(f"{'  ' * depth}While {tr('第')} {iter_label} {tr('次执行')}")
-                result = self._execute_steps(normalized["children"], depth + 1)
+                result, loop_control = self._execute_steps(normalized["children"], depth + 1, in_loop=True)
+                if loop_control == self.LOOP_CONTROL_BREAK:
+                    break
+                if loop_control == self.LOOP_CONTROL_CONTINUE:
+                    continue
             if max_iter > 0 and iteration >= max_iter:
                 self._log(f"{tr('达到 While 最大循环次数')} {max_iter}，{tr('已自动停止循环')}")
-            return result
-        return False
+            return result, None
+        return False, None
+
+    def _handle_loop_control_step(self, step_type: str, depth: int, in_loop: bool) -> tuple[bool, str | None]:
+        if not in_loop:
+            self._log(f"{'  ' * depth}{tr('循环控制步骤只能在循环内使用')}")
+            return True, None
+
+        if step_type == self.LOOP_CONTROL_BREAK:
+            return True, self.LOOP_CONTROL_BREAK
+
+        return True, self.LOOP_CONTROL_CONTINUE
 
     def _evaluate_condition(self, step: dict) -> bool:
         condition_type = step["condition_type"]
-        if condition_type == "image_exists":
-            return self._find_image(step)
-        if condition_type == "text_exists":
-            return self._find_text(step)
-        if condition_type == "last_result":
-            return bool(self.last_result)
+        if condition_type in {"image_exists", "image_not_exists"}:
+            result = self._find_image(step)
+            return result if condition_type == "image_exists" else not result
+        if condition_type in {"text_exists", "text_not_exists"}:
+            result = self._find_text(step)
+            return result if condition_type == "text_exists" else not result
+        if condition_type in {"last_result", "last_result_failed"}:
+            result = bool(self.last_result)
+            return result if condition_type == "last_result" else not result
         return False
 
     def _crop(self, step: dict) -> tuple[float, float, float, float]:
@@ -876,6 +1064,7 @@ class WorkflowRunner:
             max_retries=step["max_retries"],
             crop=self._crop(step),
             action=action,
+            press_duration=step.get("press_duration", 0.0),
         ))
 
     def _click_text(self, step: dict) -> bool:
@@ -900,6 +1089,27 @@ class WorkflowRunner:
             crop=self._crop(step),
             include=step["include"],
             action=action,
+            press_duration=step.get("press_duration", 0.0),
+        ))
+
+    def _click_crop(self, step: dict) -> bool:
+        if not str(step.get("crop", "")).strip():
+            self._log(tr("点击坐标失败：未填写检测区域"))
+            return False
+
+        action_map = {
+            "press": "down",
+            "release": "up",
+            "press_and_release": "click",
+        }
+        action = action_map.get(step["click_action"], "click")
+
+        return bool(auto.click_element(
+            self._crop(step),
+            "crop",
+            crop=(0, 0, 1, 1),
+            action=action,
+            press_duration=step.get("press_duration", 0.0),
         ))
 
     def _find_image(self, step: dict) -> bool:
@@ -978,6 +1188,21 @@ class WorkflowRunner:
         except Exception as e:
             self._log(f"{tr('消息推送失败')}：{e}")
             return False
+
+    def _switch_screen(self, step: dict) -> bool:
+        target_screen = step.get("target_screen", "").strip()
+        if not target_screen:
+            self._log(tr("切换界面失败：未选择目标界面"))
+            return False
+
+        if not can_change_to_screen_from_main(target_screen):
+            self._log(tr("切换界面失败：目标界面不可切换"))
+            return False
+
+        from module.screen import screen as screen_manager
+
+        screen_manager.change_to(target_screen)
+        return True
 
     def _press_key(self, step: dict) -> bool:
         """按下指定按键。"""

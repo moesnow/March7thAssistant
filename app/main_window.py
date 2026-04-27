@@ -435,6 +435,7 @@ class MainWindow(MSFluentWindow):
                 ('helpInterface', FIF.BOOK_SHELF, tr('帮助'), HelpInterface),
                 ('warpInterface', FIF.SHARE, tr('抽卡记录'), WarpInterface),
                 ('toolsInterface', FIF.DEVELOPER_TOOLS, tr('工具箱'), ToolsInterface),
+                ('workflowInterface', FIF.CODE, tr('流程编排'), WorkflowInterface),
             ]
             for attr, icon, label, cls in top_specs:
                 old = getattr(self, attr, None)

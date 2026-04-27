@@ -679,7 +679,7 @@ class Automation(metaclass=SingletonMeta):
                 time.sleep(retry_delay)  # 在重试前等待一定时间
         return None
 
-    def click_element_with_pos(self, coordinates, offset=(0, 0), action="click", cnt=1):
+    def click_element_with_pos(self, coordinates, offset=(0, 0), action="click", cnt=1, press_duration: float = 0.0):
         """
         在指定坐标上执行点击操作。
 
@@ -692,23 +692,33 @@ class Automation(metaclass=SingletonMeta):
         - 如果操作成功，则返回True；否则返回False。
         """
         x, y = self.calculate_click_position(coordinates, offset)
-        # 动作到方法的映射
-        action_map = {
-            "click": self.mouse_click,
-            "down": self.mouse_down,
-            "up": self.mouse_up,
-            "move": self.mouse_move,
-        }
-
-        if action in action_map:
-            for _ in range(cnt):
-                action_map[action](x, y)
-        else:
+        if action not in {"click", "down", "up", "move"}:
             raise ValueError(f"未知的动作类型: {action}")
+
+        normalized_press_duration = max(0.0, float(press_duration or 0.0))
+
+        for _ in range(cnt):
+            if action == "click":
+                if normalized_press_duration > 0:
+                    self.mouse_down(x, y)
+                    time.sleep(normalized_press_duration)
+                    self.mouse_up()
+                else:
+                    self.mouse_click(x, y)
+            elif action == "down":
+                self.mouse_down(x, y)
+                if normalized_press_duration > 0:
+                    time.sleep(normalized_press_duration)
+                    self.mouse_up()
+            elif action == "up":
+                self.mouse_move(x, y)
+                self.mouse_up()
+            elif action == "move":
+                self.mouse_move(x, y)
 
         return True
 
-    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None):
+    def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None, press_duration: float = 0.0):
         """
         查找并点击屏幕上的元素。
 
@@ -725,7 +735,7 @@ class Automation(metaclass=SingletonMeta):
         coordinates = self.find_element(target, find_type, threshold, max_retries, crop, take_screenshot, relative, scale_range, include,
                                         need_ocr, source, source_type, pixel_bgr, position, retry_delay, use_background_screenshot)
         if coordinates:
-            return self.click_element_with_pos(coordinates, offset, action)
+            return self.click_element_with_pos(coordinates, offset, action, press_duration=press_duration)
         return False
 
     def get_single_line_text(self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3, retry_delay=0.0):

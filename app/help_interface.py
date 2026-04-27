@@ -1,11 +1,13 @@
+import os
+import sys
+
+import markdown
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties
 from qfluentwidgets import qconfig, ScrollArea, Pivot
 from .common.style_sheet import StyleSheet
 from module.localization import tr
-import markdown
-import sys
 
 
 class HelpInterface(ScrollArea):
@@ -19,6 +21,7 @@ class HelpInterface(ScrollArea):
 
         self.helpLabel = QLabel(tr("帮助"), self)
         self.tutorialLabel = QLabel(parent)
+        self.workflowLabel = QLabel(parent)
         self.faqLabel = QLabel(parent)
         self.tasksLabel = QLabel(parent)
         self.changelogLabel = QLabel(parent)
@@ -67,28 +70,12 @@ th, td {
 }
 </style>
 """
-        # Load Tutorial based on language setting
         from module.config import cfg
-        tutorial_file = "./assets/docs/Tutorial.md"
-        if hasattr(cfg, 'ui_language_now'):
-            if cfg.ui_language_now == "ja_JP":
-                import os
-                ja_file = "./assets/docs/Tutorial_ja.md"
-                if os.path.exists(ja_file):
-                    tutorial_file = ja_file
-            elif cfg.ui_language_now == "ko_KR":
-                import os
-                ko_file = "./assets/docs/Tutorial_ko.md"
-                if os.path.exists(ko_file):
-                    tutorial_file = ko_file
-            elif cfg.ui_language_now == "en_US":
-                import os
-                en_file = "./assets/docs/Tutorial_en.md"
-                if os.path.exists(en_file):
-                    tutorial_file = en_file
+        tutorial_file = self._get_localized_doc_path("Tutorial")
         try:
             with open(tutorial_file, 'r', encoding='utf-8') as file:
-                self.content = file.read().replace('/assets/docs/Background.md', 'https://m7a.top/#/assets/docs/Background').replace('/assets/docs/Docker.md', 'https://m7a.top/#/assets/docs/Docker')
+                self.content = file.read().replace('/assets/docs/Background.md', 'https://m7a.top/#/assets/docs/Background').replace('/assets/docs/Docker.md',
+                                                                                                                                     'https://m7a.top/#/assets/docs/Docker').replace('/assets/docs/Workflow.md', 'https://m7a.top/#/assets/docs/Workflow')
                 self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
             sys.exit(1)
@@ -101,6 +88,21 @@ th, td {
         self.tutorialLabel.setOpenExternalLinks(True)
         self.tutorialLabel.linkActivated.connect(self.open_url)
 
+        workflow_file = self._get_localized_doc_path("Workflow")
+        try:
+            with open(workflow_file, 'r', encoding='utf-8') as file:
+                self.content = file.read()
+        except FileNotFoundError:
+            sys.exit(1)
+        self.workflow_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
+
+        if qconfig.theme.name == "DARK":
+            self.workflowLabel.setText(self.workflow_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+        else:
+            self.workflowLabel.setText(self.workflow_content)
+        self.workflowLabel.setOpenExternalLinks(True)
+        self.workflowLabel.linkActivated.connect(self.open_url)
+
         faq_style = """
 <style>
 a {
@@ -109,24 +111,7 @@ a {
 }
 </style>
 """
-        # Load FAQ based on language setting
-        faq_file = "./assets/docs/FAQ.md"
-        if hasattr(cfg, 'ui_language_now'):
-            if cfg.ui_language_now == "ja_JP":
-                import os
-                ja_faq_file = "./assets/docs/FAQ_ja.md"
-                if os.path.exists(ja_faq_file):
-                    faq_file = ja_faq_file
-            elif cfg.ui_language_now == "ko_KR":
-                import os
-                ko_faq_file = "./assets/docs/FAQ_ko.md"
-                if os.path.exists(ko_faq_file):
-                    faq_file = ko_faq_file
-            elif cfg.ui_language_now == "en_US":
-                import os
-                en_faq_file = "./assets/docs/FAQ_en.md"
-                if os.path.exists(en_faq_file):
-                    faq_file = en_faq_file
+        faq_file = self._get_localized_doc_path("FAQ")
         try:
             with open(faq_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
@@ -310,24 +295,7 @@ a {
 }
 </style>
 """
-        # Load Changelog based on language setting
-        changelog_file = "./assets/docs/Changelog.md"
-        if hasattr(cfg, 'ui_language_now'):
-            if cfg.ui_language_now == "ja_JP":
-                import os
-                ja_changelog_file = "./assets/docs/Changelog_ja.md"
-                if os.path.exists(ja_changelog_file):
-                    changelog_file = ja_changelog_file
-            elif cfg.ui_language_now == "ko_KR":
-                import os
-                ko_changelog_file = "./assets/docs/Changelog_ko.md"
-                if os.path.exists(ko_changelog_file):
-                    changelog_file = ko_changelog_file
-            elif cfg.ui_language_now == "en_US":
-                import os
-                en_changelog_file = "./assets/docs/Changelog_en.md"
-                if os.path.exists(en_changelog_file):
-                    changelog_file = en_changelog_file
+        changelog_file = self._get_localized_doc_path("Changelog")
         try:
             with open(changelog_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
@@ -348,6 +316,7 @@ a {
 
         # self.vBoxLayout.addWidget(self.tutorialLabel, 0, Qt.AlignTop)
         self.addSubInterface(self.tutorialLabel, 'tutorialLabel', tr('使用教程'))
+        self.addSubInterface(self.workflowLabel, 'workflowLabel', tr('流程编排'))
         self.addSubInterface(self.faqLabel, 'faqLabel', tr('常见问题'))
         self.addSubInterface(self.tasksLabel, 'tasksLabel', tr('每日实训'))
         self.addSubInterface(self.changelogLabel, 'changelogLabel', tr('更新日志'))
@@ -385,11 +354,31 @@ a {
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
 
+    def _get_localized_doc_path(self, base_name: str) -> str:
+        from module.config import cfg
+
+        language_suffix_map = {
+            "ja_JP": "ja",
+            "ko_KR": "ko",
+            "en_US": "en",
+        }
+        suffix = language_suffix_map.get(getattr(cfg, 'ui_language_now', ''), '')
+        if suffix:
+            localized_path = f"./assets/docs/{base_name}_{suffix}.md"
+            if os.path.exists(localized_path):
+                return localized_path
+        return f"./assets/docs/{base_name}.md"
+
     def __themeChanged(self):
         if qconfig.theme.name == "DARK":
             self.tutorialLabel.setText(self.tutorial_content.replace("border: 1px solid black;", "border: 1px solid white;"))
         else:
             self.tutorialLabel.setText(self.tutorial_content)
+
+        if qconfig.theme.name == "DARK":
+            self.workflowLabel.setText(self.workflow_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+        else:
+            self.workflowLabel.setText(self.workflow_content)
 
         if qconfig.theme.name == "DARK":
             self.tasksLabel.setText(self.tasks_content.replace("border: 1px solid black;", "border: 1px solid white;"))
