@@ -122,7 +122,7 @@ class Power:
             Power.merge("immersifier")
 
     @staticmethod
-    def process(instance_type: str, instance_name: str, planned_attempts: int = 0):
+    def process(instance_type: str, instance_name: str, planned_attempts: int = 0, immersifier_only: bool = False):
         instances_power = {
             "拟造花萼（金）": 10,
             "拟造花萼（赤）": 10,
@@ -149,9 +149,8 @@ class Power:
         executed_attempts = 0
         failed_runs = 0
         FAILED_LIMIT = 3
-        while failed_runs <= FAILED_LIMIT:
-            power = Power.get()
-            attempts = power // instance_power_min
+        while failed_runs < FAILED_LIMIT:
+            
             
             
             if "饰品提取" in instance_type:
@@ -171,9 +170,17 @@ class Power:
                 #     return True
 
                 immersifier_count = Power.get_immersifier_count()
-                attempts += immersifier_count
-                log.info(f"开拓力: {power} + 沉浸器: {immersifier_count} = {attempts} 次挑战")
+                if immersifier_only:
+                    attempts = immersifier_count
+                    log.info(f"只使用沉浸器进行 {attempts} 次挑战")
+                else:
+                    power = Power.get()
+                    attempts = power // instance_power_min
+                    attempts += immersifier_count
+                    log.info(f"开拓力: {power} + 沉浸器: {immersifier_count} = {attempts} 次挑战")
             else:
+                power = Power.get()
+                attempts = power // instance_power_min
                 log.info(f"开拓力: {power} = {attempts} 次挑战")
                 
             if attempts == 0:

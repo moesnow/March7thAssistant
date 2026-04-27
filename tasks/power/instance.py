@@ -273,7 +273,7 @@ class Instance:
                     screen.wait_for_screen_change('main')
                     return False
         else:
-            if "拟造花萼" in instance_type or "凝滞虚影" in instance_type or "侵蚀隧洞" in instance_type:
+            if "拟造花萼" in instance_type or "凝滞虚影" in instance_type or "侵蚀隧洞" in instance_type or "历战余响" in instance_type:
                 # 选择挑战次数
                 # challenges_count_max = {
                 #     "拟造花萼（金）": 24,

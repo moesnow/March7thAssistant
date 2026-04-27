@@ -20,7 +20,6 @@ class DoubleActivity(ActivityTemplate):
                     return int(text.split("/")[0])
         return 0
 
-    @abstractmethod
     def _run_instances(self, reward_count):
         if reward_count == 0:
             return True

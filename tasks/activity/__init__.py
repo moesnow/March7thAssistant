@@ -16,11 +16,11 @@ class ActivityManager:
         self.giftofradiance = CheckInActivity("巡光之礼", cfg.activity_dailycheckin_enable)
         self.festivegifts = CheckInActivity("庆典祝礼", cfg.activity_dailycheckin_enable)
         
-        self.gardenofplenty = DoubleActivity("花藏繁生", cfg.activity_gardenofplenty_enable, cfg.activity_gardenofplenty_instance_type, cfg.instance_names, cfg.instance_names_challenge_count)
-        self.realmofthestrange = DoubleActivity("异器盈界", cfg.activity_realmofthestrange_enable, "侵蚀隧洞", cfg.instance_names, cfg.instance_names_challenge_count)
-        self.realmofthestrange3 = DoubleActivity("异器盈界300%", cfg.activity_realmofthestrange_enable, "侵蚀隧洞", cfg.instance_names, cfg.instance_names_challenge_count)
-        self.planarfissure = DoubleActivity("位面分裂", cfg.activity_planarfissure_enable, "位面分裂", cfg.instance_names)
-        self.planarfissure3 = DoubleActivity("位面分裂300%", cfg.activity_planarfissure_enable, "位面分裂", cfg.instance_names)
+        self.gardenofplenty = DoubleActivity("花藏繁生", cfg.activity_gardenofplenty_enable, cfg.activity_gardenofplenty_instance_type, cfg.instance_names)
+        self.realmofthestrange = DoubleActivity("异器盈界", cfg.activity_realmofthestrange_enable, "侵蚀隧洞", cfg.instance_names)
+        self.realmofthestrange3 = DoubleActivity("异器盈界300%", cfg.activity_realmofthestrange_enable, "侵蚀隧洞", cfg.instance_names)
+        self.planarfissure = DoubleActivity("位面分裂", cfg.activity_planarfissure_enable, "饰品提取", cfg.instance_names)
+        self.planarfissure3 = DoubleActivity("位面分裂300%", cfg.activity_planarfissure_enable, "饰品提取", cfg.instance_names)
 
         self.activity_functions = {
             "巡星之礼": self.giftofodyssey.start,

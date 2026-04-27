@@ -293,7 +293,7 @@ class Universe:
             except Exception as e:
                 log.error(f"获取培养目标副本失败: {e}")
 
-            Power.process("饰品提取", instance_name, planned_attempts = immersifier_count)
+            Power.process("饰品提取", instance_name, immersifier_only = True)
 
     @staticmethod
     def gui():

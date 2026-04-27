@@ -119,7 +119,7 @@ class DivergentUniverse:
             except Exception as e:
                 log.error(f"获取培养目标副本失败: {e}")
 
-            Power.process("饰品提取", instance_name, planned_attempts = immersifier_count)
+            Power.process("饰品提取", instance_name, immersifier_only = True)
 
     def start_war(self, type: Literal["normal", "cycle"] = "normal") -> bool:
         log.info("开始「差分宇宙」")
