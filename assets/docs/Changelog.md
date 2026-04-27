@@ -1,7 +1,8 @@
 # 更新日志
 
-## v2026.4.30-1
+## v2026.5.1
 - 新增 “流程编排” 功能，支持创建简单的自动化流程
+- 支持饰品提取和历战余响连续挑战 [#1014](https://github.com/moesnow/March7thAssistant/issues/1014) @CL4R3T
 - 修复定时任务中的外部程序对 BetterGI 的支持 [#1011](https://github.com/moesnow/March7thAssistant/pull/1011) @Daydreamer114
 - 优化了云游戏的截图性能，提高了差分宇宙任务的稳定性
 - 优化性能和稳定性并修复若干已知问题
