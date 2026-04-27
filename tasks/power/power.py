@@ -71,9 +71,6 @@ class Power:
                 updated_plan.append(plan)
                 continue
 
-            # 获取副本所需体力
-            instance_power = instances_power.get(instance_type, 10)
-
             log.info(f"执行体力计划 [{i + 1}/{len(power_plan)}]: {instance_type} - {instance_name}, 计划次数: {count}")
 
             try:

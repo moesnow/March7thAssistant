@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from module.automation import auto
 from module.logger import log
 from .activitytemplate import ActivityTemplate
@@ -30,10 +29,15 @@ class DoubleActivity(ActivityTemplate):
             self.instance_names[self.instance_type]
         )
         
-        Power.process(instance_type, instance_name, planned_attempts = reward_count)
-        
-        # 暂时先return True保证不会无限循环，还需要分析如何处理可能的错误
-        return True
+        processed_count = Power.process(instance_type, instance_name, planned_attempts=reward_count)
+        if isinstance(processed_count, int):
+            if processed_count > 0:
+                return True
+            if processed_count == 0:
+                log.info(f"{self.name}未执行副本，可能是体力不足，跳过重试")
+                return True
+        log.warning(f"{self.name}副本执行失败，Power.process返回值异常：{processed_count}")
+        return False
 
     def run(self):
         reward_count = self._get_reward_count()

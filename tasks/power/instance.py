@@ -201,8 +201,11 @@ class Instance:
             
             
             count = attempts_per_run - 1
-            result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10, crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
-            if result:
+            if count > 0:
+                result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10, crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
+                if not result:
+                    log.warning(f"需要设置连续挑战次数为 {attempts_per_run}，但未识别到“+”按钮，取消本次开始挑战")
+                    return False
                 for i in range(count):
                     auto.click_element_with_pos(result)
                     time.sleep(0.5)
@@ -286,8 +289,11 @@ class Instance:
                 # if not 0 <= count <= challenge_count_max - 1:
                 #     Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="连续挑战次数错误"))
                 #     return False
-                result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10, crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
-                if result:
+                if count > 0:
+                    result = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.8, max_retries=10, crop=(1174.0 / 1920, 775.0 / 1080, 738.0 / 1920, 174.0 / 1080))
+                    if not result:
+                        log.warning(f"需要设置连续挑战次数为 {attempts_per_run}，但未识别到“+”按钮，取消本次开始挑战")
+                        return False
                     for i in range(count):
                         auto.click_element_with_pos(result)
                         time.sleep(0.5)
