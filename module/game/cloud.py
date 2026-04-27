@@ -8,6 +8,7 @@ import base64
 import requests
 import time
 import io
+import ctypes
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, SessionNotCreatedException
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -230,6 +231,13 @@ class CloudGameController(GameControllerBase):
             "--disable-blink-features=AutomationControlled",  # 去除自动化痕迹，防止被人机验证
             f"--remote-debugging-port={self.cfg.browser_debug_port}",   # 调试端口，可用于复用浏览器
         ]
+        if not headless:
+            args += [
+                "--disable-backgrounding-occluded-windows",  # 避免窗口被遮挡/最小化后页面降速
+                "--disable-renderer-backgrounding",          # 避免渲染进程在后台被降级
+                "--disable-background-timer-throttling",     # 避免后台定时器被节流
+                "--disable-features=CalculateNativeWinOcclusion",  # 关闭 Windows 原生遮挡检测
+            ]
         if self.cfg.browser_persistent_enable:
             args += [
                 f"--user-data-dir={self.user_profile_path}",   # UserProfile 路径
@@ -1047,10 +1055,255 @@ class CloudGameController(GameControllerBase):
             raise Exception("云游戏剩余时长为 0，停止运行")
         return False
 
-    def take_screenshot(self) -> bytes:
-        """浏览器内截图"""
+    def _take_video_screenshot(self, crop=(0, 0, 1, 1)) -> tuple[bytes, tuple[int, int]] | None:
+        """直接从云游戏画面元素抓取当前帧，避免整页截图开销。"""
         if not self.driver:
             return None
+
+        try:
+            result = self.driver.execute_async_script(
+                """
+                const crop = arguments[0];
+                const callback = arguments[arguments.length - 1];
+
+                const safeNumber = (value) => Number.isFinite(value) ? Number(value) : null;
+                const buildRect = (rect) => ({
+                    x: safeNumber(rect.x),
+                    y: safeNumber(rect.y),
+                    width: safeNumber(rect.width),
+                    height: safeNumber(rect.height),
+                });
+                const buildSourceDebug = (element) => {
+                    if (!element) {
+                        return null;
+                    }
+                    const tagName = element.tagName ? element.tagName.toUpperCase() : null;
+                    const computedStyle = window.getComputedStyle(element);
+                    return {
+                        tagName,
+                        className: String(element.className ?? ''),
+                        sourceKind: tagName === 'CANVAS' ? 'canvas' : (tagName === 'VIDEO' ? 'video' : 'unknown'),
+                        readyState: safeNumber('readyState' in element ? element.readyState : null),
+                        networkState: safeNumber('networkState' in element ? element.networkState : null),
+                        paused: 'paused' in element ? Boolean(element.paused) : null,
+                        ended: 'ended' in element ? Boolean(element.ended) : null,
+                        muted: 'muted' in element ? Boolean(element.muted) : null,
+                        currentTime: safeNumber('currentTime' in element ? element.currentTime : null),
+                        duration: safeNumber('duration' in element ? element.duration : null),
+                        videoWidth: safeNumber('videoWidth' in element ? element.videoWidth : null),
+                        videoHeight: safeNumber('videoHeight' in element ? element.videoHeight : null),
+                        canvasWidth: safeNumber('width' in element ? element.width : null),
+                        canvasHeight: safeNumber('height' in element ? element.height : null),
+                        clientWidth: safeNumber(element.clientWidth),
+                        clientHeight: safeNumber(element.clientHeight),
+                        offsetWidth: safeNumber(element.offsetWidth),
+                        offsetHeight: safeNumber(element.offsetHeight),
+                        currentSrc: typeof element.currentSrc === 'string' && element.currentSrc ? element.currentSrc.slice(0, 300) : null,
+                        crossOrigin: 'crossOrigin' in element ? (element.crossOrigin ?? null) : null,
+                        rect: buildRect(element.getBoundingClientRect()),
+                        display: computedStyle.display,
+                        visibility: computedStyle.visibility,
+                        opacity: computedStyle.opacity,
+                    };
+                };
+                const getSourceInfo = (element) => {
+                    const tagName = element.tagName ? element.tagName.toUpperCase() : '';
+                    if (tagName === 'CANVAS') {
+                        return {
+                            kind: 'canvas',
+                            width: safeNumber(element.width) ?? safeNumber(element.clientWidth),
+                            height: safeNumber(element.height) ?? safeNumber(element.clientHeight),
+                        };
+                    }
+                    if (tagName === 'VIDEO') {
+                        return {
+                            kind: 'video',
+                            width: safeNumber(element.videoWidth) ?? safeNumber(element.clientWidth),
+                            height: safeNumber(element.videoHeight) ?? safeNumber(element.clientHeight),
+                        };
+                    }
+                    return {
+                        kind: 'unknown',
+                        width: safeNumber(element.width) ?? safeNumber(element.videoWidth) ?? safeNumber(element.clientWidth),
+                        height: safeNumber(element.height) ?? safeNumber(element.videoHeight) ?? safeNumber(element.clientHeight),
+                    };
+                };
+                const exportCanvas = (canvas, sourceWidth, sourceHeight, stage, debug) => {
+                    debug.stage = stage;
+                    canvas.toBlob((blob) => {
+                        debug.stage = stage + '_callback';
+                        if (!blob) {
+                            callback({ error: 'canvas.toBlob 返回空结果', debug });
+                            return;
+                        }
+
+                        debug.blobSize = blob.size;
+                        debug.blobType = blob.type;
+
+                        const reader = new FileReader();
+                        reader.onloadend = () => callback({
+                            dataUrl: reader.result,
+                            sourceWidth,
+                            sourceHeight,
+                            debug: {
+                                ...debug,
+                                stage: 'reader_done',
+                                dataUrlLength: typeof reader.result === 'string' ? reader.result.length : null,
+                            },
+                        });
+                        reader.onerror = () => callback({
+                            error: reader.error ? String(reader.error) : 'FileReader 读取失败',
+                            debug: {
+                                ...debug,
+                                stage: 'reader_failed',
+                            },
+                        });
+                        reader.readAsDataURL(blob);
+                    }, 'image/png');
+                };
+
+                const debug = {
+                    stage: 'init',
+                    crop,
+                    locationHref: window.location.href,
+                    documentReadyState: document.readyState,
+                    gamePlayerCount: document.querySelectorAll('.game-player').length,
+                    videoCount: document.querySelectorAll('.game-player__video').length,
+                    canvasPlayerCount: document.querySelectorAll('#canvas-player.game-player__video').length,
+                    timestamp: new Date().toISOString(),
+                };
+
+                try {
+                    debug.stage = 'query_source';
+                    const source = document.querySelector('.game-player__video');
+                    debug.video = buildSourceDebug(source);
+
+                    if (!source) {
+                        callback({ error: '未找到 .game-player__video 元素', debug });
+                        return;
+                    }
+
+                    const sourceInfo = getSourceInfo(source);
+                    debug.sourceKind = sourceInfo.kind;
+                    debug.sourceWidth = sourceInfo.width;
+                    debug.sourceHeight = sourceInfo.height;
+
+                    if (sourceInfo.kind === 'unknown') {
+                        debug.stage = 'unknown_source';
+                        callback({ error: '截图源既不是 canvas 也不是 video', debug });
+                        return;
+                    }
+
+                    if (!sourceInfo.width || !sourceInfo.height) {
+                        debug.stage = 'source_not_ready';
+                        callback({ error: '游戏画面元素尺寸为 0，可能尚未开始渲染', debug });
+                        return;
+                    }
+
+                    debug.stage = 'compute_crop';
+                    const sourceWidth = sourceInfo.width;
+                    const sourceHeight = sourceInfo.height;
+                    const left = Math.min(sourceWidth - 1, Math.max(0, Math.floor(sourceWidth * crop[0])));
+                    const top = Math.min(sourceHeight - 1, Math.max(0, Math.floor(sourceHeight * crop[1])));
+                    const width = Math.min(sourceWidth - left, Math.max(1, Math.floor(sourceWidth * crop[2])));
+                    const height = Math.min(sourceHeight - top, Math.max(1, Math.floor(sourceHeight * crop[3])));
+                    debug.captureRect = { left, top, width, height };
+                    debug.isFullCrop = left == 0 && top == 0 && width == sourceWidth && height == sourceHeight;
+
+                    if (sourceInfo.kind === 'canvas' && debug.isFullCrop) {
+                        exportCanvas(source, sourceWidth, sourceHeight, 'source_canvas_to_blob', debug);
+                        return;
+                    }
+
+                    debug.stage = 'create_canvas';
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    if (!ctx) {
+                        debug.stage = 'get_context_failed';
+                        callback({ error: '无法创建 canvas 2d 上下文', debug });
+                        return;
+                    }
+
+                    debug.stage = 'draw_image';
+                    ctx.drawImage(source, left, top, width, height, 0, 0, width, height);
+
+                    try {
+                        debug.stage = 'read_canvas';
+                        const pixel = ctx.getImageData(0, 0, Math.min(1, width), Math.min(1, height));
+                        debug.sampleRgba = pixel ? Array.from(pixel.data.slice(0, 4)) : null;
+                    } catch (readError) {
+                        debug.readCanvasError = String(readError);
+                    }
+
+                    exportCanvas(canvas, sourceWidth, sourceHeight, 'to_blob', debug);
+                } catch (error) {
+                    callback({
+                        error: String(error),
+                        debug: {
+                            ...debug,
+                            stage: 'exception',
+                        },
+                    });
+                }
+                """,
+                list(crop),
+            )
+        except Exception as e:
+            page_url = None
+            page_title = None
+            try:
+                page_url = self.driver.current_url
+                page_title = self.driver.title
+            except Exception:
+                pass
+            self.log_debug(
+                f"执行视频元素截图脚本异常: crop={crop}, url={page_url}, title={page_title}, error={e}"
+            )
+            raise
+
+        if not result:
+            self.log_debug(f"视频元素截图返回空结果: crop={crop}")
+            return None
+
+        debug_info = result.get("debug")
+
+        if result.get("error"):
+            if debug_info is not None:
+                try:
+                    self.log_debug(
+                        f"视频元素截图失败调试信息: {json.dumps(debug_info, ensure_ascii=False, default=str)}"
+                    )
+                except Exception as log_err:
+                    self.log_debug(f"视频元素截图调试信息序列化失败: {log_err}; 原始调试信息: {debug_info}")
+            error_message = result["error"]
+            if isinstance(debug_info, dict) and debug_info.get("stage"):
+                error_message = f"{error_message} (stage={debug_info['stage']})"
+            raise RuntimeError(error_message)
+
+        data_url = result.get("dataUrl")
+        if not data_url or "," not in data_url:
+            if debug_info is not None:
+                try:
+                    self.log_debug(
+                        f"视频元素截图返回了无效 dataUrl，调试信息: {json.dumps(debug_info, ensure_ascii=False, default=str)}"
+                    )
+                except Exception as log_err:
+                    self.log_debug(f"视频元素截图调试信息序列化失败: {log_err}; 原始调试信息: {debug_info}")
+            else:
+                self.log_debug(f"视频元素截图返回的 dataUrl 无效: keys={list(result.keys())}")
+            return None
+
+        _, encoded = data_url.split(",", 1)
+        return base64.b64decode(encoded), (int(result["sourceWidth"]), int(result["sourceHeight"]))
+
+    def _take_browser_screenshot(self) -> bytes | None:
+        """使用浏览器原生截图能力作为回退方案。"""
+        if not self.driver:
+            return None
+
         # 仅在 macOS 非 headless 模式下使用 CDP 截图，避免浏览器被切换到前台
         if not self.cfg.browser_headless_enable and platform.system() == "Darwin":
             # Chrome/Chromium 在非 headless 模式下调用 get_screenshot_as_png() 时，
@@ -1064,8 +1317,46 @@ class CloudGameController(GameControllerBase):
                 if data:
                     return base64.b64decode(data)
             except Exception as e:
-                self.log_warning(f"CDP 截图失败，回退 WebDriver 截图: {e}")
+                self.log_debug(f"CDP 截图失败，回退 WebDriver 截图: {e}")
+
         return self.driver.get_screenshot_as_png()
+
+    def _ensure_window_not_minimized_for_frame_capture(self) -> None:
+        """视频帧截图依赖前台窗口持续渲染，最小化时先恢复窗口。"""
+        if self.cfg.browser_headless_enable or sys.platform != "win32":
+            return
+
+        hwnd = self.get_window_handle()
+        if not hwnd:
+            return
+
+        try:
+            user32 = ctypes.windll.user32
+            SW_RESTORE = 9
+            if user32.IsIconic(hwnd):
+                self.log_warning("检测到云游戏浏览器已最小化，视频帧可能停止更新，正在恢复窗口")
+                user32.ShowWindow(hwnd, SW_RESTORE)
+                time.sleep(0.1)
+        except Exception as e:
+            self.log_debug(f"恢复云游戏窗口失败，继续尝试截图: {e}")
+
+    def take_screenshot(self, crop=(0, 0, 1, 1), prefer_frame=True) -> bytes | tuple[bytes, tuple[int, int]] | None:
+        """浏览器内截图"""
+        if not self.driver:
+            return None
+
+        if prefer_frame:
+            try:
+                self._ensure_window_not_minimized_for_frame_capture()
+                video_screenshot = self._take_video_screenshot(crop=crop)
+                if video_screenshot:
+                    return video_screenshot
+                else:
+                    self.log_debug("游戏画面元素截图失败，回退到浏览器截图")
+            except Exception as e:
+                self.log_debug(f"游戏画面元素截图失败，回退浏览器截图: {e}")
+
+        return self._take_browser_screenshot()
 
     def execute_cdp_cmd(self, cmd: str, cmd_args: dict):
         return self.driver.execute_cdp_cmd(cmd, cmd_args)

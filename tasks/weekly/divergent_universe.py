@@ -565,7 +565,7 @@ class DivergentUniverse:
                                 log.info("中断事件处理，已检测到随意门并成功进入")
                                 return
 
-                    if not stable_mode and time.monotonic() - area_window_start_time >= 2:
+                    if time.monotonic() - area_window_start_time >= 2:
                         area_growth_ok = (
                             area_window_start_value is not None
                             and area_window_latest_value is not None
@@ -606,10 +606,11 @@ class DivergentUniverse:
                 # 重进关卡是最简单粗暴的解决办法，能大大提高稳定性
                 log.info("事件交互成功")
 
-                # 如果只有一个事件且检测到了随意门，在非稳定模式下快速的尝试一下直接去找门
-                if not stable_mode and event_length == 1:
+                # 如果只有一个事件且检测到了随意门，尝试一下直接去找门
+                if event_length == 1:
                     time.sleep(2)  # 事件卡消失要一定时间
-                    if self.detect_random_door and self.process_random_door(timeout=10):
+                    timeout = 40 if stable_mode else 10
+                    if self.detect_random_door and self.process_random_door(timeout=timeout):
                         log.info("中断事件处理，已检测到随意门并成功进入")
                         return
 
@@ -664,8 +665,6 @@ class DivergentUniverse:
             else:
                 log.info("未检测到敌对目标")
             time.sleep(0.8)
-            if cfg.cloud_game_enable or cfg.weekly_divergent_stable_mode:
-                time.sleep(0.5)
             auto.press_key_up("w")
             if not cfg.cloud_game_enable and not cfg.weekly_divergent_stable_mode:
                 auto.press_key_up("shift")

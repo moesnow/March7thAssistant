@@ -57,7 +57,9 @@ class ToolManager:
                 time.sleep(0.5)  # 等待窗口切换
 
             log.debug("开始截图...")
+            start_time = time.monotonic()
             result = Screenshot.take_screenshot(cfg.game_title_name)
+            log.info(f"截图完成，耗时 {(time.monotonic() - start_time) * 1000:.2f} 毫秒")
             if result:
                 log.debug(f"截图成功，图像尺寸: {result[0].size}")
                 self.screenshot_data = result[0]

@@ -182,7 +182,7 @@ def start_game():
         if not cloud_game.is_in_game():
             if not cloud_game.enter_cloud_game():
                 raise Exception("进入云游戏失败")
-            # time.sleep(10)    #dont need to wait
+            time.sleep(10)
             if not wait_until(lambda: cloud_game_check_and_enter(), cfg.start_game_timeout * 60):
                 raise TimeoutError("查找并点击进入按钮超时")
             time.sleep(10)

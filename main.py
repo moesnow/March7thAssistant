@@ -84,6 +84,7 @@ from module.ocr import ocr
 from utils.screenshot_util import save_error_screenshot
 
 import tasks.game as game
+from module.game import cloud_game
 import tasks.reward as reward
 import tasks.challenge as challenge
 import tasks.version as version
@@ -129,6 +130,9 @@ def run_sub_task(action):
     if action != "currencywarstemp" and action != "divergenttemp":
         game.start()
     else:
+        if cfg.cloud_game_enable:
+            if not cloud_game.start_game_process():
+                raise Exception("启动或连接浏览器失败")
         game.switch_to_game()
 
     def currencywars(mode=None):
