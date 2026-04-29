@@ -27,6 +27,7 @@ import pygetwindow as gw
 from PySide6.QtCore import QObject, QTimer
 
 from module.automation import auto
+from module.config import cfg
 from module.logger import log
 
 from ._config import (
@@ -279,7 +280,7 @@ class AutoPlot(QObject):
             now = time.monotonic()
             if now - self._last_auto_battle_check >= Threshold.AUTO_BATTLE_COOLDOWN:
                 log.info("尝试开启自动战斗")
-                auto.press_key("v")
+                auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
                 self._last_auto_battle_check = now
 
         # 2. 手机对话页面（可通过开关控制）

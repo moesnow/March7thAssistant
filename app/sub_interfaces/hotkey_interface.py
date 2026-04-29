@@ -1,5 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QLabel
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import MessageBox
 
@@ -16,6 +17,7 @@ class HotkeyInterface(MessageBox):
             tr("秘技（只对清体力和逐光捡金场景生效）"): "hotkey_technique",
             tr("地图"): "hotkey_map",
             tr("跃迁"): "hotkey_warp",
+            tr("自动战斗"): "hotkey_auto_battle",
             tr("停止任务（全局热键，支持后台）"): "hotkey_stop_task"
         }
 
@@ -46,6 +48,8 @@ class HotkeyInterface(MessageBox):
                 icon = FIF.LEAF
             elif config == "hotkey_warp":
                 icon = FIF.LEAF
+            elif config == "hotkey_auto_battle":
+                icon = FIF.GAME
             else:
                 icon = FIF.SETTING
 
@@ -59,6 +63,15 @@ class HotkeyInterface(MessageBox):
 
             self.textLayout.addWidget(pushButton, 0, Qt.AlignmentFlag.AlignTop)
             self.pushButton_dict[config] = pushButton
+
+        # 添加提示标签：交互 F / 角色详细 C 不允许修改
+        hint_label = QLabel(tr("注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"))
+        hint_font = QFont()
+        hint_font.setPointSize(9)
+        hint_label.setFont(hint_font)
+        hint_label.setStyleSheet("color: gray;")
+        hint_label.setWordWrap(True)
+        self.textLayout.addWidget(hint_label, 0, Qt.AlignmentFlag.AlignTop)
 
         self.yesButton.clicked.connect(self._onConfirmClicked)
         self.cancelButton.clicked.connect(self._onCancelClicked)

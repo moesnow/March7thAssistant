@@ -399,7 +399,7 @@ class PushSettingCardDate(CustomPushSettingCard):
 class PushSettingCardKey(CustomPushSettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
         self.configvalue = str(cfg.get_value(configname))
-        super().__init__(text, icon, title, configname, self.configvalue, parent)
+        super().__init__(text, icon, title, configname, self._format_key_display(self.configvalue), parent)
         self.button.pressed.connect(self.__onpressed)
         self.button.released.connect(self.__onreleased)
 
@@ -414,8 +414,22 @@ class PushSettingCardKey(CustomPushSettingCard):
             key_name = self._get_key_name(e)
             if key_name:
                 cfg.set_value(self.configname, key_name)
-                self.contentLabel.setText(key_name)
-                self.button.setText(tr("已改为 {}").format(key_name))
+                self.contentLabel.setText(self._format_key_display(key_name))
+                self.button.setText(tr("已改为 {}").format(self._format_key_display(key_name)))
+
+    @staticmethod
+    def _format_key_display(key_name: str) -> str:
+        """将存储的小写键名格式化为显示用的大写/首字母大写形式。"""
+        if not key_name:
+            return key_name
+        # f1-f12 → F1-F12
+        if len(key_name) >= 2 and key_name[0] == 'f' and key_name[1:].isdigit():
+            return 'F' + key_name[1:]
+        # 单个字母 → 大写
+        if len(key_name) == 1 and key_name.isalpha():
+            return key_name.upper()
+        # 其他特殊键 → 首字母大写
+        return key_name[0].upper() + key_name[1:]
 
     def _get_key_name(self, event):
         function_keys = {

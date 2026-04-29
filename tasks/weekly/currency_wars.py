@@ -1823,7 +1823,7 @@ class CurrencyWars:
         """
         if cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
             log.info("尝试开启自动战斗")
-            auto.press_key("v")
+            auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
 
     def check_click_continue(self):
         """

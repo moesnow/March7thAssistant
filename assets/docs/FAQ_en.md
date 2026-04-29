@@ -58,7 +58,7 @@ To change the team, manually set the desired team in game, enter the correspondi
 
 A: In most cases, this is caused by your key bindings not matching the assistant’s default assumptions. Check in this order:
 
-1. First, check whether you changed the default in-game keys, especially auto-battle (`V`), interact (`F`), and movement (`WASD`). If you changed them, restore the default key bindings and test again.
+1. First, check whether you changed the default in-game keys, especially auto-battle, interact (`F`), character details (`C`), and movement (`WASD`). If you changed the auto-battle key, you can sync it in the assistant via `Settings → Miscellaneous → Modify Keys`. Note: Interact (`F`) and character details (`C`) cannot be changed and must remain at their game defaults, otherwise recognition will fail. Other keys should also stay at defaults.
 
 2. Then check whether `Settings → Miscellaneous → Enable auto battle and 2x speed detection` is turned on in the assistant.
 
