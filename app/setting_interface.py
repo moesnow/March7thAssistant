@@ -1426,6 +1426,13 @@ class SettingInterface(ScrollArea):
                 tr('在用户登录时启动'),
                 tr("通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）")
             )
+        if sys.platform == 'win32':
+            self.debugModeEnableCard = SwitchSettingCard1(
+                FIF.DEVELOPER_TOOLS,
+                tr('启用调试模式'),
+                tr("开启后会在屏幕上实时绘制检测范围框（透明悬浮窗），用于调试自动化识别效果。仅 Windows 生效。"),
+                "debug_mode_enable"
+            )
         self.hotkeyCard = SwitchSettingCardHotkey(
             FIF.SETTING,
             tr('修改按键'),
@@ -1740,6 +1747,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.useBackgroundScreenshotCard)
         if sys.platform == 'win32':
             self.MiscGroup.addSettingCard(self.StartMarch7thAssistantCard)
+            self.MiscGroup.addSettingCard(self.debugModeEnableCard)
         self.MiscGroup.addSettingCard(self.hotkeyCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)

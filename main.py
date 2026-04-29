@@ -275,8 +275,14 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
 
 # 程序结束时的处理器
 def exit_handler():
-    """注册程序退出时的处理函数，用于清理OCR资源."""
+    """注册程序退出时的处理函数，用于清理OCR和调试资源."""
     ocr.exit_ocr()
+    # 清理调试叠加层
+    try:
+        from module.automation import auto
+        auto.shutdown_debug()
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

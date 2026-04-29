@@ -1,3 +1,4 @@
+import sys
 import time
 import math
 import cv2
@@ -5,12 +6,14 @@ import numpy as np
 from PIL import Image
 
 from .screenshot import Screenshot
+from .debug_overlay import get_debug_overlay, DebugOverlay
 from utils.logger.logger import Logger
 from typing import Optional
 from utils.singleton import SingletonMeta
 from utils.image_utils import ImageUtils
 from module.game import get_game_controller
 from module.ocr import ocr
+from module.config import cfg
 
 
 class Automation(metaclass=SingletonMeta):
@@ -28,6 +31,8 @@ class Automation(metaclass=SingletonMeta):
         self.screenshot = None
         self._init_input()
         self.img_cache = {}
+        self._debug_overlay = None
+        self._debug_initialized = False
 
     def _init_input(self):
         """
@@ -45,6 +50,91 @@ class Automation(metaclass=SingletonMeta):
         self.secretly_press_key = self.input_handler.secretly_press_key
         self.press_mouse = self.input_handler.press_mouse
         self.secretly_write = self.input_handler.secretly_write
+
+    def _is_debug_enabled(self):
+        """检查调试模式是否启用。"""
+        if sys.platform != 'win32':
+            return False
+        if not bool(cfg.get_value('debug_mode_enable', False)):
+            return False
+        # 云游戏无窗口模式下没有可见画面，无需显示叠加层
+        if cfg.get_value('cloud_game_enable', False) and cfg.get_value('browser_headless_enable', False):
+            return False
+        return True
+
+    def _ensure_debug_overlay(self):
+        """确保调试叠加层已初始化并显示。"""
+        if not self._is_debug_enabled():
+            return
+        if not self._debug_initialized:
+            self._debug_overlay = get_debug_overlay()
+            self._debug_overlay.show_overlay()
+            self._debug_initialized = True
+
+    def _debug_clear(self):
+        """清除调试叠加层上的所有矩形框。"""
+        if not self._debug_initialized or self._debug_overlay is None:
+            return
+        self._debug_overlay.clear_rects()
+
+    def _debug_draw_rect(self, top_left, bottom_right, color=None, label=None):
+        """在调试叠加层上绘制一个矩形框。
+
+        :param top_left: 左上角坐标 (x, y)。
+        :param bottom_right: 右下角坐标 (x, y)。
+        :param color: QColor 颜色，默认绿色。
+        :param label: 可选标签文字。
+        """
+        if not self._debug_initialized or self._debug_overlay is None:
+            return
+        if top_left is None or bottom_right is None:
+            return
+        self._ensure_debug_overlay()
+        # 如果标签是图片路径，只取文件名
+        if label and isinstance(label, str) and ('/' in label or '\\' in label):
+            import os
+            label = os.path.basename(label)
+        self._debug_overlay.add_rect(
+            top_left[0], top_left[1],
+            bottom_right[0], bottom_right[1],
+            color=color,
+            label=label,
+        )
+
+    def _debug_draw_crop_region(self, crop):
+        """在调试叠加层上高亮显示截图裁剪区域。"""
+        if not self._debug_initialized or self._debug_overlay is None:
+            return
+        if self.screenshot_pos is None:
+            return
+        # screenshot_pos 格式: (abs_left, abs_top, scaled_width, scaled_height)
+        # 其中 scaled_width/height 已乘以 screenshot_scale_factor，高分辨率下被缩小
+        # 绘制时需要还原为屏幕实际像素尺寸
+        if self.screenshot_scale_factor and self.screenshot_scale_factor != 0:
+            actual_w = int(self.screenshot_pos[2] / self.screenshot_scale_factor)
+            actual_h = int(self.screenshot_pos[3] / self.screenshot_scale_factor)
+        else:
+            actual_w = self.screenshot_pos[2]
+            actual_h = self.screenshot_pos[3]
+        x1 = self.screenshot_pos[0]
+        y1 = self.screenshot_pos[1]
+        x2 = x1 + actual_w
+        y2 = y1 + actual_h
+        self._debug_draw_rect((x1, y1), (x2, y2), color=DebugOverlay.COLOR_CYAN, label='crop')
+
+    def _get_debug_color(self, find_type):
+        """根据查找类型返回对应的调试颜色。"""
+        color_map = {
+            'image': DebugOverlay.COLOR_GREEN,
+            'image_threshold': DebugOverlay.COLOR_YELLOW,
+            'text': DebugOverlay.COLOR_BLUE,
+            'min_distance_text': DebugOverlay.COLOR_MAGENTA,
+            'hsv': DebugOverlay.COLOR_ORANGE,
+            'yolo': DebugOverlay.COLOR_RED,
+            'image_with_multiple_targets': DebugOverlay.COLOR_GREEN,
+            'yolo_with_multiple_targets': DebugOverlay.COLOR_RED,
+        }
+        return color_map.get(find_type, DebugOverlay.COLOR_GREEN)
 
     def calculate_crop_with_pos(self, left_top, size):
         """
@@ -80,6 +170,12 @@ class Automation(metaclass=SingletonMeta):
                 )
                 if result:
                     self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
+                    # 调试模式：清除上一帧的矩形框，并显示裁剪区域
+                    if self._is_debug_enabled():
+                        self._ensure_debug_overlay()
+                        self._debug_clear()
+                        if crop != (0, 0, 1, 1):
+                            self._debug_draw_crop_region(crop)
                     return result
                 else:
                     self.logger.error("截图失败：没有找到游戏窗口")
@@ -644,6 +740,9 @@ class Automation(metaclass=SingletonMeta):
         """
         take_screenshot = take_screenshot and need_ocr
         max_retries = 1 if not take_screenshot else max_retries
+        # 调试模式：确保叠加层可见
+        if self._is_debug_enabled():
+            self._ensure_debug_overlay()
         for i in range(max_retries):
             if take_screenshot:
                 screenshot_result = self.take_screenshot(crop, use_background_screenshot, prefer_frame_screenshot)
@@ -664,21 +763,47 @@ class Automation(metaclass=SingletonMeta):
                 elif find_type == 'yolo':
                     top_left, bottom_right = self.find_yolo_element(target, threshold or 0.25, relative)
                 if top_left and bottom_right:
+                    # 调试模式：绘制查找结果的矩形框
+                    if self._is_debug_enabled():
+                        color = self._get_debug_color(find_type)
+                        label = target if isinstance(target, str) else str(target)
+                        self._debug_draw_rect(top_left, bottom_right, color=color,
+                                              label=f'{find_type}: {label}')
                     if find_type == 'image_threshold':
                         return image_threshold
                     return top_left, bottom_right
             elif find_type in ['image_count']:
                 return self.find_image_and_count(target, threshold, pixel_bgr)
             elif find_type in ['image_with_multiple_targets']:
-                return self.find_image_with_multiple_targets(target, threshold, scale_range, relative)
+                matches = self.find_image_with_multiple_targets(target, threshold, scale_range, relative)
+                # 调试模式：绘制所有匹配结果
+                if self._is_debug_enabled() and matches:
+                    color = self._get_debug_color(find_type)
+                    for i, match in enumerate(matches):
+                        self._debug_draw_rect(match[0], match[1], color=color,
+                                              label=f'{find_type}[{i}]: {target}')
+                return matches
             elif find_type == 'yolo_with_multiple_targets':
-                return self.find_yolo_with_multiple_targets(target, threshold or 0.25, relative)
+                matches = self.find_yolo_with_multiple_targets(target, threshold or 0.25, relative)
+                # 调试模式：绘制所有YOLO检测结果
+                if self._is_debug_enabled() and matches:
+                    color = self._get_debug_color(find_type)
+                    for i, match in enumerate(matches):
+                        self._debug_draw_rect(match[0], match[1], color=color,
+                                              label=f'{find_type}[{i}]')
+                return matches
             else:
                 raise ValueError("错误的类型")
 
             if i < max_retries - 1:
                 time.sleep(retry_delay)  # 在重试前等待一定时间
         return None
+
+    def shutdown_debug(self):
+        """关闭调试叠加层。"""
+        if self._debug_overlay is not None:
+            self._debug_overlay.hide_overlay()
+            self._debug_initialized = False
 
     def click_element_with_pos(self, coordinates, offset=(0, 0), action="click", cnt=1, press_duration: float = 0.0):
         """
