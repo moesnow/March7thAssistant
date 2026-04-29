@@ -756,8 +756,13 @@ class Automation(metaclass=SingletonMeta):
                 elif find_type == 'min_distance_text':
                     top_left, bottom_right = self.find_min_distance_text_element(target, source, source_type, include, need_ocr, position)
                 elif find_type == 'crop':
-                    top_left = (int(target[0] * self.screenshot.width) + self.screenshot_pos[0], int(target[1] * self.screenshot.height) + self.screenshot_pos[1])
-                    bottom_right = (int((target[0] + target[2]) * self.screenshot.width) + self.screenshot_pos[0], int((target[1] + target[3]) * self.screenshot.height) + self.screenshot_pos[1])
+                    scale_factor = self.screenshot_scale_factor if not relative else 1
+                    offset_x = self.screenshot_pos[0] * (not relative)
+                    offset_y = self.screenshot_pos[1] * (not relative)
+                    top_left = (int(target[0] * self.screenshot.width / scale_factor) + offset_x,
+                                int(target[1] * self.screenshot.height / scale_factor) + offset_y)
+                    bottom_right = (int((target[0] + target[2]) * self.screenshot.width / scale_factor) + offset_x,
+                                    int((target[1] + target[3]) * self.screenshot.height / scale_factor) + offset_y)
                 elif find_type == 'hsv':
                     top_left, bottom_right = self.find_hsv_element(target, relative)
                 elif find_type == 'yolo':
