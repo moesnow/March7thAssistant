@@ -266,6 +266,9 @@ class CurrencyWars:
 
     def start_war(self, type: Literal["normal", "overclock"] = "normal") -> bool:
         log.info("开始「货币战争」")
+        
+        # 每周首次进入后会自动跳转积分界面，所以需要重新获取当前屏幕状态。
+        screen.get_current_screen()
         screen.change_to("currency_wars_mode_select")
 
         if auto.click_element("结束并结算", "text", crop=(1253 / 1920, 915 / 1080, 271 / 1920, 95 / 1080)):
