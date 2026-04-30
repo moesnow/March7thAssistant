@@ -585,6 +585,19 @@
         ]
     },
     {
+        "name": "模拟宇宙-积分奖励",
+        "id": "universe_rewards",
+        "image_path": "./assets/images/screen/universe/universe_rewards.png",
+        "actions": [
+            {
+                "target_screen": "universe_main",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
         "name": "模拟宇宙-扩展装置",
         "id": "universe_expansion",
         "image_path": "./assets/images/screen/universe/universe_expansion.png",
@@ -619,6 +632,19 @@
                 "actions_list": [
                     "auto.click_element('./assets/images/screen/universe/homepage.png', 'image', 0.9, 10)",
                     "time.sleep(2)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "差分宇宙-积分奖励",
+        "id": "divergent_rewards",
+        "image_path": "./assets/images/screen/universe/divergent_rewards.png",
+        "actions": [
+            {
+                "target_screen": "divergent_main",
+                "actions_list": [
+                    "auto.press_key('esc')"
                 ]
             }
         ]
@@ -693,6 +719,19 @@
                 "actions_list": [
                     "auto.click_element('./assets/images/screen/currency_wars/homepage.png', 'image', 0.9, 10)",
                     "time.sleep(2)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "货币战争-积分奖励",
+        "id": "currency_wars_rewards",
+        "image_path": "./assets/images/screen/currency_wars/rewards.png",
+        "actions": [
+            {
+                "target_screen": "currency_wars_homepage",
+                "actions_list": [
+                    "auto.press_key('esc')"
                 ]
             }
         ]
