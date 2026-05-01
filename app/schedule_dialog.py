@@ -1,11 +1,13 @@
 # coding:utf-8
-from PySide6.QtCore import Qt, QTime, QDateTime
+from PySide6.QtCore import Qt, QTime, QDateTime, QSize
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QTableWidgetItem, QFileDialog, QHeaderView,
+                               QToolButton, QWidget,
                                QAbstractItemView)
-from qfluentwidgets import TimePicker, BodyLabel, PushButton, TableWidget, MaskDialogBase, MessageBox, Dialog
+from qfluentwidgets import TimePicker, BodyLabel, PushButton, PrimaryPushButton, TableWidget, MaskDialogBase, MessageBox, Dialog
 from qfluentwidgets import LineEdit, ComboBox, CheckBox, SpinBox
 from qfluentwidgets import InfoBar, InfoBarPosition
+from qfluentwidgets import FluentIcon as FIF
 from utils.tasks import TASK_NAMES
 import uuid
 import os
@@ -167,6 +169,24 @@ class AddEditScheduleDialog(MessageBox):
         self.timeout_spin.setRange(0, 24 * 60)
         self.timeout_spin.setSuffix(tr(" 分钟（0 表示不启用）"))
 
+        # 启动方式：按时启动或链式启动
+        self._trigger_mode_items = [
+            ('time', tr('按时启动')),
+            ('chain', tr('链式启动')),
+        ]
+        self.trigger_mode_combo = ComboBox(self)
+        for key, label in self._trigger_mode_items:
+            self.trigger_mode_combo.addItem(label, userData=key)
+        self.trigger_mode_combo.currentIndexChanged.connect(self._on_trigger_mode_changed)
+        self.trigger_mode_help_btn = QToolButton(self)
+        self.trigger_mode_help_btn.setIcon(FIF.INFO.icon())
+        self.trigger_mode_help_btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.trigger_mode_help_btn.setAutoRaise(True)
+        self.trigger_mode_help_btn.setFixedSize(28, 28)
+        self.trigger_mode_help_btn.setIconSize(QSize(16, 16))
+        self.trigger_mode_help_btn.setToolTip(tr('启动方式说明'))
+        self.trigger_mode_help_btn.clicked.connect(self._show_trigger_mode_help)
+
         # 初始显示状态：默认选择本体
         self.program_type_combo.setCurrentText('本体')
         # 连接信号，在后面创建 args_label 后再触发一次以确保文本正确
@@ -208,6 +228,11 @@ class AddEditScheduleDialog(MessageBox):
         top_row = QHBoxLayout()
         top_row.addWidget(self.enable_check)
         top_row.addStretch()
+        mode_label = BodyLabel(tr('启动方式:'))
+        mode_label.setFixedWidth(90)
+        top_row.addWidget(mode_label)
+        top_row.addWidget(self.trigger_mode_combo)
+        top_row.addWidget(self.trigger_mode_help_btn)
         form.addLayout(top_row)
 
         # 名称与时间同一行
@@ -217,9 +242,9 @@ class AddEditScheduleDialog(MessageBox):
         row.addWidget(label)
         row.addWidget(self.name_edit, 1)
         # 时间放在同一行的右侧
-        time_label = BodyLabel(tr("启动时间:"))
-        time_label.setFixedWidth(90)
-        row.addWidget(time_label)
+        self.time_label = BodyLabel(tr("启动时间:"))
+        self.time_label.setFixedWidth(90)
+        row.addWidget(self.time_label)
         row.addWidget(self.time_picker)
         form.addLayout(row)
 
@@ -279,10 +304,13 @@ class AddEditScheduleDialog(MessageBox):
 
         # 确保 args_label 文本正确（首次打开时 program_type 已设为默认）
         self._on_program_type_changed(self.program_type_combo.currentText())
+        self._set_trigger_mode('time')
 
         # 如果是编辑，填充数据
         if self.task:
             self._load_task(self.task)
+        else:
+            self._on_trigger_mode_changed()
 
         # 当程序类型改变时切换参数输入模式
         # 已在构造中连接：self.program_type_combo.currentTextChanged -> _on_program_type_changed
@@ -298,16 +326,19 @@ class AddEditScheduleDialog(MessageBox):
             return
 
         # 时间重复校验（跳过与当前编辑任务相同的 id）
-        time_str = self.time_picker.time.toString('HH:mm')
-        for t in (self.existing_tasks or []):
-            if self.task and t.get('id') == self.task.get('id'):
-                continue
-            if t.get('time') == time_str:
-                m = MessageBox(tr('错误'), tr('已存在相同时间的任务，请选择其他时间'), self)
-                m.cancelButton.hide()
-                m.yesButton.setText(tr('确认'))
-                m.exec()
-                return
+        if self._current_trigger_mode() == 'time':
+            time_str = self.time_picker.time.toString('HH:mm')
+            for t in (self.existing_tasks or []):
+                if self.task and t.get('id') == self.task.get('id'):
+                    continue
+                if str(t.get('trigger_mode', 'time')).lower() != 'time':
+                    continue
+                if t.get('time') == time_str:
+                    m = MessageBox(tr('错误'), tr('已存在相同时间的任务，请选择其他时间'), self)
+                    m.cancelButton.hide()
+                    m.yesButton.setText(tr('确认'))
+                    m.exec()
+                    return
 
         # 程序路径不能为空（非本体类型都要求路径）
         if self.program_type_combo.currentText() != tr('本体'):
@@ -331,6 +362,39 @@ class AddEditScheduleDialog(MessageBox):
         if path:
             # 将选择的路径填写到外部程序路径控件
             self.program_path_edit.setText(path)
+
+    def _current_trigger_mode(self):
+        idx = self.trigger_mode_combo.currentIndex() if self.trigger_mode_combo.count() > 0 else 0
+        try:
+            mode = self.trigger_mode_combo.itemData(idx)
+        except Exception:
+            mode = None
+        return mode if mode in ('time', 'chain') else 'time'
+
+    def _set_trigger_mode(self, mode):
+        target = mode if mode in ('time', 'chain') else 'time'
+        for i in range(self.trigger_mode_combo.count()):
+            if self.trigger_mode_combo.itemData(i) == target:
+                self.trigger_mode_combo.setCurrentIndex(i)
+                return
+        if self.trigger_mode_combo.count() > 0:
+            self.trigger_mode_combo.setCurrentIndex(0)
+
+    def _on_trigger_mode_changed(self, _index=None):
+        is_time_mode = self._current_trigger_mode() == 'time'
+        self.time_label.setVisible(is_time_mode)
+        self.time_picker.setVisible(is_time_mode)
+
+    def _show_trigger_mode_help(self):
+        content = tr(
+            '按时启动：到达设定时间后，直接启动当前任务。\n'
+            '链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动。\n'
+            '立即运行：从当前任务开始，后面连续的链式任务也会跟随执行。'
+        )
+        box = MessageBox(tr('启动方式说明'), content, self)
+        box.cancelButton.hide()
+        box.yesButton.setText(tr('确认'))
+        box.exec()
 
     def _on_program_type_changed(self, text):
         """根据程序类型调整界面：本体 -> 显示任务下拉；外部程序 -> 显示路径与参数输入，并修改标签文本"""
@@ -423,6 +487,7 @@ class AddEditScheduleDialog(MessageBox):
         self.name_edit.setText(label)
 
     def _load_task(self, task):
+        self._set_trigger_mode(str(task.get('trigger_mode', 'time')).lower())
         self.name_edit.setText(task.get('name', ''))
         t = task.get('time', '04:00')
         parts = list(map(int, t.split(':')))
@@ -491,11 +556,13 @@ class AddEditScheduleDialog(MessageBox):
         self.post_action_combo.setCurrentIndex(idx)
         self.enable_check.setChecked(task.get('enabled', True))
         self._on_program_type_changed(self.program_type_combo.currentText())
+        self._on_trigger_mode_changed()
 
     def get_task(self):
         task = {}
         task['id'] = self.task.get('id') if self.task and self.task.get('id') else str(uuid.uuid4())
         task['name'] = self.name_edit.text().strip() or tr('未命名')
+        task['trigger_mode'] = self._current_trigger_mode()
         # TimePicker.time is a QTime *object* (not a callable), so access property directly
         task['time'] = self.time_picker.time.toString('HH:mm')
 
@@ -551,25 +618,23 @@ class ScheduleManagerDialog(MessageBox):
 
         # 表格
         self.table = TableWidget(self)
-        # 新增一列：完成后终止进程
-        self.table.setColumnCount(7)
-        # 列顺序：启用, 名称, 时间, 程序, 参数/任务, 推送通知, 终止进程
-        self.table.setHorizontalHeaderLabels([tr('启用'), tr('名称'), tr('时间'), tr('程序'), tr('参数/任务'), tr('通知'), tr('终止进程')])
+        self.table.setColumnCount(6)
+        # 列顺序：启用, 名称, 时间/链式启动, 程序, 参数/任务, 推送通知
+        self.table.setHorizontalHeaderLabels([tr('启用'), tr('名称'), tr('时间'), tr('程序'), tr('参数/任务'), tr('通知')])
         # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Fixed)
         self.table.setColumnWidth(0, 60)
         header.setSectionResizeMode(1, QHeaderView.Fixed)
-        self.table.setColumnWidth(1, 110)
+        self.table.setColumnWidth(1, 160)
         header.setSectionResizeMode(2, QHeaderView.Fixed)
-        self.table.setColumnWidth(2, 80)
+        self.table.setColumnWidth(2, 90)
         header.setSectionResizeMode(3, QHeaderView.Stretch)
         header.setSectionResizeMode(4, QHeaderView.Fixed)
         self.table.setColumnWidth(4, 150)
         header.setSectionResizeMode(5, QHeaderView.Fixed)
         self.table.setColumnWidth(5, 60)
-        header.setSectionResizeMode(6, QHeaderView.Stretch)
-        self.table.setMinimumWidth(800)
+        self.table.setMinimumWidth(760)
         self.table.setMinimumHeight(350)
         # 只读表格设定：禁止直接编辑，整行选择，单选模式（只能通过按钮编辑）
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -582,7 +647,7 @@ class ScheduleManagerDialog(MessageBox):
         self.edit_btn = PushButton(tr('编辑'), self)
         self.move_up_btn = PushButton(tr('上移'), self)
         self.del_btn = PushButton(tr('删除'), self)
-        self.run_btn = PushButton(tr('立即运行'), self)
+        self.run_btn = PrimaryPushButton(tr('立即运行'), self)
         btn_layout.addWidget(self.add_btn)
         btn_layout.addWidget(self.edit_btn)
         btn_layout.addWidget(self.move_up_btn)
@@ -634,14 +699,30 @@ class ScheduleManagerDialog(MessageBox):
 
     def _reload_table(self):
         self.table.setRowCount(len(self.scheduled_tasks))
+        chain_visuals = self._build_chain_visuals()
         for i, t in enumerate(self.scheduled_tasks):
+            trigger_mode = str(t.get('trigger_mode', 'time')).lower()
+            chain_role = chain_visuals.get(i)
             # 启用（第一列）
-            enabled_item = QTableWidgetItem(tr('是') if t.get('enabled', True) else tr('否'))
-            self.table.setItem(i, 0, enabled_item)
+            enabled_widget = QWidget(self.table)
+            enabled_layout = QHBoxLayout(enabled_widget)
+            enabled_layout.setContentsMargins(0, 0, 0, 0)
+            enabled_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            enabled_check = CheckBox('', enabled_widget)
+            enabled_check.setChecked(bool(t.get('enabled', True)))
+            enabled_check.stateChanged.connect(lambda _state, row=i: self._on_enabled_toggled(row))
+            enabled_layout.addWidget(enabled_check)
+            self.table.setCellWidget(i, 0, enabled_widget)
             # 名称
-            self.table.setItem(i, 1, QTableWidgetItem(t.get('name', '')))
-            # 时间
-            self.table.setItem(i, 2, QTableWidgetItem(t.get('time', '')))
+            name_display = t.get('name', '')
+            if chain_role == 'child':
+                name_display = f"-> {name_display}"
+            name_item = QTableWidgetItem(name_display)
+            self.table.setItem(i, 1, name_item)
+            # 时间列：按时任务显示时间，链式任务显示启动方式
+            time_display = t.get('time', '') if trigger_mode == 'time' else tr('链式启动')
+            time_item = QTableWidgetItem(time_display)
+            self.table.setItem(i, 2, time_item)
             # 程序（本体显示“本体”，否则显示路径或文件名）
             prog = t.get('program', '')
             if prog == 'self':
@@ -664,16 +745,63 @@ class ScheduleManagerDialog(MessageBox):
                 args_display = TASK_NAMES.get(args, args)
             else:
                 args_display = args
-            self.table.setItem(i, 4, QTableWidgetItem(args_display))
+            args_item = QTableWidgetItem(args_display)
+            self.table.setItem(i, 4, args_item)
             notify_item = QTableWidgetItem(tr('是') if t.get('notify', False) else tr('否'))
             self.table.setItem(i, 5, notify_item)
-            # 完成后终止进程显示（第 6 列，索引 6）
-            kp = t.get('kill_processes', [])
-            if isinstance(kp, list):
-                kp_display = ', '.join(kp)
-            else:
-                kp_display = str(kp) if kp else ''
-            self.table.setItem(i, 6, QTableWidgetItem(kp_display))
+
+            if trigger_mode == 'time':
+                self._apply_time_task_visual_style(
+                    [name_item, time_item, prog_item, args_item, notify_item]
+                )
+
+    def _build_chain_visuals(self):
+        visuals = {}
+        row = 0
+        total = len(self.scheduled_tasks)
+
+        while row < total:
+            trigger_mode = str(self.scheduled_tasks[row].get('trigger_mode', 'time')).lower()
+            if trigger_mode != 'time':
+                row += 1
+                continue
+
+            end_row = row + 1
+            while end_row < total:
+                next_mode = str(self.scheduled_tasks[end_row].get('trigger_mode', 'time')).lower()
+                if next_mode != 'chain':
+                    break
+                end_row += 1
+
+            if end_row - row >= 2:
+                visuals[row] = 'root'
+                for child_row in range(row + 1, end_row):
+                    visuals[child_row] = 'child'
+
+            row = end_row
+
+        return visuals
+
+    def _apply_time_task_visual_style(self, items):
+        for item in items:
+            if item is None:
+                continue
+            font = item.font()
+            font.setBold(True)
+            item.setFont(font)
+
+    def _on_enabled_toggled(self, row: int):
+        if row < 0 or row >= len(self.scheduled_tasks):
+            return
+        enabled_widget = self.table.cellWidget(row, 0)
+        if enabled_widget is None:
+            return
+        enabled_check = enabled_widget.findChild(CheckBox)
+        if enabled_check is None:
+            return
+        self.scheduled_tasks[row]['enabled'] = bool(enabled_check.isChecked())
+        if self.save_callback:
+            self.save_callback(self.scheduled_tasks)
 
     def _on_add(self):
         dlg = AddEditScheduleDialog(self, scheduled_tasks=self.scheduled_tasks)
@@ -696,7 +824,7 @@ class ScheduleManagerDialog(MessageBox):
         self.scheduled_tasks.insert(target_row, task)
         self._reload_table()
         self.table.selectRow(target_row)
-        self.table.setCurrentCell(target_row, 0)
+        self.table.setCurrentCell(target_row, 1)
         if self.save_callback:
             self.save_callback(self.scheduled_tasks)
         return True
@@ -717,8 +845,9 @@ class ScheduleManagerDialog(MessageBox):
             return
         self._move_task(row, row - 1)
 
-    def _on_edit(self):
-        row = self.table.currentRow()
+    def _on_edit(self, row=None):
+        if row is None:
+            row = self.table.currentRow()
         if row < 0 or row >= len(self.scheduled_tasks):
             m = MessageBox(tr('提示'), tr('请先选择要编辑的任务'), self)
             m.cancelButton.hide()
@@ -767,41 +896,10 @@ class ScheduleManagerDialog(MessageBox):
         if not m.exec():
             return
 
-        # 构建与 _checkScheduledTime 一致的任务字典
-        task_for_start = {
-            'program': t.get('program', 'self'),
-            'args': t.get('args', ''),
-            'timeout': int(t.get('timeout', 0) or 0),
-            'name': t.get('name', ''),
-            'notify': bool(t.get('notify', False)),
-            'post_action': t.get('post_action', 'None'),
-            'id': t.get('id'),
-        }
-
         try:
             parent = self.parent()
-            # 记录 pending meta 与触发时间戳（避免与定时器冲突）
-            now_ts = QDateTime.currentDateTime().toSecsSinceEpoch()
-            try:
-                if hasattr(parent, '_pending_task_meta'):
-                    parent._pending_task_meta = t
-            except Exception:
-                pass
-            try:
-                if hasattr(parent, '_last_triggered_ts') and t.get('id'):
-                    parent._last_triggered_ts[t.get('id')] = now_ts
-            except Exception:
-                pass
-
-            # 写日志（如果父组件支持）
-            try:
-                if hasattr(parent, 'appendLog'):
-                    parent.appendLog(f"\n========== 定时任务手动触发 ({t.get('name', '未命名')} @ {t.get('time', '')}) ==========")
-            except Exception:
-                pass
-
             # 启动任务
-            if hasattr(parent, 'startTask'):
+            if hasattr(parent, 'runScheduledTask'):
                 # 检查是否有任务正在运行
                 if parent.isTaskRunning():
                     InfoBar.warning(
@@ -819,13 +917,13 @@ class ScheduleManagerDialog(MessageBox):
                     except Exception:
                         pass
                 else:
-                    parent.startTask(task_for_start)
-                    try:
-                        self.close()
-                    except Exception:
-                        pass
+                    if parent.runScheduledTask(t, tasks=self.scheduled_tasks, manual=True):
+                        try:
+                            self.close()
+                        except Exception:
+                            pass
             else:
-                info = MessageBox(tr('错误'), tr('无法运行任务：父组件不支持 startTask'), self)
+                info = MessageBox(tr('错误'), tr('无法运行任务：父组件不支持 runScheduledTask'), self)
                 info.cancelButton.hide()
                 info.yesButton.setText(tr('确认'))
                 info.exec()
@@ -842,5 +940,5 @@ class ScheduleManagerDialog(MessageBox):
             return
         # 选中该行并打开编辑对话框
         self.table.selectRow(row)
-        self.table.setCurrentCell(row, 0)
-        self._on_edit()
+        self.table.setCurrentCell(row, 1)
+        self._on_edit(row)
