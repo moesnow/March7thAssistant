@@ -48,6 +48,7 @@ STEP_TYPE_LABELS = {
     "if": "如果",
     "for": "循环次数",
     "while": "条件循环",
+    "stop_workflow": "终止流程",
     "break": "结束循环",
     "continue": "继续循环",
 }
@@ -800,7 +801,7 @@ def summarize_step(step: dict) -> tuple[str, str]:
     step_type = normalized["type"]
     label = tr(STEP_TYPE_LABELS.get(step_type, step_type))
 
-    if step_type in {"break", "continue"}:
+    if step_type in {"break", "continue", "stop_workflow"}:
         return label, ""
 
     if step_type == "click_image":
@@ -893,6 +894,7 @@ def summarize_step(step: dict) -> tuple[str, str]:
 class WorkflowRunner:
     LOOP_CONTROL_BREAK = "break"
     LOOP_CONTROL_CONTINUE = "continue"
+    FLOW_CONTROL_STOP = "stop_workflow"
 
     def __init__(self, log_callback=None, sleep_func=None, mirror_to_project_log: bool = True):
         self.log_callback = log_callback or (lambda message: None)
@@ -990,6 +992,8 @@ class WorkflowRunner:
         if step_type == "wait":
             self.sleep_func(normalized["seconds"])
             return True, None
+        if step_type == self.FLOW_CONTROL_STOP:
+            return self._handle_stop_workflow_step(depth)
         if step_type in {self.LOOP_CONTROL_BREAK, self.LOOP_CONTROL_CONTINUE}:
             return self._handle_loop_control_step(step_type, depth, in_loop)
         if step_type == "if":
@@ -1049,6 +1053,11 @@ class WorkflowRunner:
             return True, self.LOOP_CONTROL_BREAK
 
         return True, self.LOOP_CONTROL_CONTINUE
+
+    def _handle_stop_workflow_step(self, depth: int) -> tuple[bool, str | None]:
+        self.stop_requested = True
+        self._log(f"{'  ' * depth}{tr('已触发流程终止')}")
+        return True, None
 
     def _evaluate_condition(self, step: dict, depth: int = 0) -> bool:
         condition_type = step["condition_type"]

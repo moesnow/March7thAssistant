@@ -157,6 +157,7 @@ class StepEditDialog(QDialog):
         "if",
         "for",
         "while",
+        "stop_workflow",
         "break",
         "continue",
     ]

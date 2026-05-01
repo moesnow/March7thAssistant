@@ -1310,5 +1310,7 @@
     "失败": "Failed",
     "条件": "Condition",
     "条件结果": "Condition Result",
-    "成功": "Success"
+    "成功": "Success",
+    "终止流程": "Terminate Workflow",
+    "已触发流程终止": "Workflow termination triggered"
 }
