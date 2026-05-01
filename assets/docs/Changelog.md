@@ -1,12 +1,22 @@
 # 更新日志
 
+## v2026.5.2
+- 新增 “定时任务” 支持链式启动
+- 新增 “流程编排” 支持添加终止流程步骤
+- 新增 “调试模式” 功能，支持在 Windows 上实时绘制检测范围框
+- 新增支持修改开/关 “自动战斗” 的按键
+- 优化了自动对话功能
+- 差分宇宙现在会记录今日和每周的运行次数
+- 修复了 “流程编排” 按下操作会自动松开
+- 优化性能和稳定性并修复若干已知问题
+- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
+
 ## v2026.5.1
 - 新增 “流程编排” 功能，支持创建简单的自动化流程
 - 支持饰品提取和历战余响连续挑战 [#1014](https://github.com/moesnow/March7thAssistant/issues/1014) @CL4R3T
 - 修复定时任务中的外部程序对 BetterGI 的支持 [#1011](https://github.com/moesnow/March7thAssistant/pull/1011) @Daydreamer114
 - 优化了云游戏的截图性能，提高了差分宇宙任务的稳定性
 - 优化性能和稳定性并修复若干已知问题
-- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.4.27
 - 支持 4.2 新角色和副本
@@ -19,6 +29,7 @@
 - 更新程序支持命令行参数在最新版本时自动退出 [#1006](https://github.com/moesnow/March7thAssistant/pull/1006) @xinjiajuan
 - 新增 uv 源码工作流 [#1003](https://github.com/moesnow/March7thAssistant/pull/1003) @Bot1822
 - 修复无法正常进入活动和漫游签证界面
+- 优化性能和稳定性并修复若干已知问题
 
 ## v2026.4.23
 - 锄大地（[Fhoe-Rail](https://github.com/linruowuyin/Fhoe-Rail/)）已经支持二相乐园啦~
