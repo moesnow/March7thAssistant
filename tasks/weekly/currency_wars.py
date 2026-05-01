@@ -1407,7 +1407,7 @@ class CurrencyWars:
         """
 
         # 通过颜色快速判断一下是否存在奖励可领取（避免每次都滑动一遍）
-        if auto.is_rgb_ratio_above_threshold((1306 / 1920, 154 / 1080, 285 / 1920, 329 / 1080), (66, 72, 185), 0.8, tolerance=0.085):
+        if auto.is_rgb_ratio_above_threshold((1306 / 1920, 154 / 1080, 285 / 1920, 329 / 1080), (66, 72, 185), 0.8, tolerance=0.06):
             log.info("没有检测到可领取的奖励，跳过滑动")
             return
         else:
