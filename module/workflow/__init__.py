@@ -1212,7 +1212,7 @@ class WorkflowRunner:
             return False
 
         action = step.get("key_action", "press_and_release")
-        duration = step.get("key_duration", 0.1)
+        duration = max(0.0, float(step.get("key_duration", 0.1) or 0.0))
 
         try:
             if action == "press":
@@ -1220,8 +1220,6 @@ class WorkflowRunner:
                 auto.press_key_down(key)
                 if duration > 0:
                     self.sleep_func(duration)
-                    auto.press_key_up(key)
-                    self._log(f"{tr('释放按键')}：{key}")
             elif action == "release":
                 self._log(f"{tr('释放按键')}：{key}")
                 auto.press_key_up(key)

@@ -840,7 +840,6 @@ class Automation(metaclass=SingletonMeta):
                 self.mouse_down(x, y)
                 if normalized_press_duration > 0:
                     time.sleep(normalized_press_duration)
-                    self.mouse_up()
             elif action == "up":
                 self.mouse_move(x, y)
                 self.mouse_up()

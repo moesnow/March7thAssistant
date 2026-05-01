@@ -1487,6 +1487,7 @@ class CurrencyWars:
         for px, py in path_pixels[1:]:
             norm_pt = to_norm(px, py)
             crop_box = make_crop_box(norm_pt)
+            auto._debug_clear()
             pos = auto.find_element(crop_box, "crop", take_screenshot=False)
             auto.click_element_with_pos(pos, action="move")
 
