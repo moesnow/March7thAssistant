@@ -31,6 +31,16 @@
             ]
         },
         {
+            "key": "maaend",
+            "display_name": "终末地 MaaEnd",
+            "short_name": "终末地",
+            "executable": "MaaEnd.exe",
+            "default_args": "",
+            "kill_processes": [
+                "Endfield.exe"
+            ]
+        },
+        {
             "key": "m9a",
             "display_name": "重返未来 M9A",
             "short_name": "1999",

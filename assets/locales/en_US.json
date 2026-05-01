@@ -1339,5 +1339,6 @@
     "本周已完成 {} 次": "Completed {} runs this week",
     "启用前请确认用途": "Confirm Before Enabling",
     "此选项及其子选项用于配置反复刷取遗器经验和灵之珠泪，直到达到每周上限。\n默认运行次数为每周 34 次。\n请确认你已经清楚了解这个功能的作用，并确保知道自己在做什么后再开启。": "This option and its child settings are used to repeatedly farm relic EXP and Lost Gold Fragments until the weekly cap is reached.\nThe default run count is 34 times per week.\nOnly enable this after you clearly understand what this feature does and are sure you know what you are doing.",
-    "我已了解，继续开启": "I understand, enable it"
+    "我已了解，继续开启": "I understand, enable it",
+    "终末地 MaaEnd": "MaaEnd"
 }
