@@ -119,6 +119,21 @@ class OCR:
             self._openvino_last_reinit = time.monotonic()
             self.logger.info("OpenVINO OCR 实例已重新初始化")
 
+    def _disable_openvino_telemetry(self):
+        """在导入 OpenVINO 前显式关闭 telemetry，避免额外的统计请求和子进程。"""
+        try:
+            from openvino_telemetry.utils.opt_in_checker import ConsentCheckResult, OptInChecker
+        except Exception:
+            return
+
+        try:
+            checker = OptInChecker()
+            if checker.check(enable_opt_in_dialog=False) != ConsentCheckResult.DECLINED:
+                checker.update_result(ConsentCheckResult.DECLINED)
+        except Exception as e:
+            if self.logger is not None:
+                self.logger.debug(f"关闭 OpenVINO telemetry 失败: {e}")
+
     def _get_config(self):
         """延迟获取配置对象，避免循环导入"""
         if self._cfg is None:
@@ -540,6 +555,8 @@ class OCR:
                 self.logger.debug(f"DML 支持：{'启用' if use_dml else '禁用'}")
 
                 self._using_openvino = (prefer_engine == EngineType.OPENVINO)
+                if self._using_openvino:
+                    self._disable_openvino_telemetry()
 
                 params = {
                     # "Global.use_det": False,
