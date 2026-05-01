@@ -6,7 +6,7 @@ from qfluentwidgets import SettingCard, FluentIconBase, InfoBar, InfoBarPosition
 from .messagebox_custom import MessageBoxEdit, MessageBoxEditCode, MessageBoxDate, MessageBoxInstance, MessageBoxInstanceChallengeCount, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends, MessageBoxPowerPlan, MessageBoxInstanceTeam
 from tasks.base.tasks import start_task
 from module.config import cfg
-from typing import Union
+from typing import Callable, Union
 import datetime
 import json
 import re
@@ -55,6 +55,27 @@ class DualPushSettingCard(SettingCard):
 
         self.leftButton.clicked.connect(self.leftClicked.emit)
         self.rightButton.clicked.connect(self.rightClicked.emit)
+
+
+class PushSettingCardAction(SettingCard):
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, content_getter: Callable[[], str], callback: Callable[[], None], parent=None):
+        self._content_getter = content_getter
+        self._callback = callback
+        super().__init__(icon, title, content_getter(), parent)
+
+        self.button = QPushButton(text, self)
+        self.hBoxLayout.addWidget(self.button, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        self.button.clicked.connect(self.__on_clicked)
+
+    def refreshContent(self):
+        self.contentLabel.setText(self._content_getter())
+        self.contentLabel.adjustSize()
+
+    def __on_clicked(self):
+        self._callback()
+        self.refreshContent()
 
 
 class PushSettingCardStr(CustomPushSettingCard):

@@ -23,6 +23,37 @@ import datetime
 
 class Daily:
     @staticmethod
+    def _run_scheduled_divergent_universe(divergent: DivergentUniverse):
+        target_count = int(cfg.universe_count)
+        cycle = "weekly" if cfg.universe_frequency == "weekly" else "daily"
+        cycle_label = "本周" if cycle == "weekly" else "今日"
+
+        if target_count <= 0:
+            log.info("差分宇宙固定次数为 0，跳过执行并记录本轮时间")
+            cfg.save_timestamp("universe_timestamp")
+            return
+
+        completed_count = DivergentUniverse.get_recorded_run_count(cycle)
+        if completed_count >= target_count:
+            log.info(f"差分宇宙固定次数（{cycle_label}）已完成 {completed_count}/{target_count}，跳过执行")
+            cfg.save_timestamp("universe_timestamp")
+            return
+
+        remaining_runs = target_count - completed_count
+        log.info(f"差分宇宙固定次数进度（{cycle_label}）：{completed_count}/{target_count}，继续运行剩余 {remaining_runs} 次")
+
+        for _ in range(remaining_runs):
+            if not divergent.start():
+                log.warning(f"差分宇宙本轮未完成，不计入固定次数，下次将从 {cycle_label} {completed_count}/{target_count} 继续")
+                return
+
+            completed_count = DivergentUniverse.get_recorded_run_count(cycle)
+            log.info(f"差分宇宙固定次数（{cycle_label}）已完成 {completed_count}/{target_count}")
+
+        cfg.save_timestamp("universe_timestamp")
+        log.info("差分宇宙固定次数已全部完成，记录本轮执行时间")
+
+    @staticmethod
     def start():
         if cfg.reward_enable and cfg.reward_redemption_code_enable:
             Redemption.get()
@@ -107,9 +138,7 @@ class Daily:
             if Date.is_next_mon_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
                     if cfg.universe_category == "divergent":
-                        for _ in range(cfg.universe_count):
-                            divergent.start()
-                        cfg.save_timestamp("universe_timestamp")
+                        Daily._run_scheduled_divergent_universe(divergent)
                     else:
                         Universe.start()
                 else:
@@ -120,9 +149,7 @@ class Daily:
             if Date.is_next_x_am(cfg.universe_timestamp, cfg.refresh_hour):
                 if cfg.universe_enable:
                     if cfg.universe_category == "divergent":
-                        for _ in range(cfg.universe_count):
-                            divergent.start()
-                        cfg.save_timestamp("universe_timestamp")
+                        Daily._run_scheduled_divergent_universe(divergent)
                     else:
                         Universe.start()
                 else:

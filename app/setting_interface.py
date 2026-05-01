@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame, QApplication
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard, MessageBox
 from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
@@ -10,7 +10,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
 from .card.switchsettingcard1 import SwitchSettingCard1, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
+from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
@@ -18,6 +18,7 @@ from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
 from module.notification import init_notifiers
 from module.localization import tr
+from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
 import os
@@ -100,6 +101,7 @@ class SettingInterface(ScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.parent = parent
+        self._ignoreUniverseEnableCardSwitchChanged = False
         self.scrollWidget = QWidget()
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
@@ -662,6 +664,13 @@ class SettingInterface(ScrollArea):
             FIF.HISTORY,
             tr("运行次数"),
             tr("注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"),
+        )
+        self.divergentUniverseRunCountCard = PushSettingCardAction(
+            tr('重置次数'),
+            FIF.HISTORY,
+            tr('差分宇宙已完成次数'),
+            self.__getDivergentUniverseRunCountText,
+            self.__resetDivergentUniverseRunCount,
         )
         # self.divergentTeamTypeCard = ComboBoxSettingCard2(
         #     "divergent_team_type",
@@ -1643,6 +1652,7 @@ class SettingInterface(ScrollArea):
             self.universeBonusEnableCard,
             self.universeFrequencyCard,
             self.universeCountCard,
+            self.divergentUniverseRunCountCard,
             self.universeFateCard,
             self.universeDifficultyCard,
             self.universeOperationModeCard,
@@ -1868,6 +1878,40 @@ class SettingInterface(ScrollArea):
         self.echoofwarEnableCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.browserTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.browserHeadlessCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
+        self.universeEnableCard.switchChanged.connect(self.__onUniverseEnableCardSwitchChanged)
+
+    def __onUniverseEnableCardSwitchChanged(self, isChecked: bool):
+        if self._ignoreUniverseEnableCardSwitchChanged:
+            self._ignoreUniverseEnableCardSwitchChanged = False
+            return
+
+        if not isChecked:
+            return
+
+        confirm = MessageBox(
+            tr("启用前请确认用途"),
+            tr("此选项及其子选项用于配置反复刷取遗器经验和灵之珠泪，直到达到每周上限。\n默认运行次数为每周 34 次。\n请确认你已经清楚了解这个功能的作用，并确保知道自己在做什么后再开启。"),
+            self.window()
+        )
+        confirm.yesButton.setText(tr("我已了解，继续开启"))
+        confirm.cancelButton.setText(tr("取消"))
+
+        if confirm.exec():
+            return
+
+        self._ignoreUniverseEnableCardSwitchChanged = True
+        self.universeEnableCard.switchButton.setChecked(False)
+
+    def __getDivergentUniverseRunCountText(self):
+        daily_count = DivergentUniverse.get_recorded_run_count("daily")
+        weekly_count = DivergentUniverse.get_recorded_run_count("weekly")
+        return "，".join([
+            tr("今日已完成 {} 次").format(daily_count),
+            tr("本周已完成 {} 次").format(weekly_count),
+        ])
+
+    def __resetDivergentUniverseRunCount(self):
+        DivergentUniverse.reset_recorded_run_count()
 
     def __getNotifyProviderNames(self):
         provider_names = []

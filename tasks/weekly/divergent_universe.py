@@ -24,9 +24,59 @@ class DivergentUniverse:
         self.stage_finish: bool = False  # 是否完成当前阶段
         self.unsupported_area: bool = False  # 是否遇到暂不支持区域
 
-    def start(self):
+    @staticmethod
+    def _get_count_config(cycle: Literal["daily", "weekly"]):
+        if cycle == "weekly":
+            return "divergent_universe_weekly_completed_count", "divergent_universe_weekly_completed_timestamp"
+        return "divergent_universe_daily_completed_count", "divergent_universe_daily_completed_timestamp"
+
+    @staticmethod
+    def _is_count_in_current_cycle(timestamp: float, cycle: Literal["daily", "weekly"]) -> bool:
+        if not timestamp:
+            return False
+
+        if cycle == "weekly":
+            return not Date.is_next_mon_x_am(timestamp, cfg.refresh_hour)
+        return not Date.is_next_x_am(timestamp, cfg.refresh_hour)
+
+    @staticmethod
+    def get_recorded_run_count(cycle: Literal["daily", "weekly"], sync: bool = True) -> int:
+        count_key, timestamp_key = DivergentUniverse._get_count_config(cycle)
+        count = int(cfg.get_value(count_key, 0) or 0)
+        timestamp = float(cfg.get_value(timestamp_key, 0) or 0)
+        count = max(count, 0)
+
+        if not DivergentUniverse._is_count_in_current_cycle(timestamp, cycle):
+            if sync and (count != 0 or timestamp != 0):
+                DivergentUniverse.reset_recorded_run_count(cycle)
+            return 0
+
+        return count
+
+    @staticmethod
+    def reset_recorded_run_count(cycle: Optional[Literal["daily", "weekly"]] = None):
+        cycles = (cycle,) if cycle else ("daily", "weekly")
+        for current_cycle in cycles:
+            count_key, timestamp_key = DivergentUniverse._get_count_config(current_cycle)
+            cfg.set_value(count_key, 0)
+            cfg.set_value(timestamp_key, 0)
+
+    @staticmethod
+    def record_completed_run() -> dict:
+        now = time.time()
+        counts = {}
+        for cycle in ("daily", "weekly"):
+            count_key, timestamp_key = DivergentUniverse._get_count_config(cycle)
+            count = DivergentUniverse.get_recorded_run_count(cycle) + 1
+            cfg.set_value(count_key, count)
+            cfg.set_value(timestamp_key, now)
+            counts[cycle] = count
+        return counts
+
+    def start(self) -> bool:
         log.hr('准备差分宇宙', '0')
-        if self.run():
+        success = self.run()
+        if success:
             Base.send_notification_with_screenshot("差分宇宙已完成", NotificationLevel.ALL, self.screenshot)
             self.screenshot = None
         else:
@@ -41,6 +91,7 @@ class DivergentUniverse:
         if has_reward and cfg.universe_bonus_enable:
             self.process_ornament()
         log.hr("完成", 2)
+        return success
 
     def check_divergent_universe_score(self) -> bool:
         """
@@ -241,7 +292,11 @@ class DivergentUniverse:
                 time.sleep(4)
                 screen.wait_for_screen_change("divergent_main")
                 log.info("已返回差分宇宙首页")
-                return self.result if self.result is not None else False
+                result = self.result if self.result is not None else False
+                if result:
+                    counts = DivergentUniverse.record_completed_run()
+                    log.info(f"已记录差分宇宙次数：今日 {counts['daily']} 次，本周 {counts['weekly']} 次")
+                return result
 
             time.sleep(2)
 
