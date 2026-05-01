@@ -3,6 +3,8 @@ import io
 import sys
 import time
 import platform
+import re
+import subprocess
 from utils.logger.logger import Logger
 from typing import Optional
 from PIL import Image
@@ -189,6 +191,254 @@ class OCR:
             return True
         return False
 
+    def _normalize_machine(self) -> str:
+        """规范化 CPU 架构名称。"""
+        machine = platform.machine().lower()
+        if machine in {"amd64", "x86_64", "x64", "intel64"}:
+            return "x86_64"
+        if machine in {"arm64", "aarch64"} or machine.startswith(("armv8", "armv9")):
+            return "arm64"
+        if machine.startswith("armv7"):
+            return "armv7"
+        return machine
+
+    def _version_at_least(self, current_version: str, minimum_version: str) -> bool:
+        """比较版本号，忽略非数字后缀。"""
+        current_parts = tuple(int(part) for part in re.findall(r"\d+", str(current_version)))
+        minimum_parts = tuple(int(part) for part in re.findall(r"\d+", str(minimum_version)))
+        if not current_parts or not minimum_parts:
+            return False
+        max_length = max(len(current_parts), len(minimum_parts))
+        current_parts += (0,) * (max_length - len(current_parts))
+        minimum_parts += (0,) * (max_length - len(minimum_parts))
+        return current_parts >= minimum_parts
+
+    def _get_linux_os_release(self):
+        """读取 Linux 发行版信息。"""
+        try:
+            return platform.freedesktop_os_release()
+        except Exception:
+            release = {}
+            try:
+                with open("/etc/os-release", "r", encoding="utf-8") as release_file:
+                    for line in release_file:
+                        if "=" not in line:
+                            continue
+                        key, value = line.rstrip().split("=", 1)
+                        release[key] = value.strip().strip('"')
+            except Exception:
+                return {}
+            return release
+
+    def _get_cpu_brand_string(self) -> str:
+        """尽可能获取可用于判断的 CPU 型号字符串。"""
+        try:
+            if sys.platform == "win32":
+                import winreg
+
+                with winreg.OpenKey(
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"HARDWARE\DESCRIPTION\System\CentralProcessor\0",
+                ) as cpu_key:
+                    brand_string, _ = winreg.QueryValueEx(cpu_key, "ProcessorNameString")
+                    if brand_string:
+                        return str(brand_string).strip().lower()
+            elif sys.platform == "darwin":
+                brand_string = subprocess.check_output(
+                    ["sysctl", "-n", "machdep.cpu.brand_string"],
+                    stderr=subprocess.DEVNULL,
+                    text=True,
+                ).strip()
+                if brand_string:
+                    return brand_string.lower()
+            else:
+                with open("/proc/cpuinfo", "r", encoding="utf-8", errors="ignore") as cpuinfo_file:
+                    for line in cpuinfo_file:
+                        if line.startswith(("model name", "Hardware")) and ":" in line:
+                            return line.split(":", 1)[1].strip().lower()
+        except Exception:
+            pass
+
+        fallback_values = [platform.processor(), os.environ.get("PROCESSOR_IDENTIFIER", "")]
+        for fallback_value in fallback_values:
+            if fallback_value:
+                return str(fallback_value).strip().lower()
+        return ""
+
+    def _get_cpu_flags(self):
+        """尝试获取 CPU 指令集标记。"""
+        flags = set()
+        try:
+            if sys.platform == "linux":
+                with open("/proc/cpuinfo", "r", encoding="utf-8", errors="ignore") as cpuinfo_file:
+                    for line in cpuinfo_file:
+                        if line.startswith(("flags", "Features")) and ":" in line:
+                            _, raw_flags = line.split(":", 1)
+                            flags.update(raw_flags.strip().lower().split())
+            elif sys.platform == "darwin":
+                for sysctl_name in ("machdep.cpu.features", "machdep.cpu.leaf7_features"):
+                    try:
+                        raw_flags = subprocess.check_output(
+                            ["sysctl", "-n", sysctl_name],
+                            stderr=subprocess.DEVNULL,
+                            text=True,
+                        ).strip()
+                    except Exception:
+                        continue
+                    flags.update(raw_flags.lower().split())
+            elif sys.platform == "win32":
+                import ctypes
+
+                # PF_SSE4_2_INSTRUCTIONS_AVAILABLE = 38
+                if ctypes.windll.kernel32.IsProcessorFeaturePresent(38):
+                    flags.update({"sse4_2", "sse4.2"})
+        except Exception:
+            return set()
+        return flags
+
+    def _is_supported_openvino_cpu(self):
+        """按官方支持矩阵做保守的 CPU 型号判断。"""
+        machine = self._normalize_machine()
+        cpu_brand = self._get_cpu_brand_string()
+        normalized_cpu_brand = re.sub(r"[^a-z0-9]+", " ", cpu_brand).strip()
+        cpu_flags = self._get_cpu_flags()
+
+        if machine in {"arm64", "armv7"}:
+            if sys.platform == "darwin" and machine != "arm64":
+                return False, "macOS 仅支持 Apple silicon (arm64) 使用 OpenVINO"
+            return True, ""
+
+        if machine != "x86_64":
+            return False, f"不支持的 CPU 架构: {machine or 'unknown'}"
+
+        if "intel" not in normalized_cpu_brand:
+            return False, f"当前 CPU 不在 OpenVINO 支持列表中: {cpu_brand or 'unknown'}"
+
+        if re.search(r"\bcore(?:\s+tm)?\s+ultra\b", normalized_cpu_brand):
+            return True, ""
+
+        core_match = re.search(
+            r"\b(?:i[3579]|m[357])\s+((?:[6-9]|1[0-4])[a-z]?[0-9]{2,3}[a-z0-9]{0,2})\b",
+            normalized_cpu_brand,
+        )
+        if core_match and "core" in normalized_cpu_brand:
+            model_code = core_match.group(1)
+            generation_match = re.match(r"(1[0-4]|[6-9])", model_code)
+            generation = int(generation_match.group(1)) if generation_match is not None else 0
+            if 6 <= generation <= 14:
+                return True, ""
+
+        if re.search(r"\bxeon\b.*\b(?:6\d{3}[a-z0-9]{0,2}|6)\b", normalized_cpu_brand):
+            return True, ""
+
+        if "xeon" in normalized_cpu_brand and any(series in normalized_cpu_brand for series in ("bronze", "silver", "gold", "platinum", "max")):
+            scalable_match = re.search(r"\b([3-9][0-9]{3}[a-z]?)\b", normalized_cpu_brand)
+            if scalable_match:
+                return True, ""
+
+        if "atom" in normalized_cpu_brand:
+            if re.search(r"\b(?:x\d{1,2}(?:\s*[a-z])?\d{3,4}|x\d{4,5}[a-z]{0,2})\b", normalized_cpu_brand):
+                return True, ""
+            if "sse4_2" in cpu_flags or "sse4.2" in cpu_flags:
+                return True, ""
+
+        if "pentium" in normalized_cpu_brand and re.search(r"\bn(?:4200|4205|3350|3355|3450|3455)\b", normalized_cpu_brand):
+            return True, ""
+
+        return False, f"当前 CPU 不在 OpenVINO 支持列表中: {cpu_brand or 'unknown'}"
+
+    def _is_supported_openvino_os(self):
+        """按官方支持矩阵做操作系统判断。"""
+        system_name = platform.system()
+        machine = self._normalize_machine()
+        is_64bit = sys.maxsize > 2 ** 32
+
+        if system_name == "Windows":
+            if not is_64bit:
+                return False, "Windows 使用 OpenVINO 需要 64 位系统"
+            if machine != "x86_64":
+                return False, f"Windows 当前架构不在 OpenVINO 支持列表中: {machine or 'unknown'}"
+            try:
+                windows_version = sys.getwindowsversion()
+            except Exception as e:
+                return False, f"无法识别 Windows 版本: {e}"
+            if windows_version.major < 10:
+                return False, "OpenVINO 仅支持 Windows 10/11 64-bit"
+            return True, ""
+
+        if system_name == "Darwin":
+            if not is_64bit:
+                return False, "macOS 使用 OpenVINO 需要 64 位系统"
+            mac_version = platform.mac_ver()[0]
+            if not self._version_at_least(mac_version, "12.6"):
+                return False, f"macOS 版本过低: {mac_version or 'unknown'}，需要 12.6+"
+            if machine not in {"x86_64", "arm64"}:
+                return False, f"当前 macOS 架构不受支持: {machine or 'unknown'}"
+            return True, ""
+
+        if system_name == "Linux":
+            linux_release = self._get_linux_os_release()
+            distro_id = linux_release.get("ID", "").lower()
+            version_id = linux_release.get("VERSION_ID", "")
+            kernel_version = platform.release()
+
+            if distro_id == "ubuntu":
+                if machine == "arm64":
+                    if version_id.startswith("20.04"):
+                        return True, ""
+                    return False, f"ARM64 仅支持 Ubuntu 20.04，当前为 Ubuntu {version_id or 'unknown'}"
+                if not is_64bit:
+                    return False, "Ubuntu 使用 OpenVINO 需要 64 位系统"
+                minimum_kernel = None
+                if version_id.startswith("24.04"):
+                    minimum_kernel = "6.8"
+                elif version_id.startswith(("22.04", "20.04")):
+                    minimum_kernel = "5.15"
+                else:
+                    return False, f"当前 Ubuntu 版本不在 OpenVINO 支持列表中: {version_id or 'unknown'}"
+                if not self._version_at_least(kernel_version, minimum_kernel):
+                    return False, f"Ubuntu {version_id} 需要 Kernel {minimum_kernel}+，当前为 {kernel_version}"
+                return True, ""
+
+            if distro_id == "centos":
+                if not is_64bit:
+                    return False, "CentOS 使用 OpenVINO 需要 64 位系统"
+                if machine != "x86_64":
+                    return False, f"CentOS 当前架构不在 OpenVINO 支持列表中: {machine or 'unknown'}"
+                if version_id.startswith("7"):
+                    return True, ""
+                return False, f"当前 CentOS 版本不在 OpenVINO 支持列表中: {version_id or 'unknown'}"
+
+            if distro_id == "rhel":
+                if not is_64bit:
+                    return False, "RHEL 使用 OpenVINO 需要 64 位系统"
+                if machine != "x86_64":
+                    return False, f"RHEL 当前架构不在 OpenVINO 支持列表中: {machine or 'unknown'}"
+                if version_id.split(".", 1)[0] in {"8", "9"}:
+                    return True, ""
+                return False, f"当前 RHEL 版本不在 OpenVINO 支持列表中: {version_id or 'unknown'}"
+
+            if distro_id == "opensuse-tumbleweed":
+                if machine in {"x86_64", "arm64"} and is_64bit:
+                    return True, ""
+                return False, f"openSUSE Tumbleweed 当前架构不受支持: {machine or 'unknown'}"
+
+            return False, f"当前 Linux 发行版不在 OpenVINO 支持列表中: {distro_id or 'unknown'}"
+
+        return False, f"当前操作系统不在 OpenVINO 支持列表中: {system_name or 'unknown'}"
+
+    def _can_use_openvino_fallback(self):
+        """检查 Auto/CPU 回落路径是否允许使用 OpenVINO。"""
+        os_supported, os_reason = self._is_supported_openvino_os()
+        if not os_supported:
+            return False, os_reason
+
+        cpu_supported, cpu_reason = self._is_supported_openvino_cpu()
+        if not cpu_supported:
+            return False, cpu_reason
+
+        return True, ""
+
     def _resolve_engine(self, selected_mode, force_cpu=False, force_onnx=False):
         """根据配置模式和运行环境解析实际引擎与 DML 开关。"""
         from rapidocr import EngineType
@@ -197,6 +447,23 @@ class OCR:
         windows_supported = self._check_windows_version()
         has_onnxruntime = importlib.util.find_spec("onnxruntime") is not None
         has_openvino = importlib.util.find_spec("openvino") is not None
+        openvino_fallback_supported = False
+        openvino_unsupported_reason = ""
+        openvino_warning_emitted = False
+
+        if has_openvino:
+            openvino_fallback_supported, openvino_unsupported_reason = self._can_use_openvino_fallback()
+
+        def choose_cpu_fallback_engine():
+            nonlocal openvino_warning_emitted
+            if openvino_fallback_supported:
+                return EngineType.OPENVINO
+            if has_openvino and not openvino_warning_emitted:
+                self.logger.warning(
+                    f"当前环境不满足 OpenVINO CPU 要求，已回退到 ONNXRuntime(CPU): {openvino_unsupported_reason}"
+                )
+                openvino_warning_emitted = True
+            return EngineType.ONNXRUNTIME
 
         effective_mode = selected_mode
         if force_cpu:
@@ -211,10 +478,8 @@ class OCR:
             if windows_supported and has_onnxruntime:
                 use_dml = True
                 prefer_engine = EngineType.ONNXRUNTIME
-            elif has_openvino:
-                prefer_engine = EngineType.OPENVINO
             else:
-                prefer_engine = EngineType.ONNXRUNTIME
+                prefer_engine = choose_cpu_fallback_engine()
         elif effective_mode in (OCR_MODE_GPU, OCR_MODE_ONNX_DML):
             if windows_supported and has_onnxruntime:
                 use_dml = True
@@ -222,15 +487,12 @@ class OCR:
             else:
                 self.logger.warning("当前环境不支持 ONNXRuntime(DirectML)，已回退到 CPU 模式")
                 effective_mode = OCR_MODE_CPU if effective_mode == OCR_MODE_GPU else OCR_MODE_ONNX_CPU
-                if effective_mode == OCR_MODE_CPU and has_openvino:
-                    prefer_engine = EngineType.OPENVINO
+                if effective_mode == OCR_MODE_CPU:
+                    prefer_engine = choose_cpu_fallback_engine()
                 else:
                     prefer_engine = EngineType.ONNXRUNTIME
         elif effective_mode == OCR_MODE_CPU:
-            if has_openvino:
-                prefer_engine = EngineType.OPENVINO
-            else:
-                prefer_engine = EngineType.ONNXRUNTIME
+            prefer_engine = choose_cpu_fallback_engine()
         elif effective_mode == OCR_MODE_OPENVINO_CPU:
             if has_openvino:
                 prefer_engine = EngineType.OPENVINO
@@ -246,8 +508,8 @@ class OCR:
             if windows_supported and has_onnxruntime:
                 use_dml = True
                 prefer_engine = EngineType.ONNXRUNTIME
-            elif has_openvino:
-                prefer_engine = EngineType.OPENVINO
+            else:
+                prefer_engine = choose_cpu_fallback_engine()
 
         return prefer_engine, use_dml, effective_mode
 
