@@ -923,6 +923,29 @@ class WorkflowRunner:
         if self.mirror_to_project_log:
             log.info(f"[Workflow] {message}")
 
+    def _step_label(self, step: dict, fallback: str = "") -> str:
+        step_type = str(step.get("type", "") or "")
+        if not step_type:
+            return fallback
+        return tr(STEP_TYPE_LABELS.get(step_type, step_type))
+
+    @staticmethod
+    def _result_label(result: bool) -> str:
+        return tr("成功") if result else tr("失败")
+
+    def _log_bool_step_result(self, step: dict, result: bool, depth: int):
+        label = self._step_label(step, tr("步骤"))
+        self._log(f"{'  ' * depth}{label}{tr('结果')}：{self._result_label(result)}")
+
+    def _log_condition_result(self, step: dict, result: bool, depth: int):
+        label = self._step_label(step, tr("条件"))
+        self._log(f"{'  ' * depth}{label}{tr('条件结果')}：{self._result_label(result)} ({result})")
+
+    def _execute_bool_step(self, step: dict, depth: int, handler) -> tuple[bool, None]:
+        result = bool(handler(step))
+        self._log_bool_step_result(step, result, depth)
+        return result, None
+
     def _execute_steps(self, steps: list[dict], depth: int, in_loop: bool = False) -> tuple[bool, str | None]:
         for index, step in enumerate(steps, start=1):
             if self.stop_requested:
@@ -947,15 +970,15 @@ class WorkflowRunner:
         step_type = normalized["type"]
 
         if step_type == "click_image":
-            return self._click_image(normalized), None
+            return self._execute_bool_step(normalized, depth, self._click_image)
         if step_type == "click_text":
-            return self._click_text(normalized), None
+            return self._execute_bool_step(normalized, depth, self._click_text)
         if step_type == "click_crop":
-            return self._click_crop(normalized), None
+            return self._execute_bool_step(normalized, depth, self._click_crop)
         if step_type == "find_image":
-            return self._find_image(normalized), None
+            return self._execute_bool_step(normalized, depth, self._find_image)
         if step_type == "find_text":
-            return self._find_text(normalized), None
+            return self._execute_bool_step(normalized, depth, self._find_text)
         if step_type == "play_audio":
             return self._play_audio(normalized), None
         if step_type == "send_message":
@@ -970,7 +993,7 @@ class WorkflowRunner:
         if step_type in {self.LOOP_CONTROL_BREAK, self.LOOP_CONTROL_CONTINUE}:
             return self._handle_loop_control_step(step_type, depth, in_loop)
         if step_type == "if":
-            condition_result = self._evaluate_condition(normalized)
+            condition_result = self._evaluate_condition(normalized, depth)
             if condition_result:
                 return self._execute_steps(normalized["children"], depth + 1, in_loop=in_loop)
             return False, None
@@ -1002,7 +1025,7 @@ class WorkflowRunner:
             result = False
             max_iter = normalized["max_iterations"]
             while (max_iter == 0 or iteration < max_iter) and not self.stop_requested:
-                if not self._evaluate_condition(normalized):
+                if not self._evaluate_condition(normalized, depth):
                     break
                 iteration += 1
                 iter_label = f"∞ ({iteration})" if max_iter == 0 else f"{iteration}/{max_iter}"
@@ -1027,18 +1050,21 @@ class WorkflowRunner:
 
         return True, self.LOOP_CONTROL_CONTINUE
 
-    def _evaluate_condition(self, step: dict) -> bool:
+    def _evaluate_condition(self, step: dict, depth: int = 0) -> bool:
         condition_type = step["condition_type"]
         if condition_type in {"image_exists", "image_not_exists"}:
             result = self._find_image(step)
-            return result if condition_type == "image_exists" else not result
-        if condition_type in {"text_exists", "text_not_exists"}:
+            final_result = result if condition_type == "image_exists" else not result
+        elif condition_type in {"text_exists", "text_not_exists"}:
             result = self._find_text(step)
-            return result if condition_type == "text_exists" else not result
-        if condition_type in {"last_result", "last_result_failed"}:
+            final_result = result if condition_type == "text_exists" else not result
+        elif condition_type in {"last_result", "last_result_failed"}:
             result = bool(self.last_result)
-            return result if condition_type == "last_result" else not result
-        return False
+            final_result = result if condition_type == "last_result" else not result
+        else:
+            final_result = False
+        self._log_condition_result(step, final_result, depth)
+        return final_result
 
     def _crop(self, step: dict) -> tuple[float, float, float, float]:
         return parse_crop_expression(step.get("crop", ""))
