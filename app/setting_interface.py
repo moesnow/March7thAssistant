@@ -102,6 +102,7 @@ class SettingInterface(ScrollArea):
         super().__init__(parent)
         self.parent = parent
         self._ignoreUniverseEnableCardSwitchChanged = False
+        self._ignoreCheckUpdateCardSwitchChanged = False
         self.scrollWidget = QWidget()
         self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
@@ -1485,19 +1486,15 @@ class SettingInterface(ScrollArea):
             tr('更新源'),
             self.parent,
             "",
-            texts={tr('海外源'): 'GitHub', tr('Mirror 酱'): 'MirrorChyan'}
+            texts={tr('海外源'): 'GitHub', tr('Mirror 酱'): 'MirrorChyan'},
+            secondary_configname="update_prerelease_enable",
+            secondary_texts={tr('正式版'): False, tr('公测版'): True}
         )
         self.checkUpdateCard = SwitchSettingCard1(
             FIF.SYNC,
             tr('启动时检测更新'),
             "",
             "check_update"
-        )
-        self.updatePrereleaseEnableCard = SwitchSettingCard1(
-            FIF.TRAIN,
-            tr('加入预览版更新渠道'),
-            "",
-            "update_prerelease_enable"
         )
         self.updateFullEnableCard = SwitchSettingCard1(
             FIF.GLOBE,
@@ -1768,7 +1765,6 @@ class SettingInterface(ScrollArea):
         self.AboutGroup.addSettingCard(self.updateSourceCard)
         self.updateSourceCard.addSettingCards([
             self.checkUpdateCard,
-            self.updatePrereleaseEnableCard,
             self.updateFullEnableCard,
             self.updateDownloadProxyCard
         ])
@@ -1879,6 +1875,7 @@ class SettingInterface(ScrollArea):
         self.browserTypeCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.browserHeadlessCard.expandStateChanged.connect(self.__onExpandableCardStateChanged)
         self.universeEnableCard.switchChanged.connect(self.__onUniverseEnableCardSwitchChanged)
+        self.checkUpdateCard.switchButton.checkedChanged.connect(self.__onCheckUpdateCardSwitchChanged)
 
     def __onUniverseEnableCardSwitchChanged(self, isChecked: bool):
         if self._ignoreUniverseEnableCardSwitchChanged:
@@ -1901,6 +1898,28 @@ class SettingInterface(ScrollArea):
 
         self._ignoreUniverseEnableCardSwitchChanged = True
         self.universeEnableCard.switchButton.setChecked(False)
+
+    def __onCheckUpdateCardSwitchChanged(self, isChecked: bool):
+        if self._ignoreCheckUpdateCardSwitchChanged:
+            self._ignoreCheckUpdateCardSwitchChanged = False
+            return
+
+        if isChecked:
+            return
+
+        confirm = MessageBox(
+            tr("关闭更新检测前请确认"),
+            tr("仍然建议保留“启动时检测更新”。\n\n它不会在后台偷偷自动更新软件。开启后，仅会在你手动启动软件时检查一次更新，并在发现新版本后提醒你，不会自行安装，也不会影响循环运行。\n\n这类基于图像识别的工具对游戏界面变化非常敏感。游戏更新后，界面、按钮或布局只要发生变化，旧版本就更容易出现识别失败、流程异常等问题。\n\n很多看似“突然不能用了”的情况，本质上都是版本过旧导致的。若你已经了解这些影响，再继续关闭更新检测。"),
+            self.window()
+        )
+        confirm.yesButton.setText(tr("我已了解，继续关闭"))
+        confirm.cancelButton.setText(tr("取消"))
+
+        if confirm.exec():
+            return
+
+        self._ignoreCheckUpdateCardSwitchChanged = True
+        self.checkUpdateCard.switchButton.setChecked(True)
 
     def __getDivergentUniverseRunCountText(self):
         daily_count = DivergentUniverse.get_recorded_run_count("daily")

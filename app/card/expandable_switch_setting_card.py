@@ -295,12 +295,13 @@ class ExpandableComboBoxSettingCard(ExpandSettingCard):
 
 
 class ExpandableComboBoxSettingCardUpdateSource(ExpandSettingCard):
-    """可展开的下拉菜单设置卡片 - 用于更新源选择"""
+    """可展开的下拉菜单设置卡片 - 用于更新源及更新通道选择"""
 
     expandStateChanged = Signal(bool)
 
     def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase],
-                 title: str, update_callback, content: str = None, texts: dict = None, parent=None):
+                 title: str, update_callback, content: str = None, texts: dict = None,
+                 secondary_configname: str = None, secondary_texts: dict = None, parent=None):
         """
         参数:
         - configname: 配置项名称
@@ -309,15 +310,14 @@ class ExpandableComboBoxSettingCardUpdateSource(ExpandSettingCard):
         - update_callback: 更新回调函数
         - content: 内容描述
         - texts: 下拉菜单选项 {'显示名': '值'}
+        - secondary_configname: 第二个配置项名称
+        - secondary_texts: 第二个下拉菜单选项 {'显示名': '值'}
         - parent: 父组件
         """
         super().__init__(icon, title, content, parent)
         self.configname = configname
+        self.secondaryConfigname = secondary_configname
         self.update_callback = update_callback
-
-        # ComboBox
-        self.comboBox = ComboBox(self)
-        self.card.addWidget(self.comboBox)
 
         # Import config here to avoid circular import
         from module.config import cfg
@@ -325,19 +325,41 @@ class ExpandableComboBoxSettingCardUpdateSource(ExpandSettingCard):
         self.cfg = cfg
         self.checkUpdate = checkUpdate
 
-        # Set combo box items
-        if texts:
-            for key, value in texts.items():
-                self.comboBox.addItem(key, userData=value)
-                if value == self.cfg.get_value(configname):
-                    self.comboBox.setCurrentText(key)
+        self.secondaryComboBox = None
+        if secondary_configname and secondary_texts:
+            self.secondaryComboBox = ComboBox(self)
+            self.secondaryComboBox.setMinimumWidth(110)
+            self.card.addWidget(self.secondaryComboBox)
+            self._initComboBox(self.secondaryComboBox, secondary_configname, secondary_texts)
+
+        self.comboBox = ComboBox(self)
+        self.comboBox.setMinimumWidth(110)
+        self.card.addWidget(self.comboBox)
+        self._initComboBox(self.comboBox, configname, texts)
 
         # Connect signals
         self.comboBox.currentIndexChanged.connect(self.__onComboBoxChanged)
+        if self.secondaryComboBox is not None:
+            self.secondaryComboBox.currentIndexChanged.connect(self.__onSecondaryComboBoxChanged)
+
+    def _initComboBox(self, combo_box: ComboBox, configname: str, texts: dict | None):
+        if not texts:
+            return
+
+        current_value = self.cfg.get_value(configname)
+        for key, value in texts.items():
+            combo_box.addItem(key, userData=value)
+            if value == current_value:
+                combo_box.setCurrentText(key)
 
     def __onComboBoxChanged(self, index: int):
         """ComboBox changed slot"""
         self.cfg.set_value(self.configname, self.comboBox.itemData(index))
+        self.checkUpdate(self.update_callback)
+
+    def __onSecondaryComboBoxChanged(self, index: int):
+        """Secondary ComboBox changed slot"""
+        self.cfg.set_value(self.secondaryConfigname, self.secondaryComboBox.itemData(index))
         self.checkUpdate(self.update_callback)
 
     def setExpand(self, isExpand: bool):
