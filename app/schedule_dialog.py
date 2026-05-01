@@ -655,7 +655,7 @@ class ScheduleManagerDialog(MessageBox):
         btn_layout.addWidget(self.run_btn)
 
         # 冲突处理：当定时任务触发且已有任务在运行时如何处理（skip/stop）
-        conflict_label = BodyLabel(tr('冲突处理:'))
+        conflict_label = BodyLabel(tr('冲突:'))
         # conflict_label.setFixedWidth(90)
         self.conflict_combo = ComboBox(self)
         # options: key, label
@@ -677,8 +677,40 @@ class ScheduleManagerDialog(MessageBox):
         except Exception:
             pass
 
+        chain_failure_label = BodyLabel(tr('链式失败后:'))
+        self.chain_failure_combo = ComboBox(self)
+        self._chain_failure_options = [
+            (True, tr('继续后续任务')),
+            (False, tr('停止后续任务')),
+        ]
+        for value, label in self._chain_failure_options:
+            self.chain_failure_combo.addItem(label, userData=value)
+        try:
+            cur = cfg.get_value('scheduled_chain_continue_on_failure', True)
+            if isinstance(cur, str):
+                cur = cur.strip().lower() not in ('false', '0', 'no', 'stop')
+            else:
+                cur = bool(cur)
+            for i in range(self.chain_failure_combo.count()):
+                if self.chain_failure_combo.itemData(i) == cur:
+                    self.chain_failure_combo.setCurrentIndex(i)
+                    break
+        except Exception:
+            pass
+        try:
+            self.chain_failure_combo.currentIndexChanged.connect(
+                lambda i: cfg.set_value(
+                    'scheduled_chain_continue_on_failure',
+                    self.chain_failure_combo.itemData(i) if self.chain_failure_combo.itemData(i) is not None else True,
+                )
+            )
+        except Exception:
+            pass
+
         btn_layout.addWidget(conflict_label)
         btn_layout.addWidget(self.conflict_combo)
+        btn_layout.addWidget(chain_failure_label)
+        btn_layout.addWidget(self.chain_failure_combo)
         btn_layout.addStretch()
 
         # 插入到 textLayout
@@ -698,20 +730,23 @@ class ScheduleManagerDialog(MessageBox):
         self._reload_table()
 
     def _reload_table(self):
+        self.table.clearContents()
+        self.table.setRowCount(0)
         self.table.setRowCount(len(self.scheduled_tasks))
         chain_visuals = self._build_chain_visuals()
         for i, t in enumerate(self.scheduled_tasks):
             trigger_mode = str(t.get('trigger_mode', 'time')).lower()
             chain_role = chain_visuals.get(i)
             # 启用（第一列）
-            enabled_widget = QWidget(self.table)
+            enabled_widget = QWidget()
             enabled_layout = QHBoxLayout(enabled_widget)
             enabled_layout.setContentsMargins(0, 0, 0, 0)
-            enabled_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            enabled_layout.setSpacing(0)
+            enabled_widget.setContentsMargins(0, 0, 0, 0)
             enabled_check = CheckBox('', enabled_widget)
             enabled_check.setChecked(bool(t.get('enabled', True)))
             enabled_check.stateChanged.connect(lambda _state, row=i: self._on_enabled_toggled(row))
-            enabled_layout.addWidget(enabled_check)
+            enabled_layout.addWidget(enabled_check, 0, Qt.AlignmentFlag.AlignCenter)
             self.table.setCellWidget(i, 0, enabled_widget)
             # 名称
             name_display = t.get('name', '')
@@ -754,6 +789,10 @@ class ScheduleManagerDialog(MessageBox):
                 self._apply_time_task_visual_style(
                     [name_item, time_item, prog_item, args_item, notify_item]
                 )
+
+        self.table.resizeRowsToContents()
+        self.table.doItemsLayout()
+        self.table.viewport().update()
 
     def _build_chain_visuals(self):
         visuals = {}

@@ -268,6 +268,8 @@ class LogInterface(ScrollArea):
         self._pending_task_meta = None
         # 当前链式定时任务中排队等待执行的后续任务
         self._active_task_chain = []
+        # 一次性标记：当前任务是为了切换到其他任务而被中断，不应继续旧链
+        self._suppress_chain_continuation_once = False
         # 用于在强制停止当前任务后排队延迟启动的任务（tuple: (task_meta, task_dict)）
         self._pending_start_task_after_stop = None
         # 可取消的超时定时器（用于在任务超时时停止任务）
@@ -925,6 +927,7 @@ class LogInterface(ScrollArea):
                         self.appendLog(self.tr("已有任务在运行，按配置停止当前任务并在其结束后启动: {}").format(task_for_start.get('name')) + "\n")
                         # 排队延迟启动：保存元数据与任务字典，调用 stopTask 停止当前任务
                         try:
+                            self._suppress_chain_continuation_once = True
                             self._pending_start_task_after_stop = (t, task_for_start, chain)
                             self.stopTask(user_initiated=False)
                         except Exception as e:
@@ -944,6 +947,7 @@ class LogInterface(ScrollArea):
         """启动任务"""
         # 如果有正在运行的任务，先停止
         if self.process and self.process.state() == QProcess.Running:
+            self._suppress_chain_continuation_once = True
             self.stopTask(user_initiated=False)
             # 等待进程结束
             self.process.waitForFinished(3000)
@@ -1588,13 +1592,26 @@ class LogInterface(ScrollArea):
         next_chain_task = None
         try:
             if self._active_task_chain:
-                can_continue_chain = (
-                    (not user_stop) and
+                continue_on_failure = cfg.get_value('scheduled_chain_continue_on_failure', True)
+                if isinstance(continue_on_failure, str):
+                    continue_on_failure = continue_on_failure.strip().lower() not in ('false', '0', 'no', 'stop')
+                else:
+                    continue_on_failure = bool(continue_on_failure)
+                suppress_chain_continuation = bool(getattr(self, '_suppress_chain_continuation_once', False))
+                self._suppress_chain_continuation_once = False
+                task_succeeded = (
                     exit_status == QProcess.NormalExit and
                     exit_code == 0 and
                     (not getattr(self, '_stopped_abnormally', False))
                 )
+                can_continue_chain = (
+                    (not user_stop) and
+                    (not suppress_chain_continuation) and
+                    (task_succeeded or continue_on_failure)
+                )
                 if can_continue_chain:
+                    if not task_succeeded:
+                        self.appendLog(self.tr('当前任务失败，按配置继续执行后续链式任务') + "\n")
                     next_chain_task = self._active_task_chain.pop(0)
                 else:
                     remaining = self._formatScheduledTaskChain(self._active_task_chain)
@@ -1604,6 +1621,10 @@ class LogInterface(ScrollArea):
         except Exception:
             next_chain_task = None
             self._active_task_chain = []
+            try:
+                self._suppress_chain_continuation_once = False
+            except Exception:
+                pass
 
         self._updateFinishedStatus(exit_code)
         self._hideLogOverlay()
