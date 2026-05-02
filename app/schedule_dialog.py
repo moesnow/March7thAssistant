@@ -720,7 +720,7 @@ class ScheduleManagerDialog(MessageBox):
         # 连接
         self.add_btn.clicked.connect(self._on_add)
         self.move_up_btn.clicked.connect(self._on_move_up)
-        self.edit_btn.clicked.connect(self._on_edit)
+        self.edit_btn.clicked.connect(lambda _checked=False: self._on_edit())
         self.del_btn.clicked.connect(self._on_delete)
         self.run_btn.clicked.connect(self._on_run_now)
         # 双击行打开编辑（等价于按编辑按钮）
@@ -885,6 +885,8 @@ class ScheduleManagerDialog(MessageBox):
         self._move_task(row, row - 1)
 
     def _on_edit(self, row=None):
+        if isinstance(row, bool):
+            row = None
         if row is None:
             row = self.table.currentRow()
         if row < 0 or row >= len(self.scheduled_tasks):
