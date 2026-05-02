@@ -23,6 +23,55 @@ import datetime
 
 class Daily:
     @staticmethod
+    def prepare_daily(ignore_refresh=False):
+        if cfg.reward_enable and cfg.reward_redemption_code_enable:
+            Redemption.get()
+
+        # 获取培养目标（在活动前初始化，以便活动可以使用培养目标）
+        if cfg.build_target_enable:
+            BuildTarget.init_build_targets()
+
+        # 在日常任务中检查是否使用支援角色
+        if cfg.daily_enable:
+            if ignore_refresh or Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
+                Daily.lookup()
+            else:
+                log.info("每日实训尚未刷新")
+        else:
+            log.info("每日实训未开启")
+
+        activity.start()
+
+        # 优先历战余响
+        if cfg.echo_of_war_enable:
+            if ignore_refresh or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
+                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
+                isoweekday = datetime.date.today().isoweekday()
+                if isoweekday >= cfg.echo_of_war_start_day_of_week:
+                    Echoofwar.start()
+                else:
+                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
+            else:
+                log.info("历战余响尚未刷新")
+        else:
+            log.info("历战余响未开启")
+
+        Power.run()
+
+        if cfg.daily_enable:
+            if ignore_refresh or Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
+                Daily.run()
+            else:
+                log.info("每日实训尚未刷新")
+        else:
+            log.info("每日实训未开启")
+
+    @staticmethod
+    def routine():
+        Daily.prepare_daily(ignore_refresh=True)
+        reward.start()
+
+    @staticmethod
     def _run_scheduled_divergent_universe(divergent: DivergentUniverse):
         target_count = int(cfg.universe_count)
         cycle = "weekly" if cfg.universe_frequency == "weekly" else "daily"
@@ -55,47 +104,7 @@ class Daily:
 
     @staticmethod
     def start():
-        if cfg.reward_enable and cfg.reward_redemption_code_enable:
-            Redemption.get()
-
-        # 获取培养目标（在活动前初始化，以便活动可以使用培养目标）
-        if cfg.build_target_enable:
-            BuildTarget.init_build_targets()
-
-        # 在日常任务中检查是否使用支援角色
-        if cfg.daily_enable:
-            if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
-                Daily.lookup()
-            else:
-                log.info("每日实训尚未刷新")
-        else:
-            log.info("每日实训未开启")
-
-        activity.start()
-
-        # 优先历战余响
-        if cfg.echo_of_war_enable:
-            if Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
-                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
-                isoweekday = datetime.date.today().isoweekday()
-                if isoweekday >= cfg.echo_of_war_start_day_of_week:
-                    Echoofwar.start()
-                else:
-                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
-            else:
-                log.info("历战余响尚未刷新")
-        else:
-            log.info("历战余响未开启")
-
-        Power.run()
-
-        if cfg.daily_enable:
-            if Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
-                Daily.run()
-            else:
-                log.info("每日实训尚未刷新")
-        else:
-            log.info("每日实训未开启")
+        Daily.prepare_daily()
 
         if cfg.currencywars_enable:
             if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):

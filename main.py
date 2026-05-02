@@ -137,7 +137,6 @@ def run_main_actions(no_run_immediately=False):
             notif.start_batch()
         version.start()
         game.start()
-        reward.start_specific("dispatch")
         Daily.start()
         reward.start()
         game.stop(True)
@@ -173,6 +172,7 @@ def run_sub_task(action):
             universe.start()
 
     sub_tasks = {
+        "routine": Daily.routine,
         "daily": lambda: (Daily.run(), reward.start()),
         "power": Power.run,
         "currencywars": lambda: currencywars(),
@@ -244,7 +244,7 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
         run_main_actions(no_run_immediately)
 
     # 子任务
-    elif action in ["daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
+    elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption"]:
         run_sub_task(action)
 
     # 子任务 原生图形界面

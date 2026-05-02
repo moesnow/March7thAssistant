@@ -1,6 +1,6 @@
 # Tutorial
 
-> This document was translated from the Simplified Chinese version using AI. Last updated: 2026-04-24. If anything differs, the Simplified Chinese version takes precedence.
+> This document was translated from the Simplified Chinese version using AI. Last updated: 2026-05-03. If anything differs, the Simplified Chinese version takes precedence.
 
 ## Before You Run
 
@@ -68,7 +68,7 @@ Common examples:
 
 `March7th Launcher.exe main -e` (exit automatically after the task finishes successfully)
 
-Common task names include: `main` (full workflow), `daily` (Daily Training), `power` (Spend Trailblaze Power), `currencywars` (Currency Wars), and more.
+Common task names include: `main` (full workflow), `routine` (Daily), `daily` (Daily Training), `power` (Spend Trailblaze Power), `currencywars` (Currency Wars), and more.
 
 If you know you want to run a task but forgot the exact task name, run `March7th Launcher.exe -l` to see the latest list.
 
@@ -94,7 +94,9 @@ The default daily refresh time is 4:00 AM. Weekly content usually refreshes ever
 
 ### Daily
 
-The `Daily` menu on the home page includes `Daily Training` and `Spend Trailblaze Power`.
+The `Daily` menu on the home page includes `Daily`, `Daily Training`, and `Spend Trailblaze Power`.
+
+`Daily` ignores refresh timers for this daily slice and runs the enabled steps based on your current settings: redemption codes, cultivation target initialization, activity checks, Echo of War, spending Trailblaze Power, Daily Training, and final reward collection. Only disabled items are skipped automatically.
 
 `Daily Training` first checks which training objectives are still unfinished, then attempts to complete them automatically. If you only want to farm stages with Trailblaze Power, use `Spend Trailblaze Power` directly.
 

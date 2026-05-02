@@ -42,6 +42,7 @@ DEFAULT_CARDS = [
         "action_type": "menu",
         "task_id": "",
         "menu_items": [
+            {"label": tr("日常"), "task_id": "routine"},
             {"label": tr("每日实训"), "task_id": "daily"},
             {"label": tr("清体力"), "task_id": "power"}
         ]
