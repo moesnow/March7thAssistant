@@ -172,7 +172,7 @@ def start_game():
             auto.press_mouse()
         else:
             # starrail.check_resolution_ratio(1920, 1080)
-            # starrail.check_resolution(1920, 1080)
+            starrail.check_resolution(1920, 1080)
             if cfg.auto_set_game_path_enable:
                 program_path = get_process_path(cfg.game_process_name)
                 if program_path is not None and program_path != cfg.game_path:
