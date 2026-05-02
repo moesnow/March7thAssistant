@@ -322,7 +322,7 @@ About `OCR Acceleration Mode`: keeping it on `Auto` is recommended first. The mo
 - Otherwise, if OpenVINO is detected, use OpenVINO CPU. If neither applies, fall back to ONNXRuntime CPU.
 - `GPU (ONNXRuntime DirectML)`: Force DirectML GPU acceleration and fall back automatically if the environment is unsupported.
 - `CPU (OpenVINO)`: Force OpenVINO CPU inference. On pure CPU workloads, OpenVINO is often faster than ONNXRuntime CPU,
-- but **it may continuously increase memory usage**. The assistant periodically recreates the engine to release memory and downgrades to ONNXRuntime CPU when available memory gets low.
+- and the current version applies a temporary workaround for the OpenVINO CPU runtime cache issue. If available physical memory drops below 1 GB, it will automatically fall back to ONNXRuntime CPU.
 - `CPU (ONNXRuntime)`: Force ONNXRuntime CPU inference. It has the best compatibility and the most stable memory behavior.
 - If you encounter recognition issues, crashes, or unusually high memory usage, switch manually to `CPU (ONNXRuntime)` first.
 

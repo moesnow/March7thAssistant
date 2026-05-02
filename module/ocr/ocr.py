@@ -76,8 +76,8 @@ class OCR:
         if self.ocr_count % self._periodic_gc_interval == 0:
             gc.collect()
 
-    def _is_memory_low(self, threshold_gb: float = 4.0) -> bool:
-        """检查当前可用物理内存是否低于阈值（默认 4GB）。"""
+    def _is_memory_low(self, threshold_gb: float = 1.0) -> bool:
+        """检查当前可用物理内存是否低于阈值（默认 1GB）。"""
         try:
             import psutil
             available_gb = psutil.virtual_memory().available / (1024 ** 3)
@@ -133,6 +133,31 @@ class OCR:
         except Exception as e:
             if self.logger is not None:
                 self.logger.debug(f"关闭 OpenVINO telemetry 失败: {e}")
+
+    def _disable_openvino_runtime_cache(self):
+        """给 RapidOCR 的 OpenVINO CPU 配置补一项 runtime cache 限制。"""
+        try:
+            from rapidocr.inference_engine.openvino.device_config import CPUConfig
+        except Exception as e:
+            if self.logger is not None:
+                self.logger.debug(f"加载 RapidOCR OpenVINO 配置失败: {e}")
+            return
+
+        if getattr(CPUConfig, "_march7th_runtime_cache_disabled", False):
+            return
+
+        original_get_config = CPUConfig.get_config
+
+        def patched_get_config(config_self):
+            config = original_get_config(config_self)
+            # Workaround from https://github.com/openvinotoolkit/openvino/issues/31188#issuecomment-3076842147
+            config.setdefault("CPU_RUNTIME_CACHE_CAPACITY", "0")
+            return config
+
+        CPUConfig.get_config = patched_get_config
+        CPUConfig._march7th_runtime_cache_disabled = True
+        if self.logger is not None:
+            self.logger.debug("已禁用 OpenVINO CPU runtime cache")
 
     def _get_config(self):
         """延迟获取配置对象，避免循环导入"""
@@ -444,13 +469,15 @@ class OCR:
 
     def _can_use_openvino_fallback(self):
         """检查 Auto/CPU 回落路径是否允许使用 OpenVINO。"""
-        os_supported, os_reason = self._is_supported_openvino_os()
-        if not os_supported:
-            return False, os_reason
+        # 当前暂不启用 OpenVINO CPU 支持检测入口，直接返回 True 以允许使用 OpenVINO。
 
-        cpu_supported, cpu_reason = self._is_supported_openvino_cpu()
-        if not cpu_supported:
-            return False, cpu_reason
+        # os_supported, os_reason = self._is_supported_openvino_os()
+        # if not os_supported:
+        #     return False, os_reason
+
+        # cpu_supported, cpu_reason = self._is_supported_openvino_cpu()
+        # if not cpu_supported:
+        #     return False, cpu_reason
 
         return True, ""
 
@@ -557,6 +584,7 @@ class OCR:
                 self._using_openvino = (prefer_engine == EngineType.OPENVINO)
                 if self._using_openvino:
                     self._disable_openvino_telemetry()
+                    self._disable_openvino_runtime_cache()
 
                 params = {
                     # "Global.use_det": False,
@@ -605,7 +633,7 @@ class OCR:
                 self.logger.debug(f"OCR初始化耗时: {elapsed_time:.2f} 秒")
                 if self._using_openvino:
                     self._openvino_last_reinit = time.monotonic()
-                    # 初始化后立即检查可用内存，不足 4GB 则降级
+                    # 初始化后立即检查可用内存，不足 1GB 则降级
                     self._maybe_fallback_openvino_due_to_memory()
                 atexit.register(self.exit_ocr)
             except Exception as e:
@@ -684,9 +712,9 @@ class OCR:
                     # 成功路径最适合触发周期性回收：此时本轮 OCR 的业务处理已经完成，
                     # 主流程通常不会再需要 RapidOCR 生成的中间对象，可以优先压低峰值。
                     self._maybe_collect_garbage()
-                    # OpenVINO 存在内存泄漏，定期重新初始化以释放内存
-                    self._maybe_reinit_openvino()
-                    # OpenVINO 执行后检查可用内存，判断是否降级
+                    # 临时关闭 OpenVINO 定期重初始化入口，保留函数以便后续恢复。
+                    # self._maybe_reinit_openvino()
+                    # OpenVINO 执行后检查可用内存，不足 1GB 则降级
                     self._maybe_fallback_openvino_due_to_memory()
                     return results
                 except Exception as e:

@@ -108,9 +108,9 @@ By default, the assistant uses ONNXRuntime DirectML GPU acceleration on Windows 
 
 On environments that do not support DirectML, such as Linux or some ARM devices, it will use OpenVINO CPU inference automatically if OpenVINO is detected.
 
-**OpenVINO can show continuously increasing memory usage on some machines**. The assistant periodically rebuilds the inference engine to release memory,
+**The current version applies a temporary workaround for the OpenVINO CPU runtime cache issue**. In most cases, the assistant no longer needs to periodically rebuild the inference engine just to suppress memory growth,
 
-and automatically falls back to ONNXRuntime CPU when available physical memory drops below 4 GB. However, if the machine itself has little memory, you may still notice obvious fluctuations.
+and automatically falls back to ONNXRuntime CPU when available physical memory drops below 1 GB. However, if the machine itself has very little memory or the system load is already high, noticeable fluctuations may still occur.
 
 **It is recommended to switch OCR acceleration mode manually to `CPU (ONNXRuntime)` first** (`Settings → Miscellaneous → OCR Acceleration Mode`).
 

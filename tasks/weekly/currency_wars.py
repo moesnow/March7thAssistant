@@ -392,7 +392,7 @@ class CurrencyWars:
                 log.info(f"本次货币战争用时：{minutes} 分钟 {seconds} 秒")
                 return self.result if self.result is not None else False
 
-            time.sleep(2)
+            time.sleep(4)
 
     def check_main_screen(self):
         """

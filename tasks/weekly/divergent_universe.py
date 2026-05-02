@@ -298,7 +298,7 @@ class DivergentUniverse:
                     log.info(f"已记录差分宇宙次数：今日 {counts['daily']} 次，本周 {counts['weekly']} 次")
                 return result
 
-            time.sleep(2)
+            time.sleep(4)
 
     def check_stage(self):
         if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):

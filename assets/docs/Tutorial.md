@@ -336,7 +336,7 @@ March7th Launcher.exe main -e （任务正常完成后自动退出程序）
 - 否则若检测到 OpenVINO 则使用 OpenVINO CPU；都不满足则回退到 ONNXRuntime CPU。
 - `GPU (ONNXRuntime DirectML)`：强制使用 DirectML GPU 加速，环境不支持时自动回退。
 - `CPU (OpenVINO)`：强制使用 OpenVINO CPU 推理。OpenVINO 在纯 CPU 场景下通常比 ONNXRuntime CPU 更快，
-- 但**存在内存持续增长的问题**——程序会定期重新初始化引擎以释放内存，并在可用内存不足时降级到 ONNXRuntime CPU。
+- 当前版本已针对 OpenVINO CPU runtime cache 问题应用临时规避方案；若可用物理内存低于 1GB，会自动降级到 ONNXRuntime CPU。
 - `CPU (ONNXRuntime)`：强制使用 ONNXRuntime CPU 推理，兼容性最好、内存行为最稳定。
 - 如果遇到识别异常、闪退或内存占用过高，可手动切换为 `CPU (ONNXRuntime)`。
 
