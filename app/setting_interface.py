@@ -219,6 +219,12 @@ class SettingInterface(ScrollArea):
             "",
             "tp_before_instance"
         )
+        self.powerEnableCard = SwitchSettingCard1(
+            FIF.POWER_BUTTON,
+            tr("启用清体力"),
+            tr("仅影响完整运行和“日常”中的历战余响与清体力，不影响单独执行“清体力”任务"),
+            "power_enable"
+        )
         # self.instanceTeamNumberCard = ComboBoxSettingCard1(
         #     "instance_team_number",
         #     FIF.FLAG,
@@ -1546,6 +1552,7 @@ class SettingInterface(ScrollArea):
         self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignmentFlag.AlignTop)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
+        self.PowerGroup.addSettingCard(self.powerEnableCard)
         self.PowerGroup.addSettingCard(self.powerPlanCard)
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         # self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)

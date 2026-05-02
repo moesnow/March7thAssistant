@@ -104,6 +104,8 @@ The `Daily` menu on the home page includes `Daily`, `Daily Training`, and `Spend
 
 and also works together with options such as Reserved Trailblaze Power, Fuel, support characters, and training targets.
 
+If you disable `Enable Spend Power` in Power Settings, both `Full Run` and `Daily` will skip Echo of War and Spend Trailblaze Power together. Running `Spend Trailblaze Power` as a standalone task is not affected by this switch.
+
 ### Currency Wars
 
 The current version supports `Currency Wars: Zero-Sum Game`. The home-page entry offers both `Run Once` and `Loop Run`.

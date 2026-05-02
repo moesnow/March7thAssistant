@@ -42,21 +42,24 @@ class Daily:
 
         activity.start()
 
-        # 优先历战余响
-        if cfg.echo_of_war_enable:
-            if ignore_refresh or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
-                # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
-                isoweekday = datetime.date.today().isoweekday()
-                if isoweekday >= cfg.echo_of_war_start_day_of_week:
-                    Echoofwar.start()
+        if cfg.power_enable:
+            # 优先历战余响
+            if cfg.echo_of_war_enable:
+                if ignore_refresh or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
+                    # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
+                    isoweekday = datetime.date.today().isoweekday()
+                    if isoweekday >= cfg.echo_of_war_start_day_of_week:
+                        Echoofwar.start()
+                    else:
+                        log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
                 else:
-                    log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
+                    log.info("历战余响尚未刷新")
             else:
-                log.info("历战余响尚未刷新")
-        else:
-            log.info("历战余响未开启")
+                log.info("历战余响未开启")
 
-        Power.run()
+            Power.run()
+        else:
+            log.info("清体力未开启，跳过历战余响和清体力")
 
         if cfg.daily_enable:
             if ignore_refresh or Date.is_next_x_am(cfg.last_run_timestamp, cfg.refresh_hour):
