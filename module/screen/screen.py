@@ -16,6 +16,8 @@ class Screen(metaclass=SingletonMeta):
     界面管理类
     """
 
+    SCREEN_MATCH_THRESHOLD = 0.88
+
     def __init__(self, config_path, logger: Optional[Logger] = None):
         """
         初始化界面管理器。
@@ -146,7 +148,12 @@ class Screen(metaclass=SingletonMeta):
             if found_event.is_set():
                 return None
             try:
-                result = self._find_image(screen['image_path'], "image_threshold", 0.9, take_screenshot=False)
+                result = self._find_image(
+                    screen['image_path'],
+                    "image_threshold",
+                    self.SCREEN_MATCH_THRESHOLD,
+                    take_screenshot=False,
+                )
                 if result and not found_event.is_set():
                     with self.lock:
                         if not self.current_screen or self.current_screen_threshold < result:
@@ -158,7 +165,11 @@ class Screen(metaclass=SingletonMeta):
                 self.logger.debug(f"识别界面出错：{e}")
             return None
 
-        if self.current_screen is not None and self._find_image(self.screen_map[self.current_screen]['image_path'], "image_threshold", 0.9):
+        if self.current_screen is not None and self._find_image(
+            self.screen_map[self.current_screen]['image_path'],
+            "image_threshold",
+            self.SCREEN_MATCH_THRESHOLD,
+        ):
             return True
 
         for i in range(max_retries):
@@ -276,7 +287,7 @@ class Screen(metaclass=SingletonMeta):
         :param target_screen: 目标界面的标识符。
         :return: 如果当前界面是目标界面，则返回True；否则返回False。
         """
-        if self._find_image(self.screen_map[target_screen]['image_path'], "image", 0.9):
+        if self._find_image(self.screen_map[target_screen]['image_path'], "image", self.SCREEN_MATCH_THRESHOLD):
             # 如果找到了目标界面的图像，则更新当前界面状态为目标界面
             self.current_screen = target_screen
             return True
