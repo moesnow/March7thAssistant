@@ -609,12 +609,12 @@ class CloudGameController(GameControllerBase):
         """
         browsers: list[psutil.Process] = []
 
-        browser_names = {'chrome.exe', 'msedge.exe'}
+        browser_names = {'chrome.exe', 'msedge.exe', 'chrome', 'msedge', 'google-chrome', 'google-chrome-stable'}
         browser_tag = self.BROWSER_TAG
 
         for proc in psutil.process_iter(['pid', 'name']):
             name = proc.info.get('name')
-            if name not in browser_names:
+            if not name or name.lower() not in browser_names:
                 continue
 
             try:
@@ -665,7 +665,7 @@ class CloudGameController(GameControllerBase):
             # 只获取轻量字段，避免 ppid / exe 带来的性能问题
             for proc in psutil.process_iter(['pid', 'name']):
                 name = proc.info.get('name')
-                if name and name.lower() == 'chromedriver.exe':
+                if name and name.lower() in ('chromedriver.exe', 'chromedriver'):
                     chromedrivers.append(proc)
 
             current_pid = os.getpid()
