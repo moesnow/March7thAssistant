@@ -4,7 +4,7 @@ import sys
 import markdown
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QTextBrowser, QSizePolicy
 from qfluentwidgets import qconfig, ScrollArea, Pivot
 from .common.style_sheet import StyleSheet
 from module.localization import tr
@@ -20,11 +20,11 @@ class HelpInterface(ScrollArea):
         self.stackedWidget = QStackedWidget(self)
 
         self.helpLabel = QLabel(tr("帮助"), self)
-        self.tutorialLabel = QLabel(parent)
-        self.workflowLabel = QLabel(parent)
-        self.faqLabel = QLabel(parent)
-        self.tasksLabel = QLabel(parent)
-        self.changelogLabel = QLabel(parent)
+        self.tutorialLabel = QTextBrowser(parent)
+        self.workflowLabel = QTextBrowser(parent)
+        self.faqLabel = QTextBrowser(parent)
+        self.tasksLabel = QTextBrowser(parent)
+        self.changelogLabel = QTextBrowser(parent)
 
         self.__initWidget()
         self.__initCard()
@@ -86,7 +86,7 @@ th, td {
         else:
             self.tutorialLabel.setText(self.tutorial_content)
         self.tutorialLabel.setOpenExternalLinks(True)
-        self.tutorialLabel.linkActivated.connect(self.open_url)
+        self.tutorialLabel.anchorClicked.connect(self.open_url)
 
         workflow_file = self._get_localized_doc_path("Workflow")
         try:
@@ -101,7 +101,7 @@ th, td {
         else:
             self.workflowLabel.setText(self.workflow_content)
         self.workflowLabel.setOpenExternalLinks(True)
-        self.workflowLabel.linkActivated.connect(self.open_url)
+        self.workflowLabel.anchorClicked.connect(self.open_url)
 
         faq_style = """
 <style>
@@ -121,7 +121,7 @@ a {
         faq_content = faq_style + markdown.markdown(self.content).replace('<h3>', '<br><h3>').replace('</h3>', '</h3><hr>').replace('<br>', '', 1) + '<br>'
         self.faqLabel.setText(faq_content)
         self.faqLabel.setOpenExternalLinks(True)
-        self.faqLabel.linkActivated.connect(self.open_url)
+        self.faqLabel.anchorClicked.connect(self.open_url)
 
         qconfig.themeChanged.connect(self.__themeChanged)
         tasks_style = """
@@ -305,13 +305,14 @@ a {
         changelog_content = changelog_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
         self.changelogLabel.setText(changelog_content)
         self.changelogLabel.setOpenExternalLinks(True)
-        self.changelogLabel.linkActivated.connect(self.open_url)
+        self.changelogLabel.anchorClicked.connect(self.open_url)
 
     def __initLayout(self):
         self.helpLabel.move(36, 30)
         self.pivot.move(40, 80)
-        # self.vBoxLayout.addWidget(self.pivot, 0, Qt.AlignTop)
-        self.vBoxLayout.addWidget(self.stackedWidget, 0, Qt.AlignmentFlag.AlignTop)
+        
+        self.stackedWidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.vBoxLayout.addWidget(self.stackedWidget, 1)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
 
         # self.vBoxLayout.addWidget(self.tutorialLabel, 0, Qt.AlignTop)
@@ -323,20 +324,51 @@ a {
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())
-        self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
 
-    def addSubInterface(self, widget: QLabel, objectName, text):
-        def remove_spacing(layout):
-            for i in range(layout.count()):
-                item = layout.itemAt(i)
-                if isinstance(item, QSpacerItem):
-                    layout.removeItem(item)
-                    break
-
-        # remove_spacing(widget.vBoxLayout)
-        # widget.titleLabel.setHidden(True)
-
+    def addSubInterface(self, widget: QTextBrowser, objectName, text):
         widget.setObjectName(objectName)
+        widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        widget.document().setDocumentMargin(10)
+        
+        scrollbar_style = """
+            QTextBrowser {
+                background: transparent;
+                border: none;
+            }
+            
+            QScrollBar:vertical {
+                background: transparent;
+                width: 12px;
+                margin: 0px;
+            }
+            
+            QScrollBar::handle:vertical {
+                background: rgba(128, 128, 128, 150);
+                border-radius: 5px;
+                border-width: 1px;
+                width: 10px;
+                min-height: 30px;
+                margin: 2px 1px 2px 1px;
+            }
+            
+            QScrollBar::handle:vertical:hover {
+                background: rgba(128, 128, 128, 200);
+                border-radius: 5px;
+            }
+            
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0px;
+                background: transparent;
+            }
+            
+            QScrollBar::add-page:vertical,
+            QScrollBar::sub-page:vertical {
+                background: transparent;
+            }
+        """
+        widget.setStyleSheet(scrollbar_style)
+        
         self.stackedWidget.addWidget(widget)
         self.pivot.addItem(
             routeKey=objectName,
@@ -349,7 +381,6 @@ a {
         self.pivot.setCurrentItem(widget.objectName())
 
         self.verticalScrollBar().setValue(0)
-        self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
 
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
