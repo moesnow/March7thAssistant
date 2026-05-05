@@ -210,7 +210,7 @@ class Instance:
                     time.sleep(0.5)
             time.sleep(1)
 
-            if auto.click_element("开始挑战", "text", max_retries=10, crop=(1558.0 / 1920, 939.0 / 1080, 216.0 / 1920, 70.0 / 1080)):
+            if auto.click_element("开始挑战", "text", max_retries=10, crop=(1615 / 1920, 956 / 1080, 243 / 1920, 55 / 1080)):
                 # 快速连续检测多次，增加捕获瞬间提示的概率
                 time.sleep(0.5)
 
@@ -266,7 +266,7 @@ class Instance:
                         auto.press_mouse()
                         time.sleep(1)
                     return True
-                elif auto.find_element("开始挑战", "text", max_retries=1, crop=(1558.0 / 1920, 939.0 / 1080, 216.0 / 1920, 70.0 / 1080)):
+                elif auto.find_element("开始挑战", "text", max_retries=1, crop=(1615 / 1920, 956 / 1080, 243 / 1920, 55 / 1080)):
                     Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="无法开始挑战"), NotificationLevel.ERROR)
                     auto.press_key("esc")
                     time.sleep(2)
