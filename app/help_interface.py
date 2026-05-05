@@ -4,8 +4,8 @@ import sys
 import markdown
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QTextBrowser, QSizePolicy
-from qfluentwidgets import qconfig, ScrollArea, Pivot
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QSizePolicy
+from qfluentwidgets import qconfig, ScrollArea, Pivot, TextBrowser
 from .common.style_sheet import StyleSheet
 from module.localization import tr
 
@@ -20,11 +20,11 @@ class HelpInterface(ScrollArea):
         self.stackedWidget = QStackedWidget(self)
 
         self.helpLabel = QLabel(tr("帮助"), self)
-        self.tutorialLabel = QTextBrowser(parent)
-        self.workflowLabel = QTextBrowser(parent)
-        self.faqLabel = QTextBrowser(parent)
-        self.tasksLabel = QTextBrowser(parent)
-        self.changelogLabel = QTextBrowser(parent)
+        self.tutorialLabel = TextBrowser(parent)
+        self.workflowLabel = TextBrowser(parent)
+        self.faqLabel = TextBrowser(parent)
+        self.tasksLabel = TextBrowser(parent)
+        self.changelogLabel = TextBrowser(parent)
 
         self.__initWidget()
         self.__initCard()
@@ -325,13 +325,13 @@ a {
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())
 
-    def addSubInterface(self, widget: QTextBrowser, objectName, text):
+    def addSubInterface(self, widget: TextBrowser, objectName, text):
         widget.setObjectName(objectName)
         widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         widget.document().setDocumentMargin(10)
         
         scrollbar_style = """
-            QTextBrowser {
+            TextBrowser {
                 background: transparent;
                 border: none;
             }
@@ -367,7 +367,7 @@ a {
                 background: transparent;
             }
         """
-        widget.setStyleSheet(scrollbar_style)
+        # widget.setStyleSheet(scrollbar_style)
         
         self.stackedWidget.addWidget(widget)
         self.pivot.addItem(
