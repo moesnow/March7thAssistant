@@ -2,8 +2,9 @@
 from typing import Union, List
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
-from qfluentwidgets import ExpandSettingCard, FluentIconBase, SwitchButton, IndicatorPosition, SettingCard, ComboBox, PrimaryPushButton
+from qfluentwidgets import ExpandSettingCard, FluentIconBase, SwitchButton, IndicatorPosition, SettingCard, ComboBox, PrimaryPushButton, PushButton
 from module.localization import tr, instance_display_to_raw
+from .switchsettingcard1 import build_timestamp_content
 
 
 class ExpandableSwitchSettingCard(ExpandSettingCard):
@@ -95,6 +96,87 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
         except:
             pass
         # 发送收起信号
+        self.expandStateChanged.emit(False)
+
+
+class ExpandableTimestampSwitchSettingCard(ExpandSettingCard):
+    """带时间副标题和重置按钮的可展开开关设置卡片"""
+
+    switchChanged = Signal(bool)
+    expandStateChanged = Signal(bool)
+
+    def __init__(self, configname: str, timestamp_configname: str, icon: Union[str, QIcon, FluentIconBase],
+                 title: str, time_title: str, content: str = None, parent=None):
+        self.configname = configname
+        self.timestampConfigname = timestamp_configname
+        self.timeTitle = time_title
+        self._baseContent = content or ""
+
+        timestamp_content, _ = build_timestamp_content(self._baseContent, self.timeTitle, self.timestampConfigname)
+        super().__init__(icon, title, timestamp_content, parent)
+
+        from module.config import cfg
+        self.cfg = cfg
+
+        self.resetButton = PushButton(tr("重置时间"), self)
+        self.card.addWidget(self.resetButton)
+
+        self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
+        self.card.addWidget(self.switchButton)
+
+        self.setValue(self.cfg.get_value(self.configname))
+
+        self.resetButton.clicked.connect(self._resetTimestamp)
+        self.switchButton.checkedChanged.connect(self.__onSwitchChanged)
+
+        self.refreshTimestampContent()
+
+    def __onSwitchChanged(self, isChecked: bool):
+        self.setValue(isChecked)
+        self.cfg.set_value(self.configname, isChecked)
+        self.switchChanged.emit(isChecked)
+
+    def setValue(self, isChecked: bool):
+        self.switchButton.setChecked(isChecked)
+        self.switchButton.setText(tr('开') if isChecked else tr('关'))
+
+    def refreshTimestampContent(self):
+        timestamp_content, has_timestamp = build_timestamp_content(self._baseContent, self.timeTitle, self.timestampConfigname)
+        self.card.setContent(timestamp_content)
+        self.resetButton.setEnabled(has_timestamp)
+
+    def _resetTimestamp(self):
+        self.cfg.set_value(self.timestampConfigname, 0)
+        self.refreshTimestampContent()
+
+    def getSwitchState(self) -> bool:
+        return self.switchButton.isChecked()
+
+    def addSettingCard(self, card: SettingCard):
+        self.viewLayout.addWidget(card)
+        self._adjustViewSize()
+
+    def addSettingCards(self, cards: List[SettingCard]):
+        for card in cards:
+            self.viewLayout.addWidget(card)
+        self._adjustViewSize()
+
+    def setExpand(self, isExpand: bool):
+        is_expanding = not self.isExpand
+
+        if is_expanding:
+            self.expandStateChanged.emit(True)
+
+        super().setExpand(isExpand)
+
+        if not is_expanding:
+            self.expandAni.finished.connect(lambda: self._onCollapseFinished())
+
+    def _onCollapseFinished(self):
+        try:
+            self.expandAni.finished.disconnect()
+        except Exception:
+            pass
         self.expandStateChanged.emit(False)
 
 

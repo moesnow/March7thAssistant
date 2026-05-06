@@ -7,7 +7,30 @@ from .messagebox_custom import MessageBoxNotify
 from module.config import cfg
 from module.localization import tr
 from utils.schedule import create_task, is_task_exists, delete_task
+import datetime
 import os
+
+
+def format_config_timestamp(configname: str):
+    try:
+        timestamp = float(cfg.get_value(configname) or 0)
+    except (TypeError, ValueError):
+        timestamp = 0
+
+    if timestamp <= 0:
+        return tr("未执行"), False
+
+    try:
+        return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M'), True
+    except (OSError, OverflowError, ValueError):
+        return tr("未执行"), False
+
+
+def build_timestamp_content(content: str, time_title: str, timestamp_configname: str):
+    timestamp_text, has_timestamp = format_config_timestamp(timestamp_configname)
+    lines = [content] if content else []
+    lines.append(f"{time_title}：{timestamp_text}")
+    return "\n".join(lines), has_timestamp
 
 
 class StartMarch7thAssistantSwitchSettingCard(SettingCard):
@@ -74,6 +97,35 @@ class SwitchSettingCard1(SettingCard):
     def setValue(self, isChecked: bool):
         self.switchButton.setChecked(isChecked)
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
+
+
+class TimestampSwitchSettingCard(SwitchSettingCard1):
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None,
+                 configname: str = None, timestamp_configname: str = None,
+                 time_title: str = None, parent=None):
+        self._baseContent = content or ""
+        self.timestampConfigname = timestamp_configname
+        self.timeTitle = time_title or ""
+        timestamp_content, _ = build_timestamp_content(self._baseContent, self.timeTitle, self.timestampConfigname)
+        super().__init__(icon, title, timestamp_content, configname, parent)
+
+        self.resetButton = PushButton(tr("重置时间"), self)
+        insert_index = max(self.hBoxLayout.count() - 2, 0)
+        self.hBoxLayout.insertWidget(insert_index, self.resetButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.insertSpacing(insert_index + 1, 10)
+
+        self.resetButton.clicked.connect(self._resetTimestamp)
+        self.refreshTimestampContent()
+
+    def refreshTimestampContent(self):
+        timestamp_content, has_timestamp = build_timestamp_content(self._baseContent, self.timeTitle, self.timestampConfigname)
+        self.contentLabel.setText(timestamp_content)
+        self.contentLabel.adjustSize()
+        self.resetButton.setEnabled(has_timestamp)
+
+    def _resetTimestamp(self):
+        cfg.set_value(self.timestampConfigname, 0)
+        self.refreshTimestampContent()
 
 
 class SwitchSettingCardNotify(SettingCard):

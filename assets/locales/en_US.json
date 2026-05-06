@@ -553,6 +553,7 @@
     "获取最新兑换码": "Get Latest Codes",
     "查看已使用兑换码": "View Used Codes",
     "清空已使用兑换码": "Clear Used Codes",
+    "未执行": "Not run yet",
     "重置时间": "Reset Time",
     "设置为当前时间": "Set to Current Time",
     "说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动": "Note: Power clear based on Dungeon Type. Name also used for double events.",
