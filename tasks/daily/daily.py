@@ -109,6 +109,15 @@ class Daily:
     def start():
         Daily.prepare_daily()
 
+        if cfg.asset_manager_enable:
+            if cfg.asset_self_molding_resin_enable:
+                if Date.is_next_month_x_am(cfg.asset_self_molding_resin_timestamp, cfg.refresh_hour):
+                    Synthesis.self_molding_resin()
+                else:
+                    log.info("自塑尘脂自动合成尚未刷新")
+            else:
+                log.info("自塑尘脂自动合成未开启")
+
         if cfg.currencywars_enable:
             if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
                 war = CurrencyWars()

@@ -2,6 +2,8 @@ from module.config import cfg
 from module.screen import screen
 from module.automation import auto
 from module.logger import log
+from module.notification.notification import NotificationLevel
+from tasks.base.base import Base
 import time
 
 
@@ -39,6 +41,46 @@ class Synthesis:
                 log.error("合成材料失败")
             except Exception as e:
                 log.error(f"合成材料失败: {e}")
+        return False
+
+    @staticmethod
+    def self_molding_resin():
+        try:
+            log.hr("准备合成自塑尘脂", 2)
+            screen.change_to("material")
+            time.sleep(2)
+            if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
+                time.sleep(2)
+                if auto.click_element("遗器培养材料", "text", max_retries=10, crop=(478.0 / 1920, 350.0 / 1080, 981.0 / 1920, 399.0 / 1080)):
+                    time.sleep(2)
+                    if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
+                        time.sleep(2)
+                        resin_crop = (75 / 1920, 103 / 1080, 421 / 1920, 331 / 1080)
+                        if auto.click_element("./assets/images/share/synthesis/resin.png", "image", 0.9, crop=resin_crop) or auto.click_element("./assets/images/share/synthesis/resin2.png", "image", 0.9, crop=resin_crop):
+                            time.sleep(1)
+                            if auto.find_element("自塑尘脂", "text", crop=(1088 / 1920, 125 / 1080, 193 / 1920, 61 / 1080)):
+                                time.sleep(1)
+                                if auto.find_element("已达上限", "text", crop=(1087 / 1920, 848 / 1080, 200 / 1920, 44 / 1080)):
+                                    log.info("自塑尘脂已达上限，无需合成")
+                                    cfg.save_timestamp("asset_self_molding_resin_timestamp")
+                                    return True
+                                if auto.click_element("./assets/images/share/synthesis/plus.png", "image", 0.9, crop=(1520 / 1920, 832 / 1080, 86 / 1920, 69 / 1080)):
+                                    time.sleep(2)
+                                if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
+                                    time.sleep(2)
+                                    if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
+                                        time.sleep(2)
+                                        if coordinates := auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
+                                            Base.send_notification_with_screenshot("自塑尘脂合成完成", NotificationLevel.ALL)
+                                            time.sleep(1)
+                                            auto.click_element_with_pos(coordinates)
+                                            time.sleep(2)
+                                            cfg.save_timestamp("asset_self_molding_resin_timestamp")
+                                            log.info("自塑尘脂合成完成")
+                                            return True
+            log.error("自塑尘脂合成失败")
+        except Exception as e:
+            log.error(f"自塑尘脂合成失败: {e}")
         return False
 
     @staticmethod

@@ -31,6 +31,36 @@ class Date:
         return current_time >= next_monday_x_am
 
     @staticmethod
+    def is_next_month_x_am(timestamp, hour=4):
+        dt_object = datetime.fromtimestamp(timestamp)
+        current_time = datetime.now()
+
+        if dt_object.day == 1 and dt_object.hour < hour:
+            next_month_x_am = dt_object.replace(hour=hour, minute=0, second=0, microsecond=0)
+        else:
+            if dt_object.month == 12:
+                next_month_x_am = dt_object.replace(
+                    year=dt_object.year + 1,
+                    month=1,
+                    day=1,
+                    hour=hour,
+                    minute=0,
+                    second=0,
+                    microsecond=0,
+                )
+            else:
+                next_month_x_am = dt_object.replace(
+                    month=dt_object.month + 1,
+                    day=1,
+                    hour=hour,
+                    minute=0,
+                    second=0,
+                    microsecond=0,
+                )
+
+        return current_time >= next_month_x_am
+
+    @staticmethod
     def is_next_2weeks_mon_x_am(timestamp, hour=4):
         dt_object = datetime.fromtimestamp(timestamp)
         current_time = datetime.now()

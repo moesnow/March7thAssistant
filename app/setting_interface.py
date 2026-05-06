@@ -499,6 +499,18 @@ class SettingInterface(ScrollArea):
             tr("自动将3星光锥进行叠加以节省背包空间"),
             "asset_lc3_star_superimpose_enable",
         )
+        self.selfMoldingResinEnableCard = SwitchSettingCard1(
+            FIF.CALENDAR,
+            tr("启用「每月自动合成自塑尘脂」"),
+            tr("每月自动尝试合成 2 个自塑尘脂，成功后记录时间，并在每月 1 号刷新"),
+            "asset_self_molding_resin_enable",
+        )
+        self.selfMoldingResinRunTimeCard = PushSettingCardDate(
+            tr('修改'),
+            FIF.DATE_TIME,
+            tr("上次完成自塑尘脂合成的时间"),
+            "asset_self_molding_resin_timestamp"
+        )
 
         self.CurrencywarsGroup = SettingCardGroup(tr("货币"), self.scrollWidget)
         self.currencywarsEnableCard = ExpandableSwitchSettingCard(
@@ -1620,6 +1632,8 @@ class SettingInterface(ScrollArea):
         self.DailyGroup.addSettingCard(self.assetEnableCard)
         self.assetEnableCard.addSettingCards(
             [
+                self.selfMoldingResinEnableCard,
+                self.selfMoldingResinRunTimeCard,
                 self.lc3StarSuperimposeEnableCard,
             ]
         )
