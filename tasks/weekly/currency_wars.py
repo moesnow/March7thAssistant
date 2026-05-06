@@ -34,18 +34,24 @@ class CurrencyWars:
         self.forward_characters: list[CurrencyWarsCharacter] = []  # 存储前台角色
         self.backward_characters: list[CurrencyWarsCharacter] = []  # 存储后台角色
         self.prepare_characters: list[CurrencyWarsCharacter] = []  # 存储备战席角色
-        self.has_aglaea: bool = False  # 存在阿格莱雅
+        self.character_flags: dict[str, bool] = {}
+        self.character_purchase_costs = {
+            "阿格莱雅": 1,
+            "藿藿": 1,
+            "风堇": 2,
+            "缇宝": 2,
+            "花火": 2,
+            "佩拉": 2,
+            "希儿": 3,
+            "星期日": 3,
+            "刻律德菈": 3,
+            "符玄": 4,
+            "银狼": 4,
+            "瓦尔特": 5,
+            "昔涟": 5,
+        }
+        self.remembrance_trailblazer_purchase_cost: int = 4
         self.has_aglaea_three_star: bool = False  # 阿格莱雅三星
-        self.has_hyacine: bool = False  # 存在风堇
-        self.has_tribbie: bool = False  # 存在缇宝
-        self.has_huohuo: bool = False  # 存在藿藿
-        self.has_sunday: bool = False  # 存在星期日
-        self.has_remembrance_trailblazer: bool = False  # 存在开拓者·记忆
-        self.has_fuxuan: bool = False  # 存在符玄
-        self.has_silverwolf: bool = False  # 存在银狼
-        self.has_sparkle: bool = False  # 存在花火
-        self.has_welt: bool = False  # 存在瓦尔特
-        self.has_cyrene: bool = False  # 存在昔涟
         self.allow_buy_experience: bool = False  # 是否允许购买经验
         self.allow_equip_weapons: bool = False  # 是否允许装备武器
         self.propeller_count: int = 0  # 螺旋桨数量
@@ -126,6 +132,98 @@ class CurrencyWars:
         if isinstance(name, str):
             name = name.strip()
         return name or None
+
+    def reset_tracked_characters(self):
+        self.character_flags.clear()
+
+    def _normalize_tracked_character_name(self, name: Optional[str]) -> Optional[str]:
+        if not isinstance(name, str):
+            return None
+        name = name.strip()
+        return name or None
+
+    def mark_tracked_character(self, name: Optional[str], zone_name: Optional[str] = None) -> bool:
+        normalized_name = self._normalize_tracked_character_name(name)
+        if not normalized_name:
+            return False
+        if not self.character_flags.get(normalized_name, False):
+            if zone_name:
+                log.info(f"检测到{zone_name}存在{normalized_name}")
+            else:
+                log.info(f"检测到存在{normalized_name}")
+        self.character_flags[normalized_name] = True
+        return True
+
+    def mark_tracked_characters(self, characters: list[CurrencyWarsCharacter], zone_name: Optional[str] = None):
+        for char in characters:
+            self.mark_tracked_character(char.name, zone_name)
+
+    def has_tracked_character(self, name: Optional[str]) -> bool:
+        normalized_name = self._normalize_tracked_character_name(name)
+        if not normalized_name:
+            return False
+        return self.character_flags.get(normalized_name, False)
+
+    def get_character_purchase_cost(self, name: Optional[str]) -> Optional[int]:
+        normalized_name = self._normalize_tracked_character_name(name)
+        if not normalized_name:
+            return None
+        remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+        if remembrance_trailblazer_name and normalized_name == remembrance_trailblazer_name:
+            return self.remembrance_trailblazer_purchase_cost
+        return self.character_purchase_costs.get(normalized_name)
+
+    def can_afford_character(self, money: int, name: Optional[str]) -> bool:
+        cost = self.get_character_purchase_cost(name)
+        return cost is not None and money >= cost
+
+    def spend_character_purchase_cost(self, money: int, name: Optional[str]) -> int:
+        cost = self.get_character_purchase_cost(name)
+        if cost is None:
+            return money
+        return money - cost
+
+    def try_buy_character(self, name: Optional[str], wait_time: float = 1.0) -> bool:
+        normalized_name = self._normalize_tracked_character_name(name)
+        if not normalized_name:
+            return False
+        if auto.click_element(normalized_name, "text", take_screenshot=False, need_ocr=False):
+            log.info(f"尝试购买{normalized_name}")
+            self.mark_tracked_character(normalized_name)
+            time.sleep(wait_time)
+            return True
+        return False
+
+    def find_deployed_character_position(self, target_name: str):
+        character_groups = (
+            (self.forward_characters, self.forward_pos, "前台"),
+            (self.backward_characters, self.backward_pos, "后台"),
+        )
+        for characters, positions, zone_name in character_groups:
+            if not positions:
+                continue
+            for index, char in enumerate(characters):
+                if char.name != target_name:
+                    continue
+                position = auto.find_element(positions[index], "crop")
+                if position:
+                    log.debug(f"在{zone_name}第{index + 1}格找到{target_name}")
+                return position
+        log.warning(f"未能在前台或后台找到{target_name}")
+        return None
+
+    def _get_ocr_texts_in_crop(self, crop: Tuple[float, float, float, float]) -> list[str]:
+        auto.find_element(crop, "crop")
+        auto.perform_ocr()
+        return [text for _, (text, _) in auto.ocr_result]
+
+    def _find_text_in_texts(self, texts: list[str], targets, include: bool = False) -> Optional[str]:
+        target_texts = [targets] if isinstance(targets, str) else list(targets)
+        for text in texts:
+            for target in target_texts:
+                if (include and target in text) or (not include and text == target):
+                    return target
+        return None
 
     def start(self):
         log.hr('准备货币战争', '0')
@@ -339,18 +437,8 @@ class CurrencyWars:
         self.forward_characters = []  # 重置前台角色
         self.backward_characters = []  # 重置后台角色
         self.prepare_characters = []  # 重置备战席角色
-        self.has_aglaea = False  # 重置阿格莱雅存在标志
+        self.reset_tracked_characters()
         self.has_aglaea_three_star = False  # 重置阿格莱雅三星标志
-        self.has_hyacine = False  # 重置风堇存在标志
-        self.has_tribbie = False  # 重置缇宝存在标志
-        self.has_huohuo = False  # 重置藿藿存在标志
-        self.has_sunday = False  # 重置星期日存在标志
-        self.has_remembrance_trailblazer = False  # 重置开拓者·记忆存在标志
-        self.has_fuxuan = False  # 重置符玄存在标志
-        self.has_silverwolf = False  # 重置银狼存在标志
-        self.has_sparkle = False  # 重置花火存在标志
-        self.has_welt = False  # 重置瓦尔特存在标志
-        self.has_cyrene = False  # 重置昔涟存在标志
         self.allow_buy_experience = False  # 重置允许购买经验标志
         self.allow_equip_weapons = False  # 重置允许装备武器标志
         self.propeller_count = 0  # 重置螺旋桨数量
@@ -418,46 +506,12 @@ class CurrencyWars:
                 self.check_character_status()
                 log.info(f"当前关卡阶段: {self.current_stage}")
                 if cfg.currencywars_strategy == "aglaea":
-                    remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
                     if self.current_stage == "1-1":
-                        for char in self.prepare_characters:
-                            if char.name == "阿格莱雅":
-                                log.info("检测到准备席存在阿格莱雅")
-                                self.has_aglaea = True
-                            elif char.name == "风堇":
-                                log.info("检测到准备席存在风堇")
-                                self.has_hyacine = True
-                            elif char.name == "缇宝":
-                                log.info("检测到准备席存在缇宝")
-                                self.has_tribbie = True
-                            elif char.name == "藿藿":
-                                log.info("检测到准备席存在藿藿")
-                                self.has_huohuo = True
-                            elif char.name == "星期日":
-                                log.info("检测到准备席存在星期日")
-                                self.has_sunday = True
-                            elif remembrance_trailblazer_name and char.name == remembrance_trailblazer_name:
-                                log.info("检测到准备席存在开拓者·记忆")
-                                self.has_remembrance_trailblazer = True
-                            elif char.name == "符玄":
-                                log.info("检测到准备席存在符玄")
-                                self.has_fuxuan = True
-                            elif char.name == "银狼":
-                                log.info("检测到准备席存在银狼")
-                                self.has_silverwolf = True
-                            elif char.name == "花火":
-                                log.info("检测到准备席存在花火")
-                                self.has_sparkle = True
-                            elif char.name == "瓦尔特":
-                                log.info("检测到准备席存在瓦尔特")
-                                self.has_welt = True
-                            elif char.name == "昔涟":
-                                log.info("检测到准备席存在昔涟")
-                                self.has_cyrene = True
+                        self.mark_tracked_characters(self.prepare_characters, "准备席")
 
                         self.sell_characters_aglaea_strategy()
-                        self.buy_aglaea(only_aglaea=not self.has_aglaea)
-                        if not self.has_aglaea:
+                        self.buy_aglaea(only_aglaea=not self.has_tracked_character("阿格莱雅"))
+                        if not self.has_tracked_character("阿格莱雅"):
                             log.info("未能获得阿格莱雅，尝试重开")
                             self.give_up_and_settle()
                             self.need_exit = False
@@ -466,7 +520,10 @@ class CurrencyWars:
 
                     else:
                         self.sell_characters_aglaea_strategy()
-                        if not self.has_aglaea_three_star or not self.has_hyacine or not self.has_tribbie or not self.has_huohuo:
+                        if (not self.has_aglaea_three_star
+                                or not self.has_tracked_character("风堇")
+                                or not self.has_tracked_character("缇宝")
+                                or not self.has_tracked_character("藿藿")):
                             self.buy_aglaea()
                         else:
                             self.buy_aglaea2()
@@ -507,7 +564,7 @@ class CurrencyWars:
 
     def buy_aglaea(self, only_aglaea=False):
         shop_button_crop = (1591 / 1920, 958 / 1080, 66 / 1920, 46 / 1080)
-        shop_crop = (344 / 1920, 19 / 1080, 1370 / 1920, 336 / 1080)
+        shop_crop = (344 / 1920, 19 / 1080, 1370 / 1920, 526 / 1080)
         aglaea3_img = "./assets/images/share/aglaea/aglaea3.png"
         remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
         # 打开商店
@@ -516,65 +573,60 @@ class CurrencyWars:
         time.sleep(2)
         money = self.check_money()
         buy_anything = False
+        shop_scan_dirty = True
+
+        def refresh_shop_scan_if_needed():
+            nonlocal shop_scan_dirty
+            if shop_scan_dirty:
+                self._get_ocr_texts_in_crop(shop_crop)
+                shop_scan_dirty = False
+
         while True:
-            if not self.has_aglaea_three_star and auto.find_element(aglaea3_img, "image", 0.9, crop=(729 / 1920, 415 / 1080, 117 / 1920, 130 / 1080)):
+            refresh_shop_scan_if_needed()
+
+            if not self.has_aglaea_three_star and auto.find_element(aglaea3_img, "image", 0.9, take_screenshot=False, need_ocr=False):
                 log.info("检测到阿格莱雅三星")
                 self.has_aglaea_three_star = True
-            elif not self.has_aglaea_three_star and money >= 1 and auto.click_element("阿格莱雅", "text", crop=shop_crop):
-                log.info("尝试购买阿格莱雅")
+            elif not self.has_aglaea_three_star and self.can_afford_character(money, "阿格莱雅") and self.try_buy_character("阿格莱雅", wait_time=5):
                 buy_anything = True
-                self.has_aglaea = True
-                time.sleep(5)
-                money -= 1
-            elif not only_aglaea and not self.has_hyacine and money >= 2 and auto.click_element("风堇", "text", crop=shop_crop):
-                log.info("尝试购买风堇")
+                money = self.spend_character_purchase_cost(money, "阿格莱雅")
+                shop_scan_dirty = True
+            elif not only_aglaea and not self.has_tracked_character("风堇") and self.can_afford_character(money, "风堇") and self.try_buy_character("风堇"):
                 buy_anything = True
-                self.has_hyacine = True
-                time.sleep(1)
-                money -= 2
-            elif not only_aglaea and not self.has_tribbie and money >= 2 and auto.click_element("缇宝", "text", crop=shop_crop):
-                log.info("尝试购买缇宝")
+                money = self.spend_character_purchase_cost(money, "风堇")
+                shop_scan_dirty = True
+            elif not only_aglaea and not self.has_tracked_character("缇宝") and self.can_afford_character(money, "缇宝") and self.try_buy_character("缇宝"):
                 buy_anything = True
-                self.has_tribbie = True
-                time.sleep(1)
-                money -= 2
-            elif not only_aglaea and not self.has_huohuo and money >= 1 and auto.click_element("藿藿", "text", crop=shop_crop):
-                log.info("尝试购买藿藿")
+                money = self.spend_character_purchase_cost(money, "缇宝")
+                shop_scan_dirty = True
+            elif not only_aglaea and not self.has_tracked_character("藿藿") and self.can_afford_character(money, "藿藿") and self.try_buy_character("藿藿"):
                 buy_anything = True
-                self.has_huohuo = True
-                time.sleep(1)
-                money -= 1
-            elif not only_aglaea and not self.has_sunday and money >= 3 and auto.click_element("星期日", "text", crop=shop_crop):
-                log.info("尝试购买星期日")
+                money = self.spend_character_purchase_cost(money, "藿藿")
+                shop_scan_dirty = True
+            elif not only_aglaea and not self.has_tracked_character("星期日") and self.can_afford_character(money, "星期日") and self.try_buy_character("星期日"):
                 buy_anything = True
-                self.has_sunday = True
-                time.sleep(1)
-                money -= 3
-            elif remembrance_trailblazer_name and not only_aglaea and not self.has_remembrance_trailblazer and money >= 4 and auto.click_element(remembrance_trailblazer_name, "text", crop=shop_crop):
-                log.info("尝试购买开拓者·记忆")
+                money = self.spend_character_purchase_cost(money, "星期日")
+                shop_scan_dirty = True
+            elif (remembrance_trailblazer_name and not only_aglaea and not self.has_tracked_character(remembrance_trailblazer_name)
+                  and self.can_afford_character(money, remembrance_trailblazer_name)
+                  and self.try_buy_character(remembrance_trailblazer_name)):
                 buy_anything = True
-                self.has_remembrance_trailblazer = True
-                time.sleep(1)
-                money -= 4
-            elif not only_aglaea and not self.has_fuxuan and money >= 4 and auto.click_element("符玄", "text", crop=shop_crop):
-                log.info("尝试购买符玄")
+                money = self.spend_character_purchase_cost(money, remembrance_trailblazer_name)
+                shop_scan_dirty = True
+            elif not only_aglaea and not self.has_tracked_character("符玄") and self.can_afford_character(money, "符玄") and self.try_buy_character("符玄"):
                 buy_anything = True
-                self.has_fuxuan = True
-                time.sleep(1)
-                money -= 4
-            elif not only_aglaea and not self.has_silverwolf and money >= 4 and auto.click_element("银狼", "text", crop=shop_crop):
-                log.info("尝试购买银狼")
+                money = self.spend_character_purchase_cost(money, "符玄")
+                shop_scan_dirty = True
+            elif not only_aglaea and not self.has_tracked_character("银狼") and self.can_afford_character(money, "银狼") and self.try_buy_character("银狼"):
                 buy_anything = True
-                self.has_silverwolf = True
-                time.sleep(1)
-                money -= 4
-            elif not only_aglaea and not self.has_sparkle and money >= 2 and auto.click_element("花火", "text", crop=shop_crop):
-                log.info("尝试购买花火")
+                money = self.spend_character_purchase_cost(money, "银狼")
+                shop_scan_dirty = True
+            elif not only_aglaea and not self.has_tracked_character("花火") and self.can_afford_character(money, "花火") and self.try_buy_character("花火"):
                 buy_anything = True
-                self.has_sparkle = True
-                time.sleep(1)
-                money -= 2
-            elif self.has_aglaea_three_star and self.has_hyacine and self.has_tribbie and self.has_huohuo:
+                money = self.spend_character_purchase_cost(money, "花火")
+                shop_scan_dirty = True
+            elif (self.has_aglaea_three_star and self.has_tracked_character("风堇")
+                  and self.has_tracked_character("缇宝") and self.has_tracked_character("藿藿")):
                 self.allow_buy_experience = True
                 break
             elif (not self.has_aglaea_three_star and money >= 3) or (not only_aglaea and money >= 4):
@@ -582,6 +634,7 @@ class CurrencyWars:
                 log.info("刷新角色列表")
                 time.sleep(1)
                 money -= 2
+                shop_scan_dirty = True
             else:
                 break
         # 关闭商店
@@ -595,7 +648,7 @@ class CurrencyWars:
 
     def buy_aglaea2(self):
         shop_button_crop = (1591 / 1920, 958 / 1080, 66 / 1920, 46 / 1080)
-        shop_crop = (344 / 1920, 19 / 1080, 1370 / 1920, 336 / 1080)
+        shop_crop = (344 / 1920, 19 / 1080, 1370 / 1920, 526 / 1080)
         remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
         # 打开商店
         log.info("打开商店购买角色")
@@ -603,56 +656,60 @@ class CurrencyWars:
         time.sleep(2)
         money = self.check_money()
         buy_anything = False
+        shop_scan_dirty = True
+
+        def refresh_shop_scan_if_needed():
+            nonlocal shop_scan_dirty
+            if shop_scan_dirty:
+                self._get_ocr_texts_in_crop(shop_crop)
+                shop_scan_dirty = False
 
         while True:
-            if not self.has_welt and money >= 5 and auto.click_element("瓦尔特", "text", crop=shop_crop):
-                log.info("尝试购买瓦尔特")
-                buy_anything = True
-                self.has_welt = True
-                time.sleep(1)
-                money -= 5
+            refresh_shop_scan_if_needed()
 
-            if not self.has_cyrene and money >= 5 and auto.click_element("昔涟", "text", crop=shop_crop):
-                log.info("尝试购买昔涟")
+            if not self.has_tracked_character("瓦尔特") and self.can_afford_character(money, "瓦尔特") and self.try_buy_character("瓦尔特"):
                 buy_anything = True
-                self.has_cyrene = True
-                time.sleep(1)
-                money -= 5
+                money = self.spend_character_purchase_cost(money, "瓦尔特")
+                shop_scan_dirty = True
+                continue
 
-            if not self.has_sunday and money >= 3 and auto.click_element("星期日", "text", crop=shop_crop):
-                log.info("尝试购买星期日")
+            if not self.has_tracked_character("昔涟") and self.can_afford_character(money, "昔涟") and self.try_buy_character("昔涟"):
                 buy_anything = True
-                self.has_sunday = True
-                time.sleep(1)
-                money -= 3
+                money = self.spend_character_purchase_cost(money, "昔涟")
+                shop_scan_dirty = True
+                continue
 
-            if remembrance_trailblazer_name and not self.has_remembrance_trailblazer and money >= 4 and auto.click_element(remembrance_trailblazer_name, "text", crop=shop_crop):
-                log.info("尝试购买开拓者·记忆")
+            if not self.has_tracked_character("星期日") and self.can_afford_character(money, "星期日") and self.try_buy_character("星期日"):
                 buy_anything = True
-                self.has_remembrance_trailblazer = True
-                time.sleep(1)
-                money -= 4
+                money = self.spend_character_purchase_cost(money, "星期日")
+                shop_scan_dirty = True
+                continue
 
-            if not self.has_fuxuan and money >= 4 and auto.click_element("符玄", "text", crop=shop_crop):
-                log.info("尝试购买符玄")
+            if (remembrance_trailblazer_name and not self.has_tracked_character(remembrance_trailblazer_name)
+                    and self.can_afford_character(money, remembrance_trailblazer_name)
+                    and self.try_buy_character(remembrance_trailblazer_name)):
                 buy_anything = True
-                self.has_fuxuan = True
-                time.sleep(1)
-                money -= 4
+                money = self.spend_character_purchase_cost(money, remembrance_trailblazer_name)
+                shop_scan_dirty = True
+                continue
 
-            if not self.has_silverwolf and money >= 4 and auto.click_element("银狼", "text", crop=shop_crop):
-                log.info("尝试购买银狼")
+            if not self.has_tracked_character("符玄") and self.can_afford_character(money, "符玄") and self.try_buy_character("符玄"):
                 buy_anything = True
-                self.has_silverwolf = True
-                time.sleep(1)
-                money -= 4
+                money = self.spend_character_purchase_cost(money, "符玄")
+                shop_scan_dirty = True
+                continue
 
-            if not self.has_sparkle and money >= 2 and auto.click_element("花火", "text", crop=shop_crop):
-                log.info("尝试购买花火")
+            if not self.has_tracked_character("银狼") and self.can_afford_character(money, "银狼") and self.try_buy_character("银狼"):
                 buy_anything = True
-                self.has_sparkle = True
-                time.sleep(1)
-                money -= 2
+                money = self.spend_character_purchase_cost(money, "银狼")
+                shop_scan_dirty = True
+                continue
+
+            if not self.has_tracked_character("花火") and self.can_afford_character(money, "花火") and self.try_buy_character("花火"):
+                buy_anything = True
+                money = self.spend_character_purchase_cost(money, "花火")
+                shop_scan_dirty = True
+                continue
 
             # if money >= 2 and auto.click_element("风堇", "text", crop=shop_crop):
             #     log.info("尝试购买风堇")
@@ -678,11 +735,12 @@ class CurrencyWars:
             if ((cfg.currencywars_type == "normal" and self.current_stage != "3-7") or (cfg.currencywars_type == "overclock" and self.current_stage != "3-5")) and self.current_level < 9:
                 break
             else:
-                if money >= 7 and (not self.has_welt or not self.has_cyrene):
+                if money >= 7 and (not self.has_tracked_character("瓦尔特") or not self.has_tracked_character("昔涟")):
                     auto.press_key('d')
                     log.info("刷新角色列表")
                     time.sleep(1)
                     money -= 2
+                    shop_scan_dirty = True
                 else:
                     break
 
@@ -719,8 +777,10 @@ class CurrencyWars:
         ]
 
         equip_crop = (1386 / 1920, 93 / 1080, 514 / 1920, 610 / 1080)
-        aglaea_crop = (683 / 1920, 323 / 1080, 124 / 1920, 145 / 1080)
-        aglaea_position = auto.find_element(aglaea_crop, "crop")
+        aglaea_position = self.find_deployed_character_position("阿格莱雅")
+        if not aglaea_position:
+            log.warning("未找到阿格莱雅位置，跳过装备阿格莱雅流程")
+            return
 
         def try_equip(from_position, to_position):
             time.sleep(2)
@@ -1747,6 +1807,8 @@ class CurrencyWars:
             # 检查缓存中是否已有该角色信息
             if name in self.character_info_cache:
                 log.info(f"识别到已知角色：{name}")
+                if cfg.currencywars_strategy == "aglaea":
+                    self.mark_tracked_character(name)
                 self.click_origin()
                 return self.character_info_cache[name]
 
@@ -1768,36 +1830,36 @@ class CurrencyWars:
                 if name == "阿格莱雅":
                     # 核心角色，视为10费以确保优先上场
                     money = "10"
-                    self.has_aglaea = True
+                    self.mark_tracked_character(name)
                 elif name == "风堇":
                     money = "8"
                     cpos = "backward"
-                    self.has_hyacine = True
+                    self.mark_tracked_character(name)
                 elif name == "缇宝":
                     money = "9"
                     cpos = "backward"
-                    self.has_tribbie = True
+                    self.mark_tracked_character(name)
                 elif name == "藿藿":
                     money = "7"
                     cpos = "backward"
-                    self.has_huohuo = True
+                    self.mark_tracked_character(name)
                 elif name == "星期日":
-                    self.has_sunday = True
+                    self.mark_tracked_character(name)
                 elif remembrance_trailblazer_name and name == remembrance_trailblazer_name:
                     cpos = "forward"
-                    self.has_remembrance_trailblazer = True
+                    self.mark_tracked_character(name)
                 elif name == "符玄":
-                    self.has_fuxuan = True
+                    self.mark_tracked_character(name)
                 elif name == "银狼":
                     money = "2"
-                    self.has_silverwolf = True
+                    self.mark_tracked_character(name)
                 elif name == "花火":
                     cpos = "all"
-                    self.has_sparkle = True
+                    self.mark_tracked_character(name)
                 elif name == "瓦尔特":
-                    self.has_welt = True
+                    self.mark_tracked_character(name)
                 elif name == "昔涟":
-                    self.has_cyrene = True
+                    self.mark_tracked_character(name)
 
             # 创建角色对象并缓存
             character = CurrencyWarsCharacter(name, cpos, money=int(money))
@@ -1904,13 +1966,19 @@ class CurrencyWars:
                 self.screenshot = auto.screenshot
                 return
 
-    def check_special_characters(self, crop: Tuple[float, float, float, float]):
+    def check_special_characters(self, crop: Optional[Tuple[float, float, float, float]] = None, texts: Optional[list[str]] = None):
         """
         检查指定区域是否有佩佩、叽米或财富宝钻，并更新计数
 
         参数：
-            crop: 要检查的区域坐标
+            crop: 要检查的区域坐标，未提供 texts 时会对该区域执行 OCR
+            texts: 已有的 OCR 文本结果，提供后直接复用，不再重复 OCR
         """
+        if texts is None:
+            if crop is None:
+                raise ValueError("crop 和 texts 至少需要提供一个")
+            texts = self._get_ocr_texts_in_crop(crop)
+
         # 孪生姵姵：获得一个姵姵，它看起来和你的佩佩一模一样！
         # 佩佩驾到：获得1个携带着3个永久附着星徽的【佩佩】。
         # 这么大的钻石：佩佩携带【财富宝钻】出现
@@ -1921,13 +1989,13 @@ class CurrencyWars:
         # 粗星佩佩：获得一个穿戴三个随机星徽的佩佩
         # 星徽大使叽米：超稀有的叽米登场！爆出超多星徽！！
         # 金币大使叽米：超稀有的叽米登场！爆出超多金币！！
-        if auto.find_element(('姵姵', '佩佩', '叽米'), 'text', crop=crop, include=True):
+        if self._find_text_in_texts(texts, ('姵姵', '佩佩', '叽米'), include=True):
             self.peipei_count += 1
             self.update_backward()
-        if auto.find_element('财富宝钻', 'text', crop=crop, include=True):
+        if self._find_text_in_texts(texts, '财富宝钻', include=True):
             self.diamond_count += 1
             # 多元化团队：获得2个【财富宝钻】
-            if auto.find_element('多元化团队', 'text', crop=crop, include=True):
+            if self._find_text_in_texts(texts, '多元化团队', include=True):
                 self.diamond_count += 1
             self.update_backward()
 
@@ -1958,6 +2026,7 @@ class CurrencyWars:
                 (267.0 / 1920, 200.0 / 1080, 384.0 / 1920, 269.0 / 1080),
                 (1268.0 / 1920, 204.0 / 1080, 387.0 / 1920, 265.0 / 1080),
             ]
+            option_texts = [self._get_ocr_texts_in_crop(pos) for pos in button_positions]
             has_choose = False
 
             # 投资环境：
@@ -1985,9 +2054,11 @@ class CurrencyWars:
             if cfg.currencywars_strategy == "aglaea":
                 white_list = ('昼之半神概念股', '能量概念股', '火药味', '过剩经费', '红钻贵族', '蓝钻贵族', '增发货币', '成功经验', '二手市场', '昼之半神邀请', '量子同频邀请', '能量邀请', '特权阶级')
                 white_list += ('公司军火更新', '超光速提拔', '自由市场', '优势火力论', '淘金客')
-                for pos in button_positions:
-                    if auto.click_element(white_list, 'text', crop=pos, include=True):
-                        log.info(f"检测到{auto.matched_text}选项，尝试点击")
+                for index, texts in enumerate(option_texts):
+                    matched_text = self._find_text_in_texts(texts, white_list, include=True)
+                    if matched_text:
+                        auto.click_element(button_positions_click[index], 'crop')
+                        log.info(f"检测到{matched_text}选项，尝试点击")
                         has_choose = True
                         break
 
@@ -2013,25 +2084,27 @@ class CurrencyWars:
 
             black_list = ('深井角斗场', '佩佩客串', '钻石商人', '现金为王', '降本增效', '大裁员', '人力重组', '全员晋升', '节省工位', '奋斗协议', '专家研讨会', '快请专家', '英雄登场', '命运礼物', '独家代言', '全都要', '广聚天下英才', '阿哈大悦')
             if not has_choose:
-                for pos in button_positions:
-                    if auto.find_element(black_list, 'text', crop=pos, include=True):
-                        log.debug(f"跳过{auto.matched_text}选项")
+                for index, texts in enumerate(option_texts):
+                    matched_black_text = self._find_text_in_texts(texts, black_list, include=True)
+                    if matched_black_text:
+                        log.debug(f"跳过{matched_black_text}选项")
                         continue
-                    if auto.click_element("./assets/images/screen/currency_wars/new.png", "image", 0.9, crop=pos):
+                    if auto.click_element("./assets/images/screen/currency_wars/new.png", "image", 0.9, crop=button_positions[index]):
                         log.info("检测到图鉴未收集选项，尝试点击")
                         has_choose = True
-                        self.check_special_characters(pos)
+                        self.check_special_characters(texts=texts)
                         break
 
             if not has_choose:
-                for pos in button_positions:
-                    if auto.find_element(black_list, 'text', crop=pos, include=True):
-                        log.debug(f"跳过{auto.matched_text}选项")
+                for index, texts in enumerate(option_texts):
+                    matched_black_text = self._find_text_in_texts(texts, black_list, include=True)
+                    if matched_black_text:
+                        log.debug(f"跳过{matched_black_text}选项")
                         continue
-                    auto.click_element(button_positions_click[button_positions.index(pos)], 'crop')
+                    auto.click_element(button_positions_click[index], 'crop')
                     has_choose = True
-                    log.info(f"未检测到图鉴未收集选项，选择第{button_positions.index(pos) + 1}个按钮")
-                    self.check_special_characters(button_positions[button_positions.index(pos)])
+                    log.info(f"未检测到图鉴未收集选项，选择第{index + 1}个按钮")
+                    self.check_special_characters(texts=texts)
                     break
 
             if not has_choose:
