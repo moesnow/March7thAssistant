@@ -511,6 +511,42 @@ class SettingInterface(ScrollArea):
             tr("上次完成自塑尘脂合成的时间"),
             "asset_self_molding_resin_timestamp"
         )
+        self.emberSpecialPassEnableCard = SwitchSettingCard1(
+            FIF.CALENDAR,
+            tr("启用「每月自动购买{}」").format(tr("星轨专票")),
+            tr("每月自动尝试在余烬兑换中购买「{}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(tr("星轨专票")),
+            "asset_ember_special_pass_enable",
+        )
+        self.emberSpecialPassRunTimeCard = PushSettingCardDate(
+            tr('修改'),
+            FIF.DATE_TIME,
+            tr("上次完成{}购买的时间").format(tr("星轨专票")),
+            "asset_ember_special_pass_timestamp"
+        )
+        self.emberRegularPassEnableCard = SwitchSettingCard1(
+            FIF.CALENDAR,
+            tr("启用「每月自动购买{}」").format(tr("星轨通票")),
+            tr("每月自动尝试在余烬兑换中购买「{}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(tr("星轨通票")),
+            "asset_ember_regular_pass_enable",
+        )
+        self.emberRegularPassRunTimeCard = PushSettingCardDate(
+            tr('修改'),
+            FIF.DATE_TIME,
+            tr("上次完成{}购买的时间").format(tr("星轨通票")),
+            "asset_ember_regular_pass_timestamp"
+        )
+        self.emberTracksOfDestinyEnableCard = SwitchSettingCard1(
+            FIF.CALENDAR,
+            tr("启用「每月自动购买{}」").format(tr("命运的足迹")),
+            tr("每月自动尝试在余烬兑换中购买「{}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(tr("命运的足迹")),
+            "asset_ember_tracks_of_destiny_enable",
+        )
+        self.emberTracksOfDestinyRunTimeCard = PushSettingCardDate(
+            tr('修改'),
+            FIF.DATE_TIME,
+            tr("上次完成{}购买的时间").format(tr("命运的足迹")),
+            "asset_ember_tracks_of_destiny_timestamp"
+        )
 
         self.CurrencywarsGroup = SettingCardGroup(tr("货币"), self.scrollWidget)
         self.currencywarsEnableCard = ExpandableSwitchSettingCard(
@@ -1634,6 +1670,12 @@ class SettingInterface(ScrollArea):
             [
                 self.selfMoldingResinEnableCard,
                 self.selfMoldingResinRunTimeCard,
+                self.emberSpecialPassEnableCard,
+                self.emberSpecialPassRunTimeCard,
+                self.emberRegularPassEnableCard,
+                self.emberRegularPassRunTimeCard,
+                self.emberTracksOfDestinyEnableCard,
+                self.emberTracksOfDestinyRunTimeCard,
                 self.lc3StarSuperimposeEnableCard,
             ]
         )

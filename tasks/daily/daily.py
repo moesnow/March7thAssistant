@@ -17,6 +17,7 @@ from tasks.daily.himekotry import HimekoTry
 from tasks.weekly.echoofwar import Echoofwar
 from tasks.daily.buildtarget import BuildTarget
 from tasks.daily.redemption import Redemption
+from tasks.daily.ember_exchange import EmberExchange
 from utils.color import red, green, yellow
 import datetime
 
@@ -117,6 +118,8 @@ class Daily:
                     log.info("自塑尘脂自动合成尚未刷新")
             else:
                 log.info("自塑尘脂自动合成未开启")
+
+            EmberExchange.start()
 
         if cfg.currencywars_enable:
             if Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
