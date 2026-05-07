@@ -13,6 +13,7 @@ QLabel#helpLabel {
     font: 33px 'Microsoft YaHei';
     font-weight: 300;
     background-color: transparent;
+    color: black;
 }
 
 QLabel#tutorialLabel {
