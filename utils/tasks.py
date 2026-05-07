@@ -32,6 +32,7 @@ AVAILABLE_TASKS = {
     "game": tr("启动游戏"),
     "notify": tr("测试消息推送"),
     "redemption": tr("兑换码"),
+    "app_update": tr("更新三月七小助手"),
 }
 
 # 任务名称本地化映射（兼容旧名称）

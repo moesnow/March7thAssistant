@@ -1,262 +1,225 @@
-from PySide6.QtCore import Qt, QThread, Signal
+from __future__ import annotations
+
+import re
+from enum import Enum
+
+import markdown
+from PySide6.QtCore import Qt, QThread, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtCore import QUrl
 from qfluentwidgets import InfoBar, InfoBarPosition
 
-from ..card.messagebox_custom import MessageBoxUpdate
-from tasks.base.fastest_mirror import FastestMirror
 from module.config import cfg
-
-from packaging.version import parse
-from enum import Enum
-import subprocess
-import markdown
-import requests
-import re
-import os
 from module.localization import tr
+from module.update.version_check import check_for_update
+
+from ..card.messagebox_custom import MessageBoxUpdate
 
 
 class UpdateStatus(Enum):
-    """更新状态枚举类，用于指示更新检查的结果状态。"""
     SUCCESS = 1
     UPDATE_AVAILABLE = 2
     FAILURE = 0
 
 
+def _parse_release_body(body: str) -> str:
+    """清理更新日志中的图片和推广文本。"""
+    body = re.sub(r"!\[.*?\]\(.*?\)", "", body)
+    body = re.sub(r"\r\n\r\n首次.*?无法.*?！", "", body, flags=re.DOTALL)
+    body = re.sub(
+        r"\r\n\r\n\[.*?Mirror酱.*?CDK.*?下载\]\(https?://.*?mirrorchyan\.com[^\)]*\)",
+        "",
+        body,
+        flags=re.IGNORECASE,
+    )
+    return body
+
+
 class UpdateThread(QThread):
-    """负责后台检查更新的线程类。"""
+    """后台检查更新线程。"""
+
     updateSignal = Signal(UpdateStatus)
 
-    def __init__(self, timeout, flag):
+    def __init__(self, timeout: int, flag: bool):
         super().__init__()
-        self.timeout = timeout  # 超时时间
-        self.flag = flag  # 标志位，用于控制是否执行更新检查
-        self.error_msg = ""  # 错误信息
-        self.html_url = ""  # 发布页面URL
-        self.github_assert_url = ""  # GitHub资源下载URL
-        self.mirrorchyan_assert_url = ""  # Mirror酱资源下载URL
-
-    def remove_images_from_markdown(self, markdown_content):
-        """从Markdown内容中移除图片标记。"""
-        img_pattern = re.compile(r'!\[.*?\]\(.*?\)')
-        return img_pattern.sub('', markdown_content)
-
-    def fetch_latest_release_info(self):
-        """获取最新的发布信息。"""
-        response = requests.get(
-            FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", not cfg.update_prerelease_enable),
-            timeout=10,
-            headers=cfg.useragent
-        )
-        response.raise_for_status()
-        return response.json()[0] if cfg.update_prerelease_enable else response.json()
-
-    def get_download_url_from_assets(self, assets):
-        """从发布信息中获取下载URL。"""
-        for asset in assets:
-            if ((cfg.update_full_enable or cfg.update_source == "MirrorChyan") and "full" in asset["browser_download_url"]) or \
-               (not cfg.update_full_enable and "full" not in asset["browser_download_url"]):
-                return asset["browser_download_url"]
-        return None
+        self.timeout = timeout
+        self.flag = flag
+        self.error_msg = ""
+        self.title = ""
+        self.content = ""
+        self.github_assert_url = ""
+        self.github_assert_name = ""
+        self.github_assert_sha256 = ""
+        self.mirrorchyan_assert_url = ""
+        self.mirrorchyan_assert_name = ""
+        self.mirrorchyan_assert_sha256 = ""
+        self.html_url = ""
 
     def run(self):
-        """执行更新检查逻辑。"""
         try:
             if self.flag and not cfg.check_update:
                 return
 
-            data = self.fetch_latest_release_info()
-            version = data["tag_name"]
-            self.html_url = data["html_url"]
-            content = self.remove_images_from_markdown(data["body"])
-            content = re.sub(r"\r\n\r\n首次.*?无法.*?！", "", content, flags=re.DOTALL)
-            content = re.sub(r"\r\n\r\n\[.*?Mirror酱.*?CDK.*?下载\]\(https?://.*?mirrorchyan\.com[^\)]*\)", "", content, flags=re.IGNORECASE)
-            # if cfg.update_source == "GitHub":
-            #     content = content + "\n\n若下载速度较慢，可尝试使用 Mirror酱（设置 → 关于 → 更新源） 高速下载"
-            assert_url = self.get_download_url_from_assets(data["assets"])
-            self.github_assert_url = assert_url
-            assert_name = assert_url.split("/")[-1]
+            source = cfg.update_source
+            cdk = cfg.mirrorchyan_cdk
+            prerelease = cfg.update_prerelease_enable
+            full = cfg.update_full_enable or source == "MirrorChyan"
 
-            if assert_url is None:
+            # 始终先请求 GitHub，获取 html_url、更新日志等信息
+            github_info = check_for_update("GitHub", prerelease=prerelease, full=full)
+
+            # 如果用户配置了 Mirror酱，再请求 Mirror酱
+            if source == "MirrorChyan" and cdk:
+                try:
+                    mirror_info = check_for_update("MirrorChyan", cdk, prerelease, full=full, mirrorchyan_fallback=False)
+                except Exception as e:
+                    # Mirror酱 请求失败，直接报错，不回落到 GitHub
+                    self.error_msg = str(e)
+                    self.updateSignal.emit(UpdateStatus.FAILURE)
+                    return
+
+                if github_info is None:
+                    self.updateSignal.emit(UpdateStatus.SUCCESS)
+                    return
+
+                if mirror_info is None:
+                    # Mirror酱 认为已是最新版本，以 Mirror酱 为准
+                    self.updateSignal.emit(UpdateStatus.SUCCESS)
+                    return
+
+                self.mirrorchyan_assert_url = mirror_info.url
+                self.mirrorchyan_assert_name = mirror_info.file_name
+                self.mirrorchyan_assert_sha256 = mirror_info.sha256
+
+            if github_info is None:
                 self.updateSignal.emit(UpdateStatus.SUCCESS)
                 return
-            if cfg.update_source == "MirrorChyan":
-                if cfg.mirrorchyan_cdk == "":
-                    self.error_msg = tr("未设置 Mirror酱 CDK")
-                    self.updateSignal.emit(UpdateStatus.FAILURE)
-                    return
-                # 符合Mirror酱条件
-                url = f"https://mirrorchyan.com/api/resources/March7thAssistant/latest?current_version={cfg.version}&cdk={cfg.mirrorchyan_cdk}&user_agent=m7a_app"
-                if cfg.update_prerelease_enable:
-                    url += "&channel=beta"
-                response = requests.get(
-                    url,
-                    timeout=10,
-                    headers=cfg.useragent
-                )
-                if response.status_code == 200:
-                    mirrorchyan_data = response.json()
-                    if mirrorchyan_data["code"] == 0 and mirrorchyan_data["msg"] == "success":
-                        version_name = mirrorchyan_data["data"]["version_name"]
-                        url = mirrorchyan_data["data"]["url"]
-                        if version_name == version:
-                            assert_url = url
-                            self.mirrorchyan_assert_url = assert_url
-                else:
-                    try:
-                        mirrorchyan_data = response.json()
-                        self.code = mirrorchyan_data["code"]
-                        self.error_msg = mirrorchyan_data["msg"]
 
-                        cdk_error_messages = {
-                            7001: tr("Mirror酱 CDK 已过期"),
-                            7002: tr("Mirror酱 CDK 错误"),
-                            7003: tr("Mirror酱 CDK 今日下载次数已达上限"),
-                            7004: tr("Mirror酱 CDK 类型和待下载的资源不匹配"),
-                            7005: tr("Mirror酱 CDK 已被封禁")
-                        }
-                        if self.code in cdk_error_messages:
-                            self.error_msg = cdk_error_messages[self.code]
-                    except:
-                        self.error_msg = tr("Mirror酱API请求失败")
-                    self.updateSignal.emit(UpdateStatus.FAILURE)
-                    return
+            self.github_assert_url = github_info.url
+            self.github_assert_name = github_info.file_name
+            self.github_assert_sha256 = github_info.sha256
+            self.html_url = github_info.html_url
 
-            if parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
-                self.title = tr("发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)").format(cfg=cfg, version=version)
-                self.content = "<style>a {color: #f18cb9; font-weight: bold;}</style>" + markdown.markdown(content)
-                self.assert_url = assert_url
-                self.assert_name = assert_name
-                self.updateSignal.emit(UpdateStatus.UPDATE_AVAILABLE)
-            else:
-                self.updateSignal.emit(UpdateStatus.SUCCESS)
+            # 构建更新日志（始终使用 GitHub 的 release notes）
+            raw_note = github_info.release_note or ""
+            clean_note = _parse_release_body(raw_note)
+            self.title = tr("发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)").format(
+                cfg=cfg, version=github_info.version
+            )
+            self.content = (
+                '<style>a {color: #f18cb9; font-weight: bold;}</style>'
+                + markdown.markdown(clean_note)
+            )
+            self.updateSignal.emit(UpdateStatus.UPDATE_AVAILABLE)
+
         except Exception as e:
-            print(e)
+            self.error_msg = str(e)
             self.updateSignal.emit(UpdateStatus.FAILURE)
 
 
-def checkUpdate(self, timeout=5, flag=False):
+def checkUpdate(self, timeout: int = 5, flag: bool = False):
     """检查更新，并根据更新状态显示不同的信息或执行更新操作。"""
-    def handle_update(status):
+
+    def open_update_window(
+        assert_url: str,
+        assert_name: str,
+        assert_sha256: str,
+        message_box,
+    ):
+        from module.update.update_window import show_update_window
+
+        message_box.reject()
+        main_window = self.window() if hasattr(self, "window") else self
+        show_update_window(main_window, assert_url, assert_name, assert_sha256)
+
+    def handle_update(status: UpdateStatus):
         if status == UpdateStatus.UPDATE_AVAILABLE:
-            # 显示更新对话框
             message_box = MessageBoxUpdate(
                 self.update_thread.title,
                 self.update_thread.content,
-                self.window()
+                self.window(),
             )
-            # 预留外部处理的信号方法（占位）
 
             def handle_github_click():
-                # 执行更新操作
-                assert_url = self.update_thread.github_assert_url
-                assert_name = self.update_thread.assert_name
-                source_file = os.path.abspath("./March7th Updater.exe")
-                subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
-                message_box.reject()
+                open_update_window(
+                    self.update_thread.github_assert_url,
+                    self.update_thread.github_assert_name,
+                    self.update_thread.github_assert_sha256,
+                    message_box,
+                )
 
             def handle_mirrorchyan_click():
-                # 执行更新操作
-                assert_url = self.update_thread.mirrorchyan_assert_url
-                if assert_url == "":
+                if not self.update_thread.mirrorchyan_assert_url:
                     InfoBar.error(
-                        title=tr('尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)'),
-                        content=tr("请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK"),
+                        title=tr("尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"),
+                        content=tr('请在 "设置 → 关于 → 更新源" 中选择 Mirror酱 并填写有效 CDK'),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP,
                         duration=5000,
-                        parent=self
+                        parent=self,
                     )
                     return
-                assert_name = self.update_thread.assert_name
-                source_file = os.path.abspath("./March7th Updater.exe")
-                subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
-                message_box.reject()
+                open_update_window(
+                    self.update_thread.mirrorchyan_assert_url,
+                    self.update_thread.mirrorchyan_assert_name,
+                    self.update_thread.mirrorchyan_assert_sha256,
+                    message_box
+                )
 
-            # 连接 PrimaryPushSettingCard 的点击信号（若存在）到占位处理函数，外部也可直接访问 message_box.githubUpdateCard / message_box.mirrorchyanUpdateCard
-            try:
-                if hasattr(message_box, 'githubUpdateCard') and message_box.githubUpdateCard is not None:
-                    message_box.githubUpdateCard.clicked.connect(handle_github_click)
-            except Exception:
-                pass
+            if hasattr(message_box, "githubUpdateCard") and message_box.githubUpdateCard:
+                message_box.githubUpdateCard.clicked.connect(handle_github_click)
+            if hasattr(message_box, "mirrorchyanUpdateCard") and message_box.mirrorchyanUpdateCard:
+                message_box.mirrorchyanUpdateCard.clicked.connect(handle_mirrorchyan_click)
 
-            try:
-                if hasattr(message_box, 'mirrorchyanUpdateCard') and message_box.mirrorchyanUpdateCard is not None:
-                    message_box.mirrorchyanUpdateCard.clicked.connect(handle_mirrorchyan_click)
-            except Exception:
-                pass
             if message_box.exec():
                 QDesktopServices.openUrl(QUrl(self.update_thread.html_url))
-                # # 执行更新操作
-                # source_file = os.path.abspath("./March7th Updater.exe")
-                # assert_url = FastestMirror.get_github_mirror(self.update_thread.assert_url)
-                # # assert_url = self.update_thread.assert_url
-                # assert_name = self.update_thread.assert_name
-                # subprocess.Popen([source_file, assert_url, assert_name], creationflags=subprocess.DETACHED_PROCESS)
+
         elif status == UpdateStatus.SUCCESS:
-            # 显示当前为最新版本的信息
             InfoBar.success(
-                title=tr('当前是最新版本(＾∀＾●)'),
+                title=tr("当前是最新版本(＾∀＾●)"),
                 content="",
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
-                parent=self
+                parent=self,
             )
         else:
-            # 显示检查更新失败的信息
             InfoBar.warning(
-                title=tr('检测更新失败(╥╯﹏╰╥)'),
-                content=getattr(self, 'update_thread', None).error_msg if getattr(self, 'update_thread', None) is not None else '',
+                title=tr("检测更新失败(╥╯﹏╰╥)"),
+                content=getattr(self, "update_thread", None) and self.update_thread.error_msg or "",
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=5000,
-                parent=self
+                parent=self,
             )
 
-    # 若已有检查线程并且正在运行，则不再重复启动
-    existing_thread = getattr(self, 'update_thread', None)
-    if existing_thread is not None:
-        if existing_thread.isRunning():
+    # 防止重复启动
+    existing = getattr(self, "update_thread", None)
+    if existing is not None:
+        if existing.isRunning():
             InfoBar.warning(
-                title=tr('正在检测更新'),
-                content=tr('请稍候，更新检查仍在进行中'),
+                title=tr("正在检测更新"),
+                content=tr("请稍候，更新检查仍在进行中"),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
                 duration=1000,
-                parent=self
+                parent=self,
             )
             return
-        else:
-            try:
-                existing_thread.deleteLater()
-            except Exception:
-                pass
-            self.update_thread = None
+        try:
+            existing.deleteLater()
+        except Exception:
+            pass
+        self.update_thread = None
 
-    # 创建并启动新线程
-    self.update_thread = UpdateThread(timeout, flag)
-    # 将线程归属于当前窗口，避免在 Python 端无引用时被意外销毁
+    thread = UpdateThread(timeout, flag)
     try:
-        self.update_thread.setParent(self)
+        thread.setParent(self)
     except Exception:
         pass
-
-    self.update_thread.updateSignal.connect(handle_update)
-
-    # def _on_finished():
-    #     # 线程结束后清理引用和删除对象
-    #     try:
-    #         if getattr(self, 'update_thread', None) is not None:
-    #             self.update_thread.deleteLater()
-    #     except Exception:
-    #         pass
-    #     self.update_thread = None
-
-    # self.update_thread.finished.connect(_on_finished)
-    self.update_thread.start()
+    thread.updateSignal.connect(handle_update)
+    self.update_thread = thread
+    thread.start()

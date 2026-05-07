@@ -2123,12 +2123,22 @@ class CurrencyWars:
         检查并返回货币战争
         """
         if auto.click_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080)):
-            log.info("检测到货币战争按钮，尝试点击")
+            log.info("检测到返回货币战争按钮，尝试点击")
+            time.sleep(3)
+            # 等待一段时间后再次检查按钮是否还在
+            pos = auto.find_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080))
+            if pos:
+                log.warning("返回货币战争按钮仍存在，尝试重新点击")
+                auto.click_element_with_pos(pos)
+                time.sleep(3)
+                # 再次检查按钮是否仍在
+                if auto.find_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080)):
+                    log.error("无法返回货币战争首页")
+                    raise RuntimeError("无法返回货币战争首页")
             if self.result is not None:
                 log.info(f"本次对局结果：{'胜利' if self.result else '失败'}")
             else:
                 log.info("本次对局结果：未知")
-            time.sleep(2)
             screen.wait_for_screen_change("currency_wars_homepage")
             log.info("已返回货币战争首页")
             return True

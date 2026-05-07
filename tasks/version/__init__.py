@@ -1,45 +1,29 @@
-from tasks.base.fastest_mirror import FastestMirror
-from module.logger import log
+"""主循环中的版本检测（仅通知，不执行更新）。"""
 from module.config import cfg
+from module.logger import log
 from module.notification import notif
 from module.notification.notification import NotificationLevel
-from packaging.version import parse
-import requests
+from module.update.version_check import check_for_update
 
 
 def start():
+    if not cfg.check_update:
+        return
     try:
-        if cfg.update_prerelease_enable:
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant", False), timeout=10, headers=cfg.useragent)
-        else:
-            response = requests.get(FastestMirror.get_github_api_mirror("moesnow", "March7thAssistant"), timeout=10, headers=cfg.useragent)
-        if not cfg.check_update:
-            return
         log.hr("开始检测更新", 0)
-        if response.status_code == 200:
-            if cfg.update_prerelease_enable:
-                data = response.json()[0]
-            else:
-                data = response.json()
-
-            version = data["tag_name"]
-
-            assert_url = None
-            for asset in data["assets"]:
-                if ((cfg.update_full_enable or cfg.update_source == "MirrorChyan") and "full" in asset["browser_download_url"]) or \
-                   (not cfg.update_full_enable and "full" not in asset["browser_download_url"]):
-                    assert_url = asset["browser_download_url"]
-                    break
-
-            if assert_url is not None and parse(version.lstrip('v')) > parse(cfg.version.lstrip('v')):
-                notif.notify(content=cfg.notify_template['NewVersion'].format(version=version), level=NotificationLevel.ERROR)
-                log.info(f"发现新版本：{cfg.version}  ——→  {version}")
-                log.info(data["html_url"])
-            else:
-                log.info(f"已经是最新版本：{cfg.version}")
+        info = check_for_update(
+            source=getattr(cfg, "update_source", "GitHub"),
+            cdk=getattr(cfg, "mirrorchyan_cdk", ""),
+            prerelease=bool(getattr(cfg, "update_prerelease_enable", False)),
+        )
+        if info is not None:
+            notif.notify(
+                content=cfg.notify_template["NewVersion"].format(version=info.version),
+                level=NotificationLevel.ERROR,
+            )
+            log.info(f"发现新版本：{cfg.version}  ——→  {info.version}")
         else:
-            log.warning("检测更新失败")
-            log.debug(f"状态码: {response.status_code}")
+            log.info(f"已经是最新版本：{cfg.version}")
         log.hr("完成", 2)
     except Exception:
         pass

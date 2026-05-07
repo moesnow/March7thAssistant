@@ -219,7 +219,9 @@ class Automation(metaclass=SingletonMeta):
                 template = self.img_cache[target]['template']
             else:
                 mask = ImageUtils.read_template_with_mask(target)  # 读取模板图片掩码
-                template = cv2.imread(target)  # 读取模板图片
+                template = ImageUtils.read_image(target)  # 读取模板图片
+                if template is None:
+                    raise ValueError(f"读取图片失败：{target}")
                 if cacheable:
                     self.img_cache[target] = {'mask': mask, 'template': template}
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)  # 将截图转换为RGB
@@ -283,9 +285,9 @@ class Automation(metaclass=SingletonMeta):
         - 匹配的数量，或在出错时返回 None。
         """
         try:
-            template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
+            template = ImageUtils.read_image(target, cv2.IMREAD_GRAYSCALE)
             if template is None:
-                raise ValueError("读取图片失败")
+                raise ValueError(f"读取图片失败：{target}")
             bw_map = self.generate_black_white_map(pixel_bgr)
             cnt = ImageUtils.count_template_matches(bw_map, template, threshold)
             self.logger.debug(f"目标图片：{target.replace('./assets/images/', '')} 匹配数量：{cnt} 匹配阈值：{threshold} 目标像素BGR：{pixel_bgr}")
@@ -296,9 +298,9 @@ class Automation(metaclass=SingletonMeta):
 
     def find_image_with_multiple_targets(self, target, threshold, scale_range, relative=False):
         try:
-            template = cv2.imread(target, cv2.IMREAD_GRAYSCALE)
+            template = ImageUtils.read_image(target, cv2.IMREAD_GRAYSCALE)
             if template is None:
-                raise ValueError("读取图片失败")
+                raise ValueError(f"读取图片失败：{target}")
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
             matches = ImageUtils.scale_and_match_template_with_multiple_targets(screenshot, template, threshold, scale_range)
             if len(matches) == 0:

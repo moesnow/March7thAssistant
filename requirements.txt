@@ -28,6 +28,7 @@ qrcode==8.2
 PySocks==1.7.1
 PyPAC==0.17.2
 requests-toolbelt==1.0.0
+py7zr==1.1.0
 # Desktopmagic==14.3.11; sys_platform == 'win32'
 matrix-nio==0.25.2
 python-socks[asyncio]==2.8.0
