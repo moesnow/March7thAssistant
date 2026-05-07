@@ -347,7 +347,7 @@ class Instance:
 
     @staticmethod
     def start_instance_again(instance_type):
-        auto.click_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9, max_retries=10)
+        auto.click_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.88, max_retries=10)
         if instance_type == "历战余响":
             time.sleep(1)
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
@@ -375,7 +375,7 @@ class Instance:
 
         start_time = time.monotonic()
         while time.monotonic() - start_time < timeout:
-            if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.9):
+            if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.88):
                 log.info("战斗完成")
                 log.info(f"第{num}次副本完成")
                 return True
