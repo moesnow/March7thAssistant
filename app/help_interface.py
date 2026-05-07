@@ -4,7 +4,7 @@ import sys
 import markdown
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QSizePolicy
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QScroller, QScrollerProperties, QSizePolicy
 from qfluentwidgets import qconfig, ScrollArea, Pivot, TextBrowser
 from .common.style_sheet import StyleSheet
 from module.localization import tr
@@ -334,6 +334,7 @@ a {
             TextBrowser {
                 background: transparent;
                 border: none;
+                selection-background-color: rgba(253, 147, 194, 255);
             }
             
             QScrollBar:vertical {
@@ -367,7 +368,7 @@ a {
                 background: transparent;
             }
         """
-        # widget.setStyleSheet(scrollbar_style)
+        widget.setStyleSheet(scrollbar_style)
         
         self.stackedWidget.addWidget(widget)
         self.pivot.addItem(
