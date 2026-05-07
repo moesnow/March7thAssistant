@@ -1403,6 +1403,7 @@
     "解压完成": "Extraction complete",
     "检测到本地文件已完整，无需继续下载": "Local files are complete, no need to continue downloading",
     "发现新版本": "New version found",
+    "检测到新版本：{version}": "Update available: {version}",
     "未找到更新程序 March7th Updater.exe": "Updater March7th Updater.exe not found",
     "March7th Assistant 更新": "March7th Assistant Update",
     "Mirror酱 获取到更新": "Update fetched via Mirror",

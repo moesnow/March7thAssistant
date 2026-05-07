@@ -1,8 +1,8 @@
 from PySide6.QtCore import Qt, QSize, QFileSystemWatcher, Signal, QObject
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel
 
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, Theme
+from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, Theme, themeColor, qconfig
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarPosition, SystemTrayMenu
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
@@ -68,11 +68,26 @@ class ConfigWatcher(QObject):
             self.config_changed.emit()
 
 
+class ClickableLabel(QLabel):
+    clicked = Signal()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit()
+            event.accept()
+            return
+
+        super().mousePressEvent(event)
+
+
 class MainWindow(MSFluentWindow):
     def __init__(self, task=None, exit_on_complete=False):
         super().__init__()
         self.startup_task = task  # 保存启动时要执行的任务
         self.exit_on_complete = exit_on_complete  # 任务完成后是否退出
+        self.detected_update_version = None
+        self.updateVersionBadge = None
+        qconfig.themeChanged.connect(self._on_theme_changed)
 
         self.initWindow()
 
@@ -137,8 +152,7 @@ class MainWindow(MSFluentWindow):
         self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
         self.setWindowTitle("March7th Assistant")
         # 分离系统窗口标题与应用内标题栏文本
-        if hasattr(self, 'titleBar') and hasattr(self.titleBar, 'setTitle'):
-            self.titleBar.setTitle(f"March7th Assistant {cfg.version}")
+        self._refreshWindowTitleBar()
 
         # 创建启动画面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
@@ -169,6 +183,54 @@ class MainWindow(MSFluentWindow):
             self.show()
 
         QApplication.processEvents()
+
+    def _baseTitleBarText(self):
+        return f"March7th Assistant {cfg.version}"
+
+    def _ensureUpdateVersionBadge(self):
+        if self.updateVersionBadge is not None:
+            return self.updateVersionBadge
+
+        if not hasattr(self, 'titleBar') or not hasattr(self.titleBar, 'hBoxLayout'):
+            return None
+
+        badge = ClickableLabel(self.titleBar)
+        badge.hide()
+        badge.setStyleSheet(f"color: {themeColor().name()}; font-weight: 700;")
+        badge.setCursor(Qt.CursorShape.PointingHandCursor)
+        badge.clicked.connect(self._on_update_version_badge_clicked)
+        try:
+            self.titleBar.hBoxLayout.insertWidget(4, badge, 0, Qt.AlignmentFlag.AlignVCenter)
+        except Exception:
+            self.titleBar.hBoxLayout.addWidget(badge, 0, Qt.AlignmentFlag.AlignVCenter)
+        self.updateVersionBadge = badge
+        return badge
+
+    def _refreshWindowTitleBar(self):
+        if hasattr(self, 'titleBar') and hasattr(self.titleBar, 'setTitle'):
+            self.titleBar.setTitle(self._baseTitleBarText())
+
+        badge = self._ensureUpdateVersionBadge()
+        if badge is None:
+            return
+
+        badge.setStyleSheet(f"color: {themeColor().name()}; font-weight: 700;")
+        if self.detected_update_version:
+            badge.setText(tr('检测到新版本：{version}').format(version=self.detected_update_version))
+            badge.show()
+        else:
+            badge.hide()
+
+    def setDetectedUpdateVersion(self, version: str | None):
+        self.detected_update_version = version or None
+        self._refreshWindowTitleBar()
+
+    def _on_theme_changed(self):
+        self._refreshWindowTitleBar()
+
+    def _on_update_version_badge_clicked(self):
+        if self.detected_update_version:
+            checkUpdate(self)
 
     def initInterface(self):
         self.homeInterface = HomeInterface(self)
@@ -375,6 +437,7 @@ class MainWindow(MSFluentWindow):
             cfg.ui_language_now = actual_lang
             load_language(actual_lang)
             self._reinstall_fluent_translator(actual_lang)
+            self._refreshWindowTitleBar()
 
             # 禁用导航栏，防止重建期间误操作
             self.navigationInterface.setEnabled(False)

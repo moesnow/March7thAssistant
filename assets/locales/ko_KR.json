@@ -1403,6 +1403,7 @@
     "解压完成": "압축 해제 완료",
     "检测到本地文件已完整，无需继续下载": "로컬 파일이 완전합니다. 다운로드를 계속할 필요가 없습니다",
     "发现新版本": "새 버전을 발견했습니다",
+    "检测到新版本：{version}": "새 버전 감지: {version}",
     "未找到更新程序 March7th Updater.exe": "업데이트 프로그램 March7th Updater.exe를 찾을 수 없습니다",
     "March7th Assistant 更新": "March7th Assistant 업데이트",
     "Mirror酱 获取到更新": "Mirror에서 업데이트를 가져왔습니다",

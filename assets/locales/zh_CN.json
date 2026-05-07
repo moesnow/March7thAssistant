@@ -1403,6 +1403,7 @@
     "解压完成": "解压完成",
     "检测到本地文件已完整，无需继续下载": "检测到本地文件已完整，无需继续下载",
     "发现新版本": "发现新版本",
+    "检测到新版本：{version}": "检测到新版本：{version}",
     "未找到更新程序 March7th Updater.exe": "未找到更新程序 March7th Updater.exe",
     "March7th Assistant 更新": "March7th Assistant 更新",
     "Mirror酱 获取到更新": "Mirror酱 获取到更新",

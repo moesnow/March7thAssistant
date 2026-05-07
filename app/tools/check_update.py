@@ -46,6 +46,7 @@ class UpdateThread(QThread):
         self.error_msg = ""
         self.title = ""
         self.content = ""
+        self.version = ""
         self.github_assert_url = ""
         self.github_assert_name = ""
         self.github_assert_sha256 = ""
@@ -56,9 +57,6 @@ class UpdateThread(QThread):
 
     def run(self):
         try:
-            if self.flag and not cfg.check_update:
-                return
-
             source = cfg.update_source
             cdk = cfg.mirrorchyan_cdk
             prerelease = cfg.update_prerelease_enable
@@ -98,6 +96,7 @@ class UpdateThread(QThread):
             self.github_assert_name = github_info.file_name
             self.github_assert_sha256 = github_info.sha256
             self.html_url = github_info.html_url
+            self.version = github_info.version
 
             # 构建更新日志（始终使用 GitHub 的 release notes）
             raw_note = github_info.release_note or ""
@@ -119,6 +118,8 @@ class UpdateThread(QThread):
 def checkUpdate(self, timeout: int = 5, flag: bool = False):
     """检查更新，并根据更新状态显示不同的信息或执行更新操作。"""
 
+    suppress_feedback = flag and not cfg.check_update
+
     def open_update_window(
         assert_url: str,
         assert_name: str,
@@ -132,7 +133,20 @@ def checkUpdate(self, timeout: int = 5, flag: bool = False):
         show_update_window(main_window, assert_url, assert_name, assert_sha256)
 
     def handle_update(status: UpdateStatus):
+        main_window = self.window() if hasattr(self, "window") else self
+        if main_window is None:
+            main_window = self
+
         if status == UpdateStatus.UPDATE_AVAILABLE:
+            if hasattr(main_window, "setDetectedUpdateVersion"):
+                try:
+                    main_window.setDetectedUpdateVersion(self.update_thread.version)
+                except Exception:
+                    pass
+
+            if suppress_feedback:
+                return
+
             message_box = MessageBoxUpdate(
                 self.update_thread.title,
                 self.update_thread.content,
@@ -175,6 +189,15 @@ def checkUpdate(self, timeout: int = 5, flag: bool = False):
                 QDesktopServices.openUrl(QUrl(self.update_thread.html_url))
 
         elif status == UpdateStatus.SUCCESS:
+            if hasattr(main_window, "setDetectedUpdateVersion"):
+                try:
+                    main_window.setDetectedUpdateVersion(None)
+                except Exception:
+                    pass
+
+            if suppress_feedback:
+                return
+
             InfoBar.success(
                 title=tr("当前是最新版本(＾∀＾●)"),
                 content="",
@@ -185,6 +208,9 @@ def checkUpdate(self, timeout: int = 5, flag: bool = False):
                 parent=self,
             )
         else:
+            if suppress_feedback:
+                return
+
             InfoBar.warning(
                 title=tr("检测更新失败(╥╯﹏╰╥)"),
                 content=getattr(self, "update_thread", None) and self.update_thread.error_msg or "",
