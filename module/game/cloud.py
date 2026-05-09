@@ -281,6 +281,11 @@ class CloudGameController(GameControllerBase):
         # 记录 driver 可执行路径和 service，以便后续清理 chromedriver 进程
         self.driver_path = driver_path
         self._webdriver_service = service
+        # 记录 driver pid
+        try:
+            self._driver_pid = self.driver.service.process.pid
+        except AttributeError:
+            self._driver_pid = None
 
         # 关掉 headless 不匹配的浏览器，防止端口冲突
         if self.close_all_m7a_browser(headless=not headless):
@@ -609,12 +614,22 @@ class CloudGameController(GameControllerBase):
         """
         browsers: list[psutil.Process] = []
 
-        browser_names = {'chrome.exe', 'msedge.exe'}
+        browser_names = {'chrome.exe', 'msedge.exe', 'chrome', 'msedge', 'google-chrome', 'google-chrome-stable'}
         browser_tag = self.BROWSER_TAG
+
+        for path_attr in ('browser_path',):
+            if hasattr(self, path_attr):
+                p = getattr(self, path_attr)
+                if p:
+                    browser_names.add(os.path.basename(p))
+
+        env_path = os.environ.get('MARCH7TH_BROWSER_PATH')
+        if env_path:
+            browser_names.add(os.path.basename(env_path))
 
         for proc in psutil.process_iter(['pid', 'name']):
             name = proc.info.get('name')
-            if name not in browser_names:
+            if not name or name.lower() not in browser_names:
                 continue
 
             try:
@@ -659,13 +674,23 @@ class CloudGameController(GameControllerBase):
         """单独清理 chromedriver 进程并返回被关闭的进程列表"""
         closed: list[psutil.Process] = []
 
+        # 尝试通过记录的 pid 直接清理 driver
+        if hasattr(self, '_driver_pid') and self._driver_pid:
+            try:
+                p = psutil.Process(self._driver_pid)
+                p.terminate()
+                closed.append(p)
+                return closed
+            except psutil.NoSuchProcess:
+                pass
+
         try:
             chromedrivers: list[psutil.Process] = []
 
             # 只获取轻量字段，避免 ppid / exe 带来的性能问题
             for proc in psutil.process_iter(['pid', 'name']):
                 name = proc.info.get('name')
-                if name and name.lower() == 'chromedriver.exe':
+                if name and name.lower() in ('chromedriver.exe', 'chromedriver', 'msedgedriver', 'msedgedriver.exe'):
                     chromedrivers.append(proc)
 
             current_pid = os.getpid()
