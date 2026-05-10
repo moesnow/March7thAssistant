@@ -439,13 +439,13 @@ class CloudGameController(GameControllerBase):
             self.driver.refresh()
             self._wait_game_page_loaded()
 
-    def _get_remaining_playtime(self):
+    def _get_remaining_playtime(self) -> tuple[int | None, int | None]:
         """
-        获取云游戏剩余时长（分钟），付费时长 + 免费时长之和。
-        若两者均无法识别则返回 None。
+        获取云游戏剩余时长（分钟），返回 (付费时长, 免费时长)。
+        若两者均无法识别则返回 (None, None)。
         """
         if not self.driver:
-            return None
+            return None, None
         try:
             paid_selector = "#app > div.home-wrapper > div.welcome > div.welcome-wrapper > div > div.wel-card__content > div.wel-card__content--wallet > div.wallet-item.coin > div.left > span:nth-child(1) > span.left__value > span:nth-child(1)"
             free_selector = "#app > div.home-wrapper > div.welcome > div.welcome-wrapper > div > div.wel-card__content > div.wel-card__content--wallet > div.wallet-item.ft > div.left > span > span:nth-child(2)"
@@ -453,12 +453,10 @@ class CloudGameController(GameControllerBase):
             free_els = self.driver.find_elements(By.CSS_SELECTOR, free_selector)
             paid = int(paid_els[0].text.strip()) if paid_els else None
             free = int(free_els[0].text.strip()) if free_els else None
-            if paid is None and free is None:
-                return None
-            return (paid or 0) + (free or 0)
+            return paid, free
         except Exception as e:
             self.log_debug(f"获取剩余时长失败: {e}")
-            return None
+            return None, None
 
     def _check_login(self, timeout=5) -> bool:
         """检查是否已经登录"""
@@ -535,12 +533,23 @@ class CloudGameController(GameControllerBase):
                 if select_retries >= 5:
                     self.log_error("选择排队队列超时")
                     return False
-                self.log_info("检测到选择排队队列界面，选择普通队列")
-                self.driver.execute_script("""
-                    try {
-                        document.getElementsByClassName("coin-prior-choose-item-include-info")[1].click();
-                    } catch(e) {}
-                """)
+                
+                if self.cfg.cloud_game_use_paid_time and getattr(self, '_paid_time', 0) > 0:
+                    self.log_info("检测到选择排队队列界面，配置开启了使用付费时间，选择快速队列")
+                    self.driver.execute_script("""
+                        try {
+                            document.getElementsByClassName("coin-prior-choose-item-include-info")[0].click();
+                        } catch(e) {}
+                    """)
+                else:
+                    if self.cfg.cloud_game_use_paid_time:
+                        self.log_warning("当前账号付费时间不足，已切换为免费时间。")
+                    self.log_info("检测到选择排队队列界面，选择普通队列")
+                    self.driver.execute_script("""
+                        try {
+                            document.getElementsByClassName("coin-prior-choose-item-include-info")[1].click();
+                        } catch(e) {}
+                    """)
                 time.sleep(2)
                 status = WebDriverWait(self.driver, 10).until(
                     lambda d: d.execute_script("""
@@ -1046,15 +1055,19 @@ class CloudGameController(GameControllerBase):
 
             # 检测剩余时长，为 0 则直接终止（等待钱包区域渲染，最多 5 秒）
             self.log_info("正在检测云游戏剩余时长...")
-            remaining = None
+            paid, free = None, None
             for _ in range(5):
-                remaining = self._get_remaining_playtime()
-                if remaining is not None:
+                paid, free = self._get_remaining_playtime()
+                if paid is not None or free is not None:
                     break
                 time.sleep(1)
-            if remaining is None:
+            
+            remaining = (paid or 0) + (free or 0)
+            self._paid_time = paid or 0
+
+            if paid is None and free is None:
                 self.log_warning("无法识别剩余时长，将继续尝试进入游戏")
-                # 在无法识别剩余时长的情况下，仍然按原逻辑尝试进入并排队
+                remaining = None
                 self._click_enter_game()
                 if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
                     return False
@@ -1064,7 +1077,7 @@ class CloudGameController(GameControllerBase):
             elif remaining == 0:
                 self.log_error("云游戏剩余时长为 0，停止运行")
             else:
-                self.log_info(f"云游戏剩余时长：{remaining} 分钟")
+                self.log_info(f"云游戏剩余时长：{remaining} 分钟（付费：{paid or 0} 分钟，免费：{free or 0} 分钟）")
                 self._click_enter_game()
                 if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
                     return False
