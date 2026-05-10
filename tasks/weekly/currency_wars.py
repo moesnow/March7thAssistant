@@ -1233,6 +1233,7 @@ class CurrencyWars:
             # 尝试合成
             if try_synthesize(shoe_img, knife_img, "轮滑鞋", "折叠小刀"):
                 log.info("尝试合成火力风暴潮（轮滑鞋+折叠小刀）")
+                self.seele_firestorm_count += 1
                 continue
             # 没有材料了
             log.info("缺少合成火力风暴潮的材料")
@@ -1249,6 +1250,7 @@ class CurrencyWars:
             # 尝试合成
             if try_synthesize(star_img, knife_img, "幸运星", "折叠小刀"):
                 log.info("尝试合成高周波电锯（幸运星+折叠小刀）")
+                self.seele_chainsaw_count += 1
                 continue
             # 没有材料了
             log.info("缺少合成高周波电锯的材料")
