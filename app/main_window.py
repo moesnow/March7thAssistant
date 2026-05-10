@@ -224,6 +224,11 @@ class MainWindow(MSFluentWindow):
     def setDetectedUpdateVersion(self, version: str | None):
         self.detected_update_version = version or None
         self._refreshWindowTitleBar()
+        if hasattr(self, 'logInterface') and self.logInterface:
+            try:
+                self.logInterface.setDetectedUpdateVersion(self.detected_update_version)
+            except Exception:
+                pass
 
     def _on_theme_changed(self):
         self._refreshWindowTitleBar()
@@ -438,6 +443,8 @@ class MainWindow(MSFluentWindow):
             load_language(actual_lang)
             self._reinstall_fluent_translator(actual_lang)
             self._refreshWindowTitleBar()
+            if hasattr(self, 'logInterface') and self.logInterface:
+                self.logInterface.setDetectedUpdateVersion(self.detected_update_version)
 
             # 禁用导航栏，防止重建期间误操作
             self.navigationInterface.setEnabled(False)

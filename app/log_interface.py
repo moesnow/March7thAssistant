@@ -49,6 +49,7 @@ class GameLogOverlay(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.detected_update_version = None
         self._lines = deque(maxlen=14)
         self._pending_line = ""
         self._ansi_escape_re = re.compile(r'\x1b\[[0-9;]*[A-Za-z]')
@@ -94,6 +95,15 @@ class GameLogOverlay(QWidget):
                 font-size: 11px;
                 font-weight: 700;
             }
+            QLabel#gameLogOverlayUpdateBadge {
+                color: rgba(255, 244, 250, 240);
+                background-color: rgba(241, 140, 185, 70);
+                border: 1px solid rgba(241, 140, 185, 190);
+                border-radius: 9px;
+                padding: 1px 8px;
+                font-size: 11px;
+                font-weight: 700;
+            }
             QLabel#gameLogOverlayBody {
                 color: rgba(244, 247, 252, 235);
                 background-color: transparent;
@@ -120,6 +130,12 @@ class GameLogOverlay(QWidget):
         self.liveBadge.setObjectName('gameLogOverlayBadge')
         self.liveBadge.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
+        self.updateBadge = QLabel(self.panel)
+        self.updateBadge.setObjectName('gameLogOverlayUpdateBadge')
+        self.updateBadge.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.updateBadge.setTextFormat(Qt.TextFormat.PlainText)
+        self.updateBadge.hide()
+
         hotkey = cfg.get_value('hotkey_stop_task', 'F10').upper()
         self.hotkeyLabel = QLabel(f'按下 {hotkey} 停止任务', self.panel)
         self.hotkeyLabel.setObjectName('gameLogOverlayHotkey')
@@ -127,6 +143,7 @@ class GameLogOverlay(QWidget):
 
         headerLayout.addWidget(self.titleLabel)
         headerLayout.addWidget(self.liveBadge)
+        headerLayout.addWidget(self.updateBadge)
         headerLayout.addStretch()
         headerLayout.addWidget(self.hotkeyLabel)
 
@@ -146,6 +163,14 @@ class GameLogOverlay(QWidget):
 
         self.resize(420, 188)
         self.hide()
+
+    def setDetectedUpdateVersion(self, version: str | None):
+        self.detected_update_version = version or None
+        if self.detected_update_version:
+            self.updateBadge.setText(ltr('检测到新版本：{version}').format(version=self.detected_update_version))
+            self.updateBadge.show()
+        else:
+            self.updateBadge.hide()
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -251,6 +276,7 @@ class LogInterface(ScrollArea):
         super().__init__(parent=parent)
         self.process = None
         self.current_task = None
+        self.detected_update_version = None
         self._external_task_active = False
         self._external_task_name = None
         self._external_task_stop_callback = None
@@ -462,6 +488,11 @@ class LogInterface(ScrollArea):
         self._setLogOverlaySwitchValue(enabled)
         if not enabled:
             self._hideLogOverlay()
+
+    def setDetectedUpdateVersion(self, version: str | None):
+        self.detected_update_version = version or None
+        if self._log_overlay:
+            self._log_overlay.setDetectedUpdateVersion(self.detected_update_version)
 
     def _hideLogOverlay(self):
         if self._log_overlay:
