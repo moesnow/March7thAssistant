@@ -56,6 +56,12 @@ class CurrencyWars:
         self.allow_equip_weapons: bool = False  # 是否允许装备武器
         self.propeller_count: int = 0  # 螺旋桨数量
         self.shoe_count: int = 0  # 鞋子数量
+        self.has_seele: bool = False  # 是否拥有希儿
+        self.has_seele_three_star: bool = False  # 希儿三星
+        self.seele_firestorm_count: int = 0  # 希儿已装备的火力风暴潮数量
+        self.seele_chainsaw_count: int = 0  # 希儿已装备的高周波电锯数量
+        self.allow_seele_equip_weapons: bool = False  # 希儿策略是否允许装备武器
+        self.seele_missing_basic_equips: set = set()  # 希儿策略：合成时发现缺失的初级装备
         self.zone_name_localization = {
             "forward": "前台",
             "backward": "后台",
@@ -213,7 +219,7 @@ class CurrencyWars:
         return None
 
     def _get_ocr_texts_in_crop(self, crop: Tuple[float, float, float, float]) -> list[str]:
-        auto.find_element(crop, "crop")
+        auto.take_screenshot(crop)
         auto.perform_ocr()
         return [text for _, (text, _) in auto.ocr_result]
 
@@ -443,6 +449,12 @@ class CurrencyWars:
         self.allow_equip_weapons = False  # 重置允许装备武器标志
         self.propeller_count = 0  # 重置螺旋桨数量
         self.shoe_count = 0  # 重置鞋子数量
+        self.has_seele = False  # 重置希儿拥有标志
+        self.has_seele_three_star = False  # 重置希儿三星标志
+        self.seele_firestorm_count = 0  # 重置火力风暴潮数量
+        self.seele_chainsaw_count = 0  # 重置高周波电锯数量
+        self.allow_seele_equip_weapons = False  # 重置希儿策略装备武器标志
+        self.seele_missing_basic_equips = set()  # 重置缺失初级装备
         self.update_backward()
 
         start_time = time.monotonic()
@@ -528,12 +540,33 @@ class CurrencyWars:
                         else:
                             self.buy_aglaea2()
 
-                if not (cfg.currencywars_strategy == "aglaea" and not self.allow_buy_experience):
+                elif cfg.currencywars_strategy == "seele":
+                    self.mark_tracked_characters(self.prepare_characters, "准备席")
+                    self.mark_tracked_characters(self.forward_characters, "前台")
+                    self.mark_tracked_characters(self.backward_characters, "后台")
+                    # 购买前出售不需要的角色
+                    if self.has_seele:
+                        self.sell_characters_seele_strategy()
+                    # 记录购买前是否已拥有希儿
+                    had_seele = self.has_seele
+                    # 购买希儿和策略角色
+                    self.buy_seele()
+                    # 如果是第一次获得希儿，额外出售一次不需要的角色
+                    if not had_seele and self.has_seele:
+                        log.info("首次获得希儿，立即出售多余角色")
+                        self.sell_characters_seele_strategy()
+
+                skip_buy_experience = False
+                if cfg.currencywars_strategy == "aglaea" and not self.allow_buy_experience:
+                    skip_buy_experience = True
+                if not skip_buy_experience:
                     self.buy_experience()
                 self.deploy_and_optimize()
 
                 if cfg.currencywars_strategy == "aglaea":
                     self.equip_aglaea()
+                elif cfg.currencywars_strategy == "seele":
+                    self.equip_seele()
 
                 # if cfg.currencywars_strategy == "aglaea" and self.current_stage.startswith("1-9") and (self.shoe_count < 2):
                 #     log.info("当前策略为阿格莱雅，未达到指定装备条件，尝试重开")
@@ -542,7 +575,12 @@ class CurrencyWars:
                 #     return
 
                 self.sell_characters()
-                if not (cfg.currencywars_strategy == "aglaea" and not self.allow_equip_weapons):
+                skip_equip_weapons = False
+                if cfg.currencywars_strategy == "aglaea" and not self.allow_equip_weapons:
+                    skip_equip_weapons = True
+                elif cfg.currencywars_strategy == "seele" and not self.allow_seele_equip_weapons:
+                    skip_equip_weapons = True
+                if not skip_equip_weapons:
                     self.equip_weapons()
                 auto.click_element(('出战', '跳过'), 'text', None, 10, crop=(1740 / 1920, 709 / 1080, 177 / 1920, 80 / 1080), include=True)
                 time.sleep(2)
@@ -560,6 +598,43 @@ class CurrencyWars:
                 log.info(f"准备席角色 {char.name} 不符合条件，尝试出售")
                 if self._sell_single_character(idx):
                     # 出售成功，清空该位置的角色信息
+                    self.prepare_characters[idx] = CurrencyWarsCharacter(None, None)
+
+    def sell_characters_seele_strategy(self):
+        remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+        char_list = {"希儿", "瓦尔特", "刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"}
+        if remembrance_trailblazer_name:
+            char_list.add(remembrance_trailblazer_name)
+        # 出售前台不符合条件的角色
+        for idx, char in enumerate(self.forward_characters):
+            if char.name and char.name not in char_list:
+                log.info(f"前台角色 {char.name} 不符合条件，尝试出售")
+                if self._sell_single_character(idx, self.forward_pos):
+                    self.forward_characters[idx] = CurrencyWarsCharacter(None, None)
+        # 出售后台不符合条件的角色
+        for idx, char in enumerate(self.backward_characters):
+            if char.name and char.name not in char_list:
+                log.info(f"后台角色 {char.name} 不符合条件，尝试出售")
+                if self._sell_single_character(idx, self.backward_pos):
+                    self.backward_characters[idx] = CurrencyWarsCharacter(None, None)
+        # 出售备战席不符合条件的角色，以及重复的策略内角色（希儿除外）
+        deployed_names = set()
+        for char in self.forward_characters:
+            if char.name:
+                deployed_names.add(char.name)
+        for char in self.backward_characters:
+            if char.name:
+                deployed_names.add(char.name)
+        for idx, char in enumerate(self.prepare_characters):
+            if not char.name:
+                continue
+            if char.name not in char_list:
+                log.info(f"准备席角色 {char.name} 不符合条件，尝试出售")
+                if self._sell_single_character(idx):
+                    self.prepare_characters[idx] = CurrencyWarsCharacter(None, None)
+            elif char.name != "希儿" and char.name in deployed_names:
+                log.info(f"准备席角色 {char.name} 已在前/后台，出售重复")
+                if self._sell_single_character(idx):
                     self.prepare_characters[idx] = CurrencyWarsCharacter(None, None)
 
     def buy_aglaea(self, only_aglaea=False):
@@ -751,6 +826,140 @@ class CurrencyWars:
         if buy_anything:
             self.check_character_status()
 
+    def buy_seele(self):
+        shop_button_crop = (1591 / 1920, 958 / 1080, 66 / 1920, 46 / 1080)
+        shop_crop = (344 / 1920, 19 / 1080, 1370 / 1920, 526 / 1080)
+        seele3_img = "./assets/images/share/aglaea/seele3.png"
+        remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+
+        # 确定当前阶段
+        if not self.has_seele:
+            phase = 1 if self.current_level < 6 else 2
+        elif not self.has_seele_three_star:
+            phase = 3 if self.current_level < 7 else 4
+        else:
+            phase = 5 if self.current_level < 9 else 6
+        log.info(f"希儿策略购买阶段: {phase}")
+
+        # 打开商店
+        log.info("打开商店购买角色")
+        auto.click_element(shop_button_crop, "crop")
+        time.sleep(2)
+        money = self.check_money()
+        buy_anything = False
+        shop_scan_dirty = True
+
+        def refresh_shop_scan_if_needed():
+            nonlocal shop_scan_dirty
+            if shop_scan_dirty:
+                self._get_ocr_texts_in_crop(shop_crop)
+                shop_scan_dirty = False
+
+        # 策略内需要的角色（按购买费用从高到低排列）
+        strategy_characters = ["瓦尔特", "刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"]
+        if remembrance_trailblazer_name:
+            strategy_characters.insert(2, remembrance_trailblazer_name)  # 费用4，排在刻律德菈之前
+
+        def try_buy_strategy_characters():
+            """尝试购买策略内需要的角色，返回是否购买了任何角色"""
+            nonlocal money, buy_anything, shop_scan_dirty
+            bought = False
+            for name in strategy_characters:
+                if not self.has_tracked_character(name) and self.can_afford_character(money, name) and self.try_buy_character(name):
+                    buy_anything = True
+                    money = self.spend_character_purchase_cost(money, name)
+                    shop_scan_dirty = True
+                    bought = True
+            return bought
+
+        while True:
+            refresh_shop_scan_if_needed()
+
+            # 检测希儿三星
+            if not self.has_seele_three_star and auto.find_element(seele3_img, "image", 0.9, take_screenshot=False, need_ocr=False):
+                log.info("检测到希儿三星")
+                self.has_seele_three_star = True
+                # 三星后更新阶段
+                if self.current_level < 9:
+                    phase = 5
+                else:
+                    phase = 6
+                continue
+
+            # 尝试购买希儿
+            if not self.has_seele_three_star and self.can_afford_character(money, "希儿") and self.try_buy_character("希儿", wait_time=5):
+                buy_anything = True
+                money = self.spend_character_purchase_cost(money, "希儿")
+                shop_scan_dirty = True
+                if not self.has_seele:
+                    self.has_seele = True
+                    log.info("成功获得希儿")
+                continue
+
+            # 阶段1: 无希儿 + 等级<6 — 买希儿+策略角色，不刷新
+            if phase == 1:
+                try_buy_strategy_characters()
+                break
+
+            # 阶段2: 无希儿 + 等级>=6 — 买希儿+策略角色，刷新直到钱<5
+            elif phase == 2:
+                try_buy_strategy_characters()
+                if money >= 5:
+                    auto.press_key('d')
+                    log.info("刷新角色列表")
+                    time.sleep(1)
+                    money -= 2
+                    shop_scan_dirty = True
+                else:
+                    break
+
+            # 阶段3: 有希儿+未三星+等级<7 — 买希儿+策略角色，不刷新
+            elif phase == 3:
+                try_buy_strategy_characters()
+                break
+
+            # 阶段4: 有希儿+未三星+等级>=7 — 买希儿+策略角色，允许刷新
+            elif phase == 4:
+                try_buy_strategy_characters()
+                if money >= 3:
+                    auto.press_key('d')
+                    log.info("刷新角色列表")
+                    time.sleep(1)
+                    money -= 2
+                    shop_scan_dirty = True
+                else:
+                    break
+
+            # 阶段5: 三星+等级<9 — 只买策略角色，不刷新
+            elif phase == 5:
+                try_buy_strategy_characters()
+                break
+
+            # 阶段6: 三星+等级>=9 — 买策略角色，缺角色且钱>=7时刷新
+            elif phase == 6:
+                try_buy_strategy_characters()
+                # 检查是否还缺策略角色
+                missing = False
+                for name in strategy_characters:
+                    if not self.has_tracked_character(name):
+                        missing = True
+                        break
+                if missing and money >= 7:
+                    auto.press_key('d')
+                    log.info("刷新角色列表")
+                    time.sleep(1)
+                    money -= 2
+                    shop_scan_dirty = True
+                else:
+                    break
+
+        # 关闭商店
+        log.info("关闭商店")
+        auto.click_element(shop_button_crop, "crop")
+        time.sleep(2)
+        if buy_anything:
+            self.check_character_status()
+
     def equip_aglaea(self):
         # 轮滑鞋
         shoe_img = "./assets/images/share/aglaea/shoe.png"
@@ -790,6 +999,20 @@ class CurrencyWars:
             time.sleep(1)
             auto.mouse_up()
             time.sleep(2)
+
+        # 员工投影仪和完美投影仪：阿格莱雅未三星时使用
+        if not self.aglaea_three_star:
+            projector_img = "./assets/images/share/aglaea/projector.png"
+            projector2_img = "./assets/images/share/aglaea/projector2.png"
+            for _ in range(5):
+                if result := auto.find_element(projector2_img, "image", 0.9, crop=equip_crop):
+                    log.info("检测到完美投影仪，尝试使用")
+                    try_equip(result, aglaea_position)
+                elif result := auto.find_element(projector_img, "image", 0.9, crop=equip_crop):
+                    log.info("检测到员工投影仪，尝试使用")
+                    try_equip(result, aglaea_position)
+                else:
+                    break
 
         if self.shoe_count < 4:
             cnt = 0
@@ -864,6 +1087,177 @@ class CurrencyWars:
         if self.shoe_count >= 4 and self.propeller_count >= 1:
             self.allow_equip_weapons = True
 
+    def equip_seele(self):
+        # 轮滑鞋
+        shoe_img = "./assets/images/share/aglaea/shoe.png"
+        # 折叠小刀
+        knife_img = "./assets/images/share/aglaea/e7.png"
+        # 幸运星
+        star_img = "./assets/images/share/aglaea/e1.png"
+        # 火力风暴潮 = 轮滑鞋 + 折叠小刀
+        firestorm_img = "./assets/images/share/aglaea/firestorm.png"
+        # 高周波电锯 = 幸运星 + 折叠小刀
+        chainsaw_img = "./assets/images/share/aglaea/chainsaw.png"
+        # 好运令牌
+        token_img = "./assets/images/share/aglaea/token.png"
+        # 冶金炉
+        stove_img = "./assets/images/share/aglaea/stove.png"
+        # 简易装备列表
+        simple_equip_list = [
+            "./assets/images/share/aglaea/e2.png",
+            "./assets/images/share/aglaea/e3.png",
+            "./assets/images/share/aglaea/e4.png",
+            "./assets/images/share/aglaea/e5.png",
+            "./assets/images/share/aglaea/e6.png",
+        ]
+
+        equip_crop = (1386 / 1920, 93 / 1080, 514 / 1920, 610 / 1080)
+        seele_position = self.find_deployed_character_position("希儿")
+        if not seele_position:
+            log.warning("未找到希儿位置，跳过装备希儿流程")
+            # 即使希儿未部署，也扫描装备栏判断缺少哪个初级装备
+            if self.seele_firestorm_count < 2:
+                has_shoe = bool(auto.find_element(shoe_img, "image", 0.9, crop=equip_crop))
+                has_knife_for_firestorm = bool(auto.find_element(knife_img, "image", 0.9, crop=equip_crop))
+                if has_shoe and not has_knife_for_firestorm:
+                    self.seele_missing_basic_equips.add("折叠小刀")
+                    self.seele_missing_basic_equips.discard("轮滑鞋")
+                elif not has_shoe and has_knife_for_firestorm:
+                    self.seele_missing_basic_equips.add("轮滑鞋")
+                    self.seele_missing_basic_equips.discard("折叠小刀")
+            if self.seele_chainsaw_count < 1:
+                has_star = bool(auto.find_element(star_img, "image", 0.9, crop=equip_crop))
+                has_knife_for_chainsaw = bool(auto.find_element(knife_img, "image", 0.9, crop=equip_crop))
+                if has_star and not has_knife_for_chainsaw:
+                    self.seele_missing_basic_equips.add("折叠小刀")
+                    self.seele_missing_basic_equips.discard("幸运星")
+                elif not has_star and has_knife_for_chainsaw:
+                    self.seele_missing_basic_equips.add("幸运星")
+                    self.seele_missing_basic_equips.discard("折叠小刀")
+            return
+
+        def try_equip(from_position, to_position):
+            time.sleep(2)
+            auto.click_element_with_pos(from_position, action="down")
+            time.sleep(1)
+            auto.click_element_with_pos(to_position, action="move")
+            time.sleep(1)
+            auto.mouse_up()
+            time.sleep(2)
+
+        def try_synthesize(comp1_img, comp2_img, comp1_name, comp2_name):
+            """尝试合成装备：将两个初级装备都拖到希儿身上，自动合成"""
+            result1 = auto.find_element(comp1_img, "image", 0.9, crop=equip_crop)
+            result2 = auto.find_element(comp2_img, "image", 0.9, crop=equip_crop)
+            if result1 and result2:
+                # 将第一个装备拖到希儿身上
+                try_equip(result1, seele_position)
+                # 将第二个装备拖到希儿身上，自动触发合成
+                result2 = auto.find_element(comp2_img, "image", 0.9, crop=equip_crop)
+                try_equip(result2, seele_position)
+                self.seele_missing_basic_equips.discard(comp1_name)
+                self.seele_missing_basic_equips.discard(comp2_name)
+                return True
+            elif result1 and not result2:
+                self.seele_missing_basic_equips.discard(comp1_name)
+                self.seele_missing_basic_equips.add(comp2_name)
+            elif not result1 and result2:
+                self.seele_missing_basic_equips.add(comp1_name)
+                self.seele_missing_basic_equips.discard(comp2_name)
+            return False
+
+        # 员工投影仪和完美投影仪：希儿未三星时使用
+        if not self.has_seele_three_star:
+            projector_img = "./assets/images/share/aglaea/projector.png"
+            projector2_img = "./assets/images/share/aglaea/projector2.png"
+            for _ in range(5):
+                if result := auto.find_element(projector2_img, "image", 0.9, crop=equip_crop):
+                    log.info("检测到完美投影仪，尝试使用")
+                    try_equip(result, seele_position)
+                elif result := auto.find_element(projector_img, "image", 0.9, crop=equip_crop):
+                    log.info("检测到员工投影仪，尝试使用")
+                    try_equip(result, seele_position)
+                else:
+                    break
+
+        # 希儿需要2个火力风暴潮和1个高周波电锯
+        # 火力风暴潮 = 轮滑鞋 + 折叠小刀
+        # 高周波电锯 = 幸运星 + 折叠小刀
+
+        # 优先使用好运令牌选择缺失的高级装备
+        token_firestorm_selected = 0
+        token_chainsaw_selected = 0
+        for _ in range(5):
+            # 用临时计数+已装备数判断是否还需要
+            need_firestorm = self.seele_firestorm_count + token_firestorm_selected < 2
+            need_chainsaw = self.seele_chainsaw_count + token_chainsaw_selected < 1
+            if not need_firestorm and not need_chainsaw:
+                break
+            if result := auto.find_element(token_img, "image", 0.9, crop=equip_crop):
+                log.info("检测到好运令牌，尝试使用好运令牌")
+                try_equip(result, seele_position)
+                # 按缺失优先级选择装备（选择后会出现在装备栏，后续由合成/装备循环处理）
+                if need_firestorm and auto.click_element("火力风暴潮", "text", crop=(534 / 1920, 247 / 1080, 1129 / 1920, 45 / 1080)):
+                    log.info("使用好运令牌选择了火力风暴潮")
+                    token_firestorm_selected += 1
+                elif need_chainsaw and auto.click_element("高周波电锯", "text", crop=(534 / 1920, 247 / 1080, 1129 / 1920, 45 / 1080)):
+                    log.info("使用好运令牌选择了高周波电锯")
+                    token_chainsaw_selected += 1
+                else:
+                    # 没找到目标装备，随便点一个关闭菜单
+                    auto.click_element((534 / 1920, 247 / 1080, 153 / 1920, 45 / 1080), "crop")
+                time.sleep(2)
+            else:
+                break
+
+        if self.seele_firestorm_count < 2 or self.seele_chainsaw_count < 1:
+            for _ in range(10):
+                if result := auto.find_element(stove_img, "image", 0.9, crop=equip_crop):
+                    for simple_equip in simple_equip_list:
+                        if result_simple := auto.find_element(simple_equip, "image", 0.9, crop=equip_crop):
+                            log.info("检测到冶金炉，尝试使用冶金炉")
+                            try_equip(result, result_simple)
+                            time.sleep(2)
+                            break
+                else:
+                    break
+
+        # 尝试合成并装备火力风暴潮
+        while self.seele_firestorm_count < 2:
+            # 先检查是否已有合成好的火力风暴潮
+            if result := auto.find_element(firestorm_img, "image", 0.9, crop=equip_crop):
+                log.info("检测到火力风暴潮，尝试装备给希儿")
+                try_equip(result, seele_position)
+                self.seele_firestorm_count += 1
+                continue
+            # 尝试合成
+            if try_synthesize(shoe_img, knife_img, "轮滑鞋", "折叠小刀"):
+                log.info("尝试合成火力风暴潮（轮滑鞋+折叠小刀）")
+                continue
+            # 没有材料了
+            log.info("缺少合成火力风暴潮的材料")
+            break
+
+        # 尝试合成并装备高周波电锯
+        while self.seele_chainsaw_count < 1:
+            # 先检查是否已有合成好的高周波电锯
+            if result := auto.find_element(chainsaw_img, "image", 0.9, crop=equip_crop):
+                log.info("检测到高周波电锯，尝试装备给希儿")
+                try_equip(result, seele_position)
+                self.seele_chainsaw_count += 1
+                continue
+            # 尝试合成
+            if try_synthesize(star_img, knife_img, "幸运星", "折叠小刀"):
+                log.info("尝试合成高周波电锯（幸运星+折叠小刀）")
+                continue
+            # 没有材料了
+            log.info("缺少合成高周波电锯的材料")
+            break
+
+        if self.seele_firestorm_count >= 2 and self.seele_chainsaw_count >= 1:
+            self.allow_seele_equip_weapons = True
+            log.info("希儿装备齐全，允许为其他角色装备武器")
+
     def give_up_and_settle(self):
         """
         放弃并结算：按ESC键并点击放弃并结算按钮
@@ -933,18 +1327,23 @@ class CurrencyWars:
             self.deploy_and_optimize()
             if cfg.currencywars_strategy == "aglaea":
                 self.equip_aglaea()
+            elif cfg.currencywars_strategy == "seele":
+                self.equip_seele()
 
-    def _sell_single_character(self, idx: int) -> bool:
+    def _sell_single_character(self, idx: int, pos_list=None) -> bool:
         """
         出售单个角色
 
         参数：
-            idx: prepare_characters 中的索引
+            idx: 角色在列表中的索引
+            pos_list: 位置列表（forward_pos/backward_pos/prepare_pos），默认为 prepare_pos
 
         返回：
             True 表示出售成功，False 表示出售失败
         """
-        position = self.prepare_pos[idx]
+        if pos_list is None:
+            pos_list = self.prepare_pos
+        position = pos_list[idx]
         auto.click_element(position, "crop")
         time.sleep(0.5)
         if auto.click_element("出售", "text", crop=(1694.0 / 1920, 896.0 / 1080, 141.0 / 1920, 39.0 / 1080), include=True):
@@ -1111,6 +1510,11 @@ class CurrencyWars:
             if "风堇" in deployed_names and "藿藿" not in deployed_names:
                 # 阿格莱雅策略下检测到风堇已上场但藿藿未上场，强制将风堇视为前台角色后重新排序
                 all_chars, assigned, used = _build_assignment({"风堇"})
+
+        elif cfg.currencywars_strategy == "seele":
+            # 希儿策略下强制希儿为前台角色
+            if self.has_tracked_character("希儿"):
+                all_chars, assigned, used = _build_assignment({"希儿"})
 
         # 无效优化，前台角色放后台不会自动使用技能，保持队伍中有角色空缺即可（好像能凑羁绊 也未必是无效优化，但是我懒得改了^_^）
         # # 补充逻辑：如果 forward 已满且 used < limit，从 prepare 移动角色到 backward
@@ -1332,6 +1736,16 @@ class CurrencyWars:
                         log.error("藿藿调整到后台首位失败")
                     break
 
+        elif cfg.currencywars_strategy == "seele":
+            # 希儿移动到前台时，确保在第一个位置
+            if self.has_seele and self.forward_characters and self.forward_characters[0].name != "希儿":
+                for idx, char in enumerate(self.forward_characters):
+                    if char.name == "希儿":
+                        log.info("希儿策略下检测到希儿不在前台首位，尝试交换到第一个位置")
+                        if not self.move_character(("forward", idx), ("forward", 0)):
+                            log.error("希儿调整到前台首位失败")
+                        break
+
         log.info("角色移动操作完成")
 
     def _log_character_status(self):
@@ -1467,7 +1881,7 @@ class CurrencyWars:
         """
 
         # 通过颜色快速判断一下是否存在奖励可领取（避免每次都滑动一遍）
-        if auto.is_rgb_ratio_above_threshold((1306 / 1920, 154 / 1080, 285 / 1920, 329 / 1080), (66, 72, 185), 0.8, tolerance=0.06):
+        if auto.is_rgb_ratio_above_threshold((1306 / 1920, 154 / 1080, 285 / 1920, 329 / 1080), (66, 72, 185), 0.8, tolerance=0.07):
             log.info("没有检测到可领取的奖励，跳过滑动")
             return
         else:
@@ -1587,6 +2001,16 @@ class CurrencyWars:
         if cfg.currencywars_strategy == "aglaea" and self.current_level == 9:
             log.info("当前等级9，策略为阿格莱亚，跳过购买经验")
             return
+        if cfg.currencywars_strategy == "seele":
+            if not self.has_seele and self.current_level >= 6:
+                log.info("未获得希儿且等级>=6，跳过购买经验")
+                return
+            elif self.has_seele and not self.has_seele_three_star and self.current_level >= 7:
+                log.info("希儿未三星且等级>=7，跳过购买经验")
+                return
+            elif self.has_seele_three_star and self.current_level >= 9:
+                log.info("希儿三星且等级>=9，跳过购买经验")
+                return
         if self.current_level == 10:
             log.info("已达最大等级，跳过购买经验")
             return
@@ -1598,6 +2022,16 @@ class CurrencyWars:
             if cfg.currencywars_strategy == "aglaea" and self.current_level == 9:
                 log.info("当前等级9，策略为阿格莱亚，跳过购买经验")
                 break
+            if cfg.currencywars_strategy == "seele":
+                if not self.has_seele and self.current_level >= 6:
+                    log.info("未获得希儿且等级>=6，停止购买经验")
+                    break
+                elif self.has_seele and not self.has_seele_three_star and self.current_level >= 7:
+                    log.info("希儿未三星且等级>=7，停止购买经验")
+                    break
+                elif self.has_seele_three_star and self.current_level >= 9:
+                    log.info("希儿三星且等级>=9，停止购买经验")
+                    break
 
             money = self.check_money()
             if money >= 4:
@@ -1715,6 +2149,23 @@ class CurrencyWars:
                 success = True
                 if cfg.currencywars_strategy == "aglaea" and self.shoe_count < 4 and auto.click_element("轮滑鞋", "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080), include=True):
                     log.info("检测到轮滑鞋选项，尝试点击")
+                elif cfg.currencywars_strategy == "seele" and not self.allow_seele_equip_weapons:
+                    # 希儿策略：缺失初级装备优先级最高
+                    seele_equip_priority = list(self.seele_missing_basic_equips)
+                    if self.seele_firestorm_count < 2 or self.seele_chainsaw_count < 1:
+                        if "折叠小刀" not in seele_equip_priority:
+                            seele_equip_priority.append("折叠小刀")
+                    if self.seele_firestorm_count < 2:
+                        if "轮滑鞋" not in seele_equip_priority:
+                            seele_equip_priority.append("轮滑鞋")
+                    if self.seele_chainsaw_count < 1:
+                        if "幸运星" not in seele_equip_priority:
+                            seele_equip_priority.append("幸运星")
+                    if seele_equip_priority and auto.click_element(tuple(seele_equip_priority), "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080)):
+                        log.info(f"检测到{auto.matched_text}选项，尝试点击")
+                    else:
+                        pos = (533.0 / 1920, 135.0 / 1080, 258.0 / 1920, 181.0 / 1080)
+                        auto.click_element(pos, "crop")
                 else:
                     pos = (533.0 / 1920, 135.0 / 1080, 258.0 / 1920, 181.0 / 1080)
                     auto.click_element(pos, "crop")
@@ -1734,6 +2185,22 @@ class CurrencyWars:
                     else:
                         pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
                         auto.click_element(pos, "crop")
+                elif cfg.currencywars_strategy == "seele":
+                    # 希儿策略：如果没有希儿或希儿没三星，优先希儿；其次按费用从高到低（仅限尚未拥有的角色）
+                    remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+                    preferred_characters = []
+                    if not self.has_seele or not self.has_seele_three_star:
+                        preferred_characters.append("希儿")
+                    all_candidates = ["瓦尔特"]
+                    if remembrance_trailblazer_name:
+                        all_candidates.append(remembrance_trailblazer_name)
+                    all_candidates.extend(["刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"])
+                    preferred_characters.extend(name for name in all_candidates if not self.has_tracked_character(name))
+                    if preferred_characters and auto.click_element(tuple(preferred_characters), "text", crop=(501 / 1920, 362 / 1080, 1047 / 1920, 42 / 1080)):
+                        log.info(f"检测到{auto.matched_text}选项，优先点击")
+                    else:
+                        pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
+                        auto.click_element(pos, "crop")
                 else:
                     pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
                     auto.click_element(pos, "crop")
@@ -1742,6 +2209,23 @@ class CurrencyWars:
                 log.info("检测到专家邀请函选项，尝试点击")
                 success = True
                 if cfg.currencywars_strategy == "aglaea" and auto.click_element("银狼", "text", crop=(366 / 1920, 363 / 1080, 1318 / 1920, 40 / 1080)):
+                    pass
+                elif cfg.currencywars_strategy == "seele":
+                    # 希儿策略：如果没有希儿或希儿没三星，优先希儿；其次按费用从高到低（仅限尚未拥有的角色）
+                    remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+                    preferred_characters = []
+                    if not self.has_seele or not self.has_seele_three_star:
+                        preferred_characters.append("希儿")
+                    all_candidates = ["瓦尔特"]
+                    if remembrance_trailblazer_name:
+                        all_candidates.append(remembrance_trailblazer_name)
+                    all_candidates.extend(["刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"])
+                    preferred_characters.extend(name for name in all_candidates if not self.has_tracked_character(name))
+                    if preferred_characters and not auto.click_element(tuple(preferred_characters), "text", crop=(366 / 1920, 363 / 1080, 1318 / 1920, 40 / 1080)):
+                        # 4个
+                        auto.click_element((769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080), "crop")
+                        # 5个
+                        auto.click_element((900 / 1920, 135 / 1080, 249 / 1920, 275 / 1080), "crop")
                     pass
                 else:
                     # 4个
@@ -1861,6 +2345,24 @@ class CurrencyWars:
                 elif name == "昔涟":
                     self.mark_tracked_character(name)
 
+            elif cfg.currencywars_strategy == "seele":
+                remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+                if name == "希儿":
+                    money = "10"
+                    self.has_seele = True
+                    self.mark_tracked_character(name)
+                elif name == "风堇":
+                    money = "9"
+                    self.mark_tracked_character(name)
+                elif name == "花火":
+                    cpos = "all"
+                    self.mark_tracked_character(name)
+                elif remembrance_trailblazer_name and name == remembrance_trailblazer_name:
+                    cpos = "forward"
+                    self.mark_tracked_character(name)
+                elif name in ("瓦尔特", "刻律德菈", "符玄", "佩拉", "缇宝"):
+                    self.mark_tracked_character(name)
+
             # 创建角色对象并缓存
             character = CurrencyWarsCharacter(name, cpos, money=int(money))
             self.character_info_cache[name] = character
@@ -1898,7 +2400,7 @@ class CurrencyWars:
             if auto.matched_text == "下一页":
                 self._check_battle_result()
                 auto.click_element_with_pos(result)
-            elif cfg.currencywars_strategy == "aglaea" and cfg.currencywars_strategy_restart_on_special_tags:
+            elif cfg.currencywars_strategy in ("aglaea", "seele") and cfg.currencywars_strategy_restart_on_special_tags:
                 if auto.matched_text == "下一步":
                     time.sleep(2)  # 等待BOSS词条加载完成
                     if auto.click_element("下一步", 'text', None, include=True):
@@ -1921,31 +2423,43 @@ class CurrencyWars:
         # 永久创伤：我方小队生命值降低时，会减少等同于生命值降低值20%的生命上限，最多降低生命上限的60%。
         # 变宝为废：每个位面开始时，首次合成的进阶装备会有50%的概率变成垃圾袋。
         # 额外打击：我方队员每有1个空缺装备栏，受到敌人攻击后，额外受到本次攻击伤害8%的真实伤害。
-        black_tags = ["沉重脚步", "能量逃逸", "忍无可忍", "同步行动", "决战在即", "战个痛快", "正当防卫", "免死金牌", "榜样激励", "永久创伤", "变宝为废", "额外打击"]
-
-        # 雷之熄火：进入战斗时，我方小队中的雷属性目标造成伤害时只能造成1点伤害，施放4次攻击后解除。
-        # 一鼓作气：敌人首次行动后，行动提前100%。
-        # 应激反应：敌人的生命值百分比降低至小于50%时，行动提前100%。
-        # 灼热轰炸：进入战斗时，我方前台在场的第一位角色受到攻击的概率大幅提高。敌人施放攻击后，使攻击目标陷入灼烧状态，回合开始时受到等同 于生命上限12%的火属性持续伤害，持续3回合，该灼烧状态可叠加。
-        # 忽快忽慢：战斗开始时，速度增幅最高的两名我方角色降低40%速度增幅，最低的两名我方角色提高25%速度增幅。
-        # 成长的烦恼：在你达到8级后，每次购买经验会损失1金币。
         # 极速制冷：我方前台回合结束时，本回合中每消耗1个战技点，就有15%固定概率陷入冻结状态，持续1回合。
+        # 量子熄火：进入战斗时，我方小队中的量子属性目标造成伤害时只能造成1点伤害，施放4次攻击后解除。
         # 坠入陷阱：战斗开始时，我方前台有40%基础概率陷入禁锢、纠缠状态，使其行动延后20%，持续1回合。
-        black2_tags = ["雷之熄火", "一鼓作气", "应激反应", "灼热轰炸", "忽快忽慢", "成长的烦恼", "极速制冷", "坠入陷阱"]
+        # 忽快忽慢：战斗开始时，速度增幅最高的两名我方角色降低40%速度增幅，最低的两名我方角色提高25%速度增幅。
+
+        # 阿格莱雅策略：直接重开的词条
+        aglaea_black_tags = ["沉重脚步", "能量逃逸", "忍无可忍", "同步行动", "决战在即", "战个痛快", "正当防卫", "免死金牌", "榜样激励", "永久创伤", "变宝为废", "额外打击"]
+        # 阿格莱雅策略：超过1个才重开的词条
+        aglaea_black2_tags = ["雷之熄火", "一鼓作气", "应激反应", "灼热轰炸", "忽快忽慢", "成长的烦恼", "极速制冷", "坠入陷阱"]
+
+        # 希儿策略：直接重开的词条
+        seele_black_tags = ["极速制冷", "量子熄火", "免死金牌", "忽快忽慢", "坠入陷阱"]
+        # 希儿策略：超过1个才重开的词条
+        seele_black2_tags = ["一鼓作气", "忍无可忍", "应激反应"]
+
+        if cfg.currencywars_strategy == "seele":
+            black_tags = seele_black_tags
+            black2_tags = seele_black2_tags
+            strategy_name = "希儿"
+        else:
+            black_tags = aglaea_black_tags
+            black2_tags = aglaea_black2_tags
+            strategy_name = "阿格莱雅"
 
         # black_tags 直接重开，black2_tags 超过1个才重开
         black2_count = 0
         for box in auto.ocr_result:
             text = box[1][0]
             if text in black_tags:
-                log.info(f"检测到{text}词条，当前策略为阿格莱雅，尝试重开")
+                log.info(f"检测到{text}词条，当前策略为{strategy_name}，尝试重开")
                 self.need_exit = True
                 self.need_restart = True
                 break
             elif text in black2_tags:
                 black2_count += 1
                 if black2_count > 1:
-                    log.info(f"检测到{text}等词条，当前策略为阿格莱雅，尝试重开")
+                    log.info(f"检测到{text}等词条，当前策略为{strategy_name}，尝试重开")
                     self.need_exit = True
                     self.need_restart = True
                     break
@@ -2056,6 +2570,18 @@ class CurrencyWars:
                 white_list += ('公司军火更新', '超光速提拔', '自由市场', '优势火力论', '淘金客')
                 for index, texts in enumerate(option_texts):
                     matched_text = self._find_text_in_texts(texts, white_list, include=True)
+                    if matched_text:
+                        auto.click_element(button_positions_click[index], 'crop')
+                        log.info(f"检测到{matched_text}选项，尝试点击")
+                        has_choose = True
+                        break
+
+            elif cfg.currencywars_strategy == "seele":
+                # 希儿策略投资环境优先级（从高到低）
+                seele_white_list = ('量子同频契约', '人才储备', '量子同频邀请', '贝洛伯格概念股', '长线利好', '增发货币', '经济过热', '经济严重过热',
+                                    '钢铁美学', '量子力学', '好运来', '枪在手')
+                for index, texts in enumerate(option_texts):
+                    matched_text = self._find_text_in_texts(texts, seele_white_list, include=True)
                     if matched_text:
                         auto.click_element(button_positions_click[index], 'crop')
                         log.info(f"检测到{matched_text}选项，尝试点击")
@@ -2177,6 +2703,72 @@ class CurrencyWars:
                         has_choose = True
                         time.sleep(1)
                         break
+                    elif not auto.find_element("剩余次数：0", "text", crop=refresh_pos) and not auto.find_element("0", "text", crop=refresh_pos):
+                        auto.click_element(refresh_pos, "crop")
+                        log.info("刷新补给选项")
+                        time.sleep(2)
+                    else:
+                        break
+
+            elif cfg.currencywars_strategy == "seele":
+                remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+                # 策略角色按费用从高到低排列（仅限尚未拥有的角色）
+                all_candidates = ["瓦尔特"]
+                if remembrance_trailblazer_name:
+                    all_candidates.append(remembrance_trailblazer_name)
+                all_candidates.extend(["刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"])
+                preferred_characters = [name for name in all_candidates if not self.has_tracked_character(name)]
+                # 按需构建缺失装备列表
+                advanced_equip = []
+                if self.seele_firestorm_count < 2:
+                    advanced_equip.append("火力风暴潮")
+                if self.seele_chainsaw_count < 1:
+                    advanced_equip.append("高周波电锯")
+                # 缺失初级装备优先级最高
+                basic_equip = list(self.seele_missing_basic_equips)
+                if self.seele_firestorm_count < 2 or self.seele_chainsaw_count < 1:
+                    if "折叠小刀" not in basic_equip:
+                        basic_equip.append("折叠小刀")
+                if self.seele_firestorm_count < 2:
+                    if "轮滑鞋" not in basic_equip:
+                        basic_equip.append("轮滑鞋")
+                if self.seele_chainsaw_count < 1:
+                    if "幸运星" not in basic_equip:
+                        basic_equip.append("幸运星")
+                refresh_pos = (1343 / 1920, 959 / 1080, 158 / 1920, 46 / 1080)
+                supply_text_crop = (84 / 1920, 400 / 1080, 1749 / 1920, 400 / 1080)
+                for _ in range(5):
+                    # 优先级0：合成时发现缺失的初级装备
+                    if self.seele_missing_basic_equips and not self.allow_seele_equip_weapons and auto.click_element(tuple(self.seele_missing_basic_equips), "text", crop=supply_text_crop):
+                        log.info(f"检测到{auto.matched_text}缺失初级装备选项，尝试点击")
+                        has_choose = True
+                        time.sleep(1)
+                        break
+                    # 优先级1：没有希儿或希儿没三星时，优先希儿
+                    if (not self.has_seele or not self.has_seele_three_star) and auto.click_element("希儿", "text", crop=supply_text_crop):
+                        log.info("检测到希儿选项，尝试点击")
+                        has_choose = True
+                        time.sleep(1)
+                        break
+                    # 优先级2：高级装备（火力风暴潮、高周波电锯）
+                    elif not self.allow_seele_equip_weapons and auto.click_element(advanced_equip, "text", crop=supply_text_crop):
+                        log.info(f"检测到{auto.matched_text}高级装备选项，尝试点击")
+                        has_choose = True
+                        time.sleep(1)
+                        break
+                    # 优先级3：策略角色（按费用从高到低）
+                    elif auto.click_element(tuple(preferred_characters), "text", crop=supply_text_crop):
+                        log.info(f"检测到{auto.matched_text}选项，尝试点击")
+                        has_choose = True
+                        time.sleep(1)
+                        break
+                    # 优先级4：初级装备（用于合成）
+                    elif not self.allow_seele_equip_weapons and auto.click_element(basic_equip, "text", crop=supply_text_crop):
+                        log.info(f"检测到{auto.matched_text}初级装备选项，尝试点击")
+                        has_choose = True
+                        time.sleep(1)
+                        break
+                    # 刷新
                     elif not auto.find_element("剩余次数：0", "text", crop=refresh_pos) and not auto.find_element("0", "text", crop=refresh_pos):
                         auto.click_element(refresh_pos, "crop")
                         log.info("刷新补给选项")

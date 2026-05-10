@@ -567,15 +567,15 @@ class SettingInterface(ScrollArea):
             "currencywars_strategy",
             FIF.BOOK_SHELF,
             tr('货币战争策略'),
-            tr('提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅策略。'),
-            {tr('默认'): 'default', tr('阿格莱雅'): 'aglaea'}
+            tr('提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅或希儿策略。'),
+            {tr('默认'): 'default', tr('阿格莱雅'): 'aglaea', tr('希儿') + tr('【测试版】'): 'seele'}
         )
         self.currencywarsRemembranceTrailblazerNameCard = PushSettingCardStr(
             tr('修改'),
             FIF.EDIT,
             tr('「开拓者•记忆」名称'),
             "currencywars_remembrance_trailblazer_name",
-            empty_content=tr('未配置，阿格莱雅策略下将跳过该角色，需要填入自己游戏名称')
+            empty_content=tr('未配置时，阿格莱雅/希儿策略将跳过该角色，需要填入自己游戏名称')
         )
         self.currencywarsStrategyRestartOnSpecialTagsCard = SwitchSettingCard1(
             FIF.SYNC,
@@ -1023,8 +1023,7 @@ class SettingInterface(ScrollArea):
             FIF.POWER_BUTTON,
             tr('任务完成后'),
             tr('“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能'),
-            texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启')
-                      : 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
+            texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
         )
         self.loopModeCard = ComboBoxSettingCard2(
             "loop_mode",

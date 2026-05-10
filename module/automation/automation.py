@@ -360,12 +360,16 @@ class Automation(metaclass=SingletonMeta):
         :param relative: 是否返回相对位置。
         :return: 如果找到，返回文本的位置坐标。
         """
-        for box, (text, confidence) in self.ocr_result:
-            match, matched_text = self.is_text_match(text, targets, include)
-            if match:
-                self.matched_text = matched_text  # 更新匹配的文本变量
-                self.logger.debug(f"目标文字：{matched_text} 相似度：{confidence:.2f}")
-                return self.calculate_text_position(box, relative)
+        for target in targets:
+            for box, (text, confidence) in self.ocr_result:
+                if include:
+                    match = target in text
+                else:
+                    match = text == target
+                if match:
+                    self.matched_text = target
+                    self.logger.debug(f"目标文字：{target} 相似度：{confidence:.2f}")
+                    return self.calculate_text_position(box, relative)
         self.logger.debug(f"目标文字：{', '.join(targets)} 未找到匹配文字")
         return None, None
 
