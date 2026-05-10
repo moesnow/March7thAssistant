@@ -13,12 +13,13 @@ class RewardTemplate(ABC):
     def start(self):
         if not self.enabled:
             log.info(f"{self.name}未开启")
-            return
+            return False
 
         log.hr(f"检测到{self.name}奖励", 1)
         self.prepare()
-        self.run()
+        result = self.run()
         log.hr(f"{self.name}奖励完成", 2)
+        return result
 
     def prepare(self):
         screen.change_to(self.screen)

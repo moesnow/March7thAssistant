@@ -10,9 +10,11 @@ class Dispatch(RewardTemplate):
         # 适配低性能电脑，中间的界面不一定加载出了
         auto.find_element("专属材料", "text", max_retries=10, crop=(163 / 1920, 99 / 1080, 1115 / 1920, 118 / 1080))
 
-        if self._perform_dispatches() and "派遣委托或收取1次委托奖励" in cfg.daily_tasks and cfg.daily_tasks["派遣委托或收取1次委托奖励"]:
+        result = self._perform_dispatches()
+        if result and "派遣委托或收取1次委托奖励" in cfg.daily_tasks and cfg.daily_tasks["派遣委托或收取1次委托奖励"]:
             cfg.daily_tasks["派遣委托或收取1次委托奖励"] = False
             cfg.save_config()
+        return result
 
     def _perform_dispatches(self):
         # 4.0 新界面适配

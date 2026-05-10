@@ -57,17 +57,19 @@ class RewardManager:
     def check_and_collect_specific_reward(self, reward_type):
         reward_name = self._get_reward_name(reward_type)
         log.hr(f"开始领取{reward_name}奖励", 0)
+        result = False
 
         if reward_type in self.reward_mapping:
             image_path, confidence, crop = self.reward_mapping[reward_type]
             if self._find_reward(image_path, confidence, crop):
-                self.reward_instances[reward_type].start()
+                result = self.reward_instances[reward_type].start()
             else:
                 log.info(f"未检测到{reward_name}奖励")
         else:
             log.error(f"未知的奖励类型: {reward_type}")
 
         log.hr("完成", 2)
+        return result
 
     def _get_reward_name(self, reward_type):
         instance = self.reward_instances.get(reward_type)
@@ -90,7 +92,7 @@ def start():
 def start_specific(reward_type):
     if not cfg.reward_enable:
         log.info("领取奖励未开启")
-        return
+        return False
 
     reward_manager = RewardManager()
-    reward_manager.check_and_collect_specific_reward(reward_type)
+    return reward_manager.check_and_collect_specific_reward(reward_type)
