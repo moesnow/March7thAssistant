@@ -168,6 +168,14 @@ class Instance:
                 if auto.find_element(instance_name.replace("2", ""), "text", max_retries=1, include=True, crop=(1172.0 / 1920, 5.0 / 1080, 742.0 / 1920, 636.0 / 1080)):
                     success = True
                     break
+
+                if "历战余响" in instance_type:
+                    if auto.find_element("不再弹出", "text", max_retries=1, include=True):
+                        log.info("检测到历战余响剧情提示，尝试勾选不再提示")
+                        auto.click_element("不再弹出", "text", include=True)
+                        time.sleep(0.5)
+                        auto.click_element("确认", "text", include=True)
+
                 time.sleep(2)
         if not success:
             Base.send_notification_with_screenshot(cfg.notify_template['InstanceNotCompleted'].format(error="传送可能失败"), NotificationLevel.ERROR)
