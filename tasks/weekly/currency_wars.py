@@ -2436,9 +2436,9 @@ class CurrencyWars:
         aglaea_black2_tags = ["雷之熄火", "一鼓作气", "应激反应", "灼热轰炸", "忽快忽慢", "成长的烦恼", "极速制冷", "坠入陷阱"]
 
         # 希儿策略：直接重开的词条
-        seele_black_tags = ["极速制冷", "量子熄火", "免死金牌", "忽快忽慢", "坠入陷阱"]
+        seele_black_tags = ["极速制冷", "量子熄火", "免死金牌", "忽快忽慢", "坠入陷阱", "沉重脚步", "忍无可忍", "同步行动", "正当防卫", "榜样激励", "永久创伤", "变宝为废", "额外打击"]
         # 希儿策略：超过1个才重开的词条
-        seele_black2_tags = ["一鼓作气", "忍无可忍", "应激反应"]
+        seele_black2_tags = ["一鼓作气", "应激反应", "决战在即", "战个痛快"]
 
         if cfg.currencywars_strategy == "seele":
             black_tags = seele_black_tags
