@@ -969,6 +969,8 @@ class CurrencyWars:
         propeller_img = "./assets/images/share/aglaea/propeller.png"
         # 拆装扳手
         wrench_img = "./assets/images/share/aglaea/wrench.png"
+        # 拆装扳手2
+        wrench2_img = "./assets/images/share/aglaea/wrench2.png"
         # 冶金炉
         stove_img = "./assets/images/share/aglaea/stove.png"
         # 好运令牌
@@ -984,6 +986,8 @@ class CurrencyWars:
             "./assets/images/share/aglaea/e6.png",
             "./assets/images/share/aglaea/e7.png",
         ]
+
+        aglaea3_img = "./assets/images/share/aglaea/aglaea3.png"
 
         equip_crop = (1386 / 1920, 93 / 1080, 514 / 1920, 610 / 1080)
         aglaea_position = self.find_deployed_character_position("阿格莱雅")
@@ -1004,7 +1008,7 @@ class CurrencyWars:
         if not self.aglaea_three_star:
             projector_img = "./assets/images/share/aglaea/projector.png"
             projector2_img = "./assets/images/share/aglaea/projector2.png"
-            for _ in range(5):
+            for _ in range(10):
                 if result := auto.find_element(projector2_img, "image", 0.9, crop=equip_crop):
                     log.info("检测到完美投影仪，尝试使用")
                     try_equip(result, aglaea_position)
@@ -1012,6 +1016,11 @@ class CurrencyWars:
                     log.info("检测到员工投影仪，尝试使用")
                     try_equip(result, aglaea_position)
                 else:
+                    break
+                time.sleep(5) # 等待一段时间以检测阿格莱雅三星
+                if auto.find_element(aglaea3_img, "image", 0.9, take_screenshot=False, need_ocr=False):
+                    log.info("检测到阿格莱雅三星")
+                    self.has_aglaea_three_star = True
                     break
 
         if self.shoe_count < 4:
@@ -1045,7 +1054,16 @@ class CurrencyWars:
                             self.shoe_count += 2
                         elif self.shoe_count == 3:
                             # 判断是否存在拆装扳手，移动到角色身上拆掉已有装备
-                            if result_wrench := auto.find_element(wrench_img, "image", 0.9, crop=equip_crop):
+                            if result_wrench2 := auto.find_element(wrench2_img, "image", 0.9, crop=equip_crop):
+                                log.info("检测到拆装扳手2，尝试使用拆装扳手2")
+                                try_equip(result_wrench2, aglaea_position)
+                                self.shoe_count = 0
+                                result = auto.find_element(boots_img, "image", 0.9, crop=equip_crop)
+                                if result:
+                                    log.info("尝试装备反重力皮靴")
+                                    try_equip(result, aglaea_position)
+                                    self.shoe_count += 2
+                            elif result_wrench := auto.find_element(wrench_img, "image", 0.9, crop=equip_crop):
                                 log.info("检测到拆装扳手，尝试使用拆装扳手")
                                 try_equip(result_wrench, aglaea_position)
                                 self.shoe_count = 0
@@ -1111,6 +1129,8 @@ class CurrencyWars:
             "./assets/images/share/aglaea/e6.png",
         ]
 
+        seele3_img = "./assets/images/share/aglaea/seele3.png"
+        
         equip_crop = (1386 / 1920, 93 / 1080, 514 / 1920, 610 / 1080)
         seele_position = self.find_deployed_character_position("希儿")
         if not seele_position:
@@ -1170,7 +1190,7 @@ class CurrencyWars:
         if not self.has_seele_three_star:
             projector_img = "./assets/images/share/aglaea/projector.png"
             projector2_img = "./assets/images/share/aglaea/projector2.png"
-            for _ in range(5):
+            for _ in range(10):
                 if result := auto.find_element(projector2_img, "image", 0.9, crop=equip_crop):
                     log.info("检测到完美投影仪，尝试使用")
                     try_equip(result, seele_position)
@@ -1178,6 +1198,11 @@ class CurrencyWars:
                     log.info("检测到员工投影仪，尝试使用")
                     try_equip(result, seele_position)
                 else:
+                    break
+                time.sleep(5) # 等待一段时间以检测希儿三星
+                if auto.find_element(seele3_img, "image", 0.9, take_screenshot=False, need_ocr=False):
+                    log.info("检测到希儿三星")
+                    self.has_seele_three_star = True
                     break
 
         # 希儿需要2个火力风暴潮和1个高周波电锯
@@ -2149,8 +2174,8 @@ class CurrencyWars:
                 else:
                     log.info(f"检测到{auto.matched_text}，尝试点击")
                 success = True
-                if cfg.currencywars_strategy == "aglaea" and self.shoe_count < 4 and auto.click_element("轮滑鞋", "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080), include=True):
-                    log.info("检测到轮滑鞋选项，尝试点击")
+                if cfg.currencywars_strategy == "aglaea" and self.shoe_count < 4 and auto.click_element(("反重力皮靴", "轮滑鞋"), "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080), include=True):
+                    log.info(f"检测到{auto.matched_text}选项，尝试点击")
                 elif cfg.currencywars_strategy == "seele" and not self.allow_seele_equip_weapons:
                     # 希儿策略：缺失初级装备优先级最高
                     seele_equip_priority = list(self.seele_missing_basic_equips)
@@ -2163,6 +2188,12 @@ class CurrencyWars:
                     if self.seele_chainsaw_count < 1:
                         if "幸运星" not in seele_equip_priority:
                             seele_equip_priority.append("幸运星")
+                    if self.seele_firestorm_count < 2:
+                        if "火力风暴潮" not in seele_equip_priority:
+                            seele_equip_priority.append("火力风暴潮")
+                    if self.seele_chainsaw_count < 1:
+                        if "高周波电锯" not in seele_equip_priority:
+                            seele_equip_priority.append("高周波电锯")
                     if seele_equip_priority and auto.click_element(tuple(seele_equip_priority), "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080)):
                         log.info(f"检测到{auto.matched_text}选项，尝试点击")
                     else:
@@ -2687,8 +2718,8 @@ class CurrencyWars:
                 preferred_characters.extend(["星期日", "符玄", "银狼", "花火", "风堇", "藿藿", "缇宝"])
                 refresh_pos = (1343 / 1920, 959 / 1080, 158 / 1920, 46 / 1080)
                 for _ in range(5):
-                    if self.shoe_count < 4 and auto.click_element("轮滑鞋", "text", crop=(84 / 1920, 620 / 1080, 1749 / 1920, 164 / 1080)):
-                        log.info("检测到轮滑鞋选项，尝试点击")
+                    if self.shoe_count < 4 and auto.click_element(("反重力皮靴", "轮滑鞋"), "text", crop=(84 / 1920, 620 / 1080, 1749 / 1920, 164 / 1080)):
+                        log.info(f"检测到{auto.matched_text}选项，尝试点击")
                         has_choose = True
                         time.sleep(1)
                         break
