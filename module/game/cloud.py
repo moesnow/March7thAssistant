@@ -114,6 +114,8 @@ class CloudGameController(GameControllerBase):
         self.cfg = cfg
         self.logger = logger
 
+        self._last_interruption_check_time = 0.0
+
         # 二维码登录通知限流（避免夜间定时任务反复刷屏）
         self._qr_notify_sent_count = 0
         self._qr_notify_max_count = 3
@@ -543,6 +545,7 @@ class CloudGameController(GameControllerBase):
                     """)
                 else:
                     if self.cfg.cloud_game_use_paid_time:
+                        # self.cfg.cloud_game_use_paid_time = False
                         self.log_warning("当前账号付费时间不足，已切换为免费时间。")
                     self.log_info("检测到选择排队队列界面，选择普通队列")
                     self.driver.execute_script("""
@@ -601,6 +604,42 @@ class CloudGameController(GameControllerBase):
             traceback.print_exc()
             self.log_error(f"等待排队异常: {e}")
             return False
+
+    def _check_time_insufficient_dialog(self) -> bool:
+        """检测时长不足弹窗"""
+        if not self.driver:
+            return False
+        try:
+            dialog = self.driver.find_elements(By.CSS_SELECTOR, "[aria-labelledby='温馨提示']")
+            if not dialog:
+                return False
+            content = dialog[0].text
+            if "星云币时长不足" in content or "无法消耗免费时长" in content:
+                return True
+            return False
+        except Exception:
+            return False
+
+    def check_cloud_game_interruptions(self) -> None:
+        """检测云游戏中的中断弹窗（时长不足等），检测到则推送通知并中断运行"""
+        if not self.driver:
+            return
+
+        now = time.time()
+        if now - self._last_interruption_check_time < 20:
+            return
+        self._last_interruption_check_time = now
+
+        if self._check_time_insufficient_dialog() or True:
+            self.log_error("检测到付费时长耗尽弹窗，正在中断运行")
+            from module.notification import notif
+            from module.notification.notification import NotificationLevel
+            notif.notify(
+                content="云游戏付费时长已耗尽，无法继续游戏。请重新运行。",
+                level=NotificationLevel.ERROR,
+            )
+            self.stop_game()
+            raise SystemExit("云游戏付费时长已耗尽，游戏中断")
 
     def _clean_at_exit(self) -> None:
         """当脚本退出时，关闭所有 headless 浏览器"""
@@ -1385,6 +1424,9 @@ class CloudGameController(GameControllerBase):
         """浏览器内截图"""
         if not self.driver:
             return None
+
+        if self.cfg.cloud_game_use_paid_time:
+            self.check_cloud_game_interruptions()
 
         return self._take_browser_screenshot()
 
