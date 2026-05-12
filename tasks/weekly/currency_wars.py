@@ -1001,7 +1001,7 @@ class CurrencyWars:
             time.sleep(2)
 
         # 员工投影仪和完美投影仪：阿格莱雅未三星时使用
-        if not self.aglaea_three_star:
+        if not self.has_aglaea_three_star:
             projector_img = "./assets/images/share/aglaea/projector.png"
             projector2_img = "./assets/images/share/aglaea/projector2.png"
             for _ in range(5):
