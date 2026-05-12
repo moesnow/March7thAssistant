@@ -1439,5 +1439,9 @@
     "请等待当前获取完成": "Please wait for current fetch to complete",
     "请重新安装或补全更新组件后再试": "Please reinstall or complete the update components and try again",
     "通过 GitHub 获取到更新": "Update fetched via GitHub",
-    "通过 Mirror酱 获取到更新": "Update fetched via Mirror"
+    "通过 Mirror酱 获取到更新": "Update fetched via Mirror",
+    "剩余 {days} 天": "{days} days remaining",
+    "CDK 有效 (＾∀＾●)": "CDK Valid (＾∀＾●)",
+    "今天到期": "Expires today",
+    "CDK 验证失败 (╥╯﹏╰╥)": "CDK Validation Failed (╥╯﹏╰╥)"
 }
