@@ -183,7 +183,7 @@ def run_sub_task(action):
         "divergentloop": lambda: divergent("loop"),
         "divergenttemp": lambda: divergent("temp"),
         "fight": Fight.start,
-        "universe": Universe.start,
+        "universe": lambda: Universe.start(category="universe"),
         "forgottenhall": lambda: challenge.start("memoryofchaos"),
         "purefiction": lambda: challenge.start("purefiction"),
         "apocalyptic": lambda: challenge.start("apocalyptic"),
