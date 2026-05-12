@@ -256,6 +256,35 @@ def _check_mirrorchyan(
     )
 
 
+def validate_mirrorchyan_cdk(
+    cdk: str,
+    proxies: dict[str, str] | None = None,
+) -> int | float:
+    """验证 Mirror酱 CDK 有效性，返回 cdk_expired_time 时间戳。"""
+    current_version = get_local_version()
+    api_url = (
+        "https://mirrorchyan.com/api/resources/March7thAssistant/latest"
+        f"?current_version={current_version}&cdk={cdk}&user_agent=m7a_app"
+    )
+    masked_url = api_url.replace(f"cdk={cdk}", f"cdk=***" if cdk else f"cdk={cdk}")
+    log.debug(f"Mirror酱 CDK 验证: {masked_url}")
+
+    try:
+        resp = requests.get(api_url, timeout=10, proxies=proxies)
+        data = resp.json()
+    except Exception as e:
+        raise VersionCheckError(f"{tr('Mirror酱 API 请求失败')}: {e}") from e
+
+    if resp.status_code != 200 or data.get("code") != 0:
+        code = data.get("code", resp.status_code)
+        msg = data.get("msg", "unknown error")
+        if code in _CDK_ERROR_MESSAGES:
+            msg = tr(_CDK_ERROR_MESSAGES[code])
+        raise VersionCheckError(f"{tr('Mirror酱 API 请求失败')} (code={code}): {msg}")
+
+    return data["data"]["cdk_expired_time"]
+
+
 # ── GitHub API ───────────────────────────────────────────────────────
 
 def _check_github(
