@@ -1005,7 +1005,7 @@ class CurrencyWars:
             time.sleep(2)
 
         # 员工投影仪和完美投影仪：阿格莱雅未三星时使用
-        if not self.aglaea_three_star:
+        if not self.has_aglaea_three_star:
             projector_img = "./assets/images/share/aglaea/projector.png"
             projector2_img = "./assets/images/share/aglaea/projector2.png"
             for _ in range(10):
@@ -1018,7 +1018,7 @@ class CurrencyWars:
                 else:
                     break
                 time.sleep(5) # 等待一段时间以检测阿格莱雅三星
-                if auto.find_element(aglaea3_img, "image", 0.9, take_screenshot=False, need_ocr=False):
+                if auto.find_element(aglaea3_img, "image", 0.9):
                     log.info("检测到阿格莱雅三星")
                     self.has_aglaea_three_star = True
                     break
@@ -1200,7 +1200,7 @@ class CurrencyWars:
                 else:
                     break
                 time.sleep(5) # 等待一段时间以检测希儿三星
-                if auto.find_element(seele3_img, "image", 0.9, take_screenshot=False, need_ocr=False):
+                if auto.find_element(seele3_img, "image", 0.9):
                     log.info("检测到希儿三星")
                     self.has_seele_three_star = True
                     break
