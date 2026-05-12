@@ -412,6 +412,8 @@ class MainWindow(MSFluentWindow):
             # 切换到日志界面
             self.switchTo(self.logInterface)
             return
+        # 静默检查更新
+        checkUpdate(self, silent=True)
         # 切换到日志界面
         self.switchTo(self.logInterface)
         # 启动任务
