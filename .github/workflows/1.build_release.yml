@@ -25,18 +25,18 @@ jobs:
         with:
           submodules: "false"
 
-      # 设置Python环境
-      - name: Set up python
-        uses: actions/setup-python@v4
+      # 设置 uv 和 Python 环境
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
         with:
           python-version: "3.13.11"
-          cache: "pip"
+          enable-cache: true
 
       # 安装依赖
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller==6.17.0
+          uv sync
+          uv pip install pyinstaller==6.17.0
           python build.py --task ocr
 
       # 生成程序

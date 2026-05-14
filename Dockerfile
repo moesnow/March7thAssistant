@@ -39,7 +39,7 @@ ENV MARCH7TH_DOCKER_STARTED=true
 
 WORKDIR /m7a
 
-COPY requirements-docker.txt ./
+COPY pyproject.toml uv.lock ./
 
 # ======================
 # System dependencies
@@ -85,11 +85,10 @@ RUN \
 # ======================
 # Python deps
 # ======================
-RUN python -m venv $VIRTUAL_ENV \
-    && pip install --no-cache-dir \
+COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /uvx /bin/
+RUN uv sync --only-group docker
     # 如果需要使用国内源，可以取消下面一行的注释
-    # -i https://mirrors.cloud.tencent.com/pypi/simple/ \
-    -r requirements-docker.txt
+    # RUN uv sync --only-group docker --index-url https://mirrors.cloud.tencent.com/pypi/simple/
 
 COPY build.py ./
 

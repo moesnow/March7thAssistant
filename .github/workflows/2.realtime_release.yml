@@ -39,20 +39,20 @@ jobs:
             echo "should_build=true" >> $env:GITHUB_OUTPUT
           }
 
-      # 设置Python环境
-      - name: Set up python
+      # 设置 uv 和 Python 环境
+      - name: Set up uv
         if: steps.check_version.outputs.should_build == 'true'
-        uses: actions/setup-python@v4
+        uses: astral-sh/setup-uv@v4
         with:
           python-version: "3.13.11"
-          cache: "pip"
+          enable-cache: true
 
       # 安装依赖
       - name: Install dependencies
         if: steps.check_version.outputs.should_build == 'true'
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller==6.17.0
+          uv sync
+          uv pip install pyinstaller==6.17.0
           python build.py --task ocr
 
       # 生成程序
