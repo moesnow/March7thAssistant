@@ -53,15 +53,15 @@ jobs:
         run: |
           uv sync
           uv pip install pyinstaller==6.17.0
-          python build.py --task ocr
+          uv run python build.py --task ocr
 
       # 生成程序
       - name: Generate program
         if: steps.check_version.outputs.should_build == 'true'
         run: |
-          pyinstaller --distpath '.\dist\' '.\March7th Assistant.spec' -y
-          pyinstaller --distpath '.\dist\' '.\March7th Launcher.spec' -y
-          pyinstaller --distpath '.\dist\March7thAssistant\' '.\March7th Updater.spec' -y
+          uv run pyinstaller --distpath '.\dist\' '.\March7th Assistant.spec' -y
+          uv run pyinstaller --distpath '.\dist\' '.\March7th Launcher.spec' -y
+          uv run pyinstaller --distpath '.\dist\March7thAssistant\' '.\March7th Updater.spec' -y
 
       # 移动资源到dist目录
       - name: Move assets to dist directory

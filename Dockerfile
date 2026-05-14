@@ -17,6 +17,7 @@ ENV PYTHONUNBUFFERED=1
 # Virtualenv
 # ======================
 ENV VIRTUAL_ENV="/opt/venv"
+ENV UV_PROJECT_ENVIRONMENT=$VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # ======================
