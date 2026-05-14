@@ -40,12 +40,17 @@ jobs:
           uv pip install pyinstaller==6.17.0
           uv run python build.py --task ocr
 
-      # 生成程序
+      # 并行生成程序
       - name: Generate program
         run: |
-          uv run pyinstaller --distpath '.\dist\' '.\March7th Assistant.spec' -y
-          uv run pyinstaller --distpath '.\dist\' '.\March7th Launcher.spec' -y
-          uv run pyinstaller --distpath '.\dist\March7thAssistant\' '.\March7th Updater.spec' -y
+          $p1 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Assistant.spec" -y' -PassThru -NoNewWindow
+          $p2 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Launcher.spec" -y' -PassThru -NoNewWindow
+          $p3 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist\March7thAssistant" ".\March7th Updater.spec" -y' -PassThru -NoNewWindow
+          $p1.WaitForExit(); $p2.WaitForExit(); $p3.WaitForExit()
+          if ($p1.ExitCode -ne 0 -or $p2.ExitCode -ne 0 -or $p3.ExitCode -ne 0) {
+            Write-Host "Exit codes: Assistant=$($p1.ExitCode) Launcher=$($p2.ExitCode) Updater=$($p3.ExitCode)"
+            exit 1
+          }
 
       # 移动资源到dist目录
       - name: Move assets to dist directory
@@ -67,7 +72,7 @@ jobs:
       # 获取第三方库最新发布版本
       - name: Get 3rdparty release tags
         if: startsWith(github.ref, 'refs/tags/')
-        id: 3rdparty
+        id: deps-tags
         run: |
           $asu = (gh api repos/moesnow/Auto_Simulated_Universe/releases/latest --jq '.tag_name' 2>$null)
           $fhoe = (gh api repos/linruowuyin/Fhoe-Rail/releases/latest --jq '.tag_name' 2>$null)
@@ -86,7 +91,7 @@ jobs:
         uses: actions/cache@v5
         with:
           path: 3rdparty
-          key: 3rdparty-${{ steps.3rdparty.outputs.hash }}
+          key: 3rdparty-${{ steps.deps-tags.outputs.hash }}
 
       # 下载第三方库（缓存未命中时）
       - name: Download 3rdparty
