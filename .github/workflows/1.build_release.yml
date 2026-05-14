@@ -71,11 +71,40 @@ jobs:
           .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\update.7z .\dist\update\
           Rename-Item -Path .\dist\update -NewName March7thAssistant
 
-      # 移动第三方库到dist目录
+      # 获取第三方库最新发布版本
+      - name: Get 3rdparty release tags
+        if: startsWith(github.ref, 'refs/tags/')
+        id: 3rdparty
+        run: |
+          $asu = (gh api repos/moesnow/Auto_Simulated_Universe/releases/latest --jq '.tag_name' 2>$null)
+          $fhoe = (gh api repos/linruowuyin/Fhoe-Rail/releases/latest --jq '.tag_name' 2>$null)
+          $fps = (gh api repos/winTEuser/Genshin_StarRail_fps_unlocker/releases/latest --jq '.tag_name' 2>$null)
+          $buildHash = "${{ hashFiles('build.py', 'module/game/cloud.py') }}"
+          $hash = "${asu}-${fhoe}-${fps}-${buildHash}"
+          echo "hash=$hash" >> $env:GITHUB_OUTPUT
+          Write-Host "3rdparty cache key: $hash"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 缓存第三方库
+      - name: Restore 3rdparty cache
+        if: startsWith(github.ref, 'refs/tags/')
+        id: cache-3rdparty
+        uses: actions/cache@v4
+        with:
+          path: 3rdparty
+          key: 3rdparty-${{ steps.3rdparty.outputs.hash }}
+
+      # 下载第三方库（缓存未命中时）
+      - name: Download 3rdparty
+        if: startsWith(github.ref, 'refs/tags/') && steps.cache-3rdparty.outputs.cache-hit != 'true'
+        run: uv run python build.py --task all
+
+      # 生成日志并移动第三方库到dist目录
       - name: Move 3rdparty to dist directory
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          uv run python build.py --task all -v "${{ github.ref_name }}" -o changelog_temp.md
+          uv run python build.py --task changelog -v "${{ github.ref_name }}" -o changelog_temp.md
           Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
 
