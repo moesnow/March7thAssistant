@@ -17,7 +17,7 @@ jobs:
     steps:
       # 步骤1：签出代码
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: "true"
 
