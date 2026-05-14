@@ -42,7 +42,7 @@ jobs:
       # 设置 uv 和 Python 环境
       - name: Set up uv
         if: steps.check_version.outputs.should_build == 'true'
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v8
         with:
           version: "0.11.7"
           python-version: "3.13.11"
