@@ -29,6 +29,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v4
         with:
+          version: "0.11.7"
           python-version: "3.13.11"
           enable-cache: true
 
@@ -38,6 +39,13 @@ jobs:
           uv sync
           uv pip install pyinstaller==6.17.0
           uv run python build.py --task ocr
+
+      # 缓存 PyInstaller 构建中间产物
+      - name: Restore PyInstaller cache
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: pyinstaller-${{ hashFiles('*.spec') }}-${{ hashFiles('uv.lock') }}
 
       # 生成程序
       - name: Generate program
