@@ -397,6 +397,14 @@ class Instance:
             elif auto.find_element("已处于无法战斗状态", "text", max_retries=1, include=True, threshold=0.7):
                 log.info("队伍中存在无法战斗的角色，尝试继续战斗。")
                 auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+            elif auto.find_element("长时间未操作", "text", max_retries=1, include=True, threshold=0.75):
+                log.error("检测到云游戏超时弹窗")
+                Base.send_notification_with_screenshot("检测到云游戏超时弹窗\n"
+                                                       "战斗已中断，请：\n"
+                                                       "- 检查是否被初次挑战教程卡住\n"
+                                                       "- 检查配队是否正确\n"
+                                                       "- 尝试减少连续挑战次数", NotificationLevel.ERROR)
+                raise RuntimeError("云游戏不活跃超时")
             # 检测遗器背包已满的提示
             # 每次战斗检测循环中进行多次快速检测
             for _ in range(3):
