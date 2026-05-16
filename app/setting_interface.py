@@ -881,6 +881,12 @@ class SettingInterface(ScrollArea):
             None,
             "cloud_game_fullscreen_enable"
         )
+        self.cloudGameUsePaidTimeCard = SwitchSettingCard1(
+            FIF.SHOPPING_CART,
+            tr("使用付费时长"),
+            tr("打开后可在使用云游戏时使用付费时长免除排队"),
+            "cloud_game_use_paid_time"
+        )
         self.cloudGameMaxQueueTimeCard = RangeSettingCard1(
             "cloud_game_max_queue_time",
             [1, 120],
@@ -1702,6 +1708,7 @@ class SettingInterface(ScrollArea):
             self.browserLaunchArgCard
         ])
         self.CloudGameGroup.addSettingCard(self.cloudGameFullScreenCard)
+        self.CloudGameGroup.addSettingCard(self.cloudGameUsePaidTimeCard)
         self.CloudGameGroup.addSettingCard(self.browserHeadlessCard)
         self.browserHeadlessCard.addSettingCards([self.browserHeadlessRestartCard])
         self.CloudGameGroup.addSettingCard(self.cloudGameMaxQueueTimeCard)
