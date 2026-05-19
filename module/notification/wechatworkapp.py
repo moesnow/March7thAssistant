@@ -95,7 +95,7 @@ class WeChatworkappNotifier(Notifier):
         self.corpsecret = self.params["corpsecret"]
         self.agentid = self.params["agentid"]
         self.touser = self.params["touser"]
-        self.base_url = self.params.get("base_url", "https://qyapi.weixin.qq.com").rstrip('/')
+        self.base_url = (self.params.get("base_url") or "https://qyapi.weixin.qq.com").rstrip('/')
         self.access_token = self._get_access_token()
 
         # 构建消息文本
