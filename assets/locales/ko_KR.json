@@ -1023,6 +1023,7 @@
     "应用 AgentId": "앱 AgentId",
     "接收用户": "수신 사용자",
     "可选参数，接收用户，@all 表示全员": "선택 사항: 수신 사용자 (@all 은 전체 대상)",
+    "可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制": "선택 사항: 리버스 프록시를 통해 신뢰할 수 있는 IP 제한을 우회하기 위한 사용자 지정 WeCom API 주소",
     "Gotify 私有通知服务": "Gotify 자체 호스팅 알림 서비스",
     "Gotify 服务器 URL，例如 https://gotify.example.com": "Gotify 서버 URL (예: https://gotify.example.com)",
     "Gotify 应用的 Access Token": "Gotify 앱 Access Token",

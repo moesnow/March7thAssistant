@@ -1023,6 +1023,7 @@
     "应用 AgentId": "應用 AgentId",
     "接收用户": "接收用戶",
     "可选参数，接收用户，@all 表示全员": "可選參數，接收用戶，@all 表示全員",
+    "可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制": "可選參數，自定義企業微信 API 地址，用於反向代理繞過可信 IP 限制",
     "Gotify 私有通知服务": "Gotify 私有通知服務",
     "Gotify 服务器 URL，例如 https://gotify.example.com": "Gotify 服務器 URL，例如 https://gotify.example.com",
     "Gotify 应用的 Access Token": "Gotify 應用的 Access Token",

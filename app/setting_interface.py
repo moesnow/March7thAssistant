@@ -1274,6 +1274,7 @@ class SettingInterface(ScrollArea):
                     "corpsecret": {"title": tr("应用密钥")},
                     "agentid": {"title": tr("应用 AgentId")},
                     "touser": {"title": tr("接收用户"), "description": tr("可选参数，接收用户，@all 表示全员")},
+                    "base_url": {"title": tr("自定义 API 地址"), "description": tr("可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制")},
                 }
             },
             "gotify": {

@@ -583,6 +583,7 @@ notify_wechatworkapp_corpid: "" # 企业微信的企业ID。
 notify_wechatworkapp_corpsecret: "" # 企业微信应用的密钥。
 notify_wechatworkapp_agentid: "" # 企业微信应用的AgentId。
 notify_wechatworkapp_touser: "" # 可选参数，企业微信应用通知的目标用户，"@all" 表示发送给所有人。
+notify_wechatworkapp_base_url: "" # 可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制。
 
 # 企业微信机器人通知配置
 notify_wechatworkbot_enable: false # 是否启用企业微信机器人通知。true 开启，false 关闭。
