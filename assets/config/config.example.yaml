@@ -2,11 +2,15 @@
 locales: zh_CN
 
 # UI 인터페이스 언어 설정 / UI 界面语言设置
-ui_language: auto # 可选值 / 가능한 값: auto (自动判断), zh_CN (简体中文),  zh_TW (繁體中文), ko_KR (한국어) , en_US (English)
+ui_language: auto # 可选值 / 가능한 값: auto (自动判断), zh_CN (简体中文), zh_TW (繁體中文), ja_JP (日本語), ko_KR (한국어), en_US (English)
 
 # 日志设置
 log_level: INFO # 日志等级，可选值：INFO, DEBUG。INFO 仅记录重要信息，DEBUG 记录详细调试信息。
 log_retention_days: 30 # 日志保留天数，超过此天数的日志文件将被自动删除。
+log_overlay_enable: true # 是否在游戏界面上显示实时日志浮窗（仅 Windows）。
+
+# 调试模式
+debug_mode_enable: false # 是否启用调试模式。开启后会在屏幕对应位置实时绘制检测范围框（透明悬浮窗），用于调试自动化识别。仅 Windows 生效。
 
 # 更新检查
 check_update: true # 是否检查更新。true 检查，false 不检查。
@@ -48,6 +52,7 @@ update_game_timeout: 12 # 更新游戏超时时间（时）。
 # 云崩铁配置
 cloud_game_enable: False # 是否启动云游戏
 cloud_game_fullscreen_enable: True # 云崩铁是否全屏运行
+cloud_game_use_paid_time: False # 是否使用付费时长
 cloud_game_max_queue_time: 60 # 最大排队等待时间（分钟）
 # cloud_game_video_quality: '0' # 云崩铁画质 '0'(超高清)，'1'（高清）, '2'（标清）, '3'（低清）
 # cloud_game_smooth_first_enable: False # 是否流畅优先
@@ -75,6 +80,7 @@ browser_mirror_urls:
 
 # 副本设置
 # 体力计划列表，每项包含副本类型、副本名称和剩余次数，例如：[["拟造花萼（金）", "回忆之蕾", 10], ["侵蚀隧洞", "睿治之径", 5]]
+power_enable: true # 是否启用清体力总开关。false 时完整运行和“日常”中的历战余响与清体力都会跳过，但单独执行“清体力”任务不受影响。
 power_plan: []
 instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造花萼（金）、拟造花萼（赤）、凝滞虚影、侵蚀隧洞、饰品提取。
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
@@ -96,7 +102,9 @@ tp_before_instance: false # 是否在进入副本前进行传送至任意锚点�
 
 # 培养目标设置
 build_target_enable: false # 是否启用培养目标。
+build_target_scheme: "instance" # 培养目标的识别方案。可以是 instance 通过副本名称识别， drop 通过副本素材识别。
 build_target_ornament_weekly_count: 1 # 培养目标每周执行饰品提取的次数，取值范围 0-7。
+build_target_use_user_instance_when_only_erosion_and_ornament: false # 当培养目标只识别到「侵蚀隧洞」和「饰品提取」时，是否改用用户手动配置的副本。
 
 # 分解设置
 break_down_level_four_relicset: false # 完成侵蚀隧洞、饰品提取、历战余响和模拟宇宙后是否自动分解四星及以下遗器。true 开启，false 关闭。
@@ -105,7 +113,6 @@ break_down_level_four_relicset: false # 完成侵蚀隧洞、饰品提取、历�
 instance_team_enable: false # 是否在打副本时自动切换队伍。true 开启，false 关闭。
 instance_team_number: "6" # 自动切换的队伍编号。
 # instance_teams 可以为特定的副本配置队伍，当没有匹配项时则使用 instance_team_number 的设置
-# 饰品提取的队伍编号设置为数字如 "1" 时，游戏内相应队伍名称必须是默认格式如 "队伍1"；设置为非数字时，队伍名称可以自定义，但请测试确保 OCR 能正确识别队伍名称。
 # 格式: [{"instance_name": "副本名称", "team_number": 队伍编号}]
 instance_teams: []
 
@@ -149,6 +156,7 @@ reward_quest_enable: true # 是否领取每日实训奖励。true 开启，false
 reward_srpass_enable: true # 是否领取无名勋礼奖励。true 开启，false 关闭。
 reward_redemption_code_enable: true # 是否领取兑换码奖励。true 开启，false 关闭。
 reward_achievement_enable: false # 是否领取成就奖励。true 开启，false 关闭。
+reward_message_enable: false # 是否领取短信奖励。true 开启，false 关闭。
 
 # 日常任务设置
 daily_enable: true # 是否启用日常任务。true 开启，false 关闭。
@@ -174,24 +182,52 @@ activity_gardenofplenty_enable: false # 是否启用花藏繁生活动。true �
 activity_gardenofplenty_instance_type: 拟造花萼（金） # 花藏繁生副本类型。
 activity_realmofthestrange_enable: false # 是否启用异器盈界活动。true 开启，false 关闭。
 activity_planarfissure_enable: false # 是否启用位面分裂活动。true 开启，false 关闭。
+activity_journey_highlights_notification_enable: false # 是否启用活动热点通知（每次运行时发送含有活动热点截图的通知）。true 开启，false 关闭。
 
 # 资产设置
 asset_manager_enable: false # 是否启用资产管理功能。true 开启，false 关闭。
+asset_self_molding_resin_enable: false # 是否启用每月自动合成自塑尘脂。true 开启，false 关闭。
+asset_self_molding_resin_timestamp: 0 # 上次成功合成自塑尘脂的时间戳。用于记录时间并在每月1号刷新。
+asset_ember_special_pass_enable: false # 是否启用每月自动购买余烬兑换中的「星轨专票」。true 开启，false 关闭。
+asset_ember_special_pass_timestamp: 0 # 上次成功购买「星轨专票」的时间戳。用于记录时间并在每月1号刷新。
+asset_ember_regular_pass_enable: false # 是否启用每月自动购买余烬兑换中的「星轨通票」。true 开启，false 关闭。
+asset_ember_regular_pass_timestamp: 0 # 上次成功购买「星轨通票」的时间戳。用于记录时间并在每月1号刷新。
+asset_ember_tracks_of_destiny_enable: false # 是否启用每月自动购买余烬兑换中的「命运的足迹」。true 开启，false 关闭。
+asset_ember_tracks_of_destiny_timestamp: 0 # 上次成功购买「命运的足迹」的时间戳。用于记录时间并在每月1号刷新。
 asset_lc3_star_superimpose_enable: false # 是否启用「三星光锥自动叠加」功能。true 开启，false 关闭。
 
 # 货币战争配置
 currencywars_enable: false # 是否启用「货币战争」积分奖励。true 开启，false 关闭。
 currencywars_type: overclock # 货币战争模式，可选值："normal"（标准博弈）或 "overclock"（超频博弈）。
+currencywars_rank_difficulty: lowest # 货币战争职级难度，可选值："current"（当前职级）、"lowest"（最低职级）或 "highest"（最高职级）。
 currencywars_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的时间戳，用于记录和控制运行频率。
 currencywars_bonus_enable: false # 在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器。true 开启，false 关闭。
+currencywars_fast_mode: true # 是否启用货币战争速通模式，仅在首领节点尝试装备武器。true 开启，false 关闭。
+currencywars_strategy: default # 货币战争策略，可选默认(default)或阿格莱雅(aglaea)
+currencywars_remembrance_trailblazer_name: "" # 阿格莱雅策略下“开拓者·记忆”在游戏内的实际显示名字，由玩家自定义；留空则跳过该角色。
+currencywars_strategy_restart_on_special_tags: true # 根据所选策略，遇到特定词条或词条组合时是否接受重开。true 开启，false 关闭。
 
 # 差分宇宙配置
 weekly_divergent_enable: false # 是否启用「差分宇宙」积分奖励。true 开启，false 关闭。
 weekly_divergent_type: cycle # 积分奖励时执行的差分宇宙模式，可选值："normal"（常规演算）或 "cycle"（周期演算）。
-weekly_divergent_level: 5 # 执行差分宇宙时的难度等级，取值范围 1-5，数值越大难度越高。
+weekly_divergent_level: 5 # 执行差分宇宙时的难度等级，取值范围 1-6，数值越大难度越高，其中难度 6 对应常规演算星阶模式。
 weekly_divergent_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的时间戳，用于记录和控制运行频率。
 weekly_divergent_bonus_enable: false # 在领取积分奖励后自动执行饰品提取消耗沉浸器。true 开启，false 关闭。
-weekly_divergent_stable_mode: false # 是否启用差分宇宙稳定模式，运行若出现问题可尝试开启，适配低性能环境，云游戏默认使用此模式。true 开启，false 关闭。
+weekly_divergent_stable_mode: false # 是否启用差分宇宙低性能兼容模式，建议仅在低性能设备开启，可以提高事件和随意门交互的成功率（云游戏强制使用此模式）。true 开启，false 关闭。
+
+# 差分宇宙站点优先级配置
+divergent_station_priority_enable: false # 是否启用自定义站点优先级。true 开启，false 关闭。关闭时使用默认优先级。
+divergent_station_priority:
+  战斗: 1
+  精英: 1
+  事件: 2
+  奖励: 2
+  异常: 2
+  铸造: 2
+  空白: 3
+  商店: 3
+  财富: 3
+divergent_station_disabled: [] # 禁用的站点列表，在有重抽次数时会尝试重抽避开这些站点
 
 universe_enable: false # 是否启用模拟宇宙功能。true 开启，false 关闭。
 universe_operation_mode: exe # 模拟宇宙运行方式，可选 "源码"（source）或 "集成"（exe）。
@@ -204,6 +240,10 @@ universe_path: .\3rdparty\Auto_Simulated_Universe # 模拟宇宙路径，指向�
 universe_timeout: 20 # 模拟宇宙超时时间（单位：小时），设置脚本或程序的最长运行时间。
 universe_requirements: false # 是否已安装模拟宇宙依赖。true 表示已安装，false 表示未安装或需要重新安装。
 universe_timestamp: 0 # 上次运行模拟宇宙的时间戳，用于记录和控制运行频率。
+divergent_universe_daily_completed_count: 0 # 当日成功通关差分宇宙的次数，任何方式运行并成功通关都会记录此值。
+divergent_universe_daily_completed_timestamp: 0 # 上次更新差分宇宙每日计数的时间戳，用于在次日刷新后自动重置次数。
+divergent_universe_weekly_completed_count: 0 # 当周成功通关差分宇宙的次数，任何方式运行并成功通关都会记录此值。
+divergent_universe_weekly_completed_timestamp: 0 # 上次更新差分宇宙每周计数的时间戳，用于在周刷新后自动重置次数。
 divergent_type: normal # 差分宇宙模式，可选值："normal"（常规演算）或 "cycle"（周期演算）。
 divergent_team_type: 终结技 # 差分宇宙队伍类型，可选值：追击/dot/终结技/击破/盾反
 universe_fate: 不配置 # 模拟宇宙使用的命途
@@ -221,6 +261,7 @@ fight_timestamp: 0 # 上次运行锄大地的时间戳，用于记录和控制�
 fight_allow_map_buy: 不配置 # 购买代币与过期邮包
 fight_allow_snack_buy: 不配置 # 购买秘技零食并合成零食
 fight_main_map: "0" # 优先星球 {"空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4", "翁法罗斯": "5"}, "不配置": "0"
+fight_map_version: 不配置 # 地图版本，可选值：不配置、default（默认，疾跑）或 HuangQuan（黄泉专用）
 
 # Genshin_StarRail_fps_unlocker 配置
 genshin_starRail_fps_unlocker_allow: false
@@ -312,8 +353,8 @@ apocalyptic_timestamp: 0 # 上次运行末日幻影的时间戳，用于记录�
 # 自动战斗和二倍速检测配置
 auto_battle_detect_enable: true # 是否启用自动战斗和二倍速检测。true 开启，false 关闭。
 
-# OCR GPU 加速配置
-ocr_gpu_acceleration: true # 是否启用 OCR GPU 加速（DML）。true 开启，false 关闭。若 GPU 负载高导致 OCR 过慢会自动关闭。
+# OCR 加速配置
+ocr_gpu_acceleration: auto # OCR 加速模式，可选值：auto（自动）, gpu（GPU）, onnx_dml（ONNXRuntime + DirectML）, cpu（CPU）, openvino_cpu（OpenVINO CPU）, onnx_cpu（ONNXRuntime CPU）。若 DML 模式过慢会自动切换到 cpu。
 
 # 自动修改分辨率配置
 auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。true 开启，false 关闭。
@@ -340,6 +381,7 @@ script_path: C:\Path\to\your\Script.bat
 hotkey_technique: e # 设置游戏内使用秘技的按键。
 hotkey_map: m # 设置打开地图的按键。
 hotkey_warp: f3 # 设置打开跃迁的按键。
+hotkey_auto_battle: v # 设置自动战斗的按键。
 
 # 图形界面快捷键设置
 hotkey_stop_task: f10 # 设置停止任务的全局快捷键（支持后台）。
@@ -367,6 +409,9 @@ scheduled_run_time: "04:00" # 旧配置：单一定时运行时间（仅用于�
 # 定时任务冲突处理：当计划任务触发且当前已有任务在运行时的处理策略
 # 可选值：skip（跳过需要运行的任务），stop（停止正在运行的任务并启动计划任务）
 scheduled_on_conflict: skip
+# 链式任务失败后是否继续执行后续任务
+# true：继续执行后续任务，false：停止执行后续任务
+scheduled_chain_continue_on_failure: true
 scheduled_tasks: [] # 示例：
 # scheduled_tasks:
 #   - id: "0001-..."
@@ -381,13 +426,17 @@ scheduled_tasks: [] # 示例：
 #     enabled: true
 
 use_background_screenshot: true # 是否优先使用后台截图
-
-# 关闭窗口行为设置
+home_cards:
 close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问）, "minimize"（最小化到托盘）, "close"（关闭程序）
 
-# 窗口尺寸设置（自动保存，一般无需手动修改）
+# 窗口记忆设置
+window_memory: size # 记忆窗口大小和位置，可选值："size"（记忆窗口大小）, "position"（记忆窗口位置）, "size_and_position"（记忆窗口大小和位置）, "none"（都不记忆）
+
+# 窗口尺寸和位置设置（自动保存，一般无需手动修改）
 window_width: 960 # 窗口宽度
 window_height: 640 # 窗口高度
+window_x: null # 窗口左上角 X 坐标
+window_y: null # 窗口左上角 Y 坐标
 window_maximized: false # 窗口是否最大化
 banner_path: ./assets/app/images/bg37.jpg # 背景图片路径
 
@@ -400,6 +449,7 @@ auto_update: false
 
 update_source: GitHub # 更新源，可选值："GitHub"（海外源）, "MirrorChyan"（Mirror 酱）
 mirrorchyan_cdk: "" # MirrorChyan CDK
+update_download_proxy: "" # 更新下载代理，留空则使用系统代理。支持 http://127.0.0.1:7890 和 socks5://127.0.0.1:1080，仅在下载更新文件时生效，且优先于系统代理。
 
 # 消息推送配置
 # 消息推送格式配置
@@ -420,6 +470,7 @@ notify_template:
   SimulatedUniverseNotCompleted: "模拟宇宙未完成"
   FightCompleted: "锄大地已完成"
   FightNotCompleted: "锄大地未完成"
+  RelicBagFull: "遗器背包已满"
 
 # 消息推送总开关
 notification_enable: true # 是否启用消息推送。true 开启，false 关闭。关闭后所有消息推送将被禁用。
@@ -443,6 +494,7 @@ notify_telegram_token: "" # Telegram bot 的 token。
 notify_telegram_userid: "" # 接收通知的用户或群组 ID。
 notify_telegram_api_url: "" # 可选参数，Telegram API 的自定义URL，默认为空。
 notify_telegram_proxies: "" # 可选参数，请求 Telegram API 是否使用代理。默认为空(使用系统PAC或不使用)。例如："127.0.0.1:10808", "socks5://127.0.0.1:1080/" 。
+notify_telegram_thread_id: "" # 可选参数，Telegram Topics 群组的 message_thread_id，不填则不使用。
 
 notify_matrix_enable: false # 是否启用 Matrix 通知。true 开启，false 关闭。
 notify_matrix_homeserver: "" # 服务器的地址 例如官方地址 https://matrix.org
@@ -475,7 +527,8 @@ notify_bark_group: "March7thAssistant" # 可选参数，Bark 通知的分组名�
 notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/app/images/March7th.jpg" # 可选参数，Bark 通知的图标 URL。
 notify_bark_isarchive: "1" # 可选参数，Bark 通知是否归档。
 notify_bark_sound: "" # 可选参数
-notify_bark_url: "" # 可选参数，自定义 Bark 服务的 URL。
+notify_bark_url: "" # 可选参数，通知点击后跳转的 URL。
+notify_bark_base_url: "" # 可选参数，自定义 Bark 服务的 URL。
 notify_bark_copy: "" # 可选参数
 notify_bark_autocopy: "" # 可选参数
 notify_bark_cipherkey: "" # 可选参数，推送加密密钥，用于保护推送内容。需先在 Bark APP 中配置相同的密钥。
@@ -532,6 +585,7 @@ notify_wechatworkapp_corpid: "" # 企业微信的企业ID。
 notify_wechatworkapp_corpsecret: "" # 企业微信应用的密钥。
 notify_wechatworkapp_agentid: "" # 企业微信应用的AgentId。
 notify_wechatworkapp_touser: "" # 可选参数，企业微信应用通知的目标用户，"@all" 表示发送给所有人。
+notify_wechatworkapp_base_url: "" # 可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制。
 
 # 企业微信机器人通知配置
 notify_wechatworkbot_enable: false # 是否启用企业微信机器人通知。true 开启，false 关闭。
