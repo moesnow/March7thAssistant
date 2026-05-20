@@ -8,12 +8,13 @@
 | macOS | ❌ | ✅ |
 | Linux | ❌ | ✅ |
 | Docker | ❌ | ✅ |
+| Android (Termux) | ❌ | ✅ |
 
 本地游戏模式仅支持 Windows，必须使用 PC 客户端，以 1920×1080 分辨率窗口运行游戏；如果窗口模式不可用，再选择全屏。
 
 游戏内语言必须设置为简体中文，并关闭帧率监控 HUD、微星小飞机、游戏加加、HDR、N 卡游戏滤镜等可能遮挡或改变画面的软件。
 
-云游戏模式支持 Windows、macOS、Linux。macOS / Linux 用户可通过源码运行使用云游戏模式，也可以使用 [Docker 部署](/assets/docs/Docker.md)。
+云游戏模式支持 Windows、macOS、Linux、Android。macOS / Linux 用户可通过源码运行使用云游戏模式，也可以使用 [Docker 部署](/assets/docs/Docker.md)；Android 用户可参考 [Termux 安卓部署](/assets/docs/Termux.md)。
 
 > 开启 `云·星穹铁道` 后，清体力、每日实训、差分宇宙等任务不再要求固定窗口，
 >

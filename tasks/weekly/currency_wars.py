@@ -31,6 +31,7 @@ class CurrencyWars:
         self.need_exit: bool = False  # 是否需要退出
         self.need_restart: bool = False  # 是否重开
         self._stage_unchanged_count: int = 0  # 连续未发生阶段变化计数
+        self._unrecognized_stage_count: int = 0  # 连续未识别阶段计数
         self.forward_characters: list[CurrencyWarsCharacter] = []  # 存储前台角色
         self.backward_characters: list[CurrencyWarsCharacter] = []  # 存储后台角色
         self.prepare_characters: list[CurrencyWarsCharacter] = []  # 存储备战席角色
@@ -439,6 +440,7 @@ class CurrencyWars:
         self.current_stage = "0-0"  # 重置当前关卡阶段
         self.need_exit = False  # 是否需要退出
         self._stage_unchanged_count = 0  # 重置阶段未变化计数
+        self._unrecognized_stage_count = 0  # 重置未识别阶段计数
         self.need_restart = False  # 是否需要重开
         self.forward_characters = []  # 重置前台角色
         self.backward_characters = []  # 重置后台角色
@@ -987,8 +989,6 @@ class CurrencyWars:
             "./assets/images/share/aglaea/e7.png",
         ]
 
-        aglaea3_img = "./assets/images/share/aglaea/aglaea3.png"
-
         equip_crop = (1386 / 1920, 93 / 1080, 514 / 1920, 610 / 1080)
         aglaea_position = self.find_deployed_character_position("阿格莱雅")
         if not aglaea_position:
@@ -1008,7 +1008,7 @@ class CurrencyWars:
         if not self.has_aglaea_three_star:
             projector_img = "./assets/images/share/aglaea/projector.png"
             projector2_img = "./assets/images/share/aglaea/projector2.png"
-            for _ in range(10):
+            for _ in range(5):
                 if result := auto.find_element(projector2_img, "image", 0.9, crop=equip_crop):
                     log.info("检测到完美投影仪，尝试使用")
                     try_equip(result, aglaea_position)
@@ -1016,11 +1016,6 @@ class CurrencyWars:
                     log.info("检测到员工投影仪，尝试使用")
                     try_equip(result, aglaea_position)
                 else:
-                    break
-                time.sleep(5) # 等待一段时间以检测阿格莱雅三星
-                if auto.find_element(aglaea3_img, "image", 0.9):
-                    log.info("检测到阿格莱雅三星")
-                    self.has_aglaea_three_star = True
                     break
 
         if self.shoe_count < 4:
@@ -1129,8 +1124,6 @@ class CurrencyWars:
             "./assets/images/share/aglaea/e6.png",
         ]
 
-        seele3_img = "./assets/images/share/aglaea/seele3.png"
-        
         equip_crop = (1386 / 1920, 93 / 1080, 514 / 1920, 610 / 1080)
         seele_position = self.find_deployed_character_position("希儿")
         if not seele_position:
@@ -1190,7 +1183,7 @@ class CurrencyWars:
         if not self.has_seele_three_star:
             projector_img = "./assets/images/share/aglaea/projector.png"
             projector2_img = "./assets/images/share/aglaea/projector2.png"
-            for _ in range(10):
+            for _ in range(5):
                 if result := auto.find_element(projector2_img, "image", 0.9, crop=equip_crop):
                     log.info("检测到完美投影仪，尝试使用")
                     try_equip(result, seele_position)
@@ -1198,11 +1191,6 @@ class CurrencyWars:
                     log.info("检测到员工投影仪，尝试使用")
                     try_equip(result, seele_position)
                 else:
-                    break
-                time.sleep(5) # 等待一段时间以检测希儿三星
-                if auto.find_element(seele3_img, "image", 0.9):
-                    log.info("检测到希儿三星")
-                    self.has_seele_three_star = True
                     break
 
         # 希儿需要2个火力风暴潮和1个高周波电锯
@@ -1889,6 +1877,7 @@ class CurrencyWars:
         stage_crop = (414 / 1920, 56 / 1080, 117 / 1920, 44 / 1080)
         stage_text = auto.get_single_line_text(crop=stage_crop)
         if stage_text and re.match(r"^\d-\d$", stage_text):
+            self._unrecognized_stage_count = 0
             log.hr(f"当前阶段：{stage_text}", 2)
             if stage_text == self.current_stage:
                 self._stage_unchanged_count += 1
@@ -1900,7 +1889,15 @@ class CurrencyWars:
                 log.warning("检测到当前阶段连续5次未发生变化，判定为卡死")
                 self.need_exit = True
         else:
-            log.warning("未能识别当前货币战争阶段")
+            self._unrecognized_stage_count += 1
+            log.warning(f"未能识别当前货币战争阶段（连续{self._unrecognized_stage_count}次）")
+            if self._unrecognized_stage_count >= 5:
+                log.warning("检测到连续5次未能识别阶段，判定为卡死")
+                self.need_exit = True
+                return
+            self._check_equipment_box()
+            self._check_hiring_book()
+            self._check_expert_invitation()
 
     def collect_reward(self):
         """
@@ -2105,7 +2102,7 @@ class CurrencyWars:
         检查当前货币数量
         """
         money_crop = (1559.0 / 1920, 880.0 / 1080, 127.0 / 1920, 82.0 / 1080)
-        money = auto.get_single_line_text(crop=money_crop, blacklist=['V'])
+        money = auto.get_single_line_text(crop=money_crop, blacklist=['V', '?'])
         if money:
             try:
                 money_int = int(money)
@@ -2148,10 +2145,123 @@ class CurrencyWars:
 
         raise ValueError("无法解析角色上限信息")
 
+    def _check_equipment_box(self):
+        """检查并处理武装箱/星徽秘典/阿哈"""
+        if not auto.find_element(('武装箱', '星徽秘典', '阿哈'), "text", None, crop=(1012.0 / 1920, 27.0 / 1080, 173.0 / 1920, 56.0 / 1080), include=True):
+            return False
+        if auto.matched_text == "阿哈":
+            log.info(f"检测到为「阿哈」选择装备，尝试点击")
+        else:
+            log.info(f"检测到{auto.matched_text}，尝试点击")
+        if cfg.currencywars_strategy == "aglaea" and self.shoe_count < 4 and auto.click_element(("反重力皮靴", "轮滑鞋"), "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080), include=True):
+            log.info(f"检测到{auto.matched_text}选项，尝试点击")
+        elif cfg.currencywars_strategy == "seele" and not self.allow_seele_equip_weapons:
+            # 希儿策略：缺失初级装备优先级最高
+            seele_equip_priority = list(self.seele_missing_basic_equips)
+            if self.seele_firestorm_count < 2 or self.seele_chainsaw_count < 1:
+                if "折叠小刀" not in seele_equip_priority:
+                    seele_equip_priority.append("折叠小刀")
+            if self.seele_firestorm_count < 2:
+                if "轮滑鞋" not in seele_equip_priority:
+                    seele_equip_priority.append("轮滑鞋")
+            if self.seele_chainsaw_count < 1:
+                if "幸运星" not in seele_equip_priority:
+                    seele_equip_priority.append("幸运星")
+            if self.seele_firestorm_count < 2:
+                if "火力风暴潮" not in seele_equip_priority:
+                    seele_equip_priority.append("火力风暴潮")
+            if self.seele_chainsaw_count < 1:
+                if "高周波电锯" not in seele_equip_priority:
+                    seele_equip_priority.append("高周波电锯")
+            if seele_equip_priority and auto.click_element(tuple(seele_equip_priority), "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080)):
+                log.info(f"检测到{auto.matched_text}选项，尝试点击")
+            else:
+                pos = (533.0 / 1920, 135.0 / 1080, 258.0 / 1920, 181.0 / 1080)
+                auto.click_element(pos, "crop")
+        else:
+            pos = (533.0 / 1920, 135.0 / 1080, 258.0 / 1920, 181.0 / 1080)
+            auto.click_element(pos, "crop")
+        time.sleep(2)
+        return True
+
+    def _check_hiring_book(self):
+        """检查并处理聘用书"""
+        # 聘用书坐标尚未经过测试
+        if not auto.find_element("聘用书", "text", None, crop=(923.0 / 1920, 21.0 / 1080, 168.0 / 1920, 74.0 / 1080), include=True):
+            return False
+        log.info("检测到聘用书选项，尝试点击")
+        if cfg.currencywars_strategy == "aglaea":
+            remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+            preferred_characters = ["瓦尔特", "昔涟"]
+            if remembrance_trailblazer_name:
+                preferred_characters.append(remembrance_trailblazer_name)
+            preferred_characters.extend(["星期日", "符玄", "银狼", "花火", "风堇", "藿藿", "缇宝"])
+            if auto.click_element(tuple(preferred_characters), "text", crop=(501 / 1920, 362 / 1080, 1047 / 1920, 42 / 1080)):
+                log.info(f"检测到{auto.matched_text}选项，优先点击")
+            else:
+                pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
+                auto.click_element(pos, "crop")
+        elif cfg.currencywars_strategy == "seele":
+            # 希儿策略：如果没有希儿或希儿没三星，优先希儿；其次按费用从高到低（仅限尚未拥有的角色）
+            remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+            preferred_characters = []
+            if not self.has_seele or not self.has_seele_three_star:
+                preferred_characters.append("希儿")
+            all_candidates = ["瓦尔特"]
+            if remembrance_trailblazer_name:
+                all_candidates.append(remembrance_trailblazer_name)
+            all_candidates.extend(["刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"])
+            preferred_characters.extend(name for name in all_candidates if not self.has_tracked_character(name))
+            if preferred_characters and auto.click_element(tuple(preferred_characters), "text", crop=(501 / 1920, 362 / 1080, 1047 / 1920, 42 / 1080)):
+                log.info(f"检测到{auto.matched_text}选项，优先点击")
+            else:
+                pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
+                auto.click_element(pos, "crop")
+        else:
+            pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
+            auto.click_element(pos, "crop")
+        time.sleep(2)
+        return True
+
+    def _check_expert_invitation(self):
+        """检查并处理专家邀请函"""
+        if not auto.find_element("专家邀请函", "text", None, crop=(949 / 1920, 27 / 1080, 153 / 1920, 56 / 1080), include=True):
+            return False
+        log.info("检测到专家邀请函选项，尝试点击")
+        if cfg.currencywars_strategy == "aglaea" and auto.click_element("银狼", "text", crop=(366 / 1920, 363 / 1080, 1318 / 1920, 40 / 1080)):
+            pass
+        elif cfg.currencywars_strategy == "seele":
+            # 希儿策略：如果没有希儿或希儿没三星，优先希儿；其次按费用从高到低（仅限尚未拥有的角色）
+            remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+            preferred_characters = []
+            if not self.has_seele or not self.has_seele_three_star:
+                preferred_characters.append("希儿")
+            all_candidates = ["瓦尔特"]
+            if remembrance_trailblazer_name:
+                all_candidates.append(remembrance_trailblazer_name)
+            all_candidates.extend(["刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"])
+            preferred_characters.extend(name for name in all_candidates if not self.has_tracked_character(name))
+            if preferred_characters and not auto.click_element(tuple(preferred_characters), "text", crop=(366 / 1920, 363 / 1080, 1318 / 1920, 40 / 1080)):
+                # 4个
+                auto.click_element((769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080), "crop")
+                # 5个
+                auto.click_element((900 / 1920, 135 / 1080, 249 / 1920, 275 / 1080), "crop")
+            pass
+        else:
+            # 4个
+            auto.click_element((769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080), "crop")
+            # 5个
+            auto.click_element((900 / 1920, 135 / 1080, 249 / 1920, 275 / 1080), "crop")
+        time.sleep(2)
+        return True
+
     def check_box(self):
         """
         检查并处理补给阶段的宝箱
         """
+        # 滑动完检查一次专家邀请函，疑似没点击开启也会直接弹窗选择界面 (╯▔皿▔)╯
+        self._check_expert_invitation()
+
         # 游戏存在bug，点击开启的速度太快无法弹出选择界面 :(
         res = auto.find_element("开启", "text", None, crop=(376.0 / 1920, 839.0 / 1080, 1125.0 / 1920, 148.0 / 1080), include=True)
         start_time = time.monotonic()
@@ -2168,104 +2278,12 @@ class CurrencyWars:
             time.sleep(4)
 
             success = False
-            if auto.find_element(('武装箱', '星徽秘典', '阿哈'), "text", None, crop=(1012.0 / 1920, 27.0 / 1080, 173.0 / 1920, 56.0 / 1080), include=True):
-                if auto.matched_text == "阿哈":
-                    log.info(f"检测到为「阿哈」选择装备，尝试点击")
-                else:
-                    log.info(f"检测到{auto.matched_text}，尝试点击")
+            if self._check_equipment_box():
                 success = True
-                if cfg.currencywars_strategy == "aglaea" and self.shoe_count < 4 and auto.click_element(("反重力皮靴", "轮滑鞋"), "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080), include=True):
-                    log.info(f"检测到{auto.matched_text}选项，尝试点击")
-                elif cfg.currencywars_strategy == "seele" and not self.allow_seele_equip_weapons:
-                    # 希儿策略：缺失初级装备优先级最高
-                    seele_equip_priority = list(self.seele_missing_basic_equips)
-                    if self.seele_firestorm_count < 2 or self.seele_chainsaw_count < 1:
-                        if "折叠小刀" not in seele_equip_priority:
-                            seele_equip_priority.append("折叠小刀")
-                    if self.seele_firestorm_count < 2:
-                        if "轮滑鞋" not in seele_equip_priority:
-                            seele_equip_priority.append("轮滑鞋")
-                    if self.seele_chainsaw_count < 1:
-                        if "幸运星" not in seele_equip_priority:
-                            seele_equip_priority.append("幸运星")
-                    if self.seele_firestorm_count < 2:
-                        if "火力风暴潮" not in seele_equip_priority:
-                            seele_equip_priority.append("火力风暴潮")
-                    if self.seele_chainsaw_count < 1:
-                        if "高周波电锯" not in seele_equip_priority:
-                            seele_equip_priority.append("高周波电锯")
-                    if seele_equip_priority and auto.click_element(tuple(seele_equip_priority), "text", crop=(535 / 1920, 268 / 1080, 1129 / 1920, 45 / 1080)):
-                        log.info(f"检测到{auto.matched_text}选项，尝试点击")
-                    else:
-                        pos = (533.0 / 1920, 135.0 / 1080, 258.0 / 1920, 181.0 / 1080)
-                        auto.click_element(pos, "crop")
-                else:
-                    pos = (533.0 / 1920, 135.0 / 1080, 258.0 / 1920, 181.0 / 1080)
-                    auto.click_element(pos, "crop")
-                time.sleep(2)
-            # 聘用书坐标尚未经过测试
-            if auto.find_element("聘用书", "text", None, crop=(923.0 / 1920, 21.0 / 1080, 168.0 / 1920, 74.0 / 1080), include=True):
-                log.info("检测到聘用书选项，尝试点击")
+            if self._check_hiring_book():
                 success = True
-                if cfg.currencywars_strategy == "aglaea":
-                    remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
-                    preferred_characters = ["瓦尔特", "昔涟"]
-                    if remembrance_trailblazer_name:
-                        preferred_characters.append(remembrance_trailblazer_name)
-                    preferred_characters.extend(["星期日", "符玄", "银狼", "花火", "风堇", "藿藿", "缇宝"])
-                    if auto.click_element(tuple(preferred_characters), "text", crop=(501 / 1920, 362 / 1080, 1047 / 1920, 42 / 1080)):
-                        log.info(f"检测到{auto.matched_text}选项，优先点击")
-                    else:
-                        pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
-                        auto.click_element(pos, "crop")
-                elif cfg.currencywars_strategy == "seele":
-                    # 希儿策略：如果没有希儿或希儿没三星，优先希儿；其次按费用从高到低（仅限尚未拥有的角色）
-                    remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
-                    preferred_characters = []
-                    if not self.has_seele or not self.has_seele_three_star:
-                        preferred_characters.append("希儿")
-                    all_candidates = ["瓦尔特"]
-                    if remembrance_trailblazer_name:
-                        all_candidates.append(remembrance_trailblazer_name)
-                    all_candidates.extend(["刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"])
-                    preferred_characters.extend(name for name in all_candidates if not self.has_tracked_character(name))
-                    if preferred_characters and auto.click_element(tuple(preferred_characters), "text", crop=(501 / 1920, 362 / 1080, 1047 / 1920, 42 / 1080)):
-                        log.info(f"检测到{auto.matched_text}选项，优先点击")
-                    else:
-                        pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
-                        auto.click_element(pos, "crop")
-                else:
-                    pos = (486.0 / 1920, 159.0 / 1080, 240.0 / 1920, 269.0 / 1080)
-                    auto.click_element(pos, "crop")
-                time.sleep(2)
-            if auto.find_element("专家邀请函", "text", None, crop=(949 / 1920, 27 / 1080, 153 / 1920, 56 / 1080), include=True):
-                log.info("检测到专家邀请函选项，尝试点击")
+            if self._check_expert_invitation():
                 success = True
-                if cfg.currencywars_strategy == "aglaea" and auto.click_element("银狼", "text", crop=(366 / 1920, 363 / 1080, 1318 / 1920, 40 / 1080)):
-                    pass
-                elif cfg.currencywars_strategy == "seele":
-                    # 希儿策略：如果没有希儿或希儿没三星，优先希儿；其次按费用从高到低（仅限尚未拥有的角色）
-                    remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
-                    preferred_characters = []
-                    if not self.has_seele or not self.has_seele_three_star:
-                        preferred_characters.append("希儿")
-                    all_candidates = ["瓦尔特"]
-                    if remembrance_trailblazer_name:
-                        all_candidates.append(remembrance_trailblazer_name)
-                    all_candidates.extend(["刻律德菈", "符玄", "花火", "佩拉", "风堇", "缇宝"])
-                    preferred_characters.extend(name for name in all_candidates if not self.has_tracked_character(name))
-                    if preferred_characters and not auto.click_element(tuple(preferred_characters), "text", crop=(366 / 1920, 363 / 1080, 1318 / 1920, 40 / 1080)):
-                        # 4个
-                        auto.click_element((769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080), "crop")
-                        # 5个
-                        auto.click_element((900 / 1920, 135 / 1080, 249 / 1920, 275 / 1080), "crop")
-                    pass
-                else:
-                    # 4个
-                    auto.click_element((769 / 1920, 134 / 1080, 245 / 1920, 276 / 1080), "crop")
-                    # 5个
-                    auto.click_element((900 / 1920, 135 / 1080, 249 / 1920, 275 / 1080), "crop")
-                time.sleep(2)
             if not success:
                 log.warning("未检测到可点击的选项")
                 continue

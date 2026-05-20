@@ -12,6 +12,7 @@ class TelegramNotifier(Notifier):
         chat_id = self.params["userid"]
         api_url = self.params.get("api_url", "api.telegram.org")
         proxies = match_proxy(self.params.get("proxies", None), f"https://{api_url}/")
+        thread_id = self.params.get("thread_id", None)
 
         # 构建消息文本
         message = title if not content else f'{title}\n{content}' if title else content
@@ -24,6 +25,8 @@ class TelegramNotifier(Notifier):
                 'chat_id': (None, chat_id),
                 'caption': (None, message)
             }
+            if thread_id:
+                files['message_thread_id'] = (None, thread_id)
             response = requests.post(tgurl, files=files, proxies=proxies)
             response.raise_for_status()
         else:
@@ -33,5 +36,7 @@ class TelegramNotifier(Notifier):
                 'chat_id': chat_id,
                 'text': message
             }
+            if thread_id:
+                data['message_thread_id'] = thread_id
             response = requests.post(tgurl, data=data, proxies=proxies)
             response.raise_for_status()

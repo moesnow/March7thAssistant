@@ -233,6 +233,8 @@ class Downloader:
                     else:
                         self._log("error", f"aria2 下载失败: {aria2_error}")
                     raise DownloadError(build_download_error_message(aria2_error)) from aria2_error
+                self._log("info", f"{tr('下载完成')}: {self.dest_path}")
+                return
             raise DownloadError(build_download_error_message(e)) from e
         self._log("info", f"{tr('下载完成')}: {self.dest_path}")
 

@@ -52,6 +52,7 @@ update_game_timeout: 12 # 更新游戏超时时间（时）。
 # 云崩铁配置
 cloud_game_enable: False # 是否启动云游戏
 cloud_game_fullscreen_enable: True # 云崩铁是否全屏运行
+cloud_game_use_paid_time: False # 是否使用付费时长
 cloud_game_max_queue_time: 60 # 最大排队等待时间（分钟）
 # cloud_game_video_quality: '0' # 云崩铁画质 '0'(超高清)，'1'（高清）, '2'（标清）, '3'（低清）
 # cloud_game_smooth_first_enable: False # 是否流畅优先
@@ -201,7 +202,7 @@ currencywars_type: overclock # 货币战争模式，可选值："normal"（标�
 currencywars_rank_difficulty: lowest # 货币战争职级难度，可选值："current"（当前职级）、"lowest"（最低职级）或 "highest"（最高职级）。
 currencywars_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的时间戳，用于记录和控制运行频率。
 currencywars_bonus_enable: false # 在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器。true 开启，false 关闭。
-currencywars_fast_mode: false # 是否启用货币战争速通模式，仅在首领节点尝试装备武器。true 开启，false 关闭。
+currencywars_fast_mode: true # 是否启用货币战争速通模式，仅在首领节点尝试装备武器。true 开启，false 关闭。
 currencywars_strategy: default # 货币战争策略，可选默认(default)或阿格莱雅(aglaea)
 currencywars_remembrance_trailblazer_name: "" # 阿格莱雅策略下“开拓者·记忆”在游戏内的实际显示名字，由玩家自定义；留空则跳过该角色。
 currencywars_strategy_restart_on_special_tags: true # 根据所选策略，遇到特定词条或词条组合时是否接受重开。true 开启，false 关闭。
@@ -493,6 +494,7 @@ notify_telegram_token: "" # Telegram bot 的 token。
 notify_telegram_userid: "" # 接收通知的用户或群组 ID。
 notify_telegram_api_url: "" # 可选参数，Telegram API 的自定义URL，默认为空。
 notify_telegram_proxies: "" # 可选参数，请求 Telegram API 是否使用代理。默认为空(使用系统PAC或不使用)。例如："127.0.0.1:10808", "socks5://127.0.0.1:1080/" 。
+notify_telegram_thread_id: "" # 可选参数，Telegram Topics 群组的 message_thread_id，不填则不使用。
 
 notify_matrix_enable: false # 是否启用 Matrix 通知。true 开启，false 关闭。
 notify_matrix_homeserver: "" # 服务器的地址 例如官方地址 https://matrix.org
@@ -525,7 +527,8 @@ notify_bark_group: "March7thAssistant" # 可选参数，Bark 通知的分组名�
 notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/app/images/March7th.jpg" # 可选参数，Bark 通知的图标 URL。
 notify_bark_isarchive: "1" # 可选参数，Bark 通知是否归档。
 notify_bark_sound: "" # 可选参数
-notify_bark_url: "" # 可选参数，自定义 Bark 服务的 URL。
+notify_bark_url: "" # 可选参数，通知点击后跳转的 URL。
+notify_bark_base_url: "" # 可选参数，自定义 Bark 服务的 URL。
 notify_bark_copy: "" # 可选参数
 notify_bark_autocopy: "" # 可选参数
 notify_bark_cipherkey: "" # 可选参数，推送加密密钥，用于保护推送内容。需先在 Bark APP 中配置相同的密钥。
@@ -582,6 +585,7 @@ notify_wechatworkapp_corpid: "" # 企业微信的企业ID。
 notify_wechatworkapp_corpsecret: "" # 企业微信应用的密钥。
 notify_wechatworkapp_agentid: "" # 企业微信应用的AgentId。
 notify_wechatworkapp_touser: "" # 可选参数，企业微信应用通知的目标用户，"@all" 表示发送给所有人。
+notify_wechatworkapp_base_url: "" # 可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制。
 
 # 企业微信机器人通知配置
 notify_wechatworkbot_enable: false # 是否启用企业微信机器人通知。true 开启，false 关闭。

@@ -10,12 +10,13 @@
 | macOS | ❌ | ✅ |
 | Linux | ❌ | ✅ |
 | Docker | ❌ | ✅ |
+| Android (Termux) | ❌ | ✅ |
 
 Local game mode supports Windows only. You must use the PC client and run the game in a 1920×1080 window. If windowed mode is unavailable, use fullscreen instead.
 
 The in-game language must be set to Simplified Chinese. You should also disable FPS monitoring HUDs, MSI Afterburner, GamePP, HDR, NVIDIA Freestyle filters, and similar tools that may overlay or alter the captured image.
 
-Cloud game mode supports Windows, macOS, and Linux. macOS and Linux users can run it from source, or use [Docker Deployment](/assets/docs/Docker.md).
+Cloud game mode supports Windows, macOS, Linux, and Android. macOS and Linux users can run it from source, or use [Docker Deployment](/assets/docs/Docker.md); Android users can refer to [Termux Android Deployment](/assets/docs/Termux.md).
 
 > After enabling `Cloud Honkai: Star Rail`, tasks such as spending Trailblaze Power, Daily Training, and Divergent Universe no longer require a fixed window.
 >

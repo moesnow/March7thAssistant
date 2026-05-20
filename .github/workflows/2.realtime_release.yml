@@ -4,8 +4,13 @@ name: Build realtime release
 on:
   workflow_dispatch:
   pull_request:
+    branches:
+      - main
     paths:
-      - "**.py"
+      - "**/*.py"
+      - "requirements.txt"
+      - "pyproject.toml"
+      - "uv.lock"
 
 jobs:
   build:
@@ -21,7 +26,7 @@ jobs:
     steps:
       # 签出代码
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: "false"
           fetch-depth: 0
@@ -39,29 +44,36 @@ jobs:
             echo "should_build=true" >> $env:GITHUB_OUTPUT
           }
 
-      # 设置Python环境
-      - name: Set up python
+      # 设置 uv 和 Python 环境
+      - name: Set up uv
         if: steps.check_version.outputs.should_build == 'true'
-        uses: actions/setup-python@v4
+        uses: astral-sh/setup-uv@v8.1.0
         with:
-          python-version: "3.13.11"
-          cache: "pip"
+          version: "0.11.15"
+          python-version: "3.14.5"
+          enable-cache: true
+          cache-python: true
+          prune-cache: false
 
       # 安装依赖
       - name: Install dependencies
         if: steps.check_version.outputs.should_build == 'true'
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller==6.17.0
-          python build.py --task ocr
+          uv sync --group build
+          uv run python build.py --task ocr
 
-      # 生成程序
+      # 并行生成程序
       - name: Generate program
         if: steps.check_version.outputs.should_build == 'true'
         run: |
-          pyinstaller --distpath '.\dist\' '.\March7th Assistant.spec' -y
-          pyinstaller --distpath '.\dist\' '.\March7th Launcher.spec' -y
-          pyinstaller --distpath '.\dist\March7thAssistant\' '.\March7th Updater.spec' -y
+          $p1 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Assistant.spec" -y' -PassThru -NoNewWindow
+          $p2 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Launcher.spec" -y' -PassThru -NoNewWindow
+          $p3 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist\March7thAssistant" ".\March7th Updater.spec" -y' -PassThru -NoNewWindow
+          $p1.WaitForExit(); $p2.WaitForExit(); $p3.WaitForExit()
+          if ($p1.ExitCode -ne 0 -or $p2.ExitCode -ne 0 -or $p3.ExitCode -ne 0) {
+            Write-Host "Exit codes: Assistant=$($p1.ExitCode) Launcher=$($p2.ExitCode) Updater=$($p3.ExitCode)"
+            exit 1
+          }
 
       # 移动资源到dist目录
       - name: Move assets to dist directory
@@ -82,7 +94,7 @@ jobs:
       # 上传压缩包
       - name: Upload artifact
         if: steps.check_version.outputs.should_build == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: March7thAssistant_${{ github.run_number }}.7z
           path: ./dist/March7thAssistant_${{ github.run_number }}.7z

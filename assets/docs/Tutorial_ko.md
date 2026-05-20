@@ -10,12 +10,13 @@
 | macOS | ❌ | ✅ |
 | Linux | ❌ | ✅ |
 | Docker | ❌ | ✅ |
+| Android (Termux) | ❌ | ✅ |
 
 로컬 게임 모드는 Windows만 지원하며, 반드시 PC 클라이언트를 1920×1080 해상도의 창 모드로 실행해야 합니다. 창 모드가 불가능하면 전체 화면을 사용하세요.
 
 게임 내 언어는 반드시 중국어 간체로 설정해야 하며, 프레임 표시 HUD, MSI Afterburner, GamePP, HDR, NVIDIA 게임 필터 등 화면을 가리거나 색을 바꾸는 도구는 모두 꺼 주세요.
 
-클라우드 게임 모드는 Windows, macOS, Linux를 지원합니다. macOS / Linux 사용자는 소스 실행으로 사용할 수 있고, [Docker 배포](/assets/docs/Docker.md)도 사용할 수 있습니다.
+클라우드 게임 모드는 Windows, macOS, Linux, Android를 지원합니다. macOS / Linux 사용자는 소스 실행으로 사용할 수 있고, [Docker 배포](/assets/docs/Docker.md)도 사용할 수 있습니다. Android 사용자는 [Termux 안드로이드 배포](/assets/docs/Termux.md)를 참고하세요.
 
 > `클라우드 스타레일`을 켜면 개척력 소모, 일일 훈련, 차분 우주 같은 작업은 더 이상 고정된 게임 창을 요구하지 않습니다.
 >

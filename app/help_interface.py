@@ -75,7 +75,7 @@ th, td {
         try:
             with open(tutorial_file, 'r', encoding='utf-8') as file:
                 self.content = file.read().replace('/assets/docs/Background.md', 'https://m7a.top/#/assets/docs/Background').replace('/assets/docs/Docker.md',
-                                                                                                                                     'https://m7a.top/#/assets/docs/Docker').replace('/assets/docs/Workflow.md', 'https://m7a.top/#/assets/docs/Workflow')
+                                                                                                                                     'https://m7a.top/#/assets/docs/Docker').replace('/assets/docs/Termux.md', 'https://m7a.top/#/assets/docs/Termux').replace('/assets/docs/Workflow.md', 'https://m7a.top/#/assets/docs/Workflow')
                 self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
             sys.exit(1)
@@ -92,6 +92,7 @@ th, td {
         try:
             with open(workflow_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
+                self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
             sys.exit(1)
         self.workflow_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
@@ -310,7 +311,7 @@ a {
     def __initLayout(self):
         self.helpLabel.move(36, 30)
         self.pivot.move(40, 80)
-        
+
         self.stackedWidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.vBoxLayout.addWidget(self.stackedWidget, 1)
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
@@ -329,7 +330,7 @@ a {
         widget.setObjectName(objectName)
         widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         widget.document().setDocumentMargin(10)
-        
+
         custom_scrollbar_qss = """
             QTextBrowser {
                 background: transparent;
@@ -379,7 +380,7 @@ a {
             }
         """
         setCustomStyleSheet(widget, custom_scrollbar_qss, custom_scrollbar_qss)
-        
+
         self.stackedWidget.addWidget(widget)
         self.pivot.addItem(
             routeKey=objectName,

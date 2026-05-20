@@ -392,6 +392,9 @@ class PushSettingCardCode(CustomPushSettingCard):
 
     def _get_server(self):
         try:
+            # 如果云游戏启用，默认使用国服
+            if cfg.cloud_game_enable:
+                return 'cn'
             if sys.platform == 'win32':
                 from utils.registry.star_rail_setting import get_server_by_registry
                 server = get_server_by_registry()

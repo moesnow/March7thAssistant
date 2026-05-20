@@ -5,4 +5,5 @@
 - [更新日志](/assets/docs/Changelog.md)
 - [后台运行](/assets/docs/Background.md)
 - [Docker 部署](/assets/docs/Docker.md)
+- [Termux 安卓部署](/assets/docs/Termux.md)
 - [贡献指南](/CONTRIBUTING.md)

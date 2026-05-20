@@ -10,12 +10,13 @@
 | macOS | ❌ | ✅ |
 | Linux | ❌ | ✅ |
 | Docker | ❌ | ✅ |
+| Android (Termux) | ❌ | ✅ |
 
 ローカルゲームモードは Windows のみ対応です。PC クライアントを使用し、1920×1080 のウィンドウモードでゲームを実行してください。ウィンドウモードが使えない場合は全画面を使用します。
 
 ゲーム内言語は必ず簡体字中国語に設定してください。また、FPS 監視 HUD、MSI Afterburner、GamePP、HDR、NVIDIA ゲームフィルターなど、画面を覆ったり色味を変えたりするソフトは無効にしてください。
 
-クラウドゲームモードは Windows、macOS、Linux に対応しています。macOS / Linux ユーザーはソースから実行するか、[Docker デプロイ](/assets/docs/Docker.md) を利用できます。
+クラウドゲームモードは Windows、macOS、Linux、Android に対応しています。macOS / Linux ユーザーはソースから実行するか、[Docker デプロイ](/assets/docs/Docker.md) を利用できます。Android ユーザーは [Termux Android デプロイ](/assets/docs/Termux.md) を参照してください。
 
 > `クラウド・崩壊：スターレイル` を有効にすると、開拓力消化、デイリー訓練、差分宇宙などのタスクは固定ウィンドウを必要としなくなります。
 >

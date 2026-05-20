@@ -21,30 +21,37 @@ jobs:
     steps:
       # 签出代码
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: "false"
 
-      # 设置Python环境
-      - name: Set up python
-        uses: actions/setup-python@v4
+      # 设置 uv 和 Python 环境
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
         with:
-          python-version: "3.13.11"
-          cache: "pip"
+          version: "0.11.15"
+          python-version: "3.14.5"
+          enable-cache: true
+          cache-python: true
+          prune-cache: false
 
       # 安装依赖
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller==6.17.0
-          python build.py --task ocr
+          uv sync --group build
+          uv run python build.py --task ocr
 
-      # 生成程序
+      # 并行生成程序
       - name: Generate program
         run: |
-          pyinstaller --distpath '.\dist\' '.\March7th Assistant.spec' -y
-          pyinstaller --distpath '.\dist\' '.\March7th Launcher.spec' -y
-          pyinstaller --distpath '.\dist\March7thAssistant\' '.\March7th Updater.spec' -y
+          $p1 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Assistant.spec" -y' -PassThru -NoNewWindow
+          $p2 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Launcher.spec" -y' -PassThru -NoNewWindow
+          $p3 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist\March7thAssistant" ".\March7th Updater.spec" -y' -PassThru -NoNewWindow
+          $p1.WaitForExit(); $p2.WaitForExit(); $p3.WaitForExit()
+          if ($p1.ExitCode -ne 0 -or $p2.ExitCode -ne 0 -or $p3.ExitCode -ne 0) {
+            Write-Host "Exit codes: Assistant=$($p1.ExitCode) Launcher=$($p2.ExitCode) Updater=$($p3.ExitCode)"
+            exit 1
+          }
 
       # 移动资源到dist目录
       - name: Move assets to dist directory
@@ -63,11 +70,40 @@ jobs:
           .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\update.7z .\dist\update\
           Rename-Item -Path .\dist\update -NewName March7thAssistant
 
-      # 移动第三方库到dist目录
+      # 获取第三方库最新发布版本
+      - name: Get 3rdparty release tags
+        if: startsWith(github.ref, 'refs/tags/')
+        id: deps-tags
+        run: |
+          $asu = (gh api repos/moesnow/Auto_Simulated_Universe/releases/latest --jq '.tag_name' 2>$null)
+          $fhoe = (gh api repos/linruowuyin/Fhoe-Rail/releases/latest --jq '.tag_name' 2>$null)
+          $fps = (gh api repos/winTEuser/Genshin_StarRail_fps_unlocker/releases/latest --jq '.tag_name' 2>$null)
+          $buildHash = "${{ hashFiles('build.py', 'module/game/cloud.py') }}"
+          $hash = "${asu}-${fhoe}-${fps}-${buildHash}"
+          echo "hash=$hash" >> $env:GITHUB_OUTPUT
+          Write-Host "3rdparty cache key: $hash"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 缓存第三方库
+      - name: Restore 3rdparty cache
+        if: startsWith(github.ref, 'refs/tags/')
+        id: cache-3rdparty
+        uses: actions/cache@v5
+        with:
+          path: 3rdparty
+          key: 3rdparty-${{ steps.deps-tags.outputs.hash }}
+
+      # 下载第三方库（缓存未命中时）
+      - name: Download 3rdparty
+        if: startsWith(github.ref, 'refs/tags/') && steps.cache-3rdparty.outputs.cache-hit != 'true'
+        run: uv run python build.py --task all
+
+      # 生成日志并移动第三方库到dist目录
       - name: Move 3rdparty to dist directory
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          python build.py --task all -v "${{ github.ref_name }}" -o changelog_temp.md
+          uv run python build.py --task changelog -v "${{ github.ref_name }}" -o changelog_temp.md
           Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
 
@@ -82,7 +118,7 @@ jobs:
       # 创建GitHub发布
       - name: Create release
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: March7thAssistant ${{ github.ref_name }}

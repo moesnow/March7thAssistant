@@ -115,10 +115,10 @@ class UpdateThread(QThread):
             self.updateSignal.emit(UpdateStatus.FAILURE)
 
 
-def checkUpdate(self, timeout: int = 5, flag: bool = False):
+def checkUpdate(self, timeout: int = 5, flag: bool = False, silent: bool = False):
     """检查更新，并根据更新状态显示不同的信息或执行更新操作。"""
 
-    suppress_feedback = flag and not cfg.check_update
+    suppress_feedback = silent or (flag and not cfg.check_update)
 
     def open_update_window(
         assert_url: str,
@@ -225,6 +225,8 @@ def checkUpdate(self, timeout: int = 5, flag: bool = False):
     existing = getattr(self, "update_thread", None)
     if existing is not None:
         if existing.isRunning():
+            if suppress_feedback:
+                return
             InfoBar.warning(
                 title=tr("正在检测更新"),
                 content=tr("请稍候，更新检查仍在进行中"),

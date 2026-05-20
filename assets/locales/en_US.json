@@ -171,6 +171,9 @@
     "使用“云·星穹铁道”": "Use 'Cloud StarRail'",
     "开启后，将改用云·星穹铁道来执行清体力等自动化任务。无需固定窗口，可在后台运行。（模拟宇宙和锄大地仍需保持窗口全屏）": "Enable to use Cloud StarRail for automation. Runs in background. (Simulated Universe and Fhoe-Rail still need full screen)",
     "全屏运行": "Run Fullscreen",
+    "使用付费时长": "Use Paid Time",
+    "打开后可在使用云游戏时使用付费时长免除排队": "Enable to use paid time for cloud gaming to skip queue",
+    "当前账号付费时间不足，已切换为免费时间。": "Insufficient paid time on current account, switched to free time.",
     "最大排队等待时间（分钟）": "Max Queue Wait Time (Minutes)",
     "浏览器类型": "Browser Type",
     "建议保持默认的“集成（Chrome For Testing）”效果最好": "Recommended to keep default 'Integrated (Chrome For Testing)'",
@@ -927,6 +930,8 @@
     "可选参数，自定义 Telegram API 地址，例如 api.telegram.org": "Optional: custom Telegram API URL, e.g. api.telegram.org",
     "代理配置": "Proxy settings",
     "可选参数，例如 127.0.0.1:10808 或 socks5://127.0.0.1:1080，不填则使用系统 PAC 代理": "Optional: e.g. 127.0.0.1:10808 or socks5://127.0.0.1:1080. If empty, use system PAC proxy",
+    "话题 ID": "Topic ID",
+    "可选参数，开启 Topics 功能的群组需要填写对应的话题 ID": "Optional: required for groups with Topics enabled, fill in the corresponding topic ID",
     "适用于 Matrix 协议": "For Matrix protocol",
     "服务器地址": "Server URL",
     "服务器地址，例如 https://matrix.org": "Server URL, e.g. https://matrix.org",
@@ -961,6 +966,8 @@
     "可选参数：1 归档，0 不归档": "Optional: 1 = archive, 0 = do not archive",
     "提示音": "Sound",
     "可选参数，自定义提示音名称": "Optional: custom sound name",
+    "跳转链接": "Jump URL",
+    "可选参数，通知点击后跳转的 URL": "Optional: notification click-through URL",
     "服务地址": "Service URL",
     "可选参数，自定义 Bark 服务的 URL": "Optional: custom Bark service URL",
     "复制内容": "Copy content",
@@ -1020,6 +1027,7 @@
     "应用 AgentId": "App AgentId",
     "接收用户": "Recipients",
     "可选参数，接收用户，@all 表示全员": "Optional: recipient users, @all means everyone",
+    "可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制": "Optional: custom WeCom API URL for reverse proxy to bypass trusted IP restrictions",
     "Gotify 私有通知服务": "Gotify self-hosted notification service",
     "Gotify 服务器 URL，例如 https://gotify.example.com": "Gotify server URL, e.g. https://gotify.example.com",
     "Gotify 应用的 Access Token": "Gotify app access token",
@@ -1443,5 +1451,6 @@
     "剩余 {days} 天": "{days} days remaining",
     "CDK 有效 (＾∀＾●)": "CDK Valid (＾∀＾●)",
     "今天到期": "Expires today",
-    "CDK 验证失败 (╥╯﹏╰╥)": "CDK Validation Failed (╥╯﹏╰╥)"
+    "CDK 验证失败 (╥╯﹏╰╥)": "CDK Validation Failed (╥╯﹏╰╥)",
+    "不存在的翻译": ""
 }
