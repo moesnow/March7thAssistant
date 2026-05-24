@@ -163,6 +163,12 @@ class Instance:
                 if auto.find_element(instance_name, "text", max_retries=1, include=True, crop=(591.0 / 1920, 98.0 / 1080, 594.0 / 1920, 393.0 / 1080)):
                     success = True
                     break
+
+                if auto.find_element("是否切换", "text", max_retries=1, include=True):
+                    log.info("检测到切换角色视角提示，尝试点击确认")
+                    auto.click_element("确认", "text", include=True)
+                    time.sleep(0.5)
+
                 time.sleep(2)
         else:
             while time.monotonic() - start_time < timeout:
@@ -176,6 +182,11 @@ class Instance:
                         auto.click_element("不再弹出", "text", include=True)
                         time.sleep(0.5)
                         auto.click_element("确认", "text", include=True)
+
+                if auto.find_element("是否切换", "text", max_retries=1, include=True):
+                    log.info("检测到切换角色视角提示，尝试点击确认")
+                    auto.click_element("确认", "text", include=True)
+                    time.sleep(0.5)
 
                 time.sleep(2)
         if not success:
