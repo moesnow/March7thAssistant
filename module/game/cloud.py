@@ -125,7 +125,7 @@ class CloudGameController(GameControllerBase):
 
         atexit.register(self._clean_at_exit)
 
-    def _wait_game_page_loaded(self, timeout=5) -> None:
+    def _wait_game_page_loaded(self, timeout=30) -> None:
         """等待云崩铁网页加载出来，这里以背景图是否加载出来为准"""
         if not self.driver:
             return
