@@ -73,3 +73,18 @@ class TestTrie:
         trie.insert("application", 3)
         result = trie.items("app")
         assert len(result) == 3
+
+    def test_get_none_value_is_indistinguishable_from_missing(self):
+        trie = Trie()
+        trie.insert("hello", None)
+        assert trie.get("hello") is None
+        assert trie.get("missing") is None
+
+    def test_items_empty_prefix_returns_all(self):
+        trie = Trie()
+        trie.insert("hello", 1)
+        trie.insert("world", 2)
+        result = trie.items("")
+        assert len(result) == 2
+        assert ("hello", 1) in result
+        assert ("world", 2) in result
