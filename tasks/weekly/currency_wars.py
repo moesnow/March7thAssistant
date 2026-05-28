@@ -2023,7 +2023,7 @@ class CurrencyWars:
         购买经验
         """
         if cfg.currencywars_strategy == "aglaea" and self.current_level == 9:
-            log.info("当前等级9，策略为阿格莱亚，跳过购买经验")
+            log.info("当前等级9，策略为阿格莱雅，跳过购买经验")
             return
         if cfg.currencywars_strategy == "seele":
             if not self.has_seele and self.current_level >= 6:
@@ -2044,7 +2044,7 @@ class CurrencyWars:
                 log.debug(f"缓存角色等级信息: 当前等级 {self.current_level}")
 
             if cfg.currencywars_strategy == "aglaea" and self.current_level == 9:
-                log.info("当前等级9，策略为阿格莱亚，跳过购买经验")
+                log.info("当前等级9，策略为阿格莱雅，跳过购买经验")
                 break
             if cfg.currencywars_strategy == "seele":
                 if not self.has_seele and self.current_level >= 6:
