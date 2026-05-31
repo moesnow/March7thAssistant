@@ -628,6 +628,10 @@ notify_kook_token: "" # KOOK 机器人的 Token。
 notify_kook_target_id: "" # 接收消息的目标ID（用户ID或频道ID）。
 notify_kook_chat_type: "1" # 可选参数，消息类型，"1" 表示私聊，"9" 表示频道聊天，默认为 "1"。
 
+# MeoW 配置
+notify_meow_enable: false
+notify_meow_nickname: ""
+
 # Webhook 通知配置
 # 支持发送截图，支持自定义HTTP请求方法、Headers和Body
 # 如果不配置 notify_webhook_method、notify_webhook_headers、notify_webhook_body，则默认使用POST方法发送JSON格式数据 {title, content}
@@ -647,10 +651,6 @@ notify_custom_datatype: "" # 数据类型 [data/json], onebot 请输入 json,默
 notify_custom_image: "" #可选参数, 图片将转换为 base64 格式, onebot请参考 {type: image, data: {file: 'base64://{image}'}}
 # 如果 datatype 为 json,请确保 data 为准确的 json 格式,如果 datatype 为 data 则直接输出, json类型时 {message} 将会替换为 title+"\n"+content
 notify_custom_data: "" #onebot 请参考{user_id: 114514, message_type: private, message: [{type: text,data: {text: '{message}'}}]}
-
-# MeoW 配置
-notify_meow_enable: false
-notify_meow_nickname: ""
 
 # 遥测配置
 telemetry_enable: true # 是否启用匿名使用数据收集，帮助改进程序。true 开启，false 关闭。

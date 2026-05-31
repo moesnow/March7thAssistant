@@ -1021,7 +1021,7 @@ class LogInterface(ScrollArea):
             env.insert("MARCH7TH_GUI_STARTED", "1")
             # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
             try:
-                _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH']
+                _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QT_QPA_FONTDIR']
                 for rk in _remove_keys:
                     if env.contains(rk):
                         env.remove(rk)
@@ -1157,7 +1157,7 @@ class LogInterface(ScrollArea):
         env.insert("MARCH7TH_GUI_STARTED", "true")  # 标记为图形界面启动
         # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
         try:
-            _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH']
+            _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QT_QPA_FONTDIR']
             for rk in _remove_keys:
                 if env.contains(rk):
                     env.remove(rk)

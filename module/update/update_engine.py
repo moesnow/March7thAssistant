@@ -29,6 +29,9 @@ FILE_COMPARE_CHUNK_SIZE = 64 * 1024
 def build_independent_process_env() -> dict[str, str]:
     env = os.environ.copy()
     env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
+    # 避免 Qt 环境变量干扰重启后的主程序
+    for _qt_key in ('QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QML2_IMPORT_PATH', 'QT_QPA_FONTDIR'):
+        env.pop(_qt_key, None)
     return env
 
 

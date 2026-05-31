@@ -2,6 +2,7 @@
 from typing import Union, List
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon
+from PySide6.QtWidgets import QWidget
 from qfluentwidgets import ExpandSettingCard, FluentIconBase, SwitchButton, IndicatorPosition, SettingCard, ComboBox, PrimaryPushButton, PushButton
 from module.localization import tr, instance_display_to_raw
 from .switchsettingcard1 import build_timestamp_content
@@ -60,6 +61,18 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
     def getSwitchState(self) -> bool:
         """Get current switch state"""
         return self.switchButton.isChecked()
+
+    def insertWidgetBeforeSwitch(self, widget: QWidget):
+        """在开关按钮之前插入控件"""
+        layout = self.card.hBoxLayout
+        # 找到开关按钮的位置
+        for i in range(layout.count()):
+            item = layout.itemAt(i)
+            if item and item.widget() == self.switchButton:
+                # 在开关按钮之前插入控件
+                layout.insertWidget(i, widget)
+                layout.insertSpacing(i + 1, 10)
+                break
 
     def addSettingCard(self, card: SettingCard):
         """添加子设置卡片到可展开区域"""

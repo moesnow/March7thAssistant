@@ -13,8 +13,10 @@ class TestBuildIndependentProcessEnv:
     def test_inherits_current_env(self):
         import os
         env = build_independent_process_env()
-        # 应该包含当前环境变量
-        assert len(env) >= len(os.environ)
+        qt_keys = {'QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QML2_IMPORT_PATH', 'QT_QPA_FONTDIR'}
+        removed = qt_keys & os.environ.keys()
+        # 应该包含当前环境变量（减去被清理的 Qt key）加上 PYINSTALLER_RESET_ENVIRONMENT
+        assert len(env) >= len(os.environ) - len(removed)
 
 
 class TestShouldEmitCoverProgress:

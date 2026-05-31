@@ -206,6 +206,11 @@ if __name__ == "__main__":
     # 设置应用属性，必须在创建 QApplication 之前调用
     QApplication.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
 
+    # 避免用户环境中已有的 Qt 环境变量干扰打包后的 Qt 插件加载
+    if getattr(sys, 'frozen', False):
+        for _qt_key in ('QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QML2_IMPORT_PATH', 'QT_QPA_FONTDIR'):
+            os.environ.pop(_qt_key, None)
+
     app = QApplication(sys.argv)
 
     # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server

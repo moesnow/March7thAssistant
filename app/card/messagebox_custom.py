@@ -1,9 +1,10 @@
 from PySide6.QtCore import Qt, QUrl, QSize
-from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter
+from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox, SimpleCardWidget)
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox, SimpleCardWidget,
+                            TextBrowser, setCustomStyleSheet)
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from module.config import cfg
@@ -256,6 +257,123 @@ class MessageBoxHtmlUpdate(MessageBox):
 
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
+
+
+class MessageBoxTutorial(MessageBox):
+    """通知方式配置教程对话框"""
+
+    def __init__(self, title: str, tutorial_html: str, parent=None):
+        super().__init__(title, "", parent)
+
+        self.textLayout.removeWidget(self.contentLabel)
+        self.contentLabel.clear()
+
+        self.yesButton.setText(tr('关闭'))
+        self.cancelButton.setHidden(True)
+
+        self.buttonGroup.setMinimumWidth(580)
+        self.setMinimumWidth(620)
+
+        # 教程样式
+        tutorial_style = """
+        <style>
+        body {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        h3 {
+            color: #f18cb9;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+        h4 {
+            margin-top: 12px;
+            margin-bottom: 4px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+        a {
+            color: #f18cb9;
+            font-weight: bold;
+        }
+        code {
+            background-color: rgba(128, 128, 128, 0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: Consolas, Monaco, monospace;
+        }
+        ol, ul {
+            margin-left: 20px;
+            margin-top: 4px;
+            margin-bottom: 4px;
+        }
+        li {
+            margin-bottom: 4px;
+        }
+        .tip {
+            background-color: rgba(241, 140, 185, 0.1);
+            border-left: 3px solid #f18cb9;
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .warning {
+            background-color: rgba(255, 183, 77, 0.1);
+            border-left: 3px solid #ffb74d;
+            padding: 8px 12px;
+            margin: 8px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        </style>
+        """
+
+        # 根据主题调整样式
+        if isDarkTheme():
+            tutorial_style = tutorial_style.replace("border-bottom: 1px solid #eee;", "border-bottom: 1px solid #444;")
+
+        full_html = tutorial_style + tutorial_html
+
+        # 创建 TextBrowser 显示教程
+        self.tutorialBrowser = TextBrowser(self)
+        self.tutorialBrowser.setText(full_html)
+        self.tutorialBrowser.setOpenExternalLinks(True)
+        self.tutorialBrowser.anchorClicked.connect(self._open_url)
+        self.tutorialBrowser.setMinimumHeight(400)
+        self.tutorialBrowser.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+
+        # 自定义滚动条样式
+        custom_scrollbar_qss = """
+            QTextBrowser {
+                background: transparent;
+                border: none;
+                selection-background-color: #f18cb9;
+            }
+            QScrollBar:vertical {
+                background: transparent;
+                width: 10px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background: rgba(128, 128, 128, 150);
+                border-radius: 4px;
+                min-height: 30px;
+                margin: 2px 1px 2px 1px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: rgba(128, 128, 128, 200);
+            }
+            QScrollBar::add-line:vertical,
+            QScrollBar::sub-line:vertical {
+                height: 0px;
+                background: transparent;
+            }
+        """
+        setCustomStyleSheet(self.tutorialBrowser, custom_scrollbar_qss, custom_scrollbar_qss)
+
+        self.textLayout.addWidget(self.tutorialBrowser, 1, Qt.AlignmentFlag.AlignTop)
+
+    def _open_url(self, url):
+        QDesktopServices.openUrl(url)
 
 
 class MessageBoxUpdate(MessageBoxHtmlUpdate):
