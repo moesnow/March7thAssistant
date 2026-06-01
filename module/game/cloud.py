@@ -440,6 +440,101 @@ class CloudGameController(GameControllerBase):
         if self.driver:
             self.driver.refresh()
             self._wait_game_page_loaded()
+            self._install_cloud_ping_fallback()
+
+    def _install_cloud_ping_fallback(self) -> None:
+        """Repair empty cloud-game ping results caused by headless timeout."""
+        if not self.driver:
+            return
+        try:
+            self.driver.execute_script("""
+                (() => {
+                    if (window.__m7aCloudPingFallbackInstalled) return;
+                    window.__m7aCloudPingFallbackInstalled = true;
+
+                    const state = { pingServers: [] };
+
+                    function rememberPingServers(text) {
+                        try {
+                            const payload = JSON.parse(text);
+                            const servers = payload && payload.data && payload.data.ping_svr;
+                            if (Array.isArray(servers) && servers.length > 0) {
+                                state.pingServers = servers;
+                            }
+                        } catch (_) {}
+                    }
+
+                    function buildPingResults() {
+                        return state.pingServers.map((server, index) => ({
+                            ping_server_id: server.ping_server_id || "",
+                            node_id: server.node_id || "",
+                            display_name: server.display_name || "",
+                            region_id: server.region_id || "",
+                            province_id: String(server.province_id || ""),
+                            isp_type: server.isp_type || 0,
+                            rtt: 20 + index * 5,
+                            loss_rate: 0,
+                            jitter: 0,
+                            out_of_order: 0
+                        }));
+                    }
+
+                    function repairGetNodesInfoBody(url, body) {
+                        if (!String(url || "").includes("/dispatcher/api/getNodesInfo")) return body;
+                        if (typeof body !== "string" || state.pingServers.length === 0) return body;
+                        try {
+                            const payload = JSON.parse(body);
+                            const node = JSON.parse(payload.node || "{}");
+                            if (Array.isArray(node.ping_results) && node.ping_results.length > 0) return body;
+
+                            node.bandwidth = Number(node.bandwidth) || 20;
+                            node.ping_results = buildPingResults();
+                            payload.node = JSON.stringify(node);
+                            console.info("[M7A] repaired empty cloud ping_results", node.ping_results.length);
+                            return JSON.stringify(payload);
+                        } catch (_) {
+                            return body;
+                        }
+                    }
+
+                    if (window.fetch) {
+                        const originalFetch = window.fetch;
+                        window.fetch = function(input, init) {
+                            const url = typeof input === "string" ? input : input && input.url;
+                            if (init && init.body) {
+                                init = Object.assign({}, init, {
+                                    body: repairGetNodesInfoBody(url, init.body)
+                                });
+                            }
+                            return originalFetch.call(this, input, init).then((response) => {
+                                if (String(url || "").includes("/dispatcher/api/listPingServer")) {
+                                    response.clone().text().then(rememberPingServers).catch(() => {});
+                                }
+                                return response;
+                            });
+                        };
+                    }
+
+                    const originalOpen = XMLHttpRequest.prototype.open;
+                    const originalSend = XMLHttpRequest.prototype.send;
+                    XMLHttpRequest.prototype.open = function(method, url) {
+                        this.__m7aRequestUrl = url;
+                        return originalOpen.apply(this, arguments);
+                    };
+                    XMLHttpRequest.prototype.send = function(body) {
+                        const url = this.__m7aRequestUrl || "";
+                        if (String(url).includes("/dispatcher/api/listPingServer")) {
+                            this.addEventListener("readystatechange", () => {
+                                if (this.readyState === 4) rememberPingServers(this.responseText);
+                            });
+                        }
+                        return originalSend.call(this, repairGetNodesInfoBody(url, body));
+                    };
+                })();
+            """)
+            self.log_debug("已安装云游戏网络测速兜底补丁")
+        except Exception as e:
+            self.log_debug(f"安装云游戏网络测速兜底补丁失败: {e}")
 
     def _get_remaining_playtime(self) -> tuple[int | None, int | None]:
         """
@@ -503,6 +598,7 @@ class CloudGameController(GameControllerBase):
             if self.driver.find_elements(By.CSS_SELECTOR, game_selector):
                 self.log_info("已在游戏中")
                 return
+            self._install_cloud_ping_fallback()
             guide_close_btn = self.driver.find_elements(By.CSS_SELECTOR, guide_close_selector)
             if guide_close_btn:
                 # 先关闭 “保存网页地址，下次可一键游玩” 引导弹窗，避免遮挡后续游戏画面
@@ -540,12 +636,15 @@ class CloudGameController(GameControllerBase):
         select_queue_selector = "[aria-labelledby*='请选择排队队列']"
 
         try:
-            # 检查是否需要排队
-            status = WebDriverWait(self.driver, 10).until(
+            # The cloud page can sit on its generic loading screen for longer
+            # than Selenium's default ten seconds before it shows a queue/game
+            # element, especially in Docker software-rendering mode.
+            status = WebDriverWait(self.driver, timeout).until(
                 lambda d: d.execute_script("""
                     if (document.querySelector(arguments[0])) return "game_running";
                     else if (document.querySelector(arguments[1])) return "in_queue";
                     else if (document.querySelector(arguments[2])) return "select_queue";
+                    else if (document.body && document.body.innerText.includes("加载中")) return false;
                     else return null;
                 """, cloud_game_selector, in_queue_selector, select_queue_selector)
             )
