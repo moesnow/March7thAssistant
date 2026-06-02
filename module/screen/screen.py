@@ -117,8 +117,7 @@ class Screen(metaclass=SingletonMeta):
         处理自动重试逻辑，包括按ESC键和处理特定的异常情况。
         """
         self._warn_overlay_monitor_text_if_needed()
-        if auto.find_element("稍后再看", "text", take_screenshot=False):
-            auto.click_element("稍后再看", "text", take_screenshot=False)
+        if auto.click_element("稍后再看", "text", take_screenshot=False):
             self.logger.info("检测到开拓任务前情提要弹窗，已点击稍后再看")
         else:
             auto.press_key("esc")
