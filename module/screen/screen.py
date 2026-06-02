@@ -118,7 +118,10 @@ class Screen(metaclass=SingletonMeta):
         """
         self._warn_overlay_monitor_text_if_needed()
         self.logger.warning("未识别出任何界面，请确保游戏画面干净，按ESC后重试")
-        auto.press_key("esc")
+        if auto.find_element("稍后再看", "text", take_screenshot=False):
+            auto.click_element("稍后再看", "text", take_screenshot=False)
+        else:
+            auto.press_key("esc")
         time.sleep(2)  # 等待屏幕变化
 
         auto.take_screenshot()
