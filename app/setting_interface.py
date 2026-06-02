@@ -2405,12 +2405,6 @@ class SettingInterface(ScrollArea):
             "",
             "check_update"
         )
-        self.updateFullEnableCard = SwitchSettingCard1(
-            FIF.GLOBE,
-            tr('更新时下载完整包'),
-            tr("更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。"),
-            "update_full_enable"
-        )
         self.updateDownloadProxyCard = PushSettingCardStr(
             tr('修改'),
             FIF.GLOBE,
@@ -2676,7 +2670,6 @@ class SettingInterface(ScrollArea):
         self.AboutGroup.addSettingCard(self.updateSourceCard)
         self.updateSourceCard.addSettingCards([
             self.checkUpdateCard,
-            self.updateFullEnableCard,
             self.updateDownloadProxyCard
         ])
         self.AboutGroup.addSettingCard(self.mirrorchyanCdkCard)

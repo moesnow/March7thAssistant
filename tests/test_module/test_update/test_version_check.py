@@ -59,29 +59,30 @@ class TestNormalizeSha256:
 
 
 class TestPickAsset:
-    def test_pick_full(self):
+    def test_pick_full_by_filename(self):
         assets = [
-            {"browser_download_url": "https://example.com/app.zip"},
-            {"browser_download_url": "https://example.com/app-full.zip"},
+            {"browser_download_url": "https://example.com/app.zip", "name": "app.zip"},
+            {"browser_download_url": "https://example.com/app-full.zip", "name": "app-full.zip"},
         ]
-        result = pick_asset(assets, full=True)
+        result = pick_asset(assets, file_name="full")
         assert result is not None
         assert "full" in result["browser_download_url"]
 
-    def test_pick_not_full(self):
+    def test_pick_patch_by_filename(self):
         assets = [
-            {"browser_download_url": "https://example.com/app-full.zip"},
-            {"browser_download_url": "https://example.com/app.zip"},
+            {"browser_download_url": "https://example.com/app.zip", "name": "app.zip"},
+            {"browser_download_url": "https://example.com/patch_from_v1_to_v2", "name": "patch_from_v1_to_v2"},
         ]
-        result = pick_asset(assets, full=False)
+        result = pick_asset(assets, file_name="patch_from_v1_to_v2")
         assert result is not None
-        assert "full" not in result["browser_download_url"]
+        assert result["name"] == "patch_from_v1_to_v2"
 
     def test_empty_assets(self):
-        assert pick_asset([], full=True) is None
+        assert pick_asset([], file_name="full") is None
 
     def test_no_match(self):
         assets = [
-            {"browser_download_url": "https://example.com/app.zip"},
+            {"browser_download_url": "https://example.com/app.zip", "name": "app.zip"},
         ]
-        assert pick_asset(assets, full=True) is None
+        assert pick_asset(assets, file_name="full") is None
+        assert pick_asset(assets, file_name="patch_from_v1_to_v2") is None

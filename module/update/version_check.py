@@ -34,6 +34,9 @@ class UpdateInfo:
     sha256: str = ""      # 下载文件 SHA-256（如果更新源提供）
     release_note: str = ""   # 更新日志（Markdown）
     html_url: str = ""       # 发布页面 URL（仅 GitHub 来源有值）
+    patch_url: str = ""      # 增量补丁下载链接
+    patch_name: str = ""     # 增量补丁文件名
+    patch_sha256: str = ""   # 增量补丁 SHA-256
 
 
 class VersionCheckError(RuntimeError):
@@ -140,13 +143,11 @@ def _find_fastest_api(
     return urls[0]
 
 
-def pick_asset(assets: list[dict], full: bool = True) -> dict | None:
+def pick_asset(assets: list[dict], file_name: str = "full") -> dict | None:
     """从 release assets 中挑选匹配的资源对象。"""
     for asset in assets:
-        url = asset.get("browser_download_url", "")
-        if full and "full" in url:
-            return asset
-        if not full and "full" not in url:
+        name = asset.get("name", "")
+        if file_name in name:
             return asset
     return None
 
@@ -290,7 +291,6 @@ def validate_mirrorchyan_cdk(
 def _check_github(
     prerelease: bool,
     current_version: str,
-    full: bool = True,
     proxies: dict[str, str] | None = None,
 ) -> UpdateInfo | None:
     """通过 GitHub API 检测更新。
@@ -316,13 +316,26 @@ def _check_github(
         log.info(f"GitHub 确认已是最新版本: {current_version}")
         return None
 
-    asset = pick_asset(release.get("assets", []), full=full)
-    if not asset:
+    # 选取完整包
+    full_asset = pick_asset(release.get("assets", []), file_name="full")
+    if not full_asset:
         raise VersionCheckError(tr("没有找到合适的下载URL"))
 
-    download_url = asset.get("browser_download_url", "")
-    file_name = asset.get("name") or download_url.rsplit("/", 1)[-1]
-    sha256 = normalize_sha256(asset.get("digest") or asset.get("sha256"))
+    download_url = full_asset.get("browser_download_url", "")
+    file_name = full_asset.get("name") or download_url.rsplit("/", 1)[-1]
+    sha256 = normalize_sha256(full_asset.get("digest") or full_asset.get("sha256"))
+
+    # 选取增量补丁（如果存在）
+    patch_url = ""
+    patch_name = ""
+    patch_sha256 = ""
+    patch_asset = pick_asset(release.get("assets", []),
+                             file_name=f"patch_from_{current_version}_to_{version}")
+    if patch_asset:
+        patch_url = patch_asset.get("browser_download_url", "")
+        patch_name = patch_asset.get("name", "")
+        patch_sha256 = normalize_sha256(patch_asset.get("digest") or patch_asset.get("sha256"))
+
     log.info(f"GitHub 发现新版本: {version}")
     return UpdateInfo(
         source="GitHub",
@@ -332,6 +345,9 @@ def _check_github(
         sha256=sha256,
         release_note=release.get("body", ""),
         html_url=release.get("html_url", ""),
+        patch_url=patch_url,
+        patch_name=patch_name,
+        patch_sha256=patch_sha256,
     )
 
 
@@ -341,7 +357,6 @@ def check_for_update(
     source: str = "GitHub",
     cdk: str = "",
     prerelease: bool = False,
-    full: bool = True,
     mirrorchyan_fallback: bool = True,
 ) -> UpdateInfo | None:
     """检测更新的统一入口。
@@ -352,7 +367,6 @@ def check_for_update(
         source: "GitHub" 或 "MirrorChyan"
         cdk: Mirror酱 CDK 密钥
         prerelease: 是否检测公测版
-        full: 是否优先下载完整包
         mirrorchyan_fallback: Mirror酱 失败时是否回退到 GitHub（默认 True）
 
     Returns:
@@ -384,6 +398,6 @@ def check_for_update(
             log.warning(f"Mirror酱 检测失败，回退到 GitHub: {e}")
 
     # GitHub（含 source == "GitHub" 或 Mirror酱 失败的回退）
-    result = _check_github(prerelease, current_version, full, request_proxies)
+    result = _check_github(prerelease, current_version, request_proxies)
     log.debug(f"GitHub 检测结果: {result}")
     return result

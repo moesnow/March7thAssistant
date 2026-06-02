@@ -444,7 +444,6 @@ banner_path: ./assets/app/images/bg37.jpg # 背景图片路径
 redemption_code: [] # 兑换码列表
 already_used_codes: [] # 已使用兑换码列表
 update_prerelease_enable: false # 是否加入预览版更新渠道。true 加入，false 不加入。
-update_full_enable: true # 更新时是否下载完整包。true 下载，false 不下载。
 auto_update: false
 
 update_source: GitHub # 更新源，可选值："GitHub"（海外源）, "MirrorChyan"（Mirror 酱）

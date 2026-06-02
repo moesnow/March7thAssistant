@@ -124,6 +124,7 @@ class UpdateEngine:
         self.cover_folder_path = os.path.abspath("./")
         self.exe_path = os.path.abspath("./assets/binary/7za.exe")
         self.aria2_path = os.path.abspath("./assets/binary/aria2c.exe")
+        self.hpatchz_path = os.path.abspath("./assets/binary/hpatchz.exe")
 
         # 更新包信息
         self.download_url: str | None = None
@@ -164,9 +165,12 @@ class UpdateEngine:
         )
         self._log("debug", f"设置本地更新包: {file_name}")
 
-    def set_update_info(self, info: UpdateInfo):
+    def set_update_info(self, info: UpdateInfo, is_patch: bool = True):
         """从 UpdateInfo（check_for_update 的结果）设置更新包。"""
-        self.set_package(info.url, info.file_name, info.sha256)
+        if is_patch and info.patch_url:
+            self.set_package(info.patch_url, info.patch_name, info.patch_sha256)
+        else:
+            self.set_package(info.url, info.file_name, info.sha256)
 
     # ── 版本与更新检测 ───────────────────────────────────────────────
 
@@ -183,7 +187,6 @@ class UpdateEngine:
         source: str = "GitHub",
         cdk: str = "",
         prerelease: bool = False,
-        full: bool = True,
     ) -> str | None:
         """检测更新并自动设置更新包信息。
 
@@ -191,7 +194,7 @@ class UpdateEngine:
         """
         self._log("info", tr("开始检测更新"))
         try:
-            info = check_for_update(source, cdk, prerelease, full)
+            info = check_for_update(source, cdk, prerelease)
         except Exception as e:
             self._log("error", f"{tr('检测更新失败')}: {e}")
             raise UpdateError(tr("检测更新失败")) from e
@@ -202,7 +205,7 @@ class UpdateEngine:
 
         self.set_update_info(info)
         self._log("info", f"{tr('发现新版本')}: {info.version} ({info.source})")
-        return info.url
+        return self.download_url
 
     # ── 进度与日志 ───────────────────────────────────────────────────
 
@@ -433,6 +436,89 @@ class UpdateEngine:
 
         self._cleanup_self_backup()
         self._emit_progress(UpdateStage.DONE, tr("更新完成"), 1, 1)
+
+    # ── 尝试增量更新 ─────────────────────────────────────────────────────
+
+    def try_incremental_update(self, wait_pid: int | None = None) -> bool:
+        '''尝试使用增量补丁更新。返回 True 表示成功应用增量更新，False 表示无法使用增量更新。'''
+        if not self.download_url:
+            return False
+
+        self._log("info", "尝试增量更新...")
+        self.download_with_progress()
+        try:
+            self.wait_for_process_exit(wait_pid)
+            self.terminate_processes()
+
+            if not self._release_self_lock():
+                self._restore_self_lock()
+                return False
+
+            cmd = [self.hpatchz_path, "-f", self.cover_folder_path, self.download_file_path, self.cover_folder_path]
+            result = subprocess.run(cmd, check=False, timeout=300)
+            if result.returncode != 0:
+                self._log("error", f"hpatchz 失败，退出码: {result.returncode}")
+                os.remove(self.download_file_path)
+                self._restore_self_lock()
+                return False
+
+            self._log("info", "增量补丁应用成功")
+            self.cleanup()
+            self.launch_application()
+            return True
+        except Exception as e:
+            self._log("warning", f"增量更新失败: {e}")
+            self._restore_self_lock()
+            return False
+
+    def _release_self_lock(self) -> bool:
+        """重命名自身 exe 以释放文件锁，使 hpatchz 可以覆盖当前运行的程序。"""
+        self_path = sys.argv[0]
+        if not self_path or not os.path.exists(self_path):
+            return True
+        root, ext = os.path.splitext(self_path)
+        backup = f"{root}.old{ext}"
+        if os.path.exists(backup):
+            os.remove(backup)
+        try:
+            os.rename(self_path, backup)
+        except Exception as e:
+            self._log("error", f"重命名自身失败: {e}")
+            return False
+        try:
+            shutil.copy2(backup, self_path)
+        except Exception as e:
+            self._log("error", f"复制自身备份失败: {e}")
+            return False
+        self.self_backup_path = backup
+        return True
+
+    def _restore_self_lock(self):
+        """撤销 _release_self_lock：删副本，将 .old 重命名回原位。"""
+        self_path = sys.argv[0]
+        root, ext = os.path.splitext(self_path)
+        os.remove(self_path)
+        os.rename(f"{root}.old{ext}", self_path)
+        self.self_backup_path = None
+
+    def try_apply_patch(self, patch_file_path: str) -> bool:
+        """对已下载的补丁文件执行 hpatchz。
+        调用方负责：等主程序退出、杀进程、cleanup + launch。
+        返回 True 表示补丁应用成功。"""
+        self.download_file_path = patch_file_path
+        if not self._release_self_lock():
+            self._restore_self_lock()
+            return False
+        cmd = [self.hpatchz_path, "-f", self.cover_folder_path,
+               patch_file_path, self.cover_folder_path]
+        result = subprocess.run(cmd, check=False, timeout=300)
+        if result.returncode != 0:
+            self._log("error", f"hpatchz 失败，退出码: {result.returncode}")
+            os.remove(self.download_file_path)
+            self._restore_self_lock()
+            return False
+        self._log("info", "补丁应用成功")
+        return True
 
     # ── 流程编排 ─────────────────────────────────────────────────────
 

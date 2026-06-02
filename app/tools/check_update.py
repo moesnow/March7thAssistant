@@ -53,6 +53,9 @@ class UpdateThread(QThread):
         self.mirrorchyan_assert_url = ""
         self.mirrorchyan_assert_name = ""
         self.mirrorchyan_assert_sha256 = ""
+        self.patch_url = ""
+        self.patch_name = ""
+        self.patch_sha256 = ""
         self.html_url = ""
 
     def run(self):
@@ -60,15 +63,14 @@ class UpdateThread(QThread):
             source = cfg.update_source
             cdk = cfg.mirrorchyan_cdk
             prerelease = cfg.update_prerelease_enable
-            full = cfg.update_full_enable or source == "MirrorChyan"
 
             # 始终先请求 GitHub，获取 html_url、更新日志等信息
-            github_info = check_for_update("GitHub", prerelease=prerelease, full=full)
+            github_info = check_for_update("GitHub", prerelease=prerelease)
 
             # 如果用户配置了 Mirror酱，再请求 Mirror酱
             if source == "MirrorChyan" and cdk:
                 try:
-                    mirror_info = check_for_update("MirrorChyan", cdk, prerelease, full=full, mirrorchyan_fallback=False)
+                    mirror_info = check_for_update("MirrorChyan", cdk, prerelease, mirrorchyan_fallback=False)
                 except Exception as e:
                     # Mirror酱 请求失败，直接报错，不回落到 GitHub
                     self.error_msg = str(e)
@@ -95,6 +97,9 @@ class UpdateThread(QThread):
             self.github_assert_url = github_info.url
             self.github_assert_name = github_info.file_name
             self.github_assert_sha256 = github_info.sha256
+            self.patch_url = github_info.patch_url
+            self.patch_name = github_info.patch_name
+            self.patch_sha256 = github_info.patch_sha256
             self.html_url = github_info.html_url
             self.version = github_info.version
 
@@ -125,12 +130,16 @@ def checkUpdate(self, timeout: int = 5, flag: bool = False, silent: bool = False
         assert_name: str,
         assert_sha256: str,
         message_box,
+        patch_url: str = "",
+        patch_name: str = "",
+        patch_sha256: str = "",
     ):
         from module.update.update_window import show_update_window
 
         message_box.reject()
         main_window = self.window() if hasattr(self, "window") else self
-        show_update_window(main_window, assert_url, assert_name, assert_sha256)
+        show_update_window(main_window, assert_url, assert_name, assert_sha256,
+                          patch_url, patch_name, patch_sha256)
 
     def handle_update(status: UpdateStatus):
         main_window = self.window() if hasattr(self, "window") else self
@@ -159,6 +168,9 @@ def checkUpdate(self, timeout: int = 5, flag: bool = False, silent: bool = False
                     self.update_thread.github_assert_name,
                     self.update_thread.github_assert_sha256,
                     message_box,
+                    self.update_thread.patch_url,
+                    self.update_thread.patch_name,
+                    self.update_thread.patch_sha256,
                 )
 
             def handle_mirrorchyan_click():

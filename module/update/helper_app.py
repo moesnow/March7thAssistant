@@ -192,6 +192,7 @@ class HelperOptions:
     wait_pid: int | None
     auto_mode: bool = False
     cleanup_backup_path: str | None = None
+    patch_file_path: str | None = None
 
 
 @dataclass(slots=True)
@@ -377,8 +378,9 @@ class NativeUpdaterWindow:
                 self._log("info", f"从 {retry_context.stage.value} 阶段继续重试")
 
             elif self.options.mode == "finalize" and self.options.file_name:
-                engine.set_local_package(self.options.file_name, self.options.extract_folder_path)
-                self._log("debug", f"finalize 模式使用本地更新包：{self.options.file_name}")
+                if not self.options.patch_file_path:
+                    engine.set_local_package(self.options.file_name, self.options.extract_folder_path)
+                    self._log("debug", f"finalize 模式使用本地更新包：{self.options.file_name}")
             elif self.options.download_url and self.options.file_name:
                 self._log("debug", f"已预设URL和文件名：{self.options.file_name}")
                 engine.set_package(
@@ -395,25 +397,43 @@ class NativeUpdaterWindow:
                 self._run_retry_from_stage(engine, retry_context.stage)
             elif self.options.mode == "finalize":
                 self._log("info", f"执行最终化模式，等待PID={self.options.wait_pid}")
-                engine.finalize_update(wait_pid=self.options.wait_pid)
+                if self.options.patch_file_path:
+                    engine.wait_for_process_exit(self.options.wait_pid)
+                    engine.terminate_processes()
+                    if engine.try_apply_patch(self.options.patch_file_path):
+                        engine.cleanup()
+                        engine.launch_application()
+                    else:
+                        self._log("info", "补丁应用失败，回退到完整更新")
+                        engine.set_package(self.options.download_url,
+                                           self.options.file_name or "",
+                                           self.options.sha256 or "")
+                        if not engine.run_full_update(wait_pid=self.options.wait_pid):
+                            self._set_result("no-update", tr("当前已是最新版本"))
+                            return
+                else:
+                    engine.finalize_update(wait_pid=self.options.wait_pid)
             else:
-                # 未预设 URL 时，通过统一的版本检测获取更新信息
-                if not engine.download_url:
-                    self._log("debug", "未预设URL，执行版本检测")
+                if engine.download_url and engine.file_name:
+                    if not engine.run_full_update(wait_pid=self.options.wait_pid):
+                        self._set_result("no-update", tr("当前已是最新版本"))
+                        return
+                else:
+                    # 自行检测更新，获取更新信息后再执行更新流程
                     try:
                         from module.config import cfg
                         source = getattr(cfg, "update_source", "GitHub")
                         cdk = getattr(cfg, "mirrorchyan_cdk", "")
                         prerelease = bool(getattr(cfg, "update_prerelease_enable", False))
-                        full = bool(getattr(cfg, "update_full_enable", True))
                     except Exception:
-                        source, cdk, prerelease, full = "GitHub", "", False, True
+                        source, cdk, prerelease = "GitHub", "", False
 
                     try:
-                        info = check_for_update(source, cdk, prerelease, full)
+                        info = check_for_update(source, cdk, prerelease)
                     except Exception as e:
-                        self._log("warning", f"版本检测失败: {e}")
-                        info = None
+                        self._log("error", f"版本检测失败: {e}")
+                        self._set_result("failed", str(e) or tr("检测更新失败"))
+                        return
 
                     if info is None:
                         self._log("info", "当前已是最新版本")
@@ -423,9 +443,18 @@ class NativeUpdaterWindow:
                     engine.set_update_info(info)
                     self._log("info", f"发现新版本: {info.version} ({info.source})")
 
-                if not engine.run_full_update(wait_pid=self.options.wait_pid):
-                    self._set_result("no-update", tr("当前已是最新版本"))
-                    return
+                    # 如果有补丁包，优先尝试增量更新
+                    if info.patch_url:
+                        if not engine.try_incremental_update(wait_pid=self.options.wait_pid):
+                            self._log("info", "增量更新失败，回退到完整更新")
+                            engine.set_update_info(info, is_patch=False)
+                            if not engine.run_full_update(wait_pid=self.options.wait_pid):
+                                self._set_result("no-update", tr("当前已是最新版本"))
+                                return
+                    else:
+                        if not engine.run_full_update(wait_pid=self.options.wait_pid):
+                            self._set_result("no-update", tr("当前已是最新版本"))
+                            return
 
             with self._lock:
                 self._running = False
@@ -674,16 +703,14 @@ def parse_args(argv=None) -> HelperOptions:
     parser.add_argument("--file-name", dest="file_name_option", default=None)
     parser.add_argument("--sha256", default=None)
     parser.add_argument("--extract-folder-path", default=None)
+    parser.add_argument("--patch-file", dest="patch_file_path", default=None)
+    parser.add_argument("--download-url", dest="download_url", default=None)
     parser.add_argument("--cleanup-backup-path", default=None)
     parser.add_argument("--auto", "-a", action="store_true", dest="auto_mode")
 
     args = parser.parse_args(normalized_argv)
     effective_download_url = args.download_url
     effective_file_name = args.file_name_option or args.file_name
-
-    if args.mode == "finalize" and not effective_file_name and args.download_url and not args.file_name:
-        effective_download_url = None
-        effective_file_name = args.download_url
 
     if args.mode == "finalize" and not effective_file_name:
         parser.error("finalize mode requires file_name")
@@ -700,6 +727,7 @@ def parse_args(argv=None) -> HelperOptions:
         wait_pid=args.wait_pid,
         auto_mode=args.auto_mode,
         cleanup_backup_path=args.cleanup_backup_path,
+        patch_file_path=args.patch_file_path,
     )
 
 

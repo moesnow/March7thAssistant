@@ -34,7 +34,7 @@ class ClickableStateToolTip(StateToolTip):
 class UpdatePrepareWorker(QThread):
     progressChanged = Signal(object)
     logWritten = Signal(str, str)
-    prepared = Signal(str, str)
+    prepared = Signal(str, str, str)  # file_name, extract_folder_path, patch_file_path
     cancelled = Signal()
     failed = Signal(str)
     noUpdate = Signal(str)
@@ -44,14 +44,21 @@ class UpdatePrepareWorker(QThread):
         download_url: str | None,
         file_name: str | None,
         sha256: str | None = None,
+        patch_url: str = "",
+        patch_name: str = "",
+        patch_sha256: str = "",
         parent=None,
     ):
         super().__init__(parent)
         self.download_url = download_url
         self.file_name = file_name
         self.sha256 = sha256
+        self.patch_url = patch_url
+        self.patch_name = patch_name
+        self.patch_sha256 = patch_sha256
         self.engine: UpdateEngine | None = None
         self._cancel_requested = False
+        self._patch_file_path: str = ""
 
     def _on_progress(self, progress: UpdateProgress):
         self.progressChanged.emit(progress)
@@ -72,24 +79,43 @@ class UpdatePrepareWorker(QThread):
                 checksum_in_subprocess=True,
             )
             self.engine = engine
-            if self.download_url and self.file_name:
-                engine.set_package(self.download_url, self.file_name, self.sha256)
 
             if self._cancel_requested:
                 engine.request_cancel()
 
-            if not engine.prepare_update():
+            # 有补丁优先下载补丁（只下载不解压，补丁不是归档文件）
+            if self.patch_url and self.patch_name:
+                engine.set_package(self.patch_url, self.patch_name, self.patch_sha256)
                 if self._cancel_requested:
                     self.cancelled.emit()
                     return
-                self.noUpdate.emit(tr("当前已是最新版本"))
-                return
+                engine.download_with_progress()
+                self._patch_file_path = engine.download_file_path
+            elif self.download_url and self.file_name:
+                engine.set_package(self.download_url, self.file_name, self.sha256)
+                if not engine.prepare_update():
+                    if self._cancel_requested:
+                        self.cancelled.emit()
+                        return
+                    self.noUpdate.emit(tr("当前已是最新版本"))
+                    return
+            else:
+                if not engine.prepare_update():
+                    if self._cancel_requested:
+                        self.cancelled.emit()
+                        return
+                    self.noUpdate.emit(tr("当前已是最新版本"))
+                    return
 
             if self._cancel_requested:
                 self.cancelled.emit()
                 return
 
-            self.prepared.emit(engine.file_name or "", engine.extract_folder_path or "")
+            self.prepared.emit(
+                engine.file_name or "",
+                engine.extract_folder_path or "",
+                self._patch_file_path,
+            )
         except UpdateCancelledError:
             self.cancelled.emit()
         except UpdateError as e:
@@ -109,12 +135,18 @@ class UpdaterWindow(MessageBoxBase):
         download_url: str | None,
         file_name: str | None,
         sha256: str | None = None,
+        patch_url: str = "",
+        patch_name: str = "",
+        patch_sha256: str = "",
     ):
         super().__init__(parent=main_window)
         self.main_window = main_window
         self.download_url = download_url
         self.file_name = file_name
         self.sha256 = sha256
+        self.patch_url = patch_url
+        self.patch_name = patch_name
+        self.patch_sha256 = patch_sha256
         self.worker: UpdatePrepareWorker | None = None
         self.background_tooltip: ClickableStateToolTip | None = None
         self.is_running = False
@@ -123,6 +155,7 @@ class UpdaterWindow(MessageBoxBase):
         self._awaiting_install = False
         self._prepared_file_name: str | None = None
         self._prepared_extract_folder_path: str | None = None
+        self._prepared_patch_file_path: str = ""
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         self.setWindowModality(Qt.NonModal)
         self._init_ui()
@@ -304,11 +337,18 @@ class UpdaterWindow(MessageBoxBase):
         if self.worker is not None and self.worker.isRunning():
             return
 
+        if self.worker is not None:
+            try:
+                self.worker.deleteLater()
+            except Exception:
+                pass
+
         self._cancel_requested = False
         self._is_in_background = False
         self._awaiting_install = False
         self._prepared_file_name = None
         self._prepared_extract_folder_path = None
+        self._prepared_patch_file_path = ""
         self._close_background_tooltip()
         self.showNormal()
         self.show()
@@ -326,6 +366,9 @@ class UpdaterWindow(MessageBoxBase):
             self.download_url,
             self.file_name,
             self.sha256,
+            self.patch_url,
+            self.patch_name,
+            self.patch_sha256,
             self,
         )
         self.worker.progressChanged.connect(self._on_progress_changed)
@@ -365,7 +408,9 @@ class UpdaterWindow(MessageBoxBase):
         else:
             self.detail_label.setText(f"{_format_size(current)} / {_format_size(total)}")
 
-    def _launch_helper(self, file_name: str, extract_folder_path: str):
+    def _launch_helper(self, file_name: str, extract_folder_path: str,
+                       patch_file_path: str = "", full_download_url: str = "",
+                       full_sha256: str = ""):
         source_file = os.path.abspath("./March7th Updater.exe")
         if not os.path.exists(source_file):
             raise FileNotFoundError(tr("未找到更新程序"))
@@ -375,6 +420,12 @@ class UpdaterWindow(MessageBoxBase):
         command.extend(["--file-name", file_name])
         if extract_folder_path:
             command.extend(["--extract-folder-path", extract_folder_path])
+        if patch_file_path:
+            command.extend(["--patch-file", patch_file_path])
+        if full_download_url:
+            command.extend(["--download-url", full_download_url])
+        if full_sha256:
+            command.extend(["--sha256", full_sha256])
         subprocess.Popen(
             command,
             creationflags=creationflags,
@@ -382,13 +433,14 @@ class UpdaterWindow(MessageBoxBase):
             close_fds=True,
         )
 
-    def _on_prepared(self, file_name: str, extract_folder_path: str):
+    def _on_prepared(self, file_name: str, extract_folder_path: str, patch_file_path: str):
         if self._cancel_requested:
             self._on_cancelled()
             return
 
         self._prepared_file_name = file_name
         self._prepared_extract_folder_path = extract_folder_path
+        self._prepared_patch_file_path = patch_file_path
 
         if not self._is_in_background:
             self._awaiting_install = True
@@ -419,8 +471,11 @@ class UpdaterWindow(MessageBoxBase):
 
         try:
             self._launch_helper(
-                self._prepared_file_name,
+                self.file_name or self._prepared_file_name,
                 self._prepared_extract_folder_path or "",
+                self._prepared_patch_file_path,
+                self.download_url or "",
+                self.sha256 or "",
             )
         except Exception as e:
             self._on_failed(str(e) or tr("启动更新器失败"))
@@ -440,41 +495,28 @@ class UpdaterWindow(MessageBoxBase):
         else:
             QTimer.singleShot(200, self.close)
 
-    def _on_cancelled(self):
+    def _set_terminal_state(self, title: str, status: str, detail: str,
+                            log_level: str = "info", progress_value: int = 0):
         self.restore_from_background()
         self._awaiting_install = False
         self._set_running_state(False)
         self._set_indeterminate(False)
         self.progress_bar.setRange(0, 1)
-        self.progress_bar.setValue(0)
-        self.title_label.setText(tr("取消"))
-        self.status_label.setText(tr("更新已取消"))
-        self.detail_label.setText("")
-        self._append_log("info", tr("更新已取消"))
+        self.progress_bar.setValue(progress_value)
+        self.title_label.setText(title)
+        self.status_label.setText(status)
+        self.detail_label.setText(detail)
+        self._append_log(log_level, status)
+
+    def _on_cancelled(self):
+        self._set_terminal_state(tr("取消"), tr("更新已取消"), "")
 
     def _on_failed(self, message: str):
-        self.restore_from_background()
-        self._awaiting_install = False
-        self._set_running_state(False)
-        self._set_indeterminate(False)
-        self.progress_bar.setRange(0, 1)
-        self.progress_bar.setValue(0)
-        self.title_label.setText(tr("更新失败"))
-        self.status_label.setText(message)
-        self.detail_label.setText(tr("请检查日志后重试"))
-        self._append_log("error", message)
+        self._set_terminal_state(tr("更新失败"), message,
+                                 tr("请检查日志后重试"), "error")
 
     def _on_no_update(self, message: str):
-        self.restore_from_background()
-        self._awaiting_install = False
-        self._set_running_state(False)
-        self._set_indeterminate(False)
-        self.progress_bar.setRange(0, 1)
-        self.progress_bar.setValue(1)
-        self.title_label.setText(tr("无需更新"))
-        self.status_label.setText(message)
-        self.detail_label.setText("")
-        self._append_log("info", message)
+        self._set_terminal_state(tr("无需更新"), message, "", progress_value=1)
 
     def closeEvent(self, event: QCloseEvent):
         if self.is_running:
@@ -493,13 +535,17 @@ def show_update_window(
     download_url: str | None,
     file_name: str | None,
     sha256: str | None = None,
+    patch_url: str = "",
+    patch_name: str = "",
+    patch_sha256: str = "",
 ):
     existing = getattr(main_window, "gui_update_window", None)
     if existing is not None:
         existing.restore_from_background()
         return existing
 
-    window = UpdaterWindow(main_window, download_url, file_name, sha256)
+    window = UpdaterWindow(main_window, download_url, file_name, sha256,
+                           patch_url, patch_name, patch_sha256)
     main_window.gui_update_window = window
     window.show()
     window.raise_()

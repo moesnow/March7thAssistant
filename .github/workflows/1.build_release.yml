@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: "false"
+          fetch-depth: 0
 
       # 设置 uv 和 Python 环境
       - name: Set up uv
@@ -40,6 +41,15 @@ jobs:
         run: |
           uv sync --group build
           uv run python build.py --task ocr
+
+      # 下载 HDiffPatch 工具
+      - name: Download HDiffPatch
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          .\assets\binary\aria2c.exe -o hdiffpatch.zip https://github.com/sisong/HDiffPatch/releases/download/v4.12.2/hdiffpatch_v4.12.2_bin_windows64.zip
+          .\assets\binary\7za.exe x hdiffpatch.zip -ohdiffpatch -y
+          echo "HDIFFZ_PATH=${{ github.workspace }}\hdiffpatch\windows64\hdiffz.exe" >> $env:GITHUB_ENV
+        shell: pwsh
 
       # 并行生成程序
       - name: Generate program
@@ -60,15 +70,6 @@ jobs:
           Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
           Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
           Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
-
-      # 创建更新压缩包
-      - name: Create archive
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
-          Rename-Item -Path .\dist\March7thAssistant -NewName update
-          .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\update.7z .\dist\update\
-          Rename-Item -Path .\dist\update -NewName March7thAssistant
 
       # 获取第三方库最新发布版本
       - name: Get 3rdparty release tags
@@ -107,6 +108,99 @@ jobs:
           Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
 
+      # 获取上一版本 tag
+      - name: Get previous tag
+        if: startsWith(github.ref, 'refs/tags/')
+        id: prev_tag
+        run: |
+          $current = "${{ github.ref_name }}"
+          $prev = git tag --sort=-creatordate | Where-Object { $_ -ne $current } | Select-Object -First 1
+          if (-not $prev) {
+            Write-Warning "未找到上一版本 tag，将跳过增量补丁生成"
+          }
+          echo "prev_tag=$prev" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      # 从缓存恢复上一版本
+      - name: Restore previous version from cache
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_tag.outputs.prev_tag != ''
+        id: cache-prev
+        uses: actions/cache/restore@v5
+        with:
+          path: ./prev_version
+          key: release-${{ steps.prev_tag.outputs.prev_tag }}
+
+      # 缓存未命中时下载并解压上一版本
+      - name: Download and extract previous version if cache miss
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_tag.outputs.prev_tag != '' && steps.cache-prev.outputs.cache-hit != 'true'
+        run: |
+          gh release download ${{ steps.prev_tag.outputs.prev_tag }} --repo ${{ github.repository }} --pattern "*full.7z" --dir ./old_build
+          $full7z = Get-ChildItem -Path ./old_build -Filter "*full.7z" | Select-Object -First 1
+          if ($full7z) { .\assets\binary\7za.exe x "$full7z" -o"./prev_version" -y }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+
+      # 生成针对上个版本的增量补丁
+      - name: Generate incremental patch
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_tag.outputs.prev_tag != ''
+        id: gen_patch
+        run: |
+          $currDir = ".\dist\March7thAssistant_full"
+          $oldDir = ".\prev_version\March7thAssistant_full"
+          $patchName = "patch_from_${{ steps.prev_tag.outputs.prev_tag }}_to_${{ github.ref_name }}"
+          & $env:HDIFFZ_PATH -m-6 -SD -c-zstd-21-24 -d $oldDir $currDir $patchName
+          echo "patch_name=$patchName" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      # 获取上上个版本 tag
+      - name: Get previous previous tag
+        if: startsWith(github.ref, 'refs/tags/')
+        id: prev_prev_tag
+        run: |
+          $current = "${{ github.ref_name }}"
+          $prevprev = git tag --sort=-creatordate | Where-Object { $_ -ne $current } | Select-Object -Skip 1 -First 1
+          if (-not $prevprev) {
+            Write-Warning "未找到上上个版本 tag，将跳过第二个增量补丁生成"
+          }
+          echo "prev_prev_tag=$prevprev" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      # 从缓存恢复上上个版本
+      - name: Restore previous-previous version from cache
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_prev_tag.outputs.prev_prev_tag != ''
+        id: cache-prevprev
+        uses: actions/cache/restore@v5
+        with:
+          path: ./prev_prev_version
+          key: release-${{ steps.prev_prev_tag.outputs.prev_prev_tag }}
+
+      # 缓存未命中时下载并解压上上个版本
+      - name: Download and extract previous-previous version if cache miss
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_prev_tag.outputs.prev_prev_tag != '' && steps.cache-prevprev.outputs.cache-hit != 'true'
+        run: |
+          $prevprevTag = "${{ steps.prev_prev_tag.outputs.prev_prev_tag }}"
+          if ($prevprevTag) {
+            gh release download $prevprevTag --repo ${{ github.repository }} --pattern "*full.7z" --dir ./old_build_prev
+            $full7z = Get-ChildItem -Path ./old_build_prev -Filter "*full.7z" | Select-Object -First 1
+            if ($full7z) { .\assets\binary\7za.exe x "$full7z" -o"./prev_prev_version" -y }
+          }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+
+      # 生成针对上上个版本的增量补丁
+      - name: Generate second incremental patch
+        if: startsWith(github.ref, 'refs/tags/') && steps.prev_prev_tag.outputs.prev_prev_tag != ''
+        id: gen_patch2
+        run: |
+          $currDir = ".\dist\March7thAssistant_full"
+          $oldDir = ".\prev_prev_version\March7thAssistant_full"
+          $patchName = "patch_from_${{ steps.prev_prev_tag.outputs.prev_prev_tag }}_to_${{ github.ref_name }}"
+          & $env:HDIFFZ_PATH -m-6 -SD -c-zstd-21-24 -d $oldDir $currDir $patchName
+          echo "patch_name2=$patchName" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
       # 创建完整的压缩包
       - name: Create full zip archive
         if: startsWith(github.ref, 'refs/tags/')
@@ -114,6 +208,21 @@ jobs:
           # Compress-Archive -Path .\dist\March7thAssistant_full\ -DestinationPath .\dist\March7thAssistant_full.zip -Force
           .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
           .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
+
+      # 准备发布文件列表
+      - name: Prepare release files
+        if: startsWith(github.ref, 'refs/tags/')
+        id: release_files
+        run: |
+          $files = @("./dist/March7thAssistant_full.7z", "./dist/March7thAssistant_full.zip")
+          $patchName = "${{ steps.gen_patch.outputs.patch_name }}"
+          if ($patchName) { $files += $patchName }
+          $patchName2 = "${{ steps.gen_patch2.outputs.patch_name2 }}"
+          if ($patchName2) { $files += $patchName2 }
+          "release_files<<EOF" >> $env:GITHUB_OUTPUT
+          $files -join "`n" >> $env:GITHUB_OUTPUT
+          "EOF" >> $env:GITHUB_OUTPUT
+        shell: pwsh
 
       # 创建GitHub发布
       - name: Create release
@@ -123,12 +232,24 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: March7thAssistant ${{ github.ref_name }}
           body_path: changelog_temp.md
-          files: |
-            ./dist/March7thAssistant_full.zip
-            ./dist/March7thAssistant_full.7z
-            ./dist/update.7z
+          files: ${{ steps.release_files.outputs.release_files }}
           prerelease: ${{ contains(github.ref_name, 'beta') }}
           make_latest: true
+
+      # 将当前构建放入 prev_version 目录以供缓存——未来发布将以此为旧版本生成补丁
+      - name: Stage build for caching
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          Remove-Item -Path "./prev_version" -Recurse -Force -ErrorAction SilentlyContinue
+          Copy-Item -Path "./dist/March7thAssistant_full" -Destination "./prev_version/March7thAssistant_full" -Recurse -Force
+        shell: pwsh
+
+      - name: Cache build for future patch generation
+        uses: actions/cache/save@v5
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          path: ./prev_version
+          key: release-${{ github.ref_name }}
 
       # 强制触发 MirrorChyan 上传
       - name: Trigger MirrorChyanUploading
