@@ -36,7 +36,7 @@ class PythonChecker:
 
     @staticmethod
     def install():
-        download_url = "http://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-amd64.exe"
+        download_url = "https://mirrors.huaweicloud.com/python/3.11.5/python-3.11.5-amd64.exe"
         download_file_path = os.path.join(tempfile.gettempdir(), os.path.basename(download_url))
         destination_path = os.path.join(os.getenv('LocalAppData'), r'Programs\Python\Python311\python.exe')
 
