@@ -895,6 +895,13 @@ class SettingInterface(ScrollArea):
             tr("最大排队等待时间（分钟）"),
             ''
         )
+        self.cloudGameLoginTimeoutCard = RangeSettingCard1(
+            "cloud_game_login_timeout",
+            [1, 120],
+            FIF.DATE_TIME,
+            tr("登录超时时间（分钟）"),
+            tr("等待用户完成登录的最长时间，超时后将终止运行")
+        )
         # self.cloudGameVideoQualityCard = ComboBoxSettingCard2(
         #     "cloud_game_video_quality",
         #     FIF.VIDEO,
@@ -2616,6 +2623,7 @@ class SettingInterface(ScrollArea):
         self.CloudGameGroup.addSettingCard(self.browserHeadlessCard)
         self.browserHeadlessCard.addSettingCards([self.browserHeadlessRestartCard])
         self.CloudGameGroup.addSettingCard(self.cloudGameMaxQueueTimeCard)
+        self.CloudGameGroup.addSettingCard(self.cloudGameLoginTimeoutCard)
         # self.CloudGameGroup.addSettingCard(self.cloudGameVideoQualityCard)
         # self.CloudGameGroup.addSettingCard(self.cloudGameSmoothFirstCard)
         # self.CloudGameGroup.addSettingCard(self.cloudGameShowStatusCard)

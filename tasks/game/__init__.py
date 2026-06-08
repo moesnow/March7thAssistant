@@ -12,6 +12,7 @@ from utils.date import Date
 from utils.console import pause_on_success
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
+from module.game.cloud import CloudGameLoginTimeoutError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
@@ -207,6 +208,8 @@ def start_game():
                     starrail.stop_game()
                 continue
             break
+        except CloudGameLoginTimeoutError:
+            raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
             # 确保在重试前停止游戏
