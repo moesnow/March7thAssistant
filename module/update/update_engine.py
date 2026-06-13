@@ -466,6 +466,8 @@ class UpdateEngine:
             self.cleanup()
             self.launch_application()
             return True
+        except UpdateCancelledError:
+            raise
         except Exception as e:
             self._log("warning", f"增量更新失败: {e}")
             self._restore_self_lock()
