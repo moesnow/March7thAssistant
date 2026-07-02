@@ -15,7 +15,7 @@ dependencies = [
     "psutil==7.2.2",
     "pyautogui==0.9.54",
     "mss==10.2.0",
-    "pygetwindow==0.0.9",
+    "pygetwindow==0.0.9; sys_platform == 'win32'",
     "requests[socks]==2.34.2",
     "charset_normalizer==3.4.7",
     "imageio==2.37.3",
