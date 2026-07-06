@@ -1037,7 +1037,7 @@ class SettingInterface(ScrollArea):
             FIF.POWER_BUTTON,
             tr('任务完成后'),
             tr('“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能'),
-            texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
+            texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关闭软件'): 'ExitApp', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
         )
         self.loopModeCard = ComboBoxSettingCard2(
             "loop_mode",
