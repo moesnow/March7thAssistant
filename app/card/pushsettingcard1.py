@@ -787,11 +787,17 @@ class PushSettingCardPowerPlan(CustomPushSettingCard):
         return tr("已配置 {} 项计划").format(len(self.configvalue))
 
     def __onclicked(self):
-        message_box = MessageBoxPowerPlan(self.title, self.configvalue, self.window())
+        message_box = MessageBoxPowerPlan(
+            self.title,
+            self.configvalue,
+            self.window(),
+            keep_plan=cfg.get_value("power_plan_keep", False),
+        )
         if message_box.exec():
             plans = message_box.get_plans()
             self.configvalue = plans
             cfg.set_value(self.configname, plans)
+            cfg.set_value("power_plan_keep", message_box.should_keep_plan())
             self.contentLabel.setText(self._get_display_text())
 
 
