@@ -316,6 +316,9 @@ class CloudGameController(GameControllerBase):
         # 设置浏览器启动参数
         for arg in self._get_browser_arguments(headless=headless):
             options.add_argument(arg)
+        options.add_argument(f"--remote-debugging-port={actual_port}")
+        if integrated or is_docker_started():  # 修复 Windows 部分情况下启动 Chrome 报错
+            options.add_argument("--no-sandbox")
 
         # 清理失效的断链 (Broken Symlinks) 防止浏览器无法启动
         if is_docker_started():
