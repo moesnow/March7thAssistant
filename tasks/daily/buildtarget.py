@@ -372,12 +372,12 @@ class DropHandler(BuildTargetHandler):
         if auto.find_element(
             "./assets/images/share/build_target/drop_modal_close.png",
             "image",
-            0.8,
+            0.7,
             max_retries=4,
             retry_delay=0.5,
-            crop=(1330 / 1920, 222 / 1080, 256 / 1920, 236 / 1080),
+            crop=(1838 / 1920, 38 / 1080, 50 / 1920, 60 / 1080),
         ):
-            drop_name = auto.get_single_line_text(crop=(783 / 1920, 318 / 1080, 300 / 1920, 55 / 1080), max_retries=2, retry_delay=0.5)
+            drop_name = auto.get_single_line_text(crop=(788 / 1920, 336 / 1080, 330 / 1920, 50 / 1080), max_retries=2, retry_delay=0.5)
             if auto.click_element(
                 "./assets/images/share/build_target/drop_modal_close.png", "image", 0.8, crop=(1330 / 1920, 222 / 1080, 256 / 1920, 236 / 1080)
             ):
