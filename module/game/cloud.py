@@ -296,7 +296,10 @@ class CloudGameController(GameControllerBase):
         browser_path, driver_path = self._prepare_browser_and_driver(browser_type, integrated)
 
         # 端口可用性检测：若配置端口被占，递增找一个空闲端口
-        configured_port = int(self.cfg.browser_debug_port)
+        try:
+            configured_port = int(self.cfg.browser_debug_port)
+        except (TypeError, ValueError):
+            raise RuntimeError(f"browser_debug_port 配置无效: {self.cfg.browser_debug_port!r}")
         actual_port = configured_port
         if not self._is_port_available(configured_port):
             self.log_warning(f"端口 {configured_port} 被占用，正在查找可用端口...")
