@@ -23,7 +23,11 @@ from __future__ import annotations
 import time
 from typing import Callable
 
-import pygetwindow as gw
+try:
+    import pygetwindow as gw
+except (ImportError, NotImplementedError):
+    # pygetwindow 仅支持 Windows，非 Windows 平台降级（见 _is_game_window_active）
+    gw = None
 from PySide6.QtCore import QObject, QTimer
 
 from module.automation import auto
@@ -213,6 +217,9 @@ class AutoPlot(QObject):
             True  游戏窗口在前台
             False 游戏窗口不在前台或未找到
         """
+        if gw is None:
+            # 非 Windows 平台无法枚举窗口，假定激活以放行后续对话检测
+            return True
         windows = gw.getWindowsWithTitle(self._game_title_name)
         if not windows:
             return False
