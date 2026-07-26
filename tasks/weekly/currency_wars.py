@@ -1848,60 +1848,60 @@ class CurrencyWars:
         """
         检查是否弹出盛会之星或命运卜者等内容的选择框
         """
-        result = auto.get_single_line_text(crop=(936.0 / 1920, 52.0 / 1080, 219.0 / 1920, 53.0 / 1080))
-        if result:
-            if "盛会之星" in result:
-                log.info("检测到盛会之星")
-                char_crop = (816.0 / 1920, 165.0 / 1080, 222.0 / 1920, 202.0 / 1080)
-                auto.click_element(char_crop, "crop")
-                time.sleep(0.5)
-                auto.click_element("确认选择", "text", crop=(1428.0 / 1920, 539.0 / 1080, 124.0 / 1920, 46.0 / 1080))
-                time.sleep(0.5)
-            elif "命运卜者" in result:
-                log.info("检测到命运卜者")
-                char_crop = (850.0 / 1920, 167.0 / 1080, 395.0 / 1920, 249.0 / 1080)
-                auto.click_element(char_crop, "crop")
-                time.sleep(0.5)
-                char_crop_pos = [
-                    (800.0 / 1920, 372.0 / 1080, 25.0 / 1920, 36.0 / 1080),
-                    (1208.0 / 1920, 371.0 / 1080, 25.0 / 1920, 36.0 / 1080),
-                    (1617.0 / 1920, 373.0 / 1080, 24.0 / 1920, 35.0 / 1080)
-                ]
-                for pos in char_crop_pos:
-                    result = auto.get_single_line_text(crop=pos)
-                    if result:
-                        # 优先选择0费
-                        if result.isdigit() and int(result) == 0:
-                            auto.click_element(pos, "crop")
-                            time.sleep(0.5)
-                            break
-                auto.click_element("确认选择", "text", crop=(1329.0 / 1920, 572.0 / 1080, 332.0 / 1920, 55.0 / 1080))
-                time.sleep(0.5)
-            elif "我来当策划" in result:
-                log.info("检测到我来当策划")
-                choose_crop = (564 / 1920, 191 / 1080, 449 / 1920, 225 / 1080)
-                auto.click_element(choose_crop, "crop")
-                time.sleep(0.5)
-                auto.click_element("确认选择", "text", crop=(1424 / 1920, 573 / 1080, 134 / 1920, 51 / 1080))
-                time.sleep(0.5)
-            elif "祈愿试炼" in result:
-                log.info("检测到祈愿试炼")
-                choose1_crop = (458 / 1920, 179 / 1080, 448 / 1920, 339 / 1080)
-                choose2_crop = (1189 / 1920, 187 / 1080, 441 / 1920, 332 / 1080)
-                auto.click_element(choose1_crop, "crop")
-                time.sleep(0.5)
-                auto.click_element("确认选择", "text", crop=(1425 / 1920, 614 / 1080, 138 / 1920, 52 / 1080))
-                time.sleep(0.5)
-            elif "选择伙伴" in result:
-                log.info("检测到选择伙伴")
-                choose1_crop = (936 / 1920, 165 / 1080, 222 / 1920, 265 / 1080)
-                choose2_crop = (817 / 1920, 166 / 1080, 221 / 1920, 265 / 1080)
-                auto.click_element(choose1_crop, "crop")
-                time.sleep(0.5)
-                auto.click_element(choose2_crop, "crop")
-                time.sleep(0.5)
-                auto.click_element("确认选择", "text", crop=(1423 / 1920, 572 / 1080, 135 / 1920, 50 / 1080))
-                time.sleep(0.5)
+        for _ in range(5):
+            result = auto.get_single_line_text(crop=(936.0 / 1920, 52.0 / 1080, 219.0 / 1920, 53.0 / 1080))
+            if result:
+                if "盛会之星" in result:
+                    log.info("检测到盛会之星")
+                    char_crop = (816.0 / 1920, 165.0 / 1080, 222.0 / 1920, 202.0 / 1080)
+                    auto.click_element(char_crop, "crop")
+                    time.sleep(0.5)
+                    auto.click_element("确认选择", "text", crop=(1428.0 / 1920, 539.0 / 1080, 124.0 / 1920, 46.0 / 1080))
+                elif "命运卜者" in result:
+                    log.info("检测到命运卜者")
+                    char_crop = (850.0 / 1920, 167.0 / 1080, 395.0 / 1920, 249.0 / 1080)
+                    auto.click_element(char_crop, "crop")
+                    time.sleep(0.5)
+                    char_crop_pos = [
+                        (800.0 / 1920, 372.0 / 1080, 25.0 / 1920, 36.0 / 1080),
+                        (1208.0 / 1920, 371.0 / 1080, 25.0 / 1920, 36.0 / 1080),
+                        (1617.0 / 1920, 373.0 / 1080, 24.0 / 1920, 35.0 / 1080)
+                    ]
+                    for pos in char_crop_pos:
+                        result = auto.get_single_line_text(crop=pos)
+                        if result:
+                            # 优先选择0费
+                            if result.isdigit() and int(result) == 0:
+                                auto.click_element(pos, "crop")
+                                time.sleep(0.5)
+                                break
+                    auto.click_element("确认选择", "text", crop=(1329.0 / 1920, 572.0 / 1080, 332.0 / 1920, 55.0 / 1080))
+                elif "我来当策划" in result:
+                    log.info("检测到我来当策划")
+                    choose_crop = (564 / 1920, 191 / 1080, 449 / 1920, 225 / 1080)
+                    auto.click_element(choose_crop, "crop")
+                    time.sleep(0.5)
+                    auto.click_element("确认选择", "text", crop=(1424 / 1920, 573 / 1080, 134 / 1920, 51 / 1080))
+                elif "祈愿试炼" in result:
+                    log.info("检测到祈愿试炼")
+                    choose1_crop = (458 / 1920, 179 / 1080, 448 / 1920, 339 / 1080)
+                    choose2_crop = (1189 / 1920, 187 / 1080, 441 / 1920, 332 / 1080)
+                    auto.click_element(choose1_crop, "crop")
+                    time.sleep(0.5)
+                    auto.click_element("确认选择", "text", crop=(1425 / 1920, 614 / 1080, 138 / 1920, 52 / 1080))
+                elif "选择伙伴" in result:
+                    log.info("检测到选择伙伴")
+                    choose1_crop = (936 / 1920, 165 / 1080, 222 / 1920, 265 / 1080)
+                    choose2_crop = (817 / 1920, 166 / 1080, 221 / 1920, 265 / 1080)
+                    auto.click_element(choose1_crop, "crop")
+                    time.sleep(0.5)
+                    auto.click_element(choose2_crop, "crop")
+                    time.sleep(0.5)
+                    auto.click_element("确认选择", "text", crop=(1423 / 1920, 572 / 1080, 135 / 1920, 50 / 1080))
+                time.sleep(2)
+                continue
+            else:
+                break
 
     def identify_current_stage(self):
         """
