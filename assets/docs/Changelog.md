@@ -1,5 +1,20 @@
 # 更新日志
 
+## v2026.7.26
+- 添加 4.4 版本新增副本
+- 同步 4.4 版本联动卡池名称改动
+- 货币战争新增祈愿试炼弹窗适配
+- 货币战争新增选择伙伴弹窗适配
+- 货币战争支持连续多个弹窗按序处理
+- 新增保留体力计划选项 [#1140](https://github.com/moesnow/March7thAssistant/pull/1140) @henry3218
+- 增加货币战争查找难度1关卡的循环上限至100次
+- 更新支援奖励的图标 [#1152](https://github.com/moesnow/March7thAssistant/pull/1152) @sparklelcm333
+- 修复 pygetwindow 导致非 Windows 平台启动失败 [#1127](https://github.com/moesnow/March7thAssistant/pull/1127) @zzy9001
+- 优化掉落物弹窗识别逻辑并适配新版本 [#1146](https://github.com/moesnow/March7thAssistant/pull/1146) @shing-yu
+- 修复 Chrome 启动错误和尝试自动递增调试端口 [#1144](https://github.com/moesnow/March7thAssistant/pull/1144) @CodingAQ
+- 优化性能和稳定性并修复若干已知问题
+- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
+
 ## v2026.6.8
 - 支持 4.3 新副本和角色 [#1109](https://github.com/moesnow/March7thAssistant/pull/1109) @shing-yu
 - 新增自动对话全局快捷键切换功能
