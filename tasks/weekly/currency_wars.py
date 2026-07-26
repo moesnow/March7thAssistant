@@ -1825,7 +1825,15 @@ class CurrencyWars:
         self._log_character_status()
 
         # 特殊会弹窗角色
-        star_characters = {"星期日", "花火", "大丽花", "知更鸟", "黑天鹅", "银狼LV.999"}
+        # 盛会之星角色
+        star_characters = {"加拉赫", "大丽花", "花火", "星期日", "知更鸟"}
+        # 命运卜者角色
+        star_characters.add("黑天鹅")
+        # 我来当策划角色
+        star_characters.add("银狼LV.999")
+        # 祈愿试炼角色
+        star_characters.update({"远坂凛", "吉尔伽美什", "Saber", "Archer"})
+
         if list2[i2].name in star_characters or list1[i1].name in star_characters:
             time.sleep(4)  # 等待选择框出现
         self.check_festival_star_popup()
@@ -1870,6 +1878,14 @@ class CurrencyWars:
                 auto.click_element(choose_crop, "crop")
                 time.sleep(0.5)
                 auto.click_element("确认选择", "text", crop=(1424 / 1920, 573 / 1080, 134 / 1920, 51 / 1080))
+                time.sleep(0.5)
+            elif "祈愿试炼" in result:
+                log.info("检测到祈愿试炼")
+                choose1_crop = (458 / 1920, 179 / 1080, 448 / 1920, 339 / 1080)
+                choose2_crop = (1189 / 1920, 187 / 1080, 441 / 1920, 332 / 1080)
+                auto.click_element(choose1_crop, "crop")
+                time.sleep(0.5)
+                auto.click_element("确认选择", "text", crop=(1425 / 1920, 614 / 1080, 138 / 1920, 52 / 1080))
                 time.sleep(0.5)
 
     def identify_current_stage(self):
