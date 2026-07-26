@@ -102,12 +102,15 @@ class Power:
 
         # 保留模式用于重复执行固定计划；关闭时维持原有的扣次数和删除逻辑
         if keep_power_plan:
-            log.info(f"已保留体力计划，共 {len(power_plan)} 项")
+            log.info(f"已启用保留体力计划，共 {len(power_plan)} 项")
         else:
             cfg.set_value("power_plan", updated_plan)
 
         if has_executed:
-            log.info(f"体力计划执行完成，剩余计划数: {len(updated_plan)}")
+            if keep_power_plan:
+                log.info(f"体力计划执行完成（保留模式），计划数: {len(power_plan)}")
+            else:
+                log.info(f"体力计划执行完成，剩余计划数: {len(updated_plan)}")
         else:
             log.info("体力不足，无法执行任何体力计划")
             log.hr("完成", 2)
