@@ -942,21 +942,6 @@
         ]
     },
     {
-        "name": "忘却之庭-准备战斗",
-        "id": "prepare_fight",
-        "image_path": "./assets/images/forgottenhall/prepare_fight.png",
-        "actions": [
-            {
-                "target_screen": "memory_of_chaos",
-                "actions_list": [
-                    "auto.press_key('esc')",
-                    "time.sleep(1)",
-                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 2)"
-                ]
-            }
-        ]
-    },
-    {
         "name": "虚构叙事",
         "id": "purefiction",
         "image_path": "./assets/images/screen/purefiction/purefiction.png",
@@ -977,6 +962,40 @@
             {
                 "target_screen": "main",
                 "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "异相仲裁",
+        "id": "anomaly_arbitration",
+        "image_path": "./assets/images/screen/anomaly_arbitration/anomaly_arbitration.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "逐光捡金-准备战斗",
+        "id": "prepare_fight",
+        "image_path": [
+            "./assets/images/screen/treasures_lightward/exit.png",
+            "./assets/images/screen/treasures_lightward/view_details.png"
+        ],
+        "match_all": true,
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 2)",
+                    "time.sleep(3)",
                     "auto.press_key('esc')"
                 ]
             }
@@ -1137,6 +1156,115 @@
                 "target_screen": "activity",
                 "actions_list": [
                     "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "二次元JUMP",
+        "id": "interplanar_jump",
+        "image_path": "./assets/images/screen/planarcadia/interplanar_jump.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.click_element('离开二次元', 'text', None, 10)",
+                    "time.sleep(3)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "浮脂记事",
+        "id": "floating_grease_chronicles",
+        "image_path": "./assets/images/screen/planarcadia/floating_grease_chronicles.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)",
+                    "time.sleep(3)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "星轨之兔",
+        "id": "star_rabbit",
+        "image_path": "./assets/images/screen/planarcadia/star_rabbit.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/screen/planarcadia/exit.png', 'image', 0.9, 10)",
+                    "time.sleep(3)",
+                    "auto.click_element('./assets/images/screen/planarcadia/quit_stage.png', 'image', 0.9, 10)",
+                    "time.sleep(6)",
+                    "auto.press_key('esc')",
+                    "time.sleep(0.5)",
+                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "机巧鸟",
+        "id": "cycane",
+        "image_path": "./assets/images/screen/xianzhou_luofu/cycane.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('i')",
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)",
+                    "time.sleep(0.5)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "檞寄生",
+        "id": "mistletoe",
+        "image_path": "./assets/images/screen/amphoreus/mistletoe.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "哈努兄弟",
+        "id": "brother_hanu",
+        "image_path": "./assets/images/screen/penacony/brother_hanu.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key(cfg.get_value('hotkey_map', 'm'))",
+                    "time.sleep(1.5)",
+                    "auto.click_element((1700.0 / 1920, 500.0 / 1080, 10.0 / 1920, 10.0 / 1080), 'crop', action='move')",
+                    "auto.mouse_scroll(25, 1)",
+                    "time.sleep(0.5)",
+                    "auto.click_element('./assets/images/share/map/astral_express.png', 'image', 0.9, 10)",
+                    "time.sleep(0.5)",
+                    "auto.click_element('./assets/images/share/map/party_car.png', 'image', 0.8, 5)",
+                    "time.sleep(0.5)",
+                    "auto.click_element('./assets/images/share/map/space_anchor.png', 'image', 0.9, 10)",
+                    "time.sleep(0.5)",
+                    "auto.click_element('./assets/images/share/map/teleport.png', 'image', 0.9, 10)",
+                    "time.sleep(2)"
                 ]
             }
         ]
