@@ -1826,13 +1826,18 @@ class CurrencyWars:
 
         # 特殊会弹窗角色
         # 盛会之星角色
-        star_characters = {"加拉赫", "大丽花", "花火", "星期日", "知更鸟"}
+        star_characters = {"加拉赫", "大丽花", "花火", "星期日", "知更鸟", "黑天鹅"}
         # 命运卜者角色
         star_characters.add("黑天鹅")
         # 我来当策划角色
         star_characters.add("银狼LV.999")
         # 祈愿试炼角色
         star_characters.update({"远坂凛", "吉尔伽美什", "Saber", "Archer"})
+        # 选择伙伴角色
+        star_characters.update({"姬子·启行", "丹恒·饮月", "星期日", "瓦尔特", "姬子", "三月七"})
+        remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
+        if remembrance_trailblazer_name:
+            star_characters.add(remembrance_trailblazer_name)
 
         if list2[i2].name in star_characters or list1[i1].name in star_characters:
             time.sleep(4)  # 等待选择框出现
@@ -1886,6 +1891,16 @@ class CurrencyWars:
                 auto.click_element(choose1_crop, "crop")
                 time.sleep(0.5)
                 auto.click_element("确认选择", "text", crop=(1425 / 1920, 614 / 1080, 138 / 1920, 52 / 1080))
+                time.sleep(0.5)
+            elif "选择伙伴" in result:
+                log.info("检测到选择伙伴")
+                choose1_crop = (936 / 1920, 165 / 1080, 222 / 1920, 265 / 1080)
+                choose2_crop = (817 / 1920, 166 / 1080, 221 / 1920, 265 / 1080)
+                auto.click_element(choose1_crop, "crop")
+                time.sleep(0.5)
+                auto.click_element(choose2_crop, "crop")
+                time.sleep(0.5)
+                auto.click_element("确认选择", "text", crop=(1423 / 1920, 572 / 1080, 135 / 1920, 50 / 1080))
                 time.sleep(0.5)
 
     def identify_current_stage(self):
