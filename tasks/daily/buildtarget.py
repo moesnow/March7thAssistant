@@ -369,22 +369,41 @@ class DropHandler(BuildTargetHandler):
         识别掉落物名称，并匹配对应的副本信息，返回 (instance_type, instance_name, drop, similarity_score) 或 None
         """
         time.sleep(0.5)
-        if auto.find_element(
-            "./assets/images/share/build_target/drop_modal_close.png",
-            "image",
-            0.8,
-            max_retries=4,
-            retry_delay=0.5,
-            crop=(1330 / 1920, 222 / 1080, 256 / 1920, 236 / 1080),
-        ):
-            drop_name = auto.get_single_line_text(crop=(783 / 1920, 318 / 1080, 300 / 1920, 55 / 1080), max_retries=2, retry_delay=0.5)
-            if auto.click_element(
-                "./assets/images/share/build_target/drop_modal_close.png", "image", 0.8, crop=(1330 / 1920, 222 / 1080, 256 / 1920, 236 / 1080)
-            ):
+
+        modal_configs = [
+            {
+                "close_image": "./assets/images/share/build_target/drop_modal_close.png",
+                "threshold": 0.8,
+                "crop": (1330 / 1920, 222 / 1080, 256 / 1920, 236 / 1080),
+                "text_crop": (783 / 1920, 318 / 1080, 300 / 1920, 55 / 1080),
+            },
+            {
+                "close_image": "./assets/images/share/build_target/drop_modal_close2.png",
+                "threshold": 0.7,
+                "crop": (1838 / 1920, 38 / 1080, 50 / 1920, 60 / 1080),
+                "text_crop": (788 / 1920, 336 / 1080, 330 / 1920, 50 / 1080),
+            },
+        ]
+
+        for config in modal_configs:
+            coords = auto.find_element(
+                config["close_image"], "image", config["threshold"],
+                max_retries=4, retry_delay=0.5, crop=config["crop"],
+            )
+            if not coords:
+                continue
+
+            drop_name = auto.get_single_line_text(
+                crop=config["text_crop"], max_retries=2, retry_delay=0.5,
+            )
+
+            if auto.click_element_with_pos(coords):
                 time.sleep(1.0)
+
             if drop_name:
                 log.debug(f"识别到掉落物: {drop_name}")
                 return self._match_instance(drop_name)
+
         log.warning("未能识别到掉落物")
         return None
 
