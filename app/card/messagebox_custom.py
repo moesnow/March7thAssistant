@@ -932,7 +932,7 @@ class MessageBoxFriends(MessageBox):
 class MessageBoxPowerPlan(MessageBox):
     """体力计划配置对话框"""
 
-    def __init__(self, title: str, content: list, parent=None):
+    def __init__(self, title: str, content: list, parent=None, keep_plan: bool = False):
         super().__init__(title, "", parent)
         self.content = content if content else []
 
@@ -961,9 +961,14 @@ class MessageBoxPowerPlan(MessageBox):
         self.plan_rows = []
 
         # 添加说明
-        self.titleLabelInfo = QLabel(tr("体力计划会在清体力前优先执行，完成后自动从列表中删除"), parent)
+        self.titleLabelInfo = QLabel(tr("体力计划会在清体力前优先执行，未勾选保留时，完成后会自动从列表中删除"), parent)
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
+
+        # 是否在执行后保留整份计划，方便重复执行固定计划
+        self.keepPlanCheckBox = CheckBox(tr("保留体力计划"), self)
+        self.keepPlanCheckBox.setChecked(keep_plan)
+        self.textLayout.addWidget(self.keepPlanCheckBox)
 
         # 计划列表容器
         self.planLayout = QVBoxLayout()
@@ -1148,6 +1153,10 @@ class MessageBoxPowerPlan(MessageBox):
             if raw_type and raw_name and count > 0:
                 plans.append([raw_type, raw_name, count])
         return plans
+
+    def should_keep_plan(self):
+        """返回是否应在执行后保留整份体力计划。"""
+        return self.keepPlanCheckBox.isChecked()
 
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
