@@ -7,11 +7,14 @@ from unittest.mock import patch
 
 
 class FakeConfig:
-    def __init__(self, power_plan, keep_plan):
+    def __init__(self, power_plan, keep_plan, build_target_enable=False):
         self.values = {
             "power_plan": power_plan,
             "power_plan_keep": keep_plan,
         }
+        self.build_target_enable = build_target_enable
+        self.instance_type = "侵蚀隧洞"
+        self.instance_names = {"侵蚀隧洞": "睿治之径"}
         self.writes = []
 
     def get_value(self, key, default=None):
@@ -50,7 +53,9 @@ def _load_power_module(cfg):
             return True
 
     class FakeBuildTarget:
-        pass
+        @staticmethod
+        def get_target_instance():
+            return None
 
     stub_modules = {
         "module.screen": _stub_module("module.screen", screen=object()),
@@ -88,6 +93,47 @@ class TestPowerPlanRetention(unittest.TestCase):
             self.assertTrue(module.Power.execute_power_plan())
         self.assertEqual(cfg.writes, [])
         self.assertEqual(cfg.get_value("power_plan"), plan)
+
+
+class TestPowerRunPriority(unittest.TestCase):
+    def test_build_target_runs_before_power_plan(self):
+        cfg = FakeConfig(
+            [["侵蚀隧洞", "睿治之径", 2]],
+            keep_plan=True,
+            build_target_enable=True,
+        )
+        module = _load_power_module(cfg)
+        target = ("拟造花萼（赤）", "毁灭之蕾•拟造花萼（赤）")
+
+        with (
+            patch.object(module.Power, "preprocess"),
+            patch.object(module.Power, "execute_power_plan") as execute_power_plan,
+            patch.object(module.Power, "process") as process,
+            patch.object(module.BuildTarget, "get_target_instance", return_value=target),
+        ):
+            module.Power.run()
+
+        execute_power_plan.assert_not_called()
+        process.assert_called_once_with(*target)
+
+    def test_power_plan_runs_when_build_target_returns_to_custom_instance(self):
+        cfg = FakeConfig(
+            [["侵蚀隧洞", "睿治之径", 2]],
+            keep_plan=True,
+            build_target_enable=True,
+        )
+        module = _load_power_module(cfg)
+
+        with (
+            patch.object(module.Power, "preprocess"),
+            patch.object(module.Power, "execute_power_plan") as execute_power_plan,
+            patch.object(module.Power, "process") as process,
+            patch.object(module.BuildTarget, "get_target_instance", return_value=None),
+        ):
+            module.Power.run()
+
+        execute_power_plan.assert_called_once_with()
+        process.assert_called_once_with("侵蚀隧洞", "睿治之径")
 
 
 if __name__ == "__main__":
