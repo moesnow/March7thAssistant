@@ -1,7 +1,7 @@
 import importlib.util
 import sys
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 from unittest.mock import patch
 
 
@@ -143,3 +143,45 @@ def test_reward_count_is_capped_at_three():
     assert module.Echoofwar.start() is True
     assert instance.calls == [("历战余响", "目标副本", 3, 1)]
     assert cfg.saved_timestamps == ["echo_of_war_timestamp"]
+
+
+def test_build_target_echo_runs_before_all_other_daily_tasks(monkeypatch):
+    from tasks.daily import daily as daily_module
+
+    events = []
+    cfg = SimpleNamespace(
+        reward_enable=True,
+        reward_redemption_code_enable=True,
+        build_target_enable=True,
+        power_enable=True,
+        daily_enable=True,
+        last_run_timestamp="",
+        refresh_hour=4,
+        echo_of_war_enable=False,
+        echo_of_war_timestamp="",
+        echo_of_war_start_day_of_week=1,
+    )
+
+    monkeypatch.setattr(daily_module, "cfg", cfg)
+    monkeypatch.setattr(daily_module.BuildTarget, "init_build_targets", lambda: events.append("build_target_init"))
+    monkeypatch.setattr(daily_module.Echoofwar, "should_run_for_build_target", lambda: True)
+    monkeypatch.setattr(daily_module.Echoofwar, "start", lambda: events.append("echo_of_war") or True)
+    monkeypatch.setattr(daily_module.Redemption, "get", lambda: events.append("redemption"))
+    monkeypatch.setattr(daily_module.Daily, "lookup", lambda: events.append("daily_lookup"))
+    monkeypatch.setattr(daily_module.activity, "start", lambda: events.append("activity"))
+    monkeypatch.setattr(daily_module.Power, "run", lambda: events.append("power"))
+    monkeypatch.setattr(daily_module.Daily, "run", lambda: events.append("daily_run"))
+    monkeypatch.setattr(daily_module.Date, "is_next_x_am", lambda *_args: True)
+    monkeypatch.setattr(daily_module.Date, "is_next_mon_x_am", lambda *_args: True)
+
+    daily_module.Daily.prepare_daily()
+
+    assert events == [
+        "build_target_init",
+        "echo_of_war",
+        "redemption",
+        "daily_lookup",
+        "activity",
+        "power",
+        "daily_run",
+    ]

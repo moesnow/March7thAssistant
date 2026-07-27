@@ -24,13 +24,41 @@ import datetime
 
 class Daily:
     @staticmethod
-    def prepare_daily(ignore_refresh=False):
-        if cfg.reward_enable and cfg.reward_redemption_code_enable:
-            Redemption.get()
+    def _run_echo_of_war(ignore_refresh: bool, build_target_echo_enabled: bool):
+        if not (cfg.echo_of_war_enable or build_target_echo_enabled):
+            log.info("历战余响未开启")
+            return False
 
-        # 获取培养目标（在活动前初始化，以便活动可以使用培养目标）
+        if not (ignore_refresh or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour)):
+            log.info("历战余响尚未刷新")
+            return False
+
+        # 培养目标中的历战余响在周一刷新后立即执行；
+        # 独立历战余响设置仍遵循配置的开始星期。
+        if build_target_echo_enabled:
+            return Echoofwar.start()
+
+        isoweekday = datetime.date.today().isoweekday()
+        if isoweekday >= cfg.echo_of_war_start_day_of_week:
+            return Echoofwar.start()
+
+        log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
+        return False
+
+    @staticmethod
+    def prepare_daily(ignore_refresh=False):
+        build_target_echo_enabled = False
+
+        # 先获取培养目标；若其中包含历战余响，则在所有其他日常及培养副本之前执行。
         if cfg.build_target_enable:
             BuildTarget.init_build_targets()
+            if cfg.power_enable:
+                build_target_echo_enabled = Echoofwar.should_run_for_build_target()
+                if build_target_echo_enabled:
+                    Daily._run_echo_of_war(ignore_refresh, build_target_echo_enabled=True)
+
+        if cfg.reward_enable and cfg.reward_redemption_code_enable:
+            Redemption.get()
 
         # 在日常任务中检查是否使用支援角色
         if cfg.daily_enable:
@@ -44,24 +72,9 @@ class Daily:
         activity.start()
 
         if cfg.power_enable:
-            build_target_echo_enabled = Echoofwar.should_run_for_build_target()
-
-            # 优先历战余响
-            if cfg.echo_of_war_enable or build_target_echo_enabled:
-                if ignore_refresh or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
-                    # 培养目标中的历战余响在周一刷新后立即执行；独立历战余响设置仍遵循配置的开始星期。
-                    if build_target_echo_enabled:
-                        Echoofwar.start()
-                    else:
-                        isoweekday = datetime.date.today().isoweekday()
-                        if isoweekday >= cfg.echo_of_war_start_day_of_week:
-                            Echoofwar.start()
-                        else:
-                            log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
-                else:
-                    log.info("历战余响尚未刷新")
-            else:
-                log.info("历战余响未开启")
+            # 非培养目标来源的独立历战余响设置维持原执行位置。
+            if not build_target_echo_enabled:
+                Daily._run_echo_of_war(ignore_refresh, build_target_echo_enabled=False)
 
             Power.run()
         else:
