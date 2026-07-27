@@ -304,6 +304,12 @@ class SettingInterface(ScrollArea):
                 tr("掉落物识别"): "drop"
             }
         )
+        self.buildTargetEchoOfWarEnableCard = SwitchSettingCard1(
+            FIF.MEGAPHONE,
+            tr("自动完成培养目标历战余响"),
+            tr("培养目标识别到历战余响且本周仍有奖励次数时自动完成；每周一凌晨4点刷新，最多3次"),
+            "build_target_echo_of_war_enable"
+        )
         self.buildTargetPlanarOrnamentWeeklyCountCard = RangeSettingCard1(
             "build_target_ornament_weekly_count",
             [0, 7],
@@ -2495,6 +2501,7 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.buildTargetEnableCard)
         self.buildTargetEnableCard.addSettingCards([
             self.buildTargetSchemeCard,
+            self.buildTargetEchoOfWarEnableCard,
             self.buildTargetPlanarOrnamentWeeklyCountCard,
             self.buildTargetUseUserInstanceWhenOnlyErosionAndOrnamentCard
         ])

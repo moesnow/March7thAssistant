@@ -44,15 +44,20 @@ class Daily:
         activity.start()
 
         if cfg.power_enable:
+            build_target_echo_enabled = Echoofwar.should_run_for_build_target()
+
             # 优先历战余响
-            if cfg.echo_of_war_enable:
+            if cfg.echo_of_war_enable or build_target_echo_enabled:
                 if ignore_refresh or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour):
-                    # 注意，这里并没有解决每天开始时间。也就是4点开始。按照真实时间进行执行
-                    isoweekday = datetime.date.today().isoweekday()
-                    if isoweekday >= cfg.echo_of_war_start_day_of_week:
+                    # 培养目标中的历战余响在周一刷新后立即执行；独立历战余响设置仍遵循配置的开始星期。
+                    if build_target_echo_enabled:
                         Echoofwar.start()
                     else:
-                        log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
+                        isoweekday = datetime.date.today().isoweekday()
+                        if isoweekday >= cfg.echo_of_war_start_day_of_week:
+                            Echoofwar.start()
+                        else:
+                            log.info(f"历战余响设置周{cfg.echo_of_war_start_day_of_week}后开始执行，当前为周{isoweekday}, 跳过执行")
                 else:
                     log.info("历战余响尚未刷新")
             else:

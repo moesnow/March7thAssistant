@@ -111,6 +111,7 @@ tp_before_instance: false # 是否在进入副本前进行传送至任意锚点�
 # 培养目标设置
 build_target_enable: false # 是否启用培养目标。
 build_target_scheme: "instance" # 培养目标的识别方案。可以是 instance 通过副本名称识别， drop 通过副本素材识别。
+build_target_echo_of_war_enable: false # 培养目标识别到「历战余响」且本周仍有奖励次数时，是否自动完成剩余次数。
 build_target_ornament_weekly_count: 1 # 培养目标每周执行饰品提取的次数，取值范围 0-7。
 build_target_use_user_instance_when_only_erosion_and_ornament: false # 当培养目标只识别到「侵蚀隧洞」和「饰品提取」时，是否改用用户手动配置的副本。
 
