@@ -138,4 +138,10 @@ March7thAssistant 离不开以下开源项目和运行时依赖的帮助，感�
 
 ## Stargazers over time
 
-[![Star History](https://starchart.cc/moesnow/March7thAssistant.svg?variant=adaptive)](https://starchart.cc/moesnow/March7thAssistant)
+<a href="https://star-history.dera.page/#moesnow/March7thAssistant">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant" />
+   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant" />
+ </picture>
+</a>
