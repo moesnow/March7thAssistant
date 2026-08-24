@@ -822,6 +822,19 @@ class MainWindow(MSFluentWindow):
         if start_game_button:
             start_game_button.setEnabled(False)
         game = get_game_controller()
+        if game.is_game_running():
+            InfoBar.warning(
+                title=tr('游戏已在运行'),
+                content=tr('无需重复启动游戏'),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
+            if start_game_button:
+                start_game_button.setEnabled(True)
+            return
         if cfg.cloud_game_enable and cfg.browser_type == "integrated" and not game.is_integrated_browser_downloaded():
             InfoBar.warning(
                 title=tr('正在下载内置浏览器(ง •̀_•́)ง'),
