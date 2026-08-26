@@ -1108,8 +1108,6 @@
             {
                 "target_screen": "menu",
                 "actions_list": [
-                    "auto.press_key('esc')",
-                    "time.sleep(1)",
                     "auto.press_key('esc')"
                 ]
             }
