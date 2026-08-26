@@ -1468,6 +1468,7 @@ class SettingInterface(ScrollArea):
                     "ssl": {"title": tr("启用 SSL"), "description": tr("可选参数，是否启用 SSL"), "type": "bool"},
                     "starttls": {"title": tr("启用 STARTTLS"), "description": tr("可选参数，是否启用 STARTTLS"), "type": "bool"},
                     "ssl_unverified": {"title": tr("跳过证书验证"), "description": tr("可选参数，是否跳过 SSL 证书验证"), "type": "bool"},
+                    "plain_text": {"title": tr("纯文本模式"), "description": tr("可选参数，是否以纯文本格式发送邮件（适用于 Outlook 等邮箱）"), "type": "bool"},
                 },
                 "tutorial": """
 <h4>一、什么是 SMTP？</h4>
