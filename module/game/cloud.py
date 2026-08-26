@@ -43,6 +43,24 @@ class CloudGameController(GameControllerBase):
     BROWSER_TAG = "--march-7th-assistant-sr-cloud-game"  # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
     BROWSER_INSTALL_PATH = os.path.join(os.getcwd(), "3rdparty", "WebBrowser")  # 浏览器安装路径
     INTEGRATED_BROWSER_VERSION = "140.0.7339.207"      # 浏览器版本
+    DISABLE_POINTER_LOCK_SCRIPT = """
+        (() => {
+            const blocked = function () {
+                return Promise.reject(new DOMException(
+                    'Pointer Lock is disabled in background mode.',
+                    'NotAllowedError'
+                ));
+            };
+            Object.defineProperty(Element.prototype, 'requestPointerLock', {
+                configurable: true,
+                writable: true,
+                value: blocked,
+            });
+            if (document.pointerLockElement && document.exitPointerLock) {
+                document.exitPointerLock();
+            }
+        })();
+    """
 
     @staticmethod
     def _get_platform_dir() -> str:
@@ -164,6 +182,20 @@ class CloudGameController(GameControllerBase):
             "deviceScaleFactor": 1,
             "mobile": False
         })
+
+    def _configure_pointer_lock(self, headless: bool) -> None:
+        """无窗口运行时禁止网页锁定系统鼠标指针。"""
+        if not headless or not self.driver:
+            return
+
+        try:
+            self.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": self.DISABLE_POINTER_LOCK_SCRIPT,
+                "runImmediately": True,
+            })
+            self.log_debug("无窗口模式已禁用 Pointer Lock")
+        except Exception as e:
+            self.log_warning(f"无窗口模式禁用 Pointer Lock 失败: {e}")
 
     def _prepare_browser_and_driver(self, browser_type: str, integrated: bool) -> tuple[str, str]:
         self.user_profile_path = os.path.join(self.BROWSER_INSTALL_PATH, "UserProfile", self.cfg.browser_type.capitalize())
@@ -340,6 +372,7 @@ class CloudGameController(GameControllerBase):
             try:
                 options.debugger_address = f"127.0.0.1:{reconnect_port}"
                 self.driver = webdriver_type(service=service, options=options)
+                self._configure_pointer_lock(headless)
                 self.log_info("已连接到现有浏览器")
                 return
             except Exception:
@@ -402,6 +435,7 @@ class CloudGameController(GameControllerBase):
             self.log_error(f"浏览器启动失败: {e}")
             raise RuntimeError("浏览器启动失败")
 
+        self._configure_pointer_lock(headless)
         if not self.cfg.cloud_game_fullscreen_enable:
             self.driver.set_window_size(1920, 1120)
         if first_run or not self.cfg.browser_persistent_enable:
