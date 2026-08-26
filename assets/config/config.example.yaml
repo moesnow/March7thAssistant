@@ -362,7 +362,9 @@ apocalyptic_timestamp: 0 # 上次运行末日幻影的时间戳，用于记录�
 auto_battle_detect_enable: true # 是否启用自动战斗和二倍速检测。true 开启，false 关闭。
 
 # OCR 加速配置
-ocr_gpu_acceleration: auto # OCR 加速模式，可选值：auto（自动）, gpu（GPU）, onnx_dml（ONNXRuntime + DirectML）, cpu（CPU）, openvino_cpu（OpenVINO CPU）, onnx_cpu（ONNXRuntime CPU）。若 DML 模式过慢会自动切换到 cpu。
+ocr_gpu_acceleration: auto # OCR 加速模式，可选值：auto（自动）, gpu（GPU）, onnx_dml（ONNXRuntime + DirectML）, cpu（CPU）, openvino_cpu（OpenVINO CPU）, onnx_cpu（ONNXRuntime CPU）。若 DML 连续多次过慢会自动降级到 onnx_cpu。
+ocr_slow_threshold: 5.0 # DML 模式下单次 OCR 耗时超过此值（秒）计为一次"慢"，仅在 ocr_gpu_acceleration 为 auto/gpu/onnx_dml 时生效；非法值回退默认，设为极大值可视为禁用自动降级。
+ocr_slow_consecutive_threshold: 3 # DML 连续"慢"达到此次数才降级到 onnx_cpu，避免首帧冷启动或偶发抖动误杀。设为 1 即单次超阈值立即降级；最小为 1，非法值回退默认。
 
 # 自动修改分辨率配置
 auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。true 开启，false 关闭。
