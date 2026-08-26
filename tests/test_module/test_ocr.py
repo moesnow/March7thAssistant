@@ -1,4 +1,9 @@
-from module.ocr.ocr import OCR
+from module.ocr.ocr import (
+    OCR,
+    OCR_MODE_ONNX_CPU,
+    OCR_SLOW_CONSECUTIVE_THRESHOLD,
+    OCR_SLOW_THRESHOLD,
+)
 
 
 class TestOCRNormalizeMachine:
@@ -135,3 +140,166 @@ class TestDisableOpenVINOTelemetry:
                 OptInChecker._march7th_telemetry_disabled = original_flag
             elif hasattr(OptInChecker, "_march7th_telemetry_disabled"):
                 delattr(OptInChecker, "_march7th_telemetry_disabled")
+
+
+class _FakeConfig:
+    """最小配置桩：仅实现 OCR 用到的 get_value / set_value。"""
+
+    def __init__(self, values=None):
+        self.values = dict(values or {})
+
+    def get_value(self, key, default=None):
+        return self.values.get(key, default)
+
+    def set_value(self, key, value):
+        self.values[key] = value
+
+
+def _create_ocr_for_internal_tests(config_values=None):
+    from unittest.mock import MagicMock
+    ocr = OCR.__new__(OCR)
+    ocr.logger = MagicMock()
+    ocr.replacements = None
+    ocr._cfg = _FakeConfig(config_values)
+    ocr._slow_threshold = OCR_SLOW_THRESHOLD
+    ocr._slow_consecutive = OCR_SLOW_CONSECUTIVE_THRESHOLD
+    ocr._slow_count = 0
+    return ocr
+
+
+class TestLoadThresholds:
+    def test_missing_config_keeps_defaults(self):
+        ocr = _create_ocr_for_internal_tests()
+        assert ocr._load_thresholds() is None
+        assert ocr._slow_threshold == OCR_SLOW_THRESHOLD
+        assert ocr._slow_consecutive == OCR_SLOW_CONSECUTIVE_THRESHOLD
+
+    def test_invalid_values_fall_back_to_defaults(self):
+        ocr = _create_ocr_for_internal_tests({
+            "ocr_slow_threshold": -1,
+            "ocr_slow_consecutive_threshold": 0,
+        })
+        ocr._load_thresholds()
+        assert ocr._slow_threshold == OCR_SLOW_THRESHOLD
+        assert ocr._slow_consecutive == OCR_SLOW_CONSECUTIVE_THRESHOLD
+
+        ocr = _create_ocr_for_internal_tests({
+            "ocr_slow_threshold": float("nan"),
+            "ocr_slow_consecutive_threshold": -5,
+        })
+        ocr._load_thresholds()
+        assert ocr._slow_threshold == OCR_SLOW_THRESHOLD
+        assert ocr._slow_consecutive == OCR_SLOW_CONSECUTIVE_THRESHOLD
+
+    def test_valid_values_applied(self):
+        ocr = _create_ocr_for_internal_tests({
+            "ocr_slow_threshold": 8.0,
+            "ocr_slow_consecutive_threshold": 2,
+        })
+        ocr._load_thresholds()
+        assert ocr._slow_threshold == 8.0
+        assert ocr._slow_consecutive == 2
+
+    def test_huge_threshold_keeps_degrade_disabled(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_slow_threshold": float("inf")})
+        ocr._load_thresholds()
+        assert ocr._slow_threshold == float("inf")
+
+
+class TestDisableGpuAcceleration:
+    def test_auto_persists_onnx_cpu(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_gpu_acceleration": "auto"})
+        ocr._disable_gpu_acceleration()
+        assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_ONNX_CPU
+
+    def test_legacy_bool_true_persists_onnx_cpu(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_gpu_acceleration": True})
+        ocr._disable_gpu_acceleration()
+        assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_ONNX_CPU
+
+    def test_explicit_mode_not_overwritten(self):
+        for mode in ("gpu", "onnx_dml"):
+            ocr = _create_ocr_for_internal_tests({"ocr_gpu_acceleration": mode})
+            ocr._disable_gpu_acceleration()
+            assert ocr._cfg.values["ocr_gpu_acceleration"] == mode
+
+
+class TestExitOcrResetsSlowCount:
+    def test_exit_resets_pending_slow_count(self):
+        ocr = _create_ocr_for_internal_tests()
+        ocr.ocr = None
+        ocr.ocr_time = 0.0
+        ocr.ocr_count = 0
+        ocr._slow_count = 2
+        ocr.exit_ocr()
+        assert ocr._slow_count == 0
+
+
+class TestRunSlowDegradeStateMachine:
+    def _create_running_ocr(self, config_values=None):
+        from unittest.mock import MagicMock
+        from PIL import Image as PILImage
+
+        ocr = _create_ocr_for_internal_tests(config_values)
+        ocr._use_dml = True
+        ocr._dml_fallback = False
+        ocr._using_openvino = False
+        ocr._openvino_fallback = False
+        ocr._periodic_gc_interval = 0
+        ocr.ocr_time = 0.0
+        ocr.ocr_count = 0
+        ocr.img = PILImage.new("RGB", (32, 32), "white")
+
+        def make_engine():
+            engine = MagicMock()
+            engine.return_value.to_json.return_value = []
+            return engine
+
+        ocr.ocr = make_engine()
+
+        def fake_instance_ocr(force_cpu=False, force_onnx=False, **kwargs):
+            # 模拟 force_onnx 重建后的关键状态变化
+            if force_onnx:
+                ocr._use_dml = False
+                ocr.ocr = make_engine()
+        ocr.instance_ocr = MagicMock(side_effect=fake_instance_ocr)
+        return ocr
+
+    def test_consecutive_slow_calls_trigger_degrade(self):
+        ocr = self._create_running_ocr({"ocr_gpu_acceleration": "auto"})
+        ocr._slow_threshold = -1  # 任何耗时都计为一次“慢”
+        ocr._slow_consecutive = 3
+
+        degrade_calls = []
+        original_disable = OCR._disable_gpu_acceleration
+
+        def counting_disable(self_inner):
+            degrade_calls.append(1)
+            self_inner._set_mode(OCR_MODE_ONNX_CPU)
+
+        OCR._disable_gpu_acceleration = counting_disable
+        try:
+            ocr.run(ocr.img)
+            ocr.run(ocr.img)
+            assert len(degrade_calls) == 0  # 未达连续次数，不降级
+            assert ocr._slow_count == 2
+
+            ocr.run(ocr.img)
+            assert len(degrade_calls) == 1  # 第三次触发降级
+            assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_ONNX_CPU
+            assert ocr._use_dml is False  # 已切换到 ONNXRuntime(CPU)
+        finally:
+            OCR._disable_gpu_acceleration = original_disable
+
+    def test_fast_call_resets_pending_slow_count(self):
+        ocr = self._create_running_ocr()
+        ocr._slow_threshold = -1
+        ocr._slow_consecutive = 3
+
+        ocr.run(ocr.img)
+        ocr.run(ocr.img)
+        assert ocr._slow_count == 2
+
+        ocr._slow_threshold = 999999  # 恢复正常速度
+        ocr.run(ocr.img)
+        assert ocr._slow_count == 0
