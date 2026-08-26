@@ -1682,7 +1682,7 @@ class LogInterface(ScrollArea):
             self._user_initiated_stop = False
         except Exception:
             user_stop = False
-        if exit_status == QProcess.NormalExit:
+        if exit_status == QProcess.NormalExit and exit_code == 0:
             self.appendLog(f"任务完成，退出码: {exit_code}\n")
         else:
             if user_stop:
@@ -1771,9 +1771,15 @@ class LogInterface(ScrollArea):
                             # 用户停止不视为异常；否则根据退出状态与异常标记判定
                             abnormal = False
                             try:
-                                abnormal = (not user_stop) and (getattr(self, '_stopped_abnormally', False) or exit_status != QProcess.NormalExit)
+                                abnormal = (not user_stop) and (
+                                    getattr(self, '_stopped_abnormally', False)
+                                    or exit_status != QProcess.NormalExit
+                                    or exit_code != 0
+                                )
                             except Exception:
-                                abnormal = (not user_stop) and (exit_status != QProcess.NormalExit)
+                                abnormal = (not user_stop) and (
+                                    exit_status != QProcess.NormalExit or exit_code != 0
+                                )
                             note = (f"定时任务异常结束: {pm.get('name', '')}" if abnormal else f"定时任务完成: {pm.get('name', '')}")
 
                             def _send_notify(n):
