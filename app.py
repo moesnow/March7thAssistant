@@ -210,10 +210,13 @@ if __name__ == "__main__":
     # 设置应用属性，必须在创建 QApplication 之前调用
     QApplication.setAttribute(Qt.AA_DontCreateNativeWidgetSiblings)
 
-    # 避免用户环境中已有的 Qt 环境变量干扰打包后的 Qt 插件加载
+    # 避免用户环境变量干扰打包后的 Qt 和 OpenSSL 运行时
     if getattr(sys, 'frozen', False):
-        for _qt_key in ('QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QML2_IMPORT_PATH', 'QT_QPA_FONTDIR'):
-            os.environ.pop(_qt_key, None)
+        for _runtime_key in (
+            'QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QML2_IMPORT_PATH', 'QT_QPA_FONTDIR',
+            'SSLKEYLOGFILE', 'OPENSSL_CONF',
+        ):
+            os.environ.pop(_runtime_key, None)
 
     app = QApplication(sys.argv)
 
