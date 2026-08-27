@@ -12,7 +12,7 @@ pygetwindow==0.0.9; sys_platform == 'win32'
 requests[socks]==2.34.2
 charset_normalizer==3.4.7
 imageio==2.37.3
-Pillow==12.2.0
+Pillow==12.3.0
 numpy==2.4.6
 opencv-python==4.13.0.92
 onepush==1.9.0
