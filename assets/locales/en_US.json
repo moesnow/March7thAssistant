@@ -1497,5 +1497,7 @@
     "Fate[UBW]角色联动跃迁": "",
     "Fate[UBW]光锥联动跃迁": "",
     "游戏已在运行": "Game Already Running",
-    "无需重复启动游戏": "There is no need to launch it again"
+    "无需重复启动游戏": "There is no need to launch it again",
+    "纯文本模式": "Plain Text Mode",
+    "可选参数，是否以纯文本格式发送邮件（适用于 Outlook 等邮箱）": "Optional parameter: whether to send emails in plain text format (suitable for Outlook and other email services)"
 }
