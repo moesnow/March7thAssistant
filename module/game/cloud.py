@@ -260,14 +260,31 @@ class CloudGameController(GameControllerBase):
         return browser_path, driver_path
 
     @staticmethod
-    def _is_port_available(port: int) -> bool:
-        """检查端口是否可绑定（真实 bind 试探，TIME_WAIT 也会判不可用）"""
+    def _get_port_bind_error(port: int) -> OSError | None:
+        """检查端口是否可绑定，返回原始错误供日志诊断"""
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('127.0.0.1', port))
-            return True
-        except OSError:
-            return False
+            return None
+        except OSError as e:
+            return e
+
+    @classmethod
+    def _is_port_available(cls, port: int) -> bool:
+        """检查端口是否可绑定（真实 bind 试探，TIME_WAIT 也会判不可用）"""
+        return cls._get_port_bind_error(port) is None
+
+    @staticmethod
+    def _get_system_assigned_port() -> int:
+        """请求操作系统分配可用端口，避免连续端口段被整体保留"""
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind(('127.0.0.1', 0))
+                return s.getsockname()[1]
+        except OSError as e:
+            error_code = getattr(e, "winerror", None) or e.errno
+            error_detail = f"错误码 {error_code}: {e}" if error_code is not None else str(e)
+            raise RuntimeError(f"系统自动分配可用端口失败（{error_detail}）") from e
 
     @staticmethod
     def _get_debug_port_from_cmdline(proc) -> int | None:
@@ -281,11 +298,17 @@ class CloudGameController(GameControllerBase):
         return None
 
     def _find_available_port(self, start_port: int, max_retry: int = 10) -> int:
-        """从 start_port 开始递增找第一个可用端口"""
-        for port in range(start_port, start_port + max_retry):
+        """优先递增查找可用端口，连续端口均不可用时由系统分配"""
+        end_port = min(start_port + max_retry, 65536)
+        for port in range(start_port, end_port):
             if self._is_port_available(port):
                 return port
-        raise RuntimeError(f"无法找到可用端口（范围: {start_port}-{start_port + max_retry - 1}）")
+        port = self._get_system_assigned_port()
+        self.log_warning(
+            f"端口范围 {start_port}-{end_port - 1} 均不可用，"
+            f"将使用系统分配的端口 {port}"
+        )
+        return port
 
     def _get_browser_arguments(self, headless) -> list[str]:
         args = [
@@ -332,9 +355,14 @@ class CloudGameController(GameControllerBase):
             configured_port = int(self.cfg.browser_debug_port)
         except (TypeError, ValueError):
             raise RuntimeError(f"browser_debug_port 配置无效: {self.cfg.browser_debug_port!r}")
+        if not 1 <= configured_port <= 65535:
+            raise RuntimeError(f"browser_debug_port 超出有效范围: {configured_port}")
         actual_port = configured_port
-        if not self._is_port_available(configured_port):
-            self.log_warning(f"端口 {configured_port} 被占用，正在查找可用端口...")
+        bind_error = self._get_port_bind_error(configured_port)
+        if bind_error is not None:
+            self.log_warning(
+                f"端口 {configured_port} 无法绑定（{bind_error}），正在查找可用端口..."
+            )
             actual_port = self._find_available_port(configured_port)
             self.log_info(f"将使用端口 {actual_port} 启动浏览器")
 
