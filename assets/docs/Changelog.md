@@ -1,5 +1,19 @@
 # 更新日志
 
+## v2026.8.28
+- 启动游戏前检测游戏是否已在运行 [#1189](https://github.com/moesnow/March7thAssistant/pull/1189) @girl-dream
+- 邮件推送新增纯文本模式 [#1173](https://github.com/moesnow/March7thAssistant/pull/1173)
+- 修复自动对话失效 [#1191](https://github.com/moesnow/March7thAssistant/pull/1191) @FullError11
+- 添加新历战余响的掉落物识别 [#1188](https://github.com/moesnow/March7thAssistant/pull/1188) @shing-yu
+- 防止云游戏无窗口模式锁定系统鼠标 [#1171](https://github.com/moesnow/March7thAssistant/pull/1171) @CisageX
+- 修复定时任务非零退出码时仍提示完成的问题 [#1176](https://github.com/moesnow/March7thAssistant/pull/1176) @yJader
+- 支持差分宇宙人才管理阶段界面 [#1193](https://github.com/moesnow/March7thAssistant/pull/1193) @DipsyHou
+- 连续调试端口不可用时由系统分配端口 [#1194](https://github.com/moesnow/March7thAssistant/pull/1194) @LumiaBlack51
+- 优化成就奖励领取流程 [#1155](https://github.com/moesnow/March7thAssistant/pull/1155) @sparklelcm333
+- 移除无效和重复的依赖项 [#1183](https://github.com/moesnow/March7thAssistant/pull/1183) [#1184](https://github.com/moesnow/March7thAssistant/pull/1184) @ZardHju
+- 优化性能和稳定性并修复若干已知问题
+- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
+
 ## v2026.7.26
 - 添加 4.4 版本新增副本
 - 同步 4.4 版本联动卡池名称改动
