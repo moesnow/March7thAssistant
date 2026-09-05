@@ -299,7 +299,7 @@ class Instance:
                         return False
                     time.sleep(0.1)
 
-                if auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 200000, max_retries=60, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
+                if auto.find_element("./assets/images/screen/treasures_lightward/exit.png", "image", 200000, max_retries=60, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
                     time.sleep(1)
 
                     # 使用秘技
