@@ -997,9 +997,16 @@ class SettingInterface(ScrollArea):
         self.launcherPathCard = PushSettingCard(
             tr('修改'),
             FIF.GAME,
-            tr("米哈游启动器路径"),
+            tr("启动器路径"),
             cfg.launcher_path
         )
+        self.launcherType = ComboBoxSettingCard2(
+                    "launcher_type",
+                    FIF.GAME,
+                    tr('启动器类型'),
+                    '',
+                    texts={tr('米哈游启动器'): 'mihoyou', tr('HoYoPlay'): 'hoyoplay'}
+                )
         self.startGameTimeoutCard = RangeSettingCard1(
             "start_game_timeout",
             [10, 60],
@@ -2638,6 +2645,7 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.updateViaLauncherEnableCard)
         self.updateViaLauncherEnableCard.addSettingCards([
             self.launcherPathCard,
+            self.launcherType,
             self.updateGameTimeoutCard
         ])
         self.ProgramGroup.addSettingCard(self.startGameTimeoutCard)
