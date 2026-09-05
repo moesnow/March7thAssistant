@@ -611,14 +611,12 @@ class MainWindow(MSFluentWindow):
             QApplication.restoreOverrideCursor()
 
     def _onTaskFinished(self, exit_code):
-        """处理任务完成信号"""
-        # 如果是启动任务且设置了完成后退出，则在任务成功完成时退出程序
         if self.exit_on_complete and self.startup_task and exit_code == 0:
             from PySide6.QtCore import QTimer
-            # 延迟一小段时间让用户看到完成状态
             QTimer.singleShot(5000, self.quitApp)
+        elif cfg.after_finish == "ExitApp" and exit_code == 0:
+            QTimer.singleShot(0, self.quitApp)
         else:
-            # 任务失败或未指定退出时，清除自动退出标记
             self.exit_on_complete = False
 
     def quitApp(self):
