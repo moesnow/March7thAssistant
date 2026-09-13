@@ -25,8 +25,15 @@ class SMTPNotifier(Notifier):
 
         if plain_text:
             if image_io:
-                self.logger.warning("SMTP 纯文本模式下不支持发送图片，图片将被忽略")
-            msg = MIMEText(content, "plain", "utf-8")
+                msg = MIMEMultipart("mixed")
+                msg.attach(MIMEText(content, "plain", "utf-8"))
+                img = MIMEImage(image_io.getvalue())
+                img.add_header("Content-Disposition", "attachment",
+                    filename=f"screenshot.{img.get_content_subtype()}")
+                msg.attach(img)
+            else:
+                msg = MIMEText(content, "plain", "utf-8")
+
             msg['Subject'] = Header(title, 'utf-8')
             msg['From'] = From
             msg['To'] = To

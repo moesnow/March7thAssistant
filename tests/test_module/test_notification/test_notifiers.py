@@ -41,7 +41,7 @@ class TestSMTPNotifier:
         n = SMTPNotifier({"host": "smtp.example.com"}, logger)
         assert n._get_supports_image() is True
 
-    def test_send_plain_text_mode_ignores_image_and_warns(self):
+    def test_send_plain_text_mode_without_image(self):
         from module.notification.smtp import SMTPNotifier
         logger = MagicMock()
         notifier = SMTPNotifier({
@@ -52,7 +52,31 @@ class TestSMTPNotifier:
             "To": "to@example.com",
             "plain_text": True
         }, logger)
-        image_io = io.BytesIO(b"fake-image-bytes")
+        with patch("module.notification.smtp.smtplib.SMTP_SSL") as mock_smtp_ssl:
+            smtp = MagicMock()
+            mock_smtp_ssl.return_value = smtp
+            notifier.send("测试标题", "纯文本正文")
+
+        _, _, raw_message = smtp.sendmail.call_args.args
+        message = message_from_string(raw_message)
+        assert message.get_content_type() == "text/plain"
+        assert message.get_payload(decode=True).decode("utf-8") == "纯文本正文"
+        assert not message.is_multipart()
+
+    def test_send_plain_text_mode_attaches_image(self):
+        from module.notification.smtp import SMTPNotifier
+        logger = MagicMock()
+        notifier = SMTPNotifier({
+            "host": "smtp.example.com",
+            "user": "user@example.com",
+            "password": "secret",
+            "From": "from@example.com",
+            "To": "to@example.com",
+            "plain_text": True
+        }, logger)
+        image_io = io.BytesIO(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
+                    b"\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDAT\x08\x99c\xf8\xff"
+                    b"\xff?\x00\x05\xfe\x02\xfeA\xdd\x94\x9b\x00\x00\x00\x00IEND\xaeB`\x82")
 
         with patch("module.notification.smtp.smtplib.SMTP_SSL") as mock_smtp_ssl:
             smtp = MagicMock()
@@ -60,12 +84,16 @@ class TestSMTPNotifier:
 
             notifier.send("测试标题", "纯文本正文", image_io=image_io)
 
-        logger.warning.assert_called_once_with("SMTP 纯文本模式下不支持发送图片，图片将被忽略")
         _, _, raw_message = smtp.sendmail.call_args.args
         message = message_from_string(raw_message)
-        assert message.get_content_type() == "text/plain"
-        assert message.get_payload(decode=True).decode("utf-8") == "纯文本正文"
-        assert not message.is_multipart()
+        assert message.get_content_type() == "multipart/mixed"
+        parts = message.get_payload()
+        assert len(parts) == 2
+        assert parts[0].get_content_type() == "text/plain"
+        assert parts[0].get_payload(decode=True).decode("utf-8") == "纯文本正文"
+        assert parts[1].get_content_type() == "image/png"
+        assert parts[1].get_content_disposition() == "attachment"
+        assert parts[1].get_filename() == "screenshot.png"
 
     def test_send_default_mode_still_uses_html(self):
         from module.notification.smtp import SMTPNotifier
