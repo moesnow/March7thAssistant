@@ -111,6 +111,34 @@ class CdpInput(InputBase):
         except Exception as e:
             self.logger.error(f"鼠标移动出错：{e}")
 
+    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5):
+        '''按住鼠标左键从起点拖动到终点'''
+        duration = max(0.0, float(duration or 0.0))
+        steps = max(1, int(duration * 60))
+        self.mouse_move(start_x, start_y)
+        self.mouse_down(start_x, start_y)
+        try:
+            for index in range(1, steps + 1):
+                progress = index / steps
+                x = round(start_x + (end_x - start_x) * progress)
+                y = round(start_y + (end_y - start_y) * progress)
+                self.last_x, self.last_y = x, y
+                self.cloud_game.execute_cdp_cmd("Input.dispatchMouseEvent", {
+                    "type": "mouseMoved",
+                    "button": "left",
+                    "buttons": 1,
+                    "x": x, "y": y,
+                    "pointerType": "mouse"
+                })
+                if duration > 0:
+                    time.sleep(duration / steps)
+        except Exception as e:
+            self.logger.error(f"鼠标拖动出错：{e}")
+            raise
+        finally:
+            self.mouse_up()
+        return True
+
     def mouse_down(self, x, y):
         self.last_x, self.last_y = x, y
         try:

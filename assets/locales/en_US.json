@@ -1501,5 +1501,17 @@
     "纯文本模式": "Plain Text Mode",
     "可选参数，是否以纯文本格式发送邮件（适用于 Outlook 等邮箱）": "Optional parameter: whether to send emails in plain text format (suitable for Outlook and other email services)",
     "选择流程:": "Select workflow:",
-    "请选择要运行的流程编排": "Please select a workflow to run"
+    "请选择要运行的流程编排": "Please select a workflow to run",
+    "滑动鼠标": "Drag Mouse",
+    "例如 100 / 1920, 540 / 1080": "Example: 100 / 1920, 540 / 1080",
+    "例如 900 / 1920, 540 / 1080": "Example: 900 / 1920, 540 / 1080",
+    "滑动起点": "Drag Start",
+    "滑动终点": "Drag End",
+    "滑动时长": "Drag Duration",
+    "未填写起点": "Start point not specified",
+    "未填写终点": "End point not specified",
+    "滑动鼠标失败": "Mouse drag failed",
+    "滑动鼠标失败：坐标必须在 0 到 1 之间": "Mouse drag failed: coordinates must be between 0 and 1",
+    "滑动鼠标需要填写起点和终点": "Mouse drag requires both start and end points",
+    "滑动鼠标坐标必须在 0 到 1 之间": "Mouse drag coordinates must be between 0 and 1"
 }

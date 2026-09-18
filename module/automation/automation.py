@@ -43,6 +43,7 @@ class Automation(metaclass=SingletonMeta):
         self.mouse_down = self.input_handler.mouse_down
         self.mouse_up = self.input_handler.mouse_up
         self.mouse_move = self.input_handler.mouse_move
+        self.mouse_drag = self.input_handler.mouse_drag
         self.mouse_scroll = self.input_handler.mouse_scroll
         self.press_key = self.input_handler.press_key
         self.press_key_down = self.input_handler.press_key_down
@@ -853,6 +854,21 @@ class Automation(metaclass=SingletonMeta):
                 self.mouse_move(x, y)
 
         return True
+
+    def drag_mouse(self, start, end, duration=0.5):
+        """按归一化坐标将鼠标从 start 拖动到 end。"""
+        self.take_screenshot()
+        if self.screenshot is None or self.screenshot_pos is None:
+            raise RuntimeError("无法获取游戏窗口尺寸")
+
+        scale_factor = self.screenshot_scale_factor or 1
+        width = self.screenshot.width / scale_factor
+        height = self.screenshot.height / scale_factor
+        offset_x, offset_y = self.screenshot_pos[:2]
+        start_xy = (int(start[0] * width + offset_x), int(start[1] * height + offset_y))
+        end_xy = (int(end[0] * width + offset_x), int(end[1] * height + offset_y))
+
+        return bool(self.mouse_drag(*start_xy, *end_xy, duration))
 
     def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None, press_duration: float = 0.0, prefer_frame_screenshot=True):
         """
