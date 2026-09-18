@@ -114,29 +114,39 @@ class CdpInput(InputBase):
     def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5):
         '''按住鼠标左键从起点拖动到终点'''
         duration = max(0.0, float(duration or 0.0))
-        steps = max(1, int(duration * 60))
-        self.mouse_move(start_x, start_y)
-        self.mouse_down(start_x, start_y)
+        self.last_x, self.last_y = start_x, start_y
+
+        def dispatch(event_type, buttons):
+            self.cloud_game.execute_cdp_cmd("Input.dispatchMouseEvent", {
+                "type": event_type,
+                "button": "left" if buttons or event_type == "mouseReleased" else "none",
+                "buttons": buttons,
+                "x": self.last_x, "y": self.last_y,
+                "modifiers": self.active_modifiers,
+                "clickCount": 1 if event_type != "mouseMoved" else 0,
+                "pointerType": "mouse",
+            })
+
+        dispatch("mouseMoved", 0)
         try:
-            for index in range(1, steps + 1):
-                progress = index / steps
+            dispatch("mousePressed", 1)
+            started = time.monotonic()
+            while True:
+                elapsed = time.monotonic() - started
+                if elapsed < duration:
+                    time.sleep(min(1 / 60, duration - elapsed))
+                progress = min(1.0, (time.monotonic() - started) / duration) if duration else 1.0
                 x = round(start_x + (end_x - start_x) * progress)
                 y = round(start_y + (end_y - start_y) * progress)
                 self.last_x, self.last_y = x, y
-                self.cloud_game.execute_cdp_cmd("Input.dispatchMouseEvent", {
-                    "type": "mouseMoved",
-                    "button": "left",
-                    "buttons": 1,
-                    "x": x, "y": y,
-                    "pointerType": "mouse"
-                })
-                if duration > 0:
-                    time.sleep(duration / steps)
+                dispatch("mouseMoved", 1)
+                if progress >= 1:
+                    break
         except Exception as e:
             self.logger.error(f"鼠标拖动出错：{e}")
             raise
         finally:
-            self.mouse_up()
+            dispatch("mouseReleased", 0)
         return True
 
     def mouse_down(self, x, y):

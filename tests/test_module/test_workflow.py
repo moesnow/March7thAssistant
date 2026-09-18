@@ -487,11 +487,22 @@ class TestNormalizeStepExtended:
 
 
 class TestWorkflowRunnerDragMouse:
+    @pytest.mark.parametrize("raises", [False, True])
+    def test_drag_mouse_reports_backend_failure(self, monkeypatch, raises):
+        def fail(*args):
+            if raises:
+                raise RuntimeError("input failed")
+            return False
+
+        monkeypatch.setattr("module.workflow.auto.drag_mouse", fail, raising=False)
+        runner = WorkflowRunner(mirror_to_project_log=False)
+        assert runner._drag_mouse({"start": "0, 0", "end": "1, 1"}) is False
+
     def test_drag_mouse_calls_automation(self, monkeypatch):
         calls = []
         monkeypatch.setattr(
             "module.workflow.auto.drag_mouse",
-            lambda start, end, duration: calls.append((start, end, duration)),
+            lambda start, end, duration: calls.append((start, end, duration)) or True,
             raising=False,
         )
         runner = WorkflowRunner(sleep_func=lambda _: None, mirror_to_project_log=False)

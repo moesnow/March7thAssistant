@@ -47,8 +47,8 @@ class LocalInput(InputBase):
         '''按住鼠标左键从起点拖动到终点'''
         try:
             pyautogui.moveTo(start_x, start_y)
-            pyautogui.mouseDown()
             try:
+                pyautogui.mouseDown()
                 pyautogui.moveTo(end_x, end_y, duration=max(0.0, float(duration or 0.0)))
             finally:
                 pyautogui.mouseUp()

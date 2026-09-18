@@ -857,16 +857,25 @@ class Automation(metaclass=SingletonMeta):
 
     def drag_mouse(self, start, end, duration=0.5):
         """按归一化坐标将鼠标从 start 拖动到 end。"""
+        duration = float(duration)
+        if not math.isfinite(duration) or not 0 <= duration <= 60:
+            raise ValueError("滑动时长必须在 0 到 60 秒之间")
+        if any(not 0 <= value <= 1 for value in (*start, *end)):
+            raise ValueError("坐标必须在 0 到 1 之间")
         self.take_screenshot()
         if self.screenshot is None or self.screenshot_pos is None:
             raise RuntimeError("无法获取游戏窗口尺寸")
 
         scale_factor = self.screenshot_scale_factor or 1
-        width = self.screenshot.width / scale_factor
-        height = self.screenshot.height / scale_factor
+        width = int(self.screenshot_pos[2] / scale_factor)
+        height = int(self.screenshot_pos[3] / scale_factor)
+        if width <= 0 or height <= 0:
+            raise RuntimeError("无法获取游戏窗口尺寸")
         offset_x, offset_y = self.screenshot_pos[:2]
-        start_xy = (int(start[0] * width + offset_x), int(start[1] * height + offset_y))
-        end_xy = (int(end[0] * width + offset_x), int(end[1] * height + offset_y))
+        start_xy = (offset_x + min(int(start[0] * width), width - 1),
+                    offset_y + min(int(start[1] * height), height - 1))
+        end_xy = (offset_x + min(int(end[0] * width), width - 1),
+                  offset_y + min(int(end[1] * height), height - 1))
 
         return bool(self.mouse_drag(*start_xy, *end_xy, duration))
 

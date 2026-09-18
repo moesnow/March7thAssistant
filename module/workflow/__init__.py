@@ -1207,8 +1207,7 @@ class WorkflowRunner:
             return False
 
         try:
-            auto.drag_mouse(start, end, step.get("drag_duration", 0.5))
-            return True
+            return bool(auto.drag_mouse(start, end, step.get("drag_duration", 0.5)))
         except Exception as exc:
             self._log(f"{tr('滑动鼠标失败')}：{exc}")
             return False
