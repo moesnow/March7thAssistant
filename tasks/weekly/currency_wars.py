@@ -2870,26 +2870,27 @@ class CurrencyWars:
 
     def check_return_home(self) -> bool:
         """
-        检查并返回货币战争
+        检查并返回货币战争；已在首页时也应结束本局。
         """
-        if auto.click_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080)):
+        if not screen.check_screen("currency_wars_homepage"):
+            # 结算布局可能变化，按完整按钮文字查找，不限定旧版按钮区域。
+            if not auto.click_element('返回货币战争', 'text', None):
+                return False
             log.info("检测到返回货币战争按钮，尝试点击")
             time.sleep(3)
             # 等待一段时间后再次检查按钮是否还在
-            pos = auto.find_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080))
+            pos = auto.find_element('返回货币战争', 'text', None)
             if pos:
                 log.warning("返回货币战争按钮仍存在，尝试重新点击")
                 auto.click_element_with_pos(pos)
                 time.sleep(3)
-                # 再次检查按钮是否仍在
-                if auto.find_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080)):
+                if auto.find_element('返回货币战争', 'text', None):
                     log.error("无法返回货币战争首页")
                     raise RuntimeError("无法返回货币战争首页")
-            if self.result is not None:
-                log.info(f"本次对局结果：{'胜利' if self.result else '失败'}")
-            else:
-                log.info("本次对局结果：未知")
             screen.wait_for_screen_change("currency_wars_homepage")
-            log.info("已返回货币战争首页")
-            return True
-        return False
+        if self.result is not None:
+            log.info(f"本次对局结果：{'胜利' if self.result else '失败'}")
+        else:
+            log.info("本次对局结果：未知")
+        log.info("已返回货币战争首页")
+        return True
