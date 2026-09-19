@@ -166,6 +166,10 @@ class TestCurrencyWarsRepeatedRuns(unittest.TestCase):
             self.war.character_flags['previous-round-character'] = True
         elif self.state == 'battle':
             self.state = 'result'
+        elif self.state == 'loading':
+            self.loading_frames -= 1
+            if self.loading_frames == 0:
+                self.state = 'home'
 
     def find_element(self, target, *args, **kwargs):
         if target == './assets/images/share/base/RedExclamationMark.png':
@@ -185,11 +189,6 @@ class TestCurrencyWarsRepeatedRuns(unittest.TestCase):
 
     def check_screen(self, target):
         self.assertEqual(target, 'currency_wars_homepage')
-        if self.state == 'loading':
-            self.loading_frames -= 1
-            if self.loading_frames == 0:
-                self.state = 'home'
-            return False
         return self.state == 'home'
 
     def wait_for_screen(self, target):
