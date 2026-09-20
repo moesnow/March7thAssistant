@@ -100,6 +100,8 @@ class TestCurrencyWarsRepeatedRuns(unittest.TestCase):
         self.state = 'home'
         self.events = []
         self.rounds = 0
+        self.ignored_start_clicks = 0
+        self.start_clicks = 0
         self.ticks = 0
         self.loading_frames = 0
         self.result_text = '对局胜利'
@@ -146,13 +148,6 @@ class TestCurrencyWarsRepeatedRuns(unittest.TestCase):
             self.fail(f'Unexpected navigation: {target}')
 
     def click_element(self, target, *args, **kwargs):
-        if target == '开始对局':
-            self.assertEqual(self.state, 'ready')
-            self.rounds += 1
-            self.ticks = 0
-            self.events.append('start')
-            self.state = 'battle'
-            return True
         if target in ('结束并结算', '返回货币战争'):
             return False  # The return button was missed; only the homepage remains.
         self.fail(f'Unexpected click: {target}')
@@ -172,6 +167,10 @@ class TestCurrencyWarsRepeatedRuns(unittest.TestCase):
                 self.state = 'home'
 
     def find_element(self, target, *args, **kwargs):
+        if target == '开始对局' and self.state == 'ready':
+            return (1500, 950, 200, 50)
+        if isinstance(target, tuple) and '投资环境' in target and self.state == 'battle':
+            return (800, 80, 200, 50)
         if target == './assets/images/share/base/RedExclamationMark.png':
             self.assertEqual(self.state, 'home')
             self.events.append('reward')
@@ -183,6 +182,16 @@ class TestCurrencyWarsRepeatedRuns(unittest.TestCase):
         return None
 
     def click_position(self, position):
+        if self.state == 'ready':
+            self.start_clicks += 1
+            if self.ignored_start_clicks:
+                self.ignored_start_clicks -= 1
+                return True  # Input dispatch succeeds, but the game ignores it.
+            self.rounds += 1
+            self.ticks = 0
+            self.events.append('start')
+            self.state = 'battle'
+            return True
         self.assertEqual(self.state, 'result')
         self.events.append('settle')
         self.state = 'loading' if self.loading_frames else 'home'
@@ -216,6 +225,14 @@ class TestCurrencyWarsRepeatedRuns(unittest.TestCase):
         self.assertIsNone(self.war.result)
         self.assertIsNone(self.war.screenshot)
         self.module.cfg.save_timestamp.assert_not_called()
+
+    def test_second_round_retries_ignored_start_click(self):
+        self.assertTrue(self.war.start())
+        self.ignored_start_clicks = 1
+        self.assertTrue(self.war.start())
+        self.assertEqual(self.start_clicks, 3)
+        self.assertEqual(self.rounds, 2)
+        self.assertEqual(self.events, ['start', 'settle', 'notify', 'reward', 'score'] * 2)
 
     def test_defeat_returns_home_and_allows_next_round(self):
         self.result_text = '对局未完成'
