@@ -391,12 +391,34 @@ class CurrencyWars:
             log.error("选择关卡失败，结束任务")
             return False
 
-        if not auto.click_element('开始对局', 'text', None, 10):
-            log.error("未找到开始对局按钮，结束任务")
-            return False
+        if not self.wait_for_war_start():
+            # 启动状态不明确时停止外层循环，避免继续领奖或反复创建对局。
+            raise RuntimeError("货币战争启动失败：未确认进入对局")
 
         log.info("开始对局")
         return True
+
+    def wait_for_war_start(self) -> bool:
+        """有限重试开始按钮，并确认进入开局界面后才交给任务主循环。"""
+        attempts = 0
+        last_click = -3
+        for poll in range(30):
+            # 每轮重新识别位置，加载中或 OCR 暂时漏检时不复用旧坐标。
+            pos = auto.find_element('开始对局', 'text')
+            if pos:
+                if attempts < 3 and poll - last_click >= 3:
+                    attempts += 1
+                    last_click = poll
+                    log.info(f"尝试开始对局（{attempts}/3）")
+                    auto.click_element_with_pos(pos)
+            elif auto.find_element(('下一步', '投资环境', '请选择投资策略', '遭遇节点'), 'text') or auto.find_element(
+                "./assets/images/screen/currency_wars/exit.png", "image", 0.9,
+                crop=(3.0 / 1920, 37.0 / 1080, 104.0 / 1920, 57.0 / 1080)
+            ):
+                return True
+            time.sleep(2)
+        log.error("等待货币战争开局超时，未确认进入对局")
+        return False
 
     def choose_level(self, level: int) -> bool:
         """
@@ -2870,26 +2892,27 @@ class CurrencyWars:
 
     def check_return_home(self) -> bool:
         """
-        检查并返回货币战争
+        检查并返回货币战争；已在首页时也应结束本局。
         """
-        if auto.click_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080)):
+        if not screen.check_screen("currency_wars_homepage"):
+            # 结算布局可能变化，按完整按钮文字查找，不限定旧版按钮区域。
+            if not auto.click_element('返回货币战争', 'text', None):
+                return False
             log.info("检测到返回货币战争按钮，尝试点击")
             time.sleep(3)
             # 等待一段时间后再次检查按钮是否还在
-            pos = auto.find_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080))
+            pos = auto.find_element('返回货币战争', 'text', None)
             if pos:
                 log.warning("返回货币战争按钮仍存在，尝试重新点击")
                 auto.click_element_with_pos(pos)
                 time.sleep(3)
-                # 再次检查按钮是否仍在
-                if auto.find_element('返回货币战争', 'text', None, crop=(674.0 / 1920, 852.0 / 1080, 569.0 / 1920, 108.0 / 1080)):
+                if auto.find_element('返回货币战争', 'text', None):
                     log.error("无法返回货币战争首页")
                     raise RuntimeError("无法返回货币战争首页")
-            if self.result is not None:
-                log.info(f"本次对局结果：{'胜利' if self.result else '失败'}")
-            else:
-                log.info("本次对局结果：未知")
             screen.wait_for_screen_change("currency_wars_homepage")
-            log.info("已返回货币战争首页")
-            return True
-        return False
+        if self.result is not None:
+            log.info(f"本次对局结果：{'胜利' if self.result else '失败'}")
+        else:
+            log.info("本次对局结果：未知")
+        log.info("已返回货币战争首页")
+        return True
