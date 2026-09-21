@@ -11,7 +11,11 @@ QScrollArea {
     border: none;
 }
 
-QFrame[frameShape="5"] {
+#cardEditScrollWidget {
+    background-color: transparent;
+}
+
+CardEditorWidget {
     background-color: rgba(39, 39, 39, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;

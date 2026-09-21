@@ -343,6 +343,9 @@ class CardEditDialog(QDialog):
         scroll.setWidgetResizable(True)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scroll_widget = QWidget()
+        # QScrollArea.setWidget 会强制 autoFillBackground，滚动内容默认用系统 palette
+        # 填充背景，深色模式下会露出浅灰底，需由 qss 按主题覆盖
+        self.scroll_widget.setObjectName("cardEditScrollWidget")
         self.cards_layout = QVBoxLayout(self.scroll_widget)
         self.cards_layout.setSpacing(8)
         scroll.setWidget(self.scroll_widget)
