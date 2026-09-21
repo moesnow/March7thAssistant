@@ -4,6 +4,8 @@ from module.workflow import (
     parse_float,
     _parse_text_targets,
     parse_crop_expression,
+    parse_point_expression,
+    format_point_expression,
     format_crop_expression,
     build_crop_expression,
     normalize_step,
@@ -17,6 +19,7 @@ from module.workflow import (
     _serialize_workflow,
     _find_workflow_by_name,
     _allocate_workflow_directory_name,
+    WorkflowRunner,
 )
 
 
@@ -107,6 +110,26 @@ class TestParseCropExpression:
     def test_zero_denominator_raises(self):
         with pytest.raises(ValueError, match="分母不能为 0"):
             parse_crop_expression("1/0, 2/1, 3/1, 4/1")
+
+
+class TestParsePointExpression:
+    def test_fraction_format(self):
+        result = parse_point_expression("100 / 1920, 540 / 1080")
+        assert result == pytest.approx((100 / 1920, 0.5))
+
+    def test_tuple_input(self):
+        assert parse_point_expression((0.1, 0.2)) == (0.1, 0.2)
+
+    def test_invalid_count_raises(self):
+        with pytest.raises(ValueError, match="2 个值"):
+            parse_point_expression("0.1, 0.2, 0.3")
+
+    def test_zero_denominator_raises(self):
+        with pytest.raises(ValueError, match="分母不能为 0"):
+            parse_point_expression("1 / 0, 0.5")
+
+    def test_format_list(self):
+        assert format_point_expression([0.1, 0.2]) == "(0.1, 0.2)"
 
 
 class TestFormatCropExpression:
@@ -448,6 +471,67 @@ class TestNormalizeStepExtended:
         assert result["type"] == "press_key"
         assert result["key"] == "enter"
         assert result["key_duration"] == 0.5
+
+    def test_drag_mouse_step(self):
+        step = {
+            "type": "drag_mouse",
+            "start": "100 / 1920, 540 / 1080",
+            "end": "900 / 1920, 540 / 1080",
+            "drag_duration": 1.2,
+        }
+        result = normalize_step(step)
+        assert result["type"] == "drag_mouse"
+        assert result["start"] == step["start"]
+        assert result["end"] == step["end"]
+        assert result["drag_duration"] == 1.2
+
+
+class TestWorkflowRunnerDragMouse:
+    @pytest.mark.parametrize("raises", [False, True])
+    def test_drag_mouse_reports_backend_failure(self, monkeypatch, raises):
+        def fail(*args):
+            if raises:
+                raise RuntimeError("input failed")
+            return False
+
+        monkeypatch.setattr("module.workflow.auto.drag_mouse", fail, raising=False)
+        runner = WorkflowRunner(mirror_to_project_log=False)
+        assert runner._drag_mouse({"start": "0, 0", "end": "1, 1"}) is False
+
+    def test_drag_mouse_calls_automation(self, monkeypatch):
+        calls = []
+        monkeypatch.setattr(
+            "module.workflow.auto.drag_mouse",
+            lambda start, end, duration: calls.append((start, end, duration)) or True,
+            raising=False,
+        )
+        runner = WorkflowRunner(sleep_func=lambda _: None, mirror_to_project_log=False)
+
+        result = runner._drag_mouse({
+            "start": "100 / 1920, 540 / 1080",
+            "end": "900 / 1920, 540 / 1080",
+            "drag_duration": 0.8,
+        })
+
+        assert result is True
+        assert calls[0][0] == pytest.approx((100 / 1920, 0.5))
+        assert calls[0][1] == pytest.approx((900 / 1920, 0.5))
+        assert calls[0][2] == pytest.approx(0.8)
+
+    def test_drag_mouse_rejects_out_of_range_coordinates(self, monkeypatch):
+        called = False
+
+        def drag_mouse(*args, **kwargs):
+            nonlocal called
+            called = True
+
+        monkeypatch.setattr("module.workflow.auto.drag_mouse", drag_mouse, raising=False)
+        runner = WorkflowRunner(mirror_to_project_log=False)
+
+        result = runner._drag_mouse({"start": "-0.1, 0.5", "end": "0.8, 0.5"})
+
+        assert result is False
+        assert called is False
 
 
 class TestBuildCropExpression:

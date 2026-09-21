@@ -24,6 +24,11 @@ class InputBase(ABC):
         pass
 
     @abstractmethod
+    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5):
+        '''按住鼠标左键从起点拖动到终点'''
+        pass
+
+    @abstractmethod
     def mouse_scroll(self, count, direction=-1, pause=True):
         '''滚动鼠标滚轮，方向和次数由参数指定'''
         pass

@@ -111,6 +111,44 @@ class CdpInput(InputBase):
         except Exception as e:
             self.logger.error(f"鼠标移动出错：{e}")
 
+    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5):
+        '''按住鼠标左键从起点拖动到终点'''
+        duration = max(0.0, float(duration or 0.0))
+        self.last_x, self.last_y = start_x, start_y
+
+        def dispatch(event_type, buttons):
+            self.cloud_game.execute_cdp_cmd("Input.dispatchMouseEvent", {
+                "type": event_type,
+                "button": "left" if buttons or event_type == "mouseReleased" else "none",
+                "buttons": buttons,
+                "x": self.last_x, "y": self.last_y,
+                "modifiers": self.active_modifiers,
+                "clickCount": 1 if event_type != "mouseMoved" else 0,
+                "pointerType": "mouse",
+            })
+
+        dispatch("mouseMoved", 0)
+        try:
+            dispatch("mousePressed", 1)
+            started = time.monotonic()
+            while True:
+                elapsed = time.monotonic() - started
+                if elapsed < duration:
+                    time.sleep(min(1 / 60, duration - elapsed))
+                progress = min(1.0, (time.monotonic() - started) / duration) if duration else 1.0
+                x = round(start_x + (end_x - start_x) * progress)
+                y = round(start_y + (end_y - start_y) * progress)
+                self.last_x, self.last_y = x, y
+                dispatch("mouseMoved", 1)
+                if progress >= 1:
+                    break
+        except Exception as e:
+            self.logger.error(f"鼠标拖动出错：{e}")
+            raise
+        finally:
+            dispatch("mouseReleased", 0)
+        return True
+
     def mouse_down(self, x, y):
         self.last_x, self.last_y = x, y
         try:

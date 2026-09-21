@@ -38,6 +38,7 @@ STEP_TYPE_LABELS = {
     "click_image": "点击图片",
     "click_text": "点击文字",
     "click_crop": "点击坐标",
+    "drag_mouse": "滑动鼠标",
     "find_image": "查找图片",
     "find_text": "查找文字",
     "play_audio": "播放音频",
@@ -522,6 +523,42 @@ def parse_crop_expression(crop_text) -> tuple[float, float, float, float]:
     return tuple(values)
 
 
+def parse_point_expression(point_text) -> tuple[float, float]:
+    """解析归一化坐标点，支持 ``x, y`` 和 ``x / width, y / height``。"""
+    if isinstance(point_text, (list, tuple)) and len(point_text) == 2:
+        return tuple(float(item) for item in point_text)
+
+    normalized = str(point_text or "").strip()
+    if normalized.startswith("(") and normalized.endswith(")"):
+        normalized = normalized[1:-1].strip()
+
+    parts = [part.strip() for part in normalized.split(",") if part.strip()]
+    if len(parts) != 2:
+        raise ValueError("坐标点需要包含 2 个值")
+
+    values = []
+    for part in parts:
+        if "/" in part:
+            numerator, denominator = part.split("/", 1)
+            denominator_value = float(denominator.strip())
+            if denominator_value == 0:
+                raise ValueError("坐标点分母不能为 0")
+            values.append(float(numerator.strip()) / denominator_value)
+        else:
+            values.append(float(part))
+    return tuple(values)
+
+
+def format_point_expression(point_text) -> str:
+    if point_text in (None, "", []):
+        return ""
+    if isinstance(point_text, str):
+        return point_text
+    if isinstance(point_text, (list, tuple)) and len(point_text) == 2:
+        return f"({point_text[0]}, {point_text[1]})"
+    return str(point_text)
+
+
 def format_crop_expression(crop_text) -> str:
     if crop_text in (None, "", []):
         return tr("全屏")
@@ -596,6 +633,9 @@ def normalize_step(step: dict) -> dict:
         "key_action": str(step.get("key_action", "press_and_release") or "press_and_release"),
         "click_action": str(step.get("click_action", "press_and_release") or "press_and_release"),
         "press_duration": parse_float(step.get("press_duration", 0.1), 0.1, 0.0),
+        "start": step.get("start", "") or "",
+        "end": step.get("end", "") or "",
+        "drag_duration": parse_float(step.get("drag_duration", 0.5), 0.5, 0.0),
     }
 
     normalized["children"] = [normalize_step(child) for child in step.get("children", []) if isinstance(child, dict)]
@@ -822,6 +862,11 @@ def summarize_step(step: dict) -> tuple[str, str]:
         action_label = _get_click_action_label(normalized["click_action"])
         return title, action_label
 
+    if step_type == "drag_mouse":
+        start = format_point_expression(normalized["start"]) or tr("未填写起点")
+        end = format_point_expression(normalized["end"]) or tr("未填写终点")
+        return f"{label} · {start} → {end}", f"{tr('时长')} {normalized['drag_duration']:.2f}s"
+
     if step_type == "find_image":
         title = f"{label} · {os.path.basename(normalized['template_path']) or tr('未选择模板')}"
         retries_text = f" / {tr('重试')} {normalized['max_retries']} {tr('次')}" if normalized['max_retries'] > 1 else ""
@@ -977,6 +1022,8 @@ class WorkflowRunner:
             return self._execute_bool_step(normalized, depth, self._click_text)
         if step_type == "click_crop":
             return self._execute_bool_step(normalized, depth, self._click_crop)
+        if step_type == "drag_mouse":
+            return self._execute_bool_step(normalized, depth, self._drag_mouse)
         if step_type == "find_image":
             return self._execute_bool_step(normalized, depth, self._find_image)
         if step_type == "find_text":
@@ -1146,6 +1193,24 @@ class WorkflowRunner:
             action=action,
             press_duration=step.get("press_duration", 0.0),
         ))
+
+    def _drag_mouse(self, step: dict) -> bool:
+        try:
+            start = parse_point_expression(step.get("start", ""))
+            end = parse_point_expression(step.get("end", ""))
+        except (TypeError, ValueError) as exc:
+            self._log(f"{tr('滑动鼠标失败')}：{exc}")
+            return False
+
+        if any(not 0.0 <= value <= 1.0 for value in (*start, *end)):
+            self._log(tr("滑动鼠标失败：坐标必须在 0 到 1 之间"))
+            return False
+
+        try:
+            return bool(auto.drag_mouse(start, end, step.get("drag_duration", 0.5)))
+        except Exception as exc:
+            self._log(f"{tr('滑动鼠标失败')}：{exc}")
+            return False
 
     def _find_image(self, step: dict) -> bool:
         if not step["template_path"]:
