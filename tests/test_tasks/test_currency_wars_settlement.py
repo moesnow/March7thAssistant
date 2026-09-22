@@ -52,6 +52,46 @@ class TestCurrencyWarsSettlement(unittest.TestCase):
         self.assertFalse(self.war.check_return_home())
         self.module.screen.wait_for_screen_change.assert_not_called()
 
+    def test_direct_settlement_records_loss_before_leaving_result_screen(self):
+        self.module.auto.find_element.return_value = ((800, 900), (1100, 980))
+        self.module.auto.matched_text = '前往结算'
+        self.module.auto.ocr_result = [(None, ('对局未完成', 0.99))]
+        self.module.cfg.currencywars_strategy_restart_on_special_tags = False
+        screenshot = self.module.auto.screenshot
+        self.assertTrue(self.war.check_click_continue())
+        self.assertIs(self.war.result, False)
+        self.assertIs(self.war.screenshot, screenshot)
+
+    def test_continue_without_result_text_does_not_invent_a_loss(self):
+        self.module.auto.find_element.return_value = ((800, 900), (1100, 980))
+        self.module.auto.matched_text = '继续挑战'
+        self.module.auto.ocr_result = [(None, ('继续挑战', 0.99))]
+        self.module.cfg.currencywars_strategy_restart_on_special_tags = False
+        self.assertTrue(self.war.check_click_continue())
+        self.assertIsNone(self.war.result)
+
+    def test_exhausted_health_settlement_captures_observed_result(self):
+        # Observed 2-1 defeat: no “对局未完成” or “下一页” before returning home.
+        self.module.auto.find_element.return_value = ((910, 879), (1011, 909))
+        self.module.auto.matched_text = '前往结算'
+        self.module.auto.ocr_result = [(None, (text, 0.99)) for text in (
+            '21', '挑战结束', '2-1X', '战斗', '挑战进度', '-16 0', '前往结算')]
+        screenshot = self.module.auto.screenshot
+        self.assertTrue(self.war.check_click_continue())
+        self.assertIs(self.war.result, False)
+        self.assertIs(self.war.screenshot, screenshot)
+
+    def test_intermediate_challenge_end_is_not_a_finished_run(self):
+        self.module.auto.ocr_result = [(None, (text, 0.99)) for text in (
+            '挑战结束', '继续挑战')]
+        self.war._check_battle_result()
+        self.assertIsNone(self.war.result)
+
+    def test_settlement_button_alone_does_not_invent_a_result(self):
+        self.module.auto.ocr_result = [(None, ('前往结算', 0.99))]
+        self.war._check_battle_result()
+        self.assertIsNone(self.war.result)
+
     def test_return_button_outside_old_crop(self):
         self.module.auto.click_element.side_effect = lambda *args, **kw: 'crop' not in kw
         self.module.auto.find_element.return_value = None
