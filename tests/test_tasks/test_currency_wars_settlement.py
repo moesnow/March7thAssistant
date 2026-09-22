@@ -34,6 +34,7 @@ class TestCurrencyWarsSettlement(unittest.TestCase):
         self.module = load_currency_wars()
         self.war = self.module.CurrencyWars()
         self.module.screen.check_screen.return_value = False
+        self.module.auto.find_element.return_value = None
         self.module.auto.click_element.return_value = False
         self.sleep = patch.object(self.module.time, 'sleep')
         self.sleep.start()
