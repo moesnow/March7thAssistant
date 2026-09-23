@@ -61,15 +61,6 @@ jobs:
           Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
           Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
 
-      # 创建更新压缩包
-      - name: Create archive
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
-          Rename-Item -Path .\dist\March7thAssistant -NewName update
-          .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\update.7z .\dist\update\
-          Rename-Item -Path .\dist\update -NewName March7thAssistant
-
       # 获取第三方库最新发布版本
       - name: Get 3rdparty release tags
         if: startsWith(github.ref, 'refs/tags/')
@@ -94,26 +85,57 @@ jobs:
           path: 3rdparty
           key: 3rdparty-${{ steps.deps-tags.outputs.hash }}
 
-      # 下载第三方库（缓存未命中时）
-      - name: Download 3rdparty
-        if: startsWith(github.ref, 'refs/tags/') && steps.cache-3rdparty.outputs.cache-hit != 'true'
-        run: uv run python build.py --task all
-
-      # 生成日志并移动第三方库到dist目录
-      - name: Move 3rdparty to dist directory
+      # 并行创建 update.7z 并下载第三方库（二者无依赖）
+      - name: Build update.7z and fetch 3rdparty in parallel
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          uv run python build.py --task changelog -v "${{ github.ref_name }}" -o changelog_temp.md
+          # 轨道 A：update.7z（归档内根目录必须叫 update，故先改名）
+          Rename-Item -Path .\dist\March7thAssistant -NewName update
+          $p1 = Start-Process -FilePath ".\assets\binary\7za.exe" -ArgumentList 'a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\update.7z .\dist\update\' -PassThru -NoNewWindow
+          Write-Host "Started update.7z compression (PID $($p1.Id))"
+
+          # 轨道 B：3rdparty 下载（缓存未命中时）
+          $fetchFailed = $false
+          if ("${{ steps.cache-3rdparty.outputs.cache-hit }}" -ne 'true') {
+            Write-Host "3rdparty cache miss, downloading..."
+            uv run python build.py --task all
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "3rdparty download failed with exit $LASTEXITCODE"
+              $fetchFailed = $true
+            }
+          } else {
+            Write-Host "3rdparty cache hit, skip download"
+          }
+
+          # 汇合：等待 update.7z 完成
+          $p1.WaitForExit()
+          Write-Host "update.7z compression finished, exit=$($p1.ExitCode)"
+          if ($p1.ExitCode -ne 0 -or $fetchFailed) {
+            exit 1
+          }
+
+          # 组装完整包目录
+          Rename-Item -Path .\dist\update -NewName March7thAssistant
           Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
 
-      # 创建完整的压缩包
-      - name: Create full zip archive
+      # 生成日志
+      - name: Generate changelog
+        if: startsWith(github.ref, 'refs/tags/')
+        run: uv run python build.py --task changelog -v "${{ github.ref_name }}" -o changelog_temp.md
+
+      # 并行创建完整的 zip 与 7z 压缩包
+      - name: Create full zip and 7z in parallel
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          # Compress-Archive -Path .\dist\March7thAssistant_full\ -DestinationPath .\dist\March7thAssistant_full.zip -Force
-          .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
-          .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
+          $p1 = Start-Process -FilePath ".\assets\binary\7za.exe" -ArgumentList 'a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\' -PassThru -NoNewWindow
+          $p2 = Start-Process -FilePath ".\assets\binary\7za.exe" -ArgumentList 'a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\' -PassThru -NoNewWindow
+          Write-Host "Started full.zip (PID $($p1.Id)) and full.7z (PID $($p2.Id))"
+          $p1.WaitForExit(); $p2.WaitForExit()
+          if ($p1.ExitCode -ne 0 -or $p2.ExitCode -ne 0) {
+            Write-Host "Exit codes: zip=$($p1.ExitCode) 7z=$($p2.ExitCode)"
+            exit 1
+          }
 
       # 创建GitHub发布
       - name: Create release
