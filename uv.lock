@@ -754,19 +754,6 @@ wheels = [
 ]
 
 [[package]]
-name = "imageio"
-version = "2.37.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "pillow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b1/84/93bcd1300216ea50811cee96873b84a1bebf8d0489ffaf7f2a3756bab866/imageio-2.37.3.tar.gz", hash = "sha256:bbb37efbfc4c400fcd534b367b91fcd66d5da639aaa138034431a1c5e0a41451", size = 389673, upload-time = "2026-03-09T11:31:12.573Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/fa/391e437a34e55095173dca5f24070d89cbc233ff85bf1c29c93248c6588d/imageio-2.37.3-py3-none-any.whl", hash = "sha256:46f5bb8522cd421c0f5ae104d8268f569d856b29eb1a13b92829d1970f32c9f0", size = 317646, upload-time = "2026-03-09T11:31:10.771Z" },
-]
-
-[[package]]
 name = "inflate64"
 version = "1.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -881,7 +868,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "charset-normalizer" },
     { name = "colorama" },
-    { name = "imageio" },
     { name = "keyboard" },
     { name = "markdown" },
     { name = "matrix-nio" },
@@ -910,7 +896,6 @@ dependencies = [
     { name = "pysocks" },
     { name = "python-socks" },
     { name = "pyuac", marker = "sys_platform == 'win32'" },
-    { name = "pyyaml" },
     { name = "qrcode" },
     { name = "rapidocr" },
     { name = "requests", extra = ["socks"] },
@@ -933,7 +918,6 @@ dev = [
 docker = [
     { name = "charset-normalizer" },
     { name = "colorama" },
-    { name = "imageio" },
     { name = "matrix-nio" },
     { name = "numpy" },
     { name = "onnxruntime" },
@@ -947,7 +931,6 @@ docker = [
     { name = "pyperclip" },
     { name = "pysocks" },
     { name = "python-socks" },
-    { name = "pyyaml" },
     { name = "rapidocr" },
     { name = "requests", extra = ["socks"] },
     { name = "requests-toolbelt" },
@@ -960,7 +943,6 @@ docker = [
 requires-dist = [
     { name = "charset-normalizer", specifier = "==3.4.7" },
     { name = "colorama", specifier = "==0.4.6" },
-    { name = "imageio", specifier = "==2.37.3" },
     { name = "keyboard", specifier = "==0.13.5" },
     { name = "markdown", specifier = "==3.10.2" },
     { name = "matrix-nio", specifier = "==0.25.2" },
@@ -989,7 +971,6 @@ requires-dist = [
     { name = "pysocks", specifier = "==1.7.1" },
     { name = "python-socks", extras = ["asyncio"], specifier = "==2.8.1" },
     { name = "pyuac", marker = "sys_platform == 'win32'", specifier = "==0.0.3" },
-    { name = "pyyaml", specifier = "==6.0.3" },
     { name = "qrcode", specifier = "==8.2" },
     { name = "rapidocr", specifier = "==3.8.1" },
     { name = "requests", extras = ["socks"], specifier = "==2.34.2" },
@@ -1010,7 +991,6 @@ dev = [
 docker = [
     { name = "charset-normalizer", specifier = "==3.4.7" },
     { name = "colorama", specifier = "==0.4.6" },
-    { name = "imageio", specifier = "==2.37.3" },
     { name = "matrix-nio", specifier = "==0.25.2" },
     { name = "numpy", specifier = "==2.4.6" },
     { name = "onnxruntime", specifier = "==1.26.0" },
@@ -1024,7 +1004,6 @@ docker = [
     { name = "pyperclip", specifier = "==1.11.0" },
     { name = "pysocks", specifier = "==1.7.1" },
     { name = "python-socks", extras = ["asyncio"], specifier = "==2.8.1" },
-    { name = "pyyaml", specifier = "==6.0.3" },
     { name = "rapidocr", specifier = "==3.8.1" },
     { name = "requests", extras = ["socks"], specifier = "==2.34.2" },
     { name = "requests-toolbelt", specifier = "==1.0.0" },

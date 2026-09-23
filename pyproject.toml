@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "ruamel.yaml==0.19.1",
-    "pyyaml==6.0.3",
     "colorama==0.4.6",
     "packaging==26.2",
     "pyuac==0.0.3; sys_platform == 'win32'",
@@ -18,7 +17,6 @@ dependencies = [
     "pygetwindow==0.0.9; sys_platform == 'win32'",
     "requests[socks]==2.34.2",
     "charset_normalizer==3.4.7",
-    "imageio==2.37.3",
     "Pillow==12.3.0",
     "numpy==2.4.6",
     "opencv-python==4.13.0.92",
@@ -51,7 +49,6 @@ dependencies = [
 # Docker 专用依赖：排除 GUI 和 Windows 专属包，其余与 main 保持同步
 docker = [
     "ruamel.yaml==0.19.1",
-    "pyyaml==6.0.3",
     "colorama==0.4.6",
     "packaging==26.2",
     "playsound3==3.3.1",
@@ -59,7 +56,6 @@ docker = [
     "psutil==7.2.2",
     "requests[socks]==2.34.2",
     "charset_normalizer==3.4.7",
-    "imageio==2.37.3",
     "Pillow==12.3.0",
     "numpy==2.4.6",
     "opencv-python==4.13.0.92",
