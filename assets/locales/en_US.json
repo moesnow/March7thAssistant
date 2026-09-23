@@ -1513,5 +1513,13 @@
     "滑动鼠标失败": "Mouse drag failed",
     "滑动鼠标失败：坐标必须在 0 到 1 之间": "Mouse drag failed: coordinates must be between 0 and 1",
     "滑动鼠标需要填写起点和终点": "Mouse drag requires both start and end points",
-    "滑动鼠标坐标必须在 0 到 1 之间": "Mouse drag coordinates must be between 0 and 1"
+    "滑动鼠标坐标必须在 0 到 1 之间": "Mouse drag coordinates must be between 0 and 1",
+    "远坂凛": "Rin Tohsaka",
+    "吉尔伽美什": "Gilgamesh",
+    "Qmsg 酱 QQ 推送": "Qmsg QQ push",
+    "Qmsg 酱分配的 Key": "Key assigned by Qmsg",
+    "QQ 号": "QQ number",
+    "可选参数，指定接收通知的 QQ 号，不填则发送到该 Key 绑定的默认 QQ": "Optional: QQ number for receiving notifications. If empty, use the default QQ bound to the key",
+    "发送模式": "Send mode",
+    "可选参数，例如 send（默认）或 group": "Optional: e.g. send (default) or group"
 }
