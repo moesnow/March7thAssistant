@@ -45,7 +45,7 @@
     "CaelumElation": "穹（欢愉）",
     "Blade": "刃",
     "RuanMei": "阮·梅",
-	"RuanMeiPlumblossomLetter": "阮·梅「雪绽梅笺」",
+    "RuanMeiPlumblossomLetter": "阮·梅「雪绽梅笺」",
     "Sampo": "桑博",
     "Aventurine": "砂金",
     "Sushang": "素裳",
@@ -66,7 +66,7 @@
     "StelleElation": "星（欢愉）",
     "Yukong": "驭空",
     "SilverWolf": "银狼",
-    "SilverWolfLV999":"银狼LV.999",
+    "SilverWolfLV999": "银狼LV.999",
     "Yunli": "云璃",
     "Yanqing": "彦卿",
     "Argenti": "银枝",
@@ -90,9 +90,11 @@
     "Evernight": "长夜月",
     "Cyrene": "昔涟",
     "TheDahlia": "大丽花",
-	"YaoGuang": "爻光",
-	"Sparxie": "火花",
+    "YaoGuang": "爻光",
+    "Sparxie": "火花",
     "Evanescia": "绯英",
     "Ashveil": "不死途",
-    "MortenaxBlade": "千冶·刃"
+    "MortenaxBlade": "千冶·刃",
+    "RinTohsaka": "远坂凛",
+    "Gilgamesh": "吉尔伽美什"
 }
