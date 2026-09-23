@@ -589,6 +589,12 @@ notify_pushplus_channel: "" # 可选参数，Pushplus 的通知渠道。
 notify_pushplus_webhook: "" # 可选参数，Pushplus 的 Webhook URL。
 notify_pushplus_callbackUrl: "" # 可选参数，Pushplus 的回调 URL。
 
+# Qmsg 通知配置
+notify_qmsg_enable: false # 是否启用 Qmsg 通知。true 开启，false 关闭。
+notify_qmsg_key: "" # Qmsg 酱的 Key。
+notify_qmsg_qq: "" # 可选参数，指定接收通知的 QQ 号，不填则发送到该 Key 绑定的默认 QQ。
+notify_qmsg_mode: "" # 可选参数，发送模式，例如 send（默认）或 group。
+
 # 企业微信应用通知配置
 # 支持发送截图
 notify_wechatworkapp_enable: false # 是否启用企业微信应用通知。true 开启，false 关闭。

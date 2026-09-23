@@ -360,6 +360,7 @@ March7th Launcher.exe main -e （任务正常完成后自动退出程序）
 - Go-cqhttp
 - 钉钉
 - Pushplus
+- Qmsg
 - 企业微信机器人 / 企业微信应用
 - Gotify
 - Discord

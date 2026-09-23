@@ -1746,6 +1746,51 @@ class SettingInterface(ScrollArea):
 
 """
             },
+            "qmsg": {
+                "icon": FIF.MAIL,
+                "display_name": "Qmsg",
+                "description": tr("Qmsg 酱 QQ 推送"),
+                "params": {
+                    "key": {"title": tr("推送密钥"), "description": tr("Qmsg 酱分配的 Key")},
+                    "qq": {"title": tr("QQ 号"), "description": tr("可选参数，指定接收通知的 QQ 号，不填则发送到该 Key 绑定的默认 QQ")},
+                    "mode": {"title": tr("发送模式"), "description": tr("可选参数，例如 send（默认）或 group")},
+                },
+                "tutorial": """
+<h4>一、什么是 Qmsg？</h4>
+<p>Qmsg 酱是一个基于 QQ 的消息推送服务，可以把程序通知发送到指定 QQ 或群聊场景。</p>
+
+<h4>二、配置步骤</h4>
+
+<p><b>第 1 步：注册并获取 Key</b></p>
+<ol>
+<li>访问 <a href="https://qmsg.zendee.cn/">Qmsg 酱官网</a></li>
+<li>登录或注册账号后，进入控制台</li>
+<li>创建或查看你的推送 Key，并复制保存</li>
+</ol>
+
+<p><b>第 2 步：确认接收目标</b></p>
+<ol>
+<li>默认情况下，消息会发送到该 Key 绑定的 QQ</li>
+<li>如果需要发送给其他 QQ，可额外填写「QQ 号」参数</li>
+<li>如需群发等其他能力，可按实际需要填写「发送模式」</li>
+</ol>
+
+<p><b>第 3 步：配置到 March7thAssistant</b></p>
+<ol>
+<li>在本软件中，找到「消息推送」设置</li>
+<li>开启「启用消息推送」总开关</li>
+<li>找到「Qmsg」通知，开启开关</li>
+<li>点击「推送密钥」右侧的「修改」按钮，粘贴获取的 Key</li>
+<li>如有需要，填写「QQ 号」和「发送模式」</li>
+<li>点击下方的「发送消息」按钮测试</li>
+</ol>
+
+<div class="tip">💡 <b>提示</b>：如果只给当前 Key 绑定的默认 QQ 发送消息，通常只需要填写 Key 即可。</div>
+
+<h4>三、参考链接</h4>
+<p><a href="https://qmsg.zendee.cn/api.html">Qmsg 酱接口文档</a></p>
+"""
+            },
             "wechatworkbot": {
                 "icon": FIF.MAIL,
                 "display_name": tr("企业微信机器人"),
@@ -2885,6 +2930,7 @@ class SettingInterface(ScrollArea):
             "serverchanturbo", # Server酱 Turbo
             "lark",            # 飞书
             "pushplus",        # Pushplus
+            "qmsg",            # Qmsg
             "serverchan3",     # Server酱³
             "wechatworkapp",   # 企业微信应用
             "dingtalk",        # 钉钉

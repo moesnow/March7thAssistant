@@ -344,6 +344,7 @@ HoYoverse ランチャー経由で更新や事前ダウンロードを行いた�
 - Go-cqhttp
 - DingTalk
 - Pushplus
+- Qmsg
 - WeCom ロボット / WeCom アプリ
 - Gotify
 - Discord

@@ -346,6 +346,7 @@ The current version supports more notification channels than older versions. Com
 - Go-cqhttp
 - DingTalk
 - Pushplus
+- Qmsg
 - WeCom bot / WeCom app
 - Gotify
 - Discord
