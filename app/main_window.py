@@ -51,6 +51,13 @@ class ConfigWatcher(QObject):
         """检测到文件变化，延迟处理避免频繁触发"""
         from PySide6.QtCore import QTimer
 
+        # 配置保存采用临时文件原子替换，替换后旧的监视句柄可能失效，需要重新挂载
+        try:
+            if os.path.exists(self.config_path) and self.config_path not in self.watcher.files():
+                self.watcher.addPath(self.config_path)
+        except Exception:
+            pass
+
         # 清除之前的定时器
         if self.debounce_timer:
             self.debounce_timer.stop()

@@ -2,6 +2,7 @@ import sys
 import time
 import copy
 import os
+import tempfile
 from ruamel.yaml import YAML
 from utils.singleton import SingletonMeta
 
@@ -42,6 +43,9 @@ class Config(metaclass=SingletonMeta):
     配置管理类，用于加载、更新和保存配置信息
     """
 
+    # 配置文件损坏提示只弹一次，避免反复打扰
+    _config_error_notified = False
+
     def __init__(self, version_path, example_path, config_path):
         self.yaml = YAML()
         self.version = self._load_version(version_path)
@@ -75,20 +79,70 @@ class Config(metaclass=SingletonMeta):
             sys.exit("默认配置文件未找到")
 
     def _load_config(self, path=None, save=True):
-        """加载用户配置信息，如未找到则保存默认配置"""
+        """加载用户配置信息
+
+        - 文件缺失（首次运行）：保存默认配置
+        - 文件为空或损坏：备份损坏文件并提示用户，不静默覆盖为默认配置
+        """
         path = path or self.config_path
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 loaded_config = self.yaml.load(file)
-                if loaded_config:
-                    # self.config.update(loaded_config)
-                    self._update_config(self.config, loaded_config)
-            if save:
-                self.save_config()
         except FileNotFoundError:
             self.save_config()
+            return
         except Exception as e:
-            print(f"配置文件 {path} 加载错误: {e}")
+            self._handle_broken_config(path, f"解析失败: {e}")
+            return
+
+        if loaded_config is None:
+            # 空文件（或仅含注释）：多半是写入过程被中断导致的损坏
+            self._handle_broken_config(path, "文件为空或不包含有效内容（可能是写入过程被中断）")
+            return
+        if not isinstance(loaded_config, dict):
+            self._handle_broken_config(path, "文件内容不是有效的配置映射")
+            return
+
+        self._update_config(self.config, loaded_config)
+        if save:
+            self.save_config()
+
+    def _handle_broken_config(self, path, reason):
+        """处理损坏的配置文件：备份损坏内容并提示用户，避免静默重置为默认配置"""
+        backup_path = self._backup_broken_config(path)
+        message = f"配置文件无法读取，已使用默认配置启动。\n文件: {path}\n原因: {reason}"
+        if backup_path:
+            message += f"\n为避免数据丢失，损坏的文件已备份到:\n{backup_path}\n如需恢复，请将其内容复制回:\n{path}"
+        else:
+            message += f"\n注意：损坏的文件未能自动备份，请手动检查 {path}"
+        self._notify_config_error(message)
+
+    def _backup_broken_config(self, path):
+        """把损坏的配置文件移走备份（保留原始字节），返回备份路径；失败返回 None"""
+        try:
+            backup_path = f"{path}.bak"
+            if os.path.exists(backup_path):
+                # 保留更早的备份，改用时间戳命名
+                backup_path = f"{path}.bak-{time.strftime('%Y%m%d-%H%M%S')}"
+            os.replace(path, backup_path)
+            return backup_path
+        except Exception:
+            return None
+
+    def _notify_config_error(self, message):
+        """向用户提示配置文件损坏（进程内只提示一次）"""
+        if Config._config_error_notified:
+            return
+        Config._config_error_notified = True
+        print(f"[配置错误] {message}")
+        # 仅在打包后的 Windows 图形界面环境弹窗，避免测试/命令行/服务场景被阻塞
+        if os.name == "nt" and getattr(sys, "frozen", False):
+            try:
+                import ctypes
+                # MB_OK | MB_ICONERROR | MB_TOPMOST
+                ctypes.windll.user32.MessageBoxW(None, message, "March7th Assistant - 配置文件错误", 0x00040010)
+            except Exception:
+                pass
 
     def _read_file_config(self, path=None):
         """读取配置文件内容（不修改内存中的 self.config），返回 dict 或 None"""
@@ -143,9 +197,25 @@ class Config(metaclass=SingletonMeta):
         return changed
 
     def save_config(self):
-        """保存配置到文件"""
-        with open(self.config_path, 'w', encoding='utf-8') as file:
-            self.yaml.dump(self.config, file)
+        """保存配置到文件（先写临时文件再原子替换，避免写入中断损坏原文件）"""
+        config_dir = os.path.dirname(os.path.abspath(self.config_path))
+        # 临时文件名唯一，避免多进程同时保存时互相截断
+        tmp_fd, tmp_path = tempfile.mkstemp(
+            prefix=f"{os.path.basename(self.config_path)}.", suffix=".tmp", dir=config_dir
+        )
+        try:
+            with os.fdopen(tmp_fd, 'w', encoding='utf-8') as file:
+                self.yaml.dump(self.config, file)
+                file.flush()
+                os.fsync(file.fileno())
+            os.replace(tmp_path, self.config_path)
+        except Exception:
+            try:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+            except Exception:
+                pass
+            raise
 
     def get_value(self, key, default=None):
         """获取配置项的值，环境变量优先，如果值是可变对象，则返回其拷贝"""
