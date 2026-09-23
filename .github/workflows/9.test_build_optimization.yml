@@ -1,0 +1,202 @@
+name: Test Build Optimization
+
+# 手动触发，用于验证打包并行化优化与 UPX 生效情况
+# 不创建 Release、不触发 Mirror酱，不影响正式发布流程
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Test Build
+    runs-on: windows-latest
+    env:
+      PYTHONHASHSEED: 0
+      SOURCE_DATE_EPOCH: 315532800
+      MARCH7TH_LOG_LEVEL: DEBUG
+      MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR: false
+      PYTHONIOENCODING: utf-8
+
+    steps:
+      # 签出代码
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          submodules: "false"
+
+      # 设置 uv 和 Python 环境
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          version: "0.11.15"
+          python-version: "3.14.5"
+          enable-cache: true
+          cache-python: true
+          prune-cache: false
+
+      # 确认 UPX 是否可用（与 PyInstaller configure.py 的探测方式一致）
+      - name: Check UPX availability
+        run: |
+          Write-Host "=== UPX availability check (same as PyInstaller) ==="
+          $upxCmd = Get-Command upx -ErrorAction SilentlyContinue
+          if ($upxCmd) {
+            Write-Host "UPX found on PATH: $($upxCmd.Source)"
+          } else {
+            Write-Host "UPX NOT found on PATH"
+          }
+
+          # PyInstaller configure.py:_check_upx_availability 实际执行 `upx -V`
+          try {
+            $ver = & upx -V 2>&1
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "upx -V OK: $ver"
+              Write-Host "RESULT: UPX available => spec 中 upx=True 会生效"
+              echo "upx_available=true" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "upx -V exited with $LASTEXITCODE"
+              Write-Host "RESULT: UPX NOT available => spec 中 upx=True 为无效空操作"
+              Write-Host "PyInstaller: self.upx = CONF['upx_available'] and kwargs.get('upx', False)"
+              echo "upx_available=false" >> $env:GITHUB_OUTPUT
+            }
+          } catch {
+            Write-Host "upx -V failed: $($_.Exception.Message)"
+            Write-Host "RESULT: UPX NOT available => spec 中 upx=True 为无效空操作"
+            Write-Host "PyInstaller: self.upx = CONF['upx_available'] and kwargs.get('upx', False)"
+            echo "upx_available=false" >> $env:GITHUB_OUTPUT
+          }
+        id: upx
+
+      # 安装依赖
+      - name: Install dependencies
+        run: |
+          uv sync --group build
+          uv run python build.py --task ocr
+
+      # 并行生成程序（与正式流程一致）
+      - name: Generate program
+        run: |
+          $p1 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Assistant.spec" -y' -PassThru -NoNewWindow
+          $p2 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Launcher.spec" -y' -PassThru -NoNewWindow
+          $p3 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist\March7thAssistant" ".\March7th Updater.spec" -y' -PassThru -NoNewWindow
+          $p1.WaitForExit(); $p2.WaitForExit(); $p3.WaitForExit()
+          if ($p1.ExitCode -ne 0 -or $p2.ExitCode -ne 0 -or $p3.ExitCode -ne 0) {
+            Write-Host "Exit codes: Assistant=$($p1.ExitCode) Launcher=$($p2.ExitCode) Updater=$($p3.ExitCode)"
+            exit 1
+          }
+
+      # 移动资源到dist目录
+      - name: Move assets to dist directory
+        run: |
+          Copy-Item -Path ".\dist\March7th Assistant\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
+          Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
+
+      # 获取第三方库最新发布版本
+      - name: Get 3rdparty release tags
+        id: deps-tags
+        run: |
+          $asu = (gh api repos/moesnow/Auto_Simulated_Universe/releases/latest --jq '.tag_name' 2>$null)
+          $fhoe = (gh api repos/linruowuyin/Fhoe-Rail/releases/latest --jq '.tag_name' 2>$null)
+          $fps = (gh api repos/winTEuser/Genshin_StarRail_fps_unlocker/releases/latest --jq '.tag_name' 2>$null)
+          $buildHash = "${{ hashFiles('build.py', 'module/game/cloud.py') }}"
+          $hash = "${asu}-${fhoe}-${fps}-${buildHash}"
+          echo "hash=$hash" >> $env:GITHUB_OUTPUT
+          Write-Host "3rdparty cache key: $hash"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 缓存第三方库
+      - name: Restore 3rdparty cache
+        id: cache-3rdparty
+        uses: actions/cache@v5
+        with:
+          path: 3rdparty
+          key: 3rdparty-test-${{ steps.deps-tags.outputs.hash }}
+
+      # 优化点 2：update.7z 压缩与 3rdparty 下载并行
+      # update.7z 只依赖核心 dist；3rdparty 写入 ./3rdparty，二者无依赖
+      - name: Build update.7z and fetch 3rdparty in parallel
+        run: |
+          $timer = [System.Diagnostics.Stopwatch]::StartNew()
+
+          # --- 轨道 A：update.7z（归档内根目录必须叫 update，故先改名）---
+          Rename-Item -Path .\dist\March7thAssistant -NewName update
+          $p1 = Start-Process -FilePath ".\assets\binary\7za.exe" `
+            -ArgumentList 'a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\update.7z .\dist\update\' `
+            -PassThru -NoNewWindow
+          Write-Host "Started update.7z compression (PID $($p1.Id))"
+
+          # --- 轨道 B：3rdparty 下载（缓存未命中时）---
+          if ("${{ steps.cache-3rdparty.outputs.cache-hit }}" -ne 'true') {
+            Write-Host "3rdparty cache miss, downloading..."
+            uv run python build.py --task all
+          } else {
+            Write-Host "3rdparty cache hit, skip download"
+          }
+
+          # --- 汇合 ---
+          $p1.WaitForExit()
+          Write-Host "update.7z compression finished in $([math]::Round($timer.Elapsed.TotalSeconds, 1))s, exit=$($p1.ExitCode)"
+          if ($p1.ExitCode -ne 0) {
+            Write-Host "update.7z compression failed"
+            exit 1
+          }
+          Get-Item .\dist\update.7z | ForEach-Object { Write-Host "update.7z size: $([math]::Round($_.Length / 1MB, 1)) MB" }
+
+          # 组装完整包目录
+          Rename-Item -Path .\dist\update -NewName March7thAssistant
+          Copy-Item -Path .\3rdparty\ -Destination .\dist\March7thAssistant\3rdparty\ -Recurse -Force
+          Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
+          Write-Host "Assembled March7thAssistant_full in $([math]::Round($timer.Elapsed.TotalSeconds, 1))s total"
+
+      # 优化点 1：full.zip 与 full.7z 并行
+      - name: Create full zip and 7z in parallel
+        run: |
+          $timer = [System.Diagnostics.Stopwatch]::StartNew()
+
+          $p1 = Start-Process -FilePath ".\assets\binary\7za.exe" `
+            -ArgumentList 'a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\' `
+            -PassThru -NoNewWindow
+          $p2 = Start-Process -FilePath ".\assets\binary\7za.exe" `
+            -ArgumentList 'a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\' `
+            -PassThru -NoNewWindow
+          Write-Host "Started full.zip (PID $($p1.Id)) and full.7z (PID $($p2.Id))"
+
+          $p1.WaitForExit()
+          Write-Host "full.zip finished in $([math]::Round($timer.Elapsed.TotalSeconds, 1))s, exit=$($p1.ExitCode)"
+          $p2.WaitForExit()
+          Write-Host "full.7z finished in $([math]::Round($timer.Elapsed.TotalSeconds, 1))s, exit=$($p2.ExitCode)"
+
+          if ($p1.ExitCode -ne 0 -or $p2.ExitCode -ne 0) {
+            Write-Host "Exit codes: zip=$($p1.ExitCode) 7z=$($p2.ExitCode)"
+            exit 1
+          }
+
+          Write-Host "=== Archive sizes ==="
+          Get-ChildItem .\dist\*.7z, .\dist\*.zip | ForEach-Object {
+            Write-Host ("{0}: {1} MB" -f $_.Name, [math]::Round($_.Length / 1MB, 1))
+          }
+
+      # 校验产物完整性
+      - name: Verify archives
+        run: |
+          foreach ($archive in @(".\dist\update.7z", ".\dist\March7thAssistant_full.zip", ".\dist\March7thAssistant_full.7z")) {
+            Write-Host "Testing $archive ..."
+            & .\assets\binary\7za.exe t $archive
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "Archive test failed: $archive"
+              exit 1
+            }
+          }
+          Write-Host "All archives OK"
+
+      # 输出结果摘要
+      - name: Summary
+        run: |
+          Write-Host "=== Optimization test summary ==="
+          Write-Host "UPX available: ${{ steps.upx.outputs.upx_available }}"
+          Write-Host "Expected savings vs sequential:"
+          Write-Host "  - update.7z || 3rdparty download: ~25-30s"
+          Write-Host "  - full.zip || full.7z:            ~50s"
+          Write-Host "Compare step timings above with run 34044492837 (baseline 11m0s)"
+          Write-Host "  baseline: Create archive 127s | Create full zip archive 309s | Generate program 95s"
