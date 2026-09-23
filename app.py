@@ -93,10 +93,10 @@ if not args.no_silent:
     hide_console()
 
 if sys.platform == 'win32':
-    import pyuac
-    if not pyuac.isUserAdmin():
+    from utils.admin import is_user_admin, run_as_admin
+    if not is_user_admin():
         try:
-            pyuac.runAsAdmin(False)
+            run_as_admin()
             sys.exit(0)
         except Exception:
             sys.exit(1)

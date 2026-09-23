@@ -277,6 +277,31 @@ class TestLarkNotifier:
         sign2 = n.gen_sign("1234567890", "secret2")
         assert sign1 != sign2
 
+    def test_send_image_uploads_multipart(self):
+        from module.notification.lark import LarkNotifier
+        logger = MagicMock()
+        n = LarkNotifier({
+            "webhook": "https://open.feishu.cn/open-apis/hook",
+            "imageenable": True,
+            "appid": "app",
+            "secret": "sec",
+        }, logger)
+        auth_resp = MagicMock(status_code=200)
+        auth_resp.json.return_value = {"tenant_access_token": "token"}
+        upload_resp = MagicMock(status_code=200)
+        upload_resp.json.return_value = {"data": {"image_key": "img_key"}}
+        send_resp = MagicMock(status_code=200)
+
+        image_io = io.BytesIO(b"fakeimg")
+        with patch("module.notification.lark.requests.post", side_effect=[auth_resp, upload_resp, send_resp]) as mock_post:
+            n.send("标题", "内容", image_io=image_io)
+
+        upload_call = mock_post.call_args_list[1]
+        assert upload_call.args[0] == "https://open.feishu.cn/open-apis/im/v1/images"
+        assert upload_call.kwargs["data"] == {"image_type": "message"}
+        assert upload_call.kwargs["files"] == {"image": image_io}
+        assert "Content-Type" not in upload_call.kwargs["headers"]
+
 
 class TestServerChanNotifier:
     def test_init_requires_sendkey(self):

@@ -3,7 +3,6 @@ import io
 from typing import Dict, Any, Optional
 from .notifier import Notifier
 import requests
-from requests_toolbelt import MultipartEncoder
 import hashlib
 import base64
 import hmac
@@ -60,13 +59,15 @@ class LarkNotifier(Notifier):
             # 上传图片并获取图片的image_key
             image_endpoint = "https://open.feishu.cn/open-apis/im/v1/images"
             image_headers = {
-                "Content-Type": "multipart/form-data; boundary=---7MA4YWxkTrZu0gW",
                 "Authorization": f"Bearer {tenant_access_token}"
             }
-            form = {'image_type': 'message', 'image': (image_io)}
-            multi_form = MultipartEncoder(form)
-            image_headers['Content-Type'] = multi_form.content_type
-            image_response = requests.post(image_endpoint , headers=image_headers, data=multi_form)
+            # 使用 requests 原生 multipart/form-data 上传（自动生成 boundary）
+            image_response = requests.post(
+                image_endpoint,
+                headers=image_headers,
+                data={"image_type": "message"},
+                files={"image": image_io}
+            )
             if (image_response.status_code % 100 != 2):
                 log.error(image_response.text)
                 image_response.raise_for_status()

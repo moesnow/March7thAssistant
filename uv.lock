@@ -541,15 +541,6 @@ wheels = [
 ]
 
 [[package]]
-name = "decorator"
-version = "5.2.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/43/fa/6d96a0978d19e17b68d634497769987b16c8f4cd0a7a05048bec693caa6b/decorator-5.2.1.tar.gz", hash = "sha256:65f266143752f734b0a7cc83c46f4618af75b8c5911b00ccb61d0ac9b6da0360", size = 56711, upload-time = "2025-02-24T04:41:34.073Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/8c/f3147f5c4b73e7550fe5f9352eaa956ae838d5c51eb58e7a25b9f3e2643b/decorator-5.2.1-py3-none-any.whl", hash = "sha256:d316bb415a2d9e2d2b3abcc4084c6502fc09240e292cd76a76afc106a1c8e04a", size = 9190, upload-time = "2025-02-24T04:41:32.565Z" },
-]
-
-[[package]]
 name = "dukpy"
 version = "0.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -895,11 +886,9 @@ dependencies = [
     { name = "pysidesix-frameless-window" },
     { name = "pysocks" },
     { name = "python-socks" },
-    { name = "pyuac", marker = "sys_platform == 'win32'" },
     { name = "qrcode" },
     { name = "rapidocr" },
     { name = "requests", extra = ["socks"] },
-    { name = "requests-toolbelt" },
     { name = "ruamel-yaml" },
     { name = "selenium" },
     { name = "tqdm" },
@@ -933,7 +922,6 @@ docker = [
     { name = "python-socks" },
     { name = "rapidocr" },
     { name = "requests", extra = ["socks"] },
-    { name = "requests-toolbelt" },
     { name = "ruamel-yaml" },
     { name = "selenium" },
     { name = "tqdm" },
@@ -970,11 +958,9 @@ requires-dist = [
     { name = "pysidesix-frameless-window", specifier = "==0.8.1" },
     { name = "pysocks", specifier = "==1.7.1" },
     { name = "python-socks", extras = ["asyncio"], specifier = "==2.8.1" },
-    { name = "pyuac", marker = "sys_platform == 'win32'", specifier = "==0.0.3" },
     { name = "qrcode", specifier = "==8.2" },
     { name = "rapidocr", specifier = "==3.8.1" },
     { name = "requests", extras = ["socks"], specifier = "==2.34.2" },
-    { name = "requests-toolbelt", specifier = "==1.0.0" },
     { name = "ruamel-yaml", specifier = "==0.19.1" },
     { name = "selenium", specifier = "==4.44.0" },
     { name = "tqdm", specifier = "==4.67.3" },
@@ -1006,7 +992,6 @@ docker = [
     { name = "python-socks", extras = ["asyncio"], specifier = "==2.8.1" },
     { name = "rapidocr", specifier = "==3.8.1" },
     { name = "requests", extras = ["socks"], specifier = "==2.34.2" },
-    { name = "requests-toolbelt", specifier = "==1.0.0" },
     { name = "ruamel-yaml", specifier = "==0.19.1" },
     { name = "selenium", specifier = "==4.44.0" },
     { name = "tqdm", specifier = "==4.67.3" },
@@ -4894,19 +4879,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/79/0c/c16bc93ac2755bac0066a8ecbd2a2931a1735a6fffd99a2b9681c7e83e90/pytweening-1.2.0.tar.gz", hash = "sha256:243318b7736698066c5f362ec5c2b6434ecf4297c3c8e7caa8abfe6af4cac71b", size = 171241, upload-time = "2024-02-20T03:37:56.809Z" }
 
 [[package]]
-name = "pyuac"
-version = "0.0.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "decorator" },
-    { name = "tee" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/b4/b4d82bea65a5c8cd0cdcf285821481e25eba21578e29c667d90d28007808/pyuac-0.0.3.tar.gz", hash = "sha256:fd11caf47246e0a5149284ced014c346439ae3a28c6bad0b622b239fe30d2d5b", size = 8747, upload-time = "2020-11-09T01:25:16.643Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b6/65/4cc39101176508733f644b1fdff183f60ff25c35e1e3e0eac9740233b4aa/pyuac-0.0.3-py2.py3-none-any.whl", hash = "sha256:cf0e1de597388744daa308e4f83019885caa0c646246a7e94713a77652701600", size = 11703, upload-time = "2020-11-09T01:25:14.646Z" },
-]
-
-[[package]]
 name = "pywin32"
 version = "311"
 source = { registry = "https://pypi.org/simple" }
@@ -5054,18 +5026,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/3c/f8/5dc70102e4d337063452c82e1f0d95e39abfe67aa222ed8a5ddeb9df8de8/requests_file-3.0.1.tar.gz", hash = "sha256:f14243d7796c588f3521bd423c5dea2ee4cc730e54a3cac9574d78aca1272576", size = 6967, upload-time = "2025-10-20T18:56:42.279Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e1/d5/de8f089119205a09da657ed4784c584ede8381a0ce6821212a6d4ca47054/requests_file-3.0.1-py2.py3-none-any.whl", hash = "sha256:d0f5eb94353986d998f80ac63c7f146a307728be051d4d1cd390dbdb59c10fa2", size = 4514, upload-time = "2025-10-20T18:56:41.184Z" },
-]
-
-[[package]]
-name = "requests-toolbelt"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/61/d7545dafb7ac2230c70d38d31cbfe4cc64f7144dc41f6e4e4b78ecd9f5bb/requests-toolbelt-1.0.0.tar.gz", hash = "sha256:7681a0a3d047012b5bdc0ee37d7f8f07ebe76ab08caeccfc3921ce23c88d5bc6", size = 206888, upload-time = "2023-05-01T04:11:33.229Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/51/d4db610ef29373b879047326cbf6fa98b6c1969d6f6dc423279de2b1be2c/requests_toolbelt-1.0.0-py2.py3-none-any.whl", hash = "sha256:cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06", size = 54481, upload-time = "2023-05-01T04:11:28.427Z" },
 ]
 
 [[package]]
@@ -5294,12 +5254,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
 ]
-
-[[package]]
-name = "tee"
-version = "0.0.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/44/13/4daa2418b6c72de8255da00f873d709317accd57f38c6d8bf0233aeb9bf2/tee-0.0.3.tar.gz", hash = "sha256:801dea18fe5046b57c26e87aa5c7ca0d1b8590cdc0e4e84158d07cdfa6628cdb", size = 3144, upload-time = "2018-07-23T02:14:53.516Z" }
 
 [[package]]
 name = "texttable"
