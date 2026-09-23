@@ -36,6 +36,29 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+# 裁剪确认用不到的二进制与数据，减小打包体积：
+# - rapidocr 的 _infer 模型：OCR 固定使用 MOBILE 模型（module/ocr/ocr.py）
+# - opencv_videoio_ffmpeg：视频编解码，项目不处理视频
+# - Pillow 的 _avif 插件：项目只处理 PNG/JPEG 截图
+# - selenium-manager 的 macOS/Linux 版本：Windows 发行版只用 windows 版
+# - *.lib：MSVC 链接期导入库，运行时用不到
+def _is_excluded(dest_name: str) -> bool:
+    dest = dest_name.replace('\\', '/').lower()
+    base = dest.rsplit('/', 1)[-1]
+    if base.endswith('.lib'):
+        return True
+    if dest.startswith('rapidocr/') and base.endswith('_infer.onnx'):
+        return True
+    if 'opencv_videoio_ffmpeg' in base or base.startswith('_avif.'):
+        return True
+    if dest.startswith('selenium/webdriver/common/macos/') or dest.startswith('selenium/webdriver/common/linux/'):
+        return True
+    return False
+
+
+a.binaries = [item for item in a.binaries if not _is_excluded(item[0])]
+a.datas = [item for item in a.datas if not _is_excluded(item[0])]
+
 pyz = PYZ(a.pure)
 
 exe = EXE(
