@@ -1,10 +1,15 @@
 import base64
+import copy
+import io
+from typing import Optional
+import requests
 from .notifier import Notifier
-from onepush import get_notifier
 from ruamel.yaml import comments
 
 
 class CustomNotifier(Notifier):
+    """自定义通知器，按配置的请求模板发送通知。"""
+
     def _get_supports_image(self):
         # 判断是否支持图片
         return True
@@ -27,17 +32,38 @@ class CustomNotifier(Notifier):
         else:
             return d
 
-    def send(self, title: str, content: str, image_io=None):
-        # 发送通知
-        n = get_notifier("custom")
-        if self.params["datatype"] == "json":
-            raw_data = self.comment_init(self.params["data"])
-            message = "\n".join(filter(None, [title, content]))
-            base64_str = base64.b64encode(image_io.getvalue()).decode() if image_io else ""
+    def send(self, title: str, content: str, image_io: Optional[io.BytesIO] = None):
+        """
+        发送自定义通知。
 
-            if base64_str:
-                raw_data["message"].append(self.comment_init(self.params.get("image", "")))
+        :param title: 通知标题。
+        :param content: 通知内容。
+        :param image_io: 可选，发送的图片，为 io.BytesIO 对象。
+        """
+        url = self.params.get("url")
+        if not url:
+            raise ValueError("URL is required for CustomNotifier")
+        method = self.params.get("method") or "post"
+        datatype = self.params.get("datatype") or "data"
 
-            data = self.comment_format(raw_data, "text", "file", message=message, image=base64_str)
-            self.params["data"] = data
-            response = n.notify(**self.params)
+        # 每次发送都基于原始模板重新构建，避免多次发送时消息内容被固定
+        raw_data = self.comment_init(copy.deepcopy(self.params.get("data") or {}))
+        message = "\n".join(filter(None, [title, content]))
+        base64_str = base64.b64encode(image_io.getvalue()).decode() if image_io else ""
+
+        # onebot 等接口通过 message 列表追加图片消息段
+        if base64_str and datatype == "json" and isinstance(raw_data, dict) and isinstance(raw_data.get("message"), list):
+            raw_data["message"].append(self.comment_init(copy.deepcopy(self.params.get("image", ""))))
+
+        data = self.comment_format(raw_data, "text", "file", message=message, image=base64_str)
+
+        try:
+            if str(method).upper() == "GET":
+                response = requests.request(method, url, params=data, timeout=30)
+            elif str(datatype).lower() == "json":
+                response = requests.request(method, url, json=data, timeout=30)
+            else:
+                response = requests.request(method, url, data=data, timeout=30)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            self.logger.error(f"自定义通知发送失败: {e}")

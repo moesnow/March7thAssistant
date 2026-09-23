@@ -3,8 +3,8 @@ from module.config import cfg
 from module.logger import log
 from module.notification.notification import Notification, NotificationLevel
 # 导入所有通知器类型
-from module.notification.onepush import OnepushNotifier
 from module.notification.serverchan3 import ServerChanNotifier
+from module.notification.serverchanturbo import ServerChanTurboNotifier
 if sys.platform == 'win32':
     from module.notification.winotify import WinotifyNotifier
 from module.notification.telegram import TelegramNotifier
@@ -19,6 +19,13 @@ from module.notification.wechatworkbot import WeChatWorkBotNotifier
 from module.notification.kook import KOOKNotifier
 from module.notification.webhook import WebhookNotifier
 from module.notification.meow import MeoWNotifier
+from module.notification.bark import BarkNotifier
+from module.notification.dingtalk import DingTalkNotifier
+from module.notification.discord import DiscordNotifier
+from module.notification.gotify import GotifyNotifier
+from module.notification.pushdeer import PushDeerNotifier
+from module.notification.pushplus import PushPlusNotifier
+from module.notification.qmsg import QmsgNotifier
 
 
 class NotifierFactory:
@@ -34,9 +41,17 @@ class NotifierFactory:
         "custom": CustomNotifier,
         "lark": LarkNotifier,
         "serverchan3": ServerChanNotifier,
+        "serverchanturbo": ServerChanTurboNotifier,
         "kook": KOOKNotifier,
         "webhook": WebhookNotifier,
         "meow": MeoWNotifier,
+        "bark": BarkNotifier,
+        "dingtalk": DingTalkNotifier,
+        "discord": DiscordNotifier,
+        "gotify": GotifyNotifier,
+        "pushdeer": PushDeerNotifier,
+        "pushplus": PushPlusNotifier,
+        "qmsg": QmsgNotifier,
     }
     if sys.platform == 'win32':
         notifier_classes["winotify"] = WinotifyNotifier
@@ -45,16 +60,13 @@ class NotifierFactory:
     def create_notifier(notifier_name, params, logger):
         """
         根据提供的notifier_name，从映射字典中找到对应的类并实例化。
-        对于特殊处理的通知器，如OnepushNotifier，根据需要传递额外的参数。
+        未内置支持的通知方式返回None，并记录警告。
         """
-        # 特殊处理的通知器类型
-        if notifier_name in ["gotify", "pushplus", "pushdeer"]:
-            return OnepushNotifier(notifier_name, params, logger, require_content=True)
-        elif notifier_name in NotifierFactory.notifier_classes:
-            return NotifierFactory.notifier_classes[notifier_name](params, logger)
-        else:
-            # 默认情况下，如果没有找到匹配的类，则创建OnepushNotifier实例
-            return OnepushNotifier(notifier_name, params, logger)
+        notifier_class = NotifierFactory.notifier_classes.get(notifier_name)
+        if notifier_class is None:
+            logger.warning(f"暂不支持的通知方式: {notifier_name}，已跳过")
+            return None
+        return notifier_class(params, logger)
 
 
 notif = Notification(cfg.notify_template['Title'], log)
@@ -100,8 +112,13 @@ def init_notifiers():
                           if param_key.startswith(f"notify_{notifier_name}_") and param_key != f"notify_{notifier_name}_enable" and param_value != ""}
                 if sys.platform != 'win32' and notifier_name == 'winotify':
                     continue  # 跳过 Windows 专用的通知器
-                notifier = NotifierFactory.create_notifier(notifier_name, params, log)
-                notif.set_notifier(notifier_name, notifier)
+                try:
+                    notifier = NotifierFactory.create_notifier(notifier_name, params, log)
+                except Exception as e:
+                    log.error(f"{notifier_name} 通知初始化失败: {e}")
+                    continue
+                if notifier is not None:
+                    notif.set_notifier(notifier_name, notifier)
     except Exception:
         pass
 

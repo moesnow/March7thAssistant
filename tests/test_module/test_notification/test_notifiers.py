@@ -25,6 +25,14 @@ class TestNotifierBase:
         with pytest.raises(NotImplementedError):
             n.send("title", "content")
 
+    def test_merge_message(self):
+        logger = MagicMock()
+        n = Notifier({}, logger)
+        assert n.merge_message("标题", "内容") == "标题\n\n内容"
+        assert n.merge_message("标题", "") == "标题"
+        assert n.merge_message("", "内容") == "内容"
+        assert n.merge_message("", "") == ""
+
 
 class TestTelegramNotifier:
     def test_supports_image(self):
@@ -150,6 +158,25 @@ class TestGocqhttpNotifier:
         logger = MagicMock()
         n = GocqhttpNotifier({}, logger)
         assert n._get_supports_image() is True
+
+    def test_send_requires_endpoint(self):
+        from module.notification.gocqhttp import GocqhttpNotifier
+        logger = MagicMock()
+        n = GocqhttpNotifier({}, logger)
+        with pytest.raises(ValueError, match="Endpoint"):
+            n.send("t", "c")
+
+    def test_send_normalizes_endpoint_and_appends_cq_image(self):
+        from module.notification.gocqhttp import GocqhttpNotifier
+        logger = MagicMock()
+        n = GocqhttpNotifier({"endpoint": "127.0.0.1:5700", "message_type": "private", "user_id": "1"}, logger)
+        with patch("module.notification.gocqhttp.requests.get") as mock_get:
+            n.send("标题", "内容", image_io=io.BytesIO(b"fakepng"))
+        assert mock_get.call_args.args[0] == "http://127.0.0.1:5700/send_msg"
+        params = mock_get.call_args.kwargs["params"]
+        assert params["message_type"] == "private"
+        assert params["user_id"] == "1"
+        assert params["message"].startswith("标题\n\n内容[CQ:image,file=base64://")
 
 
 class TestMatrixNotifier:
@@ -288,20 +315,234 @@ class TestMeoWNotifier:
         assert n.nickname == "test"
 
 
-class TestOnepushNotifier:
-    def test_init(self):
-        from module.notification.onepush import OnepushNotifier
+class TestBarkNotifier:
+    def test_init_requires_key(self):
+        from module.notification.bark import BarkNotifier
         logger = MagicMock()
-        n = OnepushNotifier("gotify", {"key": "val"}, logger, require_content=True)
-        assert n.notifier_name == "gotify"
-        assert n.require_content is True
+        with pytest.raises(ValueError, match="Key"):
+            BarkNotifier({}, logger)
 
-    def test_require_content_fills_empty(self):
-        from module.notification.onepush import OnepushNotifier
+    def test_send_builds_payload(self):
+        from module.notification.bark import BarkNotifier
         logger = MagicMock()
-        n = OnepushNotifier("gotify", {}, logger, require_content=True)
-        # send 内部会把空 content 设为 "."，但需要 mock onepush
-        assert n.require_content is True
+        n = BarkNotifier({"key": "k1", "group": "g1", "isarchive": "1"}, logger)
+        with patch("module.notification.bark.requests.post") as mock_post:
+            n.send("标题", "内容")
+        assert mock_post.call_args.args[0] == "https://api.day.app/push"
+        data = mock_post.call_args.kwargs["json"]
+        assert data["device_key"] == "k1"
+        assert data["title"] == "标题"
+        assert data["body"] == "内容"
+        assert data["group"] == "g1"
+        assert data["isArchive"] == "1"
+
+    def test_custom_base_url_appends_push(self):
+        from module.notification.bark import BarkNotifier
+        logger = MagicMock()
+        n = BarkNotifier({"key": "k1", "base_url": "https://bark.example.com"}, logger)
+        with patch("module.notification.bark.requests.post") as mock_post:
+            n.send("t", "c")
+        assert mock_post.call_args.args[0] == "https://bark.example.com/push"
+
+    def test_encrypt_by_ecb(self):
+        pytest.importorskip("Crypto")
+        from module.notification.bark import BarkNotifier
+        logger = MagicMock()
+        n = BarkNotifier({"key": "k1", "cipherkey": "0123456789abcdef", "ciphermethod": "ecb"}, logger)
+        with patch("module.notification.bark.requests.post") as mock_post:
+            n.send("t", "c")
+        data = mock_post.call_args.kwargs["json"]
+        assert "ciphertext" in data
+        assert "device_key" not in data
+
+    def test_unsupported_ciphermethod_raises(self):
+        from module.notification.bark import BarkNotifier
+        logger = MagicMock()
+        n = BarkNotifier({"key": "k1", "cipherkey": "0123456789abcdef", "ciphermethod": "xxx"}, logger)
+        with pytest.raises(ValueError, match="加密算法"):
+            n.send("t", "c")
+
+
+class TestDingTalkNotifier:
+    def test_init_requires_token(self):
+        from module.notification.dingtalk import DingTalkNotifier
+        logger = MagicMock()
+        with pytest.raises(ValueError, match="Token"):
+            DingTalkNotifier({}, logger)
+
+    def test_gen_sign_returns_tuple(self):
+        from module.notification.dingtalk import DingTalkNotifier
+        timestamp, sign = DingTalkNotifier.gen_sign("secret")
+        assert isinstance(timestamp, str)
+        assert isinstance(sign, str)
+        assert len(sign) > 0
+
+    def test_send_builds_url_from_token(self):
+        from module.notification.dingtalk import DingTalkNotifier
+        logger = MagicMock()
+        n = DingTalkNotifier({"token": "tok"}, logger)
+        with patch("module.notification.dingtalk.requests.post") as mock_post:
+            n.send("标题", "内容")
+        assert mock_post.call_args.args[0] == "https://oapi.dingtalk.com/robot/send?access_token=tok"
+        data = mock_post.call_args.kwargs["json"]
+        assert data["msgtype"] == "text"
+        assert data["text"]["content"] == "标题\n\n内容"
+
+    def test_send_keeps_full_url(self):
+        from module.notification.dingtalk import DingTalkNotifier
+        logger = MagicMock()
+        n = DingTalkNotifier({"token": "https://oapi.dingtalk.com/robot/send?access_token=abc"}, logger)
+        with patch("module.notification.dingtalk.requests.post") as mock_post:
+            n.send("t", "c")
+        assert mock_post.call_args.args[0] == "https://oapi.dingtalk.com/robot/send?access_token=abc"
+
+    def test_send_with_secret_appends_sign(self):
+        from module.notification.dingtalk import DingTalkNotifier
+        logger = MagicMock()
+        n = DingTalkNotifier({"token": "tok", "secret": "sec"}, logger)
+        with patch("module.notification.dingtalk.requests.post") as mock_post:
+            n.send("t", "c")
+        url = mock_post.call_args.args[0]
+        assert "&timestamp=" in url
+        assert "&sign=" in url
+
+
+class TestDiscordNotifier:
+    def test_init_requires_webhook(self):
+        from module.notification.discord import DiscordNotifier
+        logger = MagicMock()
+        with pytest.raises(ValueError, match="Webhook"):
+            DiscordNotifier({}, logger)
+
+    def test_parse_color(self):
+        from module.notification.discord import DiscordNotifier
+        assert DiscordNotifier.parse_color("0x3498db") == 0x3498db
+        assert DiscordNotifier.parse_color("16478873") == 16478873
+        assert DiscordNotifier.parse_color(None) == DiscordNotifier.DEFAULT_COLOR
+        assert DiscordNotifier.parse_color("invalid") == DiscordNotifier.DEFAULT_COLOR
+
+    def test_send_builds_payload(self):
+        from module.notification.discord import DiscordNotifier
+        logger = MagicMock()
+        n = DiscordNotifier({"webhook": "https://discord.example.com/hook", "username": "bot"}, logger)
+        with patch("module.notification.discord.requests.post") as mock_post:
+            n.send("标题", "内容")
+        assert mock_post.call_args.args[0] == "https://discord.example.com/hook"
+        data = mock_post.call_args.kwargs["json"]
+        assert data["username"] == "bot"
+        assert data["embeds"][0]["title"] == "标题"
+        assert data["embeds"][0]["description"] == "内容"
+        assert data["embeds"][0]["color"] == DiscordNotifier.DEFAULT_COLOR
+
+
+class TestGotifyNotifier:
+    def test_init_requires_url_and_token(self):
+        from module.notification.gotify import GotifyNotifier
+        logger = MagicMock()
+        with pytest.raises(ValueError, match="URL and Token"):
+            GotifyNotifier({}, logger)
+
+    def test_send_fills_empty_content(self):
+        from module.notification.gotify import GotifyNotifier
+        logger = MagicMock()
+        n = GotifyNotifier({"url": "https://gotify.example.com/", "token": "tkn", "priority": "3"}, logger)
+        with patch("module.notification.gotify.requests.post") as mock_post:
+            n.send("标题", "")
+        assert mock_post.call_args.args[0] == "https://gotify.example.com/message?token=tkn"
+        data = mock_post.call_args.kwargs["json"]
+        assert data["title"] == "标题"
+        assert data["message"] == "."
+        assert data["priority"] == 3
+
+
+class TestPushDeerNotifier:
+    def test_init_accepts_token(self):
+        from module.notification.pushdeer import PushDeerNotifier
+        logger = MagicMock()
+        n = PushDeerNotifier({"token": "pd-key"}, logger)
+        assert n.pushkey == "pd-key"
+
+    def test_send_builds_payload(self):
+        from module.notification.pushdeer import PushDeerNotifier
+        logger = MagicMock()
+        n = PushDeerNotifier({"token": "pd-key"}, logger)
+        with patch("module.notification.pushdeer.requests.post") as mock_post:
+            n.send("标题", "内容")
+        assert mock_post.call_args.args[0] == "https://api2.pushdeer.com/message/push"
+        data = mock_post.call_args.kwargs["json"]
+        assert data["pushkey"] == "pd-key"
+        assert data["text"] == "标题"
+        assert data["desp"] == "内容"
+
+
+class TestPushPlusNotifier:
+    def test_init_requires_token(self):
+        from module.notification.pushplus import PushPlusNotifier
+        logger = MagicMock()
+        with pytest.raises(ValueError, match="Token"):
+            PushPlusNotifier({}, logger)
+
+    def test_send_builds_payload(self):
+        from module.notification.pushplus import PushPlusNotifier
+        logger = MagicMock()
+        n = PushPlusNotifier({"token": "pp", "channel": "wechat"}, logger)
+        with patch("module.notification.pushplus.requests.post") as mock_post:
+            n.send("标题", "内容")
+        assert mock_post.call_args.args[0] == "https://www.pushplus.plus/send"
+        data = mock_post.call_args.kwargs["json"]
+        assert data["token"] == "pp"
+        assert data["title"] == "标题"
+        assert data["content"] == "内容"
+        assert data["template"] == "html"
+        assert data["channel"] == "wechat"
+
+
+class TestQmsgNotifier:
+    def test_init_requires_key(self):
+        from module.notification.qmsg import QmsgNotifier
+        logger = MagicMock()
+        with pytest.raises(ValueError, match="Key"):
+            QmsgNotifier({}, logger)
+
+    def test_send_builds_url_and_message(self):
+        from module.notification.qmsg import QmsgNotifier
+        logger = MagicMock()
+        n = QmsgNotifier({"key": "qkey", "qq": "12345"}, logger)
+        with patch("module.notification.qmsg.requests.post") as mock_post:
+            n.send("标题", "内容")
+        assert mock_post.call_args.args[0] == "https://qmsg.zendee.cn/send/qkey"
+        data = mock_post.call_args.kwargs["data"]
+        assert data["msg"] == "标题\n\n内容"
+        assert data["qq"] == "12345"
+
+    def test_send_mode_group(self):
+        from module.notification.qmsg import QmsgNotifier
+        logger = MagicMock()
+        n = QmsgNotifier({"key": "qkey", "mode": "group"}, logger)
+        with patch("module.notification.qmsg.requests.post") as mock_post:
+            n.send("t", "c")
+        assert mock_post.call_args.args[0] == "https://qmsg.zendee.cn/group/qkey"
+
+
+class TestServerChanTurboNotifier:
+    def test_init_requires_sctkey(self):
+        from module.notification.serverchanturbo import ServerChanTurboNotifier
+        logger = MagicMock()
+        with pytest.raises(ValueError, match="Sctkey"):
+            ServerChanTurboNotifier({}, logger)
+
+    def test_send_posts_form(self):
+        from module.notification.serverchanturbo import ServerChanTurboNotifier
+        logger = MagicMock()
+        n = ServerChanTurboNotifier({"sctkey": "SCT1", "openid": "openid1"}, logger)
+        with patch("module.notification.serverchanturbo.requests.post") as mock_post:
+            mock_post.return_value.json.return_value = {"code": 0}
+            n.send("标题", "内容")
+        assert mock_post.call_args.args[0] == "https://sctapi.ftqq.com/SCT1.send"
+        data = mock_post.call_args.kwargs["data"]
+        assert data["text"] == "标题"
+        assert data["desp"] == "内容"
+        assert data["openid"] == "openid1"
 
 
 class TestCustomNotifier:
@@ -352,6 +593,51 @@ class TestCustomNotifier:
         d = {"outer": {"text": "{message}"}}
         result = n.comment_format(d, "text", message="hi")
         assert result["outer"]["text"] == "hi"
+
+    def test_send_json_datatype_posts_json(self):
+        from module.notification.custom import CustomNotifier
+        logger = MagicMock()
+        n = CustomNotifier({
+            "url": "http://localhost:3000/send_msg",
+            "method": "post",
+            "datatype": "json",
+            "data": {"message": [{"type": "text", "data": {"text": "{message}"}}]},
+        }, logger)
+        with patch("module.notification.custom.requests.request") as mock_request:
+            n.send("标题", "内容")
+        assert mock_request.call_args.args[:2] == ("post", "http://localhost:3000/send_msg")
+        data = mock_request.call_args.kwargs["json"]
+        assert data["message"][0]["data"]["text"] == "标题\n内容"
+
+    def test_send_reuses_template_for_each_message(self):
+        from module.notification.custom import CustomNotifier
+        logger = MagicMock()
+        n = CustomNotifier({
+            "url": "http://localhost:3000/send_msg",
+            "method": "post",
+            "datatype": "json",
+            "data": {"text": "{message}"},
+        }, logger)
+        with patch("module.notification.custom.requests.request") as mock_request:
+            n.send("标题1", "内容1")
+            n.send("标题2", "内容2")
+        first = mock_request.call_args_list[0].kwargs["json"]
+        second = mock_request.call_args_list[1].kwargs["json"]
+        assert first["text"] == "标题1\n内容1"
+        assert second["text"] == "标题2\n内容2"
+
+    def test_send_data_datatype_posts_form(self):
+        from module.notification.custom import CustomNotifier
+        logger = MagicMock()
+        n = CustomNotifier({
+            "url": "http://localhost:8080/notify",
+            "method": "post",
+            "datatype": "data",
+            "data": {"text": "{message}"},
+        }, logger)
+        with patch("module.notification.custom.requests.request") as mock_request:
+            n.send("标题", "内容")
+        assert mock_request.call_args.kwargs["data"] == {"text": "标题\n内容"}
 
 
 class TestWinotifyNotifier:
@@ -404,37 +690,67 @@ class TestNotifierFactory:
         notif = NotifierFactory.create_notifier("meow", {"nickname": "test"}, logger)
         assert isinstance(notif, MeoWNotifier)
 
-    def test_create_gotify_as_onepush(self):
+    def test_create_gotify(self):
         from module.notification import NotifierFactory
-        from module.notification.onepush import OnepushNotifier
+        from module.notification.gotify import GotifyNotifier
         logger = MagicMock()
-        notif = NotifierFactory.create_notifier("gotify", {}, logger)
-        assert isinstance(notif, OnepushNotifier)
-        assert notif.require_content is True
+        notif = NotifierFactory.create_notifier("gotify", {"url": "https://gotify.example.com", "token": "t"}, logger)
+        assert isinstance(notif, GotifyNotifier)
 
-    def test_create_pushplus_as_onepush(self):
+    def test_create_pushplus(self):
         from module.notification import NotifierFactory
-        from module.notification.onepush import OnepushNotifier
+        from module.notification.pushplus import PushPlusNotifier
         logger = MagicMock()
-        notif = NotifierFactory.create_notifier("pushplus", {}, logger)
-        assert isinstance(notif, OnepushNotifier)
-        assert notif.require_content is True
+        notif = NotifierFactory.create_notifier("pushplus", {"token": "t"}, logger)
+        assert isinstance(notif, PushPlusNotifier)
 
-    def test_create_qmsg_as_onepush(self):
+    def test_create_qmsg(self):
         from module.notification import NotifierFactory
-        from module.notification.onepush import OnepushNotifier
+        from module.notification.qmsg import QmsgNotifier
         logger = MagicMock()
         notif = NotifierFactory.create_notifier("qmsg", {"key": "test-key"}, logger)
-        assert isinstance(notif, OnepushNotifier)
-        assert notif.notifier_name == "qmsg"
-        assert notif.require_content is False
+        assert isinstance(notif, QmsgNotifier)
 
-    def test_create_unknown_as_onepush(self):
+    def test_create_bark(self):
         from module.notification import NotifierFactory
-        from module.notification.onepush import OnepushNotifier
+        from module.notification.bark import BarkNotifier
+        logger = MagicMock()
+        notif = NotifierFactory.create_notifier("bark", {"key": "test-key"}, logger)
+        assert isinstance(notif, BarkNotifier)
+
+    def test_create_dingtalk(self):
+        from module.notification import NotifierFactory
+        from module.notification.dingtalk import DingTalkNotifier
+        logger = MagicMock()
+        notif = NotifierFactory.create_notifier("dingtalk", {"token": "test-token"}, logger)
+        assert isinstance(notif, DingTalkNotifier)
+
+    def test_create_discord(self):
+        from module.notification import NotifierFactory
+        from module.notification.discord import DiscordNotifier
+        logger = MagicMock()
+        notif = NotifierFactory.create_notifier("discord", {"webhook": "https://discord.example.com/hook"}, logger)
+        assert isinstance(notif, DiscordNotifier)
+
+    def test_create_pushdeer(self):
+        from module.notification import NotifierFactory
+        from module.notification.pushdeer import PushDeerNotifier
+        logger = MagicMock()
+        notif = NotifierFactory.create_notifier("pushdeer", {"token": "test-token"}, logger)
+        assert isinstance(notif, PushDeerNotifier)
+
+    def test_create_serverchanturbo(self):
+        from module.notification import NotifierFactory
+        from module.notification.serverchanturbo import ServerChanTurboNotifier
+        logger = MagicMock()
+        notif = NotifierFactory.create_notifier("serverchanturbo", {"sctkey": "SCT1"}, logger)
+        assert isinstance(notif, ServerChanTurboNotifier)
+
+    def test_create_unknown_returns_none(self):
+        from module.notification import NotifierFactory
         logger = MagicMock()
         notif = NotifierFactory.create_notifier("unknown_service", {}, logger)
-        assert isinstance(notif, OnepushNotifier)
+        assert notif is None
 
     def test_notifier_classes_mapping(self):
         from module.notification import NotifierFactory
