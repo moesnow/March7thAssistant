@@ -9,7 +9,7 @@ import pyperclip
 import json
 import os
 from openpyxl.styles import Font
-from openpyxl import load_workbook
+from openpyxl import Workbook
 from openpyxl.utils import get_column_letter
 from module.localization import tr
 import time
@@ -234,10 +234,7 @@ class WarpInterface(ScrollArea):
             if not path:
                 return
 
-            import pandas as pd
             records = config.get("list", [])
-            df = pd.DataFrame(records)
-            df = df[["time", "name", "item_type", "rank_type", "gacha_type"]]
             gacha_map = {
                 "11": tr("角色活动跃迁"),
                 "12": tr("光锥活动跃迁"),
@@ -246,30 +243,27 @@ class WarpInterface(ScrollArea):
                 "1": tr("常驻跃迁"),
                 "2": tr("新手跃迁"),
             }
-            df["gacha_type"] = df["gacha_type"].map(gacha_map).fillna(tr("未知"))
-            df.rename(columns={
-                "time": tr("时间"),
-                "name": tr("名称"),
-                "item_type": tr("类别"),
-                "rank_type": tr("星级"),
-                "gacha_type": tr("卡池"),
-            }, inplace=True)
-            df["总次数"] = range(1, len(df) + 1)
-            df["保底内"] = 0
+
+            wb = Workbook()
+            ws = wb.active
+            ws.append([tr("时间"), tr("名称"), tr("类别"), tr("星级"), tr("卡池"), "总次数", "保底内"])
             pity_counters = {}
-            for idx, row in df.iterrows():
-                pool = row["卡池"]
-                star = row["星级"]
-                if pool not in pity_counters:
-                    pity_counters[pool] = 0
-                pity_counters[pool] += 1
-                df.at[idx, "保底内"] = pity_counters[pool]
+            for total, record in enumerate(records, start=1):
+                pool = gacha_map.get(record.get("gacha_type"), tr("未知"))
+                star = record.get("rank_type")
+                pity_counters[pool] = pity_counters.get(pool, 0) + 1
+                pity = pity_counters[pool]
                 if star == "5":
                     pity_counters[pool] = 0
-
-            df.to_excel(path, index=False)
-            wb = load_workbook(path)
-            ws = wb.active
+                ws.append([
+                    record.get("time"),
+                    record.get("name"),
+                    record.get("item_type"),
+                    star,
+                    pool,
+                    total,
+                    pity,
+                ])
             for row in range(2, ws.max_row + 1):
                 star_cell = ws[f"D{row}"]
                 try:
