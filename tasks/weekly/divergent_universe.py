@@ -1416,6 +1416,10 @@ class DivergentUniverse:
         auto.click_element('确定', 'text', None, 10, crop=(561 / 1920, 937 / 1080, 794 / 1920, 60 / 1080), include=True)
         time.sleep(2)
 
+        # 4.5 版本新更新的 “贪吃面具” 会在此处弹窗 “本次为最后一次区域选择阶段，之后将无法再进入储蓄间，是否继续？”
+        if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9):
+            time.sleep(2)
+
     def process_event(self):
         while True:
             time.sleep(1)
