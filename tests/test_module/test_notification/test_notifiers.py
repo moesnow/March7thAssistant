@@ -420,6 +420,15 @@ class TestNotifierFactory:
         assert isinstance(notif, OnepushNotifier)
         assert notif.require_content is True
 
+    def test_create_qmsg_as_onepush(self):
+        from module.notification import NotifierFactory
+        from module.notification.onepush import OnepushNotifier
+        logger = MagicMock()
+        notif = NotifierFactory.create_notifier("qmsg", {"key": "test-key"}, logger)
+        assert isinstance(notif, OnepushNotifier)
+        assert notif.notifier_name == "qmsg"
+        assert notif.require_content is False
+
     def test_create_unknown_as_onepush(self):
         from module.notification import NotifierFactory
         from module.notification.onepush import OnepushNotifier

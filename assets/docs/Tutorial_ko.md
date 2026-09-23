@@ -346,6 +346,7 @@ HoYoverse 런처를 통해 게임 업데이트나 사전 다운로드를 하려�
 - Go-cqhttp
 - DingTalk
 - Pushplus
+- Qmsg
 - WeCom 봇 / WeCom 앱
 - Gotify
 - Discord
