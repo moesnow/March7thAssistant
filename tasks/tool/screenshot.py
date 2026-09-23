@@ -7,7 +7,7 @@ from PySide6.QtGui import QPixmap, QPainter, QPen, QImage, QColor
 from PIL import Image
 import cv2
 import numpy as np
-import pyperclip
+from utils import clipboard
 import os
 import sys
 import atexit
@@ -393,7 +393,7 @@ class ScreenshotApp(QMainWindow):
         if selection_info:
             x, y, width, height = selection_info
             text = f"({x} / {self.screenshot.width}, {y} / {self.screenshot.height}, {width} / {self.screenshot.width}, {height} / {self.screenshot.height})"
-            pyperclip.copy(text)
+            clipboard.copy(text)
             _show_msg(self, "结果", f"{text}\n复制到剪贴板成功")
         else:
             _show_msg(self, "结果", "还没有选择区域呢")
@@ -535,11 +535,11 @@ class ScreenshotApp(QMainWindow):
         crop_expression = build_crop_expression(x, y, width, height, self.screenshot.width, self.screenshot.height)
 
         if kind == "template":
-            pyperclip.copy(relative_path)
+            clipboard.copy(relative_path)
             clipboard_hint = tr("模板路径")
             title = tr("流程图像模板")
         else:
-            pyperclip.copy(crop_expression)
+            clipboard.copy(crop_expression)
             clipboard_hint = tr("Crop 表达式")
             title = tr("流程 OCR 区域")
 
@@ -584,7 +584,7 @@ class ScreenshotApp(QMainWindow):
         if result:
             # 如果识别出结果，处理并显示结果
             text = self.format_ocr_result(result)  # 格式化OCR识别的结果
-            pyperclip.copy(text)  # 将结果复制到剪贴板
+            clipboard.copy(text)  # 将结果复制到剪贴板
             _show_msg(self, "OCR识别结果", f"{text}\n\n复制到剪贴板成功\n识别耗时: {end_time - start_time:.2f} 秒")
         else:
             _show_msg(self, "OCR识别结果", "没有识别出任何内容")

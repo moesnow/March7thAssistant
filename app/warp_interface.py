@@ -5,7 +5,7 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton, MessageBox
 from .common.style_sheet import StyleSheet
 from .tools.warp_export import warpExport, WarpExport, detect_format, uigf_to_srgf_hkrpg, srgf_to_uigf_hkrpg
-import pyperclip
+from utils import clipboard
 import json
 import os
 from openpyxl.styles import Font
@@ -321,7 +321,7 @@ class WarpInterface(ScrollArea):
 
     def __onCopyLinkBtnClicked(self):
         try:
-            pyperclip.copy(self.warplink)
+            clipboard.copy(self.warplink)
             InfoBar.success(
                 title=tr('复制成功(＾∀＾●)'),
                 content="",

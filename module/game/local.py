@@ -2,7 +2,7 @@ import os
 import psutil
 import getpass
 import subprocess
-import pyperclip
+from utils import clipboard
 from typing import Optional
 from module.config.config import Config
 from module.game.base import GameControllerBase
@@ -107,4 +107,4 @@ class LocalGameController(GameControllerBase):
         return win32gui.FindWindow(self.window_class, self.window_name)
 
     def copy(self, text):
-        pyperclip.copy(text)
+        clipboard.copy(text)

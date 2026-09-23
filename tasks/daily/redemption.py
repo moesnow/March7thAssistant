@@ -5,7 +5,6 @@ from module.logger import log
 from module.game import get_game_controller
 from utils.color import red, green, yellow
 import tasks.reward as reward
-import pyperclip
 import time
 import json
 import datetime

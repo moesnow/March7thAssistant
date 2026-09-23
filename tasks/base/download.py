@@ -1,9 +1,9 @@
-from tqdm import tqdm
 import urllib.request
 import subprocess
 import requests
 import os
 
+from utils.progress import ProgressBar
 from module.update.download_proxy import get_update_download_aria2_args, get_update_download_requests_proxies
 
 
@@ -39,7 +39,7 @@ def download_with_progress(download_url, save_path, use_update_proxy=False):
                 response.raise_for_status()
                 file_size = int(response.headers.get("Content-Length", 0)) or None
 
-                with tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+                with ProgressBar(total=file_size) as pbar:
                     with open(save_path, "wb") as file:
                         for chunk in response.iter_content(chunk_size=8192):
                             if chunk:
@@ -50,8 +50,8 @@ def download_with_progress(download_url, save_path, use_update_proxy=False):
             response = urllib.request.urlopen(download_url)
             file_size = int(response.info().get('Content-Length', -1))
 
-            # 使用 tqdm 创建进度条
-            with tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:
+            # 使用进度条显示下载进度
+            with ProgressBar(total=file_size) as pbar:
                 def update_bar(block_count, block_size, total_size):
                     if pbar.total != total_size:
                         pbar.total = total_size

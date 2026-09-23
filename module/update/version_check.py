@@ -14,7 +14,6 @@ import threading
 from dataclasses import dataclass
 
 import requests
-from packaging.version import parse
 
 from module.logger import log
 from module.localization import tr
@@ -22,6 +21,7 @@ from module.update.download_proxy import (
     get_update_download_requests_proxies,
     get_update_requests_proxy_description,
 )
+from utils.version import Version
 
 
 @dataclass
@@ -69,7 +69,7 @@ def is_update_available(remote_version: str, local_version: str) -> bool:
     if not local_version:
         return True
     try:
-        return parse(remote_version.lstrip("v")) > parse(local_version.lstrip("v"))
+        return Version(remote_version.lstrip("v")) > Version(local_version.lstrip("v"))
     except Exception:
         return True
 

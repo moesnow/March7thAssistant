@@ -858,7 +858,6 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "charset-normalizer" },
-    { name = "colorama" },
     { name = "keyboard" },
     { name = "markdown" },
     { name = "matrix-nio" },
@@ -870,7 +869,6 @@ dependencies = [
     { name = "opencv-python" },
     { name = "openpyxl" },
     { name = "openvino" },
-    { name = "packaging" },
     { name = "pillow" },
     { name = "playsound3" },
     { name = "psutil" },
@@ -879,7 +877,6 @@ dependencies = [
     { name = "pygetwindow", marker = "sys_platform == 'win32'" },
     { name = "pylnk3" },
     { name = "pypac" },
-    { name = "pyperclip" },
     { name = "pyside6" },
     { name = "pyside6-fluent-widgets" },
     { name = "pysidesix-frameless-window" },
@@ -890,7 +887,6 @@ dependencies = [
     { name = "requests", extra = ["socks"] },
     { name = "ruamel-yaml" },
     { name = "selenium" },
-    { name = "tqdm" },
     { name = "winotify", marker = "sys_platform == 'win32'" },
 ]
 
@@ -905,31 +901,26 @@ dev = [
 ]
 docker = [
     { name = "charset-normalizer" },
-    { name = "colorama" },
     { name = "matrix-nio" },
     { name = "numpy" },
     { name = "onnxruntime" },
     { name = "opencv-python" },
     { name = "openvino" },
-    { name = "packaging" },
     { name = "pillow" },
     { name = "playsound3" },
     { name = "psutil" },
     { name = "pypac" },
-    { name = "pyperclip" },
     { name = "pysocks" },
     { name = "python-socks" },
     { name = "rapidocr" },
     { name = "requests", extra = ["socks"] },
     { name = "ruamel-yaml" },
     { name = "selenium" },
-    { name = "tqdm" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "charset-normalizer", specifier = "==3.4.7" },
-    { name = "colorama", specifier = "==0.4.6" },
     { name = "keyboard", specifier = "==0.13.5" },
     { name = "markdown", specifier = "==3.10.2" },
     { name = "matrix-nio", specifier = "==0.25.2" },
@@ -941,7 +932,6 @@ requires-dist = [
     { name = "opencv-python", specifier = "==4.13.0.92" },
     { name = "openpyxl", specifier = "==3.1.5" },
     { name = "openvino", specifier = "==2026.2.0" },
-    { name = "packaging", specifier = "==26.2" },
     { name = "pillow", specifier = "==12.3.0" },
     { name = "playsound3", specifier = "==3.3.1" },
     { name = "psutil", specifier = "==7.2.2" },
@@ -950,7 +940,6 @@ requires-dist = [
     { name = "pygetwindow", marker = "sys_platform == 'win32'", specifier = "==0.0.9" },
     { name = "pylnk3", specifier = "==0.4.3" },
     { name = "pypac", specifier = "==0.18.3" },
-    { name = "pyperclip", specifier = "==1.11.0" },
     { name = "pyside6", specifier = "==6.11.1" },
     { name = "pyside6-fluent-widgets", specifier = "==1.11.2" },
     { name = "pysidesix-frameless-window", specifier = "==0.8.1" },
@@ -961,7 +950,6 @@ requires-dist = [
     { name = "requests", extras = ["socks"], specifier = "==2.34.2" },
     { name = "ruamel-yaml", specifier = "==0.19.1" },
     { name = "selenium", specifier = "==4.44.0" },
-    { name = "tqdm", specifier = "==4.67.3" },
     { name = "winotify", marker = "sys_platform == 'win32'", specifier = "==1.1.0" },
 ]
 
@@ -974,25 +962,21 @@ dev = [
 ]
 docker = [
     { name = "charset-normalizer", specifier = "==3.4.7" },
-    { name = "colorama", specifier = "==0.4.6" },
     { name = "matrix-nio", specifier = "==0.25.2" },
     { name = "numpy", specifier = "==2.4.6" },
     { name = "onnxruntime", specifier = "==1.26.0" },
     { name = "opencv-python", specifier = "==4.13.0.92" },
     { name = "openvino", specifier = "==2026.2.0" },
-    { name = "packaging", specifier = "==26.2" },
     { name = "pillow", specifier = "==12.3.0" },
     { name = "playsound3", specifier = "==3.3.1" },
     { name = "psutil", specifier = "==7.2.2" },
     { name = "pypac", specifier = "==0.18.3" },
-    { name = "pyperclip", specifier = "==1.11.0" },
     { name = "pysocks", specifier = "==1.7.1" },
     { name = "python-socks", extras = ["asyncio"], specifier = "==2.8.1" },
     { name = "rapidocr", specifier = "==3.8.1" },
     { name = "requests", extras = ["socks"], specifier = "==2.34.2" },
     { name = "ruamel-yaml", specifier = "==0.19.1" },
     { name = "selenium", specifier = "==4.44.0" },
-    { name = "tqdm", specifier = "==4.67.3" },
 ]
 
 [[package]]

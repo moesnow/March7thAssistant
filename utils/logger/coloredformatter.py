@@ -1,8 +1,47 @@
-from colorama import init
 import logging
+import sys
 
-# 初始化colorama以支持在不同平台上的颜色显示
-init(autoreset=True)
+from .colorcodefilter import ColorCodeFilter
+
+
+def _enable_windows_ansi() -> bool:
+    """
+    在 Windows 控制台启用 ANSI 转义序列（虚拟终端处理），替代 colorama 的初始化。
+
+    :return: True 表示可直接输出 ANSI 颜色（非 Windows 平台、Windows 10+ 控制台，
+             或输出被重定向到文件/管道时原样透传）；False 表示旧版控制台不支持，
+             需要省略颜色代码以避免乱码。
+    """
+    if not sys.platform.startswith('win'):
+        return True
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        enable_processed_output = 0x0001
+        enable_virtual_terminal_processing = 0x0004
+        std_output_handle = -11
+        std_error_handle = -12
+
+        for std_handle in (std_output_handle, std_error_handle):
+            handle = kernel32.GetStdHandle(std_handle)
+            if not handle or handle == -1:
+                # 无控制台（如 pythonw），无需处理
+                continue
+            mode = ctypes.c_uint()
+            if not kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+                # 输出被重定向到文件/管道，ANSI 代码原样透传
+                continue
+            new_mode = mode.value | enable_processed_output | enable_virtual_terminal_processing
+            if not kernel32.SetConsoleMode(handle, new_mode):
+                # 旧版控制台不支持虚拟终端处理
+                return False
+        return True
+    except Exception:
+        return False
+
+
+ANSI_SUPPORTED = _enable_windows_ansi()
 
 
 class ColoredFormatter(logging.Formatter):
@@ -36,4 +75,8 @@ class ColoredFormatter(logging.Formatter):
         # 将颜色代码应用到日志级别上，以便在输出中显示颜色
         record.levelname = f"{color_start}{log_level}{color_end}"
         # 调用父类的format方法进行最终的格式化
-        return super().format(record)
+        formatted = super().format(record)
+        if not ANSI_SUPPORTED:
+            # 旧版控制台不支持 ANSI：移除颜色代码，保证输出不乱码
+            formatted = ColorCodeFilter.color_pattern.sub('', formatted)
+        return formatted
