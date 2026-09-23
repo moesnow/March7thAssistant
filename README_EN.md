@@ -23,7 +23,7 @@
 
 [简体中文](./README.md) | [繁體中文](./README_TW.md) | **English** | [日本語](./README_JA.md) | [한국어](./README_KR.md)
 
-**This document was translated from the Simplified Chinese version using AI. Last updated: 2026-04-24. If anything differs, the Simplified Chinese version takes precedence.**
+**This document was translated from the Simplified Chinese version using AI. Last updated: 2026-09-24. If anything differs, the Simplified Chinese version takes precedence.**
 
 **The in-game language currently supports Simplified Chinese only.**
 
@@ -36,15 +36,15 @@ Before asking for help, please check: [FAQ](https://m7a.top/#/assets/docs/FAQ_en
 ## Feature Overview
 
 - **Daily**: Spend Trailblaze Power, Daily Training, claim rewards, dispatch, field farming
-- **Weekly**: Echo of War, Currency Wars, Divergent Universe, Memory of Chaos, Pure Fiction, Apocalyptic Shadow
-- **Cloud Honkai: Star Rail**: Supports background execution, headless execution, and Docker deployment
+- **Weekly**: Echo of War, Simulated Universe, Divergent Universe, Currency Wars, Memory of Chaos, Pure Fiction, Apocalyptic Shadow
+- **Cloud Honkai: Star Rail**: Supports background execution, headless execution, and [Docker](https://m7a.top/#/assets/docs/Docker) deployment
 - **Gacha record export**: Supports the [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) standards
-- **Toolbox**: Auto dialogue, FPS unlock, redemption codes
+- **Toolbox**: Auto dialogue, FPS unlock, redemption codes, touch mode
 - Task results such as Daily Training support **push notifications**
 - Supports **automatic start** after task refresh or when Trailblaze Power recovers to a specified value
 - Supports **sound alerts, automatic game exit, shutdown, and more** after tasks finish
 
-For details, see the GUI settings or the [configuration file](assets/config/config.example.yaml) | QQ group [Join here](https://qm.qq.com/q/C3IryUWCQw) TG group [Join here](https://t.me/+ZgH5zpvFS8o0NGI1) Bilibili [Visit here](https://space.bilibili.com/3706960664857075)
+For details, see the GUI settings or the [configuration file](assets/config/config.example.yaml) | QQ group [Join here](https://qm.qq.com/q/C3IryUWCQw) | TG group [Join here](https://t.me/+ZgH5zpvFS8o0NGI1) | Bilibili [Visit here](https://space.bilibili.com/3706960664857075)
 
 ## Interface Preview
 
@@ -63,7 +63,7 @@ Download the latest release from [Releases](https://github.com/moesnow/March7thA
 
 If you are completely new to this, use the packaged release above. You can ignore the rest of this section.
 
-Python 3.12 or newer is recommended.
+Python 3.12 or newer is required.
 
 On Windows, if you launch from a terminal, it is recommended to open PowerShell, Windows Terminal, or CMD as Administrator. On Windows 11 24H2 or later, you can also use [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/).
 
@@ -72,7 +72,11 @@ On Windows, if you launch from a terminal, it is recommended to open PowerShell,
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
+
+# Launch the GUI
 python app.py
+
+# Run the full workflow (see all subcommands: python main.py -h)
 python main.py
 
 # Update
@@ -104,7 +108,7 @@ uv run python main.py daily
 <details>
 <summary>Development Notes</summary>
 
-To obtain the crop coordinates used by crop parameters, you can use the capture screenshot feature in the toolbox.
+To obtain the crop coordinates used by crop parameters, use the "Capture" button on the "Game Screenshot" card in the toolbox.
 
 </details>
 
@@ -141,4 +145,10 @@ Additionally, `requirements.txt` contains many lower-level dependencies that are
 
 ## Stargazers over time
 
-[![Star History](https://starchart.cc/moesnow/March7thAssistant.svg?variant=adaptive)](https://starchart.cc/moesnow/March7thAssistant)
+<a href="https://star-history.dera.page/#moesnow/March7thAssistant">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant" />
+   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant" />
+ </picture>
+</a>

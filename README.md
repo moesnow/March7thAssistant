@@ -10,7 +10,7 @@
 <br/>
 
 <div align="center">
-🌟 点一下右上角的 Star，Github 主页就能收到软件更新通知了哦~
+🌟 点一下右上角的 Star，GitHub 主页就能收到软件更新通知了哦~
 </div>
 
 <div align="center">
@@ -32,15 +32,15 @@
 ## 功能简介
 
 - **日常**：清体力、每日实训、领取奖励、委托、锄大地
-- **周常**：历战余响、货币战争、差分宇宙、混沌回忆、虚构叙事、末日幻影
-- **云·星穹铁道**：支持后台运行、无窗口运行和 Docker 运行
+- **周常**：历战余响、模拟宇宙、差分宇宙、货币战争、混沌回忆、虚构叙事、末日幻影
+- **云·星穹铁道**：支持后台运行、无窗口运行和 [Docker](https://m7a.top/#/assets/docs/Docker) 运行
 - **抽卡记录导出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 标准
-- **工具箱**：自动对话、解锁帧率、兑换码
+- **工具箱**：自动对话、解锁帧率、兑换码、触屏模式
 - 每日实训等任务的完成情况支持**消息推送**
 - 任务刷新或体力恢复到指定值后**自动启动**
 - 任务完成后**声音提示、自动关闭游戏或关机等**
 
-详情见 图形界面设置 或 [配置文件](assets/config/config.example.yaml)｜QQ群 [点击跳转](https://qm.qq.com/q/C3IryUWCQw) TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)  哔哩哔哩 [点击跳转](https://space.bilibili.com/3706960664857075) 
+详情见图形界面设置或 [配置文件](assets/config/config.example.yaml)｜QQ群 [点击跳转](https://qm.qq.com/q/C3IryUWCQw)｜TG群 [点击跳转](https://t.me/+ZgH5zpvFS8o0NGI1)｜哔哩哔哩 [点击跳转](https://space.bilibili.com/3706960664857075)
 
 ## 界面展示
 
@@ -59,19 +59,23 @@
 
 如果你是完全不懂的小白，请通过上面的方式下载安装，可以不用往下看了。
 
-推荐使用 Python 3.12 或更高版本。
+需要 Python 3.12 或更高版本。
 
 Windows 下如果通过终端启动，建议使用管理员模式打开 PowerShell、Windows Terminal 或 CMD；Windows 11 24H2 及以上也可以按 [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/) 的方式执行。
 
 ```cmd
-# Installation (using venv is recommended)
+# 安装（推荐使用虚拟环境）
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
+
+# 启动图形界面
 python app.py
+
+# 执行完整运行（查看全部子命令：python main.py -h）
 python main.py
 
-# Update
+# 更新
 git pull
 git submodule update --init --recursive
 ```
@@ -79,7 +83,7 @@ git submodule update --init --recursive
 如果使用 `uv`，推荐直接使用项目自带的 `pyproject.toml` 工作流：
 
 ```cmd
-# Installation (using uv)
+# 安装（使用 uv）
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 uv sync
@@ -100,7 +104,7 @@ uv run python main.py daily
 <details>
 <summary>开发相关</summary>
 
-获取 crop 参数表示的裁剪坐标可以通过小助手工具箱内的捕获截图功能
+获取 crop 参数表示的裁剪坐标，可以通过小助手工具箱内「游戏截图」卡片的「捕获」功能
 
 </details>
 

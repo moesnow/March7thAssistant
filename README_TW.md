@@ -10,7 +10,7 @@
 <br/>
 
 <div align="center">
-🌟 點一下右上角的 Star，Github 首頁就能收到軟體更新通知了。
+🌟 點一下右上角的 Star，GitHub 首頁就能收到軟體更新通知了。
 </div>
 
 <div align="center">
@@ -23,7 +23,7 @@
 
 [简体中文](./README.md) | **繁體中文** | [English](./README_EN.md) | [日本語](./README_JA.md) | [한국어](./README_KR.md)
 
-**此文件由 AI 根據簡體中文版翻譯。最後更新：2026-04-24。如有差異，請以簡體中文版為準。**
+**此文件由 AI 根據簡體中文版翻譯。最後更新：2026-09-24。如有差異，請以簡體中文版為準。**
 
 **遊戲內語言目前僅支援簡體中文。**
 
@@ -36,15 +36,15 @@
 ## 功能簡介
 
 - **日常**：清體力、每日實訓、領取獎勵、委託、鋤大地
-- **周常**：歷戰餘響、貨幣戰爭、差分宇宙、混沌回憶、虛構敘事、末日幻影
-- **雲·星穹鐵道**：支援背景執行、無視窗執行與 Docker 執行
+- **周常**：歷戰餘響、模擬宇宙、差分宇宙、貨幣戰爭、混沌回憶、虛構敘事、末日幻影
+- **雲·星穹鐵道**：支援背景執行、無視窗執行與 [Docker](https://m7a.top/#/assets/docs/Docker) 執行
 - **抽卡記錄導出**：支援 [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) 標準
-- **工具箱**：自動對話、解鎖幀率、兌換碼
+- **工具箱**：自動對話、解鎖幀率、兌換碼、觸控模式
 - 每日實訓等任務的完成情況支援 **訊息推送**
 - 任務刷新或體力恢復到指定值後支援 **自動啟動**
 - 任務完成後支援 **聲音提示、自動關閉遊戲或關機等**
 
-詳情見圖形介面設定或 [配置文件](assets/config/config.example.yaml)｜QQ群 [點擊跳轉](https://qm.qq.com/q/C3IryUWCQw) TG群 [點擊跳轉](https://t.me/+ZgH5zpvFS8o0NGI1) 哔哩哔哩 [點擊跳轉](https://space.bilibili.com/3706960664857075)
+詳情見圖形介面設定或 [配置文件](assets/config/config.example.yaml)｜QQ群 [點擊跳轉](https://qm.qq.com/q/C3IryUWCQw)｜TG群 [點擊跳轉](https://t.me/+ZgH5zpvFS8o0NGI1)｜哔哩哔哩 [點擊跳轉](https://space.bilibili.com/3706960664857075)
 
 ## 介面展示
 
@@ -63,19 +63,23 @@
 
 如果你是完全不懂的小白，請直接使用上面的方式下載安裝，可以不用往下看。
 
-建議使用 Python 3.12 或更高版本。
+需要 Python 3.12 或更高版本。
 
 Windows 下如果透過終端啟動，建議使用系統管理員模式開啟 PowerShell、Windows Terminal 或 CMD；Windows 11 24H2 及以上也可以依照 [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/) 的方式執行。
 
 ```cmd
-# Installation (using venv is recommended)
+# 安裝（建議使用虛擬環境）
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
+
+# 啟動圖形介面
 python app.py
+
+# 執行完整運行（查看全部子命令：python main.py -h）
 python main.py
 
-# Update
+# 更新
 git pull
 git submodule update --init --recursive
 ```
@@ -83,7 +87,7 @@ git submodule update --init --recursive
 如果使用 `uv`，建議直接使用專案內建的 `pyproject.toml` 工作流：
 
 ```cmd
-# Installation (using uv)
+# 安裝（使用 uv）
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 uv sync
@@ -104,7 +108,7 @@ uv run python main.py daily
 <details>
 <summary>開發相關</summary>
 
-如需取得 crop 參數表示的裁切座標，可以使用小助手工具箱中的擷取截圖功能。
+如需取得 crop 參數表示的裁切座標，可以使用小助手工具箱內「遊戲截圖」卡片的「捕捉」功能。
 
 </details>
 
@@ -141,4 +145,10 @@ March7thAssistant 離不開以下開源專案與執行期依賴的幫助，感�
 
 ## Stargazers over time
 
-[![Star History](https://starchart.cc/moesnow/March7thAssistant.svg?variant=adaptive)](https://starchart.cc/moesnow/March7thAssistant)
+<a href="https://star-history.dera.page/#moesnow/March7thAssistant">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant" />
+   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant" />
+ </picture>
+</a>

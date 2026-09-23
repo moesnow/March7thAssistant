@@ -10,7 +10,7 @@
 <br/>
 
 <div align="center">
-🌟 오른쪽 위의 Star를 누르면 Github 메인에서 업데이트 알림을 받을 수 있습니다.
+🌟 오른쪽 위의 Star를 누르면 GitHub 메인에서 업데이트 알림을 받을 수 있습니다.
 </div>
 
 <div align="center">
@@ -23,7 +23,7 @@
 
 [简体中文](./README.md) | [繁體中文](./README_TW.md) | [English](./README_EN.md) | [日本語](./README_JA.md) | **한국어**
 
-**이 문서는 중국어 간체 원문을 기준으로 AI가 번역했습니다. 마지막 업데이트: 2026-04-24. 차이가 있으면 중국어 간체 원문을 우선해 주세요.**
+**이 문서는 중국어 간체 원문을 기준으로 AI가 번역했습니다. 마지막 업데이트: 2026-09-24. 차이가 있으면 중국어 간체 원문을 우선해 주세요.**
 
 **게임 내 언어는 현재 중국어 간체만 지원합니다.**
 
@@ -36,15 +36,15 @@
 ## 기능 소개
 
 - **일상**: 개척력 소모, 일일 훈련, 보상 수령, 위탁, 필드 파밍
-- **주간**: 전쟁의 여운, 화폐 전쟁, 차분 우주, 혼돈의 기억, 허구 이야기, 종말의 환영
-- **클라우드 스타레일**: 백그라운드 실행, 무창 실행, Docker 실행 지원
+- **주간**: 전쟁의 여운, 시뮬레이션 우주, 차분 우주, 화폐 전쟁, 혼돈의 기억, 허구 이야기, 종말의 환영
+- **클라우드 스타레일**: 백그라운드 실행, 무창 실행, [Docker](https://m7a.top/#/assets/docs/Docker) 실행 지원
 - **가챠 기록 내보내기**: [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) 표준 지원
-- **도구 상자**: 자동 대화, FPS 잠금 해제, 리딤 코드
+- **도구 상자**: 자동 대화, FPS 잠금 해제, 리딤 코드, 터치스크린 모드
 - 일일 훈련 등 작업 완료 여부에 대한 **메시지 푸시** 지원
 - 작업 갱신 또는 개척력 회복 시점의 **자동 시작** 지원
 - 작업 완료 후 **알림음, 게임 자동 종료, 시스템 종료 등** 지원
 
-자세한 내용은 GUI 설정 또는 [설정 파일](assets/config/config.example.yaml)을 참고하세요 ｜ QQ 그룹 [바로가기](https://qm.qq.com/q/C3IryUWCQw) TG 그룹 [바로가기](https://t.me/+ZgH5zpvFS8o0NGI1) Bilibili [바로가기](https://space.bilibili.com/3706960664857075)
+자세한 내용은 GUI 설정 또는 [설정 파일](assets/config/config.example.yaml)을 참고하세요｜QQ 그룹 [바로가기](https://qm.qq.com/q/C3IryUWCQw)｜TG 그룹 [바로가기](https://t.me/+ZgH5zpvFS8o0NGI1)｜Bilibili [바로가기](https://space.bilibili.com/3706960664857075)
 
 ## 화면 예시
 
@@ -63,19 +63,23 @@
 
 완전 초보라면 위의 배포판 사용을 권장합니다. 아래 내용은 건너뛰어도 됩니다.
 
-Python 3.12 이상을 권장합니다.
+Python 3.12 이상이 필요합니다.
 
 Windows에서 터미널로 실행할 경우 PowerShell, Windows Terminal, CMD를 관리자 권한으로 여는 것을 권장합니다. Windows 11 24H2 이상에서는 [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/)도 사용할 수 있습니다.
 
 ```cmd
-# Installation (using venv is recommended)
+# 설치 (가상 환경 사용 권장)
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
+
+# GUI 실행
 python app.py
+
+# 전체 실행 (모든 하위 명령 보기: python main.py -h)
 python main.py
 
-# Update
+# 업데이트
 git pull
 git submodule update --init --recursive
 ```
@@ -83,7 +87,7 @@ git submodule update --init --recursive
 `uv`를 사용한다면 프로젝트에 포함된 `pyproject.toml` 워크플로를 그대로 쓰는 것을 권장합니다.
 
 ```cmd
-# Installation (using uv)
+# 설치 (uv 사용)
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 uv sync
@@ -104,7 +108,7 @@ uv run python main.py daily
 <details>
 <summary>개발 관련</summary>
 
-crop 매개변수에 쓰이는 자르기 좌표는 도구 상자의 캡처 스크린샷 기능으로 확인할 수 있습니다.
+crop 매개변수에 쓰이는 자르기 좌표는 도구 상자 '게임 스크린샷' 카드의 '캡처' 기능으로 확인할 수 있습니다.
 
 </details>
 
@@ -141,4 +145,10 @@ March7thAssistant는 다음 오픈소스 프로젝트와 런타임 의존성의 
 
 ## Stargazers over time
 
-[![Star History](https://starchart.cc/moesnow/March7thAssistant.svg?variant=adaptive)](https://starchart.cc/moesnow/March7thAssistant)
+<a href="https://star-history.dera.page/#moesnow/March7thAssistant">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant" />
+   <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=moesnow/March7thAssistant" />
+ </picture>
+</a>
