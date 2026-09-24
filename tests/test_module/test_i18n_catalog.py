@@ -191,6 +191,72 @@ class TestDeclaredSources:
         assert missing == [], f"{len(missing)} 条声明来源未登记进 .pot，运行 extract: {missing[:10]}"
 
 
+class TestPrune:
+    """死键淘汰：只删「不在 .pot 且不在白名单」的条目。"""
+
+    @staticmethod
+    def _setup(tmp_path, monkeypatch, whitelist=""):
+        import polib
+        from tools import i18n
+        from tools.i18n import po as po_mod
+
+        locales = tmp_path / "locales"
+        (locales / "zh_CN" / "LC_MESSAGES").mkdir(parents=True)
+        monkeypatch.setattr(po_mod, "LOCALE_DIR", locales)
+        monkeypatch.setattr(po_mod, "LOCALES", ["zh_CN"])
+        monkeypatch.setattr(po_mod, "pot_path", lambda: locales / "march7th.pot")
+        monkeypatch.setattr(po_mod, "po_path", lambda lang: locales / lang / "LC_MESSAGES" / "march7th.po")
+        monkeypatch.setattr(i18n, "LOCALES", ["zh_CN"])
+        monkeypatch.setattr(i18n, "LEGACY_WHITELIST_PATH", tmp_path / "legacy_keys.txt")
+
+        pot = polib.POFile()
+        pot.metadata = po_mod.base_metadata("", is_pot=True)
+        pot.append(polib.POEntry(msgid="登记条目", msgstr=""))
+        pot.save(str(po_mod.pot_path()))
+
+        po = polib.POFile()
+        po.metadata = po_mod.base_metadata("zh_CN")
+        for m in ("登记条目", "死键甲", "死键乙"):
+            po.append(polib.POEntry(msgid=m, msgstr=m))
+        po.save(str(po_mod.po_path("zh_CN")))
+
+        (tmp_path / "legacy_keys.txt").write_text(whitelist, encoding="utf-8")
+        return po_mod
+
+    def test_removes_unregistered_keeps_whitelist(self, tmp_path, monkeypatch):
+        import polib
+        from tools import i18n
+        po_mod = self._setup(tmp_path, monkeypatch, whitelist="# 注释\n死键乙\n")
+        assert i18n.legacy_whitelist() == {"死键乙"}
+
+        removed = i18n.prune_dead_keys()
+
+        assert removed == {"zh_CN": 1}
+        left = [e.msgid for e in polib.pofile(str(po_mod.po_path("zh_CN")))]
+        assert left == ["登记条目", "死键乙"]
+
+    def test_dry_run_does_not_write(self, tmp_path, monkeypatch):
+        import polib
+        from tools import i18n
+        po_mod = self._setup(tmp_path, monkeypatch)
+        before = po_mod.po_path("zh_CN").read_bytes()
+
+        removed = i18n.prune_dead_keys(dry_run=True)
+
+        assert removed == {"zh_CN": 2}
+        assert po_mod.po_path("zh_CN").read_bytes() == before
+
+    def test_declared_sources_are_never_dead(self):
+        """TABLE_SOURCES / DATA_SOURCES 的取值已进 .pot，prune 不会动它们。"""
+        import polib
+        from tools.i18n import collect_data_literals, collect_table_literals
+        from tools.i18n.po import po_keyset
+        keys = po_keyset(polib.pofile(str(pot_path())))
+        table_literals, _ = collect_table_literals()
+        data_literals, _ = collect_data_literals()
+        assert not (table_literals | data_literals) - keys
+
+
 class TestCatalogs:
     def test_all_locales_present(self):
         assert pot_path().is_file()

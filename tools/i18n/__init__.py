@@ -367,6 +367,51 @@ def extract() -> dict:
     return {"new_keys": sum(added.values()), "synced": added, "dynamic_calls": dynamic}
 
 
+# ---------------------------------------------------------------------------
+# 死键淘汰
+# ---------------------------------------------------------------------------
+
+LEGACY_WHITELIST_PATH = Path(__file__).resolve().parent / "legacy_keys.txt"
+
+
+def legacy_whitelist() -> set[str]:
+    """读取死键白名单（一行一个 msgid，'#' 起始为注释）。"""
+    if not LEGACY_WHITELIST_PATH.is_file():
+        return set()
+    keys = set()
+    for line in LEGACY_WHITELIST_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#"):
+            keys.add(line)
+    return keys
+
+
+def prune_dead_keys(dry_run: bool = False) -> dict:
+    """删除「未登记进 .pot」的死条目（历史遗留），返回各语言删除条数。
+
+    判定：条目键不在 .pot 且不在 legacy_keys.txt 白名单里即为死键。
+    TABLE_SOURCES / DATA_SOURCES 的取值经 extract 已进 .pot，不会被误删。
+    只改 .po，删完需运行 compile 同步 .mo。
+    """
+    import polib
+
+    from .po import entry_key, po_keyset, po_path, pot_path
+
+    registered = po_keyset(polib.pofile(str(pot_path())))
+    whitelist = legacy_whitelist()
+    removed: dict[str, int] = {}
+    for lang in LOCALES:
+        path = po_path(lang)
+        po = polib.pofile(str(path))
+        dead = [e for e in po if entry_key(e) not in registered and entry_key(e) not in whitelist]
+        if dead and not dry_run:
+            for e in dead:
+                po.remove(e)
+            po.save(str(path))
+        removed[lang] = len(dead)
+    return removed
+
+
 def run_checks() -> tuple[list[str], list[str]]:
     """校验翻译目录，返回 (错误列表, 警告列表)；错误非空即应视为失败。"""
     errors: list[str] = []

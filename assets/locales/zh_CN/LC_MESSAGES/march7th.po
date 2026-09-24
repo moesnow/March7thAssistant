@@ -478,12 +478,6 @@ msgstr "源码"
 msgid "选择差分宇宙时类别"
 msgstr "选择差分宇宙时类别"
 
-msgid "禁用GPU加速"
-msgstr "禁用GPU加速"
-
-msgid "差分宇宙无法正常运行时，可尝试打开此选项"
-msgstr "差分宇宙无法正常运行时，可尝试打开此选项"
-
 #: app/setting_interface.py:668
 msgid "模拟宇宙/差分宇宙超时"
 msgstr "模拟宇宙/差分宇宙超时"
@@ -495,12 +489,6 @@ msgstr "超过设定时间强制停止（单位小时）"
 #: app/setting_interface.py:674
 msgid "上次运行模拟宇宙/差分宇宙的时间"
 msgstr "上次运行模拟宇宙/差分宇宙的时间"
-
-msgid "自动执行饰品提取/领取沉浸奖励"
-msgstr "自动执行饰品提取/领取沉浸奖励"
-
-msgid "类别为“差分宇宙”时，在领取积分奖励后自动执行饰品提取消耗沉浸器。类别为“模拟宇宙”时，自动领取沉浸奖励。"
-msgstr "类别为“差分宇宙”时，在领取积分奖励后自动执行饰品提取消耗沉浸器。类别为“模拟宇宙”时，自动领取沉浸奖励。"
 
 #: app/setting_interface.py:686
 msgid "运行频率"
@@ -521,21 +509,6 @@ msgstr "运行次数"
 #: app/setting_interface.py:695
 msgid "注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"
 msgstr "注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"
-
-msgid "差分宇宙队伍类型"
-msgstr "差分宇宙队伍类型"
-
-msgid "追击"
-msgstr "追击"
-
-msgid "终结技"
-msgstr "终结技"
-
-msgid "击破"
-msgstr "击破"
-
-msgid "盾反"
-msgstr "盾反"
 
 #: app/setting_interface.py:713
 msgid "不配置"
@@ -700,9 +673,6 @@ msgstr "使用付费时长"
 #: app/setting_interface.py:889
 msgid "打开后可在使用云游戏时使用付费时长免除排队"
 msgstr "打开后可在使用云游戏时使用付费时长免除排队"
-
-msgid "当前账号付费时间不足，已切换为免费时间。"
-msgstr "当前账号付费时间不足，已切换为免费时间。"
 
 #: app/setting_interface.py:896
 msgid "最大排队等待时间（分钟）"
@@ -948,16 +918,6 @@ msgstr "启用自动战斗和二倍速检测"
 msgid "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态"
 msgstr "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态"
 
-msgid "启用 OCR GPU 加速"
-msgstr "启用 OCR GPU 加速"
-
-msgid ""
-"使用 DirectML 加速 OCR 识别，若 GPU 负载高导致 OCR 过慢会自动关闭（仅 Windows 10 Build 18362 "
-"及以上支持）"
-msgstr ""
-"使用 DirectML 加速 OCR 识别，若 GPU 负载高导致 OCR 过慢会自动关闭（仅 Windows 10 Build 18362 "
-"及以上支持）"
-
 #: app/setting_interface.py:2367
 msgid "OCR 加速模式"
 msgstr "OCR 加速模式"
@@ -1002,12 +962,6 @@ msgstr "启用自动配置游戏路径"
 msgid "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）"
 msgstr "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）"
 
-msgid "在多显示器上进行截屏"
-msgstr "在多显示器上进行截屏"
-
-msgid "默认开启，如果正在使用多显示器且无法正常截屏请关闭此选项重试"
-msgstr "默认开启，如果正在使用多显示器且无法正常截屏请关闭此选项重试"
-
 #: app/setting_interface.py:2399
 msgid "在用户登录时启动"
 msgstr "在用户登录时启动"
@@ -1035,12 +989,6 @@ msgstr "加入群聊"
 #: app/setting_interface.py:2431
 msgid "QQ群"
 msgstr "QQ群"
-
-msgid "提供反馈"
-msgstr "提供反馈"
-
-msgid "帮助我们改进 March7thAssistant"
-msgstr "帮助我们改进 March7thAssistant"
 
 #: app/setting_interface.py:2441
 msgid "检查更新"
@@ -1078,12 +1026,6 @@ msgstr "启动时检测更新"
 msgid "链式失败后:"
 msgstr "链式失败后:"
 
-msgid "继续执行后续任务"
-msgstr "继续执行后续任务"
-
-msgid "停止执行后续任务"
-msgstr "停止执行后续任务"
-
 #: app/setting_interface.py:2882
 msgid "关闭更新检测前请确认"
 msgstr "关闭更新检测前请确认"
@@ -1109,9 +1051,6 @@ msgstr ""
 #: app/setting_interface.py:2886
 msgid "我已了解，继续关闭"
 msgstr "我已了解，继续关闭"
-
-msgid "加入预览版更新渠道"
-msgstr "加入预览版更新渠道"
 
 #: app/setting_interface.py:2464
 msgid "更新时下载完整包"
@@ -1183,9 +1122,6 @@ msgstr "启动失败"
 msgid "游戏路径配置错误(╥╯﹏╰╥)"
 msgstr "游戏路径配置错误(╥╯﹏╰╥)"
 
-msgid "请在'设置'-->'程序'中配置"
-msgstr "请在'设置'-->'程序'中配置"
-
 #: app/main_window.py:882
 msgid "浏览器或驱动下载失败 (╥╯﹏╰╥)"
 msgstr "浏览器或驱动下载失败 (╥╯﹏╰╥)"
@@ -1222,24 +1158,6 @@ msgstr "程序已最小化到托盘"
 msgid "停止任务"
 msgstr "停止任务"
 
-msgid "启用 Winotify 通知 （支持图片）"
-msgstr "启用 Winotify 通知 （支持图片）"
-
-msgid "启用 Telegram 通知 （支持图片）"
-msgstr "启用 Telegram 通知 （支持图片）"
-
-msgid "启用 Serverchanturbo 通知 （支持图片）"
-msgstr "启用 Serverchanturbo 通知 （支持图片）"
-
-msgid "启用 Serverchan3 通知 "
-msgstr "启用 Serverchan3 通知 "
-
-msgid "启用 Smtp 通知 （支持图片）"
-msgstr "启用 Smtp 通知 （支持图片）"
-
-msgid "启用 Meow 通知 "
-msgstr "启用 Meow 通知 "
-
 #: app/home_interface.py:29
 msgid "更换背景图片"
 msgstr "更换背景图片"
@@ -1255,9 +1173,6 @@ msgstr "三月七小助手"
 #: app/home_interface.py:85
 msgid "选择图片"
 msgstr "选择图片"
-
-msgid "喜欢就给个星星吧\\n拜托求求你啦|･ω･)"
-msgstr "喜欢就给个星星吧\\n拜托求求你啦|･ω･)"
 
 #: app/home_interface.py:181
 msgid "任务 >"
@@ -1295,12 +1210,6 @@ msgstr "打开程序目录"
 msgid "打开项目主页"
 msgstr "打开项目主页"
 
-msgid "暂不支持"
-msgstr "暂不支持"
-
-msgid "更新模拟宇宙"
-msgstr "更新模拟宇宙"
-
 #: app/setting_interface.py:982
 msgid "日志等级"
 msgstr "日志等级"
@@ -1320,9 +1229,6 @@ msgstr "游戏路径"
 #: app/setting_interface.py:201
 msgid "修改"
 msgstr "修改"
-
-msgid "界面语言 / UI Language"
-msgstr "界面语言 / UI Language"
 
 #: app/card/messagebox_custom.py:1227
 msgid "关闭确认"
@@ -1637,12 +1543,6 @@ msgstr "角色活动跃迁"
 msgid "光锥活动跃迁"
 msgstr "光锥活动跃迁"
 
-msgid "角色联动跃迁"
-msgstr "角色联动跃迁"
-
-msgid "光锥联动跃迁"
-msgstr "光锥联动跃迁"
-
 #: app/tools/warp_export.py:121
 msgid "常驻跃迁"
 msgstr "常驻跃迁"
@@ -1708,24 +1608,6 @@ msgstr ""
 "你也可以从其他支持 UIGF/SRGF 数据格式的应用导入数据，例如 StarRail Warp Export 或 Starward 等。\n"
 "\n"
 "复制链接功能可用于小程序或其他软件。"
-
-msgid "启用 Windows 通知"
-msgstr "启用 Windows 通知"
-
-msgid "启用 Telegram 通知"
-msgstr "启用 Telegram 通知"
-
-msgid "启用 Smtp 通知"
-msgstr "启用 Smtp 通知"
-
-msgid "Telegram Token"
-msgstr "Telegram Token"
-
-msgid "输入 Telegram Token"
-msgstr "输入 Telegram Token"
-
-msgid "Token"
-msgstr "Token"
 
 #: app/sub_interfaces/hotkey_interface.py:17
 msgid "秘技（只对清体力和逐光捡金场景生效）"
@@ -2003,9 +1885,6 @@ msgstr "{exe} 的完整路径"
 msgid "定时任务配置"
 msgstr "定时任务配置"
 
-msgid "启动方式"
-msgstr "启动方式"
-
 #: app/schedule_dialog.py:673
 msgid "参数/任务"
 msgstr "参数/任务"
@@ -2013,9 +1892,6 @@ msgstr "参数/任务"
 #: app/schedule_dialog.py:673
 msgid "通知"
 msgstr "通知"
-
-msgid "终止进程"
-msgstr "终止进程"
 
 #: app/card/messagebox_custom.py:1325
 msgid "添加"
@@ -2032,9 +1908,6 @@ msgstr "删除"
 #: app/schedule_dialog.py:700
 msgid "立即运行"
 msgstr "立即运行"
-
-msgid "冲突处理:"
-msgstr "冲突处理:"
 
 #: app/schedule_dialog.py:712
 msgid "跳过需要运行的任务"
@@ -2102,15 +1975,6 @@ msgstr "无法运行任务：父组件不支持 runScheduledTask"
 msgid "启动任务失败: {error}"
 msgstr "启动任务失败: {error}"
 
-msgid "对话模式"
-msgstr "对话模式"
-
-msgid "固定间隔"
-msgstr "固定间隔"
-
-msgid "自适应"
-msgstr "自适应"
-
 #: app/card/autoplot_setting_card.py:46
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
 msgstr "自动跳过 (当出现跳过按钮时自动点击)"
@@ -2118,15 +1982,6 @@ msgstr "自动跳过 (当出现跳过按钮时自动点击)"
 #: app/card/autoplot_setting_card.py:51
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "自动选择 (自动选择任意对话选项)"
-
-msgid "阅读延迟"
-msgstr "阅读延迟"
-
-msgid "毫秒"
-msgstr "毫秒"
-
-msgid "点击间隔"
-msgstr "点击间隔"
 
 #: app/card/autoplot_setting_card.py:28
 msgid "关"
@@ -2203,9 +2058,6 @@ msgstr "好的"
 #: app/card/messagebox_custom.py:392
 msgid "我已知晓"
 msgstr "我已知晓"
-
-msgid "阅读时间太短了，多停留一会吧(>∀<)"
-msgstr "阅读时间太短了，多停留一会吧(>∀<)"
 
 #: app/card/messagebox_custom.py:464
 msgid "获取最新兑换码"
@@ -2299,17 +2151,9 @@ msgstr "第{i}号位角色\"{char_text}\"不在可选项中，请重新选择"
 msgid "第{i}号位秘技\"{tech_text}\"不在可选项中，请重新选择"
 msgstr "第{i}号位秘技\"{tech_text}\"不在可选项中，请重新选择"
 
-msgid ""
-"说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\\n若好友名称留空则只查找选择的角色。"
-msgstr ""
-"说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\\n若好友名称留空则只查找选择的角色。"
-
 #: app/card/messagebox_custom.py:904
 msgid "第{i}个好友角色\"{char_text}\"不在可选项中，请重新选择"
 msgstr "第{i}个好友角色\"{char_text}\"不在可选项中，请重新选择"
-
-msgid "体力计划会在清体力前优先执行，完成后自动从列表中删除"
-msgstr "体力计划会在清体力前优先执行，完成后自动从列表中删除"
 
 #: app/card/messagebox_custom.py:964
 msgid "体力计划会在清体力前优先执行，未勾选保留时，完成后会自动从列表中删除"
@@ -2351,9 +2195,6 @@ msgstr "第{i}个计划的副本类型无效"
 msgid "第{i}个计划的副本名称\"{input_text}\"不在可选项中，请重新选择"
 msgstr "第{i}个计划的副本名称\"{input_text}\"不在可选项中，请重新选择"
 
-msgid "持续伤害 (DoT)"
-msgstr "持续伤害 (DoT)"
-
 #: app/setting_interface.py:931
 msgid "Chrome"
 msgstr "Chrome"
@@ -2366,9 +2207,6 @@ msgstr "Edge"
 msgid "选择游戏路径"
 msgstr "选择游戏路径"
 
-msgid "所有文件 (*)"
-msgstr "所有文件 (*)"
-
 #: app/setting_interface.py:3090
 msgid "选择米哈游启动器路径"
 msgstr "选择米哈游启动器路径"
@@ -2376,15 +2214,6 @@ msgstr "选择米哈游启动器路径"
 #: app/setting_interface.py:3115
 msgid "脚本或程序路径"
 msgstr "脚本或程序路径"
-
-msgid "脚本或可执行文件 (*.ps1 *.bat *.exe)"
-msgstr "脚本或可执行文件 (*.ps1 *.bat *.exe)"
-
-msgid "旧单一定时启用"
-msgstr "旧单一定时启用"
-
-msgid "未配置定时任务"
-msgstr "未配置定时任务"
 
 #: app/log_interface.py:898
 msgid "已启用: {count}，下次: {time}"
@@ -2470,9 +2299,6 @@ msgstr "正在获取跃迁数据..."
 msgid "跃迁数据获取完成(＾∀＾●)"
 msgstr "跃迁数据获取完成(＾∀＾●)"
 
-msgid "未设置 Mirror酱 CDK"
-msgstr "未设置 Mirror酱 CDK"
-
 msgid "Mirror酱 CDK 已过期"
 msgstr "Mirror酱 CDK 已过期"
 
@@ -2488,9 +2314,6 @@ msgstr "Mirror酱 CDK 类型和待下载的资源不匹配"
 msgid "Mirror酱 CDK 已被封禁"
 msgstr "Mirror酱 CDK 已被封禁"
 
-msgid "Mirror酱API请求失败"
-msgstr "Mirror酱API请求失败"
-
 #: app/tools/check_update.py:104
 msgid ""
 "发现新版本：{cfg.version} ——> {version}\n"
@@ -2502,9 +2325,6 @@ msgstr ""
 #: app/tools/check_update.py:167
 msgid "尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"
 msgstr "尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"
-
-msgid "请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK"
-msgstr "请在 “设置 → 关于 → 更新源” 中选择 Mirror酱 并填写有效 CDK"
 
 #: app/tools/check_update.py:202
 msgid "当前是最新版本(＾∀＾●)"
@@ -2529,12 +2349,6 @@ msgstr "未命名"
 #: app/card/card_edit_dialog.py:48
 msgid "清体力"
 msgstr "清体力"
-
-msgid "喜欢就给个星星吧"
-msgstr "喜欢就给个星星吧"
-
-msgid "拜托求求你啦|･ω･)"
-msgstr "拜托求求你啦|･ω･)"
 
 #: app/card/card_edit_dialog.py:97
 msgid "混沌回忆"
@@ -3502,9 +3316,6 @@ msgstr "MFAAvalonia"
 msgid "更新成功"
 msgstr "更新成功"
 
-msgid "配置在重启软件后生效"
-msgstr "配置在重启软件后生效"
-
 #: app/card/pushsettingcard1.py:311
 msgid "开始获取"
 msgstr "开始获取"
@@ -3601,36 +3412,6 @@ msgstr "暂无"
 #: assets/config/instance_names.json
 msgid "领航员 / 名冶套"
 msgstr "领航员 / 名冶套"
-
-msgid "银河沙盘"
-msgstr "银河沙盘"
-
-msgid "星系框架"
-msgstr "星系框架"
-
-msgid "天体模型"
-msgstr "天体模型"
-
-msgid "万色，愚者自将"
-msgstr "万色，愚者自将"
-
-msgid "六合，王手飞车"
-msgstr "六合，王手飞车"
-
-msgid "四相，过河照君"
-msgstr "四相，过河照君"
-
-msgid "嗤笑丑面"
-msgstr "嗤笑丑面"
-
-msgid "星如我见的领航员"
-msgstr "星如我见的领航员"
-
-msgid "叩问天工的名冶"
-msgstr "叩问天工的名冶"
-
-msgid "启用差分宇宙 GPU 加速"
-msgstr "启用差分宇宙 GPU 加速"
 
 #: app/setting_interface.py:749
 msgid "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项"
@@ -4600,9 +4381,6 @@ msgstr "重返未来 M9A"
 msgid "短信"
 msgstr "短信"
 
-msgid "难度等级（难度6对应常规演算星阶模式）"
-msgstr "难度等级（难度6对应常规演算星阶模式）"
-
 #: app/setting_interface.py:633
 msgid "站点优先级"
 msgstr "站点优先级"
@@ -5249,9 +5027,6 @@ msgstr "未选择目标界面"
 msgid "目标界面不可切换"
 msgstr "目标界面不可切换"
 
-msgid "开始运行流程："
-msgstr "开始运行流程："
-
 #: app/workflow_interface.py:1290
 msgid "截图窗口已打开，请框选后保存为流程素材"
 msgstr "截图窗口已打开，请框选后保存为流程素材"
@@ -5322,12 +5097,6 @@ msgstr "重置次数"
 msgid "差分宇宙已完成次数"
 msgstr "差分宇宙已完成次数"
 
-msgid "当前为模拟宇宙，不记录次数"
-msgstr "当前为模拟宇宙，不记录次数"
-
-msgid "当前周期内已完成 {} / {} 次"
-msgstr "当前周期内已完成 {} / {} 次"
-
 #: app/setting_interface.py:2899
 msgid "今日已完成 {count} 次"
 msgid_plural "今日已完成 {count} 次|plural"
@@ -5375,9 +5144,6 @@ msgstr "停止后续任务"
 msgid "正在覆盖安装新版本..."
 msgstr "正在覆盖安装新版本..."
 
-msgid "{current} / {total} 个文件"
-msgstr "{current} / {total} 个文件"
-
 #: module/update/helper_app.py:260
 msgid "正在更新 March7th Assistant"
 msgstr "正在更新 March7th Assistant"
@@ -5385,12 +5151,6 @@ msgstr "正在更新 March7th Assistant"
 #: module/update/update_engine.py:404
 msgid "正在清理临时文件..."
 msgstr "正在清理临时文件..."
-
-msgid "开始清理临时文件"
-msgstr "开始清理临时文件"
-
-msgid "清理完成"
-msgstr "清理完成"
 
 #: module/update/update_engine.py:420
 msgid "正在启动新版本..."
@@ -5536,18 +5296,6 @@ msgstr "正在解压更新包..."
 msgid "检测到新版本：{version}"
 msgstr "检测到新版本：{version}"
 
-msgid "March7th Assistant 更新"
-msgstr "March7th Assistant 更新"
-
-msgid "Mirror酱 获取到更新"
-msgstr "Mirror酱 获取到更新"
-
-msgid "Mirror酱 获取失败，回退到 GitHub"
-msgstr "Mirror酱 获取失败，回退到 GitHub"
-
-msgid "Mirror酱 返回了无效的文件名"
-msgstr "Mirror酱 返回了无效的文件名"
-
 #: app/card/card_edit_dialog.py:445
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr "任务菜单中的菜单项名称不能为空"
@@ -5560,36 +5308,6 @@ msgstr "卡片标题不能为空"
 msgid "启动更新器失败"
 msgstr "启动更新器失败"
 
-msgid "启用 Dingtalk 通知"
-msgstr "启用 Dingtalk 通知"
-
-msgid "启用 Gocqhttp 通知"
-msgstr "启用 Gocqhttp 通知"
-
-msgid "启用 Meow 通知"
-msgstr "启用 Meow 通知"
-
-msgid "启用 Onebot 通知"
-msgstr "启用 Onebot 通知"
-
-msgid "启用 Pushplus 通知"
-msgstr "启用 Pushplus 通知"
-
-msgid "启用 ServerChan3 通知"
-msgstr "启用 ServerChan3 通知"
-
-msgid "启用 ServerChanTurbo 通知"
-msgstr "启用 ServerChanTurbo 通知"
-
-msgid "启用 Winotify 通知"
-msgstr "启用 Winotify 通知"
-
-msgid "开始解压更新包"
-msgstr "开始解压更新包"
-
-msgid "更新完成，新版本已启动"
-msgstr "更新完成，新版本已启动"
-
 #: module/update/helper_app.py:653
 msgid "更新被阻塞"
 msgstr "更新被阻塞"
@@ -5597,9 +5315,6 @@ msgstr "更新被阻塞"
 #: module/update/update_window.py:371
 msgid "未找到更新程序"
 msgstr "未找到更新程序"
-
-msgid "正在使用 aria2 下载更新包..."
-msgstr "正在使用 aria2 下载更新包..."
 
 #: module/update/update_engine.py:301
 msgid "正在关闭相关进程..."
@@ -5609,28 +5324,13 @@ msgstr "正在关闭相关进程..."
 msgid "正在获取"
 msgstr "正在获取"
 
-msgid "获取更新信息失败"
-msgstr "获取更新信息失败"
-
 #: app/card/pushsettingcard1.py:321
 msgid "获取最新兑换码失败"
 msgstr "获取最新兑换码失败"
 
-msgid "请关闭占用文件后点击重试"
-msgstr "请关闭占用文件后点击重试"
-
 #: app/card/pushsettingcard1.py:287
 msgid "请等待当前获取完成"
 msgstr "请等待当前获取完成"
-
-msgid "请重新安装或补全更新组件后再试"
-msgstr "请重新安装或补全更新组件后再试"
-
-msgid "通过 GitHub 获取到更新"
-msgstr "通过 GitHub 获取到更新"
-
-msgid "通过 Mirror酱 获取到更新"
-msgstr "通过 Mirror酱 获取到更新"
 
 #: app/card/pushsettingcard1.py:188
 msgid "CDK 有效 (＾∀＾●)"
@@ -5643,9 +5343,6 @@ msgstr "今天到期"
 #: app/card/pushsettingcard1.py:203
 msgid "CDK 验证失败 (╥╯﹏╰╥)"
 msgstr "CDK 验证失败 (╥╯﹏╰╥)"
-
-msgid "不存在的翻译"
-msgstr "不存在的翻译"
 
 #: app/setting_interface.py:2492
 msgid "匿名使用数据收集"
@@ -5680,12 +5377,6 @@ msgstr ""
 "当前可能收集的内容包括：程序版本、系统类型、界面语言、OCR 模式、部分功能开关与通知偏好配置快照、任务执行结果，以及匿名化后的错误信息。\n"
 "\n"
 "这些数据仅用于分析功能使用情况、发现兼容性问题、评估版本稳定性和排查共性故障。"
-
-msgid "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅策略。"
-msgstr "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅策略。"
-
-msgid "未配置，阿格莱雅策略下将跳过该角色，需要填入自己游戏名称"
-msgstr "未配置，阿格莱雅策略下将跳过该角色，需要填入自己游戏名称"
 
 #: app/setting_interface.py:2964
 msgid "该参数用于配置该通知方式的请求字段"
