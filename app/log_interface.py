@@ -21,7 +21,7 @@ from module.game import get_game_controller
 from utils.tasks import TASK_NAMES
 from .schedule_dialog import ScheduleManagerDialog
 from module.notification import notif
-from module.localization import tr as ltr
+from module.localization import tr
 import shlex
 import threading
 import subprocess as sp
@@ -167,7 +167,7 @@ class GameLogOverlay(QWidget):
     def setDetectedUpdateVersion(self, version: str | None):
         self.detected_update_version = version or None
         if self.detected_update_version:
-            self.updateBadge.setText(ltr('检测到新版本：{version}').format(version=self.detected_update_version))
+            self.updateBadge.setText(tr('检测到新版本：{version}').format(version=self.detected_update_version))
             self.updateBadge.show()
         else:
             self.updateBadge.hide()
@@ -271,9 +271,6 @@ class LogInterface(ScrollArea):
     # 线程安全的日志信号（用于从后台线程发送日志）
     logMessage = Signal(str)
 
-    def tr(self, text: str) -> str:
-        return ltr(text)
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.process = None
@@ -365,13 +362,13 @@ class LogInterface(ScrollArea):
         self.headerLayout = QHBoxLayout(self.headerWidget)
         self.headerLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.titleLabel = StrongBodyLabel(self.tr('任务日志'))
+        self.titleLabel = StrongBodyLabel(tr('任务日志'))
         if sys.platform == 'win32':
             self.titleLabel.setFont(QFont('Microsoft YaHei', 16, QFont.Bold))
         else:
             self.titleLabel.setFont(QFont('PingFang SC', 16, QFont.Bold))
 
-        self.statusLabel = BodyLabel(self.tr('等待任务...'))
+        self.statusLabel = BodyLabel(tr('等待任务...'))
         # self.statusLabel.setStyleSheet("color: gray;")
 
         self.headerLayout.addWidget(self.titleLabel)
@@ -386,17 +383,17 @@ class LogInterface(ScrollArea):
 
         if sys.platform == 'win32':
             hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
-            self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, f"{self.tr('停止任务')} ({hotkey})")
+            self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, f"{tr('停止任务')} ({hotkey})")
         else:
-            self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, self.tr('停止任务'))
+            self.stopButton = PrimaryPushButton(FluentIcon.CLOSE, tr('停止任务'))
         self.stopButton.clicked.connect(lambda: self.stopTask(user_initiated=True))
         self.stopButton.setEnabled(False)
 
-        self.clearButton = PushButton(FluentIcon.DELETE, self.tr('清空日志'))
+        self.clearButton = PushButton(FluentIcon.DELETE, tr('清空日志'))
         self.clearButton.clicked.connect(self.clearLog)
 
-        self.logOverlayLabel = BodyLabel(self.tr('在游戏内显示日志'))
-        self.logOverlaySwitch = SwitchButton(self.tr('关'), self.buttonWidget, IndicatorPosition.RIGHT)
+        self.logOverlayLabel = BodyLabel(tr('在游戏内显示日志'))
+        self.logOverlaySwitch = SwitchButton(tr('关'), self.buttonWidget, IndicatorPosition.RIGHT)
         self.logOverlaySwitch.checkedChanged.connect(self._onLogOverlayToggled)
         self._setLogOverlaySwitchValue(self._overlay_enabled)
         if sys.platform != 'win32':
@@ -409,10 +406,10 @@ class LogInterface(ScrollArea):
         self.buttonLayout.addSpacing(20)
 
         # 定时任务配置（支持多个定时任务）
-        # self.scheduleLabel = BodyLabel(self.tr('定时任务'))
+        # self.scheduleLabel = BodyLabel(tr('定时任务'))
 
         # 打开定时任务管理配置弹窗
-        self.manageScheduleButton = PushButton(self.tr('配置定时任务'))
+        self.manageScheduleButton = PushButton(tr('配置定时任务'))
         self.manageScheduleButton.clicked.connect(self._openScheduleManager)
 
         self.scheduleStatusLabel = BodyLabel()
@@ -479,7 +476,7 @@ class LogInterface(ScrollArea):
         try:
             self.logOverlaySwitch.blockSignals(True)
             self.logOverlaySwitch.setChecked(enabled)
-            self.logOverlaySwitch.setText(self.tr('开') if enabled else self.tr('关'))
+            self.logOverlaySwitch.setText(tr('开') if enabled else tr('关'))
         finally:
             self.logOverlaySwitch.blockSignals(False)
 
@@ -693,7 +690,7 @@ class LogInterface(ScrollArea):
         if sys.platform == 'win32':
             # 更新按钮文本
             hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
-            self.stopButton.setText(f"{self.tr('停止任务')} ({hotkey})")
+            self.stopButton.setText(f"{tr('停止任务')} ({hotkey})")
             # 同步更新悬浮窗的快捷键提示
             try:
                 if self._log_overlay:
@@ -701,7 +698,7 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
         else:
-            self.stopButton.setText(self.tr('停止任务'))
+            self.stopButton.setText(tr('停止任务'))
 
     def _registerAutoplotHotkey(self):
         """注册自动对话全局热键"""
@@ -829,7 +826,7 @@ class LogInterface(ScrollArea):
     def _formatScheduledTaskChain(self, chain) -> str:
         names = []
         for task_meta, task_dict in chain:
-            name = task_meta.get('name') or task_dict.get('name') or self.tr('未命名')
+            name = task_meta.get('name') or task_dict.get('name') or tr('未命名')
             names.append(str(name))
         return ' -> '.join(names)
 
@@ -868,7 +865,7 @@ class LogInterface(ScrollArea):
         #     # 兼容旧配置：如果开启了旧的单一定时配置，显示旧配置内容
         #     if cfg.get_value('scheduled_run_enable', False):
         #         time_str = cfg.get_value('scheduled_run_time', '04:00')
-        #         self.scheduleStatusLabel.setText(self.tr(f'旧单一定时启用: {time_str}'))
+        #         self.scheduleStatusLabel.setText(tr(f'旧单一定时启用: {time_str}'))
         #     else:
         #         self.scheduleStatusLabel.setText('未配置定时任务')
         #     return
@@ -898,10 +895,10 @@ class LogInterface(ScrollArea):
             else:
                 # 计算具体时间
                 time_str = next_task.get('time')
-            self.scheduleStatusLabel.setText(self.tr('已启用: {count}，下次: {time}').format(count=len(enabled), time=time_str))
+            self.scheduleStatusLabel.setText(tr('已启用: {count}，下次: {time}').format(count=len(enabled), time=time_str))
         else:
-            # self.scheduleStatusLabel.setText(self.tr(f'已启用定时任务数: {len(enabled)}'))
-            self.scheduleStatusLabel.setText(self.tr('尚未配置定时任务'))
+            # self.scheduleStatusLabel.setText(tr(f'已启用定时任务数: {len(enabled)}'))
+            self.scheduleStatusLabel.setText(tr('尚未配置定时任务'))
 
     def _openScheduleManager(self):
         """打开定时任务管理对话框"""
@@ -1147,7 +1144,7 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             self.current_task = program
-            self.statusLabel.setText(self.tr('正在运行: {}').format(name))
+            self.statusLabel.setText(tr('正在运行: {}').format(name))
             self.stopButton.setEnabled(True)
 
             if timeout > 0:
@@ -1177,7 +1174,7 @@ class LogInterface(ScrollArea):
     def startExternalTask(self, task_name, stop_callback=None):
         """注册当前 GUI 进程内运行的外部任务，复用现有日志界面。"""
         if self.isTaskRunning():
-            raise RuntimeError(self.tr('任务正在运行'))
+            raise RuntimeError(tr('任务正在运行'))
 
         self._pending_task_meta = None
         self._external_task_active = True
@@ -1188,7 +1185,7 @@ class LogInterface(ScrollArea):
 
         self.clearLog()
         self.appendLog("========== 开始任务: {} ==========".format(self._external_task_name) + "\n")
-        self.statusLabel.setText(self.tr('正在运行: {}').format(self._external_task_name))
+        self.statusLabel.setText(tr('正在运行: {}').format(self._external_task_name))
         self.stopButton.setEnabled(True)
 
     def finishExternalTask(self, exit_code=0, user_stopped=None):
@@ -1227,7 +1224,7 @@ class LogInterface(ScrollArea):
         self.appendLog("========== 开始任务: {} ==========".format(task_display_name) + "\n")
 
         # 更新状态
-        self.statusLabel.setText(self.tr('正在运行: {}').format(task_display_name))
+        self.statusLabel.setText(tr('正在运行: {}').format(task_display_name))
         # self.statusLabel.setStyleSheet("color: #0078d4;")
         self.stopButton.setEnabled(True)
 
@@ -1903,7 +1900,7 @@ class LogInterface(ScrollArea):
                 self._pending_task_meta = next_meta
                 self.startTask(next_task_dict)
                 if self._hasActiveStartedProcess():
-                    name = next_meta.get('name') or self.tr('未命名')
+                    name = next_meta.get('name') or tr('未命名')
                     self.appendLog('链式启动下一任务: {}'.format(name) + "\n")
                     remaining = self._formatScheduledTaskChain(self._active_task_chain)
                     if remaining:
@@ -1937,7 +1934,7 @@ class LogInterface(ScrollArea):
                     self._active_task_chain = chain
                     self.startTask(task_dict)
                     if self._hasActiveStartedProcess():
-                        name = t_meta.get('name') or self.tr('未命名')
+                        name = t_meta.get('name') or tr('未命名')
                         self.appendLog('延迟启动任务: {}'.format(name) + "\n")
                         if chain:
                             self.appendLog('已排队链式任务: {}'.format(self._formatScheduledTaskChain(chain)) + "\n")
@@ -1985,13 +1982,13 @@ class LogInterface(ScrollArea):
     def _post_action_label(self, action: str) -> str:
         """返回 post_action 的本地化标签"""
         mapping = {
-            'None': self.tr('无操作'),
-            'Shutdown': self.tr('关机'),
-            'Sleep': self.tr('睡眠'),
-            'Hibernate': self.tr('休眠'),
-            'Restart': self.tr('重启'),
-            'Logoff': self.tr('注销'),
-            'TurnOffDisplay': self.tr('关闭显示器'),
+            'None': tr('无操作'),
+            'Shutdown': tr('关机'),
+            'Sleep': tr('睡眠'),
+            'Hibernate': tr('休眠'),
+            'Restart': tr('重启'),
+            'Logoff': tr('注销'),
+            'TurnOffDisplay': tr('关闭显示器'),
         }
         return mapping.get(action, str(action))
 
@@ -2053,10 +2050,10 @@ class LogInterface(ScrollArea):
                 pass
 
         if exit_code == 0:
-            self.statusLabel.setText(self.tr('任务完成'))
+            self.statusLabel.setText(tr('任务完成'))
             # self.statusLabel.setStyleSheet("color: green;")
         else:
-            self.statusLabel.setText(self.tr('任务已停止'))
+            self.statusLabel.setText(tr('任务已停止'))
             # self.statusLabel.setStyleSheet("color: orange;")
 
     def isTaskRunning(self):

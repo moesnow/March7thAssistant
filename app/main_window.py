@@ -490,24 +490,14 @@ class MainWindow(MSFluentWindow):
 
     def _reinstall_fluent_translator(self, lang_code: str):
         """重新安装 FluentTranslator 以使 Qt 内置组件翻译同步更新"""
-        from PySide6.QtCore import QLocale
-        from qfluentwidgets import FluentTranslator
+        from app.common.translator import create_fluent_translator
         app = QApplication.instance()
         if hasattr(self, '_fluent_translator') and self._fluent_translator:
             try:
                 app.removeTranslator(self._fluent_translator)
             except Exception:
                 pass
-        if lang_code == 'zh_TW':
-            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
-        elif lang_code == 'ja_JP':
-            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Japanese, QLocale.Country.Japan))
-        elif lang_code == 'ko_KR':
-            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
-        elif lang_code == 'en_US':
-            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        else:
-            self._fluent_translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
+        self._fluent_translator = create_fluent_translator(lang_code)
         app.installTranslator(self._fluent_translator)
 
     def _rebuild_interfaces_for_language(self):

@@ -429,8 +429,8 @@ class PushSettingCardCode(CustomPushSettingCard):
 
     def _info_warning(self, title, content, parent):
         InfoBar.warning(
-            self.tr(title),
-            self.tr(content),
+            tr(title),
+            tr(content),
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
@@ -440,8 +440,8 @@ class PushSettingCardCode(CustomPushSettingCard):
 
     def _info_success(self, title, content, parent):
         InfoBar.success(
-            self.tr(title),
-            self.tr(content),
+            tr(title),
+            tr(content),
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,

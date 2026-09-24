@@ -129,13 +129,8 @@ def get_current_language() -> str:
 
 def get_available_languages() -> dict:
     """Get list of available languages"""
-    return {
-        "简体中文": "zh_CN",
-        "繁體中文": "zh_TW",
-        "日本語": "ja_JP",
-        "한국어": "ko_KR",
-        "English": "en_US"
-    }
+    from .languages import available_languages
+    return available_languages()
 
 
 def get_character_names(include_none: bool = False) -> dict:
