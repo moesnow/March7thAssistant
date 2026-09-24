@@ -466,7 +466,12 @@ def run_checks() -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-def check_docs() -> list[str]:
+# 界面实际加载的文档基名（help_interface / changelog_interface 经 localized_doc_path 读取）。
+# 后缀登记校验、译文完整性校验、zh_TW 生成共用此清单，防止多处清单漂移。
+DOC_BASES = ("Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog")
+
+
+def check_docs(docs_dir: Path | None = None) -> list[str]:
     """多语言文档校验（警告级）。
 
     - TasksTable 各语言版本表格行数须与基准版一致（防止改漏一份）
@@ -476,9 +481,10 @@ def check_docs() -> list[str]:
     warnings: list[str] = []
     from module.localization.languages import LANGS
 
-    docs_dir = ROOT / "assets" / "docs"
+    if docs_dir is None:
+        docs_dir = ROOT / "assets" / "docs"
     suffixes = {m["docs_suffix"] for m in LANGS.values() if m["docs_suffix"]}
-    bases = ("Tutorial", "FAQ", "Changelog", "TasksTable")
+    bases = DOC_BASES
 
     def table_rows(p: Path) -> int:
         return sum(1 for line in p.read_text(encoding="utf-8").splitlines() if line.strip().startswith("|"))
@@ -500,7 +506,7 @@ def check_docs() -> list[str]:
                 break
 
     # 界面实际加载的文档（app/help_interface.py 与 changelog_interface.py 经 localized_doc_path 读取）
-    for b in ("Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog"):
+    for b in DOC_BASES:
         if not (docs_dir / f"{b}.md").is_file():
             continue  # 缺基准文档由其它校验负责
         for code, meta in LANGS.items():
@@ -516,8 +522,8 @@ def check_docs() -> list[str]:
 # zh_TW 文档生成（繁体由简体基准机械转换，不需要人工翻译）
 # ---------------------------------------------------------------------------
 
-# 界面会加载的文档；zh_TW 版本由简体基准经 OpenCC s2twp 生成
-ZH_TW_DOC_BASES = ("Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog")
+# 界面会加载的文档；zh_TW 版本由简体基准经 OpenCC s2twp 生成（清单与 DOC_BASES 同源）
+ZH_TW_DOC_BASES = DOC_BASES
 
 # 译文文档第 3 行的声明（界面按行号剥离，位置固定：第 1 行标题 / 第 2 行空行 / 第 3 行声明 / 第 4 行空行）
 ZH_TW_DOC_NOTE = "> 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。"

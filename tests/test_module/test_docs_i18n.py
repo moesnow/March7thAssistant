@@ -3,7 +3,7 @@
 import os
 
 from module.localization.languages import get_lang_meta, localized_doc_path
-from tools.i18n import check_docs
+from tools.i18n import DOC_BASES, check_docs
 
 TASKS_TABLE_FILES = {
     "assets/docs/TasksTable.md",
@@ -14,12 +14,32 @@ TASKS_TABLE_FILES = {
 }
 
 # 界面经 localized_doc_path 加载的文档，每个语言都应有独立版本
-LOCALIZED_DOC_BASES = ("Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog")
+# 与工具链的 DOC_BASES 同源（曾各自维护，导致 Workflow 漏出后缀登记校验）
+LOCALIZED_DOC_BASES = DOC_BASES
 ALL_SUFFIXES = ("zh_TW", "ja_JP", "ko_KR", "en_US")
 
 
 def _rows(path):
     return sum(1 for line in open(path, encoding="utf-8").read().splitlines() if line.strip().startswith("|"))
+
+
+class TestDocBasesSingleSource:
+    def test_doc_bases_complete(self):
+        # 后缀登记校验 / 译文完整性校验 / zh_TW 生成 / 测试清单必须同源
+        from tools.i18n import ZH_TW_DOC_BASES
+        assert set(DOC_BASES) == {"Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog"}
+        assert tuple(ZH_TW_DOC_BASES) == tuple(DOC_BASES)
+        assert tuple(LOCALIZED_DOC_BASES) == tuple(DOC_BASES)
+
+    def test_suffix_check_covers_workflow(self, tmp_path):
+        # 回归：Workflow 曾不在后缀登记校验清单里，Workflow_xx.md 命名写错不会被告警
+        (tmp_path / "Workflow_en.md").write_text("x", encoding="utf-8")
+        (tmp_path / "Workflow_zh_TW.md").write_text("x", encoding="utf-8")
+        warnings = check_docs(docs_dir=tmp_path)
+        assert [w for w in warnings if "Workflow_en.md" in w and "后缀" in w], \
+            "未注册后缀的 Workflow_en.md 应被告警"
+        assert not [w for w in warnings if "Workflow_zh_TW.md" in w and "后缀" in w], \
+            "已注册后缀的 Workflow_zh_TW.md 不应告警"
 
 
 class TestTasksTableDocs:
