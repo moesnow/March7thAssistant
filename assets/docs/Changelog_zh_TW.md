@@ -2,7 +2,7 @@
 
 > 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。
 
-## v2026.9.24
+## v2026.9.25
 - 支援 Fate 聯動角色遠坂凜與吉爾伽美什
 - 流程編排支援滑動滑鼠 [#1221](https://github.com/moesnow/March7thAssistant/pull/1221) @AnonMoi
 - 定時任務支援新增流程編排
@@ -13,6 +13,9 @@
 - 修復差分宇宙貪吃麵具最後區域選擇階段的確認彈窗
 - 修復更新後未恢復托盤最小化狀態
 - 修復配置檔案損壞時未備份導致配置丟失
+- 修復貨幣戰爭雲遊戲保活、超時退出及敗局結算識別 [#1226](https://github.com/moesnow/March7thAssistant/pull/1226) @LumiaBlack51
+- 修復 Docker 單檔案掛載時配置檔案無法儲存 [#1231](https://github.com/moesnow/March7thAssistant/pull/1231) @lingyezhixing
+- 最佳化多語言翻譯，修正繁體用語並補全英日韓文案
 - 最佳化效能和穩定性並修復若干已知問題
 - [歡迎關注我們的B站賬號，獲取最新動態和教程](https://space.bilibili.com/3706960664857075)
 
