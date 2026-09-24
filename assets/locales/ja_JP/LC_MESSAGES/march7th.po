@@ -4362,7 +4362,7 @@ msgstr ""
 
 #: app/card/card_edit_dialog.py:367
 msgid "确定"
-msgstr ""
+msgstr "確認"
 
 msgid "重返未来 M9A"
 msgstr ""

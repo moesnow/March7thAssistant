@@ -20,7 +20,7 @@ def _show_msg(parent, title: str, content: str):
     """显示 Fluent 风格消息框（仅确定）"""
     w = MessageBox(title, content, parent)
     w.hideCancelButton()
-    w.yesButton.setText("确定")
+    w.yesButton.setText(tr("确定"))
     w.exec()
 
 
@@ -37,8 +37,8 @@ class _InputDialog(MessageBoxBase):
         self.viewLayout.addWidget(self.titleLabel)
         self.viewLayout.addWidget(self.inputEdit)
         self.widget.setMinimumWidth(420)
-        self.yesButton.setText("确定")
-        self.cancelButton.setText("取消")
+        self.yesButton.setText(tr("确定"))
+        self.cancelButton.setText(tr("取消"))
 
     def validate(self) -> bool:
         return bool(self.inputEdit.text().strip())
@@ -86,7 +86,7 @@ class ScreenshotApp(QMainWindow):
         """
         try:
             from module.logger import log
-            self.setWindowTitle("游戏截图")
+            self.setWindowTitle(tr("游戏截图"))
             self.setWindowIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DesktopIcon))
 
             # 获取屏幕的 DPI 缩放因子
