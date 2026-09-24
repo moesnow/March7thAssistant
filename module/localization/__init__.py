@@ -10,6 +10,10 @@ import sys
 
 _current_lang = "zh_CN"
 _translations = {}
+# en_US 兜底目录（zh_TW / ja_JP / ko_KR 缺失时依次回退）
+_fallback_translations = {}
+# 已记录过缺失告警的原文，避免循环调用刷屏
+_missing_logged = set()
 
 if getattr(sys, 'frozen', False):
     _locale_dir = os.path.join(os.path.dirname(sys.executable), "assets", "locales")
@@ -21,123 +25,101 @@ else:
 
 def _s2t(text: str) -> str:
     """
-    Simple Simplified->Traditional conversion.
-    Uses opencc.OpenCC('s2t') if available, otherwise falls back to a small word/char mapping.
+    Simple Simplified->Traditional conversion (OpenCC), fallback to source text on failure.
     """
     if not text:
         return text
-    from opencc import OpenCC
-    converter = OpenCC('s2t')
-    return converter.convert(text)
+    try:
+        from opencc import OpenCC
+        converter = OpenCC('s2t')
+        return converter.convert(text)
+    except Exception:
+        return text
 
 
 # cache for character names
 _character_names_cache = None
 
 
+def _load_catalog(lang_code: str) -> dict:
+    """读取单个语言目录，文件缺失或解析失败时返回空目录。"""
+    locale_path = os.path.join(_locale_dir, f"{lang_code}.json")
+    try:
+        with open(locale_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
 def load_language(lang_code: str = None):
     """
-    Load language file
+    Load language file and initialize the fallback chain (see tr()).
+    Runtime code never writes translation catalogs; registration is done
+    offline via `python -m tools.i18n extract`.
+
     :param lang_code: Language code (zh_CN, zh_TW, ja_JP, ko_KR, en_US)
     """
-    global _current_lang, _translations
+    global _current_lang, _translations, _fallback_translations, _missing_logged
 
-    try:
-        if lang_code is None:
+    if lang_code is None:
+        try:
             from module.config import cfg
             lang_code = cfg.get_value("ui_language", "zh_CN")
-            # import yaml
-            # with open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config.yaml"), 'r', encoding='utf-8') as f:
-            #     config = yaml.safe_load(f)
-            #     lang_code = config.get("ui_language", "zh_CN")
-    except Exception:
-        pass
+        except Exception:
+            pass
 
     if lang_code is None:
         lang_code = "zh_CN"
 
-    locale_path = os.path.join(_locale_dir, f"{lang_code}.json")
+    _current_lang = lang_code
+    _translations = _load_catalog(lang_code)
+    _fallback_translations = {} if lang_code in ("zh_CN", "en_US") else _load_catalog("en_US")
+    _missing_logged = set()
 
-    if lang_code == "ja_JP":
-        try:
-            base_translations = {}
-            en_us_path = os.path.join(_locale_dir, "en_US.json")
-            if os.path.exists(en_us_path):
-                with open(en_us_path, 'r', encoding='utf-8') as f:
-                    base_translations = json.load(f)
 
-            if os.path.exists(locale_path):
-                with open(locale_path, 'r', encoding='utf-8') as f:
-                    ja_translations = json.load(f)
-                for key, value in ja_translations.items():
-                    if isinstance(value, str) and value.strip():
-                        base_translations[key] = value
-
-            _translations = base_translations
-            _current_lang = lang_code
-        except Exception as e:
-            print(f"언어 파일 로드 실패: {e}")
-            _translations = {}
-            _current_lang = "zh_CN"
-    elif os.path.exists(locale_path):
-        try:
-            with open(locale_path, 'r', encoding='utf-8') as f:
-                _translations = json.load(f)
-            _current_lang = lang_code
-        except Exception as e:
-            print(f"언어 파일 로드 실패: {e}")
-            _translations = {}
-            _current_lang = "zh_CN"
-    else:
-        _translations = {}
-        _current_lang = "zh_CN"
+def _log_missing_once(text: str) -> None:
+    """缺失翻译只在 DEBUG 日志记录一次。"""
+    if text in _missing_logged:
+        return
+    _missing_logged.add(text)
+    try:
+        from module.logger import log
+        log.debug(f"i18n 缺失翻译 [{_current_lang}]: {text[:60]}")
+    except Exception:
+        pass
 
 
 def tr(text: str) -> str:
     """
-    Translation function
-    Returns translation missing prompt if key is missing
-    :param text: Text to translate (Chinese source)
-    :return: Translated text or missing prompt
+    Translation function.
+
+    Missing entries fall back along a fixed chain and never leak a
+    "missing" marker into the UI:
+
+    - zh_CN: source text (the key itself)
+    - zh_TW: OpenCC s2t conversion -> en_US -> source text
+    - ja_JP / ko_KR: en_US -> source text
+    - en_US: source text
     """
     if not text:
         return text
     translated = _translations.get(text)
-    if translated is None or translated.strip() == "":
-        if _current_lang == "zh_CN":
-            # Add to zh_CN.json with key and value as text
-            zh_cn_path = os.path.join(_locale_dir, "zh_CN.json")
-            try:
-                if os.path.exists(zh_cn_path):
-                    with open(zh_cn_path, 'r', encoding='utf-8') as f:
-                        zh_translations = json.load(f)
-                else:
-                    zh_translations = {}
-                zh_translations[text] = text
-                with open(zh_cn_path, 'w', encoding='utf-8') as f:
-                    json.dump(zh_translations, f, ensure_ascii=False, indent=4)
-                # Sync other language files
-                sync_translations()
-            except Exception:
-                pass
-            return text
-        else:
-            # Translation missing prompts in respective languages
-            if _current_lang == "zh_TW":
-                # For Traditional Chinese, do a simple Simplified->Traditional conversion
-                try:
-                    return _s2t(text)
-                except Exception:
-                    pass
-            missing_prompts = {
-                "zh_CN": f"[译缺: {text}]",
-                "zh_TW": f"[譯缺: {text}]",
-                "ja_JP": f"[翻訳漏れ: {text}]",
-                "ko_KR": f"[번역 누락: {text}]",
-                "en_US": f"[Missing: {text}]"
-            }
-            return missing_prompts.get(_current_lang, f"[Missing: {text}]")
-    return translated
+    if translated and translated.strip():
+        return translated
+
+    _log_missing_once(text)
+
+    if _current_lang == "zh_TW":
+        converted = _s2t(text)
+        if converted != text:
+            return converted
+
+    if _current_lang != "en_US":
+        fallback = _fallback_translations.get(text)
+        if fallback and fallback.strip():
+            return fallback
+
+    return text
 
 
 def get_current_language() -> str:
@@ -154,42 +136,6 @@ def get_available_languages() -> dict:
         "한국어": "ko_KR",
         "English": "en_US"
     }
-
-
-def sync_translations():
-    """
-    Sync translation files by adding missing keys from zh_CN.json to other language files with empty values
-    """
-    zh_cn_path = os.path.join(_locale_dir, "zh_CN.json")
-    if not os.path.exists(zh_cn_path):
-        return
-    try:
-        with open(zh_cn_path, 'r', encoding='utf-8') as f:
-            zh_translations = json.load(f)
-        keys = set(zh_translations.keys())
-        for lang in ["zh_TW", "ja_JP", "ko_KR", "en_US"]:
-            lang_path = os.path.join(_locale_dir, f"{lang}.json")
-            if os.path.exists(lang_path):
-                with open(lang_path, 'r', encoding='utf-8') as f:
-                    translations = json.load(f)
-            else:
-                translations = {}
-            updated = False
-            for key in keys:
-                if key not in translations:
-                    if lang == "zh_TW":
-                        try:
-                            translations[key] = _s2t(key)
-                        except Exception:
-                            translations[key] = ""
-                    else:
-                        translations[key] = ""
-                    updated = True
-            if updated:
-                with open(lang_path, 'w', encoding='utf-8') as f:
-                    json.dump(translations, f, ensure_ascii=False, indent=4)
-    except Exception:
-        pass
 
 
 def get_character_names(include_none: bool = False) -> dict:

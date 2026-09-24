@@ -1,11 +1,17 @@
-import json
-import os
-from unittest.mock import patch, MagicMock
+import hashlib
+from pathlib import Path
 from module.localization import (
     tr,
     get_current_language,
     get_available_languages,
 )
+
+LOCALE_DIR = Path(__file__).resolve().parents[2] / "assets" / "locales"
+
+
+def _catalog_fingerprint() -> dict:
+    """翻译目录内容指纹，用于断言运行期绝不改写翻译文件。"""
+    return {p.name: hashlib.md5(p.read_bytes()).hexdigest() for p in sorted(LOCALE_DIR.glob("*.json"))}
 
 
 class TestTr:
@@ -25,33 +31,33 @@ class TestTr:
         finally:
             loc._translations = original
 
-    def test_translation_not_found_zh_cn(self):
+    def test_translation_not_found_zh_cn_returns_source(self):
         import module.localization as loc
-        original_translations = loc._translations
-        original_lang = loc._current_lang
+        originals = (loc._translations, loc._current_lang, loc._fallback_translations)
+        before = _catalog_fingerprint()
         try:
             loc._translations = {}
             loc._current_lang = "zh_CN"
-            # 在 zh_CN 模式下，tr() 会尝试写入文件
-            # 我们只需要验证它返回原文
+            loc._fallback_translations = {}
             result = tr("不存在的翻译")
             assert result == "不存在的翻译"
+            # 运行期不得写翻译目录（此前 tr() 会把缺失 key 写回 zh_CN.json）
+            assert _catalog_fingerprint() == before
         finally:
-            loc._translations = original_translations
-            loc._current_lang = original_lang
+            loc._translations, loc._current_lang, loc._fallback_translations = originals
 
-    def test_translation_not_found_en_us(self):
+    def test_translation_not_found_en_us_returns_source(self):
         import module.localization as loc
-        original_translations = loc._translations
-        original_lang = loc._current_lang
+        originals = (loc._translations, loc._current_lang, loc._fallback_translations)
         try:
             loc._translations = {}
             loc._current_lang = "en_US"
+            loc._fallback_translations = {}
             result = tr("不存在的翻译")
-            assert "[Missing:" in result
+            # 缺失时回退中文原文，不再向用户暴露 [Missing:] 标记
+            assert result == "不存在的翻译"
         finally:
-            loc._translations = original_translations
-            loc._current_lang = original_lang
+            loc._translations, loc._current_lang, loc._fallback_translations = originals
 
 
 class TestGetCurrentLanguage:
@@ -108,43 +114,49 @@ class TestInstanceDisplayToRaw:
         assert "（" not in result[1]
 
 
-class TestTrMissingPrompts:
-    def test_ja_jp_missing(self):
-        import module.localization as loc
-        original_translations = loc._translations
-        original_lang = loc._current_lang
-        try:
-            loc._translations = {}
-            loc._current_lang = "ja_JP"
-            result = tr("不存在的翻译")
-            assert "翻訳漏れ" in result
-        finally:
-            loc._translations = original_translations
-            loc._current_lang = original_lang
+class TestFallbackChain:
+    """缺失条目的回退链：目标语言 → en_US（或 zh_TW 简转繁）→ 中文原文。"""
 
-    def test_ko_kr_missing(self):
+    def _with_lang(self, lang, translations=None, fallback=None):
         import module.localization as loc
-        original_translations = loc._translations
-        original_lang = loc._current_lang
-        try:
-            loc._translations = {}
-            loc._current_lang = "ko_KR"
-            result = tr("不存在的翻译")
-            assert "번역 누락" in result
-        finally:
-            loc._translations = original_translations
-            loc._current_lang = original_lang
+        originals = (loc._translations, loc._current_lang, loc._fallback_translations)
+        loc._translations = translations or {}
+        loc._current_lang = lang
+        loc._fallback_translations = fallback or {}
+        return originals
 
-    def test_zh_tw_missing(self):
+    def _restore(self, originals):
         import module.localization as loc
-        original_translations = loc._translations
-        original_lang = loc._current_lang
+        loc._translations, loc._current_lang, loc._fallback_translations = originals
+
+    def test_ja_jp_falls_back_to_en_us(self):
+        originals = self._with_lang("ja_JP", fallback={"不存在的翻译": "Hello"})
         try:
-            loc._translations = {}
-            loc._current_lang = "zh_TW"
-            # zh_TW 尝试 s2t 转换，可能会失败
-            result = tr("test text")
+            assert tr("不存在的翻译") == "Hello"
+        finally:
+            self._restore(originals)
+
+    def test_ko_kr_without_fallback_returns_source(self):
+        originals = self._with_lang("ko_KR")
+        try:
+            assert tr("不存在的翻译") == "不存在的翻译"
+        finally:
+            self._restore(originals)
+
+    def test_zh_tw_uses_s2t_or_source(self):
+        originals = self._with_lang("zh_TW")
+        try:
+            result = tr("软件设置")
             assert isinstance(result, str)
+            assert result  # 要么简转繁结果，要么原文，绝不为空
         finally:
-            loc._translations = original_translations
-            loc._current_lang = original_lang
+            self._restore(originals)
+
+    def test_never_leaks_missing_marker(self):
+        for lang in ("zh_CN", "zh_TW", "ja_JP", "ko_KR", "en_US"):
+            originals = self._with_lang(lang)
+            try:
+                result = tr("不存在的翻译")
+            finally:
+                self._restore(originals)
+            assert not result.startswith("["), f"{lang} 泄漏了缺失标记: {result}"
