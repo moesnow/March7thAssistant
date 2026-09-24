@@ -476,81 +476,81 @@ msgstr ""
 msgid "获取服务器信息失败"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:487
+#: app/card/pushsettingcard1.py:489
 msgid "时间无效"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:488
+#: app/card/pushsettingcard1.py:490
 msgid "所选时间无法转换为时间戳，已使用默认时间"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:508
+#: app/card/pushsettingcard1.py:510
 msgid "按下要绑定的按键"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:511
+#: app/card/pushsettingcard1.py:513
 msgid "按住以修改"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:519
+#: app/card/pushsettingcard1.py:521
 msgid "已改为 {key}"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:705
+#: app/card/pushsettingcard1.py:707
 msgid "修改队伍1"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:711
+#: app/card/pushsettingcard1.py:713
 msgid "修改队伍2"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:717
+#: app/card/pushsettingcard1.py:719
 msgid "交换队伍"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:731
+#: app/card/pushsettingcard1.py:733
 msgid ""
 "队伍1: {team1}\n"
 "队伍2: {team2}"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:747
+#: app/card/pushsettingcard1.py:749
 msgid "交换成功"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:748
+#: app/card/pushsettingcard1.py:750
 msgid "队伍1和队伍2已成功交换"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:757
+#: app/card/pushsettingcard1.py:759
 msgid "队伍1"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:760
+#: app/card/pushsettingcard1.py:762
 msgid "队伍2"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:786
+#: app/card/pushsettingcard1.py:788
 msgid "暂无计划"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:787
+#: app/card/pushsettingcard1.py:789
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/card/pushsettingcard1.py:813
+#: app/card/pushsettingcard1.py:815
 msgid "配置"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:841
+#: app/card/pushsettingcard1.py:843
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/card/pushsettingcard1.py:843
+#: app/card/pushsettingcard1.py:845
 msgid "为特定的副本配置队伍"
 msgstr ""
 

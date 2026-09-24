@@ -428,9 +428,10 @@ class PushSettingCardCode(CustomPushSettingCard):
         mb._fetch_thread = None
 
     def _info_warning(self, title, content, parent):
+        """title / content 由调用方负责翻译（这里只负责弹 InfoBar）。"""
         InfoBar.warning(
-            tr(title),
-            tr(content),
+            title,
+            content,
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
@@ -439,9 +440,10 @@ class PushSettingCardCode(CustomPushSettingCard):
         )
 
     def _info_success(self, title, content, parent):
+        """title / content 由调用方负责翻译（这里只负责弹 InfoBar）。"""
         InfoBar.success(
-            tr(title),
-            tr(content),
+            title,
+            content,
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
