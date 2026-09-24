@@ -1615,8 +1615,8 @@ msgstr "No Plan"
 #: app/card/pushsettingcard1.py:787
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
-msgstr[0] "Configured {count} plans"
-msgstr[1] ""
+msgstr[0] "Configured {count} plan"
+msgstr[1] "Configured {count} plans"
 
 #: app/warp_interface.py:26
 msgid "更新数据"
@@ -3598,8 +3598,8 @@ msgstr "Fetch Success"
 #: app/card/pushsettingcard1.py:328
 msgid "已获取 {count} 个兑换码"
 msgid_plural "已获取 {count} 个兑换码|plural"
-msgstr[0] "Fetched {count} codes"
-msgstr[1] ""
+msgstr[0] "Fetched {count} code"
+msgstr[1] "Fetched {count} codes"
 
 #: assets/config/instance_names.json
 msgid "欢愉之蕾"
@@ -3790,8 +3790,8 @@ msgstr "Team: "
 #: app/card/pushsettingcard1.py:841
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
-msgstr[0] "{count} rule(s) configured"
-msgstr[1] ""
+msgstr[0] "{count} rule configured"
+msgstr[1] "{count} rules configured"
 
 #: app/setting_interface.py:1140
 msgid "Windows 原生通知"
@@ -4719,8 +4719,8 @@ msgstr ""
 #: app/card/stationprioritysettingcard.py:299
 msgid "已启用自定义优先级，{count} 个站点已禁用"
 msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
-msgstr[0] "Custom priority enabled, {count} sites disabled"
-msgstr[1] ""
+msgstr[0] "Custom priority enabled, {count} site disabled"
+msgstr[1] "Custom priority enabled, {count} sites disabled"
 
 #: app/setting_interface.py:2471
 msgid "下载代理"
@@ -5456,14 +5456,14 @@ msgstr "Completed {} / {} runs this cycle"
 #: app/setting_interface.py:2899
 msgid "今日已完成 {count} 次"
 msgid_plural "今日已完成 {count} 次|plural"
-msgstr[0] "Completed {count} runs today"
-msgstr[1] ""
+msgstr[0] "Completed {count} run today"
+msgstr[1] "Completed {count} runs today"
 
 #: app/setting_interface.py:2900
 msgid "本周已完成 {count} 次"
 msgid_plural "本周已完成 {count} 次|plural"
-msgstr[0] "Completed {count} runs this week"
-msgstr[1] ""
+msgstr[0] "Completed {count} run this week"
+msgstr[1] "Completed {count} runs this week"
 
 #: app/setting_interface.py:2860
 msgid "启用前请确认用途"
@@ -6142,11 +6142,11 @@ msgstr ""
 #: app/card/pushsettingcard1.py:184
 msgid "剩余 {count} 天"
 msgid_plural "剩余 {count} 天|plural"
-msgstr[0] "{count} days remaining"
-msgstr[1] ""
+msgstr[0] "{count} day remaining"
+msgstr[1] "{count} days remaining"
 
 #: module/update/helper_app.py:641
 msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
-msgstr[0] "Auto-exit in {count} seconds"
-msgstr[1] ""
+msgstr[0] "Auto-exit in {count} second"
+msgstr[1] "Auto-exit in {count} seconds"
