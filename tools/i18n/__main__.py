@@ -1,5 +1,5 @@
 # coding:utf-8
-"""i18n 工具命令行入口：python -m tools.i18n {extract,check,compile,prune}"""
+"""i18n 工具命令行入口：python -m tools.i18n {extract,check,compile,prune,docs-tw}"""
 import argparse
 import sys
 
@@ -14,6 +14,8 @@ def main(argv=None) -> int:
     sub.add_parser("compile", help="编译 .po -> .mo（.mo 需随 .po 一起提交）")
     prune = sub.add_parser("prune", help="删除未登记进 .pot 的死条目（模板外历史遗留）")
     prune.add_argument("--dry-run", action="store_true", help="只统计不写入")
+    docs = sub.add_parser("docs-tw", help="由简体基准经 OpenCC 重新生成 zh_TW 多语言文档")
+    docs.add_argument("--check", action="store_true", help="只检查是否最新，不写入")
     args = parser.parse_args(argv)
 
     if args.command == "extract":
@@ -23,6 +25,19 @@ def main(argv=None) -> int:
             if n:
                 print(f"[{lang}] 变更 {n} 个条目")
         print(f"动态 tr()/tn() 调用（无法静态提取）: {stats['dynamic_calls']} 处")
+        return 0
+
+    if args.command == "docs-tw":
+        from . import generate_zh_tw_docs
+        stale = generate_zh_tw_docs(write=not args.check)
+        need = [b for b, changed in stale.items() if changed]
+        if args.check:
+            if need:
+                print(f"以下 zh_TW 文档落后于简体基准，请运行 python -m tools.i18n docs-tw：{need}")
+                return 1
+            print(f"zh_TW 文档均为最新（{len(stale)} 份）")
+            return 0
+        print(f"已更新 zh_TW 文档 {len(need)} 份" + (f"：{need}" if need else "（本就最新）"))
         return 0
 
     if args.command == "prune":

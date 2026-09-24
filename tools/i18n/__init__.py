@@ -499,3 +499,45 @@ def check_docs() -> list[str]:
             if not (docs_dir / f"{b}_{suf}.md").is_file():
                 warnings.append(f"文档 {b}_{suf}.md 缺失（{code} 用户将看到中文基准文档）")
     return warnings
+
+
+# ---------------------------------------------------------------------------
+# zh_TW 文档生成（繁体由简体基准机械转换，不需要人工翻译）
+# ---------------------------------------------------------------------------
+
+# 界面会加载的文档；zh_TW 版本由简体基准经 OpenCC s2twp 生成
+ZH_TW_DOC_BASES = ("Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog")
+
+# 译文文档第 3 行的声明（界面按行号剥离，位置固定：第 1 行标题 / 第 2 行空行 / 第 3 行声明 / 第 4 行空行）
+ZH_TW_DOC_NOTE = "> 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。"
+
+# 纯表格文档不带声明（与其它语言保持一致）
+ZH_TW_DOC_NO_NOTE = {"TasksTable"}
+
+
+def render_zh_tw_doc(base: str, docs_dir: Path | None = None) -> str:
+    """把简体基准文档渲染成 zh_TW 版本（OpenCC s2twp + 第 3 行声明）。"""
+    from opencc import OpenCC
+
+    docs_dir = Path(docs_dir) if docs_dir else ROOT / "assets" / "docs"
+    lines = OpenCC("s2twp").convert((docs_dir / f"{base}.md").read_text(encoding="utf-8")).split("\n")
+    if base not in ZH_TW_DOC_NO_NOTE:
+        lines[2:2] = [ZH_TW_DOC_NOTE, ""]
+    return "\n".join(lines)
+
+
+def generate_zh_tw_docs(docs_dir: Path | None = None, write: bool = True) -> dict[str, bool]:
+    """生成 assets/docs/*_zh_TW.md，返回 {文档基名: 是否需要更新}。
+
+    简体基准改动后必须重新运行，否则繁体文档会落后于简体（tests 有守护用例）。
+    """
+    docs_dir = Path(docs_dir) if docs_dir else ROOT / "assets" / "docs"
+    stale: dict[str, bool] = {}
+    for base in ZH_TW_DOC_BASES:
+        rendered = render_zh_tw_doc(base, docs_dir)
+        dst = docs_dir / f"{base}_zh_TW.md"
+        old = dst.read_text(encoding="utf-8") if dst.is_file() else None
+        stale[base] = old != rendered
+        if write and stale[base]:
+            dst.write_text(rendered, encoding="utf-8", newline="\n")
+    return stale

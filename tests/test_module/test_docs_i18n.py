@@ -91,3 +91,21 @@ class TestCheckDocs:
     def test_repo_state_has_no_doc_warning(self):
         """C1+C3 补齐文档后，仓库状态不应再有任何文档类警告。"""
         assert check_docs() == []
+
+    def test_zh_tw_docs_are_up_to_date(self):
+        """zh_TW 文档必须等于简体基准的转换结果（改了基准却忘记重新生成会失败）。"""
+        from tools.i18n import generate_zh_tw_docs
+        stale = [b for b, changed in generate_zh_tw_docs(write=False).items() if changed]
+        assert stale == [], f"这些 zh_TW 文档落后于简体基准，运行 python -m tools.i18n docs-tw: {stale}"
+
+    def test_zh_tw_doc_structure(self):
+        """生成的 zh_TW 文档遵循固定行结构（界面按行号剥离）。"""
+        from tools.i18n import ZH_TW_DOC_BASES, ZH_TW_DOC_NO_NOTE, render_zh_tw_doc
+        for base in ZH_TW_DOC_BASES:
+            lines = render_zh_tw_doc(base).split("\n")
+            assert lines[0].startswith("# "), f"{base}_zh_TW 首行应为 # 标题"
+            if base in ZH_TW_DOC_NO_NOTE:
+                continue
+            assert lines[1].strip() == "", f"{base}_zh_TW 第 2 行应为空行"
+            assert lines[2].startswith("> "), f"{base}_zh_TW 第 3 行应为声明"
+            assert lines[3].strip() == "", f"{base}_zh_TW 声明后应为空行"
