@@ -5828,3 +5828,143 @@ msgstr "After Chain Failure:"
 #: app/schedule_dialog.py:1027
 msgid "启动任务失败：{error}"
 msgstr "Start Task Failed: {error}"
+
+#: app/card/samplecardview1.py:61
+msgid "执行完成(＾∀＾●)"
+msgstr "Completed(＾∀＾●)"
+
+#: app/card/samplecardview1.py:73
+msgid "执行出错"
+msgstr "Execution Failed"
+
+#: app/main_window.py:482
+msgid "语言切换失败"
+msgstr "Failed to switch language"
+
+#: tasks/tool/screenshot.py:386
+msgid "还没有选择区域呢"
+msgstr "No area selected yet"
+
+#: tasks/tool/screenshot.py:397
+msgid "复制到剪贴板成功"
+msgstr "Copied to clipboard"
+
+#: tasks/tool/screenshot.py:410
+msgid "请输入 crop 值"
+msgstr "Please enter a crop value"
+
+#: tasks/tool/screenshot.py:418
+msgid "crop 值必须包含 4 个部分"
+msgstr "Crop value must contain 4 parts"
+
+#: tasks/tool/screenshot.py:426
+msgid "比例格式不正确"
+msgstr "Invalid ratio format"
+
+#: tasks/tool/screenshot.py:430
+msgid "比例分母必须大于 0"
+msgstr "Ratio denominator must be greater than 0"
+
+#: tasks/tool/screenshot.py:434
+msgid "第 {index} 项分母应为 {expected}"
+msgstr "Item {index} denominator should be {expected}"
+
+#: tasks/tool/screenshot.py:441
+msgid "像素坐标格式不正确"
+msgstr "Invalid pixel coordinate format"
+
+#: tasks/tool/screenshot.py:445
+msgid "宽度和高度必须大于 0"
+msgstr "Width and height must be greater than 0"
+
+#: tasks/tool/screenshot.py:447
+msgid "X 和 Y 不能小于 0"
+msgstr "X and Y cannot be less than 0"
+
+#: tasks/tool/screenshot.py:449
+msgid "crop 区域超出截图范围"
+msgstr "Crop area exceeds the screenshot bounds"
+
+#: tasks/tool/screenshot.py:458
+msgid "输入 Crop 值"
+msgstr "Enter Crop Value"
+
+#: tasks/tool/screenshot.py:459
+msgid "支持 (x / 宽, y / 高, width / 宽, height / 高) 或 x, y, width, height"
+msgstr ""
+"Supported: (x / width, y / height, width / width, height / height) or x, y, "
+"width, height"
+
+#: tasks/tool/screenshot.py:482
+msgid "已绘制区域: X={x}, Y={y}, Width={width}, Height={height}"
+msgstr "Drawn area: X={x}, Y={y}, Width={width}, Height={height}"
+
+#: tasks/tool/screenshot.py:484
+msgid "（已使用蓝色矩形标记）"
+msgstr "(marked with a blue rectangle)"
+
+#: tasks/tool/screenshot.py:517
+msgid "保存选区截图"
+msgstr "Save Selection"
+
+#: tasks/tool/screenshot.py:591
+msgid "OCR识别结果"
+msgstr "OCR Result"
+
+#: tasks/tool/screenshot.py:593
+msgid "识别耗时: {seconds} 秒"
+msgstr "Recognition time: {seconds} s"
+
+#: tasks/tool/screenshot.py:595
+msgid "没有识别出任何内容"
+msgstr "Nothing was recognized"
+
+#: tasks/tool/screenshot.py:618
+msgid "模板图片加载失败"
+msgstr "Failed to load the template image"
+
+#: tasks/tool/screenshot.py:626
+msgid "模板尺寸大于截图尺寸，无法匹配"
+msgstr "Template is larger than the screenshot; cannot match"
+
+#: tasks/tool/screenshot.py:642
+msgid "模板匹配结果"
+msgstr "Template Match Result"
+
+#: tasks/tool/screenshot.py:643
+msgid "最高置信度: {value}"
+msgstr "Best confidence: {value}"
+
+#: tasks/tool/screenshot.py:644
+msgid "匹配区域: X={x}, Y={y}, Width={width}, Height={height}"
+msgstr "Matched area: X={x}, Y={y}, Width={width}, Height={height}"
+
+#: tasks/tool/screenshot.py:646
+msgid "（已使用绿色矩形标记）"
+msgstr "(marked with a green rectangle)"
+
+#: tasks/tool/screenshot.py:683
+msgid "没有检测到随意门"
+msgstr "No random door detected"
+
+#: tasks/tool/screenshot.py:692
+msgid "检测区域: X={x}, Y={y}, Width={width}, Height={height}"
+msgstr "Detection area: X={x}, Y={y}, Width={width}, Height={height}"
+
+#: tasks/tool/screenshot.py:695
+msgid "（已使用黄色矩形标记）"
+msgstr "(marked with a yellow rectangle)"
+
+#: tasks/tool/screenshot.py:705
+msgid "没有检测到事件"
+msgstr "No events detected"
+
+#: tasks/tool/screenshot.py:715
+msgid "检测到 {count} 个事件"
+msgid_plural "检测到 {count} 个事件|plural"
+msgstr[0] "Detected {count} event"
+msgstr[1] "Detected {count} events"
+
+#: tasks/tool/screenshot.py:715
+msgid "（已使用橙色矩形标记）"
+msgstr "(marked with an orange rectangle)"

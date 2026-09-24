@@ -479,7 +479,7 @@ class MainWindow(MSFluentWindow):
         except Exception as e:
             self.navigationInterface.setEnabled(True)
             InfoBar.warning(
-                title='语言切换失败',
+                title=tr('语言切换失败'),
                 content=str(e),
                 orient=Qt.Horizontal,
                 isClosable=True,
