@@ -155,11 +155,11 @@ class AddEditScheduleDialog(MessageBox):
         self.args_edit = LineEdit(self)
         self.args_edit.setPlaceholderText(tr("外部程序启动参数（可选）"))
         self.args_combo = ComboBox(self)
-        # 使用中文显示任务名称，但保存时保留对应的任务ID
+        # 显示本地化任务名，但保存时保留对应的任务ID（TASK_NAMES 存的是中文原文）
         # 保持 TASK_NAMES 的原始顺序（插入顺序）
         task_items = list(TASK_NAMES.items())
         self._task_keys = [k for k, v in task_items]
-        self._task_labels = [v for k, v in task_items]
+        self._task_labels = [tr(v) for k, v in task_items]
         self.args_combo.addItems(self._task_labels)
         self.args_combo.setVisible(True)
         # 当用户选择内置任务时，自动填写任务名称（仅在用户操作时触发）
@@ -830,7 +830,7 @@ class ScheduleManagerDialog(MessageBox):
             # 参数/任务（如果是本体，显示本地化任务名）
             args = t.get('args', '')
             if prog == 'self':
-                args_display = TASK_NAMES.get(args, args)
+                args_display = tr(TASK_NAMES.get(args, args))
             elif prog == 'workflow':
                 args_display = t.get('workflow_name') or args
             else:

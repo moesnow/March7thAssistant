@@ -216,11 +216,19 @@ def collect_code_literals() -> tuple[set[str], set[str], int]:
 # 常量表与数据源字面量
 # ---------------------------------------------------------------------------
 
-# 经 tr(表[key]) 动态传入的模块级字面量表：(源码相对路径, (变量名, ...))
-# 必须用 AST 读取、绝不 import —— 否则会把 PySide6 / qfluentwidgets 拖进工具链。
+# 模块级常量表：(源码相对路径, ((变量名, 取哪些 dict 键), ...))
+#   - 键为 None 表示取整个字面量里的全部字符串（常用于「值即文案」的映射表）；
+#   - 键为元组表示只取这些 dict 键对应的值，避免把图标路径、task_id 等一起登记；
+#   - 必须用 AST 读取、绝不 import —— 否则会把 PySide6 / qfluentwidgets 拖进工具链。
 TABLE_SOURCES = [
-    ("module/workflow/__init__.py", ("STEP_TYPE_LABELS", "CONDITION_TYPE_LABELS")),
-    ("module/update/version_check.py", ("_CDK_ERROR_MESSAGES",)),
+    ("module/workflow/__init__.py", (("STEP_TYPE_LABELS", None), ("CONDITION_TYPE_LABELS", None))),
+    ("module/update/version_check.py", (("_CDK_ERROR_MESSAGES", None),)),
+    # 任务名与主页卡片文案：常量里存的是中文原文（msgid），显示时才 tr()
+    ("utils/tasks.py", (("AVAILABLE_TASKS", None),)),
+    ("app/card/card_edit_dialog.py", (
+        ("HOME_EXTRA_TASKS", None),
+        ("DEFAULT_CARDS", ("title", "label", "menu_items")),
+    )),
 ]
 
 # 取值会经 tr() 传入的数据文件（display_name 等展示字段即 msgid）
@@ -231,26 +239,30 @@ DATA_SOURCES = [
 ]
 
 
-def _collect_table_values(node: ast.AST) -> set[str]:
+def _collect_table_values(node: ast.AST, keys: tuple[str, ...] | None = None) -> set[str]:
     """递归取出常量表字面量里的文案。
 
-    只取 dict 的 value（键是程序标识，不是文案）；顺带支持 value 写成 tr("...") 的形式。
+    :param keys: 只取 dict 里这些键对应的值；为 None 时取所有值（键本身从不登记，
+                 因为键通常是程序标识）。顺带支持值写成 tr("...") 的形式。
     """
     out: set[str] = set()
     if isinstance(node, ast.Constant):
         if isinstance(node.value, str) and node.value.strip():
             out.add(node.value)
     elif isinstance(node, ast.Dict):
-        for v in node.values:
-            out |= _collect_table_values(v)
+        for k, v in zip(node.keys, node.values):
+            if keys is not None:
+                if not (isinstance(k, ast.Constant) and k.value in keys):
+                    continue
+            out |= _collect_table_values(v, keys)
     elif isinstance(node, (ast.List, ast.Tuple, ast.Set)):
         for v in node.elts:
-            out |= _collect_table_values(v)
+            out |= _collect_table_values(v, keys)
     elif isinstance(node, ast.Call):
         func_name = _LiteralCollector._func_name(node.func) or ""
         idx = _LiteralCollector._msgid_index(func_name)
         if idx is not None and len(node.args) > idx:
-            out |= _collect_table_values(node.args[idx])
+            out |= _collect_table_values(node.args[idx], keys)
     return out
 
 
@@ -258,7 +270,7 @@ def collect_table_literals() -> tuple[set[str], dict[str, str]]:
     """读取 TABLE_SOURCES 声明的常量表字面量，返回 (字面量集合, 字面量 -> 来源)。"""
     literals: set[str] = set()
     refs: dict[str, str] = {}
-    for rel, var_names in TABLE_SOURCES:
+    for rel, specs in TABLE_SOURCES:
         path = ROOT / rel
         if not path.is_file():
             continue
@@ -266,6 +278,7 @@ def collect_table_literals() -> tuple[set[str], dict[str, str]]:
             tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"), str(path))
         except (SyntaxError, ValueError):
             continue
+        by_name = {name: keys for name, keys in specs}
         for node in ast.walk(tree):
             if isinstance(node, ast.Assign):
                 targets = node.targets
@@ -273,11 +286,12 @@ def collect_table_literals() -> tuple[set[str], dict[str, str]]:
                 targets = [node.target]
             else:
                 continue
-            if not any(isinstance(t, ast.Name) and t.id in var_names for t in targets):
+            matched = [t.id for t in targets if isinstance(t, ast.Name) and t.id in by_name]
+            if not matched:
                 continue
             if node.value is None:
                 continue
-            for value in _collect_table_values(node.value):
+            for value in _collect_table_values(node.value, by_name[matched[0]]):
                 literals.add(value)
                 refs.setdefault(value, f"{rel}:{node.lineno}")
     return literals, refs

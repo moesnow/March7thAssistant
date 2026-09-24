@@ -45,215 +45,79 @@ msgstr ""
 msgid "开"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:20
-msgid "重置模拟宇宙配置文件"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:21
-msgid "打开模拟宇宙目录"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:22
-msgid "打开模拟宇宙项目主页"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:23
-msgid "重置锄大地配置文件"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:24
-msgid "打开锄大地程序目录"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:25
-msgid "打开锄大地项目主页"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:35
-msgid "完整运行"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:42
-msgid "日常"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:47
-msgid "每日实训"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:48
-msgid "清体力"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:53
-msgid "货币战争"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:57
-msgid "运行一次"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:58
-msgid "循环运行"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:63
-msgid "差分宇宙"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:67
-msgid "差分宇宙运行一次 ⭐"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:68
-msgid "差分宇宙循环运行 ⭐"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:69
-msgid "差分宇宙中途接管"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:70
-msgid "模拟宇宙快速启动（停止维护）"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:71
-msgid "模拟宇宙原版运行（停止维护）"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:72
-msgid "更新模拟宇宙（停止维护）"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:73
-msgid "重置模拟宇宙配置文件（停止维护）"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:74
-msgid "打开模拟宇宙目录（停止维护）"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:75
-msgid "打开模拟宇宙项目主页（停止维护）"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:80
-msgid "锄大地"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:84
-msgid "快速启动 ⭐"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:85
-msgid "原版运行"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:86
-msgid "更新锄大地"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:87
-msgid "重置配置文件"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:88
-msgid "打开程序目录"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:89
-msgid "打开项目主页"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:93
-msgid "逐光捡金"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:97
-msgid "混沌回忆"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:98
-msgid "虚构叙事"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:99
-msgid "末日幻影"
-msgstr ""
-
-#: app/card/card_edit_dialog.py:119
+#: app/card/card_edit_dialog.py:154
 msgid "菜单项名称"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:141
+#: app/card/card_edit_dialog.py:174
 msgid "名称："
 msgstr ""
 
-#: app/card/card_edit_dialog.py:143
+#: app/card/card_edit_dialog.py:176
 msgid "任务："
 msgstr ""
 
-#: app/card/card_edit_dialog.py:183
+#: app/card/card_edit_dialog.py:227
 msgid "图标"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:195
+#: app/card/card_edit_dialog.py:239
 msgid "标题："
 msgstr ""
 
-#: app/card/card_edit_dialog.py:198
+#: app/card/card_edit_dialog.py:242
 msgid "卡片标题"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:226
+#: app/card/card_edit_dialog.py:270
 msgid "操作类型："
 msgstr ""
 
-#: app/card/card_edit_dialog.py:228
+#: app/card/card_edit_dialog.py:272
 msgid "单个任务"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:228
+#: app/card/card_edit_dialog.py:272
 msgid "任务菜单"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:256
+#: app/card/card_edit_dialog.py:300
 msgid "添加菜单项"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:282
+#: app/card/card_edit_dialog.py:326
 msgid "选择图标"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:327
+#: app/card/card_edit_dialog.py:372
 msgid "编辑主页卡片"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:362
+#: app/card/card_edit_dialog.py:407
 msgid "添加卡片"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:364
+#: app/card/card_edit_dialog.py:409
 msgid "恢复默认"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:367
+#: app/card/card_edit_dialog.py:412
 msgid "确定"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:369
+#: app/card/card_edit_dialog.py:414
 msgid "取消"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:432
+#: app/card/card_edit_dialog.py:477
 msgid "保存失败"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:433
+#: app/card/card_edit_dialog.py:478
 msgid "卡片标题不能为空"
 msgstr ""
 
-#: app/card/card_edit_dialog.py:445
+#: app/card/card_edit_dialog.py:490
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr ""
 
@@ -758,6 +622,10 @@ msgstr ""
 msgid "常见问题"
 msgstr ""
 
+#: app/help_interface.py:190
+msgid "每日实训"
+msgstr ""
+
 #: app/home_interface.py:29
 msgid "更换背景图片"
 msgstr ""
@@ -903,6 +771,10 @@ msgstr ""
 
 #: app/main_window.py:333
 msgid "显示主界面"
+msgstr ""
+
+#: app/main_window.py:338
+msgid "完整运行"
 msgstr ""
 
 #: app/main_window.py:420
@@ -1648,6 +1520,10 @@ msgstr ""
 msgid "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"
 msgstr ""
 
+#: app/setting_interface.py:595
+msgid "差分宇宙"
+msgstr ""
+
 #: app/setting_interface.py:598
 msgid "启用「差分宇宙」积分奖励"
 msgstr ""
@@ -1898,6 +1774,10 @@ msgstr ""
 
 #: app/setting_interface.py:798
 msgid "购买代币与过期邮包"
+msgstr ""
+
+#: app/setting_interface.py:803
+msgid "逐光捡金"
 msgstr ""
 
 #: app/setting_interface.py:808
@@ -3114,6 +2994,18 @@ msgstr ""
 
 #: app/setting_interface.py:2749
 msgid "体力"
+msgstr ""
+
+#: app/setting_interface.py:2751
+msgid "日常"
+msgstr ""
+
+#: app/setting_interface.py:2752
+msgid "货币战争"
+msgstr ""
+
+#: app/setting_interface.py:2755
+msgid "锄大地"
 msgstr ""
 
 #: app/setting_interface.py:2767
@@ -4548,50 +4440,6 @@ msgstr ""
 msgid "已复制到剪贴板"
 msgstr ""
 
-#: utils/tasks.py:14
-msgid "更新游戏"
-msgstr ""
-
-#: utils/tasks.py:15
-msgid "预下载游戏"
-msgstr ""
-
-#: utils/tasks.py:16
-msgid "更新三月七小助手"
-msgstr ""
-
-#: utils/tasks.py:24
-msgid "货币战争循环"
-msgstr ""
-
-#: utils/tasks.py:25
-msgid "货币战争中途接管"
-msgstr ""
-
-#: utils/tasks.py:26
-msgid "差分宇宙循环"
-msgstr ""
-
-#: utils/tasks.py:28
-msgid "模拟宇宙原生界面"
-msgstr ""
-
-#: utils/tasks.py:29
-msgid "锄大地原生界面"
-msgstr ""
-
-#: utils/tasks.py:30
-msgid "模拟宇宙更新"
-msgstr ""
-
-#: utils/tasks.py:31
-msgid "锄大地更新"
-msgstr ""
-
-#: utils/tasks.py:32
-msgid "触屏模式更新"
-msgstr ""
-
 #: module/update/version_check.py:194
 msgid "Mirror酱 CDK 今日下载次数已达上限"
 msgstr ""
@@ -4624,6 +4472,10 @@ msgstr ""
 msgid "切换界面"
 msgstr ""
 
+#: app/card/card_edit_dialog.py:32
+msgid "原版运行"
+msgstr ""
+
 #: module/workflow/__init__.py:57
 msgid "图片不存在"
 msgstr ""
@@ -4634,6 +4486,62 @@ msgstr ""
 
 #: module/workflow/__init__.py:37
 msgid "如果"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "差分宇宙中途接管"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "差分宇宙循环"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "差分宇宙循环运行 ⭐"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "差分宇宙运行一次 ⭐"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "循环运行"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "快速启动 ⭐"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:19
+msgid "打开模拟宇宙目录"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "打开模拟宇宙目录（停止维护）"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:19
+msgid "打开模拟宇宙项目主页"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "打开模拟宇宙项目主页（停止维护）"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "打开程序目录"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:19
+msgid "打开锄大地程序目录"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:19
+msgid "打开锄大地项目主页"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "打开项目主页"
 msgstr ""
 
 #: module/workflow/__init__.py:37
@@ -4652,6 +4560,26 @@ msgstr ""
 msgid "文字存在"
 msgstr ""
 
+#: utils/tasks.py:15
+msgid "更新三月七小助手"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "更新模拟宇宙（停止维护）"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "更新游戏"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "更新锄大地"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "末日幻影"
+msgstr ""
+
 #: module/workflow/__init__.py:37
 msgid "条件循环"
 msgstr ""
@@ -4662,6 +4590,30 @@ msgstr ""
 
 #: module/workflow/__init__.py:37
 msgid "查找文字"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "模拟宇宙原版运行（停止维护）"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "模拟宇宙原生界面"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "模拟宇宙快速启动（停止维护）"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "模拟宇宙更新"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "混沌回忆"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "清体力"
 msgstr ""
 
 #: module/workflow/__init__.py:37
@@ -4694,6 +4646,54 @@ msgstr ""
 
 #: module/workflow/__init__.py:37
 msgid "继续循环"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "虚构叙事"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "触屏模式更新"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "货币战争中途接管"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "货币战争循环"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "运行一次"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:19
+msgid "重置模拟宇宙配置文件"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "重置模拟宇宙配置文件（停止维护）"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:32
+msgid "重置配置文件"
+msgstr ""
+
+#: app/card/card_edit_dialog.py:19
+msgid "重置锄大地配置文件"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "锄大地原生界面"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "锄大地更新"
+msgstr ""
+
+#: utils/tasks.py:15
+msgid "预下载游戏"
 msgstr ""
 
 #: assets/config/character_names.json

@@ -4,6 +4,8 @@
 其中 test_check_no_error 直接守护 assets/locales/ 的仓库状态，
 与 CI 中运行的 `python -m tools.i18n check` 使用同一套规则。
 """
+import ast
+
 from tools.i18n import (
     LOCALES,
     collect_calls_from_source,
@@ -375,6 +377,40 @@ class TestPluralSuffixGuard:
                         assert PLURAL_SUFFIX not in v, f"[{lang}] {e.msgid!r}"
                 else:
                     assert PLURAL_SUFFIX not in e.msgstr, f"[{lang}] {e.msgid!r}"
+
+
+class TestNoModuleLevelTranslation:
+    """约定守护：模块级常量不得调用 tr()/tn()/trc()。
+
+    它们只在 import 期求值一次，会被冻结在启动语言（切换语言后不更新），
+    并且会被写进 config.yaml 变成用户数据。做法是常量存中文原文，显示时再 tr()。
+    详见 I18N.md。
+    """
+
+    def test_no_module_level_translation_call(self):
+        from tools.i18n import CONTEXT_FUNCS, TRANSLATION_FUNCS, iter_source_files
+
+        def func_name(node):
+            if isinstance(node, ast.Name):
+                return node.id
+            if isinstance(node, ast.Attribute):
+                return node.attr
+            return None
+
+        offenders = []
+        for path in iter_source_files():
+            try:
+                tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"), str(path))
+            except (SyntaxError, ValueError):
+                continue
+            for node in tree.body:  # 只看模块顶层
+                if not isinstance(node, (ast.Assign, ast.AnnAssign)) or node.value is None:
+                    continue
+                for sub in ast.walk(node.value):
+                    if isinstance(sub, ast.Call) and func_name(sub.func) in (TRANSLATION_FUNCS | CONTEXT_FUNCS):
+                        offenders.append(f"{path.name}:{node.lineno}")
+                        break
+        assert offenders == [], f"模块级常量不得存译文（改存中文原文，显示时 tr()）: {offenders}"
 
 
 class TestCatalogs:
