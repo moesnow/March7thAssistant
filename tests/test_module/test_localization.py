@@ -84,6 +84,30 @@ class TestTr:
         monkeypatch.setattr(loc, "_s2t", lambda t: f"tw:{t}")
         assert tr("abc") == "tw:abc"
 
+    def test_zh_tw_same_script_text_keeps_chinese(self, tmp_path, env):
+        """简繁同形的文案（转换后没变化）必须保留中文，不能回退到英文。"""
+        fallback = _build(tmp_path, "en_US", entries={"最高置信度": "Best confidence"})
+        env("zh_TW", fallback=fallback)
+        assert tr("最高置信度") == "最高置信度"
+
+    def test_zh_tw_converted_text_used(self, tmp_path, env):
+        """含简体专用字的文案应返回简转繁结果，而不是英文回退。"""
+        fallback = _build(tmp_path, "en_US", entries={"设置": "Settings"})
+        env("zh_TW", fallback=fallback)
+        assert tr("设置") == "設置"
+
+    def test_s2t_unavailable_falls_through_to_en(self, tmp_path, env, monkeypatch):
+        """OpenCC 不可用时（_s2t 返回 None）应继续走 en_US 回退。"""
+        import opencc
+
+        def boom(*_a, **_k):
+            raise RuntimeError("opencc 不可用")
+
+        monkeypatch.setattr(opencc, "OpenCC", boom)
+        fallback = _build(tmp_path, "en_US", entries={"设置": "Settings"})
+        env("zh_TW", fallback=fallback)
+        assert tr("设置") == "Settings"
+
     def test_en_us_fallback_catalog(self, tmp_path, env):
         trans = _build(tmp_path, "ja_JP", entries={"s1": "ja"})
         fallback = _build(tmp_path, "en_US", entries={"s2": "en2"})

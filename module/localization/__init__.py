@@ -26,12 +26,14 @@ if getattr(sys, 'frozen', False):
 else:
     _locale_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "locales")
 
-# simple s2t converter (use opencc if available, fallback to simple mapping)
-
-
-def _s2t(text: str) -> str:
+# 简体转繁体转换器（OpenCC）
+def _s2t(text: str):
     """
-    Simple Simplified->Traditional conversion (OpenCC), fallback to source text on failure.
+    Simplified->Traditional conversion (OpenCC)。
+
+    转换器不可用时返回 None（而不是返回原文），让调用方能区分两种情况：
+    「转换失败」应继续走 en_US 回退；「转换成功但文案本来就没变」（如「最高置信度」
+    这类简繁同形文案）则应直接采用结果，不应再回退到英文。
     """
     if not text:
         return text
@@ -40,7 +42,7 @@ def _s2t(text: str) -> str:
         converter = OpenCC('s2t')
         return converter.convert(text)
     except Exception:
-        return text
+        return None
 
 
 # cache for character names
@@ -146,7 +148,9 @@ def tr(text: str) -> str:
 
     if _current_lang == "zh_TW":
         converted = _s2t(text)
-        if converted != text:
+        if converted is not None:
+            # 转换成功即采用：简繁同形的文案（如「最高置信度」）转换后不变，
+            # 但它已经是繁体用户该看到的文本，不能因此回退到英文
             return converted
 
     if _current_lang != "en_US":
@@ -184,7 +188,7 @@ def tn(text: str, n: float, **kwargs) -> str:
         _log_missing_once(text)
         if _current_lang == "zh_TW":
             converted = _s2t(text)
-            if converted != text:
+            if converted is not None:
                 form = converted
         if form is None and _current_lang != "en_US" and _plural_translated_or_none(_fallback_translation, text):
             form = _fallback_translation.ngettext(text, text + PLURAL_SUFFIX, int(n))
