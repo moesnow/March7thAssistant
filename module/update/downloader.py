@@ -197,7 +197,7 @@ class Downloader:
         aria2_args = get_update_download_aria2_args()
         aria2_proxy_desc = get_update_aria2_proxy_description()
 
-        self._log("info", tr("开始下载更新包"))
+        self._log("info", "开始下载更新包")
         if request_proxy_desc:
             self._log("info", f"更新下载使用代理: {request_proxy_desc}")
         try:
@@ -213,7 +213,7 @@ class Downloader:
         except Exception as e:
             self._cancel_check()
             if self.aria2_path and os.path.exists(self.aria2_path):
-                self._log("warning", f"{tr('内置下载失败，尝试使用 aria2')}: {e}")
+                self._log("warning", f"内置下载失败，尝试使用 aria2: {e}")
                 if aria2_proxy_desc:
                     self._log("info", f"aria2 下载使用代理: {aria2_proxy_desc}")
                 try:
@@ -233,10 +233,10 @@ class Downloader:
                     else:
                         self._log("error", f"aria2 下载失败: {aria2_error}")
                     raise DownloadError(build_download_error_message(aria2_error)) from aria2_error
-                self._log("info", f"{tr('下载完成')}: {self.dest_path}")
+                self._log("info", f"下载完成: {self.dest_path}")
                 return
             raise DownloadError(build_download_error_message(e)) from e
-        self._log("info", f"{tr('下载完成')}: {self.dest_path}")
+        self._log("info", f"下载完成: {self.dest_path}")
 
     def request_cancel(self):
         """请求取消下载。"""
@@ -433,15 +433,15 @@ class Downloader:
                 total_size = int(ts)
 
         if total_size is not None and existing_size == total_size:
-            self._log("info", tr("检测到本地文件已完整，无需继续下载"))
+            self._log("info", "检测到本地文件已完整，无需继续下载")
             return True
 
         if os.path.exists(self.dest_path):
             try:
                 os.remove(self.dest_path)
-                self._log("warning", tr("检测到无效续传区间(416)，已清理分片并从头重试"))
+                self._log("warning", "检测到无效续传区间(416)，已清理分片并从头重试")
             except Exception as rm_err:
-                self._log("warning", f"{tr('清理分片失败')}: {rm_err}")
+                self._log("warning", f"清理分片失败: {rm_err}")
         return False
 
     def _retry_or_raise(
@@ -451,7 +451,7 @@ class Downloader:
         if attempt >= max_retries:
             raise
         self._cancel_check()
-        self._log("warning", f"{tr('下载中断，准备重试')} ({attempt}/{max_retries}): {error}")
+        self._log("warning", f"下载中断，准备重试 ({attempt}/{max_retries}): {error}")
         self._sleep_with_cancel(delay)
         return attempt
 
@@ -554,7 +554,7 @@ class Downloader:
 
     def _download_with_aria2(self, proxy_args: list[str]) -> None:
         self._cancel_check()
-        self._log("info", tr("正在使用 aria2 下载更新包"))
+        self._log("info", "正在使用 aria2 下载更新包")
 
         command = [
             self.aria2_path,

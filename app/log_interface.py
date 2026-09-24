@@ -856,7 +856,7 @@ class LogInterface(ScrollArea):
             return False
 
         if chain:
-            self.appendLog(self.tr('已排队链式任务: {}').format(self._formatScheduledTaskChain(chain)) + '\n')
+            self.appendLog('已排队链式任务: {}'.format(self._formatScheduledTaskChain(chain)) + '\n')
 
         return True
 
@@ -1032,10 +1032,10 @@ class LogInterface(ScrollArea):
 
                 if self.isTaskRunning():
                     if conflict_mode == 'skip':
-                        self.appendLog(self.tr("已有任务在运行，按配置跳过计划任务: {}").format(task_for_start.get('name')) + "\n")
+                        self.appendLog("已有任务在运行，按配置跳过计划任务: {}".format(task_for_start.get('name')) + "\n")
                         continue
                     elif conflict_mode == 'stop':
-                        self.appendLog(self.tr("已有任务在运行，按配置停止当前任务并在其结束后启动: {}").format(task_for_start.get('name')) + "\n")
+                        self.appendLog("已有任务在运行，按配置停止当前任务并在其结束后启动: {}".format(task_for_start.get('name')) + "\n")
                         # 排队延迟启动：保存元数据与任务字典，调用 stopTask 停止当前任务
                         try:
                             self._suppress_chain_continuation_once = True
@@ -1125,7 +1125,7 @@ class LogInterface(ScrollArea):
 
             executable_path = os.path.abspath(program)
             if not os.path.exists(executable_path):
-                self.appendLog(self.tr("错误: 未找到可执行文件 {}").format(executable_path) + "\n")
+                self.appendLog("错误: 未找到可执行文件 {}".format(executable_path) + "\n")
                 self._updateFinishedStatus(-1)
                 return
             # 将工作目录设置为程序所在目录，确保相对路径正常工作
@@ -1187,7 +1187,7 @@ class LogInterface(ScrollArea):
         self.current_task = self._external_task_name
 
         self.clearLog()
-        self.appendLog(self.tr("========== 开始任务: {} ==========").format(self._external_task_name) + "\n")
+        self.appendLog("========== 开始任务: {} ==========".format(self._external_task_name) + "\n")
         self.statusLabel.setText(self.tr('正在运行: {}').format(self._external_task_name))
         self.stopButton.setEnabled(True)
 
@@ -1224,7 +1224,7 @@ class LogInterface(ScrollArea):
         command = str(task)
         task_display_name = TASK_NAMES.get(command, command)
         self.clearLog()
-        self.appendLog(self.tr("========== 开始任务: {} ==========").format(task_display_name) + "\n")
+        self.appendLog("========== 开始任务: {} ==========".format(task_display_name) + "\n")
 
         # 更新状态
         self.statusLabel.setText(self.tr('正在运行: {}').format(task_display_name))
@@ -1257,9 +1257,9 @@ class LogInterface(ScrollArea):
         if getattr(sys, 'frozen', False):
             executable_path = os.path.abspath("./March7th Assistant.exe")
             if not os.path.exists(executable_path):
-                self.appendLog(self.tr("错误: 未找到可执行文件 March7th Assistant.exe") + "\n")
-                self.appendLog(self.tr("请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次") + "\n")
-                self.appendLog(self.tr("具体操作方法可以参考“常见问题”（FAQ）") + "\n")
+                self.appendLog("错误: 未找到可执行文件 March7th Assistant.exe" + "\n")
+                self.appendLog("请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次" + "\n")
+                self.appendLog("具体操作方法可以参考“常见问题”（FAQ）" + "\n")
                 self._updateFinishedStatus(-1)
                 return
             # 将工作目录设置为可执行文件所在目录
@@ -1730,13 +1730,13 @@ class LogInterface(ScrollArea):
                 )
                 if can_continue_chain:
                     if not task_succeeded:
-                        self.appendLog(self.tr('当前任务失败，按配置继续执行后续链式任务') + "\n")
+                        self.appendLog('当前任务失败，按配置继续执行后续链式任务' + "\n")
                     next_chain_task = self._active_task_chain.pop(0)
                 else:
                     remaining = self._formatScheduledTaskChain(self._active_task_chain)
                     self._active_task_chain = []
                     if remaining:
-                        self.appendLog(self.tr('链式任务已中断，未继续执行: {}').format(remaining) + "\n")
+                        self.appendLog('链式任务已中断，未继续执行: {}'.format(remaining) + "\n")
         except Exception:
             next_chain_task = None
             self._active_task_chain = []
@@ -1814,7 +1814,7 @@ class LogInterface(ScrollArea):
                     post_action = pm.get('post_action', 'None')
                     if post_action and post_action != 'None':
                         if next_chain_task:
-                            self.appendLog(self.tr('当前任务存在链式后续任务，已跳过完成后操作') + "\n")
+                            self.appendLog('当前任务存在链式后续任务，已跳过完成后操作' + "\n")
                         else:
                             try:
                                 label = self._post_action_label(post_action)
@@ -1904,14 +1904,14 @@ class LogInterface(ScrollArea):
                 self.startTask(next_task_dict)
                 if self._hasActiveStartedProcess():
                     name = next_meta.get('name') or self.tr('未命名')
-                    self.appendLog(self.tr('链式启动下一任务: {}').format(name) + "\n")
+                    self.appendLog('链式启动下一任务: {}'.format(name) + "\n")
                     remaining = self._formatScheduledTaskChain(self._active_task_chain)
                     if remaining:
-                        self.appendLog(self.tr('剩余链式任务: {}').format(remaining) + "\n")
+                        self.appendLog('剩余链式任务: {}'.format(remaining) + "\n")
                     return
                 self._pending_task_meta = None
                 self._active_task_chain = []
-                self.appendLog(self.tr('链式启动下一任务失败: {}').format(next_meta.get('name') or self.tr('未命名')) + "\n")
+                self.appendLog('链式启动下一任务失败: {}'.format(next_meta.get('name') or '未命名') + "\n")
             except Exception as e:
                 self._pending_task_meta = None
                 self._active_task_chain = []
@@ -1938,13 +1938,13 @@ class LogInterface(ScrollArea):
                     self.startTask(task_dict)
                     if self._hasActiveStartedProcess():
                         name = t_meta.get('name') or self.tr('未命名')
-                        self.appendLog(self.tr('延迟启动任务: {}').format(name) + "\n")
+                        self.appendLog('延迟启动任务: {}'.format(name) + "\n")
                         if chain:
-                            self.appendLog(self.tr('已排队链式任务: {}').format(self._formatScheduledTaskChain(chain)) + "\n")
+                            self.appendLog('已排队链式任务: {}'.format(self._formatScheduledTaskChain(chain)) + "\n")
                     else:
                         self._pending_task_meta = None
                         self._active_task_chain = []
-                        self.appendLog(self.tr('延迟启动任务失败: {}').format(t_meta.get('name') or self.tr('未命名')) + "\n")
+                        self.appendLog('延迟启动任务失败: {}'.format(t_meta.get('name') or '未命名') + "\n")
                 except Exception as e:
                     self._pending_task_meta = None
                     self._active_task_chain = []

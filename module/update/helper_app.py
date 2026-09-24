@@ -457,7 +457,7 @@ class NativeUpdaterWindow:
             self._log("error", f"更新被文件占用阻止：{str(e)}")
             self._set_result("blocked", str(e), e.locked_files)
         except Exception as e:
-            self._log("error", f"更新过程出错：{str(e) or tr('更新失败')}")
+            self._log("error", f"更新过程出错：{str(e) or '更新失败'}")
             with self._lock:
                 self._retry_context = None
             self._set_result("failed", str(e) or tr("更新失败"))
