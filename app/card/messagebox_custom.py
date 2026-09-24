@@ -771,7 +771,7 @@ class MessageBoxTeam(MessageBox):
             # 将 titleLabel 与两个下拉框放在同一行
             horizontalLayout = QHBoxLayout()
 
-            titleLabel = QLabel(tr("{}号位").format(i), parent)
+            titleLabel = QLabel(tr("{index}号位").format(index=i), parent)
             titleLabel.setFont(font)
             # titleLabel.setMinimumWidth(60)
             titleLabel.setAlignment(Qt.AlignmentFlag.AlignVCenter)

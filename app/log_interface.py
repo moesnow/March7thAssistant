@@ -1144,7 +1144,7 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             self.current_task = program
-            self.statusLabel.setText(tr('正在运行: {}').format(name))
+            self.statusLabel.setText(tr('正在运行: {name}').format(name=name))
             self.stopButton.setEnabled(True)
 
             if timeout > 0:
@@ -1185,7 +1185,7 @@ class LogInterface(ScrollArea):
 
         self.clearLog()
         self.appendLog("========== 开始任务: {} ==========".format(self._external_task_name) + "\n")
-        self.statusLabel.setText(tr('正在运行: {}').format(self._external_task_name))
+        self.statusLabel.setText(tr('正在运行: {name}').format(name=self._external_task_name))
         self.stopButton.setEnabled(True)
 
     def finishExternalTask(self, exit_code=0, user_stopped=None):
@@ -1224,7 +1224,7 @@ class LogInterface(ScrollArea):
         self.appendLog("========== 开始任务: {} ==========".format(task_display_name) + "\n")
 
         # 更新状态
-        self.statusLabel.setText(tr('正在运行: {}').format(task_display_name))
+        self.statusLabel.setText(tr('正在运行: {name}').format(name=task_display_name))
         # self.statusLabel.setStyleSheet("color: #0078d4;")
         self.stopButton.setEnabled(True)
 

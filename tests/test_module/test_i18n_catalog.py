@@ -7,6 +7,7 @@
 from tools.i18n import (
     LOCALES,
     collect_literals_from_source,
+    has_positional_placeholder,
     load_catalogs,
     placeholders,
     run_checks,
@@ -16,6 +17,13 @@ from tools.i18n import (
 class TestPlaceholders:
     def test_named_and_positional(self):
         assert placeholders("剩余 {count} 天，共 {} 次") == {"count": 1, "": 1}
+
+    def test_positional_detection(self):
+        assert has_positional_placeholder("已获取 {} 个")
+        assert has_positional_placeholder("第 {0} 个")
+        assert not has_positional_placeholder("已获取 {count} 个")
+        assert not has_positional_placeholder("说明：{ } 中的内容")  # 字面大括号不算
+        assert not has_positional_placeholder('如：{"a": 1}')
 
     def test_escaped_braces_ignored(self):
         assert placeholders("{{literal}} 和 {name}") == {"name": 1}

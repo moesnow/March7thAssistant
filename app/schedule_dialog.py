@@ -463,7 +463,7 @@ class AddEditScheduleDialog(MessageBox):
                     self.args_label.setText(tr('启动参数:'))
                     # 显示可执行文件示例作为 placeholder
                     exe = found.get('executable', '')
-                    self.program_path_edit.setPlaceholderText(tr("{} 的完整路径").format(exe))
+                    self.program_path_edit.setPlaceholderText(tr("{exe} 的完整路径").format(exe=exe))
                 except Exception:
                     pass
             else:
@@ -986,7 +986,7 @@ class ScheduleManagerDialog(MessageBox):
             return
         t = self.scheduled_tasks[row]
         # 确认
-        m = MessageBox(tr('确认'), tr('确认立即运行任务 "{}" 吗？').format(t.get("name", "")), self)
+        m = MessageBox(tr('确认'), tr('确认立即运行任务 "{name}" 吗？').format(name=t.get("name", "")), self)
         m.yesButton.setText(tr('确认'))
         m.cancelButton.setText(tr('取消'))
         if not m.exec():
@@ -1024,7 +1024,7 @@ class ScheduleManagerDialog(MessageBox):
                 info.yesButton.setText(tr('确认'))
                 info.exec()
         except Exception as e:
-            m = MessageBox(tr('错误'), tr('启动任务失败: {}').format(e), self)
+            m = MessageBox(tr('错误'), tr('启动任务失败: {error}').format(error=e), self)
             m.cancelButton.hide()
             m.yesButton.setText(tr('确认'))
             m.exec()

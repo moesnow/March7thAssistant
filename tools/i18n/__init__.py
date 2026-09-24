@@ -39,6 +39,14 @@ PLURAL_SUFFIX = "|plural"
 # 占位符：{name} / {} / { } 等，{{ }} 转义不计
 PLACEHOLDER_RE = re.compile(r"(?<!\{)\{([^{}]*)\}(?!\})")
 
+# 位置占位符：{} / {0} / {1} ...
+POSITIONAL_FIELD_RE = re.compile(r"(?<!\{)\{(\d*)\}(?!\})")
+
+
+def has_positional_placeholder(text: str) -> bool:
+    """是否含位置占位符（{} / {0} 等）；带 .format() 的文案必须使用命名占位符。"""
+    return bool(POSITIONAL_FIELD_RE.search(text))
+
 
 def placeholders(text: str) -> Counter:
     """提取 str.format 风格占位符的字段名集合（含出现次数）。"""
@@ -281,6 +289,11 @@ def run_checks() -> tuple[list[str], list[str]]:
             if placeholders(key) != placeholders(value):
                 level = errors if key in formatted else warnings
                 level.append(f"[{lang}] 占位符与原文不一致（key 长度 {len(key)}）")
+
+    # 3b) 带 .format() 的字面量禁止位置占位符（译文无法调整语序）
+    for key in sorted(formatted):
+        if has_positional_placeholder(key):
+            errors.append(f"位置占位符请改为命名占位符（key 长度 {len(key)}）")
 
     # 4) 空值（待翻译）—— 仅警告
     for lang in LOCALES:

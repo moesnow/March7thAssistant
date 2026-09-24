@@ -296,7 +296,7 @@ class StationPrioritySettingCard(SettingCard):
         if cfg.get_value("divergent_station_priority_enable"):
             disabled = cfg.get_value("divergent_station_disabled")
             if disabled:
-                self.contentLabel.setText(tr("已启用自定义优先级，{} 个站点已禁用").format(len(disabled)))
+                self.contentLabel.setText(tr("已启用自定义优先级，{count} 个站点已禁用").format(count=len(disabled)))
             else:
                 self.contentLabel.setText(tr("已启用自定义优先级"))
         else:
