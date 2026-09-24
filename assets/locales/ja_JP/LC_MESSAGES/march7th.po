@@ -2463,11 +2463,11 @@ msgstr ""
 
 #: assets/config/character_names.json
 msgid "丹恒·饮月"
-msgstr "Dan Heng • Imbibitor Lunae"
+msgstr "丹恒・飲月"
 
 #: assets/config/character_names.json
 msgid "丹恒·腾荒"
-msgstr "Dan Heng • Permansor Terrae"
+msgstr "丹恒・騰荒"
 
 #: assets/config/character_names.json
 msgid "翡翠"
@@ -2899,7 +2899,7 @@ msgstr ""
 
 #: assets/config/instance_names.json
 msgid "苏乐达™热砂海选会场"
-msgstr "SoulGlad™ Scorchsand Audition Venue"
+msgstr "ソウルグレイ™熱砂オーディション会場"
 
 #: assets/config/instance_names.json
 msgid "匹诺康尼大剧院"
@@ -4177,11 +4177,11 @@ msgstr ""
 
 #: app/card/card_edit_dialog.py:67
 msgid "差分宇宙运行一次 ⭐"
-msgstr "Divergent Universe Run Once ⭐"
+msgstr "差分宇宙を 1 回実行 ⭐"
 
 #: app/card/card_edit_dialog.py:68
 msgid "差分宇宙循环运行 ⭐"
-msgstr "Divergent Universe Loop Run ⭐"
+msgstr "差分宇宙ループ実行 ⭐"
 
 #: app/card/card_edit_dialog.py:70
 msgid "模拟宇宙快速启动（停止维护）"

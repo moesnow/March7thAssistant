@@ -417,19 +417,22 @@ def run_checks() -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
     _, formatted, _ = collect_code_literals()
+    # tn() 的复数文案自带 str.format，占位符必须与译文严格一致，同样纳入严格集合
+    plurals, _, _ = collect_code_extras()
+    strict = formatted | plurals
 
-    # 1) 带 .format() 的字面量禁止位置占位符（译文无法调整语序）
-    for key in sorted(formatted):
+    # 1) 需要 .format() 的文案禁止位置占位符（译文无法调整语序）
+    for key in sorted(strict):
         if has_positional_placeholder(key):
             errors.append(f"位置占位符请改为命名占位符（key 长度 {len(key)}）")
 
-    # 2) 多语言文档：表格行数一致、语言后缀命名合法 —— 仅警告
+    # 2) 多语言文档：表格行数一致、语言后缀命名合法、译文缺失 —— 仅警告
     warnings.extend(check_docs())
 
     # 3) gettext 目录（.pot/.po/.mo）
     try:
         from .po import check_po
-        po_errors, po_warnings = check_po(formatted)
+        po_errors, po_warnings = check_po(strict)
         errors.extend(po_errors)
         warnings.extend(po_warnings)
     except Exception as e:
@@ -443,6 +446,7 @@ def check_docs() -> list[str]:
 
     - TasksTable 各语言版本表格行数须与基准版一致（防止改漏一份）
     - {Base}_{后缀}.md 的后缀须在 module.localization.languages 注册表声明
+    - 帮助页/更新日志实际加载的文档，声明了 docs_suffix 的语言必须有对应译文
     """
     warnings: list[str] = []
     from module.localization.languages import LANGS
@@ -469,4 +473,15 @@ def check_docs() -> list[str]:
                 if suf not in suffixes:
                     warnings.append(f"文档 {f.name} 的语言后缀 {suf!r} 未在语言注册表声明")
                 break
+
+    # 界面实际加载的文档（app/help_interface.py 与 changelog_interface.py 经 localized_doc_path 读取）
+    for b in ("Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog"):
+        if not (docs_dir / f"{b}.md").is_file():
+            continue  # 缺基准文档由其它校验负责
+        for code, meta in LANGS.items():
+            suf = meta["docs_suffix"]
+            if not suf:
+                continue
+            if not (docs_dir / f"{b}_{suf}.md").is_file():
+                warnings.append(f"文档 {b}_{suf}.md 缺失（{code} 用户将看到中文基准文档）")
     return warnings

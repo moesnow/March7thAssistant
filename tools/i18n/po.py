@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import os
+import re
 import tempfile
 
 import polib
@@ -27,6 +28,9 @@ from . import (
 )
 
 PO_DOMAIN = "march7th"
+
+# 原文含汉字（用于识别"目标语言直接沿用英文"的占位译文）
+CJK_RE = re.compile(r"[\u3400-\u9fff]")
 
 
 def po_path(lang: str):
@@ -253,7 +257,13 @@ def _is_untranslated(entry) -> bool:
     return not entry.msgstr
 
 
-def check_po(formatted: set[str]) -> tuple[list[str], list[str]]:
+def check_po(strict: set[str]) -> tuple[list[str], list[str]]:
+    """校验翻译目录。
+
+    :param strict: 需要严格校验占位符的文案集合（tr().format() 链 + tn() 复数文案）。
+                   这些文案的译文必须逐字段保留占位符，不一致按 error 处理；
+                   其余文案的占位符差异只报警告（可能只是说明性文本里的花括号）。
+    """
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -273,6 +283,15 @@ def check_po(formatted: set[str]) -> tuple[list[str], list[str]]:
     ctx_missing_pot = ctx_keys - pot_keys
     if ctx_missing_pot:
         errors.append(f"{len(ctx_missing_pot)} 条 trc 语境未登记进 .pot（运行 python -m tools.i18n extract）")
+
+    # en_US 译文：用于识别"目标语言直接沿用了英文"的占位译文
+    en_values: dict[str, str] = {}
+    try:
+        for e in polib.pofile(str(po_path("en_US"))):
+            if not e.msgid_plural:
+                en_values[entry_key(e)] = e.msgstr
+    except Exception:
+        pass
 
     for lang in LOCALES:
         try:
@@ -295,23 +314,29 @@ def check_po(formatted: set[str]) -> tuple[list[str], list[str]]:
         if ctx_missing:
             errors.append(f"[{lang}] po 缺少 {len(ctx_missing)} 条 trc 语境条目（运行 python -m tools.i18n extract）")
 
-        # 2) 占位符一致（带 .format() 的条目严格级）
+        # 2) 占位符一致（strict 级为 error，其余仅警告）
         for e in po:
             values = [e.msgstr] if e.msgstr else list(e.msgstr_plural.values())
+            strict_entry = e.msgid in strict or entries.get(e.msgid, {}).get("plural", False)
             for value in values:
                 if not value:
                     continue
                 if placeholders(e.msgid) != placeholders(value):
-                    level = errors if e.msgid in formatted else warnings
+                    level = errors if strict_entry else warnings
                     level.append(f"[{lang}] po 占位符与原文不一致（msgid 长度 {len(e.msgid)}）")
 
-        # 3) 复数条目 msgstr_plural 个数符合 Plural-Forms
+        # 3) 复数条目：形式个数符合 Plural-Forms，且多形式语言不得留空
         n = nplurals_of(lang)
         for e in po:
-            if e.msgid_plural and len(e.msgstr_plural) != n:
+            if not e.msgid_plural:
+                continue
+            if len(e.msgstr_plural) != n:
                 errors.append(
                     f"[{lang}] 复数条目 msgstr_plural 个数应为 {n}（msgid 长度 {len(e.msgid)}）"
                 )
+            elif n >= 2 and not all(e.msgstr_plural.values()):
+                # polib 编译时会整条丢弃该条目，运行期直接回退到中文原文，必须挡住
+                errors.append(f"[{lang}] 复数条目缺少复数形式（msgid 长度 {len(e.msgid)}）")
 
         # 4) .mo 与 .po 同步
         if not _mo_in_sync(po, lang):
@@ -319,10 +344,22 @@ def check_po(formatted: set[str]) -> tuple[list[str], list[str]]:
 
         # 5) 位置占位符禁令同样适用于 po 条目
         for e in po:
-            if e.msgid in formatted and has_positional_placeholder(e.msgid):
+            if (e.msgid in strict or entries.get(e.msgid, {}).get("plural", False)) \
+                    and has_positional_placeholder(e.msgid):
                 errors.append(f"[{lang}] po 含位置占位符条目（msgid 长度 {len(e.msgid)}）")
 
-        # 6) 待翻译统计 —— 仅警告
+        # 6) 译文与 en_US 逐字相同且原文含中文 —— 疑似英文占位（仅警告）
+        if lang != "en_US":
+            for e in po:
+                if e.msgid_plural or not e.msgstr or e.msgstr == e.msgid:
+                    continue
+                if not CJK_RE.search(e.msgid):
+                    continue
+                en = en_values.get(entry_key(e), "")
+                if en and e.msgstr == en:
+                    warnings.append(f"[{lang}] 译文与 en_US 完全相同（疑似英文占位，msgid 长度 {len(e.msgid)}）")
+
+        # 7) 待翻译统计 —— 仅警告
         untranslated = sum(1 for e in po if _is_untranslated(e))
         if untranslated:
             warnings.append(f"[{lang}] 有 {untranslated} 条待翻译")

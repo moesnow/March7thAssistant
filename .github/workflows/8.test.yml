@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - "**/*.py"
+      - "assets/locales/**"
+      - "assets/docs/**"
       - "requirements.txt"
       - "pyproject.toml"
       - "uv.lock"
@@ -16,6 +18,8 @@ on:
       - main
     paths:
       - "**/*.py"
+      - "assets/locales/**"
+      - "assets/docs/**"
       - "requirements.txt"
       - "pyproject.toml"
       - "uv.lock"
@@ -66,6 +70,9 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --group dev
+
+      - name: Check translation catalogs
+        run: uv run python -m tools.i18n check
 
       - name: Run tests
         run: uv run pytest tests/ -v --tb=short

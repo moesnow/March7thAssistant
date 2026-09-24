@@ -257,6 +257,126 @@ class TestPrune:
         assert not (table_literals | data_literals) - keys
 
 
+class TestStrictRules:
+    """B4 新增/加固的校验规则。"""
+
+    @staticmethod
+    def _locale_fixture(tmp_path, monkeypatch, langs, entries_by_lang, source):
+        """搭一个临时语言目录：entries_by_lang = {lang: [POEntry, ...]}。"""
+        import polib
+        from tools.i18n import po as po_mod
+
+        locales = tmp_path / "locales"
+        for lang in langs:
+            (locales / lang / "LC_MESSAGES").mkdir(parents=True, exist_ok=True)
+        monkeypatch.setattr(po_mod, "LOCALE_DIR", locales)
+        monkeypatch.setattr(po_mod, "LOCALES", list(langs))
+        monkeypatch.setattr(po_mod, "pot_path", lambda: locales / "march7th.pot")
+        monkeypatch.setattr(po_mod, "po_path", lambda lang: locales / lang / "LC_MESSAGES" / "march7th.po")
+        monkeypatch.setattr(po_mod, "source_entries", lambda: source)
+
+        pot = polib.POFile()
+        pot.metadata = po_mod.base_metadata("", is_pot=True)
+        for msgid, meta in source.items():
+            pot.append(po_mod._make_entry(msgid, meta, None))
+        pot.save(str(po_mod.pot_path()))
+
+        for lang, entries in entries_by_lang.items():
+            po = polib.POFile()
+            po.metadata = po_mod.base_metadata(lang)
+            for e in entries:
+                po.append(e)
+            po.save(str(po_mod.po_path(lang)))
+        return po_mod
+
+    def test_plural_empty_form_is_error(self, tmp_path, monkeypatch):
+        """en_US 两形式语言缺一个形式 → error（polib 编译时会整条丢弃）。"""
+        import polib
+        entry = polib.POEntry(msgid="A {count}", msgstr="")
+        entry.msgid_plural = "A {count}|plural"
+        entry.msgstr_plural = {0: "one {count}", 1: ""}
+        po_mod = self._locale_fixture(
+            tmp_path, monkeypatch, ["en_US"], {"en_US": [entry]},
+            {"A {count}": {"ref": "a.py:1", "plural": True, "contexts": ()}},
+        )
+        errors, _ = po_mod.check_po({"A {count}"})
+        assert any("复数条目缺少复数形式" in e for e in errors), errors
+
+    def test_plural_placeholder_mismatch_is_error(self, tmp_path, monkeypatch):
+        """tn() 文案占位符与译文不一致 → error（此前只有警告）。"""
+        import polib
+        entry = polib.POEntry(msgid="B {count}", msgstr="")
+        entry.msgid_plural = "B {count}|plural"
+        entry.msgstr_plural = {0: "one", 1: "many"}  # 丢了 {count}
+        po_mod = self._locale_fixture(
+            tmp_path, monkeypatch, ["en_US"], {"en_US": [entry]},
+            {"B {count}": {"ref": "a.py:1", "plural": True, "contexts": ()}},
+        )
+        errors, _ = po_mod.check_po({"B {count}"})
+        assert any("占位符与原文不一致" in e for e in errors), errors
+
+    def test_english_placeholder_is_warning(self, tmp_path, monkeypatch):
+        """目标语言译文与 en_US 逐字相同且原文含中文 → 警告。"""
+        import polib
+        en = polib.POEntry(msgid="设置", msgstr="Settings")
+        ja_same = polib.POEntry(msgid="设置", msgstr="Settings")
+        po_mod = self._locale_fixture(
+            tmp_path, monkeypatch, ["ja_JP", "en_US"],
+            {"ja_JP": [ja_same, polib.POEntry(msgid="保存", msgstr="セーブ")], "en_US": [
+                en, polib.POEntry(msgid="保存", msgstr="Save"),
+            ]},
+            {
+                "设置": {"ref": "a.py:1", "plural": False, "contexts": ()},
+                "保存": {"ref": "a.py:2", "plural": False, "contexts": ()},
+            },
+        )
+        _errors, warnings = po_mod.check_po(set())
+        assert any("与 en_US 完全相同" in w for w in warnings), warnings
+
+    def test_missing_localized_doc_is_warning(self, tmp_path, monkeypatch):
+        """声明了 docs_suffix 的语言缺少对应文档 → 警告。"""
+        from tools import i18n
+        docs = tmp_path / "assets" / "docs"
+        docs.mkdir(parents=True)
+        (docs / "Tutorial.md").write_text("# 使用教程\n", encoding="utf-8")
+        monkeypatch.setattr(i18n, "ROOT", tmp_path)
+
+        warnings = i18n.check_docs()
+
+        # ja_JP / ko_KR / en_US 在注册表里都声明了 docs_suffix
+        assert any("Tutorial_ja_JP.md 缺失" in w for w in warnings), warnings
+        assert any("Tutorial_en_US.md 缺失" in w for w in warnings), warnings
+
+
+class TestPluralSuffixGuard:
+    """守护 '|plural' 元数据后缀绝不泄漏到界面。"""
+
+    def test_tn_never_leaks_suffix(self):
+        from module.localization import PLURAL_SUFFIX, get_current_language, load_language, tn
+        old = get_current_language()
+        try:
+            for lang in ("zh_CN", "zh_TW", "ja_JP", "ko_KR", "en_US"):
+                load_language(lang)
+                out = tn("__i18n_test_missing_key__", 5)
+                assert PLURAL_SUFFIX not in out, f"{lang}: {out!r}"
+                assert "plural" not in out
+        finally:
+            load_language(old)
+
+    def test_no_catalog_value_contains_plural_suffix(self):
+        """复数后缀只允许出现在 msgid_plural，不得出现在任何译文里。"""
+        import polib
+        from module.localization import PLURAL_SUFFIX
+        for lang in LOCALES:
+            po = polib.pofile(str(po_path(lang)))
+            for e in po:
+                if e.msgid_plural:
+                    for v in e.msgstr_plural.values():
+                        assert PLURAL_SUFFIX not in v, f"[{lang}] {e.msgid!r}"
+                else:
+                    assert PLURAL_SUFFIX not in e.msgstr, f"[{lang}] {e.msgid!r}"
+
+
 class TestCatalogs:
     def test_all_locales_present(self):
         assert pot_path().is_file()
