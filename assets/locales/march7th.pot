@@ -521,8 +521,10 @@ msgid "获取 CDK"
 msgstr ""
 
 #: app/card/pushsettingcard1.py:184
-msgid "剩余 {days} 天"
-msgstr ""
+msgid "剩余 {count} 天"
+msgid_plural "剩余 {count} 天|plural"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/card/pushsettingcard1.py:186
 msgid "今天到期"
@@ -570,7 +572,9 @@ msgstr ""
 
 #: app/card/pushsettingcard1.py:328
 msgid "已获取 {count} 个兑换码"
-msgstr ""
+msgid_plural "已获取 {count} 个兑换码|plural"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/card/pushsettingcard1.py:339
 msgid "暂无已使用兑换码"
@@ -668,7 +672,9 @@ msgstr ""
 
 #: app/card/pushsettingcard1.py:787
 msgid "已配置 {count} 项计划"
-msgstr ""
+msgid_plural "已配置 {count} 项计划|plural"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/card/pushsettingcard1.py:813
 msgid "配置"
@@ -676,7 +682,9 @@ msgstr ""
 
 #: app/card/pushsettingcard1.py:841
 msgid "已配置 {count} 项规则"
-msgstr ""
+msgid_plural "已配置 {count} 项规则|plural"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/card/pushsettingcard1.py:843
 msgid "为特定的副本配置队伍"
@@ -714,7 +722,9 @@ msgstr ""
 
 #: app/card/stationprioritysettingcard.py:299
 msgid "已启用自定义优先级，{count} 个站点已禁用"
-msgstr ""
+msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/card/stationprioritysettingcard.py:301
 msgid "已启用自定义优先级"
@@ -3154,11 +3164,15 @@ msgstr ""
 
 #: app/setting_interface.py:2899
 msgid "今日已完成 {count} 次"
-msgstr ""
+msgid_plural "今日已完成 {count} 次|plural"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/setting_interface.py:2900
 msgid "本周已完成 {count} 次"
-msgstr ""
+msgid_plural "本周已完成 {count} 次|plural"
+msgstr[0] ""
+msgstr[1] ""
 
 #: app/setting_interface.py:2905
 msgid "匿名使用数据收集说明"
@@ -4201,8 +4215,10 @@ msgid "无需更新"
 msgstr ""
 
 #: module/update/helper_app.py:641
-msgid "{seconds} 秒后自动退出"
-msgstr ""
+msgid "{count} 秒后自动退出"
+msgid_plural "{count} 秒后自动退出|plural"
+msgstr[0] ""
+msgstr[1] ""
 
 #: module/update/helper_app.py:653
 msgid "更新被阻塞"
@@ -4576,120 +4592,24 @@ msgstr ""
 msgid "触屏模式更新"
 msgstr ""
 
-#: assets/config/character_names.json
-msgid "穹（毁灭）"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "丹恒·腾荒"
+#: assets/config/instance_names.json
+msgid "公司 / 差分机"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "蛀星的旧靥"
+msgid "启航 / 寰宇"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "铆钉镇"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "知更鸟"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "椒丘"
+msgid "幻光之形"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "存护之蕾"
+msgid "「白日梦」酒店-梦境"
 msgstr ""
 
 #: assets/config/character_names.json
-msgid "花火"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "玲可"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "桑博"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "末日兽"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "西风丛中"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "黄泉"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "遐蝶「幽梦翩跹」"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "丹恒"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "万色返空主，归寂·「成」"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "野焰之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "役轮之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "忘归人"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "虚无之蕾"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "阮·梅"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "「辉痕圣林」神悟树庭"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "黑塔"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "银狼"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "圣颂之径"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "千冶·刃"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "「世界尽头」酒馆"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "烬日之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "孽兽之形"
+msgid "长夜月"
 msgstr ""
 
 #: assets/config/character_names.json
@@ -4697,223 +4617,7 @@ msgid "吉尔伽美什"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "锋芒之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "驭空"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "三月七（冰）"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "星（同谐）"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "鳞渊境"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "梦潜之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "偃偶之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "「纷争荒墟」悬锋城"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "冰棱之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "流萤「春日手信」"
-msgstr ""
-
-#: assets/config/instance_names.json
 msgid "克劳克影视乐园"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "加拉赫"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "卡芙卡"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "可可利亚，虚妄之母"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "隐救之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "震厄之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "砂金"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "盗贼 / 翁瓦克"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "「齐响诗班」神主日"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "以太之蕾"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "音爆之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "铁卫套 / 量子套"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "伴你入眠"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "霜晶之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "治疗套 / 快枪手"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "负面套 / 新击破套"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "幻胧"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "Archer"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "坚城不倒"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "燔灼之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "远坂凛"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "火花"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "白露"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "阮·梅「雪绽梅笺」"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "瓦尔特"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "苍穹 / 匹诺康尼"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "毁灭的开端"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "月下朱殷"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "霜风之径"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "布洛妮娅"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "心兽的战场"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "收容舱段"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "火套 / 虚数套"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "爻光"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "支援舱段"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "奔狼 / 劫火"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "鸣雷之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "残灰之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "碎星王虫"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "银狼LV.999"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "刃"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "Saber"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "穹（同谐）"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "繁星 / 龙骨"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "公司 / 差分机"
 msgstr ""
 
 #: assets/config/instance_names.json
@@ -4921,163 +4625,27 @@ msgid "坏灭的喜剧"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "不死的神实"
+msgid "城郊雪原"
 msgstr ""
 
 #: assets/config/character_names.json
-msgid "三月七（虚数）"
+msgid "真理医生"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "露莎卡 / 蕉乐园"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "娜塔莎"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "穹（欢愉）"
+msgid "边缘通路"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "「飞霄」之影"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "绯英"
+msgid "巡猎之蕾"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "追击套 / dot套"
+msgid "机械聚落"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "炎华之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "冰酿之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "迷识之径"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "貊泽"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "欢愉之蕾"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "雳涌之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "纷争不休"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "职司之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "托帕&账账"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "凛月之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "绥园"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "灵砂"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "浴火钢心"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "妖精 / 沉欢"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "巽风之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "飞霄"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "天人之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "领航员 / 名冶套"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "同谐之蕾"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "嗔怒之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "遐蝶"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "睿治之径"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "穹（存护）"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "防御套 / 雷套"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "穹（记忆）"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "白厄"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "符玄"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "角色经验"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "今宵之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "少女套 / 卜者套"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "丹恒·饮月"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "零号 / 千星"
+msgid "晨昏的回眸"
 msgstr ""
 
 #: assets/config/instance_names.json
@@ -5085,15 +4653,227 @@ msgid "匹诺康尼大剧院"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "至高，至阳，天空的化身"
+msgid "「纷争荒墟」悬锋城"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "罗刹"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "救世套 / 隐士套"
+msgid "回忆之蕾"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "姬子"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "流萤「春日手信」"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "铁卫套 / 量子套"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "铁骑套 / 勇烈套"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "女武神 / 船长套"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "「飞霄」之影"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "穹（存护）"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "丹恒·饮月"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "托帕&账账"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "以太之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "铁骸的锈冢"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "弦音之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "太空 / 仙舟"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "智识之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "天人之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "停云"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "记忆之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "燔灼之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "黄泉"
 msgstr ""
 
 #: assets/config/instance_names.json
 msgid "渡画泉隐"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "鳞渊境"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "「葬忆彼岸」时光归墟"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "弦歌之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "永恒笑剧"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "虎克"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "丹恒·腾荒"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "刻律德菈"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "烬日之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "幽府之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "那刻夏"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "遐蝶「幽梦翩跹」"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "海原电视塔"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "药使之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "司铎套 / 学者套"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "穹（记忆）"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "赛飞儿"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "绥园"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "银狼LV.999"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "震厄之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "加拉赫"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "寒潮的落幕"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "花火"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "绯英"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "镜流"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "大矿区"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "蠹役饥肠"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "妖精 / 沉欢"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "月下朱殷"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "存护之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "凛月之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "残灰之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "灵砂"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "阮·梅"
 msgstr ""
 
 #: assets/config/character_names.json
@@ -5101,15 +4881,107 @@ msgid "海瑟音"
 msgstr ""
 
 #: assets/config/character_names.json
-msgid "流萤"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "星（记忆）"
+msgid "千冶·刃"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "城郊雪原"
+msgid "三月七"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "收容舱段"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "嗔怒之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "炎华之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "卡芙卡"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "坚城不倒"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "治疗套 / 快枪手"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "浴火钢心"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "火套 / 虚数套"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "蛀星的旧靥"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "星（同谐）"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "丰饶之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "梦潜之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "零号 / 千星"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "阮·梅「雪绽梅笺」"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "防御套 / 雷套"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "星（存护）"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "今宵之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "信用点"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "机狼之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "睿治之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "冰棱之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "役轮之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "三月七（虚数）"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "黑塔"
 msgstr ""
 
 #: assets/config/character_names.json
@@ -5121,387 +4993,27 @@ msgid "景元"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "幽府之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "巡猎之蕾"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "昔涟"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "三月七「冬去煦至」"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "藿藿"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "姬子"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "机狼之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "晨昏的回眸"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "孽果盘生"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "云璃"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "雪衣"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "彦卿"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "观火之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "温柔话语"
-msgstr ""
-
-#: assets/config/instance_names.json
 msgid "冰套 / 风套"
 msgstr ""
 
-#: assets/config/character_names.json
-msgid "艾丝妲"
+#: assets/config/instance_names.json
+msgid "「世界尽头」酒馆"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "天剑如雨"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "百年冻土"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "铁骸的锈冢"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "桂乃芬"
+msgid "野焰之径"
 msgstr ""
 
 #: assets/config/character_names.json
 msgid "杰帕德"
 msgstr ""
 
-#: assets/config/character_names.json
-msgid "万敌"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "那刻夏"
-msgstr ""
-
 #: assets/config/instance_names.json
-msgid "边缘通路"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "丹鼎司"
+msgid "追击套 / dot套"
 msgstr ""
 
 #: assets/config/character_names.json
-msgid "翡翠"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "「葬忆彼岸」时光归墟"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "寒潮的落幕"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "拾骨地 / 巨树"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "弦音之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "黑天鹅"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "克拉拉"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "暂无"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "迅拳之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "吞噬之形"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "佩拉"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "卢卡"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "幽冥之径"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "星期日"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "真理医生"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "物理套 / 击破套"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "太空 / 仙舟"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "三月七"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "虫虫来袭"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "风堇"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "空海之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "永恒 / 天国"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "丰饶之蕾"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "不死途"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "鎏金追忆"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "赛飞儿"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "武器经验"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "塞壬之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "女武神 / 船长套"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "智识之蕾"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "英豪套 / 诗人套"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "尘梦的赞礼"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "阿兰"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "罗刹"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "大黑塔"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "米沙"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "银枝"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "茨冈尼亚 / 高天神国"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "溟簇之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "反造物主，流溢之恨"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "寒鸦"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "虎克"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "大矿区"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "铁骑套 / 勇烈套"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "刻律德菈"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "星（欢愉）"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "「白日梦」酒店-梦境"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "司铎套 / 学者套"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "勇骑之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "漂泊之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "毁灭之蕾"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "长夜月"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "素裳"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "焦炙之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "藏珍之蕾"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "海原电视塔"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "镜流"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "药使之径"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "启航 / 寰宇"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "蠹役饥肠"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "记忆之蕾"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "苏乐达™热砂海选会场"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "幻光之形"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "生命套 / 速度套"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "乱破"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "弦歌之径"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "希露瓦"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "星（存护）"
-msgstr ""
-
-#: assets/config/character_names.json
-msgid "青雀"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "回忆之蕾"
-msgstr ""
-
-#: assets/config/instance_names.json
-msgid "永恒笑剧"
+msgid "瓦尔特"
 msgstr ""
 
 #: assets/config/character_names.json
@@ -5509,7 +5021,283 @@ msgid "大丽花"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "信用点"
+msgid "支援舱段"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "刃"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "桑博"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "孽果盘生"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "至高，至阳，天空的化身"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "阿兰"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "驭空"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "砂金"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "彦卿"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "音爆之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "飞霄"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "可可利亚，虚妄之母"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "永恒 / 天国"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "布洛妮娅"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "穹（同谐）"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "虫虫来袭"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "艾丝妲"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "穹（毁灭）"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "希露瓦"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "漂泊之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "不死的神实"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "「齐响诗班」神主日"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "「辉痕圣林」神悟树庭"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "暂无"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "圣颂之径"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "大黑塔"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "温柔话语"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "拾骨地 / 巨树"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "物理套 / 击破套"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "娜塔莎"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "爻光"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "迅拳之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "欢愉之蕾"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "玲可"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "塞壬之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "昔涟"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "迷识之径"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "银枝"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "末日兽"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "西风丛中"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "心兽的战场"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "万敌"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "星（欢愉）"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "星期日"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "幽冥之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "霜风之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "勇骑之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "苍穹 / 匹诺康尼"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "反造物主，流溢之恨"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "三月七「冬去煦至」"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "寒鸦"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "藿藿"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "遐蝶"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "孽兽之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "天剑如雨"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "丹鼎司"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "素裳"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "繁星 / 龙骨"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "吞噬之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "克拉拉"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "符玄"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "白厄"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "苏乐达™热砂海选会场"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "雳涌之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "职司之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "白露"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "尘梦的赞礼"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "霜晶之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "奔狼 / 劫火"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "米沙"
 msgstr ""
 
 #: assets/config/instance_names.json
@@ -5517,11 +5305,111 @@ msgid "贝洛伯格 / 萨尔索图"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "魔占之径"
+msgid "盗贼 / 翁瓦克"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "偃偶之形"
 msgstr ""
 
 #: assets/config/character_names.json
-msgid "停云"
+msgid "风堇"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "观火之径"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "青雀"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "星（记忆）"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "铆钉镇"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "空海之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "毁灭的开端"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "桂乃芬"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "三月七（冰）"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "毁灭之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "领航员 / 名冶套"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "武器经验"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "卢卡"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "纷争不休"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "穹（欢愉）"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "茨冈尼亚 / 高天神国"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "不死途"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "远坂凛"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "鸣雷之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "生命套 / 速度套"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "佩拉"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "溟簇之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "丹恒"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "知更鸟"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "伴你入眠"
 msgstr ""
 
 #: assets/config/character_names.json
@@ -5529,9 +5417,137 @@ msgid "缇宝"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "机械聚落"
+msgid "角色经验"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "隐救之径"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "Archer"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "救世套 / 隐士套"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "露莎卡 / 蕉乐园"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "鎏金追忆"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "云璃"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "虚无之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "碎星王虫"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "焦炙之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "万色返空主，归寂·「成」"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "乱破"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "雪衣"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "英豪套 / 诗人套"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "Saber"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "貊泽"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "同谐之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "负面套 / 新击破套"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "流萤"
 msgstr ""
 
 #: assets/config/character_names.json
 msgid "星（毁灭）"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "冰酿之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "银狼"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "翡翠"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "锋芒之形"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "藏珍之蕾"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "魔占之径"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "巽风之形"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "忘归人"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "火花"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "少女套 / 卜者套"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "椒丘"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "幻胧"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "百年冻土"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "黑天鹅"
 msgstr ""

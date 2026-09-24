@@ -1,97 +1,165 @@
-import hashlib
-from pathlib import Path
+# coding:utf-8
+"""module.localization（gettext 后端）测试：合成目录，不读取真实译文内容。"""
+import gettext
+
+import polib
+import pytest
+
+import module.localization as loc
 from module.localization import (
-    tr,
+    PLURAL_SUFFIX,
     get_current_language,
-    get_available_languages,
+    tr,
+    trc,
+    tn,
 )
 
-LOCALE_DIR = Path(__file__).resolve().parents[2] / "assets" / "locales"
+
+def _build(tmp_path, lang, entries=None, plurals=None, contexts=None, nplurals=2):
+    """构造并加载一个合成 gettext 目录（键值均为 ASCII 占位串）。"""
+    po = polib.POFile()
+    po.metadata = {
+        "Language": lang,
+        "MIME-Version": "1.0",
+        "Content-Type": "text/plain; charset=UTF-8",
+        "Plural-Forms": f"nplurals={nplurals}; plural={'(n != 1)' if nplurals == 2 else '0'};",
+    }
+    for k, v in (entries or {}).items():
+        po.append(polib.POEntry(msgid=k, msgstr=v))
+    for k, forms in (plurals or {}).items():
+        e = polib.POEntry(msgid=k, msgid_plural=k + PLURAL_SUFFIX, msgstr="")
+        e.msgstr_plural = dict(enumerate(forms))
+        po.append(e)
+    for (ctx, k), v in (contexts or {}).items():
+        po.append(polib.POEntry(msgid=k, msgstr=v, msgctxt=ctx))
+    d = tmp_path / lang / "LC_MESSAGES"
+    d.mkdir(parents=True, exist_ok=True)
+    po.save(str(d / "march7th.po"))
+    po.save_as_mofile(str(d / "march7th.mo"))
+    return gettext.translation("march7th", str(tmp_path), languages=[lang])
 
 
-def _catalog_fingerprint() -> dict:
-    """翻译目录内容指纹，用于断言运行期绝不改写翻译文件。"""
-    return {p.name: hashlib.md5(p.read_bytes()).hexdigest() for p in sorted(LOCALE_DIR.glob("*.json"))}
+@pytest.fixture()
+def env(monkeypatch):
+    """把模块状态指向合成目录/空目录。"""
+
+    def set_lang(code, translation=None, fallback=None):
+        monkeypatch.setattr(loc, "_current_lang", code)
+        monkeypatch.setattr(loc, "_translation", translation or gettext.NullTranslations())
+        monkeypatch.setattr(loc, "_fallback_translation", fallback or gettext.NullTranslations())
+        monkeypatch.setattr(loc, "_missing_logged", set())
+
+    return set_lang
 
 
 class TestTr:
-    def test_empty_string(self):
+    def test_empty_string(self, env):
+        env("en_US")
         assert tr("") == ""
 
-    def test_none(self):
+    def test_none(self, env):
+        env("en_US")
         assert tr(None) is None
 
-    def test_translation_found(self):
-        import module.localization as loc
-        original = loc._translations
-        try:
-            loc._translations = {"你好": "Hello"}
-            loc._current_lang = "en_US"
-            assert tr("你好") == "Hello"
-        finally:
-            loc._translations = original
+    def test_translation_found(self, tmp_path, env):
+        trans = _build(tmp_path, "en_US", entries={"s1": "t1"})
+        env("en_US", translation=trans)
+        assert tr("s1") == "t1"
 
-    def test_translation_not_found_zh_cn_returns_source(self):
-        import module.localization as loc
-        originals = (loc._translations, loc._current_lang, loc._fallback_translations)
-        before = _catalog_fingerprint()
-        try:
-            loc._translations = {}
-            loc._current_lang = "zh_CN"
-            loc._fallback_translations = {}
-            result = tr("不存在的翻译")
-            assert result == "不存在的翻译"
-            # 运行期不得写翻译目录（此前 tr() 会把缺失 key 写回 zh_CN.json）
-            assert _catalog_fingerprint() == before
-        finally:
-            loc._translations, loc._current_lang, loc._fallback_translations = originals
+    def test_identity_translation_is_hit(self, tmp_path, env):
+        # msgstr == msgid 视为已翻译命中（同文翻译）
+        trans = _build(tmp_path, "zh_CN", entries={"s1": "s1"}, nplurals=1)
+        env("zh_CN", translation=trans)
+        assert tr("s1") == "s1"
 
-    def test_translation_not_found_en_us_returns_source(self):
-        import module.localization as loc
-        originals = (loc._translations, loc._current_lang, loc._fallback_translations)
-        try:
-            loc._translations = {}
-            loc._current_lang = "en_US"
-            loc._fallback_translations = {}
-            result = tr("不存在的翻译")
-            # 缺失时回退中文原文，不再向用户暴露 [Missing:] 标记
-            assert result == "不存在的翻译"
-        finally:
-            loc._translations, loc._current_lang, loc._fallback_translations = originals
+    def test_missing_returns_source_no_marker(self, tmp_path, env):
+        trans = _build(tmp_path, "en_US", entries={"s1": "t1"})
+        env("en_US", translation=trans)
+        result = tr("missing-key")
+        assert result == "missing-key"
+        assert "[" not in result
 
+    def test_zh_tw_s2t_fallback(self, env, monkeypatch):
+        env("zh_TW")
+        monkeypatch.setattr(loc, "_s2t", lambda t: f"tw:{t}")
+        assert tr("abc") == "tw:abc"
 
-class TestGetCurrentLanguage:
-    def test_returns_string(self):
-        result = get_current_language()
-        assert isinstance(result, str)
+    def test_en_us_fallback_catalog(self, tmp_path, env):
+        trans = _build(tmp_path, "ja_JP", entries={"s1": "ja"})
+        fallback = _build(tmp_path, "en_US", entries={"s2": "en2"})
+        env("ja_JP", translation=trans, fallback=fallback)
+        assert tr("s2") == "en2"
 
-    def test_default_language(self):
-        import module.localization as loc
-        original = loc._current_lang
-        try:
-            loc._current_lang = "zh_CN"
-            assert get_current_language() == "zh_CN"
-        finally:
-            loc._current_lang = original
+    def test_no_file_writes_on_missing(self, env, monkeypatch):
+        env("zh_CN")
+
+        def boom(*a, **k):
+            raise AssertionError("缺失翻译不应写文件")
+
+        monkeypatch.setattr("builtins.open", boom)
+        assert tr("missing-key-2") == "missing-key-2"
 
 
-class TestGetAvailableLanguages:
-    def test_returns_dict(self):
-        result = get_available_languages()
-        assert isinstance(result, dict)
+class TestTrc:
+    def test_context_hit(self, tmp_path, env):
+        trans = _build(tmp_path, "en_US", entries={"run": "RunBtn"}, contexts={("state", "run"): "Running"})
+        env("en_US", translation=trans)
+        assert trc("state", "run") == "Running"
+        assert trc("button", "run") == "RunBtn"  # 无上下文条目回退 tr
 
-    def test_contains_all_languages(self):
-        result = get_available_languages()
-        assert "zh_CN" in result.values()
-        assert "zh_TW" in result.values()
-        assert "ja_JP" in result.values()
-        assert "ko_KR" in result.values()
-        assert "en_US" in result.values()
+    def test_context_miss_falls_back_to_source(self, env):
+        env("en_US")
+        assert trc("ctx", "text") == "text"
 
-    def test_keys_are_display_names(self):
-        result = get_available_languages()
-        assert "简体中文" in result
-        assert "English" in result
+
+class TestTn:
+    def test_two_forms(self, tmp_path, env):
+        trans = _build(tmp_path, "en_US", plurals={"k1": ("one", "many")})
+        env("en_US", translation=trans)
+        assert tn("k1", 1) == "one"
+        assert tn("k1", 5) == "many"
+
+    def test_single_form_language(self, tmp_path, env):
+        trans = _build(tmp_path, "zh_CN", plurals={"k1": ("same",)}, nplurals=1)
+        env("zh_CN", translation=trans)
+        assert tn("k1", 1) == "same"
+        assert tn("k1", 5) == "same"
+
+    def test_count_auto_format(self, tmp_path, env):
+        trans = _build(tmp_path, "en_US", plurals={"x {count} y": ("a {count} b", "c {count} d")})
+        env("en_US", translation=trans)
+        assert tn("x {count} y", 1) == "a 1 b"
+        assert tn("x {count} y", 5) == "c 5 d"
+
+    def test_missing_returns_formatted_source(self, env):
+        env("en_US")
+        assert tn("only {count} left", 2) == "only 2 left"
+
+
+class TestLoadLanguage:
+    def test_load_from_locale_dir(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "tX"})
+        monkeypatch.setattr(loc, "_locale_dir", str(tmp_path))
+        loc.load_language("xx_XX")
+        monkeypatch.setattr(loc, "_missing_logged", set())
+        assert get_current_language() == "xx_XX"
+        assert tr("s1") == "tX"
+
+    def test_missing_catalog_falls_back_to_null(self, monkeypatch, env):
+        monkeypatch.setattr(loc, "_locale_dir", "不存在的目录")
+        loc.load_language("yy_YY")
+        monkeypatch.setattr(loc, "_missing_logged", set())
+        assert get_current_language() == "yy_YY"
+        assert tr("any") == "any"
+
+    def test_auto_resolves_via_detect_lang(self, monkeypatch, env):
+        import module.config as mcfg
+        monkeypatch.setattr(mcfg.cfg, "get_value", lambda key, default=None: "auto")
+        monkeypatch.setattr(loc, "_locale_dir", "不存在的目录")
+        monkeypatch.setattr(loc, "detect_lang", lambda: "zz_ZZ")
+        loc.load_language("auto")
+        monkeypatch.setattr(loc, "_missing_logged", set())
+        assert get_current_language() == "zz_ZZ"
 
 
 class TestInstanceDisplayToRaw:
@@ -110,53 +178,4 @@ class TestInstanceDisplayToRaw:
     def test_name_with_parentheses_cleaned(self):
         from module.localization import instance_display_to_raw
         result = instance_display_to_raw("unknown", "name（extra info）")
-        # 应该清理掉括号内容
         assert "（" not in result[1]
-
-
-class TestFallbackChain:
-    """缺失条目的回退链：目标语言 → en_US（或 zh_TW 简转繁）→ 中文原文。"""
-
-    def _with_lang(self, lang, translations=None, fallback=None):
-        import module.localization as loc
-        originals = (loc._translations, loc._current_lang, loc._fallback_translations)
-        loc._translations = translations or {}
-        loc._current_lang = lang
-        loc._fallback_translations = fallback or {}
-        return originals
-
-    def _restore(self, originals):
-        import module.localization as loc
-        loc._translations, loc._current_lang, loc._fallback_translations = originals
-
-    def test_ja_jp_falls_back_to_en_us(self):
-        originals = self._with_lang("ja_JP", fallback={"不存在的翻译": "Hello"})
-        try:
-            assert tr("不存在的翻译") == "Hello"
-        finally:
-            self._restore(originals)
-
-    def test_ko_kr_without_fallback_returns_source(self):
-        originals = self._with_lang("ko_KR")
-        try:
-            assert tr("不存在的翻译") == "不存在的翻译"
-        finally:
-            self._restore(originals)
-
-    def test_zh_tw_uses_s2t_or_source(self):
-        originals = self._with_lang("zh_TW")
-        try:
-            result = tr("软件设置")
-            assert isinstance(result, str)
-            assert result  # 要么简转繁结果，要么原文，绝不为空
-        finally:
-            self._restore(originals)
-
-    def test_never_leaks_missing_marker(self):
-        for lang in ("zh_CN", "zh_TW", "ja_JP", "ko_KR", "en_US"):
-            originals = self._with_lang(lang)
-            try:
-                result = tr("不存在的翻译")
-            finally:
-                self._restore(originals)
-            assert not result.startswith("["), f"{lang} 泄漏了缺失标记: {result}"

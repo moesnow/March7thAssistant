@@ -8,10 +8,10 @@ from tools.i18n import (
     LOCALES,
     collect_literals_from_source,
     has_positional_placeholder,
-    load_catalogs,
     placeholders,
     run_checks,
 )
+from tools.i18n.po import mo_path, po_path, pot_path
 
 
 class TestPlaceholders:
@@ -62,9 +62,10 @@ class TestCollector:
 
 class TestCatalogs:
     def test_all_locales_present(self):
-        catalogs, errors = load_catalogs()
-        assert errors == []
-        assert set(catalogs) == set(LOCALES)
+        assert pot_path().is_file()
+        for lang in LOCALES:
+            assert po_path(lang).is_file(), f"{lang} 缺 .po"
+            assert mo_path(lang).is_file(), f"{lang} 缺 .mo"
 
     def test_check_no_error(self):
         """翻译目录 + 源码字面量整体校验：不得有错误（警告不限）。"""

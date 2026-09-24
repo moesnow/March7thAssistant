@@ -2,16 +2,22 @@
 """
 Localization Module
 Support for Chinese, Japanese, Korean, and English UI languages
+
+翻译后端为 gettext（assets/locales/{lang}/LC_MESSAGES/march7th.mo）；
+msgid 即中文原文。缺失回退链：目标语言 → zh_TW 简转繁 → en_US → 中文原文。
 """
+import gettext
 import json
 import os
 import re
 import sys
 
+PLURAL_SUFFIX = "|plural"  # tn() 复数形目录键后缀（tools.i18n 共用）
+
 _current_lang = "zh_CN"
-_translations = {}
+_translation = gettext.NullTranslations()
 # en_US 兜底目录（zh_TW / ja_JP / ko_KR 缺失时依次回退）
-_fallback_translations = {}
+_fallback_translation = gettext.NullTranslations()
 # 已记录过缺失告警的原文，避免循环调用刷屏
 _missing_logged = set()
 
@@ -41,39 +47,35 @@ def _s2t(text: str) -> str:
 _character_names_cache = None
 
 
-def _load_catalog(lang_code: str) -> dict:
-    """读取单个语言目录，文件缺失或解析失败时返回空目录。"""
-    locale_path = os.path.join(_locale_dir, f"{lang_code}.json")
+def _load_translation(lang_code: str):
+    """加载 gettext 目录；缺失时返回 NullTranslations（查找结果即原文）。"""
     try:
-        with open(locale_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        return gettext.translation("march7th", _locale_dir, languages=[lang_code], fallback=False)
     except Exception:
-        return {}
+        return gettext.NullTranslations()
 
 
 def load_language(lang_code: str = None):
     """
-    Load language file and initialize the fallback chain (see tr()).
-    Runtime code never writes translation catalogs; registration is done
-    offline via `python -m tools.i18n extract`.
+    Load gettext catalog and initialize the fallback chain (see tr()).
 
     :param lang_code: Language code (zh_CN, zh_TW, ja_JP, ko_KR, en_US)
     """
-    global _current_lang, _translations, _fallback_translations, _missing_logged
+    global _current_lang, _translation, _fallback_translation, _missing_logged
 
-    if lang_code is None:
+    if lang_code is None or lang_code == "auto":
         try:
             from module.config import cfg
             lang_code = cfg.get_value("ui_language", "zh_CN")
         except Exception:
             pass
 
-    if lang_code is None:
-        lang_code = "zh_CN"
+    if lang_code is None or lang_code == "auto":
+        lang_code = detect_lang()
 
     _current_lang = lang_code
-    _translations = _load_catalog(lang_code)
-    _fallback_translations = {} if lang_code in ("zh_CN", "en_US") else _load_catalog("en_US")
+    _translation = _load_translation(lang_code)
+    _fallback_translation = gettext.NullTranslations() if lang_code in ("zh_CN", "en_US") else _load_translation("en_US")
     _missing_logged = set()
 
 
@@ -89,9 +91,42 @@ def _log_missing_once(text: str) -> None:
         pass
 
 
+def _translated_or_none(trans, text: str):
+    """返回 gettext 目录中的已翻译值；未翻译/无条目/NullTranslations 返回 None。
+
+    同文翻译（msgstr == msgid）视为已翻译命中。
+    """
+    catalog = getattr(trans, "_catalog", None) or getattr(trans, "catalog", None)
+    if not isinstance(catalog, dict):
+        return None
+    value = catalog.get(text)
+    if isinstance(value, str) and value:
+        return value
+    return None
+
+
+def _plural_translated_or_none(trans, text: str):
+    """复数条目是否已翻译。
+
+    gettext 目录中复数条目的键可能为 (msgid, 形式序号)（polib 生成）或
+    (msgid, msgid_plural) 元组，逐个探测。
+    """
+    catalog = getattr(trans, "_catalog", None) or getattr(trans, "catalog", None)
+    if not isinstance(catalog, dict):
+        return None
+    for key in ((text, 0), (text, 1), (text, text + PLURAL_SUFFIX), text):
+        if key in catalog:
+            value = catalog[key]
+            if isinstance(value, (tuple, list)) and any(value):
+                return True
+            if isinstance(value, str) and value:
+                return True
+    return None
+
+
 def tr(text: str) -> str:
     """
-    Translation function.
+    Translation function (gettext backend, msgid = 中文原文).
 
     Missing entries fall back along a fixed chain and never leak a
     "missing" marker into the UI:
@@ -103,8 +138,8 @@ def tr(text: str) -> str:
     """
     if not text:
         return text
-    translated = _translations.get(text)
-    if translated and translated.strip():
+    translated = _translated_or_none(_translation, text)
+    if translated is not None:
         return translated
 
     _log_missing_once(text)
@@ -115,11 +150,52 @@ def tr(text: str) -> str:
             return converted
 
     if _current_lang != "en_US":
-        fallback = _fallback_translations.get(text)
-        if fallback and fallback.strip():
+        fallback = _translated_or_none(_fallback_translation, text)
+        if fallback is not None:
             return fallback
 
     return text
+
+
+def trc(context: str, text: str) -> str:
+    """带上下文的翻译（msgctxt 消歧），无上下文条目时回退 tr()。"""
+    if not text:
+        return text
+    catalog = getattr(_translation, "_catalog", None) or getattr(_translation, "catalog", None)
+    if isinstance(catalog, dict):
+        value = catalog.get(f"{context}\x04{text}")
+        if isinstance(value, str) and value:
+            return value
+    return tr(text)
+
+
+def tn(text: str, n: float, **kwargs) -> str:
+    """复数翻译：ngettext(msgid, msgid+PLURAL_SUFFIX, n) 选形。
+
+    选形结果若含占位符则自动 `form.format(count=n, **kwargs)`（{count} 恒可用），
+    无占位符则原样返回；缺失回退链与 tr() 一致。
+    """
+    if not text:
+        return text
+    form = None
+    if _plural_translated_or_none(_translation, text):
+        form = _translation.ngettext(text, text + PLURAL_SUFFIX, int(n))
+    else:
+        _log_missing_once(text)
+        if _current_lang == "zh_TW":
+            converted = _s2t(text)
+            if converted != text:
+                form = converted
+        if form is None and _current_lang != "en_US" and _plural_translated_or_none(_fallback_translation, text):
+            form = _fallback_translation.ngettext(text, text + PLURAL_SUFFIX, int(n))
+    if form is None:
+        form = text
+    if "{" in form:
+        try:
+            return form.format(count=n, **kwargs)
+        except Exception:
+            return form
+    return form
 
 
 def get_current_language() -> str:

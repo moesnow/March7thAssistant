@@ -9,7 +9,7 @@ from ctypes import wintypes
 from dataclasses import dataclass
 
 from module.logger import log
-from module.localization import load_language, tr
+from module.localization import load_language, tr, tn
 from module.update.downloader import format_size
 from module.update.update_engine import UpdateBlockedError, UpdateCancelledError, UpdateEngine, UpdateProgress, UpdateStage
 from module.update.version_check import check_for_update
@@ -638,7 +638,7 @@ class NativeUpdaterWindow:
                 if remaining <= 0:
                     user32.DestroyWindow(self.hwnd)
                 else:
-                    countdown_text = tr("{seconds} 秒后自动退出").format(seconds=int(remaining) + 1)
+                    countdown_text = tn("{count} 秒后自动退出", int(remaining) + 1)
                     with self._lock:
                         self._detail_text = countdown_text
             return

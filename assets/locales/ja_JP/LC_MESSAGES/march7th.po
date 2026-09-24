@@ -1562,7 +1562,8 @@ msgstr "プランなし"
 
 #: app/card/pushsettingcard1.py:787
 msgid "已配置 {count} 项计划"
-msgstr "{count} 件のプランを設定済み"
+msgid_plural "已配置 {count} 项计划|plural"
+msgstr[0] "{count} 件のプランを設定済み"
 
 #: app/warp_interface.py:26
 msgid "更新数据"
@@ -3533,7 +3534,8 @@ msgstr "取得成功"
 
 #: app/card/pushsettingcard1.py:328
 msgid "已获取 {count} 个兑换码"
-msgstr "{count} 個の交換コードを取得しました"
+msgid_plural "已获取 {count} 个兑换码|plural"
+msgstr[0] "{count} 個の交換コードを取得しました"
 
 #: assets/config/instance_names.json
 msgid "欢愉之蕾"
@@ -3717,7 +3719,8 @@ msgstr "Team: "
 
 #: app/card/pushsettingcard1.py:841
 msgid "已配置 {count} 项规则"
-msgstr "{count} rule(s) configured"
+msgid_plural "已配置 {count} 项规则|plural"
+msgstr[0] "{count} rule(s) configured"
 
 #: app/setting_interface.py:1140
 msgid "Windows 原生通知"
@@ -4639,7 +4642,8 @@ msgstr ""
 
 #: app/card/stationprioritysettingcard.py:299
 msgid "已启用自定义优先级，{count} 个站点已禁用"
-msgstr "Custom priority enabled, {count} sites disabled"
+msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
+msgstr[0] "Custom priority enabled, {count} sites disabled"
 
 #: app/setting_interface.py:2471
 msgid "下载代理"
@@ -5371,11 +5375,13 @@ msgstr "今周期の完了回数: {} / {}"
 
 #: app/setting_interface.py:2899
 msgid "今日已完成 {count} 次"
-msgstr "本日の完了回数: {count} 回"
+msgid_plural "今日已完成 {count} 次|plural"
+msgstr[0] "本日の完了回数: {count} 回"
 
 #: app/setting_interface.py:2900
 msgid "本周已完成 {count} 次"
-msgstr "今週の完了回数: {count} 回"
+msgid_plural "本周已完成 {count} 次|plural"
+msgstr[0] "今週の完了回数: {count} 回"
 
 #: app/setting_interface.py:2860
 msgid "启用前请确认用途"
@@ -5466,10 +5472,6 @@ msgstr "新しいバージョンのダウンロードとインストールを開
 #: module/update/helper_app.py:584
 msgid "无需更新"
 msgstr "更新の必要なし"
-
-#: module/update/helper_app.py:641
-msgid "{seconds} 秒后自动退出"
-msgstr "{seconds} 秒後に自動終了"
 
 #: module/update/update_window.py:156
 msgid "更新日志会显示在这里"
@@ -5677,10 +5679,6 @@ msgstr "GitHubから更新を取得しました"
 
 msgid "通过 Mirror酱 获取到更新"
 msgstr "Mirrorから更新を取得しました"
-
-#: app/card/pushsettingcard1.py:184
-msgid "剩余 {days} 天"
-msgstr "残り {days} 日"
 
 #: app/card/pushsettingcard1.py:188
 msgid "CDK 有效 (＾∀＾●)"
@@ -6042,3 +6040,13 @@ msgstr ""
 #: tasks/game/__init__.py:86
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 msgstr ""
+
+#: app/card/pushsettingcard1.py:184
+msgid "剩余 {count} 天"
+msgid_plural "剩余 {count} 天|plural"
+msgstr[0] "残り {count} 日"
+
+#: module/update/helper_app.py:641
+msgid "{count} 秒后自动退出"
+msgid_plural "{count} 秒后自动退出|plural"
+msgstr[0] "{count} 秒後に自動終了"

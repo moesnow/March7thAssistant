@@ -17,7 +17,7 @@ from .card.messagebox_custom import MessageBoxEdit
 from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
 from module.notification import init_notifiers
-from module.localization import tr
+from module.localization import tr, tn
 from module.localization.languages import AUTO_LANGUAGE, available_languages
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
@@ -2896,8 +2896,8 @@ class SettingInterface(ScrollArea):
         daily_count = DivergentUniverse.get_recorded_run_count("daily")
         weekly_count = DivergentUniverse.get_recorded_run_count("weekly")
         return "，".join([
-            tr("今日已完成 {count} 次").format(count=daily_count),
-            tr("本周已完成 {count} 次").format(count=weekly_count),
+            tn("今日已完成 {count} 次", daily_count),
+            tn("本周已完成 {count} 次", weekly_count),
         ])
 
     def __showTelemetryInfo(self):

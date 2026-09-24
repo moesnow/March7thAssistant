@@ -1,10 +1,9 @@
 # coding:utf-8
-"""gettext(.po/.mo) 目录后端工具（JSON 双轨阶段）。
+"""gettext(.po/.mo) 目录后端工具。
 
 约定：
 - msgid = 中文原文（key 即 msgid），源语言 zh_CN
-- 复数条目：msgid_plural = 文案 + PLURAL_SUFFIX（仅元数据后缀，便于与 JSON 的
-  key|plural 机械互转；GNU gettext 运行期按 msgid 查表，不受影响）
+- 复数条目：msgid_plural = 文案 + PLURAL_SUFFIX（仅元数据后缀；GNU gettext 运行期按 msgid 查表）
 - .mo 随 .po 一起提交（打包流程整目录拷贝 assets，零改动），check 校验两者同步
 - 本模块只做机械读写，调用方输出统计时不得打印译文内容
 """
@@ -145,45 +144,14 @@ def _build_pot(entries: dict[str, dict]) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 迁移与生成
+# 生成
 # ---------------------------------------------------------------------------
 
-def migrate_po(catalogs: dict[str, dict]) -> dict:
-    """JSON → .pot + 各语言 .po（一次性迁移；已存在的 msgstr 不覆盖）。
-
-    po 条目取 zh_CN 全集（含历史遗留条目，保留译者已有工作）；
-    .pot 只含源码/数据源条目（与 update-po 同一口径）。
-    """
-    entries = source_entries()
-    base = catalogs[BASE_LOCALE]
-    _build_pot(entries)
-
-    stats = {}
-    for lang in LOCALES:
-        data = catalogs[lang]
-        po = polib.POFile(wrapwidth=78)
-        po.metadata = base_metadata(lang)
-        for key in base:
-            if key.endswith(PLURAL_SUFFIX) and key[: -len(PLURAL_SUFFIX)] in base:
-                continue  # 复数形随单数条目合并
-            is_plural = key + PLURAL_SUFFIX in base
-            meta = entries.get(key, {}).copy()
-            meta["ref"] = meta.get("ref", "")
-            meta["plural"] = is_plural
-            po.append(_make_entry(
-                key, meta, lang,
-                msgstr=data.get(key, ""),
-                plural_msgstr=data.get(key + PLURAL_SUFFIX, ""),
-            ))
-        path = po_path(lang)
-        os.makedirs(str(path.parent), exist_ok=True)
-        po.save(str(path))
-        stats[lang] = len(po)
-    return stats
-
-
 def update_po() -> dict:
-    """把源码/数据源提取结果并入 .pot 与各 .po（新条目追加，已有译文不覆盖）。"""
+    """把源码/数据源提取结果并入 .pot 与各 .po（新条目追加，已有译文不覆盖）。
+
+    已有单数条目在源侧改为 tn() 复数时升级为复数条目（译文保留在 msgstr[0]）。
+    """
     entries = source_entries()
     _build_pot(entries)
 
@@ -196,9 +164,19 @@ def update_po() -> dict:
             po = polib.POFile(wrapwidth=78)
             po.metadata = base_metadata(lang)
         have = po_keyset(po)
+        index = _index(po)
         n = 0
         for msgid, meta in entries.items():
             if msgid in have:
+                if meta.get("plural"):
+                    e = index.get(msgid)
+                    if e is not None and not e.msgid_plural:
+                        forms = nplurals_of(lang)
+                        old = e.msgstr or ""
+                        e.msgid_plural = msgid + PLURAL_SUFFIX
+                        e.msgstr_plural = ({0: old, 1: ""} if forms >= 2 else {0: old})
+                        e.msgstr = ""
+                        n += 1
                 continue
             po.append(_make_entry(msgid, meta, lang,
                                   msgstr=msgid if lang == BASE_LOCALE else ""))
@@ -221,31 +199,32 @@ def compile_po(lang: str) -> int:
 # 校验
 # ---------------------------------------------------------------------------
 
-def _expected_json_value(json_d: dict, key: str, lang: str) -> str:
-    """JSON 侧与 po 对齐后的期望值（nplurals=1 时复数形条目按"复数形非空优先"归一）。"""
-    value = json_d.get(key, "") or ""
-    if key.endswith(PLURAL_SUFFIX) and nplurals_of(lang) < 2:
-        singular = json_d.get(key[: -len(PLURAL_SUFFIX)], "") or ""
-        return value or singular
-    return value
+def _is_untranslated(entry) -> bool:
+    if entry.msgid_plural:
+        return not all(entry.msgstr_plural.values())
+    return not entry.msgstr
 
 
-def check_po(catalogs: dict[str, dict], formatted: set[str]) -> tuple[list[str], list[str]]:
+def check_po(formatted: set[str]) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
+    entries = source_entries()
     try:
         pot = polib.pofile(str(pot_path()))
     except Exception:
-        errors.append("march7th.pot 缺失或不可解析（运行 python -m tools.i18n migrate-po）")
+        errors.append("march7th.pot 缺失或不可解析（运行 python -m tools.i18n extract）")
         return errors, warnings
     pot_keys = po_keyset(pot)
+    unregistered = set(entries) - pot_keys
+    if unregistered:
+        errors.append(f"{len(unregistered)} 条源文案未登记进 .pot（运行 python -m tools.i18n extract）")
 
     for lang in LOCALES:
         try:
             po = polib.pofile(str(po_path(lang)))
         except Exception:
-            errors.append(f"[{lang}] po 目录缺失或不可解析（运行 python -m tools.i18n migrate-po）")
+            errors.append(f"[{lang}] po 目录缺失或不可解析（运行 python -m tools.i18n extract）")
             continue
 
         # 1) 源条目集与 .pot 一致（模板之外的条目为历史遗留，保留并警告）
@@ -253,23 +232,11 @@ def check_po(catalogs: dict[str, dict], formatted: set[str]) -> tuple[list[str],
         missing = pot_keys - keys
         extra = keys - pot_keys
         if missing:
-            errors.append(f"[{lang}] po 缺少 {len(missing)} 个条目（运行 python -m tools.i18n update-po）")
+            errors.append(f"[{lang}] po 缺少 {len(missing)} 个条目（运行 python -m tools.i18n extract）")
         if extra:
             warnings.append(f"[{lang}] po 有 {len(extra)} 个模板之外的条目（历史遗留，保留）")
 
-        # 2) 与 JSON 双轨一致
-        json_d = catalogs[lang]
-        mism = 0
-        for k, v in json_d.items():
-            if _po_value(po, k, lang) != _expected_json_value(json_d, k, lang):
-                mism += 1
-        rev = sum(1 for k in keys if k not in json_d)
-        if mism:
-            errors.append(f"[{lang}] po 与 JSON 译文不一致 {mism} 条")
-        if rev:
-            errors.append(f"[{lang}] po 有 JSON 没有的条目 {rev} 条")
-
-        # 3) 占位符一致（带 .format() 的条目严格级同 JSON 侧）
+        # 2) 占位符一致（带 .format() 的条目严格级）
         for e in po:
             values = [e.msgstr] if e.msgstr else list(e.msgstr_plural.values())
             for value in values:
@@ -279,7 +246,7 @@ def check_po(catalogs: dict[str, dict], formatted: set[str]) -> tuple[list[str],
                     level = errors if e.msgid in formatted else warnings
                     level.append(f"[{lang}] po 占位符与原文不一致（msgid 长度 {len(e.msgid)}）")
 
-        # 4) 复数条目 msgstr_plural 个数符合 Plural-Forms
+        # 3) 复数条目 msgstr_plural 个数符合 Plural-Forms
         n = nplurals_of(lang)
         for e in po:
             if e.msgid_plural and len(e.msgstr_plural) != n:
@@ -287,32 +254,21 @@ def check_po(catalogs: dict[str, dict], formatted: set[str]) -> tuple[list[str],
                     f"[{lang}] 复数条目 msgstr_plural 个数应为 {n}（msgid 长度 {len(e.msgid)}）"
                 )
 
-        # 5) .mo 与 .po 同步
+        # 4) .mo 与 .po 同步
         if not _mo_in_sync(po, lang):
             errors.append(f"[{lang}] .mo 与 .po 不同步（运行 python -m tools.i18n compile）")
 
-        # 6) 位置占位符禁令同样适用于 po 条目
+        # 5) 位置占位符禁令同样适用于 po 条目
         for e in po:
             if e.msgid in formatted and has_positional_placeholder(e.msgid):
                 errors.append(f"[{lang}] po 含位置占位符条目（msgid 长度 {len(e.msgid)}）")
 
+        # 6) 待翻译统计 —— 仅警告
+        untranslated = sum(1 for e in po if _is_untranslated(e))
+        if untranslated:
+            warnings.append(f"[{lang}] 有 {untranslated} 条待翻译")
+
     return errors, warnings
-
-
-def _po_value(po, key: str, lang: str) -> str:
-    """按 JSON 侧约定读取 po 译文（复数键 key|plural 映射 msgstr_plural）。"""
-    idx = _index(po)
-    if key.endswith(PLURAL_SUFFIX):
-        singular = key[: -len(PLURAL_SUFFIX)]
-        e = idx.get(singular)
-        if e is None or not e.msgid_plural:
-            return ""
-        pos = 1 if nplurals_of(lang) >= 2 else 0
-        return e.msgstr_plural.get(pos, "") or ""
-    e = idx.get(key)
-    if e is None or e.msgid_plural:
-        return ""
-    return e.msgstr or ""
 
 
 def _mo_in_sync(po, lang: str) -> bool:

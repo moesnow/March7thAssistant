@@ -1554,7 +1554,8 @@ msgstr "暫無計畫"
 
 #: app/card/pushsettingcard1.py:787
 msgid "已配置 {count} 项计划"
-msgstr "已設定 {count} 項計畫"
+msgid_plural "已配置 {count} 项计划|plural"
+msgstr[0] "已設定 {count} 項計畫"
 
 #: app/warp_interface.py:26
 msgid "更新数据"
@@ -3522,7 +3523,8 @@ msgstr "獲取成功"
 
 #: app/card/pushsettingcard1.py:328
 msgid "已获取 {count} 个兑换码"
-msgstr "已獲取 {count} 個兌換碼"
+msgid_plural "已获取 {count} 个兑换码|plural"
+msgstr[0] "已獲取 {count} 個兌換碼"
 
 #: assets/config/instance_names.json
 msgid "欢愉之蕾"
@@ -3704,7 +3706,8 @@ msgstr "隊伍:"
 
 #: app/card/pushsettingcard1.py:841
 msgid "已配置 {count} 项规则"
-msgstr "已配置 {count} 項規則"
+msgid_plural "已配置 {count} 项规则|plural"
+msgstr[0] "已配置 {count} 項規則"
 
 #: app/setting_interface.py:1140
 msgid "Windows 原生通知"
@@ -4610,7 +4613,8 @@ msgstr "自定義差分宇宙「選擇下一站」的站點優先級"
 
 #: app/card/stationprioritysettingcard.py:299
 msgid "已启用自定义优先级，{count} 个站点已禁用"
-msgstr "已啓用自定義優先級，{count} 個站點已禁用"
+msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
+msgstr[0] "已啓用自定義優先級，{count} 個站點已禁用"
 
 #: app/setting_interface.py:2471
 msgid "下载代理"
@@ -5326,11 +5330,13 @@ msgstr "當前週期內已完成 {} / {} 次"
 
 #: app/setting_interface.py:2899
 msgid "今日已完成 {count} 次"
-msgstr "今日已完成 {count} 次"
+msgid_plural "今日已完成 {count} 次|plural"
+msgstr[0] "今日已完成 {count} 次"
 
 #: app/setting_interface.py:2900
 msgid "本周已完成 {count} 次"
-msgstr "本週已完成 {count} 次"
+msgid_plural "本周已完成 {count} 次|plural"
+msgstr[0] "本週已完成 {count} 次"
 
 #: app/setting_interface.py:2860
 msgid "启用前请确认用途"
@@ -5421,10 +5427,6 @@ msgstr "即將開始下載和安裝新版本"
 #: module/update/helper_app.py:584
 msgid "无需更新"
 msgstr "無需更新"
-
-#: module/update/helper_app.py:641
-msgid "{seconds} 秒后自动退出"
-msgstr "{seconds} 秒後自動退出"
 
 #: module/update/update_window.py:156
 msgid "更新日志会显示在这里"
@@ -5629,10 +5631,6 @@ msgstr "透過 GitHub 獲取到更新"
 
 msgid "通过 Mirror酱 获取到更新"
 msgstr "透過 Mirror醬 獲取到更新"
-
-#: app/card/pushsettingcard1.py:184
-msgid "剩余 {days} 天"
-msgstr "剩餘 {days} 天"
 
 #: app/card/pushsettingcard1.py:188
 msgid "CDK 有效 (＾∀＾●)"
@@ -5987,3 +5985,13 @@ msgstr "選擇音頻文件"
 #: tasks/game/__init__.py:86
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 msgstr "檢測到遊戲客戶端版本過低，請前往啓動器下載最新客戶端"
+
+#: app/card/pushsettingcard1.py:184
+msgid "剩余 {count} 天"
+msgid_plural "剩余 {count} 天|plural"
+msgstr[0] "剩餘 {count} 天"
+
+#: module/update/helper_app.py:641
+msgid "{count} 秒后自动退出"
+msgid_plural "{count} 秒后自动退出|plural"
+msgstr[0] "{count} 秒後自動退出"

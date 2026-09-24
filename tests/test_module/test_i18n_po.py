@@ -6,7 +6,7 @@ import os
 import polib
 
 from tools.i18n.po import (
-    _expected_json_value,
+    _is_untranslated,
     _make_entry,
     base_metadata,
     nplurals_of,
@@ -59,19 +59,19 @@ class TestEntryBuild:
         assert po_keyset(po) == {"a", "a|plural", "z"}
 
 
-class TestExpectedJsonValue:
-    def test_plain(self):
-        assert _expected_json_value({"k": "v"}, "k", "en_US") == "v"
+class TestUntranslated:
+    def test_plain_entry(self):
+        e = _make_entry("a", {"ref": "", "plural": False}, "en_US", msgstr="")
+        assert _is_untranslated(e)
+        e2 = _make_entry("a", {"ref": "", "plural": False}, "en_US", msgstr="b")
+        assert not _is_untranslated(e2)
 
-    def test_plural_single_form_prefers_plural(self):
-        d = {"k": "v0", "k|plural": ""}
-        assert _expected_json_value(d, "k|plural", "zh_CN") == "v0"
-        d2 = {"k": "v0", "k|plural": "v1"}
-        assert _expected_json_value(d2, "k|plural", "zh_CN") == "v1"
-
-    def test_plural_two_forms(self):
-        d = {"k": "v0", "k|plural": "v1"}
-        assert _expected_json_value(d, "k|plural", "en_US") == "v1"
+    def test_plural_entry(self):
+        e = _make_entry("a", {"ref": "", "plural": True}, "en_US", msgstr="b", plural_msgstr="")
+        e.msgstr_plural = {0: "b", 1: ""}
+        assert _is_untranslated(e)  # 部分未翻也算待翻
+        e.msgstr_plural = {0: "b", 1: "c"}
+        assert not _is_untranslated(e)
 
 
 class TestMoRoundtrip:

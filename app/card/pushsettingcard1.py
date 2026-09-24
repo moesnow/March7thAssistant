@@ -13,7 +13,7 @@ import re
 import sys
 from ..tools.check_update import checkUpdate
 from module.update.version_check import validate_mirrorchyan_cdk
-from module.localization import tr, get_character_names, instance_display_to_raw
+from module.localization import tr, tn, get_character_names, instance_display_to_raw
 
 
 def get_key_from_value(val, map):
@@ -181,7 +181,7 @@ class PushSettingCardMirrorchyan(SettingCard):
             remaining = expired_dt - now
             days = remaining.days
             if days > 0:
-                content = tr("剩余 {days} 天").format(days=days)
+                content = tn("剩余 {count} 天", days)
             else:
                 content = tr("今天到期")
             InfoBar.success(
@@ -325,7 +325,7 @@ class PushSettingCardCode(CustomPushSettingCard):
             mb.textEdit.setText('\n'.join(codes))
             self._info_success(
                 tr('获取成功'),
-                tr('已获取 {count} 个兑换码').format(count=len(codes)),
+                tn('已获取 {count} 个兑换码', len(codes)),
                 mb
             )
 
@@ -784,7 +784,7 @@ class PushSettingCardPowerPlan(CustomPushSettingCard):
         """获取显示文本"""
         if not self.configvalue:
             return tr("暂无计划")
-        return tr("已配置 {count} 项计划").format(count=len(self.configvalue))
+        return tn("已配置 {count} 项计划", len(self.configvalue))
 
     def __onclicked(self):
         message_box = MessageBoxPowerPlan(
@@ -838,7 +838,7 @@ class InstanceTeamSettingCard(SettingCard):
 
         teams = cfg.get_value("instance_teams")
         if teams:
-            self.contentLabel.setText(tr("已配置 {count} 项规则").format(count=len(teams)))
+            self.contentLabel.setText(tn("已配置 {count} 项规则", len(teams)))
         else:
             self.contentLabel.setText(tr("为特定的副本配置队伍"))
 
