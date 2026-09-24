@@ -1342,10 +1342,6 @@ msgstr "確認"
 msgid "取消"
 msgstr "取消"
 
-#: app/tools_interface.py:186
-msgid "请在“设置”-->“程序”中配置正确的游戏路径"
-msgstr "請在「設定」-->「程式」中設定正確的遊戲路徑"
-
 #: app/tools_interface.py:226
 msgid "已将命令复制到剪贴板"
 msgstr "已將指令複製到剪貼簿"
@@ -2222,10 +2218,6 @@ msgstr "已啓用: {count}，下次: {time}"
 #: app/log_interface.py:1147
 msgid "正在运行: {name}"
 msgstr "正在運行: {name}"
-
-#: app/main_window.py:903
-msgid "请在“设置”-->“程序”中配置"
-msgstr "請在「設定」-->「程式」中設定"
 
 #: app/tools/warp_export.py:193
 msgid "抽"
@@ -5172,10 +5164,6 @@ msgstr "當前已是最新版本"
 msgid "Mirror酱 API 请求失败"
 msgstr "Mirror醬 API 請求失敗"
 
-#: app/tools/check_update.py:168
-msgid "请在 \"设置 → 关于 → 更新源\" 中选择 Mirror酱 并填写有效 CDK"
-msgstr "請在 \"設置 → 關於 → 更新源\" 中選擇 Mirror醬 並填寫有效 CDK"
-
 #: module/update/helper_app.py:245
 msgid "正在准备更新"
 msgstr "正在準備更新"
@@ -5686,3 +5674,15 @@ msgstr[0] "剩餘 {count} 天"
 msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "{count} 秒後自動退出"
+
+#: app/main_window.py:903
+msgid "请在“设置”→“程序”中配置"
+msgstr "請在「設定」→「程式」中設定"
+
+#: app/tools/check_update.py:168
+msgid "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK"
+msgstr "請在「設置 → 關於 → 更新源」中選擇 Mirror醬 並填寫有效 CDK"
+
+#: app/tools_interface.py:186
+msgid "请在“设置”→“程序”中配置正确的游戏路径"
+msgstr "請在「設定」→「程式」中設定正確的遊戲路徑"

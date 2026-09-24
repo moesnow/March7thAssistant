@@ -846,7 +846,7 @@ msgid "游戏路径配置错误(╥╯﹏╰╥)"
 msgstr ""
 
 #: app/main_window.py:903
-msgid "请在“设置”-->“程序”中配置"
+msgid "请在“设置”→“程序”中配置"
 msgstr ""
 
 #: app/main_window.py:912
@@ -3278,7 +3278,7 @@ msgid "尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"
 msgstr ""
 
 #: app/tools/check_update.py:168
-msgid "请在 \"设置 → 关于 → 更新源\" 中选择 Mirror酱 并填写有效 CDK"
+msgid "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK"
 msgstr ""
 
 #: app/tools/check_update.py:202
@@ -3504,7 +3504,7 @@ msgid "确认继续并允许启用触屏模式？"
 msgstr ""
 
 #: app/tools_interface.py:186
-msgid "请在“设置”-->“程序”中配置正确的游戏路径"
+msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr ""
 
 #: app/tools_interface.py:226

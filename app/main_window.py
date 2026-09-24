@@ -900,7 +900,7 @@ class MainWindow(MSFluentWindow):
         elif result == GameStartStatus.LOCAL_LAUNCH_FAIL:
             InfoBar.warning(
                 title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                content=tr("请在“设置”-->“程序”中配置"),
+                content=tr("请在“设置”→“程序”中配置"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
