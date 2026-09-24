@@ -134,6 +134,59 @@ def stored_label(text: str, msgid: str | None) -> str:
     return text
 
 
+def legacy_label_map() -> dict:
+    """旧版本配置遗留的「译文 -> 中文原文」还原表（仅内置文案闭集）。
+
+    旧版本在非中文界面保存卡片时会把译文写进 config.yaml；这里按 5 语言目录反查还原。
+    **歧义译文（多个内置文案同译）不收录**——如日文里「更新锄大地」与「锄大地更新」同译，
+    反查会串味，宁可原样保留交由用户重新选择。
+    """
+    from module.localization import translations_of
+
+    reverse: dict[str, str] = {}
+    ambiguous: set[str] = set()
+    for msgid in sorted(BUILTIN_LABELS):
+        for translated in translations_of(msgid).values():
+            # 同文、或译文本身就是某个内置原文的值无需还原（display_label 已能识别）
+            if not translated or translated == msgid or translated in BUILTIN_LABELS:
+                continue
+            if translated in reverse and reverse[translated] != msgid:
+                ambiguous.add(translated)
+            else:
+                reverse[translated] = msgid
+    for text in ambiguous:
+        reverse.pop(text, None)
+    return reverse
+
+
+def migrate_home_cards(cards, reverse=None) -> bool:
+    """把旧版本写进配置的译文还原为中文原文（原地修改、幂等）。
+
+    识别范围仅限「等于内置文案某个译文」的遗留值；用户自定义文案与歧义译文不动。
+    返回是否有改动，供调用方决定是否写回配置。
+    """
+    if not isinstance(cards, list):
+        return False
+    if reverse is None:
+        reverse = legacy_label_map()
+    changed = False
+    for card in cards:
+        if not isinstance(card, dict):
+            continue
+        title = card.get("title", "")
+        if isinstance(title, str) and title in reverse:
+            card["title"] = reverse[title]
+            changed = True
+        for item in card.get("menu_items") or []:
+            if not isinstance(item, dict):
+                continue
+            label = item.get("label", "")
+            if isinstance(label, str) and label in reverse:
+                item["label"] = reverse[label]
+                changed = True
+    return changed
+
+
 class MenuItemRow(QWidget):
     """菜单项编辑行"""
 

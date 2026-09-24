@@ -202,6 +202,30 @@ def tn(text: str, n: float, **kwargs) -> str:
     return form
 
 
+_lang_catalogs_cache = {}
+
+
+def translations_of(text: str) -> dict:
+    """返回 text 在各语言目录中的译文 {lang: 译文}（未翻译的语言不含在内）。
+
+    与当前界面语言无关，供跨语言比对使用（如旧配置里遗留译文的还原）。
+    """
+    if not text:
+        return {}
+    from .languages import LANGS
+
+    result = {}
+    for lang in LANGS:
+        trans = _lang_catalogs_cache.get(lang)
+        if trans is None:
+            trans = _load_translation(lang)
+            _lang_catalogs_cache[lang] = trans
+        translated = _translated_or_none(trans, text)
+        if translated:
+            result[lang] = translated
+    return result
+
+
 def get_current_language() -> str:
     """Get current language code"""
     return _current_lang
