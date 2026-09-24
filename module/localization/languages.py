@@ -18,7 +18,7 @@ LANGS = {
     "zh_TW": {
         "native": "繁體中文",
         "qlocale": ("Chinese", "Taiwan"),
-        "docs_suffix": "",  # 暂无独立文档，回退基准文档
+        "docs_suffix": "zh_TW",  # 由简体基准经 OpenCC s2twp 生成，见 assets/docs/*_zh_TW.md
         "plural_forms": "nplurals=1; plural=0;",
     },
     "ja_JP": {

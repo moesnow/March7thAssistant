@@ -7,10 +7,15 @@ from tools.i18n import check_docs
 
 TASKS_TABLE_FILES = {
     "assets/docs/TasksTable.md",
+    "assets/docs/TasksTable_zh_TW.md",
     "assets/docs/TasksTable_ja_JP.md",
     "assets/docs/TasksTable_ko_KR.md",
     "assets/docs/TasksTable_en_US.md",
 }
+
+# 界面经 localized_doc_path 加载的文档，每个语言都应有独立版本
+LOCALIZED_DOC_BASES = ("Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog")
+ALL_SUFFIXES = ("zh_TW", "ja_JP", "ko_KR", "en_US")
 
 
 def _rows(path):
@@ -51,25 +56,38 @@ class TestLocalizedDocPath:
         monkeypatch.setattr("module.localization._current_lang", "ja_JP")
         assert localized_doc_path("TasksTable") == "./assets/docs/TasksTable_ja_JP.md"
 
-    def test_zh_tw_falls_back_to_base(self, monkeypatch):
+    def test_zh_tw_has_own_docs(self, monkeypatch):
         monkeypatch.setattr("module.localization._current_lang", "zh_TW")
-        assert localized_doc_path("TasksTable") == "./assets/docs/TasksTable.md"
+        assert localized_doc_path("TasksTable") == "./assets/docs/TasksTable_zh_TW.md"
 
     def test_suffix_matches_registry(self):
-        for code in ("ja_JP", "ko_KR", "en_US"):
+        for code in ("zh_TW", "ja_JP", "ko_KR", "en_US"):
             assert get_lang_meta(code)["docs_suffix"] == code
+
+    def test_all_loaded_docs_localized_for_every_language(self):
+        """界面加载的 5 类文档，每种语言都要有独立版本（缺失会回退中文基准）。"""
+        missing = []
+        for base in LOCALIZED_DOC_BASES:
+            for suffix in ALL_SUFFIXES:
+                path = f"assets/docs/{base}_{suffix}.md"
+                if not os.path.exists(path):
+                    missing.append(path)
+        assert missing == [], f"缺少本地化文档: {missing}"
+
+    def test_note_line_after_title(self):
+        """译文文档遵循「首行标题 / 第 2 行空 / 第 3 行声明」的结构（界面按行号剥离）。"""
+        for base in LOCALIZED_DOC_BASES:
+            if base == "TasksTable":
+                continue  # 纯表格文档不带声明
+            for suffix in ALL_SUFFIXES:
+                lines = open(f"assets/docs/{base}_{suffix}.md", encoding="utf-8").read().split("\n")
+                assert lines[0].startswith("# "), f"{base}_{suffix} 首行应为 # 标题"
+                assert lines[1].strip() == "", f"{base}_{suffix} 第 2 行应为空行"
+                assert lines[2].startswith("> "), f"{base}_{suffix} 第 3 行应为声明"
+                assert lines[3].strip() == "", f"{base}_{suffix} 声明后应为空行"
 
 
 class TestCheckDocs:
-    # Phase C 之前已知缺失的本地化文档（帮助页会回退中文基准）。
-    # 补齐 Workflow 的多语言文档后，此集合应变为空集。
-    KNOWN_MISSING = {
-        "文档 Workflow_ja_JP.md 缺失（ja_JP 用户将看到中文基准文档）",
-        "文档 Workflow_ko_KR.md 缺失（ko_KR 用户将看到中文基准文档）",
-        "文档 Workflow_en_US.md 缺失（en_US 用户将看到中文基准文档）",
-    }
-
-    def test_repo_state_has_no_unexpected_warning(self):
-        """仓库状态不得出现"文档不一致"类警告；本地化缺失仅豁免已知清单。"""
-        unexpected = set(check_docs()) - self.KNOWN_MISSING
-        assert unexpected == set(), unexpected
+    def test_repo_state_has_no_doc_warning(self):
+        """C1+C3 补齐文档后，仓库状态不应再有任何文档类警告。"""
+        assert check_docs() == []

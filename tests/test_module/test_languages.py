@@ -27,12 +27,10 @@ class TestLangsRegistry:
             assert hasattr(QLocale.Country, country), f"{code} 的 QLocale.Country.{country} 不存在"
 
     def test_docs_suffix_uses_locale_codes(self):
-        # 文档后缀与 locales 语言代码一致（zh 回退基准文档）
+        # 文档后缀与 locales 语言代码一致；只有 zh_CN 用基准文档（空后缀）
         assert LANGS["zh_CN"]["docs_suffix"] == ""
-        assert LANGS["zh_TW"]["docs_suffix"] == ""
-        assert LANGS["ja_JP"]["docs_suffix"] == "ja_JP"
-        assert LANGS["ko_KR"]["docs_suffix"] == "ko_KR"
-        assert LANGS["en_US"]["docs_suffix"] == "en_US"
+        for code in ("zh_TW", "ja_JP", "ko_KR", "en_US"):
+            assert LANGS[code]["docs_suffix"] == code
 
     def test_plural_forms(self):
         assert "nplurals=2" in LANGS["en_US"]["plural_forms"]
