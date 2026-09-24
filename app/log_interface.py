@@ -1219,12 +1219,13 @@ class LogInterface(ScrollArea):
     def _startTask(self, task, timeout=0):
         self.current_task = task
         command = str(task)
-        task_display_name = TASK_NAMES.get(command, command)
+        task_msgid = TASK_NAMES.get(command, command)
         self.clearLog()
-        self.appendLog("========== 开始任务: {} ==========".format(task_display_name) + "\n")
+        # 日志按约定记中文原文（msgid）；状态标签是界面文案，显示当前语言
+        self.appendLog("========== 开始任务: {} ==========".format(task_msgid) + "\n")
 
         # 更新状态
-        self.statusLabel.setText(tr('正在运行：{name}').format(name=task_display_name))
+        self.statusLabel.setText(tr('正在运行：{name}').format(name=tr(task_msgid)))
         # self.statusLabel.setStyleSheet("color: #0078d4;")
         self.stopButton.setEnabled(True)
 
