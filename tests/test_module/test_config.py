@@ -204,6 +204,32 @@ class TestConfigPersistence:
         assert (tmp_path / "config.yaml").read_bytes() == original
         assert list(tmp_path.glob("config.yaml.*.tmp")) == []
 
+    def test_save_config_falls_back_when_replace_fails(self, tmp_path, monkeypatch):
+        """目标为挂载点（如 Docker 单文件挂载）时 os.replace 报 EBUSY，应退化为原地覆盖写入"""
+        config = self._create_config(tmp_path)
+        config.save_config()
+
+        config.config = {"key1": "new", "nested": {"a": 2}}
+
+        target = os.path.abspath(config.config_path)
+        real_replace = os.replace
+
+        def replace_fails_on_config(src, dst, *args, **kwargs):
+            if os.path.abspath(dst) == target:
+                raise OSError(16, "Device or resource busy")
+            return real_replace(src, dst, *args, **kwargs)
+
+        monkeypatch.setattr(os, "replace", replace_fails_on_config)
+
+        config.save_config()
+
+        from ruamel.yaml import YAML
+        data = YAML().load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+        assert data["key1"] == "new"
+        assert data["nested"]["a"] == 2
+        # 不残留临时文件
+        assert list(tmp_path.glob("config.yaml.*.tmp")) == []
+
     def test_load_missing_creates_default(self, tmp_path):
         config = self._create_config(tmp_path)
         config._load_config()
@@ -252,6 +278,29 @@ class TestConfigPersistence:
         # 更早的备份不被覆盖，新备份使用时间戳命名
         assert (tmp_path / "config.yaml.bak").read_text(encoding="utf-8") == "old backup"
         assert list(tmp_path.glob("config.yaml.bak-*"))
+
+    def test_broken_config_backup_falls_back_when_replace_fails(self, tmp_path, monkeypatch):
+        """配置文件为挂载点时无法移动，备份应退化为复制，保留损坏内容"""
+        config = self._create_config(tmp_path)
+        broken = "key1: [unclosed\n  nested: broken: yaml"
+        (tmp_path / "config.yaml").write_text(broken, encoding="utf-8")
+
+        target = os.path.abspath(config.config_path)
+        real_replace = os.replace
+
+        def replace_fails_on_config(src, dst, *args, **kwargs):
+            if os.path.abspath(src) == target:
+                raise OSError(16, "Device or resource busy")
+            return real_replace(src, dst, *args, **kwargs)
+
+        monkeypatch.setattr(os, "replace", replace_fails_on_config)
+        monkeypatch.setattr(config, "_notify_config_error", lambda message: None)
+
+        config._load_config()
+
+        backup = tmp_path / "config.yaml.bak"
+        assert backup.exists()
+        assert backup.read_text(encoding="utf-8") == broken
 
     def test_load_merges_user_values(self, tmp_path):
         config = self._create_config(tmp_path)

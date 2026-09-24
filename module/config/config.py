@@ -2,6 +2,7 @@ import sys
 import time
 import copy
 import os
+import shutil
 import tempfile
 from ruamel.yaml import YAML
 from utils.singleton import SingletonMeta
@@ -118,13 +119,17 @@ class Config(metaclass=SingletonMeta):
         self._notify_config_error(message)
 
     def _backup_broken_config(self, path):
-        """把损坏的配置文件移走备份（保留原始字节），返回备份路径；失败返回 None"""
+        """备份损坏的配置文件（保留原始字节）；无法移走时退化为复制，返回备份路径；失败返回 None"""
         try:
             backup_path = f"{path}.bak"
             if os.path.exists(backup_path):
                 # 保留更早的备份，改用时间戳命名
                 backup_path = f"{path}.bak-{time.strftime('%Y%m%d-%H%M%S')}"
-            os.replace(path, backup_path)
+            try:
+                os.replace(path, backup_path)
+            except OSError:
+                # 目标是挂载点（如 Docker 单文件挂载）时无法移动，退化为复制备份
+                shutil.copyfile(path, backup_path)
             return backup_path
         except Exception:
             return None
@@ -197,7 +202,7 @@ class Config(metaclass=SingletonMeta):
         return changed
 
     def save_config(self):
-        """保存配置到文件（先写临时文件再原子替换，避免写入中断损坏原文件）"""
+        """保存配置到文件（先写临时文件再原子替换；目标为挂载点时退化为原地覆盖写入）"""
         config_dir = os.path.dirname(os.path.abspath(self.config_path))
         # 临时文件名唯一，避免多进程同时保存时互相截断
         tmp_fd, tmp_path = tempfile.mkstemp(
@@ -208,7 +213,16 @@ class Config(metaclass=SingletonMeta):
                 self.yaml.dump(self.config, file)
                 file.flush()
                 os.fsync(file.fileno())
-            os.replace(tmp_path, self.config_path)
+            try:
+                os.replace(tmp_path, self.config_path)
+            except OSError:
+                # 目标是挂载点（如 Docker 单文件挂载的 config.yaml）时 rename 会报 EBUSY，
+                # 退化为原地覆盖写入（非原子，但保证可保存）
+                with open(tmp_path, 'rb') as src, open(self.config_path, 'wb') as dst:
+                    shutil.copyfileobj(src, dst)
+                    dst.flush()
+                    os.fsync(dst.fileno())
+                os.remove(tmp_path)
         except Exception:
             try:
                 if os.path.exists(tmp_path):
