@@ -63,7 +63,10 @@ class _LiteralCollector(ast.NodeVisitor):
     def __init__(self):
         self.literals: set[str] = set()
         self.formatted: set[str] = set()
+        self.plural_literals: set[str] = set()  # 经 tn() 调用的字面量（复数条目）
+        self.refs: dict[str, tuple[str, int]] = {}  # 字面量 -> 首次出现 (文件, 行号)
         self.dynamic = 0
+        self._current_file = "<string>"
 
     @staticmethod
     def _func_name(node: ast.expr) -> str | None:
@@ -91,6 +94,9 @@ class _LiteralCollector(ast.NodeVisitor):
             if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
                 if arg.value.strip():
                     self.literals.add(arg.value)
+                    if func_name == "tn":
+                        self.plural_literals.add(arg.value)
+                    self.refs.setdefault(arg.value, (self._current_file, node.lineno))
                 # 空白字符串无翻译意义，tr() 运行期会原样返回，忽略
             else:
                 self.dynamic += 1
@@ -118,8 +124,34 @@ def collect_literals_from_source(source: str, filename: str = "<string>") -> tup
     """从一段源码收集 tr()/tn() 字面量，返回 (字面量, 带 .format() 的字面量, 动态调用次数)。"""
     tree = ast.parse(source, filename=filename)
     collector = _LiteralCollector()
+    collector._current_file = filename
     collector.visit(tree)
     return collector.literals, collector.formatted, collector.dynamic
+
+
+def collect_calls_from_source(source: str, filename: str = "<string>") -> tuple[set[str], set[str], int, set[str], dict]:
+    """同 collect_literals_from_source，另返回 (tn 复数字面量, 出处映射)。"""
+    tree = ast.parse(source, filename=filename)
+    collector = _LiteralCollector()
+    collector._current_file = filename
+    collector.visit(tree)
+    return collector.literals, collector.formatted, collector.dynamic, collector.plural_literals, collector.refs
+
+
+def collect_code_extras() -> tuple[set[str], dict]:
+    """返回 (tn 复数字面量集合, 字面量出处映射)。"""
+    plurals: set[str] = set()
+    refs: dict[str, tuple[str, int]] = {}
+    for path in iter_source_files():
+        try:
+            source = path.read_text(encoding="utf-8", errors="ignore")
+            collected = collect_calls_from_source(source, str(path).replace("\\", "/"))
+        except (SyntaxError, ValueError):
+            continue
+        plurals |= collected[3]
+        for k, v in collected[4].items():
+            refs.setdefault(k, v)
+    return plurals, refs
 
 
 def collect_code_literals() -> tuple[set[str], set[str], int]:
@@ -204,6 +236,7 @@ def sync_catalogs(catalogs: dict[str, dict] | None = None) -> dict[str, int]:
 
     - zh_TW 预填 OpenCC 简转繁结果（可由译者继续润色）
     - 其余语言留空（空值 = 待翻译）
+    - tn() 复数字面量同时登记 key|plural 条目
     """
     if catalogs is None:
         catalogs, errors = load_catalogs()
@@ -225,6 +258,49 @@ def sync_catalogs(catalogs: dict[str, dict] | None = None) -> dict[str, int]:
     return added
 
 
+def collect_data_literals() -> tuple[set[str], dict[str, str]]:
+    """数据源驱动的翻译字面量（character_names / instance_names）。
+
+    返回 (字面量集合, 字面量 -> 来源文件)。instance_names 中「凝滞虚影」的 info
+    按斜杠拆分后逐段登记，与 module.localization.get_instance_names 运行期一致。
+    """
+    import re as _re
+
+    literals: set[str] = set()
+    refs: dict[str, str] = {}
+
+    def add(text, ref):
+        if isinstance(text, str) and text.strip():
+            literals.add(text)
+            refs.setdefault(text, ref)
+
+    char_path = "assets/config/character_names.json"
+    try:
+        data = json.loads((ROOT / char_path).read_text(encoding="utf-8"))
+        for v in data.values():
+            add(v, char_path)
+    except Exception:
+        pass
+
+    inst_path = "assets/config/instance_names.json"
+    try:
+        data = json.loads((ROOT / inst_path).read_text(encoding="utf-8"))
+        for inst_type, names in data.items():
+            add(inst_type, inst_path)
+            for raw_name, info in names.items():
+                add(raw_name, inst_path)
+                if isinstance(info, str):
+                    if inst_type == "凝滞虚影" and "/" in info:
+                        for part in _re.split(r"\s*/\s*", info):
+                            add(part.strip(), inst_path)
+                    else:
+                        add(info, inst_path)
+    except Exception:
+        pass
+
+    return literals, refs
+
+
 # ---------------------------------------------------------------------------
 # 提取与校验
 # ---------------------------------------------------------------------------
@@ -232,6 +308,7 @@ def sync_catalogs(catalogs: dict[str, dict] | None = None) -> dict[str, int]:
 def extract() -> dict:
     """登记新文案并补齐各语言骨架，返回统计信息。"""
     literals, _, dynamic = collect_code_literals()
+    plurals, _ = collect_code_extras()
     catalogs, errors = load_catalogs()
     if errors:
         raise RuntimeError("翻译目录不可用: " + "; ".join(errors))
@@ -240,10 +317,16 @@ def extract() -> dict:
     new_keys = sorted(k for k in literals if k not in base)
     for key in new_keys:
         base[key] = key
-    if new_keys:
+    plural_new = 0
+    for key in sorted(plurals):
+        pk = key + PLURAL_SUFFIX
+        if pk not in base:
+            base[pk] = key  # zh 预填原文（中文单复数同形）
+            plural_new += 1
+    if new_keys or plural_new:
         dump_catalog(BASE_LOCALE, base)
     added = sync_catalogs(catalogs)
-    return {"new_keys": len(new_keys), "synced": added, "dynamic_calls": dynamic}
+    return {"new_keys": len(new_keys) + plural_new, "synced": added, "dynamic_calls": dynamic}
 
 
 def run_checks() -> tuple[list[str], list[str]]:
@@ -303,14 +386,24 @@ def run_checks() -> tuple[list[str], list[str]]:
         if empty:
             warnings.append(f"[{lang}] 有 {empty} 条待翻译（value 为空）")
 
-    # 5) 孤儿 key（可能由数据文件驱动）—— 仅警告
-    referenced = literals | {k + PLURAL_SUFFIX for k in literals}
+    # 5) 孤儿 key（数据源已声明的除外）—— 仅警告
+    data_literals, _ = collect_data_literals()
+    referenced = literals | {k + PLURAL_SUFFIX for k in literals} | data_literals
     orphans = base_keys - referenced
     if orphans:
-        warnings.append(f"zh_CN 有 {len(orphans)} 个 key 未在源码字面量中出现（数据驱动或历史遗留）")
+        warnings.append(f"zh_CN 有 {len(orphans)} 个 key 未在源码字面量中出现（历史遗留）")
 
     # 6) 多语言文档：表格行数一致、语言后缀命名合法 —— 仅警告
     warnings.extend(check_docs())
+
+    # 7) gettext 双轨目录（.pot/.po/.mo）
+    try:
+        from .po import check_po
+        po_errors, po_warnings = check_po(catalogs, formatted)
+        errors.extend(po_errors)
+        warnings.extend(po_warnings)
+    except ImportError:
+        pass
 
     return errors, warnings
 
