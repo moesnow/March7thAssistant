@@ -5870,147 +5870,147 @@ msgstr "선택 사항: 예) send(기본값) 또는 group"
 
 #: tasks/tool/screenshot.py:543
 msgid "Crop 表达式"
-msgstr ""
+msgstr "Crop 표현식"
 
 #: module/workflow/__init__.py:805
 msgid "ZIP 中未找到 workflow.yaml"
-msgstr ""
+msgstr "ZIP에서 workflow.yaml을 찾을 수 없습니다"
 
 #: module/workflow/__init__.py:796
 msgid "ZIP 文件包含不安全路径，已拒绝导入"
-msgstr ""
+msgstr "ZIP 파일에 안전하지 않은 경로가 포함되어 있어 가져오기를 거부했습니다"
 
 #: module/workflow/__init__.py:810
 msgid "workflow.yaml 格式无效"
-msgstr ""
+msgstr "workflow.yaml 형식이 올바르지 않습니다"
 
 #: tasks/tool/screenshot.py:240
 msgid "⭐保存为流程 OCR 区域⭐"
-msgstr ""
+msgstr "⭐워크플로 OCR 영역으로 저장⭐"
 
 #: module/workflow/__init__.py:926
 msgid "上一步返回 False"
-msgstr ""
+msgstr "이전 단계 결과 False"
 
 #: module/workflow/__init__.py:924
 msgid "上一步返回 True"
-msgstr ""
+msgstr "이전 단계 결과 True"
 
 #: module/workflow/__init__.py:889
 msgid "不含截图"
-msgstr ""
+msgstr "스크린샷 없음"
 
 #: module/workflow/__init__.py:779
 msgid "不是有效的 ZIP 文件"
-msgstr ""
+msgstr "유효한 ZIP 파일이 아닙니다"
 
 #: tasks/tool/screenshot.py:525
 msgid "保存流程素材"
-msgstr ""
+msgstr "워크플로 소재 저장"
 
 #: app/workflow_interface.py:758
 msgid "只有 if / for / while 才能包含子步骤"
-msgstr ""
+msgstr "하위 단계를 추가할 수 있는 것은 if / for / while 뿐입니다"
 
 #: tasks/tool/__init__.py:84
 msgid "图片文件不存在，请重新选择"
-msgstr ""
+msgstr "이미지 파일이 존재하지 않습니다. 다시 선택하세요"
 
 #: app/workflow_interface.py:490
 msgid "图片条件需要选择模板图片"
-msgstr ""
+msgstr "이미지 조건에는 템플릿 이미지를 선택해야 합니다"
 
 #: app/workflow_interface.py:1028
 msgid "导入失败"
-msgstr ""
+msgstr "가져오기 실패"
 
 #: app/workflow_interface.py:1015
 msgid "导出失败"
-msgstr ""
+msgstr "내보내기 실패"
 
 #: module/workflow/__init__.py:752
 msgid "工作流目录不存在"
-msgstr ""
+msgstr "워크플로 디렉터리가 존재하지 않습니다"
 
 #: app/workflow_interface.py:492
 msgid "文字条件需要填写目标文字"
-msgstr ""
+msgstr "텍스트 조건에는 대상 텍스트를 입력해야 합니다"
 
 #: module/update/update_engine.py:391
 msgid "无法为当前更新程序创建备份，请关闭占用后重试"
-msgstr ""
+msgstr "현재 업데이트 프로그램의 백업을 만들 수 없습니다. 사용 중인 프로그램을 닫고 다시 시도하세요"
 
 #: app/workflow_interface.py:949
 msgid "无法删除"
-msgstr ""
+msgstr "삭제할 수 없습니다"
 
 #: app/workflow_interface.py:744
 msgid "无法添加子步骤"
-msgstr ""
+msgstr "하위 단계를 추가할 수 없습니다"
 
 #: module/workflow/__init__.py:931
 msgid "无限次"
-msgstr ""
+msgstr "무제한"
 
 #: module/update/update_engine.py:484
 msgid "更新包信息不完整"
-msgstr ""
+msgstr "업데이트 패키지 정보가 불완전합니다"
 
 #: module/workflow/__init__.py:931
 msgid "最多"
-msgstr ""
+msgstr "최대"
 
 #: module/workflow/__init__.py:906
 msgid "未填写按键"
-msgstr ""
+msgstr "키 미입력"
 
 #: module/workflow/__init__.py:888
 msgid "未填写消息内容"
-msgstr ""
+msgstr "메시지 내용 미입력"
 
 #: module/workflow/__init__.py:884
 msgid "未填写音频路径"
-msgstr ""
+msgstr "오디오 파일 경로 미입력"
 
 #: module/workflow/__init__.py:848
 msgid "未选择模板"
-msgstr ""
+msgstr "템플릿 미선택"
 
 #: module/update/version_check.py:321
 msgid "没有找到合适的下载URL"
-msgstr ""
+msgstr "적절한 다운로드 URL을 찾을 수 없습니다"
 
 #: tasks/tool/screenshot.py:544
 msgid "流程 OCR 区域"
-msgstr ""
+msgstr "워크플로 OCR 영역"
 
 #: app/workflow_interface.py:459
 msgid "点击坐标需要填写检测区域"
-msgstr ""
+msgstr "좌표 클릭에는 검출 영역을 입력해야 합니다"
 
 #: app/workflow_interface.py:950
 msgid "至少需要保留一个流程"
-msgstr ""
+msgstr "최소 하나의 워크플로를 유지해야 합니다"
 
 #: tasks/tool/screenshot.py:525
 msgid "请先框选一个区域"
-msgstr ""
+msgstr "먼저 영역을 선택하세요"
 
 #: app/workflow_interface.py:745
 msgid "请先选中一个 if / for / while 节点"
-msgstr ""
+msgstr "먼저 if / for / while 노드를 선택하세요"
 
 #: app/workflow_interface.py:473
 msgid "请输入音频文件路径"
-msgstr ""
+msgstr "오디오 파일 경로를 입력하세요"
 
 #: app/workflow_interface.py:422
 msgid "选择音频文件"
-msgstr ""
+msgstr "오디오 파일 선택"
 
 #: tasks/game/__init__.py:86
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
-msgstr ""
+msgstr "게임 클라이언트 버전이 너무 낮습니다. 런처에서 최신 클라이언트를 다운로드하세요"
 
 #: app/card/pushsettingcard1.py:184
 msgid "剩余 {count} 天"

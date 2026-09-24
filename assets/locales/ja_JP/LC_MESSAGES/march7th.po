@@ -3720,7 +3720,7 @@ msgstr "Team: "
 #: app/card/pushsettingcard1.py:841
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
-msgstr[0] "{count} rule(s) configured"
+msgstr[0] "{count} 件のルールを設定済み"
 
 #: app/setting_interface.py:1140
 msgid "Windows 原生通知"
@@ -4643,7 +4643,7 @@ msgstr ""
 #: app/card/stationprioritysettingcard.py:299
 msgid "已启用自定义优先级，{count} 个站点已禁用"
 msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
-msgstr[0] "Custom priority enabled, {count} sites disabled"
+msgstr[0] "カスタム優先度を有効化、{count} 件の拠点を無効化"
 
 #: app/setting_interface.py:2471
 msgid "下载代理"
@@ -5899,147 +5899,147 @@ msgstr "オプション: 例：send（デフォルト）または group"
 
 #: tasks/tool/screenshot.py:543
 msgid "Crop 表达式"
-msgstr ""
+msgstr "Crop 式"
 
 #: module/workflow/__init__.py:805
 msgid "ZIP 中未找到 workflow.yaml"
-msgstr ""
+msgstr "ZIP 内に workflow.yaml が見つかりません"
 
 #: module/workflow/__init__.py:796
 msgid "ZIP 文件包含不安全路径，已拒绝导入"
-msgstr ""
+msgstr "ZIP ファイルに安全でないパスが含まれているため、インポートを拒否しました"
 
 #: module/workflow/__init__.py:810
 msgid "workflow.yaml 格式无效"
-msgstr ""
+msgstr "workflow.yaml の形式が無効です"
 
 #: tasks/tool/screenshot.py:240
 msgid "⭐保存为流程 OCR 区域⭐"
-msgstr ""
+msgstr "⭐フロー OCR 範囲として保存⭐"
 
 #: module/workflow/__init__.py:926
 msgid "上一步返回 False"
-msgstr ""
+msgstr "前ステップの結果が False"
 
 #: module/workflow/__init__.py:924
 msgid "上一步返回 True"
-msgstr ""
+msgstr "前ステップの結果が True"
 
 #: module/workflow/__init__.py:889
 msgid "不含截图"
-msgstr ""
+msgstr "スクリーンショットなし"
 
 #: module/workflow/__init__.py:779
 msgid "不是有效的 ZIP 文件"
-msgstr ""
+msgstr "有効な ZIP ファイルではありません"
 
 #: tasks/tool/screenshot.py:525
 msgid "保存流程素材"
-msgstr ""
+msgstr "フロー素材の保存"
 
 #: app/workflow_interface.py:758
 msgid "只有 if / for / while 才能包含子步骤"
-msgstr ""
+msgstr "子ステップを追加できるのは if / for / while のみです"
 
 #: tasks/tool/__init__.py:84
 msgid "图片文件不存在，请重新选择"
-msgstr ""
+msgstr "画像ファイルが存在しません。選択し直してください"
 
 #: app/workflow_interface.py:490
 msgid "图片条件需要选择模板图片"
-msgstr ""
+msgstr "画像条件にはテンプレート画像を選択してください"
 
 #: app/workflow_interface.py:1028
 msgid "导入失败"
-msgstr ""
+msgstr "インポート失敗"
 
 #: app/workflow_interface.py:1015
 msgid "导出失败"
-msgstr ""
+msgstr "エクスポート失敗"
 
 #: module/workflow/__init__.py:752
 msgid "工作流目录不存在"
-msgstr ""
+msgstr "フローのディレクトリが存在しません"
 
 #: app/workflow_interface.py:492
 msgid "文字条件需要填写目标文字"
-msgstr ""
+msgstr "テキスト条件には対象テキストを入力してください"
 
 #: module/update/update_engine.py:391
 msgid "无法为当前更新程序创建备份，请关闭占用后重试"
-msgstr ""
+msgstr "現在の更新プログラムのバックアップを作成できません。使用中のアプリを閉じて再試行してください"
 
 #: app/workflow_interface.py:949
 msgid "无法删除"
-msgstr ""
+msgstr "削除できません"
 
 #: app/workflow_interface.py:744
 msgid "无法添加子步骤"
-msgstr ""
+msgstr "子ステップを追加できません"
 
 #: module/workflow/__init__.py:931
 msgid "无限次"
-msgstr ""
+msgstr "無制限"
 
 #: module/update/update_engine.py:484
 msgid "更新包信息不完整"
-msgstr ""
+msgstr "更新パッケージの情報が不完全です"
 
 #: module/workflow/__init__.py:931
 msgid "最多"
-msgstr ""
+msgstr "最大"
 
 #: module/workflow/__init__.py:906
 msgid "未填写按键"
-msgstr ""
+msgstr "キー未入力"
 
 #: module/workflow/__init__.py:888
 msgid "未填写消息内容"
-msgstr ""
+msgstr "メッセージ内容未入力"
 
 #: module/workflow/__init__.py:884
 msgid "未填写音频路径"
-msgstr ""
+msgstr "音声ファイルパス未入力"
 
 #: module/workflow/__init__.py:848
 msgid "未选择模板"
-msgstr ""
+msgstr "テンプレート未選択"
 
 #: module/update/version_check.py:321
 msgid "没有找到合适的下载URL"
-msgstr ""
+msgstr "適切なダウンロード URL が見つかりません"
 
 #: tasks/tool/screenshot.py:544
 msgid "流程 OCR 区域"
-msgstr ""
+msgstr "フロー OCR 範囲"
 
 #: app/workflow_interface.py:459
 msgid "点击坐标需要填写检测区域"
-msgstr ""
+msgstr "座標クリックには検出範囲の入力が必要です"
 
 #: app/workflow_interface.py:950
 msgid "至少需要保留一个流程"
-msgstr ""
+msgstr "少なくとも 1 つのフローを保持する必要があります"
 
 #: tasks/tool/screenshot.py:525
 msgid "请先框选一个区域"
-msgstr ""
+msgstr "先に範囲を選択してください"
 
 #: app/workflow_interface.py:745
 msgid "请先选中一个 if / for / while 节点"
-msgstr ""
+msgstr "先に if / for / while ノードを選択してください"
 
 #: app/workflow_interface.py:473
 msgid "请输入音频文件路径"
-msgstr ""
+msgstr "音声ファイルのパスを入力してください"
 
 #: app/workflow_interface.py:422
 msgid "选择音频文件"
-msgstr ""
+msgstr "音声ファイルを選択"
 
 #: tasks/game/__init__.py:86
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
-msgstr ""
+msgstr "ゲームクライアントのバージョンが古すぎます。ランチャーから最新のクライアントをダウンロードしてください"
 
 #: app/card/pushsettingcard1.py:184
 msgid "剩余 {count} 天"
