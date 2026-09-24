@@ -36,4 +36,5 @@ class TestZhTwTaiwanVocabulary:
             raise RuntimeError("no opencc")
         monkeypatch.setattr(loc, "OpenCC", boom, raising=False)
         monkeypatch.setattr("opencc.OpenCC", boom)
+        monkeypatch.setattr(loc, "_s2t_converter", None)  # 模拟首次构造
         assert _s2t("任意") is None

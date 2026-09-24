@@ -104,9 +104,28 @@ class TestTr:
             raise RuntimeError("opencc 不可用")
 
         monkeypatch.setattr(opencc, "OpenCC", boom)
+        monkeypatch.setattr(loc, "_s2t_converter", None)  # 模拟首次构造
         fallback = _build(tmp_path, "en_US", entries={"设置": "Settings"})
         env("zh_TW", fallback=fallback)
         assert tr("设置") == "Settings"
+
+    def test_s2t_reuses_converter_instance(self, env, monkeypatch):
+        """OpenCC 实例构造/析构开销在百毫秒级，缺译回退必须复用同一实例，不能每次新建。"""
+        import opencc
+
+        created = []
+        real_opencc = opencc.OpenCC
+
+        def counting_factory(*args, **kwargs):
+            created.append(1)
+            return real_opencc(*args, **kwargs)
+
+        monkeypatch.setattr(opencc, "OpenCC", counting_factory)
+        monkeypatch.setattr(loc, "_s2t_converter", None)  # 模拟首次构造
+        env("zh_TW")
+        assert tr("设置") == "設定"
+        assert tr("另一个需要转换的文案") != ""
+        assert len(created) == 1
 
     def test_en_us_fallback_catalog(self, tmp_path, env):
         trans = _build(tmp_path, "ja_JP", entries={"s1": "ja"})

@@ -26,7 +26,12 @@ if getattr(sys, 'frozen', False):
 else:
     _locale_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "locales")
 
-# 简体转繁体转换器（OpenCC）
+# 简体转繁体转换器（OpenCC）缓存实例。
+# OpenCC 实例的构造/析构开销在百毫秒级（每次都要加载词库），而 convert() 是微秒级；
+# 缺译回退的每次 tr()/tn() 都会走到这里，必须复用同一实例，不能每次新建。
+_s2t_converter = None
+
+
 def _s2t(text: str):
     """
     Simplified->Traditional conversion (OpenCC, s2twp)。
@@ -41,10 +46,12 @@ def _s2t(text: str):
     """
     if not text:
         return text
+    global _s2t_converter
     try:
-        from opencc import OpenCC
-        converter = OpenCC('s2twp')
-        return converter.convert(text)
+        if _s2t_converter is None:
+            from opencc import OpenCC
+            _s2t_converter = OpenCC('s2twp')
+        return _s2t_converter.convert(text)
     except Exception:
         return None
 
