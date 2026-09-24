@@ -90,23 +90,23 @@ msgstr "贊助"
 msgid "体力"
 msgstr "體力"
 
-#: app/card/card_edit_dialog.py:42
+#: app/setting_interface.py:2751
 msgid "日常"
 msgstr "日常"
 
-#: app/card/card_edit_dialog.py:53
+#: app/setting_interface.py:2752
 msgid "货币战争"
 msgstr "貨幣戰爭"
 
-#: app/card/card_edit_dialog.py:63
+#: app/setting_interface.py:595
 msgid "差分宇宙"
 msgstr "差分宇宙"
 
-#: app/card/card_edit_dialog.py:80
+#: app/setting_interface.py:2755
 msgid "锄大地"
 msgstr "鋤大地"
 
-#: app/card/card_edit_dialog.py:93
+#: app/setting_interface.py:803
 msgid "逐光捡金"
 msgstr "逐光撿金"
 
@@ -142,7 +142,7 @@ msgstr "體力設定"
 msgid "体力计划"
 msgstr "體力計畫"
 
-#: app/card/pushsettingcard1.py:813
+#: app/card/pushsettingcard1.py:815
 msgid "配置"
 msgstr "配置"
 
@@ -338,7 +338,7 @@ msgstr "郵件"
 msgid "支援"
 msgstr "支援"
 
-#: app/card/card_edit_dialog.py:47
+#: app/help_interface.py:190
 msgid "每日实训"
 msgstr "每日實訓"
 
@@ -1078,7 +1078,7 @@ msgstr ""
 msgid "显示主界面"
 msgstr "顯示主介面"
 
-#: app/card/card_edit_dialog.py:35
+#: app/main_window.py:338
 msgid "完整运行"
 msgstr "完整運行"
 
@@ -1154,55 +1154,55 @@ msgstr "程式已縮小至系統匣"
 msgid "停止任务"
 msgstr "停止任務"
 
-#: app/home_interface.py:29
+#: app/home_interface.py:28
 msgid "更换背景图片"
 msgstr "更換背景圖片"
 
-#: app/home_interface.py:36
+#: app/home_interface.py:35
 msgid "恢复默认图片"
 msgstr "恢復預設圖片"
 
-#: app/home_interface.py:43
+#: app/home_interface.py:42
 msgid "三月七小助手"
 msgstr "三月七小助手"
 
-#: app/home_interface.py:85
+#: app/home_interface.py:70
 msgid "选择图片"
 msgstr "選擇圖片"
 
-#: app/home_interface.py:181
+#: app/home_interface.py:165
 msgid "任务 >"
 msgstr "任務 >"
 
-#: app/card/card_edit_dialog.py:57
+#: app/card/card_edit_dialog.py:32
 msgid "运行一次"
 msgstr "運行一次"
 
-#: app/card/card_edit_dialog.py:58
+#: app/card/card_edit_dialog.py:32
 msgid "循环运行"
 msgstr "循環運行"
 
-#: app/card/card_edit_dialog.py:84
+#: app/card/card_edit_dialog.py:32
 msgid "快速启动 ⭐"
 msgstr "快速啟動 ⭐"
 
-#: app/card/card_edit_dialog.py:85
+#: app/card/card_edit_dialog.py:32
 msgid "原版运行"
 msgstr "原版運行"
 
-#: app/card/card_edit_dialog.py:86
+#: app/card/card_edit_dialog.py:32
 msgid "更新锄大地"
 msgstr "更新鋤大地"
 
-#: app/card/card_edit_dialog.py:87
+#: app/card/card_edit_dialog.py:32
 msgid "重置配置文件"
 msgstr "重置設定檔"
 
-#: app/card/card_edit_dialog.py:88
+#: app/card/card_edit_dialog.py:32
 msgid "打开程序目录"
 msgstr "打開程式目錄"
 
-#: app/card/card_edit_dialog.py:89
+#: app/card/card_edit_dialog.py:32
 msgid "打开项目主页"
 msgstr "打開專案首頁"
 
@@ -1334,7 +1334,7 @@ msgstr "確認繼續並允許啟用觸控模式？"
 msgid "确认"
 msgstr "確認"
 
-#: app/card/card_edit_dialog.py:369
+#: app/card/card_edit_dialog.py:414
 msgid "取消"
 msgstr "取消"
 
@@ -1390,39 +1390,39 @@ msgstr "無法獲取最新兌換碼"
 msgid "获取服务器信息失败"
 msgstr "獲取伺服器資訊失敗"
 
-#: app/card/pushsettingcard1.py:487
+#: app/card/pushsettingcard1.py:489
 msgid "时间无效"
 msgstr "時間無效"
 
-#: app/card/pushsettingcard1.py:488
+#: app/card/pushsettingcard1.py:490
 msgid "所选时间无法转换为时间戳，已使用默认时间"
 msgstr "所選時間無法轉換為時間戳記，已使用預設時間"
 
-#: app/card/pushsettingcard1.py:508
+#: app/card/pushsettingcard1.py:510
 msgid "按下要绑定的按键"
 msgstr "按下要綁定的按鍵"
 
-#: app/card/pushsettingcard1.py:511
+#: app/card/pushsettingcard1.py:513
 msgid "按住以修改"
 msgstr "按住以修改"
 
-#: app/card/pushsettingcard1.py:519
+#: app/card/pushsettingcard1.py:521
 msgid "已改为 {key}"
 msgstr "已改為 {key}"
 
-#: app/card/pushsettingcard1.py:705
+#: app/card/pushsettingcard1.py:707
 msgid "修改队伍1"
 msgstr "修改隊伍 1"
 
-#: app/card/pushsettingcard1.py:711
+#: app/card/pushsettingcard1.py:713
 msgid "修改队伍2"
 msgstr "修改隊伍 2"
 
-#: app/card/pushsettingcard1.py:717
+#: app/card/pushsettingcard1.py:719
 msgid "交换队伍"
 msgstr "交換隊伍"
 
-#: app/card/pushsettingcard1.py:731
+#: app/card/pushsettingcard1.py:733
 msgid ""
 "队伍1: {team1}\n"
 "队伍2: {team2}"
@@ -1430,27 +1430,27 @@ msgstr ""
 "隊伍 1: {team1}\n"
 "隊伍 2: {team2}"
 
-#: app/card/pushsettingcard1.py:747
+#: app/card/pushsettingcard1.py:749
 msgid "交换成功"
 msgstr "交換成功"
 
-#: app/card/pushsettingcard1.py:748
+#: app/card/pushsettingcard1.py:750
 msgid "队伍1和队伍2已成功交换"
 msgstr "隊伍 1 和隊伍 2 已成功交換"
 
-#: app/card/pushsettingcard1.py:757
+#: app/card/pushsettingcard1.py:759
 msgid "队伍1"
 msgstr "隊伍 1"
 
-#: app/card/pushsettingcard1.py:760
+#: app/card/pushsettingcard1.py:762
 msgid "队伍2"
 msgstr "隊伍 2"
 
-#: app/card/pushsettingcard1.py:786
+#: app/card/pushsettingcard1.py:788
 msgid "暂无计划"
 msgstr "暫無計畫"
 
-#: app/card/pushsettingcard1.py:787
+#: app/card/pushsettingcard1.py:789
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "已設定 {count} 項計畫"
@@ -1841,7 +1841,7 @@ msgstr "通知"
 msgid "添加"
 msgstr "新增"
 
-#: app/home_interface.py:184
+#: app/home_interface.py:168
 msgid "编辑"
 msgstr "編輯"
 
@@ -2027,7 +2027,7 @@ msgstr "設定為目前時間"
 msgid "说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动"
 msgstr "說明：清體力是根據選擇的副本類型來判斷，副本名稱也會用於雙倍活動"
 
-#: app/card/messagebox_custom.py:1192
+#: app/card/messagebox_custom.py:602
 msgid "输入错误"
 msgstr "輸入錯誤"
 
@@ -2215,18 +2215,23 @@ msgstr "正在獲取躍遷資料..."
 msgid "跃迁数据获取完成(＾∀＾●)"
 msgstr "躍遷資料獲取完成(＾∀＾●)"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已过期"
 msgstr "Mirror醬 CDK 已過期"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 错误"
 msgstr "Mirror醬 CDK 錯誤"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 今日下载次数已达上限"
 msgstr "Mirror醬 CDK 今日下載次數已達上限"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 类型和待下载的资源不匹配"
 msgstr "Mirror醬 CDK 類型和待下載的資源不符"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已被封禁"
 msgstr "Mirror醬 CDK 已被封禁"
 
@@ -2262,11 +2267,11 @@ msgstr "請稍候，更新檢查仍在進行中"
 msgid "未命名"
 msgstr "未命名"
 
-#: app/card/card_edit_dialog.py:48
+#: utils/tasks.py:15
 msgid "清体力"
 msgstr "清體力"
 
-#: app/card/card_edit_dialog.py:97
+#: utils/tasks.py:15
 msgid "混沌回忆"
 msgstr "混沌回憶"
 
@@ -2284,11 +2289,11 @@ msgstr ""
 msgid "锄地"
 msgstr "鋤地"
 
-#: app/card/card_edit_dialog.py:99
+#: utils/tasks.py:15
 msgid "末日幻影"
 msgstr "末日幻影"
 
-#: app/card/card_edit_dialog.py:98
+#: utils/tasks.py:15
 msgid "虚构叙事"
 msgstr "虛構敘事"
 
@@ -2296,7 +2301,7 @@ msgstr "虛構敘事"
 msgid "请确认是否已打开游戏抽卡记录"
 msgstr "請確認是否已打開遊戲抽卡紀錄"
 
-#: utils/tasks.py:14
+#: utils/tasks.py:15
 msgid "更新游戏"
 msgstr "更新遊戲"
 
@@ -2304,31 +2309,31 @@ msgstr "更新遊戲"
 msgid "预下载游戏"
 msgstr "預下載遊戲"
 
-#: utils/tasks.py:24
+#: utils/tasks.py:15
 msgid "货币战争循环"
 msgstr "貨幣戰爭循環"
 
-#: utils/tasks.py:25
+#: utils/tasks.py:15
 msgid "货币战争中途接管"
 msgstr "貨幣戰爭中途接管"
 
-#: utils/tasks.py:28
+#: utils/tasks.py:15
 msgid "模拟宇宙原生界面"
 msgstr "模擬宇宙原生介面"
 
-#: utils/tasks.py:29
+#: utils/tasks.py:15
 msgid "锄大地原生界面"
 msgstr "鋤大地原生介面"
 
-#: utils/tasks.py:30
+#: utils/tasks.py:15
 msgid "模拟宇宙更新"
 msgstr "模擬宇宙更新"
 
-#: utils/tasks.py:31
+#: utils/tasks.py:15
 msgid "锄大地更新"
 msgstr "鋤大地更新"
 
-#: utils/tasks.py:32
+#: utils/tasks.py:15
 msgid "触屏模式更新"
 msgstr "觸屏模式更新"
 
@@ -3216,15 +3221,19 @@ msgstr "末日獸"
 msgid "毁灭的开端"
 msgstr "毀滅的開端"
 
+#: assets/config/special_programs.jsonc
 msgid "原神 BetterGI"
 msgstr "原神 BetterGI"
 
+#: assets/config/special_programs.jsonc
 msgid "绝区零 一条龙"
 msgstr "絕區零 一條龍"
 
+#: assets/config/special_programs.jsonc
 msgid "鸣潮 ok-ww"
 msgstr "鳴潮 ok-ww"
 
+#: assets/config/special_programs.jsonc
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
@@ -3389,7 +3398,7 @@ msgstr "啟用除錯模式"
 msgid "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗），用于调试自动化识别效果。仅 Windows 生效。"
 msgstr "開啟後會在螢幕上即時繪製檢測範圍框（透明懸浮窗），用於除錯自動化識別效果。僅 Windows 生效。"
 
-#: app/card/pushsettingcard1.py:843
+#: app/card/pushsettingcard1.py:845
 msgid "为特定的副本配置队伍"
 msgstr "爲特定的副本配置隊伍"
 
@@ -3397,7 +3406,7 @@ msgstr "爲特定的副本配置隊伍"
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr "當沒有匹配到任何規則時，默認出戰隊伍："
 
-#: app/card/pushsettingcard1.py:841
+#: app/card/pushsettingcard1.py:843
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] "已配置 {count} 項規則"
@@ -4082,43 +4091,43 @@ msgstr "消息推送總開關"
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
 msgstr "自動戰鬥檢測 (檢測到未自動戰鬥時按V開啓)"
 
-#: utils/tasks.py:26
+#: utils/tasks.py:15
 msgid "差分宇宙循环"
 msgstr "差分宇宙循環"
 
-#: app/card/card_edit_dialog.py:69
+#: utils/tasks.py:15
 msgid "差分宇宙中途接管"
 msgstr "差分宇宙中途接管"
 
-#: app/card/card_edit_dialog.py:67
+#: app/card/card_edit_dialog.py:32
 msgid "差分宇宙运行一次 ⭐"
 msgstr "差分宇宙運行一次 ⭐"
 
-#: app/card/card_edit_dialog.py:68
+#: app/card/card_edit_dialog.py:32
 msgid "差分宇宙循环运行 ⭐"
 msgstr "差分宇宙循環運行 ⭐"
 
-#: app/card/card_edit_dialog.py:70
+#: app/card/card_edit_dialog.py:32
 msgid "模拟宇宙快速启动（停止维护）"
 msgstr "模擬宇宙快速啓動（停止維護）"
 
-#: app/card/card_edit_dialog.py:71
+#: app/card/card_edit_dialog.py:32
 msgid "模拟宇宙原版运行（停止维护）"
 msgstr "模擬宇宙原版運行（停止維護）"
 
-#: app/card/card_edit_dialog.py:72
+#: app/card/card_edit_dialog.py:32
 msgid "更新模拟宇宙（停止维护）"
 msgstr "更新模擬宇宙（停止維護）"
 
-#: app/card/card_edit_dialog.py:73
+#: app/card/card_edit_dialog.py:32
 msgid "重置模拟宇宙配置文件（停止维护）"
 msgstr "重置模擬宇宙配置文件（停止維護）"
 
-#: app/card/card_edit_dialog.py:74
+#: app/card/card_edit_dialog.py:32
 msgid "打开模拟宇宙目录（停止维护）"
 msgstr "打開模擬宇宙目錄（停止維護）"
 
-#: app/card/card_edit_dialog.py:75
+#: app/card/card_edit_dialog.py:32
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "打開模擬宇宙項目主頁（停止維護）"
 
@@ -4206,86 +4215,87 @@ msgstr "零號 / 千星"
 msgid "鎏金追忆"
 msgstr "鎏金追憶"
 
-#: app/card/card_edit_dialog.py:20
+#: app/card/card_edit_dialog.py:19
 msgid "重置模拟宇宙配置文件"
 msgstr "重置模擬宇宙配置文件"
 
-#: app/card/card_edit_dialog.py:21
+#: app/card/card_edit_dialog.py:19
 msgid "打开模拟宇宙目录"
 msgstr "打開模擬宇宙目錄"
 
-#: app/card/card_edit_dialog.py:22
+#: app/card/card_edit_dialog.py:19
 msgid "打开模拟宇宙项目主页"
 msgstr "打開模擬宇宙項目主頁"
 
-#: app/card/card_edit_dialog.py:23
+#: app/card/card_edit_dialog.py:19
 msgid "重置锄大地配置文件"
 msgstr "重置鋤大地配置文件"
 
-#: app/card/card_edit_dialog.py:24
+#: app/card/card_edit_dialog.py:19
 msgid "打开锄大地程序目录"
 msgstr "打開鋤大地程序目錄"
 
-#: app/card/card_edit_dialog.py:25
+#: app/card/card_edit_dialog.py:19
 msgid "打开锄大地项目主页"
 msgstr "打開鋤大地項目主頁"
 
-#: app/card/card_edit_dialog.py:327
+#: app/card/card_edit_dialog.py:372
 msgid "编辑主页卡片"
 msgstr "編輯主頁卡片"
 
-#: app/card/card_edit_dialog.py:183
+#: app/card/card_edit_dialog.py:227
 msgid "图标"
 msgstr "圖標"
 
-#: app/card/card_edit_dialog.py:195
+#: app/card/card_edit_dialog.py:239
 msgid "标题："
 msgstr "標題："
 
-#: app/card/card_edit_dialog.py:198
+#: app/card/card_edit_dialog.py:242
 msgid "卡片标题"
 msgstr "卡片標題"
 
-#: app/card/card_edit_dialog.py:226
+#: app/card/card_edit_dialog.py:270
 msgid "操作类型："
 msgstr "操作類型："
 
-#: app/card/card_edit_dialog.py:228
+#: app/card/card_edit_dialog.py:272
 msgid "单个任务"
 msgstr "單個任務"
 
-#: app/card/card_edit_dialog.py:228
+#: app/card/card_edit_dialog.py:272
 msgid "任务菜单"
 msgstr "任務菜單"
 
-#: app/card/card_edit_dialog.py:143
+#: app/card/card_edit_dialog.py:176
 msgid "任务："
 msgstr "任務："
 
-#: app/card/card_edit_dialog.py:256
+#: app/card/card_edit_dialog.py:300
 msgid "添加菜单项"
 msgstr "添加菜單項"
 
-#: app/card/card_edit_dialog.py:119
+#: app/card/card_edit_dialog.py:154
 msgid "菜单项名称"
 msgstr "菜單項名稱"
 
-#: app/card/card_edit_dialog.py:141
+#: app/card/card_edit_dialog.py:174
 msgid "名称："
 msgstr "名稱："
 
-#: app/card/card_edit_dialog.py:362
+#: app/card/card_edit_dialog.py:407
 msgid "添加卡片"
 msgstr "添加卡片"
 
-#: app/card/card_edit_dialog.py:364
+#: app/card/card_edit_dialog.py:409
 msgid "恢复默认"
 msgstr "恢復默認"
 
-#: app/card/card_edit_dialog.py:367
+#: app/card/card_edit_dialog.py:412
 msgid "确定"
 msgstr "確定"
 
+#: assets/config/special_programs.jsonc
 msgid "重返未来 M9A"
 msgstr "重返未來 M9A"
 
@@ -4314,7 +4324,7 @@ msgstr "下載代理"
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "留空則使用系統代理；支持 http:// 和 socks5://"
 
-#: app/card/card_edit_dialog.py:282
+#: app/card/card_edit_dialog.py:326
 msgid "选择图标"
 msgstr "選擇圖標"
 
@@ -4622,6 +4632,7 @@ msgstr "子步驟"
 msgid "个"
 msgstr "個"
 
+#: module/workflow/__init__.py:37
 msgid "点击文字"
 msgstr "點擊文字"
 
@@ -4653,6 +4664,7 @@ msgstr "重試"
 msgid "次"
 msgstr "次"
 
+#: module/workflow/__init__.py:37
 msgid "点击图片"
 msgstr "點擊圖片"
 
@@ -4660,15 +4672,19 @@ msgstr "點擊圖片"
 msgid "阈值"
 msgstr "閾值"
 
+#: module/workflow/__init__.py:37
 msgid "如果"
 msgstr "如果"
 
+#: module/workflow/__init__.py:57
 msgid "文字存在"
 msgstr "文字存在"
 
+#: module/workflow/__init__.py:37
 msgid "播放音频"
 msgstr "播放音頻"
 
+#: module/workflow/__init__.py:37
 msgid "等待"
 msgstr "等待"
 
@@ -4684,21 +4700,27 @@ msgstr "用於給界面或動畫留出時間"
 msgid "请输入流程名称"
 msgstr "請輸入流程名稱"
 
+#: module/workflow/__init__.py:37
 msgid "查找图片"
 msgstr "查找圖片"
 
+#: module/workflow/__init__.py:37
 msgid "查找文字"
 msgstr "查找文字"
 
+#: module/workflow/__init__.py:37
 msgid "按下按键"
 msgstr "按下按鍵"
 
+#: module/workflow/__init__.py:37
 msgid "条件循环"
 msgstr "條件循環"
 
+#: module/workflow/__init__.py:57
 msgid "图片存在"
 msgstr "圖片存在"
 
+#: module/workflow/__init__.py:57
 msgid "上一步成功"
 msgstr "上一步成功"
 
@@ -4810,7 +4832,7 @@ msgstr "按下時長"
 msgid "请选择模板图片"
 msgstr "請選擇模板圖片"
 
-#: app/card/card_edit_dialog.py:432
+#: app/card/card_edit_dialog.py:477
 msgid "保存失败"
 msgstr "保存失敗"
 
@@ -4882,6 +4904,7 @@ msgstr "保存選取截圖"
 msgid "全屏"
 msgstr "全屏"
 
+#: module/workflow/__init__.py:37
 msgid "点击坐标"
 msgstr "點擊座標"
 
@@ -4889,12 +4912,15 @@ msgstr "點擊座標"
 msgid "执行选中步骤"
 msgstr "執行選中步驟"
 
+#: module/workflow/__init__.py:57
 msgid "图片不存在"
 msgstr "圖片不存在"
 
+#: module/workflow/__init__.py:57
 msgid "文字不存在"
 msgstr "文字不存在"
 
+#: module/workflow/__init__.py:57
 msgid "上一步失败"
 msgstr "上一步失敗"
 
@@ -4914,12 +4940,15 @@ msgstr "包含"
 msgid "未填写文字"
 msgstr "未填寫文字"
 
+#: module/workflow/__init__.py:37
 msgid "结束循环"
 msgstr "結束循環"
 
+#: module/workflow/__init__.py:37
 msgid "继续循环"
 msgstr "繼續循環"
 
+#: module/workflow/__init__.py:37
 msgid "切换界面"
 msgstr "切換介面"
 
@@ -4959,15 +4988,15 @@ msgstr "重命名流程"
 msgid "请输入新的流程名称"
 msgstr "請輸入新的流程名稱"
 
-#: tasks/tool/screenshot.py:540
+#: tasks/tool/screenshot.py:543
 msgid "流程图像模板"
 msgstr "流程圖像模板"
 
-#: tasks/tool/screenshot.py:549
+#: tasks/tool/screenshot.py:552
 msgid "已保存到"
 msgstr "已保存到"
 
-#: tasks/tool/screenshot.py:549
+#: tasks/tool/screenshot.py:552
 msgid "已复制到剪贴板"
 msgstr "已複製到剪貼板"
 
@@ -4983,6 +5012,7 @@ msgstr "自動短信 (自動點擊關閉手機短信頁面)"
 msgid "流程说明"
 msgstr "流程說明"
 
+#: tasks/tool/screenshot.py:384
 msgid "结果"
 msgstr "結果"
 
@@ -4998,6 +5028,7 @@ msgstr "條件"
 msgid "成功"
 msgstr "成功"
 
+#: module/workflow/__init__.py:37
 msgid "终止流程"
 msgstr "終止流程"
 
@@ -5037,6 +5068,7 @@ msgstr ""
 msgid "我已了解，继续开启"
 msgstr "我已了解，繼續開啟"
 
+#: assets/config/special_programs.jsonc
 msgid "终末地 MaaEnd"
 msgstr "終末地 MaaEnd"
 
@@ -5068,7 +5100,7 @@ msgstr "正在啓動新版本..."
 msgid "更新失败"
 msgstr "更新失敗"
 
-#: utils/tasks.py:16
+#: utils/tasks.py:15
 msgid "更新三月七小助手"
 msgstr "更新三月七小助手"
 
@@ -5200,11 +5232,11 @@ msgstr "正在解壓更新包..."
 msgid "检测到新版本：{version}"
 msgstr "檢測到新版本：{version}"
 
-#: app/card/card_edit_dialog.py:445
+#: app/card/card_edit_dialog.py:490
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr "任務選單中的選單項目名稱不能為空"
 
-#: app/card/card_edit_dialog.py:433
+#: app/card/card_edit_dialog.py:478
 msgid "卡片标题不能为空"
 msgstr "卡片標題不能為空"
 
@@ -5358,6 +5390,7 @@ msgstr "可選參數，是否以純文本格式發送郵件（適用於 Outlook 
 msgid "请选择要运行的流程编排"
 msgstr "請選擇要執行的流程編排"
 
+#: module/workflow/__init__.py:37
 msgid "滑动鼠标"
 msgstr "拖曳滑鼠"
 
@@ -5429,7 +5462,7 @@ msgstr "發送模式"
 msgid "可选参数，例如 send（默认）或 group"
 msgstr "可選參數，例如 send（默認）或 group"
 
-#: tasks/tool/screenshot.py:543
+#: tasks/tool/screenshot.py:546
 msgid "Crop 表达式"
 msgstr "Crop 表達式"
 
@@ -5465,7 +5498,7 @@ msgstr "不含截圖"
 msgid "不是有效的 ZIP 文件"
 msgstr "不是有效的 ZIP 文件"
 
-#: tasks/tool/screenshot.py:525
+#: tasks/tool/screenshot.py:528
 msgid "保存流程素材"
 msgstr "保存流程素材"
 
@@ -5541,7 +5574,7 @@ msgstr "未選擇模板"
 msgid "没有找到合适的下载URL"
 msgstr "沒有找到合適的下載URL"
 
-#: tasks/tool/screenshot.py:544
+#: tasks/tool/screenshot.py:547
 msgid "流程 OCR 区域"
 msgstr "流程 OCR 區域"
 
@@ -5553,7 +5586,7 @@ msgstr "點擊座標需要填寫檢測區域"
 msgid "至少需要保留一个流程"
 msgstr "至少需要保留一個流程"
 
-#: tasks/tool/screenshot.py:525
+#: tasks/tool/screenshot.py:528
 msgid "请先框选一个区域"
 msgstr "請先框選一個區域"
 

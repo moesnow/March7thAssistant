@@ -141,6 +141,17 @@ class _LiteralCollector(ast.NodeVisitor):
 
 
 
+def _rel(path) -> str:
+    """源码文件名统一为仓库相对路径（POSIX 分隔符）。
+
+    # 引用写进 .po/.pot，绝对路径会泄露本机目录结构并在不同机器间产生整文件 diff。
+    """
+    try:
+        return Path(path).relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path).replace("\\", "/")
+
+
 def iter_source_files():
     """遍历参与提取的源码文件。"""
     for d in SCAN_DIRS:
@@ -184,7 +195,7 @@ def collect_code_extras() -> tuple[set[str], dict, dict]:
     for path in iter_source_files():
         try:
             source = path.read_text(encoding="utf-8", errors="ignore")
-            collected = collect_calls_from_source(source, str(path).replace("\\", "/"))
+            collected = collect_calls_from_source(source, _rel(path))
         except (SyntaxError, ValueError):
             continue
         plurals |= collected[3]
@@ -203,7 +214,7 @@ def collect_code_literals() -> tuple[set[str], set[str], int]:
     for path in iter_source_files():
         try:
             source = path.read_text(encoding="utf-8", errors="ignore")
-            collected = collect_literals_from_source(source, str(path))
+            collected = collect_literals_from_source(source, _rel(path))
         except (SyntaxError, ValueError):
             continue
         literals |= collected[0]

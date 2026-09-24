@@ -90,23 +90,23 @@ msgstr "후원"
 msgid "体力"
 msgstr "개척력"
 
-#: app/card/card_edit_dialog.py:42
+#: app/setting_interface.py:2751
 msgid "日常"
 msgstr "일일 숙제"
 
-#: app/card/card_edit_dialog.py:53
+#: app/setting_interface.py:2752
 msgid "货币战争"
 msgstr "신용 포인트 파밍"
 
-#: app/card/card_edit_dialog.py:63
+#: app/setting_interface.py:595
 msgid "差分宇宙"
 msgstr "차분화 우주"
 
-#: app/card/card_edit_dialog.py:80
+#: app/setting_interface.py:2755
 msgid "锄大地"
 msgstr "토벌"
 
-#: app/card/card_edit_dialog.py:93
+#: app/setting_interface.py:803
 msgid "逐光捡金"
 msgstr "저금통 잡기"
 
@@ -142,7 +142,7 @@ msgstr "개척력 설정"
 msgid "体力计划"
 msgstr "개척력 계획"
 
-#: app/card/pushsettingcard1.py:813
+#: app/card/pushsettingcard1.py:815
 msgid "配置"
 msgstr "설정"
 
@@ -339,7 +339,7 @@ msgstr "우편"
 msgid "支援"
 msgstr "지원"
 
-#: app/card/card_edit_dialog.py:47
+#: app/help_interface.py:190
 msgid "每日实训"
 msgstr "일일 훈련"
 
@@ -1081,7 +1081,7 @@ msgstr ""
 msgid "显示主界面"
 msgstr "메인 화면 표시"
 
-#: app/card/card_edit_dialog.py:35
+#: app/main_window.py:338
 msgid "完整运行"
 msgstr "전체 실행"
 
@@ -1157,55 +1157,55 @@ msgstr "프로그램이 트레이로 최소화되었습니다"
 msgid "停止任务"
 msgstr "임무 중지"
 
-#: app/home_interface.py:29
+#: app/home_interface.py:28
 msgid "更换背景图片"
 msgstr "배경 이미지 변경"
 
-#: app/home_interface.py:36
+#: app/home_interface.py:35
 msgid "恢复默认图片"
 msgstr "기본 이미지 복구"
 
-#: app/home_interface.py:43
+#: app/home_interface.py:42
 msgid "三月七小助手"
 msgstr ""
 
-#: app/home_interface.py:85
+#: app/home_interface.py:70
 msgid "选择图片"
 msgstr "이미지 선택"
 
-#: app/home_interface.py:181
+#: app/home_interface.py:165
 msgid "任务 >"
 msgstr "임무 >"
 
-#: app/card/card_edit_dialog.py:57
+#: app/card/card_edit_dialog.py:32
 msgid "运行一次"
 msgstr "1회 실행"
 
-#: app/card/card_edit_dialog.py:58
+#: app/card/card_edit_dialog.py:32
 msgid "循环运行"
 msgstr "반복 실행"
 
-#: app/card/card_edit_dialog.py:84
+#: app/card/card_edit_dialog.py:32
 msgid "快速启动 ⭐"
 msgstr "빠른 시작 ⭐"
 
-#: app/card/card_edit_dialog.py:85
+#: app/card/card_edit_dialog.py:32
 msgid "原版运行"
 msgstr "원본 실행"
 
-#: app/card/card_edit_dialog.py:86
+#: app/card/card_edit_dialog.py:32
 msgid "更新锄大地"
 msgstr "필드 정리 업데이트"
 
-#: app/card/card_edit_dialog.py:87
+#: app/card/card_edit_dialog.py:32
 msgid "重置配置文件"
 msgstr "설정 파일 초기화"
 
-#: app/card/card_edit_dialog.py:88
+#: app/card/card_edit_dialog.py:32
 msgid "打开程序目录"
 msgstr "프로그램 폴더 열기"
 
-#: app/card/card_edit_dialog.py:89
+#: app/card/card_edit_dialog.py:32
 msgid "打开项目主页"
 msgstr "프로젝트 홈페이지 열기"
 
@@ -1339,7 +1339,7 @@ msgstr "계속 진행하고 터치스크린 모드를 활성화하시겠습니�
 msgid "确认"
 msgstr "확인"
 
-#: app/card/card_edit_dialog.py:369
+#: app/card/card_edit_dialog.py:414
 msgid "取消"
 msgstr "취소"
 
@@ -1395,39 +1395,39 @@ msgstr "최신 리딤코드를 가져올 수 없음"
 msgid "获取服务器信息失败"
 msgstr "서버 정보 가져오기 실패"
 
-#: app/card/pushsettingcard1.py:487
+#: app/card/pushsettingcard1.py:489
 msgid "时间无效"
 msgstr "시간이 유효하지 않음"
 
-#: app/card/pushsettingcard1.py:488
+#: app/card/pushsettingcard1.py:490
 msgid "所选时间无法转换为时间戳，已使用默认时间"
 msgstr "선택한 시간을 타임스탬프로 변환할 수 없어 기본 시간을 사용했습니다"
 
-#: app/card/pushsettingcard1.py:508
+#: app/card/pushsettingcard1.py:510
 msgid "按下要绑定的按键"
 msgstr "바인딩할 키를 누르세요"
 
-#: app/card/pushsettingcard1.py:511
+#: app/card/pushsettingcard1.py:513
 msgid "按住以修改"
 msgstr "키를 눌러 수정"
 
-#: app/card/pushsettingcard1.py:519
+#: app/card/pushsettingcard1.py:521
 msgid "已改为 {key}"
 msgstr "{key} (으)로 변경됨"
 
-#: app/card/pushsettingcard1.py:705
+#: app/card/pushsettingcard1.py:707
 msgid "修改队伍1"
 msgstr "파티 1 수정"
 
-#: app/card/pushsettingcard1.py:711
+#: app/card/pushsettingcard1.py:713
 msgid "修改队伍2"
 msgstr "파티 2 수정"
 
-#: app/card/pushsettingcard1.py:717
+#: app/card/pushsettingcard1.py:719
 msgid "交换队伍"
 msgstr "파티 교체"
 
-#: app/card/pushsettingcard1.py:731
+#: app/card/pushsettingcard1.py:733
 msgid ""
 "队伍1: {team1}\n"
 "队伍2: {team2}"
@@ -1435,27 +1435,27 @@ msgstr ""
 "파티 1: {team1}\n"
 "파티 2: {team2}"
 
-#: app/card/pushsettingcard1.py:747
+#: app/card/pushsettingcard1.py:749
 msgid "交换成功"
 msgstr "교체 성공"
 
-#: app/card/pushsettingcard1.py:748
+#: app/card/pushsettingcard1.py:750
 msgid "队伍1和队伍2已成功交换"
 msgstr "파티 1과 파티 2가 성공적으로 교체되었습니다"
 
-#: app/card/pushsettingcard1.py:757
+#: app/card/pushsettingcard1.py:759
 msgid "队伍1"
 msgstr "파티 1"
 
-#: app/card/pushsettingcard1.py:760
+#: app/card/pushsettingcard1.py:762
 msgid "队伍2"
 msgstr "파티 2"
 
-#: app/card/pushsettingcard1.py:786
+#: app/card/pushsettingcard1.py:788
 msgid "暂无计划"
 msgstr "계획 없음"
 
-#: app/card/pushsettingcard1.py:787
+#: app/card/pushsettingcard1.py:789
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "{count} 개의 계획이 설정됨"
@@ -1848,7 +1848,7 @@ msgstr "알림"
 msgid "添加"
 msgstr "추가"
 
-#: app/home_interface.py:184
+#: app/home_interface.py:168
 msgid "编辑"
 msgstr "편집"
 
@@ -2034,7 +2034,7 @@ msgstr "현재 시간으로 설정"
 msgid "说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动"
 msgstr "설명: 개척력 소모는 선택한 던전 유형에 따라 판단되며, 던전 이름은 두 배 이벤트에도 사용됩니다."
 
-#: app/card/messagebox_custom.py:1192
+#: app/card/messagebox_custom.py:602
 msgid "输入错误"
 msgstr "입력 오류"
 
@@ -2223,18 +2223,23 @@ msgstr "워프 데이터 가져오는 중..."
 msgid "跃迁数据获取完成(＾∀＾●)"
 msgstr "워프 데이터 가져오기 완료(＾∀＾●)"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已过期"
 msgstr "Mirror짱 CDK 만료됨"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 错误"
 msgstr "Mirror짱 CDK 오류"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 今日下载次数已达上限"
 msgstr "Mirror짱 CDK 금일 다운로드 횟수 초과"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 类型和待下载的资源不匹配"
 msgstr "Mirror짱 CDK 유형과 다운로드할 리소스가 일치하지 않음"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已被封禁"
 msgstr "Mirror짱 CDK 차단됨"
 
@@ -2270,11 +2275,11 @@ msgstr "기다려주세요, 업데이트 확인이 진행 중입니다"
 msgid "未命名"
 msgstr "이름 없음"
 
-#: app/card/card_edit_dialog.py:48
+#: utils/tasks.py:15
 msgid "清体力"
 msgstr "개척력 소모"
 
-#: app/card/card_edit_dialog.py:97
+#: utils/tasks.py:15
 msgid "混沌回忆"
 msgstr "혼돈의 기억"
 
@@ -2292,11 +2297,11 @@ msgstr ""
 msgid "锄地"
 msgstr "토벌 (Fhoe-Rail)"
 
-#: app/card/card_edit_dialog.py:99
+#: utils/tasks.py:15
 msgid "末日幻影"
 msgstr "종말의 환영"
 
-#: app/card/card_edit_dialog.py:98
+#: utils/tasks.py:15
 msgid "虚构叙事"
 msgstr "허구 이야기"
 
@@ -2304,7 +2309,7 @@ msgstr "허구 이야기"
 msgid "请确认是否已打开游戏抽卡记录"
 msgstr "게임 가챠 기록을 열었는지 확인해주세요"
 
-#: utils/tasks.py:14
+#: utils/tasks.py:15
 msgid "更新游戏"
 msgstr "게임 업데이트"
 
@@ -2312,31 +2317,31 @@ msgstr "게임 업데이트"
 msgid "预下载游戏"
 msgstr "게임 사전 다운로드"
 
-#: utils/tasks.py:24
+#: utils/tasks.py:15
 msgid "货币战争循环"
 msgstr "화폐 전쟁 루프"
 
-#: utils/tasks.py:25
+#: utils/tasks.py:15
 msgid "货币战争中途接管"
 msgstr "화폐 전쟁 중간 인수"
 
-#: utils/tasks.py:28
+#: utils/tasks.py:15
 msgid "模拟宇宙原生界面"
 msgstr "시뮬레이션 우주 네이티브 인터페이스"
 
-#: utils/tasks.py:29
+#: utils/tasks.py:15
 msgid "锄大地原生界面"
 msgstr "토벌 네이티브 인터페이스 (Fhoe-Rail)"
 
-#: utils/tasks.py:30
+#: utils/tasks.py:15
 msgid "模拟宇宙更新"
 msgstr "시뮬레이션 우주 업데이트"
 
-#: utils/tasks.py:31
+#: utils/tasks.py:15
 msgid "锄大地更新"
 msgstr "토벌 업데이트 (Fhoe-Rail)"
 
-#: utils/tasks.py:32
+#: utils/tasks.py:15
 msgid "触屏模式更新"
 msgstr "터치스크린 모드 업데이트"
 
@@ -3224,15 +3229,19 @@ msgstr "종말 괴수"
 msgid "毁灭的开端"
 msgstr "파멸의 시작"
 
+#: assets/config/special_programs.jsonc
 msgid "原神 BetterGI"
 msgstr "원신 BetterGI"
 
+#: assets/config/special_programs.jsonc
 msgid "绝区零 一条龙"
 msgstr "젠레스 존 제로 원드래곤"
 
+#: assets/config/special_programs.jsonc
 msgid "鸣潮 ok-ww"
 msgstr "명조 ok-ww"
 
+#: assets/config/special_programs.jsonc
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
@@ -3398,7 +3407,7 @@ msgid "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗）�
 msgstr ""
 "활성화하면 자동화 인식 디버깅을 위해 화면에 감지 범위 상자가 실시간으로 그려집니다(투명 오버레이). Windows에서만 작동합니다."
 
-#: app/card/pushsettingcard1.py:843
+#: app/card/pushsettingcard1.py:845
 msgid "为特定的副本配置队伍"
 msgstr "특정 던전을 위한 팀 구성"
 
@@ -3406,7 +3415,7 @@ msgstr "특정 던전을 위한 팀 구성"
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr "규칙이 일치하지 않을 때 기본 출전 팀: "
 
-#: app/card/pushsettingcard1.py:841
+#: app/card/pushsettingcard1.py:843
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] "{count}개의 규칙이 구성됨"
@@ -4093,43 +4102,43 @@ msgstr "알림 총괄 스위치"
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
 msgstr "자동 전투 감지 (자동 전투가 꺼져 있으면 V 키를 눌러 켜기)"
 
-#: utils/tasks.py:26
+#: utils/tasks.py:15
 msgid "差分宇宙循环"
 msgstr "차분 우주 루프"
 
-#: app/card/card_edit_dialog.py:69
+#: utils/tasks.py:15
 msgid "差分宇宙中途接管"
 msgstr "차분 우주 중간 인수"
 
-#: app/card/card_edit_dialog.py:67
+#: app/card/card_edit_dialog.py:32
 msgid "差分宇宙运行一次 ⭐"
 msgstr "차분 우주 1회 실행 ⭐"
 
-#: app/card/card_edit_dialog.py:68
+#: app/card/card_edit_dialog.py:32
 msgid "差分宇宙循环运行 ⭐"
 msgstr "차분 우주 루프 실행 ⭐"
 
-#: app/card/card_edit_dialog.py:70
+#: app/card/card_edit_dialog.py:32
 msgid "模拟宇宙快速启动（停止维护）"
 msgstr "시뮬레이션 우주 빠른 시작（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:71
+#: app/card/card_edit_dialog.py:32
 msgid "模拟宇宙原版运行（停止维护）"
 msgstr "시뮬레이션 우주 원본 실행（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:72
+#: app/card/card_edit_dialog.py:32
 msgid "更新模拟宇宙（停止维护）"
 msgstr "시뮬레이션 우주 업데이트（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:73
+#: app/card/card_edit_dialog.py:32
 msgid "重置模拟宇宙配置文件（停止维护）"
 msgstr "시뮬레이션 우주 설정 파일 초기화（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:74
+#: app/card/card_edit_dialog.py:32
 msgid "打开模拟宇宙目录（停止维护）"
 msgstr "시뮬레이션 우주 폴더 열기（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:75
+#: app/card/card_edit_dialog.py:32
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "시뮬레이션 우주 프로젝트 홈페이지 열기（유지보수 중단）"
 
@@ -4219,86 +4228,87 @@ msgstr "제로 / 천성"
 msgid "鎏金追忆"
 msgstr "금빛 추억"
 
-#: app/card/card_edit_dialog.py:20
+#: app/card/card_edit_dialog.py:19
 msgid "重置模拟宇宙配置文件"
 msgstr "시뮬레이션 우주 설정 파일 초기화"
 
-#: app/card/card_edit_dialog.py:21
+#: app/card/card_edit_dialog.py:19
 msgid "打开模拟宇宙目录"
 msgstr "시뮬레이션 우주 폴더 열기"
 
-#: app/card/card_edit_dialog.py:22
+#: app/card/card_edit_dialog.py:19
 msgid "打开模拟宇宙项目主页"
 msgstr "시뮬레이션 우주 프로젝트 홈페이지 열기"
 
-#: app/card/card_edit_dialog.py:23
+#: app/card/card_edit_dialog.py:19
 msgid "重置锄大地配置文件"
 msgstr "Fhoe-Rail 설정 파일 초기화"
 
-#: app/card/card_edit_dialog.py:24
+#: app/card/card_edit_dialog.py:19
 msgid "打开锄大地程序目录"
 msgstr "Fhoe-Rail 프로그램 폴더 열기"
 
-#: app/card/card_edit_dialog.py:25
+#: app/card/card_edit_dialog.py:19
 msgid "打开锄大地项目主页"
 msgstr "Fhoe-Rail 프로젝트 홈페이지 열기"
 
-#: app/card/card_edit_dialog.py:327
+#: app/card/card_edit_dialog.py:372
 msgid "编辑主页卡片"
 msgstr "홈 카드 편집"
 
-#: app/card/card_edit_dialog.py:183
+#: app/card/card_edit_dialog.py:227
 msgid "图标"
 msgstr "아이콘"
 
-#: app/card/card_edit_dialog.py:195
+#: app/card/card_edit_dialog.py:239
 msgid "标题："
 msgstr "제목:"
 
-#: app/card/card_edit_dialog.py:198
+#: app/card/card_edit_dialog.py:242
 msgid "卡片标题"
 msgstr "카드 제목"
 
-#: app/card/card_edit_dialog.py:226
+#: app/card/card_edit_dialog.py:270
 msgid "操作类型："
 msgstr "동작 유형:"
 
-#: app/card/card_edit_dialog.py:228
+#: app/card/card_edit_dialog.py:272
 msgid "单个任务"
 msgstr "단일 작업"
 
-#: app/card/card_edit_dialog.py:228
+#: app/card/card_edit_dialog.py:272
 msgid "任务菜单"
 msgstr "작업 메뉴"
 
-#: app/card/card_edit_dialog.py:143
+#: app/card/card_edit_dialog.py:176
 msgid "任务："
 msgstr "작업:"
 
-#: app/card/card_edit_dialog.py:256
+#: app/card/card_edit_dialog.py:300
 msgid "添加菜单项"
 msgstr "메뉴 항목 추가"
 
-#: app/card/card_edit_dialog.py:119
+#: app/card/card_edit_dialog.py:154
 msgid "菜单项名称"
 msgstr "메뉴 항목 이름"
 
-#: app/card/card_edit_dialog.py:141
+#: app/card/card_edit_dialog.py:174
 msgid "名称："
 msgstr "이름:"
 
-#: app/card/card_edit_dialog.py:362
+#: app/card/card_edit_dialog.py:407
 msgid "添加卡片"
 msgstr "카드 추가"
 
-#: app/card/card_edit_dialog.py:364
+#: app/card/card_edit_dialog.py:409
 msgid "恢复默认"
 msgstr "기본값 복원"
 
-#: app/card/card_edit_dialog.py:367
+#: app/card/card_edit_dialog.py:412
 msgid "确定"
 msgstr "확인"
 
+#: assets/config/special_programs.jsonc
 msgid "重返未来 M9A"
 msgstr ""
 
@@ -4327,7 +4337,7 @@ msgstr "다운로드 프록시"
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "비워두면 시스템 프록시를 사용합니다. http:// 및 socks5:// 지원"
 
-#: app/card/card_edit_dialog.py:282
+#: app/card/card_edit_dialog.py:326
 msgid "选择图标"
 msgstr "아이콘 선택"
 
@@ -4640,6 +4650,7 @@ msgstr "하위 단계"
 msgid "个"
 msgstr "개"
 
+#: module/workflow/__init__.py:37
 msgid "点击文字"
 msgstr "텍스트 클릭"
 
@@ -4671,6 +4682,7 @@ msgstr "재시도"
 msgid "次"
 msgstr "회"
 
+#: module/workflow/__init__.py:37
 msgid "点击图片"
 msgstr "이미지 클릭"
 
@@ -4678,15 +4690,19 @@ msgstr "이미지 클릭"
 msgid "阈值"
 msgstr "임계값"
 
+#: module/workflow/__init__.py:37
 msgid "如果"
 msgstr "만약"
 
+#: module/workflow/__init__.py:57
 msgid "文字存在"
 msgstr "텍스트 존재"
 
+#: module/workflow/__init__.py:37
 msgid "播放音频"
 msgstr "오디오 재생"
 
+#: module/workflow/__init__.py:37
 msgid "等待"
 msgstr "대기"
 
@@ -4702,21 +4718,27 @@ msgstr "UI 또는 애니메이션에 여유 시간을 주기 위해 사용"
 msgid "请输入流程名称"
 msgstr "워크플로우 이름을 입력하세요"
 
+#: module/workflow/__init__.py:37
 msgid "查找图片"
 msgstr "이미지 찾기"
 
+#: module/workflow/__init__.py:37
 msgid "查找文字"
 msgstr "텍스트 찾기"
 
+#: module/workflow/__init__.py:37
 msgid "按下按键"
 msgstr "키 누르기"
 
+#: module/workflow/__init__.py:37
 msgid "条件循环"
 msgstr "조건 반복"
 
+#: module/workflow/__init__.py:57
 msgid "图片存在"
 msgstr "이미지 존재"
 
+#: module/workflow/__init__.py:57
 msgid "上一步成功"
 msgstr "이전 단계 성공"
 
@@ -4828,7 +4850,7 @@ msgstr "누름 시간"
 msgid "请选择模板图片"
 msgstr "템플릿 이미지를 선택하세요"
 
-#: app/card/card_edit_dialog.py:432
+#: app/card/card_edit_dialog.py:477
 msgid "保存失败"
 msgstr "저장 실패"
 
@@ -4900,6 +4922,7 @@ msgstr "선택 영역 스크린샷 저장"
 msgid "全屏"
 msgstr "전체 화면"
 
+#: module/workflow/__init__.py:37
 msgid "点击坐标"
 msgstr "좌표 클릭"
 
@@ -4907,12 +4930,15 @@ msgstr "좌표 클릭"
 msgid "执行选中步骤"
 msgstr "선택한 단계 실행"
 
+#: module/workflow/__init__.py:57
 msgid "图片不存在"
 msgstr "이미지 없음"
 
+#: module/workflow/__init__.py:57
 msgid "文字不存在"
 msgstr "텍스트 없음"
 
+#: module/workflow/__init__.py:57
 msgid "上一步失败"
 msgstr "이전 단계 실패"
 
@@ -4932,12 +4958,15 @@ msgstr "부분 "
 msgid "未填写文字"
 msgstr "텍스트 미입력"
 
+#: module/workflow/__init__.py:37
 msgid "结束循环"
 msgstr "반복 종료"
 
+#: module/workflow/__init__.py:37
 msgid "继续循环"
 msgstr "다음 반복 계속"
 
+#: module/workflow/__init__.py:37
 msgid "切换界面"
 msgstr "화면 전환"
 
@@ -4977,15 +5006,15 @@ msgstr "워크플로 이름 변경"
 msgid "请输入新的流程名称"
 msgstr "새 워크플로 이름을 입력하세요"
 
-#: tasks/tool/screenshot.py:540
+#: tasks/tool/screenshot.py:543
 msgid "流程图像模板"
 msgstr "워크플로 이미지 템플릿"
 
-#: tasks/tool/screenshot.py:549
+#: tasks/tool/screenshot.py:552
 msgid "已保存到"
 msgstr "다음 위치에 저장됨: "
 
-#: tasks/tool/screenshot.py:549
+#: tasks/tool/screenshot.py:552
 msgid "已复制到剪贴板"
 msgstr "클립보드에 복사됨"
 
@@ -5001,6 +5030,7 @@ msgstr "자동 메시지 (휴대폰 메시지 화면을 자동으로 클릭해 �
 msgid "流程说明"
 msgstr "워크플로 설명"
 
+#: tasks/tool/screenshot.py:384
 msgid "结果"
 msgstr "결과"
 
@@ -5016,6 +5046,7 @@ msgstr "조건"
 msgid "成功"
 msgstr "성공"
 
+#: module/workflow/__init__.py:37
 msgid "终止流程"
 msgstr "워크플로 종료"
 
@@ -5055,6 +5086,7 @@ msgstr ""
 msgid "我已了解，继续开启"
 msgstr "이해했으며 계속 활성화"
 
+#: assets/config/special_programs.jsonc
 msgid "终末地 MaaEnd"
 msgstr ""
 
@@ -5086,7 +5118,7 @@ msgstr "새 버전 시작 중..."
 msgid "更新失败"
 msgstr "업데이트 실패"
 
-#: utils/tasks.py:16
+#: utils/tasks.py:15
 msgid "更新三月七小助手"
 msgstr "March7th Assistant 업데이트"
 
@@ -5220,11 +5252,11 @@ msgstr "업데이트 패키지 압축 해제 중..."
 msgid "检测到新版本：{version}"
 msgstr "새 버전 감지: {version}"
 
-#: app/card/card_edit_dialog.py:445
+#: app/card/card_edit_dialog.py:490
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr "작업 메뉴의 메뉴 항목 이름은 비워 둘 수 없습니다"
 
-#: app/card/card_edit_dialog.py:433
+#: app/card/card_edit_dialog.py:478
 msgid "卡片标题不能为空"
 msgstr "카드 제목은 비워 둘 수 없습니다"
 
@@ -5378,6 +5410,7 @@ msgstr "선택 사항: 이메일을 일반 텍스트 형식으로 보낼지 여�
 msgid "请选择要运行的流程编排"
 msgstr "실행할 워크플로를 선택하세요"
 
+#: module/workflow/__init__.py:37
 msgid "滑动鼠标"
 msgstr "마우스 드래그"
 
@@ -5449,7 +5482,7 @@ msgstr "전송 모드"
 msgid "可选参数，例如 send（默认）或 group"
 msgstr "선택 사항: 예) send(기본값) 또는 group"
 
-#: tasks/tool/screenshot.py:543
+#: tasks/tool/screenshot.py:546
 msgid "Crop 表达式"
 msgstr "Crop 표현식"
 
@@ -5485,7 +5518,7 @@ msgstr "스크린샷 없음"
 msgid "不是有效的 ZIP 文件"
 msgstr "유효한 ZIP 파일이 아닙니다"
 
-#: tasks/tool/screenshot.py:525
+#: tasks/tool/screenshot.py:528
 msgid "保存流程素材"
 msgstr "워크플로 소재 저장"
 
@@ -5561,7 +5594,7 @@ msgstr "템플릿 미선택"
 msgid "没有找到合适的下载URL"
 msgstr "적절한 다운로드 URL을 찾을 수 없습니다"
 
-#: tasks/tool/screenshot.py:544
+#: tasks/tool/screenshot.py:547
 msgid "流程 OCR 区域"
 msgstr "워크플로 OCR 영역"
 
@@ -5573,7 +5606,7 @@ msgstr "좌표 클릭에는 검출 영역을 입력해야 합니다"
 msgid "至少需要保留一个流程"
 msgstr "최소 하나의 워크플로를 유지해야 합니다"
 
-#: tasks/tool/screenshot.py:525
+#: tasks/tool/screenshot.py:528
 msgid "请先框选一个区域"
 msgstr "먼저 영역을 선택하세요"
 

@@ -9,9 +9,26 @@ from tools.i18n.po import (
     _is_untranslated,
     _make_entry,
     base_metadata,
+    has_absolute_reference,
     nplurals_of,
     po_keyset,
 )
+
+
+class TestAbsoluteReference:
+    def test_relative_ok(self):
+        e = _make_entry("a", {"ref": "app/x.py:1", "plural": False}, "en_US", msgstr="b")
+        assert not has_absolute_reference(e)
+
+    def test_windows_drive_rejected(self):
+        e = polib.POEntry(msgid="a", msgstr="b", occurrences=[("C:/somewhere/app/x.py", "1")])
+        assert has_absolute_reference(e)
+        e2 = polib.POEntry(msgid="a", msgstr="b", occurrences=[("C:\\somewhere\\app\\x.py", "1")])
+        assert has_absolute_reference(e2)
+
+    def test_posix_root_rejected(self):
+        e = polib.POEntry(msgid="a", msgstr="b", occurrences=[("/home/u/app/x.py", "1")])
+        assert has_absolute_reference(e)
 
 
 class TestNplurals:

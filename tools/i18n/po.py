@@ -233,6 +233,16 @@ def update_po() -> dict:
                                       msgstr=msgid if lang == BASE_LOCALE else "",
                                       msgctxt=ctx))
                 n += 1
+
+        # # 引用统一刷新为当前源码位置（仓库相对路径）；源侧已不存在的条目清空过期引用，
+        # 防止历史绝对路径残留在目录里
+        source_keys = set(entries) | _context_keys(entries)
+        for e in po:
+            meta = entries.get(e.msgid)
+            if entry_key(e) in source_keys and meta is not None:
+                e.occurrences = _occurrences(meta.get("ref", ""))
+            else:
+                e.occurrences = []
         po.save(str(path))
         added[lang] = n
     return added
@@ -255,6 +265,18 @@ def _is_untranslated(entry) -> bool:
     if entry.msgid_plural:
         return not all(entry.msgstr_plural.values())
     return not entry.msgstr
+
+
+_ABS_REF_RE = re.compile(r"^([A-Za-z]:)?[\\/]")
+
+
+def has_absolute_reference(entry) -> bool:
+    """条目引用是否含绝对路径（# 引用必须是仓库相对路径，禁止泄露本机目录结构）。"""
+    return any(_ABS_REF_RE.match(p) for p, _ in entry.occurrences)
+
+
+def _absolute_ref_count(po) -> int:
+    return sum(1 for e in po if has_absolute_reference(e))
 
 
 def check_po(strict: set[str]) -> tuple[list[str], list[str]]:
@@ -283,6 +305,11 @@ def check_po(strict: set[str]) -> tuple[list[str], list[str]]:
     ctx_missing_pot = ctx_keys - pot_keys
     if ctx_missing_pot:
         errors.append(f"{len(ctx_missing_pot)} 条 trc 语境未登记进 .pot（运行 python -m tools.i18n extract）")
+
+    # # 引用禁止绝对路径（会泄露本机目录结构）
+    n_abs = _absolute_ref_count(pot)
+    if n_abs:
+        errors.append(f".pot 有 {n_abs} 条绝对路径引用（运行 python -m tools.i18n extract 刷新）")
 
     # en_US 译文：用于识别"目标语言直接沿用了英文"的占位译文
     en_values: dict[str, str] = {}
@@ -313,6 +340,11 @@ def check_po(strict: set[str]) -> tuple[list[str], list[str]]:
         ctx_missing = ctx_keys - keys
         if ctx_missing:
             errors.append(f"[{lang}] po 缺少 {len(ctx_missing)} 条 trc 语境条目（运行 python -m tools.i18n extract）")
+
+        # 1c) # 引用禁止绝对路径（会泄露本机目录结构）
+        n_abs = _absolute_ref_count(po)
+        if n_abs:
+            errors.append(f"[{lang}] po 有 {n_abs} 条绝对路径引用（运行 python -m tools.i18n extract 刷新）")
 
         # 2) 占位符一致（strict 级为 error，其余仅警告）
         for e in po:

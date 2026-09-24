@@ -90,23 +90,23 @@ msgstr "Donate"
 msgid "体力"
 msgstr "Power"
 
-#: app/card/card_edit_dialog.py:42
+#: app/setting_interface.py:2751
 msgid "日常"
 msgstr "Daily"
 
-#: app/card/card_edit_dialog.py:53
+#: app/setting_interface.py:2752
 msgid "货币战争"
 msgstr "Currency Wars"
 
-#: app/card/card_edit_dialog.py:63
+#: app/setting_interface.py:595
 msgid "差分宇宙"
 msgstr "Divergent Universe"
 
-#: app/card/card_edit_dialog.py:80
+#: app/setting_interface.py:2755
 msgid "锄大地"
 msgstr "Fhoe-Rail"
 
-#: app/card/card_edit_dialog.py:93
+#: app/setting_interface.py:803
 msgid "逐光捡金"
 msgstr "Treasures Lightward"
 
@@ -142,7 +142,7 @@ msgstr "Power Settings"
 msgid "体力计划"
 msgstr "Power Plan"
 
-#: app/card/pushsettingcard1.py:813
+#: app/card/pushsettingcard1.py:815
 msgid "配置"
 msgstr "Config"
 
@@ -359,7 +359,7 @@ msgstr "Mail"
 msgid "支援"
 msgstr "Support"
 
-#: app/card/card_edit_dialog.py:47
+#: app/help_interface.py:190
 msgid "每日实训"
 msgstr "Daily Training"
 
@@ -1126,7 +1126,7 @@ msgstr ""
 msgid "显示主界面"
 msgstr "Show Main Interface"
 
-#: app/card/card_edit_dialog.py:35
+#: app/main_window.py:338
 msgid "完整运行"
 msgstr "Full Run"
 
@@ -1202,55 +1202,55 @@ msgstr "Program minimized to tray"
 msgid "停止任务"
 msgstr "Stop Task"
 
-#: app/home_interface.py:29
+#: app/home_interface.py:28
 msgid "更换背景图片"
 msgstr "Change Background Image"
 
-#: app/home_interface.py:36
+#: app/home_interface.py:35
 msgid "恢复默认图片"
 msgstr "Restore Default Image"
 
-#: app/home_interface.py:43
+#: app/home_interface.py:42
 msgid "三月七小助手"
 msgstr "March7th Assistant"
 
-#: app/home_interface.py:85
+#: app/home_interface.py:70
 msgid "选择图片"
 msgstr "Select Image"
 
-#: app/home_interface.py:181
+#: app/home_interface.py:165
 msgid "任务 >"
 msgstr "Task >"
 
-#: app/card/card_edit_dialog.py:57
+#: app/card/card_edit_dialog.py:32
 msgid "运行一次"
 msgstr "Run Once"
 
-#: app/card/card_edit_dialog.py:58
+#: app/card/card_edit_dialog.py:32
 msgid "循环运行"
 msgstr "Loop Run"
 
-#: app/card/card_edit_dialog.py:84
+#: app/card/card_edit_dialog.py:32
 msgid "快速启动 ⭐"
 msgstr "Quick Start ⭐"
 
-#: app/card/card_edit_dialog.py:85
+#: app/card/card_edit_dialog.py:32
 msgid "原版运行"
 msgstr "Original Run"
 
-#: app/card/card_edit_dialog.py:86
+#: app/card/card_edit_dialog.py:32
 msgid "更新锄大地"
 msgstr "Update Fhoe-Rail"
 
-#: app/card/card_edit_dialog.py:87
+#: app/card/card_edit_dialog.py:32
 msgid "重置配置文件"
 msgstr "Reset Config"
 
-#: app/card/card_edit_dialog.py:88
+#: app/card/card_edit_dialog.py:32
 msgid "打开程序目录"
 msgstr "Open Program Dir"
 
-#: app/card/card_edit_dialog.py:89
+#: app/card/card_edit_dialog.py:32
 msgid "打开项目主页"
 msgstr "Open Project Page"
 
@@ -1390,7 +1390,7 @@ msgstr "Confirm continue and enable Touch Mode?"
 msgid "确认"
 msgstr "Confirm"
 
-#: app/card/card_edit_dialog.py:369
+#: app/card/card_edit_dialog.py:414
 msgid "取消"
 msgstr "Cancel"
 
@@ -1446,39 +1446,39 @@ msgstr "Cannot get latest codes"
 msgid "获取服务器信息失败"
 msgstr "Failed to get server info"
 
-#: app/card/pushsettingcard1.py:487
+#: app/card/pushsettingcard1.py:489
 msgid "时间无效"
 msgstr "Invalid Time"
 
-#: app/card/pushsettingcard1.py:488
+#: app/card/pushsettingcard1.py:490
 msgid "所选时间无法转换为时间戳，已使用默认时间"
 msgstr "Selected time invalid, used default"
 
-#: app/card/pushsettingcard1.py:508
+#: app/card/pushsettingcard1.py:510
 msgid "按下要绑定的按键"
 msgstr "Press key to bind"
 
-#: app/card/pushsettingcard1.py:511
+#: app/card/pushsettingcard1.py:513
 msgid "按住以修改"
 msgstr "Hold to modify"
 
-#: app/card/pushsettingcard1.py:519
+#: app/card/pushsettingcard1.py:521
 msgid "已改为 {key}"
 msgstr "Changed to {key}"
 
-#: app/card/pushsettingcard1.py:705
+#: app/card/pushsettingcard1.py:707
 msgid "修改队伍1"
 msgstr "Edit Team 1"
 
-#: app/card/pushsettingcard1.py:711
+#: app/card/pushsettingcard1.py:713
 msgid "修改队伍2"
 msgstr "Edit Team 2"
 
-#: app/card/pushsettingcard1.py:717
+#: app/card/pushsettingcard1.py:719
 msgid "交换队伍"
 msgstr "Swap Teams"
 
-#: app/card/pushsettingcard1.py:731
+#: app/card/pushsettingcard1.py:733
 msgid ""
 "队伍1: {team1}\n"
 "队伍2: {team2}"
@@ -1486,27 +1486,27 @@ msgstr ""
 "Team 1: {team1}\n"
 "Team 2: {team2}"
 
-#: app/card/pushsettingcard1.py:747
+#: app/card/pushsettingcard1.py:749
 msgid "交换成功"
 msgstr "Swap Success"
 
-#: app/card/pushsettingcard1.py:748
+#: app/card/pushsettingcard1.py:750
 msgid "队伍1和队伍2已成功交换"
 msgstr "Team 1 and Team 2 swapped"
 
-#: app/card/pushsettingcard1.py:757
+#: app/card/pushsettingcard1.py:759
 msgid "队伍1"
 msgstr "Team 1"
 
-#: app/card/pushsettingcard1.py:760
+#: app/card/pushsettingcard1.py:762
 msgid "队伍2"
 msgstr "Team 2"
 
-#: app/card/pushsettingcard1.py:786
+#: app/card/pushsettingcard1.py:788
 msgid "暂无计划"
 msgstr "No Plan"
 
-#: app/card/pushsettingcard1.py:787
+#: app/card/pushsettingcard1.py:789
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "Configured {count} plan"
@@ -1902,7 +1902,7 @@ msgstr "Notify"
 msgid "添加"
 msgstr "Add"
 
-#: app/home_interface.py:184
+#: app/home_interface.py:168
 msgid "编辑"
 msgstr "Edit"
 
@@ -2091,7 +2091,7 @@ msgid "说明：清体力是根据选择的副本类型来判断，副本名称�
 msgstr ""
 "Note: Power clear based on Dungeon Type. Name also used for double events."
 
-#: app/card/messagebox_custom.py:1192
+#: app/card/messagebox_custom.py:602
 msgid "输入错误"
 msgstr "Input Error"
 
@@ -2281,18 +2281,23 @@ msgstr "Fetching warp data..."
 msgid "跃迁数据获取完成(＾∀＾●)"
 msgstr "Warp data fetch complete(＾∀＾●)"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已过期"
 msgstr "MirrorChan CDK expired"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 错误"
 msgstr "MirrorChan CDK error"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 今日下载次数已达上限"
 msgstr "MirrorChan CDK daily limit reached"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 类型和待下载的资源不匹配"
 msgstr "MirrorChan CDK type mismatch"
 
+#: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已被封禁"
 msgstr "MirrorChan CDK banned"
 
@@ -2328,11 +2333,11 @@ msgstr "Please wait, update check in progress"
 msgid "未命名"
 msgstr "Unnamed"
 
-#: app/card/card_edit_dialog.py:48
+#: utils/tasks.py:15
 msgid "清体力"
 msgstr "Spend Power"
 
-#: app/card/card_edit_dialog.py:97
+#: utils/tasks.py:15
 msgid "混沌回忆"
 msgstr "Memory of Chaos"
 
@@ -2350,11 +2355,11 @@ msgstr ""
 msgid "锄地"
 msgstr "Fhoe-Rail"
 
-#: app/card/card_edit_dialog.py:99
+#: utils/tasks.py:15
 msgid "末日幻影"
 msgstr "Apocalyptic Shadow"
 
-#: app/card/card_edit_dialog.py:98
+#: utils/tasks.py:15
 msgid "虚构叙事"
 msgstr "Pure Fiction"
 
@@ -2362,7 +2367,7 @@ msgstr "Pure Fiction"
 msgid "请确认是否已打开游戏抽卡记录"
 msgstr "Please confirm if Warp History is open"
 
-#: utils/tasks.py:14
+#: utils/tasks.py:15
 msgid "更新游戏"
 msgstr "Update Game"
 
@@ -2370,31 +2375,31 @@ msgstr "Update Game"
 msgid "预下载游戏"
 msgstr "Pre-download Game"
 
-#: utils/tasks.py:24
+#: utils/tasks.py:15
 msgid "货币战争循环"
 msgstr "Currency War Loop"
 
-#: utils/tasks.py:25
+#: utils/tasks.py:15
 msgid "货币战争中途接管"
 msgstr "Currency War Mid-takeover"
 
-#: utils/tasks.py:28
+#: utils/tasks.py:15
 msgid "模拟宇宙原生界面"
 msgstr "Simulated Universe Native Interface"
 
-#: utils/tasks.py:29
+#: utils/tasks.py:15
 msgid "锄大地原生界面"
 msgstr "Fhoe-Rail Native Interface"
 
-#: utils/tasks.py:30
+#: utils/tasks.py:15
 msgid "模拟宇宙更新"
 msgstr "Simulated Universe Update"
 
-#: utils/tasks.py:31
+#: utils/tasks.py:15
 msgid "锄大地更新"
 msgstr "Update Fhoe-Rail"
 
-#: utils/tasks.py:32
+#: utils/tasks.py:15
 msgid "触屏模式更新"
 msgstr "Touchscreen Mode Update"
 
@@ -3284,15 +3289,19 @@ msgstr "Doomsday Beast"
 msgid "毁灭的开端"
 msgstr "Destruction's Beginning"
 
+#: assets/config/special_programs.jsonc
 msgid "原神 BetterGI"
 msgstr "Genshin BetterGI"
 
+#: assets/config/special_programs.jsonc
 msgid "绝区零 一条龙"
 msgstr "ZZZ OneDragon"
 
+#: assets/config/special_programs.jsonc
 msgid "鸣潮 ok-ww"
 msgstr "Wuthering Waves ok-ww"
 
+#: assets/config/special_programs.jsonc
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
@@ -3466,7 +3475,7 @@ msgstr ""
 "When enabled, detection bounding boxes will be drawn in real-time on screen "
 "(transparent overlay) for debugging automation recognition. Windows only."
 
-#: app/card/pushsettingcard1.py:843
+#: app/card/pushsettingcard1.py:845
 msgid "为特定的副本配置队伍"
 msgstr "Configure teams for specific dungeons"
 
@@ -3474,7 +3483,7 @@ msgstr "Configure teams for specific dungeons"
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr "Default team when no rules match: "
 
-#: app/card/pushsettingcard1.py:841
+#: app/card/pushsettingcard1.py:843
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] "{count} rule configured"
@@ -4176,43 +4185,43 @@ msgstr "Notification master switch"
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
 msgstr "Auto Battle Detection (Press V when auto-battle is off)"
 
-#: utils/tasks.py:26
+#: utils/tasks.py:15
 msgid "差分宇宙循环"
 msgstr "Divergent Universe Loop"
 
-#: app/card/card_edit_dialog.py:69
+#: utils/tasks.py:15
 msgid "差分宇宙中途接管"
 msgstr "Divergent Universe Mid-takeover"
 
-#: app/card/card_edit_dialog.py:67
+#: app/card/card_edit_dialog.py:32
 msgid "差分宇宙运行一次 ⭐"
 msgstr "Divergent Universe Run Once ⭐"
 
-#: app/card/card_edit_dialog.py:68
+#: app/card/card_edit_dialog.py:32
 msgid "差分宇宙循环运行 ⭐"
 msgstr "Divergent Universe Loop Run ⭐"
 
-#: app/card/card_edit_dialog.py:70
+#: app/card/card_edit_dialog.py:32
 msgid "模拟宇宙快速启动（停止维护）"
 msgstr "Simulated Universe Quick Start (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:71
+#: app/card/card_edit_dialog.py:32
 msgid "模拟宇宙原版运行（停止维护）"
 msgstr "Simulated Universe Original Run (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:72
+#: app/card/card_edit_dialog.py:32
 msgid "更新模拟宇宙（停止维护）"
 msgstr "Update Simulated Universe (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:73
+#: app/card/card_edit_dialog.py:32
 msgid "重置模拟宇宙配置文件（停止维护）"
 msgstr "Reset Simulated Universe Config (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:74
+#: app/card/card_edit_dialog.py:32
 msgid "打开模拟宇宙目录（停止维护）"
 msgstr "Open Simulated Universe Dir (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:75
+#: app/card/card_edit_dialog.py:32
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "Open Simulated Universe Project Homepage (Stop Maintain)"
 
@@ -4303,86 +4312,87 @@ msgstr "Zero / Thousand Stars"
 msgid "鎏金追忆"
 msgstr "Gilded Reminiscence"
 
-#: app/card/card_edit_dialog.py:20
+#: app/card/card_edit_dialog.py:19
 msgid "重置模拟宇宙配置文件"
 msgstr "Reset Simulated Universe Config"
 
-#: app/card/card_edit_dialog.py:21
+#: app/card/card_edit_dialog.py:19
 msgid "打开模拟宇宙目录"
 msgstr "Open Simulated Universe Directory"
 
-#: app/card/card_edit_dialog.py:22
+#: app/card/card_edit_dialog.py:19
 msgid "打开模拟宇宙项目主页"
 msgstr "Open Simulated Universe Project Homepage"
 
-#: app/card/card_edit_dialog.py:23
+#: app/card/card_edit_dialog.py:19
 msgid "重置锄大地配置文件"
 msgstr "Reset Fhoe-Rail Config"
 
-#: app/card/card_edit_dialog.py:24
+#: app/card/card_edit_dialog.py:19
 msgid "打开锄大地程序目录"
 msgstr "Open Fhoe-Rail Directory"
 
-#: app/card/card_edit_dialog.py:25
+#: app/card/card_edit_dialog.py:19
 msgid "打开锄大地项目主页"
 msgstr "Open Fhoe-Rail Project Homepage"
 
-#: app/card/card_edit_dialog.py:327
+#: app/card/card_edit_dialog.py:372
 msgid "编辑主页卡片"
 msgstr "Edit Home Cards"
 
-#: app/card/card_edit_dialog.py:183
+#: app/card/card_edit_dialog.py:227
 msgid "图标"
 msgstr "Icon"
 
-#: app/card/card_edit_dialog.py:195
+#: app/card/card_edit_dialog.py:239
 msgid "标题："
 msgstr "Title:"
 
-#: app/card/card_edit_dialog.py:198
+#: app/card/card_edit_dialog.py:242
 msgid "卡片标题"
 msgstr "Card Title"
 
-#: app/card/card_edit_dialog.py:226
+#: app/card/card_edit_dialog.py:270
 msgid "操作类型："
 msgstr "Action Type:"
 
-#: app/card/card_edit_dialog.py:228
+#: app/card/card_edit_dialog.py:272
 msgid "单个任务"
 msgstr "Single Task"
 
-#: app/card/card_edit_dialog.py:228
+#: app/card/card_edit_dialog.py:272
 msgid "任务菜单"
 msgstr "Task Menu"
 
-#: app/card/card_edit_dialog.py:143
+#: app/card/card_edit_dialog.py:176
 msgid "任务："
 msgstr "Task:"
 
-#: app/card/card_edit_dialog.py:256
+#: app/card/card_edit_dialog.py:300
 msgid "添加菜单项"
 msgstr "Add Menu Item"
 
-#: app/card/card_edit_dialog.py:119
+#: app/card/card_edit_dialog.py:154
 msgid "菜单项名称"
 msgstr "Menu Item Name"
 
-#: app/card/card_edit_dialog.py:141
+#: app/card/card_edit_dialog.py:174
 msgid "名称："
 msgstr "Name:"
 
-#: app/card/card_edit_dialog.py:362
+#: app/card/card_edit_dialog.py:407
 msgid "添加卡片"
 msgstr "Add Card"
 
-#: app/card/card_edit_dialog.py:364
+#: app/card/card_edit_dialog.py:409
 msgid "恢复默认"
 msgstr "Restore Defaults"
 
-#: app/card/card_edit_dialog.py:367
+#: app/card/card_edit_dialog.py:412
 msgid "确定"
 msgstr "Confirm"
 
+#: assets/config/special_programs.jsonc
 msgid "重返未来 M9A"
 msgstr "1999 M9A"
 
@@ -4413,7 +4423,7 @@ msgstr "Download Proxy"
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "Leave empty to use system proxy; supports http:// and socks5://"
 
-#: app/card/card_edit_dialog.py:282
+#: app/card/card_edit_dialog.py:326
 msgid "选择图标"
 msgstr "Select Icon"
 
@@ -4738,6 +4748,7 @@ msgstr "Child Steps"
 msgid "个"
 msgstr "items"
 
+#: module/workflow/__init__.py:37
 msgid "点击文字"
 msgstr "Click Text"
 
@@ -4769,6 +4780,7 @@ msgstr "Retry"
 msgid "次"
 msgstr "times"
 
+#: module/workflow/__init__.py:37
 msgid "点击图片"
 msgstr "Click Image"
 
@@ -4776,15 +4788,19 @@ msgstr "Click Image"
 msgid "阈值"
 msgstr "Threshold"
 
+#: module/workflow/__init__.py:37
 msgid "如果"
 msgstr "If"
 
+#: module/workflow/__init__.py:57
 msgid "文字存在"
 msgstr "Text Exists"
 
+#: module/workflow/__init__.py:37
 msgid "播放音频"
 msgstr "Play Audio"
 
+#: module/workflow/__init__.py:37
 msgid "等待"
 msgstr "Wait"
 
@@ -4800,21 +4816,27 @@ msgstr "Used to give UI or animations time"
 msgid "请输入流程名称"
 msgstr "Please enter a workflow name"
 
+#: module/workflow/__init__.py:37
 msgid "查找图片"
 msgstr "Find Image"
 
+#: module/workflow/__init__.py:37
 msgid "查找文字"
 msgstr "Find Text"
 
+#: module/workflow/__init__.py:37
 msgid "按下按键"
 msgstr "Press Key"
 
+#: module/workflow/__init__.py:37
 msgid "条件循环"
 msgstr "Conditional Loop"
 
+#: module/workflow/__init__.py:57
 msgid "图片存在"
 msgstr "Image Exists"
 
+#: module/workflow/__init__.py:57
 msgid "上一步成功"
 msgstr "Previous Step Succeeded"
 
@@ -4928,7 +4950,7 @@ msgstr "Press Duration"
 msgid "请选择模板图片"
 msgstr "Please select a template image"
 
-#: app/card/card_edit_dialog.py:432
+#: app/card/card_edit_dialog.py:477
 msgid "保存失败"
 msgstr "Save Failed"
 
@@ -5000,6 +5022,7 @@ msgstr "Save Selected Screenshot"
 msgid "全屏"
 msgstr "Full Screen"
 
+#: module/workflow/__init__.py:37
 msgid "点击坐标"
 msgstr "Click Coordinates"
 
@@ -5007,12 +5030,15 @@ msgstr "Click Coordinates"
 msgid "执行选中步骤"
 msgstr "Run Selected Step"
 
+#: module/workflow/__init__.py:57
 msgid "图片不存在"
 msgstr "Image Missing"
 
+#: module/workflow/__init__.py:57
 msgid "文字不存在"
 msgstr "Text Missing"
 
+#: module/workflow/__init__.py:57
 msgid "上一步失败"
 msgstr "Previous Step Failed"
 
@@ -5032,12 +5058,15 @@ msgstr "Partial "
 msgid "未填写文字"
 msgstr "No Text Entered"
 
+#: module/workflow/__init__.py:37
 msgid "结束循环"
 msgstr "Break Loop"
 
+#: module/workflow/__init__.py:37
 msgid "继续循环"
 msgstr "Continue Loop"
 
+#: module/workflow/__init__.py:37
 msgid "切换界面"
 msgstr "Switch Screen"
 
@@ -5077,15 +5106,15 @@ msgstr "Rename Workflow"
 msgid "请输入新的流程名称"
 msgstr "Please enter a new workflow name"
 
-#: tasks/tool/screenshot.py:540
+#: tasks/tool/screenshot.py:543
 msgid "流程图像模板"
 msgstr "Workflow Image Template"
 
-#: tasks/tool/screenshot.py:549
+#: tasks/tool/screenshot.py:552
 msgid "已保存到"
 msgstr "Saved to "
 
-#: tasks/tool/screenshot.py:549
+#: tasks/tool/screenshot.py:552
 msgid "已复制到剪贴板"
 msgstr "Copied to clipboard"
 
@@ -5101,6 +5130,7 @@ msgstr "Auto Message (Automatically click to close the phone message page)"
 msgid "流程说明"
 msgstr "Workflow Description"
 
+#: tasks/tool/screenshot.py:384
 msgid "结果"
 msgstr "Result"
 
@@ -5116,6 +5146,7 @@ msgstr "Condition"
 msgid "成功"
 msgstr "Success"
 
+#: module/workflow/__init__.py:37
 msgid "终止流程"
 msgstr "Terminate Workflow"
 
@@ -5157,6 +5188,7 @@ msgstr ""
 msgid "我已了解，继续开启"
 msgstr "I understand, enable it"
 
+#: assets/config/special_programs.jsonc
 msgid "终末地 MaaEnd"
 msgstr "MaaEnd"
 
@@ -5188,7 +5220,7 @@ msgstr "Launching new version..."
 msgid "更新失败"
 msgstr "Update failed"
 
-#: utils/tasks.py:16
+#: utils/tasks.py:15
 msgid "更新三月七小助手"
 msgstr "Update March7th Assistant"
 
@@ -5331,11 +5363,11 @@ msgstr "Extracting update package..."
 msgid "检测到新版本：{version}"
 msgstr "Update available: {version}"
 
-#: app/card/card_edit_dialog.py:445
+#: app/card/card_edit_dialog.py:490
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr "Menu item name in task menu cannot be empty"
 
-#: app/card/card_edit_dialog.py:433
+#: app/card/card_edit_dialog.py:478
 msgid "卡片标题不能为空"
 msgstr "Card title cannot be empty"
 
@@ -5495,6 +5527,7 @@ msgstr ""
 msgid "请选择要运行的流程编排"
 msgstr "Please select a workflow to run"
 
+#: module/workflow/__init__.py:37
 msgid "滑动鼠标"
 msgstr "Drag Mouse"
 
@@ -5568,7 +5601,7 @@ msgstr "Send mode"
 msgid "可选参数，例如 send（默认）或 group"
 msgstr "Optional: e.g. send (default) or group"
 
-#: tasks/tool/screenshot.py:543
+#: tasks/tool/screenshot.py:546
 msgid "Crop 表达式"
 msgstr "Crop Expression"
 
@@ -5604,7 +5637,7 @@ msgstr "Without Screenshot"
 msgid "不是有效的 ZIP 文件"
 msgstr "Not a valid ZIP file"
 
-#: tasks/tool/screenshot.py:525
+#: tasks/tool/screenshot.py:528
 msgid "保存流程素材"
 msgstr "Save Workflow Assets"
 
@@ -5681,7 +5714,7 @@ msgstr "No Template Selected"
 msgid "没有找到合适的下载URL"
 msgstr "No suitable download URL found"
 
-#: tasks/tool/screenshot.py:544
+#: tasks/tool/screenshot.py:547
 msgid "流程 OCR 区域"
 msgstr "Workflow OCR Area"
 
@@ -5693,7 +5726,7 @@ msgstr "Click Coordinates requires a detection area"
 msgid "至少需要保留一个流程"
 msgstr "At least one workflow must be kept"
 
-#: tasks/tool/screenshot.py:525
+#: tasks/tool/screenshot.py:528
 msgid "请先框选一个区域"
 msgstr "Please select an area first"
 
