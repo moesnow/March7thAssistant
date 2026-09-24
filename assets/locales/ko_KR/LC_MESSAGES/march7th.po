@@ -1025,10 +1025,6 @@ msgstr "베타 버전"
 msgid "启动时检测更新"
 msgstr "시작 시 업데이트 확인"
 
-#: app/schedule_dialog.py:730
-msgid "链式失败后:"
-msgstr "체인 실패 후:"
-
 #: app/setting_interface.py:2882
 msgid "关闭更新检测前请确认"
 msgstr "업데이트 확인을 끄기 전에 확인해 주세요"
@@ -1800,14 +1796,6 @@ msgstr "완료 후 알림 전송"
 msgid "无操作"
 msgstr "작업 없음"
 
-#: app/schedule_dialog.py:247
-msgid "任务名称:"
-msgstr "작업 이름:"
-
-#: app/schedule_dialog.py:238
-msgid "启动方式:"
-msgstr "시작 방식:"
-
 #: app/schedule_dialog.py:181
 msgid "按时启动"
 msgstr "시간 기반 시작"
@@ -1815,38 +1803,6 @@ msgstr "시간 기반 시작"
 #: app/schedule_dialog.py:182
 msgid "链式启动"
 msgstr "체인 시작"
-
-#: app/schedule_dialog.py:252
-msgid "启动时间:"
-msgstr "시작 시간:"
-
-#: app/schedule_dialog.py:260
-msgid "程序路径:"
-msgstr "프로그램 경로:"
-
-#: app/schedule_dialog.py:268
-msgid "启动参数 或 选择任务:"
-msgstr "실행 인수 또는 작업 선택:"
-
-#: app/schedule_dialog.py:278
-msgid "超时强制停止:"
-msgstr "시간 초과 강제 중지:"
-
-#: app/schedule_dialog.py:286
-msgid "任务完成后操作:"
-msgstr "작업 완료 후 동작:"
-
-#: app/schedule_dialog.py:294
-msgid "完成后终止进程:"
-msgstr "완료 후 프로세스 종료:"
-
-#: app/schedule_dialog.py:297
-msgid "例如: StarRail.exe, YuanShen.exe（逗号分隔多个进程）"
-msgstr "예: StarRail.exe, YuanShen.exe (쉼표로 구분)"
-
-#: app/schedule_dialog.py:304
-msgid "完成后推送通知:"
-msgstr "완료 후 알림:"
 
 #: app/schedule_dialog.py:330
 msgid "错误"
@@ -1871,14 +1827,6 @@ msgstr "프로그램 또는 스크립트 선택"
 #: app/schedule_dialog.py:376
 msgid "可执行文件 (*.exe *.bat *.ps1);;所有文件 (*.*)"
 msgstr "실행 파일 (*.exe *.bat *.ps1);;모든 파일 (*.*)"
-
-#: app/schedule_dialog.py:424
-msgid "选择任务:"
-msgstr "작업 선택:"
-
-#: app/schedule_dialog.py:445
-msgid "启动参数:"
-msgstr "실행 인수:"
 
 #: app/schedule_dialog.py:466
 msgid "{exe} 的完整路径"
@@ -1973,10 +1921,6 @@ msgstr "작업 \"{name}\"을(를) 즉시 실행하시겠습니까?"
 #: app/schedule_dialog.py:1022
 msgid "无法运行任务：父组件不支持 runScheduledTask"
 msgstr "작업 실행 불가: 부모 구성 요소가 runScheduledTask를 지원하지 않음"
-
-#: app/schedule_dialog.py:1027
-msgid "启动任务失败: {error}"
-msgstr "작업 시작 실패: {error}"
 
 #: app/card/autoplot_setting_card.py:46
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
@@ -2179,18 +2123,6 @@ msgstr "추가 불가"
 msgid "已达到最大计划数量"
 msgstr "최대 계획 수량에 도달했습니다"
 
-#: app/card/messagebox_custom.py:1116
-msgid "类型:"
-msgstr "유형:"
-
-#: app/card/messagebox_custom.py:1118
-msgid "名称:"
-msgstr "이름:"
-
-#: app/card/messagebox_custom.py:1120
-msgid "次数:"
-msgstr "횟수:"
-
 #: app/card/messagebox_custom.py:1172
 msgid "第{i}个计划的副本类型无效"
 msgstr "{i}번째 계획의 던전 유형이 유효하지 않습니다"
@@ -2218,14 +2150,6 @@ msgstr "미호요 런처 경로 선택"
 #: app/setting_interface.py:3115
 msgid "脚本或程序路径"
 msgstr "스크립트 또는 프로그램 경로"
-
-#: app/log_interface.py:898
-msgid "已启用: {count}，下次: {time}"
-msgstr "활성화됨: {count}, 다음: {time}"
-
-#: app/log_interface.py:1147
-msgid "正在运行: {name}"
-msgstr "실행 중: {name}"
 
 #: app/tools/warp_export.py:193
 msgid "抽"
@@ -3481,10 +3405,6 @@ msgstr "특정 던전을 위한 팀 구성"
 #: app/card/messagebox_custom.py:1304
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr "규칙이 일치하지 않을 때 기본 출전 팀: "
-
-#: app/card/messagebox_custom.py:1393
-msgid "队伍:"
-msgstr "팀: "
 
 #: app/card/pushsettingcard1.py:841
 msgid "已配置 {count} 项规则"
@@ -5138,10 +5058,6 @@ msgstr "이해했으며 계속 활성화"
 msgid "终末地 MaaEnd"
 msgstr ""
 
-#: app/schedule_dialog.py:708
-msgid "冲突:"
-msgstr "충돌:"
-
 #: app/schedule_dialog.py:733
 msgid "继续后续任务"
 msgstr "후속 작업 계속 실행"
@@ -5414,10 +5330,6 @@ msgstr "최단 경로로 이동 가능한 모든 화면을 순회하여 화면 �
 msgid "自动对话（全局热键，支持后台）"
 msgstr "자동 대화 (글로벌 단축키, 백그라운드 지원)"
 
-#: app/card/autoplot_setting_card.py:72
-msgid "快捷键: {hotkey}（可在设置中修改）"
-msgstr "단축키: {hotkey} (설정에서 변경 가능)"
-
 #: app/card/autoplot_setting_card.py:66
 msgid "启用快捷键切换自动对话"
 msgstr "자동 대화 전환 단축키 활성화"
@@ -5461,10 +5373,6 @@ msgstr "일반 텍스트 모드"
 #: app/setting_interface.py:1472
 msgid "可选参数，是否以纯文本格式发送邮件（适用于 Outlook 等邮箱）"
 msgstr "선택 사항: 이메일을 일반 텍스트 형식으로 보낼지 여부 (Outlook 등의 이메일 서비스에 적합)"
-
-#: app/schedule_dialog.py:434
-msgid "选择流程:"
-msgstr "워크플로 선택:"
 
 #: app/schedule_dialog.py:356
 msgid "请选择要运行的流程编排"
@@ -5706,3 +5614,91 @@ msgstr "\"설정 → 정보 → 업데이트 소스\"에서 Mirror를 선택하�
 #: app/tools_interface.py:186
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr "'설정' → '프로그램'에서 올바른 게임 경로를 설정해 주세요"
+
+#: app/card/autoplot_setting_card.py:72
+msgid "快捷键：{hotkey}（可在设置中修改）"
+msgstr "단축키: {hotkey} (설정에서 변경 가능)"
+
+#: app/card/messagebox_custom.py:1116
+msgid "类型："
+msgstr "유형:"
+
+#: app/card/messagebox_custom.py:1120
+msgid "次数："
+msgstr "횟수:"
+
+#: app/card/messagebox_custom.py:1393
+msgid "队伍："
+msgstr "팀: "
+
+#: app/log_interface.py:898
+msgid "已启用：{count}，下次：{time}"
+msgstr "활성화됨: {count}, 다음: {time}"
+
+#: app/log_interface.py:1147
+msgid "正在运行：{name}"
+msgstr "실행 중: {name}"
+
+#: app/schedule_dialog.py:238
+msgid "启动方式："
+msgstr "시작 방식:"
+
+#: app/schedule_dialog.py:247
+msgid "任务名称："
+msgstr "작업 이름:"
+
+#: app/schedule_dialog.py:252
+msgid "启动时间："
+msgstr "시작 시간:"
+
+#: app/schedule_dialog.py:260
+msgid "程序路径："
+msgstr "프로그램 경로:"
+
+#: app/schedule_dialog.py:268
+msgid "启动参数 或 选择任务："
+msgstr "실행 인수 또는 작업 선택:"
+
+#: app/schedule_dialog.py:278
+msgid "超时强制停止："
+msgstr "시간 초과 강제 중지:"
+
+#: app/schedule_dialog.py:286
+msgid "任务完成后操作："
+msgstr "작업 완료 후 동작:"
+
+#: app/schedule_dialog.py:294
+msgid "完成后终止进程："
+msgstr "완료 후 프로세스 종료:"
+
+#: app/schedule_dialog.py:297
+msgid "例如：StarRail.exe, YuanShen.exe（逗号分隔多个进程）"
+msgstr "예: StarRail.exe, YuanShen.exe (쉼표로 구분)"
+
+#: app/schedule_dialog.py:304
+msgid "完成后推送通知："
+msgstr "완료 후 알림:"
+
+#: app/schedule_dialog.py:424
+msgid "选择任务："
+msgstr "작업 선택:"
+
+#: app/schedule_dialog.py:434
+msgid "选择流程："
+msgstr "워크플로 선택:"
+
+#: app/schedule_dialog.py:445
+msgid "启动参数："
+msgstr "실행 인수:"
+
+#: app/schedule_dialog.py:708
+msgid "冲突："
+msgstr "충돌:"
+
+#: app/schedule_dialog.py:730
+msgid "链式失败后："
+msgstr "체인 실패 후:"
+
+#: app/schedule_dialog.py:1027
+msgid "启动任务失败：{error}"
+msgstr "작업 시작 실패: {error}"

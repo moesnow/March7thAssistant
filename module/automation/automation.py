@@ -831,7 +831,7 @@ class Automation(metaclass=SingletonMeta):
         """
         x, y = self.calculate_click_position(coordinates, offset)
         if action not in {"click", "down", "up", "move"}:
-            raise ValueError(f"未知的动作类型: {action}")
+            raise ValueError(f"未知的动作类型： {action}")
 
         normalized_press_duration = max(0.0, float(press_duration or 0.0))
 

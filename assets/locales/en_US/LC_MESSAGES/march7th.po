@@ -1068,10 +1068,6 @@ msgstr "Beta"
 msgid "启动时检测更新"
 msgstr "Check Update on Launch"
 
-#: app/schedule_dialog.py:730
-msgid "链式失败后:"
-msgstr "After Chain Failure:"
-
 #: app/setting_interface.py:2882
 msgid "关闭更新检测前请确认"
 msgstr "Confirm Before Disabling Update Check"
@@ -1854,14 +1850,6 @@ msgstr "Notify on completion"
 msgid "无操作"
 msgstr "No Action"
 
-#: app/schedule_dialog.py:247
-msgid "任务名称:"
-msgstr "Task Name:"
-
-#: app/schedule_dialog.py:238
-msgid "启动方式:"
-msgstr "Start Mode:"
-
 #: app/schedule_dialog.py:181
 msgid "按时启动"
 msgstr "Time-based Start"
@@ -1869,38 +1857,6 @@ msgstr "Time-based Start"
 #: app/schedule_dialog.py:182
 msgid "链式启动"
 msgstr "Chained Start"
-
-#: app/schedule_dialog.py:252
-msgid "启动时间:"
-msgstr "Start Time:"
-
-#: app/schedule_dialog.py:260
-msgid "程序路径:"
-msgstr "Program Path:"
-
-#: app/schedule_dialog.py:268
-msgid "启动参数 或 选择任务:"
-msgstr "Args or Select Task:"
-
-#: app/schedule_dialog.py:278
-msgid "超时强制停止:"
-msgstr "Timeout Force Stop:"
-
-#: app/schedule_dialog.py:286
-msgid "任务完成后操作:"
-msgstr "After Task Action:"
-
-#: app/schedule_dialog.py:294
-msgid "完成后终止进程:"
-msgstr "Kill Process After:"
-
-#: app/schedule_dialog.py:297
-msgid "例如: StarRail.exe, YuanShen.exe（逗号分隔多个进程）"
-msgstr "e.g., StarRail.exe, YuanShen.exe (comma separated)"
-
-#: app/schedule_dialog.py:304
-msgid "完成后推送通知:"
-msgstr "Notify After:"
 
 #: app/schedule_dialog.py:330
 msgid "错误"
@@ -1925,14 +1881,6 @@ msgstr "Select Program/Script"
 #: app/schedule_dialog.py:376
 msgid "可执行文件 (*.exe *.bat *.ps1);;所有文件 (*.*)"
 msgstr "Executables (*.exe *.bat *.ps1);;All Files (*.*)"
-
-#: app/schedule_dialog.py:424
-msgid "选择任务:"
-msgstr "Select Task:"
-
-#: app/schedule_dialog.py:445
-msgid "启动参数:"
-msgstr "Args:"
 
 #: app/schedule_dialog.py:466
 msgid "{exe} 的完整路径"
@@ -2027,10 +1975,6 @@ msgstr "Run task \"{name}\" now?"
 #: app/schedule_dialog.py:1022
 msgid "无法运行任务：父组件不支持 runScheduledTask"
 msgstr "Cannot run: Parent doesn't support runScheduledTask"
-
-#: app/schedule_dialog.py:1027
-msgid "启动任务失败: {error}"
-msgstr "Start Task Failed: {error}"
 
 #: app/card/autoplot_setting_card.py:46
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
@@ -2237,18 +2181,6 @@ msgstr "Cannot Add"
 msgid "已达到最大计划数量"
 msgstr "Max plans reached"
 
-#: app/card/messagebox_custom.py:1116
-msgid "类型:"
-msgstr "Type:"
-
-#: app/card/messagebox_custom.py:1118
-msgid "名称:"
-msgstr "Name:"
-
-#: app/card/messagebox_custom.py:1120
-msgid "次数:"
-msgstr "Count:"
-
 #: app/card/messagebox_custom.py:1172
 msgid "第{i}个计划的副本类型无效"
 msgstr "Plan {i} Dungeon Type invalid"
@@ -2276,14 +2208,6 @@ msgstr "Select HoYoPlay Path"
 #: app/setting_interface.py:3115
 msgid "脚本或程序路径"
 msgstr "Script/Program Path"
-
-#: app/log_interface.py:898
-msgid "已启用: {count}，下次: {time}"
-msgstr "Active: {count}, Next: {time}"
-
-#: app/log_interface.py:1147
-msgid "正在运行: {name}"
-msgstr "Running: {name}"
 
 #: app/tools/warp_export.py:193
 msgid "抽"
@@ -3549,10 +3473,6 @@ msgstr "Configure teams for specific dungeons"
 #: app/card/messagebox_custom.py:1304
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr "Default team when no rules match: "
-
-#: app/card/messagebox_custom.py:1393
-msgid "队伍:"
-msgstr "Team: "
 
 #: app/card/pushsettingcard1.py:841
 msgid "已配置 {count} 项规则"
@@ -5240,10 +5160,6 @@ msgstr "I understand, enable it"
 msgid "终末地 MaaEnd"
 msgstr "MaaEnd"
 
-#: app/schedule_dialog.py:708
-msgid "冲突:"
-msgstr "Conflict:"
-
 #: app/schedule_dialog.py:733
 msgid "继续后续任务"
 msgstr "Continue Remaining Tasks"
@@ -5529,10 +5445,6 @@ msgstr ""
 msgid "自动对话（全局热键，支持后台）"
 msgstr "Auto Dialogue (Global Hotkey, Works in Background)"
 
-#: app/card/autoplot_setting_card.py:72
-msgid "快捷键: {hotkey}（可在设置中修改）"
-msgstr "Hotkey: {hotkey} (Configurable in Settings)"
-
 #: app/card/autoplot_setting_card.py:66
 msgid "启用快捷键切换自动对话"
 msgstr "Enable Hotkey to Toggle Auto Dialogue"
@@ -5578,10 +5490,6 @@ msgid "可选参数，是否以纯文本格式发送邮件（适用于 Outlook �
 msgstr ""
 "Optional parameter: whether to send emails in plain text format (suitable "
 "for Outlook and other email services)"
-
-#: app/schedule_dialog.py:434
-msgid "选择流程:"
-msgstr "Select workflow:"
 
 #: app/schedule_dialog.py:356
 msgid "请选择要运行的流程编排"
@@ -5832,3 +5740,91 @@ msgstr ""
 #: app/tools_interface.py:186
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr "Please configure the correct Game Path in Settings → Program"
+
+#: app/card/autoplot_setting_card.py:72
+msgid "快捷键：{hotkey}（可在设置中修改）"
+msgstr "Hotkey: {hotkey} (Configurable in Settings)"
+
+#: app/card/messagebox_custom.py:1116
+msgid "类型："
+msgstr "Type:"
+
+#: app/card/messagebox_custom.py:1120
+msgid "次数："
+msgstr "Count:"
+
+#: app/card/messagebox_custom.py:1393
+msgid "队伍："
+msgstr "Team: "
+
+#: app/log_interface.py:898
+msgid "已启用：{count}，下次：{time}"
+msgstr "Active: {count}, Next: {time}"
+
+#: app/log_interface.py:1147
+msgid "正在运行：{name}"
+msgstr "Running: {name}"
+
+#: app/schedule_dialog.py:238
+msgid "启动方式："
+msgstr "Start Mode:"
+
+#: app/schedule_dialog.py:247
+msgid "任务名称："
+msgstr "Task Name:"
+
+#: app/schedule_dialog.py:252
+msgid "启动时间："
+msgstr "Start Time:"
+
+#: app/schedule_dialog.py:260
+msgid "程序路径："
+msgstr "Program Path:"
+
+#: app/schedule_dialog.py:268
+msgid "启动参数 或 选择任务："
+msgstr "Args or Select Task:"
+
+#: app/schedule_dialog.py:278
+msgid "超时强制停止："
+msgstr "Timeout Force Stop:"
+
+#: app/schedule_dialog.py:286
+msgid "任务完成后操作："
+msgstr "After Task Action:"
+
+#: app/schedule_dialog.py:294
+msgid "完成后终止进程："
+msgstr "Kill Process After:"
+
+#: app/schedule_dialog.py:297
+msgid "例如：StarRail.exe, YuanShen.exe（逗号分隔多个进程）"
+msgstr "e.g., StarRail.exe, YuanShen.exe (comma separated)"
+
+#: app/schedule_dialog.py:304
+msgid "完成后推送通知："
+msgstr "Notify After:"
+
+#: app/schedule_dialog.py:424
+msgid "选择任务："
+msgstr "Select Task:"
+
+#: app/schedule_dialog.py:434
+msgid "选择流程："
+msgstr "Select workflow:"
+
+#: app/schedule_dialog.py:445
+msgid "启动参数："
+msgstr "Args:"
+
+#: app/schedule_dialog.py:708
+msgid "冲突："
+msgstr "Conflict:"
+
+#: app/schedule_dialog.py:730
+msgid "链式失败后："
+msgstr "After Chain Failure:"
+
+#: app/schedule_dialog.py:1027
+msgid "启动任务失败：{error}"
+msgstr "Start Task Failed: {error}"

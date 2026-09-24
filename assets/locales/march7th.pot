@@ -38,7 +38,7 @@ msgid "启用快捷键切换自动对话"
 msgstr ""
 
 #: app/card/autoplot_setting_card.py:72
-msgid "快捷键: {hotkey}（可在设置中修改）"
+msgid "快捷键：{hotkey}（可在设置中修改）"
 msgstr ""
 
 #: app/card/autoplot_setting_card.py:115
@@ -313,15 +313,11 @@ msgid "上移"
 msgstr ""
 
 #: app/card/messagebox_custom.py:1116
-msgid "类型:"
-msgstr ""
-
-#: app/card/messagebox_custom.py:1118
-msgid "名称:"
+msgid "类型："
 msgstr ""
 
 #: app/card/messagebox_custom.py:1120
-msgid "次数:"
+msgid "次数："
 msgstr ""
 
 #: app/card/messagebox_custom.py:1172
@@ -373,7 +369,7 @@ msgid "添加"
 msgstr ""
 
 #: app/card/messagebox_custom.py:1393
-msgid "队伍:"
+msgid "队伍："
 msgstr ""
 
 #: app/card/pushsettingcard1.py:128
@@ -683,7 +679,7 @@ msgid "未命名"
 msgstr ""
 
 #: app/log_interface.py:898
-msgid "已启用: {count}，下次: {time}"
+msgid "已启用：{count}，下次：{time}"
 msgstr ""
 
 #: app/log_interface.py:901
@@ -691,7 +687,7 @@ msgid "尚未配置定时任务"
 msgstr ""
 
 #: app/log_interface.py:1147
-msgid "正在运行: {name}"
+msgid "正在运行：{name}"
 msgstr ""
 
 #: app/log_interface.py:1177
@@ -902,43 +898,43 @@ msgid "完成后推送通知"
 msgstr ""
 
 #: app/schedule_dialog.py:238
-msgid "启动方式:"
+msgid "启动方式："
 msgstr ""
 
 #: app/schedule_dialog.py:247
-msgid "任务名称:"
+msgid "任务名称："
 msgstr ""
 
 #: app/schedule_dialog.py:252
-msgid "启动时间:"
+msgid "启动时间："
 msgstr ""
 
 #: app/schedule_dialog.py:260
-msgid "程序路径:"
+msgid "程序路径："
 msgstr ""
 
 #: app/schedule_dialog.py:268
-msgid "启动参数 或 选择任务:"
+msgid "启动参数 或 选择任务："
 msgstr ""
 
 #: app/schedule_dialog.py:278
-msgid "超时强制停止:"
+msgid "超时强制停止："
 msgstr ""
 
 #: app/schedule_dialog.py:286
-msgid "任务完成后操作:"
+msgid "任务完成后操作："
 msgstr ""
 
 #: app/schedule_dialog.py:294
-msgid "完成后终止进程:"
+msgid "完成后终止进程："
 msgstr ""
 
 #: app/schedule_dialog.py:297
-msgid "例如: StarRail.exe, YuanShen.exe（逗号分隔多个进程）"
+msgid "例如：StarRail.exe, YuanShen.exe（逗号分隔多个进程）"
 msgstr ""
 
 #: app/schedule_dialog.py:304
-msgid "完成后推送通知:"
+msgid "完成后推送通知："
 msgstr ""
 
 #: app/schedule_dialog.py:330
@@ -977,15 +973,15 @@ msgid ""
 msgstr ""
 
 #: app/schedule_dialog.py:424
-msgid "选择任务:"
+msgid "选择任务："
 msgstr ""
 
 #: app/schedule_dialog.py:434
-msgid "选择流程:"
+msgid "选择流程："
 msgstr ""
 
 #: app/schedule_dialog.py:445
-msgid "启动参数:"
+msgid "启动参数："
 msgstr ""
 
 #: app/schedule_dialog.py:466
@@ -1021,7 +1017,7 @@ msgid "立即运行"
 msgstr ""
 
 #: app/schedule_dialog.py:708
-msgid "冲突:"
+msgid "冲突："
 msgstr ""
 
 #: app/schedule_dialog.py:712
@@ -1033,7 +1029,7 @@ msgid "停止正在运行的任务"
 msgstr ""
 
 #: app/schedule_dialog.py:730
-msgid "链式失败后:"
+msgid "链式失败后："
 msgstr ""
 
 #: app/schedule_dialog.py:733
@@ -1089,7 +1085,7 @@ msgid "无法运行任务：父组件不支持 runScheduledTask"
 msgstr ""
 
 #: app/schedule_dialog.py:1027
-msgid "启动任务失败: {error}"
+msgid "启动任务失败：{error}"
 msgstr ""
 
 #: app/setting_interface.py:179

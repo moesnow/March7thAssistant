@@ -1113,11 +1113,11 @@ class MessageBoxPowerPlan(MessageBox):
         deleteButton.clicked.connect(delete_row)
 
         # 添加到布局
-        horizontalLayout.addWidget(QLabel(tr("类型:")))
+        horizontalLayout.addWidget(QLabel(tr("类型：")))
         horizontalLayout.addWidget(typeComboBox)
-        horizontalLayout.addWidget(QLabel(tr("名称:")))
+        horizontalLayout.addWidget(QLabel(tr("名称：")))
         horizontalLayout.addWidget(nameComboBox)
-        horizontalLayout.addWidget(QLabel(tr("次数:")))
+        horizontalLayout.addWidget(QLabel(tr("次数：")))
         horizontalLayout.addWidget(countSpinBox)
         horizontalLayout.addWidget(moveUpButton)
         horizontalLayout.addWidget(deleteButton)
@@ -1388,9 +1388,9 @@ class MessageBoxInstanceTeam(MessageBox):
         deleteButton.clicked.connect(delete_row)
 
         # 应用布局
-        horizontalLayout.addWidget(QLabel(tr("名称:")))
+        horizontalLayout.addWidget(QLabel(tr("名称：")))
         horizontalLayout.addWidget(nameComboBox)
-        horizontalLayout.addWidget(QLabel(tr("队伍:")))
+        horizontalLayout.addWidget(QLabel(tr("队伍：")))
         horizontalLayout.addWidget(teamSpinBox)
         horizontalLayout.addWidget(deleteButton)
 
