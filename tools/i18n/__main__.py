@@ -3,10 +3,11 @@
 import argparse
 import sys
 
-from . import extract, prune_dead_keys, run_checks
+from . import ensure_utf8_output, extract, prune_dead_keys, run_checks
 
 
 def main(argv=None) -> int:
+    ensure_utf8_output()
     parser = argparse.ArgumentParser(prog="python -m tools.i18n", description="多语言翻译目录工具")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("extract", help="扫描源码/常量表/数据源，把新文案并入 .pot/.po")
