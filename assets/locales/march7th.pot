@@ -630,27 +630,27 @@ msgstr ""
 msgid "每日实训"
 msgstr ""
 
-#: app/home_interface.py:29
+#: app/home_interface.py:28
 msgid "更换背景图片"
 msgstr ""
 
-#: app/home_interface.py:36
+#: app/home_interface.py:35
 msgid "恢复默认图片"
 msgstr ""
 
-#: app/home_interface.py:43
+#: app/home_interface.py:42
 msgid "三月七小助手"
 msgstr ""
 
-#: app/home_interface.py:85
+#: app/home_interface.py:70
 msgid "选择图片"
 msgstr ""
 
-#: app/home_interface.py:181
+#: app/home_interface.py:165
 msgid "任务 >"
 msgstr ""
 
-#: app/home_interface.py:184
+#: app/home_interface.py:168
 msgid "编辑"
 msgstr ""
 

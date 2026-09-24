@@ -8,7 +8,6 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowE
 from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton
 
 from .common.style_sheet import StyleSheet
-from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
 from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog, display_label
 from tasks.base.tasks import start_task
@@ -63,20 +62,6 @@ class BannerWidget(QWidget):
         self.parent_height = 0
         self.parent_width = 0
 
-        self.linkCardView = LinkCardView(self)
-        self.linkCardView.setContentsMargins(0, 0, 0, 36)
-        self.linkCardView.addCard(
-            FluentIcon.GITHUB,
-            'GitHub repo',
-            # tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
-            f"tr('喜欢就给个星星吧')\ntr('拜托求求你啦|･ω･)')",
-
-            "https://github.com/moesnow/March7thAssistant",
-        )
-        self.linkCardView.setHidden(True)
-        # self.vBoxLayout.setContentsMargins(0, 0, 0, 36)
-        # self.vBoxLayout.setSpacing(40)
-
         # 点击标签可以选择新的背景图片
         def _on_gallery_label_clicked(event):
             self.menu.exec(event.globalPos(), ani=True)
@@ -121,8 +106,7 @@ class BannerWidget(QWidget):
         self.vBoxLayout.setSpacing(0)
         self.vBoxLayout.setContentsMargins(0, 20, 0, 10)
         self.vBoxLayout.addWidget(self.galleryLabel)
-        self.vBoxLayout.addStretch(1)  # 添加弹性空间，将 linkCardView 推到底部
-        self.vBoxLayout.addWidget(self.linkCardView, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom)
+        self.vBoxLayout.addStretch(1)  # 添加弹性空间，将下方任务卡片推到底部
 
     def paintEvent(self, e):
         super().paintEvent(e)
