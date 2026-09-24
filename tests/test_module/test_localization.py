@@ -91,10 +91,10 @@ class TestTr:
         assert tr("最高置信度") == "最高置信度"
 
     def test_zh_tw_converted_text_used(self, tmp_path, env):
-        """含简体专用字的文案应返回简转繁结果，而不是英文回退。"""
+        """含简体专用字的文案应返回简转繁结果（台湾用语 s2twp），而不是英文回退。"""
         fallback = _build(tmp_path, "en_US", entries={"设置": "Settings"})
         env("zh_TW", fallback=fallback)
-        assert tr("设置") == "設置"
+        assert tr("设置") == "設定"
 
     def test_s2t_unavailable_falls_through_to_en(self, tmp_path, env, monkeypatch):
         """OpenCC 不可用时（_s2t 返回 None）应继续走 en_US 回退。"""

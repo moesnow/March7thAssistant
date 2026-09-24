@@ -29,7 +29,11 @@ else:
 # 简体转繁体转换器（OpenCC）
 def _s2t(text: str):
     """
-    Simplified->Traditional conversion (OpenCC)。
+    Simplified->Traditional conversion (OpenCC, s2twp)。
+
+    使用 s2twp（字形 + 台湾词库）：繁体回退产出「軟體/網路/設定」等台湾用语，
+    与 assets/docs/*_zh_TW.md 的生成口径一致，避免同一界面两套用语并存。
+    如需支持港澳用语应另立 zh_HK 语言，不要让 zh_TW 骑墙。
 
     转换器不可用时返回 None（而不是返回原文），让调用方能区分两种情况：
     「转换失败」应继续走 en_US 回退；「转换成功但文案本来就没变」（如「最高置信度」
@@ -39,7 +43,7 @@ def _s2t(text: str):
         return text
     try:
         from opencc import OpenCC
-        converter = OpenCC('s2t')
+        converter = OpenCC('s2twp')
         return converter.convert(text)
     except Exception:
         return None
