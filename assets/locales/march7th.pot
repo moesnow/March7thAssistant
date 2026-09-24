@@ -4592,8 +4592,116 @@ msgstr ""
 msgid "触屏模式更新"
 msgstr ""
 
+#: module/update/version_check.py:194
+msgid "Mirror酱 CDK 今日下载次数已达上限"
+msgstr ""
+
+#: module/update/version_check.py:194
+msgid "Mirror酱 CDK 已被封禁"
+msgstr ""
+
+#: module/update/version_check.py:194
+msgid "Mirror酱 CDK 已过期"
+msgstr ""
+
+#: module/update/version_check.py:194
+msgid "Mirror酱 CDK 类型和待下载的资源不匹配"
+msgstr ""
+
+#: module/update/version_check.py:194
+msgid "Mirror酱 CDK 错误"
+msgstr ""
+
+#: module/workflow/__init__.py:57
+msgid "上一步失败"
+msgstr ""
+
+#: module/workflow/__init__.py:57
+msgid "上一步成功"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "切换界面"
+msgstr ""
+
+#: module/workflow/__init__.py:57
+msgid "图片不存在"
+msgstr ""
+
+#: module/workflow/__init__.py:57
+msgid "图片存在"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "如果"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "按下按键"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "播放音频"
+msgstr ""
+
+#: module/workflow/__init__.py:57
+msgid "文字不存在"
+msgstr ""
+
+#: module/workflow/__init__.py:57
+msgid "文字存在"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "条件循环"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "查找图片"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "查找文字"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "滑动鼠标"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "点击图片"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "点击坐标"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "点击文字"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "等待"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "终止流程"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "结束循环"
+msgstr ""
+
+#: module/workflow/__init__.py:37
+msgid "继续循环"
+msgstr ""
+
 #: assets/config/character_names.json
 msgid "Archer"
+msgstr ""
+
+#: assets/config/special_programs.jsonc
+msgid "MFAAvalonia"
 msgstr ""
 
 #: assets/config/character_names.json
@@ -4774,6 +4882,10 @@ msgstr ""
 
 #: assets/config/character_names.json
 msgid "卢卡"
+msgstr ""
+
+#: assets/config/special_programs.jsonc
+msgid "原神 BetterGI"
 msgstr ""
 
 #: assets/config/instance_names.json
@@ -5260,6 +5372,14 @@ msgstr ""
 msgid "纷争不休"
 msgstr ""
 
+#: assets/config/special_programs.jsonc
+msgid "终末地 MaaEnd"
+msgstr ""
+
+#: assets/config/special_programs.jsonc
+msgid "绝区零 一条龙"
+msgstr ""
+
 #: assets/config/instance_names.json
 msgid "绥园"
 msgstr ""
@@ -5408,6 +5528,10 @@ msgstr ""
 msgid "那刻夏"
 msgstr ""
 
+#: assets/config/special_programs.jsonc
+msgid "重返未来 M9A"
+msgstr ""
+
 #: assets/config/instance_names.json
 msgid "野焰之径"
 msgstr ""
@@ -5534,6 +5658,10 @@ msgstr ""
 
 #: assets/config/instance_names.json
 msgid "鳞渊境"
+msgstr ""
+
+#: assets/config/special_programs.jsonc
+msgid "鸣潮 ok-ww"
 msgstr ""
 
 #: assets/config/instance_names.json

@@ -143,6 +143,54 @@ class TestContextCatalog:
         assert _context_keys(entries) == {"button\x04运行"}
 
 
+class TestDeclaredSources:
+    """TABLE_SOURCES / DATA_SOURCES 声明的动态 tr() 输入必须登记进目录。
+
+    这两类取值经 tr(表[key]) / tr(数据字段) 在运行期传入，AST 扫描看不到，
+    若不登记就会在删/改目录时被当成"历史遗留"清理掉，造成功能文案回退中文。
+    """
+
+    def test_declared_paths_exist(self):
+        from tools.i18n import DATA_SOURCES, TABLE_SOURCES, ROOT
+        for rel, _vars in TABLE_SOURCES:
+            assert (ROOT / rel).is_file(), f"TABLE_SOURCES 路径不存在: {rel}"
+        for rel in DATA_SOURCES:
+            assert (ROOT / rel).is_file(), f"DATA_SOURCES 路径不存在: {rel}"
+
+    def test_table_literals_collected(self):
+        from tools.i18n import collect_table_literals
+        literals, refs = collect_table_literals()
+        # 工作流步骤/条件标签（module/workflow/__init__.py）
+        assert {"点击图片", "条件循环", "上一步成功", "终止流程"} <= literals
+        # Mirror酱 CDK 错误文案（module/update/version_check.py）
+        assert {"Mirror酱 CDK 已过期", "Mirror酱 CDK 已被封禁"} <= literals
+        assert refs["点击图片"].startswith("module/workflow/__init__.py:")
+        assert refs["Mirror酱 CDK 已过期"].startswith("module/update/version_check.py:")
+        # dict 的键是程序标识，不能当成文案登记
+        assert "click_image" not in literals
+        assert "7001" not in literals
+
+    def test_special_programs_display_name_collected(self):
+        from tools.i18n import collect_data_literals
+        literals, refs = collect_data_literals()
+        assert {"原神 BetterGI", "绝区零 一条龙", "MFAAvalonia"} <= literals
+        assert refs["原神 BetterGI"] == "assets/config/special_programs.jsonc"
+        # executable / short_name 不是展示文案，不登记
+        assert "BetterGI.exe" not in literals
+        assert "1999" not in literals
+
+    def test_declared_sources_all_in_pot(self):
+        """所有声明来源的取值都必须在 .pot 里（等价于 extract 已跑过）。"""
+        import polib
+        from tools.i18n import collect_data_literals, collect_table_literals
+        from tools.i18n.po import po_keyset
+        keys = po_keyset(polib.pofile(str(pot_path())))
+        table_literals, _ = collect_table_literals()
+        data_literals, _ = collect_data_literals()
+        missing = sorted((table_literals | data_literals) - keys)
+        assert missing == [], f"{len(missing)} 条声明来源未登记进 .pot，运行 extract: {missing[:10]}"
+
+
 class TestCatalogs:
     def test_all_locales_present(self):
         assert pot_path().is_file()

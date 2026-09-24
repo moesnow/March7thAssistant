@@ -10,7 +10,12 @@
 设计约定：
 - msgid 即中文原文（zh_CN 为源语言），.po/.mo 位于 assets/locales/{lang}/LC_MESSAGES/；
 - 复数形式的条目 msgid_plural = 文案 + PLURAL_SUFFIX（收口于 module.localization）；
-- 数据源（character_names/instance_names）由 collect_data_literals() 一并登记；
+- 语境形式的条目 msgctxt = trc() 的第一个参数（目录键为 'msgctxt\\x04msgid'）；
+- 文案来源四类，缺任一类都会造成静默漏译：
+  1) 源码里 tr()/tn()/trc() 的字面量参数（AST 扫描 SCAN_DIRS/SCAN_FILES）；
+  2) TABLE_SOURCES 声明的模块级常量表 —— 取值经 tr(表[key]) 动态传入，静态扫不到；
+  3) DATA_SOURCES 声明的数据文件 —— display_name 等展示字段经 tr() 传入；
+  4) trc() 的语境（每个 (context, msgid) 生成一条 msgctxt 条目）。
 - 运行期代码绝不写翻译目录，登记/补齐一律通过本工具进行。
 """
 from __future__ import annotations
@@ -208,15 +213,102 @@ def collect_code_literals() -> tuple[set[str], set[str], int]:
 
 
 # ---------------------------------------------------------------------------
+# 常量表与数据源字面量
+# ---------------------------------------------------------------------------
+
+# 经 tr(表[key]) 动态传入的模块级字面量表：(源码相对路径, (变量名, ...))
+# 必须用 AST 读取、绝不 import —— 否则会把 PySide6 / qfluentwidgets 拖进工具链。
+TABLE_SOURCES = [
+    ("module/workflow/__init__.py", ("STEP_TYPE_LABELS", "CONDITION_TYPE_LABELS")),
+    ("module/update/version_check.py", ("_CDK_ERROR_MESSAGES",)),
+]
+
+# 取值会经 tr() 传入的数据文件（display_name 等展示字段即 msgid）
+DATA_SOURCES = [
+    "assets/config/character_names.json",
+    "assets/config/instance_names.json",
+    "assets/config/special_programs.jsonc",
+]
+
+
+def _collect_table_values(node: ast.AST) -> set[str]:
+    """递归取出常量表字面量里的文案。
+
+    只取 dict 的 value（键是程序标识，不是文案）；顺带支持 value 写成 tr("...") 的形式。
+    """
+    out: set[str] = set()
+    if isinstance(node, ast.Constant):
+        if isinstance(node.value, str) and node.value.strip():
+            out.add(node.value)
+    elif isinstance(node, ast.Dict):
+        for v in node.values:
+            out |= _collect_table_values(v)
+    elif isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+        for v in node.elts:
+            out |= _collect_table_values(v)
+    elif isinstance(node, ast.Call):
+        func_name = _LiteralCollector._func_name(node.func) or ""
+        idx = _LiteralCollector._msgid_index(func_name)
+        if idx is not None and len(node.args) > idx:
+            out |= _collect_table_values(node.args[idx])
+    return out
+
+
+def collect_table_literals() -> tuple[set[str], dict[str, str]]:
+    """读取 TABLE_SOURCES 声明的常量表字面量，返回 (字面量集合, 字面量 -> 来源)。"""
+    literals: set[str] = set()
+    refs: dict[str, str] = {}
+    for rel, var_names in TABLE_SOURCES:
+        path = ROOT / rel
+        if not path.is_file():
+            continue
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"), str(path))
+        except (SyntaxError, ValueError):
+            continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign):
+                targets = node.targets
+            elif isinstance(node, ast.AnnAssign):
+                targets = [node.target]
+            else:
+                continue
+            if not any(isinstance(t, ast.Name) and t.id in var_names for t in targets):
+                continue
+            if node.value is None:
+                continue
+            for value in _collect_table_values(node.value):
+                literals.add(value)
+                refs.setdefault(value, f"{rel}:{node.lineno}")
+    return literals, refs
+
+
+def _load_jsonc(path) -> dict:
+    """读取 JSON，容忍 .jsonc 的行注释与块注释。"""
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+    stripped = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    stripped = re.sub(r"//[^\n]*", "", stripped)
+    try:
+        return json.loads(stripped)
+    except Exception:
+        return {}
+
+
+# ---------------------------------------------------------------------------
 # 数据源字面量
 # ---------------------------------------------------------------------------
 
 
 def collect_data_literals() -> tuple[set[str], dict[str, str]]:
-    """数据源驱动的翻译字面量（character_names / instance_names）。
+    """数据源驱动的翻译字面量（见 DATA_SOURCES）。
 
     返回 (字面量集合, 字面量 -> 来源文件)。instance_names 中「凝滞虚影」的 info
-    按斜杠拆分后逐段登记，与 module.localization.get_instance_names 运行期一致。
+    按斜杠拆分后逐段登记，与 module.localization.get_instance_names 运行期一致；
+    special_programs.jsonc 登记 special_programs[].display_name（schedule_dialog 经 tr() 传入）。
     """
     import re as _re
 
@@ -229,12 +321,13 @@ def collect_data_literals() -> tuple[set[str], dict[str, str]]:
             refs.setdefault(text, ref)
 
     char_path = "assets/config/character_names.json"
-    try:
-        data = json.loads((ROOT / char_path).read_text(encoding="utf-8"))
-        for v in data.values():
-            add(v, char_path)
-    except Exception:
-        pass
+    if char_path in DATA_SOURCES:
+        try:
+            data = json.loads((ROOT / char_path).read_text(encoding="utf-8"))
+            for v in data.values():
+                add(v, char_path)
+        except Exception:
+            pass
 
     inst_path = "assets/config/instance_names.json"
     try:
@@ -251,6 +344,13 @@ def collect_data_literals() -> tuple[set[str], dict[str, str]]:
                         add(info, inst_path)
     except Exception:
         pass
+
+    sp_path = "assets/config/special_programs.jsonc"
+    if sp_path in DATA_SOURCES:
+        data = _load_jsonc(ROOT / sp_path)
+        for prog in data.get("special_programs", []) or []:
+            if isinstance(prog, dict):
+                add(prog.get("display_name"), sp_path)
 
     return literals, refs
 

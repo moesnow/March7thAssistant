@@ -21,6 +21,7 @@ from . import (
     PLURAL_SUFFIX,
     collect_code_extras,
     collect_data_literals,
+    collect_table_literals,
     has_positional_placeholder,
     placeholders,
 )
@@ -79,11 +80,13 @@ def base_metadata(lang: str, is_pot: bool = False) -> dict:
 # ---------------------------------------------------------------------------
 
 def source_entries() -> dict[str, dict]:
-    """收集全部源条目：{msgid: {"ref": "path:line", "plural": bool, "contexts": tuple}}（含数据源）。
+    """收集全部源条目：{msgid: {"ref": "path:line", "plural": bool, "contexts": tuple}}。
 
+    来源四类：源码 tr/tn/trc 字面量、TABLE_SOURCES 常量表、DATA_SOURCES 数据文件、trc 语境。
     contexts 为经 trc() 传入的 msgctxt 集合（同一 msgid 可带多个语境）。
     """
     plurals, refs, contexts = collect_code_extras()
+    table_literals, table_refs = collect_table_literals()
     data_literals, data_refs = collect_data_literals()
     entries: dict[str, dict] = {}
     for msgid, (path, line) in refs.items():
@@ -92,7 +95,10 @@ def source_entries() -> dict[str, dict]:
             "plural": msgid in plurals,
             "contexts": tuple(sorted(contexts.get(msgid, ()))),
         }
-    for msgid in sorted(data_literals):  # 数据源来自 set，排序保证 extract 结果可复现
+    # 常量表与数据源都来自 set，排序保证 extract 结果可复现
+    for msgid in sorted(table_literals):
+        entries.setdefault(msgid, {"ref": table_refs.get(msgid, ""), "plural": False, "contexts": ()})
+    for msgid in sorted(data_literals):
         entries.setdefault(msgid, {"ref": data_refs.get(msgid, ""), "plural": False, "contexts": ()})
     return entries
 
