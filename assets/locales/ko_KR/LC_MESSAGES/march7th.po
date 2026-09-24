@@ -1251,7 +1251,7 @@ msgstr "기본 이미지 복구"
 
 #: app/home_interface.py:43
 msgid "三月七小助手"
-msgstr "March 7th Assistant"
+msgstr ""
 
 #: app/home_interface.py:85
 msgid "选择图片"
@@ -3131,7 +3131,7 @@ msgstr "봉망의 형체"
 
 #: assets/config/instance_names.json
 msgid "三月七"
-msgstr "March 7th"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "霜晶之形"
@@ -3820,7 +3820,7 @@ msgstr "일부 클라이언트에서 텍스트가 보이지 않는 문제를 피
 
 #: app/setting_interface.py:1285
 msgid "Server酱·Turbo版"
-msgstr "ServerChan Turbo"
+msgstr ""
 
 #: app/setting_interface.py:1286
 msgid "微信推送，适合轻量通知"
@@ -3848,7 +3848,7 @@ msgstr "수신자 OpenID"
 
 #: app/setting_interface.py:1343
 msgid "Server酱³"
-msgstr "ServerChan 3"
+msgstr ""
 
 #: app/setting_interface.py:1344
 msgid "Server酱³ APP 推送"
@@ -4060,7 +4060,7 @@ msgstr "메시지 유형: private 또는 group"
 
 #: app/setting_interface.py:1651
 msgid "钉钉"
-msgstr "DingTalk"
+msgstr ""
 
 #: app/setting_interface.py:1652
 msgid "钉钉机器人推送"
@@ -4213,7 +4213,7 @@ msgstr "선택 사항: 사용자 지정 Pushdeer 서비스 주소"
 
 #: app/setting_interface.py:2033
 msgid "飞书"
-msgstr "Feishu"
+msgstr ""
 
 #: app/setting_interface.py:2034
 msgid "飞书机器人推送"
@@ -4606,7 +4606,7 @@ msgid "确定"
 msgstr "확인"
 
 msgid "重返未来 M9A"
-msgstr "1999 M9A"
+msgstr ""
 
 #: app/setting_interface.py:482
 msgid "短信"
@@ -5374,7 +5374,7 @@ msgid "我已了解，继续开启"
 msgstr "이해했으며 계속 활성화"
 
 msgid "终末地 MaaEnd"
-msgstr "MaaEnd"
+msgstr ""
 
 #: app/schedule_dialog.py:708
 msgid "冲突:"
@@ -5702,20 +5702,13 @@ msgstr ""
 
 msgid "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅策略。"
 msgstr ""
-"To increase ascension level, recommended strategy is default strategy in "
-"lowest difficulty. To increase rank level, recommended strategy is Aglaea "
-"strategy in highest difficulty. "
 
 msgid "未配置，阿格莱雅策略下将跳过该角色，需要填入自己游戏名称"
 msgstr ""
-"Not set, this character will be skipped for Aglaea strategy. Please set this"
-" to your in-game nickname."
 
 #: app/setting_interface.py:2964
 msgid "该参数用于配置该通知方式的请求字段"
 msgstr ""
-"This parameter is used to configure the request field for this notification "
-"method"
 
 #: app/setting_interface.py:2316
 msgid "教程"

@@ -1417,8 +1417,6 @@ msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
 msgstr ""
-"https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
-"Issues caused by this are not related to this project/team. Continue?"
 
 #: app/tools_interface.py:167
 msgid "再次确认：可能存在风险"
@@ -1537,8 +1535,6 @@ msgid ""
 "队伍1: {team1}\n"
 "队伍2: {team2}"
 msgstr ""
-"Team 1: {team1}\n"
-"Team 2: {team2}"
 
 #: app/card/pushsettingcard1.py:747
 msgid "交换成功"
@@ -1711,11 +1707,6 @@ msgid ""
 "\n"
 "复制链接功能可用于小程序或其他软件。"
 msgstr ""
-"Warp history empty. Open in-game history and click Update Data.\n"
-"\n"
-"You can also import from UIGF/SRGF apps like StarRail Warp Export or Starward.\n"
-"\n"
-"Copy Link is for mini-programs or other software."
 
 msgid "启用 Windows 通知"
 msgstr "Windows 通知を有効化"
@@ -1766,8 +1757,6 @@ msgstr "キー設定"
 #: app/sub_interfaces/accounts_interface.py:30
 msgid "重要：请完全进入游戏（看到角色）后再进行导出，否则会读取前一个账号的UID，导致文件和账号不对应"
 msgstr ""
-"Important: Enter game fully (see character) before export to avoid reading "
-"previous UID/mismatch."
 
 #: app/sub_interfaces/accounts_interface.py:33
 msgid "该功能不支持云·星穹铁道"
@@ -1846,8 +1835,6 @@ msgid ""
 "当登录过期时尝试自动重新填写账号密码\n"
 " *此功能存在一定风险，请谨慎使用*"
 msgstr ""
-"Try auto-fill user/pass when login expired\n"
-" *Risk involved, use with caution*"
 
 #: app/sub_interfaces/accounts_interface.py:130
 msgid "请输入用户名"
@@ -2208,7 +2195,7 @@ msgstr "手動ダウンロード"
 
 #: app/card/messagebox_custom.py:384
 msgid "好的"
-msgstr "OK"
+msgstr ""
 
 #: app/card/messagebox_custom.py:392
 msgid "我已知晓"
@@ -2312,8 +2299,6 @@ msgstr "{i} 番目の秘技 \"{tech_text}\" は選択肢にありません。選
 msgid ""
 "说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\\n例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\\n若好友名称留空则只查找选择的角色。"
 msgstr ""
-"Note: Select char on left, enter friend name on right.\\nPartial match works"
-" (e.g., 'Dan' matches 'Dan Heng').\\nIf name empty, searches only char."
 
 #: app/card/messagebox_custom.py:904
 msgid "第{i}个好友角色\"{char_text}\"不在可选项中，请重新选择"
@@ -2639,27 +2624,27 @@ msgstr "CDK を取得"
 
 #: assets/config/character_names.json
 msgid "阿兰"
-msgstr "Arlan"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "艾丝妲"
-msgstr "Asta"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "白露"
-msgstr "Bailu"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "布洛妮娅"
-msgstr "Bronya"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "波提欧"
-msgstr "Boothill"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "丹恒"
-msgstr "Dan Heng"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "丹恒·饮月"
@@ -2671,279 +2656,279 @@ msgstr "Dan Heng • Permansor Terrae"
 
 #: assets/config/character_names.json
 msgid "翡翠"
-msgstr "Jade"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "飞霄"
-msgstr "Feixiao"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "符玄"
-msgstr "Fu Xuan"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "桂乃芬"
-msgstr "Guinaifen"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "藿藿"
-msgstr "Huohuo"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "花火"
-msgstr "Sparkle"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "虎克"
-msgstr "Hook"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "黄泉"
-msgstr "Acheron"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "黑塔"
-msgstr "Herta"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "黑天鹅"
-msgstr "Black Swan"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "寒鸦"
-msgstr "Hanya"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "镜流"
-msgstr "Jingliu"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "加拉赫"
-msgstr "Gallagher"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "杰帕德"
-msgstr "Gepard"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "椒丘"
-msgstr "Jiaoqiu"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "景元"
-msgstr "Jing Yuan"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "姬子"
-msgstr "Himeko"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "卡芙卡"
-msgstr "Kafka"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "克拉拉"
-msgstr "Clara"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "罗刹"
-msgstr "Luocha"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "卢卡"
-msgstr "Luka"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "玲可"
-msgstr "Lynx"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "乱破"
-msgstr "Rappa"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "灵砂"
-msgstr "Lingsha"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "流萤"
-msgstr "Firefly"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "流萤「春日手信」"
-msgstr "Firefly: Spring Missive"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "米沙"
-msgstr "Misha"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "貊泽"
-msgstr "Moze"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "娜塔莎"
-msgstr "Natasha"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "佩拉"
-msgstr "Pela"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "青雀"
-msgstr "Qingque"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "穹（存护）"
-msgstr "Caelus (Preservation)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "穹（毁灭）"
-msgstr "Caelus (Destruction)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "穹（同谐）"
-msgstr "Caelus (Harmony)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "穹（记忆）"
-msgstr "Caelus (Remembrance)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "穹（欢愉）"
-msgstr "Caelus (Elation)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "刃"
-msgstr "Blade"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "阮·梅"
-msgstr "Ruan Mei"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "桑博"
-msgstr "Sampo"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "砂金"
-msgstr "Aventurine"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "素裳"
-msgstr "Sushang"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "三月七（冰）"
-msgstr "March 7th (Ice)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "三月七（虚数）"
-msgstr "March 7th (Imaginary)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "三月七「冬去煦至」"
-msgstr "March 7th: Nascent Spring"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "托帕&账账"
-msgstr "Topaz & Numby"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "停云"
-msgstr "Tingyun"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "瓦尔特"
-msgstr "Welt"
+msgstr ""
 
 #: app/setting_interface.py:573
 msgid "希儿"
-msgstr "Seele"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "希露瓦"
-msgstr "Serval"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "星期日"
-msgstr "Sunday"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "雪衣"
-msgstr "Xueyi"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "星（存护）"
-msgstr "Stelle (Preservation)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "星（毁灭）"
-msgstr "Stelle (Destruction)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "星（同谐）"
-msgstr "Stelle (Harmony)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "星（记忆）"
-msgstr "Stelle (Remembrance)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "星（欢愉）"
-msgstr "Stelle (Elation)"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "驭空"
-msgstr "Yukong"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "银狼"
-msgstr "Silver Wolf"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "云璃"
-msgstr "Yunli"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "彦卿"
-msgstr "Yanqing"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "银枝"
-msgstr "Argenti"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "知更鸟"
-msgstr "Robin"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "真理医生"
-msgstr "Dr. Ratio"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "忘归人"
-msgstr "Fugue"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "大黑塔"
-msgstr "The Herta"
+msgstr ""
 
 #: app/setting_interface.py:573
 msgid "阿格莱雅"
-msgstr "Aglaea"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "缇宝"
-msgstr "Tribbie"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "万敌"
-msgstr "Mydei"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "遐蝶"
-msgstr "Castorice"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "遐蝶「幽梦翩跹」"
@@ -2951,19 +2936,19 @@ msgstr "Castorice: 儚き夢の舞"
 
 #: assets/config/character_names.json
 msgid "那刻夏"
-msgstr "Anaxa"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "风堇"
-msgstr "Hyacine"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "赛飞儿"
-msgstr "Cipher"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "白厄"
-msgstr "Phainon"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "Archer"
@@ -2975,127 +2960,127 @@ msgstr "Saber"
 
 #: assets/config/character_names.json
 msgid "海瑟音"
-msgstr "Hysilens"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "刻律德菈"
-msgstr "Cerydra"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "长夜月"
-msgstr "Evernight"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "昔涟"
-msgstr "Cyrene"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "大丽花"
-msgstr "The Dahlia"
+msgstr ""
 
 #: app/card/messagebox_custom.py:1186
 msgid "跳过"
-msgstr "Skip"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "角色经验"
-msgstr "Character EXP"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "回忆之蕾"
-msgstr "Bud of Memories"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "武器经验"
-msgstr "Light Cone EXP"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "以太之蕾"
-msgstr "Bud of Aether"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "信用点"
-msgstr "Credits"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "藏珍之蕾"
-msgstr "Bud of Treasures"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "毁灭之蕾"
-msgstr "Bud of Destruction"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "收容舱段"
-msgstr "Storage Zone"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "存护之蕾"
-msgstr "Bud of Preservation"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "支援舱段"
-msgstr "Supply Zone"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "巡猎之蕾"
-msgstr "Bud of The Hunt"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "城郊雪原"
-msgstr "Outlying Snow Plains"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "丰饶之蕾"
-msgstr "Bud of Abundance"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "边缘通路"
-msgstr "Backwater Pass"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "智识之蕾"
-msgstr "Bud of Erudition"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "铆钉镇"
-msgstr "Rivet Town"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "同谐之蕾"
-msgstr "Bud of Harmony"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "机械聚落"
-msgstr "Robot Settlement"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "虚无之蕾"
-msgstr "Bud of Nihility"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "大矿区"
-msgstr "Great Mine"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "鳞渊境"
-msgstr "Scalegorge Waterscape"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "丹鼎司"
-msgstr "Alchemy Commission"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "「白日梦」酒店-梦境"
-msgstr "The Reverie (Dreamscape)"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "绥园"
-msgstr "Fyxestroll Garden"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "克劳克影视乐园"
-msgstr "Clock Studios Theme Park"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "苏乐达™热砂海选会场"
@@ -3103,335 +3088,335 @@ msgstr "SoulGlad™ Scorchsand Audition Venue"
 
 #: assets/config/instance_names.json
 msgid "匹诺康尼大剧院"
-msgstr "Penacony Grand Theater"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "记忆之蕾"
-msgstr "Bud of Remembrance"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "「纷争荒墟」悬锋城"
-msgstr "\"Strife Ruins\" Castrum Kremnos"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "空海之形"
-msgstr "Shape of Quanta"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "巽风之形"
-msgstr "Shape of Gust"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "鸣雷之形"
-msgstr "Shape of Fulmination"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "炎华之形"
-msgstr "Shape of Scorch"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "锋芒之形"
-msgstr "Shape of Spike"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "三月七"
-msgstr "March 7th"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "霜晶之形"
-msgstr "Shape of Rime"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "幻光之形"
-msgstr "Shape of Mirage"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "冰棱之形"
-msgstr "Shape of Icicle"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "震厄之形"
-msgstr "Shape of Doom"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "偃偶之形"
-msgstr "Shape of Puppetry"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "孽兽之形"
-msgstr "Shape of Abomination"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "天人之形"
-msgstr "Shape of Celestial"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "幽府之形"
-msgstr "Shape of Perdition"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "燔灼之形"
-msgstr "Shape of Scorch"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "冰酿之形"
-msgstr "Shape of Nectar"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "焦炙之形"
-msgstr "Shape of Roast"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "嗔怒之形"
-msgstr "Shape of Ire"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "职司之形"
-msgstr "Shape of Duty"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "机狼之形"
-msgstr "Shape of Mechwolf"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "今宵之形"
-msgstr "Shape of Gloam"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "弦音之形"
-msgstr "Shape of Timbre"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "凛月之形"
-msgstr "Shape of Gelidmoon"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "役轮之形"
-msgstr "Shape of Sloggyre"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "溟簇之形"
-msgstr "Shape of Deepsheaf"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "烬日之形"
-msgstr "Shape of Cinders"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "塞壬之形"
-msgstr "Shape of Sirens"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "残灰之形"
-msgstr "Shape of Ashes"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "冰套 / 风套"
-msgstr "Ice / Wind Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "霜风之径"
-msgstr "Path of Gelid Wind"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "物理套 / 击破套"
-msgstr "Physical / Break Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "迅拳之径"
-msgstr "Path of Jabbing Punch"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "治疗套 / 快枪手"
-msgstr "Healer / Musketeer Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "漂泊之径"
-msgstr "Path of Drifting"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "铁卫套 / 量子套"
-msgstr "Guard / Quantum Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "睿治之径"
-msgstr "Path of Providence"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "防御套 / 雷套"
-msgstr "Defense / Lightning Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "圣颂之径"
-msgstr "Path of Holy Hymn"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "火套 / 虚数套"
-msgstr "Fire / Imaginary Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "野焰之径"
-msgstr "Path of Conflagration"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "生命套 / 速度套"
-msgstr "HP / Speed Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "药使之径"
-msgstr "Path of Elixir Seekers"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "追击套 / dot套"
-msgstr "Follow-up / DoT Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "幽冥之径"
-msgstr "Path of Darkness"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "负面套 / 新击破套"
-msgstr "Debuff / New Break Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "梦潜之径"
-msgstr "Path of Dreamdive"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "铁骑套 / 勇烈套"
-msgstr "Cavalry / Valorous Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "勇骑之径"
-msgstr "Path of Cavalier"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "司铎套 / 学者套"
-msgstr "Priest / Scholar Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "迷识之径"
-msgstr "Path of Uncertainty"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "英豪套 / 诗人套"
-msgstr "Hero / Poet Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "弦歌之径"
-msgstr "Path of Aria"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "女武神 / 船长套"
-msgstr "Valkyrie / Captain Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "雳涌之径"
-msgstr "Path of Thundersurge"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "救世套 / 隐士套"
-msgstr "Savior / Hermit Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "隐救之径"
-msgstr "Path of Hidden Salvation"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "永恒 / 天国"
-msgstr "Eternal / Heaven"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "西风丛中"
-msgstr "Within the West Wind"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "妖精 / 沉欢"
-msgstr "Fairy / Indulgence"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "月下朱殷"
-msgstr "Moonlit Blood"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "拾骨地 / 巨树"
-msgstr "Bone Field / Giant Tree"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "纷争不休"
-msgstr "Unceasing Strife"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "露莎卡 / 蕉乐园"
-msgstr "Rusalka / Banana Paradise"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "蠹役饥肠"
-msgstr "Famished Worker"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "奔狼 / 劫火"
-msgstr "Wolf / Calamity Fire"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "永恒笑剧"
-msgstr "Eternal Comedy"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "茨冈尼亚 / 高天神国"
-msgstr "Sigonia / Divine Realm"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "伴你入眠"
-msgstr "To Sweet Dreams"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "苍穹 / 匹诺康尼"
-msgstr "Firmament / Penacony"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "天剑如雨"
-msgstr "Pouring Blades"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "繁星 / 龙骨"
-msgstr "Starlight / Keel"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "孽果盘生"
-msgstr "Fruit of Evil"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "贝洛伯格 / 萨尔索图"
-msgstr "Belobog / Salsotto"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "百年冻土"
-msgstr "Permafrost"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "公司 / 差分机"
-msgstr "IPC / Difference Machine"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "温柔话语"
-msgstr "Gentle Words"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "盗贼 / 翁瓦克"
-msgstr "Thief / Vonwacq"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "浴火钢心"
-msgstr "Smelted Heart"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "太空 / 仙舟"
-msgstr "Space Station / Xianzhou"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "坚城不倒"
-msgstr "Untoppled Walls"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "反造物主，流溢之恨"
@@ -3498,23 +3483,23 @@ msgid "毁灭的开端"
 msgstr "壊滅の始まり"
 
 msgid "原神 BetterGI"
-msgstr "Genshin BetterGI"
+msgstr ""
 
 msgid "绝区零 一条龙"
-msgstr "ZZZ OneDragon"
+msgstr ""
 
 msgid "鸣潮 ok-ww"
-msgstr "Wuthering Waves ok-ww"
+msgstr ""
 
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
 #: app/main_window.py:590
 msgid "更新成功"
-msgstr "Update Successful"
+msgstr ""
 
 msgid "配置在重启软件后生效"
-msgstr "Settings take effect after restart"
+msgstr ""
 
 #: app/card/pushsettingcard1.py:311
 msgid "开始获取"
@@ -3539,119 +3524,117 @@ msgstr[0] "{count} 個の交換コードを取得しました"
 
 #: assets/config/instance_names.json
 msgid "欢愉之蕾"
-msgstr "Bud of Elation"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "「世界尽头」酒馆"
-msgstr "\"World's End\" Tavern"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "「葬忆彼岸」时光归墟"
-msgstr "\"Memortis Shore\" Ruins of Time"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "音爆之形"
-msgstr "Shape of Soundburst"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "少女套 / 卜者套"
-msgstr "Magical Girl / Diviner Set"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "魔占之径"
-msgstr "Path of Possession"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "爻光"
-msgstr "Yao Guang"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "火花"
-msgstr "Sparxie"
+msgstr ""
 
 #: app/tools/warp_export.py:193
 msgid "一共"
-msgstr "Total"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "阮·梅「雪绽梅笺」"
-msgstr "Ruan Mei: Plumblossom Letter"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "不死途"
-msgstr "Ashveil"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "绯英"
-msgstr "Evanescia"
+msgstr ""
 
 #: assets/config/character_names.json
 msgid "千冶·刃"
-msgstr "Mortenax Blade"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "海原电视塔"
-msgstr "Seafeld TV Tower"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "渡画泉隐"
-msgstr "Inkford Hermitage"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "吞噬之形"
-msgstr "Shape of Devour"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "观火之径"
-msgstr "Path of Insight"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "暂无"
-msgstr "TBD"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "领航员 / 名冶套"
-msgstr "Navigator / Master Smith Set"
+msgstr ""
 
 msgid "银河沙盘"
-msgstr "Cosmic Sandpit"
+msgstr ""
 
 msgid "星系框架"
-msgstr "Galaxy Framework"
+msgstr ""
 
 msgid "天体模型"
-msgstr "Celestial Globe"
+msgstr ""
 
 msgid "万色，愚者自将"
-msgstr "Omnicolor, Fool's Own"
+msgstr ""
 
 msgid "六合，王手飞车"
-msgstr "Sixen, King-Rook Fork"
+msgstr ""
 
 msgid "四相，过河照君"
-msgstr "Four Phases, Crossing the River to Check the King"
+msgstr ""
 
 msgid "嗤笑丑面"
-msgstr "Sneering Harlequin"
+msgstr ""
 
 msgid "星如我见的领航员"
-msgstr "As Navigator Isee Sees It"
+msgstr ""
 
 msgid "叩问天工的名冶"
-msgstr "Divine-Querying Master Smith"
+msgstr ""
 
 msgid "启用差分宇宙 GPU 加速"
-msgstr "Enable Divergent Universe GPU Acceleration"
+msgstr ""
 
 #: app/setting_interface.py:749
 msgid "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项"
 msgstr ""
-"May improve performance. If errors, exceptions, or instability occur, please"
-" disable this option."
 
 #: app/setting_interface.py:3080
 msgid "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
-msgstr "Script or executable files (*.exe *.bat *.cmd *.ps1)"
+msgstr ""
 
 #: tasks/tool/__init__.py:132
 msgid "截图失败(╥╯﹏╰╥)"
@@ -3683,11 +3666,11 @@ msgstr "上へ"
 
 #: app/schedule_dialog.py:929
 msgid "请先选择要上移的任务"
-msgstr "Select task to move up first"
+msgstr ""
 
 #: app/schedule_dialog.py:935
 msgid "当前任务已经位于最上方"
-msgstr "The selected task is already at the top"
+msgstr ""
 
 #: app/setting_interface.py:2392
 msgid "优先使用后台截图"
@@ -3711,11 +3694,11 @@ msgstr "特定ダンジョン用のチームを設定"
 
 #: app/card/messagebox_custom.py:1304
 msgid "当没有匹配到任何规则时，默认出战队伍："
-msgstr "Default team when no rules match: "
+msgstr ""
 
 #: app/card/messagebox_custom.py:1393
 msgid "队伍:"
-msgstr "Team: "
+msgstr ""
 
 #: app/card/pushsettingcard1.py:841
 msgid "已配置 {count} 项规则"
@@ -3728,7 +3711,7 @@ msgstr "Windows ネイティブ通知"
 
 #: app/setting_interface.py:1145
 msgid "通常需要可访问 Telegram 网络"
-msgstr "Usually requires Telegram network access"
+msgstr ""
 
 #: app/setting_interface.py:1148
 msgid "机器人令牌"
@@ -3736,7 +3719,7 @@ msgstr "Bot トークン"
 
 #: app/setting_interface.py:1148
 msgid "获取方式：创建 Bot → @BotFather → /newbot → 获取 Token"
-msgstr "How to get: Create bot -> @BotFather -> /newbot -> get token"
+msgstr ""
 
 #: app/setting_interface.py:1149
 msgid "用户/群组 ID"
@@ -3744,7 +3727,7 @@ msgstr "ユーザー / グループ ID"
 
 #: app/setting_interface.py:1149
 msgid "接收通知的用户 ID 或群组 ID（以 - 开头）"
-msgstr "Recipient user ID or group ID (group IDs usually start with -)"
+msgstr ""
 
 #: app/setting_interface.py:1150
 msgid "自定义 API 地址"
@@ -3752,17 +3735,15 @@ msgstr "カスタム API URL"
 
 #: app/setting_interface.py:1150
 msgid "可选参数，自定义 Telegram API 地址，例如 api.telegram.org"
-msgstr "Optional: custom Telegram API URL, e.g. api.telegram.org"
+msgstr ""
 
 #: app/setting_interface.py:1151
 msgid "代理配置"
-msgstr "Proxy settings"
+msgstr ""
 
 #: app/setting_interface.py:1151
 msgid "可选参数，例如 127.0.0.1:10808 或 socks5://127.0.0.1:1080，不填则使用系统 PAC 代理"
 msgstr ""
-"Optional: e.g. 127.0.0.1:10808 or socks5://127.0.0.1:1080. If empty, use "
-"system PAC proxy"
 
 #: app/setting_interface.py:1152
 msgid "话题 ID"
@@ -3774,65 +3755,63 @@ msgstr "オプション: Topics 機能が有効なグループの場合、対応
 
 #: app/setting_interface.py:1212
 msgid "适用于 Matrix 协议"
-msgstr "For Matrix protocol"
+msgstr ""
 
 #: app/setting_interface.py:1215
 msgid "服务器地址"
-msgstr "Server URL"
+msgstr ""
 
 #: app/setting_interface.py:1215
 msgid "服务器地址，例如 https://matrix.org"
-msgstr "Server URL, e.g. https://matrix.org"
+msgstr ""
 
 #: app/setting_interface.py:1216
 msgid "设备 ID"
-msgstr "Device ID"
+msgstr ""
 
 #: app/setting_interface.py:1216
 msgid "设备 ID，通常是 10 位大写字母或数字"
-msgstr "Device ID, usually 10 uppercase letters/numbers"
+msgstr ""
 
 #: app/setting_interface.py:1217
 msgid "用户 ID"
-msgstr "User ID"
+msgstr ""
 
 #: app/setting_interface.py:1217
 msgid "用户 ID，例如 @user:matrix.org"
-msgstr "User ID, e.g. @user:matrix.org"
+msgstr ""
 
 #: app/setting_interface.py:1218
 msgid "访问令牌"
-msgstr "Access token"
+msgstr ""
 
 #: app/setting_interface.py:1218
 msgid "登录后分配的 Access Token"
-msgstr "Access token issued after login"
+msgstr ""
 
 #: app/setting_interface.py:1219
 msgid "房间 ID"
-msgstr "Room ID"
+msgstr ""
 
 #: app/setting_interface.py:1219
 msgid "目标房间 ID，例如 !xxx:matrix.org"
-msgstr "Target room ID, e.g. !xxx:matrix.org"
+msgstr ""
 
 #: app/setting_interface.py:1221
 msgid "文字与图片分开发送"
-msgstr "Send text and image separately"
+msgstr ""
 
 #: app/setting_interface.py:1221
 msgid "是否分开发送文字和图片，避免部分客户端不显示文字"
 msgstr ""
-"Whether to send text and image separately to avoid text not showing in some "
-"clients"
 
 #: app/setting_interface.py:1285
 msgid "Server酱·Turbo版"
-msgstr "ServerChan Turbo"
+msgstr ""
 
 #: app/setting_interface.py:1286
 msgid "微信推送，适合轻量通知"
-msgstr "WeChat push, suitable for lightweight notifications"
+msgstr ""
 
 #: app/setting_interface.py:1288
 msgid "SendKey"
@@ -3840,75 +3819,75 @@ msgstr "SendKey"
 
 #: app/setting_interface.py:1288
 msgid "在 https://sct.ftqq.com/ 获取的 SendKey"
-msgstr "SendKey from https://sct.ftqq.com/"
+msgstr ""
 
 #: app/setting_interface.py:1289
 msgid "发送通道"
-msgstr "Channel"
+msgstr ""
 
 #: app/setting_interface.py:1289
 msgid "可选参数"
-msgstr "Optional"
+msgstr ""
 
 #: app/setting_interface.py:1290
 msgid "接收人 OpenID"
-msgstr "Recipient OpenID"
+msgstr ""
 
 #: app/setting_interface.py:1343
 msgid "Server酱³"
-msgstr "ServerChan 3"
+msgstr ""
 
 #: app/setting_interface.py:1344
 msgid "Server酱³ APP 推送"
-msgstr "ServerChan 3 app push"
+msgstr ""
 
 #: app/setting_interface.py:1346
 msgid "在 https://sc3.ft07.com/ 获取的 SendKey"
-msgstr "SendKey from https://sc3.ft07.com/"
+msgstr ""
 
 #: app/setting_interface.py:1391
 msgid "适合 iOS 设备推送"
-msgstr "Suitable for iOS push"
+msgstr ""
 
 #: app/setting_interface.py:1393
 msgid "推送密钥"
-msgstr "Push key"
+msgstr ""
 
 #: app/setting_interface.py:1393
 msgid "在 Bark APP 中获取的唯一标识符"
-msgstr "Unique identifier from Bark app"
+msgstr ""
 
 #: app/setting_interface.py:1394
 msgid "分组名"
-msgstr "Group name"
+msgstr ""
 
 #: app/setting_interface.py:1394
 msgid "可选参数，Bark 通知的分组名"
-msgstr "Optional: Bark notification group name"
+msgstr ""
 
 #: app/setting_interface.py:1395
 msgid "图标地址"
-msgstr "Icon URL"
+msgstr ""
 
 #: app/setting_interface.py:1395
 msgid "可选参数，通知图标的 URL"
-msgstr "Optional: notification icon URL"
+msgstr ""
 
 #: app/setting_interface.py:1396
 msgid "归档"
-msgstr "Archive"
+msgstr ""
 
 #: app/setting_interface.py:1396
 msgid "可选参数：1 归档，0 不归档"
-msgstr "Optional: 1 = archive, 0 = do not archive"
+msgstr ""
 
 #: app/setting_interface.py:1397
 msgid "提示音"
-msgstr "Sound"
+msgstr ""
 
 #: app/setting_interface.py:1397
 msgid "可选参数，自定义提示音名称"
-msgstr "Optional: custom sound name"
+msgstr ""
 
 #: app/setting_interface.py:1398
 msgid "跳转链接"
@@ -3924,235 +3903,235 @@ msgstr "サービスURL"
 
 #: app/setting_interface.py:1399
 msgid "可选参数，自定义 Bark 服务的 URL"
-msgstr "Optional: custom Bark service URL"
+msgstr ""
 
 #: app/setting_interface.py:1400
 msgid "复制内容"
-msgstr "Copy content"
+msgstr ""
 
 #: app/setting_interface.py:1400
 msgid "可选参数，通知点击后复制内容"
-msgstr "Optional: copy content when notification is clicked"
+msgstr ""
 
 #: app/setting_interface.py:1401
 msgid "自动复制"
-msgstr "Auto copy"
+msgstr ""
 
 #: app/setting_interface.py:1401
 msgid "可选参数，是否自动复制"
-msgstr "Optional: whether to auto copy"
+msgstr ""
 
 #: app/setting_interface.py:1402
 msgid "加密密钥"
-msgstr "Encryption key"
+msgstr ""
 
 #: app/setting_interface.py:1402
 msgid "可选参数，推送加密密钥，需在 Bark APP 中配置相同的密钥"
-msgstr "Optional: push encryption key, must match Bark app settings"
+msgstr ""
 
 #: app/setting_interface.py:1403
 msgid "加密算法"
-msgstr "Encryption method"
+msgstr ""
 
 #: app/setting_interface.py:1403
 msgid "可选参数，支持 cbc 或 ecb，需与 Bark APP 中配置的算法一致"
-msgstr "Optional: supports cbc or ecb, must match Bark app settings"
+msgstr ""
 
 #: app/setting_interface.py:1460
 msgid "常用于邮箱提醒"
-msgstr "Commonly used for email alerts"
+msgstr ""
 
 #: app/setting_interface.py:1463
 msgid "SMTP 服务器"
-msgstr "SMTP server"
+msgstr ""
 
 #: app/setting_interface.py:1464
 msgid "用户名/邮箱"
-msgstr "Username/Email"
+msgstr ""
 
 #: app/setting_interface.py:1465
 msgid "密码/授权码"
-msgstr "Password/App password"
+msgstr ""
 
 #: app/setting_interface.py:1465
 msgid "部分邮箱需要填写授权码（如 QQ 邮箱）"
-msgstr "Some providers require app password (e.g. QQ Mail)"
+msgstr ""
 
 #: app/setting_interface.py:1466
 msgid "发件人"
-msgstr "From"
+msgstr ""
 
 #: app/setting_interface.py:1466
 msgid "可选参数，发件人邮箱，默认使用 user"
-msgstr "Optional: sender email, defaults to user"
+msgstr ""
 
 #: app/setting_interface.py:1467
 msgid "收件人"
-msgstr "To"
+msgstr ""
 
 #: app/setting_interface.py:1467
 msgid "可选参数，收件人邮箱，默认使用 user"
-msgstr "Optional: recipient email, defaults to user"
+msgstr ""
 
 #: app/setting_interface.py:1468
 msgid "端口"
-msgstr "Port"
+msgstr ""
 
 #: app/setting_interface.py:1468
 msgid "可选参数，端口，默认 465"
-msgstr "Optional: port, default is 465"
+msgstr ""
 
 #: app/setting_interface.py:1469
 msgid "启用 SSL"
-msgstr "Enable SSL"
+msgstr ""
 
 #: app/setting_interface.py:1469
 msgid "可选参数，是否启用 SSL"
-msgstr "Optional: whether to enable SSL"
+msgstr ""
 
 #: app/setting_interface.py:1470
 msgid "启用 STARTTLS"
-msgstr "Enable STARTTLS"
+msgstr ""
 
 #: app/setting_interface.py:1470
 msgid "可选参数，是否启用 STARTTLS"
-msgstr "Optional: whether to enable STARTTLS"
+msgstr ""
 
 #: app/setting_interface.py:1471
 msgid "跳过证书验证"
-msgstr "Skip certificate verification"
+msgstr ""
 
 #: app/setting_interface.py:1471
 msgid "可选参数，是否跳过 SSL 证书验证"
-msgstr "Optional: whether to skip SSL certificate verification"
+msgstr ""
 
 #: app/setting_interface.py:1532
 msgid "适用于 OneBot 协议"
-msgstr "For OneBot protocol"
+msgstr ""
 
 #: app/setting_interface.py:1535
 msgid "OneBot 服务端点地址，例如 http://127.0.0.1:3000"
-msgstr "OneBot endpoint URL, e.g. http://127.0.0.1:3000"
+msgstr ""
 
 #: app/setting_interface.py:1536
 msgid "可选参数，Access Token"
-msgstr "Optional: access token"
+msgstr ""
 
 #: app/setting_interface.py:1537
 msgid "私聊用户 ID"
-msgstr "Private chat user ID"
+msgstr ""
 
 #: app/setting_interface.py:1537
 msgid "可选参数，私聊接收用户 ID"
-msgstr "Optional: recipient user ID for private chat"
+msgstr ""
 
 #: app/setting_interface.py:1538
 msgid "群组 ID"
-msgstr "Group ID"
+msgstr ""
 
 #: app/setting_interface.py:1538
 msgid "可选参数，群聊接收群组 ID"
-msgstr "Optional: recipient group ID for group chat"
+msgstr ""
 
 #: app/setting_interface.py:1599
 msgid "Go-cqhttp 项目已停止维护"
-msgstr "Go-cqhttp project is no longer maintained"
+msgstr ""
 
 #: app/setting_interface.py:1603
 msgid "消息类型"
-msgstr "Message type"
+msgstr ""
 
 #: app/setting_interface.py:1603
 msgid "消息类型：private 或 group"
-msgstr "Message type: private or group"
+msgstr ""
 
 #: app/setting_interface.py:1651
 msgid "钉钉"
-msgstr "DingTalk"
+msgstr ""
 
 #: app/setting_interface.py:1652
 msgid "钉钉机器人推送"
-msgstr "DingTalk bot push"
+msgstr ""
 
 #: app/setting_interface.py:1655
 msgid "加签密钥"
-msgstr "Signature secret"
+msgstr ""
 
 #: app/setting_interface.py:1655
 msgid "可选参数，安全加签密钥"
-msgstr "Optional: security signature secret"
+msgstr ""
 
 #: app/setting_interface.py:1700
 msgid "Pushplus 通知服务"
-msgstr "Pushplus notification service"
+msgstr ""
 
 #: app/setting_interface.py:1702
 msgid "推送令牌"
-msgstr "Push token"
+msgstr ""
 
 #: app/setting_interface.py:1703
 msgid "推送渠道"
-msgstr "Push channel"
+msgstr ""
 
 #: app/setting_interface.py:1704
 msgid "Webhook 地址"
-msgstr "Webhook URL"
+msgstr ""
 
 #: app/setting_interface.py:1704
 msgid "可选参数，Webhook URL"
-msgstr "Optional: webhook URL"
+msgstr ""
 
 #: app/setting_interface.py:1705
 msgid "回调地址"
-msgstr "Callback URL"
+msgstr ""
 
 #: app/setting_interface.py:1705
 msgid "可选参数，回调 URL"
-msgstr "Optional: callback URL"
+msgstr ""
 
 #: app/setting_interface.py:1797
 msgid "企业微信机器人"
-msgstr "WeCom bot"
+msgstr ""
 
 #: app/setting_interface.py:1798
 msgid "企业微信机器人消息推送"
-msgstr "WeCom bot message push"
+msgstr ""
 
 #: app/setting_interface.py:1801
 msgid "机器人 Key"
-msgstr "Bot key"
+msgstr ""
 
 #: app/setting_interface.py:1802
 msgid "可选参数，企业微信机器人 Webhook URL"
-msgstr "Optional: WeCom bot webhook URL"
+msgstr ""
 
 #: app/setting_interface.py:1840
 msgid "企业微信应用"
-msgstr "WeCom app"
+msgstr ""
 
 #: app/setting_interface.py:1841
 msgid "企业微信应用消息推送"
-msgstr "WeCom app message push"
+msgstr ""
 
 #: app/setting_interface.py:1844
 msgid "企业 ID"
-msgstr "Corp ID"
+msgstr ""
 
 #: app/setting_interface.py:1845
 msgid "应用密钥"
-msgstr "App secret"
+msgstr ""
 
 #: app/setting_interface.py:1846
 msgid "应用 AgentId"
-msgstr "App AgentId"
+msgstr ""
 
 #: app/setting_interface.py:1847
 msgid "接收用户"
-msgstr "Recipients"
+msgstr ""
 
 #: app/setting_interface.py:1847
 msgid "可选参数，接收用户，@all 表示全员"
-msgstr "Optional: recipient users, @all means everyone"
+msgstr ""
 
 #: app/setting_interface.py:1848
 msgid "可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制"
@@ -4160,57 +4139,55 @@ msgstr "オプション: リバースプロキシで信頼済み IP 制限を回
 
 #: app/setting_interface.py:1892
 msgid "Gotify 私有通知服务"
-msgstr "Gotify self-hosted notification service"
+msgstr ""
 
 #: app/setting_interface.py:1894
 msgid "Gotify 服务器 URL，例如 https://gotify.example.com"
-msgstr "Gotify server URL, e.g. https://gotify.example.com"
+msgstr ""
 
 #: app/setting_interface.py:1895
 msgid "Gotify 应用的 Access Token"
-msgstr "Gotify app access token"
+msgstr ""
 
 #: app/card/stationprioritysettingcard.py:148
 msgid "优先级"
-msgstr "Priority"
+msgstr ""
 
 #: app/setting_interface.py:1896
 msgid "可选参数，通知优先级，范围 1-10，越高优先级越高。1-3:仅图标，4-7:图标 + 声音，8-10:图标 + 声音 + 震动"
 msgstr ""
-"Optional: priority level 1-10. Higher means more prominent. 1-3: icon only, "
-"4-7: icon + sound, 8-10: icon + sound + vibration"
 
 #: app/setting_interface.py:1945
 msgid "Discord Webhook 推送"
-msgstr "Discord webhook push"
+msgstr ""
 
 #: app/setting_interface.py:1948
 msgid "显示用户名"
-msgstr "Display username"
+msgstr ""
 
 #: app/setting_interface.py:1948
 msgid "可选参数，显示用户名"
-msgstr "Optional: display username"
+msgstr ""
 
 #: app/setting_interface.py:1949
 msgid "头像地址"
-msgstr "Avatar URL"
+msgstr ""
 
 #: app/setting_interface.py:1949
 msgid "可选参数，头像 URL"
-msgstr "Optional: avatar URL"
+msgstr ""
 
 #: app/setting_interface.py:1950
 msgid "消息颜色"
-msgstr "Message color"
+msgstr ""
 
 #: app/setting_interface.py:1950
 msgid "可选参数，嵌入消息颜色，十六进制颜色值（如：0x3498db）"
-msgstr "Optional: embed message color in hex (e.g. 0x3498db)"
+msgstr ""
 
 #: app/setting_interface.py:1992
 msgid "Pushdeer 通知服务"
-msgstr "Pushdeer notification service"
+msgstr ""
 
 #: app/setting_interface.py:1994
 msgid "Pushdeer Token"
@@ -4218,209 +4195,203 @@ msgstr "Pushdeer token"
 
 #: app/setting_interface.py:1995
 msgid "可选参数，自定义 Pushdeer 服务地址"
-msgstr "Optional: custom Pushdeer service URL"
+msgstr ""
 
 #: app/setting_interface.py:2033
 msgid "飞书"
-msgstr "Feishu"
+msgstr ""
 
 #: app/setting_interface.py:2034
 msgid "飞书机器人推送"
-msgstr "Feishu bot push"
+msgstr ""
 
 #: app/setting_interface.py:2038
 msgid "消息内容"
-msgstr "Message content"
+msgstr ""
 
 #: app/setting_interface.py:2039
 msgid "关键词"
-msgstr "Keyword"
+msgstr ""
 
 #: app/setting_interface.py:2039
 msgid "可选参数，关键词安全校验内容"
-msgstr "Optional: keyword for security validation"
+msgstr ""
 
 #: app/setting_interface.py:2040
 msgid "签名"
-msgstr "Signature"
+msgstr ""
 
 #: app/setting_interface.py:2040
 msgid "可选参数，签名安全校验参数"
-msgstr "Optional: signature for security validation"
+msgstr ""
 
 #: app/setting_interface.py:2041
 msgid "启用图片"
-msgstr "Enable image"
+msgstr ""
 
 #: app/setting_interface.py:2041
 msgid "是否发送图片"
-msgstr "Whether to send image"
+msgstr ""
 
 #: app/setting_interface.py:2042
 msgid "应用 AppId"
-msgstr "App AppId"
+msgstr ""
 
 #: app/setting_interface.py:2042
 msgid "发送图片时必填：飞书应用 AppId"
-msgstr "Required when sending images: Feishu app AppId"
+msgstr ""
 
 #: app/setting_interface.py:2043
 msgid "应用 Secret"
-msgstr "App Secret"
+msgstr ""
 
 #: app/setting_interface.py:2043
 msgid "发送图片时必填：飞书应用 Secret"
-msgstr "Required when sending images: Feishu app Secret"
+msgstr ""
 
 #: app/setting_interface.py:2084
 msgid "适合 鸿蒙NEXT 设备推送"
-msgstr "Suitable for HarmonyOS NEXT devices"
+msgstr ""
 
 #: app/setting_interface.py:2086
 msgid "昵称"
-msgstr "Nickname"
+msgstr ""
 
 #: app/setting_interface.py:2117
 msgid "KOOK 机器人推送"
-msgstr "KOOK bot push"
+msgstr ""
 
 #: app/setting_interface.py:2120
 msgid "KOOK 机器人的 Token"
-msgstr "KOOK bot token"
+msgstr ""
 
 #: app/setting_interface.py:2121
 msgid "目标 ID"
-msgstr "Target ID"
+msgstr ""
 
 #: app/setting_interface.py:2121
 msgid "接收消息的用户 ID 或频道 ID"
-msgstr "Recipient user ID or channel ID"
+msgstr ""
 
 #: app/setting_interface.py:2122
 msgid "聊天类型"
-msgstr "Chat type"
+msgstr ""
 
 #: app/setting_interface.py:2122
 msgid "可选参数，1 为私聊，9 为频道"
-msgstr "Optional: 1 for private chat, 9 for channel"
+msgstr ""
 
 #: app/setting_interface.py:2168
 msgid "可自定义请求方法、请求头和请求体"
-msgstr "Supports custom request method, headers, and body"
+msgstr ""
 
 #: app/setting_interface.py:2171
 msgid "接收地址"
-msgstr "Endpoint URL"
+msgstr ""
 
 #: app/setting_interface.py:2172
 msgid "请求方法"
-msgstr "Request method"
+msgstr ""
 
 #: app/setting_interface.py:2172
 msgid "可选参数，HTTP 方法，默认 POST"
-msgstr "Optional: HTTP method, default POST"
+msgstr ""
 
 #: app/setting_interface.py:2173
 msgid "请求头"
-msgstr "Request headers"
+msgstr ""
 
 #: app/setting_interface.py:2173
 msgid "可选参数，请求头 JSON 格式字符串，如：{\"Authorization\": \"Bearer token\"}"
-msgstr "Optional: headers in JSON string, e.g. {\"Authorization\": \"Bearer token\"}"
+msgstr ""
 
 #: app/setting_interface.py:2174
 msgid "请求体"
-msgstr "Request body"
+msgstr ""
 
 #: app/setting_interface.py:2174
 msgid "可选参数，请求体模板 JSON 格式字符串，支持 {title}/{content}/{image} 占位符"
 msgstr ""
-"Optional: body template as JSON string, supports placeholders "
-"{title}/{content}/{image}"
 
 #: app/setting_interface.py:2234
 msgid "自定义通知"
-msgstr "Custom notification"
+msgstr ""
 
 #: app/setting_interface.py:2235
 msgid "自定义 HTTP 请求推送"
-msgstr "Custom HTTP request push"
+msgstr ""
 
 #: app/setting_interface.py:2238
 msgid "请求地址"
-msgstr "Request URL"
+msgstr ""
 
 #: app/setting_interface.py:2238
 msgid "请求地址，OneBot 可填写 send_msg 接口 URL"
-msgstr "Request URL. For OneBot, you can use send_msg endpoint URL"
+msgstr ""
 
 #: app/setting_interface.py:2239
 msgid "请求方法，通常 get 或 post"
-msgstr "Request method, usually GET or POST"
+msgstr ""
 
 #: app/setting_interface.py:2240
 msgid "数据类型"
-msgstr "Data type"
+msgstr ""
 
 #: app/setting_interface.py:2240
 msgid "数据类型，通常为 data 或 json"
-msgstr "Data type, usually data or json"
+msgstr ""
 
 #: app/setting_interface.py:2241
 msgid "图片模板"
-msgstr "Image template"
+msgstr ""
 
 #: app/setting_interface.py:2241
 msgid "可选参数，图片消息模板，{image} 会替换为 Base64"
 msgstr ""
-"Optional: image message template, {image} will be replaced with Base64"
 
 #: app/setting_interface.py:2242
 msgid "数据模板"
-msgstr "Data template"
+msgstr ""
 
 #: app/setting_interface.py:2242
 msgid "请求体模板，{message} 会替换为标题和内容"
 msgstr ""
-"Request body template, {message} will be replaced with title and content"
 
 #: app/setting_interface.py:1118
 msgid "通知合并"
-msgstr "Notification merge"
+msgstr ""
 
 #: app/setting_interface.py:1119
 msgid "开启后，完整运行结束时将所有通知合并为一条发送"
 msgstr ""
-"When enabled, all notifications are merged and sent as one message after a "
-"full run completes."
 
 #: app/setting_interface.py:1124
 msgid "推送图片"
-msgstr "Send images with notifications"
+msgstr ""
 
 #: app/setting_interface.py:1125
 msgid "关闭后推送消息时不再发送截图"
-msgstr "Do not include screenshots when sending notifications"
+msgstr ""
 
 #: app/setting_interface.py:1100
 msgid "启用消息推送"
-msgstr "Enable notifications"
+msgstr ""
 
 #: app/setting_interface.py:1101
 msgid "消息推送总开关"
-msgstr "Notification master switch"
+msgstr ""
 
 #: app/card/autoplot_setting_card.py:56
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
-msgstr "Auto Battle Detection (Press V when auto-battle is off)"
+msgstr ""
 
 #: utils/tasks.py:26
 msgid "差分宇宙循环"
-msgstr "Divergent Universe Loop"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:69
 msgid "差分宇宙中途接管"
-msgstr "Divergent Universe Mid-takeover"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:67
 msgid "差分宇宙运行一次 ⭐"
@@ -4432,48 +4403,47 @@ msgstr "Divergent Universe Loop Run ⭐"
 
 #: app/card/card_edit_dialog.py:70
 msgid "模拟宇宙快速启动（停止维护）"
-msgstr "Simulated Universe Quick Start (Stop Maintain)"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:71
 msgid "模拟宇宙原版运行（停止维护）"
-msgstr "Simulated Universe Original Run (Stop Maintain)"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:72
 msgid "更新模拟宇宙（停止维护）"
-msgstr "Update Simulated Universe (Stop Maintain)"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:73
 msgid "重置模拟宇宙配置文件（停止维护）"
-msgstr "Reset Simulated Universe Config (Stop Maintain)"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:74
 msgid "打开模拟宇宙目录（停止维护）"
-msgstr "Open Simulated Universe Dir (Stop Maintain)"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:75
 msgid "打开模拟宇宙项目主页（停止维护）"
-msgstr "Open Simulated Universe Project Homepage (Stop Maintain)"
+msgstr ""
 
 #: app/log_interface.py:395
 msgid "在游戏内显示日志"
-msgstr "Show Log in Game"
+msgstr ""
 
 #: app/setting_interface.py:590
 msgid "启用速通模式"
-msgstr "Enable Speed Run Mode"
+msgstr ""
 
 #: app/setting_interface.py:614
 msgid "难度等级"
-msgstr "Difficulty Level"
+msgstr ""
 
 #: app/setting_interface.py:620
 msgid "自动执行饰品提取"
-msgstr "Auto Ornament Extraction"
+msgstr ""
 
 #: app/setting_interface.py:621
 msgid "在领取积分奖励后自动执行饰品提取消耗沉浸器"
 msgstr ""
-"Auto Ornament Extraction using Immersifiers after claiming point rewards"
 
 #: app/setting_interface.py:626
 msgid "启用低性能兼容模式"
@@ -4486,159 +4456,157 @@ msgstr ""
 
 #: app/setting_interface.py:679
 msgid "自动领取模拟宇宙沉浸奖励"
-msgstr "Auto Claim Simulated Universe Immersion Rewards"
+msgstr ""
 
 #: app/setting_interface.py:680
 msgid "类别为“模拟宇宙”时，自动领取沉浸奖励"
-msgstr "When category is 'Simulated Universe', auto claim immersion rewards"
+msgstr ""
 
 #: app/setting_interface.py:748
 msgid "启用模拟宇宙 GPU 加速"
-msgstr "Enable Simulated Universe GPU Acceleration"
+msgstr ""
 
 #: app/setting_interface.py:1091
 msgid "窗口记忆"
-msgstr "Window Memory"
+msgstr ""
 
 #: app/setting_interface.py:1092
 msgid "选择启动时恢复的窗口状态"
-msgstr "Select window state to restore on startup"
+msgstr ""
 
 #: app/setting_interface.py:1093
 msgid "记忆窗口大小"
-msgstr "Remember Window Size"
+msgstr ""
 
 #: app/setting_interface.py:1093
 msgid "记忆窗口位置"
-msgstr "Remember Window Position"
+msgstr ""
 
 #: app/setting_interface.py:1093
 msgid "记忆窗口大小和位置"
-msgstr "Remember Window Size and Position"
+msgstr ""
 
 #: app/setting_interface.py:1093
 msgid "都不记忆"
-msgstr "Remember Neither"
+msgstr ""
 
 #: app/setting_interface.py:2423
 msgid "立即前往"
-msgstr "Go Now"
+msgstr ""
 
 #: app/setting_interface.py:2425
 msgid "哔哩哔哩"
-msgstr "Bilibili"
+msgstr ""
 
 #: app/setting_interface.py:2426
 msgid "欢迎关注我们的B站账号，获取最新动态和教程"
-msgstr "Follow our Bilibili account for the latest updates and tutorials"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "零号 / 千星"
-msgstr "Zero / Thousand Stars"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "鎏金追忆"
-msgstr "Gilded Reminiscence"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:20
 msgid "重置模拟宇宙配置文件"
-msgstr "Reset Simulated Universe Config"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:21
 msgid "打开模拟宇宙目录"
-msgstr "Open Simulated Universe Directory"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:22
 msgid "打开模拟宇宙项目主页"
-msgstr "Open Simulated Universe Project Homepage"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:23
 msgid "重置锄大地配置文件"
-msgstr "Reset Fhoe-Rail Config"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:24
 msgid "打开锄大地程序目录"
-msgstr "Open Fhoe-Rail Directory"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:25
 msgid "打开锄大地项目主页"
-msgstr "Open Fhoe-Rail Project Homepage"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:327
 msgid "编辑主页卡片"
-msgstr "Edit Home Cards"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:183
 msgid "图标"
-msgstr "Icon"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:195
 msgid "标题："
-msgstr "Title:"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:198
 msgid "卡片标题"
-msgstr "Card Title"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:226
 msgid "操作类型："
-msgstr "Action Type:"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:228
 msgid "单个任务"
-msgstr "Single Task"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:228
 msgid "任务菜单"
-msgstr "Task Menu"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:143
 msgid "任务："
-msgstr "Task:"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:256
 msgid "添加菜单项"
-msgstr "Add Menu Item"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:119
 msgid "菜单项名称"
-msgstr "Menu Item Name"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:141
 msgid "名称："
-msgstr "Name:"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:362
 msgid "添加卡片"
-msgstr "Add Card"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:364
 msgid "恢复默认"
-msgstr "Restore Defaults"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:367
 msgid "确定"
-msgstr "Confirm"
+msgstr ""
 
 msgid "重返未来 M9A"
-msgstr "1999 M9A"
+msgstr ""
 
 #: app/setting_interface.py:482
 msgid "短信"
-msgstr "Message"
+msgstr ""
 
 msgid "难度等级（难度6对应常规演算星阶模式）"
 msgstr ""
-"Difficulty Level (Level 6 corresponds to regular calculation star-rank mode)"
 
 #: app/setting_interface.py:633
 msgid "站点优先级"
-msgstr "Site Priority"
+msgstr ""
 
 #: app/setting_interface.py:634
 msgid "自定义差分宇宙「选择下一站」的站点优先级"
 msgstr ""
-"Customize site priority for \"Choose Next Station\" in Differential Universe"
 
 #: app/card/stationprioritysettingcard.py:299
 msgid "已启用自定义优先级，{count} 个站点已禁用"
@@ -4647,154 +4615,141 @@ msgstr[0] "カスタム優先度を有効化、{count} 件の拠点を無効化"
 
 #: app/setting_interface.py:2471
 msgid "下载代理"
-msgstr "Download Proxy"
+msgstr ""
 
 #: app/setting_interface.py:2473
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
-msgstr "Leave empty to use system proxy; supports http:// and socks5://"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:282
 msgid "选择图标"
-msgstr "Select Icon"
+msgstr ""
 
 #: app/setting_interface.py:564
 msgid "职级难度"
-msgstr "Rank Difficulty"
+msgstr ""
 
 #: app/setting_interface.py:566
 msgid "当前职级"
-msgstr "Current Rank"
+msgstr ""
 
 #: app/setting_interface.py:566
 msgid "最低职级"
-msgstr "Lowest Rank"
+msgstr ""
 
 #: app/setting_interface.py:566
 msgid "最高职级"
-msgstr "Highest Rank"
+msgstr ""
 
 #: app/setting_interface.py:571
 msgid "货币战争策略"
-msgstr "Currency Wars Strategy"
+msgstr ""
 
 #: app/setting_interface.py:573
 msgid "默认"
-msgstr "Default"
+msgstr ""
 
 #: app/setting_interface.py:584
 msgid "遇到特定词条时接受重开"
-msgstr "Allow restart on specific tags"
+msgstr ""
 
 #: app/setting_interface.py:585
 msgid "根据所选策略，在遇到特定词条或词条组合时允许重开"
 msgstr ""
-"Allow restart when specific tags or tag combinations appear based on the "
-"selected strategy"
 
 #: app/setting_interface.py:578
 msgid "「开拓者•记忆」名称"
-msgstr "Remembrance Trailblazer Name"
+msgstr ""
 
 #: app/setting_interface.py:580
 msgid "未配置时，阿格莱雅/希儿策略将跳过该角色，需要填入自己游戏名称"
 msgstr ""
-"If not configured, this character will be skipped in the Aglaea/Seele "
-"strategies. Enter the name shown in your game."
 
 #: app/setting_interface.py:572
 msgid "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅或希儿策略。"
 msgstr ""
-"To level up promotion rank, use the default strategy at the lowest rank. To "
-"level up rank, use the Aglaea or Seele strategy at the highest rank."
 
 #: app/setting_interface.py:591
 msgid "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"
 msgstr ""
-"When enabled, weapon equip is only attempted at boss nodes. Only recommended"
-" to enable at the lowest rank."
 
 #: app/setting_interface.py:543
 msgid "提升晋升等级"
-msgstr "Raise Promotion Tier"
+msgstr ""
 
 #: app/setting_interface.py:544
 msgid "提升职级等级"
-msgstr "Raise Rank Level"
+msgstr ""
 
 #: app/setting_interface.py:546
 msgid "快捷配置"
-msgstr "Quick Preset"
+msgstr ""
 
 #: app/setting_interface.py:3151
 msgid "已应用快捷配置"
-msgstr "Quick Preset Applied"
+msgstr ""
 
 #: app/setting_interface.py:3152
 msgid "当前为“提升晋升等级”模式"
-msgstr "Now using 'Raise Promotion Tier' mode"
+msgstr ""
 
 #: app/setting_interface.py:3167
 msgid "当前为“提升职级等级”模式"
-msgstr "Now using 'Raise Rank Level' mode"
+msgstr ""
 
 #: app/card/stationprioritysettingcard.py:112
 msgid "站点优先级配置"
-msgstr "Station Priority Configuration"
+msgstr ""
 
 #: app/card/stationprioritysettingcard.py:122
 msgid ""
 "调整站点优先级顺序，数字越小优先级越高。\n"
 "没有重抽次数后仍会选择禁用的站点。"
 msgstr ""
-"Adjust station priority order. Smaller numbers mean higher priority.\n"
-"Disabled stations may still be selected when no rerolls remain."
 
 #: app/card/stationprioritysettingcard.py:130
 msgid "固定站点（始终最高优先级）：首领、休整、转化"
-msgstr "Fixed stations (always highest priority): Boss, Rest, Conversion"
+msgstr ""
 
 #: app/card/stationprioritysettingcard.py:145
 msgid "站点"
-msgstr "Station"
+msgstr ""
 
 #: app/card/stationprioritysettingcard.py:153
 msgid "排序"
-msgstr "Order"
+msgstr ""
 
 #: app/card/stationprioritysettingcard.py:303
 msgid "使用默认优先级"
-msgstr "Use Default Priority"
+msgstr ""
 
 #: app/card/stationprioritysettingcard.py:301
 msgid "已启用自定义优先级"
-msgstr "Custom Priority Enabled"
+msgstr ""
 
 #: app/setting_interface.py:2370
 msgid "自动"
-msgstr "Auto"
+msgstr ""
 
 #: app/setting_interface.py:786
 msgid "二相乐园"
-msgstr "Planarcadia"
+msgstr ""
 
 #: app/setting_interface.py:301
 msgid "识别方案"
-msgstr "Recognition Method"
+msgstr ""
 
 #: app/setting_interface.py:302
 msgid "副本名称识别会进入挑战页读取副本信息；掉落物识别根据列表中的掉落物匹配副本，异常时可尝试切换方案"
 msgstr ""
-"Stage Name Recognition enters the challenge page to read stage info; Drop "
-"Recognition matches stages by drops in the list. If issues occur, try "
-"switching methods."
 
 #: app/setting_interface.py:304
 msgid "副本名称识别"
-msgstr "Stage Name Recognition"
+msgstr ""
 
 #: app/setting_interface.py:305
 msgid "掉落物识别"
-msgstr "Drop Recognition"
+msgstr ""
 
 #: app/setting_interface.py:777
 msgid "地图版本"
@@ -4811,19 +4766,14 @@ msgstr "黄泉専用"
 #: app/setting_interface.py:317
 msgid "仅识别到侵蚀隧洞/饰品提取时使用自定义副本"
 msgstr ""
-"Use custom dungeon when only Cavern of Corrosion/Ornament Extraction is "
-"detected"
 
 #: app/setting_interface.py:318
 msgid "开启后，当培养目标仅包含侵蚀隧洞和饰品提取时，清体力将改用你在体力设置中配置的副本"
 msgstr ""
-"When enabled, if cultivation targets only include Cavern of Corrosion and "
-"Ornament Extraction, Power farming will use the dungeon configured in your "
-"Power settings"
 
 #: assets/config/character_names.json
 msgid "银狼LV.999"
-msgstr "Silver Wolf LV.999"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "「辉痕圣林」神悟树庭"
@@ -4831,11 +4781,11 @@ msgstr "「輝痕聖林」神悟の樹庭"
 
 #: app/setting_interface.py:424
 msgid "活动热点通知"
-msgstr "Journey Highlights Notification"
+msgstr ""
 
 #: app/setting_interface.py:425
 msgid "每次运行时发送带有活动热点截图的通知"
-msgstr "Send notification with Journey Highlights screenshot every run"
+msgstr ""
 
 #: app/help_interface.py:188
 msgid "流程编排"
@@ -5167,7 +5117,7 @@ msgstr "テンプレート画像を選択してください"
 
 #: app/card/card_edit_dialog.py:432
 msgid "保存失败"
-msgstr "Save Failed"
+msgstr ""
 
 #: app/workflow_interface.py:456
 msgid "请输入目标文字"
@@ -5402,7 +5352,7 @@ msgid "我已了解，继续开启"
 msgstr "理解したうえで有効化する"
 
 msgid "终末地 MaaEnd"
-msgstr "MaaEnd"
+msgstr ""
 
 #: app/schedule_dialog.py:708
 msgid "冲突:"
@@ -5598,11 +5548,11 @@ msgstr "Mirrorから無効なファイル名が返されました"
 
 #: app/card/card_edit_dialog.py:445
 msgid "任务菜单中的菜单项名称不能为空"
-msgstr "Menu item name in task menu cannot be empty"
+msgstr ""
 
 #: app/card/card_edit_dialog.py:433
 msgid "卡片标题不能为空"
-msgstr "Card title cannot be empty"
+msgstr ""
 
 #: module/update/update_window.py:428
 msgid "启动更新器失败"
@@ -5731,20 +5681,13 @@ msgstr ""
 
 msgid "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅策略。"
 msgstr ""
-"To increase ascension level, recommended strategy is default strategy in "
-"lowest difficulty. To increase rank level, recommended strategy is Aglaea "
-"strategy in highest difficulty. "
 
 msgid "未配置，阿格莱雅策略下将跳过该角色，需要填入自己游戏名称"
 msgstr ""
-"Not set, this character will be skipped for Aglaea strategy. Please set this"
-" to your in-game nickname."
 
 #: app/setting_interface.py:2964
 msgid "该参数用于配置该通知方式的请求字段"
 msgstr ""
-"This parameter is used to configure the request field for this notification "
-"method"
 
 #: app/setting_interface.py:2316
 msgid "教程"
