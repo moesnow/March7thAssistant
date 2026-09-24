@@ -1,5 +1,7 @@
 # 업데이트 로그
 
+> 이 문서는 중국어 간체 버전을 바탕으로 AI가 번역했습니다. 내용은 v2026.1.21까지입니다. 이후 변경 사항은 [중국어 간체 버전](https://m7a.top/#/assets/docs/Changelog)을 우선해 주세요.
+
 ## v2026.1.21
 - 화폐 전쟁 포인트 보상 수령 후 심연의 몰입기 자동 사용 지원
 - MeoW 푸시 알림 지원 추가 [#850](https://github.com/moesnow/March7thAssistant/pull/850) @pboymt

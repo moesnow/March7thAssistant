@@ -21,7 +21,12 @@ from module.notification import notif
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from module.ocr import ocr
+from module.localization import tr
 from utils.console import is_gui_started
+
+
+class GameClientOutdatedError(RuntimeError):
+    """游戏客户端版本过低（供 except 类型判断，勿用文本匹配异常消息）。"""
 
 
 def wait_until(condition, timeout, period=1):
@@ -78,7 +83,7 @@ def start_game():
         # 游戏已有新版本，请前往启动器下载最新客户端，完成本次更新后登录游戏即可获
         # 得300星琼奖励。
         if auto.find_element("前往启动器下载最新客户端", "text", take_screenshot=False, include=True):
-            raise RuntimeError("检测到游戏客户端版本过低，请前往启动器下载最新客户端")
+            raise GameClientOutdatedError(tr("检测到游戏客户端版本过低，请前往启动器下载最新客户端"))
 
         # 适配B服，需要点击“登录”，强制使用前台截图方式（#901）
         if auto.find_element(("bilibili游戏隐私政策提示", "登录记录"), "text", use_background_screenshot=False):
@@ -218,7 +223,7 @@ def start_game():
             else:
                 starrail.stop_game()
                 # 非云游戏模式下，若检测到是版本过低则尝试通过启动器更新
-                if str(e).startswith("检测到游戏客户端版本过低") and cfg.update_via_launcher:
+                if isinstance(e, GameClientOutdatedError) and cfg.update_via_launcher:
                     update_via_launcher()
             if retry == MAX_RETRY - 1:
                 raise  # 如果是最后一次尝试，则重新抛出异常

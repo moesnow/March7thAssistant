@@ -71,9 +71,13 @@ def parse_args():
 
     # 处理 --list 参数
     if args.list:
+        from module.localization import load_language
+        from utils.tasks import task_display_names
+
+        load_language()
         print("\n可用的任务列表:")
         print("-" * 40)
-        for task_id, task_name in AVAILABLE_TASKS.items():
+        for task_id, task_name in task_display_names().items():
             print(f"  {task_id:<20} {task_name}")
         print("-" * 40)
         print("\n使用示例:")
@@ -247,6 +251,7 @@ if __name__ == "__main__":
     try:
         from module.config import cfg
         from module.localization import load_language, detect_lang
+        from app.common.translator import create_fluent_translator
         ui_language = cfg.get_value("ui_language", "zh_CN")
 
         if ui_language == "auto":
@@ -255,16 +260,7 @@ if __name__ == "__main__":
         cfg.ui_language_now = ui_language
 
         # 创建翻译器实例，生命周期必须和 app 相同
-        if ui_language == "zh_TW":
-            translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
-        elif ui_language == "ja_JP":
-            translator = FluentTranslator(QLocale(QLocale.Language.Japanese, QLocale.Country.Japan))
-        elif ui_language == "ko_KR":
-            translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
-        elif ui_language == "en_US":
-            translator = FluentTranslator(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        else:  # 默认使用中文
-            translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
+        translator = create_fluent_translator(ui_language)
 
         load_language(ui_language)
     except Exception:

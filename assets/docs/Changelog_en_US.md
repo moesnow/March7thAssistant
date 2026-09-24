@@ -1,5 +1,7 @@
 # Changelog
 
+> This document is AI-translated from the Simplified Chinese version. It covers releases up to v2026.1.21; for later changes please refer to the [Simplified Chinese version](https://m7a.top/#/assets/docs/Changelog).
+
 ## v2026.1.21
 - Support automatically using **Deep Immersifier** after claiming **Currency Wars** points
 - Added **MeoW** push notification support [#850](https://github.com/moesnow/March7thAssistant/pull/850) @pboymt

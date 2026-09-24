@@ -1,40 +1,56 @@
 # coding:utf-8
-from module.localization import tr, load_language
+"""任务定义模块。
 
-load_language()
+**这里的名称是中文原文（msgid），不是译文。** 模块级常量在 import 期求值，
+若直接存 `tr()` 的结果，就会被冻结在启动时的语言：切换语言后（界面会热重载）
+这些文案仍显示旧语言，且会被写进 config.yaml 变成用户数据。显示时请自行调用 `tr()`：
 
-"""任务定义模块"""
+    from module.localization import tr
+    label = tr(AVAILABLE_TASKS[task_id])
 
-# 可用的任务列表（任务ID -> 任务名称）
+详见 I18N.md「模块级常量不要存译文」。
+"""
+
+# 可用的任务列表（任务ID -> 名称 msgid）
 AVAILABLE_TASKS = {
-    "main": tr("完整运行"),
-    "routine": tr("日常"),
-    "daily": tr("每日实训"),
-    "power": tr("清体力"),
-    "game_update": tr("更新游戏"),
-    "game_pre_download": tr("预下载游戏"),
-    "app_update": tr("更新三月七小助手"),
-    "currencywars": tr("货币战争"),
-    "divergent": tr("差分宇宙"),
-    "fight": tr("锄大地"),
-    "universe": tr("模拟宇宙"),
-    "forgottenhall": tr("混沌回忆"),
-    "purefiction": tr("虚构叙事"),
-    "apocalyptic": tr("末日幻影"),
-    "currencywarsloop": tr("货币战争循环"),
-    "currencywarstemp": tr("货币战争中途接管"),
-    "divergentloop": tr("差分宇宙循环"),
-    "divergenttemp": tr("差分宇宙中途接管"),
-    "universe_gui": tr("模拟宇宙原生界面"),
-    "fight_gui": tr("锄大地原生界面"),
-    "universe_update": tr("模拟宇宙更新"),
-    "fight_update": tr("锄大地更新"),
-    "mobileui_update": tr("触屏模式更新"),
-    "game": tr("启动游戏"),
-    "notify": tr("测试消息推送"),
-    "redemption": tr("兑换码"),
-    "screen_test": tr("界面可切换性测试"),
+    "main": "完整运行",
+    "routine": "日常",
+    "daily": "每日实训",
+    "power": "清体力",
+    "game_update": "更新游戏",
+    "game_pre_download": "预下载游戏",
+    "app_update": "更新三月七小助手",
+    "currencywars": "货币战争",
+    "divergent": "差分宇宙",
+    "fight": "锄大地",
+    "universe": "模拟宇宙",
+    "forgottenhall": "混沌回忆",
+    "purefiction": "虚构叙事",
+    "apocalyptic": "末日幻影",
+    "currencywarsloop": "货币战争循环",
+    "currencywarstemp": "货币战争中途接管",
+    "divergentloop": "差分宇宙循环",
+    "divergenttemp": "差分宇宙中途接管",
+    "universe_gui": "模拟宇宙原生界面",
+    "fight_gui": "锄大地原生界面",
+    "universe_update": "模拟宇宙更新",
+    "fight_update": "锄大地更新",
+    "mobileui_update": "触屏模式更新",
+    "game": "启动游戏",
+    "notify": "测试消息推送",
+    "redemption": "兑换码",
+    "screen_test": "界面可切换性测试",
 }
 
-# 任务名称本地化映射（兼容旧名称）
+# 任务名称映射（兼容旧名称调用方）
 TASK_NAMES = AVAILABLE_TASKS
+
+
+def task_display_names() -> dict:
+    """任务ID -> 当前语言显示名。
+
+    供 `--list` 等界面输出使用（属界面文案，随 ui_language）；
+    日志与配置仍按约定使用 AVAILABLE_TASKS 里的中文原文。
+    """
+    from module.localization import tr
+    return {task_id: tr(name) for task_id, name in AVAILABLE_TASKS.items()}

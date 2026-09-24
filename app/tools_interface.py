@@ -183,7 +183,7 @@ class ToolsInterface(ScrollArea):
             if not game_path or not os.path.exists(game_path):
                 InfoBar.warning(
                     title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                    content=tr("请在“设置”-->“程序”中配置正确的游戏路径"),
+                    content=tr("请在“设置”→“程序”中配置正确的游戏路径"),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,

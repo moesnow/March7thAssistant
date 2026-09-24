@@ -2,142 +2,239 @@
 """
 Localization Module
 Support for Chinese, Japanese, Korean, and English UI languages
+
+翻译后端为 gettext（assets/locales/{lang}/LC_MESSAGES/march7th.mo）；
+msgid 即中文原文。缺失回退链：目标语言 → zh_TW 简转繁 → en_US → 中文原文。
 """
+import gettext
 import json
 import os
 import re
 import sys
 
+PLURAL_SUFFIX = "|plural"  # tn() 复数形目录键后缀（tools.i18n 共用）
+
 _current_lang = "zh_CN"
-_translations = {}
+_translation = gettext.NullTranslations()
+# en_US 兜底目录（zh_TW / ja_JP / ko_KR 缺失时依次回退）
+_fallback_translation = gettext.NullTranslations()
+# 已记录过缺失告警的原文，避免循环调用刷屏
+_missing_logged = set()
 
 if getattr(sys, 'frozen', False):
     _locale_dir = os.path.join(os.path.dirname(sys.executable), "assets", "locales")
 else:
     _locale_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "locales")
 
-# simple s2t converter (use opencc if available, fallback to simple mapping)
+# 简体转繁体转换器（OpenCC）缓存实例。
+# OpenCC 实例的构造/析构开销在百毫秒级（每次都要加载词库），而 convert() 是微秒级；
+# 缺译回退的每次 tr()/tn() 都会走到这里，必须复用同一实例，不能每次新建。
+_s2t_converter = None
 
 
-def _s2t(text: str) -> str:
+def _s2t(text: str):
     """
-    Simple Simplified->Traditional conversion.
-    Uses opencc.OpenCC('s2t') if available, otherwise falls back to a small word/char mapping.
+    Simplified->Traditional conversion (OpenCC, s2twp)。
+
+    使用 s2twp（字形 + 台湾词库）：繁体回退产出「軟體/網路/設定」等台湾用语，
+    与 assets/docs/*_zh_TW.md 的生成口径一致，避免同一界面两套用语并存。
+    如需支持港澳用语应另立 zh_HK 语言，不要让 zh_TW 骑墙。
+
+    转换器不可用时返回 None（而不是返回原文），让调用方能区分两种情况：
+    「转换失败」应继续走 en_US 回退；「转换成功但文案本来就没变」（如「最高置信度」
+    这类简繁同形文案）则应直接采用结果，不应再回退到英文。
     """
     if not text:
         return text
-    from opencc import OpenCC
-    converter = OpenCC('s2t')
-    return converter.convert(text)
+    global _s2t_converter
+    try:
+        if _s2t_converter is None:
+            from opencc import OpenCC
+            _s2t_converter = OpenCC('s2twp')
+        return _s2t_converter.convert(text)
+    except Exception:
+        return None
 
 
 # cache for character names
 _character_names_cache = None
 
 
+def _load_translation(lang_code: str):
+    """加载 gettext 目录；缺失时返回 NullTranslations（查找结果即原文）。"""
+    try:
+        return gettext.translation("march7th", _locale_dir, languages=[lang_code], fallback=False)
+    except Exception:
+        return gettext.NullTranslations()
+
+
 def load_language(lang_code: str = None):
     """
-    Load language file
+    Load gettext catalog and initialize the fallback chain (see tr()).
+
     :param lang_code: Language code (zh_CN, zh_TW, ja_JP, ko_KR, en_US)
     """
-    global _current_lang, _translations
+    global _current_lang, _translation, _fallback_translation, _missing_logged
 
-    try:
-        if lang_code is None:
+    if lang_code is None or lang_code == "auto":
+        try:
             from module.config import cfg
             lang_code = cfg.get_value("ui_language", "zh_CN")
-            # import yaml
-            # with open(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config.yaml"), 'r', encoding='utf-8') as f:
-            #     config = yaml.safe_load(f)
-            #     lang_code = config.get("ui_language", "zh_CN")
+        except Exception:
+            pass
+
+    if lang_code is None or lang_code == "auto":
+        lang_code = detect_lang()
+
+    _current_lang = lang_code
+    _translation = _load_translation(lang_code)
+    _fallback_translation = gettext.NullTranslations() if lang_code in ("zh_CN", "en_US") else _load_translation("en_US")
+    _missing_logged = set()
+
+
+def _log_missing_once(text: str) -> None:
+    """缺失翻译只在 DEBUG 日志记录一次。"""
+    if text in _missing_logged:
+        return
+    _missing_logged.add(text)
+    try:
+        from module.logger import log
+        log.debug(f"i18n 缺失翻译 [{_current_lang}]: {text[:60]}")
     except Exception:
         pass
 
-    if lang_code is None:
-        lang_code = "zh_CN"
 
-    locale_path = os.path.join(_locale_dir, f"{lang_code}.json")
+def _translated_or_none(trans, text: str):
+    """返回 gettext 目录中的已翻译值；未翻译/无条目/NullTranslations 返回 None。
 
-    if lang_code == "ja_JP":
-        try:
-            base_translations = {}
-            en_us_path = os.path.join(_locale_dir, "en_US.json")
-            if os.path.exists(en_us_path):
-                with open(en_us_path, 'r', encoding='utf-8') as f:
-                    base_translations = json.load(f)
+    同文翻译（msgstr == msgid）视为已翻译命中。
+    """
+    catalog = getattr(trans, "_catalog", None) or getattr(trans, "catalog", None)
+    if not isinstance(catalog, dict):
+        return None
+    value = catalog.get(text)
+    if isinstance(value, str) and value:
+        return value
+    return None
 
-            if os.path.exists(locale_path):
-                with open(locale_path, 'r', encoding='utf-8') as f:
-                    ja_translations = json.load(f)
-                for key, value in ja_translations.items():
-                    if isinstance(value, str) and value.strip():
-                        base_translations[key] = value
 
-            _translations = base_translations
-            _current_lang = lang_code
-        except Exception as e:
-            print(f"언어 파일 로드 실패: {e}")
-            _translations = {}
-            _current_lang = "zh_CN"
-    elif os.path.exists(locale_path):
-        try:
-            with open(locale_path, 'r', encoding='utf-8') as f:
-                _translations = json.load(f)
-            _current_lang = lang_code
-        except Exception as e:
-            print(f"언어 파일 로드 실패: {e}")
-            _translations = {}
-            _current_lang = "zh_CN"
-    else:
-        _translations = {}
-        _current_lang = "zh_CN"
+def _plural_translated_or_none(trans, text: str):
+    """复数条目是否已翻译。
+
+    gettext 目录中复数条目的键可能为 (msgid, 形式序号)（polib 生成）或
+    (msgid, msgid_plural) 元组，逐个探测。
+    """
+    catalog = getattr(trans, "_catalog", None) or getattr(trans, "catalog", None)
+    if not isinstance(catalog, dict):
+        return None
+    for key in ((text, 0), (text, 1), (text, text + PLURAL_SUFFIX), text):
+        if key in catalog:
+            value = catalog[key]
+            if isinstance(value, (tuple, list)) and any(value):
+                return True
+            if isinstance(value, str) and value:
+                return True
+    return None
 
 
 def tr(text: str) -> str:
     """
-    Translation function
-    Returns translation missing prompt if key is missing
-    :param text: Text to translate (Chinese source)
-    :return: Translated text or missing prompt
+    Translation function (gettext backend, msgid = 中文原文).
+
+    Missing entries fall back along a fixed chain and never leak a
+    "missing" marker into the UI:
+
+    - zh_CN: source text (the key itself)
+    - zh_TW: OpenCC s2t conversion -> en_US -> source text
+    - ja_JP / ko_KR: en_US -> source text
+    - en_US: source text
     """
     if not text:
         return text
-    translated = _translations.get(text)
-    if translated is None or translated.strip() == "":
-        if _current_lang == "zh_CN":
-            # Add to zh_CN.json with key and value as text
-            zh_cn_path = os.path.join(_locale_dir, "zh_CN.json")
-            try:
-                if os.path.exists(zh_cn_path):
-                    with open(zh_cn_path, 'r', encoding='utf-8') as f:
-                        zh_translations = json.load(f)
-                else:
-                    zh_translations = {}
-                zh_translations[text] = text
-                with open(zh_cn_path, 'w', encoding='utf-8') as f:
-                    json.dump(zh_translations, f, ensure_ascii=False, indent=4)
-                # Sync other language files
-                sync_translations()
-            except Exception:
-                pass
-            return text
-        else:
-            # Translation missing prompts in respective languages
-            if _current_lang == "zh_TW":
-                # For Traditional Chinese, do a simple Simplified->Traditional conversion
-                try:
-                    return _s2t(text)
-                except Exception:
-                    pass
-            missing_prompts = {
-                "zh_CN": f"[译缺: {text}]",
-                "zh_TW": f"[譯缺: {text}]",
-                "ja_JP": f"[翻訳漏れ: {text}]",
-                "ko_KR": f"[번역 누락: {text}]",
-                "en_US": f"[Missing: {text}]"
-            }
-            return missing_prompts.get(_current_lang, f"[Missing: {text}]")
-    return translated
+    translated = _translated_or_none(_translation, text)
+    if translated is not None:
+        return translated
+
+    _log_missing_once(text)
+
+    if _current_lang == "zh_TW":
+        converted = _s2t(text)
+        if converted is not None:
+            # 转换成功即采用：简繁同形的文案（如「最高置信度」）转换后不变，
+            # 但它已经是繁体用户该看到的文本，不能因此回退到英文
+            return converted
+
+    if _current_lang != "en_US":
+        fallback = _translated_or_none(_fallback_translation, text)
+        if fallback is not None:
+            return fallback
+
+    return text
+
+
+def trc(context: str, text: str) -> str:
+    """带上下文的翻译（msgctxt 消歧），无上下文条目时回退 tr()。"""
+    if not text:
+        return text
+    catalog = getattr(_translation, "_catalog", None) or getattr(_translation, "catalog", None)
+    if isinstance(catalog, dict):
+        value = catalog.get(f"{context}\x04{text}")
+        if isinstance(value, str) and value:
+            return value
+    return tr(text)
+
+
+def tn(text: str, n: float, **kwargs) -> str:
+    """复数翻译：ngettext(msgid, msgid+PLURAL_SUFFIX, n) 选形。
+
+    选形结果若含占位符则自动 `form.format(count=n, **kwargs)`（{count} 恒可用），
+    无占位符则原样返回；缺失回退链与 tr() 一致。
+    """
+    if not text:
+        return text
+    form = None
+    if _plural_translated_or_none(_translation, text):
+        form = _translation.ngettext(text, text + PLURAL_SUFFIX, int(n))
+    else:
+        _log_missing_once(text)
+        if _current_lang == "zh_TW":
+            converted = _s2t(text)
+            if converted is not None:
+                form = converted
+        if form is None and _current_lang != "en_US" and _plural_translated_or_none(_fallback_translation, text):
+            form = _fallback_translation.ngettext(text, text + PLURAL_SUFFIX, int(n))
+    if form is None:
+        form = text
+    if "{" in form:
+        try:
+            return form.format(count=n, **kwargs)
+        except Exception:
+            return form
+    return form
+
+
+_lang_catalogs_cache = {}
+
+
+def translations_of(text: str) -> dict:
+    """返回 text 在各语言目录中的译文 {lang: 译文}（未翻译的语言不含在内）。
+
+    与当前界面语言无关，供跨语言比对使用（如旧配置里遗留译文的还原）。
+    """
+    if not text:
+        return {}
+    from .languages import LANGS
+
+    result = {}
+    for lang in LANGS:
+        trans = _lang_catalogs_cache.get(lang)
+        if trans is None:
+            trans = _load_translation(lang)
+            _lang_catalogs_cache[lang] = trans
+        translated = _translated_or_none(trans, text)
+        if translated:
+            result[lang] = translated
+    return result
 
 
 def get_current_language() -> str:
@@ -147,49 +244,8 @@ def get_current_language() -> str:
 
 def get_available_languages() -> dict:
     """Get list of available languages"""
-    return {
-        "简体中文": "zh_CN",
-        "繁體中文": "zh_TW",
-        "日本語": "ja_JP",
-        "한국어": "ko_KR",
-        "English": "en_US"
-    }
-
-
-def sync_translations():
-    """
-    Sync translation files by adding missing keys from zh_CN.json to other language files with empty values
-    """
-    zh_cn_path = os.path.join(_locale_dir, "zh_CN.json")
-    if not os.path.exists(zh_cn_path):
-        return
-    try:
-        with open(zh_cn_path, 'r', encoding='utf-8') as f:
-            zh_translations = json.load(f)
-        keys = set(zh_translations.keys())
-        for lang in ["zh_TW", "ja_JP", "ko_KR", "en_US"]:
-            lang_path = os.path.join(_locale_dir, f"{lang}.json")
-            if os.path.exists(lang_path):
-                with open(lang_path, 'r', encoding='utf-8') as f:
-                    translations = json.load(f)
-            else:
-                translations = {}
-            updated = False
-            for key in keys:
-                if key not in translations:
-                    if lang == "zh_TW":
-                        try:
-                            translations[key] = _s2t(key)
-                        except Exception:
-                            translations[key] = ""
-                    else:
-                        translations[key] = ""
-                    updated = True
-            if updated:
-                with open(lang_path, 'w', encoding='utf-8') as f:
-                    json.dump(translations, f, ensure_ascii=False, indent=4)
-    except Exception:
-        pass
+    from .languages import available_languages
+    return available_languages()
 
 
 def get_character_names(include_none: bool = False) -> dict:

@@ -27,9 +27,9 @@
 
 **게임 내 언어는 현재 중국어 간체만 지원합니다.**
 
-빠르게 시작하려면: [사용 튜토리얼](https://m7a.top/#/assets/docs/Tutorial_ko)
+빠르게 시작하려면: [사용 튜토리얼](https://m7a.top/#/assets/docs/Tutorial_ko_KR)
 
-문제가 생기면 먼저 확인하세요: [FAQ](https://m7a.top/#/assets/docs/FAQ_ko)
+문제가 생기면 먼저 확인하세요: [FAQ](https://m7a.top/#/assets/docs/FAQ_ko_KR)
 
 </div>
 

@@ -418,7 +418,7 @@ class CloudGameController(GameControllerBase):
         options.binary_location = browser_path
         options.add_experimental_option("prefs", self.PERFERENCES)  # 允许云游戏权限权限
 
-        self.log_debug(f"启动参数: {self._get_browser_arguments(headless=headless)}")
+        self.log_debug(f"启动参数： {self._get_browser_arguments(headless=headless)}")
         # 设置浏览器启动参数
         for arg in self._get_browser_arguments(headless=headless):
             options.add_argument(arg)

@@ -445,7 +445,7 @@ class LauncherAutomation():
             for _ in range(cnt):
                 action_map[action](x, y)
         else:
-            raise ValueError(f"未知的动作类型: {action}")
+            raise ValueError(f"未知的动作类型： {action}")
 
         return True
 

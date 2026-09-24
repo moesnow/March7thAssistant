@@ -27,9 +27,9 @@
 
 **遊戲內語言目前僅支援簡體中文。**
 
-快速上手，請訪問：[使用教程](https://m7a.top/#/assets/docs/Tutorial)
+快速上手，請訪問：[使用教程](https://m7a.top/#/assets/docs/Tutorial_zh_TW)
 
-遇到問題，請先查看：[FAQ](https://m7a.top/#/assets/docs/FAQ)
+遇到問題，請先查看：[FAQ](https://m7a.top/#/assets/docs/FAQ_zh_TW)
 
 </div>
 

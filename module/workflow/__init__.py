@@ -957,12 +957,12 @@ class WorkflowRunner:
         self.stop_requested = False
         self.last_result = False
         self.current_workflow = normalized
-        self._log(tr("开始执行流程：") + normalized['name'])
+        self._log("开始执行流程：" + normalized['name'])
         success, _ = self._execute_steps(normalized["steps"], 0)
         if self.stop_requested:
-            self._log(tr("流程已停止"))
+            self._log("流程已停止")
             return False
-        self._log(tr("流程执行完成"))
+        self._log("流程执行完成")
         return success
 
     def _log(self, message: str):
@@ -982,11 +982,11 @@ class WorkflowRunner:
 
     def _log_bool_step_result(self, step: dict, result: bool, depth: int):
         label = self._step_label(step, tr("步骤"))
-        self._log(f"{'  ' * depth}{label}{tr('结果')}：{self._result_label(result)}")
+        self._log(f"{'  ' * depth}{label}结果：{self._result_label(result)}")
 
     def _log_condition_result(self, step: dict, result: bool, depth: int):
         label = self._step_label(step, tr("条件"))
-        self._log(f"{'  ' * depth}{label}{tr('条件结果')}：{self._result_label(result)} ({result})")
+        self._log(f"{'  ' * depth}{label}条件结果：{self._result_label(result)} ({result})")
 
     def _execute_bool_step(self, step: dict, depth: int, handler) -> tuple[bool, None]:
         result = bool(handler(step))
@@ -1004,7 +1004,7 @@ class WorkflowRunner:
             except Exception as exc:
                 self.last_result = False
                 loop_control = None
-                self._log(tr("步骤执行异常：") + str(exc))
+                self._log("步骤执行异常：" + str(exc))
                 log.error(traceback.format_exc())
             if loop_control is not None:
                 return self.last_result, loop_control
@@ -1054,7 +1054,7 @@ class WorkflowRunner:
                 iteration = 0
                 while not self.stop_requested:
                     iteration += 1
-                    self._log(f"{'  ' * depth}{tr('第')} {iteration} {tr('次循环')}")
+                    self._log(f"{'  ' * depth}第 {iteration} 次循环")
                     result, loop_control = self._execute_steps(normalized["children"], depth + 1, in_loop=True)
                     if loop_control == self.LOOP_CONTROL_BREAK:
                         break
@@ -1064,7 +1064,7 @@ class WorkflowRunner:
                 for iteration in range(normalized["count"]):
                     if self.stop_requested:
                         return False, None
-                    self._log(f"{'  ' * depth}{tr('第')} {iteration + 1}/{normalized['count']} {tr('次循环')}")
+                    self._log(f"{'  ' * depth}第 {iteration + 1}/{normalized['count']} 次循环")
                     result, loop_control = self._execute_steps(normalized["children"], depth + 1, in_loop=True)
                     if loop_control == self.LOOP_CONTROL_BREAK:
                         break
@@ -1080,20 +1080,20 @@ class WorkflowRunner:
                     break
                 iteration += 1
                 iter_label = f"∞ ({iteration})" if max_iter == 0 else f"{iteration}/{max_iter}"
-                self._log(f"{'  ' * depth}While {tr('第')} {iter_label} {tr('次执行')}")
+                self._log(f"{'  ' * depth}While 第 {iter_label} 次执行")
                 result, loop_control = self._execute_steps(normalized["children"], depth + 1, in_loop=True)
                 if loop_control == self.LOOP_CONTROL_BREAK:
                     break
                 if loop_control == self.LOOP_CONTROL_CONTINUE:
                     continue
             if max_iter > 0 and iteration >= max_iter:
-                self._log(f"{tr('达到 While 最大循环次数')} {max_iter}，{tr('已自动停止循环')}")
+                self._log(f"达到 While 最大循环次数 {max_iter}，已自动停止循环")
             return result, None
         return False, None
 
     def _handle_loop_control_step(self, step_type: str, depth: int, in_loop: bool) -> tuple[bool, str | None]:
         if not in_loop:
-            self._log(f"{'  ' * depth}{tr('循环控制步骤只能在循环内使用')}")
+            self._log(f"{'  ' * depth}循环控制步骤只能在循环内使用")
             return True, None
 
         if step_type == self.LOOP_CONTROL_BREAK:
@@ -1103,7 +1103,7 @@ class WorkflowRunner:
 
     def _handle_stop_workflow_step(self, depth: int) -> tuple[bool, str | None]:
         self.stop_requested = True
-        self._log(f"{'  ' * depth}{tr('已触发流程终止')}")
+        self._log(f"{'  ' * depth}已触发流程终止")
         return True, None
 
     def _evaluate_condition(self, step: dict, depth: int = 0) -> bool:
@@ -1127,7 +1127,7 @@ class WorkflowRunner:
 
     def _click_image(self, step: dict) -> bool:
         if not step["template_path"]:
-            self._log(tr("点击图片失败：未选择模板"))
+            self._log("点击图片失败：未选择模板")
             return False
         template_path = resolve_workflow_path(step["template_path"], self.current_workflow)
 
@@ -1151,7 +1151,7 @@ class WorkflowRunner:
 
     def _click_text(self, step: dict) -> bool:
         if not step["text"]:
-            self._log(tr("点击文字失败：未填写目标文字"))
+            self._log("点击文字失败：未填写目标文字")
             return False
         targets = _parse_text_targets(step["text"])
         target = targets[0] if len(targets) == 1 else tuple(targets)
@@ -1176,7 +1176,7 @@ class WorkflowRunner:
 
     def _click_crop(self, step: dict) -> bool:
         if not str(step.get("crop", "")).strip():
-            self._log(tr("点击坐标失败：未填写检测区域"))
+            self._log("点击坐标失败：未填写检测区域")
             return False
 
         action_map = {
@@ -1199,22 +1199,22 @@ class WorkflowRunner:
             start = parse_point_expression(step.get("start", ""))
             end = parse_point_expression(step.get("end", ""))
         except (TypeError, ValueError) as exc:
-            self._log(f"{tr('滑动鼠标失败')}：{exc}")
+            self._log(f"滑动鼠标失败：{exc}")
             return False
 
         if any(not 0.0 <= value <= 1.0 for value in (*start, *end)):
-            self._log(tr("滑动鼠标失败：坐标必须在 0 到 1 之间"))
+            self._log("滑动鼠标失败：坐标必须在 0 到 1 之间")
             return False
 
         try:
             return bool(auto.drag_mouse(start, end, step.get("drag_duration", 0.5)))
         except Exception as exc:
-            self._log(f"{tr('滑动鼠标失败')}：{exc}")
+            self._log(f"滑动鼠标失败：{exc}")
             return False
 
     def _find_image(self, step: dict) -> bool:
         if not step["template_path"]:
-            self._log(tr("查找图片失败：未选择模板"))
+            self._log("查找图片失败：未选择模板")
             return False
         template_path = resolve_workflow_path(step["template_path"], self.current_workflow)
         return bool(auto.find_element(
@@ -1227,7 +1227,7 @@ class WorkflowRunner:
 
     def _find_text(self, step: dict) -> bool:
         if not step["text"]:
-            self._log(tr("OCR 判断失败：未填写文字"))
+            self._log("OCR 判断失败：未填写文字")
             return False
         targets = _parse_text_targets(step["text"])
         target = targets[0] if len(targets) == 1 else tuple(targets)
@@ -1242,18 +1242,18 @@ class WorkflowRunner:
     def _play_audio(self, step: dict) -> bool:
         audio_path = step.get("audio_path", "").strip()
         if not audio_path:
-            self._log(tr("播放音频失败：未填写音频路径"))
+            self._log("播放音频失败：未填写音频路径")
             return False
         try:
             from playsound3 import playsound
 
             resolved_path = resolve_workflow_path(audio_path, self.current_workflow)
-            self._log(f"{tr('开始播放音频')} {resolved_path}")
+            self._log(f"开始播放音频 {resolved_path}")
             playsound(resolved_path)
-            self._log(tr("播放音频完成"))
+            self._log("播放音频完成")
             return True
         except Exception as e:
-            self._log(f"{tr('播放音频时发生错误')}：{e}")
+            self._log(f"播放音频时发生错误：{e}")
             return False
 
     def _send_message(self, step: dict) -> bool:
@@ -1264,7 +1264,7 @@ class WorkflowRunner:
             image = None
 
             if not message_text:
-                self._log(tr("消息推送失败：未填写消息内容"))
+                self._log("消息推送失败：未填写消息内容")
                 return False
 
             if with_screenshot:
@@ -1274,29 +1274,29 @@ class WorkflowRunner:
                     if result:
                         screenshot, _, _ = result
                         image = screenshot
-                    self._log(tr("消息通知：包含截图"))
+                    self._log("消息通知：包含截图")
                 except Exception as e:
-                    self._log(f"{tr('获取截图失败')}：{e}")
+                    self._log(f"获取截图失败：{e}")
 
             # 发送通知
             notif.notify(
                 content=message_text,
                 image=image,
             )
-            self._log(tr("消息推送完成"))
+            self._log("消息推送完成")
             return True
         except Exception as e:
-            self._log(f"{tr('消息推送失败')}：{e}")
+            self._log(f"消息推送失败：{e}")
             return False
 
     def _switch_screen(self, step: dict) -> bool:
         target_screen = step.get("target_screen", "").strip()
         if not target_screen:
-            self._log(tr("切换界面失败：未选择目标界面"))
+            self._log("切换界面失败：未选择目标界面")
             return False
 
         if not can_change_to_screen_from_main(target_screen):
-            self._log(tr("切换界面失败：目标界面不可切换"))
+            self._log("切换界面失败：目标界面不可切换")
             return False
 
         from module.screen import screen as screen_manager
@@ -1308,7 +1308,7 @@ class WorkflowRunner:
         """按下指定按键。"""
         key = step.get("key", "").strip()
         if not key:
-            self._log(tr("按键操作失败：未填写按键"))
+            self._log("按键操作失败：未填写按键")
             return False
 
         action = step.get("key_action", "press_and_release")
@@ -1316,20 +1316,20 @@ class WorkflowRunner:
 
         try:
             if action == "press":
-                self._log(f"{tr('按下按键')}：{key}")
+                self._log(f"按下按键：{key}")
                 auto.press_key_down(key)
                 if duration > 0:
                     self.sleep_func(duration)
             elif action == "release":
-                self._log(f"{tr('释放按键')}：{key}")
+                self._log(f"释放按键：{key}")
                 auto.press_key_up(key)
             elif action == "press_and_release":
-                self._log(f"{tr('按下并释放按键')}：{key}，{tr('时长')} {duration:.2f}s")
+                self._log(f"按下并释放按键：{key}，时长 {duration:.2f}s")
                 auto.press_key(key, duration)
             else:
-                self._log(f"{tr('未知按键动作')}：{action}")
+                self._log(f"未知按键动作：{action}")
                 return False
             return True
         except Exception as e:
-            self._log(f"{tr('按键操作失败')}：{e}")
+            self._log(f"按键操作失败：{e}")
             return False

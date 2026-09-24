@@ -8,9 +8,8 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowE
 from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton
 
 from .common.style_sheet import StyleSheet
-from .components.link_card import LinkCardView
 from .card.samplecardview1 import SampleCardView1
-from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog
+from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog, display_label, migrate_home_cards
 from tasks.base.tasks import start_task
 
 from module.config import cfg
@@ -63,20 +62,6 @@ class BannerWidget(QWidget):
         self.parent_height = 0
         self.parent_width = 0
 
-        self.linkCardView = LinkCardView(self)
-        self.linkCardView.setContentsMargins(0, 0, 0, 36)
-        self.linkCardView.addCard(
-            FluentIcon.GITHUB,
-            'GitHub repo',
-            # tr('喜欢就给个星星吧\n拜托求求你啦|･ω･)'),
-            f"tr('喜欢就给个星星吧')\ntr('拜托求求你啦|･ω･)')",
-
-            "https://github.com/moesnow/March7thAssistant",
-        )
-        self.linkCardView.setHidden(True)
-        # self.vBoxLayout.setContentsMargins(0, 0, 0, 36)
-        # self.vBoxLayout.setSpacing(40)
-
         # 点击标签可以选择新的背景图片
         def _on_gallery_label_clicked(event):
             self.menu.exec(event.globalPos(), ani=True)
@@ -121,8 +106,7 @@ class BannerWidget(QWidget):
         self.vBoxLayout.setSpacing(0)
         self.vBoxLayout.setContentsMargins(0, 20, 0, 10)
         self.vBoxLayout.addWidget(self.galleryLabel)
-        self.vBoxLayout.addStretch(1)  # 添加弹性空间，将 linkCardView 推到底部
-        self.vBoxLayout.addWidget(self.linkCardView, 0, Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignBottom)
+        self.vBoxLayout.addStretch(1)  # 添加弹性空间，将下方任务卡片推到底部
 
     def paintEvent(self, e):
         super().paintEvent(e)
@@ -187,15 +171,14 @@ class HomeInterface(ScrollArea):
         self.basicInputView.headerLayout.addWidget(edit_btn)
 
         # 从配置加载卡片数据
-        cards_data = cfg.get_value("home_cards")
-        if cards_data is None:
-            cards_data = copy.deepcopy(DEFAULT_CARDS)
+        cards_data = self._load_home_cards()
 
         for card in cards_data:
             action = self._build_card_action(card)
             self.basicInputView.addSampleCard(
                 icon=card.get("icon", ""),
-                title=card.get("title", ""),
+                # 内置卡片存的是中文原文，这里按当前语言显示；用户自定义标题原样显示
+                title=display_label(card.get("title", "")),
                 action=action
             )
 
@@ -212,12 +195,22 @@ class HomeInterface(ScrollArea):
             result = {}
             for item in card_data.get("menu_items", []):
                 task_id = item.get("task_id", "")
-                label = item.get("label", "")
+                # 同上：内置菜单项存中文原文，显示时按当前语言解析
+                label = display_label(item.get("label", ""))
                 if task_id in HOME_EXTRA_TASKS:
                     result[label] = self._get_extra_task_action(task_id)
                 else:
                     result[label] = lambda tid=task_id: start_task(tid)
             return result
+
+    def _load_home_cards(self):
+        """读取主页卡片配置；旧版本写进配置的译文一次性还原为中文原文并写回。"""
+        cards_data = cfg.get_value("home_cards")
+        if cards_data is None:
+            return copy.deepcopy(DEFAULT_CARDS)
+        if migrate_home_cards(cards_data):
+            cfg.set_value("home_cards", cards_data)
+        return cards_data
 
     @staticmethod
     def _get_extra_task_action(task_id):
@@ -238,9 +231,7 @@ class HomeInterface(ScrollArea):
 
     def _on_edit_cards(self):
         """打开卡片编辑对话框"""
-        cards_data = cfg.get_value("home_cards")
-        if cards_data is None:
-            cards_data = copy.deepcopy(DEFAULT_CARDS)
+        cards_data = self._load_home_cards()
 
         dialog = CardEditDialog(cards_data, self)
         if dialog.exec() == QDialog.DialogCode.Accepted and dialog.result_cards is not None:
@@ -255,14 +246,13 @@ class HomeInterface(ScrollArea):
         """重建卡片视图"""
         self.basicInputView.clearCards()
 
-        cards_data = cfg.get_value("home_cards")
-        if cards_data is None:
-            cards_data = copy.deepcopy(DEFAULT_CARDS)
+        cards_data = self._load_home_cards()
 
         for card in cards_data:
             action = self._build_card_action(card)
             self.basicInputView.addSampleCard(
                 icon=card.get("icon", ""),
-                title=card.get("title", ""),
+                # 内置卡片存的是中文原文，这里按当前语言显示；用户自定义标题原样显示
+                title=display_label(card.get("title", "")),
                 action=action
             )

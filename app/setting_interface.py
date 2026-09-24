@@ -17,7 +17,8 @@ from .card.messagebox_custom import MessageBoxEdit
 from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
 from module.notification import init_notifiers
-from module.localization import tr
+from module.localization import tr, tn
+from module.localization.languages import AUTO_LANGUAGE, available_languages
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
@@ -506,27 +507,27 @@ class SettingInterface(ScrollArea):
         )
         self.emberSpecialPassEnableCard = TimestampSwitchSettingCard(
             FIF.CALENDAR,
-            tr("启用「每月自动购买{}」").format(tr("星轨专票")),
-            tr("每月自动尝试在余烬兑换中购买「{}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(tr("星轨专票")),
+            tr("启用「每月自动购买{item}」").format(item=tr("星轨专票")),
+            tr("每月自动尝试在余烬兑换中购买「{item}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(item=tr("星轨专票")),
             "asset_ember_special_pass_enable",
             "asset_ember_special_pass_timestamp",
-            tr("上次完成{}购买的时间").format(tr("星轨专票")),
+            tr("上次完成{item}购买的时间").format(item=tr("星轨专票")),
         )
         self.emberRegularPassEnableCard = TimestampSwitchSettingCard(
             FIF.CALENDAR,
-            tr("启用「每月自动购买{}」").format(tr("星轨通票")),
-            tr("每月自动尝试在余烬兑换中购买「{}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(tr("星轨通票")),
+            tr("启用「每月自动购买{item}」").format(item=tr("星轨通票")),
+            tr("每月自动尝试在余烬兑换中购买「{item}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(item=tr("星轨通票")),
             "asset_ember_regular_pass_enable",
             "asset_ember_regular_pass_timestamp",
-            tr("上次完成{}购买的时间").format(tr("星轨通票")),
+            tr("上次完成{item}购买的时间").format(item=tr("星轨通票")),
         )
         self.emberTracksOfDestinyEnableCard = TimestampSwitchSettingCard(
             FIF.CALENDAR,
-            tr("启用「每月自动购买{}」").format(tr("命运的足迹")),
-            tr("每月自动尝试在余烬兑换中购买「{}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(tr("命运的足迹")),
+            tr("启用「每月自动购买{item}」").format(item=tr("命运的足迹")),
+            tr("每月自动尝试在余烬兑换中购买「{item}」，点击最大值并确认后记录时间，并在每月 1 号刷新").format(item=tr("命运的足迹")),
             "asset_ember_tracks_of_destiny_enable",
             "asset_ember_tracks_of_destiny_timestamp",
-            tr("上次完成{}购买的时间").format(tr("命运的足迹")),
+            tr("上次完成{item}购买的时间").format(item=tr("命运的足迹")),
         )
 
         self.CurrencywarsGroup = SettingCardGroup(tr("货币"), self.scrollWidget)
@@ -2305,7 +2306,7 @@ class SettingInterface(ScrollArea):
                 notifyEnableCard = ExpandableSwitchSettingCard(
                     enable_key,
                     provider_meta.get("icon", FIF.MAIL),
-                    tr('启用 {} 通知').format(display_name),
+                    tr('启用 {name} 通知').format(name=display_name),
                     provider_description
                 )
                 notifyEnableCard.switchChanged.connect(self.__refreshNotifiers)
@@ -2329,7 +2330,7 @@ class SettingInterface(ScrollArea):
             else:
                 notifyEnableCard = SwitchSettingCard1(
                     provider_meta.get("icon", FIF.MAIL),
-                    tr('启用 {} 通知').format(display_name),
+                    tr('启用 {name} 通知').format(name=display_name),
                     provider_description,
                     enable_key,
                     self
@@ -2483,7 +2484,7 @@ class SettingInterface(ScrollArea):
             FIF.LANGUAGE,
             '界面语言 / 界面語言 / 日本語 / 인터페이스 언어 / UI Language',
             '切换后即时生效 / 切換後即時生效 / 切り替え後すぐ適用 / 변경 즉시 적용 / Takes effect immediately',
-            texts={'自动': 'auto', '简体中文': 'zh_CN', '繁體中文': 'zh_TW', '日本語': 'ja_JP', '한국어': 'ko_KR', 'English': 'en_US'}
+            texts={'自动': AUTO_LANGUAGE, **available_languages()}
         )
         self.telemetryCard = SwitchSettingCardWithAction(
             tr("查看说明"),
@@ -2895,8 +2896,8 @@ class SettingInterface(ScrollArea):
         daily_count = DivergentUniverse.get_recorded_run_count("daily")
         weekly_count = DivergentUniverse.get_recorded_run_count("weekly")
         return "，".join([
-            tr("今日已完成 {} 次").format(daily_count),
-            tr("本周已完成 {} 次").format(weekly_count),
+            tn("今日已完成 {count} 次", daily_count),
+            tn("本周已完成 {count} 次", weekly_count),
         ])
 
     def __showTelemetryInfo(self):
@@ -3032,7 +3033,7 @@ class SettingInterface(ScrollArea):
         """显示通知方式配置教程对话框"""
         from .card.messagebox_custom import MessageBoxTutorial
         dialog = MessageBoxTutorial(
-            tr("{} 配置教程").format(provider_name),
+            tr("{name} 配置教程").format(name=provider_name),
             tutorial_html,
             self.window()
         )

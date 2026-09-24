@@ -13,7 +13,7 @@ import re
 import sys
 from ..tools.check_update import checkUpdate
 from module.update.version_check import validate_mirrorchyan_cdk
-from module.localization import tr, get_character_names, instance_display_to_raw
+from module.localization import tr, tn, get_character_names, instance_display_to_raw
 
 
 def get_key_from_value(val, map):
@@ -181,7 +181,7 @@ class PushSettingCardMirrorchyan(SettingCard):
             remaining = expired_dt - now
             days = remaining.days
             if days > 0:
-                content = tr("剩余 {days} 天").format(days=days)
+                content = tn("剩余 {count} 天", days)
             else:
                 content = tr("今天到期")
             InfoBar.success(
@@ -325,7 +325,7 @@ class PushSettingCardCode(CustomPushSettingCard):
             mb.textEdit.setText('\n'.join(codes))
             self._info_success(
                 tr('获取成功'),
-                tr('已获取 {} 个兑换码').format(len(codes)),
+                tn('已获取 {count} 个兑换码', len(codes)),
                 mb
             )
 
@@ -428,9 +428,10 @@ class PushSettingCardCode(CustomPushSettingCard):
         mb._fetch_thread = None
 
     def _info_warning(self, title, content, parent):
+        """title / content 由调用方负责翻译（这里只负责弹 InfoBar）。"""
         InfoBar.warning(
-            self.tr(title),
-            self.tr(content),
+            title,
+            content,
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
@@ -439,9 +440,10 @@ class PushSettingCardCode(CustomPushSettingCard):
         )
 
     def _info_success(self, title, content, parent):
+        """title / content 由调用方负责翻译（这里只负责弹 InfoBar）。"""
         InfoBar.success(
-            self.tr(title),
-            self.tr(content),
+            title,
+            content,
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
@@ -516,7 +518,7 @@ class PushSettingCardKey(CustomPushSettingCard):
             if key_name:
                 cfg.set_value(self.configname, key_name)
                 self.contentLabel.setText(self._format_key_display(key_name))
-                self.button.setText(tr("已改为 {}").format(self._format_key_display(key_name)))
+                self.button.setText(tr("已改为 {key}").format(key=self._format_key_display(key_name)))
 
     @staticmethod
     def _format_key_display(key_name: str) -> str:
@@ -728,7 +730,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
     def _get_display_text(self):
         team1_text = self.translate_to_chinese(self.team1_value)
         team2_text = self.translate_to_chinese(self.team2_value)
-        return tr("队伍1: {}\n队伍2: {}").format(team1_text, team2_text)
+        return tr("队伍1: {team1}\n队伍2: {team2}").format(team1=team1_text, team2=team2_text)
 
     def _update_display(self):
         self.team1_value = cfg.get_value(self.configname_team1)
@@ -784,7 +786,7 @@ class PushSettingCardPowerPlan(CustomPushSettingCard):
         """获取显示文本"""
         if not self.configvalue:
             return tr("暂无计划")
-        return tr("已配置 {} 项计划").format(len(self.configvalue))
+        return tn("已配置 {count} 项计划", len(self.configvalue))
 
     def __onclicked(self):
         message_box = MessageBoxPowerPlan(
@@ -838,7 +840,7 @@ class InstanceTeamSettingCard(SettingCard):
 
         teams = cfg.get_value("instance_teams")
         if teams:
-            self.contentLabel.setText(tr("已配置 {} 项规则").format(len(teams)))
+            self.contentLabel.setText(tn("已配置 {count} 项规则", len(teams)))
         else:
             self.contentLabel.setText(tr("为特定的副本配置队伍"))
 

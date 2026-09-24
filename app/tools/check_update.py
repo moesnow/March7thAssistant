@@ -165,7 +165,7 @@ def checkUpdate(self, timeout: int = 5, flag: bool = False, silent: bool = False
                 if not self.update_thread.mirrorchyan_assert_url:
                     InfoBar.error(
                         title=tr("尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"),
-                        content=tr('请在 "设置 → 关于 → 更新源" 中选择 Mirror酱 并填写有效 CDK'),
+                        content=tr('请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK'),
                         orient=Qt.Orientation.Horizontal,
                         isClosable=True,
                         position=InfoBarPosition.TOP,

@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
 from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, IndicatorPosition,
                             MessageBox, PushButton, BodyLabel)
 from module.config import cfg
-from module.localization import tr
+from module.localization import tr, tn
 
 
 # 固定站点（优先级0），不允许用户操作
@@ -296,7 +296,7 @@ class StationPrioritySettingCard(SettingCard):
         if cfg.get_value("divergent_station_priority_enable"):
             disabled = cfg.get_value("divergent_station_disabled")
             if disabled:
-                self.contentLabel.setText(tr("已启用自定义优先级，{} 个站点已禁用").format(len(disabled)))
+                self.contentLabel.setText(tn("已启用自定义优先级，{count} 个站点已禁用", len(disabled)))
             else:
                 self.contentLabel.setText(tr("已启用自定义优先级"))
         else:

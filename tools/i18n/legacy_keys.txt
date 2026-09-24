@@ -1,0 +1,7 @@
+# 死键白名单：一行一个 msgid，'#' 起始为注释。
+#
+# 用途：`python -m tools.i18n prune` 会删除「不在 .pot 且不在本白名单」的条目。
+# 只有确实需要保留、但静态提取暂时覆盖不到的 msgid 才写进来；本文件应为空。
+#
+# 优先做法：若条目来源没被登记，应补进 tools/i18n/__init__.py 的
+# TABLE_SOURCES / DATA_SOURCES，而不是加白名单。

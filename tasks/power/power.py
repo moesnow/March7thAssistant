@@ -72,7 +72,7 @@ class Power:
                 updated_plan.append(plan)
                 continue
 
-            log.info(f"执行体力计划 [{i + 1}/{len(power_plan)}]: {instance_type} - {instance_name}, 计划次数: {count}")
+            log.info(f"执行体力计划 [{i + 1}/{len(power_plan)}]: {instance_type} - {instance_name}, 计划次数： {count}")
 
             try:
                 # 执行副本
@@ -84,7 +84,7 @@ class Power:
                     remaining_count = count - executed_count
                     if remaining_count > 0:
                         updated_plan.append([instance_type, instance_name, remaining_count])
-                        log.info(f"体力计划剩余: {instance_type} - {instance_name}, 剩余次数: {remaining_count}")
+                        log.info(f"体力计划剩余: {instance_type} - {instance_name}, 剩余次数： {remaining_count}")
                     else:
                         log.info(f"体力计划已完成: {instance_type} - {instance_name}")
                 else:
@@ -193,12 +193,12 @@ class Power:
             
             if planned_attempts - executed_attempts > 0:
                 attempts = min(attempts, planned_attempts - executed_attempts)
-                log.info(f"剩余计划挑战次数: {planned_attempts - executed_attempts}，实际可挑战次数调整为: {attempts}")
+                log.info(f"剩余计划挑战次数： {planned_attempts - executed_attempts}，实际可挑战次数调整为: {attempts}")
             elif planned_attempts > 0:
                     log.info(f"该计划挑战次数已完成")
                     break
             else:
-                log.info(f"未设置计划挑战次数，按照当前开拓力可挑战次数: {attempts}")
+                log.info(f"未设置计划挑战次数，按照当前开拓力可挑战次数： {attempts}")
 
             
             full_runs = attempts // attempts_per_run

@@ -69,7 +69,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
 
         # Hotkey hint label
         hotkey = cfg.get_value("hotkey_toggle_autoplot", "f9").upper()
-        self.hotkeyHintLabel = QLabel(tr("快捷键: {hotkey}（可在设置中修改）").format(hotkey=hotkey), self.view)
+        self.hotkeyHintLabel = QLabel(tr("快捷键：{hotkey}（可在设置中修改）").format(hotkey=hotkey), self.view)
         hint_font = QFont()
         hint_font.setPointSize(9)
         self.hotkeyHintLabel.setFont(hint_font)
@@ -130,4 +130,4 @@ class AutoPlotSettingCard(ExpandSettingCard):
     def updateHotkeyHint(self):
         """更新快捷键提示文字（当配置改变时调用）"""
         hotkey = cfg.get_value("hotkey_toggle_autoplot", "f9").upper()
-        self.hotkeyHintLabel.setText(tr("快捷键: {hotkey}（可在设置中修改）").format(hotkey=hotkey))
+        self.hotkeyHintLabel.setText(tr("快捷键：{hotkey}（可在设置中修改）").format(hotkey=hotkey))
