@@ -544,7 +544,7 @@ msgstr "歓愉"
 
 #: app/setting_interface.py:713
 msgid "繁育"
-msgstr "繁育"
+msgstr "繁殖"
 
 #: app/setting_interface.py:713
 msgid "智识"
