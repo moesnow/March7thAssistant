@@ -81,14 +81,26 @@ class TestCurrencyWarsSettlement(unittest.TestCase):
         self.assertIs(self.war.result, False)
         self.assertIs(self.war.screenshot, screenshot)
 
+    def test_settlement_markers_match_substrings_in_separate_boxes(self):
+        self.module.auto.ocr_result = [(None, (text, 0.99)) for text in (
+            '挑战结束！', '点击前往结算')]
+        self.war._check_battle_result()
+        self.assertIs(self.war.result, False)
+        self.assertIs(self.war.screenshot, self.module.auto.screenshot)
+
+    def test_settlement_markers_match_substrings_in_one_box(self):
+        self.module.auto.ocr_result = [(None, ('挑战结束 前往结算', 0.99))]
+        self.war._check_battle_result()
+        self.assertIs(self.war.result, False)
+
     def test_intermediate_challenge_end_is_not_a_finished_run(self):
         self.module.auto.ocr_result = [(None, (text, 0.99)) for text in (
-            '挑战结束', '继续挑战')]
+            '挑战结束！', '继续挑战')]
         self.war._check_battle_result()
         self.assertIsNone(self.war.result)
 
     def test_settlement_button_alone_does_not_invent_a_result(self):
-        self.module.auto.ocr_result = [(None, ('前往结算', 0.99))]
+        self.module.auto.ocr_result = [(None, ('点击前往结算', 0.99))]
         self.war._check_battle_result()
         self.assertIsNone(self.war.result)
 

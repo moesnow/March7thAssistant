@@ -4,7 +4,7 @@ import os
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from urllib3.exceptions import ReadTimeoutError
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 
 from module.game.cloud import CloudGameController
 
@@ -86,6 +86,33 @@ class TestCloudGameScreenshotTimeout(unittest.TestCase):
         with self.assertRaisesRegex(TimeoutError, '截图请求超时'):
             self.controller._take_browser_screenshot()
         self.controller.driver.get_screenshot_as_png.assert_not_called()
+        self.assertEqual(self.config.timeout, 120)
+
+    def test_wrapped_transport_timeout_does_not_enter_webdriver_fallback(self):
+        def capture(*_args):
+            raise WebDriverException('CDP failed') from ReadTimeoutError(None, '/', 'stalled')
+        self.controller.driver.execute_cdp_cmd.side_effect = capture
+        with self.assertRaisesRegex(TimeoutError, '截图请求超时'):
+            self.controller._take_browser_screenshot()
+        self.controller.driver.get_screenshot_as_png.assert_not_called()
+        self.assertEqual(self.config.timeout, 120)
+
+    def test_implicit_wrapped_timeout_does_not_enter_webdriver_fallback(self):
+        def capture(*_args):
+            try:
+                raise ReadTimeoutError(None, '/', 'stalled')
+            except ReadTimeoutError:
+                raise WebDriverException('CDP failed')
+        self.controller.driver.execute_cdp_cmd.side_effect = capture
+        with self.assertRaisesRegex(TimeoutError, '截图请求超时'):
+            self.controller._take_browser_screenshot()
+        self.controller.driver.get_screenshot_as_png.assert_not_called()
+
+    def test_non_timeout_cdp_error_allows_webdriver_fallback(self):
+        self.controller.driver.execute_cdp_cmd.side_effect = WebDriverException('CDP failed')
+        self.controller.driver.get_screenshot_as_png.return_value = b'png'
+        self.assertEqual(self.controller._take_browser_screenshot(), b'png')
+        self.controller.driver.get_screenshot_as_png.assert_called_once_with()
         self.assertEqual(self.config.timeout, 120)
 
     def test_renderer_timeout_does_not_enter_webdriver_fallback(self):

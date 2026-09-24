@@ -493,7 +493,8 @@ class CurrencyWars:
             if time.monotonic() - start_time > timeout:
                 self.abort_run("货币战争主循环超时（120分钟），停止任务")
 
-            self.check_connection()
+            if cfg.cloud_game_enable:
+                self.check_connection()
             active = False
             try:
                 active = self.check_main_screen() is True
@@ -2658,7 +2659,7 @@ class CurrencyWars:
         # 生命值耗尽时可能直接显示“挑战结束 / 前往结算”，随后回到首页。
         # 普通节点的“挑战结束 / 继续挑战”不能当作整局失败。
         texts = {box[1][0] for box in auto.ocr_result}
-        if {"挑战结束", "前往结算"}.issubset(texts):
+        if any("挑战结束" in text for text in texts) and any("前往结算" in text for text in texts):
             self.result = False
             self.screenshot = auto.screenshot
             log.info("检测到挑战结束并前往结算，记录本次对局未完成")

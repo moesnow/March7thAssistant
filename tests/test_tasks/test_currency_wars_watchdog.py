@@ -49,6 +49,7 @@ class TestCurrencyWarsWatchdog(unittest.TestCase):
         self.assertEqual(self.seconds, 300)
 
     def test_disconnected_cloud_stops_before_game_actions(self):
+        self.module.cfg.cloud_game_enable = True
         self.module.auto.find_element.side_effect = lambda target, *a, **kw: (
             (1, 2, 3, 4) if target in ('连接中断', '退出游戏') else None)
         self.assert_aborts('云游戏连接中断')
@@ -56,6 +57,7 @@ class TestCurrencyWarsWatchdog(unittest.TestCase):
         self.assertEqual(self.seconds, 0)
 
     def test_cloud_loading_failure_stops_before_board_actions(self):
+        self.module.cfg.cloud_game_enable = True
         self.module.auto.find_element.side_effect = lambda target, *a, **kw: (
             (1, 2, 3, 4) if target in ('加载失败', '立即切换') else None)
         self.assert_aborts('云游戏加载失败')
@@ -66,6 +68,12 @@ class TestCurrencyWarsWatchdog(unittest.TestCase):
             (1, 2, 3, 4) if target == '连接中断' else None)
         self.war.check_connection()
         self.module.auto.screenshot.save.assert_not_called()
+
+    def test_local_game_skips_cloud_connection_check(self):
+        self.war.check_connection = Mock()
+        self.war.check_return_home.return_value = True
+        self.assertFalse(self.war.loop())
+        self.war.check_connection.assert_not_called()
 
     def test_recognized_battle_can_wait_longer_than_five_minutes(self):
         self.module.auto.find_element.side_effect = lambda target, *a, **kw: (

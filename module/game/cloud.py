@@ -1572,10 +1572,18 @@ class CloudGameController(GameControllerBase):
                 data = result.get("data") if result else None
                 if data:
                     return base64.b64decode(data)
-            except (TransportTimeoutError, TimeoutException) as exc:
-                # GET screenshot可能被HTTP层自动重试；通信已经超时时不能再回退。
-                raise TimeoutError("云游戏浏览器截图请求超时") from exc
             except Exception as exc:
+                # Selenium 可能将 urllib3 超时包装为 WebDriverException。
+                pending = [exc]
+                seen = set()
+                while pending:
+                    error = pending.pop()
+                    if id(error) in seen:
+                        continue
+                    seen.add(id(error))
+                    if isinstance(error, (TransportTimeoutError, TimeoutException, TimeoutError)):
+                        raise TimeoutError("云游戏浏览器截图请求超时") from exc
+                    pending.extend(cause for cause in (error.__cause__, error.__context__) if cause is not None)
                 self.log_debug(f"CDP 截图失败，回退 WebDriver 截图: {exc}")
             return self.driver.get_screenshot_as_png()
         finally:
