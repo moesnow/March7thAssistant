@@ -22,6 +22,7 @@ class CurrencyWarsCharacter:
 
 class CurrencyWars:
     def __init__(self):
+        self._last_battle_keepalive: Optional[float] = None
         self.screenshot = None  # 任务截图
         self.peipei_count: int = 0  # 佩佩和叽米
         self.diamond_count: int = 0  # 财富宝钻
@@ -484,15 +485,19 @@ class CurrencyWars:
         self.update_backward()
 
         start_time = time.monotonic()
+        last_activity = start_time
+        self._last_battle_keepalive = start_time
         timeout = 60 * 120  # 120分钟超时
         while True:
             # 检查超时
             if time.monotonic() - start_time > timeout:
-                log.error("货币战争主循环超时（120分钟），强制退出")
-                return False
+                self.abort_run("货币战争主循环超时（120分钟），停止任务")
 
+            if cfg.cloud_game_enable:
+                self.check_connection()
+            active = False
             try:
-                self.check_main_screen()
+                active = self.check_main_screen() is True
             except Exception as e:
                 log.error(f"货币战争主循环出现异常：{e}，尝试退出")
 
@@ -506,10 +511,9 @@ class CurrencyWars:
 
                 self.give_up_and_settle()
 
-            self.check_investment_environment()
-            self.check_auto_battle()
-            self.check_click_continue()
-            self.check_supply_phase()
+            for check in (self.check_investment_environment, self.check_auto_battle,
+                          self.check_click_continue, self.check_supply_phase):
+                active = (check() is True) or active
             if self.check_return_home():
                 end_time = time.monotonic()
                 elapsed_time = end_time - start_time
@@ -518,7 +522,68 @@ class CurrencyWars:
                 log.info(f"本次货币战争用时：{minutes} 分钟 {seconds} 秒")
                 return self.result if self.result is not None else False
 
+            now = time.monotonic()
+            # 自动战斗可以长时间没有点击；可识别的战斗画面不属于未知界面。
+            if active:
+                last_activity = now
+                self._last_battle_keepalive = now
+            elif self.check_battle_keepalive():
+                last_activity = now
+            elif now - last_activity >= 300:
+                self.abort_run("货币战争连续5分钟未识别到可处理界面或战斗画面，停止任务")
             time.sleep(4)
+
+    def check_battle_keepalive(self) -> bool:
+        """仅在新截图确认战斗时，向云游戏发送低频、无按键的鼠标移动。"""
+        if not auto.find_element("./assets/images/forgottenhall/pause.png", "image", 0.9):
+            # 货币战争的暂停图标与忘却之庭模板不同，使用实际战斗状态文字兜底。
+            if not auto.find_element(("敌方行动中", "我方行动中"), "text", crop=(0.85, 0.89, 0.15, 0.08)):
+                return False
+            # 文字识别使用了局部截图，恢复完整截图用于下面的归一化坐标换算。
+            if not auto.take_screenshot():
+                return False
+        if not cfg.cloud_game_enable:
+            return True
+
+        now = time.monotonic()
+        if self._last_battle_keepalive is None:
+            self._last_battle_keepalive = now
+        if now - self._last_battle_keepalive < 60:
+            return True
+
+        # 使用战斗检测的完整截图换算坐标，两个不同的点保证产生实际移动。
+        # 只发 mouseMoved；不点击、不拖动、不按键，不切换自动战斗/倍速/暂停。
+        # 在主循环内同步执行，避免后台线程与商店、部署、结算操作争用输入。
+        for crop in ((0.49, 0.05, 0.002, 0.002), (0.50, 0.05, 0.002, 0.002)):
+            position = auto.find_element(crop, "crop", take_screenshot=False, need_ocr=False)
+            if position:
+                auto.click_element_with_pos(position, action="move")
+        self._last_battle_keepalive = now
+        log.info("云游戏战斗保活：发送鼠标移动")
+        return True
+
+    def abort_run(self, reason: str):
+        """保留现场并中止整个任务，不能在未知状态下继续领奖或开局。"""
+        log.error(reason)
+        try:
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            os.makedirs("./debug", exist_ok=True)
+            debug_path = f"./debug/currency_wars_stalled_{timestamp}.png"
+            auto.take_screenshot()
+            auto.screenshot.save(debug_path)
+            log.error(f"已保存现场截图至 {debug_path}")
+        except Exception as exc:
+            log.warning(f"保存货币战争现场截图失败：{exc}")
+        raise RuntimeError(reason)
+
+    def check_connection(self):
+        if auto.find_element("加载失败", "text", include=True):
+            if auto.find_element("立即切换", "text", take_screenshot=False, need_ocr=False):
+                self.abort_run("云游戏加载失败，请检查兼容模式后重试货币战争")
+        # 使用新截图；必须同时识别断线标题和退出按钮，避免匹配背景文字。
+        if auto.find_element("连接中断", "text", include=True):
+            if auto.find_element("退出游戏", "text", take_screenshot=False, need_ocr=False):
+                self.abort_run("云游戏连接中断，请重新连接游戏后重试货币战争")
 
     def check_main_screen(self):
         """
@@ -613,6 +678,7 @@ class CurrencyWars:
                 if auto.click_element("本局不再提示", "text", crop=(905 / 1920, 571 / 1080, 171 / 1920, 50 / 1080)):
                     time.sleep(1)
                 auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+                return True
 
     def sell_characters_aglaea_strategy(self):
         remembrance_trailblazer_name = self.get_remembrance_trailblazer_name()
@@ -2495,6 +2561,7 @@ class CurrencyWars:
         if cfg.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
             log.info("尝试开启自动战斗")
             auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
+            return True
 
     def check_click_continue(self):
         """
@@ -2503,7 +2570,9 @@ class CurrencyWars:
         if result := auto.find_element(("点击空白处继续", "下一步", "继续挑战", "前往结算", "下一页", "确认选择"), 'text', None, include=True):
             log.info(f"检测到{auto.matched_text}按钮，尝试点击")
 
-            if auto.matched_text == "下一页":
+            # 某些结算直接通过“前往结算”离开，不会出现“下一页”。
+            # 在点击前读取同一帧的结果，避免回到首页后只剩未知结果。
+            if auto.matched_text in ("下一页", "前往结算"):
                 self._check_battle_result()
                 auto.click_element_with_pos(result)
             elif cfg.currencywars_strategy in ("aglaea", "seele") and cfg.currencywars_strategy_restart_on_special_tags:
@@ -2515,6 +2584,7 @@ class CurrencyWars:
                     auto.click_element_with_pos(result)
             else:
                 auto.click_element_with_pos(result)
+            return True
 
     def _check_boss_tag(self):
         # 沉重脚步：敌人攻击我方队员后，使受到攻击的我方队员行动延后8%。
@@ -2586,6 +2656,14 @@ class CurrencyWars:
                 self.screenshot = auto.screenshot
                 return
 
+        # 生命值耗尽时可能直接显示“挑战结束 / 前往结算”，随后回到首页。
+        # 普通节点的“挑战结束 / 继续挑战”不能当作整局失败。
+        texts = {box[1][0] for box in auto.ocr_result}
+        if any("挑战结束" in text for text in texts) and any("前往结算" in text for text in texts):
+            self.result = False
+            self.screenshot = auto.screenshot
+            log.info("检测到挑战结束并前往结算，记录本次对局未完成")
+
     def check_special_characters(self, crop: Optional[Tuple[float, float, float, float]] = None, texts: Optional[list[str]] = None):
         """
         检查指定区域是否有佩佩、叽米或财富宝钻，并更新计数
@@ -2634,7 +2712,7 @@ class CurrencyWars:
                 auto.click_element(button_positions[0], 'crop')
                 time.sleep(1)
                 auto.click_element('选择', 'text', None, 10, crop=(891 / 1920, 870 / 1080, 381 / 1920, 60 / 1080), include=True)
-                return
+                return True
 
             button_positions = [
                 (725.0 / 1920, 196.0 / 1080, 468.0 / 1920, 670.0 / 1080),
@@ -2746,6 +2824,7 @@ class CurrencyWars:
                 self.need_exit = True
             time.sleep(1)
             auto.click_element('确认', 'text', None, 10, crop=(738.0 / 1920, 927.0 / 1080, 457.0 / 1920, 123.0 / 1080), include=True)
+            return True
 
     def update_backward(self):
         default = 6
@@ -2889,6 +2968,7 @@ class CurrencyWars:
                 time.sleep(1)
             auto.click_element('确认', 'text', None, 10, crop=(1490.0 / 1920, 943.0 / 1080, 403.0 / 1920, 76.0 / 1080), include=True)
             time.sleep(2)
+            return True
 
     def check_return_home(self) -> bool:
         """

@@ -10,6 +10,7 @@ import time
 import io
 import ctypes
 import socket
+from urllib3.exceptions import TimeoutError as TransportTimeoutError
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, SessionNotCreatedException, StaleElementReferenceException
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -320,13 +321,12 @@ class CloudGameController(GameControllerBase):
             f"--app={self.GAME_URL}",   # 以应用模式启动
             "--disable-blink-features=AutomationControlled",  # 去除自动化痕迹，防止被人机验证
         ]
-        # if not headless:
-        #     args += [
-        #         "--disable-backgrounding-occluded-windows",  # 避免窗口被遮挡/最小化后页面降速
-        #         "--disable-renderer-backgrounding",          # 避免渲染进程在后台被降级
-        #         "--disable-background-timer-throttling",     # 避免后台定时器被节流
-        #         "--disable-features=CalculateNativeWinOcclusion",  # 关闭 Windows 原生遮挡检测
-        #     ]
+        if not headless:
+            args += [
+                "--disable-backgrounding-occluded-windows",
+                "--disable-renderer-backgrounding",
+                "--disable-background-timer-throttling",
+            ]
         if self.cfg.browser_persistent_enable:
             args += [
                 f"--user-data-dir={self.user_profile_path}",   # UserProfile 路径
@@ -1215,8 +1215,19 @@ class CloudGameController(GameControllerBase):
             return False
 
     def is_in_game(self) -> bool:
-        if self.driver:
-            return True if self.driver.find_elements(By.CSS_SELECTOR, ".game-player") else False
+        if not self.driver:
+            return False
+        # 断联后播放器节点仍然存在，不能据此跳过重新连接。
+        # 启动流程捕获 ConnectionError 后会关闭失效会话并按原有上限重试。
+        disconnected = self.driver.find_elements(
+            By.XPATH, "//*[normalize-space(text())='连接中断']")
+        exit_buttons = self.driver.find_elements(
+            By.XPATH, "//*[normalize-space(text())='退出游戏']")
+        if (any(element.is_displayed() for element in disconnected)
+                and any(element.is_displayed() for element in exit_buttons)):
+            raise ConnectionError("云游戏会话已断开，重新连接游戏")
+        return any(element.is_displayed() for element in
+                   self.driver.find_elements(By.CSS_SELECTOR, ".game-player"))
 
     def enter_cloud_game(self) -> bool:
         """进入云游戏"""
@@ -1548,25 +1559,35 @@ class CloudGameController(GameControllerBase):
         if not self.driver:
             return None
 
-        # 仅在 macOS 非 headless 模式下使用 CDP 截图，避免浏览器被切换到前台
-        # if not self.cfg.browser_headless_enable and platform.system() == "Darwin":
-            # Chrome/Chromium 在非 headless 模式下调用 get_screenshot_as_png() 时，
-            # 会先确保窗口“可见且未被遮挡”，否则截图内容可能为空或全黑。
-            # macOS 的窗口管理要求被截取的 NSWindow 处于前台/可见状态，
-            # Chromium 的实现会自动把窗口置前。
-            # 改用 CDP 截图接口可以避免这个问题。
+        # 外层截图重试的60秒上限无法中断阻塞中的WebDriver请求。
+        # 限制实际HTTP读取时间；保留调用者原有的更短超时。
+        client_config = self.driver.command_executor._client_config
+        previous_timeout = client_config.timeout
+        client_config.timeout = min(previous_timeout, 15) if previous_timeout is not None else 15
         try:
             self._ensure_window_not_minimized_for_frame_capture()
-            # 未知原因，PNG 格式截图特别慢，改用 JPEG 格式可以显著提升截图速度
-            # result = self.driver.execute_cdp_cmd("Page.captureScreenshot", {"format": "png"})
-            result = self.driver.execute_cdp_cmd("Page.captureScreenshot", {"format": "jpeg", "quality": 100})
-            data = result.get("data") if result else None
-            if data:
-                return base64.b64decode(data)
-        except Exception as e:
-            self.log_debug(f"CDP 截图失败，回退 WebDriver 截图: {e}")
-
-        return self.driver.get_screenshot_as_png()
+            try:
+                result = self.driver.execute_cdp_cmd(
+                    "Page.captureScreenshot", {"format": "jpeg", "quality": 100})
+                data = result.get("data") if result else None
+                if data:
+                    return base64.b64decode(data)
+            except Exception as exc:
+                # Selenium 可能将 urllib3 超时包装为 WebDriverException。
+                pending = [exc]
+                seen = set()
+                while pending:
+                    error = pending.pop()
+                    if id(error) in seen:
+                        continue
+                    seen.add(id(error))
+                    if isinstance(error, (TransportTimeoutError, TimeoutException, TimeoutError)):
+                        raise TimeoutError("云游戏浏览器截图请求超时") from exc
+                    pending.extend(cause for cause in (error.__cause__, error.__context__) if cause is not None)
+                self.log_debug(f"CDP 截图失败，回退 WebDriver 截图: {exc}")
+            return self.driver.get_screenshot_as_png()
+        finally:
+            client_config.timeout = previous_timeout
 
     def _ensure_window_not_minimized_for_frame_capture(self) -> None:
         """视频帧截图依赖前台窗口持续渲染，最小化时先恢复窗口。"""
@@ -1743,13 +1764,23 @@ class CloudGameController(GameControllerBase):
             self.log_debug(f"删除二维码图片失败（可忽略）: {e}")
 
         if self.driver:
+            driver = self.driver
+            client_config = driver.command_executor._client_config
+            previous_timeout = client_config.timeout
+            client_config.timeout = min(previous_timeout, 15) if previous_timeout is not None else 15
             try:
-                self.driver.execute(Command.CLOSE)
-                self.log_info("关闭浏览器成功")
-            except Exception:
-                pass
-            self.driver.quit()
-            self.driver = None
+                try:
+                    driver.execute(Command.CLOSE)
+                    self.log_info("关闭浏览器成功")
+                except Exception as exc:
+                    self.log_debug(f"关闭浏览器窗口失败，将清理进程: {exc}")
+                try:
+                    driver.quit()
+                except Exception as exc:
+                    self.log_debug(f"退出浏览器会话失败，将清理进程: {exc}")
+            finally:
+                client_config.timeout = previous_timeout
+                self.driver = None
 
         # 清理所有未正常退出的浏览器
         try:
