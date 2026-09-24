@@ -44,3 +44,13 @@ AVAILABLE_TASKS = {
 
 # 任务名称映射（兼容旧名称调用方）
 TASK_NAMES = AVAILABLE_TASKS
+
+
+def task_display_names() -> dict:
+    """任务ID -> 当前语言显示名。
+
+    供 `--list` 等界面输出使用（属界面文案，随 ui_language）；
+    日志与配置仍按约定使用 AVAILABLE_TASKS 里的中文原文。
+    """
+    from module.localization import tr
+    return {task_id: tr(name) for task_id, name in AVAILABLE_TASKS.items()}
