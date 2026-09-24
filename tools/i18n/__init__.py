@@ -33,6 +33,9 @@ SCAN_FILES = ["main.py", "app.py", "updater.py", "build.py"]
 # 视为翻译调用的函数名（含 self.tr(...) 形式）
 TRANSLATION_FUNCS = {"tr", "tn"}
 
+# 带语境的翻译调用：第一个参数是 msgctxt（语境），第二个参数才是文案（msgid）
+CONTEXT_FUNCS = {"trc"}
+
 # tn() 复数形式的目录键后缀，收口于 module.localization
 from module.localization import PLURAL_SUFFIX  # noqa: E402
 
@@ -58,13 +61,14 @@ def placeholders(text: str) -> Counter:
 # ---------------------------------------------------------------------------
 
 class _LiteralCollector(ast.NodeVisitor):
-    """收集 tr()/tn() 的字面量参数，并区分是否紧跟 .format()。"""
+    """收集 tr()/tn()/trc() 的字面量参数，并区分是否紧跟 .format()。"""
 
     def __init__(self):
         self.literals: set[str] = set()
         self.formatted: set[str] = set()
         self.plural_literals: set[str] = set()  # 经 tn() 调用的字面量（复数条目）
         self.refs: dict[str, tuple[str, int]] = {}  # 字面量 -> 首次出现 (文件, 行号)
+        self.contexts: dict[str, set[str]] = {}  # trc 字面量 -> 语境集合（msgctxt）
         self.dynamic = 0
         self._current_file = "<string>"
 
@@ -76,16 +80,26 @@ class _LiteralCollector(ast.NodeVisitor):
             return node.attr
         return None
 
+    @staticmethod
+    def _msgid_index(func_name: str) -> int | None:
+        """取出该翻译函数里"文案"参数的下标（trc 的文案在第 2 个参数）。"""
+        if func_name in TRANSLATION_FUNCS:
+            return 0
+        if func_name in CONTEXT_FUNCS:
+            return 1
+        return None
+
     def visit_Call(self, node: ast.Call) -> None:
         func_name = self._func_name(node.func)
 
-        # tr("...").format(...) 链式：占位符必须与译文严格一致
+        # tr("...").format(...) / trc("ctx", "...").format(...) 链式：占位符必须与译文严格一致
         if func_name == "format" and isinstance(node.func, ast.Attribute):
             inner = node.func.value
             if isinstance(inner, ast.Call):
                 inner_name = self._func_name(inner.func)
-                if inner_name in TRANSLATION_FUNCS and inner.args:
-                    arg = inner.args[0]
+                idx = self._msgid_index(inner_name) if inner_name else None
+                if idx is not None and len(inner.args) > idx:
+                    arg = inner.args[idx]
                     if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
                         self.formatted.add(arg.value)
 
@@ -101,7 +115,25 @@ class _LiteralCollector(ast.NodeVisitor):
             else:
                 self.dynamic += 1
 
+        # trc(context, text)：context 进 msgctxt，text 进 msgid
+        elif func_name in CONTEXT_FUNCS and node.args:
+            if len(node.args) < 2:
+                self.dynamic += 1
+            else:
+                ctx_arg, text_arg = node.args[0], node.args[1]
+                if not (isinstance(text_arg, ast.Constant) and isinstance(text_arg.value, str)):
+                    self.dynamic += 1
+                elif text_arg.value.strip():
+                    # 文案本身仍作为无上下文条目登记：trc 运行期在无 msgctxt 条目时回退 tr()
+                    self.literals.add(text_arg.value)
+                    self.refs.setdefault(text_arg.value, (self._current_file, node.lineno))
+                    if isinstance(ctx_arg, ast.Constant) and isinstance(ctx_arg.value, str) and ctx_arg.value.strip():
+                        self.contexts.setdefault(text_arg.value, set()).add(ctx_arg.value)
+                    else:
+                        self.dynamic += 1
+
         self.generic_visit(node)
+
 
 
 def iter_source_files():
@@ -121,7 +153,7 @@ def iter_source_files():
 
 
 def collect_literals_from_source(source: str, filename: str = "<string>") -> tuple[set[str], set[str], int]:
-    """从一段源码收集 tr()/tn() 字面量，返回 (字面量, 带 .format() 的字面量, 动态调用次数)。"""
+    """从一段源码收集 tr()/tn()/trc() 字面量，返回 (字面量, 带 .format() 的字面量, 动态调用次数)。"""
     tree = ast.parse(source, filename=filename)
     collector = _LiteralCollector()
     collector._current_file = filename
@@ -129,19 +161,21 @@ def collect_literals_from_source(source: str, filename: str = "<string>") -> tup
     return collector.literals, collector.formatted, collector.dynamic
 
 
-def collect_calls_from_source(source: str, filename: str = "<string>") -> tuple[set[str], set[str], int, set[str], dict]:
-    """同 collect_literals_from_source，另返回 (tn 复数字面量, 出处映射)。"""
+def collect_calls_from_source(source: str, filename: str = "<string>") -> tuple[set[str], set[str], int, set[str], dict, dict]:
+    """同 collect_literals_from_source，另返回 (tn 复数字面量, 出处映射, trc 语境映射)。"""
     tree = ast.parse(source, filename=filename)
     collector = _LiteralCollector()
     collector._current_file = filename
     collector.visit(tree)
-    return collector.literals, collector.formatted, collector.dynamic, collector.plural_literals, collector.refs
+    return (collector.literals, collector.formatted, collector.dynamic,
+            collector.plural_literals, collector.refs, collector.contexts)
 
 
-def collect_code_extras() -> tuple[set[str], dict]:
-    """返回 (tn 复数字面量集合, 字面量出处映射)。"""
+def collect_code_extras() -> tuple[set[str], dict, dict]:
+    """返回 (tn 复数字面量集合, 字面量出处映射, trc 语境映射)。"""
     plurals: set[str] = set()
     refs: dict[str, tuple[str, int]] = {}
+    contexts: dict[str, set[str]] = {}
     for path in iter_source_files():
         try:
             source = path.read_text(encoding="utf-8", errors="ignore")
@@ -151,7 +185,9 @@ def collect_code_extras() -> tuple[set[str], dict]:
         plurals |= collected[3]
         for k, v in collected[4].items():
             refs.setdefault(k, v)
-    return plurals, refs
+        for k, v in collected[5].items():
+            contexts.setdefault(k, set()).update(v)
+    return plurals, refs, contexts
 
 
 def collect_code_literals() -> tuple[set[str], set[str], int]:

@@ -79,15 +79,34 @@ def base_metadata(lang: str, is_pot: bool = False) -> dict:
 # ---------------------------------------------------------------------------
 
 def source_entries() -> dict[str, dict]:
-    """收集全部源条目：{msgid: {"ref": "path:line", "plural": bool}}（含数据源）。"""
-    plurals, refs = collect_code_extras()
+    """收集全部源条目：{msgid: {"ref": "path:line", "plural": bool, "contexts": tuple}}（含数据源）。
+
+    contexts 为经 trc() 传入的 msgctxt 集合（同一 msgid 可带多个语境）。
+    """
+    plurals, refs, contexts = collect_code_extras()
     data_literals, data_refs = collect_data_literals()
     entries: dict[str, dict] = {}
     for msgid, (path, line) in refs.items():
-        entries[msgid] = {"ref": f"{path}:{line}", "plural": msgid in plurals}
-    for msgid in data_literals:
-        entries.setdefault(msgid, {"ref": data_refs.get(msgid, ""), "plural": False})
+        entries[msgid] = {
+            "ref": f"{path}:{line}",
+            "plural": msgid in plurals,
+            "contexts": tuple(sorted(contexts.get(msgid, ()))),
+        }
+    for msgid in sorted(data_literals):  # 数据源来自 set，排序保证 extract 结果可复现
+        entries.setdefault(msgid, {"ref": data_refs.get(msgid, ""), "plural": False, "contexts": ()})
     return entries
+
+
+def entry_key(entry) -> str:
+    """条目在目录中的唯一键：有 msgctxt 时用 gettext 的 'msgctxt\\x04msgid' 形式。"""
+    if getattr(entry, "msgctxt", ""):
+        return f"{entry.msgctxt}\x04{entry.msgid}"
+    return entry.msgid
+
+
+def context_key(msgctxt: str, msgid: str) -> str:
+    """按 gettext 约定拼 msgctxt 条目的键。"""
+    return f"{msgctxt}\x04{msgid}"
 
 
 def _occurrences(ref: str) -> list:
@@ -100,10 +119,12 @@ def _occurrences(ref: str) -> list:
 
 
 def _make_entry(msgid: str, meta: dict, lang: str | None,
-                msgstr: str = "", plural_msgstr: str = "") -> polib.POEntry:
+                msgstr: str = "", plural_msgstr: str = "",
+                msgctxt: str | None = None) -> polib.POEntry:
     is_plural = meta.get("plural", False)
     entry = polib.POEntry(
         msgid=msgid,
+        msgctxt=msgctxt,
         msgstr="" if is_plural else msgstr,
         occurrences=_occurrences(meta.get("ref", "")),
     )
@@ -122,17 +143,27 @@ def _make_entry(msgid: str, meta: dict, lang: str | None,
 
 
 def po_keyset(po) -> set[str]:
-    """条目键集合：复数条目同时映射 msgid 与 msgid|plural。"""
+    """条目键集合：带 msgctxt 的条目用 ctx\\x04msgid，复数条目同时映射 msgid|plural。"""
     keys = set()
     for e in po:
-        keys.add(e.msgid)
+        key = entry_key(e)
+        keys.add(key)
         if e.msgid_plural:
-            keys.add(e.msgid + PLURAL_SUFFIX)
+            keys.add(key + PLURAL_SUFFIX)
     return keys
 
 
 def _index(po) -> dict:
-    return {e.msgid: e for e in po}
+    return {entry_key(e): e for e in po}
+
+
+def _context_keys(entries: dict[str, dict]) -> set[str]:
+    """源侧 trc 语境对应的目录键集合。"""
+    keys = set()
+    for msgid, meta in entries.items():
+        for ctx in meta.get("contexts", ()):
+            keys.add(context_key(ctx, msgid))
+    return keys
 
 
 def _build_pot(entries: dict[str, dict]) -> None:
@@ -140,6 +171,8 @@ def _build_pot(entries: dict[str, dict]) -> None:
     pot.metadata = base_metadata("", is_pot=True)
     for msgid, meta in entries.items():
         pot.append(_make_entry(msgid, meta, None))
+        for ctx in meta.get("contexts", ()):
+            pot.append(_make_entry(msgid, meta, None, msgctxt=ctx))
     pot.save(str(pot_path()))
 
 
@@ -150,7 +183,8 @@ def _build_pot(entries: dict[str, dict]) -> None:
 def update_po() -> dict:
     """把源码/数据源提取结果并入 .pot 与各 .po（新条目追加，已有译文不覆盖）。
 
-    已有单数条目在源侧改为 tn() 复数时升级为复数条目（译文保留在 msgstr[0]）。
+    - 已有单数条目在源侧改为 tn() 复数时升级为复数条目（译文保留在 msgstr[0]）；
+    - trc() 的每条语境补一条 msgctxt 条目，同时保留无上下文条目供 tr() 回退。
     """
     entries = source_entries()
     _build_pot(entries)
@@ -177,10 +211,18 @@ def update_po() -> dict:
                         e.msgstr_plural = ({0: old, 1: ""} if forms >= 2 else {0: old})
                         e.msgstr = ""
                         n += 1
-                continue
-            po.append(_make_entry(msgid, meta, lang,
-                                  msgstr=msgid if lang == BASE_LOCALE else ""))
-            n += 1
+            else:
+                po.append(_make_entry(msgid, meta, lang,
+                                      msgstr=msgid if lang == BASE_LOCALE else ""))
+                n += 1
+            for ctx in meta.get("contexts", ()):
+                if context_key(ctx, msgid) in have:
+                    continue
+                # 语境条目与无上下文条目共享同一 ref；zh_CN 直接填原文
+                po.append(_make_entry(msgid, meta, lang,
+                                      msgstr=msgid if lang == BASE_LOCALE else "",
+                                      msgctxt=ctx))
+                n += 1
         po.save(str(path))
         added[lang] = n
     return added
@@ -220,6 +262,12 @@ def check_po(formatted: set[str]) -> tuple[list[str], list[str]]:
     if unregistered:
         errors.append(f"{len(unregistered)} 条源文案未登记进 .pot（运行 python -m tools.i18n extract）")
 
+    # trc() 的每条语境都必须在 .pot 里有对应 msgctxt 条目
+    ctx_keys = _context_keys(entries)
+    ctx_missing_pot = ctx_keys - pot_keys
+    if ctx_missing_pot:
+        errors.append(f"{len(ctx_missing_pot)} 条 trc 语境未登记进 .pot（运行 python -m tools.i18n extract）")
+
     for lang in LOCALES:
         try:
             po = polib.pofile(str(po_path(lang)))
@@ -235,6 +283,11 @@ def check_po(formatted: set[str]) -> tuple[list[str], list[str]]:
             errors.append(f"[{lang}] po 缺少 {len(missing)} 个条目（运行 python -m tools.i18n extract）")
         if extra:
             warnings.append(f"[{lang}] po 有 {len(extra)} 个模板之外的条目（历史遗留，保留）")
+
+        # 1b) trc 语境条目齐全（单独报错，便于定位是哪个语境漏了）
+        ctx_missing = ctx_keys - keys
+        if ctx_missing:
+            errors.append(f"[{lang}] po 缺少 {len(ctx_missing)} 条 trc 语境条目（运行 python -m tools.i18n extract）")
 
         # 2) 占位符一致（带 .format() 的条目严格级）
         for e in po:

@@ -6,6 +6,7 @@
 """
 from tools.i18n import (
     LOCALES,
+    collect_calls_from_source,
     collect_literals_from_source,
     has_positional_placeholder,
     placeholders,
@@ -58,6 +59,88 @@ class TestCollector:
         literals, _, dynamic = collect_literals_from_source("getattr(obj, 'tr')\nstr(v)\n")
         assert literals == set()
         assert dynamic == 0
+
+
+class TestContextCollector:
+    """trc(context, text)：文案进 msgid，第一个参数进 msgctxt。"""
+
+    def test_collects_text_and_context(self):
+        literals, _, dynamic, plurals, refs, contexts = collect_calls_from_source(
+            "from module.localization import trc\n"
+            "trc('button', '运行')\n"
+            "trc('status', '运行')\n"
+        )
+        # 文案本身按无上下文条目登记，供运行期 trc 回退到 tr()
+        assert literals == {"运行"}
+        assert contexts == {"运行": {"button", "status"}}
+        assert plurals == set()
+        assert refs["运行"][1] == 2
+        assert dynamic == 0
+        # 语境字符串绝不能当成文案登记
+        assert "button" not in literals
+        assert "status" not in literals
+
+    def test_dynamic_context_or_text_counted(self):
+        _, _, dynamic, _, _, contexts = collect_calls_from_source(
+            "trc(ctx_var, '文案')\n"
+            "trc('ctx', text_var)\n"
+            "trc('只有语境')\n"
+        )
+        assert contexts == {}
+        assert dynamic == 3
+
+    def test_trc_format_chain_is_formatted(self):
+        _, formatted, _, _, _, _ = collect_calls_from_source(
+            "trc('ctx', '共 {count} 个').format(count=n)\n"
+            "tr('共 {count} 个')\n"
+        )
+        assert formatted == {"共 {count} 个"}
+
+
+class TestContextCatalog:
+    """msgctxt 条目的键与生成。"""
+
+    def test_entry_key_and_keyset(self):
+        import polib
+        from tools.i18n.po import entry_key, po_keyset
+        po = polib.POFile()
+        po.append(polib.POEntry(msgid="运行", msgstr="Run"))
+        po.append(polib.POEntry(msgctxt="button", msgid="运行", msgstr="Run Button"))
+        assert entry_key(po[0]) == "运行"
+        assert entry_key(po[1]) == "button\x04运行"
+        assert po_keyset(po) == {"运行", "button\x04运行"}
+
+    def test_update_po_writes_msgctxt_entries(self, tmp_path, monkeypatch):
+        """trc 的每条语境生成一条 msgctxt 条目，同时保留无上下文条目。"""
+        import polib
+        from tools.i18n import po as po_mod
+
+        locales = tmp_path / "locales"
+        (locales / "zh_CN" / "LC_MESSAGES").mkdir(parents=True)
+        monkeypatch.setattr(po_mod, "LOCALE_DIR", locales)
+        monkeypatch.setattr(po_mod, "LOCALES", ["zh_CN"])
+        monkeypatch.setattr(po_mod, "pot_path", lambda: locales / "march7th.pot")
+        monkeypatch.setattr(
+            po_mod, "po_path",
+            lambda lang: locales / lang / "LC_MESSAGES" / "march7th.po",
+        )
+        monkeypatch.setattr(
+            po_mod, "source_entries",
+            lambda: {"运行": {"ref": "a.py:1", "plural": False, "contexts": ("button", "status")}},
+        )
+
+        po_mod.update_po()
+
+        po = polib.pofile(str(po_mod.po_path("zh_CN")))
+        assert {po_mod.entry_key(e) for e in po} == {"运行", "button\x04运行", "status\x04运行"}
+        assert [e.msgctxt for e in po if e.msgctxt] == ["button", "status"]
+        pot = polib.pofile(str(po_mod.pot_path()))
+        assert {po_mod.entry_key(e) for e in pot} == {"运行", "button\x04运行", "status\x04运行"}
+
+    def test_context_keys_from_entries(self):
+        from tools.i18n.po import _context_keys
+        entries = {"运行": {"ref": "", "plural": False, "contexts": ("button",)}}
+        assert _context_keys(entries) == {"button\x04运行"}
 
 
 class TestCatalogs:
