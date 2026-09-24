@@ -296,4 +296,41 @@ def run_checks() -> tuple[list[str], list[str]]:
     if orphans:
         warnings.append(f"zh_CN 有 {len(orphans)} 个 key 未在源码字面量中出现（数据驱动或历史遗留）")
 
+    # 6) 多语言文档：表格行数一致、语言后缀命名合法 —— 仅警告
+    warnings.extend(check_docs())
+
     return errors, warnings
+
+
+def check_docs() -> list[str]:
+    """多语言文档校验（警告级）。
+
+    - TasksTable 各语言版本表格行数须与基准版一致（防止改漏一份）
+    - {Base}_{后缀}.md 的后缀须在 module.localization.languages 注册表声明
+    """
+    warnings: list[str] = []
+    from module.localization.languages import LANGS
+
+    docs_dir = ROOT / "assets" / "docs"
+    suffixes = {m["docs_suffix"] for m in LANGS.values() if m["docs_suffix"]}
+    bases = ("Tutorial", "FAQ", "Changelog", "TasksTable")
+
+    def table_rows(p: Path) -> int:
+        return sum(1 for line in p.read_text(encoding="utf-8").splitlines() if line.strip().startswith("|"))
+
+    base = docs_dir / "TasksTable.md"
+    if base.is_file():
+        rows = table_rows(base)
+        for f in sorted(docs_dir.glob("TasksTable_*.md")):
+            if table_rows(f) != rows:
+                warnings.append(f"文档 {f.name} 表格行数与 TasksTable.md 不一致（可能改漏一份）")
+
+    for f in sorted(docs_dir.glob("*.md")):
+        stem = f.stem
+        for b in bases:
+            if stem.startswith(b + "_"):
+                suf = stem[len(b) + 1:]
+                if suf not in suffixes:
+                    warnings.append(f"文档 {f.name} 的语言后缀 {suf!r} 未在语言注册表声明")
+                break
+    return warnings

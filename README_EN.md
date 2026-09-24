@@ -27,9 +27,9 @@
 
 **The in-game language currently supports Simplified Chinese only.**
 
-Quick start: [Tutorial](https://m7a.top/#/assets/docs/Tutorial_en)
+Quick start: [Tutorial](https://m7a.top/#/assets/docs/Tutorial_en_US)
 
-Before asking for help, please check: [FAQ](https://m7a.top/#/assets/docs/FAQ_en)
+Before asking for help, please check: [FAQ](https://m7a.top/#/assets/docs/FAQ_en_US)
 
 </div>
 

@@ -26,24 +26,8 @@ a {
 }
 </style>
 """
-        from module.config import cfg
-        changelog_file = "./assets/docs/Changelog.md"
-        if hasattr(cfg, 'ui_language_now'):
-            if cfg.ui_language_now == "ja_JP":
-                import os
-                ja_changelog_file = "./assets/docs/Changelog_ja.md"
-                if os.path.exists(ja_changelog_file):
-                    changelog_file = ja_changelog_file
-            elif cfg.ui_language_now == "ko_KR":
-                import os
-                ko_changelog_file = "./assets/docs/Changelog_ko.md"
-                if os.path.exists(ko_changelog_file):
-                    changelog_file = ko_changelog_file
-            elif cfg.ui_language_now == "en_US":
-                import os
-                en_changelog_file = "./assets/docs/Changelog_en.md"
-                if os.path.exists(en_changelog_file):
-                    changelog_file = en_changelog_file
+        from module.localization.languages import localized_doc_path
+        changelog_file = localized_doc_path("Changelog")
         try:
             with open(changelog_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()

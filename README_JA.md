@@ -27,9 +27,9 @@
 
 **ゲーム内言語は現在、簡体字中国語のみ対応しています。**
 
-クイックスタート: [使用チュートリアル](https://m7a.top/#/assets/docs/Tutorial_ja)
+クイックスタート: [使用チュートリアル](https://m7a.top/#/assets/docs/Tutorial_ja_JP)
 
-困ったときは先にこちらを確認してください: [FAQ](https://m7a.top/#/assets/docs/FAQ_ja)
+困ったときは先にこちらを確認してください: [FAQ](https://m7a.top/#/assets/docs/FAQ_ja_JP)
 
 </div>
 
