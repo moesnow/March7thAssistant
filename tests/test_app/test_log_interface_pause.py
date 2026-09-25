@@ -1,0 +1,208 @@
+# coding:utf-8
+"""GUI 暂停功能测试：按钮切换、状态同步、悬浮窗徽章与快捷键提示。"""
+import json
+import sys
+from types import SimpleNamespace
+
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    sys.platform != "win32" or not hasattr(sys, 'getwindowsversion'),
+    reason="GUI 测试仅在 Windows 平台运行"
+)
+
+
+@pytest.fixture(scope="session")
+def qapp():
+    try:
+        from PySide6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app is None:
+            app = QApplication(sys.argv)
+        return app
+    except ImportError:
+        pytest.skip("PySide6 未安装")
+
+
+class _FakeButton:
+    def __init__(self):
+        self.enabled = None
+        self.text = None
+
+    def setEnabled(self, enabled):
+        self.enabled = bool(enabled)
+
+    def setText(self, text):
+        self.text = text
+
+
+class _FakeLabel:
+    def __init__(self, value=''):
+        self.value = value
+
+    def text(self):
+        return self.value
+
+    def setText(self, value):
+        self.value = value
+
+
+class _FakeTimer:
+    def __init__(self):
+        self.stopped = False
+        self.started_with = None
+        self.remaining = 5000
+
+    def remainingTime(self):
+        return self.remaining
+
+    def stop(self):
+        self.stopped = True
+
+    def start(self, msec):
+        self.started_with = msec
+
+
+class TestPausableTasksWhitelist:
+    """仅内置自动化任务支持暂停。"""
+
+    def test_builtin_tasks_in_whitelist(self):
+        from utils.tasks import PAUSABLE_TASKS
+        for task_id in ("main", "daily", "power", "currencywars", "divergent", "fight", "universe"):
+            assert task_id in PAUSABLE_TASKS
+
+    def test_non_automation_tasks_not_in_whitelist(self):
+        from utils.tasks import PAUSABLE_TASKS
+        for task_id in ("universe_gui", "fight_gui", "app_update", "game_update",
+                        "universe_update", "fight_update", "mobileui_update",
+                        "notify", "game", "screen_test"):
+            assert task_id not in PAUSABLE_TASKS
+
+
+class TestPauseToggle:
+    """按钮/热键共用的暂停切换逻辑。"""
+
+    def _make_iface(self, tmp_path):
+        from app.log_interface import LogInterface
+        from utils.pause import STATE_RUNNING
+        iface = LogInterface.__new__(LogInterface)
+        iface._pause_supported = True
+        iface._pause_state = STATE_RUNNING
+        iface._status_text_before_pause = None
+        iface._paused_timeout_remaining = None
+        iface._timeout_timer = None
+        iface.log_lines = []
+        iface.appendLog = iface.log_lines.append
+        iface.isTaskRunning = lambda: True
+        iface._pauseControlPath = lambda: str(tmp_path / "pause.json")
+        iface.pauseButton = _FakeButton()
+        iface.statusLabel = _FakeLabel('正在运行：货币战争')
+        iface._log_overlay = SimpleNamespace(set_paused=lambda p: iface.paused_flags.append(p))
+        iface.paused_flags = []
+        return iface
+
+    def test_toggle_writes_pause_then_resume(self, tmp_path):
+        iface = self._make_iface(tmp_path)
+        control = tmp_path / "pause.json"
+
+        iface._onPauseToggle()
+        assert json.loads(control.read_text(encoding="utf-8"))["command"] == "pause"
+        assert iface._pause_state == "pausing"
+        assert any("暂停指令已发送" in line for line in iface.log_lines)
+
+        iface._onPauseToggle()
+        assert json.loads(control.read_text(encoding="utf-8"))["command"] == "resume"
+        assert iface._pause_state == "running"
+        assert any("继续指令已发送" in line for line in iface.log_lines)
+
+    def test_toggle_ignored_when_task_not_supported(self, tmp_path):
+        iface = self._make_iface(tmp_path)
+        iface._pause_supported = False
+        iface._onPauseToggle()
+        assert not (tmp_path / "pause.json").exists()
+        assert iface.log_lines == []
+
+    def test_sync_state_updates_ui_on_paused(self, tmp_path):
+        from utils.pause import STATE_PAUSED, write_command
+        from module.localization import tr
+        iface = self._make_iface(tmp_path)
+        control = tmp_path / "pause.json"
+        write_command(str(control), "resume")
+        # 模拟 CLI 回执 paused
+        (tmp_path / "pause.json.state").write_text(
+            json.dumps({"state": STATE_PAUSED}), encoding="utf-8"
+        )
+
+        iface._syncPauseState()
+
+        assert iface._pause_state == STATE_PAUSED
+        assert iface.statusLabel.value == tr('已暂停')
+        assert iface.paused_flags == [True]
+        assert iface.pauseButton.enabled is True
+        assert tr('继续任务') in iface.pauseButton.text
+
+    def test_reset_pause_runtime(self, tmp_path):
+        from utils.pause import STATE_PAUSED, read_state, write_command
+        iface = self._make_iface(tmp_path)
+        control = tmp_path / "pause.json"
+        write_command(str(control), "pause")
+        (tmp_path / "pause.json.state").write_text(
+            json.dumps({"state": STATE_PAUSED}), encoding="utf-8"
+        )
+        iface._pause_state = STATE_PAUSED
+        iface._status_text_before_pause = '正在运行：货币战争'
+
+        iface._resetPauseRuntime()
+
+        assert iface._pause_supported is False
+        assert iface._pause_state == "running"
+        assert iface.pauseButton.enabled is False
+        assert read_state(str(control)) is None
+
+    def test_timeout_timer_frozen_while_paused(self, tmp_path):
+        iface = self._make_iface(tmp_path)
+        timer = _FakeTimer()
+        iface._timeout_timer = timer
+
+        iface._freezeTimeoutTimer()
+        assert timer.stopped is True
+        assert iface._paused_timeout_remaining == 5000
+
+        iface._resumeTimeoutTimer()
+        assert timer.started_with == 5000
+        assert iface._paused_timeout_remaining is None
+
+    def test_schedule_check_skipped_while_paused(self, tmp_path):
+        iface = self._make_iface(tmp_path)
+        from utils.pause import STATE_PAUSED
+        iface._pause_state = STATE_PAUSED
+        iface._updateScheduleStatusLabel = lambda: None
+        # 暂停期间直接返回，不读取定时任务配置（配置对象若被访问会失败）
+        iface._checkScheduledTime()
+
+
+class TestGameLogOverlayPauseDisplay:
+    """悬浮窗：双快捷键提示 + 暂停徽章。"""
+
+    def _make_overlay(self):
+        from app.log_interface import GameLogOverlay
+        overlay = GameLogOverlay.__new__(GameLogOverlay)
+        overlay.hotkeyLabel = _FakeLabel()
+        overlay.pauseBadge = SimpleNamespace(
+            visible=None,
+            setVisible=lambda v: setattr(overlay.pauseBadge, 'visible', bool(v)),
+        )
+        return overlay
+
+    def test_hotkey_hint_shows_both_hotkeys(self, qapp):
+        overlay = self._make_overlay()
+        overlay.update_hotkey_hint('F10', 'F8')
+        assert 'F10' in overlay.hotkeyLabel.value
+        assert 'F8' in overlay.hotkeyLabel.value
+
+    def test_set_paused_toggles_badge(self, qapp):
+        overlay = self._make_overlay()
+        overlay.set_paused(True)
+        assert overlay.pauseBadge.visible is True
+        overlay.set_paused(False)
+        assert overlay.pauseBadge.visible is False

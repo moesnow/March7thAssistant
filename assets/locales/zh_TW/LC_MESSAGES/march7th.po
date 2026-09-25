@@ -14,11 +14,11 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: tools.i18n\n"
 
-#: app/main_window.py:321
+#: app/main_window.py:329
 msgid "设置"
 msgstr "設定"
 
-#: app/main_window.py:282
+#: app/main_window.py:290
 msgid "主页"
 msgstr "首頁"
 
@@ -38,51 +38,51 @@ msgstr "常見問題"
 msgid "更新日志"
 msgstr "更新日誌"
 
-#: app/main_window.py:285
+#: app/main_window.py:293
 msgid "抽卡记录"
 msgstr "抽卡紀錄"
 
-#: app/main_window.py:286
+#: app/main_window.py:294
 msgid "工具箱"
 msgstr "工具箱"
 
-#: app/main_window.py:291
+#: app/main_window.py:299
 msgid "启动游戏"
 msgstr "啟動遊戲"
 
-#: app/main_window.py:295
+#: app/main_window.py:303
 msgid "日志"
 msgstr "日誌"
 
-#: app/log_interface.py:365
+#: app/log_interface.py:411
 msgid "任务日志"
 msgstr "任務日誌"
 
-#: app/log_interface.py:371
+#: app/log_interface.py:417
 msgid "等待任务..."
 msgstr "等待任務..."
 
-#: app/log_interface.py:392
+#: app/log_interface.py:448
 msgid "清空日志"
 msgstr "清空日誌"
 
-#: app/log_interface.py:412
+#: app/log_interface.py:469
 msgid "配置定时任务"
 msgstr "設定排程任務"
 
-#: app/log_interface.py:901
+#: app/log_interface.py:1034
 msgid "尚未配置定时任务"
 msgstr "尚未設定排程任務"
 
-#: app/log_interface.py:2062
+#: app/log_interface.py:2320
 msgid "任务完成"
 msgstr "任務完成"
 
-#: app/log_interface.py:2065
+#: app/log_interface.py:2323
 msgid "任务已停止"
 msgstr "任務已停止"
 
-#: app/main_window.py:311
+#: app/main_window.py:319
 msgid "赞赏"
 msgstr "贊助"
 
@@ -142,7 +142,7 @@ msgstr "體力設定"
 msgid "体力计划"
 msgstr "體力計畫"
 
-#: app/card/pushsettingcard1.py:843
+#: app/card/pushsettingcard1.py:844
 msgid "配置"
 msgstr "配置"
 
@@ -786,27 +786,27 @@ msgstr "「退出」指退出遊戲，不再建議使用循環模式，請改用
 msgid "无"
 msgstr "無"
 
-#: app/log_interface.py:1995
+#: app/log_interface.py:2246
 msgid "关机"
 msgstr "關機"
 
-#: app/log_interface.py:1996
+#: app/log_interface.py:2247
 msgid "睡眠"
 msgstr "睡眠"
 
-#: app/log_interface.py:1997
+#: app/log_interface.py:2248
 msgid "休眠"
 msgstr "休眠"
 
-#: app/log_interface.py:1998
+#: app/log_interface.py:2249
 msgid "重启"
 msgstr "重新啟動"
 
-#: app/log_interface.py:1999
+#: app/log_interface.py:2250
 msgid "注销"
 msgstr "登出"
 
-#: app/log_interface.py:2000
+#: app/log_interface.py:2251
 msgid "关闭显示器"
 msgstr "關閉顯示器"
 
@@ -1060,11 +1060,11 @@ msgstr "更新將包含依賴組件，建議保持開啟。若關閉此選項，
 msgid "Mirror 酱 CDK"
 msgstr "Mirror 醬 CDK"
 
-#: app/main_window.py:313
+#: app/main_window.py:321
 msgid "支持作者🥰"
 msgstr "支持作者🥰"
 
-#: app/main_window.py:314
+#: app/main_window.py:322
 msgid ""
 "此程序为免费开源项目，如果你付了钱请立刻退款\n"
 "如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n"
@@ -1074,11 +1074,11 @@ msgstr ""
 "如果喜歡本專案，可以贊助送作者一杯咖啡☕\n"
 "您的支持就是作者開發和維護專案的動力🚀"
 
-#: app/main_window.py:340
+#: app/main_window.py:348
 msgid "显示主界面"
 msgstr "顯示主介面"
 
-#: app/main_window.py:345
+#: app/main_window.py:353
 msgid "完整运行"
 msgstr "完整運行"
 
@@ -1086,71 +1086,71 @@ msgstr "完整運行"
 msgid "退出"
 msgstr "退出"
 
-#: app/log_interface.py:1177
+#: app/log_interface.py:1316
 msgid "任务正在运行"
 msgstr "任務正在運行"
 
-#: app/main_window.py:442
+#: app/main_window.py:450
 msgid "请先停止当前任务后再启动新任务"
 msgstr "請先停止目前任務後再啟動新任務"
 
-#: app/main_window.py:713
+#: app/main_window.py:721
 msgid "配置已更新"
 msgstr "設定已更新"
 
-#: app/main_window.py:714
+#: app/main_window.py:722
 msgid "检测到配置文件变化，已自动重新加载"
 msgstr "偵測到設定檔變化，已自動重新載入"
 
-#: app/main_window.py:624
+#: app/main_window.py:632
 msgid "配置加载失败"
 msgstr "設定載入失敗"
 
-#: app/main_window.py:894
+#: app/main_window.py:902
 msgid "启动成功(＾∀＾●)"
 msgstr "啟動成功(＾∀＾●)"
 
-#: app/main_window.py:934
+#: app/main_window.py:942
 msgid "启动失败"
 msgstr "啟動失敗"
 
-#: app/main_window.py:924
+#: app/main_window.py:932
 msgid "游戏路径配置错误(╥╯﹏╰╥)"
 msgstr "遊戲路徑設定錯誤(╥╯﹏╰╥)"
 
-#: app/main_window.py:904
+#: app/main_window.py:912
 msgid "浏览器或驱动下载失败 (╥╯﹏╰╥)"
 msgstr "瀏覽器或驅動程式下載失敗 (╥╯﹏╰╥)"
 
-#: app/main_window.py:905
+#: app/main_window.py:913
 msgid "请检查网络连接是否正常"
 msgstr "請檢查網路連線是否正常"
 
-#: app/main_window.py:914
+#: app/main_window.py:922
 msgid "云游戏启动失败(╥╯﹏╰╥)"
 msgstr "雲端遊戲啟動失敗(╥╯﹏╰╥)"
 
-#: app/main_window.py:915
+#: app/main_window.py:923
 msgid "请检查所选浏览器是否存在，网络连接是否正常"
 msgstr "請檢查所選瀏覽器是否存在，網路連線是否正常"
 
-#: app/main_window.py:863
+#: app/main_window.py:871
 msgid "正在下载内置浏览器(ง •̀_•́)ง"
 msgstr "正在下載內建瀏覽器(ง •̀_•́)ง"
 
-#: app/main_window.py:864
+#: app/main_window.py:872
 msgid "下载成功后，将自动启动云·星穹铁道"
 msgstr "下載成功後，將自動啟動雲·星穹鐵道"
 
-#: app/main_window.py:873
+#: app/main_window.py:881
 msgid "正在启动游戏(❁´◡`❁)"
 msgstr "正在啟動遊戲(❁´◡`❁)"
 
-#: app/main_window.py:803
+#: app/main_window.py:811
 msgid "程序已最小化到托盘"
 msgstr "程式已縮小至系統匣"
 
-#: app/log_interface.py:386
+#: app/log_interface.py:432
 msgid "停止任务"
 msgstr "停止任務"
 
@@ -1350,11 +1350,11 @@ msgstr "自動對話已啟動"
 msgid "自动对话已停止"
 msgstr "自動對話已停止"
 
-#: app/card/pushsettingcard1.py:367
+#: app/card/pushsettingcard1.py:368
 msgid "暂无已使用兑换码"
 msgstr "暫無已使用兌換碼"
 
-#: app/card/pushsettingcard1.py:371
+#: app/card/pushsettingcard1.py:372
 msgid "已使用兑换码"
 msgstr "已使用兌換碼"
 
@@ -1362,67 +1362,67 @@ msgstr "已使用兌換碼"
 msgid "关闭"
 msgstr "關閉"
 
-#: app/card/pushsettingcard1.py:387
+#: app/card/pushsettingcard1.py:388
 msgid "确认清空已使用兑换码"
 msgstr "確認清空已使用兌換碼"
 
-#: app/card/pushsettingcard1.py:388
+#: app/card/pushsettingcard1.py:389
 msgid "此操作不可撤销，是否继续？"
 msgstr "此操作不可還原，是否繼續？"
 
-#: app/card/pushsettingcard1.py:396
+#: app/card/pushsettingcard1.py:397
 msgid "已清空已使用兑换码"
 msgstr "已清空已使用兌換碼"
 
-#: app/card/pushsettingcard1.py:417
+#: app/card/pushsettingcard1.py:418
 msgid "兑换码为空"
 msgstr "兌換碼為空"
 
-#: app/card/pushsettingcard1.py:431
+#: app/card/pushsettingcard1.py:432
 msgid "无法判断服务器类型"
 msgstr "無法判斷伺服器類型"
 
-#: app/card/pushsettingcard1.py:432
+#: app/card/pushsettingcard1.py:433
 msgid "无法获取最新兑换码"
 msgstr "無法獲取最新兌換碼"
 
-#: app/card/pushsettingcard1.py:439
+#: app/card/pushsettingcard1.py:440
 msgid "获取服务器信息失败"
 msgstr "獲取伺服器資訊失敗"
 
-#: app/card/pushsettingcard1.py:517
+#: app/card/pushsettingcard1.py:518
 msgid "时间无效"
 msgstr "時間無效"
 
-#: app/card/pushsettingcard1.py:518
+#: app/card/pushsettingcard1.py:519
 msgid "所选时间无法转换为时间戳，已使用默认时间"
 msgstr "所選時間無法轉換為時間戳記，已使用預設時間"
 
-#: app/card/pushsettingcard1.py:538
+#: app/card/pushsettingcard1.py:539
 msgid "按下要绑定的按键"
 msgstr "按下要綁定的按鍵"
 
-#: app/card/pushsettingcard1.py:541
+#: app/card/pushsettingcard1.py:542
 msgid "按住以修改"
 msgstr "按住以修改"
 
-#: app/card/pushsettingcard1.py:549
+#: app/card/pushsettingcard1.py:550
 msgid "已改为 {key}"
 msgstr "已改為 {key}"
 
-#: app/card/pushsettingcard1.py:735
+#: app/card/pushsettingcard1.py:736
 msgid "修改队伍1"
 msgstr "修改隊伍 1"
 
-#: app/card/pushsettingcard1.py:741
+#: app/card/pushsettingcard1.py:742
 msgid "修改队伍2"
 msgstr "修改隊伍 2"
 
-#: app/card/pushsettingcard1.py:747
+#: app/card/pushsettingcard1.py:748
 msgid "交换队伍"
 msgstr "交換隊伍"
 
-#: app/card/pushsettingcard1.py:761
+#: app/card/pushsettingcard1.py:762
 msgid ""
 "队伍1: {team1}\n"
 "队伍2: {team2}"
@@ -1430,27 +1430,27 @@ msgstr ""
 "隊伍 1: {team1}\n"
 "隊伍 2: {team2}"
 
-#: app/card/pushsettingcard1.py:777
+#: app/card/pushsettingcard1.py:778
 msgid "交换成功"
 msgstr "交換成功"
 
-#: app/card/pushsettingcard1.py:778
+#: app/card/pushsettingcard1.py:779
 msgid "队伍1和队伍2已成功交换"
 msgstr "隊伍 1 和隊伍 2 已成功交換"
 
-#: app/card/pushsettingcard1.py:787
+#: app/card/pushsettingcard1.py:788
 msgid "队伍1"
 msgstr "隊伍 1"
 
-#: app/card/pushsettingcard1.py:790
+#: app/card/pushsettingcard1.py:791
 msgid "队伍2"
 msgstr "隊伍 2"
 
-#: app/card/pushsettingcard1.py:816
+#: app/card/pushsettingcard1.py:817
 msgid "暂无计划"
 msgstr "暫無計畫"
 
-#: app/card/pushsettingcard1.py:817
+#: app/card/pushsettingcard1.py:818
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "已設定 {count} 項計畫"
@@ -1617,7 +1617,7 @@ msgstr "躍遷"
 msgid "自动战斗"
 msgstr "自動戰鬥"
 
-#: app/sub_interfaces/hotkey_interface.py:71
+#: app/sub_interfaces/hotkey_interface.py:74
 msgid "注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"
 msgstr "注意：互動（F）和角色詳細（C）按鍵不允許修改，請保持遊戲內預設設定。"
 
@@ -1625,7 +1625,7 @@ msgstr "注意：互動（F）和角色詳細（C）按鍵不允許修改，請�
 msgid "停止任务（全局热键，支持后台）"
 msgstr "停止任務（全域熱鍵，支援背景）"
 
-#: app/sub_interfaces/hotkey_interface.py:25
+#: app/sub_interfaces/hotkey_interface.py:26
 msgid "按键设置"
 msgstr "按鍵設定"
 
@@ -2235,7 +2235,7 @@ msgstr "Mirror醬 CDK 類型和待下載的資源不符"
 msgid "Mirror酱 CDK 已被封禁"
 msgstr "Mirror醬 CDK 已被封禁"
 
-#: app/tools/check_update.py:104
+#: app/tools/check_update.py:107
 msgid ""
 "发现新版本：{cfg.version} ——> {version}\n"
 "更新日志 |･ω･)"
@@ -2243,27 +2243,27 @@ msgstr ""
 "發現新版本：{cfg.version} ——> {version}\n"
 "更新日誌 |･ω･)"
 
-#: app/tools/check_update.py:167
+#: app/tools/check_update.py:170
 msgid "尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"
 msgstr "尚未設定 Mirror醬 更新來源 (╥╯﹏╰╥)"
 
-#: app/tools/check_update.py:202
+#: app/tools/check_update.py:205
 msgid "当前是最新版本(＾∀＾●)"
 msgstr "目前是最新版本(＾∀＾●)"
 
-#: app/tools/check_update.py:215
+#: app/tools/check_update.py:218
 msgid "检测更新失败(╥╯﹏╰╥)"
 msgstr "檢查更新失敗(╥╯﹏╰╥)"
 
-#: app/tools/check_update.py:231
+#: app/tools/check_update.py:234
 msgid "正在检测更新"
 msgstr "正在檢查更新"
 
-#: app/tools/check_update.py:232
+#: app/tools/check_update.py:235
 msgid "请稍候，更新检查仍在进行中"
 msgstr "請稍候，更新檢查仍在進行中"
 
-#: app/log_interface.py:829
+#: app/log_interface.py:962
 msgid "未命名"
 msgstr "未命名"
 
@@ -2337,7 +2337,7 @@ msgstr "鋤大地更新"
 msgid "触屏模式更新"
 msgstr "觸屏模式更新"
 
-#: app/card/pushsettingcard1.py:274
+#: app/card/pushsettingcard1.py:275
 msgid "批量使用兑换码，每行一个，自动过滤空格等无效字符"
 msgstr "批量使用兌換碼，每行一個，自動過濾空格等無效字元"
 
@@ -3237,27 +3237,27 @@ msgstr "鳴潮 ok-ww"
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
-#: app/main_window.py:612
+#: app/main_window.py:620
 msgid "更新成功"
 msgstr "更新成功"
 
-#: app/card/pushsettingcard1.py:339
+#: app/card/pushsettingcard1.py:340
 msgid "开始获取"
 msgstr "開始獲取"
 
-#: app/card/pushsettingcard1.py:339
+#: app/card/pushsettingcard1.py:340
 msgid "正在获取最新兑换码..."
 msgstr "正在獲取最新兌換碼..."
 
-#: app/card/pushsettingcard1.py:351
+#: app/card/pushsettingcard1.py:352
 msgid "未获取到兑换码"
 msgstr "未獲取到兌換碼"
 
-#: app/card/pushsettingcard1.py:355
+#: app/card/pushsettingcard1.py:356
 msgid "获取成功"
 msgstr "獲取成功"
 
-#: app/card/pushsettingcard1.py:356
+#: app/card/pushsettingcard1.py:357
 msgid "已获取 {count} 个兑换码"
 msgid_plural "已获取 {count} 个兑换码|plural"
 msgstr[0] "已獲取 {count} 個兌換碼"
@@ -3398,7 +3398,7 @@ msgstr "啟用除錯模式"
 msgid "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗），用于调试自动化识别效果。仅 Windows 生效。"
 msgstr "開啟後會在螢幕上即時繪製檢測範圍框（透明懸浮窗），用於除錯自動化識別效果。僅 Windows 生效。"
 
-#: app/card/pushsettingcard1.py:873
+#: app/card/pushsettingcard1.py:874
 msgid "为特定的副本配置队伍"
 msgstr "爲特定的副本配置隊伍"
 
@@ -3406,7 +3406,7 @@ msgstr "爲特定的副本配置隊伍"
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr "當沒有匹配到任何規則時，默認出戰隊伍："
 
-#: app/card/pushsettingcard1.py:871
+#: app/card/pushsettingcard1.py:872
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] "已配置 {count} 項規則"
@@ -4131,7 +4131,7 @@ msgstr "打開模擬宇宙目錄（停止維護）"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "打開模擬宇宙項目主頁（停止維護）"
 
-#: app/log_interface.py:395
+#: app/log_interface.py:451
 msgid "在游戏内显示日志"
 msgstr "在遊戲內顯示日誌"
 
@@ -5228,7 +5228,7 @@ msgstr "請檢查日誌後重試"
 msgid "正在解压更新包..."
 msgstr "正在解壓更新包..."
 
-#: app/log_interface.py:170
+#: app/log_interface.py:189
 msgid "检测到新版本：{version}"
 msgstr "檢測到新版本：{version}"
 
@@ -5256,27 +5256,27 @@ msgstr "未找到更新程式"
 msgid "正在关闭相关进程..."
 msgstr "正在關閉相關處理程式..."
 
-#: app/card/pushsettingcard1.py:315
+#: app/card/pushsettingcard1.py:316
 msgid "正在获取"
 msgstr "正在獲取"
 
-#: app/card/pushsettingcard1.py:349
+#: app/card/pushsettingcard1.py:350
 msgid "获取最新兑换码失败"
 msgstr "獲取最新兑換碼失敗"
 
-#: app/card/pushsettingcard1.py:315
+#: app/card/pushsettingcard1.py:316
 msgid "请等待当前获取完成"
 msgstr "請等待目前獲取完成"
 
-#: app/card/pushsettingcard1.py:202
+#: app/card/pushsettingcard1.py:203
 msgid "CDK 有效 (＾∀＾●)"
 msgstr "CDK 有效 (＾∀＾●)"
 
-#: app/card/pushsettingcard1.py:200
+#: app/card/pushsettingcard1.py:201
 msgid "今天到期"
 msgstr "今天到期"
 
-#: app/card/pushsettingcard1.py:217
+#: app/card/pushsettingcard1.py:218
 msgid "CDK 验证失败 (╥╯﹏╰╥)"
 msgstr "CDK 驗證失敗 (╥╯﹏╰╥)"
 
@@ -5338,7 +5338,7 @@ msgstr "測試"
 msgid "以最短路径遍历所有可达界面，验证界面切换是否正常"
 msgstr "以最短路徑遍歷所有可達界面，驗證界面切換是否正常"
 
-#: app/sub_interfaces/hotkey_interface.py:22
+#: app/sub_interfaces/hotkey_interface.py:23
 msgid "自动对话（全局热键，支持后台）"
 msgstr "自動對話（全局熱鍵，支持後臺）"
 
@@ -5370,11 +5370,11 @@ msgstr "Fate[UBW]角色聯動躍遷"
 msgid "Fate[UBW]光锥联动跃迁"
 msgstr "Fate[UBW]光錐聯動躍遷"
 
-#: app/main_window.py:850
+#: app/main_window.py:858
 msgid "游戏已在运行"
 msgstr "遊戲已在運行"
 
-#: app/main_window.py:851
+#: app/main_window.py:859
 msgid "无需重复启动游戏"
 msgstr "無需重複啟動遊戲"
 
@@ -5606,7 +5606,7 @@ msgstr "選擇音頻文件"
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 msgstr "檢測到遊戲客戶端版本過低，請前往啓動器下載最新客戶端"
 
-#: app/card/pushsettingcard1.py:198
+#: app/card/pushsettingcard1.py:199
 msgid "剩余 {count} 天"
 msgid_plural "剩余 {count} 天|plural"
 msgstr[0] "剩餘 {count} 天"
@@ -5616,11 +5616,11 @@ msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "{count} 秒後自動退出"
 
-#: app/main_window.py:925
+#: app/main_window.py:933
 msgid "请在“设置”→“程序”中配置"
 msgstr "請在「設定」→「程式」中設定"
 
-#: app/tools/check_update.py:168
+#: app/tools/check_update.py:171
 msgid "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK"
 msgstr "請在「設置 → 關於 → 更新源」中選擇 Mirror醬 並填寫有效 CDK"
 
@@ -5644,11 +5644,11 @@ msgstr "次數："
 msgid "队伍："
 msgstr "隊伍："
 
-#: app/log_interface.py:898
+#: app/log_interface.py:1031
 msgid "已启用：{count}，下次：{time}"
 msgstr "已啓用：{count}，下次：{time}"
 
-#: app/log_interface.py:1147
+#: app/log_interface.py:1286
 msgid "正在运行：{name}"
 msgstr "正在運行：{name}"
 
@@ -5724,7 +5724,7 @@ msgstr ""
 msgid "执行出错"
 msgstr ""
 
-#: app/main_window.py:504
+#: app/main_window.py:512
 msgid "语言切换失败"
 msgstr ""
 
@@ -5861,10 +5861,34 @@ msgstr "查詢天數"
 msgid "正在查询 CDK 剩余天数…"
 msgstr "正在查詢 CDK 剩餘天數…"
 
-#: app/card/pushsettingcard1.py:235
+#: app/card/pushsettingcard1.py:236
 msgid "尚未填写 CDK (╥╯﹏╰╥)"
 msgstr "尚未填寫 CDK (╥╯﹏╰╥)"
 
-#: app/card/pushsettingcard1.py:236
+#: app/card/pushsettingcard1.py:237
 msgid "请先点击“修改”填写 Mirror 酱 CDK"
 msgstr "請先點擊「修改」填寫 Mirror 醬 CDK"
+
+#: app/log_interface.py:149
+msgid "已暂停"
+msgstr "已暫停"
+
+#: app/log_interface.py:201
+msgid "按下 {stop} 停止 · {pause} 暂停"
+msgstr "按下 {stop} 停止 · {pause} 暫停"
+
+#: app/log_interface.py:441
+msgid "暂停任务"
+msgstr "暫停任務"
+
+#: app/log_interface.py:446
+msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
+msgstr "僅內建任務支援暫停，暫停後腳本將停止一切操作"
+
+#: app/log_interface.py:1707
+msgid "继续任务"
+msgstr "繼續任務"
+
+#: app/sub_interfaces/hotkey_interface.py:22
+msgid "暂停/继续任务（全局热键，支持后台）"
+msgstr "暫停/繼續任務（全域熱鍵，支援背景）"

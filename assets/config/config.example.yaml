@@ -393,6 +393,7 @@ hotkey_auto_battle: v # 设置自动战斗的按键。
 
 # 图形界面快捷键设置
 hotkey_stop_task: f10 # 设置停止任务的全局快捷键（支持后台）。
+hotkey_pause_task: f8 # 设置暂停/继续任务的全局快捷键（支持后台，仅内置任务有效）。
 hotkey_toggle_autoplot: f9 # 设置切换自动对话的全局快捷键（支持后台）。
 hotkey_toggle_autoplot_enable: false # 是否启用自动对话全局快捷键。启用后可通过快捷键快速切换自动对话的开/关状态。
 
