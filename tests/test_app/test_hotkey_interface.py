@@ -161,3 +161,51 @@ class TestHotkeyDialogAnimation:
 
         assert dlg.isHidden()  # 动画结束后真正关闭
         assert time.monotonic() - t0 < 2.0
+
+
+class TestHotkeyScrollBackground:
+    """滚动区底色必须与面板同色（回归：内容容器自填 #1e1e1e，与外框割裂）。"""
+
+    def _pump(self, qapp, seconds):
+        import time
+        t0 = time.monotonic()
+        while time.monotonic() - t0 < seconds:
+            qapp.processEvents()
+            time.sleep(0.01)
+
+    @pytest.mark.parametrize("theme_name", ["light", "dark"])
+    def test_scroll_bg_matches_panel(self, qapp, theme_name):
+        from PySide6.QtCore import QPoint
+        from PySide6.QtWidgets import QWidget
+        from qfluentwidgets import Theme, qconfig, setTheme
+
+        from app.sub_interfaces.hotkey_interface import HotkeyInterface
+
+        old_theme = qconfig.theme
+        setTheme(Theme.LIGHT if theme_name == "light" else Theme.DARK)
+        parent = QWidget()
+        try:
+            parent.resize(952, 635)
+            parent.show()
+            dlg = HotkeyInterface(parent)
+            dlg.show()
+            self._pump(qapp, 0.6)  # 等淡入动画结束（opacity 回到 1）再采样
+
+            img = dlg.grab().toImage()
+            cards = list(dlg.pushButton_dict.values())
+            # 卡片之间的缝隙（滚动区底色透出点）
+            p_gap = cards[1].mapTo(dlg, QPoint(20, -2))
+            # 滚动区之外的面板底色（按钮区上方）
+            p_panel = QPoint(dlg.widget.x() + dlg.widget.width() // 2,
+                             dlg.widget.y() + dlg.buttonGroup.y() - 12)
+            c_gap = img.pixelColor(p_gap)
+            c_panel = img.pixelColor(p_panel)
+            delta = max(abs(c_gap.red() - c_panel.red()),
+                        abs(c_gap.green() - c_panel.green()),
+                        abs(c_gap.blue() - c_panel.blue()))
+            assert delta <= 2, f"{theme_name} 主题下滚动区底色 {c_gap.name()} 与面板 {c_panel.name()} 不一致"
+
+            dlg.deleteLater()
+        finally:
+            parent.deleteLater()
+            setTheme(old_theme)

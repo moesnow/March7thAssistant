@@ -123,6 +123,12 @@ class HotkeyInterface(MessageBox):
         scroll.setMaximumHeight(max_height)
         # 宽度为内容下限 + 滚动条占位，避免纵向滚动条出现后卡片被横向裁切
         scroll.setMinimumWidth(min(content_min.width() + 20, host_width - 120))
+        # 滚动区背景一律透出面板底色，保证与外框同色（浅/深主题通用）：
+        # 内容容器会以调色板色自填底（#1e1e1e），把半透明卡片染脏、与外框割裂。
+        # 视口的样式规则用 objectName 限定选择器，避免级联影响卡片自身配色。
+        list_container.setAutoFillBackground(False)
+        scroll.viewport().setObjectName("hotkeyScrollViewport")
+        scroll.viewport().setStyleSheet("#hotkeyScrollViewport { background: transparent; }")
         scroll.setStyleSheet("QScrollArea{background: transparent; border: none;}")
         self.textLayout.addWidget(scroll, 1)
         self._scroll = scroll
