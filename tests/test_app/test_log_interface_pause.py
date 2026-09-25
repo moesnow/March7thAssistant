@@ -97,6 +97,26 @@ class TestResolvePauseSupport:
         task = {"program": "workflow", "workflow_name": "示例流程"}
         assert LogInterface._resolvePauseSupport(task) is True
 
+    def test_workflow_launcher_task_is_pausable(self):
+        # 流程编排启动形态：program 为真实可执行文件，args 内带 --workflow-name
+        from app.log_interface import LogInterface
+        task = {
+            "name": "流程编排 - 示例流程",
+            "program": "C:\\repo\\.venv\\Scripts\\python.exe",
+            "args": "C:\\repo\\main.py --workflow-name 示例流程",
+            "timeout": 0,
+        }
+        assert LogInterface._resolvePauseSupport(task) is True
+
+    def test_workflow_step_task_is_pausable(self):
+        # 运行选中步骤：--workflow-name + --workflow-step-path
+        from app.log_interface import LogInterface
+        task = {
+            "program": "C:\\repo\\March7th Assistant.exe",
+            "args": "--workflow-name 示例流程 --workflow-step-path 0/1",
+        }
+        assert LogInterface._resolvePauseSupport(task) is True
+
     def test_external_program_is_not_pausable(self):
         from app.log_interface import LogInterface
         task = {"program": "BetterGI.exe", "args": "--foo"}

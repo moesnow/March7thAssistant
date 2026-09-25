@@ -1665,12 +1665,22 @@ class LogInterface(ScrollArea):
         """判断启动目标是否支持暂停。
 
         - 内置任务：按 utils.tasks.PAUSABLE_TASKS 白名单；
-        - workflow：运行于 main.py 进程内、走同一套动作卡点，支持；
+        - workflow：运行于 main.py 进程内、走同一套动作卡点，支持。
+          覆盖两种启动形态：定时任务的 program='workflow' 标记，以及流程编排
+          直接给出可执行文件 + `--workflow-name` 参数；
         - 外部/自定义程序（BetterGI 等独立进程）：不支持。
         """
         if isinstance(command_or_task, dict):
             program = str(command_or_task.get('program', '')).strip().lower()
-            return program == 'workflow'
+            if program == 'workflow':
+                return True
+            args_text = str(command_or_task.get('args', '') or '')
+            try:
+                args_tokens = shlex.split(args_text) if args_text else []
+            except Exception:
+                args_tokens = args_text.split()
+            # 流程编排/自定义任务经 main.py（或 March7th Assistant.exe）+ --workflow-name 启动
+            return '--workflow-name' in args_tokens
         return str(command_or_task) in PAUSABLE_TASKS
 
     def _pauseControlPath(self):
