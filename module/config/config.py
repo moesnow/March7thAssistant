@@ -252,6 +252,20 @@ class Config(metaclass=SingletonMeta):
             self.config[key] = value
         self.save_config()
 
+    def set_values(self, values):
+        """批量设置配置项并一次性保存。
+
+        与逐个调用 `set_value` 等价，但只落盘一次：
+        `save_config` 带 fsync，逐项保存在批量恢复配置等场景会产生明显卡顿。
+        """
+        self._load_config(save=False)
+        for key, value in values.items():
+            if isinstance(value, (list, dict, set)):
+                self.config[key] = copy.deepcopy(value)
+            else:
+                self.config[key] = value
+        self.save_config()
+
     def save_timestamp(self, key):
         """保存当前时间戳到指定的配置项"""
         self.set_value(key, time.time())
