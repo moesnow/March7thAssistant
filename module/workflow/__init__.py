@@ -296,7 +296,11 @@ def load_workflow_execution_payload(workflow_name: str, step_path=None) -> dict:
     if parsed_path is None:
         return workflow
 
-    selected_workflow = build_selected_step_workflow(workflow, parsed_path)
+    try:
+        selected_workflow = build_selected_step_workflow(workflow, parsed_path)
+    except IndexError:
+        # 统一为 ValueError：调用方按「用户输入错误」处理（CLI 对 ValueError 走友好报错）
+        raise ValueError(f"invalid workflow step path: {step_path}")
     if selected_workflow is None:
         raise ValueError(f"invalid workflow step path: {step_path}")
     return selected_workflow
@@ -726,6 +730,17 @@ def load_workflows() -> list[dict]:
         workflows = sample_workflows + user_workflows
 
     return workflows
+
+
+def list_workflow_names() -> list[str]:
+    """列出可用流程名称（与 get_workflow_by_name 的匹配名严格一致，供 CLI 发现流程）。"""
+    return [workflow.get("name", "") for workflow in load_workflows() if workflow.get("name")]
+
+
+def describe_available_workflows(separator: str = "、") -> str:
+    """把可用流程名拼成一行文本（供 CLI 报错提示使用），无流程时返回占位文本。"""
+    names = list_workflow_names()
+    return separator.join(names) if names else "（无）"
 
 
 def save_workflows(workflows: list[dict]):
