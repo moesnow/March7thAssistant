@@ -1244,8 +1244,7 @@ class LogInterface(ScrollArea):
 
             env = QProcessEnvironment.systemEnvironment()
             env.insert("PYTHONUNBUFFERED", "1")
-            # 与 _startTask 分支保持一致：is_gui_started() 只认 "true"，写 "1" 会导致
-            # 子进程报错路径误走 pause_on_error() 的 input() 而在 GUI 下永久挂起
+            # 与 _startTask 分支保持一致写 "true"（is_gui_started() 宽容接受 "true"/"1"）
             env.insert("MARCH7TH_GUI_STARTED", "true")
             # 支持暂停的目标（workflow）：注入暂停控制文件路径并清理陈旧状态
             if self._pause_supported:
