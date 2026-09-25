@@ -266,3 +266,65 @@ class TestGetTimeoutOperations:
     def test_nonexistent_target(self):
         s = _build_linear_screen()
         assert s.get_timeout_operations("main", "nonexistent") == []
+
+
+class TestFindImage:
+    """测试真实 Screen._find_image 的 OR/AND 匹配逻辑，mock 掉 auto.find_element。"""
+
+    def _make_screen(self):
+        from module.screen.screen import Screen
+        from module.automation import auto
+        self.auto = auto
+        s = object.__new__(Screen)  # 绕过 __init__，避免加载配置和 singleton
+        s.logger = MagicMock()
+        s.SCREEN_MATCH_THRESHOLD = 0.88
+        return s
+
+    @staticmethod
+    def _fake_map(values):
+        """按图片名返回匹配值的测试替身。"""
+        return lambda p, *a, **k: values[p]
+
+    def test_or_partial_hit(self, monkeypatch):
+        """OR：部分命中，返回首图结果"""
+        s = self._make_screen()
+        calls = []
+
+        def fake_find(p, *a, **k):
+            calls.append(p)
+            return (10, 20) if p == "a.png" else None
+
+        monkeypatch.setattr(self.auto, "find_element", fake_find)
+        assert s._find_image(["a.png", "b.png"], "image", 0.9) == (10, 20)
+        assert calls == ["a.png"]
+
+    def test_or_threshold_max(self, monkeypatch):
+        """OR：image_threshold 返回最高值"""
+        s = self._make_screen()
+        monkeypatch.setattr(self.auto, "find_element", self._fake_map({"a.png": 0.9, "b.png": 0.95}))
+        assert s._find_image(["a.png", "b.png"], "image_threshold", 0.88) == 0.95
+
+    def test_and_all_hit_min_threshold(self, monkeypatch):
+        """AND：全部命中，image_threshold 返回最低值"""
+        s = self._make_screen()
+        monkeypatch.setattr(self.auto, "find_element", self._fake_map({"a.png": 0.9, "b.png": 0.95}))
+        assert s._find_image(["a.png", "b.png"], "image_threshold", 0.88, match_all=True) == 0.9
+
+    def test_and_partial_hit_none(self, monkeypatch):
+        """AND：部分未命中，返回 None"""
+        s = self._make_screen()
+        monkeypatch.setattr(self.auto, "find_element", self._fake_map({"a.png": 0.9, "b.png": None}))
+        assert s._find_image(["a.png", "b.png"], "image_threshold", 0.88, match_all=True) is None
+
+    def test_exception_handling(self, monkeypatch):
+        """异常：OR 跳过继续，AND 直接失败"""
+        s = self._make_screen()
+
+        def fake_find(p, *a, **k):
+            if p == "a.png":
+                raise ValueError("boom")
+            return (30, 40)
+
+        monkeypatch.setattr(self.auto, "find_element", fake_find)
+        assert s._find_image(["a.png", "b.png"], "image", 0.9) == (30, 40)
+        assert s._find_image(["a.png", "b.png"], "image", 0.9, match_all=True) is None

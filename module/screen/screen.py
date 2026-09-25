@@ -51,7 +51,9 @@ class Screen(metaclass=SingletonMeta):
             with open(config_path, 'r', encoding='utf-8') as file:
                 configs = json.load(file)
                 for config in configs:
-                    self._add_screen(config["id"], config["name"], config["image_path"], config["actions"])
+                    self._add_screen(config['id'], config['name'], config['image_path'], config['actions'])
+                    if config.get('match_all'):
+                        self.screen_map[config['id']]['match_all'] = True
         except FileNotFoundError:
             self.logger.error(f"配置文件不存在：{config_path}")
             raise
@@ -125,15 +127,23 @@ class Screen(metaclass=SingletonMeta):
         time.sleep(2)  # 等待屏幕变化
 
         auto.take_screenshot()
+
         # 处理与服务器断开连接的异常情况
         if auto.find_element("./assets/images/zh_CN/exception/relogin.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
             time.sleep(20)
+            return
 
         # 处理登录异常情况
         if auto.find_element("./assets/images/zh_CN/exception/retry.png", "image", 0.9, take_screenshot=False):
             auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
             time.sleep(20)
+            return
+
+        # 通用兜底：ESC后检测是否有确认按钮
+        if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False):
+            self.logger.info("检测到确认按钮，已点击")
+            time.sleep(2)
 
     def get_current_screen(self, autotry=True, max_retries=10):
         """
@@ -156,6 +166,7 @@ class Screen(metaclass=SingletonMeta):
                     "image_threshold",
                     self.SCREEN_MATCH_THRESHOLD,
                     take_screenshot=False,
+                    match_all=screen.get('match_all', False),
                 )
                 if result and not found_event.is_set():
                     with self.lock:
@@ -172,6 +183,8 @@ class Screen(metaclass=SingletonMeta):
             self.screen_map[self.current_screen]['image_path'],
             "image_threshold",
             self.SCREEN_MATCH_THRESHOLD,
+            match_all=self.screen_map[self.current_screen].get('match_all', False),
+            take_screenshot=False,
         ):
             return True
 
@@ -290,17 +303,24 @@ class Screen(metaclass=SingletonMeta):
         :param target_screen: 目标界面的标识符。
         :return: 如果当前界面是目标界面，则返回True；否则返回False。
         """
-        if self._find_image(self.screen_map[target_screen]['image_path'], "image", self.SCREEN_MATCH_THRESHOLD):
+        auto.take_screenshot()
+        if self._find_image(
+            self.screen_map[target_screen]['image_path'],
+            "image",
+            self.SCREEN_MATCH_THRESHOLD,
+            match_all=self.screen_map[target_screen].get('match_all', False),
+            take_screenshot=False,
+        ):
             # 如果找到了目标界面的图像，则更新当前界面状态为目标界面
             self.current_screen = target_screen
             return True
         return False
 
-    def _find_image(self, image_path, find_type, threshold=None, **kwargs):
+    def _find_image(self, image_path, find_type, threshold=None, match_all=False, **kwargs):
         """
         支持 image_path 为字符串或字符串列表（或元组）。
-        当 image_path 为列表时，对列表内的图片进行“或”匹配：
-        - 对于 'image_threshold' 类型，返回最高的匹配阈值（float）或 None。
+        当 image_path 为列表时，默认进行"或"匹配；若 match_all=True 则进行"与"匹配。
+        - 对于 'image_threshold' 类型，OR 匹配返回最高的匹配阈值，AND 匹配返回最低的匹配阈值（float）或 None。
         - 对于其他类型，返回第一个被匹配到的结果（与 auto.find_element 的返回值一致）或 None。
         其他参数会透传给 auto.find_element。
         """
@@ -311,17 +331,20 @@ class Screen(metaclass=SingletonMeta):
                     try:
                         r = auto.find_element(p, find_type, threshold, **kwargs)
                     except Exception as e:
+                        if match_all:
+                            return None
                         self.logger.debug(f"查找图片 {p} 出错: {e}")
                         r = None
-                    if r:
-                        if find_type == 'image_threshold':
-                            if best is None or r > best:
-                                best = r
-                        else:
-                            return r
+                    if not r:
+                        if match_all:
+                            return None
+                        continue
+                    if find_type != 'image_threshold' and not match_all:
+                        return r
+                    if best is None or (match_all and r < best) or (not match_all and r > best):
+                        best = r
                 return best
-            else:
-                return auto.find_element(image_path, find_type, threshold, **kwargs)
+            return auto.find_element(image_path, find_type, threshold, **kwargs)
         except Exception as e:
             self.logger.debug(f"_find_image 出错: {e}")
             return None
