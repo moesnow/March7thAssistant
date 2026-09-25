@@ -193,6 +193,9 @@ class MainWindow(MSFluentWindow):
         else:
             self.move(w // 2 - self.width() // 2, h // 2 - self.height() // 2)
 
+        # 记录期望的窗口几何（尺寸与位置）
+        target_geometry = self.geometry()
+
         # 根据配置决定窗口显示方式
         if self.start_minimized_to_tray:
             # 最小化到托盘启动：不显示主窗口与启动画面（SplashScreen 是主窗口子控件，随父窗口隐藏），直接进托盘
@@ -203,6 +206,11 @@ class MainWindow(MSFluentWindow):
             self.show()
 
         QApplication.processEvents()
+
+        if self.start_minimized_to_tray:
+            # 托盘启动跳过了 show() 的几何同步：构造期堆积的窗口几何事件会在 processEvents 中被处理，
+            # 把窗口尺寸打回原生默认值（500x500），导致从托盘恢复后窗口异常变小，需重新应用一次几何
+            self.setGeometry(target_geometry)
 
     def _baseTitleBarText(self):
         return f"March7th Assistant {cfg.version}"
