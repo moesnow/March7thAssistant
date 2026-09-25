@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt, QUrl, QSize
-from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy
+from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy, QWidget
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
@@ -7,6 +7,8 @@ from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, Da
                             TextBrowser, setCustomStyleSheet)
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
+from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
+                                      build_scroll_area)
 from module.config import cfg
 from module.localization import tr, get_raw_instance_names, get_instance_names, instance_display_to_raw
 import datetime
@@ -216,7 +218,7 @@ class MessageBoxHtml(MessageBox):
         QDesktopServices.openUrl(QUrl(url))
 
 
-class MessageBoxHtmlUpdate(MessageBox):
+class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
@@ -224,6 +226,7 @@ class MessageBoxHtmlUpdate(MessageBox):
         self.buttonLayout.removeWidget(self.cancelButton)
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
+        self._scroll = None
 
         self.contentLabel = BodyLabel(content, parent)
         self.contentLabel.setObjectName("contentLabel")
@@ -231,11 +234,11 @@ class MessageBoxHtmlUpdate(MessageBox):
         self.contentLabel.linkActivated.connect(self.open_url)
         self.contentLabel.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.contentLabel.setMinimumWidth(500)
+        self.contentLabel.setWordWrap(True)
         FluentStyleSheet.DIALOG.apply(self.contentLabel)
 
         self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignmentFlag.AlignVCenter)
         self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignmentFlag.AlignVCenter)
-        self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignTop)
 
         self.githubUpdateCard = PrimaryPushSettingCard(
             tr('立即更新'),
@@ -250,8 +253,34 @@ class MessageBoxHtmlUpdate(MessageBox):
             tr('Mirror酱 服务 ⚡'),
             tr("Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）")
         )
+
+        # 仅更新日志放进限高滚动区：日志再长也只在内部滚动，
+        # 两张更新卡片固定在滚动区之外，始终可见可点。
+        # 弹窗必须装进父窗口（遮罩尺寸跟随父窗口而非屏幕），细节见 app.common.scroll_dialog。
+        content_container = QWidget(self)
+        content_layout = QVBoxLayout(content_container)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(self.contentLabel)
+        content_layout.addStretch(1)
+
+        # 卡片先进布局并强制布局计算：PrimaryPushSettingCard 的 sizeHint 偏小
+        # （约 34px，实际 70px），必须取布局后的真实高度才能算准非滚动部分。
         self.textLayout.addWidget(self.githubUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
         self.textLayout.addWidget(self.mirrorchyanUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
+        self.textLayout.activate()
+
+        host_width, host_height = available_host_size(parent)
+        # 非滚动部分的高度：布局边距 + 标题 + 两张更新卡片 + 按钮区 + 间距 + 余量
+        chrome = (self.textLayout.contentsMargins().top()
+                  + self.textLayout.contentsMargins().bottom()
+                  + self.titleLabel.height()
+                  + self.githubUpdateCard.height()
+                  + self.mirrorchyanUpdateCard.height()
+                  + self.buttonGroup.height()
+                  + self.textLayout.spacing() * 4
+                  + 24)
+        self._scroll = build_scroll_area(content_container, host_width, host_height, chrome)
+        self.textLayout.insertWidget(1, self._scroll)
 
         # self.githubUpdateCard.clicked.connect(self._githubupdate())
 
