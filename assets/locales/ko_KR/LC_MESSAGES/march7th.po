@@ -54,31 +54,31 @@ msgstr "게임 실행"
 msgid "日志"
 msgstr "로그"
 
-#: app/log_interface.py:411
+#: app/log_interface.py:416
 msgid "任务日志"
 msgstr "임무 로그"
 
-#: app/log_interface.py:417
+#: app/log_interface.py:422
 msgid "等待任务..."
 msgstr "작업 대기 중..."
 
-#: app/log_interface.py:448
+#: app/log_interface.py:453
 msgid "清空日志"
 msgstr "로그 지우기"
 
-#: app/log_interface.py:469
+#: app/log_interface.py:474
 msgid "配置定时任务"
 msgstr "예약 실행 설정"
 
-#: app/log_interface.py:1034
+#: app/log_interface.py:1035
 msgid "尚未配置定时任务"
 msgstr "예약된 임무 없음"
 
-#: app/log_interface.py:2320
+#: app/log_interface.py:2357
 msgid "任务完成"
 msgstr "임무 완료"
 
-#: app/log_interface.py:2323
+#: app/log_interface.py:2360
 msgid "任务已停止"
 msgstr "임무 중지됨"
 
@@ -789,27 +789,27 @@ msgstr "'종료'는 게임 종료를 의미합니다. 순환 모드 대신 로�
 msgid "无"
 msgstr "없음"
 
-#: app/log_interface.py:2246
+#: app/log_interface.py:2283
 msgid "关机"
 msgstr "시스템 종료"
 
-#: app/log_interface.py:2247
+#: app/log_interface.py:2284
 msgid "睡眠"
 msgstr "절전"
 
-#: app/log_interface.py:2248
+#: app/log_interface.py:2285
 msgid "休眠"
 msgstr "최대 절전"
 
-#: app/log_interface.py:2249
+#: app/log_interface.py:2286
 msgid "重启"
 msgstr "재부팅"
 
-#: app/log_interface.py:2250
+#: app/log_interface.py:2287
 msgid "注销"
 msgstr "로그오프"
 
-#: app/log_interface.py:2251
+#: app/log_interface.py:2288
 msgid "关闭显示器"
 msgstr "모니터 끄기"
 
@@ -1089,7 +1089,7 @@ msgstr "전체 실행"
 msgid "退出"
 msgstr "종료"
 
-#: app/log_interface.py:1316
+#: app/log_interface.py:1321
 msgid "任务正在运行"
 msgstr "임무 실행 중"
 
@@ -1153,7 +1153,7 @@ msgstr "게임 시작 중 (❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "프로그램이 트레이로 최소화되었습니다"
 
-#: app/log_interface.py:432
+#: app/log_interface.py:437
 msgid "停止任务"
 msgstr "임무 중지"
 
@@ -2271,7 +2271,7 @@ msgstr "업데이트 확인 중"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "기다려주세요, 업데이트 확인이 진행 중입니다"
 
-#: app/log_interface.py:962
+#: app/log_interface.py:963
 msgid "未命名"
 msgstr "이름 없음"
 
@@ -4142,7 +4142,7 @@ msgstr "시뮬레이션 우주 폴더 열기（유지보수 중단）"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "시뮬레이션 우주 프로젝트 홈페이지 열기（유지보수 중단）"
 
-#: app/log_interface.py:451
+#: app/log_interface.py:456
 msgid "在游戏内显示日志"
 msgstr "게임 내 로그 표시"
 
@@ -5664,11 +5664,11 @@ msgstr "횟수:"
 msgid "队伍："
 msgstr "팀: "
 
-#: app/log_interface.py:1031
+#: app/log_interface.py:1032
 msgid "已启用：{count}，下次：{time}"
 msgstr "활성화됨: {count}, 다음: {time}"
 
-#: app/log_interface.py:1286
+#: app/log_interface.py:1290
 msgid "正在运行：{name}"
 msgstr "실행 중: {name}"
 
@@ -5894,22 +5894,26 @@ msgstr "\"수정\"을 클릭하여 Mirror 짱 CDK를 입력하세요"
 msgid "已暂停"
 msgstr "일시 중지됨"
 
-#: app/log_interface.py:201
+#: app/log_interface.py:202
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "{stop} 중지 · {pause} 일시 중지"
 
-#: app/log_interface.py:441
+#: app/log_interface.py:446
 msgid "暂停任务"
 msgstr "임무 일시 중지"
 
-#: app/log_interface.py:446
+#: app/log_interface.py:451
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr "내장 임무만 일시 중지를 지원하며, 일시 중지 시 스크립트가 모든 동작을 중지합니다"
 
-#: app/log_interface.py:1707
+#: app/log_interface.py:1743
 msgid "继续任务"
 msgstr "임무 재개"
 
 #: app/sub_interfaces/hotkey_interface.py:22
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "임무 일시 중지/재개 (전역 단축키, 백그라운드 지원)"
+
+#: app/log_interface.py:206
+msgid "按下 {stop} 停止任务"
+msgstr "{stop} 중지"

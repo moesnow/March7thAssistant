@@ -54,31 +54,31 @@ msgstr "启动游戏"
 msgid "日志"
 msgstr "日志"
 
-#: app/log_interface.py:411
+#: app/log_interface.py:416
 msgid "任务日志"
 msgstr "任务日志"
 
-#: app/log_interface.py:417
+#: app/log_interface.py:422
 msgid "等待任务..."
 msgstr "等待任务..."
 
-#: app/log_interface.py:448
+#: app/log_interface.py:453
 msgid "清空日志"
 msgstr "清空日志"
 
-#: app/log_interface.py:469
+#: app/log_interface.py:474
 msgid "配置定时任务"
 msgstr "配置定时任务"
 
-#: app/log_interface.py:1034
+#: app/log_interface.py:1035
 msgid "尚未配置定时任务"
 msgstr "尚未配置定时任务"
 
-#: app/log_interface.py:2320
+#: app/log_interface.py:2357
 msgid "任务完成"
 msgstr "任务完成"
 
-#: app/log_interface.py:2323
+#: app/log_interface.py:2360
 msgid "任务已停止"
 msgstr "任务已停止"
 
@@ -786,27 +786,27 @@ msgstr "“退出”指退出游戏，不再建议使用循环模式，请改用
 msgid "无"
 msgstr "无"
 
-#: app/log_interface.py:2246
+#: app/log_interface.py:2283
 msgid "关机"
 msgstr "关机"
 
-#: app/log_interface.py:2247
+#: app/log_interface.py:2284
 msgid "睡眠"
 msgstr "睡眠"
 
-#: app/log_interface.py:2248
+#: app/log_interface.py:2285
 msgid "休眠"
 msgstr "休眠"
 
-#: app/log_interface.py:2249
+#: app/log_interface.py:2286
 msgid "重启"
 msgstr "重启"
 
-#: app/log_interface.py:2250
+#: app/log_interface.py:2287
 msgid "注销"
 msgstr "注销"
 
-#: app/log_interface.py:2251
+#: app/log_interface.py:2288
 msgid "关闭显示器"
 msgstr "关闭显示器"
 
@@ -1086,7 +1086,7 @@ msgstr "完整运行"
 msgid "退出"
 msgstr "退出"
 
-#: app/log_interface.py:1316
+#: app/log_interface.py:1321
 msgid "任务正在运行"
 msgstr "任务正在运行"
 
@@ -1150,7 +1150,7 @@ msgstr "正在启动游戏(❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "程序已最小化到托盘"
 
-#: app/log_interface.py:432
+#: app/log_interface.py:437
 msgid "停止任务"
 msgstr "停止任务"
 
@@ -2263,7 +2263,7 @@ msgstr "正在检测更新"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "请稍候，更新检查仍在进行中"
 
-#: app/log_interface.py:962
+#: app/log_interface.py:963
 msgid "未命名"
 msgstr "未命名"
 
@@ -4131,7 +4131,7 @@ msgstr "打开模拟宇宙目录（停止维护）"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "打开模拟宇宙项目主页（停止维护）"
 
-#: app/log_interface.py:451
+#: app/log_interface.py:456
 msgid "在游戏内显示日志"
 msgstr "在游戏内显示日志"
 
@@ -5644,11 +5644,11 @@ msgstr "次数："
 msgid "队伍："
 msgstr "队伍："
 
-#: app/log_interface.py:1031
+#: app/log_interface.py:1032
 msgid "已启用：{count}，下次：{time}"
 msgstr "已启用：{count}，下次：{time}"
 
-#: app/log_interface.py:1286
+#: app/log_interface.py:1290
 msgid "正在运行：{name}"
 msgstr "正在运行：{name}"
 
@@ -5873,22 +5873,26 @@ msgstr "请先点击“修改”填写 Mirror 酱 CDK"
 msgid "已暂停"
 msgstr "已暂停"
 
-#: app/log_interface.py:201
+#: app/log_interface.py:202
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "按下 {stop} 停止 · {pause} 暂停"
 
-#: app/log_interface.py:441
+#: app/log_interface.py:446
 msgid "暂停任务"
 msgstr "暂停任务"
 
-#: app/log_interface.py:446
+#: app/log_interface.py:451
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 
-#: app/log_interface.py:1707
+#: app/log_interface.py:1743
 msgid "继续任务"
 msgstr "继续任务"
 
 #: app/sub_interfaces/hotkey_interface.py:22
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "暂停/继续任务（全局热键，支持后台）"
+
+#: app/log_interface.py:206
+msgid "按下 {stop} 停止任务"
+msgstr "按下 {stop} 停止任务"

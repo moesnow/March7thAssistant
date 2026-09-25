@@ -64,7 +64,7 @@ class _FakeTimer:
 
 
 class TestPausableTasksWhitelist:
-    """仅内置自动化任务支持暂停。"""
+    """仅内置自动化任务与 workflow 支持暂停。"""
 
     def test_builtin_tasks_in_whitelist(self):
         from utils.tasks import PAUSABLE_TASKS
@@ -77,6 +77,36 @@ class TestPausableTasksWhitelist:
                         "universe_update", "fight_update", "mobileui_update",
                         "notify", "game", "screen_test"):
             assert task_id not in PAUSABLE_TASKS
+
+
+class TestResolvePauseSupport:
+    """启动目标的暂停支持判定：内置任务按白名单，workflow 支持，外部程序不支持。"""
+
+    def test_builtin_pausable_tasks(self):
+        from app.log_interface import LogInterface
+        for task_id in ("main", "daily", "currencywars", "divergentloop"):
+            assert LogInterface._resolvePauseSupport(task_id) is True
+
+    def test_builtin_non_pausable_tasks(self):
+        from app.log_interface import LogInterface
+        for task_id in ("universe_gui", "app_update", "game_update", "screen_test"):
+            assert LogInterface._resolvePauseSupport(task_id) is False
+
+    def test_workflow_task_is_pausable(self):
+        from app.log_interface import LogInterface
+        task = {"program": "workflow", "workflow_name": "示例流程"}
+        assert LogInterface._resolvePauseSupport(task) is True
+
+    def test_external_program_is_not_pausable(self):
+        from app.log_interface import LogInterface
+        task = {"program": "BetterGI.exe", "args": "--foo"}
+        assert LogInterface._resolvePauseSupport(task) is False
+
+    def test_self_program_defers_to_task_id(self):
+        # program='self' 的任务由 _startTask 按任务 ID 重新判定
+        from app.log_interface import LogInterface
+        task = {"program": "self", "args": "daily"}
+        assert LogInterface._resolvePauseSupport(task) is False
 
 
 class TestPauseToggle:
@@ -200,9 +230,33 @@ class TestGameLogOverlayPauseDisplay:
         assert 'F10' in overlay.hotkeyLabel.value
         assert 'F8' in overlay.hotkeyLabel.value
 
+    def test_hotkey_hint_hides_pause_hotkey_when_not_pausable(self, qapp):
+        from module.localization import tr
+        overlay = self._make_overlay()
+        overlay.update_hotkey_hint('F10', None)
+        assert overlay.hotkeyLabel.value == tr('按下 {stop} 停止任务').format(stop='F10')
+
     def test_set_paused_toggles_badge(self, qapp):
         overlay = self._make_overlay()
         overlay.set_paused(True)
         assert overlay.pauseBadge.visible is True
         overlay.set_paused(False)
         assert overlay.pauseBadge.visible is False
+
+    def test_overlay_hint_reflects_task_pausability(self, tmp_path):
+        from app.log_interface import LogInterface
+        from utils.pause import STATE_RUNNING
+        iface = LogInterface.__new__(LogInterface)
+        iface._pause_supported = False
+        iface._pause_state = STATE_RUNNING
+        calls = []
+        iface._log_overlay = SimpleNamespace(
+            update_hotkey_hint=lambda stop, pause: calls.append((stop, pause)),
+        )
+
+        iface._updateOverlayHotkeyHint()
+        assert calls[-1][1] is None  # 不可暂停：不显示暂停快捷键
+
+        iface._pause_supported = True
+        iface._updateOverlayHotkeyHint()
+        assert calls[-1][1] is not None  # 可暂停：显示暂停快捷键

@@ -678,95 +678,99 @@ msgstr ""
 msgid "检测到新版本：{version}"
 msgstr ""
 
-#: app/log_interface.py:201
+#: app/log_interface.py:202
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr ""
 
-#: app/log_interface.py:411
+#: app/log_interface.py:206
+msgid "按下 {stop} 停止任务"
+msgstr ""
+
+#: app/log_interface.py:416
 msgid "任务日志"
 msgstr ""
 
-#: app/log_interface.py:417
+#: app/log_interface.py:422
 msgid "等待任务..."
 msgstr ""
 
-#: app/log_interface.py:432
+#: app/log_interface.py:437
 msgid "停止任务"
 msgstr ""
 
-#: app/log_interface.py:441
+#: app/log_interface.py:446
 msgid "暂停任务"
 msgstr ""
 
-#: app/log_interface.py:446
+#: app/log_interface.py:451
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr ""
 
-#: app/log_interface.py:448
+#: app/log_interface.py:453
 msgid "清空日志"
 msgstr ""
 
-#: app/log_interface.py:451
+#: app/log_interface.py:456
 msgid "在游戏内显示日志"
 msgstr ""
 
-#: app/log_interface.py:469
+#: app/log_interface.py:474
 msgid "配置定时任务"
 msgstr ""
 
-#: app/log_interface.py:962
+#: app/log_interface.py:963
 msgid "未命名"
 msgstr ""
 
-#: app/log_interface.py:1031
+#: app/log_interface.py:1032
 msgid "已启用：{count}，下次：{time}"
 msgstr ""
 
-#: app/log_interface.py:1034
+#: app/log_interface.py:1035
 msgid "尚未配置定时任务"
 msgstr ""
 
-#: app/log_interface.py:1286
+#: app/log_interface.py:1290
 msgid "正在运行：{name}"
 msgstr ""
 
-#: app/log_interface.py:1316
+#: app/log_interface.py:1321
 msgid "任务正在运行"
 msgstr ""
 
-#: app/log_interface.py:1707
+#: app/log_interface.py:1743
 msgid "继续任务"
 msgstr ""
 
-#: app/log_interface.py:2246
+#: app/log_interface.py:2283
 msgid "关机"
 msgstr ""
 
-#: app/log_interface.py:2247
+#: app/log_interface.py:2284
 msgid "睡眠"
 msgstr ""
 
-#: app/log_interface.py:2248
+#: app/log_interface.py:2285
 msgid "休眠"
 msgstr ""
 
-#: app/log_interface.py:2249
+#: app/log_interface.py:2286
 msgid "重启"
 msgstr ""
 
-#: app/log_interface.py:2250
+#: app/log_interface.py:2287
 msgid "注销"
 msgstr ""
 
-#: app/log_interface.py:2251
+#: app/log_interface.py:2288
 msgid "关闭显示器"
 msgstr ""
 
-#: app/log_interface.py:2320
+#: app/log_interface.py:2357
 msgid "任务完成"
 msgstr ""
 
-#: app/log_interface.py:2323
+#: app/log_interface.py:2360
 msgid "任务已停止"
 msgstr ""
 

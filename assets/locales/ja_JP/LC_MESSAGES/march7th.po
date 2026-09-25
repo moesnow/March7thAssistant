@@ -54,31 +54,31 @@ msgstr "ゲーム起動"
 msgid "日志"
 msgstr "ログ"
 
-#: app/log_interface.py:411
+#: app/log_interface.py:416
 msgid "任务日志"
 msgstr "タスクログ"
 
-#: app/log_interface.py:417
+#: app/log_interface.py:422
 msgid "等待任务..."
 msgstr "タスク待機中..."
 
-#: app/log_interface.py:448
+#: app/log_interface.py:453
 msgid "清空日志"
 msgstr "ログをクリア"
 
-#: app/log_interface.py:469
+#: app/log_interface.py:474
 msgid "配置定时任务"
 msgstr "定期タスクを設定"
 
-#: app/log_interface.py:1034
+#: app/log_interface.py:1035
 msgid "尚未配置定时任务"
 msgstr "定期タスクは未設定です"
 
-#: app/log_interface.py:2320
+#: app/log_interface.py:2357
 msgid "任务完成"
 msgstr "タスク完了"
 
-#: app/log_interface.py:2323
+#: app/log_interface.py:2360
 msgid "任务已停止"
 msgstr "タスク停止"
 
@@ -788,27 +788,27 @@ msgstr "「終了」はゲーム終了を意味します。ループモードは
 msgid "无"
 msgstr "なし"
 
-#: app/log_interface.py:2246
+#: app/log_interface.py:2283
 msgid "关机"
 msgstr "シャットダウン"
 
-#: app/log_interface.py:2247
+#: app/log_interface.py:2284
 msgid "睡眠"
 msgstr "スリープ"
 
-#: app/log_interface.py:2248
+#: app/log_interface.py:2285
 msgid "休眠"
 msgstr "休止"
 
-#: app/log_interface.py:2249
+#: app/log_interface.py:2286
 msgid "重启"
 msgstr "再起動"
 
-#: app/log_interface.py:2250
+#: app/log_interface.py:2287
 msgid "注销"
 msgstr "ログオフ"
 
-#: app/log_interface.py:2251
+#: app/log_interface.py:2288
 msgid "关闭显示器"
 msgstr "ディスプレイをオフ"
 
@@ -1091,7 +1091,7 @@ msgstr "完全実行"
 msgid "退出"
 msgstr "終了"
 
-#: app/log_interface.py:1316
+#: app/log_interface.py:1321
 msgid "任务正在运行"
 msgstr "タスク実行中"
 
@@ -1155,7 +1155,7 @@ msgstr "ゲーム起動中 (❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "アプリをトレイに最小化しました。"
 
-#: app/log_interface.py:432
+#: app/log_interface.py:437
 msgid "停止任务"
 msgstr "タスク停止"
 
@@ -2260,7 +2260,7 @@ msgstr "更新を確認中"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "しばらくお待ちください。更新確認はまだ進行中です"
 
-#: app/log_interface.py:962
+#: app/log_interface.py:963
 msgid "未命名"
 msgstr "名称未設定"
 
@@ -4128,7 +4128,7 @@ msgstr ""
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr ""
 
-#: app/log_interface.py:451
+#: app/log_interface.py:456
 msgid "在游戏内显示日志"
 msgstr ""
 
@@ -5643,11 +5643,11 @@ msgstr "回数："
 msgid "队伍："
 msgstr "編成："
 
-#: app/log_interface.py:1031
+#: app/log_interface.py:1032
 msgid "已启用：{count}，下次：{time}"
 msgstr "有効：{count} 件、次回：{time}"
 
-#: app/log_interface.py:1286
+#: app/log_interface.py:1290
 msgid "正在运行：{name}"
 msgstr "実行中：{name}"
 
@@ -5872,22 +5872,26 @@ msgstr "「変更」をクリックして Mirror酱 CDK を入力してくださ
 msgid "已暂停"
 msgstr "一時停止中"
 
-#: app/log_interface.py:201
+#: app/log_interface.py:202
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "{stop} で停止 · {pause} で一時停止"
 
-#: app/log_interface.py:441
+#: app/log_interface.py:446
 msgid "暂停任务"
 msgstr "タスク一時停止"
 
-#: app/log_interface.py:446
+#: app/log_interface.py:451
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr "内蔵タスクのみ一時停止に対応。一時停止中はスクリプトがすべての操作を停止します"
 
-#: app/log_interface.py:1707
+#: app/log_interface.py:1743
 msgid "继续任务"
 msgstr "タスク再開"
 
 #: app/sub_interfaces/hotkey_interface.py:22
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "タスク一時停止/再開（グローバルホットキー、バックグラウンド対応）"
+
+#: app/log_interface.py:206
+msgid "按下 {stop} 停止任务"
+msgstr "{stop} で停止"

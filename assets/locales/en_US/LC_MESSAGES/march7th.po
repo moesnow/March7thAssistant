@@ -54,31 +54,31 @@ msgstr "Launch"
 msgid "日志"
 msgstr "Log"
 
-#: app/log_interface.py:411
+#: app/log_interface.py:416
 msgid "任务日志"
 msgstr "Task Log"
 
-#: app/log_interface.py:417
+#: app/log_interface.py:422
 msgid "等待任务..."
 msgstr "Waiting for task..."
 
-#: app/log_interface.py:448
+#: app/log_interface.py:453
 msgid "清空日志"
 msgstr "Clear Log"
 
-#: app/log_interface.py:469
+#: app/log_interface.py:474
 msgid "配置定时任务"
 msgstr "Configure Scheduled Tasks"
 
-#: app/log_interface.py:1034
+#: app/log_interface.py:1035
 msgid "尚未配置定时任务"
 msgstr "No scheduled tasks configured"
 
-#: app/log_interface.py:2320
+#: app/log_interface.py:2357
 msgid "任务完成"
 msgstr "Task Completed"
 
-#: app/log_interface.py:2323
+#: app/log_interface.py:2360
 msgid "任务已停止"
 msgstr "Task Stopped"
 
@@ -821,27 +821,27 @@ msgstr ""
 msgid "无"
 msgstr "None"
 
-#: app/log_interface.py:2246
+#: app/log_interface.py:2283
 msgid "关机"
 msgstr "Shutdown"
 
-#: app/log_interface.py:2247
+#: app/log_interface.py:2284
 msgid "睡眠"
 msgstr "Sleep"
 
-#: app/log_interface.py:2248
+#: app/log_interface.py:2285
 msgid "休眠"
 msgstr "Hibernate"
 
-#: app/log_interface.py:2249
+#: app/log_interface.py:2286
 msgid "重启"
 msgstr "Restart"
 
-#: app/log_interface.py:2250
+#: app/log_interface.py:2287
 msgid "注销"
 msgstr "Log off"
 
-#: app/log_interface.py:2251
+#: app/log_interface.py:2288
 msgid "关闭显示器"
 msgstr "Turn off Monitor"
 
@@ -1134,7 +1134,7 @@ msgstr "Full Run"
 msgid "退出"
 msgstr "Exit"
 
-#: app/log_interface.py:1316
+#: app/log_interface.py:1321
 msgid "任务正在运行"
 msgstr "Task Running"
 
@@ -1198,7 +1198,7 @@ msgstr "Launching Game (❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "Program minimized to tray"
 
-#: app/log_interface.py:432
+#: app/log_interface.py:437
 msgid "停止任务"
 msgstr "Stop Task"
 
@@ -2329,7 +2329,7 @@ msgstr "Checking for updates"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "Please wait, update check in progress"
 
-#: app/log_interface.py:962
+#: app/log_interface.py:963
 msgid "未命名"
 msgstr "Unnamed"
 
@@ -4225,7 +4225,7 @@ msgstr "Open Simulated Universe Dir (Stop Maintain)"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "Open Simulated Universe Project Homepage (Stop Maintain)"
 
-#: app/log_interface.py:451
+#: app/log_interface.py:456
 msgid "在游戏内显示日志"
 msgstr "Show Log in Game"
 
@@ -5790,11 +5790,11 @@ msgstr "Count:"
 msgid "队伍："
 msgstr "Team: "
 
-#: app/log_interface.py:1031
+#: app/log_interface.py:1032
 msgid "已启用：{count}，下次：{time}"
 msgstr "Active: {count}, Next: {time}"
 
-#: app/log_interface.py:1286
+#: app/log_interface.py:1290
 msgid "正在运行：{name}"
 msgstr "Running: {name}"
 
@@ -6022,22 +6022,28 @@ msgstr "Please click 'Modify' to enter your Mirror Chan CDK"
 msgid "已暂停"
 msgstr "Paused"
 
-#: app/log_interface.py:201
+#: app/log_interface.py:202
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "Press {stop} to stop · {pause} to pause"
 
-#: app/log_interface.py:441
+#: app/log_interface.py:446
 msgid "暂停任务"
 msgstr "Pause Task"
 
-#: app/log_interface.py:446
+#: app/log_interface.py:451
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
-msgstr "Only built-in tasks support pausing; the script stops all actions while paused"
+msgstr ""
+"Only built-in tasks support pausing; the script stops all actions while "
+"paused"
 
-#: app/log_interface.py:1707
+#: app/log_interface.py:1743
 msgid "继续任务"
 msgstr "Resume Task"
 
 #: app/sub_interfaces/hotkey_interface.py:22
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "Pause/Resume Task (Global Hotkey, Background)"
+
+#: app/log_interface.py:206
+msgid "按下 {stop} 停止任务"
+msgstr "Press {stop} to stop"

@@ -46,8 +46,9 @@ AVAILABLE_TASKS = {
 TASK_NAMES = AVAILABLE_TASKS
 
 # 支持「暂停/继续」的内置任务白名单。
-# 仅包含走 module/automation 操作游戏的自动化任务；workflow（用户自定义流程）、
-# 外部/自定义任务以及更新、启动器、原生界面类子任务均不支持暂停。
+# 仅针对内置任务 ID；workflow（用户自定义流程）经 workflow 启动路径单独启用
+# （运行于 main.py 进程内、走同一套动作卡点），外部/自定义程序与更新、
+# 启动器、原生界面类子任务不支持暂停。判定逻辑见 LogInterface._resolvePauseSupport。
 PAUSABLE_TASKS = frozenset({
     "main",
     "routine",

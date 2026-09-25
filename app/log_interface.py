@@ -153,11 +153,11 @@ class GameLogOverlay(QWidget):
         self.pauseBadge.hide()
 
         stop_hotkey = cfg.get_value('hotkey_stop_task', 'F10').upper()
-        pause_hotkey = cfg.get_value('hotkey_pause_task', 'f8').upper()
         self.hotkeyLabel = QLabel('', self.panel)
         self.hotkeyLabel.setObjectName('gameLogOverlayHotkey')
         self.hotkeyLabel.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        self.update_hotkey_hint(stop_hotkey, pause_hotkey)
+        # 默认仅提示停止快捷键；任务启动后由 LogInterface 按任务是否支持暂停刷新提示
+        self.update_hotkey_hint(stop_hotkey, None)
 
         headerLayout.addWidget(self.titleLabel)
         headerLayout.addWidget(self.liveBadge)
@@ -195,11 +195,16 @@ class GameLogOverlay(QWidget):
         """显示/隐藏暂停状态徽章。"""
         self.pauseBadge.setVisible(bool(paused))
 
-    def update_hotkey_hint(self, stop_hotkey: str, pause_hotkey: str):
-        """更新快捷键提示（停止 / 暂停）。"""
-        self.hotkeyLabel.setText(
-            tr('按下 {stop} 停止 · {pause} 暂停').format(stop=stop_hotkey, pause=pause_hotkey)
-        )
+    def update_hotkey_hint(self, stop_hotkey: str, pause_hotkey: str | None):
+        """更新快捷键提示；不支持暂停的任务只显示停止快捷键。"""
+        if pause_hotkey:
+            self.hotkeyLabel.setText(
+                tr('按下 {stop} 停止 · {pause} 暂停').format(stop=stop_hotkey, pause=pause_hotkey)
+            )
+        else:
+            self.hotkeyLabel.setText(
+                tr('按下 {stop} 停止任务').format(stop=stop_hotkey)
+            )
 
     def showEvent(self, event):
         super().showEvent(event)
@@ -823,12 +828,8 @@ class LogInterface(ScrollArea):
             self.stopButton.setText(f"{tr('停止任务')} ({hotkey})")
             pause_hotkey = cfg.get_value("hotkey_pause_task", "f8").upper()
             self.pauseButton.setText(f"{tr('暂停任务')} ({pause_hotkey})")
-            # 同步更新悬浮窗的快捷键提示
-            try:
-                if self._log_overlay:
-                    self._log_overlay.update_hotkey_hint(hotkey, pause_hotkey)
-            except Exception:
-                pass
+            # 同步更新悬浮窗的快捷键提示（不支持暂停的任务只显示停止快捷键）
+            self._updateOverlayHotkeyHint()
         else:
             self.stopButton.setText(tr('停止任务'))
             self.pauseButton.setText(tr('暂停任务'))
@@ -1199,8 +1200,8 @@ class LogInterface(ScrollArea):
 
         # 如果传入的是任务字典，则作为外部/自定义任务处理
         if isinstance(command_or_task, dict):
-            # 外部/自定义任务（含 workflow）不支持暂停
-            self._pause_supported = False
+            # workflow 运行于 main.py 进程内支持暂停；外部/自定义程序不支持
+            self._pause_supported = self._resolvePauseSupport(command_or_task)
             task = command_or_task
             if not task.get('id') and self._pending_task_meta is None:
                 self._active_task_chain = []
@@ -1243,6 +1244,9 @@ class LogInterface(ScrollArea):
             env = QProcessEnvironment.systemEnvironment()
             env.insert("PYTHONUNBUFFERED", "1")
             env.insert("MARCH7TH_GUI_STARTED", "1")
+            # 支持暂停的目标（workflow）：注入暂停控制文件路径并清理陈旧状态
+            if self._pause_supported:
+                self._injectPauseControlEnv(env)
             # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
             try:
                 _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QT_QPA_FONTDIR']
@@ -1285,6 +1289,7 @@ class LogInterface(ScrollArea):
             self.current_task = program
             self.statusLabel.setText(tr('正在运行：{name}').format(name=name))
             self.stopButton.setEnabled(True)
+            self._syncPauseUi()
 
             if timeout > 0:
                 # 使用可取消的单次 QTimer，并绑定到当前启动的进程实例
@@ -1327,6 +1332,7 @@ class LogInterface(ScrollArea):
         self.appendLog("========== 开始任务: {} ==========".format(self._external_task_name) + "\n")
         self.statusLabel.setText(tr('正在运行：{name}').format(name=self._external_task_name))
         self.stopButton.setEnabled(True)
+        self._syncPauseUi()
 
     def finishExternalTask(self, exit_code=0, user_stopped=None):
         """结束当前 GUI 进程内运行的外部任务，并更新日志页状态。"""
@@ -1361,8 +1367,8 @@ class LogInterface(ScrollArea):
     def _startTask(self, task, timeout=0):
         self.current_task = task
         command = str(task)
-        # 仅白名单内置任务支持暂停（workflow、外部/自定义任务不支持）
-        self._pause_supported = command in PAUSABLE_TASKS
+        # 内置任务按白名单启用暂停（workflow 与外部任务的判定见 _resolvePauseSupport）
+        self._pause_supported = self._resolvePauseSupport(command)
         self._pause_state = STATE_RUNNING
         self._status_text_before_pause = None
         self._paused_timeout_remaining = None
@@ -1391,11 +1397,7 @@ class LogInterface(ScrollArea):
         env.insert("MARCH7TH_GUI_STARTED", "true")  # 标记为图形界面启动
         # 内置任务：注入暂停控制文件路径并清理陈旧状态，使 CLI 侧支持暂停/继续
         if self._pause_supported:
-            try:
-                reset_files(self._pauseControlPath())
-            except Exception:
-                pass
-            env.insert("MARCH7TH_CONTROL_FILE", self._pauseControlPath())
+            self._injectPauseControlEnv(env)
         # 主窗口最小化到托盘时启动的任务（如定时“更新三月七小助手”），
         # 通过环境变量告知子进程，更新完成后保持最小化到托盘
         try:
@@ -1658,9 +1660,40 @@ class LogInterface(ScrollArea):
 
     # ---------- 任务暂停/继续 ----------
 
+    @staticmethod
+    def _resolvePauseSupport(command_or_task):
+        """判断启动目标是否支持暂停。
+
+        - 内置任务：按 utils.tasks.PAUSABLE_TASKS 白名单；
+        - workflow：运行于 main.py 进程内、走同一套动作卡点，支持；
+        - 外部/自定义程序（BetterGI 等独立进程）：不支持。
+        """
+        if isinstance(command_or_task, dict):
+            program = str(command_or_task.get('program', '')).strip().lower()
+            return program == 'workflow'
+        return str(command_or_task) in PAUSABLE_TASKS
+
     def _pauseControlPath(self):
         """暂停指令文件路径（CLI 通过环境变量 MARCH7TH_CONTROL_FILE 读取同一路径）。"""
         return os.path.abspath(os.path.join('temp', 'pause.json'))
+
+    def _injectPauseControlEnv(self, env):
+        """向子进程注入暂停控制文件路径并清理陈旧状态。"""
+        try:
+            reset_files(self._pauseControlPath())
+        except Exception:
+            pass
+        env.insert("MARCH7TH_CONTROL_FILE", self._pauseControlPath())
+
+    def _updateOverlayHotkeyHint(self):
+        """按当前任务是否支持暂停，刷新悬浮窗快捷键提示。"""
+        try:
+            if self._log_overlay:
+                stop_hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
+                pause_hotkey = cfg.get_value("hotkey_pause_task", "f8").upper() if self._pause_supported else None
+                self._log_overlay.update_hotkey_hint(stop_hotkey, pause_hotkey)
+        except Exception:
+            pass
 
     def _onPauseToggle(self):
         """切换任务暂停/继续（按钮与全局热键共用入口）。"""
@@ -1718,6 +1751,7 @@ class LogInterface(ScrollArea):
             elif self._status_text_before_pause is not None:
                 self.statusLabel.setText(self._status_text_before_pause)
                 self._status_text_before_pause = None
+            self._updateOverlayHotkeyHint()
             if self._log_overlay:
                 self._log_overlay.set_paused(paused)
         except Exception:
