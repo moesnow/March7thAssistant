@@ -365,6 +365,13 @@ class MainWindow(MSFluentWindow):
             self.tray_icon.activated.connect(self.onTrayIconActivated)
         self.tray_icon.show()
 
+    def is_minimized_to_tray(self) -> bool:
+        """是否处于最小化到托盘状态（主窗口隐藏且托盘图标可见）"""
+        try:
+            return not self.isVisible() and self.tray_icon.isVisible()
+        except Exception:
+            return False
+
     def _show_main_window(self):
         """显示主界面，macOS 下确保窗口置顶"""
         self.showNormal()

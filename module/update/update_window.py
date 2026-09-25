@@ -372,7 +372,7 @@ class UpdaterWindow(MessageBoxBase):
 
         creationflags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
         command = [source_file, "--mode", "finalize", "--wait-pid", str(os.getpid())]
-        if self.main_window is not None and not self.main_window.isVisible() and self.main_window.tray_icon.isVisible():
+        if self.main_window is not None and self.main_window.is_minimized_to_tray():
             command.append("--start-minimized-to-tray")
         command.extend(["--file-name", file_name])
         if extract_folder_path:

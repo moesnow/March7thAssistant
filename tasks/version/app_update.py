@@ -15,6 +15,15 @@ from module.update.update_engine import build_independent_process_env
 from module.update.version_check import check_for_update
 
 
+def start_minimized_to_tray() -> bool:
+    """是否应以最小化到托盘方式重启主程序。
+
+    GUI 处于托盘最小化状态时，会通过环境变量 MARCH7TH_START_MINIMIZED_TO_TRAY
+    告知任务子进程，以便更新完成后恢复最小化到托盘状态。
+    """
+    return os.environ.get("MARCH7TH_START_MINIMIZED_TO_TRAY", "").lower() in ("1", "true")
+
+
 def start():
     log.hr("开始更新三月七小助手", 0)
     try:
@@ -47,6 +56,9 @@ def start():
         command = [updater, info.url, info.file_name]
         if info.sha256:
             command.extend(["--sha256", info.sha256])
+        if start_minimized_to_tray():
+            # 更新完成后恢复托盘最小化状态
+            command.append("--start-minimized-to-tray")
         subprocess.Popen(
             command,
             creationflags=creationflags,

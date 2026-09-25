@@ -1241,6 +1241,14 @@ class LogInterface(ScrollArea):
         env = QProcessEnvironment.systemEnvironment()
         env.insert("PYTHONUNBUFFERED", "1")
         env.insert("MARCH7TH_GUI_STARTED", "true")  # 标记为图形界面启动
+        # 主窗口最小化到托盘时启动的任务（如定时“更新三月七小助手”），
+        # 通过环境变量告知子进程，更新完成后保持最小化到托盘
+        try:
+            main_window = self.window()
+            if getattr(main_window, "is_minimized_to_tray", None) and main_window.is_minimized_to_tray():
+                env.insert("MARCH7TH_START_MINIMIZED_TO_TRAY", "1")
+        except Exception:
+            pass
         # 避免将当前进程的 Qt 环境变量传给子进程（会造成 "no qt platform plugin could be initialized" 错误）
         try:
             _remove_keys = ['QML2_IMPORT_PATH', 'QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QT_QPA_FONTDIR']
