@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QApplication, QFrame, QLabel, QScrollArea, QVBoxLayout, QWidget
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import MessageBox
 
@@ -42,6 +42,13 @@ class HotkeyInterface(MessageBox):
         font.setPointSize(10)
         self.textLayout.setSpacing(4)
 
+        # 按键列表放进可滚动容器：弹窗高度以屏幕可用高度为上限，
+        # 避免条目增多后超出屏幕、底部确认/取消按钮不可见
+        list_container = QWidget(self)
+        list_layout = QVBoxLayout(list_container)
+        list_layout.setContentsMargins(0, 0, 0, 0)
+        list_layout.setSpacing(4)
+
         self.pushButton_dict = {}
         for name, config in self.configlist.items():
             if config == "hotkey_technique":
@@ -67,7 +74,7 @@ class HotkeyInterface(MessageBox):
             )
             pushButton.setFont(font)
 
-            self.textLayout.addWidget(pushButton, 0, Qt.AlignmentFlag.AlignTop)
+            list_layout.addWidget(pushButton, 0, Qt.AlignmentFlag.AlignTop)
             self.pushButton_dict[config] = pushButton
 
         # 添加提示标签：交互 F / 角色详细 C 不允许修改
@@ -77,7 +84,19 @@ class HotkeyInterface(MessageBox):
         hint_label.setFont(hint_font)
         hint_label.setStyleSheet("color: gray;")
         hint_label.setWordWrap(True)
-        self.textLayout.addWidget(hint_label, 0, Qt.AlignmentFlag.AlignTop)
+        list_layout.addWidget(hint_label, 0, Qt.AlignmentFlag.AlignTop)
+        list_layout.addStretch(1)
+
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(list_container)
+        # 为标题、布局边距与按钮区（81px）预留空间，保证整个弹窗在屏幕内完整可见
+        screen_height = QApplication.primaryScreen().availableGeometry().height()
+        scroll.setMaximumHeight(max(240, screen_height - 320))
+        scroll.setStyleSheet("QScrollArea{background: transparent; border: none;}")
+        self.textLayout.addWidget(scroll, 1)
 
         self.yesButton.clicked.connect(self._onConfirmClicked)
         self.cancelButton.clicked.connect(self._onCancelClicked)
