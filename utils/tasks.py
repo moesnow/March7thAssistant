@@ -66,6 +66,7 @@ PAUSABLE_TASKS = frozenset({
     "purefiction",
     "apocalyptic",
     "redemption",
+    "screen_test",
 })
 
 

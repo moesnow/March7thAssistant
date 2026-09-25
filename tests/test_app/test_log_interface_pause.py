@@ -68,14 +68,15 @@ class TestPausableTasksWhitelist:
 
     def test_builtin_tasks_in_whitelist(self):
         from utils.tasks import PAUSABLE_TASKS
-        for task_id in ("main", "daily", "power", "currencywars", "divergent", "fight", "universe"):
+        for task_id in ("main", "daily", "power", "currencywars", "divergent", "fight",
+                        "universe", "screen_test"):
             assert task_id in PAUSABLE_TASKS
 
     def test_non_automation_tasks_not_in_whitelist(self):
         from utils.tasks import PAUSABLE_TASKS
         for task_id in ("universe_gui", "fight_gui", "app_update", "game_update",
                         "universe_update", "fight_update", "mobileui_update",
-                        "notify", "game", "screen_test"):
+                        "notify", "game"):
             assert task_id not in PAUSABLE_TASKS
 
 
@@ -84,12 +85,12 @@ class TestResolvePauseSupport:
 
     def test_builtin_pausable_tasks(self):
         from app.log_interface import LogInterface
-        for task_id in ("main", "daily", "currencywars", "divergentloop"):
+        for task_id in ("main", "daily", "currencywars", "divergentloop", "screen_test"):
             assert LogInterface._resolvePauseSupport(task_id) is True
 
     def test_builtin_non_pausable_tasks(self):
         from app.log_interface import LogInterface
-        for task_id in ("universe_gui", "app_update", "game_update", "screen_test"):
+        for task_id in ("universe_gui", "app_update", "game_update"):
             assert LogInterface._resolvePauseSupport(task_id) is False
 
     def test_workflow_task_is_pausable(self):
