@@ -54,31 +54,31 @@ msgstr "게임 실행"
 msgid "日志"
 msgstr "로그"
 
-#: app/log_interface.py:416
+#: app/log_interface.py:418
 msgid "任务日志"
 msgstr "임무 로그"
 
-#: app/log_interface.py:422
+#: app/log_interface.py:424
 msgid "等待任务..."
 msgstr "작업 대기 중..."
 
-#: app/log_interface.py:453
+#: app/log_interface.py:1830
 msgid "清空日志"
 msgstr "로그 지우기"
 
-#: app/log_interface.py:474
+#: app/log_interface.py:472
 msgid "配置定时任务"
 msgstr "예약 실행 설정"
 
-#: app/log_interface.py:1035
+#: app/log_interface.py:1042
 msgid "尚未配置定时任务"
 msgstr "예약된 임무 없음"
 
-#: app/log_interface.py:2357
+#: app/log_interface.py:2402
 msgid "任务完成"
 msgstr "임무 완료"
 
-#: app/log_interface.py:2360
+#: app/log_interface.py:2405
 msgid "任务已停止"
 msgstr "임무 중지됨"
 
@@ -789,27 +789,27 @@ msgstr "'종료'는 게임 종료를 의미합니다. 순환 모드 대신 로�
 msgid "无"
 msgstr "없음"
 
-#: app/log_interface.py:2283
+#: app/log_interface.py:2328
 msgid "关机"
 msgstr "시스템 종료"
 
-#: app/log_interface.py:2284
+#: app/log_interface.py:2329
 msgid "睡眠"
 msgstr "절전"
 
-#: app/log_interface.py:2285
+#: app/log_interface.py:2330
 msgid "休眠"
 msgstr "최대 절전"
 
-#: app/log_interface.py:2286
+#: app/log_interface.py:2331
 msgid "重启"
 msgstr "재부팅"
 
-#: app/log_interface.py:2287
+#: app/log_interface.py:2332
 msgid "注销"
 msgstr "로그오프"
 
-#: app/log_interface.py:2288
+#: app/log_interface.py:2333
 msgid "关闭显示器"
 msgstr "모니터 끄기"
 
@@ -1089,7 +1089,7 @@ msgstr "전체 실행"
 msgid "退出"
 msgstr "종료"
 
-#: app/log_interface.py:1321
+#: app/log_interface.py:1322
 msgid "任务正在运行"
 msgstr "임무 실행 중"
 
@@ -1153,7 +1153,7 @@ msgstr "게임 시작 중 (❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "프로그램이 트레이로 최소화되었습니다"
 
-#: app/log_interface.py:437
+#: app/log_interface.py:439
 msgid "停止任务"
 msgstr "임무 중지"
 
@@ -2271,7 +2271,7 @@ msgstr "업데이트 확인 중"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "기다려주세요, 업데이트 확인이 진행 중입니다"
 
-#: app/log_interface.py:963
+#: app/log_interface.py:970
 msgid "未命名"
 msgstr "이름 없음"
 
@@ -2349,7 +2349,7 @@ msgstr "터치스크린 모드 업데이트"
 msgid "批量使用兑换码，每行一个，自动过滤空格等无效字符"
 msgstr "리딤 코드를 대량으로 사용하며, 한 줄에 하나씩 입력하면 공백 등 무효 문자를 자동으로 필터링합니다"
 
-#: app/card/comboboxsettingcard2.py:66
+#: app/card/comboboxsettingcard2.py:65
 msgid "打开日志文件夹"
 msgstr "로그 폴더 열기"
 
@@ -3358,7 +3358,7 @@ msgstr "스크립트 또는 실행 파일 (*.exe *.bat *.cmd *.ps1)"
 msgid "截图失败(╥╯﹏╰╥)"
 msgstr "스크린샷 실패(╥╯﹏╰╥)"
 
-#: app/workflow_interface.py:1237
+#: app/workflow_interface.py:1224
 msgid "无法获取游戏窗口截图，请确认游戏窗口已打开"
 msgstr "게임 창 스크린샷을 가져올 수 없습니다. 게임 창이 열려 있는지 확인해 주세요."
 
@@ -4142,7 +4142,7 @@ msgstr "시뮬레이션 우주 폴더 열기（유지보수 중단）"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "시뮬레이션 우주 프로젝트 홈페이지 열기（유지보수 중단）"
 
-#: app/log_interface.py:456
+#: app/log_interface.py:455
 msgid "在游戏内显示日志"
 msgstr "게임 내 로그 표시"
 
@@ -4594,7 +4594,7 @@ msgstr "아래로 이동"
 msgid "步骤"
 msgstr "단계"
 
-#: module/workflow/__init__.py:889
+#: module/workflow/__init__.py:929
 msgid "包含截图"
 msgstr "스크린샷 포함"
 
@@ -4642,11 +4642,11 @@ msgstr "반복 횟수"
 msgid "无限"
 msgstr "무제한"
 
-#: module/workflow/__init__.py:916
+#: module/workflow/__init__.py:956
 msgid "子步骤"
 msgstr "하위 단계"
 
-#: module/workflow/__init__.py:916
+#: module/workflow/__init__.py:956
 msgid "个"
 msgstr "개"
 
@@ -4654,7 +4654,7 @@ msgstr "개"
 msgid "点击文字"
 msgstr "텍스트 클릭"
 
-#: module/workflow/__init__.py:854
+#: module/workflow/__init__.py:894
 msgid "精确"
 msgstr "정확 일치"
 
@@ -4670,7 +4670,7 @@ msgstr "떼기"
 msgid "点击"
 msgstr "클릭"
 
-#: module/workflow/__init__.py:857
+#: module/workflow/__init__.py:897
 msgid "匹配"
 msgstr "일치"
 
@@ -4678,7 +4678,7 @@ msgstr "일치"
 msgid "重试"
 msgstr "재시도"
 
-#: module/workflow/__init__.py:857
+#: module/workflow/__init__.py:897
 msgid "次"
 msgstr "회"
 
@@ -4686,7 +4686,7 @@ msgstr "회"
 msgid "点击图片"
 msgstr "이미지 클릭"
 
-#: module/workflow/__init__.py:850
+#: module/workflow/__init__.py:890
 msgid "阈值"
 msgstr "임계값"
 
@@ -4706,11 +4706,11 @@ msgstr "오디오 재생"
 msgid "等待"
 msgstr "대기"
 
-#: module/workflow/__init__.py:911
+#: module/workflow/__init__.py:951
 msgid "秒"
 msgstr "초"
 
-#: module/workflow/__init__.py:911
+#: module/workflow/__init__.py:951
 msgid "用于给界面或动画留出时间"
 msgstr "UI 또는 애니메이션에 여유 시간을 주기 위해 사용"
 
@@ -4918,7 +4918,7 @@ msgstr "전체 스크린샷 저장"
 msgid "保存选取截图"
 msgstr "선택 영역 스크린샷 저장"
 
-#: module/workflow/__init__.py:564
+#: module/workflow/__init__.py:604
 msgid "全屏"
 msgstr "전체 화면"
 
@@ -4946,15 +4946,15 @@ msgstr "이전 단계 실패"
 msgid "确认删除当前步骤吗？"
 msgstr "현재 단계를 삭제하시겠습니까?"
 
-#: module/workflow/__init__.py:868
+#: module/workflow/__init__.py:908
 msgid "时长"
 msgstr "누름 시간"
 
-#: module/workflow/__init__.py:854
+#: module/workflow/__init__.py:894
 msgid "包含"
 msgstr "부분 "
 
-#: module/workflow/__init__.py:855
+#: module/workflow/__init__.py:895
 msgid "未填写文字"
 msgstr "텍스트 미입력"
 
@@ -4978,7 +4978,7 @@ msgstr "대상 화면"
 msgid "请选择目标界面"
 msgstr "대상 화면을 선택하세요"
 
-#: module/workflow/__init__.py:895
+#: module/workflow/__init__.py:935
 msgid "未选择目标界面"
 msgstr "대상 화면이 선택되지 않음"
 
@@ -4986,11 +4986,11 @@ msgstr "대상 화면이 선택되지 않음"
 msgid "目标界面不可切换"
 msgstr "대상 화면으로 전환할 수 없습니다"
 
-#: app/workflow_interface.py:1290
+#: app/workflow_interface.py:1277
 msgid "截图窗口已打开，请框选后保存为流程素材"
 msgstr "캡처 창을 열었습니다. 영역을 선택한 뒤 워크플로 자료로 저장하세요"
 
-#: app/workflow_interface.py:1293
+#: app/workflow_interface.py:1280
 msgid "已打开截图工具"
 msgstr "캡처 도구를 열었습니다"
 
@@ -5034,15 +5034,15 @@ msgstr "워크플로 설명"
 msgid "结果"
 msgstr "결과"
 
-#: module/workflow/__init__.py:981
+#: module/workflow/__init__.py:1021
 msgid "失败"
 msgstr "실패"
 
-#: module/workflow/__init__.py:988
+#: module/workflow/__init__.py:1028
 msgid "条件"
 msgstr "조건"
 
-#: module/workflow/__init__.py:981
+#: module/workflow/__init__.py:1021
 msgid "成功"
 msgstr "성공"
 
@@ -5248,7 +5248,7 @@ msgstr "로그를 확인한 후 재시도하세요"
 msgid "正在解压更新包..."
 msgstr "업데이트 패키지 압축 해제 중..."
 
-#: app/log_interface.py:189
+#: app/log_interface.py:191
 msgid "检测到新版本：{version}"
 msgstr "새 버전 감지: {version}"
 
@@ -5434,11 +5434,11 @@ msgstr "드래그 끝점"
 msgid "滑动时长"
 msgstr "드래그 시간"
 
-#: module/workflow/__init__.py:866
+#: module/workflow/__init__.py:906
 msgid "未填写起点"
 msgstr "시작점이 입력되지 않았습니다"
 
-#: module/workflow/__init__.py:867
+#: module/workflow/__init__.py:907
 msgid "未填写终点"
 msgstr "끝점이 입력되지 않았습니다"
 
@@ -5486,15 +5486,15 @@ msgstr "선택 사항: 예) send(기본값) 또는 group"
 msgid "Crop 表达式"
 msgstr "Crop 표현식"
 
-#: module/workflow/__init__.py:805
+#: module/workflow/__init__.py:845
 msgid "ZIP 中未找到 workflow.yaml"
 msgstr "ZIP에서 workflow.yaml을 찾을 수 없습니다"
 
-#: module/workflow/__init__.py:796
+#: module/workflow/__init__.py:836
 msgid "ZIP 文件包含不安全路径，已拒绝导入"
 msgstr "ZIP 파일에 안전하지 않은 경로가 포함되어 있어 가져오기를 거부했습니다"
 
-#: module/workflow/__init__.py:810
+#: module/workflow/__init__.py:850
 msgid "workflow.yaml 格式无效"
 msgstr "workflow.yaml 형식이 올바르지 않습니다"
 
@@ -5502,19 +5502,19 @@ msgstr "workflow.yaml 형식이 올바르지 않습니다"
 msgid "⭐保存为流程 OCR 区域⭐"
 msgstr "⭐워크플로 OCR 영역으로 저장⭐"
 
-#: module/workflow/__init__.py:926
+#: module/workflow/__init__.py:966
 msgid "上一步返回 False"
 msgstr "이전 단계 결과 False"
 
-#: module/workflow/__init__.py:924
+#: module/workflow/__init__.py:964
 msgid "上一步返回 True"
 msgstr "이전 단계 결과 True"
 
-#: module/workflow/__init__.py:889
+#: module/workflow/__init__.py:929
 msgid "不含截图"
 msgstr "스크린샷 없음"
 
-#: module/workflow/__init__.py:779
+#: module/workflow/__init__.py:819
 msgid "不是有效的 ZIP 文件"
 msgstr "유효한 ZIP 파일이 아닙니다"
 
@@ -5542,7 +5542,7 @@ msgstr "가져오기 실패"
 msgid "导出失败"
 msgstr "내보내기 실패"
 
-#: module/workflow/__init__.py:752
+#: module/workflow/__init__.py:792
 msgid "工作流目录不存在"
 msgstr "워크플로 디렉터리가 존재하지 않습니다"
 
@@ -5562,7 +5562,7 @@ msgstr "삭제할 수 없습니다"
 msgid "无法添加子步骤"
 msgstr "하위 단계를 추가할 수 없습니다"
 
-#: module/workflow/__init__.py:931
+#: module/workflow/__init__.py:971
 msgid "无限次"
 msgstr "무제한"
 
@@ -5570,23 +5570,23 @@ msgstr "무제한"
 msgid "更新包信息不完整"
 msgstr "업데이트 패키지 정보가 불완전합니다"
 
-#: module/workflow/__init__.py:931
+#: module/workflow/__init__.py:971
 msgid "最多"
 msgstr "최대"
 
-#: module/workflow/__init__.py:906
+#: module/workflow/__init__.py:946
 msgid "未填写按键"
 msgstr "키 미입력"
 
-#: module/workflow/__init__.py:888
+#: module/workflow/__init__.py:928
 msgid "未填写消息内容"
 msgstr "메시지 내용 미입력"
 
-#: module/workflow/__init__.py:884
+#: module/workflow/__init__.py:924
 msgid "未填写音频路径"
 msgstr "오디오 파일 경로 미입력"
 
-#: module/workflow/__init__.py:848
+#: module/workflow/__init__.py:888
 msgid "未选择模板"
 msgstr "템플릿 미선택"
 
@@ -5664,11 +5664,11 @@ msgstr "횟수:"
 msgid "队伍："
 msgstr "팀: "
 
-#: app/log_interface.py:1032
+#: app/log_interface.py:1039
 msgid "已启用：{count}，下次：{time}"
 msgstr "활성화됨: {count}, 다음: {time}"
 
-#: app/log_interface.py:1290
+#: app/log_interface.py:1291
 msgid "正在运行：{name}"
 msgstr "실행 중: {name}"
 
@@ -5890,23 +5890,23 @@ msgstr "CDK가 입력되지 않았습니다 (╥╯﹏╰╥)"
 msgid "请先点击“修改”填写 Mirror 酱 CDK"
 msgstr "\"수정\"을 클릭하여 Mirror 짱 CDK를 입력하세요"
 
-#: app/log_interface.py:149
+#: app/log_interface.py:151
 msgid "已暂停"
 msgstr "일시 중지됨"
 
-#: app/log_interface.py:202
+#: app/log_interface.py:204
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "{stop} 중지 · {pause} 일시 중지"
 
-#: app/log_interface.py:446
+#: app/log_interface.py:448
 msgid "暂停任务"
 msgstr "임무 일시 중지"
 
-#: app/log_interface.py:451
+#: app/log_interface.py:453
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr "내장 임무만 일시 중지를 지원하며, 일시 중지 시 스크립트가 모든 동작을 중지합니다"
 
-#: app/log_interface.py:1743
+#: app/log_interface.py:1773
 msgid "继续任务"
 msgstr "임무 재개"
 
@@ -5914,6 +5914,14 @@ msgstr "임무 재개"
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "임무 일시 중지/재개 (전역 단축키, 백그라운드 지원)"
 
-#: app/log_interface.py:206
+#: app/log_interface.py:208
 msgid "按下 {stop} 停止任务"
 msgstr "{stop} 중지"
+
+#: app/log_interface.py:1825
+msgid "复制"
+msgstr "복사"
+
+#: app/log_interface.py:1828
+msgid "全选"
+msgstr "모두 선택"

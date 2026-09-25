@@ -54,31 +54,31 @@ msgstr "Launch"
 msgid "日志"
 msgstr "Log"
 
-#: app/log_interface.py:416
+#: app/log_interface.py:418
 msgid "任务日志"
 msgstr "Task Log"
 
-#: app/log_interface.py:422
+#: app/log_interface.py:424
 msgid "等待任务..."
 msgstr "Waiting for task..."
 
-#: app/log_interface.py:453
+#: app/log_interface.py:1830
 msgid "清空日志"
 msgstr "Clear Log"
 
-#: app/log_interface.py:474
+#: app/log_interface.py:472
 msgid "配置定时任务"
 msgstr "Configure Scheduled Tasks"
 
-#: app/log_interface.py:1035
+#: app/log_interface.py:1042
 msgid "尚未配置定时任务"
 msgstr "No scheduled tasks configured"
 
-#: app/log_interface.py:2357
+#: app/log_interface.py:2402
 msgid "任务完成"
 msgstr "Task Completed"
 
-#: app/log_interface.py:2360
+#: app/log_interface.py:2405
 msgid "任务已停止"
 msgstr "Task Stopped"
 
@@ -821,27 +821,27 @@ msgstr ""
 msgid "无"
 msgstr "None"
 
-#: app/log_interface.py:2283
+#: app/log_interface.py:2328
 msgid "关机"
 msgstr "Shutdown"
 
-#: app/log_interface.py:2284
+#: app/log_interface.py:2329
 msgid "睡眠"
 msgstr "Sleep"
 
-#: app/log_interface.py:2285
+#: app/log_interface.py:2330
 msgid "休眠"
 msgstr "Hibernate"
 
-#: app/log_interface.py:2286
+#: app/log_interface.py:2331
 msgid "重启"
 msgstr "Restart"
 
-#: app/log_interface.py:2287
+#: app/log_interface.py:2332
 msgid "注销"
 msgstr "Log off"
 
-#: app/log_interface.py:2288
+#: app/log_interface.py:2333
 msgid "关闭显示器"
 msgstr "Turn off Monitor"
 
@@ -1134,7 +1134,7 @@ msgstr "Full Run"
 msgid "退出"
 msgstr "Exit"
 
-#: app/log_interface.py:1321
+#: app/log_interface.py:1322
 msgid "任务正在运行"
 msgstr "Task Running"
 
@@ -1198,7 +1198,7 @@ msgstr "Launching Game (❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "Program minimized to tray"
 
-#: app/log_interface.py:437
+#: app/log_interface.py:439
 msgid "停止任务"
 msgstr "Stop Task"
 
@@ -2329,7 +2329,7 @@ msgstr "Checking for updates"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "Please wait, update check in progress"
 
-#: app/log_interface.py:963
+#: app/log_interface.py:970
 msgid "未命名"
 msgstr "Unnamed"
 
@@ -2409,7 +2409,7 @@ msgstr ""
 "Use redemption codes in bulk, one per line. Invalid characters like spaces "
 "will be filtered automatically"
 
-#: app/card/comboboxsettingcard2.py:66
+#: app/card/comboboxsettingcard2.py:65
 msgid "打开日志文件夹"
 msgstr "Open Log Folder"
 
@@ -3421,7 +3421,7 @@ msgstr "Script or executable files (*.exe *.bat *.cmd *.ps1)"
 msgid "截图失败(╥╯﹏╰╥)"
 msgstr "Screenshot Failed (╥╯﹏╰╥)"
 
-#: app/workflow_interface.py:1237
+#: app/workflow_interface.py:1224
 msgid "无法获取游戏窗口截图，请确认游戏窗口已打开"
 msgstr ""
 "Unable to capture the game window screenshot. Please make sure the game "
@@ -4225,7 +4225,7 @@ msgstr "Open Simulated Universe Dir (Stop Maintain)"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "Open Simulated Universe Project Homepage (Stop Maintain)"
 
-#: app/log_interface.py:456
+#: app/log_interface.py:455
 msgid "在游戏内显示日志"
 msgstr "Show Log in Game"
 
@@ -4691,7 +4691,7 @@ msgstr "Move Down"
 msgid "步骤"
 msgstr "Step"
 
-#: module/workflow/__init__.py:889
+#: module/workflow/__init__.py:929
 msgid "包含截图"
 msgstr "With Screenshot"
 
@@ -4740,11 +4740,11 @@ msgstr "Loop Count"
 msgid "无限"
 msgstr "Infinite"
 
-#: module/workflow/__init__.py:916
+#: module/workflow/__init__.py:956
 msgid "子步骤"
 msgstr "Child Steps"
 
-#: module/workflow/__init__.py:916
+#: module/workflow/__init__.py:956
 msgid "个"
 msgstr "items"
 
@@ -4752,7 +4752,7 @@ msgstr "items"
 msgid "点击文字"
 msgstr "Click Text"
 
-#: module/workflow/__init__.py:854
+#: module/workflow/__init__.py:894
 msgid "精确"
 msgstr "Exact"
 
@@ -4768,7 +4768,7 @@ msgstr "Release"
 msgid "点击"
 msgstr "Click"
 
-#: module/workflow/__init__.py:857
+#: module/workflow/__init__.py:897
 msgid "匹配"
 msgstr "Match"
 
@@ -4776,7 +4776,7 @@ msgstr "Match"
 msgid "重试"
 msgstr "Retry"
 
-#: module/workflow/__init__.py:857
+#: module/workflow/__init__.py:897
 msgid "次"
 msgstr "times"
 
@@ -4784,7 +4784,7 @@ msgstr "times"
 msgid "点击图片"
 msgstr "Click Image"
 
-#: module/workflow/__init__.py:850
+#: module/workflow/__init__.py:890
 msgid "阈值"
 msgstr "Threshold"
 
@@ -4804,11 +4804,11 @@ msgstr "Play Audio"
 msgid "等待"
 msgstr "Wait"
 
-#: module/workflow/__init__.py:911
+#: module/workflow/__init__.py:951
 msgid "秒"
 msgstr "sec"
 
-#: module/workflow/__init__.py:911
+#: module/workflow/__init__.py:951
 msgid "用于给界面或动画留出时间"
 msgstr "Used to give UI or animations time"
 
@@ -5018,7 +5018,7 @@ msgstr "Save Full Screenshot"
 msgid "保存选取截图"
 msgstr "Save Selected Screenshot"
 
-#: module/workflow/__init__.py:564
+#: module/workflow/__init__.py:604
 msgid "全屏"
 msgstr "Full Screen"
 
@@ -5046,15 +5046,15 @@ msgstr "Previous Step Failed"
 msgid "确认删除当前步骤吗？"
 msgstr "Delete the current step?"
 
-#: module/workflow/__init__.py:868
+#: module/workflow/__init__.py:908
 msgid "时长"
 msgstr "Duration"
 
-#: module/workflow/__init__.py:854
+#: module/workflow/__init__.py:894
 msgid "包含"
 msgstr "Partial "
 
-#: module/workflow/__init__.py:855
+#: module/workflow/__init__.py:895
 msgid "未填写文字"
 msgstr "No Text Entered"
 
@@ -5078,7 +5078,7 @@ msgstr "Target Screen"
 msgid "请选择目标界面"
 msgstr "Please select a target screen"
 
-#: module/workflow/__init__.py:895
+#: module/workflow/__init__.py:935
 msgid "未选择目标界面"
 msgstr "No Target Screen Selected"
 
@@ -5086,11 +5086,11 @@ msgstr "No Target Screen Selected"
 msgid "目标界面不可切换"
 msgstr "The target screen cannot be navigated to"
 
-#: app/workflow_interface.py:1290
+#: app/workflow_interface.py:1277
 msgid "截图窗口已打开，请框选后保存为流程素材"
 msgstr "Capture window opened. Select an area and save it as a workflow asset"
 
-#: app/workflow_interface.py:1293
+#: app/workflow_interface.py:1280
 msgid "已打开截图工具"
 msgstr "Capture tool opened"
 
@@ -5134,15 +5134,15 @@ msgstr "Workflow Description"
 msgid "结果"
 msgstr "Result"
 
-#: module/workflow/__init__.py:981
+#: module/workflow/__init__.py:1021
 msgid "失败"
 msgstr "Failed"
 
-#: module/workflow/__init__.py:988
+#: module/workflow/__init__.py:1028
 msgid "条件"
 msgstr "Condition"
 
-#: module/workflow/__init__.py:981
+#: module/workflow/__init__.py:1021
 msgid "成功"
 msgstr "Success"
 
@@ -5359,7 +5359,7 @@ msgstr "Please check the log and retry"
 msgid "正在解压更新包..."
 msgstr "Extracting update package..."
 
-#: app/log_interface.py:189
+#: app/log_interface.py:191
 msgid "检测到新版本：{version}"
 msgstr "Update available: {version}"
 
@@ -5551,11 +5551,11 @@ msgstr "Drag End"
 msgid "滑动时长"
 msgstr "Drag Duration"
 
-#: module/workflow/__init__.py:866
+#: module/workflow/__init__.py:906
 msgid "未填写起点"
 msgstr "Start point not specified"
 
-#: module/workflow/__init__.py:867
+#: module/workflow/__init__.py:907
 msgid "未填写终点"
 msgstr "End point not specified"
 
@@ -5605,15 +5605,15 @@ msgstr "Optional: e.g. send (default) or group"
 msgid "Crop 表达式"
 msgstr "Crop Expression"
 
-#: module/workflow/__init__.py:805
+#: module/workflow/__init__.py:845
 msgid "ZIP 中未找到 workflow.yaml"
 msgstr "workflow.yaml not found in ZIP"
 
-#: module/workflow/__init__.py:796
+#: module/workflow/__init__.py:836
 msgid "ZIP 文件包含不安全路径，已拒绝导入"
 msgstr "ZIP file contains unsafe paths; import rejected"
 
-#: module/workflow/__init__.py:810
+#: module/workflow/__init__.py:850
 msgid "workflow.yaml 格式无效"
 msgstr "Invalid workflow.yaml format"
 
@@ -5621,19 +5621,19 @@ msgstr "Invalid workflow.yaml format"
 msgid "⭐保存为流程 OCR 区域⭐"
 msgstr "⭐Save as Workflow OCR Area⭐"
 
-#: module/workflow/__init__.py:926
+#: module/workflow/__init__.py:966
 msgid "上一步返回 False"
 msgstr "Previous step returned False"
 
-#: module/workflow/__init__.py:924
+#: module/workflow/__init__.py:964
 msgid "上一步返回 True"
 msgstr "Previous step returned True"
 
-#: module/workflow/__init__.py:889
+#: module/workflow/__init__.py:929
 msgid "不含截图"
 msgstr "Without Screenshot"
 
-#: module/workflow/__init__.py:779
+#: module/workflow/__init__.py:819
 msgid "不是有效的 ZIP 文件"
 msgstr "Not a valid ZIP file"
 
@@ -5661,7 +5661,7 @@ msgstr "Import Failed"
 msgid "导出失败"
 msgstr "Export Failed"
 
-#: module/workflow/__init__.py:752
+#: module/workflow/__init__.py:792
 msgid "工作流目录不存在"
 msgstr "Workflow directory does not exist"
 
@@ -5682,7 +5682,7 @@ msgstr "Cannot Delete"
 msgid "无法添加子步骤"
 msgstr "Cannot Add Child Step"
 
-#: module/workflow/__init__.py:931
+#: module/workflow/__init__.py:971
 msgid "无限次"
 msgstr "Unlimited"
 
@@ -5690,23 +5690,23 @@ msgstr "Unlimited"
 msgid "更新包信息不完整"
 msgstr "Incomplete update package information"
 
-#: module/workflow/__init__.py:931
+#: module/workflow/__init__.py:971
 msgid "最多"
 msgstr "Max"
 
-#: module/workflow/__init__.py:906
+#: module/workflow/__init__.py:946
 msgid "未填写按键"
 msgstr "No Key Entered"
 
-#: module/workflow/__init__.py:888
+#: module/workflow/__init__.py:928
 msgid "未填写消息内容"
 msgstr "No Message Content Entered"
 
-#: module/workflow/__init__.py:884
+#: module/workflow/__init__.py:924
 msgid "未填写音频路径"
 msgstr "No Audio Path Entered"
 
-#: module/workflow/__init__.py:848
+#: module/workflow/__init__.py:888
 msgid "未选择模板"
 msgstr "No Template Selected"
 
@@ -5790,11 +5790,11 @@ msgstr "Count:"
 msgid "队伍："
 msgstr "Team: "
 
-#: app/log_interface.py:1032
+#: app/log_interface.py:1039
 msgid "已启用：{count}，下次：{time}"
 msgstr "Active: {count}, Next: {time}"
 
-#: app/log_interface.py:1290
+#: app/log_interface.py:1291
 msgid "正在运行：{name}"
 msgstr "Running: {name}"
 
@@ -6018,25 +6018,25 @@ msgstr "No CDK Configured (╥╯﹏╰╥)"
 msgid "请先点击“修改”填写 Mirror 酱 CDK"
 msgstr "Please click 'Modify' to enter your Mirror Chan CDK"
 
-#: app/log_interface.py:149
+#: app/log_interface.py:151
 msgid "已暂停"
 msgstr "Paused"
 
-#: app/log_interface.py:202
+#: app/log_interface.py:204
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "Press {stop} to stop · {pause} to pause"
 
-#: app/log_interface.py:446
+#: app/log_interface.py:448
 msgid "暂停任务"
 msgstr "Pause Task"
 
-#: app/log_interface.py:451
+#: app/log_interface.py:453
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr ""
 "Only built-in tasks support pausing; the script stops all actions while "
 "paused"
 
-#: app/log_interface.py:1743
+#: app/log_interface.py:1773
 msgid "继续任务"
 msgstr "Resume Task"
 
@@ -6044,6 +6044,14 @@ msgstr "Resume Task"
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "Pause/Resume Task (Global Hotkey, Background)"
 
-#: app/log_interface.py:206
+#: app/log_interface.py:208
 msgid "按下 {stop} 停止任务"
 msgstr "Press {stop} to stop"
+
+#: app/log_interface.py:1825
+msgid "复制"
+msgstr "Copy"
+
+#: app/log_interface.py:1828
+msgid "全选"
+msgstr "Select All"

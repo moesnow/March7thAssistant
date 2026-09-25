@@ -121,7 +121,7 @@ msgstr ""
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr ""
 
-#: app/card/comboboxsettingcard2.py:66
+#: app/card/comboboxsettingcard2.py:65
 msgid "打开日志文件夹"
 msgstr ""
 
@@ -670,107 +670,115 @@ msgstr ""
 msgid "编辑"
 msgstr ""
 
-#: app/log_interface.py:149
+#: app/log_interface.py:151
 msgid "已暂停"
 msgstr ""
 
-#: app/log_interface.py:189
+#: app/log_interface.py:191
 msgid "检测到新版本：{version}"
 msgstr ""
 
-#: app/log_interface.py:202
+#: app/log_interface.py:204
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr ""
 
-#: app/log_interface.py:206
+#: app/log_interface.py:208
 msgid "按下 {stop} 停止任务"
 msgstr ""
 
-#: app/log_interface.py:416
+#: app/log_interface.py:418
 msgid "任务日志"
 msgstr ""
 
-#: app/log_interface.py:422
+#: app/log_interface.py:424
 msgid "等待任务..."
 msgstr ""
 
-#: app/log_interface.py:437
+#: app/log_interface.py:439
 msgid "停止任务"
 msgstr ""
 
-#: app/log_interface.py:446
+#: app/log_interface.py:448
 msgid "暂停任务"
 msgstr ""
 
-#: app/log_interface.py:451
+#: app/log_interface.py:453
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr ""
 
-#: app/log_interface.py:453
-msgid "清空日志"
-msgstr ""
-
-#: app/log_interface.py:456
+#: app/log_interface.py:455
 msgid "在游戏内显示日志"
 msgstr ""
 
-#: app/log_interface.py:474
+#: app/log_interface.py:472
 msgid "配置定时任务"
 msgstr ""
 
-#: app/log_interface.py:963
+#: app/log_interface.py:970
 msgid "未命名"
 msgstr ""
 
-#: app/log_interface.py:1032
+#: app/log_interface.py:1039
 msgid "已启用：{count}，下次：{time}"
 msgstr ""
 
-#: app/log_interface.py:1035
+#: app/log_interface.py:1042
 msgid "尚未配置定时任务"
 msgstr ""
 
-#: app/log_interface.py:1290
+#: app/log_interface.py:1291
 msgid "正在运行：{name}"
 msgstr ""
 
-#: app/log_interface.py:1321
+#: app/log_interface.py:1322
 msgid "任务正在运行"
 msgstr ""
 
-#: app/log_interface.py:1743
+#: app/log_interface.py:1773
 msgid "继续任务"
 msgstr ""
 
-#: app/log_interface.py:2283
+#: app/log_interface.py:1825
+msgid "复制"
+msgstr ""
+
+#: app/log_interface.py:1828
+msgid "全选"
+msgstr ""
+
+#: app/log_interface.py:1830
+msgid "清空日志"
+msgstr ""
+
+#: app/log_interface.py:2328
 msgid "关机"
 msgstr ""
 
-#: app/log_interface.py:2284
+#: app/log_interface.py:2329
 msgid "睡眠"
 msgstr ""
 
-#: app/log_interface.py:2285
+#: app/log_interface.py:2330
 msgid "休眠"
 msgstr ""
 
-#: app/log_interface.py:2286
+#: app/log_interface.py:2331
 msgid "重启"
 msgstr ""
 
-#: app/log_interface.py:2287
+#: app/log_interface.py:2332
 msgid "注销"
 msgstr ""
 
-#: app/log_interface.py:2288
+#: app/log_interface.py:2333
 msgid "关闭显示器"
 msgstr ""
 
-#: app/log_interface.py:2357
+#: app/log_interface.py:2402
 msgid "任务完成"
 msgstr ""
 
-#: app/log_interface.py:2360
+#: app/log_interface.py:2405
 msgid "任务已停止"
 msgstr ""
 
@@ -4082,15 +4090,15 @@ msgstr ""
 msgid "确认删除当前步骤吗？"
 msgstr ""
 
-#: app/workflow_interface.py:1237
+#: app/workflow_interface.py:1224
 msgid "无法获取游戏窗口截图，请确认游戏窗口已打开"
 msgstr ""
 
-#: app/workflow_interface.py:1290
+#: app/workflow_interface.py:1277
 msgid "截图窗口已打开，请框选后保存为流程素材"
 msgstr ""
 
-#: app/workflow_interface.py:1293
+#: app/workflow_interface.py:1280
 msgid "已打开截图工具"
 msgstr ""
 
@@ -4276,135 +4284,135 @@ msgstr ""
 msgid "没有找到合适的下载URL"
 msgstr ""
 
-#: module/workflow/__init__.py:564
+#: module/workflow/__init__.py:604
 msgid "全屏"
 msgstr ""
 
-#: module/workflow/__init__.py:752
+#: module/workflow/__init__.py:792
 msgid "工作流目录不存在"
 msgstr ""
 
-#: module/workflow/__init__.py:779
+#: module/workflow/__init__.py:819
 msgid "不是有效的 ZIP 文件"
 msgstr ""
 
-#: module/workflow/__init__.py:796
+#: module/workflow/__init__.py:836
 msgid "ZIP 文件包含不安全路径，已拒绝导入"
 msgstr ""
 
-#: module/workflow/__init__.py:805
+#: module/workflow/__init__.py:845
 msgid "ZIP 中未找到 workflow.yaml"
 msgstr ""
 
-#: module/workflow/__init__.py:810
+#: module/workflow/__init__.py:850
 msgid "workflow.yaml 格式无效"
 msgstr ""
 
-#: module/workflow/__init__.py:848
+#: module/workflow/__init__.py:888
 msgid "未选择模板"
 msgstr ""
 
-#: module/workflow/__init__.py:850
+#: module/workflow/__init__.py:890
 msgid "阈值"
 msgstr ""
 
-#: module/workflow/__init__.py:854
+#: module/workflow/__init__.py:894
 msgid "包含"
 msgstr ""
 
-#: module/workflow/__init__.py:854
+#: module/workflow/__init__.py:894
 msgid "精确"
 msgstr ""
 
-#: module/workflow/__init__.py:855
+#: module/workflow/__init__.py:895
 msgid "未填写文字"
 msgstr ""
 
-#: module/workflow/__init__.py:857
+#: module/workflow/__init__.py:897
 msgid "匹配"
 msgstr ""
 
-#: module/workflow/__init__.py:857
+#: module/workflow/__init__.py:897
 msgid "次"
 msgstr ""
 
-#: module/workflow/__init__.py:866
+#: module/workflow/__init__.py:906
 msgid "未填写起点"
 msgstr ""
 
-#: module/workflow/__init__.py:867
+#: module/workflow/__init__.py:907
 msgid "未填写终点"
 msgstr ""
 
-#: module/workflow/__init__.py:868
+#: module/workflow/__init__.py:908
 msgid "时长"
 msgstr ""
 
-#: module/workflow/__init__.py:884
+#: module/workflow/__init__.py:924
 msgid "未填写音频路径"
 msgstr ""
 
-#: module/workflow/__init__.py:888
+#: module/workflow/__init__.py:928
 msgid "未填写消息内容"
 msgstr ""
 
-#: module/workflow/__init__.py:889
+#: module/workflow/__init__.py:929
 msgid "包含截图"
 msgstr ""
 
-#: module/workflow/__init__.py:889
+#: module/workflow/__init__.py:929
 msgid "不含截图"
 msgstr ""
 
-#: module/workflow/__init__.py:895
+#: module/workflow/__init__.py:935
 msgid "未选择目标界面"
 msgstr ""
 
-#: module/workflow/__init__.py:906
+#: module/workflow/__init__.py:946
 msgid "未填写按键"
 msgstr ""
 
-#: module/workflow/__init__.py:911
+#: module/workflow/__init__.py:951
 msgid "秒"
 msgstr ""
 
-#: module/workflow/__init__.py:911
+#: module/workflow/__init__.py:951
 msgid "用于给界面或动画留出时间"
 msgstr ""
 
-#: module/workflow/__init__.py:916
+#: module/workflow/__init__.py:956
 msgid "子步骤"
 msgstr ""
 
-#: module/workflow/__init__.py:916
+#: module/workflow/__init__.py:956
 msgid "个"
 msgstr ""
 
-#: module/workflow/__init__.py:924
+#: module/workflow/__init__.py:964
 msgid "上一步返回 True"
 msgstr ""
 
-#: module/workflow/__init__.py:926
+#: module/workflow/__init__.py:966
 msgid "上一步返回 False"
 msgstr ""
 
-#: module/workflow/__init__.py:931
+#: module/workflow/__init__.py:971
 msgid "无限次"
 msgstr ""
 
-#: module/workflow/__init__.py:931
+#: module/workflow/__init__.py:971
 msgid "最多"
 msgstr ""
 
-#: module/workflow/__init__.py:981
+#: module/workflow/__init__.py:1021
 msgid "成功"
 msgstr ""
 
-#: module/workflow/__init__.py:981
+#: module/workflow/__init__.py:1021
 msgid "失败"
 msgstr ""
 
-#: module/workflow/__init__.py:988
+#: module/workflow/__init__.py:1028
 msgid "条件"
 msgstr ""
 

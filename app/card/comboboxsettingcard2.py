@@ -6,8 +6,7 @@ from PySide6.QtWidgets import QPushButton
 
 from module.config import cfg
 from module.localization import tr
-import os
-import sys
+from utils.desktop import open_log_folder
 from ..tools.check_update import checkUpdate
 from app.common.signal_bus import signalBus
 
@@ -84,12 +83,7 @@ class ComboBoxSettingCardLog(SettingCard):
         cfg.set_value(self.configname, self.comboBox.itemData(index))
 
     def _onClicked(self):
-        if sys.platform == 'win32':
-            os.startfile(os.path.abspath("./logs"))
-        elif sys.platform == 'darwin':
-            os.system(f'open "{os.path.abspath("./logs")}"')
-        else:
-            os.system(f'xdg-open "{os.path.abspath("./logs")}"')
+        open_log_folder()
 
 
 class ComboBoxSettingCardLanguage(ComboBoxSettingCard2):

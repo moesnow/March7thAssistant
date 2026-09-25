@@ -8,7 +8,8 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
 from qfluentwidgets import (ScrollArea, PrimaryPushButton, PushButton,
                             FluentIcon, InfoBar, InfoBarPosition, CardWidget,
                             BodyLabel, StrongBodyLabel, PlainTextEdit,
-                            SwitchButton, IndicatorPosition, TimePicker)
+                            SwitchButton, IndicatorPosition, TimePicker,
+                            Action, RoundMenu, MenuAnimationType)
 import sys
 import os
 import locale
@@ -21,6 +22,7 @@ from module.game import get_game_controller
 from utils.tasks import TASK_NAMES, PAUSABLE_TASKS
 from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, STATE_PAUSING, STATE_PAUSED,
                          STATE_RUNNING, write_command, read_state, reset_files)
+from utils.desktop import open_log_folder
 from .schedule_dialog import ScheduleManagerDialog
 from module.notification import notif
 from module.localization import tr
@@ -450,9 +452,6 @@ class LogInterface(ScrollArea):
         self.pauseButton.setEnabled(False)
         self.pauseButton.setToolTip(tr('仅内置任务支持暂停，暂停后脚本将停止一切操作'))
 
-        self.clearButton = PushButton(FluentIcon.DELETE, tr('清空日志'))
-        self.clearButton.clicked.connect(self.clearLog)
-
         self.logOverlayLabel = BodyLabel(tr('在游戏内显示日志'))
         self.logOverlaySwitch = SwitchButton(tr('关'), self.buttonWidget, IndicatorPosition.RIGHT)
         self.logOverlaySwitch.checkedChanged.connect(self._onLogOverlayToggled)
@@ -462,7 +461,6 @@ class LogInterface(ScrollArea):
 
         self.buttonLayout.addWidget(self.stopButton)
         self.buttonLayout.addWidget(self.pauseButton)
-        self.buttonLayout.addWidget(self.clearButton)
         self.buttonLayout.addWidget(self.logOverlayLabel)
         self.buttonLayout.addWidget(self.logOverlaySwitch)
         self.buttonLayout.addSpacing(20)
@@ -511,6 +509,9 @@ class LogInterface(ScrollArea):
         self.logTextEdit.setMinimumHeight(425)
         # print(self.logTextEdit.height())
         self.logTextEdit.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # 日志显示区右键菜单（Fluent 风格 RoundMenu）：复制/全选 + 清空日志/打开日志文件夹
+        self.logTextEdit.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.logTextEdit.customContextMenuRequested.connect(self._showLogContextMenu)
 
         self.logCardLayout.addWidget(self.logTextEdit)
 
@@ -1815,6 +1816,21 @@ class LogInterface(ScrollArea):
         except Exception:
             pass
         self._syncPauseUi()
+
+    def _showLogContextMenu(self, pos):
+        """日志显示区右键菜单（Fluent 风格）。"""
+        menu = RoundMenu(parent=self.logTextEdit)
+
+        has_selection = bool(self.logTextEdit.textCursor().selectedText())
+        copy_action = Action(FluentIcon.COPY, tr('复制'), triggered=self.logTextEdit.copy)
+        copy_action.setEnabled(has_selection)
+        menu.addAction(copy_action)
+        menu.addAction(Action(FluentIcon.CHECKBOX, tr('全选'), triggered=self.logTextEdit.selectAll))
+        menu.addSeparator()
+        menu.addAction(Action(FluentIcon.DELETE, tr('清空日志'), triggered=self.clearLog))
+        menu.addAction(Action(FluentIcon.FOLDER, tr('打开日志文件夹'), triggered=open_log_folder))
+
+        menu.exec(self.logTextEdit.mapToGlobal(pos), aniType=MenuAnimationType.DROP_DOWN)
 
     def clearLog(self):
         """清空日志并清空缓冲"""
