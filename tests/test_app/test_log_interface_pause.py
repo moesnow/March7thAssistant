@@ -129,6 +129,78 @@ class TestResolvePauseSupport:
         assert LogInterface._resolvePauseSupport(task) is False
 
 
+class TestWorkflowLaunchResolution:
+    """workflow 标记形态的命令解析（唯一收口点）：frozen/开发态、单步运行、旧数据兼容。"""
+
+    def _resolve(self, task):
+        import shlex
+        from app.log_interface import LogInterface
+        program, args_text = LogInterface._resolveWorkflowLaunch(task)
+        return program, shlex.split(args_text)
+
+    def test_dev_mode_resolves_main_py(self, monkeypatch):
+        import sys
+        monkeypatch.delattr(sys, 'frozen', raising=False)
+        task = {"program": "workflow", "workflow_name": "示例流程", "args": "示例流程"}
+        program, tokens = self._resolve(task)
+        assert program == sys.executable
+        assert tokens[0].endswith("main.py")
+        assert tokens[tokens.index("--workflow-name") + 1] == "示例流程"
+
+    def test_frozen_mode_resolves_exe(self, monkeypatch):
+        import sys
+        monkeypatch.setattr(sys, 'frozen', True, raising=False)
+        task = {"program": "workflow", "workflow_name": "示例流程", "args": "示例流程"}
+        program, tokens = self._resolve(task)
+        assert program.lower().endswith("march7th assistant.exe")
+        assert not any(token.endswith("main.py") for token in tokens)
+        assert tokens[tokens.index("--workflow-name") + 1] == "示例流程"
+
+    def test_step_path_appended(self):
+        task = {"program": "workflow", "workflow_name": "示例流程",
+                "workflow_step_path": "0/1"}
+        _, tokens = self._resolve(task)
+        assert tokens[tokens.index("--workflow-step-path") + 1] == "0/1"
+
+    def test_without_step_path_omits_flag(self):
+        task = {"program": "workflow", "workflow_name": "示例流程"}
+        _, tokens = self._resolve(task)
+        assert "--workflow-step-path" not in tokens
+
+    def test_legacy_task_without_workflow_name_field(self):
+        # 旧数据：workflow_name 存在 args 里
+        task = {"program": "workflow", "args": "示例流程"}
+        _, tokens = self._resolve(task)
+        assert tokens[tokens.index("--workflow-name") + 1] == "示例流程"
+
+    def test_builder_output_resolves(self):
+        # 构造函数产出 → 解析收口点 的往返
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程", step_path=[0, 1], name="流程编排 - 示例流程")
+        program, tokens = self._resolve(task)
+        assert tokens[tokens.index("--workflow-name") + 1] == "示例流程"
+        assert tokens[tokens.index("--workflow-step-path") + 1] == "0/1"
+
+    def test_scheduled_payload_passes_workflow_fields(self):
+        from app.log_interface import LogInterface
+        iface = LogInterface.__new__(LogInterface)
+        payload = iface._buildScheduledTaskPayload({
+            'program': 'workflow', 'args': '示例流程', 'workflow_name': '示例流程',
+            'workflow_step_path': '0/1', 'id': 'x', 'trigger_mode': 'time',
+        })
+        assert payload['workflow_name'] == '示例流程'
+        assert payload['workflow_step_path'] == '0/1'
+
+    def test_scheduled_payload_omits_workflow_fields_for_external(self):
+        from app.log_interface import LogInterface
+        iface = LogInterface.__new__(LogInterface)
+        payload = iface._buildScheduledTaskPayload({
+            'program': 'BetterGI.exe', 'args': '--foo', 'id': 'x', 'trigger_mode': 'time',
+        })
+        assert 'workflow_name' not in payload
+        assert 'workflow_step_path' not in payload
+
+
 class TestPauseToggle:
     """按钮/热键共用的暂停切换逻辑。"""
 

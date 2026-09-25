@@ -302,6 +302,46 @@ def load_workflow_execution_payload(workflow_name: str, step_path=None) -> dict:
     return selected_workflow
 
 
+def format_workflow_step_path(step_path) -> str | None:
+    """把步骤路径格式化为 CLI 形态（如 "0/1"）。
+
+    接受下标序列（[0, 1] -> "0/1"）或已是该形态的字符串；None 原样返回。
+    """
+    if step_path is None:
+        return None
+    if isinstance(step_path, str):
+        text = step_path.strip()
+        return text or None
+    return "/".join(str(index) for index in step_path)
+
+
+def build_workflow_task(workflow_name: str, step_path=None, timeout: int = 0, name: str | None = None) -> dict:
+    """构造 workflow 启动任务字典（标记形态：program='workflow'）。
+
+    所有 GUI 启动入口（流程编排、定时任务等）统一产出该形态，
+    由 `LogInterface.startTask` 的 workflow 改写处唯一解析为实际命令行
+    （含 frozen/开发态分支），避免同一启动语义出现多份解析逻辑。
+
+    :param workflow_name: 要运行的流程名称
+    :param step_path: 仅运行指定步骤（下标序列或 "0/1" 形态字符串），None 运行整个流程
+    :param timeout: 超时秒数，0 表示不限制
+    :param name: 任务显示名，None 时由调用方/启动处自行命名
+    """
+    task = {
+        "program": "workflow",
+        "workflow_name": str(workflow_name),
+        # 兼容旧字段：早期数据把 workflow_name 直接存在 args 里，启动处保留回退读取
+        "args": str(workflow_name),
+        "timeout": int(timeout or 0),
+    }
+    formatted_path = format_workflow_step_path(step_path)
+    if formatted_path:
+        task["workflow_step_path"] = formatted_path
+    if name:
+        task["name"] = name
+    return task
+
+
 def get_workflow_directory(workflow=None) -> str | None:
     if isinstance(workflow, dict):
         base_dir = workflow.get("_workflow_base_dir")

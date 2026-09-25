@@ -908,7 +908,7 @@ class LogInterface(ScrollArea):
         return 'chain' if mode == 'chain' else 'time'
 
     def _buildScheduledTaskPayload(self, task) -> dict:
-        return {
+        payload = {
             'program': task.get('program', 'self'),
             'args': task.get('args', ''),
             'timeout': int(task.get('timeout', 0) or 0),
@@ -918,6 +918,12 @@ class LogInterface(ScrollArea):
             'id': task.get('id'),
             'trigger_mode': self._getScheduledTaskTriggerMode(task),
         }
+        # workflow 标记形态的字段透传给 _resolveWorkflowLaunch 解析
+        if payload['program'] == 'workflow':
+            payload['workflow_name'] = task.get('workflow_name', '')
+            if task.get('workflow_step_path'):
+                payload['workflow_step_path'] = task.get('workflow_step_path')
+        return payload
 
     def _findScheduledTaskIndex(self, task, tasks) -> int:
         task_id = task.get('id') if isinstance(task, dict) else None
@@ -1208,13 +1214,7 @@ class LogInterface(ScrollArea):
             program = str(task.get('program', '')).strip()
             args = str(task.get('args', '') or '')
             if program.lower() == 'workflow':
-                workflow_name = str(task.get('workflow_name') or args).strip()
-                if getattr(sys, 'frozen', False):
-                    program = os.path.abspath('./March7th Assistant.exe')
-                    args = shlex.join(['--workflow-name', workflow_name])
-                else:
-                    program = sys.executable
-                    args = shlex.join([os.path.abspath('main.py'), '--workflow-name', workflow_name])
+                program, args = self._resolveWorkflowLaunch(task)
             timeout = int(task.get('timeout', 0) or 0)
             if program.lower() == 'self':
                 self._startTask(args, timeout)
@@ -1661,6 +1661,25 @@ class LogInterface(ScrollArea):
     # ---------- 任务暂停/继续 ----------
 
     @staticmethod
+    def _resolveWorkflowLaunch(task):
+        """把 workflow 标记形态（program='workflow'）解析为实际启动命令（唯一的解析收口点）。
+
+        支持 workflow_name / workflow_step_path 字段（经 module.workflow.build_workflow_task 构造）；
+        兼容旧数据：workflow_name 缺失时回退读取 args，无 step_path 则运行整个流程。
+        """
+        args = str(task.get('args', '') or '')
+        workflow_name = str(task.get('workflow_name') or args).strip()
+        command = ['--workflow-name', workflow_name]
+        step_path = task.get('workflow_step_path')
+        if step_path not in (None, ''):
+            command.extend(['--workflow-step-path', str(step_path)])
+        if getattr(sys, 'frozen', False):
+            program = os.path.abspath('./March7th Assistant.exe')
+            return program, shlex.join(command)
+        program = sys.executable
+        return program, shlex.join([os.path.abspath('main.py'), *command])
+
+    @staticmethod
     def _resolvePauseSupport(command_or_task):
         """判断启动目标是否支持暂停。
 
@@ -1679,7 +1698,7 @@ class LogInterface(ScrollArea):
                 args_tokens = shlex.split(args_text) if args_text else []
             except Exception:
                 args_tokens = args_text.split()
-            # 流程编排/自定义任务经 main.py（或 March7th Assistant.exe）+ --workflow-name 启动
+            # legacy fallback：兼容手写 --workflow-name 的自定义任务/历史启动形态
             return '--workflow-name' in args_tokens
         return str(command_or_task) in PAUSABLE_TASKS
 

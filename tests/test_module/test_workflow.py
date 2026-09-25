@@ -694,3 +694,47 @@ class TestDuplicateWorkflowNameExtended:
         from module.workflow import duplicate_workflow_name
         result = duplicate_workflow_name("测试流程", set())
         assert result == "测试流程"
+
+
+class TestFormatWorkflowStepPath:
+    def test_list_input(self):
+        from module.workflow import format_workflow_step_path
+        assert format_workflow_step_path([0, 1]) == "0/1"
+
+    def test_string_passthrough(self):
+        from module.workflow import format_workflow_step_path
+        assert format_workflow_step_path(" 0/1/2 ") == "0/1/2"
+
+    def test_none_and_empty(self):
+        from module.workflow import format_workflow_step_path
+        assert format_workflow_step_path(None) is None
+        assert format_workflow_step_path("") is None
+
+
+class TestBuildWorkflowTask:
+    """workflow 启动任务统一构造：产出 program='workflow' 标记形态。"""
+
+    def test_marker_form_fields(self):
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程")
+        assert task["program"] == "workflow"
+        assert task["workflow_name"] == "示例流程"
+        assert task["args"] == "示例流程"  # 兼容旧字段
+        assert task["timeout"] == 0
+        assert "workflow_step_path" not in task
+
+    def test_step_path_from_indices(self):
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程", step_path=[0, 1])
+        assert task["workflow_step_path"] == "0/1"
+
+    def test_step_path_from_string(self):
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程", step_path="0/1/2")
+        assert task["workflow_step_path"] == "0/1/2"
+
+    def test_name_and_timeout(self):
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程", timeout=60, name="流程编排 - 示例流程")
+        assert task["name"] == "流程编排 - 示例流程"
+        assert task["timeout"] == 60

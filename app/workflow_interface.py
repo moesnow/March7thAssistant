@@ -2,7 +2,6 @@
 import copy
 import os
 import re
-import shlex
 import sys
 
 from PySide6.QtCore import Qt
@@ -49,6 +48,7 @@ from module.workflow import (
     CONDITION_TYPE_LABELS,
     STEP_TYPE_LABELS,
     WORKFLOW_USER_INFO_KEYS,
+    build_workflow_task,
     can_change_to_screen_from_main,
     duplicate_workflow_name,
     export_workflow_to_zip,
@@ -1193,25 +1193,12 @@ class WorkflowInterface(ScrollArea):
         return f"{workflow_name} - {title}"
 
     def _build_workflow_task(self, selected_path=None) -> dict:
-        args = ["--workflow-name", self._current_workflow()["name"]]
-        if selected_path:
-            path_text = "/".join(str(index) for index in selected_path)
-            args.extend(["--workflow-step-path", path_text])
-
-        if getattr(sys, 'frozen', False):
-            program = os.path.abspath("./March7th Assistant.exe")
-            task_args = shlex.join(args)
-        else:
-            program = sys.executable
-            main_script = os.path.abspath("main.py")
-            task_args = shlex.join([main_script, *args])
-
-        return {
-            "name": f"{tr('流程编排')} - {self._workflow_task_display_name(selected_path)}",
-            "program": program,
-            "args": task_args,
-            "timeout": 0,
-        }
+        # 统一产出 program='workflow' 标记形态，实际命令行由 startTask 的 workflow 改写处唯一解析
+        return build_workflow_task(
+            self._current_workflow()["name"],
+            step_path=selected_path,
+            name=f"{tr('流程编排')} - {self._workflow_task_display_name(selected_path)}",
+        )
 
     def _start_workflow_execution(self, selected_path=None):
         main_window = self._get_main_window()
