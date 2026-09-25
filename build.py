@@ -31,10 +31,11 @@ def generate_changelog(version: str, output_file: Path) -> None:
     log_content = get_changelog(version)
 
     # 生成最终内容
-    # 推广块用 m7a:hide 标记包裹：GitHub 网页照常展示，应用内更新弹窗会整块剥离
-    final_output = f"""{log_content}
+    # 推广块用 m7a:hide 标记包裹，GitHub 网页照常展示，应用内更新弹窗整块剥离。
+    # 开头标记紧贴上一行行尾、链接保持 "\n\n[...](...)" 形状：
+    # 已发布的旧版客户端按 \r\n\r\n 锚点清理推广块，需保持该形状以兼容。
+    final_output = f"""{log_content}<!-- m7a:hide -->
 
-<!-- m7a:hide -->
 [已有 Mirror酱 CDK？前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable&source=m7a-release)
 <!-- /m7a:hide -->"""
 

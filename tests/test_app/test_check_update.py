@@ -53,6 +53,14 @@ class TestParseReleaseBody:
         body = "<!--m7a:hide-->隐藏<!--/m7a:hide-->"
         assert "隐藏" not in _parse_release_body(body)
 
+    def test_hidden_block_glued_to_previous_line(self):
+        # build.py 的双兼容布局：开头标记紧贴上一行行尾
+        body = "- [文档](https://x)<!-- m7a:hide -->\n\n[推广](https://example.com)\n<!-- /m7a:hide -->"
+        result = _parse_release_body(body)
+        assert "推广" not in result
+        assert "m7a:hide" not in result
+        assert "[文档](https://x)" in result
+
     def test_removes_mirror_link_inside_hidden_block(self):
         body = (
             "<!-- m7a:hide -->\r\n"
