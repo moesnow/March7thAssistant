@@ -52,6 +52,22 @@ def switch_to_game():
     log.hr("完成", 2)
 
 
+def ensure_game_ready():
+    """校验游戏窗口存在并切换到前台（workflow 执行前置）。
+
+    与流程编排启动语义一致：游戏未启动或切换失败时记录错误并返回 False，
+    由调用方决定如何终止（本地与云游戏均经 controller 处理）。
+    """
+    controller = get_game_controller()
+    if not controller.is_game_running():
+        log.error("未检测到游戏窗口，workflow 未执行")
+        return False
+    if not controller.switch_to_game():
+        log.error("切换到游戏窗口失败，workflow 未执行")
+        return False
+    return True
+
+
 def start_game():
     MAX_RETRY = 3
 

@@ -278,6 +278,10 @@ def run_notify_action():
 
 
 def run_workflow_action(workflow_name: str, workflow_step_path=None):
+    # 与流程编排启动语义一致：游戏未启动或无法切换到游戏窗口时直接报错终止，
+    # 避免按键/点击打进当前聚焦的其它窗口（定时任务、命令行直跑均在此收口）
+    if not game.ensure_game_ready():
+        sys.exit(1)
     workflow = load_workflow_execution_payload(workflow_name, workflow_step_path)
     runner = WorkflowRunner(
         log_callback=lambda message: print(message, flush=True),
