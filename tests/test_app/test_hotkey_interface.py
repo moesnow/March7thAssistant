@@ -123,3 +123,41 @@ class TestHotkeyCancelRestore:
             'hotkey_warp': cfg.get_value('hotkey_warp'),
         })
         assert len(saves) == 1
+
+
+class TestHotkeyDialogAnimation:
+    """开关动画：效果分体挂载（回归：整窗挂效果导致列表内容动画结束时突兀闪现）。"""
+
+    def _pump(self, qapp, seconds):
+        import time
+        t0 = time.monotonic()
+        while time.monotonic() - t0 < seconds:
+            qapp.processEvents()
+            time.sleep(0.005)
+
+    def test_fade_uses_split_effects_not_window_wide(self, dlg, qapp):
+        # 钉住一个长动画，稳定断言效果挂载位置
+        dlg._start_fade(0.5, 0.5, 5000, None)
+        # 整窗挂效果是 bug 根源，绝不能出现
+        assert dlg.graphicsEffect() is None
+        # 外壳与列表内容各自带透明度效果
+        assert dlg.widget.graphicsEffect() is not None
+        assert dlg._scroll.widget().graphicsEffect() is not None
+
+        dlg._stop_fade()
+        # 动画收尾后效果清理、内容框投影恢复
+        assert dlg._scroll.widget().graphicsEffect() is None
+        assert dlg.widget.graphicsEffect() is not None
+
+    def test_done_fades_out_then_closes(self, dlg, qapp):
+        import time
+        self._pump(qapp, 0.5)  # 等淡入完成
+
+        t0 = time.monotonic()
+        dlg._onCancelClicked()
+        while not dlg.isHidden() and time.monotonic() - t0 < 2.0:
+            qapp.processEvents()
+            time.sleep(0.005)
+
+        assert dlg.isHidden()  # 动画结束后真正关闭
+        assert time.monotonic() - t0 < 2.0
