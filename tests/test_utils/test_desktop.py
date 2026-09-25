@@ -8,7 +8,8 @@ from utils import desktop
 def test_open_path_uses_startfile_on_win32(monkeypatch):
     calls = []
     monkeypatch.setattr(desktop.sys, 'platform', 'win32')
-    monkeypatch.setattr(desktop.os, 'startfile', lambda path: calls.append(path))
+    # os.startfile 仅存在于 Windows：在 Linux/macOS 上补桩测试 win32 分支时需 raising=False
+    monkeypatch.setattr(desktop.os, 'startfile', lambda path: calls.append(path), raising=False)
     desktop.open_path("./logs")
     assert calls == [os.path.abspath("./logs")]
 
