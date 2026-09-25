@@ -24,16 +24,50 @@ class TestParseReleaseBody:
         assert "img2" not in result
         assert "Text" in result
 
-    def test_removes_promotional_text(self):
-        body = "\r\n\r\n首次使用请阅读说明，否则无法正常使用！"
+    def test_removes_hidden_block(self):
+        body = (
+            "前言\n"
+            "<!-- m7a:hide -->\n"
+            "[推广内容](https://example.com)\n"
+            "<!-- /m7a:hide -->\n"
+            "后记"
+        )
         result = _parse_release_body(body)
-        assert "首次" not in result
+        assert "推广内容" not in result
+        assert "m7a:hide" not in result
+        assert "前言" in result
+        assert "后记" in result
 
-    def test_removes_mirror_link(self):
-        body = '\r\n\r\n[Mirror酱CDK下载](https://www.mirrorchyan.com/test)'
+    def test_removes_multiple_hidden_blocks(self):
+        body = (
+            "A\n<!-- m7a:hide -->\n隐藏一\n<!-- /m7a:hide -->\n"
+            "B\n<!-- m7a:hide -->\n隐藏二\n<!-- /m7a:hide -->\nC"
+        )
+        result = _parse_release_body(body)
+        assert "隐藏" not in result
+        assert "A" in result
+        assert "B" in result
+        assert "C" in result
+
+    def test_hidden_block_tolerates_whitespace_variants(self):
+        body = "<!--m7a:hide-->隐藏<!--/m7a:hide-->"
+        assert "隐藏" not in _parse_release_body(body)
+
+    def test_removes_mirror_link_inside_hidden_block(self):
+        body = (
+            "<!-- m7a:hide -->\r\n"
+            "[Mirror酱CDK下载](https://www.mirrorchyan.com/test)\r\n"
+            "<!-- /m7a:hide -->"
+        )
         result = _parse_release_body(body)
         assert "Mirror酱" not in result
         assert "mirrorchyan" not in result
+
+    def test_keeps_content_outside_hidden_block(self):
+        # 不再按文案清洗：标记之外的内容一律保留
+        body = "\r\n\r\n[Mirror酱CDK下载](https://www.mirrorchyan.com/test)"
+        result = _parse_release_body(body)
+        assert "Mirror酱" in result
 
     def test_preserves_normal_content(self):
         body = "## v1.0.0\n- Bug fixes\n- Performance improvements"

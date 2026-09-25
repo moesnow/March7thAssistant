@@ -21,16 +21,19 @@ class UpdateStatus(Enum):
     FAILURE = 0
 
 
+_HIDDEN_BLOCK_RE = re.compile(r"<!--\s*m7a:hide\s*-->.*?<!--\s*/m7a:hide\s*-->", flags=re.DOTALL)
+_IMAGE_RE = re.compile(r"!\[.*?\]\(.*?\)")
+
+
 def _parse_release_body(body: str) -> str:
-    """清理更新日志中的图片和推广文本。"""
-    body = re.sub(r"!\[.*?\]\(.*?\)", "", body)
-    body = re.sub(r"\r\n\r\n首次.*?无法.*?！", "", body, flags=re.DOTALL)
-    body = re.sub(
-        r"\r\n\r\n\[.*?Mirror酱.*?CDK.*?下载\]\(https?://.*?mirrorchyan\.com[^\)]*\)",
-        "",
-        body,
-        flags=re.IGNORECASE,
-    )
+    """清理更新日志中应用内不展示的内容。
+
+    发布时由 build.py 用 <!-- m7a:hide --> ... <!-- /m7a:hide --> 包裹仅在
+    GitHub 网页展示的内容（如推广块），这里整块剥离，不关心具体文案；
+    图片受弹窗渲染能力限制，另行去除。
+    """
+    body = _HIDDEN_BLOCK_RE.sub("", body)
+    body = _IMAGE_RE.sub("", body)
     return body
 
 
