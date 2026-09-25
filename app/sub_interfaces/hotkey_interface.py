@@ -92,9 +92,15 @@ class HotkeyInterface(MessageBox):
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidget(list_container)
-        # 为标题、布局边距与按钮区（81px）预留空间，保证整个弹窗在屏幕内完整可见
-        screen_height = QApplication.primaryScreen().availableGeometry().height()
-        scroll.setMaximumHeight(max(240, screen_height - 320))
+        # 弹窗按最小尺寸收缩，而 QScrollArea 的 sizeHint 远小于实际内容，
+        # 因此这里显式以内容尺寸为下限撑开弹窗；超过屏幕上限的部分内部滚动。
+        screen = QApplication.primaryScreen().availableGeometry()
+        max_height = max(240, screen.height() - 320)  # 为标题、布局边距与按钮区（81px）留出空间
+        content_min = list_container.minimumSizeHint()
+        scroll.setMinimumHeight(min(content_min.height(), max_height))
+        scroll.setMaximumHeight(max_height)
+        # 宽度为内容下限 + 滚动条占位，避免纵向滚动条出现后卡片被横向裁切
+        scroll.setMinimumWidth(min(content_min.width() + 20, screen.width() - 120))
         scroll.setStyleSheet("QScrollArea{background: transparent; border: none;}")
         self.textLayout.addWidget(scroll, 1)
 

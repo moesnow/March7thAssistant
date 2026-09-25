@@ -66,6 +66,22 @@ class TestHotkeyInterfaceLayout:
         assert yes_bottom <= screen.height()
         assert cancel_bottom <= screen.height()
 
+    def test_scroll_area_sized_to_content(self, dlg):
+        """滚动区必须按内容撑开：弹窗不能塌成一小条（回归：高度塌缩）。"""
+        from PySide6.QtWidgets import QScrollArea
+
+        scroll = dlg.findChild(QScrollArea)
+        # 至少同时看到两个条目（每张卡片约 70px 高）
+        assert scroll.height() >= 140
+        # 内容未超出上限时应完整可见
+        content_height = scroll.widget().minimumSizeHint().height()
+        assert scroll.height() >= min(content_height, scroll.maximumHeight())
+
+    def test_cards_not_clipped_horizontally(self, dlg):
+        """卡片不得被横向裁切（回归：滚动区宽度不足导致按钮被切掉）。"""
+        for card in dlg.pushButton_dict.values():
+            assert card.width() >= card.minimumSizeHint().width()
+
     def test_all_hotkeys_listed_including_pause(self, dlg):
         assert "hotkey_pause_task" in dlg.pushButton_dict
         assert len(dlg.pushButton_dict) == 7
