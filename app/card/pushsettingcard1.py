@@ -125,6 +125,12 @@ class PushSettingCardMirrorchyan(SettingCard):
         self._validation_thread = None
         self.destroyed.connect(self._cleanup_validation_thread)
 
+        self.button4 = QPushButton(tr("查询天数"), self)
+        self.button4.setObjectName('primaryButton')
+        self.hBoxLayout.addWidget(self.button4, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.button4.clicked.connect(self.__onclicked4)
+
         self.button3 = QPushButton(tr("交流反馈"), self)
         self.button3.setObjectName('primaryButton')
         self.hBoxLayout.addWidget(self.button3, 0, Qt.AlignmentFlag.AlignRight)
@@ -172,6 +178,15 @@ class PushSettingCardMirrorchyan(SettingCard):
         thread.validationFinished.connect(self._on_cdk_validated)
         self._validation_thread = thread
         thread.start()
+        InfoBar.info(
+            title=tr("正在查询 CDK 剩余天数…"),
+            content="",
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=1500,
+            parent=self.window(),
+        )
 
     def _on_cdk_validated(self, success, result):
         if success:
@@ -214,6 +229,20 @@ class PushSettingCardMirrorchyan(SettingCard):
 
     def __onclicked3(self):
         QDesktopServices.openUrl(QUrl("https://pd.qq.com/g/MirrorChyan"))
+
+    def __onclicked4(self):
+        if not self.configvalue:
+            InfoBar.warning(
+                title=tr("尚未填写 CDK (╥╯﹏╰╥)"),
+                content=tr('请先点击“修改”填写 Mirror 酱 CDK'),
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self.window(),
+            )
+            return
+        self._start_cdk_validation(self.configvalue)
 
 
 class FetchLatestCodesWorker(QObject):

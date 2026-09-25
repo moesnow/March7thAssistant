@@ -14,11 +14,11 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: tools.i18n\n"
 
-#: app/main_window.py:314
+#: app/main_window.py:321
 msgid "设置"
 msgstr "Settings"
 
-#: app/main_window.py:275
+#: app/main_window.py:282
 msgid "主页"
 msgstr "Home"
 
@@ -38,19 +38,19 @@ msgstr "FAQ"
 msgid "更新日志"
 msgstr "Changelog"
 
-#: app/main_window.py:278
+#: app/main_window.py:285
 msgid "抽卡记录"
 msgstr "Warp"
 
-#: app/main_window.py:279
+#: app/main_window.py:286
 msgid "工具箱"
 msgstr "Toolbox"
 
-#: app/main_window.py:284
+#: app/main_window.py:291
 msgid "启动游戏"
 msgstr "Launch"
 
-#: app/main_window.py:288
+#: app/main_window.py:295
 msgid "日志"
 msgstr "Log"
 
@@ -74,15 +74,15 @@ msgstr "Configure Scheduled Tasks"
 msgid "尚未配置定时任务"
 msgstr "No scheduled tasks configured"
 
-#: app/log_interface.py:2053
+#: app/log_interface.py:2062
 msgid "任务完成"
 msgstr "Task Completed"
 
-#: app/log_interface.py:2056
+#: app/log_interface.py:2065
 msgid "任务已停止"
 msgstr "Task Stopped"
 
-#: app/main_window.py:304
+#: app/main_window.py:311
 msgid "赞赏"
 msgstr "Donate"
 
@@ -142,7 +142,7 @@ msgstr "Power Settings"
 msgid "体力计划"
 msgstr "Power Plan"
 
-#: app/card/pushsettingcard1.py:815
+#: app/card/pushsettingcard1.py:843
 msgid "配置"
 msgstr "Config"
 
@@ -821,27 +821,27 @@ msgstr ""
 msgid "无"
 msgstr "None"
 
-#: app/log_interface.py:1986
+#: app/log_interface.py:1995
 msgid "关机"
 msgstr "Shutdown"
 
-#: app/log_interface.py:1987
+#: app/log_interface.py:1996
 msgid "睡眠"
 msgstr "Sleep"
 
-#: app/log_interface.py:1988
+#: app/log_interface.py:1997
 msgid "休眠"
 msgstr "Hibernate"
 
-#: app/log_interface.py:1989
+#: app/log_interface.py:1998
 msgid "重启"
 msgstr "Restart"
 
-#: app/log_interface.py:1990
+#: app/log_interface.py:1999
 msgid "注销"
 msgstr "Log off"
 
-#: app/log_interface.py:1991
+#: app/log_interface.py:2000
 msgid "关闭显示器"
 msgstr "Turn off Monitor"
 
@@ -1108,11 +1108,11 @@ msgstr ""
 msgid "Mirror 酱 CDK"
 msgstr "Mirror Chan CDK"
 
-#: app/main_window.py:306
+#: app/main_window.py:313
 msgid "支持作者🥰"
 msgstr "Support Author 🥰"
 
-#: app/main_window.py:307
+#: app/main_window.py:314
 msgid ""
 "此程序为免费开源项目，如果你付了钱请立刻退款\n"
 "如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n"
@@ -1122,11 +1122,11 @@ msgstr ""
 "If you like it, consider buying the author a coffee ☕\n"
 "Your support powers development! 🚀"
 
-#: app/main_window.py:333
+#: app/main_window.py:340
 msgid "显示主界面"
 msgstr "Show Main Interface"
 
-#: app/main_window.py:338
+#: app/main_window.py:345
 msgid "完整运行"
 msgstr "Full Run"
 
@@ -1138,63 +1138,63 @@ msgstr "Exit"
 msgid "任务正在运行"
 msgstr "Task Running"
 
-#: app/main_window.py:420
+#: app/main_window.py:442
 msgid "请先停止当前任务后再启动新任务"
 msgstr "Please stop current task before starting new one"
 
-#: app/main_window.py:691
+#: app/main_window.py:713
 msgid "配置已更新"
 msgstr "Config Updated"
 
-#: app/main_window.py:692
+#: app/main_window.py:714
 msgid "检测到配置文件变化，已自动重新加载"
 msgstr "Config file change detected, reloaded automatically"
 
-#: app/main_window.py:602
+#: app/main_window.py:624
 msgid "配置加载失败"
 msgstr "Config Load Failed"
 
-#: app/main_window.py:872
+#: app/main_window.py:894
 msgid "启动成功(＾∀＾●)"
 msgstr "Process started (＾∀＾●)"
 
-#: app/main_window.py:912
+#: app/main_window.py:934
 msgid "启动失败"
 msgstr "Start Failed"
 
-#: app/main_window.py:902
+#: app/main_window.py:924
 msgid "游戏路径配置错误(╥╯﹏╰╥)"
 msgstr "Game path config error (╥╯﹏╰╥)"
 
-#: app/main_window.py:882
+#: app/main_window.py:904
 msgid "浏览器或驱动下载失败 (╥╯﹏╰╥)"
 msgstr "Browser/Driver download failed (╥╯﹏╰╥)"
 
-#: app/main_window.py:883
+#: app/main_window.py:905
 msgid "请检查网络连接是否正常"
 msgstr "Please check network connection"
 
-#: app/main_window.py:892
+#: app/main_window.py:914
 msgid "云游戏启动失败(╥╯﹏╰╥)"
 msgstr "Cloud Game start failed (╥╯﹏╰╥)"
 
-#: app/main_window.py:893
+#: app/main_window.py:915
 msgid "请检查所选浏览器是否存在，网络连接是否正常"
 msgstr "Check if browser exists and network is normal"
 
-#: app/main_window.py:841
+#: app/main_window.py:863
 msgid "正在下载内置浏览器(ง •̀_•́)ง"
 msgstr "Downloading built-in browser (ง •̀_•́)ง"
 
-#: app/main_window.py:842
+#: app/main_window.py:864
 msgid "下载成功后，将自动启动云·星穹铁道"
 msgstr "Will auto start Cloud StarRail after download"
 
-#: app/main_window.py:851
+#: app/main_window.py:873
 msgid "正在启动游戏(❁´◡`❁)"
 msgstr "Launching Game (❁´◡`❁)"
 
-#: app/main_window.py:781
+#: app/main_window.py:803
 msgid "程序已最小化到托盘"
 msgstr "Program minimized to tray"
 
@@ -1390,7 +1390,7 @@ msgstr "Confirm continue and enable Touch Mode?"
 msgid "确认"
 msgstr "Confirm"
 
-#: app/card/card_edit_dialog.py:414
+#: app/card/card_edit_dialog.py:467
 msgid "取消"
 msgstr "Cancel"
 
@@ -1406,11 +1406,11 @@ msgstr "Auto Dialogue Started"
 msgid "自动对话已停止"
 msgstr "Auto Dialogue Stopped"
 
-#: app/card/pushsettingcard1.py:339
+#: app/card/pushsettingcard1.py:367
 msgid "暂无已使用兑换码"
 msgstr "No used redemption codes"
 
-#: app/card/pushsettingcard1.py:343
+#: app/card/pushsettingcard1.py:371
 msgid "已使用兑换码"
 msgstr "Used Redemption Codes"
 
@@ -1418,67 +1418,67 @@ msgstr "Used Redemption Codes"
 msgid "关闭"
 msgstr "Close"
 
-#: app/card/pushsettingcard1.py:359
+#: app/card/pushsettingcard1.py:387
 msgid "确认清空已使用兑换码"
 msgstr "Confirm clear used redemption codes"
 
-#: app/card/pushsettingcard1.py:360
+#: app/card/pushsettingcard1.py:388
 msgid "此操作不可撤销，是否继续？"
 msgstr "Irreversible operation. Continue?"
 
-#: app/card/pushsettingcard1.py:368
+#: app/card/pushsettingcard1.py:396
 msgid "已清空已使用兑换码"
 msgstr "Used redemption codes cleared"
 
-#: app/card/pushsettingcard1.py:389
+#: app/card/pushsettingcard1.py:417
 msgid "兑换码为空"
 msgstr "Redemption code is empty"
 
-#: app/card/pushsettingcard1.py:403
+#: app/card/pushsettingcard1.py:431
 msgid "无法判断服务器类型"
 msgstr "Cannot determine server type"
 
-#: app/card/pushsettingcard1.py:404
+#: app/card/pushsettingcard1.py:432
 msgid "无法获取最新兑换码"
 msgstr "Cannot get latest codes"
 
-#: app/card/pushsettingcard1.py:411
+#: app/card/pushsettingcard1.py:439
 msgid "获取服务器信息失败"
 msgstr "Failed to get server info"
 
-#: app/card/pushsettingcard1.py:489
+#: app/card/pushsettingcard1.py:517
 msgid "时间无效"
 msgstr "Invalid Time"
 
-#: app/card/pushsettingcard1.py:490
+#: app/card/pushsettingcard1.py:518
 msgid "所选时间无法转换为时间戳，已使用默认时间"
 msgstr "Selected time invalid, used default"
 
-#: app/card/pushsettingcard1.py:510
+#: app/card/pushsettingcard1.py:538
 msgid "按下要绑定的按键"
 msgstr "Press key to bind"
 
-#: app/card/pushsettingcard1.py:513
+#: app/card/pushsettingcard1.py:541
 msgid "按住以修改"
 msgstr "Hold to modify"
 
-#: app/card/pushsettingcard1.py:521
+#: app/card/pushsettingcard1.py:549
 msgid "已改为 {key}"
 msgstr "Changed to {key}"
 
-#: app/card/pushsettingcard1.py:707
+#: app/card/pushsettingcard1.py:735
 msgid "修改队伍1"
 msgstr "Edit Team 1"
 
-#: app/card/pushsettingcard1.py:713
+#: app/card/pushsettingcard1.py:741
 msgid "修改队伍2"
 msgstr "Edit Team 2"
 
-#: app/card/pushsettingcard1.py:719
+#: app/card/pushsettingcard1.py:747
 msgid "交换队伍"
 msgstr "Swap Teams"
 
-#: app/card/pushsettingcard1.py:733
+#: app/card/pushsettingcard1.py:761
 msgid ""
 "队伍1: {team1}\n"
 "队伍2: {team2}"
@@ -1486,27 +1486,27 @@ msgstr ""
 "Team 1: {team1}\n"
 "Team 2: {team2}"
 
-#: app/card/pushsettingcard1.py:749
+#: app/card/pushsettingcard1.py:777
 msgid "交换成功"
 msgstr "Swap Success"
 
-#: app/card/pushsettingcard1.py:750
+#: app/card/pushsettingcard1.py:778
 msgid "队伍1和队伍2已成功交换"
 msgstr "Team 1 and Team 2 swapped"
 
-#: app/card/pushsettingcard1.py:759
+#: app/card/pushsettingcard1.py:787
 msgid "队伍1"
 msgstr "Team 1"
 
-#: app/card/pushsettingcard1.py:762
+#: app/card/pushsettingcard1.py:790
 msgid "队伍2"
 msgstr "Team 2"
 
-#: app/card/pushsettingcard1.py:788
+#: app/card/pushsettingcard1.py:816
 msgid "暂无计划"
 msgstr "No Plan"
 
-#: app/card/pushsettingcard1.py:789
+#: app/card/pushsettingcard1.py:817
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "Configured {count} plan"
@@ -2403,7 +2403,7 @@ msgstr "Update Fhoe-Rail"
 msgid "触屏模式更新"
 msgstr "Touchscreen Mode Update"
 
-#: app/card/pushsettingcard1.py:246
+#: app/card/pushsettingcard1.py:274
 msgid "批量使用兑换码，每行一个，自动过滤空格等无效字符"
 msgstr ""
 "Use redemption codes in bulk, one per line. Invalid characters like spaces "
@@ -2421,11 +2421,11 @@ msgstr "Enable {name} Notification"
 msgid "（支持图片）"
 msgstr " (Supports Images)"
 
-#: app/card/pushsettingcard1.py:128
+#: app/card/pushsettingcard1.py:134
 msgid "交流反馈"
 msgstr "Feedback"
 
-#: app/card/pushsettingcard1.py:134
+#: app/card/pushsettingcard1.py:140
 msgid "获取 CDK"
 msgstr "Get CDK"
 
@@ -3305,27 +3305,27 @@ msgstr "Wuthering Waves ok-ww"
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
-#: app/main_window.py:590
+#: app/main_window.py:612
 msgid "更新成功"
 msgstr "Update Successful"
 
-#: app/card/pushsettingcard1.py:311
+#: app/card/pushsettingcard1.py:339
 msgid "开始获取"
 msgstr "Start Fetching"
 
-#: app/card/pushsettingcard1.py:311
+#: app/card/pushsettingcard1.py:339
 msgid "正在获取最新兑换码..."
 msgstr "Fetching latest codes..."
 
-#: app/card/pushsettingcard1.py:323
+#: app/card/pushsettingcard1.py:351
 msgid "未获取到兑换码"
 msgstr "No codes found"
 
-#: app/card/pushsettingcard1.py:327
+#: app/card/pushsettingcard1.py:355
 msgid "获取成功"
 msgstr "Fetch Success"
 
-#: app/card/pushsettingcard1.py:328
+#: app/card/pushsettingcard1.py:356
 msgid "已获取 {count} 个兑换码"
 msgid_plural "已获取 {count} 个兑换码|plural"
 msgstr[0] "Fetched {count} code"
@@ -3475,7 +3475,7 @@ msgstr ""
 "When enabled, detection bounding boxes will be drawn in real-time on screen "
 "(transparent overlay) for debugging automation recognition. Windows only."
 
-#: app/card/pushsettingcard1.py:845
+#: app/card/pushsettingcard1.py:873
 msgid "为特定的副本配置队伍"
 msgstr "Configure teams for specific dungeons"
 
@@ -3483,7 +3483,7 @@ msgstr "Configure teams for specific dungeons"
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr "Default team when no rules match: "
 
-#: app/card/pushsettingcard1.py:843
+#: app/card/pushsettingcard1.py:871
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] "{count} rule configured"
@@ -4336,59 +4336,59 @@ msgstr "Open Fhoe-Rail Directory"
 msgid "打开锄大地项目主页"
 msgstr "Open Fhoe-Rail Project Homepage"
 
-#: app/card/card_edit_dialog.py:372
+#: app/card/card_edit_dialog.py:425
 msgid "编辑主页卡片"
 msgstr "Edit Home Cards"
 
-#: app/card/card_edit_dialog.py:227
+#: app/card/card_edit_dialog.py:280
 msgid "图标"
 msgstr "Icon"
 
-#: app/card/card_edit_dialog.py:239
+#: app/card/card_edit_dialog.py:292
 msgid "标题："
 msgstr "Title:"
 
-#: app/card/card_edit_dialog.py:242
+#: app/card/card_edit_dialog.py:295
 msgid "卡片标题"
 msgstr "Card Title"
 
-#: app/card/card_edit_dialog.py:270
+#: app/card/card_edit_dialog.py:323
 msgid "操作类型："
 msgstr "Action Type:"
 
-#: app/card/card_edit_dialog.py:272
+#: app/card/card_edit_dialog.py:325
 msgid "单个任务"
 msgstr "Single Task"
 
-#: app/card/card_edit_dialog.py:272
+#: app/card/card_edit_dialog.py:325
 msgid "任务菜单"
 msgstr "Task Menu"
 
-#: app/card/card_edit_dialog.py:176
+#: app/card/card_edit_dialog.py:229
 msgid "任务："
 msgstr "Task:"
 
-#: app/card/card_edit_dialog.py:300
+#: app/card/card_edit_dialog.py:353
 msgid "添加菜单项"
 msgstr "Add Menu Item"
 
-#: app/card/card_edit_dialog.py:154
+#: app/card/card_edit_dialog.py:207
 msgid "菜单项名称"
 msgstr "Menu Item Name"
 
-#: app/card/card_edit_dialog.py:174
+#: app/card/card_edit_dialog.py:227
 msgid "名称："
 msgstr "Name:"
 
-#: app/card/card_edit_dialog.py:407
+#: app/card/card_edit_dialog.py:460
 msgid "添加卡片"
 msgstr "Add Card"
 
-#: app/card/card_edit_dialog.py:409
+#: app/card/card_edit_dialog.py:462
 msgid "恢复默认"
 msgstr "Restore Defaults"
 
-#: app/card/card_edit_dialog.py:412
+#: app/card/card_edit_dialog.py:465
 msgid "确定"
 msgstr "Confirm"
 
@@ -4423,7 +4423,7 @@ msgstr "Download Proxy"
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "Leave empty to use system proxy; supports http:// and socks5://"
 
-#: app/card/card_edit_dialog.py:326
+#: app/card/card_edit_dialog.py:379
 msgid "选择图标"
 msgstr "Select Icon"
 
@@ -4950,7 +4950,7 @@ msgstr "Press Duration"
 msgid "请选择模板图片"
 msgstr "Please select a template image"
 
-#: app/card/card_edit_dialog.py:477
+#: app/card/card_edit_dialog.py:530
 msgid "保存失败"
 msgstr "Save Failed"
 
@@ -5363,11 +5363,11 @@ msgstr "Extracting update package..."
 msgid "检测到新版本：{version}"
 msgstr "Update available: {version}"
 
-#: app/card/card_edit_dialog.py:490
+#: app/card/card_edit_dialog.py:543
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr "Menu item name in task menu cannot be empty"
 
-#: app/card/card_edit_dialog.py:478
+#: app/card/card_edit_dialog.py:531
 msgid "卡片标题不能为空"
 msgstr "Card title cannot be empty"
 
@@ -5387,27 +5387,27 @@ msgstr "Updater not found"
 msgid "正在关闭相关进程..."
 msgstr "Closing related processes..."
 
-#: app/card/pushsettingcard1.py:287
+#: app/card/pushsettingcard1.py:315
 msgid "正在获取"
 msgstr "Fetching"
 
-#: app/card/pushsettingcard1.py:321
+#: app/card/pushsettingcard1.py:349
 msgid "获取最新兑换码失败"
 msgstr "Failed to fetch latest codes"
 
-#: app/card/pushsettingcard1.py:287
+#: app/card/pushsettingcard1.py:315
 msgid "请等待当前获取完成"
 msgstr "Please wait for current fetch to complete"
 
-#: app/card/pushsettingcard1.py:188
+#: app/card/pushsettingcard1.py:202
 msgid "CDK 有效 (＾∀＾●)"
 msgstr "CDK Valid (＾∀＾●)"
 
-#: app/card/pushsettingcard1.py:186
+#: app/card/pushsettingcard1.py:200
 msgid "今天到期"
 msgstr "Expires today"
 
-#: app/card/pushsettingcard1.py:203
+#: app/card/pushsettingcard1.py:217
 msgid "CDK 验证失败 (╥╯﹏╰╥)"
 msgstr "CDK Validation Failed (╥╯﹏╰╥)"
 
@@ -5505,11 +5505,11 @@ msgstr "Fate[UBW] Character Collab Warp"
 msgid "Fate[UBW]光锥联动跃迁"
 msgstr "Fate[UBW] Light Cone Collab Warp"
 
-#: app/main_window.py:828
+#: app/main_window.py:850
 msgid "游戏已在运行"
 msgstr "Game Already Running"
 
-#: app/main_window.py:829
+#: app/main_window.py:851
 msgid "无需重复启动游戏"
 msgstr "There is no need to launch it again"
 
@@ -5748,7 +5748,7 @@ msgstr ""
 "Game client version is too old. Please download the latest client from the "
 "launcher"
 
-#: app/card/pushsettingcard1.py:184
+#: app/card/pushsettingcard1.py:198
 msgid "剩余 {count} 天"
 msgid_plural "剩余 {count} 天|plural"
 msgstr[0] "{count} day remaining"
@@ -5760,7 +5760,7 @@ msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "Auto-exit in {count} second"
 msgstr[1] "Auto-exit in {count} seconds"
 
-#: app/main_window.py:903
+#: app/main_window.py:925
 msgid "请在“设置”→“程序”中配置"
 msgstr "Please configure in 'Settings' → 'Program'"
 
@@ -5870,7 +5870,7 @@ msgstr "Completed(＾∀＾●)"
 msgid "执行出错"
 msgstr "Execution Failed"
 
-#: app/main_window.py:482
+#: app/main_window.py:504
 msgid "语言切换失败"
 msgstr "Failed to switch language"
 
@@ -6001,3 +6001,19 @@ msgstr[1] "Detected {count} events"
 #: tasks/tool/screenshot.py:715
 msgid "（已使用橙色矩形标记）"
 msgstr "(marked with an orange rectangle)"
+
+#: app/card/pushsettingcard1.py:128
+msgid "查询天数"
+msgstr "Check Remaining Days"
+
+#: app/card/pushsettingcard1.py:182
+msgid "正在查询 CDK 剩余天数…"
+msgstr "Checking remaining CDK days…"
+
+#: app/card/pushsettingcard1.py:235
+msgid "尚未填写 CDK (╥╯﹏╰╥)"
+msgstr "No CDK Configured (╥╯﹏╰╥)"
+
+#: app/card/pushsettingcard1.py:236
+msgid "请先点击“修改”填写 Mirror 酱 CDK"
+msgstr "Please click 'Modify' to enter your Mirror Chan CDK"
