@@ -222,6 +222,7 @@ weekly_divergent_level: 5 # 执行差分宇宙时的难度等级，取值范围 
 weekly_divergent_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的时间戳，用于记录和控制运行频率。
 weekly_divergent_bonus_enable: false # 在领取积分奖励后自动执行饰品提取消耗沉浸器。true 开启，false 关闭。
 weekly_divergent_stable_mode: false # 是否启用差分宇宙低性能兼容模式，建议仅在低性能设备开启，可以提高事件和随意门交互的成功率（云游戏强制使用此模式）。true 开启，false 关闭。
+divergent_auto_save_enable: true # 探索成功后自动保存到第一个空存档位；没有空位时跳过。true 开启，false 关闭。
 
 # 差分宇宙站点优先级配置
 divergent_station_priority_enable: false # 是否启用自定义站点优先级。true 开启，false 关闭。关闭时使用默认优先级。
