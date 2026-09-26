@@ -5903,3 +5903,11 @@ msgstr "コピー"
 #: app/log_interface.py:1828
 msgid "全选"
 msgstr "すべて選択"
+
+#: app/setting_interface.py:632
+msgid "自动记录差分宇宙存档"
+msgstr "差分宇宙のセーブデータを自動保存"
+
+#: app/setting_interface.py:633
+msgid "探索成功后保存到第一个空存档位；存档已满时跳过"
+msgstr "探索成功後、最初の空きセーブデータ枠に保存します。すべての枠が埋まっている場合はスキップします。"

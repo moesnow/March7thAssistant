@@ -627,6 +627,12 @@ class SettingInterface(ScrollArea):
             tr("建议仅在低性能设备开启，可以提高事件和随意门交互的成功率（云游戏强制使用此模式）"),
             "weekly_divergent_stable_mode"
         )
+        self.divergentAutoSaveCard = SwitchSettingCard1(
+            FIF.SAVE_AS,
+            tr("自动记录差分宇宙存档"),
+            tr("探索成功后保存到第一个空存档位；存档已满时跳过"),
+            "divergent_auto_save_enable"
+        )
 
         self.stationPriorityCard = StationPrioritySettingCard(
             FIF.MENU,
@@ -2609,6 +2615,7 @@ class SettingInterface(ScrollArea):
         self.UniverseGroup.addSettingCard(self.weeklyDivergentLevelCard)
         self.UniverseGroup.addSettingCard(self.stationPriorityCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentStableModeCard)
+        self.UniverseGroup.addSettingCard(self.divergentAutoSaveCard)
 
         self.UniverseGroup.addSettingCard(self.universeEnableCard)
         self.universeEnableCard.addSettingCards([
