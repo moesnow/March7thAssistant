@@ -12,20 +12,25 @@ class Power:
     def run():
         Power.preprocess()
 
-        # 优先执行体力计划
-        Power.execute_power_plan()
-
         log.hr("开始清体力", 0)
 
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names[instance_type]
+        target = None
 
         try:
-            if cfg.build_target_enable and (target := BuildTarget.get_target_instance()):
-                instance_type, instance_name = target
-                log.info(f"使用培养目标副本: {instance_type} - {instance_name}")
+            if cfg.build_target_enable:
+                target = BuildTarget.get_target_instance()
         except Exception as e:
             log.error(f"获取培养目标副本失败: {e}")
+
+        if target:
+            instance_type, instance_name = target
+            log.info(f"使用培养目标副本: {instance_type} - {instance_name}")
+        else:
+            # 未启用培养目标、识别失败，或培养目标按配置回退至自定义副本时，
+            # 才优先执行用户配置的体力计划。
+            Power.execute_power_plan()
 
         if not Instance.validate_instance(instance_type, instance_name):
             log.hr("完成", 2)
