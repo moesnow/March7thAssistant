@@ -6063,3 +6063,15 @@ msgstr "Auto-save Divergent Universe runs"
 #: app/setting_interface.py:633
 msgid "探索成功后保存到第一个空存档位；存档已满时跳过"
 msgstr "After a successful run, save to the first empty slot. Skip if all slots are full."
+
+#: app/setting_interface.py:251
+msgid "每周清理遗器"
+msgstr ""
+
+#: app/setting_interface.py:257
+msgid "启用智能弃置"
+msgstr ""
+
+#: app/setting_interface.py:258
+msgid "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
+msgstr ""
