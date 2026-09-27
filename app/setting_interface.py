@@ -8,11 +8,11 @@ from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction, TimestampSwitchSettingCard, WeeklySwitchSettingCard, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction, TimestampSwitchSettingCard, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
-from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableTimestampSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
+from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableWeeklyRelicSettingCard, ExpandableTimestampSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
 from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
@@ -246,11 +246,17 @@ class SettingInterface(ScrollArea):
             tr("单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"),
             "use_fuel"
         )
-        self.weeklyRelicCleanupEnableCard = WeeklySwitchSettingCard(
-            FIF.FILTER,
-            tr("每周清理遗器"),
+        self.weeklyRelicCleanupEnableCard = ExpandableWeeklyRelicSettingCard(
             "break_down_level_four_relicset",
             "weekly_relic_cleanup_day_of_week",
+            FIF.FILTER,
+            tr("每周清理遗器"),
+        )
+        self.smartRelicDiscardEnableCard = SwitchSettingCard1(
+            FIF.DELETE,
+            tr("启用智能弃置"),
+            tr("按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"),
+            "weekly_relic_smart_discard_enable",
         )
         self.mergeImmersifierEnableCard = SwitchSettingCardImmersifier(
             FIF.BASKETBALL,
@@ -2526,7 +2532,6 @@ class SettingInterface(ScrollArea):
         self.PowerGroup.addSettingCard(self.powerPlanCard)
         self.PowerGroup.addSettingCard(self.instanceTypeCard)
         # self.PowerGroup.addSettingCard(self.calyxGoldenPreferenceCard)
-        self.PowerGroup.addSettingCard(self.instanceTypeCard)
         self.instanceTypeCard.addSettingCards([
             self.instanceTeamEnableCard,
             self.tpBeforeInstanceEnableCard,
@@ -2536,6 +2541,8 @@ class SettingInterface(ScrollArea):
             self.mergeImmersifierEnableCard,
             self.instanceNameChallengeCountCard
         ])
+        self.weeklyRelicCleanupEnableCard.addSettingCard(self.smartRelicDiscardEnableCard)
+        self.weeklyRelicCleanupEnableCard.expandAni.valueChanged.connect(self.instanceTypeCard._adjustViewSize)
         self.PowerGroup.addSettingCard(self.instanceNameCard)
         self.PowerGroup.addSettingCard(self.borrowEnableCard)
         # 将子卡片添加到 borrowEnableCard 的可展开区域
@@ -2849,6 +2856,7 @@ class SettingInterface(ScrollArea):
         for notify_card in self.notifyEnableGroup:
             connect_expand_state(notify_card)
         connect_expand_state(self.instanceTypeCard)
+        connect_expand_state(self.weeklyRelicCleanupEnableCard)
         connect_expand_state(self.echoofwarEnableCard)
         connect_expand_state(self.browserTypeCard)
         connect_expand_state(self.browserHeadlessCard)
