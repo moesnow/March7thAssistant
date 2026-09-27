@@ -8,7 +8,7 @@ from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
-from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction, TimestampSwitchSettingCard, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
+from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction, TimestampSwitchSettingCard, WeeklySwitchSettingCard, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
@@ -246,11 +246,11 @@ class SettingInterface(ScrollArea):
             tr("单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"),
             "use_fuel"
         )
-        self.breakDownLevelFourRelicsetEnableCard = SwitchSettingCard1(
+        self.weeklyRelicCleanupEnableCard = WeeklySwitchSettingCard(
             FIF.FILTER,
-            tr("自动分解四星遗器（建议在游戏内配置结算遗器时自动分解）"),
-            tr("侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"),
-            "break_down_level_four_relicset"
+            tr("每周清理遗器"),
+            "break_down_level_four_relicset",
+            "weekly_relic_cleanup_day_of_week",
         )
         self.mergeImmersifierEnableCard = SwitchSettingCardImmersifier(
             FIF.BASKETBALL,
@@ -2532,7 +2532,7 @@ class SettingInterface(ScrollArea):
             self.tpBeforeInstanceEnableCard,
             self.useReservedTrailblazePowerEnableCard,
             self.useFuelEnableCard,
-            self.breakDownLevelFourRelicsetEnableCard,
+            self.weeklyRelicCleanupEnableCard,
             self.mergeImmersifierEnableCard,
             self.instanceNameChallengeCountCard
         ])
