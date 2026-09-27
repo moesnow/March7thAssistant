@@ -6063,3 +6063,7 @@ msgstr "Auto-save Divergent Universe runs"
 #: app/setting_interface.py:633
 msgid "探索成功后保存到第一个空存档位；存档已满时跳过"
 msgstr "After a successful run, save to the first empty slot. Skip if all slots are full."
+
+#: app/setting_interface.py:251
+msgid "每周清理遗器"
+msgstr ""
