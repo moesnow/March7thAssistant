@@ -197,8 +197,14 @@ jobs:
           $t = [System.Diagnostics.Stopwatch]::StartNew()
           & $zs a -t7z -m0=flzma2 -ms=on -mx=9 .\temp\full-flzma2-mx9.7z $src | Out-Null
           $t.Stop()
-          if ($LASTEXITCODE -ne 0) { Write-Host "flzma2 full compress failed"; exit 1 }
+          if ($LASTEXITCODE -ne 0) { Write-Host "flzma2 mx9 full compress failed"; exit 1 }
           $rows += [PSCustomObject]@{ Method = "ZS    flzma2 -mx=9        "; Sec = [math]::Round($t.Elapsed.TotalSeconds,1); Bytes = (Get-Item .\temp\full-flzma2-mx9.7z).Length }
+
+          $t = [System.Diagnostics.Stopwatch]::StartNew()
+          & $zs a -t7z -m0=flzma2 -ms=on -mx=7 .\temp\full-flzma2-mx7.7z $src | Out-Null
+          $t.Stop()
+          if ($LASTEXITCODE -ne 0) { Write-Host "flzma2 mx7 full compress failed"; exit 1 }
+          $rows += [PSCustomObject]@{ Method = "ZS    flzma2 -mx=7        "; Sec = [math]::Round($t.Elapsed.TotalSeconds,1); Bytes = (Get-Item .\temp\full-flzma2-mx7.7z).Length }
 
           $base = $rows[0]
           Write-Host ""
@@ -209,14 +215,16 @@ jobs:
             Write-Host ("{0}  {1,8:N1}s  {2,10:N0} B  ({3}x faster, {4:+0.00;-0.00;0.00}% size)" -f $r.Method, $r.Sec, $r.Bytes, $speed, $delta)
           }
 
-      # 兼容性：stock 7za 解开 flzma2 完整包
+      # 兼容性：stock 7za 解开 flzma2 完整包（mx=9 与 mx=7 各验一次）
       - name: Compatibility check (full)
         run: |
           $stock = ".\assets\binary\7za.exe"
-          Write-Host "=== stock 7za CRC-tests flzma2 full archive ==="
-          & $stock t .\temp\full-flzma2-mx9.7z | Select-Object -Last 6
-          if ($LASTEXITCODE -ne 0) { Write-Host "COMPAT FAIL: stock cannot verify full flzma2 archive"; exit 1 }
-          Write-Host "COMPAT OK: stock verifies flzma2 full archive"
+          foreach ($a in @(".\temp\full-flzma2-mx9.7z", ".\temp\full-flzma2-mx7.7z")) {
+            Write-Host "=== stock 7za CRC-tests $a ==="
+            & $stock t $a | Select-Object -Last 6
+            if ($LASTEXITCODE -ne 0) { Write-Host "COMPAT FAIL: stock cannot verify $a"; exit 1 }
+          }
+          Write-Host "COMPAT OK: stock verifies flzma2 full archives (mx=9 and mx=7)"
 
       # 汇总
       - name: Summary
@@ -227,5 +235,6 @@ jobs:
           Write-Host ""
           Write-Host "See benchmark tables above for speed/size."
           Write-Host "If flzma2 holds on this 4-vCPU runner, production switch would be:"
-          Write-Host "  - CI downloads ZS, packs update.7z / full.7z with -m0=flzma2 -mx=9"
+          Write-Host "  - CI downloads ZS, packs update.7z with -m0=flzma2 -mx=7"
+          Write-Host "  - full.7z with -m0=flzma2 (mx=7 vs mx=9 decided by the tables above)"
           Write-Host "  - bundled 7za stays stock (still able to extract flzma2 => LZMA2 output)"
