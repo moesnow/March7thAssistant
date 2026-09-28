@@ -68,8 +68,12 @@ jobs:
           New-Item -ItemType Directory -Force -Path .\temp\7zzs | Out-Null
           curl.exe -sL -o .\temp\7zzs-setup.exe "$env:ZS_URL"
           if ($LASTEXITCODE -ne 0) { Write-Host "download failed"; exit 1 }
+          $sz = (Get-Item .\temp\7zzs-setup.exe).Length
+          Write-Host "downloaded 7zzs-setup.exe: $sz bytes"
+          if ($sz -lt 1000000) { Write-Host "download too small, likely failed"; exit 1 }
           # 用仓库自带的 stock 7za 解开安装包
-          .\assets\binary\7za.exe x -y .\temp\7zzs-setup.exe -o.\temp\7zzs
+          # 注意：PowerShell 会把 -o.\temp\7zzs 拆成两个 token，必须整体加引号
+          .\assets\binary\7za.exe x -y ".\temp\7zzs-setup.exe" "-o.\temp\7zzs"
           if ($LASTEXITCODE -ne 0) { Write-Host "extract failed"; exit 1 }
 
           Write-Host "=== stock 7za (bundled) ==="
@@ -128,7 +132,7 @@ jobs:
 
           Write-Host "=== stock 7za extracts flzma2 core archive ==="
           New-Item -ItemType Directory -Force -Path .\temp\core-verify | Out-Null
-          & $stock x -y .\temp\core-flzma2-mx9.7z -o.\temp\core-verify -aoa | Select-Object -Last 5
+          & $stock x -y ".\temp\core-flzma2-mx9.7z" "-o.\temp\core-verify" -aoa | Select-Object -Last 5
           if ($LASTEXITCODE -ne 0) { Write-Host "COMPAT FAIL: stock cannot extract flzma2 archive"; exit 1 }
 
           $a = Get-ChildItem -Path ".\dist\March7thAssistant" -Recurse -File | Measure-Object -Property Length -Sum
