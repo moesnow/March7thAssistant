@@ -128,3 +128,29 @@ class TestParseHotkeyForHook:
         groups, trigger = iface._parseHotkeyForHook("ctrl+shift+f9")
         assert isinstance(groups, list)
         assert trigger is not None
+
+
+class TestDecodeOutput:
+    """子进程输出的解码：UTF-8 优先、系统编码兜底（回归「同一进程里一半行乱码」）。"""
+
+    def _create_instance(self, qapp):
+        from app.log_interface import LogInterface
+        return LogInterface.__new__(LogInterface)
+
+    def test_utf8_line_whose_bytes_are_also_valid_gbk(self, qapp):
+        # 这行的 UTF-8 字节恰好也是合法 GBK 序列：先按 GBK 解就会整行变乱码
+        line = "识别到主界面，无月卡，图片匹配度: 1.00 (241, 70)\n"
+        assert self._create_instance(qapp)._decodeOutput(line.encode("utf-8")) == line
+
+    def test_plain_utf8_chinese(self, qapp):
+        line = "检测到游戏主界面，非战斗/传送/黑屏状态，耗时 0.1 秒\n"
+        assert self._create_instance(qapp)._decodeOutput(line.encode("utf-8")) == line
+
+    def test_gbk_output_still_decodes(self, qapp):
+        # 老式 GBK 子进程的输出必须照旧正常（落到系统编码兜底）
+        line = "游戏窗口已切换到前台，开始检测\n"
+        assert self._create_instance(qapp)._decodeOutput(line.encode("gbk")) == line
+
+    def test_literal_unicode_escape_is_recovered(self, qapp):
+        # #808 加的那半要保留：字面 \uXXXX 仍然被还原成汉字
+        assert self._create_instance(qapp)._decodeOutput(r"\u5f00\u68c0\u6d4b") == "开检测"
