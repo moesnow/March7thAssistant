@@ -153,4 +153,4 @@ class TestDecodeOutput:
 
     def test_literal_unicode_escape_is_recovered(self, qapp):
         # #808 加的那半要保留：字面 \uXXXX 仍然被还原成汉字
-        assert self._create_instance(qapp)._decodeOutput(r"\u5f00\u68c0\u6d4b") == "开检测"
+        assert self._create_instance(qapp)._decodeOutput(rb"\u5f00\u68c0\u6d4b") == "开检测"
