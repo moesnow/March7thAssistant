@@ -10,7 +10,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction, TimestampSwitchSettingCard, WeeklySwitchSettingCard, StartMarch7thAssistantSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.rangesettingcard1 import RangeSettingCard1
-from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
+from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, TriplePushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableTimestampSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
@@ -782,7 +782,7 @@ class SettingInterface(ScrollArea):
             FIF.GLOBE,
             tr('地图版本'),
             '',
-            texts={tr("不配置"): "不配置", tr("默认（疾跑）"): "default", tr("黄泉专用"): "HuangQuan"}
+            texts={tr("不配置"): "不配置", tr("默认（疾跑）"): "default", tr("黄泉专用"): "HuangQuan", tr("获得特殊物品"): "reward"}
         )
         self.fightMainMapCard = ComboBoxSettingCard2(
             "fight_main_map",
@@ -791,19 +791,40 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr("不配置"): "0", tr("空间站"): "1", tr("雅利洛"): "2", tr("仙舟"): "3", tr("匹诺康尼"): "4", tr("翁法罗斯"): 5, tr("二相乐园"): 6}
         )
+        self.fightRewardEnableCard = ExpandableSwitchSettingCard(
+            "fight_reward_enable",
+            FIF.LIBRARY,
+            tr('启用「特殊物品领取」'),
+            tr("按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置")
+        )
         self.fightAllowSnackBuyCard = ComboBoxSettingCard2(
             "fight_allow_snack_buy",
             FIF.GLOBE,
             tr('购买秘技零食并合成零食'),
-            '',
+            tr("每日获得特殊物品：购买秘技零食材料并合成零食"),
             texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False}
         )
         self.fightAllowMapBuyCard = ComboBoxSettingCard2(
             "fight_allow_map_buy",
             FIF.GLOBE,
             tr('购买代币与过期邮包'),
-            '',
+            tr("每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"),
             texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False}
+        )
+        self.fightAllowMemoryTokenCard = ComboBoxSettingCard2(
+            "fight_allow_memory_token",
+            FIF.GLOBE,
+            tr('获得翁法罗斯记忆代币'),
+            tr("每周获得特殊物品：收集翁法罗斯忆质残晶"),
+            texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False}
+        )
+        self.fightPresetCard = TriplePushSettingCard(
+            tr('远程一号位锄地'),
+            tr('黄泉一号位锄地'),
+            tr('仅获取特殊物品'),
+            FIF.SYNC,
+            tr('快捷配置'),
+            tr("一键切换地图版本，并把三项特殊物品领取都设为「启用」")
         )
 
         self.ImmortalGameGroup = SettingCardGroup(tr("逐光捡金"), self.scrollWidget)
@@ -2639,12 +2660,17 @@ class SettingInterface(ScrollArea):
             self.fightOperationModeCard,
             self.fightTimeoutCard,
         ])
+        self.FightGroup.addSettingCard(self.fightPresetCard)
         self.FightGroup.addSettingCard(self.fightTeamEnableCard)
         # self.FightGroup.addSettingCard(self.fightTeamNumberCard)
         self.FightGroup.addSettingCard(self.fightMapVersionCard)
         self.FightGroup.addSettingCard(self.fightMainMapCard)
-        self.FightGroup.addSettingCard(self.fightAllowSnackBuyCard)
-        self.FightGroup.addSettingCard(self.fightAllowMapBuyCard)
+        self.FightGroup.addSettingCard(self.fightRewardEnableCard)
+        self.fightRewardEnableCard.addSettingCards([
+            self.fightAllowSnackBuyCard,
+            self.fightAllowMapBuyCard,
+            self.fightAllowMemoryTokenCard,
+        ])
 
         self.ImmortalGameGroup.addSettingCard(self.forgottenhallEnableCard)
         self.forgottenhallEnableCard.addSettingCards([
@@ -2813,6 +2839,9 @@ class SettingInterface(ScrollArea):
         self.ScriptPathCard.clicked.connect(self.__onScriptPathCardClicked)
         self.currencywarsPresetCard.leftClicked.connect(self.__applyCurrencywarsPromotionPreset)
         self.currencywarsPresetCard.rightClicked.connect(self.__applyCurrencywarsRankPreset)
+        self.fightPresetCard.leftClicked.connect(self.__applyFightRangedPreset)
+        self.fightPresetCard.middleClicked.connect(self.__applyFightAcheronPreset)
+        self.fightPresetCard.rightClicked.connect(self.__applyFightRewardOnlyPreset)
         # self.borrowCharacterInfoCard.clicked.connect(self.__openCharacterFolder())
 
         self.testNotifyCard.clicked.connect(lambda: start_task("notify"))
@@ -2838,6 +2867,7 @@ class SettingInterface(ScrollArea):
         connect_expand_state(self.currencywarsEnableCard)
         connect_expand_state(self.currencywarsStrategyCard)
         connect_expand_state(self.fightEnableCard)
+        connect_expand_state(self.fightRewardEnableCard)
         connect_expand_state(self.weeklyDivergentEnableCard)
         connect_expand_state(self.universeEnableCard)
         connect_expand_state(self.forgottenhallEnableCard)
@@ -3148,6 +3178,31 @@ class SettingInterface(ScrollArea):
 
         card.setValue(value)
         cfg.set_value(card.configname, value)
+
+    def __applyFightPreset(self, map_version, label):
+        """三个快捷配置共用：切地图版本，并打开「特殊物品领取」总开关与三项购买"""
+        self.__setComboBoxCardValue(self.fightMapVersionCard, map_version)
+        self.__setSwitchCardValue(self.fightRewardEnableCard, True)
+        for card in (self.fightAllowSnackBuyCard, self.fightAllowMapBuyCard, self.fightAllowMemoryTokenCard):
+            self.__setComboBoxCardValue(card, True)
+        InfoBar.success(
+            title=tr('已应用快捷配置'),
+            content=tr('当前为“{name}”模式').format(name=label),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self
+        )
+
+    def __applyFightRangedPreset(self):
+        self.__applyFightPreset('default', tr('远程一号位锄地'))
+
+    def __applyFightAcheronPreset(self):
+        self.__applyFightPreset('HuangQuan', tr('黄泉一号位锄地'))
+
+    def __applyFightRewardOnlyPreset(self):
+        self.__applyFightPreset('reward', tr('仅获取特殊物品'))
 
     def __applyCurrencywarsPromotionPreset(self):
         self.__setComboBoxCardValue(self.currencywarsTypeCard, 'overclock')

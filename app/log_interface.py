@@ -1977,23 +1977,30 @@ class LogInterface(ScrollArea):
                 self.appendLog(text)
 
     def _decodeOutput(self, data):
-        """解码输出，优先尝试系统默认编码，再尝试 UTF-8，最后处理 Unicode 转义序列"""
-        # 获取系统默认编码（根据「非 Unicode 程序的语言」设置）
+        """解码输出：**优先 UTF-8**，不成立再退系统默认编码，最后处理 Unicode 转义序列。
+
+        顺序反了会出现「有的行正常、有的行乱码」：UTF-8 的中文里有一大部分字节恰好也是合法
+        GBK 序列，先按系统编码严格解时这些行会「成功」解出乱码，只有解不动的行才退到 UTF-8。
+        本程序自己的输出已固定 UTF-8（见 main.py 的 ensure_utf8_output），Fhoe-Rail 等现代
+        Python 子进程同样是 UTF-8；而 GBK 的字节几乎不可能构成合法 UTF-8（实测 637 条中文
+        字符串 0 条能通过 UTF-8 校验），所以 UTF-8 优先对老的 GBK 子进程也安全 —— 它们会落到
+        下面的系统编码兜底，显示照旧正常。
+        """
+        # 获取系统默认编码（根据「非 Unicode 程序的语言」设置），仅作兜底
         system_encoding = locale.getpreferredencoding(False)
         decoded = None
 
-        # 优先尝试系统默认编码（Windows 子进程通常使用 ANSI 代码页输出）
-        if system_encoding:
+        # 优先尝试 UTF-8
+        try:
+            decoded = data.decode('utf-8')
+        except UnicodeDecodeError:
+            pass
+
+        # 再尝试系统默认编码（老式 Windows 子进程通常使用 ANSI 代码页输出）
+        if decoded is None and system_encoding:
             try:
                 decoded = data.decode(system_encoding)
             except (UnicodeDecodeError, LookupError):
-                pass
-
-        # 再尝试 UTF-8
-        if decoded is None:
-            try:
-                decoded = data.decode('utf-8')
-            except UnicodeDecodeError:
                 pass
 
         # 最后使用系统编码或 UTF-8 并替换错误字符

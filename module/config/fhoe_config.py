@@ -32,20 +32,30 @@ def auto_config():
             "allow_run_again": False,
             "allow_run_next_day": False,
             "allow_map_buy": False,
-            "allow_snack_buy": False
+            "allow_snack_buy": False,
+            "allow_memory_token": False
         }
     else:
         with open(os.path.join(cfg.fight_path, "config.json"), 'r', encoding='utf-8') as f:
             config = json.load(f)
             
-    if ("不配置" != cfg.fight_allow_map_buy and config.get('allow_map_buy') != cfg.fight_allow_map_buy) or ("不配置" != cfg.fight_allow_snack_buy and config.get('allow_snack_buy') != cfg.fight_allow_snack_buy) or ("0" != cfg.fight_main_map and config.get('main_map') != cfg.fight_main_map) or ("不配置" != cfg.fight_map_version and config.get('map_version') != cfg.fight_map_version):
-        if cfg.fight_allow_map_buy != "不配置":
-            config['allow_map_buy'] = cfg.fight_allow_map_buy
-        if cfg.fight_allow_snack_buy != "不配置":
-            config['allow_snack_buy'] = cfg.fight_allow_snack_buy
-        if cfg.fight_main_map != "0":
-            config['main_map'] = cfg.fight_main_map
-        if cfg.fight_map_version != "不配置":
-            config['map_version'] = cfg.fight_map_version
+    # 三项「特殊物品领取」由总开关统一控制（键名即 FightGroup 里「启用「特殊物品领取」」那个卡片）：
+    # 总开关关闭时完全不碰锄大地那边的这三项，让用户自己在锄大地里设置的值说了算。
+    updates = {}
+    if cfg.fight_reward_enable:
+        for key, value in (
+            ("allow_map_buy", cfg.fight_allow_map_buy),
+            ("allow_snack_buy", cfg.fight_allow_snack_buy),
+            ("allow_memory_token", cfg.fight_allow_memory_token),
+        ):
+            if value != "不配置" and config.get(key) != value:
+                updates[key] = value
+    # 优先星球与地图版本与总开关无关，各自独立同步
+    if cfg.fight_main_map != "0" and config.get("main_map") != cfg.fight_main_map:
+        updates["main_map"] = cfg.fight_main_map
+    if cfg.fight_map_version != "不配置" and config.get("map_version") != cfg.fight_map_version:
+        updates["map_version"] = cfg.fight_map_version
+    if updates:
+        config.update(updates)
         with open(os.path.join(cfg.fight_path, "config.json"), 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=4)

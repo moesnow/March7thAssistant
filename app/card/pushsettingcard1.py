@@ -58,6 +58,33 @@ class DualPushSettingCard(SettingCard):
         self.rightButton.clicked.connect(self.rightClicked.emit)
 
 
+class TriplePushSettingCard(SettingCard):
+    leftClicked = Signal()
+    middleClicked = Signal()
+    rightClicked = Signal()
+
+    def __init__(self, left_text, middle_text, right_text, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
+        super().__init__(icon, title, content, parent)
+
+        self.leftButton = QPushButton(left_text, self)
+        self.middleButton = QPushButton(middle_text, self)
+        self.rightButton = QPushButton(right_text, self)
+
+        for button in (self.leftButton, self.middleButton, self.rightButton):
+            button.setObjectName('primaryButton')
+
+        self.hBoxLayout.addWidget(self.leftButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.hBoxLayout.addWidget(self.middleButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.hBoxLayout.addWidget(self.rightButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        self.leftButton.clicked.connect(self.leftClicked.emit)
+        self.middleButton.clicked.connect(self.middleClicked.emit)
+        self.rightButton.clicked.connect(self.rightClicked.emit)
+
+
 class PushSettingCardAction(SettingCard):
     def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, content_getter: Callable[[], str], callback: Callable[[], None], parent=None):
         self._content_getter = content_getter

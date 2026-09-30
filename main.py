@@ -4,6 +4,12 @@ import argparse
 # 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
+from utils.console import ensure_utf8_output
+
+# 输出流固定成 UTF-8：非 UTF-8 环境（cp1252 / cp936 / cp932 的控制台或管道）下打印中文会直接抛
+# UnicodeEncodeError；而且 GUI 的内嵌日志（app/log_interface.py）现在也按 UTF-8 解码子进程输出。
+ensure_utf8_output()
+
 from utils.dpi import configure_dpi_awareness
 from utils.tasks import AVAILABLE_TASKS
 
