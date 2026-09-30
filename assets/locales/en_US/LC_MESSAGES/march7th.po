@@ -74,11 +74,11 @@ msgstr "Configure Scheduled Tasks"
 msgid "尚未配置定时任务"
 msgstr "No scheduled tasks configured"
 
-#: app/log_interface.py:2403
+#: app/log_interface.py:2410
 msgid "任务完成"
 msgstr "Task Completed"
 
-#: app/log_interface.py:2406
+#: app/log_interface.py:2413
 msgid "任务已停止"
 msgstr "Task Stopped"
 
@@ -821,27 +821,27 @@ msgstr ""
 msgid "无"
 msgstr "None"
 
-#: app/log_interface.py:2329
+#: app/log_interface.py:2336
 msgid "关机"
 msgstr "Shutdown"
 
-#: app/log_interface.py:2330
+#: app/log_interface.py:2337
 msgid "睡眠"
 msgstr "Sleep"
 
-#: app/log_interface.py:2331
+#: app/log_interface.py:2338
 msgid "休眠"
 msgstr "Hibernate"
 
-#: app/log_interface.py:2332
+#: app/log_interface.py:2339
 msgid "重启"
 msgstr "Restart"
 
-#: app/log_interface.py:2333
+#: app/log_interface.py:2340
 msgid "注销"
 msgstr "Log off"
 
-#: app/log_interface.py:2334
+#: app/log_interface.py:2341
 msgid "关闭显示器"
 msgstr "Turn off Monitor"
 
@@ -3399,7 +3399,6 @@ msgstr "Shape of Devour"
 msgid "观火之径"
 msgstr "Path of Insight"
 
-#: assets/config/instance_names.json
 msgid "暂无"
 msgstr "TBD"
 
@@ -6127,3 +6126,39 @@ msgstr ""
 #: app/setting_interface.py:818
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
 msgstr "Weekly special item: collect Amphoreus Memory Crystal Shards"
+
+#: assets/config/instance_names.json
+msgid "伶人套 / 禁果套"
+msgstr "Actor / Heretic Set"
+
+#: assets/config/character_names.json
+msgid "姬子·启行"
+msgstr "Himeko • Nova"
+
+#: assets/config/instance_names.json
+msgid "密伶之径"
+msgstr "Path of the Secret Actor"
+
+#: assets/config/character_names.json
+msgid "火花·甜梦电波"
+msgstr "Sparxie: Candy-Coated Waves"
+
+#: assets/config/character_names.json
+msgid "真珠"
+msgstr "Pearl"
+
+#: assets/config/character_names.json
+msgid "知更鸟·晴歌"
+msgstr "Robin • Summeretto"
+
+#: assets/config/character_names.json
+msgid "砂金·戏浪"
+msgstr "Aventurine • Waveflair"
+
+#: assets/config/character_names.json
+msgid "绯英·月待花时"
+msgstr "Evanescia: Lunar Blossoming"
+
+#: assets/config/character_names.json
+msgid "风堇·云边拾暖"
+msgstr "Hyacine: Warm Cotton Skies"

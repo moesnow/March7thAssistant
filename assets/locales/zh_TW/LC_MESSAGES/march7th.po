@@ -74,11 +74,11 @@ msgstr "設定排程任務"
 msgid "尚未配置定时任务"
 msgstr "尚未設定排程任務"
 
-#: app/log_interface.py:2403
+#: app/log_interface.py:2410
 msgid "任务完成"
 msgstr "任務完成"
 
-#: app/log_interface.py:2406
+#: app/log_interface.py:2413
 msgid "任务已停止"
 msgstr "任務已停止"
 
@@ -786,27 +786,27 @@ msgstr "「退出」指退出遊戲，不再建議使用循環模式，請改用
 msgid "无"
 msgstr "無"
 
-#: app/log_interface.py:2329
+#: app/log_interface.py:2336
 msgid "关机"
 msgstr "關機"
 
-#: app/log_interface.py:2330
+#: app/log_interface.py:2337
 msgid "睡眠"
 msgstr "睡眠"
 
-#: app/log_interface.py:2331
+#: app/log_interface.py:2338
 msgid "休眠"
 msgstr "休眠"
 
-#: app/log_interface.py:2332
+#: app/log_interface.py:2339
 msgid "重启"
 msgstr "重新啟動"
 
-#: app/log_interface.py:2333
+#: app/log_interface.py:2340
 msgid "注销"
 msgstr "登出"
 
-#: app/log_interface.py:2334
+#: app/log_interface.py:2341
 msgid "关闭显示器"
 msgstr "關閉顯示器"
 
@@ -3330,7 +3330,6 @@ msgstr "吞噬之形"
 msgid "观火之径"
 msgstr "觀火之徑"
 
-#: assets/config/instance_names.json
 msgid "暂无"
 msgstr "暫無"
 
@@ -5969,3 +5968,39 @@ msgstr ""
 #: app/setting_interface.py:818
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
 msgstr ""
+
+#: assets/config/instance_names.json
+msgid "伶人套 / 禁果套"
+msgstr "伶人套 / 禁果套"
+
+#: assets/config/character_names.json
+msgid "姬子·启行"
+msgstr "姬子•啟行"
+
+#: assets/config/instance_names.json
+msgid "密伶之径"
+msgstr "密伶之徑"
+
+#: assets/config/character_names.json
+msgid "火花·甜梦电波"
+msgstr "火花·甜夢電波"
+
+#: assets/config/character_names.json
+msgid "真珠"
+msgstr "真珠"
+
+#: assets/config/character_names.json
+msgid "知更鸟·晴歌"
+msgstr "知更鳥•晴歌"
+
+#: assets/config/character_names.json
+msgid "砂金·戏浪"
+msgstr "砂金•戲浪"
+
+#: assets/config/character_names.json
+msgid "绯英·月待花时"
+msgstr "緋英·月待花時"
+
+#: assets/config/character_names.json
+msgid "风堇·云边拾暖"
+msgstr "風堇·雲邊拾暖"

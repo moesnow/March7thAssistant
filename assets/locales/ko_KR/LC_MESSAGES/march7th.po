@@ -74,11 +74,11 @@ msgstr "예약 실행 설정"
 msgid "尚未配置定时任务"
 msgstr "예약된 임무 없음"
 
-#: app/log_interface.py:2403
+#: app/log_interface.py:2410
 msgid "任务完成"
 msgstr "임무 완료"
 
-#: app/log_interface.py:2406
+#: app/log_interface.py:2413
 msgid "任务已停止"
 msgstr "임무 중지됨"
 
@@ -789,27 +789,27 @@ msgstr "'종료'는 게임 종료를 의미합니다. 순환 모드 대신 로�
 msgid "无"
 msgstr "없음"
 
-#: app/log_interface.py:2329
+#: app/log_interface.py:2336
 msgid "关机"
 msgstr "시스템 종료"
 
-#: app/log_interface.py:2330
+#: app/log_interface.py:2337
 msgid "睡眠"
 msgstr "절전"
 
-#: app/log_interface.py:2331
+#: app/log_interface.py:2338
 msgid "休眠"
 msgstr "최대 절전"
 
-#: app/log_interface.py:2332
+#: app/log_interface.py:2339
 msgid "重启"
 msgstr "재부팅"
 
-#: app/log_interface.py:2333
+#: app/log_interface.py:2340
 msgid "注销"
 msgstr "로그오프"
 
-#: app/log_interface.py:2334
+#: app/log_interface.py:2341
 msgid "关闭显示器"
 msgstr "모니터 끄기"
 
@@ -3338,7 +3338,6 @@ msgstr "화중은천"
 msgid "观火之径"
 msgstr "구름마루섬역"
 
-#: assets/config/instance_names.json
 msgid "暂无"
 msgstr "미정"
 
@@ -5990,3 +5989,39 @@ msgstr ""
 #: app/setting_interface.py:818
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
 msgstr ""
+
+#: assets/config/instance_names.json
+msgid "伶人套 / 禁果套"
+msgstr "연극인 / 이단 세트"
+
+#: assets/config/character_names.json
+msgid "姬子·启行"
+msgstr "히메코•노바"
+
+#: assets/config/instance_names.json
+msgid "密伶之径"
+msgstr "은밀한 연극인의 길"
+
+#: assets/config/character_names.json
+msgid "火花·甜梦电波"
+msgstr "스파키「달콤한 꿈의 전파」"
+
+#: assets/config/character_names.json
+msgid "真珠"
+msgstr "펄"
+
+#: assets/config/character_names.json
+msgid "知更鸟·晴歌"
+msgstr "로빈•서머레토"
+
+#: assets/config/character_names.json
+msgid "砂金·戏浪"
+msgstr "어벤츄린•웨이브"
+
+#: assets/config/character_names.json
+msgid "绯英·月待花时"
+msgstr "에바네시아「꽃 피길 기다리는 달」"
+
+#: assets/config/character_names.json
+msgid "风堇·云边拾暖"
+msgstr "히아신「구름 곁의 따스함」"

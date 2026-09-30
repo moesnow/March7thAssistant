@@ -74,11 +74,11 @@ msgstr "定期タスクを設定"
 msgid "尚未配置定时任务"
 msgstr "定期タスクは未設定です"
 
-#: app/log_interface.py:2403
+#: app/log_interface.py:2410
 msgid "任务完成"
 msgstr "タスク完了"
 
-#: app/log_interface.py:2406
+#: app/log_interface.py:2413
 msgid "任务已停止"
 msgstr "タスク停止"
 
@@ -788,27 +788,27 @@ msgstr "「終了」はゲーム終了を意味します。ループモードは
 msgid "无"
 msgstr "なし"
 
-#: app/log_interface.py:2329
+#: app/log_interface.py:2336
 msgid "关机"
 msgstr "シャットダウン"
 
-#: app/log_interface.py:2330
+#: app/log_interface.py:2337
 msgid "睡眠"
 msgstr "スリープ"
 
-#: app/log_interface.py:2331
+#: app/log_interface.py:2338
 msgid "休眠"
 msgstr "休止"
 
-#: app/log_interface.py:2332
+#: app/log_interface.py:2339
 msgid "重启"
 msgstr "再起動"
 
-#: app/log_interface.py:2333
+#: app/log_interface.py:2340
 msgid "注销"
 msgstr "ログオフ"
 
-#: app/log_interface.py:2334
+#: app/log_interface.py:2341
 msgid "关闭显示器"
 msgstr "ディスプレイをオフ"
 
@@ -3327,7 +3327,6 @@ msgstr ""
 msgid "观火之径"
 msgstr ""
 
-#: assets/config/instance_names.json
 msgid "暂无"
 msgstr ""
 
@@ -5973,3 +5972,39 @@ msgstr ""
 #: app/setting_interface.py:818
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
 msgstr "Weekly special item: collect Amphoreus Memory Crystal Shards"
+
+#: assets/config/instance_names.json
+msgid "伶人套 / 禁果套"
+msgstr "伶人 / 異端者セット"
+
+#: assets/config/character_names.json
+msgid "姬子·启行"
+msgstr "姫子・旅立ち"
+
+#: assets/config/instance_names.json
+msgid "密伶之径"
+msgstr "密伶の路"
+
+#: assets/config/character_names.json
+msgid "火花·甜梦电波"
+msgstr "火花: 甘い夢の電波"
+
+#: assets/config/character_names.json
+msgid "真珠"
+msgstr "パール"
+
+#: assets/config/character_names.json
+msgid "知更鸟·晴歌"
+msgstr "ロビン・夏空の歌"
+
+#: assets/config/character_names.json
+msgid "砂金·戏浪"
+msgstr "アベンチュリン・波と戯れる夏"
+
+#: assets/config/character_names.json
+msgid "绯英·月待花时"
+msgstr "緋英: 月待つ花時"
+
+#: assets/config/character_names.json
+msgid "风堇·云边拾暖"
+msgstr "ヒアンシー: 雲間からこぼれる陽光"

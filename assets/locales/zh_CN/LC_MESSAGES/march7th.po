@@ -74,11 +74,11 @@ msgstr "配置定时任务"
 msgid "尚未配置定时任务"
 msgstr "尚未配置定时任务"
 
-#: app/log_interface.py:2403
+#: app/log_interface.py:2410
 msgid "任务完成"
 msgstr "任务完成"
 
-#: app/log_interface.py:2406
+#: app/log_interface.py:2413
 msgid "任务已停止"
 msgstr "任务已停止"
 
@@ -786,27 +786,27 @@ msgstr "“退出”指退出游戏，不再建议使用循环模式，请改用
 msgid "无"
 msgstr "无"
 
-#: app/log_interface.py:2329
+#: app/log_interface.py:2336
 msgid "关机"
 msgstr "关机"
 
-#: app/log_interface.py:2330
+#: app/log_interface.py:2337
 msgid "睡眠"
 msgstr "睡眠"
 
-#: app/log_interface.py:2331
+#: app/log_interface.py:2338
 msgid "休眠"
 msgstr "休眠"
 
-#: app/log_interface.py:2332
+#: app/log_interface.py:2339
 msgid "重启"
 msgstr "重启"
 
-#: app/log_interface.py:2333
+#: app/log_interface.py:2340
 msgid "注销"
 msgstr "注销"
 
-#: app/log_interface.py:2334
+#: app/log_interface.py:2341
 msgid "关闭显示器"
 msgstr "关闭显示器"
 
@@ -3330,7 +3330,6 @@ msgstr "吞噬之形"
 msgid "观火之径"
 msgstr "观火之径"
 
-#: assets/config/instance_names.json
 msgid "暂无"
 msgstr "暂无"
 
@@ -5969,3 +5968,39 @@ msgstr "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪
 #: app/setting_interface.py:818
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
 msgstr "每周获得特殊物品：收集翁法罗斯忆质残晶"
+
+#: assets/config/instance_names.json
+msgid "伶人套 / 禁果套"
+msgstr "伶人套 / 禁果套"
+
+#: assets/config/character_names.json
+msgid "姬子·启行"
+msgstr "姬子·启行"
+
+#: assets/config/instance_names.json
+msgid "密伶之径"
+msgstr "密伶之径"
+
+#: assets/config/character_names.json
+msgid "火花·甜梦电波"
+msgstr "火花·甜梦电波"
+
+#: assets/config/character_names.json
+msgid "真珠"
+msgstr "真珠"
+
+#: assets/config/character_names.json
+msgid "知更鸟·晴歌"
+msgstr "知更鸟·晴歌"
+
+#: assets/config/character_names.json
+msgid "砂金·戏浪"
+msgstr "砂金·戏浪"
+
+#: assets/config/character_names.json
+msgid "绯英·月待花时"
+msgstr "绯英·月待花时"
+
+#: assets/config/character_names.json
+msgid "风堇·云边拾暖"
+msgstr "风堇·云边拾暖"

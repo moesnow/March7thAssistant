@@ -750,35 +750,35 @@ msgstr ""
 msgid "清空日志"
 msgstr ""
 
-#: app/log_interface.py:2329
+#: app/log_interface.py:2336
 msgid "关机"
 msgstr ""
 
-#: app/log_interface.py:2330
+#: app/log_interface.py:2337
 msgid "睡眠"
 msgstr ""
 
-#: app/log_interface.py:2331
+#: app/log_interface.py:2338
 msgid "休眠"
 msgstr ""
 
-#: app/log_interface.py:2332
+#: app/log_interface.py:2339
 msgid "重启"
 msgstr ""
 
-#: app/log_interface.py:2333
+#: app/log_interface.py:2340
 msgid "注销"
 msgstr ""
 
-#: app/log_interface.py:2334
+#: app/log_interface.py:2341
 msgid "关闭显示器"
 msgstr ""
 
-#: app/log_interface.py:2403
+#: app/log_interface.py:2410
 msgid "任务完成"
 msgstr ""
 
-#: app/log_interface.py:2406
+#: app/log_interface.py:2413
 msgid "任务已停止"
 msgstr ""
 
@@ -5054,6 +5054,10 @@ msgstr ""
 msgid "伴你入眠"
 msgstr ""
 
+#: assets/config/instance_names.json
+msgid "伶人套 / 禁果套"
+msgstr ""
+
 #: assets/config/character_names.json
 msgid "佩拉"
 msgstr ""
@@ -5231,6 +5235,10 @@ msgid "姬子"
 msgstr ""
 
 #: assets/config/character_names.json
+msgid "姬子·启行"
+msgstr ""
+
+#: assets/config/character_names.json
 msgid "娜塔莎"
 msgstr ""
 
@@ -5244,6 +5252,10 @@ msgstr ""
 
 #: assets/config/instance_names.json
 msgid "孽果盘生"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "密伶之径"
 msgstr ""
 
 #: assets/config/instance_names.json
@@ -5379,10 +5391,6 @@ msgid "智识之蕾"
 msgstr ""
 
 #: assets/config/instance_names.json
-msgid "暂无"
-msgstr ""
-
-#: assets/config/instance_names.json
 msgid "月下朱殷"
 msgstr ""
 
@@ -5499,6 +5507,10 @@ msgid "火花"
 msgstr ""
 
 #: assets/config/character_names.json
+msgid "火花·甜梦电波"
+msgstr ""
+
+#: assets/config/character_names.json
 msgid "灵砂"
 msgstr ""
 
@@ -5555,6 +5567,10 @@ msgid "盗贼 / 翁瓦克"
 msgstr ""
 
 #: assets/config/character_names.json
+msgid "真珠"
+msgstr ""
+
+#: assets/config/character_names.json
 msgid "真理医生"
 msgstr ""
 
@@ -5567,7 +5583,15 @@ msgid "知更鸟"
 msgstr ""
 
 #: assets/config/character_names.json
+msgid "知更鸟·晴歌"
+msgstr ""
+
+#: assets/config/character_names.json
 msgid "砂金"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "砂金·戏浪"
 msgstr ""
 
 #: assets/config/instance_names.json
@@ -5632,6 +5656,10 @@ msgstr ""
 
 #: assets/config/character_names.json
 msgid "绯英"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "绯英·月待花时"
 msgstr ""
 
 #: assets/config/character_names.json
@@ -5888,6 +5916,10 @@ msgstr ""
 
 #: assets/config/character_names.json
 msgid "风堇"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "风堇·云边拾暖"
 msgstr ""
 
 #: assets/config/character_names.json
