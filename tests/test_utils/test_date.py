@@ -24,6 +24,31 @@ class TestDate:
         timestamp = last_week.timestamp()
         assert Date.is_next_mon_x_am(timestamp, hour=4) is True
 
+    def test_weekly_day_waits_until_selected_day_and_refresh_hour(self):
+        for now, expected in (
+            (datetime(2026, 9, 24, 12), False),  # Thursday
+            (datetime(2026, 9, 25, 3, 59), False),
+            (datetime(2026, 9, 25, 4), True),
+            (datetime(2026, 9, 27, 12), True),
+        ):
+            with patch('utils.date.datetime') as mock_dt:
+                mock_dt.now.return_value = now
+                mock_dt.fromtimestamp = datetime.fromtimestamp
+                assert Date.is_weekly_day_due(0, 5, hour=4) is expected
+
+    def test_weekly_day_runs_once_per_game_week(self):
+        last_run = datetime(2026, 9, 25, 8).timestamp()
+        for now, expected in (
+            (datetime(2026, 9, 27, 12), False),
+            (datetime(2026, 9, 28, 3, 59), False),
+            (datetime(2026, 9, 28, 4), False),
+            (datetime(2026, 10, 2, 4), True),
+        ):
+            with patch('utils.date.datetime') as mock_dt:
+                mock_dt.now.return_value = now
+                mock_dt.fromtimestamp = datetime.fromtimestamp
+                assert Date.is_weekly_day_due(last_run, 5, hour=4) is expected
+
     def test_is_next_month_x_am_passed(self):
         # 上个月的时间戳
         last_month = datetime.now() - timedelta(days=32)

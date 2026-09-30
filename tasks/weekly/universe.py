@@ -4,7 +4,6 @@ from module.logger import log
 from module.automation import auto
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
-from tasks.power.relicset import Relicset
 from tasks.base.pythonchecker import PythonChecker
 from utils.command import subprocess_with_timeout
 import subprocess
@@ -165,9 +164,6 @@ class Universe:
 
         screen.wait_for_screen_change('main')
         Universe.get_reward(category)
-
-        if category != "divergent" and cfg.universe_bonus_enable and cfg.break_down_level_four_relicset:
-            Relicset.run()
 
     @staticmethod
     def start_simulation(nums, save, category):

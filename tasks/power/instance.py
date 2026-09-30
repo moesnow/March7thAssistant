@@ -410,9 +410,6 @@ class Instance:
         # 从副本返回主界面后，按esc太快无效
         time.sleep(2)
 
-        if ("侵蚀隧洞" in instance_type or "饰品提取" in instance_type or "历战余响" in instance_type) and cfg.break_down_level_four_relicset:
-            Relicset.run()
-
     @staticmethod
     def wait_fight(num, timeout=1800):
         log.info("进入战斗")

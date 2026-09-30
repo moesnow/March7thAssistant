@@ -186,11 +186,9 @@ msgstr "使用燃料"
 msgid "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 
-#: app/setting_interface.py:251
 msgid "自动分解四星遗器（建议在游戏内配置结算遗器时自动分解）"
 msgstr "自动分解四星遗器（建议在游戏内配置结算遗器时自动分解）"
 
-#: app/setting_interface.py:252
 msgid "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
 msgstr "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
 
@@ -6004,3 +6002,7 @@ msgstr "绯英·月待花时"
 #: assets/config/character_names.json
 msgid "风堇·云边拾暖"
 msgstr "风堇·云边拾暖"
+
+#: app/setting_interface.py:251
+msgid "每周清理遗器"
+msgstr "每周清理遗器"

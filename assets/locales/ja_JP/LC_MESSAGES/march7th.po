@@ -186,11 +186,9 @@ msgstr "燃料を使用"
 msgid "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr "1回あたりの上限は5個です。すべて使うには「タスク完了後」を「ループ」に変更し、「完全実行」を開始してください。"
 
-#: app/setting_interface.py:251
 msgid "自动分解四星遗器（建议在游戏内配置结算遗器时自动分解）"
 msgstr "星4遺物を自動分解（ゲーム内の自動分解設定推奨）"
 
-#: app/setting_interface.py:252
 msgid "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
 msgstr "侵蝕トンネル、装飾品抽出、歴戦余韻、模擬宇宙の完了後に星4以下の遺物を自動分解"
 
@@ -6003,3 +6001,7 @@ msgstr "緋英: 月待つ花時"
 #: assets/config/character_names.json
 msgid "风堇·云边拾暖"
 msgstr "ヒアンシー: 雲間からこぼれる陽光"
+
+#: app/setting_interface.py:251
+msgid "每周清理遗器"
+msgstr ""

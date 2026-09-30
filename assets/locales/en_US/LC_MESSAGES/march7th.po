@@ -192,12 +192,10 @@ msgstr ""
 "Max 5 per run. To use all, change 'After Task' to 'Loop' and click 'Full "
 "Run'"
 
-#: app/setting_interface.py:251
 msgid "自动分解四星遗器（建议在游戏内配置结算遗器时自动分解）"
 msgstr ""
 "Auto salvage 4-star Relics (Recommended to config in-game auto salvage)"
 
-#: app/setting_interface.py:252
 msgid "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
 msgstr ""
 "Auto salvage 4-star and below Relics after Cavern of Corrosion, Ornament "
@@ -6162,3 +6160,7 @@ msgstr "Evanescia: Lunar Blossoming"
 #: assets/config/character_names.json
 msgid "风堇·云边拾暖"
 msgstr "Hyacine: Warm Cotton Skies"
+
+#: app/setting_interface.py:251
+msgid "每周清理遗器"
+msgstr ""

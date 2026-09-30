@@ -187,11 +187,9 @@ msgstr "연료 사용"
 msgid "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr "1회 최대 5개. 전부 사용하려면 '임무 완료 후'를 '반복'으로 변경하고 '전체 실행'을 클릭하세요."
 
-#: app/setting_interface.py:251
 msgid "自动分解四星遗器（建议在游戏内配置结算遗器时自动分解）"
 msgstr "4성 유물 자동 분해 (게임 내 설정 권장)"
 
-#: app/setting_interface.py:252
 msgid "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
 msgstr "침식된 터널, 장신구 추출, 전쟁의 여운, 시뮬레이션 우주 완료 후 4성 이하 유물 자동 분해"
 
@@ -6025,3 +6023,7 @@ msgstr "에바네시아「꽃 피길 기다리는 달」"
 #: assets/config/character_names.json
 msgid "风堇·云边拾暖"
 msgstr "히아신「구름 곁의 따스함」"
+
+#: app/setting_interface.py:251
+msgid "每周清理遗器"
+msgstr ""
