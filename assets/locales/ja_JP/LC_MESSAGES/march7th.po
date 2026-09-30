@@ -5913,17 +5913,15 @@ msgstr "探索成功後、最初の空きセーブデータ枠に保存します
 
 #: app/setting_interface.py:785
 msgid "获得特殊物品"
-msgstr "Obtain Special Items"
+msgstr ""
 
 #: app/setting_interface.py:797
 msgid "启用「特殊物品领取」"
-msgstr "Enable 'Special Item Claiming'"
+msgstr ""
 
 #: app/setting_interface.py:798
 msgid "按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置"
 msgstr ""
-"Write the three choices below into Fhoe-Rail's config; when off, Fhoe-Rail's"
-" own settings are left untouched"
 
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食（零食材料-1 / 零食合成-1）"
 msgstr ""
@@ -5933,45 +5931,42 @@ msgstr ""
 
 #: app/setting_interface.py:817
 msgid "获得翁法罗斯记忆代币"
-msgstr "Obtain Amphoreus Memory Tokens"
+msgstr ""
 
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
 msgstr ""
 
 #: app/setting_interface.py:822
 msgid "远程一号位锄地"
-msgstr "Ranged in Slot 1"
+msgstr ""
 
 #: app/setting_interface.py:823
 msgid "黄泉一号位锄地"
-msgstr "Acheron in Slot 1"
+msgstr ""
 
 #: app/setting_interface.py:824
 msgid "仅获取特殊物品"
-msgstr "Special Items Only"
+msgstr ""
 
 #: app/setting_interface.py:827
 msgid "一键切换地图版本，并把三项特殊物品领取都设为「启用」"
 msgstr ""
-"Switch the map version in one click and set all three special-item toggles "
-"to 'Enable'"
 
 #: app/setting_interface.py:3190
 msgid "当前为“{name}”模式"
-msgstr "Now using '{name}' mode"
+msgstr ""
 
 #: app/setting_interface.py:804
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食"
-msgstr "Daily special item: buy Trick Snack materials and synthesize"
+msgstr ""
 
 #: app/setting_interface.py:811
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"
 msgstr ""
-"Weekly special item: buy Xianzhou expired parcels and Penacony Aideen Tokens"
 
 #: app/setting_interface.py:818
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
-msgstr "Weekly special item: collect Amphoreus Memory Crystal Shards"
+msgstr ""
 
 #: assets/config/instance_names.json
 msgid "伶人套 / 禁果套"
