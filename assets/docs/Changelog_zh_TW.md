@@ -2,16 +2,17 @@
 
 > 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。
 
-## v2026.9.26-beta
+## v2026.9.30
 - 新增任務暫停/繼續功能，支援按鈕、全域性快捷鍵與遊戲內日誌懸浮窗狀態顯示
 - 任務日誌區新增右鍵選單，支援複製/全選、清空日誌與開啟日誌資料夾
 - 命令列支援列出與執行自定義流程
+- 支援 4.6 新增副本，適配缺失角色與皮膚 [#1240](https://github.com/moesnow/March7thAssistant/pull/1240) @0frostmourne0
+- “自動分解四星遺器” 升級為 “每週清理遺器” [#1234](https://github.com/moesnow/March7thAssistant/pull/1234) @23swccp
+- “每週清理遺器” 新增 “啟用智慧棄置” 設定 [#1235](https://github.com/moesnow/March7thAssistant/pull/1235) @23swccp
+- 新增支援儲存 “差分宇宙” 存檔 [#1233](https://github.com/moesnow/March7thAssistant/pull/1233) @23swccp
+- 鋤大地新增「特殊物品領取」分組、翁法羅斯代幣開關與三預設快捷配置 [#1243](https://github.com/moesnow/March7thAssistant/pull/1243) @smjes3
 - Mirror 醬 CDK 卡片新增查詢天數按鈕
-- 修復收藏狀態下無法識別角色緋櫻
-- 修復無法切換到虛構敘事主介面
-- 修復流程編排啟動的流程不切換到遊戲視窗
-- 修復混沌回憶預設關卡範圍調整為 10-12
-- 修復定時任務更新後未恢復托盤最小化狀態
+- 修復子程序日誌中文顯示不全（亂碼）的問題 [#1242](https://github.com/moesnow/March7thAssistant/pull/1242) @smjes3
 - 最佳化效能和穩定性並修復若干已知問題
 - [歡迎關注我們的B站賬號，獲取最新動態和教程](https://space.bilibili.com/3706960664857075)
 

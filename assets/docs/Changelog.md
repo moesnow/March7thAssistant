@@ -1,15 +1,16 @@
 # 更新日志
 
-## v2026.9.26-beta
+## v2026.9.30
 - 新增任务暂停/继续功能，支持按钮、全局快捷键与游戏内日志悬浮窗状态显示
 - 任务日志区新增右键菜单，支持复制/全选、清空日志与打开日志文件夹
 - 命令行支持列出与运行自定义流程
+- 支持 4.6 新增副本，适配缺失角色与皮肤 [#1240](https://github.com/moesnow/March7thAssistant/pull/1240) @0frostmourne0
+- “自动分解四星遗器” 升级为 “每周清理遗器” [#1234](https://github.com/moesnow/March7thAssistant/pull/1234) @23swccp
+- “每周清理遗器” 新增 “启用智能弃置” 设置 [#1235](https://github.com/moesnow/March7thAssistant/pull/1235) @23swccp
+- 新增支持保存 “差分宇宙” 存档 [#1233](https://github.com/moesnow/March7thAssistant/pull/1233) @23swccp
+- 锄大地新增「特殊物品领取」分组、翁法罗斯代币开关与三预设快捷配置 [#1243](https://github.com/moesnow/March7thAssistant/pull/1243) @smjes3
 - Mirror 酱 CDK 卡片新增查询天数按钮
-- 修复收藏状态下无法识别角色绯樱
-- 修复无法切换到虚构叙事主界面
-- 修复流程编排启动的流程不切换到游戏窗口
-- 修复混沌回忆默认关卡范围调整为 10-12
-- 修复定时任务更新后未恢复托盘最小化状态
+- 修复子进程日志中文显示不全（乱码）的问题 [#1242](https://github.com/moesnow/March7thAssistant/pull/1242) @smjes3
 - 优化性能和稳定性并修复若干已知问题
 - [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
 
