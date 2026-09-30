@@ -1,5 +1,22 @@
 # coding:utf-8
 import os
+import sys
+
+
+def ensure_utf8_output(streams=None) -> None:
+    """把输出流切换到 UTF-8（无法编码的字符替换掉）。
+
+    Windows 的控制台/管道可能把 stdout 绑定到 cp1252 等本地编码，
+    打印中文警告会直接抛 UnicodeEncodeError（CI 曾因此挂掉）；
+    本地 UTF-8 终端不复现，所以必须在程序入口统一兜底。
+    """
+    if streams is None:
+        streams = (sys.stdout, sys.stderr)
+    for stream in streams:
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 
 def is_gui_started():
