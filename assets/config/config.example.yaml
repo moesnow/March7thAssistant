@@ -115,7 +115,8 @@ build_target_ornament_weekly_count: 1 # 培养目标每周执行饰品提取的�
 build_target_use_user_instance_when_only_erosion_and_ornament: false # 当培养目标只识别到「侵蚀隧洞」和「饰品提取」时，是否改用用户手动配置的副本。
 
 # 分解设置
-break_down_level_four_relicset: false # 每周所选日期清理四星及以下遗器。默认关闭。
+break_down_level_four_relicset: false # 每周所选日期清理四星及以下遗器；可在展开项启用智能弃置。默认关闭。
+weekly_relic_smart_discard_enable: false # 每周清理时先智能弃置五星遗器，并一并分解已弃置遗器。默认关闭。
 weekly_relic_cleanup_day_of_week: 1 # 每周从周几开始清理遗器，1=周一，7=周日；在游戏刷新时间后执行。
 weekly_relic_cleanup_timestamp: 0 # 上次成功完成每周遗器清理的时间戳。
 

@@ -142,30 +142,6 @@ class TimestampSwitchSettingCard(SwitchSettingCard1):
         self.refreshTimestampContent()
 
 
-class WeeklySwitchSettingCard(SwitchSettingCard1):
-    """Single-row weekly switch with a weekday selector."""
-
-    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title,
-                 configname: str, day_configname: str, parent=None):
-        super().__init__(icon, title, None, configname, parent)
-        self.dayConfigname = day_configname
-        self.comboBox = ComboBox(self)
-        for day, text in enumerate(('周一', '周二', '周三', '周四', '周五', '周六', '周日'), 1):
-            self.comboBox.addItem(tr(text), userData=day)
-
-        day = cfg.get_value(day_configname, 1)
-        self.comboBox.setCurrentIndex(day - 1 if isinstance(day, int) and 1 <= day <= 7 else 0)
-        insert_index = self.hBoxLayout.indexOf(self.switchButton)
-        self.hBoxLayout.insertWidget(insert_index, self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
-        self.hBoxLayout.insertSpacing(insert_index + 1, 10)
-
-        self.comboBox.currentIndexChanged.connect(self._onDayChanged)
-
-    def _onDayChanged(self, index: int):
-        if index >= 0:
-            cfg.set_value(self.dayConfigname, self.comboBox.itemData(index))
-
-
 class SwitchSettingCardNotify(SettingCard):
     """ Setting card with switch button """
 
