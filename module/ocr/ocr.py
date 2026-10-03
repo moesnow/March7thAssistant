@@ -7,13 +7,18 @@ import re
 import subprocess
 from utils.logger.logger import Logger
 from typing import Optional
-from PIL import Image
+from PIL import Image, ImageDraw
 import atexit
 import gc
 
 
-# OCR 耗时阈值（秒），超过此值时自动禁用 DML
+# OCR 耗时阈值（秒），超过此值时累计一次“慢”
 OCR_SLOW_THRESHOLD = 5.0
+# 连续 2 次“慢”即降级：第 1 次容忍预热残余的冷启动，第 2 次确认真慢
+OCR_SLOW_CONSECUTIVE_LIMIT = 2
+# DML 预热耗时硬上限（秒）。弱 GPU 首帧 shader 编译可达数分钟，
+# 超过此上限视为 DML 不可用，直接降级，避免用户长时间空等。
+OCR_WARMUP_HARD_LIMIT = 30.0
 # 固定图片压测表明，RapidOCR 在连续多次识别时会创建大量中间 ndarray、
 # RapidOCROutput、以及 to_json 生成的 Python 容器对象。它们并非真正泄漏，
 # 但往往要等到 full GC 才会集中回收，所以任务管理器里会表现为 RSS 快速
@@ -59,6 +64,8 @@ class OCR:
         self.ocr_count = 0
         self._periodic_gc_interval = OCR_PERIODIC_FULL_GC_INTERVAL
         self._openvino_last_reinit = 0.0  # 上次 OpenVINO 重初始化的时间戳
+        self._slow_count = 0  # DML 连续慢速计数，达到阈值才降级
+        self._slow_threshold = OCR_SLOW_THRESHOLD  # 单次慢速阈值（秒），可被配置覆盖
 
     def _maybe_collect_garbage(self):
         """在长时间 OCR 循环下定期触发 full GC，优先压低峰值内存。
@@ -208,7 +215,13 @@ class OCR:
                 self.logger.warning(f"保存配置失败：{e}")
 
     def _disable_gpu_acceleration(self):
-        """禁用 GPU 加速；仅在自动模式时写回 CPU 模式。"""
+        """禁用 GPU 加速；仅在自动模式时把配置写回 cpu 模式。
+
+        这里写回 cpu 而不是具体的 onnx_cpu/openvino_cpu：cpu 由
+        choose_cpu_fallback_engine 解析到 OpenVINO 或 ONNXRuntime，是上游刻意
+        的设计（OpenVINO CPU 吞吐更优，内存问题已有定期重建与不足降级两层治理），
+        写死 onnx_cpu 反而会让降级后的用户整体变慢。
+        """
         cfg = self._get_config()
         raw_mode = None
         if cfg is not None:
@@ -496,6 +509,40 @@ class OCR:
 
         return True, ""
 
+    def _load_thresholds(self):
+        """从配置加载慢速阈值，缺失或非法时回退到默认常量。"""
+        cfg = self._get_config()
+        if cfg is None:
+            return
+        try:
+            threshold = float(cfg.get_value("ocr_slow_threshold", OCR_SLOW_THRESHOLD))
+            # 过滤负数与 NaN（NaN 比较恒为 False，被条件自然排除）；
+            # 极大值合法，等效于关闭自动降级
+            self._slow_threshold = (
+                threshold if threshold > 0 else OCR_SLOW_THRESHOLD
+            )
+        except Exception:
+            self._slow_threshold = OCR_SLOW_THRESHOLD
+
+    def _warmup_dml(self) -> float:
+        """DML 首帧推理需要编译 shader、上传权重，冷启动开销很大。
+
+        在初始化阶段做一次预热推理，把冷启动耗时消化在这里，避免首次
+        真实 OCR 因首帧过慢被慢速检测误判为“DML 过慢”而降级到 CPU。
+        高度 200 大于 Global.min_height(155)，确保 det 算子被触发；
+        白图检不出 det 框时 rec 分支不会执行，因此需画上文字让
+        det + rec 全链路完成编译。
+
+        返回本次预热的实测耗时（秒），供调用方判断 DML 是否慢到不可用。
+        """
+        warmup_img = Image.new("RGB", (320, 200), "white")
+        ImageDraw.Draw(warmup_img).text((40, 60), "Hello World 123", fill="black")
+        start = time.monotonic()
+        self.ocr(warmup_img)
+        elapsed = time.monotonic() - start
+        self.logger.info(f"DML 预热完成，耗时 {elapsed:.2f} 秒")
+        return elapsed
+
     def _resolve_engine(self, selected_mode, force_cpu=False, force_onnx=False):
         """根据配置模式和运行环境解析实际引擎与 DML 开关。"""
         from rapidocr import EngineType
@@ -585,6 +632,7 @@ class OCR:
                 start_time = time.monotonic()
                 from rapidocr import EngineType, LangDet, ModelType, OCRVersion, RapidOCR
                 self._selected_mode = self._get_selected_mode()
+                self._load_thresholds()
                 prefer_engine, use_dml, resolved_mode = self._resolve_engine(
                     self._selected_mode,
                     force_cpu=force_cpu,
@@ -653,6 +701,31 @@ class OCR:
                 self.logger.debug("初始化OCR完成")
                 elapsed_time = time.monotonic() - start_time
                 self.logger.debug(f"OCR初始化耗时: {elapsed_time:.2f} 秒")
+
+                # DML 预热：消化首帧 shader 编译开销，避免慢速检测误杀冷启动。
+                # 预热失败、或实测耗时超过硬上限（弱 GPU 首帧可达数分钟），都说明
+                # DML 实际不可用，立即降级到 CPU 模式并持久化（auto 模式下否则每次
+                # 重建都会再撞 DML）。force_cpu 会使 _use_dml=False，重建时不会再
+                # 触发预热，因此无递归。
+                if self._use_dml:
+                    try:
+                        warmup_elapsed = self._warmup_dml()
+                    except Exception as we:
+                        self.logger.warning(f"DML 预热失败: {we}，降级到 CPU 模式")
+                        self._disable_gpu_acceleration()
+                        self.ocr = None
+                        self.instance_ocr(force_cpu=True)
+                        return
+                    if warmup_elapsed > OCR_WARMUP_HARD_LIMIT:
+                        self.logger.warning(
+                            f"DML 预热耗时 {warmup_elapsed:.2f}s 超过上限 {OCR_WARMUP_HARD_LIMIT:.0f}s，"
+                            f"判定 DML 不可用，降级到 CPU 模式"
+                        )
+                        self._disable_gpu_acceleration()
+                        self.ocr = None
+                        self.instance_ocr(force_cpu=True)
+                        return
+
                 if self._using_openvino:
                     self._openvino_last_reinit = time.monotonic()
                     # 初始化后立即检查可用内存，不足 1GB 则降级
@@ -664,6 +737,7 @@ class OCR:
 
     def exit_ocr(self):
         """退出OCR实例，清理资源"""
+        self._slow_count = 0  # 连续慢速计数以单次实例生命周期为界，重建后重新累计
         if self.ocr is not None:
             try:
                 self.ocr = None
@@ -720,15 +794,26 @@ class OCR:
                     self.ocr_time += elapsed_time
                     self.ocr_count += 1
 
-                    # 检测 DML 是否过慢，若超过阈值则自动降级
-                    if self._use_dml and not self._dml_fallback and elapsed_time > OCR_SLOW_THRESHOLD:
-                        self.logger.warning(f"OCR 执行耗时 {elapsed_time:.2f}s 超过阈值 {OCR_SLOW_THRESHOLD}s，正在降级到 CPU 模式...")
-                        self._disable_gpu_acceleration()
-                        self.exit_ocr()
-                        self.instance_ocr(force_cpu=True)
-                        # 用 CPU 模式重新执行一次
-                        original_dict = self.ocr(img).to_json()
-                        self.logger.info("已切换到 CPU 模式")
+                    # 检测 DML 是否过慢：第 1 次容忍预热残余的冷启动，第 2 次确认
+                    # 真慢后即降级，避免在弱 GPU 上让用户长时间空等。
+                    if self._use_dml and not self._dml_fallback and elapsed_time > self._slow_threshold:
+                        self._slow_count += 1
+                        self.logger.warning(
+                            f"OCR 执行耗时 {elapsed_time:.2f}s 超过阈值 {self._slow_threshold}s"
+                            f"（连续 {self._slow_count}/{OCR_SLOW_CONSECUTIVE_LIMIT} 次）"
+                        )
+                        if self._slow_count >= OCR_SLOW_CONSECUTIVE_LIMIT:
+                            self.logger.warning(f"DML 连续 {OCR_SLOW_CONSECUTIVE_LIMIT} 次过慢，降级到 CPU 模式...")
+                            self._slow_count = 0
+                            self._disable_gpu_acceleration()
+                            self.exit_ocr()
+                            self.instance_ocr(force_cpu=True)
+                            # 用 CPU 模式重新执行一次
+                            original_dict = self.ocr(img).to_json()
+                            self.logger.info("已切换到 CPU 模式")
+                    elif self._slow_count > 0:
+                        # 稳态恢复正常，重置连续慢速计数
+                        self._slow_count = 0
 
                     results = self.replace_strings(original_dict)
                     # 成功路径最适合触发周期性回收：此时本轮 OCR 的业务处理已经完成，
