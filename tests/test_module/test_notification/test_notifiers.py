@@ -1,5 +1,8 @@
+import hashlib
 import io
+import json
 import sys
+import threading
 from email import message_from_string
 from unittest.mock import MagicMock, patch, PropertyMock
 import pytest
@@ -549,6 +552,277 @@ class TestQmsgNotifier:
         assert mock_post.call_args.args[0] == "https://qmsg.zendee.cn/group/qkey"
 
 
+class TestQqBotNotifier:
+    @pytest.fixture(autouse=True)
+    def clear_token_cache(self):
+        from module.notification.qqbot import QqBotNotifier
+        QqBotNotifier._token_cache.clear()
+        yield
+        QqBotNotifier._token_cache.clear()
+
+    @staticmethod
+    def _resp(payload):
+        mock = MagicMock()
+        mock.json.return_value = payload
+        mock.text = str(payload)
+        return mock
+
+    def test_init_requires_appid_and_client_secret(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        with pytest.raises(ValueError, match="AppID"):
+            QqBotNotifier({}, logger)
+        with pytest.raises(ValueError, match="AppID"):
+            QqBotNotifier({"appid": "app1"}, logger)
+
+    def test_send_requires_target(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": "app1", "client_secret": "sec"}, logger)
+        with pytest.raises(ValueError, match="openid"):
+            n.send("标题", "内容")
+
+    def test_send_builds_group_payload_and_auth_header(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": "app1", "client_secret": "sec", "group_openid": "g123"}, logger)
+        with patch("module.notification.qqbot.requests.post",
+                   side_effect=[self._resp({"access_token": "tok", "expires_in": "7200"}),
+                                self._resp({"id": "1"})]) as mock_post:
+            n.send("标题", "内容")
+        token_call = mock_post.call_args_list[0]
+        assert token_call.args[0] == "https://bots.qq.com/app/getAppAccessToken"
+        assert token_call.kwargs["json"] == {"appId": "app1", "clientSecret": "sec"}
+        message_call = mock_post.call_args_list[1]
+        assert message_call.args[0] == "https://api.sgroup.qq.com/v2/groups/g123/messages"
+        assert message_call.kwargs["headers"]["Authorization"] == "QQBot tok"
+        assert message_call.kwargs["json"] == {"content": "标题\n内容", "msg_type": 0}
+
+    def test_send_to_group_and_user(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": "app2", "client_secret": "sec", "openid": "u1", "group_openid": "g1"}, logger)
+        with patch("module.notification.qqbot.requests.post",
+                   side_effect=[self._resp({"access_token": "tok", "expires_in": "7200"}),
+                                self._resp({"id": "1"}), self._resp({"id": "2"})]) as mock_post:
+            n.send("标题", "内容")
+        urls = [c.args[0] for c in mock_post.call_args_list[1:]]
+        assert urls == [
+            "https://api.sgroup.qq.com/v2/groups/g1/messages",
+            "https://api.sgroup.qq.com/v2/users/u1/messages",
+        ]
+
+    def test_token_reused_across_sends(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": "app3", "client_secret": "sec", "openid": "u1"}, logger)
+        with patch("module.notification.qqbot.requests.post",
+                   side_effect=[self._resp({"access_token": "tok", "expires_in": "7200"}),
+                                self._resp({"id": "1"}), self._resp({"id": "2"})]) as mock_post:
+            n.send("标题1", "内容1")
+            n.send("标题2", "内容2")
+        token_calls = [c for c in mock_post.call_args_list if c.args[0].endswith("getAppAccessToken")]
+        assert len(token_calls) == 1
+
+    def test_send_truncates_long_content(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": "app4", "client_secret": "sec", "openid": "u1"}, logger)
+        with patch("module.notification.qqbot.requests.post",
+                   side_effect=[self._resp({"access_token": "tok", "expires_in": "7200"}),
+                                self._resp({"id": "1"})]) as mock_post:
+            n.send("", "长" * 3000)
+        data = mock_post.call_args_list[1].kwargs["json"]
+        assert len(data["content"]) == QqBotNotifier.MAX_CONTENT_LENGTH
+        assert data["content"].endswith("…")
+
+    def test_error_includes_server_response(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": "app5", "client_secret": "sec", "openid": "u1"}, logger)
+        error = {"code": 40034105, "message": "主动消息发送失败，无权限"}
+        with patch("module.notification.qqbot.requests.post",
+                   side_effect=[self._resp({"access_token": "tok", "expires_in": "7200"}),
+                                self._resp(error)]):
+            with pytest.raises(RuntimeError, match="40034105"):
+                n.send("标题", "内容")
+
+
+    def test_send_image_uploads_chunks_and_sends_media_message(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": "app6", "client_secret": "sec", "openid": "u1"}, logger)
+        image_bytes = b"1234567"
+        prepare = {
+            "upload_id": "up1",
+            "block_size": "4",
+            "parts": [
+                {"index": 0, "presigned_url": "https://upload.example/p0", "block_size": 4},
+                {"index": 1, "presigned_url": "https://upload.example/p1", "block_size": 4},
+            ],
+        }
+        responses = [
+            self._resp({"access_token": "tok", "expires_in": "7200"}),
+            self._resp(prepare),
+            self._resp({}),
+            self._resp({}),
+            self._resp({"file_uuid": "uuid1", "file_info": "fi123", "ttl": 300}),
+            self._resp({"id": "msg1"}),
+        ]
+        with patch("module.notification.qqbot.requests.post", side_effect=responses) as mock_post, \
+                patch("module.notification.qqbot.requests.put") as mock_put:
+            n.send("", "", image_io=io.BytesIO(image_bytes))
+
+        prepare_call = mock_post.call_args_list[1]
+        assert prepare_call.args[0] == "https://api.sgroup.qq.com/v2/users/u1/upload_prepare"
+        payload = prepare_call.kwargs["json"]
+        assert payload["file_type"] == 1
+        assert payload["file_size"] == str(len(image_bytes))
+        assert payload["md5"] == hashlib.md5(image_bytes).hexdigest()
+        assert payload["sha1"] == hashlib.sha1(image_bytes).hexdigest()
+        assert payload["md5_10m"] == hashlib.md5(image_bytes).hexdigest()
+
+        assert [c.args[0] for c in mock_put.call_args_list] == ["https://upload.example/p0", "https://upload.example/p1"]
+        assert [c.kwargs["data"] for c in mock_put.call_args_list] == [b"1234", b"567"]
+
+        finish_calls = [c for c in mock_post.call_args_list if c.args[0].endswith("upload_part_finish")]
+        assert finish_calls[0].kwargs["json"] == {
+            "upload_id": "up1", "part_index": 0, "block_size": "4", "md5": hashlib.md5(b"1234").hexdigest(),
+        }
+        assert finish_calls[1].kwargs["json"]["block_size"] == "3"
+
+        files_call = mock_post.call_args_list[4]
+        assert files_call.args[0] == "https://api.sgroup.qq.com/v2/users/u1/files"
+        assert files_call.kwargs["json"] == {"file_type": 1, "upload_id": "up1", "file_name": "screenshot.jpg"}
+
+        message_call = mock_post.call_args_list[5]
+        assert message_call.args[0] == "https://api.sgroup.qq.com/v2/users/u1/messages"
+        assert message_call.kwargs["json"] == {"msg_type": 7, "media": {"file_info": "fi123"}}
+        assert message_call.kwargs["headers"]["Authorization"] == "QQBot tok"
+
+    def test_supports_image(self):
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": "app7", "client_secret": "sec"}, logger)
+        assert n._get_supports_image() is True
+
+    def test_token_request_stringifies_numeric_params(self):
+        # YAML 中未加引号的纯数字会被解析为 int，必须转成字符串发送，否则服务端返回 100002
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        n = QqBotNotifier({"appid": 102043218, "client_secret": 12345678901234567890123456789012}, logger)
+        assert n.appid == "102043218"
+        with patch("module.notification.qqbot.requests.post",
+                   side_effect=[self._resp({"access_token": "tok", "expires_in": "7200"})]) as mock_post:
+            assert n._get_access_token() == "tok"
+        assert mock_post.call_args.kwargs["json"] == {
+            "appId": "102043218",
+            "clientSecret": "12345678901234567890123456789012",
+        }
+
+
+class TestQqBotOpenIdBinder:
+    @staticmethod
+    def _resp(payload):
+        mock = MagicMock()
+        mock.json.return_value = payload
+        mock.text = str(payload)
+        return mock
+
+    def test_parse_event_targets(self):
+        from module.notification.qqbot import QqBotOpenIdBinder
+        assert QqBotOpenIdBinder.parse_event("C2C_MESSAGE_CREATE", {"author": {"user_openid": "u1"}}) == ("user", "u1", True)
+        assert QqBotOpenIdBinder.parse_event("FRIEND_ADD", {"openid": "u2"}) == ("user", "u2", False)
+        assert QqBotOpenIdBinder.parse_event("GROUP_AT_MESSAGE_CREATE", {"group_openid": "g1"}) == ("group", "g1", True)
+        assert QqBotOpenIdBinder.parse_event("GROUP_MESSAGE_CREATE", {"group_openid": "g2"}) == ("group", "g2", True)
+        assert QqBotOpenIdBinder.parse_event("GROUP_ADD_ROBOT", {"group_openid": "g3"}) == ("group", "g3", False)
+        assert QqBotOpenIdBinder.parse_event("READY", {}) is None
+        assert QqBotOpenIdBinder.parse_event(None, {}) is None
+
+    def test_capture_requires_mode(self):
+        from module.notification.qqbot import QqBotOpenIdBinder
+        binder = QqBotOpenIdBinder({"appid": "app8", "client_secret": "sec"}, MagicMock())
+        with pytest.raises(ValueError, match="mode"):
+            binder.capture("both", "1234")
+
+    def test_capture_group_openid_via_fake_gateway(self, monkeypatch):
+        from module.notification import qqbot as qqbot_module
+        from module.notification.qqbot import QqBotOpenIdBinder
+        binder = QqBotOpenIdBinder({"appid": "app9", "client_secret": "sec"}, MagicMock())
+        sent = []
+
+        class FakeWSApp:
+            def __init__(self, url, on_open=None, on_message=None, on_error=None):
+                self.url = url
+                self.on_open = on_open
+                self.on_message = on_message
+                self.closed = threading.Event()
+
+            def send(self, raw):
+                sent.append(json.loads(raw))
+
+            def close(self):
+                self.closed.set()
+
+            def run_forever(self):
+                self.on_open(self)
+                self.on_message(self, json.dumps({"op": 10, "d": {"heartbeat_interval": 60000}}))
+                self.on_message(self, json.dumps({"op": 0, "s": 1, "t": "READY", "d": {"session_id": "s1"}}))
+                # 校验码不匹配的无关消息应被忽略
+                self.on_message(self, json.dumps({"op": 0, "s": 2, "t": "GROUP_AT_MESSAGE_CREATE",
+                                                  "d": {"group_openid": "wrong", "content": "0000"}}))
+                self.on_message(self, json.dumps({"op": 0, "s": 3, "t": "GROUP_AT_MESSAGE_CREATE",
+                                                  "d": {"group_openid": "g9", "content": "4321"}}))
+                self.closed.wait(5)
+
+        fake_websocket = MagicMock()
+        fake_websocket.WebSocketApp = FakeWSApp
+        monkeypatch.setattr(qqbot_module, "websocket", fake_websocket)
+
+        with patch("module.notification.qqbot.requests.post",
+                   side_effect=[self._resp({"access_token": "tok", "expires_in": "7200"})]), \
+                patch("module.notification.qqbot.requests.get") as mock_get:
+            mock_get.return_value = self._resp({"url": "wss://gateway.example/ws"})
+            value = binder.capture("group", "4321", timeout=5)
+
+        assert value == "g9"
+        identify = [p for p in sent if p.get("op") == 2][0]
+        assert identify["d"]["token"] == "QQBot tok"
+        assert identify["d"]["intents"] == 1 << 25
+        assert identify["d"]["shard"] == [0, 1]
+
+    def test_capture_timeout(self, monkeypatch):
+        from module.notification import qqbot as qqbot_module
+        from module.notification.qqbot import QqBotOpenIdBinder
+        binder = QqBotOpenIdBinder({"appid": "app10", "client_secret": "sec"}, MagicMock())
+
+        class FakeWSApp:
+            def __init__(self, url, on_open=None, on_message=None, on_error=None):
+                self.on_open = on_open
+                self.closed = threading.Event()
+
+            def send(self, raw):
+                pass
+
+            def close(self):
+                self.closed.set()
+
+            def run_forever(self):
+                self.on_open(self)
+                self.closed.wait(10)
+
+        fake_websocket = MagicMock()
+        fake_websocket.WebSocketApp = FakeWSApp
+        monkeypatch.setattr(qqbot_module, "websocket", fake_websocket)
+
+        with patch("module.notification.qqbot.requests.post",
+                   side_effect=[self._resp({"access_token": "tok", "expires_in": "7200"})]), \
+                patch("module.notification.qqbot.requests.get") as mock_get:
+            mock_get.return_value = self._resp({"url": "wss://gateway.example/ws"})
+            with pytest.raises(TimeoutError, match="绑定超时"):
+                binder.capture("user", "1234", timeout=0.2)
+
+
 class TestServerChanTurboNotifier:
     def test_init_requires_sctkey(self):
         from module.notification.serverchanturbo import ServerChanTurboNotifier
@@ -736,6 +1010,13 @@ class TestNotifierFactory:
         notif = NotifierFactory.create_notifier("qmsg", {"key": "test-key"}, logger)
         assert isinstance(notif, QmsgNotifier)
 
+    def test_create_qqbot(self):
+        from module.notification import NotifierFactory
+        from module.notification.qqbot import QqBotNotifier
+        logger = MagicMock()
+        notif = NotifierFactory.create_notifier("qqbot", {"appid": "test-app", "client_secret": "test-secret"}, logger)
+        assert isinstance(notif, QqBotNotifier)
+
     def test_create_bark(self):
         from module.notification import NotifierFactory
         from module.notification.bark import BarkNotifier
@@ -786,5 +1067,6 @@ class TestNotifierFactory:
         assert "kook" in NotifierFactory.notifier_classes
         assert "matrix" in NotifierFactory.notifier_classes
         assert "onebot" in NotifierFactory.notifier_classes
+        assert "qqbot" in NotifierFactory.notifier_classes
         assert "wechatworkapp" in NotifierFactory.notifier_classes
         assert "wechatworkbot" in NotifierFactory.notifier_classes

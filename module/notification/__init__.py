@@ -26,6 +26,7 @@ from module.notification.gotify import GotifyNotifier
 from module.notification.pushdeer import PushDeerNotifier
 from module.notification.pushplus import PushPlusNotifier
 from module.notification.qmsg import QmsgNotifier
+from module.notification.qqbot import QqBotNotifier
 
 
 class NotifierFactory:
@@ -52,6 +53,7 @@ class NotifierFactory:
         "pushdeer": PushDeerNotifier,
         "pushplus": PushPlusNotifier,
         "qmsg": QmsgNotifier,
+        "qqbot": QqBotNotifier,
     }
     if sys.platform == 'win32':
         notifier_classes["winotify"] = WinotifyNotifier

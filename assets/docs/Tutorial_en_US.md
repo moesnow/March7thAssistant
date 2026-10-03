@@ -343,6 +343,7 @@ The current version supports more notification channels than older versions. Com
 - Bark
 - SMTP (email)
 - OneBot
+- QQ Official Bot
 - Go-cqhttp
 - DingTalk
 - Pushplus

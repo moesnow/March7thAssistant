@@ -887,6 +887,7 @@ dependencies = [
     { name = "requests", extra = ["socks"] },
     { name = "ruamel-yaml" },
     { name = "selenium" },
+    { name = "websocket-client" },
     { name = "winotify", marker = "sys_platform == 'win32'" },
 ]
 
@@ -917,6 +918,7 @@ docker = [
     { name = "requests", extra = ["socks"] },
     { name = "ruamel-yaml" },
     { name = "selenium" },
+    { name = "websocket-client" },
 ]
 
 [package.metadata]
@@ -951,6 +953,7 @@ requires-dist = [
     { name = "requests", extras = ["socks"], specifier = "==2.34.2" },
     { name = "ruamel-yaml", specifier = "==0.19.1" },
     { name = "selenium", specifier = "==4.44.0" },
+    { name = "websocket-client", specifier = "==1.9.0" },
     { name = "winotify", marker = "sys_platform == 'win32'", specifier = "==1.1.0" },
 ]
 
@@ -979,6 +982,7 @@ docker = [
     { name = "requests", extras = ["socks"], specifier = "==2.34.2" },
     { name = "ruamel-yaml", specifier = "==0.19.1" },
     { name = "selenium", specifier = "==4.44.0" },
+    { name = "websocket-client", specifier = "==1.9.0" },
 ]
 
 [[package]]

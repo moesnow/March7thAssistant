@@ -341,6 +341,7 @@ HoYoverse ランチャー経由で更新や事前ダウンロードを行いた�
 - Bark
 - SMTP（メール）
 - OneBot
+- QQ 公式ボット
 - Go-cqhttp
 - DingTalk
 - Pushplus

@@ -1,8 +1,8 @@
-from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint
+from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint, QThread, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame, QApplication
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard, MessageBox, PushButton
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard, MessageBox, PushButton, StateToolTip
 from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
 from .components.pivot import SettingPivot
@@ -23,8 +23,35 @@ from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
 import os
+import random
 import sys
 import platform
+
+
+class QqBotBindThread(QThread):
+    """QQ 官方机器人 openid / group_openid 自动绑定监听线程。"""
+
+    resultSignal = Signal(bool, str, str)  # 是否成功，模式 user/group，标识值或错误信息
+
+    def __init__(self, appid: str, client_secret: str, mode: str, verify_code: str, parent=None):
+        super().__init__(parent)
+        self.appid = appid
+        self.client_secret = client_secret
+        self.mode = mode
+        self.verify_code = verify_code
+
+    def run(self):
+        from module.logger import log
+        try:
+            from module.notification.qqbot import QqBotOpenIdBinder
+            binder = QqBotOpenIdBinder({"appid": self.appid, "client_secret": self.client_secret})
+            value = binder.capture(self.mode, self.verify_code)
+        except Exception as e:
+            log.error(f"QQ 官方机器人自动绑定失败（模式：{self.mode}）: {e}")
+            self.resultSignal.emit(False, self.mode, str(e))
+            return
+        log.info(f"QQ 官方机器人自动绑定成功（模式：{self.mode}），已写入配置")
+        self.resultSignal.emit(True, self.mode, value)
 
 
 class _PivotScrollFilter(QObject):
@@ -1626,6 +1653,62 @@ class SettingInterface(ScrollArea):
 
 """
             },
+            "qqbot": {
+                "icon": FIF.ROBOT,
+                "display_name": tr("QQ 官方机器人"),
+                "description": tr("QQ 开放平台官方机器人推送"),
+                "support_image": True,
+                "params": {
+                    "appid": {"title": tr("机器人 AppID"), "description": tr("QQ 开放平台的机器人 AppID")},
+                    "client_secret": {"title": tr("机器人 AppSecret"), "description": tr("QQ 开放平台的机器人 AppSecret")},
+                    "openid": {"title": tr("单聊用户 openid"), "description": tr("可选参数，单聊消息的接收用户 openid")},
+                    "group_openid": {"title": tr("群聊 group_openid"), "description": tr("可选参数，群聊消息的接收群 group_openid")},
+                },
+                "tutorial": """
+<h4>一、什么是 QQ 官方机器人？</h4>
+<p>QQ 官方机器人是 QQ 开放平台提供的官方能力，只需 <b>AppID + AppSecret</b> 两个字段即可主动推送消息，无需部署 NapCat / Lagrange 等第三方协议端（OneBot），无封号风险。</p>
+
+<h4>二、前置准备</h4>
+<ol>
+<li>访问 <a href="https://q.qq.com/">QQ 开放平台</a>，注册并创建机器人</li>
+<li>在「开发设置」中获取 <b>AppID</b> 与 <b>AppSecret</b></li>
+</ol>
+
+<h4>三、获取 openid / group_openid</h4>
+<p>收件方标识 <code>openid</code> / <code>group_openid</code> 不是 QQ 号，也无法通过接口查询，只能在机器人收到事件时获取。推荐使用参数列表下方的「自动绑定收件标识」：</p>
+<ul>
+<li><b>绑定单聊</b>：点击后 60 秒内用 QQ 私聊机器人发送指定验证码，或直接添加机器人为好友</li>
+<li><b>绑定群聊</b>：点击后 60 秒内在目标群中 @ 机器人发送指定验证码，或将机器人拉进目标群</li>
+</ul>
+<p>也可以手动填写：单聊对应 <code>C2C_MESSAGE_CREATE</code> / <code>FRIEND_ADD</code> 事件中的 openid，群聊对应 <code>GROUP_AT_MESSAGE_CREATE</code> / <code>GROUP_ADD_ROBOT</code> 事件中的 group_openid。</p>
+<p>二者可只填一个，也可同时填写（同时推送）。</p>
+
+<h4>四、配置到 March7thAssistant</h4>
+<ol>
+<li>在本软件中，找到「消息推送」设置</li>
+<li>开启「启用消息推送」总开关</li>
+<li>找到「QQ 官方机器人」通知，开启开关</li>
+<li>填写「机器人 AppID」「机器人 AppSecret」</li>
+<li>点击「绑定单聊」或「绑定群聊」自动获取收件标识（也可手动填写）</li>
+<li>点击下方的「发送消息」按钮测试</li>
+</ol>
+
+<div class="tip">💡 <b>提示</b>：推送截图会自动走官方分片上传并以图片消息发送，无需额外配置。</div>
+<div class="warning">⚠️ <b>注意</b>：AppSecret 属于敏感凭证，请勿泄露给他人或发布到公开场合。</div>
+
+<h4>五、常见问题</h4>
+
+<p><b>Q：提示 40034105 主动消息发送失败？</b></p>
+<p>A：一般是当月主动消息额度已用完或触发了发送频控，稍后再试即可；若持续出现，可到开放平台检查机器人状态与消息权限。</p>
+
+<p><b>Q：提示 invalid appid or secret？</b></p>
+<p>A：AppID 或 AppSecret 填写错误，请与开放平台「开发设置」中的内容核对。</p>
+
+<p><b>Q：发送成功但 QQ 没收到？</b></p>
+<p>A：请确认 openid / group_openid 是否正确，以及机器人是否已入群或与你建立过会话。</p>
+
+"""
+            },
             "gocqhttp": {
                 "icon": FIF.ROBOT,
                 "display_name": "Go-cqhttp",
@@ -2967,28 +3050,37 @@ class SettingInterface(ScrollArea):
                     continue
                 provider_names.append(notifier_name)
 
-        # 自定义排序顺序（根据用户实际使用统计）
+        # 自定义排序顺序
         custom_order = [
-            "winotify",        # Windows
-            "telegram",        # Telegram
+            "winotify",        # Windows 原生通知
             "wechatworkbot",   # 企业微信机器人
+            "qqbot",           # QQ 官方机器人
             "smtp",            # SMTP
-            "serverchanturbo", # Server酱 Turbo
             "lark",            # 飞书
-            "pushplus",        # Pushplus
-            "qmsg",            # Qmsg
-            "serverchan3",     # Server酱³
-            "wechatworkapp",   # 企业微信应用
+            "telegram",        # Telegram
             "dingtalk",        # 钉钉
+            "serverchan3",     # Server酱³
+            "onebot",          # OneBot
+            "serverchanturbo", # Server酱 Turbo
             "bark",            # Bark
+            "wechatworkapp",   # 企业微信应用
+            "pushplus",        # Pushplus
             "discord",         # Discord
+            "meow",            # MeoW
+            "gotify",          # Gotify
+            "kook",            # KOOK
+            "qmsg",            # Qmsg
+            "matrix",          # Matrix
+            "pushdeer",        # Pushdeer
+            "gocqhttp",        # Go-cqhttp
         ]
 
-        # 先按自定义顺序排列指定的 provider，其余保持原有顺序
-        custom_set = set(custom_order)
+        # 先按自定义顺序排列指定的 provider，其余保持原有顺序，webhook/自定义通知置底
+        custom_set = set(custom_order) | {"webhook", "custom"}
         ordered = [name for name in custom_order if name in provider_names]
         remaining = [name for name in provider_names if name not in custom_set]
-        return ordered + remaining
+        tail = [name for name in ("webhook", "custom") if name in provider_names]
+        return ordered + remaining + tail
 
     def __createNotifyParamCards(self, notifier_name):
         param_cards = []
@@ -3034,7 +3126,119 @@ class SettingInterface(ScrollArea):
                 )
             param_cards.append(notify_param_card)
 
+        if notifier_name == "qqbot":
+            param_cards.append(self.__createQqBotBindCard())
+
         return param_cards
+
+    def __createQqBotBindCard(self):
+        """QQ 官方机器人：自动绑定 openid / group_openid 的卡片。"""
+        self._qqbotBindThread = None
+        self.qqbotStateTooltip = None
+        bind_card = DualPushSettingCard(
+            tr("绑定单聊"), tr("绑定群聊"),
+            FIF.LINK,
+            tr("自动绑定收件标识"),
+        )
+        bind_card.leftClicked.connect(lambda: self.__onQqBotBindClicked("user"))
+        bind_card.rightClicked.connect(lambda: self.__onQqBotBindClicked("group"))
+        return bind_card
+
+    def __onQqBotBindClicked(self, mode: str):
+        if self._qqbotBindThread is not None and self._qqbotBindThread.isRunning():
+            InfoBar.warning(
+                title=tr("正在绑定中"),
+                content=tr("请等待当前绑定完成后再试"),
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.window()
+            )
+            return
+
+        appid = cfg.get_value("notify_qqbot_appid") or ""
+        client_secret = cfg.get_value("notify_qqbot_client_secret") or ""
+        if not appid or not client_secret:
+            InfoBar.warning(
+                title=tr("无法绑定"),
+                content=tr("请先填写机器人 AppID 与 AppSecret"),
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self.window()
+            )
+            return
+
+        from module.notification.qqbot import QqBotOpenIdBinder
+        verify_code = f"{random.randint(0, 9999):04d}"
+        seconds = QqBotOpenIdBinder.BIND_TIMEOUT
+        if mode == "user":
+            tip = tr("点击「开始监听」后，请在 {seconds} 秒内用 QQ 私聊机器人并发送验证码 {code}")
+        else:
+            tip = tr("点击「开始监听」后，请在 {seconds} 秒内在群聊中 @ 机器人并发送验证码 {code}，或将机器人拉进目标群")
+        tip = tip.format(seconds=seconds, code=verify_code)
+
+        confirm = MessageBox(tr("自动绑定收件标识"), tip, self.window())
+        confirm.yesButton.setText(tr("开始监听"))
+        confirm.cancelButton.setText(tr("取消"))
+        if not confirm.exec():
+            return
+
+        thread = QqBotBindThread(appid, client_secret, mode, verify_code, self)
+        thread.resultSignal.connect(self.__onQqBotBindFinished)
+        self._qqbotBindThread = thread
+        thread.start()
+
+        # 监听期间常驻显示（同「抽卡记录-更新数据」的 StateToolTip），避免用户忘记验证码
+        if mode == "user":
+            listen_tip = tr("监听中，请私聊机器人发送验证码 {code}（{seconds} 秒内）")
+        else:
+            listen_tip = tr("监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）")
+        listen_tip = listen_tip.format(code=verify_code, seconds=seconds)
+        try:
+            self.qqbotStateTooltip = StateToolTip(tr("自动绑定收件标识"), listen_tip, self.window())
+            self.qqbotStateTooltip.closeButton.setVisible(False)
+            self.qqbotStateTooltip.move(self.qqbotStateTooltip.getSuitablePos())
+            self.qqbotStateTooltip.show()
+        except Exception:
+            self.qqbotStateTooltip = None
+
+    def __onQqBotBindFinished(self, success: bool, mode: str, value: str):
+        # 收起常驻提示（setState(True) 后自动淡出）
+        tooltip = getattr(self, "qqbotStateTooltip", None)
+        self.qqbotStateTooltip = None
+        if tooltip is not None:
+            try:
+                tooltip.setContent(tr("绑定成功") if success else tr("绑定失败"))
+                tooltip.setState(True)
+            except Exception:
+                pass
+
+        if success:
+            configname = "notify_qqbot_openid" if mode == "user" else "notify_qqbot_group_openid"
+            cfg.set_value(configname, value)
+            self.__refreshNotifiers()
+            InfoBar.success(
+                title=tr("绑定成功"),
+                content=value,
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self.window()
+            )
+        else:
+            InfoBar.error(
+                title=tr("绑定失败"),
+                content=value,
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=8000,
+                parent=self.window()
+            )
 
     def __onNotifyParamCardClicked(self, card):
         current_value = cfg.get_value(card.configname)

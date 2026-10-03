@@ -357,6 +357,7 @@ March7th Launcher.exe main -e （任务正常完成后自动退出程序）
 - Bark
 - SMTP（邮箱）
 - OneBot
+- QQ 官方机器人
 - Go-cqhttp
 - 钉钉
 - Pushplus

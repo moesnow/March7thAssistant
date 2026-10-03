@@ -343,6 +343,7 @@ HoYoverse 런처를 통해 게임 업데이트나 사전 다운로드를 하려�
 - Bark
 - SMTP(이메일)
 - OneBot
+- QQ 공식 봇
 - Go-cqhttp
 - DingTalk
 - Pushplus

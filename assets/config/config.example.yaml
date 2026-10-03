@@ -575,6 +575,16 @@ notify_onebot_token: "" # 可选参数，验证请求的 Access Token。
 notify_onebot_user_id: "" # 可选参数，私聊消息的接收用户 ID。
 notify_onebot_group_id: "" # 可选参数，群消息的接收群组 ID。
 
+# QQ 官方机器人通知配置（QQ 开放平台）
+# 仅需 AppID + AppSecret，无需部署 NapCat / Lagrange 等 OneBot 协议端，无封号风险
+# 支持发送截图（官方分片上传）
+# openid / group_openid 无法通过接口查询，可在软件内「自动绑定收件标识」，或从机器人收到的事件（如私聊、@ 机器人、机器人入群）中获取
+notify_qqbot_enable: false # 是否启用 QQ 官方机器人通知。true 开启，false 关闭。
+notify_qqbot_appid: "" # QQ 开放平台的机器人 AppID（纯数字时建议加引号填写）。
+notify_qqbot_client_secret: "" # QQ 开放平台的机器人 AppSecret（敏感凭证，请勿泄露；建议加引号填写）。
+notify_qqbot_openid: "" # 可选参数，单聊消息的接收用户 openid。
+notify_qqbot_group_openid: "" # 可选参数，群聊消息的接收群 group_openid。
+
 # Go-cqhttp 通知配置（已停止维护）
 # 支持发送截图
 # https://github.com/Mrs4s/go-cqhttp
