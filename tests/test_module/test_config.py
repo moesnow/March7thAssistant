@@ -173,6 +173,32 @@ class TestConfigPersistence:
         config.config_path = str(tmp_path / "config.yaml")
         return config
 
+    def _mock_mountinfo(self, monkeypatch, contents, platform="linux", docker="true"):
+        import builtins
+        import importlib
+        import io
+        from types import SimpleNamespace
+
+        config_module = importlib.import_module("module.config.config")
+        monkeypatch.setattr(config_module, "sys", SimpleNamespace(platform=platform))
+        monkeypatch.setenv("MARCH7TH_DOCKER_STARTED", docker)
+        real_open = builtins.open
+
+        def open_with_mountinfo(name, *args, **kwargs):
+            if name == "/proc/self/mountinfo":
+                if isinstance(contents, OSError):
+                    raise contents
+                return io.StringIO(contents)
+            return real_open(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "open", open_with_mountinfo)
+
+    def _mountinfo_entry(self, path):
+        # mountinfo 对反斜线和空白字符使用八进制转义。
+        escaped = os.path.realpath(path).replace("\\", r"\134")
+        escaped = escaped.replace(" ", r"\040").replace("\t", r"\011").replace("\n", r"\012")
+        return f"42 25 0:33 /source {escaped} rw,relatime shared:1 - ext4 /dev/sda1 rw\n"
+
     def test_save_config_atomic(self, tmp_path):
         config = self._create_config(tmp_path)
         config.save_config()
@@ -204,8 +230,8 @@ class TestConfigPersistence:
         assert (tmp_path / "config.yaml").read_bytes() == original
         assert list(tmp_path.glob("config.yaml.*.tmp")) == []
 
-    def test_save_config_falls_back_when_replace_fails(self, tmp_path, monkeypatch):
-        """目标为挂载点（如 Docker 单文件挂载）时 os.replace 报 EBUSY，应退化为原地覆盖写入"""
+    def test_save_config_falls_back_for_verified_docker_file_mount(self, tmp_path, monkeypatch):
+        """已确认的 Docker 单文件挂载报 EBUSY 时仍能保存配置。"""
         config = self._create_config(tmp_path)
         config.save_config()
 
@@ -220,6 +246,7 @@ class TestConfigPersistence:
             return real_replace(src, dst, *args, **kwargs)
 
         monkeypatch.setattr(os, "replace", replace_fails_on_config)
+        self._mock_mountinfo(monkeypatch, self._mountinfo_entry(config.config_path))
 
         config.save_config()
 
@@ -326,6 +353,74 @@ class TestConfigPersistence:
         with pytest.raises(OSError):
             config.save_config()
         assert path.read_bytes() == original
+
+    def test_unverified_ebusy_preserves_original(self, tmp_path, monkeypatch):
+        import errno
+
+        config = self._create_config(tmp_path)
+        config.save_config()
+        path = tmp_path / "config.yaml"
+        original = path.read_bytes()
+        config.config["key1"] = "new"
+        monkeypatch.delenv("MARCH7TH_DOCKER_STARTED", raising=False)
+
+        def busy(src, dst):
+            raise OSError(errno.EBUSY, "Device or resource busy")
+
+        monkeypatch.setattr(os, "replace", busy)
+        with pytest.raises(OSError) as exc_info:
+            config.save_config()
+        assert exc_info.value.errno == errno.EBUSY
+        assert path.read_bytes() == original
+        assert list(tmp_path.glob("config.yaml.*.tmp")) == []
+
+    @pytest.mark.parametrize("mountinfo_kind", ["parent", "other", "malformed", "unreadable"])
+    def test_docker_ebusy_without_file_mount_preserves_original(self, tmp_path, monkeypatch, mountinfo_kind):
+        import errno
+
+        config = self._create_config(tmp_path)
+        config.save_config()
+        path = tmp_path / "config.yaml"
+        original = path.read_bytes()
+        config.config["key1"] = "new"
+        contents = {
+            "parent": self._mountinfo_entry(tmp_path),
+            "other": self._mountinfo_entry(tmp_path / "other.yaml"),
+            "malformed": "invalid mount record\n",
+            "unreadable": PermissionError("mountinfo unavailable"),
+        }[mountinfo_kind]
+        self._mock_mountinfo(monkeypatch, contents)
+
+        def busy(src, dst):
+            raise OSError(errno.EBUSY, "Device or resource busy")
+
+        monkeypatch.setattr(os, "replace", busy)
+        with pytest.raises(OSError) as exc_info:
+            config.save_config()
+        assert exc_info.value.errno == errno.EBUSY
+        assert path.read_bytes() == original
+        assert list(tmp_path.glob("config.yaml.*.tmp")) == []
+
+    @pytest.mark.parametrize("platform,docker", [("win32", "true"), ("darwin", "true"), ("linux", "false")])
+    def test_mount_fallback_requires_linux_docker(self, tmp_path, monkeypatch, platform, docker):
+        config = self._create_config(tmp_path)
+        config.save_config()
+        self._mock_mountinfo(monkeypatch, self._mountinfo_entry(config.config_path), platform, docker)
+        assert config._is_docker_file_mount() is False
+
+    def test_file_mount_path_with_escaped_characters(self, tmp_path, monkeypatch):
+        directory = tmp_path / "config space"
+        directory.mkdir()
+        config = self._create_config(directory)
+        config.save_config()
+        self._mock_mountinfo(monkeypatch, self._mountinfo_entry(config.config_path))
+        assert config._is_docker_file_mount() is True
+
+    def test_directory_is_not_a_single_file_mount(self, tmp_path, monkeypatch):
+        config = self._create_config(tmp_path)
+        config.config_path = str(tmp_path)
+        self._mock_mountinfo(monkeypatch, self._mountinfo_entry(tmp_path))
+        assert config._is_docker_file_mount() is False
 
     def test_read_only_load_does_not_create_missing_file(self, tmp_path):
         config = self._create_config(tmp_path)

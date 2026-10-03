@@ -3,10 +3,12 @@ import time
 import copy
 import errno
 import os
+import re
 import shutil
 import tempfile
 from ruamel.yaml import YAML
 from utils.singleton import SingletonMeta
+from utils.console import is_docker_started
 
 # 环境变量覆盖映射：环境变量名 -> (配置键, 转换函数)
 # 环境变量值为 "true"/"1" 时为 True，"false"/"0" 时为 False
@@ -206,8 +208,31 @@ class Config(metaclass=SingletonMeta):
         changed = not self._configs_equal(file_conf, self.config)
         return changed
 
+    def _is_docker_file_mount(self):
+        """只允许已确认的 Docker 单文件挂载使用非原子写入。"""
+        if sys.platform != "linux" or not is_docker_started():
+            return False
+        target = os.path.realpath(self.config_path)
+        if not os.path.isfile(target):
+            return False
+        try:
+            # ismount 无法可靠识别同一文件系统的 bind mount，必须检查实际挂载表。
+            with open("/proc/self/mountinfo", encoding="utf-8", errors="surrogateescape") as mounts:
+                for line in mounts:
+                    mount, separator, filesystem = line.partition(" - ")
+                    fields = mount.split()
+                    if not separator or len(fields) < 6 or len(filesystem.split()) < 3:
+                        continue
+                    mount_point = re.sub(r"\\([0-7]{3})", lambda m: chr(int(m[1], 8)), fields[4])
+                    # 必须是配置文件本身的挂载，父目录挂载不需要原地写入。
+                    if mount_point == target:
+                        return True
+        except OSError:
+            pass
+        return False
+
     def save_config(self):
-        """保存配置到文件（先写临时文件再原子替换；目标为挂载点时退化为原地覆盖写入）"""
+        """先写临时文件再原子替换；仅已确认的 Docker 单文件挂载允许原地写入。"""
         config_dir = os.path.dirname(os.path.abspath(self.config_path))
         # 临时文件名唯一，避免多进程同时保存时互相截断
         tmp_fd, tmp_path = tempfile.mkstemp(
@@ -228,7 +253,7 @@ class Config(metaclass=SingletonMeta):
                         raise
                     time.sleep(0.05 * (attempt + 1))
                 except OSError as e:
-                    if e.errno != errno.EBUSY:
+                    if e.errno != errno.EBUSY or not self._is_docker_file_mount():
                         raise
                     # 仅兼容 Docker 单文件挂载的 EBUSY；其他失败不能截断原文件。
                     with open(tmp_path, 'rb') as src, open(self.config_path, 'wb') as dst:
