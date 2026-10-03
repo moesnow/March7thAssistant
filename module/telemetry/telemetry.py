@@ -370,7 +370,14 @@ class Telemetry(metaclass=SingletonMeta):
                 separators=(",", ":"),
             )
             resp = self._session.post(_ENDPOINT, data=body.encode("utf-8"), timeout=_REQUEST_TIMEOUT)
-            return resp.status_code == 204
+            if resp.status_code == 204:
+                return True
+            if 400 <= resp.status_code < 500 and resp.status_code != 429:
+                # 服务端明确拒绝（载荷/签名/版本等永久性问题）：重试只会再次失败，
+                # 还会放大服务端压力并触发风控计罚，直接丢弃该批。
+                return True
+            # 5xx / 429（限流）/ 网络异常：可重试，由上层 __retry_count 控制上限
+            return False
         except Exception:
             return False
 
