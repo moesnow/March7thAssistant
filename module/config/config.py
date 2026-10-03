@@ -22,6 +22,17 @@ _DIAG_FILE_MAX_BYTES = 5 * 1024 * 1024
 _DIAG_FILE_LOCK = threading.Lock()
 
 
+def _diag_rotated_path():
+    """轮转文件名：config_diag.log -> config_diag.1.log
+
+    必须保留 .log 后缀：utils.logger 的 _cleanup_old_logs 按 *.log + 保留天数
+    回收 logs/ 下的日志，命名成 config_diag.log.1 会永远残留（即使将来移除
+    本诊断模块，历史文件也应能被正常清理）。
+    """
+    root, ext = os.path.splitext(_DIAG_FILE)
+    return f"{root}.1{ext or '.log'}"
+
+
 def _diag(level, message):
     """写诊断日志（绝不抛错）。level: debug/info/warning/error"""
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -35,7 +46,7 @@ def _diag(level, message):
                 os.makedirs(log_dir, exist_ok=True)
             try:
                 if os.path.exists(_DIAG_FILE) and os.path.getsize(_DIAG_FILE) > _DIAG_FILE_MAX_BYTES:
-                    os.replace(_DIAG_FILE, f"{_DIAG_FILE}.1")
+                    os.replace(_DIAG_FILE, _diag_rotated_path())
             except OSError:
                 pass
             with open(_DIAG_FILE, "a", encoding="utf-8") as file:
@@ -72,18 +83,33 @@ _REPLACE_RETRY_ATTEMPTS = 5
 _REPLACE_RETRY_BASE_DELAY = 0.03
 
 
-def _is_transient_io_error(e):
-    """判断是否为瞬时 IO 冲突（文件正被其他进程替换/占用），而非真正的文件损坏
+def _is_io_conflict_error(e):
+    """判断是否为 IO 占用/权限冲突（而非内容损坏）
 
     Windows 下 os.replace 目标被其他进程打开（无 FILE_SHARE_DELETE）时报
     WinError 5/32，读取撞上替换瞬间时报 Permission denied（errno 13）；
-    Docker 单文件挂载 rename 报 EBUSY（errno 16）。这些都是并发/占用冲突。
+    Docker 单文件挂载 rename 报 EBUSY（errno 16）。这些都是占用/权限冲突，
+    不代表文件内容损坏，绝不能据此判定损坏并移走文件。
     """
     if isinstance(e, PermissionError):
         return True
     if getattr(e, "winerror", None) in (5, 32):
         return True
     return getattr(e, "errno", None) in (13, 16)
+
+
+def _is_retryable_io_error(e):
+    """判断占用冲突是否值得短暂重试
+
+    只有“稍纵即逝”的并发占用才值得重试：Windows 下其他进程读取配置只持有
+    文件毫秒级，替换撞上共享冲突（PermissionError / WinError 5/32）重试几次
+    即可避开——这类错误带 winerror 或是 PermissionError/errno 13，行为不变。
+    而 EBUSY（errno 16，Docker 单文件挂载的 rename 撞上挂载点）是永久性的，
+    重试注定失败，应立即走降级路径，避免每次保存都空等重试。
+    """
+    if getattr(e, "winerror", None) is None and not isinstance(e, PermissionError) and getattr(e, "errno", None) == 16:
+        return False
+    return _is_io_conflict_error(e)
 
 # 环境变量覆盖映射：环境变量名 -> (配置键, 转换函数)
 # 环境变量值为 "true"/"1" 时为 True，"false"/"0" 时为 False
@@ -172,12 +198,13 @@ class Config(metaclass=SingletonMeta):
         返回 (status, data, detail)：
         - ("ok", dict, "")        读取并解析成功
         - ("missing", None, ...)  文件不存在
-        - ("unreadable", None, ...) 持续的并发占用冲突（非损坏，绝不能走损坏保护）
+        - ("unreadable", None, ...) 持续的占用冲突（非损坏，绝不能走损坏保护）
         - ("broken", None, ...)   重试后仍为空/解析失败/非映射（真损坏）
 
-        瞬时并发冲突与“读到写入中间态”都会短暂重试，避免把完好文件误判为损坏。
+        瞬时并发冲突（Windows 共享冲突）与“读到写入中间态”都会短暂重试，
+        避免把完好文件误判为损坏；永久性占用（挂载点 EBUSY）不空转重试。
         """
-        last_status, last_detail = "broken", "未知原因"
+        last_status, last_detail, last_retryable = "broken", "未知原因", True
         for attempt in range(1, _READ_RETRY_ATTEMPTS + 1):
             try:
                 with open(path, 'r', encoding='utf-8') as file:
@@ -185,21 +212,24 @@ class Config(metaclass=SingletonMeta):
             except FileNotFoundError:
                 return "missing", None, "文件不存在"
             except Exception as e:
-                if _is_transient_io_error(e):
+                if _is_io_conflict_error(e):
                     last_status, last_detail = "unreadable", f"读取冲突（文件正被其他进程替换/占用）: {e}"
+                    last_retryable = _is_retryable_io_error(e)
                 else:
-                    last_status, last_detail = "broken", f"解析失败: {e}"
+                    last_status, last_detail, last_retryable = "broken", f"解析失败: {e}", True
             else:
                 if loaded is None:
-                    last_status, last_detail = "broken", "文件为空或不包含有效内容（可能是写入过程被中断）"
+                    last_status, last_detail, last_retryable = "broken", "文件为空或不包含有效内容（可能是写入过程被中断）", True
                 elif not isinstance(loaded, dict):
-                    last_status, last_detail = "broken", "文件内容不是有效的配置映射"
+                    last_status, last_detail, last_retryable = "broken", "文件内容不是有效的配置映射", True
                 else:
                     if attempt > 1:
                         _diag("warning", f"配置读取在第 {attempt} 次尝试成功（此前撞上并发读写窗口）: {os.path.abspath(path)}")
                     return "ok", loaded, ""
-            if attempt < _READ_RETRY_ATTEMPTS:
+            if attempt < _READ_RETRY_ATTEMPTS and last_retryable:
                 time.sleep(_READ_RETRY_BASE_DELAY * attempt)
+            elif not last_retryable:
+                break
         return last_status, None, last_detail
 
     def _load_config(self, path=None, save=True):
@@ -252,7 +282,8 @@ class Config(metaclass=SingletonMeta):
             if os.path.exists(backup_path):
                 # 保留更早的备份，改用时间戳命名
                 backup_path = f"{path}.bak-{time.strftime('%Y%m%d-%H%M%S')}"
-            # 移动同样可能撞上并发占用（WinError 32），先重试再降级复制
+            # 移动可能撞上 Windows 并发占用（WinError 32），短暂重试再降级复制；
+            # 挂载点 EBUSY 是永久性的，不空转重试，直接降级复制
             move_error = None
             for attempt in range(1, _REPLACE_RETRY_ATTEMPTS + 1):
                 try:
@@ -261,7 +292,7 @@ class Config(metaclass=SingletonMeta):
                     break
                 except OSError as e:
                     move_error = e
-                    if not _is_transient_io_error(e):
+                    if not _is_retryable_io_error(e):
                         break
                     if attempt < _REPLACE_RETRY_ATTEMPTS:
                         time.sleep(_REPLACE_RETRY_BASE_DELAY * attempt)
@@ -379,14 +410,15 @@ class Config(metaclass=SingletonMeta):
 
             replace_error = self._replace_with_retry(tmp_path, self.config_path)
             if replace_error is not None:
-                # 目标是挂载点（如 Docker 单文件挂载）时报 EBUSY；
-                # Windows 下目标文件被其他进程打开（无 FILE_SHARE_DELETE）时报 WinError 5/32。
+                # 两类情况会走到这里：
+                # 1. Docker 单文件挂载的 config.yaml：rename 撞上挂载点报 EBUSY（永久性，未重试）；
+                # 2. Windows 共享冲突重试用尽（WinError 5/32）或其他替换错误。
                 # 降级为原地覆盖写入（非原子，写入中途被中断会截断配置文件），
                 # 因此降级前先把当前配置复制一份留底。
                 backup_path = self._backup_before_inplace_write(self.config_path)
-                _diag("warning", f"save_config os.replace 重试 {_REPLACE_RETRY_ATTEMPTS} 次仍失败（{replace_error}），"
+                _diag("warning", f"save_config os.replace 失败（{replace_error}），"
                                  f"退化为非原子的原地覆盖写入（写入中途被中断会截断配置文件）；"
-                                 f"原文件已备份至 {backup_path or '<备份失败>'}\n{traceback.format_exc()}")
+                                 f"原文件已备份至 {backup_path or '<备份失败>'}")
                 with open(tmp_path, 'rb') as src, open(self.config_path, 'wb') as dst:
                     shutil.copyfileobj(src, dst)
                     dst.flush()
@@ -406,8 +438,10 @@ class Config(metaclass=SingletonMeta):
     def _replace_with_retry(self, tmp_path, target_path):
         """原子替换，对瞬时并发冲突做有限重试。
 
-        其他进程读取配置只持有文件毫秒级，短暂重试基本必然成功，
-        从而避免退化为危险的非原子原地写入。成功返回 None，失败返回最后的异常。
+        Windows 下其他进程读取配置只持有文件毫秒级，共享冲突短暂重试基本必然
+        成功，从而避免退化为危险的非原子原地写入；挂载点 EBUSY 是永久性的，
+        不重试、直接交给调用方走降级路径（与 Docker 单文件挂载的历史行为一致）。
+        成功返回 None，失败返回最后的异常。
         """
         replace_error = None
         for attempt in range(1, _REPLACE_RETRY_ATTEMPTS + 1):
@@ -419,7 +453,7 @@ class Config(metaclass=SingletonMeta):
                 return None
             except OSError as e:
                 replace_error = e
-                if not _is_transient_io_error(e):
+                if not _is_retryable_io_error(e):
                     break
                 if attempt < _REPLACE_RETRY_ATTEMPTS:
                     _diag("warning", f"save_config os.replace 第 {attempt} 次失败（并发占用，稍后重试）: {e}")
