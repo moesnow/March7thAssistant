@@ -5,6 +5,7 @@ from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBa
 from .card.pushsettingcard1 import PushSettingCardCode
 from .card.autoplot_setting_card import AutoPlotSettingCard
 from .common.style_sheet import StyleSheet
+from .common.icon import UiIcon
 import tasks.tool as tool
 import base64
 import subprocess
@@ -29,13 +30,13 @@ class ToolsInterface(ScrollArea):
 
         self.ToolsGroup = SettingCardGroup(tr('工具箱'), self.scrollWidget)
         self.automaticPlotCard = AutoPlotSettingCard(
-            FIF.IMAGE_EXPORT,
+            FIF.CHAT,
             tr("自动对话"),
             tr("进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道")
         )
         self.gameScreenshotCard = PushSettingCard(
             tr('捕获'),
-            FIF.CLIPPING_TOOL,
+            FIF.CAMERA,
             tr("游戏截图"),
             tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）")
         )
@@ -47,20 +48,20 @@ class ToolsInterface(ScrollArea):
         )
         self.redemptionCodeCard = PushSettingCardCode(
             tr('执行'),
-            FIF.BOOK_SHELF,
+            UiIcon.TICKET,
             tr("兑换码"),
             "redemption_code",
             self
         )
         self.cloudTouchCard = PushSettingCard(
             tr('启动'),
-            FIF.CLOUD,
+            UiIcon.TAP,
             tr("触屏模式"),
             tr("以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内")
         )
         self.screenTestCard = PushSettingCard(
             tr('测试'),
-            FIF.CHECKBOX,
+            UiIcon.BEAKER,
             tr("界面可切换性测试"),
             tr("以最短路径遍历所有可达界面，验证界面切换是否正常")
         )

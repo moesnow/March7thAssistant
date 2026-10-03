@@ -1,0 +1,569 @@
+{
+  "brand/bilibili": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "simple-icons/bilibili"
+  },
+  "brand/dingtalk": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "tabler/brand-dingtalk"
+  },
+  "brand/discord": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "simple-icons/discord"
+  },
+  "brand/lark": {
+    "grid": [
+      48,
+      48
+    ],
+    "source": "icon-park-outline/new-lark"
+  },
+  "brand/matrix": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "simple-icons/matrix"
+  },
+  "brand/qq": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "simple-icons/qq"
+  },
+  "brand/telegram": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "simple-icons/telegram"
+  },
+  "brand/wecom": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "tdesign/logo-wecom-filled"
+  },
+  "brand/windows": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "simple-icons/windows"
+  },
+  "ui/arrow-clockwise": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/arrow-clockwise-24-regular"
+  },
+  "ui/arrow-export": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/arrow-export-24-regular"
+  },
+  "ui/arrow-import": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/arrow-import-24-regular"
+  },
+  "ui/arrow-repeat-all": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/arrow-repeat-all-24-regular"
+  },
+  "ui/battery-charge": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/battery-charge-24-regular"
+  },
+  "ui/beaker": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/beaker-24-regular"
+  },
+  "ui/bookmark": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/bookmark-24-regular"
+  },
+  "ui/box": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/box-24-regular"
+  },
+  "ui/chart-multiple": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/chart-multiple-24-regular"
+  },
+  "ui/clipboard-task": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/clipboard-task-24-regular"
+  },
+  "ui/clock": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/clock-24-regular"
+  },
+  "ui/cloud": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/cloud-24-regular"
+  },
+  "ui/cloud-arrow-down": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/cloud-arrow-down-24-regular"
+  },
+  "ui/cloud-sync": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/cloud-sync-24-regular"
+  },
+  "ui/coin-multiple": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/coin-multiple-24-regular"
+  },
+  "ui/coin-stack": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/coin-stack-24-regular"
+  },
+  "ui/compass-true-north": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/compass-true-north-24-regular"
+  },
+  "ui/crown": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/crown-24-regular"
+  },
+  "ui/cube": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/cube-24-regular"
+  },
+  "ui/diamond": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/diamond-24-regular"
+  },
+  "ui/drop": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/drop-24-regular"
+  },
+  "ui/eye-off": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/eye-off-24-regular"
+  },
+  "ui/filter": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/filter-24-regular"
+  },
+  "ui/flash": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/flash-24-regular"
+  },
+  "ui/food": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/food-24-regular"
+  },
+  "ui/gauge": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/gauge-24-regular"
+  },
+  "ui/gift": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/gift-24-regular"
+  },
+  "ui/history": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/history-24-regular"
+  },
+  "ui/hourglass": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/hourglass-24-regular"
+  },
+  "ui/key": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/key-24-regular"
+  },
+  "ui/keyboard": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/keyboard-24-regular"
+  },
+  "ui/leaf-two": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/leaf-two-24-regular"
+  },
+  "ui/link": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/link-24-regular"
+  },
+  "ui/list": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/list-24-regular"
+  },
+  "ui/map": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/map-24-regular"
+  },
+  "ui/megaphone": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/megaphone-24-regular"
+  },
+  "ui/megaphone-circle": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/megaphone-circle-24-regular"
+  },
+  "ui/megaphone-loud": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/megaphone-loud-24-regular"
+  },
+  "ui/merge": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/merge-24-regular"
+  },
+  "ui/mic": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/mic-24-regular"
+  },
+  "ui/money": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/money-24-regular"
+  },
+  "ui/options": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/options-24-regular"
+  },
+  "ui/people": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/people-24-regular"
+  },
+  "ui/people-chat": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/people-chat-24-regular"
+  },
+  "ui/people-checkmark": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/people-checkmark-24-regular"
+  },
+  "ui/people-link": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/people-link-24-regular"
+  },
+  "ui/people-list": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/people-list-24-regular"
+  },
+  "ui/people-swap": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/people-swap-24-regular"
+  },
+  "ui/people-team": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/people-team-24-regular"
+  },
+  "ui/person": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/person-24-regular"
+  },
+  "ui/pin": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/pin-24-regular"
+  },
+  "ui/planet": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/planet-24-regular"
+  },
+  "ui/plug-connected": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/plug-connected-24-regular"
+  },
+  "ui/question": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/question-24-regular"
+  },
+  "ui/rocket": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/rocket-24-regular"
+  },
+  "ui/select-all-on": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/select-all-on-24-regular"
+  },
+  "ui/send": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/send-24-regular"
+  },
+  "ui/send-copy": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/send-copy-24-regular"
+  },
+  "ui/server": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/server-24-regular"
+  },
+  "ui/sound-wave-circle": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/sound-wave-circle-24-regular"
+  },
+  "ui/sparkle": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/sparkle-24-regular"
+  },
+  "ui/speaker-2": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/speaker-2-24-regular"
+  },
+  "ui/stack": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/stack-24-regular"
+  },
+  "ui/star": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/star-24-regular"
+  },
+  "ui/tap-single": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/tap-single-24-regular"
+  },
+  "ui/target": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/target-24-regular"
+  },
+  "ui/target-arrow": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/target-arrow-24-regular"
+  },
+  "ui/ticket-horizontal": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/ticket-horizontal-24-regular"
+  },
+  "ui/timer": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/timer-24-regular"
+  },
+  "ui/toolbox": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/toolbox-24-regular"
+  },
+  "ui/trophy": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/trophy-24-regular"
+  },
+  "ui/wand": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/wand-24-regular"
+  }
+}

@@ -5,6 +5,7 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import MessageBox
 
 from app.card.pushsettingcard1 import PushSettingCardKey
+from app.common.icon import UiIcon
 from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
                                       build_scroll_area)
 from module.config import cfg
@@ -55,17 +56,19 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
         self.pushButton_dict = {}
         for name, config in self.configlist.items():
             if config == "hotkey_technique":
-                icon = FIF.LEAF
+                icon = UiIcon.WAND
             elif config == "hotkey_map":
-                icon = FIF.LEAF
+                icon = UiIcon.MAP
             elif config == "hotkey_warp":
-                icon = FIF.LEAF
+                icon = UiIcon.STAR
             elif config == "hotkey_auto_battle":
                 icon = FIF.GAME
+            elif config == "hotkey_stop_task":
+                icon = FIF.CLOSE
             elif config == "hotkey_pause_task":
                 icon = FIF.PAUSE
             elif config == "hotkey_toggle_autoplot":
-                icon = FIF.DEVELOPER_TOOLS
+                icon = FIF.CHAT
             else:
                 icon = FIF.SETTING
 

@@ -5,6 +5,7 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard, MessageBox, PushButton, StateToolTip
 from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
+from .common.icon import UiIcon, BrandIcon
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
@@ -212,7 +213,7 @@ class SettingInterface(ScrollArea):
         )
         self.instanceTypeCard = ExpandableComboBoxSettingCardInstanceType(
             "instance_type",
-            FIF.ALIGNMENT,
+            UiIcon.LIST,
             tr("副本类型"),
             None,
             texts=[tr('拟造花萼（金）'), tr('拟造花萼（赤）'), tr('凝滞虚影'), tr('侵蚀隧洞'), tr('饰品提取')]
@@ -226,7 +227,7 @@ class SettingInterface(ScrollArea):
         # )
         self.instanceNameCard = PushSettingCardInstance(
             tr('修改'),
-            FIF.PALETTE,
+            UiIcon.BOOKMARK,
             tr("副本名称"),
             "instance_names"
         )
@@ -238,18 +239,18 @@ class SettingInterface(ScrollArea):
         #     '',
         # )
         self.instanceTeamEnableCard = InstanceTeamSettingCard(
-            FIF.EDIT,
+            UiIcon.PEOPLE_SWAP,
             tr("自动切换队伍"),
             None
         )
         self.tpBeforeInstanceEnableCard = SwitchSettingCard1(
-            FIF.LEAF,
+            UiIcon.PIN,
             tr("清体力前传送至任意锚点"),
             "",
             "tp_before_instance"
         )
         self.powerEnableCard = SwitchSettingCard1(
-            FIF.POWER_BUTTON,
+            UiIcon.FLASH,
             tr("启用清体力"),
             tr("仅影响完整运行和“日常”中的历战余响与清体力，不影响单独执行“清体力”任务"),
             "power_enable"
@@ -262,13 +263,13 @@ class SettingInterface(ScrollArea):
         #     texts=['3', '4', '5', '6', '7']
         # )
         self.useReservedTrailblazePowerEnableCard = SwitchSettingCard1(
-            FIF.HEART,
+            UiIcon.BATTERY_CHARGE,
             tr("使用后备开拓力"),
             tr("单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"),
             "use_reserved_trailblaze_power"
         )
         self.useFuelEnableCard = SwitchSettingCard1(
-            FIF.CAFE,
+            UiIcon.DROP,
             tr("使用燃料"),
             tr("单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"),
             "use_fuel"
@@ -286,45 +287,45 @@ class SettingInterface(ScrollArea):
             "weekly_relic_smart_discard_enable",
         )
         self.mergeImmersifierEnableCard = SwitchSettingCardImmersifier(
-            FIF.BASKETBALL,
+            UiIcon.BEAKER,
             tr("体力优先合成沉浸器（建议直接通过饰品提取获取位面饰品）"),
             tr("达到指定上限后停止"),
             "merge_immersifier"
         )
         self.instanceNameChallengeCountCard = PushSettingCardInstanceChallengeCount(
             tr('修改'),
-            FIF.HISTORY,
+            UiIcon.REPEAT,
             tr("副本最大连续挑战次数（通常不建议修改保持默认即可）"),
             "instance_names_challenge_count"
         )
         self.borrowEnableCard = ExpandableSwitchSettingCard(
             "borrow_enable",
-            FIF.PIN,
+            UiIcon.PEOPLE,
             tr("启用使用支援角色"),
             ''
         )
         self.borrowCharacterEnableCard = SwitchSettingCard1(
-            FIF.UNPIN,
+            UiIcon.PEOPLE_CHECKMARK,
             tr("强制使用支援角色"),
             tr("无论何时都要使用支援角色，即使日常实训中的要求已经完成"),
             "borrow_character_enable"
         )
         self.borrowFriendsCard = PushSettingCardFriends(
             tr('修改'),
-            FIF.FLAG,
+            UiIcon.PEOPLE_LIST,
             tr("支援列表"),
             "borrow_friends"
         )
         self.borrowScrollTimesCard = RangeSettingCard1(
             "borrow_scroll_times",
             [1, 10],
-            FIF.HISTORY,
+            UiIcon.REPEAT,
             tr("滚动查找次数"),
             '',
         )
         self.buildTargetEnableCard = ExpandableSwitchSettingCard(
             "build_target_enable",
-            FIF.LEAF,
+            UiIcon.TARGET,
             tr("启用培养目标"),
             tr("根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置")
         )
@@ -341,7 +342,7 @@ class SettingInterface(ScrollArea):
         self.buildTargetPlanarOrnamentWeeklyCountCard = RangeSettingCard1(
             "build_target_ornament_weekly_count",
             [0, 7],
-            FIF.CALENDAR,
+            UiIcon.DIAMOND,
             tr("每周饰品提取次数"),
             tr("目标有足够资源后，执行饰品提取的次数，其余时间执行侵蚀隧洞"),
         )
@@ -353,7 +354,7 @@ class SettingInterface(ScrollArea):
         )
         self.echoofwarEnableCard = ExpandableSwitchSettingCardEchoofwar(
             "echo_of_war_enable",
-            FIF.MEGAPHONE,
+            UiIcon.TARGET_ARROW,
             tr("启用历战余响"),
             tr("每周体力优先完成三次「历战余响」，支持配置从周几后开始执行，仅限完整运行生效"),
         )
@@ -424,7 +425,7 @@ class SettingInterface(ScrollArea):
         )
         self.activityEnableCard = ExpandableSwitchSettingCard(
             "activity_enable",
-            FIF.CERTIFICATE,
+            UiIcon.SPARKLE,
             tr('启用活动检测'),
             None
         )
@@ -435,19 +436,19 @@ class SettingInterface(ScrollArea):
             "activity_dailycheckin_enable"
         )
         self.activityGardenOfPlentyEnableCard = SwitchSettingCardGardenofplenty(
-            FIF.CALORIES,
+            UiIcon.LEAF,
             tr('花藏繁生'),
             tr("存在双倍次数时体力优先「拟造花萼」"),
             "activity_gardenofplenty_enable"
         )
         self.activityRealmOfTheStrangeEnableCard = SwitchSettingCard1(
-            FIF.CALORIES,
+            UiIcon.DIAMOND,
             tr('异器盈界'),
             tr("存在双倍次数时体力优先「侵蚀隧洞」"),
             "activity_realmofthestrange_enable"
         )
         self.activityPlanarFissureEnableCard = SwitchSettingCard1(
-            FIF.CALORIES,
+            UiIcon.CUBE,
             tr('位面分裂'),
             tr("存在双倍次数时体力优先「饰品提取」"),
             "activity_planarfissure_enable"
@@ -460,12 +461,12 @@ class SettingInterface(ScrollArea):
         )
         self.rewardEnableCard = ExpandableSwitchSettingCard(
             "reward_enable",
-            FIF.TRANSPARENT,
+            UiIcon.GIFT,
             tr('启用奖励领取'),
             ""
         )
         self.dispatchEnableCard = SwitchSettingCard1(
-            FIF.STOP_WATCH,
+            UiIcon.SEND,
             tr('委托'),
             None,
             "reward_dispatch_enable"
@@ -477,25 +478,25 @@ class SettingInterface(ScrollArea):
             "reward_mail_enable"
         )
         self.assistEnableCard = SwitchSettingCard1(
-            FIF.BRUSH,
+            UiIcon.PEOPLE_LINK,
             tr('支援'),
             None,
             "reward_assist_enable"
         )
         self.questEnableCard = SwitchSettingCard1(
-            FIF.STOP_WATCH,
+            UiIcon.CLIPBOARD_TASK,
             tr('每日实训'),
             None,
             "reward_quest_enable"
         )
         self.srpassEnableCard = SwitchSettingCard1(
-            FIF.QUIET_HOURS,
+            UiIcon.CROWN,
             tr('无名勋礼'),
             None,
             "reward_srpass_enable"
         )
         self.achievementEnableCard = SwitchSettingCard1(
-            FIF.CERTIFICATE,
+            UiIcon.TROPHY,
             tr('成就'),
             None,
             "reward_achievement_enable"
@@ -503,7 +504,7 @@ class SettingInterface(ScrollArea):
 
         # 兑换码奖励开关
         self.redemptionEnableCard = SwitchSettingCard1(
-            FIF.BOOK_SHELF,
+            UiIcon.TICKET,
             tr('兑换码'),
             None,
             "reward_redemption_code_enable"
@@ -519,13 +520,13 @@ class SettingInterface(ScrollArea):
 
         self.assetEnableCard = ExpandableSwitchSettingCard(
             "asset_manager_enable",
-            FIF.LIBRARY,
+            UiIcon.BOX,
             tr("启用资产管理"),
             ""
         )
 
         self.lc3StarSuperimposeEnableCard = SwitchSettingCard1(
-            FIF.ZIP_FOLDER,
+            UiIcon.STACK,
             tr("启用「3星光锥自动叠加」"),
             tr("自动将3星光锥进行叠加以节省背包空间"),
             "asset_lc3_star_superimpose_enable",
@@ -565,7 +566,7 @@ class SettingInterface(ScrollArea):
 
         self.CurrencywarsGroup = SettingCardGroup(tr("货币"), self.scrollWidget)
         self.currencywarsEnableCard = TimestampSwitchSettingCard(
-            FIF.DICTIONARY,
+            UiIcon.MONEY,
             tr('启用「货币战争」积分奖励'),
             "",
             "currencywars_enable",
@@ -575,32 +576,32 @@ class SettingInterface(ScrollArea):
         self.currencywarsPresetCard = DualPushSettingCard(
             tr('提升晋升等级'),
             tr('提升职级等级'),
-            FIF.SYNC,
+            UiIcon.WAND,
             tr('快捷配置')
         )
         self.currencywarsTypeCard = ComboBoxSettingCard2(
             "currencywars_type",
-            FIF.COMMAND_PROMPT,
+            UiIcon.OPTIONS,
             tr('类别'),
             '',
             texts={tr('标准博弈'): 'normal', tr('超频博弈'): 'overclock'}
         )
         self.currencywarsBonusEnableCard = SwitchSettingCard1(
-            FIF.IOT,
+            UiIcon.DIAMOND,
             tr('自动执行位面饰品快速提取'),
             tr("在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器"),
             "currencywars_bonus_enable"
         )
         self.currencywarsRankDifficultyCard = ComboBoxSettingCard2(
             "currencywars_rank_difficulty",
-            FIF.HISTORY,
+            UiIcon.GAUGE,
             tr('职级难度'),
             '',
             texts={tr('最高职级'): 'highest', tr('当前职级'): 'current', tr('最低职级'): 'lowest'}
         )
         self.currencywarsStrategyCard = ExpandableComboBoxSettingCard(
             "currencywars_strategy",
-            FIF.BOOK_SHELF,
+            UiIcon.LIST,
             tr('货币战争策略'),
             tr('提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅或希儿策略。'),
             {tr('默认'): 'default', tr('阿格莱雅'): 'aglaea', tr('希儿') + tr('【测试版】'): 'seele'}
@@ -613,13 +614,13 @@ class SettingInterface(ScrollArea):
             empty_content=tr('未配置时，阿格莱雅/希儿策略将跳过该角色，需要填入自己游戏名称')
         )
         self.currencywarsStrategyRestartOnSpecialTagsCard = SwitchSettingCard1(
-            FIF.SYNC,
+            UiIcon.REFRESH,
             tr('遇到特定词条时接受重开'),
             tr('根据所选策略，在遇到特定词条或词条组合时允许重开'),
             "currencywars_strategy_restart_on_special_tags"
         )
         self.currencywarsFastModeCard = SwitchSettingCard1(
-            FIF.SPEED_HIGH,
+            UiIcon.ROCKET,
             tr('启用速通模式'),
             tr("开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"),
             "currencywars_fast_mode"
@@ -627,7 +628,7 @@ class SettingInterface(ScrollArea):
 
         self.UniverseGroup = SettingCardGroup(tr("差分宇宙"), self.scrollWidget)
         self.weeklyDivergentEnableCard = TimestampSwitchSettingCard(
-            FIF.DICTIONARY,
+            UiIcon.PLANET,
             tr('启用「差分宇宙」积分奖励'),
             "",
             "weekly_divergent_enable",
@@ -636,20 +637,20 @@ class SettingInterface(ScrollArea):
         )
         self.weeklyDivergentTypeCard = ComboBoxSettingCard2(
             "weekly_divergent_type",
-            FIF.COMMAND_PROMPT,
+            UiIcon.OPTIONS,
             tr('类别'),
             '',
             texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'}
         )
         self.weeklyDivergentLevelCard = ComboBoxSettingCard2(
             "weekly_divergent_level",
-            FIF.HISTORY,
+            UiIcon.GAUGE,
             tr("难度等级"),
             "",
             texts={f"{tr('难度')} Ⅰ": 1, f"{tr('难度')} Ⅱ": 2, f"{tr('难度')} Ⅲ": 3, f"{tr('难度')} Ⅳ": 4, f"{tr('难度')} Ⅴ": 5, f"{tr('难度')} Ⅹ{tr('（星阶模式）')}": 6}
         )
         self.weeklyDivergentBonusEnableCard = SwitchSettingCard1(
-            FIF.IOT,
+            UiIcon.DIAMOND,
             tr('自动执行饰品提取'),
             tr("在领取积分奖励后自动执行饰品提取消耗沉浸器"),
             "weekly_divergent_bonus_enable"
@@ -668,34 +669,34 @@ class SettingInterface(ScrollArea):
         )
 
         self.stationPriorityCard = StationPrioritySettingCard(
-            FIF.MENU,
+            UiIcon.LIST,
             tr('站点优先级'),
             tr("自定义差分宇宙「选择下一站」的站点优先级"),
         )
 
         self.universeEnableCard = ExpandableSwitchSettingCard(
             "universe_enable",
-            FIF.VPN,
+            UiIcon.PLANET,
             tr('启用模拟宇宙/差分宇宙 (Auto_Simulated_Universe)'),
             tr("通常用于反复刷取遗器经验和灵之珠泪（代替敌方掉落素材）直到每周上限")
         )
         self.universeOperationModeCard = ComboBoxSettingCard2(
             "universe_operation_mode",
-            FIF.COMMAND_PROMPT,
+            UiIcon.OPTIONS,
             tr('运行模式'),
             '',
             texts={tr('集成'): 'exe', tr('源码'): 'source'}
         )
         self.universeCategoryCard = ComboBoxSettingCard2(
             "universe_category",
-            FIF.COMMAND_PROMPT,
+            UiIcon.OPTIONS,
             tr('类别'),
             '',
             texts={tr('差分宇宙'): 'divergent', tr('模拟宇宙'): 'universe'}
         )
         self.divergentTypeCard = ComboBoxSettingCard2(
             "divergent_type",
-            FIF.COMMAND_PROMPT,
+            UiIcon.OPTIONS,
             tr('选择差分宇宙时类别'),
             '',
             texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'}
@@ -703,7 +704,7 @@ class SettingInterface(ScrollArea):
         self.universeTimeoutCard = RangeSettingCard1(
             "universe_timeout",
             [1, 24],
-            FIF.HISTORY,
+            UiIcon.CLOCK,
             tr("模拟宇宙/差分宇宙超时"),
             tr("超过设定时间强制停止（单位小时）"),
         )
@@ -714,14 +715,14 @@ class SettingInterface(ScrollArea):
             "universe_timestamp"
         )
         self.universeBonusEnableCard = SwitchSettingCard1(
-            FIF.IOT,
+            UiIcon.GIFT,
             tr('自动领取模拟宇宙沉浸奖励'),
             tr("类别为“模拟宇宙”时，自动领取沉浸奖励"),
             "universe_bonus_enable"
         )
         self.universeFrequencyCard = ComboBoxSettingCard2(
             "universe_frequency",
-            FIF.MINIMIZE,
+            UiIcon.TIMER,
             tr('运行频率'),
             '',
             texts={tr('每周'): 'weekly', tr('每天'): 'daily'}
@@ -729,13 +730,13 @@ class SettingInterface(ScrollArea):
         self.universeCountCard = RangeSettingCard1(
             "universe_count",
             [0, 34],
-            FIF.HISTORY,
+            UiIcon.REPEAT,
             tr("运行次数"),
             tr("注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"),
         )
         self.divergentUniverseRunCountCard = PushSettingCardAction(
             tr('重置次数'),
-            FIF.HISTORY,
+            UiIcon.REPEAT,
             tr('差分宇宙已完成次数'),
             self.__getDivergentUniverseRunCountText,
             self.__resetDivergentUniverseRunCount,
@@ -753,7 +754,7 @@ class SettingInterface(ScrollArea):
             fates[a] = a
         self.universeFateCard = ComboBoxSettingCard2(
             "universe_fate",
-            FIF.PIE_SINGLE,
+            UiIcon.COMPASS,
             tr('命途（仅模拟宇宙生效）'),
             '',
             texts=fates
@@ -761,7 +762,7 @@ class SettingInterface(ScrollArea):
         self.universeDifficultyCard = RangeSettingCard1(
             "universe_difficulty",
             [0, 5],
-            FIF.HISTORY,
+            UiIcon.GAUGE,
             tr("难度 (0为不配置，仅模拟宇宙生效)"),
             "",
         )
@@ -770,14 +771,14 @@ class SettingInterface(ScrollArea):
         self.fightEnableCard = ExpandableTimestampSwitchSettingCard(
             "fight_enable",
             "fight_timestamp",
-            FIF.BUS,
+            UiIcon.MAP,
             tr('启用锄大地 (Fhoe-Rail)'),
             tr("上次运行锄大地的时间"),
             ""
         )
         self.fightOperationModeCard = ComboBoxSettingCard2(
             "fight_operation_mode",
-            FIF.COMMAND_PROMPT,
+            UiIcon.OPTIONS,
             tr('运行模式'),
             '',
             texts={tr('集成'): 'exe', tr('源码'): 'source'}
@@ -792,12 +793,12 @@ class SettingInterface(ScrollArea):
         self.fightTimeoutCard = RangeSettingCard1(
             "fight_timeout",
             [1, 24],
-            FIF.HISTORY,
+            UiIcon.CLOCK,
             tr("锄大地超时"),
             tr("超过设定时间强制停止（单位小时）"),
         )
         self.fightTeamEnableCard = SwitchSettingCardTeam(
-            FIF.EDIT,
+            UiIcon.PEOPLE_SWAP,
             tr('自动切换队伍'),
             None,
             "fight_team_enable",
@@ -812,41 +813,41 @@ class SettingInterface(ScrollArea):
         # )
         self.fightMapVersionCard = ComboBoxSettingCard2(
             "fight_map_version",
-            FIF.GLOBE,
+            UiIcon.MAP,
             tr('地图版本'),
             '',
             texts={tr("不配置"): "不配置", tr("默认（疾跑）"): "default", tr("黄泉专用"): "HuangQuan", tr("获得特殊物品"): "reward"}
         )
         self.fightMainMapCard = ComboBoxSettingCard2(
             "fight_main_map",
-            FIF.GLOBE,
+            UiIcon.PLANET,
             tr('优先星球'),
             '',
             texts={tr("不配置"): "0", tr("空间站"): "1", tr("雅利洛"): "2", tr("仙舟"): "3", tr("匹诺康尼"): "4", tr("翁法罗斯"): 5, tr("二相乐园"): 6}
         )
         self.fightRewardEnableCard = ExpandableSwitchSettingCard(
             "fight_reward_enable",
-            FIF.LIBRARY,
+            UiIcon.GIFT,
             tr('启用「特殊物品领取」'),
             tr("按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置")
         )
         self.fightAllowSnackBuyCard = ComboBoxSettingCard2(
             "fight_allow_snack_buy",
-            FIF.GLOBE,
+            UiIcon.FOOD,
             tr('购买秘技零食并合成零食'),
             tr("每日获得特殊物品：购买秘技零食材料并合成零食"),
             texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False}
         )
         self.fightAllowMapBuyCard = ComboBoxSettingCard2(
             "fight_allow_map_buy",
-            FIF.GLOBE,
+            UiIcon.COIN,
             tr('购买代币与过期邮包'),
             tr("每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"),
             texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False}
         )
         self.fightAllowMemoryTokenCard = ComboBoxSettingCard2(
             "fight_allow_memory_token",
-            FIF.GLOBE,
+            UiIcon.COIN_STACK,
             tr('获得翁法罗斯记忆代币'),
             tr("每周获得特殊物品：收集翁法罗斯忆质残晶"),
             texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False}
@@ -855,7 +856,7 @@ class SettingInterface(ScrollArea):
             tr('远程一号位锄地'),
             tr('黄泉一号位锄地'),
             tr('仅获取特殊物品'),
-            FIF.SYNC,
+            UiIcon.WAND,
             tr('快捷配置'),
             tr("一键切换地图版本，并把三项特殊物品领取都设为「启用」")
         )
@@ -864,14 +865,14 @@ class SettingInterface(ScrollArea):
         self.forgottenhallEnableCard = ExpandableTimestampSwitchSettingCard(
             "forgottenhall_enable",
             "forgottenhall_timestamp",
-            FIF.SPEED_HIGH,
+            UiIcon.TARGET_ARROW,
             tr('启用混沌回忆'),
             tr("上次运行混沌回忆的时间"),
             ""
         )
         self.forgottenhallLevelCard = PushSettingCardEval(
             tr('修改'),
-            FIF.MINIMIZE,
+            UiIcon.FILTER,
             tr("关卡范围"),
             "forgottenhall_level"
         )
@@ -882,7 +883,7 @@ class SettingInterface(ScrollArea):
         #     "重试次数",
         # )
         self.forgottenhallTeamsCard = PushSettingCardTeamWithSwap(
-            FIF.FLAG,
+            UiIcon.PEOPLE_TEAM,
             tr("混沌回忆队伍配置"),
             "forgottenhall_team1",
             "forgottenhall_team2"
@@ -890,19 +891,19 @@ class SettingInterface(ScrollArea):
         self.purefictionEnableCard = ExpandableTimestampSwitchSettingCard(
             "purefiction_enable",
             "purefiction_timestamp",
-            FIF.SPEED_HIGH,
+            UiIcon.TARGET_ARROW,
             tr('启用虚构叙事'),
             tr("上次运行虚构叙事的时间"),
             ""
         )
         self.purefictionLevelCard = PushSettingCardEval(
             tr('修改'),
-            FIF.MINIMIZE,
+            UiIcon.FILTER,
             tr("关卡范围"),
             "purefiction_level"
         )
         self.purefictionTeamsCard = PushSettingCardTeamWithSwap(
-            FIF.FLAG,
+            UiIcon.PEOPLE_TEAM,
             tr("虚构叙事队伍配置"),
             "purefiction_team1",
             "purefiction_team2"
@@ -910,19 +911,19 @@ class SettingInterface(ScrollArea):
         self.ApocalypticEnableCard = ExpandableTimestampSwitchSettingCard(
             "apocalyptic_enable",
             "apocalyptic_timestamp",
-            FIF.SPEED_HIGH,
+            UiIcon.TARGET_ARROW,
             tr('启用末日幻影'),
             tr("上次运行末日幻影的时间"),
             ""
         )
         self.ApocalypticLevelCard = PushSettingCardEval(
             tr('修改'),
-            FIF.MINIMIZE,
+            UiIcon.FILTER,
             tr("关卡范围"),
             "apocalyptic_level"
         )
         self.ApocalypticTeamsCard = PushSettingCardTeamWithSwap(
-            FIF.FLAG,
+            UiIcon.PEOPLE_TEAM,
             tr("末日幻影队伍配置"),
             "apocalyptic_team1",
             "apocalyptic_team2"
@@ -932,7 +933,7 @@ class SettingInterface(ScrollArea):
             self.scrollWidget
         )
         self.cloudGameEnableCard = SwitchSettingCard1(
-            FIF.SPEED_HIGH,
+            UiIcon.CLOUD,
             tr("使用“云·星穹铁道”"),
             tr("开启后，将改用云·星穹铁道来执行清体力等自动化任务。无需固定窗口，可在后台运行。（模拟宇宙和锄大地仍需保持窗口全屏）"),
             "cloud_game_enable"
@@ -952,14 +953,14 @@ class SettingInterface(ScrollArea):
         self.cloudGameMaxQueueTimeCard = RangeSettingCard1(
             "cloud_game_max_queue_time",
             [1, 120],
-            FIF.SPEED_MEDIUM,
+            UiIcon.HOURGLASS,
             tr("最大排队等待时间（分钟）"),
             ''
         )
         self.cloudGameLoginTimeoutCard = RangeSettingCard1(
             "cloud_game_login_timeout",
             [1, 120],
-            FIF.DATE_TIME,
+            UiIcon.CLOCK,
             tr("登录超时时间（分钟）"),
             tr("等待用户完成登录的最长时间，超时后将终止运行")
         )
@@ -1018,7 +1019,7 @@ class SettingInterface(ScrollArea):
         )
         self.browserHeadlessCard = ExpandableSwitchSettingCard(
             "browser_headless_enable",
-            FIF.VIEW,
+            UiIcon.EYE_OFF,
             tr("启用无窗口模式（后台运行）"),
             tr("不支持模拟宇宙和锄大地")
         )
@@ -1064,14 +1065,14 @@ class SettingInterface(ScrollArea):
         self.startGameTimeoutCard = RangeSettingCard1(
             "start_game_timeout",
             [10, 60],
-            FIF.DATE_TIME,
+            UiIcon.CLOCK,
             tr("启动游戏超时时间（分）"),
             "",
         )
         self.updateGameTimeoutCard = RangeSettingCard1(
             "update_game_timeout",
             [1, 24],
-            FIF.DATE_TIME,
+            UiIcon.CLOCK,
             tr("更新游戏超时时间（时）"),
             "",
         )
@@ -1102,7 +1103,7 @@ class SettingInterface(ScrollArea):
         )
         self.loopModeCard = ComboBoxSettingCard2(
             "loop_mode",
-            FIF.COMMAND_PROMPT,
+            UiIcon.REPEAT,
             tr('循环模式（请改用日志界面的定时运行功能）'),
             '',
             texts={tr('定时任务'): 'scheduled', tr('根据开拓力'): 'power'}
@@ -1115,7 +1116,7 @@ class SettingInterface(ScrollArea):
         self.powerLimitCard = RangeSettingCard1(
             "power_limit",
             [10, 300],
-            FIF.HEART,
+            UiIcon.FLASH,
             tr("循环运行再次启动所需开拓力"),
             tr("游戏刷新后优先级更高"),
         )
@@ -1133,7 +1134,7 @@ class SettingInterface(ScrollArea):
             cfg.script_path
         )
         self.playAudioCard = SwitchSettingCard1(
-            FIF.ALBUM,
+            UiIcon.SPEAKER,
             tr('声音提示'),
             tr('任务完成后列车长唱歌提示帕！'),
             "play_audio"
@@ -1168,13 +1169,13 @@ class SettingInterface(ScrollArea):
         )
         self.notifyLevelCard = ComboBoxSettingCard2(
             "notify_level",
-            FIF.COMMAND_PROMPT,
+            UiIcon.FILTER,
             tr('通知级别'),
             '',
             texts={tr('推送所有通知'): 'all', tr('仅推送错误通知'): 'error'}
         )
         self.notifyMergeCard = SwitchSettingCard1(
-            FIF.PASTE,
+            UiIcon.MERGE,
             tr('通知合并'),
             tr('开启后，完整运行结束时将所有通知合并为一条发送'),
             "notify_merge"
@@ -1195,12 +1196,12 @@ class SettingInterface(ScrollArea):
         self.notifyEnableGroup = []
         self.notifyProviderMeta = {
             "winotify": {
-                "icon": FIF.BACK_TO_WINDOW,
+                "icon": BrandIcon.WINDOWS,
                 "display_name": "Windows",
                 "description": tr("Windows 原生通知"),
             },
             "telegram": {
-                "icon": FIF.AIRPLANE,
+                "icon": BrandIcon.TELEGRAM,
                 "display_name": "Telegram",
                 "description": tr("通常需要可访问 Telegram 网络"),
                 "support_image": True,
@@ -1267,7 +1268,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "matrix": {
-                "icon": FIF.GLOBE,
+                "icon": BrandIcon.MATRIX,
                 "display_name": "Matrix",
                 "description": tr("适用于 Matrix 协议"),
                 "support_image": True,
@@ -1341,7 +1342,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "serverchanturbo": {
-                "icon": FIF.ROBOT,
+                "icon": UiIcon.SEND,
                 "display_name": tr("Server酱·Turbo版"),
                 "description": tr("微信推送，适合轻量通知"),
                 "params": {
@@ -1399,7 +1400,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "serverchan3": {
-                "icon": FIF.ROBOT,
+                "icon": UiIcon.SEND_COPY,
                 "display_name": tr("Server酱³"),
                 "description": tr("Server酱³ APP 推送"),
                 "params": {
@@ -1446,7 +1447,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "bark": {
-                "icon": FIF.MAIL,
+                "icon": UiIcon.MEGAPHONE,
                 "display_name": "Bark",
                 "description": tr("适合 iOS 设备推送"),
                 "params": {
@@ -1654,7 +1655,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "qqbot": {
-                "icon": FIF.ROBOT,
+                "icon": BrandIcon.QQ,
                 "display_name": tr("QQ 官方机器人"),
                 "description": tr("QQ 开放平台官方机器人推送"),
                 "support_image": True,
@@ -1763,7 +1764,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "dingtalk": {
-                "icon": FIF.MAIL,
+                "icon": BrandIcon.DINGTALK,
                 "display_name": tr("钉钉"),
                 "description": tr("钉钉机器人推送"),
                 "params": {
@@ -1811,7 +1812,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "pushplus": {
-                "icon": FIF.MAIL,
+                "icon": UiIcon.MEGAPHONE_CIRCLE,
                 "display_name": "Pushplus",
                 "description": tr("Pushplus 通知服务"),
                 "params": {
@@ -1864,7 +1865,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "qmsg": {
-                "icon": FIF.MAIL,
+                "icon": UiIcon.PEOPLE_CHAT,
                 "display_name": "Qmsg",
                 "description": tr("Qmsg 酱 QQ 推送"),
                 "params": {
@@ -1909,7 +1910,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "wechatworkbot": {
-                "icon": FIF.MAIL,
+                "icon": BrandIcon.WECOM,
                 "display_name": tr("企业微信机器人"),
                 "description": tr("企业微信机器人消息推送"),
                 "support_image": True,
@@ -1952,7 +1953,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "wechatworkapp": {
-                "icon": FIF.MAIL,
+                "icon": BrandIcon.WECOM,
                 "display_name": tr("企业微信应用"),
                 "description": tr("企业微信应用消息推送"),
                 "support_image": True,
@@ -2003,7 +2004,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "gotify": {
-                "icon": FIF.MAIL,
+                "icon": UiIcon.SERVER,
                 "display_name": "Gotify",
                 "description": tr("Gotify 私有通知服务"),
                 "params": {
@@ -2056,7 +2057,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "discord": {
-                "icon": FIF.MAIL,
+                "icon": BrandIcon.DISCORD,
                 "display_name": "Discord",
                 "description": tr("Discord Webhook 推送"),
                 "params": {
@@ -2103,7 +2104,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "pushdeer": {
-                "icon": FIF.MAIL,
+                "icon": UiIcon.MEGAPHONE_LOUD,
                 "display_name": "Pushdeer",
                 "description": tr("Pushdeer 通知服务"),
                 "params": {
@@ -2145,7 +2146,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "lark": {
-                "icon": FIF.MAIL,
+                "icon": BrandIcon.LARK,
                 "display_name": tr("飞书"),
                 "description": tr("飞书机器人推送"),
                 "support_image": True,
@@ -2195,7 +2196,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "meow": {
-                "icon": FIF.ROBOT,
+                "icon": UiIcon.SOUND_WAVE,
                 "display_name": "MeoW",
                 "description": tr("适合 鸿蒙NEXT 设备推送"),
                 "params": {
@@ -2228,7 +2229,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "kook": {
-                "icon": FIF.ROBOT,
+                "icon": UiIcon.MIC,
                 "display_name": "KOOK",
                 "description": tr("KOOK 机器人推送"),
                 "support_image": True,
@@ -2279,7 +2280,7 @@ class SettingInterface(ScrollArea):
 """
             },
             "webhook": {
-                "icon": FIF.CODE,
+                "icon": UiIcon.PLUG,
                 "display_name": "Webhook",
                 "description": tr("可自定义请求方法、请求头和请求体"),
                 "support_image": True,
@@ -2523,7 +2524,7 @@ class SettingInterface(ScrollArea):
                 "debug_mode_enable"
             )
         self.hotkeyCard = SwitchSettingCardHotkey(
-            FIF.SETTING,
+            UiIcon.KEYBOARD,
             tr('修改按键'),
             tr("配置秘技、地图、跃迁、停止任务等按键设置")
         )
@@ -2537,13 +2538,13 @@ class SettingInterface(ScrollArea):
         )
         self.bilibiliCard = PrimaryPushSettingCard(
             tr('立即前往'),
-            FIF.MOVIE,
+            BrandIcon.BILIBILI,
             tr('哔哩哔哩'),
             tr('欢迎关注我们的B站账号，获取最新动态和教程')
         )
         self.qqGroupCard = PrimaryPushSettingCard(
             tr('加入群聊'),
-            FIF.EXPRESSIVE_INPUT_ENTRY,
+            BrandIcon.QQ,
             tr('QQ群'),
             ""
         )
@@ -2561,7 +2562,7 @@ class SettingInterface(ScrollArea):
         )
         self.updateSourceCard = ExpandableComboBoxSettingCardUpdateSource(
             "update_source",
-            FIF.SPEED_HIGH,
+            UiIcon.CLOUD_SYNC,
             tr('更新源'),
             self.parent,
             "",
@@ -2576,7 +2577,7 @@ class SettingInterface(ScrollArea):
             "check_update"
         )
         self.updateFullEnableCard = SwitchSettingCard1(
-            FIF.GLOBE,
+            UiIcon.CLOUD_DOWNLOAD,
             tr('更新时下载完整包'),
             tr("更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。"),
             "update_full_enable"
@@ -2590,7 +2591,7 @@ class SettingInterface(ScrollArea):
         )
         self.mirrorchyanCdkCard = PushSettingCardMirrorchyan(
             tr('修改'),
-            FIF.BOOK_SHELF,
+            UiIcon.KEY,
             tr("Mirror 酱 CDK"),
             self.parent,
             "mirrorchyan_cdk"
@@ -2604,7 +2605,7 @@ class SettingInterface(ScrollArea):
         )
         self.telemetryCard = SwitchSettingCardWithAction(
             tr("查看说明"),
-            FIF.FEEDBACK,
+            UiIcon.CHART,
             tr("匿名使用数据收集"),
             tr("帮助开发者了解程序使用情况，改进功能"),
             "telemetry_enable"

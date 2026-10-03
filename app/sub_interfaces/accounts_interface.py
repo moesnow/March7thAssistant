@@ -6,6 +6,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QPushButton, QListWidgetItem, QVBoxLayout, QMessageBox, QInputDialog, QLineEdit, QLabel
 from PySide6.QtWidgets import QGridLayout, QFrame
 from qfluentwidgets import FluentIcon as FIF
+from app.common.icon import UiIcon
 from module.config import cfg
 from app.tools.account_manager import accounts, reload_all_account_from_files, dump_current_account, delete_account, \
     save_account_name, import_account, save_acc_and_pwd, clear_reg
@@ -182,6 +183,6 @@ class AccountsCard(QFrame):
 def accounts_interface(tr, scrollWidget) -> SettingCardGroup:
     accountsInterface = SettingCardGroup(tr("账户设置"), scrollWidget)
     accountsInterface.addSettingCard(AccountsCard(
-        FIF.ALBUM, title=tr(""),
+        UiIcon.PERSON, title=tr(""),
     ))
     return accountsInterface

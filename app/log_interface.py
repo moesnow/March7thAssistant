@@ -17,6 +17,7 @@ import re
 
 import uuid
 from .common.style_sheet import StyleSheet
+from .common.icon import UiIcon
 from module.config import cfg
 from module.game import get_game_controller
 from utils.tasks import TASK_NAMES, PAUSABLE_TASKS
@@ -1826,7 +1827,7 @@ class LogInterface(ScrollArea):
         copy_action = Action(FluentIcon.COPY, tr('复制'), triggered=self.logTextEdit.copy)
         copy_action.setEnabled(has_selection)
         menu.addAction(copy_action)
-        menu.addAction(Action(FluentIcon.CHECKBOX, tr('全选'), triggered=self.logTextEdit.selectAll))
+        menu.addAction(Action(UiIcon.SELECT_ALL, tr('全选'), triggered=self.logTextEdit.selectAll))
         menu.addSeparator()
         menu.addAction(Action(FluentIcon.DELETE, tr('清空日志'), triggered=self.clearLog))
         menu.addAction(Action(FluentIcon.FOLDER, tr('打开日志文件夹'), triggered=open_log_folder))
