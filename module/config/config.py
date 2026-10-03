@@ -1,6 +1,7 @@
 import sys
 import time
 import copy
+import errno
 import os
 import shutil
 import tempfile
@@ -83,53 +84,57 @@ class Config(metaclass=SingletonMeta):
         """加载用户配置信息
 
         - 文件缺失（首次运行）：保存默认配置
-        - 文件为空或损坏：备份损坏文件并提示用户，不静默覆盖为默认配置
+        - 读取失败：保留原文件并中止，不将临时 I/O 错误当作文件损坏
+        - 文件为空或损坏：复制备份并中止，阻止后续保存覆盖用户配置
         """
         path = path or self.config_path
         try:
             with open(path, 'r', encoding='utf-8') as file:
                 loaded_config = self.yaml.load(file)
         except FileNotFoundError:
-            self.save_config()
+            if save:
+                self.save_config()
             return
+        except OSError:
+            # 文件暂时被其他进程占用不代表内容损坏，不能移走它并以默认值继续运行。
+            raise
         except Exception as e:
             self._handle_broken_config(path, f"解析失败: {e}")
-            return
 
         if loaded_config is None:
             # 空文件（或仅含注释）：多半是写入过程被中断导致的损坏
             self._handle_broken_config(path, "文件为空或不包含有效内容（可能是写入过程被中断）")
-            return
         if not isinstance(loaded_config, dict):
             self._handle_broken_config(path, "文件内容不是有效的配置映射")
-            return
 
         self._update_config(self.config, loaded_config)
         if save:
             self.save_config()
 
     def _handle_broken_config(self, path, reason):
-        """处理损坏的配置文件：备份损坏内容并提示用户，避免静默重置为默认配置"""
+        """保留原文件并中止加载，防止调用方继续保存默认配置。"""
         backup_path = self._backup_broken_config(path)
-        message = f"配置文件无法读取，已使用默认配置启动。\n文件: {path}\n原因: {reason}"
+        message = f"配置文件无法读取，已停止加载，原文件未修改。\n文件: {path}\n原因: {reason}"
         if backup_path:
             message += f"\n为避免数据丢失，损坏的文件已备份到:\n{backup_path}\n如需恢复，请将其内容复制回:\n{path}"
         else:
             message += f"\n注意：损坏的文件未能自动备份，请手动检查 {path}"
         self._notify_config_error(message)
+        raise ValueError(message)
 
     def _backup_broken_config(self, path):
-        """备份损坏的配置文件（保留原始字节）；无法移走时退化为复制，返回备份路径；失败返回 None"""
+        """复制原始字节作为备份，不移走原文件，也不覆盖已有备份。"""
         try:
             backup_path = f"{path}.bak"
-            if os.path.exists(backup_path):
-                # 保留更早的备份，改用时间戳命名
-                backup_path = f"{path}.bak-{time.strftime('%Y%m%d-%H%M%S')}"
-            try:
-                os.replace(path, backup_path)
-            except OSError:
-                # 目标是挂载点（如 Docker 单文件挂载）时无法移动，退化为复制备份
-                shutil.copyfile(path, backup_path)
+            with open(path, 'rb') as src:
+                while True:
+                    try:
+                        dst = open(backup_path, 'xb')
+                        break
+                    except FileExistsError:
+                        backup_path = f"{path}.bak-{time.time_ns()}"
+                with dst:
+                    shutil.copyfileobj(src, dst)
             return backup_path
         except Exception:
             return None
@@ -213,16 +218,25 @@ class Config(metaclass=SingletonMeta):
                 self.yaml.dump(self.config, file)
                 file.flush()
                 os.fsync(file.fileno())
-            try:
-                os.replace(tmp_path, self.config_path)
-            except OSError:
-                # 目标是挂载点（如 Docker 单文件挂载的 config.yaml）时 rename 会报 EBUSY，
-                # 退化为原地覆盖写入（非原子，但保证可保存）
-                with open(tmp_path, 'rb') as src, open(self.config_path, 'wb') as dst:
-                    shutil.copyfileobj(src, dst)
-                    dst.flush()
-                    os.fsync(dst.fileno())
-                os.remove(tmp_path)
+            for attempt in range(5):
+                try:
+                    os.replace(tmp_path, self.config_path)
+                    break
+                except PermissionError:
+                    # Windows 上其他进程短暂读取可能阻止替换，重试时保留原文件。
+                    if attempt == 4:
+                        raise
+                    time.sleep(0.05 * (attempt + 1))
+                except OSError as e:
+                    if e.errno != errno.EBUSY:
+                        raise
+                    # 仅兼容 Docker 单文件挂载的 EBUSY；其他失败不能截断原文件。
+                    with open(tmp_path, 'rb') as src, open(self.config_path, 'wb') as dst:
+                        shutil.copyfileobj(src, dst)
+                        dst.flush()
+                        os.fsync(dst.fileno())
+                    os.remove(tmp_path)
+                    break
         except Exception:
             try:
                 if os.path.exists(tmp_path):
@@ -245,7 +259,7 @@ class Config(metaclass=SingletonMeta):
 
     def set_value(self, key, value):
         """设置配置项的值并保存"""
-        self._load_config()
+        self._load_config(save=False)
         if isinstance(value, (list, dict, set)):
             self.config[key] = copy.deepcopy(value)
         else:

@@ -235,16 +235,126 @@ class TestConfigPersistence:
         config._load_config()
         assert (tmp_path / "config.yaml").exists()
 
+    def test_read_error_does_not_move_valid_config_or_save_defaults(self, tmp_path, monkeypatch):
+        import builtins
+
+        config = self._create_config(tmp_path)
+        path = tmp_path / "config.yaml"
+        original = b"key1: user\nnested:\n  a: 2\n"
+        path.write_bytes(original)
+        real_open = builtins.open
+
+        def deny_config_read(name, mode="r", *args, **kwargs):
+            if os.fspath(name) == config.config_path and mode == "r":
+                raise PermissionError("configuration is temporarily in use")
+            return real_open(name, mode, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "open", deny_config_read)
+        monkeypatch.setattr(config, "_notify_config_error", lambda message: None)
+        with pytest.raises(OSError):
+            config.set_value("key1", "new")
+        assert path.read_bytes() == original
+        assert list(tmp_path.glob("config.yaml.bak*")) == []
+        assert config.config["key1"] == "value1"
+
+    @pytest.mark.parametrize("setter", ["set_value", "set_values"])
+    def test_invalid_config_blocks_followup_save(self, tmp_path, monkeypatch, setter):
+        config = self._create_config(tmp_path)
+        path = tmp_path / "config.yaml"
+        original = b"key1: [unclosed\n"
+        path.write_bytes(original)
+        monkeypatch.setattr(config, "_notify_config_error", lambda message: None)
+        with pytest.raises(ValueError):
+            if setter == "set_value":
+                config.set_value("key1", "new")
+            else:
+                config.set_values({"key1": "new"})
+        assert path.read_bytes() == original
+        assert config.config["key1"] == "value1"
+
+    def test_replace_permission_error_never_truncates_original(self, tmp_path, monkeypatch):
+        config = self._create_config(tmp_path)
+        config.save_config()
+        path = tmp_path / "config.yaml"
+        original = path.read_bytes()
+        config.config["key1"] = "new"
+
+        def deny_replace(src, dst):
+            raise PermissionError("configuration is temporarily in use")
+
+        monkeypatch.setattr(os, "replace", deny_replace)
+        with pytest.raises(PermissionError):
+            config.save_config()
+        assert path.read_bytes() == original
+        assert list(tmp_path.glob("config.yaml.*.tmp")) == []
+
+    def test_replace_retries_transient_permission_error(self, tmp_path, monkeypatch):
+        config = self._create_config(tmp_path)
+        config.save_config()
+        path = tmp_path / "config.yaml"
+        original = path.read_bytes()
+        config.config["key1"] = "new"
+        real_replace = os.replace
+        attempts = []
+
+        def temporarily_busy(src, dst):
+            attempts.append(dst)
+            assert path.read_bytes() == original
+            if len(attempts) < 3:
+                raise PermissionError("configuration is temporarily in use")
+            return real_replace(src, dst)
+
+        monkeypatch.setattr(os, "replace", temporarily_busy)
+        config.save_config()
+        assert len(attempts) == 3
+        from ruamel.yaml import YAML
+        assert YAML().load(path.read_text(encoding="utf-8"))["key1"] == "new"
+
+    def test_replace_io_error_does_not_fall_back_to_truncation(self, tmp_path, monkeypatch):
+        import errno
+
+        config = self._create_config(tmp_path)
+        config.save_config()
+        path = tmp_path / "config.yaml"
+        original = path.read_bytes()
+        config.config["key1"] = "new"
+
+        def io_error(src, dst):
+            raise OSError(errno.EIO, "I/O error")
+
+        monkeypatch.setattr(os, "replace", io_error)
+        with pytest.raises(OSError):
+            config.save_config()
+        assert path.read_bytes() == original
+
+    def test_read_only_load_does_not_create_missing_file(self, tmp_path):
+        config = self._create_config(tmp_path)
+        config._load_config(save=False)
+        assert not (tmp_path / "config.yaml").exists()
+
+    @pytest.mark.parametrize("invalid", ["", "# comment only\n", "- not a mapping\n", "key1: [unclosed\n"])
+    def test_reload_after_repair_preserves_user_values(self, tmp_path, monkeypatch, invalid):
+        config = self._create_config(tmp_path)
+        path = tmp_path / "config.yaml"
+        path.write_text(invalid, encoding="utf-8")
+        monkeypatch.setattr(config, "_notify_config_error", lambda message: None)
+        with pytest.raises(ValueError):
+            config._load_config()
+        path.write_text("key1: user\nnested:\n  a: 2\n", encoding="utf-8")
+        config._load_config()
+        assert config.config == {"key1": "user", "nested": {"a": 2}}
+
     def test_load_empty_file_backs_up(self, tmp_path, monkeypatch):
         config = self._create_config(tmp_path)
         (tmp_path / "config.yaml").write_text("", encoding="utf-8")
 
         notified = []
         monkeypatch.setattr(config, "_notify_config_error", lambda message: notified.append(message))
-        config._load_config()
+        with pytest.raises(ValueError):
+            config._load_config()
 
-        # 空文件视为损坏：移走备份、提示用户，且不静默写入默认配置
-        assert not (tmp_path / "config.yaml").exists()
+        # 空文件视为损坏：保留原文件并复制备份，中止加载而非继续使用默认值。
+        assert (tmp_path / "config.yaml").read_bytes() == b""
         backup = tmp_path / "config.yaml.bak"
         assert backup.exists()
         assert backup.read_text(encoding="utf-8") == ""
@@ -258,9 +368,10 @@ class TestConfigPersistence:
 
         notified = []
         monkeypatch.setattr(config, "_notify_config_error", lambda message: notified.append(message))
-        config._load_config()
+        with pytest.raises(ValueError):
+            config._load_config()
 
-        assert not (tmp_path / "config.yaml").exists()
+        assert (tmp_path / "config.yaml").read_text(encoding="utf-8") == broken
         backup = tmp_path / "config.yaml.bak"
         assert backup.exists()
         # 备份保留损坏文件的原始内容
@@ -273,14 +384,15 @@ class TestConfigPersistence:
         (tmp_path / "config.yaml.bak").write_text("old backup", encoding="utf-8")
 
         monkeypatch.setattr(config, "_notify_config_error", lambda message: None)
-        config._load_config()
+        with pytest.raises(ValueError):
+            config._load_config()
 
         # 更早的备份不被覆盖，新备份使用时间戳命名
         assert (tmp_path / "config.yaml.bak").read_text(encoding="utf-8") == "old backup"
         assert list(tmp_path.glob("config.yaml.bak-*"))
 
-    def test_broken_config_backup_falls_back_when_replace_fails(self, tmp_path, monkeypatch):
-        """配置文件为挂载点时无法移动，备份应退化为复制，保留损坏内容"""
+    def test_broken_config_backup_does_not_replace_source(self, tmp_path, monkeypatch):
+        """备份始终复制，挂载点和普通文件都不会因备份而被移走。"""
         config = self._create_config(tmp_path)
         broken = "key1: [unclosed\n  nested: broken: yaml"
         (tmp_path / "config.yaml").write_text(broken, encoding="utf-8")
@@ -296,11 +408,13 @@ class TestConfigPersistence:
         monkeypatch.setattr(os, "replace", replace_fails_on_config)
         monkeypatch.setattr(config, "_notify_config_error", lambda message: None)
 
-        config._load_config()
+        with pytest.raises(ValueError):
+            config._load_config()
 
         backup = tmp_path / "config.yaml.bak"
         assert backup.exists()
         assert backup.read_text(encoding="utf-8") == broken
+        assert (tmp_path / "config.yaml").read_text(encoding="utf-8") == broken
 
     def test_load_merges_user_values(self, tmp_path):
         config = self._create_config(tmp_path)
