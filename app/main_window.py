@@ -51,10 +51,13 @@ class ConfigWatcher(QObject):
         """检测到文件变化，延迟处理避免频繁触发"""
         from PySide6.QtCore import QTimer
 
+        log.debug(f"[config-watch] 文件变化事件: {path}")
+
         # 配置保存采用临时文件原子替换，替换后旧的监视句柄可能失效，需要重新挂载
         try:
             if os.path.exists(self.config_path) and self.config_path not in self.watcher.files():
                 self.watcher.addPath(self.config_path)
+                log.debug("[config-watch] 监视句柄失效，已重新挂载")
         except Exception:
             pass
 
@@ -71,8 +74,12 @@ class ConfigWatcher(QObject):
 
     def _emit_change(self):
         """检查文件是否真的改变，然后发送信号"""
-        if os.path.exists(self.config_path) and cfg.is_config_changed():
+        exists = os.path.exists(self.config_path)
+        if exists and cfg.is_config_changed():
+            log.info("[config-watch] 检测到配置文件被外部修改，准备重载界面")
             self.config_changed.emit()
+        else:
+            log.debug(f"[config-watch] 无需重载: exists={exists}")
 
 
 class ClickableLabel(QLabel):
@@ -657,23 +664,27 @@ class MainWindow(MSFluentWindow):
         self._do_quit()
 
     def _saveWindowState(self):
-        """保存窗口尺寸、位置和最大化状态到配置文件"""
+        """保存窗口尺寸、位置和最大化状态到配置文件（批量一次落盘）"""
         try:
             is_maximized = self.isMaximized()
-            cfg.set_value('window_maximized', is_maximized)
-
-            window_memory = cfg.get_value('window_memory', 'size')
+            log.debug(f"[config-save] 退出保存窗口状态开始: maximized={is_maximized}")
 
             # 只在非最大化状态下保存窗口尺寸和位置
+            values = {'window_maximized': is_maximized}
             if not is_maximized:
+                window_memory = cfg.get_value('window_memory', 'size')
                 if window_memory in ('size', 'size_and_position'):
-                    cfg.set_value('window_width', self.width())
-                    cfg.set_value('window_height', self.height())
+                    values['window_width'] = self.width()
+                    values['window_height'] = self.height()
                 if window_memory in ('position', 'size_and_position'):
-                    cfg.set_value('window_x', self.x())
-                    cfg.set_value('window_y', self.y())
-        except Exception:
-            pass
+                    values['window_x'] = self.x()
+                    values['window_y'] = self.y()
+            # 批量一次落盘：逐项 set_value 会保存多次，放大与更新器并发写的冲突窗口
+            cfg.set_values(values)
+            log.debug("[config-save] 退出保存窗口状态完成")
+        except Exception as e:
+            import traceback
+            log.error(f"[config-save] 退出保存窗口状态失败: {e}\n{traceback.format_exc()}")
 
     def _on_config_file_changed(self):
         """重新加载配置文件并刷新界面"""
@@ -682,6 +693,7 @@ class MainWindow(MSFluentWindow):
             is_in_setting_interface = self.stackedWidget.currentWidget() == self.settingInterface
 
             # 重新加载配置
+            log.info("[config-watch] 重新加载配置文件并刷新界面")
             cfg._load_config(None, save=False)
 
             # 重新初始化通知器
@@ -762,6 +774,7 @@ class MainWindow(MSFluentWindow):
         e: 可选的 QCloseEvent，用于调用 e.accept()
         """
         # 保存窗口尺寸和最大化状态
+        log.info(f"[config-save] 主程序退出，保存窗口状态 PID={os.getpid()}（更新期间此处会与更新器并发写配置）")
         self._saveWindowState()
 
         try:

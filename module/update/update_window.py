@@ -377,6 +377,7 @@ class UpdaterWindow(MessageBoxBase):
         command.extend(["--file-name", file_name])
         if extract_folder_path:
             command.extend(["--extract-folder-path", extract_folder_path])
+        self._append_log("info", f"启动更新器: {' '.join(command)} (PID={os.getpid()})")
         subprocess.Popen(
             command,
             creationflags=creationflags,
@@ -433,6 +434,7 @@ class UpdaterWindow(MessageBoxBase):
         self.background_button.setEnabled(False)
         self.close_button.setEnabled(False)
         self._append_log("info", "开始安装")
+        self._append_log("info", "200ms 后退出主程序（退出时会保存窗口状态并写配置，注意与更新器的并发窗口）")
         self.title_label.setText(tr("开始安装"))
         self.status_label.setText(tr("请勿关闭此窗口，更新完成后会自动启动新版本"))
         self.detail_label.setText("")

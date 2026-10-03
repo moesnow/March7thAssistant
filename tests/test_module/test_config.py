@@ -320,3 +320,161 @@ class TestConfigPersistence:
         out = capsys.readouterr().out
         assert "first error" in out
         assert "second error" not in out
+
+
+class TestConcurrentAccessSafety:
+    """并发读写安全（回归：更新时配置损坏/误判损坏）
+
+    - 读取撞上并发占用（Permission denied 等）不得误判损坏、不得移走完好文件；
+    - os.replace 撞上并发占用应重试，重试成功则不降级；
+    - 降级原地写前必须先留底备份；
+    - 只读角色（更新器/清理器）不写配置。
+    """
+
+    def _create_config(self, tmp_path):
+        from ruamel.yaml import YAML
+        from module.config.config import Config
+        config = Config.__new__(Config)
+        config.yaml = YAML()
+        config.config = {"key1": "value1", "nested": {"a": 1}}
+        config.config_path = str(tmp_path / "config.yaml")
+        return config
+
+    def test_load_transient_permission_error_retries(self, tmp_path, monkeypatch):
+        """读取前两次撞上并发冲突，第三次成功：正常合并，不判损坏、不产生备份"""
+        import module.config.config as config_module
+        monkeypatch.setattr(config_module.time, "sleep", lambda s: None)
+        config = self._create_config(tmp_path)
+        (tmp_path / "config.yaml").write_text("key1: user\nnested:\n  a: 2\n", encoding="utf-8")
+
+        real_load = config.yaml.load
+        calls = {"n": 0}
+
+        def flaky_load(stream):
+            calls["n"] += 1
+            if calls["n"] <= 2:
+                raise PermissionError(13, "Permission denied")
+            return real_load(stream)
+
+        monkeypatch.setattr(config.yaml, "load", flaky_load)
+        notified = []
+        monkeypatch.setattr(config, "_notify_config_error", lambda m: notified.append(m))
+
+        config._load_config(save=False)
+
+        assert calls["n"] == 3
+        assert config.config["key1"] == "user"
+        assert config.config["nested"]["a"] == 2
+        assert notified == []
+        assert (tmp_path / "config.yaml").exists()
+        assert not (tmp_path / "config.yaml.bak").exists()
+
+    def test_load_persistent_permission_error_keeps_file(self, tmp_path, monkeypatch):
+        """持续并发冲突：放弃本次加载，绝不判损坏、绝不移走完好文件"""
+        import module.config.config as config_module
+        monkeypatch.setattr(config_module.time, "sleep", lambda s: None)
+        config = self._create_config(tmp_path)
+        original = b"key1: user\nnested:\n  a: 2\n"
+        (tmp_path / "config.yaml").write_bytes(original)
+
+        def always_conflict(stream):
+            raise PermissionError(13, "Permission denied")
+
+        monkeypatch.setattr(config.yaml, "load", always_conflict)
+        notified = []
+        monkeypatch.setattr(config, "_notify_config_error", lambda m: notified.append(m))
+
+        config._load_config(save=False)
+
+        # 文件完好保留、没有备份、没有弹窗，内存配置不变
+        assert (tmp_path / "config.yaml").read_bytes() == original
+        assert not (tmp_path / "config.yaml.bak").exists()
+        assert notified == []
+        assert config.config["key1"] == "value1"
+
+    def test_broken_content_still_backed_up_after_retries(self, tmp_path, monkeypatch):
+        """真正的损坏（空文件）在重试用尽后仍走损坏保护"""
+        import module.config.config as config_module
+        monkeypatch.setattr(config_module.time, "sleep", lambda s: None)
+        config = self._create_config(tmp_path)
+        (tmp_path / "config.yaml").write_text("", encoding="utf-8")
+
+        notified = []
+        monkeypatch.setattr(config, "_notify_config_error", lambda m: notified.append(m))
+        config._load_config(save=False)
+
+        assert not (tmp_path / "config.yaml").exists()
+        assert (tmp_path / "config.yaml.bak").exists()
+        assert len(notified) == 1
+
+    def test_save_config_retries_replace_then_succeeds(self, tmp_path, monkeypatch):
+        """os.replace 前两次撞上并发冲突，第三次成功：原子替换成功，不降级、不留底"""
+        import module.config.config as config_module
+        monkeypatch.setattr(config_module.time, "sleep", lambda s: None)
+        config = self._create_config(tmp_path)
+
+        target = os.path.abspath(config.config_path)
+        real_replace = os.replace
+        calls = {"n": 0}
+
+        def flaky_replace(src, dst, *args, **kwargs):
+            if os.path.abspath(dst) == target:
+                calls["n"] += 1
+                if calls["n"] <= 2:
+                    raise PermissionError(13, "Permission denied")
+            return real_replace(src, dst, *args, **kwargs)
+
+        monkeypatch.setattr(os, "replace", flaky_replace)
+
+        config.save_config()
+
+        assert calls["n"] == 3
+        from ruamel.yaml import YAML
+        data = YAML().load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+        assert data["key1"] == "value1"
+        assert not (tmp_path / "config.yaml.prefallback").exists()
+        assert list(tmp_path.glob("config.yaml.*.tmp")) == []
+
+    def test_save_config_fallback_backs_up_before_inplace_write(self, tmp_path, monkeypatch):
+        """替换持续失败降级原地写前，必须先把当前配置留底备份"""
+        import module.config.config as config_module
+        monkeypatch.setattr(config_module.time, "sleep", lambda s: None)
+        config = self._create_config(tmp_path)
+        config.save_config()
+        original = (tmp_path / "config.yaml").read_bytes()
+
+        config.config = {"key1": "new", "nested": {"a": 2}}
+
+        target = os.path.abspath(config.config_path)
+        real_replace = os.replace
+
+        def replace_fails_on_config(src, dst, *args, **kwargs):
+            if os.path.abspath(dst) == target:
+                raise OSError(16, "Device or resource busy")
+            return real_replace(src, dst, *args, **kwargs)
+
+        monkeypatch.setattr(os, "replace", replace_fails_on_config)
+
+        config.save_config()
+
+        # 降级写成功，且原配置留底
+        from ruamel.yaml import YAML
+        data = YAML().load((tmp_path / "config.yaml").read_text(encoding="utf-8"))
+        assert data["key1"] == "new"
+        backup = tmp_path / "config.yaml.prefallback"
+        assert backup.exists()
+        assert backup.read_bytes() == original
+        assert list(tmp_path.glob("config.yaml.*.tmp")) == []
+
+    def test_readonly_role_skips_writes(self, tmp_path, monkeypatch):
+        """只读角色（更新器/清理器）不写配置文件"""
+        from module.config.config import Config
+        monkeypatch.setattr(Config, "_readonly", True)
+        config = self._create_config(tmp_path)
+
+        config.save_config()
+        config.set_value("key1", "updated")
+
+        assert not (tmp_path / "config.yaml").exists()
+        # 内存中的值仍然更新（只读只针对磁盘）
+        assert config.config["key1"] == "updated"

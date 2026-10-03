@@ -5,12 +5,14 @@
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import shutil
 import subprocess
 import sys
 import threading
 import time
+import traceback
 from enum import Enum
 from typing import Callable
 
@@ -24,6 +26,19 @@ from module.update.version_check import UpdateInfo, check_for_update
 
 
 FILE_COMPARE_CHUNK_SIZE = 64 * 1024
+
+# 更新流程中需要重点盯防的用户数据文件（损坏/丢失即用户可感知的故障）
+USER_DATA_MARKERS = ("config.yaml", "config.yaml.bak", "settings", "config/workflows")
+
+
+def describe_path(path: str) -> str:
+    """返回文件的简要指纹（大小/sha256 前 12 位），用于更新前后对比用户数据文件"""
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+    except OSError as e:
+        return f"<读取失败: {e}>"
+    return f"size={len(data)} sha256={hashlib.sha256(data).hexdigest()[:12]}"
 
 
 def build_independent_process_env() -> dict[str, str]:
@@ -312,6 +327,8 @@ class UpdateEngine:
                 except (psutil.NoSuchProcess, psutil.TimeoutExpired, psutil.AccessDenied):
                     pass
         self._log("info", f"终止完成，共 {count} 个进程")
+        # 被强杀的进程可能正在写配置，记录此刻的用户数据状态便于事后定责
+        self._log("info", f"[config-snapshot] 进程终止后用户数据: {self._describe_user_data()}")
 
     def wait_for_process_exit(
         self, pid: int | None, timeout: float = 30.0, poll_interval: float = 0.2
@@ -349,9 +366,11 @@ class UpdateEngine:
         self._check_cancelled()
         self._emit_progress(UpdateStage.COVER, tr("正在检测文件占用..."), indeterminate=True)
         self._log("info", "开始覆盖安装")
+        self._log("info", f"[config-snapshot] 覆盖前用户数据: {self._describe_user_data()}")
 
         files = self._get_files_to_overwrite()
         self._log("debug", f"需要覆盖 {len(files)} 个文件")
+        self._warn_user_data_in_package(files)
 
         files = self._filter_changed_files(files)
 
@@ -395,6 +414,7 @@ class UpdateEngine:
         completed = self._overwrite_files(self_items, completed, len(files), created_dirs)
 
         self._log("info", f"覆盖完成: {self.cover_folder_path}")
+        self._log("info", f"[config-snapshot] 覆盖后用户数据: {self._describe_user_data()}")
 
     # ── 清理 ─────────────────────────────────────────────────────────
 
@@ -425,6 +445,8 @@ class UpdateEngine:
         if start_minimized_to_tray:
             command.append("--start-minimized-to-tray")
 
+        self._log("info", f"[config-snapshot] 启动新版本前用户数据: {self._describe_user_data()}")
+        self._log("info", f"启动新版本: {command}")
         try:
             subprocess.Popen(
                 command,
@@ -432,7 +454,8 @@ class UpdateEngine:
                 env=env,
                 close_fds=True,
             )
-        except Exception:
+        except Exception as e:
+            self._log("warning", f"启动新版本失败，尝试备用方式: {e}")
             subprocess.Popen(command, env=env, close_fds=True)
 
         self._cleanup_self_backup()
@@ -458,7 +481,7 @@ class UpdateEngine:
 
     def finalize_update(self, wait_pid: int | None = None, start_minimized_to_tray: bool = False):
         """最终安装：等待退出 → 终止进程 → 覆盖 → 清理 → 启动。"""
-        self._log("info", "开始最终化更新")
+        self._log("info", f"开始最终化更新 PID={os.getpid()} 等待退出PID={wait_pid} cwd={os.getcwd()}")
         self._require_package(require_download_url=False)
         self.wait_for_process_exit(wait_pid)
         self.terminate_processes()
@@ -500,6 +523,33 @@ class UpdateEngine:
                 dest = os.path.join(self.cover_folder_path, rel)
                 items.append((src, dest))
         return items
+
+    def _describe_user_data(self) -> str:
+        """描述当前用户数据文件（config.yaml 等）的状态，用于更新前后对比"""
+        parts = []
+        config_path = os.path.abspath("./config.yaml")
+        if os.path.exists(config_path):
+            parts.append(f"config.yaml[{describe_path(config_path)}]")
+        else:
+            parts.append("config.yaml[不存在]")
+        try:
+            leftovers = [
+                name for name in os.listdir(os.path.dirname(config_path))
+                if name.startswith("config.yaml.") or name.startswith("config.yaml.bak")
+            ]
+            if leftovers:
+                parts.append(f"残留文件={sorted(leftovers)}")
+        except OSError:
+            pass
+        return " ".join(parts)
+
+    def _warn_user_data_in_package(self, files: list[tuple[str, str]]):
+        """更新包中若携带用户数据文件（如 config.yaml），覆盖会直接抹掉用户配置，必须告警留痕"""
+        for _, dest in files:
+            rel = os.path.relpath(dest, self.cover_folder_path)
+            rel_norm = rel.replace("\\", "/")
+            if rel_norm == "config.yaml" or rel_norm.startswith(("settings/", "config/workflows/")):
+                self._log("warning", f"更新包包含用户数据文件，覆盖后会覆盖用户现有数据: {rel}")
 
     def _check_target_files_locked(self, files: list[tuple[str, str]]) -> list[str]:
         locked = []
@@ -587,8 +637,11 @@ class UpdateEngine:
             try:
                 os.replace(src, dest)
                 return
-            except OSError:
-                pass
+            except OSError as e:
+                # 目标被其他进程占用时 os.replace 会失败，退化为 copy2（非原子）。
+                # config.yaml 等用户文件若走到这里，写入中途被中断就会截断。
+                self._log("warning", f"覆盖文件 os.replace 失败（errno={getattr(e, 'winerror', None) or e.errno}），"
+                                     f"退化为复制（非原子）: {os.path.abspath(dest)}\n{traceback.format_exc()}")
         shutil.copy2(src, dest)
 
     def _is_same_drive(self, src: str, dest: str) -> bool:

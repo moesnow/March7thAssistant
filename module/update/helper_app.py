@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import ctypes
 import os
+import sys
 import threading
 import time
 from ctypes import wintypes
@@ -364,7 +365,8 @@ class NativeUpdaterWindow:
 
     def _worker_main(self):
         try:
-            self._log("info", f"更新程序启动，模式={self.options.mode}")
+            self._log("info", f"更新程序启动，模式={self.options.mode} PID={os.getpid()} "
+                              f"cwd={os.getcwd()} argv={sys.argv if hasattr(sys, 'argv') else []}")
             engine = UpdateEngine(progress_callback=self._on_progress, log_callback=self._on_engine_log)
             self._engine = engine
             retry_context = self._retry_context
@@ -724,6 +726,7 @@ def run_cleanup_backup(options: HelperOptions) -> int:
     if not backup:
         return 0
 
+    log.info(f"备份清理程序启动 PID={os.getpid()} cwd={os.getcwd()} 备份={backup}")
     engine = UpdateEngine(logger=log)
     if options.wait_pid:
         if not engine.wait_for_process_exit(options.wait_pid, timeout=CLEANUP_BACKUP_WAIT_TIMEOUT):
@@ -748,6 +751,7 @@ def run_cleanup_backup(options: HelperOptions) -> int:
 
 
 def main(argv=None) -> int:
+    log.info(f"March7th Updater 进程入口 PID={os.getpid()} cwd={os.getcwd()} argv={argv}")
     load_language()
     options = parse_args(argv)
     if options.mode == "cleanup-backup":
