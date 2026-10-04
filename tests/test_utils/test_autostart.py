@@ -10,6 +10,8 @@ from utils import autostart
 @pytest.fixture()
 def fake_tasks(monkeypatch):
     """假的任务计划程序：记录任务集合与创建/删除参数"""
+    # 生命周期逻辑与宿主平台无关：显式走 Windows 分支，保证非 Windows 平台也能测到
+    monkeypatch.setattr(autostart, "IS_WINDOWS", True)
     tasks = set()
     created = {}
     deleted = []
@@ -79,10 +81,12 @@ class TestCommand:
                 captured["cmd"] = cmd
                 captured["kwargs"] = kwargs
 
+        # CREATE_NEW_CONSOLE 仅 Windows 存在，非 Windows 补桩验证“传入新控制台标志”的接线
+        monkeypatch.setattr(autostart.subprocess, "CREATE_NEW_CONSOLE", 0x10, raising=False)
         monkeypatch.setattr(autostart.subprocess, "Popen", FakePopen)
         assert autostart.launch_headless_task("main") is True
         assert captured["cmd"][-1] == "main"
-        assert captured["kwargs"]["creationflags"] == autostart.subprocess.CREATE_NEW_CONSOLE
+        assert captured["kwargs"]["creationflags"] == 0x10
 
 
 class TestUnsupportedPlatform:
