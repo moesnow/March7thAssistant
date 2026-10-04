@@ -89,10 +89,13 @@ class AutoPlotSettingCard(ExpandSettingCard):
 
     def _on_option_changed(self):
         """Save options to config and emit signal"""
-        cfg.set_value("autoplot_skip_enable", self.autoSkipCheckBox.isChecked())
-        cfg.set_value("autoplot_click_enable", self.autoClickCheckBox.isChecked())
-        cfg.set_value("autoplot_battle_detect_enable", self.autoBattleDetectCheckBox.isChecked())
-        cfg.set_value("autoplot_phone_detect_enable", self.autoPhoneDetectCheckBox.isChecked())
+        # 批量写入：set_value 每次都会 load+save 落盘，一次勾选只需落盘一次
+        cfg.set_values({
+            "autoplot_skip_enable": self.autoSkipCheckBox.isChecked(),
+            "autoplot_click_enable": self.autoClickCheckBox.isChecked(),
+            "autoplot_battle_detect_enable": self.autoBattleDetectCheckBox.isChecked(),
+            "autoplot_phone_detect_enable": self.autoPhoneDetectCheckBox.isChecked(),
+        })
         self.optionsChanged.emit(self.getOptions())
 
     def _on_hotkey_toggle_changed(self):

@@ -1087,9 +1087,11 @@ class LogInterface(ScrollArea):
                     'post_action': 'None',
                     'enabled': True,
                 }
-                cfg.set_value('scheduled_tasks', [task])
-                # 关闭旧配置标记，避免重复迁移
-                cfg.set_value('scheduled_run_enable', False)
+                # 批量写入，一次落盘；关闭旧配置标记，避免重复迁移
+                cfg.set_values({
+                    'scheduled_tasks': [task],
+                    'scheduled_run_enable': False,
+                })
                 # 写日志以提醒用户迁移已完成
                 try:
                     self.appendLog(f"\n已将旧单一定时迁移为新的定时任务: {task['name']} @ {scheduled_time}\n")

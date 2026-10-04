@@ -310,6 +310,8 @@ class StationPrioritySettingCard(SettingCard):
         if dialog.exec():
             new_priority = dialog.get_station_priority()
             new_disabled = dialog.get_disabled_stations()
-            cfg.set_value("divergent_station_priority", new_priority)
-            cfg.set_value("divergent_station_disabled", new_disabled)
+            cfg.set_values({
+                "divergent_station_priority": new_priority,
+                "divergent_station_disabled": new_disabled,
+            })
             self._update_content_text()
