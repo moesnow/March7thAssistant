@@ -6277,3 +6277,7 @@ msgid "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds}
 msgstr ""
 "Listening… Mention the bot in a group chat and send the verification code "
 "{code} (within {seconds} seconds)"
+
+#: app/card/autoplot_setting_card.py:65
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""

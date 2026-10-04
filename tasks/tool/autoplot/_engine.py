@@ -92,6 +92,8 @@ class AutoPlot(QObject):
         self.auto_click: bool = Defaults.AUTO_CLICK
         self.auto_battle_detect_enable: bool = Defaults.AUTO_BATTLE_DETECT
         self.auto_phone_detect_enable: bool = Defaults.AUTO_PHONE_DETECT
+        self.hero_chronicle_enable = False
+        self._hero_reader = None
 
         # --- 定时器 ---
         self._monitor_timer = QTimer(self)
@@ -111,6 +113,8 @@ class AutoPlot(QObject):
             return
 
         self.is_running = True
+        if self._hero_reader is not None:
+            self._hero_reader.reset()
         self._transition_to(EngineState.MONITORING)
         self._invalidate_session()
         log.info("自动对话已启动")
@@ -155,6 +159,11 @@ class AutoPlot(QObject):
             self.auto_battle_detect_enable = bool(options['auto_battle_detect_enable'])
         if 'auto_phone_detect_enable' in options:
             self.auto_phone_detect_enable = bool(options['auto_phone_detect_enable'])
+        if 'hero_chronicle_enable' in options:
+            enabled = bool(options['hero_chronicle_enable'])
+            if enabled != self.hero_chronicle_enable and self._hero_reader is not None:
+                self._hero_reader.reset()
+            self.hero_chronicle_enable = enabled
 
         log.debug(f"自动对话配置已更新: {options}")
 
@@ -229,6 +238,12 @@ class AutoPlot(QObject):
     # 监控主循环（每 500ms 触发一次）
     # ========================================================================
 
+    def _click_hero_book(self, point):
+        left, top, width, height = self._hero_reader.region
+        x = left + point[0] * width / 1920
+        y = top + point[1] * height / 1080
+        auto.click_element_with_pos(((x, y), (x, y)))
+
     def _monitor_loop(self) -> None:
         """监控定时器回调：主状态机入口。
 
@@ -249,6 +264,15 @@ class AutoPlot(QObject):
                 self._invalidate_session()
                 self._transition_to(EngineState.MONITORING)
             return
+
+        if self.hero_chronicle_enable:
+            if self._hero_reader is None:
+                from ._hero_chronicle import HeroChronicleReader
+                self._hero_reader = HeroChronicleReader(self._click_hero_book, self._game_title_name)
+            if self._hero_reader.tick():
+                self._invalidate_session()
+                self._transition_to(EngineState.MONITORING)
+                return
 
         # 2. 对话场景检测 → 启动或停止对话循环
         if SceneDetector.is_dialog_scene():

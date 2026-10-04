@@ -6110,3 +6110,7 @@ msgstr "監聽中，請私聊機器人發送驗證碼 {code}（{seconds} 秒內�
 #: app/setting_interface.py:3191
 msgid "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "監聽中，請在群聊中 @ 機器人發送驗證碼 {code}（{seconds} 秒內）"
+
+#: app/card/autoplot_setting_card.py:65
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""
