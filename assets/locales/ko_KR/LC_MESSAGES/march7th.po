@@ -14,11 +14,11 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: tools.i18n\n"
 
-#: app/main_window.py:329
+#: app/main_window.py:336
 msgid "设置"
 msgstr "설정"
 
-#: app/main_window.py:290
+#: app/main_window.py:297
 msgid "主页"
 msgstr "홈"
 
@@ -38,75 +38,75 @@ msgstr "자주 묻는 질문"
 msgid "更新日志"
 msgstr "업데이트 로그"
 
-#: app/main_window.py:293
+#: app/main_window.py:300
 msgid "抽卡记录"
 msgstr "가챠 기록"
 
-#: app/main_window.py:294
+#: app/main_window.py:301
 msgid "工具箱"
 msgstr "도구 상자"
 
-#: app/main_window.py:299
+#: app/main_window.py:306
 msgid "启动游戏"
 msgstr "게임 실행"
 
-#: app/main_window.py:303
+#: app/main_window.py:310
 msgid "日志"
 msgstr "로그"
 
-#: app/log_interface.py:418
+#: app/log_interface.py:419
 msgid "任务日志"
 msgstr "임무 로그"
 
-#: app/log_interface.py:424
+#: app/log_interface.py:425
 msgid "等待任务..."
 msgstr "작업 대기 중..."
 
-#: app/log_interface.py:1831
+#: app/log_interface.py:1832
 msgid "清空日志"
 msgstr "로그 지우기"
 
-#: app/log_interface.py:472
+#: app/log_interface.py:473
 msgid "配置定时任务"
 msgstr "예약 실행 설정"
 
-#: app/log_interface.py:1042
+#: app/log_interface.py:1043
 msgid "尚未配置定时任务"
 msgstr "예약된 임무 없음"
 
-#: app/log_interface.py:2410
+#: app/log_interface.py:2411
 msgid "任务完成"
 msgstr "임무 완료"
 
-#: app/log_interface.py:2413
+#: app/log_interface.py:2414
 msgid "任务已停止"
 msgstr "임무 중지됨"
 
-#: app/main_window.py:319
+#: app/main_window.py:326
 msgid "赞赏"
 msgstr "후원"
 
-#: app/setting_interface.py:2873
+#: app/setting_interface.py:2874
 msgid "体力"
 msgstr "개척력"
 
-#: app/setting_interface.py:2875
+#: app/setting_interface.py:2876
 msgid "日常"
 msgstr "일일 숙제"
 
-#: app/setting_interface.py:2876
+#: app/setting_interface.py:2877
 msgid "货币战争"
 msgstr "신용 포인트 파밍"
 
-#: app/setting_interface.py:628
+#: app/setting_interface.py:630
 msgid "差分宇宙"
 msgstr "차분화 우주"
 
-#: app/setting_interface.py:2879
+#: app/setting_interface.py:2880
 msgid "锄大地"
 msgstr "토벌"
 
-#: app/setting_interface.py:863
+#: app/setting_interface.py:865
 msgid "逐光捡金"
 msgstr "저금통 잡기"
 
@@ -114,76 +114,76 @@ msgstr "저금통 잡기"
 msgid "程序"
 msgstr "프로그램"
 
-#: app/setting_interface.py:2891
+#: app/setting_interface.py:2892
 msgid "云游戏"
 msgstr "클라우드"
 
-#: app/setting_interface.py:2892
+#: app/setting_interface.py:2893
 msgid "推送"
 msgstr "알림"
 
-#: app/setting_interface.py:2474
+#: app/setting_interface.py:2475
 msgid "杂项"
 msgstr "기타"
 
-#: app/setting_interface.py:2898
+#: app/setting_interface.py:2899
 msgid "账号"
 msgstr "계정"
 
-#: app/setting_interface.py:2532
+#: app/setting_interface.py:2533
 msgid "关于"
 msgstr "프로그램 정보"
 
-#: app/setting_interface.py:206
+#: app/setting_interface.py:208
 msgid "体力设置"
 msgstr "개척력 설정"
 
-#: app/setting_interface.py:210
+#: app/setting_interface.py:212
 msgid "体力计划"
 msgstr "개척력 계획"
 
-#: app/card/pushsettingcard1.py:871
+#: app/card/autostart_setting_card.py:138
 msgid "配置"
 msgstr "설정"
 
-#: app/setting_interface.py:216
+#: app/setting_interface.py:218
 msgid "副本类型"
 msgstr "던전 종류"
 
-#: app/setting_interface.py:230
+#: app/setting_interface.py:232
 msgid "副本名称"
 msgstr "던전 이름"
 
-#: app/setting_interface.py:242
+#: app/setting_interface.py:244
 msgid "自动切换队伍"
 msgstr "파티 자동 교체"
 
-#: app/setting_interface.py:247
+#: app/setting_interface.py:249
 msgid "清体力前传送至任意锚点"
 msgstr "소모 전 임의 앵커로 이동"
 
-#: app/setting_interface.py:253
+#: app/setting_interface.py:255
 msgid "启用清体力"
 msgstr "개척력 소모 활성화"
 
-#: app/setting_interface.py:254
+#: app/setting_interface.py:256
 msgid "仅影响完整运行和“日常”中的历战余响与清体力，不影响单独执行“清体力”任务"
 msgstr ""
 "전체 실행과 일상 안의 전쟁의 여운 및 개척력 소모에만 영향을 주며, 개척력 소모 작업을 단독 실행할 때는 영향을 주지 않습니다"
 
-#: app/setting_interface.py:266
+#: app/setting_interface.py:268
 msgid "使用后备开拓力"
 msgstr "예비 개척력 사용"
 
-#: app/setting_interface.py:267
+#: app/setting_interface.py:269
 msgid "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr "1회 최대 300pt. 전부 사용하려면 '임무 완료 후'를 '반복'으로 변경하고 '전체 실행'을 클릭하세요."
 
-#: app/setting_interface.py:272
+#: app/setting_interface.py:274
 msgid "使用燃料"
 msgstr "연료 사용"
 
-#: app/setting_interface.py:273
+#: app/setting_interface.py:275
 msgid "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr "1회 최대 5개. 전부 사용하려면 '임무 완료 후'를 '반복'으로 변경하고 '전체 실행'을 클릭하세요."
 
@@ -193,147 +193,147 @@ msgstr "4성 유물 자동 분해 (게임 내 설정 권장)"
 msgid "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
 msgstr "침식된 터널, 장신구 추출, 전쟁의 여운, 시뮬레이션 우주 완료 후 4성 이하 유물 자동 분해"
 
-#: app/setting_interface.py:290
+#: app/setting_interface.py:292
 msgid "体力优先合成沉浸器（建议直接通过饰品提取获取位面饰品）"
 msgstr "개척력 우선 몰입기 합성 (장신구 추출로 직접 획득 권장)"
 
-#: app/setting_interface.py:291
+#: app/setting_interface.py:293
 msgid "达到指定上限后停止"
 msgstr "지정 상한 도달 시 중지"
 
-#: app/setting_interface.py:297
+#: app/setting_interface.py:299
 msgid "副本最大连续挑战次数（通常不建议修改保持默认即可）"
 msgstr "던전 최대 연속 도전 횟수 (기본값 유지 권장)"
 
-#: app/setting_interface.py:303
+#: app/setting_interface.py:305
 msgid "启用使用支援角色"
 msgstr "지원 캐릭터 사용"
 
-#: app/setting_interface.py:308
+#: app/setting_interface.py:310
 msgid "强制使用支援角色"
 msgstr "지원 캐릭터 강제 사용"
 
-#: app/setting_interface.py:309
+#: app/setting_interface.py:311
 msgid "无论何时都要使用支援角色，即使日常实训中的要求已经完成"
 msgstr "일일 훈련 요구사항이 완료되었더라도 항상 지원 캐릭터 사용"
 
-#: app/setting_interface.py:315
+#: app/setting_interface.py:317
 msgid "支援列表"
 msgstr "지원 캐릭터 목록"
 
-#: app/setting_interface.py:322
+#: app/setting_interface.py:324
 msgid "滚动查找次数"
 msgstr "스크롤 검색 횟수"
 
-#: app/setting_interface.py:328
+#: app/setting_interface.py:330
 msgid "启用培养目标"
 msgstr "육성 목표 활성화"
 
-#: app/setting_interface.py:329
+#: app/setting_interface.py:331
 msgid "根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置"
 msgstr "육성 목표에 따라 행적 및 유물 던전 파밍, 목표를 가져올 수 없는 경우 기본 설정으로 복귀"
 
-#: app/setting_interface.py:345
+#: app/setting_interface.py:347
 msgid "每周饰品提取次数"
 msgstr "주간 장신구 추출 횟수"
 
-#: app/setting_interface.py:346
+#: app/setting_interface.py:348
 msgid "目标有足够资源后，执行饰品提取的次数，其余时间执行侵蚀隧洞"
 msgstr "목표 자원 충분 시 장신구 추출 실행 횟수, 나머지 시간은 침식된 터널 실행"
 
-#: app/setting_interface.py:357
+#: app/setting_interface.py:359
 msgid "启用历战余响"
 msgstr "전쟁의 여운 활성화"
 
-#: app/setting_interface.py:358
+#: app/setting_interface.py:360
 msgid "每周体力优先完成三次「历战余响」，支持配置从周几后开始执行，仅限完整运行生效"
 msgstr "매주 개척력 우선으로 '전쟁의 여운' 3회 완료, 특정 요일 이후 실행 설정 지원(전체 실행 시에만 유효)"
 
-#: app/setting_interface.py:363
+#: app/setting_interface.py:365
 msgid "上次完成历战余响的时间"
 msgstr "지난 전쟁의 여운 완료 시간"
 
-#: app/setting_interface.py:392
+#: app/setting_interface.py:394
 msgid "日常设置"
 msgstr "일일 설정"
 
-#: app/setting_interface.py:397
+#: app/setting_interface.py:399
 msgid "启用每日实训"
 msgstr "일일 훈련 활성화"
 
-#: app/setting_interface.py:403
+#: app/setting_interface.py:405
 msgid "通过 “合成材料” 完成任务"
 msgstr "'재료 합성'으로 임무 완료"
 
-#: app/setting_interface.py:404
+#: app/setting_interface.py:406
 msgid "请确保背包中有足够的 “熄灭原核” 用于合成 “微光原核” "
 msgstr "가방에 '미광 원핵' 합성을 위한 '꺼진 원핵'이 충분한지 확인하세요"
 
-#: app/setting_interface.py:415
+#: app/setting_interface.py:417
 msgid "通过 “回忆一” 完成任务"
 msgstr "'기억 1'로 임무 완료"
 
-#: app/setting_interface.py:416
+#: app/setting_interface.py:418
 msgid "请解锁混沌回忆并配置了队伍后再打开该选项"
 msgstr "혼돈의 기억 해금 및 파티 설정 후 이 옵션을 켜세요"
 
-#: app/setting_interface.py:422
+#: app/setting_interface.py:424
 msgid "回忆一队伍"
 msgstr "기억 1 파티"
 
-#: app/setting_interface.py:398
+#: app/setting_interface.py:400
 msgid "上次检测到完成日常的时间"
 msgstr "지난 일일 훈련 완료 감지 시간"
 
-#: app/setting_interface.py:428
+#: app/setting_interface.py:430
 msgid "启用活动检测"
 msgstr "이벤트 감지 활성화"
 
-#: app/setting_interface.py:433
+#: app/setting_interface.py:435
 msgid "每日签到"
 msgstr "일일 출석"
 
-#: app/setting_interface.py:434
+#: app/setting_interface.py:436
 msgid "自动领取「星轨专票」或「星琼」，包含巡星之礼、巡光之礼和庆典祝礼活动"
 msgstr "'별의 궤도 전용티켓' 또는 '성옥' 자동 수령 (별의 선물 등 이벤트 포함)"
 
-#: app/setting_interface.py:439
+#: app/setting_interface.py:441
 msgid "花藏繁生"
 msgstr "화중생화"
 
-#: app/setting_interface.py:440
+#: app/setting_interface.py:442
 msgid "存在双倍次数时体力优先「拟造花萼」"
 msgstr "2배 횟수 존재 시 '고치' 우선"
 
-#: app/setting_interface.py:445
+#: app/setting_interface.py:447
 msgid "异器盈界"
 msgstr "기이한 영역"
 
-#: app/setting_interface.py:446
+#: app/setting_interface.py:448
 msgid "存在双倍次数时体力优先「侵蚀隧洞」"
 msgstr "2배 횟수 존재 시 '침식된 터널' 우선"
 
-#: app/setting_interface.py:451
+#: app/setting_interface.py:453
 msgid "位面分裂"
 msgstr "차원 분열"
 
-#: app/setting_interface.py:452
+#: app/setting_interface.py:454
 msgid "存在双倍次数时体力优先「饰品提取」"
 msgstr "2배 횟수 존재 시 '장신구 추출' 우선"
 
-#: app/setting_interface.py:464
+#: app/setting_interface.py:466
 msgid "启用奖励领取"
 msgstr "보상 수령 활성화"
 
-#: app/setting_interface.py:469
+#: app/setting_interface.py:471
 msgid "委托"
 msgstr "의뢰"
 
-#: app/setting_interface.py:475
+#: app/setting_interface.py:477
 msgid "邮件"
 msgstr "우편"
 
-#: app/setting_interface.py:481
+#: app/setting_interface.py:483
 msgid "支援"
 msgstr "지원"
 
@@ -341,235 +341,235 @@ msgstr "지원"
 msgid "每日实训"
 msgstr "일일 훈련"
 
-#: app/setting_interface.py:493
+#: app/setting_interface.py:495
 msgid "无名勋礼"
 msgstr "무명의 공훈"
 
-#: app/setting_interface.py:499
+#: app/setting_interface.py:501
 msgid "成就"
 msgstr "업적"
 
-#: app/setting_interface.py:507
+#: app/setting_interface.py:509
 msgid "兑换码"
 msgstr "리딤코드"
 
-#: app/setting_interface.py:523
+#: app/setting_interface.py:525
 msgid "启用资产管理"
 msgstr "자산 관리 활성화"
 
-#: app/setting_interface.py:535
+#: app/setting_interface.py:537
 msgid "启用「每月自动合成自塑尘脂」"
 msgstr "'월간 자소성 수지 자동 합성' 활성화"
 
-#: app/setting_interface.py:536
+#: app/setting_interface.py:538
 msgid "每月自动尝试合成 2 个自塑尘脂，成功后记录时间，并在每月 1 号刷新"
 msgstr "매달 자소성 수지 1개 합성을 자동으로 시도하고, 성공 시 시간을 기록하며 매월 1일에 초기화합니다"
 
-#: app/setting_interface.py:539
+#: app/setting_interface.py:541
 msgid "上次完成自塑尘脂合成的时间"
 msgstr "지난 자소성 수지 합성 완료 시간"
 
-#: app/setting_interface.py:543
+#: app/setting_interface.py:545
 msgid "星轨专票"
 msgstr "별의 궤도 전용 티켓"
 
-#: app/setting_interface.py:551
+#: app/setting_interface.py:553
 msgid "星轨通票"
 msgstr "별의 궤도 티켓"
 
-#: app/setting_interface.py:559
+#: app/setting_interface.py:561
 msgid "命运的足迹"
 msgstr "운명의 발자취"
 
-#: app/setting_interface.py:543
+#: app/setting_interface.py:545
 msgid "启用「每月自动购买{item}」"
 msgstr "'매월 자동 구매 {item}' 활성화"
 
-#: app/setting_interface.py:547
+#: app/setting_interface.py:549
 msgid "上次完成{item}购买的时间"
 msgstr "지난 {item} 구매 완료 시간"
 
-#: app/setting_interface.py:544
+#: app/setting_interface.py:546
 msgid "每月自动尝试在余烬兑换中购买「{item}」，点击最大值并确认后记录时间，并在每月 1 号刷新"
 msgstr "매월 잔화 교환에서 '{item}' 구매를 시도하고, 최대치를 누른 뒤 확인하면 시간을 기록하며 매월 1일에 초기화됩니다"
 
-#: app/setting_interface.py:529
+#: app/setting_interface.py:531
 msgid "启用「3星光锥自动叠加」"
 msgstr "'3성 광추 자동 중첩' 활성화"
 
-#: app/setting_interface.py:530
+#: app/setting_interface.py:532
 msgid "自动将3星光锥进行叠加以节省背包空间"
 msgstr "가방 공간 절약을 위해 3성 광추 자동 중첩"
 
-#: app/setting_interface.py:566
+#: app/setting_interface.py:568
 msgid "货币"
 msgstr "화폐"
 
-#: app/setting_interface.py:569
+#: app/setting_interface.py:571
 msgid "启用「货币战争」积分奖励"
 msgstr "'화폐 전쟁' 포인트 보상 활성화"
 
-#: app/setting_interface.py:573
+#: app/setting_interface.py:575
 msgid "上次检测到完成货币战争积分奖励的时间"
 msgstr "지난 화폐 전쟁 포인트 보상 완료 감지 시간"
 
-#: app/setting_interface.py:584
+#: app/setting_interface.py:586
 msgid "类别"
 msgstr "분류"
 
-#: app/setting_interface.py:586
+#: app/setting_interface.py:588
 msgid "标准博弈"
 msgstr "표준 게임"
 
-#: app/setting_interface.py:586
+#: app/setting_interface.py:588
 msgid "超频博弈"
 msgstr "오버클럭 게임"
 
-#: app/setting_interface.py:590
+#: app/setting_interface.py:592
 msgid "自动执行位面饰品快速提取"
 msgstr "차원 장신구 빠른 추출 자동 실행"
 
-#: app/setting_interface.py:591
+#: app/setting_interface.py:593
 msgid "在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器"
 msgstr "포인트 보상 수령 후 몰입기 소모하여 차원 장신구 빠른 추출 자동 실행"
 
-#: app/setting_interface.py:694
+#: app/setting_interface.py:696
 msgid "模拟宇宙"
 msgstr "시뮬레이션 우주"
 
-#: app/setting_interface.py:631
+#: app/setting_interface.py:633
 msgid "启用「差分宇宙」积分奖励"
 msgstr "'차분 우주' 포인트 보상 활성화"
 
-#: app/setting_interface.py:642
+#: app/setting_interface.py:644
 msgid "常规演算"
 msgstr "일반 연산"
 
-#: app/setting_interface.py:642
+#: app/setting_interface.py:644
 msgid "周期演算"
 msgstr "주기 연산"
 
-#: app/setting_interface.py:635
+#: app/setting_interface.py:637
 msgid "上次检测到完成差分宇宙积分奖励的时间"
 msgstr "지난 차분 우주 포인트 보상 완료 감지 시간"
 
-#: app/setting_interface.py:679
+#: app/setting_interface.py:681
 msgid "启用模拟宇宙/差分宇宙 (Auto_Simulated_Universe)"
 msgstr "시뮬레이션/차분화 우주 활성화 (ASU)"
 
-#: app/setting_interface.py:680
+#: app/setting_interface.py:682
 msgid "通常用于反复刷取遗器经验和灵之珠泪（代替敌方掉落素材）直到每周上限"
 msgstr "주간 상한까지 유물 경험치 및 영혼의 눈물(몬스터 드랍 대체) 반복 파밍용"
 
-#: app/setting_interface.py:685
+#: app/setting_interface.py:687
 msgid "运行模式"
 msgstr "실행 모드"
 
-#: app/setting_interface.py:687
+#: app/setting_interface.py:689
 msgid "集成"
 msgstr "통합 (exe)"
 
-#: app/setting_interface.py:687
+#: app/setting_interface.py:689
 msgid "源码"
 msgstr "소스코드 (source)"
 
-#: app/setting_interface.py:699
+#: app/setting_interface.py:701
 msgid "选择差分宇宙时类别"
 msgstr "차분 우주 선택 시 분류"
 
-#: app/setting_interface.py:707
+#: app/setting_interface.py:709
 msgid "模拟宇宙/差分宇宙超时"
 msgstr "시뮬레이션/차분 우주 타임아웃"
 
-#: app/setting_interface.py:708
+#: app/setting_interface.py:710
 msgid "超过设定时间强制停止（单位小时）"
 msgstr "설정 시간 초과 시 강제 중지 (단위: 시간)"
 
-#: app/setting_interface.py:713
+#: app/setting_interface.py:715
 msgid "上次运行模拟宇宙/差分宇宙的时间"
 msgstr "지난 시뮬레이션/차분 우주 실행 시간"
 
-#: app/setting_interface.py:725
+#: app/setting_interface.py:727
 msgid "运行频率"
 msgstr "실행 빈도"
 
-#: app/setting_interface.py:727
+#: app/setting_interface.py:729
 msgid "每周"
 msgstr "매주"
 
-#: app/setting_interface.py:727
+#: app/setting_interface.py:729
 msgid "每天"
 msgstr "매일"
 
-#: app/setting_interface.py:733
+#: app/setting_interface.py:735
 msgid "运行次数"
 msgstr "실행 횟수"
 
-#: app/setting_interface.py:734
+#: app/setting_interface.py:736
 msgid "注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"
 msgstr "중도 정지는 카운트되지 않음. 0은 미지정(기본 로직 사용)"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "不配置"
 msgstr "설정 안 함"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "存护"
 msgstr "보존"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "记忆"
 msgstr "기억"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "虚无"
 msgstr "공허"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "丰饶"
 msgstr "풍요"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "巡猎"
 msgstr "수렵"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "毁灭"
 msgstr "파멸"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "欢愉"
 msgstr "환락"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "繁育"
 msgstr "번식"
 
-#: app/setting_interface.py:752
+#: app/setting_interface.py:754
 msgid "智识"
 msgstr "지식"
 
-#: app/setting_interface.py:757
+#: app/setting_interface.py:759
 msgid "命途（仅模拟宇宙生效）"
 msgstr "운명의 길 (시뮬레이션 우주 전용)"
 
-#: app/setting_interface.py:765
+#: app/setting_interface.py:767
 msgid "难度 (0为不配置，仅模拟宇宙生效)"
 msgstr "난이도 (0은 미설정, 시뮬레이션 우주 전용)"
 
-#: app/setting_interface.py:774
+#: app/setting_interface.py:776
 msgid "启用锄大地 (Fhoe-Rail)"
 msgstr "필드 정리 활성화 (Fhoe-Rail)"
 
-#: app/setting_interface.py:796
+#: app/setting_interface.py:798
 msgid "锄大地超时"
 msgstr "필드 정리 타임아웃"
 
-#: app/setting_interface.py:775
+#: app/setting_interface.py:777
 msgid "上次运行锄大地的时间"
 msgstr "지난 필드 정리 실행 시간"
 
-#: app/setting_interface.py:843
+#: app/setting_interface.py:845
 msgid "购买代币与过期邮包"
 msgstr "토큰 및 만료된 우편 구매"
 
@@ -577,209 +577,209 @@ msgstr "토큰 및 만료된 우편 구매"
 msgid "启用"
 msgstr "활성화"
 
-#: app/setting_interface.py:838
+#: app/setting_interface.py:840
 msgid "停用"
 msgstr "비활성화"
 
-#: app/setting_interface.py:836
+#: app/setting_interface.py:838
 msgid "购买秘技零食并合成零食"
 msgstr "비술 간식 구매 및 합성"
 
-#: app/setting_interface.py:823
+#: app/setting_interface.py:825
 msgid "优先星球"
 msgstr "우선 행성"
 
-#: app/setting_interface.py:825
+#: app/setting_interface.py:827
 msgid "空间站"
 msgstr "우주정거장"
 
-#: app/setting_interface.py:825
+#: app/setting_interface.py:827
 msgid "雅利洛"
 msgstr "야릴로"
 
-#: app/setting_interface.py:825
+#: app/setting_interface.py:827
 msgid "仙舟"
 msgstr "선주"
 
-#: app/setting_interface.py:825
+#: app/setting_interface.py:827
 msgid "匹诺康尼"
 msgstr "페나코니"
 
-#: app/setting_interface.py:825
+#: app/setting_interface.py:827
 msgid "翁法罗斯"
 msgstr "온파로스"
 
-#: app/setting_interface.py:868
+#: app/setting_interface.py:870
 msgid "启用混沌回忆"
 msgstr "혼돈의 기억 활성화"
 
-#: app/setting_interface.py:875
+#: app/setting_interface.py:877
 msgid "关卡范围"
 msgstr "스테이지 범위"
 
-#: app/setting_interface.py:886
+#: app/setting_interface.py:888
 msgid "混沌回忆队伍配置"
 msgstr "혼돈의 기억 파티 설정"
 
-#: app/setting_interface.py:869
+#: app/setting_interface.py:871
 msgid "上次运行混沌回忆的时间"
 msgstr "지난 혼돈의 기억 실행 시간"
 
-#: app/setting_interface.py:894
+#: app/setting_interface.py:896
 msgid "启用虚构叙事"
 msgstr "허구 이야기 활성화"
 
-#: app/setting_interface.py:906
+#: app/setting_interface.py:908
 msgid "虚构叙事队伍配置"
 msgstr "허구 이야기 파티 설정"
 
-#: app/setting_interface.py:895
+#: app/setting_interface.py:897
 msgid "上次运行虚构叙事的时间"
 msgstr "지난 허구 이야기 실행 시간"
 
-#: app/setting_interface.py:914
+#: app/setting_interface.py:916
 msgid "启用末日幻影"
 msgstr "종말의 환영 활성화"
 
-#: app/setting_interface.py:926
+#: app/setting_interface.py:928
 msgid "末日幻影队伍配置"
 msgstr "종말의 환영 파티 설정"
 
-#: app/setting_interface.py:915
+#: app/setting_interface.py:917
 msgid "上次运行末日幻影的时间"
 msgstr "지난 종말의 환영 실행 시간"
 
-#: app/setting_interface.py:931
+#: app/setting_interface.py:933
 msgid "云崩铁设置"
 msgstr "클라우드 게임 설정"
 
-#: app/setting_interface.py:936
+#: app/setting_interface.py:938
 msgid "使用“云·星穹铁道”"
 msgstr "'클라우드·붕괴: 스타레일' 사용"
 
-#: app/setting_interface.py:937
+#: app/setting_interface.py:939
 msgid "开启后，将改用云·星穹铁道来执行清体力等自动化任务。无需固定窗口，可在后台运行。（模拟宇宙和锄大地仍需保持窗口全屏）"
 msgstr ""
 "켜면 클라우드 버전을 사용하여 자동화 임무를 수행합니다. 창 고정 불필요, 백그라운드 실행 가능. (시뮬레이션 우주 및 필드 정리는 "
 "여전히 전체 화면 필요)"
 
-#: app/setting_interface.py:942
+#: app/setting_interface.py:944
 msgid "全屏运行"
 msgstr "전체 화면 실행"
 
-#: app/setting_interface.py:948
+#: app/setting_interface.py:950
 msgid "使用付费时长"
 msgstr "유료 시간 사용"
 
-#: app/setting_interface.py:949
+#: app/setting_interface.py:951
 msgid "打开后可在使用云游戏时使用付费时长免除排队"
 msgstr "켜면 클라우드 게임 사용 시 유료 시간을 사용하여 대기열을 건너뛸 수 있습니다"
 
-#: app/setting_interface.py:956
+#: app/setting_interface.py:958
 msgid "最大排队等待时间（分钟）"
 msgstr "최대 대기열 대기 시간 (분)"
 
-#: app/setting_interface.py:963
+#: app/setting_interface.py:965
 msgid "登录超时时间（分钟）"
 msgstr "로그인 타임아웃 (분)"
 
-#: app/setting_interface.py:964
+#: app/setting_interface.py:966
 msgid "等待用户完成登录的最长时间，超时后将终止运行"
 msgstr "사용자가 로그인을 완료할 때까지 기다리는 최대 시간입니다. 타임아웃 후 실행을 종료합니다."
 
-#: app/setting_interface.py:989
+#: app/setting_interface.py:991
 msgid "浏览器类型"
 msgstr "브라우저 유형"
 
-#: app/setting_interface.py:990
+#: app/setting_interface.py:992
 msgid "建议保持默认的“集成（Chrome For Testing）”效果最好"
 msgstr "기본값 '통합 (Chrome For Testing)' 사용 권장"
 
-#: app/setting_interface.py:991
+#: app/setting_interface.py:993
 msgid "集成（Chrome For Testing）"
 msgstr "통합 (Chrome For Testing)"
 
-#: app/setting_interface.py:995
+#: app/setting_interface.py:997
 msgid "使用国内镜像下载浏览器和驱动"
 msgstr "브라우저 및 드라이버 다운로드 시 미러 사용"
 
-#: app/setting_interface.py:1001
+#: app/setting_interface.py:1003
 msgid "保存浏览器数据（游戏的登录状态和本地数据）"
 msgstr "브라우저 데이터 저장 (로그인 상태 및 로컬 데이터)"
 
-#: app/setting_interface.py:1008
+#: app/setting_interface.py:1010
 msgid "浏览器画面缩放（DPI）"
 msgstr "브라우저 화면 배율 (DPI)"
 
-#: app/setting_interface.py:1009
+#: app/setting_interface.py:1011
 msgid "非 1920x1080 屏幕下，云游戏画面无法铺满屏幕，可以调整这个值改变画面缩放"
 msgstr "1920x1080 해상도가 아닌 경우 화면이 꽉 차지 않을 수 있으며, 이 값을 조정하여 배율을 변경하세요"
 
-#: app/setting_interface.py:1010
+#: app/setting_interface.py:1012
 msgid "无缩放（100%）"
 msgstr "배율 없음 (100%)"
 
-#: app/setting_interface.py:1016
+#: app/setting_interface.py:1018
 msgid "浏览器启动参数"
 msgstr "브라우저 시작 매개변수"
 
-#: app/setting_interface.py:1022
+#: app/setting_interface.py:1024
 msgid "启用无窗口模式（后台运行）"
 msgstr "무창 모드 활성화 (백그라운드 실행)"
 
-#: app/setting_interface.py:1023
+#: app/setting_interface.py:1025
 msgid "不支持模拟宇宙和锄大地"
 msgstr "시뮬레이션 우주 및 필드 정리 미지원"
 
-#: app/setting_interface.py:1027
+#: app/setting_interface.py:1029
 msgid "未登录时自动切换为有窗口模式"
 msgstr "미로그인 시 자동으로 유창 모드 전환"
 
-#: app/setting_interface.py:1028
+#: app/setting_interface.py:1030
 msgid "开启后：在无窗口模式检测到未登录时，将自动以有窗口模式重启浏览器以便登录；关闭后：将在无窗口模式下尝试二维码登录。"
 msgstr "켜짐: 무창 모드에서 미로그인 감지 시 유창 모드로 재시작하여 로그인 유도. 꺼짐: 무창 모드에서 QR 코드 로그인 시도."
 
-#: app/setting_interface.py:1038
+#: app/setting_interface.py:1040
 msgid "程序设置"
 msgstr "프로그램 설정"
 
-#: app/setting_interface.py:1055
+#: app/setting_interface.py:1057
 msgid "通过启动器更新游戏"
 msgstr "런처를 통한 게임 업데이트"
 
-#: app/setting_interface.py:1061
+#: app/setting_interface.py:1063
 msgid "米哈游启动器路径"
 msgstr "HoYoPlay 런처 경로"
 
-#: app/setting_interface.py:1068
+#: app/setting_interface.py:1070
 msgid "启动游戏超时时间（分）"
 msgstr "게임 시작 타임아웃 (분)"
 
-#: app/setting_interface.py:1075
+#: app/setting_interface.py:1077
 msgid "更新游戏超时时间（时）"
 msgstr "게임 업데이트 타임아웃 (시간)"
 
-#: app/setting_interface.py:1086
+#: app/setting_interface.py:1088
 msgid "成功后暂停程序"
 msgstr "성공 후 프로그램 일시정지"
 
-#: app/setting_interface.py:1087
+#: app/setting_interface.py:1089
 msgid "如果勾选，除非循环模式，执行成功后暂停程序。"
 msgstr "체크 시, 순환 모드가 아니면 실행 성공 후 프로그램을 일시정지합니다."
 
-#: app/setting_interface.py:1092
+#: app/setting_interface.py:1094
 msgid "失败后直接退出"
 msgstr "실패 후 즉시 종료"
 
-#: app/setting_interface.py:1093
+#: app/setting_interface.py:1095
 msgid "如果勾选，那么失败后直接退出，否则失败后暂停程序。"
 msgstr "체크 시 실패하면 바로 종료하며, 체크 해제 시 일시정지합니다."
 
-#: app/setting_interface.py:1099
+#: app/setting_interface.py:1101
 msgid "任务完成后"
 msgstr "임무 완료 시"
 
-#: app/setting_interface.py:1100
+#: app/setting_interface.py:1102
 msgid "“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能"
 msgstr "'종료'는 게임 종료를 의미합니다. 순환 모드 대신 로그 화면의 예약 실행 기능을 사용하세요."
 
@@ -787,91 +787,91 @@ msgstr "'종료'는 게임 종료를 의미합니다. 순환 모드 대신 로�
 msgid "无"
 msgstr "없음"
 
-#: app/log_interface.py:2336
+#: app/log_interface.py:2337
 msgid "关机"
 msgstr "시스템 종료"
 
-#: app/log_interface.py:2337
+#: app/log_interface.py:2338
 msgid "睡眠"
 msgstr "절전"
 
-#: app/log_interface.py:2338
+#: app/log_interface.py:2339
 msgid "休眠"
 msgstr "최대 절전"
 
-#: app/log_interface.py:2339
+#: app/log_interface.py:2340
 msgid "重启"
 msgstr "재부팅"
 
-#: app/log_interface.py:2340
+#: app/log_interface.py:2341
 msgid "注销"
 msgstr "로그오프"
 
-#: app/log_interface.py:2341
+#: app/log_interface.py:2342
 msgid "关闭显示器"
 msgstr "모니터 끄기"
 
-#: app/setting_interface.py:1101
+#: app/setting_interface.py:1103
 msgid "运行脚本"
 msgstr "스크립트 실행"
 
-#: app/setting_interface.py:1101
+#: app/setting_interface.py:1103
 msgid "循环"
 msgstr "순환"
 
-#: app/setting_interface.py:1106
+#: app/setting_interface.py:1108
 msgid "循环模式（请改用日志界面的定时运行功能）"
 msgstr "순환 모드 (로그 화면의 예약 실행 기능 권장)"
 
-#: app/setting_interface.py:1108
+#: app/setting_interface.py:1110
 msgid "定时任务"
 msgstr "예약 임무"
 
-#: app/setting_interface.py:1108
+#: app/setting_interface.py:1110
 msgid "根据开拓力"
 msgstr "개척력 기준"
 
-#: app/setting_interface.py:1113
+#: app/setting_interface.py:1115
 msgid "定时任务时间"
 msgstr "예약 임무 시간"
 
-#: app/setting_interface.py:1119
+#: app/setting_interface.py:1121
 msgid "循环运行再次启动所需开拓力"
 msgstr "순환 실행 재시작 필요 개척력"
 
-#: app/setting_interface.py:1120
+#: app/setting_interface.py:1122
 msgid "游戏刷新后优先级更高"
 msgstr "게임 리셋 후 우선순위가 더 높음"
 
-#: app/setting_interface.py:1126
+#: app/setting_interface.py:1128
 msgid "游戏刷新时间"
 msgstr "게임 리셋 시간"
 
-#: app/setting_interface.py:1127
+#: app/setting_interface.py:1129
 msgid "用于循环运行及判断任务状态，默认凌晨四点"
 msgstr "순환 실행 및 임무 상태 판단용, 기본값 새벽 4시"
 
-#: app/setting_interface.py:1132
+#: app/setting_interface.py:1134
 msgid "脚本或程序路径(选择运行脚本时生效)"
 msgstr "스크립트 또는 프로그램 경로 (스크립트 실행 선택 시 유효)"
 
-#: app/setting_interface.py:1137
+#: app/setting_interface.py:1139
 msgid "声音提示"
 msgstr "소리 알림"
 
-#: app/setting_interface.py:1138
+#: app/setting_interface.py:1140
 msgid "任务完成后列车长唱歌提示帕！"
 msgstr "임무 완료 후 차장님이 노래로 알려줘요 폼!"
 
-#: app/setting_interface.py:1144
+#: app/setting_interface.py:1146
 msgid "关闭窗口时"
 msgstr "창을 닫을 때"
 
-#: app/setting_interface.py:1145
+#: app/setting_interface.py:1147
 msgid "选择关闭窗口时的默认行为，也可以在关闭时由对话框询问"
 msgstr "창을 닫을 때의 기본 동작 선택, 또는 닫을 때마다 묻기"
 
-#: app/setting_interface.py:1146
+#: app/setting_interface.py:1148
 msgid "询问"
 msgstr "묻기"
 
@@ -883,151 +883,150 @@ msgstr "트레이로 최소화"
 msgid "关闭程序"
 msgstr "프로그램 종료"
 
-#: app/setting_interface.py:1156
+#: app/setting_interface.py:1158
 msgid "消息推送"
 msgstr "알림 푸시"
 
-#: app/setting_interface.py:1166
+#: app/setting_interface.py:1168
 msgid "测试消息推送"
 msgstr "알림 푸시 테스트"
 
-#: app/setting_interface.py:1164
+#: app/setting_interface.py:1166
 msgid "发送消息"
 msgstr "메시지 전송"
 
-#: app/setting_interface.py:1172
+#: app/setting_interface.py:1174
 msgid "通知级别"
 msgstr "알림 레벨"
 
-#: app/setting_interface.py:1174
+#: app/setting_interface.py:1176
 msgid "推送所有通知"
 msgstr "모든 알림 푸시"
 
-#: app/setting_interface.py:1174
+#: app/setting_interface.py:1176
 msgid "仅推送错误通知"
 msgstr "오류 알림만 푸시"
 
-#: app/setting_interface.py:1191
+#: app/setting_interface.py:1193
 msgid "消息推送格式"
 msgstr "알림 푸시 형식"
 
-#: app/setting_interface.py:2477
+#: app/setting_interface.py:2478
 msgid "启用自动战斗和二倍速检测"
 msgstr "자동 전투 및 2배속 감지 활성화"
 
-#: app/setting_interface.py:2478
+#: app/setting_interface.py:2479
 msgid "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态"
 msgstr "게임 시작 전 레지스트리/로컬 저장소를 수정하여 자동 전투/2배속을 켜고, 파밍 중 상태를 감지하여 유지합니다."
 
-#: app/setting_interface.py:2484
+#: app/setting_interface.py:2485
 msgid "OCR 加速模式"
 msgstr "OCR 가속 모드"
 
-#: app/setting_interface.py:2485
+#: app/setting_interface.py:2486
 msgid "设置 OCR 引擎与加速后端。自动模式会优先尝试 DirectML，若不可用则回退到 CPU 引擎。"
 msgstr "OCR 엔진/가속 백엔드를 설정합니다. 자동 모드는 DirectML을 우선 시도하고, 불가 시 CPU 엔진으로 전환합니다."
 
-#: app/setting_interface.py:2488
+#: app/setting_interface.py:2489
 msgid "GPU"
 msgstr "GPU"
 
-#: app/setting_interface.py:2489
+#: app/setting_interface.py:2490
 msgid "ONNXRuntime（DirectML）"
 msgstr "ONNXRuntime (DirectML)"
 
-#: app/setting_interface.py:2490
+#: app/setting_interface.py:2491
 msgid "CPU"
 msgstr "CPU"
 
-#: app/setting_interface.py:2491
+#: app/setting_interface.py:2492
 msgid "OpenVINO（CPU）"
 msgstr "OpenVINO (CPU)"
 
-#: app/setting_interface.py:2492
+#: app/setting_interface.py:2493
 msgid "ONNXRuntime（CPU）"
 msgstr "ONNXRuntime (CPU)"
 
-#: app/setting_interface.py:2497
+#: app/setting_interface.py:2498
 msgid "启用自动修改分辨率并关闭自动 HDR"
 msgstr "자동 해상도 변경 및 자동 HDR 끄기 활성화"
 
-#: app/setting_interface.py:2498
+#: app/setting_interface.py:2499
 msgid "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）"
 msgstr "소프트웨어로 게임 시작 시 1920x1080 및 자동 HDR 끄기 적용. 수동 실행 시 영향 없음 (중국/글로벌 서버 지원)"
 
-#: app/setting_interface.py:2503
+#: app/setting_interface.py:2504
 msgid "启用自动配置游戏路径"
 msgstr "게임 경로 자동 설정 활성화"
 
-#: app/setting_interface.py:2504
+#: app/setting_interface.py:2505
 msgid "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）"
 msgstr "바로가기, 공식 런처, 실행 중인 프로세스 등으로 게임 경로 자동 설정 시도 (중국/글로벌 서버 지원)"
 
-#: app/setting_interface.py:2516
+#: app/setting_interface.py:2517
 msgid "在用户登录时启动"
 msgstr "사용자 로그인 시 시작"
 
-#: app/setting_interface.py:2517
 msgid "通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）"
 msgstr "작업 스케줄러를 통해 부팅 후 '전체 실행' 모드 자동 수행 (자동 로그인 설정 필요할 수 있음)"
 
-#: app/setting_interface.py:2528
+#: app/setting_interface.py:2529
 msgid "修改按键"
 msgstr "단축키 변경"
 
-#: app/setting_interface.py:2529
+#: app/setting_interface.py:2530
 msgid "配置秘技、地图、跃迁、停止任务等按键设置"
 msgstr "비술, 지도, 워프, 임무 중지 등 단축키 설정"
 
-#: app/setting_interface.py:2534
+#: app/setting_interface.py:2535
 msgid "项目主页"
 msgstr "프로젝트 홈페이지"
 
-#: app/setting_interface.py:2546
+#: app/setting_interface.py:2547
 msgid "加入群聊"
 msgstr "채팅방 참여"
 
-#: app/setting_interface.py:2548
+#: app/setting_interface.py:2549
 msgid "QQ群"
 msgstr "QQ 그룹"
 
-#: app/setting_interface.py:2558
+#: app/setting_interface.py:2559
 msgid "检查更新"
 msgstr "업데이트 확인"
 
-#: app/setting_interface.py:2561
+#: app/setting_interface.py:2562
 msgid "当前版本："
 msgstr "현재 버전:"
 
-#: app/setting_interface.py:2566
+#: app/setting_interface.py:2567
 msgid "更新源"
 msgstr "업데이트 소스"
 
-#: app/setting_interface.py:2569
+#: app/setting_interface.py:2570
 msgid "海外源"
 msgstr "해외 소스 (GitHub)"
 
-#: app/setting_interface.py:2569
+#: app/setting_interface.py:2570
 msgid "Mirror 酱"
 msgstr "Mirror 짱"
 
-#: app/setting_interface.py:2571
+#: app/setting_interface.py:2572
 msgid "正式版"
 msgstr "정식 버전"
 
-#: app/setting_interface.py:2571
+#: app/setting_interface.py:2572
 msgid "公测版"
 msgstr "베타 버전"
 
-#: app/setting_interface.py:2575
+#: app/setting_interface.py:2576
 msgid "启动时检测更新"
 msgstr "시작 시 업데이트 확인"
 
-#: app/setting_interface.py:3011
+#: app/setting_interface.py:3012
 msgid "关闭更新检测前请确认"
 msgstr "업데이트 확인을 끄기 전에 확인해 주세요"
 
-#: app/setting_interface.py:3012
+#: app/setting_interface.py:3013
 msgid ""
 "仍然建议保留“启动时检测更新”。\n"
 "\n"
@@ -1045,27 +1044,27 @@ msgstr ""
 "\n"
 "겉보기에는 \"갑자기 안 된다\"는 문제 중 많은 경우가 실제로는 오래된 버전을 사용해서 생깁니다. 이런 영향을 이해했다면 그때 업데이트 확인을 꺼 주세요."
 
-#: app/setting_interface.py:3015
+#: app/setting_interface.py:3016
 msgid "我已了解，继续关闭"
 msgstr "이해했습니다. 계속 끄기"
 
-#: app/setting_interface.py:2581
+#: app/setting_interface.py:2582
 msgid "更新时下载完整包"
 msgstr "업데이트 시 전체 패키지 다운로드"
 
-#: app/setting_interface.py:2582
+#: app/setting_interface.py:2583
 msgid "更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。"
 msgstr "업데이트에 종속 구성 요소 포함. 켜둠 권장. 끄면 종속성을 수동 업데이트해야 하며 오류 발생 가능성 있음."
 
-#: app/setting_interface.py:2595
+#: app/setting_interface.py:2596
 msgid "Mirror 酱 CDK"
 msgstr "Mirror 짱 CDK"
 
-#: app/main_window.py:321
+#: app/main_window.py:328
 msgid "支持作者🥰"
 msgstr "개발자 후원하기 🥰"
 
-#: app/main_window.py:322
+#: app/main_window.py:329
 msgid ""
 "此程序为免费开源项目，如果你付了钱请立刻退款\n"
 "如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n"
@@ -1075,11 +1074,11 @@ msgstr ""
 "이 프로젝트가 마음에 든다면 WeChat으로 커피 한 잔을 후원해주세요☕\n"
 "당신의 후원은 개발 및 유지보수의 원동력이 됩니다🚀"
 
-#: app/main_window.py:348
+#: app/main_window.py:355
 msgid "显示主界面"
 msgstr "메인 화면 표시"
 
-#: app/main_window.py:353
+#: app/main_window.py:360
 msgid "完整运行"
 msgstr "전체 실행"
 
@@ -1087,71 +1086,71 @@ msgstr "전체 실행"
 msgid "退出"
 msgstr "종료"
 
-#: app/log_interface.py:1323
+#: app/log_interface.py:1324
 msgid "任务正在运行"
 msgstr "임무 실행 중"
 
-#: app/main_window.py:450
+#: app/main_window.py:457
 msgid "请先停止当前任务后再启动新任务"
 msgstr "새 임무를 시작하려면 먼저 현재 임무를 중지하세요"
 
-#: app/main_window.py:721
+#: app/main_window.py:733
 msgid "配置已更新"
 msgstr "설정 업데이트됨"
 
-#: app/main_window.py:722
+#: app/main_window.py:734
 msgid "检测到配置文件变化，已自动重新加载"
 msgstr "설정 파일 변경 감지, 자동 재로드됨"
 
-#: app/main_window.py:632
+#: app/main_window.py:639
 msgid "配置加载失败"
 msgstr "설정 로드 실패"
 
-#: app/main_window.py:902
+#: app/main_window.py:915
 msgid "启动成功(＾∀＾●)"
 msgstr "시작 성공 (＾∀＾●)"
 
-#: app/main_window.py:942
+#: app/main_window.py:955
 msgid "启动失败"
 msgstr "시작 실패"
 
-#: app/main_window.py:932
+#: app/main_window.py:945
 msgid "游戏路径配置错误(╥╯﹏╰╥)"
 msgstr "게임 경로 설정 오류 (╥╯﹏╰╥)"
 
-#: app/main_window.py:912
+#: app/main_window.py:925
 msgid "浏览器或驱动下载失败 (╥╯﹏╰╥)"
 msgstr "브라우저/드라이버 다운로드 실패 (╥╯﹏╰╥)"
 
-#: app/main_window.py:913
+#: app/main_window.py:926
 msgid "请检查网络连接是否正常"
 msgstr "네트워크 연결을 확인하세요"
 
-#: app/main_window.py:922
+#: app/main_window.py:935
 msgid "云游戏启动失败(╥╯﹏╰╥)"
 msgstr "클라우드 게임 시작 실패 (╥╯﹏╰╥)"
 
-#: app/main_window.py:923
+#: app/main_window.py:936
 msgid "请检查所选浏览器是否存在，网络连接是否正常"
 msgstr "선택한 브라우저가 있는지, 네트워크가 정상인지 확인하세요"
 
-#: app/main_window.py:871
+#: app/main_window.py:884
 msgid "正在下载内置浏览器(ง •̀_•́)ง"
 msgstr "내장 브라우저 다운로드 중 (ง ·̀_·́)ง"
 
-#: app/main_window.py:872
+#: app/main_window.py:885
 msgid "下载成功后，将自动启动云·星穹铁道"
 msgstr "다운로드 완료 후 클라우드·붕괴: 스타레일을 자동 시작합니다"
 
-#: app/main_window.py:881
+#: app/main_window.py:894
 msgid "正在启动游戏(❁´◡`❁)"
 msgstr "게임 시작 중 (❁´◡`❁)"
 
-#: app/main_window.py:811
+#: app/main_window.py:824
 msgid "程序已最小化到托盘"
 msgstr "프로그램이 트레이로 최소화되었습니다"
 
-#: app/log_interface.py:439
+#: app/log_interface.py:440
 msgid "停止任务"
 msgstr "임무 중지"
 
@@ -1207,23 +1206,23 @@ msgstr "프로그램 폴더 열기"
 msgid "打开项目主页"
 msgstr "프로젝트 홈페이지 열기"
 
-#: app/setting_interface.py:1042
+#: app/setting_interface.py:1044
 msgid "日志等级"
 msgstr "로그 레벨"
 
-#: app/setting_interface.py:1044
+#: app/setting_interface.py:1046
 msgid "简洁"
 msgstr "간결"
 
-#: app/setting_interface.py:1044
+#: app/setting_interface.py:1046
 msgid "详细"
 msgstr "상세"
 
-#: app/setting_interface.py:1049
+#: app/setting_interface.py:1051
 msgid "游戏路径"
 msgstr "게임 경로"
 
-#: app/setting_interface.py:228
+#: app/setting_interface.py:230
 msgid "修改"
 msgstr "수정"
 
@@ -1239,77 +1238,77 @@ msgstr "프로그램을 어떻게 처리하시겠습니까?"
 msgid "记住我的选择,下次不再询问"
 msgstr "선택을 기억하고 다음에 묻지 않음"
 
-#: app/tools_interface.py:33
+#: app/tools_interface.py:34
 msgid "自动对话"
 msgstr "자동 대화"
 
-#: app/tools_interface.py:34
+#: app/tools_interface.py:35
 msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
 msgstr "스토리 화면 진입 후 자동 실행, 1920*1080 이상 16:9 해상도 지원, 클라우드·붕괴: 스타레일 미지원"
 
-#: app/tools_interface.py:37
+#: app/tools_interface.py:38
 msgid "捕获"
 msgstr "캡처"
 
-#: app/tools_interface.py:39
+#: app/tools_interface.py:40
 msgid "游戏截图"
 msgstr "게임 스크린샷"
 
-#: app/tools_interface.py:40
+#: app/tools_interface.py:41
 msgid "检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）"
 msgstr "프로그램이 획득한 이미지가 올바른지 확인, OCR 텍스트 인식 지원 (이상 발생 시 자가 진단용)"
 
-#: app/tools_interface.py:43
+#: app/tools_interface.py:44
 msgid "解锁"
 msgstr "잠금 해제"
 
-#: app/tools_interface.py:45
+#: app/tools_interface.py:46
 msgid "解锁帧率"
 msgstr "프레임 잠금 해제"
 
-#: app/tools_interface.py:46
+#: app/tools_interface.py:47
 msgid "通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）"
 msgstr ""
 "레지스트리를 수정하여 120 프레임 잠금 해제, 이미 해제된 경우 다시 클릭 시 60 프레임으로 복구 (중국 서버 및 글로벌 서버 지원)"
 
-#: app/tools_interface.py:49
+#: app/tools_interface.py:50
 msgid "执行"
 msgstr "실행"
 
-#: app/tools_interface.py:56
+#: app/tools_interface.py:57
 msgid "启动"
 msgstr "시작"
 
-#: app/tools_interface.py:58
+#: app/tools_interface.py:59
 msgid "触屏模式"
 msgstr "터치스크린 모드"
 
-#: app/tools_interface.py:59
+#: app/tools_interface.py:60
 msgid "以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内"
 msgstr ""
 "클라우드 게임 모바일 UI 방식으로 게임 시작, UU 원격 태블릿 터치 모드와 호환 가능, 시작 후 명령어가 클립보드에 복사됨"
 
-#: app/tools_interface.py:126
+#: app/tools_interface.py:127
 msgid "恢复60成功 (＾∀＾●)"
 msgstr "60 프레임 복구 성공 (＾∀＾●)"
 
-#: app/tools_interface.py:137
+#: app/tools_interface.py:138
 msgid "解锁120成功 (＾∀＾●)"
 msgstr "120 프레임 해제 성공 (＾∀＾●)"
 
-#: app/tools_interface.py:147
+#: app/tools_interface.py:148
 msgid "解锁失败"
 msgstr "잠금 해제 실패"
 
-#: app/tools_interface.py:148
+#: app/tools_interface.py:149
 msgid "请将游戏图像质量修改为自定义后重试"
 msgstr "게임 화질 설정을 사용자 정의로 변경 후 다시 시도해 주세요"
 
-#: app/tools_interface.py:165
+#: app/tools_interface.py:166
 msgid "此功能依赖第三方程序实现"
 msgstr "이 기능은 타사 프로그램에 의존합니다"
 
-#: app/tools_interface.py:166
+#: app/tools_interface.py:167
 msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
@@ -1317,19 +1316,19 @@ msgstr ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "이 기능 사용으로 발생하는 모든 문제는 본 프로젝트 및 개발팀과 무관합니다. 계속하시겠습니까?"
 
-#: app/tools_interface.py:167
+#: app/tools_interface.py:168
 msgid "再次确认：可能存在风险"
 msgstr "재확인: 위험이 존재할 수 있음"
 
-#: app/tools_interface.py:168
+#: app/tools_interface.py:169
 msgid "工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？"
 msgstr "작동 원리는 WriteProcessMemory를 통해 코드를 게임에 삽입하는 방식입니다. 계속하시겠습니까?"
 
-#: app/tools_interface.py:169
+#: app/tools_interface.py:170
 msgid "最终确认：请谨慎操作"
 msgstr "최종 확인: 신중하게 조작하세요"
 
-#: app/tools_interface.py:170
+#: app/tools_interface.py:171
 msgid "确认继续并允许启用触屏模式？"
 msgstr "계속 진행하고 터치스크린 모드를 활성화하시겠습니까?"
 
@@ -1337,19 +1336,19 @@ msgstr "계속 진행하고 터치스크린 모드를 활성화하시겠습니�
 msgid "确认"
 msgstr "확인"
 
-#: app/card/card_edit_dialog.py:467
+#: app/card/autostart_setting_card.py:89
 msgid "取消"
 msgstr "취소"
 
-#: app/tools_interface.py:226
+#: app/tools_interface.py:227
 msgid "已将命令复制到剪贴板"
 msgstr "명령어가 클립보드에 복사되었습니다"
 
-#: app/tools_interface.py:299
+#: app/tools_interface.py:300
 msgid "自动对话已启动"
 msgstr "자동 대화가 시작되었습니다"
 
-#: app/tools_interface.py:311
+#: app/tools_interface.py:312
 msgid "自动对话已停止"
 msgstr "자동 대화가 중지되었습니다"
 
@@ -1458,75 +1457,75 @@ msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "{count} 개의 계획이 설정됨"
 
-#: app/warp_interface.py:26
+#: app/warp_interface.py:27
 msgid "更新数据"
 msgstr "데이터 업데이트"
 
-#: app/warp_interface.py:27
+#: app/warp_interface.py:28
 msgid "更新完整数据"
 msgstr "전체 데이터 업데이트"
 
-#: app/warp_interface.py:28
+#: app/warp_interface.py:29
 msgid "导入数据"
 msgstr "데이터 가져오기"
 
-#: app/warp_interface.py:29
+#: app/warp_interface.py:30
 msgid "导出数据"
 msgstr "데이터 내보내기"
 
-#: app/warp_interface.py:30
+#: app/warp_interface.py:31
 msgid "导出Excel"
 msgstr "Excel로 내보내기"
 
-#: app/warp_interface.py:31
+#: app/warp_interface.py:32
 msgid "复制链接"
 msgstr "링크 복사"
 
-#: app/warp_interface.py:32
+#: app/warp_interface.py:33
 msgid "清空"
 msgstr "비우기"
 
-#: app/warp_interface.py:119
+#: app/warp_interface.py:120
 msgid "导入抽卡记录"
 msgstr "가챠 기록 가져오기"
 
-#: app/warp_interface.py:119
+#: app/warp_interface.py:120
 msgid "UIGF / SRGF 格式 (*.json)"
 msgstr "UIGF / SRGF 형식 (*.json)"
 
-#: app/warp_interface.py:146
+#: app/warp_interface.py:147
 msgid "导入成功(＾∀＾●)"
 msgstr "가져오기 성공(＾∀＾●)"
 
-#: app/warp_interface.py:156
+#: app/warp_interface.py:157
 msgid "导入失败(╥╯﹏╰╥)"
 msgstr "가져오기 실패(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:175
+#: app/warp_interface.py:176
 msgid "导出抽卡记录"
 msgstr "가챠 기록 내보내기"
 
-#: app/warp_interface.py:177
+#: app/warp_interface.py:178
 msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
 msgstr "UIGF 형식 (*.json);;SRGF 형식 (*.srgf.json)"
 
-#: app/warp_interface.py:184
+#: app/warp_interface.py:185
 msgid "UIGF 格式 (*.json)"
 msgstr "UIGF 형식 (*.json)"
 
-#: app/warp_interface.py:203
+#: app/warp_interface.py:204
 msgid "导出成功(＾∀＾●)"
 msgstr "내보내기 성공(＾∀＾●)"
 
-#: app/warp_interface.py:214
+#: app/warp_interface.py:215
 msgid "导出失败(╥╯﹏╰╥)"
 msgstr "내보내기 실패(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:230
+#: app/warp_interface.py:231
 msgid "导出为 Excel 文件"
 msgstr "Excel 파일로 내보내기"
 
-#: app/warp_interface.py:232
+#: app/warp_interface.py:233
 msgid "Excel 文件 (*.xlsx)"
 msgstr "Excel 파일 (*.xlsx)"
 
@@ -1546,7 +1545,7 @@ msgstr "상시 워프"
 msgid "新手跃迁"
 msgstr "초행길 워프"
 
-#: app/warp_interface.py:231
+#: app/warp_interface.py:232
 msgid "未知"
 msgstr "알 수 없음"
 
@@ -1558,39 +1557,39 @@ msgstr "시간"
 msgid "名称"
 msgstr "이름"
 
-#: app/warp_interface.py:249
+#: app/warp_interface.py:250
 msgid "星级"
 msgstr "등급"
 
-#: app/warp_interface.py:249
+#: app/warp_interface.py:250
 msgid "卡池"
 msgstr "워프"
 
-#: app/warp_interface.py:326
+#: app/warp_interface.py:327
 msgid "复制成功(＾∀＾●)"
 msgstr "복사 성공(＾∀＾●)"
 
-#: app/warp_interface.py:336
+#: app/warp_interface.py:337
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr "복사 실패(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:347
+#: app/warp_interface.py:348
 msgid "清空抽卡记录"
 msgstr "가챠 기록 비우기"
 
-#: app/warp_interface.py:348
+#: app/warp_interface.py:349
 msgid "确定要清空抽卡记录吗？此操作不可撤销。"
 msgstr "가챠 기록을 비우시겠습니까? 이 작업은 취소할 수 없습니다."
 
-#: app/warp_interface.py:358
+#: app/warp_interface.py:359
 msgid "清空完成(＾∀＾●)"
 msgstr "비우기 완료(＾∀＾●)"
 
-#: app/warp_interface.py:369
+#: app/warp_interface.py:370
 msgid "清空失败(╥╯﹏╰╥)"
 msgstr "비우기 실패(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:400
+#: app/warp_interface.py:401
 msgid ""
 "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n"
 "\n"
@@ -1604,113 +1603,113 @@ msgstr ""
 "\n"
 "링크 복사 기능은 미니 프로그램이나 다른 소프트웨어에 사용할 수 있습니다."
 
-#: app/sub_interfaces/hotkey_interface.py:19
+#: app/sub_interfaces/hotkey_interface.py:20
 msgid "秘技（只对清体力和逐光捡金场景生效）"
 msgstr "비술 (개척력 소모 및 버전 행사 일정에만 유효)"
 
-#: app/sub_interfaces/hotkey_interface.py:20
+#: app/sub_interfaces/hotkey_interface.py:21
 msgid "地图"
 msgstr "지도"
 
-#: app/sub_interfaces/hotkey_interface.py:21
+#: app/sub_interfaces/hotkey_interface.py:22
 msgid "跃迁"
 msgstr "워프"
 
-#: app/sub_interfaces/hotkey_interface.py:22
+#: app/sub_interfaces/hotkey_interface.py:23
 msgid "自动战斗"
 msgstr "자동 전투"
 
-#: app/sub_interfaces/hotkey_interface.py:84
+#: app/sub_interfaces/hotkey_interface.py:87
 msgid "注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"
 msgstr "참고: 상호작용(F) 및 캐릭터 상세(C) 키는 변경할 수 없습니다. 게임 기본 설정을 유지하세요."
 
-#: app/sub_interfaces/hotkey_interface.py:23
+#: app/sub_interfaces/hotkey_interface.py:24
 msgid "停止任务（全局热键，支持后台）"
 msgstr "임무 중지 (전역 단축키, 백그라운드 지원)"
 
-#: app/sub_interfaces/hotkey_interface.py:28
+#: app/sub_interfaces/hotkey_interface.py:29
 msgid "按键设置"
 msgstr "단축키 설정"
 
-#: app/sub_interfaces/accounts_interface.py:30
+#: app/sub_interfaces/accounts_interface.py:31
 msgid "重要：请完全进入游戏（看到角色）后再进行导出，否则会读取前一个账号的UID，导致文件和账号不对应"
 msgstr ""
 "중요: 완전히 게임에 진입한 후(캐릭터가 보일 때) 내보내세요. 그렇지 않으면 이전 UID를 읽어 파일과 계정이 일치하지 않을 수 "
 "있습니다."
 
-#: app/sub_interfaces/accounts_interface.py:33
+#: app/sub_interfaces/accounts_interface.py:34
 msgid "该功能不支持云·星穹铁道"
 msgstr "이 기능은 클라우드·스타레일 미지원"
 
-#: app/sub_interfaces/accounts_interface.py:40
+#: app/sub_interfaces/accounts_interface.py:41
 msgid "导出当前游戏账户"
 msgstr "현재 게임 계정 내보내기"
 
-#: app/sub_interfaces/accounts_interface.py:41
+#: app/sub_interfaces/accounts_interface.py:42
 msgid "导入选中的账户"
 msgstr "선택한 계정 가져오기"
 
-#: app/sub_interfaces/accounts_interface.py:42
+#: app/sub_interfaces/accounts_interface.py:43
 msgid "删除账户"
 msgstr "계정 삭제"
 
-#: app/sub_interfaces/accounts_interface.py:43
+#: app/sub_interfaces/accounts_interface.py:44
 msgid "账户更名"
 msgstr "계정 이름 변경"
 
-#: app/sub_interfaces/accounts_interface.py:44
+#: app/sub_interfaces/accounts_interface.py:45
 msgid "自动登录"
 msgstr "자동 로그인"
 
-#: app/sub_interfaces/accounts_interface.py:45
+#: app/sub_interfaces/accounts_interface.py:46
 msgid "刷新"
 msgstr "새로고침"
 
-#: app/sub_interfaces/accounts_interface.py:46
+#: app/sub_interfaces/accounts_interface.py:47
 msgid "清除注册表"
 msgstr "레지스트리 정리"
 
-#: app/sub_interfaces/accounts_interface.py:71
+#: app/sub_interfaces/accounts_interface.py:72
 msgid "账户列表刷新成功"
 msgstr "계정 목록 새로고침 성공"
 
-#: app/sub_interfaces/accounts_interface.py:76
+#: app/sub_interfaces/accounts_interface.py:77
 msgid "导出"
 msgstr "내보내기"
 
-#: app/sub_interfaces/accounts_interface.py:76
+#: app/sub_interfaces/accounts_interface.py:77
 msgid "账户导出成功"
 msgstr "계정 내보내기 성공"
 
-#: app/sub_interfaces/accounts_interface.py:81
+#: app/sub_interfaces/accounts_interface.py:82
 msgid "请选择要删除的账户"
 msgstr "삭제할 계정을 선택하세요"
 
-#: app/sub_interfaces/accounts_interface.py:83
+#: app/sub_interfaces/accounts_interface.py:84
 msgid "确定要删除选中的账户吗？"
 msgstr "선택한 계정을 삭제하시겠습니까?"
 
-#: app/sub_interfaces/accounts_interface.py:93
+#: app/sub_interfaces/accounts_interface.py:94
 msgid "请选择要更名的账户"
 msgstr "이름을 변경할 계정을 선택하세요"
 
-#: app/sub_interfaces/accounts_interface.py:96
+#: app/sub_interfaces/accounts_interface.py:97
 msgid "只能选择一个账户"
 msgstr "하나의 계정만 선택할 수 있습니다"
 
-#: app/sub_interfaces/accounts_interface.py:100
+#: app/sub_interfaces/accounts_interface.py:101
 msgid "请输入新的账户名"
 msgstr "새로운 계정 이름을 입력하세요"
 
-#: app/sub_interfaces/accounts_interface.py:104
+#: app/sub_interfaces/accounts_interface.py:105
 msgid "账户名不能为空"
 msgstr "계정 이름은 비워둘 수 없습니다"
 
-#: app/sub_interfaces/accounts_interface.py:112
+#: app/sub_interfaces/accounts_interface.py:113
 msgid "请选择要使用的账户"
 msgstr "사용할 계정을 선택하세요"
 
-#: app/sub_interfaces/accounts_interface.py:123
+#: app/sub_interfaces/accounts_interface.py:124
 msgid ""
 "当登录过期时尝试自动重新填写账号密码\n"
 " *此功能存在一定风险，请谨慎使用*"
@@ -1718,39 +1717,39 @@ msgstr ""
 "로그인 만료 시 자동으로 계정 및 비밀번호 재입력 시도\n"
 " *이 기능은 위험이 있을 수 있으니 주의해서 사용하세요*"
 
-#: app/sub_interfaces/accounts_interface.py:130
+#: app/sub_interfaces/accounts_interface.py:131
 msgid "请输入用户名"
 msgstr "사용자 이름을 입력하세요"
 
-#: app/sub_interfaces/accounts_interface.py:134
+#: app/sub_interfaces/accounts_interface.py:135
 msgid "用户名不能为空"
 msgstr "사용자 이름은 비워둘 수 없습니다"
 
-#: app/sub_interfaces/accounts_interface.py:137
+#: app/sub_interfaces/accounts_interface.py:138
 msgid "请输入密码"
 msgstr "비밀번호를 입력하세요"
 
-#: app/sub_interfaces/accounts_interface.py:141
+#: app/sub_interfaces/accounts_interface.py:142
 msgid "密码不能为空"
 msgstr "비밀번호는 비워둘 수 없습니다"
 
-#: app/sub_interfaces/accounts_interface.py:149
+#: app/sub_interfaces/accounts_interface.py:150
 msgid "导入"
 msgstr "가져오기"
 
-#: app/sub_interfaces/accounts_interface.py:157
+#: app/sub_interfaces/accounts_interface.py:158
 msgid "账户导入成功"
 msgstr "계정 가져오기 성공"
 
-#: app/sub_interfaces/accounts_interface.py:160
+#: app/sub_interfaces/accounts_interface.py:161
 msgid "确定要清除注册表中的账户信息吗？"
 msgstr "레지스트리의 계정 정보를 삭제하시겠습니까?"
 
-#: app/sub_interfaces/accounts_interface.py:163
+#: app/sub_interfaces/accounts_interface.py:164
 msgid "注册表中的账户信息已清除"
 msgstr "레지스트리의 계정 정보가 삭제되었습니다"
 
-#: app/sub_interfaces/accounts_interface.py:183
+#: app/sub_interfaces/accounts_interface.py:184
 msgid "账户设置"
 msgstr "계정 설정"
 
@@ -2016,7 +2015,7 @@ msgstr "사용된 리딤코드 보기"
 msgid "清空已使用兑换码"
 msgstr "사용된 리딤코드 비우기"
 
-#: app/card/switchsettingcard1.py:21
+#: app/card/switchsettingcard1.py:19
 msgid "未执行"
 msgstr "아직 실행되지 않음"
 
@@ -2040,23 +2039,23 @@ msgstr "입력 오류"
 msgid "\"{type}\"的输入\"{input_text}\"不在可选项中，请重新选择"
 msgstr "\"{type}\"의 입력값 \"{input_text}\"이(가) 선택 항목에 없습니다. 다시 선택해주세요."
 
-#: app/setting_interface.py:218
+#: app/setting_interface.py:220
 msgid "拟造花萼（金）"
 msgstr "고치 (금)"
 
-#: app/setting_interface.py:218
+#: app/setting_interface.py:220
 msgid "拟造花萼（赤）"
 msgstr "고치 (적)"
 
-#: app/setting_interface.py:218
+#: app/setting_interface.py:220
 msgid "凝滞虚影"
 msgstr "정체된 허영"
 
-#: app/setting_interface.py:218
+#: app/setting_interface.py:220
 msgid "侵蚀隧洞"
 msgstr "침식된 터널"
 
-#: app/setting_interface.py:218
+#: app/setting_interface.py:220
 msgid "饰品提取"
 msgstr "장신구 추출"
 
@@ -2129,23 +2128,23 @@ msgstr "{i}번째 계획의 던전 유형이 유효하지 않습니다"
 msgid "第{i}个计划的副本名称\"{input_text}\"不在可选项中，请重新选择"
 msgstr "{i}번째 계획의 던전 이름 \"{input_text}\"이(가) 선택 항목에 없습니다. 다시 선택해주세요."
 
-#: app/setting_interface.py:991
+#: app/setting_interface.py:993
 msgid "Chrome"
 msgstr "Chrome"
 
-#: app/setting_interface.py:991
+#: app/setting_interface.py:993
 msgid "Edge"
 msgstr "Edge"
 
-#: app/setting_interface.py:3320
+#: app/setting_interface.py:3329
 msgid "选择游戏路径"
 msgstr "게임 경로 선택"
 
-#: app/setting_interface.py:3332
+#: app/setting_interface.py:3341
 msgid "选择米哈游启动器路径"
 msgstr "미호요 런처 경로 선택"
 
-#: app/setting_interface.py:3357
+#: app/setting_interface.py:3366
 msgid "脚本或程序路径"
 msgstr "스크립트 또는 프로그램 경로"
 
@@ -2269,7 +2268,7 @@ msgstr "업데이트 확인 중"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "기다려주세요, 업데이트 확인이 진행 중입니다"
 
-#: app/log_interface.py:970
+#: app/log_interface.py:971
 msgid "未命名"
 msgstr "이름 없음"
 
@@ -2291,7 +2290,7 @@ msgstr ""
 "예: 친구 이름이 '단항'이면 '단'만 입력해도 매칭됩니다.\n"
 "비워두면 선택한 캐릭터만 검색합니다."
 
-#: app/setting_interface.py:769
+#: app/setting_interface.py:771
 msgid "锄地"
 msgstr "토벌 (Fhoe-Rail)"
 
@@ -2351,11 +2350,11 @@ msgstr "리딤 코드를 대량으로 사용하며, 한 줄에 하나씩 입력�
 msgid "打开日志文件夹"
 msgstr "로그 폴더 열기"
 
-#: app/setting_interface.py:2426
+#: app/setting_interface.py:2427
 msgid "启用 {name} 通知"
 msgstr "{name} 알림 활성화"
 
-#: app/setting_interface.py:2415
+#: app/setting_interface.py:2416
 msgid "（支持图片）"
 msgstr " (이미지 지원)"
 
@@ -2587,7 +2586,7 @@ msgstr "정운"
 msgid "瓦尔特"
 msgstr "웰트"
 
-#: app/setting_interface.py:606
+#: app/setting_interface.py:608
 msgid "希儿"
 msgstr "제레"
 
@@ -2659,7 +2658,7 @@ msgstr "망귀인"
 msgid "大黑塔"
 msgstr "대헤르타"
 
-#: app/setting_interface.py:606
+#: app/setting_interface.py:608
 msgid "阿格莱雅"
 msgstr "아글라이아"
 
@@ -3243,7 +3242,7 @@ msgstr "명조 ok-ww"
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
-#: app/main_window.py:620
+#: app/main_window.py:627
 msgid "更新成功"
 msgstr "업데이트 성공"
 
@@ -3343,11 +3342,11 @@ msgstr "미정"
 msgid "领航员 / 名冶套"
 msgstr "항법사 / 명장 세트"
 
-#: app/setting_interface.py:788
+#: app/setting_interface.py:790
 msgid "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项"
 msgstr "활성화하면 실행 속도가 향상될 수 있습니다. 오류, 예외 또는 불안정이 발생하면 이 옵션을 끄세요."
 
-#: app/setting_interface.py:3322
+#: app/setting_interface.py:3331
 msgid "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
 msgstr "스크립트 또는 실행 파일 (*.exe *.bat *.cmd *.ps1)"
 
@@ -3359,19 +3358,19 @@ msgstr "스크린샷 실패(╥╯﹏╰╥)"
 msgid "无法获取游戏窗口截图，请确认游戏窗口已打开"
 msgstr "게임 창 스크린샷을 가져올 수 없습니다. 게임 창이 열려 있는지 확인해 주세요."
 
-#: app/tools_interface.py:246
+#: app/tools_interface.py:247
 msgid "截图来源"
 msgstr "스크린샷 출처"
 
-#: app/tools_interface.py:246
+#: app/tools_interface.py:247
 msgid "请选择截图方式"
 msgstr "스크린샷 방식을 선택하세요"
 
-#: app/tools_interface.py:249
+#: app/tools_interface.py:250
 msgid "捕获游戏窗口"
 msgstr "게임 창 캡처"
 
-#: app/tools_interface.py:252
+#: app/tools_interface.py:253
 msgid "手动选择图片"
 msgstr "이미지 수동 선택"
 
@@ -3387,19 +3386,19 @@ msgstr "먼저 위로 이동할 작업을 선택하세요"
 msgid "当前任务已经位于最上方"
 msgstr "현재 작업은 이미 맨 위에 있습니다"
 
-#: app/setting_interface.py:2509
+#: app/setting_interface.py:2510
 msgid "优先使用后台截图"
 msgstr "백그라운드 스크린샷 우선 사용"
 
-#: app/setting_interface.py:2510
+#: app/setting_interface.py:2511
 msgid "默认开启，可以避免悬浮窗等干扰"
 msgstr "기본적으로 활성화되어 있으며, 플로팅 창 등의 간섭을 피할 수 있습니다"
 
-#: app/setting_interface.py:2522
+#: app/setting_interface.py:2523
 msgid "启用调试模式"
 msgstr "디버그 모드 활성화"
 
-#: app/setting_interface.py:2523
+#: app/setting_interface.py:2524
 msgid "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗），用于调试自动化识别效果。仅 Windows 生效。"
 msgstr ""
 "활성화하면 자동화 인식 디버깅을 위해 화면에 감지 범위 상자가 실시간으로 그려집니다(투명 오버레이). Windows에서만 작동합니다."
@@ -3417,448 +3416,448 @@ msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] "{count}개의 규칙이 구성됨"
 
-#: app/setting_interface.py:1200
+#: app/setting_interface.py:1202
 msgid "Windows 原生通知"
 msgstr "Windows 기본 알림"
 
-#: app/setting_interface.py:1205
+#: app/setting_interface.py:1207
 msgid "通常需要可访问 Telegram 网络"
 msgstr "일반적으로 Telegram 네트워크 접속이 필요합니다"
 
-#: app/setting_interface.py:1208
+#: app/setting_interface.py:1210
 msgid "机器人令牌"
 msgstr "봇 토큰"
 
-#: app/setting_interface.py:1208
+#: app/setting_interface.py:1210
 msgid "获取方式：创建 Bot → @BotFather → /newbot → 获取 Token"
 msgstr "획득 방법: 봇 생성 -> @BotFather -> /newbot -> Token 발급"
 
-#: app/setting_interface.py:1209
+#: app/setting_interface.py:1211
 msgid "用户/群组 ID"
 msgstr "사용자/그룹 ID"
 
-#: app/setting_interface.py:1209
+#: app/setting_interface.py:1211
 msgid "接收通知的用户 ID 或群组 ID（以 - 开头）"
 msgstr "알림을 받을 사용자 ID 또는 그룹 ID(그룹 ID는 보통 - 로 시작)"
 
-#: app/setting_interface.py:1210
+#: app/setting_interface.py:1212
 msgid "自定义 API 地址"
 msgstr "사용자 지정 API 주소"
 
-#: app/setting_interface.py:1210
+#: app/setting_interface.py:1212
 msgid "可选参数，自定义 Telegram API 地址，例如 api.telegram.org"
 msgstr "선택 사항: 사용자 지정 Telegram API 주소 (예: api.telegram.org)"
 
-#: app/setting_interface.py:1211
+#: app/setting_interface.py:1213
 msgid "代理配置"
 msgstr "프록시 설정"
 
-#: app/setting_interface.py:1211
+#: app/setting_interface.py:1213
 msgid "可选参数，例如 127.0.0.1:10808 或 socks5://127.0.0.1:1080，不填则使用系统 PAC 代理"
 msgstr ""
 "선택 사항: 예) 127.0.0.1:10808 또는 socks5://127.0.0.1:1080, 비워두면 시스템 PAC 프록시 사용"
 
-#: app/setting_interface.py:1212
+#: app/setting_interface.py:1214
 msgid "话题 ID"
 msgstr "토픽 ID"
 
-#: app/setting_interface.py:1212
+#: app/setting_interface.py:1214
 msgid "可选参数，开启 Topics 功能的群组需要填写对应的话题 ID"
 msgstr "선택 사항: Topics 기능이 활성화된 그룹의 경우 해당 토픽 ID를 입력하세요"
 
-#: app/setting_interface.py:1272
+#: app/setting_interface.py:1274
 msgid "适用于 Matrix 协议"
 msgstr "Matrix 프로토콜용"
 
-#: app/setting_interface.py:1275
+#: app/setting_interface.py:1277
 msgid "服务器地址"
 msgstr "서버 주소"
 
-#: app/setting_interface.py:1275
+#: app/setting_interface.py:1277
 msgid "服务器地址，例如 https://matrix.org"
 msgstr "서버 주소 (예: https://matrix.org)"
 
-#: app/setting_interface.py:1276
+#: app/setting_interface.py:1278
 msgid "设备 ID"
 msgstr "디바이스 ID"
 
-#: app/setting_interface.py:1276
+#: app/setting_interface.py:1278
 msgid "设备 ID，通常是 10 位大写字母或数字"
 msgstr "디바이스 ID, 일반적으로 10자리 대문자/숫자"
 
-#: app/setting_interface.py:1277
+#: app/setting_interface.py:1279
 msgid "用户 ID"
 msgstr "사용자 ID"
 
-#: app/setting_interface.py:1277
+#: app/setting_interface.py:1279
 msgid "用户 ID，例如 @user:matrix.org"
 msgstr "사용자 ID (예: @user:matrix.org)"
 
-#: app/setting_interface.py:1278
+#: app/setting_interface.py:1280
 msgid "访问令牌"
 msgstr "액세스 토큰"
 
-#: app/setting_interface.py:1278
+#: app/setting_interface.py:1280
 msgid "登录后分配的 Access Token"
 msgstr "로그인 후 발급되는 액세스 토큰"
 
-#: app/setting_interface.py:1279
+#: app/setting_interface.py:1281
 msgid "房间 ID"
 msgstr "룸 ID"
 
-#: app/setting_interface.py:1279
+#: app/setting_interface.py:1281
 msgid "目标房间 ID，例如 !xxx:matrix.org"
 msgstr "대상 룸 ID (예: !xxx:matrix.org)"
 
-#: app/setting_interface.py:1281
+#: app/setting_interface.py:1283
 msgid "文字与图片分开发送"
 msgstr "텍스트/이미지 분리 전송"
 
-#: app/setting_interface.py:1281
+#: app/setting_interface.py:1283
 msgid "是否分开发送文字和图片，避免部分客户端不显示文字"
 msgstr "일부 클라이언트에서 텍스트가 보이지 않는 문제를 피하기 위해 텍스트와 이미지를 분리 전송할지 설정"
 
-#: app/setting_interface.py:1345
+#: app/setting_interface.py:1347
 msgid "Server酱·Turbo版"
 msgstr ""
 
-#: app/setting_interface.py:1346
+#: app/setting_interface.py:1348
 msgid "微信推送，适合轻量通知"
 msgstr "WeChat 푸시, 가벼운 알림에 적합"
 
-#: app/setting_interface.py:1348
+#: app/setting_interface.py:1350
 msgid "SendKey"
 msgstr "SendKey"
 
-#: app/setting_interface.py:1348
+#: app/setting_interface.py:1350
 msgid "在 https://sct.ftqq.com/ 获取的 SendKey"
 msgstr "https://sct.ftqq.com/ 에서 발급받은 SendKey"
 
-#: app/setting_interface.py:1349
+#: app/setting_interface.py:1351
 msgid "发送通道"
 msgstr "전송 채널"
 
-#: app/setting_interface.py:1349
+#: app/setting_interface.py:1351
 msgid "可选参数"
 msgstr "선택 사항"
 
-#: app/setting_interface.py:1350
+#: app/setting_interface.py:1352
 msgid "接收人 OpenID"
 msgstr "수신자 OpenID"
 
-#: app/setting_interface.py:1403
+#: app/setting_interface.py:1405
 msgid "Server酱³"
 msgstr ""
 
-#: app/setting_interface.py:1404
+#: app/setting_interface.py:1406
 msgid "Server酱³ APP 推送"
 msgstr "ServerChan 3 앱 푸시"
 
-#: app/setting_interface.py:1406
+#: app/setting_interface.py:1408
 msgid "在 https://sc3.ft07.com/ 获取的 SendKey"
 msgstr "https://sc3.ft07.com/ 에서 발급받은 SendKey"
 
-#: app/setting_interface.py:1451
+#: app/setting_interface.py:1453
 msgid "适合 iOS 设备推送"
 msgstr "iOS 기기 푸시에 적합"
 
-#: app/setting_interface.py:1453
+#: app/setting_interface.py:1455
 msgid "推送密钥"
 msgstr "푸시 키"
 
-#: app/setting_interface.py:1453
+#: app/setting_interface.py:1455
 msgid "在 Bark APP 中获取的唯一标识符"
 msgstr "Bark 앱에서 얻는 고유 식별자"
 
-#: app/setting_interface.py:1454
+#: app/setting_interface.py:1456
 msgid "分组名"
 msgstr "그룹 이름"
 
-#: app/setting_interface.py:1454
+#: app/setting_interface.py:1456
 msgid "可选参数，Bark 通知的分组名"
 msgstr "선택 사항: Bark 알림 그룹 이름"
 
-#: app/setting_interface.py:1455
+#: app/setting_interface.py:1457
 msgid "图标地址"
 msgstr "아이콘 주소"
 
-#: app/setting_interface.py:1455
+#: app/setting_interface.py:1457
 msgid "可选参数，通知图标的 URL"
 msgstr "선택 사항: 알림 아이콘 URL"
 
-#: app/setting_interface.py:1456
+#: app/setting_interface.py:1458
 msgid "归档"
 msgstr "보관"
 
-#: app/setting_interface.py:1456
+#: app/setting_interface.py:1458
 msgid "可选参数：1 归档，0 不归档"
 msgstr "선택 사항: 1=보관, 0=보관 안 함"
 
-#: app/setting_interface.py:1457
+#: app/setting_interface.py:1459
 msgid "提示音"
 msgstr "알림음"
 
-#: app/setting_interface.py:1457
+#: app/setting_interface.py:1459
 msgid "可选参数，自定义提示音名称"
 msgstr "선택 사항: 사용자 지정 알림음 이름"
 
-#: app/setting_interface.py:1458
+#: app/setting_interface.py:1460
 msgid "跳转链接"
 msgstr "이동 URL"
 
-#: app/setting_interface.py:1458
+#: app/setting_interface.py:1460
 msgid "可选参数，通知点击后跳转的 URL"
 msgstr "선택 사항: 알림 클릭 시 이동 URL"
 
-#: app/setting_interface.py:1459
+#: app/setting_interface.py:1461
 msgid "服务地址"
 msgstr "서비스 주소"
 
-#: app/setting_interface.py:1459
+#: app/setting_interface.py:1461
 msgid "可选参数，自定义 Bark 服务的 URL"
 msgstr "선택 사항: 사용자 지정 Bark 서비스 URL"
 
-#: app/setting_interface.py:1460
+#: app/setting_interface.py:1462
 msgid "复制内容"
 msgstr "복사 내용"
 
-#: app/setting_interface.py:1460
+#: app/setting_interface.py:1462
 msgid "可选参数，通知点击后复制内容"
 msgstr "선택 사항: 알림 클릭 시 복사할 내용"
 
-#: app/setting_interface.py:1461
+#: app/setting_interface.py:1463
 msgid "自动复制"
 msgstr "자동 복사"
 
-#: app/setting_interface.py:1461
+#: app/setting_interface.py:1463
 msgid "可选参数，是否自动复制"
 msgstr "선택 사항: 자동 복사 여부"
 
-#: app/setting_interface.py:1462
+#: app/setting_interface.py:1464
 msgid "加密密钥"
 msgstr "암호화 키"
 
-#: app/setting_interface.py:1462
+#: app/setting_interface.py:1464
 msgid "可选参数，推送加密密钥，需在 Bark APP 中配置相同的密钥"
 msgstr "선택 사항: 푸시 암호화 키 (Bark 앱과 동일하게 설정 필요)"
 
-#: app/setting_interface.py:1463
+#: app/setting_interface.py:1465
 msgid "加密算法"
 msgstr "암호화 방식"
 
-#: app/setting_interface.py:1463
+#: app/setting_interface.py:1465
 msgid "可选参数，支持 cbc 或 ecb，需与 Bark APP 中配置的算法一致"
 msgstr "선택 사항: cbc 또는 ecb 지원, Bark 앱 설정과 일치해야 함"
 
-#: app/setting_interface.py:1520
+#: app/setting_interface.py:1522
 msgid "常用于邮箱提醒"
 msgstr "이메일 알림에 자주 사용"
 
-#: app/setting_interface.py:1523
+#: app/setting_interface.py:1525
 msgid "SMTP 服务器"
 msgstr "SMTP 서버"
 
-#: app/setting_interface.py:1524
+#: app/setting_interface.py:1526
 msgid "用户名/邮箱"
 msgstr "사용자명/이메일"
 
-#: app/setting_interface.py:1525
+#: app/setting_interface.py:1527
 msgid "密码/授权码"
 msgstr "비밀번호/앱 비밀번호"
 
-#: app/setting_interface.py:1525
+#: app/setting_interface.py:1527
 msgid "部分邮箱需要填写授权码（如 QQ 邮箱）"
 msgstr "일부 메일 서비스는 앱 비밀번호가 필요합니다(예: QQ 메일)"
 
-#: app/setting_interface.py:1526
+#: app/setting_interface.py:1528
 msgid "发件人"
 msgstr "보낸 사람"
 
-#: app/setting_interface.py:1526
+#: app/setting_interface.py:1528
 msgid "可选参数，发件人邮箱，默认使用 user"
 msgstr "선택 사항: 발신자 이메일 (기본값: user)"
 
-#: app/setting_interface.py:1527
+#: app/setting_interface.py:1529
 msgid "收件人"
 msgstr "받는 사람"
 
-#: app/setting_interface.py:1527
+#: app/setting_interface.py:1529
 msgid "可选参数，收件人邮箱，默认使用 user"
 msgstr "선택 사항: 수신자 이메일 (기본값: user)"
 
-#: app/setting_interface.py:1528
+#: app/setting_interface.py:1530
 msgid "端口"
 msgstr "포트"
 
-#: app/setting_interface.py:1528
+#: app/setting_interface.py:1530
 msgid "可选参数，端口，默认 465"
 msgstr "선택 사항: 포트 (기본값 465)"
 
-#: app/setting_interface.py:1529
+#: app/setting_interface.py:1531
 msgid "启用 SSL"
 msgstr "SSL 사용"
 
-#: app/setting_interface.py:1529
+#: app/setting_interface.py:1531
 msgid "可选参数，是否启用 SSL"
 msgstr "선택 사항: SSL 사용 여부"
 
-#: app/setting_interface.py:1530
+#: app/setting_interface.py:1532
 msgid "启用 STARTTLS"
 msgstr "STARTTLS 사용"
 
-#: app/setting_interface.py:1530
+#: app/setting_interface.py:1532
 msgid "可选参数，是否启用 STARTTLS"
 msgstr "선택 사항: STARTTLS 사용 여부"
 
-#: app/setting_interface.py:1531
+#: app/setting_interface.py:1533
 msgid "跳过证书验证"
 msgstr "인증서 검증 건너뛰기"
 
-#: app/setting_interface.py:1531
+#: app/setting_interface.py:1533
 msgid "可选参数，是否跳过 SSL 证书验证"
 msgstr "선택 사항: SSL 인증서 검증 건너뛰기 여부"
 
-#: app/setting_interface.py:1592
+#: app/setting_interface.py:1594
 msgid "适用于 OneBot 协议"
 msgstr "OneBot 프로토콜용"
 
-#: app/setting_interface.py:1595
+#: app/setting_interface.py:1597
 msgid "OneBot 服务端点地址，例如 http://127.0.0.1:3000"
 msgstr "OneBot 엔드포인트 주소 (예: http://127.0.0.1:3000)"
 
-#: app/setting_interface.py:1596
+#: app/setting_interface.py:1598
 msgid "可选参数，Access Token"
 msgstr "선택 사항: Access Token"
 
-#: app/setting_interface.py:1597
+#: app/setting_interface.py:1599
 msgid "私聊用户 ID"
 msgstr "개인 채팅 사용자 ID"
 
-#: app/setting_interface.py:1597
+#: app/setting_interface.py:1599
 msgid "可选参数，私聊接收用户 ID"
 msgstr "선택 사항: 개인 채팅 수신 사용자 ID"
 
-#: app/setting_interface.py:1598
+#: app/setting_interface.py:1600
 msgid "群组 ID"
 msgstr "그룹 ID"
 
-#: app/setting_interface.py:1598
+#: app/setting_interface.py:1600
 msgid "可选参数，群聊接收群组 ID"
 msgstr "선택 사항: 그룹 채팅 수신 그룹 ID"
 
-#: app/setting_interface.py:1716
+#: app/setting_interface.py:1717
 msgid "Go-cqhttp 项目已停止维护"
 msgstr "Go-cqhttp 프로젝트는 유지보수가 중단되었습니다"
 
-#: app/setting_interface.py:1720
+#: app/setting_interface.py:1721
 msgid "消息类型"
 msgstr "메시지 유형"
 
-#: app/setting_interface.py:1720
+#: app/setting_interface.py:1721
 msgid "消息类型：private 或 group"
 msgstr "메시지 유형: private 또는 group"
 
-#: app/setting_interface.py:1768
+#: app/setting_interface.py:1769
 msgid "钉钉"
 msgstr ""
 
-#: app/setting_interface.py:1769
+#: app/setting_interface.py:1770
 msgid "钉钉机器人推送"
 msgstr "DingTalk 봇 푸시"
 
-#: app/setting_interface.py:1772
+#: app/setting_interface.py:1773
 msgid "加签密钥"
 msgstr "서명 비밀키"
 
-#: app/setting_interface.py:1772
+#: app/setting_interface.py:1773
 msgid "可选参数，安全加签密钥"
 msgstr "선택 사항: 보안 서명 비밀키"
 
-#: app/setting_interface.py:1817
+#: app/setting_interface.py:1818
 msgid "Pushplus 通知服务"
 msgstr "Pushplus 알림 서비스"
 
-#: app/setting_interface.py:1819
+#: app/setting_interface.py:1820
 msgid "推送令牌"
 msgstr "푸시 토큰"
 
-#: app/setting_interface.py:1820
+#: app/setting_interface.py:1821
 msgid "推送渠道"
 msgstr "푸시 채널"
 
-#: app/setting_interface.py:1821
+#: app/setting_interface.py:1822
 msgid "Webhook 地址"
 msgstr "Webhook 주소"
 
-#: app/setting_interface.py:1821
+#: app/setting_interface.py:1822
 msgid "可选参数，Webhook URL"
 msgstr "선택 사항: Webhook URL"
 
-#: app/setting_interface.py:1822
+#: app/setting_interface.py:1823
 msgid "回调地址"
 msgstr "콜백 주소"
 
-#: app/setting_interface.py:1822
+#: app/setting_interface.py:1823
 msgid "可选参数，回调 URL"
 msgstr "선택 사항: 콜백 URL"
 
-#: app/setting_interface.py:1914
+#: app/setting_interface.py:1915
 msgid "企业微信机器人"
 msgstr "WeCom 봇"
 
-#: app/setting_interface.py:1915
+#: app/setting_interface.py:1916
 msgid "企业微信机器人消息推送"
 msgstr "WeCom 봇 메시지 푸시"
 
-#: app/setting_interface.py:1918
+#: app/setting_interface.py:1919
 msgid "机器人 Key"
 msgstr "봇 Key"
 
-#: app/setting_interface.py:1919
+#: app/setting_interface.py:1920
 msgid "可选参数，企业微信机器人 Webhook URL"
 msgstr "선택 사항: WeCom 봇 Webhook URL"
 
-#: app/setting_interface.py:1957
+#: app/setting_interface.py:1958
 msgid "企业微信应用"
 msgstr "WeCom 앱"
 
-#: app/setting_interface.py:1958
+#: app/setting_interface.py:1959
 msgid "企业微信应用消息推送"
 msgstr "WeCom 앱 메시지 푸시"
 
-#: app/setting_interface.py:1961
+#: app/setting_interface.py:1962
 msgid "企业 ID"
 msgstr "기업 ID"
 
-#: app/setting_interface.py:1962
+#: app/setting_interface.py:1963
 msgid "应用密钥"
 msgstr "앱 비밀키"
 
-#: app/setting_interface.py:1963
+#: app/setting_interface.py:1964
 msgid "应用 AgentId"
 msgstr "앱 AgentId"
 
-#: app/setting_interface.py:1964
+#: app/setting_interface.py:1965
 msgid "接收用户"
 msgstr "수신 사용자"
 
-#: app/setting_interface.py:1964
+#: app/setting_interface.py:1965
 msgid "可选参数，接收用户，@all 表示全员"
 msgstr "선택 사항: 수신 사용자 (@all 은 전체 대상)"
 
-#: app/setting_interface.py:1965
+#: app/setting_interface.py:1966
 msgid "可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制"
 msgstr "선택 사항: 리버스 프록시를 통해 신뢰할 수 있는 IP 제한을 우회하기 위한 사용자 지정 WeCom API 주소"
 
-#: app/setting_interface.py:2009
+#: app/setting_interface.py:2010
 msgid "Gotify 私有通知服务"
 msgstr "Gotify 자체 호스팅 알림 서비스"
 
-#: app/setting_interface.py:2011
+#: app/setting_interface.py:2012
 msgid "Gotify 服务器 URL，例如 https://gotify.example.com"
 msgstr "Gotify 서버 URL (예: https://gotify.example.com)"
 
-#: app/setting_interface.py:2012
+#: app/setting_interface.py:2013
 msgid "Gotify 应用的 Access Token"
 msgstr "Gotify 앱 Access Token"
 
@@ -3866,232 +3865,232 @@ msgstr "Gotify 앱 Access Token"
 msgid "优先级"
 msgstr "우선순위"
 
-#: app/setting_interface.py:2013
+#: app/setting_interface.py:2014
 msgid "可选参数，通知优先级，范围 1-10，越高优先级越高。1-3:仅图标，4-7:图标 + 声音，8-10:图标 + 声音 + 震动"
 msgstr ""
 "선택 사항: 알림 우선순위(1-10), 숫자가 클수록 높음. 1-3: 아이콘만, 4-7: 아이콘+소리, 8-10: 아이콘+소리+진동"
 
-#: app/setting_interface.py:2062
+#: app/setting_interface.py:2063
 msgid "Discord Webhook 推送"
 msgstr "Discord Webhook 푸시"
 
-#: app/setting_interface.py:2065
+#: app/setting_interface.py:2066
 msgid "显示用户名"
 msgstr "표시 사용자명"
 
-#: app/setting_interface.py:2065
+#: app/setting_interface.py:2066
 msgid "可选参数，显示用户名"
 msgstr "선택 사항: 표시 사용자명"
 
-#: app/setting_interface.py:2066
+#: app/setting_interface.py:2067
 msgid "头像地址"
 msgstr "아바타 주소"
 
-#: app/setting_interface.py:2066
+#: app/setting_interface.py:2067
 msgid "可选参数，头像 URL"
 msgstr "선택 사항: 아바타 URL"
 
-#: app/setting_interface.py:2067
+#: app/setting_interface.py:2068
 msgid "消息颜色"
 msgstr "메시지 색상"
 
-#: app/setting_interface.py:2067
+#: app/setting_interface.py:2068
 msgid "可选参数，嵌入消息颜色，十六进制颜色值（如：0x3498db）"
 msgstr "선택 사항: 임베드 메시지 색상(16진수, 예: 0x3498db)"
 
-#: app/setting_interface.py:2109
+#: app/setting_interface.py:2110
 msgid "Pushdeer 通知服务"
 msgstr "Pushdeer 알림 서비스"
 
-#: app/setting_interface.py:2111
+#: app/setting_interface.py:2112
 msgid "Pushdeer Token"
 msgstr "Pushdeer 토큰"
 
-#: app/setting_interface.py:2112
+#: app/setting_interface.py:2113
 msgid "可选参数，自定义 Pushdeer 服务地址"
 msgstr "선택 사항: 사용자 지정 Pushdeer 서비스 주소"
 
-#: app/setting_interface.py:2150
+#: app/setting_interface.py:2151
 msgid "飞书"
 msgstr ""
 
-#: app/setting_interface.py:2151
+#: app/setting_interface.py:2152
 msgid "飞书机器人推送"
 msgstr "Feishu 봇 푸시"
 
-#: app/setting_interface.py:2155
+#: app/setting_interface.py:2156
 msgid "消息内容"
 msgstr "메시지 내용"
 
-#: app/setting_interface.py:2156
+#: app/setting_interface.py:2157
 msgid "关键词"
 msgstr "키워드"
 
-#: app/setting_interface.py:2156
+#: app/setting_interface.py:2157
 msgid "可选参数，关键词安全校验内容"
 msgstr "선택 사항: 키워드 보안 검증 내용"
 
-#: app/setting_interface.py:2157
+#: app/setting_interface.py:2158
 msgid "签名"
 msgstr "서명"
 
-#: app/setting_interface.py:2157
+#: app/setting_interface.py:2158
 msgid "可选参数，签名安全校验参数"
 msgstr "선택 사항: 서명 보안 검증 파라미터"
 
-#: app/setting_interface.py:2158
+#: app/setting_interface.py:2159
 msgid "启用图片"
 msgstr "이미지 전송 사용"
 
-#: app/setting_interface.py:2158
+#: app/setting_interface.py:2159
 msgid "是否发送图片"
 msgstr "이미지를 전송할지 여부"
 
-#: app/setting_interface.py:2159
+#: app/setting_interface.py:2160
 msgid "应用 AppId"
 msgstr "앱 AppId"
 
-#: app/setting_interface.py:2159
+#: app/setting_interface.py:2160
 msgid "发送图片时必填：飞书应用 AppId"
 msgstr "이미지 전송 시 필수: Feishu 앱 AppId"
 
-#: app/setting_interface.py:2160
+#: app/setting_interface.py:2161
 msgid "应用 Secret"
 msgstr "앱 Secret"
 
-#: app/setting_interface.py:2160
+#: app/setting_interface.py:2161
 msgid "发送图片时必填：飞书应用 Secret"
 msgstr "이미지 전송 시 필수: Feishu 앱 Secret"
 
-#: app/setting_interface.py:2201
+#: app/setting_interface.py:2202
 msgid "适合 鸿蒙NEXT 设备推送"
 msgstr "HarmonyOS NEXT 기기 푸시에 적합"
 
-#: app/setting_interface.py:2203
+#: app/setting_interface.py:2204
 msgid "昵称"
 msgstr "닉네임"
 
-#: app/setting_interface.py:2234
+#: app/setting_interface.py:2235
 msgid "KOOK 机器人推送"
 msgstr "KOOK 봇 푸시"
 
-#: app/setting_interface.py:2237
+#: app/setting_interface.py:2238
 msgid "KOOK 机器人的 Token"
 msgstr "KOOK 봇 토큰"
 
-#: app/setting_interface.py:2238
+#: app/setting_interface.py:2239
 msgid "目标 ID"
 msgstr "대상 ID"
 
-#: app/setting_interface.py:2238
+#: app/setting_interface.py:2239
 msgid "接收消息的用户 ID 或频道 ID"
 msgstr "메시지를 받을 사용자 ID 또는 채널 ID"
 
-#: app/setting_interface.py:2239
+#: app/setting_interface.py:2240
 msgid "聊天类型"
 msgstr "채팅 유형"
 
-#: app/setting_interface.py:2239
+#: app/setting_interface.py:2240
 msgid "可选参数，1 为私聊，9 为频道"
 msgstr "선택 사항: 1=개인 채팅, 9=채널"
 
-#: app/setting_interface.py:2285
+#: app/setting_interface.py:2286
 msgid "可自定义请求方法、请求头和请求体"
 msgstr "요청 메서드, 헤더, 본문을 사용자 지정할 수 있습니다"
 
-#: app/setting_interface.py:2288
+#: app/setting_interface.py:2289
 msgid "接收地址"
 msgstr "수신 주소"
 
-#: app/setting_interface.py:2289
+#: app/setting_interface.py:2290
 msgid "请求方法"
 msgstr "요청 메서드"
 
-#: app/setting_interface.py:2289
+#: app/setting_interface.py:2290
 msgid "可选参数，HTTP 方法，默认 POST"
 msgstr "선택 사항: HTTP 메서드 (기본 POST)"
 
-#: app/setting_interface.py:2290
+#: app/setting_interface.py:2291
 msgid "请求头"
 msgstr "요청 헤더"
 
-#: app/setting_interface.py:2290
+#: app/setting_interface.py:2291
 msgid "可选参数，请求头 JSON 格式字符串，如：{\"Authorization\": \"Bearer token\"}"
 msgstr "선택 사항: JSON 형식 요청 헤더 문자열 (예: {\"Authorization\": \"Bearer token\"})"
 
-#: app/setting_interface.py:2291
+#: app/setting_interface.py:2292
 msgid "请求体"
 msgstr "요청 본문"
 
-#: app/setting_interface.py:2291
+#: app/setting_interface.py:2292
 msgid "可选参数，请求体模板 JSON 格式字符串，支持 {title}/{content}/{image} 占位符"
 msgstr "선택 사항: JSON 형식 요청 본문 템플릿, {title}/{content}/{image} 플레이스홀더 지원"
 
-#: app/setting_interface.py:2351
+#: app/setting_interface.py:2352
 msgid "自定义通知"
 msgstr "사용자 지정 알림"
 
-#: app/setting_interface.py:2352
+#: app/setting_interface.py:2353
 msgid "自定义 HTTP 请求推送"
 msgstr "사용자 지정 HTTP 요청 푸시"
 
-#: app/setting_interface.py:2355
+#: app/setting_interface.py:2356
 msgid "请求地址"
 msgstr "요청 주소"
 
-#: app/setting_interface.py:2355
+#: app/setting_interface.py:2356
 msgid "请求地址，OneBot 可填写 send_msg 接口 URL"
 msgstr "요청 주소, OneBot의 경우 send_msg API URL 입력 가능"
 
-#: app/setting_interface.py:2356
+#: app/setting_interface.py:2357
 msgid "请求方法，通常 get 或 post"
 msgstr "요청 메서드 (일반적으로 GET 또는 POST)"
 
-#: app/setting_interface.py:2357
+#: app/setting_interface.py:2358
 msgid "数据类型"
 msgstr "데이터 형식"
 
-#: app/setting_interface.py:2357
+#: app/setting_interface.py:2358
 msgid "数据类型，通常为 data 或 json"
 msgstr "데이터 형식 (일반적으로 data 또는 json)"
 
-#: app/setting_interface.py:2358
+#: app/setting_interface.py:2359
 msgid "图片模板"
 msgstr "이미지 템플릿"
 
-#: app/setting_interface.py:2358
+#: app/setting_interface.py:2359
 msgid "可选参数，图片消息模板，{image} 会替换为 Base64"
 msgstr "선택 사항: 이미지 메시지 템플릿, {image}는 Base64로 치환됨"
 
-#: app/setting_interface.py:2359
+#: app/setting_interface.py:2360
 msgid "数据模板"
 msgstr "데이터 템플릿"
 
-#: app/setting_interface.py:2359
+#: app/setting_interface.py:2360
 msgid "请求体模板，{message} 会替换为标题和内容"
 msgstr "요청 본문 템플릿, {message}는 제목과 내용으로 치환됨"
 
-#: app/setting_interface.py:1178
+#: app/setting_interface.py:1180
 msgid "通知合并"
 msgstr "알림 병합"
 
-#: app/setting_interface.py:1179
+#: app/setting_interface.py:1181
 msgid "开启后，完整运行结束时将所有通知合并为一条发送"
 msgstr "활성화하면 전체 실행 종료 시 모든 알림을 하나로 합쳐서 전송합니다."
 
-#: app/setting_interface.py:1184
+#: app/setting_interface.py:1186
 msgid "推送图片"
 msgstr "알림에 이미지 전송"
 
-#: app/setting_interface.py:1185
+#: app/setting_interface.py:1187
 msgid "关闭后推送消息时不再发送截图"
 msgstr "끄면 알림 전송 시 스크린샷을 포함하지 않음"
 
-#: app/setting_interface.py:1160
+#: app/setting_interface.py:1162
 msgid "启用消息推送"
 msgstr "알림 사용"
 
-#: app/setting_interface.py:1161
+#: app/setting_interface.py:1163
 msgid "消息推送总开关"
 msgstr "알림 총괄 스위치"
 
@@ -4139,81 +4138,81 @@ msgstr "시뮬레이션 우주 폴더 열기（유지보수 중단）"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "시뮬레이션 우주 프로젝트 홈페이지 열기（유지보수 중단）"
 
-#: app/log_interface.py:455
+#: app/log_interface.py:456
 msgid "在游戏内显示日志"
 msgstr "게임 내 로그 표시"
 
-#: app/setting_interface.py:623
+#: app/setting_interface.py:625
 msgid "启用速通模式"
 msgstr "속도 단축 모드 활성화"
 
-#: app/setting_interface.py:647
+#: app/setting_interface.py:649
 msgid "难度等级"
 msgstr "난이도 등급"
 
-#: app/setting_interface.py:653
+#: app/setting_interface.py:655
 msgid "自动执行饰品提取"
 msgstr "장신구 추출 자동 실행"
 
-#: app/setting_interface.py:654
+#: app/setting_interface.py:656
 msgid "在领取积分奖励后自动执行饰品提取消耗沉浸器"
 msgstr "포인트 보상 수령 후 몰입기를 소모하여 장신구 추출을 자동으로 실행합니다"
 
-#: app/setting_interface.py:659
+#: app/setting_interface.py:661
 msgid "启用低性能兼容模式"
 msgstr "저사양 호환 모드 활성화"
 
-#: app/setting_interface.py:660
+#: app/setting_interface.py:662
 msgid "建议仅在低性能设备开启，可以提高事件和随意门交互的成功率（云游戏强制使用此模式）"
 msgstr ""
 "저사양 기기에서만 활성화를 권장합니다. 이벤트 및 포털 상호작용 성공률을 높일 수 있습니다(클라우드 게임에서는 이 모드가 강제 "
 "적용됩니다)."
 
-#: app/setting_interface.py:718
+#: app/setting_interface.py:720
 msgid "自动领取模拟宇宙沉浸奖励"
 msgstr "시뮬레이션 우주 몰입 보상 자동 수령"
 
-#: app/setting_interface.py:719
+#: app/setting_interface.py:721
 msgid "类别为“模拟宇宙”时，自动领取沉浸奖励"
 msgstr "류별이 '시뮬레이션 우주'일 때, 몰입 보상을 자동으로 수령합니다"
 
-#: app/setting_interface.py:787
+#: app/setting_interface.py:789
 msgid "启用模拟宇宙 GPU 加速"
 msgstr "시뮬레이션 우주 GPU 가속 활성화"
 
-#: app/setting_interface.py:1151
+#: app/setting_interface.py:1153
 msgid "窗口记忆"
 msgstr "창 상태 기억"
 
-#: app/setting_interface.py:1152
+#: app/setting_interface.py:1154
 msgid "选择启动时恢复的窗口状态"
 msgstr "시작 시 복원할 창 상태를 선택하세요"
 
-#: app/setting_interface.py:1153
+#: app/setting_interface.py:1155
 msgid "记忆窗口大小"
 msgstr "창 크기 기억"
 
-#: app/setting_interface.py:1153
+#: app/setting_interface.py:1155
 msgid "记忆窗口位置"
 msgstr "창 위치 기억"
 
-#: app/setting_interface.py:1153
+#: app/setting_interface.py:1155
 msgid "记忆窗口大小和位置"
 msgstr "창 크기와 위치 기억"
 
-#: app/setting_interface.py:1153
+#: app/setting_interface.py:1155
 msgid "都不记忆"
 msgstr "아무것도 기억하지 않음"
 
-#: app/setting_interface.py:2540
+#: app/setting_interface.py:2541
 msgid "立即前往"
 msgstr "지금 이동"
 
-#: app/setting_interface.py:2542
+#: app/setting_interface.py:2543
 msgid "哔哩哔哩"
 msgstr "빌리빌리"
 
-#: app/setting_interface.py:2543
+#: app/setting_interface.py:2544
 msgid "欢迎关注我们的B站账号，获取最新动态和教程"
 msgstr "최신 소식과 튜토리얼을 위해 저희 빌리빌리 계정을 팔로우해 주세요"
 
@@ -4309,15 +4308,15 @@ msgstr "확인"
 msgid "重返未来 M9A"
 msgstr ""
 
-#: app/setting_interface.py:515
+#: app/setting_interface.py:517
 msgid "短信"
 msgstr "문자 메시지"
 
-#: app/setting_interface.py:672
+#: app/setting_interface.py:674
 msgid "站点优先级"
 msgstr "거점 우선순위"
 
-#: app/setting_interface.py:673
+#: app/setting_interface.py:675
 msgid "自定义差分宇宙「选择下一站」的站点优先级"
 msgstr "차분 우주 「다음 거점 선택」의 거점 우선순위 설정"
 
@@ -4326,11 +4325,11 @@ msgid "已启用自定义优先级，{count} 个站点已禁用"
 msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
 msgstr[0] "사용자 지정 우선순위 활성화, {count} 개 거점 비활성화됨"
 
-#: app/setting_interface.py:2588
+#: app/setting_interface.py:2589
 msgid "下载代理"
 msgstr "다운로드 프록시"
 
-#: app/setting_interface.py:2590
+#: app/setting_interface.py:2591
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "비워두면 시스템 프록시를 사용합니다. http:// 및 socks5:// 지원"
 
@@ -4338,77 +4337,77 @@ msgstr "비워두면 시스템 프록시를 사용합니다. http:// 및 socks5:
 msgid "选择图标"
 msgstr "아이콘 선택"
 
-#: app/setting_interface.py:597
+#: app/setting_interface.py:599
 msgid "职级难度"
 msgstr "직급 난이도"
 
-#: app/setting_interface.py:599
+#: app/setting_interface.py:601
 msgid "当前职级"
 msgstr "현재 직급"
 
-#: app/setting_interface.py:599
+#: app/setting_interface.py:601
 msgid "最低职级"
 msgstr "최저 직급"
 
-#: app/setting_interface.py:599
+#: app/setting_interface.py:601
 msgid "最高职级"
 msgstr "최고 직급"
 
-#: app/setting_interface.py:604
+#: app/setting_interface.py:606
 msgid "货币战争策略"
 msgstr "화폐 전쟁 전략"
 
-#: app/setting_interface.py:606
+#: app/setting_interface.py:608
 msgid "默认"
 msgstr "기본"
 
-#: app/setting_interface.py:617
+#: app/setting_interface.py:619
 msgid "遇到特定词条时接受重开"
 msgstr "특정 태그를 만나면 재시작 허용"
 
-#: app/setting_interface.py:618
+#: app/setting_interface.py:620
 msgid "根据所选策略，在遇到特定词条或词条组合时允许重开"
 msgstr "선택한 전략에 따라 특정 태그 또는 태그 조합이 나오면 재시작을 허용합니다"
 
-#: app/setting_interface.py:611
+#: app/setting_interface.py:613
 msgid "「开拓者•记忆」名称"
 msgstr "「개척자·기억」 이름"
 
-#: app/setting_interface.py:613
+#: app/setting_interface.py:615
 msgid "未配置时，阿格莱雅/希儿策略将跳过该角色，需要填入自己游戏名称"
 msgstr "미설정 시 아글라이아/제레 전략에서 해당 캐릭터를 건너뜁니다. 게임 내 표시 이름을 입력해 주세요"
 
-#: app/setting_interface.py:605
+#: app/setting_interface.py:607
 msgid "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅或希儿策略。"
 msgstr ""
 "진급 등급을 올리려면 최저 직급에서 기본 전략을, 직급 등급을 올리려면 최고 직급에서 아글라이아 또는 제레 전략을 선택하는 것을 "
 "권장합니다."
 
-#: app/setting_interface.py:624
+#: app/setting_interface.py:626
 msgid "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"
 msgstr "활성화하면 두목 노드에서만 무기 장착을 시도합니다. 최저 직급에서만 활성화하는 것을 권장합니다."
 
-#: app/setting_interface.py:576
+#: app/setting_interface.py:578
 msgid "提升晋升等级"
 msgstr "승급 등급 올리기"
 
-#: app/setting_interface.py:577
+#: app/setting_interface.py:579
 msgid "提升职级等级"
 msgstr "직급 등급 올리기"
 
-#: app/setting_interface.py:579
+#: app/setting_interface.py:581
 msgid "快捷配置"
 msgstr "빠른 설정"
 
-#: app/setting_interface.py:3394
+#: app/setting_interface.py:3403
 msgid "已应用快捷配置"
 msgstr "빠른 설정이 적용되었습니다"
 
-#: app/setting_interface.py:3419
+#: app/setting_interface.py:3428
 msgid "当前为“提升晋升等级”模式"
 msgstr "현재 '승급 등급 올리기' 모드입니다"
 
-#: app/setting_interface.py:3434
+#: app/setting_interface.py:3443
 msgid "当前为“提升职级等级”模式"
 msgstr "현재 '직급 등급 올리기' 모드입니다"
 
@@ -4444,49 +4443,49 @@ msgstr "기본 우선순위 사용"
 msgid "已启用自定义优先级"
 msgstr "사용자 지정 우선순위 활성화됨"
 
-#: app/setting_interface.py:2487
+#: app/setting_interface.py:2488
 msgid "自动"
 msgstr "자동"
 
-#: app/setting_interface.py:825
+#: app/setting_interface.py:827
 msgid "二相乐园"
 msgstr "이상 낙원"
 
-#: app/setting_interface.py:334
+#: app/setting_interface.py:336
 msgid "识别方案"
 msgstr "인식 방식"
 
-#: app/setting_interface.py:335
+#: app/setting_interface.py:337
 msgid "副本名称识别会进入挑战页读取副本信息；掉落物识别根据列表中的掉落物匹配副本，异常时可尝试切换方案"
 msgstr ""
 "스테이지 이름 인식은 도전 페이지에 진입하여 스테이지 정보를 읽어옵니다. 드롭 아이템 인식은 목록의 드롭 아이템으로 스테이지를 "
 "매칭합니다. 문제가 발생하면 방식 전환을 시도하세요."
 
-#: app/setting_interface.py:337
+#: app/setting_interface.py:339
 msgid "副本名称识别"
 msgstr "스테이지 이름 인식"
 
-#: app/setting_interface.py:338
+#: app/setting_interface.py:340
 msgid "掉落物识别"
 msgstr "드롭 아이템 인식"
 
-#: app/setting_interface.py:816
+#: app/setting_interface.py:818
 msgid "地图版本"
 msgstr "지도 버전"
 
-#: app/setting_interface.py:818
+#: app/setting_interface.py:820
 msgid "默认（疾跑）"
 msgstr "기본 (질주)"
 
-#: app/setting_interface.py:818
+#: app/setting_interface.py:820
 msgid "黄泉专用"
 msgstr "황천 전용"
 
-#: app/setting_interface.py:350
+#: app/setting_interface.py:352
 msgid "仅识别到侵蚀隧洞/饰品提取时使用自定义副本"
 msgstr "침식된 터널/장신구 추출만 인식된 경우 사용자 지정 던전 사용"
 
-#: app/setting_interface.py:351
+#: app/setting_interface.py:353
 msgid "开启后，当培养目标仅包含侵蚀隧洞和饰品提取时，清体力将改用你在体力设置中配置的副本"
 msgstr ""
 "활성화하면 육성 목표가 침식된 터널과 장신구 추출만 포함할 때, 개척력 소모는 체력 설정에서 사용자가 구성한 던전을 사용합니다"
@@ -4499,11 +4498,11 @@ msgstr "은빛 늑대 LV.999"
 msgid "「辉痕圣林」神悟树庭"
 msgstr "「휘적 성림」신오의 수목원"
 
-#: app/setting_interface.py:457
+#: app/setting_interface.py:459
 msgid "活动热点通知"
 msgstr "여정 하이라이트 알림"
 
-#: app/setting_interface.py:458
+#: app/setting_interface.py:460
 msgid "每次运行时发送带有活动热点截图的通知"
 msgstr "실행 시 여정 하이라이트 스크린샷 알림 전송"
 
@@ -4511,7 +4510,7 @@ msgstr "실행 시 여정 하이라이트 스크린샷 알림 전송"
 msgid "流程编排"
 msgstr "워크플로우 편집"
 
-#: app/setting_interface.py:606
+#: app/setting_interface.py:608
 msgid "【测试版】"
 msgstr "[베타]"
 
@@ -4623,7 +4622,7 @@ msgstr "버전"
 msgid "使用说明"
 msgstr "사용 설명"
 
-#: app/workflow_interface.py:114
+#: app/card/autostart_setting_card.py:88
 msgid "保存"
 msgstr "저장"
 
@@ -4871,11 +4870,11 @@ msgstr "ZIP 파일 (*.zip)"
 msgid "导出成功"
 msgstr "내보내기 성공"
 
-#: app/setting_interface.py:649
+#: app/setting_interface.py:651
 msgid "难度"
 msgstr "난이도"
 
-#: app/setting_interface.py:649
+#: app/setting_interface.py:651
 msgid "（星阶模式）"
 msgstr " (성계 모드)"
 
@@ -5047,29 +5046,29 @@ msgstr "성공"
 msgid "终止流程"
 msgstr "워크플로 종료"
 
-#: app/setting_interface.py:737
+#: app/setting_interface.py:739
 msgid "重置次数"
 msgstr "횟수 초기화"
 
-#: app/setting_interface.py:739
+#: app/setting_interface.py:741
 msgid "差分宇宙已完成次数"
 msgstr "차분 우주 완료 횟수"
 
-#: app/setting_interface.py:3028
+#: app/setting_interface.py:3029
 msgid "今日已完成 {count} 次"
 msgid_plural "今日已完成 {count} 次|plural"
 msgstr[0] "오늘 완료 횟수: {count}회"
 
-#: app/setting_interface.py:3029
+#: app/setting_interface.py:3030
 msgid "本周已完成 {count} 次"
 msgid_plural "本周已完成 {count} 次|plural"
 msgstr[0] "이번 주 완료 횟수: {count}회"
 
-#: app/setting_interface.py:2989
+#: app/setting_interface.py:2990
 msgid "启用前请确认用途"
 msgstr "활성화 전에 용도를 확인하세요"
 
-#: app/setting_interface.py:2990
+#: app/setting_interface.py:2991
 msgid ""
 "此选项及其子选项用于配置反复刷取遗器经验和灵之珠泪，直到达到每周上限。\n"
 "默认运行次数为每周 34 次。\n"
@@ -5079,7 +5078,7 @@ msgstr ""
 "기본 실행 횟수는 주당 34회입니다.\n"
 "이 기능의 용도를 충분히 이해하고, 무엇을 하는지 확실히 알고 있을 때만 활성화하세요."
 
-#: app/setting_interface.py:2993
+#: app/setting_interface.py:2994
 msgid "我已了解，继续开启"
 msgstr "이해했으며 계속 활성화"
 
@@ -5095,19 +5094,19 @@ msgstr "후속 작업 계속 실행"
 msgid "停止后续任务"
 msgstr "후속 작업 실행 중지"
 
-#: module/update/update_engine.py:370
+#: module/update/update_engine.py:389
 msgid "正在覆盖安装新版本..."
 msgstr "새 버전 덮어쓰기 설치 중..."
 
-#: module/update/helper_app.py:260
+#: module/update/helper_app.py:261
 msgid "正在更新 March7th Assistant"
 msgstr "March7th Assistant 업데이트 중"
 
-#: module/update/update_engine.py:404
+#: module/update/update_engine.py:424
 msgid "正在清理临时文件..."
 msgstr "임시 파일 정리 중..."
 
-#: module/update/update_engine.py:420
+#: module/update/update_engine.py:440
 msgid "正在启动新版本..."
 msgstr "새 버전 시작 중..."
 
@@ -5119,7 +5118,7 @@ msgstr "업데이트 실패"
 msgid "更新三月七小助手"
 msgstr "March7th Assistant 업데이트"
 
-#: module/update/helper_app.py:424
+#: module/update/helper_app.py:426
 msgid "当前已是最新版本"
 msgstr "이미 최신 버전입니다"
 
@@ -5127,15 +5126,15 @@ msgstr "이미 최신 버전입니다"
 msgid "Mirror酱 API 请求失败"
 msgstr "Mirror API 요청 실패"
 
-#: module/update/helper_app.py:245
+#: module/update/helper_app.py:246
 msgid "正在准备更新"
 msgstr "업데이트 준비 중"
 
-#: module/update/helper_app.py:246
+#: module/update/helper_app.py:247
 msgid "即将开始下载和安装新版本"
 msgstr "새 버전 다운로드 및 설치를 시작합니다"
 
-#: module/update/helper_app.py:584
+#: module/update/helper_app.py:586
 msgid "无需更新"
 msgstr "업데이트 필요 없음"
 
@@ -5147,15 +5146,15 @@ msgstr "업데이트 로그가 여기에 표시됩니다"
 msgid "请勿关闭此窗口，更新完成后会自动启动新版本"
 msgstr "이 창을 닫지 마세요. 업데이트 완료 후 새 버전이 자동으로 시작됩니다"
 
-#: module/update/update_engine.py:247
+#: module/update/update_engine.py:262
 msgid "正在下载更新包..."
 msgstr "업데이트 패키지 다운로드 중..."
 
-#: module/update/helper_app.py:540
+#: module/update/helper_app.py:542
 msgid "已请求取消更新，正在等待当前步骤结束"
 msgstr "업데이트 취소가 요청되었습니다. 현재 단계가 끝나기를 기다리는 중"
 
-#: module/update/helper_app.py:452
+#: module/update/helper_app.py:454
 msgid "更新已取消"
 msgstr "업데이트가 취소되었습니다"
 
@@ -5175,7 +5174,7 @@ msgstr "백그라운드 업데이트 진행 중"
 msgid "点击此处可重新打开更新窗口"
 msgstr "여기를 클릭하면 업데이트 창을 다시 열 수 있습니다"
 
-#: module/update/update_engine.py:197
+#: module/update/update_engine.py:212
 msgid "检测更新失败"
 msgstr "업데이트 확인 실패"
 
@@ -5191,15 +5190,15 @@ msgstr "예상 SHA-256"
 msgid "实际 SHA-256"
 msgstr "실제 SHA-256"
 
-#: module/update/update_engine.py:350
+#: module/update/update_engine.py:367
 msgid "正在检测文件占用..."
 msgstr "파일 사용 여부 확인 중..."
 
-#: module/update/update_engine.py:612
+#: module/update/update_engine.py:665
 msgid "临时文件被占用，无法清理"
 msgstr "임시 파일이 사용 중이라 정리할 수 없습니다"
 
-#: module/update/helper_app.py:439
+#: module/update/helper_app.py:441
 msgid "更新完成"
 msgstr "업데이트 완료"
 
@@ -5211,41 +5210,41 @@ msgstr "다운로드 파일 검증에 실패했습니다"
 msgid "下载文件校验失败，请重新下载或切换更新源后重试"
 msgstr "다운로드 파일 검증에 실패했습니다. 다시 다운로드하거나 업데이트 소스를 바꿔 다시 시도하세요"
 
-#: module/update/update_window.py:406
+#: module/update/update_window.py:407
 msgid "更新已准备完成"
 msgstr "업데이트 준비가 완료되었습니다"
 
-#: module/update/update_window.py:407
+#: module/update/update_window.py:408
 msgid "更新包已下载并解压完成，点击“开始安装”后将关闭主程序并安装新版本"
 msgstr "업데이트 패키지 다운로드와 압축 해제가 완료되었습니다. 설치 시작을 누르면 메인 프로그램을 종료하고 새 버전을 설치합니다"
 
-#: module/update/update_window.py:414
+#: module/update/update_window.py:415
 msgid "更新已准备完成，等待开始安装"
 msgstr "업데이트 준비가 완료되어 설치 시작을 기다리는 중입니다"
 
-#: module/update/helper_app.py:440
+#: module/update/helper_app.py:442
 msgid "新版本已启动，此窗口将自动关闭"
 msgstr "새 버전이 시작되었습니다. 이 창은 자동으로 닫힙니다"
 
-#: module/update/update_engine.py:362
+#: module/update/update_engine.py:381
 msgid "以下目标文件正在被占用，暂时无法覆盖。请打开任务管理器尝试关闭相关进程后重试，或直接重启电脑后再试。"
 msgstr ""
 "다음 대상 파일이 현재 사용 중이어서 아직 덮어쓸 수 없습니다. 작업 관리자를 열어 관련된 프로세스를 종료한 뒤 다시 시도하거나, PC를"
 " 재부팅한 후 다시 시도해 주세요."
 
-#: module/update/helper_app.py:261
+#: module/update/helper_app.py:262
 msgid "正在等待主程序退出..."
 msgstr "메인 프로그램 종료 대기 중..."
 
-#: module/update/update_window.py:466
+#: module/update/update_window.py:468
 msgid "请检查日志后重试"
 msgstr "로그를 확인한 후 재시도하세요"
 
-#: module/update/update_engine.py:285
+#: module/update/update_engine.py:300
 msgid "正在解压更新包..."
 msgstr "업데이트 패키지 압축 해제 중..."
 
-#: app/log_interface.py:191
+#: app/log_interface.py:192
 msgid "检测到新版本：{version}"
 msgstr "새 버전 감지: {version}"
 
@@ -5257,11 +5256,11 @@ msgstr "작업 메뉴의 메뉴 항목 이름은 비워 둘 수 없습니다"
 msgid "卡片标题不能为空"
 msgstr "카드 제목은 비워 둘 수 없습니다"
 
-#: module/update/update_window.py:428
+#: module/update/update_window.py:429
 msgid "启动更新器失败"
 msgstr "업데이터 실행 실패"
 
-#: module/update/helper_app.py:653
+#: module/update/helper_app.py:655
 msgid "更新被阻塞"
 msgstr "업데이트가 차단되었습니다"
 
@@ -5269,7 +5268,7 @@ msgstr "업데이트가 차단되었습니다"
 msgid "未找到更新程序"
 msgstr "업데이트 프로그램을 찾을 수 없습니다"
 
-#: module/update/update_engine.py:301
+#: module/update/update_engine.py:316
 msgid "正在关闭相关进程..."
 msgstr "관련 프로세스 종료 중..."
 
@@ -5297,23 +5296,23 @@ msgstr "오늘 만료"
 msgid "CDK 验证失败 (╥╯﹏╰╥)"
 msgstr "CDK 인증 실패 (╥╯﹏╰╥)"
 
-#: app/setting_interface.py:2609
+#: app/setting_interface.py:2610
 msgid "匿名使用数据收集"
 msgstr "익명 사용 데이터 수집"
 
-#: app/setting_interface.py:2610
+#: app/setting_interface.py:2611
 msgid "帮助开发者了解程序使用情况，改进功能"
 msgstr "개발자가 사용 패턴을 이해하고 프로그램을 개선하는 데 도움이 됩니다"
 
-#: app/setting_interface.py:2607
+#: app/setting_interface.py:2608
 msgid "查看说明"
 msgstr "설명 보기"
 
-#: app/setting_interface.py:3034
+#: app/setting_interface.py:3035
 msgid "匿名使用数据收集说明"
 msgstr "익명 사용 데이터 수집 안내"
 
-#: app/setting_interface.py:3035
+#: app/setting_interface.py:3036
 msgid ""
 "我们只收集用于改进稳定性、兼容性和功能体验的匿名统计信息，不用于识别你的真实身份，也不会用于广告、画像或与第三方共享。\n"
 "\n"
@@ -5331,31 +5330,31 @@ msgstr ""
 "\n"
 "이 데이터는 기능 사용 현황 분석, 호환성 문제 발견, 버전 안정성 평가, 공통 장애 원인 파악에만 사용됩니다."
 
-#: app/setting_interface.py:3094
+#: app/setting_interface.py:3103
 msgid "该参数用于配置该通知方式的请求字段"
 msgstr ""
 
-#: app/setting_interface.py:2433
+#: app/setting_interface.py:2434
 msgid "教程"
 msgstr "튜토리얼"
 
-#: app/setting_interface.py:3278
+#: app/setting_interface.py:3287
 msgid "{name} 配置教程"
 msgstr "{name} 설정 튜토리얼"
 
-#: app/tools_interface.py:64
+#: app/tools_interface.py:65
 msgid "界面可切换性测试"
 msgstr "화면 전환 테스트"
 
-#: app/tools_interface.py:62
+#: app/tools_interface.py:63
 msgid "测试"
 msgstr "테스트"
 
-#: app/tools_interface.py:65
+#: app/tools_interface.py:66
 msgid "以最短路径遍历所有可达界面，验证界面切换是否正常"
 msgstr "최단 경로로 이동 가능한 모든 화면을 순회하여 화면 전환이 정상적으로 작동하는지 확인합니다"
 
-#: app/sub_interfaces/hotkey_interface.py:25
+#: app/sub_interfaces/hotkey_interface.py:26
 msgid "自动对话（全局热键，支持后台）"
 msgstr "자동 대화 (글로벌 단축키, 백그라운드 지원)"
 
@@ -5387,19 +5386,19 @@ msgstr "Fate[UBW] 캐릭터 컬래버 워프"
 msgid "Fate[UBW]光锥联动跃迁"
 msgstr "Fate[UBW] 광추 컬래버레이션 워프"
 
-#: app/main_window.py:858
+#: app/main_window.py:871
 msgid "游戏已在运行"
 msgstr "게임이 이미 실행 중입니다"
 
-#: app/main_window.py:859
+#: app/main_window.py:872
 msgid "无需重复启动游戏"
 msgstr "게임을 다시 실행할 필요가 없습니다"
 
-#: app/setting_interface.py:1532
+#: app/setting_interface.py:1534
 msgid "纯文本模式"
 msgstr "일반 텍스트 모드"
 
-#: app/setting_interface.py:1532
+#: app/setting_interface.py:1534
 msgid "可选参数，是否以纯文本格式发送邮件（适用于 Outlook 等邮箱）"
 msgstr "선택 사항: 이메일을 일반 텍스트 형식으로 보낼지 여부 (Outlook 등의 이메일 서비스에 적합)"
 
@@ -5455,27 +5454,27 @@ msgstr "토오사카 린"
 msgid "吉尔伽美什"
 msgstr "길가메시"
 
-#: app/setting_interface.py:1870
+#: app/setting_interface.py:1871
 msgid "Qmsg 酱 QQ 推送"
 msgstr "Qmsg QQ 푸시"
 
-#: app/setting_interface.py:1872
+#: app/setting_interface.py:1873
 msgid "Qmsg 酱分配的 Key"
 msgstr "Qmsg에서 발급한 Key"
 
-#: app/setting_interface.py:1873
+#: app/setting_interface.py:1874
 msgid "QQ 号"
 msgstr "QQ 번호"
 
-#: app/setting_interface.py:1873
+#: app/setting_interface.py:1874
 msgid "可选参数，指定接收通知的 QQ 号，不填则发送到该 Key 绑定的默认 QQ"
 msgstr "선택 사항: 알림을 받을 QQ 번호. 입력하지 않으면 해당 Key에 연결된 기본 QQ로 전송됩니다"
 
-#: app/setting_interface.py:1874
+#: app/setting_interface.py:1875
 msgid "发送模式"
 msgstr "전송 모드"
 
-#: app/setting_interface.py:1874
+#: app/setting_interface.py:1875
 msgid "可选参数，例如 send（默认）或 group"
 msgstr "선택 사항: 예) send(기본값) 또는 group"
 
@@ -5547,7 +5546,7 @@ msgstr "워크플로 디렉터리가 존재하지 않습니다"
 msgid "文字条件需要填写目标文字"
 msgstr "텍스트 조건에는 대상 텍스트를 입력해야 합니다"
 
-#: module/update/update_engine.py:391
+#: module/update/update_engine.py:410
 msgid "无法为当前更新程序创建备份，请关闭占用后重试"
 msgstr "현재 업데이트 프로그램의 백업을 만들 수 없습니다. 사용 중인 프로그램을 닫고 다시 시도하세요"
 
@@ -5563,7 +5562,7 @@ msgstr "하위 단계를 추가할 수 없습니다"
 msgid "无限次"
 msgstr "무제한"
 
-#: module/update/update_engine.py:484
+#: module/update/update_engine.py:507
 msgid "更新包信息不完整"
 msgstr "업데이트 패키지 정보가 불완전합니다"
 
@@ -5628,12 +5627,12 @@ msgid "剩余 {count} 天"
 msgid_plural "剩余 {count} 天|plural"
 msgstr[0] "{count}일 남음"
 
-#: module/update/helper_app.py:641
+#: module/update/helper_app.py:643
 msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "{count} 초 후 자동 종료"
 
-#: app/main_window.py:933
+#: app/main_window.py:946
 msgid "请在“设置”→“程序”中配置"
 msgstr "'설정' → '프로그램'에서 설정하세요"
 
@@ -5641,7 +5640,7 @@ msgstr "'설정' → '프로그램'에서 설정하세요"
 msgid "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK"
 msgstr "\"설정 → 정보 → 업데이트 소스\"에서 Mirror를 선택하고 유효한 CDK를 입력하세요"
 
-#: app/tools_interface.py:186
+#: app/tools_interface.py:187
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr "'설정' → '프로그램'에서 올바른 게임 경로를 설정해 주세요"
 
@@ -5661,11 +5660,11 @@ msgstr "횟수:"
 msgid "队伍："
 msgstr "팀: "
 
-#: app/log_interface.py:1039
+#: app/log_interface.py:1040
 msgid "已启用：{count}，下次：{time}"
 msgstr "활성화됨: {count}, 다음: {time}"
 
-#: app/log_interface.py:1292
+#: app/log_interface.py:1293
 msgid "正在运行：{name}"
 msgstr "실행 중: {name}"
 
@@ -5741,7 +5740,7 @@ msgstr "실행 완료(＾∀＾●)"
 msgid "执行出错"
 msgstr "실행 오류"
 
-#: app/main_window.py:512
+#: app/main_window.py:519
 msgid "语言切换失败"
 msgstr "언어 전환 실패"
 
@@ -5887,59 +5886,59 @@ msgstr "CDK가 입력되지 않았습니다 (╥╯﹏╰╥)"
 msgid "请先点击“修改”填写 Mirror 酱 CDK"
 msgstr "\"수정\"을 클릭하여 Mirror 짱 CDK를 입력하세요"
 
-#: app/log_interface.py:151
+#: app/log_interface.py:152
 msgid "已暂停"
 msgstr "일시 중지됨"
 
-#: app/log_interface.py:204
+#: app/log_interface.py:205
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "{stop} 중지 · {pause} 일시 중지"
 
-#: app/log_interface.py:448
+#: app/log_interface.py:449
 msgid "暂停任务"
 msgstr "임무 일시 중지"
 
-#: app/log_interface.py:453
+#: app/log_interface.py:454
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr "내장 임무만 일시 중지를 지원하며, 일시 중지 시 스크립트가 모든 동작을 중지합니다"
 
-#: app/log_interface.py:1774
+#: app/log_interface.py:1775
 msgid "继续任务"
 msgstr "임무 재개"
 
-#: app/sub_interfaces/hotkey_interface.py:24
+#: app/sub_interfaces/hotkey_interface.py:25
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "임무 일시 중지/재개 (전역 단축키, 백그라운드 지원)"
 
-#: app/log_interface.py:208
+#: app/log_interface.py:209
 msgid "按下 {stop} 停止任务"
 msgstr "{stop} 중지"
 
-#: app/log_interface.py:1826
+#: app/log_interface.py:1827
 msgid "复制"
 msgstr "복사"
 
-#: app/log_interface.py:1829
+#: app/log_interface.py:1830
 msgid "全选"
 msgstr "모두 선택"
 
-#: app/setting_interface.py:665
+#: app/setting_interface.py:667
 msgid "自动记录差分宇宙存档"
 msgstr "차분 우주 기록 자동 저장"
 
-#: app/setting_interface.py:666
+#: app/setting_interface.py:668
 msgid "探索成功后保存到第一个空存档位；存档已满时跳过"
 msgstr "탐사 성공 후 첫 번째 빈 슬롯에 저장합니다. 슬롯이 모두 차 있으면 건너뜁니다."
 
-#: app/setting_interface.py:818
+#: app/setting_interface.py:820
 msgid "获得特殊物品"
 msgstr ""
 
-#: app/setting_interface.py:830
+#: app/setting_interface.py:832
 msgid "启用「特殊物品领取」"
 msgstr ""
 
-#: app/setting_interface.py:831
+#: app/setting_interface.py:833
 msgid "按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置"
 msgstr ""
 
@@ -5949,42 +5948,42 @@ msgstr ""
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币（过期邮包-1 / 艾迪恩代币-1）"
 msgstr ""
 
-#: app/setting_interface.py:850
+#: app/setting_interface.py:852
 msgid "获得翁法罗斯记忆代币"
 msgstr ""
 
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
 msgstr ""
 
-#: app/setting_interface.py:855
+#: app/setting_interface.py:857
 msgid "远程一号位锄地"
 msgstr ""
 
-#: app/setting_interface.py:856
+#: app/setting_interface.py:858
 msgid "黄泉一号位锄地"
 msgstr ""
 
-#: app/setting_interface.py:857
+#: app/setting_interface.py:859
 msgid "仅获取特殊物品"
 msgstr ""
 
-#: app/setting_interface.py:860
+#: app/setting_interface.py:862
 msgid "一键切换地图版本，并把三项特殊物品领取都设为「启用」"
 msgstr ""
 
-#: app/setting_interface.py:3395
+#: app/setting_interface.py:3404
 msgid "当前为“{name}”模式"
 msgstr ""
 
-#: app/setting_interface.py:837
+#: app/setting_interface.py:839
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食"
 msgstr ""
 
-#: app/setting_interface.py:844
+#: app/setting_interface.py:846
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"
 msgstr ""
 
-#: app/setting_interface.py:851
+#: app/setting_interface.py:853
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
 msgstr ""
 
@@ -6024,112 +6023,204 @@ msgstr "에바네시아「꽃 피길 기다리는 달」"
 msgid "风堇·云边拾暖"
 msgstr "히아신「구름 곁의 따스함」"
 
-#: app/setting_interface.py:280
+#: app/setting_interface.py:282
 msgid "每周清理遗器"
 msgstr ""
 
-#: app/setting_interface.py:284
+#: app/setting_interface.py:286
 msgid "启用智能弃置"
 msgstr ""
 
-#: app/setting_interface.py:285
+#: app/setting_interface.py:287
 msgid "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
 msgstr ""
 
-#: app/setting_interface.py:1658
+#: app/setting_interface.py:1660
 msgid "QQ 官方机器人"
 msgstr "QQ 공식 봇"
 
-#: app/setting_interface.py:1659
+#: app/setting_interface.py:1661
 msgid "QQ 开放平台官方机器人推送"
 msgstr "QQ 개방형 플랫폼 공식 봇 푸시"
 
-#: app/setting_interface.py:1662
+#: app/setting_interface.py:1664
 msgid "机器人 AppID"
 msgstr "봇 AppID"
 
-#: app/setting_interface.py:1662
+#: app/setting_interface.py:1664
 msgid "QQ 开放平台的机器人 AppID"
 msgstr "QQ 개방형 플랫폼의 봇 AppID"
 
-#: app/setting_interface.py:1663
+#: app/setting_interface.py:1665
 msgid "机器人 AppSecret"
 msgstr "봇 AppSecret"
 
-#: app/setting_interface.py:1663
+#: app/setting_interface.py:1665
 msgid "QQ 开放平台的机器人 AppSecret"
 msgstr "QQ 개방형 플랫폼의 봇 AppSecret"
 
-#: app/setting_interface.py:1664
+#: app/setting_interface.py:1666
 msgid "单聊用户 openid"
 msgstr "1:1 채팅 사용자 openid"
 
-#: app/setting_interface.py:1664
+#: app/setting_interface.py:1666
 msgid "可选参数，单聊消息的接收用户 openid"
 msgstr "선택 사항, 1:1 채팅 메시지 수신 사용자 openid"
 
-#: app/setting_interface.py:1665
+#: app/setting_interface.py:1667
 msgid "群聊 group_openid"
 msgstr "그룹 채팅 group_openid"
 
-#: app/setting_interface.py:1665
+#: app/setting_interface.py:1667
 msgid "可选参数，群聊消息的接收群 group_openid"
 msgstr "선택 사항, 그룹 채팅 메시지 수신 그룹 group_openid"
 
-#: app/setting_interface.py:3132
+#: app/setting_interface.py:3141
 msgid "绑定单聊"
 msgstr "1:1 채팅 연결"
 
-#: app/setting_interface.py:3132
+#: app/setting_interface.py:3141
 msgid "绑定群聊"
 msgstr "그룹 채팅 연결"
 
-#: app/setting_interface.py:3134
+#: app/setting_interface.py:3143
 msgid "自动绑定收件标识"
 msgstr "수신 ID 자동 연결"
 
-#: app/setting_interface.py:3143
+#: app/setting_interface.py:3152
 msgid "正在绑定中"
 msgstr "연결 처리 중"
 
-#: app/setting_interface.py:3144
+#: app/setting_interface.py:3153
 msgid "请等待当前绑定完成后再试"
 msgstr "현재 연결이 완료될 때까지 기다린 후 다시 시도하세요"
 
-#: app/setting_interface.py:3157
+#: app/setting_interface.py:3166
 msgid "无法绑定"
 msgstr "연결할 수 없음"
 
-#: app/setting_interface.py:3158
+#: app/setting_interface.py:3167
 msgid "请先填写机器人 AppID 与 AppSecret"
 msgstr "먼저 봇 AppID와 AppSecret을 입력하세요"
 
-#: app/setting_interface.py:3171
+#: app/setting_interface.py:3180
 msgid "点击「开始监听」后，请在 {seconds} 秒内用 QQ 私聊机器人并发送验证码 {code}"
 msgstr "\"수신 대기 시작\"을 클릭한 후 {seconds}초 안에 QQ에서 봇에게 1:1 메시지로 인증 코드 {code}를 보내세요"
 
-#: app/setting_interface.py:3173
+#: app/setting_interface.py:3182
 msgid "点击「开始监听」后，请在 {seconds} 秒内在群聊中 @ 机器人并发送验证码 {code}，或将机器人拉进目标群"
 msgstr ""
 "\"수신 대기 시작\"을 클릭한 후 {seconds}초 안에 그룹 채팅에서 봇을 @하여 인증 코드 {code}를 보내거나, 봇을 대상 "
 "그룹에 초대하세요"
 
-#: app/setting_interface.py:3177
+#: app/setting_interface.py:3186
 msgid "开始监听"
 msgstr "수신 대기 시작"
 
-#: app/setting_interface.py:3207
+#: app/setting_interface.py:3216
 msgid "绑定成功"
 msgstr "연결 완료"
 
-#: app/setting_interface.py:3207
+#: app/setting_interface.py:3216
 msgid "绑定失败"
 msgstr "연결 실패"
 
-#: app/setting_interface.py:3189
+#: app/setting_interface.py:3198
 msgid "监听中，请私聊机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "수신 대기 중… {seconds}초 안에 QQ에서 봇에게 1:1 메시지로 인증 코드 {code}를 보내세요"
 
-#: app/setting_interface.py:3191
+#: app/setting_interface.py:3200
 msgid "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "수신 대기 중… {seconds}초 안에 그룹 채팅에서 봇을 @하여 인증 코드 {code}를 보내세요"
+
+#: app/card/autostart_setting_card.py:42
+msgid "开机启动设置"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:49
+msgid "登录后打开图形界面"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:53
+msgid "打开图形界面后最小化到托盘"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:57
+msgid "打开图形界面后自动执行的任务："
+msgstr ""
+
+#: app/card/autostart_setting_card.py:59
+msgid "不执行"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:65
+msgid "不打开图形界面时执行的任务："
+msgstr ""
+
+msgid "不打开图形界面时必须选择一项任务，将以命令行方式执行，完成后自动退出"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:73
+msgid "请选择要执行的任务"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:139
+msgid "升级到新版"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:214
+msgid "开机启动已开启"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:224
+msgid "开机启动已关闭"
+msgstr ""
+
+msgid "可在任务管理器的「启动应用」中查看或禁用"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:235
+msgid "开机启动设置失败"
+msgstr ""
+
+msgid "请确认以管理员权限运行后重试"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:249
+msgid "开机启动设置已保存"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:262
+msgid "已升级到新版开机启动"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:263
+msgid "旧的计划任务已删除，请按需配置并重新开启开关"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:272
+msgid "升级到新版失败"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:273
+msgid "删除旧的计划任务失败，请重试"
+msgstr ""
+
+msgid ""
+"登录 Windows 后自动启动，可在任务管理器「启动应用」中查看或禁用；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:236
+msgid "请以管理员权限运行后重试"
+msgstr ""
+
+msgid "登录 Windows 后自动启动，启动时不会弹出 UAC 提示；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
+msgstr ""
+
+#: app/card/autostart_setting_card.py:71
+msgid "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
+msgstr ""
+
+#: app/setting_interface.py:2518
+msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
+msgstr ""

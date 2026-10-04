@@ -444,6 +444,14 @@ scheduled_tasks: [] # 示例：
 #     enabled: true
 
 use_background_screenshot: true # 是否优先使用后台截图
+
+# 开机启动设置（在图形界面「设置 - 杂项」中通过「配置」按钮设置）
+# 由计划任务在登录后以最高权限静默启动，不会弹出 UAC 提示。
+autostart_open_gui: true # 登录 Windows 后是否打开图形界面；关闭时将以命令行窗口方式执行 autostart_headless_task（与手动运行命令行版一致）
+autostart_minimize: false # 打开图形界面后是否最小化到托盘（仅在打开图形界面时有效）
+autostart_gui_task: "" # 打开图形界面后自动执行的任务ID（如 main / daily），留空表示不执行
+autostart_headless_task: "main" # 不打开图形界面时执行的任务ID，必须填写（如 main / daily）
+
 home_cards:
 close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问）, "minimize"（最小化到托盘）, "close"（关闭程序）
 

@@ -6,9 +6,7 @@ from PySide6.QtWidgets import QPushButton
 from .messagebox_custom import MessageBoxNotify
 from module.config import cfg
 from module.localization import tr
-from utils.schedule import create_task, is_task_exists, delete_task
 import datetime
-import os
 
 
 def format_config_timestamp(configname: str):
@@ -31,41 +29,6 @@ def build_timestamp_content(content: str, time_title: str, timestamp_configname:
     lines = [content] if content else []
     lines.append(f"{time_title}：{timestamp_text}")
     return "\n".join(lines), has_timestamp
-
-
-class StartMarch7thAssistantSwitchSettingCard(SettingCard):
-    """ Setting card with switch button """
-
-    checkedChanged = Signal(bool)
-
-    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
-        super().__init__(icon, title, content, parent)
-        self.switchButton = SwitchButton(
-            tr('关'), self, IndicatorPosition.RIGHT)
-
-        self.task_name = "StartMarch7thAssistant"
-        self.program_path = os.path.abspath("./March7th Launcher.exe")
-        self.program_args = "main"
-
-        self.setValue(is_task_exists(self.task_name))
-
-        # add switch button to layout
-        self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
-        self.hBoxLayout.addSpacing(16)
-
-        self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
-
-    def __onCheckedChanged(self, isChecked: bool):
-        """ switch button checked state changed slot """
-        self.setValue(isChecked)
-        if isChecked:
-            create_task(task_name=self.task_name, program_path=self.program_path, program_args=self.program_args)
-        else:
-            delete_task(task_name=self.task_name)
-
-    def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(bool(isChecked))
-        self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
 
 class SwitchSettingCard1(SettingCard):
