@@ -6057,3 +6057,7 @@ msgstr ""
 #: assets/config/character_names.json
 msgid "黑天鹅"
 msgstr ""
+
+#: app/card/autoplot_setting_card.py:65
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""

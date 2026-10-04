@@ -62,6 +62,11 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.autoPhoneDetectCheckBox.setChecked(bool(cfg.get_value("autoplot_phone_detect_enable", True)))
         self.viewLayout.addWidget(self.autoPhoneDetectCheckBox)
 
+        self.heroChronicleCheckBox = CheckBox(tr('自动阅读翁法罗斯英雄纪（请先打开该书目录）'), self.view)
+        self.heroChronicleCheckBox.setChecked(bool(cfg.get_value('autoplot_hero_chronicle_enable', False)))
+        self.viewLayout.addWidget(self.heroChronicleCheckBox)
+        self.heroChronicleCheckBox.stateChanged.connect(self._on_option_changed)
+
         # Hotkey toggle checkbox
         self.hotkeyToggleCheckBox = CheckBox(tr("启用快捷键切换自动对话"), self.view)
         self.hotkeyToggleCheckBox.setChecked(bool(cfg.get_value("hotkey_toggle_autoplot_enable", False)))
@@ -93,6 +98,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
         cfg.set_value("autoplot_click_enable", self.autoClickCheckBox.isChecked())
         cfg.set_value("autoplot_battle_detect_enable", self.autoBattleDetectCheckBox.isChecked())
         cfg.set_value("autoplot_phone_detect_enable", self.autoPhoneDetectCheckBox.isChecked())
+        cfg.set_value('autoplot_hero_chronicle_enable', self.heroChronicleCheckBox.isChecked())
         self.optionsChanged.emit(self.getOptions())
 
     def _on_hotkey_toggle_changed(self):
@@ -125,6 +131,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
             'auto_click': self.autoClickCheckBox.isChecked(),
             'auto_battle_detect_enable': self.autoBattleDetectCheckBox.isChecked(),
             'auto_phone_detect_enable': self.autoPhoneDetectCheckBox.isChecked(),
+            'hero_chronicle_enable': self.heroChronicleCheckBox.isChecked(),
         }
 
     def updateHotkeyHint(self):

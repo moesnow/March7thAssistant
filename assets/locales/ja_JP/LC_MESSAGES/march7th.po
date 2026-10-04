@@ -6112,3 +6112,7 @@ msgstr "監視中…{seconds} 秒以内に QQ でボットへ個人メッセー�
 #: app/setting_interface.py:3191
 msgid "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "監視中…{seconds} 秒以内にグループチャットでボットに @ を付けて認証コード {code} を送信してください"
+
+#: app/card/autoplot_setting_card.py:65
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""

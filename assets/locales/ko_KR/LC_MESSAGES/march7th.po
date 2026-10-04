@@ -6133,3 +6133,7 @@ msgstr "수신 대기 중… {seconds}초 안에 QQ에서 봇에게 1:1 메시�
 #: app/setting_interface.py:3191
 msgid "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "수신 대기 중… {seconds}초 안에 그룹 채팅에서 봇을 @하여 인증 코드 {code}를 보내세요"
+
+#: app/card/autoplot_setting_card.py:65
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""
