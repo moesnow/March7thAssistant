@@ -225,6 +225,7 @@ class TestPauseToggle:
         return iface
 
     def test_toggle_writes_pause_then_resume(self, tmp_path):
+        from utils.pause import STATE_PAUSED
         iface = self._make_iface(tmp_path)
         control = tmp_path / "pause.json"
 
@@ -233,10 +234,32 @@ class TestPauseToggle:
         assert iface._pause_state == "pausing"
         assert any("暂停指令已发送" in line for line in iface.log_lines)
 
+        # 任务真正停下（CLI 回执 paused）后按键才发送继续指令
+        (tmp_path / "pause.json.state").write_text(
+            json.dumps({"state": STATE_PAUSED}), encoding="utf-8"
+        )
         iface._onPauseToggle()
         assert json.loads(control.read_text(encoding="utf-8"))["command"] == "resume"
         assert iface._pause_state == "running"
         assert any("继续指令已发送" in line for line in iface.log_lines)
+
+    def test_toggle_never_resumes_before_fully_paused(self, tmp_path):
+        """任务未真正停下前连按暂停热键/按钮，始终是暂停语义，不会切成继续。"""
+        from utils.pause import STATE_PAUSING
+        iface = self._make_iface(tmp_path)
+        control = tmp_path / "pause.json"
+
+        iface._onPauseToggle()
+        assert json.loads(control.read_text(encoding="utf-8"))["command"] == "pause"
+        # 模拟 CLI 回执「暂停中」（已发暂停指令、尚未停到卡点）
+        (tmp_path / "pause.json.state").write_text(
+            json.dumps({"state": STATE_PAUSING}), encoding="utf-8"
+        )
+        for _ in range(3):
+            iface._onPauseToggle()
+            assert json.loads(control.read_text(encoding="utf-8"))["command"] == "pause"
+        assert iface._pause_state == "pausing"
+        assert not any("继续指令已发送" in line for line in iface.log_lines)
 
     def test_toggle_ignored_when_task_not_supported(self, tmp_path):
         iface = self._make_iface(tmp_path)
@@ -291,6 +314,11 @@ class TestPauseToggle:
         assert timer.stopped is True
         assert iface._paused_timeout_remaining == 5000
 
+        # 重复暂停请求不覆盖已冻结的剩余时间（定时器已停止时 remainingTime 无意义）
+        timer.remaining = -1
+        iface._freezeTimeoutTimer()
+        assert iface._paused_timeout_remaining == 5000
+
         iface._resumeTimeoutTimer()
         assert timer.started_with == 5000
         assert iface._paused_timeout_remaining is None
@@ -318,15 +346,26 @@ class TestGameLogOverlayPauseDisplay:
         return overlay
 
     def test_hotkey_hint_shows_both_hotkeys(self, qapp):
+        from module.localization import tr
         overlay = self._make_overlay()
         overlay.update_hotkey_hint('F10', 'F8')
         assert 'F10' in overlay.hotkeyLabel.value
         assert 'F8' in overlay.hotkeyLabel.value
+        assert tr('按下 {stop} 停止 · {pause} 暂停').format(stop='F10', pause='F8') == overlay.hotkeyLabel.value
+
+    def test_hotkey_hint_switches_to_resume_when_paused(self, qapp):
+        from module.localization import tr
+        overlay = self._make_overlay()
+        overlay.update_hotkey_hint('F10', 'F8', paused=True)
+        assert overlay.hotkeyLabel.value == tr('按下 {stop} 停止 · {pause} 继续').format(stop='F10', pause='F8')
 
     def test_hotkey_hint_hides_pause_hotkey_when_not_pausable(self, qapp):
         from module.localization import tr
         overlay = self._make_overlay()
         overlay.update_hotkey_hint('F10', None)
+        assert overlay.hotkeyLabel.value == tr('按下 {stop} 停止任务').format(stop='F10')
+        # 不支持暂停的任务即使处于暂停态（不会发生）也只显示停止提示
+        overlay.update_hotkey_hint('F10', None, paused=True)
         assert overlay.hotkeyLabel.value == tr('按下 {stop} 停止任务').format(stop='F10')
 
     def test_set_paused_toggles_badge(self, qapp):
@@ -344,7 +383,7 @@ class TestGameLogOverlayPauseDisplay:
         iface._pause_state = STATE_RUNNING
         calls = []
         iface._log_overlay = SimpleNamespace(
-            update_hotkey_hint=lambda stop, pause: calls.append((stop, pause)),
+            update_hotkey_hint=lambda stop, pause, paused=False: calls.append((stop, pause, paused)),
         )
 
         iface._updateOverlayHotkeyHint()
@@ -353,3 +392,27 @@ class TestGameLogOverlayPauseDisplay:
         iface._pause_supported = True
         iface._updateOverlayHotkeyHint()
         assert calls[-1][1] is not None  # 可暂停：显示暂停快捷键
+        assert calls[-1][2] is False  # 未暂停：提示仍是「暂停」
+
+    def test_overlay_hint_reflects_paused_state(self, tmp_path):
+        from app.log_interface import LogInterface
+        from utils.pause import STATE_PAUSED, STATE_PAUSING, STATE_RUNNING
+        iface = LogInterface.__new__(LogInterface)
+        iface._pause_supported = True
+        calls = []
+        iface._log_overlay = SimpleNamespace(
+            update_hotkey_hint=lambda stop, pause, paused=False: calls.append(paused),
+        )
+
+        iface._pause_state = STATE_RUNNING
+        iface._updateOverlayHotkeyHint()
+        assert calls[-1] is False
+
+        # 「暂停中」过渡态不切换文案（与暂停徽章/按钮文本一致）
+        iface._pause_state = STATE_PAUSING
+        iface._updateOverlayHotkeyHint()
+        assert calls[-1] is False
+
+        iface._pause_state = STATE_PAUSED
+        iface._updateOverlayHotkeyHint()
+        assert calls[-1] is True  # 已暂停：提示改为「继续」

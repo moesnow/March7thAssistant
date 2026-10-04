@@ -54,31 +54,31 @@ msgstr "啟動遊戲"
 msgid "日志"
 msgstr "日誌"
 
-#: app/log_interface.py:419
+#: app/log_interface.py:425
 msgid "任务日志"
 msgstr "任務日誌"
 
-#: app/log_interface.py:425
+#: app/log_interface.py:431
 msgid "等待任务..."
 msgstr "等待任務..."
 
-#: app/log_interface.py:1832
+#: app/log_interface.py:1842
 msgid "清空日志"
 msgstr "清空日誌"
 
-#: app/log_interface.py:473
+#: app/log_interface.py:479
 msgid "配置定时任务"
 msgstr "設定排程任務"
 
-#: app/log_interface.py:1043
+#: app/log_interface.py:1052
 msgid "尚未配置定时任务"
 msgstr "尚未設定排程任務"
 
-#: app/log_interface.py:2411
+#: app/log_interface.py:2436
 msgid "任务完成"
 msgstr "任務完成"
 
-#: app/log_interface.py:2414
+#: app/log_interface.py:2439
 msgid "任务已停止"
 msgstr "任務已停止"
 
@@ -784,27 +784,27 @@ msgstr "「退出」指退出遊戲，不再建議使用循環模式，請改用
 msgid "无"
 msgstr "無"
 
-#: app/log_interface.py:2337
+#: app/log_interface.py:2362
 msgid "关机"
 msgstr "關機"
 
-#: app/log_interface.py:2338
+#: app/log_interface.py:2363
 msgid "睡眠"
 msgstr "睡眠"
 
-#: app/log_interface.py:2339
+#: app/log_interface.py:2364
 msgid "休眠"
 msgstr "休眠"
 
-#: app/log_interface.py:2340
+#: app/log_interface.py:2365
 msgid "重启"
 msgstr "重新啟動"
 
-#: app/log_interface.py:2341
+#: app/log_interface.py:2366
 msgid "注销"
 msgstr "登出"
 
-#: app/log_interface.py:2342
+#: app/log_interface.py:2367
 msgid "关闭显示器"
 msgstr "關閉顯示器"
 
@@ -1083,7 +1083,7 @@ msgstr "完整運行"
 msgid "退出"
 msgstr "退出"
 
-#: app/log_interface.py:1324
+#: app/log_interface.py:1333
 msgid "任务正在运行"
 msgstr "任務正在運行"
 
@@ -1147,7 +1147,7 @@ msgstr "正在啟動遊戲(❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "程式已縮小至系統匣"
 
-#: app/log_interface.py:440
+#: app/log_interface.py:446
 msgid "停止任务"
 msgstr "停止任務"
 
@@ -1452,75 +1452,75 @@ msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "已設定 {count} 項計畫"
 
-#: app/warp_interface.py:27
+#: app/warp_interface.py:24
 msgid "更新数据"
 msgstr "更新資料"
 
-#: app/warp_interface.py:28
+#: app/warp_interface.py:25
 msgid "更新完整数据"
 msgstr "更新完整資料"
 
-#: app/warp_interface.py:29
+#: app/warp_interface.py:26
 msgid "导入数据"
 msgstr "匯入資料"
 
-#: app/warp_interface.py:30
+#: app/warp_interface.py:27
 msgid "导出数据"
 msgstr "匯出資料"
 
-#: app/warp_interface.py:31
+#: app/warp_interface.py:28
 msgid "导出Excel"
 msgstr "匯出 Excel"
 
-#: app/warp_interface.py:32
+#: app/warp_interface.py:29
 msgid "复制链接"
 msgstr "複製連結"
 
-#: app/warp_interface.py:33
+#: app/warp_interface.py:30
 msgid "清空"
 msgstr "清空"
 
-#: app/warp_interface.py:120
+#: app/warp_interface.py:117
 msgid "导入抽卡记录"
 msgstr "匯入抽卡紀錄"
 
-#: app/warp_interface.py:120
+#: app/warp_interface.py:117
 msgid "UIGF / SRGF 格式 (*.json)"
 msgstr "UIGF / SRGF 格式 (*.json)"
 
-#: app/warp_interface.py:147
+#: app/warp_interface.py:144
 msgid "导入成功(＾∀＾●)"
 msgstr "匯入成功(＾∀＾●)"
 
-#: app/warp_interface.py:157
+#: app/warp_interface.py:154
 msgid "导入失败(╥╯﹏╰╥)"
 msgstr "匯入失敗(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:176
+#: app/warp_interface.py:173
 msgid "导出抽卡记录"
 msgstr "匯出抽卡紀錄"
 
-#: app/warp_interface.py:178
+#: app/warp_interface.py:175
 msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
 msgstr "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
 
-#: app/warp_interface.py:185
+#: app/warp_interface.py:182
 msgid "UIGF 格式 (*.json)"
 msgstr "UIGF 格式 (*.json)"
 
-#: app/warp_interface.py:204
+#: app/warp_interface.py:201
 msgid "导出成功(＾∀＾●)"
 msgstr "匯出成功(＾∀＾●)"
 
-#: app/warp_interface.py:215
+#: app/warp_interface.py:212
 msgid "导出失败(╥╯﹏╰╥)"
 msgstr "匯出失敗(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:231
+#: app/warp_interface.py:228
 msgid "导出为 Excel 文件"
 msgstr "匯出為 Excel 檔案"
 
-#: app/warp_interface.py:233
+#: app/warp_interface.py:230
 msgid "Excel 文件 (*.xlsx)"
 msgstr "Excel 檔案 (*.xlsx)"
 
@@ -1540,7 +1540,7 @@ msgstr "常駐躍遷"
 msgid "新手跃迁"
 msgstr "新手躍遷"
 
-#: app/warp_interface.py:232
+#: app/warp_interface.py:229
 msgid "未知"
 msgstr "未知"
 
@@ -1552,39 +1552,39 @@ msgstr "時間"
 msgid "名称"
 msgstr "名稱"
 
-#: app/warp_interface.py:250
+#: app/warp_interface.py:252
 msgid "星级"
 msgstr "星級"
 
-#: app/warp_interface.py:250
+#: app/warp_interface.py:252
 msgid "卡池"
 msgstr "卡池"
 
-#: app/warp_interface.py:327
+#: app/warp_interface.py:329
 msgid "复制成功(＾∀＾●)"
 msgstr "複製成功(＾∀＾●)"
 
-#: app/warp_interface.py:337
+#: app/warp_interface.py:339
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr "複製失敗(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:348
+#: app/warp_interface.py:350
 msgid "清空抽卡记录"
 msgstr "清空抽卡紀錄"
 
-#: app/warp_interface.py:349
+#: app/warp_interface.py:351
 msgid "确定要清空抽卡记录吗？此操作不可撤销。"
 msgstr "確定要清空抽卡紀錄嗎？此操作不可還原。"
 
-#: app/warp_interface.py:359
+#: app/warp_interface.py:361
 msgid "清空完成(＾∀＾●)"
 msgstr "清空完成(＾∀＾●)"
 
-#: app/warp_interface.py:370
+#: app/warp_interface.py:372
 msgid "清空失败(╥╯﹏╰╥)"
 msgstr "清空失敗(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:401
+#: app/warp_interface.py:403
 msgid ""
 "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n"
 "\n"
@@ -2260,7 +2260,7 @@ msgstr "正在檢查更新"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "請稍候，更新檢查仍在進行中"
 
-#: app/log_interface.py:971
+#: app/log_interface.py:980
 msgid "未命名"
 msgstr "未命名"
 
@@ -4127,7 +4127,7 @@ msgstr "打開模擬宇宙目錄（停止維護）"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "打開模擬宇宙項目主頁（停止維護）"
 
-#: app/log_interface.py:456
+#: app/log_interface.py:462
 msgid "在游戏内显示日志"
 msgstr "在遊戲內顯示日誌"
 
@@ -5640,11 +5640,11 @@ msgstr "次數："
 msgid "队伍："
 msgstr "隊伍："
 
-#: app/log_interface.py:1040
+#: app/log_interface.py:1049
 msgid "已启用：{count}，下次：{time}"
 msgstr "已啓用：{count}，下次：{time}"
 
-#: app/log_interface.py:1293
+#: app/log_interface.py:1302
 msgid "正在运行：{name}"
 msgstr "正在運行：{name}"
 
@@ -5869,19 +5869,19 @@ msgstr "請先點擊「修改」填寫 Mirror 醬 CDK"
 msgid "已暂停"
 msgstr "已暫停"
 
-#: app/log_interface.py:205
+#: app/log_interface.py:207
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "按下 {stop} 停止 · {pause} 暫停"
 
-#: app/log_interface.py:449
+#: app/log_interface.py:455
 msgid "暂停任务"
 msgstr "暫停任務"
 
-#: app/log_interface.py:454
+#: app/log_interface.py:460
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr "僅內建任務支援暫停，暫停後腳本將停止一切操作"
 
-#: app/log_interface.py:1775
+#: app/log_interface.py:1785
 msgid "继续任务"
 msgstr "繼續任務"
 
@@ -5889,15 +5889,15 @@ msgstr "繼續任務"
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "暫停/繼續任務（全域熱鍵，支援背景）"
 
-#: app/log_interface.py:209
+#: app/log_interface.py:211
 msgid "按下 {stop} 停止任务"
 msgstr "按下 {stop} 停止任務"
 
-#: app/log_interface.py:1827
+#: app/log_interface.py:1837
 msgid "复制"
 msgstr "複製"
 
-#: app/log_interface.py:1830
+#: app/log_interface.py:1840
 msgid "全选"
 msgstr "全選"
 
@@ -6201,3 +6201,7 @@ msgstr ""
 #: app/setting_interface.py:2518
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 msgstr ""
+
+#: app/log_interface.py:207
+msgid "按下 {stop} 停止 · {pause} 继续"
+msgstr "按下 {stop} 停止 · {pause} 繼續"

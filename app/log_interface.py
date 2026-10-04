@@ -198,12 +198,14 @@ class GameLogOverlay(QWidget):
         """显示/隐藏暂停状态徽章。"""
         self.pauseBadge.setVisible(bool(paused))
 
-    def update_hotkey_hint(self, stop_hotkey: str, pause_hotkey: str | None):
-        """更新快捷键提示；不支持暂停的任务只显示停止快捷键。"""
+    def update_hotkey_hint(self, stop_hotkey: str, pause_hotkey: str | None, paused: bool = False):
+        """更新快捷键提示；不支持暂停的任务只显示停止快捷键。
+
+        任务已暂停时暂停快捷键的作用变为继续，提示文案随之从「暂停」改为「继续」。
+        """
         if pause_hotkey:
-            self.hotkeyLabel.setText(
-                tr('按下 {stop} 停止 · {pause} 暂停').format(stop=stop_hotkey, pause=pause_hotkey)
-            )
+            template = tr('按下 {stop} 停止 · {pause} 继续') if paused else tr('按下 {stop} 停止 · {pause} 暂停')
+            self.hotkeyLabel.setText(template.format(stop=stop_hotkey, pause=pause_hotkey))
         else:
             self.hotkeyLabel.setText(
                 tr('按下 {stop} 停止任务').format(stop=stop_hotkey)
@@ -1725,20 +1727,27 @@ class LogInterface(ScrollArea):
         env.insert("MARCH7TH_CONTROL_FILE", self._pauseControlPath())
 
     def _updateOverlayHotkeyHint(self):
-        """按当前任务是否支持暂停，刷新悬浮窗快捷键提示。"""
+        """按当前任务是否支持暂停、是否已暂停，刷新悬浮窗快捷键提示。"""
         try:
             if self._log_overlay:
                 stop_hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
                 pause_hotkey = cfg.get_value("hotkey_pause_task", "f8").upper() if self._pause_supported else None
-                self._log_overlay.update_hotkey_hint(stop_hotkey, pause_hotkey)
+                paused = self._pause_state == STATE_PAUSED
+                self._log_overlay.update_hotkey_hint(stop_hotkey, pause_hotkey, paused)
         except Exception:
             pass
 
     def _onPauseToggle(self):
-        """切换任务暂停/继续（按钮与全局热键共用入口）。"""
+        """切换任务暂停/继续（按钮与全局热键共用入口）。
+
+        只有任务真正停下（CLI 回执为已暂停）后按键才发送继续指令；
+        未停住之前（运行中/暂停中）连按多少次都维持暂停语义，不会误切成继续。
+        """
         if not self._pause_supported or not self.isTaskRunning():
             return
-        if self._pause_state in (STATE_PAUSING, STATE_PAUSED):
+        # 以 CLI 回执为准，避免界面状态滞后时把「暂停中」的按键误判为继续
+        self._syncPauseState()
+        if self._pause_state == STATE_PAUSED:
             self._sendPauseCommand(COMMAND_RESUME)
         else:
             self._sendPauseCommand(COMMAND_PAUSE)
@@ -1797,10 +1806,11 @@ class LogInterface(ScrollArea):
             pass
 
     def _freezeTimeoutTimer(self):
-        """暂停期间冻结任务超时定时器。"""
+        """暂停期间冻结任务超时定时器（重复暂停请求不覆盖已冻结的剩余时间）。"""
         if getattr(self, '_timeout_timer', None):
             try:
-                self._paused_timeout_remaining = max(0, int(self._timeout_timer.remainingTime()))
+                if self._paused_timeout_remaining is None:
+                    self._paused_timeout_remaining = max(0, int(self._timeout_timer.remainingTime()))
                 self._timeout_timer.stop()
             except Exception:
                 pass

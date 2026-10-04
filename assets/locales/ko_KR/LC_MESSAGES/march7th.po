@@ -54,31 +54,31 @@ msgstr "게임 실행"
 msgid "日志"
 msgstr "로그"
 
-#: app/log_interface.py:419
+#: app/log_interface.py:425
 msgid "任务日志"
 msgstr "임무 로그"
 
-#: app/log_interface.py:425
+#: app/log_interface.py:431
 msgid "等待任务..."
 msgstr "작업 대기 중..."
 
-#: app/log_interface.py:1832
+#: app/log_interface.py:1842
 msgid "清空日志"
 msgstr "로그 지우기"
 
-#: app/log_interface.py:473
+#: app/log_interface.py:479
 msgid "配置定时任务"
 msgstr "예약 실행 설정"
 
-#: app/log_interface.py:1043
+#: app/log_interface.py:1052
 msgid "尚未配置定时任务"
 msgstr "예약된 임무 없음"
 
-#: app/log_interface.py:2411
+#: app/log_interface.py:2436
 msgid "任务完成"
 msgstr "임무 완료"
 
-#: app/log_interface.py:2414
+#: app/log_interface.py:2439
 msgid "任务已停止"
 msgstr "임무 중지됨"
 
@@ -787,27 +787,27 @@ msgstr "'종료'는 게임 종료를 의미합니다. 순환 모드 대신 로�
 msgid "无"
 msgstr "없음"
 
-#: app/log_interface.py:2337
+#: app/log_interface.py:2362
 msgid "关机"
 msgstr "시스템 종료"
 
-#: app/log_interface.py:2338
+#: app/log_interface.py:2363
 msgid "睡眠"
 msgstr "절전"
 
-#: app/log_interface.py:2339
+#: app/log_interface.py:2364
 msgid "休眠"
 msgstr "최대 절전"
 
-#: app/log_interface.py:2340
+#: app/log_interface.py:2365
 msgid "重启"
 msgstr "재부팅"
 
-#: app/log_interface.py:2341
+#: app/log_interface.py:2366
 msgid "注销"
 msgstr "로그오프"
 
-#: app/log_interface.py:2342
+#: app/log_interface.py:2367
 msgid "关闭显示器"
 msgstr "모니터 끄기"
 
@@ -1086,7 +1086,7 @@ msgstr "전체 실행"
 msgid "退出"
 msgstr "종료"
 
-#: app/log_interface.py:1324
+#: app/log_interface.py:1333
 msgid "任务正在运行"
 msgstr "임무 실행 중"
 
@@ -1150,7 +1150,7 @@ msgstr "게임 시작 중 (❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "프로그램이 트레이로 최소화되었습니다"
 
-#: app/log_interface.py:440
+#: app/log_interface.py:446
 msgid "停止任务"
 msgstr "임무 중지"
 
@@ -1457,75 +1457,75 @@ msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "{count} 개의 계획이 설정됨"
 
-#: app/warp_interface.py:27
+#: app/warp_interface.py:24
 msgid "更新数据"
 msgstr "데이터 업데이트"
 
-#: app/warp_interface.py:28
+#: app/warp_interface.py:25
 msgid "更新完整数据"
 msgstr "전체 데이터 업데이트"
 
-#: app/warp_interface.py:29
+#: app/warp_interface.py:26
 msgid "导入数据"
 msgstr "데이터 가져오기"
 
-#: app/warp_interface.py:30
+#: app/warp_interface.py:27
 msgid "导出数据"
 msgstr "데이터 내보내기"
 
-#: app/warp_interface.py:31
+#: app/warp_interface.py:28
 msgid "导出Excel"
 msgstr "Excel로 내보내기"
 
-#: app/warp_interface.py:32
+#: app/warp_interface.py:29
 msgid "复制链接"
 msgstr "링크 복사"
 
-#: app/warp_interface.py:33
+#: app/warp_interface.py:30
 msgid "清空"
 msgstr "비우기"
 
-#: app/warp_interface.py:120
+#: app/warp_interface.py:117
 msgid "导入抽卡记录"
 msgstr "가챠 기록 가져오기"
 
-#: app/warp_interface.py:120
+#: app/warp_interface.py:117
 msgid "UIGF / SRGF 格式 (*.json)"
 msgstr "UIGF / SRGF 형식 (*.json)"
 
-#: app/warp_interface.py:147
+#: app/warp_interface.py:144
 msgid "导入成功(＾∀＾●)"
 msgstr "가져오기 성공(＾∀＾●)"
 
-#: app/warp_interface.py:157
+#: app/warp_interface.py:154
 msgid "导入失败(╥╯﹏╰╥)"
 msgstr "가져오기 실패(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:176
+#: app/warp_interface.py:173
 msgid "导出抽卡记录"
 msgstr "가챠 기록 내보내기"
 
-#: app/warp_interface.py:178
+#: app/warp_interface.py:175
 msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
 msgstr "UIGF 형식 (*.json);;SRGF 형식 (*.srgf.json)"
 
-#: app/warp_interface.py:185
+#: app/warp_interface.py:182
 msgid "UIGF 格式 (*.json)"
 msgstr "UIGF 형식 (*.json)"
 
-#: app/warp_interface.py:204
+#: app/warp_interface.py:201
 msgid "导出成功(＾∀＾●)"
 msgstr "내보내기 성공(＾∀＾●)"
 
-#: app/warp_interface.py:215
+#: app/warp_interface.py:212
 msgid "导出失败(╥╯﹏╰╥)"
 msgstr "내보내기 실패(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:231
+#: app/warp_interface.py:228
 msgid "导出为 Excel 文件"
 msgstr "Excel 파일로 내보내기"
 
-#: app/warp_interface.py:233
+#: app/warp_interface.py:230
 msgid "Excel 文件 (*.xlsx)"
 msgstr "Excel 파일 (*.xlsx)"
 
@@ -1545,7 +1545,7 @@ msgstr "상시 워프"
 msgid "新手跃迁"
 msgstr "초행길 워프"
 
-#: app/warp_interface.py:232
+#: app/warp_interface.py:229
 msgid "未知"
 msgstr "알 수 없음"
 
@@ -1557,39 +1557,39 @@ msgstr "시간"
 msgid "名称"
 msgstr "이름"
 
-#: app/warp_interface.py:250
+#: app/warp_interface.py:252
 msgid "星级"
 msgstr "등급"
 
-#: app/warp_interface.py:250
+#: app/warp_interface.py:252
 msgid "卡池"
 msgstr "워프"
 
-#: app/warp_interface.py:327
+#: app/warp_interface.py:329
 msgid "复制成功(＾∀＾●)"
 msgstr "복사 성공(＾∀＾●)"
 
-#: app/warp_interface.py:337
+#: app/warp_interface.py:339
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr "복사 실패(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:348
+#: app/warp_interface.py:350
 msgid "清空抽卡记录"
 msgstr "가챠 기록 비우기"
 
-#: app/warp_interface.py:349
+#: app/warp_interface.py:351
 msgid "确定要清空抽卡记录吗？此操作不可撤销。"
 msgstr "가챠 기록을 비우시겠습니까? 이 작업은 취소할 수 없습니다."
 
-#: app/warp_interface.py:359
+#: app/warp_interface.py:361
 msgid "清空完成(＾∀＾●)"
 msgstr "비우기 완료(＾∀＾●)"
 
-#: app/warp_interface.py:370
+#: app/warp_interface.py:372
 msgid "清空失败(╥╯﹏╰╥)"
 msgstr "비우기 실패(╥╯﹏╰╥)"
 
-#: app/warp_interface.py:401
+#: app/warp_interface.py:403
 msgid ""
 "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n"
 "\n"
@@ -2268,7 +2268,7 @@ msgstr "업데이트 확인 중"
 msgid "请稍候，更新检查仍在进行中"
 msgstr "기다려주세요, 업데이트 확인이 진행 중입니다"
 
-#: app/log_interface.py:971
+#: app/log_interface.py:980
 msgid "未命名"
 msgstr "이름 없음"
 
@@ -4138,7 +4138,7 @@ msgstr "시뮬레이션 우주 폴더 열기（유지보수 중단）"
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "시뮬레이션 우주 프로젝트 홈페이지 열기（유지보수 중단）"
 
-#: app/log_interface.py:456
+#: app/log_interface.py:462
 msgid "在游戏内显示日志"
 msgstr "게임 내 로그 표시"
 
@@ -5660,11 +5660,11 @@ msgstr "횟수:"
 msgid "队伍："
 msgstr "팀: "
 
-#: app/log_interface.py:1040
+#: app/log_interface.py:1049
 msgid "已启用：{count}，下次：{time}"
 msgstr "활성화됨: {count}, 다음: {time}"
 
-#: app/log_interface.py:1293
+#: app/log_interface.py:1302
 msgid "正在运行：{name}"
 msgstr "실행 중: {name}"
 
@@ -5890,19 +5890,19 @@ msgstr "\"수정\"을 클릭하여 Mirror 짱 CDK를 입력하세요"
 msgid "已暂停"
 msgstr "일시 중지됨"
 
-#: app/log_interface.py:205
+#: app/log_interface.py:207
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "{stop} 중지 · {pause} 일시 중지"
 
-#: app/log_interface.py:449
+#: app/log_interface.py:455
 msgid "暂停任务"
 msgstr "임무 일시 중지"
 
-#: app/log_interface.py:454
+#: app/log_interface.py:460
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr "내장 임무만 일시 중지를 지원하며, 일시 중지 시 스크립트가 모든 동작을 중지합니다"
 
-#: app/log_interface.py:1775
+#: app/log_interface.py:1785
 msgid "继续任务"
 msgstr "임무 재개"
 
@@ -5910,15 +5910,15 @@ msgstr "임무 재개"
 msgid "暂停/继续任务（全局热键，支持后台）"
 msgstr "임무 일시 중지/재개 (전역 단축키, 백그라운드 지원)"
 
-#: app/log_interface.py:209
+#: app/log_interface.py:211
 msgid "按下 {stop} 停止任务"
 msgstr "{stop} 중지"
 
-#: app/log_interface.py:1827
+#: app/log_interface.py:1837
 msgid "复制"
 msgstr "복사"
 
-#: app/log_interface.py:1830
+#: app/log_interface.py:1840
 msgid "全选"
 msgstr "모두 선택"
 
@@ -6224,3 +6224,7 @@ msgstr ""
 #: app/setting_interface.py:2518
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 msgstr ""
+
+#: app/log_interface.py:207
+msgid "按下 {stop} 停止 · {pause} 继续"
+msgstr "{stop} 중지 · {pause} 재개"

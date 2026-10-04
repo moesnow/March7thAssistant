@@ -754,107 +754,111 @@ msgstr ""
 msgid "检测到新版本：{version}"
 msgstr ""
 
-#: app/log_interface.py:205
+#: app/log_interface.py:207
+msgid "按下 {stop} 停止 · {pause} 继续"
+msgstr ""
+
+#: app/log_interface.py:207
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr ""
 
-#: app/log_interface.py:209
+#: app/log_interface.py:211
 msgid "按下 {stop} 停止任务"
 msgstr ""
 
-#: app/log_interface.py:419
+#: app/log_interface.py:425
 msgid "任务日志"
 msgstr ""
 
-#: app/log_interface.py:425
+#: app/log_interface.py:431
 msgid "等待任务..."
 msgstr ""
 
-#: app/log_interface.py:440
+#: app/log_interface.py:446
 msgid "停止任务"
 msgstr ""
 
-#: app/log_interface.py:449
+#: app/log_interface.py:455
 msgid "暂停任务"
 msgstr ""
 
-#: app/log_interface.py:454
+#: app/log_interface.py:460
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr ""
 
-#: app/log_interface.py:456
+#: app/log_interface.py:462
 msgid "在游戏内显示日志"
 msgstr ""
 
-#: app/log_interface.py:473
+#: app/log_interface.py:479
 msgid "配置定时任务"
 msgstr ""
 
-#: app/log_interface.py:971
+#: app/log_interface.py:980
 msgid "未命名"
 msgstr ""
 
-#: app/log_interface.py:1040
+#: app/log_interface.py:1049
 msgid "已启用：{count}，下次：{time}"
 msgstr ""
 
-#: app/log_interface.py:1043
+#: app/log_interface.py:1052
 msgid "尚未配置定时任务"
 msgstr ""
 
-#: app/log_interface.py:1293
+#: app/log_interface.py:1302
 msgid "正在运行：{name}"
 msgstr ""
 
-#: app/log_interface.py:1324
+#: app/log_interface.py:1333
 msgid "任务正在运行"
 msgstr ""
 
-#: app/log_interface.py:1775
+#: app/log_interface.py:1785
 msgid "继续任务"
 msgstr ""
 
-#: app/log_interface.py:1827
+#: app/log_interface.py:1837
 msgid "复制"
 msgstr ""
 
-#: app/log_interface.py:1830
+#: app/log_interface.py:1840
 msgid "全选"
 msgstr ""
 
-#: app/log_interface.py:1832
+#: app/log_interface.py:1842
 msgid "清空日志"
 msgstr ""
 
-#: app/log_interface.py:2337
+#: app/log_interface.py:2362
 msgid "关机"
 msgstr ""
 
-#: app/log_interface.py:2338
+#: app/log_interface.py:2363
 msgid "睡眠"
 msgstr ""
 
-#: app/log_interface.py:2339
+#: app/log_interface.py:2364
 msgid "休眠"
 msgstr ""
 
-#: app/log_interface.py:2340
+#: app/log_interface.py:2365
 msgid "重启"
 msgstr ""
 
-#: app/log_interface.py:2341
+#: app/log_interface.py:2366
 msgid "注销"
 msgstr ""
 
-#: app/log_interface.py:2342
+#: app/log_interface.py:2367
 msgid "关闭显示器"
 msgstr ""
 
-#: app/log_interface.py:2411
+#: app/log_interface.py:2436
 msgid "任务完成"
 msgstr ""
 
-#: app/log_interface.py:2414
+#: app/log_interface.py:2439
 msgid "任务已停止"
 msgstr ""
 
@@ -3827,115 +3831,115 @@ msgstr ""
 msgid "自动对话已停止"
 msgstr ""
 
-#: app/warp_interface.py:27
+#: app/warp_interface.py:24
 msgid "更新数据"
 msgstr ""
 
-#: app/warp_interface.py:28
+#: app/warp_interface.py:25
 msgid "更新完整数据"
 msgstr ""
 
-#: app/warp_interface.py:29
+#: app/warp_interface.py:26
 msgid "导入数据"
 msgstr ""
 
-#: app/warp_interface.py:30
+#: app/warp_interface.py:27
 msgid "导出数据"
 msgstr ""
 
-#: app/warp_interface.py:31
+#: app/warp_interface.py:28
 msgid "导出Excel"
 msgstr ""
 
-#: app/warp_interface.py:32
+#: app/warp_interface.py:29
 msgid "复制链接"
 msgstr ""
 
-#: app/warp_interface.py:33
+#: app/warp_interface.py:30
 msgid "清空"
 msgstr ""
 
-#: app/warp_interface.py:120
+#: app/warp_interface.py:117
 msgid "导入抽卡记录"
 msgstr ""
 
-#: app/warp_interface.py:120
+#: app/warp_interface.py:117
 msgid "UIGF / SRGF 格式 (*.json)"
 msgstr ""
 
-#: app/warp_interface.py:147
+#: app/warp_interface.py:144
 msgid "导入成功(＾∀＾●)"
 msgstr ""
 
-#: app/warp_interface.py:157
+#: app/warp_interface.py:154
 msgid "导入失败(╥╯﹏╰╥)"
 msgstr ""
 
-#: app/warp_interface.py:176
+#: app/warp_interface.py:173
 msgid "导出抽卡记录"
 msgstr ""
 
-#: app/warp_interface.py:178
+#: app/warp_interface.py:175
 msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
 msgstr ""
 
-#: app/warp_interface.py:185
+#: app/warp_interface.py:182
 msgid "UIGF 格式 (*.json)"
 msgstr ""
 
-#: app/warp_interface.py:204
+#: app/warp_interface.py:201
 msgid "导出成功(＾∀＾●)"
 msgstr ""
 
-#: app/warp_interface.py:215
+#: app/warp_interface.py:212
 msgid "导出失败(╥╯﹏╰╥)"
 msgstr ""
 
-#: app/warp_interface.py:231
+#: app/warp_interface.py:228
 msgid "导出为 Excel 文件"
 msgstr ""
 
-#: app/warp_interface.py:232
+#: app/warp_interface.py:229
 msgid "未知"
 msgstr ""
 
-#: app/warp_interface.py:233
+#: app/warp_interface.py:230
 msgid "Excel 文件 (*.xlsx)"
 msgstr ""
 
-#: app/warp_interface.py:250
+#: app/warp_interface.py:252
 msgid "星级"
 msgstr ""
 
-#: app/warp_interface.py:250
+#: app/warp_interface.py:252
 msgid "卡池"
 msgstr ""
 
-#: app/warp_interface.py:327
+#: app/warp_interface.py:329
 msgid "复制成功(＾∀＾●)"
 msgstr ""
 
-#: app/warp_interface.py:337
+#: app/warp_interface.py:339
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr ""
 
-#: app/warp_interface.py:348
+#: app/warp_interface.py:350
 msgid "清空抽卡记录"
 msgstr ""
 
-#: app/warp_interface.py:349
+#: app/warp_interface.py:351
 msgid "确定要清空抽卡记录吗？此操作不可撤销。"
 msgstr ""
 
-#: app/warp_interface.py:359
+#: app/warp_interface.py:361
 msgid "清空完成(＾∀＾●)"
 msgstr ""
 
-#: app/warp_interface.py:370
+#: app/warp_interface.py:372
 msgid "清空失败(╥╯﹏╰╥)"
 msgstr ""
 
-#: app/warp_interface.py:401
+#: app/warp_interface.py:403
 msgid ""
 "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n"
 "\n"
