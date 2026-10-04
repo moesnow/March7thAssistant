@@ -888,7 +888,7 @@ class InstanceTeamSettingCard(SettingCard):
         cfg.set_value("instance_team_enable", isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr("开") if isChecked else tr("关"))
 
     def _update_content_text(self):

@@ -64,7 +64,7 @@ class StartMarch7thAssistantSwitchSettingCard(SettingCard):
             delete_task(task_name=self.task_name)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
 
@@ -95,7 +95,7 @@ class SwitchSettingCard1(SettingCard):
         cfg.set_value(self.configname, isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
 
@@ -206,7 +206,7 @@ class SwitchSettingCardNotify(SettingCard):
             pass
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
 
@@ -247,7 +247,7 @@ class SwitchSettingCardTeam(SettingCard):
         cfg.set_value(self.configname, isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
@@ -290,7 +290,7 @@ class SwitchSettingCardImmersifier(SettingCard):
         cfg.set_value(self.configname, isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
@@ -333,7 +333,7 @@ class SwitchSettingCardGardenofplenty(SettingCard):
         cfg.set_value(self.configname, isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
@@ -377,7 +377,7 @@ class SwitchSettingCardEchoofwar(SettingCard):
         cfg.set_value(self.configname, isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
@@ -441,7 +441,7 @@ class SwitchSettingCardCloudGameStatus(SettingCard):
         cfg.set_value(self.configname, isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):
