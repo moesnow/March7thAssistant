@@ -10,6 +10,7 @@ log_retention_days: 30 # 日志保留天数，超过此天数的日志文件将�
 log_overlay_enable: true # 是否在游戏界面上显示实时日志浮窗（仅 Windows）。
 
 # 自动对话设置
+autoplot_enable: false # 是否在打开图形界面时恢复自动对话的开启状态。
 autoplot_skip_enable: true # 是否自动跳过对话（当出现跳过按钮时自动点击）。
 autoplot_click_enable: true # 是否自动选择对话选项。
 autoplot_battle_detect_enable: true # 是否自动战斗检测（检测到未自动战斗时按 V 开启）。

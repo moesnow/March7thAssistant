@@ -33,6 +33,9 @@ class AutoPlotSettingCard(ExpandSettingCard):
         # Configuration options
         self._init_options()
 
+        # 恢复总开关状态；此时尚未连接信号，实际启动由工具箱界面负责。
+        self.setValue(bool(cfg.get_value("autoplot_enable", False)))
+
         # Connect signals
         self.switchButton.checkedChanged.connect(self.__onSwitchChanged)
 
