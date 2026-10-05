@@ -186,12 +186,6 @@ msgstr "燃料を使用"
 msgid "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr "1回あたりの上限は5個です。すべて使うには「タスク完了後」を「ループ」に変更し、「完全実行」を開始してください。"
 
-msgid "自动分解四星遗器（建议在游戏内配置结算遗器时自动分解）"
-msgstr "星4遺物を自動分解（ゲーム内の自動分解設定推奨）"
-
-msgid "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
-msgstr "侵蝕トンネル、装飾品抽出、歴戦余韻、模擬宇宙の完了後に星4以下の遺物を自動分解"
-
 #: app/setting_interface.py:292
 msgid "体力优先合成沉浸器（建议直接通过饰品提取获取位面饰品）"
 msgstr "開拓力を優先して没入器に変換（次元装飾品は装飾品抽出推奨）"
@@ -746,9 +740,6 @@ msgstr "プログラム設定"
 msgid "通过启动器更新游戏"
 msgstr "ランチャー経由でゲームを更新"
 
-msgid "米哈游启动器路径"
-msgstr "HoYoPlay パス"
-
 #: app/setting_interface.py:1077
 msgid "启动游戏超时时间（分）"
 msgstr "ゲーム起動タイムアウト（分）"
@@ -966,9 +957,6 @@ msgstr "ショートカット、公式ランチャー、実行中プロセスな
 #: app/setting_interface.py:2524
 msgid "在用户登录时启动"
 msgstr "ユーザーログイン時に起動"
-
-msgid "通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）"
-msgstr "タスクスケジューラで起動後に完全実行を自動開始します（パスワード不要の自動ログイン設定が別途必要な場合があります）。"
 
 #: app/setting_interface.py:2536
 msgid "修改按键"
@@ -3321,9 +3309,6 @@ msgstr ""
 
 #: assets/config/instance_names.json
 msgid "观火之径"
-msgstr ""
-
-msgid "暂无"
 msgstr ""
 
 #: assets/config/instance_names.json
@@ -5919,17 +5904,8 @@ msgstr ""
 msgid "按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置"
 msgstr ""
 
-msgid "每日获得特殊物品：购买秘技零食材料并合成零食（零食材料-1 / 零食合成-1）"
-msgstr ""
-
-msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币（过期邮包-1 / 艾迪恩代币-1）"
-msgstr ""
-
 #: app/setting_interface.py:852
 msgid "获得翁法罗斯记忆代币"
-msgstr ""
-
-msgid "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
 msgstr ""
 
 #: app/setting_interface.py:857
@@ -6135,9 +6111,6 @@ msgstr ""
 msgid "不打开图形界面时执行的任务："
 msgstr ""
 
-msgid "不打开图形界面时必须选择一项任务，将以命令行方式执行，完成后自动退出"
-msgstr ""
-
 #: app/card/autostart_setting_card.py:73
 msgid "请选择要执行的任务"
 msgstr ""
@@ -6154,14 +6127,8 @@ msgstr ""
 msgid "开机启动已关闭"
 msgstr ""
 
-msgid "可在任务管理器的「启动应用」中查看或禁用"
-msgstr ""
-
 #: app/card/autostart_setting_card.py:235
 msgid "开机启动设置失败"
-msgstr ""
-
-msgid "请确认以管理员权限运行后重试"
 msgstr ""
 
 #: app/card/autostart_setting_card.py:249
@@ -6184,15 +6151,8 @@ msgstr ""
 msgid "删除旧的计划任务失败，请重试"
 msgstr ""
 
-msgid ""
-"登录 Windows 后自动启动，可在任务管理器「启动应用」中查看或禁用；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
-msgstr ""
-
 #: app/card/autostart_setting_card.py:236
 msgid "请以管理员权限运行后重试"
-msgstr ""
-
-msgid "登录 Windows 后自动启动，启动时不会弹出 UAC 提示；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
 msgstr ""
 
 #: app/card/autostart_setting_card.py:71
