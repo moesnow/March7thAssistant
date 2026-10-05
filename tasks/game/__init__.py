@@ -419,10 +419,8 @@ def update_via_launcher(game="hkrpg_cn"):
     通过米哈游启动器尝试更新指定游戏到最新客户端
     'hkrpg_cn'（崩坏：星穹铁道国服）、'hk4e_cn'（原神国服）、'nap_cn'（绝区零国服）、'hkrpg_global'（崩坏：星穹铁道国际服）
     """
-    if cfg.launcher_title_name == "mihoyou":
-        game = "hkrpg_cn"  # 使用米哈游启动器更新国服游戏
-    elif cfg.launcher_title_name == "hoyoplay":
-        game = "hkrpg_global"  # 使用HoYoPlay启动器更新国际服游戏
+    if cfg.launcher_title_name == "HoYoPlay":
+        game = "hkrpg_global"  # 使用 HoYoPlay 更新国际服游戏
     launcher, launcher_auto = _start_launcher_and_get_automation(game)
     if launcher is None:
         return
