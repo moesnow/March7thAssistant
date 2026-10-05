@@ -68,6 +68,9 @@ class ToolsInterface(ScrollArea):
 
         self.__initWidget()
 
+        if sys.platform == 'win32' and self.automaticPlotCard.getSwitchState():
+            self.__startAutoPlot()
+
     def __initWidget(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setViewportMargins(0, 80, 0, 20)
@@ -290,12 +293,9 @@ class ToolsInterface(ScrollArea):
 
     def __onAutoPlotSwitchChanged(self, isChecked: bool):
         """Handle auto plot switch state change"""
+        cfg.set_value("autoplot_enable", isChecked)
         if isChecked:
-            # Update options first
-            options = self.automaticPlotCard.getOptions()
-            tool.update_plot_options(options)
-            # Start auto plot
-            tool.start("plot")
+            self.__startAutoPlot()
             InfoBar.success(
                 title=tr('自动对话已启动'),
                 content="",
@@ -317,6 +317,10 @@ class ToolsInterface(ScrollArea):
                 duration=1000,
                 parent=self
             )
+
+    def __startAutoPlot(self):
+        tool.update_plot_options(self.automaticPlotCard.getOptions())
+        tool.start("plot")
 
     def __onAutoPlotOptionsChanged(self, options: dict):
         """Handle auto plot options change"""
