@@ -1,3 +1,6 @@
+import cv2
+import numpy as np
+
 from utils.image_utils import ImageUtils
 
 
@@ -62,3 +65,28 @@ class TestImageUtilsConvertNpInt64:
     def test_convert_empty(self):
         result = ImageUtils.convert_np_int64_to_int([])
         assert result == []
+
+
+def test_masked_match_recovers_avatar_with_corner_badge_without_false_match():
+    rng = np.random.default_rng(1254)
+    template = rng.integers(105, 150, (101, 108), dtype=np.uint8)
+    template[:26, -26:] = rng.integers(0, 256, (26, 26), dtype=np.uint8)
+    scaled = cv2.resize(template, None, fx=0.9, fy=0.9, interpolation=cv2.INTER_AREA)
+
+    background = rng.integers(105, 150, (210, 230), dtype=np.uint8)
+    screenshot = background.copy()
+    y, x = 55, 65
+    h, w = scaled.shape
+    screenshot[y:y + h, x:x + w] = scaled
+    side = round(min(h, w) * 0.26)
+    screenshot[y:y + side, x + w - side:x + w] = 255 - scaled[:side, -side:]
+
+    assert ImageUtils.scale_and_match_template_with_multiple_targets(screenshot, template, 0.8, 0.9) == []
+    matches = ImageUtils.scale_and_match_template_with_multiple_targets(
+        screenshot, template, 0.8, 0.9, mask_top_right_ratio=0.26
+    )
+    assert len(matches) == 1
+    assert abs(matches[0][0] - x) <= 2 and abs(matches[0][1] - y) <= 2
+    assert ImageUtils.scale_and_match_template_with_multiple_targets(
+        background, template, 0.8, 0.9, mask_top_right_ratio=0.26
+    ) == []
