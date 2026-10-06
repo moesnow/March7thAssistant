@@ -5,6 +5,7 @@ from module.logger import log
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from utils.date import Date
+from tasks.weekly.weekly_reward import wait_for_weekly_reward
 from typing import Literal, Tuple, Optional
 import numpy as np
 import time
@@ -287,7 +288,7 @@ class CurrencyWars:
         if auto.find_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(28.0 / 1920, 880.0 / 1080, 435.0 / 1920, 175.0 / 1080)):
             if auto.click_element("积分", 'text', crop=(28.0 / 1920, 880.0 / 1080, 435.0 / 1920, 175.0 / 1080), include=True):
                 if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
-                    if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
+                    if wait_for_weekly_reward():
                         time.sleep(2)
                         Base.send_notification_with_screenshot("货币战争奖励已领取", NotificationLevel.ALL)
                         auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
