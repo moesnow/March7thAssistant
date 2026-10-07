@@ -149,7 +149,7 @@ class ToolsInterface(ScrollArea):
             log.error(f"解锁帧率失败：{e}\n{traceback.format_exc()}")
             InfoBar.warning(
                 title=tr('解锁失败'),
-                content=f"{type(e).__name__}: {e}",
+                content=f"{type(e).__name__}: {e}, {tr('可能是[游戏图像质量]未修改为[自定义]')}",
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,

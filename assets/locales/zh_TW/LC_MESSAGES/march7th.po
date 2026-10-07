@@ -1299,6 +1299,10 @@ msgstr "解鎖失敗"
 msgid "请将游戏图像质量修改为自定义后重试"
 msgstr "請將遊戲圖像品質修改為自訂後重試"
 
+#: app/tools_interface.py:152
+msgid "可能是[游戏图像质量]未修改为[自定义]"
+msgstr "可能是[遊戲圖像品質]未修改為[自訂]"
+
 #: app/tools_interface.py:166
 msgid "此功能依赖第三方程序实现"
 msgstr "此功能依賴第三方程式實現"

@@ -15,6 +15,8 @@ def test_unlock_fps_shows_actual_error_and_logs_traceback():
             patch("app.tools_interface.log.error") as mock_log:
         ToolsInterface._ToolsInterface__onUnlockfpsCardClicked(object())
 
-    assert mock_warning.call_args.kwargs["content"] == "PermissionError: Access denied"
+    assert mock_warning.call_args.kwargs["content"] == (
+        "PermissionError: Access denied, 可能是[游戏图像质量]未修改为[自定义]"
+    )
     assert "Traceback" in mock_log.call_args.args[0]
     assert "PermissionError: Access denied" in mock_log.call_args.args[0]
