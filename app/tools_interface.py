@@ -14,9 +14,11 @@ from module.config import cfg
 from tasks.base.tasks import start_task
 import os
 import sys
+import traceback
 
 
 from module.localization import tr
+from module.logger import log
 
 
 class ToolsInterface(ScrollArea):
@@ -143,10 +145,11 @@ class ToolsInterface(ScrollArea):
                     duration=1000,
                     parent=self
                 )
-        except:
+        except Exception as e:
+            log.error(f"解锁帧率失败：{e}\n{traceback.format_exc()}")
             InfoBar.warning(
                 title=tr('解锁失败'),
-                content=tr("请将游戏图像质量修改为自定义后重试"),
+                content=f"{type(e).__name__}: {e}",
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
