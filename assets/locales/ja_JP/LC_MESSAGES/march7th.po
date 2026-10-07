@@ -1303,10 +1303,6 @@ msgstr "120 FPS の解除に成功しました (＾∀＾●)"
 msgid "解锁失败"
 msgstr "解除に失敗しました"
 
-#: app/tools_interface.py:149
-msgid "请将游戏图像质量修改为自定义后重试"
-msgstr "ゲームの画質設定を「カスタム」に変更してから再試行してください"
-
 #: app/tools_interface.py:152
 msgid "可能是[游戏图像质量]未修改为[自定义]"
 msgstr "［画質設定］が［カスタム］に設定されていない可能性があります"

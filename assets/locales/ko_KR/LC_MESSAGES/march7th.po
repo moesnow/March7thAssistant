@@ -1300,10 +1300,6 @@ msgstr "120 프레임 해제 성공 (＾∀＾●)"
 msgid "解锁失败"
 msgstr "잠금 해제 실패"
 
-#: app/tools_interface.py:149
-msgid "请将游戏图像质量修改为自定义后重试"
-msgstr "게임 화질 설정을 사용자 정의로 변경 후 다시 시도해 주세요"
-
 #: app/tools_interface.py:152
 msgid "可能是[游戏图像质量]未修改为[自定义]"
 msgstr "[게임 화질 설정]이 [사용자 정의]로 설정되지 않았을 수 있습니다"
