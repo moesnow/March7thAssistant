@@ -325,6 +325,9 @@ def run_workflow_action(workflow_name: str, workflow_step_path=None):
     # 避免按键/点击打进当前聚焦的其它窗口（定时任务、命令行直跑均在此收口）
     if not game.ensure_game_ready():
         sys.exit(1)
+    if cfg.cloud_game_enable and not cloud_game.start_game_process(headless=cfg.browser_headless_enable):
+        log.error("云游戏浏览器连接失败，workflow 未执行")
+        sys.exit(1)
     runner = WorkflowRunner(
         log_callback=lambda message: print(message, flush=True),
         mirror_to_project_log=False,

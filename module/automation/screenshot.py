@@ -129,6 +129,9 @@ class Screenshot:
     def take_screenshot(title, crop=(0, 0, 1, 1), use_background_screenshot=None, prefer_frame_screenshot=True):
         if cfg.cloud_game_enable:
             from module.game import cloud_game
+            # #region debug-point C:workflow-screenshot
+            import json, urllib.request, os; _p='.dbg/cloud-workflow-screenshot.env'; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; exec("try:\n with open(_p) as f: c=f.read(); _u=next((l.split('=',1)[1] for l in c.split('\\n') if l.startswith('DEBUG_SERVER_URL=')),_u); _s=next((l.split('=',1)[1] for l in c.split('\\n') if l.startswith('DEBUG_SESSION_ID=')),_s)\nexcept: pass"); urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'C','location':'module/automation/screenshot.py:132','msg':'[DEBUG] workflow cloud screenshot entry','data':{'driver':bool(getattr(cloud_game,'driver',None)),'crop':crop,'prefer_frame':prefer_frame_screenshot}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
+            # #endregion
             screenshot_result = cloud_game.take_screenshot(crop=crop, prefer_frame=prefer_frame_screenshot)
             if not screenshot_result:
                 return False

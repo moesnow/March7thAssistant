@@ -1557,7 +1557,14 @@ class CloudGameController(GameControllerBase):
     def _take_browser_screenshot(self) -> bytes | None:
         """使用浏览器原生截图能力作为回退方案。"""
         if not self.driver:
+            # #region debug-point B:no-driver
+            import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'B','location':'module/game/cloud.py:1559','msg':'[DEBUG] cloud screenshot skipped because driver is missing','data':{}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
+            # #endregion
             return None
+
+        # #region debug-point B:driver-ready
+        import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'B','location':'module/game/cloud.py:1565','msg':'[DEBUG] cloud screenshot driver ready','data':{'driver_type':type(self.driver).__name__}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
+        # #endregion
 
         # 外层截图重试的60秒上限无法中断阻塞中的WebDriver请求。
         # 限制实际HTTP读取时间；保留调用者原有的更短超时。
@@ -1567,9 +1574,15 @@ class CloudGameController(GameControllerBase):
         try:
             self._ensure_window_not_minimized_for_frame_capture()
             try:
+                # #region debug-point A:cdp-start
+                import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'A','location':'module/game/cloud.py:1575','msg':'[DEBUG] CDP screenshot request started','data':{'timeout':client_config.timeout}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
+                # #endregion
                 result = self.driver.execute_cdp_cmd(
                     "Page.captureScreenshot", {"format": "jpeg", "quality": 100})
                 data = result.get("data") if result else None
+                # #region debug-point A:cdp-result
+                import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'A','location':'module/game/cloud.py:1581','msg':'[DEBUG] CDP screenshot response received','data':{'has_data':bool(data),'data_length':len(data) if data else 0}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
+                # #endregion
                 if data:
                     return base64.b64decode(data)
             except Exception as exc:
@@ -1585,7 +1598,14 @@ class CloudGameController(GameControllerBase):
                         raise TimeoutError("云游戏浏览器截图请求超时") from exc
                     pending.extend(cause for cause in (error.__cause__, error.__context__) if cause is not None)
                 self.log_debug(f"CDP 截图失败，回退 WebDriver 截图: {exc}")
-            return self.driver.get_screenshot_as_png()
+                # #region debug-point A:cdp-failed
+                import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'A','location':'module/game/cloud.py:1598','msg':'[DEBUG] CDP screenshot failed','data':{'error_type':type(exc).__name__,'error':str(exc)[:300]}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
+                # #endregion
+            screenshot = self.driver.get_screenshot_as_png()
+            # #region debug-point A:webdriver-result
+            import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'A','location':'module/game/cloud.py:1602','msg':'[DEBUG] WebDriver screenshot response received','data':{'data_length':len(screenshot) if screenshot else 0}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
+            # #endregion
+            return screenshot
         finally:
             client_config.timeout = previous_timeout
 
