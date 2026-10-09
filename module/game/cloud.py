@@ -146,6 +146,7 @@ class CloudGameController(GameControllerBase):
         self._qr_notify_last_link = ""
         self._qr_notify_last_sent_ts = 0.0
         self._qr_notify_min_interval_sec = 60
+        self._owns_browser_process = True
 
         atexit.register(self._clean_at_exit)
 
@@ -345,6 +346,7 @@ class CloudGameController(GameControllerBase):
 
     def _connect_or_create_browser(self, headless=False) -> None:
         """尝试连接到现有的（由小助手启动的）浏览器，如果没有，那就创建一个"""
+        self._owns_browser_process = True
         browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge" if self.cfg.browser_type == "edge" else "chromium"
         integrated = self.cfg.browser_type == "integrated"
         first_run = False
@@ -799,9 +801,57 @@ class CloudGameController(GameControllerBase):
             raise SystemExit("云游戏付费时长已耗尽，游戏中断")
 
     def _clean_at_exit(self) -> None:
-        """当脚本退出时，关闭所有 headless 浏览器"""
+        """当脚本退出时，关闭当前进程负责的 headless 浏览器"""
+        if not self._owns_browser_process:
+            return
         if self.close_all_m7a_browser(headless=True):
             self.log_info("已关闭所有后台浏览器")
+
+    def connect_existing_browser_only(self, headless=False) -> bool:
+        """仅连接已有的小助手浏览器，不创建或关闭任何浏览器。"""
+        browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge" if self.cfg.browser_type == "edge" else "chromium"
+        integrated = self.cfg.browser_type == "integrated"
+        _, driver_path = self._prepare_browser_and_driver(browser_type, integrated)
+        existing = self.get_m7a_browsers(headless=headless)
+        if not existing:
+            self.log_warning("未找到可连接的云游戏浏览器")
+            return False
+
+        reconnect_port = self._get_debug_port_from_cmdline(existing[0])
+        if not reconnect_port:
+            self.log_warning("无法获取已有云游戏浏览器的调试端口")
+            return False
+
+        if browser_type == "chrome":
+            options = ChromeOptions()
+            service = ChromeService(executable_path=driver_path, log_path=os.devnull)
+            webdriver_type = webdriver.Chrome
+        elif browser_type == "edge":
+            options = EdgeOptions()
+            service = EdgeService(executable_path=driver_path, log_path=os.devnull)
+            webdriver_type = webdriver.Edge
+        else:
+            options = ChromiumOptions()
+            service = ChromiumService(executable_path=driver_path, log_path=os.devnull)
+            webdriver_type = webdriver.Chrome
+
+        options.debugger_address = f"127.0.0.1:{reconnect_port}"
+        try:
+            self.driver = webdriver_type(service=service, options=options)
+            self.driver_path = driver_path
+            self._webdriver_service = service
+            self._owns_browser_process = False
+            self._configure_pointer_lock(headless)
+            self.log_info("已连接到现有浏览器（仅连接，不负责浏览器生命周期）")
+            return True
+        except Exception as e:
+            self.log_warning(f"连接已有云游戏浏览器失败: {e}")
+            try:
+                self.driver.quit()
+            except Exception:
+                pass
+            self.driver = None
+            return False
 
     def download_intergrated_browser(self) -> bool:
         self._prepare_browser_and_driver(browser_type="chrome", integrated=True)
@@ -1557,14 +1607,7 @@ class CloudGameController(GameControllerBase):
     def _take_browser_screenshot(self) -> bytes | None:
         """使用浏览器原生截图能力作为回退方案。"""
         if not self.driver:
-            # #region debug-point B:no-driver
-            import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'B','location':'module/game/cloud.py:1559','msg':'[DEBUG] cloud screenshot skipped because driver is missing','data':{}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
-            # #endregion
             return None
-
-        # #region debug-point B:driver-ready
-        import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'B','location':'module/game/cloud.py:1565','msg':'[DEBUG] cloud screenshot driver ready','data':{'driver_type':type(self.driver).__name__}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
-        # #endregion
 
         # 外层截图重试的60秒上限无法中断阻塞中的WebDriver请求。
         # 限制实际HTTP读取时间；保留调用者原有的更短超时。
@@ -1574,15 +1617,9 @@ class CloudGameController(GameControllerBase):
         try:
             self._ensure_window_not_minimized_for_frame_capture()
             try:
-                # #region debug-point A:cdp-start
-                import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'A','location':'module/game/cloud.py:1575','msg':'[DEBUG] CDP screenshot request started','data':{'timeout':client_config.timeout}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
-                # #endregion
                 result = self.driver.execute_cdp_cmd(
                     "Page.captureScreenshot", {"format": "jpeg", "quality": 100})
                 data = result.get("data") if result else None
-                # #region debug-point A:cdp-result
-                import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'A','location':'module/game/cloud.py:1581','msg':'[DEBUG] CDP screenshot response received','data':{'has_data':bool(data),'data_length':len(data) if data else 0}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
-                # #endregion
                 if data:
                     return base64.b64decode(data)
             except Exception as exc:
@@ -1598,13 +1635,7 @@ class CloudGameController(GameControllerBase):
                         raise TimeoutError("云游戏浏览器截图请求超时") from exc
                     pending.extend(cause for cause in (error.__cause__, error.__context__) if cause is not None)
                 self.log_debug(f"CDP 截图失败，回退 WebDriver 截图: {exc}")
-                # #region debug-point A:cdp-failed
-                import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'A','location':'module/game/cloud.py:1598','msg':'[DEBUG] CDP screenshot failed','data':{'error_type':type(exc).__name__,'error':str(exc)[:300]}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
-                # #endregion
             screenshot = self.driver.get_screenshot_as_png()
-            # #region debug-point A:webdriver-result
-            import json, urllib.request; _u,_s='http://127.0.0.1:7777/event','cloud-workflow-screenshot'; urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'pre','hypothesisId':'A','location':'module/game/cloud.py:1602','msg':'[DEBUG] WebDriver screenshot response received','data':{'data_length':len(screenshot) if screenshot else 0}}).encode(), headers={'Content-Type':'application/json'}), timeout=2).read()
-            # #endregion
             return screenshot
         finally:
             client_config.timeout = previous_timeout
@@ -1802,7 +1833,10 @@ class CloudGameController(GameControllerBase):
                 client_config.timeout = previous_timeout
                 self.driver = None
 
-        # 清理所有未正常退出的浏览器
+        # 仅浏览器所有者负责关闭浏览器；流程子进程的借用连接只退出 WebDriver 会话。
+        if not self._owns_browser_process:
+            return True
+
         try:
             if self.close_all_m7a_browser():
                 self.log_info("检测到由小助手启动的浏览器，已成功关闭")

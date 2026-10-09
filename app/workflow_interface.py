@@ -1274,7 +1274,7 @@ class WorkflowInterface(ScrollArea):
             )
             return
         tool.start_workflow_capture(kind, self._current_workflow()["name"])
-        message = tr("截图窗口已打开，请框选后保存为流程素材")
+        message = tr("截图任务已提交，截图成功后窗口将自动显示，请稍候")
         self._append_log(message)
         InfoBar.success(
             title=tr("已打开截图工具"),

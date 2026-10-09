@@ -217,3 +217,5 @@ CLAUDE.md
 
 # Telemetry server
 telemetry_server/
+
+debug-*.md
