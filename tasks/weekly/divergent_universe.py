@@ -1043,7 +1043,7 @@ class DivergentUniverse:
         检查当前界面标题，并根据不同标题执行对应的处理函数
         """
         title_crop = (96 / 1920, 63 / 1080, 142 / 1920, 34 / 1080)
-        if auto.find_element(("欢愉假面", "选择方程", "选择祝福", "选择奇物", "丢弃奇物", "愿力满盈", "选择下一站", "事件", "选择站点卡", "存档管理", "混沌药箱", "人才管理阶段"), 'text', crop=title_crop, include=True):
+        if auto.find_element(("欢愉假面", "选择方程", "选择祝福", "选择奇物", "丢弃奇物", "奇物损毁", "愿力满盈", "选择下一站", "事件", "选择站点卡", "存档管理", "混沌药箱", "人才管理阶段"), 'text', crop=title_crop, include=True):
             log.info(f"检测到 “{auto.matched_text}” 界面")
             if auto.matched_text == "欢愉假面":
                 self.process_mask()
@@ -1055,6 +1055,8 @@ class DivergentUniverse:
                 self.process_relic_selection()
             elif auto.matched_text == "丢弃奇物":
                 self.process_relic_discard()
+            elif auto.matched_text == "奇物损毁":
+                self.process_relic_destroy()
             elif auto.matched_text == "愿力满盈":
                 self.process_wish()
             elif auto.matched_text == "选择下一站":
@@ -1282,6 +1284,50 @@ class DivergentUniverse:
         time.sleep(1)
         auto.click_element('丢弃', 'text', None, 10, crop=(1695 / 1920, 948 / 1080, 69 / 1920, 50 / 1080), include=True)
         time.sleep(2)
+
+    def process_relic_destroy(self):
+        """处理奇物损毁；只在标题、说明与按钮均符合时选择卡片。"""
+        title_crop = (96 / 1920, 63 / 1080, 142 / 1920, 34 / 1080)
+        prompt_crop = (520 / 1920, 118 / 1080, 880 / 1920, 65 / 1080)
+        button_crop = (1540 / 1920, 934 / 1080, 345 / 1920, 75 / 1080)
+        if not auto.find_element("奇物损毁", "text", crop=title_crop, include=False):
+            raise RuntimeError("奇物损毁标题已变化，停止点击")
+        if not auto.find_element("请选择要摧毁的奇物", "text", crop=prompt_crop, include=False):
+            raise RuntimeError("奇物损毁说明未识别，停止点击")
+        if not auto.find_element("摧毁", "text", crop=button_crop, include=False):
+            raise RuntimeError("奇物损毁按钮未识别，停止点击")
+
+        # 一张或三张卡片时选中间；两张时选左边。先识别卡名再点击，
+        # 不连续盲点多个位置，避免切换已选中的卡片。
+        name_crops = (
+            (777 / 1920, 482 / 1080, 370 / 1920, 70 / 1080),
+            (537 / 1920, 482 / 1080, 369 / 1920, 70 / 1080),
+        )
+        for crop in name_crops:
+            name = auto.get_single_line_text(crop=crop, max_retries=2)
+            if name and name.strip():
+                if not auto.click_element(crop, "crop"):
+                    raise RuntimeError("奇物损毁卡片点击失败")
+                log.info(f"奇物损毁：选择{name.strip()}")
+                break
+        else:
+            raise RuntimeError("奇物损毁卡片未识别，停止点击")
+
+        time.sleep(0.5)
+        if not auto.click_element("摧毁", "text", max_retries=3, crop=button_crop, include=False):
+            raise RuntimeError("奇物损毁：点击摧毁失败")
+        # 点击成功不等于处理成功。连续两次确认标题与说明消失，
+        # 若按钮未生效或出现未支持弹窗，则明确停止并由顶层保存截图。
+        absent_frames = 0
+        for _ in range(10):
+            time.sleep(1)
+            still_title = auto.find_element("奇物损毁", "text", crop=title_crop, include=False)
+            still_prompt = auto.find_element("请选择要摧毁的奇物", "text", crop=prompt_crop, include=False)
+            absent_frames = 0 if still_title or still_prompt else absent_frames + 1
+            if absent_frames >= 2:
+                log.info("奇物损毁处理完成，已离开选择界面")
+                return
+        raise RuntimeError("奇物损毁：点击后界面未退出，停止任务并保留现场")
 
     def process_wish(self):
         """
