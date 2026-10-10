@@ -1295,9 +1295,9 @@ msgstr "解锁120成功 (＾∀＾●)"
 msgid "解锁失败"
 msgstr "解锁失败"
 
-#: app/tools_interface.py:149
-msgid "请将游戏图像质量修改为自定义后重试"
-msgstr "请将游戏图像质量修改为自定义后重试"
+#: app/tools_interface.py:152
+msgid "可能是[游戏图像质量]未修改为[自定义]"
+msgstr "可能是[游戏图像质量]未修改为[自定义]"
 
 #: app/tools_interface.py:166
 msgid "此功能依赖第三方程序实现"
