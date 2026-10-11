@@ -887,12 +887,37 @@ class DivergentUniverse:
                     screen.wait_for_screen_change('divergent_main')
                 screen.change_to("divergent_mode_select")
                 if auto.click_element("继续进度", "text", crop=(39 / 1920, 215 / 1080, 748 / 1920, 597 / 1080)):
-                    if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, max_retries=120, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                    if not self.wait_stage_after_continue():
                         raise RuntimeError("重新进入关卡失败")
                     return
                 else:
                     raise RuntimeError("未找到继续进度按钮")
         log.error("多次尝试重新进入关卡失败")
+
+    def wait_stage_after_continue(self, max_retries: int = 120) -> bool:
+        """等待“继续进度”后进入关卡界面，顺带处理跨周确认框（#1175）。
+
+        周期演算每周一 4:00 更新：循环运行跨过这个时间点时，上一次的存档已属于上一周，
+        点“继续进度”后游戏会先弹确认框“当前存档非本周演算进度，进度所在玩法已过期，
+        仍可获得拟合值和「模拟宇宙」积分，确定继续进度吗？”。
+        不处理它就会一直卡在弹窗上，把原本等待关卡界面的 120 次重试耗光，最后误报
+        “重新进入关卡失败”；弹窗说明继续进度仍会结算积分，所以这里点“确认”继续原进度。
+        """
+        # 弹窗在点击“继续进度”后立刻出现，只在开头几秒内探测，避免常态路径反复 OCR
+        prompt_deadline = time.monotonic() + 10
+        for attempt in range(max_retries):
+            if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                return True
+            # 关卡界面通常一两秒内就会出现，迟迟不出现时优先怀疑这个弹窗
+            if (attempt >= 3 and time.monotonic() < prompt_deadline
+                    and auto.find_element("当前存档非本周演算进度", "text", max_retries=1, include=True, threshold=0.7)):
+                log.info("检测到“当前存档非本周演算进度”提示，点击确认继续进度")
+                auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10,
+                                   crop=(1100 / 1920, 630 / 1080, 280 / 1920, 82 / 1080))
+                prompt_deadline = time.monotonic() + 10  # 点击没生效时还能再次识别
+                continue
+            time.sleep(1)
+        return False
 
     def detect_random_door(self):
         return auto.find_element(
