@@ -2655,6 +2655,14 @@ class CurrencyWars:
                 self.result = False
                 self.screenshot = auto.screenshot
                 return
+            elif "触发晋升赛" in text:
+                self.result = True
+                self.screenshot = auto.screenshot
+                return
+            elif "晋升成功" in text:
+                self.result = True
+                self.screenshot = auto.screenshot
+                return
 
         # 生命值耗尽时可能直接显示“挑战结束 / 前往结算”，随后回到首页。
         # 普通节点的“挑战结束 / 继续挑战”不能当作整局失败。
