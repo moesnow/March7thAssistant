@@ -5,9 +5,33 @@ if sys.platform == 'win32':
     import win32com.client
 
 
+def apply_task_settings(task_def):
+    """
+    显式写全任务的运行设置，不依赖 COM 默认值。
+
+    默认值面向“跑完即退”的短任务，与 GUI 长驻进程不兼容：
+    - ExecutionTimeLimit 默认 PT72H（即任务计划属性里的
+      “如果任务运行时间超过以下时间，停止任务：3 天”），到期会终止长驻的图形界面；
+      PT0S 表示不限时长。
+    - DisallowStartIfOnBatteries / StopIfGoingOnBatteries 默认 True，
+      笔记本用电池时不开机自启，运行中切换到电池还会直接终止任务。
+    - AllowHardTerminate 保持 True：请求停止后进程不退出时允许强杀兜底。
+
+    参数:
+    - task_def: Schedule.Service.NewTask 返回的任务定义对象。
+    """
+    settings = task_def.Settings
+    settings.ExecutionTimeLimit = "PT0S"  # 不限时长，避免默认 3 天后强杀
+    settings.DisallowStartIfOnBatteries = False  # 允许电池供电时启动
+    settings.StopIfGoingOnBatteries = False  # 切换到电池不终止任务
+    settings.AllowHardTerminate = True  # 请求停止后允许强杀
+
+
 def create_task(task_name, program_path, program_args=None, delay_seconds=30):
     """
     创建计划任务，指定在用户登录时启动指定程序。
+
+    运行设置显式写全（见 apply_task_settings），例如不限制运行时长。
 
     参数:
     - task_name (str): 任务的名称。
@@ -44,6 +68,9 @@ def create_task(task_name, program_path, program_args=None, delay_seconds=30):
     task_def.Principal.UserId = current_user  # 指定为当前用户
     task_def.Principal.LogonType = 3  # 3 表示交互用户登录
     task_def.Principal.RunLevel = 1  # 1 表示以最高权限运行
+
+    # 配置运行时长等运行设置（显式写全，不依赖默认值）
+    apply_task_settings(task_def)
 
     # 注册任务
     root_folder.RegisterTaskDefinition(
