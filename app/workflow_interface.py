@@ -36,10 +36,10 @@ from qfluentwidgets import (
     ScrollArea,
     SubtitleLabel,
     TreeWidget,
-    SpinBox,
-    DoubleSpinBox,
     CheckBox
 )
+
+from app.components.ascii_spin_box import AsciiSpinBox, AsciiDoubleSpinBox
 
 import tasks.tool as tool
 from module.localization import tr
@@ -219,27 +219,27 @@ class StepEditDialog(QDialog):
         self.screenTargetCombo = ComboBox(self)
         self.cropEdit = LineEdit(self)
         self.cropEdit.setPlaceholderText(tr("留空表示全屏，例如 (100 / 1920, 200 / 1080, 300 / 1920, 120 / 1080)"))
-        self.thresholdSpin = DoubleSpinBox(self)
+        self.thresholdSpin = AsciiDoubleSpinBox(self)
         self.thresholdSpin.setRange(0.0, 1.0)
         self.thresholdSpin.setDecimals(2)
         self.thresholdSpin.setSingleStep(0.05)
-        self.maxRetriesSpin = SpinBox(self)
+        self.maxRetriesSpin = AsciiSpinBox(self)
         self.maxRetriesSpin.setRange(1, 99)
-        self.secondsSpin = DoubleSpinBox(self)
+        self.secondsSpin = AsciiDoubleSpinBox(self)
         self.secondsSpin.setRange(0.0, 3600.0)
         self.secondsSpin.setDecimals(1)
         self.secondsSpin.setSingleStep(0.5)
-        self.countSpin = SpinBox(self)
+        self.countSpin = AsciiSpinBox(self)
         self.countSpin.setRange(0, 9999)
         self.countSpin.setSpecialValueText(tr("无限"))
-        self.maxIterationsSpin = SpinBox(self)
+        self.maxIterationsSpin = AsciiSpinBox(self)
         self.maxIterationsSpin.setRange(0, 9999)
         self.maxIterationsSpin.setSpecialValueText(tr("无限"))
         self.includeCheck = CheckBox(tr("使用包含匹配"), self)
         self.withScreenshotCheck = CheckBox(tr("发送截图"), self)
         self.keyEdit = LineEdit(self)
         self.keyEdit.setPlaceholderText(tr("输入按键名，如 enter, space, a, b 等"))
-        self.keyDurationSpin = DoubleSpinBox(self)
+        self.keyDurationSpin = AsciiDoubleSpinBox(self)
         self.keyDurationSpin.setRange(0.0, 60.0)
         self.keyDurationSpin.setDecimals(2)
         self.keyDurationSpin.setSingleStep(0.1)
@@ -247,7 +247,7 @@ class StepEditDialog(QDialog):
         self.keyActionCombo.addItems([tr("点击"), tr("按下"), tr("松开")])
         self.clickActionCombo = ComboBox(self)
         self.clickActionCombo.addItems([tr("点击"), tr("按下"), tr("松开")])
-        self.pressDurationSpin = DoubleSpinBox(self)
+        self.pressDurationSpin = AsciiDoubleSpinBox(self)
         self.pressDurationSpin.setRange(0.0, 60.0)
         self.pressDurationSpin.setDecimals(2)
         self.pressDurationSpin.setSingleStep(0.1)
@@ -255,7 +255,7 @@ class StepEditDialog(QDialog):
         self.startPointEdit.setPlaceholderText(tr("例如 100 / 1920, 540 / 1080"))
         self.endPointEdit = LineEdit(self)
         self.endPointEdit.setPlaceholderText(tr("例如 900 / 1920, 540 / 1080"))
-        self.dragDurationSpin = DoubleSpinBox(self)
+        self.dragDurationSpin = AsciiDoubleSpinBox(self)
         self.dragDurationSpin.setRange(0.0, 60.0)
         self.dragDurationSpin.setDecimals(2)
         self.dragDurationSpin.setSingleStep(0.1)
