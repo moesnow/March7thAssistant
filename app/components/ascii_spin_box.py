@@ -10,8 +10,44 @@ qfluentwidgets 的 SpinBox 系列继承自 QSpinBox，显示文本由
 
 这里覆写 `textFromValue()` / `valueFromText()`，显示与解析一律使用
 ASCII 数字，绕开 QLocale 的数字替换，任何区域设置下都稳定。
+
+注意：Qt 调用 `valueFromText()` 传入的是输入框的完整文本，prefix/suffix
+也在其中（Qt 自带实现会先用 `stripped()` 剥掉再解析）。覆写后必须做同样的
+剥离，否则后缀里的字面量数字（如「 分钟（0 表示不启用）」里的 0）会被当成
+用户输入，出现「输入 1 变成 10」的自动进位现象。
 """
 from qfluentwidgets import DoubleSpinBox, SpinBox
+
+ASCII_DIGITS = "0123456789"
+
+
+def _strip_affixes(box, text: str) -> str:
+    """剥掉 prefix/suffix，只留下可编辑的数值部分。
+
+    对标 QAbstractSpinBoxPrivate::stripped()：specialValueText 是整体替换
+    显示文本，不做前后缀剥离；前缀/后缀只有完整匹配时才剥掉。
+    """
+    special = box.specialValueText()
+    if not special or text != special:
+        prefix, suffix = box.prefix(), box.suffix()
+        if prefix and text.startswith(prefix):
+            text = text[len(prefix):]
+        if suffix and text.endswith(suffix):
+            text = text[:-len(suffix)]
+    return text.strip()
+
+
+def _ascii_digits(text: str) -> str:
+    """只保留 ASCII 数字字符。
+
+    不能用 str.isdigit()：它会把 ² 这类上标数字也算进去，而 int() 无法解析，
+    粘贴这类文本会直接在解析里抛 ValueError。
+    """
+    return ''.join(c for c in text if c in ASCII_DIGITS)
+
+
+def _is_negative(text: str) -> bool:
+    return text.strip().startswith('-')
 
 
 class AsciiSpinBox(SpinBox):
@@ -21,11 +57,12 @@ class AsciiSpinBox(SpinBox):
         return str(int(value))
 
     def valueFromText(self, text: str) -> int:
-        special = self.specialValueText()
-        if special and text.strip() == special:
+        text = _strip_affixes(self, text)
+        digits = _ascii_digits(text)
+        if not digits:
             return self.minimum()
-        digits = ''.join(c for c in text if c.isdigit())
-        return int(digits) if digits else self.minimum()
+        value = int(digits)
+        return -value if _is_negative(text) else value
 
 
 class AsciiDoubleSpinBox(DoubleSpinBox):
@@ -35,11 +72,12 @@ class AsciiDoubleSpinBox(DoubleSpinBox):
         return f'{value:.{self.decimals()}f}'
 
     def valueFromText(self, text: str) -> float:
-        special = self.specialValueText()
-        if special and text.strip() == special:
-            return self.minimum()
-        cleaned = ''.join(c for c in text if c.isdigit() or c in '.-')
-        try:
-            return float(cleaned) if cleaned else float(self.minimum())
-        except ValueError:
+        text = _strip_affixes(self, text)
+        cleaned = ''.join(c for c in text if c in ASCII_DIGITS or c == '.')
+        if not _ascii_digits(cleaned):
             return float(self.minimum())
+        if cleaned.count('.') > 1:  # 只保留第一个小数点，避免 float() 抛异常
+            head, _, tail = cleaned.partition('.')
+            cleaned = f"{head}.{tail.replace('.', '')}"
+        value = float(cleaned)
+        return -value if _is_negative(text) else value
