@@ -5,10 +5,17 @@
 `QLocale().toString()` 生成显示文本，在个别系统上会被换成本地数字
 （例如苏州码子 〇〡〢…）。覆写后应不受 locale 影响。
 """
+import sys
+
 import pytest
 from PySide6.QtCore import QLocale
 
 from app.components.ascii_spin_box import AsciiDoubleSpinBox, AsciiSpinBox
+
+pytestmark = pytest.mark.skipif(
+    sys.platform != "win32" or not hasattr(sys, 'getwindowsversion'),
+    reason="GUI 测试仅在 Windows 平台运行"
+)
 
 LOCALES = ["zh_CN", "zh_TW", "en_US", "ar_EG", "hi_IN", "th_TH"]
 
