@@ -3,8 +3,9 @@ from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCo
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox, SimpleCardWidget,
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, CheckBox, SimpleCardWidget,
                             TextBrowser, setCustomStyleSheet)
+from app.components.ascii_spin_box import AsciiSpinBox
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
@@ -1075,7 +1076,7 @@ class MessageBoxPowerPlan(MessageBox):
         nameComboBox.setMinimumWidth(320)
 
         # 次数输入框
-        countSpinBox = SpinBox()
+        countSpinBox = AsciiSpinBox()
         countSpinBox.setMinimum(1)
         countSpinBox.setMaximum(999)
         countSpinBox.setValue(count if count else 1)
@@ -1323,7 +1324,7 @@ class MessageBoxInstanceTeam(MessageBox):
 
     def _setup_top_section(self):
         """设置全局区域 - 默认队伍"""
-        self.defaultTeamSpinbox = SpinBox()
+        self.defaultTeamSpinbox = AsciiSpinBox()
         self.defaultTeamSpinbox.setMinimum(1)
         self.defaultTeamSpinbox.setMaximum(12)
         self.defaultTeamSpinbox.setValue(self.default_team)
@@ -1394,7 +1395,7 @@ class MessageBoxInstanceTeam(MessageBox):
         setup_completer(nameComboBox, [item.text for item in nameComboBox.items])
 
         # 队伍编号选择框
-        teamSpinBox = SpinBox()
+        teamSpinBox = AsciiSpinBox()
         teamSpinBox.setMinimum(1)
         teamSpinBox.setMaximum(12)
         teamSpinBox.setValue(team_number or 3)

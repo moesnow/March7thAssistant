@@ -9,9 +9,6 @@ from .tools.warp_export import warpExport, WarpExport, detect_format, uigf_to_sr
 from utils import clipboard
 import json
 import os
-from openpyxl.styles import Font
-from openpyxl import Workbook
-from openpyxl.utils import get_column_letter
 from module.localization import tr
 import time
 import sys
@@ -234,6 +231,11 @@ class WarpInterface(ScrollArea):
             )
             if not path:
                 return
+
+            # 延迟导入，避免启动时加载 openpyxl
+            from openpyxl.styles import Font
+            from openpyxl import Workbook
+            from openpyxl.utils import get_column_letter
 
             records = config.get("list", [])
             gacha_map = {

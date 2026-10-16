@@ -71,7 +71,7 @@ class StationRow(QFrame):
         layout.addSpacing(10)
 
         self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
-        self.switchButton.setChecked(enabled)
+        self.switchButton.setChecked(bool(enabled))
         self.switchButton.setText(tr('开') if enabled else tr('关'))
         self.switchButton.checkedChanged.connect(self._on_toggled)
         layout.addWidget(self.switchButton)
@@ -288,7 +288,7 @@ class StationPrioritySettingCard(SettingCard):
         self._update_content_text()
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _update_content_text(self):
@@ -310,6 +310,8 @@ class StationPrioritySettingCard(SettingCard):
         if dialog.exec():
             new_priority = dialog.get_station_priority()
             new_disabled = dialog.get_disabled_stations()
-            cfg.set_value("divergent_station_priority", new_priority)
-            cfg.set_value("divergent_station_disabled", new_disabled)
+            cfg.set_values({
+                "divergent_station_priority": new_priority,
+                "divergent_station_disabled": new_disabled,
+            })
             self._update_content_text()

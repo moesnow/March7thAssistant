@@ -55,7 +55,7 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
 
     def setValue(self, isChecked: bool):
         """Set switch button state"""
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def getSwitchState(self) -> bool:
@@ -171,7 +171,7 @@ class ExpandableTimestampSwitchSettingCard(ExpandSettingCard):
         self.switchChanged.emit(isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def refreshTimestampContent(self):
@@ -656,7 +656,7 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
 
     def setValue(self, isChecked: bool):
         """设置开关状态"""
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):

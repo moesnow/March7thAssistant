@@ -66,6 +66,11 @@ def parse_args():
         action="store_true",
         help="启动后最小化到托盘"
     )
+    optional.add_argument(
+        "--autostart",
+        action="store_true",
+        help="开机自启入口（由启动项自动传入，按配置决定是否打开图形界面及自动执行的任务）"
+    )
 
     args = parser.parse_args()
 
@@ -104,6 +109,23 @@ if sys.platform == 'win32':
             sys.exit(0)
         except Exception:
             sys.exit(1)
+
+
+# 开机自启：按配置决定是否打开图形界面，以及启动后自动执行的任务
+_autostart_gui_task = None
+_autostart_minimized = False
+if args.autostart:
+    try:
+        from module.config import cfg as _autostart_cfg
+        if not _autostart_cfg.get_value("autostart_open_gui", True):
+            # 不打开图形界面：交由命令行版在命令行窗口中执行所选任务（与手动运行一致）
+            from utils.autostart import launch_headless_task
+            launch_headless_task(_autostart_cfg.get_value("autostart_headless_task") or "main")
+            sys.exit(0)
+        _autostart_gui_task = _autostart_cfg.get_value("autostart_gui_task") or None
+        _autostart_minimized = bool(_autostart_cfg.get_value("autostart_minimize", False))
+    except Exception:
+        pass
 
 from PySide6.QtCore import Qt, QLocale, qInstallMessageHandler, QtMsgType
 from PySide6.QtWidgets import QApplication
@@ -231,8 +253,10 @@ if __name__ == "__main__":
 
     # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server
     _key = _get_server_key()
+    # 开机自启时把配置的任务一并转发给已有实例，保证任务照常执行
+    _startup_task = args.task or _autostart_gui_task
     try:
-        payload = json.dumps({'action': 'activate', 'task': args.task, 'exit': args.exit}).encode('utf-8')
+        payload = json.dumps({'action': 'activate', 'task': _startup_task, 'exit': args.exit}).encode('utf-8')
     except Exception:
         payload = b'ACTIVATE'
 
@@ -274,9 +298,9 @@ if __name__ == "__main__":
     # 传递任务参数给主窗口
     from app.main_window import MainWindow
     w = MainWindow(
-        task=args.task,
+        task=_startup_task,
         exit_on_complete=args.exit,
-        start_minimized_to_tray=args.start_minimized_to_tray,
+        start_minimized_to_tray=args.start_minimized_to_tray or _autostart_minimized,
     )
 
     # 注册主窗口并处理启动期间收到的挂起消息

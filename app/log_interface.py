@@ -198,12 +198,14 @@ class GameLogOverlay(QWidget):
         """显示/隐藏暂停状态徽章。"""
         self.pauseBadge.setVisible(bool(paused))
 
-    def update_hotkey_hint(self, stop_hotkey: str, pause_hotkey: str | None):
-        """更新快捷键提示；不支持暂停的任务只显示停止快捷键。"""
+    def update_hotkey_hint(self, stop_hotkey: str, pause_hotkey: str | None, paused: bool = False):
+        """更新快捷键提示；不支持暂停的任务只显示停止快捷键。
+
+        任务已暂停时暂停快捷键的作用变为继续，提示文案随之从「暂停」改为「继续」。
+        """
         if pause_hotkey:
-            self.hotkeyLabel.setText(
-                tr('按下 {stop} 停止 · {pause} 暂停').format(stop=stop_hotkey, pause=pause_hotkey)
-            )
+            template = tr('按下 {stop} 停止 · {pause} 继续') if paused else tr('按下 {stop} 停止 · {pause} 暂停')
+            self.hotkeyLabel.setText(template.format(stop=stop_hotkey, pause=pause_hotkey))
         else:
             self.hotkeyLabel.setText(
                 tr('按下 {stop} 停止任务').format(stop=stop_hotkey)
@@ -298,6 +300,10 @@ class GameLogOverlay(QWidget):
 
 class LogInterface(ScrollArea):
     """日志界面"""
+
+    # 任务日志显示区最多保留的行数（QTextDocument 块数上限，超出后自动丢弃最旧的行）；
+    # 完整日志不受影响，仍写入 logs/ 目录下的日志文件
+    MAX_LOG_LINES = 5000
 
     # 信号：任务完成
     taskFinished = Signal(int)  # exit_code
@@ -488,6 +494,9 @@ class LogInterface(ScrollArea):
 
         self.logTextEdit = PlainTextEdit()
         self.logTextEdit.setReadOnly(True)
+        # 限制文档块数上限：长任务下自动丢弃最旧的日志行，避免文档无限增长到几十 MB
+        # （副作用是禁用撤销栈，只读日志显示区没有影响）
+        self.logTextEdit.setMaximumBlockCount(self.MAX_LOG_LINES)
 
         # 根据操作系统选择合适的等宽字体
         if sys.platform == 'win32':
@@ -1078,9 +1087,11 @@ class LogInterface(ScrollArea):
                     'post_action': 'None',
                     'enabled': True,
                 }
-                cfg.set_value('scheduled_tasks', [task])
-                # 关闭旧配置标记，避免重复迁移
-                cfg.set_value('scheduled_run_enable', False)
+                # 批量写入，一次落盘；关闭旧配置标记，避免重复迁移
+                cfg.set_values({
+                    'scheduled_tasks': [task],
+                    'scheduled_run_enable': False,
+                })
                 # 写日志以提醒用户迁移已完成
                 try:
                     self.appendLog(f"\n已将旧单一定时迁移为新的定时任务: {task['name']} @ {scheduled_time}\n")
@@ -1718,20 +1729,27 @@ class LogInterface(ScrollArea):
         env.insert("MARCH7TH_CONTROL_FILE", self._pauseControlPath())
 
     def _updateOverlayHotkeyHint(self):
-        """按当前任务是否支持暂停，刷新悬浮窗快捷键提示。"""
+        """按当前任务是否支持暂停、是否已暂停，刷新悬浮窗快捷键提示。"""
         try:
             if self._log_overlay:
                 stop_hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
                 pause_hotkey = cfg.get_value("hotkey_pause_task", "f8").upper() if self._pause_supported else None
-                self._log_overlay.update_hotkey_hint(stop_hotkey, pause_hotkey)
+                paused = self._pause_state == STATE_PAUSED
+                self._log_overlay.update_hotkey_hint(stop_hotkey, pause_hotkey, paused)
         except Exception:
             pass
 
     def _onPauseToggle(self):
-        """切换任务暂停/继续（按钮与全局热键共用入口）。"""
+        """切换任务暂停/继续（按钮与全局热键共用入口）。
+
+        只有任务真正停下（CLI 回执为已暂停）后按键才发送继续指令；
+        未停住之前（运行中/暂停中）连按多少次都维持暂停语义，不会误切成继续。
+        """
         if not self._pause_supported or not self.isTaskRunning():
             return
-        if self._pause_state in (STATE_PAUSING, STATE_PAUSED):
+        # 以 CLI 回执为准，避免界面状态滞后时把「暂停中」的按键误判为继续
+        self._syncPauseState()
+        if self._pause_state == STATE_PAUSED:
             self._sendPauseCommand(COMMAND_RESUME)
         else:
             self._sendPauseCommand(COMMAND_PAUSE)
@@ -1790,10 +1808,11 @@ class LogInterface(ScrollArea):
             pass
 
     def _freezeTimeoutTimer(self):
-        """暂停期间冻结任务超时定时器。"""
+        """暂停期间冻结任务超时定时器（重复暂停请求不覆盖已冻结的剩余时间）。"""
         if getattr(self, '_timeout_timer', None):
             try:
-                self._paused_timeout_remaining = max(0, int(self._timeout_timer.remainingTime()))
+                if self._paused_timeout_remaining is None:
+                    self._paused_timeout_remaining = max(0, int(self._timeout_timer.remainingTime()))
                 self._timeout_timer.stop()
             except Exception:
                 pass
@@ -1870,10 +1889,7 @@ class LogInterface(ScrollArea):
         # 如果当前不应立即追加，则缓冲并返回
         try:
             if not self._should_append_now():
-                try:
-                    self._buffered_logs += s
-                except Exception:
-                    self._buffered_logs = s
+                self._buffer_log(s)
                 return
         except Exception:
             # 若检查可见性失败，则继续追加以保证日志不丢失
@@ -1896,10 +1912,7 @@ class LogInterface(ScrollArea):
             scrollbar.setValue(scrollbar.maximum())
         except Exception:
             # 如果追加失败，尽量保留内容到缓冲中
-            try:
-                self._buffered_logs = (getattr(self, '_buffered_logs', '') or '') + s
-            except Exception:
-                pass
+            self._buffer_log(s)
 
     def _strip_ansi_sequences(self, text: str) -> str:
         """移除 ANSI 转义序列，避免在 GUI 文本框中显示颜色控制码。"""
@@ -1922,6 +1935,27 @@ class LogInterface(ScrollArea):
         except Exception:
             # 在不确定时返回 True 以避免丢失日志
             return True
+
+    def _buffer_log(self, s: str):
+        """缓冲日志文本，并按 MAX_LOG_LINES 行上限丢弃最旧的内容。
+
+        与 logTextEdit 的 maximumBlockCount 保持一致，避免窗口长时间隐藏时
+        _buffered_logs 无限增长（完整日志仍写入 logs/ 目录下的日志文件）。
+        """
+        try:
+            self._buffered_logs = (getattr(self, '_buffered_logs', None) or '') + s
+        except Exception:
+            self._buffered_logs = s
+        try:
+            buf = self._buffered_logs
+            limit = self.MAX_LOG_LINES
+            # 超出上限约 5% 的余量后才裁剪，避免每次追加都重建字符串
+            if buf.count('\n') <= limit + max(limit // 20, 1):
+                return
+            # 只保留最新的 limit 行（按换行数计，与 maximumBlockCount 的块数语义一致）
+            self._buffered_logs = '\n'.join(buf.split('\n')[-(limit + 1):])
+        except Exception:
+            pass
 
     def _flush_buffered_logs(self):
         """把缓冲的日志一次性追加到日志编辑器并清空缓冲"""

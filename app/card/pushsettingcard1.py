@@ -797,8 +797,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
         # Swap team1 and team2 - get fresh values from config to avoid stale data
         temp_team1 = cfg.get_value(self.configname_team1)
         temp_team2 = cfg.get_value(self.configname_team2)
-        cfg.set_value(self.configname_team1, temp_team2)
-        cfg.set_value(self.configname_team2, temp_team1)
+        cfg.set_values({self.configname_team1: temp_team2, self.configname_team2: temp_team1})
         self._update_display()
 
         InfoBar.success(
@@ -854,8 +853,10 @@ class PushSettingCardPowerPlan(CustomPushSettingCard):
         if message_box.exec():
             plans = message_box.get_plans()
             self.configvalue = plans
-            cfg.set_value(self.configname, plans)
-            cfg.set_value("power_plan_keep", message_box.should_keep_plan())
+            cfg.set_values({
+                self.configname: plans,
+                "power_plan_keep": message_box.should_keep_plan(),
+            })
             self.contentLabel.setText(self._get_display_text())
 
 
@@ -888,7 +889,7 @@ class InstanceTeamSettingCard(SettingCard):
         cfg.set_value("instance_team_enable", isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr("开") if isChecked else tr("关"))
 
     def _update_content_text(self):
@@ -909,9 +910,10 @@ class InstanceTeamSettingCard(SettingCard):
 
         if message_box.exec():
             new_default_team = message_box.get_default_team()
-            cfg.set_value("instance_team_number", str(new_default_team))
-
             new_teams = message_box.get_rules()
-            cfg.set_value("instance_teams", new_teams)
+            cfg.set_values({
+                "instance_team_number": str(new_default_team),
+                "instance_teams": new_teams,
+            })
 
             self._update_content_text()
