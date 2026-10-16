@@ -1283,27 +1283,27 @@ msgstr "觸控模式"
 msgid "以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内"
 msgstr "以雲端遊戲行動端 UI 的方式啟動遊戲，可搭配 UU 遠端平板觸控模式，啟動後會將指令複製到剪貼簿內"
 
-#: app/tools_interface.py:127
+#: app/tools_interface.py:130
 msgid "恢复60成功 (＾∀＾●)"
 msgstr "恢復 60 成功 (＾∀＾●)"
 
-#: app/tools_interface.py:138
+#: app/tools_interface.py:141
 msgid "解锁120成功 (＾∀＾●)"
 msgstr "解鎖 120 成功 (＾∀＾●)"
 
-#: app/tools_interface.py:148
+#: app/tools_interface.py:151
 msgid "解锁失败"
 msgstr "解鎖失敗"
 
-#: app/tools_interface.py:149
+#: app/tools_interface.py:152
 msgid "请将游戏图像质量修改为自定义后重试"
 msgstr "請將遊戲圖像品質修改為自訂後重試"
 
-#: app/tools_interface.py:166
+#: app/tools_interface.py:169
 msgid "此功能依赖第三方程序实现"
 msgstr "此功能依賴第三方程式實現"
 
-#: app/tools_interface.py:167
+#: app/tools_interface.py:170
 msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
@@ -1311,19 +1311,19 @@ msgstr ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能產生的所有問題與本專案及開發者團隊無關，是否繼續？"
 
-#: app/tools_interface.py:168
+#: app/tools_interface.py:171
 msgid "再次确认：可能存在风险"
 msgstr "再次確認：可能存在風險"
 
-#: app/tools_interface.py:169
+#: app/tools_interface.py:172
 msgid "工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？"
 msgstr "工作原理是透過 WriteProcessMemory 把程式碼寫進遊戲，是否繼續？"
 
-#: app/tools_interface.py:170
+#: app/tools_interface.py:173
 msgid "最终确认：请谨慎操作"
 msgstr "最終確認：請謹慎操作"
 
-#: app/tools_interface.py:171
+#: app/tools_interface.py:174
 msgid "确认继续并允许启用触屏模式？"
 msgstr "確認繼續並允許啟用觸控模式？"
 
@@ -1335,7 +1335,7 @@ msgstr "確認"
 msgid "取消"
 msgstr "取消"
 
-#: app/tools_interface.py:227
+#: app/tools_interface.py:230
 msgid "已将命令复制到剪贴板"
 msgstr "已將指令複製到剪貼簿"
 
@@ -1912,11 +1912,11 @@ msgstr "確認立即運行任務 \"{name}\" 嗎？"
 msgid "无法运行任务：父组件不支持 runScheduledTask"
 msgstr "無法運行任務：父組件不支援 runScheduledTask"
 
-#: app/card/autoplot_setting_card.py:46
+#: app/card/autoplot_setting_card.py:60
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
 msgstr "自動跳過 (當出現跳過按鈕時自動點擊)"
 
-#: app/card/autoplot_setting_card.py:51
+#: app/card/autoplot_setting_card.py:65
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "自動選擇 (自動選擇任意對話選項)"
 
@@ -1924,7 +1924,7 @@ msgstr "自動選擇 (自動選擇任意對話選項)"
 msgid "关"
 msgstr "關"
 
-#: app/card/autoplot_setting_card.py:124
+#: app/card/autoplot_setting_card.py:145
 msgid "开"
 msgstr "開"
 
@@ -3350,19 +3350,19 @@ msgstr "截圖失敗(╥╯﹏╰╥)"
 msgid "无法获取游戏窗口截图，请确认游戏窗口已打开"
 msgstr "無法獲取遊戲窗口截圖，請確認遊戲窗口已打開"
 
-#: app/tools_interface.py:247
+#: app/tools_interface.py:250
 msgid "截图来源"
 msgstr "截圖來源"
 
-#: app/tools_interface.py:247
+#: app/tools_interface.py:250
 msgid "请选择截图方式"
 msgstr "請選擇截圖方式"
 
-#: app/tools_interface.py:250
+#: app/tools_interface.py:253
 msgid "捕获游戏窗口"
 msgstr "捕獲遊戲窗口"
 
-#: app/tools_interface.py:253
+#: app/tools_interface.py:256
 msgid "手动选择图片"
 msgstr "手動選擇圖片"
 
@@ -4083,7 +4083,7 @@ msgstr "啓用消息推送"
 msgid "消息推送总开关"
 msgstr "消息推送總開關"
 
-#: app/card/autoplot_setting_card.py:56
+#: app/card/autoplot_setting_card.py:70
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
 msgstr "自動戰鬥檢測 (檢測到未自動戰鬥時按V開啓)"
 
@@ -5000,7 +5000,7 @@ msgstr "已複製到剪貼板"
 msgid "选择模板图片"
 msgstr "選擇模板圖片"
 
-#: app/card/autoplot_setting_card.py:61
+#: app/card/autoplot_setting_card.py:75
 msgid "自动短信 (自动点击关闭手机短信页面)"
 msgstr "自動短信 (自動點擊關閉手機短信頁面)"
 
@@ -5338,7 +5338,7 @@ msgstr "以最短路徑遍歷所有可達界面，驗證界面切換是否正常
 msgid "自动对话（全局热键，支持后台）"
 msgstr "自動對話（全局熱鍵，支持後臺）"
 
-#: app/card/autoplot_setting_card.py:71
+#: app/card/autoplot_setting_card.py:85
 msgid "启用快捷键切换自动对话"
 msgstr "啓用快捷鍵切換自動對話"
 
@@ -5620,11 +5620,11 @@ msgstr "請在「設定」→「程式」中設定"
 msgid "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK"
 msgstr "請在「設置 → 關於 → 更新源」中選擇 Mirror醬 並填寫有效 CDK"
 
-#: app/tools_interface.py:187
+#: app/tools_interface.py:190
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr "請在「設定」→「程式」中設定正確的遊戲路徑"
 
-#: app/card/autoplot_setting_card.py:77
+#: app/card/autoplot_setting_card.py:91
 msgid "快捷键：{hotkey}（可在设置中修改）"
 msgstr "快捷鍵：{hotkey}（可在設置中修改）"
 
@@ -6206,6 +6206,14 @@ msgstr ""
 msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "按下 {stop} 停止 · {pause} 繼續"
 
-#: app/card/autoplot_setting_card.py:65
+#: app/card/autoplot_setting_card.py:79
 msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:49
+msgid "记住自动对话开关状态"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:53
+msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"
 msgstr ""

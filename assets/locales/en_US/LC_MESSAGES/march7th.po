@@ -1339,27 +1339,27 @@ msgstr ""
 "Launch with Cloud Game Mobile UI. Use with UU Remote Tablet Mode. Command "
 "copied to clipboard."
 
-#: app/tools_interface.py:127
+#: app/tools_interface.py:130
 msgid "恢复60成功 (＾∀＾●)"
 msgstr "Restored 60 FPS (＾∀＾●)"
 
-#: app/tools_interface.py:138
+#: app/tools_interface.py:141
 msgid "解锁120成功 (＾∀＾●)"
 msgstr "Unlocked 120 FPS (＾∀＾●)"
 
-#: app/tools_interface.py:148
+#: app/tools_interface.py:151
 msgid "解锁失败"
 msgstr "Unlock Failed"
 
-#: app/tools_interface.py:149
+#: app/tools_interface.py:152
 msgid "请将游戏图像质量修改为自定义后重试"
 msgstr "Please set Game Image Quality to Custom and retry"
 
-#: app/tools_interface.py:166
+#: app/tools_interface.py:169
 msgid "此功能依赖第三方程序实现"
 msgstr "This feature relies on third-party software"
 
-#: app/tools_interface.py:167
+#: app/tools_interface.py:170
 msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
@@ -1367,19 +1367,19 @@ msgstr ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "Issues caused by this are not related to this project/team. Continue?"
 
-#: app/tools_interface.py:168
+#: app/tools_interface.py:171
 msgid "再次确认：可能存在风险"
 msgstr "Confirm Again: Potential Risk"
 
-#: app/tools_interface.py:169
+#: app/tools_interface.py:172
 msgid "工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？"
 msgstr "Works by writing code into game via WriteProcessMemory. Continue?"
 
-#: app/tools_interface.py:170
+#: app/tools_interface.py:173
 msgid "最终确认：请谨慎操作"
 msgstr "Final Confirm: Proceed with caution"
 
-#: app/tools_interface.py:171
+#: app/tools_interface.py:174
 msgid "确认继续并允许启用触屏模式？"
 msgstr "Confirm continue and enable Touch Mode?"
 
@@ -1391,7 +1391,7 @@ msgstr "Confirm"
 msgid "取消"
 msgstr "Cancel"
 
-#: app/tools_interface.py:227
+#: app/tools_interface.py:230
 msgid "已将命令复制到剪贴板"
 msgstr "Command copied to clipboard"
 
@@ -1973,11 +1973,11 @@ msgstr "Run task \"{name}\" now?"
 msgid "无法运行任务：父组件不支持 runScheduledTask"
 msgstr "Cannot run: Parent doesn't support runScheduledTask"
 
-#: app/card/autoplot_setting_card.py:46
+#: app/card/autoplot_setting_card.py:60
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
 msgstr "Auto Skip (Click Skip button when available)"
 
-#: app/card/autoplot_setting_card.py:51
+#: app/card/autoplot_setting_card.py:65
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "Auto Select (Select any option)"
 
@@ -1985,7 +1985,7 @@ msgstr "Auto Select (Select any option)"
 msgid "关"
 msgstr "Off"
 
-#: app/card/autoplot_setting_card.py:124
+#: app/card/autoplot_setting_card.py:145
 msgid "开"
 msgstr "On"
 
@@ -3423,19 +3423,19 @@ msgstr ""
 "Unable to capture the game window screenshot. Please make sure the game "
 "window is open."
 
-#: app/tools_interface.py:247
+#: app/tools_interface.py:250
 msgid "截图来源"
 msgstr "Screenshot Source"
 
-#: app/tools_interface.py:247
+#: app/tools_interface.py:250
 msgid "请选择截图方式"
 msgstr "Please choose a screenshot method"
 
-#: app/tools_interface.py:250
+#: app/tools_interface.py:253
 msgid "捕获游戏窗口"
 msgstr "Capture game window"
 
-#: app/tools_interface.py:253
+#: app/tools_interface.py:256
 msgid "手动选择图片"
 msgstr "Choose image manually"
 
@@ -4177,7 +4177,7 @@ msgstr "Enable notifications"
 msgid "消息推送总开关"
 msgstr "Notification master switch"
 
-#: app/card/autoplot_setting_card.py:56
+#: app/card/autoplot_setting_card.py:70
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
 msgstr "Auto Battle Detection (Press V when auto-battle is off)"
 
@@ -5118,7 +5118,7 @@ msgstr "Copied to clipboard"
 msgid "选择模板图片"
 msgstr "Select Template Image"
 
-#: app/card/autoplot_setting_card.py:61
+#: app/card/autoplot_setting_card.py:75
 msgid "自动短信 (自动点击关闭手机短信页面)"
 msgstr "Auto Message (Automatically click to close the phone message page)"
 
@@ -5473,7 +5473,7 @@ msgstr ""
 msgid "自动对话（全局热键，支持后台）"
 msgstr "Auto Dialogue (Global Hotkey, Works in Background)"
 
-#: app/card/autoplot_setting_card.py:71
+#: app/card/autoplot_setting_card.py:85
 msgid "启用快捷键切换自动对话"
 msgstr "Enable Hotkey to Toggle Auto Dialogue"
 
@@ -5766,11 +5766,11 @@ msgstr ""
 "Please go to Settings → About → Update Source, select Mirror and enter a "
 "valid CDK"
 
-#: app/tools_interface.py:187
+#: app/tools_interface.py:190
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr "Please configure the correct Game Path in Settings → Program"
 
-#: app/card/autoplot_setting_card.py:77
+#: app/card/autoplot_setting_card.py:91
 msgid "快捷键：{hotkey}（可在设置中修改）"
 msgstr "Hotkey: {hotkey} (Configurable in Settings)"
 
@@ -6373,6 +6373,14 @@ msgstr ""
 msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "Press {stop} to stop · {pause} to resume"
 
-#: app/card/autoplot_setting_card.py:65
+#: app/card/autoplot_setting_card.py:79
 msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:49
+msgid "记住自动对话开关状态"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:53
+msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"
 msgstr ""
