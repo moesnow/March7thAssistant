@@ -3346,7 +3346,7 @@ class SettingInterface(ScrollArea):
     def __onLauncherPathCardClicked(self):
         launcher_path, _ = QFileDialog.getOpenFileName(
             self,
-            tr("选择米哈游启动器路径"),
+            tr("选择启动器路径"),
             "",
             tr("脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)")
         )
