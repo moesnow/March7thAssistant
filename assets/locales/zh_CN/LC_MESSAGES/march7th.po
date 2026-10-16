@@ -1235,75 +1235,75 @@ msgstr "您希望如何处理程序?"
 msgid "记住我的选择,下次不再询问"
 msgstr "记住我的选择,下次不再询问"
 
-#: app/tools_interface.py:34
+#: app/tools_interface.py:36
 msgid "自动对话"
 msgstr "自动对话"
 
-#: app/tools_interface.py:35
+#: app/tools_interface.py:37
 msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
 msgstr "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
 
-#: app/tools_interface.py:38
+#: app/tools_interface.py:40
 msgid "捕获"
 msgstr "捕获"
 
-#: app/tools_interface.py:40
+#: app/tools_interface.py:42
 msgid "游戏截图"
 msgstr "游戏截图"
 
-#: app/tools_interface.py:41
+#: app/tools_interface.py:43
 msgid "检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）"
 msgstr "检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）"
 
-#: app/tools_interface.py:44
+#: app/tools_interface.py:46
 msgid "解锁"
 msgstr "解锁"
 
-#: app/tools_interface.py:46
+#: app/tools_interface.py:48
 msgid "解锁帧率"
 msgstr "解锁帧率"
 
-#: app/tools_interface.py:47
+#: app/tools_interface.py:49
 msgid "通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）"
 msgstr "通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）"
 
-#: app/tools_interface.py:50
+#: app/tools_interface.py:52
 msgid "执行"
 msgstr "执行"
 
-#: app/tools_interface.py:57
+#: app/tools_interface.py:59
 msgid "启动"
 msgstr "启动"
 
-#: app/tools_interface.py:59
+#: app/tools_interface.py:61
 msgid "触屏模式"
 msgstr "触屏模式"
 
-#: app/tools_interface.py:60
+#: app/tools_interface.py:62
 msgid "以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内"
 msgstr "以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内"
 
-#: app/tools_interface.py:130
+#: app/tools_interface.py:132
 msgid "恢复60成功 (＾∀＾●)"
 msgstr "恢复60成功 (＾∀＾●)"
 
-#: app/tools_interface.py:141
+#: app/tools_interface.py:143
 msgid "解锁120成功 (＾∀＾●)"
 msgstr "解锁120成功 (＾∀＾●)"
 
-#: app/tools_interface.py:151
+#: app/tools_interface.py:162
 msgid "解锁失败"
 msgstr "解锁失败"
 
-#: app/tools_interface.py:152
+#: app/tools_interface.py:153
 msgid "请将游戏图像质量修改为自定义后重试"
 msgstr "请将游戏图像质量修改为自定义后重试"
 
-#: app/tools_interface.py:169
+#: app/tools_interface.py:180
 msgid "此功能依赖第三方程序实现"
 msgstr "此功能依赖第三方程序实现"
 
-#: app/tools_interface.py:170
+#: app/tools_interface.py:181
 msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
@@ -1311,19 +1311,19 @@ msgstr ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
 
-#: app/tools_interface.py:171
+#: app/tools_interface.py:182
 msgid "再次确认：可能存在风险"
 msgstr "再次确认：可能存在风险"
 
-#: app/tools_interface.py:172
+#: app/tools_interface.py:183
 msgid "工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？"
 msgstr "工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？"
 
-#: app/tools_interface.py:173
+#: app/tools_interface.py:184
 msgid "最终确认：请谨慎操作"
 msgstr "最终确认：请谨慎操作"
 
-#: app/tools_interface.py:174
+#: app/tools_interface.py:185
 msgid "确认继续并允许启用触屏模式？"
 msgstr "确认继续并允许启用触屏模式？"
 
@@ -1335,15 +1335,15 @@ msgstr "确认"
 msgid "取消"
 msgstr "取消"
 
-#: app/tools_interface.py:230
+#: app/tools_interface.py:241
 msgid "已将命令复制到剪贴板"
 msgstr "已将命令复制到剪贴板"
 
-#: app/tools_interface.py:300
+#: app/tools_interface.py:311
 msgid "自动对话已启动"
 msgstr "自动对话已启动"
 
-#: app/tools_interface.py:312
+#: app/tools_interface.py:323
 msgid "自动对话已停止"
 msgstr "自动对话已停止"
 
@@ -3350,19 +3350,19 @@ msgstr "截图失败(╥╯﹏╰╥)"
 msgid "无法获取游戏窗口截图，请确认游戏窗口已打开"
 msgstr "无法获取游戏窗口截图，请确认游戏窗口已打开"
 
-#: app/tools_interface.py:250
+#: app/tools_interface.py:261
 msgid "截图来源"
 msgstr "截图来源"
 
-#: app/tools_interface.py:250
+#: app/tools_interface.py:261
 msgid "请选择截图方式"
 msgstr "请选择截图方式"
 
-#: app/tools_interface.py:253
+#: app/tools_interface.py:264
 msgid "捕获游戏窗口"
 msgstr "捕获游戏窗口"
 
-#: app/tools_interface.py:256
+#: app/tools_interface.py:267
 msgid "手动选择图片"
 msgstr "手动选择图片"
 
@@ -5322,15 +5322,15 @@ msgstr "教程"
 msgid "{name} 配置教程"
 msgstr "{name} 配置教程"
 
-#: app/tools_interface.py:65
+#: app/tools_interface.py:67
 msgid "界面可切换性测试"
 msgstr "界面可切换性测试"
 
-#: app/tools_interface.py:63
+#: app/tools_interface.py:65
 msgid "测试"
 msgstr "测试"
 
-#: app/tools_interface.py:66
+#: app/tools_interface.py:68
 msgid "以最短路径遍历所有可达界面，验证界面切换是否正常"
 msgstr "以最短路径遍历所有可达界面，验证界面切换是否正常"
 
@@ -5620,7 +5620,7 @@ msgstr "请在“设置”→“程序”中配置"
 msgid "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK"
 msgstr "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK"
 
-#: app/tools_interface.py:190
+#: app/tools_interface.py:201
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr "请在“设置”→“程序”中配置正确的游戏路径"
 
@@ -6218,3 +6218,7 @@ msgstr "记住自动对话开关状态"
 #: app/card/autoplot_setting_card.py:53
 msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"
 msgstr "开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"
+
+#: app/tools_interface.py:160
+msgid "{error}（详情见日志）"
+msgstr "{error}（详情见日志）"

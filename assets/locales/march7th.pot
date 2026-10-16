@@ -3709,137 +3709,141 @@ msgstr ""
 msgid "跃迁数据获取完成(＾∀＾●)"
 msgstr ""
 
-#: app/tools_interface.py:34
+#: app/tools_interface.py:36
 msgid "自动对话"
 msgstr ""
 
-#: app/tools_interface.py:35
+#: app/tools_interface.py:37
 msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
 msgstr ""
 
-#: app/tools_interface.py:38
+#: app/tools_interface.py:40
 msgid "捕获"
 msgstr ""
 
-#: app/tools_interface.py:40
+#: app/tools_interface.py:42
 msgid "游戏截图"
 msgstr ""
 
-#: app/tools_interface.py:41
+#: app/tools_interface.py:43
 msgid "检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）"
 msgstr ""
 
-#: app/tools_interface.py:44
+#: app/tools_interface.py:46
 msgid "解锁"
 msgstr ""
 
-#: app/tools_interface.py:46
+#: app/tools_interface.py:48
 msgid "解锁帧率"
 msgstr ""
 
-#: app/tools_interface.py:47
+#: app/tools_interface.py:49
 msgid "通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）"
 msgstr ""
 
-#: app/tools_interface.py:50
+#: app/tools_interface.py:52
 msgid "执行"
 msgstr ""
 
-#: app/tools_interface.py:57
+#: app/tools_interface.py:59
 msgid "启动"
 msgstr ""
 
-#: app/tools_interface.py:59
+#: app/tools_interface.py:61
 msgid "触屏模式"
 msgstr ""
 
-#: app/tools_interface.py:60
+#: app/tools_interface.py:62
 msgid "以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内"
 msgstr ""
 
-#: app/tools_interface.py:63
+#: app/tools_interface.py:65
 msgid "测试"
 msgstr ""
 
-#: app/tools_interface.py:65
+#: app/tools_interface.py:67
 msgid "界面可切换性测试"
 msgstr ""
 
-#: app/tools_interface.py:66
+#: app/tools_interface.py:68
 msgid "以最短路径遍历所有可达界面，验证界面切换是否正常"
 msgstr ""
 
-#: app/tools_interface.py:130
+#: app/tools_interface.py:132
 msgid "恢复60成功 (＾∀＾●)"
 msgstr ""
 
-#: app/tools_interface.py:141
+#: app/tools_interface.py:143
 msgid "解锁120成功 (＾∀＾●)"
 msgstr ""
 
-#: app/tools_interface.py:151
-msgid "解锁失败"
-msgstr ""
-
-#: app/tools_interface.py:152
+#: app/tools_interface.py:153
 msgid "请将游戏图像质量修改为自定义后重试"
 msgstr ""
 
-#: app/tools_interface.py:169
+#: app/tools_interface.py:160
+msgid "{error}（详情见日志）"
+msgstr ""
+
+#: app/tools_interface.py:162
+msgid "解锁失败"
+msgstr ""
+
+#: app/tools_interface.py:180
 msgid "此功能依赖第三方程序实现"
 msgstr ""
 
-#: app/tools_interface.py:170
+#: app/tools_interface.py:181
 msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
 msgstr ""
 
-#: app/tools_interface.py:171
+#: app/tools_interface.py:182
 msgid "再次确认：可能存在风险"
 msgstr ""
 
-#: app/tools_interface.py:172
+#: app/tools_interface.py:183
 msgid "工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？"
 msgstr ""
 
-#: app/tools_interface.py:173
+#: app/tools_interface.py:184
 msgid "最终确认：请谨慎操作"
 msgstr ""
 
-#: app/tools_interface.py:174
+#: app/tools_interface.py:185
 msgid "确认继续并允许启用触屏模式？"
 msgstr ""
 
-#: app/tools_interface.py:190
+#: app/tools_interface.py:201
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr ""
 
-#: app/tools_interface.py:230
+#: app/tools_interface.py:241
 msgid "已将命令复制到剪贴板"
 msgstr ""
 
-#: app/tools_interface.py:250
+#: app/tools_interface.py:261
 msgid "截图来源"
 msgstr ""
 
-#: app/tools_interface.py:250
+#: app/tools_interface.py:261
 msgid "请选择截图方式"
 msgstr ""
 
-#: app/tools_interface.py:253
+#: app/tools_interface.py:264
 msgid "捕获游戏窗口"
 msgstr ""
 
-#: app/tools_interface.py:256
+#: app/tools_interface.py:267
 msgid "手动选择图片"
 msgstr ""
 
-#: app/tools_interface.py:300
+#: app/tools_interface.py:311
 msgid "自动对话已启动"
 msgstr ""
 
-#: app/tools_interface.py:312
+#: app/tools_interface.py:323
 msgid "自动对话已停止"
 msgstr ""
 
