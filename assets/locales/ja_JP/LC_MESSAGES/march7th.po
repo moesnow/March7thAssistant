@@ -6243,3 +6243,35 @@ msgstr "HoYoPlay"
 #: app/setting_interface.py:3349
 msgid "选择启动器路径"
 msgstr "ランチャーのパスを選択"
+
+#: app/card/messagebox_custom.py:276
+msgid "显示更早的更新记录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:309
+msgid "正在加载历史更新记录……"
+msgstr ""
+
+#: app/card/messagebox_custom.py:313
+msgid "查看完整更新日志"
+msgstr ""
+
+#: app/card/messagebox_custom.py:327
+msgid "以下为已收录的更新记录，部分历史版本可能未收录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:329
+msgid "已加载 {count} 份版本更新记录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:352
+msgid "继续显示更早的更新记录（还有 {count} 份）"
+msgstr ""
+
+#: app/tools/check_update.py:62
+msgid "历史更新记录暂时无法加载，仍可正常更新"
+msgstr ""
+
+#: app/tools/check_update.py:204
+msgid "该渠道版本与目标版本不一致，请稍后重试"
+msgstr ""

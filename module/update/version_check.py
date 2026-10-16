@@ -34,6 +34,7 @@ class UpdateInfo:
     sha256: str = ""      # 下载文件 SHA-256（如果更新源提供）
     release_note: str = ""   # 更新日志（Markdown）
     html_url: str = ""       # 发布页面 URL（仅 GitHub 来源有值）
+    api_base: str = ""       # 本次成功使用的 GitHub API 地址（含镜像前缀）
 
 
 class VersionCheckError(RuntimeError):
@@ -42,15 +43,14 @@ class VersionCheckError(RuntimeError):
 
 # ── GitHub API 镜像列表 ──────────────────────────────────────────────
 
-_GITHUB_API_URLS = [
-    "https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-    "https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases/latest",
-]
+GITHUB_API_BASES = (
+    "https://api.github.com/repos/moesnow/March7thAssistant",
+    "https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant",
+)
 
-_GITHUB_API_PRERELEASE_URLS = [
-    "https://api.github.com/repos/moesnow/March7thAssistant/releases",
-    "https://github.kotori.top/https://api.github.com/repos/moesnow/March7thAssistant/releases",
-]
+_GITHUB_API_URLS = [base + "/releases/latest" for base in GITHUB_API_BASES]
+
+_GITHUB_API_PRERELEASE_URLS = [base + "/releases" for base in GITHUB_API_BASES]
 
 
 # ── 底层工具函数 ─────────────────────────────────────────────────────
@@ -332,6 +332,7 @@ def _check_github(
         sha256=sha256,
         release_note=release.get("body", ""),
         html_url=release.get("html_url", ""),
+        api_base=api_url.rsplit("/releases", 1)[0],
     )
 
 
