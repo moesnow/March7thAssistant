@@ -7,11 +7,42 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--show-ui",
+        action="store_true",
+        default=False,
+        help="测试时显示 UI 窗口，便于调试（默认不上屏）",
+    )
+
+
 @pytest.fixture(autouse=True)
-def _auto_close_windows():
+def _quiet_ui(request, monkeypatch):
+    """保留原生 Qt 布局、绘制和事件处理，只让顶层窗口不上屏。"""
+    if request.config.getoption("--show-ui"):
+        return
+
+    try:
+        from PySide6.QtCore import Qt
+        from PySide6.QtWidgets import QWidget
+    except ImportError:
+        return
+
+    original_show = QWidget.show
+
+    def show_without_screen(widget, *args, **kwargs):
+        if widget.isWindow():
+            widget.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, True)
+        return original_show(widget, *args, **kwargs)
+
+    monkeypatch.setattr(QWidget, "show", show_without_screen)
+
+
+@pytest.fixture(autouse=True)
+def _auto_close_windows(_quiet_ui):
     """每个测试结束后立刻关闭并销毁它打开的顶层窗口。
 
-    GUI 测试会真实 show 顶层窗口；`deleteLater` 是延迟删除，在由
+    GUI 测试仍会执行 show，只是默认不上屏；`deleteLater` 是延迟删除，在由
     `processEvents` 手动驱动的测试流程里可能一直得不到处理，导致窗口
     堆积到进程退出才一次性消失。这里在测试收尾时强制隐藏并立即销毁
     所有可见的顶层窗口（包括失败用例遗留的）。
