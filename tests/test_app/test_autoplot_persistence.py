@@ -29,6 +29,9 @@ def test_autoplot_switch_persists_and_restores_running_state(qapp, monkeypatch):
         def set_value(self, key, value):
             values[key] = value
 
+        def set_values(self, updates):
+            values.update(updates)
+
     fake_config = FakeConfig()
     monkeypatch.setattr(card_module, "cfg", fake_config)
     monkeypatch.setattr(tools_module, "cfg", fake_config)
@@ -46,6 +49,18 @@ def test_autoplot_switch_persists_and_restores_running_state(qapp, monkeypatch):
     start.assert_not_called()
 
     first.automaticPlotCard.switchButton.setChecked(True)
+    assert values["autoplot_enable"] is False
+    start.assert_called_once_with("plot")
+
+    # 默认不恢复，即使配置中有旧的开启状态。
+    values["autoplot_enable"] = True
+    fresh = tools_module.ToolsInterface()
+    assert not fresh.automaticPlotCard.getSwitchState()
+    assert start.call_count == 1
+
+    # 已开启自动对话时再启用记忆，也要保存当前状态。
+    first.automaticPlotCard.rememberStateCheckBox.setChecked(True)
+    assert values["autoplot_remember_enable"] is True
     assert values["autoplot_enable"] is True
     start.assert_called_once_with("plot")
 
@@ -61,3 +76,10 @@ def test_autoplot_switch_persists_and_restores_running_state(qapp, monkeypatch):
     disabled = tools_module.ToolsInterface()
     assert not disabled.automaticPlotCard.getSwitchState()
     assert start.call_count == 2
+
+    disabled.toggleAutoPlot()
+    assert values["autoplot_enable"] is True
+    disabled.automaticPlotCard.rememberStateCheckBox.setChecked(False)
+    assert values["autoplot_enable"] is False
+    assert disabled.automaticPlotCard.getSwitchState()
+    assert not tools_module.ToolsInterface().automaticPlotCard.getSwitchState()

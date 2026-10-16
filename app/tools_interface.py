@@ -293,7 +293,7 @@ class ToolsInterface(ScrollArea):
 
     def __onAutoPlotSwitchChanged(self, isChecked: bool):
         """Handle auto plot switch state change"""
-        cfg.set_value("autoplot_enable", isChecked)
+        cfg.set_value("autoplot_enable", isChecked and bool(cfg.get_value("autoplot_remember_enable", False)))
         if isChecked:
             self.__startAutoPlot()
             InfoBar.success(
