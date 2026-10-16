@@ -14,6 +14,7 @@ autoplot_skip_enable: true # 是否自动跳过对话（当出现跳过按钮时
 autoplot_click_enable: true # 是否自动选择对话选项。
 autoplot_battle_detect_enable: true # 是否自动战斗检测（检测到未自动战斗时按 V 开启）。
 autoplot_phone_detect_enable: true # 是否自动处理手机短信页面。
+autoplot_hero_chronicle_enable: false # 是否自动阅读如我所书中的翁法罗斯英雄纪。
 
 # 调试模式
 debug_mode_enable: false # 是否启用调试模式。开启后会在屏幕对应位置实时绘制检测范围框（透明悬浮窗），用于调试自动化识别。仅 Windows 生效。
