@@ -1,11 +1,31 @@
 # 更新日志
 
+## v2026.10.16
+- 新手推荐观看 [从零开始的三月七小助手保姆级安装教程](https://www.bilibili.com/video/BV1DrJt62E1u/)，从下载、解压到首次启动，跟着视频一步步完成安装，欢迎点赞、投币、收藏支持！
+- 自动对话新增自动阅读翁法罗斯英雄纪，支持跳过已读及未解锁篇章（请先打开该书目录） [#1250](https://github.com/moesnow/March7thAssistant/pulls/1250) @long098sdo
+- 自动对话新增“记住自动对话开关状态”选项，开启后下次启动小助手时恢复开关状态，默认关闭 [#1258](https://github.com/moesnow/March7thAssistant/pulls/1258) @23swccp
+- 支持选择 HoYoPlay 启动器更新及预下载国际服游戏 [#1253](https://github.com/moesnow/March7thAssistant/pulls/1253) @300g-BoHeYou
+- 开机自启升级为可配置的登录自启，支持选择是否打开图形界面、最小化到托盘及自动执行的任务，启动时不再弹出 UAC 提示
+- 助燃券满额时自动清理并继续领取周期奖励，支持差分宇宙和货币战争 [#1261](https://github.com/moesnow/March7thAssistant/pulls/1261) @Welt2000
+- 货币战争新增“触发晋升赛”和“晋升成功”结果识别 [#1270](https://github.com/moesnow/March7thAssistant/pulls/1270) @loader3229
+- 修复好友支援列表中部分带角标的角色头像无法识别的问题 [#1259](https://github.com/moesnow/March7thAssistant/pulls/1259) @23swccp
+- 修复差分宇宙卡在“奇物损毁”页面的问题 [#1264](https://github.com/moesnow/March7thAssistant/pulls/1264) @XX3121
+- 修复差分宇宙跨周继续进度时，确认弹窗导致重新进入关卡失败的问题 [#1268](https://github.com/moesnow/March7thAssistant/pulls/1268) @08158
+- 修复遗器背包已满后自动分解时，界面返回路径异常导致任务中断的问题 [#1267](https://github.com/moesnow/March7thAssistant/pulls/1267) @08158
+- 优化解锁帧率失败提示：缺少帧率配置时明确提示将图像质量改为自定义，其他错误显示简短信息并记录完整日志 [#1262](https://github.com/moesnow/March7thAssistant/pulls/1262) @23swccp
+- 修复部分系统中数值输入框显示异常，以及输入数字时数值意外增大的问题
+- 修复任务暂停时悬浮窗快捷键提示与实际状态不一致，以及连续按暂停键可能误恢复任务的问题
+- 修复通过开机自启启动后，长时间运行的图形界面可能被任务计划程序关闭的问题
+- 修复部分配置项缺失时开关卡片显示异常的问题
+- 优化界面启动速度及长时间运行时的日志内存占用
+- 优化性能和稳定性并修复若干已知问题
+- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
+
 ## v2026.10.3
 - 新增 QQ 官方机器人通知渠道
 - 修复更新时偶发的配置文件损坏或被重置为默认值的问题
 - 修复 OCR GPU(DML) 加速被误降级到 CPU 的问题 [#1178](https://github.com/moesnow/March7thAssistant/pull/1178) @KiMelody
 - 优化性能和稳定性并修复若干已知问题
-- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.9.30
 - 新增任务暂停/继续功能，支持按钮、全局快捷键与游戏内日志悬浮窗状态显示
