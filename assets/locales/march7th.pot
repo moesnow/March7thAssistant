@@ -2145,7 +2145,19 @@ msgid "通过启动器更新游戏"
 msgstr ""
 
 #: app/setting_interface.py:1063
-msgid "米哈游启动器路径"
+msgid "启动器路径"
+msgstr ""
+
+#: app/setting_interface.py:1069
+msgid "启动器类型"
+msgstr ""
+
+#: app/setting_interface.py:1071
+msgid "米哈游启动器"
+msgstr ""
+
+#: app/setting_interface.py:1071
+msgid "HoYoPlay"
 msgstr ""
 
 #: app/setting_interface.py:1070
@@ -3397,8 +3409,8 @@ msgstr ""
 msgid "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
 msgstr ""
 
-#: app/setting_interface.py:3341
-msgid "选择米哈游启动器路径"
+#: app/setting_interface.py:3349
+msgid "选择启动器路径"
 msgstr ""
 
 #: app/setting_interface.py:3366

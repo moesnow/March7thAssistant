@@ -6244,3 +6244,23 @@ msgstr ""
 #: app/tools_interface.py:160
 msgid "{error}（详情见日志）"
 msgstr ""
+
+#: app/setting_interface.py:1063
+msgid "启动器路径"
+msgstr "런처 경로"
+
+#: app/setting_interface.py:1069
+msgid "启动器类型"
+msgstr "런처 유형"
+
+#: app/setting_interface.py:1071
+msgid "米哈游启动器"
+msgstr "미호요 런처"
+
+#: app/setting_interface.py:1071
+msgid "HoYoPlay"
+msgstr "HoYoPlay"
+
+#: app/setting_interface.py:3349
+msgid "选择启动器路径"
+msgstr "런처 경로 선택"

@@ -335,6 +335,8 @@ def _start_launcher_and_get_automation(game):
     """启动米哈游启动器并返回 (launcher, launcher_auto)。
     若无法找到路径，返回 (None, None)。若启动器未切换到窗口，返回 (launcher, None)。"""
     from module.game.launcher import LauncherController
+    if game is None:
+        game = "hkrpg_global" if cfg.launcher_title_name == "HoYoPlay" else "hkrpg_cn"
     if os.path.exists(cfg.launcher_path):
         path = cfg.launcher_path
     else:
@@ -414,12 +416,12 @@ def _click_pre_download(launcher, launcher_auto):
     return False
 
 
-def update_via_launcher(game="hkrpg_cn"):
+def update_via_launcher(game=None):
     """
     通过米哈游启动器尝试更新指定游戏到最新客户端
-    'hkrpg_cn'（崩坏：星穹铁道国服）、'hk4e_cn'（原神国服）、'nap_cn'（绝区零国服）
+    'hkrpg_cn'（崩坏：星穹铁道国服）、'hk4e_cn'（原神国服）、'nap_cn'（绝区零国服）、'hkrpg_global'（崩坏：星穹铁道国际服）
     """
-
+    # 未指定游戏时按启动器类型选择星铁；显式传入的游戏标识保持不变。
     launcher, launcher_auto = _start_launcher_and_get_automation(game)
     if launcher is None:
         return
@@ -440,10 +442,10 @@ def update_via_launcher(game="hkrpg_cn"):
     launcher.stop_game()
 
 
-def pre_download_via_launcher(game="hkrpg_cn"):
+def pre_download_via_launcher(game=None):
     """
     通过米哈游启动器尝试预下载指定游戏的最新客户端
-    'hkrpg_cn'（崩坏：星穹铁道国服）、'hk4e_cn'（原神国服）、'nap_cn'（绝区零国服）
+    'hkrpg_cn'（崩坏：星穹铁道国服）、'hk4e_cn'（原神国服）、'nap_cn'（绝区零国服）、'hkrpg_global'（崩坏：星穹铁道国际服）
     """
     launcher, launcher_auto = _start_launcher_and_get_automation(game)
     if launcher is None:

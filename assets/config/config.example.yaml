@@ -50,7 +50,7 @@ game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
 
-launcher_title_name: 米哈游启动器 # 米哈游启动器窗口标题。
+launcher_title_name: 米哈游启动器 # 启动器类型及窗口标题，可选 米哈游启动器、HoYoPlay。
 launcher_process_name: HYP # 米哈游启动器进程名。
 launcher_path: C:\Program Files\miHoYo Launcher\launcher.exe # 米哈游启动器安装路径。
 
