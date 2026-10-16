@@ -33,6 +33,10 @@ class AutoPlotSettingCard(ExpandSettingCard):
         # Configuration options
         self._init_options()
 
+        # 恢复总开关状态；此时尚未连接信号，实际启动由工具箱界面负责。
+        self.setValue(bool(cfg.get_value("autoplot_remember_enable", False))
+                      and bool(cfg.get_value("autoplot_enable", False)))
+
         # Connect signals
         self.switchButton.checkedChanged.connect(self.__onSwitchChanged)
 
@@ -41,6 +45,16 @@ class AutoPlotSettingCard(ExpandSettingCard):
         # Create widgets container
         self.viewLayout.setSpacing(19)
         self.viewLayout.setContentsMargins(48, 18, 48, 18)
+
+        self.rememberStateCheckBox = CheckBox(tr("记住自动对话开关状态"), self.view)
+        self.rememberStateCheckBox.setChecked(bool(cfg.get_value("autoplot_remember_enable", False)))
+        self.viewLayout.addWidget(self.rememberStateCheckBox)
+        self.rememberStateHintLabel = QLabel(
+            tr("开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"), self.view)
+        self.rememberStateHintLabel.setWordWrap(True)
+        self.rememberStateHintLabel.setStyleSheet("color: gray;")
+        self.viewLayout.addWidget(self.rememberStateHintLabel)
+        self.rememberStateCheckBox.stateChanged.connect(self._on_remember_state_changed)
 
         # Auto skip checkbox
         self.autoSkipCheckBox = CheckBox(tr("自动跳过 (当出现跳过按钮时自动点击)"), self.view)
@@ -61,6 +75,11 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.autoPhoneDetectCheckBox = CheckBox(tr("自动短信 (自动点击关闭手机短信页面)"), self.view)
         self.autoPhoneDetectCheckBox.setChecked(bool(cfg.get_value("autoplot_phone_detect_enable", True)))
         self.viewLayout.addWidget(self.autoPhoneDetectCheckBox)
+
+        self.heroChronicleCheckBox = CheckBox(tr('自动阅读翁法罗斯英雄纪（请先打开该书目录）'), self.view)
+        self.heroChronicleCheckBox.setChecked(bool(cfg.get_value('autoplot_hero_chronicle_enable', False)))
+        self.viewLayout.addWidget(self.heroChronicleCheckBox)
+        self.heroChronicleCheckBox.stateChanged.connect(self._on_option_changed)
 
         # Hotkey toggle checkbox
         self.hotkeyToggleCheckBox = CheckBox(tr("启用快捷键切换自动对话"), self.view)
@@ -87,6 +106,13 @@ class AutoPlotSettingCard(ExpandSettingCard):
         # Adjust view size
         self._adjustViewSize()
 
+    def _on_remember_state_changed(self):
+        enabled = self.rememberStateCheckBox.isChecked()
+        cfg.set_values({
+            "autoplot_remember_enable": enabled,
+            "autoplot_enable": enabled and self.getSwitchState(),
+        })
+
     def _on_option_changed(self):
         """Save options to config and emit signal"""
         # 批量写入：set_value 每次都会 load+save 落盘，一次勾选只需落盘一次
@@ -95,6 +121,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
             "autoplot_click_enable": self.autoClickCheckBox.isChecked(),
             "autoplot_battle_detect_enable": self.autoBattleDetectCheckBox.isChecked(),
             "autoplot_phone_detect_enable": self.autoPhoneDetectCheckBox.isChecked(),
+            "autoplot_hero_chronicle_enable": self.heroChronicleCheckBox.isChecked(),
         })
         self.optionsChanged.emit(self.getOptions())
 
@@ -128,6 +155,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
             'auto_click': self.autoClickCheckBox.isChecked(),
             'auto_battle_detect_enable': self.autoBattleDetectCheckBox.isChecked(),
             'auto_phone_detect_enable': self.autoPhoneDetectCheckBox.isChecked(),
+            'hero_chronicle_enable': self.heroChronicleCheckBox.isChecked(),
         }
 
     def updateHotkeyHint(self):
