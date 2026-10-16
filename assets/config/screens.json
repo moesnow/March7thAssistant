@@ -380,6 +380,9 @@
                 "target_screen": "menu",
                 "actions_list": [
                     "auto.press_key('esc')"
+                ],
+                "actions_list_on_timeout": [
+                    "auto.press_key('esc')"
                 ]
             },
             {
