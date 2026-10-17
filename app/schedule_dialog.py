@@ -1,10 +1,12 @@
 # coding:utf-8
-from PySide6.QtCore import Qt, QTime, QDateTime, QSize
+from copy import deepcopy
+
+from PySide6.QtCore import Qt, QTime, QSize, QSignalBlocker
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QTableWidgetItem, QFileDialog, QHeaderView,
                                QToolButton, QWidget,
                                QAbstractItemView)
-from qfluentwidgets import TimePicker, BodyLabel, PushButton, PrimaryPushButton, TableWidget, MaskDialogBase, MessageBox, Dialog
+from qfluentwidgets import TimePicker, BodyLabel, PushButton, PrimaryPushButton, TableWidget, MessageBox
 from qfluentwidgets import LineEdit, ComboBox, CheckBox
 from app.components.ascii_spin_box import AsciiSpinBox
 from qfluentwidgets import InfoBar, InfoBarPosition
@@ -16,6 +18,7 @@ import os
 import json
 from module.config import cfg
 from module.localization import tr
+from app.common.schedule import parse_schedule_time, task_timeout_seconds, task_trigger_mode
 
 
 def _strip_jsonc_comments(text: str) -> str:
@@ -106,7 +109,8 @@ class AddEditScheduleDialog(MessageBox):
     def __init__(self, parent=None, task=None, scheduled_tasks=None):
         # 使用 MessageBox 的风格初始化（不显示默认内容）
         super().__init__(tr("添加/编辑定时任务"), "", parent)
-        self.task = task or {}
+        self.task = deepcopy(task) if task else {}
+        self._timeout_edited = False
         # 用于校验时间重复的现有任务列表（可能包含当前正在编辑的任务）
         self.existing_tasks = scheduled_tasks or []
 
@@ -134,11 +138,10 @@ class AddEditScheduleDialog(MessageBox):
         # 程序类型（本体、流程编排或外部程序）
         self.program_type_combo = ComboBox(self)
         # 程序类型：本体、流程编排、外部程序，以及来自配置的特殊程序
-        items = [tr('本体'), tr('流程编排'), tr('外部程序')]
+        for program_key, label in [('self', tr('本体')), ('workflow', tr('流程编排')), ('external', tr('外部程序'))]:
+            self.program_type_combo.addItem(label, userData=program_key)
         for sp in SPECIAL_PROGRAMS:
-            # display_name 可能包含空格等，本地化时使用 tr(display_name)
-            items.append(tr(sp.get('display_name')))
-        self.program_type_combo.addItems(items)
+            self.program_type_combo.addItem(tr(sp.get('display_name')), userData=sp.get('key'))
 
         # 可选的外部程序路径（仅当选择外部程序时启用）
         self.program_path_edit = LineEdit(self)
@@ -167,8 +170,8 @@ class AddEditScheduleDialog(MessageBox):
         self.args_combo.activated.connect(self._on_args_activated)
 
         self.workflow_combo = ComboBox(self)
-        self.workflow_names = [workflow.get('name', '') for workflow in load_workflows() if workflow.get('name')]
-        self.workflow_combo.addItems(self.workflow_names)
+        self.workflow_names = []
+        self._workflows_loaded = False
         self.workflow_combo.setVisible(False)
         self.workflow_combo.activated.connect(self._on_workflow_activated)
 
@@ -196,7 +199,7 @@ class AddEditScheduleDialog(MessageBox):
         self.trigger_mode_help_btn.clicked.connect(self._show_trigger_mode_help)
 
         # 初始显示状态：默认选择本体
-        self.program_type_combo.setCurrentText('本体')
+        self.program_type_combo.setCurrentIndex(0)
         # 连接信号，在后面创建 args_label 后再触发一次以确保文本正确
         self.program_type_combo.currentTextChanged.connect(self._on_program_type_changed)
         # 连接 activated 信号，用于检测用户手动选择以应用默认参数（仅用户触发）
@@ -321,6 +324,8 @@ class AddEditScheduleDialog(MessageBox):
         else:
             self._on_trigger_mode_changed()
 
+        self.timeout_spin.valueChanged.connect(self._on_timeout_changed)
+
         # 当程序类型改变时切换参数输入模式
         # 已在构造中连接：self.program_type_combo.currentTextChanged -> _on_program_type_changed
 
@@ -336,13 +341,12 @@ class AddEditScheduleDialog(MessageBox):
 
         # 时间重复校验（跳过与当前编辑任务相同的 id）
         if self._current_trigger_mode() == 'time':
-            time_str = self.time_picker.time.toString('HH:mm')
             for t in (self.existing_tasks or []):
                 if self.task and t.get('id') == self.task.get('id'):
                     continue
-                if str(t.get('trigger_mode', 'time')).lower() != 'time':
+                if task_trigger_mode(t) != 'time':
                     continue
-                if t.get('time') == time_str:
+                if parse_schedule_time(t.get('time')) == self.time_picker.time:
                     m = MessageBox(tr('错误'), tr('已存在相同时间的任务，请选择其他时间'), self)
                     m.cancelButton.hide()
                     m.yesButton.setText(tr('确认'))
@@ -350,10 +354,10 @@ class AddEditScheduleDialog(MessageBox):
                     return
 
         # 程序路径不能为空（非本体类型都要求路径）
-        if self.program_type_combo.currentText() != tr('本体'):
+        if self._current_program_type() != 'self':
             prog = self.program_path_edit.text().strip()
-            if self.program_type_combo.currentText() == tr('流程编排'):
-                if not self.workflow_combo.currentText().strip():
+            if self._current_program_type() == 'workflow':
+                if self.workflow_combo.currentText().strip() not in self.workflow_names:
                     m = MessageBox(tr('错误'), tr('请选择要运行的流程编排'), self)
                     m.cancelButton.hide()
                     m.yesButton.setText(tr('确认'))
@@ -378,6 +382,25 @@ class AddEditScheduleDialog(MessageBox):
         if path:
             # 将选择的路径填写到外部程序路径控件
             self.program_path_edit.setText(path)
+
+    def _current_program_type(self):
+        return self.program_type_combo.itemData(self.program_type_combo.currentIndex())
+
+    def _set_program_type(self, program_key):
+        for index in range(self.program_type_combo.count()):
+            if self.program_type_combo.itemData(index) == program_key:
+                self.program_type_combo.setCurrentIndex(index)
+                return
+
+    def _load_workflow_choices(self):
+        if self._workflows_loaded:
+            return
+        self.workflow_names = [workflow.get('name', '') for workflow in load_workflows() if workflow.get('name')]
+        self.workflow_combo.addItems(self.workflow_names)
+        self._workflows_loaded = True
+
+    def _on_timeout_changed(self, _value):
+        self._timeout_edited = True
 
     def _current_trigger_mode(self):
         idx = self.trigger_mode_combo.currentIndex() if self.trigger_mode_combo.count() > 0 else 0
@@ -414,7 +437,8 @@ class AddEditScheduleDialog(MessageBox):
 
     def _on_program_type_changed(self, text):
         """根据程序类型调整界面：本体 -> 显示任务下拉；外部程序 -> 显示路径与参数输入，并修改标签文本"""
-        if text == tr('本体'):
+        program_type = self._current_program_type()
+        if program_type == 'self':
             self.program_path_edit.setVisible(False)
             self.prog_btn.setVisible(False)
             self.args_edit.setVisible(False)
@@ -425,7 +449,8 @@ class AddEditScheduleDialog(MessageBox):
                 self.args_label.setText(tr('选择任务：'))
             except Exception:
                 pass
-        elif text == tr('流程编排'):
+        elif program_type == 'workflow':
+            self._load_workflow_choices()
             self.program_path_edit.setVisible(False)
             self.prog_btn.setVisible(False)
             self.args_edit.setVisible(False)
@@ -435,7 +460,7 @@ class AddEditScheduleDialog(MessageBox):
                 self.args_label.setText(tr('选择流程：'))
             except Exception:
                 pass
-        elif text == tr('外部程序'):
+        elif program_type == 'external':
             self.program_path_edit.setVisible(True)
             self.prog_btn.setVisible(True)
             self.args_edit.setVisible(True)
@@ -451,7 +476,7 @@ class AddEditScheduleDialog(MessageBox):
             # 检查是否为配置中的特殊程序（使用 display_name 的 tr 版本比较）
             found = None
             for sp in SPECIAL_PROGRAMS:
-                if text == tr(sp.get('display_name')):
+                if program_type == sp.get('key'):
                     found = sp
                     break
             if found:
@@ -480,21 +505,18 @@ class AddEditScheduleDialog(MessageBox):
 
     def _on_program_type_activated(self, index):
         """仅在用户手动选择时应用默认参数（若参数为空）"""
-        try:
-            text = self.program_type_combo.itemText(index)
-        except Exception:
-            text = self.program_type_combo.currentText()
         # 本体/流程编排/外部程序手动选择 -> 清空名称与参数（让用户填写）
-        if text == tr('本体') or text == tr('流程编排') or text == tr('外部程序'):
+        program_type = self._current_program_type()
+        if program_type in ('self', 'workflow', 'external'):
             self.name_edit.setText('')
             self.args_edit.setText('')
             self.kill_processes_edit.setText('')
-            if text == tr('流程编排') and self.workflow_combo.count() > 0:
+            if program_type == 'workflow' and self.workflow_combo.count() > 0:
                 self._on_workflow_activated(self.workflow_combo.currentIndex())
             return
         # 特殊程序：查找配置并应用 short_name 与默认 args（仅当 args 为空时）
         for sp in SPECIAL_PROGRAMS:
-            if text == tr(sp.get('display_name')):
+            if program_type == sp.get('key'):
                 try:
                     self.name_edit.setText(sp.get('short_name', ''))
                     self.args_edit.setText(sp.get('default_args', ''))
@@ -526,16 +548,14 @@ class AddEditScheduleDialog(MessageBox):
             self.name_edit.setText(f"{tr('流程编排')} - {name}")
 
     def _load_task(self, task):
-        self._set_trigger_mode(str(task.get('trigger_mode', 'time')).lower())
+        self._set_trigger_mode(task_trigger_mode(task))
         self.name_edit.setText(task.get('name', ''))
-        t = task.get('time', '04:00')
-        parts = list(map(int, t.split(':')))
-        self.time_picker.setTime(QTime(*parts))
+        self.time_picker.setTime(parse_schedule_time(task.get('time', '04:00')) or QTime(4, 0))
 
         prog = task.get('program', 'self')
         if isinstance(prog, str) and prog.strip().lower() == 'self':
             # 本体任务
-            self.program_type_combo.setCurrentText(tr('本体'))
+            self._set_program_type('self')
             # 找到对应 task key 在 self._task_keys 中的索引
             args_key = task.get('args', 'main')
             try:
@@ -545,13 +565,19 @@ class AddEditScheduleDialog(MessageBox):
                 try:
                     idx = self._task_labels.index(args_key)
                 except ValueError:
-                    idx = 0
+                    self._task_keys.append(args_key)
+                    self._task_labels.append(str(args_key))
+                    self.args_combo.addItem(str(args_key))
+                    idx = len(self._task_keys) - 1
             self.args_combo.setCurrentIndex(idx)
         elif isinstance(prog, str) and prog.strip().lower() == 'workflow':
-            self.program_type_combo.setCurrentText(tr('流程编排'))
+            self._set_program_type('workflow')
             workflow_name = task.get('workflow_name') or task.get('args', '')
             if workflow_name in self.workflow_names:
                 self.workflow_combo.setCurrentIndex(self.workflow_names.index(workflow_name))
+            elif workflow_name:
+                self.workflow_combo.addItem(workflow_name)
+                self.workflow_combo.setCurrentIndex(self.workflow_combo.count() - 1)
             self.name_edit.setText(task.get('name') or f"{tr('流程编排')} - {workflow_name}")
         else:
             # 外部程序或特定外部类型
@@ -562,15 +588,15 @@ class AddEditScheduleDialog(MessageBox):
             sp = _SPECIAL_BY_EXEC.get(basename.lower())
             if sp:
                 # 找到配置中的特殊程序，设置为对应 display_name（tr 并显示）
-                self.program_type_combo.setCurrentText(tr(sp.get('display_name')))
+                self._set_program_type(sp.get('key'))
                 self.args_edit.setText(task.get('args', ''))
             else:
-                self.program_type_combo.setCurrentText(tr('外部程序'))
+                self._set_program_type('external')
                 self.args_edit.setText(task.get('args', ''))
 
         # task['timeout'] 存储为秒，UI 使用分钟单位，因此先转换
         try:
-            self.timeout_spin.setValue(int(task.get('timeout', 0)) // 60)
+            self.timeout_spin.setValue(task_timeout_seconds(task) // 60)
         except Exception:
             self.timeout_spin.setValue(0)
         # 完成后是否推送通知 -> 新字段 notify
@@ -604,7 +630,7 @@ class AddEditScheduleDialog(MessageBox):
         self._on_trigger_mode_changed()
 
     def get_task(self):
-        task = {}
+        task = deepcopy(self.task)
         task['id'] = self.task.get('id') if self.task and self.task.get('id') else str(uuid.uuid4())
         task['name'] = self.name_edit.text().strip() or tr('未命名')
         task['trigger_mode'] = self._current_trigger_mode()
@@ -612,13 +638,13 @@ class AddEditScheduleDialog(MessageBox):
         task['time'] = self.time_picker.time.toString('HH:mm')
 
         # 根据程序类型保存 program 字段：'self' 或 外部程序路径
-        program_type = self.program_type_combo.currentText()
-        if program_type == tr('本体'):
+        program_type = self._current_program_type()
+        if program_type == 'self':
             task['program'] = 'self'
             # args 保存为任务 id（key）而不是中文 label
             idx = self.args_combo.currentIndex() if self.args_combo.count() > 0 else 0
             task['args'] = self._task_keys[idx] if idx >= 0 and idx < len(self._task_keys) else 'main'
-        elif program_type == tr('流程编排'):
+        elif program_type == 'workflow':
             task['program'] = 'workflow'
             workflow_name = self.workflow_combo.currentText().strip()
             task['args'] = workflow_name
@@ -627,8 +653,12 @@ class AddEditScheduleDialog(MessageBox):
             task['program'] = self.program_path_edit.text().strip() or ''
             task['args'] = self.args_edit.text().strip()
 
+        if program_type != 'workflow':
+            task.pop('workflow_name', None)
+            task.pop('workflow_step_path', None)
+
         # 存储为秒（与现有运行/超时逻辑兼容）
-        task['timeout'] = int(self.timeout_spin.value()) * 60
+        task['timeout'] = int(self.timeout_spin.value()) * 60 if self._timeout_edited else task_timeout_seconds(self.task)
         # 完成后是否推送通知（布尔值）
         task['notify'] = bool(self.notify_check.isChecked())
         # 保存为 key（与 _post_action_keys 对应）
@@ -781,24 +811,46 @@ class ScheduleManagerDialog(MessageBox):
         self._reload_table()
 
     def _reload_table(self):
-        self.table.clearContents()
-        self.table.setRowCount(0)
+        selected_row = self.table.currentRow()
+        scroll_position = self.table.verticalScrollBar().value()
+        self.table.setUpdatesEnabled(False)
+        try:
+            self._update_task_rows()
+            if selected_row >= 0 and self.scheduled_tasks:
+                self.table.selectRow(min(selected_row, len(self.scheduled_tasks) - 1))
+            self.table.verticalScrollBar().setValue(scroll_position)
+        finally:
+            self.table.setUpdatesEnabled(True)
+
+    def _update_task_rows(self):
         self.table.setRowCount(len(self.scheduled_tasks))
         chain_visuals = self._build_chain_visuals()
+        previous_rows = getattr(self, '_rendered_task_rows', [])
+        rendered_rows = []
         for i, t in enumerate(self.scheduled_tasks):
-            trigger_mode = str(t.get('trigger_mode', 'time')).lower()
+            trigger_mode = task_trigger_mode(t)
             chain_role = chain_visuals.get(i)
+            row_values = tuple(t.get(field) for field in ('enabled', 'name', 'time', 'program', 'args', 'workflow_name', 'notify'))
+            row_values += (trigger_mode, chain_role)
+            rendered_rows.append(row_values)
+            if i < len(previous_rows) and row_values == previous_rows[i]:
+                continue
             # 启用（第一列）
-            enabled_widget = QWidget()
-            enabled_layout = QHBoxLayout(enabled_widget)
-            enabled_layout.setContentsMargins(0, 0, 0, 0)
-            enabled_layout.setSpacing(0)
-            enabled_widget.setContentsMargins(0, 0, 0, 0)
-            enabled_check = CheckBox('', enabled_widget)
-            enabled_check.setChecked(bool(t.get('enabled', True)))
-            enabled_check.stateChanged.connect(lambda _state, row=i: self._on_enabled_toggled(row))
-            enabled_layout.addWidget(enabled_check, 0, Qt.AlignmentFlag.AlignCenter)
-            self.table.setCellWidget(i, 0, enabled_widget)
+            enabled_widget = self.table.cellWidget(i, 0)
+            if enabled_widget is None:
+                enabled_widget = QWidget()
+                enabled_layout = QHBoxLayout(enabled_widget)
+                enabled_layout.setContentsMargins(0, 0, 0, 0)
+                enabled_layout.setSpacing(0)
+                enabled_widget.setContentsMargins(0, 0, 0, 0)
+                enabled_check = CheckBox('', enabled_widget)
+                enabled_check.stateChanged.connect(lambda _state, row=i: self._on_enabled_toggled(row))
+                enabled_layout.addWidget(enabled_check, 0, Qt.AlignmentFlag.AlignCenter)
+                self.table.setCellWidget(i, 0, enabled_widget)
+            else:
+                enabled_check = enabled_widget.findChild(CheckBox)
+            with QSignalBlocker(enabled_check):
+                enabled_check.setChecked(bool(t.get('enabled', True)))
             # 名称
             name_display = t.get('name', '')
             if chain_role == 'child':
@@ -846,6 +898,7 @@ class ScheduleManagerDialog(MessageBox):
                     [name_item, time_item, prog_item, args_item, notify_item]
                 )
 
+        self._rendered_task_rows = rendered_rows
         self.table.resizeRowsToContents()
         self.table.doItemsLayout()
         self.table.viewport().update()
@@ -856,14 +909,14 @@ class ScheduleManagerDialog(MessageBox):
         total = len(self.scheduled_tasks)
 
         while row < total:
-            trigger_mode = str(self.scheduled_tasks[row].get('trigger_mode', 'time')).lower()
+            trigger_mode = task_trigger_mode(self.scheduled_tasks[row])
             if trigger_mode != 'time':
                 row += 1
                 continue
 
             end_row = row + 1
             while end_row < total:
-                next_mode = str(self.scheduled_tasks[end_row].get('trigger_mode', 'time')).lower()
+                next_mode = task_trigger_mode(self.scheduled_tasks[end_row])
                 if next_mode != 'chain':
                     break
                 end_row += 1
