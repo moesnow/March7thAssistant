@@ -6232,7 +6232,7 @@ msgid "记住自动对话开关状态"
 msgstr ""
 
 #: app/card/autoplot_setting_card.py:53
-msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"
+msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。"
 msgstr ""
 
 #: app/tools_interface.py:160
