@@ -5,7 +5,45 @@ import sys
 import pytest
 from PySide6.QtCore import QDateTime
 
-from app.common.schedule import milliseconds_to_next_minute, scheduled_task_slot, split_task_arguments
+from app.common.schedule import (milliseconds_to_next_minute, scheduled_task_slot, split_task_arguments,
+                                 task_weekdays, next_scheduled_datetime)
+
+
+@pytest.mark.parametrize(('task', 'expected'), [
+    ({}, (1, 2, 3, 4, 5, 6, 7)),
+    ({'weekdays': None}, (1, 2, 3, 4, 5, 6, 7)),
+    ({'weekdays': [5, 1, 3, 1]}, (1, 3, 5)),
+    ({'weekdays': []}, ()),
+    ({'weekdays': [0, 8, True, '2', 3]}, (3,)),
+    ({'weekdays': '1,3,5'}, ()),
+])
+def test_weekday_selection_is_normalized_and_legacy_defaults_to_daily(task, expected):
+    assert task_weekdays(task) == expected
+
+
+@pytest.mark.parametrize(('current_time', 'weekdays', 'expected'), [
+    ('2026-10-19T04:00:10', [1, 3, 5], True),
+    ('2026-10-20T04:00:10', [1, 3, 5], False),
+    ('2026-10-18T04:00:10', [6, 7], True),
+    ('2026-10-18T04:00:10', [], False),
+])
+def test_automatic_trigger_respects_selected_weekdays(current_time, weekdays, expected):
+    now = QDateTime.fromString(current_time, 'yyyy-MM-ddTHH:mm:ss')
+    assert (scheduled_task_slot({'time': '04:00', 'weekdays': weekdays}, now) is not None) == expected
+
+
+@pytest.mark.parametrize(('current_time', 'task_time', 'weekdays', 'expected_time'), [
+    ('2026-10-17T04:00:10', '04:00', [1, 3, 5], '2026-10-19T04:00:00'),
+    ('2026-10-19T04:00:00', '04:00', [1], '2026-10-26T04:00:00'),
+    ('2026-10-18T03:59:59', '04:00', [6, 7], '2026-10-18T04:00:00'),
+    ('2026-10-18T04:00:10', '04:00', [6, 7], '2026-10-24T04:00:00'),
+    ('2026-10-16T23:59:59', '00:00', [6], '2026-10-17T00:00:00'),
+    ('2026-10-17T04:00:10', '04:00', [], None),
+])
+def test_next_run_accounts_for_weekdays_and_week_boundaries(current_time, task_time, weekdays, expected_time):
+    now = QDateTime.fromString(current_time, 'yyyy-MM-ddTHH:mm:ss')
+    actual = next_scheduled_datetime({'time': task_time, 'weekdays': weekdays}, now)
+    assert (actual.toString('yyyy-MM-ddTHH:mm:ss') if actual else None) == expected_time
 
 
 @pytest.mark.parametrize(('current_time', 'task_time', 'expected_slot'), [

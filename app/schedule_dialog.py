@@ -2,6 +2,7 @@
 from copy import deepcopy
 
 from PySide6.QtCore import Qt, QTime, QSize, QSignalBlocker
+from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QTableWidgetItem, QFileDialog, QHeaderView,
                                QToolButton, QWidget,
@@ -18,7 +19,8 @@ import os
 import json
 from module.config import cfg
 from module.localization import tr
-from app.common.schedule import parse_schedule_time, task_timeout_seconds, task_trigger_mode
+from app.common.schedule import (parse_schedule_time, task_timeout_seconds, task_trigger_mode,
+                                 task_weekdays, schedule_weekday_labels, format_task_weekdays)
 
 
 def _strip_jsonc_comments(text: str) -> str:
@@ -110,6 +112,7 @@ class AddEditScheduleDialog(MessageBox):
         # 使用 MessageBox 的风格初始化（不显示默认内容）
         super().__init__(tr("添加/编辑定时任务"), "", parent)
         self.task = deepcopy(task) if task else {}
+        self._editing_task = task
         self._timeout_edited = False
         # 用于校验时间重复的现有任务列表（可能包含当前正在编辑的任务）
         self.existing_tasks = scheduled_tasks or []
@@ -259,6 +262,23 @@ class AddEditScheduleDialog(MessageBox):
         row.addWidget(self.time_picker)
         form.addLayout(row)
 
+        self.weekday_row = QWidget(self)
+        weekday_layout = QHBoxLayout(self.weekday_row)
+        weekday_layout.setContentsMargins(0, 0, 0, 0)
+        weekday_layout.setSpacing(12)
+        weekday_label = BodyLabel(tr('执行星期：'))
+        weekday_label.setFixedWidth(label_width)
+        weekday_layout.addWidget(weekday_label)
+        self.weekday_checks = {}
+        for day, text in enumerate(schedule_weekday_labels(), 1):
+            checkbox = CheckBox(text, self.weekday_row)
+            checkbox.setChecked(True)
+            self.weekday_checks[day] = checkbox
+            weekday_layout.addWidget(checkbox)
+        weekday_layout.addStretch()
+        self.weekday_row.setToolTip(tr('按电脑本地日期判断执行星期'))
+        form.addWidget(self.weekday_row)
+
         # 程序路径行
         row = QHBoxLayout()
         label = BodyLabel(tr("程序路径："))
@@ -341,13 +361,26 @@ class AddEditScheduleDialog(MessageBox):
 
         # 时间重复校验（跳过与当前编辑任务相同的 id）
         if self._current_trigger_mode() == 'time':
+            selected_days = set(self._selected_weekdays())
+            if not selected_days:
+                message = MessageBox(tr('错误'), tr('请至少选择一个执行星期'), self)
+                message.cancelButton.hide()
+                message.yesButton.setText(tr('确认'))
+                message.exec()
+                return
             for t in (self.existing_tasks or []):
-                if self.task and t.get('id') == self.task.get('id'):
+                if t is self._editing_task or (self.task.get('id') and t.get('id') == self.task.get('id')):
                     continue
                 if task_trigger_mode(t) != 'time':
                     continue
-                if parse_schedule_time(t.get('time')) == self.time_picker.time:
-                    m = MessageBox(tr('错误'), tr('已存在相同时间的任务，请选择其他时间'), self)
+                overlapping_days = selected_days.intersection(task_weekdays(t))
+                if overlapping_days and parse_schedule_time(t.get('time')) == self.time_picker.time:
+                    content = tr('任务“{name}”已占用{days}的 {time}，请调整时间或星期').format(
+                        name=t.get('name') or tr('未命名'),
+                        days=format_task_weekdays({'weekdays': overlapping_days}),
+                        time=self.time_picker.time.toString('HH:mm'),
+                    )
+                    m = MessageBox(tr('错误'), content, self)
                     m.cancelButton.hide()
                     m.yesButton.setText(tr('确认'))
                     m.exec()
@@ -410,6 +443,9 @@ class AddEditScheduleDialog(MessageBox):
             mode = None
         return mode if mode in ('time', 'chain') else 'time'
 
+    def _selected_weekdays(self):
+        return [day for day, checkbox in self.weekday_checks.items() if checkbox.isChecked()]
+
     def _set_trigger_mode(self, mode):
         target = mode if mode in ('time', 'chain') else 'time'
         for i in range(self.trigger_mode_combo.count()):
@@ -423,12 +459,13 @@ class AddEditScheduleDialog(MessageBox):
         is_time_mode = self._current_trigger_mode() == 'time'
         self.time_label.setVisible(is_time_mode)
         self.time_picker.setVisible(is_time_mode)
+        self.weekday_row.setVisible(is_time_mode)
 
     def _show_trigger_mode_help(self):
         content = tr(
-            '按时启动：到达设定时间后，直接启动当前任务。\n'
-            '链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动。\n'
-            '立即运行：从当前任务开始，后面连续的链式任务也会跟随执行。'
+            '按时启动：在选中的星期到达设定时间后，直接启动当前任务，星期按电脑本地日期判断。\n'
+            '链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动，不单独判断星期。\n'
+            '立即运行：不受星期限制，从当前任务开始，后面连续的链式任务也会跟随执行。'
         )
         box = MessageBox(tr('启动方式说明'), content, self)
         box.cancelButton.hide()
@@ -551,6 +588,9 @@ class AddEditScheduleDialog(MessageBox):
         self._set_trigger_mode(task_trigger_mode(task))
         self.name_edit.setText(task.get('name', ''))
         self.time_picker.setTime(parse_schedule_time(task.get('time', '04:00')) or QTime(4, 0))
+        selected_days = task_weekdays(task)
+        for day, checkbox in self.weekday_checks.items():
+            checkbox.setChecked(day in selected_days)
 
         prog = task.get('program', 'self')
         if isinstance(prog, str) and prog.strip().lower() == 'self':
@@ -636,6 +676,7 @@ class AddEditScheduleDialog(MessageBox):
         task['trigger_mode'] = self._current_trigger_mode()
         # TimePicker.time is a QTime *object* (not a callable), so access property directly
         task['time'] = self.time_picker.time.toString('HH:mm')
+        task['weekdays'] = self._selected_weekdays()
 
         # 根据程序类型保存 program 字段：'self' 或 外部程序路径
         program_type = self._current_program_type()
@@ -701,7 +742,7 @@ class ScheduleManagerDialog(MessageBox):
         self.table = TableWidget(self)
         self.table.setColumnCount(6)
         # 列顺序：启用, 名称, 时间/链式启动, 程序, 参数/任务, 推送通知
-        self.table.setHorizontalHeaderLabels([tr('启用'), tr('名称'), tr('时间'), tr('程序'), tr('参数/任务'), tr('通知')])
+        self.table.setHorizontalHeaderLabels([tr('启用'), tr('名称'), tr('执行计划'), tr('程序'), tr('参数/任务'), tr('通知')])
         # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.Fixed)
@@ -709,7 +750,7 @@ class ScheduleManagerDialog(MessageBox):
         header.setSectionResizeMode(1, QHeaderView.Fixed)
         self.table.setColumnWidth(1, 160)
         header.setSectionResizeMode(2, QHeaderView.Fixed)
-        self.table.setColumnWidth(2, 90)
+        self.table.setColumnWidth(2, 170)
         header.setSectionResizeMode(3, QHeaderView.Stretch)
         header.setSectionResizeMode(4, QHeaderView.Fixed)
         self.table.setColumnWidth(4, 150)
@@ -831,7 +872,7 @@ class ScheduleManagerDialog(MessageBox):
             trigger_mode = task_trigger_mode(t)
             chain_role = chain_visuals.get(i)
             row_values = tuple(t.get(field) for field in ('enabled', 'name', 'time', 'program', 'args', 'workflow_name', 'notify'))
-            row_values += (trigger_mode, chain_role)
+            row_values += (trigger_mode, chain_role, task_weekdays(t))
             rendered_rows.append(row_values)
             if i < len(previous_rows) and row_values == previous_rows[i]:
                 continue
@@ -858,8 +899,17 @@ class ScheduleManagerDialog(MessageBox):
             name_item = QTableWidgetItem(name_display)
             self.table.setItem(i, 1, name_item)
             # 时间列：按时任务显示时间，链式任务显示启动方式
-            time_display = t.get('time', '') if trigger_mode == 'time' else tr('链式启动')
-            time_item = QTableWidgetItem(time_display)
+            time_item = QTableWidgetItem()
+            if trigger_mode == 'time':
+                weekdays_display = format_task_weekdays(t)
+                plan_font = self.table.font()
+                plan_font.setBold(True)
+                metrics = QFontMetrics(plan_font)
+                weekdays_summary = metrics.elidedText(weekdays_display, Qt.TextElideMode.ElideRight, self.table.columnWidth(2) - 20)
+                time_item.setText(f"{t.get('time', '')}\n{weekdays_summary}")
+                time_item.setToolTip(f"{weekdays_display} {t.get('time', '')}")
+            else:
+                time_item.setText(tr('链式启动'))
             self.table.setItem(i, 2, time_item)
             # 程序（本体、流程编排显示类型，否则显示路径或文件名）
             prog = t.get('program', '')

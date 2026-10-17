@@ -13,6 +13,33 @@ def task_trigger_mode(task) -> str:
     return 'chain' if mode == 'chain' else 'time'
 
 
+def task_weekdays(task) -> tuple[int, ...]:
+    weekdays = task.get('weekdays')
+    if weekdays is None:
+        return tuple(range(1, 8))
+    if not isinstance(weekdays, (list, tuple, set)):
+        return ()
+    return tuple(sorted({day for day in weekdays if isinstance(day, int) and not isinstance(day, bool) and 1 <= day <= 7}))
+
+
+def schedule_weekday_labels() -> tuple[str, ...]:
+    from module.localization import tr
+
+    return (tr('周一'), tr('周二'), tr('周三'), tr('周四'), tr('周五'), tr('周六'), tr('周日'))
+
+
+def format_task_weekdays(task) -> str:
+    from module.localization import tr
+
+    weekdays = task_weekdays(task)
+    if len(weekdays) == 7:
+        return tr('每天')
+    if not weekdays:
+        return tr('未选择')
+    labels = schedule_weekday_labels()
+    return '、'.join(labels[day - 1] for day in weekdays)
+
+
 def parse_schedule_time(value) -> QTime | None:
     try:
         scheduled_time = QTime(*map(int, value.split(':')))
@@ -28,6 +55,8 @@ def milliseconds_to_next_minute(now: QDateTime) -> int:
 
 def scheduled_task_slot(task, now: QDateTime) -> int | None:
     """只匹配当前分钟内已经到达的计划点，不回看前一分钟。"""
+    if now.date().dayOfWeek() not in task_weekdays(task):
+        return None
     scheduled_time = parse_schedule_time(task.get('time', '00:00'))
     if scheduled_time is None:
         return None
@@ -38,6 +67,23 @@ def scheduled_task_slot(task, now: QDateTime) -> int | None:
     scheduled_at.setTime(scheduled_time)
     if scheduled_at <= now:
         return scheduled_at.toSecsSinceEpoch()
+    return None
+
+
+def next_scheduled_datetime(task, now: QDateTime) -> QDateTime | None:
+    scheduled_time = parse_schedule_time(task.get('time', '00:00'))
+    weekdays = task_weekdays(task)
+    if scheduled_time is None or not weekdays:
+        return None
+    for offset in range(8):
+        scheduled_date = now.date().addDays(offset)
+        if scheduled_date.dayOfWeek() not in weekdays:
+            continue
+        scheduled_at = QDateTime(now)
+        scheduled_at.setDate(scheduled_date)
+        scheduled_at.setTime(scheduled_time)
+        if scheduled_at.isValid() and scheduled_at > now:
+            return scheduled_at
     return None
 
 

@@ -74,6 +74,49 @@ def test_builtin_editor_loads_workflows_only_when_needed(schedule_editor):
     schedule_editor.workflows.assert_called_once()
 
 
+def test_weekday_editor_has_seven_checkboxes_without_shortcut_buttons(schedule_editor):
+    editor = schedule_editor()
+    assert editor._selected_weekdays() == list(range(1, 8))
+    assert len(editor.weekday_row.findChildren(schedule_dialog.CheckBox)) == 7
+    assert editor.weekday_row.findChildren(schedule_dialog.PushButton) == []
+
+
+def test_weekday_selection_survives_chain_mode_switch(schedule_editor):
+    editor = schedule_editor(weekdays=[1, 3, 5])
+    editor._set_trigger_mode('chain')
+    assert editor.weekday_row.isHidden()
+    editor._set_trigger_mode('time')
+    assert not editor.weekday_row.isHidden()
+    assert editor.get_task()['weekdays'] == [1, 3, 5]
+
+
+def test_time_task_requires_at_least_one_weekday(schedule_editor, monkeypatch):
+    editor = schedule_editor(weekdays=[])
+    message = Mock()
+    monkeypatch.setattr(schedule_dialog, 'MessageBox', Mock(return_value=message))
+    editor.accept()
+    message.exec.assert_called_once()
+    assert editor.result() != schedule_dialog.QDialog.DialogCode.Accepted
+
+
+@pytest.mark.parametrize('existing_days', [[2, 4], [3, 5]])
+def test_same_time_conflicts_only_when_weekdays_overlap(schedule_editor, monkeypatch, existing_days):
+    editor = schedule_editor(weekdays=[1, 3])
+    editor.existing_tasks = [{'id': 'other', 'name': 'other-task', 'time': '04:00', 'weekdays': existing_days}]
+    message_factory = Mock(return_value=Mock())
+    monkeypatch.setattr(schedule_dialog, 'MessageBox', message_factory)
+    accepted = Mock()
+    monkeypatch.setattr(AddEditScheduleDialog.__mro__[1], 'accept', accepted)
+    editor.accept()
+    if 3 in existing_days:
+        accepted.assert_not_called()
+        content = message_factory.call_args.args[1]
+        assert 'other-task' in content and '04:00' in content
+    else:
+        message_factory.assert_not_called()
+        accepted.assert_called_once()
+
+
 @pytest.mark.skipif(sys.platform != 'win32', reason='GUI 测试仅在 Windows 平台运行')
 def test_table_refresh_reuses_unchanged_rows_and_preserves_selection(qtbot, monkeypatch):
     parent = QWidget()
@@ -97,6 +140,10 @@ def test_table_refresh_reuses_unchanged_rows_and_preserves_selection(qtbot, monk
     assert manager.table.currentRow() == 1
     assert manager.table.item(1, 1).text() == 'edited'
     assert not enabled_widget.findChild(schedule_dialog.CheckBox).isChecked()
+    saved.assert_not_called()
+    tasks[1]['weekdays'] = [1, 3]
+    manager._reload_table()
+    assert schedule_dialog.format_task_weekdays(tasks[1]) in manager.table.item(1, 2).toolTip()
     saved.assert_not_called()
 
 

@@ -8,7 +8,8 @@ import pytest
 if sys.platform != 'win32':
     pytest.skip('GUI 测试仅在 Windows 平台运行', allow_module_level=True)
 
-from PySide6.QtCore import QDateTime, QProcess, QTime, QTimer, Qt
+from PySide6.QtCore import QDateTime, QPoint, QProcess, QTime, QTimer, Qt
+from PySide6.QtWidgets import QWidget, QVBoxLayout
 from qfluentwidgets import ScrollArea
 
 from app import log_interface
@@ -42,6 +43,7 @@ def schedule_runtime(qtbot, monkeypatch):
     interface._perform_post_action = Mock()
     interface.statusLabel = Mock()
     interface.scheduleStatusLabel = Mock()
+    interface.manageScheduleButton = Mock()
     interface.stopButton = Mock()
     interface.pauseButton = Mock()
     interface._syncPauseUi = Mock()
@@ -330,3 +332,54 @@ def test_disabled_scheduler_does_not_rearm_timer(schedule_runtime, schedule_cloc
     schedule_runtime._onScheduleTimerTimeout()
     assert not schedule_runtime._schedule_timer.isActive()
     schedule_runtime.startTask.assert_not_called()
+
+
+def test_weekday_limits_automatic_trigger_but_not_manual_run(schedule_runtime, schedule_clock):
+    root = scheduled_task(weekdays=[1])
+    schedule_runtime.settings['scheduled_tasks'] = [root]
+    schedule_runtime._checkScheduledTime()
+    schedule_runtime.startTask.assert_not_called()
+    assert schedule_runtime.runScheduledTask(root, tasks=[root], manual=True)
+    schedule_runtime.startTask.assert_called_once()
+
+
+def test_chain_children_do_not_apply_independent_weekday_filters(schedule_runtime, schedule_clock):
+    root = scheduled_task(weekdays=[6])
+    child = scheduled_task('child', trigger_mode='chain', weekdays=[1])
+    schedule_runtime.settings['scheduled_tasks'] = [root, child]
+    schedule_runtime._checkScheduledTime()
+    schedule_runtime._onProcessFinished(0, QProcess.NormalExit)
+    assert [call.args[0]['id'] for call in schedule_runtime.startTask.call_args_list] == ['root', 'child']
+
+
+def test_status_label_shows_next_execution_date_for_selected_weekday(schedule_runtime, schedule_clock):
+    schedule_runtime.settings['scheduled_tasks'] = [
+        scheduled_task('monday', weekdays=[1]),
+        scheduled_task('sunday', weekdays=[7], time='10:00'),
+    ]
+    schedule_runtime._updateScheduleStatusLabel()
+    text = schedule_runtime.scheduleStatusLabel.setText.call_args.args[0]
+    assert '10-18' in text and '10:00' in text
+
+
+@pytest.mark.parametrize('overlay_enabled', [False, True])
+def test_log_toolbar_fits_minimum_window_without_wrapping(schedule_runtime, schedule_clock, qtbot, overlay_enabled):
+    schedule_runtime.settings['scheduled_tasks'] = [scheduled_task(weekdays=[7])]
+    schedule_runtime._overlay_enabled = overlay_enabled
+    schedule_runtime._buffered_logs = ''
+    schedule_runtime.scrollWidget = QWidget()
+    schedule_runtime.vBoxLayout = QVBoxLayout(schedule_runtime.scrollWidget)
+    schedule_runtime._LogInterface__initWidget()
+    schedule_runtime.resize(888, 592)
+    schedule_runtime.show()
+    qtbot.waitUntil(lambda: schedule_runtime.buttonWidget.width() > 0)
+    label = schedule_runtime.scheduleStatusLabel
+    right_edge = label.mapTo(schedule_runtime.viewport(), QPoint(label.width(), 0)).x()
+    assert right_edge <= schedule_runtime.viewport().width()
+    assert label.width() >= label.fontMetrics().horizontalAdvance(label.text())
+    assert not label.wordWrap() and '\n' not in label.text()
+    assert schedule_runtime.logOverlayLabel.text() == log_interface.tr('在游戏内显示日志')
+    assert schedule_runtime.logOverlaySwitch.text == (log_interface.tr('开') if overlay_enabled else log_interface.tr('关'))
+    schedule_runtime._setLogOverlaySwitchValue(not overlay_enabled)
+    assert schedule_runtime.logOverlaySwitch.text == (log_interface.tr('关') if overlay_enabled else log_interface.tr('开'))
+    assert schedule_runtime.manageScheduleButton.text().endswith('(1)')

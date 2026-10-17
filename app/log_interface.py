@@ -19,9 +19,10 @@ import re
 import uuid
 from .common.style_sheet import StyleSheet
 from .common.icon import UiIcon
-from .common.schedule import (task_trigger_mode, parse_schedule_time, scheduled_task_slot,
+from .common.schedule import (task_trigger_mode, scheduled_task_slot,
                               scheduled_task_payload, find_scheduled_task, scheduled_task_chain,
-                              split_task_arguments, milliseconds_to_next_minute)
+                              split_task_arguments, milliseconds_to_next_minute,
+                              next_scheduled_datetime, schedule_weekday_labels)
 from module.config import cfg
 from module.game import get_game_controller
 from utils.tasks import TASK_NAMES, PAUSABLE_TASKS
@@ -462,7 +463,12 @@ class LogInterface(ScrollArea):
         self.pauseButton.setToolTip(tr('仅内置任务支持暂停，暂停后脚本将停止一切操作'))
 
         self.logOverlayLabel = BodyLabel(tr('在游戏内显示日志'))
+        self.logOverlayLabel.setToolTip(tr('在游戏内显示日志'))
         self.logOverlaySwitch = SwitchButton(tr('关'), self.buttonWidget, IndicatorPosition.RIGHT)
+        self.logOverlaySwitch.setOnText(tr('开'))
+        self.logOverlaySwitch.setOffText(tr('关'))
+        self.logOverlaySwitch.setAccessibleName(tr('在游戏内显示日志'))
+        self.logOverlaySwitch.setToolTip(tr('在游戏内显示日志'))
         self.logOverlaySwitch.checkedChanged.connect(self._onLogOverlayToggled)
         self._setLogOverlaySwitchValue(self._overlay_enabled)
         if sys.platform != 'win32':
@@ -478,7 +484,7 @@ class LogInterface(ScrollArea):
         # self.scheduleLabel = BodyLabel(tr('定时任务'))
 
         # 打开定时任务管理配置弹窗
-        self.manageScheduleButton = PushButton(tr('配置定时任务'))
+        self.manageScheduleButton = PushButton(tr('定时任务'))
         self.manageScheduleButton.clicked.connect(self._openScheduleManager)
 
         self.scheduleStatusLabel = BodyLabel()
@@ -551,7 +557,6 @@ class LogInterface(ScrollArea):
         try:
             self.logOverlaySwitch.blockSignals(True)
             self.logOverlaySwitch.setChecked(enabled)
-            self.logOverlaySwitch.setText(tr('开') if enabled else tr('关'))
         finally:
             self.logOverlaySwitch.blockSignals(False)
 
@@ -967,23 +972,26 @@ class LogInterface(ScrollArea):
         if tasks is None:
             tasks = cfg.get_value('scheduled_tasks', []) or []
         enabled = [t for t in tasks if t.get('enabled', True) and self._getScheduledTaskTriggerMode(t) == 'time']
-        current_time = (now or QDateTime.currentDateTime()).time()
-        next_secs = None
-        next_task = None
+        button_text = tr('定时任务({count})').format(count=len(enabled)) if enabled else tr('定时任务')
+        self.manageScheduleButton.setText(button_text)
+        self.manageScheduleButton.setToolTip(tr('已启用 {count} 个按时任务，点击配置').format(count=len(enabled)))
+        if now is None:
+            now = QDateTime.currentDateTime()
+        next_time = None
         for t in enabled:
-            scheduled_time = parse_schedule_time(t.get('time', '00:00'))
-            if scheduled_time is None:
+            scheduled_at = next_scheduled_datetime(t, now)
+            if scheduled_at is None:
                 continue
-            secs = current_time.secsTo(scheduled_time)
-            if secs < 0:
-                secs += 24 * 60 * 60
-            if next_secs is None or secs < next_secs:
-                next_secs = secs
-                next_task = t
+            if next_time is None or scheduled_at < next_time:
+                next_time = scheduled_at
 
-        if next_task is not None:
-            time_str = next_task.get('time')
-            self.scheduleStatusLabel.setText(tr('已启用：{count}，下次：{time}').format(count=len(enabled), time=time_str))
+        if next_time is not None:
+            time_str = tr('{date}（{weekday}）{time}').format(
+                date=next_time.toString('MM-dd'),
+                weekday=schedule_weekday_labels()[next_time.date().dayOfWeek() - 1],
+                time=next_time.toString('HH:mm'),
+            )
+            self.scheduleStatusLabel.setText(tr('下次：{time}').format(time=time_str))
         else:
             self.scheduleStatusLabel.setText(tr('尚未配置定时任务'))
 
