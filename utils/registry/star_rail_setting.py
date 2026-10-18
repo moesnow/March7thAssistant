@@ -13,6 +13,10 @@ resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
 graphics_value_name = "GraphicsSettings_Model_h2986158309"
 
 
+class MissingFPSSettingError(ValueError):
+    """游戏未使用自定义图像质量，没有可修改的帧率配置。"""
+
+
 def get_server_by_registry() -> Optional[str]:
     """
     Detect and return the server region based on the installed game server.
@@ -222,9 +226,11 @@ def set_game_fps(fps: int) -> None:
     - fps
     """
     value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name)
-
+    if not value:
+        raise MissingFPSSettingError("请将游戏图像质量修改为自定义后重试")
     data_dict = json.loads(value.decode('utf-8').strip('\x00'))
-
+    if 'FPS' not in data_dict:
+        raise MissingFPSSettingError("请将游戏图像质量修改为自定义后重试")
     data_dict['FPS'] = fps
     data = (json.dumps(data_dict) + '\x00').encode('utf-8')
     write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name, data, winreg.REG_BINARY)

@@ -2,12 +2,32 @@
 
 > 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。
 
+## v2026.10.16
+- 新手推薦觀看 [從零開始的三月七小助手保姆級安裝教程](https://www.bilibili.com/video/BV1DrJt62E1u/)，從下載、解壓到首次啟動，跟著影片一步步完成安裝，歡迎點贊、投幣、收藏支援！
+- 自動對話新增自動閱讀翁法羅斯英雄紀，支援跳過已讀及未解鎖篇章（請先開啟該書目錄） [#1250](https://github.com/moesnow/March7thAssistant/pulls/1250) @long098sdo
+- 自動對話新增“記住自動對話開關狀態”選項，開啟後下次啟動小助手時恢復開關狀態，預設關閉 [#1258](https://github.com/moesnow/March7thAssistant/pulls/1258) @23swccp
+- 支援選擇 HoYoPlay 啟動器更新及預下載國際服遊戲 [#1253](https://github.com/moesnow/March7thAssistant/pulls/1253) @300g-BoHeYou
+- 開機自啟升級為可配置的登入自啟，支援選擇是否開啟圖形介面、最小化到托盤及自動執行的任務，啟動時不再彈出 UAC 提示
+- 助燃券滿額時自動清理並繼續領取週期獎勵，支援差分宇宙和貨幣戰爭 [#1261](https://github.com/moesnow/March7thAssistant/pulls/1261) @Welt2000
+- 貨幣戰爭新增“觸發晉升賽”和“晉升成功”結果識別 [#1270](https://github.com/moesnow/March7thAssistant/pulls/1270) @loader3229
+- 修復好友支援列表中部分帶角標的角色頭像無法識別的問題 [#1259](https://github.com/moesnow/March7thAssistant/pulls/1259) @23swccp
+- 修復差分宇宙卡在“奇物損毀”頁面的問題 [#1264](https://github.com/moesnow/March7thAssistant/pulls/1264) @XX3121
+- 修復差分宇宙跨周繼續進度時，確認彈窗導致重新進入關卡失敗的問題 [#1268](https://github.com/moesnow/March7thAssistant/pulls/1268) @08158
+- 修復遺器背包已滿後自動分解時，介面返回路徑異常導致任務中斷的問題 [#1267](https://github.com/moesnow/March7thAssistant/pulls/1267) @08158
+- 最佳化解鎖幀率失敗提示：缺少幀率配置時明確提示將影像質量改為自定義，其他錯誤顯示簡簡訊息並記錄完整日誌 [#1262](https://github.com/moesnow/March7thAssistant/pulls/1262) @23swccp
+- 修復部分系統中數值輸入框顯示異常，以及輸入數字時數值意外增大的問題
+- 修復任務暫停時懸浮窗快捷鍵提示與實際狀態不一致，以及連續按暫停鍵可能誤恢復任務的問題
+- 修復通過開機自啟啟動後，長時間執行的圖形介面可能被任務計劃程式關閉的問題
+- 修復部分配置項缺失時開關卡片顯示異常的問題
+- 最佳化介面啟動速度及長時間執行時的日誌記憶體佔用
+- 最佳化效能和穩定性並修復若干已知問題
+- [歡迎關注我們的B站賬號，獲取最新動態和教程](https://space.bilibili.com/3706960664857075)
+
 ## v2026.10.3
 - 新增 QQ 官方機器人通知渠道
 - 修復更新時偶發的配置檔案損壞或被重置為預設值的問題
 - 修復 OCR GPU(DML) 加速被誤降級到 CPU 的問題 [#1178](https://github.com/moesnow/March7thAssistant/pull/1178) @KiMelody
 - 最佳化效能和穩定性並修復若干已知問題
-- [歡迎關注我們的B站賬號，獲取最新動態和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.9.30
 - 新增任務暫停/繼續功能，支援按鈕、全域性快捷鍵與遊戲內日誌懸浮窗狀態顯示

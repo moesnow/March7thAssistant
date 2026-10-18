@@ -58,10 +58,11 @@ class Version:
     True
 
     :param text: 版本号字符串，可带 v 前缀。
+    :param strict: 拒绝未知后缀，不使用兼容旧版本的宽松解析。
     :raises ValueError: 版本号不含数字部分、无法解析时抛出。
     """
 
-    def __init__(self, text):
+    def __init__(self, text, *, strict=False):
         self._text = str(text).strip()
         match = _VERSION_PATTERN.match(self._text)
         if match:
@@ -79,6 +80,8 @@ class Version:
             self._dev = int(match.group("dev_n") or 0) if match.group("dev_l") else None
             self._local = bool(match.group("local"))
         else:
+            if strict:
+                raise ValueError(f"无效的版本号: {self._text}")
             # 兜底：按开头数字部分比较，忽略无法识别的后缀，避免解析失败
             fallback = _LENIENT_PATTERN.match(self._text)
             if not fallback:
@@ -129,6 +132,10 @@ class Version:
 
     def __str__(self):
         return self._text
+
+    @property
+    def is_prerelease(self):
+        return self._pre is not None or self._dev is not None
 
     def __repr__(self):
         return f"Version({self._text!r})"

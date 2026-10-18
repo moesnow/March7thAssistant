@@ -10,10 +10,13 @@ log_retention_days: 30 # 日志保留天数，超过此天数的日志文件将�
 log_overlay_enable: true # 是否在游戏界面上显示实时日志浮窗（仅 Windows）。
 
 # 自动对话设置
+autoplot_remember_enable: false # 是否记住自动对话开关状态，开启后下次启动恢复，可能增加后台资源占用。
+autoplot_enable: false # 记住的自动对话开关状态，仅在 autoplot_remember_enable 开启时恢复。
 autoplot_skip_enable: true # 是否自动跳过对话（当出现跳过按钮时自动点击）。
 autoplot_click_enable: true # 是否自动选择对话选项。
 autoplot_battle_detect_enable: true # 是否自动战斗检测（检测到未自动战斗时按 V 开启）。
 autoplot_phone_detect_enable: true # 是否自动处理手机短信页面。
+autoplot_hero_chronicle_enable: false # 是否自动阅读如我所书中的翁法罗斯英雄纪。
 
 # 调试模式
 debug_mode_enable: false # 是否启用调试模式。开启后会在屏幕对应位置实时绘制检测范围框（透明悬浮窗），用于调试自动化识别。仅 Windows 生效。
@@ -47,7 +50,7 @@ game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
 
-launcher_title_name: 米哈游启动器 # 米哈游启动器窗口标题。
+launcher_title_name: 米哈游启动器 # 启动器类型及窗口标题，可选 米哈游启动器、HoYoPlay。
 launcher_process_name: HYP # 米哈游启动器进程名。
 launcher_path: C:\Program Files\miHoYo Launcher\launcher.exe # 米哈游启动器安装路径。
 
