@@ -62,7 +62,7 @@ msgstr "임무 로그"
 msgid "等待任务..."
 msgstr "작업 대기 중..."
 
-#: app/log_interface.py:1842
+#: app/log_interface.py:1851
 msgid "清空日志"
 msgstr "로그 지우기"
 
@@ -74,11 +74,11 @@ msgstr "예약 실행 설정"
 msgid "尚未配置定时任务"
 msgstr "예약된 임무 없음"
 
-#: app/log_interface.py:2436
+#: app/log_interface.py:2445
 msgid "任务完成"
 msgstr "임무 완료"
 
-#: app/log_interface.py:2439
+#: app/log_interface.py:2448
 msgid "任务已停止"
 msgstr "임무 중지됨"
 
@@ -110,7 +110,7 @@ msgstr "토벌"
 msgid "逐光捡金"
 msgstr "저금통 잡기"
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "程序"
 msgstr "프로그램"
 
@@ -783,31 +783,31 @@ msgstr "임무 완료 시"
 msgid "“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能"
 msgstr "'종료'는 게임 종료를 의미합니다. 순환 모드 대신 로그 화면의 예약 실행 기능을 사용하세요."
 
-#: app/card/messagebox_custom.py:1215
+#: app/card/messagebox_custom.py:1216
 msgid "无"
 msgstr "없음"
 
-#: app/log_interface.py:2362
+#: app/log_interface.py:2371
 msgid "关机"
 msgstr "시스템 종료"
 
-#: app/log_interface.py:2363
+#: app/log_interface.py:2372
 msgid "睡眠"
 msgstr "절전"
 
-#: app/log_interface.py:2364
+#: app/log_interface.py:2373
 msgid "休眠"
 msgstr "최대 절전"
 
-#: app/log_interface.py:2365
+#: app/log_interface.py:2374
 msgid "重启"
 msgstr "재부팅"
 
-#: app/log_interface.py:2366
+#: app/log_interface.py:2375
 msgid "注销"
 msgstr "로그오프"
 
-#: app/log_interface.py:2367
+#: app/log_interface.py:2376
 msgid "关闭显示器"
 msgstr "모니터 끄기"
 
@@ -875,11 +875,11 @@ msgstr "창을 닫을 때의 기본 동작 선택, 또는 닫을 때마다 묻�
 msgid "询问"
 msgstr "묻기"
 
-#: app/card/messagebox_custom.py:1262
+#: app/card/messagebox_custom.py:1263
 msgid "最小化到托盘"
 msgstr "트레이로 최소화"
 
-#: app/card/messagebox_custom.py:1263
+#: app/card/messagebox_custom.py:1264
 msgid "关闭程序"
 msgstr "프로그램 종료"
 
@@ -1082,11 +1082,11 @@ msgstr "메인 화면 표시"
 msgid "完整运行"
 msgstr "전체 실행"
 
-#: app/card/messagebox_custom.py:420
+#: app/card/messagebox_custom.py:421
 msgid "退出"
 msgstr "종료"
 
-#: app/log_interface.py:1333
+#: app/log_interface.py:1335
 msgid "任务正在运行"
 msgstr "임무 실행 중"
 
@@ -1226,89 +1226,89 @@ msgstr "게임 경로"
 msgid "修改"
 msgstr "수정"
 
-#: app/card/messagebox_custom.py:1256
+#: app/card/messagebox_custom.py:1257
 msgid "关闭确认"
 msgstr "닫기 확인"
 
-#: app/card/messagebox_custom.py:1257
+#: app/card/messagebox_custom.py:1258
 msgid "您希望如何处理程序?"
 msgstr "프로그램을 어떻게 처리하시겠습니까?"
 
-#: app/card/messagebox_custom.py:1266
+#: app/card/messagebox_custom.py:1267
 msgid "记住我的选择,下次不再询问"
 msgstr "선택을 기억하고 다음에 묻지 않음"
 
-#: app/tools_interface.py:34
+#: app/tools_interface.py:36
 msgid "自动对话"
 msgstr "자동 대화"
 
-#: app/tools_interface.py:35
+#: app/tools_interface.py:37
 msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
 msgstr "스토리 화면 진입 후 자동 실행, 1920*1080 이상 16:9 해상도 지원, 클라우드·붕괴: 스타레일 미지원"
 
-#: app/tools_interface.py:38
+#: app/tools_interface.py:40
 msgid "捕获"
 msgstr "캡처"
 
-#: app/tools_interface.py:40
+#: app/tools_interface.py:42
 msgid "游戏截图"
 msgstr "게임 스크린샷"
 
-#: app/tools_interface.py:41
+#: app/tools_interface.py:43
 msgid "检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）"
 msgstr "프로그램이 획득한 이미지가 올바른지 확인, OCR 텍스트 인식 지원 (이상 발생 시 자가 진단용)"
 
-#: app/tools_interface.py:44
+#: app/tools_interface.py:46
 msgid "解锁"
 msgstr "잠금 해제"
 
-#: app/tools_interface.py:46
+#: app/tools_interface.py:48
 msgid "解锁帧率"
 msgstr "프레임 잠금 해제"
 
-#: app/tools_interface.py:47
+#: app/tools_interface.py:49
 msgid "通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）"
 msgstr ""
 "레지스트리를 수정하여 120 프레임 잠금 해제, 이미 해제된 경우 다시 클릭 시 60 프레임으로 복구 (중국 서버 및 글로벌 서버 지원)"
 
-#: app/tools_interface.py:50
+#: app/tools_interface.py:52
 msgid "执行"
 msgstr "실행"
 
-#: app/tools_interface.py:57
+#: app/tools_interface.py:59
 msgid "启动"
 msgstr "시작"
 
-#: app/tools_interface.py:59
+#: app/tools_interface.py:61
 msgid "触屏模式"
 msgstr "터치스크린 모드"
 
-#: app/tools_interface.py:60
+#: app/tools_interface.py:62
 msgid "以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内"
 msgstr ""
 "클라우드 게임 모바일 UI 방식으로 게임 시작, UU 원격 태블릿 터치 모드와 호환 가능, 시작 후 명령어가 클립보드에 복사됨"
 
-#: app/tools_interface.py:127
+#: app/tools_interface.py:132
 msgid "恢复60成功 (＾∀＾●)"
 msgstr "60 프레임 복구 성공 (＾∀＾●)"
 
-#: app/tools_interface.py:138
+#: app/tools_interface.py:143
 msgid "解锁120成功 (＾∀＾●)"
 msgstr "120 프레임 해제 성공 (＾∀＾●)"
 
-#: app/tools_interface.py:148
+#: app/tools_interface.py:162
 msgid "解锁失败"
 msgstr "잠금 해제 실패"
 
-#: app/tools_interface.py:149
+#: app/tools_interface.py:153
 msgid "请将游戏图像质量修改为自定义后重试"
 msgstr "게임 화질 설정을 사용자 정의로 변경 후 다시 시도해 주세요"
 
-#: app/tools_interface.py:166
+#: app/tools_interface.py:180
 msgid "此功能依赖第三方程序实现"
 msgstr "이 기능은 타사 프로그램에 의존합니다"
 
-#: app/tools_interface.py:167
+#: app/tools_interface.py:181
 msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
@@ -1316,23 +1316,23 @@ msgstr ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "이 기능 사용으로 발생하는 모든 문제는 본 프로젝트 및 개발팀과 무관합니다. 계속하시겠습니까?"
 
-#: app/tools_interface.py:168
+#: app/tools_interface.py:182
 msgid "再次确认：可能存在风险"
 msgstr "재확인: 위험이 존재할 수 있음"
 
-#: app/tools_interface.py:169
+#: app/tools_interface.py:183
 msgid "工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？"
 msgstr "작동 원리는 WriteProcessMemory를 통해 코드를 게임에 삽입하는 방식입니다. 계속하시겠습니까?"
 
-#: app/tools_interface.py:170
+#: app/tools_interface.py:184
 msgid "最终确认：请谨慎操作"
 msgstr "최종 확인: 신중하게 조작하세요"
 
-#: app/tools_interface.py:171
+#: app/tools_interface.py:185
 msgid "确认继续并允许启用触屏模式？"
 msgstr "계속 진행하고 터치스크린 모드를 활성화하시겠습니까?"
 
-#: app/card/messagebox_custom.py:468
+#: app/card/messagebox_custom.py:469
 msgid "确认"
 msgstr "확인"
 
@@ -1340,15 +1340,15 @@ msgstr "확인"
 msgid "取消"
 msgstr "취소"
 
-#: app/tools_interface.py:227
+#: app/tools_interface.py:241
 msgid "已将命令复制到剪贴板"
 msgstr "명령어가 클립보드에 복사되었습니다"
 
-#: app/tools_interface.py:300
+#: app/tools_interface.py:311
 msgid "自动对话已启动"
 msgstr "자동 대화가 시작되었습니다"
 
-#: app/tools_interface.py:312
+#: app/tools_interface.py:323
 msgid "自动对话已停止"
 msgstr "자동 대화가 중지되었습니다"
 
@@ -1360,7 +1360,7 @@ msgstr "사용된 리딤코드가 없습니다"
 msgid "已使用兑换码"
 msgstr "사용된 리딤코드"
 
-#: app/card/messagebox_custom.py:300
+#: app/card/messagebox_custom.py:301
 msgid "关闭"
 msgstr "닫기"
 
@@ -1432,27 +1432,27 @@ msgstr ""
 "파티 1: {team1}\n"
 "파티 2: {team2}"
 
-#: app/card/pushsettingcard1.py:805
+#: app/card/pushsettingcard1.py:804
 msgid "交换成功"
 msgstr "교체 성공"
 
-#: app/card/pushsettingcard1.py:806
+#: app/card/pushsettingcard1.py:805
 msgid "队伍1和队伍2已成功交换"
 msgstr "파티 1과 파티 2가 성공적으로 교체되었습니다"
 
-#: app/card/pushsettingcard1.py:815
+#: app/card/pushsettingcard1.py:814
 msgid "队伍1"
 msgstr "파티 1"
 
-#: app/card/pushsettingcard1.py:818
+#: app/card/pushsettingcard1.py:817
 msgid "队伍2"
 msgstr "파티 2"
 
-#: app/card/pushsettingcard1.py:844
+#: app/card/pushsettingcard1.py:843
 msgid "暂无计划"
 msgstr "계획 없음"
 
-#: app/card/pushsettingcard1.py:845
+#: app/card/pushsettingcard1.py:844
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "{count} 개의 계획이 설정됨"
@@ -1549,11 +1549,11 @@ msgstr "초행길 워프"
 msgid "未知"
 msgstr "알 수 없음"
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "时间"
 msgstr "시간"
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "名称"
 msgstr "이름"
 
@@ -1753,95 +1753,95 @@ msgstr "레지스트리의 계정 정보가 삭제되었습니다"
 msgid "账户设置"
 msgstr "계정 설정"
 
-#: app/schedule_dialog.py:107
+#: app/schedule_dialog.py:108
 msgid "添加/编辑定时任务"
 msgstr "예약 작업 추가/편집"
 
-#: app/schedule_dialog.py:126
+#: app/schedule_dialog.py:127
 msgid "例如：完整运行"
 msgstr "예: 전체 실행"
 
-#: app/schedule_dialog.py:136
+#: app/schedule_dialog.py:137
 msgid "本体"
 msgstr "본체"
 
-#: app/schedule_dialog.py:136
+#: app/schedule_dialog.py:137
 msgid "外部程序"
 msgstr "외부 프로그램"
 
-#: app/schedule_dialog.py:145
+#: app/schedule_dialog.py:146
 msgid "外部程序或脚本的完整路径"
 msgstr "외부 프로그램 또는 스크립트의 전체 경로"
 
-#: app/schedule_dialog.py:146
+#: app/schedule_dialog.py:147
 msgid "选择程序"
 msgstr "프로그램 선택"
 
-#: app/schedule_dialog.py:156
+#: app/schedule_dialog.py:157
 msgid "外部程序启动参数（可选）"
 msgstr "외부 프로그램 실행 인수 (선택)"
 
-#: app/schedule_dialog.py:177
+#: app/schedule_dialog.py:178
 msgid " 分钟（0 表示不启用）"
 msgstr " 분 (0은 비활성화)"
 
-#: app/schedule_dialog.py:205
+#: app/schedule_dialog.py:206
 msgid "完成后推送通知"
 msgstr "완료 후 알림 전송"
 
-#: app/card/messagebox_custom.py:793
+#: app/card/messagebox_custom.py:794
 msgid "无操作"
 msgstr "작업 없음"
 
-#: app/schedule_dialog.py:181
+#: app/schedule_dialog.py:182
 msgid "按时启动"
 msgstr "시간 기반 시작"
 
-#: app/schedule_dialog.py:182
+#: app/schedule_dialog.py:183
 msgid "链式启动"
 msgstr "체인 시작"
 
-#: app/schedule_dialog.py:330
+#: app/schedule_dialog.py:331
 msgid "错误"
 msgstr "오류"
 
-#: app/schedule_dialog.py:330
+#: app/schedule_dialog.py:331
 msgid "任务名称不能为空"
 msgstr "작업 이름은 비워둘 수 없습니다"
 
-#: app/schedule_dialog.py:345
+#: app/schedule_dialog.py:346
 msgid "已存在相同时间的任务，请选择其他时间"
 msgstr "동일한 시간의 작업이 이미 존재합니다. 다른 시간을 선택하세요"
 
-#: app/schedule_dialog.py:362
+#: app/schedule_dialog.py:363
 msgid "程序路径不能为空"
 msgstr "프로그램 경로는 비워둘 수 없습니다"
 
-#: app/schedule_dialog.py:376
+#: app/schedule_dialog.py:377
 msgid "选择程序或脚本"
 msgstr "프로그램 또는 스크립트 선택"
 
-#: app/schedule_dialog.py:376
+#: app/schedule_dialog.py:377
 msgid "可执行文件 (*.exe *.bat *.ps1);;所有文件 (*.*)"
 msgstr "실행 파일 (*.exe *.bat *.ps1);;모든 파일 (*.*)"
 
-#: app/schedule_dialog.py:466
+#: app/schedule_dialog.py:467
 msgid "{exe} 的完整路径"
 msgstr "{exe} 의 전체 경로"
 
-#: app/schedule_dialog.py:653
+#: app/schedule_dialog.py:654
 msgid "定时任务配置"
 msgstr "예약 작업 구성"
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "参数/任务"
 msgstr "인수/작업"
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "通知"
 msgstr "알림"
 
-#: app/card/messagebox_custom.py:1354
+#: app/card/messagebox_custom.py:1355
 msgid "添加"
 msgstr "추가"
 
@@ -1849,31 +1849,31 @@ msgstr "추가"
 msgid "编辑"
 msgstr "편집"
 
-#: app/card/messagebox_custom.py:1085
+#: app/card/messagebox_custom.py:1086
 msgid "删除"
 msgstr "삭제"
 
-#: app/schedule_dialog.py:700
+#: app/schedule_dialog.py:701
 msgid "立即运行"
 msgstr "즉시 실행"
 
-#: app/schedule_dialog.py:712
+#: app/schedule_dialog.py:713
 msgid "跳过需要运行的任务"
 msgstr "실행할 작업 건너뛰기"
 
-#: app/schedule_dialog.py:712
+#: app/schedule_dialog.py:713
 msgid "停止正在运行的任务"
 msgstr "실행 중인 작업 중지"
 
-#: app/schedule_dialog.py:840
+#: app/schedule_dialog.py:841
 msgid "是"
 msgstr "예"
 
-#: app/schedule_dialog.py:840
+#: app/schedule_dialog.py:841
 msgid "否"
 msgstr "아니요"
 
-#: app/schedule_dialog.py:929
+#: app/schedule_dialog.py:930
 msgid "提示"
 msgstr "팁"
 
@@ -1881,11 +1881,11 @@ msgstr "팁"
 msgid "说明"
 msgstr "설명"
 
-#: app/schedule_dialog.py:194
+#: app/schedule_dialog.py:195
 msgid "启动方式说明"
 msgstr "시작 방식 안내"
 
-#: app/schedule_dialog.py:404
+#: app/schedule_dialog.py:405
 msgid ""
 "按时启动：到达设定时间后，直接启动当前任务。\n"
 "链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动。\n"
@@ -1895,35 +1895,35 @@ msgstr ""
 "체인 시작: 시간만으로는 단독 실행되지 않습니다. 앞선 작업 뒤에 배치하면, 그 작업이 정상 종료된 직후 목록 순서대로 바로 시작됩니다.\n"
 "즉시 실행: 현재 작업부터 시작하며, 뒤에 이어진 체인 작업도 함께 실행됩니다."
 
-#: app/schedule_dialog.py:948
+#: app/schedule_dialog.py:949
 msgid "请先选择要编辑的任务"
 msgstr "편집할 작업을 먼저 선택하세요"
 
-#: app/schedule_dialog.py:964
+#: app/schedule_dialog.py:965
 msgid "请先选择要删除的任务"
 msgstr "삭제할 작업을 먼저 선택하세요"
 
-#: app/schedule_dialog.py:969
+#: app/schedule_dialog.py:970
 msgid "确认删除选中的定时任务？"
 msgstr "선택한 예약 작업을 삭제하시겠습니까?"
 
-#: app/schedule_dialog.py:982
+#: app/schedule_dialog.py:983
 msgid "请先选择要运行的任务"
 msgstr "실행할 작업을 먼저 선택하세요"
 
-#: app/schedule_dialog.py:989
+#: app/schedule_dialog.py:990
 msgid "确认立即运行任务 \"{name}\" 吗？"
 msgstr "작업 \"{name}\"을(를) 즉시 실행하시겠습니까?"
 
-#: app/schedule_dialog.py:1022
+#: app/schedule_dialog.py:1023
 msgid "无法运行任务：父组件不支持 runScheduledTask"
 msgstr "작업 실행 불가: 부모 구성 요소가 runScheduledTask를 지원하지 않음"
 
-#: app/card/autoplot_setting_card.py:46
+#: app/card/autoplot_setting_card.py:60
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
 msgstr "자동 건너뛰기 (건너뛰기 버튼이 나타나면 자동 클릭)"
 
-#: app/card/autoplot_setting_card.py:51
+#: app/card/autoplot_setting_card.py:65
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "자동 선택 (임의의 대화 옵션 자동 선택)"
 
@@ -1931,7 +1931,7 @@ msgstr "자동 선택 (임의의 대화 옵션 자동 선택)"
 msgid "关"
 msgstr "끄기"
 
-#: app/card/autoplot_setting_card.py:115
+#: app/card/autoplot_setting_card.py:145
 msgid "开"
 msgstr "켜기"
 
@@ -1963,55 +1963,55 @@ msgstr "토요일"
 msgid "周日"
 msgstr "일요일"
 
-#: app/card/messagebox_custom.py:184
+#: app/card/messagebox_custom.py:185
 msgid "下次一定"
 msgstr "다음에 할게요"
 
-#: app/card/messagebox_custom.py:192
+#: app/card/messagebox_custom.py:193
 msgid "收到"
 msgstr "확인"
 
-#: app/card/messagebox_custom.py:244
+#: app/card/messagebox_custom.py:245
 msgid "立即更新"
 msgstr "즉시 업데이트"
 
-#: app/card/messagebox_custom.py:246
+#: app/card/messagebox_custom.py:247
 msgid "开源渠道"
 msgstr "오픈 소스 채널"
 
-#: app/card/messagebox_custom.py:247
+#: app/card/messagebox_custom.py:248
 msgid "直接从 GitHub 下载并更新"
 msgstr "GitHub에서 직접 다운로드 및 업데이트"
 
-#: app/card/messagebox_custom.py:253
+#: app/card/messagebox_custom.py:254
 msgid "Mirror酱 服务 ⚡"
 msgstr "MirrorChyan 서비스 ⚡"
 
-#: app/card/messagebox_custom.py:254
+#: app/card/messagebox_custom.py:255
 msgid "Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）"
 msgstr "MirrorChyan 사용자는 CDK를 통해 고속 업데이트 가능 (버전 간 증분 업데이트 지원)"
 
-#: app/card/messagebox_custom.py:412
+#: app/card/messagebox_custom.py:413
 msgid "手动下载"
 msgstr "수동 다운로드"
 
-#: app/card/messagebox_custom.py:413
+#: app/card/messagebox_custom.py:414
 msgid "好的"
 msgstr "확인"
 
-#: app/card/messagebox_custom.py:421
+#: app/card/messagebox_custom.py:422
 msgid "我已知晓"
 msgstr "알겠습니다"
 
-#: app/card/messagebox_custom.py:493
+#: app/card/messagebox_custom.py:494
 msgid "获取最新兑换码"
 msgstr "최신 리딤코드 가져오기"
 
-#: app/card/messagebox_custom.py:494
+#: app/card/messagebox_custom.py:495
 msgid "查看已使用兑换码"
 msgstr "사용된 리딤코드 보기"
 
-#: app/card/messagebox_custom.py:495
+#: app/card/messagebox_custom.py:496
 msgid "清空已使用兑换码"
 msgstr "사용된 리딤코드 비우기"
 
@@ -2023,19 +2023,19 @@ msgstr "아직 실행되지 않음"
 msgid "重置时间"
 msgstr "시간 초기화"
 
-#: app/card/messagebox_custom.py:538
+#: app/card/messagebox_custom.py:539
 msgid "设置为当前时间"
 msgstr "현재 시간으로 설정"
 
-#: app/card/messagebox_custom.py:612
+#: app/card/messagebox_custom.py:613
 msgid "说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动"
 msgstr "설명: 개척력 소모는 선택한 던전 유형에 따라 판단되며, 던전 이름은 두 배 이벤트에도 사용됩니다."
 
-#: app/card/messagebox_custom.py:631
+#: app/card/messagebox_custom.py:632
 msgid "输入错误"
 msgstr "입력 오류"
 
-#: app/card/messagebox_custom.py:632
+#: app/card/messagebox_custom.py:633
 msgid "\"{type}\"的输入\"{input_text}\"不在可选项中，请重新选择"
 msgstr "\"{type}\"의 입력값 \"{input_text}\"이(가) 선택 항목에 없습니다. 다시 선택해주세요."
 
@@ -2059,72 +2059,72 @@ msgstr "침식된 터널"
 msgid "饰品提取"
 msgstr "장신구 추출"
 
-#: app/card/messagebox_custom.py:983
+#: app/card/messagebox_custom.py:984
 msgid "历战余响"
 msgstr "전쟁의 여운"
 
-#: app/card/messagebox_custom.py:769
+#: app/card/messagebox_custom.py:770
 msgid "说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行"
 msgstr "설명: { } 안의 내용은 실제 전송 시 교체되며, \\n 은 줄바꿈을 의미합니다."
 
-#: app/card/messagebox_custom.py:792
+#: app/card/messagebox_custom.py:793
 msgid "秘技 / 开怪"
 msgstr "비술 / 전투 시작"
 
-#: app/card/messagebox_custom.py:794
+#: app/card/messagebox_custom.py:795
 msgid "秘技 1 次"
 msgstr "비술 1회"
 
-#: app/card/messagebox_custom.py:795
+#: app/card/messagebox_custom.py:796
 msgid "秘技 2 次"
 msgstr "비술 2회"
 
-#: app/card/messagebox_custom.py:803
+#: app/card/messagebox_custom.py:804
 msgid "{index}号位"
 msgstr "{index}번 자리"
 
-#: app/card/messagebox_custom.py:826
+#: app/card/messagebox_custom.py:827
 msgid "每个队伍只允许一名角色配置为“秘技 / 开怪”"
 msgstr "각 파티당 한 명의 캐릭터만 '비술 / 전투 시작'으로 설정할 수 있습니다."
 
-#: app/card/messagebox_custom.py:842
+#: app/card/messagebox_custom.py:843
 msgid "第{i}号位角色\"{char_text}\"不在可选项中，请重新选择"
 msgstr "{i}번 자리 캐릭터 \"{char_text}\"이(가) 선택 항목에 없습니다. 다시 선택해주세요."
 
-#: app/card/messagebox_custom.py:854
+#: app/card/messagebox_custom.py:855
 msgid "第{i}号位秘技\"{tech_text}\"不在可选项中，请重新选择"
 msgstr "{i}번 자리 비술 \"{tech_text}\"이(가) 선택 항목에 없습니다. 다시 선택해주세요."
 
-#: app/card/messagebox_custom.py:933
+#: app/card/messagebox_custom.py:934
 msgid "第{i}个好友角色\"{char_text}\"不在可选项中，请重新选择"
 msgstr "{i}번째 친구 캐릭터 \"{char_text}\"이(가) 선택 항목에 없습니다. 다시 선택해주세요."
 
-#: app/card/messagebox_custom.py:993
+#: app/card/messagebox_custom.py:994
 msgid "体力计划会在清体力前优先执行，未勾选保留时，完成后会自动从列表中删除"
 msgstr ""
 "개척력 계획은 개척력 소모 전에 우선 실행됩니다. '개척력 계획 유지'를 선택하지 않으면 완료 후 목록에서 자동으로 삭제됩니다."
 
-#: app/card/messagebox_custom.py:998
+#: app/card/messagebox_custom.py:999
 msgid "保留体力计划"
 msgstr "개척력 계획 유지"
 
-#: app/card/messagebox_custom.py:1013
+#: app/card/messagebox_custom.py:1014
 msgid "添加计划"
 msgstr "계획 추가"
 
-#: app/card/messagebox_custom.py:1052
+#: app/card/messagebox_custom.py:1053
 msgid "无法添加"
 msgstr "추가 불가"
 
-#: app/card/messagebox_custom.py:1053
+#: app/card/messagebox_custom.py:1054
 msgid "已达到最大计划数量"
 msgstr "최대 계획 수량에 도달했습니다"
 
-#: app/card/messagebox_custom.py:1201
+#: app/card/messagebox_custom.py:1202
 msgid "第{i}个计划的副本类型无效"
 msgstr "{i}번째 계획의 던전 유형이 유효하지 않습니다"
 
-#: app/card/messagebox_custom.py:1222
+#: app/card/messagebox_custom.py:1223
 msgid "第{i}个计划的副本名称\"{input_text}\"不在可选项中，请重新选择"
 msgstr "{i}번째 계획의 던전 이름 \"{input_text}\"이(가) 선택 항목에 없습니다. 다시 선택해주세요."
 
@@ -2280,7 +2280,7 @@ msgstr "개척력 소모"
 msgid "混沌回忆"
 msgstr "혼돈의 기억"
 
-#: app/card/messagebox_custom.py:920
+#: app/card/messagebox_custom.py:921
 msgid ""
 "说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n"
 "例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n"
@@ -2722,7 +2722,7 @@ msgstr "석련"
 msgid "大丽花"
 msgstr "달리아"
 
-#: app/card/messagebox_custom.py:1215
+#: app/card/messagebox_custom.py:1216
 msgid "跳过"
 msgstr "건너뛰기"
 
@@ -3358,31 +3358,31 @@ msgstr "스크린샷 실패(╥╯﹏╰╥)"
 msgid "无法获取游戏窗口截图，请确认游戏窗口已打开"
 msgstr "게임 창 스크린샷을 가져올 수 없습니다. 게임 창이 열려 있는지 확인해 주세요."
 
-#: app/tools_interface.py:247
+#: app/tools_interface.py:261
 msgid "截图来源"
 msgstr "스크린샷 출처"
 
-#: app/tools_interface.py:247
+#: app/tools_interface.py:261
 msgid "请选择截图方式"
 msgstr "스크린샷 방식을 선택하세요"
 
-#: app/tools_interface.py:250
+#: app/tools_interface.py:264
 msgid "捕获游戏窗口"
 msgstr "게임 창 캡처"
 
-#: app/tools_interface.py:253
+#: app/tools_interface.py:267
 msgid "手动选择图片"
 msgstr "이미지 수동 선택"
 
-#: app/card/messagebox_custom.py:1089
+#: app/card/messagebox_custom.py:1090
 msgid "上移"
 msgstr "위로 이동"
 
-#: app/schedule_dialog.py:929
+#: app/schedule_dialog.py:930
 msgid "请先选择要上移的任务"
 msgstr "먼저 위로 이동할 작업을 선택하세요"
 
-#: app/schedule_dialog.py:935
+#: app/schedule_dialog.py:936
 msgid "当前任务已经位于最上方"
 msgstr "현재 작업은 이미 맨 위에 있습니다"
 
@@ -3403,15 +3403,15 @@ msgid "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗）�
 msgstr ""
 "활성화하면 자동화 인식 디버깅을 위해 화면에 감지 범위 상자가 실시간으로 그려집니다(투명 오버레이). Windows에서만 작동합니다."
 
-#: app/card/pushsettingcard1.py:901
+#: app/card/pushsettingcard1.py:902
 msgid "为特定的副本配置队伍"
 msgstr "특정 던전을 위한 팀 구성"
 
-#: app/card/messagebox_custom.py:1333
+#: app/card/messagebox_custom.py:1334
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr "규칙이 일치하지 않을 때 기본 출전 팀: "
 
-#: app/card/pushsettingcard1.py:899
+#: app/card/pushsettingcard1.py:900
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] "{count}개의 규칙이 구성됨"
@@ -4094,7 +4094,7 @@ msgstr "알림 사용"
 msgid "消息推送总开关"
 msgstr "알림 총괄 스위치"
 
-#: app/card/autoplot_setting_card.py:56
+#: app/card/autoplot_setting_card.py:70
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
 msgstr "자동 전투 감지 (자동 전투가 꺼져 있으면 V 키를 눌러 켜기)"
 
@@ -5018,7 +5018,7 @@ msgstr "클립보드에 복사됨"
 msgid "选择模板图片"
 msgstr "템플릿 이미지 선택"
 
-#: app/card/autoplot_setting_card.py:61
+#: app/card/autoplot_setting_card.py:75
 msgid "自动短信 (自动点击关闭手机短信页面)"
 msgstr "자동 메시지 (휴대폰 메시지 화면을 자동으로 클릭해 닫기)"
 
@@ -5086,11 +5086,11 @@ msgstr "이해했으며 계속 활성화"
 msgid "终末地 MaaEnd"
 msgstr ""
 
-#: app/schedule_dialog.py:733
+#: app/schedule_dialog.py:734
 msgid "继续后续任务"
 msgstr "후속 작업 계속 실행"
 
-#: app/schedule_dialog.py:734
+#: app/schedule_dialog.py:735
 msgid "停止后续任务"
 msgstr "후속 작업 실행 중지"
 
@@ -5342,15 +5342,15 @@ msgstr "튜토리얼"
 msgid "{name} 配置教程"
 msgstr "{name} 설정 튜토리얼"
 
-#: app/tools_interface.py:65
+#: app/tools_interface.py:67
 msgid "界面可切换性测试"
 msgstr "화면 전환 테스트"
 
-#: app/tools_interface.py:63
+#: app/tools_interface.py:65
 msgid "测试"
 msgstr "테스트"
 
-#: app/tools_interface.py:66
+#: app/tools_interface.py:68
 msgid "以最短路径遍历所有可达界面，验证界面切换是否正常"
 msgstr "최단 경로로 이동 가능한 모든 화면을 순회하여 화면 전환이 정상적으로 작동하는지 확인합니다"
 
@@ -5358,7 +5358,7 @@ msgstr "최단 경로로 이동 가능한 모든 화면을 순회하여 화면 �
 msgid "自动对话（全局热键，支持后台）"
 msgstr "자동 대화 (글로벌 단축키, 백그라운드 지원)"
 
-#: app/card/autoplot_setting_card.py:66
+#: app/card/autoplot_setting_card.py:85
 msgid "启用快捷键切换自动对话"
 msgstr "자동 대화 전환 단축키 활성화"
 
@@ -5402,7 +5402,7 @@ msgstr "일반 텍스트 모드"
 msgid "可选参数，是否以纯文本格式发送邮件（适用于 Outlook 等邮箱）"
 msgstr "선택 사항: 이메일을 일반 텍스트 형식으로 보낼지 여부 (Outlook 등의 이메일 서비스에 적합)"
 
-#: app/schedule_dialog.py:356
+#: app/schedule_dialog.py:357
 msgid "请选择要运行的流程编排"
 msgstr "실행할 워크플로를 선택하세요"
 
@@ -5640,23 +5640,23 @@ msgstr "'설정' → '프로그램'에서 설정하세요"
 msgid "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写有效 CDK"
 msgstr "\"설정 → 정보 → 업데이트 소스\"에서 Mirror를 선택하고 유효한 CDK를 입력하세요"
 
-#: app/tools_interface.py:187
+#: app/tools_interface.py:201
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr "'설정' → '프로그램'에서 올바른 게임 경로를 설정해 주세요"
 
-#: app/card/autoplot_setting_card.py:72
+#: app/card/autoplot_setting_card.py:91
 msgid "快捷键：{hotkey}（可在设置中修改）"
 msgstr "단축키: {hotkey} (설정에서 변경 가능)"
 
-#: app/card/messagebox_custom.py:1145
+#: app/card/messagebox_custom.py:1146
 msgid "类型："
 msgstr "유형:"
 
-#: app/card/messagebox_custom.py:1149
+#: app/card/messagebox_custom.py:1150
 msgid "次数："
 msgstr "횟수:"
 
-#: app/card/messagebox_custom.py:1422
+#: app/card/messagebox_custom.py:1423
 msgid "队伍："
 msgstr "팀: "
 
@@ -5664,71 +5664,71 @@ msgstr "팀: "
 msgid "已启用：{count}，下次：{time}"
 msgstr "활성화됨: {count}, 다음: {time}"
 
-#: app/log_interface.py:1302
+#: app/log_interface.py:1304
 msgid "正在运行：{name}"
 msgstr "실행 중: {name}"
 
-#: app/schedule_dialog.py:238
+#: app/schedule_dialog.py:239
 msgid "启动方式："
 msgstr "시작 방식:"
 
-#: app/schedule_dialog.py:247
+#: app/schedule_dialog.py:248
 msgid "任务名称："
 msgstr "작업 이름:"
 
-#: app/schedule_dialog.py:252
+#: app/schedule_dialog.py:253
 msgid "启动时间："
 msgstr "시작 시간:"
 
-#: app/schedule_dialog.py:260
+#: app/schedule_dialog.py:261
 msgid "程序路径："
 msgstr "프로그램 경로:"
 
-#: app/schedule_dialog.py:268
+#: app/schedule_dialog.py:269
 msgid "启动参数 或 选择任务："
 msgstr "실행 인수 또는 작업 선택:"
 
-#: app/schedule_dialog.py:278
+#: app/schedule_dialog.py:279
 msgid "超时强制停止："
 msgstr "시간 초과 강제 중지:"
 
-#: app/schedule_dialog.py:286
+#: app/schedule_dialog.py:287
 msgid "任务完成后操作："
 msgstr "작업 완료 후 동작:"
 
-#: app/schedule_dialog.py:294
+#: app/schedule_dialog.py:295
 msgid "完成后终止进程："
 msgstr "완료 후 프로세스 종료:"
 
-#: app/schedule_dialog.py:297
+#: app/schedule_dialog.py:298
 msgid "例如：StarRail.exe, YuanShen.exe（逗号分隔多个进程）"
 msgstr "예: StarRail.exe, YuanShen.exe (쉼표로 구분)"
 
-#: app/schedule_dialog.py:304
+#: app/schedule_dialog.py:305
 msgid "完成后推送通知："
 msgstr "완료 후 알림:"
 
-#: app/schedule_dialog.py:424
+#: app/schedule_dialog.py:425
 msgid "选择任务："
 msgstr "작업 선택:"
 
-#: app/schedule_dialog.py:434
+#: app/schedule_dialog.py:435
 msgid "选择流程："
 msgstr "워크플로 선택:"
 
-#: app/schedule_dialog.py:445
+#: app/schedule_dialog.py:446
 msgid "启动参数："
 msgstr "실행 인수:"
 
-#: app/schedule_dialog.py:708
+#: app/schedule_dialog.py:709
 msgid "冲突："
 msgstr "충돌:"
 
-#: app/schedule_dialog.py:730
+#: app/schedule_dialog.py:731
 msgid "链式失败后："
 msgstr "체인 실패 후:"
 
-#: app/schedule_dialog.py:1027
+#: app/schedule_dialog.py:1028
 msgid "启动任务失败：{error}"
 msgstr "작업 시작 실패: {error}"
 
@@ -5902,7 +5902,7 @@ msgstr "임무 일시 중지"
 msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
 msgstr "내장 임무만 일시 중지를 지원하며, 일시 중지 시 스크립트가 모든 동작을 중지합니다"
 
-#: app/log_interface.py:1785
+#: app/log_interface.py:1793
 msgid "继续任务"
 msgstr "임무 재개"
 
@@ -5914,11 +5914,11 @@ msgstr "임무 일시 중지/재개 (전역 단축키, 백그라운드 지원)"
 msgid "按下 {stop} 停止任务"
 msgstr "{stop} 중지"
 
-#: app/log_interface.py:1837
+#: app/log_interface.py:1846
 msgid "复制"
 msgstr "복사"
 
-#: app/log_interface.py:1840
+#: app/log_interface.py:1849
 msgid "全选"
 msgstr "모두 선택"
 
@@ -6228,3 +6228,71 @@ msgstr ""
 #: app/log_interface.py:207
 msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "{stop} 중지 · {pause} 재개"
+
+#: app/card/autoplot_setting_card.py:79
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:49
+msgid "记住自动对话开关状态"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:53
+msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"
+msgstr ""
+
+#: app/tools_interface.py:160
+msgid "{error}（详情见日志）"
+msgstr ""
+
+#: app/setting_interface.py:1063
+msgid "启动器路径"
+msgstr "런처 경로"
+
+#: app/setting_interface.py:1069
+msgid "启动器类型"
+msgstr "런처 유형"
+
+#: app/setting_interface.py:1071
+msgid "米哈游启动器"
+msgstr "미호요 런처"
+
+#: app/setting_interface.py:1071
+msgid "HoYoPlay"
+msgstr "HoYoPlay"
+
+#: app/setting_interface.py:3349
+msgid "选择启动器路径"
+msgstr "런처 경로 선택"
+
+#: app/card/messagebox_custom.py:276
+msgid "显示更早的更新记录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:309
+msgid "正在加载历史更新记录……"
+msgstr ""
+
+#: app/card/messagebox_custom.py:313
+msgid "查看完整更新日志"
+msgstr ""
+
+#: app/card/messagebox_custom.py:327
+msgid "以下为已收录的更新记录，部分历史版本可能未收录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:329
+msgid "已加载 {count} 份版本更新记录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:352
+msgid "继续显示更早的更新记录（还有 {count} 份）"
+msgstr ""
+
+#: app/tools/check_update.py:62
+msgid "历史更新记录暂时无法加载，仍可正常更新"
+msgstr ""
+
+#: app/tools/check_update.py:204
+msgid "该渠道版本与目标版本不一致，请稍后重试"
+msgstr ""

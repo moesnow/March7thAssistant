@@ -117,6 +117,10 @@
   * 新增功能能正常使用
   * 不引入明显性能回退或卡顿问题
 
+运行测试：`uv run pytest`。UI 测试默认不会在桌面弹出窗口，仍使用原生 Qt 后端执行布局、绘制和事件处理。
+
+需要目视检查界面或调试窗口焦点时，使用 `uv run pytest --show-ui`；也可指定文件，例如 `uv run pytest tests/test_app/test_update_dialog.py --show-ui`。
+
 ---
 
 ### 2. 提交信息（Commit Message）规范

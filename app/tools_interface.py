@@ -14,9 +14,11 @@ from module.config import cfg
 from tasks.base.tasks import start_task
 import os
 import sys
+import traceback
 
 
 from module.localization import tr
+from module.logger import log
 
 
 class ToolsInterface(ScrollArea):
@@ -68,6 +70,9 @@ class ToolsInterface(ScrollArea):
 
         self.__initWidget()
 
+        if sys.platform == 'win32' and self.automaticPlotCard.getSwitchState():
+            self.__startAutoPlot()
+
     def __initWidget(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setViewportMargins(0, 80, 0, 20)
@@ -118,7 +123,7 @@ class ToolsInterface(ScrollArea):
                 break
 
     def __onUnlockfpsCardClicked(self):
-        from utils.registry.star_rail_setting import get_game_fps, set_game_fps  # 延迟导入，避免非 Windows 平台报错
+        from utils.registry.star_rail_setting import get_game_fps, set_game_fps, MissingFPSSettingError  # 延迟导入，避免非 Windows 平台报错
         try:
             fps = get_game_fps()
             if fps == 120:
@@ -143,10 +148,19 @@ class ToolsInterface(ScrollArea):
                     duration=1000,
                     parent=self
                 )
-        except:
+        except Exception as e:
+            if isinstance(e, MissingFPSSettingError):
+                content = tr("请将游戏图像质量修改为自定义后重试")
+                log.warning("解锁帧率失败：请将游戏图像质量修改为自定义后重试")
+            else:
+                log.error(f"解锁帧率失败：{e}\n{traceback.format_exc()}")
+                error = f"{type(e).__name__}: {' '.join(str(e).split())}"
+                if len(error) > 80:
+                    error = error[:79] + "…"
+                content = tr("{error}（详情见日志）").format(error=error)
             InfoBar.warning(
                 title=tr('解锁失败'),
-                content=tr("请将游戏图像质量修改为自定义后重试"),
+                content=content,
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -290,12 +304,9 @@ class ToolsInterface(ScrollArea):
 
     def __onAutoPlotSwitchChanged(self, isChecked: bool):
         """Handle auto plot switch state change"""
+        cfg.set_value("autoplot_enable", isChecked and bool(cfg.get_value("autoplot_remember_enable", False)))
         if isChecked:
-            # Update options first
-            options = self.automaticPlotCard.getOptions()
-            tool.update_plot_options(options)
-            # Start auto plot
-            tool.start("plot")
+            self.__startAutoPlot()
             InfoBar.success(
                 title=tr('自动对话已启动'),
                 content="",
@@ -317,6 +328,10 @@ class ToolsInterface(ScrollArea):
                 duration=1000,
                 parent=self
             )
+
+    def __startAutoPlot(self):
+        tool.update_plot_options(self.automaticPlotCard.getOptions())
+        tool.start("plot")
 
     def __onAutoPlotOptionsChanged(self, options: dict):
         """Handle auto plot options change"""

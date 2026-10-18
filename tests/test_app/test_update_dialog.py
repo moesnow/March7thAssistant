@@ -143,3 +143,57 @@ class TestUpdateDialogScrollBackground:
             if parent is not None:
                 parent.deleteLater()
             setTheme(old_theme)
+
+
+class TestUpdateDialogHistory:
+    def test_history_appends_without_moving_controls_or_scroll(self, qapp):
+        from module.update.changelog import UpdateNotes, VersionNote
+        from app.card.messagebox_custom import MessageBoxUpdate
+        from PySide6.QtWidgets import QWidget
+
+        parent = QWidget()
+        parent.resize(952, 635)
+        parent.show()
+        dlg = MessageBoxUpdate('更新记录', '', parent)
+        dlg.prepareHistory('v1.0', 'v30.0', '- 最新说明\n' * 30)
+        dlg.show()
+        _pump(qapp, 0.3)
+        before = (dlg.githubUpdateCard.geometry(), dlg.buttonGroup.geometry(), dlg.widget.size())
+        dlg._scroll.verticalScrollBar().setValue(20)
+        assert dlg._scroll.verticalScrollBar().value() == 20
+        sections = tuple(VersionNote(f'v{i}.0', f'- 第 {i} 版\n' * 10) for i in range(30, 0, -1))
+        dlg.setHistory(UpdateNotes(sections))
+        _pump(qapp, 0.1)
+        assert before == (dlg.githubUpdateCard.geometry(), dlg.buttonGroup.geometry(), dlg.widget.size())
+        assert dlg._scroll.verticalScrollBar().value() == 20
+        assert 'v21.0' in dlg.contentLabel.text()
+        assert 'v20.0' not in dlg.contentLabel.text()
+        assert dlg.moreHistoryButton.isVisible()
+        dlg.moreHistoryButton.click()
+        _pump(qapp, 0.1)
+        assert 'v20.0' in dlg.contentLabel.text()
+        assert 'v11.0' in dlg.contentLabel.text()
+        assert 'v10.0' not in dlg.contentLabel.text()
+        dlg.moreHistoryButton.click()
+        assert not dlg.moreHistoryButton.isVisible()
+        assert 'v1.0' in dlg.contentLabel.text()
+        assert 'v30.0/assets/docs/Changelog.md' in dlg.fullHistoryLabel.text()
+        dlg.deleteLater()
+        parent.deleteLater()
+
+    def test_closed_dialog_ignores_late_success_and_failure(self, qapp):
+        from module.update.changelog import UpdateNotes, VersionNote
+        dlg, parent = _build_dialog(qapp, SHORT_CHANGELOG)
+        dlg.prepareHistory('v1.0', 'v2.0', '- 当前发布说明')
+        original = dlg.contentLabel.text()
+        dlg.setHistory(UpdateNotes((VersionNote('v3.0', '- 错误的目标'),)))
+        assert dlg.contentLabel.text() == original
+        dlg.done(0)
+        previous_status = dlg.historyStatusLabel.text()
+        dlg.setHistory(UpdateNotes((VersionNote('v2.0', '- 迟到的说明'),)))
+        dlg.setHistoryError('迟到的错误')
+        assert dlg.contentLabel.text() == original
+        assert dlg.historyStatusLabel.text() == previous_status
+        _pump(qapp, 0.2)
+        dlg.deleteLater()
+        parent.deleteLater()

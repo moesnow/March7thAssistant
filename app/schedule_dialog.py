@@ -5,7 +5,8 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
                                QToolButton, QWidget,
                                QAbstractItemView)
 from qfluentwidgets import TimePicker, BodyLabel, PushButton, PrimaryPushButton, TableWidget, MaskDialogBase, MessageBox, Dialog
-from qfluentwidgets import LineEdit, ComboBox, CheckBox, SpinBox
+from qfluentwidgets import LineEdit, ComboBox, CheckBox
+from app.components.ascii_spin_box import AsciiSpinBox
 from qfluentwidgets import InfoBar, InfoBarPosition
 from qfluentwidgets import FluentIcon as FIF
 from utils.tasks import TASK_NAMES
@@ -172,7 +173,7 @@ class AddEditScheduleDialog(MessageBox):
         self.workflow_combo.activated.connect(self._on_workflow_activated)
 
         # 超时强制停止，默认60分钟，单位分钟
-        self.timeout_spin = SpinBox(self)
+        self.timeout_spin = AsciiSpinBox(self)
         self.timeout_spin.setRange(0, 24 * 60)
         self.timeout_spin.setSuffix(tr(" 分钟（0 表示不启用）"))
 

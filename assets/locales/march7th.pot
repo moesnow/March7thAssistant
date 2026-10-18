@@ -17,31 +17,43 @@ msgstr ""
 msgid "关"
 msgstr ""
 
-#: app/card/autoplot_setting_card.py:46
+#: app/card/autoplot_setting_card.py:49
+msgid "记住自动对话开关状态"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:53
+msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:60
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
 msgstr ""
 
-#: app/card/autoplot_setting_card.py:51
+#: app/card/autoplot_setting_card.py:65
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr ""
 
-#: app/card/autoplot_setting_card.py:56
+#: app/card/autoplot_setting_card.py:70
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
 msgstr ""
 
-#: app/card/autoplot_setting_card.py:61
+#: app/card/autoplot_setting_card.py:75
 msgid "自动短信 (自动点击关闭手机短信页面)"
 msgstr ""
 
-#: app/card/autoplot_setting_card.py:66
+#: app/card/autoplot_setting_card.py:79
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgstr ""
+
+#: app/card/autoplot_setting_card.py:85
 msgid "启用快捷键切换自动对话"
 msgstr ""
 
-#: app/card/autoplot_setting_card.py:72
+#: app/card/autoplot_setting_card.py:91
 msgid "快捷键：{hotkey}（可在设置中修改）"
 msgstr ""
 
-#: app/card/autoplot_setting_card.py:115
+#: app/card/autoplot_setting_card.py:145
 msgid "开"
 msgstr ""
 
@@ -237,218 +249,242 @@ msgstr ""
 msgid "周日"
 msgstr ""
 
-#: app/card/messagebox_custom.py:184
+#: app/card/messagebox_custom.py:185
 msgid "下次一定"
 msgstr ""
 
-#: app/card/messagebox_custom.py:192
+#: app/card/messagebox_custom.py:193
 msgid "收到"
 msgstr ""
 
-#: app/card/messagebox_custom.py:244
+#: app/card/messagebox_custom.py:245
 msgid "立即更新"
 msgstr ""
 
-#: app/card/messagebox_custom.py:246
+#: app/card/messagebox_custom.py:247
 msgid "开源渠道"
 msgstr ""
 
-#: app/card/messagebox_custom.py:247
+#: app/card/messagebox_custom.py:248
 msgid "直接从 GitHub 下载并更新"
 msgstr ""
 
-#: app/card/messagebox_custom.py:253
+#: app/card/messagebox_custom.py:254
 msgid "Mirror酱 服务 ⚡"
 msgstr ""
 
-#: app/card/messagebox_custom.py:254
+#: app/card/messagebox_custom.py:255
 msgid "Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）"
 msgstr ""
 
-#: app/card/messagebox_custom.py:300
+#: app/card/messagebox_custom.py:276
+msgid "显示更早的更新记录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:309
+msgid "正在加载历史更新记录……"
+msgstr ""
+
+#: app/card/messagebox_custom.py:313
+msgid "查看完整更新日志"
+msgstr ""
+
+#: app/card/messagebox_custom.py:327
+msgid "以下为已收录的更新记录，部分历史版本可能未收录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:329
+msgid "已加载 {count} 份版本更新记录"
+msgstr ""
+
+#: app/card/messagebox_custom.py:352
+msgid "继续显示更早的更新记录（还有 {count} 份）"
+msgstr ""
+
+#: app/card/messagebox_custom.py:301
 msgid "关闭"
 msgstr ""
 
-#: app/card/messagebox_custom.py:412
+#: app/card/messagebox_custom.py:413
 msgid "手动下载"
 msgstr ""
 
-#: app/card/messagebox_custom.py:413
+#: app/card/messagebox_custom.py:414
 msgid "好的"
 msgstr ""
 
-#: app/card/messagebox_custom.py:420
+#: app/card/messagebox_custom.py:421
 msgid "退出"
 msgstr ""
 
-#: app/card/messagebox_custom.py:421
+#: app/card/messagebox_custom.py:422
 msgid "我已知晓"
 msgstr ""
 
-#: app/card/messagebox_custom.py:468
+#: app/card/messagebox_custom.py:469
 msgid "确认"
 msgstr ""
 
-#: app/card/messagebox_custom.py:493
+#: app/card/messagebox_custom.py:494
 msgid "获取最新兑换码"
 msgstr ""
 
-#: app/card/messagebox_custom.py:494
+#: app/card/messagebox_custom.py:495
 msgid "查看已使用兑换码"
 msgstr ""
 
-#: app/card/messagebox_custom.py:495
+#: app/card/messagebox_custom.py:496
 msgid "清空已使用兑换码"
 msgstr ""
 
-#: app/card/messagebox_custom.py:538
+#: app/card/messagebox_custom.py:539
 msgid "设置为当前时间"
 msgstr ""
 
-#: app/card/messagebox_custom.py:612
+#: app/card/messagebox_custom.py:613
 msgid "说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动"
 msgstr ""
 
-#: app/card/messagebox_custom.py:631
+#: app/card/messagebox_custom.py:632
 msgid "输入错误"
 msgstr ""
 
-#: app/card/messagebox_custom.py:632
+#: app/card/messagebox_custom.py:633
 msgid "\"{type}\"的输入\"{input_text}\"不在可选项中，请重新选择"
 msgstr ""
 
-#: app/card/messagebox_custom.py:769
+#: app/card/messagebox_custom.py:770
 msgid "说明：{ } 中的内容会在实际发送时被替换，\\n 代表换行"
 msgstr ""
 
-#: app/card/messagebox_custom.py:792
+#: app/card/messagebox_custom.py:793
 msgid "秘技 / 开怪"
 msgstr ""
 
-#: app/card/messagebox_custom.py:793
+#: app/card/messagebox_custom.py:794
 msgid "无操作"
 msgstr ""
 
-#: app/card/messagebox_custom.py:794
+#: app/card/messagebox_custom.py:795
 msgid "秘技 1 次"
 msgstr ""
 
-#: app/card/messagebox_custom.py:795
+#: app/card/messagebox_custom.py:796
 msgid "秘技 2 次"
 msgstr ""
 
-#: app/card/messagebox_custom.py:803
+#: app/card/messagebox_custom.py:804
 msgid "{index}号位"
 msgstr ""
 
-#: app/card/messagebox_custom.py:826
+#: app/card/messagebox_custom.py:827
 msgid "每个队伍只允许一名角色配置为“秘技 / 开怪”"
 msgstr ""
 
-#: app/card/messagebox_custom.py:842
+#: app/card/messagebox_custom.py:843
 msgid "第{i}号位角色\"{char_text}\"不在可选项中，请重新选择"
 msgstr ""
 
-#: app/card/messagebox_custom.py:854
+#: app/card/messagebox_custom.py:855
 msgid "第{i}号位秘技\"{tech_text}\"不在可选项中，请重新选择"
 msgstr ""
 
-#: app/card/messagebox_custom.py:920
+#: app/card/messagebox_custom.py:921
 msgid ""
 "说明：左侧选择角色后，在右侧对应的文本框中填写好友名称。\n"
 "例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n"
 "若好友名称留空则只查找选择的角色。"
 msgstr ""
 
-#: app/card/messagebox_custom.py:933
+#: app/card/messagebox_custom.py:934
 msgid "第{i}个好友角色\"{char_text}\"不在可选项中，请重新选择"
 msgstr ""
 
-#: app/card/messagebox_custom.py:983
+#: app/card/messagebox_custom.py:984
 msgid "历战余响"
 msgstr ""
 
-#: app/card/messagebox_custom.py:993
+#: app/card/messagebox_custom.py:994
 msgid "体力计划会在清体力前优先执行，未勾选保留时，完成后会自动从列表中删除"
 msgstr ""
 
-#: app/card/messagebox_custom.py:998
+#: app/card/messagebox_custom.py:999
 msgid "保留体力计划"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1013
+#: app/card/messagebox_custom.py:1014
 msgid "添加计划"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1052
+#: app/card/messagebox_custom.py:1053
 msgid "无法添加"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1053
+#: app/card/messagebox_custom.py:1054
 msgid "已达到最大计划数量"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1085
+#: app/card/messagebox_custom.py:1086
 msgid "删除"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1089
+#: app/card/messagebox_custom.py:1090
 msgid "上移"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1145
+#: app/card/messagebox_custom.py:1146
 msgid "类型："
 msgstr ""
 
-#: app/card/messagebox_custom.py:1149
+#: app/card/messagebox_custom.py:1150
 msgid "次数："
 msgstr ""
 
-#: app/card/messagebox_custom.py:1201
+#: app/card/messagebox_custom.py:1202
 msgid "第{i}个计划的副本类型无效"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1215
+#: app/card/messagebox_custom.py:1216
 msgid "无"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1215
+#: app/card/messagebox_custom.py:1216
 msgid "跳过"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1222
+#: app/card/messagebox_custom.py:1223
 msgid "第{i}个计划的副本名称\"{input_text}\"不在可选项中，请重新选择"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1256
+#: app/card/messagebox_custom.py:1257
 msgid "关闭确认"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1257
+#: app/card/messagebox_custom.py:1258
 msgid "您希望如何处理程序?"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1262
+#: app/card/messagebox_custom.py:1263
 msgid "最小化到托盘"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1263
+#: app/card/messagebox_custom.py:1264
 msgid "关闭程序"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1266
+#: app/card/messagebox_custom.py:1267
 msgid "记住我的选择,下次不再询问"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1333
+#: app/card/messagebox_custom.py:1334
 msgid "当没有匹配到任何规则时，默认出战队伍："
 msgstr ""
 
-#: app/card/messagebox_custom.py:1354
+#: app/card/messagebox_custom.py:1355
 msgid "添加"
 msgstr ""
 
-#: app/card/messagebox_custom.py:1422
+#: app/card/messagebox_custom.py:1423
 msgid "队伍："
 msgstr ""
 
@@ -606,39 +642,39 @@ msgid ""
 "队伍2: {team2}"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:805
+#: app/card/pushsettingcard1.py:804
 msgid "交换成功"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:806
+#: app/card/pushsettingcard1.py:805
 msgid "队伍1和队伍2已成功交换"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:815
+#: app/card/pushsettingcard1.py:814
 msgid "队伍1"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:818
+#: app/card/pushsettingcard1.py:817
 msgid "队伍2"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:844
+#: app/card/pushsettingcard1.py:843
 msgid "暂无计划"
 msgstr ""
 
-#: app/card/pushsettingcard1.py:845
+#: app/card/pushsettingcard1.py:844
 msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/card/pushsettingcard1.py:899
+#: app/card/pushsettingcard1.py:900
 msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] ""
 msgstr[1] ""
 
-#: app/card/pushsettingcard1.py:901
+#: app/card/pushsettingcard1.py:902
 msgid "为特定的副本配置队伍"
 msgstr ""
 
@@ -806,59 +842,59 @@ msgstr ""
 msgid "尚未配置定时任务"
 msgstr ""
 
-#: app/log_interface.py:1302
+#: app/log_interface.py:1304
 msgid "正在运行：{name}"
 msgstr ""
 
-#: app/log_interface.py:1333
+#: app/log_interface.py:1335
 msgid "任务正在运行"
 msgstr ""
 
-#: app/log_interface.py:1785
+#: app/log_interface.py:1793
 msgid "继续任务"
 msgstr ""
 
-#: app/log_interface.py:1837
+#: app/log_interface.py:1846
 msgid "复制"
 msgstr ""
 
-#: app/log_interface.py:1840
+#: app/log_interface.py:1849
 msgid "全选"
 msgstr ""
 
-#: app/log_interface.py:1842
+#: app/log_interface.py:1851
 msgid "清空日志"
 msgstr ""
 
-#: app/log_interface.py:2362
+#: app/log_interface.py:2371
 msgid "关机"
 msgstr ""
 
-#: app/log_interface.py:2363
+#: app/log_interface.py:2372
 msgid "睡眠"
 msgstr ""
 
-#: app/log_interface.py:2364
+#: app/log_interface.py:2373
 msgid "休眠"
 msgstr ""
 
-#: app/log_interface.py:2365
+#: app/log_interface.py:2374
 msgid "重启"
 msgstr ""
 
-#: app/log_interface.py:2366
+#: app/log_interface.py:2375
 msgid "注销"
 msgstr ""
 
-#: app/log_interface.py:2367
+#: app/log_interface.py:2376
 msgid "关闭显示器"
 msgstr ""
 
-#: app/log_interface.py:2436
+#: app/log_interface.py:2445
 msgid "任务完成"
 msgstr ""
 
-#: app/log_interface.py:2439
+#: app/log_interface.py:2448
 msgid "任务已停止"
 msgstr ""
 
@@ -989,242 +1025,242 @@ msgstr ""
 msgid "启动失败"
 msgstr ""
 
-#: app/schedule_dialog.py:107
+#: app/schedule_dialog.py:108
 msgid "添加/编辑定时任务"
 msgstr ""
 
-#: app/schedule_dialog.py:126
+#: app/schedule_dialog.py:127
 msgid "例如：完整运行"
 msgstr ""
 
-#: app/schedule_dialog.py:136
+#: app/schedule_dialog.py:137
 msgid "本体"
 msgstr ""
 
-#: app/schedule_dialog.py:136
+#: app/schedule_dialog.py:137
 msgid "外部程序"
 msgstr ""
 
-#: app/schedule_dialog.py:145
+#: app/schedule_dialog.py:146
 msgid "外部程序或脚本的完整路径"
 msgstr ""
 
-#: app/schedule_dialog.py:146
+#: app/schedule_dialog.py:147
 msgid "选择程序"
 msgstr ""
 
-#: app/schedule_dialog.py:156
+#: app/schedule_dialog.py:157
 msgid "外部程序启动参数（可选）"
 msgstr ""
 
-#: app/schedule_dialog.py:177
+#: app/schedule_dialog.py:178
 msgid " 分钟（0 表示不启用）"
 msgstr ""
 
-#: app/schedule_dialog.py:181
+#: app/schedule_dialog.py:182
 msgid "按时启动"
 msgstr ""
 
-#: app/schedule_dialog.py:182
+#: app/schedule_dialog.py:183
 msgid "链式启动"
 msgstr ""
 
-#: app/schedule_dialog.py:194
+#: app/schedule_dialog.py:195
 msgid "启动方式说明"
 msgstr ""
 
-#: app/schedule_dialog.py:205
+#: app/schedule_dialog.py:206
 msgid "完成后推送通知"
 msgstr ""
 
-#: app/schedule_dialog.py:238
+#: app/schedule_dialog.py:239
 msgid "启动方式："
 msgstr ""
 
-#: app/schedule_dialog.py:247
+#: app/schedule_dialog.py:248
 msgid "任务名称："
 msgstr ""
 
-#: app/schedule_dialog.py:252
+#: app/schedule_dialog.py:253
 msgid "启动时间："
 msgstr ""
 
-#: app/schedule_dialog.py:260
+#: app/schedule_dialog.py:261
 msgid "程序路径："
 msgstr ""
 
-#: app/schedule_dialog.py:268
+#: app/schedule_dialog.py:269
 msgid "启动参数 或 选择任务："
 msgstr ""
 
-#: app/schedule_dialog.py:278
+#: app/schedule_dialog.py:279
 msgid "超时强制停止："
 msgstr ""
 
-#: app/schedule_dialog.py:286
+#: app/schedule_dialog.py:287
 msgid "任务完成后操作："
 msgstr ""
 
-#: app/schedule_dialog.py:294
+#: app/schedule_dialog.py:295
 msgid "完成后终止进程："
 msgstr ""
 
-#: app/schedule_dialog.py:297
+#: app/schedule_dialog.py:298
 msgid "例如：StarRail.exe, YuanShen.exe（逗号分隔多个进程）"
 msgstr ""
 
-#: app/schedule_dialog.py:304
+#: app/schedule_dialog.py:305
 msgid "完成后推送通知："
 msgstr ""
 
-#: app/schedule_dialog.py:330
+#: app/schedule_dialog.py:331
 msgid "错误"
 msgstr ""
 
-#: app/schedule_dialog.py:330
+#: app/schedule_dialog.py:331
 msgid "任务名称不能为空"
 msgstr ""
 
-#: app/schedule_dialog.py:345
+#: app/schedule_dialog.py:346
 msgid "已存在相同时间的任务，请选择其他时间"
 msgstr ""
 
-#: app/schedule_dialog.py:356
+#: app/schedule_dialog.py:357
 msgid "请选择要运行的流程编排"
 msgstr ""
 
-#: app/schedule_dialog.py:362
+#: app/schedule_dialog.py:363
 msgid "程序路径不能为空"
 msgstr ""
 
-#: app/schedule_dialog.py:376
+#: app/schedule_dialog.py:377
 msgid "选择程序或脚本"
 msgstr ""
 
-#: app/schedule_dialog.py:376
+#: app/schedule_dialog.py:377
 msgid "可执行文件 (*.exe *.bat *.ps1);;所有文件 (*.*)"
 msgstr ""
 
-#: app/schedule_dialog.py:404
+#: app/schedule_dialog.py:405
 msgid ""
 "按时启动：到达设定时间后，直接启动当前任务。\n"
 "链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动。\n"
 "立即运行：从当前任务开始，后面连续的链式任务也会跟随执行。"
 msgstr ""
 
-#: app/schedule_dialog.py:424
+#: app/schedule_dialog.py:425
 msgid "选择任务："
 msgstr ""
 
-#: app/schedule_dialog.py:434
+#: app/schedule_dialog.py:435
 msgid "选择流程："
 msgstr ""
 
-#: app/schedule_dialog.py:445
+#: app/schedule_dialog.py:446
 msgid "启动参数："
 msgstr ""
 
-#: app/schedule_dialog.py:466
+#: app/schedule_dialog.py:467
 msgid "{exe} 的完整路径"
 msgstr ""
 
-#: app/schedule_dialog.py:653
+#: app/schedule_dialog.py:654
 msgid "定时任务配置"
 msgstr ""
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "名称"
 msgstr ""
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "时间"
 msgstr ""
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "程序"
 msgstr ""
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "参数/任务"
 msgstr ""
 
-#: app/schedule_dialog.py:673
+#: app/schedule_dialog.py:674
 msgid "通知"
 msgstr ""
 
-#: app/schedule_dialog.py:700
+#: app/schedule_dialog.py:701
 msgid "立即运行"
 msgstr ""
 
-#: app/schedule_dialog.py:708
+#: app/schedule_dialog.py:709
 msgid "冲突："
 msgstr ""
 
-#: app/schedule_dialog.py:712
+#: app/schedule_dialog.py:713
 msgid "跳过需要运行的任务"
 msgstr ""
 
-#: app/schedule_dialog.py:712
+#: app/schedule_dialog.py:713
 msgid "停止正在运行的任务"
 msgstr ""
 
-#: app/schedule_dialog.py:730
+#: app/schedule_dialog.py:731
 msgid "链式失败后："
 msgstr ""
 
-#: app/schedule_dialog.py:733
+#: app/schedule_dialog.py:734
 msgid "继续后续任务"
 msgstr ""
 
-#: app/schedule_dialog.py:734
+#: app/schedule_dialog.py:735
 msgid "停止后续任务"
 msgstr ""
 
-#: app/schedule_dialog.py:840
+#: app/schedule_dialog.py:841
 msgid "是"
 msgstr ""
 
-#: app/schedule_dialog.py:840
+#: app/schedule_dialog.py:841
 msgid "否"
 msgstr ""
 
-#: app/schedule_dialog.py:929
+#: app/schedule_dialog.py:930
 msgid "提示"
 msgstr ""
 
-#: app/schedule_dialog.py:929
+#: app/schedule_dialog.py:930
 msgid "请先选择要上移的任务"
 msgstr ""
 
-#: app/schedule_dialog.py:935
+#: app/schedule_dialog.py:936
 msgid "当前任务已经位于最上方"
 msgstr ""
 
-#: app/schedule_dialog.py:948
+#: app/schedule_dialog.py:949
 msgid "请先选择要编辑的任务"
 msgstr ""
 
-#: app/schedule_dialog.py:964
+#: app/schedule_dialog.py:965
 msgid "请先选择要删除的任务"
 msgstr ""
 
-#: app/schedule_dialog.py:969
+#: app/schedule_dialog.py:970
 msgid "确认删除选中的定时任务？"
 msgstr ""
 
-#: app/schedule_dialog.py:982
+#: app/schedule_dialog.py:983
 msgid "请先选择要运行的任务"
 msgstr ""
 
-#: app/schedule_dialog.py:989
+#: app/schedule_dialog.py:990
 msgid "确认立即运行任务 \"{name}\" 吗？"
 msgstr ""
 
-#: app/schedule_dialog.py:1022
+#: app/schedule_dialog.py:1023
 msgid "无法运行任务：父组件不支持 runScheduledTask"
 msgstr ""
 
-#: app/schedule_dialog.py:1027
+#: app/schedule_dialog.py:1028
 msgid "启动任务失败：{error}"
 msgstr ""
 
@@ -2133,7 +2169,19 @@ msgid "通过启动器更新游戏"
 msgstr ""
 
 #: app/setting_interface.py:1063
-msgid "米哈游启动器路径"
+msgid "启动器路径"
+msgstr ""
+
+#: app/setting_interface.py:1069
+msgid "启动器类型"
+msgstr ""
+
+#: app/setting_interface.py:1071
+msgid "米哈游启动器"
+msgstr ""
+
+#: app/setting_interface.py:1071
+msgid "HoYoPlay"
 msgstr ""
 
 #: app/setting_interface.py:1070
@@ -3385,8 +3433,8 @@ msgstr ""
 msgid "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
 msgstr ""
 
-#: app/setting_interface.py:3341
-msgid "选择米哈游启动器路径"
+#: app/setting_interface.py:3349
+msgid "选择启动器路径"
 msgstr ""
 
 #: app/setting_interface.py:3366
@@ -3563,10 +3611,18 @@ msgstr ""
 msgid "注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"
 msgstr ""
 
+#: app/tools/check_update.py:62
+msgid "历史更新记录暂时无法加载，仍可正常更新"
+msgstr ""
+
 #: app/tools/check_update.py:107
 msgid ""
 "发现新版本：{cfg.version} ——> {version}\n"
 "更新日志 |･ω･)"
+msgstr ""
+
+#: app/tools/check_update.py:204
+msgid "该渠道版本与目标版本不一致，请稍后重试"
 msgstr ""
 
 #: app/tools/check_update.py:170
@@ -3697,137 +3753,141 @@ msgstr ""
 msgid "跃迁数据获取完成(＾∀＾●)"
 msgstr ""
 
-#: app/tools_interface.py:34
+#: app/tools_interface.py:36
 msgid "自动对话"
 msgstr ""
 
-#: app/tools_interface.py:35
+#: app/tools_interface.py:37
 msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
 msgstr ""
 
-#: app/tools_interface.py:38
+#: app/tools_interface.py:40
 msgid "捕获"
 msgstr ""
 
-#: app/tools_interface.py:40
+#: app/tools_interface.py:42
 msgid "游戏截图"
 msgstr ""
 
-#: app/tools_interface.py:41
+#: app/tools_interface.py:43
 msgid "检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）"
 msgstr ""
 
-#: app/tools_interface.py:44
+#: app/tools_interface.py:46
 msgid "解锁"
 msgstr ""
 
-#: app/tools_interface.py:46
+#: app/tools_interface.py:48
 msgid "解锁帧率"
 msgstr ""
 
-#: app/tools_interface.py:47
+#: app/tools_interface.py:49
 msgid "通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）"
 msgstr ""
 
-#: app/tools_interface.py:50
+#: app/tools_interface.py:52
 msgid "执行"
 msgstr ""
 
-#: app/tools_interface.py:57
+#: app/tools_interface.py:59
 msgid "启动"
 msgstr ""
 
-#: app/tools_interface.py:59
+#: app/tools_interface.py:61
 msgid "触屏模式"
 msgstr ""
 
-#: app/tools_interface.py:60
+#: app/tools_interface.py:62
 msgid "以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内"
 msgstr ""
 
-#: app/tools_interface.py:63
+#: app/tools_interface.py:65
 msgid "测试"
 msgstr ""
 
-#: app/tools_interface.py:65
+#: app/tools_interface.py:67
 msgid "界面可切换性测试"
 msgstr ""
 
-#: app/tools_interface.py:66
+#: app/tools_interface.py:68
 msgid "以最短路径遍历所有可达界面，验证界面切换是否正常"
 msgstr ""
 
-#: app/tools_interface.py:127
+#: app/tools_interface.py:132
 msgid "恢复60成功 (＾∀＾●)"
 msgstr ""
 
-#: app/tools_interface.py:138
+#: app/tools_interface.py:143
 msgid "解锁120成功 (＾∀＾●)"
 msgstr ""
 
-#: app/tools_interface.py:148
-msgid "解锁失败"
-msgstr ""
-
-#: app/tools_interface.py:149
+#: app/tools_interface.py:153
 msgid "请将游戏图像质量修改为自定义后重试"
 msgstr ""
 
-#: app/tools_interface.py:166
+#: app/tools_interface.py:160
+msgid "{error}（详情见日志）"
+msgstr ""
+
+#: app/tools_interface.py:162
+msgid "解锁失败"
+msgstr ""
+
+#: app/tools_interface.py:180
 msgid "此功能依赖第三方程序实现"
 msgstr ""
 
-#: app/tools_interface.py:167
+#: app/tools_interface.py:181
 msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
 msgstr ""
 
-#: app/tools_interface.py:168
+#: app/tools_interface.py:182
 msgid "再次确认：可能存在风险"
 msgstr ""
 
-#: app/tools_interface.py:169
+#: app/tools_interface.py:183
 msgid "工作原理是通过 WriteProcessMemory 把代码写进游戏，是否继续？"
 msgstr ""
 
-#: app/tools_interface.py:170
+#: app/tools_interface.py:184
 msgid "最终确认：请谨慎操作"
 msgstr ""
 
-#: app/tools_interface.py:171
+#: app/tools_interface.py:185
 msgid "确认继续并允许启用触屏模式？"
 msgstr ""
 
-#: app/tools_interface.py:187
+#: app/tools_interface.py:201
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr ""
 
-#: app/tools_interface.py:227
+#: app/tools_interface.py:241
 msgid "已将命令复制到剪贴板"
 msgstr ""
 
-#: app/tools_interface.py:247
+#: app/tools_interface.py:261
 msgid "截图来源"
 msgstr ""
 
-#: app/tools_interface.py:247
+#: app/tools_interface.py:261
 msgid "请选择截图方式"
 msgstr ""
 
-#: app/tools_interface.py:250
+#: app/tools_interface.py:264
 msgid "捕获游戏窗口"
 msgstr ""
 
-#: app/tools_interface.py:253
+#: app/tools_interface.py:267
 msgid "手动选择图片"
 msgstr ""
 
-#: app/tools_interface.py:300
+#: app/tools_interface.py:311
 msgid "自动对话已启动"
 msgstr ""
 
-#: app/tools_interface.py:312
+#: app/tools_interface.py:323
 msgid "自动对话已停止"
 msgstr ""
 

@@ -1,10 +1,11 @@
-from PySide6.QtCore import Qt, QUrl, QSize
+from PySide6.QtCore import Qt, QUrl, QSize, Signal, Slot
 from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy, QWidget
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox, SimpleCardWidget,
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, CheckBox, SimpleCardWidget,
                             TextBrowser, setCustomStyleSheet)
+from app.components.ascii_spin_box import AsciiSpinBox
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
@@ -15,6 +16,9 @@ import datetime
 import json
 import time
 import base64
+import html
+import markdown
+from module.update.changelog import VersionNote, changelog_url, clean_release_body
 
 
 def _cleanup_infobars(widget):
@@ -219,6 +223,8 @@ class MessageBoxHtml(MessageBox):
 
 
 class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
+    historyCancelled = Signal()
+
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
@@ -261,6 +267,21 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
         content_layout = QVBoxLayout(content_container)
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.addWidget(self.contentLabel)
+        self._history_closed = False
+        self._history_sections = ()
+        self._history_limit = 10
+        self.historyStatusLabel = BodyLabel("", content_container)
+        self.historyStatusLabel.setWordWrap(True)
+        self.historyStatusLabel.hide()
+        self.moreHistoryButton = PushButton(tr("显示更早的更新记录"), content_container)
+        self.moreHistoryButton.hide()
+        self.moreHistoryButton.clicked.connect(self._showMoreHistory)
+        self.fullHistoryLabel = BodyLabel("", content_container)
+        self.fullHistoryLabel.setOpenExternalLinks(True)
+        self.fullHistoryLabel.hide()
+        content_layout.insertWidget(0, self.historyStatusLabel)
+        content_layout.addWidget(self.moreHistoryButton)
+        content_layout.addWidget(self.fullHistoryLabel)
         content_layout.addStretch(1)
 
         # 卡片先进布局并强制布局计算：PrimaryPushSettingCard 的 sizeHint 偏小
@@ -282,7 +303,67 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
         self._scroll = build_scroll_area(content_container, host_width, host_height, chrome)
         self.textLayout.insertWidget(1, self._scroll)
 
-        # self.githubUpdateCard.clicked.connect(self._githubupdate())
+    def prepareHistory(self, current: str, target: str, latest_note: str):
+        self._history_target = target
+        self._history_sections = (VersionNote(target, clean_release_body(latest_note)),)
+        self.historyStatusLabel.setText(tr("正在加载历史更新记录……"))
+        self.historyStatusLabel.show()
+        self.fullHistoryLabel.setText(
+            '<style>a {color: #f18cb9; font-weight: bold;}</style>'
+            '<a href="' + html.escape(changelog_url(target), quote=True) + '">'
+            + html.escape(tr("查看完整更新日志")) + '</a>')
+        self.fullHistoryLabel.show()
+        # 在打开前预留高度，补充历史记录时不移动更新卡片和底部按钮。
+        self._scroll.setFixedHeight(self._scroll.maximumHeight())
+        self._renderHistory()
+
+    @Slot(object)
+    def setHistory(self, result):
+        if self._history_closed or not result.sections:
+            return
+        if result.sections[0].version != getattr(self, "_history_target", None):
+            return
+        self._history_sections = result.sections
+        if result.partial:
+            text = tr("以下为已收录的更新记录，部分历史版本可能未收录")
+        elif len(result.sections) > 1:
+            text = tr("已加载 {count} 份版本更新记录").format(count=len(result.sections))
+        else:
+            text = ""
+        self.historyStatusLabel.setText(text)
+        self.historyStatusLabel.setVisible(bool(text))
+        self._renderHistory()
+
+    @Slot(str)
+    def setHistoryError(self, message):
+        if not self._history_closed:
+            self.historyStatusLabel.setText(message)
+            self.historyStatusLabel.show()
+
+    def _showMoreHistory(self):
+        self._history_limit += 10
+        self._renderHistory()
+
+    def _renderHistory(self):
+        scroll_position = self._scroll.verticalScrollBar().value()
+        body = "\n\n".join(
+            f"### {section.version}\n\n{section.markdown}"
+            for section in self._history_sections[:self._history_limit]
+        )
+        self.contentLabel.setText(
+            '<style>a {color: #f18cb9; font-weight: bold;}</style>' + markdown.markdown(body))
+        remaining = len(self._history_sections) - self._history_limit
+        if remaining > 0:
+            self.moreHistoryButton.setText(tr("继续显示更早的更新记录（还有 {count} 份）").format(count=remaining))
+        self.moreHistoryButton.setVisible(remaining > 0)
+        self.contentLabel.updateGeometry()
+        self._scroll.widget().layout().activate()
+        self._scroll.verticalScrollBar().setValue(scroll_position)
+
+    def done(self, code):
+        self._history_closed = True
+        self.historyCancelled.emit()
+        super().done(code)
 
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
@@ -1075,7 +1156,7 @@ class MessageBoxPowerPlan(MessageBox):
         nameComboBox.setMinimumWidth(320)
 
         # 次数输入框
-        countSpinBox = SpinBox()
+        countSpinBox = AsciiSpinBox()
         countSpinBox.setMinimum(1)
         countSpinBox.setMaximum(999)
         countSpinBox.setValue(count if count else 1)
@@ -1323,7 +1404,7 @@ class MessageBoxInstanceTeam(MessageBox):
 
     def _setup_top_section(self):
         """设置全局区域 - 默认队伍"""
-        self.defaultTeamSpinbox = SpinBox()
+        self.defaultTeamSpinbox = AsciiSpinBox()
         self.defaultTeamSpinbox.setMinimum(1)
         self.defaultTeamSpinbox.setMaximum(12)
         self.defaultTeamSpinbox.setValue(self.default_team)
@@ -1394,7 +1475,7 @@ class MessageBoxInstanceTeam(MessageBox):
         setup_completer(nameComboBox, [item.text for item in nameComboBox.items])
 
         # 队伍编号选择框
-        teamSpinBox = SpinBox()
+        teamSpinBox = AsciiSpinBox()
         teamSpinBox.setMinimum(1)
         teamSpinBox.setMaximum(12)
         teamSpinBox.setValue(team_number or 3)

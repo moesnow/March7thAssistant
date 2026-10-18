@@ -1060,8 +1060,15 @@ class SettingInterface(ScrollArea):
         self.launcherPathCard = PushSettingCard(
             tr('修改'),
             FIF.GAME,
-            tr("米哈游启动器路径"),
+            tr("启动器路径"),
             cfg.launcher_path
+        )
+        self.launcherType = ComboBoxSettingCard2(
+            "launcher_title_name",
+            FIF.GAME,
+            tr('启动器类型'),
+            '',
+            texts={tr('米哈游启动器'): '米哈游启动器', tr('HoYoPlay'): 'HoYoPlay'}
         )
         self.startGameTimeoutCard = RangeSettingCard1(
             "start_game_timeout",
@@ -2809,6 +2816,7 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.updateViaLauncherEnableCard)
         self.updateViaLauncherEnableCard.addSettingCards([
             self.launcherPathCard,
+            self.launcherType,
             self.updateGameTimeoutCard
         ])
         self.ProgramGroup.addSettingCard(self.startGameTimeoutCard)
@@ -3338,7 +3346,7 @@ class SettingInterface(ScrollArea):
     def __onLauncherPathCardClicked(self):
         launcher_path, _ = QFileDialog.getOpenFileName(
             self,
-            tr("选择米哈游启动器路径"),
+            tr("选择启动器路径"),
             "",
             tr("脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)")
         )
