@@ -12,7 +12,7 @@ from utils.date import Date
 from utils.console import pause_on_success
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
-from module.game.cloud import CloudGameLoginTimeoutError
+from module.game.cloud import CloudGameLoginTimeoutError, CloudGameZeroDurationError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
@@ -229,6 +229,16 @@ def start_game():
                     starrail.stop_game()
                 continue
             break
+        except CloudGameZeroDurationError as e:
+            cloud_game.stop_game()
+            msg = cfg.notify_template['ErrorOccurred'].format(error=e)
+            log.error(msg)
+            notif.flush_batch(extra_content=msg, level=NotificationLevel.ERROR)
+            log.hr("完成", 2)
+            if cfg.after_finish == "Loop":
+                after_finish_is_loop(force_scheduled=True)
+                return start_game()
+            sys.exit(0)
         except CloudGameLoginTimeoutError:
             raise
         except Exception as e:
@@ -276,7 +286,7 @@ def stop(detect_loop=False):
         sys.exit(0)
 
 
-def after_finish_is_loop():
+def after_finish_is_loop(force_scheduled=False):
 
     def get_wait_time(current_power):
         # 距离体力到达配置文件指定的上限剩余秒数
@@ -287,7 +297,7 @@ def after_finish_is_loop():
         wait_time = min(wait_time_power_limit, wait_time_next_day)
         return wait_time
 
-    if cfg.loop_mode == "power":
+    if not force_scheduled and cfg.loop_mode == "power":
         current_power = Power.get(use_supplement=False)
         if current_power >= cfg.power_limit:
             log.info(f"开拓力 >= {cfg.power_limit}")
