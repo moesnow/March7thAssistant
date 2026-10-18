@@ -4965,6 +4965,10 @@ msgid "目标界面不可切换"
 msgstr "目标界面不可切换"
 
 #: app/workflow_interface.py:1277
+msgid "截图任务已提交，截图成功后窗口将自动显示，请稍候"
+msgstr "截图任务已提交，截图成功后窗口将自动显示，请稍候"
+
+#: app/workflow_interface.py:1277
 msgid "截图窗口已打开，请框选后保存为流程素材"
 msgstr "截图窗口已打开，请框选后保存为流程素材"
 
