@@ -112,23 +112,23 @@ docker compose build
 
 ## 默认任务执行行为
 
-Docker 部署时已预配置为**自动循环运行模式**，无需手动操作：
+Docker 默认以监管 API 模式启动。容器启动后不会自动执行游戏任务，需要通过管理 API 启动任务：
 
-- **每天凌晨 4:00** 自动执行完整运行
-- 任务完成后**自动循环等待**下一个执行时间
-- 容器会持续运行，不会自动退出
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"task":"main"}' http://127.0.0.1:8765/api/start
+```
 
-如需修改可通过编辑配置文件或环境变量进行调整（见下方环境变量配置）。
+监管程序的完整说明、API 列表和鉴权方式见[监管程序与管理 API](/assets/docs/Supervisor.md)。任务完成后的行为仍由 `after_finish` 配置控制，例如 `Loop` 会让任务在进程内循环执行。
 
 ## 启动非完整运行任务
 
-默认情况下，镜像会使用 Dockerfile 中的默认命令：
+如果需要绕过监管 API，镜像可以切换到 CLI 模式。默认的 API 启动命令由 Dockerfile 提供；CLI 模式通过环境变量选择：
 
 ```bash
-python main.py
+MARCH7TH_MODE=cli MARCH7TH_TASK=daily docker compose up
 ```
 
-这等价于启动 **完整运行**。如果你想只执行某个子任务，可以在 `docker-compose.yml` 的服务配置里增加 `command`，覆盖 Dockerfile 内的默认命令。
+不设置 `MARCH7TH_TASK` 时，CLI 模式等价于执行完整运行。
 
 例如，只运行一次 **每日实训**：
 
@@ -142,25 +142,23 @@ services:
       - ./logs:/m7a/logs
       - ./3rdparty/WebBrowser/UserProfile:/m7a/3rdparty/WebBrowser/UserProfile
     environment:
-      - MARCH7TH_LOG_LEVEL=DEBUG
-    command: ["python", "main.py", "daily"]
-    network_mode: "bridge"
-    shm_size: 1g
+      - MARCH7TH_MODE=cli
+      - MARCH7TH_TASK=daily
     restart: "no"
 ```
 
 常见示例：
 
-- `command: ["python", "main.py", "daily"]`：仅执行每日实训
-- `command: ["python", "main.py", "power"]`：仅执行清体力
-- `command: ["python", "main.py", "currencywars"]`：仅执行货币战争
-- `command: ["python", "main.py", "divergent"]`：仅执行差分宇宙
-- `command: ["python", "main.py", "notify"]`：测试消息推送
+- `MARCH7TH_TASK=daily`：仅执行每日实训
+- `MARCH7TH_TASK=power`：仅执行清体力
+- `MARCH7TH_TASK=currencywars`：仅执行货币战争
+- `MARCH7TH_TASK=divergent`：仅执行差分宇宙
+- `MARCH7TH_TASK=notify`：测试消息推送
 
 > **注意**：
 > - 如果只是临时执行一次子任务，建议同时将 `restart: unless-stopped` 改为 `restart: "no"`，否则任务执行完后容器会被自动拉起并再次执行。
-> - 任务名称与桌面版命令行一致；如果想查看完整列表，可以临时改成 `command: ["python", "main.py", "-l"]` 后再执行一次 `docker compose up`。
-> - 想恢复默认的完整运行模式时，删除 `command` 配置即可。
+> - 任务名称与桌面版命令行一致；API 模式下可以请求 `GET /api/tasks` 查看完整列表。
+> - 想恢复默认的监管模式时，将 `MARCH7TH_MODE` 改为 `api` 或删除该环境变量即可。
 
 ## 环境变量配置
 

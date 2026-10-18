@@ -10,15 +10,18 @@ services:
       - ./3rdparty/WebBrowser/UserProfile:/m7a/3rdparty/WebBrowser/UserProfile
     environment:
       - MARCH7TH_LOG_LEVEL=DEBUG
+      - MARCH7TH_MODE=${MARCH7TH_MODE:-api}
+      - MARCH7TH_API_HOST=0.0.0.0
+      - MARCH7TH_API_PORT=8765
+      - MARCH7TH_API_TOKEN=${MARCH7TH_API_TOKEN:-}
+      - MARCH7TH_TASK=${MARCH7TH_TASK:-}
+      - MARCH7TH_SUPERVISOR_STARTUP_TASK=${MARCH7TH_SUPERVISOR_STARTUP_TASK:-main}
+      - MARCH7TH_SUPERVISOR_NO_RUN_IMMEDIATELY=${MARCH7TH_SUPERVISOR_NO_RUN_IMMEDIATELY:-false}
     network_mode: "bridge"
+    ports:
+      - "${MARCH7TH_API_BIND:-127.0.0.1}:8765:8765"
     shm_size: 1g
-    # 默认命令为 python main.py，即完整运行。
-    # 如需只执行某个子任务，可取消下面其中一行的注释以覆盖 Dockerfile 内的默认命令：
-    # command: ["python", "main.py", "daily"]
-    # command: ["python", "main.py", "power"]
-    # command: ["python", "main.py", "currencywars"]
-    # command: ["python", "main.py", "divergent"]
-    # command: ["python", "main.py", "notify"]
+    # MARCH7TH_MODE=cli 可直接运行 python main.py；MARCH7TH_TASK 可指定任务 ID。
     restart: unless-stopped
     # 如果只是临时执行一次子任务，建议改为：
     # restart: "no"

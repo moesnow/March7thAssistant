@@ -257,7 +257,7 @@ def stop(detect_loop=False):
         except Exception as e:
             log.warning(f"播放音频时发生错误：{e}")
 
-    if detect_loop and cfg.after_finish == "Loop":
+    if detect_loop and cfg.after_finish == "Loop" and os.environ.get("MARCH7TH_SUPERVISED") != "true":
         if cfg.play_audio:
             play_audio()
         after_finish_is_loop()

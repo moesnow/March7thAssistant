@@ -37,6 +37,11 @@ ENV MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR=false
 ENV MARCH7TH_AFTER_FINISH=Loop
 # 标记从 Docker 启动，避免控制台阻塞
 ENV MARCH7TH_DOCKER_STARTED=true
+ENV MARCH7TH_MODE=api
+ENV MARCH7TH_API_HOST=0.0.0.0
+ENV MARCH7TH_API_PORT=8765
+ENV MARCH7TH_SUPERVISOR_STARTUP_TASK=main
+ENV MARCH7TH_SUPERVISOR_NO_RUN_IMMEDIATELY=false
 
 WORKDIR /m7a
 
@@ -112,4 +117,4 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["python", "main.py"]
+CMD ["sh", "-c", "if [ \"$MARCH7TH_MODE\" = \"api\" ]; then exec python supervisor.py; else exec python main.py $MARCH7TH_TASK; fi"]
