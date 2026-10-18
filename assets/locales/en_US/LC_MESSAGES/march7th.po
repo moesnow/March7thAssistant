@@ -1263,11 +1263,11 @@ msgstr "Simple"
 msgid "详细"
 msgstr "Detailed"
 
-#: app/setting_interface.py:1051
+#: app/card/game_path_setting_card.py:17
 msgid "游戏路径"
 msgstr "Game Path"
 
-#: app/setting_interface.py:230
+#: app/card/game_path_setting_card.py:18
 msgid "修改"
 msgstr "Modify"
 
@@ -6440,3 +6440,22 @@ msgstr ""
 #: app/tools/check_update.py:204
 msgid "该渠道版本与目标版本不一致，请稍后重试"
 msgstr ""
+
+#: app/card/game_path_setting_card.py:23
+msgid "游戏启动方式"
+msgstr "Game launch method"
+
+#: app/card/game_path_setting_card.py:25
+msgid "直接启动"
+msgstr "Launch directly"
+
+#: app/card/game_path_setting_card.py:26
+msgid "通过 Epic 启动"
+msgstr "Launch via Epic"
+
+#: app/card/game_path_setting_card.py:32
+msgid "请选择 Epic 渠道版 StarRail.exe，助手将通过 Epic 打开启动器并自动点击‘开始游戏’。需提前登录 Epic。"
+msgstr ""
+"Select StarRail.exe from the Epic edition. The assistant will open the "
+"launcher through Epic and click ‘Start Game’ automatically. Sign in to Epic "
+"in advance."

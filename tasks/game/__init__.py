@@ -161,25 +161,25 @@ def start_game():
 
     def start_local_game(starrail):
         if not starrail.switch_to_game():
-            if cfg.auto_set_resolution_enable:
-                starrail.change_resolution(1920, 1080)
-                starrail.change_auto_hdr("disable")
+            try:
+                if cfg.auto_set_resolution_enable:
+                    starrail.change_resolution(1920, 1080)
+                    starrail.change_auto_hdr("disable")
 
-            if cfg.auto_battle_detect_enable:
-                starrail.change_auto_battle(True)
+                if cfg.auto_battle_detect_enable:
+                    starrail.change_auto_battle(True)
 
-            if not starrail.start_game_process():
-                raise RuntimeError("启动游戏失败")
-            time.sleep(10)
+                if not starrail.start_game_process():
+                    raise RuntimeError("启动游戏失败")
+                time.sleep(10)
 
-            if not wait_until(lambda: starrail.switch_to_game(), 360):
+                if not wait_until(lambda: starrail.switch_to_game(), 360):
+                    raise TimeoutError("切换到游戏超时")
+
+                time.sleep(10)
+            finally:
                 starrail.restore_resolution()
                 starrail.restore_auto_hdr()
-                raise TimeoutError("切换到游戏超时")
-
-            time.sleep(10)
-            starrail.restore_resolution()
-            starrail.restore_auto_hdr()
             # starrail.check_resolution_ratio(1920, 1080)
             starrail.check_resolution(1920, 1080)
 
@@ -233,6 +233,11 @@ def start_game():
             raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
+            if not cfg.cloud_game_enable and starrail.launch_method == "epic":
+                from module.game.epic import EpicLaunchError
+                if isinstance(e, EpicLaunchError):
+                    # 渠道启动已给出具体阶段错误，不重放协议/点击，不关闭用户启动器。
+                    raise
             # 确保在重试前停止游戏
             if cfg.cloud_game_enable:
                 cloud_game.stop_game()

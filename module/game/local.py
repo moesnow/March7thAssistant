@@ -24,11 +24,23 @@ class LocalGameController(GameControllerBase):
         self.game_path = os.path.normpath(cfg.game_path)
         self.process_name = cfg.game_process_name
         self.window_name = cfg.game_title_name
+        self.launch_method = cfg.get_value("game_launch_method", "direct")
 
     def start_game_process(self) -> bool:
         """启动游戏"""
+        if self.is_game_running():
+            self.log_info("游戏已运行，复用现有游戏窗口")
+            return True
+
         if not os.path.exists(self.game_path):
             self.log_error(f"游戏路径不存在：{self.game_path}")
+            return False
+
+        if self.launch_method == "epic":
+            from module.game.epic import EpicGameLauncher
+            return EpicGameLauncher(self).start()
+        if self.launch_method != "direct":
+            self.log_error(f"未知的游戏启动方式：{self.launch_method}")
             return False
 
         game_folder = self.game_path.rpartition('\\')[0]
