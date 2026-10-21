@@ -105,8 +105,7 @@ class DefaultHandler(BuildTargetHandler):
             if validated:
                 log.debug(f"副本名称 {validated} 检验通过，加入目标列表")
                 results.append(validated)
-                if "饰品提取" in validated[0]:
-                    break
+
             else:
                 log.warning(f"目标副本识别错误，{instance} 不在任何已知副本列表中")
 
@@ -474,26 +473,39 @@ class BuildTarget:
         if not BuildTarget._initialized:
             BuildTarget.init_build_targets()
 
-        require_ornament = False
-        only_erosion_and_ornament = False
-        if BuildTarget._target_instances:
-            only_erosion_and_ornament = all(("侵蚀隧洞" in instance_type) or ("饰品提取" in instance_type) for instance_type in BuildTarget._target_instances)
-            if only_erosion_and_ornament:
-                require_ornament = datetime.date.today().weekday() >= (7 - cfg.build_target_ornament_weekly_count)
+        target_instances = [
+            (instance_type, instance_names[0])
+            for instance_type, instance_names in BuildTarget._target_instances.items()
+            if instance_names and "历战余响" not in instance_type
+        ]
+        if not target_instances:
+            return None
 
+        def is_erosion_or_ornament(instance_type: str) -> bool:
+            return "侵蚀隧洞" in instance_type or "饰品提取" in instance_type
+
+        only_erosion_and_ornament = all(is_erosion_or_ornament(instance_type) for instance_type, _ in target_instances)
         if only_erosion_and_ornament and cfg.build_target_use_user_instance_when_only_erosion_and_ornament:
             log.info("培养目标仅识别到侵蚀隧洞/饰品提取，按配置回退至自定义副本")
             return None
 
-        for instance_type, instance_names in BuildTarget._target_instances.items():
-            if "历战余响" in instance_type:
-                continue
-            if not require_ornament:
-                return (instance_type, instance_names[0])
-            if "饰品提取" in instance_type:
-                return (instance_type, instance_names[0])
+        # 游戏界面可能将饰品提取显示在材料副本之前，因此不能依赖识别顺序。
+        # 只要仍有角色或光锥素材需要刷取，就优先执行相应的材料副本。
+        for instance_type, instance_name in target_instances:
+            if not is_erosion_or_ornament(instance_type):
+                return (instance_type, instance_name)
 
-        return None
+        require_ornament = datetime.date.today().weekday() >= (7 - cfg.build_target_ornament_weekly_count)
+        if require_ornament:
+            for instance_type, instance_name in target_instances:
+                if "饰品提取" in instance_type:
+                    return (instance_type, instance_name)
+
+        for instance_type, instance_name in target_instances:
+            if "侵蚀隧洞" in instance_type:
+                return (instance_type, instance_name)
+
+        return target_instances[0]
 
     @staticmethod
     def get_target_echo_instance() -> tuple[str, str] | None:
