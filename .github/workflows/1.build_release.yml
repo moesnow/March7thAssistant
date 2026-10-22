@@ -11,6 +11,8 @@ jobs:
   build:
     name: Build
     runs-on: windows-latest
+    outputs:
+      mirror_release_ready: ${{ steps.publish_release.outcome == 'success' }}
     env:
       PYTHONHASHSEED: 0
       SOURCE_DATE_EPOCH: 315532800
@@ -160,6 +162,7 @@ jobs:
 
       # 创建GitHub发布
       - name: Create release
+        id: publish_release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v3
         with:
@@ -181,3 +184,80 @@ jobs:
           gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Release Note'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-mirror:
+    name: Refresh mirror metadata
+    needs: build
+    if: ${{ always() && !cancelled() && startsWith(github.ref, 'refs/tags/') && needs.build.outputs.mirror_release_ready == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: mirror-release
+    permissions: {}
+    concurrency:
+      group: mirror-release-refresh
+      cancel-in-progress: false
+    steps:
+      # 凭据只提供给独立通知任务的这一步，不进入构建任务或公开产物。
+      - name: Refresh public release cache
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          MIRROR_SSH_HOST: ${{ secrets.MIRROR_SSH_HOST }}
+          MIRROR_SSH_PORT: ${{ secrets.MIRROR_SSH_PORT }}
+          MIRROR_SSH_USER: ${{ secrets.MIRROR_SSH_USER }}
+          MIRROR_SSH_PRIVATE_KEY: ${{ secrets.MIRROR_SSH_PRIVATE_KEY }}
+          MIRROR_SSH_KNOWN_HOSTS: ${{ secrets.MIRROR_SSH_KNOWN_HOSTS }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+          import tempfile
+          import time
+
+          def notify():
+              names = ("HOST", "PORT", "USER", "PRIVATE_KEY", "KNOWN_HOSTS")
+              values = {name: os.environ.get("MIRROR_SSH_" + name, "").strip() for name in names}
+              tag = os.environ.get("RELEASE_TAG", "")
+              if not all(values.values()) or not re.fullmatch(r"v\d{4}\.\d{1,2}\.\d{1,2}(?:-[A-Za-z0-9.]+)?", tag):
+                  return False
+              host, user, port = values["HOST"], values["USER"], int(values["PORT"])
+              if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.:-]{0,252}", host) or not re.fullmatch(r"[a-z_][a-z0-9_-]{0,31}", user) or not 1 <= port <= 65535:
+                  return False
+              with tempfile.TemporaryDirectory(prefix="mirror-notify-") as directory:
+                  root = Path(directory)
+                  root.chmod(0o700)
+                  key, hosts = root / "key", root / "known_hosts"
+                  key.write_text(values["PRIVATE_KEY"] + "\n", encoding="utf-8")
+                  hosts.write_text(values["KNOWN_HOSTS"] + "\n", encoding="utf-8")
+                  key.chmod(0o600)
+                  hosts.chmod(0o600)
+                  command = [
+                      "ssh", "-F", os.devnull, "-T", "-i", str(key),
+                      "-o", "BatchMode=yes", "-o", "IdentitiesOnly=yes",
+                      "-o", "StrictHostKeyChecking=yes", "-o", f"UserKnownHostsFile={hosts}",
+                      "-o", "ConnectTimeout=10", "-o", "ConnectionAttempts=1",
+                      "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3",
+                      "-p", str(port), "-l", user, "--", host,
+                  ]
+                  for attempt in range(3):
+                      if attempt:
+                          time.sleep(60)
+                      try:
+                          result = subprocess.run(command, input=json.dumps({"tag": tag}) + "\n",
+                                                  text=True, capture_output=True, timeout=180)
+                          response = json.loads(result.stdout) if result.returncode == 0 else {}
+                          if isinstance(response, dict) and response.get("ok") is True and response.get("status") in {"refreshed", "already_refreshed"}:
+                              return True
+                      except (OSError, subprocess.TimeoutExpired, ValueError):
+                          pass
+              return False
+
+          try:
+              success = notify()
+          except Exception:
+              success = False
+          print("镜像缓存刷新成功" if success else "镜像缓存刷新失败，请检查凭据配置或服务端私有日志")
+          raise SystemExit(0 if success else 1)
+          PY
