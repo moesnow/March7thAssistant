@@ -6317,3 +6317,7 @@ msgstr ""
 #: app/log_interface.py:994
 msgid "下次：{time}"
 msgstr ""
+
+#: module/update/version_check.py:331
+msgid "更新接口未返回有效版本信息，请稍后重试"
+msgstr ""

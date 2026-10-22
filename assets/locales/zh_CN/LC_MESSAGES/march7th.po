@@ -6321,3 +6321,7 @@ msgstr "已启用 {count} 个按时任务，点击配置"
 #: app/log_interface.py:994
 msgid "下次：{time}"
 msgstr "下次：{time}"
+
+#: module/update/version_check.py:331
+msgid "更新接口未返回有效版本信息，请稍后重试"
+msgstr "更新接口未返回有效版本信息，请稍后重试"
