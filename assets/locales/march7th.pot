@@ -6221,3 +6221,31 @@ msgstr ""
 #: assets/config/character_names.json
 msgid "黑天鹅"
 msgstr ""
+
+#: app/challenge_config_dialog.py:153
+msgid "关卡范围的起始值不能大于结束值。"
+msgstr ""
+
+#: app/challenge_config_dialog.py:162
+msgid "出战队伍不能重复使用同一角色。"
+msgstr ""
+
+#: app/challenge_config_dialog.py:45
+msgid "至"
+msgstr ""
+
+#: app/setting_interface.py:889
+msgid "虚构叙事配置"
+msgstr ""
+
+#: app/challenge_config_dialog.py:159
+msgid "请为队伍{index}选择1至4名有效角色。"
+msgstr ""
+
+#: app/challenge_config_dialog.py:119
+msgid "队伍{first} ↔ 队伍{second}"
+msgstr ""
+
+#: app/challenge_config_dialog.py:86
+msgid "队伍{index}"
+msgstr ""

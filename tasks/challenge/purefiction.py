@@ -2,6 +2,7 @@ import time
 from tasks.base.base import Base
 from module.notification.notification import NotificationLevel
 from .basechallenge import BaseChallenge
+from .stellar import StellarChallenge
 from module.automation.screenshot import Screenshot
 from module.screen import screen
 from module.automation import auto
@@ -10,18 +11,24 @@ from module.logger import log
 
 
 class PureFiction(BaseChallenge):
-    def __init__(self, team1, team2, level_range=(1, 4), hotkey_technique="e", auto_battle_detect_enable=True) -> None:
+    def __init__(self, team1, team2, level_range=(1, 4), hotkey_technique="e", auto_battle_detect_enable=True, *, team3=None, stellar_enable=False) -> None:
         super().__init__("虚构叙事", 12, hotkey_technique, auto_battle_detect_enable)
         self.team1 = team1
         self.team2 = team2
         self.level_range = level_range
+        self.stellar = StellarChallenge(self, 4, team3, stellar_enable)
 
     def run(self):
         '''执行挑战'''
+        self.stellar.validate_teams()
         log.hr(f"准备{self.name}", 0)
         if self.prepare():
-            self.start_challenges()
-            self.collect_rewards()
+            if self.stellar.enabled:
+                self.stellar.run_selected_levels()
+            else:
+                self.stellar.ensure_mode(False)
+                self.start_challenges()
+                self.collect_rewards()
         log.hr("完成", 2)
 
     def prepare(self):
@@ -34,7 +41,7 @@ class PureFiction(BaseChallenge):
 
         if not auto.find_element(self.name, "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True):
             return False
-        if self.check_star_in_ocr_results(auto.ocr_result):
+        if not self.stellar.enabled and self.check_star_in_ocr_results(auto.ocr_result):
             self.save_timestamp_into_config()
             return False
 
@@ -153,14 +160,14 @@ class PureFiction(BaseChallenge):
 
     def select_buff(self):
         '''选择增益效果'''
-        if auto.click_element("./assets/images/purefiction/plus.png", "image", 0.8, max_retries=10, crop=(1661.0 / 1920, 522.0 / 1080, 218.0 / 1920, 274.0 / 1080)):
-            if auto.click_element("./assets/images/purefiction/choose.png", "image", 0.8, max_retries=10):
-                if auto.click_element("./assets/images/purefiction/confirm.png", "image", 0.8, max_retries=10):
-                    if auto.click_element("./assets/images/purefiction/plus.png", "image", 0.8, max_retries=10, crop=(1659.0 / 1920, 808.0 / 1080, 238.0 / 1920, 140.0 / 1080)):
-                        if auto.click_element("./assets/images/purefiction/choose.png", "image", 0.8, max_retries=10):
-                            auto.click_element("./assets/images/purefiction/confirm.png", "image", 0.8, max_retries=10)
-                            return True
-        return False
+        for crop in ((1661 / 1920, 522 / 1080, 218 / 1920, 274 / 1080),
+                     (1659 / 1920, 808 / 1080, 238 / 1920, 140 / 1080)):
+            if not auto.click_element("./assets/images/purefiction/plus.png", "image", 0.8,
+                                      max_retries=10, crop=crop):
+                return False
+            if not self.select_buff_effect():
+                return False
+        return True
 
     def start_level(self):
         '''开始关卡'''
