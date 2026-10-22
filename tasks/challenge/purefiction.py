@@ -67,7 +67,7 @@ class PureFiction(BaseChallenge):
             top_left = self.find_level(level)
             if not top_left:
                 log.error(f"查找第{level}层失败")
-                break
+                return False
 
             # 判断星数
             stars = self.judge_stars(top_left)
@@ -77,10 +77,11 @@ class PureFiction(BaseChallenge):
 
             if not self.start_challenge(level):
                 log.error(f"第{level}层挑战失败")
-                break
+                return False
 
             time.sleep(2)
-            screen.wait_for_screen_change('purefiction')
+            self.return_to_stage_list()
+        return True
 
     def find_level(self, level, max_retries=4):
         '''查找关卡'''
@@ -174,28 +175,50 @@ class PureFiction(BaseChallenge):
             log.info(f"进入第{i}间")
             self.use_technique_and_attack_monster(getattr(self, f"team{i if status else 3 - i}"))
 
-            if self.check_fight(30 * 60):
+            if self.check_fight(30 * 60, final=(i == 2)):
                 continue
             else:
                 return False
 
         return True
 
-    def check_fight(self, timeout):
+    def is_battle_active(self):
+        '''通过右上角暂停、倍速图标确认仍在战斗，不触发全局界面恢复'''
+        return bool(
+            auto.find_element("./assets/images/purefiction/battle_pause.png", "image", 0.9,
+                              crop=(0.95, 0, 0.05, 0.08), scale_range=(0.65, 1.05))
+            or auto.find_element("./assets/images/purefiction/battle_speed.png", "image", 0.9,
+                                 crop=(0.83, 0, 0.07, 0.08), scale_range=(0.65, 1.05))
+        )
+
+    def check_fight(self, timeout, *, final=False):
         '''检查战斗是否结束'''
         log.info("进入战斗")
         time.sleep(5)
 
         start_time = time.monotonic()
+        ready_frames = 0
         while time.monotonic() - start_time < timeout:
-            # 整间完成
-            if auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 200000, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
-                return True
-            elif auto.find_element("./assets/images/purefiction/back.png", "image", 0.9):
-                failed = bool(auto.find_element("./assets/images/purefiction/fail.png", "image", 0.9))
-                self.return_to_stage_list()
-                return not failed
-            elif self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+            if self.is_battle_active():
+                ready_frames = 0
+            else:
+                # 新版普通关结算的返回按钮带有图标，优先识别文字并兼容原图片。
+                if (auto.find_element("返回虚构叙事", "text", crop=(0.25, 0.75, 0.5, 0.25), include=True)
+                        or auto.find_element("./assets/images/purefiction/back.png", "image", 0.9)):
+                    failed = bool(
+                        auto.find_element("失败", "text", crop=(0.3, 0.15, 0.4, 0.3), include=True)
+                        or auto.find_element("./assets/images/purefiction/fail.png", "image", 0.9))
+                    self.return_to_stage_list()
+                    return not failed
+                # 仅前一间可以等待下一间准备画面；最后一间必须等到结算返回按钮。
+                if not final and auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 200000,
+                                                   crop=(0, 0, 300 / 1920, 300 / 1080)):
+                    ready_frames += 1
+                    if ready_frames >= 2:
+                        return True
+                else:
+                    ready_frames = 0
+            if self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 log.info("尝试开启自动战斗")
                 auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
 
@@ -207,14 +230,17 @@ class PureFiction(BaseChallenge):
     def return_to_stage_list(self):
         '''退出结算并确认已回到关卡列表'''
         for _ in range(5):
+            if self.is_battle_active():
+                time.sleep(2)
+                continue
             if screen.check_screen('purefiction'):
                 return
             # 点击可能只跳过结算动画，不能以点击成功代替界面确认。
-            if not auto.click_element("返回虚构叙事", "text"):
+            if not auto.click_element("返回虚构叙事", "text", crop=(0.25, 0.75, 0.5, 0.25), include=True):
                 auto.click_element("./assets/images/purefiction/back.png", "image", 0.9)
             time.sleep(2)
 
-        if screen.check_screen('purefiction'):
+        if not self.is_battle_active() and screen.check_screen('purefiction'):
             return
         log.error("结算后返回虚构叙事失败")
         raise RuntimeError("结算后返回虚构叙事失败")
@@ -224,7 +250,7 @@ class PureFiction(BaseChallenge):
         if self.max_level > 0:
             self.save_timestamp_into_config()
             time.sleep(2)
-            screen.wait_for_screen_change('purefiction')
+            self.return_to_stage_list()
             # 领取星琼
             if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, max_retries=5, crop=(1775.0 / 1920, 902.0 / 1080, 116.0 / 1920, 110.0 / 1080)):
                 time.sleep(1)
