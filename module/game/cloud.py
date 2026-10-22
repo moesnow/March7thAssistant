@@ -38,6 +38,10 @@ class CloudGameLoginTimeoutError(RuntimeError):
     """云游戏登录等待超时，不应按启动失败重试。"""
 
 
+class CloudGameZeroDurationError(RuntimeError):
+    """云游戏剩余时长为 0。"""
+
+
 class CloudGameController(GameControllerBase):
     COOKIE_PATH = "settings/cookies.enc"          # Cookies 保存地址（仅用于调试）
     GAME_URL = "https://sr.mihoyo.com/cloud"            # 游戏地址
@@ -1307,7 +1311,7 @@ class CloudGameController(GameControllerBase):
             return False
 
         if remaining == 0:
-            raise RuntimeError("云游戏剩余时长为 0，停止运行")
+            raise CloudGameZeroDurationError("云游戏剩余时长为 0，停止运行")
         return False
 
     def _take_video_screenshot(self, crop=(0, 0, 1, 1)) -> tuple[bytes, tuple[int, int]] | None:
