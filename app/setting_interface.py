@@ -902,17 +902,9 @@ class SettingInterface(ScrollArea):
             tr("上次运行末日幻影的时间"),
             ""
         )
-        self.ApocalypticLevelCard = PushSettingCardEval(
-            tr('修改'),
-            UiIcon.FILTER,
-            tr("关卡范围"),
-            "apocalyptic_level"
-        )
-        self.ApocalypticTeamsCard = PushSettingCardTeamWithSwap(
+        self.ApocalypticConfigCard = ChallengeConfigCard(
             UiIcon.PEOPLE_TEAM,
-            tr("末日幻影队伍配置"),
-            "apocalyptic_team1",
-            "apocalyptic_team2"
+            tr("末日幻影配置"), "apocalyptic", 4
         )
         self.CloudGameGroup = SettingCardGroup(
             tr("云崩铁设置"),
@@ -2768,8 +2760,7 @@ class SettingInterface(ScrollArea):
 
         self.ImmortalGameGroup.addSettingCard(self.ApocalypticEnableCard)
         self.ApocalypticEnableCard.addSettingCards([
-            self.ApocalypticLevelCard,
-            self.ApocalypticTeamsCard
+            self.ApocalypticConfigCard
         ])
 
         self.CloudGameGroup.addSettingCard(self.cloudGameEnableCard)

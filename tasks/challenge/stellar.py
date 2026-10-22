@@ -49,6 +49,8 @@ class StellarChallenge:
     def ensure_mode(self, stellar):
         target, other = ("星启模式", "常规模式") if stellar else ("常规模式", "星启模式")
         crop = (0.55, 0.15, 0.4, 0.25)
+        if self.challenge.name == "末日幻影":
+            crop = (0.40, 0.65, 0.20, 0.08)
         for attempt in range(5):
             if auto.find_element(target, "text", crop=crop, include=False):
                 log.info(f"已确认{target}")
@@ -86,6 +88,15 @@ class StellarChallenge:
         return result
 
     def _click_node_control(self, number, *, buff=False):
+        if self.challenge.name == "末日幻影":
+            # 末日幻影编队用数字标记节点，没有“节点一／二／三”文字。
+            if not self._apocalyptic_team_screen():
+                raise RuntimeError("未确认末日幻影星启角色列表，停止配置队伍")
+            x = 1826 / 1920 if buff else 1488 / 1920
+            if not self._click_ratio(x, (330 + (number - 1) * 216) / 1080):
+                raise RuntimeError(f"点击星启节点{number}的配置入口失败")
+            time.sleep(1)
+            return
         top_left, bottom_right = self._node(number)
         left, top, width, height = self._window_region()
         # 以节点文字为纵向锚点；偏移取自用户提供的 1920×1080 编队截图。
@@ -98,6 +109,9 @@ class StellarChallenge:
         time.sleep(1)
 
     def _open_highest_level(self):
+        if self.challenge.name == "末日幻影":
+            self._open_apocalyptic_teams()
+            return
         if not self.challenge.find_level(self.highest_level):
             raise RuntimeError("未找到星启模式最高关")
         if not auto.click_element(f"{self.highest_level:02}", "text", max_retries=5,
@@ -115,8 +129,40 @@ class StellarChallenge:
             time.sleep(1)
         raise RuntimeError("未进入星启三节点编队界面")
 
+    def _apocalyptic_team_screen(self):
+        return (auto.find_element("角色列表", "text", crop=(0, 0.10, 0.30, 0.08), include=False)
+                and auto.find_element("星启模式", "text", crop=(0.32, 0.05, 0.20, 0.10), include=False))
 
+    def _open_apocalyptic_teams(self):
+        nodes = ["节点一", "节点—", "节点二", "节点三"]
+        node_crop = (0.20, 0.74, 0.60, 0.07)
+        # 先用底部节点文字确认主页，避免套用旧版关卡页面的图片和流程。
+        if not auto.find_element(nodes, "text", max_retries=5, crop=node_crop, include=False):
+            raise RuntimeError("未确认末日幻影星启主页的节点入口")
+        if not auto.click_element(f"{self.highest_level:02}", "text", max_retries=5,
+                                  crop=(0.20, 0.87, 0.60, 0.06), include=True):
+            raise RuntimeError("点击末日幻影星启最高关失败")
+        time.sleep(1)
+        for _ in range(10):
+            if self._apocalyptic_team_screen():
+                return
+            # 无论进入哪个节点详情，下一步都是更换编队，不再依赖节点标题 OCR。
+            if not auto.click_element("更换编队", "text", crop=(0.81, 0.76, 0.15, 0.08), include=False):
+                auto.click_element(nodes, "text", crop=node_crop, include=False)
+            time.sleep(1)
+        raise RuntimeError("未进入末日幻影星启三节点编队界面")
 
+    def _confirm_apocalyptic_teams(self):
+        if not self._apocalyptic_team_screen():
+            raise RuntimeError("未确认末日幻影星启角色列表，无法确认编队")
+        if not auto.click_element("确认", "text", max_retries=5,
+                                  crop=(0.77, 0.87, 0.22, 0.08), include=False):
+            raise RuntimeError("确认末日幻影星启编队失败")
+        for _ in range(10):
+            if auto.find_element("当前队伍", "text", crop=(0.36, 0.70, 0.15, 0.07), include=False):
+                return
+            time.sleep(1)
+        raise RuntimeError("确认编队后未返回末日幻影节点详情页")
 
     def _prepare_teams(self):
         if not auto.click_element("./assets/images/forgottenhall/reset.png", "image", 0.8,
@@ -133,7 +179,7 @@ class StellarChallenge:
                 raise RuntimeError(f"节点{number}未打开角色列表")
             if not BaseChallenge.select_characters(self.challenge, team, None, switch_team=False):
                 raise RuntimeError(f"星启节点{number}选人失败")
-        if self.challenge.name == "虚构叙事":
+        if self.challenge.name in ("虚构叙事", "末日幻影"):
             for number in (1, 2, 3):
                 log.info(f"配置星启节点{number}增益")
                 self._click_node_control(number, buff=True)
@@ -256,6 +302,8 @@ class StellarChallenge:
         self.ensure_mode(True)
         self._open_highest_level()
         self._prepare_teams()
+        if self.challenge.name == "末日幻影":
+            self._confirm_apocalyptic_teams()
         start_buttons = (["「混沌回忆」", "混沌回忆"] if self.challenge.name == "混沌回忆"
                          else ["进入故事", "开始挑战", "前往挑战"])
         if not auto.click_element(start_buttons, "text", max_retries=5,
