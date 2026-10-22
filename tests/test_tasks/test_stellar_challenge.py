@@ -130,7 +130,7 @@ def test_node_controls_use_window_size_and_ocr_anchor(stellar, monkeypatch):
 
 
 
-@pytest.mark.parametrize('mode', ['虚构叙事'])
+@pytest.mark.parametrize('mode', ['虚构叙事', '混沌回忆'])
 def test_stellar_configures_three_teams_then_buffs_for_modes_that_need_them(stellar, monkeypatch, mode):
     stellar.runner.challenge.name = mode
     controls = Mock()
@@ -158,8 +158,45 @@ def test_stellar_configures_three_teams_then_buffs_for_modes_that_need_them(stel
 
 
 
+def test_chaos_stellar_starts_with_button_label_from_screenshot(stellar, monkeypatch):
+    owner = stellar.runner.challenge
+    owner.name = '混沌回忆'
+    owner.use_technique_and_attack_monster = Mock()
+    for name in ('ensure_mode', '_open_highest_level', '_prepare_teams', '_wait_ready', '_wait_node_end'):
+        monkeypatch.setattr(stellar.runner, name, Mock())
+    stellar.auto.click_element.side_effect = lambda targets, *args, **kwargs: '「混沌回忆」' in targets
+    stellar.runner.run()
+    stellar.runner._wait_ready.assert_called_once_with(1)
+    assert owner.use_technique_and_attack_monster.call_count == 3
 
 
+def test_chaos_closes_each_node_popup_three_times_before_using_techniques(stellar, monkeypatch):
+    owner = stellar.runner.challenge
+    owner.name = '混沌回忆'
+    events = []
+    for name in ('ensure_mode', '_open_highest_level', '_prepare_teams'):
+        monkeypatch.setattr(stellar.runner, name, Mock())
+    monkeypatch.setattr(stellar.runner, '_ready', Mock(return_value=True))
+    clicks = Mock(side_effect=lambda *args: events.append('dismiss') or True)
+    monkeypatch.setattr(stellar.runner, '_click_ratio', clicks)
+    owner.use_technique_and_attack_monster = Mock(side_effect=lambda team: events.append(team))
+
+    def finish_node(number):
+        if number < 3:
+            stellar.runner._wait_ready(number + 1)
+            return None
+        return False
+
+    monkeypatch.setattr(stellar.runner, '_wait_node_end', finish_node)
+    stellar.auto.click_element.side_effect = None
+    stellar.auto.click_element.return_value = True
+    stellar.runner.run()
+    assert events == [
+        'dismiss', 'dismiss', 'dismiss', owner.team1,
+        'dismiss', 'dismiss', 'dismiss', owner.team2,
+        'dismiss', 'dismiss', 'dismiss', stellar.runner.team3,
+    ]
+    assert clicks.call_args_list == [call(0.5, 0.97)] * 9
 
 
 def test_stellar_character_search_scrolls_list_instead_of_enemy_level(stellar, monkeypatch):
@@ -238,6 +275,30 @@ def test_failure_with_missing_return_button_stops_instead_of_advancing(stellar):
     assert stellar.runner.result is None
 
 
+@pytest.mark.parametrize('failed_node', [1, 2, 3])
+def test_failure_at_any_chaos_node_returns_without_starting_later_teams(stellar, monkeypatch, failed_node):
+    owner = stellar.runner.challenge
+    owner.name = '混沌回忆'
+    owner.return_to_stage_list = None
+    for name in ('ensure_mode', '_open_highest_level', '_prepare_teams', '_wait_ready'):
+        monkeypatch.setattr(stellar.runner, name, Mock())
+    owner.use_technique_and_attack_monster = Mock()
+
+    def find(target, *args, **kwargs):
+        number = owner.use_technique_and_attack_monster.call_count
+        if target == '失败':
+            return number == failed_node
+        return target == ('前往节点二' if number == 1 else '前往节点三')
+
+    stellar.auto.find_element.side_effect = find
+    stellar.auto.click_element.side_effect = None
+    stellar.auto.click_element.return_value = True
+    assert stellar.runner.run() is False
+    assert owner.use_technique_and_attack_monster.call_count == failed_node
+    assert stellar.runner.result is False
+    assert owner.max_level == 0
+    assert stellar.auto.click_element.call_args.args[0] == '返回'
+    stellar.cfg.save_timestamp.assert_not_called()
 
 
 @pytest.mark.parametrize('succeeded', [True, False])

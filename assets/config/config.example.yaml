@@ -310,6 +310,9 @@ forgottenhall_team2: # 队伍2配置。
     - -1
   - - Qingque
     - 1
+forgottenhall_team3: # 星启模式第三队默认使用丹恒，可配置1至4名角色，不能留空。
+  - - DanHeng
+    - -1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳，用于记录和控制运行频率。
 
 # 虚构叙事配置

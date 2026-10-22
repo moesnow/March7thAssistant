@@ -6330,6 +6330,10 @@ msgstr "关卡范围的起始值不能大于结束值。"
 msgid "出战队伍不能重复使用同一角色。"
 msgstr "出战队伍不能重复使用同一角色。"
 
+#: app/setting_interface.py:877
+msgid "混沌回忆配置"
+msgstr "混沌回忆配置"
+
 #: app/challenge_config_dialog.py:45
 msgid "至"
 msgstr "至"

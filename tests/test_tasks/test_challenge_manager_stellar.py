@@ -32,10 +32,10 @@ def test_all_challenges_enable_stellar_despite_legacy_disabled_flags():
     with patch.dict(sys.modules, stubs):
         spec.loader.exec_module(module)
         module.ChallengeManager()
-    for name in ('purefiction',):
+    for name in ('purefiction', 'memoryofchaos'):
         assert constructors[name].call_args.kwargs == {
             'team3': [['DanHeng', -1]], 'stellar_enable': True,
         }
 
-    for name in ('memoryofchaos', 'apocalyptic'):
+    for name in ('apocalyptic',):
         assert constructors[name].call_args.kwargs == {}

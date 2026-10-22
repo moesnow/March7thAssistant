@@ -2,6 +2,7 @@ import time
 from tasks.base.base import Base
 from module.notification.notification import NotificationLevel
 from .basechallenge import BaseChallenge
+from .stellar import StellarChallenge
 from module.automation.screenshot import Screenshot
 from module.screen import screen
 from module.automation import auto
@@ -10,18 +11,24 @@ from module.logger import log
 
 
 class MemoryOfChaos(BaseChallenge):
-    def __init__(self, team1, team2, level_range=(7, 12), hotkey_technique="e", auto_battle_detect_enable=True) -> None:
+    def __init__(self, team1, team2, level_range=(7, 12), hotkey_technique="e", auto_battle_detect_enable=True, *, team3=None, stellar_enable=False) -> None:
         super().__init__("混沌回忆", 36, hotkey_technique, auto_battle_detect_enable)
         self.team1 = team1
         self.team2 = team2
         self.level_range = level_range
+        self.stellar = StellarChallenge(self, 12, team3, stellar_enable)
 
     def run(self):
         '''执行挑战'''
+        self.stellar.validate_teams()
         log.hr(f"准备{self.name}", 0)
         if self.prepare():
-            self.start_challenges()
-            self.collect_rewards()
+            if self.stellar.enabled:
+                self.stellar.run_selected_levels()
+            else:
+                self.stellar.ensure_mode(False)
+                self.start_challenges()
+                self.collect_rewards()
         log.hr("完成", 2)
 
     def prepare(self):
@@ -34,7 +41,7 @@ class MemoryOfChaos(BaseChallenge):
 
         if not auto.find_element(self.name, "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True):
             return False
-        if self.check_star_in_ocr_results(auto.ocr_result):
+        if not self.stellar.enabled and self.check_star_in_ocr_results(auto.ocr_result):
             self.save_timestamp_into_config()
             return False
 
@@ -62,7 +69,7 @@ class MemoryOfChaos(BaseChallenge):
             top_left = self.find_level(level)
             if not top_left:
                 log.error(f"查找第{level}层失败")
-                break
+                return False
 
             # 判断星数
             stars = self.judge_stars(top_left)
@@ -72,10 +79,11 @@ class MemoryOfChaos(BaseChallenge):
 
             if not self.start_challenge(level):
                 log.error(f"第{level}层挑战失败")
-                break
+                return False
 
             time.sleep(6)
             screen.wait_for_screen_change('memory_of_chaos')
+        return True
 
     def find_level(self, level, max_retries=4):
         '''查找关卡'''

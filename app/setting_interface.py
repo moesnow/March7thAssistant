@@ -872,23 +872,15 @@ class SettingInterface(ScrollArea):
             tr("上次运行混沌回忆的时间"),
             ""
         )
-        self.forgottenhallLevelCard = PushSettingCardEval(
-            tr('修改'),
-            UiIcon.FILTER,
-            tr("关卡范围"),
-            "forgottenhall_level"
-        )
         # self.forgottenhallRetriesCard = RangeSettingCard1(
         #     "forgottenhall_retries",
         #     [0, 10],
         #     FIF.REMOVE_FROM,
         #     "重试次数",
         # )
-        self.forgottenhallTeamsCard = PushSettingCardTeamWithSwap(
+        self.forgottenhallConfigCard = ChallengeConfigCard(
             UiIcon.PEOPLE_TEAM,
-            tr("混沌回忆队伍配置"),
-            "forgottenhall_team1",
-            "forgottenhall_team2"
+            tr("混沌回忆配置"), "forgottenhall", 12
         )
         self.purefictionEnableCard = ExpandableTimestampSwitchSettingCard(
             "purefiction_enable",
@@ -2766,8 +2758,7 @@ class SettingInterface(ScrollArea):
 
         self.ImmortalGameGroup.addSettingCard(self.forgottenhallEnableCard)
         self.forgottenhallEnableCard.addSettingCards([
-            self.forgottenhallLevelCard,
-            self.forgottenhallTeamsCard
+            self.forgottenhallConfigCard
         ])
 
         self.ImmortalGameGroup.addSettingCard(self.purefictionEnableCard)

@@ -149,6 +149,13 @@ class StellarChallenge:
         clicks = 0
         while time.monotonic() < deadline:
             if self._ready():
+                if self.challenge.name == "混沌回忆":
+                    # 准备画面标识可能在节点说明弹窗后方，先点击底部空白再执行秘技。
+                    time.sleep(1)
+                    for _ in range(3):
+                        if not self._click_ratio(0.5, 0.97):
+                            raise RuntimeError(f"关闭星启节点{number}说明弹窗失败")
+                        time.sleep(0.5)
                 log.info(f"已进入星启节点{number}准备画面")
                 return
             if auto.find_element("空白", "text", include=True, crop=(0, 0.65, 1, 0.35)):
@@ -249,7 +256,8 @@ class StellarChallenge:
         self.ensure_mode(True)
         self._open_highest_level()
         self._prepare_teams()
-        start_buttons = ["进入故事", "开始挑战", "前往挑战"]
+        start_buttons = (["「混沌回忆」", "混沌回忆"] if self.challenge.name == "混沌回忆"
+                         else ["进入故事", "开始挑战", "前往挑战"])
         if not auto.click_element(start_buttons, "text", max_retries=5,
                                   crop=(0.75, 0.85, 0.25, 0.15), include=False):
             raise RuntimeError("开始星启挑战失败")

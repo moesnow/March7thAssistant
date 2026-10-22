@@ -6493,6 +6493,10 @@ msgstr ""
 msgid "出战队伍不能重复使用同一角色。"
 msgstr ""
 
+#: app/setting_interface.py:877
+msgid "混沌回忆配置"
+msgstr ""
+
 #: app/challenge_config_dialog.py:45
 msgid "至"
 msgstr ""
