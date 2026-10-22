@@ -192,14 +192,9 @@ class PureFiction(BaseChallenge):
             if auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 200000, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
                 return True
             elif auto.find_element("./assets/images/purefiction/back.png", "image", 0.9):
-                # 挑战失败
-                if auto.find_element("./assets/images/purefiction/fail.png", "image", 0.9):
-                    auto.click_element("./assets/images/purefiction/back.png", "image", 0.9)
-                    return False
-                # 整层完成
-                else:
-                    auto.click_element("./assets/images/purefiction/back.png", "image", 0.9)
-                    return True
+                failed = bool(auto.find_element("./assets/images/purefiction/fail.png", "image", 0.9))
+                self.return_to_stage_list()
+                return not failed
             elif self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
                 log.info("尝试开启自动战斗")
                 auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
@@ -208,6 +203,21 @@ class PureFiction(BaseChallenge):
 
         log.error("战斗超时")
         return False
+
+    def return_to_stage_list(self):
+        '''退出结算并确认已回到关卡列表'''
+        for _ in range(5):
+            if screen.check_screen('purefiction'):
+                return
+            # 点击可能只跳过结算动画，不能以点击成功代替界面确认。
+            if not auto.click_element("返回虚构叙事", "text"):
+                auto.click_element("./assets/images/purefiction/back.png", "image", 0.9)
+            time.sleep(2)
+
+        if screen.check_screen('purefiction'):
+            return
+        log.error("结算后返回虚构叙事失败")
+        raise RuntimeError("结算后返回虚构叙事失败")
 
     def collect_rewards(self):
         '''领取奖励'''
