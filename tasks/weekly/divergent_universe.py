@@ -90,7 +90,7 @@ class DivergentUniverse:
         has_reward = self.get_reward()
         if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
             self.check_divergent_universe_score()
-        if has_reward and cfg.universe_bonus_enable:
+        if has_reward and cfg.weekly_divergent_bonus_enable:
             self.process_ornament()
         log.hr("完成", 2)
         return success
