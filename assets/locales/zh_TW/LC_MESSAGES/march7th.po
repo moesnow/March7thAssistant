@@ -6345,3 +6345,7 @@ msgstr ""
 #: app/challenge_config_dialog.py:86
 msgid "队伍{index}"
 msgstr ""
+
+#: module/update/version_check.py:331
+msgid "更新接口未返回有效版本信息，请稍后重试"
+msgstr ""
