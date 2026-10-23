@@ -16,6 +16,7 @@ from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, T
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableWeeklyRelicSettingCard, ExpandableTimestampSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
+from .challenge_config_dialog import ChallengeConfigCard
 from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
 from module.notification import init_notifiers
@@ -871,23 +872,15 @@ class SettingInterface(ScrollArea):
             tr("上次运行混沌回忆的时间"),
             ""
         )
-        self.forgottenhallLevelCard = PushSettingCardEval(
-            tr('修改'),
-            UiIcon.FILTER,
-            tr("关卡范围"),
-            "forgottenhall_level"
-        )
         # self.forgottenhallRetriesCard = RangeSettingCard1(
         #     "forgottenhall_retries",
         #     [0, 10],
         #     FIF.REMOVE_FROM,
         #     "重试次数",
         # )
-        self.forgottenhallTeamsCard = PushSettingCardTeamWithSwap(
+        self.forgottenhallConfigCard = ChallengeConfigCard(
             UiIcon.PEOPLE_TEAM,
-            tr("混沌回忆队伍配置"),
-            "forgottenhall_team1",
-            "forgottenhall_team2"
+            tr("混沌回忆配置"), "forgottenhall", 12
         )
         self.purefictionEnableCard = ExpandableTimestampSwitchSettingCard(
             "purefiction_enable",
@@ -897,17 +890,9 @@ class SettingInterface(ScrollArea):
             tr("上次运行虚构叙事的时间"),
             ""
         )
-        self.purefictionLevelCard = PushSettingCardEval(
-            tr('修改'),
-            UiIcon.FILTER,
-            tr("关卡范围"),
-            "purefiction_level"
-        )
-        self.purefictionTeamsCard = PushSettingCardTeamWithSwap(
+        self.purefictionConfigCard = ChallengeConfigCard(
             UiIcon.PEOPLE_TEAM,
-            tr("虚构叙事队伍配置"),
-            "purefiction_team1",
-            "purefiction_team2"
+            tr("虚构叙事配置"), "purefiction", 4
         )
         self.ApocalypticEnableCard = ExpandableTimestampSwitchSettingCard(
             "apocalyptic_enable",
@@ -2773,14 +2758,12 @@ class SettingInterface(ScrollArea):
 
         self.ImmortalGameGroup.addSettingCard(self.forgottenhallEnableCard)
         self.forgottenhallEnableCard.addSettingCards([
-            self.forgottenhallLevelCard,
-            self.forgottenhallTeamsCard
+            self.forgottenhallConfigCard
         ])
 
         self.ImmortalGameGroup.addSettingCard(self.purefictionEnableCard)
         self.purefictionEnableCard.addSettingCards([
-            self.purefictionLevelCard,
-            self.purefictionTeamsCard
+            self.purefictionConfigCard
         ])
 
         self.ImmortalGameGroup.addSettingCard(self.ApocalypticEnableCard)
