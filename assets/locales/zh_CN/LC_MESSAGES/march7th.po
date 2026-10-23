@@ -6353,3 +6353,7 @@ msgstr "队伍{first} ↔ 队伍{second}"
 #: app/challenge_config_dialog.py:86
 msgid "队伍{index}"
 msgstr "队伍{index}"
+
+#: module/update/version_check.py:331
+msgid "更新接口未返回有效版本信息，请稍后重试"
+msgstr "更新接口未返回有效版本信息，请稍后重试"

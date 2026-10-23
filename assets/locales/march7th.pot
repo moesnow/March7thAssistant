@@ -4600,6 +4600,10 @@ msgstr ""
 msgid "Mirror酱 API 请求失败"
 msgstr ""
 
+#: module/update/version_check.py:331
+msgid "更新接口未返回有效版本信息，请稍后重试"
+msgstr ""
+
 #: module/update/version_check.py:321
 msgid "没有找到合适的下载URL"
 msgstr ""
