@@ -1,4 +1,5 @@
 from copy import deepcopy
+import sys
 from unittest.mock import Mock
 
 import pytest
@@ -8,6 +9,12 @@ from PySide6.QtWidgets import QWidget
 from qfluentwidgets import CheckBox
 
 from app import challenge_config_dialog as module
+
+
+pytestmark = pytest.mark.skipif(
+    sys.platform != "win32",
+    reason="GUI 测试仅在 Windows 平台运行",
+)
 
 
 @pytest.fixture
