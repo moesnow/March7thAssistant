@@ -1,4 +1,10 @@
+from unittest.mock import Mock
+
+import pytest
+
+from app.tools import check_update
 from app.tools.check_update import _parse_release_body, UpdateStatus
+from module.update import version_check
 
 
 class TestParseReleaseBody:
@@ -102,3 +108,39 @@ class TestUpdateStatus:
 
     def test_all_members(self):
         assert len(UpdateStatus) == 3
+
+
+@pytest.mark.parametrize("recovered", [True, False])
+def test_public_beta_empty_response_reports_correct_gui_status(monkeypatch, recovered):
+    config = Mock(update_source="MirrorChyan", mirrorchyan_cdk="test",
+                  update_prerelease_enable=True, update_full_enable=True, version="v2026.10.16")
+    monkeypatch.setattr(check_update, "cfg", config)
+    monkeypatch.setattr(version_check, "get_local_version", lambda: config.version)
+    monkeypatch.setattr(version_check, "get_update_download_requests_proxies", lambda: None)
+    monkeypatch.setattr(version_check, "get_update_requests_proxy_description", lambda: "")
+    monkeypatch.setattr(version_check, "_find_fastest_api", lambda urls, **kwargs: urls[1])
+    release = {"tag_name": "v2026.10.23-beta1", "body": "- 公测更新说明",
+               "assets": [{"browser_download_url": "https://example.com/app_full.zip"}]}
+    get = Mock(side_effect=[Mock(status_code=200, json=Mock(return_value=[])),
+                            Mock(status_code=200, json=Mock(return_value=[release] if recovered else []))])
+    monkeypatch.setattr(version_check.requests, "get", get)
+    mirror = Mock(return_value=version_check.UpdateInfo(
+        "MirrorChyan", "https://example.com/mirror.zip", "mirror.zip", release["tag_name"],
+    ))
+    monkeypatch.setattr(version_check, "_check_mirrorchyan", mirror)
+    thread = check_update.UpdateThread(5, False)
+    statuses = []
+    thread.updateSignal.connect(statuses.append)
+
+    thread.run()
+
+    assert get.call_count == 2
+    if recovered:
+        assert statuses == [UpdateStatus.UPDATE_AVAILABLE]
+        assert thread.version == release["tag_name"]
+        assert thread.mirrorchyan_assert_url == "https://example.com/mirror.zip"
+        mirror.assert_called_once()
+    else:
+        assert statuses == [UpdateStatus.FAILURE]
+        assert "更新接口未返回有效版本信息" in thread.error_msg
+        mirror.assert_not_called()
