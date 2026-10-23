@@ -100,7 +100,7 @@ class Daily:
         log.info(f"差分宇宙固定次数进度（{cycle_label}）：{completed_count}/{target_count}，继续运行剩余 {remaining_runs} 次")
 
         for _ in range(remaining_runs):
-            if not divergent.start():
+            if not divergent.start(universe_type=cfg.divergent_type):
                 log.warning(f"差分宇宙本轮未完成，不计入固定次数，下次将从 {cycle_label} {completed_count}/{target_count} 继续")
                 return
 
