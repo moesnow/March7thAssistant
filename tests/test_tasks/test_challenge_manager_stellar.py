@@ -1,4 +1,4 @@
-"""主任务入口启用已适配模式的星启流程，忽略其旧的关闭配置。"""
+"""主任务入口按虚构叙事配置选择常规或星启模式。"""
 
 import importlib.util
 import sys
@@ -6,8 +6,11 @@ from pathlib import Path
 from types import ModuleType
 from unittest.mock import Mock, patch
 
+import pytest
 
-def test_all_challenges_enable_stellar_despite_legacy_disabled_flags():
+
+@pytest.mark.parametrize('configured,expected', [(None, False), (False, False), (True, True)])
+def test_purefiction_stellar_mode_follows_config(configured, expected):
     package = '_challenge_manager_stellar_test'
     constructors = {}
     stubs = {}
@@ -22,7 +25,9 @@ def test_all_challenges_enable_stellar_despite_legacy_disabled_flags():
         stubs[stub.__name__] = stub
     config_module = ModuleType('module.config')
     config = Mock()
-    config.get_value.side_effect = lambda key, default=None: False if key.endswith('_stellar_enable') else []
+    config.get_value.side_effect = lambda key, default=None: (
+        configured if configured is not None else default
+    ) if key == 'purefiction_stellar_enable' else []
     config_module.cfg = config
     stubs['module.config'] = config_module
     path = Path(__file__).parents[2] / 'tasks/challenge/__init__.py'
@@ -32,10 +37,9 @@ def test_all_challenges_enable_stellar_despite_legacy_disabled_flags():
     with patch.dict(sys.modules, stubs):
         spec.loader.exec_module(module)
         module.ChallengeManager()
-    for name in ('purefiction',):
-        assert constructors[name].call_args.kwargs == {
-            'team3': [['DanHeng', -1]], 'stellar_enable': True,
-        }
+    assert constructors['purefiction'].call_args.kwargs == {
+        'team3': [['DanHeng', -1]], 'stellar_enable': expected,
+    }
 
     for name in ('memoryofchaos', 'apocalyptic'):
         assert constructors[name].call_args.kwargs == {}

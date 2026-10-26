@@ -11,7 +11,8 @@ class ChallengeManager:
         self.game_modes = {
             "memoryofchaos": MemoryOfChaos(cfg.forgottenhall_team1, cfg.forgottenhall_team2, cfg.forgottenhall_level, cfg.hotkey_technique, cfg.auto_battle_detect_enable),
             "purefiction": PureFiction(cfg.purefiction_team1, cfg.purefiction_team2, cfg.purefiction_level, cfg.hotkey_technique, cfg.auto_battle_detect_enable,
-                                      team3=cfg.get_value("purefiction_team3", [["DanHeng", -1]]) or [["DanHeng", -1]], stellar_enable=True),
+                                      team3=cfg.get_value("purefiction_team3", [["DanHeng", -1]]) or [["DanHeng", -1]],
+                                      stellar_enable=bool(cfg.get_value("purefiction_stellar_enable", False))),
             "memoryone": MemoryOne(cfg.daily_memory_one_team, cfg.hotkey_technique, cfg.auto_battle_detect_enable),
             "apocalyptic": Apocalyptic(cfg.apocalyptic_team1, cfg.apocalyptic_team2, cfg.apocalyptic_level, cfg.hotkey_technique, cfg.auto_battle_detect_enable),
         }
