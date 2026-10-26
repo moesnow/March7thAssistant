@@ -6376,3 +6376,19 @@ msgstr ""
 #: module/update/version_check.py:331
 msgid "更新接口未返回有效版本信息，请稍后重试"
 msgstr ""
+
+#: app/challenge_config_dialog.py:52
+msgid "启用星启模式"
+msgstr ""
+
+#: app/challenge_config_dialog.py:66
+msgid "队伍三仅用于星启模式"
+msgstr ""
+
+#: app/challenge_config_dialog.py:196
+msgid "星启模式"
+msgstr ""
+
+#: app/challenge_config_dialog.py:196
+msgid "常规模式"
+msgstr ""

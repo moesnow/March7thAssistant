@@ -39,7 +39,8 @@ def editor(qtbot, monkeypatch):
 def test_all_three_teams_remain_available_with_legacy_mode_disabled(editor):
     dialog, data, _, _ = editor
     assert data['purefiction_stellar_enable'] is False
-    assert not dialog.findChildren(CheckBox)
+    assert len(dialog.findChildren(CheckBox)) == 1
+    assert not dialog.stellar_enable.isChecked()
     dialog.select_team(2)
     assert dialog.pages.currentIndex() == 2
     assert dialog.values()['purefiction_team3'] == data['purefiction_team3']
@@ -57,6 +58,7 @@ def test_unconfigured_third_team_defaults_to_dan_heng_and_cannot_be_empty(editor
         **{f'char{i}': f'角色{i}' for i in range(12)}, 'DanHeng': '丹恒'})
     dialog = module.ChallengeConfigDialog('test', 'purefiction', 4, parent)
     qtbot.addWidget(dialog)
+    dialog.stellar_enable.setChecked(True)
     assert dialog.values()['purefiction_team3'] == [['DanHeng', -1]]
     assert dialog.validate_inputs()
     dialog.team_rows[2][0][0].setCurrentText('')
@@ -65,12 +67,12 @@ def test_unconfigured_third_team_defaults_to_dan_heng_and_cannot_be_empty(editor
 
 
 @pytest.mark.parametrize('prefix', ['forgottenhall', 'purefiction', 'apocalyptic'])
-def test_all_modes_show_three_teams_without_mode_switch(editor, qtbot, prefix):
+def test_all_modes_show_three_teams_with_purefiction_switch(editor, qtbot, prefix):
     _, data, _, parent = editor
     data.pop('purefiction_stellar_enable')
     dialog = module.ChallengeConfigDialog('test', prefix, 4, parent)
     qtbot.addWidget(dialog)
-    assert not dialog.findChildren(CheckBox)
+    assert len(dialog.findChildren(CheckBox)) == (1 if prefix in ('purefiction', 'forgottenhall') else 0)
     dialog.select_team(2)
     assert dialog.pages.currentIndex() == 2
     assert len(dialog.team_rows) == 3
@@ -117,6 +119,7 @@ def test_swap_is_draft_only_and_cancel_never_saves(editor):
 
 def test_stellar_requires_third_team_and_unique_characters(editor):
     dialog, _, _, _ = editor
+    dialog.stellar_enable.setChecked(True)
     assert dialog.validate_inputs()
     dialog.team_rows[2][0][0].setCurrentText('')
     assert dialog.validate_inputs()
@@ -158,6 +161,7 @@ def test_empty_slots_are_compacted_with_techniques_kept_in_character_order(edito
 
 def test_empty_third_team_is_rejected_when_range_includes_last_level(editor):
     dialog, _, _, _ = editor
+    dialog.stellar_enable.setChecked(True)
     for character, _ in dialog.team_rows[2]:
         character.setCurrentText('')
     assert not dialog.validate_inputs()
@@ -167,6 +171,7 @@ def test_empty_third_team_is_rejected_when_range_includes_last_level(editor):
 @pytest.mark.parametrize('third_team', ['empty', 'duplicate', 'invalid'])
 def test_regular_range_keeps_third_team_editable_but_ignores_its_validation(editor, qtbot, third_team):
     dialog, _, _, parent = editor
+    dialog.stellar_enable.setChecked(True)
     dialog.last_level.setValue(3)
     for character, _ in dialog.team_rows[2]:
         character.setCurrentText('')
@@ -194,7 +199,7 @@ def test_regular_range_still_validates_both_active_teams(editor):
     assert not dialog.validate_inputs()
 
 
-def test_selected_range_is_saved_and_old_mode_flag_is_ignored(editor):
+def test_selected_range_and_disabled_mode_are_saved(editor):
     dialog, data, _, _ = editor
     assert dialog.first_level.value() == 3
     assert dialog.last_level.value() == 4
@@ -202,7 +207,30 @@ def test_selected_range_is_saved_and_old_mode_flag_is_ignored(editor):
     dialog.last_level.setValue(3)
     assert dialog.validate_inputs()
     assert dialog.values()['purefiction_level'] == [2, 3]
-    assert 'purefiction_stellar_enable' not in dialog.values()
+    assert dialog.values()['purefiction_stellar_enable'] is False
+
+
+def test_regular_mode_ignores_invalid_third_team_until_enabled(editor):
+    dialog, _, _, _ = editor
+    dialog.team_rows[2][0][0].setCurrentText('角色0')
+    assert dialog.validate_inputs()
+    dialog.stellar_enable.setChecked(True)
+    assert not dialog.validate_inputs()
+
+
+def test_memoryofchaos_mode_is_disabled_by_default_and_keeps_third_team(editor, qtbot):
+    _, data, _, parent = editor
+    data['forgottenhall_level'] = [11, 12]
+    for index in range(1, 4):
+        data[f'forgottenhall_team{index}'] = data[f'purefiction_team{index}']
+    dialog = module.ChallengeConfigDialog('test', 'forgottenhall', 12, parent)
+    qtbot.addWidget(dialog)
+    assert not dialog.stellar_enable.isChecked()
+    dialog.team_rows[2][0][0].setCurrentText('角色0')
+    assert dialog.validate_inputs()
+    assert dialog.values()['forgottenhall_stellar_enable'] is False
+    dialog.stellar_enable.setChecked(True)
+    assert not dialog.validate_inputs()
 
 
 def test_reversed_range_is_rejected(editor):
@@ -233,7 +261,7 @@ def test_save_is_one_write_with_all_three_teams(editor, monkeypatch):
     saved = config.set_values.call_args.args[0]
     assert saved == dialog.values()
     assert saved['purefiction_team3'] == dialog.values()['purefiction_team3']
-    assert card.contentLabel.text() == f"{module.tr('关卡范围')} 3–4"
+    assert card.contentLabel.text() == f"{module.tr('关卡范围')} 3–4 · {module.tr('常规模式')}"
 
 
 def test_changing_range_resets_schedule_timestamp_on_save(editor, monkeypatch):
@@ -245,6 +273,18 @@ def test_changing_range_resets_schedule_timestamp_on_save(editor, monkeypatch):
     card._edit()
     assert config.set_values.call_args.args[0]['purefiction_level'] == [2, 4]
     assert config.set_values.call_args.args[0]['purefiction_timestamp'] == 0
+
+
+def test_changing_mode_resets_schedule_timestamp_on_save(editor, monkeypatch):
+    dialog, _, config, parent = editor
+    dialog.stellar_enable.setChecked(True)
+    dialog.exec = Mock(return_value=True)
+    monkeypatch.setattr(module, 'ChallengeConfigDialog', Mock(return_value=dialog))
+    card = module.ChallengeConfigCard(QIcon(), 'test', 'purefiction', 4, parent)
+    card._edit()
+    saved = config.set_values.call_args.args[0]
+    assert saved['purefiction_stellar_enable'] is True
+    assert saved['purefiction_timestamp'] == 0
 
 
 def test_dialog_fits_host_with_actions_visible(editor, qtbot):
