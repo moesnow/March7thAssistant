@@ -174,6 +174,9 @@ def test_regular_stage_opens_updated_entry_then_next_and_team_setup(apocalyptic,
         if target == '03':
             assert kwargs['crop'] == (0.20, 0.87, 0.60, 0.06)
             state['selected'] = True
+        elif target == '前往挑战':
+            assert kwargs['crop'] == (0.35, 0.72, 0.30, 0.12)
+            return False
         elif target == '更换编队':
             assert state['selected']
             x, y, width, height = kwargs['crop']
@@ -205,12 +208,15 @@ def test_regular_stage_opens_updated_entry_then_next_and_team_setup(apocalyptic,
 def test_unplayed_regular_stage_can_use_go_to_challenge_entry(apocalyptic):
     auto = apocalyptic.run.__func__.__globals__['auto']
     state = {'page': 'overview'}
+    clicks = []
     auto.find_element.side_effect = lambda target, *args, **kwargs: state['page'] == 'teams'
 
     def click(target, *args, **kwargs):
+        clicks.append(target)
         if target == '03':
             return True
         if target == '前往挑战':
+            assert kwargs['crop'] == (0.35, 0.72, 0.30, 0.12)
             state['page'] = 'intro'
             return True
         if target == '下一步':
@@ -225,6 +231,7 @@ def test_unplayed_regular_stage_can_use_go_to_challenge_entry(apocalyptic):
 
     auto.click_element.side_effect = click
     assert apocalyptic._open_regular_teams(3)
+    assert clicks == ['03', '前往挑战', '下一步', '前往编队']
 
 
 @pytest.mark.parametrize('failed_button', ['下一步', '前往编队'])
@@ -241,7 +248,7 @@ def test_missing_required_intermediate_step_stops_before_selecting_characters(ap
     auto.click_element.side_effect = click
     apocalyptic.prepare_level = Mock()
     assert apocalyptic.start_challenge(3) is False
-    assert clicked == ['03', '更换编队', '下一步'] + (['前往编队'] if failed_button == '前往编队' else [])
+    assert clicked == ['03', '前往挑战', '下一步'] + (['前往编队'] if failed_button == '前往编队' else [])
     apocalyptic.prepare_level.assert_not_called()
 
 

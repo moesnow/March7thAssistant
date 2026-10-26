@@ -170,14 +170,20 @@ class Apocalyptic(BaseChallenge):
         for _ in range(10):
             if auto.find_element("角色列表", "text", crop=(0, 0.10, 0.30, 0.15), include=False):
                 return True
-            # 同时覆盖主页右侧按钮和节点详情页较低的按钮，避免在空白区域重试。
-            opened = auto.click_element("更换编队", "text", crop=(0.80, 0.64, 0.20, 0.20), include=False)
+            # 未挑战关卡的“前往挑战”位于主页下方中央。
+            opened = auto.click_element("前往挑战", "text",
+                                        crop=(0.35, 0.72, 0.30, 0.12), include=False)
             if not opened:
-                if auto.click_element(["节点一", "节点—", "节点二"], "text",
-                                      crop=(0.20, 0.74, 0.60, 0.08), include=False):
-                    time.sleep(1)
-                    continue
-                opened = auto.click_element("前往挑战", "text", crop=(0.80, 0.64, 0.20, 0.30), include=False)
+                # 已挑战关卡可能从右侧“更换编队”进入，或需先打开节点详情。
+                opened = auto.click_element("更换编队", "text",
+                                            crop=(0.80, 0.64, 0.20, 0.20), include=False)
+                if not opened:
+                    if auto.click_element(["节点一", "节点—", "节点二"], "text",
+                                          crop=(0.20, 0.74, 0.60, 0.08), include=False):
+                        time.sleep(1)
+                        continue
+                    opened = auto.click_element("前往挑战", "text",
+                                                crop=(0.80, 0.64, 0.20, 0.30), include=False)
             if opened:
                 # 普通关入口仍需依次经过说明页和编队入口，不能直接开始选人。
                 for button in ("下一步", "前往编队"):
