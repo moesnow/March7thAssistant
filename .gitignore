@@ -207,7 +207,8 @@ smtp_temp.bin
 # Genshin_StarRail_fps_unlocker
 /3rdparty/Genshin_StarRail_fps_unlocker
 
-# Claude Code
+.agents/
+AGENTS.md
 .claude/
 CLAUDE.md
 
