@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget
 from qfluentwidgets import (
     MessageBox, BodyLabel, ComboBox, EditableComboBox, Pivot,
-    SettingCard, PushButton, InfoBar, InfoBarPosition,
+    SettingCard, PushButton, CheckBox, InfoBar, InfoBarPosition,
 )
 
 from app.card.messagebox_custom import setup_completer, _cleanup_infobars
@@ -47,6 +47,12 @@ class ChallengeConfigDialog(SplitFadeDialogMixin, MessageBox):
         level_row.addWidget(self.last_level)
         layout.addLayout(level_row)
 
+        self.stellar_enable = None
+        if prefix in ("purefiction", "forgottenhall", "apocalyptic"):
+            self.stellar_enable = CheckBox(tr("启用星启模式"), content)
+            self.stellar_enable.setChecked(bool(cfg.get_value(f"{prefix}_stellar_enable", False)))
+            layout.addWidget(self.stellar_enable)
+
         self.tabs = Pivot(content)
         self.pages = QStackedWidget(content)
         self.tabs.currentItemChanged.connect(self._on_team_changed)
@@ -56,6 +62,8 @@ class ChallengeConfigDialog(SplitFadeDialogMixin, MessageBox):
             rows = []
             page_layout = QVBoxLayout(page)
             page_layout.setContentsMargins(0, 8, 0, 8)
+            if index == 2 and self.stellar_enable is not None:
+                page_layout.addWidget(BodyLabel(tr("队伍三仅用于星启模式"), page))
             team = cfg.get_value(f"{prefix}_team{index + 1}", []) or []
             if index == 2 and not team:
                 team = [["DanHeng", -1]]
@@ -125,6 +133,8 @@ class ChallengeConfigDialog(SplitFadeDialogMixin, MessageBox):
     def values(self):
         reverse = {value: key for key, value in self.template.items()}
         values = {f"{self.prefix}_level": [self.first_level.value(), self.last_level.value()]}
+        if self.stellar_enable is not None:
+            values[f"{self.prefix}_stellar_enable"] = self.stellar_enable.isChecked()
         for index, rows in enumerate(self.team_rows, 1):
             team = [[reverse.get(character.text(), character.text()), technique.currentData()]
                     for character, technique in rows if character.text().strip()]
@@ -136,7 +146,8 @@ class ChallengeConfigDialog(SplitFadeDialogMixin, MessageBox):
         if self.first_level.value() > self.last_level.value():
             error = tr("关卡范围的起始值不能大于结束值。")
         seen = set()
-        team_count = 3 if self.last_level.value() == self.highest_level else 2
+        team_count = 3 if (self.stellar_enable is not None and self.stellar_enable.isChecked()
+                           and self.last_level.value() == self.highest_level) else 2
         for index, rows in enumerate(self.team_rows[:team_count], 1):
             selected_rows = [(character, technique) for character, technique in rows if character.text().strip()]
             characters = [character.text() for character, _ in selected_rows]
@@ -180,13 +191,22 @@ class ChallengeConfigCard(SettingCard):
 
     def refresh(self):
         first, last = cfg.get_value(f"{self.prefix}_level", [self.highest_level, self.highest_level])
-        self.contentLabel.setText(f"{tr('关卡范围')} {first}–{last}")
+        description = f"{tr('关卡范围')} {first}–{last}"
+        if self.prefix in ("purefiction", "forgottenhall", "apocalyptic"):
+            mode = tr("星启模式") if cfg.get_value(f"{self.prefix}_stellar_enable", False) else tr("常规模式")
+            description += f" · {mode}"
+        self.contentLabel.setText(description)
 
     def _edit(self):
         dialog = ChallengeConfigDialog(self.dialog_title, self.prefix, self.highest_level, self.window())
         if dialog.exec():
             values = dialog.values()
-            if values[f"{self.prefix}_level"] != cfg.get_value(f"{self.prefix}_level", [self.highest_level, self.highest_level]):
+            range_changed = values[f"{self.prefix}_level"] != cfg.get_value(
+                f"{self.prefix}_level", [self.highest_level, self.highest_level])
+            mode_changed = (self.prefix in ("purefiction", "forgottenhall", "apocalyptic") and
+                            values[f"{self.prefix}_stellar_enable"] != bool(
+                                cfg.get_value(f"{self.prefix}_stellar_enable", False)))
+            if range_changed or mode_changed:
                 values[f"{self.prefix}_timestamp"] = 0
             cfg.set_values(values)
             self.refresh()

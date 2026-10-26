@@ -33,6 +33,34 @@ def test_regular_mode_accepts_locked_mode_selector(stellar):
     stellar.auto.click_element.assert_not_called()
 
 
+def test_regular_mode_clicks_ocr_option_when_both_modes_are_visible(stellar):
+    stellar.auto.find_element.side_effect = lambda target, *args, **kwargs: target in ('常规模式', '星启模式')
+    stellar.auto.click_element.side_effect = None
+    stellar.auto.click_element.return_value = True
+    stellar.runner.ensure_mode(False)
+    stellar.auto.click_element.assert_called_once_with(
+        '常规模式', 'text', crop=(0.55, 0.15, 0.4, 0.25), include=False)
+
+
+def test_apocalyptic_regular_mode_clicks_option_in_lower_selector(stellar):
+    stellar.runner.challenge.name = '末日幻影'
+    stellar.auto.find_element.side_effect = lambda target, *args, **kwargs: target in ('常规模式', '星启模式')
+    stellar.auto.click_element.side_effect = None
+    stellar.auto.click_element.return_value = True
+    stellar.runner.ensure_mode(False)
+    stellar.auto.click_element.assert_called_once_with(
+        '常规模式', 'text', crop=(0.40, 0.65, 0.20, 0.08), include=False)
+
+
+def test_regular_mode_does_not_accept_visible_option_after_failed_click(stellar):
+    stellar.auto.find_element.side_effect = lambda target, *args, **kwargs: target in ('常规模式', '星启模式')
+    stellar.auto.click_element.side_effect = None
+    stellar.auto.click_element.return_value = False
+    with pytest.raises(RuntimeError, match='无法确认常规模式'):
+        stellar.runner.ensure_mode(False)
+    assert stellar.auto.click_element.call_count == 5
+
+
 def test_switch_checks_mode_after_click_and_retries(stellar):
     state = {'mode': '常规模式', 'clicks': 0}
     stellar.auto.find_element.side_effect = lambda target, *args, **kwargs: target == state['mode']

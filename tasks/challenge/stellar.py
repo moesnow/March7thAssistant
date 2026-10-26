@@ -52,19 +52,28 @@ class StellarChallenge:
         if self.challenge.name == "末日幻影":
             crop = (0.40, 0.65, 0.20, 0.08)
         for attempt in range(5):
-            if auto.find_element(target, "text", crop=crop, include=False):
+            target_visible = auto.find_element(target, "text", crop=crop, include=False)
+            other_visible = auto.find_element(other, "text", crop=crop, include=False)
+            if target_visible and other_visible:
+                # 模式选择菜单同时显示两个选项时，必须点击目标项，不能仅凭文字可见判定已切换。
+                if auto.click_element(target, "text", crop=crop, include=False):
+                    time.sleep(2)
+                    log.info(f"已点击{target}")
+                    return
+            elif target_visible:
                 log.info(f"已确认{target}")
                 return
-            if auto.find_element(other, "text", crop=crop, include=False):
+            elif other_visible:
                 auto.click_element(other, "text", crop=crop, include=False)
                 time.sleep(2)
                 continue
             # 切换入口在解锁前不存在；常规模式仍能照常运行。
-            if not stellar and attempt == 0:
+            if not stellar and attempt == 0 and not target_visible and not other_visible:
                 log.info("未发现模式切换入口，按常规模式执行")
                 return
             time.sleep(1)
-        if auto.find_element(target, "text", crop=crop, include=False):
+        if (auto.find_element(target, "text", crop=crop, include=False)
+                and not auto.find_element(other, "text", crop=crop, include=False)):
             log.info(f"已确认{target}")
             return
         raise RuntimeError(f"无法确认{target}；请检查星启模式是否已解锁及当前画面")

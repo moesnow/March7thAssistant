@@ -6526,3 +6526,19 @@ msgid "更新接口未返回有效版本信息，请稍后重试"
 msgstr ""
 "The update service did not return valid version information. Please try "
 "again later."
+
+#: app/challenge_config_dialog.py:52
+msgid "启用星启模式"
+msgstr "Enable Stellar Mode"
+
+#: app/challenge_config_dialog.py:66
+msgid "队伍三仅用于星启模式"
+msgstr "Team 3 is only used in Stellar Mode"
+
+#: app/challenge_config_dialog.py:196
+msgid "星启模式"
+msgstr "Stellar Mode"
+
+#: app/challenge_config_dialog.py:196
+msgid "常规模式"
+msgstr "Regular Mode"
