@@ -85,27 +85,27 @@ msgstr "任务已停止"
 msgid "赞赏"
 msgstr "赞赏"
 
-#: app/setting_interface.py:2891
+#: app/setting_interface.py:2882
 msgid "体力"
 msgstr "体力"
 
-#: app/setting_interface.py:2893
+#: app/setting_interface.py:2884
 msgid "日常"
 msgstr "日常"
 
-#: app/setting_interface.py:2894
+#: app/setting_interface.py:2885
 msgid "货币战争"
 msgstr "货币战争"
 
-#: app/setting_interface.py:632
+#: app/setting_interface.py:630
 msgid "差分宇宙"
 msgstr "差分宇宙"
 
-#: app/setting_interface.py:2897
+#: app/setting_interface.py:2888
 msgid "锄大地"
 msgstr "锄大地"
 
-#: app/setting_interface.py:867
+#: app/setting_interface.py:865
 msgid "逐光捡金"
 msgstr "逐光捡金"
 
@@ -113,31 +113,31 @@ msgstr "逐光捡金"
 msgid "程序"
 msgstr "程序"
 
-#: app/setting_interface.py:2909
+#: app/setting_interface.py:2900
 msgid "云游戏"
 msgstr "云游戏"
 
-#: app/setting_interface.py:2910
+#: app/setting_interface.py:2901
 msgid "推送"
 msgstr "推送"
 
-#: app/setting_interface.py:2484
+#: app/setting_interface.py:2482
 msgid "杂项"
 msgstr "杂项"
 
-#: app/setting_interface.py:2916
+#: app/setting_interface.py:2907
 msgid "账号"
 msgstr "账号"
 
-#: app/setting_interface.py:2542
+#: app/setting_interface.py:2540
 msgid "关于"
 msgstr "关于"
 
-#: app/setting_interface.py:210
+#: app/setting_interface.py:208
 msgid "体力设置"
 msgstr "体力设置"
 
-#: app/setting_interface.py:214
+#: app/setting_interface.py:212
 msgid "体力计划"
 msgstr "体力计划"
 
@@ -145,43 +145,43 @@ msgstr "体力计划"
 msgid "配置"
 msgstr "配置"
 
-#: app/setting_interface.py:220
+#: app/setting_interface.py:218
 msgid "副本类型"
 msgstr "副本类型"
 
-#: app/setting_interface.py:234
+#: app/setting_interface.py:232
 msgid "副本名称"
 msgstr "副本名称"
 
-#: app/setting_interface.py:246
+#: app/setting_interface.py:244
 msgid "自动切换队伍"
 msgstr "自动切换队伍"
 
-#: app/setting_interface.py:251
+#: app/setting_interface.py:249
 msgid "清体力前传送至任意锚点"
 msgstr "清体力前传送至任意锚点"
 
-#: app/setting_interface.py:257
+#: app/setting_interface.py:255
 msgid "启用清体力"
 msgstr "启用清体力"
 
-#: app/setting_interface.py:258
+#: app/setting_interface.py:256
 msgid "仅影响完整运行和“日常”中的历战余响与清体力，不影响单独执行“清体力”任务"
 msgstr "仅影响完整运行和“日常”中的历战余响与清体力，不影响单独执行“清体力”任务"
 
-#: app/setting_interface.py:270
+#: app/setting_interface.py:268
 msgid "使用后备开拓力"
 msgstr "使用后备开拓力"
 
-#: app/setting_interface.py:271
+#: app/setting_interface.py:269
 msgid "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 
-#: app/setting_interface.py:276
+#: app/setting_interface.py:274
 msgid "使用燃料"
 msgstr "使用燃料"
 
-#: app/setting_interface.py:277
+#: app/setting_interface.py:275
 msgid "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 
@@ -191,147 +191,147 @@ msgstr "自动分解四星遗器（建议在游戏内配置结算遗器时自动
 msgid "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
 msgstr "侵蚀隧洞、饰品提取、历战余响和模拟宇宙完成后自动分解四星及以下遗器"
 
-#: app/setting_interface.py:294
+#: app/setting_interface.py:292
 msgid "体力优先合成沉浸器（建议直接通过饰品提取获取位面饰品）"
 msgstr "体力优先合成沉浸器（建议直接通过饰品提取获取位面饰品）"
 
-#: app/setting_interface.py:295
+#: app/setting_interface.py:293
 msgid "达到指定上限后停止"
 msgstr "达到指定上限后停止"
 
-#: app/setting_interface.py:301
+#: app/setting_interface.py:299
 msgid "副本最大连续挑战次数（通常不建议修改保持默认即可）"
 msgstr "副本最大连续挑战次数（通常不建议修改保持默认即可）"
 
-#: app/setting_interface.py:307
+#: app/setting_interface.py:305
 msgid "启用使用支援角色"
 msgstr "启用使用支援角色"
 
-#: app/setting_interface.py:312
+#: app/setting_interface.py:310
 msgid "强制使用支援角色"
 msgstr "强制使用支援角色"
 
-#: app/setting_interface.py:313
+#: app/setting_interface.py:311
 msgid "无论何时都要使用支援角色，即使日常实训中的要求已经完成"
 msgstr "无论何时都要使用支援角色，即使日常实训中的要求已经完成"
 
-#: app/setting_interface.py:319
+#: app/setting_interface.py:317
 msgid "支援列表"
 msgstr "支援列表"
 
-#: app/setting_interface.py:326
+#: app/setting_interface.py:324
 msgid "滚动查找次数"
 msgstr "滚动查找次数"
 
-#: app/setting_interface.py:332
+#: app/setting_interface.py:330
 msgid "启用培养目标"
 msgstr "启用培养目标"
 
-#: app/setting_interface.py:333
+#: app/setting_interface.py:331
 msgid "根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置"
 msgstr "根据培养目标刷取行迹与遗器副本，如果无法获取培养目标则回退到默认的副本设置"
 
-#: app/setting_interface.py:349
+#: app/setting_interface.py:347
 msgid "每周饰品提取次数"
 msgstr "每周饰品提取次数"
 
-#: app/setting_interface.py:350
+#: app/setting_interface.py:348
 msgid "目标有足够资源后，执行饰品提取的次数，其余时间执行侵蚀隧洞"
 msgstr "目标有足够资源后，执行饰品提取的次数，其余时间执行侵蚀隧洞"
 
-#: app/setting_interface.py:361
+#: app/setting_interface.py:359
 msgid "启用历战余响"
 msgstr "启用历战余响"
 
-#: app/setting_interface.py:362
+#: app/setting_interface.py:360
 msgid "每周体力优先完成三次「历战余响」，支持配置从周几后开始执行，仅限完整运行生效"
 msgstr "每周体力优先完成三次「历战余响」，支持配置从周几后开始执行，仅限完整运行生效"
 
-#: app/setting_interface.py:367
+#: app/setting_interface.py:365
 msgid "上次完成历战余响的时间"
 msgstr "上次完成历战余响的时间"
 
-#: app/setting_interface.py:396
+#: app/setting_interface.py:394
 msgid "日常设置"
 msgstr "日常设置"
 
-#: app/setting_interface.py:401
+#: app/setting_interface.py:399
 msgid "启用每日实训"
 msgstr "启用每日实训"
 
-#: app/setting_interface.py:407
+#: app/setting_interface.py:405
 msgid "通过 “合成材料” 完成任务"
 msgstr "通过 “合成材料” 完成任务"
 
-#: app/setting_interface.py:408
+#: app/setting_interface.py:406
 msgid "请确保背包中有足够的 “熄灭原核” 用于合成 “微光原核” "
 msgstr "请确保背包中有足够的 “熄灭原核” 用于合成 “微光原核” "
 
-#: app/setting_interface.py:419
+#: app/setting_interface.py:417
 msgid "通过 “回忆一” 完成任务"
 msgstr "通过 “回忆一” 完成任务"
 
-#: app/setting_interface.py:420
+#: app/setting_interface.py:418
 msgid "请解锁混沌回忆并配置了队伍后再打开该选项"
 msgstr "请解锁混沌回忆并配置了队伍后再打开该选项"
 
-#: app/setting_interface.py:426
+#: app/setting_interface.py:424
 msgid "回忆一队伍"
 msgstr "回忆一队伍"
 
-#: app/setting_interface.py:402
+#: app/setting_interface.py:400
 msgid "上次检测到完成日常的时间"
 msgstr "上次检测到完成日常的时间"
 
-#: app/setting_interface.py:432
+#: app/setting_interface.py:430
 msgid "启用活动检测"
 msgstr "启用活动检测"
 
-#: app/setting_interface.py:437
+#: app/setting_interface.py:435
 msgid "每日签到"
 msgstr "每日签到"
 
-#: app/setting_interface.py:438
+#: app/setting_interface.py:436
 msgid "自动领取「星轨专票」或「星琼」，包含巡星之礼、巡光之礼和庆典祝礼活动"
 msgstr "自动领取「星轨专票」或「星琼」，包含巡星之礼、巡光之礼和庆典祝礼活动"
 
-#: app/setting_interface.py:443
+#: app/setting_interface.py:441
 msgid "花藏繁生"
 msgstr "花藏繁生"
 
-#: app/setting_interface.py:444
+#: app/setting_interface.py:442
 msgid "存在双倍次数时体力优先「拟造花萼」"
 msgstr "存在双倍次数时体力优先「拟造花萼」"
 
-#: app/setting_interface.py:449
+#: app/setting_interface.py:447
 msgid "异器盈界"
 msgstr "异器盈界"
 
-#: app/setting_interface.py:450
+#: app/setting_interface.py:448
 msgid "存在双倍次数时体力优先「侵蚀隧洞」"
 msgstr "存在双倍次数时体力优先「侵蚀隧洞」"
 
-#: app/setting_interface.py:455
+#: app/setting_interface.py:453
 msgid "位面分裂"
 msgstr "位面分裂"
 
-#: app/setting_interface.py:456
+#: app/setting_interface.py:454
 msgid "存在双倍次数时体力优先「饰品提取」"
 msgstr "存在双倍次数时体力优先「饰品提取」"
 
-#: app/setting_interface.py:468
+#: app/setting_interface.py:466
 msgid "启用奖励领取"
 msgstr "启用奖励领取"
 
-#: app/setting_interface.py:473
+#: app/setting_interface.py:471
 msgid "委托"
 msgstr "委托"
 
-#: app/setting_interface.py:479
+#: app/setting_interface.py:477
 msgid "邮件"
 msgstr "邮件"
 
-#: app/setting_interface.py:485
+#: app/setting_interface.py:483
 msgid "支援"
 msgstr "支援"
 
@@ -339,159 +339,159 @@ msgstr "支援"
 msgid "每日实训"
 msgstr "每日实训"
 
-#: app/setting_interface.py:497
+#: app/setting_interface.py:495
 msgid "无名勋礼"
 msgstr "无名勋礼"
 
-#: app/setting_interface.py:503
+#: app/setting_interface.py:501
 msgid "成就"
 msgstr "成就"
 
-#: app/setting_interface.py:511
+#: app/setting_interface.py:509
 msgid "兑换码"
 msgstr "兑换码"
 
-#: app/setting_interface.py:527
+#: app/setting_interface.py:525
 msgid "启用资产管理"
 msgstr "启用资产管理"
 
-#: app/setting_interface.py:539
+#: app/setting_interface.py:537
 msgid "启用「每月自动合成自塑尘脂」"
 msgstr "启用「每月自动合成自塑尘脂」"
 
-#: app/setting_interface.py:540
+#: app/setting_interface.py:538
 msgid "每月自动尝试合成 2 个自塑尘脂，成功后记录时间，并在每月 1 号刷新"
 msgstr "每月自动尝试合成 2 个自塑尘脂，成功后记录时间，并在每月 1 号刷新"
 
-#: app/setting_interface.py:543
+#: app/setting_interface.py:541
 msgid "上次完成自塑尘脂合成的时间"
 msgstr "上次完成自塑尘脂合成的时间"
 
-#: app/setting_interface.py:547
+#: app/setting_interface.py:545
 msgid "星轨专票"
 msgstr "星轨专票"
 
-#: app/setting_interface.py:555
+#: app/setting_interface.py:553
 msgid "星轨通票"
 msgstr "星轨通票"
 
-#: app/setting_interface.py:563
+#: app/setting_interface.py:561
 msgid "命运的足迹"
 msgstr "命运的足迹"
 
-#: app/setting_interface.py:547
+#: app/setting_interface.py:545
 msgid "启用「每月自动购买{item}」"
 msgstr "启用「每月自动购买{item}」"
 
-#: app/setting_interface.py:551
+#: app/setting_interface.py:549
 msgid "上次完成{item}购买的时间"
 msgstr "上次完成{item}购买的时间"
 
-#: app/setting_interface.py:548
+#: app/setting_interface.py:546
 msgid "每月自动尝试在余烬兑换中购买「{item}」，点击最大值并确认后记录时间，并在每月 1 号刷新"
 msgstr "每月自动尝试在余烬兑换中购买「{item}」，点击最大值并确认后记录时间，并在每月 1 号刷新"
 
-#: app/setting_interface.py:533
+#: app/setting_interface.py:531
 msgid "启用「3星光锥自动叠加」"
 msgstr "启用「3星光锥自动叠加」"
 
-#: app/setting_interface.py:534
+#: app/setting_interface.py:532
 msgid "自动将3星光锥进行叠加以节省背包空间"
 msgstr "自动将3星光锥进行叠加以节省背包空间"
 
-#: app/setting_interface.py:570
+#: app/setting_interface.py:568
 msgid "货币"
 msgstr "货币"
 
-#: app/setting_interface.py:573
+#: app/setting_interface.py:571
 msgid "启用「货币战争」积分奖励"
 msgstr "启用「货币战争」积分奖励"
 
-#: app/setting_interface.py:577
+#: app/setting_interface.py:575
 msgid "上次检测到完成货币战争积分奖励的时间"
 msgstr "上次检测到完成货币战争积分奖励的时间"
 
-#: app/setting_interface.py:588
+#: app/setting_interface.py:586
 msgid "类别"
 msgstr "类别"
 
-#: app/setting_interface.py:590
+#: app/setting_interface.py:588
 msgid "标准博弈"
 msgstr "标准博弈"
 
-#: app/setting_interface.py:590
+#: app/setting_interface.py:588
 msgid "超频博弈"
 msgstr "超频博弈"
 
-#: app/setting_interface.py:594
+#: app/setting_interface.py:592
 msgid "自动执行位面饰品快速提取"
 msgstr "自动执行位面饰品快速提取"
 
-#: app/setting_interface.py:595
+#: app/setting_interface.py:593
 msgid "在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器"
 msgstr "在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器"
 
-#: app/setting_interface.py:698
+#: app/setting_interface.py:696
 msgid "模拟宇宙"
 msgstr "模拟宇宙"
 
-#: app/setting_interface.py:635
+#: app/setting_interface.py:633
 msgid "启用「差分宇宙」积分奖励"
 msgstr "启用「差分宇宙」积分奖励"
 
-#: app/setting_interface.py:646
+#: app/setting_interface.py:644
 msgid "常规演算"
 msgstr "常规演算"
 
-#: app/setting_interface.py:646
+#: app/setting_interface.py:644
 msgid "周期演算"
 msgstr "周期演算"
 
-#: app/setting_interface.py:639
+#: app/setting_interface.py:637
 msgid "上次检测到完成差分宇宙积分奖励的时间"
 msgstr "上次检测到完成差分宇宙积分奖励的时间"
 
-#: app/setting_interface.py:683
+#: app/setting_interface.py:681
 msgid "启用模拟宇宙/差分宇宙 (Auto_Simulated_Universe)"
 msgstr "启用模拟宇宙/差分宇宙 (Auto_Simulated_Universe)"
 
-#: app/setting_interface.py:684
+#: app/setting_interface.py:682
 msgid "通常用于反复刷取遗器经验和灵之珠泪（代替敌方掉落素材）直到每周上限"
 msgstr "通常用于反复刷取遗器经验和灵之珠泪（代替敌方掉落素材）直到每周上限"
 
-#: app/setting_interface.py:689
+#: app/setting_interface.py:687
 msgid "运行模式"
 msgstr "运行模式"
 
-#: app/setting_interface.py:691
+#: app/setting_interface.py:689
 msgid "集成"
 msgstr "集成"
 
-#: app/setting_interface.py:691
+#: app/setting_interface.py:689
 msgid "源码"
 msgstr "源码"
 
-#: app/setting_interface.py:703
+#: app/setting_interface.py:701
 msgid "选择差分宇宙时类别"
 msgstr "选择差分宇宙时类别"
 
-#: app/setting_interface.py:711
+#: app/setting_interface.py:709
 msgid "模拟宇宙/差分宇宙超时"
 msgstr "模拟宇宙/差分宇宙超时"
 
-#: app/setting_interface.py:712
+#: app/setting_interface.py:710
 msgid "超过设定时间强制停止（单位小时）"
 msgstr "超过设定时间强制停止（单位小时）"
 
-#: app/setting_interface.py:717
+#: app/setting_interface.py:715
 msgid "上次运行模拟宇宙/差分宇宙的时间"
 msgstr "上次运行模拟宇宙/差分宇宙的时间"
 
-#: app/setting_interface.py:729
+#: app/setting_interface.py:727
 msgid "运行频率"
 msgstr "运行频率"
 
-#: app/setting_interface.py:731
+#: app/setting_interface.py:729
 msgid "每周"
 msgstr "每周"
 
@@ -499,75 +499,75 @@ msgstr "每周"
 msgid "每天"
 msgstr "每天"
 
-#: app/setting_interface.py:737
+#: app/setting_interface.py:735
 msgid "运行次数"
 msgstr "运行次数"
 
-#: app/setting_interface.py:738
+#: app/setting_interface.py:736
 msgid "注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"
 msgstr "注意中途停止不会计数，0 代表不指定，使用模拟宇宙原版逻辑"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "不配置"
 msgstr "不配置"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "存护"
 msgstr "存护"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "记忆"
 msgstr "记忆"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "虚无"
 msgstr "虚无"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "丰饶"
 msgstr "丰饶"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "巡猎"
 msgstr "巡猎"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "毁灭"
 msgstr "毁灭"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "欢愉"
 msgstr "欢愉"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "繁育"
 msgstr "繁育"
 
-#: app/setting_interface.py:756
+#: app/setting_interface.py:754
 msgid "智识"
 msgstr "智识"
 
-#: app/setting_interface.py:761
+#: app/setting_interface.py:759
 msgid "命途（仅模拟宇宙生效）"
 msgstr "命途（仅模拟宇宙生效）"
 
-#: app/setting_interface.py:769
+#: app/setting_interface.py:767
 msgid "难度 (0为不配置，仅模拟宇宙生效)"
 msgstr "难度 (0为不配置，仅模拟宇宙生效)"
 
-#: app/setting_interface.py:778
+#: app/setting_interface.py:776
 msgid "启用锄大地 (Fhoe-Rail)"
 msgstr "启用锄大地 (Fhoe-Rail)"
 
-#: app/setting_interface.py:800
+#: app/setting_interface.py:798
 msgid "锄大地超时"
 msgstr "锄大地超时"
 
-#: app/setting_interface.py:779
+#: app/setting_interface.py:777
 msgid "上次运行锄大地的时间"
 msgstr "上次运行锄大地的时间"
 
-#: app/setting_interface.py:847
+#: app/setting_interface.py:845
 msgid "购买代币与过期邮包"
 msgstr "购买代币与过期邮包"
 
@@ -575,206 +575,206 @@ msgstr "购买代币与过期邮包"
 msgid "启用"
 msgstr "启用"
 
-#: app/setting_interface.py:842
+#: app/setting_interface.py:840
 msgid "停用"
 msgstr "停用"
 
-#: app/setting_interface.py:840
+#: app/setting_interface.py:838
 msgid "购买秘技零食并合成零食"
 msgstr "购买秘技零食并合成零食"
 
-#: app/setting_interface.py:827
+#: app/setting_interface.py:825
 msgid "优先星球"
 msgstr "优先星球"
 
-#: app/setting_interface.py:829
+#: app/setting_interface.py:827
 msgid "空间站"
 msgstr "空间站"
 
-#: app/setting_interface.py:829
+#: app/setting_interface.py:827
 msgid "雅利洛"
 msgstr "雅利洛"
 
-#: app/setting_interface.py:829
+#: app/setting_interface.py:827
 msgid "仙舟"
 msgstr "仙舟"
 
-#: app/setting_interface.py:829
+#: app/setting_interface.py:827
 msgid "匹诺康尼"
 msgstr "匹诺康尼"
 
-#: app/setting_interface.py:829
+#: app/setting_interface.py:827
 msgid "翁法罗斯"
 msgstr "翁法罗斯"
 
-#: app/setting_interface.py:872
+#: app/setting_interface.py:870
 msgid "启用混沌回忆"
 msgstr "启用混沌回忆"
 
-#: app/setting_interface.py:879
+#: app/setting_interface.py:877
 msgid "关卡范围"
 msgstr "关卡范围"
 
-#: app/setting_interface.py:890
+#: app/setting_interface.py:888
 msgid "混沌回忆队伍配置"
 msgstr "混沌回忆队伍配置"
 
-#: app/setting_interface.py:873
+#: app/setting_interface.py:871
 msgid "上次运行混沌回忆的时间"
 msgstr "上次运行混沌回忆的时间"
 
-#: app/setting_interface.py:898
+#: app/setting_interface.py:896
 msgid "启用虚构叙事"
 msgstr "启用虚构叙事"
 
-#: app/setting_interface.py:910
+#: app/setting_interface.py:908
 msgid "虚构叙事队伍配置"
 msgstr "虚构叙事队伍配置"
 
-#: app/setting_interface.py:899
+#: app/setting_interface.py:897
 msgid "上次运行虚构叙事的时间"
 msgstr "上次运行虚构叙事的时间"
 
-#: app/setting_interface.py:918
+#: app/setting_interface.py:916
 msgid "启用末日幻影"
 msgstr "启用末日幻影"
 
-#: app/setting_interface.py:930
+#: app/setting_interface.py:928
 msgid "末日幻影队伍配置"
 msgstr "末日幻影队伍配置"
 
-#: app/setting_interface.py:919
+#: app/setting_interface.py:917
 msgid "上次运行末日幻影的时间"
 msgstr "上次运行末日幻影的时间"
 
-#: app/setting_interface.py:935
+#: app/setting_interface.py:933
 msgid "云崩铁设置"
 msgstr "云崩铁设置"
 
-#: app/setting_interface.py:940
+#: app/setting_interface.py:938
 msgid "使用“云·星穹铁道”"
 msgstr "使用“云·星穹铁道”"
 
-#: app/setting_interface.py:941
+#: app/setting_interface.py:939
 msgid "开启后，将改用云·星穹铁道来执行清体力等自动化任务。无需固定窗口，可在后台运行。（模拟宇宙和锄大地仍需保持窗口全屏）"
 msgstr "开启后，将改用云·星穹铁道来执行清体力等自动化任务。无需固定窗口，可在后台运行。（模拟宇宙和锄大地仍需保持窗口全屏）"
 
-#: app/setting_interface.py:946
+#: app/setting_interface.py:944
 msgid "全屏运行"
 msgstr "全屏运行"
 
-#: app/setting_interface.py:952
+#: app/setting_interface.py:950
 msgid "使用付费时长"
 msgstr "使用付费时长"
 
-#: app/setting_interface.py:953
+#: app/setting_interface.py:951
 msgid "打开后可在使用云游戏时使用付费时长免除排队"
 msgstr "打开后可在使用云游戏时使用付费时长免除排队"
 
-#: app/setting_interface.py:960
+#: app/setting_interface.py:958
 msgid "最大排队等待时间（分钟）"
 msgstr "最大排队等待时间（分钟）"
 
-#: app/setting_interface.py:967
+#: app/setting_interface.py:965
 msgid "登录超时时间（分钟）"
 msgstr "登录超时时间（分钟）"
 
-#: app/setting_interface.py:968
+#: app/setting_interface.py:966
 msgid "等待用户完成登录的最长时间，超时后将终止运行"
 msgstr "等待用户完成登录的最长时间，超时后将终止运行"
 
-#: app/setting_interface.py:993
+#: app/setting_interface.py:991
 msgid "浏览器类型"
 msgstr "浏览器类型"
 
-#: app/setting_interface.py:994
+#: app/setting_interface.py:992
 msgid "建议保持默认的“集成（Chrome For Testing）”效果最好"
 msgstr "建议保持默认的“集成（Chrome For Testing）”效果最好"
 
-#: app/setting_interface.py:995
+#: app/setting_interface.py:993
 msgid "集成（Chrome For Testing）"
 msgstr "集成（Chrome For Testing）"
 
-#: app/setting_interface.py:999
+#: app/setting_interface.py:997
 msgid "使用国内镜像下载浏览器和驱动"
 msgstr "使用国内镜像下载浏览器和驱动"
 
-#: app/setting_interface.py:1005
+#: app/setting_interface.py:1003
 msgid "保存浏览器数据（游戏的登录状态和本地数据）"
 msgstr "保存浏览器数据（游戏的登录状态和本地数据）"
 
-#: app/setting_interface.py:1012
+#: app/setting_interface.py:1010
 msgid "浏览器画面缩放（DPI）"
 msgstr "浏览器画面缩放（DPI）"
 
-#: app/setting_interface.py:1013
+#: app/setting_interface.py:1011
 msgid "非 1920x1080 屏幕下，云游戏画面无法铺满屏幕，可以调整这个值改变画面缩放"
 msgstr "非 1920x1080 屏幕下，云游戏画面无法铺满屏幕，可以调整这个值改变画面缩放"
 
-#: app/setting_interface.py:1014
+#: app/setting_interface.py:1012
 msgid "无缩放（100%）"
 msgstr "无缩放（100%）"
 
-#: app/setting_interface.py:1020
+#: app/setting_interface.py:1018
 msgid "浏览器启动参数"
 msgstr "浏览器启动参数"
 
-#: app/setting_interface.py:1026
+#: app/setting_interface.py:1024
 msgid "启用无窗口模式（后台运行）"
 msgstr "启用无窗口模式（后台运行）"
 
-#: app/setting_interface.py:1027
+#: app/setting_interface.py:1025
 msgid "不支持模拟宇宙和锄大地"
 msgstr "不支持模拟宇宙和锄大地"
 
-#: app/setting_interface.py:1031
+#: app/setting_interface.py:1029
 msgid "未登录时自动切换为有窗口模式"
 msgstr "未登录时自动切换为有窗口模式"
 
-#: app/setting_interface.py:1032
+#: app/setting_interface.py:1030
 msgid "开启后：在无窗口模式检测到未登录时，将自动以有窗口模式重启浏览器以便登录；关闭后：将在无窗口模式下尝试二维码登录。"
 msgstr "开启后：在无窗口模式检测到未登录时，将自动以有窗口模式重启浏览器以便登录；关闭后：将在无窗口模式下尝试二维码登录。"
 
-#: app/setting_interface.py:1042
+#: app/setting_interface.py:1040
 msgid "程序设置"
 msgstr "程序设置"
 
-#: app/setting_interface.py:1059
+#: app/setting_interface.py:1057
 msgid "通过启动器更新游戏"
 msgstr "通过启动器更新游戏"
 
 msgid "米哈游启动器路径"
 msgstr "米哈游启动器路径"
 
-#: app/setting_interface.py:1079
+#: app/setting_interface.py:1077
 msgid "启动游戏超时时间（分）"
 msgstr "启动游戏超时时间（分）"
 
-#: app/setting_interface.py:1086
+#: app/setting_interface.py:1084
 msgid "更新游戏超时时间（时）"
 msgstr "更新游戏超时时间（时）"
 
-#: app/setting_interface.py:1097
+#: app/setting_interface.py:1095
 msgid "成功后暂停程序"
 msgstr "成功后暂停程序"
 
-#: app/setting_interface.py:1098
+#: app/setting_interface.py:1096
 msgid "如果勾选，除非循环模式，执行成功后暂停程序。"
 msgstr "如果勾选，除非循环模式，执行成功后暂停程序。"
 
-#: app/setting_interface.py:1103
+#: app/setting_interface.py:1101
 msgid "失败后直接退出"
 msgstr "失败后直接退出"
 
-#: app/setting_interface.py:1104
+#: app/setting_interface.py:1102
 msgid "如果勾选，那么失败后直接退出，否则失败后暂停程序。"
 msgstr "如果勾选，那么失败后直接退出，否则失败后暂停程序。"
 
-#: app/setting_interface.py:1110
+#: app/setting_interface.py:1108
 msgid "任务完成后"
 msgstr "任务完成后"
 
-#: app/setting_interface.py:1111
+#: app/setting_interface.py:1109
 msgid "“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能"
 msgstr "“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能"
 
@@ -806,15 +806,15 @@ msgstr "注销"
 msgid "关闭显示器"
 msgstr "关闭显示器"
 
-#: app/setting_interface.py:1112
+#: app/setting_interface.py:1110
 msgid "运行脚本"
 msgstr "运行脚本"
 
-#: app/setting_interface.py:1112
+#: app/setting_interface.py:1110
 msgid "循环"
 msgstr "循环"
 
-#: app/setting_interface.py:1117
+#: app/setting_interface.py:1115
 msgid "循环模式（请改用日志界面的定时运行功能）"
 msgstr "循环模式（请改用日志界面的定时运行功能）"
 
@@ -822,51 +822,51 @@ msgstr "循环模式（请改用日志界面的定时运行功能）"
 msgid "定时任务"
 msgstr "定时任务"
 
-#: app/setting_interface.py:1119
+#: app/setting_interface.py:1117
 msgid "根据开拓力"
 msgstr "根据开拓力"
 
-#: app/setting_interface.py:1124
+#: app/setting_interface.py:1122
 msgid "定时任务时间"
 msgstr "定时任务时间"
 
-#: app/setting_interface.py:1130
+#: app/setting_interface.py:1128
 msgid "循环运行再次启动所需开拓力"
 msgstr "循环运行再次启动所需开拓力"
 
-#: app/setting_interface.py:1131
+#: app/setting_interface.py:1129
 msgid "游戏刷新后优先级更高"
 msgstr "游戏刷新后优先级更高"
 
-#: app/setting_interface.py:1137
+#: app/setting_interface.py:1135
 msgid "游戏刷新时间"
 msgstr "游戏刷新时间"
 
-#: app/setting_interface.py:1138
+#: app/setting_interface.py:1136
 msgid "用于循环运行及判断任务状态，默认凌晨四点"
 msgstr "用于循环运行及判断任务状态，默认凌晨四点"
 
-#: app/setting_interface.py:1143
+#: app/setting_interface.py:1141
 msgid "脚本或程序路径(选择运行脚本时生效)"
 msgstr "脚本或程序路径(选择运行脚本时生效)"
 
-#: app/setting_interface.py:1148
+#: app/setting_interface.py:1146
 msgid "声音提示"
 msgstr "声音提示"
 
-#: app/setting_interface.py:1149
+#: app/setting_interface.py:1147
 msgid "任务完成后列车长唱歌提示帕！"
 msgstr "任务完成后列车长唱歌提示帕！"
 
-#: app/setting_interface.py:1155
+#: app/setting_interface.py:1153
 msgid "关闭窗口时"
 msgstr "关闭窗口时"
 
-#: app/setting_interface.py:1156
+#: app/setting_interface.py:1154
 msgid "选择关闭窗口时的默认行为，也可以在关闭时由对话框询问"
 msgstr "选择关闭窗口时的默认行为，也可以在关闭时由对话框询问"
 
-#: app/setting_interface.py:1157
+#: app/setting_interface.py:1155
 msgid "询问"
 msgstr "询问"
 
@@ -878,150 +878,150 @@ msgstr "最小化到托盘"
 msgid "关闭程序"
 msgstr "关闭程序"
 
-#: app/setting_interface.py:1167
+#: app/setting_interface.py:1165
 msgid "消息推送"
 msgstr "消息推送"
 
-#: app/setting_interface.py:1177
+#: app/setting_interface.py:1175
 msgid "测试消息推送"
 msgstr "测试消息推送"
 
-#: app/setting_interface.py:1175
+#: app/setting_interface.py:1173
 msgid "发送消息"
 msgstr "发送消息"
 
-#: app/setting_interface.py:1183
+#: app/setting_interface.py:1181
 msgid "通知级别"
 msgstr "通知级别"
 
-#: app/setting_interface.py:1185
+#: app/setting_interface.py:1183
 msgid "推送所有通知"
 msgstr "推送所有通知"
 
-#: app/setting_interface.py:1185
+#: app/setting_interface.py:1183
 msgid "仅推送错误通知"
 msgstr "仅推送错误通知"
 
-#: app/setting_interface.py:1202
+#: app/setting_interface.py:1200
 msgid "消息推送格式"
 msgstr "消息推送格式"
 
-#: app/setting_interface.py:2487
+#: app/setting_interface.py:2485
 msgid "启用自动战斗和二倍速检测"
 msgstr "启用自动战斗和二倍速检测"
 
-#: app/setting_interface.py:2488
+#: app/setting_interface.py:2486
 msgid "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态"
 msgstr "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态"
 
-#: app/setting_interface.py:2494
+#: app/setting_interface.py:2492
 msgid "OCR 加速模式"
 msgstr "OCR 加速模式"
 
-#: app/setting_interface.py:2495
+#: app/setting_interface.py:2493
 msgid "设置 OCR 引擎与加速后端。自动模式会优先尝试 DirectML，若不可用则回退到 CPU 引擎。"
 msgstr "设置 OCR 引擎与加速后端。自动模式会优先尝试 DirectML，若不可用则回退到 CPU 引擎。"
 
-#: app/setting_interface.py:2498
+#: app/setting_interface.py:2496
 msgid "GPU"
 msgstr "GPU"
 
-#: app/setting_interface.py:2499
+#: app/setting_interface.py:2497
 msgid "ONNXRuntime（DirectML）"
 msgstr "ONNXRuntime（DirectML）"
 
-#: app/setting_interface.py:2500
+#: app/setting_interface.py:2498
 msgid "CPU"
 msgstr "CPU"
 
-#: app/setting_interface.py:2501
+#: app/setting_interface.py:2499
 msgid "OpenVINO（CPU）"
 msgstr "OpenVINO（CPU）"
 
-#: app/setting_interface.py:2502
+#: app/setting_interface.py:2500
 msgid "ONNXRuntime（CPU）"
 msgstr "ONNXRuntime（CPU）"
 
-#: app/setting_interface.py:2507
+#: app/setting_interface.py:2505
 msgid "启用自动修改分辨率并关闭自动 HDR"
 msgstr "启用自动修改分辨率并关闭自动 HDR"
 
-#: app/setting_interface.py:2508
+#: app/setting_interface.py:2506
 msgid "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）"
 msgstr "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）"
 
-#: app/setting_interface.py:2513
+#: app/setting_interface.py:2511
 msgid "启用自动配置游戏路径"
 msgstr "启用自动配置游戏路径"
 
-#: app/setting_interface.py:2514
+#: app/setting_interface.py:2512
 msgid "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）"
 msgstr "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）"
 
-#: app/setting_interface.py:2526
+#: app/setting_interface.py:2524
 msgid "在用户登录时启动"
 msgstr "在用户登录时启动"
 
 msgid "通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）"
 msgstr "通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）"
 
-#: app/setting_interface.py:2538
+#: app/setting_interface.py:2536
 msgid "修改按键"
 msgstr "修改按键"
 
-#: app/setting_interface.py:2539
+#: app/setting_interface.py:2537
 msgid "配置秘技、地图、跃迁、停止任务等按键设置"
 msgstr "配置秘技、地图、跃迁、停止任务等按键设置"
 
-#: app/setting_interface.py:2544
+#: app/setting_interface.py:2542
 msgid "项目主页"
 msgstr "项目主页"
 
-#: app/setting_interface.py:2562
+#: app/setting_interface.py:2554
 msgid "加入群聊"
 msgstr "加入群聊"
 
-#: app/setting_interface.py:2564
+#: app/setting_interface.py:2556
 msgid "QQ群"
 msgstr "QQ群"
 
-#: app/setting_interface.py:2574
+#: app/setting_interface.py:2566
 msgid "检查更新"
 msgstr "检查更新"
 
-#: app/setting_interface.py:2577
+#: app/setting_interface.py:2569
 msgid "当前版本："
 msgstr "当前版本："
 
-#: app/setting_interface.py:2582
+#: app/setting_interface.py:2574
 msgid "更新源"
 msgstr "更新源"
 
-#: app/setting_interface.py:2585
+#: app/setting_interface.py:2577
 msgid "海外源"
 msgstr "海外源"
 
-#: app/setting_interface.py:2585
+#: app/setting_interface.py:2577
 msgid "Mirror 酱"
 msgstr "Mirror 酱"
 
-#: app/setting_interface.py:2587
+#: app/setting_interface.py:2579
 msgid "正式版"
 msgstr "正式版"
 
-#: app/setting_interface.py:2587
+#: app/setting_interface.py:2579
 msgid "公测版"
 msgstr "公测版"
 
-#: app/setting_interface.py:2591
+#: app/setting_interface.py:2583
 msgid "启动时检测更新"
 msgstr "启动时检测更新"
 
-#: app/setting_interface.py:3030
+#: app/setting_interface.py:3020
 msgid "关闭更新检测前请确认"
 msgstr "关闭更新检测前请确认"
 
-#: app/setting_interface.py:3031
+#: app/setting_interface.py:3021
 msgid ""
 "仍然建议保留“启动时检测更新”。\n"
 "\n"
@@ -1039,19 +1039,19 @@ msgstr ""
 "\n"
 "很多看似“突然不能用了”的情况，本质上都是版本过旧导致的。若你已经了解这些影响，再继续关闭更新检测。"
 
-#: app/setting_interface.py:3034
+#: app/setting_interface.py:3024
 msgid "我已了解，继续关闭"
 msgstr "我已了解，继续关闭"
 
-#: app/setting_interface.py:2597
+#: app/setting_interface.py:2589
 msgid "更新时下载完整包"
 msgstr "更新时下载完整包"
 
-#: app/setting_interface.py:2598
+#: app/setting_interface.py:2590
 msgid "更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。"
 msgstr "更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。"
 
-#: app/setting_interface.py:2611
+#: app/setting_interface.py:2603
 msgid "Mirror 酱 CDK"
 msgstr "Mirror 酱 CDK"
 
@@ -1201,23 +1201,23 @@ msgstr "打开程序目录"
 msgid "打开项目主页"
 msgstr "打开项目主页"
 
-#: app/setting_interface.py:1046
+#: app/setting_interface.py:1044
 msgid "日志等级"
 msgstr "日志等级"
 
-#: app/setting_interface.py:1048
+#: app/setting_interface.py:1046
 msgid "简洁"
 msgstr "简洁"
 
-#: app/setting_interface.py:1048
+#: app/setting_interface.py:1046
 msgid "详细"
 msgstr "详细"
 
-#: app/setting_interface.py:1053
+#: app/setting_interface.py:1051
 msgid "游戏路径"
 msgstr "游戏路径"
 
-#: app/setting_interface.py:232
+#: app/setting_interface.py:230
 msgid "修改"
 msgstr "修改"
 
@@ -1558,11 +1558,11 @@ msgstr "星级"
 msgid "卡池"
 msgstr "卡池"
 
-#: app/setting_interface.py:3378
+#: app/warp_interface.py:329
 msgid "复制成功(＾∀＾●)"
 msgstr "复制成功(＾∀＾●)"
 
-#: app/setting_interface.py:3388
+#: app/warp_interface.py:339
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr "复制失败(╥╯﹏╰╥)"
 
@@ -1908,11 +1908,11 @@ msgstr "确认立即运行任务 \"{name}\" 吗？"
 msgid "无法运行任务：父组件不支持 runScheduledTask"
 msgstr "无法运行任务：父组件不支持 runScheduledTask"
 
-#: app/card/autoplot_setting_card.py:64
+#: app/card/autoplot_setting_card.py:60
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
 msgstr "自动跳过 (当出现跳过按钮时自动点击)"
 
-#: app/card/autoplot_setting_card.py:69
+#: app/card/autoplot_setting_card.py:65
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "自动选择 (自动选择任意对话选项)"
 
@@ -1920,7 +1920,7 @@ msgstr "自动选择 (自动选择任意对话选项)"
 msgid "关"
 msgstr "关"
 
-#: app/card/autoplot_setting_card.py:160
+#: app/card/autoplot_setting_card.py:145
 msgid "开"
 msgstr "开"
 
@@ -2028,23 +2028,23 @@ msgstr "输入错误"
 msgid "\"{type}\"的输入\"{input_text}\"不在可选项中，请重新选择"
 msgstr "\"{type}\"的输入\"{input_text}\"不在可选项中，请重新选择"
 
-#: app/setting_interface.py:222
+#: app/setting_interface.py:220
 msgid "拟造花萼（金）"
 msgstr "拟造花萼（金）"
 
-#: app/setting_interface.py:222
+#: app/setting_interface.py:220
 msgid "拟造花萼（赤）"
 msgstr "拟造花萼（赤）"
 
-#: app/setting_interface.py:222
+#: app/setting_interface.py:220
 msgid "凝滞虚影"
 msgstr "凝滞虚影"
 
-#: app/setting_interface.py:222
+#: app/setting_interface.py:220
 msgid "侵蚀隧洞"
 msgstr "侵蚀隧洞"
 
-#: app/setting_interface.py:222
+#: app/setting_interface.py:220
 msgid "饰品提取"
 msgstr "饰品提取"
 
@@ -2116,22 +2116,22 @@ msgstr "第{i}个计划的副本类型无效"
 msgid "第{i}个计划的副本名称\"{input_text}\"不在可选项中，请重新选择"
 msgstr "第{i}个计划的副本名称\"{input_text}\"不在可选项中，请重新选择"
 
-#: app/setting_interface.py:995
+#: app/setting_interface.py:993
 msgid "Chrome"
 msgstr "Chrome"
 
-#: app/setting_interface.py:995
+#: app/setting_interface.py:993
 msgid "Edge"
 msgstr "Edge"
 
-#: app/setting_interface.py:3347
+#: app/setting_interface.py:3337
 msgid "选择游戏路径"
 msgstr "选择游戏路径"
 
 msgid "选择米哈游启动器路径"
 msgstr "选择米哈游启动器路径"
 
-#: app/setting_interface.py:3407
+#: app/setting_interface.py:3374
 msgid "脚本或程序路径"
 msgstr "脚本或程序路径"
 
@@ -2277,7 +2277,7 @@ msgstr ""
 "例如好友名称为“持明上網”，填写“持明上”也可以匹配成功，\n"
 "若好友名称留空则只查找选择的角色。"
 
-#: app/setting_interface.py:773
+#: app/setting_interface.py:771
 msgid "锄地"
 msgstr "锄地"
 
@@ -2337,11 +2337,11 @@ msgstr "批量使用兑换码，每行一个，自动过滤空格等无效字符
 msgid "打开日志文件夹"
 msgstr "打开日志文件夹"
 
-#: app/setting_interface.py:2436
+#: app/setting_interface.py:2434
 msgid "启用 {name} 通知"
 msgstr "启用 {name} 通知"
 
-#: app/setting_interface.py:2425
+#: app/setting_interface.py:2423
 msgid "（支持图片）"
 msgstr "（支持图片）"
 
@@ -2573,7 +2573,7 @@ msgstr "停云"
 msgid "瓦尔特"
 msgstr "瓦尔特"
 
-#: app/setting_interface.py:610
+#: app/setting_interface.py:608
 msgid "希儿"
 msgstr "希儿"
 
@@ -2645,7 +2645,7 @@ msgstr "忘归人"
 msgid "大黑塔"
 msgstr "大黑塔"
 
-#: app/setting_interface.py:610
+#: app/setting_interface.py:608
 msgid "阿格莱雅"
 msgstr "阿格莱雅"
 
@@ -3329,11 +3329,11 @@ msgstr "暂无"
 msgid "领航员 / 名冶套"
 msgstr "领航员 / 名冶套"
 
-#: app/setting_interface.py:792
+#: app/setting_interface.py:790
 msgid "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项"
 msgstr "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项"
 
-#: app/setting_interface.py:3349
+#: app/setting_interface.py:3339
 msgid "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
 msgstr "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
 
@@ -3373,19 +3373,19 @@ msgstr "请先选择要上移的任务"
 msgid "当前任务已经位于最上方"
 msgstr "当前任务已经位于最上方"
 
-#: app/setting_interface.py:2519
+#: app/setting_interface.py:2517
 msgid "优先使用后台截图"
 msgstr "优先使用后台截图"
 
-#: app/setting_interface.py:2520
+#: app/setting_interface.py:2518
 msgid "默认开启，可以避免悬浮窗等干扰"
 msgstr "默认开启，可以避免悬浮窗等干扰"
 
-#: app/setting_interface.py:2532
+#: app/setting_interface.py:2530
 msgid "启用调试模式"
 msgstr "启用调试模式"
 
-#: app/setting_interface.py:2533
+#: app/setting_interface.py:2531
 msgid "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗），用于调试自动化识别效果。仅 Windows 生效。"
 msgstr "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗），用于调试自动化识别效果。仅 Windows 生效。"
 
@@ -3402,447 +3402,447 @@ msgid "已配置 {count} 项规则"
 msgid_plural "已配置 {count} 项规则|plural"
 msgstr[0] "已配置 {count} 项规则"
 
-#: app/setting_interface.py:1211
+#: app/setting_interface.py:1209
 msgid "Windows 原生通知"
 msgstr "Windows 原生通知"
 
-#: app/setting_interface.py:1216
+#: app/setting_interface.py:1214
 msgid "通常需要可访问 Telegram 网络"
 msgstr "通常需要可访问 Telegram 网络"
 
-#: app/setting_interface.py:1219
+#: app/setting_interface.py:1217
 msgid "机器人令牌"
 msgstr "机器人令牌"
 
-#: app/setting_interface.py:1219
+#: app/setting_interface.py:1217
 msgid "获取方式：创建 Bot → @BotFather → /newbot → 获取 Token"
 msgstr "获取方式：创建 Bot → @BotFather → /newbot → 获取 Token"
 
-#: app/setting_interface.py:1220
+#: app/setting_interface.py:1218
 msgid "用户/群组 ID"
 msgstr "用户/群组 ID"
 
-#: app/setting_interface.py:1220
+#: app/setting_interface.py:1218
 msgid "接收通知的用户 ID 或群组 ID（以 - 开头）"
 msgstr "接收通知的用户 ID 或群组 ID（以 - 开头）"
 
-#: app/setting_interface.py:1221
+#: app/setting_interface.py:1219
 msgid "自定义 API 地址"
 msgstr "自定义 API 地址"
 
-#: app/setting_interface.py:1221
+#: app/setting_interface.py:1219
 msgid "可选参数，自定义 Telegram API 地址，例如 api.telegram.org"
 msgstr "可选参数，自定义 Telegram API 地址，例如 api.telegram.org"
 
-#: app/setting_interface.py:1222
+#: app/setting_interface.py:1220
 msgid "代理配置"
 msgstr "代理配置"
 
-#: app/setting_interface.py:1222
+#: app/setting_interface.py:1220
 msgid "可选参数，例如 127.0.0.1:10808 或 socks5://127.0.0.1:1080，不填则使用系统 PAC 代理"
 msgstr "可选参数，例如 127.0.0.1:10808 或 socks5://127.0.0.1:1080，不填则使用系统 PAC 代理"
 
-#: app/setting_interface.py:1223
+#: app/setting_interface.py:1221
 msgid "话题 ID"
 msgstr "话题 ID"
 
-#: app/setting_interface.py:1223
+#: app/setting_interface.py:1221
 msgid "可选参数，开启 Topics 功能的群组需要填写对应的话题 ID"
 msgstr "可选参数，开启 Topics 功能的群组需要填写对应的话题 ID"
 
-#: app/setting_interface.py:1283
+#: app/setting_interface.py:1281
 msgid "适用于 Matrix 协议"
 msgstr "适用于 Matrix 协议"
 
-#: app/setting_interface.py:1286
+#: app/setting_interface.py:1284
 msgid "服务器地址"
 msgstr "服务器地址"
 
-#: app/setting_interface.py:1286
+#: app/setting_interface.py:1284
 msgid "服务器地址，例如 https://matrix.org"
 msgstr "服务器地址，例如 https://matrix.org"
 
-#: app/setting_interface.py:1287
+#: app/setting_interface.py:1285
 msgid "设备 ID"
 msgstr "设备 ID"
 
-#: app/setting_interface.py:1287
+#: app/setting_interface.py:1285
 msgid "设备 ID，通常是 10 位大写字母或数字"
 msgstr "设备 ID，通常是 10 位大写字母或数字"
 
-#: app/setting_interface.py:1288
+#: app/setting_interface.py:1286
 msgid "用户 ID"
 msgstr "用户 ID"
 
-#: app/setting_interface.py:1288
+#: app/setting_interface.py:1286
 msgid "用户 ID，例如 @user:matrix.org"
 msgstr "用户 ID，例如 @user:matrix.org"
 
-#: app/setting_interface.py:1289
+#: app/setting_interface.py:1287
 msgid "访问令牌"
 msgstr "访问令牌"
 
-#: app/setting_interface.py:1289
+#: app/setting_interface.py:1287
 msgid "登录后分配的 Access Token"
 msgstr "登录后分配的 Access Token"
 
-#: app/setting_interface.py:1290
+#: app/setting_interface.py:1288
 msgid "房间 ID"
 msgstr "房间 ID"
 
-#: app/setting_interface.py:1290
+#: app/setting_interface.py:1288
 msgid "目标房间 ID，例如 !xxx:matrix.org"
 msgstr "目标房间 ID，例如 !xxx:matrix.org"
 
-#: app/setting_interface.py:1292
+#: app/setting_interface.py:1290
 msgid "文字与图片分开发送"
 msgstr "文字与图片分开发送"
 
-#: app/setting_interface.py:1292
+#: app/setting_interface.py:1290
 msgid "是否分开发送文字和图片，避免部分客户端不显示文字"
 msgstr "是否分开发送文字和图片，避免部分客户端不显示文字"
 
-#: app/setting_interface.py:1356
+#: app/setting_interface.py:1354
 msgid "Server酱·Turbo版"
 msgstr "Server酱·Turbo版"
 
-#: app/setting_interface.py:1357
+#: app/setting_interface.py:1355
 msgid "微信推送，适合轻量通知"
 msgstr "微信推送，适合轻量通知"
 
-#: app/setting_interface.py:1359
+#: app/setting_interface.py:1357
 msgid "SendKey"
 msgstr "SendKey"
 
-#: app/setting_interface.py:1359
+#: app/setting_interface.py:1357
 msgid "在 https://sct.ftqq.com/ 获取的 SendKey"
 msgstr "在 https://sct.ftqq.com/ 获取的 SendKey"
 
-#: app/setting_interface.py:1360
+#: app/setting_interface.py:1358
 msgid "发送通道"
 msgstr "发送通道"
 
-#: app/setting_interface.py:1360
+#: app/setting_interface.py:1358
 msgid "可选参数"
 msgstr "可选参数"
 
-#: app/setting_interface.py:1361
+#: app/setting_interface.py:1359
 msgid "接收人 OpenID"
 msgstr "接收人 OpenID"
 
-#: app/setting_interface.py:1414
+#: app/setting_interface.py:1412
 msgid "Server酱³"
 msgstr "Server酱³"
 
-#: app/setting_interface.py:1415
+#: app/setting_interface.py:1413
 msgid "Server酱³ APP 推送"
 msgstr "Server酱³ APP 推送"
 
-#: app/setting_interface.py:1417
+#: app/setting_interface.py:1415
 msgid "在 https://sc3.ft07.com/ 获取的 SendKey"
 msgstr "在 https://sc3.ft07.com/ 获取的 SendKey"
 
-#: app/setting_interface.py:1462
+#: app/setting_interface.py:1460
 msgid "适合 iOS 设备推送"
 msgstr "适合 iOS 设备推送"
 
-#: app/setting_interface.py:1464
+#: app/setting_interface.py:1462
 msgid "推送密钥"
 msgstr "推送密钥"
 
-#: app/setting_interface.py:1464
+#: app/setting_interface.py:1462
 msgid "在 Bark APP 中获取的唯一标识符"
 msgstr "在 Bark APP 中获取的唯一标识符"
 
-#: app/setting_interface.py:1465
+#: app/setting_interface.py:1463
 msgid "分组名"
 msgstr "分组名"
 
-#: app/setting_interface.py:1465
+#: app/setting_interface.py:1463
 msgid "可选参数，Bark 通知的分组名"
 msgstr "可选参数，Bark 通知的分组名"
 
-#: app/setting_interface.py:1466
+#: app/setting_interface.py:1464
 msgid "图标地址"
 msgstr "图标地址"
 
-#: app/setting_interface.py:1466
+#: app/setting_interface.py:1464
 msgid "可选参数，通知图标的 URL"
 msgstr "可选参数，通知图标的 URL"
 
-#: app/setting_interface.py:1467
+#: app/setting_interface.py:1465
 msgid "归档"
 msgstr "归档"
 
-#: app/setting_interface.py:1467
+#: app/setting_interface.py:1465
 msgid "可选参数：1 归档，0 不归档"
 msgstr "可选参数：1 归档，0 不归档"
 
-#: app/setting_interface.py:1468
+#: app/setting_interface.py:1466
 msgid "提示音"
 msgstr "提示音"
 
-#: app/setting_interface.py:1468
+#: app/setting_interface.py:1466
 msgid "可选参数，自定义提示音名称"
 msgstr "可选参数，自定义提示音名称"
 
-#: app/setting_interface.py:1469
+#: app/setting_interface.py:1467
 msgid "跳转链接"
 msgstr "跳转链接"
 
-#: app/setting_interface.py:1469
+#: app/setting_interface.py:1467
 msgid "可选参数，通知点击后跳转的 URL"
 msgstr "可选参数，通知点击后跳转的 URL"
 
-#: app/setting_interface.py:1470
+#: app/setting_interface.py:1468
 msgid "服务地址"
 msgstr "服务地址"
 
-#: app/setting_interface.py:1470
+#: app/setting_interface.py:1468
 msgid "可选参数，自定义 Bark 服务的 URL"
 msgstr "可选参数，自定义 Bark 服务的 URL"
 
-#: app/setting_interface.py:1471
+#: app/setting_interface.py:1469
 msgid "复制内容"
 msgstr "复制内容"
 
-#: app/setting_interface.py:1471
+#: app/setting_interface.py:1469
 msgid "可选参数，通知点击后复制内容"
 msgstr "可选参数，通知点击后复制内容"
 
-#: app/setting_interface.py:1472
+#: app/setting_interface.py:1470
 msgid "自动复制"
 msgstr "自动复制"
 
-#: app/setting_interface.py:1472
+#: app/setting_interface.py:1470
 msgid "可选参数，是否自动复制"
 msgstr "可选参数，是否自动复制"
 
-#: app/setting_interface.py:1473
+#: app/setting_interface.py:1471
 msgid "加密密钥"
 msgstr "加密密钥"
 
-#: app/setting_interface.py:1473
+#: app/setting_interface.py:1471
 msgid "可选参数，推送加密密钥，需在 Bark APP 中配置相同的密钥"
 msgstr "可选参数，推送加密密钥，需在 Bark APP 中配置相同的密钥"
 
-#: app/setting_interface.py:1474
+#: app/setting_interface.py:1472
 msgid "加密算法"
 msgstr "加密算法"
 
-#: app/setting_interface.py:1474
+#: app/setting_interface.py:1472
 msgid "可选参数，支持 cbc 或 ecb，需与 Bark APP 中配置的算法一致"
 msgstr "可选参数，支持 cbc 或 ecb，需与 Bark APP 中配置的算法一致"
 
-#: app/setting_interface.py:1531
+#: app/setting_interface.py:1529
 msgid "常用于邮箱提醒"
 msgstr "常用于邮箱提醒"
 
-#: app/setting_interface.py:1534
+#: app/setting_interface.py:1532
 msgid "SMTP 服务器"
 msgstr "SMTP 服务器"
 
-#: app/setting_interface.py:1535
+#: app/setting_interface.py:1533
 msgid "用户名/邮箱"
 msgstr "用户名/邮箱"
 
-#: app/setting_interface.py:1536
+#: app/setting_interface.py:1534
 msgid "密码/授权码"
 msgstr "密码/授权码"
 
-#: app/setting_interface.py:1536
+#: app/setting_interface.py:1534
 msgid "部分邮箱需要填写授权码（如 QQ 邮箱）"
 msgstr "部分邮箱需要填写授权码（如 QQ 邮箱）"
 
-#: app/setting_interface.py:1537
+#: app/setting_interface.py:1535
 msgid "发件人"
 msgstr "发件人"
 
-#: app/setting_interface.py:1537
+#: app/setting_interface.py:1535
 msgid "可选参数，发件人邮箱，默认使用 user"
 msgstr "可选参数，发件人邮箱，默认使用 user"
 
-#: app/setting_interface.py:1538
+#: app/setting_interface.py:1536
 msgid "收件人"
 msgstr "收件人"
 
-#: app/setting_interface.py:1538
+#: app/setting_interface.py:1536
 msgid "可选参数，收件人邮箱，默认使用 user"
 msgstr "可选参数，收件人邮箱，默认使用 user"
 
-#: app/setting_interface.py:1539
+#: app/setting_interface.py:1537
 msgid "端口"
 msgstr "端口"
 
-#: app/setting_interface.py:1539
+#: app/setting_interface.py:1537
 msgid "可选参数，端口，默认 465"
 msgstr "可选参数，端口，默认 465"
 
-#: app/setting_interface.py:1540
+#: app/setting_interface.py:1538
 msgid "启用 SSL"
 msgstr "启用 SSL"
 
-#: app/setting_interface.py:1540
+#: app/setting_interface.py:1538
 msgid "可选参数，是否启用 SSL"
 msgstr "可选参数，是否启用 SSL"
 
-#: app/setting_interface.py:1541
+#: app/setting_interface.py:1539
 msgid "启用 STARTTLS"
 msgstr "启用 STARTTLS"
 
-#: app/setting_interface.py:1541
+#: app/setting_interface.py:1539
 msgid "可选参数，是否启用 STARTTLS"
 msgstr "可选参数，是否启用 STARTTLS"
 
-#: app/setting_interface.py:1542
+#: app/setting_interface.py:1540
 msgid "跳过证书验证"
 msgstr "跳过证书验证"
 
-#: app/setting_interface.py:1542
+#: app/setting_interface.py:1540
 msgid "可选参数，是否跳过 SSL 证书验证"
 msgstr "可选参数，是否跳过 SSL 证书验证"
 
-#: app/setting_interface.py:1603
+#: app/setting_interface.py:1601
 msgid "适用于 OneBot 协议"
 msgstr "适用于 OneBot 协议"
 
-#: app/setting_interface.py:1606
+#: app/setting_interface.py:1604
 msgid "OneBot 服务端点地址，例如 http://127.0.0.1:3000"
 msgstr "OneBot 服务端点地址，例如 http://127.0.0.1:3000"
 
-#: app/setting_interface.py:1607
+#: app/setting_interface.py:1605
 msgid "可选参数，Access Token"
 msgstr "可选参数，Access Token"
 
-#: app/setting_interface.py:1608
+#: app/setting_interface.py:1606
 msgid "私聊用户 ID"
 msgstr "私聊用户 ID"
 
-#: app/setting_interface.py:1608
+#: app/setting_interface.py:1606
 msgid "可选参数，私聊接收用户 ID"
 msgstr "可选参数，私聊接收用户 ID"
 
-#: app/setting_interface.py:1609
+#: app/setting_interface.py:1607
 msgid "群组 ID"
 msgstr "群组 ID"
 
-#: app/setting_interface.py:1609
+#: app/setting_interface.py:1607
 msgid "可选参数，群聊接收群组 ID"
 msgstr "可选参数，群聊接收群组 ID"
 
-#: app/setting_interface.py:1726
+#: app/setting_interface.py:1724
 msgid "Go-cqhttp 项目已停止维护"
 msgstr "Go-cqhttp 项目已停止维护"
 
-#: app/setting_interface.py:1730
+#: app/setting_interface.py:1728
 msgid "消息类型"
 msgstr "消息类型"
 
-#: app/setting_interface.py:1730
+#: app/setting_interface.py:1728
 msgid "消息类型：private 或 group"
 msgstr "消息类型：private 或 group"
 
-#: app/setting_interface.py:1778
+#: app/setting_interface.py:1776
 msgid "钉钉"
 msgstr "钉钉"
 
-#: app/setting_interface.py:1779
+#: app/setting_interface.py:1777
 msgid "钉钉机器人推送"
 msgstr "钉钉机器人推送"
 
-#: app/setting_interface.py:1782
+#: app/setting_interface.py:1780
 msgid "加签密钥"
 msgstr "加签密钥"
 
-#: app/setting_interface.py:1782
+#: app/setting_interface.py:1780
 msgid "可选参数，安全加签密钥"
 msgstr "可选参数，安全加签密钥"
 
-#: app/setting_interface.py:1827
+#: app/setting_interface.py:1825
 msgid "Pushplus 通知服务"
 msgstr "Pushplus 通知服务"
 
-#: app/setting_interface.py:1829
+#: app/setting_interface.py:1827
 msgid "推送令牌"
 msgstr "推送令牌"
 
-#: app/setting_interface.py:1830
+#: app/setting_interface.py:1828
 msgid "推送渠道"
 msgstr "推送渠道"
 
-#: app/setting_interface.py:1831
+#: app/setting_interface.py:1829
 msgid "Webhook 地址"
 msgstr "Webhook 地址"
 
-#: app/setting_interface.py:1831
+#: app/setting_interface.py:1829
 msgid "可选参数，Webhook URL"
 msgstr "可选参数，Webhook URL"
 
-#: app/setting_interface.py:1832
+#: app/setting_interface.py:1830
 msgid "回调地址"
 msgstr "回调地址"
 
-#: app/setting_interface.py:1832
+#: app/setting_interface.py:1830
 msgid "可选参数，回调 URL"
 msgstr "可选参数，回调 URL"
 
-#: app/setting_interface.py:1924
+#: app/setting_interface.py:1922
 msgid "企业微信机器人"
 msgstr "企业微信机器人"
 
-#: app/setting_interface.py:1925
+#: app/setting_interface.py:1923
 msgid "企业微信机器人消息推送"
 msgstr "企业微信机器人消息推送"
 
-#: app/setting_interface.py:1928
+#: app/setting_interface.py:1926
 msgid "机器人 Key"
 msgstr "机器人 Key"
 
-#: app/setting_interface.py:1929
+#: app/setting_interface.py:1927
 msgid "可选参数，企业微信机器人 Webhook URL"
 msgstr "可选参数，企业微信机器人 Webhook URL"
 
-#: app/setting_interface.py:1967
+#: app/setting_interface.py:1965
 msgid "企业微信应用"
 msgstr "企业微信应用"
 
-#: app/setting_interface.py:1968
+#: app/setting_interface.py:1966
 msgid "企业微信应用消息推送"
 msgstr "企业微信应用消息推送"
 
-#: app/setting_interface.py:1971
+#: app/setting_interface.py:1969
 msgid "企业 ID"
 msgstr "企业 ID"
 
-#: app/setting_interface.py:1972
+#: app/setting_interface.py:1970
 msgid "应用密钥"
 msgstr "应用密钥"
 
-#: app/setting_interface.py:1973
+#: app/setting_interface.py:1971
 msgid "应用 AgentId"
 msgstr "应用 AgentId"
 
-#: app/setting_interface.py:1974
+#: app/setting_interface.py:1972
 msgid "接收用户"
 msgstr "接收用户"
 
-#: app/setting_interface.py:1974
+#: app/setting_interface.py:1972
 msgid "可选参数，接收用户，@all 表示全员"
 msgstr "可选参数，接收用户，@all 表示全员"
 
-#: app/setting_interface.py:1975
+#: app/setting_interface.py:1973
 msgid "可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制"
 msgstr "可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制"
 
-#: app/setting_interface.py:2019
+#: app/setting_interface.py:2017
 msgid "Gotify 私有通知服务"
 msgstr "Gotify 私有通知服务"
 
-#: app/setting_interface.py:2021
+#: app/setting_interface.py:2019
 msgid "Gotify 服务器 URL，例如 https://gotify.example.com"
 msgstr "Gotify 服务器 URL，例如 https://gotify.example.com"
 
-#: app/setting_interface.py:2022
+#: app/setting_interface.py:2020
 msgid "Gotify 应用的 Access Token"
 msgstr "Gotify 应用的 Access Token"
 
@@ -3850,235 +3850,235 @@ msgstr "Gotify 应用的 Access Token"
 msgid "优先级"
 msgstr "优先级"
 
-#: app/setting_interface.py:2023
+#: app/setting_interface.py:2021
 msgid "可选参数，通知优先级，范围 1-10，越高优先级越高。1-3:仅图标，4-7:图标 + 声音，8-10:图标 + 声音 + 震动"
 msgstr "可选参数，通知优先级，范围 1-10，越高优先级越高。1-3:仅图标，4-7:图标 + 声音，8-10:图标 + 声音 + 震动"
 
-#: app/setting_interface.py:2072
+#: app/setting_interface.py:2070
 msgid "Discord Webhook 推送"
 msgstr "Discord Webhook 推送"
 
-#: app/setting_interface.py:2075
+#: app/setting_interface.py:2073
 msgid "显示用户名"
 msgstr "显示用户名"
 
-#: app/setting_interface.py:2075
+#: app/setting_interface.py:2073
 msgid "可选参数，显示用户名"
 msgstr "可选参数，显示用户名"
 
-#: app/setting_interface.py:2076
+#: app/setting_interface.py:2074
 msgid "头像地址"
 msgstr "头像地址"
 
-#: app/setting_interface.py:2076
+#: app/setting_interface.py:2074
 msgid "可选参数，头像 URL"
 msgstr "可选参数，头像 URL"
 
-#: app/setting_interface.py:2077
+#: app/setting_interface.py:2075
 msgid "消息颜色"
 msgstr "消息颜色"
 
-#: app/setting_interface.py:2077
+#: app/setting_interface.py:2075
 msgid "可选参数，嵌入消息颜色，十六进制颜色值（如：0x3498db）"
 msgstr "可选参数，嵌入消息颜色，十六进制颜色值（如：0x3498db）"
 
-#: app/setting_interface.py:2119
+#: app/setting_interface.py:2117
 msgid "Pushdeer 通知服务"
 msgstr "Pushdeer 通知服务"
 
-#: app/setting_interface.py:2121
+#: app/setting_interface.py:2119
 msgid "Pushdeer Token"
 msgstr "Pushdeer Token"
 
-#: app/setting_interface.py:2122
+#: app/setting_interface.py:2120
 msgid "可选参数，自定义 Pushdeer 服务地址"
 msgstr "可选参数，自定义 Pushdeer 服务地址"
 
-#: app/setting_interface.py:2160
+#: app/setting_interface.py:2158
 msgid "飞书"
 msgstr "飞书"
 
-#: app/setting_interface.py:2161
+#: app/setting_interface.py:2159
 msgid "飞书机器人推送"
 msgstr "飞书机器人推送"
 
-#: app/setting_interface.py:2165
+#: app/setting_interface.py:2163
 msgid "消息内容"
 msgstr "消息内容"
 
-#: app/setting_interface.py:2166
+#: app/setting_interface.py:2164
 msgid "关键词"
 msgstr "关键词"
 
-#: app/setting_interface.py:2166
+#: app/setting_interface.py:2164
 msgid "可选参数，关键词安全校验内容"
 msgstr "可选参数，关键词安全校验内容"
 
-#: app/setting_interface.py:2167
+#: app/setting_interface.py:2165
 msgid "签名"
 msgstr "签名"
 
-#: app/setting_interface.py:2167
+#: app/setting_interface.py:2165
 msgid "可选参数，签名安全校验参数"
 msgstr "可选参数，签名安全校验参数"
 
-#: app/setting_interface.py:2168
+#: app/setting_interface.py:2166
 msgid "启用图片"
 msgstr "启用图片"
 
-#: app/setting_interface.py:2168
+#: app/setting_interface.py:2166
 msgid "是否发送图片"
 msgstr "是否发送图片"
 
-#: app/setting_interface.py:2169
+#: app/setting_interface.py:2167
 msgid "应用 AppId"
 msgstr "应用 AppId"
 
-#: app/setting_interface.py:2169
+#: app/setting_interface.py:2167
 msgid "发送图片时必填：飞书应用 AppId"
 msgstr "发送图片时必填：飞书应用 AppId"
 
-#: app/setting_interface.py:2170
+#: app/setting_interface.py:2168
 msgid "应用 Secret"
 msgstr "应用 Secret"
 
-#: app/setting_interface.py:2170
+#: app/setting_interface.py:2168
 msgid "发送图片时必填：飞书应用 Secret"
 msgstr "发送图片时必填：飞书应用 Secret"
 
-#: app/setting_interface.py:2211
+#: app/setting_interface.py:2209
 msgid "适合 鸿蒙NEXT 设备推送"
 msgstr "适合 鸿蒙NEXT 设备推送"
 
-#: app/setting_interface.py:2213
+#: app/setting_interface.py:2211
 msgid "昵称"
 msgstr "昵称"
 
-#: app/setting_interface.py:2244
+#: app/setting_interface.py:2242
 msgid "KOOK 机器人推送"
 msgstr "KOOK 机器人推送"
 
-#: app/setting_interface.py:2247
+#: app/setting_interface.py:2245
 msgid "KOOK 机器人的 Token"
 msgstr "KOOK 机器人的 Token"
 
-#: app/setting_interface.py:2248
+#: app/setting_interface.py:2246
 msgid "目标 ID"
 msgstr "目标 ID"
 
-#: app/setting_interface.py:2248
+#: app/setting_interface.py:2246
 msgid "接收消息的用户 ID 或频道 ID"
 msgstr "接收消息的用户 ID 或频道 ID"
 
-#: app/setting_interface.py:2249
+#: app/setting_interface.py:2247
 msgid "聊天类型"
 msgstr "聊天类型"
 
-#: app/setting_interface.py:2249
+#: app/setting_interface.py:2247
 msgid "可选参数，1 为私聊，9 为频道"
 msgstr "可选参数，1 为私聊，9 为频道"
 
-#: app/setting_interface.py:2295
+#: app/setting_interface.py:2293
 msgid "可自定义请求方法、请求头和请求体"
 msgstr "可自定义请求方法、请求头和请求体"
 
-#: app/setting_interface.py:2298
+#: app/setting_interface.py:2296
 msgid "接收地址"
 msgstr "接收地址"
 
-#: app/setting_interface.py:2299
+#: app/setting_interface.py:2297
 msgid "请求方法"
 msgstr "请求方法"
 
-#: app/setting_interface.py:2299
+#: app/setting_interface.py:2297
 msgid "可选参数，HTTP 方法，默认 POST"
 msgstr "可选参数，HTTP 方法，默认 POST"
 
-#: app/setting_interface.py:2300
+#: app/setting_interface.py:2298
 msgid "请求头"
 msgstr "请求头"
 
-#: app/setting_interface.py:2300
+#: app/setting_interface.py:2298
 msgid "可选参数，请求头 JSON 格式字符串，如：{\"Authorization\": \"Bearer token\"}"
 msgstr "可选参数，请求头 JSON 格式字符串，如：{\"Authorization\": \"Bearer token\"}"
 
-#: app/setting_interface.py:2301
+#: app/setting_interface.py:2299
 msgid "请求体"
 msgstr "请求体"
 
-#: app/setting_interface.py:2301
+#: app/setting_interface.py:2299
 msgid "可选参数，请求体模板 JSON 格式字符串，支持 {title}/{content}/{image} 占位符"
 msgstr "可选参数，请求体模板 JSON 格式字符串，支持 {title}/{content}/{image} 占位符"
 
-#: app/setting_interface.py:2361
+#: app/setting_interface.py:2359
 msgid "自定义通知"
 msgstr "自定义通知"
 
-#: app/setting_interface.py:2362
+#: app/setting_interface.py:2360
 msgid "自定义 HTTP 请求推送"
 msgstr "自定义 HTTP 请求推送"
 
-#: app/setting_interface.py:2365
+#: app/setting_interface.py:2363
 msgid "请求地址"
 msgstr "请求地址"
 
-#: app/setting_interface.py:2365
+#: app/setting_interface.py:2363
 msgid "请求地址，OneBot 可填写 send_msg 接口 URL"
 msgstr "请求地址，OneBot 可填写 send_msg 接口 URL"
 
-#: app/setting_interface.py:2366
+#: app/setting_interface.py:2364
 msgid "请求方法，通常 get 或 post"
 msgstr "请求方法，通常 get 或 post"
 
-#: app/setting_interface.py:2367
+#: app/setting_interface.py:2365
 msgid "数据类型"
 msgstr "数据类型"
 
-#: app/setting_interface.py:2367
+#: app/setting_interface.py:2365
 msgid "数据类型，通常为 data 或 json"
 msgstr "数据类型，通常为 data 或 json"
 
-#: app/setting_interface.py:2368
+#: app/setting_interface.py:2366
 msgid "图片模板"
 msgstr "图片模板"
 
-#: app/setting_interface.py:2368
+#: app/setting_interface.py:2366
 msgid "可选参数，图片消息模板，{image} 会替换为 Base64"
 msgstr "可选参数，图片消息模板，{image} 会替换为 Base64"
 
-#: app/setting_interface.py:2369
+#: app/setting_interface.py:2367
 msgid "数据模板"
 msgstr "数据模板"
 
-#: app/setting_interface.py:2369
+#: app/setting_interface.py:2367
 msgid "请求体模板，{message} 会替换为标题和内容"
 msgstr "请求体模板，{message} 会替换为标题和内容"
 
-#: app/setting_interface.py:1189
+#: app/setting_interface.py:1187
 msgid "通知合并"
 msgstr "通知合并"
 
-#: app/setting_interface.py:1190
+#: app/setting_interface.py:1188
 msgid "开启后，完整运行结束时将所有通知合并为一条发送"
 msgstr "开启后，完整运行结束时将所有通知合并为一条发送"
 
-#: app/setting_interface.py:1195
+#: app/setting_interface.py:1193
 msgid "推送图片"
 msgstr "推送图片"
 
-#: app/setting_interface.py:1196
+#: app/setting_interface.py:1194
 msgid "关闭后推送消息时不再发送截图"
 msgstr "关闭后推送消息时不再发送截图"
 
-#: app/setting_interface.py:1171
+#: app/setting_interface.py:1169
 msgid "启用消息推送"
 msgstr "启用消息推送"
 
-#: app/setting_interface.py:1172
+#: app/setting_interface.py:1170
 msgid "消息推送总开关"
 msgstr "消息推送总开关"
 
-#: app/card/autoplot_setting_card.py:74
+#: app/card/autoplot_setting_card.py:70
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
 msgstr "自动战斗检测 (检测到未自动战斗时按V开启)"
 
@@ -4126,75 +4126,75 @@ msgstr "打开模拟宇宙项目主页（停止维护）"
 msgid "在游戏内显示日志"
 msgstr "在游戏内显示日志"
 
-#: app/setting_interface.py:627
+#: app/setting_interface.py:625
 msgid "启用速通模式"
 msgstr "启用速通模式"
 
-#: app/setting_interface.py:651
+#: app/setting_interface.py:649
 msgid "难度等级"
 msgstr "难度等级"
 
-#: app/setting_interface.py:657
+#: app/setting_interface.py:655
 msgid "自动执行饰品提取"
 msgstr "自动执行饰品提取"
 
-#: app/setting_interface.py:658
+#: app/setting_interface.py:656
 msgid "在领取积分奖励后自动执行饰品提取消耗沉浸器"
 msgstr "在领取积分奖励后自动执行饰品提取消耗沉浸器"
 
-#: app/setting_interface.py:663
+#: app/setting_interface.py:661
 msgid "启用低性能兼容模式"
 msgstr "启用低性能兼容模式"
 
-#: app/setting_interface.py:664
+#: app/setting_interface.py:662
 msgid "建议仅在低性能设备开启，可以提高事件和随意门交互的成功率（云游戏强制使用此模式）"
 msgstr "建议仅在低性能设备开启，可以提高事件和随意门交互的成功率（云游戏强制使用此模式）"
 
-#: app/setting_interface.py:722
+#: app/setting_interface.py:720
 msgid "自动领取模拟宇宙沉浸奖励"
 msgstr "自动领取模拟宇宙沉浸奖励"
 
-#: app/setting_interface.py:723
+#: app/setting_interface.py:721
 msgid "类别为“模拟宇宙”时，自动领取沉浸奖励"
 msgstr "类别为“模拟宇宙”时，自动领取沉浸奖励"
 
-#: app/setting_interface.py:791
+#: app/setting_interface.py:789
 msgid "启用模拟宇宙 GPU 加速"
 msgstr "启用模拟宇宙 GPU 加速"
 
-#: app/setting_interface.py:1162
+#: app/setting_interface.py:1160
 msgid "窗口记忆"
 msgstr "窗口记忆"
 
-#: app/setting_interface.py:1163
+#: app/setting_interface.py:1161
 msgid "选择启动时恢复的窗口状态"
 msgstr "选择启动时恢复的窗口状态"
 
-#: app/setting_interface.py:1164
+#: app/setting_interface.py:1162
 msgid "记忆窗口大小"
 msgstr "记忆窗口大小"
 
-#: app/setting_interface.py:1164
+#: app/setting_interface.py:1162
 msgid "记忆窗口位置"
 msgstr "记忆窗口位置"
 
-#: app/setting_interface.py:1164
+#: app/setting_interface.py:1162
 msgid "记忆窗口大小和位置"
 msgstr "记忆窗口大小和位置"
 
-#: app/setting_interface.py:1164
+#: app/setting_interface.py:1162
 msgid "都不记忆"
 msgstr "都不记忆"
 
-#: app/setting_interface.py:2556
+#: app/setting_interface.py:2548
 msgid "立即前往"
 msgstr "立即前往"
 
-#: app/setting_interface.py:2558
+#: app/setting_interface.py:2550
 msgid "哔哩哔哩"
 msgstr "哔哩哔哩"
 
-#: app/setting_interface.py:2559
+#: app/setting_interface.py:2551
 msgid "欢迎关注我们的B站账号，获取最新动态和教程"
 msgstr "欢迎关注我们的B站账号，获取最新动态和教程"
 
@@ -4290,15 +4290,15 @@ msgstr "确定"
 msgid "重返未来 M9A"
 msgstr "重返未来 M9A"
 
-#: app/setting_interface.py:519
+#: app/setting_interface.py:517
 msgid "短信"
 msgstr "短信"
 
-#: app/setting_interface.py:676
+#: app/setting_interface.py:674
 msgid "站点优先级"
 msgstr "站点优先级"
 
-#: app/setting_interface.py:677
+#: app/setting_interface.py:675
 msgid "自定义差分宇宙「选择下一站」的站点优先级"
 msgstr "自定义差分宇宙「选择下一站」的站点优先级"
 
@@ -4307,11 +4307,11 @@ msgid "已启用自定义优先级，{count} 个站点已禁用"
 msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
 msgstr[0] "已启用自定义优先级，{count} 个站点已禁用"
 
-#: app/setting_interface.py:2604
+#: app/setting_interface.py:2596
 msgid "下载代理"
 msgstr "下载代理"
 
-#: app/setting_interface.py:2606
+#: app/setting_interface.py:2598
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "留空则使用系统代理；支持 http:// 和 socks5://"
 
@@ -4319,75 +4319,75 @@ msgstr "留空则使用系统代理；支持 http:// 和 socks5://"
 msgid "选择图标"
 msgstr "选择图标"
 
-#: app/setting_interface.py:601
+#: app/setting_interface.py:599
 msgid "职级难度"
 msgstr "职级难度"
 
-#: app/setting_interface.py:603
+#: app/setting_interface.py:601
 msgid "当前职级"
 msgstr "当前职级"
 
-#: app/setting_interface.py:603
+#: app/setting_interface.py:601
 msgid "最低职级"
 msgstr "最低职级"
 
-#: app/setting_interface.py:603
+#: app/setting_interface.py:601
 msgid "最高职级"
 msgstr "最高职级"
 
-#: app/setting_interface.py:608
+#: app/setting_interface.py:606
 msgid "货币战争策略"
 msgstr "货币战争策略"
 
-#: app/setting_interface.py:610
+#: app/setting_interface.py:608
 msgid "默认"
 msgstr "默认"
 
-#: app/setting_interface.py:621
+#: app/setting_interface.py:619
 msgid "遇到特定词条时接受重开"
 msgstr "遇到特定词条时接受重开"
 
-#: app/setting_interface.py:622
+#: app/setting_interface.py:620
 msgid "根据所选策略，在遇到特定词条或词条组合时允许重开"
 msgstr "根据所选策略，在遇到特定词条或词条组合时允许重开"
 
-#: app/setting_interface.py:615
+#: app/setting_interface.py:613
 msgid "「开拓者•记忆」名称"
 msgstr "「开拓者•记忆」名称"
 
-#: app/setting_interface.py:617
+#: app/setting_interface.py:615
 msgid "未配置时，阿格莱雅/希儿策略将跳过该角色，需要填入自己游戏名称"
 msgstr "未配置时，阿格莱雅/希儿策略将跳过该角色，需要填入自己游戏名称"
 
-#: app/setting_interface.py:609
+#: app/setting_interface.py:607
 msgid "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅或希儿策略。"
 msgstr "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅或希儿策略。"
 
-#: app/setting_interface.py:628
+#: app/setting_interface.py:626
 msgid "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"
 msgstr "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"
 
-#: app/setting_interface.py:580
+#: app/setting_interface.py:578
 msgid "提升晋升等级"
 msgstr "提升晋升等级"
 
-#: app/setting_interface.py:581
+#: app/setting_interface.py:579
 msgid "提升职级等级"
 msgstr "提升职级等级"
 
-#: app/setting_interface.py:583
+#: app/setting_interface.py:581
 msgid "快捷配置"
 msgstr "快捷配置"
 
-#: app/setting_interface.py:3444
+#: app/setting_interface.py:3411
 msgid "已应用快捷配置"
 msgstr "已应用快捷配置"
 
-#: app/setting_interface.py:3469
+#: app/setting_interface.py:3436
 msgid "当前为“提升晋升等级”模式"
 msgstr "当前为“提升晋升等级”模式"
 
-#: app/setting_interface.py:3484
+#: app/setting_interface.py:3451
 msgid "当前为“提升职级等级”模式"
 msgstr "当前为“提升职级等级”模式"
 
@@ -4423,47 +4423,47 @@ msgstr "使用默认优先级"
 msgid "已启用自定义优先级"
 msgstr "已启用自定义优先级"
 
-#: app/setting_interface.py:2497
+#: app/setting_interface.py:2495
 msgid "自动"
 msgstr "自动"
 
-#: app/setting_interface.py:829
+#: app/setting_interface.py:827
 msgid "二相乐园"
 msgstr "二相乐园"
 
-#: app/setting_interface.py:338
+#: app/setting_interface.py:336
 msgid "识别方案"
 msgstr "识别方案"
 
-#: app/setting_interface.py:339
+#: app/setting_interface.py:337
 msgid "副本名称识别会进入挑战页读取副本信息；掉落物识别根据列表中的掉落物匹配副本，异常时可尝试切换方案"
 msgstr "副本名称识别会进入挑战页读取副本信息；掉落物识别根据列表中的掉落物匹配副本，异常时可尝试切换方案"
 
-#: app/setting_interface.py:341
+#: app/setting_interface.py:339
 msgid "副本名称识别"
 msgstr "副本名称识别"
 
-#: app/setting_interface.py:342
+#: app/setting_interface.py:340
 msgid "掉落物识别"
 msgstr "掉落物识别"
 
-#: app/setting_interface.py:820
+#: app/setting_interface.py:818
 msgid "地图版本"
 msgstr "地图版本"
 
-#: app/setting_interface.py:822
+#: app/setting_interface.py:820
 msgid "默认（疾跑）"
 msgstr "默认（疾跑）"
 
-#: app/setting_interface.py:822
+#: app/setting_interface.py:820
 msgid "黄泉专用"
 msgstr "黄泉专用"
 
-#: app/setting_interface.py:354
+#: app/setting_interface.py:352
 msgid "仅识别到侵蚀隧洞/饰品提取时使用自定义副本"
 msgstr "仅识别到侵蚀隧洞/饰品提取时使用自定义副本"
 
-#: app/setting_interface.py:355
+#: app/setting_interface.py:353
 msgid "开启后，当培养目标仅包含侵蚀隧洞和饰品提取时，清体力将改用你在体力设置中配置的副本"
 msgstr "开启后，当培养目标仅包含侵蚀隧洞和饰品提取时，清体力将改用你在体力设置中配置的副本"
 
@@ -4475,11 +4475,11 @@ msgstr "银狼LV.999"
 msgid "「辉痕圣林」神悟树庭"
 msgstr "「辉痕圣林」神悟树庭"
 
-#: app/setting_interface.py:461
+#: app/setting_interface.py:459
 msgid "活动热点通知"
 msgstr "活动热点通知"
 
-#: app/setting_interface.py:462
+#: app/setting_interface.py:460
 msgid "每次运行时发送带有活动热点截图的通知"
 msgstr "每次运行时发送带有活动热点截图的通知"
 
@@ -4487,7 +4487,7 @@ msgstr "每次运行时发送带有活动热点截图的通知"
 msgid "流程编排"
 msgstr "流程编排"
 
-#: app/setting_interface.py:610
+#: app/setting_interface.py:608
 msgid "【测试版】"
 msgstr "【测试版】"
 
@@ -4847,11 +4847,11 @@ msgstr "ZIP 文件 (*.zip)"
 msgid "导出成功"
 msgstr "导出成功"
 
-#: app/setting_interface.py:653
+#: app/setting_interface.py:651
 msgid "难度"
 msgstr "难度"
 
-#: app/setting_interface.py:653
+#: app/setting_interface.py:651
 msgid "（星阶模式）"
 msgstr "（星阶模式）"
 
@@ -4995,7 +4995,7 @@ msgstr "已复制到剪贴板"
 msgid "选择模板图片"
 msgstr "选择模板图片"
 
-#: app/card/autoplot_setting_card.py:79
+#: app/card/autoplot_setting_card.py:75
 msgid "自动短信 (自动点击关闭手机短信页面)"
 msgstr "自动短信 (自动点击关闭手机短信页面)"
 
@@ -5023,29 +5023,29 @@ msgstr "成功"
 msgid "终止流程"
 msgstr "终止流程"
 
-#: app/setting_interface.py:741
+#: app/setting_interface.py:739
 msgid "重置次数"
 msgstr "重置次数"
 
-#: app/setting_interface.py:743
+#: app/setting_interface.py:741
 msgid "差分宇宙已完成次数"
 msgstr "差分宇宙已完成次数"
 
-#: app/setting_interface.py:3047
+#: app/setting_interface.py:3037
 msgid "今日已完成 {count} 次"
 msgid_plural "今日已完成 {count} 次|plural"
 msgstr[0] "今日已完成 {count} 次"
 
-#: app/setting_interface.py:3048
+#: app/setting_interface.py:3038
 msgid "本周已完成 {count} 次"
 msgid_plural "本周已完成 {count} 次|plural"
 msgstr[0] "本周已完成 {count} 次"
 
-#: app/setting_interface.py:3008
+#: app/setting_interface.py:2998
 msgid "启用前请确认用途"
 msgstr "启用前请确认用途"
 
-#: app/setting_interface.py:3009
+#: app/setting_interface.py:2999
 msgid ""
 "此选项及其子选项用于配置反复刷取遗器经验和灵之珠泪，直到达到每周上限。\n"
 "默认运行次数为每周 34 次。\n"
@@ -5055,7 +5055,7 @@ msgstr ""
 "默认运行次数为每周 34 次。\n"
 "请确认你已经清楚了解这个功能的作用，并确保知道自己在做什么后再开启。"
 
-#: app/setting_interface.py:3012
+#: app/setting_interface.py:3002
 msgid "我已了解，继续开启"
 msgstr "我已了解，继续开启"
 
@@ -5071,7 +5071,7 @@ msgstr "继续后续任务"
 msgid "停止后续任务"
 msgstr "停止后续任务"
 
-#: module/update/update_engine.py:390
+#: module/update/update_engine.py:389
 msgid "正在覆盖安装新版本..."
 msgstr "正在覆盖安装新版本..."
 
@@ -5079,11 +5079,11 @@ msgstr "正在覆盖安装新版本..."
 msgid "正在更新 March7th Assistant"
 msgstr "正在更新 March7th Assistant"
 
-#: module/update/update_engine.py:425
+#: module/update/update_engine.py:424
 msgid "正在清理临时文件..."
 msgstr "正在清理临时文件..."
 
-#: module/update/update_engine.py:441
+#: module/update/update_engine.py:440
 msgid "正在启动新版本..."
 msgstr "正在启动新版本..."
 
@@ -5123,7 +5123,7 @@ msgstr "更新日志会显示在这里"
 msgid "请勿关闭此窗口，更新完成后会自动启动新版本"
 msgstr "请勿关闭此窗口，更新完成后会自动启动新版本"
 
-#: module/update/update_engine.py:263
+#: module/update/update_engine.py:262
 msgid "正在下载更新包..."
 msgstr "正在下载更新包..."
 
@@ -5151,7 +5151,7 @@ msgstr "后台更新中"
 msgid "点击此处可重新打开更新窗口"
 msgstr "点击此处可重新打开更新窗口"
 
-#: module/update/update_engine.py:213
+#: module/update/update_engine.py:212
 msgid "检测更新失败"
 msgstr "检测更新失败"
 
@@ -5167,11 +5167,11 @@ msgstr "期望 SHA-256"
 msgid "实际 SHA-256"
 msgstr "实际 SHA-256"
 
-#: module/update/update_engine.py:368
+#: module/update/update_engine.py:367
 msgid "正在检测文件占用..."
 msgstr "正在检测文件占用..."
 
-#: module/update/update_engine.py:666
+#: module/update/update_engine.py:665
 msgid "临时文件被占用，无法清理"
 msgstr "临时文件被占用，无法清理"
 
@@ -5203,7 +5203,7 @@ msgstr "更新已准备完成，等待开始安装"
 msgid "新版本已启动，此窗口将自动关闭"
 msgstr "新版本已启动，此窗口将自动关闭"
 
-#: module/update/update_engine.py:382
+#: module/update/update_engine.py:381
 msgid "以下目标文件正在被占用，暂时无法覆盖。请打开任务管理器尝试关闭相关进程后重试，或直接重启电脑后再试。"
 msgstr "以下目标文件正在被占用，暂时无法覆盖。请打开任务管理器尝试关闭相关进程后重试，或直接重启电脑后再试。"
 
@@ -5215,7 +5215,7 @@ msgstr "正在等待主程序退出..."
 msgid "请检查日志后重试"
 msgstr "请检查日志后重试"
 
-#: module/update/update_engine.py:301
+#: module/update/update_engine.py:300
 msgid "正在解压更新包..."
 msgstr "正在解压更新包..."
 
@@ -5243,7 +5243,7 @@ msgstr "更新被阻塞"
 msgid "未找到更新程序"
 msgstr "未找到更新程序"
 
-#: module/update/update_engine.py:317
+#: module/update/update_engine.py:316
 msgid "正在关闭相关进程..."
 msgstr "正在关闭相关进程..."
 
@@ -5271,23 +5271,23 @@ msgstr "今天到期"
 msgid "CDK 验证失败 (╥╯﹏╰╥)"
 msgstr "CDK 验证失败 (╥╯﹏╰╥)"
 
-#: app/setting_interface.py:2625
+#: app/setting_interface.py:2617
 msgid "匿名使用数据收集"
 msgstr "匿名使用数据收集"
 
-#: app/setting_interface.py:2626
+#: app/setting_interface.py:2618
 msgid "帮助开发者了解程序使用情况，改进功能"
 msgstr "帮助开发者了解程序使用情况，改进功能"
 
-#: app/setting_interface.py:2623
+#: app/setting_interface.py:2615
 msgid "查看说明"
 msgstr "查看说明"
 
-#: app/setting_interface.py:3053
+#: app/setting_interface.py:3043
 msgid "匿名使用数据收集说明"
 msgstr "匿名使用数据收集说明"
 
-#: app/setting_interface.py:3054
+#: app/setting_interface.py:3044
 msgid ""
 "我们只收集用于改进稳定性、兼容性和功能体验的匿名统计信息，不用于识别你的真实身份，也不会用于广告、画像或与第三方共享。\n"
 "\n"
@@ -5305,15 +5305,15 @@ msgstr ""
 "\n"
 "这些数据仅用于分析功能使用情况、发现兼容性问题、评估版本稳定性和排查共性故障。"
 
-#: app/setting_interface.py:3121
+#: app/setting_interface.py:3111
 msgid "该参数用于配置该通知方式的请求字段"
 msgstr "该参数用于配置该通知方式的请求字段"
 
-#: app/setting_interface.py:2443
+#: app/setting_interface.py:2441
 msgid "教程"
 msgstr "教程"
 
-#: app/setting_interface.py:3305
+#: app/setting_interface.py:3295
 msgid "{name} 配置教程"
 msgstr "{name} 配置教程"
 
@@ -5333,7 +5333,7 @@ msgstr "以最短路径遍历所有可达界面，验证界面切换是否正常
 msgid "自动对话（全局热键，支持后台）"
 msgstr "自动对话（全局热键，支持后台）"
 
-#: app/card/autoplot_setting_card.py:93
+#: app/card/autoplot_setting_card.py:85
 msgid "启用快捷键切换自动对话"
 msgstr "启用快捷键切换自动对话"
 
@@ -5369,11 +5369,11 @@ msgstr "游戏已在运行"
 msgid "无需重复启动游戏"
 msgstr "无需重复启动游戏"
 
-#: app/setting_interface.py:1543
+#: app/setting_interface.py:1541
 msgid "纯文本模式"
 msgstr "纯文本模式"
 
-#: app/setting_interface.py:1543
+#: app/setting_interface.py:1541
 msgid "可选参数，是否以纯文本格式发送邮件（适用于 Outlook 等邮箱）"
 msgstr "可选参数，是否以纯文本格式发送邮件（适用于 Outlook 等邮箱）"
 
@@ -5429,27 +5429,27 @@ msgstr "远坂凛"
 msgid "吉尔伽美什"
 msgstr "吉尔伽美什"
 
-#: app/setting_interface.py:1880
+#: app/setting_interface.py:1878
 msgid "Qmsg 酱 QQ 推送"
 msgstr "Qmsg 酱 QQ 推送"
 
-#: app/setting_interface.py:1882
+#: app/setting_interface.py:1880
 msgid "Qmsg 酱分配的 Key"
 msgstr "Qmsg 酱分配的 Key"
 
-#: app/setting_interface.py:1883
+#: app/setting_interface.py:1881
 msgid "QQ 号"
 msgstr "QQ 号"
 
-#: app/setting_interface.py:1883
+#: app/setting_interface.py:1881
 msgid "可选参数，指定接收通知的 QQ 号，不填则发送到该 Key 绑定的默认 QQ"
 msgstr "可选参数，指定接收通知的 QQ 号，不填则发送到该 Key 绑定的默认 QQ"
 
-#: app/setting_interface.py:1884
+#: app/setting_interface.py:1882
 msgid "发送模式"
 msgstr "发送模式"
 
-#: app/setting_interface.py:1884
+#: app/setting_interface.py:1882
 msgid "可选参数，例如 send（默认）或 group"
 msgstr "可选参数，例如 send（默认）或 group"
 
@@ -5521,7 +5521,7 @@ msgstr "工作流目录不存在"
 msgid "文字条件需要填写目标文字"
 msgstr "文字条件需要填写目标文字"
 
-#: module/update/update_engine.py:411
+#: module/update/update_engine.py:410
 msgid "无法为当前更新程序创建备份，请关闭占用后重试"
 msgstr "无法为当前更新程序创建备份，请关闭占用后重试"
 
@@ -5537,7 +5537,7 @@ msgstr "无法添加子步骤"
 msgid "无限次"
 msgstr "无限次"
 
-#: module/update/update_engine.py:508
+#: module/update/update_engine.py:507
 msgid "更新包信息不完整"
 msgstr "更新包信息不完整"
 
@@ -5561,7 +5561,7 @@ msgstr "未填写音频路径"
 msgid "未选择模板"
 msgstr "未选择模板"
 
-#: module/update/version_check.py:340
+#: module/update/version_check.py:321
 msgid "没有找到合适的下载URL"
 msgstr "没有找到合适的下载URL"
 
@@ -5593,7 +5593,7 @@ msgstr "请输入音频文件路径"
 msgid "选择音频文件"
 msgstr "选择音频文件"
 
-#: tasks/game/__init__.py:103
+#: tasks/game/__init__.py:102
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 msgstr "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 
@@ -5619,7 +5619,7 @@ msgstr "请在“设置 → 关于 → 更新源”中选择 Mirror酱 并填写
 msgid "请在“设置”→“程序”中配置正确的游戏路径"
 msgstr "请在“设置”→“程序”中配置正确的游戏路径"
 
-#: app/card/autoplot_setting_card.py:99
+#: app/card/autoplot_setting_card.py:91
 msgid "快捷键：{hotkey}（可在设置中修改）"
 msgstr "快捷键：{hotkey}（可在设置中修改）"
 
@@ -5895,23 +5895,23 @@ msgstr "复制"
 msgid "全选"
 msgstr "全选"
 
-#: app/setting_interface.py:669
+#: app/setting_interface.py:667
 msgid "自动记录差分宇宙存档"
 msgstr "自动记录差分宇宙存档"
 
-#: app/setting_interface.py:670
+#: app/setting_interface.py:668
 msgid "探索成功后保存到第一个空存档位；存档已满时跳过"
 msgstr "探索成功后保存到第一个空存档位；存档已满时跳过"
 
-#: app/setting_interface.py:822
+#: app/setting_interface.py:820
 msgid "获得特殊物品"
 msgstr "获得特殊物品"
 
-#: app/setting_interface.py:834
+#: app/setting_interface.py:832
 msgid "启用「特殊物品领取」"
 msgstr "启用「特殊物品领取」"
 
-#: app/setting_interface.py:835
+#: app/setting_interface.py:833
 msgid "按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置"
 msgstr "按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置"
 
@@ -5921,42 +5921,42 @@ msgstr "每日获得特殊物品：购买秘技零食材料并合成零食（零
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币（过期邮包-1 / 艾迪恩代币-1）"
 msgstr "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币（过期邮包-1 / 艾迪恩代币-1）"
 
-#: app/setting_interface.py:854
+#: app/setting_interface.py:852
 msgid "获得翁法罗斯记忆代币"
 msgstr "获得翁法罗斯记忆代币"
 
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
 msgstr "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
 
-#: app/setting_interface.py:859
+#: app/setting_interface.py:857
 msgid "远程一号位锄地"
 msgstr "远程一号位锄地"
 
-#: app/setting_interface.py:860
+#: app/setting_interface.py:858
 msgid "黄泉一号位锄地"
 msgstr "黄泉一号位锄地"
 
-#: app/setting_interface.py:861
+#: app/setting_interface.py:859
 msgid "仅获取特殊物品"
 msgstr "仅获取特殊物品"
 
-#: app/setting_interface.py:864
+#: app/setting_interface.py:862
 msgid "一键切换地图版本，并把三项特殊物品领取都设为「启用」"
 msgstr "一键切换地图版本，并把三项特殊物品领取都设为「启用」"
 
-#: app/setting_interface.py:3445
+#: app/setting_interface.py:3412
 msgid "当前为“{name}”模式"
 msgstr "当前为“{name}”模式"
 
-#: app/setting_interface.py:841
+#: app/setting_interface.py:839
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食"
 msgstr "每日获得特殊物品：购买秘技零食材料并合成零食"
 
-#: app/setting_interface.py:848
+#: app/setting_interface.py:846
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"
 msgstr "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"
 
-#: app/setting_interface.py:855
+#: app/setting_interface.py:853
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
 msgstr "每周获得特殊物品：收集翁法罗斯忆质残晶"
 
@@ -5996,111 +5996,111 @@ msgstr "绯英·月待花时"
 msgid "风堇·云边拾暖"
 msgstr "风堇·云边拾暖"
 
-#: app/setting_interface.py:284
+#: app/setting_interface.py:282
 msgid "每周清理遗器"
 msgstr "每周清理遗器"
 
-#: app/setting_interface.py:288
+#: app/setting_interface.py:286
 msgid "启用智能弃置"
 msgstr "启用智能弃置"
 
-#: app/setting_interface.py:289
+#: app/setting_interface.py:287
 msgid "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
 msgstr "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
 
-#: app/setting_interface.py:1669
+#: app/setting_interface.py:1667
 msgid "QQ 官方机器人"
 msgstr "QQ 官方机器人"
 
-#: app/setting_interface.py:1670
+#: app/setting_interface.py:1668
 msgid "QQ 开放平台官方机器人推送"
 msgstr "QQ 开放平台官方机器人推送"
 
-#: app/setting_interface.py:1673
+#: app/setting_interface.py:1671
 msgid "机器人 AppID"
 msgstr "机器人 AppID"
 
-#: app/setting_interface.py:1673
+#: app/setting_interface.py:1671
 msgid "QQ 开放平台的机器人 AppID"
 msgstr "QQ 开放平台的机器人 AppID"
 
-#: app/setting_interface.py:1674
+#: app/setting_interface.py:1672
 msgid "机器人 AppSecret"
 msgstr "机器人 AppSecret"
 
-#: app/setting_interface.py:1674
+#: app/setting_interface.py:1672
 msgid "QQ 开放平台的机器人 AppSecret"
 msgstr "QQ 开放平台的机器人 AppSecret"
 
-#: app/setting_interface.py:1675
+#: app/setting_interface.py:1673
 msgid "单聊用户 openid"
 msgstr "单聊用户 openid"
 
-#: app/setting_interface.py:1675
+#: app/setting_interface.py:1673
 msgid "可选参数，单聊消息的接收用户 openid"
 msgstr "可选参数，单聊消息的接收用户 openid"
 
-#: app/setting_interface.py:1676
+#: app/setting_interface.py:1674
 msgid "群聊 group_openid"
 msgstr "群聊 group_openid"
 
-#: app/setting_interface.py:1676
+#: app/setting_interface.py:1674
 msgid "可选参数，群聊消息的接收群 group_openid"
 msgstr "可选参数，群聊消息的接收群 group_openid"
 
-#: app/setting_interface.py:3159
+#: app/setting_interface.py:3149
 msgid "绑定单聊"
 msgstr "绑定单聊"
 
-#: app/setting_interface.py:3159
+#: app/setting_interface.py:3149
 msgid "绑定群聊"
 msgstr "绑定群聊"
 
-#: app/setting_interface.py:3161
+#: app/setting_interface.py:3151
 msgid "自动绑定收件标识"
 msgstr "自动绑定收件标识"
 
-#: app/setting_interface.py:3170
+#: app/setting_interface.py:3160
 msgid "正在绑定中"
 msgstr "正在绑定中"
 
-#: app/setting_interface.py:3171
+#: app/setting_interface.py:3161
 msgid "请等待当前绑定完成后再试"
 msgstr "请等待当前绑定完成后再试"
 
-#: app/setting_interface.py:3184
+#: app/setting_interface.py:3174
 msgid "无法绑定"
 msgstr "无法绑定"
 
-#: app/setting_interface.py:3185
+#: app/setting_interface.py:3175
 msgid "请先填写机器人 AppID 与 AppSecret"
 msgstr "请先填写机器人 AppID 与 AppSecret"
 
-#: app/setting_interface.py:3198
+#: app/setting_interface.py:3188
 msgid "点击「开始监听」后，请在 {seconds} 秒内用 QQ 私聊机器人并发送验证码 {code}"
 msgstr "点击「开始监听」后，请在 {seconds} 秒内用 QQ 私聊机器人并发送验证码 {code}"
 
-#: app/setting_interface.py:3200
+#: app/setting_interface.py:3190
 msgid "点击「开始监听」后，请在 {seconds} 秒内在群聊中 @ 机器人并发送验证码 {code}，或将机器人拉进目标群"
 msgstr "点击「开始监听」后，请在 {seconds} 秒内在群聊中 @ 机器人并发送验证码 {code}，或将机器人拉进目标群"
 
-#: app/setting_interface.py:3204
+#: app/setting_interface.py:3194
 msgid "开始监听"
 msgstr "开始监听"
 
-#: app/setting_interface.py:3234
+#: app/setting_interface.py:3224
 msgid "绑定成功"
 msgstr "绑定成功"
 
-#: app/setting_interface.py:3234
+#: app/setting_interface.py:3224
 msgid "绑定失败"
 msgstr "绑定失败"
 
-#: app/setting_interface.py:3216
+#: app/setting_interface.py:3206
 msgid "监听中，请私聊机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "监听中，请私聊机器人发送验证码 {code}（{seconds} 秒内）"
 
-#: app/setting_interface.py:3218
+#: app/setting_interface.py:3208
 msgid "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）"
 
@@ -6193,7 +6193,7 @@ msgstr "登录 Windows 后自动启动，启动时不会弹出 UAC 提示；点�
 msgid "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
 msgstr "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
 
-#: app/setting_interface.py:2527
+#: app/setting_interface.py:2525
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 msgstr "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 
@@ -6201,15 +6201,15 @@ msgstr "登录后自动启动，点击「配置」进行详细设置；无人值
 msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "按下 {stop} 停止 · {pause} 继续"
 
-#: app/card/autoplot_setting_card.py:83
+#: app/card/autoplot_setting_card.py:79
 msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
 msgstr "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
 
-#: app/card/autoplot_setting_card.py:53
+#: app/card/autoplot_setting_card.py:49
 msgid "记住自动对话开关状态"
 msgstr "记住自动对话开关状态"
 
-#: app/card/autoplot_setting_card.py:57
+#: app/card/autoplot_setting_card.py:53
 msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。"
 msgstr "开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。"
 
@@ -6217,23 +6217,23 @@ msgstr "开启后，下次启动小助手时将恢复自动对话的开关状态
 msgid "{error}（详情见日志）"
 msgstr "{error}（详情见日志）"
 
-#: app/setting_interface.py:1065
+#: app/setting_interface.py:1063
 msgid "启动器路径"
 msgstr "启动器路径"
 
-#: app/setting_interface.py:1071
+#: app/setting_interface.py:1069
 msgid "启动器类型"
 msgstr "启动器类型"
 
-#: app/setting_interface.py:1073
+#: app/setting_interface.py:1071
 msgid "米哈游启动器"
 msgstr "米哈游启动器"
 
-#: app/setting_interface.py:1073
+#: app/setting_interface.py:1071
 msgid "HoYoPlay"
 msgstr "HoYoPlay"
 
-#: app/setting_interface.py:3359
+#: app/setting_interface.py:3349
 msgid "选择启动器路径"
 msgstr "选择启动器路径"
 
@@ -6322,9 +6322,61 @@ msgstr "已启用 {count} 个按时任务，点击配置"
 msgid "下次：{time}"
 msgstr "下次：{time}"
 
+#: app/challenge_config_dialog.py:153
+msgid "关卡范围的起始值不能大于结束值。"
+msgstr "关卡范围的起始值不能大于结束值。"
+
+#: app/challenge_config_dialog.py:162
+msgid "出战队伍不能重复使用同一角色。"
+msgstr "出战队伍不能重复使用同一角色。"
+
+#: app/setting_interface.py:901
+msgid "末日幻影配置"
+msgstr "末日幻影配置"
+
+#: app/setting_interface.py:877
+msgid "混沌回忆配置"
+msgstr "混沌回忆配置"
+
+#: app/challenge_config_dialog.py:45
+msgid "至"
+msgstr "至"
+
+#: app/setting_interface.py:889
+msgid "虚构叙事配置"
+msgstr "虚构叙事配置"
+
+#: app/challenge_config_dialog.py:159
+msgid "请为队伍{index}选择1至4名有效角色。"
+msgstr "请为队伍{index}选择1至4名有效角色。"
+
+#: app/challenge_config_dialog.py:119
+msgid "队伍{first} ↔ 队伍{second}"
+msgstr "队伍{first} ↔ 队伍{second}"
+
+#: app/challenge_config_dialog.py:86
+msgid "队伍{index}"
+msgstr "队伍{index}"
+
 #: module/update/version_check.py:331
 msgid "更新接口未返回有效版本信息，请稍后重试"
 msgstr "更新接口未返回有效版本信息，请稍后重试"
+
+#: app/challenge_config_dialog.py:52
+msgid "启用星启模式"
+msgstr "启用星启模式"
+
+#: app/challenge_config_dialog.py:66
+msgid "队伍三仅用于星启模式"
+msgstr "队伍三仅用于星启模式"
+
+#: app/challenge_config_dialog.py:196
+msgid "星启模式"
+msgstr "星启模式"
+
+#: app/challenge_config_dialog.py:196
+msgid "常规模式"
+msgstr "常规模式"
 
 #: app/setting_interface.py:2550
 msgid "复制提示词"
