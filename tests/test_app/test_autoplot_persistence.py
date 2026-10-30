@@ -16,6 +16,43 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
+@pytest.mark.parametrize("width", [600, 900])
+def test_autoplot_expand_collapse_leaves_no_blank_strip(qapp, qtbot, monkeypatch, width):
+    from PySide6.QtWidgets import QVBoxLayout, QWidget
+    from qfluentwidgets import FluentIcon
+
+    import app.card.autoplot_setting_card as card_module
+
+    fake_config = Mock()
+    fake_config.get_value.side_effect = lambda key, default=None: default
+    monkeypatch.setattr(card_module, "cfg", fake_config)
+
+    host = QWidget()
+    qtbot.addWidget(host)
+    layout = QVBoxLayout(host)
+    card = card_module.AutoPlotSettingCard(FluentIcon.CHAT, "自动对话", "说明")
+    layout.addWidget(card)
+    layout.addStretch()
+    host.resize(width, 800)
+    host.show()
+    qapp.processEvents()
+    initial_height = card.height()
+    assert initial_height == card.card.height()
+
+    # 同时覆盖快捷键提示显隐后的高度更新，以及多次展开/收起。
+    for show_hint in (False, True, False):
+        with qtbot.waitSignal(card.expandAni.finished):
+            card.setExpand(True)
+        card.hotkeyToggleCheckBox.setChecked(show_hint)
+        qapp.processEvents()
+        assert card.view.height() == card.viewLayout.sizeHint().height()
+        assert card.height() == card.card.height() + card.view.height()
+        with qtbot.waitSignal(card.expandAni.finished):
+            card.setExpand(False)
+        qapp.processEvents()
+        assert card.height() == initial_height
+
+
 def test_autoplot_switch_persists_and_restores_running_state(qapp, monkeypatch):
     import app.card.autoplot_setting_card as card_module
     import app.tools_interface as tools_module

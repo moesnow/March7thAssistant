@@ -55,6 +55,15 @@
 
 前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下载后解压双击三月七图标的 `March7th Launcher.exe` 打开图形界面
 
+## 使用 AI 助手操作
+
+DeepSeek Harness、Codex、Claude Code 等能执行命令的 AI 助手都可以直接操作三月七小助手：安装、运行任务、修改设置、查看日志和排查问题。
+
+- 已经安装：在「设置 → 关于 → AI 助手」点击「复制提示词」，粘贴给你的 AI 助手即可
+- 还没安装：对 AI 助手说「帮我安装三月七小助手，说明见 https://m7a.top/assets/agent/skills/march7th-assistant/SKILL.md 」
+
+AI 助手使用的是不需要管理员权限的命令行入口 `m7a.exe`（运行任务时会弹出一次 UAC），说明文件随程序一起发布在 [`assets/agent/`](assets/agent/skills/march7th-assistant/SKILL.md)，同样适用于其他支持 Skill 的 AI 助手。
+
 ## 源码运行
 
 如果你是完全不懂的小白，请通过上面的方式下载安装，可以不用往下看了。

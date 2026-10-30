@@ -50,7 +50,7 @@ GITHUB_API_BASES = (
 
 _GITHUB_API_URLS = [base + "/releases/latest" for base in GITHUB_API_BASES]
 
-_GITHUB_API_PRERELEASE_URLS = [base + "/releases" for base in GITHUB_API_BASES]
+_GITHUB_API_PRERELEASE_URLS = [base + "/releases?per_page=1" for base in GITHUB_API_BASES]
 
 
 # ── 底层工具函数 ─────────────────────────────────────────────────────
@@ -298,19 +298,38 @@ def _check_github(
     返回 UpdateInfo 如果有新版本；返回 None 如果已是最新。
     """
     urls = _GITHUB_API_PRERELEASE_URLS if prerelease else _GITHUB_API_URLS
-    api_url = _find_fastest_api(urls, proxies=proxies)
-    log.debug(f"GitHub API: {api_url}")
-
-    try:
-        resp = requests.get(api_url, timeout=10, proxies=proxies)
-        if resp.status_code != 200:
-            raise VersionCheckError(f"{tr('检测更新失败')}: HTTP {resp.status_code}")
-        raw = resp.json()
-    except Exception as e:
-        raise VersionCheckError(f"{tr('检测更新失败')}: {e}") from e
-
-    release = raw[0] if prerelease else raw
-    version = release["tag_name"]
+    fastest_api = _find_fastest_api(urls, proxies=proxies)
+    last_error = None
+    # 测速成功只代表 HTTP 可达；响应内容异常时依次尝试其他接口，每个地址只请求一次。
+    for api_url in dict.fromkeys([fastest_api, *urls]):
+        log.debug(f"GitHub API: {api_url}")
+        try:
+            resp = requests.get(api_url, timeout=10, proxies=proxies)
+            if resp.status_code != 200:
+                raise VersionCheckError(f"HTTP {resp.status_code}")
+            raw = resp.json()
+            if prerelease:
+                if not isinstance(raw, list) or not raw:
+                    raise ValueError("发布列表为空或类型错误")
+                release = raw[0]
+            else:
+                release = raw
+            if not isinstance(release, dict):
+                raise ValueError("发布信息不是对象")
+            version = release.get("tag_name")
+            if not isinstance(version, str) or not version.strip():
+                raise ValueError("发布信息缺少有效版本号")
+            # 保持历史版本号的宽松解析规则，但拒绝完全无法识别的版本号。
+            Version(version.lstrip("v"))
+        except Exception as error:
+            last_error = error
+            log.warning(f"GitHub 更新接口失败: {api_url}: {type(error).__name__}: {error}")
+            continue
+        break
+    else:
+        raise VersionCheckError(
+            f"{tr('检测更新失败')}: {tr('更新接口未返回有效版本信息，请稍后重试')}"
+        ) from last_error
 
     if not is_update_available(version, current_version):
         log.info(f"GitHub 确认已是最新版本: {current_version}")

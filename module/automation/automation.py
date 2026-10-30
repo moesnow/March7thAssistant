@@ -1,6 +1,8 @@
 import sys
 import time
 import math
+from contextlib import contextmanager
+from contextvars import ContextVar
 import cv2
 import numpy as np
 from PIL import Image
@@ -15,6 +17,19 @@ from utils.pause import pause_guard
 from module.game import get_game_controller
 from module.ocr import ocr
 from module.config import cfg
+
+
+_screenshot_retry_timeout = ContextVar("screenshot_retry_timeout", default=60.0)
+
+
+@contextmanager
+def screenshot_retry_timeout(timeout: float):
+    """临时调整当前执行上下文的截图重试时限，退出后恢复原值。"""
+    token = _screenshot_retry_timeout.set(max(0.0, float(timeout)))
+    try:
+        yield
+    finally:
+        _screenshot_retry_timeout.reset(token)
 
 
 class Automation(metaclass=SingletonMeta):
@@ -165,6 +180,7 @@ class Automation(metaclass=SingletonMeta):
         :return: 成功时返回截图及其位置和缩放因子，失败时抛出异常。
         """
         start_time = time.monotonic()
+        timeout = _screenshot_retry_timeout.get()
         while True:
             try:
                 result = Screenshot.take_screenshot(
@@ -182,13 +198,16 @@ class Automation(metaclass=SingletonMeta):
                         if crop != (0, 0, 1, 1):
                             self._debug_draw_crop_region(crop)
                     return result
-                else:
+                elif timeout > 0:
                     self.logger.error("截图失败：没有找到游戏窗口")
             except Exception as e:
+                if timeout <= 0:
+                    raise RuntimeError(f"截图失败：{e}") from e
                 self.logger.error(f"截图失败：{e}")
-            time.sleep(1)
-            if time.monotonic() - start_time > 60:
+            remaining = timeout - (time.monotonic() - start_time)
+            if remaining <= 0:
                 raise RuntimeError("截图超时")
+            time.sleep(min(1, remaining))
 
     def calculate_positions(self, template, max_loc, relative):
         """

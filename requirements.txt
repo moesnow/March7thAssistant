@@ -6,7 +6,7 @@ mss==10.2.0
 pygetwindow==0.0.9; sys_platform == 'win32'
 requests[socks]==2.34.2
 charset_normalizer==3.4.7
-Pillow==12.3.0
+Pillow==13.0.0
 numpy==2.4.6
 opencv-python==4.13.0.92
 winotify==1.1.0; sys_platform == 'win32'
