@@ -746,27 +746,31 @@ msgstr ""
 msgid "未选择"
 msgstr ""
 
-#: app/help_interface.py:23
+#: app/help_interface.py:34
 msgid "帮助"
 msgstr ""
 
-#: app/help_interface.py:204
+#: app/help_interface.py:35
+msgid "在官网查看"
+msgstr ""
+
+#: app/help_interface.py:218
 msgid "使用教程"
 msgstr ""
 
-#: app/help_interface.py:205
+#: app/help_interface.py:219
 msgid "流程编排"
 msgstr ""
 
-#: app/help_interface.py:206
+#: app/help_interface.py:220
 msgid "常见问题"
 msgstr ""
 
-#: app/help_interface.py:207
+#: app/help_interface.py:221
 msgid "后台运行"
 msgstr ""
 
-#: app/help_interface.py:208
+#: app/help_interface.py:222
 msgid "每日实训"
 msgstr ""
 

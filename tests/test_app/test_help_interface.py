@@ -41,3 +41,27 @@ def test_site_links_cover_localized_docs_only():
     assert HelpInterface._site_links(text) == (
         '[a](https://m7a.top/docs/#/assets/docs/Background_en_US) '
         '[b](https://m7a.top/docs/#/assets/docs/Docker) [c](https://example.com/x.md)')
+
+
+def test_website_button_opens_current_tab_doc_and_stays_right_aligned(qapp):
+    from app.help_interface import DOC_OF_TAB, HelpInterface
+    from module.localization.languages import localized_doc_path
+    page = HelpInterface()
+    try:
+        opened = []
+        page.open_url = opened.append
+        page.resize(1100, 700)
+        page.show()
+        qapp.processEvents()
+        button = page.websiteButton.geometry()
+        assert page.width() - button.right() - 1 == 36 and button.y() == 36
+        for name, base in DOC_OF_TAB.items():
+            page.stackedWidget.setCurrentWidget(getattr(page, name))
+            page.websiteButton.click()
+            doc = localized_doc_path(base).rsplit('/', 1)[-1][:-len('.md')]
+            assert opened[-1] == f'https://m7a.top/docs/#/assets/docs/{doc}'
+        assert set(DOC_OF_TAB) == {page.stackedWidget.widget(i).objectName()
+                                   for i in range(page.stackedWidget.count())}
+    finally:
+        page.close()
+        page.deleteLater()

@@ -6,9 +6,20 @@ import markdown
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QScroller, QScrollerProperties, QSizePolicy
-from qfluentwidgets import qconfig, ScrollArea, Pivot, TextBrowser, setCustomStyleSheet
+from qfluentwidgets import qconfig, ScrollArea, Pivot, TextBrowser, setCustomStyleSheet, PushButton, FluentIcon
 from .common.style_sheet import StyleSheet
 from module.localization import tr
+
+
+# 各标签对应的文档：“在官网查看”按钮打开当前标签的同一份文档（按界面语言）
+DOC_OF_TAB = {
+    'tutorialLabel': 'Tutorial',
+    'workflowLabel': 'Workflow',
+    'faqLabel': 'FAQ',
+    'backgroundLabel': 'Background',
+    'tasksLabel': 'TasksTable',
+    'changelogLabel': 'Changelog',
+}
 
 
 class HelpInterface(ScrollArea):
@@ -21,6 +32,7 @@ class HelpInterface(ScrollArea):
         self.stackedWidget = QStackedWidget(self)
 
         self.helpLabel = QLabel(tr("帮助"), self)
+        self.websiteButton = PushButton(FluentIcon.GLOBE, tr("在官网查看"), self)
         self.tutorialLabel = TextBrowser(parent)
         self.workflowLabel = TextBrowser(parent)
         self.faqLabel = TextBrowser(parent)
@@ -42,6 +54,8 @@ class HelpInterface(ScrollArea):
         self.scrollWidget.setObjectName('scrollWidget')
         self.helpLabel.setObjectName('helpLabel')
         StyleSheet.HELP_INTERFACE.apply(self)
+        self.websiteButton.adjustSize()
+        self.websiteButton.clicked.connect(self.openWebsite)
 
         QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
         scroller = QScroller.scroller(self.viewport())
@@ -281,6 +295,16 @@ a {
 
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
+
+    def openWebsite(self):
+        doc = os.path.splitext(os.path.basename(
+            self._get_localized_doc_path(DOC_OF_TAB[self.stackedWidget.currentWidget().objectName()])))[0]
+        self.open_url(f'https://m7a.top/docs/#/assets/docs/{doc}')
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # 按钮与标题同一行、靠右对齐（右边距与左侧 36px 对称）
+        self.websiteButton.move(self.width() - self.websiteButton.width() - 36, 36)
 
     @staticmethod
     def _site_links(text: str) -> str:

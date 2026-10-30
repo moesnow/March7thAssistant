@@ -22,15 +22,15 @@ msgstr "설정"
 msgid "主页"
 msgstr "홈"
 
-#: app/help_interface.py:23
+#: app/help_interface.py:34
 msgid "帮助"
 msgstr "도움말"
 
-#: app/help_interface.py:204
+#: app/help_interface.py:218
 msgid "使用教程"
 msgstr "사용 가이드"
 
-#: app/help_interface.py:206
+#: app/help_interface.py:220
 msgid "常见问题"
 msgstr "자주 묻는 질문"
 
@@ -336,7 +336,7 @@ msgstr "우편"
 msgid "支援"
 msgstr "지원"
 
-#: app/help_interface.py:208
+#: app/help_interface.py:222
 msgid "每日实训"
 msgstr "일일 훈련"
 
@@ -4501,7 +4501,7 @@ msgstr "여정 하이라이트 알림"
 msgid "每次运行时发送带有活动热点截图的通知"
 msgstr "실행 시 여정 하이라이트 스크린샷 알림 전송"
 
-#: app/help_interface.py:205
+#: app/help_interface.py:219
 msgid "流程编排"
 msgstr "워크플로우 편집"
 
@@ -6436,6 +6436,10 @@ msgstr ""
 msgid "我已了解，启用后台模式"
 msgstr "이해했으며 백그라운드 모드 활성화"
 
-#: app/help_interface.py:207
+#: app/help_interface.py:221
 msgid "后台运行"
 msgstr "백그라운드 실행"
+
+#: app/help_interface.py:35
+msgid "在官网查看"
+msgstr "공식 사이트에서 보기"

@@ -22,15 +22,15 @@ msgstr "设置"
 msgid "主页"
 msgstr "主页"
 
-#: app/help_interface.py:23
+#: app/help_interface.py:34
 msgid "帮助"
 msgstr "帮助"
 
-#: app/help_interface.py:204
+#: app/help_interface.py:218
 msgid "使用教程"
 msgstr "使用教程"
 
-#: app/help_interface.py:206
+#: app/help_interface.py:220
 msgid "常见问题"
 msgstr "常见问题"
 
@@ -335,7 +335,7 @@ msgstr "邮件"
 msgid "支援"
 msgstr "支援"
 
-#: app/help_interface.py:208
+#: app/help_interface.py:222
 msgid "每日实训"
 msgstr "每日实训"
 
@@ -4483,7 +4483,7 @@ msgstr "活动热点通知"
 msgid "每次运行时发送带有活动热点截图的通知"
 msgstr "每次运行时发送带有活动热点截图的通知"
 
-#: app/help_interface.py:205
+#: app/help_interface.py:219
 msgid "流程编排"
 msgstr "流程编排"
 
@@ -6418,6 +6418,10 @@ msgstr ""
 msgid "我已了解，启用后台模式"
 msgstr "我已了解，启用后台模式"
 
-#: app/help_interface.py:207
+#: app/help_interface.py:221
 msgid "后台运行"
 msgstr "后台运行"
+
+#: app/help_interface.py:35
+msgid "在官网查看"
+msgstr "在官网查看"
