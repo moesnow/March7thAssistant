@@ -6534,3 +6534,31 @@ msgstr "Stellar Mode"
 #: app/challenge_config_dialog.py:196
 msgid "常规模式"
 msgstr "Regular Mode"
+
+#: app/setting_interface.py:2550
+msgid "复制提示词"
+msgstr "Copy prompt"
+
+#: app/setting_interface.py:2552
+msgid "AI 助手"
+msgstr "AI Assistant"
+
+#: app/setting_interface.py:2553
+msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
+msgstr ""
+"Copy a prompt for AI assistants such as DeepSeek Harness, Codex or Claude "
+"Code so they can operate March7th Assistant"
+
+#: app/tools/agent_prompt.py:16
+msgid ""
+"我在这台电脑上安装了「三月七小助手」（崩坏：星穹铁道自动化工具），版本 {version}，安装目录：{install_dir}\n"
+"请先阅读 {skill_file} ，按其中的说明帮我操作它。\n"
+"如果你支持 Skill（技能），请把文件夹 {skill_dir} 复制到你的用户级技能目录（例如 ~/.agents/skills/ 或 ~/.claude/skills/），以后就不需要我再提供这段说明。"
+msgstr ""
+"I have installed March7th Assistant (an automation tool for Honkai: Star Rail), version {version}, at {install_dir}\n"
+"Please read {skill_file} first and follow its instructions to operate it for me.\n"
+"If you support Skills, copy the folder {skill_dir} to your user-level skills directory (for example ~/.agents/skills/ or ~/.claude/skills/) so I don't need to give you these instructions again."
+
+#: app/setting_interface.py:3379
+msgid "粘贴给你的 AI 助手即可"
+msgstr "Paste it to your AI assistant"

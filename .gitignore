@@ -207,7 +207,9 @@ smtp_temp.bin
 # Genshin_StarRail_fps_unlocker
 /3rdparty/Genshin_StarRail_fps_unlocker
 
-# Claude Code
+.agents/
+# 仅忽略仓库根目录的个人开发说明；assets/agent/AGENTS.md 是随发布包分发的公开文件
+/AGENTS.md
 .claude/
 CLAUDE.md
 
