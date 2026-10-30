@@ -79,6 +79,21 @@ def _near(actual, expected):
             and abs(actual[0] - expected[0]) <= _CURSOR_TOLERANCE and abs(actual[1] - expected[1]) <= _CURSOR_TOLERANCE)
 
 
+def _carried_cursor(user, written, current):
+    """脚本借用光标后应归还给用户的位置。
+
+    物理鼠标按相对位移移动光标：脚本把光标放到点击处后用户仍在移动，位移就叠加在点击处。
+    归还时把这段位移平移回用户原来的位置，避免光标留在点击处、用户只能在那里接着移动。
+    光标若已离用户位置更近（手写板、触屏、远程桌面等绝对定位会直接把光标放回用户手边，
+    或用户已自行移回），返回 None 表示保持不动。
+    """
+    if _near(current, written):
+        return user
+    if math.dist(current, user) < math.dist(current, written):
+        return None
+    return user[0] + current[0] - written[0], user[1] + current[1] - written[1]
+
+
 _WINDOW_TEXT = {
     WINDOW_EXITED: '游戏进程已退出',
     WINDOW_MISSING: '未找到游戏窗口',
@@ -122,6 +137,7 @@ class BackgroundInput(InputBase):
         self._point = None
         self._last_click = None
         self._written_cursor = None
+        self._user_cursor = None  # 本次会话结束时应归还给用户的光标位置（随用户的相对移动更新）
         self._target_identity = None
         self._foreground_identity = None
         self.protect_mouse = bool(protect_mouse)
@@ -263,6 +279,7 @@ class BackgroundInput(InputBase):
         self._foreground_identity = self.api.identity(foreground)
         activated = foreground != target.hwnd
         self._session = (target, foreground, cursor, activated, self._geometry(target))
+        self._user_cursor = cursor
         if activated:
             self.api.post(target, 0x0006, 1)  # WM_ACTIVATE / WA_ACTIVE
             self._wait(.08)
@@ -316,14 +333,15 @@ class BackgroundInput(InputBase):
             errors.clear()
             self._keys.clear()
             self._mouse_down = False
-        # 用户后来移动了鼠标或切了窗口，就不再把光标拉回旧位置。恢复光标只是善后，
-        # 失败（例如锁屏）不能让已释放的输入被当作清理失败。
+        # 归还光标：用户期间继续移动时按相对位移带回用户原来的区域；用户切了窗口则不再移动光标。
+        # 恢复光标只是善后，失败（例如锁屏）不能让已释放的输入被当作清理失败。
         try:
             if (self._written_cursor is not None and self.api.foreground() == foreground
                     and self._foreground_identity is not None
-                    and self.api.identity(foreground) == self._foreground_identity
-                    and _near(self.api.cursor(), self._written_cursor)):
-                self.api.move(cursor)
+                    and self.api.identity(foreground) == self._foreground_identity):
+                carried = _carried_cursor(self._user_cursor or cursor, self._written_cursor, self.api.cursor())
+                if carried is not None:
+                    self.api.move(carried)
         except Exception as error:
             if self.logger:
                 self.logger.warning(f'恢复光标位置失败：{error}')
@@ -332,6 +350,7 @@ class BackgroundInput(InputBase):
         self._settle_until = 0
         if not errors:
             self._session = None
+            self._user_cursor = None
         try:
             self._release_protection()
         finally:
@@ -563,10 +582,20 @@ class BackgroundInput(InputBase):
         if not 0 <= point[0] < width or not 0 <= point[1] < height:
             raise _WindowLost('输入位置超出游戏客户区')
         self._point = (round(point[0]), round(point[1]))
+        self._carry_user_motion()
         self._written_cursor = self.api.client_to_screen(target, self._point)
         self._pointer_active = True
         self.api.move(self._written_cursor)
         self.api.send_mouse(target, 0x0200, 1 if self._mouse_down else 0, _position(self._point))
+
+    def _carry_user_motion(self):
+        """写入光标前，把用户自上次写入（或会话开始）以来的移动计入归还位置，例如激活等待期间的移动。"""
+        if self._user_cursor is None:
+            return
+        anchor = self._written_cursor if self._written_cursor is not None else self._user_cursor
+        current = self.api.cursor()
+        carried = _carried_cursor(self._user_cursor, anchor, current)
+        self._user_cursor = carried if carried is not None else current
 
     def _move_screen(self, x, y):
         self._move_client(self.api.screen_to_client(self._session[0], (round(x), round(y))))
@@ -862,6 +891,10 @@ class BackgroundInput(InputBase):
             width, height = self.api.size(target)
             if not (0 <= point[0] < width and 0 <= point[1] < height):
                 raise _WindowLost('滚轮位置超出游戏客户区，请重新定位')
+            # 切换前台期间用户仍在移动时，以写入前的位置作为归还基准；激活后游戏自己把光标居中的情况除外。
+            current = self.api.cursor()
+            if not _near(current, self.api.client_to_screen(target, ((width - 1)//2, (height - 1)//2))):
+                cursor = current
             owned_cursor = self.api.client_to_screen(target, point)
             self.api.move(owned_cursor)
             self._wait(.05, check)
@@ -880,8 +913,10 @@ class BackgroundInput(InputBase):
                     watch.sync()
                 requested = watch is not None and watch.focus_requested == target.hwnd
                 still_owned = (acquired or requested) and watch and not watch.lost and self.api.foreground() == target.hwnd
-                if still_owned and owned_cursor is not None and _near(self.api.cursor(), owned_cursor):
-                    self.api.move(cursor)
+                if still_owned and owned_cursor is not None:
+                    carried = _carried_cursor(cursor, owned_cursor, self.api.cursor())
+                    if carried is not None:
+                        self.api.move(carried)
                 if (temporary and still_owned and original and self.api.usable(original)
                         and not watch.lost and self.api.foreground() == target.hwnd):
                     if not self.api.focus(original, target.hwnd, watch) and self.logger:

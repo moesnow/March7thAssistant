@@ -264,15 +264,20 @@ def test_destroyed_or_reused_window_never_receives_release(backend):
     assert not b.input._keys
 
 
-def test_user_mouse_motion_retries_before_click_and_restores_latest_position(backend):
+def nudge(api, dx, dy):
+    """模拟物理鼠标的相对移动：位移叠加在当前光标位置上。"""
+    api.point = (api.point[0] + dx, api.point[1] + dy)
+
+
+def test_user_mouse_motion_retries_before_click_and_carries_motion_back(backend):
     b=backend
     def moved(_point):
         b.api.on_move=None
-        b.api.point=(800,900)
+        nudge(b.api, 40, 25)  # 光标刚被放到点击处，用户继续移动
     b.api.on_move=moved
     assert b.input.mouse_click(300,400)
     assert len(posts(b.api,0x201))==1
-    assert b.api.cursor()==(800,900)
+    assert b.api.cursor()==(47,34)  # 原位置 (7,9) 加上用户的位移，而不是留在点击处
     assert not b.api.protections
 
 
@@ -502,17 +507,17 @@ def test_cancelling_during_key_settle_cleans_without_replaying_esc(backend):
     assert not b.input._keys and b.input._session is None
 
 
-def test_pure_key_ignores_mouse_motion_and_does_not_restore_user_cursor(backend):
+def test_pure_key_ignores_mouse_motion_and_carries_user_cursor_back(backend):
     b = backend
     center = b.api.client_to_screen(b.api.game, (959, 539))
     def move(message, wp, _lp):
         if message == 0x6 and wp == 1:
-            b.api.point = center
+            b.api.point = center  # 大世界激活时游戏把光标居中
         if message == 0x100:
-            b.api.point = (800, 900)
+            nudge(b.api, 40, 30)
     b.api.on_post = move
     assert b.input.press_key('esc')
-    assert b.api.cursor() == (800, 900)
+    assert b.api.cursor() == (47, 39)
     assert not b.api.protections
 
 
@@ -539,7 +544,7 @@ def test_mouse_conflict_after_down_releases_without_replaying(backend, gesture):
         b.api.events.clear()
     def move(message, *_):
         if message == 0x201:
-            b.api.point = (800, 900)
+            nudge(b.api, 40, 30)
     b.api.on_post = move
     if gesture == 'click':
         result = b.input.mouse_click(300, 400)
@@ -550,7 +555,7 @@ def test_mouse_conflict_after_down_releases_without_replaying(backend, gesture):
     assert result is False
     assert len(posts(b.api, 0x201)) == len(posts(b.api, 0x202)) == 1
     assert not posts(b.api, 0x102)
-    assert b.api.cursor() == (800, 900)
+    assert b.api.cursor() == (47, 39)
     assert not b.input._mouse_down and b.input._session is None
 
 
@@ -712,11 +717,11 @@ def test_scroll_mouse_conflict_only_retries_unsent_ticks(backend):
     b = backend
     def move():
         b.api.on_scroll = None
-        b.api.point = (800, 900)
+        nudge(b.api, 40, 30)
     b.api.on_scroll = move
     assert b.input.mouse_scroll(3)
     assert len([e for e in b.api.events if e[0] == 'scroll']) == 3
-    assert b.api.cursor() == (800, 900) and b.api.foreground() == 20
+    assert b.api.cursor() == (47, 39) and b.api.foreground() == 20
 
 
 def test_cursor_restore_failure_still_unlocks(backend, monkeypatch):
@@ -1338,3 +1343,70 @@ def test_completed_release_does_not_wait_for_minimized_window(backend):
     assert b.input.press_key_up('w') is None
     assert b.clock.now < 1
     assert not b.input._keys and b.input._session is None
+
+
+
+# ---------- 归还光标：用户在后台点击期间继续移动鼠标 ----------
+
+def test_user_motion_after_click_is_carried_back_to_users_area(backend):
+    """反馈的场景：用户在别处持续绕圈，后台点击完成后立即继续移动。光标应带着这段位移回到用户的位置，而不是留在点击处。"""
+    b = backend
+    b.api.point = (1500, 900)
+    def resume(message, *_):
+        if message == 0x202:
+            nudge(b.api, 25, -12)
+    b.api.on_post = resume
+    assert b.input.mouse_click(300, 400) is True
+    assert b.api.cursor() == (1525, 888)
+
+
+@pytest.mark.parametrize('protect', [False, True])
+def test_motion_while_activating_counts_towards_restore(backend, protect):
+    """光标被放到点击处之前（激活等待期间）用户的移动同样保留，与是否开启鼠标保护无关。"""
+    b = backend
+    b.input.protect_mouse = protect
+    b.api.point = (1500, 900)
+    def activating(message, wp, _lp):
+        if message == 0x6 and wp == 1:
+            nudge(b.api, 20, 5)
+        if message == 0x202:
+            nudge(b.api, 7, 3)
+    b.api.on_post = activating
+    assert b.input.mouse_click(300, 400) is True
+    assert b.api.cursor() == (1527, 908)
+
+
+def test_scroll_carries_motion_during_focus_switch_and_wheel(backend):
+    b = backend
+    b.api.point = (1500, 900)
+    def switching(window):
+        if window == b.api.game:
+            b.api.on_focus = None
+            nudge(b.api, 10, 0)  # 切换前台期间用户仍在移动
+    b.api.on_focus = switching
+    def wheel():
+        b.api.on_scroll = None
+        nudge(b.api, 5, 6)  # 滚动途中继续移动：本轮中断，只重试未发出的滚轮
+    b.api.on_scroll = wheel
+    assert b.input.mouse_scroll(2)
+    assert len([e for e in b.api.events if e[0] == 'scroll']) == 2
+    assert b.api.cursor() == (1515, 906)
+
+
+def test_absolute_pointer_back_in_users_area_is_left_alone(backend):
+    """手写板、触屏、远程桌面等绝对定位设备会直接把光标放回用户手边，此时不再移动光标。"""
+    b = backend
+    b.api.point = (1500, 900)
+    def tablet(message, *_):
+        if message == 0x202:
+            b.api.point = (1510, 910)
+    b.api.on_post = tablet
+    assert b.input.mouse_click(300, 400) is True
+    assert b.api.cursor() == (1510, 910)
+
+
+def test_carried_cursor_rules():
+    near_click = module._carried_cursor((1500, 900), (300, 400), (302, 401))
+    assert near_click == (1500, 900)  # 容差内视为未移动：归还原位置
+    assert module._carried_cursor((1500, 900), (300, 400), (380, 360)) == (1580, 860)
+    assert module._carried_cursor((1500, 900), (300, 400), (1490, 905)) is None

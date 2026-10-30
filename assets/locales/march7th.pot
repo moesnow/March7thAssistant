@@ -4469,11 +4469,11 @@ msgstr ""
 msgid "已打开截图工具"
 msgstr ""
 
-#: module/automation/background_input.py:443
+#: module/automation/background_input.py:462
 msgid "正在短暂保护鼠标，键盘和暂停热键仍可用"
 msgstr ""
 
-#: module/automation/background_input.py:444
+#: module/automation/background_input.py:463
 msgid "等待鼠标空闲，任务将自动继续"
 msgstr ""
 

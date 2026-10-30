@@ -6369,11 +6369,11 @@ msgstr "重試失敗時短暫鎖定滑鼠"
 msgid "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 msgstr "僅保護必要的滑鼠操作，保留鍵盤和暫停快捷鍵。"
 
-#: module/automation/background_input.py:443
+#: module/automation/background_input.py:462
 msgid "正在短暂保护鼠标，键盘和暂停热键仍可用"
 msgstr "正在短暫保護滑鼠，鍵盤和暫停快捷鍵仍可使用"
 
-#: module/automation/background_input.py:444
+#: module/automation/background_input.py:463
 msgid "等待鼠标空闲，任务将自动继续"
 msgstr "等待滑鼠閒置，任務將自動繼續"
 
