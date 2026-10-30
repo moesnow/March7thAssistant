@@ -27,9 +27,9 @@
 
 **The in-game language currently supports Simplified Chinese only.**
 
-Quick start: [Tutorial](https://m7a.top/#/assets/docs/Tutorial_en_US)
+Quick start: [Tutorial](https://m7a.top/docs/#/assets/docs/Tutorial_en_US)
 
-Before asking for help, please check: [FAQ](https://m7a.top/#/assets/docs/FAQ_en_US)
+Before asking for help, please check: [FAQ](https://m7a.top/docs/#/assets/docs/FAQ_en_US)
 
 </div>
 
@@ -37,7 +37,7 @@ Before asking for help, please check: [FAQ](https://m7a.top/#/assets/docs/FAQ_en
 
 - **Daily**: Spend Trailblaze Power, Daily Training, claim rewards, dispatch, field farming
 - **Weekly**: Echo of War, Simulated Universe, Divergent Universe, Currency Wars, Memory of Chaos, Pure Fiction, Apocalyptic Shadow
-- **Cloud Honkai: Star Rail**: Supports background execution, headless execution, and [Docker](https://m7a.top/#/assets/docs/Docker) deployment
+- **Cloud Honkai: Star Rail**: Supports background execution, headless execution, and [Docker](https://m7a.top/docs/#/assets/docs/Docker) deployment
 - **Gacha record export**: Supports the [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) standards
 - **Toolbox**: Auto dialogue, FPS unlock, redemption codes, touch mode
 - Task results such as Daily Training support **push notifications**

@@ -1,35 +1,901 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<!doctype html>
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>March7thAssistant Wiki</title>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="description" content="Description">
-  <meta name="viewport"
-    content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <link rel="icon" href="/assets/logo/March7th.ico">
-  <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="assets\docsify\theme-simple-dark.css">
-  <!-- href="//unpkg.com/docsify-themeable/dist/css/theme-simple-dark.css"> -->
-  <link rel="stylesheet" media="(prefers-color-scheme: light)" href="assets\docsify\theme-simple.css">
-  <!-- href="//unpkg.com/docsify-themeable/dist/css/theme-simple.css"> -->
+<meta charset="utf-8">
+<script>
+// 文档原先由 docsify 直接部署在根路径（如 m7a.top/#/assets/docs/Tutorial），已迁到 /docs/。
+// 旧版小助手、README 与各处转发的链接都还指向这里，放在最前面以便尽早跳转。
+(function (h, d) { if (/^#\/[^?]/.test(h)) location.replace('/docs/' + h); d.className += ' js'; })(location.hash, document.documentElement);
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>三月七小助手 · 崩坏：星穹铁道全自动日常助手 | March7thAssistant</title>
+<meta name="description" content="三月七小助手（March7thAssistant）是免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、差分宇宙、货币战争、锄大地等日常周常一键完成，支持定时启动、消息推送，也可以交给 AI 助手操作。">
+<meta name="keywords" content="三月七小助手,March7thAssistant,M7A,崩坏星穹铁道,星穹铁道,星铁,崩铁,自动化,清体力,每日实训,差分宇宙,货币战争,锄大地,模拟宇宙,AI 助手">
+<link rel="canonical" href="https://m7a.top/">
+<meta name="theme-color" content="#fff7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1124" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="三月七小助手">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:url" content="https://m7a.top/">
+<meta property="og:title" content="三月七小助手 · 日常交给三月七，开拓留给你">
+<meta property="og:description" content="免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、周常玩法一键完成，支持定时启动、消息推送与 AI 助手操作。">
+<meta property="og:image" content="https://m7a.top/website/img/og-cover.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"三月七小助手","alternateName":["March7thAssistant","M7A"],"url":"https://m7a.top/","image":"https://m7a.top/website/img/og-cover.jpg","description":"免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、周常玩法一键完成，支持定时启动、消息推送与 AI 助手操作。","applicationCategory":"GameApplication","operatingSystem":"Windows 10, Windows 11","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"},"license":"https://www.gnu.org/licenses/gpl-3.0.html","downloadUrl":"https://github.com/moesnow/March7thAssistant/releases/latest","codeRepository":"https://github.com/moesnow/March7thAssistant","inLanguage":"zh-CN"}
+</script>
+<style>
+:root{
+  color-scheme:light dark;
+  --ink:#1e2547;--text:#4a5072;--muted:#5f6688;--line:#ece5ef;--line-2:#ddd4e4;
+  --bg:#fff;--bg-soft:#fff7fb;--card:#fff;--nav:rgba(255,255,255,.86);
+  --pink:#c8337a;--pink-soft:#ffe6f2;--pink-line:#f5bcd8;
+  --blue:#1d6fd8;--blue-soft:#e6efff;
+  --btn:#c8337a;--btn-hover:#b02a6b;
+  --stage:radial-gradient(70% 60% at 72% 26%,#ffd3e8,transparent 70%),radial-gradient(60% 55% at 26% 88%,#d4e4ff,transparent 70%),linear-gradient(160deg,#fff5fa,#f0f4ff);
+  --shadow:0 1px 2px rgba(30,37,71,.05),0 12px 32px -14px rgba(30,37,71,.2);
+  --shadow-lg:0 2px 6px rgba(30,37,71,.05),0 32px 64px -24px rgba(30,37,71,.32);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei","Noto Sans SC","Source Han Sans SC",system-ui,sans-serif;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,"SF Mono",Menlo,monospace,var(--font);
+}
+@media (prefers-color-scheme:dark){:root{
+  --ink:#f4f2fb;--text:#c7cae0;--muted:#a3a8c6;--line:#262b4a;--line-2:#353b60;
+  --bg:#0e1124;--bg-soft:#12162f;--card:#171c39;--nav:rgba(14,17,36,.84);
+  --pink:#ff8cc6;--pink-soft:rgba(255,140,198,.12);--pink-line:rgba(255,140,198,.35);
+  --blue:#8ab8ff;--blue-soft:rgba(138,184,255,.12);
+  --stage:radial-gradient(70% 60% at 72% 26%,rgba(255,120,190,.3),transparent 70%),radial-gradient(60% 55% at 26% 88%,rgba(110,160,255,.28),transparent 70%),linear-gradient(160deg,#1c2044,#141a3a);
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -14px rgba(0,0,0,.7);
+  --shadow-lg:0 32px 64px -24px rgba(0,0,0,.8);
+}}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:72px}
+body{margin:0;font:16px/1.75 var(--font);color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img,svg{display:block;max-width:100%}
+a{color:var(--pink);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+h1,h2,h3,h4{color:var(--ink);margin:0;line-height:1.3;font-weight:800}
+p,ul,ol,figure{margin:0}
+p,li{text-wrap:pretty}
+h1,h2,h3{text-wrap:balance}
+ul,ol{padding:0;list-style:none}
+code,kbd{font-family:var(--mono);font-size:.9em}
+:focus-visible{outline:3px solid #4f9cf7;outline-offset:2px;border-radius:8px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 20px}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.nw{white-space:nowrap}
+.skip{position:absolute;left:-9999px;top:12px;z-index:99;padding:8px 14px;border-radius:10px;background:var(--card);color:var(--ink)}
+.skip:focus{left:16px}
+
+/* 导航 */
+.nav{position:sticky;top:0;z-index:40;background:var(--nav);-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:8px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;color:var(--ink);font-weight:800;font-size:17px;line-height:1.15}
+.brand:hover{text-decoration:none}
+.brand img{width:36px;height:36px}
+.brand small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.links{display:none;gap:2px}
+.links a,.menu a{color:var(--text);padding:8px 12px;border-radius:10px;font-size:15px}
+.links a:hover,.menu a:hover{background:var(--pink-soft);color:var(--ink);text-decoration:none}
+.gh{display:none;align-items:center;gap:6px;color:var(--ink);font-weight:700;font-size:14px;padding:7px 12px;border:1px solid var(--line-2);border-radius:999px}
+.gh:hover{text-decoration:none;border-color:var(--pink-line)}
+.gh .i{width:18px;height:18px}
+.menu{position:relative}
+.menu summary{list-style:none;cursor:pointer;display:grid;place-items:center;width:40px;height:40px;border-radius:12px;color:var(--ink)}
+.menu summary::-webkit-details-marker{display:none}
+.menu[open] summary{background:var(--pink-soft)}
+.menu nav{position:absolute;right:0;top:48px;display:grid;min-width:180px;padding:8px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg)}
+@media (min-width:920px){.links,.gh{display:flex}.menu{display:none}}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 24px;border-radius:999px;border:1px solid transparent;font-weight:700;font-size:16px;line-height:1;white-space:nowrap;transition:transform .15s,background-color .15s,border-color .15s,box-shadow .15s}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn .i{width:19px;height:19px}
+.btn-primary{background:var(--btn);color:#fff;box-shadow:0 12px 26px -12px rgba(200,51,122,.75)}
+.btn-primary:hover{background:var(--btn-hover)}
+.btn-ghost{background:var(--card);color:var(--ink);border-color:var(--line-2)}
+.btn-ghost:hover{border-color:var(--pink-line)}
+.btn-sm{height:38px;padding:0 16px;font-size:14px}
+.more{display:inline-flex;align-items:center;gap:4px;font-weight:700}
+.more .i{width:17px;height:17px;transition:transform .15s}
+.more:hover .i{transform:translateX(2px)}
+
+/* 首屏 */
+.hero{position:relative;overflow:hidden;padding:36px 0 64px;background:radial-gradient(900px 520px at 88% -8%,var(--pink-soft),transparent 62%),radial-gradient(760px 460px at -8% 104%,var(--blue-soft),transparent 62%)}
+.hero .wrap{display:grid;gap:44px;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:4px 14px 4px 5px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink);font-size:14px;box-shadow:var(--shadow)}
+.pill:hover{text-decoration:none;border-color:#9cc2fb}
+.pill b{padding:1px 9px;border-radius:999px;background:linear-gradient(135deg,#4f9cf7,#1d6fd8);color:#fff;font-size:12px}
+.pill .i{width:15px;height:15px;color:var(--muted)}
+h1{margin:22px 0 18px;font-size:clamp(2.25rem,1.35rem + 3.3vw,3.85rem);line-height:1.18;letter-spacing:-.01em}
+.hl{color:var(--pink)}
+@supports (-webkit-background-clip:text){.hl{background:linear-gradient(110deg,#ef5fa5,#c8337a 55%,#7d6be6);-webkit-background-clip:text;background-clip:text;color:transparent}}
+@media (prefers-color-scheme:dark){@supports (-webkit-background-clip:text){.hl{background-image:linear-gradient(110deg,#ffb0d6,#ff7ab8 50%,#a9a0ff)}}}
+.lead{max-width:33em;font-size:clamp(1.04rem,.98rem + .3vw,1.18rem)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:30px 0 22px}
+.facts{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:14px;color:var(--muted)}
+.facts li{display:flex;align-items:center;gap:6px}
+.facts .i{width:16px;height:16px;color:#1f9d6b}
+
+.art{position:relative;width:100%;max-width:540px;margin:0 auto;aspect-ratio:1/1.04}
+.stage{position:absolute;inset:15% 0 0 11%;border-radius:40px;background:var(--stage);border:1px solid var(--line);box-shadow:var(--shadow-lg)}
+.chibi{position:absolute;right:3%;bottom:2.5%;width:60%;height:auto;filter:drop-shadow(0 18px 22px rgba(30,37,71,.2));animation:float 6s ease-in-out infinite}
+.js .chibi:not(.ok){opacity:0}
+.chibi.ok{transition:opacity .5s}
+@keyframes float{50%{transform:translateY(-8px)}}
+.spark{position:absolute;width:24px;height:24px;color:#7eb2f7;animation:twinkle 3.2s ease-in-out infinite}
+.spark.p{color:#f58fc3}
+@keyframes twinkle{50%{transform:scale(.7) rotate(15deg);opacity:.6}}
+.run,.toast{position:absolute;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-lg)}
+.run{left:0;bottom:6%;width:min(56%,300px);padding:14px 16px 8px;border-radius:20px;font-size:13.5px;line-height:1.5}
+.run-hd{display:flex;align-items:center;gap:8px;padding-bottom:10px;color:var(--ink);font-weight:800;font-size:14.5px}
+.live{display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:2px 9px;border-radius:999px;background:rgba(31,157,107,.12);color:#16855a;font-size:12px;font-weight:700}
+.live::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite}
+@media (prefers-color-scheme:dark){.live{color:#6fe0ae}}
+@keyframes pulse{50%{opacity:.3}}
+.run li{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px dashed var(--line);color:var(--ink)}
+.run li em{margin-left:auto;font-style:normal;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tk{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;flex:none;background:var(--btn);color:#fff}
+.tk .i{width:12px;height:12px;stroke-width:3}
+.tk.spin{background:none;border:2px solid var(--blue-soft);border-top-color:#4f9cf7;animation:spin .9s linear infinite}
+.tk.wait{background:none;border:2px dashed var(--line-2)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{top:3%;left:0;width:min(53%,282px);display:flex;gap:11px;padding:12px 14px;border-radius:18px;font-size:13px;line-height:1.5}
+.toast img{width:36px;height:36px;flex:none}
+.toast b{display:block;color:var(--ink)}
+.toast time{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap}
+.run li em{white-space:nowrap}
+/* 手机上角色贴右上，任务卡压在腿部，不挡住脸和相机 */
+@media (max-width:599px){
+  .art{aspect-ratio:1/1.15}
+  .stage{inset:16% 0 0 5%;border-radius:30px}
+  .chibi{top:3%;bottom:auto;right:0;width:58%}
+  .toast{width:56%;padding:10px 12px;gap:9px;font-size:12px}
+  .toast img{width:30px;height:30px}
+  .toast time{display:none}
+  .run{width:74%;bottom:2%;padding:12px 12px 6px;font-size:12.5px}
+  .run-hd{padding-bottom:6px;font-size:13.5px}
+  .run li{gap:8px;padding:5px 0}
+}
+@media (min-width:960px){
+  .hero{padding:64px 0 96px}
+  .hero .wrap{grid-template-columns:1.06fr .94fr;gap:32px}
+  .art{margin-right:0}
+}
+
+/* 数据条 */
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;margin-top:-28px;position:relative;background:var(--line);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:var(--shadow)}
+.stats div{padding:18px 22px;background:var(--card)}
+.stats b{display:block;color:var(--ink);font-size:clamp(1.4rem,1.1rem + 1vw,1.85rem);line-height:1.25;font-weight:800}
+.stats span{font-size:13.5px;color:var(--muted)}
+@media (min-width:768px){.stats{grid-template-columns:repeat(4,1fr)}}
+
+/* 通用区块 */
+.sec{padding:80px 0}
+.sec-hd{max-width:720px;margin-bottom:44px}
+.sec-hd.c{margin-left:auto;margin-right:auto;text-align:center}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px;color:var(--pink);font-size:14.5px;font-weight:800}
+.eyebrow .i{width:16px;height:16px}
+h2{font-size:clamp(1.75rem,1.2rem + 1.9vw,2.6rem)}
+.sec-hd p{margin-top:14px;font-size:1.07rem}
+.card{position:relative;padding:26px;background:var(--card);border:1px solid var(--line);border-radius:24px}
+.card h3{margin:16px 0 8px;font-size:19px}
+.card p{font-size:15px}
+.ic{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;background:var(--pink-soft);color:var(--pink)}
+.ic.b{background:var(--blue-soft);color:var(--blue)}
+.ic .i{width:23px;height:23px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.chips li{padding:3px 12px;border-radius:999px;background:var(--bg-soft);border:1px solid var(--line);color:var(--ink);font-size:13.5px}
+@media (min-width:960px){.sec{padding:112px 0}}
+
+/* 功能 */
+.feat{display:grid;gap:16px}
+.meter{margin-top:20px;padding:16px 18px;border-radius:18px;background:var(--bg-soft);border:1px solid var(--line)}
+.meter div{display:flex;justify-content:space-between;font-size:14px;color:var(--ink)}
+.meter b{font-variant-numeric:tabular-nums}
+.bar{height:10px;margin-top:10px;border-radius:999px;background:var(--pink-soft);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#f58fc3,#c8337a)}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:20px;text-align:center;font-size:12px;color:var(--muted)}
+.week span{padding:8px 0;border-radius:10px;background:var(--bg-soft);border:1px solid var(--line)}
+.week .on{background:var(--btn);border-color:transparent;color:#fff;font-weight:700}
+@media (min-width:720px){.feat{grid-template-columns:repeat(2,1fr)}}
+@media (min-width:1024px){.feat{grid-template-columns:repeat(3,1fr)}.span2{grid-column:span 2}}
+
+/* 界面与流程 */
+.flow{background:var(--bg-soft);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.flow .wrap{display:grid;gap:48px;align-items:center}
+.shot{position:relative;padding:0 9% 13% 0}
+/* 截图自带 Windows 11 窗口圆角（透明像素），阴影用 drop-shadow 才能贴合圆角 */
+.shot img{width:100%;height:auto}
+.shot>picture img{filter:drop-shadow(0 2px 4px rgba(30,37,71,.08)) drop-shadow(0 28px 40px rgba(30,37,71,.22))}
+.shot .phone{position:absolute;right:0;bottom:0;width:26%;transform:rotate(5deg)}
+.shot .phone img{filter:drop-shadow(0 22px 30px rgba(30,37,71,.35))}
+.steps{display:grid;gap:26px;margin-top:32px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:44px 1fr;gap:16px}
+.steps li::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:var(--card);border:1px solid var(--pink-line);color:var(--pink);font-weight:800;font-size:18px}
+.steps h3{margin-bottom:4px;font-size:18px}
+.steps p{font-size:15px}
+@media (min-width:960px){.flow .wrap{grid-template-columns:1.2fr 1fr;gap:72px}}
+
+/* AI 助手：深色面板，与粉色的玩家区块区分开 */
+.agent{position:relative;overflow:hidden;background:#141a36;color:#c4c9e6}
+.agent::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(640px 420px at 88% 0%,rgba(79,156,247,.24),transparent 70%),radial-gradient(520px 380px at 0% 100%,rgba(239,95,165,.16),transparent 70%)}
+.agent .wrap{position:relative;display:grid;gap:48px}
+.agent h2,.agent h3,.agent strong{color:#fff}
+.agent .eyebrow{color:#8ab8ff}
+.agent a{color:#9cc3ff}
+.agent .sec-hd{margin-bottom:28px}
+.who{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.who li{padding:3px 12px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#e6e9fb;font-size:13.5px}
+.tablist{display:inline-flex;gap:4px;padding:4px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)}
+html:not(.js) .tablist{display:none}
+.tablist button{height:38px;padding:0 16px;border:0;border-radius:10px;background:none;color:#c4c9e6;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
+.tablist [aria-selected=true]{background:#fff;color:#141a36}
+.panel{margin-top:18px}
+.panel+.panel{margin-top:18px}
+.js .panel+.panel{margin-top:18px}
+.panel p{font-size:15px}
+.prompt{display:flex;gap:12px;align-items:flex-start;margin:12px 0;padding:14px 14px 14px 18px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:15px;line-height:1.7}
+.prompt>span{flex:1;min-width:0;overflow-wrap:anywhere}
+.copy{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;flex:none}
+.copy:hover{background:rgba(255,255,255,.14)}
+.copy.ok{background:#1f9d6b;border-color:#1f9d6b}
+.copy .i{width:15px;height:15px}
+.path{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0}
+.path span{padding:4px 10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px}
+.path .i{width:15px;height:15px;color:#7c84ad}
+.agent pre{margin:12px 0;padding:14px 16px;border-radius:14px;background:#0b0f22;border:1px solid rgba(255,255,255,.1);color:#cdd3f0;font:13px/1.8 var(--mono);overflow-x:auto}
+.agent pre i{font-style:normal;color:#7c84ad}
+.term{border-radius:20px;background:#0b0f22;border:1px solid rgba(255,255,255,.12);box-shadow:0 40px 80px -30px rgba(0,0,0,.7);overflow:hidden}
+.term-hd{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);color:#8d94bb;font-size:13px}
+.term-hd i{width:11px;height:11px;border-radius:50%;background:#ff6b8b}
+.term-hd i+i{background:#ffd27a}
+.term-hd i+i+i{background:#6fe0ae}
+.term-hd span{margin-left:8px}
+.term-bd{padding:18px 18px 22px;font:13px/1.75 var(--mono);color:#cdd3f0;overflow-x:auto}
+.term-bd p{white-space:pre-wrap}
+.term .me{margin-bottom:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07);color:#fff;font-family:var(--font);font-size:14px}
+.term .ai{margin-top:12px;color:#fff;font-family:var(--font);font-size:14px}
+.term .ai::before{content:"●";margin-right:8px;color:#8ab8ff}
+.term .c{color:#8ab8ff}
+.term .d{color:#7c84ad}
+.term .g{color:#6fe0ae}
+.term .y{color:#ffd27a}
+.js .term-bd>*{opacity:0;transform:translateY(4px)}
+.play .term-bd>*{animation:line .4s ease forwards;animation-delay:calc(var(--d,0) * 1ms)}
+/* 三月七趴在对话窗口上沿：底边压住窗口边框 14px，像把手臂搭在窗口上 */
+.peek{display:block;position:relative;z-index:1;width:min(290px,60%);margin:0 7% -14px auto}
+.peek img{width:100%;height:auto}
+.js .peek{opacity:0;transform:translateY(14px)}
+.play .peek{opacity:1;transform:none;transition:opacity .5s,transform .6s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes line{to{opacity:1;transform:none}}
+.caps{display:grid;gap:12px;margin-top:28px}
+.caps li{display:flex;gap:12px;padding:16px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);font-size:14.5px}
+.caps .i{width:22px;height:22px;color:#8ab8ff;margin-top:2px}
+.caps strong{display:block;margin-bottom:2px;font-size:15.5px}
+.guard{margin-top:24px;padding:18px 20px;border-radius:16px;border:1px dashed rgba(138,184,255,.4);font-size:14.5px}
+.guard h3{display:flex;align-items:center;gap:8px;font-size:15.5px;margin-bottom:8px}
+.guard h3 .i{color:#6fe0ae}
+.guard li{position:relative;padding-left:16px}
+.guard li::before{content:"";position:absolute;left:2px;top:.75em;width:5px;height:5px;border-radius:50%;background:#8ab8ff}
+.agent-links{display:flex;flex-wrap:wrap;gap:10px 22px;margin-top:24px;font-size:14.5px}
+@media (min-width:640px){.caps{grid-template-columns:1fr 1fr}}
+@media (min-width:1024px){.agent .wrap{grid-template-columns:1fr 1.05fr;gap:64px;align-items:start}}
+@media (min-width:1024px) and (min-height:720px){.demo{position:sticky;top:72px}}
+
+/* 下载 */
+/* 抱着礼物盒的三月七：宽屏放在标题左侧（她面朝右，正好"递"向下面的卡片），其余尺寸放在标题上方 */
+.dl-hd{position:relative}
+.gift{display:block;width:120px;margin:0 auto 6px}
+.gift img{width:100%;height:auto}
+@media (min-width:1200px){.gift{position:absolute;left:-200px;top:-16px;width:180px;margin:0}}
+.dl-meta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;margin-top:16px;font-size:14px;color:var(--muted)}
+.dl-meta b{color:var(--ink)}
+.chans{display:grid;gap:20px}
+.chan{display:flex;flex-direction:column;padding:30px;border-radius:26px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow)}
+.chan.rec{border:2px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(135deg,#f590c5,#9ec0f8) border-box}
+.chan-hd{display:flex;align-items:center;gap:14px}
+.chan-hd h3{font-size:21px}
+.chan-hd p{font-size:14px;color:var(--muted)}
+.badge{display:inline-block;margin-bottom:14px;padding:3px 11px;border-radius:999px;background:var(--pink-soft);color:var(--pink);font-size:13px;font-weight:800}
+.badge.g{background:var(--blue-soft);color:var(--blue)}
+.pros{display:grid;gap:10px;margin:20px 0 26px;font-size:15px}
+.pros li{display:flex;gap:10px}
+.pros .i{width:18px;height:18px;margin-top:4px;color:#1f9d6b}
+.pros .n .i{color:var(--muted)}
+.pros .n{color:var(--muted)}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;margin-top:auto;font-size:14.5px}
+.acts .btn{flex:1 1 auto}
+.which{display:flex;gap:12px;max-width:820px;margin:28px auto 0;padding:16px 20px;border-radius:18px;background:var(--card);border:1px solid var(--line);font-size:15px}
+.which .i{color:var(--blue);margin-top:4px}
+.on-phone{display:none;align-items:center;gap:12px;margin:0 auto 24px;padding:14px 16px;border-radius:16px;background:var(--blue-soft);color:var(--ink);font-size:14.5px}
+.on-phone .copy{border-color:var(--line-2);background:var(--card);color:var(--ink)}
+@media (max-width:720px) and (pointer:coarse){.on-phone{display:flex}}
+.start-t{margin:64px 0 18px;font-size:20px;text-align:center}
+.start{display:grid;gap:16px}
+.start h3{font-size:18px;margin:14px 0 6px}
+.start .card{padding:22px 24px}
+.start .n{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--btn);color:#fff;font-weight:800}
+.start code{padding:1px 6px;border-radius:6px;background:var(--bg-soft);border:1px solid var(--line);color:var(--ink);font-size:.88em}
+.env{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px 24px;margin-top:20px;font-size:14.5px}
+.resale{display:flex;gap:12px;margin-top:20px;padding:16px 20px;border-radius:18px;background:#fff7e6;border:1px solid #f5d9a3;color:#6b4a12;font-size:14.5px}
+.resale .i{color:#c47f0a;margin-top:3px}
+.resale strong{color:#5a3d0a}
+@media (prefers-color-scheme:dark){.resale{background:rgba(255,196,90,.08);border-color:rgba(255,196,90,.28);color:#f2d9a8}.resale strong{color:#ffe2a8}}
+@media (min-width:900px){.chans{grid-template-columns:1fr 1fr}.start{grid-template-columns:repeat(3,1fr)}}
+
+/* 常见问题 */
+.faq{max-width:840px;margin:0 auto;border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{position:relative;padding:20px 44px 20px 0;list-style:none;cursor:pointer;color:var(--ink);font-weight:700;font-size:17px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"";position:absolute;right:8px;top:50%;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-70%) rotate(45deg);transition:transform .2s}
+.faq details[open] summary::after{transform:translateY(-25%) rotate(225deg)}
+.faq details div{padding:0 0 22px;font-size:15.5px}
+.faq details div p+p{margin-top:8px}
+.faq-more{margin-top:28px;text-align:center}
+
+/* 社区与支持 */
+.comm{display:grid;gap:16px;grid-template-columns:1fr 1fr}
+.comm a{display:flex;flex-direction:column;gap:2px;padding:22px;border-radius:22px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:14px;transition:border-color .15s,transform .15s}
+.comm a:hover{text-decoration:none;border-color:var(--pink-line);transform:translateY(-2px)}
+.comm strong{margin-top:12px;color:var(--ink);font-size:16.5px}
+.support{display:grid;gap:16px;margin-top:16px}
+.support .card{display:flex;gap:16px;padding:22px}
+.support h3{margin:0 0 4px;font-size:16.5px}
+.support p{font-size:14.5px}
+.support details summary{display:inline-flex;margin-top:6px;color:var(--pink);font-weight:700;font-size:14.5px;cursor:pointer;list-style:none}
+.support details summary::-webkit-details-marker{display:none}
+.support details img{width:180px;height:180px;margin-top:12px;border-radius:12px;border:1px solid var(--line)}
+.thanks{margin-top:40px;font-size:14px;color:var(--muted);text-align:center}
+.thanks a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+@media (min-width:900px){.comm{grid-template-columns:repeat(4,1fr)}.support{grid-template-columns:repeat(3,1fr)}}
+
+/* 页脚 */
+.foot{padding:56px 0 36px;background:var(--bg-soft);border-top:1px solid var(--line);font-size:14px}
+.foot-grid{display:grid;gap:32px 24px;grid-template-columns:1fr 1fr}
+.foot-brand{grid-column:1/-1}
+.foot-brand p{max-width:22em;margin-top:12px;color:var(--muted)}
+.foot h4{margin-bottom:12px;font-size:14px}
+.foot ul{display:grid;gap:8px}
+.foot ul a{color:var(--text)}
+.legal{display:grid;gap:6px;margin-top:40px;padding-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+@media (min-width:900px){.foot-grid{grid-template-columns:1.6fr repeat(4,1fr)}.foot-brand{grid-column:auto}}
+
+@media (min-width:768px){.wrap{padding:0 32px}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .term-bd>*,.js .peek{opacity:1;transform:none}
+}
+</style>
 </head>
-
 <body>
-  <div id="app"></div>
-  <script>
-    window.$docsify = {
-      name: 'March7thAssistant',
-      repo: 'moesnow/March7thAssistant',
-      loadSidebar: true,
-      subMaxLevel: 3,
-      auto2top: true,
-      themeColor: '#f18cb9',
-      loadSidebar: './assets/docs/_sidebar.md'
-    }
-  </script>
-  <!-- <script src="//unpkg.com/docsify/lib/docsify.min.js"></script> -->
-  <script src="assets\docsify\docsify.min.js"></script>
-</body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 6.5C10.5 5 8 4.5 4 4.5v13c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-13c-4 0-6.5.5-8 2Zm0 0v13"/></symbol>
+  <symbol id="i-gh" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.89 1.53 2.34 1.09 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.6 9.6 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 1.5c.9 6.1 4.4 9.6 10.5 10.5-6.1.9-9.6 4.4-10.5 10.5-.9-6.1-4.4-9.6-10.5-10.5C7.6 11.1 11.1 7.6 12 1.5Z"/></symbol>
+  <symbol id="i-day" viewBox="0 0 24 24"><path d="M7.5 3v3m9-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm4 9.5 2 2 4-4"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4Zm0 2H5.5a2.5 2.5 0 0 0 2.6 3.9M16 6h2.5a2.5 2.5 0 0 1-2.6 3.9M12 13v3.5m-3.5 3.5h7m-6-3.5h5"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="M9 4.5 3.5 7v12.5L9 17l6 2.5 5.5-2.5V4.5L15 7 9 4.5Zm0 0V17m6-10v12.5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><path d="M12 7.5V12l3 2m6-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 1 1 12 0v5l1.5 2h-15L6 16Zm4 4a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.6 9.1 4.75 4.75 0 0 0 7 18.5Z"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path d="M4 9h16v10H4V9Zm5 0V6.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V9M4 13.5h16"/></symbol>
+  <symbol id="i-flow" viewBox="0 0 24 24"><path d="M4 4h6v6H4V4Zm10 10h6v6h-6v-6ZM7 10v2.5A1.5 1.5 0 0 0 8.5 14H14"/></symbol>
+  <symbol id="i-term" viewBox="0 0 24 24"><path d="M4 5h16v14H4V5Zm3.5 4.5L10 12l-2.5 2.5m5 .5H16"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M9 9h10.5v10.5H9V9Zm-4 6V4.5h10.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5.5c0 4.2 2.9 7.9 7 9.5 4.1-1.6 7-5.3 7-9.5V6l-7-3Zm-3 9 2 2 4-4"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m0 0-5-5m5 5-5 5"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M14 5h5v5m0-5-8 8m6 1v5H5V7h5"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 19V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8.5L5 19Zm4-10h6m-6 3h4"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 3 10.5l7 2.5 2.5 7L21 3Zm-11 10 4-4"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M4 6.5h16v12H4v-12Zm6 3.5v5l4.5-2.5L10 10ZM8 3l2 3.5M16 3l-2 3.5"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5Zm4 4.5h8m-8 3h5"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9L12 3.5Z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3 5 14h6l-1 7 8-11h-6l1-7Z"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="m4 7.5 8-4.5 8 4.5v9L12 21l-8-4.5v-9Zm0 0 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><path d="M12 11v5m0-8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19L12 4Zm0 6v4.5m0 3h.01"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-1.6.1-1.4-.1-1.4 2-1.6-2-3.4-2.4.9a7.7 7.7 0 0 0-2.4-1.4L14.2 2.5h-4.4l-.4 2.6A7.7 7.7 0 0 0 7 6.5l-2.4-.9-2 3.4 2 1.6-.1 1.4.1 1.4-2 1.6 2 3.4 2.4-.9a7.7 7.7 0 0 0 2.4 1.4l.4 2.6h4.4l.4-2.6a7.7 7.7 0 0 0 2.4-1.4l2.4.9 2-3.4-2-1.6Z"/></symbol>
+</svg>
+<a class="skip" href="#main">跳到正文</a>
 
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="三月七小助手 首页">
+      <picture><source type="image/webp" srcset="/website/img/m7a-mark-120.webp"><img src="/website/img/m7a-mark-120.png" width="36" height="36" alt=""></picture>
+      <span>三月七小助手<small>March7thAssistant</small></span>
+    </a>
+    <nav class="links" aria-label="主导航">
+      <a href="#features">功能</a>
+      <a href="#agent">AI 助手</a>
+      <a href="#download">下载</a>
+      <a href="/docs/#/assets/docs/Tutorial">使用教程</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+    <a class="gh" href="https://github.com/moesnow/March7thAssistant" target="_blank" rel="noopener"><svg class="i"><use href="#i-gh"/></svg>12k</a>
+    <a class="btn btn-primary btn-sm" href="#download">下载</a>
+    <details class="menu">
+      <summary aria-label="打开菜单"><svg class="i"><use href="#i-menu"/></svg></summary>
+      <nav aria-label="菜单">
+        <a href="#features">功能</a>
+        <a href="#agent">AI 助手</a>
+        <a href="#download">下载</a>
+        <a href="/docs/#/assets/docs/Tutorial">使用教程</a>
+        <a href="#faq">常见问题</a>
+        <a href="https://github.com/moesnow/March7thAssistant" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </details>
+  </div>
+</header>
+
+<main id="main">
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <a class="pill" href="#agent"><b>新</b>现在可以让 AI 助手帮你操作<svg class="i"><use href="#i-chev"/></svg></a>
+      <h1>日常交给三月七，<br><span class="hl">开拓留给你。</span></h1>
+      <p class="lead">免费开源的《崩坏：星穹铁道》自动化助手。每日实训、清体力、差分宇宙等日常与周常一键完成，还能定时启动、把结果推送到手机。</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#download"><svg class="i"><use href="#i-down"/></svg>免费下载</a>
+        <a class="btn btn-ghost" href="/docs/#/assets/docs/Tutorial"><svg class="i"><use href="#i-book"/></svg>使用教程</a>
+      </div>
+      <ul class="facts">
+        <li><svg class="i"><use href="#i-check"/></svg>完全免费 · GPL-3.0 开源</li>
+        <li><svg class="i"><use href="#i-check"/></svg>Windows 10 / 11</li>
+        <li><svg class="i"><use href="#i-check"/></svg><span data-version="hero">持续更新中</span></li>
+      </ul>
+    </div>
+
+    <div class="art" aria-hidden="true">
+      <div class="stage"></div>
+      <svg class="spark" style="top:24%;left:17%"><use href="#i-spark"/></svg>
+      <svg class="spark p" style="top:43%;left:5%;width:16px;height:16px;animation-delay:-1.2s"><use href="#i-spark"/></svg>
+      <svg class="spark p" style="top:7%;right:3%;width:18px;height:18px;animation-delay:-2s"><use href="#i-spark"/></svg>
+      <picture>
+        <source type="image/avif" srcset="/website/img/m7a-chibi-440.avif 440w, /website/img/m7a-chibi-600.avif 600w" sizes="(min-width: 960px) 290px, 52vw">
+        <source type="image/webp" srcset="/website/img/m7a-chibi-440.webp 440w, /website/img/m7a-chibi-600.webp 600w" sizes="(min-width: 960px) 290px, 52vw">
+        <img class="chibi" src="/website/img/m7a-chibi-440.webp" width="954" height="1471" alt="" fetchpriority="high" onload="this.classList.add('ok')">
+      </picture>
+      <div class="toast">
+        <img src="/website/img/m7a-mark-120.webp" width="36" height="36" alt="">
+        <div><b>三月七小助手|･ω･)</b>每日实训已完成</div>
+        <time>04:16</time>
+      </div>
+      <div class="run">
+        <div class="run-hd">完整运行<span class="live">运行中</span></div>
+        <ul>
+          <li><span class="tk"><svg class="i"><use href="#i-check"/></svg></span>兑换码<em>已领取</em></li>
+          <li><span class="tk"><svg class="i"><use href="#i-check"/></svg></span>每日实训<em>500 / 500</em></li>
+          <li><span class="tk"><svg class="i"><use href="#i-check"/></svg></span>清体力 · 拟造花萼<em>已完成</em></li>
+          <li><span class="tk spin"></span>差分宇宙 · 积分奖励<em>进行中</em></li>
+          <li><span class="tk wait"></span>领取奖励<em>等待中</em></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="stats">
+    <div><b>12k+</b><span>GitHub Star</span></div>
+    <div><b>220 万+</b><span>GitHub 累计下载</span></div>
+    <div><b>70+</b><span>位开源贡献者</span></div>
+    <div><b>2023 年起</b><span>持续更新至今</span></div>
+  </div>
+</div>
+
+<section class="sec" id="features" aria-labelledby="features-t">
+  <div class="wrap">
+    <div class="sec-hd">
+      <p class="eyebrow"><svg class="i"><use href="#i-spark"/></svg>功能</p>
+      <h2 id="features-t">每天要做的事，三月七都记得</h2>
+      <p>从凌晨 4 点刷新的每日实训，到每周一次的积分奖励，按你的设置自动安排：没开启的不会动，做完的不会重复。</p>
+    </div>
+    <div class="feat">
+      <article class="card span2">
+        <span class="ic"><svg class="i"><use href="#i-day"/></svg></span>
+        <h3>日常，一键清空</h3>
+        <p>自动识别还没完成的每日实训；按你选的副本清空开拓力，可搭配后备开拓力、燃料、支援角色与培养目标；最后统一领取奖励。</p>
+        <ul class="chips"><li>每日实训</li><li>清体力</li><li>委托</li><li>领取奖励</li><li>兑换码</li><li>历战余响</li></ul>
+        <div class="meter" aria-hidden="true">
+          <div><span>今日活跃度</span><b>500 / 500</b></div>
+          <div class="bar"><i style="width:100%"></i></div>
+        </div>
+      </article>
+      <article class="card">
+        <span class="ic b"><svg class="i"><use href="#i-trophy"/></svg></span>
+        <h3>周常，按周期安排</h3>
+        <p>积分奖励与逐光捡金在每周刷新后自动处理，难度、关卡与阵容都能分别设置。</p>
+        <ul class="chips"><li>差分宇宙</li><li>货币战争</li><li>混沌回忆</li><li>虚构叙事</li><li>末日幻影</li><li>模拟宇宙</li></ul>
+        <div class="week" aria-hidden="true"><span class="on">一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+      </article>
+      <article class="card">
+        <span class="ic b"><svg class="i"><use href="#i-map"/></svg></span>
+        <h3>锄大地</h3>
+        <p>自动跑图、清理大世界里的敌人，可从中断的地图继续。基于开源项目 Fhoe-Rail。</p>
+      </article>
+      <article class="card">
+        <span class="ic"><svg class="i"><use href="#i-clock"/></svg></span>
+        <h3>定时开工，做完收工</h3>
+        <p>任务刷新或体力回满时自动启动，也能开机自启；完成后可以声音提醒、关闭游戏或者关机。</p>
+      </article>
+      <article class="card">
+        <span class="ic"><svg class="i"><use href="#i-bell"/></svg></span>
+        <h3>结果推送到手机</h3>
+        <p>支持 QQ、微信、钉钉、飞书、Telegram、Bark、邮件等 20 多种推送方式，还能附上截图。</p>
+      </article>
+      <article class="card">
+        <span class="ic b"><svg class="i"><use href="#i-cloud"/></svg></span>
+        <h3>云·星穹铁道</h3>
+        <p>通过浏览器运行云游戏，支持无窗口后台运行；macOS、Linux、Docker 和安卓 Termux 上也能用。</p>
+      </article>
+      <article class="card">
+        <span class="ic b"><svg class="i"><use href="#i-flow"/></svg></span>
+        <h3>流程编排</h3>
+        <p>把图片点击、文字识别、等待、按键和条件循环自由组合，做出属于你自己的自动化流程。</p>
+      </article>
+      <article class="card">
+        <span class="ic"><svg class="i"><use href="#i-tool"/></svg></span>
+        <h3>实用工具箱</h3>
+        <p>抽卡记录导出（UIGF / SRGF）、自动对话、解锁帧率、触屏模式，以及多账号切换。</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="sec flow" aria-labelledby="flow-t">
+  <div class="wrap">
+    <figure class="shot">
+      <picture>
+        <source type="image/avif" srcset="/website/img/app-home-800.avif 800w, /website/img/app-home-1200.avif 1200w" sizes="(min-width: 1160px) 560px, (min-width: 960px) 48vw, 88vw">
+        <source type="image/webp" srcset="/website/img/app-home-800.webp 800w, /website/img/app-home-1200.webp 1200w" sizes="(min-width: 1160px) 560px, (min-width: 960px) 48vw, 88vw">
+        <img src="/website/img/app-home-800.webp" width="1920" height="1280" alt="三月七小助手的图形界面：首页列出完整运行、日常、货币战争、差分宇宙、锄大地、逐光捡金等任务" loading="lazy" decoding="async">
+      </picture>
+      <picture class="phone">
+        <source type="image/avif" srcset="/website/img/app-phone-360.avif 360w, /website/img/app-phone-480.avif 480w" sizes="(min-width: 960px) 160px, 24vw">
+        <source type="image/webp" srcset="/website/img/app-phone-360.webp 360w, /website/img/app-phone-480.webp 480w" sizes="(min-width: 960px) 160px, 24vw">
+        <img src="/website/img/app-phone-360.webp" width="860" height="1714" alt="手机 QQ 收到的推送：每日实训已完成、货币战争奖励已领取、开拓力剩余 37/240" loading="lazy" decoding="async">
+      </picture>
+    </figure>
+    <div>
+      <p class="eyebrow"><svg class="i"><use href="#i-spark"/></svg>上手</p>
+      <h2 id="flow-t">设置一次，之后每天自动</h2>
+      <p style="margin-top:14px;font-size:1.07rem">Fluent 风格的图形界面，所有设置都能点选完成，不需要编辑配置文件。</p>
+      <ol class="steps">
+        <li><div><h3>选好要做的事</h3><p>勾选每天和每周要完成的任务，选好清体力的副本与周常玩法的难度。</p></div></li>
+        <li><div><h3>定好什么时候做</h3><p>每天任务刷新后、体力回满时，或者开机时自动开始，也可以随时手动一键运行。</p></div></li>
+        <li><div><h3>等着收消息</h3><p>完成情况和截图推送到手机，游戏自动关闭，你只需要上线享受开拓。</p></div></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="sec agent" id="agent" aria-labelledby="agent-t">
+  <div class="wrap">
+    <div>
+      <div class="sec-hd">
+        <p class="eyebrow"><svg class="i"><use href="#i-spark"/></svg>新功能 · AI 助手</p>
+        <h2 id="agent-t">动动嘴，<span class="nw">让 AI 助手替你操作</span></h2>
+        <p>Claude Code、Codex、DeepSeek Harness 等能执行命令的 AI 助手，可以帮你安装三月七小助手、运行任务、修改设置、查看日志和排查问题。不用 AI 也完全没关系，图形界面可以完成所有操作。</p>
+        <ul class="who"><li>Claude Code</li><li>Codex</li><li>DeepSeek Harness</li><li>其他支持 Skill 的 AI 助手</li></ul>
+      </div>
+
+      <div class="tabs">
+        <div class="tablist" role="tablist" aria-label="开始方式">
+          <button role="tab" id="t-new" aria-controls="p-new" aria-selected="true">还没安装</button>
+          <button role="tab" id="t-has" aria-controls="p-has" aria-selected="false" tabindex="-1">已经安装</button>
+          <button role="tab" id="t-dev" aria-controls="p-dev" aria-selected="false" tabindex="-1">命令行</button>
+        </div>
+        <div class="panel" id="p-new" role="tabpanel" aria-labelledby="t-new">
+          <p>把这句话发给你的 AI 助手，它会按说明下载官方正式版、校验文件并解压到新目录：</p>
+          <div class="prompt"><span id="prompt-install">帮我安装三月七小助手，说明见 https://m7a.top/assets/agent/skills/march7th-assistant/SKILL.md</span><button class="copy" type="button" data-copy="prompt-install"><svg class="i"><use href="#i-copy"/></svg><span>复制</span></button></div>
+          <p>首次打开时的免责声明需要你本人阅读并确认，AI 助手不会代你点击。</p>
+        </div>
+        <div class="panel" id="p-has" role="tabpanel" aria-labelledby="t-has">
+          <p>在小助手里复制一段提示词，粘贴给 AI 助手即可。提示词里已经带上了本机的安装目录和版本：</p>
+          <div class="path"><span>设置</span><svg class="i"><use href="#i-chev"/></svg><span>关于</span><svg class="i"><use href="#i-chev"/></svg><span>AI 助手</span><svg class="i"><use href="#i-chev"/></svg><span>复制提示词</span></div>
+          <p>支持 Skill 的 AI 助手会把说明保存到自己的技能目录（如 <code>~/.claude/skills/</code>），之后直接说「帮我清体力」就行。</p>
+        </div>
+        <div class="panel" id="p-dev" role="tabpanel" aria-labelledby="t-dev">
+          <p>AI 助手使用的是随程序发布的命令行入口 <code>m7a.exe</code>：不需要管理员权限，运行任务时弹出一次 UAC，输出和退出码直接返回终端。你也可以在脚本里用它：</p>
+<pre><code>.\m7a.exe --status                    <i># 安装、配置与运行状态（JSON）</i>
+.\m7a.exe --list --json               <i># 全部任务</i>
+.\m7a.exe daily --after-finish None   <i># 运行每日实训</i>
+.\m7a.exe --follow latest             <i># 查看最近一次运行</i></code></pre>
+        </div>
+      </div>
+
+      <ul class="caps">
+        <li><svg class="i"><use href="#i-box"/></svg><div><strong>安装与更新</strong>下载官方版本并校验 SHA-256，已有安装会直接复用</div></li>
+        <li><svg class="i"><use href="#i-term"/></svg><div><strong>运行任务</strong>完整运行、每日实训、清体力、差分宇宙……实时回传输出</div></li>
+        <li><svg class="i"><use href="#i-gear"/></svg><div><strong>修改设置</strong>按配置说明改体力计划、定时任务与消息推送</div></li>
+        <li><svg class="i"><use href="#i-info"/></svg><div><strong>排查问题</strong>读取运行记录、日志与失败截图，对照常见问题处理</div></li>
+      </ul>
+      <div class="guard">
+        <h3><svg class="i"><use href="#i-shield"/></svg>该由你决定的，仍然由你决定</h3>
+        <ul>
+          <li>免责声明必须由你本人阅读并确认，不会被代为点击或绕过</li>
+          <li>每次运行任务都要你在 UAC 弹窗中点「是」</li>
+          <li>默认不执行关机等完成后操作，CDK、推送令牌等不会出现在对话里</li>
+        </ul>
+      </div>
+      <p class="agent-links">
+        <a class="more" href="/docs/#/assets/docs/Agent">AI 助手使用说明<svg class="i"><use href="#i-arrow"/></svg></a>
+        <a class="more" href="https://github.com/moesnow/March7thAssistant/tree/main/assets/agent/skills/march7th-assistant" target="_blank" rel="noopener">查看 Skill 源文件<svg class="i"><use href="#i-out"/></svg></a>
+      </p>
+    </div>
+
+    <div class="demo">
+    <picture class="peek">
+      <source type="image/avif" srcset="/website/img/m7a-peek-320.avif 320w, /website/img/m7a-peek-640.avif 640w" sizes="(min-width: 1024px) 290px, 60vw">
+      <source type="image/webp" srcset="/website/img/m7a-peek-320.webp 320w, /website/img/m7a-peek-640.webp 640w" sizes="(min-width: 1024px) 290px, 60vw">
+      <img src="/website/img/m7a-peek-320.webp" width="1461" height="792" alt="" loading="lazy" decoding="async">
+    </picture>
+    <div class="term" role="img" aria-label="示例：让 AI 助手运行每日实训的对话过程">
+      <div class="term-hd"><i></i><i></i><i></i><span>对话示例</span></div>
+      <div class="term-bd" aria-hidden="true">
+        <p class="me" style="--d:100">帮我把今天的每日实训做了</p>
+        <p class="ai" style="--d:600">先确认一下小助手的状态。</p>
+        <p style="--d:1000"><span class="c">&gt; .\m7a.exe --status</span></p>
+        <p class="d" style="--d:1400">{ "first_run_completed": true, "game_path_exists": true, "active_run": null, … }</p>
+        <p class="ai" style="--d:2000">一切正常，开始运行。完成后的关机等操作这次不执行。</p>
+        <p style="--d:2500"><span class="c">&gt; .\m7a.exe daily --after-finish None</span></p>
+        <p class="y" style="--d:2900">需要管理员权限：请在 UAC 弹窗中点「是」</p>
+        <p style="--d:3500">开始执行：每日实训</p>
+        <p style="--d:3900">识别到 3 项未完成的实训，开始处理…</p>
+        <p class="g" style="--d:4500">每日实训已完成 · 退出码 0</p>
+        <p class="ai" style="--d:5100">搞定！今天的每日实训已经完成，活跃度 500 / 500。</p>
+      </div>
+    </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="download" aria-labelledby="download-t">
+  <div class="wrap">
+    <div class="sec-hd c dl-hd">
+      <picture class="gift">
+        <source type="image/avif" srcset="/website/img/m7a-gift-200.avif 200w, /website/img/m7a-gift-400.avif 400w" sizes="(min-width: 1200px) 180px, 120px">
+        <source type="image/webp" srcset="/website/img/m7a-gift-200.webp 200w, /website/img/m7a-gift-400.webp 400w" sizes="(min-width: 1200px) 180px, 120px">
+        <img src="/website/img/m7a-gift-200.webp" width="984" height="1144" alt="" loading="lazy" decoding="async">
+      </picture>
+      <p class="eyebrow"><svg class="i"><use href="#i-down"/></svg>下载</p>
+      <h2 id="download-t">下载三月七小助手</h2>
+      <p>软件本身完全免费。两个渠道提供的是同一份程序，按你的网络情况选择就好。</p>
+      <p class="dl-meta"><span>最新版本 <b data-version="full">最新正式版</b></span><span>Windows 10 / 11（64 位）</span><a href="/docs/#/assets/docs/Changelog">更新日志</a></p>
+    </div>
+
+    <div class="on-phone"><svg class="i"><use href="#i-info"/></svg><span style="flex:1">小助手需要在 Windows 电脑上运行，可以把下载页链接发到电脑上打开。</span><span id="page-link" hidden>https://m7a.top/#download</span><button class="copy" type="button" data-copy="page-link"><svg class="i"><use href="#i-copy"/></svg><span>复制链接</span></button></div>
+
+    <div class="chans">
+      <article class="chan rec">
+        <div><span class="badge">中国大陆推荐</span></div>
+        <div class="chan-hd">
+          <span class="ic"><svg class="i"><use href="#i-bolt"/></svg></span>
+          <div><h3>Mirror酱 高速下载</h3><p>国内 CDN 加速，大文件也能稳定下完</p></div>
+        </div>
+        <ul class="pros">
+          <li><svg class="i"><use href="#i-check"/></svg>国内网络下载快，不容易中断</li>
+          <li><svg class="i"><use href="#i-check"/></svg>填写 CDK 后，软件内更新同样走高速通道，并支持增量更新</li>
+          <li><svg class="i"><use href="#i-heart"/></svg>收入与开发者分成，直接支持三月七小助手的持续开发</li>
+          <li class="n"><svg class="i"><use href="#i-info"/></svg>付费服务，需要购买 CDK；同一个 CDK 也能用于 MAA 等其他接入 Mirror酱 的项目</li>
+        </ul>
+        <div class="acts">
+          <a class="btn btn-primary" href="https://mirrorchyan.com/zh/download?rid=March7thAssistant&amp;os=&amp;arch=&amp;channel=stable&amp;source=m7a-website" target="_blank" rel="noopener">前往 Mirror酱 下载<svg class="i"><use href="#i-out"/></svg></a>
+          <a href="https://mirrorchyan.com/?source=m7a-website" target="_blank" rel="noopener">了解 Mirror酱</a>
+        </div>
+      </article>
+      <article class="chan">
+        <div><span class="badge g">官方 · 免费</span></div>
+        <div class="chan-hd">
+          <span class="ic b"><svg class="i"><use href="#i-gh"/></svg></span>
+          <div><h3>GitHub 免费下载</h3><p>项目官方发布页，原版完整包</p></div>
+        </div>
+        <ul class="pros">
+          <li><svg class="i"><use href="#i-check"/></svg>完全免费，下载与软件内更新都不收费</li>
+          <li><svg class="i"><use href="#i-check"/></svg>发布页附带 SHA-256 校验值，可以核对文件是否完整</li>
+          <li><svg class="i"><use href="#i-check"/></svg>.7z 体积更小；.zip 用 Windows 自带功能就能解压</li>
+          <li class="n"><svg class="i"><use href="#i-info"/></svg>中国大陆访问 GitHub 可能很慢，甚至无法连接</li>
+        </ul>
+        <div class="acts">
+          <a class="btn btn-ghost" href="https://github.com/moesnow/March7thAssistant/releases/latest/download/March7thAssistant_full.7z"><svg class="i"><use href="#i-down"/></svg>下载完整包 .7z</a>
+          <a href="https://github.com/moesnow/March7thAssistant/releases/latest/download/March7thAssistant_full.zip">.zip 版本</a>
+          <a href="https://github.com/moesnow/March7thAssistant/releases/latest" target="_blank" rel="noopener">全部版本</a>
+        </div>
+      </article>
+    </div>
+    <p class="which"><svg class="i"><use href="#i-info"/></svg><span>不知道选哪个？能流畅打开 GitHub 就用 GitHub；下载很慢、经常中断，推荐 Mirror酱，顺便支持一下开发者。</span></p>
+
+    <h3 class="start-t">下载之后，三步开始</h3>
+    <div class="start">
+      <div class="card"><span class="n">1</span><h3>解压</h3><p>把完整包解压到一个新文件夹，例如 <code>D:\March7thAssistant</code>，不建议放在 <code>C:\Program Files</code>。</p></div>
+      <div class="card"><span class="n">2</span><h3>打开</h3><p>双击 <code>March7th Launcher.exe</code> 打开图形界面，阅读并确认免责声明。</p></div>
+      <div class="card"><span class="n">3</span><h3>开始</h3><p>确认游戏路径（一般会自动识别），点击「完整运行」，剩下的交给三月七。</p></div>
+    </div>
+    <div class="env">
+      <span>运行前请把游戏设为 <strong>1920×1080 窗口</strong>、语言设为<strong>简体中文</strong>，并关闭帧率显示、HDR、N 卡滤镜等会改变画面的功能。</span>
+      <a class="more" href="/docs/#/assets/docs/Tutorial">完整使用教程<svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+    <div class="env" style="margin-top:8px">
+      <span>macOS / Linux / 安卓：使用云·星穹铁道模式，见 <a href="https://github.com/moesnow/March7thAssistant#源码运行" target="_blank" rel="noopener">源码运行</a> · <a href="/docs/#/assets/docs/Docker">Docker 部署</a> · <a href="/docs/#/assets/docs/Termux">Termux 安卓部署</a></span>
+    </div>
+    <p class="resale"><svg class="i"><use href="#i-warn"/></svg><span><strong>三月七小助手从未授权任何人售卖。</strong>如果你在闲鱼等平台付费买到了它，请立即退款并举报商家。Mirror酱 是官方合作的下载加速服务，不属于售卖行为。</span></p>
+  </div>
+</section>
+
+<section class="sec flow" id="faq" aria-labelledby="faq-t">
+  <div class="wrap" style="display:block">
+    <div class="sec-hd c">
+      <p class="eyebrow"><svg class="i"><use href="#i-spark"/></svg>常见问题</p>
+      <h2 id="faq-t">下载之前，你可能想知道</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>真的免费吗？Mirror酱 为什么要收费？</summary>
+        <div><p>三月七小助手完全免费，基于 GPL-3.0 协议开源。Mirror酱 是为开源项目提供有偿分发的第三方平台，收取的是国内高速下载服务的费用，并与开发者分成；不购买也可以从 GitHub 免费下载和更新，功能完全一样。</p></div>
+      </details>
+      <details>
+        <summary>使用自动化工具有风险吗？</summary>
+        <div><p>有。《崩坏：星穹铁道》的公平游戏宣言禁止使用脚本等第三方工具，违规可能导致扣除收益乃至封禁账号。小助手主要通过识别游戏画面、模拟键鼠操作来完成任务，但这不代表没有风险。</p><p>首次启动时的免责声明有完整说明，请了解后自行决定是否使用。</p></div>
+      </details>
+      <details>
+        <summary>电脑和游戏需要怎么设置？</summary>
+        <div><p>需要 Windows 10 / 11 和 PC 版游戏客户端。游戏以 1920×1080 分辨率窗口化运行（不可用时再选全屏），语言设为简体中文，并关闭帧率监控、HDR、N 卡游戏滤镜等会遮挡或改变画面的软件。macOS / Linux 用户可以使用云·星穹铁道模式。</p></div>
+      </details>
+      <details>
+        <summary>运行的时候还能用电脑吗？</summary>
+        <div><p>本地游戏模式下，小助手会操作键鼠并把游戏切到前台，运行期间请不要动电脑。想后台挂机，可以开启云·星穹铁道的无窗口模式（锄大地、模拟宇宙除外），或者使用 <a href="/docs/#/assets/docs/Background">远程本地多用户桌面</a>。</p></div>
+      </details>
+      <details>
+        <summary>以后怎么更新？</summary>
+        <div><p>有新版本时小助手会弹窗提示，点击即可下载更新；也可以在设置页最底部手动检查更新。默认从 GitHub 免费下载更新，填写 Mirror酱 CDK 后可以在国内高速增量更新。</p></div>
+      </details>
+      <details>
+        <summary>被杀毒软件拦截或删除了怎么办？</summary>
+        <div><p>自动化工具容易被误报。请把小助手所在的文件夹加入杀毒软件的排除项（信任区），然后重新解压一次。具体步骤见 <a href="/docs/#/assets/docs/FAQ">常见问题文档</a>。</p></div>
+      </details>
+    </div>
+    <p class="faq-more"><a class="more" href="/docs/#/assets/docs/FAQ">查看全部常见问题<svg class="i"><use href="#i-arrow"/></svg></a></p>
+  </div>
+</section>
+
+<section class="sec" id="community" aria-labelledby="community-t">
+  <div class="wrap">
+    <div class="sec-hd">
+      <p class="eyebrow"><svg class="i"><use href="#i-heart"/></svg>社区</p>
+      <h2 id="community-t">一起让小助手变得更好</h2>
+      <p>三月七小助手由社区共同维护。遇到问题、有新想法，或者只是想聊聊，都欢迎来找我们。</p>
+    </div>
+    <div class="comm">
+      <a href="https://qm.qq.com/q/C3IryUWCQw" target="_blank" rel="noopener"><span class="ic"><svg class="i"><use href="#i-chat"/></svg></span><strong>QQ 群</strong>交流使用心得</a>
+      <a href="https://t.me/+ZgH5zpvFS8o0NGI1" target="_blank" rel="noopener"><span class="ic b"><svg class="i"><use href="#i-send"/></svg></span><strong>Telegram 群</strong>海外玩家交流</a>
+      <a href="https://space.bilibili.com/3706960664857075" target="_blank" rel="noopener"><span class="ic"><svg class="i"><use href="#i-play"/></svg></span><strong>哔哩哔哩</strong>最新动态与视频教程</a>
+      <a href="https://github.com/moesnow/March7thAssistant/issues" target="_blank" rel="noopener"><span class="ic b"><svg class="i"><use href="#i-msg"/></svg></span><strong>GitHub Issues</strong>反馈问题与建议</a>
+    </div>
+    <div class="support">
+      <div class="card"><span class="ic"><svg class="i"><use href="#i-star"/></svg></span><div><h3>点一个 Star</h3><p>在 GitHub 上 Star 本项目，就能在主页收到新版本通知。</p><a class="more" href="https://github.com/moesnow/March7thAssistant" target="_blank" rel="noopener" style="margin-top:6px">前往 GitHub<svg class="i"><use href="#i-out"/></svg></a></div></div>
+      <div class="card"><span class="ic"><svg class="i"><use href="#i-heart"/></svg></span><div><h3>赞助开发者</h3><p>请作者喝杯咖啡，或通过 Mirror酱 下载与更新，都是对持续维护的支持。</p><details><summary>显示微信赞赏码</summary><img src="/assets/screenshot/sponsor.jpg" width="180" height="180" alt="微信赞赏码" loading="lazy"></details></div></div>
+      <div class="card"><span class="ic b"><svg class="i"><use href="#i-flow"/></svg></span><div><h3>参与贡献</h3><p>修复问题、完善文档、适配新玩法，欢迎提交 Pull Request。</p><a class="more" href="/docs/#/CONTRIBUTING" style="margin-top:6px">阅读贡献指南<svg class="i"><use href="#i-arrow"/></svg></a></div></div>
+    </div>
+    <p class="thanks">感谢 <a href="https://github.com/CHNZYX/Auto_Simulated_Universe" target="_blank" rel="noopener">Auto_Simulated_Universe</a>、<a href="https://github.com/linruowuyin/Fhoe-Rail" target="_blank" rel="noopener">Fhoe-Rail</a>、<a href="https://github.com/RapidAI/RapidOCR" target="_blank" rel="noopener">RapidOCR</a>、<a href="https://github.com/zhiyiYo/PyQt-Fluent-Widgets" target="_blank" rel="noopener">PyQt-Fluent-Widgets</a>、<a href="https://mirrorchyan.com/?source=m7a-website" target="_blank" rel="noopener">Mirror酱</a> 等开源项目与合作伙伴。</p>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="/"><img src="/website/img/m7a-mark-120.webp" width="36" height="36" alt=""><span>三月七小助手<small>March7thAssistant</small></span></a>
+        <p>日常交给三月七，开拓留给你。免费开源的《崩坏：星穹铁道》自动化助手。</p>
+      </div>
+      <div><h4>产品</h4><ul><li><a href="#download">下载</a></li><li><a href="/docs/#/assets/docs/Changelog">更新日志</a></li><li><a href="/docs/#/assets/docs/TasksTable">每日实训支持表</a></li><li><a href="https://github.com/moesnow/March7thAssistant/releases" target="_blank" rel="noopener">历史版本</a></li></ul></div>
+      <div><h4>文档</h4><ul><li><a href="/docs/#/assets/docs/Tutorial">使用教程</a></li><li><a href="/docs/#/assets/docs/FAQ">常见问题</a></li><li><a href="/docs/#/assets/docs/Workflow">流程编排</a></li><li><a href="/docs/#/assets/docs/Background">后台运行</a></li></ul></div>
+      <div><h4>AI 助手</h4><ul><li><a href="/docs/#/assets/docs/Agent">使用说明</a></li><li><a href="/assets/agent/skills/march7th-assistant/SKILL.md">SKILL.md</a></li><li><a href="https://github.com/moesnow/March7thAssistant/tree/main/assets/agent/skills/march7th-assistant" target="_blank" rel="noopener">Skill 源文件</a></li></ul></div>
+      <div><h4>Language</h4><ul><li><a href="/docs/#/README_TW">繁體中文</a></li><li><a href="/docs/#/README_EN">English</a></li><li><a href="/docs/#/README_JA">日本語</a></li><li><a href="/docs/#/README_KR">한국어</a></li></ul></div>
+    </div>
+    <div class="legal">
+      <p>三月七小助手是社区开源项目，与米哈游 / HoYoverse 没有任何关联；《崩坏：星穹铁道》相关名称与角色形象的权利归其权利人所有。</p>
+      <p>© 2023–2026 March7thAssistant · 以<a href="https://github.com/moesnow/March7thAssistant/blob/main/LICENSE" target="_blank" rel="noopener">GPL-3.0</a> 协议开源</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // 最新版本号：仓库中的 version.txt 随发版提交更新，同源小文件，不依赖 GitHub API
+  var slots = document.querySelectorAll('[data-version]');
+  if (slots.length && window.fetch) {
+    fetch('/assets/config/version.txt').then(function (r) { return r.ok ? r.text() : ''; }).then(function (text) {
+      var v = text.trim(), m = /^v(\d{4})\.(\d{1,2})\.(\d{1,2})$/.exec(v);
+      if (!m) return; // 测试版（如 v2026.9.26-beta）不当作正式版展示
+      var date = +m[2] + ' 月 ' + +m[3] + ' 日';
+      for (var i = 0; i < slots.length; i++) {
+        slots[i].textContent = slots[i].getAttribute('data-version') === 'hero' ? '最新版 ' + v + ' · ' + date + '更新' : v + '（' + m[1] + ' 年 ' + date + '）';
+      }
+    }).catch(function () {});
+  }
+
+  // 复制按钮
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('[data-copy]');
+    if (!btn) return;
+    var text = document.getElementById(btn.getAttribute('data-copy')).textContent.trim();
+    var label = btn.querySelector('span'), old = label.textContent;
+    function done() {
+      btn.classList.add('ok'); label.textContent = '已复制';
+      setTimeout(function () { btn.classList.remove('ok'); label.textContent = old; }, 1800);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      try { if (document.execCommand('copy')) done(); } catch (_) {}
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+  });
+
+  // 选项卡（无 JS 时三块内容全部展开）
+  var tabs = [].slice.call(document.querySelectorAll('[role=tab]'));
+  function select(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', on);
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+  }
+  if (tabs.length) {
+    select(tabs[0]);
+    tabs[0].parentNode.addEventListener('click', function (e) {
+      var t = e.target.closest('[role=tab]'); if (t) select(t);
+    });
+    tabs[0].parentNode.addEventListener('keydown', function (e) {
+      var i = tabs.indexOf(document.activeElement), n = tabs.length;
+      if (i < 0) return;
+      if (e.key === 'ArrowRight') select(tabs[(i + 1) % n], true);
+      else if (e.key === 'ArrowLeft') select(tabs[(i - 1 + n) % n], true);
+      else return;
+      e.preventDefault();
+    });
+  }
+
+  // 对话示例进入视野后：三月七探出头，对话逐行出现
+  var demo = document.querySelector('.demo');
+  if (demo) {
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        if (entries[0].isIntersecting) { demo.classList.add('play'); io.disconnect(); }
+      }, { threshold: 0.3 });
+      io.observe(demo);
+    } else demo.classList.add('play');
+  }
+
+  // 页面加载完成后，空闲时预取文档页的脚本与样式：点「使用教程」时不用再等
+  window.addEventListener('load', function () {
+    var c = navigator.connection;
+    if (c && (c.saveData || /2g/.test(c.effectiveType))) return;
+    (window.requestIdleCallback || setTimeout)(function () {
+      ['/docs/', '/assets/docsify/docsify.min.js', '/assets/docsify/theme-simple.css'].forEach(function (href) {
+        var l = document.createElement('link'); l.rel = 'prefetch'; l.href = href; document.head.appendChild(l);
+      });
+    }, { timeout: 4000 });
+  });
+})();
+</script>
+</body>
 </html>

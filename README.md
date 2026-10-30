@@ -23,9 +23,9 @@
 
 **简体中文** | [繁體中文](./README_TW.md) | [English](./README_EN.md) | [日本語](./README_JA.md) | [한국어](./README_KR.md)
 
-快速上手，请访问：[使用教程](https://m7a.top/#/assets/docs/Tutorial)
+快速上手，请访问：[使用教程](https://m7a.top/docs/#/assets/docs/Tutorial)
 
-遇到问题，请在提问前查看：[FAQ](https://m7a.top/#/assets/docs/FAQ)
+遇到问题，请在提问前查看：[FAQ](https://m7a.top/docs/#/assets/docs/FAQ)
 
 </div>
 
@@ -33,7 +33,7 @@
 
 - **日常**：清体力、每日实训、领取奖励、委托、锄大地
 - **周常**：历战余响、模拟宇宙、差分宇宙、货币战争、混沌回忆、虚构叙事、末日幻影
-- **云·星穹铁道**：支持后台运行、无窗口运行和 [Docker](https://m7a.top/#/assets/docs/Docker) 运行
+- **云·星穹铁道**：支持后台运行、无窗口运行和 [Docker](https://m7a.top/docs/#/assets/docs/Docker) 运行
 - **抽卡记录导出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 标准
 - **工具箱**：自动对话、解锁帧率、兑换码、触屏模式
 - 每日实训等任务的完成情况支持**消息推送**
@@ -62,7 +62,7 @@ DeepSeek Harness、Codex、Claude Code 等能执行命令的 AI 助手都可以�
 - 已经安装：在「设置 → 关于 → AI 助手」点击「复制提示词」，粘贴给你的 AI 助手即可
 - 还没安装：对 AI 助手说「帮我安装三月七小助手，说明见 https://m7a.top/assets/agent/skills/march7th-assistant/SKILL.md 」
 
-AI 助手使用的是不需要管理员权限的命令行入口 `m7a.exe`（运行任务时会弹出一次 UAC），说明文件随程序一起发布在 [`assets/agent/`](assets/agent/skills/march7th-assistant/SKILL.md)，同样适用于其他支持 Skill 的 AI 助手。
+AI 助手使用的是不需要管理员权限的命令行入口 `m7a.exe`（运行任务时会弹出一次 UAC），说明文件随程序一起发布在 [`assets/agent/`](assets/agent/skills/march7th-assistant/SKILL.md)，同样适用于其他支持 Skill 的 AI 助手。详见 [AI 助手文档](https://m7a.top/docs/#/assets/docs/Agent)。
 
 ## 源码运行
 
