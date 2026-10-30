@@ -7,6 +7,25 @@ import threading
 import time
 
 
+# 窗口不可后台操作的原因（BackgroundInput 据此决定等待、报错还是交给原有错误处理）
+WINDOW_EXITED = 'exited'        # 游戏进程已退出
+WINDOW_MISSING = 'missing'      # 进程仍在，但找不到匹配的游戏窗口（启动中、重建窗口等）
+WINDOW_MINIMIZED = 'minimized'
+WINDOW_HIDDEN = 'hidden'
+WINDOW_EMPTY = 'empty'          # 客户区尺寸为 0
+
+# SendMessageTimeout 等待游戏处理鼠标消息的上限（毫秒）。正常一帧内完成，加载卡顿时按未完成处理。
+SEND_MOUSE_TIMEOUT_MS = 500
+
+
+class WindowGoneError(OSError):
+    """目标窗口句柄已失效（游戏关闭或重建窗口）。"""
+
+
+class CursorUnavailable(OSError):
+    """无法读写系统光标，通常是锁屏、UAC 等安全桌面正在显示。"""
+
+
 class _MouseEvent(ctypes.Structure):
     _fields_ = [('point', wintypes.POINT), ('data', wintypes.DWORD),
                 ('flags', wintypes.DWORD), ('time', wintypes.DWORD), ('extra', ctypes.c_size_t)]
@@ -108,6 +127,13 @@ class MouseProtection:
             self.on_expire(self)
 
 
+def _message_error(code):
+    # ERROR_INVALID_WINDOW_HANDLE：窗口已关闭或重建，按窗口失效处理而不是普通系统错误。
+    if code == 1400:
+        return WindowGoneError('游戏窗口已关闭或重建')
+    return ctypes.WinError(code)
+
+
 @dataclass(frozen=True)
 class WindowIdentity:
     hwnd: int
@@ -201,7 +227,9 @@ class WindowsInputApi:
         import win32gui
         import win32process
         import psutil
+        import pywintypes
         self.api, self.gui, self.process, self.psutil = win32api, win32gui, win32process, psutil
+        self._pywin_error = pywintypes.error
         self.user32 = ctypes.WinDLL('user32', use_last_error=True)
         self.user32.PostMessageW.argtypes = (wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
         self.user32.PostMessageW.restype = wintypes.BOOL
@@ -227,13 +255,51 @@ class WindowsInputApi:
             return identity
         raise RuntimeError('未找到匹配的游戏窗口')
 
+    def _window_call(self, window, call, *args):
+        """窗口查询在窗口被关闭后会抛出 pywin32 错误：统一转换为 WindowGoneError，交给调用方按窗口失效处理。"""
+        try:
+            return call(window.hwnd, *args)
+        except self._pywin_error as error:
+            if not self.gui.IsWindow(window.hwnd):
+                raise WindowGoneError('游戏窗口已关闭或重建') from error
+            raise
+
+    def process_running(self, process_name):
+        stem = Path(process_name).stem.casefold()
+        for process in self.psutil.process_iter(['name']):
+            if Path(process.info.get('name') or '').stem.casefold() == stem:
+                return True
+        return False
+
+    def inspect(self, title, process_name):
+        """返回 (窗口, 问题)：窗口可以后台操作时问题为 None，否则为 WINDOW_* 之一。"""
+        try:
+            window = self.resolve(title, process_name)
+        except Exception:
+            return None, WINDOW_MISSING if self.process_running(process_name) else WINDOW_EXITED
+        try:
+            if self.gui.IsIconic(window.hwnd):
+                return window, WINDOW_MINIMIZED
+            if not self.gui.IsWindowVisible(window.hwnd):
+                return window, WINDOW_HIDDEN
+            if not all(value > 0 for value in self.size(window)):
+                return window, WINDOW_EMPTY
+        except WindowGoneError:
+            return None, WINDOW_MISSING
+        if self.identity(window.hwnd) != window:
+            return None, WINDOW_MISSING  # 检查期间窗口被关闭或句柄被复用
+        return window, None
+
     def usable(self, window):
-        return (window is not None and self.identity(window.hwnd) == window
-                and self.gui.IsWindowVisible(window.hwnd) and not self.gui.IsIconic(window.hwnd)
-                and all(value > 0 for value in self.size(window)))
+        try:
+            return (window is not None and self.identity(window.hwnd) == window
+                    and self.gui.IsWindowVisible(window.hwnd) and not self.gui.IsIconic(window.hwnd)
+                    and all(value > 0 for value in self.size(window)))
+        except WindowGoneError:
+            return False
 
     def size(self, window):
-        _, _, width, height = self.gui.GetClientRect(window.hwnd)
+        _, _, width, height = self._window_call(window, self.gui.GetClientRect)
         return width, height
 
     def foreground(self):
@@ -301,7 +367,10 @@ class WindowsInputApi:
         return ForegroundWatch(self, window.hwnd)
 
     def cursor(self):
-        return self.api.GetCursorPos()
+        try:
+            return self.api.GetCursorPos()
+        except self._pywin_error as error:
+            raise CursorUnavailable(f'无法读取系统光标：{error}') from error
 
     def cursor_locked(self, window):
         """识别游戏的视角捕获：光标被限制在本窗口中心的一个点。"""
@@ -320,7 +389,10 @@ class WindowsInputApi:
         protection = getattr(self, '_mouse_protection', None)
         if protection is not None:
             protection.allow_move(point)
-        self.api.SetCursorPos(point)
+        try:
+            self.api.SetCursorPos(point)
+        except self._pywin_error as error:
+            raise CursorUnavailable(f'无法移动系统光标：{error}') from error
 
     def mouse_buttons_down(self):
         return any(self.api.GetAsyncKeyState(key) & 0x8000 for key in (1,2,4,5,6))
@@ -333,15 +405,15 @@ class WindowsInputApi:
         return protection
 
     def screen_to_client(self, window, point):
-        return self.gui.ScreenToClient(window.hwnd, point)
+        return self._window_call(window, self.gui.ScreenToClient, point)
 
     def client_to_screen(self, window, point):
-        return self.gui.ClientToScreen(window.hwnd, point)
+        return self._window_call(window, self.gui.ClientToScreen, point)
 
     def post(self, window, message, wparam=0, lparam=0):
         ctypes.set_last_error(0)
         if not self.user32.PostMessageW(window.hwnd, message, wparam, lparam):
-            raise ctypes.WinError(ctypes.get_last_error())
+            raise _message_error(ctypes.get_last_error())
 
     def send_mouse(self, window, message, wparam=0, lparam=0):
         """鼠标消息有序处理，避免旧 WM_MOUSEMOVE 在下一次定位后回写旧光标。"""
@@ -349,11 +421,11 @@ class WindowsInputApi:
         ctypes.set_last_error(0)
         # SMTO_BLOCK | SMTO_ABORTIFHUNG | SMTO_ERRORONEXIT；不允许无限等待游戏线程。
         if not self.user32.SendMessageTimeoutW(window.hwnd, message, wparam, lparam,
-                                               0x23, 100, ctypes.byref(result)):
+                                               0x23, SEND_MOUSE_TIMEOUT_MS, ctypes.byref(result)):
             error = ctypes.get_last_error()
             if error in (0, 1460):
                 raise TimeoutError('游戏未及时处理鼠标输入')
-            raise ctypes.WinError(error)
+            raise _message_error(error)
 
     def scan_code(self, vk):
         return self.api.MapVirtualKey(vk, 0)

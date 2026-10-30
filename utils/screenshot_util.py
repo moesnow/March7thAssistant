@@ -34,7 +34,13 @@ def save_error_screenshot(logger):
 
         # 尝试捕获截图
         try:
-            auto.take_screenshot()
+            if getattr(auto.input_handler, 'is_background', False) is True:
+                # 后台模式出错时窗口往往已不可用（最小化、游戏退出），只尝试一次，不再等待窗口恢复
+                from module.automation.automation import screenshot_retry_timeout
+                with screenshot_retry_timeout(0):
+                    auto.take_screenshot()
+            else:
+                auto.take_screenshot()
             # 验证截图是否成功捕获
             if auto.screenshot is not None:
                 auto.screenshot.save(filepath)

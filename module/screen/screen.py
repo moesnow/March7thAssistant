@@ -8,6 +8,7 @@ from utils.singleton import SingletonMeta
 from utils.logger.logger import Logger
 from typing import Optional
 from module.automation import auto
+from module.automation.background_input import GameWindowLost, InputInterrupted
 from module.config import cfg
 
 
@@ -310,6 +311,8 @@ class Screen(metaclass=SingletonMeta):
                 for p in image_path:
                     try:
                         r = auto.find_element(p, find_type, threshold, **kwargs)
+                    except (InputInterrupted, GameWindowLost):
+                        raise
                     except Exception as e:
                         self.logger.debug(f"查找图片 {p} 出错: {e}")
                         r = None
@@ -322,6 +325,9 @@ class Screen(metaclass=SingletonMeta):
                 return best
             else:
                 return auto.find_element(image_path, find_type, threshold, **kwargs)
+        except (InputInterrupted, GameWindowLost):
+            # 后台模式下游戏窗口持续不可用或游戏已退出：照常向上报告，不能当作「未匹配」反复重试
+            raise
         except Exception as e:
             self.logger.debug(f"_find_image 出错: {e}")
             return None
@@ -380,6 +386,9 @@ class Screen(metaclass=SingletonMeta):
                     },
                 )
                 self.logger.debug("执行了一个操作")
+            except InputInterrupted:
+                # 后台输入需要用户处理（例如锁屏后无法移动光标）：不能当作普通操作失败吞掉
+                raise
             except Exception as e:
                 self.logger.debug(f"未知的操作: {e}")
 

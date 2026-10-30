@@ -189,17 +189,18 @@ class Automation(metaclass=SingletonMeta):
         timeout = _screenshot_retry_timeout.get()
         while True:
             handler = getattr(self, 'input_handler', None)
-            if (getattr(handler, 'is_background', False) is True
-                    and not handler.is_available()):
-                from .background_input import InputInterrupted
-                raise InputInterrupted('后台游戏窗口不可操作，请恢复窗口后继续')
+            background = getattr(handler, 'is_background', False) is True
+            if background:
+                # 窗口暂时不可用（最小化、重建等）时等待恢复，与前台截图找不到窗口时的重试时限一致；
+                # 游戏进程已退出或超时则抛出写明原因的异常。
+                handler.wait_for_window(max(0.0, timeout - (time.monotonic() - start_time)))
             try:
                 result = Screenshot.take_screenshot(
                     self.window_title,
                     crop=crop,
                     use_background_screenshot=use_background_screenshot,
                     prefer_frame_screenshot=prefer_frame_screenshot,
-                    require_background=getattr(getattr(self, 'input_handler', None), 'is_background', False) is True,
+                    require_background=background,
                 )
                 if result:
                     self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
@@ -211,7 +212,7 @@ class Automation(metaclass=SingletonMeta):
                             self._debug_draw_crop_region(crop)
                     return result
                 elif timeout > 0:
-                    self.logger.error("截图失败：没有找到游戏窗口")
+                    self.logger.error("截图失败：未能获取游戏窗口画面" if background else "截图失败：没有找到游戏窗口")
             except Exception as e:
                 if timeout <= 0:
                     raise RuntimeError(f"截图失败：{e}") from e

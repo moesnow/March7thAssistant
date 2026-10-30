@@ -100,11 +100,10 @@ class LocalGameController(GameControllerBase):
     def switch_to_game(self, force=False) -> bool:
         from module.automation.input_base import background_enabled
         if not force and background_enabled(self._config):
-            available = self.get_input_handler().is_available()
-            if not available and self.is_game_running():
-                from module.automation.background_input import InputInterrupted
-                raise InputInterrupted('游戏窗口不可操作或已最小化，请恢复窗口后继续')
-            return available
+            # 后台模式不激活、不还原游戏窗口，只报告窗口当前能否后台操作；不阻塞也不抛出，图形界面也会调用。
+            # 窗口存在但暂时不可用（例如被最小化）时由启动流程等待，不能当作游戏未运行而重新启动。
+            from module.automation.windows_input import WindowsInputApi
+            return WindowsInputApi().inspect(self.window_name, self.process_name)[1] is None
         return super().switch_to_game()
 
     def stop_game(self) -> bool:

@@ -125,8 +125,10 @@ def test_mouse_messages_wait_for_target_processing_with_finite_timeout(native):
     n.api.user32.SendMessageTimeoutW = Mock(return_value=1)
     n.api.send_mouse(n.game, 0x200, 1, 0x01234567)
     args = n.api.user32.SendMessageTimeoutW.call_args.args
-    assert args[:6] == (10, 0x200, 1, 0x01234567, 0x23, 100)
+    assert args[:6] == (10, 0x200, 1, 0x01234567, 0x23, module.SEND_MOUSE_TIMEOUT_MS)
     assert ctypes.sizeof(args[6]._obj) == ctypes.sizeof(ctypes.c_void_p)
+    # 正常一帧（实测约 16ms）内即可完成；上限需覆盖短暂卡顿，又不能长时间占住输入锁。
+    assert 100 <= module.SEND_MOUSE_TIMEOUT_MS <= 1000
 
 
 @pytest.mark.skipif(sys.platform != 'win32', reason='Windows last-error API')
@@ -179,3 +181,91 @@ def test_closed_previous_window_during_activation_does_not_raise(native):
     n.api.process.GetWindowThreadProcessId = Mock(side_effect=OSError('window closed'))
     assert not n.api.focus(n.game,20,n.watch)
     n.api.user32.AttachThreadInput.assert_not_called()
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='Windows last-error API')
+def test_closed_window_is_reported_as_window_gone(native):
+    """窗口已关闭（ERROR_INVALID_WINDOW_HANDLE）不能混同为普通系统错误。"""
+    native.api.user32.SendMessageTimeoutW = Mock(return_value=0)
+    native.api.user32.PostMessageW = Mock(return_value=0)
+    original = ctypes.get_last_error
+    try:
+        ctypes.get_last_error = lambda: 1400
+        with pytest.raises(module.WindowGoneError):
+            native.api.send_mouse(native.game, 0x201, 1, 0)
+        with pytest.raises(module.WindowGoneError):
+            native.api.post(native.game, 0x100, 65, 0)
+    finally:
+        ctypes.get_last_error = original
+
+
+@pytest.fixture
+def inspector(native):
+    n = native
+    state = SimpleNamespace(iconic=False, visible=True, size=(1920, 1080), found=True, running=True)
+    def resolve(_title, _process):
+        if not state.found:
+            raise RuntimeError('未找到匹配的游戏窗口')
+        return n.game
+    n.api.resolve = resolve
+    n.api.process_running = lambda _name: state.running
+    n.api.gui = SimpleNamespace(IsIconic=lambda _hwnd: state.iconic, IsWindowVisible=lambda _hwnd: state.visible)
+    n.api.size = lambda _window: state.size
+    return SimpleNamespace(api=n.api, state=state, game=n.game, windows=n.windows)
+
+
+@pytest.mark.parametrize('change,expected', [
+    ({}, None),
+    ({'iconic': True}, module.WINDOW_MINIMIZED),
+    ({'visible': False}, module.WINDOW_HIDDEN),
+    ({'size': (0, 0)}, module.WINDOW_EMPTY),
+    ({'found': False}, module.WINDOW_MISSING),
+    ({'found': False, 'running': False}, module.WINDOW_EXITED),
+])
+def test_inspect_names_why_window_cannot_be_operated(inspector, change, expected):
+    """区分游戏已退出、窗口暂时找不到和最小化等状态，调用方据此等待或报告准确原因。"""
+    for key, value in change.items():
+        setattr(inspector.state, key, value)
+    window, problem = inspector.api.inspect('game', 'StarRail')
+    assert problem == expected
+    if expected is None:
+        assert window == inspector.game
+
+
+def test_inspect_rechecks_identity_after_state_queries(inspector):
+    """检查期间窗口关闭或句柄被复用时，按找不到窗口处理，不把新窗口当成原来的游戏。"""
+    inspector.windows[inspector.game.hwnd] = WindowIdentity(10, 999, 9)
+    assert inspector.api.inspect('game', 'StarRail') == (None, module.WINDOW_MISSING)
+
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='pywin32 错误类型')
+def test_queries_on_closed_window_become_window_gone(native):
+    """窗口在查询途中被关闭时，pywin32 错误转换为 WindowGoneError，usable/inspect 不把它当成普通错误抛出。"""
+    import pywintypes
+    n = native
+    n.api._pywin_error = pywintypes.error
+    def closed(*_args):
+        raise pywintypes.error(1400, 'GetClientRect', '无效的窗口句柄。')
+    n.api.gui = SimpleNamespace(GetClientRect=closed, ClientToScreen=closed, ScreenToClient=closed,
+                                IsWindow=lambda _hwnd: False, IsIconic=lambda _hwnd: False,
+                                IsWindowVisible=lambda _hwnd: True)
+    with pytest.raises(module.WindowGoneError):
+        n.api.size(n.game)
+    with pytest.raises(module.WindowGoneError):
+        n.api.client_to_screen(n.game, (0, 0))
+    assert n.api.usable(n.game) is False
+    n.api.resolve = lambda _title, _process: n.game
+    assert n.api.inspect('game', 'StarRail') == (None, module.WINDOW_MISSING)
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='pywin32 错误类型')
+def test_query_errors_on_live_window_are_not_hidden(native):
+    import pywintypes
+    n = native
+    n.api._pywin_error = pywintypes.error
+    def failed(*_args):
+        raise pywintypes.error(5, 'GetClientRect', '拒绝访问。')
+    n.api.gui = SimpleNamespace(GetClientRect=failed, IsWindow=lambda _hwnd: True)
+    with pytest.raises(pywintypes.error):
+        n.api.size(n.game)

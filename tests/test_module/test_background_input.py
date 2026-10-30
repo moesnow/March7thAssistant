@@ -5,8 +5,8 @@ from unittest.mock import Mock
 import pytest
 
 from module.automation import background_input as module
-from module.automation.background_input import BackgroundInput, InputInterrupted
-from module.automation.windows_input import WindowIdentity
+from module.automation.background_input import BackgroundInput, GameWindowLost, InputInterrupted
+from module.automation.windows_input import CursorUnavailable, WindowGoneError, WindowIdentity
 from utils.pause import RunStopRequested
 
 
@@ -52,6 +52,7 @@ class Api:
         self.buttons_down = False
         self.protections = []
         self.captured = False
+        self.problem = None  # 直接指定 inspect 结果：'exited' / 'missing' / 'hidden' ...
 
     def resolve(self, title, process_name):
         return self.game
@@ -61,6 +62,14 @@ class Api:
 
     def usable(self, window):
         return self.identity(window.hwnd)==window and (window!=self.game or not self.minimized)
+
+    def inspect(self, title, process_name):
+        if self.problem:
+            return (None if self.problem in ('exited', 'missing') else self.game), self.problem
+        game = self.resolve(title, process_name)
+        if self.identity(game.hwnd) != game:
+            return None, 'exited'
+        return game, ('minimized' if self.minimized else None)
 
     def size(self, window):
         return self.dimensions
@@ -220,10 +229,13 @@ def test_unicode_text_refocuses_last_click_in_same_session(backend):
 
 
 def test_minimized_game_sends_no_messages(backend):
+    """最小化时不发任何消息，按未完成返回，交给下一次截图等待窗口恢复，不直接结束任务。"""
     backend.api.minimized=True
-    with pytest.raises(InputInterrupted,match='最小化'):
-        backend.input.mouse_click(300,400)
+    assert backend.input.mouse_click(300,400) is False
+    assert backend.input.press_key('esc') is False
     assert backend.api.events==[]
+    warnings = [call.args[0] for call in backend.input.logger.warning.call_args_list]
+    assert len(warnings) == 1 and '最小化' in warnings[0]
 
 
 def test_destroyed_or_reused_window_never_receives_release(backend):
@@ -406,7 +418,7 @@ def test_close_releases_held_key_and_rejects_new_input(backend):
     b.banner.close.assert_called_once()
 
 
-def test_capture_while_minimized_releases_held_key_without_retry(backend,monkeypatch):
+def test_capture_while_minimized_releases_held_key_and_reports_after_bounded_wait(backend,monkeypatch):
     from module.automation.automation import Automation, Screenshot
     b=backend
     b.input.press_key_down('w')
@@ -416,10 +428,12 @@ def test_capture_while_minimized_releases_held_key_without_retry(backend,monkeyp
     automation.logger=Mock()
     screenshot=Mock(side_effect=AssertionError('must not capture minimized window'))
     monkeypatch.setattr(Screenshot,'take_screenshot',screenshot)
-    with pytest.raises(InputInterrupted):automation.take_screenshot()
+    with pytest.raises(InputInterrupted, match='最小化.*已等待 60 秒'):
+        automation.take_screenshot()
     assert posts(b.api,0x101)
     assert not b.input._keys
     screenshot.assert_not_called()
+    assert 60 <= b.clock.now < 62
 
 
 def test_recreated_target_drops_previous_mouse_position(backend):
@@ -548,7 +562,7 @@ def test_three_conflicts_then_idle_automatically_continue(backend, monkeypatch):
     idle = Mock(side_effect=[False, False, False, True])
     monkeypatch.setattr(b.input, '_wait_mouse_idle', idle)
     assert b.input.mouse_click(300, 400)
-    assert idle.call_args_list[-1].kwargs == {}
+    assert idle.call_args_list[-1].kwargs == {'timeout': None}  # 任务进程里一直等到空闲
     assert len(posts(b.api, 0x201)) == 1
     assert not b.api.protections
 
@@ -690,14 +704,17 @@ def test_scroll_mouse_conflict_only_retries_unsent_ticks(backend):
 
 
 def test_cursor_restore_failure_still_unlocks(backend, monkeypatch):
+    """恢复光标只是善后：失败时记录日志，已完成的点击和输入释放不受影响。"""
     b = backend
     b.input.protect_mouse = True
     monkeypatch.setattr(b.input, '_wait_mouse_idle', Mock(return_value=False))
     def fail_restore(point):
         if point == (7, 9): raise OSError('restore failed')
     b.api.on_move = fail_restore
-    with pytest.raises(OSError): b.input.mouse_click(300, 400)
+    assert b.input.mouse_click(300, 400) is True
     assert not b.api.protections[0].active
+    assert b.input._session is None and not b.input._mouse_down
+    assert any('恢复光标' in call.args[0] for call in b.input.logger.warning.call_args_list)
 
 
 @pytest.mark.parametrize('operation', ['click', 'scroll'])
@@ -838,10 +855,11 @@ def test_mouse_message_timeout_always_queues_release(backend, monkeypatch):
             raise TimeoutError('game did not respond')
         original_send(window, message, wp, lp)
     monkeypatch.setattr(b.api, 'send_mouse', send)
-    with pytest.raises(TimeoutError):
-        b.input.mouse_down(300, 400)
+    # 加载画面等导致游戏未及时处理：释放输入并按未完成返回，不再作为错误结束整个任务。
+    assert b.input.mouse_down(300, 400) is False
     assert posts(b.api, 0x202)
     assert not b.input._mouse_down and b.input._session is None
+    assert any('未及时处理' in call.args[0] for call in b.input.logger.warning.call_args_list)
 
 
 def test_cursor_mismatch_log_records_positions_without_claiming_user_moved(backend):
@@ -999,8 +1017,9 @@ def test_switch_while_processing_release_is_recoverable(backend, kind):
     def switch(message, *_args):
         if message in (0x101,0x202): b.api.change_focus(30)
     b.api.on_post = switch
-    if kind == 'key': assert b.input.press_key_up('w') is False
-    else: assert b.input.mouse_up() is False
+    # 释放已经发出：切窗只影响收尾等待，结果与正常释放一致，不让调用方误判为未完成。
+    if kind == 'key': assert b.input.press_key_up('w') is None
+    else: assert b.input.mouse_up() is None
     assert not b.input._keys and not b.input._mouse_down and b.input._session is None
     assert b.api.foreground() == 30
     b.input.logger.error.assert_not_called()
@@ -1042,3 +1061,228 @@ def test_focus_change_releases_active_mouse_protection(backend, monkeypatch):
     assert not b.api.protections[0].active
     assert posts(b.api,0x202) and not b.input._mouse_down
     assert b.api.foreground() == 30
+
+
+
+# ---------- 窗口暂时不可用、游戏退出与可恢复中断（04:01 偶发“后台游戏窗口不可操作”问题的回归）----------
+
+def sleep_hook(backend, monkeypatch, hook):
+    """在替身时钟每次 sleep 后执行 hook(clock.now)，模拟等待期间发生的窗口变化。"""
+    original = module.time.sleep
+    def sleep(duration):
+        original(duration)
+        hook(backend.clock.now)
+    monkeypatch.setattr(module.time, 'sleep', sleep)
+
+
+def test_window_restored_during_wait_continues_without_error(backend, monkeypatch):
+    b = backend
+    b.api.minimized = True
+    sleep_hook(b, monkeypatch, lambda now: setattr(b.api, 'minimized', now < 3))
+    b.input.wait_for_window(60)
+    assert 3 <= b.clock.now < 4
+    warnings = [call.args[0] for call in b.input.logger.warning.call_args_list]
+    assert len(warnings) == 1 and '最小化' in warnings[0] and '无需切到前台' in warnings[0]
+    b.input.logger.info.assert_called_with('游戏窗口已恢复，继续执行')
+
+
+def test_exited_game_is_reported_immediately_not_as_restore_window(backend):
+    """游戏进程已退出时立即说明原因，不等待、不提示“请恢复窗口”，交给原有错误处理。"""
+    b = backend
+    b.input.press_key_down('w')
+    b.api.problem = 'exited'
+    with pytest.raises(GameWindowLost, match='游戏进程已退出'):
+        b.input.wait_for_window(60)
+    assert b.clock.now < .5
+    assert not b.input._keys and b.input._session is None
+    assert not isinstance(GameWindowLost('x'), InputInterrupted)  # 不阻止启动流程重启游戏
+
+
+def test_window_missing_for_whole_timeout_is_reported_as_window_lost(backend):
+    b = backend
+    b.api.problem = 'missing'
+    with pytest.raises(GameWindowLost, match='未找到游戏窗口（已等待 60 秒）'):
+        b.input.wait_for_window(60)
+
+
+def test_hidden_window_timeout_names_state(backend):
+    b = backend
+    b.api.problem = 'hidden'
+    with pytest.raises(InputInterrupted, match='不可见'):
+        b.input.wait_for_window(5)
+
+
+def test_zero_timeout_reports_without_waiting_or_logging(backend):
+    """图形界面（自动对话）只尝试一次：不等待，也不刷屏日志。"""
+    b = backend
+    b.api.minimized = True
+    with pytest.raises(InputInterrupted, match='最小化'):
+        b.input.wait_for_window(0)
+    assert b.clock.now == 0
+    b.input.logger.warning.assert_not_called()
+
+
+def test_pause_during_window_wait_does_not_consume_timeout(backend, monkeypatch):
+    b = backend
+    b.api.minimized = True
+    paused = {'done': False}
+    def checkpoint():
+        if b.clock.now >= 10 and not paused['done']:
+            paused['done'] = True
+            b.clock.now += 120  # 用户暂停两分钟后继续
+    b.ctl.checkpoint = checkpoint
+    sleep_hook(b, monkeypatch, lambda now: setattr(b.api, 'minimized', now < 140))
+    b.input.wait_for_window(60)
+    assert paused['done'] and b.clock.now >= 140
+
+
+def test_stop_during_window_wait_ends_task(backend, monkeypatch):
+    b = backend
+    b.api.minimized = True
+    sleep_hook(b, monkeypatch, lambda now: setattr(b.ctl, 'cancelled', now >= 2))
+    with pytest.raises(RunStopRequested):
+        b.input.wait_for_window(60)
+    assert b.clock.now < 3
+
+
+def test_capture_waits_for_restored_window_then_captures(backend, monkeypatch):
+    from module.automation.automation import Automation, Screenshot
+    b = backend
+    b.api.minimized = True
+    sleep_hook(b, monkeypatch, lambda now: setattr(b.api, 'minimized', now < 2))
+    automation = object.__new__(Automation)
+    automation.input_handler, automation.logger, automation.window_title = b.input, Mock(), 'game'
+    automation._is_debug_enabled = lambda: False
+    frame = (object(), (0, 0, 1920, 1080), 1)
+    capture = Mock(return_value=frame)
+    monkeypatch.setattr(Screenshot, 'take_screenshot', capture)
+    assert automation.take_screenshot() == frame
+    capture.assert_called_once()
+    assert capture.call_args.kwargs['require_background'] is True
+
+
+def test_capture_after_game_exit_reports_exit(backend, monkeypatch):
+    from module.automation.automation import Automation, Screenshot
+    b = backend
+    b.api.problem = 'exited'
+    automation = object.__new__(Automation)
+    automation.input_handler, automation.logger = b.input, Mock()
+    monkeypatch.setattr(Screenshot, 'take_screenshot', Mock(side_effect=AssertionError('no capture')))
+    with pytest.raises(GameWindowLost, match='游戏进程已退出'):
+        automation.take_screenshot()
+
+
+@pytest.mark.parametrize('change', ['minimize', 'move'])
+def test_window_change_during_key_hold_releases_and_returns_not_completed(backend, change):
+    """输入途中窗口被最小化或移动：释放按键、按未完成返回，不再作为错误结束任务。"""
+    b = backend
+    def act(message, vk, _lp):
+        if message == 0x100 and vk == ord('W'):
+            if change == 'minimize': b.api.minimized = True
+            else: b.api.origin = (300, 300)
+    b.api.on_post = act
+    assert b.input.press_key('w', 1) is False
+    assert len(posts(b.api, 0x100)) == len(posts(b.api, 0x101)) == 1
+    assert not b.input._keys and b.input._session is None
+    b.input.logger.error.assert_not_called()
+
+
+def test_window_closed_while_sending_is_not_completed_and_clears_state(backend):
+    b = backend
+    def gone(message, *_):
+        if message == 0x201:
+            b.api.windows.pop(10)
+            raise WindowGoneError('游戏窗口已关闭或重建')
+    b.api.on_post = gone
+    assert b.input.mouse_click(300, 400) is False
+    assert not b.input._mouse_down and not b.input._keys and b.input._session is None
+
+
+def test_release_into_closed_window_is_not_a_cleanup_failure(backend):
+    b = backend
+    b.input.press_key_down('w')
+    def gone(message, *_):
+        if message == 0x101:
+            raise WindowGoneError('游戏窗口已关闭或重建')
+    b.api.on_post = gone
+    b.input.release_all()
+    assert not b.input._keys and b.input._session is None
+
+
+@pytest.mark.parametrize('interruption', ['focus', 'pause'])
+def test_completed_key_is_not_reported_as_failed_when_interrupted_while_settling(backend, interruption):
+    """ESC 已完整发出后才切窗/暂停：返回 True，避免调用方按失败重试而重复按 ESC。"""
+    b = backend
+    def act(message, vk, _lp):
+        if message == 0x101 and vk == 27:
+            if interruption == 'focus': b.api.change_focus(30)
+            else: b.ctl.paused = True
+    b.api.on_post = act
+    assert b.input.press_key('esc') is True
+    assert len(posts(b.api, 0x100)) == len(posts(b.api, 0x101)) == 1
+    assert b.input._session is None
+
+
+@pytest.mark.parametrize('offset', [(1, 0), (-3, 2)])
+def test_small_cursor_jitter_is_not_a_conflict_and_cursor_is_restored(backend, offset):
+    """实测游戏不回写光标；日志里 1~4 像素的偏差来自鼠标抖动，不应中止点击。"""
+    b = backend
+    def jitter(message, *_):
+        if message == 0x201:
+            b.api.point = (b.api.point[0] + offset[0], b.api.point[1] + offset[1])
+    b.api.on_post = jitter
+    assert b.input.mouse_click(300, 400) is True
+    assert len(posts(b.api, 0x201)) == len(posts(b.api, 0x202)) == 1
+    assert b.api.cursor() == (7, 9)
+
+
+def test_cursor_moved_beyond_tolerance_is_still_a_conflict(backend):
+    b = backend
+    def moved(message, *_):
+        if message == 0x201:
+            b.api.point = (b.api.point[0] + 4, b.api.point[1])
+    b.api.on_post = moved
+    assert b.input.mouse_click(300, 400) is False
+
+
+def test_gui_thread_idle_limit_gives_up_quickly_without_clicking(backend, monkeypatch):
+    """图形界面线程（自动对话）里，鼠标被持续使用时短暂等待后放弃，不长时间阻塞界面。"""
+    b = backend
+    sleep_hook(b, monkeypatch, lambda now: setattr(b.api, 'point', (round(now * 1000) % 1000 + 10, 900)))
+    with module.mouse_idle_limit(.3):
+        assert b.input.mouse_click(300, 400) is False
+    assert b.clock.now < 1
+    assert not posts(b.api, 0x201) and not b.api.protections
+    b.input.logger.warning.assert_not_called()
+
+
+def test_locked_desktop_reports_clear_reason_and_releases_inputs(backend):
+    b = backend
+    b.input.press_key_down('alt')
+    def locked():
+        raise CursorUnavailable('无法读取系统光标：(5, GetCursorPos, 拒绝访问。)')
+    b.api.cursor = locked
+    with pytest.raises(InputInterrupted, match='锁屏'):
+        b.input.mouse_click(300, 400)
+    assert not b.input._keys and not b.input._mouse_down and b.input._session is None
+
+
+
+def test_window_wait_is_not_repeated_within_same_unavailable_episode(backend):
+    """任务代码常吞掉异常后重试：同一段不可用期间只等待一次，不会每次截图再等 60 秒；窗口恢复后重新计时。"""
+    b = backend
+    b.api.minimized = True
+    with pytest.raises(InputInterrupted):
+        b.input.wait_for_window(60)
+    assert 60 <= b.clock.now < 62
+    started = b.clock.now
+    with pytest.raises(InputInterrupted, match='最小化'):
+        b.input.wait_for_window(60)
+    assert b.clock.now - started < .1
+    b.api.minimized = False
+    b.input.wait_for_window(60)
+    b.api.minimized = True
+    started = b.clock.now
+    with pytest.raises(InputInterrupted):
+        b.input.wait_for_window(5)
+    assert b.clock.now - started >= 5

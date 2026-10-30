@@ -162,6 +162,10 @@ def start_game():
         return None
 
     def start_local_game(starrail):
+        if getattr(auto.input_handler, 'is_background', False) is True and starrail.is_game_running():
+            # 后台模式不还原、不激活已运行的游戏：窗口暂时不可操作（例如被最小化）时等待用户还原，
+            # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
+            auto.input_handler.wait_for_window(60)
         if not starrail.switch_to_game():
             if cfg.auto_set_resolution_enable:
                 starrail.change_resolution(1920, 1080)
@@ -234,7 +238,8 @@ def start_game():
         except CloudGameLoginTimeoutError:
             raise
         except InputInterrupted:
-            # 用户切窗或最小化不能触发原有的“关闭游戏后重启”恢复路径。
+            # 窗口持续最小化等需要用户处理的情况不能触发原有的“关闭游戏后重启”恢复路径；
+            # 游戏进程退出（GameWindowLost）仍按普通错误重启游戏。
             raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")

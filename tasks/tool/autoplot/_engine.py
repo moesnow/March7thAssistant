@@ -32,6 +32,7 @@ from PySide6.QtCore import QObject, QTimer
 
 from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
+from module.automation.background_input import mouse_idle_limit
 from module.config import cfg
 from module.logger import log
 
@@ -43,6 +44,9 @@ from ._config import (
     Defaults,
 )
 from ._detector import SceneDetector
+
+# 引擎在图形界面线程上执行点击：后台模式下鼠标正被使用时只短暂等待，未空闲就交给下一轮监控，不阻塞界面。
+GUI_MOUSE_IDLE_LIMIT = 0.3
 
 
 class AutoPlot(QObject):
@@ -242,7 +246,7 @@ class AutoPlot(QObject):
                     self._invalidate_session()
                     self._transition_to(EngineState.MONITORING)
                     return
-                with screenshot_retry_timeout(0):
+                with screenshot_retry_timeout(0), mouse_idle_limit(GUI_MOUSE_IDLE_LIMIT):
                     callback(session)
             except Exception as e:
                 self._recover_after_error(e)
@@ -294,7 +298,7 @@ class AutoPlot(QObject):
 
         try:
             # GUI 定时回调中只尝试一次截图，失败后交给下一轮重试。
-            with screenshot_retry_timeout(0):
+            with screenshot_retry_timeout(0), mouse_idle_limit(GUI_MOUSE_IDLE_LIMIT):
                 self._monitor_tick()
         except Exception as e:
             self._recover_after_error(e)

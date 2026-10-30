@@ -6546,11 +6546,11 @@ msgid "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 msgstr ""
 "Protects only mouse operations; keyboard and pause hotkeys remain available."
 
-#: module/automation/background_input.py:291
+#: module/automation/background_input.py:427
 msgid "正在短暂保护鼠标，键盘和暂停热键仍可用"
 msgstr "Mouse briefly protected; keyboard and pause hotkeys remain available"
 
-#: module/automation/background_input.py:292
+#: module/automation/background_input.py:428
 msgid "等待鼠标空闲，任务将自动继续"
 msgstr "Waiting for the mouse to be idle. The task will resume automatically."
 

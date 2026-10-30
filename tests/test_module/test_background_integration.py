@@ -35,17 +35,65 @@ def test_factory_preserves_front_and_selects_background_without_window_calls(mon
 
 
 @pytest.mark.skipif(sys.platform!='win32',reason='本地输入仅限 Windows')
-def test_background_ready_does_not_relaunch_minimized_game(monkeypatch):
+@pytest.mark.parametrize('problem,expected',[(None,True),('minimized',False),('exited',False)])
+def test_background_switch_only_reports_window_state(monkeypatch,problem,expected):
+    """后台模式的 switch_to_game 不激活、不还原窗口，也不抛出：图形界面会在界面线程里调用它。"""
     from module.game.local import LocalGameController
-    from module.automation.background_input import InputInterrupted
+    import module.automation.windows_input as native
     control=object.__new__(LocalGameController)
     control._config=config()
-    control.get_input_handler=lambda:SimpleNamespace(is_available=lambda:False)
-    control.is_game_running=lambda:True
+    control.window_name,control.process_name='game','StarRail'
+    api=Mock()
+    api.inspect.return_value=(object(),problem)
+    monkeypatch.setattr(native,'WindowsInputApi',Mock(return_value=api))
+    monkeypatch.setattr(control,'set_foreground_window_with_retry',Mock(side_effect=AssertionError('must not activate')),raising=False)
+    assert control.switch_to_game() is expected
+    api.inspect.assert_called_once_with('game','StarRail')
+
+
+def start_game_with(monkeypatch, wait_for_window, running=True):
+    """以后台输入后端运行 tasks.game.start_game，所有游戏与窗口接口均为替身。"""
+    import tasks.game as module
+    controller=Mock()
+    controller.is_game_running.return_value=running
+    controller.switch_to_game.return_value=False
+    controller.start_game_process.return_value=False
+    backend=SimpleNamespace(is_background=True,wait_for_window=Mock(side_effect=wait_for_window))
+    monkeypatch.setattr(module,'auto',SimpleNamespace(input_handler=backend))
+    monkeypatch.setattr(module,'cfg',SimpleNamespace(cloud_game_enable=False,auto_set_resolution_enable=False,
+                                                     auto_battle_detect_enable=False,update_via_launcher=False))
+    monkeypatch.setattr(module,'StarRailController',Mock(return_value=controller))
+    monkeypatch.setattr(module,'log',Mock())
+    return module,controller,backend
+
+
+def test_background_start_waits_for_minimized_game_instead_of_relaunching(monkeypatch):
+    """已运行但被最小化的游戏：等待用户还原，超时如实报告；不重复启动，也不关闭游戏重启。"""
+    from module.automation.background_input import InputInterrupted
+    module,controller,backend=start_game_with(monkeypatch,InputInterrupted('游戏窗口已最小化（已等待 60 秒）'))
     with pytest.raises(InputInterrupted,match='最小化'):
-        control.switch_to_game()
-    control.is_game_running=lambda:False
-    assert control.switch_to_game() is False
+        module.start_game()
+    backend.wait_for_window.assert_called_once_with(60)
+    controller.start_game_process.assert_not_called()
+    controller.stop_game.assert_not_called()
+
+
+def test_background_start_restarts_game_after_process_exit(monkeypatch):
+    """等待期间游戏进程退出：与前台模式找不到窗口一样走原有的关闭游戏后重启流程。"""
+    from module.automation.background_input import GameWindowLost
+    module,controller,backend=start_game_with(monkeypatch,GameWindowLost('游戏进程已退出'))
+    controller.is_game_running.side_effect=[True,False,False]
+    with pytest.raises(RuntimeError,match='启动游戏失败'):
+        module.start_game()
+    assert controller.stop_game.call_count==3
+    assert controller.start_game_process.call_count==2
+
+
+def test_background_start_does_not_wait_when_game_is_not_running(monkeypatch):
+    module,controller,backend=start_game_with(monkeypatch,AssertionError('nothing to wait for'),running=False)
+    with pytest.raises(RuntimeError,match='启动游戏失败'):
+        module.start_game()
+    backend.wait_for_window.assert_not_called()
 
 
 def test_launcher_keeps_own_foreground_handler(monkeypatch):
