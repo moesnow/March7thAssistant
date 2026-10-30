@@ -85,15 +85,15 @@ msgstr "任務已停止"
 msgid "赞赏"
 msgstr "贊助"
 
-#: app/setting_interface.py:2908
+#: app/setting_interface.py:2909
 msgid "体力"
 msgstr "體力"
 
-#: app/setting_interface.py:2910
+#: app/setting_interface.py:2911
 msgid "日常"
 msgstr "日常"
 
-#: app/setting_interface.py:2911
+#: app/setting_interface.py:2912
 msgid "货币战争"
 msgstr "貨幣戰爭"
 
@@ -101,7 +101,7 @@ msgstr "貨幣戰爭"
 msgid "差分宇宙"
 msgstr "差分宇宙"
 
-#: app/setting_interface.py:2914
+#: app/setting_interface.py:2915
 msgid "锄大地"
 msgstr "鋤大地"
 
@@ -113,11 +113,11 @@ msgstr "逐光撿金"
 msgid "程序"
 msgstr "程式"
 
-#: app/setting_interface.py:2926
+#: app/setting_interface.py:2927
 msgid "云游戏"
 msgstr "雲端遊戲"
 
-#: app/setting_interface.py:2927
+#: app/setting_interface.py:2928
 msgid "推送"
 msgstr "推播"
 
@@ -125,11 +125,11 @@ msgstr "推播"
 msgid "杂项"
 msgstr "雜項"
 
-#: app/setting_interface.py:2933
+#: app/setting_interface.py:2934
 msgid "账号"
 msgstr "帳號"
 
-#: app/setting_interface.py:2557
+#: app/setting_interface.py:2558
 msgid "关于"
 msgstr "關於"
 
@@ -958,70 +958,70 @@ msgstr "啟用自動設定遊戲路徑"
 msgid "通过快捷方式、官方启动器、运行中的游戏进程等方式尝试自动配置游戏路径（支持国服和国际服）"
 msgstr "透過捷徑、官方啟動器、運行中的遊戲處理程序等方式嘗試自動設定遊戲路徑（支援陸服和國際服）"
 
-#: app/setting_interface.py:2541
+#: app/setting_interface.py:2542
 msgid "在用户登录时启动"
 msgstr "在使用者登入時啟動"
 
 msgid "通过任务计划程序在开机后自动执行完整运行模式（可能还需要自行配置电脑无需输入密码自动登录）"
 msgstr "透過工作排程器在開機後自動執行完整運行模式（可能還需要自行設定電腦無需輸入密碼自動登入）"
 
-#: app/setting_interface.py:2553
+#: app/setting_interface.py:2554
 msgid "修改按键"
 msgstr "修改按鍵"
 
-#: app/setting_interface.py:2554
+#: app/setting_interface.py:2555
 msgid "配置秘技、地图、跃迁、停止任务等按键设置"
 msgstr "設定秘技、地圖、躍遷、停止任務等按鍵設定"
 
-#: app/setting_interface.py:2559
+#: app/setting_interface.py:2560
 msgid "项目主页"
 msgstr "專案首頁"
 
-#: app/setting_interface.py:2577
+#: app/setting_interface.py:2578
 msgid "加入群聊"
 msgstr "加入群組"
 
-#: app/setting_interface.py:2579
+#: app/setting_interface.py:2580
 msgid "QQ群"
 msgstr "QQ 群"
 
-#: app/setting_interface.py:2589
+#: app/setting_interface.py:2590
 msgid "检查更新"
 msgstr "檢查更新"
 
-#: app/setting_interface.py:2592
+#: app/setting_interface.py:2593
 msgid "当前版本："
 msgstr "目前版本："
 
-#: app/setting_interface.py:2597
+#: app/setting_interface.py:2598
 msgid "更新源"
 msgstr "更新來源"
 
-#: app/setting_interface.py:2600
+#: app/setting_interface.py:2601
 msgid "海外源"
 msgstr "海外來源"
 
-#: app/setting_interface.py:2600
+#: app/setting_interface.py:2601
 msgid "Mirror 酱"
 msgstr "Mirror 醬"
 
-#: app/setting_interface.py:2602
+#: app/setting_interface.py:2603
 msgid "正式版"
 msgstr "正式版"
 
-#: app/setting_interface.py:2602
+#: app/setting_interface.py:2603
 msgid "公测版"
 msgstr "公測版"
 
-#: app/setting_interface.py:2606
+#: app/setting_interface.py:2607
 msgid "启动时检测更新"
 msgstr "啟動時檢查更新"
 
-#: app/setting_interface.py:3048
+#: app/setting_interface.py:3068
 msgid "关闭更新检测前请确认"
 msgstr "關閉更新檢查前請確認"
 
-#: app/setting_interface.py:3049
+#: app/setting_interface.py:3069
 msgid ""
 "仍然建议保留“启动时检测更新”。\n"
 "\n"
@@ -1039,19 +1039,19 @@ msgstr ""
 "\n"
 "很多看似「突然不能用了」的情況，本質上都是版本過舊導致的。若你已經了解這些影響，再繼續關閉更新檢查。"
 
-#: app/setting_interface.py:3052
+#: app/setting_interface.py:3072
 msgid "我已了解，继续关闭"
 msgstr "我已了解，繼續關閉"
 
-#: app/setting_interface.py:2612
+#: app/setting_interface.py:2613
 msgid "更新时下载完整包"
 msgstr "更新時下載完整包"
 
-#: app/setting_interface.py:2613
+#: app/setting_interface.py:2614
 msgid "更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。"
 msgstr "更新將包含依賴組件，建議保持開啟。若關閉此選項，需自行手動更新依賴組件，可能會導致出現不可預期的錯誤。"
 
-#: app/setting_interface.py:2626
+#: app/setting_interface.py:2627
 msgid "Mirror 酱 CDK"
 msgstr "Mirror 醬 CDK"
 
@@ -1558,11 +1558,11 @@ msgstr "星級"
 msgid "卡池"
 msgstr "卡池"
 
-#: app/setting_interface.py:3396
+#: app/setting_interface.py:3416
 msgid "复制成功(＾∀＾●)"
 msgstr "複製成功(＾∀＾●)"
 
-#: app/setting_interface.py:3406
+#: app/setting_interface.py:3426
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr "複製失敗(╥╯﹏╰╥)"
 
@@ -1924,31 +1924,31 @@ msgstr "關"
 msgid "开"
 msgstr "開"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周一"
 msgstr "週一"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周二"
 msgstr "週二"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周三"
 msgstr "週三"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周四"
 msgstr "週四"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周五"
 msgstr "週五"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周六"
 msgstr "週六"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周日"
 msgstr "週日"
 
@@ -2124,14 +2124,14 @@ msgstr "Chrome"
 msgid "Edge"
 msgstr "Edge"
 
-#: app/setting_interface.py:3365
+#: app/setting_interface.py:3385
 msgid "选择游戏路径"
 msgstr "選擇遊戲路徑"
 
 msgid "选择米哈游启动器路径"
 msgstr "選擇米哈遊啟動器路徑"
 
-#: app/setting_interface.py:3425
+#: app/setting_interface.py:3445
 msgid "脚本或程序路径"
 msgstr "腳本或程式路徑"
 
@@ -3333,7 +3333,7 @@ msgstr "領航員 / 名冶套"
 msgid "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项"
 msgstr "開啓後可能提升運行速度，若出現錯誤、異常或不穩定，請關閉此選項"
 
-#: app/setting_interface.py:3367
+#: app/setting_interface.py:3387
 msgid "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
 msgstr "腳本或可執行文件 (*.exe *.bat *.cmd *.ps1)"
 
@@ -3381,11 +3381,11 @@ msgstr "優先使用後臺截圖"
 msgid "默认开启，可以避免悬浮窗等干扰"
 msgstr "默認開啓，可以避免懸浮窗等干擾"
 
-#: app/setting_interface.py:2547
+#: app/setting_interface.py:2548
 msgid "启用调试模式"
 msgstr "啟用除錯模式"
 
-#: app/setting_interface.py:2548
+#: app/setting_interface.py:2549
 msgid "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗），用于调试自动化识别效果。仅 Windows 生效。"
 msgstr "開啟後會在螢幕上即時繪製檢測範圍框（透明懸浮窗），用於除錯自動化識別效果。僅 Windows 生效。"
 
@@ -4186,15 +4186,15 @@ msgstr "記憶窗口大小和位置"
 msgid "都不记忆"
 msgstr "都不記憶"
 
-#: app/setting_interface.py:2571
+#: app/setting_interface.py:2572
 msgid "立即前往"
 msgstr "立即前往"
 
-#: app/setting_interface.py:2573
+#: app/setting_interface.py:2574
 msgid "哔哩哔哩"
 msgstr "嗶哩嗶哩"
 
-#: app/setting_interface.py:2574
+#: app/setting_interface.py:2575
 msgid "欢迎关注我们的B站账号，获取最新动态和教程"
 msgstr "歡迎關注我們的B站賬號，獲取最新動態和教程"
 
@@ -4307,11 +4307,11 @@ msgid "已启用自定义优先级，{count} 个站点已禁用"
 msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
 msgstr[0] "已啓用自定義優先級，{count} 個站點已禁用"
 
-#: app/setting_interface.py:2619
+#: app/setting_interface.py:2620
 msgid "下载代理"
 msgstr "下載代理"
 
-#: app/setting_interface.py:2621
+#: app/setting_interface.py:2622
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "留空則使用系統代理；支持 http:// 和 socks5://"
 
@@ -4379,15 +4379,15 @@ msgstr "提升職級等級"
 msgid "快捷配置"
 msgstr "快捷配置"
 
-#: app/setting_interface.py:3462
+#: app/setting_interface.py:3482
 msgid "已应用快捷配置"
 msgstr "已應用快捷配置"
 
-#: app/setting_interface.py:3487
+#: app/setting_interface.py:3507
 msgid "当前为“提升晋升等级”模式"
 msgstr "當前爲“提升晉升等級”模式"
 
-#: app/setting_interface.py:3502
+#: app/setting_interface.py:3522
 msgid "当前为“提升职级等级”模式"
 msgstr "當前爲“提升職級等級”模式"
 
@@ -5031,21 +5031,21 @@ msgstr "重置次數"
 msgid "差分宇宙已完成次数"
 msgstr "差分宇宙已完成次數"
 
-#: app/setting_interface.py:3065
+#: app/setting_interface.py:3085
 msgid "今日已完成 {count} 次"
 msgid_plural "今日已完成 {count} 次|plural"
 msgstr[0] "今日已完成 {count} 次"
 
-#: app/setting_interface.py:3066
+#: app/setting_interface.py:3086
 msgid "本周已完成 {count} 次"
 msgid_plural "本周已完成 {count} 次|plural"
 msgstr[0] "本週已完成 {count} 次"
 
-#: app/setting_interface.py:3026
+#: app/setting_interface.py:3027
 msgid "启用前请确认用途"
 msgstr "啟用前請確認用途"
 
-#: app/setting_interface.py:3027
+#: app/setting_interface.py:3028
 msgid ""
 "此选项及其子选项用于配置反复刷取遗器经验和灵之珠泪，直到达到每周上限。\n"
 "默认运行次数为每周 34 次。\n"
@@ -5055,7 +5055,7 @@ msgstr ""
 "默認運行次數為每週 34 次。\n"
 "請確認你已經清楚了解這個功能的作用，並確保知道自己在做什麼後再開啟。"
 
-#: app/setting_interface.py:3030
+#: app/setting_interface.py:3031
 msgid "我已了解，继续开启"
 msgstr "我已了解，繼續開啟"
 
@@ -5271,23 +5271,23 @@ msgstr "今天到期"
 msgid "CDK 验证失败 (╥╯﹏╰╥)"
 msgstr "CDK 驗證失敗 (╥╯﹏╰╥)"
 
-#: app/setting_interface.py:2640
+#: app/setting_interface.py:2641
 msgid "匿名使用数据收集"
 msgstr "匿名使用資料收集"
 
-#: app/setting_interface.py:2641
+#: app/setting_interface.py:2642
 msgid "帮助开发者了解程序使用情况，改进功能"
 msgstr "幫助開發者了解程式使用情況，改進功能"
 
-#: app/setting_interface.py:2638
+#: app/setting_interface.py:2639
 msgid "查看说明"
 msgstr "查看說明"
 
-#: app/setting_interface.py:3071
+#: app/setting_interface.py:3091
 msgid "匿名使用数据收集说明"
 msgstr "匿名使用資料收集說明"
 
-#: app/setting_interface.py:3072
+#: app/setting_interface.py:3092
 msgid ""
 "我们只收集用于改进稳定性、兼容性和功能体验的匿名统计信息，不用于识别你的真实身份，也不会用于广告、画像或与第三方共享。\n"
 "\n"
@@ -5305,7 +5305,7 @@ msgstr ""
 "\n"
 "這些資料僅用於分析功能使用情況、發現相容性問題、評估版本穩定性，以及排查共通故障。"
 
-#: app/setting_interface.py:3139
+#: app/setting_interface.py:3159
 msgid "该参数用于配置该通知方式的请求字段"
 msgstr "該參數用於配置該通知方式的請求欄位"
 
@@ -5313,7 +5313,7 @@ msgstr "該參數用於配置該通知方式的請求欄位"
 msgid "教程"
 msgstr "教程"
 
-#: app/setting_interface.py:3323
+#: app/setting_interface.py:3343
 msgid "{name} 配置教程"
 msgstr "{name} 配置教程"
 
@@ -5944,7 +5944,7 @@ msgstr ""
 msgid "一键切换地图版本，并把三项特殊物品领取都设为「启用」"
 msgstr ""
 
-#: app/setting_interface.py:3463
+#: app/setting_interface.py:3483
 msgid "当前为“{name}”模式"
 msgstr ""
 
@@ -6048,59 +6048,59 @@ msgstr "群聊 group_openid"
 msgid "可选参数，群聊消息的接收群 group_openid"
 msgstr "可選參數，群聊訊息的接收群 group_openid"
 
-#: app/setting_interface.py:3177
+#: app/setting_interface.py:3197
 msgid "绑定单聊"
 msgstr "綁定單聊"
 
-#: app/setting_interface.py:3177
+#: app/setting_interface.py:3197
 msgid "绑定群聊"
 msgstr "綁定群聊"
 
-#: app/setting_interface.py:3179
+#: app/setting_interface.py:3199
 msgid "自动绑定收件标识"
 msgstr "自動綁定收件標識"
 
-#: app/setting_interface.py:3188
+#: app/setting_interface.py:3208
 msgid "正在绑定中"
 msgstr "正在綁定中"
 
-#: app/setting_interface.py:3189
+#: app/setting_interface.py:3209
 msgid "请等待当前绑定完成后再试"
 msgstr "請等待當前綁定完成後再試"
 
-#: app/setting_interface.py:3202
+#: app/setting_interface.py:3222
 msgid "无法绑定"
 msgstr "無法綁定"
 
-#: app/setting_interface.py:3203
+#: app/setting_interface.py:3223
 msgid "请先填写机器人 AppID 与 AppSecret"
 msgstr "請先填寫機器人 AppID 與 AppSecret"
 
-#: app/setting_interface.py:3216
+#: app/setting_interface.py:3236
 msgid "点击「开始监听」后，请在 {seconds} 秒内用 QQ 私聊机器人并发送验证码 {code}"
 msgstr "點選「開始監聽」後，請在 {seconds} 秒內用 QQ 私聊機器人並發送驗證碼 {code}"
 
-#: app/setting_interface.py:3218
+#: app/setting_interface.py:3238
 msgid "点击「开始监听」后，请在 {seconds} 秒内在群聊中 @ 机器人并发送验证码 {code}，或将机器人拉进目标群"
 msgstr "點選「開始監聽」後，請在 {seconds} 秒內在群聊中 @ 機器人並發送驗證碼 {code}，或將機器人拉進目標群"
 
-#: app/setting_interface.py:3222
+#: app/setting_interface.py:3242
 msgid "开始监听"
 msgstr "開始監聽"
 
-#: app/setting_interface.py:3252
+#: app/setting_interface.py:3272
 msgid "绑定成功"
 msgstr "綁定成功"
 
-#: app/setting_interface.py:3252
+#: app/setting_interface.py:3272
 msgid "绑定失败"
 msgstr "綁定失敗"
 
-#: app/setting_interface.py:3234
+#: app/setting_interface.py:3254
 msgid "监听中，请私聊机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "監聽中，請私聊機器人發送驗證碼 {code}（{seconds} 秒內）"
 
-#: app/setting_interface.py:3236
+#: app/setting_interface.py:3256
 msgid "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr "監聽中，請在群聊中 @ 機器人發送驗證碼 {code}（{seconds} 秒內）"
 
@@ -6192,7 +6192,7 @@ msgstr ""
 msgid "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
 msgstr ""
 
-#: app/setting_interface.py:2542
+#: app/setting_interface.py:2543
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 msgstr ""
 
@@ -6232,7 +6232,7 @@ msgstr "米哈遊 啟動器"
 msgid "HoYoPlay"
 msgstr "HoYoPlay"
 
-#: app/setting_interface.py:3377
+#: app/setting_interface.py:3397
 msgid "选择启动器路径"
 msgstr "選擇啟動器路徑"
 
@@ -6322,15 +6322,15 @@ msgstr ""
 msgid "更新接口未返回有效版本信息，请稍后重试"
 msgstr ""
 
-#: app/setting_interface.py:2565
+#: app/setting_interface.py:2566
 msgid "复制提示词"
 msgstr ""
 
-#: app/setting_interface.py:2567
+#: app/setting_interface.py:2568
 msgid "AI 助手"
 msgstr ""
 
-#: app/setting_interface.py:2568
+#: app/setting_interface.py:2569
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr ""
 
@@ -6341,7 +6341,7 @@ msgid ""
 "如果你支持 Skill（技能），请把文件夹 {skill_dir} 复制到你的用户级技能目录（例如 ~/.agents/skills/ 或 ~/.claude/skills/），以后就不需要我再提供这段说明。"
 msgstr ""
 
-#: app/setting_interface.py:3397
+#: app/setting_interface.py:3417
 msgid "粘贴给你的 AI 助手即可"
 msgstr ""
 
@@ -6361,11 +6361,11 @@ msgstr "前景"
 msgid "后台"
 msgstr "背景"
 
-#: app/setting_interface.py:2529
+#: app/setting_interface.py:2530
 msgid "重试失败时短暂锁定鼠标"
 msgstr "重試失敗時短暫鎖定滑鼠"
 
-#: app/setting_interface.py:2530
+#: app/setting_interface.py:2531
 msgid "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 msgstr "僅保護必要的滑鼠操作，保留鍵盤和暫停快捷鍵。"
 
@@ -6380,3 +6380,33 @@ msgstr "等待滑鼠閒置，任務將自動繼續"
 #: module/automation/scroll_banner.py:21
 msgid "滚轮操作需临时切换游戏到前台"
 msgstr "滾輪操作需暫時切換遊戲至前景"
+
+#: app/setting_interface.py:3045
+msgid "启用后台模式前请确认"
+msgstr "啟用背景模式前請確認"
+
+#: app/setting_interface.py:3046
+msgid ""
+"后台模式下，任务运行时你可以继续使用电脑，但仍有以下限制：\n"
+"\n"
+"• 点击和拖动会短暂借用鼠标，完成后归还；你正在移动鼠标时，任务会等鼠标停下再操作。\n"
+"• 在大世界中按键时，光标会被短暂锁定在游戏窗口中央。\n"
+"• 需要滚轮时会临时把游戏切到前台，完成后恢复原来的窗口。\n"
+"• 游戏窗口可以放在其他窗口后面，但不能最小化；运行期间请保持系统解锁。\n"
+"• 锄大地、第三方模拟宇宙等独立程序不受此设置影响，仍需前台运行。\n"
+"\n"
+"设置在下次启动任务时生效，自动对话需重新开启。完整说明见使用文档“后台运行”。"
+msgstr ""
+"背景模式下，任務執行時你可以繼續使用電腦，但仍有以下限制：\n"
+"\n"
+"• 點擊和拖曳會短暫借用滑鼠，完成後歸還；你正在移動滑鼠時，任務會等滑鼠停下再操作。\n"
+"• 在大世界中按鍵時，游標會被短暫鎖定在遊戲視窗中央。\n"
+"• 需要滾輪時會暫時把遊戲切到前景，完成後恢復原本的視窗。\n"
+"• 遊戲視窗可以放在其他視窗後面，但不能最小化；執行期間請保持系統解鎖。\n"
+"• 鋤大地、第三方模擬宇宙等獨立程式不受此設定影響，仍需在前景執行。\n"
+"\n"
+"設定會在下次啟動任務時生效，自動對話需重新開啟。完整說明請見使用文件「後台運行」。"
+
+#: app/setting_interface.py:3055
+msgid "我已了解，启用后台模式"
+msgstr "我已了解，啟用背景模式"

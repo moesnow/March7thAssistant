@@ -85,15 +85,15 @@ msgstr "Task Stopped"
 msgid "赞赏"
 msgstr "Donate"
 
-#: app/setting_interface.py:2908
+#: app/setting_interface.py:2909
 msgid "体力"
 msgstr "Power"
 
-#: app/setting_interface.py:2910
+#: app/setting_interface.py:2911
 msgid "日常"
 msgstr "Daily"
 
-#: app/setting_interface.py:2911
+#: app/setting_interface.py:2912
 msgid "货币战争"
 msgstr "Currency Wars"
 
@@ -101,7 +101,7 @@ msgstr "Currency Wars"
 msgid "差分宇宙"
 msgstr "Divergent Universe"
 
-#: app/setting_interface.py:2914
+#: app/setting_interface.py:2915
 msgid "锄大地"
 msgstr "Fhoe-Rail"
 
@@ -113,11 +113,11 @@ msgstr "Treasures Lightward"
 msgid "程序"
 msgstr "Program"
 
-#: app/setting_interface.py:2926
+#: app/setting_interface.py:2927
 msgid "云游戏"
 msgstr "Cloud Game"
 
-#: app/setting_interface.py:2927
+#: app/setting_interface.py:2928
 msgid "推送"
 msgstr "Notification"
 
@@ -125,11 +125,11 @@ msgstr "Notification"
 msgid "杂项"
 msgstr "Misc"
 
-#: app/setting_interface.py:2933
+#: app/setting_interface.py:2934
 msgid "账号"
 msgstr "Account"
 
-#: app/setting_interface.py:2557
+#: app/setting_interface.py:2558
 msgid "关于"
 msgstr "About"
 
@@ -1002,7 +1002,7 @@ msgstr ""
 "Try auto-config game path via shortcuts, launcher, or running process (CN & "
 "Global supported)"
 
-#: app/setting_interface.py:2541
+#: app/setting_interface.py:2542
 msgid "在用户登录时启动"
 msgstr "Launch on User Login"
 
@@ -1011,63 +1011,63 @@ msgstr ""
 "Auto execute Full Run on startup via Task Scheduler (may need auto-login "
 "config)"
 
-#: app/setting_interface.py:2553
+#: app/setting_interface.py:2554
 msgid "修改按键"
 msgstr "Modify Keybindings"
 
-#: app/setting_interface.py:2554
+#: app/setting_interface.py:2555
 msgid "配置秘技、地图、跃迁、停止任务等按键设置"
 msgstr "Config keys for Technique, Map, Warp, Stop Task, etc."
 
-#: app/setting_interface.py:2559
+#: app/setting_interface.py:2560
 msgid "项目主页"
 msgstr "Project Homepage"
 
-#: app/setting_interface.py:2577
+#: app/setting_interface.py:2578
 msgid "加入群聊"
 msgstr "Join Group Chat"
 
-#: app/setting_interface.py:2579
+#: app/setting_interface.py:2580
 msgid "QQ群"
 msgstr "QQ Group"
 
-#: app/setting_interface.py:2589
+#: app/setting_interface.py:2590
 msgid "检查更新"
 msgstr "Check for Updates"
 
-#: app/setting_interface.py:2592
+#: app/setting_interface.py:2593
 msgid "当前版本："
 msgstr "Current Version:"
 
-#: app/setting_interface.py:2597
+#: app/setting_interface.py:2598
 msgid "更新源"
 msgstr "Update Source"
 
-#: app/setting_interface.py:2600
+#: app/setting_interface.py:2601
 msgid "海外源"
 msgstr "Global Source"
 
-#: app/setting_interface.py:2600
+#: app/setting_interface.py:2601
 msgid "Mirror 酱"
 msgstr "Mirror Chan"
 
-#: app/setting_interface.py:2602
+#: app/setting_interface.py:2603
 msgid "正式版"
 msgstr "Stable"
 
-#: app/setting_interface.py:2602
+#: app/setting_interface.py:2603
 msgid "公测版"
 msgstr "Beta"
 
-#: app/setting_interface.py:2606
+#: app/setting_interface.py:2607
 msgid "启动时检测更新"
 msgstr "Check Update on Launch"
 
-#: app/setting_interface.py:3048
+#: app/setting_interface.py:3068
 msgid "关闭更新检测前请确认"
 msgstr "Confirm Before Disabling Update Check"
 
-#: app/setting_interface.py:3049
+#: app/setting_interface.py:3069
 msgid ""
 "仍然建议保留“启动时检测更新”。\n"
 "\n"
@@ -1085,21 +1085,21 @@ msgstr ""
 "\n"
 "Many cases that look like the app \"suddenly stopped working\" are actually caused by using an outdated version. If you understand these implications, you can continue disabling update checks."
 
-#: app/setting_interface.py:3052
+#: app/setting_interface.py:3072
 msgid "我已了解，继续关闭"
 msgstr "I Understand, Disable Anyway"
 
-#: app/setting_interface.py:2612
+#: app/setting_interface.py:2613
 msgid "更新时下载完整包"
 msgstr "Download Full Package Update"
 
-#: app/setting_interface.py:2613
+#: app/setting_interface.py:2614
 msgid "更新将包含依赖组件，建议保持开启。若关闭此选项，需自行手动更新依赖组件，可能会导致出现不可预期的错误。"
 msgstr ""
 "Update includes dependencies. Recommended to keep on. If off, manual "
 "dependency update required, may cause errors."
 
-#: app/setting_interface.py:2626
+#: app/setting_interface.py:2627
 msgid "Mirror 酱 CDK"
 msgstr "Mirror Chan CDK"
 
@@ -1615,11 +1615,11 @@ msgstr "Rarity"
 msgid "卡池"
 msgstr "Pool"
 
-#: app/setting_interface.py:3396
+#: app/setting_interface.py:3416
 msgid "复制成功(＾∀＾●)"
 msgstr "Copy Success (＾∀＾●)"
 
-#: app/setting_interface.py:3406
+#: app/setting_interface.py:3426
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr "Copy Failed (╥╯﹏╰╥)"
 
@@ -1985,31 +1985,31 @@ msgstr "Off"
 msgid "开"
 msgstr "On"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周一"
 msgstr "Mon"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周二"
 msgstr "Tue"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周三"
 msgstr "Wed"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周四"
 msgstr "Thu"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周五"
 msgstr "Fri"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周六"
 msgstr "Sat"
 
-#: app/card/expandable_switch_setting_card.py:630
+#: app/card/expandable_switch_setting_card.py:644
 msgid "周日"
 msgstr "Sun"
 
@@ -2190,14 +2190,14 @@ msgstr "Chrome"
 msgid "Edge"
 msgstr "Edge"
 
-#: app/setting_interface.py:3365
+#: app/setting_interface.py:3385
 msgid "选择游戏路径"
 msgstr "Select Game Path"
 
 msgid "选择米哈游启动器路径"
 msgstr "Select HoYoPlay Path"
 
-#: app/setting_interface.py:3425
+#: app/setting_interface.py:3445
 msgid "脚本或程序路径"
 msgstr "Script/Program Path"
 
@@ -3404,7 +3404,7 @@ msgstr ""
 "May improve performance. If errors, exceptions, or instability occur, please"
 " disable this option."
 
-#: app/setting_interface.py:3367
+#: app/setting_interface.py:3387
 msgid "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
 msgstr "Script or executable files (*.exe *.bat *.cmd *.ps1)"
 
@@ -3456,11 +3456,11 @@ msgstr ""
 "Enabled by default to avoid interference from floating windows and similar "
 "overlays"
 
-#: app/setting_interface.py:2547
+#: app/setting_interface.py:2548
 msgid "启用调试模式"
 msgstr "Enable Debug Mode"
 
-#: app/setting_interface.py:2548
+#: app/setting_interface.py:2549
 msgid "开启后会在屏幕上实时绘制检测范围框（透明悬浮窗），用于调试自动化识别效果。仅 Windows 生效。"
 msgstr ""
 "When enabled, detection bounding boxes will be drawn in real-time on screen "
@@ -4283,15 +4283,15 @@ msgstr "Remember Window Size and Position"
 msgid "都不记忆"
 msgstr "Remember Neither"
 
-#: app/setting_interface.py:2571
+#: app/setting_interface.py:2572
 msgid "立即前往"
 msgstr "Go Now"
 
-#: app/setting_interface.py:2573
+#: app/setting_interface.py:2574
 msgid "哔哩哔哩"
 msgstr "Bilibili"
 
-#: app/setting_interface.py:2574
+#: app/setting_interface.py:2575
 msgid "欢迎关注我们的B站账号，获取最新动态和教程"
 msgstr "Follow our Bilibili account for the latest updates and tutorials"
 
@@ -4406,11 +4406,11 @@ msgid_plural "已启用自定义优先级，{count} 个站点已禁用|plural"
 msgstr[0] "Custom priority enabled, {count} site disabled"
 msgstr[1] "Custom priority enabled, {count} sites disabled"
 
-#: app/setting_interface.py:2619
+#: app/setting_interface.py:2620
 msgid "下载代理"
 msgstr "Download Proxy"
 
-#: app/setting_interface.py:2621
+#: app/setting_interface.py:2622
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "Leave empty to use system proxy; supports http:// and socks5://"
 
@@ -4486,15 +4486,15 @@ msgstr "Raise Rank Level"
 msgid "快捷配置"
 msgstr "Quick Preset"
 
-#: app/setting_interface.py:3462
+#: app/setting_interface.py:3482
 msgid "已应用快捷配置"
 msgstr "Quick Preset Applied"
 
-#: app/setting_interface.py:3487
+#: app/setting_interface.py:3507
 msgid "当前为“提升晋升等级”模式"
 msgstr "Now using 'Raise Promotion Tier' mode"
 
-#: app/setting_interface.py:3502
+#: app/setting_interface.py:3522
 msgid "当前为“提升职级等级”模式"
 msgstr "Now using 'Raise Rank Level' mode"
 
@@ -5149,23 +5149,23 @@ msgstr "Reset Count"
 msgid "差分宇宙已完成次数"
 msgstr "Divergent Universe Completed Count"
 
-#: app/setting_interface.py:3065
+#: app/setting_interface.py:3085
 msgid "今日已完成 {count} 次"
 msgid_plural "今日已完成 {count} 次|plural"
 msgstr[0] "Completed {count} run today"
 msgstr[1] "Completed {count} runs today"
 
-#: app/setting_interface.py:3066
+#: app/setting_interface.py:3086
 msgid "本周已完成 {count} 次"
 msgid_plural "本周已完成 {count} 次|plural"
 msgstr[0] "Completed {count} run this week"
 msgstr[1] "Completed {count} runs this week"
 
-#: app/setting_interface.py:3026
+#: app/setting_interface.py:3027
 msgid "启用前请确认用途"
 msgstr "Confirm Before Enabling"
 
-#: app/setting_interface.py:3027
+#: app/setting_interface.py:3028
 msgid ""
 "此选项及其子选项用于配置反复刷取遗器经验和灵之珠泪，直到达到每周上限。\n"
 "默认运行次数为每周 34 次。\n"
@@ -5175,7 +5175,7 @@ msgstr ""
 "The default run count is 34 times per week.\n"
 "Only enable this after you clearly understand what this feature does and are sure you know what you are doing."
 
-#: app/setting_interface.py:3030
+#: app/setting_interface.py:3031
 msgid "我已了解，继续开启"
 msgstr "I understand, enable it"
 
@@ -5402,23 +5402,23 @@ msgstr "Expires today"
 msgid "CDK 验证失败 (╥╯﹏╰╥)"
 msgstr "CDK Validation Failed (╥╯﹏╰╥)"
 
-#: app/setting_interface.py:2640
+#: app/setting_interface.py:2641
 msgid "匿名使用数据收集"
 msgstr "Anonymous Usage Data Collection"
 
-#: app/setting_interface.py:2641
+#: app/setting_interface.py:2642
 msgid "帮助开发者了解程序使用情况，改进功能"
 msgstr "Help developers understand usage patterns and improve the program"
 
-#: app/setting_interface.py:2638
+#: app/setting_interface.py:2639
 msgid "查看说明"
 msgstr "View Details"
 
-#: app/setting_interface.py:3071
+#: app/setting_interface.py:3091
 msgid "匿名使用数据收集说明"
 msgstr "Anonymous Usage Data Collection Details"
 
-#: app/setting_interface.py:3072
+#: app/setting_interface.py:3092
 msgid ""
 "我们只收集用于改进稳定性、兼容性和功能体验的匿名统计信息，不用于识别你的真实身份，也不会用于广告、画像或与第三方共享。\n"
 "\n"
@@ -5436,7 +5436,7 @@ msgstr ""
 "\n"
 "This data is used only to analyze feature usage, discover compatibility issues, evaluate version stability, and investigate common problems."
 
-#: app/setting_interface.py:3139
+#: app/setting_interface.py:3159
 msgid "该参数用于配置该通知方式的请求字段"
 msgstr ""
 "This parameter is used to configure the request field for this notification "
@@ -5446,7 +5446,7 @@ msgstr ""
 msgid "教程"
 msgstr "Tutorial"
 
-#: app/setting_interface.py:3323
+#: app/setting_interface.py:3343
 msgid "{name} 配置教程"
 msgstr "{name} Configuration Tutorial"
 
@@ -6101,7 +6101,7 @@ msgstr ""
 "Switch the map version in one click and set all three special-item toggles "
 "to 'Enable'"
 
-#: app/setting_interface.py:3463
+#: app/setting_interface.py:3483
 msgid "当前为“{name}”模式"
 msgstr "Now using '{name}' mode"
 
@@ -6206,66 +6206,66 @@ msgstr "Group chat group_openid"
 msgid "可选参数，群聊消息的接收群 group_openid"
 msgstr "Optional, group_openid of the group receiving group messages"
 
-#: app/setting_interface.py:3177
+#: app/setting_interface.py:3197
 msgid "绑定单聊"
 msgstr "Bind direct message"
 
-#: app/setting_interface.py:3177
+#: app/setting_interface.py:3197
 msgid "绑定群聊"
 msgstr "Bind group chat"
 
-#: app/setting_interface.py:3179
+#: app/setting_interface.py:3199
 msgid "自动绑定收件标识"
 msgstr "Auto-bind recipient IDs"
 
-#: app/setting_interface.py:3188
+#: app/setting_interface.py:3208
 msgid "正在绑定中"
 msgstr "Binding in progress"
 
-#: app/setting_interface.py:3189
+#: app/setting_interface.py:3209
 msgid "请等待当前绑定完成后再试"
 msgstr "Please wait for the current binding to finish and try again"
 
-#: app/setting_interface.py:3202
+#: app/setting_interface.py:3222
 msgid "无法绑定"
 msgstr "Unable to bind"
 
-#: app/setting_interface.py:3203
+#: app/setting_interface.py:3223
 msgid "请先填写机器人 AppID 与 AppSecret"
 msgstr "Please fill in the bot AppID and AppSecret first"
 
-#: app/setting_interface.py:3216
+#: app/setting_interface.py:3236
 msgid "点击「开始监听」后，请在 {seconds} 秒内用 QQ 私聊机器人并发送验证码 {code}"
 msgstr ""
 "After clicking \"Start Listening\", send the verification code {code} to the"
 " bot via QQ direct message within {seconds} seconds"
 
-#: app/setting_interface.py:3218
+#: app/setting_interface.py:3238
 msgid "点击「开始监听」后，请在 {seconds} 秒内在群聊中 @ 机器人并发送验证码 {code}，或将机器人拉进目标群"
 msgstr ""
 "After clicking \"Start Listening\", mention the bot in a group chat and send"
 " the verification code {code} within {seconds} seconds, or invite the bot "
 "into the target group"
 
-#: app/setting_interface.py:3222
+#: app/setting_interface.py:3242
 msgid "开始监听"
 msgstr "Start listening"
 
-#: app/setting_interface.py:3252
+#: app/setting_interface.py:3272
 msgid "绑定成功"
 msgstr "Bound successfully"
 
-#: app/setting_interface.py:3252
+#: app/setting_interface.py:3272
 msgid "绑定失败"
 msgstr "Binding failed"
 
-#: app/setting_interface.py:3234
+#: app/setting_interface.py:3254
 msgid "监听中，请私聊机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr ""
 "Listening… Send the verification code {code} to the bot via QQ direct "
 "message (within {seconds} seconds)"
 
-#: app/setting_interface.py:3236
+#: app/setting_interface.py:3256
 msgid "监听中，请在群聊中 @ 机器人发送验证码 {code}（{seconds} 秒内）"
 msgstr ""
 "Listening… Mention the bot in a group chat and send the verification code "
@@ -6359,7 +6359,7 @@ msgstr ""
 msgid "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
 msgstr ""
 
-#: app/setting_interface.py:2542
+#: app/setting_interface.py:2543
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 msgstr ""
 
@@ -6399,7 +6399,7 @@ msgstr "MiHoYo Launcher"
 msgid "HoYoPlay"
 msgstr "HoYoPlay"
 
-#: app/setting_interface.py:3377
+#: app/setting_interface.py:3397
 msgid "选择启动器路径"
 msgstr "Select Launcher Path"
 
@@ -6491,15 +6491,15 @@ msgstr ""
 "The update service did not return valid version information. Please try "
 "again later."
 
-#: app/setting_interface.py:2565
+#: app/setting_interface.py:2566
 msgid "复制提示词"
 msgstr "Copy prompt"
 
-#: app/setting_interface.py:2567
+#: app/setting_interface.py:2568
 msgid "AI 助手"
 msgstr "AI Assistant"
 
-#: app/setting_interface.py:2568
+#: app/setting_interface.py:2569
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr ""
 "Copy a prompt for AI assistants such as DeepSeek Harness, Codex or Claude "
@@ -6515,7 +6515,7 @@ msgstr ""
 "Please read {skill_file} first and follow its instructions to operate it for me.\n"
 "If you support Skills, copy the folder {skill_dir} to your user-level skills directory (for example ~/.agents/skills/ or ~/.claude/skills/) so I don't need to give you these instructions again."
 
-#: app/setting_interface.py:3397
+#: app/setting_interface.py:3417
 msgid "粘贴给你的 AI 助手即可"
 msgstr "Paste it to your AI assistant"
 
@@ -6537,11 +6537,11 @@ msgstr "Foreground"
 msgid "后台"
 msgstr "Background"
 
-#: app/setting_interface.py:2529
+#: app/setting_interface.py:2530
 msgid "重试失败时短暂锁定鼠标"
 msgstr "Temporarily protect the mouse after retries fail"
 
-#: app/setting_interface.py:2530
+#: app/setting_interface.py:2531
 msgid "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 msgstr ""
 "Protects only mouse operations; keyboard and pause hotkeys remain available."
@@ -6557,3 +6557,33 @@ msgstr "Waiting for the mouse to be idle. The task will resume automatically."
 #: module/automation/scroll_banner.py:21
 msgid "滚轮操作需临时切换游戏到前台"
 msgstr "Scrolling temporarily brings the game to the foreground"
+
+#: app/setting_interface.py:3045
+msgid "启用后台模式前请确认"
+msgstr "Confirm Before Enabling Background Mode"
+
+#: app/setting_interface.py:3046
+msgid ""
+"后台模式下，任务运行时你可以继续使用电脑，但仍有以下限制：\n"
+"\n"
+"• 点击和拖动会短暂借用鼠标，完成后归还；你正在移动鼠标时，任务会等鼠标停下再操作。\n"
+"• 在大世界中按键时，光标会被短暂锁定在游戏窗口中央。\n"
+"• 需要滚轮时会临时把游戏切到前台，完成后恢复原来的窗口。\n"
+"• 游戏窗口可以放在其他窗口后面，但不能最小化；运行期间请保持系统解锁。\n"
+"• 锄大地、第三方模拟宇宙等独立程序不受此设置影响，仍需前台运行。\n"
+"\n"
+"设置在下次启动任务时生效，自动对话需重新开启。完整说明见使用文档“后台运行”。"
+msgstr ""
+"In background mode you can keep using your computer while tasks run, with these limitations:\n"
+"\n"
+"• Clicks and drags briefly borrow the mouse and return it afterwards; while you are moving the mouse, the task waits for it to stop.\n"
+"• Key presses in the open world briefly lock the cursor to the center of the game window.\n"
+"• Scrolling temporarily brings the game to the front, then restores your previous window.\n"
+"• The game window can stay behind other windows but must not be minimized; keep the system unlocked while tasks run.\n"
+"• Standalone programs such as Fhoe-Rail and third-party Simulated Universe tools are not affected by this setting and still need the foreground.\n"
+"\n"
+"The setting takes effect the next time a task starts; turn Auto Dialogue off and on again to apply it. See \"Background Running\" in the documentation for details."
+
+#: app/setting_interface.py:3055
+msgid "我已了解，启用后台模式"
+msgstr "I understand, enable background mode"
