@@ -16,6 +16,7 @@ from module.game.cloud import CloudGameLoginTimeoutError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
+from module.automation.background_input import WINDOW_WAIT_SECONDS, GameWindowLost, InputInterrupted
 from module.config import cfg
 from module.notification import notif
 from module.notification.notification import NotificationLevel
@@ -49,7 +50,7 @@ def start():
 def switch_to_game():
     log.hr("切换到游戏窗口", 0)
     starrail = StarRailController(cfg=cfg, logger=log)
-    starrail.switch_to_game()
+    starrail.switch_to_game(force=True)
     log.hr("完成", 2)
 
 
@@ -63,6 +64,14 @@ def ensure_game_ready():
     if not controller.is_game_running():
         log.error("未检测到游戏窗口，workflow 未执行")
         return False
+    if getattr(auto.input_handler, 'is_background', False) is True:
+        # 后台模式不切换前台：窗口暂时不可操作（例如被最小化）时等待还原，失败时写明原因
+        try:
+            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
+        except (InputInterrupted, GameWindowLost) as error:
+            log.error(f"{error}，workflow 未执行")
+            return False
+        return True
     if not controller.switch_to_game():
         log.error("切换到游戏窗口失败，workflow 未执行")
         return False
@@ -161,6 +170,10 @@ def start_game():
         return None
 
     def start_local_game(starrail):
+        if getattr(auto.input_handler, 'is_background', False) is True and starrail.is_game_running():
+            # 后台模式不还原、不激活已运行的游戏：窗口暂时不可操作（例如被最小化）时等待用户还原，
+            # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
+            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
         if not starrail.switch_to_game():
             if cfg.auto_set_resolution_enable:
                 starrail.change_resolution(1920, 1080)
@@ -231,6 +244,10 @@ def start_game():
                 continue
             break
         except CloudGameLoginTimeoutError:
+            raise
+        except InputInterrupted:
+            # 窗口持续最小化等需要用户处理的情况不能触发原有的“关闭游戏后重启”恢复路径；
+            # 游戏进程退出（GameWindowLost）仍按普通错误重启游戏。
             raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
@@ -496,6 +513,9 @@ def ensure_IME_lang_en():
 
     分两种情况，若系统有英语语言，则切换至英语语言，若没有，则切换输入法语言为英文
     """
+    from module.automation.input_base import background_enabled
+    if background_enabled(cfg):
+        return True  # 后台文本使用 Unicode 消息，不改变用户前台窗口的输入法。
     import win32api
     import win32gui
     from win32con import WM_INPUTLANGCHANGEREQUEST

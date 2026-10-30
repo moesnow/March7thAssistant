@@ -26,8 +26,8 @@ from .common.schedule import (task_trigger_mode, scheduled_task_slot,
 from module.config import cfg
 from module.game import get_game_controller
 from utils.tasks import TASK_NAMES, PAUSABLE_TASKS
-from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, STATE_PAUSING, STATE_PAUSED,
-                         STATE_RUNNING, write_command, read_state, reset_files)
+from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP, STATE_PAUSING, STATE_PAUSED,
+                         STATE_RUNNING, STATE_STOPPING, write_command, read_state, reset_files)
 from utils.desktop import open_log_folder
 from .schedule_dialog import ScheduleManagerDialog
 from module.notification import notif
@@ -1425,6 +1425,9 @@ class LogInterface(ScrollArea):
 
     def stopTask(self, user_initiated=True):
         """停止任务"""
+        if (getattr(self, '_cooperative_stop_process', None) is getattr(self, 'process', None)
+                and getattr(self, 'process', None) is not None):
+            return
         # 取消任何挂起的超时定时器
         self._clearTaskTimeout()
 
@@ -1481,11 +1484,37 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             if pid > 0:
+                if getattr(self, '_pause_supported', False):
+                    try:
+                        write_command(self._pauseControlPath(), COMMAND_STOP)
+                        proc = self.process
+                        self._cooperative_stop_process = proc
+                        if getattr(self, 'pauseButton', None) is not None:
+                            self.pauseButton.setEnabled(False)
+                        deadline = time.monotonic() + 2
+                        QTimer.singleShot(100, lambda: self._finishCooperativeStop(proc, pid, deadline))
+                        return
+                    except Exception as e:
+                        self.appendLog(f"发送停止清理指令失败: {e}\n")
                 self._killProcessTree(pid)
             else:
                 self.process.terminate()
                 # 等待一段时间，如果还没结束就强制杀死
                 QTimer.singleShot(3000, self._forceKillProcess)
+
+    def _finishCooperativeStop(self, process, pid, deadline):
+        # 旧停止回调不能终止后来启动的新任务。
+        if (process is not self.process or process.state() != QProcess.Running
+                or process.processId() != pid):
+            return
+        cleaned = read_state(self._pauseControlPath()) == STATE_STOPPING
+        if cleaned or time.monotonic() >= deadline:
+            if not cleaned:
+                self.appendLog("未收到输入清理回执，强制停止任务\n")
+            if process.processId() == pid:
+                self._killProcessTree(pid)
+            return
+        QTimer.singleShot(100, lambda: self._finishCooperativeStop(process, pid, deadline))
 
     def _killProcessTree(self, pid):
         """杀死进程树（包括所有子进程）"""
@@ -1679,6 +1708,9 @@ class LogInterface(ScrollArea):
 
     def _sendPauseCommand(self, command):
         """写入暂停/恢复指令并即时反馈界面（最终状态以 CLI 回执为准）。"""
+        if (getattr(self, '_cooperative_stop_process', None) is getattr(self, 'process', None)
+                and getattr(self, 'process', None) is not None):
+            return
         try:
             write_command(self._pauseControlPath(), command)
         except Exception as e:
@@ -1702,6 +1734,8 @@ class LogInterface(ScrollArea):
             state = read_state(self._pauseControlPath())
         except Exception:
             state = None
+        if state == STATE_STOPPING:
+            return
         if state and state != self._pause_state:
             self._pause_state = state
             self._syncPauseUi()
@@ -1752,6 +1786,7 @@ class LogInterface(ScrollArea):
     def _resetPauseRuntime(self):
         """任务收尾时复位暂停状态并清理控制文件。"""
         self._pause_supported = False
+        self._cooperative_stop_process = None
         self._pause_state = STATE_RUNNING
         self._paused_timeout_remaining = None
         self._status_text_before_pause = None

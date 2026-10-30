@@ -273,6 +273,75 @@ def test_stop_without_callback_has_no_timer(controller):
     assert controller._stop_timer is None
 
 
+
+# ---------- 后台输入：暂停与停止先释放键鼠 ----------
+
+class _HeldInput:
+    """模拟持有按键/鼠标的后台输入后端。"""
+
+    def __init__(self, on_release=None):
+        self.released = 0
+        self.failed = False
+        self.on_release = on_release
+
+    def release_all(self):
+        if self.failed:
+            raise OSError("injected release failure")
+        if self.on_release:
+            self.on_release()
+        self.released += 1
+
+
+def test_stop_releases_inputs_before_ack_and_interrupts_checkpoint(controller, control_path):
+    """停止指令先释放后台输入再回执 stopping：图形界面看到回执即可安全结束进程树。"""
+    states = []
+    handler = _HeldInput(on_release=lambda: states.append(read_state(control_path)))
+    controller.register_input(handler)
+    controller.request_stop()
+    assert handler.released == 1
+    assert pause_mod.STATE_STOPPING not in states
+    assert read_state(control_path) == pause_mod.STATE_STOPPING
+    with pytest.raises(pause_mod.RunStopRequested):
+        controller.check_stop()
+    with pytest.raises(pause_mod.RunStopRequested):
+        controller.checkpoint()
+
+
+def test_pause_releases_inputs_before_paused_ack(controller, control_path):
+    handler = _HeldInput(on_release=lambda: (read_state(control_path) != STATE_PAUSED) or pytest.fail("已回执 paused"))
+    controller.register_input(handler)
+    controller.request_pause()
+    t = threading.Thread(target=controller.checkpoint)
+    t.start()
+    try:
+        assert _wait_until(lambda: read_state(control_path) == STATE_PAUSED)
+        assert handler.released >= 1
+    finally:
+        controller.request_resume()
+        t.join(2)
+
+
+def test_failed_cleanup_does_not_ack_stopping(controller, control_path):
+    """释放失败时不回执 stopping：图形界面超时后走原有强制结束，不误以为已清理。"""
+    handler = _HeldInput()
+    handler.failed = True
+    controller.register_input(handler)
+    with pytest.raises(RuntimeError, match="清理失败"):
+        controller.request_stop()
+    assert read_state(control_path) != pause_mod.STATE_STOPPING
+    assert controller.stop_requested
+    with pytest.raises(pause_mod.RunStopRequested):
+        controller.checkpoint()
+    handler.failed = False
+
+
+def test_check_stop_is_inert_without_stop_or_control_file(controller, monkeypatch):
+    controller.check_stop()
+    monkeypatch.delenv(pause_mod.CONTROL_FILE_ENV, raising=False)
+    inert = PauseController()
+    inert.request_stop()
+    inert.check_stop()
+
 def test_module_import_does_not_initialize_logger():
     """文件协议部分供未提权入口使用：导入 utils.pause 不应顺带初始化配置与日志。"""
     import subprocess

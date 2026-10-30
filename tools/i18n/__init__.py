@@ -473,7 +473,7 @@ def run_checks() -> tuple[list[str], list[str]]:
 
 # 界面实际加载的文档基名（help_interface / changelog_interface 经 localized_doc_path 读取）。
 # 后缀登记校验、译文完整性校验、zh_TW 生成共用此清单，防止多处清单漂移。
-DOC_BASES = ("Tutorial", "Workflow", "FAQ", "TasksTable", "Changelog")
+DOC_BASES = ("Tutorial", "Workflow", "FAQ", "Background", "TasksTable", "Changelog")
 
 
 def check_docs(docs_dir: Path | None = None) -> list[str]:

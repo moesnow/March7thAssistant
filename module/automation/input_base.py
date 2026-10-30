@@ -1,7 +1,22 @@
 from abc import ABC, abstractmethod
+import sys
+
+
+def background_enabled(config):
+    return (sys.platform == 'win32'
+            and config.get_value('local_control_mode', 'foreground') == 'background'
+            and not config.get_value('cloud_game_enable', False))
 
 
 class InputBase(ABC):
+    handles_pause = False
+    is_background = False
+
+    def release_all(self):
+        """释放后端持有的输入；无状态后端无需处理。"""
+
+    def close(self):
+        self.release_all()
 
     @abstractmethod
     def mouse_click(self, x, y):

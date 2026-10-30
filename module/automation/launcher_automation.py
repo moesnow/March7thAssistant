@@ -9,6 +9,7 @@ from typing import Optional
 from utils.image_utils import ImageUtils
 from utils.pause import pause_guard
 from module.game import get_game_controller
+from module.config import cfg
 from module.ocr import ocr
 
 
@@ -34,7 +35,12 @@ class LauncherAutomation():
 
         所有输入均包一层暂停卡点（`pause_guard`）：暂停期间任何键鼠输入都会停在发出之前。
         """
-        self.input_handler = get_game_controller().get_input_handler()
+        if cfg.cloud_game_enable:
+            self.input_handler = get_game_controller().get_input_handler()
+        else:
+            # 启动器独立于游戏 HWND，继续使用原有前台输入。
+            from .local_input import LocalInput
+            self.input_handler = LocalInput(self.logger)
         self.mouse_click = pause_guard(self.input_handler.mouse_click)
         self.mouse_down = pause_guard(self.input_handler.mouse_down)
         self.mouse_up = pause_guard(self.input_handler.mouse_up)

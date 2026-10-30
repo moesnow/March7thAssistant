@@ -5,7 +5,7 @@ GUI 通过控制文件下发暂停/继续指令，CLI 侧在动作卡点（`chec
 
 - 任务线程阻塞在卡点上时，调用栈原封不动（循环计数、重试次数等局部状态都保留），
   恢复指令到达后从原位置继续执行，无需任何状态序列化。
-- 暂停语义是「停止发出任何键鼠输入」，不会对游戏做任何操作（例如自动按 Esc）。
+- 暂停、停止先释放后台输入后端持有的键鼠并清理临时前台状态，再停止发出新输入，不自动按 Esc。
 
 控制文件协议（两个文件各自独占写，临时文件 + `os.replace` 原子替换，避免读写竞争）：
 
@@ -13,7 +13,8 @@ GUI 通过控制文件下发暂停/继续指令，CLI 侧在动作卡点（`chec
 - 回执文件（CLI 写、GUI 读）：指令文件路径加 ``.state`` 后缀，
   ``{"state": "running" | "pausing" | "paused" | "stopping"}``
   其中 ``pausing`` 表示已收到暂停指令、任务尚未停到卡点上；
-  ``stopping`` 表示已收到停止指令，任务将在下一个卡点抛出 `RunStopRequested` 结束。
+  ``stopping`` 表示已收到停止指令且后台输入已释放，任务将在下一个卡点抛出 `RunStopRequested` 结束，
+  图形界面据此即可安全结束进程树。
 
 指令文件路径由环境变量 ``MARCH7TH_CONTROL_FILE`` 传入（GUI 启动任务时注入；
 命令行运行时由 utils/runs.py 为每次运行分配 ``logs/runs/<run_id>.control``）。
@@ -23,6 +24,7 @@ import json
 import os
 import tempfile
 import threading
+import weakref
 
 
 class _LazyLog:
@@ -108,6 +110,9 @@ def pause_guard(method):
     """在方法入口插入暂停卡点：暂停中阻塞于此（不再发出操作/不再重试），恢复后继续执行。"""
 
     def wrapper(*args, **kwargs):
+        # 后台输入自己管理卡点，释放动作不能被外层卡点卡住。
+        if getattr(getattr(method, '__self__', None), 'handles_pause', False) is True:
+            return method(*args, **kwargs)
         pause_ctl.checkpoint()
         return method(*args, **kwargs)
 
@@ -161,6 +166,25 @@ class PauseController:
         self._stop_timer = None
         # 停止指令发出后 STOP_GRACE_SECONDS 秒仍未结束时的兜底回调（由 main.py 注册：记录结果后强制退出）
         self.on_stop_timeout = None
+        # 持有键鼠状态的输入后端（后台输入）；暂停与停止时先释放它们
+        self._inputs = weakref.WeakSet()
+        self._inputs_lock = threading.Lock()
+
+    def register_input(self, handler):
+        with self._inputs_lock:
+            self._inputs.add(handler)
+
+    def _release_inputs(self):
+        with self._inputs_lock:
+            handlers = list(self._inputs)
+        errors = []
+        for handler in handlers:
+            try:
+                handler.release_all()
+            except Exception as e:
+                errors.append(e)
+        if errors:
+            raise RuntimeError('后台输入清理失败，尚未完成暂停或停止') from errors[0]
 
     # ---------- 生命周期 ----------
 
@@ -178,6 +202,7 @@ class PauseController:
         self._control_path = os.path.abspath(path)
         self._state_path = self._control_path + STATE_FILE_SUFFIX
         self._enabled = True
+        self._resume_event.set()
         self._watcher_stop.clear()
         self._watcher = threading.Thread(
             target=self._watch_loop, name="M7APauseWatcher", daemon=True
@@ -188,13 +213,16 @@ class PauseController:
 
     def stop(self):
         """停止控制器（进程收尾时调用）。"""
-        self._watcher_stop.set()
-        self._resume_event.set()
-        self._enabled = False
-        self._watcher = None
-        if self._stop_timer is not None:
-            self._stop_timer.cancel()
-            self._stop_timer = None
+        try:
+            self._release_inputs()
+        finally:
+            self._watcher_stop.set()
+            self._resume_event.set()
+            self._enabled = False
+            self._watcher = None
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+                self._stop_timer = None
 
     @property
     def enabled(self):
@@ -215,7 +243,13 @@ class PauseController:
             # 暂停期间收到停止指令：停止指令会放行卡点，由这里结束任务
             raise RunStopRequested()
 
+    def check_stop(self):
+        """只检查停止指令、不进入暂停：供持有输入锁的后台输入在等待中途使用。"""
+        if self._enabled and self._stop_requested:
+            raise RunStopRequested()
+
     def _enter_paused(self):
+        self._release_inputs()
         with self._announce_lock:
             if self._resume_event.is_set():
                 # 恢复指令恰好在进入卡点前到达，无需播报
@@ -271,15 +305,22 @@ class PauseController:
         if command == COMMAND_STOP:
             self._stop_requested = True
             log.warning(STOP_LOG_MESSAGE)
-            self._write_state(STATE_STOPPING)
             # 暂停中的任务也要立刻走到卡点，由卡点抛出停止
             self._resume_event.set()
             self._arm_stop_timer()
+            # 先释放后台输入再回执：清理失败时不回执，图形界面超时后仍会强制结束
+            try:
+                self._release_inputs()
+            except Exception as e:
+                log.warning(f"停止前释放后台输入失败：{e}")
+                raise
+            self._write_state(STATE_STOPPING)
             return
         if command == COMMAND_PAUSE:
             self._announced_pause = False
             self._write_state(STATE_PAUSING)
             self._resume_event.clear()
+            self._release_inputs()
         else:
             was_paused = not self._resume_event.is_set()
             if was_paused:

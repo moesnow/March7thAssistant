@@ -24,6 +24,7 @@ class LocalGameController(GameControllerBase):
         self.game_path = os.path.normpath(cfg.game_path)
         self.process_name = cfg.game_process_name
         self.window_name = cfg.game_title_name
+        self._config = cfg
 
     def start_game_process(self) -> bool:
         """启动游戏"""
@@ -88,8 +89,22 @@ class LocalGameController(GameControllerBase):
         return success
 
     def get_input_handler(self):
+        from module.automation.input_base import background_enabled
+        if background_enabled(self._config):
+            from module.automation.background_input import BackgroundInput
+            return BackgroundInput(self.logger, self.window_name, self.process_name,
+                                   protect_mouse=self._config.get_value('background_mouse_protection', False))
         from module.automation.local_input import LocalInput
         return LocalInput(self.logger)
+
+    def switch_to_game(self, force=False) -> bool:
+        from module.automation.input_base import background_enabled
+        if not force and background_enabled(self._config):
+            # 后台模式不激活、不还原游戏窗口，只报告窗口当前能否后台操作；不阻塞也不抛出，图形界面也会调用。
+            # 窗口存在但暂时不可用（例如被最小化）时由启动流程等待，不能当作游戏未运行而重新启动。
+            from module.automation.windows_input import WindowsInputApi
+            return WindowsInputApi().inspect(self.window_name, self.process_name)[1] is None
+        return super().switch_to_game()
 
     def stop_game(self) -> bool:
         """终止游戏"""

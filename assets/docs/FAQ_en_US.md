@@ -66,13 +66,13 @@ A: In most cases, this is caused by your key bindings not matching the assistant
 
 ### Q: After starting a task, can I no longer use the keyboard or mouse or switch to the background?
 
-A: In local game mode, most automation still depends on the current desktop image and input state. It is not recommended to take over the keyboard or mouse, and it is also not recommended to switch the game to the background.
+A: The local game uses foreground mode by default, so please leave the keyboard and mouse alone while it runs. If you want to keep using your computer while tasks run, you can choose:
 
-If you need background execution, prefer `Cloud Honkai: Star Rail`. Tasks such as spending Trailblaze Power, Daily Training, Currency Wars, and Divergent Universe currently support background running.
+- **Windows background mode (recommended)**: select `Background` in `Settings → Miscellaneous → Local control mode` and confirm the notice; it takes effect the next time a task starts (turn Auto Dialogue off and on again). The game window can stay behind other windows but must not be minimized, and the system must stay unlocked. Clicks and drags briefly borrow the mouse, tasks wait while you are moving it, and scrolling temporarily brings the game to the front.
+- **Cloud Honkai: Star Rail**: tasks such as spending Trailblaze Power, Daily Training, Currency Wars, and Divergent Universe support background running; Field farming and Simulated Universe still require the game to stay fullscreen in the foreground.
+- **Remote Local Multi-User Desktop (advanced)**: runs in another Windows user session without touching your current desktop, but requires patching system components.
 
-Field farming and Simulated Universe still require the game to stay fullscreen in the foreground.
-
-If you need background for local mode, you can also try [Remote Local Multi-User Desktop](https://m7a.top/#/assets/docs/Background).
+See [Background Running](https://m7a.top/docs/#/assets/docs/Background_en_US) for details on all three options.
 
 ### Q: What does Full Workflow do?
 

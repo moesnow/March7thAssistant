@@ -39,6 +39,8 @@ def _prepare(monkeypatch, running, switch_ok):
         switch_to_game=lambda: calls.append('switch_to_game') or switch_ok,
     )
     monkeypatch.setattr(game, 'get_game_controller', lambda: controller)
+    # 本组用例覆盖前台模式的切换语义，不随本机配置的本地操作模式变化（后台模式见 test_background_integration）
+    monkeypatch.setattr(game, 'auto', SimpleNamespace(input_handler=SimpleNamespace(is_background=False)))
     log_stub = _LogStub()
     monkeypatch.setattr(game, 'log', log_stub)
     return game, calls, log_stub

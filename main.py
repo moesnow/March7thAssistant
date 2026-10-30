@@ -298,6 +298,7 @@ from tasks.base import screen_test
 
 from utils.console import pause_on_error, pause_on_success, pause_always, is_docker_started
 from utils.pause import pause_ctl, RunStopRequested, STOP_GRACE_SECONDS
+from module.automation import auto
 from utils.tasks import PAUSABLE_TASKS
 
 telemetry.init(
@@ -552,14 +553,29 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
         sys.exit(1)
 
 
+def release_input(close=False):
+    """释放（或关闭）输入后端持有的键鼠；清理失败只记录，不能改变本次运行的结束方式。"""
+    try:
+        if close:
+            auto.close_input()
+        else:
+            auto.input_handler.release_all()
+    except Exception as e:
+        log.warning(f"输入清理失败: {e}")
+
+
 # 程序结束时的处理器
 def exit_handler():
-    """注册程序退出时的处理函数，用于清理OCR和调试资源."""
+    """注册程序退出时的处理函数，用于清理输入、OCR和调试资源."""
+    release_input(close=True)
+    try:
+        pause_ctl.stop()
+    except Exception as e:
+        log.warning(f"输入清理失败: {e}")
     telemetry.shutdown()
     ocr.exit_ocr()
     # 清理调试叠加层
     try:
-        from module.automation import auto
         auto.shutdown_debug()
     except Exception:
         pass
@@ -583,17 +599,24 @@ if __name__ == "__main__":
             if result is False:
                 sys.exit(1)
         except KeyboardInterrupt:
+            release_input(close=True)
             run_session.note(status=STATUS_INTERRUPTED, error="手动强制停止")
             log.error("发生错误: 手动强制停止")
             pause_on_error()
             sys.exit(1)
         except RunStopRequested:
-            # 外部停止指令（--control <运行编号> stop）：不再发出任何键鼠操作，也不按错误处理（不截图、不推送）
-            pause_ctl.stop()
+            # 外部停止指令（图形界面停止按钮或 --control <运行编号> stop）：不再发出任何键鼠操作，
+            # 也不按错误处理（不截图、不推送）
+            release_input(close=True)
+            try:
+                pause_ctl.stop()
+            except Exception as e:
+                log.warning(f"输入清理失败: {e}")
             run_session.note(status=STATUS_STOPPED)
             log.warning("任务已按停止指令结束")
             sys.exit(EXIT_STOPPED)
         except Exception as e:
+            release_input()
             telemetry.track_error(type(e).__name__, str(e))
             log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
             # 保存错误截图

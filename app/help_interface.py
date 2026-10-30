@@ -1,13 +1,25 @@
 import os
+import re
 import sys
 
 import markdown
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QScroller, QScrollerProperties, QSizePolicy
-from qfluentwidgets import qconfig, ScrollArea, Pivot, TextBrowser, setCustomStyleSheet
+from qfluentwidgets import qconfig, ScrollArea, Pivot, TextBrowser, setCustomStyleSheet, PushButton, FluentIcon
 from .common.style_sheet import StyleSheet
 from module.localization import tr
+
+
+# 各标签对应的文档：“在官网查看”按钮打开当前标签的同一份文档（按界面语言）
+DOC_OF_TAB = {
+    'tutorialLabel': 'Tutorial',
+    'workflowLabel': 'Workflow',
+    'faqLabel': 'FAQ',
+    'backgroundLabel': 'Background',
+    'tasksLabel': 'TasksTable',
+    'changelogLabel': 'Changelog',
+}
 
 
 class HelpInterface(ScrollArea):
@@ -20,9 +32,11 @@ class HelpInterface(ScrollArea):
         self.stackedWidget = QStackedWidget(self)
 
         self.helpLabel = QLabel(tr("帮助"), self)
+        self.websiteButton = PushButton(FluentIcon.GLOBE, tr("在官网查看"), self)
         self.tutorialLabel = TextBrowser(parent)
         self.workflowLabel = TextBrowser(parent)
         self.faqLabel = TextBrowser(parent)
+        self.backgroundLabel = TextBrowser(parent)
         self.tasksLabel = TextBrowser(parent)
         self.changelogLabel = TextBrowser(parent)
 
@@ -40,6 +54,8 @@ class HelpInterface(ScrollArea):
         self.scrollWidget.setObjectName('scrollWidget')
         self.helpLabel.setObjectName('helpLabel')
         StyleSheet.HELP_INTERFACE.apply(self)
+        self.websiteButton.adjustSize()
+        self.websiteButton.clicked.connect(self.openWebsite)
 
         QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
         scroller = QScroller.scroller(self.viewport())
@@ -74,8 +90,7 @@ th, td {
         tutorial_file = self._get_localized_doc_path("Tutorial")
         try:
             with open(tutorial_file, 'r', encoding='utf-8') as file:
-                self.content = file.read().replace('/assets/docs/Background.md', 'https://m7a.top/#/assets/docs/Background').replace('/assets/docs/Docker.md',
-                                                                                                                                     'https://m7a.top/#/assets/docs/Docker').replace('/assets/docs/Termux.md', 'https://m7a.top/#/assets/docs/Termux').replace('/assets/docs/Workflow.md', 'https://m7a.top/#/assets/docs/Workflow')
+                self.content = self._site_links(file.read())
                 self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
             sys.exit(1)
@@ -123,6 +138,22 @@ a {
         self.faqLabel.setText(faq_content)
         self.faqLabel.setOpenExternalLinks(True)
         self.faqLabel.anchorClicked.connect(self.open_url)
+
+        background_file = self._get_localized_doc_path("Background")
+        try:
+            with open(background_file, 'r', encoding='utf-8') as file:
+                self.content = self._site_links(file.read())
+                self.content = '\n'.join(self.content.split('\n')[1:])
+        except FileNotFoundError:
+            sys.exit(1)
+        self.background_content = tutorial_style + markdown.markdown(self.content, extensions=['tables', 'fenced_code']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
+
+        if qconfig.theme.name == "DARK":
+            self.backgroundLabel.setText(self.background_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+        else:
+            self.backgroundLabel.setText(self.background_content)
+        self.backgroundLabel.setOpenExternalLinks(True)
+        self.backgroundLabel.anchorClicked.connect(self.open_url)
 
         qconfig.themeChanged.connect(self.__themeChanged)
         tasks_style = """
@@ -187,6 +218,7 @@ a {
         self.addSubInterface(self.tutorialLabel, 'tutorialLabel', tr('使用教程'))
         self.addSubInterface(self.workflowLabel, 'workflowLabel', tr('流程编排'))
         self.addSubInterface(self.faqLabel, 'faqLabel', tr('常见问题'))
+        self.addSubInterface(self.backgroundLabel, 'backgroundLabel', tr('后台运行'))
         self.addSubInterface(self.tasksLabel, 'tasksLabel', tr('每日实训'))
         self.addSubInterface(self.changelogLabel, 'changelogLabel', tr('更新日志'))
 
@@ -264,6 +296,21 @@ a {
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
 
+    def openWebsite(self):
+        doc = os.path.splitext(os.path.basename(
+            self._get_localized_doc_path(DOC_OF_TAB[self.stackedWidget.currentWidget().objectName()])))[0]
+        self.open_url(f'https://m7a.top/docs/#/assets/docs/{doc}')
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # 按钮与标题同一行、靠右对齐（右边距与左侧 36px 对称）
+        self.websiteButton.move(self.width() - self.websiteButton.width() - 36, 36)
+
+    @staticmethod
+    def _site_links(text: str) -> str:
+        """文档里的站内链接（/assets/docs/X.md）换成官网文档地址，界面中才能直接打开。"""
+        return re.sub(r'\]\(/assets/docs/(\w+)\.md\)', r'](https://m7a.top/docs/#/assets/docs/\1)', text)
+
     def _get_localized_doc_path(self, base_name: str) -> str:
         from module.localization.languages import localized_doc_path
         return localized_doc_path(base_name)
@@ -278,6 +325,11 @@ a {
             self.workflowLabel.setText(self.workflow_content.replace("border: 1px solid black;", "border: 1px solid white;"))
         else:
             self.workflowLabel.setText(self.workflow_content)
+
+        if qconfig.theme.name == "DARK":
+            self.backgroundLabel.setText(self.background_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+        else:
+            self.backgroundLabel.setText(self.background_content)
 
         if qconfig.theme.name == "DARK":
             self.tasksLabel.setText(self.tasks_content.replace("border: 1px solid black;", "border: 1px solid white;"))

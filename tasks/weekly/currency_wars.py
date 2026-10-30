@@ -605,7 +605,9 @@ class CurrencyWars:
                     self.give_up_and_settle()
                     self.need_exit = False
                     return
-                self.collect_reward()
+                if self.collect_reward() is False:
+                    # 已识别备战界面；留待下一轮重试，不能直接购买或出战。
+                    return True
                 self.check_box()
                 self.check_character_status()
                 log.info(f"当前关卡阶段: {self.current_stage}")
@@ -2029,7 +2031,7 @@ class CurrencyWars:
         # 通过颜色快速判断一下是否存在奖励可领取（避免每次都滑动一遍）
         if auto.is_rgb_ratio_above_threshold((1306 / 1920, 154 / 1080, 285 / 1920, 329 / 1080), (66, 72, 185), 0.8, tolerance=0.07):
             log.info("没有检测到可领取的奖励，跳过滑动")
-            return
+            return True
         else:
             log.info("检测到存在可领取的奖励，开始滑动收集")
 
@@ -2092,26 +2094,31 @@ class CurrencyWars:
         def make_crop_box(norm_pt):
             return (norm_pt[0], norm_pt[1], 0.001, 0.001)
 
-        # 开始拖动
-        first_norm = to_norm(*path_pixels[0])
-        first_crop = make_crop_box(first_norm)
-        pos_start = auto.find_element(first_crop, "crop")
-
-        # 避免装备过多时，收集奖励失败
-        pos = (6.0 / 1920, 5.0 / 1080, 12.0 / 1920, 14.0 / 1080)
-        auto.click_element_with_pos(auto.find_element(pos, "crop"), action="down")
-
-        auto.click_element_with_pos(pos_start, action="move")
-
-        # 连续移动
-        for px, py in path_pixels[1:]:
-            norm_pt = to_norm(px, py)
-            crop_box = make_crop_box(norm_pt)
-            auto._debug_clear()
-            pos = auto.find_element(crop_box, "crop", take_screenshot=False)
-            auto.click_element_with_pos(pos, action="move")
-
-        auto.mouse_up()
+        # 后台按短段收集，每段都释放，避免整条慢速轨迹超过鼠标保护的两秒时限。
+        batch_size = 8 if getattr(auto.input_handler, 'is_background', False) is True else len(path_pixels)
+        for offset in range(0, len(path_pixels), batch_size):
+            interrupted = False
+            try:
+                # 从空白处按下，避免装备过多时先拖起装备挡住奖励。
+                blank = (6.0 / 1920, 5.0 / 1080, 12.0 / 1920, 14.0 / 1080)
+                start = auto.find_element(blank, "crop")
+                if not start or auto.click_element_with_pos(start, action="down") is False:
+                    interrupted = True
+                else:
+                    for px, py in path_pixels[offset:offset+batch_size]:
+                        crop_box = make_crop_box(to_norm(px, py))
+                        auto._debug_clear()
+                        pos = auto.find_element(crop_box, "crop", take_screenshot=False)
+                        if not pos or auto.click_element_with_pos(pos, action="move") is False:
+                            interrupted = True
+                            break
+            finally:
+                # 释放不经过前台入口的暂停卡点，取消/异常时也不能留下按住状态。
+                if auto.input_handler.mouse_up() is False:
+                    interrupted = True
+            if interrupted:
+                log.warning("奖励收集手势未完成，已释放鼠标，稍后重新检查当前阶段")
+                return False
 
         # 检查是否弹出 “我来当策划”
         result = auto.get_single_line_text(crop=(972 / 1920, 57 / 1080, 151 / 1920, 44 / 1080))
@@ -2123,6 +2130,8 @@ class CurrencyWars:
                 time.sleep(0.5)
                 auto.click_element("确认选择", "text", crop=(1424 / 1920, 573 / 1080, 134 / 1920, 51 / 1080))
                 time.sleep(0.5)
+
+        return True
 
     # 识别等级
     def get_level(self):

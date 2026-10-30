@@ -126,6 +126,12 @@
             return md + '\n\n<p class="page-foot">内容有误或已过时？<a href="https://github.com/moesnow/March7thAssistant/edit/main/' + file +
               '" target="_blank" rel="noopener">在 GitHub 上编辑此页</a> · <a href="https://github.com/moesnow/March7thAssistant/issues" target="_blank" rel="noopener">反馈问题</a></p>';
           });
+          // 原始 HTML 里的相对图片（如 README 的 <img src="./assets/...">）docsify 不会改写，浏览器会相对 /docs/ 解析而 404；
+          // 按当前文档所在目录补成站点绝对路径，与 GitHub 上的显示一致
+          hook.afterEach(function (html) {
+            var dir = (vm.route.file || '').replace(/^\//, '').replace(/[^/]*$/, '');
+            return html.replace(/(<img\b[^>]*?\ssrc=)(["'])(?:\.\/)?(?![a-z][a-z0-9+.-]*:|\/|#)/gi, '$1$2/' + dir);
+          });
           // 标签页标题带上站点名，方便收藏与分享
           hook.doneEach(function () {
             var h1 = document.querySelector('.markdown-section h1');

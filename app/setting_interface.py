@@ -2520,6 +2520,22 @@ class SettingInterface(ScrollArea):
             tr("默认开启，可以避免悬浮窗等干扰"),
             "use_background_screenshot"
         )
+        self.localControlModeCard = ExpandableComboBoxSettingCard(
+            'local_control_mode', FIF.GAME, tr('本地操作模式'),
+            tr('后台操作遇到鼠标干扰时会等待并重试；滚轮临时切前台，下次启动任务生效。'),
+            texts={tr('前台'): 'foreground', tr('后台'): 'background'},
+            confirm=self.__confirmLocalControlMode,
+        )
+        self.backgroundMouseProtectionCard = SwitchSettingCard1(
+            FIF.GAME, tr('重试失败时短暂锁定鼠标'),
+            tr('仅保护必要的鼠标操作，保留键盘和暂停热键。'),
+            'background_mouse_protection',
+        )
+        self.localControlModeCard.addSettingCard(self.backgroundMouseProtectionCard)
+        def refresh_mouse_protection_option(*_args):
+            self.backgroundMouseProtectionCard.setEnabled(cfg.get_value('local_control_mode') == 'background')
+        self.localControlModeCard.currentIndexChanged.connect(refresh_mouse_protection_option)
+        refresh_mouse_protection_option()
         if sys.platform == 'win32':
             self.autostartCard = AutostartSettingCard(
                 FIF.GAME,
@@ -2859,6 +2875,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
         self.MiscGroup.addSettingCard(self.useBackgroundScreenshotCard)
+        self.MiscGroup.addSettingCard(self.localControlModeCard)
         if sys.platform == 'win32':
             self.MiscGroup.addSettingCard(self.autostartCard)
             self.MiscGroup.addSettingCard(self.debugModeEnableCard)
@@ -2886,6 +2903,7 @@ class SettingInterface(ScrollArea):
             self.autoSetResolutionEnableCard.setHidden(True)
             self.autoSetGamePathEnableCard.setHidden(True)
             self.useBackgroundScreenshotCard.setHidden(True)
+            self.localControlModeCard.setHidden(True)
             self.cloudGameEnableCard.setDisabled(True)  # 在配置文件中强制启用，禁止用户修改
 
         self.addSubInterface(self.PowerGroup, 'PowerInterface', tr('体力'))
@@ -2957,6 +2975,7 @@ class SettingInterface(ScrollArea):
         self.notifyMasterEnableCard.switchChanged.connect(self.__refreshNotifiers)
 
         connect_expand_state(self.afterFinishCard)
+        connect_expand_state(self.localControlModeCard)
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
         self.agentPromptCard.clicked.connect(self.__copyAgentPrompt)
@@ -3017,6 +3036,25 @@ class SettingInterface(ScrollArea):
 
         self._ignoreUniverseEnableCardSwitchChanged = True
         self.universeEnableCard.switchButton.setChecked(False)
+
+    def __confirmLocalControlMode(self, value):
+        """切换到后台模式前说明限制；确认后才写入配置，取消则保留原模式。"""
+        if value != 'background':
+            return True
+        confirm = MessageBox(
+            tr("启用后台模式前请确认"),
+            tr("后台模式下，任务运行时你可以继续使用电脑，但仍有以下限制：\n\n"
+               "• 点击和拖动会短暂借用鼠标，完成后归还；你正在移动鼠标时，任务会等鼠标停下再操作。\n"
+               "• 在大世界中按键时，光标会被短暂锁定在游戏窗口中央。\n"
+               "• 需要滚轮时会临时把游戏切到前台，完成后恢复原来的窗口。\n"
+               "• 游戏窗口可以放在其他窗口后面，但不能最小化；运行期间请保持系统解锁。\n"
+               "• 锄大地、第三方模拟宇宙等独立程序不受此设置影响，仍需前台运行。\n\n"
+               "设置在下次启动任务时生效，自动对话需重新开启。完整说明见使用文档“后台运行”。"),
+            self.window()
+        )
+        confirm.yesButton.setText(tr("我已了解，启用后台模式"))
+        confirm.cancelButton.setText(tr("取消"))
+        return bool(confirm.exec())
 
     def __onCheckUpdateCardSwitchChanged(self, isChecked: bool):
         if self._ignoreCheckUpdateCardSwitchChanged:
