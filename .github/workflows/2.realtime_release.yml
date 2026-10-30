@@ -87,6 +87,8 @@ jobs:
           Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
           Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
           Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
+          # 根目录的 AGENTS.md：在安装目录中打开的 AI Agent 会自动读取，指向随包发布的使用说明（Skill）
+          Copy-Item -Path ".\assets\agent\AGENTS.md" -Destination ".\dist\March7thAssistant\" -Force
 
       # 缓存 7-Zip ZS，避免每次构建重复下载二进制。
       # 注意 GitHub 缓存按 ref 隔离：PR 运行只能读 main 作用域的缓存、不能写入，
