@@ -25,6 +25,8 @@ from module.localization.languages import AUTO_LANGUAGE, available_languages
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
+from .tools.agent_prompt import build_agent_prompt
+from utils import clipboard
 import os
 import random
 import sys
@@ -2521,6 +2523,12 @@ class SettingInterface(ScrollArea):
             tr('项目主页'),
             "https://github.com/moesnow/March7thAssistant"
         )
+        self.agentPromptCard = PrimaryPushSettingCard(
+            tr('复制提示词'),
+            FIF.ROBOT,
+            tr('AI 助手'),
+            tr('复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手')
+        )
         self.bilibiliCard = PrimaryPushSettingCard(
             tr('立即前往'),
             BrandIcon.BILIBILI,
@@ -2831,6 +2839,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.hotkeyCard)
 
         self.AboutGroup.addSettingCard(self.githubCard)
+        self.AboutGroup.addSettingCard(self.agentPromptCard)
         self.AboutGroup.addSettingCard(self.bilibiliCard)
         self.AboutGroup.addSettingCard(self.qqGroupCard)
         # self.AboutGroup.addSettingCard(self.feedbackCard)
@@ -2924,6 +2933,7 @@ class SettingInterface(ScrollArea):
         connect_expand_state(self.afterFinishCard)
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
+        self.agentPromptCard.clicked.connect(self.__copyAgentPrompt)
         self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/C3IryUWCQw"))
         # self.feedbackCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant/issues"))
         self.bilibiliCard.clicked.connect(self.__openUrl("https://space.bilibili.com/3706960664857075"))
@@ -3334,6 +3344,29 @@ class SettingInterface(ScrollArea):
 
     def __openUrl(self, url):
         return lambda: QDesktopServices.openUrl(QUrl(url))
+
+    def __copyAgentPrompt(self):
+        try:
+            clipboard.copy(build_agent_prompt())
+            InfoBar.success(
+                title=tr('复制成功(＾∀＾●)'),
+                content=tr("粘贴给你的 AI 助手即可"),
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
+        except Exception:
+            InfoBar.warning(
+                title=tr('复制失败(╥╯﹏╰╥)'),
+                content="",
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=3000,
+                parent=self
+            )
 
     # def __showRestartTooltip(self):
     #     InfoBar.success(

@@ -81,8 +81,32 @@ exe = EXE(
     icon=['assets\\logo\\Terminal.ico'],
     contents_directory='libraries',
 )
+# 面向脚本与 AI Agent 的命令行入口：与上面同一份程序，只是清单不要求管理员权限。
+# 未提权时可直接查询（--status / --list 等）；运行任务时再通过 UAC 启动 March7th Assistant.exe，
+# 并把输出与退出码转回调用方的终端（见 utils/cli_entry.py）。
+agent_exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='m7a',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=False,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    uac_admin=False,
+    icon=['assets\\logo\\Terminal.ico'],
+    contents_directory='libraries',
+)
 coll = COLLECT(
     exe,
+    agent_exe,
     a.binaries,
     a.datas,
     strip=False,
