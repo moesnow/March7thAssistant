@@ -230,16 +230,10 @@ def start_game():
                     starrail.stop_game()
                 continue
             break
-        except CloudGameZeroDurationError as e:
+        except CloudGameZeroDurationError:
+            # 时长为 0 时重试也无法进入游戏：关闭浏览器后交给调用方，由主循环决定等待下次运行还是按错误退出
             cloud_game.stop_game()
-            msg = cfg.notify_template['ErrorOccurred'].format(error=e)
-            log.error(msg)
-            notif.flush_batch(extra_content=msg, level=NotificationLevel.ERROR)
-            log.hr("完成", 2)
-            if cfg.after_finish == "Loop":
-                after_finish_is_loop(force_scheduled=True)
-                return start_game()
-            sys.exit(0)
+            raise
         except CloudGameLoginTimeoutError:
             raise
         except Exception as e:
@@ -345,6 +339,19 @@ def after_finish_is_loop(force_scheduled=False):
 
     # 启动前重新加载配置 #262
     cfg._load_config()
+
+
+def wait_after_cloud_zero_duration(error):
+    """云游戏时长为 0 时，循环模式下发送通知并等待到下次定时运行，返回 True；
+    非循环模式返回 False，由调用方按错误退出。"""
+    if cfg.after_finish != "Loop":
+        return False
+    msg = cfg.notify_template['ErrorOccurred'].format(error=error)
+    log.error(msg)
+    notif.flush_batch(extra_content=msg, level=NotificationLevel.ERROR)
+    # 无法进入游戏读取开拓力，开拓力循环也改按定时时间等待
+    after_finish_is_loop(force_scheduled=True)
+    return True
 
 
 def _start_launcher_and_get_automation(game):
