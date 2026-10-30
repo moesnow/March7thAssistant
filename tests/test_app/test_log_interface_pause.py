@@ -14,7 +14,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_cooperative_stop_waits_for_cleanup_and_keeps_old_process_identity(monkeypatch,tmp_path):
     import app.log_interface as module
-    from utils.pause import STATE_CANCELLED
+    from utils.pause import STATE_STOPPING
     callbacks=[]
     monkeypatch.setattr(module.QTimer,'singleShot',lambda _delay,callback:callbacks.append(callback))
     process=SimpleNamespace(state=lambda:module.QProcess.Running,processId=lambda:123)
@@ -24,7 +24,7 @@ def test_cooperative_stop_waits_for_cleanup_and_keeps_old_process_identity(monke
     host._finishCooperativeStop=lambda p,pid,d:module.LogInterface._finishCooperativeStop(host,p,pid,d)
     module.LogInterface._finishCooperativeStop(host,process,123,module.time.monotonic()+10)
     assert killed==[] and callbacks
-    (tmp_path/'control.json.state').write_text(json.dumps({'state':STATE_CANCELLED}),encoding='utf-8')
+    (tmp_path/'control.json.state').write_text(json.dumps({'state':STATE_STOPPING}),encoding='utf-8')
     callbacks.pop()()
     assert killed==[123]
     host.process=SimpleNamespace(state=lambda:module.QProcess.Running,processId=lambda:456)
@@ -32,7 +32,7 @@ def test_cooperative_stop_waits_for_cleanup_and_keeps_old_process_identity(monke
     assert killed==[123]
 
 
-def test_stop_sends_cancel_and_prevents_hotkey_overwriting_it(monkeypatch,tmp_path):
+def test_stop_sends_stop_and_prevents_hotkey_overwriting_it(monkeypatch,tmp_path):
     import app.log_interface as module
     callbacks=[]
     monkeypatch.setattr(module.QTimer,'singleShot',lambda _delay,callback:callbacks.append(callback))
@@ -44,13 +44,13 @@ def test_stop_sends_cancel_and_prevents_hotkey_overwriting_it(monkeypatch,tmp_pa
                          appendLog=lambda _:None,pauseButton=SimpleNamespace(setEnabled=lambda _:None))
     host._finishCooperativeStop=lambda p,pid,d:module.LogInterface._finishCooperativeStop(host,p,pid,d)
     module.LogInterface.stopTask(host)
-    assert json.loads(path.read_text(encoding='utf-8'))['command']=='cancel'
+    assert json.loads(path.read_text(encoding='utf-8'))['command']=='stop'
     assert killed==[] and len(callbacks)==1
     module.LogInterface._sendPauseCommand(host,'resume')
-    assert json.loads(path.read_text(encoding='utf-8'))['command']=='cancel'
+    assert json.loads(path.read_text(encoding='utf-8'))['command']=='stop'
     module.LogInterface.stopTask(host)
     assert len(callbacks)==1
-    (tmp_path/'control.json.state').write_text(json.dumps({'state':'cancelled'}),encoding='utf-8')
+    (tmp_path/'control.json.state').write_text(json.dumps({'state':'stopping'}),encoding='utf-8')
     callbacks.pop()()
     assert killed==[123]
 

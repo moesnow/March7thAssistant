@@ -1,4 +1,5 @@
 import os
+import pytest
 from utils.console import is_gui_started, is_docker_started, should_skip_pause
 
 
@@ -72,3 +73,38 @@ class TestGuiStartedEnvContract:
         for value in ("", "0", "false", "yes"):
             monkeypatch.setenv("MARCH7TH_GUI_STARTED", value)
             assert is_gui_started() is False, f"{value!r} 不应被认可"
+
+
+class TestNonInteractive:
+    """非交互模式（--non-interactive / MARCH7TH_NON_INTERACTIVE）：脚本、计划任务与 AI Agent 运行时不等待回车。"""
+
+    @pytest.fixture(autouse=True)
+    def _clean_env(self, monkeypatch):
+        for name in ("MARCH7TH_GUI_STARTED", "MARCH7TH_DOCKER_STARTED", "MARCH7TH_NON_INTERACTIVE"):
+            monkeypatch.delenv(name, raising=False)
+
+    def test_flag_values(self, monkeypatch):
+        from utils.console import is_non_interactive
+        assert is_non_interactive() is False
+        for value in ("1", "true", "TRUE"):
+            monkeypatch.setenv("MARCH7TH_NON_INTERACTIVE", value)
+            assert is_non_interactive() is True
+        monkeypatch.setenv("MARCH7TH_NON_INTERACTIVE", "0")
+        assert is_non_interactive() is False
+
+    def test_skips_every_pause(self, monkeypatch):
+        import builtins
+        from utils import console
+
+        monkeypatch.setenv("MARCH7TH_NON_INTERACTIVE", "1")
+        assert should_skip_pause() is True
+
+        def fail_input(*args, **kwargs):
+            raise AssertionError("非交互模式下不应等待输入")
+
+        monkeypatch.setattr(builtins, "input", fail_input)
+        console.pause_always()
+        console.pause_and_continue()
+        with pytest.raises(SystemExit) as exc:
+            console.pause_and_retry()
+        assert exc.value.code == 1

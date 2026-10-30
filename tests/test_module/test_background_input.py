@@ -7,7 +7,7 @@ import pytest
 from module.automation import background_input as module
 from module.automation.background_input import BackgroundInput, InputInterrupted
 from module.automation.windows_input import WindowIdentity
-from utils.pause import TaskCancelled
+from utils.pause import RunStopRequested
 
 
 class Controller:
@@ -19,15 +19,15 @@ class Controller:
     def register_input(self, handler):
         self.handlers.append(handler)
 
-    def check_cancelled(self):
+    def check_stop(self):
         if self.cancelled:
-            raise TaskCancelled()
+            raise RunStopRequested()
 
     def is_paused(self):
         return self.paused
 
     def checkpoint(self):
-        self.check_cancelled()
+        self.check_stop()
         if self.paused:
             for handler in self.handlers:
                 handler.release_all()
@@ -278,7 +278,7 @@ def test_cancel_mid_drag_releases_mouse(backend):
         if msg==0x201:
             b.ctl.cancelled=True
     b.api.on_post=cancel
-    with pytest.raises(TaskCancelled):
+    with pytest.raises(RunStopRequested):
         b.input.mouse_drag(300,400,500,600,.5)
     assert posts(b.api,0x202)
     assert b.api.cursor()==(7,9)
@@ -322,7 +322,7 @@ def test_scroll_failure_cleanup_respects_user_focus(backend,failure):
     if failure in ('pause','focus','roundtrip'):
         assert b.input.mouse_scroll(3) is False
     else:
-        expected=TaskCancelled if failure=='cancel' else (OSError if failure=='raise' else InputInterrupted)
+        expected=RunStopRequested if failure=='cancel' else (OSError if failure=='raise' else InputInterrupted)
         with pytest.raises(expected): b.input.mouse_scroll(3)
     assert len([e for e in b.api.events if e[0]=='scroll'])==1
     if failure in ('focus','roundtrip'):
@@ -437,7 +437,7 @@ def test_cancel_and_user_focus_change_never_restores_old_window(backend):
         b.api.change_focus(30)
         b.ctl.cancelled=True
     b.api.on_scroll=stop
-    with pytest.raises(TaskCancelled):b.input.mouse_scroll(3)
+    with pytest.raises(RunStopRequested):b.input.mouse_scroll(3)
     assert b.api.foreground()==30
     assert ('focus',20,10) not in b.api.events
 
@@ -466,7 +466,7 @@ def test_cancelling_during_key_settle_cleans_without_replaying_esc(backend):
         if message == 0x101:
             b.ctl.cancelled = True
     b.api.on_post = cancel
-    with pytest.raises(TaskCancelled):
+    with pytest.raises(RunStopRequested):
         b.input.press_key('esc')
     assert len(posts(b.api, 0x100)) == len(posts(b.api, 0x101)) == 1
     assert not b.input._keys and b.input._session is None
@@ -532,10 +532,10 @@ def test_three_conflicts_wait_without_protection_and_remain_cancellable(backend,
         assert not b.input._mouse_down and not b.input._keys
         if timeout is None:
             b.ctl.cancelled = True
-            b.ctl.check_cancelled()
+            b.ctl.check_stop()
         return False
     monkeypatch.setattr(b.input, '_wait_mouse_idle', idle)
-    with pytest.raises(TaskCancelled):
+    with pytest.raises(RunStopRequested):
         b.input.mouse_click(300, 400)
     assert calls == [.5, .5, .5, None]
     assert not b.api.protections and not posts(b.api, 0x201)
@@ -593,7 +593,7 @@ def test_protected_input_always_unlocks_on_interruption(backend, monkeypatch, fa
     if failure == 'pause':
         assert b.input.mouse_click(300, 400) is False
     else:
-        with pytest.raises(TaskCancelled if failure == 'cancel' else OSError):
+        with pytest.raises(RunStopRequested if failure == 'cancel' else OSError):
             b.input.mouse_click(300, 400)
     assert not b.api.protections[0].active
     assert posts(b.api, 0x202) and not b.input._mouse_down
@@ -756,7 +756,7 @@ def test_wheel_processing_wait_remains_cancellable_and_does_not_replay(backend, 
     if interrupt in ('pause','switch'):
         assert b.input.mouse_scroll(3) is False
     else:
-        with pytest.raises(TaskCancelled if interrupt == 'cancel' else InputInterrupted):
+        with pytest.raises(RunStopRequested if interrupt == 'cancel' else InputInterrupted):
             b.input.mouse_scroll(3)
     assert len(sent) == 3
     if interrupt == 'switch':
@@ -797,7 +797,7 @@ def test_cancel_during_split_move_releases_without_replaying(backend):
         if message == 0x200 and wp == 1:
             b.ctl.cancelled = True
     b.api.on_post = cancel
-    with pytest.raises(TaskCancelled):
+    with pytest.raises(RunStopRequested):
         b.input.mouse_move(364, 400)
     assert len(posts(b.api, 0x201)) == len(posts(b.api, 0x202)) == 1
     assert not b.input._mouse_down and b.input._session is None
@@ -922,7 +922,7 @@ def test_captured_attack_interruption_releases_and_keeps_user_window(backend, fa
     if failure in ('pause','focus'):
         assert b.input.press_mouse() is False
     else:
-        with pytest.raises(TaskCancelled if failure == 'cancel' else InputInterrupted):
+        with pytest.raises(RunStopRequested if failure == 'cancel' else InputInterrupted):
             b.input.press_mouse()
     assert len(posts(b.api, 0x201)) == len(posts(b.api, 0x202)) == 1
     assert b.input._session is None and not b.input._mouse_down
@@ -1027,7 +1027,7 @@ def test_stopping_during_focus_handoff_keeps_cancellation_priority(backend):
             b.api.change_focus(30)
             b.ctl.cancelled = True
     b.api.on_post = stop
-    with pytest.raises(TaskCancelled): b.input.press_key('a')
+    with pytest.raises(RunStopRequested): b.input.press_key('a')
     assert not b.input._keys and b.input._session is None
 
 

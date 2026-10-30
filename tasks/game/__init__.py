@@ -24,6 +24,7 @@ from tasks.base.base import Base
 from module.ocr import ocr
 from module.localization import tr
 from utils.console import is_gui_started
+from utils.runs import describe_run, idle_without_run_lock
 
 
 class GameClientOutdatedError(RuntimeError):
@@ -323,13 +324,18 @@ def after_finish_is_loop():
     log.hr("完成", 2)
     # 等待状态退出OCR避免内存占用
     ocr.exit_ocr()
-    # 使用wall clock轮询等待，避免系统休眠后time.sleep剩余时间不准确的问题
-    target_time = time.time() + wait_time
-    while True:
-        remaining = target_time - time.time()
-        if remaining <= 0:
-            break
-        time.sleep(min(60, remaining))
+    # 等待期间不操控游戏，让出运行锁，图形界面或其他命令行可以照常运行任务；
+    # 到点后若其他任务仍在运行，等它结束再开始下一轮
+    with idle_without_run_lock(
+            on_wait=lambda holder: log.info(f"等待正在运行的{describe_run(holder)}结束后再开始下一轮"),
+            on_unavailable=lambda error: log.warning(f"运行锁不可用（{error}），无法确认是否已有其他任务在运行，照常开始下一轮")):
+        # 使用wall clock轮询等待，避免系统休眠后time.sleep剩余时间不准确的问题
+        target_time = time.time() + wait_time
+        while True:
+            remaining = target_time - time.time()
+            if remaining <= 0:
+                break
+            time.sleep(min(60, remaining))
 
     # 启动前重新加载配置 #262
     cfg._load_config()

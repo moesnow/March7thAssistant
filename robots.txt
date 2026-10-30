@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+# 整个仓库都随 GitHub Pages 发布，源码目录对搜索没有意义；assets/ 不能屏蔽（文档内容与图片在里面）
+Disallow: /app/
+Disallow: /module/
+Disallow: /tasks/
+Disallow: /tests/
+Disallow: /tools/
+Disallow: /utils/
+Disallow: /3rdparty/
+Disallow: /telemetry_server/
+
+Sitemap: https://m7a.top/sitemap.xml

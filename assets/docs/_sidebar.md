@@ -1,9 +1,13 @@
-- [主页](/README.md)
-- [使用教程](/assets/docs/Tutorial.md)
-- [流程编排](/assets/docs/Workflow.md)
-- [常见问题](/assets/docs/FAQ.md)
-- [更新日志](/assets/docs/Changelog.md)
-- [后台运行](/assets/docs/Background.md)
-- [Docker 部署](/assets/docs/Docker.md)
-- [Termux 安卓部署](/assets/docs/Termux.md)
-- [贡献指南](/CONTRIBUTING.md)
+- **新手入门**
+  - [使用教程](/assets/docs/Tutorial.md)
+  - [常见问题](/assets/docs/FAQ.md)
+  - [更新日志](/assets/docs/Changelog.md)
+- **进阶使用**
+  - [流程编排](/assets/docs/Workflow.md)
+  - [AI 助手](/assets/docs/Agent.md)
+  - [后台运行](/assets/docs/Background.md)
+  - [Docker 部署](/assets/docs/Docker.md)
+  - [Termux 安卓部署](/assets/docs/Termux.md)
+- **参与项目**
+  - [项目 README](/README.md)
+  - [贡献指南](/CONTRIBUTING.md)

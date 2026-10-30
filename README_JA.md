@@ -27,9 +27,9 @@
 
 **ゲーム内言語は現在、簡体字中国語のみ対応しています。**
 
-クイックスタート: [使用チュートリアル](https://m7a.top/#/assets/docs/Tutorial_ja_JP)
+クイックスタート: [使用チュートリアル](https://m7a.top/docs/#/assets/docs/Tutorial_ja_JP)
 
-困ったときは先にこちらを確認してください: [FAQ](https://m7a.top/#/assets/docs/FAQ_ja_JP)
+困ったときは先にこちらを確認してください: [FAQ](https://m7a.top/docs/#/assets/docs/FAQ_ja_JP)
 
 </div>
 
@@ -37,7 +37,7 @@
 
 - **日常**: 開拓力消化、デイリー訓練、報酬受け取り、委託、フィールド探索
 - **週常**: 歴戦余韻、模擬宇宙、差分宇宙、貨幣戦争、混沌の記憶、虚構叙事、末日の幻影
-- **雲・星穹鉄道**: バックグラウンド実行、ヘッドレス実行、[Docker](https://m7a.top/#/assets/docs/Docker) 実行に対応
+- **雲・星穹鉄道**: バックグラウンド実行、ヘッドレス実行、[Docker](https://m7a.top/docs/#/assets/docs/Docker) 実行に対応
 - **ガチャ記録エクスポート**: [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) 標準に対応
 - **ツールボックス**: 自動会話、FPS アンロック、交換コード、タッチモード
 - デイリー訓練などの完了状況で **通知送信** に対応

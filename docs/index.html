@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>使用文档 · 三月七小助手</title>
+  <meta name="description" content="三月七小助手（March7thAssistant）使用教程、常见问题、流程编排、AI 助手与部署文档。">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff7fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1b2036" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <script>
+    // 文档首页默认打开使用教程；README 仍可通过 #/README 访问
+    if (!location.hash || location.hash === '#/') history.replaceState(null, '', '#/assets/docs/Tutorial');
+    // 与 docsify 脚本并行预取当前页面与侧边栏，省掉一次串行往返（海外 CDN 一次往返常要零点几秒）
+    (function (m) {
+      if (!window.fetch) return;
+      fetch('/' + ((m && m[1]) || 'assets/docs/Tutorial') + '.md').catch(function () {});
+      fetch('/assets/docs/_sidebar.md').catch(function () {});
+    })(/^#\/([^?]+)/.exec(location.hash));
+  </script>
+  <!-- 主题样式不阻塞首次绘制：先显示下方的加载占位，脚本（约 48 KB）到达前样式早已就绪 -->
+  <link rel="stylesheet" href="/assets/docsify/theme-simple.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/assets/docsify/theme-simple.css"></noscript>
+  <style>
+    /* 品牌配色与字体：必须写在主题样式之后，同为 :root 时后者生效 */
+    :root {
+      --theme-color: #c8337a;
+      --link-color: #c8337a;
+      --base-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+      --code-font-family: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+      --base-color: #3d4466;
+      --heading-color: #1e2547;
+      --heading-h1-font-weight: 800;
+      --heading-h2-font-weight: 700;
+      --heading-font-weight: 700;
+      --sidebar-background: #fff7fb;
+      --sidebar-border-color: #f0e6ee;
+      --sidebar-border-width: 0 1px 0 0;
+      --sidebar-name-color: #1e2547;
+      --sidebar-name-font-weight: 800;
+      --sidebar-name-margin: 1.25rem 0 .5rem;
+      --sidebar-name-padding: 0 1rem;
+      --sidebar-name-text-align: left;
+      --blockquote-background: #fff7fb;
+      --blockquote-border-color: #f5bcd8;
+      --mark-background: #ffe6f2;
+      --mark-color: #1e2547;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      /* 以下两段取自 docsify-themeable 的 theme-simple-dark.css（它与浅色主题只差这两段变量），免去整份暗色主题的下载 */
+      :root{--code-theme-background: #222;--code-theme-comment: #516e7a;--code-theme-function: #f07178;--code-theme-keyword: #c2e78c;--code-theme-operator: #ffcb6b;--code-theme-punctuation: #89ddff;--code-theme-selector: #ffcb6b;--code-theme-tag: #f07178;--code-theme-text: #f3f3f3;--code-theme-variable: #ffcb6b}:root{--mono-hue: 201;--mono-saturation: 18%;--mono-shade3: hsl(var(--mono-hue), var(--mono-saturation), 13%);--mono-shade2: hsl(var(--mono-hue), var(--mono-saturation), 15%);--mono-shade1: hsl(var(--mono-hue), var(--mono-saturation), 17%);--mono-base: hsl(var(--mono-hue), var(--mono-saturation), 19%);--mono-tint1: hsl(var(--mono-hue), var(--mono-saturation), 25%);--mono-tint2: hsl(var(--mono-hue), var(--mono-saturation), 35%);--mono-tint3: hsl(var(--mono-hue), var(--mono-saturation), 43%);--spinner-track-color: rgba(255, 255, 255, 0.15);--base-background-color: var(--mono-base);--base-color: #d3d3d3;--hr-border: 1px solid var(--mono-tint2);--mark-background: #ffcb6b;--mark-color: var(--base-background-color);--selection-color: rgba(94, 131, 175, 0.75);--blockquote-background: var(--mono-shade2);--code-inline-background: var(--mono-tint1);--code-theme-background: var(--mono-shade2);--heading-color: #fff;--heading-h2-border-color: var(--mono-tint2);--kbd-background: var(--mono-shade2);--kbd-border: none;--kbd-color: var(--strong-color);--notice-important-background: var(--mono-shade2);--notice-tip-background: var(--mono-shade2);--table-cell-border-color: var(--mono-tint1);--table-row-odd-background: var(--mono-shade2);--cover-background-color: var(--base-background-color);--cover-background-image: radial-gradient(ellipse at center bottom, var(--mono-tint3), transparent);--cover-blockquote-color: var(--mark-background);--cover-button-border: 1px solid var(--mono-tint3);--cover-button-color: #fff;--navbar-menu-background: var(--mono-tint1);--navbar-menu-box-shadow: rgba(0,0,0,0.05) 0px 0px 1px, rgba(0,0,0,0.05) 0px 1px 2px, rgba(0,0,0,0.05) 0px 2px 4px, rgba(0,0,0,0.05) 0px 4px 8px, rgba(0,0,0,0.05) 0px 8px 16px, rgba(0,0,0,0.05) 0px 16px 32px;--copycode-background: var(--mono-tint1);--copycode-color: #fff;--docsifytabs-border-color: var(--mono-tint2);--docsifytabs-tab-background: var(--mono-shade1);--docsifytabs-tab-color: var(--mono-tint2);--pagination-border-top: 1px solid var(--mono-tint2);--pagination-title-color: #fff;--search-input-background-color: var(--mono-shade2);--search-input-background-image: url("data:image/svg+xml,%3Csvg height='20px' width='20px' viewBox='0 0 24 24' fill='none' stroke='rgba(255, 255, 255, 0.3)' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' preserveAspectRatio='xMidYMid meet' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='10.5' cy='10.5' r='7.5' vector-effect='non-scaling-stroke'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='15.8' y2='15.8' vector-effect='non-scaling-stroke'%3E%3C/line%3E%3C/svg%3E");--search-input-border-color: var(--mono-tint1);--search-input-placeholder-color: rgba(255, 255, 255, 0.4);--search-clear-icon-color1: rgba(255, 255, 255, 0.3);--sidebar-background: var(--mono-shade1);--sidebar-border-color: var(--mono-tint1);--sidebar-nav-pagelink-background: no-repeat 2px calc(50% - 2.5px) / 6px 5px linear-gradient(45deg, transparent 2.75px, var(--mono-tint2) 2.75px 4.25px, transparent 4px), no-repeat 2px calc(50% + 2.5px) / 6px 5px linear-gradient(135deg, transparent 2.75px, var(--mono-tint2) 2.75px 4.25px, transparent 4px);--sidebar-nav-pagelink-background--loaded: no-repeat 0px center / 5px 6px linear-gradient(225deg, transparent 2.75px, var(--mono-tint2) 2.75px 4.25px, transparent 4.25px), no-repeat 5px center / 5px 6px linear-gradient(135deg, transparent 2.75px, var(--mono-tint2) 2.75px 4.25px, transparent 4.25px)}
+      :root {
+        --mono-hue: 230;
+        --mono-saturation: 26%;
+        --theme-color: #ff8cc6;
+        --link-color: #ff8cc6;
+        --base-color: #c7cae0;
+        --heading-color: #fff;
+        --sidebar-background: var(--mono-shade1);
+        --sidebar-border-color: var(--mono-tint1);
+        --sidebar-name-color: #fff;
+        --blockquote-background: var(--mono-shade2);
+        --blockquote-border-color: rgba(255, 140, 198, .35);
+        --mark-background: rgba(255, 140, 198, .2);
+        --mark-color: #fff;
+      }
+    }
+
+    body { margin: 0; background: var(--base-background-color, #fff); }
+    .app-name-link { display: inline-flex !important; align-items: center; gap: 10px; line-height: 1.2; }
+    .app-name-link img { width: 36px; height: 36px; flex: none; }
+    .app-name-link small { display: block; font-size: 12px; font-weight: 600; opacity: .65; letter-spacing: .02em; }
+    /* docsify 挂载前导航还是原始列表，先隐藏，避免主题样式到达前闪一下默认样式 */
+    nav:not(.app-nav) { display: none; }
+    nav.app-nav a { font-weight: 600; }
+    @media (max-width: 47.99em) {
+      nav.app-nav { left: 64px; right: 16px; font-size: 14px; }
+      nav.app-nav > ul > li { margin: 0 0 0 .9em; }
+    }
+    /* 提示词等纯文本代码块自动换行，长链接不用横向滚动 */
+    .markdown-section pre[data-lang=text] code { white-space: pre-wrap; word-break: break-all; }
+    .markdown-section h1 { letter-spacing: -.01em; }
+    .markdown-section .page-foot { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--sidebar-border-color); font-size: .875rem; opacity: .8; }
+
+    /* 加载占位：docsify 挂载时会整体替换 #app */
+    .boot { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; min-height: 80vh; color: #5f6688; font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+    .boot img { width: 56px; height: 56px; animation: boot 1s ease-in-out infinite alternate; }
+    @keyframes boot { to { transform: translateY(-6px); } }
+    @media (prefers-color-scheme: dark) { html { background: #1b2036; } .boot { color: #a3a8c6; } }
+    @media (prefers-reduced-motion: reduce) { .boot img { animation: none; } }
+  </style>
+</head>
+
+<body>
+  <!-- docsify 会把这里的导航渲染到页面右上角 -->
+  <nav>
+    <ul>
+      <li><a href="/">官网首页</a></li>
+      <li><a href="/#download">下载</a></li>
+      <li><a href="#/assets/docs/Agent">AI 助手</a></li>
+      <li><a href="https://github.com/moesnow/March7thAssistant" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+  </nav>
+  <div id="app">
+    <div class="boot"><img src="/website/img/m7a-mark-120.webp" width="56" height="56" alt="">正在加载文档…</div>
+  </div>
+  <script>
+    var SITE = '三月七小助手';
+    window.$docsify = {
+      name: '<img src="/website/img/m7a-mark-120.webp" width="36" height="36" alt=""><span>' + SITE + '<small>使用文档</small></span>',
+      nameLink: '/',
+      // 页面位于 /docs/，文档文件仍在仓库根目录，路由与迁移前保持一致（#/assets/docs/Tutorial 等）
+      basePath: '/',
+      loadSidebar: true,
+      // 所有目录共用一份侧边栏，避免逐级向上请求 _sidebar.md 产生多次 404
+      alias: { '.*/_sidebar.md': '/assets/docs/_sidebar.md' },
+      subMaxLevel: 3,
+      auto2top: true,
+      plugins: [
+        function (hook, vm) {
+          hook.beforeEach(function (md) {
+            var file = (vm.route.file || '').replace(/^\//, '');
+            return md + '\n\n<p class="page-foot">内容有误或已过时？<a href="https://github.com/moesnow/March7thAssistant/edit/main/' + file +
+              '" target="_blank" rel="noopener">在 GitHub 上编辑此页</a> · <a href="https://github.com/moesnow/March7thAssistant/issues" target="_blank" rel="noopener">反馈问题</a></p>';
+          });
+          // 标签页标题带上站点名，方便收藏与分享
+          hook.doneEach(function () {
+            var h1 = document.querySelector('.markdown-section h1');
+            document.title = (h1 ? h1.textContent.trim() + ' · ' : '') + SITE;
+          });
+        }
+      ]
+    }
+  </script>
+  <script src="/assets/docsify/docsify.min.js"></script>
+</body>
+
+</html>

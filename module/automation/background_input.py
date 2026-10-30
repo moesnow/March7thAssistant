@@ -113,7 +113,7 @@ class BackgroundInput(InputBase):
             return False
 
     def _check(self):
-        self._pause.check_cancelled()
+        self._pause.check_stop()
         if self._closed:
             raise InputInterrupted('后台输入已取消')
         if self._pause.is_paused():
@@ -254,7 +254,7 @@ class BackgroundInput(InputBase):
         return target, foreground, identity, self._geometry(target)
 
     def _check_mouse_context(self, context):
-        self._pause.check_cancelled()
+        self._pause.check_stop()
         if self._closed:
             raise InputInterrupted('后台输入已取消')
         if self._pause.is_paused():
@@ -660,7 +660,7 @@ class BackgroundInput(InputBase):
         succeeded = False
 
         def check():
-            self._pause.check_cancelled()
+            self._pause.check_stop()
             if self._closed:
                 raise InputInterrupted('后台输入已取消')
             if self._pause.is_paused():

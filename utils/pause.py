@@ -5,17 +5,20 @@ GUI 通过控制文件下发暂停/继续指令，CLI 侧在动作卡点（`chec
 
 - 任务线程阻塞在卡点上时，调用栈原封不动（循环计数、重试次数等局部状态都保留），
   恢复指令到达后从原位置继续执行，无需任何状态序列化。
-- 暂停先释放后台后端持有的键鼠并清理临时前台状态，再停止发出新输入，不自动按 Esc。
+- 暂停、停止先释放后台输入后端持有的键鼠并清理临时前台状态，再停止发出新输入，不自动按 Esc。
 
 控制文件协议（两个文件各自独占写，临时文件 + `os.replace` 原子替换，避免读写竞争）：
 
-- 指令文件（GUI 写、CLI 读）：``{"command": "pause" | "resume" | "cancel"}``
+- 指令文件（GUI / 命令行 --control 写、CLI 读）：``{"command": "pause" | "resume" | "stop"}``
 - 回执文件（CLI 写、GUI 读）：指令文件路径加 ``.state`` 后缀，
-  ``{"state": "running" | "pausing" | "paused" | "cancelled"}``
-  其中 ``pausing`` 表示已收到暂停指令、任务尚未停到卡点上；``cancelled`` 表示停止清理完成，GUI 可终止进程树。
+  ``{"state": "running" | "pausing" | "paused" | "stopping"}``
+  其中 ``pausing`` 表示已收到暂停指令、任务尚未停到卡点上；
+  ``stopping`` 表示已收到停止指令且后台输入已释放，任务将在下一个卡点抛出 `RunStopRequested` 结束，
+  图形界面据此即可安全结束进程树。
 
-指令文件路径由环境变量 ``MARCH7TH_CONTROL_FILE`` 传入（GUI 启动任务时注入）。
-未设置该环境变量时整个功能惰性关闭（独立 CLI / Docker 场景），`checkpoint()` 仅剩一次布尔判断。
+指令文件路径由环境变量 ``MARCH7TH_CONTROL_FILE`` 传入（GUI 启动任务时注入；
+命令行运行时由 utils/runs.py 为每次运行分配 ``logs/runs/<run_id>.control``）。
+未设置该环境变量时整个功能惰性关闭（Docker 等场景），`checkpoint()` 仅剩一次布尔判断。
 """
 import json
 import os
@@ -23,7 +26,17 @@ import tempfile
 import threading
 import weakref
 
-from module.logger import log
+
+class _LazyLog:
+    """延迟导入日志模块：本模块的文件协议部分也被未提权的命令行入口使用，
+    导入 module.logger 会初始化配置与日志（并打印欢迎横幅），只在真正写日志时才导入。"""
+
+    def __getattr__(self, name):
+        from module.logger import log as _log
+        return getattr(_log, name)
+
+
+log = _LazyLog()
 
 # GUI 注入的指令文件路径（环境变量名与 MARCH7TH_GUI_STARTED 等保持同一命名风格）
 CONTROL_FILE_ENV = "MARCH7TH_CONTROL_FILE"
@@ -31,7 +44,7 @@ CONTROL_FILE_ENV = "MARCH7TH_CONTROL_FILE"
 # 指令文件内容
 COMMAND_PAUSE = "pause"
 COMMAND_RESUME = "resume"
-COMMAND_CANCEL = "cancel"
+COMMAND_STOP = "stop"
 
 # 回执文件 = 指令文件路径 + 该后缀
 STATE_FILE_SUFFIX = ".state"
@@ -40,14 +53,13 @@ STATE_FILE_SUFFIX = ".state"
 STATE_RUNNING = "running"
 STATE_PAUSING = "pausing"
 STATE_PAUSED = "paused"
-STATE_CANCELLED = "cancelled"
-
-
-class TaskCancelled(KeyboardInterrupt):
-    """协作式停止，跳过任务层的普通 Exception 重试。"""
+STATE_STOPPING = "stopping"
 
 # 指令文件轮询间隔（秒）
 POLL_INTERVAL = 0.3
+
+# 收到停止指令后，任务迟迟走不到卡点（例如长时间等待中）时，兜底强制结束前的等待时间（秒）
+STOP_GRACE_SECONDS = 60
 
 # 暂停/恢复时输出的日志（按仓库约定：日志固定中文原文，不走 tr()）
 PAUSE_LOG_MESSAGE = (
@@ -58,6 +70,14 @@ RESUME_LOG_MESSAGE = (
     "任务已恢复：将继续执行剩余步骤；"
     "因中途暂停过，后续可能出现未预期的错误"
 )
+STOP_LOG_MESSAGE = "收到停止指令：任务将在下一步操作前结束，不会再发出任何键鼠操作"
+
+
+class RunStopRequested(BaseException):
+    """外部请求停止任务。
+
+    继承 BaseException（与 KeyboardInterrupt 同级），避免被任务代码里的 `except Exception` 吞掉后继续重试。
+    """
 
 
 def _atomic_write_json(path, data):
@@ -100,7 +120,7 @@ def pause_guard(method):
 
 
 def write_command(control_path, command):
-    """写入暂停/恢复指令（GUI 侧使用）。"""
+    """写入暂停/恢复/停止指令（GUI 与命令行 --control 使用）。"""
     _atomic_write_json(control_path, {"command": command})
 
 
@@ -142,7 +162,11 @@ class PauseController:
         self._watcher = None
         self._watcher_stop = threading.Event()
         self._last_command = COMMAND_RESUME
-        self._cancel_event = threading.Event()
+        self._stop_requested = False
+        self._stop_timer = None
+        # 停止指令发出后 STOP_GRACE_SECONDS 秒仍未结束时的兜底回调（由 main.py 注册：记录结果后强制退出）
+        self.on_stop_timeout = None
+        # 持有键鼠状态的输入后端（后台输入）；暂停与停止时先释放它们
         self._inputs = weakref.WeakSet()
         self._inputs_lock = threading.Lock()
 
@@ -162,10 +186,6 @@ class PauseController:
         if errors:
             raise RuntimeError('后台输入清理失败，尚未完成暂停或停止') from errors[0]
 
-    def check_cancelled(self):
-        if self._enabled and self._cancel_event.is_set():
-            raise TaskCancelled()
-
     # ---------- 生命周期 ----------
 
     def start(self, control_path=None):
@@ -182,7 +202,6 @@ class PauseController:
         self._control_path = os.path.abspath(path)
         self._state_path = self._control_path + STATE_FILE_SUFFIX
         self._enabled = True
-        self._cancel_event.clear()
         self._resume_event.set()
         self._watcher_stop.clear()
         self._watcher = threading.Thread(
@@ -201,6 +220,9 @@ class PauseController:
             self._resume_event.set()
             self._enabled = False
             self._watcher = None
+            if self._stop_timer is not None:
+                self._stop_timer.cancel()
+                self._stop_timer = None
 
     @property
     def enabled(self):
@@ -209,11 +231,22 @@ class PauseController:
     # ---------- 任务线程侧 ----------
 
     def checkpoint(self):
-        """动作卡点：暂停中则在此阻塞，直到恢复指令到达。运行中立即返回。"""
-        self.check_cancelled()
-        if not self._enabled or self._resume_event.is_set():
+        """动作卡点：暂停中则在此阻塞，直到恢复指令到达；收到停止指令则抛出 RunStopRequested。运行中立即返回。"""
+        if not self._enabled:
+            return
+        if self._stop_requested:
+            raise RunStopRequested()
+        if self._resume_event.is_set():
             return
         self._enter_paused()
+        if self._stop_requested:
+            # 暂停期间收到停止指令：停止指令会放行卡点，由这里结束任务
+            raise RunStopRequested()
+
+    def check_stop(self):
+        """只检查停止指令、不进入暂停：供持有输入锁的后台输入在等待中途使用。"""
+        if self._enabled and self._stop_requested:
+            raise RunStopRequested()
 
     def _enter_paused(self):
         self._release_inputs()
@@ -228,7 +261,6 @@ class PauseController:
                 self._write_state(STATE_PAUSED)
         # 阻塞至 watcher 线程收到恢复指令并置位事件
         self._resume_event.wait()
-        self.check_cancelled()
 
     # ---------- 指令侧（GUI / 测试可直接调用）----------
 
@@ -240,12 +272,17 @@ class PauseController:
         """请求恢复。"""
         self._apply_command(COMMAND_RESUME)
 
-    def request_cancel(self):
-        self._apply_command(COMMAND_CANCEL)
+    def request_stop(self):
+        """请求停止：任务在下一个卡点抛出 RunStopRequested（暂停中会被立即放行到卡点）。"""
+        self._apply_command(COMMAND_STOP)
 
     def is_paused(self):
         """当前是否处于暂停状态（任务线程已停或将停在卡点上）。"""
         return self._enabled and not self._resume_event.is_set()
+
+    @property
+    def stop_requested(self):
+        return self._stop_requested
 
     # ---------- 内部实现 ----------
 
@@ -254,22 +291,32 @@ class PauseController:
             try:
                 data = _read_json(self._control_path) or {}
                 command = data.get("command")
-                if command in (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_CANCEL) and command != self._last_command:
+                if command in (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP) and command != self._last_command:
                     self._apply_command(command)
             except Exception:
                 pass
             self._watcher_stop.wait(POLL_INTERVAL)
 
     def _apply_command(self, command):
-        self._last_command = command
-        if not self._enabled:
+        if self._stop_requested:
+            # 停止是终态：之后的暂停/恢复指令一律忽略
             return
-        if command == COMMAND_CANCEL:
-            self._cancel_event.set()
+        self._last_command = command
+        if command == COMMAND_STOP:
+            self._stop_requested = True
+            log.warning(STOP_LOG_MESSAGE)
+            # 暂停中的任务也要立刻走到卡点，由卡点抛出停止
             self._resume_event.set()
-            self._release_inputs()
-            self._write_state(STATE_CANCELLED)
-        elif command == COMMAND_PAUSE:
+            self._arm_stop_timer()
+            # 先释放后台输入再回执：清理失败时不回执，图形界面超时后仍会强制结束
+            try:
+                self._release_inputs()
+            except Exception as e:
+                log.warning(f"停止前释放后台输入失败：{e}")
+                raise
+            self._write_state(STATE_STOPPING)
+            return
+        if command == COMMAND_PAUSE:
             self._announced_pause = False
             self._write_state(STATE_PAUSING)
             self._resume_event.clear()
@@ -282,6 +329,23 @@ class PauseController:
             self._write_state(STATE_RUNNING)
             self._resume_event.set()
             self._announced_pause = False
+
+    def _arm_stop_timer(self):
+        """任务长时间走不到卡点（例如等待体力恢复的长睡眠）时，宽限期满后交给兜底回调强制结束。"""
+        if self.on_stop_timeout is None or self._stop_timer is not None:
+            return
+        self._stop_timer = threading.Timer(STOP_GRACE_SECONDS, self._on_stop_grace_expired)
+        self._stop_timer.daemon = True
+        self._stop_timer.start()
+
+    def _on_stop_grace_expired(self):
+        callback = self.on_stop_timeout
+        if callback is None:
+            return
+        try:
+            callback()
+        except Exception:
+            pass
 
     def _write_state(self, state):
         if not self._state_path:

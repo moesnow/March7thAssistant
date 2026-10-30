@@ -26,8 +26,8 @@ from .common.schedule import (task_trigger_mode, scheduled_task_slot,
 from module.config import cfg
 from module.game import get_game_controller
 from utils.tasks import TASK_NAMES, PAUSABLE_TASKS
-from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_CANCEL, STATE_PAUSING, STATE_PAUSED,
-                         STATE_RUNNING, STATE_CANCELLED, write_command, read_state, reset_files)
+from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP, STATE_PAUSING, STATE_PAUSED,
+                         STATE_RUNNING, STATE_STOPPING, write_command, read_state, reset_files)
 from utils.desktop import open_log_folder
 from .schedule_dialog import ScheduleManagerDialog
 from module.notification import notif
@@ -1486,7 +1486,7 @@ class LogInterface(ScrollArea):
             if pid > 0:
                 if getattr(self, '_pause_supported', False):
                     try:
-                        write_command(self._pauseControlPath(), COMMAND_CANCEL)
+                        write_command(self._pauseControlPath(), COMMAND_STOP)
                         proc = self.process
                         self._cooperative_stop_process = proc
                         if getattr(self, 'pauseButton', None) is not None:
@@ -1507,7 +1507,7 @@ class LogInterface(ScrollArea):
         if (process is not self.process or process.state() != QProcess.Running
                 or process.processId() != pid):
             return
-        cleaned = read_state(self._pauseControlPath()) == STATE_CANCELLED
+        cleaned = read_state(self._pauseControlPath()) == STATE_STOPPING
         if cleaned or time.monotonic() >= deadline:
             if not cleaned:
                 self.appendLog("未收到输入清理回执，强制停止任务\n")
@@ -1734,7 +1734,7 @@ class LogInterface(ScrollArea):
             state = read_state(self._pauseControlPath())
         except Exception:
             state = None
-        if state == STATE_CANCELLED:
+        if state == STATE_STOPPING:
             return
         if state and state != self._pause_state:
             self._pause_state = state

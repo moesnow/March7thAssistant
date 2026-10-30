@@ -293,6 +293,14 @@ if __name__ == "__main__":
     if translator is None:
         translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
 
+    # 安装登记（含图形界面进程标识）：供 AI Agent / 脚本查找本机安装，并判断图形界面是否在运行
+    try:
+        from module.config import cfg
+        from utils.install_registry import register_install
+        register_install(cfg.version, gui_pid=os.getpid())
+    except Exception:
+        pass
+
     app.installTranslator(translator)
 
     # 传递任务参数给主窗口
