@@ -295,7 +295,12 @@ class _TeeStream:
     def write(self, text):
         written = len(text)
         if self._stream is not None:
-            written = self._stream.write(text)
+            try:
+                written = self._stream.write(text)
+            except UnicodeEncodeError:
+                # 控制台编码放不下（英文 Windows 的 cp1252、任意非 UTF-8 代码页）：
+                # 这一行只能在控制台侧丢掉，但绝不能连累下面的日志——捕获输出本就是来留底的
+                written = len(text)
         try:
             self._sink.write(_ANSI_RE.sub("", text))
             if "\n" in text:

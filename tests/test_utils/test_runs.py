@@ -348,6 +348,29 @@ class TestOutputCapture:
         assert not tee.isatty()
         assert sink.getvalue() == "abc"
 
+    def test_tee_keeps_log_when_console_cannot_encode(self):
+        """控制台编码放不下中文时（英文 Windows 的 cp1252），日志仍要完整留下。
+
+        在进程内用 cp1252 包一层内存流来构造失败场景，不依赖 runner 的语言环境：
+        CI（cp1252）、本机（cp936/UTF-8）行为一致，改坏这里任何平台都会报红。
+        """
+        raw = io.BytesIO()
+        stream = io.TextIOWrapper(raw, encoding="cp1252", errors="strict", newline="")
+        sink = io.StringIO()
+        tee = runs._TeeStream(stream, sink)
+        assert tee.write("第一行\n") == 4      # 不把 UnicodeEncodeError 甩给调用方
+        assert sink.getvalue() == "第一行\n"    # 控制台侧丢掉，日志侧不能丢
+
+    def test_tee_does_not_swallow_other_stream_errors(self):
+        """只兜编码错误：磁盘满、流已关闭这类真失败必须照旧暴露。"""
+        class Broken(io.StringIO):
+            def write(self, text):
+                raise OSError("磁盘已满")
+
+        tee = runs._TeeStream(Broken(), io.StringIO())
+        with pytest.raises(OSError):
+            tee.write("abc")
+
     def test_capture_output_writes_log_file(self, tmp_path):
         log_path = str(tmp_path / "runs" / "x.log")
         code = (
@@ -356,7 +379,10 @@ class TestOutputCapture:
             "logging.basicConfig(); logging.getLogger().error('第二行'); raise SystemExit(3)"
         )
         repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        result = subprocess.run([sys.executable, "-c", code], cwd=repo, capture_output=True, timeout=60)
+        # 子进程不走 main.py，没有 ensure_utf8_output 兜底：显式钉死编码，
+        # 免得用例随 runner 的 ANSI 代码页（cp1252 / cp936 / UTF-8）时红时绿
+        env = dict(os.environ, PYTHONIOENCODING="utf-8")
+        result = subprocess.run([sys.executable, "-c", code], cwd=repo, capture_output=True, timeout=60, env=env)
         assert result.returncode == 3
         with open(log_path, encoding="utf-8") as f:
             content = f.read()
