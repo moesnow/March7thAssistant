@@ -16,7 +16,7 @@ from module.game.cloud import CloudGameLoginTimeoutError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
-from module.automation.background_input import GameWindowLost, InputInterrupted
+from module.automation.background_input import WINDOW_WAIT_SECONDS, GameWindowLost, InputInterrupted
 from module.config import cfg
 from module.notification import notif
 from module.notification.notification import NotificationLevel
@@ -67,7 +67,7 @@ def ensure_game_ready():
     if getattr(auto.input_handler, 'is_background', False) is True:
         # 后台模式不切换前台：窗口暂时不可操作（例如被最小化）时等待还原，失败时写明原因
         try:
-            auto.input_handler.wait_for_window(60)
+            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
         except (InputInterrupted, GameWindowLost) as error:
             log.error(f"{error}，workflow 未执行")
             return False
@@ -173,7 +173,7 @@ def start_game():
         if getattr(auto.input_handler, 'is_background', False) is True and starrail.is_game_running():
             # 后台模式不还原、不激活已运行的游戏：窗口暂时不可操作（例如被最小化）时等待用户还原，
             # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
-            auto.input_handler.wait_for_window(60)
+            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
         if not starrail.switch_to_game():
             if cfg.auto_set_resolution_enable:
                 starrail.change_resolution(1920, 1080)

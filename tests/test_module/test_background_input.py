@@ -228,14 +228,30 @@ def test_unicode_text_refocuses_last_click_in_same_session(backend):
     assert [event[3] for event in posts(b.api,0x102)]==[ord('中'),65,0xD83D,0xDE42]
 
 
-def test_minimized_game_sends_no_messages(backend):
-    """最小化时不发任何消息，按未完成返回，交给下一次截图等待窗口恢复，不直接结束任务。"""
-    backend.api.minimized=True
-    assert backend.input.mouse_click(300,400) is False
-    assert backend.input.press_key('esc') is False
-    assert backend.api.events==[]
-    warnings = [call.args[0] for call in backend.input.logger.warning.call_args_list]
+def test_minimized_game_sends_no_messages_and_waits_for_restore(backend, monkeypatch):
+    """最小化时不发任何消息；等窗口还原后按未完成返回，不重放之前决定的输入，也不让只按键的循环空转。"""
+    b = backend
+    b.api.minimized = True
+    sleep_hook(b, monkeypatch, lambda now: setattr(b.api, 'minimized', now < 3))
+    assert b.input.mouse_click(300,400) is False
+    assert 3 <= b.clock.now < 4
+    assert b.api.events == []
+    warnings = [call.args[0] for call in b.input.logger.warning.call_args_list]
     assert len(warnings) == 1 and '最小化' in warnings[0]
+    assert b.input.press_key('esc') is True  # 还原后的新输入照常发送
+
+
+def test_input_on_window_minimized_for_too_long_reports_reason_once(backend):
+    b = backend
+    b.api.minimized = True
+    with pytest.raises(InputInterrupted, match='最小化.*已等待 60 秒'):
+        b.input.press_key('esc')
+    assert 60 <= b.clock.now < 62
+    started = b.clock.now
+    with pytest.raises(InputInterrupted, match='最小化'):
+        b.input.mouse_click(300, 400)  # 同一段不可用期间不再重复等待
+    assert b.clock.now - started < .1
+    assert b.api.events == []
 
 
 def test_destroyed_or_reused_window_never_receives_release(backend):
@@ -1173,12 +1189,14 @@ def test_capture_after_game_exit_reports_exit(backend, monkeypatch):
 
 
 @pytest.mark.parametrize('change', ['minimize', 'move'])
-def test_window_change_during_key_hold_releases_and_returns_not_completed(backend, change):
+def test_window_change_during_key_hold_releases_and_returns_not_completed(backend, monkeypatch, change):
     """输入途中窗口被最小化或移动：释放按键、按未完成返回，不再作为错误结束任务。"""
     b = backend
     def act(message, vk, _lp):
         if message == 0x100 and vk == ord('W'):
-            if change == 'minimize': b.api.minimized = True
+            if change == 'minimize':
+                b.api.minimized = True
+                sleep_hook(b, monkeypatch, lambda now: setattr(b.api, 'minimized', False))
             else: b.api.origin = (300, 300)
     b.api.on_post = act
     assert b.input.press_key('w', 1) is False
@@ -1187,14 +1205,23 @@ def test_window_change_during_key_hold_releases_and_returns_not_completed(backen
     b.input.logger.error.assert_not_called()
 
 
-def test_window_closed_while_sending_is_not_completed_and_clears_state(backend):
+@pytest.mark.parametrize('after', ['exited', 'recreated'])
+def test_window_closed_while_sending_clears_state_and_reports_outcome(backend, after):
+    """发送途中窗口关闭：清理状态；游戏已退出时写明原因，窗口重建后按未完成返回。"""
     b = backend
     def gone(message, *_):
         if message == 0x201:
             b.api.windows.pop(10)
+            if after == 'recreated':
+                b.api.game = WindowIdentity(10, 999, 9)
+                b.api.windows[10] = b.api.game
             raise WindowGoneError('游戏窗口已关闭或重建')
     b.api.on_post = gone
-    assert b.input.mouse_click(300, 400) is False
+    if after == 'exited':
+        with pytest.raises(GameWindowLost, match='游戏进程已退出'):
+            b.input.mouse_click(300, 400)
+    else:
+        assert b.input.mouse_click(300, 400) is False
     assert not b.input._mouse_down and not b.input._keys and b.input._session is None
 
 
@@ -1249,7 +1276,7 @@ def test_gui_thread_idle_limit_gives_up_quickly_without_clicking(backend, monkey
     """图形界面线程（自动对话）里，鼠标被持续使用时短暂等待后放弃，不长时间阻塞界面。"""
     b = backend
     sleep_hook(b, monkeypatch, lambda now: setattr(b.api, 'point', (round(now * 1000) % 1000 + 10, 900)))
-    with module.mouse_idle_limit(.3):
+    with module.input_wait_limit(.3):
         assert b.input.mouse_click(300, 400) is False
     assert b.clock.now < 1
     assert not posts(b.api, 0x201) and not b.api.protections
@@ -1286,3 +1313,28 @@ def test_window_wait_is_not_repeated_within_same_unavailable_episode(backend):
     with pytest.raises(InputInterrupted):
         b.input.wait_for_window(5)
     assert b.clock.now - started >= 5
+
+
+
+def test_gui_thread_limit_bounds_window_wait_for_input(backend):
+    """图形界面线程里窗口不可用时只短暂等待，随即报告原因，不阻塞界面。"""
+    b = backend
+    b.api.minimized = True
+    with module.input_wait_limit(.3):
+        with pytest.raises(InputInterrupted, match='最小化'):
+            b.input.press_key('esc')
+    assert b.clock.now < 1
+    assert b.api.events == []
+
+
+def test_completed_release_does_not_wait_for_minimized_window(backend):
+    """释放已经发出后窗口才被最小化：按成功返回，不等待窗口恢复。"""
+    b = backend
+    b.input.press_key_down('w')
+    def minimize(message, *_):
+        if message == 0x101:
+            b.api.minimized = True
+    b.api.on_post = minimize
+    assert b.input.press_key_up('w') is None
+    assert b.clock.now < 1
+    assert not b.input._keys and b.input._session is None

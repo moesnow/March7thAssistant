@@ -87,18 +87,22 @@ _WINDOW_TEXT = {
     WINDOW_EMPTY: '游戏窗口尺寸为 0',
 }
 
-# 鼠标持续被使用时最多等待多久（秒）；None 表示一直等到空闲（任务进程可随时暂停或停止）。
-_mouse_idle_limit = ContextVar('background_mouse_idle_limit', default=None)
+# 窗口暂时不可用（最小化、隐藏、重建）时，截图和输入最多等待多久（秒），与前台截图找不到窗口时的重试时限一致。
+WINDOW_WAIT_SECONDS = 60
+
+# 本线程内后台输入的阻塞等待上限（秒），包括等待鼠标空闲和等待窗口恢复；
+# None 表示任务进程的默认行为：鼠标一直等到空闲、窗口最多等 WINDOW_WAIT_SECONDS（可随时暂停或停止）。
+_input_wait_limit = ContextVar('background_input_wait_limit', default=None)
 
 
 @contextmanager
-def mouse_idle_limit(seconds):
-    """临时限制等待鼠标空闲的时长：图形界面线程里的调用不能无限阻塞，超时按未完成返回。"""
-    token = _mouse_idle_limit.set(max(0.0, float(seconds)))
+def input_wait_limit(seconds):
+    """临时限制后台输入的阻塞等待：图形界面线程里的调用不能长时间阻塞，超时按未完成返回或报告原因。"""
+    token = _input_wait_limit.set(max(0.0, float(seconds)))
     try:
         yield
     finally:
-        _mouse_idle_limit.reset(token)
+        _input_wait_limit.reset(token)
 
 
 class BackgroundInput(InputBase):
@@ -400,6 +404,11 @@ class BackgroundInput(InputBase):
         elif isinstance(error, TimeoutError):
             if self.logger:
                 self.logger.warning('游戏未及时处理鼠标输入（可能正在加载），已释放本次输入，等待界面确认后重试')
+        elif not done and self.window_problem() is not None:
+            # 窗口不可用时不立即返回：有的任务循环只按键不截图，立即返回会空转。等窗口恢复后再按未完成返回，
+            # 不重放之前决定的输入；游戏退出或等待超时由 wait_for_window 抛出写明原因的异常。
+            limit = _input_wait_limit.get()
+            self.wait_for_window(WINDOW_WAIT_SECONDS if limit is None else limit)
         elif self.logger:
             message = f'{error or "游戏窗口状态已变化"}，本次后台输入未完成，已释放输入，等待窗口恢复后重新确认界面'
             if message != self._window_notice:
@@ -449,7 +458,7 @@ class BackgroundInput(InputBase):
         if self._mouse_down or self._protection is not None:
             self._check()
             return
-        limit = _mouse_idle_limit.get()
+        limit = _input_wait_limit.get()
         if failures < 3:
             if not self._wait_mouse_idle(context, timeout=.5 if limit is None else min(.5, limit)):
                 raise _MouseConflict('鼠标尚未空闲')
@@ -527,7 +536,7 @@ class BackgroundInput(InputBase):
                                     self.logger.warning(f'后台鼠标手势已中断：{error}；已释放输入，等待界面确认后重试')
                                 return False
                             # 限定了等待时长（图形界面线程）时不在本次调用里反复重试，交给下一轮。
-                            limited = _mouse_idle_limit.get() is not None
+                            limited = _input_wait_limit.get() is not None
                             if failures > 3 or limited:
                                 if self.logger:
                                     log = self.logger.debug if limited else self.logger.warning
@@ -789,7 +798,7 @@ class BackgroundInput(InputBase):
                             self._release_protection()
                             failures += 1
                             self._mouse_failures = failures
-                            if _mouse_idle_limit.get() is not None and failures > 3:
+                            if _input_wait_limit.get() is not None and failures > 3:
                                 return False
                     self._mouse_failures = 0
                     return True
