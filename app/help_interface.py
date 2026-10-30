@@ -74,8 +74,10 @@ th, td {
         tutorial_file = self._get_localized_doc_path("Tutorial")
         try:
             with open(tutorial_file, 'r', encoding='utf-8') as file:
-                self.content = file.read().replace('/assets/docs/Background.md', 'https://m7a.top/#/assets/docs/Background').replace('/assets/docs/Docker.md',
-                                                                                                                                     'https://m7a.top/#/assets/docs/Docker').replace('/assets/docs/Termux.md', 'https://m7a.top/#/assets/docs/Termux').replace('/assets/docs/Workflow.md', 'https://m7a.top/#/assets/docs/Workflow')
+                self.content = file.read()
+                # 教程里的站内文档链接换成官网文档地址，界面中才能直接打开
+                for name in ('Background', 'Docker', 'Termux', 'Workflow'):
+                    self.content = self.content.replace(f'/assets/docs/{name}.md', f'https://m7a.top/docs/#/assets/docs/{name}')
                 self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
             sys.exit(1)

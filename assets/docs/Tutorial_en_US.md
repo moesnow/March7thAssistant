@@ -22,7 +22,7 @@ Cloud game mode supports Windows, macOS, Linux, and Android. macOS and Linux use
 >
 > They can run in the background. Field farming and Simulated Universe still require the game to stay fullscreen in the foreground.
 >
-> If you need background execution or multiple desktop sessions, you can also try [Remote Local Multi-User Desktop](/assets/docs/Background.md).
+> To keep using your computer while the local game runs, enable Windows background mode in `Settings → Miscellaneous → Local control mode`; if it must not touch your current desktop at all, you can also use a remote local multi-user desktop. See [Background Running](/assets/docs/Background.md) (currently in Chinese).
 
 ## Download and Installation
 
