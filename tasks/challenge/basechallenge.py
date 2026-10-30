@@ -67,40 +67,67 @@ class BaseChallenge(ABC):
                     return False
         return False
 
-    def select_characters(self, team_config, team_image_path):
+    def select_characters(self, team_config, team_image_path, *, switch_team=True):
         '''选择角色'''
         # 切换队伍
-        if auto.click_element(team_image_path, "image", 0.8, max_retries=10, crop=(592.0 / 1920, 556.0 / 1080, 256.0 / 1920, 424.0 / 1080)):
+        if not switch_team or auto.click_element(team_image_path, "image", 0.8, max_retries=10, crop=(592.0 / 1920, 556.0 / 1080, 256.0 / 1920, 424.0 / 1080)):
             time.sleep(1)
-            auto.take_screenshot(crop=(30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080))
+            list_crop = (30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080)
+            auto.take_screenshot(crop=list_crop)
+            # 复用已打开的列表时，避免全屏 OCR 将鼠标定位到右侧敌人的“等级”。
+            list_search = {"crop": list_crop} if not switch_team else {}
             # 选择角色
             for character in team_config:
                 scrolling_counter = 0  # 统计滚动次数
                 max_scroll_times = 4  # 最大滚动次数
                 scroll_line = 19  # 26滚动1页，13滚动半页
-                while (not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=False)):
+                while (not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=not switch_team, **list_search)):
                     if scrolling_counter > max_scroll_times:
                         # 滚动超过2页强制结束
                         log.info(f"{character[0]}未找到")
                         return False
-                    auto.click_element("等级", "text", include=True, action="move")
+                    auto.click_element("等级", "text", include=True, action="move", **list_search)
                     # ，尝试向下滚动
                     auto.mouse_scroll(scroll_line, -1, False)
                     time.sleep(0.5)
-                    auto.click_element("角色列表", "text", include=True, action="move")
+                    auto.click_element("角色列表", "text", include=True, action="move", **list_search)
                     scrolling_counter += 1
                 for _ in range(scrolling_counter):
                     # 尝试向上滚动 恢复初始位置
-                    auto.click_element("等级", "text", include=True, action="move")
+                    auto.click_element("等级", "text", include=True, action="move", **list_search)
                     auto.mouse_scroll(scroll_line, 1, False)
                     time.sleep(0.5)
-                    auto.click_element("角色列表", "text", include=True, action="move")
+                    auto.click_element("角色列表", "text", include=True, action="move", **list_search)
                 time.sleep(0.5)
             time.sleep(0.5)
             # 尝试关闭命途切换窗口
             if auto.click_element("切换命途", "text", offset=(0, -68), crop=(804 / 1920, 8 / 1080, 154 / 1920, 294 / 1080)):
                 time.sleep(0.5)
             return True
+        return False
+
+    def select_buff_effect(self):
+        '''等待增益弹窗，选择效果并确认已装配'''
+        confirm = "./assets/images/purefiction/confirm.png"
+        button_crop = (1546 / 1920, 900 / 1080, 343 / 1920, 170 / 1080)
+        # 以“装配效果”按钮确认弹窗已展开，避免点击编队背景中的相似箭头。
+        if not auto.find_element(confirm, "image", 0.8, max_retries=10, crop=button_crop):
+            log.error("未等到增益效果选择弹窗")
+            return False
+        for _ in range(3):
+            if not auto.click_element("./assets/images/purefiction/choose.png", "image", 0.8,
+                                      max_retries=10, crop=(0.25, 0.1, 0.25, 0.6)):
+                log.error("未找到增益选项")
+                return False
+            time.sleep(0.5)
+            if not auto.click_element(confirm, "image", 0.8, max_retries=5, crop=button_crop):
+                return False
+            for _ in range(5):
+                time.sleep(0.5)
+                if not auto.find_element(confirm, "image", 0.8, crop=button_crop):
+                    return True
+            log.warning("装配效果后弹窗未关闭，重新选择增益")
+        log.error("增益效果装配失败")
         return False
 
     def click_message_box(self):

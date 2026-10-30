@@ -286,6 +286,7 @@ genshin_starRail_fps_unlocker_path: .\3rdparty\Genshin_StarRail_fps_unlocker
 
 # 忘却之庭配置
 forgottenhall_enable: false # 是否启用混沌回忆功能。true 开启，false 关闭。
+forgottenhall_stellar_enable: false # 是否启用混沌回忆星启模式；默认使用常规模式。
 forgottenhall_level: # 混沌回忆关卡范围，设置允许尝试的关卡等级范围。
   - 10
   - 12
@@ -310,10 +311,14 @@ forgottenhall_team2: # 队伍2配置。
     - -1
   - - Qingque
     - 1
+forgottenhall_team3: # 星启模式第三队默认使用丹恒，可配置1至4名角色，不能留空。
+  - - DanHeng
+    - -1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳，用于记录和控制运行频率。
 
 # 虚构叙事配置
 purefiction_enable: false # 是否启用虚构叙事功能。true 开启，false 关闭。
+purefiction_stellar_enable: false # 是否启用虚构叙事星启模式；默认使用常规模式。
 purefiction_level: # 虚构叙事关卡范围，设置允许尝试的关卡等级范围。
   - 3
   - 4
@@ -338,6 +343,9 @@ purefiction_team2: # 队伍2配置。
     - -1
   - - Qingque
     - 1
+purefiction_team3: # 星启模式第三队默认使用丹恒，可配置1至4名角色，不能留空。
+  - - DanHeng
+    - -1
 purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳，用于记录和控制运行频率。
 
 # 末日幻影配置
