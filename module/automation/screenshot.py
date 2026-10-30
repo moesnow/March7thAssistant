@@ -126,7 +126,7 @@ class Screenshot:
         return img.crop((crop_left, crop_top, crop_left + crop_width, crop_top + crop_height))
 
     @staticmethod
-    def take_screenshot(title, crop=(0, 0, 1, 1), use_background_screenshot=None, prefer_frame_screenshot=True):
+    def take_screenshot(title, crop=(0, 0, 1, 1), use_background_screenshot=None, prefer_frame_screenshot=True, require_background=None):
         if cfg.cloud_game_enable:
             from module.game import cloud_game
             screenshot_result = cloud_game.take_screenshot(crop=crop, prefer_frame=prefer_frame_screenshot)
@@ -176,11 +176,20 @@ class Screenshot:
 
         window = Screenshot.get_window(title)
         if window:
+            from .input_base import background_enabled
+            required_background = (background_enabled(cfg) if require_background is None else require_background) and title == cfg.game_title_name
+            if required_background:
+                import win32gui
+                if win32gui.IsIconic(window._hWnd):
+                    return False
             left, top, width, height = Screenshot.get_window_region(window)
+            if width <= 0 or height <= 0:
+                return False
 
             screenshot = None
 
             use_background = cfg.use_background_screenshot if use_background_screenshot is None else use_background_screenshot
+            use_background = required_background or use_background
 
             if use_background:
                 try:
@@ -189,6 +198,8 @@ class Screenshot:
                     screenshot = None
 
             if screenshot is None:
+                if required_background:
+                    return False
                 # import pyautogui
 
                 # all_screens = cfg.all_screens

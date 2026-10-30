@@ -16,6 +16,7 @@ from module.game.cloud import CloudGameLoginTimeoutError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
+from module.automation.background_input import InputInterrupted
 from module.config import cfg
 from module.notification import notif
 from module.notification.notification import NotificationLevel
@@ -48,7 +49,7 @@ def start():
 def switch_to_game():
     log.hr("切换到游戏窗口", 0)
     starrail = StarRailController(cfg=cfg, logger=log)
-    starrail.switch_to_game()
+    starrail.switch_to_game(force=True)
     log.hr("完成", 2)
 
 
@@ -230,6 +231,9 @@ def start_game():
                 continue
             break
         except CloudGameLoginTimeoutError:
+            raise
+        except InputInterrupted:
+            # 用户切窗或最小化不能触发原有的“关闭游戏后重启”恢复路径。
             raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
@@ -490,6 +494,9 @@ def ensure_IME_lang_en():
 
     分两种情况，若系统有英语语言，则切换至英语语言，若没有，则切换输入法语言为英文
     """
+    from module.automation.input_base import background_enabled
+    if background_enabled(cfg):
+        return True  # 后台文本使用 Unicode 消息，不改变用户前台窗口的输入法。
     import win32api
     import win32gui
     from win32con import WM_INPUTLANGCHANGEREQUEST

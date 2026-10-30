@@ -165,7 +165,8 @@ from tasks.base import screen_test
 
 
 from utils.console import pause_on_error, pause_on_success, pause_always, is_docker_started
-from utils.pause import pause_ctl
+from utils.pause import pause_ctl, TaskCancelled
+from module.automation import auto
 
 telemetry.init(
     enabled=cfg.get_value("telemetry_enable", True),
@@ -381,11 +382,15 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
 # 程序结束时的处理器
 def exit_handler():
     """注册程序退出时的处理函数，用于清理OCR和调试资源."""
+    for cleanup in (auto.close_input, pause_ctl.stop):
+        try:
+            cleanup()
+        except Exception as e:
+            log.warning(f"输入清理失败: {e}")
     telemetry.shutdown()
     ocr.exit_ocr()
     # 清理调试叠加层
     try:
-        from module.automation import auto
         auto.shutdown_debug()
     except Exception:
         pass
@@ -406,11 +411,21 @@ if __name__ == "__main__":
             result = main(no_run_immediately=args.no_run_immediately)
         if result is False:
             sys.exit(1)
+    except TaskCancelled:
+        auto.close_input()
+        pause_ctl.stop()
+        log.info("任务已停止")
+        sys.exit(130)
     except KeyboardInterrupt:
+        auto.close_input()
         log.error("发生错误: 手动强制停止")
         pause_on_error()
         sys.exit(1)
     except Exception as e:
+        try:
+            auto.input_handler.release_all()
+        except Exception as cleanup_error:
+            log.warning(f"输入清理失败: {cleanup_error}")
         telemetry.track_error(type(e).__name__, str(e))
         log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
         # 保存错误截图

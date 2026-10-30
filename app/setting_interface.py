@@ -2518,6 +2518,21 @@ class SettingInterface(ScrollArea):
             tr("默认开启，可以避免悬浮窗等干扰"),
             "use_background_screenshot"
         )
+        self.localControlModeCard = ExpandableComboBoxSettingCard(
+            'local_control_mode', FIF.GAME, tr('本地操作模式'),
+            tr('后台操作遇到鼠标干扰时会等待并重试；滚轮临时切前台，下次启动任务生效。'),
+            texts={tr('前台'): 'foreground', tr('后台'): 'background'},
+        )
+        self.backgroundMouseProtectionCard = SwitchSettingCard1(
+            FIF.GAME, tr('重试失败时短暂锁定鼠标'),
+            tr('仅保护必要的鼠标操作，保留键盘和暂停热键。'),
+            'background_mouse_protection',
+        )
+        self.localControlModeCard.addSettingCard(self.backgroundMouseProtectionCard)
+        def refresh_mouse_protection_option(*_args):
+            self.backgroundMouseProtectionCard.setEnabled(cfg.get_value('local_control_mode') == 'background')
+        self.localControlModeCard.currentIndexChanged.connect(refresh_mouse_protection_option)
+        refresh_mouse_protection_option()
         if sys.platform == 'win32':
             self.autostartCard = AutostartSettingCard(
                 FIF.GAME,
@@ -2851,6 +2866,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
         self.MiscGroup.addSettingCard(self.useBackgroundScreenshotCard)
+        self.MiscGroup.addSettingCard(self.localControlModeCard)
         if sys.platform == 'win32':
             self.MiscGroup.addSettingCard(self.autostartCard)
             self.MiscGroup.addSettingCard(self.debugModeEnableCard)
@@ -2877,6 +2893,7 @@ class SettingInterface(ScrollArea):
             self.autoSetResolutionEnableCard.setHidden(True)
             self.autoSetGamePathEnableCard.setHidden(True)
             self.useBackgroundScreenshotCard.setHidden(True)
+            self.localControlModeCard.setHidden(True)
             self.cloudGameEnableCard.setDisabled(True)  # 在配置文件中强制启用，禁止用户修改
 
         self.addSubInterface(self.PowerGroup, 'PowerInterface', tr('体力'))
@@ -2948,6 +2965,7 @@ class SettingInterface(ScrollArea):
         self.notifyMasterEnableCard.switchChanged.connect(self.__refreshNotifiers)
 
         connect_expand_state(self.afterFinishCard)
+        connect_expand_state(self.localControlModeCard)
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
         self.qqGroupCard.clicked.connect(self.__openUrl("https://qm.qq.com/q/C3IryUWCQw"))

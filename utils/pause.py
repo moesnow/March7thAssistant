@@ -5,14 +5,14 @@ GUI 通过控制文件下发暂停/继续指令，CLI 侧在动作卡点（`chec
 
 - 任务线程阻塞在卡点上时，调用栈原封不动（循环计数、重试次数等局部状态都保留），
   恢复指令到达后从原位置继续执行，无需任何状态序列化。
-- 暂停语义是「停止发出任何键鼠输入」，不会对游戏做任何操作（例如自动按 Esc）。
+- 暂停先释放后台后端持有的键鼠并清理临时前台状态，再停止发出新输入，不自动按 Esc。
 
 控制文件协议（两个文件各自独占写，临时文件 + `os.replace` 原子替换，避免读写竞争）：
 
-- 指令文件（GUI 写、CLI 读）：``{"command": "pause" | "resume"}``
+- 指令文件（GUI 写、CLI 读）：``{"command": "pause" | "resume" | "cancel"}``
 - 回执文件（CLI 写、GUI 读）：指令文件路径加 ``.state`` 后缀，
-  ``{"state": "running" | "pausing" | "paused"}``
-  其中 ``pausing`` 表示已收到暂停指令、任务尚未停到卡点上。
+  ``{"state": "running" | "pausing" | "paused" | "cancelled"}``
+  其中 ``pausing`` 表示已收到暂停指令、任务尚未停到卡点上；``cancelled`` 表示停止清理完成，GUI 可终止进程树。
 
 指令文件路径由环境变量 ``MARCH7TH_CONTROL_FILE`` 传入（GUI 启动任务时注入）。
 未设置该环境变量时整个功能惰性关闭（独立 CLI / Docker 场景），`checkpoint()` 仅剩一次布尔判断。
@@ -21,6 +21,7 @@ import json
 import os
 import tempfile
 import threading
+import weakref
 
 from module.logger import log
 
@@ -30,6 +31,7 @@ CONTROL_FILE_ENV = "MARCH7TH_CONTROL_FILE"
 # 指令文件内容
 COMMAND_PAUSE = "pause"
 COMMAND_RESUME = "resume"
+COMMAND_CANCEL = "cancel"
 
 # 回执文件 = 指令文件路径 + 该后缀
 STATE_FILE_SUFFIX = ".state"
@@ -38,6 +40,11 @@ STATE_FILE_SUFFIX = ".state"
 STATE_RUNNING = "running"
 STATE_PAUSING = "pausing"
 STATE_PAUSED = "paused"
+STATE_CANCELLED = "cancelled"
+
+
+class TaskCancelled(KeyboardInterrupt):
+    """协作式停止，跳过任务层的普通 Exception 重试。"""
 
 # 指令文件轮询间隔（秒）
 POLL_INTERVAL = 0.3
@@ -83,6 +90,9 @@ def pause_guard(method):
     """在方法入口插入暂停卡点：暂停中阻塞于此（不再发出操作/不再重试），恢复后继续执行。"""
 
     def wrapper(*args, **kwargs):
+        # 后台输入自己管理卡点，释放动作不能被外层卡点卡住。
+        if getattr(getattr(method, '__self__', None), 'handles_pause', False) is True:
+            return method(*args, **kwargs)
         pause_ctl.checkpoint()
         return method(*args, **kwargs)
 
@@ -132,6 +142,29 @@ class PauseController:
         self._watcher = None
         self._watcher_stop = threading.Event()
         self._last_command = COMMAND_RESUME
+        self._cancel_event = threading.Event()
+        self._inputs = weakref.WeakSet()
+        self._inputs_lock = threading.Lock()
+
+    def register_input(self, handler):
+        with self._inputs_lock:
+            self._inputs.add(handler)
+
+    def _release_inputs(self):
+        with self._inputs_lock:
+            handlers = list(self._inputs)
+        errors = []
+        for handler in handlers:
+            try:
+                handler.release_all()
+            except Exception as e:
+                errors.append(e)
+        if errors:
+            raise RuntimeError('后台输入清理失败，尚未完成暂停或停止') from errors[0]
+
+    def check_cancelled(self):
+        if self._enabled and self._cancel_event.is_set():
+            raise TaskCancelled()
 
     # ---------- 生命周期 ----------
 
@@ -149,6 +182,8 @@ class PauseController:
         self._control_path = os.path.abspath(path)
         self._state_path = self._control_path + STATE_FILE_SUFFIX
         self._enabled = True
+        self._cancel_event.clear()
+        self._resume_event.set()
         self._watcher_stop.clear()
         self._watcher = threading.Thread(
             target=self._watch_loop, name="M7APauseWatcher", daemon=True
@@ -159,10 +194,13 @@ class PauseController:
 
     def stop(self):
         """停止控制器（进程收尾时调用）。"""
-        self._watcher_stop.set()
-        self._resume_event.set()
-        self._enabled = False
-        self._watcher = None
+        try:
+            self._release_inputs()
+        finally:
+            self._watcher_stop.set()
+            self._resume_event.set()
+            self._enabled = False
+            self._watcher = None
 
     @property
     def enabled(self):
@@ -172,11 +210,13 @@ class PauseController:
 
     def checkpoint(self):
         """动作卡点：暂停中则在此阻塞，直到恢复指令到达。运行中立即返回。"""
+        self.check_cancelled()
         if not self._enabled or self._resume_event.is_set():
             return
         self._enter_paused()
 
     def _enter_paused(self):
+        self._release_inputs()
         with self._announce_lock:
             if self._resume_event.is_set():
                 # 恢复指令恰好在进入卡点前到达，无需播报
@@ -188,6 +228,7 @@ class PauseController:
                 self._write_state(STATE_PAUSED)
         # 阻塞至 watcher 线程收到恢复指令并置位事件
         self._resume_event.wait()
+        self.check_cancelled()
 
     # ---------- 指令侧（GUI / 测试可直接调用）----------
 
@@ -198,6 +239,9 @@ class PauseController:
     def request_resume(self):
         """请求恢复。"""
         self._apply_command(COMMAND_RESUME)
+
+    def request_cancel(self):
+        self._apply_command(COMMAND_CANCEL)
 
     def is_paused(self):
         """当前是否处于暂停状态（任务线程已停或将停在卡点上）。"""
@@ -210,7 +254,7 @@ class PauseController:
             try:
                 data = _read_json(self._control_path) or {}
                 command = data.get("command")
-                if command in (COMMAND_PAUSE, COMMAND_RESUME) and command != self._last_command:
+                if command in (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_CANCEL) and command != self._last_command:
                     self._apply_command(command)
             except Exception:
                 pass
@@ -218,10 +262,18 @@ class PauseController:
 
     def _apply_command(self, command):
         self._last_command = command
-        if command == COMMAND_PAUSE:
+        if not self._enabled:
+            return
+        if command == COMMAND_CANCEL:
+            self._cancel_event.set()
+            self._resume_event.set()
+            self._release_inputs()
+            self._write_state(STATE_CANCELLED)
+        elif command == COMMAND_PAUSE:
             self._announced_pause = False
             self._write_state(STATE_PAUSING)
             self._resume_event.clear()
+            self._release_inputs()
         else:
             was_paused = not self._resume_event.is_set()
             if was_paused:

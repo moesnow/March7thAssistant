@@ -56,6 +56,9 @@ class Automation(metaclass=SingletonMeta):
 
         所有输入均包一层暂停卡点（`pause_guard`）：暂停期间任何键鼠输入都会停在发出之前。
         """
+        previous = getattr(self, 'input_handler', None)
+        if previous is not None and callable(getattr(previous, 'close', None)):
+            previous.close()
         self.input_handler = get_game_controller().get_input_handler()
         self.mouse_click = pause_guard(self.input_handler.mouse_click)
         self.mouse_down = pause_guard(self.input_handler.mouse_down)
@@ -69,6 +72,9 @@ class Automation(metaclass=SingletonMeta):
         self.secretly_press_key = pause_guard(self.input_handler.secretly_press_key)
         self.press_mouse = pause_guard(self.input_handler.press_mouse)
         self.secretly_write = pause_guard(self.input_handler.secretly_write)
+
+    def close_input(self):
+        self.input_handler.close()
 
     def _is_debug_enabled(self):
         """检查调试模式是否启用。"""
@@ -182,12 +188,18 @@ class Automation(metaclass=SingletonMeta):
         start_time = time.monotonic()
         timeout = _screenshot_retry_timeout.get()
         while True:
+            handler = getattr(self, 'input_handler', None)
+            if (getattr(handler, 'is_background', False) is True
+                    and not handler.is_available()):
+                from .background_input import InputInterrupted
+                raise InputInterrupted('后台游戏窗口不可操作，请恢复窗口后继续')
             try:
                 result = Screenshot.take_screenshot(
                     self.window_title,
                     crop=crop,
                     use_background_screenshot=use_background_screenshot,
                     prefer_frame_screenshot=prefer_frame_screenshot,
+                    require_background=getattr(getattr(self, 'input_handler', None), 'is_background', False) is True,
                 )
                 if result:
                     self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
@@ -874,20 +886,27 @@ class Automation(metaclass=SingletonMeta):
         for _ in range(cnt):
             if action == "click":
                 if normalized_press_duration > 0:
-                    self.mouse_down(x, y)
+                    if self.mouse_down(x, y) is False:
+                        return False
                     time.sleep(normalized_press_duration)
-                    self.mouse_up()
+                    result = self.mouse_up()
                 else:
-                    self.mouse_click(x, y)
+                    result = self.mouse_click(x, y)
             elif action == "down":
-                self.mouse_down(x, y)
+                result = self.mouse_down(x, y)
+                if result is False:
+                    return False
                 if normalized_press_duration > 0:
                     time.sleep(normalized_press_duration)
             elif action == "up":
-                self.mouse_move(x, y)
-                self.mouse_up()
+                moved = self.mouse_move(x, y)
+                result = self.mouse_up()
+                if moved is False:
+                    return False
             elif action == "move":
-                self.mouse_move(x, y)
+                result = self.mouse_move(x, y)
+            if result is False:
+                return False
 
         return True
 

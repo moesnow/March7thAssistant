@@ -114,6 +114,7 @@ class AutoPlot(QObject):
         if self.is_running:
             return
 
+        auto._init_input()
         self.is_running = True
         self._last_error_log_time = float('-inf')
         if self._hero_reader is not None:
@@ -136,6 +137,7 @@ class AutoPlot(QObject):
         self._monitor_timer.stop()
         self._invalidate_session()
         self._transition_to(EngineState.IDLE)
+        auto.input_handler.release_all()
         log.info("自动对话已停止")
 
     # ========================================================================
@@ -204,6 +206,14 @@ class AutoPlot(QObject):
             return
         self._invalidate_session()
         self._transition_to(EngineState.MONITORING)
+        try:
+            auto.input_handler.release_all()
+        except Exception as cleanup_error:
+            self.is_running = False
+            self._monitor_timer.stop()
+            self._transition_to(EngineState.IDLE)
+            log.error(f"自动对话已停止，输入释放失败：{cleanup_error}")
+            return
         # 截图持续不可用时限制日志频率，仍然每轮尝试恢复。
         now = time.monotonic()
         if now - self._last_error_log_time >= 30:
@@ -250,6 +260,8 @@ class AutoPlot(QObject):
             True  游戏窗口在前台
             False 游戏窗口不在前台或未找到
         """
+        if getattr(auto.input_handler, 'is_background', False) is True:
+            return auto.input_handler.is_available()
         if gw is None:
             # 非 Windows 平台无法枚举窗口，假定激活以放行后续对话检测
             return True

@@ -200,3 +200,54 @@ def test_pause_guard_blocks_until_resume(controller, monkeypatch):
     t.join(timeout=5)
     assert calls == [42]
     assert result == [42]
+
+
+def test_cancel_cleans_before_ack_and_interrupts_paused_thread(controller):
+    from utils.pause import STATE_CANCELLED, TaskCancelled
+    order=[]
+    class HeldInput:
+        def release_all(self):
+            order.append('release')
+    handler=HeldInput()
+    controller.register_input(handler)
+    controller.request_cancel()
+    assert order==['release']
+    assert read_state(controller._control_path)==STATE_CANCELLED
+    with pytest.raises(TaskCancelled):
+        controller.checkpoint()
+
+
+def test_pause_releases_inputs_before_paused_ack(controller):
+    order=[]
+    class HeldInput:
+        def release_all(self):
+            assert read_state(controller._control_path)!=STATE_PAUSED
+            order.append('release')
+    handler=HeldInput()
+    controller.register_input(handler)
+    controller.request_pause()
+    t=threading.Thread(target=controller.checkpoint)
+    t.start()
+    try:
+        assert _wait_until(lambda:read_state(controller._control_path)==STATE_PAUSED)
+        assert order
+    finally:
+        controller.request_resume()
+        t.join(2)
+
+
+def test_failed_cleanup_does_not_ack_cancelled(controller):
+    from utils.pause import STATE_CANCELLED
+    class HeldInput:
+        failed=True
+        def release_all(self):
+            if self.failed:
+                raise OSError('injected release failure')
+    handler=HeldInput()
+    controller.register_input(handler)
+    try:
+        with pytest.raises(RuntimeError,match='清理失败'):
+            controller.request_cancel()
+        assert read_state(controller._control_path)!=STATE_CANCELLED
+    finally:
+        handler.failed=False
