@@ -72,7 +72,7 @@ A: The local game uses foreground mode by default, so please leave the keyboard 
 - **Cloud Honkai: Star Rail**: tasks such as spending Trailblaze Power, Daily Training, Currency Wars, and Divergent Universe support background running; Field farming and Simulated Universe still require the game to stay fullscreen in the foreground.
 - **Remote Local Multi-User Desktop (advanced)**: runs in another Windows user session without touching your current desktop, but requires patching system components.
 
-See [Background Running](https://m7a.top/docs/#/assets/docs/Background) for details on all three options (the document is currently in Chinese).
+See [Background Running](https://m7a.top/docs/#/assets/docs/Background_en_US) for details on all three options.
 
 ### Q: What does Full Workflow do?
 

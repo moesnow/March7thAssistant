@@ -22,15 +22,15 @@ msgstr "Settings"
 msgid "主页"
 msgstr "Home"
 
-#: app/help_interface.py:22
+#: app/help_interface.py:23
 msgid "帮助"
 msgstr "Help"
 
-#: app/help_interface.py:187
+#: app/help_interface.py:204
 msgid "使用教程"
 msgstr "Usage Guide"
 
-#: app/help_interface.py:189
+#: app/help_interface.py:206
 msgid "常见问题"
 msgstr "FAQ"
 
@@ -356,7 +356,7 @@ msgstr "Mail"
 msgid "支援"
 msgstr "Support"
 
-#: app/help_interface.py:190
+#: app/help_interface.py:208
 msgid "每日实训"
 msgstr "Daily Training"
 
@@ -4598,7 +4598,7 @@ msgstr "Journey Highlights Notification"
 msgid "每次运行时发送带有活动热点截图的通知"
 msgstr "Send notification with Journey Highlights screenshot every run"
 
-#: app/help_interface.py:188
+#: app/help_interface.py:205
 msgid "流程编排"
 msgstr "Workflow"
 
@@ -6587,3 +6587,7 @@ msgstr ""
 #: app/setting_interface.py:3055
 msgid "我已了解，启用后台模式"
 msgstr "I understand, enable background mode"
+
+#: app/help_interface.py:207
+msgid "后台运行"
+msgstr "Background Running"
