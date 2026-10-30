@@ -6373,3 +6373,29 @@ msgstr "星启模式"
 #: app/challenge_config_dialog.py:196
 msgid "常规模式"
 msgstr "常规模式"
+
+#: app/setting_interface.py:2550
+msgid "复制提示词"
+msgstr "复制提示词"
+
+#: app/setting_interface.py:2552
+msgid "AI 助手"
+msgstr "AI 助手"
+
+#: app/setting_interface.py:2553
+msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
+msgstr "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
+
+#: app/tools/agent_prompt.py:16
+msgid ""
+"我在这台电脑上安装了「三月七小助手」（崩坏：星穹铁道自动化工具），版本 {version}，安装目录：{install_dir}\n"
+"请先阅读 {skill_file} ，按其中的说明帮我操作它。\n"
+"如果你支持 Skill（技能），请把文件夹 {skill_dir} 复制到你的用户级技能目录（例如 ~/.agents/skills/ 或 ~/.claude/skills/），以后就不需要我再提供这段说明。"
+msgstr ""
+"我在这台电脑上安装了「三月七小助手」（崩坏：星穹铁道自动化工具），版本 {version}，安装目录：{install_dir}\n"
+"请先阅读 {skill_file} ，按其中的说明帮我操作它。\n"
+"如果你支持 Skill（技能），请把文件夹 {skill_dir} 复制到你的用户级技能目录（例如 ~/.agents/skills/ 或 ~/.claude/skills/），以后就不需要我再提供这段说明。"
+
+#: app/setting_interface.py:3379
+msgid "粘贴给你的 AI 助手即可"
+msgstr "粘贴给你的 AI 助手即可"

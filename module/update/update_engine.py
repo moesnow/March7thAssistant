@@ -126,6 +126,7 @@ class UpdateEngine:
         self.process_names = [
             "March7th Assistant.exe",
             "March7th Launcher.exe",
+            "m7a.exe",
             "flet.exe",
             "gui.exe",
             "Fhoe-Rail.exe",
