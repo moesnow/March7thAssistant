@@ -348,9 +348,13 @@ html:not(.js) .tablist{display:none}
 .support .card{display:flex;gap:16px;padding:22px}
 .support h3{margin:0 0 4px;font-size:16.5px}
 .support p{font-size:14.5px}
-.support details summary{display:inline-flex;margin-top:6px;color:var(--pink);font-weight:700;font-size:14.5px;cursor:pointer;list-style:none}
-.support details summary::-webkit-details-marker{display:none}
-.support details img{width:180px;height:180px;margin-top:12px;border-radius:12px;border:1px solid var(--line)}
+.support .qr-btn{display:inline-flex;margin-top:6px;color:var(--pink);font-weight:700;font-size:14.5px;cursor:pointer}
+.qr-dialog{width:min(92vw,560px);padding:20px 20px 16px;border:1px solid var(--line);border-radius:24px;background:var(--card);color:var(--text);box-shadow:var(--shadow);text-align:center}
+.qr-dialog::backdrop{background:rgba(14,17,36,.55)}
+.qr-dialog img{display:block;width:100%;height:auto;border-radius:12px}
+.qr-dialog p{margin-top:10px;font-size:14px;color:var(--muted)}
+.qr-close{position:absolute;top:10px;right:12px;width:36px;height:36px;border:0;border-radius:12px;background:transparent;color:var(--muted);font-size:24px;line-height:1;cursor:pointer}
+.qr-close:hover{background:var(--pink-soft);color:var(--ink)}
 .thanks{margin-top:40px;font-size:14px;color:var(--muted);text-align:center}
 .thanks a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
 @media (min-width:900px){.comm{grid-template-columns:repeat(4,1fr)}.support{grid-template-columns:repeat(3,1fr)}}
@@ -785,9 +789,14 @@ html:not(.js) .tablist{display:none}
     </div>
     <div class="support">
       <div class="card"><span class="ic"><svg class="i"><use href="#i-star"/></svg></span><div><h3>点一个 Star</h3><p>在 GitHub 上 Star 本项目，就能在主页收到新版本通知。</p><a class="more" href="https://github.com/moesnow/March7thAssistant" target="_blank" rel="noopener" style="margin-top:6px">前往 GitHub<svg class="i"><use href="#i-out"/></svg></a></div></div>
-      <div class="card"><span class="ic"><svg class="i"><use href="#i-heart"/></svg></span><div><h3>赞助开发者</h3><p>请作者喝杯咖啡，或通过 Mirror酱 下载与更新，都是对持续维护的支持。</p><details><summary>显示微信赞赏码</summary><img src="/assets/screenshot/sponsor.jpg" width="180" height="180" alt="微信赞赏码" loading="lazy"></details></div></div>
+      <div class="card"><span class="ic"><svg class="i"><use href="#i-heart"/></svg></span><div><h3>赞助开发者</h3><p>请作者喝杯咖啡，或通过 Mirror酱 下载与更新，都是对持续维护的支持。</p><a class="qr-btn" href="/assets/app/images/sponsor.jpg" target="_blank" rel="noopener" data-dialog="sponsor-qr">显示微信赞赏码</a></div></div>
       <div class="card"><span class="ic b"><svg class="i"><use href="#i-flow"/></svg></span><div><h3>参与贡献</h3><p>修复问题、完善文档、适配新玩法，欢迎提交 Pull Request。</p><a class="more" href="/docs/#/CONTRIBUTING" style="margin-top:6px">阅读贡献指南<svg class="i"><use href="#i-arrow"/></svg></a></div></div>
     </div>
+    <dialog id="sponsor-qr" class="qr-dialog" aria-label="微信赞赏码">
+      <form method="dialog"><button class="qr-close" aria-label="关闭">×</button></form>
+      <img src="/assets/app/images/sponsor.jpg" width="547" height="399" alt="微信赞赏码" loading="lazy">
+      <p>打开微信「扫一扫」扫描上方赞赏码，感谢支持！</p>
+    </dialog>
     <p class="thanks">感谢 <a href="https://github.com/CHNZYX/Auto_Simulated_Universe" target="_blank" rel="noopener">Auto_Simulated_Universe</a>、<a href="https://github.com/linruowuyin/Fhoe-Rail" target="_blank" rel="noopener">Fhoe-Rail</a>、<a href="https://github.com/RapidAI/RapidOCR" target="_blank" rel="noopener">RapidOCR</a>、<a href="https://github.com/zhiyiYo/PyQt-Fluent-Widgets" target="_blank" rel="noopener">PyQt-Fluent-Widgets</a>、<a href="https://mirrorchyan.com/?source=m7a-website" target="_blank" rel="noopener">Mirror酱</a> 等开源项目与合作伙伴。</p>
   </div>
 </section>
@@ -883,6 +892,18 @@ html:not(.js) .tablist{display:none}
       }, { threshold: 0.3 });
       io.observe(demo);
     } else demo.classList.add('play');
+  }
+
+  // 赞赏码用对话框放大显示，方便手机扫码；不支持 <dialog> 时链接直接打开原图
+  var qr = document.getElementById('sponsor-qr');
+  if (qr && qr.showModal) {
+    document.querySelectorAll('[data-dialog="sponsor-qr"]').forEach(function (a) {
+      a.addEventListener('click', function (e) { e.preventDefault(); qr.showModal(); });
+    });
+    qr.addEventListener('click', function (e) {
+      var r = qr.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) qr.close();
+    });
   }
 
   // 页面加载完成后，空闲时预取文档页的脚本与样式：点「使用教程」时不用再等
