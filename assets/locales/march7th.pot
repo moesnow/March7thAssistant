@@ -4469,11 +4469,11 @@ msgstr ""
 msgid "已打开截图工具"
 msgstr ""
 
-#: module/automation/background_input.py:427
+#: module/automation/background_input.py:434
 msgid "正在短暂保护鼠标，键盘和暂停热键仍可用"
 msgstr ""
 
-#: module/automation/background_input.py:428
+#: module/automation/background_input.py:435
 msgid "等待鼠标空闲，任务将自动继续"
 msgstr ""
 
@@ -4799,7 +4799,7 @@ msgstr ""
 msgid "条件"
 msgstr ""
 
-#: tasks/game/__init__.py:104
+#: tasks/game/__init__.py:112
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 msgstr ""
 

@@ -5593,7 +5593,7 @@ msgstr "请输入音频文件路径"
 msgid "选择音频文件"
 msgstr "选择音频文件"
 
-#: tasks/game/__init__.py:104
+#: tasks/game/__init__.py:112
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 msgstr "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 
@@ -6376,11 +6376,11 @@ msgstr "重试失败时短暂锁定鼠标"
 msgid "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 msgstr "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 
-#: module/automation/background_input.py:427
+#: module/automation/background_input.py:434
 msgid "正在短暂保护鼠标，键盘和暂停热键仍可用"
 msgstr "正在短暂保护鼠标，键盘和暂停热键仍可用"
 
-#: module/automation/background_input.py:428
+#: module/automation/background_input.py:435
 msgid "等待鼠标空闲，任务将自动继续"
 msgstr "等待鼠标空闲，任务将自动继续"
 

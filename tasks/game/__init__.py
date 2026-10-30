@@ -16,7 +16,7 @@ from module.game.cloud import CloudGameLoginTimeoutError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
-from module.automation.background_input import InputInterrupted
+from module.automation.background_input import GameWindowLost, InputInterrupted
 from module.config import cfg
 from module.notification import notif
 from module.notification.notification import NotificationLevel
@@ -64,6 +64,14 @@ def ensure_game_ready():
     if not controller.is_game_running():
         log.error("未检测到游戏窗口，workflow 未执行")
         return False
+    if getattr(auto.input_handler, 'is_background', False) is True:
+        # 后台模式不切换前台：窗口暂时不可操作（例如被最小化）时等待还原，失败时写明原因
+        try:
+            auto.input_handler.wait_for_window(60)
+        except (InputInterrupted, GameWindowLost) as error:
+            log.error(f"{error}，workflow 未执行")
+            return False
+        return True
     if not controller.switch_to_game():
         log.error("切换到游戏窗口失败，workflow 未执行")
         return False

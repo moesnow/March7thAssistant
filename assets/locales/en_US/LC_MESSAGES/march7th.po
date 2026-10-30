@@ -5733,7 +5733,7 @@ msgstr "Please enter the audio file path"
 msgid "选择音频文件"
 msgstr "Select Audio File"
 
-#: tasks/game/__init__.py:104
+#: tasks/game/__init__.py:112
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 msgstr ""
 "Game client version is too old. Please download the latest client from the "
@@ -6546,11 +6546,11 @@ msgid "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 msgstr ""
 "Protects only mouse operations; keyboard and pause hotkeys remain available."
 
-#: module/automation/background_input.py:427
+#: module/automation/background_input.py:434
 msgid "正在短暂保护鼠标，键盘和暂停热键仍可用"
 msgstr "Mouse briefly protected; keyboard and pause hotkeys remain available"
 
-#: module/automation/background_input.py:428
+#: module/automation/background_input.py:435
 msgid "等待鼠标空闲，任务将自动继续"
 msgstr "Waiting for the mouse to be idle. The task will resume automatically."
 

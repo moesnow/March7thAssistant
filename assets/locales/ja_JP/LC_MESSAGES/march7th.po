@@ -5592,7 +5592,7 @@ msgstr "音声ファイルのパスを入力してください"
 msgid "选择音频文件"
 msgstr "音声ファイルを選択"
 
-#: tasks/game/__init__.py:104
+#: tasks/game/__init__.py:112
 msgid "检测到游戏客户端版本过低，请前往启动器下载最新客户端"
 msgstr "ゲームクライアントのバージョンが古すぎます。ランチャーから最新のクライアントをダウンロードしてください"
 
@@ -6372,11 +6372,11 @@ msgstr "再試行に失敗した場合はマウスを一時的にロック"
 msgid "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 msgstr "必要なマウス操作のみを保護します。キーボードと一時停止のホットキーは使用できます。"
 
-#: module/automation/background_input.py:427
+#: module/automation/background_input.py:434
 msgid "正在短暂保护鼠标，键盘和暂停热键仍可用"
 msgstr "マウスを一時的に保護しています。キーボードと一時停止のホットキーは使用できます"
 
-#: module/automation/background_input.py:428
+#: module/automation/background_input.py:435
 msgid "等待鼠标空闲，任务将自动继续"
 msgstr "マウス操作の終了を待機中です。タスクは自動的に再開します"
 

@@ -189,3 +189,25 @@ def test_cloud_selection_ignores_local_background_setting(monkeypatch):
     assert not background_enabled(cfg)
     monkeypatch.setattr(game,'cfg',cfg)
     assert isinstance(game.get_game_controller().get_input_handler(),CdpInput)
+
+
+
+@pytest.mark.parametrize('failure', [None, 'minimized', 'exited'])
+def test_workflow_precheck_waits_for_background_window_and_names_reason(monkeypatch, failure):
+    """流程编排前置检查：后台模式不切前台，窗口不可用时写明原因，而不是笼统的“切换到游戏窗口失败”。"""
+    import tasks.game as module
+    from module.automation.background_input import GameWindowLost, InputInterrupted
+    errors = {'minimized': InputInterrupted('游戏窗口已最小化（已等待 60 秒）'),
+              'exited': GameWindowLost('游戏进程已退出')}
+    controller = Mock()
+    controller.is_game_running.return_value = True
+    controller.switch_to_game.side_effect = AssertionError('后台模式不切换前台')
+    backend = SimpleNamespace(is_background=True, wait_for_window=Mock(side_effect=errors.get(failure)))
+    log = Mock()
+    monkeypatch.setattr(module, 'get_game_controller', lambda: controller)
+    monkeypatch.setattr(module, 'auto', SimpleNamespace(input_handler=backend))
+    monkeypatch.setattr(module, 'log', log)
+    assert module.ensure_game_ready() is (failure is None)
+    backend.wait_for_window.assert_called_once_with(60)
+    if failure:
+        assert str(errors[failure]) in log.error.call_args.args[0]
