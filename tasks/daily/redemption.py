@@ -22,26 +22,19 @@ def load_codes(path: str) -> List[Dict]:
 
 def load_codes_from_url(urls: list[str]) -> list[dict]:
     """
-    并发从多个 URL 获取 JSON 数据：
+    并发从多个 URL 获取 JSON 数据并合并：
     - 抗 DNS 劫持 / SNI 阻断 / 超时 / 证书错误 / 过滤非 JSON
     """
     import requests
     from requests.exceptions import (
         Timeout, ConnectionError, SSLError, TooManyRedirects
     )
-    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from concurrent.futures import ThreadPoolExecutor
     import json
-    import threading
-
-    stop_event = threading.Event()
 
     def fetch(url: str):
-        if stop_event.is_set():
-            return None
         try:
             resp = requests.get(url, headers=cfg.useragent, timeout=10)
-            if stop_event.is_set():
-                return None
             resp.raise_for_status()
 
             ct = resp.headers.get("Content-Type", "")
@@ -60,31 +53,33 @@ def load_codes_from_url(urls: list[str]) -> list[dict]:
             return data
 
         except (Timeout, ConnectionError, SSLError, TooManyRedirects) as e:
-            if not stop_event.is_set():
-                log.warning(f"[{url}] 网络错误: {e}")
+            log.warning(f"[{url}] 网络错误: {e}")
         except Exception as e:
-            if not stop_event.is_set():
-                log.warning(f"[{url}] 数据异常: {e}")
+            log.warning(f"[{url}] 数据异常: {e}")
 
         return None
 
-    executor = ThreadPoolExecutor(max_workers=min(5, len(urls)))
-    futures = {executor.submit(fetch, url): url for url in urls}
+    with ThreadPoolExecutor(max_workers=min(5, len(urls))) as executor:
+        results = list(executor.map(fetch, urls))
 
-    try:
-        for future in as_completed(futures):
-            result = future.result()
-            if result is not None:
-                stop_event.set()
-                executor.shutdown(wait=False, cancel_futures=True)
-                return result
-    except Exception:
-        stop_event.set()
-        executor.shutdown(wait=False, cancel_futures=True)
-        raise
+    if all(result is None for result in results):
+        raise RuntimeError("所有 URL 均不可用（可能被 DNS 劫持 / SNI 阻断 / 网络异常）")
 
-    executor.shutdown(wait=False)
-    raise RuntimeError("所有 URL 均不可用（可能被 DNS 劫持 / SNI 阻断 / 网络异常）")
+    # 各镜像同步进度不一（CDN 可能仍缓存旧清单），合并所有成功的结果，同一兑换码以靠前的 URL 为准
+    merged = []
+    seen = set()
+    for result in results:
+        if result is None:
+            continue
+        for item in result:
+            if not isinstance(item, dict):
+                continue
+            key = (item.get("server"), item.get("code"))
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(item)
+    return merged
 
 
 def valid_codes_for_server(server: str, now: Optional[datetime.datetime] = None) -> List[str]:
