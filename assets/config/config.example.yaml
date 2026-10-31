@@ -49,6 +49,7 @@ pypi_mirror_urls:
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
+game_launch_method: direct # 游戏启动方式：direct（直接启动）、epic（通过 Epic 启动）。路径仍指向 StarRail.exe。
 
 launcher_title_name: 米哈游启动器 # 启动器类型及窗口标题，可选 米哈游启动器、HoYoPlay。
 launcher_process_name: HYP # 米哈游启动器进程名。

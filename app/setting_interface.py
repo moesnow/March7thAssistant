@@ -11,6 +11,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction, TimestampSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.autostart_setting_card import AutostartSettingCard
+from .card.game_path_setting_card import GamePathSettingCard
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, TriplePushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
@@ -1047,12 +1048,7 @@ class SettingInterface(ScrollArea):
             "",
             texts={tr('简洁'): 'INFO', tr('详细'): 'DEBUG'}
         )
-        self.gamePathCard = PushSettingCard(
-            tr('修改'),
-            FIF.GAME,
-            tr("游戏路径"),
-            cfg.game_path
-        )
+        self.gamePathCard = GamePathSettingCard()
         self.updateViaLauncherEnableCard = ExpandableSwitchSettingCard(
             "update_via_launcher",
             FIF.UPDATE,
@@ -2983,6 +2979,7 @@ class SettingInterface(ScrollArea):
         connect_expand_state(self.forgottenhallEnableCard)
         connect_expand_state(self.purefictionEnableCard)
         connect_expand_state(self.ApocalypticEnableCard)
+        connect_expand_state(self.gamePathCard)
         connect_expand_state(self.updateViaLauncherEnableCard)
         connect_expand_state(self.updateSourceCard)
         connect_expand_state(self.notifyMasterEnableCard)
