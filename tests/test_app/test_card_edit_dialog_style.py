@@ -41,7 +41,10 @@ def _sample(qapp, theme):
         image = dialog.grab().toImage()
 
         def px(point):
-            return image.pixelColor(point).getRgb()[:3]
+            # 控件坐标是逻辑像素，截图使用物理像素；需兼容 Windows 显示缩放。
+            ratio = image.devicePixelRatio()
+            pixel = QPoint(round(point.x() * ratio), round(point.y() * ratio))
+            return image.pixelColor(pixel).getRgb()[:3]
 
         return {
             # x=3 落在卡片 10px 内边距内，避开图标与按钮

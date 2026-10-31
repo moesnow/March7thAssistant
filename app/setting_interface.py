@@ -17,6 +17,7 @@ from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, T
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableWeeklyRelicSettingCard, ExpandableTimestampSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
 from .card.messagebox_custom import MessageBoxEdit
+from .challenge_config_dialog import ChallengeConfigCard
 from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
 from module.notification import init_notifiers
@@ -900,17 +901,9 @@ class SettingInterface(ScrollArea):
             tr("上次运行虚构叙事的时间"),
             ""
         )
-        self.purefictionLevelCard = PushSettingCardEval(
-            tr('修改'),
-            UiIcon.FILTER,
-            tr("关卡范围"),
-            "purefiction_level"
-        )
-        self.purefictionTeamsCard = PushSettingCardTeamWithSwap(
+        self.purefictionConfigCard = ChallengeConfigCard(
             UiIcon.PEOPLE_TEAM,
-            tr("虚构叙事队伍配置"),
-            "purefiction_team1",
-            "purefiction_team2"
+            tr("虚构叙事配置"), "purefiction", 4
         )
         self.ApocalypticEnableCard = ExpandableTimestampSwitchSettingCard(
             "apocalyptic_enable",
@@ -2783,8 +2776,7 @@ class SettingInterface(ScrollArea):
 
         self.ImmortalGameGroup.addSettingCard(self.purefictionEnableCard)
         self.purefictionEnableCard.addSettingCards([
-            self.purefictionLevelCard,
-            self.purefictionTeamsCard
+            self.purefictionConfigCard
         ])
 
         self.ImmortalGameGroup.addSettingCard(self.ApocalypticEnableCard)
