@@ -12,7 +12,7 @@ from utils.date import Date
 from utils.console import pause_on_success
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
-from module.game.cloud import CloudGameLoginTimeoutError
+from module.game.cloud import CloudGameLoginTimeoutError, CloudGameZeroDurationError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
@@ -175,25 +175,25 @@ def start_game():
             # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
             auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
         if not starrail.switch_to_game():
-            if cfg.auto_set_resolution_enable:
-                starrail.change_resolution(1920, 1080)
-                starrail.change_auto_hdr("disable")
+            try:
+                if cfg.auto_set_resolution_enable:
+                    starrail.change_resolution(1920, 1080)
+                    starrail.change_auto_hdr("disable")
 
-            if cfg.auto_battle_detect_enable:
-                starrail.change_auto_battle(True)
+                if cfg.auto_battle_detect_enable:
+                    starrail.change_auto_battle(True)
 
-            if not starrail.start_game_process():
-                raise RuntimeError("启动游戏失败")
-            time.sleep(10)
+                if not starrail.start_game_process():
+                    raise RuntimeError("启动游戏失败")
+                time.sleep(10)
 
-            if not wait_until(lambda: starrail.switch_to_game(), 360):
+                if not wait_until(lambda: starrail.switch_to_game(), 360):
+                    raise TimeoutError("切换到游戏超时")
+
+                time.sleep(10)
+            finally:
                 starrail.restore_resolution()
                 starrail.restore_auto_hdr()
-                raise TimeoutError("切换到游戏超时")
-
-            time.sleep(10)
-            starrail.restore_resolution()
-            starrail.restore_auto_hdr()
             # starrail.check_resolution_ratio(1920, 1080)
             starrail.check_resolution(1920, 1080)
 
@@ -243,6 +243,10 @@ def start_game():
                     starrail.stop_game()
                 continue
             break
+        except CloudGameZeroDurationError:
+            # 时长为 0 时重试也无法进入游戏：关闭浏览器后交给调用方，由主循环决定等待下次运行还是按错误退出
+            cloud_game.stop_game()
+            raise
         except CloudGameLoginTimeoutError:
             raise
         except InputInterrupted:
@@ -251,6 +255,11 @@ def start_game():
             raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
+            if not cfg.cloud_game_enable and starrail.launch_method == "epic":
+                from module.game.epic import EpicLaunchError
+                if isinstance(e, EpicLaunchError):
+                    # 渠道启动已给出具体阶段错误，不重放协议/点击，不关闭用户启动器。
+                    raise
             # 确保在重试前停止游戏
             if cfg.cloud_game_enable:
                 cloud_game.stop_game()
@@ -294,7 +303,7 @@ def stop(detect_loop=False):
         sys.exit(0)
 
 
-def after_finish_is_loop():
+def after_finish_is_loop(force_scheduled=False):
 
     def get_wait_time(current_power):
         # 距离体力到达配置文件指定的上限剩余秒数
@@ -305,7 +314,7 @@ def after_finish_is_loop():
         wait_time = min(wait_time_power_limit, wait_time_next_day)
         return wait_time
 
-    if cfg.loop_mode == "power":
+    if not force_scheduled and cfg.loop_mode == "power":
         current_power = Power.get(use_supplement=False)
         if current_power >= cfg.power_limit:
             log.info(f"开拓力 >= {cfg.power_limit}")
@@ -352,6 +361,19 @@ def after_finish_is_loop():
 
     # 启动前重新加载配置 #262
     cfg._load_config()
+
+
+def wait_after_cloud_zero_duration(error):
+    """云游戏时长为 0 时，循环模式下发送通知并等待到下次定时运行，返回 True；
+    非循环模式返回 False，由调用方按错误退出。"""
+    if cfg.after_finish != "Loop":
+        return False
+    msg = cfg.notify_template['ErrorOccurred'].format(error=error)
+    log.error(msg)
+    notif.flush_batch(extra_content=msg, level=NotificationLevel.ERROR)
+    # 无法进入游戏读取开拓力，开拓力循环也改按定时时间等待
+    after_finish_is_loop(force_scheduled=True)
+    return True
 
 
 def _start_launcher_and_get_automation(game):
