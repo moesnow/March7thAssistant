@@ -280,6 +280,7 @@ from utils.screenshot_util import save_error_screenshot
 
 import tasks.game as game
 from module.game import cloud_game
+from module.game.cloud import CloudGameZeroDurationError
 import tasks.reward as reward
 import tasks.challenge as challenge
 import tasks.version as version
@@ -370,6 +371,11 @@ def run_main_actions(no_run_immediately=False):
             reward.start()
             telemetry.track_task_complete("main", True, time.time() - main_start_time)
             game.stop(True)
+        except CloudGameZeroDurationError as e:
+            telemetry.track_task_complete("main", False, time.time() - main_start_time)
+            # 时长为 0 时重启也无法恢复：循环模式等到下次定时再运行，避免容器反复重启并推送通知
+            if not game.wait_after_cloud_zero_duration(e):
+                raise
         except Exception:
             telemetry.track_task_complete("main", False, time.time() - main_start_time)
             raise
