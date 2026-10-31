@@ -561,7 +561,7 @@ notify_serverchan3_sendkey: "" # Server酱·3 版的 SendKey。
 notify_bark_enable: false # 是否启用 Bark 通知。true 开启，false 关闭。
 notify_bark_key: ""
 notify_bark_group: "March7thAssistant" # 可选参数，Bark 通知的分组名。
-notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/app/images/March7th.jpg" # 可选参数，Bark 通知的图标 URL。
+notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/screenshot/March7th.png" # 可选参数，Bark 通知的图标 URL。
 notify_bark_isarchive: "1" # 可选参数，Bark 通知是否归档。
 notify_bark_sound: "" # 可选参数
 notify_bark_url: "" # 可选参数，通知点击后跳转的 URL。
