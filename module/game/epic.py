@@ -18,13 +18,16 @@ class EpicLaunchError(RuntimeError):
     """Epic 渠道启动失败。"""
 
 
-def build_epic_launch_url(game_path):
-    """将 StarRail.exe 所在目录编码为 Epic 启动链接。"""
+def check_game_path(game_path):
+    """Epic 渠道启动要求游戏路径是 StarRail.exe 的绝对路径。"""
     path = ntpath.normpath(game_path)
     if not ntpath.isabs(path) or ntpath.basename(path).lower() != "starrail.exe":
         raise ValueError("Epic 游戏路径必须是 StarRail.exe 的绝对路径")
-    folder = ntpath.dirname(path).replace("\\", "/")
-    return f"com.epicgames.launcher://apps/{quote(folder, safe='')}?action=launch&silent=true"
+
+
+def build_epic_launch_url(launch_id):
+    """协议 apps/ 段是 Epic 应用标识（不是安装路径），其中的冒号需要编码。"""
+    return f"com.epicgames.launcher://apps/{quote(launch_id, safe='')}?action=launch&silent=true"
 
 
 def _inside(path, root):
@@ -35,21 +38,33 @@ def _inside(path, root):
         return False
 
 
-def find_epic_install_root(game_path):
-    """从 Epic 本地安装清单查找包含游戏路径的安装目录。"""
+def _launch_id(item):
+    """应用标识取 命名空间:目录项:应用名，旧清单缺少前两项时退回应用名。"""
+    namespace, catalog_item = item.get("CatalogNamespace"), item.get("CatalogItemId")
+    if isinstance(namespace, str) and namespace and isinstance(catalog_item, str) and catalog_item:
+        return f"{namespace}:{catalog_item}:{item['AppName']}"
+    return item["AppName"]
+
+
+def find_epic_install(game_path):
+    """从 Epic 本地安装清单查找包含游戏路径的安装记录，返回 (安装目录, 应用标识)。"""
     manifest_dir = Path(os.environ.get("PROGRAMDATA", r"C:\ProgramData")) / "Epic/EpicGamesLauncher/Data/Manifests"
-    roots = set()
+    installs = set()
     for manifest in manifest_dir.glob("*.item"):
         try:
             with manifest.open(encoding="utf-8-sig") as stream:
-                root = json.load(stream).get("InstallLocation")
-            if isinstance(root, str) and ntpath.isabs(root) and _inside(game_path, root):
-                roots.add(ntpath.normcase(ntpath.normpath(root)))
+                item = json.load(stream)
+            root, app_name = item.get("InstallLocation"), item.get("AppName")
+            # DLC 等附加内容与游戏共用安装目录，只认主程序的清单
+            if (isinstance(root, str) and ntpath.isabs(root) and _inside(game_path, root)
+                    and isinstance(app_name, str) and app_name
+                    and item.get("MainGameAppName", app_name) == app_name):
+                installs.add((ntpath.normcase(ntpath.normpath(root)), _launch_id(item)))
         except (OSError, ValueError, AttributeError):
             continue
-    if len(roots) > 1:
-        raise EpicLaunchError("Epic 启动[窗口归属]：多个安装目录包含游戏路径，无法确认渠道实例")
-    return next(iter(roots), None)
+    if len(installs) > 1:
+        raise EpicLaunchError("Epic 启动[打开协议]：多个 Epic 安装记录包含游戏路径，无法确认渠道实例")
+    return next(iter(installs), None)
 
 
 class EpicLauncherController(LauncherController):
@@ -166,13 +181,16 @@ class EpicGameLauncher:
             pause_ctl.checkpoint()
             if self._game_ready():
                 return True
-            url = build_epic_launch_url(self.game.game_path)
-            self.game.log_info("Epic 启动[打开协议]：通过系统协议请求渠道启动")
-            os.startfile(url)
+            check_game_path(self.game.game_path)
+            install = find_epic_install(self.game.game_path)
+            if install is None:
+                raise EpicLaunchError("Epic 启动[打开协议]：Epic 安装清单中没有包含游戏路径的记录，请确认游戏由 Epic 安装且路径指向该目录下的 StarRail.exe")
+            root, launch_id = install
+            self.game.log_info(f"Epic 启动[打开协议]：通过系统协议请求渠道启动 {launch_id}")
+            os.startfile(build_epic_launch_url(launch_id))
             self.stage = "等待启动器"
             # Epic 直接打开游戏时跳过启动器识别。
             if not self._game_ready():
-                root = find_epic_install_root(self.game.game_path)
                 self.launcher = EpicLauncherController(root, self.game.logger)
                 self.hwnd = None
                 if not self._wait(self._find_launcher, self.LAUNCHER_TIMEOUT):

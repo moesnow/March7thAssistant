@@ -14,6 +14,7 @@ from module.game import epic, local
 
 GAME_PATH = r"D:\Epic Games\HonkaiStarRail\games\Star Rail Games\StarRail.exe"
 INSTALL_ROOT = r"D:\Epic Games\HonkaiStarRail"
+LAUNCH_ID = "starrail-namespace:starrail-item:StarRailApp"
 
 
 class Clock:
@@ -35,7 +36,7 @@ def launch_env(monkeypatch):
     game.get_window_handle.side_effect = lambda: 99 if state["running"] else 0
     launcher = Mock()
     launcher.get_window_handle.return_value = 42
-    monkeypatch.setattr(epic, "find_epic_install_root", Mock(return_value=INSTALL_ROOT))
+    monkeypatch.setattr(epic, "find_epic_install", Mock(return_value=(INSTALL_ROOT, LAUNCH_ID)))
     monkeypatch.setattr(epic, "EpicLauncherController", Mock(return_value=launcher))
     monkeypatch.setattr(epic.os, "startfile", Mock())
     # 若任何分支回退到 EXE，测试必须失败。
@@ -63,34 +64,48 @@ def launch_env(monkeypatch):
                            click=mouse_click, capture=capture, recognize=recognize)
 
 
+@pytest.mark.parametrize("launch_id", [LAUNCH_ID, "StarRailApp"])
+def test_protocol_uses_epic_app_id(launch_id):
+    url = epic.build_epic_launch_url(launch_id)
+    parsed = urlsplit(url)
+    assert parsed.scheme == "com.epicgames.launcher" and parsed.netloc == "apps"
+    assert parsed.query == "action=launch&silent=true"
+    # apps/ 段是应用标识而非安装路径，冒号按 %3A 编码。
+    assert unquote(parsed.path.removeprefix("/")) == launch_id
+    assert ":" not in parsed.path
+
+
 @pytest.mark.parametrize("path", [
     GAME_PATH, r"C:\游戏 & 测试\星铁#100%?\StarRail.exe",
     r"\\server\共享 目录\StarRail.exe", "D:/Epic Games/星铁/StarRail.exe",
 ])
-def test_protocol_path_encoding(path):
-    import ntpath
-    url = epic.build_epic_launch_url(path)
-    parsed = urlsplit(url)
-    assert parsed.scheme == "com.epicgames.launcher" and parsed.netloc == "apps"
-    assert parsed.query == "action=launch&silent=true"
-    assert unquote(parsed.path.removeprefix("/")) == ntpath.dirname(ntpath.normpath(path)).replace("\\", "/")
-    assert " " not in url and "\\" not in url and "#" not in url
+def test_valid_game_path(path):
+    epic.check_game_path(path)
 
 
 @pytest.mark.parametrize("path", ["StarRail.exe", r"D:\Epic\launcher.exe", r"D:StarRail.exe"])
-def test_invalid_protocol_path(path):
+def test_invalid_game_path(path):
     with pytest.raises(ValueError):
-        epic.build_epic_launch_url(path)
+        epic.check_game_path(path)
 
 
 def test_epic_opens_game_directly(launch_env):
     env = launch_env
     epic.os.startfile.side_effect = lambda _: env.state.update(running=True)
     assert env.flow.start()
-    epic.os.startfile.assert_called_once_with(epic.build_epic_launch_url(GAME_PATH))
+    epic.find_epic_install.assert_called_once_with(GAME_PATH)
+    epic.os.startfile.assert_called_once_with(epic.build_epic_launch_url(LAUNCH_ID))
     epic.EpicLauncherController.assert_not_called()
     env.capture.assert_not_called()
     env.click.assert_not_called()
+
+
+def test_missing_epic_install_stops_before_protocol(launch_env):
+    epic.find_epic_install.return_value = None
+    with pytest.raises(epic.EpicLaunchError, match="安装清单"):
+        launch_env.flow.start()
+    epic.os.startfile.assert_not_called()
+    launch_env.click.assert_not_called()
 
 
 def test_game_appears_while_waiting_for_launcher(launch_env):
@@ -107,6 +122,8 @@ def test_hoyoplay_ocr_click_then_game(launch_env, button):
     box = env.recognize.return_value[0][0]
     env.recognize.return_value = [(box, (button, 0.99))]
     assert env.flow.start()
+    # HoYoPlay 窗口归属按清单中的安装目录核对。
+    epic.EpicLauncherController.assert_called_once_with(INSTALL_ROOT, env.game.logger)
     env.launcher.set_foreground_window_with_retry.assert_called_with(42)
     env.capture.assert_called_once_with((700, 760, 400, 240))
     # OCR 坐标加客户区原点和裁剪偏移，非整个桌面的固定坐标。
@@ -240,17 +257,41 @@ def test_unreadable_window_process_fails_closed(window_env, monkeypatch):
         epic.EpicLauncherController(INSTALL_ROOT, Mock()).get_window_handle()
 
 
+def _write_manifest(directory, name, **item):
+    (directory / f"{name}.item").write_text(json.dumps(item), encoding="utf-8")
+
+
 def test_manifest_installation_matching(tmp_path, monkeypatch):
     monkeypatch.setenv("PROGRAMDATA", str(tmp_path))
     manifests = tmp_path / "Epic/EpicGamesLauncher/Data/Manifests"
     manifests.mkdir(parents=True)
-    (manifests / "starrail.item").write_text(json.dumps({"InstallLocation": INSTALL_ROOT}), encoding="utf-8")
-    (manifests / "other.item").write_text(json.dumps({"InstallLocation": INSTALL_ROOT + "Other"}), encoding="utf-8")
+    _write_manifest(manifests, "starrail", InstallLocation=INSTALL_ROOT, AppName="StarRailApp",
+                    MainGameAppName="StarRailApp", CatalogNamespace="starrail-namespace",
+                    CatalogItemId="starrail-item")
+    # DLC 与游戏共用安装目录，不能被当作第二个安装记录。
+    _write_manifest(manifests, "dlc", InstallLocation=INSTALL_ROOT, AppName="StarRailDlc",
+                    MainGameAppName="StarRailApp", CatalogNamespace="starrail-namespace",
+                    CatalogItemId="dlc-item")
+    _write_manifest(manifests, "other", InstallLocation=INSTALL_ROOT + "Other", AppName="OtherApp")
+    _write_manifest(manifests, "no_app_name", InstallLocation=INSTALL_ROOT)
     (manifests / "broken.item").write_text("{", encoding="utf-8")
-    assert epic.find_epic_install_root(GAME_PATH) == INSTALL_ROOT.lower()
-    (manifests / "overlap.item").write_text(json.dumps({"InstallLocation": INSTALL_ROOT + r"\games"}), encoding="utf-8")
-    with pytest.raises(epic.EpicLaunchError, match="多个安装目录"):
-        epic.find_epic_install_root(GAME_PATH)
+    assert epic.find_epic_install(GAME_PATH) == (INSTALL_ROOT.lower(), LAUNCH_ID)
+    _write_manifest(manifests, "overlap", InstallLocation=INSTALL_ROOT + r"\games", AppName="OverlapApp")
+    with pytest.raises(epic.EpicLaunchError, match="多个 Epic 安装记录"):
+        epic.find_epic_install(GAME_PATH)
+
+
+def test_manifest_without_catalog_ids_uses_app_name(tmp_path, monkeypatch):
+    monkeypatch.setenv("PROGRAMDATA", str(tmp_path))
+    manifests = tmp_path / "Epic/EpicGamesLauncher/Data/Manifests"
+    manifests.mkdir(parents=True)
+    _write_manifest(manifests, "legacy", InstallLocation=INSTALL_ROOT, AppName="StarRailApp")
+    assert epic.find_epic_install(GAME_PATH) == (INSTALL_ROOT.lower(), "StarRailApp")
+
+
+def test_missing_manifest_directory(tmp_path, monkeypatch):
+    monkeypatch.setenv("PROGRAMDATA", str(tmp_path))
+    assert epic.find_epic_install(GAME_PATH) is None
 
 
 def test_local_default_and_reload(monkeypatch):
