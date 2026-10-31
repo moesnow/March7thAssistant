@@ -208,14 +208,15 @@ class Redemption:
                     # 每秒重新截图检测，最多约 10 秒
                     result = None
                     for _ in range(10):
-                        if auto.find_element("兑换成功", "text"):
-                            result = "success"
-                            break
-                        if auto.find_element(("兑换码已过期", "无效的兑换码", "兑换码已被使用"), "text", take_screenshot=False, include=True):
+                        if auto.find_element(
+                            ("兑换成功", "兑换码已过期", "无效的兑换码", "兑换码已被使用"),
+                            "text",
+                            include=True,
+                        ):
                             result = auto.matched_text
                             break
                         time.sleep(1)
-                    if result == "success":
+                    if result == "兑换成功":
                         log.info(f"兑换码使用成功: {green(code)} ({idx}/{len(codes_to_use)})")
                         if code not in used:
                             used.append(code)
@@ -229,7 +230,7 @@ class Redemption:
                             cfg.set_value("already_used_codes", used)
                         auto.press_key("esc")
                     else:
-                        log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
+                        log.warning(f"兑换结果检测超时: {yellow(code)} ({idx}/{len(codes_to_use)})")
                         auto.press_key("esc")
                     screen.wait_for_screen_change('menu')
                     time.sleep(3)
