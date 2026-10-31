@@ -75,9 +75,9 @@ class DivergentUniverse:
             counts[cycle] = count
         return counts
 
-    def start(self) -> bool:
+    def start(self, universe_type: Optional[Literal["normal", "cycle"]] = None) -> bool:
         log.hr('准备差分宇宙', '0')
-        success = self.run()
+        success = self.run(universe_type)
         if success:
             Base.send_notification_with_screenshot("差分宇宙已完成", NotificationLevel.ALL, self.screenshot)
             self.screenshot = None
@@ -90,7 +90,7 @@ class DivergentUniverse:
         has_reward = self.get_reward()
         if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
             self.check_divergent_universe_score()
-        if has_reward and cfg.universe_bonus_enable:
+        if has_reward and cfg.weekly_divergent_bonus_enable:
             self.process_ornament()
         log.hr("完成", 2)
         return success
@@ -125,8 +125,10 @@ class DivergentUniverse:
             log.warning(f"无法解析差分宇宙积分: {score}")
         return False
 
-    def run(self) -> bool:
-        if self.start_war(cfg.weekly_divergent_type):
+    def run(self, universe_type: Optional[Literal["normal", "cycle"]] = None) -> bool:
+        if universe_type is None:
+            universe_type = cfg.weekly_divergent_type
+        if self.start_war(universe_type):
             return self.loop()
         return False
 

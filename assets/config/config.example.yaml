@@ -421,6 +421,7 @@ scheduled_run_time: "04:00" # 旧配置：单一定时运行时间（仅用于�
 # - id: 唯一ID（自动生成）
 # - name: 任务显示名称
 # - time: 运行时间，HH:mm（24小时制）
+# - weekdays: 执行星期，1 表示周一，7 表示周日；省略时默认每天，例如 [1, 3, 5]
 # - program: 程序路径，填写 'self' 表示启动程序自身（即 March7th Assistant）
 # - args: 启动参数（可选），当 program 为 'self' 时填写任务ID（如 main/daily）
 # - timeout: 超时（秒），0 表示不启用

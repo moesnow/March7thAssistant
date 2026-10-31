@@ -200,3 +200,87 @@ def test_pause_guard_blocks_until_resume(controller, monkeypatch):
     t.join(timeout=5)
     assert calls == [42]
     assert result == [42]
+
+
+# ---------- 停止指令（--control <运行编号> stop）----------
+
+def test_stop_raises_at_next_checkpoint(controller, control_path, log_stub):
+    """停止指令到达后，下一个卡点抛出 RunStopRequested，并回执 stopping。"""
+    controller.checkpoint()  # 运行中：直接返回
+    write_command(control_path, pause_mod.COMMAND_STOP)
+    assert _wait_until(lambda: read_state(control_path) == pause_mod.STATE_STOPPING)
+    assert controller.stop_requested
+    assert pause_mod.STOP_LOG_MESSAGE in log_stub.messages
+    with pytest.raises(pause_mod.RunStopRequested):
+        controller.checkpoint()
+
+
+def test_stop_is_not_swallowed_by_except_exception(controller):
+    """RunStopRequested 继承 BaseException：任务代码里的 except Exception 拦不住它。"""
+    controller.request_stop()
+    caught = []
+    with pytest.raises(pause_mod.RunStopRequested):
+        try:
+            controller.checkpoint()
+        except Exception as e:  # noqa: BLE001 - 模拟任务代码的宽泛捕获
+            caught.append(e)
+    assert caught == []
+
+
+def test_stop_releases_paused_task(controller, control_path):
+    """暂停中收到停止：卡在卡点上的任务被放行并抛出停止。"""
+    controller.request_pause()
+    outcome = []
+
+    def worker():
+        try:
+            controller.checkpoint()
+            outcome.append("continued")
+        except pause_mod.RunStopRequested:
+            outcome.append("stopped")
+
+    t = threading.Thread(target=worker)
+    t.start()
+    assert _wait_until(lambda: read_state(control_path) == STATE_PAUSED)
+    controller.request_stop()
+    t.join(timeout=5)
+    assert outcome == ["stopped"]
+
+
+def test_commands_after_stop_are_ignored(controller, control_path):
+    """停止是终态：之后的暂停 / 恢复指令不再生效。"""
+    controller.request_stop()
+    controller.request_pause()
+    controller.request_resume()
+    assert controller.stop_requested
+    assert read_state(control_path) == pause_mod.STATE_STOPPING
+    with pytest.raises(pause_mod.RunStopRequested):
+        controller.checkpoint()
+
+
+def test_stop_timeout_callback_fires(controller, monkeypatch):
+    """任务迟迟走不到卡点时，宽限期满后调用兜底回调（main.py 用它写入结果并强制退出）。"""
+    monkeypatch.setattr(pause_mod, "STOP_GRACE_SECONDS", 0.1)
+    fired = threading.Event()
+    controller.on_stop_timeout = fired.set
+    controller.request_stop()
+    assert fired.wait(5)
+
+
+def test_stop_without_callback_has_no_timer(controller):
+    controller.on_stop_timeout = None
+    controller.request_stop()
+    assert controller._stop_timer is None
+
+
+def test_module_import_does_not_initialize_logger():
+    """文件协议部分供未提权入口使用：导入 utils.pause 不应顺带初始化配置与日志。"""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    code = "import sys, utils.pause; print('module.logger' in sys.modules, 'module.config' in sys.modules)"
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True,
+                            cwd=str(Path(__file__).resolve().parents[2]), timeout=60)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.split() == ["False", "False"]

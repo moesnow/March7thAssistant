@@ -1,7 +1,8 @@
 # coding:utf-8
 from collections import deque
+from copy import deepcopy
 
-from PySide6.QtCore import Qt, QProcess, QProcessEnvironment, Signal, QTimer, QTime, QDateTime, QEvent, QMetaObject, Slot
+from PySide6.QtCore import Qt, QProcess, QProcessEnvironment, Signal, QTimer, QDateTime, QEvent, QMetaObject, Slot
 from PySide6.QtGui import QFont, QTextCursor
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
                                QSizePolicy, QFrame, QLabel)
@@ -18,6 +19,10 @@ import re
 import uuid
 from .common.style_sheet import StyleSheet
 from .common.icon import UiIcon
+from .common.schedule import (task_trigger_mode, scheduled_task_slot,
+                              scheduled_task_payload, find_scheduled_task, scheduled_task_chain,
+                              split_task_arguments, milliseconds_to_next_minute,
+                              next_scheduled_datetime, schedule_weekday_labels)
 from module.config import cfg
 from module.game import get_game_controller
 from utils.tasks import TASK_NAMES, PAUSABLE_TASKS
@@ -380,10 +385,9 @@ class LogInterface(ScrollArea):
         QTimer.singleShot(0, self._install_window_event_filter)
 
         # 定时运行相关
-        self._schedule_timer = QTimer(self)
-        self._schedule_timer.timeout.connect(self._checkScheduledTime)
+        self._schedule_timer = None
+        self._schedule_running = False
         # 记录每个定时任务最后触发的“计划时间槽”时间戳（秒）
-        # 用于避免在触发窗口边界（例如恰好 +60s）出现同一计划点重复触发
         self._last_triggered_ts = {}
         self._overlay_enabled = bool(cfg.get_value('log_overlay_enable', False)) if sys.platform == 'win32' else False
         self._log_overlay = GameLogOverlay() if sys.platform == 'win32' else None
@@ -404,8 +408,7 @@ class LogInterface(ScrollArea):
 
         # 在启动定时器前，迁移旧的单一定时配置（若开启且未配置新任务）
         self._migrate_legacy_schedule()
-        # 启动定时检查器（每30秒检查一次）
-        self._schedule_timer.start(30000)
+        self._startScheduleTimer()
         self._initOverlayMonitor()
 
     def __initWidget(self):
@@ -460,7 +463,12 @@ class LogInterface(ScrollArea):
         self.pauseButton.setToolTip(tr('仅内置任务支持暂停，暂停后脚本将停止一切操作'))
 
         self.logOverlayLabel = BodyLabel(tr('在游戏内显示日志'))
+        self.logOverlayLabel.setToolTip(tr('在游戏内显示日志'))
         self.logOverlaySwitch = SwitchButton(tr('关'), self.buttonWidget, IndicatorPosition.RIGHT)
+        self.logOverlaySwitch.setOnText(tr('开'))
+        self.logOverlaySwitch.setOffText(tr('关'))
+        self.logOverlaySwitch.setAccessibleName(tr('在游戏内显示日志'))
+        self.logOverlaySwitch.setToolTip(tr('在游戏内显示日志'))
         self.logOverlaySwitch.checkedChanged.connect(self._onLogOverlayToggled)
         self._setLogOverlaySwitchValue(self._overlay_enabled)
         if sys.platform != 'win32':
@@ -476,7 +484,7 @@ class LogInterface(ScrollArea):
         # self.scheduleLabel = BodyLabel(tr('定时任务'))
 
         # 打开定时任务管理配置弹窗
-        self.manageScheduleButton = PushButton(tr('配置定时任务'))
+        self.manageScheduleButton = PushButton(tr('定时任务'))
         self.manageScheduleButton.clicked.connect(self._openScheduleManager)
 
         self.scheduleStatusLabel = BodyLabel()
@@ -549,7 +557,6 @@ class LogInterface(ScrollArea):
         try:
             self.logOverlaySwitch.blockSignals(True)
             self.logOverlaySwitch.setChecked(enabled)
-            self.logOverlaySwitch.setText(tr('开') if enabled else tr('关'))
         finally:
             self.logOverlaySwitch.blockSignals(False)
 
@@ -915,64 +922,17 @@ class LogInterface(ScrollArea):
             self.autoplotToggleRequested.emit()
 
     def _getScheduledTaskTriggerMode(self, task) -> str:
-        mode = str((task or {}).get('trigger_mode', 'time')).strip().lower()
-        return 'chain' if mode == 'chain' else 'time'
+        return task_trigger_mode(task)
 
     def _buildScheduledTaskPayload(self, task) -> dict:
-        payload = {
-            'program': task.get('program', 'self'),
-            'args': task.get('args', ''),
-            'timeout': int(task.get('timeout', 0) or 0),
-            'name': task.get('name', ''),
-            'notify': bool(task.get('notify', False)),
-            'post_action': task.get('post_action', 'None'),
-            'id': task.get('id'),
-            'trigger_mode': self._getScheduledTaskTriggerMode(task),
-        }
-        # workflow 标记形态的字段透传给 _resolveWorkflowLaunch 解析
-        if payload['program'] == 'workflow':
-            payload['workflow_name'] = task.get('workflow_name', '')
-            if task.get('workflow_step_path'):
-                payload['workflow_step_path'] = task.get('workflow_step_path')
-        return payload
+        return scheduled_task_payload(task)
 
     def _findScheduledTaskIndex(self, task, tasks) -> int:
-        task_id = task.get('id') if isinstance(task, dict) else None
-        if task_id:
-            for index, item in enumerate(tasks):
-                if item.get('id') == task_id:
-                    return index
-
-        for index, item in enumerate(tasks):
-            if item is task:
-                return index
-
-        if isinstance(task, dict):
-            for index, item in enumerate(tasks):
-                if (
-                    item.get('name') == task.get('name') and
-                    item.get('time') == task.get('time') and
-                    item.get('program') == task.get('program') and
-                    item.get('args') == task.get('args')
-                ):
-                    return index
-
-        return -1
+        return find_scheduled_task(task, tasks)
 
     def _buildScheduledTaskChain(self, task, tasks=None):
-        source_tasks = list(tasks) if tasks is not None else (cfg.get_value('scheduled_tasks', []) or [])
-        start_index = self._findScheduledTaskIndex(task, source_tasks)
-        if start_index < 0:
-            return []
-
-        chain = []
-        for next_task in source_tasks[start_index + 1:]:
-            if self._getScheduledTaskTriggerMode(next_task) != 'chain':
-                break
-            if not next_task.get('enabled', True):
-                continue
-            chain.append((next_task, self._buildScheduledTaskPayload(next_task)))
-        return chain
+        source_tasks = tasks if tasks is not None else (cfg.get_value('scheduled_tasks', []) or [])
+        return scheduled_task_chain(task, source_tasks)
 
     def _formatScheduledTaskChain(self, chain) -> str:
         names = []
@@ -989,12 +949,11 @@ class LogInterface(ScrollArea):
         chain = self._buildScheduledTaskChain(task, tasks)
 
         if manual and task.get('id'):
-            try:
-                self._last_triggered_ts[task.get('id')] = QDateTime.currentDateTime().toSecsSinceEpoch()
-            except Exception:
-                pass
+            slot = scheduled_task_slot(task, QDateTime.currentDateTime())
+            if slot is not None:
+                self._last_triggered_ts[task['id']] = slot
 
-        self._pending_task_meta = task
+        self._pending_task_meta = deepcopy(task)
         self._active_task_chain = chain
         self.startTask(task_dict)
 
@@ -1008,47 +967,32 @@ class LogInterface(ScrollArea):
 
         return True
 
-    def _updateScheduleStatusLabel(self):
+    def _updateScheduleStatusLabel(self, tasks=None, now=None):
         """更新定时状态标签：展示启用的定时任务数量和下次运行时间（若有）"""
-        tasks = cfg.get_value("scheduled_tasks", []) or []
+        if tasks is None:
+            tasks = cfg.get_value('scheduled_tasks', []) or []
         enabled = [t for t in tasks if t.get('enabled', True) and self._getScheduledTaskTriggerMode(t) == 'time']
-        # if not enabled:
-        #     # 兼容旧配置：如果开启了旧的单一定时配置，显示旧配置内容
-        #     if cfg.get_value('scheduled_run_enable', False):
-        #         time_str = cfg.get_value('scheduled_run_time', '04:00')
-        #         self.scheduleStatusLabel.setText(tr(f'旧单一定时启用: {time_str}'))
-        #     else:
-        #         self.scheduleStatusLabel.setText('未配置定时任务')
-        #     return
-
-        # 找到接下来最近要运行的任务时间
-        current_time = QTime.currentTime()
-        next_secs = None
-        next_task = None
+        button_text = tr('定时任务({count})').format(count=len(enabled)) if enabled else tr('定时任务')
+        self.manageScheduleButton.setText(button_text)
+        self.manageScheduleButton.setToolTip(tr('已启用 {count} 个按时任务，点击配置').format(count=len(enabled)))
+        if now is None:
+            now = QDateTime.currentDateTime()
+        next_time = None
         for t in enabled:
-            try:
-                parts = list(map(int, t.get('time', '00:00').split(':')))
-                st = QTime(*parts)
-            except Exception:
+            scheduled_at = next_scheduled_datetime(t, now)
+            if scheduled_at is None:
                 continue
-            secs = current_time.secsTo(st)
-            # secs = st.secsTo(current_time)
-            if secs < 0:
-                secs += 24 * 60 * 60
-            if next_secs is None or secs < next_secs:
-                next_secs = secs
-                next_task = t
+            if next_time is None or scheduled_at < next_time:
+                next_time = scheduled_at
 
-        if next_task and next_secs is not None:
-            # 计算下次时间点的时刻
-            if next_secs == 0:
-                time_str = next_task.get('time')
-            else:
-                # 计算具体时间
-                time_str = next_task.get('time')
-            self.scheduleStatusLabel.setText(tr('已启用：{count}，下次：{time}').format(count=len(enabled), time=time_str))
+        if next_time is not None:
+            time_str = tr('{date}（{weekday}）{time}').format(
+                date=next_time.toString('MM-dd'),
+                weekday=schedule_weekday_labels()[next_time.date().dayOfWeek() - 1],
+                time=next_time.toString('HH:mm'),
+            )
+            self.scheduleStatusLabel.setText(tr('下次：{time}').format(time=time_str))
         else:
-            # self.scheduleStatusLabel.setText(tr(f'已启用定时任务数: {len(enabled)}'))
             self.scheduleStatusLabel.setText(tr('尚未配置定时任务'))
 
     def _openScheduleManager(self):
@@ -1106,107 +1050,130 @@ class LogInterface(ScrollArea):
             # 忽略迁移过程中的任何错误
             pass
 
-    def _checkScheduledTime(self):
+    def _startScheduleTimer(self):
+        """跳过启动所在分钟，从下一次分钟变化开始调度。"""
+        if self._schedule_timer is None:
+            self._schedule_timer = QTimer(self)
+            self._schedule_timer.setSingleShot(True)
+            self._schedule_timer.setTimerType(Qt.TimerType.PreciseTimer)
+            self._schedule_timer.timeout.connect(self._onScheduleTimerTimeout)
+        now = QDateTime.currentDateTime()
+        self._last_schedule_minute = now.toSecsSinceEpoch() // 60
+        self._schedule_running = True
+        self._schedule_timer.start(milliseconds_to_next_minute(now))
+
+    def _onScheduleTimerTimeout(self):
+        if not self._schedule_running:
+            return
+        try:
+            now = QDateTime.currentDateTime()
+            current_minute = now.toSecsSinceEpoch() // 60
+            if current_minute != self._last_schedule_minute:
+                self._last_schedule_minute = current_minute
+                self._checkScheduledTime(now)
+        except Exception as error:
+            self.appendLog(f"检查定时任务失败: {error}\n")
+        finally:
+            if self._schedule_running:
+                self._schedule_timer.start(milliseconds_to_next_minute(QDateTime.currentDateTime()))
+
+    def _checkScheduledTime(self, now=None):
         """检查是否到达任意已启用的定时任务时间并触发对应任务"""
         # 任务暂停期间不触发定时任务，避免打断暂停或为启动新任务而强制停止当前任务
         if self._pause_state in (STATE_PAUSING, STATE_PAUSED):
             self._updateScheduleStatusLabel()
             return
         tasks = cfg.get_value('scheduled_tasks', []) or []
-        # if not tasks:
-        #     # 兼容旧单一定时任务配置
-        #     if cfg.get_value('scheduled_run_enable', False):
-        #         # 避免和多任务逻辑冲突，按旧逻辑触发完整运行
-        #         if self.isTaskRunning():
-        #             return
-        #         current_time = QTime.currentTime()
-        #         scheduled_time_str = cfg.get_value('scheduled_run_time', '04:00')
-        #         try:
-        #             parts = list(map(int, scheduled_time_str.split(':')))
-        #             scheduled_time = QTime(*parts)
-        #         except Exception:
-        #             return
-        #         secs = scheduled_time.secsTo(current_time)
-        #         if secs < 0:
-        #             secs += 24 * 60 * 60
-        #         if 0 <= secs <= 60:
-        #             self.appendLog(f"\n========== 定时任务触发 (旧配置: {scheduled_time_str}) ==========\n")
-        #             self.startTask('main')
-        #     return
+        if now is None:
+            now = QDateTime.currentDateTime()
+        self._updateScheduleStatusLabel(tasks, now)
 
-        # 多任务处理：不提前返回，按每个任务的冲突处理策略执行
-        # 先更新状态展示
-        self._updateScheduleStatusLabel()
-
-        current_time = QTime.currentTime()
-
-        for t in tasks:
-            if not t.get('enabled', True):
+        for task in tasks:
+            if not task.get('enabled', True) or task_trigger_mode(task) != 'time':
                 continue
-            if self._getScheduledTaskTriggerMode(t) != 'time':
+            slot = scheduled_task_slot(task, now)
+            if slot is None:
                 continue
-            time_str = t.get('time', '00:00')
-            try:
-                parts = list(map(int, time_str.split(':')))
-                scheduled_time = QTime(*parts)
-            except Exception:
+            task_id = task.get('id')
+            if task_id and self._last_triggered_ts.get(task_id) == slot:
                 continue
+            if task_id:
+                self._last_triggered_ts[task_id] = slot
+            time_str = task.get('time', '00:00')
+            self.appendLog(f"\n========== 定时任务触发 ({task.get('name', '未命名')} @ {time_str}) ==========\n")
 
-            secs = scheduled_time.secsTo(current_time)
-            if secs < 0:
-                secs += 24 * 60 * 60
-
-            if 0 <= secs <= 60:
-                tid = t.get('id')
-                now_ts = QDateTime.currentDateTime().toSecsSinceEpoch()
-                # 以“计划时间点”作为去重键，而不是“当前触发时刻”
-                # 这样可避免恰好在 +60s 边界再次触发同一计划任务
-                scheduled_slot_ts = now_ts - secs
-                last_slot_ts = self._last_triggered_ts.get(tid) if tid else None
-                if last_slot_ts is not None and last_slot_ts == scheduled_slot_ts:
+            conflict_mode = cfg.get_value('scheduled_on_conflict', 'skip') or 'skip'
+            if self.isTaskRunning():
+                if conflict_mode == 'skip':
+                    self.appendLog("已有任务在运行，按配置跳过计划任务: {}".format(task.get('name')) + "\n")
                     continue
+                if conflict_mode == 'stop':
+                    self.appendLog("已有任务在运行，按配置停止当前任务并在其结束后启动: {}".format(task.get('name')) + "\n")
+                    try:
+                        metadata = deepcopy(task)
+                        self._pending_start_task_after_stop = (
+                            metadata, scheduled_task_payload(metadata), scheduled_task_chain(metadata, tasks)
+                        )
+                        self._suppress_chain_continuation_once = True
+                        self.stopTask(user_initiated=False)
+                    except Exception as error:
+                        self._pending_start_task_after_stop = None
+                        self._suppress_chain_continuation_once = False
+                        self.appendLog(f"停止当前任务失败: {error}\n")
+                    return
+            try:
+                self.runScheduledTask(task, tasks=tasks, manual=False)
+                return
+            except Exception as error:
+                self.appendLog(f"启动任务失败: {error}\n")
 
-                # 标记为已触发（记录计划时间槽）
-                if tid:
-                    self._last_triggered_ts[tid] = scheduled_slot_ts
+    def _clearTaskTimeout(self):
+        timer = getattr(self, '_timeout_timer', None)
+        self._timeout_timer = None
+        if timer:
+            timer.stop()
+            timer.deleteLater()
 
-                # 触发任务
-                pname = t.get('program', 'self')
-                args = t.get('args', '')
-                self.appendLog(f"\n========== 定时任务触发 ({t.get('name', '未命名')} @ {time_str}) ==========\n")
+    def _armTaskTimeout(self, process, timeout):
+        self._clearTaskTimeout()
+        if timeout <= 0:
+            return
+        timer = QTimer(self)
+        timer.setSingleShot(True)
+        timer.timeout.connect(lambda: process is self.process and self._onTimeout(process))
+        self._timeout_timer = timer
+        timer.start(timeout * 1000)
 
-                task_for_start = self._buildScheduledTaskPayload(t)
-                chain = self._buildScheduledTaskChain(t, tasks)
+    def _cancelPendingPostAction(self):
+        timer = getattr(self, '_pending_post_action_timer', None)
+        self._pending_post_action_timer = None
+        self._pending_post_action = None
+        if timer:
+            timer.stop()
+            timer.deleteLater()
+        return timer is not None
 
-                # 冲突处理：如果当前已有任务在运行，根据配置决定跳过或停止正在运行的任务
-                try:
-                    conflict_mode = cfg.get_value('scheduled_on_conflict', 'skip') or 'skip'
-                except Exception:
-                    conflict_mode = 'skip'
+    def _schedulePostAction(self, action):
+        self._cancelPendingPostAction()
+        label = self._post_action_label(action)
+        self.appendLog(f"任务完成后操作： {label}（将在60秒后执行，可通过停止按钮取消）\n")
+        timer = QTimer(self)
+        timer.setSingleShot(True)
 
-                if self.isTaskRunning():
-                    if conflict_mode == 'skip':
-                        self.appendLog("已有任务在运行，按配置跳过计划任务: {}".format(task_for_start.get('name')) + "\n")
-                        continue
-                    elif conflict_mode == 'stop':
-                        self.appendLog("已有任务在运行，按配置停止当前任务并在其结束后启动: {}".format(task_for_start.get('name')) + "\n")
-                        # 排队延迟启动：保存元数据与任务字典，调用 stopTask 停止当前任务
-                        try:
-                            self._suppress_chain_continuation_once = True
-                            self._pending_start_task_after_stop = (t, task_for_start, chain)
-                            self.stopTask(user_initiated=False)
-                        except Exception as e:
-                            self.appendLog(f"停止当前任务失败: {e}\n")
-                        # 返回以避免在同一轮触发其它任务
-                        return
+        def perform_action():
+            if self._pending_post_action_timer is not timer:
+                return
+            self._cancelPendingPostAction()
+            self.logMessage.emit(f"开始执行完成后操作: {label}\n")
+            threading.Thread(target=self._perform_post_action, args=(action,), daemon=True).start()
+            if not self.isTaskRunning():
+                self.stopButton.setEnabled(False)
 
-                try:
-                    self.runScheduledTask(t, tasks=tasks, manual=False)
-                    return  # 一次只触发一个任务
-                except Exception as e:
-                    self.appendLog(f"启动任务失败: {e}\n")
-
-        self._updateScheduleStatusLabel()
+        timer.timeout.connect(perform_action)
+        self._pending_post_action = action
+        self._pending_post_action_timer = timer
+        self.stopButton.setEnabled(True)
+        timer.start(60000)
 
     def startTask(self, command_or_task):
         """启动任务"""
@@ -1217,6 +1184,13 @@ class LogInterface(ScrollArea):
             # 等待进程结束
             self.process.waitForFinished(3000)
 
+        if self._cancelPendingPostAction():
+            self.appendLog("已取消完成后操作\n")
+        self._clearTaskTimeout()
+        self._stopped_abnormally = False
+        self._user_initiated_stop = False
+        self._suppress_process_error = False
+
         # 如果传入的是任务字典，则作为外部/自定义任务处理
         if isinstance(command_or_task, dict):
             # workflow 运行于 main.py 进程内支持暂停；外部/自定义程序不支持
@@ -1226,7 +1200,8 @@ class LogInterface(ScrollArea):
                 self._active_task_chain = []
             program = str(task.get('program', '')).strip()
             args = str(task.get('args', '') or '')
-            if program.lower() == 'workflow':
+            workflow_launch = program.lower() == 'workflow'
+            if workflow_launch:
                 program, args = self._resolveWorkflowLaunch(task)
             timeout = int(task.get('timeout', 0) or 0)
             if program.lower() == 'self':
@@ -1238,6 +1213,7 @@ class LogInterface(ScrollArea):
             self.appendLog(f"========== 开始任务: {name} ==========\n")
 
             proc = QProcess(self)
+            self.process = proc
             # BetterGI（.NET 应用）启动时会调用 AllocateConsole 并将继承的标准
             # 句柄包装为同步 FileStream，与 QProcess 创建的 overlapped I/O 管道
             # 不兼容，导致 "Handle does not support synchronous operations" 错误。
@@ -1251,8 +1227,8 @@ class LogInterface(ScrollArea):
                 proc.setProcessChannelMode(QProcess.MergedChannels)
                 proc.readyReadStandardOutput.connect(self._onReadyRead)
                 proc.readyReadStandardError.connect(self._onReadyRead)
-            proc.finished.connect(self._onProcessFinished)
-            proc.errorOccurred.connect(self._onProcessError)
+            proc.finished.connect(lambda code, status, active_process=proc: self._onProcessFinished(code, status, active_process))
+            proc.errorOccurred.connect(lambda error, active_process=proc: self._onProcessError(error, active_process))
 
             env = QProcessEnvironment.systemEnvironment()
             env.insert("PYTHONUNBUFFERED", "1")
@@ -1273,14 +1249,14 @@ class LogInterface(ScrollArea):
 
             # 参数拆分
             try:
-                args_list = shlex.split(args) if args else []
+                args_list = split_task_arguments(args, posix=workflow_launch or self._pause_supported)
             except Exception:
                 args_list = [args] if args else []
 
             executable_path = os.path.abspath(program)
             if not os.path.exists(executable_path):
                 self.appendLog("错误: 未找到可执行文件 {}".format(executable_path) + "\n")
-                self._updateFinishedStatus(-1)
+                self._onProcessFinished(-1, QProcess.CrashExit, proc)
                 return
             # 将工作目录设置为程序所在目录，确保相对路径正常工作
             try:
@@ -1290,38 +1266,16 @@ class LogInterface(ScrollArea):
                 proc.setWorkingDirectory(cwd)
             except Exception:
                 pass
-            proc.start(executable_path, args_list)
             self.appendLog(f"命令: {executable_path} {' '.join(args_list)}\n")
 
-            # 记录当前进程以便其它方法管理
-            self.process = proc
-            # 重置异常停止标记（新任务开始）
-            try:
-                self._stopped_abnormally = False
-            except Exception:
-                pass
             self.current_task = program
             self.statusLabel.setText(tr('正在运行：{name}').format(name=name))
             self.stopButton.setEnabled(True)
             self._syncPauseUi()
 
-            if timeout > 0:
-                # 使用可取消的单次 QTimer，并绑定到当前启动的进程实例
-                # 如果任务结束或被替换，定时器会在 stopTask 或进程结束时被停止
-                if self._timeout_timer:
-                    try:
-                        self._timeout_timer.stop()
-                        self._timeout_timer.deleteLater()
-                    except Exception:
-                        pass
-                    self._timeout_timer = None
+            self._armTaskTimeout(proc, timeout)
 
-                t = QTimer(self)
-                t.setSingleShot(True)
-                t.timeout.connect(lambda p=proc: p is self.process and self._onTimeout(p))
-                t.start(timeout * 1000)
-                self._timeout_timer = t
-
+            proc.start(executable_path, args_list)
             return
         # 否则作为内置任务处理
         # 非定时触发的手动/内置任务，清除 pending meta
@@ -1402,8 +1356,9 @@ class LogInterface(ScrollArea):
         self.process.setProcessChannelMode(QProcess.MergedChannels)
         self.process.readyReadStandardOutput.connect(self._onReadyRead)
         self.process.readyReadStandardError.connect(self._onReadyRead)
-        self.process.finished.connect(self._onProcessFinished)
-        self.process.errorOccurred.connect(self._onProcessError)
+        proc = self.process
+        proc.finished.connect(lambda code, status, active_process=proc: self._onProcessFinished(code, status, active_process))
+        proc.errorOccurred.connect(lambda error, active_process=proc: self._onProcessError(error, active_process))
 
         # 设置环境变量，继承系统环境变量并确保 Python 输出不缓冲
         env = QProcessEnvironment.systemEnvironment()
@@ -1437,7 +1392,7 @@ class LogInterface(ScrollArea):
                 self.appendLog("错误: 未找到可执行文件 March7th Assistant.exe" + "\n")
                 self.appendLog("请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次" + "\n")
                 self.appendLog("具体操作方法可以参考“常见问题”（FAQ）" + "\n")
-                self._updateFinishedStatus(-1)
+                self._onProcessFinished(-1, QProcess.CrashExit, proc)
                 return
             # 将工作目录设置为可执行文件所在目录
             try:
@@ -1447,7 +1402,7 @@ class LogInterface(ScrollArea):
                 self.process.setWorkingDirectory(cwd)
             except Exception:
                 pass
-            self.process.start(executable_path, [command])
+            arguments = [command]
             self.appendLog(f"命令: {executable_path} {command}\n")
         else:
             executable_path = sys.executable
@@ -1460,43 +1415,18 @@ class LogInterface(ScrollArea):
                 self.process.setWorkingDirectory(cwd)
             except Exception:
                 pass
-            self.process.start(executable_path, [main_script, command])
+            arguments = [main_script, command]
             self.appendLog(f"命令: {executable_path} {main_script} {command}\n")
 
-        # 如果设置了超时，使用可取消的单次 QTimer在超时后统一停止任务
-        if timeout > 0:
-            # 新任务开始，重置异常停止标记
-            try:
-                self._stopped_abnormally = False
-            except Exception:
-                pass
-
-            if self._timeout_timer:
-                try:
-                    self._timeout_timer.stop()
-                    self._timeout_timer.deleteLater()
-                except Exception:
-                    pass
-                self._timeout_timer = None
-
-            t = QTimer(self)
-            t.setSingleShot(True)
-            t.timeout.connect(lambda p=self.process: p is self.process and self._onTimeout(p))
-            t.start(timeout * 1000)
-            self._timeout_timer = t
+        self._armTaskTimeout(proc, timeout)
+        proc.start(executable_path, arguments)
 
         # self.appendLog("-" * 117 + "\n")
 
     def stopTask(self, user_initiated=True):
         """停止任务"""
         # 取消任何挂起的超时定时器
-        if getattr(self, '_timeout_timer', None):
-            try:
-                self._timeout_timer.stop()
-                self._timeout_timer.deleteLater()
-            except Exception:
-                pass
-            self._timeout_timer = None
+        self._clearTaskTimeout()
 
         # 如果当前没有运行的进程任务，但存在当前 GUI 进程内运行的外部任务，则转发停止请求
         if not (self.process and self.process.state() == QProcess.Running):
@@ -1518,14 +1448,7 @@ class LogInterface(ScrollArea):
         if not (self.process and self.process.state() == QProcess.Running):
             if getattr(self, '_pending_post_action_timer', None):
                 try:
-                    # 取消等待中的完成后操作
-                    try:
-                        self._pending_post_action_timer.stop()
-                        self._pending_post_action_timer.deleteLater()
-                    except Exception:
-                        pass
-                    self._pending_post_action_timer = None
-                    self._pending_post_action = None
+                    self._cancelPendingPostAction()
                     self.logMessage.emit("已取消完成后操作\n")
                     try:
                         self.stopButton.setEnabled(False)
@@ -2052,16 +1975,14 @@ class LogInterface(ScrollArea):
 
         return decoded
 
-    def _onProcessFinished(self, exit_code, exit_status):
+    def _onProcessFinished(self, exit_code, exit_status, process=None):
         """进程结束"""
+        if process is not None:
+            if process is not self.process or getattr(process, '_task_finalized', False):
+                return
+            process._task_finalized = True
         # 终止并清理任何和当前任务绑定的超时定时器
-        if getattr(self, '_timeout_timer', None):
-            try:
-                self._timeout_timer.stop()
-                self._timeout_timer.deleteLater()
-            except Exception:
-                pass
-            self._timeout_timer = None
+        self._clearTaskTimeout()
         # 复位暂停状态并清理控制文件
         self._resetPauseRuntime()
 
@@ -2090,6 +2011,8 @@ class LogInterface(ScrollArea):
                     pass
                 self.appendLog(f"任务异常结束，退出码: {exit_code}\n")
 
+        suppress_chain_continuation = bool(getattr(self, '_suppress_chain_continuation_once', False))
+        self._suppress_chain_continuation_once = False
         next_chain_task = None
         try:
             if self._active_task_chain:
@@ -2098,8 +2021,6 @@ class LogInterface(ScrollArea):
                     continue_on_failure = continue_on_failure.strip().lower() not in ('false', '0', 'no', 'stop')
                 else:
                     continue_on_failure = bool(continue_on_failure)
-                suppress_chain_continuation = bool(getattr(self, '_suppress_chain_continuation_once', False))
-                self._suppress_chain_continuation_once = False
                 task_succeeded = (
                     exit_status == QProcess.NormalExit and
                     exit_code == 0 and
@@ -2195,64 +2116,11 @@ class LogInterface(ScrollArea):
                 try:
                     post_action = pm.get('post_action', 'None')
                     if post_action and post_action != 'None':
-                        if next_chain_task:
+                        if next_chain_task or self._pending_start_task_after_stop:
                             self.appendLog('当前任务存在链式后续任务，已跳过完成后操作' + "\n")
                         else:
                             try:
-                                label = self._post_action_label(post_action)
-                            except Exception:
-                                label = post_action
-                            # 使用可取消的 QTimer 在 60 秒后执行 post_action，并允许用户在等待期间取消
-                            self.appendLog(f"任务完成后操作： {label}（将在60秒后执行，可通过停止按钮取消）\n")
-                            try:
-                                # 如果已有未清理的 post action，先取消它
-                                try:
-                                    if self._pending_post_action_timer:
-                                        try:
-                                            self._pending_post_action_timer.stop()
-                                            self._pending_post_action_timer.deleteLater()
-                                        except Exception:
-                                            pass
-                                        self._pending_post_action_timer = None
-                                        self._pending_post_action = None
-                                except Exception:
-                                    pass
-
-                                timer = QTimer(self)
-                                timer.setSingleShot(True)
-
-                                def _on_post_action_timeout(act=post_action, lbl=label, t=timer):
-                                    # 在主线程记录开始执行的信息并启动后台线程执行操作
-                                    try:
-                                        self.logMessage.emit(f"开始执行完成后操作: {lbl}\n")
-                                    except Exception:
-                                        pass
-                                    try:
-                                        threading.Thread(target=self._perform_post_action, args=(act,), daemon=True).start()
-                                    finally:
-                                        try:
-                                            t.stop()
-                                            t.deleteLater()
-                                        except Exception:
-                                            pass
-                                        self._pending_post_action_timer = None
-                                        self._pending_post_action = None
-                                        # 若没有正在运行的任务，将停止按钮恢复为不可用
-                                        if not self.isTaskRunning():
-                                            try:
-                                                self.stopButton.setEnabled(False)
-                                            except Exception:
-                                                pass
-
-                                timer.timeout.connect(_on_post_action_timeout)
-                                timer.start(60000)
-                                self._pending_post_action = post_action
-                                self._pending_post_action_timer = timer
-                                # 使停止按钮可用以便用户取消等待的完成后操作（热键同样适用）
-                                try:
-                                    self.stopButton.setEnabled(True)
-                                except Exception:
-                                    pass
+                                self._schedulePostAction(post_action)
                             except Exception as e:
                                 self.appendLog(f"触发完成后操作失败: {e}\n")
                 except Exception:
@@ -2278,6 +2146,11 @@ class LogInterface(ScrollArea):
             # self._user_initiated_stop = False
         except Exception:
             pass
+
+        if process is not None:
+            if self.process is process:
+                self.process = None
+            process.deleteLater()
 
         if next_chain_task:
             try:
@@ -2334,8 +2207,10 @@ class LogInterface(ScrollArea):
         except Exception:
             pass
 
-    def _onProcessError(self, error):
+    def _onProcessError(self, error, process=None):
         """进程错误"""
+        if process is not None and process is not self.process:
+            return
         # 如果当前处于主动停止/强制结束过程，忽略错误事件
         try:
             if getattr(self, '_suppress_process_error', False):
@@ -2361,6 +2236,8 @@ class LogInterface(ScrollArea):
             self.appendLog(f"\n可尝试将 “设置-杂项-OCR加速模式” 修改为 CPU 后重新运行\n")
         elif error == QProcess.FailedToStart:
             self.appendLog(f"\n请查看 “帮助-常见问题” 中关于杀毒软件的处理方式，必要时将小助手文件夹加入排除项/白名单\n")
+            self._onProcessFinished(-1, QProcess.CrashExit, process)
+            return
         self._updateFinishedStatus(-1)
         self._hideLogOverlay()
 
@@ -2463,20 +2340,14 @@ class LogInterface(ScrollArea):
         self._external_task_stop_callback = None
         self._external_task_user_initiated_stop = False
         # 停止定时检查器
+        self._schedule_running = False
         if self._schedule_timer:
             self._schedule_timer.stop()
         if self._overlay_timer:
             self._overlay_timer.stop()
         # 取消等待中的完成后操作（若有）
         try:
-            if getattr(self, '_pending_post_action_timer', None):
-                try:
-                    self._pending_post_action_timer.stop()
-                    self._pending_post_action_timer.deleteLater()
-                except Exception:
-                    pass
-                self._pending_post_action_timer = None
-                self._pending_post_action = None
+            self._cancelPendingPostAction()
         except Exception:
             pass
             self._hideLogOverlay()

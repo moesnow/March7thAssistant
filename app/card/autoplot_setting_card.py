@@ -2,7 +2,7 @@
 from typing import Union
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QIcon, QFont
-from PySide6.QtWidgets import QLabel
+from PySide6.QtWidgets import QLabel, QVBoxLayout
 from qfluentwidgets import (
     ExpandSettingCard,
     FluentIconBase,
@@ -46,14 +46,18 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.viewLayout.setSpacing(19)
         self.viewLayout.setContentsMargins(48, 18, 48, 18)
 
+        rememberLayout = QVBoxLayout()
+        rememberLayout.setContentsMargins(0, 0, 0, 0)
+        rememberLayout.setSpacing(6)
+        self.viewLayout.addLayout(rememberLayout)
         self.rememberStateCheckBox = CheckBox(tr("记住自动对话开关状态"), self.view)
         self.rememberStateCheckBox.setChecked(bool(cfg.get_value("autoplot_remember_enable", False)))
-        self.viewLayout.addWidget(self.rememberStateCheckBox)
+        rememberLayout.addWidget(self.rememberStateCheckBox)
         self.rememberStateHintLabel = QLabel(
-            tr("开启后，下次启动小助手时将恢复自动对话的开关状态。可能增加后台资源占用。"), self.view)
+            tr("开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。"), self.view)
         self.rememberStateHintLabel.setWordWrap(True)
         self.rememberStateHintLabel.setStyleSheet("color: gray;")
-        self.viewLayout.addWidget(self.rememberStateHintLabel)
+        rememberLayout.addWidget(self.rememberStateHintLabel)
         self.rememberStateCheckBox.stateChanged.connect(self._on_remember_state_changed)
 
         # Auto skip checkbox
@@ -82,9 +86,13 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.heroChronicleCheckBox.stateChanged.connect(self._on_option_changed)
 
         # Hotkey toggle checkbox
+        hotkeyLayout = QVBoxLayout()
+        hotkeyLayout.setContentsMargins(0, 0, 0, 0)
+        hotkeyLayout.setSpacing(6)
+        self.viewLayout.addLayout(hotkeyLayout)
         self.hotkeyToggleCheckBox = CheckBox(tr("启用快捷键切换自动对话"), self.view)
         self.hotkeyToggleCheckBox.setChecked(bool(cfg.get_value("hotkey_toggle_autoplot_enable", False)))
-        self.viewLayout.addWidget(self.hotkeyToggleCheckBox)
+        hotkeyLayout.addWidget(self.hotkeyToggleCheckBox)
 
         # Hotkey hint label
         hotkey = cfg.get_value("hotkey_toggle_autoplot", "f9").upper()
@@ -93,7 +101,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
         hint_font.setPointSize(9)
         self.hotkeyHintLabel.setFont(hint_font)
         self.hotkeyHintLabel.setStyleSheet("color: gray;")
-        self.viewLayout.addWidget(self.hotkeyHintLabel)
+        hotkeyLayout.addWidget(self.hotkeyHintLabel)
         self.hotkeyHintLabel.setVisible(self.hotkeyToggleCheckBox.isChecked())
 
         # Connect all option changes
@@ -105,6 +113,13 @@ class AutoPlotSettingCard(ExpandSettingCard):
 
         # Adjust view size
         self._adjustViewSize()
+
+    def _adjustViewSize(self):
+        # 父类按 sizeHint 计算展开高度和动画范围；换行标签会让实际布局收缩，
+        # 因此固定内容区为相同高度，避免露出占位区、收起后残留空白。
+        self.viewLayout.activate()
+        self.view.setFixedHeight(self.viewLayout.sizeHint().height())
+        super()._adjustViewSize()
 
     def _on_remember_state_changed(self):
         enabled = self.rememberStateCheckBox.isChecked()
