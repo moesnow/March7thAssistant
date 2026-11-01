@@ -148,6 +148,19 @@ def test_return_falls_back_to_failure_return_button(apocalyptic):
     assert auto.click_element.call_args_list[1].kwargs['include'] is True
 
 
+def test_quick_unlock_starts_regular_stages_from_three(apocalyptic):
+    auto = apocalyptic.run.__func__.__globals__['auto']
+    auto.ocr_result = []
+    auto.click_element.side_effect = None
+    auto.click_element.return_value = True
+    auto.find_element.side_effect = lambda target, *args, **kwargs: (
+        ((10, 20), (30, 40)) if target == '03' else target in ('日幻影', '选择最高解锁关卡'))
+    apocalyptic.level_range = [1, 4]
+    assert apocalyptic.prepare() is True
+    assert apocalyptic.level_range == [3, 4]
+    auto.click_element_with_pos.assert_called_once_with(((10, 20), (10, 20)))
+
+
 def test_return_timeout_is_reported_instead_of_collecting_on_result_screen(apocalyptic):
     globals_ = apocalyptic.run.__func__.__globals__
     screen = globals_['screen']

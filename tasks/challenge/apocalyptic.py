@@ -58,6 +58,7 @@ class Apocalyptic(BaseChallenge):
             # log.info(f"之前打过，最高记录部分")
             result = auto.find_element("03", "text")
             if result:
+                self.level_range[0] = 3
                 auto.click_element_with_pos((result[0], result[0]))
             time.sleep(2)
         if not auto.click_element("日幻影", "text", max_retries=20, include=True, action="move", crop=(0.0 / 1920, 1.0 / 1080, 552.0 / 1920, 212.0 / 1080)):
