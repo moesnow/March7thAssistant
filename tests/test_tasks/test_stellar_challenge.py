@@ -370,6 +370,23 @@ def test_chaos_final_settlement_returns_then_uses_existing_rewards_and_timestamp
     assert events == ['timestamp', 'rewards', 'receive']
 
 
+def test_chaos_final_failure_returns_without_recording_clear(chaos):
+    owner, auto, game = chaos.owner, chaos.auto, chaos.context.game
+
+    def find(target, kind, *args, **kwargs):
+        # 失败结算同样带有返回入口，只能靠标题区分结果。
+        return game.page != 'stages' and target in ('返回忘却之庭', '失败')
+
+    auto.find_element.side_effect = find
+    assert owner.stellar.run_selected_levels() is False
+    assert game.page == 'stages'
+    assert owner.max_level == 0
+    assert owner.stellar.result is False
+    chaos.module.cfg.save_timestamp.assert_not_called()
+    assert not any(c.args[0].endswith('/RedExclamationMark.png')
+                   for c in auto.click_element.call_args_list)
+
+
 @pytest.mark.parametrize('clickable', [True, False])
 def test_chaos_failed_return_does_not_record_or_collect(chaos, clickable):
     chaos.context.game.clickable = clickable

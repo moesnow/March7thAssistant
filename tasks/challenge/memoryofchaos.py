@@ -188,10 +188,12 @@ class MemoryOfChaos(BaseChallenge):
 
         start_time = time.monotonic()
         while time.monotonic() - start_time < timeout:
-            # 星启最后一个节点只等待结算返回入口，未打满也正常收尾。
+            # 星启最后一个节点等待结算返回入口，未打满也算完成。
             if final and (auto.find_element("返回忘却之庭", "text", crop=(0.25, 0.75, 0.5, 0.25), include=True)
                           or auto.find_element("./assets/images/forgottenhall/back.png", "image", 0.9)):
-                return True
+                time.sleep(2)
+                # 与前两个节点相同，以结算标题中的“失败”判定挑战失败，失败不能记为通关。
+                return not auto.find_element("失败", "text", crop=(0.3, 0.15, 0.4, 0.3), include=True)
             # 整间完成
             elif not final and auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 200000, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
                 return True
