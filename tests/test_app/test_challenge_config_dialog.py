@@ -72,7 +72,7 @@ def test_all_modes_show_three_teams_with_purefiction_switch(editor, qtbot, prefi
     data.pop('purefiction_stellar_enable')
     dialog = module.ChallengeConfigDialog('test', prefix, 4, parent)
     qtbot.addWidget(dialog)
-    assert len(dialog.findChildren(CheckBox)) == (1 if prefix == 'purefiction' else 0)
+    assert len(dialog.findChildren(CheckBox)) == (1 if prefix in ('purefiction', 'forgottenhall') else 0)
     dialog.select_team(2)
     assert dialog.pages.currentIndex() == 2
     assert len(dialog.team_rows) == 3
@@ -214,6 +214,21 @@ def test_regular_mode_ignores_invalid_third_team_until_enabled(editor):
     dialog, _, _, _ = editor
     dialog.team_rows[2][0][0].setCurrentText('角色0')
     assert dialog.validate_inputs()
+    dialog.stellar_enable.setChecked(True)
+    assert not dialog.validate_inputs()
+
+
+def test_memoryofchaos_mode_is_disabled_by_default_and_keeps_third_team(editor, qtbot):
+    _, data, _, parent = editor
+    data['forgottenhall_level'] = [11, 12]
+    for index in range(1, 4):
+        data[f'forgottenhall_team{index}'] = data[f'purefiction_team{index}']
+    dialog = module.ChallengeConfigDialog('test', 'forgottenhall', 12, parent)
+    qtbot.addWidget(dialog)
+    assert not dialog.stellar_enable.isChecked()
+    dialog.team_rows[2][0][0].setCurrentText('角色0')
+    assert dialog.validate_inputs()
+    assert dialog.values()['forgottenhall_stellar_enable'] is False
     dialog.stellar_enable.setChecked(True)
     assert not dialog.validate_inputs()
 

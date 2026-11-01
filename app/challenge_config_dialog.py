@@ -48,9 +48,9 @@ class ChallengeConfigDialog(SplitFadeDialogMixin, MessageBox):
         layout.addLayout(level_row)
 
         self.stellar_enable = None
-        if prefix == "purefiction":
+        if prefix in ("purefiction", "forgottenhall"):
             self.stellar_enable = CheckBox(tr("启用星启模式"), content)
-            self.stellar_enable.setChecked(bool(cfg.get_value("purefiction_stellar_enable", False)))
+            self.stellar_enable.setChecked(bool(cfg.get_value(f"{prefix}_stellar_enable", False)))
             layout.addWidget(self.stellar_enable)
 
         self.tabs = Pivot(content)
@@ -134,7 +134,7 @@ class ChallengeConfigDialog(SplitFadeDialogMixin, MessageBox):
         reverse = {value: key for key, value in self.template.items()}
         values = {f"{self.prefix}_level": [self.first_level.value(), self.last_level.value()]}
         if self.stellar_enable is not None:
-            values["purefiction_stellar_enable"] = self.stellar_enable.isChecked()
+            values[f"{self.prefix}_stellar_enable"] = self.stellar_enable.isChecked()
         for index, rows in enumerate(self.team_rows, 1):
             team = [[reverse.get(character.text(), character.text()), technique.currentData()]
                     for character, technique in rows if character.text().strip()]
@@ -192,8 +192,8 @@ class ChallengeConfigCard(SettingCard):
     def refresh(self):
         first, last = cfg.get_value(f"{self.prefix}_level", [self.highest_level, self.highest_level])
         description = f"{tr('关卡范围')} {first}–{last}"
-        if self.prefix == "purefiction":
-            mode = tr("星启模式") if cfg.get_value("purefiction_stellar_enable", False) else tr("常规模式")
+        if self.prefix in ("purefiction", "forgottenhall"):
+            mode = tr("星启模式") if cfg.get_value(f"{self.prefix}_stellar_enable", False) else tr("常规模式")
             description += f" · {mode}"
         self.contentLabel.setText(description)
 
@@ -203,8 +203,9 @@ class ChallengeConfigCard(SettingCard):
             values = dialog.values()
             range_changed = values[f"{self.prefix}_level"] != cfg.get_value(
                 f"{self.prefix}_level", [self.highest_level, self.highest_level])
-            mode_changed = (self.prefix == "purefiction" and
-                            values["purefiction_stellar_enable"] != bool(cfg.get_value("purefiction_stellar_enable", False)))
+            mode_changed = (self.prefix in ("purefiction", "forgottenhall") and
+                            values[f"{self.prefix}_stellar_enable"] != bool(
+                                cfg.get_value(f"{self.prefix}_stellar_enable", False)))
             if range_changed or mode_changed:
                 values[f"{self.prefix}_timestamp"] = 0
             cfg.set_values(values)
