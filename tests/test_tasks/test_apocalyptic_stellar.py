@@ -2,6 +2,7 @@
 
 import importlib.util
 import sys
+from itertools import count
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock, call, patch
@@ -36,7 +37,8 @@ def apocalyptic(challenge):
         spec = importlib.util.spec_from_file_location(f'{package_name}.apocalyptic', path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-    module.time = SimpleNamespace(sleep=Mock())
+    clock = count()
+    module.time = SimpleNamespace(sleep=Mock(), monotonic=lambda: next(clock))
     return module.Apocalyptic([['one', 0]], [['two', 0]], level_range=(4, 4),
                               team3=[['three', -1]], stellar_enable=True)
 
@@ -76,16 +78,30 @@ def test_disabled_stellar_keeps_native_flow(apocalyptic):
     apocalyptic.stellar.run.assert_not_called()
 
 
-@pytest.mark.parametrize('title,succeeded', [('挑战结束', False), ('挑战成功', True)])
-def test_final_stellar_result_returns_without_native_two_node_detection(apocalyptic, title, succeeded):
+@pytest.mark.parametrize('title,succeeded', [('挑战结束', False), ('挑战成功', True), ('挑战失败', False)])
+def test_final_stellar_result_uses_settlement_title_without_native_two_node_detection(apocalyptic, title, succeeded):
     auto = apocalyptic.run.__func__.__globals__['auto']
-    auto.find_element.side_effect = lambda target, *args, **kwargs: isinstance(target, list) and title in target
+    auto.find_element.side_effect = lambda target, *args, **kwargs: (
+        title in target if isinstance(target, list) else target == '失败' and '失败' in title)
     auto.matched_text = title
-    apocalyptic.check_fight = Mock(side_effect=AssertionError('不得走原生两节点结算'))
     apocalyptic.return_to_stage_list = Mock()
     assert apocalyptic.stellar._wait_node_end(3) is succeeded
     apocalyptic.return_to_stage_list.assert_called_once()
     assert apocalyptic.max_level == (4 if succeeded else 0)
+    # 不得走普通关两节点的图片判定和点击。
+    assert not any(isinstance(c.args[0], str) and c.args[0].endswith(('/next_node.png', '/back.png'))
+                   for c in auto.find_element.call_args_list + auto.click_element.call_args_list)
+
+
+def test_final_stellar_timeout_stops_without_returning_or_recording(apocalyptic):
+    auto = apocalyptic.run.__func__.__globals__['auto']
+    auto.find_element.side_effect = None
+    auto.find_element.return_value = False
+    apocalyptic.return_to_stage_list = Mock()
+    with pytest.raises(RuntimeError, match='最终结算超时'):
+        apocalyptic.check_fight(3, final=True)
+    apocalyptic.return_to_stage_list.assert_not_called()
+    assert apocalyptic.max_level == 0
 
 
 def test_stellar_returns_before_collecting_rewards_even_with_zero_score(apocalyptic):
@@ -120,6 +136,16 @@ def test_returns_using_screenshot_button_and_retries_until_home(apocalyptic):
     apocalyptic.return_to_stage_list()
     assert auto.click_element.call_count == 2
     assert all(c.args[0] == '返回末日幻影' for c in auto.click_element.call_args_list)
+
+
+def test_return_falls_back_to_failure_return_button(apocalyptic):
+    globals_ = apocalyptic.run.__func__.__globals__
+    screen, auto = globals_['screen'], globals_['auto']
+    screen.check_screen.side_effect = [False, True]
+    auto.click_element.side_effect = lambda target, *args, **kwargs: target == '返回'
+    apocalyptic.return_to_stage_list()
+    assert [c.args[0] for c in auto.click_element.call_args_list] == ['返回末日幻影', '返回']
+    assert auto.click_element.call_args_list[1].kwargs['include'] is True
 
 
 def test_return_timeout_is_reported_instead_of_collecting_on_result_screen(apocalyptic):

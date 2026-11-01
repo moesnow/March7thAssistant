@@ -281,8 +281,10 @@ class Apocalyptic(BaseChallenge):
 
         return True
 
-    def check_fight(self, timeout):
+    def check_fight(self, timeout, *, final=False):
         '''检查战斗是否结束'''
+        if final:
+            return self.check_stellar_settlement(timeout)
         time.sleep(5)
         start_time = time.monotonic()
         while time.monotonic() - start_time < timeout:
@@ -317,6 +319,26 @@ class Apocalyptic(BaseChallenge):
         log.error("战斗超时")
         return False
 
+    def check_stellar_settlement(self, timeout):
+        '''星启最后一个节点：按结算标题判定结果，返回主页由星启流程统一处理'''
+        time.sleep(5)
+        title_crop = (0.3, 0.15, 0.4, 0.3)
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < timeout:
+            if auto.find_element("失败", "text", crop=title_crop, include=True):
+                return False
+            # 零分结算的标题是“挑战结束”，同样不能记为通关。
+            if auto.find_element(["挑战结束", "挑战成功", "挑战失败"], "text", crop=title_crop, include=False):
+                return auto.matched_text == "挑战成功"
+            if self.auto_battle_detect_enable and auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.8, crop=(0.0 / 1920, 903.0 / 1080, 144.0 / 1920, 120.0 / 1080)):
+                log.info("尝试开启自动战斗")
+                auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
+
+            time.sleep(2)
+
+        log.error("战斗超时")
+        raise RuntimeError("等待末日幻影星启最终结算超时")
+
     def click_message_box(self):
         '''等待游戏加载并点击弹窗'''
         if auto.find_element("处关闭", "text", max_retries=10, crop=(855.0 / 1920, 784.0 / 1080, 211.0 / 1920, 41.0 / 1080), include=True):            # 关闭弹窗
@@ -330,7 +352,9 @@ class Apocalyptic(BaseChallenge):
         for _ in range(5):
             if screen.check_screen('apocalyptic'):
                 return
-            auto.click_element("返回末日幻影", "text", crop=(0.5, 0.8, 0.3, 0.12), include=False)
+            if not auto.click_element("返回末日幻影", "text", crop=(0.5, 0.8, 0.3, 0.12), include=False):
+                # 失败结算的按钮位置可能不同，沿用星启失败时的“返回”识别范围。
+                auto.click_element("返回", "text", crop=(0.2, 0.75, 0.6, 0.25), include=True)
             time.sleep(2)
         if not screen.check_screen('apocalyptic'):
             raise RuntimeError("结算后返回末日幻影失败")
