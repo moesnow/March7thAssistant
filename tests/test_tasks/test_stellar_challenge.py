@@ -250,6 +250,41 @@ def test_apocalyptic_stuck_on_details_does_not_start_selecting_characters(stella
     assert stellar.auto.click_element.call_count == 11
 
 
+@pytest.mark.parametrize('stars,skipped', [(3, True), (2, False), (None, False)])
+def test_full_highest_level_is_not_challenged_again(stellar, monkeypatch, stars, skipped):
+    owner = stellar.runner.challenge
+    monkeypatch.setattr(owner, 'find_level', Mock(return_value=(100, 200)))
+    monkeypatch.setattr(owner, 'judge_stars', Mock(return_value=stars))
+    monkeypatch.setattr(stellar.runner, 'ensure_mode', Mock())
+    if skipped:
+        assert stellar.runner.run() is None
+        stellar.cfg.save_timestamp.assert_called_once_with('purefiction_timestamp')
+        stellar.auto.click_element.assert_not_called()
+    else:
+        # 未满星或无法判断星数时照常点击最高关进入编队。
+        with pytest.raises(RuntimeError, match='点击星启模式最高关失败'):
+            stellar.runner.run()
+        stellar.cfg.save_timestamp.assert_not_called()
+    owner.judge_stars.assert_called_once_with((100, 200))
+    assert owner.max_level == 0
+    assert stellar.runner.result is None
+
+
+def test_selected_range_with_full_highest_level_records_run_without_clear(stellar, monkeypatch):
+    owner = stellar.runner.challenge
+    owner.level_range = (3, 4)
+    monkeypatch.setattr(owner, 'start_challenges', Mock(return_value=True))
+    monkeypatch.setattr(owner, 'collect_rewards', Mock())
+    monkeypatch.setattr(owner, 'find_level', Mock(return_value=(100, 200)))
+    monkeypatch.setattr(owner, 'judge_stars', Mock(return_value=3))
+    monkeypatch.setattr(stellar.runner, 'ensure_mode', Mock())
+    assert stellar.runner.run_selected_levels() is None
+    assert stellar.runner.ensure_mode.call_args_list == [call(False), call(True)]
+    stellar.cfg.save_timestamp.assert_called_once_with('purefiction_timestamp')
+    owner.collect_rewards.assert_called_once()
+    assert owner.max_level == 0
+
+
 @pytest.mark.parametrize('number', [1, 2, 3])
 @pytest.mark.parametrize('buff', [False, True])
 def test_apocalyptic_slots_scale_without_node_text(stellar, monkeypatch, number, buff):

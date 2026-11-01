@@ -118,11 +118,18 @@ class StellarChallenge:
         time.sleep(1)
 
     def _open_highest_level(self):
+        '''打开最高关的三节点编队；最高关已满星时不打开，返回 False'''
         if self.challenge.name == "末日幻影":
             self._open_apocalyptic_teams()
-            return
-        if not self.challenge.find_level(self.highest_level):
+            return True
+        top_left = self.challenge.find_level(self.highest_level)
+        if not top_left:
             raise RuntimeError("未找到星启模式最高关")
+        # 星启模式没有指南页的满星检查，在关卡页判断最高关星数，避免每次刷新都重打三个节点。
+        stars = self.challenge.judge_stars(top_left)
+        log.info(f"星启模式第{self.highest_level}层星数{stars}")
+        if stars == self.challenge.max_star:
+            return False
         if not auto.click_element(f"{self.highest_level:02}", "text", max_retries=5,
                                   crop=(0.17, 0.08, 0.82, 0.82), include=False):
             raise RuntimeError("点击星启模式最高关失败")
@@ -132,7 +139,7 @@ class StellarChallenge:
                     raise RuntimeError("当前编队界面未确认星启模式")
                 for number in (1, 2, 3):
                     self._node(number)
-                return
+                return True
             # 兼容关卡详情中的编队入口。
             auto.click_element(["更换编队", "前往编队", "下一步", "前往挑战"], "text", include=False)
             time.sleep(1)
@@ -302,7 +309,11 @@ class StellarChallenge:
         self.result = None
         self.challenge.max_level = 0
         self.ensure_mode(True)
-        self._open_highest_level()
+        if not self._open_highest_level():
+            # 与指南页满星时相同，只记录运行时间，不记为本次通关。
+            log.info(f"{self.challenge.name}星启模式最高关已满星，跳过挑战")
+            self.challenge.save_timestamp_into_config()
+            return None
         self._prepare_teams()
         if self.challenge.name == "末日幻影":
             self._confirm_apocalyptic_teams()
