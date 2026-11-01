@@ -181,17 +181,21 @@ class MemoryOfChaos(BaseChallenge):
 
         return True
 
-    def check_fight(self, timeout):
+    def check_fight(self, timeout, *, final=False):
         '''检查战斗是否结束'''
         log.info("进入战斗")
         time.sleep(5)
 
         start_time = time.monotonic()
         while time.monotonic() - start_time < timeout:
-            # 整间完成
-            if auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 200000, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
+            # 星启最后一个节点只等待结算返回入口，未打满也正常收尾。
+            if final and (auto.find_element("返回忘却之庭", "text", crop=(0.25, 0.75, 0.5, 0.25), include=True)
+                          or auto.find_element("./assets/images/forgottenhall/back.png", "image", 0.9)):
                 return True
-            elif auto.find_element("./assets/images/forgottenhall/back.png", "image", 0.9):
+            # 整间完成
+            elif not final and auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 200000, crop=(0 / 1920, 0 / 1080, 300.0 / 1920, 300.0 / 1080)):
+                return True
+            elif not final and auto.find_element("./assets/images/forgottenhall/back.png", "image", 0.9):
                 time.sleep(2)
                 # 挑战失败
                 if auto.find_element("./assets/images/forgottenhall/again.png", "image", 0.9):
@@ -214,7 +218,22 @@ class MemoryOfChaos(BaseChallenge):
             time.sleep(2)
 
         log.error("战斗超时")
+        if final:
+            raise RuntimeError("等待混沌回忆星启最终结算超时")
         return False
+
+    def return_to_stage_list(self):
+        '''退出结算并确认已回到关卡列表'''
+        for _ in range(5):
+            if screen.check_screen('memory_of_chaos'):
+                return
+            # 点击可能只跳过结算动画，必须再次确认关卡列表。
+            if not auto.click_element("返回忘却之庭", "text", crop=(0.25, 0.75, 0.5, 0.25), include=True):
+                auto.click_element("./assets/images/forgottenhall/back.png", "image", 0.9)
+            time.sleep(2)
+        if screen.check_screen('memory_of_chaos'):
+            return
+        raise RuntimeError("结算后返回混沌回忆失败")
 
     def collect_rewards(self):
         '''领取奖励'''

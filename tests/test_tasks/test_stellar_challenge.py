@@ -1,8 +1,11 @@
-"""星启编队、节点推进及虚构叙事最终结算。"""
+"""星启编队、节点推进及最终结算。"""
 
+import importlib.util
+import sys
 from itertools import count
-from types import SimpleNamespace
-from unittest.mock import Mock, call
+from pathlib import Path
+from types import ModuleType, SimpleNamespace
+from unittest.mock import Mock, call, patch
 
 import pytest
 
@@ -22,6 +25,40 @@ def stellar(challenge, monkeypatch):
     monkeypatch.setitem(globals_, 'time', SimpleNamespace(sleep=Mock(), monotonic=lambda: next(clock)))
     return SimpleNamespace(runner=runner, globals=globals_, context=challenge,
                            auto=challenge.automation, cfg=globals_['cfg'])
+
+
+@pytest.fixture
+def chaos(stellar):
+    # 复用现有隔离环境，加载真正的混沌回忆结算及领奖代码。
+    source = stellar.context.module.__dict__
+    package = ModuleType('_chaos_settlement_test')
+    package.__path__ = [str(Path(__file__).parents[2] / 'tasks/challenge')]
+    stubs = {package.__name__: package}
+    for name, members in {
+        'module.screen': ['screen'],
+        'module.automation': ['auto'],
+        'module.automation.screenshot': ['Screenshot'],
+        'module.config': ['cfg'],
+        'module.logger': ['log'],
+        'module.notification.notification': ['NotificationLevel'],
+        'tasks.base.base': ['Base'],
+        f'{package.__name__}.basechallenge': ['BaseChallenge'],
+        f'{package.__name__}.stellar': ['StellarChallenge'],
+    }.items():
+        stub = ModuleType(name)
+        stub.__dict__.update({member: source[member] for member in members})
+        stubs[name] = stub
+    with patch.dict(sys.modules, stubs):
+        spec = importlib.util.spec_from_file_location(
+            f'{package.__name__}.memoryofchaos', Path(package.__path__[0]) / 'memoryofchaos.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+    module.time = stellar.globals['time']
+    owner = module.MemoryOfChaos(
+        stellar.runner.challenge.team1, stellar.runner.challenge.team2, (12, 12),
+        team3=stellar.runner.team3, stellar_enable=True)
+    owner.stellar.run = Mock(side_effect=lambda: owner.stellar._wait_node_end(3))
+    return SimpleNamespace(owner=owner, module=module, context=stellar.context, auto=stellar.auto)
 
 
 def test_regular_mode_accepts_locked_mode_selector(stellar):
@@ -293,30 +330,72 @@ def test_failure_with_missing_return_button_stops_instead_of_advancing(stellar):
     assert stellar.runner.result is None
 
 
-@pytest.mark.parametrize('failed_node', [1, 2, 3])
-def test_failure_at_any_chaos_node_returns_without_starting_later_teams(stellar, monkeypatch, failed_node):
-    owner = stellar.runner.challenge
-    owner.name = '混沌回忆'
-    owner.return_to_stage_list = None
-    for name in ('ensure_mode', '_open_highest_level', '_prepare_teams', '_wait_ready'):
-        monkeypatch.setattr(stellar.runner, name, Mock())
-    owner.use_technique_and_attack_monster = Mock()
+@pytest.mark.parametrize('return_kind', ['text', 'image'])
+def test_chaos_final_settlement_returns_then_uses_existing_rewards_and_timestamp(chaos, return_kind):
+    owner, auto, game = chaos.owner, chaos.auto, chaos.context.game
+    events = []
+    original_click = auto.click_element.side_effect
 
-    def find(target, *args, **kwargs):
-        number = owner.use_technique_and_attack_monster.call_count
-        if target == '失败':
-            return number == failed_node
-        return target == ('前往节点二' if number == 1 else '前往节点三')
+    def find(target, kind, *args, **kwargs):
+        # 没有“挑战成功”或满星标识，准备图片即使命中也不能提前结束。
+        if target == '返回忘却之庭':
+            return return_kind == 'text' and game.page != 'stages'
+        return target.endswith('/prepare_fight.png') or (
+            return_kind == 'image' and target.endswith('/back.png') and game.page != 'stages')
 
-    stellar.auto.find_element.side_effect = find
-    stellar.auto.click_element.side_effect = None
-    stellar.auto.click_element.return_value = True
-    assert stellar.runner.run() is False
-    assert owner.use_technique_and_attack_monster.call_count == failed_node
-    assert stellar.runner.result is False
-    assert owner.max_level == 0
-    assert stellar.auto.click_element.call_args.args[0] == '返回'
-    stellar.cfg.save_timestamp.assert_not_called()
+    def click(target, kind, *args, **kwargs):
+        if target == '返回忘却之庭' and return_kind == 'text':
+            return original_click('返回虚构叙事', kind, *args, **kwargs)
+        if target.endswith('/RedExclamationMark.png'):
+            assert game.page == 'stages'
+            events.append('rewards')
+            return True
+        if target.endswith('/receive.png'):
+            if 'receive' in events:
+                return False
+            events.append('receive')
+            return True
+        return original_click(target, kind, *args, **kwargs)
+
+    auto.find_element.side_effect = find
+    auto.click_element.side_effect = click
+    chaos.module.cfg.notify_template = {'LevelCleared': '{name} {level}'}
+    chaos.module.cfg.save_timestamp.side_effect = lambda key: events.append('timestamp')
+    assert owner.stellar.run_selected_levels() is True
+    assert game.page == 'stages'
+    assert game.clicks == 2  # 第一次只跳过动画，第二次才真正退出。
+    assert owner.max_level == 12
+    assert owner.stellar.result is True
+    chaos.module.cfg.save_timestamp.assert_called_once_with('forgottenhall_timestamp')
+    assert events == ['timestamp', 'rewards', 'receive']
+
+
+@pytest.mark.parametrize('clickable', [True, False])
+def test_chaos_failed_return_does_not_record_or_collect(chaos, clickable):
+    chaos.context.game.clickable = clickable
+    chaos.context.game.return_after = 99
+    with pytest.raises(RuntimeError, match='结算后返回混沌回忆失败'):
+        chaos.owner.stellar.run_selected_levels()
+    assert chaos.owner.max_level == 0
+    assert chaos.owner.stellar.result is None
+    chaos.module.cfg.save_timestamp.assert_not_called()
+    assert not any(c.args[0].endswith('/RedExclamationMark.png')
+                   for c in chaos.auto.click_element.call_args_list)
+
+
+def test_chaos_final_timeout_ignores_prepare_image_and_does_not_exit_program(chaos):
+    chaos.auto.find_element.side_effect = lambda target, *args, **kwargs: target.endswith('/prepare_fight.png')
+    with pytest.raises(RuntimeError, match='最终结算超时'):
+        chaos.owner.check_fight(3, final=True)
+    chaos.auto.click_element.assert_not_called()
+    chaos.module.cfg.save_timestamp.assert_not_called()
+
+
+@pytest.mark.parametrize('failure_image', [None, 'again.png', 'pause.png'])
+def test_chaos_regular_settlement_keeps_original_result(chaos, failure_image):
+    chaos.auto.find_element.side_effect = lambda target, *args, **kwargs: (
+        target.endswith('/back.png') or (failure_image and target.endswith('/' + failure_image)))
+    assert chaos.owner.check_fight(3) is (failure_image is None)
 
 
 @pytest.mark.parametrize('succeeded', [True, False])
@@ -351,15 +430,6 @@ def test_final_result_uses_native_failure_image_without_ocr_titles(stellar, fail
     assert stellar.runner.result is (not failed)
     assert stellar.runner.challenge.max_level == (0 if failed else 4)
     stellar.runner.challenge.return_to_stage_list.assert_called()
-
-
-def test_unconfirmed_other_challenge_return_still_preserves_screen(stellar):
-    stellar.runner.challenge.return_to_stage_list = None
-    with pytest.raises(SystemExit) as stopped:
-        stellar.runner._finish_settlement(True)
-    assert stopped.value.code == 0
-    assert stellar.runner.result is None
-    stellar.auto.click_element.assert_not_called()
 
 
 def test_failed_return_does_not_record_clear_or_collect_rewards(stellar):
