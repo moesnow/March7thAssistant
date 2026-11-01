@@ -6369,3 +6369,7 @@ msgstr ""
 #: assets/config/character_names.json
 msgid "黑天鹅"
 msgstr ""
+
+#: app/setting_interface.py:886
+msgid "混沌回忆配置"
+msgstr ""

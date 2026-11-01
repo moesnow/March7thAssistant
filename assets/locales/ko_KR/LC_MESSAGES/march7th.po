@@ -6504,3 +6504,7 @@ msgstr ""
 #: app/challenge_config_dialog.py:196
 msgid "常规模式"
 msgstr ""
+
+#: app/setting_interface.py:886
+msgid "混沌回忆配置"
+msgstr ""
