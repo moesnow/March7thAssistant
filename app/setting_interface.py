@@ -11,6 +11,7 @@ from .card.comboboxsettingcard1 import ComboBoxSettingCard1
 from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction, TimestampSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardImmersifier, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.autostart_setting_card import AutostartSettingCard
+from .card.uac_free_setting_card import UacFreeSettingCard
 from .card.game_path_setting_card import GamePathSettingCard
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, TriplePushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
@@ -2531,6 +2532,11 @@ class SettingInterface(ScrollArea):
                 tr('在用户登录时启动'),
                 tr("登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录")
             )
+            self.uacFreeCard = UacFreeSettingCard(
+                FIF.COMMAND_PROMPT,
+                tr('免 UAC 运行'),
+                tr("开启后，AI 助手或脚本通过 m7a.exe 运行任务时不再弹出 UAC 确认，适合让 AI 助手远程运行任务")
+            )
         if sys.platform == 'win32':
             self.debugModeEnableCard = SwitchSettingCard1(
                 FIF.DEVELOPER_TOOLS,
@@ -2866,6 +2872,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.localControlModeCard)
         if sys.platform == 'win32':
             self.MiscGroup.addSettingCard(self.autostartCard)
+            self.MiscGroup.addSettingCard(self.uacFreeCard)
             self.MiscGroup.addSettingCard(self.debugModeEnableCard)
         self.MiscGroup.addSettingCard(self.hotkeyCard)
 

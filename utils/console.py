@@ -19,6 +19,17 @@ def ensure_utf8_output(streams=None) -> None:
             pass
 
 
+def minimize_console_window():
+    """最小化当前控制台窗口且不抢焦点（仅 Windows，没有控制台窗口时不做任何事）。"""
+    if sys.platform != "win32":
+        return
+    import ctypes
+    from utils.admin import SW_SHOWMINNOACTIVE
+    hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+    if hwnd:
+        ctypes.windll.user32.ShowWindow(hwnd, SW_SHOWMINNOACTIVE)
+
+
 def is_gui_started():
     """检查是否从图形界面启动"""
     # 宽容写法（与 config.py/build.py 的环境变量布尔解析同一风格）：

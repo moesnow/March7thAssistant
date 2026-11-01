@@ -108,3 +108,32 @@ class TestNonInteractive:
         with pytest.raises(SystemExit) as exc:
             console.pause_and_retry()
         assert exc.value.code == 1
+
+
+class TestMinimizeConsoleWindow:
+    def test_minimizes_without_activation(self, monkeypatch):
+        """免 UAC 计划任务启动的管理员进程：与 UAC 启动的窗口一致（SW_SHOWMINNOACTIVE）"""
+        import ctypes
+        import sys
+        from types import SimpleNamespace
+        from utils import console
+
+        calls = []
+        fake = SimpleNamespace(kernel32=SimpleNamespace(GetConsoleWindow=lambda: 1234),
+                               user32=SimpleNamespace(ShowWindow=lambda hwnd, cmd: calls.append((hwnd, cmd))))
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.setattr(ctypes, "windll", fake, raising=False)
+        console.minimize_console_window()
+        assert calls == [(1234, 7)]
+
+    def test_no_console_window(self, monkeypatch):
+        import ctypes
+        import sys
+        from types import SimpleNamespace
+        from utils import console
+
+        fake = SimpleNamespace(kernel32=SimpleNamespace(GetConsoleWindow=lambda: 0),
+                               user32=SimpleNamespace(ShowWindow=lambda hwnd, cmd: pytest.fail("没有控制台窗口时不应调用")))
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.setattr(ctypes, "windll", fake, raising=False)
+        console.minimize_console_window()
