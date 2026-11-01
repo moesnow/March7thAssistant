@@ -128,6 +128,8 @@ def parse_args():
     )
     # 内部参数：未提权入口把任务交给管理员进程时传入的运行编号
     agent.add_argument('--run-id', help=argparse.SUPPRESS)
+    # 内部参数：由免 UAC 计划任务启动时最小化自身窗口（计划任务无法指定窗口状态）
+    agent.add_argument('--minimize-console', action='store_true', help=argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -224,16 +226,22 @@ import time
 
 if sys.platform == 'win32':
     from utils.admin import is_user_admin
-    if not is_user_admin():
+    # 带 --run-id 的是入口转交出来的管理员进程：即使没拿到管理员权限也不能再转交一次，否则会不断重复启动自己
+    if not is_user_admin() and not args.run_id:
         # 未提权（终端、脚本或 AI Agent 通过 m7a.exe 调用，或源码运行）：把任务交给管理员进程执行，
         # 同时在当前终端跟随输出，结束后返回任务的真实退出码
         from utils.cli_entry import run_task_elevated
         sys.exit(run_task_elevated(sys.argv[1:], json_output=args.json, detach=args.detach))
 
+# 由免 UAC 计划任务启动的管理员进程：与 UAC 启动的窗口一致，最小化且不抢焦点（输出已转发到调用方的终端）
+if args.minimize_console:
+    from utils.console import minimize_console_window
+    minimize_console_window()
+
 from utils.cli_entry import read_version
 from utils.console import is_gui_started, is_docker_started, is_non_interactive
-from utils.runs import (RunSession, EXIT_OK, EXIT_FAILED, EXIT_FIRST_RUN_REQUIRED, EXIT_BUSY, EXIT_STOPPED,
-                        STATUS_INTERRUPTED, STATUS_STOPPED, LOCK_BUSY, LOCK_FORCED, LOCK_UNAVAILABLE,
+from utils.runs import (RunSession, EXIT_OK, EXIT_FAILED, EXIT_FIRST_RUN_REQUIRED, EXIT_BUSY, EXIT_ELEVATION_FAILED,
+                        EXIT_STOPPED, STATUS_INTERRUPTED, STATUS_STOPPED, LOCK_BUSY, LOCK_FORCED, LOCK_UNAVAILABLE,
                         describe_run, exit_code_of)
 
 
@@ -261,6 +269,15 @@ run_session = RunSession.begin(
     version=read_version(),
 )
 run_session.print_json = args.json
+
+if sys.platform == 'win32' and not is_user_admin():
+    # 入口转交的管理员进程却没有管理员权限（例如免 UAC 运行的计划任务被改成了不以最高权限运行）：
+    # 不执行任务，把原因写进运行记录，入口会照常转告调用方
+    _message = "没有获得管理员权限，任务未运行。如果开启了免 UAC 运行，请在图形界面「设置 → 杂项」中关闭后重新开启"
+    print(_message, flush=True)
+    run_session.note(error=_message)
+    run_session.finish(EXIT_ELEVATION_FAILED)
+    sys.exit(EXIT_ELEVATION_FAILED)
 
 from module.config import cfg
 from module.logger import log

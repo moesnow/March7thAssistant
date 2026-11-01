@@ -3,6 +3,7 @@
 import io
 import json
 import os
+import shlex
 import subprocess
 import sys
 import threading
@@ -11,8 +12,9 @@ from pathlib import Path
 
 import pytest
 
-from utils import cli_entry, runs
-from utils.admin import ERROR_CANCELLED
+import utils.schedule as schedule
+from utils import cli_entry, runs, uac_free
+from utils.admin import ERROR_CANCELLED, is_user_admin
 from utils.pause import CONTROL_FILE_ENV, PauseController, read_state
 
 REPO = Path(__file__).resolve().parents[2]
@@ -154,6 +156,66 @@ class TestRunTaskElevated:
         assert cli_entry._normalize_exit_code(0xC000013A) == runs.EXIT_FAILED
         assert cli_entry._normalize_exit_code(None) == runs.EXIT_FAILED
         assert cli_entry._normalize_exit_code(4) == 4
+
+
+class TestRunViaUacFreeTask:
+    """开启免 UAC 运行时：由计划任务启动（这里用子进程代替），按运行记录跟随，失败时不改用 UAC。"""
+
+    @pytest.fixture
+    def task_on(self, monkeypatch):
+        monkeypatch.setattr(uac_free, "state", lambda: (uac_free.STATE_ON, {"path": "x"}))
+        monkeypatch.setattr(cli_entry, "_launch_elevated", lambda cmd: pytest.fail("已开启免 UAC 运行，不应弹出 UAC"))
+
+    def test_follows_output_and_returns_exit_code(self, workdir, task_on, monkeypatch):
+        script = workdir / "fake_worker.py"
+        script.write_text(_FAKE_WORKER, encoding="utf-8")
+        triggered = []
+
+        def fake_run_task(name, params):
+            # 计划任务把 params 原样替换进 $(Arg0)，由管理员进程按命令行规则解析
+            triggered.append((name, params))
+            env = dict(os.environ, FAKE_EXIT="4")
+            subprocess.Popen([sys.executable, str(script), *shlex.split(params)], env=env)
+
+        monkeypatch.setattr(schedule, "run_task", fake_run_task)
+        out = io.StringIO()
+        code = cli_entry.run_task_elevated(["--workflow-name", "我的 流程", "--json"], out=out, poll_interval=0.05)
+        assert code == 4
+        text = out.getvalue()
+        assert "已开启免 UAC 运行" in text and "UAC 弹窗" not in text
+        assert "开始执行 --workflow-name 我的 流程 --run-id" in text and "第二行输出" in text
+        assert "运行结束：失败（退出码 4）" in text
+        name, params = triggered[0]
+        assert name == uac_free.TASK_NAME
+        assert params.startswith('--workflow-name "我的 流程" --run-id ')
+        assert params.endswith("--non-interactive --minimize-console") and "--json" not in params
+
+    def test_launch_failure_does_not_fall_back_to_uac(self, workdir, task_on, monkeypatch):
+        def broken(args, run_id, **kwargs):
+            raise uac_free.LaunchError("启动计划任务 March7thAssistantNoUAC 失败：任务被禁用。（0x80041326）")
+
+        monkeypatch.setattr(uac_free, "launch", broken)
+        out = io.StringIO()
+        assert cli_entry.run_task_elevated(["daily"], json_output=True, out=out) == runs.EXIT_ELEVATION_FAILED
+        text = out.getvalue()
+        assert "免 UAC 运行未能启动任务" in text and "任务被禁用" in text
+        assert json.loads(text.strip().splitlines()[-1])["status"] == "not_started"
+
+    def test_other_install_falls_back_to_uac_with_hint(self, workdir, monkeypatch):
+        monkeypatch.setattr(uac_free, "state",
+                            lambda: (uac_free.STATE_OTHER, {"path": "D:\\Other\\March7th Assistant.exe"}))
+        monkeypatch.setattr(cli_entry, "_launch_elevated", _fake_launcher(0))
+        out = io.StringIO()
+        assert cli_entry.run_task_elevated(["daily"], out=out, poll_interval=0.05) == 0
+        assert "另一个安装目录" in out.getvalue() and "UAC 弹窗" in out.getvalue()
+
+    def test_elevation_modes(self, monkeypatch):
+        monkeypatch.setattr(sys, "platform", "win32")
+        assert cli_entry._elevation(True, uac_free.STATE_ON) == "admin"
+        assert cli_entry._elevation(False, uac_free.STATE_ON) == "task"
+        assert cli_entry._elevation(False, uac_free.STATE_OTHER) == "uac"
+        monkeypatch.setattr(sys, "platform", "linux")
+        assert cli_entry._elevation(False, uac_free.STATE_OFF) == "not_required"
 
 
 def _write_record(run_id, **fields):
@@ -303,7 +365,7 @@ class TestReadOnlyCommands:
         assert result.stdout.isascii()
         status = json.loads(result.stdout)
         for key in ("version", "install_dir", "first_run_completed", "game_path_exists", "active_run",
-                    "recent_runs", "runs_dir", "install_registry", "agent_skill"):
+                    "recent_runs", "runs_dir", "install_registry", "agent_skill", "elevation", "uac_free"):
             assert key in status
         assert status["install_dir"] == str(REPO)
         after = config.read_bytes() if config.exists() else None
@@ -312,3 +374,24 @@ class TestReadOnlyCommands:
     def test_rejects_invalid_run_id(self):
         result = _run_main("daily", "--run-id", "../x")
         assert result.returncode == runs.EXIT_USAGE
+
+    @pytest.mark.skipif(sys.platform != "win32" or is_user_admin(), reason="只在未提权的 Windows 上验证")
+    def test_worker_without_admin_does_not_relaunch(self):
+        """回归：入口转交的进程没拿到管理员权限时（如免 UAC 计划任务被改成不以最高权限运行），
+        不能再转交一次，否则会不断重复启动自己"""
+        run_id = runs.new_run_id()
+        runs_path = REPO / "logs" / "runs"
+        try:
+            result = _run_main("--workflow-name", "__不存在的流程__", "--run-id", run_id, "--non-interactive")
+            assert result.returncode == runs.EXIT_ELEVATION_FAILED
+            record = json.loads((runs_path / f"{run_id}.json").read_text(encoding="utf-8"))
+            assert record["exit_code"] == runs.EXIT_ELEVATION_FAILED and "没有获得管理员权限" in record["error"]
+        finally:
+            for path in runs_path.glob(f"{run_id}.*"):
+                path.unlink()
+
+    def test_internal_flags_hidden_from_help(self):
+        result = _run_main("--help")
+        assert result.returncode == 0
+        assert b"--minimize-console" not in result.stdout and b"--run-id" not in result.stdout
+        assert _run_main("--minimize-console", "--version").returncode == 0

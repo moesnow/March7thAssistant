@@ -62,7 +62,7 @@ DeepSeek Harness、Codex、Claude Code 等能执行命令的 AI 助手都可以�
 - 已经安装：在「设置 → 关于 → AI 助手」点击「复制提示词」，粘贴给你的 AI 助手即可
 - 还没安装：对 AI 助手说「帮我安装三月七小助手，说明见 https://m7a.top/assets/agent/skills/march7th-assistant/SKILL.md 」
 
-AI 助手使用的是不需要管理员权限的命令行入口 `m7a.exe`（运行任务时会弹出一次 UAC），说明文件随程序一起发布在 [`assets/agent/`](assets/agent/skills/march7th-assistant/SKILL.md)，同样适用于其他支持 Skill 的 AI 助手。详见 [AI 助手文档](https://m7a.top/docs/#/assets/docs/Agent)。
+AI 助手使用的是不需要管理员权限的命令行入口 `m7a.exe`（运行任务时默认弹出一次 UAC，人不在电脑前时可在设置中开启「免 UAC 运行」），说明文件随程序一起发布在 [`assets/agent/`](assets/agent/skills/march7th-assistant/SKILL.md)，同样适用于其他支持 Skill 的 AI 助手。详见 [AI 助手文档](https://m7a.top/docs/#/assets/docs/Agent)。
 
 ## 源码运行
 

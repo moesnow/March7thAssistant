@@ -612,7 +612,7 @@ html:not(.js) .tablist{display:none}
           <p>支持 Skill 的 AI 助手会把说明保存到自己的技能目录（如 <code>~/.claude/skills/</code>），之后直接说「帮我清体力」就行。</p>
         </div>
         <div class="panel" id="p-dev" role="tabpanel" aria-labelledby="t-dev">
-          <p>AI 助手使用的是随程序发布的命令行入口 <code>m7a.exe</code>：不需要管理员权限，运行任务时弹出一次 UAC，输出和退出码直接返回终端。你也可以在脚本里用它：</p>
+          <p>AI 助手使用的是随程序发布的命令行入口 <code>m7a.exe</code>：不需要管理员权限，运行任务时默认弹出一次 UAC（人不在电脑前时可以开启「免 UAC 运行」），输出和退出码直接返回终端。你也可以在脚本里用它：</p>
 <pre><code>.\m7a.exe --status                    <i># 安装、配置与运行状态（JSON）</i>
 .\m7a.exe --list --json               <i># 全部任务</i>
 .\m7a.exe daily --after-finish None   <i># 运行每日实训</i>
@@ -630,7 +630,7 @@ html:not(.js) .tablist{display:none}
         <h3><svg class="i"><use href="#i-shield"/></svg>该由你决定的，仍然由你决定</h3>
         <ul>
           <li>免责声明必须由你本人阅读并确认，不会被代为点击或绕过</li>
-          <li>每次运行任务都要你在 UAC 弹窗中点「是」</li>
+          <li>运行任务默认要你在 UAC 弹窗中点「是」，是否开启免 UAC 运行由你决定</li>
           <li>默认不执行关机等完成后操作，CDK、推送令牌等不会出现在对话里</li>
         </ul>
       </div>
