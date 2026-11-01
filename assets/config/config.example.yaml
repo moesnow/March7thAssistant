@@ -49,6 +49,7 @@ pypi_mirror_urls:
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
+game_launch_method: direct # 游戏启动方式：direct（直接启动）、epic（通过 Epic 启动）。路径仍指向 StarRail.exe。
 
 launcher_title_name: 米哈游启动器 # 启动器类型及窗口标题，可选 米哈游启动器、HoYoPlay。
 launcher_process_name: HYP # 米哈游启动器进程名。
@@ -456,6 +457,8 @@ scheduled_tasks: [] # 示例：
 #     enabled: true
 
 use_background_screenshot: true # 是否优先使用后台截图
+local_control_mode: foreground # Windows 本地操作模式：foreground 前台；background 后台（滚轮临时切前台）。下次启动任务生效。
+background_mouse_protection: false # 后台鼠标重试失败时，最多保护鼠标 2 秒；保留键盘和暂停热键。
 
 # 开机启动设置（在图形界面「设置 - 杂项」中通过「配置」按钮设置）
 # 由计划任务在登录后以最高权限静默启动，不会弹出 UAC 提示。
@@ -562,7 +565,7 @@ notify_serverchan3_sendkey: "" # Server酱·3 版的 SendKey。
 notify_bark_enable: false # 是否启用 Bark 通知。true 开启，false 关闭。
 notify_bark_key: ""
 notify_bark_group: "March7thAssistant" # 可选参数，Bark 通知的分组名。
-notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/app/images/March7th.jpg" # 可选参数，Bark 通知的图标 URL。
+notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/screenshot/March7th.png" # 可选参数，Bark 通知的图标 URL。
 notify_bark_isarchive: "1" # 可选参数，Bark 通知是否归档。
 notify_bark_sound: "" # 可选参数
 notify_bark_url: "" # 可选参数，通知点击后跳转的 URL。

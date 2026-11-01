@@ -5,6 +5,7 @@ import pytest
 
 from module.automation.automation import Automation
 from module.automation.cdp_input import CdpInput
+from unittest.mock import Mock
 
 
 def create_automation(events):
@@ -25,6 +26,32 @@ def test_drag_mouse_converts_relative_coordinates():
 
     assert result is True
     assert events == [("drag", 292, 266, 1828, 914, 0.1)]
+
+
+@pytest.mark.parametrize('action', ['click', 'down', 'up', 'move'])
+def test_interrupted_background_pointer_result_reaches_existing_callers(action):
+    automation = object.__new__(Automation)
+    automation.calculate_click_position = lambda *_:(100, 200)
+    automation.mouse_click = Mock(return_value=False)
+    automation.mouse_down = Mock(return_value=False)
+    automation.mouse_up = Mock(return_value=False)
+    automation.mouse_move = Mock(return_value=False)
+    assert automation.click_element_with_pos(((1,2),(3,4)), action=action) is False
+    if action == 'up':
+        automation.mouse_up.assert_called_once()
+
+
+def test_interrupted_mouse_down_does_not_sleep_or_claim_a_complete_long_press(monkeypatch):
+    import module.automation.automation as module
+    automation = object.__new__(Automation)
+    automation.calculate_click_position = lambda *_:(100, 200)
+    automation.mouse_down = Mock(return_value=False)
+    automation.mouse_up = Mock()
+    sleep = Mock()
+    monkeypatch.setattr(module.time, 'sleep', sleep)
+    assert automation.click_element_with_pos(((1,2),(3,4)), press_duration=1) is False
+    sleep.assert_not_called()
+    automation.mouse_up.assert_not_called()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="本地输入后端仅在 Windows 使用")

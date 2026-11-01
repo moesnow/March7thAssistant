@@ -32,6 +32,7 @@ from PySide6.QtCore import QObject, QTimer
 
 from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
+from module.automation.background_input import input_wait_limit
 from module.config import cfg
 from module.logger import log
 
@@ -43,6 +44,9 @@ from ._config import (
     Defaults,
 )
 from ._detector import SceneDetector
+
+# 引擎在图形界面线程上执行点击：后台模式下鼠标正被使用或窗口暂时不可用时只短暂等待，交给下一轮监控，不阻塞界面。
+GUI_INPUT_WAIT_LIMIT = 0.3
 
 
 class AutoPlot(QObject):
@@ -114,6 +118,7 @@ class AutoPlot(QObject):
         if self.is_running:
             return
 
+        auto._init_input()
         self.is_running = True
         self._last_error_log_time = float('-inf')
         if self._hero_reader is not None:
@@ -136,6 +141,7 @@ class AutoPlot(QObject):
         self._monitor_timer.stop()
         self._invalidate_session()
         self._transition_to(EngineState.IDLE)
+        auto.input_handler.release_all()
         log.info("自动对话已停止")
 
     # ========================================================================
@@ -204,6 +210,14 @@ class AutoPlot(QObject):
             return
         self._invalidate_session()
         self._transition_to(EngineState.MONITORING)
+        try:
+            auto.input_handler.release_all()
+        except Exception as cleanup_error:
+            self.is_running = False
+            self._monitor_timer.stop()
+            self._transition_to(EngineState.IDLE)
+            log.error(f"自动对话已停止，输入释放失败：{cleanup_error}")
+            return
         # 截图持续不可用时限制日志频率，仍然每轮尝试恢复。
         now = time.monotonic()
         if now - self._last_error_log_time >= 30:
@@ -232,7 +246,7 @@ class AutoPlot(QObject):
                     self._invalidate_session()
                     self._transition_to(EngineState.MONITORING)
                     return
-                with screenshot_retry_timeout(0):
+                with screenshot_retry_timeout(0), input_wait_limit(GUI_INPUT_WAIT_LIMIT):
                     callback(session)
             except Exception as e:
                 self._recover_after_error(e)
@@ -250,6 +264,8 @@ class AutoPlot(QObject):
             True  游戏窗口在前台
             False 游戏窗口不在前台或未找到
         """
+        if getattr(auto.input_handler, 'is_background', False) is True:
+            return auto.input_handler.is_available()
         if gw is None:
             # 非 Windows 平台无法枚举窗口，假定激活以放行后续对话检测
             return True
@@ -282,7 +298,7 @@ class AutoPlot(QObject):
 
         try:
             # GUI 定时回调中只尝试一次截图，失败后交给下一轮重试。
-            with screenshot_retry_timeout(0):
+            with screenshot_retry_timeout(0), input_wait_limit(GUI_INPUT_WAIT_LIMIT):
                 self._monitor_tick()
         except Exception as e:
             self._recover_after_error(e)

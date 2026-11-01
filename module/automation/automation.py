@@ -56,6 +56,9 @@ class Automation(metaclass=SingletonMeta):
 
         所有输入均包一层暂停卡点（`pause_guard`）：暂停期间任何键鼠输入都会停在发出之前。
         """
+        previous = getattr(self, 'input_handler', None)
+        if previous is not None and callable(getattr(previous, 'close', None)):
+            previous.close()
         self.input_handler = get_game_controller().get_input_handler()
         self.mouse_click = pause_guard(self.input_handler.mouse_click)
         self.mouse_down = pause_guard(self.input_handler.mouse_down)
@@ -69,6 +72,9 @@ class Automation(metaclass=SingletonMeta):
         self.secretly_press_key = pause_guard(self.input_handler.secretly_press_key)
         self.press_mouse = pause_guard(self.input_handler.press_mouse)
         self.secretly_write = pause_guard(self.input_handler.secretly_write)
+
+    def close_input(self):
+        self.input_handler.close()
 
     def _is_debug_enabled(self):
         """检查调试模式是否启用。"""
@@ -182,12 +188,19 @@ class Automation(metaclass=SingletonMeta):
         start_time = time.monotonic()
         timeout = _screenshot_retry_timeout.get()
         while True:
+            handler = getattr(self, 'input_handler', None)
+            background = getattr(handler, 'is_background', False) is True
+            if background:
+                # 窗口暂时不可用（最小化、重建等）时等待恢复，与前台截图找不到窗口时的重试时限一致；
+                # 游戏进程已退出或超时则抛出写明原因的异常。
+                handler.wait_for_window(max(0.0, timeout - (time.monotonic() - start_time)))
             try:
                 result = Screenshot.take_screenshot(
                     self.window_title,
                     crop=crop,
                     use_background_screenshot=use_background_screenshot,
                     prefer_frame_screenshot=prefer_frame_screenshot,
+                    require_background=background,
                 )
                 if result:
                     self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
@@ -199,7 +212,7 @@ class Automation(metaclass=SingletonMeta):
                             self._debug_draw_crop_region(crop)
                     return result
                 elif timeout > 0:
-                    self.logger.error("截图失败：没有找到游戏窗口")
+                    self.logger.error("截图失败：未能获取游戏窗口画面" if background else "截图失败：没有找到游戏窗口")
             except Exception as e:
                 if timeout <= 0:
                     raise RuntimeError(f"截图失败：{e}") from e
@@ -874,20 +887,27 @@ class Automation(metaclass=SingletonMeta):
         for _ in range(cnt):
             if action == "click":
                 if normalized_press_duration > 0:
-                    self.mouse_down(x, y)
+                    if self.mouse_down(x, y) is False:
+                        return False
                     time.sleep(normalized_press_duration)
-                    self.mouse_up()
+                    result = self.mouse_up()
                 else:
-                    self.mouse_click(x, y)
+                    result = self.mouse_click(x, y)
             elif action == "down":
-                self.mouse_down(x, y)
+                result = self.mouse_down(x, y)
+                if result is False:
+                    return False
                 if normalized_press_duration > 0:
                     time.sleep(normalized_press_duration)
             elif action == "up":
-                self.mouse_move(x, y)
-                self.mouse_up()
+                moved = self.mouse_move(x, y)
+                result = self.mouse_up()
+                if moved is False:
+                    return False
             elif action == "move":
-                self.mouse_move(x, y)
+                result = self.mouse_move(x, y)
+            if result is False:
+                return False
 
         return True
 

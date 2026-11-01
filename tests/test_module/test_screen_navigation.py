@@ -23,6 +23,8 @@ from pathlib import Path
 from types import ModuleType
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 SCREENS_CONFIG = ROOT / "assets" / "config" / "screens.json"
 
@@ -112,10 +114,21 @@ class _FakeAuto:
         return 1.0 if find_type == "image_threshold" else True
 
 
+class _InputInterrupted(RuntimeError):
+    pass
+
+
+class _GameWindowLost(RuntimeError):
+    pass
+
+
 def _load_screen_module(auto):
     """加载真实的 Screen 类，只替换掉依赖游戏环境的 module.automation。"""
     stubs = {
         "module.automation": _stub("module.automation", auto=auto),
+        "module.automation.background_input": _stub(
+            "module.automation.background_input",
+            InputInterrupted=_InputInterrupted, GameWindowLost=_GameWindowLost),
         "module.config": _stub("module.config", cfg=MagicMock()),
         "module.logger": _stub("module.logger", log=MagicMock()),
     }
@@ -164,3 +177,20 @@ def test_relic_bag_navigation_keeps_menu_entry_untouched(monkeypatch):
 
     assert game.state == "bag_relicset"
     assert game.esc_transitions == [("guide3", "menu")]
+
+
+
+
+def test_background_window_errors_are_not_swallowed_as_unmatched(monkeypatch):
+    """后台模式下窗口持续不可用或游戏已退出：界面识别不能把它当作“未匹配”吞掉后反复重试。"""
+    screen, _game = _build_screen(monkeypatch, MENU_ENTRY_STACK)
+    auto = type(screen).__init__.__globals__["auto"]  # _build_screen 注入的替身
+    for error in (_InputInterrupted("游戏窗口已最小化（已等待 60 秒）"), _GameWindowLost("游戏进程已退出")):
+        auto.find_element = MagicMock(side_effect=error)
+        with pytest.raises(type(error)):
+            screen.check_screen("guide3")
+        auto.find_element.assert_called_once()
+    # 执行界面操作时，需要用户处理的后台中断（例如锁屏无法移动光标）同样向上报告
+    auto.find_element = MagicMock(side_effect=_InputInterrupted("无法读写系统光标"))
+    with pytest.raises(_InputInterrupted):
+        screen.perform_operations(["auto.find_element('x', 'image')"])

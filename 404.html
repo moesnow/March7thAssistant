@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<script>
+// GitHub Pages 对所有不存在的路径返回本页。常见的手打 / 旧式地址直接带到对应文档，免得用户在 404 上卡住。
+(function (path) {
+  var doc = { tutorial: 'Tutorial', faq: 'FAQ', workflow: 'Workflow', changelog: 'Changelog', background: 'Background',
+    docker: 'Docker', termux: 'Termux', agent: 'Agent', ai: 'Agent', taskstable: 'TasksTable' };
+  var name = path.replace(/\.(md|html?)$/i, '').split('/').filter(Boolean).pop() || '';
+  var key = name.toLowerCase();
+  if (doc[key]) location.replace('/docs/#/assets/docs/' + doc[key]);
+  else if (key === 'readme') location.replace('/docs/#/README');
+  else if (key === 'download' || key === 'downloads') location.replace('/#download');
+})(location.pathname);
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>页面不存在 · 三月七小助手</title>
+<link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+<style>
+:root{color-scheme:light dark;--ink:#1e2547;--text:#4a5072;--card:#fff;--line:#ece5ef;--pink:#c8337a;--bg:radial-gradient(800px 480px at 80% -10%,#ffe6f2,transparent 60%),radial-gradient(700px 420px at 0% 110%,#e6efff,transparent 60%),#fff}
+@media (prefers-color-scheme:dark){:root{--ink:#f4f2fb;--text:#c7cae0;--card:#171c39;--line:#262b4a;--pink:#ff8cc6;--bg:radial-gradient(800px 480px at 80% -10%,rgba(255,140,198,.14),transparent 60%),radial-gradient(700px 420px at 0% 110%,rgba(138,184,255,.12),transparent 60%),#0e1124}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--bg);color:var(--text);font:16px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei UI","Microsoft YaHei","Noto Sans SC",sans-serif;text-align:center}
+main{max-width:440px}
+picture,img{display:block;margin:0 auto 16px;width:170px;height:auto}
+h1{margin:0 0 8px;color:var(--ink);font-size:28px;line-height:1.3}
+p{margin:0}
+nav{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:28px}
+a{display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-weight:700;text-decoration:none}
+a:first-child{background:#c8337a;border-color:#c8337a;color:#fff}
+a:hover{border-color:var(--pink)}
+</style>
+</head>
+<body>
+<main>
+  <picture>
+    <source type="image/avif" srcset="/website/img/m7a-lost-220.avif 220w, /website/img/m7a-lost-440.avif 440w" sizes="170px">
+    <source type="image/webp" srcset="/website/img/m7a-lost-220.webp 220w, /website/img/m7a-lost-440.webp 440w" sizes="170px">
+    <img src="/website/img/m7a-lost-220.webp" width="969" height="1451" alt="拿着地图迷路的三月七">
+  </picture>
+  <h1>这一站好像不存在</h1>
+  <p>三月七拿着地图转了好几圈，也没找到这个页面。它可能已经搬家了：文档都在「使用文档」里，下载入口在官网首页。</p>
+  <nav>
+    <a href="/">返回官网首页</a>
+    <a href="/docs/#/assets/docs/Tutorial">使用教程</a>
+    <a href="/docs/#/assets/docs/FAQ">常见问题</a>
+  </nav>
+</main>
+</body>
+</html>

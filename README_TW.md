@@ -27,9 +27,9 @@
 
 **遊戲內語言目前僅支援簡體中文。**
 
-快速上手，請訪問：[使用教程](https://m7a.top/#/assets/docs/Tutorial_zh_TW)
+快速上手，請訪問：[使用教程](https://m7a.top/docs/#/assets/docs/Tutorial_zh_TW)
 
-遇到問題，請先查看：[FAQ](https://m7a.top/#/assets/docs/FAQ_zh_TW)
+遇到問題，請先查看：[FAQ](https://m7a.top/docs/#/assets/docs/FAQ_zh_TW)
 
 </div>
 
@@ -37,7 +37,7 @@
 
 - **日常**：清體力、每日實訓、領取獎勵、委託、鋤大地
 - **周常**：歷戰餘響、模擬宇宙、差分宇宙、貨幣戰爭、混沌回憶、虛構敘事、末日幻影
-- **雲·星穹鐵道**：支援背景執行、無視窗執行與 [Docker](https://m7a.top/#/assets/docs/Docker) 執行
+- **雲·星穹鐵道**：支援背景執行、無視窗執行與 [Docker](https://m7a.top/docs/#/assets/docs/Docker) 執行
 - **抽卡記錄導出**：支援 [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) 標準
 - **工具箱**：自動對話、解鎖幀率、兌換碼、觸控模式
 - 每日實訓等任務的完成情況支援 **訊息推送**

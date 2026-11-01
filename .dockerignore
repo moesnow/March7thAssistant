@@ -35,3 +35,13 @@ temp/
 logs/
 *.zip.aria2
 __pycache__/
+
+# 官网（GitHub Pages 直接从仓库根目录发布，镜像里用不到）
+index.html
+website/
+docs/
+404.html
+robots.txt
+sitemap.xml
+favicon.ico
+apple-touch-icon.png
