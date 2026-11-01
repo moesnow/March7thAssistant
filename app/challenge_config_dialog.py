@@ -48,7 +48,7 @@ class ChallengeConfigDialog(SplitFadeDialogMixin, MessageBox):
         layout.addLayout(level_row)
 
         self.stellar_enable = None
-        if prefix in ("purefiction", "forgottenhall"):
+        if prefix in ("purefiction", "forgottenhall", "apocalyptic"):
             self.stellar_enable = CheckBox(tr("启用星启模式"), content)
             self.stellar_enable.setChecked(bool(cfg.get_value(f"{prefix}_stellar_enable", False)))
             layout.addWidget(self.stellar_enable)
@@ -192,7 +192,7 @@ class ChallengeConfigCard(SettingCard):
     def refresh(self):
         first, last = cfg.get_value(f"{self.prefix}_level", [self.highest_level, self.highest_level])
         description = f"{tr('关卡范围')} {first}–{last}"
-        if self.prefix in ("purefiction", "forgottenhall"):
+        if self.prefix in ("purefiction", "forgottenhall", "apocalyptic"):
             mode = tr("星启模式") if cfg.get_value(f"{self.prefix}_stellar_enable", False) else tr("常规模式")
             description += f" · {mode}"
         self.contentLabel.setText(description)
@@ -203,7 +203,7 @@ class ChallengeConfigCard(SettingCard):
             values = dialog.values()
             range_changed = values[f"{self.prefix}_level"] != cfg.get_value(
                 f"{self.prefix}_level", [self.highest_level, self.highest_level])
-            mode_changed = (self.prefix in ("purefiction", "forgottenhall") and
+            mode_changed = (self.prefix in ("purefiction", "forgottenhall", "apocalyptic") and
                             values[f"{self.prefix}_stellar_enable"] != bool(
                                 cfg.get_value(f"{self.prefix}_stellar_enable", False)))
             if range_changed or mode_changed:

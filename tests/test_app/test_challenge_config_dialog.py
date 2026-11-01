@@ -67,12 +67,12 @@ def test_unconfigured_third_team_defaults_to_dan_heng_and_cannot_be_empty(editor
 
 
 @pytest.mark.parametrize('prefix', ['forgottenhall', 'purefiction', 'apocalyptic'])
-def test_all_modes_show_three_teams_with_purefiction_switch(editor, qtbot, prefix):
+def test_all_modes_show_three_teams_with_stellar_switch(editor, qtbot, prefix):
     _, data, _, parent = editor
     data.pop('purefiction_stellar_enable')
     dialog = module.ChallengeConfigDialog('test', prefix, 4, parent)
     qtbot.addWidget(dialog)
-    assert len(dialog.findChildren(CheckBox)) == (1 if prefix in ('purefiction', 'forgottenhall') else 0)
+    assert len(dialog.findChildren(CheckBox)) == 1
     dialog.select_team(2)
     assert dialog.pages.currentIndex() == 2
     assert len(dialog.team_rows) == 3
@@ -229,6 +229,21 @@ def test_memoryofchaos_mode_is_disabled_by_default_and_keeps_third_team(editor, 
     dialog.team_rows[2][0][0].setCurrentText('角色0')
     assert dialog.validate_inputs()
     assert dialog.values()['forgottenhall_stellar_enable'] is False
+    dialog.stellar_enable.setChecked(True)
+    assert not dialog.validate_inputs()
+
+
+def test_apocalyptic_mode_is_disabled_by_default_and_keeps_third_team(editor, qtbot):
+    _, data, _, parent = editor
+    data['apocalyptic_level'] = [3, 4]
+    for index in range(1, 4):
+        data[f'apocalyptic_team{index}'] = data[f'purefiction_team{index}']
+    dialog = module.ChallengeConfigDialog('test', 'apocalyptic', 4, parent)
+    qtbot.addWidget(dialog)
+    assert not dialog.stellar_enable.isChecked()
+    dialog.team_rows[2][0][0].setCurrentText('角色0')
+    assert dialog.validate_inputs()
+    assert dialog.values()['apocalyptic_stellar_enable'] is False
     dialog.stellar_enable.setChecked(True)
     assert not dialog.validate_inputs()
 
