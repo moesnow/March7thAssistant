@@ -23,12 +23,10 @@ class EmberExchange:
     FULL_SCREEN_CROP = (0, 0, 1, 1)
     MENU_TEXT_CROP = (1240 / 1920, 0, 680 / 1920, 1)
     ITEM_LIST_CROP = (120 / 1920, 120 / 1080, 1680 / 1920, 820 / 1080)
-    EMBER_TAB_CROP = (571 / 1920, 110 / 1080, 186 / 1920, 42 / 1080)
     RETRY_SCROLL_CENTER_CROP = (955 / 1920, 535 / 1080, 10 / 1920, 10 / 1080)
     ITEM_INFO_WIDTH = 132 / 1920
     ITEM_INFO_HEIGHT = 204 / 1080
-    PLUS_BUTTON_IMAGE = "./assets/images/share/ember_exchange/plus.png"
-    PLUS_BUTTON_CROP = (860 / 1920, 500 / 1080, 560 / 1920, 240 / 1080)
+    MAX_BUTTON_CROP = (1438 / 1920, 624 / 1080, 20 / 1920, 20 / 1080)
     CONFIRM_BUTTON_CROP = (987 / 1920, 710 / 1080, 362 / 1920, 61 / 1080)
     SUCCESS_POPUP_CROP = (700 / 1920, 730 / 1080, 540 / 1920, 240 / 1080)
     SUCCESS_TEXTS = ("点击空白处关闭", "点击空白处")
@@ -40,7 +38,6 @@ class EmberExchange:
     RESULT_SOLD_OUT = "sold_out"
     ACTION_PAUSE = 1.0
     ITEM_CLICK_PAUSE = 1.8
-    QUANTITY_CLICK_PAUSE = 0.45
     BEFORE_CONFIRM_PAUSE = 0.9
     AFTER_CONFIRM_PAUSE = 1.5
     AFTER_CLOSE_PAUSE = 1.2
@@ -165,7 +162,7 @@ class EmberExchange:
             cls._close_current_dialog()
             return cls.RESULT_FAILED
 
-        if not cls._increase_purchase_quantity(item.display_name, item_entry["remaining_count"]):
+        if not cls._set_max_purchase_quantity(item.display_name, item_entry["remaining_count"]):
             cls._close_current_dialog()
             return cls.RESULT_FAILED
 
@@ -189,17 +186,14 @@ class EmberExchange:
 
     @classmethod
     def _select_ember_exchange_tab(cls):
-        for _ in range(5):
-            if auto.is_rgb_ratio_above_threshold(cls.EMBER_TAB_CROP, (224, 224, 225), 0.7, tolerance=0.01):
-                return True
-
-            auto.click_element(cls.EMBER_TAB_CROP, "crop")
-            time.sleep(0.8)
-
-            if auto.is_rgb_ratio_above_threshold(cls.EMBER_TAB_CROP, (224, 224, 225), 0.7, tolerance=0.01):
-                return True
-
-        return False
+        return auto.click_element(
+            "余烬兑换",
+            "text",
+            max_retries=5,
+            crop=cls.FULL_SCREEN_CROP,
+            include=False,
+            retry_delay=0.8,
+        )
 
     @classmethod
     def _find_purchasable_item(cls, item: EmberExchangeItem, accept_sold_out=False):
@@ -316,18 +310,14 @@ class EmberExchange:
         return False
 
     @classmethod
-    def _increase_purchase_quantity(cls, item_name, remaining_count):
+    def _set_max_purchase_quantity(cls, item_name, remaining_count):
         if remaining_count <= 1:
             return True
 
-        plus_clicks = remaining_count - 1
-        log.info(f"「{item_name}」需要点击加号 {plus_clicks} 次")
-
-        for index in range(plus_clicks):
-            if not auto.click_element(cls.PLUS_BUTTON_IMAGE, "image", 0.85, max_retries=6, crop=cls.PLUS_BUTTON_CROP, retry_delay=0.3):
-                log.warning(f"「{item_name}」第 {index + 1} 次点击加号失败")
-                return False
-            time.sleep(cls.QUANTITY_CLICK_PAUSE)
+        log.info(f"「{item_name}」点击最大值，剩余可兑换 {remaining_count} 个")
+        if not auto.click_element(cls.MAX_BUTTON_CROP, "crop"):
+            log.warning(f"点击「{item_name}」购买数量的最大值按钮失败")
+            return False
 
         return True
 
