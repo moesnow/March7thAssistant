@@ -1,5 +1,16 @@
 # 更新日志
 
+## v2026.10.31
+- 新增 Windows 后台运行模式，支持后台键鼠操作
+- 定时任务支持按星期执行，完善运行计划展示
+- 虚构叙事新增「星启模式」与第三队编队支持 [#1282](https://github.com/moesnow/March7thAssistant/pulls/1282) @23swccp
+- 更新弹窗支持跨版本汇总更新记录
+- 支持通过 Epic 启动渠道服星穹铁道 [#1274](https://github.com/moesnow/March7thAssistant/pulls/1274) @23swccp
+- 修复云游戏剩余时长为 0 时容器反复重启的问题 [#1276](https://github.com/moesnow/March7thAssistant/pulls/1276) @StaravenX
+- 优化兑换码使用流程 [#1295](https://github.com/moesnow/March7thAssistant/pulls/1295) @spellbook96
+- 优化性能和稳定性并修复若干已知问题
+- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
+
 ## v2026.10.16
 - 新手推荐观看 [从零开始的三月七小助手保姆级安装教程](https://www.bilibili.com/video/BV1DrJt62E1u/)，从下载、解压到首次启动，跟着视频一步步完成安装，欢迎点赞、投币、收藏支持！
 - 自动对话新增自动阅读翁法罗斯英雄纪，支持跳过已读及未解锁篇章（请先打开该书目录） [#1250](https://github.com/moesnow/March7thAssistant/pulls/1250) @long098sdo
@@ -19,7 +30,6 @@
 - 修复部分配置项缺失时开关卡片显示异常的问题
 - 优化界面启动速度及长时间运行时的日志内存占用
 - 优化性能和稳定性并修复若干已知问题
-- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.10.3
 - 新增 QQ 官方机器人通知渠道

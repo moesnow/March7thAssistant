@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from urllib3.exceptions import ReadTimeoutError
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
-from module.game.cloud import CloudGameController
+from module.game.cloud import CloudGameController, CloudGameZeroDurationError
 
 
 class FakeDriver:
@@ -277,3 +277,95 @@ class TestCloudGameDebugPort(unittest.TestCase):
             ("127.0.0.1", 0)
         )
         self.assertEqual(port, 49152)
+
+
+class TestCloudGameZeroDuration(unittest.TestCase):
+    def test_error_type(self):
+        self.assertTrue(issubclass(CloudGameZeroDurationError, RuntimeError))
+
+    def test_enter_cloud_game_raises_zero_duration_error(self):
+        controller = object.__new__(CloudGameController)
+        controller.driver = MagicMock()
+        controller.cfg = MagicMock()
+        controller.cfg.browser_headless_enable = False
+        controller.cfg.browser_dump_cookies_enable = False
+        controller.cfg.cloud_game_url = "https://sr.mihoyo.com/cloud"
+
+        controller._check_login = MagicMock(return_value=True)
+        controller._get_remaining_playtime = MagicMock(return_value=(0, 0))
+        controller.log_info = MagicMock()
+        controller.log_warning = MagicMock()
+        controller.log_error = MagicMock()
+        controller.log_debug = MagicMock()
+
+        with self.assertRaises(CloudGameZeroDurationError):
+            controller.enter_cloud_game()
+
+    def test_start_game_zero_duration_stops_browser_without_retry(self):
+        import tasks.game
+
+        with patch("tasks.game.cloud_game") as mock_cloud_game, \
+             patch("tasks.game.cfg") as mock_cfg, \
+             patch("tasks.game.log"):
+
+            mock_cfg.cloud_game_enable = True
+            mock_cloud_game.start_game_process.return_value = True
+            mock_cloud_game.is_in_game.return_value = False
+            mock_cloud_game.enter_cloud_game.side_effect = CloudGameZeroDurationError("云游戏剩余时长为 0，停止运行")
+
+            with self.assertRaises(CloudGameZeroDurationError):
+                tasks.game.start_game()
+
+            self.assertEqual(mock_cloud_game.enter_cloud_game.call_count, 1)
+            mock_cloud_game.stop_game.assert_called_once()
+
+    def test_zero_duration_waits_for_next_scheduled_run_in_loop_mode(self):
+        import tasks.game
+
+        with patch("tasks.game.cfg") as mock_cfg, \
+             patch("tasks.game.notif") as mock_notif, \
+             patch("tasks.game.log"), \
+             patch("tasks.game.after_finish_is_loop") as mock_wait:
+
+            mock_cfg.after_finish = "Loop"
+            mock_cfg.notify_template = {"ErrorOccurred": "发生错误 {error}"}
+
+            self.assertTrue(tasks.game.wait_after_cloud_zero_duration(CloudGameZeroDurationError("时长为 0")))
+
+            mock_notif.flush_batch.assert_called_once()
+            mock_wait.assert_called_once_with(force_scheduled=True)
+
+    def test_zero_duration_is_left_to_caller_outside_loop_mode(self):
+        import tasks.game
+
+        with patch("tasks.game.cfg") as mock_cfg, \
+             patch("tasks.game.notif") as mock_notif, \
+             patch("tasks.game.after_finish_is_loop") as mock_wait:
+
+            mock_cfg.after_finish = "None"
+
+            self.assertFalse(tasks.game.wait_after_cloud_zero_duration(CloudGameZeroDurationError("时长为 0")))
+
+            mock_notif.flush_batch.assert_not_called()
+            mock_wait.assert_not_called()
+
+    def test_after_finish_is_loop_force_scheduled_skips_power_check(self):
+        import tasks.game
+
+        with patch("tasks.game.cfg") as mock_cfg, \
+             patch("tasks.game.Power") as mock_power, \
+             patch("tasks.game.get_game_controller"), \
+             patch("tasks.game.Date") as mock_date, \
+             patch("tasks.game.is_gui_started", return_value=True), \
+             patch("tasks.game.notif"), \
+             patch("tasks.game.log"), \
+             patch("sys.exit", side_effect=SystemExit(0)):
+
+            mock_cfg.loop_mode = "power"
+            mock_cfg.scheduled_time = "4:00"
+
+            with self.assertRaises(SystemExit):
+                tasks.game.after_finish_is_loop(force_scheduled=True)
+
+            mock_power.get.assert_not_called()
+            mock_date.time_to_seconds.assert_called_once_with("4:00")

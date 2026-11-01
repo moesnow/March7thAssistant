@@ -27,9 +27,9 @@
 
 **게임 내 언어는 현재 중국어 간체만 지원합니다.**
 
-빠르게 시작하려면: [사용 튜토리얼](https://m7a.top/#/assets/docs/Tutorial_ko_KR)
+빠르게 시작하려면: [사용 튜토리얼](https://m7a.top/docs/#/assets/docs/Tutorial_ko_KR)
 
-문제가 생기면 먼저 확인하세요: [FAQ](https://m7a.top/#/assets/docs/FAQ_ko_KR)
+문제가 생기면 먼저 확인하세요: [FAQ](https://m7a.top/docs/#/assets/docs/FAQ_ko_KR)
 
 </div>
 
@@ -37,7 +37,7 @@
 
 - **일상**: 개척력 소모, 일일 훈련, 보상 수령, 위탁, 필드 파밍
 - **주간**: 전쟁의 여운, 시뮬레이션 우주, 차분 우주, 화폐 전쟁, 혼돈의 기억, 허구 이야기, 종말의 환영
-- **클라우드 스타레일**: 백그라운드 실행, 무창 실행, [Docker](https://m7a.top/#/assets/docs/Docker) 실행 지원
+- **클라우드 스타레일**: 백그라운드 실행, 무창 실행, [Docker](https://m7a.top/docs/#/assets/docs/Docker) 실행 지원
 - **가챠 기록 내보내기**: [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) 표준 지원
 - **도구 상자**: 자동 대화, FPS 잠금 해제, 리딤 코드, 터치스크린 모드
 - 일일 훈련 등 작업 완료 여부에 대한 **메시지 푸시** 지원

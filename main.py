@@ -128,6 +128,8 @@ def parse_args():
     )
     # 内部参数：未提权入口把任务交给管理员进程时传入的运行编号
     agent.add_argument('--run-id', help=argparse.SUPPRESS)
+    # 内部参数：由免 UAC 计划任务启动时最小化自身窗口（计划任务无法指定窗口状态）
+    agent.add_argument('--minimize-console', action='store_true', help=argparse.SUPPRESS)
 
     args = parser.parse_args()
 
@@ -224,16 +226,22 @@ import time
 
 if sys.platform == 'win32':
     from utils.admin import is_user_admin
-    if not is_user_admin():
+    # 带 --run-id 的是入口转交出来的管理员进程：即使没拿到管理员权限也不能再转交一次，否则会不断重复启动自己
+    if not is_user_admin() and not args.run_id:
         # 未提权（终端、脚本或 AI Agent 通过 m7a.exe 调用，或源码运行）：把任务交给管理员进程执行，
         # 同时在当前终端跟随输出，结束后返回任务的真实退出码
         from utils.cli_entry import run_task_elevated
         sys.exit(run_task_elevated(sys.argv[1:], json_output=args.json, detach=args.detach))
 
+# 由免 UAC 计划任务启动的管理员进程：与 UAC 启动的窗口一致，最小化且不抢焦点（输出已转发到调用方的终端）
+if args.minimize_console:
+    from utils.console import minimize_console_window
+    minimize_console_window()
+
 from utils.cli_entry import read_version
 from utils.console import is_gui_started, is_docker_started, is_non_interactive
-from utils.runs import (RunSession, EXIT_OK, EXIT_FAILED, EXIT_FIRST_RUN_REQUIRED, EXIT_BUSY, EXIT_STOPPED,
-                        STATUS_INTERRUPTED, STATUS_STOPPED, LOCK_BUSY, LOCK_FORCED, LOCK_UNAVAILABLE,
+from utils.runs import (RunSession, EXIT_OK, EXIT_FAILED, EXIT_FIRST_RUN_REQUIRED, EXIT_BUSY, EXIT_ELEVATION_FAILED,
+                        EXIT_STOPPED, STATUS_INTERRUPTED, STATUS_STOPPED, LOCK_BUSY, LOCK_FORCED, LOCK_UNAVAILABLE,
                         describe_run, exit_code_of)
 
 
@@ -262,6 +270,15 @@ run_session = RunSession.begin(
 )
 run_session.print_json = args.json
 
+if sys.platform == 'win32' and not is_user_admin():
+    # 入口转交的管理员进程却没有管理员权限（例如免 UAC 运行的计划任务被改成了不以最高权限运行）：
+    # 不执行任务，把原因写进运行记录，入口会照常转告调用方
+    _message = "没有获得管理员权限，任务未运行。如果开启了免 UAC 运行，请在图形界面「设置 → 杂项」中关闭后重新开启"
+    print(_message, flush=True)
+    run_session.note(error=_message)
+    run_session.finish(EXIT_ELEVATION_FAILED)
+    sys.exit(EXIT_ELEVATION_FAILED)
+
 from module.config import cfg
 from module.logger import log
 import logging
@@ -280,6 +297,7 @@ from utils.screenshot_util import save_error_screenshot
 
 import tasks.game as game
 from module.game import cloud_game
+from module.game.cloud import CloudGameZeroDurationError
 import tasks.reward as reward
 import tasks.challenge as challenge
 import tasks.version as version
@@ -298,6 +316,7 @@ from tasks.base import screen_test
 
 from utils.console import pause_on_error, pause_on_success, pause_always, is_docker_started
 from utils.pause import pause_ctl, RunStopRequested, STOP_GRACE_SECONDS
+from module.automation import auto
 from utils.tasks import PAUSABLE_TASKS
 
 telemetry.init(
@@ -370,6 +389,11 @@ def run_main_actions(no_run_immediately=False):
             reward.start()
             telemetry.track_task_complete("main", True, time.time() - main_start_time)
             game.stop(True)
+        except CloudGameZeroDurationError as e:
+            telemetry.track_task_complete("main", False, time.time() - main_start_time)
+            # 时长为 0 时重启也无法恢复：循环模式等到下次定时再运行，避免容器反复重启并推送通知
+            if not game.wait_after_cloud_zero_duration(e):
+                raise
         except Exception:
             telemetry.track_task_complete("main", False, time.time() - main_start_time)
             raise
@@ -552,14 +576,29 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
         sys.exit(1)
 
 
+def release_input(close=False):
+    """释放（或关闭）输入后端持有的键鼠；清理失败只记录，不能改变本次运行的结束方式。"""
+    try:
+        if close:
+            auto.close_input()
+        else:
+            auto.input_handler.release_all()
+    except Exception as e:
+        log.warning(f"输入清理失败: {e}")
+
+
 # 程序结束时的处理器
 def exit_handler():
-    """注册程序退出时的处理函数，用于清理OCR和调试资源."""
+    """注册程序退出时的处理函数，用于清理输入、OCR和调试资源."""
+    release_input(close=True)
+    try:
+        pause_ctl.stop()
+    except Exception as e:
+        log.warning(f"输入清理失败: {e}")
     telemetry.shutdown()
     ocr.exit_ocr()
     # 清理调试叠加层
     try:
-        from module.automation import auto
         auto.shutdown_debug()
     except Exception:
         pass
@@ -583,17 +622,24 @@ if __name__ == "__main__":
             if result is False:
                 sys.exit(1)
         except KeyboardInterrupt:
+            release_input(close=True)
             run_session.note(status=STATUS_INTERRUPTED, error="手动强制停止")
             log.error("发生错误: 手动强制停止")
             pause_on_error()
             sys.exit(1)
         except RunStopRequested:
-            # 外部停止指令（--control <运行编号> stop）：不再发出任何键鼠操作，也不按错误处理（不截图、不推送）
-            pause_ctl.stop()
+            # 外部停止指令（图形界面停止按钮或 --control <运行编号> stop）：不再发出任何键鼠操作，
+            # 也不按错误处理（不截图、不推送）
+            release_input(close=True)
+            try:
+                pause_ctl.stop()
+            except Exception as e:
+                log.warning(f"输入清理失败: {e}")
             run_session.note(status=STATUS_STOPPED)
             log.warning("任务已按停止指令结束")
             sys.exit(EXIT_STOPPED)
         except Exception as e:
+            release_input()
             telemetry.track_error(type(e).__name__, str(e))
             log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
             # 保存错误截图

@@ -2,6 +2,17 @@
 
 > 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。
 
+## v2026.10.31
+- 新增 Windows 後臺執行模式，支援後臺鍵鼠操作
+- 定時任務支援按星期執行，完善執行計劃展示
+- 虛構敘事新增「星啟模式」與第三隊編隊支援 [#1282](https://github.com/moesnow/March7thAssistant/pulls/1282) @23swccp
+- 更新彈窗支援跨版本彙總更新記錄
+- 支援通過 Epic 啟動渠道服星穹鐵道 [#1274](https://github.com/moesnow/March7thAssistant/pulls/1274) @23swccp
+- 修復雲遊戲剩餘時長為 0 時容器反覆重啟的問題 [#1276](https://github.com/moesnow/March7thAssistant/pulls/1276) @StaravenX
+- 最佳化兌換碼使用流程 [#1295](https://github.com/moesnow/March7thAssistant/pulls/1295) @spellbook96
+- 最佳化效能和穩定性並修復若干已知問題
+- [歡迎關注我們的B站賬號，獲取最新動態和教程](https://space.bilibili.com/3706960664857075)
+
 ## v2026.10.16
 - 新手推薦觀看 [從零開始的三月七小助手保姆級安裝教程](https://www.bilibili.com/video/BV1DrJt62E1u/)，從下載、解壓到首次啟動，跟著影片一步步完成安裝，歡迎點贊、投幣、收藏支援！
 - 自動對話新增自動閱讀翁法羅斯英雄紀，支援跳過已讀及未解鎖篇章（請先開啟該書目錄） [#1250](https://github.com/moesnow/March7thAssistant/pulls/1250) @long098sdo
@@ -21,7 +32,6 @@
 - 修復部分配置項缺失時開關卡片顯示異常的問題
 - 最佳化介面啟動速度及長時間執行時的日誌記憶體佔用
 - 最佳化效能和穩定性並修復若干已知問題
-- [歡迎關注我們的B站賬號，獲取最新動態和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.10.3
 - 新增 QQ 官方機器人通知渠道

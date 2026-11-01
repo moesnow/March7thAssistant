@@ -199,28 +199,48 @@ class Redemption:
             game.copy(code)
             if auto.click_element("./assets/images/share/redemption/paste.png", "image", 0.9):
                 time.sleep(0.5)
-                if auto.find_element("./assets/images/share/redemption/clear.png", "image", 0.9):
+                # 兑换窗口刚打开时画面可能尚未更新，单次检测会漏判；不重复粘贴，以免输入框内容叠加
+                if auto.find_element("./assets/images/share/redemption/clear.png", "image", 0.9, max_retries=6, retry_delay=0.5):
                     time.sleep(0.5)
                     auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
                     time.sleep(1)
-                    if auto.find_element("兑换成功", "text"):
+                    # 结果弹窗可能晚于 1 秒出现（实测约 2 秒），只看一次会把已兑换的码记成失败并按 esc；
+                    # 每秒重新截图检测，最多约 10 秒
+                    result = None
+                    for _ in range(10):
+                        if auto.find_element(
+                            ("兑换成功", "兑换码已过期", "无效的兑换码", "兑换码已被使用"),
+                            "text",
+                            include=True,
+                        ):
+                            result = auto.matched_text
+                            break
+                        time.sleep(1)
+                    if result == "兑换成功":
                         log.info(f"兑换码使用成功: {green(code)} ({idx}/{len(codes_to_use)})")
                         if code not in used:
                             used.append(code)
                             successful_codes.append(code)
                             cfg.set_value("already_used_codes", used)
                         auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
-                    elif auto.find_element(("兑换码已过期", "无效的兑换码", "兑换码已被使用"), "text", take_screenshot=False, include=True):
-                        log.info(f"{auto.matched_text}: {yellow(code)} ({idx}/{len(codes_to_use)})")
+                    elif result:
+                        log.info(f"{result}: {yellow(code)} ({idx}/{len(codes_to_use)})")
                         if code not in used:
                             used.append(code)
                             cfg.set_value("already_used_codes", used)
                         auto.press_key("esc")
                     else:
-                        log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
+                        log.warning(f"兑换结果检测超时: {yellow(code)} ({idx}/{len(codes_to_use)})")
                         auto.press_key("esc")
                     screen.wait_for_screen_change('menu')
                     time.sleep(3)
+                else:
+                    log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
+                    auto.press_key("esc")
+                    screen.wait_for_screen_change('menu')
+                    time.sleep(3)
+            else:
+                log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
 
         if successful_codes:
             msg = f"成功使用了{len(successful_codes)}个兑换码: \n{'\n'.join(successful_codes)}"

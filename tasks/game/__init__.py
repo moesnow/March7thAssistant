@@ -12,10 +12,11 @@ from utils.date import Date
 from utils.console import pause_on_success
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
-from module.game.cloud import CloudGameLoginTimeoutError
+from module.game.cloud import CloudGameLoginTimeoutError, CloudGameZeroDurationError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
+from module.automation.background_input import WINDOW_WAIT_SECONDS, GameWindowLost, InputInterrupted
 from module.config import cfg
 from module.notification import notif
 from module.notification.notification import NotificationLevel
@@ -49,7 +50,7 @@ def start():
 def switch_to_game():
     log.hr("切换到游戏窗口", 0)
     starrail = StarRailController(cfg=cfg, logger=log)
-    starrail.switch_to_game()
+    starrail.switch_to_game(force=True)
     log.hr("完成", 2)
 
 
@@ -63,6 +64,14 @@ def ensure_game_ready():
     if not controller.is_game_running():
         log.error("未检测到游戏窗口，workflow 未执行")
         return False
+    if getattr(auto.input_handler, 'is_background', False) is True:
+        # 后台模式不切换前台：窗口暂时不可操作（例如被最小化）时等待还原，失败时写明原因
+        try:
+            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
+        except (InputInterrupted, GameWindowLost) as error:
+            log.error(f"{error}，workflow 未执行")
+            return False
+        return True
     if not controller.switch_to_game():
         log.error("切换到游戏窗口失败，workflow 未执行")
         return False
@@ -161,26 +170,30 @@ def start_game():
         return None
 
     def start_local_game(starrail):
+        if getattr(auto.input_handler, 'is_background', False) is True and starrail.is_game_running():
+            # 后台模式不还原、不激活已运行的游戏：窗口暂时不可操作（例如被最小化）时等待用户还原，
+            # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
+            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
         if not starrail.switch_to_game():
-            if cfg.auto_set_resolution_enable:
-                starrail.change_resolution(1920, 1080)
-                starrail.change_auto_hdr("disable")
+            try:
+                if cfg.auto_set_resolution_enable:
+                    starrail.change_resolution(1920, 1080)
+                    starrail.change_auto_hdr("disable")
 
-            if cfg.auto_battle_detect_enable:
-                starrail.change_auto_battle(True)
+                if cfg.auto_battle_detect_enable:
+                    starrail.change_auto_battle(True)
 
-            if not starrail.start_game_process():
-                raise RuntimeError("启动游戏失败")
-            time.sleep(10)
+                if not starrail.start_game_process():
+                    raise RuntimeError("启动游戏失败")
+                time.sleep(10)
 
-            if not wait_until(lambda: starrail.switch_to_game(), 360):
+                if not wait_until(lambda: starrail.switch_to_game(), 360):
+                    raise TimeoutError("切换到游戏超时")
+
+                time.sleep(10)
+            finally:
                 starrail.restore_resolution()
                 starrail.restore_auto_hdr()
-                raise TimeoutError("切换到游戏超时")
-
-            time.sleep(10)
-            starrail.restore_resolution()
-            starrail.restore_auto_hdr()
             # starrail.check_resolution_ratio(1920, 1080)
             starrail.check_resolution(1920, 1080)
 
@@ -230,10 +243,23 @@ def start_game():
                     starrail.stop_game()
                 continue
             break
+        except CloudGameZeroDurationError:
+            # 时长为 0 时重试也无法进入游戏：关闭浏览器后交给调用方，由主循环决定等待下次运行还是按错误退出
+            cloud_game.stop_game()
+            raise
         except CloudGameLoginTimeoutError:
+            raise
+        except InputInterrupted:
+            # 窗口持续最小化等需要用户处理的情况不能触发原有的“关闭游戏后重启”恢复路径；
+            # 游戏进程退出（GameWindowLost）仍按普通错误重启游戏。
             raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
+            if not cfg.cloud_game_enable and starrail.launch_method == "epic":
+                from module.game.epic import EpicLaunchError
+                if isinstance(e, EpicLaunchError):
+                    # 渠道启动已给出具体阶段错误，不重放协议/点击，不关闭用户启动器。
+                    raise
             # 确保在重试前停止游戏
             if cfg.cloud_game_enable:
                 cloud_game.stop_game()
@@ -277,7 +303,7 @@ def stop(detect_loop=False):
         sys.exit(0)
 
 
-def after_finish_is_loop():
+def after_finish_is_loop(force_scheduled=False):
 
     def get_wait_time(current_power):
         # 距离体力到达配置文件指定的上限剩余秒数
@@ -288,7 +314,7 @@ def after_finish_is_loop():
         wait_time = min(wait_time_power_limit, wait_time_next_day)
         return wait_time
 
-    if cfg.loop_mode == "power":
+    if not force_scheduled and cfg.loop_mode == "power":
         current_power = Power.get(use_supplement=False)
         if current_power >= cfg.power_limit:
             log.info(f"开拓力 >= {cfg.power_limit}")
@@ -335,6 +361,19 @@ def after_finish_is_loop():
 
     # 启动前重新加载配置 #262
     cfg._load_config()
+
+
+def wait_after_cloud_zero_duration(error):
+    """云游戏时长为 0 时，循环模式下发送通知并等待到下次定时运行，返回 True；
+    非循环模式返回 False，由调用方按错误退出。"""
+    if cfg.after_finish != "Loop":
+        return False
+    msg = cfg.notify_template['ErrorOccurred'].format(error=error)
+    log.error(msg)
+    notif.flush_batch(extra_content=msg, level=NotificationLevel.ERROR)
+    # 无法进入游戏读取开拓力，开拓力循环也改按定时时间等待
+    after_finish_is_loop(force_scheduled=True)
+    return True
 
 
 def _start_launcher_and_get_automation(game):
@@ -496,6 +535,9 @@ def ensure_IME_lang_en():
 
     分两种情况，若系统有英语语言，则切换至英语语言，若没有，则切换输入法语言为英文
     """
+    from module.automation.input_base import background_enabled
+    if background_enabled(cfg):
+        return True  # 后台文本使用 Unicode 消息，不改变用户前台窗口的输入法。
     import win32api
     import win32gui
     from win32con import WM_INPUTLANGCHANGEREQUEST

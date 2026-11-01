@@ -234,23 +234,21 @@ class StellarChallenge:
         return True
 
     def _wait_node_end(self, number):
-        if number == 3 and self.challenge.name == "虚构叙事" and callable(getattr(self.challenge, 'return_to_stage_list', None)):
-            # 虚构叙事最后一节点直接复用原生图片判定及返回流程。
+        if number == 3:
+            # 最后一个节点统一复用各挑战的结算判定。
             return self._finish_settlement(self.challenge.check_fight(30 * 60, final=True))
         deadline = time.monotonic() + 30 * 60
-        next_button = ("前往节点二", "前往节点三")[number - 1] if number < 3 else None
+        next_button = ("前往节点二", "前往节点三")[number - 1]
         unknown_settlement = 0
         while time.monotonic() < deadline:
             if self._return_after_failure():
                 return False
-            if next_button and auto.find_element(next_button, "text", include=False):
+            if auto.find_element(next_button, "text", include=False):
                 # 由准备画面确认函数执行点击及有限重试，不把“挑战结束”当作整关结束。
                 self._wait_ready(number + 1, next_button)
                 return
             if auto.find_element(["挑战结束", "挑战成功", "挑战失败"], "text",
                                  crop=(0.3, 0.15, 0.4, 0.3), include=False):
-                if number == 3:
-                    return self._finish_settlement(auto.matched_text == "挑战成功")
                 unknown_settlement += 1
                 if unknown_settlement >= 10:
                     raise RuntimeError(f"星启节点{number}结算后未找到{next_button}，已保留画面")
@@ -262,16 +260,11 @@ class StellarChallenge:
         raise RuntimeError(f"星启节点{number}战斗超时，已保留画面")
 
     def _finish_settlement(self, succeeded):
-        return_to_list = getattr(self.challenge, 'return_to_stage_list', None)
-        if not callable(return_to_list):
-            # 尚未确认最终返回按钮的挑战保留调试画面。
-            log.warning(f"{self.challenge.name}星启节点三结算返回流程尚待截图确认，已保留画面。")
-            raise SystemExit(0)
+        self.challenge.return_to_stage_list()
         if succeeded:
-            log.info(f"{self.challenge.name}星启模式挑战成功")
+            log.info(f"{self.challenge.name}星启模式挑战完成")
         else:
             log.warning(f"{self.challenge.name}星启模式挑战失败")
-        return_to_list()
         self.result = succeeded
         # 仅成功时接通原生的通关记录及奖励收尾，失败不能被当作通关。
         if succeeded:
