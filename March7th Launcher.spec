@@ -1,5 +1,11 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
+from PyInstaller.utils.win32.winutils import get_system_path
+
+# 与 Windows DLL 加载顺序保持一致，避免 PATH 中其他工具的同名 ICU 等库
+# 遮蔽系统库（QtCore 需要系统 icuuc.dll 的无版本后缀导出）。
+os.environ['PATH'] = os.pathsep.join(get_system_path() + [os.environ.get('PATH', '')])
 
 binaries = []
 datas = []
