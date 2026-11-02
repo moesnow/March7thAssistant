@@ -49,6 +49,17 @@ class TestGetEnvOverride:
         assert has_override is True
         assert value == "Shutdown"
 
+    def test_no_run_immediately(self, monkeypatch):
+        monkeypatch.setenv("MARCH7TH_NO_RUN_IMMEDIATELY", "true")
+        has_override, value = _get_env_override("no_run_immediately")
+        assert has_override is True
+        assert value is True
+
+        monkeypatch.setenv("MARCH7TH_NO_RUN_IMMEDIATELY", "0")
+        has_override, value = _get_env_override("no_run_immediately")
+        assert has_override is True
+        assert value is False
+
 
 class TestEnvOverrideMap:
     def test_all_mappings_have_converter(self):

@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+from datetime import datetime
 import psutil
 
 
@@ -303,7 +304,19 @@ def stop(detect_loop=False):
         sys.exit(0)
 
 
-def after_finish_is_loop(force_scheduled=False):
+def _get_next_run_timestamp():
+    timestamp = cfg.get_value("next_run_timestamp", None)
+    if timestamp is not None and timestamp > time.time():
+        return timestamp
+    return None
+
+
+def clear_next_run_timestamp():
+    if _get_next_run_timestamp() is not None:
+        cfg.set_value("next_run_timestamp", None)
+
+
+def after_finish_is_loop(force_scheduled=False, resume=False):
 
     def get_wait_time(current_power):
         # 距离体力到达配置文件指定的上限剩余秒数
@@ -314,7 +327,13 @@ def after_finish_is_loop(force_scheduled=False):
         wait_time = min(wait_time_power_limit, wait_time_next_day)
         return wait_time
 
-    if not force_scheduled and cfg.loop_mode == "power":
+    target_time = None
+    if resume and not force_scheduled and cfg.loop_mode == "power":
+        target_time = _get_next_run_timestamp()
+        if target_time is None:
+            return
+        future_time = Date.calculate_future_time(int(target_time - time.time()))
+    elif not force_scheduled and cfg.loop_mode == "power":
         current_power = Power.get(use_supplement=False)
         if current_power >= cfg.power_limit:
             log.info(f"开拓力 >= {cfg.power_limit}")
@@ -327,8 +346,16 @@ def after_finish_is_loop(force_scheduled=False):
             wait_time = get_wait_time(current_power)
             future_time = Date.calculate_future_time(wait_time)
     else:
-        get_game_controller().stop_game()
         scheduled_time = cfg.scheduled_time
+        if resume and not force_scheduled:
+            now = datetime.now()
+            scheduled_today = datetime.combine(
+                now.date(), datetime.strptime(scheduled_time, "%H:%M").time()).timestamp()
+            last_success = cfg.get_value("last_main_success_timestamp", 0)
+            if (now.timestamp() >= scheduled_today and last_success < scheduled_today
+                    and _get_next_run_timestamp() is None):
+                return
+        get_game_controller().stop_game()
         wait_time = Date.time_to_seconds(scheduled_time)
         future_time = Date.calculate_future_time(scheduled_time)
 
@@ -352,7 +379,9 @@ def after_finish_is_loop(force_scheduled=False):
             on_wait=lambda holder: log.info(f"等待正在运行的{describe_run(holder)}结束后再开始下一轮"),
             on_unavailable=lambda error: log.warning(f"运行锁不可用（{error}），无法确认是否已有其他任务在运行，照常开始下一轮")):
         # 使用wall clock轮询等待，避免系统休眠后time.sleep剩余时间不准确的问题
-        target_time = time.time() + wait_time
+        if target_time is None:
+            target_time = time.time() + wait_time
+            cfg.set_value("next_run_timestamp", target_time)
         while True:
             remaining = target_time - time.time()
             if remaining <= 0:

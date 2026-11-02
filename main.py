@@ -359,8 +359,9 @@ def run_main_actions(no_run_immediately=False):
     while True:
         if is_first_run:
             is_first_run = False
-            game.after_finish_is_loop()
+            game.after_finish_is_loop(resume=True)
             continue
+        game.clear_next_run_timestamp()
         if cfg.notify_merge:
             notif.start_batch()
         telemetry.track_task_start("main")
@@ -370,6 +371,7 @@ def run_main_actions(no_run_immediately=False):
             game.start()
             Daily.start()
             reward.start()
+            cfg.save_timestamp("last_main_success_timestamp")
             telemetry.track_task_complete("main", True, time.time() - main_start_time)
             game.stop(True)
         except CloudGameZeroDurationError as e:
@@ -592,6 +594,7 @@ if __name__ == "__main__":
     try:
         try:
             atexit.register(exit_handler)
+            args.no_run_immediately = args.no_run_immediately or cfg.get_value("no_run_immediately", False)
             if args.workflow_name:
                 result = main(
                     no_run_immediately=args.no_run_immediately,

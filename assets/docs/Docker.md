@@ -174,6 +174,7 @@ Docker 部署支持通过环境变量覆盖配置文件中的设置，环境变�
 | `MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR` | 使用镜像下载浏览器 | `false` |
 | `MARCH7TH_AFTER_FINISH` | 任务完成后操作 | `Loop` |
 | `MARCH7TH_LOG_LEVEL` | 日志等级 | - |
+| `MARCH7TH_NO_RUN_IMMEDIATELY` | 启动时禁用立即运行 | `false` |
 
 示例：
 
