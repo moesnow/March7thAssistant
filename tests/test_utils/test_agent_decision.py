@@ -11,7 +11,7 @@ import pytest
 from unittest.mock import MagicMock
 from utils import agent_decision as protocol
 
-from utils.agent_decision import DecisionCancelled, request_decision
+from utils.agent_decision import DecisionCancelled, request_decision, request_action
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -202,3 +202,27 @@ def test_concurrent_replies_have_one_winner(tmp_path):
     assert len(winners) == 1
     response = json.loads((tmp_path / f"{request_id}.response.json").read_text())
     assert response["candidate_id"] == winners[0]
+
+
+def test_rich_bridge_response_keeps_agent_reason_and_build_memory(tmp_path):
+    queue = tmp_path / "queue"
+    command = [sys.executable, str(BRIDGE_PATH), "serve", "--directory", str(queue), "--timeout", "5"]
+    request = dict(REQUEST, controls=[{"id": "view-1", "text": "攻略"}], can_choose=True)
+    with ThreadPoolExecutor() as pool:
+        future = pool.submit(request_action, command, 8, request)
+        deadline = time.monotonic() + 5
+        paths = []
+        while not paths and time.monotonic() < deadline:
+            paths = list(queue.glob("*.request.json"))
+            time.sleep(.02)
+        assert paths
+        envelope = json.loads(paths[0].read_text(encoding="utf-8"))
+        bridge.respond(queue, envelope["request"]["request_id"], None, {
+            "action": "inspect", "control_id": "view-1", "reason": "根据当前队伍先核对方程攻略",
+            "memory": {"goal": "按队伍构筑", "references": ["frame-1"]},
+        })
+        answer = future.result(timeout=5)
+        assert answer["action"] == "inspect"
+        assert "队伍" in answer["reason"]
+        assert answer["memory"]["references"] == ["frame-1"]
+    assert not list(queue.glob("*.json"))

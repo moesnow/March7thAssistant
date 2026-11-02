@@ -56,8 +56,38 @@ def validate_decision_command(command, *, require_available=False):
     return command[0]
 
 
-def request_decision(command, timeout, request, *, cancelled=lambda: False):
-    """同步等待一个候选 ID；失败抛 ValueError/OSError，绝不执行模型返回的命令。"""
+def validate_decision_answer(request, answer):
+    """只接受当前候选/导航控件及有界的文字状态，不接收坐标、按键或代码。"""
+    if (not isinstance(answer, dict) or type(answer.get("protocol_version")) is not int
+            or answer["protocol_version"] != PROTOCOL_VERSION
+            or answer.get("request_id") != request["request_id"]):
+        raise ValueError("外部决策协议或请求编号不匹配")
+    action = answer.get("action", "choose" if answer.get("candidate_id") is not None else "decline")
+    if action == "choose":
+        if not isinstance(answer.get("candidate_id"), str) or answer["candidate_id"] not in {item["id"] for item in request["candidates"]}:
+            raise ValueError("外部决策返回了未知候选项")
+        if not request.get("can_choose", True):
+            raise ValueError("请先返回选择界面")
+    elif action == "inspect":
+        if not isinstance(answer.get("control_id"), str) or answer["control_id"] not in {item["id"] for item in request.get("controls", [])}:
+            raise ValueError("外部决策返回了未知查看控件")
+    elif action == "back":
+        if not request.get("can_go_back", False):
+            raise ValueError("当前没有可返回的查看页面")
+    elif action != "decline":
+        raise ValueError("不支持的决策动作")
+    if "action" not in answer and "candidate_id" not in answer:
+        raise ValueError("外部决策缺少动作")
+    if not isinstance(answer.get("reason", ""), str) or len(answer.get("reason", "")) > 2000:
+        raise ValueError("决策理由过长或类型无效")
+    memory = answer.get("memory", {})
+    if not isinstance(memory, dict) or len(json.dumps(memory, ensure_ascii=False)) > 16000:
+        raise ValueError("构筑记录过大或类型无效")
+    return dict(answer, action=action)
+
+
+def request_action(command, timeout, request, *, cancelled=lambda: False):
+    """交换一次决策/查看请求；执行动作仍由游戏适配器验证后完成。"""
     validate_decision_command(command)
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or not 0 < timeout <= 300:
         raise ValueError("外部决策超时必须在 0 到 300 秒之间")
@@ -65,8 +95,7 @@ def request_decision(command, timeout, request, *, cancelled=lambda: False):
     deadline = time.monotonic() + timeout
     payload = dict(request, protocol_version=PROTOCOL_VERSION, request_id=uuid.uuid4().hex,
                    expires_at=time.time() + timeout)
-    candidate_ids = {candidate["id"] for candidate in payload["candidates"]}
-    if not candidate_ids:
+    if not payload["candidates"]:
         return None
     if cancelled():
         raise DecisionCancelled()
@@ -97,17 +126,21 @@ def request_decision(command, timeout, request, *, cancelled=lambda: False):
             raw = output.read(MAX_RESPONSE_BYTES + 1)
             if len(raw) > MAX_RESPONSE_BYTES:
                 raise ValueError("外部决策响应过大")
-            answer = json.loads(raw)
-            if (not isinstance(answer, dict)
-                    or type(answer.get("protocol_version")) is not int
-                    or answer["protocol_version"] != PROTOCOL_VERSION
-                    or answer.get("request_id") != payload["request_id"]
-                    or "candidate_id" not in answer):
-                raise ValueError("外部决策协议或请求编号不匹配")
-            selected = answer.get("candidate_id")
-            if selected is not None and (not isinstance(selected, str) or selected not in candidate_ids):
-                raise ValueError("外部决策返回了未知候选项")
-            return selected
+            try:
+                answer = json.loads(raw)
+                return validate_decision_answer(payload, answer)
+            except (RecursionError, TypeError) as error:
+                raise ValueError("外部决策响应格式无效") from error
         finally:
             if process.poll() is None:
                 _terminate(process)
+
+
+def request_decision(command, timeout, request, *, cancelled=lambda: False):
+    """兼容只交换候选 ID 的既有接入。"""
+    answer = request_action(command, timeout, request, cancelled=cancelled)
+    if answer is None or answer["action"] == "decline":
+        return None
+    if answer["action"] != "choose":
+        raise ValueError("此接入不支持查看动作")
+    return answer["candidate_id"]

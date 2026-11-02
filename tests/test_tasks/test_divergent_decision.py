@@ -17,7 +17,7 @@ OCR = [
 
 
 @pytest.fixture
-def adapter(monkeypatch):
+def adapter(monkeypatch, tmp_path):
     monkeypatch.setattr(decision.time, "sleep", lambda *_: None)
     auto = MagicMock()
     auto.ocr_result = OCR
@@ -28,7 +28,8 @@ def adapter(monkeypatch):
     cfg.get_value.side_effect = lambda key, default=None: default
     pause = SimpleNamespace(is_paused=lambda: False, stop_requested=False, checkpoint=MagicMock(),
                             generation=0, guard_generation=lambda *_: nullcontext())
-    return decision.DivergentDecision(auto, cfg, MagicMock(), pause)
+    from tasks.weekly.divergent_context import DivergentContext
+    return decision.DivergentDecision(auto, cfg, MagicMock(), pause, context=DivergentContext(auto, tmp_path))
 
 
 def test_two_card_layout_uses_ocr_anchors_without_layout_templates():

@@ -48,13 +48,29 @@ def active(envelope):
 def validate_response(request, response):
     ids = {item["id"] for item in request["candidates"]}
     if (not isinstance(response, dict) or type(response.get("protocol_version")) is not int
-            or response["protocol_version"] != 1 or response.get("request_id") != request["request_id"]
-            or "candidate_id" not in response):
+            or response["protocol_version"] != 1 or response.get("request_id") != request["request_id"]):
         raise ValueError("响应与请求不匹配")
-    choice = response["candidate_id"]
-    if choice is not None and (not isinstance(choice, str) or choice not in ids):
-        raise ValueError("候选项无效")
-    return response
+    if "action" not in response and "candidate_id" not in response:
+        raise ValueError("响应缺少动作")
+    choice = response.get("candidate_id")
+    action = response.get("action", "choose" if choice is not None else "decline")
+    if action == "choose":
+        if not isinstance(choice, str) or choice not in ids or not request.get("can_choose", True):
+            raise ValueError("候选项无效或当前不在选择页")
+    elif action == "inspect":
+        if not isinstance(response.get("control_id"), str) or response["control_id"] not in {item["id"] for item in request.get("controls", [])}:
+            raise ValueError("查看控件无效")
+    elif action == "back":
+        if not request.get("can_go_back", False):
+            raise ValueError("没有可返回的查看页面")
+    elif action != "decline":
+        raise ValueError("动作无效")
+    if not isinstance(response.get("reason", ""), str) or len(response.get("reason", "")) > 2000:
+        raise ValueError("理由无效")
+    memory = response.get("memory", {})
+    if not isinstance(memory, dict) or len(json.dumps(memory, ensure_ascii=False)) > 16000:
+        raise ValueError("构筑记录无效")
+    return dict(response, action=action)
 
 
 def serve(directory, timeout):
@@ -115,13 +131,16 @@ def pending_requests(directory, wait):
         time.sleep(.1)
 
 
-def respond(directory, request_id, candidate_id):
+def respond(directory, request_id, candidate_id, decision=None):
     path = request_path(directory, request_id)
     envelope = json.loads(path.read_text(encoding="utf-8"))
     if not active(envelope):
         raise ValueError("请求已经过期或任务已取消")
-    response = {"protocol_version": 1, "request_id": request_id, "candidate_id": candidate_id}
-    validate_response(envelope["request"], response)
+    response = dict(decision or {})
+    response.setdefault("protocol_version", 1)
+    response.setdefault("request_id", request_id)
+    response.setdefault("candidate_id", candidate_id)
+    response = validate_response(envelope["request"], response)
     destination = path.with_name(f"{request_id}.response.json")
     try:
         atomic_json(destination, response, replace=False)
@@ -141,11 +160,15 @@ def main():
     choice = parser.add_mutually_exclusive_group()
     choice.add_argument("--candidate-id")
     choice.add_argument("--decline", action="store_true")
+    choice.add_argument("--inspect", metavar="CONTROL_ID")
+    choice.add_argument("--back", action="store_true")
+    choice.add_argument("--decision-file", type=Path)
+    parser.add_argument("--reason", default="")
     args = parser.parse_args()
     if not 0 < args.timeout <= 300 or not 0 <= args.wait <= 60:
         parser.error("等待时间超出范围")
-    if args.action == "respond" and (not args.request_id or not (args.candidate_id or args.decline)):
-        parser.error("回复需要请求编号，以及候选编号或 --decline")
+    if args.action == "respond" and (not args.request_id or not (args.candidate_id or args.decline or args.inspect or args.back or args.decision_file)):
+        parser.error("回复需要请求编号及选择、查看、返回或决策文件")
     directory = args.directory.resolve()
     try:
         if args.action == "serve":
@@ -153,7 +176,18 @@ def main():
         elif args.action == "pending":
             pending_requests(directory, args.wait)
         else:
-            respond(directory, args.request_id, args.candidate_id)
+            decision = None
+            if args.decision_file:
+                decision = json.loads(args.decision_file.read_text(encoding="utf-8-sig"))
+                if not isinstance(decision, dict):
+                    raise ValueError("决策文件必须是对象")
+            elif args.inspect:
+                decision = {"action": "inspect", "control_id": args.inspect, "reason": args.reason}
+            elif args.back:
+                decision = {"action": "back", "reason": args.reason}
+            elif args.reason:
+                decision = {"reason": args.reason}
+            respond(directory, args.request_id, args.candidate_id, decision)
     except (OSError, ValueError, KeyError, TypeError) as error:
         print(f"决策桥接失败：{type(error).__name__}", file=sys.stderr)
         return 1

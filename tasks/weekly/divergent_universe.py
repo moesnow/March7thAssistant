@@ -15,6 +15,9 @@ from tasks.power.power import Power
 from tasks.weekly.weekly_reward import wait_for_weekly_reward
 
 
+TEAM_SLOT_CROP = (1098 / 1920, 922 / 1080, 375 / 1920, 96 / 1080)
+
+
 class DivergentUniverse:
     def __init__(self):
         self.screenshot = None  # 任务截图
@@ -28,13 +31,24 @@ class DivergentUniverse:
         self._agent_choices = None
 
     def _try_agent_choice(self, kind, title, area, confirm):
-        if cfg.get_value("divergent_decision_enable", False) is not True:
+        agent = self._get_agent_choices()
+        if agent is None:
             return False
+        return agent.choose(kind, title, area, confirm, self.current_stage)
+
+    def _get_agent_choices(self):
+        if cfg.get_value("divergent_decision_enable", False) is not True:
+            return None
         if self._agent_choices is None:
             from tasks.weekly.divergent_decision import DivergentDecision
             from utils.pause import pause_ctl
             self._agent_choices = DivergentDecision(auto, cfg, log, pause_ctl)
-        return self._agent_choices.choose(kind, title, area, confirm, self.current_stage)
+        return self._agent_choices
+
+    def _capture_agent_context(self, source):
+        agent = self._get_agent_choices()
+        if agent is not None:
+            agent.capture_context(source)
 
     @staticmethod
     def _get_count_config(cycle: Literal["daily", "weekly"]):
@@ -208,6 +222,9 @@ class DivergentUniverse:
             return False
 
         self.choose_team()
+        self._capture_agent_context("team_setup")
+        if agent := self._get_agent_choices():
+            agent.prepare(TEAM_SLOT_CROP)
 
         if type == "normal" and int(cfg.weekly_divergent_level) == 6:
             if not auto.click_element("./assets/images/screen/divergent_universe/astronomical.png", "image", 0.9, 10):
@@ -257,7 +274,7 @@ class DivergentUniverse:
         return False
 
     def choose_team(self):
-        team_slot_crop = (1098 / 1920, 922 / 1080, 375 / 1920, 96 / 1080)
+        team_slot_crop = TEAM_SLOT_CROP
         if auto.find_element("./assets/images/share/universe/empty_character_slot.png", "image_count", 0.8, crop=team_slot_crop, pixel_bgr=[233, 233, 233]) == 4:
             if auto.click_element("./assets/images/share/universe/empty_character_slot.png", "image", 0.8, crop=team_slot_crop, take_screenshot=False):
                 time.sleep(2)
@@ -402,6 +419,7 @@ class DivergentUniverse:
             if new_stage != self.current_stage:
                 self.stage_finish = False
                 self.current_stage = new_stage
+                self._capture_agent_context("exploration_hud")
                 log.hr(f"当前阶段 {current}/{total}，第{plane}位面，区域：{station}", 2)
                 if "首领" in station or "战斗" in station or "精英" in station or "转化" in station:
                     self.process_battle_stage()
