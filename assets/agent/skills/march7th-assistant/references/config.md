@@ -60,6 +60,8 @@ scheduled_tasks:
 - 差分宇宙 `weekly_divergent_*` / `divergent_*`，货币战争 `currencywars_*`，模拟宇宙 `universe_*`，锄大地 `fight_*`。
   模拟宇宙与锄大地调用外部开源工具，首次使用可能需要在图形界面中下载或更新。
 
+- 外部决策（支持该接口的版本）：`divergent_decision_enable` 默认关闭，`divergent_decision_command` 是程序与参数列表，`divergent_decision_timeout` 限制等待时间，`divergent_decision_context` 提供队伍和构筑偏好。配置与文件桥操作见[决策说明](decisions.md)；旧版不能仅靠添加配置启用此功能。
+
 ## 流程编排
 
 流程保存在 `config/workflows/<目录>/workflow.yaml`，说明见 `assets/docs/Workflow.md`。

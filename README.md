@@ -64,6 +64,8 @@ DeepSeek Harness、Codex、Claude Code 等能执行命令的 AI 助手都可以�
 
 AI 助手使用的是不需要管理员权限的命令行入口 `m7a.exe`（运行任务时会弹出一次 UAC），说明文件随程序一起发布在 [`assets/agent/`](assets/agent/skills/march7th-assistant/SKILL.md)，同样适用于其他支持 Skill 的 AI 助手。详见 [AI 助手文档](https://m7a.top/docs/#/assets/docs/Agent)。
 
+如果希望 Agent 参与差分宇宙的祝福、方程、奇物与下一站选择，可以按[外部决策说明](assets/docs/AgentDecision.md)开启可选接口。接口不限定 Agent 品牌；普通任务默认使用原有策略，旧版发布包需要升级到包含该接口的版本。
+
 ## 源码运行
 
 如果你是完全不懂的小白，请通过上面的方式下载安装，可以不用往下看了。

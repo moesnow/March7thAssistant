@@ -8,6 +8,8 @@
 
 示例 `assets/agent/examples/decision_bridge.py` 使用本地文件队列：小助手等待决策时，Agent 读取候选文本、分析并回复。Codex、Claude Code、DeepSeek Harness 等能执行本地命令的 AI 助手都可以使用，不要求某个品牌或独立 CLI。桥接程序本身不调用模型或控制鼠标，不依赖 MCP 或模型 SDK。
 
+当前通过 `config.yaml` 配置，没有新增图形界面开关。修改后在下次任务启动时生效；已安装过用户级 Skill 的用户，应同步更新 Skill 文件夹以获得决策操作指引。
+
 将该文件复制到安装目录之外，例如 `D:/M7A-Agent/decision_bridge.py`，使用含 `psutil` 的 Python（源码环境已有此依赖）配置：
 
 ```yaml

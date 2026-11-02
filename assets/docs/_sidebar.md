@@ -5,6 +5,7 @@
 - **进阶使用**
   - [流程编排](/assets/docs/Workflow.md)
   - [AI 助手](/assets/docs/Agent.md)
+  - [Agent 外部决策](/assets/docs/AgentDecision.md)
   - [后台运行](/assets/docs/Background.md)
   - [Docker 部署](/assets/docs/Docker.md)
   - [Termux 安卓部署](/assets/docs/Termux.md)
