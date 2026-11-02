@@ -120,7 +120,54 @@ class AgentSession:
 
     def _renew(self, state):
         state.update(last_activity=time.time(), expires_at=time.time() + self.ttl)
+        gameplay = self._gameplay()
+        if gameplay and not gameplay["paused"]:
+            state.update(gameplay_id=gameplay["id"], gameplay_epoch=gameplay["epoch"], last_game_activity=time.time())
         _write(self.state_path, state)
+
+    @contextmanager
+    def gameplay(self, game_pid):
+        """仅由实际差分宇宙对局的作用域登记；退出、异常或进程结束均不再计时。"""
+        activity = None
+        try:
+            game = psutil.Process(game_pid) if game_pid else None
+            if game is not None and game.is_running():
+                owner = psutil.Process()
+                activity = {"id": uuid.uuid4().hex, "pid": owner.pid, "created_at": owner.create_time(),
+                            "game_pid": game.pid, "game_created_at": game.create_time(),
+                            "control_file": os.environ.get("MARCH7TH_CONTROL_FILE")}
+        except psutil.Error:
+            pass
+        if activity is None:
+            yield
+            return
+        path = self.directory / "gameplay.json"
+        with self._lock():
+            _write(path, activity)
+        try:
+            yield
+        finally:
+            with self._lock():
+                current = _read(path)
+                if current and current.get("id") == activity["id"]:
+                    path.unlink(missing_ok=True)
+
+    def _gameplay(self):
+        activity = _read(self.directory / "gameplay.json")
+        if not activity or not self._alive(activity["pid"], activity["created_at"]) or not self._alive(activity["game_pid"], activity["game_created_at"]):
+            return None
+        control = activity.get("control_file")
+        activity["epoch"] = 0
+        activity["paused"] = False
+        if control:
+            from utils.pause import read_state, STATE_PAUSED, STATE_PAUSING, STATE_STOPPING
+            if read_state(control) in (STATE_PAUSED, STATE_PAUSING, STATE_STOPPING):
+                activity["paused"] = True
+            try:
+                activity["epoch"] = Path(control + ".state").stat().st_mtime_ns
+            except FileNotFoundError:
+                pass
+        return activity
 
     def connect(self, client_name, session_label="", *, owner=None):
         if (not isinstance(client_name, str) or not client_name.strip() or len(client_name) > 80
@@ -189,7 +236,14 @@ class AgentSession:
                                     "kind": envelope["request"].get("kind"), "expires_at": envelope["expires_at"]})
             except (ValueError, KeyError, TypeError):
                 continue
-        result = {key: state.get(key) for key in ("client_name", "session_label", "connected_at", "last_activity", "expires_at", "last_fallback")}
+        gameplay = self._gameplay()
+        running = bool(gameplay and not gameplay["paused"])
+        last_activity = (state.get("last_game_activity") if connected and running
+                         and state.get("gameplay_id") == gameplay["id"]
+                         and state.get("gameplay_epoch") == gameplay["epoch"] else None)
+        result = {key: state.get(key) for key in ("client_name", "session_label", "connected_at", "expires_at", "last_fallback")}
+        result.update(last_activity=last_activity, divergent_running=running,
+                      divergent_paused=bool(gameplay and gameplay["paused"]))
         result.update(state="waiting" if connected and pending else "idle" if connected else "disconnected" if state.get("session_id") else "unclaimed",
                       pending=pending)
         return result
@@ -198,13 +252,16 @@ class AgentSession:
         if isinstance(wait, bool) or not isinstance(wait, (int, float)) or not math.isfinite(wait) or not 0 <= wait <= 20:
             raise ValueError("单次等待必须在 0 至 20 秒之间")
         deadline = time.monotonic() + wait
+        renewed = False
         while True:
             if cancelled():
                 raise ValueError("等待已取消")
             with self._lock():
                 state = _read(self.state_path)
                 self._authenticate(state, session_id, token)
-                self._renew(state)
+                if not renewed:
+                    self._renew(state)
+                    renewed = True
                 self._clean()
                 pending = []
                 for path in sorted(self.queue.glob("*.request.json")):
@@ -212,6 +269,10 @@ class AgentSession:
                     if self._valid_request(envelope, state) and not path.with_name(path.name.replace(".request.", ".response.")).exists():
                         pending.append(envelope["request"])
             if pending or time.monotonic() >= deadline:
+                with self._lock():
+                    state = _read(self.state_path)
+                    self._authenticate(state, session_id, token)
+                    self._renew(state)
                 return {"pending": pending, "connection": self.status()}
             time.sleep(.1)
 
@@ -288,8 +349,11 @@ class AgentSession:
                         return None
                     answer = _read(response_path)
                     if answer is not None:
+                        answer = validate_decision_answer(payload, answer)
+                        state.pop("last_fallback", None)
+                        self._renew(state)
                         fallback = ""
-                        return dict(validate_decision_answer(payload, answer), _connection_id=envelope["session_id"])
+                        return dict(answer, _connection_id=envelope["session_id"])
                 time.sleep(.05)
             return None
         finally:

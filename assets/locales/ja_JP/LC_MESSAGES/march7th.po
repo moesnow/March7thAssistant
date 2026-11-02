@@ -141,7 +141,7 @@ msgstr "開拓力設定"
 msgid "体力计划"
 msgstr "開拓力プラン"
 
-#: app/card/agent_decision_setting_card.py:210
+#: app/card/agent_decision_setting_card.py:223
 msgid "配置"
 msgstr "設定"
 
@@ -1334,7 +1334,7 @@ msgstr "続行してタッチモードを有効にしますか？"
 msgid "确认"
 msgstr "確認"
 
-#: app/card/agent_decision_setting_card.py:47
+#: app/card/agent_decision_setting_card.py:52
 msgid "取消"
 msgstr "キャンセル"
 
@@ -1912,11 +1912,11 @@ msgstr "自動スキップ（スキップボタンが出たら自動クリック
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "自動選択（任意の会話選択肢を自動選択）"
 
-#: app/card/agent_decision_setting_card.py:211
+#: app/card/agent_decision_setting_card.py:224
 msgid "关"
 msgstr "オフ"
 
-#: app/card/agent_decision_setting_card.py:236
+#: app/card/agent_decision_setting_card.py:249
 msgid "开"
 msgstr "オン"
 
@@ -4594,7 +4594,7 @@ msgstr "バージョン"
 msgid "使用说明"
 msgstr "使用説明"
 
-#: app/card/agent_decision_setting_card.py:46
+#: app/card/agent_decision_setting_card.py:51
 msgid "保存"
 msgstr "保存"
 
@@ -4722,7 +4722,7 @@ msgstr ""
 msgid "选择已保存的模板图片路径"
 msgstr "保存済みテンプレート画像のパスを選択"
 
-#: app/card/agent_decision_setting_card.py:94
+#: app/card/agent_decision_setting_card.py:102
 msgid "浏览"
 msgstr "参照"
 
@@ -6483,46 +6483,46 @@ msgstr ""
 msgid "常规模式"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:43
+#: app/card/agent_decision_setting_card.py:48
 msgid "Agent 辅助决策配置"
 msgstr ""
 
 msgid "由当前 Agent 处理选择请求；仅打开开关不会启动 AI。超时或无有效回复时使用原有策略。"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:89
+#: app/card/agent_decision_setting_card.py:97
 msgid "接入程序"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:92
+#: app/card/agent_decision_setting_card.py:100
 msgid "选择可执行文件，例如 Python 或你的接入程序"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:100
+#: app/card/agent_decision_setting_card.py:108
 msgid "启动参数（每行一个，不需要加引号）"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:111
+#: app/card/agent_decision_setting_card.py:119
 msgid "单次等待时间（秒）"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:122
+#: app/card/agent_decision_setting_card.py:130
 msgid "队伍与构筑偏好（可选）"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:171
+#: app/card/agent_decision_setting_card.py:184
 msgid "选择接入程序"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:196
+#: app/card/agent_decision_setting_card.py:209
 msgid "请检查接入程序是否存在、参数是否为空或过长；不支持批处理文件，偏好最多 8000 字。"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:206
+#: app/card/agent_decision_setting_card.py:219
 msgid "启用 Agent 辅助决策"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:207
+#: app/card/agent_decision_setting_card.py:220
 msgid ""
 "祝福、方程、奇物与下一站由 Agent 选择，战斗保持自动。\n"
 "需要 Agent 持续回复；超时回退原策略，下次任务生效。"
@@ -6548,70 +6548,96 @@ msgstr ""
 msgid "已断开"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:33
+#: app/card/agent_decision_setting_card.py:34
 msgid "最近活动：{seconds} 秒前"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:34
+#: app/card/agent_decision_setting_card.py:39
 msgid "未接管，使用原策略"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:34
+#: app/card/agent_decision_setting_card.py:39
 msgid "等待超时，使用原策略"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:35
+#: app/card/agent_decision_setting_card.py:40
 msgid "连接断开，使用原策略"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:35
+#: app/card/agent_decision_setting_card.py:40
 msgid "请求已取消"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:52
+#: app/card/agent_decision_setting_card.py:57
 msgid "先在 Agent 聊天中接管，再运行任务。已配置接口不代表 Agent 已接管；断连或超时使用原策略。"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:56
+#: app/card/agent_decision_setting_card.py:61
 msgid "接入方式"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:58
+#: app/card/agent_decision_setting_card.py:63
 msgid "内置 Agent 连接"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:59
+#: app/card/agent_decision_setting_card.py:64
 msgid "高级自定义程序"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:67
 msgid "Codex（TOML）"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:67
 msgid "通用（JSON）"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:68
+#: app/card/agent_decision_setting_card.py:73
 msgid "复制接入配置"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:69
+#: app/card/agent_decision_setting_card.py:74
 msgid "复制聊天接管指令"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:70
+#: app/card/agent_decision_setting_card.py:75
 msgid "断开"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:153
+#: app/card/agent_decision_setting_card.py:166
 msgid "连接状态暂不可用"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:160
+#: app/card/agent_decision_setting_card.py:173
 msgid "连接位于 {path} 的三月七并监管差分宇宙；未启动任务时等待，不启动新对局；任务结束后断开接管。"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:231
+#: app/card/agent_decision_setting_card.py:244
 msgid "需要 Agent 持续回复；断连或超时使用原策略。"
+msgstr ""
+
+#: app/card/agent_decision_setting_card.py:32
+msgid "会话：{label}"
+msgstr ""
+
+#: app/card/agent_decision_setting_card.py:38
+msgid "等待差分宇宙任务"
+msgstr ""
+
+#: app/card/agent_decision_setting_card.py:72
+msgid "Codex Desktop"
+msgstr ""
+
+#: app/card/agent_decision_setting_card.py:72
+msgid "其他 MCP 客户端"
+msgstr ""
+
+#: app/card/agent_decision_setting_card.py:84
+msgid "先复制配置到所用客户端，再把接管指令发给 Agent。连接成功后可启动差分宇宙。"
+msgstr ""
+
+#: app/card/agent_decision_setting_card.py:134
+msgid "可填写队伍和构筑目标；留空时由 Agent 根据游戏画面判断。"
+msgstr ""
+
+#: app/card/agent_decision_setting_card.py:36
+msgid "差分宇宙已暂停"
 msgstr ""

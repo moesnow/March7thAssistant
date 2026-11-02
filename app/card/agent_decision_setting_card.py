@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QSignalBlocker, QTimer
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QApplication
 from qfluentwidgets import (
     SettingCard, SwitchButton, IndicatorPosition, PushButton, MessageBox,
-    BodyLabel, LineEdit, TextEdit, FluentIcon, ComboBox,
+    BodyLabel, CaptionLabel, LineEdit, TextEdit, FluentIcon, ComboBox,
 )
 
 from app.common.scroll_dialog import SplitFadeDialogMixin, available_host_size, build_scroll_area
@@ -26,14 +26,19 @@ def connection_text(mode=None, compact=False):
     labels = {"unclaimed": tr("未接管"), "idle": tr("已接管空闲"),
               "waiting": tr("等待决策"), "disconnected": tr("已断开")}
     text = labels[state["state"]]
-    if state.get("client_name"):
+    if state["state"] in ("idle", "waiting") and state.get("client_name"):
         text += " · " + state["client_name"][:16 if compact else 32]
-        if state.get("session_label"):
-            text += ("\n" if compact else " · ") + state["session_label"][:20 if compact else 40]
-        text += " · " + tr("最近活动：{seconds} 秒前").format(seconds=max(0, int(time.time() - state["last_activity"])))
+        if state.get("session_label") and not compact:
+            text += "\n" + tr("会话：{label}").format(label=state["session_label"][:60])
+        if state.get("divergent_running") and state.get("last_activity") is not None:
+            text += "\n" + tr("最近活动：{seconds} 秒前").format(seconds=max(0, int(time.time() - state["last_activity"])))
+        elif state.get("divergent_paused"):
+            text += "\n" + tr("差分宇宙已暂停")
+        elif not state.get("divergent_running"):
+            text += "\n" + tr("等待差分宇宙任务")
     reasons = {"not_connected": tr("未接管，使用原策略"), "timeout": tr("等待超时，使用原策略"),
                "disconnected": tr("连接断开，使用原策略"), "cancelled": tr("请求已取消")}
-    if state.get("last_fallback"):
+    if state.get("divergent_running") and state.get("last_fallback"):
         text += "\n" + reasons.get(state["last_fallback"], state["last_fallback"])
     return text
 
@@ -64,7 +69,7 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         layout.addWidget(self.statusLabel)
         connection_row = QHBoxLayout()
         self.configFormat = ComboBox(content)
-        self.configFormat.addItems([tr("Codex（TOML）"), tr("通用（JSON）")])
+        self.configFormat.addItems([tr("Codex Desktop"), tr("其他 MCP 客户端")])
         self.copyConfigButton = PushButton(tr("复制接入配置"), content)
         self.copyPromptButton = PushButton(tr("复制聊天接管指令"), content)
         self.disconnectButton = PushButton(tr("断开"), content)
@@ -76,6 +81,9 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         prompt_row.addWidget(self.copyPromptButton)
         prompt_row.addWidget(self.disconnectButton)
         layout.addLayout(prompt_row)
+        self.connectionGuide = CaptionLabel(tr("先复制配置到所用客户端，再把接管指令发给 Agent。连接成功后可启动差分宇宙。"), content)
+        self.connectionGuide.setWordWrap(True)
+        layout.addWidget(self.connectionGuide)
         self.copyConfigButton.clicked.connect(self._copy_config)
         self.copyPromptButton.clicked.connect(self._copy_prompt)
         self.disconnectButton.clicked.connect(self._disconnect)
@@ -123,6 +131,7 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         self.contextEdit = TextEdit(content)
         self.contextEdit.setAcceptRichText(False)
         self.contextEdit.setFixedHeight(80)
+        self.contextEdit.setPlaceholderText(tr("可填写队伍和构筑目标；留空时由 Agent 根据游戏画面判断。"))
         self.contextEdit.setPlainText(str(cfg.get_value("divergent_decision_context", "") or ""))
         layout.addWidget(self.contextEdit)
         self.errorLabel = BodyLabel("", content)
@@ -144,11 +153,15 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         self.commandPanel.setVisible(advanced)
         for widget in (self.configFormat, self.copyConfigButton, self.copyPromptButton, self.disconnectButton):
             widget.setVisible(not advanced)
+        self.connectionGuide.setVisible(not advanced)
+        self._refresh()
 
     def _refresh(self):
         try:
             self.statusLabel.setText(connection_text(self.modeComboBox.currentData()))
-            self.disconnectButton.setEnabled(AgentSession().status()["state"] in ("idle", "waiting"))
+            connected = AgentSession().status()["state"] in ("idle", "waiting")
+            self.disconnectButton.setEnabled(connected)
+            self.disconnectButton.setVisible(connected and self.modeComboBox.currentData() == "connected")
         except (OSError, ValueError, TypeError, KeyError):
             self.statusLabel.setText(tr("连接状态暂不可用"))
             self.disconnectButton.setEnabled(False)
@@ -216,7 +229,7 @@ class AgentDecisionSettingCard(SettingCard):
         self.setValue(cfg.get_value(self.configname, False) is True)
         self.configButton.clicked.connect(self._configure)
         self.switchButton.checkedChanged.connect(self._on_checked)
-        self.setFixedHeight(132)
+        self.setFixedHeight(104)
         self.contentLabel.setWordWrap(True)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._refresh)

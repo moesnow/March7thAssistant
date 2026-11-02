@@ -153,6 +153,19 @@ class DivergentUniverse:
         if universe_type is None:
             universe_type = cfg.weekly_divergent_type
         if self.start_war(universe_type):
+            if cfg.get_value("divergent_decision_enable", False) is True:
+                from utils.agent_session import AgentSession
+                game_pid = None
+                try:
+                    from module.game import get_game_controller
+                    from win32process import GetWindowThreadProcessId
+                    hwnd = get_game_controller().get_window_handle()
+                    if hwnd:
+                        game_pid = GetWindowThreadProcessId(hwnd)[1]
+                except Exception:
+                    pass  # 活动计时缺少游戏进程证据时不启用，不影响原有对局。
+                with AgentSession().gameplay(game_pid):
+                    return self.loop()
             return self.loop()
         return False
 

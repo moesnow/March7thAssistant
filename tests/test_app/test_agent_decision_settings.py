@@ -182,3 +182,38 @@ def test_gui_shows_real_owner_and_disconnect_revokes_lease(settings, qtbot, host
     dialog.disconnectButton.click()
     assert store.status()["state"] == "disconnected"
     assert "已断开" in dialog.statusLabel.text()
+
+
+def test_idle_and_disconnected_ui_hide_activity_and_old_session(settings, qtbot, host, tmp_path, monkeypatch):
+    module, values, _ = settings
+    from utils.agent_session import AgentSession
+    store = AgentSession(tmp_path / "connection")
+    values["divergent_decision_mode"] = "connected"
+    monkeypatch.setattr(module, "AgentSession", lambda: store)
+    auth = store.connect("Desktop", "active chat")
+    dialog = module.AgentDecisionDialog(host)
+    qtbot.addWidget(dialog)
+    assert "最近活动" not in dialog.statusLabel.text()
+    assert "等待差分宇宙任务" in dialog.statusLabel.text()
+    store.disconnect(auth["session_id"], auth["token"])
+    dialog._refresh()
+    assert dialog.statusLabel.text() == "已断开"
+    assert not dialog.disconnectButton.isVisible()
+
+
+def test_activity_ui_appears_only_in_running_game_scope(settings, qtbot, host, tmp_path, monkeypatch):
+    import os
+    module, values, _ = settings
+    from utils.agent_session import AgentSession
+    store = AgentSession(tmp_path / "connection")
+    values["divergent_decision_mode"] = "connected"
+    monkeypatch.setattr(module, "AgentSession", lambda: store)
+    auth = store.connect("Desktop", "active chat")
+    dialog = module.AgentDecisionDialog(host)
+    qtbot.addWidget(dialog)
+    with store.gameplay(os.getpid()):
+        store.wait(session_id=auth["session_id"], token=auth["token"], wait=0)
+        dialog._refresh()
+        assert "最近活动" in dialog.statusLabel.text()
+    dialog._refresh()
+    assert "最近活动" not in dialog.statusLabel.text()

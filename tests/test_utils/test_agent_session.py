@@ -176,3 +176,63 @@ def test_cli_session_stdout_is_json_without_gui_imports():
     assert result.returncode == 0, result.stderr
     assert json.loads(result.stdout)["state"] in ("unclaimed", "idle", "waiting", "disconnected")
     assert "Fluent" not in result.stdout
+
+
+def test_visible_activity_only_exists_during_live_divergent_scope(store):
+    import os
+    auth = credentials(store)
+    store.wait(**auth, wait=0)
+    assert store.status()["last_activity"] is None
+    assert not store.status()["divergent_running"]
+    assert "last_game_activity" not in _read(store.state_path)
+    with store.gameplay(os.getpid()):
+        assert store.status()["last_activity"] is None
+        store.wait(**auth, wait=0)
+        assert store.status()["last_activity"] is not None
+        assert store.status()["divergent_running"]
+    recorded = _read(store.state_path)["last_game_activity"]
+    store.wait(**auth, wait=0)
+    assert _read(store.state_path)["last_game_activity"] == recorded
+    assert store.status()["last_activity"] is None
+    with store.gameplay(os.getpid()):
+        assert store.status()["last_activity"] is None  # 新一局不沿用旧记录。
+
+
+def test_game_exit_or_pause_hides_activity_and_resume_requires_new_contact(store, monkeypatch, tmp_path):
+    import os
+    control = str(tmp_path / "run.control")
+    state_path = Path(control + ".state")
+    monkeypatch.setenv("MARCH7TH_CONTROL_FILE", control)
+    _write(state_path, {"state": "running"})
+    auth = credentials(store)
+    with store.gameplay(os.getpid()):
+        store.wait(**auth, wait=0)
+        assert store.status()["last_activity"] is not None
+        _write(state_path, {"state": "paused"})
+        assert not store.status()["divergent_running"]
+        store.wait(**auth, wait=0)
+        assert store.status()["last_activity"] is None
+        _write(state_path, {"state": "running"})
+        assert store.status()["last_activity"] is None
+        store.wait(**auth, wait=0)
+        assert store.status()["last_activity"] is not None
+    process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(20)"])
+    try:
+        with store.gameplay(process.pid):
+            store.wait(**auth, wait=0)
+            assert store.status()["divergent_running"]
+            process.kill()
+            process.wait()
+            assert not store.status()["divergent_running"]
+            assert store.status()["last_activity"] is None
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait()
+
+
+def test_invalid_game_scope_preserves_body_exceptions(store):
+    import psutil
+    with pytest.raises(psutil.Error):
+        with store.gameplay(None):
+            raise psutil.Error("body failed")
