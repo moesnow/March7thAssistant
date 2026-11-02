@@ -19,6 +19,7 @@ from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, Ex
 from .card.messagebox_custom import MessageBoxEdit
 from .challenge_config_dialog import ChallengeConfigCard
 from .card.stationprioritysettingcard import StationPrioritySettingCard
+from .card.agent_decision_setting_card import AgentDecisionSettingCard
 from module.config import cfg
 from module.notification import init_notifiers
 from module.localization import tr, tn
@@ -678,6 +679,8 @@ class SettingInterface(ScrollArea):
             tr('站点优先级'),
             tr("自定义差分宇宙「选择下一站」的站点优先级"),
         )
+
+        self.agentDecisionCard = AgentDecisionSettingCard()
 
         self.universeEnableCard = ExpandableSwitchSettingCard(
             "universe_enable",
@@ -2747,6 +2750,7 @@ class SettingInterface(ScrollArea):
         self.UniverseGroup.addSettingCard(self.weeklyDivergentBonusEnableCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentLevelCard)
         self.UniverseGroup.addSettingCard(self.stationPriorityCard)
+        self.UniverseGroup.addSettingCard(self.agentDecisionCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentStableModeCard)
         self.UniverseGroup.addSettingCard(self.divergentAutoSaveCard)
 

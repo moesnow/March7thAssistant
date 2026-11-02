@@ -6,6 +6,8 @@
 
 完整协议与配置示例在安装/源码目录的 `assets/docs/AgentDecision.md`。内置文件桥脚本是 `assets/agent/examples/decision_bridge.py`，可复制到独立目录；读取其配置参数确定实际 Python、脚本和队列路径，不要假定固定用户路径。
 
+支持图形界面的版本也可在「设置 → 差分宇宙 → 启用 Agent 辅助决策」切换，并点「配置」修改程序、逐行参数、超时和偏好。开关与 `config.yaml` 对应同一配置，下次任务生效；开关本身不会启动或唤醒 Agent。
+
 文件桥同时适用于 Codex、Claude Code、DeepSeek Harness 等能执行本地命令的 Agent。它不调用模型，也不控制游戏；当前 Agent 自己读取、判断、回复。
 
 ## 在一次已授权的任务中参与选择

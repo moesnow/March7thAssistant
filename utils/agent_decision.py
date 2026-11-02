@@ -37,16 +37,21 @@ def _terminate(process):
         process.wait(timeout=3)
 
 
-def request_decision(command, timeout, request, *, cancelled=lambda: False):
-    """同步等待一个候选 ID；失败抛 ValueError/OSError，绝不执行模型返回的命令。"""
+def validate_decision_command(command):
+    """GUI 与运行时共用参数列表校验，校验时不执行程序。"""
     if (not isinstance(command, (list, tuple)) or not command
             or len(command) > 32
             or any(not isinstance(arg, str) or not arg or len(arg) > 4096 for arg in command)):
         raise ValueError("外部决策命令必须是非空的参数列表")
-    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or not 0 < timeout <= 300:
-        raise ValueError("外部决策超时必须在 0 到 300 秒之间")
     if os.name == "nt" and os.path.splitext(command[0])[1].lower() in (".bat", ".cmd"):
         raise ValueError("请直接指定可执行文件，不使用批处理命令")
+
+
+def request_decision(command, timeout, request, *, cancelled=lambda: False):
+    """同步等待一个候选 ID；失败抛 ValueError/OSError，绝不执行模型返回的命令。"""
+    validate_decision_command(command)
+    if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or not 0 < timeout <= 300:
+        raise ValueError("外部决策超时必须在 0 到 300 秒之间")
 
     payload = dict(request, protocol_version=PROTOCOL_VERSION, request_id=uuid.uuid4().hex)
     candidate_ids = {candidate["id"] for candidate in payload["candidates"]}
