@@ -16,7 +16,8 @@ OCR = [
 
 
 @pytest.fixture
-def adapter():
+def adapter(monkeypatch):
+    monkeypatch.setattr(decision.time, "sleep", lambda *_: None)
     auto = MagicMock()
     auto.ocr_result = OCR
     auto.screenshot.size = (800, 600)
@@ -105,3 +106,12 @@ def test_station_extra_confirmation_only_after_success(adapter, monkeypatch):
     monkeypatch.setattr(decision, "request_decision", lambda *args, **kwargs: "text-1")
     assert adapter.choose("station", "选择下一站", AREA, CONFIRM, "")
     assert adapter.auto.click_element.call_count == 3
+
+
+def test_opening_animation_settles_before_collecting_text(adapter, monkeypatch):
+    state = {"settled": False}
+    monkeypatch.setattr(decision.time, "sleep", lambda *_: state.update(settled=True))
+    adapter.auto.perform_ocr.side_effect = lambda: setattr(adapter.auto, "ocr_result", OCR if state["settled"] else [])
+    monkeypatch.setattr(decision, "request_decision", lambda *args, **kwargs: "text-1")
+    assert adapter.choose("equation", "选择方程", AREA, CONFIRM, "")
+    assert adapter.history == [{"kind": "equation", "text": "终结技伤害提高"}]

@@ -1,5 +1,7 @@
 """差分宇宙的可选决策适配器，所有识别和点击仍复用小助手。"""
 
+import time
+
 from utils.agent_decision import DecisionCancelled, request_decision
 
 
@@ -34,10 +36,13 @@ class DivergentDecision:
 
     def choose(self, kind, title, area, confirm, stage):
         """True 表示本轮已处理或界面失效；False 才交回原策略。"""
+        # 与原选择流程相同，等待卡片展开，避免只识别到已出现的标题。
+        time.sleep(2)
         self.auto.take_screenshot(area)
         self.auto.perform_ocr()
         candidates = text_candidates(self.auto.ocr_result, self.auto.screenshot.size, area)
         if not candidates:
+            self.log.warning("外部决策未识别到候选文本，使用原有策略")
             return False
         self.log.info(f"等待外部决策：{kind}，{len(candidates)} 个文本锚点")
         request = {

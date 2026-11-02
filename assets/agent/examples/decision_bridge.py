@@ -81,7 +81,14 @@ def pending_requests(directory, wait):
         for path in sorted(directory.glob("*.request.json")):
             try:
                 envelope = json.loads(path.read_text(encoding="utf-8"))
-                if active(envelope) and not path.with_name(path.name.replace(".request.", ".response.")).exists():
+                response = path.with_name(path.name.replace(".request.", ".response."))
+                if not active(envelope):
+                    # 强制取消不会执行 serve 的 finally；只清理本桥接生成的请求文件。
+                    request_id = envelope["request"]["request_id"]
+                    if path == request_path(directory, request_id):
+                        path.unlink(missing_ok=True)
+                        response.unlink(missing_ok=True)
+                elif not response.exists():
                     found.append(envelope)
             except (OSError, ValueError, KeyError, TypeError):
                 continue

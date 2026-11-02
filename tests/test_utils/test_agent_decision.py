@@ -112,3 +112,15 @@ def test_expired_request_cannot_be_answered(tmp_path):
 def test_request_id_cannot_escape_queue(tmp_path):
     with pytest.raises(ValueError):
         bridge.request_path(tmp_path, "../../other-file")
+
+
+def test_pending_cleans_cancelled_requests(tmp_path, capsys):
+    request_id = "b" * 32
+    pending = bridge.request_path(tmp_path, request_id)
+    response = tmp_path / f"{request_id}.response.json"
+    bridge.atomic_json(pending, {"expires_at": 0, "request": dict(REQUEST, request_id=request_id)})
+    bridge.atomic_json(response, {"candidate_id": "text-1"})
+    bridge.pending_requests(tmp_path, 0)
+    assert json.loads(capsys.readouterr().out) == {"pending": []}
+    assert not pending.exists()
+    assert not response.exists()

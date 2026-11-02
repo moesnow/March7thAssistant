@@ -235,7 +235,7 @@ divergent_auto_save_enable: true # 探索成功后自动保存到第一个空存
 # 外部程序通过 stdin/stdout 交换版本化 JSON；不执行响应中的命令或坐标。
 # 协议与可直接使用的 Agent 示例见 assets/docs/AgentDecision.md。
 divergent_decision_enable: false # 默认关闭，禁用或决策失败时使用原有策略。
-divergent_decision_command: [] # 可执行文件与参数列表，例如 ["python", "D:/M7A-Agent/codex_decider.py"]。
+divergent_decision_command: [] # 可执行文件与参数列表，例如 ["python", "D:/M7A-Agent/my_decider.py"]。
 divergent_decision_timeout: 60 # 单次决策超时（秒），最大 300；暂停或停止会取消当前请求。
 divergent_decision_context: "" # 可填写当前队伍、构筑目标和偏好，不要填写密码或令牌。
 
