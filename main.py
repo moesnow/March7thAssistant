@@ -4,6 +4,16 @@ import argparse
 # 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
+# 必须在 GUI、日志和游戏初始化前分流，保持 MCP stdout 只有协议数据。
+if sys.argv[1:] in (["--agent-mcp"], ["--agent-session"]):
+    from utils.console import ensure_utf8_output
+    ensure_utf8_output()
+    from utils.agent_service import run_mcp, session_main
+    if sys.argv[1] == "--agent-mcp":
+        run_mcp()
+        sys.exit(0)
+    sys.exit(session_main())
+
 from utils.console import ensure_utf8_output
 
 # 输出流固定成 UTF-8：非 UTF-8 环境（cp1252 / cp936 / cp932 的控制台或管道）下打印中文会直接抛
@@ -79,6 +89,8 @@ def parse_args():
 
     # 脚本与 AI Agent 参数组：查询类参数无需管理员权限，运行类参数只影响本次运行、不修改配置
     agent = parser.add_argument_group('脚本与 AI Agent')
+    agent.add_argument('--agent-mcp', action='store_true', help='启动本机 STDIO MCP 服务（独立使用）')
+    agent.add_argument('--agent-session', action='store_true', help='从 stdin 读取一次 Agent 会话 JSON（独立使用）')
     agent.add_argument(
         '--status',
         action='store_true',
@@ -130,6 +142,8 @@ def parse_args():
     agent.add_argument('--run-id', help=argparse.SUPPRESS)
 
     args = parser.parse_args()
+    if args.agent_mcp or args.agent_session:
+        parser.error('--agent-mcp / --agent-session 必须独立使用')
 
     # 查询类命令只读配置：可能由未提权的 m7a.exe 调用，安装目录不一定可写
     if args.list or args.list_workflows:

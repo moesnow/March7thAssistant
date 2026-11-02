@@ -1,10 +1,13 @@
 """差分宇宙外部决策的开关与接入配置，不在界面进程中运行外部程序。"""
 
-from PySide6.QtCore import Qt, QSignalBlocker
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog
+import os
+import time
+
+from PySide6.QtCore import Qt, QSignalBlocker, QTimer
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QApplication
 from qfluentwidgets import (
     SettingCard, SwitchButton, IndicatorPosition, PushButton, MessageBox,
-    BodyLabel, LineEdit, TextEdit, FluentIcon,
+    BodyLabel, LineEdit, TextEdit, FluentIcon, ComboBox,
 )
 
 from app.common.scroll_dialog import SplitFadeDialogMixin, available_host_size, build_scroll_area
@@ -12,6 +15,27 @@ from app.components.ascii_spin_box import AsciiSpinBox
 from module.config import cfg
 from module.localization import tr
 from utils.agent_decision import validate_decision_command
+from utils.agent_session import AgentSession, decision_mode
+from utils.agent_service import connection_config
+
+
+def connection_text(mode=None, compact=False):
+    if (mode or decision_mode(cfg)) == "command":
+        return tr("高级自定义程序：连接状态未知")
+    state = AgentSession().status()
+    labels = {"unclaimed": tr("未接管"), "idle": tr("已接管空闲"),
+              "waiting": tr("等待决策"), "disconnected": tr("已断开")}
+    text = labels[state["state"]]
+    if state.get("client_name"):
+        text += " · " + state["client_name"][:16 if compact else 32]
+        if state.get("session_label"):
+            text += ("\n" if compact else " · ") + state["session_label"][:20 if compact else 40]
+        text += " · " + tr("最近活动：{seconds} 秒前").format(seconds=max(0, int(time.time() - state["last_activity"])))
+    reasons = {"not_connected": tr("未接管，使用原策略"), "timeout": tr("等待超时，使用原策略"),
+               "disconnected": tr("连接断开，使用原策略"), "cancelled": tr("请求已取消")}
+    if state.get("last_fallback"):
+        text += "\n" + reasons.get(state["last_fallback"], state["last_fallback"])
+    return text
 
 
 class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
@@ -25,14 +49,44 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         content = QWidget(self)
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
-        notice = BodyLabel(tr("由当前 Agent 处理选择请求；仅打开开关不会启动 AI。超时或无有效回复时使用原有策略。"), content)
+        notice = BodyLabel(tr("先在 Agent 聊天中接管，再运行任务。已配置接口不代表 Agent 已接管；断连或超时使用原策略。"), content)
         notice.setWordWrap(True)
         layout.addWidget(notice)
 
+        layout.addWidget(BodyLabel(tr("接入方式"), content))
+        self.modeComboBox = ComboBox(content)
+        self.modeComboBox.addItem(tr("内置 Agent 连接"), userData="connected")
+        self.modeComboBox.addItem(tr("高级自定义程序"), userData="command")
+        self.modeComboBox.setCurrentIndex(1 if decision_mode(cfg) == "command" else 0)
+        layout.addWidget(self.modeComboBox)
+        self.statusLabel = BodyLabel("", content)
+        self.statusLabel.setWordWrap(True)
+        layout.addWidget(self.statusLabel)
+        connection_row = QHBoxLayout()
+        self.configFormat = ComboBox(content)
+        self.configFormat.addItems([tr("Codex（TOML）"), tr("通用（JSON）")])
+        self.copyConfigButton = PushButton(tr("复制接入配置"), content)
+        self.copyPromptButton = PushButton(tr("复制聊天接管指令"), content)
+        self.disconnectButton = PushButton(tr("断开"), content)
+        for widget in (self.configFormat, self.copyConfigButton, self.copyPromptButton, self.disconnectButton):
+            if widget in (self.configFormat, self.copyConfigButton):
+                connection_row.addWidget(widget)
+        layout.addLayout(connection_row)
+        prompt_row = QHBoxLayout()
+        prompt_row.addWidget(self.copyPromptButton)
+        prompt_row.addWidget(self.disconnectButton)
+        layout.addLayout(prompt_row)
+        self.copyConfigButton.clicked.connect(self._copy_config)
+        self.copyPromptButton.clicked.connect(self._copy_prompt)
+        self.disconnectButton.clicked.connect(self._disconnect)
+
+        self.commandPanel = QWidget(content)
+        command_layout = QVBoxLayout(self.commandPanel)
+        command_layout.setContentsMargins(0, 0, 0, 0)
         command = cfg.get_value("divergent_decision_command", [])
         if not isinstance(command, (list, tuple)) or any(not isinstance(arg, str) for arg in command):
             command = []
-        layout.addWidget(BodyLabel(tr("接入程序"), content))
+        command_layout.addWidget(BodyLabel(tr("接入程序"), content))
         program_row = QHBoxLayout()
         self.programEdit = LineEdit(content)
         self.programEdit.setPlaceholderText(tr("选择可执行文件，例如 Python 或你的接入程序"))
@@ -41,14 +95,17 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         self.browseButton.clicked.connect(self._browse)
         program_row.addWidget(self.programEdit, 1)
         program_row.addWidget(self.browseButton)
-        layout.addLayout(program_row)
+        command_layout.addLayout(program_row)
 
-        layout.addWidget(BodyLabel(tr("启动参数（每行一个，不需要加引号）"), content))
+        command_layout.addWidget(BodyLabel(tr("启动参数（每行一个，不需要加引号）"), content))
         self.argumentsEdit = TextEdit(content)
         self.argumentsEdit.setAcceptRichText(False)
         self.argumentsEdit.setFixedHeight(110)
         self.argumentsEdit.setPlainText("\n".join(command[1:]))
-        layout.addWidget(self.argumentsEdit)
+        command_layout.addWidget(self.argumentsEdit)
+        layout.addWidget(self.commandPanel)
+        self.modeComboBox.currentIndexChanged.connect(self._mode_changed)
+        self._mode_changed()
 
         timeout_row = QHBoxLayout()
         timeout_row.addWidget(BodyLabel(tr("单次等待时间（秒）"), content))
@@ -77,6 +134,38 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         self._scroll = build_scroll_area(content, width, height, chrome_height=170)
         self._scroll.setMinimumWidth(min(520, max(280, width - 120)))
         self.textLayout.addWidget(self._scroll)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._refresh)
+        self.timer.start(1000)
+        self._refresh()
+
+    def _mode_changed(self, *_):
+        advanced = self.modeComboBox.currentData() == "command"
+        self.commandPanel.setVisible(advanced)
+        for widget in (self.configFormat, self.copyConfigButton, self.copyPromptButton, self.disconnectButton):
+            widget.setVisible(not advanced)
+
+    def _refresh(self):
+        try:
+            self.statusLabel.setText(connection_text(self.modeComboBox.currentData()))
+            self.disconnectButton.setEnabled(AgentSession().status()["state"] in ("idle", "waiting"))
+        except (OSError, ValueError, TypeError, KeyError):
+            self.statusLabel.setText(tr("连接状态暂不可用"))
+            self.disconnectButton.setEnabled(False)
+
+    def _copy_config(self):
+        QApplication.clipboard().setText(connection_config()[self.configFormat.currentIndex()])
+
+    def _copy_prompt(self):
+        QApplication.clipboard().setText(tr("连接位于 {path} 的三月七并监管差分宇宙；未启动任务时等待，不启动新对局；任务结束后断开接管。").format(path=os.path.abspath(os.getcwd())))
+
+    def _disconnect(self):
+        try:
+            AgentSession().disconnect(local=True)
+        except (OSError, ValueError, TypeError, KeyError):
+            self.statusLabel.setText(tr("连接状态暂不可用"))
+        else:
+            self._refresh()
 
     def _browse(self):
         path, _ = QFileDialog.getOpenFileName(self, tr("选择接入程序"), self.programEdit.text())
@@ -85,12 +174,16 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
 
     def values(self):
         # 逐行传参，不使用 shell / eval，也不按空格切分含空格的路径。
-        command = [self.programEdit.text().strip()] + self.argumentsEdit.toPlainText().splitlines()
-        command[0] = validate_decision_command(command, require_available=True)
+        mode = self.modeComboBox.currentData()
+        command = cfg.get_value("divergent_decision_command", [])
+        if mode == "command":
+            command = [self.programEdit.text().strip()] + self.argumentsEdit.toPlainText().splitlines()
+            command[0] = validate_decision_command(command, require_available=True)
         context = self.contextEdit.toPlainText()
         if len(context) > 8000:
             raise ValueError("context")
         return {
+            "divergent_decision_mode": mode,
             "divergent_decision_command": command,
             "divergent_decision_timeout": self.timeoutSpinBox.value(),
             "divergent_decision_context": context,
@@ -123,6 +216,19 @@ class AgentDecisionSettingCard(SettingCard):
         self.setValue(cfg.get_value(self.configname, False) is True)
         self.configButton.clicked.connect(self._configure)
         self.switchButton.checkedChanged.connect(self._on_checked)
+        self.setFixedHeight(132)
+        self.contentLabel.setWordWrap(True)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self._refresh)
+        self.timer.start(1000)
+        self._refresh()
+
+    def _refresh(self):
+        try:
+            status = connection_text(compact=True)
+        except (OSError, ValueError, TypeError, KeyError):
+            status = tr("连接状态暂不可用")
+        self.setContent(status + "\n" + tr("需要 Agent 持续回复；断连或超时使用原策略。"))
 
     def setValue(self, enabled):
         with QSignalBlocker(self.switchButton):
@@ -139,7 +245,10 @@ class AgentDecisionSettingCard(SettingCard):
     def _on_checked(self, enabled):
         if enabled:
             try:
-                validate_decision_command(cfg.get_value("divergent_decision_command", []), require_available=True)
+                if decision_mode(cfg) == "command":
+                    validate_decision_command(cfg.get_value("divergent_decision_command", []), require_available=True)
+                elif cfg.get_value("divergent_decision_mode", "auto") == "auto":
+                    raise ValueError("需要首次配置连接")
             except ValueError:
                 # 首次打开时引导配置；取消不保存一个无法工作的启用状态。
                 self.setValue(False)

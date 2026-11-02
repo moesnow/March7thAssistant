@@ -91,7 +91,7 @@ def replay(monkeypatch):
     auto.click_element.side_effect = click
     auto.press_key.side_effect = lambda *_: setattr(context, "view", "choice")
     cfg = MagicMock()
-    cfg.get_value.side_effect = lambda key, default=None: default
+    cfg.get_value.side_effect = lambda key, default=None: "command" if key == "divergent_decision_mode" else default
     pause = SimpleNamespace(generation=0, is_paused=lambda: False, stop_requested=False,
                             checkpoint=MagicMock(), guard_generation=lambda *_: nullcontext())
     return decision.DivergentDecision(auto, cfg, MagicMock(), pause, context=context)
@@ -192,4 +192,14 @@ def test_inspection_and_final_choice_share_one_deadline(replay, monkeypatch):
     assert not replay.choose("blessing", "选择祝福", (.1, .2, .8, .6), ("确认", (.8, .9, .1, .05)), "")
     assert budgets == [60, 25]
     assert replay.context.view == "choice"
+    assert replay.history == []
+
+
+def test_disconnected_reply_cannot_click_after_provider_return(replay, monkeypatch):
+    store = SimpleNamespace(is_current=lambda *_: False)
+    monkeypatch.setattr(decision, "AgentSession", lambda: store)
+    monkeypatch.setattr(decision, "request_decision", lambda *args, **kwargs: {
+        "action": "choose", "candidate_id": "text-1", "_connection_id": "revoked"})
+    assert replay.choose("blessing", "选择祝福", (.1, .2, .8, .6), ("确认", (.8, .9, .1, .05)), "")
+    replay.auto.click_element.assert_not_called()
     assert replay.history == []

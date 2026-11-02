@@ -2,6 +2,8 @@
 
 用户要求 Agent 参与祝福、方程、奇物或路线选择时使用；普通运行不必启用。
 
+支持内置连接的版本，优先按 [连接与接管说明](connections.md) 使用 MCP 或命令行会话接口，GUI 可查看实际接管者与活动状态。以下文件桥是保留的高级接入方式。
+
 先在安装/源码目录的 `assets/config/config.example.yaml` 确认存在 `divergent_decision_enable`，再读取配置中的 `divergent_decision_command`。旧版不含接口时，说明需要支持该功能的版本，不要改旧版配置假装已经生效。
 
 完整协议与配置示例在安装/源码目录的 `assets/docs/AgentDecision.md`。内置文件桥脚本是 `assets/agent/examples/decision_bridge.py`，可复制到独立目录；读取其配置参数确定实际 Python、脚本和队列路径，不要假定固定用户路径。

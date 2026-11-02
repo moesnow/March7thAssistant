@@ -25,7 +25,7 @@ def adapter(monkeypatch, tmp_path):
     auto.find_element.return_value = True
     auto.click_element.return_value = True
     cfg = MagicMock()
-    cfg.get_value.side_effect = lambda key, default=None: default
+    cfg.get_value.side_effect = lambda key, default=None: "command" if key == "divergent_decision_mode" else default
     pause = SimpleNamespace(is_paused=lambda: False, stop_requested=False, checkpoint=MagicMock(),
                             generation=0, guard_generation=lambda *_: nullcontext())
     from tasks.weekly.divergent_context import DivergentContext

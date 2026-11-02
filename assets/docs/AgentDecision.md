@@ -6,7 +6,19 @@
 
 本功能不接管事件选项或阵容编辑。评价重点是每个节点是否读对队伍、理解物品条件并搭配方程/祝福/奇物，而非统计胜率。决策步骤与参考资料的使用见 [构筑取舍说明](../agent/skills/march7th-assistant/references/strategy.md)。
 
-## 供任意 Agent 使用的文件桥
+## 内置 Agent 连接（推荐）
+
+在 GUI 配置中选择「内置 Agent 连接」。将「复制接入配置」生成的 STDIO MCP 配置添加到所用客户端，重新加载后在当前聊天要求“连接三月七并监管”。MCP 入口为安装目录的 `m7a.exe --agent-mcp`，已随发布包提供，无需额外 Python、独立 Agent CLI 或模型 Key。
+
+内置工具提供连接、状态、等待、读取观察、回复、断开六种操作；未加载 MCP 的客户端也可通过 `m7a.exe --agent-session` 的 stdin/stdout JSON 使用相同功能。具体参数与监管循环见 [连接与接管说明](../agent/skills/march7th-assistant/references/connections.md)。
+
+GUI 显示未接管、已接管空闲、等待决策或已断开，附客户端名称、会话标签、最近活动与回退原因。MCP 客户端元信息和 Agent 自报标签用于区分会话，不代表已识别模型或聊天标题。只启动 MCP 进程、打开开关或安装 Skill 不会显示为已接管，也不会自动启动游戏。
+
+接管独占且有活动期限。等待一次最多 20 秒，连接、实际等待与回复续期；只读状态不续期。MCP 客户端关闭、主动断开或活动过期后失效，GUI 可断开以更换 Agent。未接管时不额外等待，直接使用原策略；处理中断连或超时后回退。新会话不能复用旧请求，已打开的查看页仍先确认返回。
+
+`divergent_decision_mode` 可取 `connected`（内置）、`command`（高级命令）或 `auto`（兼容默认：已有非空命令时沿用命令，否则内置）。GUI 保存后明确记录选择。本机新接入建议使用内置方式；高级命令参数继续保留。
+
+## 高级方式：供任意 Agent 使用的文件桥
 
 示例 `assets/agent/examples/decision_bridge.py` 使用本地文件队列：小助手等待决策时，Agent 读取候选文本、分析并回复。Codex、Claude Code、DeepSeek Harness 等能执行本地命令的 AI 助手都可以使用，不要求某个品牌或独立 CLI。桥接程序本身不调用模型或控制鼠标，不依赖 MCP 或模型 SDK。
 

@@ -146,6 +146,12 @@ def collect_status() -> dict:
         "install_registry": registry_path(),
         "agent_skill": os.path.abspath(_SKILL_PATH) if os.path.exists(_SKILL_PATH) else None,
     }
+    from utils.agent_session import AgentSession, decision_mode
+    try:
+        mode = decision_mode(cfg)
+        status["agent_connection"] = dict(AgentSession().status(), mode=mode) if mode == "connected" else {"mode": mode, "state": "unknown"}
+    except (OSError, ValueError, TypeError, KeyError):
+        status["agent_connection"] = {"state": "unavailable"}
     return status
 
 

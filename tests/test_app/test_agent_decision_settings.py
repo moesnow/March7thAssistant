@@ -11,6 +11,7 @@ def settings(qapp, monkeypatch):
 
     values = {
         "divergent_decision_enable": False,
+        "divergent_decision_mode": "command",
         "divergent_decision_command": [],
         "divergent_decision_timeout": 120,
         "divergent_decision_context": "优先生存",
@@ -142,3 +143,42 @@ def test_nul_argument_cannot_be_saved(settings, qtbot, host):
     dialog.argumentsEdit.setPlainText("bad\0argument")
     with pytest.raises(ValueError):
         dialog.values()
+
+
+def test_builtin_mode_does_not_require_python_and_preserves_advanced_command(settings, qtbot, host):
+    module, values, _ = settings
+    values["divergent_decision_command"] = ["missing-legacy.exe", "keep this"]
+    dialog = module.AgentDecisionDialog(host)
+    qtbot.addWidget(dialog)
+    dialog.modeComboBox.setCurrentIndex(0)
+    result = dialog.values()
+    assert result["divergent_decision_mode"] == "connected"
+    assert result["divergent_decision_command"] == values["divergent_decision_command"]
+    assert dialog.commandPanel.isHidden()
+
+
+def test_builtin_enable_does_not_validate_unused_command(settings, qtbot):
+    module, values, _ = settings
+    values.update(divergent_decision_mode="connected", divergent_decision_command=[])
+    card = module.AgentDecisionSettingCard()
+    qtbot.addWidget(card)
+    card.switchButton.setChecked(True)
+    assert values["divergent_decision_enable"]
+
+
+def test_gui_shows_real_owner_and_disconnect_revokes_lease(settings, qtbot, host, tmp_path, monkeypatch):
+    module, values, _ = settings
+    from utils.agent_session import AgentSession
+    store = AgentSession(tmp_path / "connection")
+    values["divergent_decision_mode"] = "connected"
+    monkeypatch.setattr(module, "AgentSession", lambda: store)
+    dialog = module.AgentDecisionDialog(host)
+    qtbot.addWidget(dialog)
+    assert "未接管" in dialog.statusLabel.text()
+    auth = store.connect("Desktop", "active chat")
+    dialog._refresh()
+    assert "Desktop" in dialog.statusLabel.text() and "active chat" in dialog.statusLabel.text()
+    assert auth["token"] not in dialog.statusLabel.text()
+    dialog.disconnectButton.click()
+    assert store.status()["state"] == "disconnected"
+    assert "已断开" in dialog.statusLabel.text()

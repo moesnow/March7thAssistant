@@ -4,6 +4,7 @@ import time
 
 from utils.agent_decision import DecisionCancelled, request_action as request_decision
 from utils.pause import PauseInterrupted
+from utils.agent_session import AgentSession, decision_mode
 
 
 TITLE_CROP = (96 / 1920, 63 / 1080, 142 / 1920, 34 / 1080)
@@ -82,10 +83,12 @@ class DivergentDecision:
             self.pause.checkpoint()
             return True  # 恢复后重新识别，不补发暂停前的选择或确认。
 
-    def _checkpoint(self, generation):
+    def _checkpoint(self, generation, answer=None):
         self.pause.checkpoint()
         if self.pause.generation != generation:
             raise PauseInterrupted()
+        if answer and answer.get("_connection_id") and not AgentSession().is_current(answer["_connection_id"]):
+            raise DecisionCancelled()
 
     def _observe(self, area):
         self.auto.take_screenshot(area)
@@ -154,13 +157,16 @@ class DivergentDecision:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     raise TimeoutError("查看与决策总等待超时")
-                answer = request_decision(
-                    self.cfg.get_value("divergent_decision_command", []), min(timeout, remaining), request,
-                    cancelled=lambda: self.pause.generation != generation or self.pause.is_paused() or self.pause.stop_requested,
-                )
+                cancelled = lambda: self.pause.generation != generation or self.pause.is_paused() or self.pause.stop_requested
+                if decision_mode(self.cfg) == "connected":
+                    answer = AgentSession(timeout=timeout).request(min(timeout, remaining), request, cancelled=cancelled)
+                else:
+                    answer = request_decision(self.cfg.get_value("divergent_decision_command", []), min(timeout, remaining),
+                                              request, cancelled=cancelled)
                 # 兼容已有只返回 ID 的适配器。
                 if answer is None or isinstance(answer, str):
                     answer = {"action": "choose" if answer else "decline", "candidate_id": answer}
+                self._checkpoint(generation, answer)
                 if answer.get("memory") and answer["action"] != "choose":
                     self.context.memory = answer["memory"]
                 action = answer["action"]
@@ -174,10 +180,11 @@ class DivergentDecision:
                     restore(generation)
                     continue
                 control = next(item for item in frame["controls"] if item["id"] == answer["control_id"])
-                self._checkpoint(generation)
+                self._checkpoint(generation, answer)
                 fresh = self.context.capture("navigation_check", inspecting)
                 if not same_choices(frame["ocr"], fresh["ocr"]):
                     continue
+                self._checkpoint(generation, answer)
                 if control.get("kind") == "scroll":
                     position = self.auto.find_element((.6, .6, .01, .01), "crop")
                     if position:
@@ -186,6 +193,7 @@ class DivergentDecision:
                         time.sleep(.5)
                     continue
                 bounds = control["bounds"]
+                self._checkpoint(generation, answer)
                 crop = (max(0, bounds[0] - .004), max(0, bounds[1] - .004),
                         min(1 - max(0, bounds[0] - .004), bounds[2] + .008),
                         min(1 - max(0, bounds[1] - .004), bounds[3] + .008))
@@ -234,6 +242,7 @@ class DivergentDecision:
             self.context.record({"status": "fallback", "kind": kind, "stage": stage})
             return False
         selected = next(candidate for candidate in candidates if candidate["id"] == selected_id)
+        self._checkpoint(generation, answer)
         bounds = selected["bounds"]
         # 为 OCR 边缘留少量余量，仍限制在当前选择区域内。
         crop = (max(area[0], bounds[0] - .004), max(area[1], bounds[1] - .004),
@@ -243,12 +252,13 @@ class DivergentDecision:
             return True
         # 复用原流程的选择动画与确认等待，低性能/后台模式同样适用。
         time.sleep(1)
-        self._checkpoint(generation)
+        self._checkpoint(generation, answer)
         if not self.auto.click_element(confirm[0], "text", crop=confirm[1], include=True, max_retries=10):
             raise RuntimeError("外部决策选项已点击，但未能确认选择")
         time.sleep(2)
         self._checkpoint(generation)
         if kind == "station":
+            self._checkpoint(generation, answer)
             if self.auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9):
                 time.sleep(2)
                 self._checkpoint(generation)
