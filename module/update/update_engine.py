@@ -442,6 +442,8 @@ class UpdateEngine:
 
         launcher = os.path.abspath("./March7th Launcher.exe")
         env = build_independent_process_env()
+        # 主程序需要写配置，不能继承更新器的只读角色；仅修改子进程环境。
+        env.pop("MARCH7TH_CONFIG_READONLY", None)
         command = [launcher]
         if start_minimized_to_tray:
             command.append("--start-minimized-to-tray")
