@@ -24,7 +24,17 @@ import json
 import os
 import tempfile
 import threading
+import time
 import weakref
+from contextlib import contextmanager
+from contextvars import ContextVar
+
+
+class PauseInterrupted(Exception):
+    """受保护操作观察到过暂停，调用方必须重新识别后再操作。"""
+
+
+_generation_guard = ContextVar("pause_generation_guard", default=None)
 
 
 class _LazyLog:
@@ -114,6 +124,11 @@ def pause_guard(method):
         if getattr(getattr(method, '__self__', None), 'handles_pause', False) is True:
             return method(*args, **kwargs)
         pause_ctl.checkpoint()
+        guard = _generation_guard.get()
+        if guard is not None:
+            controller, generation = guard
+            if controller.generation != generation:
+                raise PauseInterrupted()
         return method(*args, **kwargs)
 
     return wrapper
@@ -152,6 +167,8 @@ class PauseController:
 
     def __init__(self):
         self._enabled = False
+        self._generation = 0
+        self._generation_lock = threading.Lock()
         self._control_path = None
         self._state_path = None
         # 置位 = 允许运行；复位 = 暂停中（任务线程在卡点处等待该事件）
@@ -228,6 +245,20 @@ class PauseController:
     def enabled(self):
         return self._enabled
 
+    @property
+    def generation(self):
+        with self._generation_lock:
+            return self._generation
+
+    @contextmanager
+    def guard_generation(self, generation):
+        """仅在显式保护的流程内阻止暂停后继续执行旧识别结果。"""
+        token = _generation_guard.set((self, generation))
+        try:
+            yield
+        finally:
+            _generation_guard.reset(token)
+
     # ---------- 任务线程侧 ----------
 
     def checkpoint(self):
@@ -302,6 +333,9 @@ class PauseController:
             # 停止是终态：之后的暂停/恢复指令一律忽略
             return
         self._last_command = command
+        if command in (COMMAND_PAUSE, COMMAND_STOP):
+            with self._generation_lock:
+                self._generation += 1
         if command == COMMAND_STOP:
             self._stop_requested = True
             log.warning(STOP_LOG_MESSAGE)
@@ -350,10 +384,16 @@ class PauseController:
     def _write_state(self, state):
         if not self._state_path:
             return
-        try:
-            _atomic_write_json(self._state_path, {"state": state})
-        except Exception:
-            pass
+        # Windows GUI 读文件时会短暂占用目标，不能因一次共享冲突永久丢掉回执。
+        for attempt in range(20):
+            try:
+                _atomic_write_json(self._state_path, {"state": state})
+                return
+            except PermissionError:
+                if attempt < 19:
+                    time.sleep(.01)
+            except Exception:
+                return
 
 
 # 模块级单例（与 module.automation.auto / module.config.cfg 同风格）

@@ -1,5 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
+from PyInstaller.utils.win32.winutils import get_system_path
+
+# 与 GUI 构建使用相同的 DLL 查找顺序，避免合并发行目录时重新带入冲突库。
+os.environ['PATH'] = os.pathsep.join(get_system_path() + [os.environ.get('PATH', '')])
 
 binaries = []
 datas = []

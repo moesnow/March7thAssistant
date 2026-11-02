@@ -69,6 +69,67 @@ def test_inert_without_control_path(monkeypatch):
     assert ctl.is_paused() is False
 
 
+def test_generation_guard_rejects_quick_pause_resume(controller, monkeypatch):
+    monkeypatch.setattr(pause_mod, "pause_ctl", controller)
+    calls = []
+    @pause_mod.pause_guard
+    def action():
+        calls.append("clicked")
+    generation = controller.generation
+    with controller.guard_generation(generation):
+        controller.request_pause()
+        controller.request_resume()
+        assert not controller.is_paused()
+        with pytest.raises(pause_mod.PauseInterrupted):
+            action()
+    # 保护范围之外维持原有行为，不影响其他任务。
+    action()
+    assert calls == ["clicked"]
+
+
+def test_generation_guard_does_not_resume_stale_input(controller, monkeypatch):
+    monkeypatch.setattr(pause_mod, "pause_ctl", controller)
+    generation = controller.generation
+    controller.request_pause()
+    entered = threading.Event()
+    outcome = []
+    @pause_mod.pause_guard
+    def action():
+        outcome.append("clicked")
+    def worker():
+        with controller.guard_generation(generation):
+            entered.set()
+            try:
+                action()
+            except pause_mod.PauseInterrupted:
+                outcome.append("discarded")
+    thread = threading.Thread(target=worker)
+    thread.start()
+    assert entered.wait(2)
+    controller.request_resume()
+    thread.join(timeout=5)
+    assert not thread.is_alive()
+    assert outcome == ["discarded"]
+
+
+def test_state_ack_survives_short_windows_reader_lock(controller, control_path):
+    """Windows GUI 正在读回执时 os.replace 可能暂时被拒绝，不应永久丢掉状态。"""
+    import sys
+    if sys.platform != "win32":
+        pytest.skip("Windows 文件共享规则")
+    reading = threading.Event()
+    def reader():
+        with open(control_path + pause_mod.STATE_FILE_SUFFIX, "rb"):
+            reading.set()
+            time.sleep(.06)
+    thread = threading.Thread(target=reader)
+    thread.start()
+    assert reading.wait(2)
+    controller.request_pause()
+    thread.join(timeout=2)
+    assert read_state(control_path) == STATE_PAUSING
+
+
 def test_start_reads_env_var(monkeypatch, control_path):
     monkeypatch.setenv(pause_mod.CONTROL_FILE_ENV, control_path)
     ctl = PauseController()

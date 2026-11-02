@@ -3,6 +3,7 @@
 import json
 import math
 import os
+import shutil
 import subprocess
 import tempfile
 import time
@@ -37,14 +38,22 @@ def _terminate(process):
         process.wait(timeout=3)
 
 
-def validate_decision_command(command):
+def validate_decision_command(command, *, require_available=False):
     """GUI 与运行时共用参数列表校验，校验时不执行程序。"""
     if (not isinstance(command, (list, tuple)) or not command
             or len(command) > 32
-            or any(not isinstance(arg, str) or not arg or len(arg) > 4096 for arg in command)):
+            or any(not isinstance(arg, str) or not arg or '\0' in arg or len(arg) > 4096 for arg in command)):
         raise ValueError("外部决策命令必须是非空的参数列表")
+    if not command[0].strip():
+        raise ValueError("外部决策程序不能为空")
     if os.name == "nt" and os.path.splitext(command[0])[1].lower() in (".bat", ".cmd"):
         raise ValueError("请直接指定可执行文件，不使用批处理命令")
+    if require_available:
+        resolved = shutil.which(command[0])
+        if not resolved:
+            raise ValueError("外部决策程序不存在或不可执行")
+        return os.path.abspath(resolved)
+    return command[0]
 
 
 def request_decision(command, timeout, request, *, cancelled=lambda: False):
@@ -53,7 +62,9 @@ def request_decision(command, timeout, request, *, cancelled=lambda: False):
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or not 0 < timeout <= 300:
         raise ValueError("外部决策超时必须在 0 到 300 秒之间")
 
-    payload = dict(request, protocol_version=PROTOCOL_VERSION, request_id=uuid.uuid4().hex)
+    deadline = time.monotonic() + timeout
+    payload = dict(request, protocol_version=PROTOCOL_VERSION, request_id=uuid.uuid4().hex,
+                   expires_at=time.time() + timeout)
     candidate_ids = {candidate["id"] for candidate in payload["candidates"]}
     if not candidate_ids:
         return None
@@ -67,7 +78,6 @@ def request_decision(command, timeout, request, *, cancelled=lambda: False):
         kwargs = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {"start_new_session": True}
         process = subprocess.Popen(list(command), stdin=source, stdout=output, stderr=subprocess.DEVNULL,
                                    shell=False, **kwargs)
-        deadline = time.monotonic() + timeout
         try:
             while process.poll() is None:
                 if cancelled():
@@ -79,6 +89,8 @@ def request_decision(command, timeout, request, *, cancelled=lambda: False):
                 time.sleep(0.05)
             if cancelled():
                 raise DecisionCancelled()
+            if time.monotonic() >= deadline:
+                raise TimeoutError("外部决策超时")
             if process.returncode:
                 raise ValueError("外部决策程序执行失败")
             output.seek(0)

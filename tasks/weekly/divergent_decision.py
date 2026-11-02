@@ -3,6 +3,7 @@
 import time
 
 from utils.agent_decision import DecisionCancelled, request_decision
+from utils.pause import PauseInterrupted
 
 
 TITLE_CROP = (96 / 1920, 63 / 1080, 142 / 1920, 34 / 1080)
@@ -29,6 +30,20 @@ def text_candidates(ocr_result, image_size, area):
     return candidates[:80]
 
 
+def same_choices(previous, current):
+    """重抽会保留部分相同文字；同时核对整组选项，容忍 OCR 顺序和小幅定位变化。"""
+    remaining = list(current)
+    if len(previous) != len(remaining):
+        return False
+    for old in previous:
+        match = next((item for item in remaining if item["text"] == old["text"]
+                      and all(abs(a - b) <= .015 for a, b in zip(item["bounds"], old["bounds"]))), None)
+        if match is None:
+            return False
+        remaining.remove(match)
+    return True
+
+
 class DivergentDecision:
     def __init__(self, auto, cfg, log, pause):
         self.auto, self.cfg, self.log, self.pause = auto, cfg, log, pause
@@ -36,14 +51,33 @@ class DivergentDecision:
 
     def choose(self, kind, title, area, confirm, stage):
         """True 表示本轮已处理或界面失效；False 才交回原策略。"""
-        # 与原选择流程相同，等待卡片展开，避免只识别到已出现的标题。
-        time.sleep(2)
+        generation = self.pause.generation
+        try:
+            with self.pause.guard_generation(generation):
+                return self._choose(kind, title, area, confirm, stage, generation)
+        except (DecisionCancelled, PauseInterrupted):
+            self.pause.checkpoint()
+            return True  # 恢复后重新识别，不补发暂停前的选择或确认。
+
+    def _checkpoint(self, generation):
+        self.pause.checkpoint()
+        if self.pause.generation != generation:
+            raise PauseInterrupted()
+
+    def _observe(self, area):
         self.auto.take_screenshot(area)
         self.auto.perform_ocr()
-        candidates = text_candidates(self.auto.ocr_result, self.auto.screenshot.size, area)
+        return text_candidates(self.auto.ocr_result, self.auto.screenshot.size, area)
+
+    def _choose(self, kind, title, area, confirm, stage, generation):
+        self._checkpoint(generation)
+        # 与原选择流程相同，等待卡片展开，避免只识别到已出现的标题。
+        time.sleep(2)
+        self._checkpoint(generation)
+        candidates = self._observe(area)
         if not candidates:
             self.log.warning("外部决策未识别到候选文本，使用原有策略")
-            return False
+            return not bool(self.auto.find_element(title, "text", crop=TITLE_CROP, include=False))
         self.log.info(f"等待外部决策：{kind}，{len(candidates)} 个文本锚点")
         request = {
             "task": "divergent", "kind": kind, "stage": stage,
@@ -54,23 +88,22 @@ class DivergentDecision:
             selected_id = request_decision(
                 self.cfg.get_value("divergent_decision_command", []),
                 self.cfg.get_value("divergent_decision_timeout", 60), request,
-                cancelled=lambda: self.pause.is_paused() or self.pause.stop_requested,
+                cancelled=lambda: self.pause.generation != generation or self.pause.is_paused() or self.pause.stop_requested,
             )
-        except DecisionCancelled:
-            self.pause.checkpoint()
-            return True  # 恢复后交回主循环重新识别，不采纳暂停前的选择。
-        except (OSError, ValueError, TimeoutError):
-            self.log.warning("外部决策未返回有效结果，使用原有策略")
-            self.pause.checkpoint()
-            return not bool(self.auto.find_element(title, "text", crop=TITLE_CROP, include=False))
-        if selected_id is None:
-            self.pause.checkpoint()
-            return not bool(self.auto.find_element(title, "text", crop=TITLE_CROP, include=False))
-        self.pause.checkpoint()
-        selected = next(candidate for candidate in candidates if candidate["id"] == selected_id)
-        # 等待模型期间用户可能换了界面；必须重新识别标题和原位置的文本。
+        except (OSError, ValueError, TimeoutError) as error:
+            self.log.warning(f"外部决策未返回有效结果（{type(error).__name__}），使用原有策略")
+            selected_id = None
+        self._checkpoint(generation)
+        # 等待期间可能重抽、手动换页；不能只依赖标题或某段共用描述。
         if not self.auto.find_element(title, "text", crop=TITLE_CROP, include=False):
             return True
+        if not same_choices(candidates, self._observe(area)):
+            self.log.info("外部决策等待期间候选项已变化，重新识别")
+            return True
+        self._checkpoint(generation)
+        if selected_id is None:
+            return False
+        selected = next(candidate for candidate in candidates if candidate["id"] == selected_id)
         bounds = selected["bounds"]
         # 为 OCR 边缘留少量余量，仍限制在当前选择区域内。
         crop = (max(area[0], bounds[0] - .004), max(area[1], bounds[1] - .004),
@@ -78,10 +111,17 @@ class DivergentDecision:
                 min(area[1] + area[3], bounds[1] + bounds[3] + .004) - max(area[1], bounds[1] - .004))
         if not self.auto.click_element(selected["text"], "text", crop=crop, include=False):
             return True
-        if not self.auto.click_element(confirm[0], "text", crop=confirm[1], include=False, max_retries=3):
+        # 复用原流程的选择动画与确认等待，低性能/后台模式同样适用。
+        time.sleep(1)
+        self._checkpoint(generation)
+        if not self.auto.click_element(confirm[0], "text", crop=confirm[1], include=True, max_retries=10):
             raise RuntimeError("外部决策选项已点击，但未能确认选择")
+        time.sleep(2)
+        self._checkpoint(generation)
         if kind == "station":
-            self.auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+            if self.auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9):
+                time.sleep(2)
+                self._checkpoint(generation)
         self.history.append({"kind": kind, "text": selected["text"]})
         self.log.info(f"外部决策：{kind} → {selected['text']}")
         return True

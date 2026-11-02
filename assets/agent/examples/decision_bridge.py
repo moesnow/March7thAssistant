@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -12,13 +13,18 @@ import time
 import psutil
 
 
-def atomic_json(path, value):
+def atomic_json(path, value, *, replace=True):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=path.stem + "-", suffix=".tmp", dir=path.parent)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
             json.dump(value, stream, ensure_ascii=False)
-        os.replace(temporary, path)
+        if replace:
+            os.replace(temporary, path)
+        elif os.name == "nt":
+            os.rename(temporary, path)  # Windows rename 原子提交且不会覆盖已有回复。
+        else:
+            os.link(temporary, path)  # POSIX rename 会覆盖；同目录硬链接提交确保只有一个回复胜出。
     finally:
         Path(temporary).unlink(missing_ok=True)
 
@@ -58,8 +64,11 @@ def serve(directory, timeout):
     pending = request_path(directory, request["request_id"])
     response_path = pending.with_name(f"{request['request_id']}.response.json")
     owner = psutil.Process()
+    expires_at = request.get("expires_at", time.time() + timeout)
+    if isinstance(expires_at, bool) or not isinstance(expires_at, (int, float)) or not math.isfinite(expires_at):
+        raise ValueError("请求有效期无效")
     envelope = {"request": request, "pid": owner.pid, "process_created_at": owner.create_time(),
-                "expires_at": time.time() + timeout}
+                "expires_at": min(time.time() + timeout, expires_at)}
     atomic_json(pending, envelope)
     try:
         while time.time() < envelope["expires_at"]:
@@ -77,6 +86,14 @@ def serve(directory, timeout):
 def pending_requests(directory, wait):
     deadline = time.monotonic() + wait
     while True:
+        # 回复和取消可能同时发生；清理请求已消失后才提交的孤立回复。
+        for response in directory.glob("*.response.json"):
+            request_id = response.name.removesuffix(".response.json")
+            try:
+                if not request_path(directory, request_id).exists():
+                    response.unlink(missing_ok=True)
+            except (OSError, ValueError):
+                continue
         found = []
         for path in sorted(directory.glob("*.request.json")):
             try:
@@ -105,7 +122,12 @@ def respond(directory, request_id, candidate_id):
         raise ValueError("请求已经过期或任务已取消")
     response = {"protocol_version": 1, "request_id": request_id, "candidate_id": candidate_id}
     validate_response(envelope["request"], response)
-    atomic_json(path.with_name(f"{request_id}.response.json"), response)
+    destination = path.with_name(f"{request_id}.response.json")
+    try:
+        atomic_json(destination, response, replace=False)
+    except FileExistsError:
+        if json.loads(destination.read_text(encoding="utf-8")) != response:
+            raise ValueError("请求已有不同回复，不覆盖先前选择")
     print(json.dumps({"request_id": request_id, "accepted": True}))
 
 

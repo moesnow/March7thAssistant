@@ -1,8 +1,5 @@
 """差分宇宙外部决策的开关与接入配置，不在界面进程中运行外部程序。"""
 
-import os
-import shutil
-
 from PySide6.QtCore import Qt, QSignalBlocker
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog
 from qfluentwidgets import (
@@ -89,9 +86,7 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
     def values(self):
         # 逐行传参，不使用 shell / eval，也不按空格切分含空格的路径。
         command = [self.programEdit.text().strip()] + self.argumentsEdit.toPlainText().splitlines()
-        validate_decision_command(command)
-        if not (os.path.isfile(command[0]) or shutil.which(command[0])):
-            raise ValueError("program")
+        command[0] = validate_decision_command(command, require_available=True)
         context = self.contextEdit.toPlainText()
         if len(context) > 8000:
             raise ValueError("context")
@@ -144,7 +139,7 @@ class AgentDecisionSettingCard(SettingCard):
     def _on_checked(self, enabled):
         if enabled:
             try:
-                validate_decision_command(cfg.get_value("divergent_decision_command", []))
+                validate_decision_command(cfg.get_value("divergent_decision_command", []), require_available=True)
             except ValueError:
                 # 首次打开时引导配置；取消不保存一个无法工作的启用状态。
                 self.setValue(False)

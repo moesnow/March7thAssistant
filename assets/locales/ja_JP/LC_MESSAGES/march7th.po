@@ -141,7 +141,7 @@ msgstr "開拓力設定"
 msgid "体力计划"
 msgstr "開拓力プラン"
 
-#: app/card/agent_decision_setting_card.py:122
+#: app/card/agent_decision_setting_card.py:117
 msgid "配置"
 msgstr "設定"
 
@@ -1334,7 +1334,7 @@ msgstr "続行してタッチモードを有効にしますか？"
 msgid "确认"
 msgstr "確認"
 
-#: app/card/agent_decision_setting_card.py:26
+#: app/card/agent_decision_setting_card.py:23
 msgid "取消"
 msgstr "キャンセル"
 
@@ -1912,11 +1912,11 @@ msgstr "自動スキップ（スキップボタンが出たら自動クリック
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "自動選択（任意の会話選択肢を自動選択）"
 
-#: app/card/agent_decision_setting_card.py:123
+#: app/card/agent_decision_setting_card.py:118
 msgid "关"
 msgstr "オフ"
 
-#: app/card/agent_decision_setting_card.py:135
+#: app/card/agent_decision_setting_card.py:130
 msgid "开"
 msgstr "オン"
 
@@ -4594,7 +4594,7 @@ msgstr "バージョン"
 msgid "使用说明"
 msgstr "使用説明"
 
-#: app/card/agent_decision_setting_card.py:25
+#: app/card/agent_decision_setting_card.py:22
 msgid "保存"
 msgstr "保存"
 
@@ -4722,7 +4722,7 @@ msgstr ""
 msgid "选择已保存的模板图片路径"
 msgstr "保存済みテンプレート画像のパスを選択"
 
-#: app/card/agent_decision_setting_card.py:43
+#: app/card/agent_decision_setting_card.py:40
 msgid "浏览"
 msgstr "参照"
 
@@ -6483,47 +6483,47 @@ msgstr ""
 msgid "常规模式"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:22
+#: app/card/agent_decision_setting_card.py:19
 msgid "Agent 辅助决策配置"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:31
+#: app/card/agent_decision_setting_card.py:28
 msgid "由当前 Agent 处理选择请求；仅打开开关不会启动 AI。超时或无有效回复时使用原有策略。"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:38
+#: app/card/agent_decision_setting_card.py:35
 msgid "接入程序"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:41
+#: app/card/agent_decision_setting_card.py:38
 msgid "选择可执行文件，例如 Python 或你的接入程序"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:49
+#: app/card/agent_decision_setting_card.py:46
 msgid "启动参数（每行一个，不需要加引号）"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:57
+#: app/card/agent_decision_setting_card.py:54
 msgid "单次等待时间（秒）"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:68
+#: app/card/agent_decision_setting_card.py:65
 msgid "队伍与构筑偏好（可选）"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:85
+#: app/card/agent_decision_setting_card.py:82
 msgid "选择接入程序"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:108
+#: app/card/agent_decision_setting_card.py:103
 msgid "请检查接入程序是否存在、参数是否为空或过长；不支持批处理文件，偏好最多 8000 字。"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:118
+#: app/card/agent_decision_setting_card.py:113
 msgid "启用 Agent 辅助决策"
 msgstr ""
 
-#: app/card/agent_decision_setting_card.py:119
+#: app/card/agent_decision_setting_card.py:114
 msgid ""
 "祝福、方程、奇物与下一站由 Agent 选择，战斗保持自动。\n"
 "需要 Agent 持续回复；超时回退原策略，下次任务生效。"

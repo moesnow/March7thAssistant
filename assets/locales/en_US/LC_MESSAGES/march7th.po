@@ -141,7 +141,7 @@ msgstr "Power Settings"
 msgid "体力计划"
 msgstr "Power Plan"
 
-#: app/card/agent_decision_setting_card.py:122
+#: app/card/agent_decision_setting_card.py:117
 msgid "配置"
 msgstr "Config"
 
@@ -1384,7 +1384,7 @@ msgstr "Confirm continue and enable Touch Mode?"
 msgid "确认"
 msgstr "Confirm"
 
-#: app/card/agent_decision_setting_card.py:26
+#: app/card/agent_decision_setting_card.py:23
 msgid "取消"
 msgstr "Cancel"
 
@@ -1976,11 +1976,11 @@ msgstr "Auto Skip (Click Skip button when available)"
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "Auto Select (Select any option)"
 
-#: app/card/agent_decision_setting_card.py:123
+#: app/card/agent_decision_setting_card.py:118
 msgid "关"
 msgstr "Off"
 
-#: app/card/agent_decision_setting_card.py:135
+#: app/card/agent_decision_setting_card.py:130
 msgid "开"
 msgstr "On"
 
@@ -4713,7 +4713,7 @@ msgstr "Version"
 msgid "使用说明"
 msgstr "Usage"
 
-#: app/card/agent_decision_setting_card.py:25
+#: app/card/agent_decision_setting_card.py:22
 msgid "保存"
 msgstr "Save"
 
@@ -4842,7 +4842,7 @@ msgstr ""
 msgid "选择已保存的模板图片路径"
 msgstr "Select a saved template image path"
 
-#: app/card/agent_decision_setting_card.py:43
+#: app/card/agent_decision_setting_card.py:40
 msgid "浏览"
 msgstr "Browse"
 
@@ -6658,53 +6658,53 @@ msgstr "Stellar Mode"
 msgid "常规模式"
 msgstr "Regular Mode"
 
-#: app/card/agent_decision_setting_card.py:22
+#: app/card/agent_decision_setting_card.py:19
 msgid "Agent 辅助决策配置"
 msgstr "Agent Decision Settings"
 
-#: app/card/agent_decision_setting_card.py:31
+#: app/card/agent_decision_setting_card.py:28
 msgid "由当前 Agent 处理选择请求；仅打开开关不会启动 AI。超时或无有效回复时使用原有策略。"
 msgstr ""
 "The current agent must handle choice requests. This switch does not start an"
 " AI. If the request times out or the response is invalid, the built-in "
 "strategy continues."
 
-#: app/card/agent_decision_setting_card.py:38
+#: app/card/agent_decision_setting_card.py:35
 msgid "接入程序"
 msgstr "Adapter Program"
 
-#: app/card/agent_decision_setting_card.py:41
+#: app/card/agent_decision_setting_card.py:38
 msgid "选择可执行文件，例如 Python 或你的接入程序"
 msgstr "Select an executable, such as Python or your adapter"
 
-#: app/card/agent_decision_setting_card.py:49
+#: app/card/agent_decision_setting_card.py:46
 msgid "启动参数（每行一个，不需要加引号）"
 msgstr "Arguments (one per line, without surrounding quotes)"
 
-#: app/card/agent_decision_setting_card.py:57
+#: app/card/agent_decision_setting_card.py:54
 msgid "单次等待时间（秒）"
 msgstr "Wait Timeout (seconds)"
 
-#: app/card/agent_decision_setting_card.py:68
+#: app/card/agent_decision_setting_card.py:65
 msgid "队伍与构筑偏好（可选）"
 msgstr "Team and Build Preferences (optional)"
 
-#: app/card/agent_decision_setting_card.py:85
+#: app/card/agent_decision_setting_card.py:82
 msgid "选择接入程序"
 msgstr "Select Adapter Program"
 
-#: app/card/agent_decision_setting_card.py:108
+#: app/card/agent_decision_setting_card.py:103
 msgid "请检查接入程序是否存在、参数是否为空或过长；不支持批处理文件，偏好最多 8000 字。"
 msgstr ""
 "Check that the executable exists and arguments are neither empty nor too "
 "long. Batch files are not supported. Preferences must be at most 8,000 "
 "characters."
 
-#: app/card/agent_decision_setting_card.py:118
+#: app/card/agent_decision_setting_card.py:113
 msgid "启用 Agent 辅助决策"
 msgstr "Enable Agent Decisions"
 
-#: app/card/agent_decision_setting_card.py:119
+#: app/card/agent_decision_setting_card.py:114
 msgid ""
 "祝福、方程、奇物与下一站由 Agent 选择，战斗保持自动。\n"
 "需要 Agent 持续回复；超时回退原策略，下次任务生效。"

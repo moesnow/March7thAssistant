@@ -119,3 +119,26 @@ def test_configure_saves_atomically_and_cancel_does_not_save(settings, qtbot, mo
     dialog.exec.return_value = 0
     assert not card._configure()
     config.set_values.assert_not_called()
+
+
+def test_deleted_program_cannot_be_enabled_without_reconfiguration(settings, qtbot, monkeypatch):
+    module, values, config = settings
+    values["divergent_decision_command"] = ["missing-agent-123456.exe"]
+    card = module.AgentDecisionSettingCard()
+    qtbot.addWidget(card)
+    configure = MagicMock(return_value=False)
+    monkeypatch.setattr(card, "_configure", configure)
+    card.switchButton.setChecked(True)
+    assert not card.switchButton.isChecked()
+    configure.assert_called_once()
+    config.set_value.assert_not_called()
+
+
+def test_nul_argument_cannot_be_saved(settings, qtbot, host):
+    module, _, _ = settings
+    dialog = module.AgentDecisionDialog(host)
+    qtbot.addWidget(dialog)
+    dialog.programEdit.setText(sys.executable)
+    dialog.argumentsEdit.setPlainText("bad\0argument")
+    with pytest.raises(ValueError):
+        dialog.values()

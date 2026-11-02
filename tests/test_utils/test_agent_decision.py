@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import io
 from pathlib import Path
 import sys
 import time
@@ -7,6 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import psutil
 import pytest
+from unittest.mock import MagicMock
+from utils import agent_decision as protocol
 
 from utils.agent_decision import DecisionCancelled, request_decision
 
@@ -124,3 +127,78 @@ def test_pending_cleans_cancelled_requests(tmp_path, capsys):
     assert json.loads(capsys.readouterr().out) == {"pending": []}
     assert not pending.exists()
     assert not response.exists()
+
+
+def test_completed_response_after_deadline_is_not_accepted(tmp_path, monkeypatch):
+    process = MagicMock(returncode=0)
+    process.poll.return_value = 0
+    def launch(command, **kwargs):
+        request = json.load(kwargs["stdin"])
+        kwargs["stdout"].write(json.dumps(dict(protocol_version=1, request_id=request["request_id"], candidate_id="text-1")).encode())
+        return process
+    monkeypatch.setattr(protocol.subprocess, "Popen", launch)
+    ticks = iter((0, 2))
+    monkeypatch.setattr(protocol.time, "monotonic", lambda: next(ticks))
+    with pytest.raises(TimeoutError):
+        request_decision(["provider"], 1, REQUEST)
+
+
+def test_pending_cleans_orphaned_response(tmp_path, capsys):
+    response = tmp_path / f"{'c' * 32}.response.json"
+    bridge.atomic_json(response, {"candidate_id": "text-1"})
+    bridge.pending_requests(tmp_path, 0)
+    assert not response.exists()
+
+
+def test_reply_is_idempotent_and_cannot_overwrite_first_choice(tmp_path):
+    request_id = "d" * 32
+    owner = psutil.Process()
+    bridge.atomic_json(bridge.request_path(tmp_path, request_id), {
+        "expires_at": time.time() + 30, "pid": owner.pid,
+        "process_created_at": owner.create_time(), "request": dict(REQUEST, request_id=request_id),
+    })
+    bridge.respond(tmp_path, request_id, "text-1")
+    bridge.respond(tmp_path, request_id, "text-1")
+    with pytest.raises(ValueError):
+        bridge.respond(tmp_path, request_id, "text-2")
+    assert json.loads((tmp_path / f"{request_id}.response.json").read_text())["candidate_id"] == "text-1"
+
+
+def test_bridge_deadline_never_exceeds_outer_timeout(tmp_path, monkeypatch, capsys):
+    request_id = "e" * 32
+    deadline = time.time() + 2
+    request = dict(REQUEST, protocol_version=1, request_id=request_id, expires_at=deadline)
+    monkeypatch.setattr(bridge.sys, "stdin", io.StringIO(json.dumps(request)))
+    real_write = bridge.atomic_json
+    envelopes = []
+    def publish(path, value, **kwargs):
+        real_write(path, value, **kwargs)
+        envelopes.append(value)
+        real_write(tmp_path / f"{request_id}.response.json", {
+            "protocol_version": 1, "request_id": request_id, "candidate_id": None,
+        })
+    monkeypatch.setattr(bridge, "atomic_json", publish)
+    bridge.serve(tmp_path, 110)
+    assert envelopes[0]["expires_at"] == deadline
+    assert json.loads(capsys.readouterr().out)["candidate_id"] is None
+
+
+def test_concurrent_replies_have_one_winner(tmp_path):
+    request_id = "f" * 32
+    owner = psutil.Process()
+    bridge.atomic_json(bridge.request_path(tmp_path, request_id), {
+        "expires_at": time.time() + 30, "pid": owner.pid,
+        "process_created_at": owner.create_time(), "request": dict(REQUEST, request_id=request_id),
+    })
+    def reply(choice):
+        try:
+            bridge.respond(tmp_path, request_id, choice)
+            return choice
+        except ValueError:
+            return None
+    with ThreadPoolExecutor() as pool:
+        results = list(pool.map(reply, ("text-1", "text-2")))
+    winners = [item for item in results if item is not None]
+    assert len(winners) == 1
+    response = json.loads((tmp_path / f"{request_id}.response.json").read_text())
+    assert response["candidate_id"] == winners[0]
