@@ -25,6 +25,16 @@ class DivergentUniverse:
         self._save_attempted: bool = False  # 本轮是否尝试过存档
         self.stage_finish: bool = False  # 是否完成当前阶段
         self.unsupported_area: bool = False  # 是否遇到暂不支持区域
+        self._agent_choices = None
+
+    def _try_agent_choice(self, kind, title, area, confirm):
+        if cfg.get_value("divergent_decision_enable", False) is not True:
+            return False
+        if self._agent_choices is None:
+            from tasks.weekly.divergent_decision import DivergentDecision
+            from utils.pause import pause_ctl
+            self._agent_choices = DivergentDecision(auto, cfg, log, pause_ctl)
+        return self._agent_choices.choose(kind, title, area, confirm, self.current_stage)
 
     @staticmethod
     def _get_count_config(cycle: Literal["daily", "weekly"]):
@@ -177,6 +187,7 @@ class DivergentUniverse:
             Power.process("饰品提取", instance_name, immersifier_only=True)
 
     def start_war(self, type: Literal["normal", "cycle"] = "normal") -> bool:
+        self._agent_choices = None
         log.info("开始「差分宇宙」")
         screen.change_to("divergent_mode_select")
 
@@ -1167,6 +1178,9 @@ class DivergentUniverse:
         """
         处理选择方程界面：优先选择未收集的方程或已展开的方程
         """
+        if self._try_agent_choice("equation", "选择方程", (280 / 1920, 241 / 1080, 1366 / 1920, 612 / 1080),
+                                  ("确认", (1657 / 1920, 948 / 1080, 99 / 1920, 49 / 1080))):
+            return
         equation_positions = [
             (281 / 1920, 244 / 1080, 417 / 1920, 607 / 1080),
             (753 / 1920, 243 / 1080, 418 / 1920, 609 / 1080),
@@ -1212,6 +1226,9 @@ class DivergentUniverse:
         """
         处理选择祝福界面：优先选择未收集的祝福或建议选项
         """
+        if self._try_agent_choice("blessing", "选择祝福", (280 / 1920, 241 / 1080, 1366 / 1920, 612 / 1080),
+                                  ("确认", (1644 / 1920, 934 / 1080, 88 / 1920, 48 / 1080))):
+            return
         blessing_positions = [
             (280 / 1920, 241 / 1080, 409 / 1920, 611 / 1080),
             (758 / 1920, 242 / 1080, 407 / 1920, 608 / 1080),
@@ -1263,6 +1280,9 @@ class DivergentUniverse:
         """
         处理选择奇物界面：优先选择未收集的奇物或建议选项
         """
+        if self._try_agent_choice("curio", "选择奇物", (280 / 1920, 241 / 1080, 1366 / 1920, 612 / 1080),
+                                  ("确认", (1660 / 1920, 948 / 1080, 93 / 1920, 49 / 1080))):
+            return
         relic_positions = [
             (281 / 1920, 242 / 1080, 407 / 1920, 610 / 1080),
             (757 / 1920, 242 / 1080, 410 / 1920, 610 / 1080),
@@ -1392,6 +1412,9 @@ class DivergentUniverse:
 
     def process_next_station(self):
         # 战斗/精英/事件/异常/奖励/财富/冒险/商店/铸造/空白 奇遇（宝箱/祝福/奇物合成/铸造/惊喜升级） 首领/休整/转化
+        if self._try_agent_choice("station", "选择下一站", (439 / 1920, 432 / 1080, 1041 / 1920, 407 / 1080),
+                                  ("确定", (561 / 1920, 937 / 1080, 794 / 1920, 60 / 1080))):
+            return
         station_positions = [
             (570 / 1920, 433 / 1080, 252 / 1920, 403 / 1080),
             (835 / 1920, 432 / 1080, 251 / 1920, 405 / 1080),
