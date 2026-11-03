@@ -127,6 +127,29 @@ def test_inspection_timeout_returns_before_fallback(replay, monkeypatch):
     assert replay.context.events[-1]["status"] == "fallback"
 
 
+def test_second_pause_during_return_keeps_restoration_until_choice_page(replay, monkeypatch):
+    calls = []
+    def provider(*args, **kwargs):
+        if not calls:
+            calls.append(True)
+            return {"action": "inspect", "control_id": "view-1"}
+        replay.pause.generation += 1
+        return {"action": "decline"}
+    original = replay._restore_choice
+    returns = []
+    def restore(*args):
+        returns.append(True)
+        if len(returns) == 1:
+            replay.pause.generation += 1
+            raise decision.PauseInterrupted()
+        return original(*args)
+    monkeypatch.setattr(decision, "request_decision", provider)
+    monkeypatch.setattr(replay, "_restore_choice", restore)
+    assert replay.choose("curio", "选择奇物", (.1, .2, .8, .6), ("确认", (.8, .9, .1, .05)), "")
+    assert replay.context.view == "choice"
+    assert replay.history == []
+
+
 def test_failed_return_stops_without_confirming(replay, monkeypatch):
     replay.auto.press_key.side_effect = None
     monkeypatch.setattr(decision, "request_decision", MagicMock(side_effect=[

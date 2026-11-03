@@ -28,14 +28,17 @@ def _sample(qapp, theme):
     系统 palette 的浅灰，卡片也会因半透明叠加而偏色。
     """
     from PySide6.QtCore import QPoint
-    from qfluentwidgets import setTheme
+    from PySide6.QtTest import QTest
+    from qfluentwidgets import qconfig, setTheme
     from app.card.card_edit_dialog import CardEditDialog, DEFAULT_CARDS
 
+    previous_theme = qconfig.theme
     setTheme(theme)
     dialog = CardEditDialog(DEFAULT_CARDS)
     dialog.resize(750, 600)
     dialog.show()
     qapp.processEvents()
+    QTest.qWait(50)  # 等待主题重绘，避免整套 GUI 用例连续切换主题时采到旧画面。
     try:
         card = dialog.card_editors[0]
         image = dialog.grab().toImage()
@@ -56,6 +59,7 @@ def _sample(qapp, theme):
         }
     finally:
         dialog.close()
+        setTheme(previous_theme)
 
 
 class TestCardEditDialogStyle:

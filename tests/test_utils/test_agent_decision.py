@@ -22,6 +22,14 @@ SPEC.loader.exec_module(bridge)
 REQUEST = {"kind": "blessing", "candidates": [{"id": "text-1", "text": "防御"}, {"id": "text-2", "text": "终结技"}]}
 
 
+@pytest.mark.parametrize("memory", [{"value": float("nan")}, {"value": float("inf")}])
+def test_nonfinite_memory_is_rejected(memory):
+    request = dict(REQUEST, request_id="test")
+    answer = {"protocol_version": 1, "request_id": "test", "candidate_id": "text-1", "memory": memory}
+    with pytest.raises(ValueError):
+        protocol.validate_decision_answer(request, answer)
+
+
 def worker(tmp_path, body):
     path = tmp_path / "worker.py"
     path.write_text("import json, sys, time\nrequest = json.load(sys.stdin)\n" + body, encoding="utf-8")

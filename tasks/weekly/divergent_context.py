@@ -85,7 +85,8 @@ class DivergentContext:
                                        for key in ("kind", "stage", "text", "reason") if key in event}
                                       for event in self.events if event.get("status") == "confirmed"][-128:],
                 "unobserved_fallbacks": sum(event.get("status") == "fallback" for event in self.events),
-                "decision_skill": str(Path("assets/agent/skills/march7th-assistant/references/strategy.md").resolve())}
+                "decision_skill": str(Path("assets/agent/skills/march7th-assistant/references/strategy.md").resolve()),
+                "decision_skill_uri": "m7a://guides/strategy"}
 
     def record(self, value):
         self.directory.mkdir(parents=True, exist_ok=True)

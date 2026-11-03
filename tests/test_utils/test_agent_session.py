@@ -129,6 +129,81 @@ def test_lease_expiry_requires_new_connection(store):
     assert credentials(store)["session_id"] != auth["session_id"]
 
 
+@pytest.mark.parametrize("raw", ['{"session_id":', '[]', '{"session_id":"bad","expires_at":"forever"}'])
+def test_corrupt_session_cache_is_not_a_controller_and_can_reconnect(store, raw):
+    store.directory.mkdir(parents=True)
+    store.state_path.write_text(raw, encoding="utf-8")
+    assert not store.has_controller()
+    assert store.status()["state"] in ("unclaimed", "disconnected")
+    assert credentials(store)
+    assert store.has_controller()
+
+
+def test_corrupt_client_entry_does_not_hide_other_connected_clients(store):
+    store.register_client("healthy")
+    entries = _read(store.clients_path)
+    _write(store.clients_path, entries + [{"pid": -1}, {"pid": entries[0]["pid"], "created_at": entries[0]["created_at"]}])
+    assert [client["client_name"] for client in store.status()["clients"]] == ["healthy"]
+
+
+def test_real_wait_renews_for_actual_node_budget_after_timeout_increases(store):
+    old_client = AgentSession(store.directory, timeout=1)
+    auth = credentials(old_client)
+    original = _read(store.state_path)
+    with ThreadPoolExecutor() as pool:
+        future = pool.submit(store.request, 120, {"candidates": [{"id": "a"}]})
+        deadline = time.monotonic() + 2
+        while not list(store.queue.glob("*.request.json")) and time.monotonic() < deadline:
+            time.sleep(.01)
+        assert _read(store.state_path) == original  # 发布节点不伪造 Agent 活动。
+        request = old_client.wait(**auth, wait=0)["pending"][0]
+        assert _read(store.state_path)["expires_at"] >= request["expires_at"] + 30
+        old_client.respond(**auth, request_id=request["request_id"], decision={"candidate_id": "a"})
+        assert future.result(timeout=2)["candidate_id"] == "a"
+
+
+@pytest.mark.parametrize("raw", ['{"id":', '[]', '{}'])
+def test_corrupt_gameplay_cache_does_not_break_connection(store, raw):
+    store.directory.mkdir(parents=True)
+    (store.directory / "gameplay.json").write_text(raw, encoding="utf-8")
+    assert credentials(store)
+    assert store.status()["divergent_running"] is False
+
+
+def test_renew_failure_does_not_commit_an_action(store, monkeypatch):
+    auth = credentials(store)
+    cancel = [False]
+    with ThreadPoolExecutor() as pool:
+        future = pool.submit(store.request, 5, {"candidates": [{"id": "a"}]}, cancelled=lambda: cancel[0])
+        request = find_request(store, auth)
+        monkeypatch.setattr(store, "_renew", lambda state: (_ for _ in ()).throw(OSError("write failed")))
+        try:
+            with pytest.raises(OSError):
+                store.respond(**auth, request_id=request["request_id"], decision={"candidate_id": "a"})
+            assert not list(store.queue.glob("*.response.json"))
+        finally:
+            cancel[0] = True
+        with pytest.raises(DecisionCancelled):
+            future.result(timeout=2)
+
+
+def test_consuming_a_reply_does_not_renew_agent_activity(store, monkeypatch):
+    auth = credentials(store)
+    original = store._renew
+    renewals = []
+    def record(state):
+        renewals.append(True)
+        original(state)
+    monkeypatch.setattr(store, "_renew", record)
+    with ThreadPoolExecutor() as pool:
+        future = pool.submit(store.request, 5, {"candidates": [{"id": "a"}]})
+        request = find_request(store, auth)
+        after_wait = len(renewals)
+        store.respond(**auth, request_id=request["request_id"], decision={"candidate_id": "a"})
+        assert future.result(timeout=2)["candidate_id"] == "a"
+    assert len(renewals) == after_wait + 1  # 只有实际回复续期。
+
+
 def test_unclaimed_node_falls_back_without_waiting(store):
     started = time.monotonic()
     assert store.request(120, {"candidates": [{"id": "a"}]}) is None

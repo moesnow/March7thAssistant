@@ -39,6 +39,12 @@ class DivergentUniverse:
     def _get_agent_choices(self):
         if cfg.get_value("divergent_decision_enable", False) is not True:
             return None
+        from utils.agent_session import AgentSession, decision_mode
+        try:
+            if decision_mode(cfg) == "connected" and not AgentSession().has_controller():
+                return None
+        except (OSError, ValueError, TypeError):
+            return None  # 无法确认接管时直接走原策略，不额外截图或等待。
         if self._agent_choices is None:
             from tasks.weekly.divergent_decision import DivergentDecision
             from utils.pause import pause_ctl
@@ -48,7 +54,10 @@ class DivergentUniverse:
     def _capture_agent_context(self, source):
         agent = self._get_agent_choices()
         if agent is not None:
-            agent.capture_context(source)
+            try:
+                agent.capture_context(source)
+            except (OSError, ValueError) as error:
+                log.warning(f"Agent 观察未能保存（{type(error).__name__}），继续原流程")
 
     @staticmethod
     def _get_count_config(cycle: Literal["daily", "weekly"]):

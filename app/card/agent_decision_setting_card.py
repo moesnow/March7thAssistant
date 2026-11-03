@@ -1,6 +1,5 @@
 """差分宇宙外部决策的开关与接入配置，不在界面进程中运行外部程序。"""
 
-import os
 import time
 
 from PySide6.QtCore import Qt, QSignalBlocker, QTimer
@@ -16,7 +15,7 @@ from module.config import cfg
 from module.localization import tr
 from utils.agent_decision import validate_decision_command
 from utils.agent_session import AgentSession, decision_mode
-from utils.agent_service import connection_config
+from utils.agent_service import connection_config, installation_directory
 
 
 def connection_text(mode=None, compact=False, state=None):
@@ -103,7 +102,7 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         prompt_row.addWidget(self.copyPromptButton)
         prompt_row.addWidget(self.disconnectButton)
         layout.addLayout(prompt_row)
-        self.connectionGuide = CaptionLabel(tr("先复制配置到所用客户端，再把接管指令发给 Agent。连接成功后可启动差分宇宙。"), content)
+        self.connectionGuide = CaptionLabel(tr("保存配置并启用开关后，将接入配置加入客户端，重新加载 MCP，再发送聊天接管指令。"), content)
         self.connectionGuide.setWordWrap(True)
         layout.addWidget(self.connectionGuide)
         self.copyConfigButton.clicked.connect(self._copy_config)
@@ -163,7 +162,8 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
 
         width, height = available_host_size(parent)
         self._scroll = build_scroll_area(content, width, height, chrome_height=170)
-        self._scroll.setMinimumWidth(min(520, max(280, width - 120)))
+        # 保留公共滚动容器为纵向滚动条预留的宽度，不能以固定下限覆盖它。
+        self._scroll.setMinimumWidth(min(max(520, self._scroll.minimumWidth()), max(280, width - 120)))
         self.textLayout.addWidget(self._scroll)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._refresh)
@@ -200,7 +200,7 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         QApplication.clipboard().setText(connection_config()[self.configFormat.currentData()])
 
     def _copy_prompt(self):
-        QApplication.clipboard().setText(tr("连接位于 {path} 的三月七并监管差分宇宙；未启动任务时等待，不启动新对局；任务结束后断开接管。").format(path=os.path.abspath(os.getcwd())))
+        QApplication.clipboard().setText(tr("连接位于 {path} 的三月七并监管差分宇宙；未启动任务时等待，不启动新对局；任务结束后断开接管。").format(path=installation_directory()))
 
     def _disconnect(self):
         try:
@@ -250,6 +250,7 @@ class AgentDecisionSettingCard(SettingCard):
             tr("祝福、方程、奇物与下一站由 Agent 选择，战斗保持自动。\n需要 Agent 持续回复；超时回退原策略，下次任务生效。"), parent,
         )
         self.configname = "divergent_decision_enable"
+        self.contentLabel.setTextFormat(Qt.TextFormat.PlainText)
         self.configButton = PushButton(tr("配置"), self)
         self.switchButton = SwitchButton(tr("关"), self, IndicatorPosition.RIGHT)
         self.hBoxLayout.addWidget(self.configButton, 0, Qt.AlignmentFlag.AlignRight)

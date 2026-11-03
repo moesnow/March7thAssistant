@@ -72,6 +72,10 @@ class AgentSession:
             if not isinstance(clients, list):
                 return []
             return [item for item in clients if isinstance(item, dict)
+                    and isinstance(item.get("id"), str) and len(item["id"]) == 32
+                    and isinstance(item.get("client_name"), str) and item["client_name"]
+                    and isinstance(item.get("client_version"), str)
+                    and type(item.get("connected_at")) in (int, float) and math.isfinite(item["connected_at"])
                     and self._alive(item.get("pid"), item.get("created_at"))]
         except (OSError, ValueError, TypeError):
             return []
@@ -130,13 +134,25 @@ class AgentSession:
         try:
             process = psutil.Process(pid)
             return process.is_running() and abs(process.create_time() - created) < .01
-        except (psutil.Error, TypeError):
+        except (psutil.Error, TypeError, ValueError):
             return False
 
+    def _state(self):
+        try:
+            state = _read(self.state_path)
+        except (ValueError, RecursionError):
+            return {}  # 损坏的本机缓存不能授予控制权，也不能阻止重新接管。
+        return state if isinstance(state, dict) else {}
+
     def _active(self, state):
-        return bool(state and state.get("session_id") and not state.get("revoked")
+        return bool(isinstance(state, dict) and isinstance(state.get("session_id"), str)
+                    and len(state["session_id"]) == 32 and not state.get("revoked")
+                    and all(c in "0123456789abcdef" for c in state["session_id"])
+                    and isinstance(state.get("token_hash"), str) and len(state["token_hash"]) == 64
+                    and all(c in "0123456789abcdef" for c in state["token_hash"])
+                    and type(state.get("expires_at")) in (int, float) and math.isfinite(state["expires_at"])
                     and time.time() < state["expires_at"]
-                    and (not state.get("owner_pid") or self._alive(state["owner_pid"], state["owner_created_at"])))
+                    and (state.get("owner_pid") is None or self._alive(state["owner_pid"], state.get("owner_created_at"))))
 
     def _authenticate(self, state, session_id, token):
         if (not self._active(state) or state["session_id"] != session_id or not isinstance(token, str)
@@ -144,11 +160,26 @@ class AgentSession:
             raise ValueError("接管会话无效、已断开或已过期，请重新连接")
 
     def is_current(self, session_id):
-        state = _read(self.state_path)
+        state = self._state()
         return self._active(state) and state["session_id"] == session_id
 
+    def has_controller(self):
+        """只检查有效接管，不续期或枚举客户端/请求。"""
+        return self._active(self._state())
+
     def _renew(self, state):
-        state.update(last_activity=time.time(), expires_at=time.time() + self.ttl)
+        now = time.time()
+        expiry = now + self.ttl
+        # 已运行的 MCP 进程可能早于 GUI 修改节点超时。只在真实 Agent
+        # 联系时按当前待处理节点延长租约，不能由游戏线程伪造心跳。
+        for path in self.queue.glob("*.request.json"):
+            try:
+                request = _read(path)
+                if self._valid_request(request, state):
+                    expiry = max(expiry, request["expires_at"] + 30)
+            except (ValueError, KeyError, TypeError):
+                continue
+        state.update(last_activity=now, expires_at=expiry)
         gameplay = self._gameplay()
         if gameplay and not gameplay["paused"]:
             state.update(gameplay_id=gameplay["id"], gameplay_epoch=gameplay["epoch"], last_game_activity=time.time())
@@ -182,10 +213,17 @@ class AgentSession:
                     path.unlink(missing_ok=True)
 
     def _gameplay(self):
-        activity = _read(self.directory / "gameplay.json")
-        if not activity or not self._alive(activity["pid"], activity["created_at"]) or not self._alive(activity["game_pid"], activity["game_created_at"]):
+        try:
+            activity = _read(self.directory / "gameplay.json")
+        except (ValueError, RecursionError):
+            return None
+        if (not isinstance(activity, dict) or not isinstance(activity.get("id"), str)
+                or not self._alive(activity.get("pid"), activity.get("created_at"))
+                or not self._alive(activity.get("game_pid"), activity.get("game_created_at"))):
             return None
         control = activity.get("control_file")
+        if control is not None and not isinstance(control, str):
+            return None
         activity["epoch"] = 0
         activity["paused"] = False
         if control:
@@ -203,7 +241,7 @@ class AgentSession:
                 or not isinstance(session_label, str) or len(session_label) > 160):
             raise ValueError("请提供有效的客户端名称与会话标签")
         with self._lock():
-            previous = _read(self.state_path)
+            previous = self._state()
             if self._active(previous):
                 raise ValueError("已有 Agent 接管，请先由原会话或 GUI 断开")
             token = secrets.token_urlsafe(32)
@@ -220,7 +258,7 @@ class AgentSession:
 
     def disconnect(self, session_id=None, token=None, *, local=False):
         with self._lock():
-            state = _read(self.state_path)
+            state = self._state()
             if not state or (local and not state.get("session_id")):
                 return {"disconnected": True}
             if not local:
@@ -241,7 +279,7 @@ class AgentSession:
                     and self._alive(envelope["pid"], envelope["process_created_at"]))
 
     def _clean(self):
-        state = _read(self.state_path)
+        state = self._state()
         for path in self.queue.glob("*.request.json"):
             try:
                 if not self._valid_request(_read(path), state):
@@ -255,7 +293,7 @@ class AgentSession:
 
     def status(self):
         # 只读查询不续期，不写入令牌或伪造心跳。
-        state = _read(self.state_path) or {}
+        state = self._state()
         connected = self._active(state)
         pending = []
         for path in self.queue.glob("*.request.json"):
@@ -291,7 +329,7 @@ class AgentSession:
             if cancelled():
                 raise ValueError("等待已取消")
             with self._lock():
-                state = _read(self.state_path)
+                state = self._state()
                 self._authenticate(state, session_id, token)
                 if not renewed:
                     self._renew(state)
@@ -304,7 +342,7 @@ class AgentSession:
                         pending.append(envelope["request"])
             if pending or time.monotonic() >= deadline:
                 with self._lock():
-                    state = _read(self.state_path)
+                    state = self._state()
                     self._authenticate(state, session_id, token)
                     self._renew(state)
                 return {"pending": pending, "connection": self.status()}
@@ -319,7 +357,7 @@ class AgentSession:
 
     def respond(self, session_id, token, request_id, decision):
         with self._lock():
-            state = _read(self.state_path)
+            state = self._state()
             envelope = self._owned_request(state, session_id, token, request_id)
             if not isinstance(decision, dict):
                 raise ValueError("决策必须是对象")
@@ -333,13 +371,13 @@ class AgentSession:
             previous = _read(path)
             if previous is not None and previous != answer:
                 raise ValueError("请求已有不同回复")
-            _write(path, answer)
             self._renew(state)
+            _write(path, answer)
             return {"accepted": True, "request_id": request_id}
 
     def observe(self, session_id, token, request_id, observation_id):
         with self._lock():
-            state = _read(self.state_path)
+            state = self._state()
             envelope = self._owned_request(state, session_id, token, request_id)
             observations = envelope["request"].get("build_state", {}).get("observations", [])
             frame = next((frame for frame in observations if frame["id"] == observation_id), None)
@@ -361,7 +399,7 @@ class AgentSession:
         path = self._request_path(payload["request_id"])
         response_path = path.with_name(path.name.replace(".request.", ".response."))
         with self._lock():
-            state = _read(self.state_path) or {}
+            state = self._state()
             if not self._active(state):
                 state["last_fallback"] = "not_connected"
                 _write(self.state_path, state)
@@ -377,7 +415,7 @@ class AgentSession:
                     fallback = "cancelled"
                     raise DecisionCancelled()
                 with self._lock():
-                    state = _read(self.state_path)
+                    state = self._state()
                     if not self._valid_request(envelope, state):
                         fallback = "timeout" if time.time() >= envelope["expires_at"] else "disconnected"
                         return None
@@ -385,7 +423,8 @@ class AgentSession:
                     if answer is not None:
                         answer = validate_decision_answer(payload, answer)
                         state.pop("last_fallback", None)
-                        self._renew(state)
+                        # 游戏线程消费回执不是 Agent 活动，不能延长租约或更新时间。
+                        _write(self.state_path, state)
                         fallback = ""
                         return dict(answer, _connection_id=envelope["session_id"])
                 time.sleep(.05)
@@ -395,7 +434,7 @@ class AgentSession:
                 path.unlink(missing_ok=True)
                 response_path.unlink(missing_ok=True)
                 if fallback:
-                    state = _read(self.state_path) or {}
+                    state = self._state()
                     if state.get("session_id") == envelope["session_id"]:
                         state["last_fallback"] = fallback
                         _write(self.state_path, state)

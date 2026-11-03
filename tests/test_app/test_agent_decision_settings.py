@@ -5,6 +5,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="原生设置页与项目其余 GUI 测试一致，仅在 Windows 验证")
+
 @pytest.fixture
 def settings(qapp, monkeypatch):
     import app.card.agent_decision_setting_card as module
@@ -204,9 +206,13 @@ def test_idle_and_disconnected_ui_hide_activity_and_old_session(settings, qtbot,
 def test_config_formats_are_neutral_and_do_not_select_agent(settings, qtbot, host, tmp_path, monkeypatch):
     import json
     import tomllib
-    from PySide6.QtWidgets import QApplication
+    from types import SimpleNamespace
     from utils.agent_session import AgentSession
     module, values, _ = settings
+    # 验证按钮导出的内容；不与用户桌面其它应用争用系统剪贴板。
+    clipboard = MagicMock()
+    clipboard.text.side_effect = lambda: clipboard.setText.call_args.args[0]
+    monkeypatch.setattr(module, "QApplication", SimpleNamespace(clipboard=lambda: clipboard))
     values["divergent_decision_mode"] = "connected"
     store = AgentSession(tmp_path / "connection")
     store.connect("Independent Agent", "current chat")
@@ -216,10 +222,10 @@ def test_config_formats_are_neutral_and_do_not_select_agent(settings, qtbot, hos
     assert [dialog.configFormat.itemText(i) for i in range(dialog.configFormat.count())] == ["JSON", "TOML"]
     assert dialog.configFormat.currentText() == "JSON"
     dialog.copyConfigButton.click()
-    generic = json.loads(QApplication.clipboard().text())["mcpServers"]["march7th_assistant"]
+    generic = json.loads(clipboard.text())["mcpServers"]["march7th_assistant"]
     dialog.configFormat.setCurrentIndex(1)
     dialog.copyConfigButton.click()
-    toml = tomllib.loads(QApplication.clipboard().text())["mcp_servers"]["march7th_assistant"]
+    toml = tomllib.loads(clipboard.text())["mcp_servers"]["march7th_assistant"]
     assert generic["command"] == toml["command"]
     assert generic["args"] == toml["args"]
     assert "--agent-mcp" in generic["args"]
@@ -238,6 +244,34 @@ def test_dialog_shows_full_reported_client_name(settings, qtbot, host, tmp_path,
     dialog = module.AgentDecisionDialog(host)
     qtbot.addWidget(dialog)
     assert name in dialog.statusLabel.text()
+
+
+@pytest.mark.parametrize("language", ["zh_CN", "en_US"])
+def test_dialog_reserves_scrollbar_width_for_long_client_names(settings, qtbot, host, monkeypatch, language):
+    from types import SimpleNamespace
+    from module import localization
+    module, values, _ = settings
+    values["divergent_decision_mode"] = "connected"
+    name = "Independent Agent " + "X" * 62
+    state = {"state": "idle", "client_name": name, "session_label": "current chat",
+             "clients": [{"client_name": name, "has_control": True},
+                         {"client_name": "Another generic client", "has_control": False}]}
+    monkeypatch.setattr(module, "AgentSession", lambda: SimpleNamespace(status=lambda: state))
+    previous_language = localization._current_lang
+    localization.load_language(language)
+    try:
+        host.resize(800, 700)
+        host.show()
+        dialog = module.AgentDecisionDialog(host)
+        qtbot.addWidget(dialog)
+        dialog.show()
+        qtbot.wait(250)
+        assert dialog.widget.width() <= host.width()
+        assert dialog.widget.height() <= host.height()
+        assert dialog._scroll.widget().width() <= dialog._scroll.viewport().width()
+        assert name in dialog.clientsLabel.text()
+    finally:
+        localization.load_language(previous_language)
     card = module.AgentDecisionSettingCard()
     qtbot.addWidget(card)
     assert name in card.contentLabel.toolTip()
@@ -298,7 +332,7 @@ def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, l
     import time
     from pathlib import Path
     from PySide6.QtGui import QColor, QPalette, QPainter, QPixmap
-    from qfluentwidgets import Theme, setTheme
+    from qfluentwidgets import Theme, qconfig, setTheme
     from module import localization
     from module.config.config import Config
     import app.card.agent_decision_setting_card as module
@@ -315,6 +349,7 @@ def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, l
     store.status.side_effect = lambda: state.copy()
     monkeypatch.setattr(module, "AgentSession", lambda: store)
     previous_language = localization._current_lang
+    previous_theme = qconfig.theme
     localization.load_language(language)
     setTheme(Theme.DARK if dark else Theme.LIGHT)
     try:
@@ -383,4 +418,4 @@ def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, l
             assert page.stackedWidget.height() >= card.parentWidget().sizeHint().height()
     finally:
         localization.load_language(previous_language)
-        setTheme(Theme.LIGHT)
+        setTheme(previous_theme)

@@ -149,7 +149,7 @@ def collect_status() -> dict:
     from utils.agent_session import AgentSession, decision_mode
     try:
         mode = decision_mode(cfg)
-        status["agent_connection"] = dict(AgentSession().status(), mode=mode) if mode == "connected" else {"mode": mode, "state": "unknown"}
+        status["agent_connection"] = dict(AgentSession().status(), mode=mode, decision_enabled=cfg.get_value("divergent_decision_enable", False) is True) if mode == "connected" else {"mode": mode, "state": "unknown"}
     except (OSError, ValueError, TypeError, KeyError):
         status["agent_connection"] = {"state": "unavailable"}
     return status

@@ -58,6 +58,12 @@ def validate_decision_command(command, *, require_available=False):
 
 def validate_decision_answer(request, answer):
     """只接受当前候选/导航控件及有界的文字状态，不接收坐标、按键或代码。"""
+    try:
+        encoded = json.dumps(answer, ensure_ascii=False, allow_nan=False).encode("utf-8")
+    except (ValueError, TypeError, RecursionError) as error:
+        raise ValueError("外部决策必须是有效且有限的 JSON") from error
+    if len(encoded) > MAX_RESPONSE_BYTES:
+        raise ValueError("外部决策响应过大")
     if (not isinstance(answer, dict) or type(answer.get("protocol_version")) is not int
             or answer["protocol_version"] != PROTOCOL_VERSION
             or answer.get("request_id") != request["request_id"]):

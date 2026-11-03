@@ -198,8 +198,9 @@ class TestHotkeyScrollBackground:
             # 滚动区之外的面板底色（按钮区上方）
             p_panel = QPoint(dlg.widget.x() + dlg.widget.width() // 2,
                              dlg.widget.y() + dlg.buttonGroup.y() - 12)
-            c_gap = img.pixelColor(p_gap)
-            c_panel = img.pixelColor(p_panel)
+            ratio = img.devicePixelRatio()
+            c_gap = img.pixelColor(QPoint(round(p_gap.x() * ratio), round(p_gap.y() * ratio)))
+            c_panel = img.pixelColor(QPoint(round(p_panel.x() * ratio), round(p_panel.y() * ratio)))
             delta = max(abs(c_gap.red() - c_panel.red()),
                         abs(c_gap.green() - c_panel.green()),
                         abs(c_gap.blue() - c_panel.blue()))

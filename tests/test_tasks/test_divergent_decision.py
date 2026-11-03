@@ -162,3 +162,24 @@ def test_station_waits_for_delayed_extra_confirmation(adapter, monkeypatch):
         return True
     adapter.auto.click_element.side_effect = click
     assert adapter.choose("station", "选择下一站", AREA, CONFIRM, "")
+
+
+@pytest.mark.parametrize("checkpoint", ["checkpoint", "check_stop"])
+def test_revoked_connection_stops_inside_input_retry(adapter, monkeypatch, checkpoint):
+    from utils.pause import PauseController
+    from types import SimpleNamespace
+    adapter.pause = PauseController()
+    alive = [True]
+    monkeypatch.setattr(decision, "AgentSession", lambda: SimpleNamespace(is_current=lambda _: alive[0]))
+    monkeypatch.setattr(decision, "request_decision", lambda *args, **kwargs: {
+        "action": "choose", "candidate_id": "text-1", "_connection_id": "test-connection"})
+    inputs = []
+    def click(*args, **kwargs):
+        alive[0] = False  # 模拟已进入点击方法，等待/重试过程中 GUI 结束接管。
+        getattr(adapter.pause, checkpoint)()
+        inputs.append(args)
+        return True
+    adapter.auto.click_element.side_effect = click
+    assert adapter.choose("blessing", "选择祝福", AREA, CONFIRM, "")
+    assert inputs == []
+    assert adapter.history == []

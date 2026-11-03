@@ -37,6 +37,12 @@ class PauseInterrupted(Exception):
 _generation_guard = ContextVar("pause_generation_guard", default=None)
 
 
+def _check_guard_callback():
+    guard = _generation_guard.get()
+    if guard is not None and guard[2] is not None:
+        guard[2]()
+
+
 class _LazyLog:
     """延迟导入日志模块：本模块的文件协议部分也被未提权的命令行入口使用，
     导入 module.logger 会初始化配置与日志（并打印欢迎横幅），只在真正写日志时才导入。"""
@@ -126,7 +132,7 @@ def pause_guard(method):
         pause_ctl.checkpoint()
         guard = _generation_guard.get()
         if guard is not None:
-            controller, generation = guard
+            controller, generation, _ = guard
             if controller.generation != generation:
                 raise PauseInterrupted()
         return method(*args, **kwargs)
@@ -251,9 +257,9 @@ class PauseController:
             return self._generation
 
     @contextmanager
-    def guard_generation(self, generation):
+    def guard_generation(self, generation, validate=None):
         """仅在显式保护的流程内阻止暂停后继续执行旧识别结果。"""
-        token = _generation_guard.set((self, generation))
+        token = _generation_guard.set((self, generation, validate))
         try:
             yield
         finally:
@@ -262,6 +268,10 @@ class PauseController:
     # ---------- 任务线程侧 ----------
 
     def checkpoint(self):
+        self._wait_for_resume()
+        _check_guard_callback()
+
+    def _wait_for_resume(self):
         """动作卡点：暂停中则在此阻塞，直到恢复指令到达；收到停止指令则抛出 RunStopRequested。运行中立即返回。"""
         if not self._enabled:
             return
@@ -278,6 +288,7 @@ class PauseController:
         """只检查停止指令、不进入暂停：供持有输入锁的后台输入在等待中途使用。"""
         if self._enabled and self._stop_requested:
             raise RunStopRequested()
+        _check_guard_callback()
 
     def _enter_paused(self):
         self._release_inputs()

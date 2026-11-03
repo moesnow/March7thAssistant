@@ -174,6 +174,7 @@ def test_game_start_does_not_kill_game_on_input_interruption(monkeypatch):
     from module.automation.background_input import InputInterrupted
     controller=Mock()
     controller.switch_to_game.side_effect=InputInterrupted('minimized')
+    monkeypatch.setattr(module,'auto',SimpleNamespace(input_handler=SimpleNamespace(is_background=False)))
     monkeypatch.setattr(module,'cfg',SimpleNamespace(cloud_game_enable=False))
     monkeypatch.setattr(module,'StarRailController',Mock(return_value=controller))
     with pytest.raises(InputInterrupted):module.start_game()

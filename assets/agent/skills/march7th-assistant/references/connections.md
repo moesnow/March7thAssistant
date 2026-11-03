@@ -8,20 +8,24 @@
 
 内置标准 STDIO MCP 服务的入口是安装目录的 `m7a.exe --agent-mcp`，可供任意支持 STDIO MCP 的 Agent 客户端接入，无需额外 Python 或独立 Agent CLI。所有客户端使用相同的服务入口与工具，不按品牌选择或绑定 Agent。
 
-GUI 默认复制 JSON 配置，也可按客户端要求改选 TOML；这里选择的是配置文件格式。将配置添加到所用客户端并重新加载 MCP 后，使用下列工具。实际接入者来自 MCP 初始化握手的 `clientInfo.name`，会话标签由当前 Agent 准确提供；不从配置格式推断 Agent、模型、聊天标题或其他会话身份。只有实际执行 `agent_connect` 才显示为已接管。
+先在 GUI 保存「内置 Agent 连接」并打开「启用 Agent 辅助决策」开关，再复制接入配置。GUI 默认复制 JSON 配置，也可按客户端要求改选 TOML；这里选择的是配置文件格式。将配置合并到所用客户端（保留已有 MCP 条目）并重新加载 MCP 后，使用下列工具。命令和路径按实际安装目录生成，含空格或中文的路径不需要手动加引号。源码用户先安装项目依赖；发布包已包含运行环境。
+
+实际接入者来自 MCP 握手的 `clientInfo.name`（如客户端自己上报 `codex-mcp-client`，就原样显示），会话标签由当前 Agent 准确提供；不从配置格式推断 Agent、模型、聊天标题或其他会话身份。只有实际执行 `agent_connect` 才显示为已接管。
 
 配置页单独列出“已连接的 MCP 客户端”和“当前接管”。客户端握手成功后就出现在列表中，无需先接管；每个连接标明已接管或未接管，同名客户端可有多个连接。客户端列表仅表示通信通道存在，不表示 Agent 正在执行或监管。只有一个会话能实际接管，结束接管后客户端仍可保持连接；关闭客户端或服务后从列表移除，进程崩溃也会被过滤。
 
 ## MCP 工具
 
-- `agent_connect(session_label)`：用户授权后接管，返回 `session_id`、`token` 与 `lease_seconds`。凭据只在当前操作中保存，不写攻略、公开日志或向用户展示。
-- `agent_status()`：只读连接摘要；不续期。
+- `agent_connect(session_label)`：用户授权后接管，返回 `session_id`、`token`、`lease_seconds`、`decision_enabled` 及 `guides` 中的策略和协议全文。凭据只在当前操作中保存，不写攻略、公开日志或向用户展示。
+- `agent_status()`：只读连接摘要及 `decision_enabled`、`decision_mode`；不续期。功能未启用时提示用户在 GUI 保存并打开开关；配置损坏时通过 `configuration_error` 诊断，不擅自覆盖配置。
 - `agent_wait(session_id, token, wait=20)`：等待本会话的请求，单次 0～20 秒；无请求时按本次授权继续等待。
 - `agent_observe(session_id, token, request_id, observation_id)`：读取请求内已有的 PNG 与 OCR，不接受任意路径。
 - `agent_respond(session_id, token, request_id, decision)`：回复候选、查看、返回或 decline，并可附理由和 memory；沿用 `decisions.md` 与 `strategy.md`。
 - `agent_disconnect(session_id, token)`：结束接管，游戏后续使用原策略。
 
-接管后按 `strategy.md` 阅读队伍与构筑证据，再持续执行“等待 → 判断/查看 → 回复”。`accepted` 只表示提交，实际确认以日志为准。用户只要求连接时不自动开始新对局；游戏运行仍使用既有 GUI 或 `m7a.exe` 任务命令。
+MCP 还提供 `m7a://guides/connections`、`m7a://guides/strategy`、`m7a://guides/decisions` 三个只读 Markdown 资源。没有本地文件工具或不支持资源的 Agent 也可直接读取接管回执中的 `guides`，无需另装 Skill 才能作决策；用户级 Skill 仍方便发现与运行小助手任务。
+
+接管后按策略说明阅读队伍与构筑证据，再持续执行“等待 → 判断/查看 → 回复”。`accepted` 只表示提交，实际确认以日志为准。用户只要求连接时不自动开始新对局；游戏运行仍使用既有 GUI 或 `m7a.exe` 任务命令。
 
 任务结束、用户要求停止监管，或即将结束聊天回复时主动断开。不能把 MCP 进程、文件桥进程存活或安装 Skill 描述为 Agent 正在监管。状态查询和图片读取不续期；只有实际连接、等待与回复续期。租约为 `max(90, 节点超时+30)` 秒。
 

@@ -85,10 +85,21 @@ class DivergentDecision:
 
     def _checkpoint(self, generation, answer=None):
         self.pause.checkpoint()
+        self._validate_input(generation, answer)
+
+    def _validate_input(self, generation, answer):
         if self.pause.generation != generation:
             raise PauseInterrupted()
         if answer and answer.get("_connection_id") and not AgentSession().is_current(answer["_connection_id"]):
             raise DecisionCancelled()
+
+    def _input(self, generation, answer, method, *args, **kwargs):
+        if answer and answer.get("_connection_id"):
+            # 后台输入在等待用户鼠标、重试和实际按下前都有卡点；
+            # 在这些卡点重新验证接管，清理时的松键/松鼠标不受阻。
+            with self.pause.guard_generation(generation, validate=lambda: self._validate_input(generation, answer)):
+                return method(*args, **kwargs)
+        return method(*args, **kwargs)
 
     def _observe(self, area):
         self.auto.take_screenshot(area)
@@ -188,8 +199,8 @@ class DivergentDecision:
                 if control.get("kind") == "scroll":
                     position = self.auto.find_element((.6, .6, .01, .01), "crop")
                     if position:
-                        self.auto.mouse_move(*position[0])
-                        self.auto.mouse_scroll(5, control["direction"], False)
+                        self._input(generation, answer, self.auto.mouse_move, *position[0])
+                        self._input(generation, answer, self.auto.mouse_scroll, 5, control["direction"], False)
                         time.sleep(.5)
                     continue
                 bounds = control["bounds"]
@@ -198,9 +209,9 @@ class DivergentDecision:
                         min(1 - max(0, bounds[0] - .004), bounds[2] + .008),
                         min(1 - max(0, bounds[1] - .004), bounds[3] + .008))
                 if control.get("kind") == "region":
-                    opened = self.auto.click_element(bounds, "crop")
+                    opened = self._input(generation, answer, self.auto.click_element, bounds, "crop")
                 else:
-                    opened = self.auto.click_element(control["text"], "text", crop=crop, include=False)
+                    opened = self._input(generation, answer, self.auto.click_element, control["text"], "text", crop=crop, include=False)
                 if opened:
                     inspecting = True
                     time.sleep(.7)
@@ -208,10 +219,17 @@ class DivergentDecision:
         finally:
             if inspecting and not self.pause.stop_requested:
                 # 暂停后使用新观察返回，绝不执行暂停前的选择。
-                self.pause.checkpoint()
-                current = self.pause.generation
-                with self.pause.guard_generation(current):
-                    restore(current)
+                for _ in range(3):
+                    self.pause.checkpoint()
+                    current = self.pause.generation
+                    try:
+                        with self.pause.guard_generation(current):
+                            restore(current)
+                    except PauseInterrupted:
+                        continue  # 返回过程中再次暂停，恢复后重新确认页面。
+                    break
+                else:
+                    raise RuntimeError("返回选择页时多次被暂停打断，停止操作并保留现场")
 
     def _choose(self, kind, title, area, confirm, stage, generation):
         self._checkpoint(generation)
@@ -248,18 +266,18 @@ class DivergentDecision:
         crop = (max(area[0], bounds[0] - .004), max(area[1], bounds[1] - .004),
                 min(area[0] + area[2], bounds[0] + bounds[2] + .004) - max(area[0], bounds[0] - .004),
                 min(area[1] + area[3], bounds[1] + bounds[3] + .004) - max(area[1], bounds[1] - .004))
-        if not self.auto.click_element(selected["text"], "text", crop=crop, include=False):
+        if not self._input(generation, answer, self.auto.click_element, selected["text"], "text", crop=crop, include=False):
             return True
         # 复用原流程的选择动画与确认等待，低性能/后台模式同样适用。
         time.sleep(1)
         self._checkpoint(generation, answer)
-        if not self.auto.click_element(confirm[0], "text", crop=confirm[1], include=True, max_retries=10):
+        if not self._input(generation, answer, self.auto.click_element, confirm[0], "text", crop=confirm[1], include=True, max_retries=10):
             raise RuntimeError("外部决策选项已点击，但未能确认选择")
         time.sleep(2)
         self._checkpoint(generation)
         if kind == "station":
             self._checkpoint(generation, answer)
-            if self.auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9):
+            if self._input(generation, answer, self.auto.click_element, "./assets/images/zh_CN/base/confirm.png", "image", 0.9):
                 time.sleep(2)
                 self._checkpoint(generation)
         self.history.append({"kind": kind, "text": selected["text"]})

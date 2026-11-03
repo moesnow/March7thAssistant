@@ -23,7 +23,7 @@
 import ast
 import re
 
-from tools.i18n import iter_source_files
+from tools.i18n import ROOT, iter_source_files
 
 CJK = re.compile(r"[\u3400-\u9fff]")
 
@@ -89,7 +89,7 @@ def _parsed_sources():
             tree = ast.parse(source, str(path))
         except (SyntaxError, ValueError):
             continue
-        rel = str(path).replace("\\", "/").split("March7thAssistant/")[-1]
+        rel = path.relative_to(ROOT).as_posix()
         yield rel, tree
 
 
