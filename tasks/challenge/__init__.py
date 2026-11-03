@@ -29,7 +29,7 @@ class ChallengeManager:
             game_mode.run()
 
 
-def start(mode: Literal["memoryofchaos", "purefiction", "memoryone"], count=1):
+def start(mode: Literal["memoryofchaos", "purefiction", "memoryone", "apocalyptic"], count=1):
     challenge_manager = ChallengeManager()
     challenge_manager.run(mode, count)
 
