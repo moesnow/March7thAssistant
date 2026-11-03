@@ -50,3 +50,38 @@ def test_real_mcp_initialize_owner_observe_reply_and_client_close(tmp_path):
         assert store.status()["state"] == "disconnected"
 
     anyio.run(scenario)
+
+
+def test_different_mcp_clients_share_service_and_report_actual_owner(tmp_path):
+    """通用客户端不靠 GUI 品牌选项接入，身份来自各自 initialize 元信息。"""
+    store = AgentSession(tmp_path / "connection")
+    code = "from utils.agent_service import run_mcp; from utils.agent_session import AgentSession; run_mcp(AgentSession(" + repr(str(store.directory)) + "))"
+    params = StdioServerParameters(command=sys.executable, args=["-B", "-c", code], cwd=str(Path.cwd()))
+
+    def unpack(result):
+        assert not result.is_error, result
+        return json.loads(next(content.text for content in result.content if content.type == "text"))
+
+    async def scenario():
+        async with stdio_client(params) as streams_a, stdio_client(params) as streams_b:
+            async with ClientSession(*streams_a, client_info=Implementation(name="Example Agent A", version="1")) as a, ClientSession(*streams_b, client_info=Implementation(name="自定义 Agent B", version="2")) as b:
+                await a.initialize()
+                await b.initialize()
+                assert store.status()["state"] == "unclaimed"
+                owner_a = unpack(await a.call_tool("agent_connect", {"session_label": "first chat"}))
+                assert unpack(await b.call_tool("agent_status"))["client_name"] == "Example Agent A"
+                rejected = await b.call_tool("agent_connect", {"session_label": "second chat"})
+                assert rejected.is_error
+                assert store.status()["client_name"] == "Example Agent A"
+                credentials_a = {key: owner_a[key] for key in ("session_id", "token")}
+                unpack(await a.call_tool("agent_disconnect", credentials_a))
+                owner_b = unpack(await b.call_tool("agent_connect", {"session_label": "second chat"}))
+                status = unpack(await a.call_tool("agent_status"))
+                assert status["client_name"] == "自定义 Agent B"
+                assert status["session_label"] == "second chat"
+                credentials_b = {key: owner_b[key] for key in ("session_id", "token")}
+                unpack(await b.call_tool("agent_wait", dict(credentials_b, wait=0)))
+                unpack(await b.call_tool("agent_disconnect", credentials_b))
+        assert store.status()["state"] == "disconnected"
+
+    anyio.run(scenario)

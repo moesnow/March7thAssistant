@@ -27,7 +27,8 @@ def connection_text(mode=None, compact=False):
               "waiting": tr("等待决策"), "disconnected": tr("已断开")}
     text = labels[state["state"]]
     if state["state"] in ("idle", "waiting") and state.get("client_name"):
-        text += " · " + state["client_name"][:16 if compact else 32]
+        name = state["client_name"]
+        text += " · " + (name[:23] + "…" if compact and len(name) > 24 else name)
         if state.get("session_label") and not compact:
             text += "\n" + tr("会话：{label}").format(label=state["session_label"][:60])
         if state.get("divergent_running") and state.get("last_activity") is not None:
@@ -68,14 +69,17 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         self.statusLabel.setWordWrap(True)
         layout.addWidget(self.statusLabel)
         connection_row = QHBoxLayout()
+        self.configFormatLabel = CaptionLabel(tr("配置格式"), content)
         self.configFormat = ComboBox(content)
-        self.configFormat.addItems([tr("Codex Desktop"), tr("其他 MCP 客户端")])
+        # 这里只选择客户端配置文件的格式，不选择或绑定接入的 Agent。
+        self.configFormat.addItem("JSON", userData=1)
+        self.configFormat.addItem("TOML", userData=0)
         self.copyConfigButton = PushButton(tr("复制接入配置"), content)
         self.copyPromptButton = PushButton(tr("复制聊天接管指令"), content)
         self.disconnectButton = PushButton(tr("断开"), content)
-        for widget in (self.configFormat, self.copyConfigButton, self.copyPromptButton, self.disconnectButton):
-            if widget in (self.configFormat, self.copyConfigButton):
-                connection_row.addWidget(widget)
+        connection_row.addWidget(self.configFormatLabel)
+        connection_row.addWidget(self.configFormat, 1)
+        connection_row.addWidget(self.copyConfigButton, 1)
         layout.addLayout(connection_row)
         prompt_row = QHBoxLayout()
         prompt_row.addWidget(self.copyPromptButton)
@@ -151,7 +155,7 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
     def _mode_changed(self, *_):
         advanced = self.modeComboBox.currentData() == "command"
         self.commandPanel.setVisible(advanced)
-        for widget in (self.configFormat, self.copyConfigButton, self.copyPromptButton, self.disconnectButton):
+        for widget in (self.configFormatLabel, self.configFormat, self.copyConfigButton, self.copyPromptButton, self.disconnectButton):
             widget.setVisible(not advanced)
         self.connectionGuide.setVisible(not advanced)
         self._refresh()
@@ -167,7 +171,7 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
             self.disconnectButton.setEnabled(False)
 
     def _copy_config(self):
-        QApplication.clipboard().setText(connection_config()[self.configFormat.currentIndex()])
+        QApplication.clipboard().setText(connection_config()[self.configFormat.currentData()])
 
     def _copy_prompt(self):
         QApplication.clipboard().setText(tr("连接位于 {path} 的三月七并监管差分宇宙；未启动任务时等待，不启动新对局；任务结束后断开接管。").format(path=os.path.abspath(os.getcwd())))
@@ -239,12 +243,14 @@ class AgentDecisionSettingCard(SettingCard):
     def _refresh(self):
         try:
             status = connection_text(compact=True)
+            tooltip = connection_text()
         except (OSError, ValueError, TypeError, KeyError):
             status = tr("连接状态暂不可用")
+            tooltip = status
         content = status.splitlines()[0]
         if self.contentLabel.text() != content:
             self.setContent(content)
-        self.contentLabel.setToolTip(status)
+        self.contentLabel.setToolTip(tooltip)
 
     def setValue(self, enabled):
         with QSignalBlocker(self.switchButton):

@@ -10,6 +10,8 @@
 
 在 GUI 配置中选择「内置 Agent 连接」。将「复制接入配置」生成的 STDIO MCP 配置添加到所用客户端，重新加载后在当前聊天要求“连接三月七并监管”。MCP 入口为安装目录的 `m7a.exe --agent-mcp`，已随发布包提供，无需额外 Python、独立 Agent CLI 或模型 Key。
 
+服务兼容支持 STDIO MCP 的 Agent 客户端，不绑定品牌。配置窗口默认导出 JSON，也可按客户端要求选择 TOML；格式选项不选择接入者。GUI 显示的实际接入者来自 MCP 初始化握手的 `clientInfo.name`，由接管会话决定。
+
 内置工具提供连接、状态、等待、读取观察、回复、断开六种操作；未加载 MCP 的客户端也可通过 `m7a.exe --agent-session` 的 stdin/stdout JSON 使用相同功能。具体参数与监管循环见 [连接与接管说明](../agent/skills/march7th-assistant/references/connections.md)。
 
 GUI 显示未接管、已接管空闲、等待决策或已断开，附客户端名称、会话标签、最近活动与回退原因。MCP 客户端元信息和 Agent 自报标签用于区分会话，不代表已识别模型或聊天标题。只启动 MCP 进程、打开开关或安装 Skill 不会显示为已接管，也不会自动启动游戏。

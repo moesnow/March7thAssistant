@@ -6,7 +6,9 @@
 
 读取安装目录的 `m7a.exe --status`，查看 `agent_connection`。支持内置连接的版本，GUI「设置 → 差分宇宙 → Agent 辅助决策 → 配置」可选「内置 Agent 连接」。旧的自定义程序仍可使用，其连接状态不可推断为已接管。
 
-内置 STDIO MCP 服务的入口是安装目录的 `m7a.exe --agent-mcp`。无需额外 Python 或独立 Agent CLI。GUI 可复制 Codex TOML 或通用 JSON 接入配置；在所用客户端添加并重新加载 MCP 后，使用下列工具。客户端名称来自 MCP 客户端元信息，会话标签由当前 Agent 准确提供；不推断模型、聊天标题或其他会话身份。
+内置标准 STDIO MCP 服务的入口是安装目录的 `m7a.exe --agent-mcp`，可供任意支持 STDIO MCP 的 Agent 客户端接入，无需额外 Python 或独立 Agent CLI。所有客户端使用相同的服务入口与工具，不按品牌选择或绑定 Agent。
+
+GUI 默认复制 JSON 配置，也可按客户端要求改选 TOML；这里选择的是配置文件格式。将配置添加到所用客户端并重新加载 MCP 后，使用下列工具。实际接入者来自 MCP 初始化握手的 `clientInfo.name`，会话标签由当前 Agent 准确提供；不从配置格式推断 Agent、模型、聊天标题或其他会话身份。只有实际执行 `agent_connect` 才显示为已接管。
 
 ## MCP 工具
 

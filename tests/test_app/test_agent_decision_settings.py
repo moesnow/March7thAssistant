@@ -201,6 +201,49 @@ def test_idle_and_disconnected_ui_hide_activity_and_old_session(settings, qtbot,
     assert not dialog.disconnectButton.isVisible()
 
 
+def test_config_formats_are_neutral_and_do_not_select_agent(settings, qtbot, host, tmp_path, monkeypatch):
+    import json
+    import tomllib
+    from PySide6.QtWidgets import QApplication
+    from utils.agent_session import AgentSession
+    module, values, _ = settings
+    values["divergent_decision_mode"] = "connected"
+    store = AgentSession(tmp_path / "connection")
+    store.connect("Independent Agent", "current chat")
+    monkeypatch.setattr(module, "AgentSession", lambda: store)
+    dialog = module.AgentDecisionDialog(host)
+    qtbot.addWidget(dialog)
+    assert [dialog.configFormat.itemText(i) for i in range(dialog.configFormat.count())] == ["JSON", "TOML"]
+    assert dialog.configFormat.currentText() == "JSON"
+    dialog.copyConfigButton.click()
+    generic = json.loads(QApplication.clipboard().text())["mcpServers"]["march7th_assistant"]
+    dialog.configFormat.setCurrentIndex(1)
+    dialog.copyConfigButton.click()
+    toml = tomllib.loads(QApplication.clipboard().text())["mcp_servers"]["march7th_assistant"]
+    assert generic["command"] == toml["command"]
+    assert generic["args"] == toml["args"]
+    assert "--agent-mcp" in generic["args"]
+    assert "Independent Agent" in dialog.statusLabel.text()
+    assert store.status()["client_name"] == "Independent Agent"
+
+
+def test_dialog_shows_full_reported_client_name(settings, qtbot, host, tmp_path, monkeypatch):
+    from utils.agent_session import AgentSession
+    module, values, _ = settings
+    values["divergent_decision_mode"] = "connected"
+    name = "Independent MCP Agent " + "A" * 40
+    store = AgentSession(tmp_path / "connection")
+    store.connect(name, "current chat")
+    monkeypatch.setattr(module, "AgentSession", lambda: store)
+    dialog = module.AgentDecisionDialog(host)
+    qtbot.addWidget(dialog)
+    assert name in dialog.statusLabel.text()
+    card = module.AgentDecisionSettingCard()
+    qtbot.addWidget(card)
+    assert name in card.contentLabel.toolTip()
+    assert card.height() == 70
+
+
 def test_activity_ui_appears_only_in_running_game_scope(settings, qtbot, host, tmp_path, monkeypatch):
     import os
     module, values, _ = settings
@@ -280,7 +323,7 @@ def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, l
             assert "\n" not in card.contentLabel.text()
             assert not card.contentLabel.wordWrap()
             assert card.contentLabel.text() == module.connection_text(compact=True).splitlines()[0]
-            assert card.contentLabel.toolTip() == module.connection_text(compact=True)
+            assert card.contentLabel.toolTip() == module.connection_text()
             assert card.contentLabel.geometry().top() > card.titleLabel.geometry().bottom()
             for label in (card.titleLabel, card.contentLabel):
                 assert label.height() >= label.heightForWidth(label.width())
