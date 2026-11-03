@@ -42,7 +42,41 @@ def test_connection_status_does_not_renew_or_expose_credentials(store):
     assert _read(store.state_path) == original
 
 
-def test_concurrent_connections_have_one_owner(store):
+def test_mcp_clients_are_separate_from_takeover_and_do_not_renew(store):
+    import psutil
+    a = store.register_client("Same MCP client", "1")
+    b = store.register_client("Same MCP client", "1")
+    initial = store.status()
+    assert initial["state"] == "unclaimed"
+    assert len(initial["clients"]) == 2
+    assert all(not client["has_control"] for client in initial["clients"])
+    auth = store.connect("Same MCP client", owner=psutil.Process(), client_id=b)
+    state = _read(store.state_path)
+    assert [client["has_control"] for client in store.status()["clients"]] == [False, True]
+    store.unregister_client(a)
+    assert len(store.status()["clients"]) == 1
+    assert _read(store.state_path) == state  # 客户端登记/状态读取不续期接管。
+    store.disconnect(auth["session_id"], auth["token"])
+    assert store.status()["clients"][0]["has_control"] is False
+    store.unregister_client(b)
+    assert store.status()["clients"] == []
+
+
+def test_dead_mcp_process_is_not_shown_as_connected(store):
+    import psutil
+    process = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+    try:
+        store.register_client("MCP process", owner=psutil.Process(process.pid))
+        assert len(store.status()["clients"]) == 1
+    finally:
+        process.kill()
+        process.wait()
+    assert store.status()["clients"] == []
+    assert store.status()["state"] == "unclaimed"
+
+
+@pytest.mark.parametrize("_attempt", range(5))
+def test_concurrent_connections_have_one_owner(store, _attempt):
     def connect(_):
         try:
             return credentials(store)
@@ -51,6 +85,14 @@ def test_concurrent_connections_have_one_owner(store):
     with ThreadPoolExecutor() as pool:
         results = list(pool.map(connect, range(8)))
     assert len([value for value in results if value]) == 1
+
+
+def test_concurrent_mcp_registration_keeps_all_clients(store):
+    with ThreadPoolExecutor() as pool:
+        ids = list(pool.map(lambda i: store.register_client(f"Client {i}"), range(8)))
+    assert len(set(ids)) == 8
+    assert {c["client_name"] for c in store.status()["clients"]} == {f"Client {i}" for i in range(8)}
+    assert store.status()["state"] == "unclaimed"
 
 
 def test_cross_process_connections_have_one_owner(store):

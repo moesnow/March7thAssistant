@@ -67,11 +67,27 @@ def run_mcp(store=None):
 
     configured = store is None
     store = store or session_store()
+    registry = store
+    client_id = None
     owned = []
+
+    def register_client(params):
+        nonlocal client_id
+        if client_id is None and params is not None:
+            info = getattr(params, "client_info", None) or getattr(params, "clientInfo", None)
+            client_id = registry.register_client(getattr(info, "name", None), getattr(info, "version", ""), owner=psutil.Process())
+
+    async def track_client(ctx, call_next):
+        # 官方 SDK 的公开 middleware 钩子，观察已完成握手的真实通道。
+        # 不轮询、不替 Agent 保活，进程存活仅作为客户端连接的证据。
+        if ctx.method != "initialize":
+            register_client(ctx.session.client_params)
+        return await call_next(ctx)
+
     server = MCPServer("march7th-assistant", instructions=(
         "仅在用户要求接管时调用 agent_connect；连接不启动游戏。接管后持续调用 agent_wait，读取 strategy Skill、观察和候选，"
         "按实际队伍取舍，通过 agent_respond 回复并继续等待。不要结束回复后声称仍在监管。任务结束或用户停止监管时 agent_disconnect。"
-        "名称与会话标签须准确，未知不猜测；不使用 Computer Use。MCP 启动本身不代表 Agent 已接管。"), log_level="WARNING")
+        "名称与会话标签须准确，未知不猜测；不使用 Computer Use。MCP 启动本身不代表 Agent 已接管。"), log_level="WARNING", middleware=[track_client])
 
     @server.tool()
     async def agent_connect(session_label: str, ctx: Context) -> dict:
@@ -83,7 +99,8 @@ def run_mcp(store=None):
                 raise ValueError("请先在 GUI 保存内置 Agent 连接方式")
         params = ctx.session.client_params
         info = getattr(params, "client_info", None) or getattr(params, "clientInfo", None)
-        result = store.connect(getattr(info, "name", None) or "MCP client", session_label, owner=psutil.Process())
+        register_client(params)
+        result = store.connect(getattr(info, "name", None) or "MCP client", session_label, owner=psutil.Process(), client_id=client_id)
         owned.append(result)
         return result
 
@@ -126,6 +143,10 @@ def run_mcp(store=None):
                 store.disconnect(credentials["session_id"], credentials["token"])
             except (OSError, ValueError):
                 pass
+        try:
+            registry.unregister_client(client_id)
+        except (OSError, ValueError):
+            pass  # 崩溃/无法清理时，状态读取仍会按进程身份剔除断开的客户端。
 
 
 def connection_config(install=None):

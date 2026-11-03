@@ -174,14 +174,14 @@ def test_gui_shows_real_owner_and_disconnect_revokes_lease(settings, qtbot, host
     monkeypatch.setattr(module, "AgentSession", lambda: store)
     dialog = module.AgentDecisionDialog(host)
     qtbot.addWidget(dialog)
-    assert "未接管" in dialog.statusLabel.text()
+    assert dialog.statusLabel.text() == "当前接管：无"
     auth = store.connect("Desktop", "active chat")
     dialog._refresh()
     assert "Desktop" in dialog.statusLabel.text() and "active chat" in dialog.statusLabel.text()
     assert auth["token"] not in dialog.statusLabel.text()
     dialog.disconnectButton.click()
     assert store.status()["state"] == "disconnected"
-    assert "已断开" in dialog.statusLabel.text()
+    assert dialog.statusLabel.text() == "当前接管：无"
 
 
 def test_idle_and_disconnected_ui_hide_activity_and_old_session(settings, qtbot, host, tmp_path, monkeypatch):
@@ -197,7 +197,7 @@ def test_idle_and_disconnected_ui_hide_activity_and_old_session(settings, qtbot,
     assert "等待差分宇宙任务" in dialog.statusLabel.text()
     store.disconnect(auth["session_id"], auth["token"])
     dialog._refresh()
-    assert dialog.statusLabel.text() == "已断开"
+    assert dialog.statusLabel.text() == "当前接管：无"
     assert not dialog.disconnectButton.isVisible()
 
 
@@ -242,6 +242,33 @@ def test_dialog_shows_full_reported_client_name(settings, qtbot, host, tmp_path,
     qtbot.addWidget(card)
     assert name in card.contentLabel.toolTip()
     assert card.height() == 70
+
+
+def test_dialog_lists_clients_before_takeover_and_keeps_them_after_release(settings, qtbot, host, tmp_path, monkeypatch):
+    import psutil
+    from utils.agent_session import AgentSession
+    module, values, _ = settings
+    values["divergent_decision_mode"] = "connected"
+    store = AgentSession(tmp_path / "connection")
+    client = store.register_client("Independent Agent A")
+    store.register_client("Independent Agent B")
+    monkeypatch.setattr(module, "AgentSession", lambda: store)
+    dialog = module.AgentDecisionDialog(host)
+    qtbot.addWidget(dialog)
+    assert "Independent Agent A（未接管）" in dialog.clientsLabel.text()
+    assert "Independent Agent B（未接管）" in dialog.clientsLabel.text()
+    assert dialog.statusLabel.text() == "当前接管：无"
+    store.connect("Independent Agent A", "current chat", owner=psutil.Process(), client_id=client)
+    dialog._refresh()
+    assert "Independent Agent A（已接管）" in dialog.clientsLabel.text()
+    assert "current chat" in dialog.statusLabel.text()
+    dialog.disconnectButton.click()
+    assert "Independent Agent A（未接管）" in dialog.clientsLabel.text()
+    assert dialog.statusLabel.text() == "当前接管：无"
+    card = module.AgentDecisionSettingCard()
+    qtbot.addWidget(card)
+    assert card.height() == 70
+    assert "MCP 客户端已连接" in card.contentLabel.text()
 
 
 def test_activity_ui_appears_only_in_running_game_scope(settings, qtbot, host, tmp_path, monkeypatch):
@@ -323,7 +350,7 @@ def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, l
             assert "\n" not in card.contentLabel.text()
             assert not card.contentLabel.wordWrap()
             assert card.contentLabel.text() == module.connection_text(compact=True).splitlines()[0]
-            assert card.contentLabel.toolTip() == module.connection_text()
+            assert card.contentLabel.toolTip() == module.clients_text(state) + "\n" + module.connection_text()
             assert card.contentLabel.geometry().top() > card.titleLabel.geometry().bottom()
             for label in (card.titleLabel, card.contentLabel):
                 assert label.height() >= label.heightForWidth(label.width())

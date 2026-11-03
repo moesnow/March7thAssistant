@@ -63,15 +63,39 @@ class AgentSession:
         self.directory = Path(directory or "logs/agent_connection").resolve()
         self.queue = self.directory / "queue"
         self.state_path = self.directory / "connection.json"
+        self.clients_path = self.directory / "clients.json"
         self.ttl = max(90, timeout + 30)
+
+    def _clients(self):
+        try:
+            clients = _read(self.clients_path) or []
+            if not isinstance(clients, list):
+                return []
+            return [item for item in clients if isinstance(item, dict)
+                    and self._alive(item.get("pid"), item.get("created_at"))]
+        except (OSError, ValueError, TypeError):
+            return []
+
+    def register_client(self, client_name, client_version="", *, owner=None):
+        """登记真实 MCP 握手；仅表示客户端通道存在，不接管、不续期。"""
+        owner = owner or psutil.Process()
+        name = str(client_name or "MCP client").strip()[:80] or "MCP client"
+        entry = {"id": uuid.uuid4().hex, "client_name": name,
+                 "client_version": str(client_version or "")[:80], "connected_at": time.time(),
+                 "pid": owner.pid, "created_at": owner.create_time()}
+        with self._lock():
+            _write(self.clients_path, self._clients() + [entry])
+        return entry["id"]
+
+    def unregister_client(self, client_id):
+        if client_id:
+            with self._lock():
+                _write(self.clients_path, [item for item in self._clients() if item["id"] != client_id])
 
     @contextmanager
     def _lock(self):
         self.directory.mkdir(parents=True, exist_ok=True)
         with (self.directory / "connection.lock").open("a+b") as stream:
-            if stream.tell() == 0:
-                stream.write(b"\0")
-                stream.flush()
             deadline = time.monotonic() + 2
             while True:
                 try:
@@ -88,6 +112,11 @@ class AgentSession:
                         raise TimeoutError("Agent 会话正在被其他进程操作")
                     time.sleep(.01)
             try:
+                # Windows 允许锁定 EOF 之后的范围。首字节也须在持锁后
+                # 初始化，避免另一个连接已持锁时并发 flush 触发拒绝访问。
+                if os.fstat(stream.fileno()).st_size == 0:
+                    stream.write(b"\0")
+                    stream.flush()
                 yield
             finally:
                 stream.seek(0)
@@ -169,7 +198,7 @@ class AgentSession:
                 pass
         return activity
 
-    def connect(self, client_name, session_label="", *, owner=None):
+    def connect(self, client_name, session_label="", *, owner=None, client_id=None):
         if (not isinstance(client_name, str) or not client_name.strip() or len(client_name) > 80
                 or not isinstance(session_label, str) or len(session_label) > 160):
             raise ValueError("请提供有效的客户端名称与会话标签")
@@ -181,6 +210,7 @@ class AgentSession:
             state = {"schema": 1, "session_id": uuid.uuid4().hex,
                      "token_hash": hashlib.sha256(token.encode()).hexdigest(),
                      "client_name": client_name.strip(), "session_label": session_label,
+                     "client_id": client_id,
                      "connected_at": time.time(), "revoked": False,
                      "owner_pid": owner.pid if owner else None,
                      "owner_created_at": owner.create_time() if owner else None}
@@ -246,6 +276,10 @@ class AgentSession:
                       divergent_paused=bool(gameplay and gameplay["paused"]))
         result.update(state="waiting" if connected and pending else "idle" if connected else "disconnected" if state.get("session_id") else "unclaimed",
                       pending=pending)
+        result["clients"] = [dict(client_name=item["client_name"], client_version=item["client_version"],
+                                  connected_at=item["connected_at"],
+                                  has_control=bool(connected and state.get("client_id") == item["id"]))
+                             for item in self._clients()]
         return result
 
     def wait(self, session_id, token, wait=20, *, cancelled=lambda: False):

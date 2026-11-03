@@ -32,6 +32,8 @@ def test_real_mcp_initialize_owner_observe_reply_and_client_close(tmp_path):
                 tools = await client.list_tools()
                 assert {tool.name for tool in tools.tools} == {"agent_connect", "agent_status", "agent_wait", "agent_observe", "agent_respond", "agent_disconnect"}
                 assert store.status()["state"] == "unclaimed"  # 初始化不是接管。
+                assert store.status()["clients"][0]["client_name"] == "SDK test"
+                assert not store.status()["clients"][0]["has_control"]
                 auth = unpack(await client.call_tool("agent_connect", {"session_label": "this test"}))
                 assert store.status()["client_name"] == "SDK test"
                 auth = {key: auth[key] for key in ("session_id", "token")}
@@ -48,6 +50,7 @@ def test_real_mcp_initialize_owner_observe_reply_and_client_close(tmp_path):
                     assert accepted["accepted"]
                     assert future.result(timeout=3)["candidate_id"] == "ack"
         assert store.status()["state"] == "disconnected"
+        assert store.status()["clients"] == []
 
     anyio.run(scenario)
 
@@ -67,7 +70,11 @@ def test_different_mcp_clients_share_service_and_report_actual_owner(tmp_path):
             async with ClientSession(*streams_a, client_info=Implementation(name="Example Agent A", version="1")) as a, ClientSession(*streams_b, client_info=Implementation(name="自定义 Agent B", version="2")) as b:
                 await a.initialize()
                 await b.initialize()
+                await a.list_tools()
+                await b.list_tools()
                 assert store.status()["state"] == "unclaimed"
+                assert {c["client_name"] for c in store.status()["clients"]} == {"Example Agent A", "自定义 Agent B"}
+                assert not any(c["has_control"] for c in store.status()["clients"])
                 owner_a = unpack(await a.call_tool("agent_connect", {"session_label": "first chat"}))
                 assert unpack(await b.call_tool("agent_status"))["client_name"] == "Example Agent A"
                 rejected = await b.call_tool("agent_connect", {"session_label": "second chat"})
@@ -75,13 +82,17 @@ def test_different_mcp_clients_share_service_and_report_actual_owner(tmp_path):
                 assert store.status()["client_name"] == "Example Agent A"
                 credentials_a = {key: owner_a[key] for key in ("session_id", "token")}
                 unpack(await a.call_tool("agent_disconnect", credentials_a))
+                assert len(store.status()["clients"]) == 2
+                assert not any(c["has_control"] for c in store.status()["clients"])
                 owner_b = unpack(await b.call_tool("agent_connect", {"session_label": "second chat"}))
                 status = unpack(await a.call_tool("agent_status"))
                 assert status["client_name"] == "自定义 Agent B"
                 assert status["session_label"] == "second chat"
+                assert [c["client_name"] for c in status["clients"] if c["has_control"]] == ["自定义 Agent B"]
                 credentials_b = {key: owner_b[key] for key in ("session_id", "token")}
                 unpack(await b.call_tool("agent_wait", dict(credentials_b, wait=0)))
                 unpack(await b.call_tool("agent_disconnect", credentials_b))
         assert store.status()["state"] == "disconnected"
+        assert store.status()["clients"] == []
 
     anyio.run(scenario)

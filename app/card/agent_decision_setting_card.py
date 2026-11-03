@@ -19,13 +19,15 @@ from utils.agent_session import AgentSession, decision_mode
 from utils.agent_service import connection_config
 
 
-def connection_text(mode=None, compact=False):
+def connection_text(mode=None, compact=False, state=None):
     if (mode or decision_mode(cfg)) == "command":
         return tr("高级自定义程序：连接状态未知")
-    state = AgentSession().status()
+    state = state if state is not None else AgentSession().status()
     labels = {"unclaimed": tr("未接管"), "idle": tr("已接管空闲"),
               "waiting": tr("等待决策"), "disconnected": tr("已断开")}
     text = labels[state["state"]]
+    if state["state"] in ("unclaimed", "disconnected") and state.get("clients"):
+        text = tr("未接管 · MCP 客户端已连接")
     if state["state"] in ("idle", "waiting") and state.get("client_name"):
         name = state["client_name"]
         text += " · " + (name[:23] + "…" if compact and len(name) > 24 else name)
@@ -42,6 +44,17 @@ def connection_text(mode=None, compact=False):
     if state.get("divergent_running") and state.get("last_fallback"):
         text += "\n" + reasons.get(state["last_fallback"], state["last_fallback"])
     return text
+
+
+def clients_text(state):
+    clients = state.get("clients", [])
+    if not clients:
+        return tr("MCP 客户端：暂无连接")
+    lines = [tr("已连接的 MCP 客户端：")]
+    for client in clients:
+        label = tr("已接管") if client.get("has_control") else tr("未接管")
+        lines.append("• " + client["client_name"] + "（" + label + "）")
+    return "\n".join(lines)
 
 
 class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
@@ -65,8 +78,13 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         self.modeComboBox.addItem(tr("高级自定义程序"), userData="command")
         self.modeComboBox.setCurrentIndex(1 if decision_mode(cfg) == "command" else 0)
         layout.addWidget(self.modeComboBox)
+        self.clientsLabel = BodyLabel("", content)
+        self.clientsLabel.setWordWrap(True)
+        self.clientsLabel.setTextFormat(Qt.TextFormat.PlainText)
+        layout.addWidget(self.clientsLabel)
         self.statusLabel = BodyLabel("", content)
         self.statusLabel.setWordWrap(True)
+        self.statusLabel.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.statusLabel)
         connection_row = QHBoxLayout()
         self.configFormatLabel = CaptionLabel(tr("配置格式"), content)
@@ -76,7 +94,7 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         self.configFormat.addItem("TOML", userData=0)
         self.copyConfigButton = PushButton(tr("复制接入配置"), content)
         self.copyPromptButton = PushButton(tr("复制聊天接管指令"), content)
-        self.disconnectButton = PushButton(tr("断开"), content)
+        self.disconnectButton = PushButton(tr("结束接管"), content)
         connection_row.addWidget(self.configFormatLabel)
         connection_row.addWidget(self.configFormat, 1)
         connection_row.addWidget(self.copyConfigButton, 1)
@@ -158,16 +176,24 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
         for widget in (self.configFormatLabel, self.configFormat, self.copyConfigButton, self.copyPromptButton, self.disconnectButton):
             widget.setVisible(not advanced)
         self.connectionGuide.setVisible(not advanced)
+        self.clientsLabel.setVisible(not advanced)
         self._refresh()
 
     def _refresh(self):
         try:
-            self.statusLabel.setText(connection_text(self.modeComboBox.currentData()))
-            connected = AgentSession().status()["state"] in ("idle", "waiting")
+            mode = self.modeComboBox.currentData()
+            state = AgentSession().status() if mode == "connected" else None
+            connected = bool(state and state["state"] in ("idle", "waiting"))
+            if state is not None:
+                self.clientsLabel.setText(clients_text(state))
+                self.statusLabel.setText(tr("接管状态：{status}").format(status=connection_text(mode, state=state)) if connected else tr("当前接管：无"))
+            else:
+                self.statusLabel.setText(connection_text(mode))
             self.disconnectButton.setEnabled(connected)
             self.disconnectButton.setVisible(connected and self.modeComboBox.currentData() == "connected")
         except (OSError, ValueError, TypeError, KeyError):
             self.statusLabel.setText(tr("连接状态暂不可用"))
+            self.clientsLabel.setText(tr("连接状态暂不可用"))
             self.disconnectButton.setEnabled(False)
 
     def _copy_config(self):
@@ -242,8 +268,12 @@ class AgentDecisionSettingCard(SettingCard):
 
     def _refresh(self):
         try:
-            status = connection_text(compact=True)
-            tooltip = connection_text()
+            mode = decision_mode(cfg)
+            state = AgentSession().status() if mode == "connected" else None
+            status = connection_text(mode, compact=True, state=state)
+            tooltip = connection_text(mode, state=state)
+            if state is not None:
+                tooltip = clients_text(state) + "\n" + tooltip
         except (OSError, ValueError, TypeError, KeyError):
             status = tr("连接状态暂不可用")
             tooltip = status

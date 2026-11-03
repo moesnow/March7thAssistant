@@ -141,7 +141,7 @@ msgstr "Power Settings"
 msgid "体力计划"
 msgstr "Power Plan"
 
-#: app/card/agent_decision_setting_card.py:227
+#: app/card/agent_decision_setting_card.py:253
 msgid "配置"
 msgstr "Config"
 
@@ -1384,7 +1384,7 @@ msgstr "Confirm continue and enable Touch Mode?"
 msgid "确认"
 msgstr "Confirm"
 
-#: app/card/agent_decision_setting_card.py:53
+#: app/card/agent_decision_setting_card.py:66
 msgid "取消"
 msgstr "Cancel"
 
@@ -1976,11 +1976,11 @@ msgstr "Auto Skip (Click Skip button when available)"
 msgid "自动选择 (自动选择任意对话选项)"
 msgstr "Auto Select (Select any option)"
 
-#: app/card/agent_decision_setting_card.py:228
+#: app/card/agent_decision_setting_card.py:254
 msgid "关"
 msgstr "Off"
 
-#: app/card/agent_decision_setting_card.py:256
+#: app/card/agent_decision_setting_card.py:288
 msgid "开"
 msgstr "On"
 
@@ -4713,7 +4713,7 @@ msgstr "Version"
 msgid "使用说明"
 msgstr "Usage"
 
-#: app/card/agent_decision_setting_card.py:52
+#: app/card/agent_decision_setting_card.py:65
 msgid "保存"
 msgstr "Save"
 
@@ -4842,7 +4842,7 @@ msgstr ""
 msgid "选择已保存的模板图片路径"
 msgstr "Select a saved template image path"
 
-#: app/card/agent_decision_setting_card.py:106
+#: app/card/agent_decision_setting_card.py:124
 msgid "浏览"
 msgstr "Browse"
 
@@ -6658,7 +6658,7 @@ msgstr "Stellar Mode"
 msgid "常规模式"
 msgstr "Regular Mode"
 
-#: app/card/agent_decision_setting_card.py:49
+#: app/card/agent_decision_setting_card.py:62
 msgid "Agent 辅助决策配置"
 msgstr "Agent Decision Settings"
 
@@ -6668,42 +6668,42 @@ msgstr ""
 " AI. If the request times out or the response is invalid, the built-in "
 "strategy continues."
 
-#: app/card/agent_decision_setting_card.py:101
+#: app/card/agent_decision_setting_card.py:119
 msgid "接入程序"
 msgstr "Adapter Program"
 
-#: app/card/agent_decision_setting_card.py:104
+#: app/card/agent_decision_setting_card.py:122
 msgid "选择可执行文件，例如 Python 或你的接入程序"
 msgstr "Select an executable, such as Python or your adapter"
 
-#: app/card/agent_decision_setting_card.py:112
+#: app/card/agent_decision_setting_card.py:130
 msgid "启动参数（每行一个，不需要加引号）"
 msgstr "Arguments (one per line, without surrounding quotes)"
 
-#: app/card/agent_decision_setting_card.py:123
+#: app/card/agent_decision_setting_card.py:141
 msgid "单次等待时间（秒）"
 msgstr "Wait Timeout (seconds)"
 
-#: app/card/agent_decision_setting_card.py:134
+#: app/card/agent_decision_setting_card.py:152
 msgid "队伍与构筑偏好（可选）"
 msgstr "Team and Build Preferences (optional)"
 
-#: app/card/agent_decision_setting_card.py:188
+#: app/card/agent_decision_setting_card.py:214
 msgid "选择接入程序"
 msgstr "Select Adapter Program"
 
-#: app/card/agent_decision_setting_card.py:213
+#: app/card/agent_decision_setting_card.py:239
 msgid "请检查接入程序是否存在、参数是否为空或过长；不支持批处理文件，偏好最多 8000 字。"
 msgstr ""
 "Check that the executable exists and arguments are neither empty nor too "
 "long. Batch files are not supported. Preferences must be at most 8,000 "
 "characters."
 
-#: app/card/agent_decision_setting_card.py:223
+#: app/card/agent_decision_setting_card.py:249
 msgid "启用 Agent 辅助决策"
 msgstr "Enable Agent Decisions"
 
-#: app/card/agent_decision_setting_card.py:224
+#: app/card/agent_decision_setting_card.py:250
 msgid ""
 "祝福、方程、奇物与下一站由 Agent 选择，战斗保持自动。\n"
 "需要 Agent 持续回复；超时回退原策略，下次任务生效。"
@@ -6731,42 +6731,42 @@ msgstr "Awaiting decision"
 msgid "已断开"
 msgstr "Disconnected"
 
-#: app/card/agent_decision_setting_card.py:35
+#: app/card/agent_decision_setting_card.py:37
 msgid "最近活动：{seconds} 秒前"
 msgstr "Last activity: {seconds} seconds ago"
 
-#: app/card/agent_decision_setting_card.py:40
+#: app/card/agent_decision_setting_card.py:42
 msgid "未接管，使用原策略"
 msgstr "No Agent attached; using the original strategy"
 
-#: app/card/agent_decision_setting_card.py:40
+#: app/card/agent_decision_setting_card.py:42
 msgid "等待超时，使用原策略"
 msgstr "Decision timed out; using the original strategy"
 
-#: app/card/agent_decision_setting_card.py:41
+#: app/card/agent_decision_setting_card.py:43
 msgid "连接断开，使用原策略"
 msgstr "Disconnected; using the original strategy"
 
-#: app/card/agent_decision_setting_card.py:41
+#: app/card/agent_decision_setting_card.py:43
 msgid "请求已取消"
 msgstr "Request cancelled"
 
-#: app/card/agent_decision_setting_card.py:58
+#: app/card/agent_decision_setting_card.py:71
 msgid "先在 Agent 聊天中接管，再运行任务。已配置接口不代表 Agent 已接管；断连或超时使用原策略。"
 msgstr ""
 "Claim control from your Agent chat before running a task. A configured "
 "interface is not an active Agent; disconnects and timeouts use the original "
 "strategy."
 
-#: app/card/agent_decision_setting_card.py:62
+#: app/card/agent_decision_setting_card.py:75
 msgid "接入方式"
 msgstr "Connection method"
 
-#: app/card/agent_decision_setting_card.py:64
+#: app/card/agent_decision_setting_card.py:77
 msgid "内置 Agent 连接"
 msgstr "Built-in Agent connection"
 
-#: app/card/agent_decision_setting_card.py:65
+#: app/card/agent_decision_setting_card.py:78
 msgid "高级自定义程序"
 msgstr "Custom program"
 
@@ -6776,23 +6776,22 @@ msgstr "Codex (TOML)"
 msgid "通用（JSON）"
 msgstr "Generic (JSON)"
 
-#: app/card/agent_decision_setting_card.py:77
+#: app/card/agent_decision_setting_card.py:95
 msgid "复制接入配置"
 msgstr "Copy connection config"
 
-#: app/card/agent_decision_setting_card.py:78
+#: app/card/agent_decision_setting_card.py:96
 msgid "复制聊天接管指令"
 msgstr "Copy chat instructions"
 
-#: app/card/agent_decision_setting_card.py:79
 msgid "断开"
 msgstr "Disconnect"
 
-#: app/card/agent_decision_setting_card.py:170
+#: app/card/agent_decision_setting_card.py:195
 msgid "连接状态暂不可用"
 msgstr "Connection status unavailable"
 
-#: app/card/agent_decision_setting_card.py:177
+#: app/card/agent_decision_setting_card.py:203
 msgid "连接位于 {path} 的三月七并监管差分宇宙；未启动任务时等待，不启动新对局；任务结束后断开接管。"
 msgstr ""
 "Connect to March7thAssistant at {path} and supervise Divergent Universe. "
@@ -6804,11 +6803,11 @@ msgstr ""
 "The Agent must keep responding; disconnects and timeouts use the original "
 "strategy."
 
-#: app/card/agent_decision_setting_card.py:33
+#: app/card/agent_decision_setting_card.py:35
 msgid "会话：{label}"
 msgstr "Session: {label}"
 
-#: app/card/agent_decision_setting_card.py:39
+#: app/card/agent_decision_setting_card.py:41
 msgid "等待差分宇宙任务"
 msgstr "Waiting for a Divergent Universe task"
 
@@ -6818,22 +6817,50 @@ msgstr "Codex Desktop"
 msgid "其他 MCP 客户端"
 msgstr "Other MCP clients"
 
-#: app/card/agent_decision_setting_card.py:88
+#: app/card/agent_decision_setting_card.py:106
 msgid "先复制配置到所用客户端，再把接管指令发给 Agent。连接成功后可启动差分宇宙。"
 msgstr ""
 "Copy the configuration to your client, then send the control instructions to"
 " your Agent. Once connected, start Divergent Universe."
 
-#: app/card/agent_decision_setting_card.py:138
+#: app/card/agent_decision_setting_card.py:156
 msgid "可填写队伍和构筑目标；留空时由 Agent 根据游戏画面判断。"
 msgstr ""
 "Optionally enter your team and build goals. Leave blank for the Agent to use"
 " the game observations."
 
-#: app/card/agent_decision_setting_card.py:37
+#: app/card/agent_decision_setting_card.py:39
 msgid "差分宇宙已暂停"
 msgstr "Divergent Universe paused"
 
-#: app/card/agent_decision_setting_card.py:72
+#: app/card/agent_decision_setting_card.py:90
 msgid "配置格式"
 msgstr "Config format"
+
+#: app/card/agent_decision_setting_card.py:30
+msgid "未接管 · MCP 客户端已连接"
+msgstr "Not claimed · MCP client connected"
+
+#: app/card/agent_decision_setting_card.py:52
+msgid "MCP 客户端：暂无连接"
+msgstr "MCP clients: none connected"
+
+#: app/card/agent_decision_setting_card.py:53
+msgid "已连接的 MCP 客户端："
+msgstr "Connected MCP clients:"
+
+#: app/card/agent_decision_setting_card.py:55
+msgid "已接管"
+msgstr "In control"
+
+#: app/card/agent_decision_setting_card.py:97
+msgid "结束接管"
+msgstr "Release control"
+
+#: app/card/agent_decision_setting_card.py:189
+msgid "接管状态：{status}"
+msgstr "Control status: {status}"
+
+#: app/card/agent_decision_setting_card.py:189
+msgid "当前接管：无"
+msgstr "Current controller: none"
