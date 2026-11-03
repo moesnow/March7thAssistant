@@ -2953,6 +2953,7 @@ class SettingInterface(ScrollArea):
                 card.expandStateChanged.connect(self.__onExpandableCardStateChanged)
 
         # self.importConfigCard.clicked.connect(self.__onImportConfigCardClicked)
+        self.agentDecisionCard.heightChanged.connect(self.__onAgentDecisionCardHeightChanged)
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.launcherPathCard.clicked.connect(self.__onLauncherPathCardClicked)
         self.ScriptPathCard.clicked.connect(self.__onScriptPathCardClicked)
@@ -3364,6 +3365,11 @@ class SettingInterface(ScrollArea):
 
         self.verticalScrollBar().setValue(0)
         self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
+
+    def __onAgentDecisionCardHeightChanged(self):
+        # 卡片换行或连接状态改变后，同步实际设置页的滚动范围。
+        if self.stackedWidget.currentWidget() is self.agentDecisionCard.parentWidget():
+            self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
 
     # def __onImportConfigCardClicked(self):
     #     configdir, _ = QFileDialog.getOpenFileName(self, "选取配置文件", "./", "Config Files (*.yaml)")

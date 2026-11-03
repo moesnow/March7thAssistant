@@ -3,8 +3,8 @@
 import os
 import time
 
-from PySide6.QtCore import Qt, QSignalBlocker, QTimer
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QApplication
+from PySide6.QtCore import Qt, QSignalBlocker, QTimer, Signal
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QFileDialog, QApplication, QSizePolicy
 from qfluentwidgets import (
     SettingCard, SwitchButton, IndicatorPosition, PushButton, MessageBox,
     BodyLabel, CaptionLabel, LineEdit, TextEdit, FluentIcon, ComboBox,
@@ -214,6 +214,8 @@ class AgentDecisionDialog(SplitFadeDialogMixin, MessageBox):
 
 
 class AgentDecisionSettingCard(SettingCard):
+    heightChanged = Signal()
+
     def __init__(self, parent=None):
         super().__init__(
             FluentIcon.CHAT, tr("启用 Agent 辅助决策"),
@@ -229,8 +231,15 @@ class AgentDecisionSettingCard(SettingCard):
         self.setValue(cfg.get_value(self.configname, False) is True)
         self.configButton.clicked.connect(self._configure)
         self.switchButton.checkedChanged.connect(self._on_checked)
-        self.setFixedHeight(104)
-        self.contentLabel.setWordWrap(True)
+        # SettingCard 的尾部 stretch 原本用于单行说明。换行说明必须占用
+        # 剩余宽度，不能由 QLabel 的默认 sizeHint 决定一小块文字区域。
+        self.hBoxLayout.setStretch(2, 1)
+        self.hBoxLayout.setStretch(4, 0)
+        for label in (self.titleLabel, self.contentLabel):
+            self.vBoxLayout.setAlignment(label, Qt.AlignmentFlag.AlignVCenter)
+            label.setWordWrap(True)
+            label.setMinimumWidth(0)
+            label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._refresh)
         self.timer.start(1000)
@@ -241,7 +250,24 @@ class AgentDecisionSettingCard(SettingCard):
             status = connection_text(compact=True)
         except (OSError, ValueError, TypeError, KeyError):
             status = tr("连接状态暂不可用")
-        self.setContent(status + "\n" + tr("需要 Agent 持续回复；断连或超时使用原策略。"))
+        content = status + "\n" + tr("需要 Agent 持续回复；断连或超时使用原策略。")
+        if self.contentLabel.text() != content:
+            self.setContent(content)
+            self._update_text_layout()
+
+    def _update_text_layout(self):
+        self.hBoxLayout.activate()
+        for label in (self.titleLabel, self.contentLabel):
+            label.setFixedHeight(max(label.fontMetrics().height(), label.heightForWidth(label.width())))
+        height = max(70, self.titleLabel.height() + self.contentLabel.height() + 24)
+        if self.height() != height:
+            self.setFixedHeight(height)
+            self.heightChanged.emit()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, "configButton"):
+            QTimer.singleShot(0, self._update_text_layout)
 
     def setValue(self, enabled):
         with QSignalBlocker(self.switchButton):

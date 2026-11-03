@@ -217,3 +217,96 @@ def test_activity_ui_appears_only_in_running_game_scope(settings, qtbot, host, t
         assert "最近活动" in dialog.statusLabel.text()
     dialog._refresh()
     assert "最近活动" not in dialog.statusLabel.text()
+
+
+@pytest.mark.parametrize("language", ["zh_CN", "en_US"])
+@pytest.mark.parametrize("width", [800, 1100])
+@pytest.mark.parametrize("dark", [False, True])
+def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, language, width, dark):
+    """真实设置页中切换连接状态、改变宽度，文字不能被 stretch 挤窄或裁掉。"""
+    import os
+    import time
+    from pathlib import Path
+    from PySide6.QtGui import QColor, QPalette, QPainter, QPixmap
+    from qfluentwidgets import Theme, setTheme
+    from module import localization
+    from module.config.config import Config
+    import app.card.agent_decision_setting_card as module
+    import app.setting_interface as page_module
+
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text("divergent_decision_mode: connected\n", encoding="utf-8")
+    config = Config.__new__(Config)
+    Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(config_path))
+    monkeypatch.setattr(module, "cfg", config)
+    monkeypatch.setattr(page_module, "cfg", config)
+    state = {"state": "disconnected"}
+    store = MagicMock()
+    store.status.side_effect = lambda: state.copy()
+    monkeypatch.setattr(module, "AgentSession", lambda: store)
+    previous_language = localization._current_lang
+    localization.load_language(language)
+    setTheme(Theme.DARK if dark else Theme.LIGHT)
+    try:
+        page = page_module.SettingInterface()
+        qtbot.addWidget(page)
+        # 独立设置页没有主窗口的主题背景，补上原生 palette 后再渲染。
+        palette = page.palette()
+        palette.setColor(QPalette.ColorRole.Window, QColor("#202020" if dark else "#f6f9fc"))
+        page.setPalette(palette)
+        page.scrollWidget.setPalette(palette)
+        page.setAutoFillBackground(True)
+        page.resize(width, 760)
+        page.show()
+        card = page.agentDecisionCard
+        page.stackedWidget.setCurrentWidget(card.parentWidget())
+        qtbot.wait(60)
+        reference = page.weeklyDivergentStableModeCard
+        assert card.titleLabel.font() == reference.titleLabel.font()
+        assert card.contentLabel.font() == reference.contentLabel.font()
+
+        for name, update in [
+            ("disconnected", {}),
+            ("idle", {"state": "idle", "client_name": "codex-mcp-client", "session_label": "active chat"}),
+            ("waiting", {"state": "waiting", "divergent_running": True,
+                         "last_activity": time.time() - 3, "last_fallback": "timeout"}),
+            ("paused", {"state": "idle", "divergent_running": False,
+                        "divergent_paused": True, "last_fallback": None}),
+        ]:
+            state.update(update)
+            card._refresh()
+            qtbot.wait(40)
+            # 宽度应随设置页扩展，不能只拿到原生尾部 stretch 之前的 sizeHint。
+            assert card.contentLabel.width() > card.width() / 2
+            assert card.contentLabel.geometry().top() > card.titleLabel.geometry().bottom()
+            for label in (card.titleLabel, card.contentLabel):
+                assert label.height() >= label.heightForWidth(label.width())
+                assert card.rect().contains(label.geometry())
+                assert label.geometry().right() < card.configButton.geometry().left()
+            assert reference.y() > card.geometry().bottom()
+            assert page.stackedWidget.height() >= card.parentWidget().sizeHint().height()
+            evidence = os.environ.get("M7A_UI_EVIDENCE_DIR")
+            if evidence:
+                path = Path(evidence)
+                path.mkdir(parents=True, exist_ok=True)
+                page.ensureWidgetVisible(card, 0, 30)
+                qtbot.wait(20)
+                snapshot = page.grab()
+                preview = QPixmap(snapshot.size())
+                preview.setDevicePixelRatio(snapshot.devicePixelRatio())
+                preview.fill(palette.color(QPalette.ColorRole.Window))
+                painter = QPainter(preview)
+                painter.drawPixmap(0, 0, snapshot)
+                painter.end()
+                assert preview.save(str(path / f"settings-{language}-{width}-{name}-{'dark' if dark else 'light'}.png"))
+        # 缩窄后再放宽，卡片与后续卡片、滚动范围都应重新布局。
+        for resized in (width - 120, width + 160):
+            page.resize(resized, 760)
+            qtbot.wait(60)
+            assert reference.y() > card.geometry().bottom()
+            assert card.contentLabel.height() >= card.contentLabel.heightForWidth(card.contentLabel.width())
+            assert card.contentLabel.geometry().top() > card.titleLabel.geometry().bottom()
+            assert page.stackedWidget.height() >= card.parentWidget().sizeHint().height()
+    finally:
+        localization.load_language(previous_language)
+        setTheme(Theme.LIGHT)
