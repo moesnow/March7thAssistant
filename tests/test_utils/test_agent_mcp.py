@@ -12,6 +12,29 @@ from PIL import Image
 from utils.agent_session import AgentSession
 
 
+def test_client_close_during_pending_decision_releases_without_waiting_for_timeout(tmp_path):
+    store = AgentSession(tmp_path / "connection")
+    code = "from utils.agent_service import run_mcp; from utils.agent_session import AgentSession; run_mcp(AgentSession(" + repr(str(store.directory)) + "))"
+    params = StdioServerParameters(command=sys.executable, args=["-B", "-c", code], cwd=str(Path.cwd()))
+    async def scenario():
+        with ThreadPoolExecutor() as pool:
+            async with stdio_client(params) as streams:
+                async with ClientSession(*streams, client_info=Implementation(name="Closing client", version="1")) as client:
+                    await client.initialize()
+                    result = await client.call_tool("agent_connect", {"session_label": "pending shutdown"})
+                    assert not result.is_error
+                    claim = json.loads(result.content[0].text)
+                    auth = {k: claim[k] for k in ("session_id", "token")}
+                    future = pool.submit(store.request, 30, {"kind": "shutdown_test", "candidates": [{"id": "ack"}]})
+                    waiting = await client.call_tool("agent_wait", dict(auth, wait=2))
+                    assert json.loads(waiting.content[0].text)["pending"]
+                    assert store.status()["state"] == "waiting"
+            assert future.result(timeout=2) is None
+            assert store.status()["state"] == "disconnected"
+            assert store.status()["clients"] == []
+    anyio.run(scenario)
+
+
 def test_real_mcp_initialize_owner_observe_reply_and_client_close(tmp_path):
     directory = tmp_path / "connection"
     store = AgentSession(directory)
