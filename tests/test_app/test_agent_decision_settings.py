@@ -223,7 +223,7 @@ def test_activity_ui_appears_only_in_running_game_scope(settings, qtbot, host, t
 @pytest.mark.parametrize("width", [800, 1100])
 @pytest.mark.parametrize("dark", [False, True])
 def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, language, width, dark):
-    """真实设置页中切换连接状态、改变宽度，文字不能被 stretch 挤窄或裁掉。"""
+    """真实设置页中只显示单行状态，与相邻原生卡片保持同样高度。"""
     import os
     import time
     from pathlib import Path
@@ -276,8 +276,11 @@ def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, l
             state.update(update)
             card._refresh()
             qtbot.wait(40)
-            # 宽度应随设置页扩展，不能只拿到原生尾部 stretch 之前的 sizeHint。
-            assert card.contentLabel.width() > card.width() / 2
+            assert card.height() == reference.height() == 70
+            assert "\n" not in card.contentLabel.text()
+            assert not card.contentLabel.wordWrap()
+            assert card.contentLabel.text() == module.connection_text(compact=True).splitlines()[0]
+            assert card.contentLabel.toolTip() == module.connection_text(compact=True)
             assert card.contentLabel.geometry().top() > card.titleLabel.geometry().bottom()
             for label in (card.titleLabel, card.contentLabel):
                 assert label.height() >= label.heightForWidth(label.width())
@@ -299,10 +302,11 @@ def test_agent_card_layout_in_real_settings_page(qtbot, monkeypatch, tmp_path, l
                 painter.drawPixmap(0, 0, snapshot)
                 painter.end()
                 assert preview.save(str(path / f"settings-{language}-{width}-{name}-{'dark' if dark else 'light'}.png"))
-        # 缩窄后再放宽，卡片与后续卡片、滚动范围都应重新布局。
+        # 缩窄后再放宽不能让卡片或文字高度持续增长。
         for resized in (width - 120, width + 160):
             page.resize(resized, 760)
             qtbot.wait(60)
+            assert card.height() == reference.height() == 70
             assert reference.y() > card.geometry().bottom()
             assert card.contentLabel.height() >= card.contentLabel.heightForWidth(card.contentLabel.width())
             assert card.contentLabel.geometry().top() > card.titleLabel.geometry().bottom()
