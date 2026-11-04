@@ -394,12 +394,8 @@ scheduled_time: 4:00
 # 循环运行所需开拓力
 power_limit: 160 # 设置循环运行模式时所需的最低开拓力。
 
-# 循环等待恢复设置
-next_run_timestamp: null # 下次循环运行时间戳，用于重启恢复等待。
-last_main_success_timestamp: 0 # 上次完整运行成功时间戳
-
 # 启动运行设置
-no_run_immediately: false # 启动时先等待，体力模式无有效记录时立即运行。
+no_run_immediately: false # 启动时先等待，等同于 --no-run-immediately。
 
 # 游戏刷新时间设置
 refresh_hour: 4 # 设置游戏每日刷新的时间（24小时制）。

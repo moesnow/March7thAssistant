@@ -1,10 +1,8 @@
 import unittest
 import base64
 import os
-from contextlib import nullcontext
-from datetime import datetime
 from types import SimpleNamespace
-from unittest.mock import DEFAULT, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from urllib3.exceptions import ReadTimeoutError
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
@@ -371,111 +369,3 @@ class TestCloudGameZeroDuration(unittest.TestCase):
 
             mock_power.get.assert_not_called()
             mock_date.time_to_seconds.assert_called_once_with("4:00")
-
-
-class TestLoopWaiting(unittest.TestCase):
-    def setUp(self):
-        import tasks.game as game
-        self.game = game
-        patcher = patch.multiple(game, cfg=DEFAULT, Power=DEFAULT, Date=DEFAULT,
-                                 get_game_controller=DEFAULT, is_gui_started=DEFAULT,
-                                 notif=DEFAULT, log=DEFAULT, ocr=DEFAULT,
-                                 idle_without_run_lock=DEFAULT, time=DEFAULT)
-        self.mocks = patcher.start()
-        self.addCleanup(patcher.stop)
-        self.cfg = self.mocks["cfg"]
-        self.cfg.loop_mode = "power"
-        self.cfg.power_limit = 160
-        self.cfg.notify_template = {"ContinueTime": "等待至 {time}"}
-        self.mocks["is_gui_started"].return_value = False
-        self.mocks["idle_without_run_lock"].return_value = nullcontext()
-        self.mocks["time"].time.return_value = 1000
-        self.mocks["time"].sleep.side_effect = InterruptedError
-        self.mocks["Power"].get.return_value = 150
-        self.mocks["Date"].get_time_next_x_am.return_value = 86400
-
-    def test_resume_without_future_record_runs_immediately(self):
-        for timestamp in (None, 999, 1000):
-            with self.subTest(timestamp=timestamp):
-                self.cfg.get_value.return_value = timestamp
-                self.game.after_finish_is_loop(resume=True)
-        self.mocks["Power"].get.assert_not_called()
-        self.mocks["time"].sleep.assert_not_called()
-        self.cfg.set_value.assert_not_called()
-
-    def test_resume_future_record_waits_without_reading_power(self):
-        self.cfg.get_value.return_value = 1150
-        self.mocks["notif"].flush_batch.side_effect = lambda **kwargs: setattr(
-            self.mocks["time"].time, "return_value", 1100)
-        with self.assertRaises(InterruptedError):
-            self.game.after_finish_is_loop(resume=True)
-        self.mocks["Power"].get.assert_not_called()
-        self.mocks["get_game_controller"].assert_not_called()
-        self.cfg.set_value.assert_not_called()
-        self.mocks["time"].sleep.assert_called_once_with(50)
-
-    def test_normal_finish_saves_next_run_and_waits(self):
-        with self.assertRaises(InterruptedError):
-            self.game.after_finish_is_loop()
-        self.mocks["Power"].get.assert_called_once_with(use_supplement=False)
-        self.mocks["get_game_controller"].return_value.stop_game.assert_called_once()
-        self.cfg.set_value.assert_called_once_with("next_run_timestamp", 4600)
-        self.mocks["time"].sleep.assert_called_once_with(60)
-
-
-    def test_scheduled_resume_catches_up_only_when_needed(self):
-        cases = [
-            ("03:00", "01:00", None, True),
-            ("04:00", "01:00", None, False),
-            ("04:05", "01:00", None, False),
-            ("04:05", "04:00", None, True),
-            ("04:05", "04:02", None, True),
-            ("04:05", None, "23:00", True),
-        ]
-        def instant(hhmm):
-            return datetime.strptime("2026-11-02 " + hhmm, "%Y-%m-%d %H:%M")
-        self.cfg.loop_mode = "scheduled"
-        self.cfg.scheduled_time = "4:00"
-        self.mocks["Date"].time_to_seconds.return_value = 3600
-        for now, success, pending, should_wait in cases:
-            with self.subTest(now=now, success=success, pending=pending):
-                now = instant(now)
-                values = {"last_main_success_timestamp": instant(success).timestamp() if success else 0,
-                          "next_run_timestamp": instant(pending).timestamp() if pending else None}
-                self.cfg.get_value.side_effect = lambda key, default=None: values.get(key, default)
-                self.mocks["time"].time.return_value = now.timestamp()
-                self.mocks["time"].sleep.reset_mock()
-                with patch("tasks.game.datetime") as clock:
-                    clock.now.return_value = now
-                    clock.combine.side_effect = datetime.combine
-                    clock.strptime.side_effect = datetime.strptime
-                    if should_wait:
-                        with self.assertRaises(InterruptedError):
-                            self.game.after_finish_is_loop(resume=True)
-                    else:
-                        self.game.after_finish_is_loop(resume=True)
-                        self.mocks["time"].sleep.assert_not_called()
-        self.mocks["Power"].get.assert_not_called()
-
-    def test_full_run_records_success_only_after_tasks_complete(self):
-        import ast
-        from pathlib import Path
-        source = Path(__file__).resolve().parents[2] / "main.py"
-        node = next(n for n in ast.parse(source.read_text(encoding="utf-8-sig")).body
-                    if isinstance(n, ast.FunctionDef) and n.name == "run_main_actions")
-        for fails in (False, True):
-            with self.subTest(task_fails=fails):
-                cfg, game, reward = MagicMock(), MagicMock(), MagicMock()
-                game.stop.side_effect = SystemExit(0)
-                if fails:
-                    reward.start.side_effect = RuntimeError("task interrupted")
-                scope = dict(cfg=cfg, game=game, reward=reward, Daily=MagicMock(),
-                             version=MagicMock(), telemetry=MagicMock(), notif=MagicMock(),
-                             time=MagicMock(), CloudGameZeroDurationError=type("ZeroDuration", (Exception,), {}))
-                exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), "exec"), scope)
-                with self.assertRaises(RuntimeError if fails else SystemExit):
-                    scope["run_main_actions"]()
-                if fails:
-                    cfg.save_timestamp.assert_not_called()
-                else:
-                    cfg.save_timestamp.assert_called_once_with("last_main_success_timestamp")
