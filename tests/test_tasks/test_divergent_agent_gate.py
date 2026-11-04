@@ -45,3 +45,28 @@ def test_advanced_mode_keeps_external_adapter_available(monkeypatch):
     universe = module.DivergentUniverse()
     cached = universe._agent_choices = MagicMock()
     assert universe._get_agent_choices() is cached
+
+
+def test_gate_and_adapter_share_one_session_per_universe(monkeypatch):
+    module = _load_divergent()
+    values = {"divergent_decision_enable": True, "divergent_decision_mode": "connected"}
+    config = MagicMock()
+    config.get_value.side_effect = values.get
+    monkeypatch.setattr(module, "cfg", config)
+    first, second = MagicMock(), MagicMock()
+    first.has_controller.return_value = second.has_controller.return_value = False
+    factory = MagicMock(side_effect=[first, second])
+    monkeypatch.setattr("utils.agent_session.AgentSession", factory)
+    adapter_factory = MagicMock()
+    monkeypatch.setattr("tasks.weekly.divergent_decision.DivergentDecision", adapter_factory)
+    universe = module.DivergentUniverse()
+    for _ in range(20):
+        assert universe._get_agent_choices() is None
+    factory.assert_called_once_with()
+    first.has_controller.return_value = True
+    adapter = universe._get_agent_choices()
+    assert adapter_factory.call_args.kwargs["session"] is first
+    assert universe._get_agent_choices() is adapter
+    factory.assert_called_once_with()
+    assert module.DivergentUniverse()._get_agent_session() is second
+    assert factory.call_count == 2

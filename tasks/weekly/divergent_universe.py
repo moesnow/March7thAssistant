@@ -29,6 +29,13 @@ class DivergentUniverse:
         self.stage_finish: bool = False  # 是否完成当前阶段
         self.unsupported_area: bool = False  # 是否遇到暂不支持区域
         self._agent_choices = None
+        self._agent_session = None
+
+    def _get_agent_session(self):
+        if self._agent_session is None:
+            from utils.agent_session import AgentSession
+            self._agent_session = AgentSession()
+        return self._agent_session
 
     def _try_agent_choice(self, kind, title, area, confirm):
         agent = self._get_agent_choices()
@@ -39,16 +46,16 @@ class DivergentUniverse:
     def _get_agent_choices(self):
         if cfg.get_value("divergent_decision_enable", False) is not True:
             return None
-        from utils.agent_session import AgentSession, decision_mode
+        from utils.agent_session import decision_mode
         try:
-            if decision_mode(cfg) == "connected" and not AgentSession().has_controller():
+            if decision_mode(cfg) == "connected" and not self._get_agent_session().has_controller():
                 return None
         except (OSError, ValueError, TypeError):
             return None  # 无法确认接管时直接走原策略，不额外截图或等待。
         if self._agent_choices is None:
             from tasks.weekly.divergent_decision import DivergentDecision
             from utils.pause import pause_ctl
-            self._agent_choices = DivergentDecision(auto, cfg, log, pause_ctl)
+            self._agent_choices = DivergentDecision(auto, cfg, log, pause_ctl, session=self._get_agent_session())
         return self._agent_choices
 
     def _capture_agent_context(self, source):
@@ -163,7 +170,6 @@ class DivergentUniverse:
             universe_type = cfg.weekly_divergent_type
         if self.start_war(universe_type):
             if cfg.get_value("divergent_decision_enable", False) is True:
-                from utils.agent_session import AgentSession
                 game_pid = None
                 try:
                     from module.game import get_game_controller
@@ -173,7 +179,7 @@ class DivergentUniverse:
                         game_pid = GetWindowThreadProcessId(hwnd)[1]
                 except Exception:
                     pass  # 活动计时缺少游戏进程证据时不启用，不影响原有对局。
-                with AgentSession().gameplay(game_pid):
+                with self._get_agent_session().gameplay(game_pid):
                     return self.loop()
             return self.loop()
         return False

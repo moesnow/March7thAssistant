@@ -170,7 +170,7 @@ def test_revoked_connection_stops_inside_input_retry(adapter, monkeypatch, check
     from types import SimpleNamespace
     adapter.pause = PauseController()
     alive = [True]
-    monkeypatch.setattr(decision, "AgentSession", lambda: SimpleNamespace(is_current=lambda _: alive[0]))
+    monkeypatch.setattr(adapter, "_session", SimpleNamespace(is_current=lambda _: alive[0]))
     monkeypatch.setattr(decision, "request_decision", lambda *args, **kwargs: {
         "action": "choose", "candidate_id": "text-1", "_connection_id": "test-connection"})
     inputs = []
@@ -183,3 +183,43 @@ def test_revoked_connection_stops_inside_input_retry(adapter, monkeypatch, check
     assert adapter.choose("blessing", "选择祝福", AREA, CONFIRM, "")
     assert inputs == []
     assert adapter.history == []
+
+
+@pytest.mark.parametrize("invalidate", ["disconnect", "expire"])
+def test_reused_session_checks_live_state_without_reconstruction(adapter, monkeypatch, tmp_path, invalidate):
+    from utils.agent_session import AgentSession, _read, _write
+    store = AgentSession(tmp_path / "connection")
+    auth = store.connect("Validation test")
+    adapter._session = store
+    factory = MagicMock(side_effect=AssertionError("会话不能在输入卡点重新构造"))
+    monkeypatch.setattr(decision, "AgentSession", factory)
+    answer = {"_connection_id": auth["session_id"]}
+    for _ in range(100):
+        adapter._validate_input(0, answer)
+    writer = AgentSession(store.directory)
+    if invalidate == "disconnect":
+        writer.disconnect(local=True)
+    else:
+        state = _read(writer.state_path)
+        state["expires_at"] = 0
+        _write(writer.state_path, state)
+    with pytest.raises(DecisionCancelled):
+        adapter._validate_input(0, answer)
+    factory.assert_not_called()
+
+
+def test_requests_reuse_session_and_read_current_node_timeout(adapter, monkeypatch):
+    values = {"divergent_decision_mode": "connected", "divergent_decision_timeout": 44}
+    adapter.cfg.get_value.side_effect = values.get
+    session = MagicMock()
+    session.request.return_value = {"action": "decline"}
+    adapter._session = session
+    factory = MagicMock(side_effect=AssertionError("请求应复用输入校验使用的会话"))
+    monkeypatch.setattr(decision, "AgentSession", factory)
+    assert not adapter.choose("blessing", "选择祝福", AREA, CONFIRM, "")
+    values["divergent_decision_timeout"] = 66
+    assert not adapter.choose("blessing", "选择祝福", AREA, CONFIRM, "")
+    assert session.request.call_count == 2
+    assert 0 < session.request.call_args_list[0].args[0] <= 44
+    assert 0 < session.request.call_args_list[1].args[0] <= 66
+    factory.assert_not_called()

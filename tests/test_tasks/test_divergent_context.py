@@ -220,7 +220,7 @@ def test_inspection_and_final_choice_share_one_deadline(replay, monkeypatch):
 
 def test_disconnected_reply_cannot_click_after_provider_return(replay, monkeypatch):
     store = SimpleNamespace(is_current=lambda *_: False)
-    monkeypatch.setattr(decision, "AgentSession", lambda: store)
+    monkeypatch.setattr(replay, "_session", store)
     monkeypatch.setattr(decision, "request_decision", lambda *args, **kwargs: {
         "action": "choose", "candidate_id": "text-1", "_connection_id": "revoked"})
     assert replay.choose("blessing", "选择祝福", (.1, .2, .8, .6), ("确认", (.8, .9, .1, .05)), "")

@@ -46,8 +46,10 @@ def same_choices(previous, current):
 
 
 class DivergentDecision:
-    def __init__(self, auto, cfg, log, pause, context=None):
+    def __init__(self, auto, cfg, log, pause, context=None, *, session=None):
         self.auto, self.cfg, self.log, self.pause = auto, cfg, log, pause
+        # 复用安装路径与队列对象；有效性仍在每个输入卡点实时读取。
+        self._session = session if session is not None else AgentSession()
         self.history = []
         self.team_region = None
         from tasks.weekly.divergent_context import DivergentContext
@@ -90,7 +92,7 @@ class DivergentDecision:
     def _validate_input(self, generation, answer):
         if self.pause.generation != generation:
             raise PauseInterrupted()
-        if answer and answer.get("_connection_id") and not AgentSession().is_current(answer["_connection_id"]):
+        if answer and answer.get("_connection_id") and not self._session.is_current(answer["_connection_id"]):
             raise DecisionCancelled()
 
     def _input(self, generation, answer, method, *args, **kwargs):
@@ -170,7 +172,7 @@ class DivergentDecision:
                     raise TimeoutError("查看与决策总等待超时")
                 cancelled = lambda: self.pause.generation != generation or self.pause.is_paused() or self.pause.stop_requested
                 if decision_mode(self.cfg) == "connected":
-                    answer = AgentSession(timeout=timeout).request(min(timeout, remaining), request, cancelled=cancelled)
+                    answer = self._session.request(min(timeout, remaining), request, cancelled=cancelled)
                 else:
                     answer = request_decision(self.cfg.get_value("divergent_decision_command", []), min(timeout, remaining),
                                               request, cancelled=cancelled)
