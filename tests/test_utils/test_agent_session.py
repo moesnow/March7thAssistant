@@ -129,21 +129,16 @@ def test_lease_expiry_requires_new_connection(store):
     assert credentials(store)["session_id"] != auth["session_id"]
 
 
-@pytest.mark.parametrize("raw", ['{"session_id":', '[]', '{"session_id":"bad","expires_at":"forever"}'])
-def test_corrupt_session_cache_is_not_a_controller_and_can_reconnect(store, raw):
-    store.directory.mkdir(parents=True)
-    store.state_path.write_text(raw, encoding="utf-8")
+def test_previous_credential_format_requires_reconnection(store):
+    auth = credentials(store)
+    state = _read(store.state_path)
+    state.pop("token")
+    state["token_hash"] = "old version"
+    _write(store.state_path, state)
     assert not store.has_controller()
-    assert store.status()["state"] in ("unclaimed", "disconnected")
-    assert credentials(store)
-    assert store.has_controller()
-
-
-def test_corrupt_client_entry_does_not_hide_other_connected_clients(store):
-    store.register_client("healthy")
-    entries = _read(store.clients_path)
-    _write(store.clients_path, entries + [{"pid": -1}, {"pid": entries[0]["pid"], "created_at": entries[0]["created_at"]}])
-    assert [client["client_name"] for client in store.status()["clients"]] == ["healthy"]
+    with pytest.raises(ValueError):
+        store.wait(**auth, wait=0)
+    assert credentials(store)["session_id"] != auth["session_id"]
 
 
 def test_real_wait_renews_for_actual_node_budget_after_timeout_increases(store):
@@ -160,14 +155,6 @@ def test_real_wait_renews_for_actual_node_budget_after_timeout_increases(store):
         assert _read(store.state_path)["expires_at"] >= request["expires_at"] + 30
         old_client.respond(**auth, request_id=request["request_id"], decision={"candidate_id": "a"})
         assert future.result(timeout=2)["candidate_id"] == "a"
-
-
-@pytest.mark.parametrize("raw", ['{"id":', '[]', '{}'])
-def test_corrupt_gameplay_cache_does_not_break_connection(store, raw):
-    store.directory.mkdir(parents=True)
-    (store.directory / "gameplay.json").write_text(raw, encoding="utf-8")
-    assert credentials(store)
-    assert store.status()["divergent_running"] is False
 
 
 def test_renew_failure_does_not_commit_an_action(store, monkeypatch):

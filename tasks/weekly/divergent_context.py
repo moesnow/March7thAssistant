@@ -64,13 +64,9 @@ class DivergentContext:
                                              take_screenshot=False, relative=True)
         except (OSError, ValueError):
             matches = []  # 推荐图标缺失不影响 Agent 阅读画面与物品效果。
-        if isinstance(matches, list):
-            for match in matches[:12]:
-                if isinstance(match, (tuple, list)) and len(match) == 2:
-                    left, right = match
-                    if all(isinstance(point, (tuple, list)) and len(point) == 2 for point in match):
-                        markers.append({"source": "game_recommendation", "bounds": [left[0] / width, left[1] / height,
-                                        (right[0] - left[0]) / width, (right[1] - left[1]) / height]})
+        for left, right in (matches or [])[:12]:
+            markers.append({"source": "game_recommendation", "bounds": [left[0] / width, left[1] / height,
+                            (right[0] - left[0]) / width, (right[1] - left[1]) / height]})
         frame["recommendation_markers"] = markers
         self.frames.append(frame)
         return frame

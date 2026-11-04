@@ -113,7 +113,7 @@ def run_mcp(store=None):
     store = store or AgentSession()
     registry = store
     client_id = None
-    owned = []
+    owned = None
 
     def refresh_timeout():
         if configured:
@@ -125,7 +125,7 @@ def run_mcp(store=None):
     def register_client(params, *, allow_unknown=False):
         nonlocal client_id
         if client_id is None and (params is not None or allow_unknown):
-            info = getattr(params, "client_info", None) or getattr(params, "clientInfo", None)
+            info = params.client_info if params else None
             client_id = registry.register_client(getattr(info, "name", None), getattr(info, "version", ""), owner=psutil.Process())
 
     async def track_client(ctx, call_next):
@@ -156,17 +156,17 @@ def run_mcp(store=None):
     @server.tool()
     async def agent_connect(session_label: str, ctx: Context) -> dict:
         """接管此安装的决策队列。标签由当前 Agent 提供，不推断聊天标题。不启动游戏。"""
-        nonlocal store
+        nonlocal store, owned
         if configured:
             store = session_store()
         if getattr(store, "mode", "connected") != "connected":
             raise ValueError("请先在 GUI 保存内置 Agent 连接方式")
         params = ctx.session.client_params
-        info = getattr(params, "client_info", None) or getattr(params, "clientInfo", None)
+        info = params.client_info if params else None
         register_client(params, allow_unknown=True)
         name = str(getattr(info, "name", None) or "MCP client").strip()[:80] or "MCP client"
         result = connect_session(store, name, session_label, owner=psutil.Process(), client_id=client_id)
-        owned.append(result)
+        owned = {key: result[key] for key in ("session_id", "token")}
         return result
 
     @server.tool()
@@ -200,14 +200,17 @@ def run_mcp(store=None):
     @server.tool()
     async def agent_disconnect(session_id: str, token: str) -> dict:
         """结束接管；等待中的游戏决策及时交回原策略。"""
-        return store.disconnect(session_id, token)
+        nonlocal owned
+        result = store.disconnect(session_id, token)
+        owned = None
+        return result
 
     try:
         server.run(transport="stdio")
     finally:
-        for credentials in owned:
+        if owned:
             try:
-                store.disconnect(credentials["session_id"], credentials["token"])
+                store.disconnect(**owned)
             except (OSError, ValueError):
                 pass
         try:

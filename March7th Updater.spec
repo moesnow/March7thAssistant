@@ -1,8 +1,4 @@
 # -*- mode: python ; coding: utf-8 -*-
-import os
-from PyInstaller.utils.win32.winutils import get_system_path
-
-os.environ['PATH'] = os.pathsep.join(get_system_path() + [os.environ.get('PATH', '')])
 
 
 a = Analysis(

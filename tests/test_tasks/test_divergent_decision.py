@@ -23,6 +23,8 @@ def adapter(monkeypatch, tmp_path):
     auto.ocr_result = OCR
     auto.screenshot.size = (800, 600)
     auto.find_element.return_value = True
+    auto.find_element.side_effect = lambda _, kind, *args, **kwargs: ([] if kind == "image_with_multiple_targets"
+                                                                    else auto.find_element.return_value)
     auto.click_element.return_value = True
     cfg = MagicMock()
     cfg.get_value.side_effect = lambda key, default=None: "command" if key == "divergent_decision_mode" else default

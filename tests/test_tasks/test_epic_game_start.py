@@ -12,7 +12,6 @@ def test_scheduled_epic_failure_restores_settings_without_replaying(monkeypatch)
     controller = Mock(launch_method="epic")
     controller.switch_to_game.return_value = False
     controller.start_game_process.side_effect = EpicLaunchError("Epic 启动[等待游戏]超时")
-    monkeypatch.setattr(game, "auto", SimpleNamespace(input_handler=SimpleNamespace(is_background=False)))
     monkeypatch.setattr(game, "StarRailController", Mock(return_value=controller))
     monkeypatch.setattr(game, "cfg", SimpleNamespace(cloud_game_enable=False, auto_set_resolution_enable=True,
                                                    auto_battle_detect_enable=True))

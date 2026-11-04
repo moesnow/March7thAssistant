@@ -1,8 +1,6 @@
 """本机 Agent 接管会话。仅依赖标准库与 psutil，不加载游戏、GUI 或模型。"""
 
 from contextlib import contextmanager
-import hashlib
-import hmac
 import json
 import math
 import os
@@ -14,7 +12,7 @@ import uuid
 
 import psutil
 
-from utils.agent_decision import DecisionCancelled, MAX_RESPONSE_BYTES, validate_decision_answer
+from utils.agent_decision import DecisionCancelled, validate_decision_answer
 
 
 def decision_mode(cfg):
@@ -67,18 +65,8 @@ class AgentSession:
         self.ttl = max(90, timeout + 30)
 
     def _clients(self):
-        try:
-            clients = _read(self.clients_path) or []
-            if not isinstance(clients, list):
-                return []
-            return [item for item in clients if isinstance(item, dict)
-                    and isinstance(item.get("id"), str) and len(item["id"]) == 32
-                    and isinstance(item.get("client_name"), str) and item["client_name"]
-                    and isinstance(item.get("client_version"), str)
-                    and type(item.get("connected_at")) in (int, float) and math.isfinite(item["connected_at"])
-                    and self._alive(item.get("pid"), item.get("created_at"))]
-        except (OSError, ValueError, TypeError):
-            return []
+        return [item for item in (_read(self.clients_path) or [])
+                if self._alive(item["pid"], item["created_at"])]
 
     def register_client(self, client_name, client_version="", *, owner=None):
         """登记真实 MCP 握手；仅表示客户端通道存在，不接管、不续期。"""
@@ -138,25 +126,15 @@ class AgentSession:
             return False
 
     def _state(self):
-        try:
-            state = _read(self.state_path)
-        except (ValueError, RecursionError):
-            return {}  # 损坏的本机缓存不能授予控制权，也不能阻止重新接管。
-        return state if isinstance(state, dict) else {}
+        return _read(self.state_path) or {}
 
     def _active(self, state):
-        return bool(isinstance(state, dict) and isinstance(state.get("session_id"), str)
-                    and len(state["session_id"]) == 32 and not state.get("revoked")
-                    and all(c in "0123456789abcdef" for c in state["session_id"])
-                    and isinstance(state.get("token_hash"), str) and len(state["token_hash"]) == 64
-                    and all(c in "0123456789abcdef" for c in state["token_hash"])
-                    and type(state.get("expires_at")) in (int, float) and math.isfinite(state["expires_at"])
+        return bool(state.get("token") and not state["revoked"]
                     and time.time() < state["expires_at"]
-                    and (state.get("owner_pid") is None or self._alive(state["owner_pid"], state.get("owner_created_at"))))
+                    and (state["owner_pid"] is None or self._alive(state["owner_pid"], state["owner_created_at"])))
 
     def _authenticate(self, state, session_id, token):
-        if (not self._active(state) or state["session_id"] != session_id or not isinstance(token, str)
-                or not hmac.compare_digest(state["token_hash"], hashlib.sha256(token.encode()).hexdigest())):
+        if not self._active(state) or state["session_id"] != session_id or state["token"] != token:
             raise ValueError("接管会话无效、已断开或已过期，请重新连接")
 
     def is_current(self, session_id):
@@ -173,12 +151,9 @@ class AgentSession:
         # 已运行的 MCP 进程可能早于 GUI 修改节点超时。只在真实 Agent
         # 联系时按当前待处理节点延长租约，不能由游戏线程伪造心跳。
         for path in self.queue.glob("*.request.json"):
-            try:
-                request = _read(path)
-                if self._valid_request(request, state):
-                    expiry = max(expiry, request["expires_at"] + 30)
-            except (ValueError, KeyError, TypeError):
-                continue
+            request = _read(path)
+            if self._valid_request(request, state):
+                expiry = max(expiry, request["expires_at"] + 30)
         state.update(last_activity=now, expires_at=expiry)
         gameplay = self._gameplay()
         if gameplay and not gameplay["paused"]:
@@ -213,17 +188,11 @@ class AgentSession:
                     path.unlink(missing_ok=True)
 
     def _gameplay(self):
-        try:
-            activity = _read(self.directory / "gameplay.json")
-        except (ValueError, RecursionError):
-            return None
-        if (not isinstance(activity, dict) or not isinstance(activity.get("id"), str)
-                or not self._alive(activity.get("pid"), activity.get("created_at"))
-                or not self._alive(activity.get("game_pid"), activity.get("game_created_at"))):
+        activity = _read(self.directory / "gameplay.json")
+        if (not activity or not self._alive(activity["pid"], activity["created_at"])
+                or not self._alive(activity["game_pid"], activity["game_created_at"])):
             return None
         control = activity.get("control_file")
-        if control is not None and not isinstance(control, str):
-            return None
         activity["epoch"] = 0
         activity["paused"] = False
         if control:
@@ -246,7 +215,7 @@ class AgentSession:
                 raise ValueError("已有 Agent 接管，请先由原会话或 GUI 断开")
             token = secrets.token_urlsafe(32)
             state = {"schema": 1, "session_id": uuid.uuid4().hex,
-                     "token_hash": hashlib.sha256(token.encode()).hexdigest(),
+                     "token": token,
                      "client_name": client_name.strip(), "session_label": session_label,
                      "client_id": client_id,
                      "connected_at": time.time(), "revoked": False,
@@ -281,12 +250,9 @@ class AgentSession:
     def _clean(self):
         state = self._state()
         for path in self.queue.glob("*.request.json"):
-            try:
-                if not self._valid_request(_read(path), state):
-                    path.unlink(missing_ok=True)
-                    path.with_name(path.name.replace(".request.", ".response.")).unlink(missing_ok=True)
-            except (ValueError, KeyError, TypeError):
+            if not self._valid_request(_read(path), state):
                 path.unlink(missing_ok=True)
+                path.with_name(path.name.replace(".request.", ".response.")).unlink(missing_ok=True)
         for path in self.queue.glob("*.response.json"):
             if not path.with_name(path.name.replace(".response.", ".request.")).exists():
                 path.unlink(missing_ok=True)
@@ -297,13 +263,10 @@ class AgentSession:
         connected = self._active(state)
         pending = []
         for path in self.queue.glob("*.request.json"):
-            try:
-                envelope = _read(path)
-                if self._valid_request(envelope, state) and not path.with_name(path.name.replace(".request.", ".response.")).exists():
-                    pending.append({"request_id": envelope["request"]["request_id"],
-                                    "kind": envelope["request"].get("kind"), "expires_at": envelope["expires_at"]})
-            except (ValueError, KeyError, TypeError):
-                continue
+            envelope = _read(path)
+            if self._valid_request(envelope, state) and not path.with_name(path.name.replace(".request.", ".response.")).exists():
+                pending.append({"request_id": envelope["request"]["request_id"],
+                                "kind": envelope["request"].get("kind"), "expires_at": envelope["expires_at"]})
         gameplay = self._gameplay()
         running = bool(gameplay and not gameplay["paused"])
         last_activity = (state.get("last_game_activity") if connected and running
@@ -365,8 +328,6 @@ class AgentSession:
             answer.setdefault("protocol_version", 1)
             answer.setdefault("request_id", request_id)
             answer = validate_decision_answer(envelope["request"], answer)
-            if len(json.dumps(answer, ensure_ascii=False).encode("utf-8")) > MAX_RESPONSE_BYTES:
-                raise ValueError("决策响应过大")
             path = self.queue / f"{request_id}.response.json"
             previous = _read(path)
             if previous is not None and previous != answer:
@@ -421,7 +382,6 @@ class AgentSession:
                         return None
                     answer = _read(response_path)
                     if answer is not None:
-                        answer = validate_decision_answer(payload, answer)
                         state.pop("last_fallback", None)
                         # 游戏线程消费回执不是 Agent 活动，不能延长租约或更新时间。
                         _write(self.state_path, state)
