@@ -17,6 +17,9 @@ WINDOW_EMPTY = 'empty'          # 客户区尺寸为 0
 # SendMessageTimeout 等待游戏处理鼠标消息的上限（毫秒）。正常一帧内完成，加载卡顿时按未完成处理。
 SEND_MOUSE_TIMEOUT_MS = 500
 
+# 等待游戏处理失活消息的上限（秒）。正常几帧内完成，加载卡顿时不再等待，由清理线程在游戏恢复后完成。
+ACTIVATION_RELEASE_TIMEOUT = .3
+
 
 class WindowGoneError(OSError):
     """目标窗口句柄已失效（游戏关闭或重建窗口）。"""
@@ -238,6 +241,8 @@ class WindowsInputApi:
         self.user32.SendMessageTimeoutW.restype = wintypes.LPARAM
         self.user32.GetClipCursor.argtypes = (ctypes.POINTER(wintypes.RECT),)
         self.user32.GetClipCursor.restype = wintypes.BOOL
+        self.user32.SetActiveWindow.argtypes = (wintypes.HWND,)
+        self.user32.SetActiveWindow.restype = wintypes.HWND
 
     def identity(self, hwnd):
         if not hwnd or not self.gui.IsWindow(hwnd):
@@ -362,6 +367,51 @@ class WindowsInputApi:
             if current not in (0, previous) or time.monotonic() >= deadline:
                 return False
             time.sleep(.01)
+
+    def release_activation(self, window):
+        """清除后台激活留在游戏线程上的活动窗口和焦点，返回是否已完成。
+
+        投递的 WM_ACTIVATE 经 DefWindowProc 把游戏线程的活动窗口和焦点设为游戏自身，投递 WA_INACTIVE 不会清除。
+        系统据此认为游戏已是活动窗口，之后真实切到前台时不再发送激活消息，游戏停在失活状态，键鼠全部失效。
+        挂接游戏线程的输入队列后把活动窗口转给隐藏窗口，系统会发送真实的失活消息，前台窗口不受影响。
+
+        切换活动窗口要同步等待游戏线程处理消息，加载卡顿时会阻塞，因此放在线程里限时等待；
+        超时后线程留待游戏恢复时完成，期间不重复发起。
+        """
+        worker = getattr(self, '_activation_release', None)
+        if worker is not None and worker.is_alive():
+            return False
+        failure = []
+
+        def release():
+            try:
+                self._hand_over_activation(window.hwnd)
+            except Exception as error:
+                failure.append(error)
+
+        worker = threading.Thread(target=release, name='M7AActivationRelease', daemon=True)
+        self._activation_release = worker
+        worker.start()
+        worker.join(ACTIVATION_RELEASE_TIMEOUT)
+        if failure:
+            raise failure[0]
+        return not worker.is_alive()
+
+    def _hand_over_activation(self, hwnd):
+        # 创建窗口的同时也为当前线程建立了 AttachThreadInput 要求的消息队列。
+        # WS_EX_NOACTIVATE 不可省略：进程刚启动且用户还没操作键鼠时，系统允许它的首次激活抢占前台，
+        # 没有这个样式时隐藏窗口会把前台从用户手里抢走。
+        holder = self.gui.CreateWindowEx(0x08000080, 'STATIC', None, 0x80000000, 0, 0, 1, 1, 0, 0, 0, None)  # WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW, WS_POPUP；从不显示
+        try:
+            thread, game_thread = self.api.GetCurrentThreadId(), self.process.GetWindowThreadProcessId(hwnd)[0]
+            if not self.user32.AttachThreadInput(thread, game_thread, True):
+                raise ctypes.WinError(ctypes.get_last_error())
+            try:
+                self.user32.SetActiveWindow(holder)
+            finally:
+                self.user32.AttachThreadInput(thread, game_thread, False)
+        finally:
+            self.gui.DestroyWindow(holder)
 
     def watch_foreground(self, window):
         return ForegroundWatch(self, window.hwnd)

@@ -47,7 +47,7 @@ class Api:
         self.minimized = False
         self.events = []
         self.watchers = []
-        self.on_post = self.on_scroll = self.on_move = self.on_focus = self.on_sync = None
+        self.on_post = self.on_scroll = self.on_move = self.on_focus = self.on_sync = self.on_release = None
         self.focus_denied = set()
         self.buttons_down = False
         self.protections = []
@@ -92,6 +92,12 @@ class Api:
         self.change_focus(window.hwnd)
         if self.on_focus:
             self.on_focus(window)
+        return True
+
+    def release_activation(self, window):
+        self.events.append(('release_activation',window.hwnd))
+        if self.on_release:
+            self.on_release(window)
         return True
 
     def watch_foreground(self, window):
@@ -197,6 +203,66 @@ def test_hold_modifier_across_click_and_release(backend):
     b.input.press_key_up('alt')
     assert posts(b.api,0x104) and posts(b.api,0x105)
     assert [event[3] for event in posts(b.api,0x6)] == [1,0]
+    assert b.input._session is None
+
+
+def test_session_end_clears_thread_activation_after_inactive(backend):
+    """投递的激活留在游戏线程上时，之后真实切到前台不会再有激活消息，游戏键鼠全部失效。"""
+    b=backend
+    assert b.input.press_key('a',0) is True
+    inactive = posts(b.api,0x6)[-1]
+    assert inactive[3]==0
+    assert b.api.events.index(inactive) < b.api.events.index(('release_activation',10))
+    assert b.api.foreground()==20
+
+
+def test_every_background_session_clears_activation(backend):
+    b=backend
+    b.input.press_key('a',0)
+    b.input.mouse_click(350,450)
+    assert b.api.events.count(('release_activation',10))==2
+
+
+def test_held_input_keeps_activation_until_session_ends(backend):
+    b=backend
+    b.input.press_key_down('alt')
+    assert ('release_activation',10) not in b.api.events
+    b.input.press_key_up('alt')
+    assert b.api.events.count(('release_activation',10))==1
+
+
+def test_foreground_game_keeps_its_real_activation(backend):
+    b=backend
+    b.api.fg=10
+    b.input.press_key('a',0)
+    assert not posts(b.api,0x6)
+    assert ('release_activation',10) not in b.api.events
+
+
+def test_switching_to_game_during_session_keeps_activation(backend):
+    b=backend
+    b.input.press_key_down('alt')
+    b.api.change_focus(10)
+    b.input.release_all()
+    assert [event[3] for event in posts(b.api,0x6)]==[1]
+    assert ('release_activation',10) not in b.api.events
+
+
+def test_activation_cleanup_failure_is_not_input_release_failure(backend):
+    b=backend
+    b.api.on_release=Mock(side_effect=OSError('denied'))
+    assert b.input.press_key('a',0) is True
+    assert b.input._session is None
+    assert b.api.cursor()==(7,9)
+    assert '清除游戏激活状态失败' in b.input.logger.debug.call_args.args[0]
+
+
+def test_closed_window_needs_no_activation_cleanup(backend):
+    b=backend
+    b.input.press_key_down('alt')
+    del b.api.windows[10]
+    b.input.release_all()
+    assert ('release_activation',10) not in b.api.events
     assert b.input._session is None
 
 

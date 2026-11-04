@@ -321,10 +321,12 @@ class BackgroundInput(InputBase):
                 alive = False
             except Exception as e:
                 errors.append(e)
+        deactivated = False
         if alive and activated and self.api.foreground() != target.hwnd:
             try:
                 self.api.post(target, 0x0006, 0)
                 time.sleep(.05)  # 与实测一致：给异步失活消息一次处理机会再恢复光标。
+                deactivated = True
             except WindowGoneError:
                 alive = False
             except Exception as e:
@@ -345,6 +347,13 @@ class BackgroundInput(InputBase):
         except Exception as error:
             if self.logger:
                 self.logger.warning(f'恢复光标位置失败：{error}')
+        # 每次会话结束都还原游戏线程的激活状态：进程随时可能被结束，用户也随时可能切到游戏。同样只是善后。
+        if deactivated:
+            try:
+                self.api.release_activation(target)
+            except Exception as error:
+                if self.logger:
+                    self.logger.debug(f'清除游戏激活状态失败：{error}')
         self._written_cursor = None
         self._pointer_active = False
         self._settle_until = 0
