@@ -102,12 +102,23 @@ def test_real_modal_cancel_does_not_close_hidden_application(account_card, qapp,
 
     timer.timeout.connect(answer_dialog)
     timer.start()
+    finished = []
+
+    def exercise():
+        try:
+            state.card.autologinAccountButton.click()
+            finished.append(True)
+        finally:
+            qapp.quit()
+
+    QTimer.singleShot(0, exercise)
     try:
-        state.card.autologinAccountButton.click()
+        qapp.exec()
     finally:
         timer.stop()
         qapp.lastWindowClosed.disconnect(on_closed)
 
+    assert finished
     assert input_count == (2 if cancel_at == "password" else 1)
     assert not timed_out
     assert not closed
