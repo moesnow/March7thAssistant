@@ -1,7 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
+import sys
+
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
-binaries = []
+sys.path.append(SPECPATH)
+from tools.pyinstaller_openssl import OPENSSL_RUNTIME_HOOKS, python_openssl_binaries
+
+binaries = python_openssl_binaries()
 datas = []
 
 binaries += collect_dynamic_libs('openvino', search_patterns=['openvino_intel_cpu_plugin.dll', 'openvino_onnx_frontend.dll'])
@@ -31,7 +36,7 @@ a = Analysis(
     ],
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=[],
+    runtime_hooks=OPENSSL_RUNTIME_HOOKS,
     excludes=['PySide6'],
     noarchive=False,
     optimize=0,
