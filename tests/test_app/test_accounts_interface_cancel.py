@@ -12,10 +12,24 @@ pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="本地账号设
 def qapp():
     widgets = pytest.importorskip("PySide6.QtWidgets")
     app = widgets.QApplication.instance() or widgets.QApplication([])
-    previous = app.quitOnLastWindowClosed()
-    app.setQuitOnLastWindowClosed(False)
-    yield app
-    app.setQuitOnLastWindowClosed(previous)
+    return app
+
+
+def test_application_initialization_keeps_tray_running(qapp, monkeypatch):
+    from app.common import application as module
+
+    constructor = Mock(return_value=qapp)
+    monkeypatch.setattr(module, "QApplication", constructor)
+    previous = qapp.quitOnLastWindowClosed()
+    # 从 Qt 的默认退出策略开始，只有生产初始化逻辑才能关闭它。
+    qapp.setQuitOnLastWindowClosed(True)
+    try:
+        app = module.create_application(["March7th Launcher"])
+        constructor.assert_called_once_with(["March7th Launcher"])
+        assert app is qapp
+        assert not app.quitOnLastWindowClosed()
+    finally:
+        qapp.setQuitOnLastWindowClosed(previous)
 
 
 @pytest.fixture

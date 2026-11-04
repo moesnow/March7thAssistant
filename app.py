@@ -129,6 +129,7 @@ if args.autostart:
 
 from PySide6.QtCore import Qt, QLocale, qInstallMessageHandler, QtMsgType
 from PySide6.QtWidgets import QApplication
+from app.common.application import create_application
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 import json
 import hashlib
@@ -249,9 +250,7 @@ if __name__ == "__main__":
         ):
             os.environ.pop(_runtime_key, None)
 
-    app = QApplication(sys.argv)
-    # 关闭独立对话框时保留托盘任务，退出由主窗口显式调用 quit。
-    app.setQuitOnLastWindowClosed(False)
+    app = create_application(sys.argv)
 
     # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server
     _key = _get_server_key()
