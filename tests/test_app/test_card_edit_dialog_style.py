@@ -42,7 +42,7 @@ def _colors(dialog, card):
     }
 
 
-def _sample(qapp, theme, timeout=10.0):
+def _sample(qapp, theme, check, timeout=10.0):
     """渲染编辑主页卡片弹窗，取卡片、卡片间隙、弹窗空白处的像素
 
     间隙露出的是滚动内容的背景：QScrollArea.setWidget 会强制
@@ -51,8 +51,8 @@ def _sample(qapp, theme, timeout=10.0):
 
     窗口 show 之后必须等布局和首帧绘制完成再采样：刚 show 的窗口几何与
     样式还没生效，此时 grab() 拿到的是未上色的底色，采样值会随机器负载抖动
-    （CI 上深色模式曾因此读到 255,255,255）。这里轮询到连续两次采样一致为止，
-    超时后抛出带上下文的断言，而不是给出随机结论。
+    （CI 上深色模式曾因此读到 255,255,255）。轮询直到颜色满足断言，
+    超时后报告最后一次采样和断言错误。
     """
     from qfluentwidgets import setTheme
     from app.card.card_edit_dialog import CardEditDialog, DEFAULT_CARDS
@@ -64,18 +64,21 @@ def _sample(qapp, theme, timeout=10.0):
     try:
         card = dialog.card_editors[0]
         deadline = time.monotonic() + timeout
-        previous = None
+        colors = None
+        error = None
         while time.monotonic() < deadline:
             qapp.processEvents()
             if card.isVisible() and card.width() > 50 and card.height() > 50:
                 colors = _colors(dialog, card)
-                if colors == previous:
+                try:
+                    check(colors)
                     return colors
-                previous = colors
+                except AssertionError as exc:
+                    error = exc
             time.sleep(0.02)
         raise AssertionError(
             f"{theme} 主题下弹窗未在 {timeout:.0f}s 内完成布局与绘制，"
-            f"最后一次采样 {previous}")
+            f"最后一次采样 {colors}，断言错误：{error}")
     finally:
         dialog.close()
 
@@ -90,14 +93,16 @@ class TestCardEditDialogStyle:
         """深色模式：卡片拿到 rgba(39,39,39,0.96) 叠加后的深色底，
         间隙与弹窗同色（不残留系统 palette 的浅灰）"""
         from qfluentwidgets import Theme
-        p = _sample(qapp, Theme.DARK)
-        _assert_color(p["card"], (39, 39, 39))
-        _assert_color(p["gap"], (43, 43, 43))
-        _assert_color(p["dialog"], (43, 43, 43))
+        def check(p):
+            _assert_color(p["card"], (39, 39, 39))
+            _assert_color(p["gap"], (43, 43, 43))
+            _assert_color(p["dialog"], (43, 43, 43))
+        _sample(qapp, Theme.DARK, check)
 
     def test_light_mode(self, qapp):
         """浅色模式无回归。弹窗底色来自系统 palette，故只做相对断言"""
         from qfluentwidgets import Theme
-        p = _sample(qapp, Theme.LIGHT)
-        assert p["gap"] == p["dialog"]
-        assert p["card"] != p["gap"], "卡片应能与容器区分开"
+        def check(p):
+            assert p["gap"] == p["dialog"]
+            assert p["card"] != p["gap"], "卡片应能与容器区分开"
+        _sample(qapp, Theme.LIGHT, check)
