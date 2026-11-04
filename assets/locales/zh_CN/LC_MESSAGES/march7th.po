@@ -5092,7 +5092,7 @@ msgstr "更新失败"
 msgid "更新三月七小助手"
 msgstr "更新三月七小助手"
 
-#: module/update/helper_app.py:426
+#: module/update/helper_app.py:431
 msgid "当前已是最新版本"
 msgstr "当前已是最新版本"
 
@@ -5108,7 +5108,7 @@ msgstr "正在准备更新"
 msgid "即将开始下载和安装新版本"
 msgstr "即将开始下载和安装新版本"
 
-#: module/update/helper_app.py:586
+#: module/update/helper_app.py:591
 msgid "无需更新"
 msgstr "无需更新"
 
@@ -5124,11 +5124,11 @@ msgstr "请勿关闭此窗口，更新完成后会自动启动新版本"
 msgid "正在下载更新包..."
 msgstr "正在下载更新包..."
 
-#: module/update/helper_app.py:542
+#: module/update/helper_app.py:547
 msgid "已请求取消更新，正在等待当前步骤结束"
 msgstr "已请求取消更新，正在等待当前步骤结束"
 
-#: module/update/helper_app.py:454
+#: module/update/helper_app.py:426
 msgid "更新已取消"
 msgstr "更新已取消"
 
@@ -5172,7 +5172,7 @@ msgstr "正在检测文件占用..."
 msgid "临时文件被占用，无法清理"
 msgstr "临时文件被占用，无法清理"
 
-#: module/update/helper_app.py:441
+#: module/update/helper_app.py:446
 msgid "更新完成"
 msgstr "更新完成"
 
@@ -5196,7 +5196,7 @@ msgstr "更新包已下载并解压完成，点击“开始安装”后将关闭
 msgid "更新已准备完成，等待开始安装"
 msgstr "更新已准备完成，等待开始安装"
 
-#: module/update/helper_app.py:442
+#: module/update/helper_app.py:447
 msgid "新版本已启动，此窗口将自动关闭"
 msgstr "新版本已启动，此窗口将自动关闭"
 
@@ -5232,7 +5232,7 @@ msgstr "卡片标题不能为空"
 msgid "启动更新器失败"
 msgstr "启动更新器失败"
 
-#: module/update/helper_app.py:655
+#: module/update/helper_app.py:660
 msgid "更新被阻塞"
 msgstr "更新被阻塞"
 
@@ -5599,7 +5599,7 @@ msgid "剩余 {count} 天"
 msgid_plural "剩余 {count} 天|plural"
 msgstr[0] "剩余 {count} 天"
 
-#: module/update/helper_app.py:643
+#: module/update/helper_app.py:648
 msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "{count} 秒后自动退出"

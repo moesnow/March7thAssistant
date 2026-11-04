@@ -5088,7 +5088,7 @@ msgstr "更新失敗"
 msgid "更新三月七小助手"
 msgstr "三月七小助手を更新"
 
-#: module/update/helper_app.py:426
+#: module/update/helper_app.py:431
 msgid "当前已是最新版本"
 msgstr "すでに最新バージョンです"
 
@@ -5104,7 +5104,7 @@ msgstr "更新を準備中"
 msgid "即将开始下载和安装新版本"
 msgstr "新しいバージョンのダウンロードとインストールを開始します"
 
-#: module/update/helper_app.py:586
+#: module/update/helper_app.py:591
 msgid "无需更新"
 msgstr "更新の必要なし"
 
@@ -5120,11 +5120,11 @@ msgstr "このウィンドウを閉じないでください。更新完了後に
 msgid "正在下载更新包..."
 msgstr "更新パッケージをダウンロード中..."
 
-#: module/update/helper_app.py:542
+#: module/update/helper_app.py:547
 msgid "已请求取消更新，正在等待当前步骤结束"
 msgstr "更新のキャンセルが要求されました。現在のステップの終了を待っています"
 
-#: module/update/helper_app.py:454
+#: module/update/helper_app.py:426
 msgid "更新已取消"
 msgstr "更新がキャンセルされました"
 
@@ -5168,7 +5168,7 @@ msgstr "ファイルの使用状況を確認中..."
 msgid "临时文件被占用，无法清理"
 msgstr "一時ファイルが使用中で、クリーンアップできません"
 
-#: module/update/helper_app.py:441
+#: module/update/helper_app.py:446
 msgid "更新完成"
 msgstr "更新完了"
 
@@ -5193,7 +5193,7 @@ msgstr ""
 msgid "更新已准备完成，等待开始安装"
 msgstr "更新の準備が完了し、インストール開始待ちです"
 
-#: module/update/helper_app.py:442
+#: module/update/helper_app.py:447
 msgid "新版本已启动，此窗口将自动关闭"
 msgstr "新しいバージョンが起動しました。このウィンドウは自動的に閉じます"
 
@@ -5231,7 +5231,7 @@ msgstr ""
 msgid "启动更新器失败"
 msgstr "アップデーターの起動に失敗"
 
-#: module/update/helper_app.py:655
+#: module/update/helper_app.py:660
 msgid "更新被阻塞"
 msgstr "更新がブロックされました"
 
@@ -5598,7 +5598,7 @@ msgid "剩余 {count} 天"
 msgid_plural "剩余 {count} 天|plural"
 msgstr[0] "残り {count} 日"
 
-#: module/update/helper_app.py:643
+#: module/update/helper_app.py:648
 msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "{count} 秒後に自動終了"

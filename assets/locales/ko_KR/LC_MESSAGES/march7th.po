@@ -5110,7 +5110,7 @@ msgstr "업데이트 실패"
 msgid "更新三月七小助手"
 msgstr "March7th Assistant 업데이트"
 
-#: module/update/helper_app.py:426
+#: module/update/helper_app.py:431
 msgid "当前已是最新版本"
 msgstr "이미 최신 버전입니다"
 
@@ -5126,7 +5126,7 @@ msgstr "업데이트 준비 중"
 msgid "即将开始下载和安装新版本"
 msgstr "새 버전 다운로드 및 설치를 시작합니다"
 
-#: module/update/helper_app.py:586
+#: module/update/helper_app.py:591
 msgid "无需更新"
 msgstr "업데이트 필요 없음"
 
@@ -5142,11 +5142,11 @@ msgstr "이 창을 닫지 마세요. 업데이트 완료 후 새 버전이 자�
 msgid "正在下载更新包..."
 msgstr "업데이트 패키지 다운로드 중..."
 
-#: module/update/helper_app.py:542
+#: module/update/helper_app.py:547
 msgid "已请求取消更新，正在等待当前步骤结束"
 msgstr "업데이트 취소가 요청되었습니다. 현재 단계가 끝나기를 기다리는 중"
 
-#: module/update/helper_app.py:454
+#: module/update/helper_app.py:426
 msgid "更新已取消"
 msgstr "업데이트가 취소되었습니다"
 
@@ -5190,7 +5190,7 @@ msgstr "파일 사용 여부 확인 중..."
 msgid "临时文件被占用，无法清理"
 msgstr "임시 파일이 사용 중이라 정리할 수 없습니다"
 
-#: module/update/helper_app.py:441
+#: module/update/helper_app.py:446
 msgid "更新完成"
 msgstr "업데이트 완료"
 
@@ -5214,7 +5214,7 @@ msgstr "업데이트 패키지 다운로드와 압축 해제가 완료되었습�
 msgid "更新已准备完成，等待开始安装"
 msgstr "업데이트 준비가 완료되어 설치 시작을 기다리는 중입니다"
 
-#: module/update/helper_app.py:442
+#: module/update/helper_app.py:447
 msgid "新版本已启动，此窗口将自动关闭"
 msgstr "새 버전이 시작되었습니다. 이 창은 자동으로 닫힙니다"
 
@@ -5252,7 +5252,7 @@ msgstr "카드 제목은 비워 둘 수 없습니다"
 msgid "启动更新器失败"
 msgstr "업데이터 실행 실패"
 
-#: module/update/helper_app.py:655
+#: module/update/helper_app.py:660
 msgid "更新被阻塞"
 msgstr "업데이트가 차단되었습니다"
 
@@ -5619,7 +5619,7 @@ msgid "剩余 {count} 天"
 msgid_plural "剩余 {count} 天|plural"
 msgstr[0] "{count}일 남음"
 
-#: module/update/helper_app.py:643
+#: module/update/helper_app.py:648
 msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "{count} 초 후 자동 종료"

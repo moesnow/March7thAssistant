@@ -4657,36 +4657,36 @@ msgid "正在等待主程序退出..."
 msgstr ""
 
 #: module/update/helper_app.py:426
-msgid "当前已是最新版本"
-msgstr ""
-
-#: module/update/helper_app.py:441
-msgid "更新完成"
-msgstr ""
-
-#: module/update/helper_app.py:442
-msgid "新版本已启动，此窗口将自动关闭"
-msgstr ""
-
-#: module/update/helper_app.py:454
 msgid "更新已取消"
 msgstr ""
 
-#: module/update/helper_app.py:542
+#: module/update/helper_app.py:431
+msgid "当前已是最新版本"
+msgstr ""
+
+#: module/update/helper_app.py:446
+msgid "更新完成"
+msgstr ""
+
+#: module/update/helper_app.py:447
+msgid "新版本已启动，此窗口将自动关闭"
+msgstr ""
+
+#: module/update/helper_app.py:547
 msgid "已请求取消更新，正在等待当前步骤结束"
 msgstr ""
 
-#: module/update/helper_app.py:586
+#: module/update/helper_app.py:591
 msgid "无需更新"
 msgstr ""
 
-#: module/update/helper_app.py:643
+#: module/update/helper_app.py:648
 msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] ""
 msgstr[1] ""
 
-#: module/update/helper_app.py:655
+#: module/update/helper_app.py:660
 msgid "更新被阻塞"
 msgstr ""
 

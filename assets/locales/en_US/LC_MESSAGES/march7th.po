@@ -5212,7 +5212,7 @@ msgstr "Update failed"
 msgid "更新三月七小助手"
 msgstr "Update March7th Assistant"
 
-#: module/update/helper_app.py:426
+#: module/update/helper_app.py:431
 msgid "当前已是最新版本"
 msgstr "Already on the latest version"
 
@@ -5228,7 +5228,7 @@ msgstr "Preparing update"
 msgid "即将开始下载和安装新版本"
 msgstr "About to download and install new version"
 
-#: module/update/helper_app.py:586
+#: module/update/helper_app.py:591
 msgid "无需更新"
 msgstr "No update needed"
 
@@ -5246,11 +5246,11 @@ msgstr ""
 msgid "正在下载更新包..."
 msgstr "Downloading update package..."
 
-#: module/update/helper_app.py:542
+#: module/update/helper_app.py:547
 msgid "已请求取消更新，正在等待当前步骤结束"
 msgstr "Update cancellation requested, waiting for current step to finish"
 
-#: module/update/helper_app.py:454
+#: module/update/helper_app.py:426
 msgid "更新已取消"
 msgstr "Update cancelled"
 
@@ -5296,7 +5296,7 @@ msgstr "Checking for file locks..."
 msgid "临时文件被占用，无法清理"
 msgstr "Temporary files are in use, cannot clean up"
 
-#: module/update/helper_app.py:441
+#: module/update/helper_app.py:446
 msgid "更新完成"
 msgstr "Update complete"
 
@@ -5324,7 +5324,7 @@ msgstr ""
 msgid "更新已准备完成，等待开始安装"
 msgstr "Update is ready and waiting to start installation"
 
-#: module/update/helper_app.py:442
+#: module/update/helper_app.py:447
 msgid "新版本已启动，此窗口将自动关闭"
 msgstr "New version launched, this window will close automatically"
 
@@ -5363,7 +5363,7 @@ msgstr "Card title cannot be empty"
 msgid "启动更新器失败"
 msgstr "Failed to launch updater"
 
-#: module/update/helper_app.py:655
+#: module/update/helper_app.py:660
 msgid "更新被阻塞"
 msgstr "Update blocked"
 
@@ -5742,7 +5742,7 @@ msgid_plural "剩余 {count} 天|plural"
 msgstr[0] "{count} day remaining"
 msgstr[1] "{count} days remaining"
 
-#: module/update/helper_app.py:643
+#: module/update/helper_app.py:648
 msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "Auto-exit in {count} second"
