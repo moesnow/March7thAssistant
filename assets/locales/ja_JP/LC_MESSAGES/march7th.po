@@ -1071,11 +1071,11 @@ msgstr ""
 "このプロジェクトが気に入ったら、WeChat で作者にコーヒーをご馳走いただけます ☕\n"
 "皆さまの支援が開発と保守の原動力です 🚀"
 
-#: app/main_window.py:355
+#: app/main_window.py:357
 msgid "显示主界面"
 msgstr "メイン画面を表示"
 
-#: app/main_window.py:360
+#: app/main_window.py:362
 msgid "完整运行"
 msgstr "完全実行"
 
@@ -1087,63 +1087,63 @@ msgstr "終了"
 msgid "任务正在运行"
 msgstr "タスク実行中"
 
-#: app/main_window.py:457
+#: app/main_window.py:459
 msgid "请先停止当前任务后再启动新任务"
 msgstr "新しいタスクを開始する前に、現在のタスクを停止してください。"
 
-#: app/main_window.py:733
+#: app/main_window.py:735
 msgid "配置已更新"
 msgstr "設定を更新しました"
 
-#: app/main_window.py:734
+#: app/main_window.py:736
 msgid "检测到配置文件变化，已自动重新加载"
 msgstr "設定ファイルの変更を検出し、自動で再読み込みしました。"
 
-#: app/main_window.py:639
+#: app/main_window.py:641
 msgid "配置加载失败"
 msgstr "設定の読み込みに失敗しました"
 
-#: app/main_window.py:915
+#: app/main_window.py:917
 msgid "启动成功(＾∀＾●)"
 msgstr "起動成功 (＾∀＾●)"
 
-#: app/main_window.py:955
+#: app/main_window.py:957
 msgid "启动失败"
 msgstr "起動失敗"
 
-#: app/main_window.py:945
+#: app/main_window.py:947
 msgid "游戏路径配置错误(╥╯﹏╰╥)"
 msgstr "ゲームパス設定エラー (╥╯﹏╰╥)"
 
-#: app/main_window.py:925
+#: app/main_window.py:927
 msgid "浏览器或驱动下载失败 (╥╯﹏╰╥)"
 msgstr "ブラウザーまたはドライバーのダウンロードに失敗しました (╥╯﹏╰╥)"
 
-#: app/main_window.py:926
+#: app/main_window.py:928
 msgid "请检查网络连接是否正常"
 msgstr "ネットワーク接続を確認してください。"
 
-#: app/main_window.py:935
+#: app/main_window.py:937
 msgid "云游戏启动失败(╥╯﹏╰╥)"
 msgstr "クラウドゲーム起動失敗 (╥╯﹏╰╥)"
 
-#: app/main_window.py:936
+#: app/main_window.py:938
 msgid "请检查所选浏览器是否存在，网络连接是否正常"
 msgstr "選択したブラウザーが存在するか、ネットワーク接続が正常か確認してください。"
 
-#: app/main_window.py:884
+#: app/main_window.py:886
 msgid "正在下载内置浏览器(ง •̀_•́)ง"
 msgstr "内蔵ブラウザーをダウンロード中 (ง •̀_•́)ง"
 
-#: app/main_window.py:885
+#: app/main_window.py:887
 msgid "下载成功后，将自动启动云·星穹铁道"
 msgstr "ダウンロード完了後、クラウド・崩壊：スターレイルを自動起動します。"
 
-#: app/main_window.py:894
+#: app/main_window.py:896
 msgid "正在启动游戏(❁´◡`❁)"
 msgstr "ゲーム起動中 (❁´◡`❁)"
 
-#: app/main_window.py:824
+#: app/main_window.py:826
 msgid "程序已最小化到托盘"
 msgstr "アプリをトレイに最小化しました。"
 
@@ -3223,7 +3223,7 @@ msgstr ""
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
-#: app/main_window.py:627
+#: app/main_window.py:629
 msgid "更新成功"
 msgstr ""
 
@@ -5357,11 +5357,11 @@ msgstr "Fate[UBW]キャラクターコラボ跳躍"
 msgid "Fate[UBW]光锥联动跃迁"
 msgstr "Fate[UBW]光円錐コラボ跳躍"
 
-#: app/main_window.py:871
+#: app/main_window.py:873
 msgid "游戏已在运行"
 msgstr "ゲームはすでに起動しています"
 
-#: app/main_window.py:872
+#: app/main_window.py:874
 msgid "无需重复启动游戏"
 msgstr "再度ゲームを起動する必要はありません"
 
@@ -5603,7 +5603,7 @@ msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "{count} 秒後に自動終了"
 
-#: app/main_window.py:946
+#: app/main_window.py:948
 msgid "请在“设置”→“程序”中配置"
 msgstr "「設定」→「プログラム」で設定してください"
 
@@ -5710,7 +5710,7 @@ msgstr "実行完了(＾∀＾●)"
 msgid "执行出错"
 msgstr "実行エラー"
 
-#: app/main_window.py:519
+#: app/main_window.py:521
 msgid "语言切换失败"
 msgstr "言語の切り替えに失敗しました"
 
@@ -6529,4 +6529,12 @@ msgstr ""
 
 #: app/setting_interface.py:911
 msgid "末日幻影配置"
+msgstr ""
+
+#: app/tools/disclaimer.py:46
+msgid "确认状态保存失败"
+msgstr ""
+
+#: app/tools/disclaimer.py:47
+msgid "解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}"
 msgstr ""

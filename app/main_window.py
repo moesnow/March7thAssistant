@@ -336,10 +336,12 @@ class MainWindow(MSFluentWindow):
         self.addSubInterface(self.settingInterface, FIF.SETTING, tr('设置'), position=NavigationItemPosition.BOTTOM)
 
         self.splashScreen.finish()
-        self.themeListener = checkThemeChange(self)
 
+        # 免责声明可能退出进程，要先于后台线程：线程运行时退出会触发 Qt Fatal 中止
         if not cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8")):
             disclaimer(self)
+
+        self.themeListener = checkThemeChange(self)
 
     def initSystemTray(self):
         """初始化系统托盘"""

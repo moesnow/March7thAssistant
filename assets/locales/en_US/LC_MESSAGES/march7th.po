@@ -1114,11 +1114,11 @@ msgstr ""
 "If you like it, consider buying the author a coffee ☕\n"
 "Your support powers development! 🚀"
 
-#: app/main_window.py:355
+#: app/main_window.py:357
 msgid "显示主界面"
 msgstr "Show Main Interface"
 
-#: app/main_window.py:360
+#: app/main_window.py:362
 msgid "完整运行"
 msgstr "Full Run"
 
@@ -1130,63 +1130,63 @@ msgstr "Exit"
 msgid "任务正在运行"
 msgstr "Task Running"
 
-#: app/main_window.py:457
+#: app/main_window.py:459
 msgid "请先停止当前任务后再启动新任务"
 msgstr "Please stop current task before starting new one"
 
-#: app/main_window.py:733
+#: app/main_window.py:735
 msgid "配置已更新"
 msgstr "Config Updated"
 
-#: app/main_window.py:734
+#: app/main_window.py:736
 msgid "检测到配置文件变化，已自动重新加载"
 msgstr "Config file change detected, reloaded automatically"
 
-#: app/main_window.py:639
+#: app/main_window.py:641
 msgid "配置加载失败"
 msgstr "Config Load Failed"
 
-#: app/main_window.py:915
+#: app/main_window.py:917
 msgid "启动成功(＾∀＾●)"
 msgstr "Process started (＾∀＾●)"
 
-#: app/main_window.py:955
+#: app/main_window.py:957
 msgid "启动失败"
 msgstr "Start Failed"
 
-#: app/main_window.py:945
+#: app/main_window.py:947
 msgid "游戏路径配置错误(╥╯﹏╰╥)"
 msgstr "Game path config error (╥╯﹏╰╥)"
 
-#: app/main_window.py:925
+#: app/main_window.py:927
 msgid "浏览器或驱动下载失败 (╥╯﹏╰╥)"
 msgstr "Browser/Driver download failed (╥╯﹏╰╥)"
 
-#: app/main_window.py:926
+#: app/main_window.py:928
 msgid "请检查网络连接是否正常"
 msgstr "Please check network connection"
 
-#: app/main_window.py:935
+#: app/main_window.py:937
 msgid "云游戏启动失败(╥╯﹏╰╥)"
 msgstr "Cloud Game start failed (╥╯﹏╰╥)"
 
-#: app/main_window.py:936
+#: app/main_window.py:938
 msgid "请检查所选浏览器是否存在，网络连接是否正常"
 msgstr "Check if browser exists and network is normal"
 
-#: app/main_window.py:884
+#: app/main_window.py:886
 msgid "正在下载内置浏览器(ง •̀_•́)ง"
 msgstr "Downloading built-in browser (ง •̀_•́)ง"
 
-#: app/main_window.py:885
+#: app/main_window.py:887
 msgid "下载成功后，将自动启动云·星穹铁道"
 msgstr "Will auto start Cloud StarRail after download"
 
-#: app/main_window.py:894
+#: app/main_window.py:896
 msgid "正在启动游戏(❁´◡`❁)"
 msgstr "Launching Game (❁´◡`❁)"
 
-#: app/main_window.py:824
+#: app/main_window.py:826
 msgid "程序已最小化到托盘"
 msgstr "Program minimized to tray"
 
@@ -3294,7 +3294,7 @@ msgstr "Wuthering Waves ok-ww"
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
-#: app/main_window.py:627
+#: app/main_window.py:629
 msgid "更新成功"
 msgstr "Update Successful"
 
@@ -5493,11 +5493,11 @@ msgstr "Fate[UBW] Character Collab Warp"
 msgid "Fate[UBW]光锥联动跃迁"
 msgstr "Fate[UBW] Light Cone Collab Warp"
 
-#: app/main_window.py:871
+#: app/main_window.py:873
 msgid "游戏已在运行"
 msgstr "Game Already Running"
 
-#: app/main_window.py:872
+#: app/main_window.py:874
 msgid "无需重复启动游戏"
 msgstr "There is no need to launch it again"
 
@@ -5748,7 +5748,7 @@ msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "Auto-exit in {count} second"
 msgstr[1] "Auto-exit in {count} seconds"
 
-#: app/main_window.py:946
+#: app/main_window.py:948
 msgid "请在“设置”→“程序”中配置"
 msgstr "Please configure in 'Settings' → 'Program'"
 
@@ -5857,7 +5857,7 @@ msgstr "Completed(＾∀＾●)"
 msgid "执行出错"
 msgstr "Execution Failed"
 
-#: app/main_window.py:519
+#: app/main_window.py:521
 msgid "语言切换失败"
 msgstr "Failed to switch language"
 
@@ -6704,4 +6704,12 @@ msgstr ""
 
 #: app/setting_interface.py:911
 msgid "末日幻影配置"
+msgstr ""
+
+#: app/tools/disclaimer.py:46
+msgid "确认状态保存失败"
+msgstr ""
+
+#: app/tools/disclaimer.py:47
+msgid "解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}"
 msgstr ""

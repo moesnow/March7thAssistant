@@ -1069,11 +1069,11 @@ msgstr ""
 "이 프로젝트가 마음에 든다면 WeChat으로 커피 한 잔을 후원해주세요☕\n"
 "당신의 후원은 개발 및 유지보수의 원동력이 됩니다🚀"
 
-#: app/main_window.py:355
+#: app/main_window.py:357
 msgid "显示主界面"
 msgstr "메인 화면 표시"
 
-#: app/main_window.py:360
+#: app/main_window.py:362
 msgid "完整运行"
 msgstr "전체 실행"
 
@@ -1085,63 +1085,63 @@ msgstr "종료"
 msgid "任务正在运行"
 msgstr "임무 실행 중"
 
-#: app/main_window.py:457
+#: app/main_window.py:459
 msgid "请先停止当前任务后再启动新任务"
 msgstr "새 임무를 시작하려면 먼저 현재 임무를 중지하세요"
 
-#: app/main_window.py:733
+#: app/main_window.py:735
 msgid "配置已更新"
 msgstr "설정 업데이트됨"
 
-#: app/main_window.py:734
+#: app/main_window.py:736
 msgid "检测到配置文件变化，已自动重新加载"
 msgstr "설정 파일 변경 감지, 자동 재로드됨"
 
-#: app/main_window.py:639
+#: app/main_window.py:641
 msgid "配置加载失败"
 msgstr "설정 로드 실패"
 
-#: app/main_window.py:915
+#: app/main_window.py:917
 msgid "启动成功(＾∀＾●)"
 msgstr "시작 성공 (＾∀＾●)"
 
-#: app/main_window.py:955
+#: app/main_window.py:957
 msgid "启动失败"
 msgstr "시작 실패"
 
-#: app/main_window.py:945
+#: app/main_window.py:947
 msgid "游戏路径配置错误(╥╯﹏╰╥)"
 msgstr "게임 경로 설정 오류 (╥╯﹏╰╥)"
 
-#: app/main_window.py:925
+#: app/main_window.py:927
 msgid "浏览器或驱动下载失败 (╥╯﹏╰╥)"
 msgstr "브라우저/드라이버 다운로드 실패 (╥╯﹏╰╥)"
 
-#: app/main_window.py:926
+#: app/main_window.py:928
 msgid "请检查网络连接是否正常"
 msgstr "네트워크 연결을 확인하세요"
 
-#: app/main_window.py:935
+#: app/main_window.py:937
 msgid "云游戏启动失败(╥╯﹏╰╥)"
 msgstr "클라우드 게임 시작 실패 (╥╯﹏╰╥)"
 
-#: app/main_window.py:936
+#: app/main_window.py:938
 msgid "请检查所选浏览器是否存在，网络连接是否正常"
 msgstr "선택한 브라우저가 있는지, 네트워크가 정상인지 확인하세요"
 
-#: app/main_window.py:884
+#: app/main_window.py:886
 msgid "正在下载内置浏览器(ง •̀_•́)ง"
 msgstr "내장 브라우저 다운로드 중 (ง ·̀_·́)ง"
 
-#: app/main_window.py:885
+#: app/main_window.py:887
 msgid "下载成功后，将自动启动云·星穹铁道"
 msgstr "다운로드 완료 후 클라우드·붕괴: 스타레일을 자동 시작합니다"
 
-#: app/main_window.py:894
+#: app/main_window.py:896
 msgid "正在启动游戏(❁´◡`❁)"
 msgstr "게임 시작 중 (❁´◡`❁)"
 
-#: app/main_window.py:824
+#: app/main_window.py:826
 msgid "程序已最小化到托盘"
 msgstr "프로그램이 트레이로 최소화되었습니다"
 
@@ -3234,7 +3234,7 @@ msgstr "명조 ok-ww"
 msgid "MFAAvalonia"
 msgstr "MFAAvalonia"
 
-#: app/main_window.py:627
+#: app/main_window.py:629
 msgid "更新成功"
 msgstr "업데이트 성공"
 
@@ -5378,11 +5378,11 @@ msgstr "Fate[UBW] 캐릭터 컬래버 워프"
 msgid "Fate[UBW]光锥联动跃迁"
 msgstr "Fate[UBW] 광추 컬래버레이션 워프"
 
-#: app/main_window.py:871
+#: app/main_window.py:873
 msgid "游戏已在运行"
 msgstr "게임이 이미 실행 중입니다"
 
-#: app/main_window.py:872
+#: app/main_window.py:874
 msgid "无需重复启动游戏"
 msgstr "게임을 다시 실행할 필요가 없습니다"
 
@@ -5624,7 +5624,7 @@ msgid "{count} 秒后自动退出"
 msgid_plural "{count} 秒后自动退出|plural"
 msgstr[0] "{count} 초 후 자동 종료"
 
-#: app/main_window.py:946
+#: app/main_window.py:948
 msgid "请在“设置”→“程序”中配置"
 msgstr "'설정' → '프로그램'에서 설정하세요"
 
@@ -5731,7 +5731,7 @@ msgstr "실행 완료(＾∀＾●)"
 msgid "执行出错"
 msgstr "실행 오류"
 
-#: app/main_window.py:519
+#: app/main_window.py:521
 msgid "语言切换失败"
 msgstr "언어 전환 실패"
 
@@ -6551,4 +6551,12 @@ msgstr ""
 
 #: app/setting_interface.py:911
 msgid "末日幻影配置"
+msgstr ""
+
+#: app/tools/disclaimer.py:46
+msgid "确认状态保存失败"
+msgstr ""
+
+#: app/tools/disclaimer.py:47
+msgid "解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}"
 msgstr ""

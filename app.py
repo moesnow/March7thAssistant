@@ -111,6 +111,10 @@ if sys.platform == 'win32':
             sys.exit(1)
 
 
+# 控制台已隐藏，崩溃信息写入 logs/crash.log，否则闪退时什么都留不下
+from utils.crash_log import enable_crash_log, record_crash
+enable_crash_log()
+
 # 开机自启：按配置决定是否打开图形界面，以及启动后自动执行的任务
 _autostart_gui_task = None
 _autostart_minimized = False
@@ -150,6 +154,7 @@ def qt_message_handler(mode, context, message):
         print(f"Qt Critical: {message}")
     elif mode == QtMsgType.QtFatalMsg:
         print(f"Qt Fatal: {message}")
+        record_crash(f"Qt Fatal: {message}")
 
 
 qInstallMessageHandler(qt_message_handler)
