@@ -609,6 +609,7 @@ if __name__ == "__main__":
     try:
         try:
             atexit.register(exit_handler)
+            args.no_run_immediately = args.no_run_immediately or cfg.get_value("no_run_immediately", False)
             if args.workflow_name:
                 result = main(
                     no_run_immediately=args.no_run_immediately,

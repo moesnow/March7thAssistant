@@ -49,6 +49,15 @@ class TestGetEnvOverride:
         assert has_override is True
         assert value == "Shutdown"
 
+    @pytest.mark.parametrize("env_value, expected", [("true", True), ("1", True), ("false", False), ("0", False)])
+    def test_no_run_immediately(self, monkeypatch, env_value, expected):
+        monkeypatch.setenv("MARCH7TH_NO_RUN_IMMEDIATELY", env_value)
+        assert _get_env_override("no_run_immediately") == (True, expected)
+
+    def test_no_run_immediately_unset(self, monkeypatch):
+        monkeypatch.delenv("MARCH7TH_NO_RUN_IMMEDIATELY", raising=False)
+        assert _get_env_override("no_run_immediately") == (False, None)
+
 
 class TestEnvOverrideMap:
     def test_all_mappings_have_converter(self):
