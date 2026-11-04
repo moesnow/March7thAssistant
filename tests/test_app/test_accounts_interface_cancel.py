@@ -8,7 +8,7 @@ import pytest
 pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="本地账号设置仅用于 Windows 客户端")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def qapp():
     widgets = pytest.importorskip("PySide6.QtWidgets")
     app = widgets.QApplication.instance() or widgets.QApplication([])
