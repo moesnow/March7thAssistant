@@ -846,37 +846,21 @@ msgstr "Run Script"
 msgid "循环"
 msgstr "Loop"
 
-#: app/setting_interface.py:1091
-msgid "循环模式（请改用日志界面的定时运行功能）"
-msgstr "Loop Mode (Use Scheduled Tasks instead)"
-
 #: app/log_interface.py:487
 msgid "定时任务"
 msgstr "Scheduled Tasks"
 
-#: app/setting_interface.py:1093
-msgid "根据开拓力"
-msgstr "Based on Trailblaze Power"
-
 #: app/setting_interface.py:1098
 msgid "定时任务时间"
 msgstr "Scheduled Time"
-
-#: app/setting_interface.py:1104
-msgid "循环运行再次启动所需开拓力"
-msgstr "Trailblaze Power needed to restart loop"
-
-#: app/setting_interface.py:1105
-msgid "游戏刷新后优先级更高"
-msgstr "Higher priority after game reset"
 
 #: app/setting_interface.py:1111
 msgid "游戏刷新时间"
 msgstr "Game Reset Time"
 
 #: app/setting_interface.py:1112
-msgid "用于循环运行及判断任务状态，默认凌晨四点"
-msgstr "Used for loop runs and task status, default 4 AM"
+msgid "用于判断游戏每日刷新及任务状态，默认凌晨四点"
+msgstr "Used for daily game reset and task status, default 4 AM"
 
 #: app/setting_interface.py:1117
 msgid "脚本或程序路径(选择运行脚本时生效)"

@@ -393,14 +393,11 @@ auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。tru
 # 自动配置游戏路径
 auto_set_game_path_enable: true # 是否启用自动配置游戏路径。true 开启，false 关闭。
 
-# 循环模式
-loop_mode: scheduled # 可选值："power"（根据开拓力）, "scheduled"（定时任务）
+# 循环模式（保留用于旧配置兼容，仅支持定时运行）
+loop_mode: scheduled
 
-# 指定运行时间
+# 循环运行的指定时间（after_finish 为 Loop 时生效）
 scheduled_time: 4:00
-
-# 循环运行所需开拓力
-power_limit: 160 # 设置循环运行模式时所需的最低开拓力。
 
 # 启动运行设置
 no_run_immediately: false # 启动时先等待，等同于 --no-run-immediately。

@@ -814,37 +814,21 @@ msgstr "스크립트 실행"
 msgid "循环"
 msgstr "순환"
 
-#: app/setting_interface.py:1091
-msgid "循环模式（请改用日志界面的定时运行功能）"
-msgstr "순환 모드 (로그 화면의 예약 실행 기능 권장)"
-
 #: app/log_interface.py:487
 msgid "定时任务"
 msgstr "예약 임무"
 
-#: app/setting_interface.py:1093
-msgid "根据开拓力"
-msgstr "개척력 기준"
-
 #: app/setting_interface.py:1098
 msgid "定时任务时间"
 msgstr "예약 임무 시간"
-
-#: app/setting_interface.py:1104
-msgid "循环运行再次启动所需开拓力"
-msgstr "순환 실행 재시작 필요 개척력"
-
-#: app/setting_interface.py:1105
-msgid "游戏刷新后优先级更高"
-msgstr "게임 리셋 후 우선순위가 더 높음"
 
 #: app/setting_interface.py:1111
 msgid "游戏刷新时间"
 msgstr "게임 리셋 시간"
 
 #: app/setting_interface.py:1112
-msgid "用于循环运行及判断任务状态，默认凌晨四点"
-msgstr "순환 실행 및 임무 상태 판단용, 기본값 새벽 4시"
+msgid "用于判断游戏每日刷新及任务状态，默认凌晨四点"
+msgstr "게임 일일 초기화 및 작업 상태 판단에 사용, 기본값 오전 4시"
 
 #: app/setting_interface.py:1117
 msgid "脚本或程序路径(选择运行脚本时生效)"

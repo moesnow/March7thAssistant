@@ -93,18 +93,6 @@ class Date:
         return current_time >= next_2weeks_monday_x_am
 
     @staticmethod
-    def get_time_next_x_am(hour=4):
-        now = datetime.now()
-        next_x_am = now.replace(hour=hour, minute=0, second=0, microsecond=0)
-
-        if now >= next_x_am:
-            next_x_am += timedelta(days=1)
-
-        time_until_next_x_am = next_x_am - now
-
-        return int(time_until_next_x_am.total_seconds())
-
-    @staticmethod
     def calculate_future_time(input_data):
         current_time = datetime.now()
 

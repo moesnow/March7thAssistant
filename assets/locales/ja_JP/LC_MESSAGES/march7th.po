@@ -813,37 +813,21 @@ msgstr "スクリプト実行"
 msgid "循环"
 msgstr "ループ"
 
-#: app/setting_interface.py:1091
-msgid "循环模式（请改用日志界面的定时运行功能）"
-msgstr "ループモード（ログ画面の定期実行機能を推奨）"
-
 #: app/log_interface.py:487
 msgid "定时任务"
 msgstr "定期タスク"
 
-#: app/setting_interface.py:1093
-msgid "根据开拓力"
-msgstr "開拓力に応じて"
-
 #: app/setting_interface.py:1098
 msgid "定时任务时间"
 msgstr "定期タスク時刻"
-
-#: app/setting_interface.py:1104
-msgid "循环运行再次启动所需开拓力"
-msgstr "ループ再始動に必要な開拓力"
-
-#: app/setting_interface.py:1105
-msgid "游戏刷新后优先级更高"
-msgstr "ゲーム更新後の優先度が高い"
 
 #: app/setting_interface.py:1111
 msgid "游戏刷新时间"
 msgstr "ゲーム更新時刻"
 
 #: app/setting_interface.py:1112
-msgid "用于循环运行及判断任务状态，默认凌晨四点"
-msgstr "ループ実行とタスク状態判定に使用します。デフォルトは午前4時です。"
+msgid "用于判断游戏每日刷新及任务状态，默认凌晨四点"
+msgstr "ゲームの毎日のリセットとタスク状態の判定に使用（デフォルト：午前4時）"
 
 #: app/setting_interface.py:1117
 msgid "脚本或程序路径(选择运行脚本时生效)"

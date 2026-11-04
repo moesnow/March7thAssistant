@@ -260,6 +260,10 @@ class Config(metaclass=SingletonMeta):
             self._handle_broken_config(path, detail)
             return
 
+        # 旧体力循环统一转为定时模式；缺失的定时时间沿用模板默认值。
+        if loaded_config.get("loop_mode") == "power":
+            loaded_config["loop_mode"] = "scheduled"
+            _diag("info", "体力循环模式已移除，自动切换为定时模式")
         self._update_config(self.config, loaded_config)
         _diag("debug", f"_load_config 成功: 合并 {len(loaded_config)} 个顶层键")
         if save:

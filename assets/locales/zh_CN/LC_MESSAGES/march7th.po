@@ -811,37 +811,21 @@ msgstr "运行脚本"
 msgid "循环"
 msgstr "循环"
 
-#: app/setting_interface.py:1091
-msgid "循环模式（请改用日志界面的定时运行功能）"
-msgstr "循环模式（请改用日志界面的定时运行功能）"
-
 #: app/log_interface.py:487
 msgid "定时任务"
 msgstr "定时任务"
 
-#: app/setting_interface.py:1093
-msgid "根据开拓力"
-msgstr "根据开拓力"
-
 #: app/setting_interface.py:1098
 msgid "定时任务时间"
 msgstr "定时任务时间"
-
-#: app/setting_interface.py:1104
-msgid "循环运行再次启动所需开拓力"
-msgstr "循环运行再次启动所需开拓力"
-
-#: app/setting_interface.py:1105
-msgid "游戏刷新后优先级更高"
-msgstr "游戏刷新后优先级更高"
 
 #: app/setting_interface.py:1111
 msgid "游戏刷新时间"
 msgstr "游戏刷新时间"
 
 #: app/setting_interface.py:1112
-msgid "用于循环运行及判断任务状态，默认凌晨四点"
-msgstr "用于循环运行及判断任务状态，默认凌晨四点"
+msgid "用于判断游戏每日刷新及任务状态，默认凌晨四点"
+msgstr "用于判断游戏每日刷新及任务状态，默认凌晨四点"
 
 #: app/setting_interface.py:1117
 msgid "脚本或程序路径(选择运行脚本时生效)"

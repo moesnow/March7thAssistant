@@ -61,11 +61,6 @@ class TestDate:
         timestamp = two_weeks_ago.timestamp()
         assert Date.is_next_2weeks_mon_x_am(timestamp, hour=4) is True
 
-    def test_get_time_next_x_am(self):
-        result = Date.get_time_next_x_am(hour=4)
-        assert isinstance(result, int)
-        assert 0 < result <= 86400  # 应该在 0 到 24小时之间
-
     def test_calculate_future_time_seconds(self):
         result = Date.calculate_future_time(3600)  # 1小时后
         assert "时" in result and "分" in result

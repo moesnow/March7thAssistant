@@ -333,7 +333,7 @@ class TestCloudGameZeroDuration(unittest.TestCase):
             self.assertTrue(tasks.game.wait_after_cloud_zero_duration(CloudGameZeroDurationError("时长为 0")))
 
             mock_notif.flush_batch.assert_called_once()
-            mock_wait.assert_called_once_with(force_scheduled=True)
+            mock_wait.assert_called_once_with()
 
     def test_zero_duration_is_left_to_caller_outside_loop_mode(self):
         import tasks.game
@@ -349,7 +349,7 @@ class TestCloudGameZeroDuration(unittest.TestCase):
             mock_notif.flush_batch.assert_not_called()
             mock_wait.assert_not_called()
 
-    def test_after_finish_is_loop_force_scheduled_skips_power_check(self):
+    def test_after_finish_is_loop_uses_schedule_without_power_check(self):
         import tasks.game
 
         with patch("tasks.game.cfg") as mock_cfg, \
@@ -365,7 +365,7 @@ class TestCloudGameZeroDuration(unittest.TestCase):
             mock_cfg.scheduled_time = "4:00"
 
             with self.assertRaises(SystemExit):
-                tasks.game.after_finish_is_loop(force_scheduled=True)
+                tasks.game.after_finish_is_loop()
 
             mock_power.get.assert_not_called()
             mock_date.time_to_seconds.assert_called_once_with("4:00")

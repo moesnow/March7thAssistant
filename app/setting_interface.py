@@ -1085,31 +1085,17 @@ class SettingInterface(ScrollArea):
             tr('“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能'),
             texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
         )
-        self.loopModeCard = ComboBoxSettingCard2(
-            "loop_mode",
-            UiIcon.REPEAT,
-            tr('循环模式（请改用日志界面的定时运行功能）'),
-            '',
-            texts={tr('定时任务'): 'scheduled', tr('根据开拓力'): 'power'}
-        )
         self.scheduledCard = TimePickerSettingCard1(
             "scheduled_time",
             FIF.DATE_TIME,
             tr("定时任务时间"),
-        )
-        self.powerLimitCard = RangeSettingCard1(
-            "power_limit",
-            [10, 300],
-            UiIcon.FLASH,
-            tr("循环运行再次启动所需开拓力"),
-            tr("游戏刷新后优先级更高"),
         )
         self.refreshHourEnableCard = RangeSettingCard1(
             "refresh_hour",
             [0, 23],
             FIF.DATE_TIME,
             tr("游戏刷新时间"),
-            tr("用于循环运行及判断任务状态，默认凌晨四点"),
+            tr("用于判断游戏每日刷新及任务状态，默认凌晨四点"),
         )
         self.ScriptPathCard = PushSettingCard(
             tr('修改'),
@@ -2825,9 +2811,7 @@ class SettingInterface(ScrollArea):
         self.ProgramGroup.addSettingCard(self.exitAfterFailure)
         self.ProgramGroup.addSettingCard(self.afterFinishCard)
         self.afterFinishCard.addSettingCards([
-            self.loopModeCard,
             self.scheduledCard,
-            self.powerLimitCard,
             self.refreshHourEnableCard,
             self.ScriptPathCard
         ])
