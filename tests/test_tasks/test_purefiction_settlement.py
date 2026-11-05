@@ -8,6 +8,7 @@ from types import ModuleType, SimpleNamespace
 from unittest.mock import Mock, patch
 
 import pytest
+import tasks.base.list_drag  # 在隔离 sys.modules 前加载 NumPy，避免重复初始化扩展。
 
 
 @pytest.fixture
