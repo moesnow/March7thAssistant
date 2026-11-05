@@ -19,9 +19,10 @@ dependencies = [
     "opencv-python==4.13.0.92",
     "winotify==1.1.0; sys_platform == 'win32'",
     "Markdown==3.10.2",
-    "PySide6-Fluent-Widgets==1.11.2",
+    "PySide6-Fluent-Widgets==1.11.3",
     "PySideSix-Frameless-Window==0.8.1",
-    "PySide6==6.11.1",
+    # Qt 6.11.3 会将带样式且隐藏原生按钮的 SpinBox 文本区域压缩至 1px。
+    "PySide6==6.11.2",
     "pylnk3==0.4.3",
     "qrcode==8.2",
     "PySocks==1.7.1",
