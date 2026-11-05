@@ -185,6 +185,8 @@ pyrightconfig.json
 /*config.yaml
 /config
 /warp.json
+/characters.json
+/characters.partial.json
 /logs
 /screenshots
 /3rdparty/*OCR-json*

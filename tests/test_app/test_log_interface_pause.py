@@ -112,7 +112,7 @@ class TestPausableTasksWhitelist:
     def test_builtin_tasks_in_whitelist(self):
         from utils.tasks import PAUSABLE_TASKS
         for task_id in ("main", "daily", "power", "currencywars", "divergent", "fight",
-                        "universe", "screen_test"):
+                        "universe", "screen_test", "character_export"):
             assert task_id in PAUSABLE_TASKS
 
     def test_non_automation_tasks_not_in_whitelist(self):

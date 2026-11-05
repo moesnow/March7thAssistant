@@ -312,6 +312,7 @@ from tasks.weekly.currency_wars import CurrencyWars
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 from tasks.base import screen_test
+from tasks import character_export
 
 
 from utils.console import pause_on_error, pause_on_success, pause_always, is_docker_started
@@ -449,6 +450,7 @@ def run_sub_task(action):
         "divergenttemp": lambda: divergent("temp"),
         "fight": Fight.start,
         "screen_test": screen_test.run,
+        "character_export": character_export.run,
         "universe": lambda: Universe.start(category="universe"),
         "forgottenhall": lambda: challenge.start("memoryofchaos"),
         "purefiction": lambda: challenge.start("purefiction"),
@@ -468,7 +470,7 @@ def run_sub_task(action):
             except Exception:
                 telemetry.track_task_complete(action, False, time.time() - task_start_time)
                 raise
-    if action != "screen_test":
+    if action not in ("screen_test", "character_export"):
         game.stop(False)
 
 
@@ -544,7 +546,7 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
         run_main_actions(no_run_immediately)
 
     # 子任务
-    elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption", "screen_test"]:
+    elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption", "screen_test", "character_export"]:
         run_sub_task(action)
 
     # 子任务 原生图形界面

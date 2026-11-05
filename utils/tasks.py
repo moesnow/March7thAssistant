@@ -40,6 +40,7 @@ AVAILABLE_TASKS = {
     "notify": "测试消息推送",
     "redemption": "兑换码",
     "screen_test": "界面可切换性测试",
+    "character_export": "角色面板导出",
 }
 
 # 任务名称映射（兼容旧名称调用方）
@@ -67,6 +68,7 @@ PAUSABLE_TASKS = frozenset({
     "apocalyptic",
     "redemption",
     "screen_test",
+    "character_export",
 })
 
 

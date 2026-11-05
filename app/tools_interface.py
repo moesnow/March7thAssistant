@@ -67,6 +67,12 @@ class ToolsInterface(ScrollArea):
             tr("界面可切换性测试"),
             tr("以最短路径遍历所有可达界面，验证界面切换是否正常")
         )
+        self.characterExportCard = PushSettingCard(
+            tr('导出'),
+            FIF.PEOPLE,
+            tr("角色面板导出"),
+            tr("读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json")
+        )
 
         self.__initWidget()
 
@@ -104,6 +110,7 @@ class ToolsInterface(ScrollArea):
         self.ToolsGroup.addSettingCard(self.redemptionCodeCard)
         self.ToolsGroup.addSettingCard(self.cloudTouchCard)
         self.ToolsGroup.addSettingCard(self.screenTestCard)
+        self.ToolsGroup.addSettingCard(self.characterExportCard)
 
         if sys.platform != 'win32':
             self.automaticPlotCard.setDisabled(True)
@@ -298,9 +305,13 @@ class ToolsInterface(ScrollArea):
         self.unlockfpsCard.clicked.connect(self.__onUnlockfpsCardClicked)
         self.cloudTouchCard.clicked.connect(self.__onCloudTouchCardClicked)
         self.screenTestCard.clicked.connect(self.__onScreenTestCardClicked)
+        self.characterExportCard.clicked.connect(self.__onCharacterExportCardClicked)
 
     def __onScreenTestCardClicked(self):
         start_task("screen_test")
+
+    def __onCharacterExportCardClicked(self):
+        start_task("character_export")
 
     def __onAutoPlotSwitchChanged(self, isChecked: bool):
         """Handle auto plot switch state change"""

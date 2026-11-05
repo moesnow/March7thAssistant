@@ -184,6 +184,12 @@
                 "actions_list": [
                     "auto.click_element('./assets/images/share/menu/achievement.png', 'image', 2000000, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
                 ]
+            },
+            {
+                "target_screen": "character",
+                "actions_list": [
+                    "auto.click_element('角色', 'text', include=True, max_retries=3, retry_delay=0.5, crop=(1264.0 / 1920, 286.0 / 1080, 546.0 / 1920, 746.0 / 1080))"
+                ]
             }
         ]
     },
@@ -1110,6 +1116,19 @@
         "name": "成就",
         "id": "achievement",
         "image_path": "./assets/images/screen/achievement.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "角色",
+        "id": "character",
+        "image_path": "./assets/images/screen/character.png",
         "actions": [
             {
                 "target_screen": "menu",

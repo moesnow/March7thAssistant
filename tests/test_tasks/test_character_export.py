@@ -1,0 +1,951 @@
+"""角色面板导出：解析和遍历逻辑。OCR 样本来自实机，保留了真实的噪声。"""
+import json
+from pathlib import Path
+from types import SimpleNamespace
+
+import cv2
+import numpy as np
+import pytest
+from PIL import Image
+
+from tasks.character_export import CharacterExport, parser
+from tasks.character_export import reader as reader_module
+from tasks.character_export.parser import Line as L
+from tasks.character_export.reader import PageError
+
+
+SUMMARY = [
+    L("☆丹恒·腾荒", 1541, 142), L("存护", 1534, 184), L("等级80/80", 1553, 256),
+    L("生命值", 1564, 369), L("3025-", 1851, 370), L("攻击力：", 1572, 406), L("2968", 1850, 406),
+    L("防御力", 1564, 443), L("1101", 1851, 443), L("速度", 1554, 478), L("107", 1858, 478),
+    L("暴击率", 1565, 514), L("81.1%", 1844, 514), L("暴击伤害", 1577, 551), L("180.2%", 1839, 551),
+]
+TOTALS = {"生命值": 3025, "攻击力": 2968, "防御力": 1101, "速度": 107, "暴击率": 81.1, "暴击伤害": 180.2}
+
+SCREEN_1 = [
+    L("基础属性", 488, 387), L("?", 460, 439), L("生命值", 520, 437), L("2106", 1190, 437),
+    L("攻击力", 520, 478), L("1222", 1199, 478), L("防御力", 520, 519), L("923", 1205, 519),
+    L("速度", 508, 559), L("107", 1205, 559), L("进阶属性", 488, 621),
+    L("暴击率", 502, 672), L("81.1%", 1192, 673), L("暴击伤害", 530, 713), L("180.2%", 1185, 714),
+    L("击破特攻", 533, 754), L("11.0%", 1193, 755), L("+", 462, 793),
+    L("治疗量加成", 535, 791), L("00%", 1198, 792, 0.689),
+]
+EXTRAS = [L("+919", 1270, 437), L("+1746", 1269, 477), L("+177", 1269, 519)]
+SCREEN_2 = [
+    L("治疗量加成", 535, 351), L("0.0%", 1198, 352),
+    L("能量恢复效率", 557, 392), L("119.4%", 1185, 392), L("效果命中", 532, 432), L("12.0%", 1191, 432),
+    L("？", 1416, 433), L("效果抵抗", 533, 474), L("31.5%", 1191, 474), L("欢愉度", 520, 515), L("28.0%", 1191, 515),
+    L("伤害属性", 488, 577),
+    L("物理属性伤害提高", 561, 627), L("0.0%", 1198, 628), L("火属性伤害提高", 551, 669), L("0.0%", 1199, 669),
+    L("冰属性伤害提高", 550, 709), L("0.0%", 1198, 708), L("雷属性伤害提高", 567, 750), L("0.0%", 1198, 750),
+]
+SCREEN_3 = [
+    L("风属性伤害提高", 557, 396), L("0.0%", 1199, 397), L("量子属性伤害提高", 578, 438), L("0.0%", 1199, 438),
+    L("虚数属性伤害提高", 575, 479), L("0.0%", 1198, 478), L("物理属性抗性提高", 580, 518), L("0.0%", 1199, 519),
+    L("火属性抗性提高", 569, 560), L("0.0%", 1198, 560), L("冰属性抗性提高", 568, 600), L("0.0%", 1197, 601),
+    L("雷属性抗性提高", 568, 640), L("0.0%", 1198, 642), L("风属性抗性提高", 568, 682), L("0.0%", 1198, 683),
+    L("量子属性抗性提高", 580, 723), L("0.0%", 1198, 723), L("虚数属性抗性提高", 580, 763), L("0.0%", 1199, 764),
+]
+LIGHT_CONE = [
+    L("花花世界迷人眼", 1605, 140), L("欢愉", 1561, 185), L("等级80/80", 1554, 254),
+    L("生命值", 1567, 322), L("1058", 1848, 322), L("攻击力", 1565, 358), L("582", 1854, 358),
+    L("防御力", 1566, 394), L("463", 1854, 394), L("光锥技能", 1538, 448),
+    L("以下效果对【欢愉】命途角色生", 1700, 492), L("效", 1544, 524), L("叠影1阶", 1573, 569),
+]
+RELIC = [
+    L("头部", 1512, 230), L("+15", 1514, 262),
+    L("生命值", 1575, 310), L("705", 1853, 311), L("防御力", 1566, 355), L("4.3%", 1824, 354),
+    L("暴击率", 1566, 393), L("11.3%", 1820, 393), L("3", 1866, 393),
+    L("暴击伤害", 1576, 431), L("12.3%", 1819, 432), L("攻击力", 1566, 470), L("3.8%", 1825, 470),
+    L("套装效果", 1539, 531), L("闪耀功勋的魔法少女(4)", 1613, 567), L("二件套：暴击伤害提高16%", 1685, 605),
+]
+
+
+def full_rows():
+    rows, problems = parser.merge_stat_rows([
+        parser.parse_stat_screen(SCREEN_1, EXTRAS),
+        parser.parse_stat_screen(SCREEN_2),
+        parser.parse_stat_screen(SCREEN_3),
+    ])
+    assert problems == []
+    return rows
+
+
+def test_lines_are_sorted_and_use_design_coordinates():
+    result = [
+        [[[0, 20], [10, 20], [10, 30], [0, 30]], ("下", 0.9)],
+        [[[0, 0], [10, 0], [10, 10], [0, 10]], ("上", 0.8)],
+    ]
+    lines = parser.lines_from_ocr(result, (100, 200))
+    assert [line.text for line in lines] == ["上", "下"]
+    assert lines[0] == L("上", 105, 205, 0.8)
+    assert parser.lines_from_ocr(False) == []
+
+
+@pytest.mark.parametrize(("text", "name"), [
+    ("丹恒?腾荒", "丹恒·腾荒"), ("阮.梅", "阮·梅"), ("☆花火", "花火"), ("银狼LV.999", "银狼LV.999"), ("Saber", "Saber"),
+])
+def test_name_is_normalized(text, name):
+    assert parser.parse_summary([L(text, 1541, 142), L("欢愉", 1534, 184), L("等级80/80", 1553, 256)])["name"] == name
+
+
+@pytest.mark.parametrize(("text", "value"), [("109.2", 1092), ("126,3", 1263), ("1101", 1101)])
+def test_star_noise_inside_summary_digits(text, value):
+    lines = [*summary_lines("火花"), L("防御力", 1564, 443), L(text, 1850, 443)]
+    assert parser.parse_summary(lines)["totals"]["防御力"] == value
+
+
+def test_summary_tolerates_real_noise():
+    summary = parser.parse_summary(SUMMARY)
+    assert summary["name"] == "丹恒·腾荒"
+    assert (summary["path"], summary["level"], summary["max_level"]) == ("存护", 80, 80)
+    assert summary["totals"] == TOTALS
+
+
+@pytest.mark.parametrize("lines", [
+    [L("存护", 1534, 184), L("等级80/80", 1553, 256)],
+    [L("火花", 1541, 142), L("等级80/80", 1553, 256)],
+    [L("火花", 1541, 142), L("欢愉", 1534, 184)],
+])
+def test_summary_rejects_missing_fields(lines):
+    with pytest.raises(parser.ParseError):
+        parser.parse_summary(lines)
+
+
+@pytest.mark.parametrize(("text", "path"), [("欢愉", "欢愉"), ("聚巡猎", "巡猎"), ("￥巡猎", "巡猎"), ("丰绕", "丰饶")])
+def test_path_matching(text, path):
+    assert parser.match_path(text) == path
+
+
+def test_faded_row_is_left_for_the_next_screen():
+    rows = parser.parse_stat_screen(SCREEN_1, EXTRAS)
+    assert "治疗量加成" not in rows
+    assert rows["生命值"] == {"value": 2106, "extra": 919}
+    assert rows["暴击伤害"] == {"value": 180.2, "extra": None}
+
+
+def test_malformed_value_is_skipped_not_guessed():
+    rows = parser.parse_stat_screen([
+        L("攻击力", 520, 478), L("2+1746", 1269, 477), L("暴击率", 502, 672), L("00%", 1192, 673),
+    ])
+    assert rows == {}
+
+
+def test_all_screens_build_full_stats():
+    stats, problems = parser.build_stats(full_rows(), TOTALS)
+    assert problems == []
+    assert stats["base"]["hp"] == {"total": 3025, "base": 2106, "extra": 919}
+    assert stats["base"]["def"] == {"total": 1101, "base": 923, "extra": 177}
+    assert stats["base"]["spd"] == {"total": 107, "base": 107, "extra": 0}
+    assert stats["advanced"]["elation"] == 28.0
+    assert stats["advanced"]["outgoing_healing"] == 0.0
+    assert len(stats["damage"]) == 14
+    assert stats["other"] == {}
+
+
+def test_cross_check_reports_misread_values():
+    rows = full_rows()
+    rows["攻击力"] = {"value": 1222, "extra": 1146}
+    _, problems = parser.build_stats(rows, TOTALS)
+    assert problems == ["攻击力 总值 2968 与 1222+1146 不符"]
+
+
+def test_missing_total_falls_back_to_popup_values():
+    totals = {key: value for key, value in TOTALS.items() if key != "防御力"}
+    stats, problems = parser.build_stats(full_rows(), totals)
+    assert problems == []
+    assert stats["base"]["def"] == {"total": 1100, "base": 923, "extra": 177}
+
+
+def test_missing_rows_are_reported():
+    rows = full_rows()
+    del rows["火属性抗性提高"]
+    del rows["速度"]
+    _, problems = parser.build_stats(rows, TOTALS)
+    assert set(problems) == {"缺少属性：火属性抗性提高", "缺少属性：速度"}
+
+
+def test_elation_is_optional():
+    rows = full_rows()
+    del rows["欢愉度"]
+    stats, problems = parser.build_stats(rows, TOTALS)
+    assert problems == []
+    assert "elation" not in stats["advanced"]
+
+
+def test_unknown_stat_is_kept():
+    rows = parser.parse_stat_screen([L("忆灵能量上限", 530, 500), L("12.5%", 1190, 500)])
+    assert rows == {"忆灵能量上限": {"value": 12.5, "extra": None}}
+    all_rows = {**full_rows(), **rows}
+    stats, problems = parser.build_stats(all_rows, TOTALS)
+    assert stats["other"] == {"忆灵能量上限": 12.5}
+    assert problems == ["未知属性：忆灵能量上限"]
+
+
+def test_unreadable_unknown_label_is_not_trusted():
+    assert parser.parse_stat_screen([L("公需属性伤害提高", 530, 700, 0.83), L("0.0%", 1190, 700)]) == {}
+
+
+@pytest.mark.parametrize(("text", "expected"), [
+    ("能量上限", "能量上限"), ("+治疗量加成", "治疗量加成"), ("悠雷属性伤害提高", "雷属性伤害提高"),
+    ("攻击力：", "攻击力"), ("能重恢复效率", "能量恢复效率"), ("忆灵能量上限", None), ("属性详情", None),
+    ("公需属性伤害提高", None), ("大属性伤害提高", None), ("量了属性伤害提高", "量子属性伤害提高"),
+])
+def test_label_matching_tolerates_misreads_but_not_new_labels(text, expected):
+    assert parser.match_label(text, parser.ALL_STATS) == expected
+
+
+def test_max_energy_is_a_flat_value():
+    rows = parser.parse_stat_screen([L("能量上限", 530, 399), L("140", 1190, 399)])
+    assert rows == {"能量上限": {"value": 140, "extra": None}}
+
+
+def test_extra_value_without_sign():
+    rows = parser.parse_stat_screen([L("攻击力", 520, 478), L("1222", 1199, 478)], [L("1746", 1269, 477)])
+    assert rows["攻击力"] == {"value": 1222, "extra": 1746}
+
+
+def test_trailing_punctuation_is_noise():
+    assert parser.parse_flat("582.") == 582
+    assert parser.parse_flat("1263，") == 1263
+    assert parser.parse_flat("58.2") is None
+    assert parser.parse_percent("183.7%.") == 183.7
+
+
+def test_negative_extra_value():
+    rows = parser.parse_stat_screen([L("速度", 508, 559), L("98", 1205, 559)], [L("-6", 1260, 559)])
+    assert rows["速度"] == {"value": 98, "extra": -6}
+    all_rows = {**full_rows(), **rows}
+    stats, problems = parser.build_stats(all_rows, {**TOTALS, "速度": 92})
+    assert problems == []
+    assert stats["base"]["spd"] == {"total": 92, "base": 98, "extra": -6}
+
+
+def test_overlapping_rows_must_agree():
+    rows, problems = parser.merge_stat_rows([
+        {"暴击率": {"value": 81.1, "extra": None}},
+        {"暴击率": {"value": 87.1, "extra": None}},
+    ])
+    assert rows["暴击率"]["value"] == 81.1
+    assert problems == ["暴击率 两次读数不一致：81.1 / 87.1"]
+
+
+def test_light_cone():
+    assert parser.parse_light_cone(LIGHT_CONE) == {
+        "name": "花花世界迷人眼", "path": "欢愉", "level": 80, "max_level": 80,
+        "superimposition": 1, "stats": {"hp": 1058, "atk": 582, "def": 463},
+    }
+
+
+def test_light_cone_value_comes_from_its_own_cell():
+    lines = [L("1582", line.x, line.y) if line.text == "582" else line for line in LIGHT_CONE]
+    assert parser.parse_light_cone(lines, {358: "582"})["stats"]["atk"] == 582
+
+
+@pytest.mark.parametrize(("text", "expected"), [("等级80/8", (80, 80)), ("等级50/5", (50, 50)), ("等级1/20", (1, 20))])
+def test_gray_level_cap_may_lose_its_last_digit(text, expected):
+    lines = [L(text, line.x, line.y) if line.text == "等级80/80" else line for line in LIGHT_CONE]
+    cone = parser.parse_light_cone(lines)
+    assert (cone["level"], cone["max_level"]) == expected
+
+
+def test_impossible_level_is_rejected():
+    lines = [L("等级80/70", line.x, line.y) if line.text == "等级80/80" else line for line in LIGHT_CONE]
+    with pytest.raises(parser.ParseError):
+        parser.parse_light_cone(lines)
+
+
+@pytest.mark.parametrize(("text", "name"), [
+    ("决心如汗珠般闪耀，", "决心如汗珠般闪耀"), ("片刻，留在眼底", "片刻，留在眼底"), ("舞！舞！舞！", "舞！舞！舞！"),
+])
+def test_light_cone_name_keeps_only_real_punctuation(text, name):
+    lines = [L(text, line.x, line.y) if line.text == "花花世界迷人眼" else line for line in LIGHT_CONE]
+    assert parser.parse_light_cone(lines)["name"] == name
+
+
+def test_empty_light_cone():
+    assert parser.parse_light_cone([L("未装备", 1540, 140), L("等级0/0", 1554, 254), L("未装备光锥", 1686, 741)]) is None
+
+
+def test_light_cone_rejects_partial_read():
+    with pytest.raises(parser.ParseError):
+        parser.parse_light_cone(LIGHT_CONE[:3])
+
+
+@pytest.mark.parametrize(("text", "expected"), [
+    ("10/10", (10, 10)), ("6/12", (6, 12)), ("3/7", (3, 7)), ("1/1", (1, 1)),
+    ("10/1", None), ("0/10", None), ("6", None), ("", None),
+])
+def test_trace_label(text, expected):
+    assert parser.parse_trace_label(text) == expected
+
+
+def test_skill_panel():
+    lines = [L("战技", 1001, 142), L("海底捞月", 1064, 190), L("[强化]", 1044, 233), L("等级12", 1403, 238)]
+    assert parser.parse_skill_panel(lines) == ("战技", 12)
+    with pytest.raises(parser.ParseError):
+        parser.parse_skill_panel(lines[:2])
+
+
+def test_relic_piece_ignores_upgrade_badge():
+    piece = parser.parse_relic_piece(RELIC)
+    assert piece["slot"] == "头部"
+    assert piece["level"] == 15
+    assert (piece["set"], piece["set_count"]) == ("闪耀功勋的魔法少女", 4)
+    assert piece["main_stat"] == {"stat": "hp", "value": 705, "percent": False}
+    assert piece["sub_stats"][1] == {"stat": "crit_rate", "value": 11.3, "percent": True}
+    assert len(piece["sub_stats"]) == 4
+
+
+def test_missing_relic_value_comes_from_its_own_cell():
+    lines = [line for line in RELIC if line.text != "3.8%"]
+    with pytest.raises(parser.ParseError):
+        parser.parse_relic_piece(lines)
+    piece = parser.parse_relic_piece(lines, {470: "4"})
+    assert piece["sub_stats"][3] == {"stat": "atk", "value": 4, "percent": False}
+
+
+@pytest.mark.parametrize("block", ["*9.7%", "t9.7%", "19.7%"])
+def test_star_next_to_a_short_value_cannot_change_it(block):
+    lines = [L(block, line.x, line.y) if line.text == "11.3%" else line for line in RELIC]
+    piece = parser.parse_relic_piece(lines, {393: "9.7%"})
+    assert piece["sub_stats"][1] == {"stat": "crit_rate", "value": 9.7, "percent": True}
+
+
+def test_noise_in_label_column_is_not_a_substat():
+    piece = parser.parse_relic_piece([L("2", 1503, 312), *RELIC])
+    assert len(piece["sub_stats"]) == 4
+
+
+def test_empty_cell_falls_back_to_block_value():
+    assert parser.parse_relic_piece(RELIC, {393: None})["sub_stats"][1]["value"] == 11.3
+
+
+def test_relic_piece_rejects_partial_read():
+    with pytest.raises(parser.ParseError):
+        parser.parse_relic_piece(RELIC[:5])
+
+
+def test_relic_set_names_come_from_project_data():
+    names = reader_module.load_relic_sets()
+    assert {"骇域漫游的信使", "繁星竞技场", "天国@直播间"} <= names
+
+
+@pytest.mark.parametrize(("name", "expected"), [
+    ("孩域漫游的信使", "骇域漫游的信使"), ("骇域漫游的信使", "骇域漫游的信使"), ("从未出现过的新套装", "从未出现过的新套装"),
+])
+def test_relic_set_name_is_corrected(name, expected):
+    assert parser.correct_relic_set(name, {"骇域漫游的信使", "繁星竞技场"}) == expected
+
+
+def test_relic_set_name_with_missing_character_is_corrected():
+    assert parser.correct_relic_set("毁焚骨的大公", {"毁烬焚骨的大公", "繁星竞技场"}) == "毁烬焚骨的大公"
+
+
+def test_ambiguous_relic_set_name_is_kept():
+    assert parser.correct_relic_set("甲乙丙丁", {"甲乙丙戊", "甲乙丙己"}) == "甲乙丙丁"
+
+
+def relic_reader():
+    relic_reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
+    relic_reader.known_relic_sets = {"闪耀功勋的魔法少女"}
+    return relic_reader
+
+
+def relic_lines(slot, value="3.8%"):
+    lines = [L(slot, 1512, 230) if line.text == "头部" else line for line in RELIC]
+    return [L(value, line.x, line.y) if line.text == "3.8%" else line for line in lines]
+
+
+def test_second_read_only_fills_the_pieces_that_failed():
+    reader = relic_reader()
+    first, problems = reader.finish_relics([
+        ("头部", Done(relic_lines("头部")), {}),
+        ("手部", Done(relic_lines("手部", "*3.8%")), {}),
+    ])
+    assert [piece["slot"] for piece in first["pieces"]] == ["头部"]
+    assert len(problems) == 2  # 手部读错，头部显示 4 件却只读到 1 件的问题也要暴露
+    second, problems = reader.finish_relics([
+        ("头部", Done(relic_lines("头部", "*3.8%")), {}),
+        ("手部", Done(relic_lines("手部")), {}),
+    ], first["by_slot"])
+    assert [piece["slot"] for piece in second["pieces"]] == ["头部", "手部"]
+    assert second["pieces"][0]["sub_stats"][3]["value"] == 3.8
+    assert problems == ["闪耀功勋的魔法少女 显示 4 件，实际读到 2 件"]
+
+
+def test_relic_sets_are_counted_from_pieces():
+    pieces = [{"set": "闪耀功勋的魔法少女", "set_count": 4}] * 4 + [{"set": "天国@直播间", "set_count": 2}] * 2
+    sets, problems = parser.summarize_relic_sets(pieces)
+    assert sets == [{"name": "闪耀功勋的魔法少女", "pieces": 4}, {"name": "天国@直播间", "pieces": 2}]
+    assert problems == []
+
+
+def test_relic_set_count_mismatch_is_reported():
+    pieces = [{"set": "闪耀功勋的魔法少女", "set_count": 4}] * 3
+    _, problems = parser.summarize_relic_sets(pieces)
+    assert problems == ["闪耀功勋的魔法少女 显示 4 件，实际读到 3 件"]
+
+
+@pytest.mark.parametrize(("name", "switchable", "expected"), [
+    ("星", True, True), ("一个改过的名字", True, True), ("三月七", True, False), ("火花", False, False),
+])
+def test_trailblazer_detection(name, switchable, expected):
+    assert parser.is_trailblazer(name, switchable) is expected
+
+
+class Done:
+    """已完成的 OCR 任务。"""
+
+    def __init__(self, value):
+        self.value = value
+
+    def result(self):
+        return self.value
+
+
+def summary_lines(name, path="欢愉"):
+    return [L(name, 1541, 142), L(path, 1534, 184), L("等级80/80", 1553, 256)]
+
+
+class FakeReader:
+    """按脚本提供顶栏的每一页，只记录选中和翻页。"""
+
+    def __init__(self, pages):
+        self.pages = pages
+        self.page = 0
+        self.selected = None
+        self.closed = False
+        self.resets = 0
+        self.tab = "detail"
+
+    def reset(self):
+        self.page = 0
+        self.resets += 1
+
+    def close(self):
+        self.closed = True
+
+    def avatar_slots(self):
+        return list(range(len(self.pages[self.page])))
+
+    def select_avatar(self, x, required=False):
+        self.selected = self.pages[self.page][x]
+
+    def begin_summary(self):
+        return Done(summary_lines(self.selected))
+
+    def open_tab(self, tab):
+        self.tab = tab
+
+    def grab(self):
+        pass
+
+    def next_avatars(self):
+        if self.page + 1 >= len(self.pages):
+            return False
+        self.page += 1
+        return True
+
+    def previous_avatars(self):
+        self.pages[self.page] = self.back_pages.pop(0)
+        return True
+
+
+@pytest.fixture
+def export(tmp_path, monkeypatch):
+    def create(pages):
+        reader = FakeReader(pages)
+        job = CharacterExport(reader, output=str(tmp_path / "characters.json"), partial=str(tmp_path / "characters.partial.json"))
+        job.read = []
+
+        def read_character():
+            name = reader.selected
+            job.read.append(name)
+            job.seen.add((name, "欢愉"))
+            job.characters.append({"name": name, "warnings": []})
+
+        monkeypatch.setattr(job, "read_character", read_character)
+        return job
+
+    monkeypatch.setattr("tasks.character_export.screen", SimpleNamespace(change_to=lambda target: None))
+    return create
+
+
+def test_walk_skips_avatars_repeated_after_dragging(export):
+    job = export([["甲", "乙", "丙"], ["丙", "丁", "戊"], ["戊", "己"]])
+    job._walk()
+    assert job.read == ["甲", "乙", "丙", "丁", "戊", "己"]
+
+
+def test_walk_handles_larger_overlap(export):
+    job = export([["甲", "乙", "丙"], ["乙", "丙", "丁"]])
+    job._walk()
+    assert job.read == ["甲", "乙", "丙", "丁"]
+
+
+def test_overshooting_drag_goes_back_instead_of_skipping_characters(export):
+    job = export([["甲", "乙"], ["丁", "戊"]])
+    job.reader.back_pages = [["乙", "丙", "丁"]]
+    job._walk()
+    assert job.read == ["甲", "乙", "丙", "丁"]
+
+
+def test_keeps_reading_pages_after_a_restart(export, monkeypatch):
+    job = export([["甲", "乙"], ["乙", "丙"], ["丙", "丁"]])
+    original = job.read_character
+    failures = [True]
+
+    def flaky():
+        if job.reader.selected == "丙" and failures:
+            failures.pop()
+            raise PageError("界面没有响应")
+        original()
+
+    monkeypatch.setattr(job, "read_character", flaky)
+    assert job._walk_with_restarts() is True
+    assert job.read == ["甲", "乙", "丙", "丁"]
+
+
+def test_cannot_find_read_character_after_dragging(export):
+    job = export([["甲"], ["丁"]])
+    job.reader.back_pages = [["戊"], ["己"], ["庚"]]
+    with pytest.raises(PageError):
+        job._walk()
+
+
+def test_always_enters_through_the_phone_menu(export, monkeypatch):
+    targets = []
+    monkeypatch.setattr("tasks.character_export.screen", SimpleNamespace(change_to=targets.append))
+    job = export([["甲"]])
+    job.run()
+    assert targets == ["menu", "character", "main"]
+
+
+def test_run_writes_output_and_removes_partial(export, tmp_path):
+    job = export([["甲", "乙"]])
+    job._save(job.partial, False)
+    assert job.run() is True
+    data = json.loads((tmp_path / "characters.json").read_text(encoding="utf-8"))
+    assert data["complete"] is True
+    assert data["schema_version"] == 1
+    assert [character["name"] for character in data["characters"]] == ["甲", "乙"]
+    assert not (tmp_path / "characters.partial.json").exists()
+    assert not (tmp_path / "characters.json.tmp").exists()
+    assert job.reader.closed
+
+
+def test_interrupted_walk_restarts_and_skips_read_characters(export, monkeypatch):
+    job = export([["甲", "乙", "丙"]])
+    original = job.read_character
+    failures = [True]
+
+    def flaky():
+        if job.reader.selected == "乙" and failures:
+            failures.pop()
+            raise PageError("界面没有响应")
+        original()
+
+    monkeypatch.setattr(job, "read_character", flaky)
+    assert job._walk_with_restarts() is True
+    assert job.read == ["甲", "乙", "丙"]
+    assert job.reader.resets == 2
+
+
+def test_character_that_keeps_failing_is_skipped_and_the_rest_are_read(export, tmp_path, monkeypatch):
+    job = export([["甲", "乙", "丙"], ["丙", "丁"]])
+    original = job.read_character
+
+    def broken():
+        if job.reader.selected == "乙":
+            raise PageError("界面没有响应")
+        original()
+
+    monkeypatch.setattr(job, "read_character", broken)
+    assert job.run() is False
+    data = json.loads((tmp_path / "characters.json").read_text(encoding="utf-8"))
+    assert data["complete"] is False
+    assert [character["name"] for character in data["characters"]] == ["甲", "丙", "丁"]
+    assert data["failed"] == [{"name": "乙", "path": "欢愉"}]
+
+
+def test_gives_up_when_interface_keeps_failing(export, tmp_path, monkeypatch):
+    job = export([["甲", "乙"]])
+    original = job.read_character
+    calls = []
+
+    def broken():
+        if job.reader.selected == "甲":
+            original()
+            return
+        calls.append(1)
+        job.attempts.clear()
+        raise PageError("界面没有响应")
+
+    monkeypatch.setattr(job, "read_character", broken)
+    assert job.run() is False
+    assert len(calls) == 8
+    data = json.loads((tmp_path / "characters.json").read_text(encoding="utf-8"))
+    assert [character["name"] for character in data["characters"]] == ["甲"]
+
+
+def test_no_characters_is_an_error(export):
+    job = export([[]])
+    with pytest.raises(RuntimeError, match="简体中文"):
+        job.run()
+    assert job.reader.closed
+
+
+def test_stopped_run_keeps_previous_output(export, tmp_path, monkeypatch):
+    (tmp_path / "characters.json").write_text("上一次的结果", encoding="utf-8")
+    job = export([["甲", "乙"]])
+    original = job.read_character
+
+    def stopped():
+        if job.reader.selected == "乙":
+            raise KeyboardInterrupt
+        original()
+        job._save(job.partial, False)
+
+    monkeypatch.setattr(job, "read_character", stopped)
+    with pytest.raises(KeyboardInterrupt):
+        job.run()
+    assert (tmp_path / "characters.json").read_text(encoding="utf-8") == "上一次的结果"
+    assert json.loads((tmp_path / "characters.partial.json").read_text(encoding="utf-8"))["complete"] is False
+
+
+class SectionReader:
+    """读取层的替身：每段读取都成功，finish 的行为由测试指定。"""
+
+    def __init__(self):
+        self.tab = "detail"
+        self.calls = []
+        self.first_summary = full_summary_lines()
+        self.switchable = False
+
+    def grab(self):
+        pass
+
+    def begin_summary(self):
+        return Done(full_summary_lines())
+
+    def begin_detail(self):
+        self.calls.append(("detail",))
+        self.tab = "detail"
+        return {"summary": Done(self.first_summary), "element": "火", "switchable": self.switchable, "stats": "stats"}
+
+    def read_eidolon(self):
+        self.calls.append(("eidolon",))
+        self.tab = "eidolons"
+        return 2
+
+    def begin_stats(self, careful=False):
+        self.calls.append(("stats", careful))
+        return "stats"
+
+    def finish_stats(self, pending, totals):
+        return {"base": {}}, []
+
+    def open_traces(self):
+        self.calls.append(("traces",))
+        return "frame"
+
+    def begin_traces(self, path, frame):
+        return "traces"
+
+    def finish_traces(self, pending):
+        return [{"type": "普攻", "level": 6, "max_level": 6}], []
+
+    def read_skills_by_panel(self):
+        self.calls.append(("panel",))
+        return [{"type": "普攻", "level": 6, "max_level": None}], []
+
+    def begin_light_cone(self):
+        self.calls.append(("light_cone",))
+        return "cone"
+
+    def finish_light_cone(self, pending):
+        return None, []
+
+    def begin_relics(self):
+        self.calls.append(("relics",))
+        return []
+
+    def finish_relics(self, pending, known=None):
+        return {"sets": [], "pieces": [], "by_slot": {}}, []
+
+    def open_tab(self, tab):
+        self.tab = tab
+
+
+def read_one(reader, tmp_path, name="火花"):
+    job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
+    reader.first_summary = full_summary_lines(name)
+    job.read_character()
+    return job.characters[0]
+
+
+def test_character_structure(tmp_path):
+    reader = SectionReader()
+    character = read_one(reader, tmp_path)
+    assert character == {
+        "name": "火花", "is_trailblazer": False, "path_switchable": False, "path": "欢愉", "element": "火",
+        "level": 80, "max_level": 80, "eidolon": 2, "stats": {"base": {}}, "light_cone": None,
+        "skills": [{"type": "普攻", "level": 6, "max_level": 6}],
+        "relics": {"sets": [], "pieces": []}, "warnings": [],
+    }
+
+
+def test_characters_are_read_back_and_forth_to_skip_one_tab_click(tmp_path):
+    reader = SectionReader()
+    job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
+    job.read_character()
+    assert [call[0] for call in reader.calls] == ["detail", "traces", "light_cone", "relics", "eidolon"]
+    assert reader.tab == "eidolons"
+
+    reader.calls.clear()
+    reader.first_summary = full_summary_lines("银狼")
+    job.read_character()
+    assert [call[0] for call in reader.calls] == ["eidolon", "relics", "light_cone", "traces", "detail"]
+    assert reader.tab == "detail"
+    assert [character["name"] for character in job.characters] == ["火花", "银狼"]
+
+
+def test_stats_problems_trigger_one_careful_reread(tmp_path):
+    reader = SectionReader()
+    results = [({"base": "第一次"}, ["缺少属性：速度"]), ({"base": "第二次"}, [])]
+    reader.finish_stats = lambda pending, totals: results.pop(0)
+    character = read_one(reader, tmp_path)
+    assert character["stats"] == {"base": "第二次"}
+    assert character["warnings"] == []
+    assert reader.calls.count(("stats", True)) == 1
+
+
+def test_problems_that_survive_the_reread_become_warnings(tmp_path):
+    reader = SectionReader()
+    reader.finish_stats = lambda pending, totals: ({"base": {}}, ["攻击力 总值不符"])
+    character = read_one(reader, tmp_path)
+    assert character["warnings"] == ["攻击力 总值不符"]
+
+
+def full_summary_lines(name="火花", without=()):
+    lines = summary_lines(name)
+    for index, (label, value) in enumerate(TOTALS.items()):
+        if label not in without:
+            y = 369 + index * 36
+            lines += [L(label, 1564, y), L(f"{value}%" if isinstance(value, float) else str(value), 1850, y)]
+    return lines
+
+
+def test_missing_total_is_reread_without_reopening_the_popup(tmp_path):
+    reader = SectionReader()
+    seen = {}
+
+    def finish_stats(pending, totals):
+        seen.update(totals)
+        return {"base": {}}, []
+
+    reader.finish_stats = finish_stats
+    job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
+    reader.first_summary = full_summary_lines(without=("防御力",))
+    job.read_character()
+    assert seen == TOTALS
+    assert job.characters[0]["warnings"] == []
+    assert ("stats", True) not in reader.calls
+
+
+def test_missing_crit_total_needs_no_warning(tmp_path):
+    reader = SectionReader()
+    reader.begin_summary = lambda: Done(full_summary_lines(without=("暴击率",)))
+    job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
+    reader.first_summary = full_summary_lines(without=("暴击率",))
+    job.read_character()
+    assert job.characters[0]["warnings"] == []
+
+
+def test_total_that_cannot_be_read_is_reported(tmp_path):
+    reader = SectionReader()
+    reader.begin_summary = lambda: Done(full_summary_lines(without=("防御力",)))
+    job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
+    reader.first_summary = full_summary_lines(without=("防御力",))
+    job.read_character()
+    assert job.characters[0]["warnings"] == ["详情页没有读到防御力，未能交叉校验"]
+
+
+def test_mismatch_rereads_totals_and_popup(tmp_path):
+    reader = SectionReader()
+    results = [({"base": {}}, ["防御力 总值 1181 与 923+177 不符"]), ({"base": "第二次"}, [])]
+    seen = []
+
+    def finish_stats(pending, totals):
+        seen.append(totals["防御力"])
+        return results.pop(0)
+
+    reader.finish_stats = finish_stats
+    job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
+    reader.first_summary = [line if line.text != "1101" else L("1181", 1850, line.y) for line in full_summary_lines()]
+    job.read_character()
+    assert seen == [1181, 1101]
+    assert job.characters[0]["stats"] == {"base": "第二次"}
+
+
+def test_unreadable_section_keeps_going(tmp_path):
+    reader = SectionReader()
+
+    def fail(pending):
+        raise parser.ParseError("光锥读取失败")
+
+    reader.finish_light_cone = fail
+    character = read_one(reader, tmp_path)
+    assert character["light_cone"] is None
+    assert character["warnings"] == ["光锥读取失败", "光锥读取失败"]
+    assert character["relics"] == {"sets": [], "pieces": []}
+
+
+def test_trace_failure_falls_back_to_skill_panel(tmp_path):
+    reader = SectionReader()
+
+    def fail(pending):
+        raise parser.ParseError("行迹标签读取失败")
+
+    reader.finish_traces = fail
+    character = read_one(reader, tmp_path)
+    assert character["skills"] == [{"type": "普攻", "level": 6, "max_level": None}]
+    assert character["warnings"] == []
+    assert ("panel",) in reader.calls
+
+
+def test_duplicate_found_late_is_dropped(tmp_path):
+    reader = SectionReader()
+    job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
+    job.seen.add(("火花", "欢愉"))
+    job.read_character()
+    assert job.characters == []
+
+
+def test_trailblazer_keeps_ocr_name(tmp_path):
+    reader = SectionReader()
+    reader.switchable = True
+    character = read_one(reader, tmp_path, name="我起的名字")
+    assert character["name"] == "我起的名字"
+    assert character["is_trailblazer"] is True
+    assert character["path_switchable"] is True
+
+
+def test_avatar_slots_are_found_at_any_offset():
+    canvas = np.zeros((1080, 1920, 3), dtype=np.uint8)
+    for x in range(549, 1500, 108):
+        cv2.circle(canvas, (x, 65), 34, (200, 180, 120), 3)
+        cv2.circle(canvas, (x, 65), 26, (90, 90, 90), -1)
+    slots = reader_module.find_avatar_slots(Image.fromarray(canvas))
+    expected = list(range(549, 1441, 108))
+    assert len(slots) == len(expected)
+    assert all(abs(found - x) <= 8 for found, x in zip(slots, expected))
+
+
+def test_popup_end_is_read_from_scrollbar():
+    track = Image.new("RGB", (1920, 1080), (200, 200, 200))
+    assert not reader_module.CharacterReader._popup_at_end(track)
+    track.paste((60, 60, 60), (1470, 640, 1482, 785))
+    assert reader_module.CharacterReader._popup_at_end(track)
+
+
+def test_every_path_has_a_trace_layout():
+    assert set(reader_module.TRACE_LAYOUT) == set(parser.PATHS)
+    for layout in reader_module.TRACE_LAYOUT.values():
+        assert {"普攻", "战技", "终结技", "天赋"} <= set(layout)
+
+
+def test_every_template_exists():
+    paths = [*reader_module.ELEMENT_TEMPLATES.values(), reader_module.PATH_SWITCH, reader_module.RELIC_EMPTY_SLOT,
+             reader_module.RELIC_UNEQUIP, reader_module.EIDOLON_LOCK, "./assets/images/screen/character.png"]
+    assert len(reader_module.ELEMENT_TEMPLATES) == 7
+    for path in paths:
+        assert Path(path).is_file(), path
+
+
+def test_missing_avatar_bar_is_retryable():
+    reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
+    reader.frame = Image.new("RGB", (1920, 1080))
+    with pytest.raises(PageError, match="头像"):
+        reader.avatar_slots()
+
+
+@pytest.mark.parametrize("types", [[], ["普攻", "战技", "终结技"]])
+def test_incomplete_skill_list_is_not_a_success(types, monkeypatch):
+    reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
+    reader.frame = None
+    monkeypatch.setattr(reader_module, "auto", SimpleNamespace())
+    monkeypatch.setattr(reader, "open_tab", lambda tab: None)
+    monkeypatch.setattr(reader, "_act", lambda *args, **kwargs: None)
+    monkeypatch.setattr(reader, "_press", lambda key: None)
+    monkeypatch.setattr(reader, "_settle", lambda *args, **kwargs: None)
+    monkeypatch.setattr(reader, "_submit", lambda *args: Done([L(skill, 1600, 450) for skill in types]))
+    with pytest.raises(parser.ParseError, match="技能列表"):
+        reader.read_skills_by_panel()
+
+
+@pytest.mark.parametrize("preview_animation", [False, True])
+def test_skill_fallback_clicks_icons_and_checks_content_during_preview(preview_animation, monkeypatch):
+    reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
+    reader.frame = object()
+    labels = [L("普攻", 1567, 519), L("天赋", 1806, 518), L("终结技", 1685, 540),
+              L("欢愉技", 1685, 652), L("战技", 1567, 679)]
+    panels = iter([Done([L(line.text, 1000, 142), L("等级10", 1400, 238)]) for line in labels])
+    clicks = []
+
+    def act(action, box, **kwargs):
+        action()
+        if preview_animation and box == reader_module.SKILL_PANEL:
+            raise PageError("预览动画尚未静止")
+
+    monkeypatch.setattr(reader_module, "auto", SimpleNamespace())
+    monkeypatch.setattr(reader, "open_tab", lambda tab: None)
+    monkeypatch.setattr(reader, "_click", lambda x, y: clicks.append((x, y)))
+    monkeypatch.setattr(reader, "_act", act)
+    monkeypatch.setattr(reader, "_press", lambda key: None)
+    monkeypatch.setattr(reader, "_settle", lambda *args, **kwargs: None)
+    monkeypatch.setattr(reader, "_submit", lambda image, box: Done(labels) if box == reader_module.SKILL_LABELS else next(panels))
+    skills, problems = reader.read_skills_by_panel()
+    assert (1685, 608) in clicks
+    assert {skill["type"] for skill in skills} == {line.text for line in labels}
+    assert problems == []
+
+
+def test_unconfirmed_equipped_relic_is_not_an_empty_slot(monkeypatch):
+    reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
+    monkeypatch.setattr(reader, "open_tab", lambda tab: None)
+    monkeypatch.setattr(reader, "_score", lambda *args: 0)
+    monkeypatch.setattr(reader, "_act", lambda *args, **kwargs: None)
+    monkeypatch.setattr(reader, "_wait_unequip_button", lambda frame: None)
+    with pytest.raises(PageError, match="头部"):
+        reader.begin_relics()
+
+
+@pytest.mark.parametrize(("position", "slot"), [((866, 393), "连结绳"), ((971, 636), "位面球")])
+def test_single_planar_relic_uses_the_actual_overview_position(position, slot, monkeypatch):
+    reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
+    frame = object()
+    monkeypatch.setattr(reader_module, "auto", SimpleNamespace())
+    monkeypatch.setattr(reader, "open_tab", lambda tab: frame)
+    monkeypatch.setattr(reader, "_act", lambda *args, **kwargs: frame)
+    monkeypatch.setattr(reader, "_score", lambda image, template, box: 0 if box[:2] == (position[0]-30, position[1]-30) else 1)
+    monkeypatch.setattr(reader, "_wait_unequip_button", lambda image: image)
+    monkeypatch.setattr(reader, "_submit", lambda *args, **kwargs: Done([]))
+    monkeypatch.setattr(reader, "_submit_cells", lambda *args: {})
+    pending = reader.begin_relics()
+    assert [piece[0] for piece in pending] == [slot]
+
+
+def test_relic_from_wrong_slot_is_rejected():
+    result, problems = relic_reader().finish_relics([("手部", Done(RELIC), {})])
+    assert result["pieces"] == []
+    assert any("部位" in problem for problem in problems)
+
+
+def test_incomplete_export_reports_task_failure(monkeypatch):
+    from tasks import character_export
+
+    monkeypatch.setattr(character_export, "CharacterExport", lambda: SimpleNamespace(run=lambda: False))
+    with pytest.raises(RuntimeError, match="未完成"):
+        character_export.run()
