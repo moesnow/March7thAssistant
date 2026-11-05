@@ -6504,12 +6504,6 @@ msgstr "Paste it to your AI assistant"
 msgid "本地操作模式"
 msgstr "Local control mode"
 
-#: app/setting_interface.py:2499
-msgid "后台操作遇到鼠标干扰时会等待并重试；滚轮临时切前台，下次启动任务生效。"
-msgstr ""
-"Background operations wait and retry when the mouse is busy. Scrolling "
-"temporarily brings the game forward. Applies to the next task."
-
 #: app/setting_interface.py:2500
 msgid "前台"
 msgstr "Foreground"
@@ -6542,28 +6536,6 @@ msgstr "Scrolling temporarily brings the game to the foreground"
 #: app/setting_interface.py:3023
 msgid "启用后台模式前请确认"
 msgstr "Confirm Before Enabling Background Mode"
-
-#: app/setting_interface.py:3024
-msgid ""
-"后台模式下，任务运行时你可以继续使用电脑，但仍有以下限制：\n"
-"\n"
-"• 点击和拖动会短暂借用鼠标，完成后归还；你正在移动鼠标时，任务会等鼠标停下再操作。\n"
-"• 在大世界中按键时，光标会被短暂锁定在游戏窗口中央。\n"
-"• 需要滚轮时会临时把游戏切到前台，完成后恢复原来的窗口。\n"
-"• 游戏窗口可以放在其他窗口后面，但不能最小化；运行期间请保持系统解锁。\n"
-"• 锄大地、第三方模拟宇宙等独立程序不受此设置影响，仍需前台运行。\n"
-"\n"
-"设置在下次启动任务时生效，自动对话需重新开启。完整说明见使用文档“后台运行”。"
-msgstr ""
-"In background mode you can keep using your computer while tasks run, with these limitations:\n"
-"\n"
-"• Clicks and drags briefly borrow the mouse and return it afterwards; while you are moving the mouse, the task waits for it to stop.\n"
-"• Key presses in the open world briefly lock the cursor to the center of the game window.\n"
-"• Scrolling temporarily brings the game to the front, then restores your previous window.\n"
-"• The game window can stay behind other windows but must not be minimized; keep the system unlocked while tasks run.\n"
-"• Standalone programs such as Fhoe-Rail and third-party Simulated Universe tools are not affected by this setting and still need the foreground.\n"
-"\n"
-"The setting takes effect the next time a task starts; turn Auto Dialogue off and on again to apply it. See \"Background Running\" in the documentation for details."
 
 #: app/setting_interface.py:3033
 msgid "我已了解，启用后台模式"
@@ -6697,3 +6669,29 @@ msgstr ""
 #: app/tools/disclaimer.py:47
 msgid "解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}"
 msgstr ""
+
+#: app/setting_interface.py:2485
+msgid "后台操作遇到鼠标干扰时会等待并重试；下次启动任务生效。"
+msgstr ""
+"Background operations wait and retry when the mouse is busy. Applies to the "
+"next task."
+
+#: app/setting_interface.py:3008
+msgid ""
+"后台模式下，任务运行时你可以继续使用电脑，但仍有以下限制：\n"
+"\n"
+"• 点击和拖动会短暂借用鼠标，完成后归还；你正在移动鼠标时，任务会等鼠标停下再操作。\n"
+"• 在大世界中按键时，光标会被短暂锁定在游戏窗口中央。\n"
+"• 游戏窗口可以放在其他窗口后面，但不能最小化；运行期间请保持系统解锁。\n"
+"• 锄大地、第三方模拟宇宙等独立程序不受此设置影响，仍需前台运行。\n"
+"\n"
+"设置在下次启动任务时生效，自动对话需重新开启。完整说明见使用文档“后台运行”。"
+msgstr ""
+"In background mode you can keep using your computer while tasks run, with these limitations:\n"
+"\n"
+"• Clicks and drags briefly borrow the mouse and return it afterwards; while you are moving the mouse, the task waits for it to stop.\n"
+"• Key presses in the open world briefly lock the cursor to the center of the game window.\n"
+"• The game window can stay behind other windows but must not be minimized; keep the system unlocked while tasks run.\n"
+"• Standalone programs such as Fhoe-Rail and third-party Simulated Universe tools are not affected by this setting and still need the foreground.\n"
+"\n"
+"The setting takes effect the next time a task starts; turn Auto Dialogue off and on again to apply it. See \"Background Running\" in the documentation for details."

@@ -1,4 +1,5 @@
 import time
+import re
 from tasks.base.base import Base
 from module.notification.notification import NotificationLevel
 from .basechallenge import BaseChallenge
@@ -8,6 +9,7 @@ from module.screen import screen
 from module.automation import auto
 from module.config import cfg
 from module.logger import log
+from tasks.base.list_drag import drag_list
 
 
 class MemoryOfChaos(BaseChallenge):
@@ -63,8 +65,6 @@ class MemoryOfChaos(BaseChallenge):
 
     def start_challenges(self):
         '''查找关卡并判断星数'''
-        auto.mouse_scroll(20, 1, False)
-        time.sleep(2)
         for level in range(self.level_range[0], self.level_range[1] + 1):
             # 查找关卡
             top_left = self.find_level(level)
@@ -92,20 +92,42 @@ class MemoryOfChaos(BaseChallenge):
         window = Screenshot.get_window(cfg.game_title_name)
         _, _, width, height = Screenshot.get_window_region(window)
 
+        def positions():
+            return {int(text): sum(point[0] for point in box) / len(box)
+                    for box, (text, _) in auto.ocr_result if re.fullmatch(r"\d{2}", text)}
+
         for _ in range(max_retries):
-            result = auto.find_element(f"{level:02}", "text", max_retries=4, crop=crop, relative=True)
+            result = auto.find_element(f"{level:02}", "text", crop=crop, relative=True)
             if result:
                 return (result[0][0] + width * crop[0], result[0][1] + height * crop[1])
 
-            # 先向右滚动5次查找，然后向左
-            for direction in [-1, 1]:
+            visible = positions()
+            # 按实际可见关卡决定方向，避免目标在左侧却先拖到最右端。
+            earlier = level < min(visible) if visible else level <= 6
+            boundaries = 0
+            for direction in ([1, -1] if earlier else [-1, 1]):
+                unchanged = 0
                 for _ in range(15):
-                    auto.mouse_scroll(2, direction)
-                    time.sleep(6)
+                    before = positions()
+                    start, end = (1785 / 1920, 820 / 1080), (415 / 1920, 820 / 1080)
+                    if direction == 1:
+                        start, end = end, start
+                    if not drag_list(auto, start, end, crop=crop, duration=0.4, end_pause=0.25,
+                                     settle=0.05, poll_interval=0.1, text_pattern=r"\d{2}"):
+                        return False
 
-                    result = auto.find_element(f"{level:02}", "text", max_retries=4, crop=crop, relative=True)
+                    result = auto.find_element(f"{level:02}", "text", crop=crop, relative=True,
+                                               take_screenshot=False, need_ocr=False)
                     if result:
                         return (result[0][0] + width * crop[0], result[0][1] + height * crop[1])
+                    after = positions()
+                    at_edge = bool(before) and before.keys() == after.keys() and all(abs(before[key] - after[key]) <= 2 for key in before)
+                    unchanged = unchanged + 1 if at_edge else 0
+                    if unchanged >= 2:
+                        boundaries += 1
+                        break
+            if boundaries == 2:
+                return False
 
         return False
 

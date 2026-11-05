@@ -459,30 +459,81 @@ def test_chaos_closes_each_node_popup_three_times_before_using_techniques(stella
     assert clicks.call_args_list == [call(0.5, 0.97)] * 9
 
 
-def test_stellar_character_search_scrolls_list_instead_of_enemy_level(stellar, monkeypatch):
+@pytest.mark.parametrize('switch_team', [False, True])
+def test_stellar_character_search_scrolls_list_instead_of_enemy_level(stellar, monkeypatch, switch_team):
+    from PIL import Image
+    from tasks.base import list_drag
+
     owner = stellar.runner.challenge
     monkeypatch.setitem(owner.select_characters.__func__.__globals__, 'time', SimpleNamespace(sleep=Mock()))
-    state = {'cursor_in_list': False, 'scrolled': False}
+    monkeypatch.setattr(list_drag, 'time', SimpleNamespace(sleep=Mock()))
+    state = {'scrolled': False, 'fresh': False}
     list_crop = (30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080)
 
     def click(target, *args, **kwargs):
         if target.endswith('/DanHeng.png'):
             assert kwargs.get('crop') == list_crop
             assert kwargs.get('take_screenshot') is True
+            if state['scrolled']:
+                assert state['fresh'], '拖动后必须重新截取列表，不能复用全屏缓存'
             return state['scrolled']
-        if target == '等级':
-            # 全屏 OCR 会先命中右侧敌人的“等级：95”。
-            state['cursor_in_list'] = kwargs.get('crop') == list_crop
         return True
 
-    def scroll(lines, direction, *args):
-        assert state['cursor_in_list'], '滚轮不能落在右侧敌人区域'
-        state['scrolled'] = direction == -1
+    def capture(crop):
+        assert crop == list_crop
+        state['fresh'] = True
+        stellar.auto.screenshot = Image.new('RGB', (53, 81))
+        return stellar.auto.screenshot, crop, 1
+
+    def drag(start, end, duration):
+        assert start[0] == end[0] == 430 / 1920
+        assert all(list_crop[1] < point[1] < list_crop[1] + list_crop[3] for point in (start, end))
+        state.update(scrolled=end[1] < start[1], fresh=False)
+        return True
 
     stellar.auto.click_element.side_effect = click
-    stellar.auto.mouse_scroll.side_effect = scroll
-    assert owner.select_characters([['DanHeng', 0]], None, switch_team=False)
-    assert stellar.auto.mouse_scroll.call_args_list == [call(19, -1, False), call(19, 1, False)]
+    stellar.auto.take_screenshot.side_effect = capture
+    stellar.auto.drag_mouse.side_effect = drag
+    assert owner.select_characters([['DanHeng', 0]], './assets/images/forgottenhall/team1.png', switch_team=switch_team)
+    assert stellar.auto.drag_mouse.call_args_list == [
+        call((430 / 1920, 840 / 1080), (430 / 1920, 350 / 1080), 1.0),
+        call((430 / 1920, 350 / 1080), (430 / 1920, 840 / 1080), 1.0),
+    ]
+
+
+@pytest.mark.parametrize('failed_drag', [1, 2])
+def test_character_drag_interruption_stops_before_next_selection(stellar, monkeypatch, failed_drag):
+    from PIL import Image
+    from tasks.base import list_drag
+
+    owner = stellar.runner.challenge
+    monkeypatch.setitem(owner.select_characters.__func__.__globals__, 'time', SimpleNamespace(sleep=Mock()))
+    monkeypatch.setattr(list_drag, 'time', SimpleNamespace(sleep=Mock()))
+    selected = []
+    drags = []
+
+    def capture(crop):
+        stellar.auto.screenshot = Image.new('RGB', (53, 81))
+        return stellar.auto.screenshot, crop, 1
+
+    def click(target, *args, **kwargs):
+        if target.endswith('/DanHeng.png'):
+            if drags:
+                selected.append(target)
+            return bool(drags)
+        assert not target.endswith('/March7th.png'), '中断后不应继续选下一个角色'
+        return True
+
+    def drag(*args):
+        drags.append(args)
+        return len(drags) != failed_drag
+
+    stellar.auto.take_screenshot.side_effect = capture
+    stellar.auto.click_element.side_effect = click
+    stellar.auto.drag_mouse.side_effect = drag
+    assert owner.select_characters([['DanHeng', 0], ['March7th', 0]], None, switch_team=False) is False
+    assert len(drags) == failed_drag
+    assert len(selected) == failed_drag - 1
 
 
 @pytest.mark.parametrize('number,button', [(1, '前往节点二'), (2, '前往节点三')])

@@ -13,6 +13,7 @@ import os
 import re
 from tasks.power.power import Power
 from tasks.weekly.weekly_reward import wait_for_weekly_reward
+from tasks.base.list_drag import drag_list
 
 
 class DivergentUniverse:
@@ -1496,6 +1497,18 @@ class DivergentUniverse:
         if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9):
             time.sleep(2)
 
+    @staticmethod
+    def reveal_event_confirm():
+        options_crop = (1320 / 1920, 170 / 1080, 515 / 1920, 765 / 1080)
+        for _ in range(6):
+            if auto.find_element("确定", "text", crop=options_crop, include=False):
+                return True
+            if not drag_list(auto, (1805 / 1920, 820 / 1080), (1805 / 1920, 320 / 1080),
+                             crop=options_crop, duration=1.2):
+                return False
+            time.sleep(0.5)
+        return bool(auto.find_element("确定", "text", crop=options_crop, include=False))
+
     def process_event(self):
         while True:
             time.sleep(1)
@@ -1511,7 +1524,8 @@ class DivergentUniverse:
             for match in reversed(matchs):
                 auto.click_element_with_pos(match)
                 time.sleep(0.5)
-                auto.mouse_scroll(20, -1, False)
+                if not self.reveal_event_confirm():
+                    return
                 time.sleep(0.5)
                 if auto.click_element('确定', 'text', None, 4, include=True):
                     has_confirm = True

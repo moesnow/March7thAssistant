@@ -4,6 +4,7 @@ from module.automation import auto
 from module.logger import log
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
+from tasks.base.list_drag import drag_list
 import time
 
 
@@ -259,22 +260,22 @@ class Synthesis:
                                                 auto.press_key("esc", wait_time=3)
                                                 if not is_superimposed:
                                                     log.info("没有进行叠加")
-                                                    auto.click_element_with_pos(t)
-                                                    auto.mouse_scroll(
-                                                        5, direction=-1, pause=True
-                                                    )
+                                                    if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 650 / 1080),
+                                                                     crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
+                                                        return False
                                                 log.info("3星光锥叠加完成，继续查找")
                                                 break
                                         else:
                                             time.sleep(2)
                                             auto.press_key("esc", wait_time=3)
-                                            auto.click_element_with_pos(t)
-                                            auto.mouse_scroll(
-                                                5, direction=-1, pause=True
-                                            )
+                                            if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 650 / 1080),
+                                                             crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
+                                                return False
 
                         if not find_target:
-                            auto.mouse_scroll(25, direction=-1, pause=True)
+                            if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 410 / 1080),
+                                             crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
+                                return False
                             not_find_times += 1
                         else:
                             not_find_times = 0

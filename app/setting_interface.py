@@ -2482,7 +2482,7 @@ class SettingInterface(ScrollArea):
         )
         self.localControlModeCard = ExpandableComboBoxSettingCard(
             'local_control_mode', FIF.GAME, tr('本地操作模式'),
-            tr('后台操作遇到鼠标干扰时会等待并重试；滚轮临时切前台，下次启动任务生效。'),
+            tr('后台操作遇到鼠标干扰时会等待并重试；下次启动任务生效。'),
             texts={tr('前台'): 'foreground', tr('后台'): 'background'},
             confirm=self.__confirmLocalControlMode,
         )
@@ -3008,7 +3008,6 @@ class SettingInterface(ScrollArea):
             tr("后台模式下，任务运行时你可以继续使用电脑，但仍有以下限制：\n\n"
                "• 点击和拖动会短暂借用鼠标，完成后归还；你正在移动鼠标时，任务会等鼠标停下再操作。\n"
                "• 在大世界中按键时，光标会被短暂锁定在游戏窗口中央。\n"
-               "• 需要滚轮时会临时把游戏切到前台，完成后恢复原来的窗口。\n"
                "• 游戏窗口可以放在其他窗口后面，但不能最小化；运行期间请保持系统解锁。\n"
                "• 锄大地、第三方模拟宇宙等独立程序不受此设置影响，仍需前台运行。\n\n"
                "设置在下次启动任务时生效，自动对话需重新开启。完整说明见使用文档“后台运行”。"),

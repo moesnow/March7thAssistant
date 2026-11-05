@@ -43,15 +43,18 @@ class LocalInput(InputBase):
         except Exception as e:
             self.logger.error(f"鼠标移动出错：{e}")
 
-    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5):
+    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5, end_pause=0.0, repeats=1):
         '''按住鼠标左键从起点拖动到终点'''
         try:
-            pyautogui.moveTo(start_x, start_y)
-            try:
-                pyautogui.mouseDown()
-                pyautogui.moveTo(end_x, end_y, duration=max(0.0, float(duration or 0.0)))
-            finally:
-                pyautogui.mouseUp()
+            for index in range(repeats):
+                pyautogui.moveTo(start_x, start_y)
+                try:
+                    pyautogui.mouseDown()
+                    pyautogui.moveTo(end_x, end_y, duration=max(0.0, float(duration or 0.0)))
+                    if end_pause and index == repeats - 1:
+                        time.sleep(end_pause)
+                finally:
+                    pyautogui.mouseUp()
             self.logger.debug(f"鼠标拖动 ({start_x}, {start_y}) -> ({end_x}, {end_y})")
             return True
         except Exception as e:

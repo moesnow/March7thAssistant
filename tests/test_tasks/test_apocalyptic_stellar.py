@@ -323,35 +323,49 @@ def test_regular_start_confirms_updated_team_before_go_to_challenge(apocalyptic,
 
 @pytest.mark.parametrize('team_name,node', [('team1', '节点一'), ('team2', '节点二')])
 def test_regular_character_search_scrolls_left_list_and_refreshes_after_scroll(apocalyptic, monkeypatch, team_name, node):
+    from PIL import Image
+    from tasks.base import list_drag
+
     auto = apocalyptic.run.__func__.__globals__['auto']
     base_class = apocalyptic.__class__.__mro__[1]
     monkeypatch.setitem(base_class.select_characters.__globals__, 'time', SimpleNamespace(sleep=Mock()))
     apocalyptic.find_node = Mock(return_value=(800, 200))
-    state = {'cursor_in_list': False, 'scrolled': False, 'selected': False}
+    monkeypatch.setattr(list_drag, 'time', SimpleNamespace(sleep=Mock()))
+    state = {'scrolled': False, 'selected': False, 'fresh': False}
     list_crop = (30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080)
 
     def click(target, *args, **kwargs):
         if target.endswith('/CastoriceGossamerFlutter.png'):
             assert kwargs.get('crop') == list_crop
             assert kwargs.get('take_screenshot') is True
+            if state['scrolled']:
+                assert state['fresh']
             state['selected'] = state['scrolled']
             return state['selected']
-        if target == '等级':
-            assert kwargs.get('action') == 'move'
-            # 全屏等级识别会命中日志里的右侧敌人 (861, 214)。
-            state['cursor_in_list'] = kwargs.get('crop') == list_crop
         return True
 
-    def scroll(lines, direction, *args):
-        assert state['cursor_in_list'], '不能在右侧敌人区域滚动'
-        state['scrolled'] = direction == -1
+    def capture(crop):
+        assert crop == list_crop
+        state['fresh'] = True
+        auto.screenshot = Image.new('RGB', (53, 81))
+        return auto.screenshot, crop, 1
+
+    def drag(start, end, duration):
+        assert start[0] == end[0] == 430 / 1920
+        assert all(list_crop[1] < point[1] < list_crop[1] + list_crop[3] for point in (start, end))
+        state.update(scrolled=end[1] < start[1], fresh=False)
+        return True
 
     auto.click_element.side_effect = click
-    auto.mouse_scroll.side_effect = scroll
+    auto.take_screenshot.side_effect = capture
+    auto.drag_mouse.side_effect = drag
     assert apocalyptic.select_characters([['CastoriceGossamerFlutter', 0]], team_name)
     apocalyptic.find_node.assert_called_once_with(node)
     assert state['selected']
-    assert auto.mouse_scroll.call_args_list == [call(19, -1, False), call(19, 1, False)]
+    assert auto.drag_mouse.call_args_list == [
+        call((430 / 1920, 840 / 1080), (430 / 1920, 350 / 1080), 1.0),
+        call((430 / 1920, 350 / 1080), (430 / 1920, 840 / 1080), 1.0),
+    ]
 
 
 def test_missing_regular_team_node_does_not_click_or_scroll(apocalyptic):
@@ -359,4 +373,4 @@ def test_missing_regular_team_node_does_not_click_or_scroll(apocalyptic):
     apocalyptic.find_node = Mock(return_value=False)
     assert apocalyptic.select_characters([['CastoriceGossamerFlutter', 0]], 'team1') is False
     auto.click_element.assert_not_called()
-    auto.mouse_scroll.assert_not_called()
+    auto.drag_mouse.assert_not_called()

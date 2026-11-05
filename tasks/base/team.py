@@ -1,6 +1,7 @@
 from module.automation import auto
 from module.logger import log
 from module.screen import screen
+from tasks.base.list_drag import drag_list
 import time
 import re
 
@@ -19,11 +20,15 @@ class Team:
 
         crop = (311.0 / 1920, 15.0 / 1080, 1376.0 / 1920, 100.0 / 1080)
         if not auto.click_element(team_name, "text", max_retries=10, crop=crop, include=True):
-            if not auto.click_element("07", "text", max_retries=10, crop=crop, include=True):
-                return False
-            direction = -1 if int(team) > 7 else 1
-            auto.mouse_scroll(20, direction)
-            if not auto.click_element(team_name, "text", max_retries=10, crop=crop, include=True):
+            start, end = (1300 / 1920, 65 / 1080), (650 / 1920, 65 / 1080)
+            if int(team) <= 7:
+                start, end = end, start
+            for _ in range(4):
+                if not drag_list(auto, start, end, crop=crop, duration=1.0):
+                    return False
+                if auto.click_element(team_name, "text", max_retries=2, crop=crop, include=True):
+                    break
+            else:
                 return False
 
         # 等待界面切换

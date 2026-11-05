@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from module.automation import auto
 from module.logger import log
+from tasks.base.list_drag import drag_list
 import time
 
 
@@ -74,30 +75,27 @@ class BaseChallenge(ABC):
             time.sleep(1)
             list_crop = (30 / 1920, 115 / 1080, 530 / 1920, 810 / 1080)
             auto.take_screenshot(crop=list_crop)
-            # 复用已打开的列表时，避免全屏 OCR 将鼠标定位到右侧敌人的“等级”。
-            list_search = {"crop": list_crop} if not switch_team else {}
             # 选择角色
             for character in team_config:
                 scrolling_counter = 0  # 统计滚动次数
                 max_scroll_times = 4  # 最大滚动次数
-                scroll_line = 19  # 26滚动1页，13滚动半页
-                while (not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7, max_retries=10, take_screenshot=not switch_team, **list_search)):
+                while (not auto.click_element(f"./assets/images/share/character/{character[0]}.png", "image", 0.7,
+                                              max_retries=10, take_screenshot=True, crop=list_crop)):
                     if scrolling_counter > max_scroll_times:
                         # 滚动超过2页强制结束
                         log.info(f"{character[0]}未找到")
                         return False
-                    auto.click_element("等级", "text", include=True, action="move", **list_search)
-                    # ，尝试向下滚动
-                    auto.mouse_scroll(scroll_line, -1, False)
+                    if not drag_list(auto, (430 / 1920, 840 / 1080), (430 / 1920, 350 / 1080),
+                                     crop=list_crop, duration=1.0):
+                        return False
                     time.sleep(0.5)
-                    auto.click_element("角色列表", "text", include=True, action="move", **list_search)
                     scrolling_counter += 1
                 for _ in range(scrolling_counter):
                     # 尝试向上滚动 恢复初始位置
-                    auto.click_element("等级", "text", include=True, action="move", **list_search)
-                    auto.mouse_scroll(scroll_line, 1, False)
+                    if not drag_list(auto, (430 / 1920, 350 / 1080), (430 / 1920, 840 / 1080),
+                                     crop=list_crop, duration=1.0):
+                        return False
                     time.sleep(0.5)
-                    auto.click_element("角色列表", "text", include=True, action="move", **list_search)
                 time.sleep(0.5)
             time.sleep(0.5)
             # 尝试关闭命途切换窗口

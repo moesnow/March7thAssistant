@@ -708,18 +708,22 @@ class BackgroundInput(InputBase):
             return True
         return self._perform(click, pointer=True)
 
-    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=.5):
+    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=.5, end_pause=0.0, repeats=1):
         duration = _duration(duration)
+        end_pause = _duration(end_pause)
         def drag():
-            self._move_screen(start_x, start_y)
-            start = self._point
-            end = self.api.screen_to_client(self._session[0], (round(end_x), round(end_y)))
-            self._down()
             steps = max(1, round(duration * 60))
-            for step in range(1, steps + 1):
-                self._move_client(tuple(round(a+(b-a)*step/steps) for a,b in zip(start,end)))
-                self._wait(duration/steps)
-            self._up_mouse()
+            for index in range(repeats):
+                self._move_screen(start_x, start_y)
+                start = self._point
+                end = self.api.screen_to_client(self._session[0], (round(end_x), round(end_y)))
+                self._down()
+                for step in range(1, steps + 1):
+                    self._move_client(tuple(round(a+(b-a)*step/steps) for a,b in zip(start,end)))
+                    self._wait(duration/steps)
+                if end_pause and index == repeats - 1:
+                    self._wait(end_pause)
+                self._up_mouse()
             return True
         return self._perform(drag, pointer=True)
 
