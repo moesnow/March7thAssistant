@@ -287,6 +287,7 @@ genshin_starRail_fps_unlocker_path: .\3rdparty\Genshin_StarRail_fps_unlocker
 
 # 忘却之庭配置
 forgottenhall_enable: false # 是否启用混沌回忆功能。true 开启，false 关闭。
+forgottenhall_stellar_enable: false # 是否启用混沌回忆星启模式；默认使用常规模式。
 forgottenhall_level: # 混沌回忆关卡范围，设置允许尝试的关卡等级范围。
   - 10
   - 12
@@ -311,6 +312,9 @@ forgottenhall_team2: # 队伍2配置。
     - -1
   - - Qingque
     - 1
+forgottenhall_team3: # 星启模式第三队默认使用丹恒，可配置1至4名角色，不能留空。
+  - - DanHeng
+    - -1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳，用于记录和控制运行频率。
 
 # 虚构叙事配置
@@ -347,6 +351,7 @@ purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳，用于记录�
 
 # 末日幻影配置
 apocalyptic_enable: false # 是否启用末日幻影功能。true 开启，false 关闭。
+apocalyptic_stellar_enable: false # 是否启用末日幻影星启模式；默认使用常规模式。
 apocalyptic_level: # 末日幻影关卡范围，设置允许尝试的关卡等级范围。
   - 3
   - 4
@@ -371,6 +376,9 @@ apocalyptic_team2: # 队伍2配置。
     - -1
   - - Qingque
     - 1
+apocalyptic_team3: # 星启模式第三队默认使用丹恒，可配置1至4名角色，不能留空。
+  - - DanHeng
+    - -1
 apocalyptic_timestamp: 0 # 上次运行末日幻影的时间戳，用于记录和控制运行频率。
 # 自动战斗和二倍速检测配置
 auto_battle_detect_enable: true # 是否启用自动战斗和二倍速检测。true 开启，false 关闭。
@@ -385,14 +393,14 @@ auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。tru
 # 自动配置游戏路径
 auto_set_game_path_enable: true # 是否启用自动配置游戏路径。true 开启，false 关闭。
 
-# 循环模式
-loop_mode: scheduled # 可选值："power"（根据开拓力）, "scheduled"（定时任务）
+# 循环模式（保留用于旧配置兼容，仅支持定时运行）
+loop_mode: scheduled
 
-# 指定运行时间
+# 循环运行的指定时间（after_finish 为 Loop 时生效）
 scheduled_time: 4:00
 
-# 循环运行所需开拓力
-power_limit: 160 # 设置循环运行模式时所需的最低开拓力。
+# 启动运行设置
+no_run_immediately: false # 启动时先等待，等同于 --no-run-immediately。
 
 # 游戏刷新时间设置
 refresh_hour: 4 # 设置游戏每日刷新的时间（24小时制）。
@@ -453,7 +461,7 @@ scheduled_tasks: [] # 示例：
 #     enabled: true
 
 use_background_screenshot: true # 是否优先使用后台截图
-local_control_mode: foreground # Windows 本地操作模式：foreground 前台；background 后台（滚轮临时切前台）。下次启动任务生效。
+local_control_mode: foreground # Windows 本地操作模式：foreground 前台；background 后台。下次启动任务生效。
 background_mouse_protection: false # 后台鼠标重试失败时，最多保护鼠标 2 秒；保留键盘和暂停热键。
 
 # 开机启动设置（在图形界面「设置 - 杂项」中通过「配置」按钮设置）

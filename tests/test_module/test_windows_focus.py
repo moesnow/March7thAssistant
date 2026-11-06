@@ -1,8 +1,9 @@
 """真实 Windows 适配器的前台切换时序，所有系统调用都使用替身。"""
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 import ctypes
 import sys
+import threading
 
 import pytest
 
@@ -269,3 +270,75 @@ def test_query_errors_on_live_window_are_not_hidden(native):
     n.api.gui = SimpleNamespace(GetClientRect=failed, IsWindow=lambda _hwnd: True)
     with pytest.raises(pywintypes.error):
         n.api.size(n.game)
+
+
+@pytest.fixture
+def activation(native):
+    calls = Mock()
+    calls.create.return_value = 50
+    calls.attach.return_value = True
+    native.api.gui = SimpleNamespace(CreateWindowEx=calls.create, DestroyWindow=calls.destroy)
+    native.api.user32 = SimpleNamespace(AttachThreadInput=calls.attach, SetActiveWindow=calls.activate)
+    return SimpleNamespace(api=native.api, game=native.game, calls=calls)
+
+
+def test_release_activation_hands_active_window_to_hidden_holder(activation):
+    a = activation
+    assert a.api.release_activation(a.game) is True
+    assert [c[0] for c in a.calls.mock_calls] == ['create', 'attach', 'activate', 'attach', 'destroy']
+    assert a.calls.attach.call_args_list == [call(1, 2, True), call(1, 2, False)]
+    a.calls.activate.assert_called_once_with(50)
+    a.calls.destroy.assert_called_once_with(50)
+
+
+def test_release_activation_holder_cannot_take_foreground(activation):
+    """进程刚启动且用户未操作键鼠时，可激活的隐藏窗口会抢走前台。"""
+    a = activation
+    a.api.release_activation(a.game)
+    assert a.calls.create.call_args.args[0] & 0x08000000  # WS_EX_NOACTIVATE
+
+
+def test_release_activation_runs_on_its_own_thread(activation):
+    """系统调用可能卡在游戏线程上：不能放在持有输入锁的调用线程里执行。"""
+    a = activation
+    threads = []
+    a.calls.activate.side_effect = lambda _hwnd: threads.append(threading.current_thread())
+    a.api.release_activation(a.game)
+    assert threads and threads[0] is not threading.current_thread()
+    assert threads[0].daemon is True
+
+
+def test_release_activation_always_detaches_and_destroys_holder(activation):
+    a = activation
+    a.calls.activate.side_effect = OSError('denied')
+    with pytest.raises(OSError):
+        a.api.release_activation(a.game)
+    assert a.calls.attach.call_args_list == [call(1, 2, True), call(1, 2, False)]
+    a.calls.destroy.assert_called_once_with(50)
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='Windows last-error API')
+def test_release_activation_reports_attach_failure_without_touching_active_window(activation):
+    a = activation
+    a.calls.attach.return_value = False
+    with pytest.raises(OSError):
+        a.api.release_activation(a.game)
+    a.calls.activate.assert_not_called()
+    a.calls.destroy.assert_called_once_with(50)
+
+
+def test_release_activation_stops_waiting_when_game_stalls(activation, monkeypatch):
+    """游戏加载卡顿时限时返回，也不叠加新的清理；游戏恢复后由原线程完成。"""
+    a = activation
+    monkeypatch.setattr(module, 'ACTIVATION_RELEASE_TIMEOUT', .01)
+    resume = threading.Event()
+    a.calls.activate.side_effect = lambda _hwnd: resume.wait(5)
+    assert a.api.release_activation(a.game) is False
+    assert a.api.release_activation(a.game) is False
+    assert a.calls.create.call_count == 1
+    resume.set()
+    a.api._activation_release.join(5)
+    assert a.calls.attach.call_args_list == [call(1, 2, True), call(1, 2, False)]
+    a.calls.destroy.assert_called_once_with(50)
+    a.calls.activate.side_effect = None
+    assert a.api.release_activation(a.game) is True

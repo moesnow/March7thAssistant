@@ -3,6 +3,7 @@ from module.logger import log
 from module.config import cfg
 import time
 from module.automation.screenshot import Screenshot
+from tasks.base.list_drag import drag_list
 
 
 class Character:
@@ -58,7 +59,10 @@ class Character:
             else:
                 # 若未找到角色，尝试滚动页面
                 if i < cfg.borrow_scroll_times - 1:
-                    Character.scroll_support_list()
+                    if not Character.scroll_support_list():
+                        if auto.find_element(["支援列表", "支援角色"], "text", crop=(157 / 1920, 22 / 1080, 300 / 1920, 81 / 1080)):
+                            Character.exit_support_list(type)
+                        return False
                 continue
 
             # 当队伍已满时点击编队界面的最后一个槽位，踢出最后一个角色
@@ -152,10 +156,11 @@ class Character:
 
     @staticmethod
     def scroll_support_list():
-        """滚动支援列表"""
-        auto.click_element("等级", "text", max_retries=1, crop=(40.0 / 1920, 152.0 / 1080, 531.0 / 1920, 809.0 / 1080), include=True, action="move")
-        auto.mouse_scroll(23, -1, False)
+        """拖动支援列表，失败时由调用方退出，不继续选择角色。"""
+        completed = drag_list(auto, (400 / 1920, 850 / 1080), (400 / 1920, 400 / 1080),
+                              crop=(40 / 1920, 152 / 1080, 531 / 1920, 809 / 1080), duration=1.0)
         time.sleep(0.5)
+        return completed
 
     @staticmethod
     def exit_support_list(type):

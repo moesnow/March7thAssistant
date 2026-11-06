@@ -321,10 +321,12 @@ class BackgroundInput(InputBase):
                 alive = False
             except Exception as e:
                 errors.append(e)
+        deactivated = False
         if alive and activated and self.api.foreground() != target.hwnd:
             try:
                 self.api.post(target, 0x0006, 0)
                 time.sleep(.05)  # 与实测一致：给异步失活消息一次处理机会再恢复光标。
+                deactivated = True
             except WindowGoneError:
                 alive = False
             except Exception as e:
@@ -345,6 +347,13 @@ class BackgroundInput(InputBase):
         except Exception as error:
             if self.logger:
                 self.logger.warning(f'恢复光标位置失败：{error}')
+        # 每次会话结束都还原游戏线程的激活状态：进程随时可能被结束，用户也随时可能切到游戏。同样只是善后。
+        if deactivated:
+            try:
+                self.api.release_activation(target)
+            except Exception as error:
+                if self.logger:
+                    self.logger.debug(f'清除游戏激活状态失败：{error}')
         self._written_cursor = None
         self._pointer_active = False
         self._settle_until = 0
@@ -699,18 +708,22 @@ class BackgroundInput(InputBase):
             return True
         return self._perform(click, pointer=True)
 
-    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=.5):
+    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=.5, end_pause=0.0, repeats=1):
         duration = _duration(duration)
+        end_pause = _duration(end_pause)
         def drag():
-            self._move_screen(start_x, start_y)
-            start = self._point
-            end = self.api.screen_to_client(self._session[0], (round(end_x), round(end_y)))
-            self._down()
             steps = max(1, round(duration * 60))
-            for step in range(1, steps + 1):
-                self._move_client(tuple(round(a+(b-a)*step/steps) for a,b in zip(start,end)))
-                self._wait(duration/steps)
-            self._up_mouse()
+            for index in range(repeats):
+                self._move_screen(start_x, start_y)
+                start = self._point
+                end = self.api.screen_to_client(self._session[0], (round(end_x), round(end_y)))
+                self._down()
+                for step in range(1, steps + 1):
+                    self._move_client(tuple(round(a+(b-a)*step/steps) for a,b in zip(start,end)))
+                    self._wait(duration/steps)
+                if end_pause and index == repeats - 1:
+                    self._wait(end_pause)
+                self._up_mouse()
             return True
         return self._perform(drag, pointer=True)
 

@@ -122,6 +122,7 @@ _ENV_OVERRIDE_MAP = {
     "MARCH7TH_LOG_LEVEL": ("log_level", lambda v: v.upper()),  # 日志等级：INFO, DEBUG, WARNING, ERROR
     "MARCH7TH_AFTER_FINISH": ("after_finish", lambda v: v),  # 任务完成后操作：None, Exit, Loop, Shutdown, Sleep, Hibernate, Restart, Logoff, TurnOffDisplay, RunScript
     "MARCH7TH_BROWSER_TYPE": ("browser_type", lambda v: v),  # 浏览器类型：integrated, edge, chrome
+    "MARCH7TH_NO_RUN_IMMEDIATELY": ("no_run_immediately", lambda v: v.lower() in ("true", "1")),
 }
 
 # 反向映射：配置键 -> 环境变量名
@@ -259,6 +260,10 @@ class Config(metaclass=SingletonMeta):
             self._handle_broken_config(path, detail)
             return
 
+        # 旧体力循环统一转为定时模式；缺失的定时时间沿用模板默认值。
+        if loaded_config.get("loop_mode") == "power":
+            loaded_config["loop_mode"] = "scheduled"
+            _diag("info", "体力循环模式已移除，自动切换为定时模式")
         self._update_config(self.config, loaded_config)
         _diag("debug", f"_load_config 成功: 合并 {len(loaded_config)} 个顶层键")
         if save:

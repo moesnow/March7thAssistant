@@ -1,7 +1,13 @@
+from PySide6.QtCore import Qt
+from qfluentwidgets import InfoBar, InfoBarPosition
+
 from ..card.messagebox_custom import MessageBoxDisclaimer
 from module.config import cfg
+from module.localization import tr
+from module.logger import log
 import markdown
 import base64
+import traceback
 import sys
 import os
 
@@ -19,8 +25,13 @@ a {
     try:
         dialog = MessageBoxDisclaimer(base64.b64decode("5YWN6LSj5aOw5piO").decode("utf-8"),html_style + markdown.markdown(base64.b64decode(content).decode("utf-8")),self.window())
         result = dialog.exec()
-        if result:
-            sys.exit(0)
+    except Exception as e:
+        # 用户没有看到免责声明，不能继续运行
+        log.error(f"显示免责声明失败：{e}\n{traceback.format_exc()}")
+        sys.exit(0)
+    if result:
+        sys.exit(0)
+    try:
         cfg.set_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8"), True)
         if sys.platform == 'win32':
             path = os.path.join(os.environ[base64.b64decode("UHJvZ3JhbURhdGE=").decode("utf-8")],base64.b64decode("TWFyY2g3dGhBc3Npc3RhbnQvZGlzY2xhaW1lcg==").decode("utf-8"))
@@ -28,5 +39,15 @@ a {
             path = os.path.join(os.path.expanduser("~"),base64.b64decode("Lm1hcmNoN3RoYXNzaXN0YW50L2Rpc2NsYWltZXI=").decode("utf-8"))
         os.makedirs(os.path.dirname(path), exist_ok=True)
         open(path, 'a').close()
-    except Exception:
-        sys.exit(0)
+    except Exception as e:
+        # 用户已经确认，保存失败不退出：直接退出时用户只会看到一次没有日志的闪退
+        log.error(f"保存免责声明确认状态失败：{e}\n{traceback.format_exc()}")
+        InfoBar.error(
+            title=tr('确认状态保存失败'),
+            content=tr('解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}').format(error=f"{type(e).__name__}: {e}"),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=-1,
+            parent=self.window(),
+        )

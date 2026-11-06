@@ -911,11 +911,16 @@ class Automation(metaclass=SingletonMeta):
 
         return True
 
-    def drag_mouse(self, start, end, duration=0.5):
-        """按归一化坐标将鼠标从 start 拖动到 end。"""
+    def drag_mouse(self, start, end, duration=0.5, end_pause=0.0, repeats=1):
+        """按归一化坐标连续拖动，只截图定位一次，仅最后一次可在终点停留。"""
         duration = float(duration)
         if not math.isfinite(duration) or not 0 <= duration <= 60:
             raise ValueError("滑动时长必须在 0 到 60 秒之间")
+        end_pause = float(end_pause)
+        if not math.isfinite(end_pause) or not 0 <= end_pause <= 1:
+            raise ValueError("拖动末尾停留时长必须在 0 到 1 秒之间")
+        if isinstance(repeats, bool) or not isinstance(repeats, int) or not 1 <= repeats <= 10:
+            raise ValueError("连续拖动次数必须是 1 到 10 之间的整数")
         if any(not 0 <= value <= 1 for value in (*start, *end)):
             raise ValueError("坐标必须在 0 到 1 之间")
         self.take_screenshot()
@@ -933,6 +938,10 @@ class Automation(metaclass=SingletonMeta):
         end_xy = (offset_x + min(int(end[0] * width), width - 1),
                   offset_y + min(int(end[1] * height), height - 1))
 
+        if repeats != 1:
+            return bool(self.mouse_drag(*start_xy, *end_xy, duration, end_pause, repeats))
+        if end_pause:
+            return bool(self.mouse_drag(*start_xy, *end_xy, duration, end_pause))
         return bool(self.mouse_drag(*start_xy, *end_xy, duration))
 
     def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None, press_duration: float = 0.0, prefer_frame_screenshot=True):

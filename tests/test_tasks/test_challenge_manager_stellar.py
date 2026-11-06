@@ -1,4 +1,4 @@
-"""主任务入口按虚构叙事配置选择常规或星启模式。"""
+"""主任务入口按挑战配置选择常规或星启模式。"""
 
 import importlib.util
 import sys
@@ -10,7 +10,7 @@ import pytest
 
 
 @pytest.mark.parametrize('configured,expected', [(None, False), (False, False), (True, True)])
-def test_purefiction_stellar_mode_follows_config(configured, expected):
+def test_adapted_stellar_modes_follow_config(configured, expected):
     package = '_challenge_manager_stellar_test'
     constructors = {}
     stubs = {}
@@ -27,7 +27,8 @@ def test_purefiction_stellar_mode_follows_config(configured, expected):
     config = Mock()
     config.get_value.side_effect = lambda key, default=None: (
         configured if configured is not None else default
-    ) if key == 'purefiction_stellar_enable' else []
+    ) if key in ('purefiction_stellar_enable', 'forgottenhall_stellar_enable',
+                 'apocalyptic_stellar_enable') else []
     config_module.cfg = config
     stubs['module.config'] = config_module
     path = Path(__file__).parents[2] / 'tasks/challenge/__init__.py'
@@ -37,9 +38,7 @@ def test_purefiction_stellar_mode_follows_config(configured, expected):
     with patch.dict(sys.modules, stubs):
         spec.loader.exec_module(module)
         module.ChallengeManager()
-    assert constructors['purefiction'].call_args.kwargs == {
-        'team3': [['DanHeng', -1]], 'stellar_enable': expected,
-    }
-
-    for name in ('memoryofchaos', 'apocalyptic'):
-        assert constructors[name].call_args.kwargs == {}
+    for name in ('purefiction', 'memoryofchaos', 'apocalyptic'):
+        assert constructors[name].call_args.kwargs == {
+            'team3': [['DanHeng', -1]], 'stellar_enable': expected,
+        }

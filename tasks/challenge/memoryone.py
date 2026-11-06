@@ -30,10 +30,27 @@ class MemoryOne(BaseChallenge):
         '''切换场景并判断是否刷新'''
         screen.change_to('memory')
 
+    @staticmethod
+    def scroll_to_first_level():
+        crop = (540 / 1920, 406 / 1080, 1156 / 1920, 516 / 1080)
+        result = auto.find_element("01", "text", crop=crop)
+        for _ in range(4):
+            if result:
+                return True
+            # 组内连续拖动，不截图或识别；仅最后一次松手前停留以消除惯性。
+            if not auto.drag_mouse((415 / 1920, 820 / 1080), (1785 / 1920, 820 / 1080),
+                                   duration=0.4, end_pause=0.25, repeats=3):
+                auto.take_screenshot(crop=crop)
+                return False
+            # 组末重新截图并识别一次，不复用拖动开始前的全屏缓存。
+            result = auto.find_element("01", "text", crop=crop)
+        return bool(result)
+
     def start_challenges(self):
         '''查找关卡并判断星数'''
-        auto.mouse_scroll(30, 1, False)
-        time.sleep(2)
+        if not self.scroll_to_first_level():
+            self.success = False
+            return False
         level = 1
 
         if not self.start_challenge(level):

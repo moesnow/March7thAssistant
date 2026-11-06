@@ -35,8 +35,8 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.15"
-          python-version: "3.14.5"
+          version: "0.13.0"
+          python-version: "3.14.8"
           enable-cache: true
           cache-python: true
           prune-cache: false

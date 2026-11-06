@@ -4,6 +4,7 @@ from module.logger import log
 from module.notification.notification import NotificationLevel
 from module.screen import screen
 from tasks.base.base import Base
+from tasks.base.list_drag import drag_list
 import time
 
 
@@ -49,7 +50,9 @@ class Message(RewardTemplate):
             )
             if not unread_msg_pos:
                 log.info(f"未检测到未读消息，滚动列表继续查找（剩余 {scroll_retries} 次）")
-                auto.mouse_scroll(16)
+                if not drag_list(auto, (700 / 1920, 820 / 1080), (700 / 1920, 430 / 1080),
+                                 crop=(300 / 1920, 265 / 1080, 435 / 1920, 600 / 1080), duration=1.0):
+                    break
                 scroll_retries -= 1
                 continue
 

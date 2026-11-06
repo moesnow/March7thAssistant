@@ -47,7 +47,7 @@ class Api:
         self.minimized = False
         self.events = []
         self.watchers = []
-        self.on_post = self.on_scroll = self.on_move = self.on_focus = self.on_sync = None
+        self.on_post = self.on_scroll = self.on_move = self.on_focus = self.on_sync = self.on_release = None
         self.focus_denied = set()
         self.buttons_down = False
         self.protections = []
@@ -92,6 +92,12 @@ class Api:
         self.change_focus(window.hwnd)
         if self.on_focus:
             self.on_focus(window)
+        return True
+
+    def release_activation(self, window):
+        self.events.append(('release_activation',window.hwnd))
+        if self.on_release:
+            self.on_release(window)
         return True
 
     def watch_foreground(self, window):
@@ -200,12 +206,177 @@ def test_hold_modifier_across_click_and_release(backend):
     assert b.input._session is None
 
 
+def test_session_end_clears_thread_activation_after_inactive(backend):
+    """投递的激活留在游戏线程上时，之后真实切到前台不会再有激活消息，游戏键鼠全部失效。"""
+    b=backend
+    assert b.input.press_key('a',0) is True
+    inactive = posts(b.api,0x6)[-1]
+    assert inactive[3]==0
+    assert b.api.events.index(inactive) < b.api.events.index(('release_activation',10))
+    assert b.api.foreground()==20
+
+
+def test_every_background_session_clears_activation(backend):
+    b=backend
+    b.input.press_key('a',0)
+    b.input.mouse_click(350,450)
+    assert b.api.events.count(('release_activation',10))==2
+
+
+def test_held_input_keeps_activation_until_session_ends(backend):
+    b=backend
+    b.input.press_key_down('alt')
+    assert ('release_activation',10) not in b.api.events
+    b.input.press_key_up('alt')
+    assert b.api.events.count(('release_activation',10))==1
+
+
+def test_foreground_game_keeps_its_real_activation(backend):
+    b=backend
+    b.api.fg=10
+    b.input.press_key('a',0)
+    assert not posts(b.api,0x6)
+    assert ('release_activation',10) not in b.api.events
+
+
+def test_switching_to_game_during_session_keeps_activation(backend):
+    b=backend
+    b.input.press_key_down('alt')
+    b.api.change_focus(10)
+    b.input.release_all()
+    assert [event[3] for event in posts(b.api,0x6)]==[1]
+    assert ('release_activation',10) not in b.api.events
+
+
+def test_activation_cleanup_failure_is_not_input_release_failure(backend):
+    b=backend
+    b.api.on_release=Mock(side_effect=OSError('denied'))
+    assert b.input.press_key('a',0) is True
+    assert b.input._session is None
+    assert b.api.cursor()==(7,9)
+    assert '清除游戏激活状态失败' in b.input.logger.debug.call_args.args[0]
+
+
+def test_closed_window_needs_no_activation_cleanup(backend):
+    b=backend
+    b.input.press_key_down('alt')
+    del b.api.windows[10]
+    b.input.release_all()
+    assert ('release_activation',10) not in b.api.events
+    assert b.input._session is None
+
+
 def test_drag_preserves_button_mask_and_restores(backend):
     b=backend
     assert b.input.mouse_drag(300,400,500,600,.1)
     assert any(event[3]==1 for event in posts(b.api,0x200))
     assert len(posts(b.api,0x201))==len(posts(b.api,0x202))==1
     assert b.api.cursor()==(7,9)
+
+
+def test_drag_group_uses_one_session_and_holds_only_before_last_release(backend, monkeypatch):
+    b = backend
+    original_wait = b.input._wait
+    holds = []
+
+    def wait(seconds):
+        if seconds == 0.25:
+            assert len(posts(b.api, 0x201)) == 3
+            assert len(posts(b.api, 0x202)) == 2
+            holds.append(seconds)
+        return original_wait(seconds)
+
+    monkeypatch.setattr(b.input, "_wait", wait)
+    assert b.input.mouse_drag(300, 400, 500, 600, 0.4, 0.25, 3)
+    assert holds == [0.25]
+    assert len(posts(b.api, 0x201)) == len(posts(b.api, 0x202)) == 3
+    assert b.api.events.count(('release_activation', 10)) == 1
+    assert b.api.cursor() == (7, 9)
+
+
+@pytest.mark.parametrize("interruption", ["focus", "stop"])
+def test_drag_group_stops_on_second_stroke_without_replaying(backend, interruption):
+    b = backend
+
+    def interrupt(msg, *_):
+        if msg == 0x201 and len(posts(b.api, 0x201)) == 2:
+            if interruption == "focus":
+                b.api.change_focus(30)
+            else:
+                b.ctl.cancelled = True
+
+    b.api.on_post = interrupt
+    if interruption == "stop":
+        with pytest.raises(RunStopRequested):
+            b.input.mouse_drag(300, 400, 500, 600, 0.4, 0.25, 3)
+    else:
+        assert b.input.mouse_drag(300, 400, 500, 600, 0.4, 0.25, 3) is False
+    assert len(posts(b.api, 0x201)) == 2
+    assert len(posts(b.api, 0x202)) == 2
+    assert not b.input._mouse_down
+
+
+@pytest.mark.parametrize("interruption", ["focus", "pause"])
+def test_drag_group_interrupted_between_strokes_is_not_complete(backend, interruption):
+    b = backend
+
+    def interrupt(msg, *_):
+        if msg == 0x202 and len(posts(b.api, 0x202)) == 1:
+            if interruption == "focus":
+                b.api.change_focus(30)
+            else:
+                b.ctl.paused = True
+
+    b.api.on_post = interrupt
+    assert b.input.mouse_drag(300, 400, 500, 600, 0.4, 0.25, 3) is False
+    assert len(posts(b.api, 0x201)) == len(posts(b.api, 0x202)) == 1
+    assert not b.input._mouse_down
+
+
+@pytest.mark.parametrize("cancelled", [False, True])
+def test_drag_endpoint_pause_is_interruptible_and_releases_mouse(backend, monkeypatch, cancelled):
+    b = backend
+    original_wait = b.input._wait
+    holds = []
+
+    def wait(seconds):
+        if seconds == 0.25:
+            assert b.input._mouse_down
+            assert b.input._point == (400, 400)
+            holds.append(seconds)
+            b.ctl.cancelled = cancelled
+        return original_wait(seconds)
+
+    monkeypatch.setattr(b.input, "_wait", wait)
+    if cancelled:
+        with pytest.raises(RunStopRequested):
+            b.input.mouse_drag(300, 400, 500, 600, 0.4, 0.25)
+    else:
+        assert b.input.mouse_drag(300, 400, 500, 600, 0.4, 0.25)
+    assert holds == [0.25]
+    assert not b.input._mouse_down
+    assert posts(b.api, 0x202)
+    assert b.api.cursor() == (7, 9)
+
+
+@pytest.mark.parametrize("interruption", ["focus", "pause"])
+def test_endpoint_pause_interruption_never_reports_a_complete_drag(backend, monkeypatch, interruption):
+    b = backend
+    original_wait = b.input._wait
+
+    def wait(seconds):
+        if seconds == 0.25:
+            if interruption == "focus":
+                b.api.change_focus(30)
+            else:
+                b.ctl.paused = True
+        return original_wait(seconds)
+
+    monkeypatch.setattr(b.input, "_wait", wait)
+    assert b.input.mouse_drag(300, 400, 500, 600, 0.4, 0.25) is False
+    assert not b.input._mouse_down
+    assert len(posts(b.api, 0x201)) == 1
+    assert posts(b.api, 0x202)
 
 
 def test_chord_releases_in_reverse_order(backend):

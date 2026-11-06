@@ -39,8 +39,8 @@ class InputBase(ABC):
         pass
 
     @abstractmethod
-    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5):
-        '''按住鼠标左键从起点拖动到终点'''
+    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5, end_pause=0.0, repeats=1):
+        '''连续执行相同拖动，仅最后一次在松手前停留 end_pause 秒'''
         pass
 
     @abstractmethod

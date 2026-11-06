@@ -28,6 +28,148 @@ def test_drag_mouse_converts_relative_coordinates():
     assert events == [("drag", 292, 266, 1828, 914, 0.1)]
 
 
+def test_drag_mouse_forwards_optional_pause_before_release():
+    events = []
+    automation = create_automation(events)
+    assert automation.drag_mouse((0.1, 0.2), (0.9, 0.8), 0.4, 0.25)
+    assert events == [("drag", 292, 266, 1828, 914, 0.4, 0.25)]
+
+
+def test_drag_group_captures_geometry_once_and_propagates_interruption():
+    automation = create_automation([])
+    automation.take_screenshot = Mock()
+    automation.mouse_drag = Mock(return_value=False)
+    assert automation.drag_mouse((0.1, 0.2), (0.9, 0.8), 0.4, 0.25, repeats=3) is False
+    automation.take_screenshot.assert_called_once()
+    automation.mouse_drag.assert_called_once_with(292, 266, 1828, 914, 0.4, 0.25, 3)
+
+
+@pytest.mark.parametrize("repeats", [0, -1, 11, 1.5, True, None])
+def test_invalid_drag_count_is_rejected_before_capture(repeats):
+    automation = create_automation([])
+    automation.take_screenshot = Mock()
+    with pytest.raises(ValueError):
+        automation.drag_mouse((0, 0), (1, 1), repeats=repeats)
+    automation.take_screenshot.assert_not_called()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="本地输入后端仅在 Windows 使用")
+@pytest.mark.parametrize("interrupted", [False, True])
+def test_local_drag_group_releases_each_stroke_and_holds_only_last(monkeypatch, interrupted):
+    from module.automation import local_input as module
+
+    events = []
+    monkeypatch.setattr(module.pyautogui, "moveTo", lambda *args, **kwargs: None)
+    monkeypatch.setattr(module.pyautogui, "mouseUp", lambda: events.append("up"))
+
+    def down():
+        events.append("down")
+        if interrupted and events.count("down") == 2:
+            raise RuntimeError("interrupted")
+
+    def hold(seconds):
+        assert seconds == 0.25
+        assert events.count("down") == 3 and events.count("up") == 2
+        events.append("hold")
+
+    monkeypatch.setattr(module.pyautogui, "mouseDown", down)
+    monkeypatch.setattr(module, "time", SimpleNamespace(sleep=hold))
+    backend = module.LocalInput(SimpleNamespace(debug=lambda *_: None, error=lambda *_: None))
+    if interrupted:
+        with pytest.raises(RuntimeError):
+            backend.mouse_drag(1, 2, 3, 4, 0.4, 0.25, 3)
+        assert events == ["down", "up", "down", "up"]
+    else:
+        assert backend.mouse_drag(1, 2, 3, 4, 0.4, 0.25, 3)
+        assert events == ["down", "up", "down", "up", "down", "hold", "up"]
+
+
+@pytest.mark.parametrize("interrupted", [False, True])
+def test_cdp_drag_group_releases_each_stroke_and_stops_after_failure(monkeypatch, interrupted):
+    from module.automation import cdp_input as module
+
+    events = []
+
+    def dispatch(_, event):
+        events.append(event)
+        if interrupted and event["type"] == "mousePressed" and sum(e["type"] == "mousePressed" for e in events) == 2:
+            raise RuntimeError("interrupted")
+
+    def hold(seconds):
+        assert seconds == 0.25
+        assert sum(e["type"] == "mousePressed" for e in events) == 3
+        assert sum(e["type"] == "mouseReleased" for e in events) == 2
+
+    monkeypatch.setattr(module, "time", SimpleNamespace(monotonic=lambda: 0, sleep=hold))
+    backend = module.CdpInput(SimpleNamespace(execute_cdp_cmd=dispatch), SimpleNamespace(error=lambda *_: None))
+    if interrupted:
+        with pytest.raises(RuntimeError):
+            backend.mouse_drag(1, 2, 3, 4, 0, 0.25, 3)
+    else:
+        assert backend.mouse_drag(1, 2, 3, 4, 0, 0.25, 3)
+    expected = 2 if interrupted else 3
+    assert sum(e["type"] == "mousePressed" for e in events) == expected
+    assert sum(e["type"] == "mouseReleased" for e in events) == expected
+
+
+@pytest.mark.parametrize("end_pause", [float("nan"), float("inf"), -1, 1.01])
+def test_drag_mouse_rejects_invalid_end_pause_before_input(end_pause):
+    automation = create_automation([])
+    automation.take_screenshot = Mock()
+    with pytest.raises(ValueError):
+        automation.drag_mouse((0, 0), (1, 1), 0.4, end_pause)
+    automation.take_screenshot.assert_not_called()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="本地输入后端仅在 Windows 使用")
+@pytest.mark.parametrize("interrupted", [False, True])
+def test_local_drag_holds_endpoint_before_release_and_cleans_on_interruption(monkeypatch, interrupted):
+    from module.automation import local_input as module
+
+    events = []
+    monkeypatch.setattr(module.pyautogui, "moveTo", lambda *args, **kwargs: events.append("move"))
+    monkeypatch.setattr(module.pyautogui, "mouseDown", lambda: events.append("down"))
+    monkeypatch.setattr(module.pyautogui, "mouseUp", lambda: events.append("up"))
+
+    def hold(seconds):
+        assert seconds == 0.25 and events[-1] == "move"
+        events.append("hold")
+        if interrupted:
+            raise RuntimeError("interrupted")
+
+    monkeypatch.setattr(module, "time", SimpleNamespace(sleep=hold))
+    backend = module.LocalInput(SimpleNamespace(debug=lambda *_: None, error=lambda *_: None))
+    if interrupted:
+        with pytest.raises(RuntimeError):
+            backend.mouse_drag(1, 2, 3, 4, 0.4, 0.25)
+    else:
+        assert backend.mouse_drag(1, 2, 3, 4, 0.4, 0.25)
+    assert events == ["move", "down", "move", "hold", "up"]
+
+
+@pytest.mark.parametrize("interrupted", [False, True])
+def test_cdp_drag_holds_with_button_down_and_releases_on_interruption(monkeypatch, interrupted):
+    from module.automation import cdp_input as module
+
+    events = []
+
+    def hold(seconds):
+        assert seconds == 0.25
+        assert events[-1]["type"] == "mouseMoved" and events[-1]["buttons"] == 1
+        if interrupted:
+            raise RuntimeError("interrupted")
+
+    monkeypatch.setattr(module, "time", SimpleNamespace(monotonic=lambda: 0, sleep=hold))
+    backend = module.CdpInput(SimpleNamespace(execute_cdp_cmd=lambda _, event: events.append(event)),
+                              SimpleNamespace(error=lambda *_: None))
+    if interrupted:
+        with pytest.raises(RuntimeError):
+            backend.mouse_drag(1, 2, 3, 4, 0, 0.25)
+    else:
+        assert backend.mouse_drag(1, 2, 3, 4, 0, 0.25)
+    assert events[-1]["type"] == "mouseReleased" and events[-1]["buttons"] == 0
+
+
 @pytest.mark.parametrize('action', ['click', 'down', 'up', 'move'])
 def test_interrupted_background_pointer_result_reaches_existing_callers(action):
     automation = object.__new__(Automation)

@@ -49,6 +49,15 @@ class TestGetEnvOverride:
         assert has_override is True
         assert value == "Shutdown"
 
+    @pytest.mark.parametrize("env_value, expected", [("true", True), ("1", True), ("false", False), ("0", False)])
+    def test_no_run_immediately(self, monkeypatch, env_value, expected):
+        monkeypatch.setenv("MARCH7TH_NO_RUN_IMMEDIATELY", env_value)
+        assert _get_env_override("no_run_immediately") == (True, expected)
+
+    def test_no_run_immediately_unset(self, monkeypatch):
+        monkeypatch.delenv("MARCH7TH_NO_RUN_IMMEDIATELY", raising=False)
+        assert _get_env_override("no_run_immediately") == (False, None)
+
 
 class TestEnvOverrideMap:
     def test_all_mappings_have_converter(self):
@@ -569,3 +578,58 @@ class TestDiagLogRotation:
         from module.config.config import _diag_rotated_path
         assert _diag_rotated_path().endswith(".1.log")
         assert _diag_rotated_path().endswith(".log")
+
+
+class TestPowerLoopMigration:
+    @pytest.mark.parametrize("mode, scheduled_time", [
+        ("power", "7:35"), ("power", None), ("scheduled", "9:10"),
+    ])
+    def test_load_migrates_and_preserves_settings(self, tmp_path, monkeypatch, mode, scheduled_time):
+        from pathlib import Path
+        from module.config.config import Config
+
+        monkeypatch.delenv("MARCH7TH_CONFIG_READONLY", raising=False)
+        root = Path(__file__).resolve().parents[2]
+        path = tmp_path / "config.yaml"
+        text = f"loop_mode: {mode}\npower_limit: 160\npower_enable: false\nrefresh_hour: 5\nafter_finish: Loop\n"
+        text += "power_plan: []\nscheduled_tasks: []\n"
+        if scheduled_time is not None:
+            text += f"scheduled_time: '{scheduled_time}'\n"
+        path.write_text(text, encoding="utf-8")
+        # 绕过单例缓存，但执行真实初始化、模板合并和安全落盘。
+        config = Config.__new__(Config)
+        config.__init__(str(root / "assets/config/version.txt"),
+                        str(root / "assets/config/config.example.yaml"), str(path))
+        assert config.loop_mode == "scheduled"
+        assert config.scheduled_time == (scheduled_time or "4:00")
+        assert config.after_finish == "Loop"
+        assert config.power_enable is False
+        assert config.power_plan == []
+        assert config.scheduled_tasks == []
+        assert config.refresh_hour == 5
+        saved = config.yaml.load(path.read_text(encoding="utf-8"))
+        assert saved == config.config
+        assert "power_limit" not in saved
+        original = path.read_bytes()
+        with patch("module.config.config._diag") as diag:
+            config._load_config()
+        assert path.read_bytes() == original
+        assert not config.is_config_changed()
+        assert not any("体力循环模式已移除" in str(call) for call in diag.call_args_list)
+
+    def test_readonly_migrates_in_memory_without_writing(self, tmp_path, monkeypatch):
+        from pathlib import Path
+        from module.config.config import Config
+
+        monkeypatch.setenv("MARCH7TH_CONFIG_READONLY", "1")
+        monkeypatch.setattr(Config, "_readonly", False)
+        root = Path(__file__).resolve().parents[2]
+        path = tmp_path / "config.yaml"
+        original = "loop_mode: power\nscheduled_time: '8:00'\n"
+        path.write_text(original, encoding="utf-8")
+        config = Config.__new__(Config)
+        config.__init__(str(root / "assets/config/version.txt"),
+                        str(root / "assets/config/config.example.yaml"), str(path))
+        assert config.loop_mode == "scheduled"
+        assert config.scheduled_time == "8:00"
+        assert path.read_text(encoding="utf-8") == original

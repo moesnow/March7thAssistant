@@ -6,7 +6,8 @@
 March7th Assistant.exe 在清单里要求管理员权限，未提权的终端、脚本或 AI Agent 无法直接运行它；
 即使通过 UAC 启动，任务也在新开的控制台窗口里执行，调用方既看不到输出，也拿不到退出码。
 这里把任务交给管理员进程执行，同时跟随 logs/runs/<运行编号>.log 把输出转发到当前终端，
-结束后返回任务的真实退出码。所有结构化输出（JSON）都只含 ASCII 字符，不受终端编码影响。
+结束后返回任务的真实退出码。用户开启「免 UAC 运行」后，管理员进程改由计划任务启动，不再弹出 UAC
+（见 utils/uac_free.py）。所有结构化输出（JSON）都只含 ASCII 字符，不受终端编码影响。
 """
 import codecs
 import json
@@ -109,25 +110,40 @@ def _entrypoints(install_dir: str) -> dict:
     }
 
 
+def _elevation(is_admin: bool, uac_free_state: str) -> str:
+    """运行任务时怎样取得管理员权限：admin 已是管理员 / task 免 UAC 计划任务 / uac 弹出 UAC / not_required 非 Windows。"""
+    from utils import uac_free
+    if sys.platform != "win32":
+        return "not_required"
+    if is_admin:
+        return "admin"
+    return "task" if uac_free_state == uac_free.STATE_ON else "uac"
+
+
 def collect_status() -> dict:
     """汇总安装、配置与运行状态。只读：以只读方式加载配置，不写 config.yaml。"""
     import base64
 
     os.environ["MARCH7TH_CONFIG_READONLY"] = "1"
     from module.config import cfg
+    from utils import uac_free
     from utils.admin import is_user_admin
     from utils.install_registry import is_gui_running, registry_path
 
     install_dir = os.path.abspath(os.getcwd())
     config_path = os.path.abspath("config.yaml")
     game_path = cfg.get_value("game_path") or ""
+    is_admin = is_user_admin()
+    uac_free_state = uac_free.state()[0]
     status = {
         "schema": 1,
         "version": cfg.version,
         "install_dir": install_dir,
         "frozen": bool(getattr(sys, "frozen", False)),
         "platform": sys.platform,
-        "is_admin": is_user_admin(),
+        "is_admin": is_admin,
+        "elevation": _elevation(is_admin, uac_free_state),
+        "uac_free": uac_free_state,
         "entrypoints": _entrypoints(install_dir),
         "config_file": config_path,
         "config_exists": os.path.exists(config_path),
@@ -232,12 +248,18 @@ def _normalize_exit_code(code) -> int:
 
 # ---------- 提权运行 ----------
 
-def worker_command(argv, run_id: str) -> list:
-    """管理员进程的完整命令行：去掉仅入口处理的参数，附加运行编号与非交互模式。"""
+def worker_args(argv, run_id: str) -> list:
+    """管理员进程的参数：去掉仅入口处理的参数，附加运行编号与非交互模式。"""
     args = [arg for arg in argv if arg not in FRONTEND_ONLY_FLAGS]
     args += ["--run-id", run_id]
     if "--non-interactive" not in args:
         args.append("--non-interactive")
+    return args
+
+
+def worker_command(argv, run_id: str) -> list:
+    """管理员进程的完整命令行。"""
+    args = worker_args(argv, run_id)
     if getattr(sys, "frozen", False):
         worker = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "March7th Assistant.exe")
         if not os.path.exists(worker):
@@ -253,18 +275,43 @@ def _launch_elevated(cmd):
 
 
 def run_task_elevated(argv, json_output=False, detach=False, launcher=None, out=None, poll_interval=0.2) -> int:
-    """以管理员身份运行任务，跟随输出并返回任务的退出码（detach 时启动后立即返回）。"""
+    """以管理员身份运行任务，跟随输出并返回任务的退出码（detach 时启动后立即返回）。
+
+    用户开启了免 UAC 运行时由计划任务启动（见 utils/uac_free.py），否则通过 UAC 提权；
+    传入 launcher 时固定用它启动（测试用）。
+    """
+    from utils import uac_free
     from utils.admin import ERROR_CANCELLED
 
     out = out or sys.stdout
     run_id = new_run_id()
-    cmd = worker_command(argv, run_id)
-    _say(out, f"运行任务需要管理员权限，请在 UAC 弹窗中选择「是」。运行编号 {run_id}")
+    task_state, task_info = uac_free.state() if launcher is None else (uac_free.STATE_OFF, None)
+    via_task = task_state == uac_free.STATE_ON
+    if via_task:
+        _say(out, f"已开启免 UAC 运行，由计划任务以管理员权限启动任务。运行编号 {run_id}")
+    else:
+        if task_state == uac_free.STATE_OTHER:
+            _say(out, f"免 UAC 运行是在另一个安装目录开启的（{task_info.get('path')}），对当前目录不生效")
+        elif task_state == uac_free.STATE_DISABLED:
+            _say(out, f"免 UAC 运行的计划任务 {uac_free.TASK_NAME} 已在任务计划程序中被禁用")
+        _say(out, f"运行任务需要管理员权限，请在 UAC 弹窗中选择「是」。运行编号 {run_id}")
     try:
-        process = (launcher or _launch_elevated)(cmd)
+        if via_task:
+            # 任务窗口同样最小化且不抢焦点（计划任务无法指定窗口状态，由管理员进程自己处理）
+            process = uac_free.launch(worker_args(argv, run_id) + ["--minimize-console"], run_id)
+        else:
+            process = (launcher or _launch_elevated)(worker_command(argv, run_id))
+    except KeyboardInterrupt:
+        # 多见于等待计划任务启动的几秒内：任务可能已经启动，按运行编号继续查看即可
+        _say(out, f"已停止等待，任务可能已经在管理员窗口中启动；继续查看：{entry_hint()} --follow {run_id}")
+        return 130
     except OSError as e:
         if getattr(e, "winerror", None) == ERROR_CANCELLED:
             _say(out, "已取消管理员授权（UAC），任务未运行")
+            _say(out, "如需在无人确认时运行任务，可以在图形界面「设置 → 杂项」中开启「免 UAC 运行」")
+        elif via_task:
+            _say(out, f"免 UAC 运行未能启动任务：{e}")
+            _say(out, "可以在图形界面「设置 → 杂项」中关闭「免 UAC 运行」后重新开启；本次没有改用 UAC，避免无人确认时一直等待")
         else:
             _say(out, f"无法以管理员身份启动任务：{e}")
         if json_output:

@@ -149,3 +149,5 @@ According to Microsoft documentation, `Sudo for Windows` is only available on Wi
 If the terminal shows an error after launching this way, troubleshoot based on the actual error first.
 
 Common causes are still insufficient permissions, antivirus deleting files, blocked dependencies, or an incorrect working directory.
+
+If the GUI crashes and the terminal shows no error either, check `logs\crash.log` in the assistant folder: it records uncaught exceptions and crash details. A 「图形界面启动」 (GUI started) entry with no matching 「图形界面退出」 (GUI exited) entry means the program was ended by something external, such as antivirus software, or hit a crash that could not be captured.

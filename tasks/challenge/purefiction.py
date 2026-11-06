@@ -41,6 +41,7 @@ class PureFiction(BaseChallenge):
 
         if not auto.find_element(self.name, "text", max_retries=10, crop=(689.0 / 1920, 285.0 / 1080, 970.0 / 1920, 474.0 / 1080), include=True):
             return False
+        # 星启模式改在关卡页判断最高关星数（StellarChallenge._open_highest_level）。
         if not self.stellar.enabled and self.check_star_in_ocr_results(auto.ocr_result):
             self.save_timestamp_into_config()
             return False

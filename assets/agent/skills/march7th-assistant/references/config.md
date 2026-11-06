@@ -41,7 +41,7 @@ scheduled_tasks:
 
 ## 完成后操作
 
-`after_finish`：`None`、`Exit`、`Loop`（循环运行，按 `loop_mode` 等待下一轮）、`Shutdown`、`Sleep`、`Hibernate`、`Restart`、`Logoff`、`TurnOffDisplay`、`RunScript`。
+`after_finish`：`None`、`Exit`、`Loop`（循环运行，按 `scheduled_time` 等待下一轮，默认 `4:00`）、`Shutdown`、`Sleep`、`Hibernate`、`Restart`、`Logoff`、`TurnOffDisplay`、`RunScript`。
 只是本次运行不想关机时，用命令行参数 `--after-finish None`，不要改配置。
 
 ## 消息推送

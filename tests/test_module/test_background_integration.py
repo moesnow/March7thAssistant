@@ -98,12 +98,11 @@ def test_background_start_does_not_wait_when_game_is_not_running(monkeypatch):
 
 def test_launcher_keeps_own_foreground_handler(monkeypatch):
     import module.automation.launcher_automation as module
-    import module.automation.local_input as local
     monkeypatch.setattr(module,'cfg',config())
     handler=Mock()
     factory=Mock(return_value=handler)
     game_factory=Mock(side_effect=AssertionError('launcher must not borrow game HWND'))
-    monkeypatch.setattr(local,'LocalInput',factory)
+    monkeypatch.setitem(sys.modules, 'module.automation.local_input', SimpleNamespace(LocalInput=factory))
     monkeypatch.setattr(module,'get_game_controller',game_factory)
     launcher=SimpleNamespace(logger=Mock())
     module.LauncherAutomation._init_input(launcher)
@@ -154,6 +153,7 @@ def test_backend_snapshot_enforces_background_capture_after_setting_changes(capt
     c.desktop.assert_not_called()
 
 
+@pytest.mark.skipif(sys.platform!='win32',reason='自动对话仅在 Windows 上启用')
 def test_background_autoplot_uses_available_window_and_releases_on_stop(monkeypatch,qapp):
     from tasks.tool.autoplot import _engine as module
     backend=SimpleNamespace(is_background=True,is_available=Mock(return_value=True),release_all=Mock())

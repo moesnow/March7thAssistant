@@ -1,6 +1,7 @@
 from module.logger import log
 from module.automation import auto
 from module.ocr import ocr
+from tasks.base.list_drag import drag_to_edge
 import time
 import json
 import sys
@@ -25,8 +26,8 @@ class Tasks:
 
     def start(self):
         if self.detect():
-            self.scroll()
-            self.detect()
+            if self.scroll():
+                self.detect()
 
     def detect(self):
         screenshot, _, _ = auto.take_screenshot(crop=self.crop)
@@ -52,9 +53,9 @@ class Tasks:
         return True
 
     def scroll(self):
-        auto.click_element("./assets/images/zh_CN/reward/quest/activity.png", "image", 0.95, crop=self.crop)
-        auto.mouse_scroll(40, -1)
+        completed = drag_to_edge(auto, (1500 / 1920, 650 / 1080), (750 / 1920, 650 / 1080), crop=self.crop, duration=1.0)
         time.sleep(1)
+        return completed
 
     def _merge_block_data(self, block_list):
         """合并一个块内所有小元素的文本"""
