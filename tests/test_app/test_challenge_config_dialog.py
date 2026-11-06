@@ -266,6 +266,78 @@ def test_range_controls_use_mode_level_limits(editor, qtbot, prefix, highest):
         assert box.maximum() == highest
 
 
+@pytest.mark.parametrize('prefix,highest', [('forgottenhall', 12), ('purefiction', 4), ('apocalyptic', 4)])
+def test_single_level_config_initializes_card_and_both_range_controls(editor, qtbot, prefix, highest):
+    _, data, config, parent = editor
+    data[f'{prefix}_level'] = [3]
+    card = module.ChallengeConfigCard(QIcon(), 'test', prefix, highest, parent)
+    qtbot.addWidget(card)
+    dialog = module.ChallengeConfigDialog('test', prefix, highest, parent)
+    qtbot.addWidget(dialog)
+
+    assert card.contentLabel.text() == f"{module.tr('关卡范围')} 3–3 · {module.tr('常规模式')}"
+    assert dialog.values()[f'{prefix}_level'] == [3, 3]
+    for box in (dialog.first_level, dialog.last_level):
+        assert box.minimum() == 1
+        assert box.maximum() == highest
+    dialog.reject()
+    assert data[f'{prefix}_level'] == [3]
+    config.set_value.assert_not_called()
+    config.set_values.assert_not_called()
+
+
+@pytest.mark.parametrize('levels', [[], None, 3, '3', [1, 2, 3], ['bad', 4], [True, 4]])
+def test_invalid_level_config_uses_safe_range_in_card_and_dialog(editor, qtbot, levels):
+    _, data, config, parent = editor
+    data['purefiction_level'] = levels
+    card = module.ChallengeConfigCard(QIcon(), 'test', 'purefiction', 4, parent)
+    qtbot.addWidget(card)
+    dialog = module.ChallengeConfigDialog('test', 'purefiction', 4, parent)
+    qtbot.addWidget(dialog)
+
+    assert card.contentLabel.text() == f"{module.tr('关卡范围')} 4–4 · {module.tr('常规模式')}"
+    assert dialog.values()['purefiction_level'] == [4, 4]
+    for box in (dialog.first_level, dialog.last_level):
+        assert box.minimum() == 1
+        assert box.maximum() == 4
+    config.set_value.assert_not_called()
+    config.set_values.assert_not_called()
+
+
+@pytest.mark.parametrize('prefix,highest', [('forgottenhall', 12), ('purefiction', 4), ('apocalyptic', 4)])
+def test_out_of_bounds_range_is_consistent_in_card_and_dialog(editor, qtbot, prefix, highest):
+    _, data, _, parent = editor
+    data[f'{prefix}_level'] = [0, highest + 1]
+    card = module.ChallengeConfigCard(QIcon(), 'test', prefix, highest, parent)
+    qtbot.addWidget(card)
+    dialog = module.ChallengeConfigDialog('test', prefix, highest, parent)
+    qtbot.addWidget(dialog)
+
+    assert card.contentLabel.text() == f"{module.tr('关卡范围')} 1–{highest} · {module.tr('常规模式')}"
+    assert dialog.values()[f'{prefix}_level'] == [1, highest]
+
+
+def test_saving_single_level_config_writes_two_endpoints_once(editor, qtbot, monkeypatch):
+    _, data, config, parent = editor
+    data['purefiction_level'] = [3]
+    dialog = module.ChallengeConfigDialog('test', 'purefiction', 4, parent)
+    qtbot.addWidget(dialog)
+    assert dialog.validate_inputs()
+    dialog.exec = Mock(return_value=True)
+    monkeypatch.setattr(module, 'ChallengeConfigDialog', Mock(return_value=dialog))
+    config.set_values.side_effect = lambda values: data.update(deepcopy(values))
+    card = module.ChallengeConfigCard(QIcon(), 'test', 'purefiction', 4, parent)
+    qtbot.addWidget(card)
+    config.set_values.assert_not_called()
+
+    card._edit()
+
+    config.set_values.assert_called_once()
+    assert data['purefiction_level'] == [3, 3]
+    assert data['purefiction_timestamp'] == 0
+    assert card.contentLabel.text() == f"{module.tr('关卡范围')} 3–3 · {module.tr('常规模式')}"
+
+
 def test_save_is_one_write_with_all_three_teams(editor, monkeypatch):
     dialog, _, config, parent = editor
     dialog.exec = Mock(return_value=True)
