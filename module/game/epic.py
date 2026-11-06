@@ -55,10 +55,10 @@ def find_epic_install(game_path):
             with manifest.open(encoding="utf-8-sig") as stream:
                 item = json.load(stream)
             root, app_name = item.get("InstallLocation"), item.get("AppName")
-            # DLC 等附加内容与游戏共用安装目录，只认主程序的清单
+            # 主程序清单的 MainGameAppName 可以为空，DLC 则指向另一应用。
             if (isinstance(root, str) and ntpath.isabs(root) and _inside(game_path, root)
                     and isinstance(app_name, str) and app_name
-                    and item.get("MainGameAppName", app_name) == app_name):
+                    and item.get("MainGameAppName", "") in ("", app_name)):
                 installs.add((ntpath.normcase(ntpath.normpath(root)), _launch_id(item)))
         except (OSError, ValueError, AttributeError):
             continue
@@ -75,7 +75,7 @@ class EpicLauncherController(LauncherController):
         self.install_root = install_root
 
     def get_window_handle(self):
-        candidates = self.get_window_handles()
+        candidates = self.get_window_handles((self.window_name, "Honkai Star Rail"))
         if not candidates:
             return None
         if not self.install_root:
@@ -133,30 +133,35 @@ class EpicGameLauncher:
             return True
         if self.launcher.get_window_handle() != self.hwnd:
             raise EpicLaunchError("Epic 启动[识别按钮]：HoYoPlay 窗口已变化，停止操作")
-        self.launcher.set_foreground_window_with_retry(self.hwnd)
+        if win32gui.GetForegroundWindow() != self.hwnd:
+            try:
+                self.launcher.set_foreground_window_with_retry(self.hwnd)
+            except RuntimeError:
+                return False
         from module.automation.launcher_automation import LauncherAutomation
         from module.automation.screenshot import Screenshot
         if self.automation is None:
             self.automation = LauncherAutomation("HoYoPlay", self.game.logger)
         left, top, right, bottom = win32gui.GetClientRect(self.hwnd)
         origin = win32gui.ClientToScreen(self.hwnd, (left, top))
-        region = (*origin, right - left, bottom - top)
-        if region[2] <= 0 or region[3] <= 0:
+        width, height = right - left, bottom - top
+        crop_left, crop_top, crop_width, crop_height = self.BUTTON_REGION
+        monitor = {
+            "left": origin[0] + int(width * crop_left),
+            "top": origin[1] + int(height * crop_top),
+            "width": int(width * crop_width),
+            "height": int(height * crop_height),
+        }
+        if monitor["width"] <= 0 or monitor["height"] <= 0:
             return False
         if win32gui.GetForegroundWindow() != self.hwnd:
             return False
-        crop_region = (
-            origin[0] + int(region[2] * self.BUTTON_REGION[0]),
-            origin[1] + int(region[3] * self.BUTTON_REGION[1]),
-            int(region[2] * self.BUTTON_REGION[2]),
-            int(region[3] * self.BUTTON_REGION[3]),
-        )
         # 截取窗口右下客户区，供 OCR 识别开始游戏按钮。
-        image = Screenshot.capture_screen_with_mss(crop_region)
+        image = Screenshot.capture_screen_with_mss(monitor)
         if image is None:
             return False
         self.automation.screenshot = image
-        self.automation.screenshot_pos = crop_region[:2]
+        self.automation.screenshot_pos = (monitor["left"], monitor["top"])
         self.automation.screenshot_scale_factor = 1
         position = self.automation.find_element(
             self.START_TEXTS, "text", take_screenshot=False, include=False)
@@ -200,7 +205,7 @@ class EpicGameLauncher:
                     self.stage = "识别按钮"
                     self.automation = None
                     if not self._wait(self._click_start, self.BUTTON_TIMEOUT):
-                        raise EpicLaunchError("Epic 启动[识别按钮]超时：未识别到右下角开始游戏，请确认登录完成、星铁页面已打开且无需更新")
+                        raise EpicLaunchError("Epic 启动[识别按钮]超时：未识别到右下角开始游戏，请确认 HoYoPlay 在前台、已登录、星铁页面已打开且无需更新")
             self.stage = "等待游戏"
             self.game.log_info("Epic 启动[等待游戏]：等待星铁窗口")
             if not self._wait(self._game_ready, self.GAME_TIMEOUT):

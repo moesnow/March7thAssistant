@@ -1,5 +1,6 @@
 """不启动真实进程：覆盖渠道协议、窗口归属、句柄截图、OCR 和暂停后的点击保护。"""
 import json
+from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import Mock
 from urllib.parse import unquote, urlsplit
@@ -46,16 +47,17 @@ def launch_env(monkeypatch):
     monkeypatch.setattr(epic.win32gui, "ClientToScreen", lambda *_: (100, 200))
     monkeypatch.setattr(epic.win32gui, "GetForegroundWindow", lambda: 42)
     from module.automation.launcher_automation import LauncherAutomation
-    from module.automation.screenshot import Screenshot
     from module.ocr import ocr
+    import mss
     mouse_click = Mock(side_effect=lambda *_: state.update(clicked=True, running=True))
     def init_input(automation):
         automation.mouse_click = mouse_click
         automation.mouse_down = Mock()
         automation.mouse_move = Mock()
     monkeypatch.setattr(LauncherAutomation, "_init_input", init_input)
-    capture = Mock(return_value=Image.new("RGB", (400, 240)))
-    monkeypatch.setattr(Screenshot, "capture_screen_with_mss", capture)
+    image = Image.new("RGB", (400, 240))
+    capture = Mock(return_value=SimpleNamespace(size=image.size, rgb=image.tobytes()))
+    monkeypatch.setattr(mss, "mss", lambda: nullcontext(SimpleNamespace(grab=capture)))
     recognize = Mock(return_value=[([[20, 30], [120, 30], [120, 60], [20, 60]], ("Start Game", 0.99))])
     monkeypatch.setattr(ocr, "recognize_multi_lines", recognize)
     flow = epic.EpicGameLauncher(game)
@@ -124,8 +126,8 @@ def test_hoyoplay_ocr_click_then_game(launch_env, button):
     assert env.flow.start()
     # HoYoPlay 窗口归属按清单中的安装目录核对。
     epic.EpicLauncherController.assert_called_once_with(INSTALL_ROOT, env.game.logger)
-    env.launcher.set_foreground_window_with_retry.assert_called_with(42)
-    env.capture.assert_called_once_with((700, 760, 400, 240))
+    env.launcher.set_foreground_window_with_retry.assert_not_called()
+    env.capture.assert_called_once_with({"left": 700, "top": 760, "width": 400, "height": 240})
     # OCR 坐标加客户区原点和裁剪偏移，非整个桌面的固定坐标。
     env.click.assert_called_once_with(770, 805)
 
@@ -169,6 +171,23 @@ def test_window_ready_before_button_is_ready(launch_env):
     env.recognize.side_effect = [[], env.recognize.return_value]
     assert env.flow.start()
     assert env.capture.call_count == 2
+    env.click.assert_called_once()
+
+
+def test_retry_when_launcher_cannot_be_foregrounded_yet(launch_env, monkeypatch):
+    env = launch_env
+    foreground = Mock(return_value=123)
+    monkeypatch.setattr(epic.win32gui, "GetForegroundWindow", foreground)
+
+    def activate(hwnd):
+        if env.clock.now == 0:
+            raise RuntimeError("Failed to set window foreground after multiple attempts")
+        foreground.return_value = hwnd
+
+    env.launcher.set_foreground_window_with_retry.side_effect = activate
+    assert env.flow.start()
+    assert env.launcher.set_foreground_window_with_retry.call_count == 2
+    env.capture.assert_called_once()
     env.click.assert_called_once()
 
 
@@ -231,17 +250,23 @@ def window_env(monkeypatch):
     return windows
 
 
-def test_window_selected_by_epic_installation(window_env):
+@pytest.mark.parametrize("title", ["HoYoPlay", "Honkai Star Rail"])
+def test_window_selected_by_epic_installation(window_env, monkeypatch, title):
+    monkeypatch.setattr(epic.win32gui, "GetWindowText", lambda _: title)
     assert epic.EpicLauncherController(INSTALL_ROOT, Mock()).get_window_handle() == 42
 
 
-def test_same_title_from_another_installation_is_not_selected(window_env):
+@pytest.mark.parametrize("title", ["HoYoPlay", "Honkai Star Rail"])
+def test_same_title_from_another_installation_is_not_selected(window_env, monkeypatch, title):
+    monkeypatch.setattr(epic.win32gui, "GetWindowText", lambda _: title)
     del window_env[42]
     assert epic.EpicLauncherController(INSTALL_ROOT, Mock()).get_window_handle() is None
 
 
-def test_ambiguous_hoyoplay_windows(window_env):
+@pytest.mark.parametrize("second_title", ["HoYoPlay", "Honkai Star Rail"])
+def test_ambiguous_hoyoplay_windows(window_env, monkeypatch, second_title):
     window_env[43] = INSTALL_ROOT + r"\1.0.1\HYP.exe"
+    monkeypatch.setattr(epic.win32gui, "GetWindowText", lambda hwnd: second_title if hwnd == 43 else "HoYoPlay")
     with pytest.raises(epic.EpicLaunchError, match="多个匹配"):
         epic.EpicLauncherController(INSTALL_ROOT, Mock()).get_window_handle()
 
@@ -261,12 +286,13 @@ def _write_manifest(directory, name, **item):
     (directory / f"{name}.item").write_text(json.dumps(item), encoding="utf-8")
 
 
-def test_manifest_installation_matching(tmp_path, monkeypatch):
+@pytest.mark.parametrize("main_game_name", ["StarRailApp", ""])
+def test_manifest_installation_matching(tmp_path, monkeypatch, main_game_name):
     monkeypatch.setenv("PROGRAMDATA", str(tmp_path))
     manifests = tmp_path / "Epic/EpicGamesLauncher/Data/Manifests"
     manifests.mkdir(parents=True)
     _write_manifest(manifests, "starrail", InstallLocation=INSTALL_ROOT, AppName="StarRailApp",
-                    MainGameAppName="StarRailApp", CatalogNamespace="starrail-namespace",
+                    MainGameAppName=main_game_name, CatalogNamespace="starrail-namespace",
                     CatalogItemId="starrail-item")
     # DLC 与游戏共用安装目录，不能被当作第二个安装记录。
     _write_manifest(manifests, "dlc", InstallLocation=INSTALL_ROOT, AppName="StarRailDlc",

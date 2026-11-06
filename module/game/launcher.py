@@ -106,14 +106,17 @@ class LauncherController(GameControllerBase):
         result = self.get_window_handles()
         return result[0] if result else None
 
-    def get_window_handles(self):
+    def get_window_handles(self, window_names=None):
         """
-        返回所有可见的同标题窗口，供渠道启动核实归属，避免任取首个同名窗口。
+        返回所有标题匹配的可见窗口，供渠道启动核实归属。
         """
+        if window_names is None:
+            window_names = (self.window_name,)
+
         def callback(hwnd, result):
             if win32gui.IsWindowVisible(hwnd):
                 title = win32gui.GetWindowText(hwnd)
-                if title == self.window_name:
+                if title in window_names:
                     result.append(hwnd)
         result = []
         win32gui.EnumWindows(callback, result)
