@@ -1,6 +1,6 @@
 ---
 name: march7th-assistant
-description: 操作「三月七小助手 / March7thAssistant / M7A」（崩坏：星穹铁道 Honkai Star Rail 自动化工具）：查找或安装小助手、查询状态、运行完整运行 / 每日实训 / 清体力 / 差分宇宙 / 货币战争 / 锄大地等任务、修改配置与定时任务、查看运行日志并排查失败。用户提到三月七、小助手、M7A、星铁或崩铁的日常 / 体力 / 自动化时使用。
+description: 操作「三月七小助手 / March7thAssistant / M7A」（崩坏：星穹铁道 Honkai Star Rail 自动化工具）：查找或安装小助手、查询状态、运行完整运行 / 每日实训 / 清体力 / 差分宇宙 / 货币战争 / 锄大地等任务、修改配置与定时任务、查看运行日志并排查失败，导出角色面板并按账号情况推荐混沌回忆 / 虚构叙事 / 末日幻影的配队和打法。用户提到三月七、小助手、M7A，或星铁、崩铁的日常 / 体力 / 自动化 / 配队 / 深渊时使用。
 license: GPL-3.0
 ---
 
@@ -69,7 +69,7 @@ license: GPL-3.0
 
 常用任务 ID：`main` 完整运行、`daily` 每日实训（含领奖励）、`power` 清体力、`routine` 日常、`divergent` 差分宇宙、
 `currencywars` 货币战争、`universe` 模拟宇宙、`fight` 锄大地、`forgottenhall` 混沌回忆、`purefiction` 虚构叙事、
-`apocalyptic` 末日幻影、`redemption` 兑换码、`game` 启动游戏、`app_update` 更新小助手。
+`apocalyptic` 末日幻影、`character_export` 角色面板导出、`redemption` 兑换码、`game` 启动游戏、`app_update` 更新小助手。
 每个任务做什么见 `assets/docs/TasksTable.md`。
 
 ## 4. 修改配置
@@ -101,14 +101,33 @@ license: GPL-3.0
 - **远程运行的前提**：电脑保持开机、已登录且没有锁屏（锁屏时任务能启动，但小助手无法操作游戏）。
   仍然默认加 `--after-finish None`：关机、睡眠会让你和用户都无法再操作这台电脑。
 
-## 6. 排查失败
+## 6. 按账号情况推荐高难关卡打法
+
+用户问混沌回忆、虚构叙事、末日幻影怎么打、怎么配队时，先看用户的账号再回答，不要只给通用攻略。
+
+1. **导出角色面板**：运行 `.\m7a.exe character_export --after-finish None`，运行前按第 3 节确认。
+   后台模式实测 57 个角色约 13 分钟，角色多时按第 3 节用 `--detach`。目前只支持简体中文游戏客户端。
+   已有 `characters.json`、`exported_at` 之后用户也没有换过遗器和光锥、没有抽到新角色时，可以直接用，不必重新导出。
+2. **读安装目录的 `characters.json`**：每个角色约 5 KB，不要整份读进对话，先用脚本筛出需要的角色和字段。
+   - `complete` 为 false 或 `failed` 不为空时结果不完整，要告诉用户缺了哪些角色。任务中途停止时，这次的结果在 `characters.partial.json`，`characters.json` 还是上一次的。
+   - `characters` 每项的字段：`name`、`path`（命途）、`element`（属性）、`level`、`eidolon`（星魂）、`stats`（面板属性）、
+     `light_cone`（光锥，`superimposition` 是叠影）、`skills`（技能等级）、`relics`（`sets` 是套装，`pieces` 是每件的主词条和副词条）、
+     `warnings`（重读后仍未解决的问题，相关数值不要全信）。百分数按游戏显示值保存，`81.1` 表示 `81.1%`。
+   - 文件里没有的内容：背包里未装备的遗器、单件遗器的名字、行迹的额外能力和属性加成，主角和三月七也只有当前命途。需要这些信息时问用户，不要猜。
+3. **联网查当期关卡**：BOSS、弱点和增益每期都变，不要凭记忆回答；查不到就告诉用户。
+4. **给方案**：只用 `characters` 里有的角色，每队说明为什么这样配、依据哪些面板数值；先给不花资源的调整，再给需要养成或合成的；事实和推测分开说。
+5. **让小助手按方案打**（用户同意后）：把队伍写进 `config.yaml` 的 `forgottenhall_team1`、`purefiction_team1`、`apocalyptic_team1` 等配置项，
+   格式和秘技次数的含义见 `assets/config/config.example.yaml`；这里要写角色英文名，对照表是 `assets/config/character_names.json`。
+   星启模式默认关闭（`forgottenhall_stellar_enable` 等），多数玩家用常规模式就能拿满常规奖励，用户没有明确要求时不要打开。
+
+## 7. 排查失败
 
 1. `.\m7a.exe --follow latest` 查看最近一次运行的末尾输出与结论；或看 `--status` 的 `recent_runs`。
 2. 运行记录 `logs\runs\<运行编号>.json`：`status`、`reason`、`error`、`screenshot`（失败时的游戏截图，可以直接查看图片）。
 3. 完整输出 `logs\runs\<运行编号>.log`；当天全部日志 `logs\<日期>.log`（含图形界面启动的任务）。
 4. 对照 `assets/docs/FAQ.md` 与 [排查说明](references/troubleshooting.md)。确认原因、修正配置后再重跑；不确定时把证据和推测分开告诉用户。
 
-## 7. 更新与其他
+## 8. 更新与其他
 
 - 更新小助手：`.\m7a.exe app_update` 或在图形界面检查更新；不要用完整包覆盖已有安装。
 - 这份说明复制到技能目录后，小助手启动时会自动更新副本，不需要你处理。`--status` 的 `agent_skill_copies` 列出各副本的状态：`updated` 表示刚更新过，重新读一遍再继续；`modified` 表示副本被改过，不会自动覆盖，由用户决定是否换成随包版本。
