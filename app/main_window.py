@@ -591,9 +591,12 @@ class MainWindow(MSFluentWindow):
         lang_code = self._pending_ui_language
         self._pending_ui_language = None
         previous_lang = get_current_language()
+        previous_setting = cfg.get_value('ui_language', 'auto')
         replacement = None
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         try:
+            if lang_code != previous_setting:
+                cfg.set_value('ui_language', lang_code)
             actual_lang = detect_lang() if lang_code == 'auto' else lang_code
             cfg.ui_language_now = actual_lang
             load_language(actual_lang)
@@ -610,11 +613,19 @@ class MainWindow(MSFluentWindow):
                 isClosable=True, position=InfoBarPosition.TOP, duration=1500, parent=self
             )
         except Exception as e:
-            # 还原已刷新的常驻页面；配置中的用户选择保留，下次启动仍会采用它。
+            # 原位回滚运行时语言、持久配置及旧页面的选择，允许重选同一语言。
             cfg.ui_language_now = previous_lang
             load_language(previous_lang)
             import traceback
             log.error(f'切换界面语言失败: {e}\n{traceback.format_exc()}')
+            try:
+                if cfg.get_value('ui_language', 'auto') != previous_setting:
+                    cfg.set_value('ui_language', previous_setting)
+            except Exception:
+                log.error(f'还原界面语言配置失败\n{traceback.format_exc()}')
+            combo = self.settingInterface.languageCard.comboBox
+            with QSignalBlocker(combo):
+                combo.setCurrentIndex(combo.findData(previous_setting))
             try:
                 self._reinstall_fluent_translator(previous_lang)
                 self._retranslate_persistent_interfaces()
@@ -669,6 +680,7 @@ class MainWindow(MSFluentWindow):
 
     def _on_config_file_changed(self):
         """重新加载配置文件并刷新界面"""
+        replacement = None
         try:
             if not self._can_replace_settings() or self._pending_ui_language is not None:
                 self._config_reload_timer.start(100)
@@ -693,6 +705,7 @@ class MainWindow(MSFluentWindow):
             state = self.settingInterface.captureViewState()
             replacement = SettingInterface(self)
             self._replace_settings_interface(replacement, state)
+            replacement = None
 
             # 只有在窗口可见时才显示提示
             if self.isVisible():
@@ -717,6 +730,10 @@ class MainWindow(MSFluentWindow):
                     duration=3000,
                     parent=self
                 )
+        finally:
+            if replacement is not None:
+                replacement.hide()
+                replacement.deleteLater()
 
     def _stopThemeListener(self):
         """停止主题监听线程"""

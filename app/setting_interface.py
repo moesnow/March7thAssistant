@@ -136,22 +136,28 @@ class _PivotScrollFilter(QObject):
 class SettingInterface(ScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.parent = parent
-        self._ignoreUniverseEnableCardSwitchChanged = False
-        self._ignoreCheckUpdateCardSwitchChanged = False
-        self.scrollWidget = QWidget()
-        self.vBoxLayout = QVBoxLayout(self.scrollWidget)
+        try:
+            self.parent = parent
+            self._ignoreUniverseEnableCardSwitchChanged = False
+            self._ignoreCheckUpdateCardSwitchChanged = False
+            self.scrollWidget = QWidget()
+            self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
-        # self.title_area = QScrollArea(self)
-        self.pivot = SettingPivot(self)
-        self.stackedWidget = QStackedWidget(self)
+            # self.title_area = QScrollArea(self)
+            self.pivot = SettingPivot(self)
+            self.stackedWidget = QStackedWidget(self)
 
-        self.settingLabel = QLabel(tr("设置"), self)
+            self.settingLabel = QLabel(tr("设置"), self)
 
-        self.__initWidget()
-        self.__initCard()
-        self.__initLayout()
-        self.__connectSignalToSlot()
+            self.__initWidget()
+            self.__initCard()
+            self.__initLayout()
+            self.__connectSignalToSlot()
+        except Exception:
+            # 构造抛错时调用方还拿不到实例，必须在这里清理已建立的 Qt 父子关系。
+            self.hide()
+            self.deleteLater()
+            raise
 
     def __initWidget(self):
         self.setWidget(self.scrollWidget)

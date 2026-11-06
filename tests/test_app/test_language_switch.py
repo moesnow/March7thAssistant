@@ -1,9 +1,10 @@
 """Language refresh must not navigate, restart work, or discard runtime state."""
 import sys
+from copy import deepcopy
 from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import QProcess, QTimer, QThread, Qt
+from PySide6.QtCore import QEvent, QProcess, QTimer, QThread, Qt
 from PySide6.QtWidgets import QApplication, QDialog
 from PySide6.QtGui import QTextCursor
 
@@ -119,6 +120,7 @@ def window(qtbot, monkeypatch, tmp_path):
     from module.config import cfg
     original = localization.get_current_language()
     original_ui = getattr(cfg, 'ui_language_now', 'zh_CN')
+    monkeypatch.setattr(cfg, 'config', deepcopy(cfg.config))
     monkeypatch.setattr(cfg, 'config_path', str(tmp_path / 'config.yaml'))
     monkeypatch.setattr(cfg, 'set_value', Mock())
     monkeypatch.setattr(cfg, 'set_values', Mock())
@@ -326,7 +328,7 @@ def test_persistent_pages_keep_models_workers_tabs_and_user_state(window, qtbot,
     assert warp.warplink == 'user-owned-url'
     assert not warp.updateBtn.isEnabled() and warp.copyLinkBtn.isEnabled()
     assert tools.redemptionCodeCard.contentLabel.text() == localization.tr('批量使用兑换码，每行一个，自动过滤空格等无效字符')
-    cfg.set_value.assert_not_called()
+    cfg.set_value.assert_called_once_with('ui_language', 'en_US')
     cfg.set_values.assert_not_called()
 
 
@@ -345,3 +347,140 @@ def test_failed_state_restore_does_not_remove_old_settings(window, qtbot, monkey
     assert window.stackedWidget.count() == 7
     assert localization.get_current_language() == 'zh_CN'
     assert QApplication.overrideCursor() is None
+
+
+@pytest.fixture
+def persisted_language(window, monkeypatch):
+    """Exercise the real config writer against the window fixture's temporary file."""
+    from module.config import cfg
+    monkeypatch.setattr(cfg, 'set_value', type(cfg).set_value.__get__(cfg))
+    return cfg
+
+
+@pytest.mark.parametrize('previous_setting', ['zh_CN', 'auto'])
+@pytest.mark.parametrize('failure_stage', ['constructor', 'restore'])
+def test_failed_combo_change_restores_saved_preference_and_retries(
+        window, persisted_language, qtbot, monkeypatch, previous_setting, failure_stage):
+    from app import main_window as module
+    from app.common.signal_bus import signalBus
+    cfg = persisted_language
+    cfg.set_value('ui_language', previous_setting)
+    old = window.settingInterface
+    combo = old.languageCard.comboBox
+    combo.blockSignals(True)
+    combo.setCurrentIndex(combo.findData(previous_setting))
+    combo.blockSignals(False)
+    window.stackedWidget.setAnimationEnabled(False)
+    window.switchTo(old)
+    warning = Mock()
+    monkeypatch.setattr(module.InfoBar, 'warning', warning)
+    requests = []
+    signalBus.uiLanguageChanged.connect(requests.append)
+    try:
+        with monkeypatch.context() as fault:
+            # Fail inside the real constructor after widgets have been created,
+            # rather than mocking the entire class before Qt can own the instance.
+            method = '_SettingInterface__connectSignalToSlot' if failure_stage == 'constructor' else 'restoreViewState'
+            fault.setattr(module.SettingInterface, method, Mock(side_effect=RuntimeError('test failure')))
+            combo.setCurrentIndex(combo.findData('en_US'))
+            qtbot.waitUntil(lambda: warning.called, timeout=15000)
+        QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        assert window.settingInterface is old
+        assert window.stackedWidget.currentWidget() is old
+        assert window.stackedWidget.count() == 7
+        assert len(window.findChildren(module.SettingInterface)) == 1
+        assert localization.get_current_language() == 'zh_CN'
+        assert cfg.ui_language_now == 'zh_CN'
+        assert cfg.get_value('ui_language') == previous_setting
+        assert combo.currentData() == previous_setting
+        with open(cfg.config_path, encoding='utf-8') as file:
+            assert cfg.yaml.load(file)['ui_language'] == previous_setting
+        assert requests == ['en_US']  # Rolling back the combo must not enqueue a switch.
+        assert QApplication.overrideCursor() is None
+
+        # Retry through the same user-facing dropdown, without choosing a third language.
+        combo.setCurrentIndex(combo.findData('en_US'))
+        qtbot.waitUntil(lambda: window.settingInterface is not old, timeout=15000)
+        assert requests == ['en_US', 'en_US']
+        assert localization.get_current_language() == 'en_US'
+        assert cfg.get_value('ui_language') == 'en_US'
+        assert window.settingInterface.languageCard.comboBox.currentData() == 'en_US'
+        with open(cfg.config_path, encoding='utf-8') as file:
+            assert cfg.yaml.load(file)['ui_language'] == 'en_US'
+        QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        assert len(window.findChildren(module.SettingInterface)) == 1
+    finally:
+        signalBus.uiLanguageChanged.disconnect(requests.append)
+
+
+def test_choosing_original_language_cancels_pending_choice(window, persisted_language, qtbot):
+    from app import main_window as module
+    cfg = persisted_language
+    cfg.set_value('ui_language', 'zh_CN')
+    old = window.settingInterface
+    combo = old.languageCard.comboBox
+    combo.blockSignals(True)
+    combo.setCurrentIndex(combo.findData('zh_CN'))
+    combo.blockSignals(False)
+    old._qqbotBindPending = True
+    try:
+        for language in ('en_US', 'ja_JP', 'zh_CN'):
+            combo.setCurrentIndex(combo.findData(language))
+        qtbot.wait(150)
+        assert window.settingInterface is old
+        assert window._pending_ui_language == 'zh_CN'
+        assert cfg.get_value('ui_language') == 'zh_CN'
+    finally:
+        old._qqbotBindPending = False
+    qtbot.waitUntil(lambda: window.settingInterface is not old, timeout=15000)
+    assert localization.get_current_language() == 'zh_CN'
+    assert cfg.get_value('ui_language') == 'zh_CN'
+    assert window.settingInterface.languageCard.comboBox.currentData() == 'zh_CN'
+    QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    assert len(window.findChildren(module.SettingInterface)) == 1
+
+
+@pytest.mark.parametrize('failure_stage', ['constructor', 'restore'])
+def test_config_reload_failure_disposes_unused_settings(window, monkeypatch, failure_stage):
+    from app import main_window as module
+    from module import notification
+    monkeypatch.setattr(module.cfg, '_load_config', Mock())
+    monkeypatch.setattr(notification, 'init_notifiers', Mock())
+    monkeypatch.setattr(window.logInterface, 'reloadConfigState', Mock())
+    warning = Mock()
+    monkeypatch.setattr(module.InfoBar, 'warning', warning)
+    method = '_SettingInterface__connectSignalToSlot' if failure_stage == 'constructor' else 'restoreViewState'
+    monkeypatch.setattr(module.SettingInterface, method, Mock(side_effect=RuntimeError('test failure')))
+    old = window.settingInterface
+    window.stackedWidget.setAnimationEnabled(False)
+    window.switchTo(old)
+    for _ in range(2):
+        window._on_config_file_changed()
+        QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        assert window.settingInterface is old
+        assert window.stackedWidget.currentWidget() is old
+        assert window.stackedWidget.count() == 7
+        assert len(window.findChildren(module.SettingInterface)) == 1
+    assert warning.call_count == 2
+
+
+@pytest.mark.parametrize('checked', [False, True])
+def test_switch_button_visible_text_refreshes_without_toggling(window, monkeypatch, checked):
+    from app import log_interface
+    from app.card import autoplot_setting_card
+    monkeypatch.setattr(log_interface, 'tr', lambda text: 'new:' + text)
+    monkeypatch.setattr(autoplot_setting_card, 'tr', lambda text: 'new:' + text)
+    automatic = window.toolsInterface.automaticPlotCard
+    switches = [automatic.switchButton, window.logInterface.logOverlaySwitch]
+    toggled = Mock()
+    for switch in switches:
+        switch.blockSignals(True)
+        switch.setChecked(checked)
+        switch.blockSignals(False)
+        switch.checkedChanged.connect(toggled)
+    window.logInterface.retranslateUi()
+    automatic.retranslateUi()
+    for switch in switches:
+        assert switch.isChecked() == checked
+        assert switch.label.text() == 'new:' + ('开' if checked else '关')
+    toggled.assert_not_called()

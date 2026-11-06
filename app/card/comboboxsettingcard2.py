@@ -93,14 +93,7 @@ class ComboBoxSettingCardLanguage(ComboBoxSettingCard2):
     """
 
     def _onCurrentIndexChanged(self, index: int):
-        old_val = cfg.get_value(self.configname)
         new_val = self.comboBox.itemData(index)
-        if old_val == new_val:
-            return
-        # set value (reuse base behavior)
-        cfg.set_value(self.configname, new_val)
-        # 主窗口合并连续请求，并在安全时机刷新界面。
-        try:
-            signalBus.uiLanguageChanged.emit(new_val)
-        except Exception:
-            pass
+        # 由主窗口在刷新事务中保存配置，失败时才能恢复原值（包括 auto）。
+        # 不与已保存值比较：等待期间选回原语言，也必须覆盖之前的请求。
+        signalBus.uiLanguageChanged.emit(new_val)
