@@ -103,8 +103,8 @@ def test_quick_select_includes_discarded_and_four_star_but_not_all_five_star():
     cleanup = module.WeeklyRelicCleanup
     with patch.object(cleanup, "_click") as click, patch.object(
         cleanup, "_visible", return_value=True
-    ), patch.object(cleanup, "_count", side_effect=[1, 2]):
-        assert cleanup._select_for_salvage(1, True) == 2
+    ), patch.object(cleanup, "_count", return_value=2):
+        assert cleanup._select_for_salvage(True) == 2
     assert [call.args[0] for call in click.call_args_list] == [
         "快速选择", "全选已弃置", "4星及以下", "确认"
     ]
@@ -122,41 +122,35 @@ def test_weekly_cleanup_without_smart_discard_selects_only_four_star():
         assert cleanup.run() is True
 
     mark.assert_not_called()
-    select.assert_called_once_with(0, False)
+    select.assert_called_once_with(False)
     relicset.start_break_down_relicset.assert_not_called()
 
     with patch.object(cleanup, "_click") as click, patch.object(
         cleanup, "_visible", return_value=True
-    ), patch.object(cleanup, "_count", side_effect=[0, 2]):
-        assert cleanup._select_for_salvage(0, False) == 2
+    ), patch.object(cleanup, "_count", return_value=2):
+        assert cleanup._select_for_salvage(False) == 2
     assert [call.args[0] for call in click.call_args_list] == [
         "快速选择", "4星及以下", "确认"
     ]
 
 
-def test_quick_select_stops_if_marked_count_does_not_match():
-    module, _, _, _ = _load_cleanup()
+@pytest.mark.parametrize("marked, selected", [(27, 39), (2, 1)])
+def test_cleanup_uses_quick_select_count_independently_of_marked_count(marked, selected):
+    module, _, _, relicset = _load_cleanup()
     cleanup = module.WeeklyRelicCleanup
-    with patch.object(cleanup, "_click") as click, patch.object(
-        cleanup, "_visible", return_value=True
-    ), patch.object(cleanup, "_count", return_value=2):
-        with pytest.raises(RuntimeError, match="预计 1，实际 2"):
-            cleanup._select_for_salvage(1, True)
-    click.assert_not_called()
-
-
-def test_quick_select_stops_if_it_loses_marked_relics():
-    module, _, _, _ = _load_cleanup()
-    cleanup = module.WeeklyRelicCleanup
+    module.cfg.get_value.return_value = True
+    relicset.start_break_down_relicset.return_value = True
     with patch.object(cleanup, "_click"), patch.object(
         cleanup, "_visible", return_value=True
-    ), patch.object(cleanup, "_count", side_effect=[1, 0]):
-        with pytest.raises(RuntimeError, match="少于智能弃置数量"):
-            cleanup._select_for_salvage(1, True)
+    ), patch.object(cleanup, "_count", side_effect=[0, selected]), patch.object(
+        cleanup, "_mark_smart_discard", return_value=marked
+    ):
+        assert cleanup.run() is True
+    relicset.start_break_down_relicset.assert_called_once_with(use_ocr=True)
 
 
 def test_cleanup_only_decomposes_when_selected_and_returns_to_main():
-    module, _, screen, relicset = _load_cleanup()
+    module, auto, screen, relicset = _load_cleanup()
     cleanup = module.WeeklyRelicCleanup
     module.cfg.get_value.return_value = True
     relicset.start_break_down_relicset.return_value = True
@@ -167,7 +161,8 @@ def test_cleanup_only_decomposes_when_selected_and_returns_to_main():
     ) as select:
         assert cleanup.run() is True
     assert [call.args[0] for call in screen.change_to.call_args_list] == ["bag_relicset", "main"]
-    select.assert_called_once_with(1, True)
+    auto.press_key.assert_called_once_with("esc")
+    select.assert_called_once_with(True)
     relicset.start_break_down_relicset.assert_called_once_with(use_ocr=True)
 
 
