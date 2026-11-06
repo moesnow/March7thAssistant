@@ -119,9 +119,12 @@ class WeeklyRelicCleanup:
             for batch in range(WeeklyRelicCleanup.MAX_BATCHES):
                 if WeeklyRelicCleanup._count(_crop(610, 875, 830, 930)) != 0:
                     raise RuntimeError("分解页已有其他选中的遗器，停止清理")
-                if smart_discard:
-                    WeeklyRelicCleanup._mark_smart_discard()
+                marked_count = WeeklyRelicCleanup._mark_smart_discard() if smart_discard else 0
                 count = WeeklyRelicCleanup._select_for_salvage(smart_discard)
+                if count < marked_count:
+                    raise RuntimeError(
+                        f"快速选择后已选数量少于智能弃置数量：{count} < {marked_count}，停止清理"
+                    )
                 if not count:
                     log.info("没有剩余可分解的遗器")
                     return True
