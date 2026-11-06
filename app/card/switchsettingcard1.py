@@ -277,7 +277,9 @@ class SwitchSettingCardGardenofplenty(SettingCard):
         for text, option in zip(texts, texts):
             self.comboBox.addItem(tr(text), userData=option)
 
-        self.comboBox.setCurrentText(cfg.get_value("activity_gardenofplenty_instance_type"))
+        self.comboBox.setCurrentIndex(
+            self.comboBox.findData(cfg.get_value("activity_gardenofplenty_instance_type"))
+        )
         self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
 
         self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)

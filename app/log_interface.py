@@ -141,7 +141,7 @@ class GameLogOverlay(QWidget):
         headerLayout.setContentsMargins(0, 0, 0, 0)
         headerLayout.setSpacing(8)
 
-        self.titleLabel = QLabel(f'任务日志', self.panel)
+        self.titleLabel = QLabel(tr('任务日志'), self.panel)
         self.titleLabel.setObjectName('gameLogOverlayTitle')
 
         self.liveBadge = QLabel(cfg.version, self.panel)

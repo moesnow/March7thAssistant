@@ -249,7 +249,7 @@ class WarpInterface(ScrollArea):
 
             wb = Workbook()
             ws = wb.active
-            ws.append([tr("时间"), tr("名称"), tr("类别"), tr("星级"), tr("卡池"), "总次数", "保底内"])
+            ws.append([tr("时间"), tr("名称"), tr("类别"), tr("星级"), tr("卡池"), tr("总次数"), tr("保底内")])
             pity_counters = {}
             for total, record in enumerate(records, start=1):
                 pool = gacha_map.get(record.get("gacha_type"), tr("未知"))

@@ -54,7 +54,7 @@ msgstr "Launch"
 msgid "日志"
 msgstr "Log"
 
-#: app/log_interface.py:428
+#: app/log_interface.py:144
 msgid "任务日志"
 msgstr "Task Log"
 
@@ -639,7 +639,7 @@ msgstr "Amphoreus"
 msgid "启用混沌回忆"
 msgstr "Enable Memory of Chaos"
 
-#: app/challenge_config_dialog.py:36
+#: app/challenge_config_dialog.py:47
 msgid "关卡范围"
 msgstr "Stage Range"
 
@@ -1966,31 +1966,31 @@ msgstr "Off"
 msgid "开"
 msgstr "On"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周一"
 msgstr "Mon"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周二"
 msgstr "Tue"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周三"
 msgstr "Wed"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周四"
 msgstr "Thu"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周五"
 msgstr "Fri"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周六"
 msgstr "Sat"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周日"
 msgstr "Sun"
 
@@ -2052,7 +2052,7 @@ msgstr "Clear Used Codes"
 msgid "未执行"
 msgstr "Not run yet"
 
-#: app/card/expandable_switch_setting_card.py:155
+#: app/card/expandable_switch_setting_card.py:156
 msgid "重置时间"
 msgstr "Reset Time"
 
@@ -6053,9 +6053,13 @@ msgstr ""
 
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食（零食材料-1 / 零食合成-1）"
 msgstr ""
+"Daily special items: buy Trick Snack ingredients and synthesize snacks "
+"(Snack Ingredients-1 / Snack Synthesis-1)"
 
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币（过期邮包-1 / 艾迪恩代币-1）"
 msgstr ""
+"Weekly special items: buy Xianzhou Unclaimed Parcels and Penacony Aideen "
+"Tokens (Unclaimed Parcels-1 / Aideen Tokens-1)"
 
 #: app/setting_interface.py:857
 msgid "获得翁法罗斯记忆代币"
@@ -6063,6 +6067,8 @@ msgstr "Obtain Amphoreus Memory Tokens"
 
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
 msgstr ""
+"Weekly special items: collect Memory Crystal Shards in Amphoreus (Collect "
+"Memory Tokens-1)"
 
 #: app/setting_interface.py:862
 msgid "远程一号位锄地"
@@ -6137,15 +6143,17 @@ msgstr "Hyacine: Warm Cotton Skies"
 
 #: app/setting_interface.py:287
 msgid "每周清理遗器"
-msgstr ""
+msgstr "Weekly Relic Cleanup"
 
 #: app/setting_interface.py:291
 msgid "启用智能弃置"
-msgstr ""
+msgstr "Enable Smart Discard"
 
 #: app/setting_interface.py:292
 msgid "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
 msgstr ""
+"Filter for relics with no matching recommended characters and 0 sub-stat "
+"upgrades; salvage discarded relics and relics of 4 stars or lower"
 
 #: app/setting_interface.py:1629
 msgid "QQ 官方机器人"
@@ -6254,95 +6262,110 @@ msgstr ""
 
 #: app/card/autostart_setting_card.py:42
 msgid "开机启动设置"
-msgstr ""
+msgstr "Startup Settings"
 
 #: app/card/autostart_setting_card.py:49
 msgid "登录后打开图形界面"
-msgstr ""
+msgstr "Open the graphical interface after sign-in"
 
 #: app/card/autostart_setting_card.py:53
 msgid "打开图形界面后最小化到托盘"
-msgstr ""
+msgstr "Minimize to the system tray after opening the graphical interface"
 
 #: app/card/autostart_setting_card.py:57
 msgid "打开图形界面后自动执行的任务："
-msgstr ""
+msgstr "Task to run automatically after opening the graphical interface:"
 
 #: app/card/autostart_setting_card.py:59
 msgid "不执行"
-msgstr ""
+msgstr "Do not run a task"
 
 #: app/card/autostart_setting_card.py:65
 msgid "不打开图形界面时执行的任务："
-msgstr ""
+msgstr "Task to run without the graphical interface:"
 
 msgid "不打开图形界面时必须选择一项任务，将以命令行方式执行，完成后自动退出"
 msgstr ""
+"Select a task to run without the graphical interface. It will run in "
+"command-line mode and exit automatically when finished"
 
 #: app/card/autostart_setting_card.py:73
 msgid "请选择要执行的任务"
-msgstr ""
+msgstr "Please select a task to run"
 
 #: app/card/autostart_setting_card.py:139
 msgid "升级到新版"
-msgstr ""
+msgstr "Upgrade to the new version"
 
 #: app/card/autostart_setting_card.py:214
 msgid "开机启动已开启"
-msgstr ""
+msgstr "Launch at startup enabled"
 
 #: app/card/autostart_setting_card.py:224
 msgid "开机启动已关闭"
-msgstr ""
+msgstr "Launch at startup disabled"
 
 msgid "可在任务管理器的「启动应用」中查看或禁用"
-msgstr ""
+msgstr "You can view or disable it under \"Startup apps\" in Task Manager"
 
 #: app/card/autostart_setting_card.py:235
 msgid "开机启动设置失败"
-msgstr ""
+msgstr "Failed to configure launch at startup"
 
 msgid "请确认以管理员权限运行后重试"
-msgstr ""
+msgstr "Make sure you are running as administrator, then try again"
 
 #: app/card/autostart_setting_card.py:249
 msgid "开机启动设置已保存"
-msgstr ""
+msgstr "Startup settings saved"
 
 #: app/card/autostart_setting_card.py:262
 msgid "已升级到新版开机启动"
-msgstr ""
+msgstr "Upgraded to the new startup mechanism"
 
 #: app/card/autostart_setting_card.py:263
 msgid "旧的计划任务已删除，请按需配置并重新开启开关"
 msgstr ""
+"The old scheduled task has been deleted. Configure the settings as needed "
+"and turn the switch back on"
 
 #: app/card/autostart_setting_card.py:272
 msgid "升级到新版失败"
-msgstr ""
+msgstr "Failed to upgrade to the new version"
 
 #: app/card/autostart_setting_card.py:273
 msgid "删除旧的计划任务失败，请重试"
-msgstr ""
+msgstr "Failed to delete the old scheduled task. Please try again"
 
 msgid ""
 "登录 Windows 后自动启动，可在任务管理器「启动应用」中查看或禁用；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
 msgstr ""
+"Launch automatically after signing in to Windows. View or disable it under "
+"\"Startup apps\" in Task Manager. Click \"Configure\" to choose whether to "
+"open the graphical interface, minimize it, and run a task automatically"
 
 #: app/card/autostart_setting_card.py:236
 msgid "请以管理员权限运行后重试"
-msgstr ""
+msgstr "Please run as administrator and try again"
 
 msgid "登录 Windows 后自动启动，启动时不会弹出 UAC 提示；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
 msgstr ""
+"Launch automatically after signing in to Windows, without a UAC prompt. "
+"Click \"Configure\" to choose whether to open the graphical interface, "
+"minimize it, and run a task automatically"
 
 #: app/card/autostart_setting_card.py:71
 msgid "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
 msgstr ""
+"Select a task to run without the graphical interface. It will run in a "
+"command-line window, just like starting the command-line version manually"
 
 #: app/setting_interface.py:2503
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 msgstr ""
+"Launch automatically after sign-in. Click \"Configure\" for detailed "
+"settings. Unattended use may require you to set up Windows automatic sign-in"
+" yourself"
 
 #: app/log_interface.py:212
 msgid "按下 {stop} 停止 · {pause} 继续"
@@ -6351,18 +6374,23 @@ msgstr "Press {stop} to stop · {pause} to resume"
 #: app/card/autoplot_setting_card.py:83
 msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
 msgstr ""
+"Automatically read the Amphoreus Heroic Saga (open the book's contents page "
+"first)"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"
-msgstr ""
+msgstr "Remember the Auto Dialogue toggle state"
 
 #: app/card/autoplot_setting_card.py:57
 msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。"
 msgstr ""
+"When enabled, the Auto Dialogue toggle state will be restored the next time "
+"the assistant starts. When the game is not in the foreground, the window is "
+"only checked at low frequency."
 
 #: app/tools_interface.py:167
 msgid "{error}（详情见日志）"
-msgstr ""
+msgstr "{error} (see logs for details)"
 
 #: app/setting_interface.py:1039
 msgid "启动器路径"
@@ -6386,59 +6414,67 @@ msgstr "Select Launcher Path"
 
 #: app/card/messagebox_custom.py:276
 msgid "显示更早的更新记录"
-msgstr ""
+msgstr "Show earlier release notes"
 
 #: app/card/messagebox_custom.py:309
 msgid "正在加载历史更新记录……"
-msgstr ""
+msgstr "Loading earlier release notes..."
 
 #: app/card/messagebox_custom.py:314
 msgid "查看完整更新日志"
-msgstr ""
+msgstr "View full changelog"
 
 #: app/card/messagebox_custom.py:328
 msgid "以下为已收录的更新记录，部分历史版本可能未收录"
 msgstr ""
+"The available release notes are listed below. Some older versions may be "
+"missing"
 
 #: app/card/messagebox_custom.py:330
 msgid "已加载 {count} 份版本更新记录"
-msgstr ""
+msgstr "Loaded release notes for {count} versions"
 
 #: app/card/messagebox_custom.py:357
 msgid "继续显示更早的更新记录（还有 {count} 份）"
-msgstr ""
+msgstr "Show more earlier release notes ({count} remaining)"
 
 #: app/tools/check_update.py:62
 msgid "历史更新记录暂时无法加载，仍可正常更新"
 msgstr ""
+"Earlier release notes could not be loaded right now. You can still update "
+"normally"
 
 #: app/tools/check_update.py:204
 msgid "该渠道版本与目标版本不一致，请稍后重试"
 msgstr ""
+"The version on this channel does not match the target version. Please try "
+"again later"
 
 #: app/common/schedule.py:38
 msgid "未选择"
-msgstr ""
+msgstr "Not selected"
 
 #: app/log_interface.py:989
 msgid "{date}（{weekday}）{time}"
-msgstr ""
+msgstr "{date} ({weekday}) {time}"
 
 #: app/schedule_dialog.py:269
 msgid "执行星期："
-msgstr ""
+msgstr "Run on:"
 
 #: app/schedule_dialog.py:279
 msgid "按电脑本地日期判断执行星期"
-msgstr ""
+msgstr "Days of the week are determined by the computer's local date"
 
 #: app/schedule_dialog.py:366
 msgid "请至少选择一个执行星期"
-msgstr ""
+msgstr "Please select at least one day of the week"
 
 #: app/schedule_dialog.py:378
 msgid "任务“{name}”已占用{days}的 {time}，请调整时间或星期"
 msgstr ""
+"Task \"{name}\" already uses {time} on {days}. Please change the time or "
+"days"
 
 #: app/schedule_dialog.py:465
 msgid ""
@@ -6446,25 +6482,28 @@ msgid ""
 "链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动，不单独判断星期。\n"
 "立即运行：不受星期限制，从当前任务开始，后面连续的链式任务也会跟随执行。"
 msgstr ""
+"Scheduled start: Start the current task at the set time on the selected days, based on the computer's local date.\n"
+"Chained start: Does not start independently at a set time. Place it after another task. When the preceding task finishes normally, chained tasks start immediately in list order, without checking the day of the week.\n"
+"Run now: Ignores day-of-week restrictions. Starts the current task and then runs any consecutive chained tasks that follow."
 
 #: app/schedule_dialog.py:745
 msgid "执行计划"
-msgstr ""
+msgstr "Execution Schedule"
 
 msgid "游戏内日志"
-msgstr ""
+msgstr "In-Game Log"
 
 #: app/log_interface.py:975
 msgid "定时任务({count})"
-msgstr ""
+msgstr "Scheduled Tasks ({count})"
 
 #: app/log_interface.py:977
 msgid "已启用 {count} 个按时任务，点击配置"
-msgstr ""
+msgstr "{count} scheduled tasks enabled. Click to configure"
 
 #: app/log_interface.py:994
 msgid "下次：{time}"
-msgstr ""
+msgstr "Next: {time}"
 
 #: module/update/version_check.py:331
 msgid "更新接口未返回有效版本信息，请稍后重试"
@@ -6568,53 +6607,56 @@ msgstr ""
 "launcher through Epic and click ‘Start Game’ automatically. Sign in to Epic "
 "in advance."
 
-#: app/challenge_config_dialog.py:147
-msgid "关卡范围的起始值不能大于结束值。"
-msgstr ""
-
 #: app/challenge_config_dialog.py:158
-msgid "出战队伍不能重复使用同一角色。"
-msgstr ""
+msgid "关卡范围的起始值不能大于结束值。"
+msgstr "The start of the stage range cannot be greater than the end."
 
-#: app/challenge_config_dialog.py:46
+#: app/challenge_config_dialog.py:169
+msgid "出战队伍不能重复使用同一角色。"
+msgstr "The same character cannot be used more than once across the teams."
+
+#: app/challenge_config_dialog.py:57
 msgid "至"
-msgstr ""
+msgstr "To"
 
 #: app/setting_interface.py:899
 msgid "虚构叙事配置"
-msgstr ""
+msgstr "Pure Fiction Settings"
 
-#: app/challenge_config_dialog.py:155
+#: app/challenge_config_dialog.py:166
 msgid "请为队伍{index}选择1至4名有效角色。"
-msgstr ""
+msgstr "Please select 1 to 4 valid characters for Team {index}."
 
-#: app/challenge_config_dialog.py:99
+#: app/challenge_config_dialog.py:110
 msgid "队伍{first} ↔ 队伍{second}"
-msgstr ""
+msgstr "Team {first} ↔ Team {second}"
 
-#: app/challenge_config_dialog.py:91
+#: app/challenge_config_dialog.py:102
 msgid "队伍{index}"
-msgstr ""
+msgstr "Team {index}"
 
-#: app/challenge_config_dialog.py:52
+#: app/challenge_config_dialog.py:63
 msgid "启用星启模式"
-msgstr "Enable Stellar Mode"
+msgstr "Enable Starward Mode"
 
-#: app/challenge_config_dialog.py:66
+#: app/challenge_config_dialog.py:77
 msgid "队伍三仅用于星启模式"
-msgstr "Team 3 is only used in Stellar Mode"
+msgstr "Team 3 is only used in Starward Mode"
 
-#: app/challenge_config_dialog.py:196
+# Official name: HoYoverse press release, May 22, 2026:
+# https://www.gamespress.com/it/Honkai-Star-Rail-Version-43-The-Lethe-Below-
+# the-Living-Officially-Reve
+#: app/challenge_config_dialog.py:207
 msgid "星启模式"
-msgstr "Stellar Mode"
+msgstr "Starward Mode"
 
-#: app/challenge_config_dialog.py:196
+#: app/challenge_config_dialog.py:207
 msgid "常规模式"
 msgstr "Regular Mode"
 
 #: app/card/uac_free_setting_card.py:49
 msgid "开启免 UAC 运行前请确认"
-msgstr ""
+msgstr "Confirm before enabling execution without UAC prompts"
 
 #: app/card/uac_free_setting_card.py:50
 msgid ""
@@ -6629,46 +6671,62 @@ msgid ""
 "\n"
 "建议只在自己的电脑上、并且信任所用的 AI 助手时开启。不需要时，随时可以回到这里关闭。"
 msgstr ""
+"When enabled, AI assistants and scripts running tasks through m7a.exe will no longer trigger the \"Do you want to allow this app to make changes to your device?\" confirmation prompt. This lets an AI assistant run tasks remotely even when you are away from your computer.\n"
+"\n"
+"This prompt is a Windows security safeguard. Before enabling this feature, please understand:\n"
+"\n"
+"• Other programs running under your account on this computer (including commands executed by AI assistants) can also use the assistant to gain administrator privileges without you clicking \"Yes\".\n"
+"• If your computer is infected with malware or someone misuses your AI assistant, the potential damage may be greater.\n"
+"• This applies only to the current Windows account and installation directory. You do not need to enable it again after updating the assistant, but you must do so after moving the installation directory.\n"
+"• For remote execution, the computer must remain powered on, signed in, and unlocked.\n"
+"\n"
+"Only enable this on your own computer and with an AI assistant you trust. You can return here and disable it at any time when you no longer need it."
 
 #: app/card/uac_free_setting_card.py:72
 msgid "免 UAC 运行设置失败"
-msgstr ""
+msgstr "Failed to configure execution without UAC prompts"
 
 #: app/card/uac_free_setting_card.py:73
 msgid "请确认小助手以管理员权限运行，并且没有被安全软件拦截"
 msgstr ""
+"Make sure the assistant is running as administrator and is not blocked by "
+"security software"
 
 #: app/card/uac_free_setting_card.py:85
 msgid "免 UAC 运行已开启"
-msgstr ""
+msgstr "Execution without UAC prompts enabled"
 
 #: app/card/uac_free_setting_card.py:95
 msgid "免 UAC 运行已关闭"
-msgstr ""
+msgstr "Execution without UAC prompts disabled"
 
 #: app/setting_interface.py:2507
 msgid "免 UAC 运行"
-msgstr ""
+msgstr "Run Without UAC Prompts"
 
 #: app/setting_interface.py:2508
 msgid "开启后，AI 助手或脚本通过 m7a.exe 运行任务时不再弹出 UAC 确认，适合让 AI 助手远程运行任务"
 msgstr ""
+"When enabled, AI assistants and scripts can run tasks through m7a.exe "
+"without UAC confirmation, allowing an AI assistant to run tasks remotely"
 
 #: app/setting_interface.py:887
 msgid "混沌回忆配置"
-msgstr ""
+msgstr "Memory of Chaos Settings"
 
 #: app/setting_interface.py:911
 msgid "末日幻影配置"
-msgstr ""
+msgstr "Apocalyptic Shadow Settings"
 
 #: app/tools/disclaimer.py:46
 msgid "确认状态保存失败"
-msgstr ""
+msgstr "Failed to save confirmation status"
 
 #: app/tools/disclaimer.py:47
 msgid "解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}"
 msgstr ""
+"Until this is resolved, you must confirm again at every launch and tasks "
+"cannot run. Check antivirus blocking and directory permissions: {error}"
 
 #: app/setting_interface.py:2485
 msgid "后台操作遇到鼠标干扰时会等待并重试；下次启动任务生效。"
@@ -6703,3 +6761,13 @@ msgstr "Character Panel Export"
 #: app/tools_interface.py:74
 msgid "读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json"
 msgstr ""
+"Read all characters' stats, Light Cones, Eidolons, skills, and relics, and "
+"save them to characters.json in the program directory"
+
+#: app/warp_interface.py:252
+msgid "总次数"
+msgstr "Total Warps"
+
+#: app/warp_interface.py:252
+msgid "保底内"
+msgstr "Pity Count"
