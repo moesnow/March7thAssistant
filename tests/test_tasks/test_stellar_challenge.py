@@ -179,6 +179,41 @@ def test_node_controls_use_window_size_and_ocr_anchor(stellar, monkeypatch):
     stellar.auto.click_element_with_pos.assert_called_once_with(((1092, 542), (1092, 542)))
 
 
+def test_highest_level_dismisses_quick_clear_rewards_before_configuring(stellar, monkeypatch):
+    state = {'page': 'reward'}
+    owner = stellar.runner.challenge
+    owner.find_level = Mock(return_value=((1, 1), (2, 2)))
+    owner.judge_stars = Mock(return_value=0)
+    owner.max_star = 3
+    monkeypatch.setattr(stellar.runner, '_node', Mock())
+
+    def find(target, *args, **kwargs):
+        if target == '快速通关':
+            return state['page'] == 'reward'
+        return state['page'] == 'teams' and target in ('编队', '星启模式')
+
+    def click(target, *args, **kwargs):
+        if target == '确认':
+            state['page'] = 'teams'
+        return True
+
+    stellar.auto.find_element.side_effect = find
+    stellar.auto.click_element.side_effect = click
+    assert stellar.runner._open_highest_level() is True
+    stellar.runner._node.assert_has_calls([call(1), call(2), call(3)])
+
+
+def test_quick_clear_reward_confirmation_failure_stops(stellar):
+    owner = stellar.runner.challenge
+    owner.find_level = Mock(return_value=((1, 1), (2, 2)))
+    owner.judge_stars = Mock(return_value=0)
+    owner.max_star = 3
+    stellar.auto.find_element.side_effect = lambda target, *args, **kwargs: target == '快速通关'
+    stellar.auto.click_element.side_effect = lambda target, *args, **kwargs: target != '确认'
+    with pytest.raises(RuntimeError, match='快速通关奖励'):
+        stellar.runner._open_highest_level()
+
+
 def test_apocalyptic_uses_bottom_mode_switch(stellar):
     stellar.runner.challenge.name = '末日幻影'
 

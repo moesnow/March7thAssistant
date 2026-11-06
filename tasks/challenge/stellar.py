@@ -134,6 +134,12 @@ class StellarChallenge:
                                   crop=(0.17, 0.08, 0.82, 0.82), include=False):
             raise RuntimeError("点击星启模式最高关失败")
         for _ in range(10):
+            if auto.find_element("快速通关", "text", crop=(0.30, 0.05, 0.40, 0.15), include=False):
+                if not auto.click_element("确认", "text", max_retries=3,
+                                          crop=(0.35, 0.85, 0.30, 0.15), include=False):
+                    raise RuntimeError("未能关闭快速通关奖励弹窗")
+                time.sleep(1)
+                continue
             if auto.find_element("编队", "text", crop=(0, 0, 0.32, 0.16), include=False):
                 if not auto.find_element("星启模式", "text", crop=(0.32, 0, 0.3, 0.2), include=False):
                     raise RuntimeError("当前编队界面未确认星启模式")
