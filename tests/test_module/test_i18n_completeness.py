@@ -51,3 +51,33 @@ def test_registered_messages_are_translated_and_compiled(lang):
                       else compiled.gettext(entry.msgid))
             assert actual == entry.msgstr, (lang, label)
     assert not failures, f"[{lang}] 未完成翻译（{len(failures)} 条）: {failures[:20]}"
+
+
+@pytest.mark.parametrize("plural", [False, True])
+def test_fuzzy_entry_is_rejected_even_with_stale_compiled_translation(tmp_path, monkeypatch, plural):
+    """polib 1.2 excludes fuzzy entries in translated(); stale .mo cannot mask them."""
+    import sys
+    from tools.i18n.po import base_metadata
+
+    template = polib.POFile()
+    source = polib.POEntry(msgid="source")
+    entry = polib.POEntry(msgid="source", msgstr="translated")
+    if plural:
+        source.msgid_plural = entry.msgid_plural = "sources"
+        entry.msgstr = ""
+        entry.msgstr_plural = {0: "translated", 1: "translations"}
+    template.append(source)
+    catalog = polib.POFile()
+    catalog.metadata = base_metadata("en_US")
+    catalog.append(entry)
+    template.save(str(tmp_path / "test.pot"))
+    catalog.save_as_mofile(str(tmp_path / "test.mo"))
+    entry.flags.append("fuzzy")
+    catalog.save(str(tmp_path / "test.po"))
+
+    module = sys.modules[__name__]
+    monkeypatch.setattr(module, "pot_path", lambda: tmp_path / "test.pot")
+    monkeypatch.setattr(module, "po_path", lambda lang: tmp_path / "test.po")
+    monkeypatch.setattr(module, "mo_path", lambda lang: tmp_path / "test.mo")
+    with pytest.raises(AssertionError, match="未完成翻译"):
+        test_registered_messages_are_translated_and_compiled("en_US")

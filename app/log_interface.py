@@ -191,6 +191,12 @@ class GameLogOverlay(QWidget):
         self.resize(420, 188)
         self.hide()
 
+    def retranslateUi(self):
+        """刷新现有浮窗的文案，不重建窗口或清空任务日志。"""
+        self.titleLabel.setText(tr('任务日志'))
+        self.pauseBadge.setText(tr('已暂停'))
+        self.setDetectedUpdateVersion(self.detected_update_version)
+
     def setDetectedUpdateVersion(self, version: str | None):
         self.detected_update_version = version or None
         if self.detected_update_version:
@@ -580,6 +586,12 @@ class LogInterface(ScrollArea):
         self.detected_update_version = version or None
         if self._log_overlay:
             self._log_overlay.setDetectedUpdateVersion(self.detected_update_version)
+
+    def retranslateOverlay(self):
+        """语言切换时保留正在运行的任务及其暂停状态。"""
+        if self._log_overlay:
+            self._log_overlay.retranslateUi()
+            self._updateOverlayHotkeyHint()
 
     def _hideLogOverlay(self):
         if self._log_overlay:

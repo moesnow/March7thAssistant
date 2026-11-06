@@ -507,7 +507,7 @@ class MainWindow(MSFluentWindow):
             self._reinstall_fluent_translator(actual_lang)
             self._refreshWindowTitleBar()
             if hasattr(self, 'logInterface') and self.logInterface:
-                self.logInterface.setDetectedUpdateVersion(self.detected_update_version)
+                self.logInterface.retranslateOverlay()
 
             # 禁用导航栏，防止重建期间误操作
             self.navigationInterface.setEnabled(False)
