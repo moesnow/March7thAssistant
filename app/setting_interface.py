@@ -2401,7 +2401,7 @@ class SettingInterface(ScrollArea):
                 # 添加教程按钮（在开关左边）
                 if has_tutorial:
                     tutorialButton = PushButton(tr("教程"), self)
-                    tutorialButton.setFixedWidth(60)
+                    tutorialButton.setMinimumWidth(60)
                     # 使用 insertWidgetBeforeSwitch 在开关前插入按钮
                     notifyEnableCard.insertWidgetBeforeSwitch(tutorialButton)
                     # 保存教程内容引用
@@ -2427,7 +2427,7 @@ class SettingInterface(ScrollArea):
                 # 添加教程按钮（winotify 除外，放在开关左边）
                 if has_tutorial:
                     tutorialButton = PushButton(tr("教程"), self)
-                    tutorialButton.setFixedWidth(60)
+                    tutorialButton.setMinimumWidth(60)
                     # 在开关按钮之前插入教程按钮
                     insert_index = max(notifyEnableCard.hBoxLayout.count() - 3, 0)
                     notifyEnableCard.hBoxLayout.insertWidget(insert_index, tutorialButton, 0, Qt.AlignmentFlag.AlignRight)
