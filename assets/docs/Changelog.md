@@ -1,5 +1,28 @@
 # 更新日志
 
+## v2026.11.6
+
+- 新增角色面板导出，支持角色属性、光锥、星魂、技能和遗器
+- 混沌回忆新增「星启模式」与第三队编队支持 [#1283](https://github.com/moesnow/March7thAssistant/pulls/1283) @23swccp
+- 末日幻影新增「星启模式」与第三队编队支持，完善节点推进与结算流程 [#1284](https://github.com/moesnow/March7thAssistant/pulls/1284) @23swccp
+- 新增「免 UAC 运行」，开启后 AI 助手或脚本通过 `m7a.exe` 运行任务时无需再次确认管理员权限
+- 更新后自动同步已安装到 AI 助手的 Skill
+- Docker 支持通过 `MARCH7TH_NO_RUN_IMMEDIATELY` 环境变量设置启动后先等待定时运行 [#1303](https://github.com/moesnow/March7thAssistant/pulls/1303) @StaravenX
+- 循环运行统一改为定时模式，旧的「根据开拓力」配置自动迁移
+- 优化列表拖动与关卡翻页，减少后台运行时切到前台的情况
+- 修复后台操作后切回游戏时键盘和鼠标失效的问题
+- 修复混沌回忆、虚构叙事星启模式最高关已满星时仍重复挑战的问题
+- 修复星启快速通关奖励弹窗导致流程中断的问题 [#1309](https://github.com/moesnow/March7thAssistant/pulls/1309) @XX3121
+- 修复自塑尘脂材料不足时反复尝试合成、未正确提示的问题 [#1309](https://github.com/moesnow/March7thAssistant/pulls/1309) @XX3121
+- 补充「密伶之径」掉落物识别，修复相关副本无法识别的问题 [#1297](https://github.com/moesnow/March7thAssistant/pulls/1297) @shing-yu
+- 修复更新后首次重启无法保存配置的问题 [#1304](https://github.com/moesnow/March7thAssistant/pulls/1304) @Oc8369
+- 修复取消账号自动登录设置对话框时托盘程序一并退出的问题 [#1307](https://github.com/moesnow/March7thAssistant/pulls/1307) @LumiaBlack51
+- 修复部分 Epic 安装清单和启动器窗口无法识别导致游戏启动失败的问题 [#1310](https://github.com/moesnow/March7thAssistant/pulls/1310) @nyavana
+- 修复部分环境下 OpenSSL 冲突导致程序启动或 HTTPS 请求异常的问题
+- 修复免责声明确认状态保存失败时静默退出的问题，并补充崩溃日志
+- 优化性能和稳定性并修复若干已知问题
+- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
+
 ## v2026.10.31
 - 新增 Windows 后台运行模式，支持后台键鼠操作
 - 定时任务支持按星期执行，完善运行计划展示
@@ -9,7 +32,6 @@
 - 修复云游戏剩余时长为 0 时容器反复重启的问题 [#1276](https://github.com/moesnow/March7thAssistant/pulls/1276) @StaravenX
 - 优化兑换码使用流程 [#1295](https://github.com/moesnow/March7thAssistant/pulls/1295) @spellbook96
 - 优化性能和稳定性并修复若干已知问题
-- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.10.16
 - 新手推荐观看 [从零开始的三月七小助手保姆级安装教程](https://www.bilibili.com/video/BV1DrJt62E1u/)，从下载、解压到首次启动，跟着视频一步步完成安装，欢迎点赞、投币、收藏支持！
