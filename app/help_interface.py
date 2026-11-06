@@ -206,6 +206,7 @@ a {
     def retranslateUi(self):
         StyleSheet.HELP_INTERFACE.apply(self)
         self.helpLabel.setText(tr('帮助'))
+        self.helpLabel.adjustSize()
         self.websiteButton.setText(tr('在官网查看'))
         self.websiteButton.adjustSize()
         self.websiteButton.move(self.width() - self.websiteButton.width() - 36, 36)

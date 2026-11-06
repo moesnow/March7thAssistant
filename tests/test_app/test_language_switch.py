@@ -484,3 +484,114 @@ def test_switch_button_visible_text_refreshes_without_toggling(window, monkeypat
         assert switch.isChecked() == checked
         assert switch.label.text() == 'new:' + ('开' if checked else '关')
     toggled.assert_not_called()
+
+
+@pytest.mark.parametrize('selected_path', [None, (0,), (1,), (2, 0)])
+def test_generated_workflow_status_retranslates_snapshot_and_preserves_custom_names(
+        log_page, qtbot, monkeypatch, selected_path):
+    from app import log_interface as log_module, workflow_interface as workflow_module
+    from module.workflow import (build_workflow_task, get_workflow_step_by_path,
+                                 normalize_workflow, summarize_step)
+
+    localization.load_language('zh_CN')
+    data = normalize_workflow({
+        'name': '流程编排 - User 原名',
+        'steps': [
+            {'type': 'wait', 'seconds': 1.0},
+            {'type': 'click_text', 'text': '等待 - User 原文'},
+            {'type': 'for', 'count': 2,
+             'children': [{'type': 'press_key', 'key': 'f', 'key_action': 'press'}]},
+        ],
+    })
+    original = deepcopy(data)
+    monkeypatch.setattr(workflow_module, 'load_workflows', lambda: [data])
+    monkeypatch.setattr(workflow_module, 'get_current_workflow_name', lambda: data['name'])
+    monkeypatch.setattr(workflow_module, 'set_current_workflow_name', lambda *_: None)
+    workflow = workflow_module.WorkflowInterface()
+    qtbot.addWidget(workflow)
+    task = workflow._build_workflow_task(selected_path)
+    original_name = task['name']
+    original_step = get_workflow_step_by_path(original, selected_path) if selected_path else None
+
+    # 模型随后可被编辑；运行中任务的显示上下文必须来自启动时的快照。
+    data['name'] = 'Edited workflow'
+    for step in data['steps']:
+        step.update(seconds=99, text='Edited text', children=[])
+    start = Mock()
+    monkeypatch.setattr(log_module.QProcess, 'start', start)
+    monkeypatch.setattr(log_page, '_injectPauseControlEnv', Mock())
+    commands = Mock()
+    monkeypatch.setattr(log_module, 'write_command', commands)
+    log_page.startTask(task)  # 真实启动分支和 QProcess 对象，不启动游戏进程。
+    start.assert_called_once()
+    process = log_page.process
+
+    for language in ('en_US', 'ja_JP', 'zh_TW', 'ko_KR', 'zh_CN'):
+        localization.load_language(language)
+        expected_name = f"{localization.tr('流程编排')} - {original['name']}"
+        if original_step is not None:
+            expected_name += ' - ' + summarize_step(original_step)[0]
+        expected = localization.tr('正在运行：{name}').format(name=expected_name)
+        log_page.retranslateUi()
+        assert log_page.statusLabel.text() == expected
+        log_page._pause_state = log_module.STATE_PAUSED
+        log_page._syncPauseUi()
+        assert log_page.statusLabel.text() == localization.tr('已暂停')
+        log_page._pause_state = log_module.STATE_RUNNING
+        log_page._syncPauseUi()
+        assert log_page.statusLabel.text() == expected
+        assert log_page.process is process
+        # 调用方修改任务字典也不能改掉已经启动的任务显示。
+        task['workflow_display']['workflow_name'] = 'Edited task'
+        task['workflow_display']['step'] = {'type': 'wait', 'seconds': 99}
+    commands.assert_not_called()
+    start.assert_called_once()
+
+    # 同样的中文名称也可能是用户输入，不可按前缀猜测其来源。
+    custom = build_workflow_task(original['name'], name=original_name)
+    log_page.startTask(custom)
+    for language in ('en_US', 'ja_JP'):
+        localization.load_language(language)
+        log_page.retranslateUi()
+        assert log_page.statusLabel.text() == localization.tr('正在运行：{name}').format(name=original_name)
+    log_page._setRunningStatus('完整运行', translate_name=True)
+    assert log_page.statusLabel.text() == localization.tr('正在运行：{name}').format(
+        name=localization.tr('完整运行'))
+
+
+@pytest.mark.parametrize('page_name,label_name', [
+    ('toolsInterface', 'toolsLabel'), ('helpInterface', 'helpLabel'),
+    ('warpInterface', 'titleLabel'), ('workflowInterface', 'titleLabel'),
+])
+def test_deferred_language_refresh_resizes_visible_page_title(window, qtbot, page_name, label_name):
+    class Worker(QThread):
+        def run(self):
+            self.exec()
+
+    window.stackedWidget.setAnimationEnabled(False)
+    page = getattr(window, page_name)
+    label = getattr(page, label_name)
+    window.switchTo(page)
+    qtbot.wait(20)
+    for language in ('en_US', 'ja_JP', 'zh_CN', 'ja_JP'):
+        window.switchTo(window.settingInterface)
+        old = window.settingInterface
+        worker = Worker(old)
+        worker.start()
+        try:
+            qtbot.waitUntil(worker.isRunning)
+            old.languageCard.comboBox.setCurrentIndex(old.languageCard.comboBox.findData(language))
+            qtbot.wait(120)
+            assert window.settingInterface is old
+            # 等待期间导航是受支持的行为；刷新发生时页面已经可见。
+            window.switchTo(page)
+            qtbot.wait(20)
+        finally:
+            worker.quit()
+            assert worker.wait(3000)
+        qtbot.waitUntil(lambda: window.settingInterface is not old, timeout=15000)
+        qtbot.wait(20)
+        assert window.stackedWidget.currentWidget() is page
+        assert label.isVisible()
+        assert label.width() >= label.sizeHint().width()
+        assert label.height() >= label.sizeHint().height()

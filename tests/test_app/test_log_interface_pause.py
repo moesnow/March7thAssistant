@@ -257,6 +257,7 @@ class TestPauseToggle:
         iface._task_status = 'running'
         iface._task_display_name = '货币战争'
         iface._task_name_is_msgid = True
+        iface._task_workflow_display = None
         iface._paused_timeout_remaining = None
         iface._timeout_timer = None
         iface.log_lines = []

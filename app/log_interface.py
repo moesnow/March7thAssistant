@@ -335,6 +335,7 @@ class LogInterface(ScrollArea):
         self._task_status = 'waiting'
         self._task_display_name = None
         self._task_name_is_msgid = False
+        self._task_workflow_display = None
         self.detected_update_version = None
         self._external_task_active = False
         self._external_task_name = None
@@ -612,10 +613,12 @@ class LogInterface(ScrollArea):
         self._updateScheduleStatusLabel()
         self.retranslateOverlay()
 
-    def _setRunningStatus(self, name, *, translate_name=False):
+    def _setRunningStatus(self, name, *, translate_name=False, workflow_display=None):
         self._task_status = 'running'
         self._task_display_name = name
         self._task_name_is_msgid = translate_name
+        # 与编辑页和调用方任务字典解耦，语言切换不重新读取可变的流程模型。
+        self._task_workflow_display = deepcopy(workflow_display)
         self._refreshTaskStatus()
 
     def _refreshTaskStatus(self):
@@ -623,7 +626,12 @@ class LogInterface(ScrollArea):
             if self._pause_state == STATE_PAUSED:
                 text = tr('已暂停')
             else:
-                name = tr(self._task_display_name) if self._task_name_is_msgid else self._task_display_name
+                if self._task_workflow_display is not None:
+                    from module.workflow import format_workflow_task_name
+                    display = self._task_workflow_display
+                    name = format_workflow_task_name(display['workflow_name'], display['step'])
+                else:
+                    name = tr(self._task_display_name) if self._task_name_is_msgid else self._task_display_name
                 text = tr('正在运行：{name}').format(name=name)
         elif self._task_status == 'completed':
             text = tr('任务完成')
@@ -1321,7 +1329,7 @@ class LogInterface(ScrollArea):
             self.appendLog(f"命令: {executable_path} {' '.join(args_list)}\n")
 
             self.current_task = program
-            self._setRunningStatus(name)
+            self._setRunningStatus(name, workflow_display=task.get('workflow_display') if workflow_launch else None)
             self.stopButton.setEnabled(True)
             self._syncPauseUi()
 

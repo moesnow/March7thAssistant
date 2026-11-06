@@ -53,6 +53,7 @@ from module.workflow import (
     duplicate_workflow_name,
     export_workflow_to_zip,
     format_point_expression,
+    format_workflow_task_name,
     get_asset_directory,
     get_current_workflow_name,
     get_switchable_screen_name,
@@ -675,6 +676,7 @@ class WorkflowInterface(ScrollArea):
         """保留流程数据、选择、树节点及展开状态，不重新加载文件。"""
         StyleSheet.WORKFLOW_INTERFACE.apply(self)
         self.titleLabel.setText(tr('流程编排'))
+        self.titleLabel.adjustSize()
         self.summaryTitle.setText(tr('像快捷指令一样拼流程') + ' ' + tr('【测试版】'))
         self.currentWorkflowLabel.setText(tr('当前流程'))
         self.newWorkflowButton.setText(tr('新建流程'))
@@ -1215,20 +1217,20 @@ class WorkflowInterface(ScrollArea):
         new_path = tuple(list(selected_path[:-1]) + [new_index])
         self._refresh_tree(new_path)
 
-    def _workflow_task_display_name(self, selected_path=None) -> str:
-        workflow_name = self._current_workflow()["name"]
-        if not selected_path:
-            return workflow_name
-        title, _ = summarize_step(self._step_for_path(selected_path))
-        return f"{workflow_name} - {title}"
-
     def _build_workflow_task(self, selected_path=None) -> dict:
         # 统一产出 program='workflow' 标记形态，实际命令行由 startTask 的 workflow 改写处唯一解析
-        return build_workflow_task(
-            self._current_workflow()["name"],
+        display = {
+            "workflow_name": self._current_workflow()["name"],
+            "step": copy.deepcopy(self._step_for_path(selected_path)) if selected_path else None,
+        }
+        task = build_workflow_task(
+            display["workflow_name"],
             step_path=selected_path,
-            name=f"{tr('流程编排')} - {self._workflow_task_display_name(selected_path)}",
+            name=format_workflow_task_name(display["workflow_name"], display["step"]),
         )
+        # 仅自动生成的显示名携带来源；自定义任务名不能按文字或前缀猜测。
+        task["workflow_display"] = display
+        return task
 
     def _start_workflow_execution(self, selected_path=None):
         main_window = self._get_main_window()

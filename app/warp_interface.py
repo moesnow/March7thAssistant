@@ -49,6 +49,7 @@ class WarpInterface(ScrollArea):
     def retranslateUi(self):
         StyleSheet.WARP_INTERFACE.apply(self)
         self.titleLabel.setText(tr('抽卡记录'))
+        self.titleLabel.adjustSize()
         self.updateBtn.setText(tr('更新数据'))
         self.updateFullBtn.setText(tr('更新完整数据'))
         self.importBtn.setText(tr('导入数据'))

@@ -83,6 +83,7 @@ class ToolsInterface(ScrollArea):
         """保留自动对话开关及其运行状态，不再次启动后台工具。"""
         StyleSheet.TOOLS_INTERFACE.apply(self)
         self.toolsLabel.setText(tr('工具箱'))
+        self.toolsLabel.adjustSize()
         self.ToolsGroup.titleLabel.setText(tr('工具箱'))
         self.automaticPlotCard.card.setTitle(tr('自动对话'))
         self.automaticPlotCard.card.setContent(tr('进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道'))
