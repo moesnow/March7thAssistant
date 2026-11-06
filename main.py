@@ -487,7 +487,8 @@ def run_sub_task(action):
     if action not in ("screen_test", "character_export"):
         if success:
             game.stop(False)
-        else:
+        elif cfg.after_finish == "Exit":
+            # 失败时仅响应显式退出游戏，不执行成功后的系统操作或循环等待。
             game.get_game_controller().stop_game()
     return success
 
