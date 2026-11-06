@@ -141,6 +141,7 @@ class CloudGameController(GameControllerBase):
         self.driver = None
         self.cfg = cfg
         self.logger = logger
+        self._headless_override = None
 
         self._last_interruption_check_time = 0.0
 
@@ -1209,6 +1210,7 @@ class CloudGameController(GameControllerBase):
     def start_game_process(self, headless=None) -> bool:
         """启动浏览器进程"""
         try:
+            self._headless_override = headless
             if headless is None:
                 headless = self.cfg.browser_headless_enable
             self._connect_or_create_browser(headless=headless)
@@ -1217,6 +1219,12 @@ class CloudGameController(GameControllerBase):
         except Exception as e:
             self.log_error(f"启动或连接浏览器失败 {e}")
             return False
+
+    def is_headless(self) -> bool:
+        """返回本次启动选用的模式，未指定覆盖时遵循配置。"""
+        if getattr(self, "_headless_override", None) is not None:
+            return bool(self._headless_override)
+        return bool(self.cfg.browser_headless_enable)
 
     def is_in_game(self) -> bool:
         if not self.driver:
@@ -1243,12 +1251,12 @@ class CloudGameController(GameControllerBase):
                 self.log_info("未登录")
 
                 # 如果是 headless 且配置了自动重启，则以非 headless 模式重启启动让用户登录
-                if self.cfg.browser_headless_enable and self.cfg.browser_headless_restart_on_not_logged_in:
+                if self.is_headless() and self.cfg.browser_headless_restart_on_not_logged_in:
                     self.log_info("无窗口模式下检测到未登录，将以有窗口模式重启浏览器")
                     self._restart_browser(headless=False)
 
                 # 如果是 headless 且配置了不重启，则尝试二维码登录
-                if self.cfg.browser_headless_enable and (not self.cfg.browser_headless_restart_on_not_logged_in):
+                if self.is_headless() and (not self.cfg.browser_headless_restart_on_not_logged_in):
                     self._run_qr_login_flow(login_deadline, login_timeout_seconds)
 
                 self.log_info(f"请在浏览器中完成登录操作，超时时间：{login_timeout_seconds // 60} 分钟")
@@ -1263,7 +1271,7 @@ class CloudGameController(GameControllerBase):
                 self.log_info("检测到登录成功")
 
                 # 如果为 headless 模式，则重启浏览器回到 headless 模式
-                if self.cfg.browser_headless_enable and self.cfg.browser_headless_restart_on_not_logged_in:
+                if self.is_headless() and self.cfg.browser_headless_restart_on_not_logged_in:
                     if self.cfg.browser_dump_cookies_enable:
                         self._save_cookies()
                     self.log_info("登录完成，将重启为无窗口模式")
@@ -1595,7 +1603,7 @@ class CloudGameController(GameControllerBase):
 
     def _ensure_window_not_minimized_for_frame_capture(self) -> None:
         """视频帧截图依赖前台窗口持续渲染，最小化时先恢复窗口。"""
-        if self.cfg.browser_headless_enable or sys.platform != "win32":
+        if self.is_headless() or sys.platform != "win32":
             return
 
         hwnd = self.get_window_handle()
@@ -1647,7 +1655,7 @@ class CloudGameController(GameControllerBase):
         return win32gui.FindWindow(None, "云·星穹铁道")
 
     def switch_to_game(self) -> bool:
-        if self.cfg.browser_headless_enable:
+        if self.is_headless():
             self.log_warning("游戏切换至前台失败：当前为无窗口模式")
             return False
         else:
