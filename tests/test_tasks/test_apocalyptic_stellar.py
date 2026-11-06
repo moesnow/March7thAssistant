@@ -64,6 +64,15 @@ def test_invalid_stellar_teams_stop_before_entering_game(apocalyptic):
     apocalyptic.prepare.assert_not_called()
 
 
+def test_regular_clear_confirms_return_from_expanded_settlement(apocalyptic):
+    apocalyptic.find_level = Mock(return_value=(100, 100))
+    apocalyptic.judge_stars = Mock(return_value=0)
+    apocalyptic.start_challenge = Mock(return_value=True)
+    apocalyptic.return_to_stage_list = Mock()
+    assert apocalyptic.start_challenges() is True
+    apocalyptic.return_to_stage_list.assert_called_once_with()
+
+
 def test_disabled_stellar_keeps_native_flow(apocalyptic):
     apocalyptic.stellar.enabled = False
     apocalyptic.prepare = Mock(return_value=True)
