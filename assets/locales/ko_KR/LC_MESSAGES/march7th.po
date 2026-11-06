@@ -6543,7 +6543,7 @@ msgstr ""
 
 #: app/tools_interface.py:73
 msgid "角色面板导出"
-msgstr ""
+msgstr "캐릭터 패널 내보내기"
 
 #: app/tools_interface.py:74
 msgid "读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json"

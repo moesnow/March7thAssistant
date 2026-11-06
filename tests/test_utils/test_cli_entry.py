@@ -357,6 +357,38 @@ class TestReadOnlyCommands:
         tasks = json.loads(result.stdout)
         assert {"id": "daily"}.items() <= next(t for t in tasks if t["id"] == "daily").items()
 
+    @pytest.mark.parametrize("lang", ["zh_CN", "zh_TW", "en_US", "ja_JP", "ko_KR"])
+    def test_list_json_with_explicit_language_and_missing_translation(self, lang):
+        # 在独立进程中指定语言，并强制增加一个缺译任务，覆盖目录完整后的缺译路径。
+        code = (
+            "import runpy, sys; import module.localization as loc; import utils.tasks as tasks; "
+            "load = loc.load_language; loc.load_language = lambda: load(sys.argv[1]); "
+            "names = tasks.task_display_names; "
+            "tasks.task_display_names = lambda: dict(names(), missing=loc.tr('测试缺失译文')); "
+            "sys.argv = ['main.py', '--list', '--json']; runpy.run_path('main.py', run_name='__main__')"
+        )
+        result = subprocess.run([sys.executable, "-c", code, lang], cwd=REPO,
+                                capture_output=True, timeout=120,
+                                env=dict(os.environ, MARCH7TH_CONFIG_READONLY="1"))
+        assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
+        tasks = json.loads(result.stdout)
+        assert all(set(task) == {"id", "name"} for task in tasks)
+        assert {"daily", "character_export", "missing"} <= {task["id"] for task in tasks}
+
+    def test_missing_translation_does_not_initialize_logger(self):
+        code = ("import sys; import module.localization as loc; "
+                "loc.load_language('en_US'); assert loc.tr('测试缺失译文') == '测试缺失译文'; "
+                "assert 'module.logger' not in sys.modules")
+        result = subprocess.run([sys.executable, "-c", code], cwd=REPO,
+                                capture_output=True, timeout=120)
+        assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
+        assert result.stdout == b""
+
+    def test_list_workflows_json(self):
+        result = _run_main("--list-workflows", "--json")
+        assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
+        assert isinstance(json.loads(result.stdout)["workflows"], list)
+
     def test_status_json(self):
         config = REPO / "config.yaml"
         before = config.read_bytes() if config.exists() else None

@@ -98,8 +98,9 @@ def _log_missing_once(text: str) -> None:
         return
     _missing_logged.add(text)
     try:
-        from module.logger import log
-        log.debug(f"i18n 缺失翻译 [{_current_lang}]: {text[:60]}")
+        logger = sys.modules.get("module.logger")
+        if logger is not None and getattr(logger, "log", None) is not None:
+            logger.log.debug(f"i18n 缺失翻译 [{_current_lang}]: {text[:60]}")
     except Exception:
         pass
 

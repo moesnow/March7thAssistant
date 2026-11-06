@@ -169,9 +169,15 @@ def parse_args():
 
     # 处理 --list-workflows 参数
     if args.list_workflows:
-        from module.workflow import list_workflow_names
-
-        names = list_workflow_names()
+        if args.json:
+            # 工作流模块初始化及读取过程可能输出日志，结构化结果只写入 stdout。
+            from contextlib import redirect_stdout
+            with redirect_stdout(sys.stderr):
+                from module.workflow import list_workflow_names
+                names = list_workflow_names()
+        else:
+            from module.workflow import list_workflow_names
+            names = list_workflow_names()
         if args.json:
             import json
             print(json.dumps({"workflows": names}, ensure_ascii=True))
