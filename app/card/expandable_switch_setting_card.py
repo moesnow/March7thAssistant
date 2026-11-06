@@ -120,8 +120,9 @@ class ExpandableWeeklyRelicSettingCard(ExpandableSwitchSettingCard):
         super().__init__(configname, icon, title, parent=parent)
         self.dayConfigname = day_configname
         self.comboBox = ComboBox(self)
-        for day, text in enumerate(('周一', '周二', '周三', '周四', '周五', '周六', '周日'), 1):
-            self.comboBox.addItem(tr(text), userData=day)
+        for day, text in enumerate((tr('周一'), tr('周二'), tr('周三'), tr('周四'),
+                                    tr('周五'), tr('周六'), tr('周日')), 1):
+            self.comboBox.addItem(text, userData=day)
 
         day = self.cfg.get_value(day_configname, 1)
         self.comboBox.setCurrentIndex(day - 1 if isinstance(day, int) and 1 <= day <= 7 else 0)

@@ -54,7 +54,7 @@ msgstr "ゲーム起動"
 msgid "日志"
 msgstr "ログ"
 
-#: app/log_interface.py:428
+#: app/log_interface.py:144
 msgid "任务日志"
 msgstr "タスクログ"
 
@@ -567,9 +567,11 @@ msgstr "フィールド探索タイムアウト"
 msgid "上次运行锄大地的时间"
 msgstr "前回フィールド探索を実行した時刻"
 
+# Japanese item name: https://honkai-star-
+# rail.fandom.com/wiki/Unclaimed_Parcel
 #: app/setting_interface.py:850
 msgid "购买代币与过期邮包"
-msgstr "トークンと期限切れ郵包を購入"
+msgstr "トークンと受取期限が過ぎた荷物を購入"
 
 #: app/card/stationprioritysettingcard.py:158
 msgid "启用"
@@ -611,7 +613,7 @@ msgstr "オンパロス"
 msgid "启用混沌回忆"
 msgstr "混沌の記憶を有効化"
 
-#: app/challenge_config_dialog.py:36
+#: app/challenge_config_dialog.py:47
 msgid "关卡范围"
 msgstr "ステージ範囲"
 
@@ -1295,6 +1297,8 @@ msgid ""
 "https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
 "使用本功能产生的所有问题与本项目与开发者团队无关，是否继续？"
 msgstr ""
+"https://github.com/winTEuser/Genshin_StarRail_fps_unlocker\n"
+"この機能の使用によって発生した問題について、本プロジェクトおよび開発チームは責任を負いません。続行しますか？"
 
 #: app/tools_interface.py:189
 msgid "再次确认：可能存在风险"
@@ -1409,6 +1413,8 @@ msgid ""
 "队伍1: {team1}\n"
 "队伍2: {team2}"
 msgstr ""
+"チーム1：{team1}\n"
+"チーム2：{team2}"
 
 #: app/card/pushsettingcard1.py:804
 msgid "交换成功"
@@ -1575,6 +1581,11 @@ msgid ""
 "\n"
 "复制链接功能可用于小程序或其他软件。"
 msgstr ""
+"跳躍履歴がありません。まずゲーム内で跳躍履歴を開き、その後「データ更新」をクリックしてください。\n"
+"\n"
+"StarRail Warp Export や Starward など、UIGF/SRGF 形式に対応した他のアプリからデータをインポートすることもできます。\n"
+"\n"
+"リンクのコピー機能は、ミニアプリや他のソフトウェアで利用できます。"
 
 #: app/sub_interfaces/hotkey_interface.py:20
 msgid "秘技（只对清体力和逐光捡金场景生效）"
@@ -1607,6 +1618,7 @@ msgstr "キー設定"
 #: app/sub_interfaces/accounts_interface.py:31
 msgid "重要：请完全进入游戏（看到角色）后再进行导出，否则会读取前一个账号的UID，导致文件和账号不对应"
 msgstr ""
+"重要：エクスポートする前に、ゲームに完全にログインしてキャラクターが表示されるまで待ってください。そうしないと、前のアカウントのUIDが読み込まれ、ファイルとアカウントが一致しなくなります。"
 
 #: app/sub_interfaces/accounts_interface.py:34
 msgid "该功能不支持云·星穹铁道"
@@ -1685,6 +1697,8 @@ msgid ""
 "当登录过期时尝试自动重新填写账号密码\n"
 " *此功能存在一定风险，请谨慎使用*"
 msgstr ""
+"ログインの有効期限が切れた場合、アカウントとパスワードの自動再入力を試みます\n"
+" *この機能には一定のリスクがあります。慎重に使用してください*"
 
 #: app/sub_interfaces/accounts_interface.py:131
 msgid "请输入用户名"
@@ -1902,31 +1916,31 @@ msgstr "オフ"
 msgid "开"
 msgstr "オン"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周一"
 msgstr "月"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周二"
 msgstr "火"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周三"
 msgstr "水"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周四"
 msgstr "木"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周五"
 msgstr "金"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周六"
 msgstr "土"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周日"
 msgstr "日"
 
@@ -1964,7 +1978,7 @@ msgstr "手動ダウンロード"
 
 #: app/card/messagebox_custom.py:494
 msgid "好的"
-msgstr ""
+msgstr "わかりました"
 
 #: app/card/messagebox_custom.py:502
 msgid "我已知晓"
@@ -1986,7 +2000,7 @@ msgstr "使用済み交換コードをクリア"
 msgid "未执行"
 msgstr "未実行"
 
-#: app/card/expandable_switch_setting_card.py:155
+#: app/card/expandable_switch_setting_card.py:156
 msgid "重置时间"
 msgstr "リセット時刻"
 
@@ -2333,27 +2347,27 @@ msgstr "CDK を取得"
 
 #: assets/config/character_names.json
 msgid "阿兰"
-msgstr ""
+msgstr "アーラン"
 
 #: assets/config/character_names.json
 msgid "艾丝妲"
-msgstr ""
+msgstr "アスター"
 
 #: assets/config/character_names.json
 msgid "白露"
-msgstr ""
+msgstr "白露"
 
 #: assets/config/character_names.json
 msgid "布洛妮娅"
-msgstr ""
+msgstr "ブローニャ"
 
 #: assets/config/character_names.json
 msgid "波提欧"
-msgstr ""
+msgstr "ブートヒル"
 
 #: assets/config/character_names.json
 msgid "丹恒"
-msgstr ""
+msgstr "丹恒"
 
 #: assets/config/character_names.json
 msgid "丹恒·饮月"
@@ -2365,279 +2379,279 @@ msgstr "丹恒・騰荒"
 
 #: assets/config/character_names.json
 msgid "翡翠"
-msgstr ""
+msgstr "ジェイド"
 
 #: assets/config/character_names.json
 msgid "飞霄"
-msgstr ""
+msgstr "飛霄"
 
 #: assets/config/character_names.json
 msgid "符玄"
-msgstr ""
+msgstr "符玄"
 
 #: assets/config/character_names.json
 msgid "桂乃芬"
-msgstr ""
+msgstr "桂乃芬"
 
 #: assets/config/character_names.json
 msgid "藿藿"
-msgstr ""
+msgstr "フォフォ"
 
 #: assets/config/character_names.json
 msgid "花火"
-msgstr ""
+msgstr "花火"
 
 #: assets/config/character_names.json
 msgid "虎克"
-msgstr ""
+msgstr "フック"
 
 #: assets/config/character_names.json
 msgid "黄泉"
-msgstr ""
+msgstr "黄泉"
 
 #: assets/config/character_names.json
 msgid "黑塔"
-msgstr ""
+msgstr "ヘルタ"
 
 #: assets/config/character_names.json
 msgid "黑天鹅"
-msgstr ""
+msgstr "ブラックスワン"
 
 #: assets/config/character_names.json
 msgid "寒鸦"
-msgstr ""
+msgstr "寒鴉"
 
 #: assets/config/character_names.json
 msgid "镜流"
-msgstr ""
+msgstr "鏡流"
 
 #: assets/config/character_names.json
 msgid "加拉赫"
-msgstr ""
+msgstr "ギャラガー"
 
 #: assets/config/character_names.json
 msgid "杰帕德"
-msgstr ""
+msgstr "ジェパード"
 
 #: assets/config/character_names.json
 msgid "椒丘"
-msgstr ""
+msgstr "椒丘"
 
 #: assets/config/character_names.json
 msgid "景元"
-msgstr ""
+msgstr "景元"
 
 #: assets/config/character_names.json
 msgid "姬子"
-msgstr ""
+msgstr "姫子"
 
 #: assets/config/character_names.json
 msgid "卡芙卡"
-msgstr ""
+msgstr "カフカ"
 
 #: assets/config/character_names.json
 msgid "克拉拉"
-msgstr ""
+msgstr "クラーラ"
 
 #: assets/config/character_names.json
 msgid "罗刹"
-msgstr ""
+msgstr "羅刹"
 
 #: assets/config/character_names.json
 msgid "卢卡"
-msgstr ""
+msgstr "ルカ"
 
 #: assets/config/character_names.json
 msgid "玲可"
-msgstr ""
+msgstr "リンクス"
 
 #: assets/config/character_names.json
 msgid "乱破"
-msgstr ""
+msgstr "乱破"
 
 #: assets/config/character_names.json
 msgid "灵砂"
-msgstr ""
+msgstr "霊砂"
 
 #: assets/config/character_names.json
 msgid "流萤"
-msgstr ""
+msgstr "ホタル"
 
 #: assets/config/character_names.json
 msgid "流萤「春日手信」"
-msgstr ""
+msgstr "ホタル「春の贈り物」"
 
 #: assets/config/character_names.json
 msgid "米沙"
-msgstr ""
+msgstr "ミーシャ"
 
 #: assets/config/character_names.json
 msgid "貊泽"
-msgstr ""
+msgstr "モゼ"
 
 #: assets/config/character_names.json
 msgid "娜塔莎"
-msgstr ""
+msgstr "ナターシャ"
 
 #: assets/config/character_names.json
 msgid "佩拉"
-msgstr ""
+msgstr "ペラ"
 
 #: assets/config/character_names.json
 msgid "青雀"
-msgstr ""
+msgstr "青雀"
 
 #: assets/config/character_names.json
 msgid "穹（存护）"
-msgstr ""
+msgstr "穹（存護）"
 
 #: assets/config/character_names.json
 msgid "穹（毁灭）"
-msgstr ""
+msgstr "穹（壊滅）"
 
 #: assets/config/character_names.json
 msgid "穹（同谐）"
-msgstr ""
+msgstr "穹（調和）"
 
 #: assets/config/character_names.json
 msgid "穹（记忆）"
-msgstr ""
+msgstr "穹（記憶）"
 
 #: assets/config/character_names.json
 msgid "穹（欢愉）"
-msgstr ""
+msgstr "穹（愉悦）"
 
 #: assets/config/character_names.json
 msgid "刃"
-msgstr ""
+msgstr "刃"
 
 #: assets/config/character_names.json
 msgid "阮·梅"
-msgstr ""
+msgstr "ルアン・メェイ"
 
 #: assets/config/character_names.json
 msgid "桑博"
-msgstr ""
+msgstr "サンポ"
 
 #: assets/config/character_names.json
 msgid "砂金"
-msgstr ""
+msgstr "アベンチュリン"
 
 #: assets/config/character_names.json
 msgid "素裳"
-msgstr ""
+msgstr "素裳"
 
 #: assets/config/character_names.json
 msgid "三月七（冰）"
-msgstr ""
+msgstr "三月なのか（氷）"
 
 #: assets/config/character_names.json
 msgid "三月七（虚数）"
-msgstr ""
+msgstr "三月なのか（虚数）"
 
 #: assets/config/character_names.json
 msgid "三月七「冬去煦至」"
-msgstr ""
+msgstr "三月なのか「冬の後の日差し」"
 
 #: assets/config/character_names.json
 msgid "托帕&账账"
-msgstr ""
+msgstr "トパーズ＆カブ"
 
 #: assets/config/character_names.json
 msgid "停云"
-msgstr ""
+msgstr "停雲"
 
 #: assets/config/character_names.json
 msgid "瓦尔特"
-msgstr ""
+msgstr "ヴェルト"
 
 #: app/setting_interface.py:613
 msgid "希儿"
-msgstr ""
+msgstr "ゼーレ"
 
 #: assets/config/character_names.json
 msgid "希露瓦"
-msgstr ""
+msgstr "セーバル"
 
 #: assets/config/character_names.json
 msgid "星期日"
-msgstr ""
+msgstr "サンデー"
 
 #: assets/config/character_names.json
 msgid "雪衣"
-msgstr ""
+msgstr "雪衣"
 
 #: assets/config/character_names.json
 msgid "星（存护）"
-msgstr ""
+msgstr "星（存護）"
 
 #: assets/config/character_names.json
 msgid "星（毁灭）"
-msgstr ""
+msgstr "星（壊滅）"
 
 #: assets/config/character_names.json
 msgid "星（同谐）"
-msgstr ""
+msgstr "星（調和）"
 
 #: assets/config/character_names.json
 msgid "星（记忆）"
-msgstr ""
+msgstr "星（記憶）"
 
 #: assets/config/character_names.json
 msgid "星（欢愉）"
-msgstr ""
+msgstr "星（愉悦）"
 
 #: assets/config/character_names.json
 msgid "驭空"
-msgstr ""
+msgstr "御空"
 
 #: assets/config/character_names.json
 msgid "银狼"
-msgstr ""
+msgstr "銀狼"
 
 #: assets/config/character_names.json
 msgid "云璃"
-msgstr ""
+msgstr "雲璃"
 
 #: assets/config/character_names.json
 msgid "彦卿"
-msgstr ""
+msgstr "彦卿"
 
 #: assets/config/character_names.json
 msgid "银枝"
-msgstr ""
+msgstr "アルジェンティ"
 
 #: assets/config/character_names.json
 msgid "知更鸟"
-msgstr ""
+msgstr "ロビン"
 
 #: assets/config/character_names.json
 msgid "真理医生"
-msgstr ""
+msgstr "Dr.レイシオ"
 
 #: assets/config/character_names.json
 msgid "忘归人"
-msgstr ""
+msgstr "帰忘の流離人"
 
 #: assets/config/character_names.json
 msgid "大黑塔"
-msgstr ""
+msgstr "マダム・ヘルタ"
 
 #: app/setting_interface.py:613
 msgid "阿格莱雅"
-msgstr ""
+msgstr "アグライア"
 
 #: assets/config/character_names.json
 msgid "缇宝"
-msgstr ""
+msgstr "トリビー"
 
 #: assets/config/character_names.json
 msgid "万敌"
-msgstr ""
+msgstr "モーディス"
 
 #: assets/config/character_names.json
 msgid "遐蝶"
-msgstr ""
+msgstr "キャストリス"
 
 #: assets/config/character_names.json
 msgid "遐蝶「幽梦翩跹」"
@@ -2645,19 +2659,19 @@ msgstr "Castorice: 儚き夢の舞"
 
 #: assets/config/character_names.json
 msgid "那刻夏"
-msgstr ""
+msgstr "アナイクス"
 
 #: assets/config/character_names.json
 msgid "风堇"
-msgstr ""
+msgstr "ヒアンシー"
 
 #: assets/config/character_names.json
 msgid "赛飞儿"
-msgstr ""
+msgstr "サフェル"
 
 #: assets/config/character_names.json
 msgid "白厄"
-msgstr ""
+msgstr "ファイノン"
 
 #: assets/config/character_names.json
 msgid "Archer"
@@ -2669,127 +2683,127 @@ msgstr "Saber"
 
 #: assets/config/character_names.json
 msgid "海瑟音"
-msgstr ""
+msgstr "セイレンス"
 
 #: assets/config/character_names.json
 msgid "刻律德菈"
-msgstr ""
+msgstr "ケリュドラ"
 
 #: assets/config/character_names.json
 msgid "长夜月"
-msgstr ""
+msgstr "長夜月"
 
 #: assets/config/character_names.json
 msgid "昔涟"
-msgstr ""
+msgstr "キュレネ"
 
 #: assets/config/character_names.json
 msgid "大丽花"
-msgstr ""
+msgstr "ダリア"
 
 #: app/card/messagebox_custom.py:1296
 msgid "跳过"
-msgstr ""
+msgstr "スキップ"
 
 #: assets/config/instance_names.json
 msgid "角色经验"
-msgstr ""
+msgstr "キャラクター経験値"
 
 #: assets/config/instance_names.json
 msgid "回忆之蕾"
-msgstr ""
+msgstr "回憶の蕾"
 
 #: assets/config/instance_names.json
 msgid "武器经验"
-msgstr ""
+msgstr "光円錐経験値"
 
 #: assets/config/instance_names.json
 msgid "以太之蕾"
-msgstr ""
+msgstr "エーテルの蕾"
 
 #: assets/config/instance_names.json
 msgid "信用点"
-msgstr ""
+msgstr "信用ポイント"
 
 #: assets/config/instance_names.json
 msgid "藏珍之蕾"
-msgstr ""
+msgstr "秘蔵の蕾"
 
 #: assets/config/instance_names.json
 msgid "毁灭之蕾"
-msgstr ""
+msgstr "壊滅の蕾"
 
 #: assets/config/instance_names.json
 msgid "收容舱段"
-msgstr ""
+msgstr "収容部分"
 
 #: assets/config/instance_names.json
 msgid "存护之蕾"
-msgstr ""
+msgstr "存護の蕾"
 
 #: assets/config/instance_names.json
 msgid "支援舱段"
-msgstr ""
+msgstr "サポート部分"
 
 #: assets/config/instance_names.json
 msgid "巡猎之蕾"
-msgstr ""
+msgstr "巡狩の蕾"
 
 #: assets/config/instance_names.json
 msgid "城郊雪原"
-msgstr ""
+msgstr "郊外雪原"
 
 #: assets/config/instance_names.json
 msgid "丰饶之蕾"
-msgstr ""
+msgstr "豊穣の蕾"
 
 #: assets/config/instance_names.json
 msgid "边缘通路"
-msgstr ""
+msgstr "外縁通路"
 
 #: assets/config/instance_names.json
 msgid "智识之蕾"
-msgstr ""
+msgstr "知恵の蕾"
 
 #: assets/config/instance_names.json
 msgid "铆钉镇"
-msgstr ""
+msgstr "リベットタウン"
 
 #: assets/config/instance_names.json
 msgid "同谐之蕾"
-msgstr ""
+msgstr "調和の蕾"
 
 #: assets/config/instance_names.json
 msgid "机械聚落"
-msgstr ""
+msgstr "機械集落"
 
 #: assets/config/instance_names.json
 msgid "虚无之蕾"
-msgstr ""
+msgstr "虚無の蕾"
 
 #: assets/config/instance_names.json
 msgid "大矿区"
-msgstr ""
+msgstr "大鉱区"
 
 #: assets/config/instance_names.json
 msgid "鳞渊境"
-msgstr ""
+msgstr "鱗淵境"
 
 #: assets/config/instance_names.json
 msgid "丹鼎司"
-msgstr ""
+msgstr "丹鼎司"
 
 #: assets/config/instance_names.json
 msgid "「白日梦」酒店-梦境"
-msgstr ""
+msgstr "ホテル・レバリー‐夢境"
 
 #: assets/config/instance_names.json
 msgid "绥园"
-msgstr ""
+msgstr "綏園"
 
 #: assets/config/instance_names.json
 msgid "克劳克影视乐园"
-msgstr ""
+msgstr "クラークフィルムパーク"
 
 #: assets/config/instance_names.json
 msgid "苏乐达™热砂海选会场"
@@ -2797,335 +2811,345 @@ msgstr "ソウルグレイ™熱砂オーディション会場"
 
 #: assets/config/instance_names.json
 msgid "匹诺康尼大剧院"
-msgstr ""
+msgstr "ピノコニー大劇場"
 
 #: assets/config/instance_names.json
 msgid "记忆之蕾"
-msgstr ""
+msgstr "記憶の蕾"
 
 #: assets/config/instance_names.json
 msgid "「纷争荒墟」悬锋城"
-msgstr ""
+msgstr "「紛争の爪痕」クレムノス"
 
 #: assets/config/instance_names.json
 msgid "空海之形"
-msgstr ""
+msgstr "虚海の形"
 
 #: assets/config/instance_names.json
 msgid "巽风之形"
-msgstr ""
+msgstr "薫風の形"
 
 #: assets/config/instance_names.json
 msgid "鸣雷之形"
-msgstr ""
+msgstr "鳴雷の形"
 
 #: assets/config/instance_names.json
 msgid "炎华之形"
-msgstr ""
+msgstr "炎華の形"
 
 #: assets/config/instance_names.json
 msgid "锋芒之形"
-msgstr ""
+msgstr "切先の形"
 
 #: assets/config/instance_names.json
 msgid "三月七"
-msgstr ""
+msgstr "三月なのか"
 
 #: assets/config/instance_names.json
 msgid "霜晶之形"
-msgstr ""
+msgstr "霜晶の形"
 
 #: assets/config/instance_names.json
 msgid "幻光之形"
-msgstr ""
+msgstr "幻光の形"
 
 #: assets/config/instance_names.json
 msgid "冰棱之形"
-msgstr ""
+msgstr "氷柱の形"
 
 #: assets/config/instance_names.json
 msgid "震厄之形"
-msgstr ""
+msgstr "震厄の形"
 
 #: assets/config/instance_names.json
 msgid "偃偶之形"
-msgstr ""
+msgstr "傀儡の形"
 
 #: assets/config/instance_names.json
 msgid "孽兽之形"
-msgstr ""
+msgstr "厄獣の形"
 
 #: assets/config/instance_names.json
 msgid "天人之形"
-msgstr ""
+msgstr "天人の形"
 
 #: assets/config/instance_names.json
 msgid "幽府之形"
-msgstr ""
+msgstr "幽府の形"
 
 #: assets/config/instance_names.json
 msgid "燔灼之形"
-msgstr ""
+msgstr "燔灼の形"
 
 #: assets/config/instance_names.json
 msgid "冰酿之形"
-msgstr ""
+msgstr "氷醸の形"
 
 #: assets/config/instance_names.json
 msgid "焦炙之形"
-msgstr ""
+msgstr "焦灼の形"
 
 #: assets/config/instance_names.json
 msgid "嗔怒之形"
-msgstr ""
+msgstr "憤怒の形"
 
 #: assets/config/instance_names.json
 msgid "职司之形"
-msgstr ""
+msgstr "職掌の形"
 
 #: assets/config/instance_names.json
 msgid "机狼之形"
-msgstr ""
+msgstr "機狼の形"
 
 #: assets/config/instance_names.json
 msgid "今宵之形"
-msgstr ""
+msgstr "今宵の形"
 
 #: assets/config/instance_names.json
 msgid "弦音之形"
-msgstr ""
+msgstr "琴音の形"
 
 #: assets/config/instance_names.json
 msgid "凛月之形"
-msgstr ""
+msgstr "凛月の形"
 
 #: assets/config/instance_names.json
 msgid "役轮之形"
-msgstr ""
+msgstr "役輪の形"
 
 #: assets/config/instance_names.json
 msgid "溟簇之形"
-msgstr ""
+msgstr "結集の形"
 
 #: assets/config/instance_names.json
 msgid "烬日之形"
-msgstr ""
+msgstr "炎天の形"
 
 #: assets/config/instance_names.json
 msgid "塞壬之形"
-msgstr ""
+msgstr "海妖の形"
 
 #: assets/config/instance_names.json
 msgid "残灰之形"
-msgstr ""
+msgstr "残灰の形"
 
 #: assets/config/instance_names.json
 msgid "冰套 / 风套"
-msgstr ""
+msgstr "氷セット / 風セット"
 
 #: assets/config/instance_names.json
 msgid "霜风之径"
-msgstr ""
+msgstr "霜風の路"
 
 #: assets/config/instance_names.json
 msgid "物理套 / 击破套"
-msgstr ""
+msgstr "物理セット / 撃破セット"
 
 #: assets/config/instance_names.json
 msgid "迅拳之径"
-msgstr ""
+msgstr "迅拳の路"
 
 #: assets/config/instance_names.json
 msgid "治疗套 / 快枪手"
-msgstr ""
+msgstr "治癒セット / ガンマン"
 
 #: assets/config/instance_names.json
 msgid "漂泊之径"
-msgstr ""
+msgstr "漂泊の路"
 
 #: assets/config/instance_names.json
 msgid "铁卫套 / 量子套"
-msgstr ""
+msgstr "兵士セット / 量子セット"
 
 #: assets/config/instance_names.json
 msgid "睿治之径"
-msgstr ""
+msgstr "睿治の路"
 
 #: assets/config/instance_names.json
 msgid "防御套 / 雷套"
-msgstr ""
+msgstr "防御セット / 雷セット"
 
 #: assets/config/instance_names.json
 msgid "圣颂之径"
-msgstr ""
+msgstr "聖頌の路"
 
 #: assets/config/instance_names.json
 msgid "火套 / 虚数套"
-msgstr ""
+msgstr "炎セット / 虚数セット"
 
 #: assets/config/instance_names.json
 msgid "野焰之径"
-msgstr ""
+msgstr "野焔の路"
 
 #: assets/config/instance_names.json
 msgid "生命套 / 速度套"
-msgstr ""
+msgstr "HPセット / 速度セット"
 
 #: assets/config/instance_names.json
 msgid "药使之径"
-msgstr ""
+msgstr "薬使の路"
 
 #: assets/config/instance_names.json
 msgid "追击套 / dot套"
-msgstr ""
+msgstr "追加攻撃セット / 持続ダメージセット"
 
+# Japanese name: https://honkai-star-
+# rail.fandom.com/wiki/Cavern_of_Corrosion:_Path_of_Darkness
 #: assets/config/instance_names.json
 msgid "幽冥之径"
-msgstr ""
+msgstr "幽冥の路"
 
 #: assets/config/instance_names.json
 msgid "负面套 / 新击破套"
-msgstr ""
+msgstr "デバフセット / 新撃破セット"
 
 #: assets/config/instance_names.json
 msgid "梦潜之径"
-msgstr ""
+msgstr "夢潜の路"
 
 #: assets/config/instance_names.json
 msgid "铁骑套 / 勇烈套"
-msgstr ""
+msgstr "鉄騎セット / 勇烈セット"
 
 #: assets/config/instance_names.json
 msgid "勇骑之径"
-msgstr ""
+msgstr "勇騎の路"
 
 #: assets/config/instance_names.json
 msgid "司铎套 / 学者套"
-msgstr ""
+msgstr "司祭セット / 学者セット"
 
 #: assets/config/instance_names.json
 msgid "迷识之径"
-msgstr ""
+msgstr "迷識の路"
 
 #: assets/config/instance_names.json
 msgid "英豪套 / 诗人套"
-msgstr ""
+msgstr "英雄セット / 詩人セット"
 
 #: assets/config/instance_names.json
 msgid "弦歌之径"
-msgstr ""
+msgstr "弦歌の路"
 
 #: assets/config/instance_names.json
 msgid "女武神 / 船长套"
-msgstr ""
+msgstr "武神 / 船長セット"
 
 #: assets/config/instance_names.json
 msgid "雳涌之径"
-msgstr ""
+msgstr "雷滾の路"
 
 #: assets/config/instance_names.json
 msgid "救世套 / 隐士套"
-msgstr ""
+msgstr "救世主セット / 隠者セット"
 
 #: assets/config/instance_names.json
 msgid "隐救之径"
-msgstr ""
+msgstr "隠救の路"
 
 #: assets/config/instance_names.json
 msgid "永恒 / 天国"
-msgstr ""
+msgstr "永遠 / 天国"
 
 #: assets/config/instance_names.json
 msgid "西风丛中"
-msgstr ""
+msgstr "西風の中で"
 
 #: assets/config/instance_names.json
 msgid "妖精 / 沉欢"
-msgstr ""
+msgstr "妖精 / 沈酔"
 
+# Japanese stage name: https://wikiwiki.jp/star-rail/階差宇宙
 #: assets/config/instance_names.json
 msgid "月下朱殷"
-msgstr ""
+msgstr "月下朱殷"
 
 #: assets/config/instance_names.json
 msgid "拾骨地 / 巨树"
-msgstr ""
+msgstr "拾骨地 / 巨樹"
 
+# Japanese stage name: https://wikiwiki.jp/star-rail/階差宇宙
 #: assets/config/instance_names.json
 msgid "纷争不休"
-msgstr ""
+msgstr "止まぬ紛争"
 
 #: assets/config/instance_names.json
 msgid "露莎卡 / 蕉乐园"
-msgstr ""
+msgstr "ルサカ / バナダイス"
 
 #: assets/config/instance_names.json
 msgid "蠹役饥肠"
-msgstr ""
+msgstr "飢えた虫卒"
 
 #: assets/config/instance_names.json
 msgid "奔狼 / 劫火"
-msgstr ""
+msgstr "奔狼 / 劫火"
 
 #: assets/config/instance_names.json
 msgid "永恒笑剧"
-msgstr ""
+msgstr "永遠の喜劇"
 
 #: assets/config/instance_names.json
 msgid "茨冈尼亚 / 高天神国"
-msgstr ""
+msgstr "ツガンニヤ / 高天の神国"
 
+# Japanese stage name: https://wikiwiki.jp/star-rail/階差宇宙
 #: assets/config/instance_names.json
 msgid "伴你入眠"
-msgstr ""
+msgstr "寄り添い眠る"
 
 #: assets/config/instance_names.json
 msgid "苍穹 / 匹诺康尼"
-msgstr ""
+msgstr "蒼穹 / ピノコニー"
 
+# Japanese stage name: https://wikiwiki.jp/star-rail/階差宇宙
 #: assets/config/instance_names.json
 msgid "天剑如雨"
-msgstr ""
+msgstr "剣の雨"
 
 #: assets/config/instance_names.json
 msgid "繁星 / 龙骨"
-msgstr ""
+msgstr "星々 / 竜骨"
 
+# Japanese stage name: https://wikiwiki.jp/star-rail/階差宇宙
 #: assets/config/instance_names.json
 msgid "孽果盘生"
-msgstr ""
+msgstr "渦巻く罪"
 
 #: assets/config/instance_names.json
 msgid "贝洛伯格 / 萨尔索图"
-msgstr ""
+msgstr "ベロブルグ / サルソット"
 
+# Japanese stage name: https://wikiwiki.jp/star-rail/階差宇宙
 #: assets/config/instance_names.json
 msgid "百年冻土"
-msgstr ""
+msgstr "永久凍土"
 
 #: assets/config/instance_names.json
 msgid "公司 / 差分机"
-msgstr ""
+msgstr "カンパニー / 階差機関"
 
 #: assets/config/instance_names.json
 msgid "温柔话语"
-msgstr ""
+msgstr "優しい言葉"
 
 #: assets/config/instance_names.json
 msgid "盗贼 / 翁瓦克"
-msgstr ""
+msgstr "盗賊 / ウェンワーク"
 
+# Japanese stage name: https://wikiwiki.jp/star-rail/階差宇宙
 #: assets/config/instance_names.json
 msgid "浴火钢心"
-msgstr ""
+msgstr "鋼の意志"
 
 #: assets/config/instance_names.json
 msgid "太空 / 仙舟"
-msgstr ""
+msgstr "宇宙 / 仙舟"
 
+# Japanese stage name: https://wikiwiki.jp/star-rail/階差宇宙
 #: assets/config/instance_names.json
 msgid "坚城不倒"
-msgstr ""
+msgstr "不動の砦"
 
 #: assets/config/instance_names.json
 msgid "反造物主，流溢之恨"
@@ -3193,15 +3217,15 @@ msgstr "壊滅の始まり"
 
 #: assets/config/special_programs.jsonc
 msgid "原神 BetterGI"
-msgstr ""
+msgstr "原神 BetterGI"
 
 #: assets/config/special_programs.jsonc
 msgid "绝区零 一条龙"
-msgstr ""
+msgstr "ゼンレスゾーンゼロ 一条龙"
 
 #: assets/config/special_programs.jsonc
 msgid "鸣潮 ok-ww"
-msgstr ""
+msgstr "鳴潮 ok-ww"
 
 #: assets/config/special_programs.jsonc
 msgid "MFAAvalonia"
@@ -3209,7 +3233,7 @@ msgstr "MFAAvalonia"
 
 #: app/main_window.py:629
 msgid "更新成功"
-msgstr ""
+msgstr "更新しました"
 
 #: app/card/pushsettingcard1.py:367
 msgid "开始获取"
@@ -3234,86 +3258,86 @@ msgstr[0] "{count} 個の交換コードを取得しました"
 
 #: assets/config/instance_names.json
 msgid "欢愉之蕾"
-msgstr ""
+msgstr "愉悦の蕾"
 
 #: assets/config/instance_names.json
 msgid "「世界尽头」酒馆"
-msgstr ""
+msgstr "「世界の果て」の酒場"
 
 #: assets/config/instance_names.json
 msgid "「葬忆彼岸」时光归墟"
-msgstr ""
+msgstr "「葬られし記憶の彼岸」時の果て"
 
 #: assets/config/instance_names.json
 msgid "音爆之形"
-msgstr ""
+msgstr "音爆の形"
 
 #: assets/config/instance_names.json
 msgid "少女套 / 卜者套"
-msgstr ""
+msgstr "魔法少女セット / 卜者セット"
 
 #: assets/config/instance_names.json
 msgid "魔占之径"
-msgstr ""
+msgstr "魔占の路"
 
 #: assets/config/character_names.json
 msgid "爻光"
-msgstr ""
+msgstr "爻光"
 
 #: assets/config/character_names.json
 msgid "火花"
-msgstr ""
+msgstr "火花"
 
 #: app/tools/warp_export.py:193
 msgid "一共"
-msgstr ""
+msgstr "合計"
 
 #: assets/config/character_names.json
 msgid "阮·梅「雪绽梅笺」"
-msgstr ""
+msgstr "ルアン・メェイ「紙上に咲く雪梅」"
 
 #: assets/config/character_names.json
 msgid "不死途"
-msgstr ""
+msgstr "不死途"
 
 #: assets/config/character_names.json
 msgid "绯英"
-msgstr ""
+msgstr "緋英"
 
 #: assets/config/character_names.json
 msgid "千冶·刃"
-msgstr ""
+msgstr "千冶・刃"
 
 #: assets/config/instance_names.json
 msgid "海原电视塔"
-msgstr ""
+msgstr "海原テレビタワー"
 
 #: assets/config/instance_names.json
 msgid "渡画泉隐"
-msgstr ""
+msgstr "渡画泉隠"
 
 #: assets/config/instance_names.json
 msgid "吞噬之形"
-msgstr ""
+msgstr "吞噬の形"
 
 #: assets/config/instance_names.json
 msgid "观火之径"
-msgstr ""
+msgstr "観火の路"
 
 msgid "暂无"
-msgstr ""
+msgstr "なし"
 
 #: assets/config/instance_names.json
 msgid "领航员 / 名冶套"
-msgstr ""
+msgstr "ナビゲーター / 名匠セット"
 
 #: app/setting_interface.py:795
 msgid "开启后可能提升运行速度，若出现错误、异常或不稳定，请关闭此选项"
-msgstr ""
+msgstr "有効にすると動作が速くなる可能性があります。エラーや異常、不安定な動作が発生した場合は、このオプションを無効にしてください"
 
 #: app/setting_interface.py:3348
 msgid "脚本或可执行文件 (*.exe *.bat *.cmd *.ps1)"
-msgstr ""
+msgstr "スクリプトまたは実行ファイル (*.exe *.bat *.cmd *.ps1)"
 
 #: tasks/tool/__init__.py:132
 msgid "截图失败(╥╯﹏╰╥)"
@@ -3345,11 +3369,11 @@ msgstr "上へ"
 
 #: app/schedule_dialog.py:1033
 msgid "请先选择要上移的任务"
-msgstr ""
+msgstr "上に移動するタスクを選択してください"
 
 #: app/schedule_dialog.py:1039
 msgid "当前任务已经位于最上方"
-msgstr ""
+msgstr "このタスクはすでに最上部にあります"
 
 #: app/setting_interface.py:2479
 msgid "优先使用后台截图"
@@ -3373,7 +3397,7 @@ msgstr "特定ダンジョン用のチームを設定"
 
 #: app/card/messagebox_custom.py:1414
 msgid "当没有匹配到任何规则时，默认出战队伍："
-msgstr ""
+msgstr "どのルールにも一致しない場合の出撃チーム："
 
 #: app/card/pushsettingcard1.py:900
 msgid "已配置 {count} 项规则"
@@ -3386,7 +3410,7 @@ msgstr "Windows ネイティブ通知"
 
 #: app/setting_interface.py:1176
 msgid "通常需要可访问 Telegram 网络"
-msgstr ""
+msgstr "通常、Telegram に接続できるネットワークが必要です"
 
 #: app/setting_interface.py:1179
 msgid "机器人令牌"
@@ -3394,7 +3418,7 @@ msgstr "Bot トークン"
 
 #: app/setting_interface.py:1179
 msgid "获取方式：创建 Bot → @BotFather → /newbot → 获取 Token"
-msgstr ""
+msgstr "取得方法：@BotFather → /newbot で Bot を作成 → Token を取得"
 
 #: app/setting_interface.py:1180
 msgid "用户/群组 ID"
@@ -3402,7 +3426,7 @@ msgstr "ユーザー / グループ ID"
 
 #: app/setting_interface.py:1180
 msgid "接收通知的用户 ID 或群组 ID（以 - 开头）"
-msgstr ""
+msgstr "通知を受信するユーザー ID またはグループ ID（- で始まります）"
 
 #: app/setting_interface.py:1181
 msgid "自定义 API 地址"
@@ -3410,15 +3434,17 @@ msgstr "カスタム API URL"
 
 #: app/setting_interface.py:1181
 msgid "可选参数，自定义 Telegram API 地址，例如 api.telegram.org"
-msgstr ""
+msgstr "任意項目：Telegram API のアドレスを指定します。例：api.telegram.org"
 
 #: app/setting_interface.py:1182
 msgid "代理配置"
-msgstr ""
+msgstr "プロキシ設定"
 
 #: app/setting_interface.py:1182
 msgid "可选参数，例如 127.0.0.1:10808 或 socks5://127.0.0.1:1080，不填则使用系统 PAC 代理"
 msgstr ""
+"任意項目：例：127.0.0.1:10808 または socks5://127.0.0.1:1080。空欄の場合はシステムの PAC "
+"プロキシを使用します"
 
 #: app/setting_interface.py:1183
 msgid "话题 ID"
@@ -3430,63 +3456,63 @@ msgstr "オプション: Topics 機能が有効なグループの場合、対応
 
 #: app/setting_interface.py:1243
 msgid "适用于 Matrix 协议"
-msgstr ""
+msgstr "Matrix プロトコルに対応"
 
 #: app/setting_interface.py:1246
 msgid "服务器地址"
-msgstr ""
+msgstr "サーバーアドレス"
 
 #: app/setting_interface.py:1246
 msgid "服务器地址，例如 https://matrix.org"
-msgstr ""
+msgstr "サーバーアドレス。例：https://matrix.org"
 
 #: app/setting_interface.py:1247
 msgid "设备 ID"
-msgstr ""
+msgstr "デバイス ID"
 
 #: app/setting_interface.py:1247
 msgid "设备 ID，通常是 10 位大写字母或数字"
-msgstr ""
+msgstr "デバイス ID。通常は大文字の英字または数字からなる10文字です"
 
 #: app/setting_interface.py:1248
 msgid "用户 ID"
-msgstr ""
+msgstr "ユーザー ID"
 
 #: app/setting_interface.py:1248
 msgid "用户 ID，例如 @user:matrix.org"
-msgstr ""
+msgstr "ユーザー ID。例：@user:matrix.org"
 
 #: app/setting_interface.py:1249
 msgid "访问令牌"
-msgstr ""
+msgstr "アクセストークン"
 
 #: app/setting_interface.py:1249
 msgid "登录后分配的 Access Token"
-msgstr ""
+msgstr "ログイン後に発行される Access Token"
 
 #: app/setting_interface.py:1250
 msgid "房间 ID"
-msgstr ""
+msgstr "ルーム ID"
 
 #: app/setting_interface.py:1250
 msgid "目标房间 ID，例如 !xxx:matrix.org"
-msgstr ""
+msgstr "送信先ルームの ID。例：!xxx:matrix.org"
 
 #: app/setting_interface.py:1252
 msgid "文字与图片分开发送"
-msgstr ""
+msgstr "テキストと画像を別々に送信"
 
 #: app/setting_interface.py:1252
 msgid "是否分开发送文字和图片，避免部分客户端不显示文字"
-msgstr ""
+msgstr "一部のクライアントでテキストが表示されない問題を避けるため、テキストと画像を別々に送信します"
 
 #: app/setting_interface.py:1316
 msgid "Server酱·Turbo版"
-msgstr ""
+msgstr "Server酱・Turbo 版"
 
 #: app/setting_interface.py:1317
 msgid "微信推送，适合轻量通知"
-msgstr ""
+msgstr "WeChat へのプッシュ通知。簡単な通知に適しています"
 
 #: app/setting_interface.py:1319
 msgid "SendKey"
@@ -3494,75 +3520,75 @@ msgstr "SendKey"
 
 #: app/setting_interface.py:1319
 msgid "在 https://sct.ftqq.com/ 获取的 SendKey"
-msgstr ""
+msgstr "https://sct.ftqq.com/ で取得した SendKey"
 
 #: app/setting_interface.py:1320
 msgid "发送通道"
-msgstr ""
+msgstr "送信チャネル"
 
 #: app/setting_interface.py:1320
 msgid "可选参数"
-msgstr ""
+msgstr "任意項目"
 
 #: app/setting_interface.py:1321
 msgid "接收人 OpenID"
-msgstr ""
+msgstr "受信者の OpenID"
 
 #: app/setting_interface.py:1374
 msgid "Server酱³"
-msgstr ""
+msgstr "Server酱³"
 
 #: app/setting_interface.py:1375
 msgid "Server酱³ APP 推送"
-msgstr ""
+msgstr "Server酱³ アプリへのプッシュ通知"
 
 #: app/setting_interface.py:1377
 msgid "在 https://sc3.ft07.com/ 获取的 SendKey"
-msgstr ""
+msgstr "https://sc3.ft07.com/ で取得した SendKey"
 
 #: app/setting_interface.py:1422
 msgid "适合 iOS 设备推送"
-msgstr ""
+msgstr "iOS デバイスへのプッシュ通知に適しています"
 
 #: app/setting_interface.py:1424
 msgid "推送密钥"
-msgstr ""
+msgstr "プッシュキー"
 
 #: app/setting_interface.py:1424
 msgid "在 Bark APP 中获取的唯一标识符"
-msgstr ""
+msgstr "Bark アプリで取得した一意の識別子"
 
 #: app/setting_interface.py:1425
 msgid "分组名"
-msgstr ""
+msgstr "グループ名"
 
 #: app/setting_interface.py:1425
 msgid "可选参数，Bark 通知的分组名"
-msgstr ""
+msgstr "任意項目：Bark 通知のグループ名"
 
 #: app/setting_interface.py:1426
 msgid "图标地址"
-msgstr ""
+msgstr "アイコンのアドレス"
 
 #: app/setting_interface.py:1426
 msgid "可选参数，通知图标的 URL"
-msgstr ""
+msgstr "任意項目：通知アイコンの URL"
 
 #: app/setting_interface.py:1427
 msgid "归档"
-msgstr ""
+msgstr "アーカイブ"
 
 #: app/setting_interface.py:1427
 msgid "可选参数：1 归档，0 不归档"
-msgstr ""
+msgstr "任意項目：1 はアーカイブする、0 はアーカイブしない"
 
 #: app/setting_interface.py:1428
 msgid "提示音"
-msgstr ""
+msgstr "通知音"
 
 #: app/setting_interface.py:1428
 msgid "可选参数，自定义提示音名称"
-msgstr ""
+msgstr "任意項目：通知音の名前を指定します"
 
 #: app/setting_interface.py:1429
 msgid "跳转链接"
@@ -3578,235 +3604,235 @@ msgstr "サービスURL"
 
 #: app/setting_interface.py:1430
 msgid "可选参数，自定义 Bark 服务的 URL"
-msgstr ""
+msgstr "任意項目：Bark サーバーの URL を指定します"
 
 #: app/setting_interface.py:1431
 msgid "复制内容"
-msgstr ""
+msgstr "コピーする内容"
 
 #: app/setting_interface.py:1431
 msgid "可选参数，通知点击后复制内容"
-msgstr ""
+msgstr "任意項目：通知をクリックした際にコピーする内容"
 
 #: app/setting_interface.py:1432
 msgid "自动复制"
-msgstr ""
+msgstr "自動コピー"
 
 #: app/setting_interface.py:1432
 msgid "可选参数，是否自动复制"
-msgstr ""
+msgstr "任意項目：自動コピーするかどうか"
 
 #: app/setting_interface.py:1433
 msgid "加密密钥"
-msgstr ""
+msgstr "暗号化キー"
 
 #: app/setting_interface.py:1433
 msgid "可选参数，推送加密密钥，需在 Bark APP 中配置相同的密钥"
-msgstr ""
+msgstr "任意項目：プッシュ通知の暗号化キー。Bark アプリにも同じキーを設定してください"
 
 #: app/setting_interface.py:1434
 msgid "加密算法"
-msgstr ""
+msgstr "暗号化方式"
 
 #: app/setting_interface.py:1434
 msgid "可选参数，支持 cbc 或 ecb，需与 Bark APP 中配置的算法一致"
-msgstr ""
+msgstr "任意項目：cbc または ecb に対応。Bark アプリの設定と一致させてください"
 
 #: app/setting_interface.py:1491
 msgid "常用于邮箱提醒"
-msgstr ""
+msgstr "メール通知によく使用されます"
 
 #: app/setting_interface.py:1494
 msgid "SMTP 服务器"
-msgstr ""
+msgstr "SMTP サーバー"
 
 #: app/setting_interface.py:1495
 msgid "用户名/邮箱"
-msgstr ""
+msgstr "ユーザー名 / メールアドレス"
 
 #: app/setting_interface.py:1496
 msgid "密码/授权码"
-msgstr ""
+msgstr "パスワード / 認証コード"
 
 #: app/setting_interface.py:1496
 msgid "部分邮箱需要填写授权码（如 QQ 邮箱）"
-msgstr ""
+msgstr "一部のメールサービス（QQメールなど）では認証コードの入力が必要です"
 
 #: app/setting_interface.py:1497
 msgid "发件人"
-msgstr ""
+msgstr "送信者"
 
 #: app/setting_interface.py:1497
 msgid "可选参数，发件人邮箱，默认使用 user"
-msgstr ""
+msgstr "任意項目：送信者のメールアドレス。既定では user を使用します"
 
 #: app/setting_interface.py:1498
 msgid "收件人"
-msgstr ""
+msgstr "受信者"
 
 #: app/setting_interface.py:1498
 msgid "可选参数，收件人邮箱，默认使用 user"
-msgstr ""
+msgstr "任意項目：受信者のメールアドレス。既定では user を使用します"
 
 #: app/setting_interface.py:1499
 msgid "端口"
-msgstr ""
+msgstr "ポート"
 
 #: app/setting_interface.py:1499
 msgid "可选参数，端口，默认 465"
-msgstr ""
+msgstr "任意項目：ポート番号。既定値は 465 です"
 
 #: app/setting_interface.py:1500
 msgid "启用 SSL"
-msgstr ""
+msgstr "SSL を有効にする"
 
 #: app/setting_interface.py:1500
 msgid "可选参数，是否启用 SSL"
-msgstr ""
+msgstr "任意項目：SSL を有効にするかどうか"
 
 #: app/setting_interface.py:1501
 msgid "启用 STARTTLS"
-msgstr ""
+msgstr "STARTTLS を有効にする"
 
 #: app/setting_interface.py:1501
 msgid "可选参数，是否启用 STARTTLS"
-msgstr ""
+msgstr "任意項目：STARTTLS を有効にするかどうか"
 
 #: app/setting_interface.py:1502
 msgid "跳过证书验证"
-msgstr ""
+msgstr "証明書の検証をスキップ"
 
 #: app/setting_interface.py:1502
 msgid "可选参数，是否跳过 SSL 证书验证"
-msgstr ""
+msgstr "任意項目：SSL 証明書の検証をスキップするかどうか"
 
 #: app/setting_interface.py:1563
 msgid "适用于 OneBot 协议"
-msgstr ""
+msgstr "OneBot プロトコルに対応"
 
 #: app/setting_interface.py:1566
 msgid "OneBot 服务端点地址，例如 http://127.0.0.1:3000"
-msgstr ""
+msgstr "OneBot のエンドポイント。例：http://127.0.0.1:3000"
 
 #: app/setting_interface.py:1567
 msgid "可选参数，Access Token"
-msgstr ""
+msgstr "任意項目：Access Token"
 
 #: app/setting_interface.py:1568
 msgid "私聊用户 ID"
-msgstr ""
+msgstr "個別チャットのユーザー ID"
 
 #: app/setting_interface.py:1568
 msgid "可选参数，私聊接收用户 ID"
-msgstr ""
+msgstr "任意項目：個別チャットで通知を受信するユーザーの ID"
 
 #: app/setting_interface.py:1569
 msgid "群组 ID"
-msgstr ""
+msgstr "グループ ID"
 
 #: app/setting_interface.py:1569
 msgid "可选参数，群聊接收群组 ID"
-msgstr ""
+msgstr "任意項目：グループチャットで通知を受信するグループの ID"
 
 #: app/setting_interface.py:1686
 msgid "Go-cqhttp 项目已停止维护"
-msgstr ""
+msgstr "Go-cqhttp プロジェクトはメンテナンスを終了しています"
 
 #: app/setting_interface.py:1690
 msgid "消息类型"
-msgstr ""
+msgstr "メッセージの種類"
 
 #: app/setting_interface.py:1690
 msgid "消息类型：private 或 group"
-msgstr ""
+msgstr "メッセージの種類：private または group"
 
 #: app/setting_interface.py:1738
 msgid "钉钉"
-msgstr ""
+msgstr "DingTalk"
 
 #: app/setting_interface.py:1739
 msgid "钉钉机器人推送"
-msgstr ""
+msgstr "DingTalk ボットによるプッシュ通知"
 
 #: app/setting_interface.py:1742
 msgid "加签密钥"
-msgstr ""
+msgstr "署名キー"
 
 #: app/setting_interface.py:1742
 msgid "可选参数，安全加签密钥"
-msgstr ""
+msgstr "任意項目：セキュリティ署名キー"
 
 #: app/setting_interface.py:1787
 msgid "Pushplus 通知服务"
-msgstr ""
+msgstr "Pushplus 通知サービス"
 
 #: app/setting_interface.py:1789
 msgid "推送令牌"
-msgstr ""
+msgstr "プッシュトークン"
 
 #: app/setting_interface.py:1790
 msgid "推送渠道"
-msgstr ""
+msgstr "プッシュ通知チャネル"
 
 #: app/setting_interface.py:1791
 msgid "Webhook 地址"
-msgstr ""
+msgstr "Webhook アドレス"
 
 #: app/setting_interface.py:1791
 msgid "可选参数，Webhook URL"
-msgstr ""
+msgstr "任意項目：Webhook URL"
 
 #: app/setting_interface.py:1792
 msgid "回调地址"
-msgstr ""
+msgstr "コールバックアドレス"
 
 #: app/setting_interface.py:1792
 msgid "可选参数，回调 URL"
-msgstr ""
+msgstr "任意項目：コールバック URL"
 
 #: app/setting_interface.py:1884
 msgid "企业微信机器人"
-msgstr ""
+msgstr "WeCom ボット"
 
 #: app/setting_interface.py:1885
 msgid "企业微信机器人消息推送"
-msgstr ""
+msgstr "WeCom ボットによるメッセージ通知"
 
 #: app/setting_interface.py:1888
 msgid "机器人 Key"
-msgstr ""
+msgstr "ボットの Key"
 
 #: app/setting_interface.py:1889
 msgid "可选参数，企业微信机器人 Webhook URL"
-msgstr ""
+msgstr "任意項目：WeCom ボットの Webhook URL"
 
 #: app/setting_interface.py:1927
 msgid "企业微信应用"
-msgstr ""
+msgstr "WeCom アプリ"
 
 #: app/setting_interface.py:1928
 msgid "企业微信应用消息推送"
-msgstr ""
+msgstr "WeCom アプリによるメッセージ通知"
 
 #: app/setting_interface.py:1931
 msgid "企业 ID"
-msgstr ""
+msgstr "企業 ID"
 
 #: app/setting_interface.py:1932
 msgid "应用密钥"
-msgstr ""
+msgstr "アプリのシークレット"
 
 #: app/setting_interface.py:1933
 msgid "应用 AgentId"
-msgstr ""
+msgstr "アプリの AgentId"
 
 #: app/setting_interface.py:1934
 msgid "接收用户"
-msgstr ""
+msgstr "受信ユーザー"
 
 #: app/setting_interface.py:1934
 msgid "可选参数，接收用户，@all 表示全员"
-msgstr ""
+msgstr "任意項目：受信するユーザー。@all は全員を表します"
 
 #: app/setting_interface.py:1935
 msgid "可选参数，自定义企业微信 API 地址，用于反向代理绕过可信 IP 限制"
@@ -3814,55 +3840,57 @@ msgstr "オプション: リバースプロキシで信頼済み IP 制限を回
 
 #: app/setting_interface.py:1979
 msgid "Gotify 私有通知服务"
-msgstr ""
+msgstr "Gotify プライベート通知サービス"
 
 #: app/setting_interface.py:1981
 msgid "Gotify 服务器 URL，例如 https://gotify.example.com"
-msgstr ""
+msgstr "Gotify サーバーの URL。例：https://gotify.example.com"
 
 #: app/setting_interface.py:1982
 msgid "Gotify 应用的 Access Token"
-msgstr ""
+msgstr "Gotify アプリの Access Token"
 
 #: app/card/stationprioritysettingcard.py:148
 msgid "优先级"
-msgstr ""
+msgstr "優先度"
 
 #: app/setting_interface.py:1983
 msgid "可选参数，通知优先级，范围 1-10，越高优先级越高。1-3:仅图标，4-7:图标 + 声音，8-10:图标 + 声音 + 震动"
 msgstr ""
+"任意項目：通知の優先度。1～10 "
+"の範囲で、数値が大きいほど優先度が高くなります。1～3：アイコンのみ、4～7：アイコン＋音、8～10：アイコン＋音＋振動"
 
 #: app/setting_interface.py:2032
 msgid "Discord Webhook 推送"
-msgstr ""
+msgstr "Discord Webhook によるプッシュ通知"
 
 #: app/setting_interface.py:2035
 msgid "显示用户名"
-msgstr ""
+msgstr "表示ユーザー名"
 
 #: app/setting_interface.py:2035
 msgid "可选参数，显示用户名"
-msgstr ""
+msgstr "任意項目：表示するユーザー名"
 
 #: app/setting_interface.py:2036
 msgid "头像地址"
-msgstr ""
+msgstr "アバターのアドレス"
 
 #: app/setting_interface.py:2036
 msgid "可选参数，头像 URL"
-msgstr ""
+msgstr "任意項目：アバターの URL"
 
 #: app/setting_interface.py:2037
 msgid "消息颜色"
-msgstr ""
+msgstr "メッセージの色"
 
 #: app/setting_interface.py:2037
 msgid "可选参数，嵌入消息颜色，十六进制颜色值（如：0x3498db）"
-msgstr ""
+msgstr "任意項目：埋め込みメッセージの色。16進数のカラー値（例：0x3498db）"
 
 #: app/setting_interface.py:2079
 msgid "Pushdeer 通知服务"
-msgstr ""
+msgstr "Pushdeer 通知サービス"
 
 #: app/setting_interface.py:2081
 msgid "Pushdeer Token"
@@ -3870,203 +3898,203 @@ msgstr "Pushdeer token"
 
 #: app/setting_interface.py:2082
 msgid "可选参数，自定义 Pushdeer 服务地址"
-msgstr ""
+msgstr "任意項目：Pushdeer サーバーのアドレスを指定します"
 
 #: app/setting_interface.py:2120
 msgid "飞书"
-msgstr ""
+msgstr "Feishu"
 
 #: app/setting_interface.py:2121
 msgid "飞书机器人推送"
-msgstr ""
+msgstr "Feishu ボットによるプッシュ通知"
 
 #: app/setting_interface.py:2125
 msgid "消息内容"
-msgstr ""
+msgstr "メッセージ内容"
 
 #: app/setting_interface.py:2126
 msgid "关键词"
-msgstr ""
+msgstr "キーワード"
 
 #: app/setting_interface.py:2126
 msgid "可选参数，关键词安全校验内容"
-msgstr ""
+msgstr "任意項目：セキュリティ検証用のキーワード"
 
 #: app/setting_interface.py:2127
 msgid "签名"
-msgstr ""
+msgstr "署名"
 
 #: app/setting_interface.py:2127
 msgid "可选参数，签名安全校验参数"
-msgstr ""
+msgstr "任意項目：署名によるセキュリティ検証のパラメーター"
 
 #: app/setting_interface.py:2128
 msgid "启用图片"
-msgstr ""
+msgstr "画像を有効にする"
 
 #: app/setting_interface.py:2128
 msgid "是否发送图片"
-msgstr ""
+msgstr "画像を送信するかどうか"
 
 #: app/setting_interface.py:2129
 msgid "应用 AppId"
-msgstr ""
+msgstr "アプリの AppId"
 
 #: app/setting_interface.py:2129
 msgid "发送图片时必填：飞书应用 AppId"
-msgstr ""
+msgstr "画像の送信時は必須：Feishu アプリの AppId"
 
 #: app/setting_interface.py:2130
 msgid "应用 Secret"
-msgstr ""
+msgstr "アプリの Secret"
 
 #: app/setting_interface.py:2130
 msgid "发送图片时必填：飞书应用 Secret"
-msgstr ""
+msgstr "画像の送信時は必須：Feishu アプリの Secret"
 
 #: app/setting_interface.py:2171
 msgid "适合 鸿蒙NEXT 设备推送"
-msgstr ""
+msgstr "HarmonyOS NEXT デバイスへのプッシュ通知に適しています"
 
 #: app/setting_interface.py:2173
 msgid "昵称"
-msgstr ""
+msgstr "ニックネーム"
 
 #: app/setting_interface.py:2204
 msgid "KOOK 机器人推送"
-msgstr ""
+msgstr "KOOK ボットによるプッシュ通知"
 
 #: app/setting_interface.py:2207
 msgid "KOOK 机器人的 Token"
-msgstr ""
+msgstr "KOOK ボットの Token"
 
 #: app/setting_interface.py:2208
 msgid "目标 ID"
-msgstr ""
+msgstr "送信先 ID"
 
 #: app/setting_interface.py:2208
 msgid "接收消息的用户 ID 或频道 ID"
-msgstr ""
+msgstr "メッセージを受信するユーザー ID またはチャンネル ID"
 
 #: app/setting_interface.py:2209
 msgid "聊天类型"
-msgstr ""
+msgstr "チャットの種類"
 
 #: app/setting_interface.py:2209
 msgid "可选参数，1 为私聊，9 为频道"
-msgstr ""
+msgstr "任意項目：1 は個別チャット、9 はチャンネル"
 
 #: app/setting_interface.py:2255
 msgid "可自定义请求方法、请求头和请求体"
-msgstr ""
+msgstr "リクエストのメソッド、ヘッダー、本文をカスタマイズできます"
 
 #: app/setting_interface.py:2258
 msgid "接收地址"
-msgstr ""
+msgstr "送信先アドレス"
 
 #: app/setting_interface.py:2259
 msgid "请求方法"
-msgstr ""
+msgstr "リクエストメソッド"
 
 #: app/setting_interface.py:2259
 msgid "可选参数，HTTP 方法，默认 POST"
-msgstr ""
+msgstr "任意項目：HTTP メソッド。既定値は POST です"
 
 #: app/setting_interface.py:2260
 msgid "请求头"
-msgstr ""
+msgstr "リクエストヘッダー"
 
 #: app/setting_interface.py:2260
 msgid "可选参数，请求头 JSON 格式字符串，如：{\"Authorization\": \"Bearer token\"}"
-msgstr ""
+msgstr "任意項目：リクエストヘッダーを表す JSON 文字列。例：{\"Authorization\": \"Bearer token\"}"
 
 #: app/setting_interface.py:2261
 msgid "请求体"
-msgstr ""
+msgstr "リクエスト本文"
 
 #: app/setting_interface.py:2261
 msgid "可选参数，请求体模板 JSON 格式字符串，支持 {title}/{content}/{image} 占位符"
-msgstr ""
+msgstr "任意項目：リクエスト本文のテンプレートを表す JSON 文字列。{title}/{content}/{image} プレースホルダーに対応"
 
 #: app/setting_interface.py:2321
 msgid "自定义通知"
-msgstr ""
+msgstr "カスタム通知"
 
 #: app/setting_interface.py:2322
 msgid "自定义 HTTP 请求推送"
-msgstr ""
+msgstr "カスタム HTTP リクエストによるプッシュ通知"
 
 #: app/setting_interface.py:2325
 msgid "请求地址"
-msgstr ""
+msgstr "リクエスト先アドレス"
 
 #: app/setting_interface.py:2325
 msgid "请求地址，OneBot 可填写 send_msg 接口 URL"
-msgstr ""
+msgstr "リクエスト先アドレス。OneBot の場合は send_msg API の URL を入力できます"
 
 #: app/setting_interface.py:2326
 msgid "请求方法，通常 get 或 post"
-msgstr ""
+msgstr "リクエストメソッド。通常は get または post"
 
 #: app/setting_interface.py:2327
 msgid "数据类型"
-msgstr ""
+msgstr "データ形式"
 
 #: app/setting_interface.py:2327
 msgid "数据类型，通常为 data 或 json"
-msgstr ""
+msgstr "データ形式。通常は data または json"
 
 #: app/setting_interface.py:2328
 msgid "图片模板"
-msgstr ""
+msgstr "画像テンプレート"
 
 #: app/setting_interface.py:2328
 msgid "可选参数，图片消息模板，{image} 会替换为 Base64"
-msgstr ""
+msgstr "任意項目：画像メッセージのテンプレート。{image} は Base64 に置換されます"
 
 #: app/setting_interface.py:2329
 msgid "数据模板"
-msgstr ""
+msgstr "データテンプレート"
 
 #: app/setting_interface.py:2329
 msgid "请求体模板，{message} 会替换为标题和内容"
-msgstr ""
+msgstr "リクエスト本文のテンプレート。{message} はタイトルと内容に置換されます"
 
 #: app/setting_interface.py:1149
 msgid "通知合并"
-msgstr ""
+msgstr "通知をまとめる"
 
 #: app/setting_interface.py:1150
 msgid "开启后，完整运行结束时将所有通知合并为一条发送"
-msgstr ""
+msgstr "有効にすると、全タスク実行の終了時にすべての通知を1件にまとめて送信します"
 
 #: app/setting_interface.py:1155
 msgid "推送图片"
-msgstr ""
+msgstr "画像を通知に添付"
 
 #: app/setting_interface.py:1156
 msgid "关闭后推送消息时不再发送截图"
-msgstr ""
+msgstr "無効にすると、通知メッセージにスクリーンショットを添付しなくなります"
 
 #: app/setting_interface.py:1131
 msgid "启用消息推送"
-msgstr ""
+msgstr "プッシュ通知を有効にする"
 
 #: app/setting_interface.py:1132
 msgid "消息推送总开关"
-msgstr ""
+msgstr "プッシュ通知の一括切り替え"
 
 #: app/card/autoplot_setting_card.py:74
 msgid "自动战斗检测 (检测到未自动战斗时按V开启)"
-msgstr ""
+msgstr "自動戦闘を検出（無効の場合は V キーで有効化）"
 
 #: utils/tasks.py:15
 msgid "差分宇宙循环"
-msgstr ""
+msgstr "階差宇宙の周回"
 
 #: utils/tasks.py:15
 msgid "差分宇宙中途接管"
-msgstr ""
+msgstr "階差宇宙を途中から引き継ぐ"
 
 #: app/card/card_edit_dialog.py:32
 msgid "差分宇宙运行一次 ⭐"
@@ -4078,47 +4106,47 @@ msgstr "差分宇宙ループ実行 ⭐"
 
 #: app/card/card_edit_dialog.py:32
 msgid "模拟宇宙快速启动（停止维护）"
-msgstr ""
+msgstr "模擬宇宙クイック起動（メンテナンス終了）"
 
 #: app/card/card_edit_dialog.py:32
 msgid "模拟宇宙原版运行（停止维护）"
-msgstr ""
+msgstr "模擬宇宙の通常実行（メンテナンス終了）"
 
 #: app/card/card_edit_dialog.py:32
 msgid "更新模拟宇宙（停止维护）"
-msgstr ""
+msgstr "模擬宇宙を更新（メンテナンス終了）"
 
 #: app/card/card_edit_dialog.py:32
 msgid "重置模拟宇宙配置文件（停止维护）"
-msgstr ""
+msgstr "模擬宇宙の設定ファイルをリセット（メンテナンス終了）"
 
 #: app/card/card_edit_dialog.py:32
 msgid "打开模拟宇宙目录（停止维护）"
-msgstr ""
+msgstr "模擬宇宙のフォルダーを開く（メンテナンス終了）"
 
 #: app/card/card_edit_dialog.py:32
 msgid "打开模拟宇宙项目主页（停止维护）"
-msgstr ""
+msgstr "模擬宇宙のプロジェクトページを開く（メンテナンス終了）"
 
 #: app/log_interface.py:465
 msgid "在游戏内显示日志"
-msgstr ""
+msgstr "ゲーム内にログを表示"
 
 #: app/setting_interface.py:630
 msgid "启用速通模式"
-msgstr ""
+msgstr "スピードランモードを有効にする"
 
 #: app/setting_interface.py:654
 msgid "难度等级"
-msgstr ""
+msgstr "難易度"
 
 #: app/setting_interface.py:660
 msgid "自动执行饰品提取"
-msgstr ""
+msgstr "オーナメント抽出を自動実行"
 
 #: app/setting_interface.py:661
 msgid "在领取积分奖励后自动执行饰品提取消耗沉浸器"
-msgstr ""
+msgstr "ポイント報酬の受取後、オーナメント抽出を自動実行して没入器を消費します"
 
 #: app/setting_interface.py:666
 msgid "启用低性能兼容模式"
@@ -4131,123 +4159,123 @@ msgstr ""
 
 #: app/setting_interface.py:725
 msgid "自动领取模拟宇宙沉浸奖励"
-msgstr ""
+msgstr "模擬宇宙の没入報酬を自動で受け取る"
 
 #: app/setting_interface.py:726
 msgid "类别为“模拟宇宙”时，自动领取沉浸奖励"
-msgstr ""
+msgstr "カテゴリが「模擬宇宙」の場合、没入報酬を自動で受け取ります"
 
 #: app/setting_interface.py:794
 msgid "启用模拟宇宙 GPU 加速"
-msgstr ""
+msgstr "模擬宇宙の GPU アクセラレーションを有効にする"
 
 #: app/setting_interface.py:1122
 msgid "窗口记忆"
-msgstr ""
+msgstr "ウィンドウの状態を記憶"
 
 #: app/setting_interface.py:1123
 msgid "选择启动时恢复的窗口状态"
-msgstr ""
+msgstr "起動時に復元するウィンドウの状態を選択"
 
 #: app/setting_interface.py:1124
 msgid "记忆窗口大小"
-msgstr ""
+msgstr "ウィンドウサイズを記憶"
 
 #: app/setting_interface.py:1124
 msgid "记忆窗口位置"
-msgstr ""
+msgstr "ウィンドウの位置を記憶"
 
 #: app/setting_interface.py:1124
 msgid "记忆窗口大小和位置"
-msgstr ""
+msgstr "ウィンドウのサイズと位置を記憶"
 
 #: app/setting_interface.py:1124
 msgid "都不记忆"
-msgstr ""
+msgstr "記憶しない"
 
 #: app/setting_interface.py:2537
 msgid "立即前往"
-msgstr ""
+msgstr "今すぐ開く"
 
 #: app/setting_interface.py:2539
 msgid "哔哩哔哩"
-msgstr ""
+msgstr "bilibili"
 
 #: app/setting_interface.py:2540
 msgid "欢迎关注我们的B站账号，获取最新动态和教程"
-msgstr ""
+msgstr "bilibili の公式アカウントをフォローして、最新情報やチュートリアルをご覧ください"
 
 #: assets/config/instance_names.json
 msgid "零号 / 千星"
-msgstr ""
+msgstr "ステージゼロ / 千の星"
 
 #: assets/config/instance_names.json
 msgid "鎏金追忆"
-msgstr ""
+msgstr "黄金の追憶"
 
 #: app/card/card_edit_dialog.py:19
 msgid "重置模拟宇宙配置文件"
-msgstr ""
+msgstr "模擬宇宙の設定ファイルをリセット"
 
 #: app/card/card_edit_dialog.py:19
 msgid "打开模拟宇宙目录"
-msgstr ""
+msgstr "模擬宇宙のフォルダーを開く"
 
 #: app/card/card_edit_dialog.py:19
 msgid "打开模拟宇宙项目主页"
-msgstr ""
+msgstr "模擬宇宙のプロジェクトページを開く"
 
 #: app/card/card_edit_dialog.py:19
 msgid "重置锄大地配置文件"
-msgstr ""
+msgstr "フィールド周回の設定ファイルをリセット"
 
 #: app/card/card_edit_dialog.py:19
 msgid "打开锄大地程序目录"
-msgstr ""
+msgstr "フィールド周回プログラムのフォルダーを開く"
 
 #: app/card/card_edit_dialog.py:19
 msgid "打开锄大地项目主页"
-msgstr ""
+msgstr "フィールド周回のプロジェクトページを開く"
 
 #: app/card/card_edit_dialog.py:425
 msgid "编辑主页卡片"
-msgstr ""
+msgstr "ホームのカードを編集"
 
 #: app/card/card_edit_dialog.py:280
 msgid "图标"
-msgstr ""
+msgstr "アイコン"
 
 #: app/card/card_edit_dialog.py:292
 msgid "标题："
-msgstr ""
+msgstr "タイトル："
 
 #: app/card/card_edit_dialog.py:295
 msgid "卡片标题"
-msgstr ""
+msgstr "カードのタイトル"
 
 #: app/card/card_edit_dialog.py:323
 msgid "操作类型："
-msgstr ""
+msgstr "操作の種類："
 
 #: app/card/card_edit_dialog.py:325
 msgid "单个任务"
-msgstr ""
+msgstr "単一タスク"
 
 #: app/card/card_edit_dialog.py:325
 msgid "任务菜单"
-msgstr ""
+msgstr "タスクメニュー"
 
 #: app/card/card_edit_dialog.py:229
 msgid "任务："
-msgstr ""
+msgstr "タスク："
 
 #: app/card/card_edit_dialog.py:353
 msgid "添加菜单项"
-msgstr ""
+msgstr "メニュー項目を追加"
 
 #: app/card/card_edit_dialog.py:207
 msgid "菜单项名称"
-msgstr ""
+msgstr "メニュー項目名"
 
 #: app/card/card_edit_dialog.py:227
 msgid "名称："
@@ -4255,11 +4283,11 @@ msgstr "名称："
 
 #: app/card/card_edit_dialog.py:460
 msgid "添加卡片"
-msgstr ""
+msgstr "カードを追加"
 
 #: app/card/card_edit_dialog.py:462
 msgid "恢复默认"
-msgstr ""
+msgstr "既定値に戻す"
 
 #: app/card/card_edit_dialog.py:465
 msgid "确定"
@@ -4267,19 +4295,19 @@ msgstr "確認"
 
 #: assets/config/special_programs.jsonc
 msgid "重返未来 M9A"
-msgstr ""
+msgstr "リバース：1999 M9A"
 
 #: app/setting_interface.py:522
 msgid "短信"
-msgstr ""
+msgstr "SMS"
 
 #: app/setting_interface.py:679
 msgid "站点优先级"
-msgstr ""
+msgstr "エリアの優先度"
 
 #: app/setting_interface.py:680
 msgid "自定义差分宇宙「选择下一站」的站点优先级"
-msgstr ""
+msgstr "階差宇宙の「次のエリアを選択」で使用するエリアの優先度を設定"
 
 #: app/card/stationprioritysettingcard.py:299
 msgid "已启用自定义优先级，{count} 个站点已禁用"
@@ -4288,141 +4316,145 @@ msgstr[0] "カスタム優先度を有効化、{count} 件の拠点を無効化"
 
 #: app/setting_interface.py:2585
 msgid "下载代理"
-msgstr ""
+msgstr "ダウンロード用プロキシ"
 
 #: app/setting_interface.py:2587
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
-msgstr ""
+msgstr "空欄の場合はシステムのプロキシを使用します。http:// と socks5:// に対応"
 
 #: app/card/card_edit_dialog.py:379
 msgid "选择图标"
-msgstr ""
+msgstr "アイコンを選択"
 
 #: app/setting_interface.py:604
 msgid "职级难度"
-msgstr ""
+msgstr "ランク難易度"
 
 #: app/setting_interface.py:606
 msgid "当前职级"
-msgstr ""
+msgstr "現在のランク"
 
 #: app/setting_interface.py:606
 msgid "最低职级"
-msgstr ""
+msgstr "最低ランク"
 
 #: app/setting_interface.py:606
 msgid "最高职级"
-msgstr ""
+msgstr "最高ランク"
 
 #: app/setting_interface.py:611
 msgid "货币战争策略"
-msgstr ""
+msgstr "マネーウォーズの戦略"
 
 #: app/setting_interface.py:613
 msgid "默认"
-msgstr ""
+msgstr "既定"
 
 #: app/setting_interface.py:624
 msgid "遇到特定词条时接受重开"
-msgstr ""
+msgstr "特定の特性が出た場合にやり直しを許可"
 
 #: app/setting_interface.py:625
 msgid "根据所选策略，在遇到特定词条或词条组合时允许重开"
-msgstr ""
+msgstr "選択した戦略に応じて、特定の特性や特性の組み合わせが出た場合にやり直しを許可します"
 
 #: app/setting_interface.py:618
 msgid "「开拓者•记忆」名称"
-msgstr ""
+msgstr "「開拓者・記憶」の名前"
 
 #: app/setting_interface.py:620
 msgid "未配置时，阿格莱雅/希儿策略将跳过该角色，需要填入自己游戏名称"
-msgstr ""
+msgstr "未設定の場合、アグライア / ゼーレ戦略ではこのキャラクターをスキップします。自分のゲーム内の名前を入力してください"
 
 #: app/setting_interface.py:612
 msgid "提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅或希儿策略。"
 msgstr ""
+"昇格レベルを上げる場合は、最低ランクで既定の戦略を選ぶことをおすすめします。ランクを上げる場合は、最高ランクでアグライアまたはゼーレの戦略を選ぶことをおすすめします。"
 
 #: app/setting_interface.py:631
 msgid "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"
-msgstr ""
+msgstr "有効にすると、ボスエリアでのみ武器の装備を試みます。最低ランクでのみ有効にすることをおすすめします"
 
 #: app/setting_interface.py:583
 msgid "提升晋升等级"
-msgstr ""
+msgstr "昇格レベルを上げる"
 
 #: app/setting_interface.py:584
 msgid "提升职级等级"
-msgstr ""
+msgstr "ランクを上げる"
 
 #: app/setting_interface.py:586
 msgid "快捷配置"
-msgstr ""
+msgstr "クイック設定"
 
 #: app/setting_interface.py:3443
 msgid "已应用快捷配置"
-msgstr ""
+msgstr "クイック設定を適用しました"
 
 #: app/setting_interface.py:3468
 msgid "当前为“提升晋升等级”模式"
-msgstr ""
+msgstr "現在は「昇格レベルを上げる」モードです"
 
 #: app/setting_interface.py:3483
 msgid "当前为“提升职级等级”模式"
-msgstr ""
+msgstr "現在は「ランクを上げる」モードです"
 
 #: app/card/stationprioritysettingcard.py:112
 msgid "站点优先级配置"
-msgstr ""
+msgstr "エリアの優先度設定"
 
 #: app/card/stationprioritysettingcard.py:122
 msgid ""
 "调整站点优先级顺序，数字越小优先级越高。\n"
 "没有重抽次数后仍会选择禁用的站点。"
 msgstr ""
+"エリアの優先順位を調整します。数値が小さいほど優先度が高くなります。\n"
+"再抽選回数がなくなると、無効にしたエリアも選択されます。"
 
 #: app/card/stationprioritysettingcard.py:130
 msgid "固定站点（始终最高优先级）：首领、休整、转化"
-msgstr ""
+msgstr "固定エリア（常に最優先）：ボス、休憩、変換"
 
 #: app/card/stationprioritysettingcard.py:145
 msgid "站点"
-msgstr ""
+msgstr "エリア"
 
 #: app/card/stationprioritysettingcard.py:153
 msgid "排序"
-msgstr ""
+msgstr "並び順"
 
 #: app/card/stationprioritysettingcard.py:303
 msgid "使用默认优先级"
-msgstr ""
+msgstr "既定の優先度を使用"
 
 #: app/card/stationprioritysettingcard.py:301
 msgid "已启用自定义优先级"
-msgstr ""
+msgstr "カスタム優先度を有効にしました"
 
 #: app/setting_interface.py:2457
 msgid "自动"
-msgstr ""
+msgstr "自動"
 
 #: app/setting_interface.py:832
 msgid "二相乐园"
-msgstr ""
+msgstr "二相楽園"
 
 #: app/setting_interface.py:341
 msgid "识别方案"
-msgstr ""
+msgstr "認識方法"
 
 #: app/setting_interface.py:342
 msgid "副本名称识别会进入挑战页读取副本信息；掉落物识别根据列表中的掉落物匹配副本，异常时可尝试切换方案"
 msgstr ""
+"ステージ名認識では挑戦画面を開いてステージ情報を読み取ります。ドロップアイテム認識では一覧のドロップアイテムからステージを判別します。問題がある場合は認識方法を切り替えてください"
 
 #: app/setting_interface.py:344
 msgid "副本名称识别"
-msgstr ""
+msgstr "ステージ名で認識"
 
 #: app/setting_interface.py:345
 msgid "掉落物识别"
-msgstr ""
+msgstr "ドロップアイテムで認識"
 
 #: app/setting_interface.py:823
 msgid "地图版本"
@@ -4438,15 +4470,15 @@ msgstr "黄泉専用"
 
 #: app/setting_interface.py:357
 msgid "仅识别到侵蚀隧洞/饰品提取时使用自定义副本"
-msgstr ""
+msgstr "侵蝕トンネル / オーナメント抽出のみ検出された場合は指定ステージを使用"
 
 #: app/setting_interface.py:358
 msgid "开启后，当培养目标仅包含侵蚀隧洞和饰品提取时，清体力将改用你在体力设置中配置的副本"
-msgstr ""
+msgstr "有効にすると、育成目標が侵蝕トンネルとオーナメント抽出のみの場合、開拓力消費では開拓力設定で指定したステージを使用します"
 
 #: assets/config/character_names.json
 msgid "银狼LV.999"
-msgstr ""
+msgstr "銀狼LV.999"
 
 #: assets/config/instance_names.json
 msgid "「辉痕圣林」神悟树庭"
@@ -4454,11 +4486,11 @@ msgstr "「輝痕聖林」神悟の樹庭"
 
 #: app/setting_interface.py:464
 msgid "活动热点通知"
-msgstr ""
+msgstr "イベント情報の通知"
 
 #: app/setting_interface.py:465
 msgid "每次运行时发送带有活动热点截图的通知"
-msgstr ""
+msgstr "実行するたびに、イベント情報のスクリーンショット付き通知を送信します"
 
 #: app/help_interface.py:219
 msgid "流程编排"
@@ -4802,7 +4834,7 @@ msgstr "テンプレート画像を選択してください"
 
 #: app/card/card_edit_dialog.py:530
 msgid "保存失败"
-msgstr ""
+msgstr "保存に失敗しました"
 
 #: app/workflow_interface.py:456
 msgid "请输入目标文字"
@@ -5038,7 +5070,7 @@ msgstr "理解したうえで有効化する"
 
 #: assets/config/special_programs.jsonc
 msgid "终末地 MaaEnd"
-msgstr ""
+msgstr "エンドフィールド MaaEnd"
 
 #: app/schedule_dialog.py:805
 msgid "继续后续任务"
@@ -5205,11 +5237,11 @@ msgstr "新しいバージョンを検出しました: {version}"
 
 #: app/card/card_edit_dialog.py:543
 msgid "任务菜单中的菜单项名称不能为空"
-msgstr ""
+msgstr "タスクメニューの項目名を入力してください"
 
 #: app/card/card_edit_dialog.py:531
 msgid "卡片标题不能为空"
-msgstr ""
+msgstr "カードのタイトルを入力してください"
 
 #: module/update/update_window.py:429
 msgid "启动更新器失败"
@@ -5287,7 +5319,7 @@ msgstr ""
 
 #: app/setting_interface.py:3120
 msgid "该参数用于配置该通知方式的请求字段"
-msgstr ""
+msgstr "このパラメーターは、この通知方式のリクエストフィールドを設定するために使用します"
 
 #: app/setting_interface.py:2403
 msgid "教程"
@@ -5885,60 +5917,64 @@ msgstr "探索成功後、最初の空きセーブデータ枠に保存します
 
 #: app/setting_interface.py:825
 msgid "获得特殊物品"
-msgstr ""
+msgstr "特殊アイテムを入手"
 
 #: app/setting_interface.py:837
 msgid "启用「特殊物品领取」"
-msgstr ""
+msgstr "「特殊アイテムの受け取り」を有効にする"
 
 #: app/setting_interface.py:838
 msgid "按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置"
-msgstr ""
+msgstr "下の3項目の選択内容をフィールド周回の設定に反映します。無効の場合はフィールド周回側の設定を変更しません"
 
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食（零食材料-1 / 零食合成-1）"
-msgstr ""
+msgstr "特殊アイテムを毎日入手：秘技のおやつの素材を購入して合成（零食材料-1 / 零食合成-1）"
 
+# Japanese item name: https://honkai-star-
+# rail.fandom.com/wiki/Unclaimed_Parcel
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币（过期邮包-1 / 艾迪恩代币-1）"
-msgstr ""
+msgstr "特殊アイテムを毎週入手：仙舟の受取期限が過ぎた荷物とピノコニーのエディオンコインを購入（过期邮包-1 / 艾迪恩代币-1）"
 
 #: app/setting_interface.py:857
 msgid "获得翁法罗斯记忆代币"
-msgstr ""
+msgstr "オンパロスの記憶トークンを入手"
 
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
-msgstr ""
+msgstr "特殊アイテムを毎週入手：オンパロスの記憶の残晶を収集（收集记忆代币-1）"
 
 #: app/setting_interface.py:862
 msgid "远程一号位锄地"
-msgstr ""
+msgstr "1枠目の遠距離キャラでフィールド周回"
 
 #: app/setting_interface.py:863
 msgid "黄泉一号位锄地"
-msgstr ""
+msgstr "1枠目の黄泉でフィールド周回"
 
 #: app/setting_interface.py:864
 msgid "仅获取特殊物品"
-msgstr ""
+msgstr "特殊アイテムのみ入手"
 
 #: app/setting_interface.py:867
 msgid "一键切换地图版本，并把三项特殊物品领取都设为「启用」"
-msgstr ""
+msgstr "マップのバージョンを一括で切り替え、特殊アイテムの受け取り3項目をすべて「有効」にします"
 
 #: app/setting_interface.py:3444
 msgid "当前为“{name}”模式"
-msgstr ""
+msgstr "現在は「{name}」モードです"
 
 #: app/setting_interface.py:844
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食"
-msgstr ""
+msgstr "特殊アイテムを毎日入手：秘技のおやつの素材を購入して合成"
 
+# Japanese item name: https://honkai-star-
+# rail.fandom.com/wiki/Unclaimed_Parcel
 #: app/setting_interface.py:851
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"
-msgstr ""
+msgstr "特殊アイテムを毎週入手：仙舟の受取期限が過ぎた荷物とピノコニーのエディオンコインを購入"
 
 #: app/setting_interface.py:858
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
-msgstr ""
+msgstr "特殊アイテムを毎週入手：オンパロスの記憶の残晶を収集"
 
 #: assets/config/instance_names.json
 msgid "伶人套 / 禁果套"
@@ -5978,15 +6014,15 @@ msgstr "ヒアンシー: 雲間からこぼれる陽光"
 
 #: app/setting_interface.py:287
 msgid "每周清理遗器"
-msgstr ""
+msgstr "遺物を毎週整理"
 
 #: app/setting_interface.py:291
 msgid "启用智能弃置"
-msgstr ""
+msgstr "スマート破棄を有効にする"
 
 #: app/setting_interface.py:292
 msgid "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
-msgstr ""
+msgstr "おすすめキャラに適合せず、サブステータスの強化回数が0回の遺物を絞り込み、破棄済みおよび星4以下の遺物を分解します"
 
 #: app/setting_interface.py:1629
 msgid "QQ 官方机器人"
@@ -6089,115 +6125,123 @@ msgstr "監視中…{seconds} 秒以内にグループチャットでボット�
 
 #: app/card/autostart_setting_card.py:42
 msgid "开机启动设置"
-msgstr ""
+msgstr "自動起動の設定"
 
 #: app/card/autostart_setting_card.py:49
 msgid "登录后打开图形界面"
-msgstr ""
+msgstr "ログイン後に GUI を開く"
 
 #: app/card/autostart_setting_card.py:53
 msgid "打开图形界面后最小化到托盘"
-msgstr ""
+msgstr "GUI を開いた後にトレイに最小化"
 
 #: app/card/autostart_setting_card.py:57
 msgid "打开图形界面后自动执行的任务："
-msgstr ""
+msgstr "GUI を開いた後に自動実行するタスク："
 
 #: app/card/autostart_setting_card.py:59
 msgid "不执行"
-msgstr ""
+msgstr "実行しない"
 
 #: app/card/autostart_setting_card.py:65
 msgid "不打开图形界面时执行的任务："
-msgstr ""
+msgstr "GUI を開かない場合に実行するタスク："
 
 msgid "不打开图形界面时必须选择一项任务，将以命令行方式执行，完成后自动退出"
-msgstr ""
+msgstr "GUI を開かない場合は、タスクを1つ選択する必要があります。コマンドラインで実行し、完了後に自動終了します"
 
 #: app/card/autostart_setting_card.py:73
 msgid "请选择要执行的任务"
-msgstr ""
+msgstr "実行するタスクを選択してください"
 
 #: app/card/autostart_setting_card.py:139
 msgid "升级到新版"
-msgstr ""
+msgstr "新方式にアップグレード"
 
 #: app/card/autostart_setting_card.py:214
 msgid "开机启动已开启"
-msgstr ""
+msgstr "自動起動を有効にしました"
 
 #: app/card/autostart_setting_card.py:224
 msgid "开机启动已关闭"
-msgstr ""
+msgstr "自動起動を無効にしました"
 
 msgid "可在任务管理器的「启动应用」中查看或禁用"
-msgstr ""
+msgstr "タスクマネージャーの「スタートアップ アプリ」で確認または無効化できます"
 
 #: app/card/autostart_setting_card.py:235
 msgid "开机启动设置失败"
-msgstr ""
+msgstr "自動起動の設定に失敗しました"
 
 msgid "请确认以管理员权限运行后重试"
-msgstr ""
+msgstr "管理者権限で実行していることを確認し、再試行してください"
 
 #: app/card/autostart_setting_card.py:249
 msgid "开机启动设置已保存"
-msgstr ""
+msgstr "自動起動の設定を保存しました"
 
 #: app/card/autostart_setting_card.py:262
 msgid "已升级到新版开机启动"
-msgstr ""
+msgstr "自動起動を新方式にアップグレードしました"
 
 #: app/card/autostart_setting_card.py:263
 msgid "旧的计划任务已删除，请按需配置并重新开启开关"
-msgstr ""
+msgstr "古いスケジュールタスクを削除しました。必要に応じて設定し、スイッチを再度オンにしてください"
 
 #: app/card/autostart_setting_card.py:272
 msgid "升级到新版失败"
-msgstr ""
+msgstr "新方式へのアップグレードに失敗しました"
 
 #: app/card/autostart_setting_card.py:273
 msgid "删除旧的计划任务失败，请重试"
-msgstr ""
+msgstr "古いスケジュールタスクの削除に失敗しました。再試行してください"
 
 msgid ""
 "登录 Windows 后自动启动，可在任务管理器「启动应用」中查看或禁用；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
 msgstr ""
+"Windows へのログイン後に自動起動します。タスクマネージャーの「スタートアップ "
+"アプリ」で確認または無効化できます。「設定」をクリックすると、GUI を開くかどうか、最小化するかどうか、自動実行するタスクを選択できます"
 
 #: app/card/autostart_setting_card.py:236
 msgid "请以管理员权限运行后重试"
-msgstr ""
+msgstr "管理者権限で実行して再試行してください"
 
 msgid "登录 Windows 后自动启动，启动时不会弹出 UAC 提示；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
 msgstr ""
+"Windows へのログイン後に自動起動し、起動時に UAC の確認を表示しません。「設定」をクリックすると、GUI "
+"を開くかどうか、最小化するかどうか、自動実行するタスクを選択できます"
 
 #: app/card/autostart_setting_card.py:71
 msgid "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
-msgstr ""
+msgstr "GUI を開かない場合は、タスクを1つ選択する必要があります。コマンドライン版の手動実行と同様に、コマンドラインウィンドウで実行します"
 
 #: app/setting_interface.py:2503
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 msgstr ""
+"ログイン後に自動起動します。「設定」をクリックして詳細を設定してください。無人運転には Windows "
+"の自動ログインを別途設定する必要がある場合があります"
 
 #: app/log_interface.py:212
 msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "{stop} で停止 · {pause} で再開"
 
+# Japanese book title: https://honkai-star-
+# rail.fandom.com/wiki/Amphoreus%27s_Saga_of_Heroes
 #: app/card/autoplot_setting_card.py:83
 msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr ""
+msgstr "オンパロス英雄記を自動で読む（先に本の目次を開いてください）"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"
-msgstr ""
+msgstr "自動会話のオン / オフ状態を記憶"
 
 #: app/card/autoplot_setting_card.py:57
 msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。"
-msgstr ""
+msgstr "有効にすると、次回起動時に自動会話のオン / オフ状態を復元します。ゲームが前面にない場合は、低頻度のウィンドウ検出のみを行います。"
 
 #: app/tools_interface.py:167
 msgid "{error}（详情见日志）"
-msgstr ""
+msgstr "{error}（詳細はログを参照）"
 
 #: app/setting_interface.py:1039
 msgid "启动器路径"
@@ -6221,59 +6265,59 @@ msgstr "ランチャーのパスを選択"
 
 #: app/card/messagebox_custom.py:276
 msgid "显示更早的更新记录"
-msgstr ""
+msgstr "さらに古い更新履歴を表示"
 
 #: app/card/messagebox_custom.py:309
 msgid "正在加载历史更新记录……"
-msgstr ""
+msgstr "過去の更新履歴を読み込み中……"
 
 #: app/card/messagebox_custom.py:314
 msgid "查看完整更新日志"
-msgstr ""
+msgstr "更新履歴をすべて表示"
 
 #: app/card/messagebox_custom.py:328
 msgid "以下为已收录的更新记录，部分历史版本可能未收录"
-msgstr ""
+msgstr "収録済みの更新履歴を表示しています。一部の過去バージョンは含まれていない場合があります"
 
 #: app/card/messagebox_custom.py:330
 msgid "已加载 {count} 份版本更新记录"
-msgstr ""
+msgstr "{count} 件のバージョン更新履歴を読み込みました"
 
 #: app/card/messagebox_custom.py:357
 msgid "继续显示更早的更新记录（还有 {count} 份）"
-msgstr ""
+msgstr "さらに古い更新履歴を表示（残り {count} 件）"
 
 #: app/tools/check_update.py:62
 msgid "历史更新记录暂时无法加载，仍可正常更新"
-msgstr ""
+msgstr "過去の更新履歴を読み込めません。アップデートは通常どおり行えます"
 
 #: app/tools/check_update.py:204
 msgid "该渠道版本与目标版本不一致，请稍后重试"
-msgstr ""
+msgstr "この配信元のバージョンが対象バージョンと一致しません。しばらくしてから再試行してください"
 
 #: app/common/schedule.py:38
 msgid "未选择"
-msgstr ""
+msgstr "未選択"
 
 #: app/log_interface.py:989
 msgid "{date}（{weekday}）{time}"
-msgstr ""
+msgstr "{date}（{weekday}）{time}"
 
 #: app/schedule_dialog.py:269
 msgid "执行星期："
-msgstr ""
+msgstr "実行する曜日："
 
 #: app/schedule_dialog.py:279
 msgid "按电脑本地日期判断执行星期"
-msgstr ""
+msgstr "パソコンのローカル日付に基づいて実行する曜日を判定します"
 
 #: app/schedule_dialog.py:366
 msgid "请至少选择一个执行星期"
-msgstr ""
+msgstr "実行する曜日を少なくとも1つ選択してください"
 
 #: app/schedule_dialog.py:378
 msgid "任务“{name}”已占用{days}的 {time}，请调整时间或星期"
-msgstr ""
+msgstr "タスク「{name}」が{days}の {time} に設定されています。時刻または曜日を変更してください"
 
 #: app/schedule_dialog.py:465
 msgid ""
@@ -6281,41 +6325,46 @@ msgid ""
 "链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动，不单独判断星期。\n"
 "立即运行：不受星期限制，从当前任务开始，后面连续的链式任务也会跟随执行。"
 msgstr ""
+"定時起動：選択した曜日の設定時刻になると、このタスクを直接起動します。曜日はパソコンのローカル日付に基づいて判定します。\n"
+"連鎖起動：時刻では単独起動しません。前のタスクの後に配置してください。前のタスクが正常終了すると、曜日を個別に判定せず、一覧の順にすぐ起動します。\n"
+"今すぐ実行：曜日の制限を受けず、このタスクから開始し、後続の連鎖タスクも続けて実行します。"
 
 #: app/schedule_dialog.py:745
 msgid "执行计划"
-msgstr ""
+msgstr "実行スケジュール"
 
 msgid "游戏内日志"
-msgstr ""
+msgstr "ゲーム内ログ"
 
 #: app/log_interface.py:975
 msgid "定时任务({count})"
-msgstr ""
+msgstr "定時タスク（{count}）"
 
 #: app/log_interface.py:977
 msgid "已启用 {count} 个按时任务，点击配置"
-msgstr ""
+msgstr "定時タスク {count} 件が有効です。クリックして設定"
 
 #: app/log_interface.py:994
 msgid "下次：{time}"
-msgstr ""
+msgstr "次回：{time}"
 
 #: module/update/version_check.py:331
 msgid "更新接口未返回有效版本信息，请稍后重试"
-msgstr ""
+msgstr "更新 API から有効なバージョン情報が返されませんでした。しばらくしてから再試行してください"
 
 #: app/setting_interface.py:2531
 msgid "复制提示词"
-msgstr ""
+msgstr "プロンプトをコピー"
 
 #: app/setting_interface.py:2533
 msgid "AI 助手"
-msgstr ""
+msgstr "AI アシスタント"
 
 #: app/setting_interface.py:2534
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr ""
+"DeepSeek Harness、Codex、Claude Code などの AI "
+"アシスタントに渡すプロンプトをコピーして、三月なのかアシスタントの操作方法を教えます"
 
 #: app/tools/agent_prompt.py:16
 msgid ""
@@ -6323,10 +6372,13 @@ msgid ""
 "请先阅读 {skill_file} ，按其中的说明帮我操作它。\n"
 "如果你支持 Skill（技能），请把文件夹 {skill_dir} 复制到你的用户级技能目录（例如 ~/.agents/skills/ 或 ~/.claude/skills/），以后就不需要我再提供这段说明。"
 msgstr ""
+"このパソコンには「三月なのかアシスタント」（崩壊：スターレイルの自動化ツール）バージョン {version} がインストールされています。インストール先：{install_dir}\n"
+"まず {skill_file} を読み、その説明に従って操作を手伝ってください。\n"
+"Skill（スキル）に対応している場合は、フォルダー {skill_dir} をユーザー用のスキルディレクトリ（例：~/.agents/skills/ または ~/.claude/skills/）にコピーしてください。次回からこの説明を渡す必要がなくなります。"
 
 #: app/setting_interface.py:3378
 msgid "粘贴给你的 AI 助手即可"
-msgstr ""
+msgstr "AI アシスタントに貼り付けてください"
 
 #: app/setting_interface.py:2484
 msgid "本地操作模式"
@@ -6394,53 +6446,55 @@ msgstr ""
 "Epic 版の StarRail.exe を選択してください。アシスタントが Epic "
 "経由でランチャーを開き、「ゲーム開始」を自動でクリックします。事前に Epic にログインしてください。"
 
-#: app/challenge_config_dialog.py:147
-msgid "关卡范围的起始值不能大于结束值。"
-msgstr ""
-
 #: app/challenge_config_dialog.py:158
-msgid "出战队伍不能重复使用同一角色。"
-msgstr ""
+msgid "关卡范围的起始值不能大于结束值。"
+msgstr "ステージ範囲の開始値は終了値以下にしてください。"
 
-#: app/challenge_config_dialog.py:46
+#: app/challenge_config_dialog.py:169
+msgid "出战队伍不能重复使用同一角色。"
+msgstr "出撃チームに同じキャラクターを重複して配置することはできません。"
+
+#: app/challenge_config_dialog.py:57
 msgid "至"
-msgstr ""
+msgstr "～"
 
 #: app/setting_interface.py:899
 msgid "虚构叙事配置"
-msgstr ""
+msgstr "虚構叙事の設定"
 
-#: app/challenge_config_dialog.py:155
+#: app/challenge_config_dialog.py:166
 msgid "请为队伍{index}选择1至4名有效角色。"
-msgstr ""
+msgstr "チーム{index}に有効なキャラクターを1～4人選択してください。"
 
-#: app/challenge_config_dialog.py:99
+#: app/challenge_config_dialog.py:110
 msgid "队伍{first} ↔ 队伍{second}"
-msgstr ""
+msgstr "チーム{first} ↔ チーム{second}"
 
-#: app/challenge_config_dialog.py:91
+#: app/challenge_config_dialog.py:102
 msgid "队伍{index}"
-msgstr ""
+msgstr "チーム{index}"
 
-#: app/challenge_config_dialog.py:52
+#: app/challenge_config_dialog.py:63
 msgid "启用星启模式"
-msgstr ""
+msgstr "星拓きモードを有効にする"
 
-#: app/challenge_config_dialog.py:66
+#: app/challenge_config_dialog.py:77
 msgid "队伍三仅用于星启模式"
-msgstr ""
+msgstr "チーム3は星拓きモードでのみ使用します"
 
-#: app/challenge_config_dialog.py:196
+# Official name: COGNOSPHERE press release:
+# https://prtimes.jp/main/html/rd/p/000000410.000096124.html
+#: app/challenge_config_dialog.py:207
 msgid "星启模式"
-msgstr ""
+msgstr "星拓きモード"
 
-#: app/challenge_config_dialog.py:196
+#: app/challenge_config_dialog.py:207
 msgid "常规模式"
-msgstr ""
+msgstr "通常モード"
 
 #: app/card/uac_free_setting_card.py:49
 msgid "开启免 UAC 运行前请确认"
-msgstr ""
+msgstr "UAC 確認なしの実行を有効にする前にご確認ください"
 
 #: app/card/uac_free_setting_card.py:50
 msgid ""
@@ -6455,46 +6509,59 @@ msgid ""
 "\n"
 "建议只在自己的电脑上、并且信任所用的 AI 助手时开启。不需要时，随时可以回到这里关闭。"
 msgstr ""
+"有効にすると、AI アシスタントやスクリプトが m7a.exe からタスクを実行する際に、「このアプリがデバイスに変更を加えることを許可しますか？」という確認画面が表示されなくなります。パソコンの前にいなくても、AI アシスタントにリモートでタスクを実行してもらえます。\n"
+"\n"
+"この確認画面は Windows のセキュリティ機能の1つです。有効にする前に、以下をご確認ください。\n"
+"\n"
+"• このパソコンであなたのアカウントとして実行される他のプログラム（AI アシスタントが実行するコマンドを含む）も、「はい」をクリックすることなく、本アシスタント経由で管理者権限を取得できるようになります。\n"
+"• パソコンがウイルスに感染した場合や、第三者が AI アシスタントを不正利用した場合、被害が拡大するおそれがあります。\n"
+"• 現在の Windows アカウントとインストール先にのみ適用されます。アシスタントの更新後も再設定は不要ですが、インストール先を移動した場合は再度有効にする必要があります。\n"
+"• リモート実行時は、パソコンの電源を入れ、ログイン済みで画面がロックされていない状態にしてください。\n"
+"\n"
+"ご自身のパソコンで、使用する AI アシスタントを信頼できる場合にのみ有効にすることをおすすめします。不要になった場合は、いつでもここで無効にできます。"
 
 #: app/card/uac_free_setting_card.py:72
 msgid "免 UAC 运行设置失败"
-msgstr ""
+msgstr "UAC 確認なしの実行の設定に失敗しました"
 
 #: app/card/uac_free_setting_card.py:73
 msgid "请确认小助手以管理员权限运行，并且没有被安全软件拦截"
-msgstr ""
+msgstr "アシスタントが管理者権限で実行されており、セキュリティソフトにブロックされていないことを確認してください"
 
 #: app/card/uac_free_setting_card.py:85
 msgid "免 UAC 运行已开启"
-msgstr ""
+msgstr "UAC 確認なしの実行を有効にしました"
 
 #: app/card/uac_free_setting_card.py:95
 msgid "免 UAC 运行已关闭"
-msgstr ""
+msgstr "UAC 確認なしの実行を無効にしました"
 
 #: app/setting_interface.py:2507
 msgid "免 UAC 运行"
-msgstr ""
+msgstr "UAC 確認なしの実行"
 
 #: app/setting_interface.py:2508
 msgid "开启后，AI 助手或脚本通过 m7a.exe 运行任务时不再弹出 UAC 确认，适合让 AI 助手远程运行任务"
 msgstr ""
+"有効にすると、AI アシスタントやスクリプトが m7a.exe からタスクを実行する際に UAC の確認を表示しません。AI "
+"アシスタントによるリモート実行に適しています"
 
 #: app/setting_interface.py:887
 msgid "混沌回忆配置"
-msgstr ""
+msgstr "混沌の記憶の設定"
 
 #: app/setting_interface.py:911
 msgid "末日幻影配置"
-msgstr ""
+msgstr "末日の幻影の設定"
 
 #: app/tools/disclaimer.py:46
 msgid "确认状态保存失败"
-msgstr ""
+msgstr "確認状態の保存に失敗しました"
 
 #: app/tools/disclaimer.py:47
 msgid "解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}"
 msgstr ""
+"解決するまで起動のたびに再確認が必要となり、タスクも実行できません。ウイルス対策ソフトのブロックとフォルダーの権限を確認してください：{error}"
 
 #: app/setting_interface.py:2485
 msgid "后台操作遇到鼠标干扰时会等待并重试；下次启动任务生效。"
@@ -6527,3 +6594,12 @@ msgstr "キャラクター画面のエクスポート"
 #: app/tools_interface.py:74
 msgid "读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json"
 msgstr ""
+"全キャラクターのステータス、光円錐、星魂、スキル、遺物を読み取り、プログラムのフォルダーに characters.json として保存します"
+
+#: app/warp_interface.py:252
+msgid "总次数"
+msgstr "累計回数"
+
+#: app/warp_interface.py:252
+msgid "保底内"
+msgstr "天井カウント"

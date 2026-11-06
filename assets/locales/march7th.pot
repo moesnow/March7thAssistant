@@ -217,36 +217,36 @@ msgstr ""
 msgid "打开日志文件夹"
 msgstr ""
 
-#: app/card/expandable_switch_setting_card.py:155
-msgid "重置时间"
-msgstr ""
-
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周一"
 msgstr ""
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周二"
 msgstr ""
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周三"
 msgstr ""
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周四"
 msgstr ""
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周五"
 msgstr ""
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周六"
 msgstr ""
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周日"
+msgstr ""
+
+#: app/card/expandable_switch_setting_card.py:156
+msgid "重置时间"
 msgstr ""
 
 #: app/card/game_path_setting_card.py:17
@@ -796,47 +796,47 @@ msgstr ""
 msgid "免 UAC 运行已关闭"
 msgstr ""
 
-#: app/challenge_config_dialog.py:36
+#: app/challenge_config_dialog.py:47
 msgid "关卡范围"
 msgstr ""
 
-#: app/challenge_config_dialog.py:46
+#: app/challenge_config_dialog.py:57
 msgid "至"
 msgstr ""
 
-#: app/challenge_config_dialog.py:52
+#: app/challenge_config_dialog.py:63
 msgid "启用星启模式"
 msgstr ""
 
-#: app/challenge_config_dialog.py:66
+#: app/challenge_config_dialog.py:77
 msgid "队伍三仅用于星启模式"
 msgstr ""
 
-#: app/challenge_config_dialog.py:91
+#: app/challenge_config_dialog.py:102
 msgid "队伍{index}"
 msgstr ""
 
-#: app/challenge_config_dialog.py:99
+#: app/challenge_config_dialog.py:110
 msgid "队伍{first} ↔ 队伍{second}"
 msgstr ""
 
-#: app/challenge_config_dialog.py:147
+#: app/challenge_config_dialog.py:158
 msgid "关卡范围的起始值不能大于结束值。"
 msgstr ""
 
-#: app/challenge_config_dialog.py:155
+#: app/challenge_config_dialog.py:166
 msgid "请为队伍{index}选择1至4名有效角色。"
 msgstr ""
 
-#: app/challenge_config_dialog.py:158
+#: app/challenge_config_dialog.py:169
 msgid "出战队伍不能重复使用同一角色。"
 msgstr ""
 
-#: app/challenge_config_dialog.py:196
+#: app/challenge_config_dialog.py:207
 msgid "星启模式"
 msgstr ""
 
-#: app/challenge_config_dialog.py:196
+#: app/challenge_config_dialog.py:207
 msgid "常规模式"
 msgstr ""
 
@@ -904,6 +904,10 @@ msgstr ""
 msgid "编辑"
 msgstr ""
 
+#: app/log_interface.py:144
+msgid "任务日志"
+msgstr ""
+
 #: app/log_interface.py:157
 msgid "已暂停"
 msgstr ""
@@ -922,10 +926,6 @@ msgstr ""
 
 #: app/log_interface.py:216
 msgid "按下 {stop} 停止任务"
-msgstr ""
-
-#: app/log_interface.py:428
-msgid "任务日志"
 msgstr ""
 
 #: app/log_interface.py:434
@@ -4182,6 +4182,14 @@ msgstr ""
 
 #: app/warp_interface.py:252
 msgid "卡池"
+msgstr ""
+
+#: app/warp_interface.py:252
+msgid "总次数"
+msgstr ""
+
+#: app/warp_interface.py:252
+msgid "保底内"
 msgstr ""
 
 #: app/warp_interface.py:350

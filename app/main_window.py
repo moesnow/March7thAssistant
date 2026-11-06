@@ -507,7 +507,7 @@ class MainWindow(MSFluentWindow):
             self._reinstall_fluent_translator(actual_lang)
             self._refreshWindowTitleBar()
             if hasattr(self, 'logInterface') and self.logInterface:
-                self.logInterface.setDetectedUpdateVersion(self.detected_update_version)
+                self.logInterface.retranslateOverlay()
 
             # 禁用导航栏，防止重建期间误操作
             self.navigationInterface.setEnabled(False)
@@ -723,7 +723,7 @@ class MainWindow(MSFluentWindow):
             self.removeInterface(old_setting_interface, isDelete=True)
 
             # 添加新的设置界面
-            self.addSubInterface(self.settingInterface, FIF.SETTING, '设置', position=NavigationItemPosition.BOTTOM)
+            self.addSubInterface(self.settingInterface, FIF.SETTING, tr('设置'), position=NavigationItemPosition.BOTTOM)
 
             # 只有在重新加载配置前是在设置界面时，才切换到新的设置界面
             if is_in_setting_interface:

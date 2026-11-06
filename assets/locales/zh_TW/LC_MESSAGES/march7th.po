@@ -54,7 +54,7 @@ msgstr "啟動遊戲"
 msgid "日志"
 msgstr "日誌"
 
-#: app/log_interface.py:428
+#: app/log_interface.py:144
 msgid "任务日志"
 msgstr "任務日誌"
 
@@ -611,7 +611,7 @@ msgstr "翁法羅斯"
 msgid "启用混沌回忆"
 msgstr "啟用混沌回憶"
 
-#: app/challenge_config_dialog.py:36
+#: app/challenge_config_dialog.py:47
 msgid "关卡范围"
 msgstr "關卡範圍"
 
@@ -1905,31 +1905,31 @@ msgstr "關"
 msgid "开"
 msgstr "開"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周一"
 msgstr "週一"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周二"
 msgstr "週二"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周三"
 msgstr "週三"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周四"
 msgstr "週四"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周五"
 msgstr "週五"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周六"
 msgstr "週六"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周日"
 msgstr "週日"
 
@@ -1989,7 +1989,7 @@ msgstr "清空已使用兌換碼"
 msgid "未执行"
 msgstr "未執行"
 
-#: app/card/expandable_switch_setting_card.py:155
+#: app/card/expandable_switch_setting_card.py:156
 msgid "重置时间"
 msgstr "重置時間"
 
@@ -5689,140 +5689,140 @@ msgstr "啟動任務失敗：{error}"
 
 #: app/card/samplecardview1.py:61
 msgid "执行完成(＾∀＾●)"
-msgstr ""
+msgstr "執行完成（＾∀＾●）"
 
 #: app/card/samplecardview1.py:73
 msgid "执行出错"
-msgstr ""
+msgstr "執行發生錯誤"
 
 #: app/main_window.py:521
 msgid "语言切换失败"
-msgstr ""
+msgstr "語言切換失敗"
 
 #: tasks/tool/screenshot.py:386
 msgid "还没有选择区域呢"
-msgstr ""
+msgstr "尚未選取區域"
 
 #: tasks/tool/screenshot.py:397
 msgid "复制到剪贴板成功"
-msgstr ""
+msgstr "已複製到剪貼簿"
 
 #: tasks/tool/screenshot.py:410
 msgid "请输入 crop 值"
-msgstr ""
+msgstr "請輸入 crop 值"
 
 #: tasks/tool/screenshot.py:418
 msgid "crop 值必须包含 4 个部分"
-msgstr ""
+msgstr "crop 值必須包含 4 個部分"
 
 #: tasks/tool/screenshot.py:426
 msgid "比例格式不正确"
-msgstr ""
+msgstr "比例格式不正確"
 
 #: tasks/tool/screenshot.py:430
 msgid "比例分母必须大于 0"
-msgstr ""
+msgstr "比例的分母必須大於 0"
 
 #: tasks/tool/screenshot.py:434
 msgid "第 {index} 项分母应为 {expected}"
-msgstr ""
+msgstr "第 {index} 項的分母應為 {expected}"
 
 #: tasks/tool/screenshot.py:441
 msgid "像素坐标格式不正确"
-msgstr ""
+msgstr "像素座標格式不正確"
 
 #: tasks/tool/screenshot.py:445
 msgid "宽度和高度必须大于 0"
-msgstr ""
+msgstr "寬度和高度必須大於 0"
 
 #: tasks/tool/screenshot.py:447
 msgid "X 和 Y 不能小于 0"
-msgstr ""
+msgstr "X 和 Y 不得小於 0"
 
 #: tasks/tool/screenshot.py:449
 msgid "crop 区域超出截图范围"
-msgstr ""
+msgstr "crop 區域超出螢幕擷取範圍"
 
 #: tasks/tool/screenshot.py:458
 msgid "输入 Crop 值"
-msgstr ""
+msgstr "輸入 Crop 值"
 
 #: tasks/tool/screenshot.py:459
 msgid "支持 (x / 宽, y / 高, width / 宽, height / 高) 或 x, y, width, height"
-msgstr ""
+msgstr "支援 (x / 寬, y / 高, width / 寬, height / 高) 或 x, y, width, height"
 
 #: tasks/tool/screenshot.py:482
 msgid "已绘制区域: X={x}, Y={y}, Width={width}, Height={height}"
-msgstr ""
+msgstr "已繪製區域：X={x}、Y={y}、Width={width}、Height={height}"
 
 #: tasks/tool/screenshot.py:484
 msgid "（已使用蓝色矩形标记）"
-msgstr ""
+msgstr "（已使用藍色矩形標示）"
 
 #: tasks/tool/screenshot.py:517
 msgid "保存选区截图"
-msgstr ""
+msgstr "儲存選取區域的螢幕擷取畫面"
 
 #: tasks/tool/screenshot.py:591
 msgid "OCR识别结果"
-msgstr ""
+msgstr "OCR 辨識結果"
 
 #: tasks/tool/screenshot.py:593
 msgid "识别耗时: {seconds} 秒"
-msgstr ""
+msgstr "辨識耗時：{seconds} 秒"
 
 #: tasks/tool/screenshot.py:595
 msgid "没有识别出任何内容"
-msgstr ""
+msgstr "未辨識出任何內容"
 
 #: tasks/tool/screenshot.py:618
 msgid "模板图片加载失败"
-msgstr ""
+msgstr "範本圖片載入失敗"
 
 #: tasks/tool/screenshot.py:626
 msgid "模板尺寸大于截图尺寸，无法匹配"
-msgstr ""
+msgstr "範本尺寸大於螢幕擷取畫面，無法比對"
 
 #: tasks/tool/screenshot.py:642
 msgid "模板匹配结果"
-msgstr ""
+msgstr "範本比對結果"
 
 #: tasks/tool/screenshot.py:643
 msgid "最高置信度: {value}"
-msgstr ""
+msgstr "最高信賴度：{value}"
 
 #: tasks/tool/screenshot.py:644
 msgid "匹配区域: X={x}, Y={y}, Width={width}, Height={height}"
-msgstr ""
+msgstr "比對區域：X={x}、Y={y}、Width={width}、Height={height}"
 
 #: tasks/tool/screenshot.py:646
 msgid "（已使用绿色矩形标记）"
-msgstr ""
+msgstr "（已使用綠色矩形標示）"
 
 #: tasks/tool/screenshot.py:683
 msgid "没有检测到随意门"
-msgstr ""
+msgstr "未偵測到隨意門"
 
 #: tasks/tool/screenshot.py:692
 msgid "检测区域: X={x}, Y={y}, Width={width}, Height={height}"
-msgstr ""
+msgstr "偵測區域：X={x}、Y={y}、Width={width}、Height={height}"
 
 #: tasks/tool/screenshot.py:695
 msgid "（已使用黄色矩形标记）"
-msgstr ""
+msgstr "（已使用黃色矩形標示）"
 
 #: tasks/tool/screenshot.py:705
 msgid "没有检测到事件"
-msgstr ""
+msgstr "未偵測到事件"
 
 #: tasks/tool/screenshot.py:715
 msgid "检测到 {count} 个事件"
 msgid_plural "检测到 {count} 个事件|plural"
-msgstr[0] ""
+msgstr[0] "偵測到 {count} 個事件"
 
 #: tasks/tool/screenshot.py:715
 msgid "（已使用橙色矩形标记）"
-msgstr ""
+msgstr "（已使用橘色矩形標示）"
 
 #: app/card/pushsettingcard1.py:155
 msgid "查询天数"
@@ -5886,60 +5886,60 @@ msgstr "探索成功後儲存至第一個空存檔位；存檔已滿時略過。
 
 #: app/setting_interface.py:825
 msgid "获得特殊物品"
-msgstr ""
+msgstr "取得特殊物品"
 
 #: app/setting_interface.py:837
 msgid "启用「特殊物品领取」"
-msgstr ""
+msgstr "啟用「特殊物品領取」"
 
 #: app/setting_interface.py:838
 msgid "按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置"
-msgstr ""
+msgstr "將下列三項選擇寫入鋤大地的設定；關閉時不會變更鋤大地原有的設定"
 
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食（零食材料-1 / 零食合成-1）"
-msgstr ""
+msgstr "每日取得特殊物品：購買秘技零食材料並合成零食（零食材料-1 / 零食合成-1）"
 
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币（过期邮包-1 / 艾迪恩代币-1）"
-msgstr ""
+msgstr "每週取得特殊物品：購買仙舟過期郵包與匹諾康尼艾迪恩代幣（過期郵包-1 / 艾迪恩代幣-1）"
 
 #: app/setting_interface.py:857
 msgid "获得翁法罗斯记忆代币"
-msgstr ""
+msgstr "取得翁法羅斯記憶代幣"
 
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
-msgstr ""
+msgstr "每週取得特殊物品：收集翁法羅斯憶質殘晶（收集記憶代幣-1）"
 
 #: app/setting_interface.py:862
 msgid "远程一号位锄地"
-msgstr ""
+msgstr "遠程角色放在一號位鋤地"
 
 #: app/setting_interface.py:863
 msgid "黄泉一号位锄地"
-msgstr ""
+msgstr "黃泉放在一號位鋤地"
 
 #: app/setting_interface.py:864
 msgid "仅获取特殊物品"
-msgstr ""
+msgstr "僅取得特殊物品"
 
 #: app/setting_interface.py:867
 msgid "一键切换地图版本，并把三项特殊物品领取都设为「启用」"
-msgstr ""
+msgstr "一鍵切換地圖版本，並將三項特殊物品領取全部設為「啟用」"
 
 #: app/setting_interface.py:3444
 msgid "当前为“{name}”模式"
-msgstr ""
+msgstr "目前為「{name}」模式"
 
 #: app/setting_interface.py:844
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食"
-msgstr ""
+msgstr "每日取得特殊物品：購買秘技零食材料並合成零食"
 
 #: app/setting_interface.py:851
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"
-msgstr ""
+msgstr "每週取得特殊物品：購買仙舟過期郵包與匹諾康尼艾迪恩代幣"
 
 #: app/setting_interface.py:858
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
-msgstr ""
+msgstr "每週取得特殊物品：收集翁法羅斯憶質殘晶"
 
 #: assets/config/instance_names.json
 msgid "伶人套 / 禁果套"
@@ -5979,15 +5979,15 @@ msgstr "風堇·雲邊拾暖"
 
 #: app/setting_interface.py:287
 msgid "每周清理遗器"
-msgstr ""
+msgstr "每週清理遺器"
 
 #: app/setting_interface.py:291
 msgid "启用智能弃置"
-msgstr ""
+msgstr "啟用智慧棄置"
 
 #: app/setting_interface.py:292
 msgid "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
-msgstr ""
+msgstr "依「不符合推薦角色」及「副屬性強化 0 次」篩選，分解已標記棄置及四星及以下的遺器"
 
 #: app/setting_interface.py:1629
 msgid "QQ 官方机器人"
@@ -6087,95 +6087,97 @@ msgstr "監聽中，請在群聊中 @ 機器人發送驗證碼 {code}（{seconds
 
 #: app/card/autostart_setting_card.py:42
 msgid "开机启动设置"
-msgstr ""
+msgstr "開機啟動設定"
 
 #: app/card/autostart_setting_card.py:49
 msgid "登录后打开图形界面"
-msgstr ""
+msgstr "登入後開啟圖形介面"
 
 #: app/card/autostart_setting_card.py:53
 msgid "打开图形界面后最小化到托盘"
-msgstr ""
+msgstr "開啟圖形介面後最小化至系統匣"
 
 #: app/card/autostart_setting_card.py:57
 msgid "打开图形界面后自动执行的任务："
-msgstr ""
+msgstr "開啟圖形介面後自動執行的任務："
 
 #: app/card/autostart_setting_card.py:59
 msgid "不执行"
-msgstr ""
+msgstr "不執行"
 
 #: app/card/autostart_setting_card.py:65
 msgid "不打开图形界面时执行的任务："
-msgstr ""
+msgstr "不開啟圖形介面時執行的任務："
 
 msgid "不打开图形界面时必须选择一项任务，将以命令行方式执行，完成后自动退出"
-msgstr ""
+msgstr "不開啟圖形介面時必須選擇一項任務，將以命令列模式執行，完成後自動結束"
 
 #: app/card/autostart_setting_card.py:73
 msgid "请选择要执行的任务"
-msgstr ""
+msgstr "請選擇要執行的任務"
 
 #: app/card/autostart_setting_card.py:139
 msgid "升级到新版"
-msgstr ""
+msgstr "升級至新版"
 
 #: app/card/autostart_setting_card.py:214
 msgid "开机启动已开启"
-msgstr ""
+msgstr "已啟用開機啟動"
 
 #: app/card/autostart_setting_card.py:224
 msgid "开机启动已关闭"
-msgstr ""
+msgstr "已停用開機啟動"
 
 msgid "可在任务管理器的「启动应用」中查看或禁用"
-msgstr ""
+msgstr "可在工作管理員的「啟動應用程式」中查看或停用"
 
 #: app/card/autostart_setting_card.py:235
 msgid "开机启动设置失败"
-msgstr ""
+msgstr "開機啟動設定失敗"
 
 msgid "请确认以管理员权限运行后重试"
-msgstr ""
+msgstr "請確認以系統管理員身分執行後再試一次"
 
 #: app/card/autostart_setting_card.py:249
 msgid "开机启动设置已保存"
-msgstr ""
+msgstr "已儲存開機啟動設定"
 
 #: app/card/autostart_setting_card.py:262
 msgid "已升级到新版开机启动"
-msgstr ""
+msgstr "已升級至新版開機啟動方式"
 
 #: app/card/autostart_setting_card.py:263
 msgid "旧的计划任务已删除，请按需配置并重新开启开关"
-msgstr ""
+msgstr "已刪除舊的排程工作，請依需求設定後重新開啟開關"
 
 #: app/card/autostart_setting_card.py:272
 msgid "升级到新版失败"
-msgstr ""
+msgstr "升級至新版失敗"
 
 #: app/card/autostart_setting_card.py:273
 msgid "删除旧的计划任务失败，请重试"
-msgstr ""
+msgstr "無法刪除舊的排程工作，請再試一次"
 
 msgid ""
 "登录 Windows 后自动启动，可在任务管理器「启动应用」中查看或禁用；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
 msgstr ""
+"登入 Windows "
+"後自動啟動，可在工作管理員的「啟動應用程式」中查看或停用；按一下「設定」，選擇啟動後是否開啟圖形介面、是否最小化，以及自動執行的任務"
 
 #: app/card/autostart_setting_card.py:236
 msgid "请以管理员权限运行后重试"
-msgstr ""
+msgstr "請以系統管理員身分執行後再試一次"
 
 msgid "登录 Windows 后自动启动，启动时不会弹出 UAC 提示；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
-msgstr ""
+msgstr "登入 Windows 後自動啟動，不會顯示 UAC 提示；按一下「設定」，選擇啟動後是否開啟圖形介面、是否最小化，以及自動執行的任務"
 
 #: app/card/autostart_setting_card.py:71
 msgid "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
-msgstr ""
+msgstr "不開啟圖形介面時必須選擇一項任務，將在命令列視窗中執行，與手動執行命令列版相同"
 
 #: app/setting_interface.py:2503
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
-msgstr ""
+msgstr "登入後自動啟動，按一下「設定」進行詳細設定；無人值守時可能需要自行設定 Windows 自動登入"
 
 #: app/log_interface.py:212
 msgid "按下 {stop} 停止 · {pause} 继续"
@@ -6183,19 +6185,19 @@ msgstr "按下 {stop} 停止 · {pause} 繼續"
 
 #: app/card/autoplot_setting_card.py:83
 msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr ""
+msgstr "自動閱讀翁法羅斯英雄紀（請先開啟該書目錄）"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"
-msgstr ""
+msgstr "記住自動對話的開關狀態"
 
 #: app/card/autoplot_setting_card.py:57
 msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。"
-msgstr ""
+msgstr "開啟後，下次啟動小助手時會還原自動對話的開關狀態。遊戲不在前景時，僅會以較低頻率偵測視窗。"
 
 #: app/tools_interface.py:167
 msgid "{error}（详情见日志）"
-msgstr ""
+msgstr "{error}（詳情請見記錄）"
 
 #: app/setting_interface.py:1039
 msgid "启动器路径"
@@ -6219,59 +6221,59 @@ msgstr "選擇啟動器路徑"
 
 #: app/card/messagebox_custom.py:276
 msgid "显示更早的更新记录"
-msgstr ""
+msgstr "顯示更早的更新記錄"
 
 #: app/card/messagebox_custom.py:309
 msgid "正在加载历史更新记录……"
-msgstr ""
+msgstr "正在載入歷史更新記錄……"
 
 #: app/card/messagebox_custom.py:314
 msgid "查看完整更新日志"
-msgstr ""
+msgstr "查看完整更新記錄"
 
 #: app/card/messagebox_custom.py:328
 msgid "以下为已收录的更新记录，部分历史版本可能未收录"
-msgstr ""
+msgstr "以下為已收錄的更新記錄，部分舊版可能尚未收錄"
 
 #: app/card/messagebox_custom.py:330
 msgid "已加载 {count} 份版本更新记录"
-msgstr ""
+msgstr "已載入 {count} 份版本更新記錄"
 
 #: app/card/messagebox_custom.py:357
 msgid "继续显示更早的更新记录（还有 {count} 份）"
-msgstr ""
+msgstr "繼續顯示更早的更新記錄（還有 {count} 份）"
 
 #: app/tools/check_update.py:62
 msgid "历史更新记录暂时无法加载，仍可正常更新"
-msgstr ""
+msgstr "暫時無法載入歷史更新記錄，仍可正常更新"
 
 #: app/tools/check_update.py:204
 msgid "该渠道版本与目标版本不一致，请稍后重试"
-msgstr ""
+msgstr "此通路的版本與目標版本不符，請稍後再試"
 
 #: app/common/schedule.py:38
 msgid "未选择"
-msgstr ""
+msgstr "尚未選擇"
 
 #: app/log_interface.py:989
 msgid "{date}（{weekday}）{time}"
-msgstr ""
+msgstr "{date}（{weekday}）{time}"
 
 #: app/schedule_dialog.py:269
 msgid "执行星期："
-msgstr ""
+msgstr "執行星期："
 
 #: app/schedule_dialog.py:279
 msgid "按电脑本地日期判断执行星期"
-msgstr ""
+msgstr "依電腦本機日期判斷執行星期"
 
 #: app/schedule_dialog.py:366
 msgid "请至少选择一个执行星期"
-msgstr ""
+msgstr "請至少選擇一個執行星期"
 
 #: app/schedule_dialog.py:378
 msgid "任务“{name}”已占用{days}的 {time}，请调整时间或星期"
-msgstr ""
+msgstr "任務「{name}」已占用{days}的 {time}，請調整時間或星期"
 
 #: app/schedule_dialog.py:465
 msgid ""
@@ -6279,41 +6281,44 @@ msgid ""
 "链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动，不单独判断星期。\n"
 "立即运行：不受星期限制，从当前任务开始，后面连续的链式任务也会跟随执行。"
 msgstr ""
+"定時啟動：在選定的星期到達設定時間後，直接啟動目前任務，星期以電腦本機日期為準。\n"
+"接續啟動：不會單獨依時間觸發，必須排在另一項任務之後。前一項任務正常結束後，便會依清單順序立即啟動，不另外判斷星期。\n"
+"立即執行：不受星期限制，從目前任務開始，後方連續的接續任務也會一併執行。"
 
 #: app/schedule_dialog.py:745
 msgid "执行计划"
-msgstr ""
+msgstr "執行排程"
 
 msgid "游戏内日志"
-msgstr ""
+msgstr "遊戲內記錄"
 
 #: app/log_interface.py:975
 msgid "定时任务({count})"
-msgstr ""
+msgstr "定時任務（{count}）"
 
 #: app/log_interface.py:977
 msgid "已启用 {count} 个按时任务，点击配置"
-msgstr ""
+msgstr "已啟用 {count} 個定時任務，按一下進行設定"
 
 #: app/log_interface.py:994
 msgid "下次：{time}"
-msgstr ""
+msgstr "下次：{time}"
 
 #: module/update/version_check.py:331
 msgid "更新接口未返回有效版本信息，请稍后重试"
-msgstr ""
+msgstr "更新介面未傳回有效的版本資訊，請稍後再試"
 
 #: app/setting_interface.py:2531
 msgid "复制提示词"
-msgstr ""
+msgstr "複製提示詞"
 
 #: app/setting_interface.py:2533
 msgid "AI 助手"
-msgstr ""
+msgstr "AI 助手"
 
 #: app/setting_interface.py:2534
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
-msgstr ""
+msgstr "複製提示詞並傳給 DeepSeek Harness、Codex、Claude Code 等 AI 助手，讓它學會操作三月七小助手"
 
 #: app/tools/agent_prompt.py:16
 msgid ""
@@ -6321,10 +6326,13 @@ msgid ""
 "请先阅读 {skill_file} ，按其中的说明帮我操作它。\n"
 "如果你支持 Skill（技能），请把文件夹 {skill_dir} 复制到你的用户级技能目录（例如 ~/.agents/skills/ 或 ~/.claude/skills/），以后就不需要我再提供这段说明。"
 msgstr ""
+"我在這台電腦上安裝了「三月七小助手」（《崩壞：星穹鐵道》自動化工具），版本為 {version}，安裝目錄：{install_dir}\n"
+"請先閱讀 {skill_file}，依照其中的說明幫我操作。\n"
+"如果你支援 Skill（技能），請將資料夾 {skill_dir} 複製到使用者層級的技能目錄（例如 ~/.agents/skills/ 或 ~/.claude/skills/），之後我就不需要再次提供這段說明。"
 
 #: app/setting_interface.py:3378
 msgid "粘贴给你的 AI 助手即可"
-msgstr ""
+msgstr "貼給你的 AI 助手即可"
 
 #: app/setting_interface.py:2484
 msgid "本地操作模式"
@@ -6376,67 +6384,67 @@ msgstr "在官網查看"
 
 #: app/card/game_path_setting_card.py:23
 msgid "游戏启动方式"
-msgstr ""
+msgstr "遊戲啟動方式"
 
 #: app/card/game_path_setting_card.py:25
 msgid "直接启动"
-msgstr ""
+msgstr "直接啟動"
 
 #: app/card/game_path_setting_card.py:26
 msgid "通过 Epic 启动"
-msgstr ""
+msgstr "透過 Epic 啟動"
 
 #: app/card/game_path_setting_card.py:32
 msgid "请选择 Epic 渠道版 StarRail.exe，助手将通过 Epic 打开启动器并自动点击‘开始游戏’。需提前登录 Epic。"
-msgstr ""
-
-#: app/challenge_config_dialog.py:147
-msgid "关卡范围的起始值不能大于结束值。"
-msgstr ""
+msgstr "請選擇 Epic 版本的 StarRail.exe，小助手會透過 Epic 開啟啟動器，並自動按下「開始遊戲」。請先登入 Epic。"
 
 #: app/challenge_config_dialog.py:158
-msgid "出战队伍不能重复使用同一角色。"
-msgstr ""
+msgid "关卡范围的起始值不能大于结束值。"
+msgstr "關卡範圍的起始值不得大於結束值。"
 
-#: app/challenge_config_dialog.py:46
+#: app/challenge_config_dialog.py:169
+msgid "出战队伍不能重复使用同一角色。"
+msgstr "出戰隊伍不可重複使用同一名角色。"
+
+#: app/challenge_config_dialog.py:57
 msgid "至"
-msgstr ""
+msgstr "至"
 
 #: app/setting_interface.py:899
 msgid "虚构叙事配置"
-msgstr ""
+msgstr "虛構敘事設定"
 
-#: app/challenge_config_dialog.py:155
+#: app/challenge_config_dialog.py:166
 msgid "请为队伍{index}选择1至4名有效角色。"
-msgstr ""
+msgstr "請為隊伍 {index} 選擇 1 至 4 名有效角色。"
 
-#: app/challenge_config_dialog.py:99
+#: app/challenge_config_dialog.py:110
 msgid "队伍{first} ↔ 队伍{second}"
-msgstr ""
+msgstr "隊伍 {first} ↔ 隊伍 {second}"
 
-#: app/challenge_config_dialog.py:91
+#: app/challenge_config_dialog.py:102
 msgid "队伍{index}"
-msgstr ""
+msgstr "隊伍 {index}"
 
-#: app/challenge_config_dialog.py:52
+#: app/challenge_config_dialog.py:63
 msgid "启用星启模式"
-msgstr ""
+msgstr "啟用星啟模式"
 
-#: app/challenge_config_dialog.py:66
+#: app/challenge_config_dialog.py:77
 msgid "队伍三仅用于星启模式"
-msgstr ""
+msgstr "隊伍三僅用於星啟模式"
 
-#: app/challenge_config_dialog.py:196
+#: app/challenge_config_dialog.py:207
 msgid "星启模式"
-msgstr ""
+msgstr "星啟模式"
 
-#: app/challenge_config_dialog.py:196
+#: app/challenge_config_dialog.py:207
 msgid "常规模式"
-msgstr ""
+msgstr "一般模式"
 
 #: app/card/uac_free_setting_card.py:49
 msgid "开启免 UAC 运行前请确认"
-msgstr ""
+msgstr "啟用免 UAC 執行前請確認"
 
 #: app/card/uac_free_setting_card.py:50
 msgid ""
@@ -6451,46 +6459,56 @@ msgid ""
 "\n"
 "建议只在自己的电脑上、并且信任所用的 AI 助手时开启。不需要时，随时可以回到这里关闭。"
 msgstr ""
+"啟用後，AI 助手或指令碼透過 m7a.exe 執行任務時，不會再顯示「您要允許此應用程式變更您的裝置嗎？」確認視窗。即使你不在電腦前，也能讓 AI 助手幫你遠端執行任務。\n"
+"\n"
+"這個確認視窗原本是 Windows 的一道安全防線，啟用前請先了解：\n"
+"\n"
+"• 這台電腦上以你的帳戶執行的其他程式（包括 AI 助手執行的命令），也能透過小助手取得系統管理員權限，不再需要你按下「是」。\n"
+"• 如果電腦感染惡意程式，或有人冒用你的 AI 助手，可能造成更嚴重的損害。\n"
+"• 僅對目前的 Windows 帳戶和安裝目錄生效；更新小助手後不必重新啟用，但移動安裝目錄後需要重新啟用。\n"
+"• 遠端執行時，電腦必須保持開機、已登入且未鎖定。\n"
+"\n"
+"建議只在自己的電腦上，且信任所使用的 AI 助手時啟用。不需要時，隨時可以回到這裡停用。"
 
 #: app/card/uac_free_setting_card.py:72
 msgid "免 UAC 运行设置失败"
-msgstr ""
+msgstr "免 UAC 執行設定失敗"
 
 #: app/card/uac_free_setting_card.py:73
 msgid "请确认小助手以管理员权限运行，并且没有被安全软件拦截"
-msgstr ""
+msgstr "請確認小助手以系統管理員身分執行，且未遭安全軟體封鎖"
 
 #: app/card/uac_free_setting_card.py:85
 msgid "免 UAC 运行已开启"
-msgstr ""
+msgstr "已啟用免 UAC 執行"
 
 #: app/card/uac_free_setting_card.py:95
 msgid "免 UAC 运行已关闭"
-msgstr ""
+msgstr "已停用免 UAC 執行"
 
 #: app/setting_interface.py:2507
 msgid "免 UAC 运行"
-msgstr ""
+msgstr "免 UAC 執行"
 
 #: app/setting_interface.py:2508
 msgid "开启后，AI 助手或脚本通过 m7a.exe 运行任务时不再弹出 UAC 确认，适合让 AI 助手远程运行任务"
-msgstr ""
+msgstr "啟用後，AI 助手或指令碼透過 m7a.exe 執行任務時，不再顯示 UAC 確認，適合讓 AI 助手遠端執行任務"
 
 #: app/setting_interface.py:887
 msgid "混沌回忆配置"
-msgstr ""
+msgstr "混沌回憶設定"
 
 #: app/setting_interface.py:911
 msgid "末日幻影配置"
-msgstr ""
+msgstr "末日幻影設定"
 
 #: app/tools/disclaimer.py:46
 msgid "确认状态保存失败"
-msgstr ""
+msgstr "無法儲存確認狀態"
 
 #: app/tools/disclaimer.py:47
 msgid "解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}"
-msgstr ""
+msgstr "問題解決前，每次啟動都必須重新確認，也無法執行任務。請檢查防毒軟體是否封鎖，以及目錄權限：{error}"
 
 #: app/setting_interface.py:2485
 msgid "后台操作遇到鼠标干扰时会等待并重试；下次启动任务生效。"
@@ -6522,4 +6540,12 @@ msgstr "角色面板匯出"
 
 #: app/tools_interface.py:74
 msgid "读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json"
-msgstr ""
+msgstr "讀取全部角色的屬性、光錐、星魂、技能及遺器，儲存至程式目錄下的 characters.json"
+
+#: app/warp_interface.py:252
+msgid "总次数"
+msgstr "總次數"
+
+#: app/warp_interface.py:252
+msgid "保底内"
+msgstr "保底計數"

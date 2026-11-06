@@ -23,7 +23,7 @@
 import ast
 import re
 
-from tools.i18n import iter_source_files
+from tools.i18n import ROOT, iter_source_files
 
 CJK = re.compile(r"[\u3400-\u9fff]")
 
@@ -33,6 +33,7 @@ UI_ATTRS = {
     "setText", "setPlaceholderText", "setToolTip", "setWindowTitle", "setTitle",
     "addItem", "addItems", "setLabel", "setContent", "setSubtitle", "setCaption",
     "setInformativeText", "setDetailedText", "setStatusTip", "setWhatsThis",
+    "QLabel", "PushSettingCardEval", "addSubInterface",
 }
 UI_INFO_OBJECTS = {"InfoBar", "TeachingTip"}
 UI_INFO_KW = {"text", "title", "content", "caption", "label", "placeholder",
@@ -74,6 +75,18 @@ def _wrapped_string_ids(tree) -> set[int]:
     return wrapped
 
 
+def _raw_ui_strings(node):
+    """Inspect display containers and f-strings without descending into tr() calls."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        yield node
+    elif isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+        for item in node.elts:
+            yield from _raw_ui_strings(item)
+    elif isinstance(node, ast.JoinedStr):
+        for item in node.values:
+            yield from _raw_ui_strings(item)
+
+
 def _is_log_call(dotted: str) -> bool:
     return (dotted in LOG_CALLEES
             or dotted.startswith("log.")
@@ -89,7 +102,7 @@ def _parsed_sources():
             tree = ast.parse(source, str(path))
         except (SyntaxError, ValueError):
             continue
-        rel = str(path).replace("\\", "/").split("March7thAssistant/")[-1]
+        rel = path.relative_to(ROOT).as_posix()
         yield rel, tree
 
 
@@ -111,9 +124,9 @@ class TestUiLiteralsAreTranslated:
                     candidates += list(node.args)
                     candidates += [kw.value for kw in node.keywords if kw.arg in UI_INFO_KW]
                 for arg in candidates:
-                    if (isinstance(arg, ast.Constant) and isinstance(arg.value, str)
-                            and CJK.search(arg.value) and id(arg) not in wrapped):
-                        offenders.append(f"{rel}:{node.lineno} {dotted}(...) {arg.value[:40]!r}")
+                    for text in _raw_ui_strings(arg):
+                        if CJK.search(text.value) and id(text) not in wrapped:
+                            offenders.append(f"{rel}:{node.lineno} {dotted}(...) {text.value[:40]!r}")
         assert offenders == [], (
             "界面文案必须套 tr()（日志与通知正文除外，见本测试文件顶部说明）:\n"
             + "\n".join(offenders)
@@ -146,3 +159,20 @@ class TestNoWrapperRetranslation:
         assert offenders == [], (
             "包装器不应翻译自己的入参（调用点负责 tr()）:\n" + "\n".join(offenders)
         )
+
+
+def test_display_string_scan_catches_fstrings_and_lists():
+    expr = ast.parse('[("任务日志"), f"设置{value}", tr("已翻译")] ', mode="eval").body
+    assert [node.value for node in _raw_ui_strings(expr)] == ["任务日志", "设置"]
+
+
+def test_export_headers_and_weekdays_are_statically_extractable():
+    from tools.i18n import collect_literals_from_source
+
+    for path, expected in (
+        ("app/warp_interface.py", {"总次数", "保底内"}),
+        ("app/card/expandable_switch_setting_card.py",
+         {"周一", "周二", "周三", "周四", "周五", "周六", "周日"}),
+    ):
+        literals, _, _ = collect_literals_from_source((ROOT / path).read_text(encoding="utf-8"))
+        assert expected <= literals

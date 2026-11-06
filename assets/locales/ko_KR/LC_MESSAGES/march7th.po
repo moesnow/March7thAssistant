@@ -54,7 +54,7 @@ msgstr "게임 실행"
 msgid "日志"
 msgstr "로그"
 
-#: app/log_interface.py:428
+#: app/log_interface.py:144
 msgid "任务日志"
 msgstr "임무 로그"
 
@@ -568,9 +568,10 @@ msgstr "필드 정리 타임아웃"
 msgid "上次运行锄大地的时间"
 msgstr "지난 필드 정리 실행 시간"
 
+# Korean item name: https://honkai-star-rail.fandom.com/wiki/Unclaimed_Parcel
 #: app/setting_interface.py:850
 msgid "购买代币与过期邮包"
-msgstr "토큰 및 만료된 우편 구매"
+msgstr "토큰 및 수취 기한이 지난 우편물 구매"
 
 #: app/card/stationprioritysettingcard.py:158
 msgid "启用"
@@ -612,7 +613,7 @@ msgstr "온파로스"
 msgid "启用混沌回忆"
 msgstr "혼돈의 기억 활성화"
 
-#: app/challenge_config_dialog.py:36
+#: app/challenge_config_dialog.py:47
 msgid "关卡范围"
 msgstr "스테이지 범위"
 
@@ -1143,7 +1144,7 @@ msgstr "기본 이미지 복구"
 
 #: app/home_interface.py:42
 msgid "三月七小助手"
-msgstr ""
+msgstr "March 7th 도우미"
 
 #: app/home_interface.py:70
 msgid "选择图片"
@@ -1912,31 +1913,31 @@ msgstr "끄기"
 msgid "开"
 msgstr "켜기"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周一"
 msgstr "월요일"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周二"
 msgstr "화요일"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周三"
 msgstr "수요일"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:123
 msgid "周四"
 msgstr "목요일"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周五"
 msgstr "금요일"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周六"
 msgstr "토요일"
 
-#: app/card/expandable_switch_setting_card.py:644
+#: app/card/expandable_switch_setting_card.py:124
 msgid "周日"
 msgstr "일요일"
 
@@ -1996,7 +1997,7 @@ msgstr "사용된 리딤코드 비우기"
 msgid "未执行"
 msgstr "아직 실행되지 않음"
 
-#: app/card/expandable_switch_setting_card.py:155
+#: app/card/expandable_switch_setting_card.py:156
 msgid "重置时间"
 msgstr "시간 초기화"
 
@@ -2840,7 +2841,7 @@ msgstr "봉망의 형체"
 
 #: assets/config/instance_names.json
 msgid "三月七"
-msgstr ""
+msgstr "Mar. 7th"
 
 #: assets/config/instance_names.json
 msgid "霜晶之形"
@@ -3495,7 +3496,7 @@ msgstr "일부 클라이언트에서 텍스트가 보이지 않는 문제를 피
 
 #: app/setting_interface.py:1316
 msgid "Server酱·Turbo版"
-msgstr ""
+msgstr "ServerChan Turbo"
 
 #: app/setting_interface.py:1317
 msgid "微信推送，适合轻量通知"
@@ -3523,7 +3524,7 @@ msgstr "수신자 OpenID"
 
 #: app/setting_interface.py:1374
 msgid "Server酱³"
-msgstr ""
+msgstr "ServerChan³"
 
 #: app/setting_interface.py:1375
 msgid "Server酱³ APP 推送"
@@ -3735,7 +3736,7 @@ msgstr "메시지 유형: private 또는 group"
 
 #: app/setting_interface.py:1738
 msgid "钉钉"
-msgstr ""
+msgstr "딩톡"
 
 #: app/setting_interface.py:1739
 msgid "钉钉机器人推送"
@@ -3888,7 +3889,7 @@ msgstr "선택 사항: 사용자 지정 Pushdeer 서비스 주소"
 
 #: app/setting_interface.py:2120
 msgid "飞书"
-msgstr ""
+msgstr "페이슈"
 
 #: app/setting_interface.py:2121
 msgid "飞书机器人推送"
@@ -4282,7 +4283,7 @@ msgstr "확인"
 
 #: assets/config/special_programs.jsonc
 msgid "重返未来 M9A"
-msgstr ""
+msgstr "리버스: 1999 M9A"
 
 #: app/setting_interface.py:522
 msgid "短信"
@@ -5060,7 +5061,7 @@ msgstr "이해했으며 계속 활성화"
 
 #: assets/config/special_programs.jsonc
 msgid "终末地 MaaEnd"
-msgstr ""
+msgstr "명일방주: 엔드필드 MaaEnd"
 
 #: app/schedule_dialog.py:805
 msgid "继续后续任务"
@@ -5308,7 +5309,7 @@ msgstr ""
 
 #: app/setting_interface.py:3120
 msgid "该参数用于配置该通知方式的请求字段"
-msgstr ""
+msgstr "이 매개변수는 해당 알림 방식의 요청 필드를 설정합니다"
 
 #: app/setting_interface.py:2403
 msgid "教程"
@@ -5907,60 +5908,65 @@ msgstr "탐사 성공 후 첫 번째 빈 슬롯에 저장합니다. 슬롯이 �
 
 #: app/setting_interface.py:825
 msgid "获得特殊物品"
-msgstr ""
+msgstr "특수 아이템 획득"
 
 #: app/setting_interface.py:837
 msgid "启用「特殊物品领取」"
-msgstr ""
+msgstr "'특수 아이템 수령' 활성화"
 
 #: app/setting_interface.py:838
 msgid "按下面对三项的选择写入锄大地的配置；关闭时完全不干预锄大地自己那边的设置"
-msgstr ""
+msgstr "아래 세 항목의 선택을 Fhoe-Rail 설정에 반영합니다. 끄면 Fhoe-Rail 자체 설정은 변경하지 않습니다"
 
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食（零食材料-1 / 零食合成-1）"
-msgstr ""
+msgstr "일일 특수 아이템: 비술 간식 재료 구매 및 합성 (간식 재료-1 / 간식 합성-1)"
 
+# Korean item name: https://honkai-star-rail.fandom.com/wiki/Unclaimed_Parcel
+# Korean token name: https://honkai-star-rail.fandom.com/wiki/Aideen_Tokens
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币（过期邮包-1 / 艾迪恩代币-1）"
 msgstr ""
+"주간 특수 아이템: 선주의 수취 기한이 지난 우편물과 페나코니의 에이딘 코인 구매 (수취 기한이 지난 우편물-1 / 에이딘 코인-1)"
 
 #: app/setting_interface.py:857
 msgid "获得翁法罗斯记忆代币"
-msgstr ""
+msgstr "앰포리어스 기억 토큰 획득"
 
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶（收集记忆代币-1）"
-msgstr ""
+msgstr "주간 특수 아이템: 앰포리어스의 기억 물질 잔정 수집 (기억 토큰 수집-1)"
 
 #: app/setting_interface.py:862
 msgid "远程一号位锄地"
-msgstr ""
+msgstr "원거리 캐릭터를 1번 자리에 배치하여 필드 정리"
 
 #: app/setting_interface.py:863
 msgid "黄泉一号位锄地"
-msgstr ""
+msgstr "아케론을 1번 자리에 배치하여 필드 정리"
 
 #: app/setting_interface.py:864
 msgid "仅获取特殊物品"
-msgstr ""
+msgstr "특수 아이템만 획득"
 
 #: app/setting_interface.py:867
 msgid "一键切换地图版本，并把三项特殊物品领取都设为「启用」"
-msgstr ""
+msgstr "한 번의 클릭으로 맵 버전을 전환하고 특수 아이템 수령 세 항목을 모두 활성화합니다"
 
 #: app/setting_interface.py:3444
 msgid "当前为“{name}”模式"
-msgstr ""
+msgstr "현재 모드: \"{name}\""
 
 #: app/setting_interface.py:844
 msgid "每日获得特殊物品：购买秘技零食材料并合成零食"
-msgstr ""
+msgstr "일일 특수 아이템: 비술 간식 재료 구매 및 합성"
 
+# Korean item name: https://honkai-star-rail.fandom.com/wiki/Unclaimed_Parcel
+# Korean token name: https://honkai-star-rail.fandom.com/wiki/Aideen_Tokens
 #: app/setting_interface.py:851
 msgid "每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"
-msgstr ""
+msgstr "주간 특수 아이템: 선주의 수취 기한이 지난 우편물과 페나코니의 에이딘 코인 구매"
 
 #: app/setting_interface.py:858
 msgid "每周获得特殊物品：收集翁法罗斯忆质残晶"
-msgstr ""
+msgstr "주간 특수 아이템: 앰포리어스의 기억 물질 잔정 수집"
 
 #: assets/config/instance_names.json
 msgid "伶人套 / 禁果套"
@@ -6000,15 +6006,15 @@ msgstr "히아신「구름 곁의 따스함」"
 
 #: app/setting_interface.py:287
 msgid "每周清理遗器"
-msgstr ""
+msgstr "매주 유물 정리"
 
 #: app/setting_interface.py:291
 msgid "启用智能弃置"
-msgstr ""
+msgstr "스마트 폐기 활성화"
 
 #: app/setting_interface.py:292
 msgid "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
-msgstr ""
+msgstr "추천 캐릭터 불일치 및 부가 속성 강화 0회로 필터링하고, 폐기 표시된 유물과 4성 이하 유물을 분해합니다"
 
 #: app/setting_interface.py:1629
 msgid "QQ 官方机器人"
@@ -6110,95 +6116,101 @@ msgstr "수신 대기 중… {seconds}초 안에 그룹 채팅에서 봇을 @하
 
 #: app/card/autostart_setting_card.py:42
 msgid "开机启动设置"
-msgstr ""
+msgstr "시작 프로그램 설정"
 
 #: app/card/autostart_setting_card.py:49
 msgid "登录后打开图形界面"
-msgstr ""
+msgstr "로그인 후 그래픽 인터페이스 열기"
 
 #: app/card/autostart_setting_card.py:53
 msgid "打开图形界面后最小化到托盘"
-msgstr ""
+msgstr "그래픽 인터페이스를 연 후 시스템 트레이로 최소화"
 
 #: app/card/autostart_setting_card.py:57
 msgid "打开图形界面后自动执行的任务："
-msgstr ""
+msgstr "그래픽 인터페이스를 연 후 자동으로 실행할 작업:"
 
 #: app/card/autostart_setting_card.py:59
 msgid "不执行"
-msgstr ""
+msgstr "실행하지 않음"
 
 #: app/card/autostart_setting_card.py:65
 msgid "不打开图形界面时执行的任务："
-msgstr ""
+msgstr "그래픽 인터페이스 없이 실행할 작업:"
 
 msgid "不打开图形界面时必须选择一项任务，将以命令行方式执行，完成后自动退出"
-msgstr ""
+msgstr "그래픽 인터페이스 없이 실행하려면 작업을 선택해야 합니다. 명령줄 모드로 실행되며 완료 후 자동으로 종료됩니다"
 
 #: app/card/autostart_setting_card.py:73
 msgid "请选择要执行的任务"
-msgstr ""
+msgstr "실행할 작업을 선택하세요"
 
 #: app/card/autostart_setting_card.py:139
 msgid "升级到新版"
-msgstr ""
+msgstr "새 버전으로 업그레이드"
 
 #: app/card/autostart_setting_card.py:214
 msgid "开机启动已开启"
-msgstr ""
+msgstr "시작 시 자동 실행이 활성화되었습니다"
 
 #: app/card/autostart_setting_card.py:224
 msgid "开机启动已关闭"
-msgstr ""
+msgstr "시작 시 자동 실행이 비활성화되었습니다"
 
 msgid "可在任务管理器的「启动应用」中查看或禁用"
-msgstr ""
+msgstr "작업 관리자의 '시작 앱'에서 확인하거나 비활성화할 수 있습니다"
 
 #: app/card/autostart_setting_card.py:235
 msgid "开机启动设置失败"
-msgstr ""
+msgstr "시작 프로그램 설정 실패"
 
 msgid "请确认以管理员权限运行后重试"
-msgstr ""
+msgstr "관리자 권한으로 실행 중인지 확인한 후 다시 시도하세요"
 
 #: app/card/autostart_setting_card.py:249
 msgid "开机启动设置已保存"
-msgstr ""
+msgstr "시작 프로그램 설정이 저장되었습니다"
 
 #: app/card/autostart_setting_card.py:262
 msgid "已升级到新版开机启动"
-msgstr ""
+msgstr "새로운 시작 프로그램 방식으로 업그레이드되었습니다"
 
 #: app/card/autostart_setting_card.py:263
 msgid "旧的计划任务已删除，请按需配置并重新开启开关"
-msgstr ""
+msgstr "기존 예약 작업이 삭제되었습니다. 필요에 맞게 설정한 후 스위치를 다시 켜세요"
 
 #: app/card/autostart_setting_card.py:272
 msgid "升级到新版失败"
-msgstr ""
+msgstr "새 버전으로 업그레이드 실패"
 
 #: app/card/autostart_setting_card.py:273
 msgid "删除旧的计划任务失败，请重试"
-msgstr ""
+msgstr "기존 예약 작업을 삭제하지 못했습니다. 다시 시도하세요"
 
 msgid ""
 "登录 Windows 后自动启动，可在任务管理器「启动应用」中查看或禁用；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
 msgstr ""
+"Windows 로그인 후 자동으로 실행됩니다. 작업 관리자의 '시작 앱'에서 확인하거나 비활성화할 수 있습니다. '설정'을 눌러 그래픽 "
+"인터페이스 열기, 최소화 여부, 자동 실행할 작업을 선택하세요"
 
 #: app/card/autostart_setting_card.py:236
 msgid "请以管理员权限运行后重试"
-msgstr ""
+msgstr "관리자 권한으로 실행한 후 다시 시도하세요"
 
 msgid "登录 Windows 后自动启动，启动时不会弹出 UAC 提示；点击「配置」选择启动后是否打开图形界面、是否最小化以及自动执行的任务"
 msgstr ""
+"Windows 로그인 후 UAC 알림 없이 자동으로 실행됩니다. '설정'을 눌러 그래픽 인터페이스 열기, 최소화 여부, 자동 실행할 "
+"작업을 선택하세요"
 
 #: app/card/autostart_setting_card.py:71
 msgid "不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"
-msgstr ""
+msgstr "그래픽 인터페이스 없이 실행하려면 작업을 선택해야 합니다. 명령줄 버전을 직접 실행할 때와 동일하게 명령줄 창에서 실행됩니다"
 
 #: app/setting_interface.py:2503
 msgid "登录后自动启动，点击「配置」进行详细设置；无人值守可能需要自行配置 Windows 自动登录"
 msgstr ""
+"로그인 후 자동으로 실행됩니다. '설정'에서 세부 항목을 설정하세요. 무인 실행을 위해 Windows 자동 로그인을 직접 설정해야 할 수"
+" 있습니다"
 
 #: app/log_interface.py:212
 msgid "按下 {stop} 停止 · {pause} 继续"
@@ -6206,19 +6218,20 @@ msgstr "{stop} 중지 · {pause} 재개"
 
 #: app/card/autoplot_setting_card.py:83
 msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr ""
+msgstr "앰포리어스 영웅기 자동 읽기 (먼저 해당 책의 목차를 여세요)"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"
-msgstr ""
+msgstr "자동 대화 활성화 상태 기억"
 
 #: app/card/autoplot_setting_card.py:57
 msgid "开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。"
 msgstr ""
+"켜면 다음에 도우미를 시작할 때 자동 대화의 활성화 상태를 복원합니다. 게임이 포그라운드에 없으면 낮은 빈도로 창 감지만 수행합니다."
 
 #: app/tools_interface.py:167
 msgid "{error}（详情见日志）"
-msgstr ""
+msgstr "{error} (자세한 내용은 로그 참조)"
 
 #: app/setting_interface.py:1039
 msgid "启动器路径"
@@ -6242,59 +6255,59 @@ msgstr "런처 경로 선택"
 
 #: app/card/messagebox_custom.py:276
 msgid "显示更早的更新记录"
-msgstr ""
+msgstr "이전 업데이트 내역 표시"
 
 #: app/card/messagebox_custom.py:309
 msgid "正在加载历史更新记录……"
-msgstr ""
+msgstr "이전 업데이트 내역 불러오는 중..."
 
 #: app/card/messagebox_custom.py:314
 msgid "查看完整更新日志"
-msgstr ""
+msgstr "전체 업데이트 내역 보기"
 
 #: app/card/messagebox_custom.py:328
 msgid "以下为已收录的更新记录，部分历史版本可能未收录"
-msgstr ""
+msgstr "아래는 수록된 업데이트 내역입니다. 일부 이전 버전은 누락되어 있을 수 있습니다"
 
 #: app/card/messagebox_custom.py:330
 msgid "已加载 {count} 份版本更新记录"
-msgstr ""
+msgstr "버전 {count}개의 업데이트 내역을 불러왔습니다"
 
 #: app/card/messagebox_custom.py:357
 msgid "继续显示更早的更新记录（还有 {count} 份）"
-msgstr ""
+msgstr "이전 업데이트 내역 더 보기 ({count}개 남음)"
 
 #: app/tools/check_update.py:62
 msgid "历史更新记录暂时无法加载，仍可正常更新"
-msgstr ""
+msgstr "이전 업데이트 내역을 지금 불러올 수 없습니다. 업데이트는 정상적으로 진행할 수 있습니다"
 
 #: app/tools/check_update.py:204
 msgid "该渠道版本与目标版本不一致，请稍后重试"
-msgstr ""
+msgstr "이 채널의 버전이 대상 버전과 일치하지 않습니다. 잠시 후 다시 시도하세요"
 
 #: app/common/schedule.py:38
 msgid "未选择"
-msgstr ""
+msgstr "선택 안 함"
 
 #: app/log_interface.py:989
 msgid "{date}（{weekday}）{time}"
-msgstr ""
+msgstr "{date} ({weekday}) {time}"
 
 #: app/schedule_dialog.py:269
 msgid "执行星期："
-msgstr ""
+msgstr "실행 요일:"
 
 #: app/schedule_dialog.py:279
 msgid "按电脑本地日期判断执行星期"
-msgstr ""
+msgstr "컴퓨터의 로컬 날짜를 기준으로 실행 요일을 판단합니다"
 
 #: app/schedule_dialog.py:366
 msgid "请至少选择一个执行星期"
-msgstr ""
+msgstr "실행 요일을 하나 이상 선택하세요"
 
 #: app/schedule_dialog.py:378
 msgid "任务“{name}”已占用{days}的 {time}，请调整时间或星期"
-msgstr ""
+msgstr "\"{name}\" 작업이 이미 {days}의 {time}에 예약되어 있습니다. 시간이나 요일을 변경하세요"
 
 #: app/schedule_dialog.py:465
 msgid ""
@@ -6302,41 +6315,46 @@ msgid ""
 "链式启动：不会单独按时间触发，需要放在前一个任务后面；当前一个任务正常结束后，会按列表顺序立即启动，不单独判断星期。\n"
 "立即运行：不受星期限制，从当前任务开始，后面连续的链式任务也会跟随执行。"
 msgstr ""
+"예약 실행: 컴퓨터의 로컬 날짜를 기준으로 선택한 요일의 설정 시간이 되면 현재 작업을 시작합니다.\n"
+"연속 실행: 시간에 따라 독립적으로 시작하지 않으며, 다른 작업 뒤에 배치해야 합니다. 앞선 작업이 정상적으로 완료되면 요일을 별도로 확인하지 않고 목록 순서대로 즉시 시작합니다.\n"
+"지금 실행: 요일 제한 없이 현재 작업부터 시작하며, 뒤에 연속 실행 작업이 이어지면 함께 실행합니다."
 
 #: app/schedule_dialog.py:745
 msgid "执行计划"
-msgstr ""
+msgstr "실행 일정"
 
 msgid "游戏内日志"
-msgstr ""
+msgstr "게임 내 로그"
 
 #: app/log_interface.py:975
 msgid "定时任务({count})"
-msgstr ""
+msgstr "예약 작업 ({count})"
 
 #: app/log_interface.py:977
 msgid "已启用 {count} 个按时任务，点击配置"
-msgstr ""
+msgstr "예약 작업 {count}개가 활성화되었습니다. 클릭하여 설정하세요"
 
 #: app/log_interface.py:994
 msgid "下次：{time}"
-msgstr ""
+msgstr "다음 실행: {time}"
 
 #: module/update/version_check.py:331
 msgid "更新接口未返回有效版本信息，请稍后重试"
-msgstr ""
+msgstr "업데이트 API에서 유효한 버전 정보를 반환하지 않았습니다. 잠시 후 다시 시도하세요"
 
 #: app/setting_interface.py:2531
 msgid "复制提示词"
-msgstr ""
+msgstr "프롬프트 복사"
 
 #: app/setting_interface.py:2533
 msgid "AI 助手"
-msgstr ""
+msgstr "AI 도우미"
 
 #: app/setting_interface.py:2534
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr ""
+"DeepSeek Harness, Codex, Claude Code 등의 AI 도우미에 전달할 프롬프트를 복사하여 March 7th "
+"도우미를 조작할 수 있도록 합니다"
 
 #: app/tools/agent_prompt.py:16
 msgid ""
@@ -6344,10 +6362,13 @@ msgid ""
 "请先阅读 {skill_file} ，按其中的说明帮我操作它。\n"
 "如果你支持 Skill（技能），请把文件夹 {skill_dir} 复制到你的用户级技能目录（例如 ~/.agents/skills/ 或 ~/.claude/skills/），以后就不需要我再提供这段说明。"
 msgstr ""
+"이 컴퓨터에 「March 7th 도우미」(붕괴: 스타레일 자동화 도구) 버전 {version}을 설치했습니다. 설치 폴더: {install_dir}\n"
+"먼저 {skill_file}을 읽고 안내에 따라 조작해 주세요.\n"
+"Skill(스킬)을 지원한다면 {skill_dir} 폴더를 사용자 수준 스킬 폴더(예: ~/.agents/skills/ 또는 ~/.claude/skills/)에 복사해 주세요. 그러면 다음부터 이 설명을 다시 제공할 필요가 없습니다."
 
 #: app/setting_interface.py:3378
 msgid "粘贴给你的 AI 助手即可"
-msgstr ""
+msgstr "AI 도우미에 붙여넣으세요"
 
 #: app/setting_interface.py:2484
 msgid "本地操作模式"
@@ -6415,53 +6436,53 @@ msgstr ""
 "Epic 버전의 StarRail.exe를 선택하세요. 도우미가 Epic을 통해 런처를 열고 '게임 시작'을 자동으로 클릭합니다. "
 "Epic에 미리 로그인해야 합니다."
 
-#: app/challenge_config_dialog.py:147
-msgid "关卡范围的起始值不能大于结束值。"
-msgstr ""
-
 #: app/challenge_config_dialog.py:158
-msgid "出战队伍不能重复使用同一角色。"
-msgstr ""
+msgid "关卡范围的起始值不能大于结束值。"
+msgstr "스테이지 범위의 시작값은 끝값보다 클 수 없습니다."
 
-#: app/challenge_config_dialog.py:46
+#: app/challenge_config_dialog.py:169
+msgid "出战队伍不能重复使用同一角色。"
+msgstr "출전 파티 간에 같은 캐릭터를 중복해서 사용할 수 없습니다."
+
+#: app/challenge_config_dialog.py:57
 msgid "至"
-msgstr ""
+msgstr "~"
 
 #: app/setting_interface.py:899
 msgid "虚构叙事配置"
-msgstr ""
+msgstr "허구 이야기 설정"
 
-#: app/challenge_config_dialog.py:155
+#: app/challenge_config_dialog.py:166
 msgid "请为队伍{index}选择1至4名有效角色。"
-msgstr ""
+msgstr "파티 {index}에 유효한 캐릭터를 1~4명 선택하세요."
 
-#: app/challenge_config_dialog.py:99
+#: app/challenge_config_dialog.py:110
 msgid "队伍{first} ↔ 队伍{second}"
-msgstr ""
+msgstr "파티 {first} ↔ 파티 {second}"
 
-#: app/challenge_config_dialog.py:91
+#: app/challenge_config_dialog.py:102
 msgid "队伍{index}"
-msgstr ""
+msgstr "파티 {index}"
 
-#: app/challenge_config_dialog.py:52
+#: app/challenge_config_dialog.py:63
 msgid "启用星启模式"
-msgstr ""
+msgstr "스타라이즈 모드 활성화"
 
-#: app/challenge_config_dialog.py:66
+#: app/challenge_config_dialog.py:77
 msgid "队伍三仅用于星启模式"
-msgstr ""
+msgstr "세 번째 파티는 스타라이즈 모드에서만 사용됩니다"
 
-#: app/challenge_config_dialog.py:196
+#: app/challenge_config_dialog.py:207
 msgid "星启模式"
-msgstr ""
+msgstr "스타라이즈 모드"
 
-#: app/challenge_config_dialog.py:196
+#: app/challenge_config_dialog.py:207
 msgid "常规模式"
-msgstr ""
+msgstr "일반 모드"
 
 #: app/card/uac_free_setting_card.py:49
 msgid "开启免 UAC 运行前请确认"
-msgstr ""
+msgstr "UAC 확인 없는 실행을 활성화하기 전에 확인하세요"
 
 #: app/card/uac_free_setting_card.py:50
 msgid ""
@@ -6476,46 +6497,60 @@ msgid ""
 "\n"
 "建议只在自己的电脑上、并且信任所用的 AI 助手时开启。不需要时，随时可以回到这里关闭。"
 msgstr ""
+"활성화하면 AI 도우미나 스크립트가 m7a.exe로 작업을 실행할 때 \"이 앱이 디바이스를 변경할 수 있도록 허용하시겠어요?\" 확인 창이 표시되지 않습니다. 컴퓨터 앞에 없을 때도 AI 도우미를 통해 원격으로 작업을 실행할 수 있습니다.\n"
+"\n"
+"이 확인 창은 Windows의 보안 장치입니다. 활성화하기 전에 다음 내용을 확인하세요.\n"
+"\n"
+"• 이 컴퓨터에서 사용자 계정으로 실행되는 다른 프로그램(AI 도우미가 실행하는 명령 포함)도 도우미를 통해 관리자 권한을 얻을 수 있으며, 사용자가 '예'를 누를 필요가 없습니다.\n"
+"• 컴퓨터가 악성코드에 감염되거나 누군가 AI 도우미를 악용하면 피해가 더 커질 수 있습니다.\n"
+"• 현재 Windows 계정과 현재 설치 폴더에만 적용됩니다. 도우미 업데이트 후에는 다시 활성화할 필요가 없지만 설치 폴더를 옮기면 다시 활성화해야 합니다.\n"
+"• 원격 실행 중에는 컴퓨터가 켜져 있고 로그인되어 있으며 잠금이 해제되어 있어야 합니다.\n"
+"\n"
+"본인 소유의 컴퓨터에서 신뢰할 수 있는 AI 도우미를 사용할 때만 활성화하는 것이 좋습니다. 필요하지 않으면 언제든 여기에서 비활성화할 수 있습니다."
 
 #: app/card/uac_free_setting_card.py:72
 msgid "免 UAC 运行设置失败"
-msgstr ""
+msgstr "UAC 확인 없는 실행 설정 실패"
 
 #: app/card/uac_free_setting_card.py:73
 msgid "请确认小助手以管理员权限运行，并且没有被安全软件拦截"
-msgstr ""
+msgstr "도우미가 관리자 권한으로 실행 중이며 보안 프로그램에 의해 차단되지 않았는지 확인하세요"
 
 #: app/card/uac_free_setting_card.py:85
 msgid "免 UAC 运行已开启"
-msgstr ""
+msgstr "UAC 확인 없는 실행이 활성화되었습니다"
 
 #: app/card/uac_free_setting_card.py:95
 msgid "免 UAC 运行已关闭"
-msgstr ""
+msgstr "UAC 확인 없는 실행이 비활성화되었습니다"
 
 #: app/setting_interface.py:2507
 msgid "免 UAC 运行"
-msgstr ""
+msgstr "UAC 확인 없이 실행"
 
 #: app/setting_interface.py:2508
 msgid "开启后，AI 助手或脚本通过 m7a.exe 运行任务时不再弹出 UAC 确认，适合让 AI 助手远程运行任务"
 msgstr ""
+"활성화하면 AI 도우미나 스크립트가 m7a.exe로 작업을 실행할 때 UAC 확인 창이 표시되지 않아 AI 도우미를 통한 원격 실행에 "
+"적합합니다"
 
 #: app/setting_interface.py:887
 msgid "混沌回忆配置"
-msgstr ""
+msgstr "혼돈의 기억 설정"
 
 #: app/setting_interface.py:911
 msgid "末日幻影配置"
-msgstr ""
+msgstr "종말의 환영 설정"
 
 #: app/tools/disclaimer.py:46
 msgid "确认状态保存失败"
-msgstr ""
+msgstr "확인 상태 저장 실패"
 
 #: app/tools/disclaimer.py:47
 msgid "解决前每次启动都要重新确认，任务也无法运行。请检查杀毒软件拦截和目录权限：{error}"
 msgstr ""
+"문제가 해결될 때까지 시작할 때마다 다시 확인해야 하며 작업도 실행할 수 없습니다. 백신 프로그램의 차단 여부와 폴더 권한을 확인하세요:"
+" {error}"
 
 #: app/setting_interface.py:2485
 msgid "后台操作遇到鼠标干扰时会等待并重试；下次启动任务生效。"
@@ -6547,4 +6582,12 @@ msgstr "캐릭터 패널 내보내기"
 
 #: app/tools_interface.py:74
 msgid "读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json"
-msgstr ""
+msgstr "모든 캐릭터의 속성, 광추, 성혼, 스킬, 유물을 읽어 프로그램 폴더의 characters.json에 저장합니다"
+
+#: app/warp_interface.py:252
+msgid "总次数"
+msgstr "누적 워프 횟수"
+
+#: app/warp_interface.py:252
+msgid "保底内"
+msgstr "천장 카운트"
