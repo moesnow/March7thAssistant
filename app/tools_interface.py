@@ -79,6 +79,34 @@ class ToolsInterface(ScrollArea):
         if sys.platform == 'win32' and self.automaticPlotCard.getSwitchState():
             self.__startAutoPlot()
 
+    def retranslateUi(self):
+        """保留自动对话开关及其运行状态，不再次启动后台工具。"""
+        StyleSheet.TOOLS_INTERFACE.apply(self)
+        self.toolsLabel.setText(tr('工具箱'))
+        self.ToolsGroup.titleLabel.setText(tr('工具箱'))
+        self.automaticPlotCard.card.setTitle(tr('自动对话'))
+        self.automaticPlotCard.card.setContent(tr('进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道'))
+        self.automaticPlotCard.retranslateUi()
+        self.gameScreenshotCard.setTitle(tr('游戏截图'))
+        self.gameScreenshotCard.setContent(tr('检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）'))
+        self.gameScreenshotCard.button.setText(tr('捕获'))
+        self.unlockfpsCard.setTitle(tr('解锁帧率'))
+        self.unlockfpsCard.setContent(tr('通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）'))
+        self.unlockfpsCard.button.setText(tr('解锁'))
+        self.redemptionCodeCard.setTitle(tr('兑换码'))
+        self.redemptionCodeCard.title = tr('兑换码')
+        self.redemptionCodeCard.setContent(tr('批量使用兑换码，每行一个，自动过滤空格等无效字符'))
+        self.redemptionCodeCard.button.setText(tr('执行'))
+        self.cloudTouchCard.setTitle(tr('触屏模式'))
+        self.cloudTouchCard.setContent(tr('以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内'))
+        self.cloudTouchCard.button.setText(tr('启动'))
+        self.screenTestCard.setTitle(tr('界面可切换性测试'))
+        self.screenTestCard.setContent(tr('以最短路径遍历所有可达界面，验证界面切换是否正常'))
+        self.screenTestCard.button.setText(tr('测试'))
+        self.characterExportCard.setTitle(tr('角色面板导出'))
+        self.characterExportCard.setContent(tr('读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json'))
+        self.characterExportCard.button.setText(tr('导出'))
+
     def __initWidget(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setViewportMargins(0, 80, 0, 20)

@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint, QThread, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame, QApplication
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard, MessageBox, PushButton, StateToolTip
+from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard, MessageBox, PushButton, StateToolTip, ExpandSettingCard
 from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
 from .common.icon import UiIcon, BrandIcon
@@ -2916,6 +2916,45 @@ class SettingInterface(ScrollArea):
         if self.width() > 0:
             self.pivotScrollArea.setFixedWidth(max(self.width() - 40, 400))
 
+    def _expandableCards(self):
+        # 使用稳定的 Python 属性名，不以译文或显示顺序标识卡片。
+        cards = {}
+        for name, value in vars(self).items():
+            if isinstance(value, ExpandSettingCard):
+                cards[name] = value
+            elif isinstance(value, list):
+                for index, card in enumerate(value):
+                    if isinstance(card, ExpandSettingCard):
+                        cards[f'{name}:{index}'] = card
+        return cards
+
+    def captureViewState(self):
+        return {
+            'tab': self.stackedWidget.currentWidget().objectName(),
+            'scroll': self.verticalScrollBar().value(),
+            'pivot_scroll': self.pivotScrollArea.horizontalScrollBar().value(),
+            'language_focus': self.languageCard.comboBox.hasFocus(),
+            'expanded': {name: card.isExpand for name, card in self._expandableCards().items()},
+        }
+
+    def restoreViewState(self, state):
+        for name, card in self._expandableCards().items():
+            if name in state['expanded']:
+                card.setExpand(state['expanded'][name])
+                card.expandAni.setCurrentTime(card.expandAni.duration())
+        for index in range(self.stackedWidget.count()):
+            widget = self.stackedWidget.widget(index)
+            if widget.objectName() == state['tab']:
+                self.stackedWidget.setCurrentWidget(widget)
+                break
+        self.stackedWidget.setFixedHeight(self.stackedWidget.currentWidget().sizeHint().height())
+        self.vBoxLayout.activate()
+        self.scrollWidget.adjustSize()
+        self.verticalScrollBar().setValue(state['scroll'])
+        self.pivotScrollArea.horizontalScrollBar().setValue(state['pivot_scroll'])
+        if state.get('language_focus'):
+            self.languageCard.comboBox.setFocus(Qt.FocusReason.OtherFocusReason)
+
     def __connectSignalToSlot(self):
         def connect_expand_state(card):
             if hasattr(card, "expandStateChanged"):
@@ -3153,6 +3192,7 @@ class SettingInterface(ScrollArea):
     def __createQqBotBindCard(self):
         """QQ 官方机器人：自动绑定 openid / group_openid 的卡片。"""
         self._qqbotBindThread = None
+        self._qqbotBindPending = False
         self.qqbotStateTooltip = None
         bind_card = DualPushSettingCard(
             tr("绑定单聊"), tr("绑定群聊"),
@@ -3208,6 +3248,7 @@ class SettingInterface(ScrollArea):
         thread = QqBotBindThread(appid, client_secret, mode, verify_code, self)
         thread.resultSignal.connect(self.__onQqBotBindFinished)
         self._qqbotBindThread = thread
+        self._qqbotBindPending = True
         thread.start()
 
         # 监听期间常驻显示（同「抽卡记录-更新数据」的 StateToolTip），避免用户忘记验证码
@@ -3225,6 +3266,7 @@ class SettingInterface(ScrollArea):
             self.qqbotStateTooltip = None
 
     def __onQqBotBindFinished(self, success: bool, mode: str, value: str):
+        self._qqbotBindPending = False
         # 收起常驻提示（setState(True) 后自动淡出）
         tooltip = getattr(self, "qqbotStateTooltip", None)
         self.qqbotStateTooltip = None

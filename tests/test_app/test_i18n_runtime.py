@@ -34,9 +34,8 @@ def test_garden_selection_uses_raw_values(qtbot, monkeypatch, stored, index):
 
 
 @pytest.mark.parametrize("pause_supported,paused", [(False, False), (True, False), (True, True)])
-def test_language_switch_refreshes_existing_overlay(qtbot, monkeypatch, pause_supported, paused):
-    from PySide6.QtCore import QTimer
-    from app import log_interface, main_window
+def test_retranslate_preserves_existing_overlay(qtbot, monkeypatch, pause_supported, paused):
+    from app import log_interface
     import module.localization as localization
 
     language = SimpleNamespace(code="first")
@@ -44,9 +43,7 @@ def test_language_switch_refreshes_existing_overlay(qtbot, monkeypatch, pause_su
     settings = {"hotkey_stop_task": "f10", "hotkey_pause_task": "f8"}
     config = SimpleNamespace(version="test", get_value=settings.get)
     monkeypatch.setattr(log_interface, "cfg", config)
-    monkeypatch.setattr(main_window, "cfg", config)
     monkeypatch.setattr(localization, "load_language", lambda code: setattr(language, "code", code))
-    monkeypatch.setattr(QTimer, "singleShot", Mock())
 
     overlay = log_interface.GameLogOverlay()
     qtbot.addWidget(overlay)
@@ -61,16 +58,10 @@ def test_language_switch_refreshes_existing_overlay(qtbot, monkeypatch, pause_su
     interface._pause_supported = pause_supported
     interface._pause_state = log_interface.STATE_PAUSED if paused else log_interface.STATE_RUNNING
     interface.process = process
-    host = SimpleNamespace(
-        logInterface=interface, detected_update_version="v-next",
-        navigationInterface=Mock(), switchTo=Mock(),
-        _reinstall_fluent_translator=Mock(), _refreshWindowTitleBar=Mock(),
-        _rebuild_interfaces_for_language=Mock(),
-    )
-
-    # Repeated switches use the actual main-window path and retain the same overlay.
+    # Repeated switches retain the same overlay and task state.
     for code in ("second", "third", "first"):
-        main_window.MainWindow._on_ui_language_changed(host, code)
+        localization.load_language(code)
+        interface.retranslateOverlay()
         assert overlay.titleLabel.text() == code + ":任务日志"
         assert overlay.pauseBadge.text() == code + ":已暂停"
         assert overlay.pauseBadge.isHidden() == (not paused)

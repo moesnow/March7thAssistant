@@ -46,6 +46,24 @@ class WarpInterface(ScrollArea):
         self.__initWidget()
         self.__connectSignalToSlot()
 
+    def retranslateUi(self):
+        StyleSheet.WARP_INTERFACE.apply(self)
+        self.titleLabel.setText(tr('抽卡记录'))
+        self.updateBtn.setText(tr('更新数据'))
+        self.updateFullBtn.setText(tr('更新完整数据'))
+        self.importBtn.setText(tr('导入数据'))
+        self.exportBtn.setText(tr('导出数据'))
+        self.exportExcelBtn.setText(tr('导出Excel'))
+        self.copyLinkBtn.setText(tr('复制链接'))
+        self.clearBtn.setText(tr('清空'))
+        self.buttonWidget.adjustSize()
+        # 保留 warp_thread、链接与按钮的运行状态，只刷新统计内容。
+        buttons = self.buttonWidget.findChildren(PushButton)
+        states = [(button, button.isEnabled()) for button in buttons]
+        self.setContent()
+        for button, enabled in states:
+            button.setEnabled(enabled)
+
     def __initWidget(self):
         self.titleLabel.move(36, 30)
         

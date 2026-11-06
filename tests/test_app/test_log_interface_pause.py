@@ -254,7 +254,9 @@ class TestPauseToggle:
         iface = LogInterface.__new__(LogInterface)
         iface._pause_supported = True
         iface._pause_state = STATE_RUNNING
-        iface._status_text_before_pause = None
+        iface._task_status = 'running'
+        iface._task_display_name = '货币战争'
+        iface._task_name_is_msgid = True
         iface._paused_timeout_remaining = None
         iface._timeout_timer = None
         iface.log_lines = []
@@ -262,6 +264,7 @@ class TestPauseToggle:
         iface.isTaskRunning = lambda: True
         iface._pauseControlPath = lambda: str(tmp_path / "pause.json")
         iface.pauseButton = _FakeButton()
+        iface.stopButton = _FakeButton()
         iface.statusLabel = _FakeLabel('正在运行：货币战争')
         iface._log_overlay = SimpleNamespace(set_paused=lambda p: iface.paused_flags.append(p))
         iface.paused_flags = []
@@ -339,7 +342,6 @@ class TestPauseToggle:
             json.dumps({"state": STATE_PAUSED}), encoding="utf-8"
         )
         iface._pause_state = STATE_PAUSED
-        iface._status_text_before_pause = '正在运行：货币战争'
 
         iface._resetPauseRuntime()
 

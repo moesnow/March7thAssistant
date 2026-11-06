@@ -89,7 +89,7 @@ class ComboBoxSettingCardLog(SettingCard):
 class ComboBoxSettingCardLanguage(ComboBoxSettingCard2):
     """Combo box setting card specialized for UI language changes.
 
-    Shows an InfoBar notifying that a restart is required when the language changes.
+    Requests an in-place language refresh after the popup has closed.
     """
 
     def _onCurrentIndexChanged(self, index: int):
@@ -99,7 +99,7 @@ class ComboBoxSettingCardLanguage(ComboBoxSettingCard2):
             return
         # set value (reuse base behavior)
         cfg.set_value(self.configname, new_val)
-        # Emit a signal to notify top-level window to show restart InfoBar
+        # 主窗口合并连续请求，并在安全时机刷新界面。
         try:
             signalBus.uiLanguageChanged.emit(new_val)
         except Exception:

@@ -331,6 +331,10 @@ class LogInterface(ScrollArea):
         super().__init__(parent=parent)
         self.process = None
         self.current_task = None
+        # 保存语言无关的状态，而不是缓存暂停前的译文。
+        self._task_status = 'waiting'
+        self._task_display_name = None
+        self._task_name_is_msgid = False
         self.detected_update_version = None
         self._external_task_active = False
         self._external_task_name = None
@@ -375,7 +379,6 @@ class LogInterface(ScrollArea):
         # 暂停功能状态（仅内置任务支持，见 utils.tasks.PAUSABLE_TASKS）
         self._pause_supported = False
         self._pause_state = STATE_RUNNING  # running / pausing / paused（以 CLI 回执为准）
-        self._status_text_before_pause = None
         self._paused_timeout_remaining = None
         # 暂停全局热键状态
         self._pause_hotkey_registered = False
@@ -592,6 +595,52 @@ class LogInterface(ScrollArea):
         if self._log_overlay:
             self._log_overlay.retranslateUi()
             self._updateOverlayHotkeyHint()
+
+    def retranslateUi(self):
+        """只刷新文案，不触碰进程、热键注册、日志文档或定时器。"""
+        StyleSheet.LOG_INTERFACE.apply(self)
+        self.titleLabel.setText(tr('任务日志'))
+        self._refreshTaskStatus()
+        self._refreshTaskButtonText()
+        self.pauseButton.setToolTip(tr('仅内置任务支持暂停，暂停后脚本将停止一切操作'))
+        self.logOverlayLabel.setText(tr('在游戏内显示日志'))
+        self.logOverlayLabel.setToolTip(tr('在游戏内显示日志'))
+        self.logOverlaySwitch.setOnText(tr('开'))
+        self.logOverlaySwitch.setOffText(tr('关'))
+        self.logOverlaySwitch.setAccessibleName(tr('在游戏内显示日志'))
+        self.logOverlaySwitch.setToolTip(tr('在游戏内显示日志'))
+        self._updateScheduleStatusLabel()
+        self.retranslateOverlay()
+
+    def _setRunningStatus(self, name, *, translate_name=False):
+        self._task_status = 'running'
+        self._task_display_name = name
+        self._task_name_is_msgid = translate_name
+        self._refreshTaskStatus()
+
+    def _refreshTaskStatus(self):
+        if self._task_status == 'running':
+            if self._pause_state == STATE_PAUSED:
+                text = tr('已暂停')
+            else:
+                name = tr(self._task_display_name) if self._task_name_is_msgid else self._task_display_name
+                text = tr('正在运行：{name}').format(name=name)
+        elif self._task_status == 'completed':
+            text = tr('任务完成')
+        elif self._task_status == 'stopped':
+            text = tr('任务已停止')
+        else:
+            text = tr('等待任务...')
+        self.statusLabel.setText(text)
+
+    def _refreshTaskButtonText(self):
+        stop_text = tr('停止任务')
+        pause_text = tr('继续任务') if self._pause_state == STATE_PAUSED else tr('暂停任务')
+        if sys.platform == 'win32':
+            stop_text += f" ({cfg.get_value('hotkey_stop_task', 'f10').upper()})"
+            pause_text += f" ({cfg.get_value('hotkey_pause_task', 'f8').upper()})"
+        self.stopButton.setText(stop_text)
+        self.pauseButton.setText(pause_text)
 
     def _hideLogOverlay(self):
         if self._log_overlay:
@@ -852,17 +901,8 @@ class LogInterface(ScrollArea):
         self._registerGlobalHotkey()
         self._registerAutoplotHotkey()
         self._registerPauseHotkey()
-        if sys.platform == 'win32':
-            # 更新按钮文本
-            hotkey = cfg.get_value("hotkey_stop_task", "f10").upper()
-            self.stopButton.setText(f"{tr('停止任务')} ({hotkey})")
-            pause_hotkey = cfg.get_value("hotkey_pause_task", "f8").upper()
-            self.pauseButton.setText(f"{tr('暂停任务')} ({pause_hotkey})")
-            # 同步更新悬浮窗的快捷键提示（不支持暂停的任务只显示停止快捷键）
-            self._updateOverlayHotkeyHint()
-        else:
-            self.stopButton.setText(tr('停止任务'))
-            self.pauseButton.setText(tr('暂停任务'))
+        self._refreshTaskButtonText()
+        self._updateOverlayHotkeyHint()
 
     def _registerAutoplotHotkey(self):
         """注册自动对话全局热键"""
@@ -1281,7 +1321,7 @@ class LogInterface(ScrollArea):
             self.appendLog(f"命令: {executable_path} {' '.join(args_list)}\n")
 
             self.current_task = program
-            self.statusLabel.setText(tr('正在运行：{name}').format(name=name))
+            self._setRunningStatus(name)
             self.stopButton.setEnabled(True)
             self._syncPauseUi()
 
@@ -1310,7 +1350,7 @@ class LogInterface(ScrollArea):
 
         self.clearLog()
         self.appendLog("========== 开始任务: {} ==========".format(self._external_task_name) + "\n")
-        self.statusLabel.setText(tr('正在运行：{name}').format(name=self._external_task_name))
+        self._setRunningStatus(self._external_task_name)
         self.stopButton.setEnabled(True)
         self._syncPauseUi()
 
@@ -1350,7 +1390,6 @@ class LogInterface(ScrollArea):
         # 内置任务按白名单启用暂停（workflow 与外部任务的判定见 _resolvePauseSupport）
         self._pause_supported = self._resolvePauseSupport(command)
         self._pause_state = STATE_RUNNING
-        self._status_text_before_pause = None
         self._paused_timeout_remaining = None
         task_msgid = TASK_NAMES.get(command, command)
         self.clearLog()
@@ -1358,7 +1397,7 @@ class LogInterface(ScrollArea):
         self.appendLog("========== 开始任务: {} ==========".format(task_msgid) + "\n")
 
         # 更新状态
-        self.statusLabel.setText(tr('正在运行：{name}').format(name=tr(task_msgid)))
+        self._setRunningStatus(task_msgid, translate_name=True)
         # self.statusLabel.setStyleSheet("color: #0078d4;")
         self.stopButton.setEnabled(True)
         self._syncPauseUi()
@@ -1757,19 +1796,8 @@ class LogInterface(ScrollArea):
         paused = self._pause_state == STATE_PAUSED
         try:
             self.pauseButton.setEnabled(bool(self._pause_supported))
-            if sys.platform == 'win32':
-                pause_hotkey = cfg.get_value("hotkey_pause_task", "f8").upper()
-                pause_text = tr('继续任务') if paused else tr('暂停任务')
-                self.pauseButton.setText(f"{pause_text} ({pause_hotkey})")
-            else:
-                self.pauseButton.setText(tr('继续任务') if paused else tr('暂停任务'))
-            if paused:
-                if self._status_text_before_pause is None:
-                    self._status_text_before_pause = self.statusLabel.text()
-                self.statusLabel.setText(tr('已暂停'))
-            elif self._status_text_before_pause is not None:
-                self.statusLabel.setText(self._status_text_before_pause)
-                self._status_text_before_pause = None
+            self._refreshTaskButtonText()
+            self._refreshTaskStatus()
             self._updateOverlayHotkeyHint()
             if self._log_overlay:
                 self._log_overlay.set_paused(paused)
@@ -1801,7 +1829,6 @@ class LogInterface(ScrollArea):
         self._cooperative_stop_process = None
         self._pause_state = STATE_RUNNING
         self._paused_timeout_remaining = None
-        self._status_text_before_pause = None
         try:
             reset_files(self._pauseControlPath())
         except Exception:
@@ -2365,12 +2392,8 @@ class LogInterface(ScrollArea):
         except Exception:
             pass
 
-        if exit_code == 0:
-            self.statusLabel.setText(tr('任务完成'))
-            # self.statusLabel.setStyleSheet("color: green;")
-        else:
-            self.statusLabel.setText(tr('任务已停止'))
-            # self.statusLabel.setStyleSheet("color: orange;")
+        self._task_status = 'completed' if exit_code == 0 else 'stopped'
+        self._refreshTaskStatus()
 
     def isTaskRunning(self):
         """检查任务是否正在运行"""
