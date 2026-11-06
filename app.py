@@ -303,6 +303,13 @@ if __name__ == "__main__":
     except Exception:
         pass
 
+    # AI 助手里已安装的 Skill 副本跟随小助手更新（仅打包版）。更新后自动重启时就在这里完成，下次 AI 会话读到的已是新版
+    try:
+        from utils.agent_skill import sync_installed_skills
+        sync_installed_skills()
+    except Exception:
+        pass
+
     app.installTranslator(translator)
 
     # 传递任务参数给主窗口

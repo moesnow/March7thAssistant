@@ -133,6 +133,10 @@ def parse_args():
 
     args = parser.parse_args()
 
+    # AI 助手里已安装的 Skill 副本跟随小助手更新（仅打包版；不输出内容，不影响下面查询类命令的结果）
+    from utils.agent_skill import sync_installed_skills
+    sync_installed_skills()
+
     # 查询类命令只读配置：可能由未提权的 m7a.exe 调用，安装目录不一定可写
     if args.list or args.list_workflows:
         os.environ["MARCH7TH_CONFIG_READONLY"] = "1"

@@ -128,6 +128,7 @@ def collect_status() -> dict:
     from module.config import cfg
     from utils import uac_free
     from utils.admin import is_user_admin
+    from utils.agent_skill import last_sync_results
     from utils.install_registry import is_gui_running, registry_path
 
     install_dir = os.path.abspath(os.getcwd())
@@ -161,6 +162,7 @@ def collect_status() -> dict:
         "runs_dir": runs_dir(),
         "install_registry": registry_path(),
         "agent_skill": os.path.abspath(_SKILL_PATH) if os.path.exists(_SKILL_PATH) else None,
+        "agent_skill_copies": last_sync_results(),
     }
     return status
 

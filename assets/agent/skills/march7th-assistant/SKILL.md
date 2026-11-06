@@ -2,8 +2,6 @@
 name: march7th-assistant
 description: 操作「三月七小助手 / March7thAssistant / M7A」（崩坏：星穹铁道 Honkai Star Rail 自动化工具）：查找或安装小助手、查询状态、运行完整运行 / 每日实训 / 清体力 / 差分宇宙 / 货币战争 / 锄大地等任务、修改配置与定时任务、查看运行日志并排查失败。用户提到三月七、小助手、M7A、星铁或崩铁的日常 / 体力 / 自动化时使用。
 license: GPL-3.0
-metadata:
-  version: "1"
 ---
 
 # 三月七小助手（March7thAssistant）
@@ -113,5 +111,7 @@ metadata:
 ## 7. 更新与其他
 
 - 更新小助手：`.\m7a.exe app_update` 或在图形界面检查更新；不要用完整包覆盖已有安装。
+- 这份说明复制到技能目录后，小助手启动时会自动更新副本，不需要你处理。`--status` 的 `agent_skill_copies` 列出各副本的状态：`updated` 表示刚更新过，重新读一遍再继续；`modified` 表示副本被改过，不会自动覆盖，由用户决定是否换成随包版本。
+- 这里写的与 `--help` 或实际行为不符时，以 `--status` 的 `agent_skill` 指向的随包说明为准。
 - 打开图形界面：运行 `March7th Launcher.exe`（会弹 UAC）。
 - Mirror酱 是可选的付费下载加速（支持项目维护），只在 GitHub 下载困难时提及，不要索要或代填 CDK。
