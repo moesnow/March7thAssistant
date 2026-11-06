@@ -95,7 +95,8 @@ class Apocalyptic(BaseChallenge):
                 auto.press_key("esc")
             time.sleep(2)
 
-            screen.wait_for_screen_change('apocalyptic')
+            # 常规结算的首次点击可能只展开详细积分；需要再次点击返回并确认主页。
+            self.return_to_stage_list()
         return True
 
     def find_level(self, level, max_retries=4):
