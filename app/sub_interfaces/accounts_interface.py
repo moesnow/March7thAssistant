@@ -110,16 +110,16 @@ class AccountsCard(QFrame):
         def autologinAccountButtonAction(self):
             items = _self.widget.selectedItems()
             if len(items) == 0:
-                QMessageBox.warning(None, tr("自动登录"), tr("请选择要使用的账户"))
+                QMessageBox.warning(_self, tr("自动登录"), tr("请选择要使用的账户"))
                 return
             if len(items) > 1:
-                QMessageBox.warning(None, tr("自动登录"), tr("只能选择一个账户"))
+                QMessageBox.warning(_self, tr("自动登录"), tr("只能选择一个账户"))
                 return
             for item in items:
                 account_id = item.data(Qt.ItemDataRole.UserRole)
 
                 disclaimer_result = QMessageBox.question(
-                    None,
+                    _self,
                     tr("自动登录"),
                     tr("当登录过期时尝试自动重新填写账号密码\n *此功能存在一定风险，请谨慎使用*"),
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
@@ -128,18 +128,18 @@ class AccountsCard(QFrame):
                 if disclaimer_result != QMessageBox.StandardButton.Yes:
                     return
 
-                account_name, ok = QInputDialog.getText(None, tr("自动登录"), tr("请输入用户名"))
+                account_name, ok = QInputDialog.getText(_self, tr("自动登录"), tr("请输入用户名"))
                 if not ok:
                     return
                 if not account_name.strip():
-                    QMessageBox.warning(None, tr("自动登录"), tr("用户名不能为空"))
+                    QMessageBox.warning(_self, tr("自动登录"), tr("用户名不能为空"))
                     return
 
-                account_pass, ok2 = QInputDialog.getText(None, tr("自动登录"), tr("请输入密码"), QLineEdit.EchoMode.Password)
+                account_pass, ok2 = QInputDialog.getText(_self, tr("自动登录"), tr("请输入密码"), QLineEdit.EchoMode.Password)
                 if not ok2:
                     return
                 if not account_pass.strip():
-                    QMessageBox.warning(None, tr("自动登录"), tr("密码不能为空"))
+                    QMessageBox.warning(_self, tr("自动登录"), tr("密码不能为空"))
                     return
 
                 save_acc_and_pwd(account_id, account_name, account_pass)
