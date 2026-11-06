@@ -41,9 +41,9 @@ def wait_until(condition, timeout, period=1):
     return False
 
 
-def start():
+def start(headless=None):
     log.hr("开始运行", 0)
-    start_game()
+    start_game(headless=headless)
     log.hr("完成", 2)
 
 
@@ -78,7 +78,7 @@ def ensure_game_ready():
     return True
 
 
-def start_game():
+def start_game(headless=None):
     MAX_RETRY = 3
 
     def check_and_click_enter():
@@ -217,7 +217,7 @@ def start_game():
             time.sleep(1)
 
     def start_cloud_game():
-        if not cloud_game.start_game_process():
+        if not cloud_game.start_game_process(headless=headless):
             raise ConnectionError("启动或连接浏览器失败")
         if not cloud_game.is_in_game():
             if not cloud_game.enter_cloud_game():

@@ -205,6 +205,81 @@ class TestCloudGamePointerLock(unittest.TestCase):
         self.assertEqual(controller.driver.commands, [])
 
 
+class TestCloudGameHeadlessOverride(unittest.TestCase):
+    def create_controller(self, configured_headless=True):
+        controller = object.__new__(CloudGameController)
+        controller.cfg = MagicMock(browser_headless_enable=configured_headless)
+        controller._headless_override = None
+        return controller
+
+    def test_headless_mode_follows_config_by_default(self):
+        controller = self.create_controller(configured_headless=True)
+
+        self.assertTrue(controller.is_headless())
+
+    def test_visible_override_does_not_change_config(self):
+        controller = self.create_controller(configured_headless=True)
+        controller._headless_override = False
+
+        self.assertFalse(controller.is_headless())
+        self.assertTrue(controller.cfg.browser_headless_enable)
+
+    def test_start_process_records_runtime_override(self):
+        controller = self.create_controller(configured_headless=True)
+        controller._connect_or_create_browser = MagicMock()
+        controller._confirm_viewport_resolution = MagicMock()
+
+        self.assertTrue(controller.start_game_process(headless=False))
+        controller._connect_or_create_browser.assert_called_once_with(headless=False)
+        self.assertFalse(controller.is_headless())
+        self.assertTrue(controller.cfg.browser_headless_enable)
+
+        # 下一次正常启动应恢复全局无窗口设置。
+        self.assertTrue(controller.start_game_process())
+        controller._connect_or_create_browser.assert_called_with(headless=True)
+        self.assertTrue(controller.is_headless())
+
+    def test_visible_override_stays_visible_after_login(self):
+        controller = self.create_controller()
+        controller._connect_or_create_browser = MagicMock()
+        controller._confirm_viewport_resolution = MagicMock()
+        controller.logger = MagicMock()
+        controller._check_login = MagicMock(side_effect=[False, True, True])
+        controller._get_login_timeout_seconds = MagicMock(return_value=300)
+        controller._check_login_timeout = MagicMock()
+        controller._restart_browser = MagicMock()
+        controller._run_qr_login_flow = MagicMock()
+        controller._get_remaining_playtime = MagicMock(return_value=(60, 0))
+        controller._click_enter_game = MagicMock()
+        controller._wait_in_queue = MagicMock(return_value=True)
+        controller._save_cookies = MagicMock()
+
+        self.assertTrue(controller.start_game_process(headless=False))
+        self.assertTrue(controller.enter_cloud_game())
+
+        controller._restart_browser.assert_not_called()
+        controller._run_qr_login_flow.assert_not_called()
+        self.assertFalse(controller.is_headless())
+        self.assertTrue(controller.cfg.browser_headless_enable)
+
+    def test_start_game_passes_headless_override_to_cloud_browser(self):
+        import tasks.game
+
+        with patch("tasks.game.cloud_game") as mock_cloud_game, \
+             patch("tasks.game.cfg") as mock_cfg, \
+             patch("tasks.game.screen") as mock_screen, \
+             patch("tasks.game.log"):
+
+            mock_cfg.cloud_game_enable = True
+            mock_cloud_game.start_game_process.return_value = True
+            mock_cloud_game.is_in_game.return_value = True
+            mock_screen.get_current_screen.return_value = True
+
+            tasks.game.start(headless=False)
+
+            mock_cloud_game.start_game_process.assert_called_once_with(headless=False)
+
+
 class TestCloudGameDebugPort(unittest.TestCase):
     def create_controller(self):
         controller = object.__new__(CloudGameController)

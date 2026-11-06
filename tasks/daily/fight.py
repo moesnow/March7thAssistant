@@ -1,5 +1,6 @@
 from module.screen import screen
 from module.config import cfg
+from module.game import cloud_game
 from module.logger import log
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
@@ -88,7 +89,7 @@ class Fight:
             log.warning("锄大地功能仅支持 Windows 平台")
             return False
 
-        if cfg.cloud_game_enable and cfg.browser_headless_enable:
+        if cfg.cloud_game_enable and cloud_game.is_headless():
             log.error("锄大地不支持无界面模式运行")
             return False
 

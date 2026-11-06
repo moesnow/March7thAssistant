@@ -411,8 +411,11 @@ def run_main_actions(no_run_immediately=False):
 
 
 def run_sub_task(action):
+    # 不兼容无窗口模式的任务仅覆盖本次启动方式，不修改用户配置。
+    visible_cloud_tasks = {"fight", "universe"}
+    success = True
     if action not in ("currencywarstemp", "divergenttemp"):
-        game.start()
+        game.start(headless=False if action in visible_cloud_tasks else None)
     else:
         if cfg.cloud_game_enable:
             if not cloud_game.start_game_process():
@@ -475,13 +478,19 @@ def run_sub_task(action):
             telemetry.track_task_start(action)
             task_start_time = time.time()
             try:
-                task()
-                telemetry.track_task_complete(action, True, time.time() - task_start_time)
+                result = task()
+                success = result is not False
+                telemetry.track_task_complete(action, success, time.time() - task_start_time)
             except Exception:
                 telemetry.track_task_complete(action, False, time.time() - task_start_time)
                 raise
     if action not in ("screen_test", "character_export"):
-        game.stop(False)
+        if success:
+            game.stop(False)
+        elif cfg.after_finish == "Exit":
+            # 失败时仅响应显式退出游戏，不执行成功后的系统操作或循环等待。
+            game.get_game_controller().stop_game()
+    return success
 
 
 def run_sub_task_gui(action):
@@ -557,7 +566,7 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
 
     # 子任务
     elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption", "screen_test", "character_export"]:
-        run_sub_task(action)
+        return run_sub_task(action)
 
     # 子任务 原生图形界面
     elif action in ["universe_gui", "fight_gui"]:
