@@ -116,8 +116,13 @@ RELIC_SET_GROUPS = ("侵蚀隧洞", "饰品提取")
 
 EIDOLON_LOCK = "./assets/images/share/character_panel/eidolon_lock.png"
 EIDOLON_THRESHOLD = 0.8
+# 已解锁节点有白色外圈；透明模板只保留外圈及内侧暗边，避开各角色不同的技能图案。
+EIDOLON_UNLOCKED = "./assets/images/share/character_panel/eidolon_unlocked.png"
+EIDOLON_UNLOCKED_THRESHOLD = 0.08  # 带掩码的平方差匹配，越小越相似；灰色锁定外圈约 0.3。
 EIDOLON_SLOTS = ((669, 232), (1065, 219), (1538, 425), (1320, 902), (841, 870), (394, 783))
 EIDOLON_SEARCH = 45
+EIDOLON_TIMEOUT = 3.0
+EIDOLON_STABLE_TIME = 0.15
 
 BUTTON_THRESHOLD = 0.8
 
@@ -264,10 +269,12 @@ class CharacterReader:
         星魂页换角色时必须确认切换成功，否则读到的是上一个角色的画面。
         """
         for _ in range(3 if required else 1):
-            before = self.frame
+            before = self.grab()
             self._click(x, AVATAR_Y)
             if self._settle(BREADCRUMB, before, timeout=0.5) is not None:
-                self._settle(SUMMARY_BOX if self.tab == "detail" else RIGHT_PANEL, before, timeout=1.5)
+                frame = self._settle(SUMMARY_BOX if self.tab == "detail" else RIGHT_PANEL, before, timeout=1.5)
+                if self.tab == "eidolons" and frame is None:
+                    raise PageError("切换角色后星魂区域没有响应")
                 return True
         if required:
             raise PageError("无法切换角色")
@@ -483,18 +490,41 @@ class CharacterReader:
         sets, set_problems = parser.summarize_relic_sets(ordered)
         return {"sets": sets, "pieces": ordered, "by_slot": pieces}, problems + set_problems
 
+    def _eidolon_unlocked(self, frame, box):
+        if EIDOLON_UNLOCKED not in self.templates:
+            self.templates[EIDOLON_UNLOCKED] = ImageUtils.read_image(EIDOLON_UNLOCKED, cv2.IMREAD_UNCHANGED)
+        template = self.templates[EIDOLON_UNLOCKED]
+        region = cv2.cvtColor(np.array(_crop(frame, box)), cv2.COLOR_RGB2BGR)
+        scores = cv2.matchTemplate(region, template[:, :, :3], cv2.TM_SQDIFF_NORMED, mask=template[:, :, 3])
+        score = float(cv2.minMaxLoc(scores)[0])
+        return np.isfinite(score) and score <= EIDOLON_UNLOCKED_THRESHOLD
+
     def read_eidolon(self):
-        """星魂页有碎片飞入的动画，等 6 个图标位置都静止后再判断锁。"""
+        """六个节点都须有锁或已解锁亮圈，并持续稳定；空页和动画中漏检的节点都是未知。"""
         self.open_tab("eidolons")
-        locks = None
-        for _ in range(12):
+        deadline = time.monotonic() + EIDOLON_TIMEOUT
+        previous = None
+        stable_since = None
+        while True:
             frame = self.grab()
-            current = [self._score(frame, EIDOLON_LOCK, (x - EIDOLON_SEARCH, y - EIDOLON_SEARCH, EIDOLON_SEARCH * 2, EIDOLON_SEARCH * 2)) >= EIDOLON_THRESHOLD
-                       for x, y in EIDOLON_SLOTS]
-            if current == locks:
-                break
-            locks = current
-        unlocked = locks.count(False)
-        if any(locks[:unlocked]):
-            raise parser.ParseError(f"星魂状态不连续：{locks}")
-        return unlocked
+            current = []
+            for x, y in EIDOLON_SLOTS:
+                box = (x - EIDOLON_SEARCH, y - EIDOLON_SEARCH, EIDOLON_SEARCH * 2, EIDOLON_SEARCH * 2)
+                if self._score(frame, EIDOLON_LOCK, box) >= EIDOLON_THRESHOLD:
+                    current.append(True)
+                else:
+                    current.append(False if self._eidolon_unlocked(frame, box) else None)
+            now = time.monotonic()
+            if now >= deadline:
+                raise parser.ParseError(f"星魂节点未就绪或状态未稳定：{current}")
+            if None in current:
+                stable_since = None
+            elif current != previous or stable_since is None:
+                stable_since = now
+            elif now - stable_since >= EIDOLON_STABLE_TIME:
+                unlocked = current.count(False)
+                if any(current[:unlocked]):
+                    raise parser.ParseError(f"星魂状态不连续：{current}")
+                return unlocked
+            previous = current
+            time.sleep(0.05)

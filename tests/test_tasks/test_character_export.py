@@ -858,10 +858,191 @@ def test_every_path_has_a_trace_layout():
 
 def test_every_template_exists():
     paths = [*reader_module.ELEMENT_TEMPLATES.values(), reader_module.PATH_SWITCH, reader_module.RELIC_EMPTY_SLOT,
-             reader_module.RELIC_UNEQUIP, reader_module.EIDOLON_LOCK, "./assets/images/screen/character.png"]
+             reader_module.RELIC_UNEQUIP, reader_module.EIDOLON_LOCK, reader_module.EIDOLON_UNLOCKED,
+             "./assets/images/screen/character.png"]
     assert len(reader_module.ELEMENT_TEMPLATES) == 7
     for path in paths:
         assert Path(path).is_file(), path
+
+
+@pytest.fixture
+def eidolon_frames():
+    # 实机裁剪，每行依次是六个槽位：首次进入的空页、0 魂、6 魂、2 魂、入场动画。
+    samples = Image.open(Path(__file__).parent / "fixtures/character_eidolons.png")
+    frames = []
+    for row in range(5):
+        frame = Image.new("RGB", (1920, 1080))
+        for col, (x, y) in enumerate(reader_module.EIDOLON_SLOTS):
+            frame.paste(samples.crop((col * 90, row * 90, (col + 1) * 90, (row + 1) * 90)), (x - 45, y - 45))
+        frames.append(frame)
+    return frames
+
+
+@pytest.fixture
+def eidolon_reader(monkeypatch):
+    reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
+    reader.templates = {}
+    reader.tab = "eidolons"
+    clock = SimpleNamespace(now=0.0, captures=0)
+
+    def sleep(seconds):
+        clock.now += seconds
+
+    monkeypatch.setattr(reader_module, "time", SimpleNamespace(monotonic=lambda: clock.now, sleep=sleep))
+
+    def feed(frames):
+        clock.captures = 0
+        reader.frame = frames[0]
+
+        def capture():
+            frame = frames[min(clock.captures, len(frames) - 1)]
+            clock.captures += 1
+            clock.now += 0.05
+            return frame, None, None
+
+        # 使用真正的 grab，保证识别循环每次重新截图。
+        monkeypatch.setattr(reader_module, "auto", SimpleNamespace(take_screenshot=capture))
+
+    return reader, feed, clock
+
+
+def test_eidolon_empty_first_frames_are_not_six(eidolon_frames, eidolon_reader):
+    empty, _, _, two, _ = eidolon_frames
+    reader, feed, clock = eidolon_reader
+    feed([empty] * 4 + [two] * 5)
+    assert reader.read_eidolon() == 2
+    assert clock.captures > 4
+
+
+@pytest.mark.parametrize("count", range(7))
+def test_eidolon_all_counts_need_visible_nodes(count, eidolon_frames, eidolon_reader):
+    _, zero, six, _, _ = eidolon_frames
+    frame = zero.copy()
+    for x, y in reader_module.EIDOLON_SLOTS[:count]:
+        frame.paste(six.crop((x - 45, y - 45, x + 45, y + 45)), (x - 45, y - 45))
+    reader, feed, clock = eidolon_reader
+    feed([frame])
+    assert reader.read_eidolon() == count
+    assert clock.now < 0.5  # 已经就绪的角色无需长时间固定等待，6 魂也一样。
+
+
+@pytest.mark.parametrize("sample", [0, 4])
+def test_eidolon_unready_or_frozen_animation_times_out(sample, eidolon_frames, eidolon_reader):
+    reader, feed, clock = eidolon_reader
+    feed([eidolon_frames[sample]])
+    with pytest.raises(parser.ParseError, match="星魂"):
+        reader.read_eidolon()
+    assert clock.now <= 3.2
+
+
+def test_eidolon_never_returns_last_unstable_sample(eidolon_frames, eidolon_reader):
+    _, zero, _, two, _ = eidolon_frames
+    reader, feed, clock = eidolon_reader
+    feed([zero, two] * 40)
+    with pytest.raises(parser.ParseError, match="星魂"):
+        reader.read_eidolon()
+    assert clock.captures < 80
+
+
+def test_eidolon_ready_only_at_deadline_is_not_success(eidolon_frames, eidolon_reader):
+    empty, _, _, two, _ = eidolon_frames
+    reader, feed, _ = eidolon_reader
+    feed([empty] * 29 + [two])
+    with pytest.raises(parser.ParseError, match="星魂"):
+        reader.read_eidolon()
+
+
+def test_eidolon_unknown_frame_resets_stability(eidolon_frames, eidolon_reader):
+    empty, _, six, two, _ = eidolon_frames
+    reader, feed, clock = eidolon_reader
+    feed([six, empty, six, two, two, two])
+    assert reader.read_eidolon() == 2
+    assert clock.captures >= 6
+
+
+def test_eidolon_non_contiguous_visible_states_are_rejected(eidolon_frames, eidolon_reader):
+    _, zero, six, _, _ = eidolon_frames
+    frame = zero.copy()
+    x, y = reader_module.EIDOLON_SLOTS[1]
+    frame.paste(six.crop((x - 45, y - 45, x + 45, y + 45)), (x - 45, y - 45))
+    reader, feed, _ = eidolon_reader
+    feed([frame])
+    with pytest.raises(parser.ParseError, match="不连续"):
+        reader.read_eidolon()
+
+
+def test_eidolon_missing_lock_match_is_not_an_unlocked_node(eidolon_frames, eidolon_reader, monkeypatch):
+    reader, feed, _ = eidolon_reader
+    feed([eidolon_frames[1]])
+    # 灰色锁定节点即使模板漏检，也不能被当成亮圈的已解锁节点。
+    monkeypatch.setattr(reader, "_score", lambda *args: 0)
+    with pytest.raises(parser.ParseError, match="星魂"):
+        reader.read_eidolon()
+
+
+@pytest.mark.parametrize("color", [0, 255])
+def test_eidolon_uniform_background_is_not_ready(color, eidolon_reader):
+    reader, feed, _ = eidolon_reader
+    feed([Image.new("RGB", (1920, 1080), (color, color, color))])
+    with pytest.raises(parser.ParseError, match="星魂"):
+        reader.read_eidolon()
+
+
+def test_eidolon_readiness_is_checked_again_for_next_character(eidolon_frames, eidolon_reader):
+    empty, zero, six, two, _ = eidolon_frames
+    reader, feed, _ = eidolon_reader
+    for expected, frame in [(6, six), (2, two), (0, zero)]:
+        feed([empty] * 4 + [frame] * 5)
+        assert reader.read_eidolon() == expected
+
+
+def test_eidolon_avatar_change_requires_panel_response(monkeypatch):
+    reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
+    reader.tab = "eidolons"
+    reader.frame = Image.new("RGB", (1920, 1080))
+    monkeypatch.setattr(reader, "grab", lambda: reader.frame)
+    monkeypatch.setattr(reader, "_click", lambda *args: None)
+    # 名字变了，星魂区域却仍然是上一个角色。
+    monkeypatch.setattr(reader, "_settle", lambda box, *args, **kwargs: reader.frame if box == reader_module.BREADCRUMB else None)
+    with pytest.raises(PageError, match="星魂"):
+        reader.select_avatar(600, required=True)
+
+
+def test_eidolon_avatar_waits_past_previous_characters_nodes(eidolon_frames, eidolon_reader, monkeypatch):
+    empty, _, six, two, _ = eidolon_frames
+    reader, feed, _ = eidolon_reader
+    old = six.copy()
+    renamed = six.copy()
+    loading = empty.copy()
+    ready = two.copy()
+    # 名字先变，旧角色节点稍后才消失；真实 _settle 必须等待右侧星魂区域也变化。
+    x, y, width, height = reader_module.BREADCRUMB
+    for frame in [renamed, loading, ready]:
+        frame.paste((255, 255, 255), (x, y, x + width, y + height))
+    feed([old] + [renamed] * 5 + [loading] * 2 + [ready] * 5)
+    monkeypatch.setattr(reader, "_click", lambda *args: None)
+    assert reader.select_avatar(600, required=True)
+    assert reader.read_eidolon() == 2
+
+
+def test_eidolon_unready_uses_existing_retry(eidolon_frames, eidolon_reader):
+    empty, _, _, two, _ = eidolon_frames
+    reader, feed, clock = eidolon_reader
+    feed([empty] * 31 + [two] * 5)
+    assert CharacterExport(reader)._read_eidolon() == 2
+    assert clock.now > 3
+
+
+def test_eidolon_failure_cannot_save_a_character(tmp_path, eidolon_frames, eidolon_reader, monkeypatch):
+    reader, feed, _ = eidolon_reader
+    feed([eidolon_frames[0]])
+    sections = SectionReader()
+    monkeypatch.setattr(sections, "read_eidolon", reader.read_eidolon)
+    job = CharacterExport(sections, partial=str(tmp_path / "partial.json"))
+    with pytest.raises(parser.ParseError, match="星魂"):
+        job.read_character()
+    assert job.characters == []
+    assert not Path(job.partial).exists()
 
 
 def test_missing_avatar_bar_is_retryable():
