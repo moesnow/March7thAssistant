@@ -170,12 +170,9 @@ def test_background_autoplot_uses_available_window_and_releases_on_stop(monkeypa
 
 
 def test_game_start_does_not_kill_game_on_input_interruption(monkeypatch):
-    import tasks.game as module
     from module.automation.background_input import InputInterrupted
-    controller=Mock()
+    module,controller,backend=start_game_with(monkeypatch,None)
     controller.switch_to_game.side_effect=InputInterrupted('minimized')
-    monkeypatch.setattr(module,'cfg',SimpleNamespace(cloud_game_enable=False))
-    monkeypatch.setattr(module,'StarRailController',Mock(return_value=controller))
     with pytest.raises(InputInterrupted):module.start_game()
     controller.stop_game.assert_not_called()
     controller.start_game_process.assert_not_called()

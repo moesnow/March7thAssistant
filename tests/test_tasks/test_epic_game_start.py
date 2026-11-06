@@ -15,6 +15,8 @@ def test_scheduled_epic_failure_restores_settings_without_replaying(monkeypatch)
     monkeypatch.setattr(game, "StarRailController", Mock(return_value=controller))
     monkeypatch.setattr(game, "cfg", SimpleNamespace(cloud_game_enable=False, auto_set_resolution_enable=True,
                                                    auto_battle_detect_enable=True))
+    # 渠道启动失败的处理不区分操作模式，不随本机配置的本地操作模式变化（后台模式见 test_background_integration）
+    monkeypatch.setattr(game, "auto", SimpleNamespace(input_handler=SimpleNamespace(is_background=False)))
     with pytest.raises(EpicLaunchError, match="等待游戏"):
         game.start_game()
     controller.change_resolution.assert_called_once_with(1920, 1080)
