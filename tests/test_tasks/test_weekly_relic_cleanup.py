@@ -54,6 +54,24 @@ def _load_relicset():
     return module, auto
 
 
+def _load_power(cleanup_module):
+    stubs = {
+        "module.automation": _stub("module.automation", auto=cleanup_module.auto),
+        "module.config": _stub("module.config", cfg=cleanup_module.cfg),
+        "module.logger": _stub("module.logger", log=cleanup_module.log),
+        "module.screen": _stub("module.screen", screen=cleanup_module.screen),
+        "tasks.power.instance": _stub("tasks.power.instance", Instance=MagicMock()),
+        "tasks.daily.buildtarget": _stub("tasks.daily.buildtarget", BuildTarget=MagicMock()),
+        "tasks.power.weekly_relic_cleanup": cleanup_module,
+    }
+    path = Path(__file__).parents[2] / "tasks" / "power" / "power.py"
+    spec = importlib.util.spec_from_file_location("weekly_cleanup_power_under_test", path)
+    module = importlib.util.module_from_spec(spec)
+    with patch.dict(sys.modules, stubs):
+        spec.loader.exec_module(module)
+    return module
+
+
 def test_smart_discard_clears_then_sets_only_the_two_rules():
     module, auto, _, _ = _load_cleanup()
     cleanup = module.WeeklyRelicCleanup
@@ -103,8 +121,8 @@ def test_quick_select_includes_discarded_and_four_star_but_not_all_five_star():
     cleanup = module.WeeklyRelicCleanup
     with patch.object(cleanup, "_click") as click, patch.object(
         cleanup, "_visible", return_value=True
-    ), patch.object(cleanup, "_count", side_effect=[1, 2]):
-        assert cleanup._select_for_salvage(1, True) == 2
+    ), patch.object(cleanup, "_count", return_value=2):
+        assert cleanup._select_for_salvage(True) == 2
     assert [call.args[0] for call in click.call_args_list] == [
         "快速选择", "全选已弃置", "4星及以下", "确认"
     ]
@@ -122,41 +140,82 @@ def test_weekly_cleanup_without_smart_discard_selects_only_four_star():
         assert cleanup.run() is True
 
     mark.assert_not_called()
-    select.assert_called_once_with(0, False)
+    select.assert_called_once_with(False)
     relicset.start_break_down_relicset.assert_not_called()
 
     with patch.object(cleanup, "_click") as click, patch.object(
         cleanup, "_visible", return_value=True
-    ), patch.object(cleanup, "_count", side_effect=[0, 2]):
-        assert cleanup._select_for_salvage(0, False) == 2
+    ), patch.object(cleanup, "_count", return_value=2):
+        assert cleanup._select_for_salvage(False) == 2
     assert [call.args[0] for call in click.call_args_list] == [
         "快速选择", "4星及以下", "确认"
     ]
 
 
-def test_quick_select_stops_if_marked_count_does_not_match():
-    module, _, _, _ = _load_cleanup()
+@pytest.mark.parametrize("marked, selected", [(27, 39), (2, 2)])
+def test_cleanup_accepts_selected_count_at_least_marked_count(marked, selected):
+    module, _, _, relicset = _load_cleanup()
     cleanup = module.WeeklyRelicCleanup
-    with patch.object(cleanup, "_click") as click, patch.object(
-        cleanup, "_visible", return_value=True
-    ), patch.object(cleanup, "_count", return_value=2):
-        with pytest.raises(RuntimeError, match="预计 1，实际 2"):
-            cleanup._select_for_salvage(1, True)
-    click.assert_not_called()
-
-
-def test_quick_select_stops_if_it_loses_marked_relics():
-    module, _, _, _ = _load_cleanup()
-    cleanup = module.WeeklyRelicCleanup
+    module.cfg.get_value.return_value = True
+    relicset.start_break_down_relicset.return_value = True
     with patch.object(cleanup, "_click"), patch.object(
         cleanup, "_visible", return_value=True
-    ), patch.object(cleanup, "_count", side_effect=[1, 0]):
-        with pytest.raises(RuntimeError, match="少于智能弃置数量"):
-            cleanup._select_for_salvage(1, True)
+    ), patch.object(cleanup, "_count", side_effect=[0, selected]), patch.object(
+        cleanup, "_mark_smart_discard", return_value=marked
+    ):
+        assert cleanup.run() is True
+    relicset.start_break_down_relicset.assert_called_once_with(use_ocr=True)
+
+
+@pytest.mark.parametrize("selected", [1, 0])
+def test_cleanup_rejects_fewer_selected_than_marked_before_decomposition(selected):
+    module, auto, screen, relicset = _load_cleanup()
+    cleanup = module.WeeklyRelicCleanup
+    module.cfg.get_value.return_value = True
+    with patch.object(cleanup, "_click"), patch.object(
+        cleanup, "_visible", return_value=True
+    ), patch.object(cleanup, "_count", side_effect=[0, selected]), patch.object(
+        cleanup, "_mark_smart_discard", return_value=2
+    ):
+        with pytest.raises(RuntimeError, match=f"少于智能弃置数量：{selected} < 2"):
+            cleanup.run()
+
+    relicset.start_break_down_relicset.assert_not_called()
+    auto.press_key.assert_called_once_with("esc")
+    assert [call.args[0] for call in screen.change_to.call_args_list] == ["bag_relicset", "main"]
+
+
+@pytest.mark.parametrize("selected", [1, 0])
+def test_weekly_cleanup_count_shortfall_never_records_completion(selected):
+    module, _, _, relicset = _load_cleanup()
+    cleanup = module.WeeklyRelicCleanup
+    values = {
+        "break_down_level_four_relicset": True,
+        "weekly_relic_smart_discard_enable": True,
+        "weekly_relic_cleanup_timestamp": 1234567890,
+    }
+    module.cfg.get_value.side_effect = values.get
+    module.cfg.refresh_hour = 4
+    power_module = _load_power(module)
+
+    with patch.object(power_module.Date, "is_weekly_day_due", return_value=True) as due, patch.object(
+        power_module.Power, "preprocess", side_effect=AssertionError("遗器清理失败后不应继续清体力")
+    ) as preprocess, patch.object(cleanup, "_click"), patch.object(
+        cleanup, "_visible", return_value=True
+    ), patch.object(cleanup, "_count", side_effect=[0, selected]), patch.object(
+        cleanup, "_mark_smart_discard", return_value=2
+    ):
+        with pytest.raises(RuntimeError, match=f"少于智能弃置数量：{selected} < 2"):
+            power_module.Power.run()
+
+    due.assert_called_once_with(1234567890, 1, 4)
+    relicset.start_break_down_relicset.assert_not_called()
+    module.cfg.save_timestamp.assert_not_called()
+    preprocess.assert_not_called()
 
 
 def test_cleanup_only_decomposes_when_selected_and_returns_to_main():
-    module, _, screen, relicset = _load_cleanup()
+    module, auto, screen, relicset = _load_cleanup()
     cleanup = module.WeeklyRelicCleanup
     module.cfg.get_value.return_value = True
     relicset.start_break_down_relicset.return_value = True
@@ -167,18 +226,20 @@ def test_cleanup_only_decomposes_when_selected_and_returns_to_main():
     ) as select:
         assert cleanup.run() is True
     assert [call.args[0] for call in screen.change_to.call_args_list] == ["bag_relicset", "main"]
-    select.assert_called_once_with(1, True)
+    auto.press_key.assert_called_once_with("esc")
+    select.assert_called_once_with(True)
     relicset.start_break_down_relicset.assert_called_once_with(use_ocr=True)
 
 
-def test_full_batch_is_followed_by_an_empty_check():
+@pytest.mark.parametrize("marked", [0, 373])
+def test_full_batch_is_followed_by_an_empty_check(marked):
     module, _, _, relicset = _load_cleanup()
     cleanup = module.WeeklyRelicCleanup
     module.cfg.get_value.return_value = True
     relicset.start_break_down_relicset.return_value = True
     with patch.object(cleanup, "_click"), patch.object(cleanup, "_visible", return_value=True), patch.object(
         cleanup, "_count", return_value=0
-    ), patch.object(cleanup, "_mark_smart_discard", return_value=0) as mark, patch.object(
+    ), patch.object(cleanup, "_mark_smart_discard", side_effect=[marked, 0]) as mark, patch.object(
         cleanup, "_select_for_salvage", side_effect=[500, 0]
     ):
         assert cleanup.run() is True
@@ -187,12 +248,13 @@ def test_full_batch_is_followed_by_an_empty_check():
 
 
 def test_cleanup_failure_never_decomposes_and_still_exits():
-    module, _, screen, relicset = _load_cleanup()
+    module, auto, screen, relicset = _load_cleanup()
     cleanup = module.WeeklyRelicCleanup
     with patch.object(cleanup, "_click", side_effect=RuntimeError("OCR失败")):
         with pytest.raises(RuntimeError, match="OCR失败"):
             cleanup.run()
     relicset.start_break_down_relicset.assert_not_called()
+    auto.press_key.assert_not_called()
     screen.change_to.assert_any_call("main")
 
 
