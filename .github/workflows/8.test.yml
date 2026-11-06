@@ -74,5 +74,12 @@ jobs:
       - name: Check translation catalogs
         run: uv run python -m tools.i18n check
 
-      - name: Run tests
+      - name: Run tests (Linux, offscreen)
+        if: matrix.os == 'linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: uv run pytest tests/ -v --tb=short
+
+      - name: Run tests (Windows and macOS)
+        if: matrix.os != 'linux'
         run: uv run pytest tests/ -v --tb=short
