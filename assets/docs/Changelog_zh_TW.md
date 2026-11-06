@@ -2,31 +2,35 @@
 
 > 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。
 
-## v2026.11.6
+## v2026.11.7
 
+- [AI 救得了痛苦號嗎？讓它看完全部角色面板再配隊](https://www.bilibili.com/video/BV1ot4z66Eyg/) 影片版更新說明，歡迎點贊、投幣、收藏支援！
 - 新增角色面板匯出，支援角色屬性、光錐、星魂、技能和遺器
 - 混沌回憶新增「星啟模式」與第三隊編隊支援 [#1283](https://github.com/moesnow/March7thAssistant/pulls/1283) @23swccp
 - 末日幻影新增「星啟模式」與第三隊編隊支援，完善節點推進與結算流程 [#1284](https://github.com/moesnow/March7thAssistant/pulls/1284) @23swccp
 - 新增「免 UAC 執行」，開啟後 AI 助手或指令碼通過 `m7a.exe` 執行任務時無需再次確認管理員許可權
 - 更新後自動同步已安裝到 AI 助手的 Skill
 - Docker 支援通過 `MARCH7TH_NO_RUN_IMMEDIATELY` 環境變數設定啟動後先等待定時執行 [#1303](https://github.com/moesnow/March7thAssistant/pulls/1303) @StaravenX
+- 雲遊戲單獨執行鋤大地或傳統模擬宇宙時自動使用有視窗模式 [#1314](https://github.com/moesnow/March7thAssistant/pulls/1314) @AnonMoi
 - 迴圈執行統一改為定時模式，舊的「根據開拓力」配置自動遷移
 - 最佳化列表拖動與關卡翻頁，減少後臺執行時切到前臺的情況
-- 修復後臺操作後切迴游戲時鍵盤和滑鼠失效的問題
-- 修復混沌回憶、虛構敘事星啟模式最高關已滿星時仍重複挑戰的問題
 - 修復星啟快速通關獎勵彈窗導致流程中斷的問題 [#1309](https://github.com/moesnow/March7thAssistant/pulls/1309) @XX3121
 - 修復自塑塵脂材料不足時反覆嘗試合成、未正確提示的問題 [#1309](https://github.com/moesnow/March7thAssistant/pulls/1309) @XX3121
 - 補充「密伶之徑」掉落物識別，修復相關副本無法識別的問題 [#1297](https://github.com/moesnow/March7thAssistant/pulls/1297) @shing-yu
 - 修復更新後首次重啟無法儲存配置的問題 [#1304](https://github.com/moesnow/March7thAssistant/pulls/1304) @Oc8369
 - 修復取消賬號自動登入設定對話方塊時托盤程式一併退出的問題 [#1307](https://github.com/moesnow/March7thAssistant/pulls/1307) @LumiaBlack51
 - 修復部分 Epic 安裝清單和啟動器視窗無法識別導致遊戲啟動失敗的問題 [#1310](https://github.com/moesnow/March7thAssistant/pulls/1310) @nyavana
-- 修復部分環境下 OpenSSL 衝突導致程式啟動或 HTTPS 請求異常的問題
 - 修復免責聲明確認狀態儲存失敗時靜默退出的問題，並補充崩潰日誌
-- 最佳化效能和穩定性並修復若干已知問題
+- 修復僅配置一個高難關卡時圖形介面啟動崩潰的問題
+- 修復角色面板匯出時將尚未載入完成的星魂誤判為滿魂的問題
+- 修復每週遺器清理因選中數量判斷異常而中斷，以及清理後無法返回主介面的問題 [#1311](https://github.com/moesnow/March7thAssistant/pulls/1311) @23swccp
+- 修復末日幻影常規模式結算後未返回關卡頁，導致流程超時中斷的問題 [#1313](https://github.com/moesnow/March7thAssistant/pulls/1313) @XX3121
+- 修復單獨執行的任務失敗後仍誤報成功並觸發任務完成後操作的問題 [#1314](https://github.com/moesnow/March7thAssistant/pulls/1314) @AnonMoi
 - [歡迎關注我們的B站賬號，獲取最新動態和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.10.31
 - 新增 Windows 後臺執行模式，支援後臺鍵鼠操作
+- 支援接入 AI 助手（設定 → 關於 → AI 助手）
 - 定時任務支援按星期執行，完善執行計劃展示
 - 虛構敘事新增「星啟模式」與第三隊編隊支援 [#1282](https://github.com/moesnow/March7thAssistant/pulls/1282) @23swccp
 - 更新彈窗支援跨版本彙總更新記錄
