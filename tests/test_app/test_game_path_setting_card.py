@@ -5,10 +5,11 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QPalette, QPainter, QPixmap
 from qfluentwidgets import SettingCardGroup, Theme, setTheme
 
+from module.config import cfg
 from module.config.config import Config
 from module import localization
 
-pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
+native_gui_test = pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
 
 
 @pytest.fixture
@@ -17,8 +18,11 @@ def config(tmp_path, monkeypatch):
     path.write_text("game_path: 'D:\\Epic Games\\星铁\\StarRail.exe'\n", encoding="utf-8")
     instance = Config.__new__(Config)
     Config.__init__(instance, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
-    monkeypatch.setattr("module.config.cfg", instance)
-    return instance
+    # 只隔离配置内容和文件，不替换单例。否则在此期间首次导入的页面会
+    # 永久保留 from module.config import cfg 得到的临时对象，污染后续测试。
+    for name in ("config", "config_path", "yaml", "version"):
+        monkeypatch.setattr(cfg, name, getattr(instance, name))
+    return cfg
 
 
 def reload_config(config):
@@ -27,6 +31,20 @@ def reload_config(config):
     return result
 
 
+def test_config_fixture_preserves_shared_instance(config):
+    import module.config as config_module
+    from app import setting_interface
+    from app.card import comboboxsettingcard2
+
+    assert config is cfg is config_module.cfg
+    assert setting_interface.cfg is cfg
+    assert comboboxsettingcard2.cfg is cfg
+    config.set_value("ui_language", "ja_JP")
+    assert setting_interface.cfg.get_value("ui_language") == "ja_JP"
+    assert comboboxsettingcard2.cfg.get_value("ui_language") == "ja_JP"
+
+
+@native_gui_test
 @pytest.mark.parametrize("language", ["zh_CN", "en_US", "zh_TW", "ja_JP", "ko_KR"])
 @pytest.mark.parametrize("theme", [Theme.LIGHT, Theme.DARK])
 def test_native_card_layout_and_persistence(qtbot, config, language, theme, tmp_path):
@@ -106,6 +124,7 @@ def test_native_card_layout_and_persistence(qtbot, config, language, theme, tmp_
         setTheme(Theme.LIGHT)
 
 
+@native_gui_test
 def test_settings_page_integrates_path_card(qtbot, config, monkeypatch):
     import app.setting_interface as settings
     monkeypatch.setattr(settings, "cfg", config)

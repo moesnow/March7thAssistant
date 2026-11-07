@@ -173,6 +173,20 @@ class AutoPlotSettingCard(ExpandSettingCard):
             'hero_chronicle_enable': self.heroChronicleCheckBox.isChecked(),
         }
 
+    def retranslateUi(self):
+        self.switchButton.setOnText(tr('开'))
+        self.switchButton.setOffText(tr('关'))
+        self.rememberStateCheckBox.setText(tr('记住自动对话开关状态'))
+        self.rememberStateHintLabel.setText(tr('开启后，下次启动小助手时将恢复自动对话的开关状态。游戏未在前台时仅进行低频窗口检测。'))
+        self.autoSkipCheckBox.setText(tr('自动跳过 (当出现跳过按钮时自动点击)'))
+        self.autoClickCheckBox.setText(tr('自动选择 (自动选择任意对话选项)'))
+        self.autoBattleDetectCheckBox.setText(tr('自动战斗检测 (检测到未自动战斗时按V开启)'))
+        self.autoPhoneDetectCheckBox.setText(tr('自动短信 (自动点击关闭手机短信页面)'))
+        self.heroChronicleCheckBox.setText(tr('自动阅读翁法罗斯英雄纪（请先打开该书目录）'))
+        self.hotkeyToggleCheckBox.setText(tr('启用快捷键切换自动对话'))
+        self.updateHotkeyHint()
+        self._adjustViewSize()
+
     def updateHotkeyHint(self):
         """更新快捷键提示文字（当配置改变时调用）"""
         hotkey = cfg.get_value("hotkey_toggle_autoplot", "f9").upper()

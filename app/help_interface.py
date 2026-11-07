@@ -43,6 +43,9 @@ class HelpInterface(ScrollArea):
         self.__initWidget()
         self.__initCard()
         self.__initLayout()
+        for attr in DOC_OF_TAB:
+            getattr(self, attr).anchorClicked.connect(self.open_url)
+        qconfig.themeChanged.connect(self.__themeChanged)
 
     def __initWidget(self):
         self.setWidget(self.scrollWidget)
@@ -101,7 +104,6 @@ th, td {
         else:
             self.tutorialLabel.setText(self.tutorial_content)
         self.tutorialLabel.setOpenExternalLinks(True)
-        self.tutorialLabel.anchorClicked.connect(self.open_url)
 
         workflow_file = self._get_localized_doc_path("Workflow")
         try:
@@ -117,7 +119,6 @@ th, td {
         else:
             self.workflowLabel.setText(self.workflow_content)
         self.workflowLabel.setOpenExternalLinks(True)
-        self.workflowLabel.anchorClicked.connect(self.open_url)
 
         faq_style = """
 <style>
@@ -137,7 +138,6 @@ a {
         faq_content = faq_style + markdown.markdown(self.content).replace('<h3>', '<br><h3>').replace('</h3>', '</h3><hr>').replace('<br>', '', 1) + '<br>'
         self.faqLabel.setText(faq_content)
         self.faqLabel.setOpenExternalLinks(True)
-        self.faqLabel.anchorClicked.connect(self.open_url)
 
         background_file = self._get_localized_doc_path("Background")
         try:
@@ -153,9 +153,7 @@ a {
         else:
             self.backgroundLabel.setText(self.background_content)
         self.backgroundLabel.setOpenExternalLinks(True)
-        self.backgroundLabel.anchorClicked.connect(self.open_url)
 
-        qconfig.themeChanged.connect(self.__themeChanged)
         tasks_style = """
 <style>
 table {
@@ -204,7 +202,25 @@ a {
         changelog_content = changelog_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
         self.changelogLabel.setText(changelog_content)
         self.changelogLabel.setOpenExternalLinks(True)
-        self.changelogLabel.anchorClicked.connect(self.open_url)
+
+    def retranslateUi(self):
+        StyleSheet.HELP_INTERFACE.apply(self)
+        self.helpLabel.setText(tr('帮助'))
+        self.helpLabel.adjustSize()
+        self.websiteButton.setText(tr('在官网查看'))
+        self.websiteButton.adjustSize()
+        self.websiteButton.move(self.width() - self.websiteButton.width() - 36, 36)
+        labels = [tr('使用教程'), tr('流程编排'), tr('常见问题'),
+                  tr('后台运行'), tr('每日实训'), tr('更新日志')]
+        positions = {}
+        for attr, text in zip(DOC_OF_TAB, labels):
+            self.pivot.items[attr].setText(text)
+            positions[attr] = getattr(self, attr).verticalScrollBar().value()
+        self.pivot.adjustSize()
+        # 重新读取本地文档，但不重建标签页或重复连接信号。
+        self.__initCard()
+        for attr, position in positions.items():
+            getattr(self, attr).verticalScrollBar().setValue(position)
 
     def __initLayout(self):
         self.helpLabel.move(36, 30)

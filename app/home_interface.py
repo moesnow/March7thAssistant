@@ -165,10 +165,10 @@ class HomeInterface(ScrollArea):
             tr("任务 >"), self.view)
 
         # 添加编辑按钮到标题栏
-        edit_btn = PushButton(FluentIcon.EDIT, tr("编辑"))
-        edit_btn.setFixedHeight(30)
-        edit_btn.clicked.connect(self._on_edit_cards)
-        self.basicInputView.headerLayout.addWidget(edit_btn)
+        self.editButton = PushButton(FluentIcon.EDIT, tr("编辑"))
+        self.editButton.setFixedHeight(30)
+        self.editButton.clicked.connect(self._on_edit_cards)
+        self.basicInputView.headerLayout.addWidget(self.editButton)
 
         # 从配置加载卡片数据
         cards_data = self._load_home_cards()
@@ -183,6 +183,20 @@ class HomeInterface(ScrollArea):
             )
 
         self.vBoxLayout.addWidget(self.basicInputView)
+
+    def retranslateUi(self):
+        StyleSheet.HOME_INTERFACE.apply(self)
+        title = tr('三月七小助手')
+        if cfg.ui_language_now in ('zh_CN', 'zh_TW'):
+            title += '\nMarch7thAssistant'
+        self.banner.galleryLabel.setText(title)
+        actions = self.banner.menu.actions()
+        actions[0].setText(tr('更换背景图片'))
+        if len(actions) > 1:
+            actions[1].setText(tr('恢复默认图片'))
+        self.basicInputView.titleLabel.setText(tr('任务 >'))
+        self.editButton.setText(tr('编辑'))
+        self._rebuild_cards()
 
     def _build_card_action(self, card_data):
         """根据卡片配置数据构建动作"""

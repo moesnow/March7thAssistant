@@ -346,6 +346,15 @@ def build_workflow_task(workflow_name: str, step_path=None, timeout: int = 0, na
     return task
 
 
+def format_workflow_task_name(workflow_name: str, step: dict | None = None) -> str:
+    """按当前语言生成系统文案，保留用户流程名和步骤中的用户内容。"""
+    name = workflow_name
+    if step is not None:
+        title, _ = summarize_step(step)
+        name = f"{name} - {title}"
+    return f"{tr('流程编排')} - {name}"
+
+
 def get_workflow_directory(workflow=None) -> str | None:
     if isinstance(workflow, dict):
         base_dir = workflow.get("_workflow_base_dir")
