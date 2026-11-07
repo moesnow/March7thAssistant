@@ -245,8 +245,8 @@ def _parse_level(text):
 
 
 def _cell_text(cells, y):
-    """取单独识别的数值格。"""
-    return next((text for row, text in (cells or {}).items() if text and abs(row - y) <= ROW_TOLERANCE), None)
+    """None 表示未采集该格，空串表示已采集但识别失败，后者必须重读。"""
+    return next((text or "" for row, text in (cells or {}).items() if abs(row - y) <= ROW_TOLERANCE), None)
 
 
 def parse_summary(lines):
@@ -291,7 +291,8 @@ def parse_light_cone(lines, cells=None):
     for line in labels:
         label = match_label(line.text, ("生命值", "攻击力", "防御力"))
         cell = _nearest(values, line.y)
-        value = parse_flat(_cell_text(cells, line.y) or (cell.text if cell else ""))
+        text = _cell_text(cells, line.y)
+        value = parse_flat(text if text is not None else (cell.text if cell else ""))
         if label is None or value is None:
             raise ParseError(f"光锥属性读取失败：{[line.text for line in lines]}")
         stats[BASE_STATS[label]] = value
@@ -342,6 +343,7 @@ def parse_relic_piece(lines, cells=None):
     不取遗器名：生僻字常被读错又无从校验，套装加部位已经能确定是哪一件。
     cells 是单独识别的数值格 {行: 文字}，优先于整块识别的结果：星空背景上的星星紧贴短数值时，
     整块识别会读出 `*9.7%`，甚至可能是格式合法的 `19.7%`；单个数字也容易被整块识别漏掉。
+    已采集的数值格识别失败时重读，不能再回退采用整块结果。
     """
     slot_line = next((line for line in lines if line.text in RELIC_SLOTS), None)
     if slot_line is None:
@@ -357,9 +359,11 @@ def parse_relic_piece(lines, cells=None):
     for line in labels:
         label = match_label(line.text, ALL_STATS) or line.text
         cell = next((value for value in values if abs(value.y - line.y) <= ROW_TOLERANCE), None)
-        text = _cell_text(cells, line.y) or (cell.text if cell else None)
+        text = _cell_text(cells, line.y)
         if text is None:
-            raise ParseError(f"遗器词条读取失败：{[item.text for item in lines]}")
+            text = cell.text if cell else None
+        if not text:
+            raise ParseError(f"遗器词条读取失败：{label} 数值未识别")
         stats.append(_relic_stat(label, text))
     if not stats:
         raise ParseError(f"遗器词条读取失败：{[line.text for line in lines]}")

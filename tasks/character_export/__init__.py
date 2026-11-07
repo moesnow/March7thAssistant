@@ -49,6 +49,7 @@ class CharacterExport:
         self.seen = set()
         self.attempts = Counter()
         self.failed = []
+        self.interrupted_character = False
 
     def run(self):
         try:
@@ -62,13 +63,15 @@ class CharacterExport:
             warnings = sum(bool(character["warnings"]) for character in self.characters)
             log.info(f"角色面板已导出到 {os.path.abspath(self.output)}，共 {len(self.characters)} 个角色，"
                      f"{warnings} 个有警告，{len(self.failed)} 个读取失败")
-            screen.change_to("main")
+            screen.change_to("menu")
             return complete
         finally:
             self.reader.close()
 
     def _walk_with_restarts(self):
-        for attempt in range(MAX_RESTARTS):
+        attempt = 0
+        while attempt < MAX_RESTARTS:
+            progress = len(self.characters) + len(self.failed)
             try:
                 # 总是从手机重新进入：顶栏回到左端、页签回到详情，已读过的角色按名字跳过
                 screen.change_to("menu")
@@ -76,7 +79,11 @@ class CharacterExport:
                 self._walk()
                 return True
             except (PageError, parser.ParseError) as e:
-                log.warning(f"读取中断（{attempt + 1}/{MAX_RESTARTS}）：{e}")
+                # 有角色读完或按上限跳过就继续走；全程累计会让几个坏角色耗尽后续角色的机会。
+                if len(self.characters) + len(self.failed) > progress:
+                    attempt = 0
+                attempt += 1
+                log.warning(f"读取中断（连续 {attempt}/{MAX_RESTARTS}）：{e}")
         return False
 
     def _walk(self):
@@ -99,7 +106,11 @@ class CharacterExport:
                 if self._known(summary) or self._give_up(summary):
                     continue
                 checking = False
-            self.read_character()
+            try:
+                self.read_character()
+            except (PageError, parser.ParseError):
+                self.interrupted_character = True
+                raise
 
     def _next_page(self):
         """翻页，已经到头时返回 False。第一格必须是读过的角色，否则就是拖过头了，退回去才不会漏人。"""
@@ -120,8 +131,10 @@ class CharacterExport:
     def _give_up(self, summary):
         """中断后重新走到的第一个新角色，就是上次读到一半的角色。"""
         key = (summary["name"], summary["path"])
-        self.attempts[key] += 1
-        if self.attempts[key] <= MAX_ATTEMPTS:
+        if self.interrupted_character:
+            self.attempts[key] += 1
+            self.interrupted_character = False
+        if self.attempts[key] < MAX_ATTEMPTS:
             return False
         log.error(f"{summary['name']}（{summary['path']}）读取失败，已跳过")
         self.seen.add(key)

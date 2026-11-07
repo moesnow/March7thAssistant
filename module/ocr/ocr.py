@@ -758,7 +758,20 @@ class OCR:
             return False
         return [[item['box'], (item['txt'], item['score'])] for item in result]
 
-    def run(self, img, max_retries=3):
+    def _infer(self, img, recognition_only=False):
+        if not recognition_only:
+            return self.ocr(img).to_json()
+        # 已定位的单行可直接进入识别模型，避免孤立数字被检测器漏掉。
+        # 不切换 RapidOCR 的 use_det 属性，以免影响随后或并发的普通 OCR。
+        pixels = self.ocr.load_img(img)
+        result = self.ocr.recognize_txt([pixels])
+        height, width = pixels.shape[:2]
+        box = [[0, 0], [width, 0], [width, height], [0, height]]
+        return [{"box": box, "txt": text.strip(), "score": float(score)}
+                for text, score in zip(result.txts or (), result.scores or ())
+                if text.strip() and score >= self.ocr.text_score]
+
+    def run(self, img, max_retries=3, *, recognition_only=False):
         """执行OCR识别，支持Image对象、文件路径和np.ndarray对象"""
         self.instance_ocr()
         try:
@@ -788,7 +801,7 @@ class OCR:
                     # RapidOCR 会先构造包含原图引用和中间结果的输出对象，再转换
                     # 为 JSON 风格的 Python 结构。后续 replace_strings/convert_format
                     # 只是在此基础上继续处理，并不是主要的内存来源。
-                    original_dict = self.ocr(img).to_json()
+                    original_dict = self._infer(img, recognition_only)
                     elapsed_time = time.monotonic() - start_time
                     # self.logger.debug(f"OCR执行耗时: {elapsed_time:.2f} 秒")
                     self.ocr_time += elapsed_time
@@ -809,7 +822,7 @@ class OCR:
                             self.exit_ocr()
                             self.instance_ocr(force_cpu=True)
                             # 用 CPU 模式重新执行一次
-                            original_dict = self.ocr(img).to_json()
+                            original_dict = self._infer(img, recognition_only)
                             self.logger.info("已切换到 CPU 模式")
                     elif self._slow_count > 0:
                         # 稳态恢复正常，重置连续慢速计数
@@ -838,7 +851,7 @@ class OCR:
                             self.exit_ocr()
                             self.instance_ocr(force_cpu=True)
                             try:
-                                original_dict = self.ocr(img).to_json()
+                                original_dict = self._infer(img, recognition_only)
                                 self.logger.info("CPU 模式执行成功")
                                 results = self.replace_strings(original_dict)
                                 # 降级到 CPU 后仍会走同样的输出构造流程，因此同样保留
@@ -854,7 +867,7 @@ class OCR:
                         self.exit_ocr()
                         self.instance_ocr(force_onnx=True)
                         try:
-                            original_dict = self.ocr(img).to_json()
+                            original_dict = self._infer(img, recognition_only)
                             self.logger.info("已切换到 ONNXRuntime 模式")
                             results = self.replace_strings(original_dict)
                             self._maybe_collect_garbage()
@@ -871,7 +884,7 @@ class OCR:
                 self.exit_ocr()
                 self.instance_ocr(force_cpu=True)
                 try:
-                    original_dict = self.ocr(img).to_json()
+                    original_dict = self._infer(img, recognition_only)
                     self.logger.info("CPU 模式执行成功")
                     return self.replace_strings(original_dict)
                 except Exception as e:
@@ -952,6 +965,8 @@ class OCR:
                     return text, score
         return None
 
-    def recognize_multi_lines(self, image):
+    def recognize_multi_lines(self, image, *, recognition_only=False):
         """识别图片中的多行文本"""
+        if recognition_only:
+            return self.convert_format(self.run(image, recognition_only=True))
         return self.convert_format(self.run(image))
