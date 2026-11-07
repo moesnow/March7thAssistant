@@ -1513,6 +1513,29 @@ class DivergentUniverse:
             time.sleep(1)
         return False
 
+    @staticmethod
+    def confirm_event_option():
+        # OCR 能识别灰色按钮，输入成功也不代表选项满足条件。
+        # 只比较右侧选项内容，排除左侧背景装饰字符的 OCR 波动。
+        options_left = auto.screenshot.width * 1320 / 1920
+        before = [text for box, (text, _) in auto.ocr_result if box[0][0] >= options_left]
+        if not auto.click_element("确定", "text", None, 4, include=True):
+            raise RuntimeError("差分宇宙事件确定按钮点击失败")
+        absent_frames = 0
+        for _ in range(4):
+            time.sleep(0.5)
+            if not auto.find_element("确定", "text", include=True):
+                absent_frames += 1
+                if absent_frames >= 2:
+                    return True
+            else:
+                absent_frames = 0
+                # 连续事件可能沿用相同布局，内容变化也表示已进入下一页。
+                after = [text for box, (text, _) in auto.ocr_result if box[0][0] >= options_left]
+                if after != before:
+                    return True
+        return False
+
     def process_event(self):
         start_time = time.monotonic()
         while time.monotonic() - start_time < 120:
@@ -1528,32 +1551,31 @@ class DivergentUniverse:
             if not matchs:
                 return
             # 重入时优先完成已有选择，避免再次点击选项而切换或取消选中态。
-            if auto.find_element("确定", "text", include=True):
-                if not auto.click_element("确定", "text", None, 4, include=True):
-                    raise RuntimeError("差分宇宙事件确定按钮点击失败")
+            if auto.find_element("确定", "text", include=True) and self.confirm_event_option():
                 continue
 
             has_confirm = False
-            for attempt in range(len(matchs)):
-                if attempt:
-                    # 展开选项和拖动都会改变位置，不能继续使用上一帧的选项坐标。
-                    matchs = auto.find_element("./assets/images/screen/divergent_universe/event_option.png", "image_with_multiple_targets", 0.9)
-                    if not matchs:
-                        break
-                option_index = max(0, len(matchs) - attempt - 1)
+            for attempt in range(10):
+                # 展开选项、确认和拖动都会改变位置，每次选择前都重新定位。
+                matchs = auto.find_element("./assets/images/screen/divergent_universe/event_option.png", "image_with_multiple_targets", 0.9)
+                if not matchs:
+                    break
+                # 首次失败后的拖动可能露出新的末项，从当前末项重新向上尝试。
+                option_index = len(matchs) - max(1, attempt)
+                if option_index < 0:
+                    break
                 if not auto.click_element_with_pos(matchs[option_index]):
                     raise RuntimeError("差分宇宙事件选项点击失败")
                 time.sleep(0.5)
                 if not self.reveal_event_confirm():
                     continue
                 time.sleep(0.5)
-                if not auto.click_element('确定', 'text', None, 4, include=True):
-                    raise RuntimeError("差分宇宙事件确定按钮点击失败")
-                has_confirm = True
-                break
+                if self.confirm_event_option():
+                    has_confirm = True
+                    break
             if has_confirm:
                 continue
-            raise RuntimeError("差分宇宙事件选项均未找到确定按钮，停止处理")
+            raise RuntimeError("差分宇宙事件选项无法确认，停止处理")
         raise RuntimeError("差分宇宙事件处理超时（120秒），停止处理")
 
     def process_station_card(self):
