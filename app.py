@@ -1,5 +1,9 @@
 import os
 import sys
+
+# 旧更新器可能传入只读角色；主程序必须在任何配置加载（含开机自启）前清除。
+os.environ.pop("MARCH7TH_CONFIG_READONLY", None)
+
 # 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
