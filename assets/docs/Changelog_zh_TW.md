@@ -2,56 +2,59 @@
 
 > 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。
 
-## v2026.11.7
+## v2026.11.8
 
 - [AI 救得了痛苦號嗎？讓它看完全部角色面板再配隊](https://www.bilibili.com/video/BV1ot4z66Eyg/) 影片版更新說明，歡迎點贊、投幣、收藏支援！
 - 新增角色面板匯出，支援角色屬性、光錐、星魂、技能和遺器
-- 混沌回憶新增「星啟模式」與第三隊編隊支援 [#1283](https://github.com/moesnow/March7thAssistant/pulls/1283) @23swccp
-- 末日幻影新增「星啟模式」與第三隊編隊支援，完善節點推進與結算流程 [#1284](https://github.com/moesnow/March7thAssistant/pulls/1284) @23swccp
+- 混沌回憶新增「星啟模式」與第三隊編隊支援 [#1283](https://github.com/moesnow/March7thAssistant/pull/1283) @23swccp
+- 末日幻影新增「星啟模式」與第三隊編隊支援，完善節點推進與結算流程 [#1284](https://github.com/moesnow/March7thAssistant/pull/1284) @23swccp
 - 新增「免 UAC 執行」，開啟後 AI 助手或指令碼通過 `m7a.exe` 執行任務時無需再次確認管理員許可權
 - 更新後自動同步已安裝到 AI 助手的 Skill
-- Docker 支援通過 `MARCH7TH_NO_RUN_IMMEDIATELY` 環境變數設定啟動後先等待定時執行 [#1303](https://github.com/moesnow/March7thAssistant/pulls/1303) @StaravenX
-- 雲遊戲單獨執行鋤大地或傳統模擬宇宙時自動使用有視窗模式 [#1314](https://github.com/moesnow/March7thAssistant/pulls/1314) @AnonMoi
+- Docker 支援通過 `MARCH7TH_NO_RUN_IMMEDIATELY` 環境變數設定啟動後先等待定時執行 [#1303](https://github.com/moesnow/March7thAssistant/pull/1303) @StaravenX
+- 雲遊戲單獨執行鋤大地或傳統模擬宇宙時自動使用有視窗模式 [#1314](https://github.com/moesnow/March7thAssistant/pull/1314) @AnonMoi
 - 迴圈執行統一改為定時模式，舊的「根據開拓力」配置自動遷移
 - 最佳化列表拖動與關卡翻頁，減少後臺執行時切到前臺的情況
-- 修復星啟快速通關獎勵彈窗導致流程中斷的問題 [#1309](https://github.com/moesnow/March7thAssistant/pulls/1309) @XX3121
-- 修復自塑塵脂材料不足時反覆嘗試合成、未正確提示的問題 [#1309](https://github.com/moesnow/March7thAssistant/pulls/1309) @XX3121
-- 補充「密伶之徑」掉落物識別，修復相關副本無法識別的問題 [#1297](https://github.com/moesnow/March7thAssistant/pulls/1297) @shing-yu
-- 修復更新後首次重啟無法儲存配置的問題 [#1304](https://github.com/moesnow/March7thAssistant/pulls/1304) @Oc8369
-- 修復取消賬號自動登入設定對話方塊時托盤程式一併退出的問題 [#1307](https://github.com/moesnow/March7thAssistant/pulls/1307) @LumiaBlack51
-- 修復部分 Epic 安裝清單和啟動器視窗無法識別導致遊戲啟動失敗的問題 [#1310](https://github.com/moesnow/March7thAssistant/pulls/1310) @nyavana
+- 修復星啟快速通關獎勵彈窗導致流程中斷的問題 [#1309](https://github.com/moesnow/March7thAssistant/pull/1309) @XX3121
+- 修復自塑塵脂材料不足時反覆嘗試合成、未正確提示的問題 [#1309](https://github.com/moesnow/March7thAssistant/pull/1309) @XX3121
+- 補充「密伶之徑」掉落物識別，修復相關副本無法識別的問題 [#1297](https://github.com/moesnow/March7thAssistant/pull/1297) @shing-yu
+- 修復更新後首次重啟無法儲存配置的問題 [#1304](https://github.com/moesnow/March7thAssistant/pull/1304) @Oc8369
+- 修復取消賬號自動登入設定對話方塊時托盤程式一併退出的問題 [#1307](https://github.com/moesnow/March7thAssistant/pull/1307) @LumiaBlack51
+- 修復部分 Epic 安裝清單和啟動器視窗無法識別導致遊戲啟動失敗的問題 [#1310](https://github.com/moesnow/March7thAssistant/pull/1310) @nyavana
 - 修復免責聲明確認狀態儲存失敗時靜默退出的問題，並補充崩潰日誌
 - 修復僅配置一個高難關卡時圖形介面啟動崩潰的問題
 - 修復角色面板匯出時將尚未載入完成的星魂誤判為滿魂的問題
-- 修復每週遺器清理因選中數量判斷異常而中斷，以及清理後無法返回主介面的問題 [#1311](https://github.com/moesnow/March7thAssistant/pulls/1311) @23swccp
-- 修復末日幻影常規模式結算後未返回關卡頁，導致流程超時中斷的問題 [#1313](https://github.com/moesnow/March7thAssistant/pulls/1313) @XX3121
-- 修復單獨執行的任務失敗後仍誤報成功並觸發任務完成後操作的問題 [#1314](https://github.com/moesnow/March7thAssistant/pulls/1314) @AnonMoi
+- 修復每週遺器清理因選中數量判斷異常而中斷，以及清理後無法返回主介面的問題 [#1311](https://github.com/moesnow/March7thAssistant/pull/1311) @23swccp
+- 修復末日幻影常規模式結算後未返回關卡頁，導致流程超時中斷的問題 [#1313](https://github.com/moesnow/March7thAssistant/pull/1313) @XX3121
+- 修復單獨執行的任務失敗後仍誤報成功並觸發任務完成後操作的問題 [#1314](https://github.com/moesnow/March7thAssistant/pull/1314) @AnonMoi
+- 完善差分宇宙事件確認與不可用選項的重試處理
+- 修復角色面板匯出時介面切換判定異常及部分數值漏讀、誤讀的問題
+- 修復雲遊戲中執行流程編排時無法連線已有遊戲會話的問題
 - [歡迎關注我們的B站賬號，獲取最新動態和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.10.31
 - 新增 Windows 後臺執行模式，支援後臺鍵鼠操作
 - 支援接入 AI 助手（設定 → 關於 → AI 助手）
 - 定時任務支援按星期執行，完善執行計劃展示
-- 虛構敘事新增「星啟模式」與第三隊編隊支援 [#1282](https://github.com/moesnow/March7thAssistant/pulls/1282) @23swccp
+- 虛構敘事新增「星啟模式」與第三隊編隊支援 [#1282](https://github.com/moesnow/March7thAssistant/pull/1282) @23swccp
 - 更新彈窗支援跨版本彙總更新記錄
-- 支援通過 Epic 啟動渠道服星穹鐵道 [#1274](https://github.com/moesnow/March7thAssistant/pulls/1274) @23swccp
-- 修復雲遊戲剩餘時長為 0 時容器反覆重啟的問題 [#1276](https://github.com/moesnow/March7thAssistant/pulls/1276) @StaravenX
-- 最佳化兌換碼使用流程 [#1295](https://github.com/moesnow/March7thAssistant/pulls/1295) @spellbook96
+- 支援通過 Epic 啟動渠道服星穹鐵道 [#1274](https://github.com/moesnow/March7thAssistant/pull/1274) @23swccp
+- 修復雲遊戲剩餘時長為 0 時容器反覆重啟的問題 [#1276](https://github.com/moesnow/March7thAssistant/pull/1276) @StaravenX
+- 最佳化兌換碼使用流程 [#1295](https://github.com/moesnow/March7thAssistant/pull/1295) @spellbook96
 - 最佳化效能和穩定性並修復若干已知問題
 
 ## v2026.10.16
 - 新手推薦觀看 [從零開始的三月七小助手保姆級安裝教程](https://www.bilibili.com/video/BV1DrJt62E1u/)，從下載、解壓到首次啟動，跟著影片一步步完成安裝，歡迎點贊、投幣、收藏支援！
-- 自動對話新增自動閱讀翁法羅斯英雄紀，支援跳過已讀及未解鎖篇章（請先開啟該書目錄） [#1250](https://github.com/moesnow/March7thAssistant/pulls/1250) @long098sdo
-- 自動對話新增“記住自動對話開關狀態”選項，開啟後下次啟動小助手時恢復開關狀態，預設關閉 [#1258](https://github.com/moesnow/March7thAssistant/pulls/1258) @23swccp
-- 支援選擇 HoYoPlay 啟動器更新及預下載國際服遊戲 [#1253](https://github.com/moesnow/March7thAssistant/pulls/1253) @300g-BoHeYou
+- 自動對話新增自動閱讀翁法羅斯英雄紀，支援跳過已讀及未解鎖篇章（請先開啟該書目錄） [#1250](https://github.com/moesnow/March7thAssistant/pull/1250) @long098sdo
+- 自動對話新增“記住自動對話開關狀態”選項，開啟後下次啟動小助手時恢復開關狀態，預設關閉 [#1258](https://github.com/moesnow/March7thAssistant/pull/1258) @23swccp
+- 支援選擇 HoYoPlay 啟動器更新及預下載國際服遊戲 [#1253](https://github.com/moesnow/March7thAssistant/pull/1253) @300g-BoHeYou
 - 開機自啟升級為可配置的登入自啟，支援選擇是否開啟圖形介面、最小化到托盤及自動執行的任務，啟動時不再彈出 UAC 提示
-- 助燃券滿額時自動清理並繼續領取週期獎勵，支援差分宇宙和貨幣戰爭 [#1261](https://github.com/moesnow/March7thAssistant/pulls/1261) @Welt2000
-- 貨幣戰爭新增“觸發晉升賽”和“晉升成功”結果識別 [#1270](https://github.com/moesnow/March7thAssistant/pulls/1270) @loader3229
-- 修復好友支援列表中部分帶角標的角色頭像無法識別的問題 [#1259](https://github.com/moesnow/March7thAssistant/pulls/1259) @23swccp
-- 修復差分宇宙卡在“奇物損毀”頁面的問題 [#1264](https://github.com/moesnow/March7thAssistant/pulls/1264) @XX3121
-- 修復差分宇宙跨周繼續進度時，確認彈窗導致重新進入關卡失敗的問題 [#1268](https://github.com/moesnow/March7thAssistant/pulls/1268) @08158
-- 修復遺器背包已滿後自動分解時，介面返回路徑異常導致任務中斷的問題 [#1267](https://github.com/moesnow/March7thAssistant/pulls/1267) @08158
-- 最佳化解鎖幀率失敗提示：缺少幀率配置時明確提示將影像質量改為自定義，其他錯誤顯示簡簡訊息並記錄完整日誌 [#1262](https://github.com/moesnow/March7thAssistant/pulls/1262) @23swccp
+- 助燃券滿額時自動清理並繼續領取週期獎勵，支援差分宇宙和貨幣戰爭 [#1261](https://github.com/moesnow/March7thAssistant/pull/1261) @Welt2000
+- 貨幣戰爭新增“觸發晉升賽”和“晉升成功”結果識別 [#1270](https://github.com/moesnow/March7thAssistant/pull/1270) @loader3229
+- 修復好友支援列表中部分帶角標的角色頭像無法識別的問題 [#1259](https://github.com/moesnow/March7thAssistant/pull/1259) @23swccp
+- 修復差分宇宙卡在“奇物損毀”頁面的問題 [#1264](https://github.com/moesnow/March7thAssistant/pull/1264) @XX3121
+- 修復差分宇宙跨周繼續進度時，確認彈窗導致重新進入關卡失敗的問題 [#1268](https://github.com/moesnow/March7thAssistant/pull/1268) @08158
+- 修復遺器背包已滿後自動分解時，介面返回路徑異常導致任務中斷的問題 [#1267](https://github.com/moesnow/March7thAssistant/pull/1267) @08158
+- 最佳化解鎖幀率失敗提示：缺少幀率配置時明確提示將影像質量改為自定義，其他錯誤顯示簡簡訊息並記錄完整日誌 [#1262](https://github.com/moesnow/March7thAssistant/pull/1262) @23swccp
 - 修復部分系統中數值輸入框顯示異常，以及輸入數字時數值意外增大的問題
 - 修復任務暫停時懸浮窗快捷鍵提示與實際狀態不一致，以及連續按暫停鍵可能誤恢復任務的問題
 - 修復通過開機自啟啟動後，長時間執行的圖形介面可能被任務計劃程式關閉的問題
