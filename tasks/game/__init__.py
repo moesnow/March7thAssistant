@@ -55,12 +55,17 @@ def switch_to_game():
 
 
 def ensure_game_ready():
-    """校验游戏窗口存在并切换到前台（workflow 执行前置）。
+    """连接云游戏会话，或校验本地游戏窗口可操作（workflow 执行前置）。
 
     与流程编排启动语义一致：游戏未启动或切换失败时记录错误并返回 False，
     由调用方决定如何终止（本地与云游戏均经 controller 处理）。
     """
     controller = get_game_controller()
+    if cfg.cloud_game_enable:
+        if not controller.connect_to_running_game():
+            log.error("云游戏会话未就绪，workflow 未执行")
+            return False
+        return True
     if not controller.is_game_running():
         log.error("未检测到游戏窗口，workflow 未执行")
         return False

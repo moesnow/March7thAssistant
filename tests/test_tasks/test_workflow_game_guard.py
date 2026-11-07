@@ -5,6 +5,7 @@
 """
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
@@ -39,6 +40,7 @@ def _prepare(monkeypatch, running, switch_ok):
         switch_to_game=lambda: calls.append('switch_to_game') or switch_ok,
     )
     monkeypatch.setattr(game, 'get_game_controller', lambda: controller)
+    monkeypatch.setattr(game, 'cfg', SimpleNamespace(cloud_game_enable=False))
     # 本组用例覆盖前台模式的切换语义，不随本机配置的本地操作模式变化（后台模式见 test_background_integration）
     monkeypatch.setattr(game, 'auto', SimpleNamespace(input_handler=SimpleNamespace(is_background=False)))
     log_stub = _LogStub()
@@ -64,6 +66,24 @@ class TestEnsureGameReady:
         assert game.ensure_game_ready() is True
         assert calls == ['is_game_running', 'switch_to_game']
         assert log_stub.errors == []
+
+
+@pytest.mark.parametrize('ready', [False, True])
+def test_cloud_workflow_connects_without_checking_desktop_window(monkeypatch, ready):
+    game = _load_game_module()
+    controller = Mock()
+    controller.connect_to_running_game.return_value = ready
+    monkeypatch.setattr(game, 'cfg', SimpleNamespace(cloud_game_enable=True))
+    monkeypatch.setattr(game, 'get_game_controller', lambda: controller)
+    log = _LogStub()
+    monkeypatch.setattr(game, 'log', log)
+
+    assert game.ensure_game_ready() is ready
+
+    controller.connect_to_running_game.assert_called_once_with()
+    controller.is_game_running.assert_not_called()
+    controller.switch_to_game.assert_not_called()
+    assert bool(log.errors) is not ready
 
 
 class TestRunWorkflowActionGuardsGame:

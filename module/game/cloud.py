@@ -348,8 +348,16 @@ class CloudGameController(GameControllerBase):
         args.extend(self.cfg.browser_launch_argument)  # 用户自定义参数
         return args
 
-    def _connect_or_create_browser(self, headless=False) -> None:
-        """尝试连接到现有的（由小助手启动的）浏览器，如果没有，那就创建一个"""
+    def _connect_or_create_browser(self, headless=False, *, connect_only=False) -> None:
+        """连接小助手的浏览器；connect_only 时不启动、关闭或重建浏览器。"""
+        if connect_only:
+            existing = self.get_m7a_browsers()
+            if not existing:
+                raise ConnectionError("未检测到正在运行的云游戏浏览器，请先启动游戏")
+            # “启动游戏”可以临时使用有窗口模式，连接时应遵循实际进程而非配置。
+            headless = "--headless=new" in existing[0].cmdline()
+            self._headless_override = headless
+
         browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge" if self.cfg.browser_type == "edge" else "chromium"
         integrated = self.cfg.browser_type == "integrated"
         first_run = False
@@ -363,7 +371,7 @@ class CloudGameController(GameControllerBase):
         if not 1 <= configured_port <= 65535:
             raise RuntimeError(f"browser_debug_port 超出有效范围: {configured_port}")
         actual_port = configured_port
-        bind_error = self._get_port_bind_error(configured_port)
+        bind_error = None if connect_only else self._get_port_bind_error(configured_port)
         if bind_error is not None:
             self.log_warning(
                 f"端口 {configured_port} 无法绑定（{bind_error}），正在查找可用端口..."
@@ -396,9 +404,10 @@ class CloudGameController(GameControllerBase):
             self._driver_pid = None
 
         # 关掉 headless 不匹配的浏览器，防止端口冲突
-        if self.close_all_m7a_browser(headless=not headless):
-            self.log_info(f"已关闭正在运行的{'前台' if headless else '后台'}浏览器")
-        existing = self.get_m7a_browsers(headless=headless)
+        if not connect_only:
+            if self.close_all_m7a_browser(headless=not headless):
+                self.log_info(f"已关闭正在运行的{'前台' if headless else '后台'}浏览器")
+            existing = self.get_m7a_browsers(headless=headless)
         if existing:
             # 从进程命令行解析真实调试端口（首次启动可能已回退到其它端口）
             reconnect_port = self._get_debug_port_from_cmdline(existing[0]) or configured_port
@@ -409,6 +418,8 @@ class CloudGameController(GameControllerBase):
                 self.log_info("已连接到现有浏览器")
                 return
             except Exception:
+                if connect_only:
+                    raise
                 self.log_info("连接现有浏览器失败")
                 self.close_all_m7a_browser()
                 # 重连失败后重建 options，避免 debugger_address 残留导致 Selenium 尝试重连而非启动新浏览器
@@ -824,18 +835,21 @@ class CloudGameController(GameControllerBase):
         """
         browsers: list[psutil.Process] = []
 
-        browser_names = {'chrome.exe', 'msedge.exe', 'chrome', 'msedge', 'google-chrome', 'google-chrome-stable'}
+        browser_names = {
+            'chrome.exe', 'msedge.exe', 'chrome', 'msedge', 'google-chrome', 'google-chrome-stable',
+            'google chrome', 'google chrome for testing', 'microsoft edge', 'chromium', 'chromium-browser',
+        }
         browser_tag = self.BROWSER_TAG
 
         for path_attr in ('browser_path',):
             if hasattr(self, path_attr):
                 p = getattr(self, path_attr)
                 if p:
-                    browser_names.add(os.path.basename(p))
+                    browser_names.add(os.path.basename(p).lower())
 
         env_path = os.environ.get('MARCH7TH_BROWSER_PATH')
         if env_path:
-            browser_names.add(os.path.basename(env_path))
+            browser_names.add(os.path.basename(env_path).lower())
 
         for proc in psutil.process_iter(['pid', 'name']):
             name = proc.info.get('name')
@@ -1218,6 +1232,20 @@ class CloudGameController(GameControllerBase):
             return True
         except Exception as e:
             self.log_error(f"启动或连接浏览器失败 {e}")
+            return False
+
+    def connect_to_running_game(self) -> bool:
+        """为独立运行的流程连接已有云游戏会话，不启动游戏或重新排队。"""
+        try:
+            if self.driver is None:
+                self._connect_or_create_browser(connect_only=True)
+                self._confirm_viewport_resolution()
+            if not self.is_in_game():
+                self.log_error("云游戏尚未进入游戏画面，请先启动游戏")
+                return False
+            return True
+        except Exception as e:
+            self.log_error(f"连接正在运行的云游戏失败: {e}")
             return False
 
     def is_headless(self) -> bool:

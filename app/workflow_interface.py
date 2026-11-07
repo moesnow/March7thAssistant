@@ -42,6 +42,7 @@ from qfluentwidgets import (
 from app.components.ascii_spin_box import AsciiSpinBox, AsciiDoubleSpinBox
 
 import tasks.tool as tool
+from module.config import cfg
 from module.localization import tr
 from module.game import get_game_controller
 from module.workflow import (
@@ -1250,7 +1251,8 @@ class WorkflowInterface(ScrollArea):
                 main_window.switchTo(log_interface)
             return
 
-        if not game.is_game_running():
+        # 云游戏由任务进程连接并校验会话，不依赖桌面窗口或 GUI 进程里的 driver。
+        if not cfg.cloud_game_enable and not game.is_game_running():
             InfoBar.warning(
                 title=tr("启动游戏"),
                 content=tr("无法获取游戏窗口截图，请确认游戏窗口已打开"),
@@ -1262,7 +1264,7 @@ class WorkflowInterface(ScrollArea):
             )
             return
 
-        if not game.switch_to_game():
+        if not cfg.cloud_game_enable and not game.switch_to_game():
             InfoBar.warning(
                 title=tr("启动游戏"),
                 content=tr("无法获取游戏窗口截图，请确认游戏窗口已打开"),

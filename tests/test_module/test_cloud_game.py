@@ -63,6 +63,112 @@ class TestCloudGameSessionState(unittest.TestCase):
         self.assertFalse(self.controller.is_in_game())
 
 
+class TestCloudGameWorkflowConnection(unittest.TestCase):
+    def setUp(self):
+        self.controller = object.__new__(CloudGameController)
+        self.controller.driver = None
+        self.controller.cfg = SimpleNamespace(
+            browser_type="integrated", browser_debug_port=9222,
+            browser_headless_enable=True,
+        )
+        self.controller.logger = MagicMock()
+        self.controller.user_profile_path = "."
+        self.controller._prepare_browser_and_driver = MagicMock(return_value=("chrome", "chromedriver"))
+        self.controller.get_m7a_browsers = MagicMock(return_value=[])
+        self.controller.close_all_m7a_browser = MagicMock()
+        self.controller._get_port_bind_error = MagicMock()
+        self.controller._find_available_port = MagicMock()
+        self.controller._refresh_page = MagicMock()
+        self.controller.enter_cloud_game = MagicMock()
+
+    def browser(self, headless):
+        process = MagicMock()
+        process.cmdline.return_value = [
+            "chrome", CloudGameController.BROWSER_TAG, "--remote-debugging-port=9333",
+        ] + (["--headless=new"] if headless else [])
+        self.controller.get_m7a_browsers.return_value = [process]
+
+    @staticmethod
+    def driver(in_game=True):
+        driver = MagicMock()
+        player = MagicMock()
+        player.is_displayed.return_value = in_game
+        driver.find_elements.side_effect = lambda by, selector: [player] if selector == ".game-player" else []
+        return driver
+
+    def test_missing_browser_does_not_launch_one(self):
+        self.assertFalse(self.controller.connect_to_running_game())
+        self.controller._prepare_browser_and_driver.assert_not_called()
+        self.controller.close_all_m7a_browser.assert_not_called()
+        self.controller.enter_cloud_game.assert_not_called()
+
+    def test_browser_discovery_supports_desktop_platforms_and_requires_tag(self):
+        controller = object.__new__(CloudGameController)
+        for name in ("chrome.exe", "chrome", "Google Chrome for Testing", "Google Chrome",
+                     "msedge.exe", "Microsoft Edge", "chromium", "chromium-browser"):
+            with self.subTest(name=name):
+                browser = MagicMock()
+                browser.info = {"name": name}
+                browser.cmdline.return_value = [name, CloudGameController.BROWSER_TAG]
+                unrelated = MagicMock()
+                unrelated.info = {"name": name}
+                unrelated.cmdline.return_value = [name]
+                with patch("module.game.cloud.psutil.process_iter", return_value=[browser, unrelated]):
+                    self.assertEqual(controller.get_m7a_browsers(), [browser])
+
+    def test_connects_to_actual_browser_mode_and_debug_port(self):
+        for headless in (False, True):
+            with self.subTest(headless=headless):
+                self.controller.driver = None
+                self.controller.cfg.browser_headless_enable = not headless
+                self.browser(headless)
+                driver = self.driver()
+                with patch("module.game.cloud.webdriver.Chrome", return_value=driver) as connect:
+                    self.assertTrue(self.controller.connect_to_running_game())
+                connect.assert_called_once()
+                options = connect.call_args.kwargs["options"]
+                self.assertEqual(options.debugger_address, "127.0.0.1:9333")
+                self.assertEqual(options.arguments, [])
+                self.assertIs(self.controller.driver, driver)
+                self.assertEqual(self.controller.is_headless(), headless)
+                self.assertEqual(self.controller.cfg.browser_headless_enable, not headless)
+                driver.execute_cdp_cmd.assert_any_call("Emulation.setDeviceMetricsOverride", {
+                    "width": 1920, "height": 1080, "deviceScaleFactor": 1, "mobile": False,
+                })
+        self.controller._get_port_bind_error.assert_not_called()
+        self.controller._find_available_port.assert_not_called()
+        self.controller.close_all_m7a_browser.assert_not_called()
+        self.controller._refresh_page.assert_not_called()
+        self.controller.enter_cloud_game.assert_not_called()
+
+    def test_failed_connection_does_not_close_or_replace_browser(self):
+        self.browser(False)
+        with patch("module.game.cloud.webdriver.Chrome", side_effect=WebDriverException("lost")) as connect:
+            self.assertFalse(self.controller.connect_to_running_game())
+        connect.assert_called_once()
+        self.controller.close_all_m7a_browser.assert_not_called()
+        self.controller._refresh_page.assert_not_called()
+        self.controller.enter_cloud_game.assert_not_called()
+
+    def test_connected_browser_without_game_does_not_enter_queue(self):
+        self.browser(False)
+        with patch("module.game.cloud.webdriver.Chrome", return_value=self.driver(in_game=False)):
+            self.assertFalse(self.controller.connect_to_running_game())
+        self.controller.enter_cloud_game.assert_not_called()
+
+    def test_existing_driver_is_reused(self):
+        self.controller.driver = self.driver()
+        self.assertTrue(self.controller.connect_to_running_game())
+        self.controller.get_m7a_browsers.assert_not_called()
+
+    def test_disconnected_session_is_rejected(self):
+        self.controller.driver = self.driver()
+        self.controller.is_in_game = MagicMock(side_effect=ConnectionError("云游戏会话已断开"))
+        self.assertFalse(self.controller.connect_to_running_game())
+        self.controller.close_all_m7a_browser.assert_not_called()
+        self.controller.enter_cloud_game.assert_not_called()
+
+
 class TestCloudGameScreenshotTimeout(unittest.TestCase):
     def setUp(self):
         self.controller = object.__new__(CloudGameController)

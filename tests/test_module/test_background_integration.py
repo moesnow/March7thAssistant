@@ -201,6 +201,7 @@ def test_workflow_precheck_waits_for_background_window_and_names_reason(monkeypa
     controller.switch_to_game.side_effect = AssertionError('后台模式不切换前台')
     backend = SimpleNamespace(is_background=True, wait_for_window=Mock(side_effect=errors.get(failure)))
     log = Mock()
+    monkeypatch.setattr(module, 'cfg', config('background'))
     monkeypatch.setattr(module, 'get_game_controller', lambda: controller)
     monkeypatch.setattr(module, 'auto', SimpleNamespace(input_handler=backend))
     monkeypatch.setattr(module, 'log', log)
