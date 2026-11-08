@@ -1091,6 +1091,12 @@ class SettingInterface(ScrollArea):
             tr('“退出”指退出游戏，不再建议使用循环模式，请改用日志界面的定时运行功能'),
             texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'}
         )
+        self.exitAppAfterSuccess = SwitchSettingCard1(
+            FIF.POWER_BUTTON,
+            tr('任务全部成功后关闭助手'),
+            tr('任务链全部成功后延迟 5 秒关闭，可与退出游戏组合。\n启用按时任务或等待完成后操作时保持运行。'),
+            "exit_app_after_success"
+        )
         self.scheduledCard = TimePickerSettingCard1(
             "scheduled_time",
             FIF.DATE_TIME,
@@ -2821,6 +2827,7 @@ class SettingInterface(ScrollArea):
             self.refreshHourEnableCard,
             self.ScriptPathCard
         ])
+        self.ProgramGroup.addSettingCard(self.exitAppAfterSuccess)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
         self.ProgramGroup.addSettingCard(self.closeWindowActionCard)
         self.ProgramGroup.addSettingCard(self.windowMemoryCard)
