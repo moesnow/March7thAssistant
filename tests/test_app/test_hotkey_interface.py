@@ -23,7 +23,18 @@ def qapp():
 
 
 @pytest.fixture
-def dlg(qapp):
+def isolated_hotkey_config(tmp_path, monkeypatch):
+    from module.config import cfg
+
+    monkeypatch.setattr(cfg, "config", cfg.config.copy())
+    monkeypatch.setattr(cfg, "config_path", str(tmp_path / "config.yaml"))
+    monkeypatch.setitem(cfg.config, "hotkey_message", "p")
+    cfg.save_config()
+    return cfg
+
+
+@pytest.fixture
+def dlg(qapp, isolated_hotkey_config):
     # 注意：父窗口必须与弹窗同样保活，否则 GC 会连带销毁 C++ 对象
     # 尺寸刻意贴近常见主窗口（较矮），复现「弹窗高于窗口被裁切」的场景
     from PySide6.QtWidgets import QWidget
@@ -83,9 +94,43 @@ class TestHotkeyInterfaceLayout:
         for card in dlg.pushButton_dict.values():
             assert card.width() >= card.minimumSizeHint().width()
 
-    def test_all_hotkeys_listed_including_pause(self, dlg):
-        assert "hotkey_pause_task" in dlg.pushButton_dict
-        assert len(dlg.pushButton_dict) == 7
+    def test_all_hotkeys_listed_including_message_and_pause(self, dlg):
+        assert set(dlg.pushButton_dict) == {
+            "hotkey_technique", "hotkey_map", "hotkey_warp", "hotkey_message",
+            "hotkey_auto_battle", "hotkey_stop_task", "hotkey_pause_task",
+            "hotkey_toggle_autoplot",
+        }
+
+
+class TestMessageHotkey:
+    @pytest.mark.parametrize("confirm, expected", [(True, "k"), (False, "p")])
+    def test_edit_confirm_or_cancel_and_reopen(
+        self, dlg, isolated_hotkey_config, qtbot, confirm, expected
+    ):
+        from PySide6.QtCore import Qt
+        from app.sub_interfaces.hotkey_interface import HotkeyInterface
+
+        cfg = isolated_hotkey_config
+        card = dlg.pushButton_dict["hotkey_message"]
+        assert card.contentLabel.text() == "P"
+        qtbot.mousePress(card.button, Qt.MouseButton.LeftButton)
+        qtbot.keyClick(card, Qt.Key.Key_K)
+        qtbot.mouseRelease(card.button, Qt.MouseButton.LeftButton)
+        assert cfg.get_value("hotkey_message") == "k"
+        assert card.contentLabel.text() == "K"
+
+        qtbot.mouseClick(
+            dlg.yesButton if confirm else dlg.cancelButton,
+            Qt.MouseButton.LeftButton,
+        )
+        qtbot.waitUntil(dlg.isHidden, timeout=2000)
+
+        cfg._load_config()
+        assert cfg.get_value("hotkey_message") == expected
+        reopened = HotkeyInterface(dlg.parentWidget())
+        qtbot.addWidget(reopened)
+        reopened.show()
+        assert reopened.pushButton_dict["hotkey_message"].contentLabel.text() == expected.upper()
 
 
 class TestHotkeyCancelRestore:

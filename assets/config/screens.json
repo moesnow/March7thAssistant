@@ -29,7 +29,7 @@
             {
                 "target_screen": "incoming_message",
                 "actions_list": [
-                    "auto.press_key('p')"
+                    "auto.press_key(cfg.get_value('hotkey_message', 'p'))"
                 ]
             }
         ]

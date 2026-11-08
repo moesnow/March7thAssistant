@@ -20,6 +20,7 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
             tr("秘技（只对清体力和逐光捡金场景生效）"): "hotkey_technique",
             tr("地图"): "hotkey_map",
             tr("跃迁"): "hotkey_warp",
+            tr("短信"): "hotkey_message",
             tr("自动战斗"): "hotkey_auto_battle",
             tr("停止任务（全局热键，支持后台）"): "hotkey_stop_task",
             tr("暂停/继续任务（全局热键，支持后台）"): "hotkey_pause_task",
@@ -61,6 +62,8 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
                 icon = UiIcon.MAP
             elif config == "hotkey_warp":
                 icon = UiIcon.STAR
+            elif config == "hotkey_message":
+                icon = FIF.CHAT
             elif config == "hotkey_auto_battle":
                 icon = FIF.GAME
             elif config == "hotkey_stop_task":
