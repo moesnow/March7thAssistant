@@ -15,6 +15,7 @@ from module.config import cfg
 from module.notification.notification import NotificationLevel
 from module.localization import get_raw_instance_names
 from tasks.base.base import Base
+from tasks.base.list_drag import drag_list
 from utils.image_utils import ImageUtils
 
 
@@ -47,7 +48,9 @@ class BuildTargetHandler(ABC):
                         paging_boundary_y = match_loc[1] + 64
                         break
                     else:
-                        auto.mouse_scroll(2, 1)
+                        if not drag_list(auto, (1125 / 1920, 510 / 1080), (1125 / 1920, 570 / 1080), crop=crop, duration=1.0):
+                            yield None
+                            return
                         time.sleep(1)
                 else:
                     log.warning("滚动锚点跟踪失败")
@@ -77,7 +80,9 @@ class BuildTargetHandler(ABC):
             anchor_template, _, _ = auto.take_screenshot(anchor_crop)
             anchor_template = cv2.cvtColor(np.array(anchor_template.copy()), cv2.COLOR_RGB2BGR)
 
-            auto.mouse_scroll(12)
+            if not drag_list(auto, (1125 / 1920, 810 / 1080), (1125 / 1920, 510 / 1080), crop=crop, duration=1.2):
+                yield None
+                return
             time.sleep(1)
 
 
@@ -256,7 +261,9 @@ class DefaultHandler(BuildTargetHandler):
                     log.error("尝试提取拟造花萼副本信息时失败，无法获取光锥晋阶材料信息")
                     break
 
-                auto.mouse_scroll(6, -1)
+                if not drag_list(auto, (1390 / 1920, 620 / 1080), (1390 / 1920, 430 / 1080),
+                                 crop=(790 / 1920, 377 / 1080, 694 / 1920, 354 / 1080), duration=1.0):
+                    return None, None
                 time.sleep(1)
 
                 text_crop = (790.0 / 1920, 377.0 / 1080, 694.0 / 1920, 354.0 / 1080)

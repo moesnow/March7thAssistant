@@ -1,4 +1,10 @@
-from module.ocr.ocr import OCR
+from module.ocr.ocr import (
+    OCR,
+    OCR_MODE_CPU,
+    OCR_SLOW_CONSECUTIVE_LIMIT,
+    OCR_SLOW_THRESHOLD,
+    OCR_WARMUP_HARD_LIMIT,
+)
 
 
 class TestOCRNormalizeMachine:
@@ -72,6 +78,51 @@ class TestOCRConvertFormat:
         assert converted[1][1] == ("world", 0.95)
 
 
+class TestRecognitionOnly:
+    def test_known_line_bypasses_detection_and_preserves_engine_settings(self):
+        import numpy as np
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock
+
+        pixels = np.zeros((34, 94, 3), dtype=np.uint8)
+        engine = SimpleNamespace(
+            use_det=True, text_score=0.8,
+            load_img=MagicMock(return_value=pixels),
+            recognize_txt=MagicMock(return_value=SimpleNamespace(
+                txts=(" 6 ", "", "bad"), scores=(0.99, 0.99, 0.4))),
+        )
+        ocr = OCR.__new__(OCR)
+        ocr.ocr = engine
+        assert ocr._infer(pixels, True) == [{
+            "box": [[0, 0], [94, 0], [94, 34], [0, 34]], "txt": "6", "score": 0.99,
+        }]
+        assert engine.use_det is True
+        assert engine.recognize_txt.call_args.args[0][0] is pixels
+
+    def test_normal_inference_still_uses_detection(self):
+        from unittest.mock import MagicMock
+        ocr = OCR.__new__(OCR)
+        ocr.ocr = MagicMock()
+        ocr.ocr.return_value.to_json.return_value = [{"txt": "正常文字"}]
+        assert ocr._infer("image") == [{"txt": "正常文字"}]
+        ocr.ocr.assert_called_once_with("image")
+        ocr.ocr.recognize_txt.assert_not_called()
+
+    def test_recognition_only_keeps_existing_cpu_fallback(self):
+        from unittest.mock import MagicMock
+
+        class ONNXRuntimeError(RuntimeError):
+            pass
+
+        ocr = TestRunSlowDegradeStateMachine()._create_running_ocr()
+        expected = [{"box": [[0, 0], [10, 0], [10, 10], [0, 10]], "txt": "6", "score": 0.99}]
+        ocr._infer = MagicMock(side_effect=[ONNXRuntimeError("failed"), expected])
+        assert ocr.run(ocr.img, recognition_only=True) == expected
+        assert ocr._infer.call_count == 2
+        assert all(call.args[1] is True for call in ocr._infer.call_args_list)
+        assert ocr._use_dml is False
+
+
 class TestOCRReplaceStrings:
     def _create_ocr_with_mock_logger(self):
         from unittest.mock import MagicMock
@@ -135,3 +186,233 @@ class TestDisableOpenVINOTelemetry:
                 OptInChecker._march7th_telemetry_disabled = original_flag
             elif hasattr(OptInChecker, "_march7th_telemetry_disabled"):
                 delattr(OptInChecker, "_march7th_telemetry_disabled")
+
+
+class _FakeConfig:
+    """最小配置桩：仅实现 OCR 用到的 get_value / set_value。"""
+
+    def __init__(self, values=None):
+        self.values = dict(values or {})
+
+    def get_value(self, key, default=None):
+        return self.values.get(key, default)
+
+    def set_value(self, key, value):
+        self.values[key] = value
+
+
+def _create_ocr_for_internal_tests(config_values=None):
+    from unittest.mock import MagicMock
+    ocr = OCR.__new__(OCR)
+    ocr.logger = MagicMock()
+    ocr.replacements = None
+    ocr._cfg = _FakeConfig(config_values)
+    ocr._slow_threshold = OCR_SLOW_THRESHOLD
+    ocr._slow_count = 0
+    return ocr
+
+
+class TestLoadThresholds:
+    def test_missing_config_keeps_defaults(self):
+        ocr = _create_ocr_for_internal_tests()
+        assert ocr._load_thresholds() is None
+        assert ocr._slow_threshold == OCR_SLOW_THRESHOLD
+
+    def test_invalid_values_fall_back_to_defaults(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_slow_threshold": -1})
+        ocr._load_thresholds()
+        assert ocr._slow_threshold == OCR_SLOW_THRESHOLD
+
+        ocr = _create_ocr_for_internal_tests({"ocr_slow_threshold": float("nan")})
+        ocr._load_thresholds()
+        assert ocr._slow_threshold == OCR_SLOW_THRESHOLD
+
+    def test_valid_values_applied(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_slow_threshold": 8.0})
+        ocr._load_thresholds()
+        assert ocr._slow_threshold == 8.0
+
+    def test_huge_threshold_keeps_degrade_disabled(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_slow_threshold": float("inf")})
+        ocr._load_thresholds()
+        assert ocr._slow_threshold == float("inf")
+
+
+class TestDisableGpuAcceleration:
+    def test_auto_persists_cpu(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_gpu_acceleration": "auto"})
+        ocr._disable_gpu_acceleration()
+        assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_CPU
+
+    def test_legacy_bool_true_persists_cpu(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_gpu_acceleration": True})
+        ocr._disable_gpu_acceleration()
+        assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_CPU
+
+    def test_explicit_mode_not_overwritten(self):
+        for mode in ("gpu", "onnx_dml"):
+            ocr = _create_ocr_for_internal_tests({"ocr_gpu_acceleration": mode})
+            ocr._disable_gpu_acceleration()
+            assert ocr._cfg.values["ocr_gpu_acceleration"] == mode
+
+    def test_explicit_cpu_mode_not_overwritten(self):
+        ocr = _create_ocr_for_internal_tests({"ocr_gpu_acceleration": OCR_MODE_CPU})
+        ocr._disable_gpu_acceleration()
+        assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_CPU
+
+
+class TestExitOcrResetsSlowCount:
+    def test_exit_resets_pending_slow_count(self):
+        ocr = _create_ocr_for_internal_tests()
+        ocr.ocr = None
+        ocr.ocr_time = 0.0
+        ocr.ocr_count = 0
+        ocr._slow_count = 2
+        ocr.exit_ocr()
+        assert ocr._slow_count == 0
+
+
+class TestRunSlowDegradeStateMachine:
+    def _create_running_ocr(self, config_values=None):
+        from unittest.mock import MagicMock
+        from PIL import Image as PILImage
+
+        ocr = _create_ocr_for_internal_tests(config_values)
+        ocr._use_dml = True
+        ocr._dml_fallback = False
+        ocr._using_openvino = False
+        ocr._openvino_fallback = False
+        ocr._periodic_gc_interval = 0
+        ocr.ocr_time = 0.0
+        ocr.ocr_count = 0
+        ocr.img = PILImage.new("RGB", (32, 32), "white")
+
+        def make_engine():
+            engine = MagicMock()
+            engine.return_value.to_json.return_value = []
+            return engine
+
+        ocr.ocr = make_engine()
+
+        def fake_instance_ocr(force_cpu=False, force_onnx=False, **kwargs):
+            # 模拟 force_cpu 重建后的关键状态变化
+            if force_cpu:
+                ocr._use_dml = False
+                ocr.ocr = make_engine()
+        ocr.instance_ocr = MagicMock(side_effect=fake_instance_ocr)
+        return ocr
+
+    def test_consecutive_slow_calls_trigger_degrade(self):
+        ocr = self._create_running_ocr({"ocr_gpu_acceleration": "auto"})
+        ocr._slow_threshold = -1  # 任何耗时都计为一次“慢”
+
+        degrade_calls = []
+        original_disable = OCR._disable_gpu_acceleration
+
+        def counting_disable(self_inner):
+            degrade_calls.append(1)
+            self_inner._set_mode(OCR_MODE_CPU)
+
+        OCR._disable_gpu_acceleration = counting_disable
+        try:
+            ocr.run(ocr.img)
+            assert len(degrade_calls) == 0  # 第 1 次慢不降级，容忍冷启动残余
+            assert ocr._slow_count == OCR_SLOW_CONSECUTIVE_LIMIT - 1
+
+            ocr.run(ocr.img)
+            assert len(degrade_calls) == 1  # 第 2 次慢即触发降级
+            assert ocr._slow_count == 0
+            assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_CPU
+            assert ocr._use_dml is False  # 已切换到 CPU 模式
+        finally:
+            OCR._disable_gpu_acceleration = original_disable
+
+    def test_fast_call_resets_pending_slow_count(self):
+        ocr = self._create_running_ocr()
+        ocr._slow_threshold = -1
+
+        ocr.run(ocr.img)
+        assert ocr._slow_count == 1
+
+        ocr._slow_threshold = 999999  # 恢复正常速度
+        ocr.run(ocr.img)
+        assert ocr._slow_count == 0
+
+
+class TestWarmupDmlFallback:
+    def _create_ocr_for_instance(self, config_values=None):
+        ocr = _create_ocr_for_internal_tests(config_values)
+        ocr._selected_mode = "auto"
+        ocr._resolved_mode = "auto"
+        ocr.ocr = None
+        ocr._use_dml = None
+        ocr._dml_fallback = False
+        ocr._using_openvino = False
+        ocr._openvino_fallback = False
+        ocr.ocr_time = 0.0
+        ocr.ocr_count = 0
+        return ocr
+
+    def _prepare_instance_ocr(self, monkeypatch, ocr):
+        """替换 RapidOCR 构造与递归重建，保留真实 instance_ocr 主体逻辑。"""
+        from unittest.mock import MagicMock
+        import rapidocr
+
+        fake_engine = MagicMock()
+        fake_engine.return_value.to_json.return_value = []
+        rebuilds = []
+
+        def fake_instance_ocr(force_cpu=False, force_onnx=False, **kwargs):
+            rebuilds.append(force_cpu)
+            if force_cpu:
+                ocr._dml_fallback = True
+                ocr._use_dml = False
+                ocr.ocr = fake_engine
+
+        monkeypatch.setattr(rapidocr, "RapidOCR", lambda params: fake_engine)
+        monkeypatch.setattr(ocr, "_check_windows_version", lambda: True)
+        real_instance = ocr.instance_ocr
+        ocr.instance_ocr = MagicMock(side_effect=fake_instance_ocr)
+        return real_instance, rebuilds
+
+    def test_warmup_exception_degrades_and_persists_cpu(self, monkeypatch):
+        from unittest.mock import MagicMock
+
+        ocr = self._create_ocr_for_instance({"ocr_gpu_acceleration": "auto"})
+        ocr._warmup_dml = MagicMock(side_effect=RuntimeError("dml broken"))
+        real_instance, rebuilds = self._prepare_instance_ocr(monkeypatch, ocr)
+
+        real_instance()
+
+        assert rebuilds == [True]
+        assert ocr._use_dml is False
+        assert ocr._dml_fallback is True
+        assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_CPU
+
+    def test_warmup_over_hard_limit_degrades_and_persists_cpu(self, monkeypatch):
+        from unittest.mock import MagicMock
+
+        ocr = self._create_ocr_for_instance({"ocr_gpu_acceleration": "auto"})
+        ocr._warmup_dml = MagicMock(return_value=OCR_WARMUP_HARD_LIMIT + 5.0)
+        real_instance, rebuilds = self._prepare_instance_ocr(monkeypatch, ocr)
+
+        real_instance()
+
+        assert rebuilds == [True]
+        assert ocr._use_dml is False
+        assert ocr._dml_fallback is True
+        assert ocr._cfg.values["ocr_gpu_acceleration"] == OCR_MODE_CPU
+
+    def test_warmup_within_limit_keeps_dml(self, monkeypatch):
+        from unittest.mock import MagicMock
+
+        ocr = self._create_ocr_for_instance({"ocr_gpu_acceleration": "auto"})
+        ocr._warmup_dml = MagicMock(return_value=OCR_WARMUP_HARD_LIMIT - 1.0)
+        real_instance, rebuilds = self._prepare_instance_ocr(monkeypatch, ocr)
+
+        real_instance()
+
+        assert rebuilds == []
+        assert ocr._use_dml is True
+        assert ocr._dml_fallback is False
+        assert ocr._cfg.values.get("ocr_gpu_acceleration") == "auto"

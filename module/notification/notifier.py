@@ -15,6 +15,19 @@ class Notifier:
         self.logger = logger  # 日志记录器
         self.supports_image = self._get_supports_image()  # 是否支持发送图片
 
+    @staticmethod
+    def merge_message(title: str, content: str) -> str:
+        """
+        将标题与内容合并为单条消息文本。
+
+        :param title: 通知的标题。
+        :param content: 通知的内容。
+        :return: 合并后的消息文本。两者都有时以空行分隔，只有其一时直接返回。
+        """
+        if title and content:
+            return f"{title}\n\n{content}"
+        return title or content or ""
+
     def _get_supports_image(self) -> bool:
         """
         确定该通知发送者是否支持发送图片。

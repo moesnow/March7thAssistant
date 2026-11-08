@@ -52,6 +52,8 @@ STARTUP_NOTIFICATION_CHANNEL_CODES = (
     "gocqhttp",
     "dingtalk",
     "pushplus",
+    "qmsg",
+    "qqbot",
     "wechatworkapp",
     "wechatworkbot",
     "gotify",

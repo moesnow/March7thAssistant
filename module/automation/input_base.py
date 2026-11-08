@@ -1,7 +1,22 @@
 from abc import ABC, abstractmethod
+import sys
+
+
+def background_enabled(config):
+    return (sys.platform == 'win32'
+            and config.get_value('local_control_mode', 'foreground') == 'background'
+            and not config.get_value('cloud_game_enable', False))
 
 
 class InputBase(ABC):
+    handles_pause = False
+    is_background = False
+
+    def release_all(self):
+        """释放后端持有的输入；无状态后端无需处理。"""
+
+    def close(self):
+        self.release_all()
 
     @abstractmethod
     def mouse_click(self, x, y):
@@ -21,6 +36,11 @@ class InputBase(ABC):
     @abstractmethod
     def mouse_move(self, x, y):
         '''将鼠标光标移动到屏幕上的（x，y）位置'''
+        pass
+
+    @abstractmethod
+    def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5, end_pause=0.0, repeats=1):
+        '''连续执行相同拖动，仅最后一次在松手前停留 end_pause 秒'''
         pass
 
     @abstractmethod

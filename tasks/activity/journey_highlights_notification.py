@@ -6,6 +6,7 @@ from module.logger import log
 from module.screen import screen
 from tasks.base.base import Base
 from module.automation import auto
+from tasks.base.list_drag import drag_list
 from module.notification.notification import NotificationLevel
 
 
@@ -36,8 +37,9 @@ def take_journey_highlights_screenshot():
 
         anchor_template = frame[frame.shape[0] - 80 :, :]
 
-        auto.click_element((0, 0, 1, 1), "crop")
-        auto.mouse_scroll(12)
+        if not drag_list(auto, (1370 / 1920, 850 / 1080), (1370 / 1920, 490 / 1080),
+                         crop=(375 / 1920, 300 / 1080, 1260 / 1920, 650 / 1080), duration=1.2):
+            return None
         time.sleep(1.0)
 
     if not frames:

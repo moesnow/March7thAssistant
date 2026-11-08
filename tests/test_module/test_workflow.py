@@ -4,6 +4,8 @@ from module.workflow import (
     parse_float,
     _parse_text_targets,
     parse_crop_expression,
+    parse_point_expression,
+    format_point_expression,
     format_crop_expression,
     build_crop_expression,
     normalize_step,
@@ -17,6 +19,7 @@ from module.workflow import (
     _serialize_workflow,
     _find_workflow_by_name,
     _allocate_workflow_directory_name,
+    WorkflowRunner,
 )
 
 
@@ -107,6 +110,26 @@ class TestParseCropExpression:
     def test_zero_denominator_raises(self):
         with pytest.raises(ValueError, match="分母不能为 0"):
             parse_crop_expression("1/0, 2/1, 3/1, 4/1")
+
+
+class TestParsePointExpression:
+    def test_fraction_format(self):
+        result = parse_point_expression("100 / 1920, 540 / 1080")
+        assert result == pytest.approx((100 / 1920, 0.5))
+
+    def test_tuple_input(self):
+        assert parse_point_expression((0.1, 0.2)) == (0.1, 0.2)
+
+    def test_invalid_count_raises(self):
+        with pytest.raises(ValueError, match="2 个值"):
+            parse_point_expression("0.1, 0.2, 0.3")
+
+    def test_zero_denominator_raises(self):
+        with pytest.raises(ValueError, match="分母不能为 0"):
+            parse_point_expression("1 / 0, 0.5")
+
+    def test_format_list(self):
+        assert format_point_expression([0.1, 0.2]) == "(0.1, 0.2)"
 
 
 class TestFormatCropExpression:
@@ -449,6 +472,67 @@ class TestNormalizeStepExtended:
         assert result["key"] == "enter"
         assert result["key_duration"] == 0.5
 
+    def test_drag_mouse_step(self):
+        step = {
+            "type": "drag_mouse",
+            "start": "100 / 1920, 540 / 1080",
+            "end": "900 / 1920, 540 / 1080",
+            "drag_duration": 1.2,
+        }
+        result = normalize_step(step)
+        assert result["type"] == "drag_mouse"
+        assert result["start"] == step["start"]
+        assert result["end"] == step["end"]
+        assert result["drag_duration"] == 1.2
+
+
+class TestWorkflowRunnerDragMouse:
+    @pytest.mark.parametrize("raises", [False, True])
+    def test_drag_mouse_reports_backend_failure(self, monkeypatch, raises):
+        def fail(*args):
+            if raises:
+                raise RuntimeError("input failed")
+            return False
+
+        monkeypatch.setattr("module.workflow.auto.drag_mouse", fail, raising=False)
+        runner = WorkflowRunner(mirror_to_project_log=False)
+        assert runner._drag_mouse({"start": "0, 0", "end": "1, 1"}) is False
+
+    def test_drag_mouse_calls_automation(self, monkeypatch):
+        calls = []
+        monkeypatch.setattr(
+            "module.workflow.auto.drag_mouse",
+            lambda start, end, duration: calls.append((start, end, duration)) or True,
+            raising=False,
+        )
+        runner = WorkflowRunner(sleep_func=lambda _: None, mirror_to_project_log=False)
+
+        result = runner._drag_mouse({
+            "start": "100 / 1920, 540 / 1080",
+            "end": "900 / 1920, 540 / 1080",
+            "drag_duration": 0.8,
+        })
+
+        assert result is True
+        assert calls[0][0] == pytest.approx((100 / 1920, 0.5))
+        assert calls[0][1] == pytest.approx((900 / 1920, 0.5))
+        assert calls[0][2] == pytest.approx(0.8)
+
+    def test_drag_mouse_rejects_out_of_range_coordinates(self, monkeypatch):
+        called = False
+
+        def drag_mouse(*args, **kwargs):
+            nonlocal called
+            called = True
+
+        monkeypatch.setattr("module.workflow.auto.drag_mouse", drag_mouse, raising=False)
+        runner = WorkflowRunner(mirror_to_project_log=False)
+
+        result = runner._drag_mouse({"start": "-0.1, 0.5", "end": "0.8, 0.5"})
+
+        assert result is False
+        assert called is False
+
 
 class TestBuildCropExpression:
     def test_basic(self):
@@ -610,3 +694,120 @@ class TestDuplicateWorkflowNameExtended:
         from module.workflow import duplicate_workflow_name
         result = duplicate_workflow_name("测试流程", set())
         assert result == "测试流程"
+
+
+class TestFormatWorkflowStepPath:
+    def test_list_input(self):
+        from module.workflow import format_workflow_step_path
+        assert format_workflow_step_path([0, 1]) == "0/1"
+
+    def test_string_passthrough(self):
+        from module.workflow import format_workflow_step_path
+        assert format_workflow_step_path(" 0/1/2 ") == "0/1/2"
+
+    def test_none_and_empty(self):
+        from module.workflow import format_workflow_step_path
+        assert format_workflow_step_path(None) is None
+        assert format_workflow_step_path("") is None
+
+
+class TestBuildWorkflowTask:
+    """workflow 启动任务统一构造：产出 program='workflow' 标记形态。"""
+
+    def test_marker_form_fields(self):
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程")
+        assert task["program"] == "workflow"
+        assert task["workflow_name"] == "示例流程"
+        assert task["args"] == "示例流程"  # 兼容旧字段
+        assert task["timeout"] == 0
+        assert "workflow_step_path" not in task
+
+    def test_step_path_from_indices(self):
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程", step_path=[0, 1])
+        assert task["workflow_step_path"] == "0/1"
+
+    def test_step_path_from_string(self):
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程", step_path="0/1/2")
+        assert task["workflow_step_path"] == "0/1/2"
+
+    def test_name_and_timeout(self):
+        from module.workflow import build_workflow_task
+        task = build_workflow_task("示例流程", timeout=60, name="流程编排 - 示例流程")
+        assert task["name"] == "流程编排 - 示例流程"
+        assert task["timeout"] == 60
+
+
+class TestListWorkflowNames:
+    def test_extracts_names_and_skips_empty(self, monkeypatch):
+        import module.workflow as wf
+        monkeypatch.setattr(wf, "load_workflows", lambda: [
+            {"name": "流程A"},
+            {"name": ""},
+            {"name": "流程B"},
+            {},
+        ])
+        assert wf.list_workflow_names() == ["流程A", "流程B"]
+
+    def test_listed_names_resolve_with_get_workflow_by_name(self, monkeypatch):
+        # --list-workflows 列出的名字必须能被 get_workflow_by_name 匹配（可直接用于 --workflow-name）
+        import module.workflow as wf
+        workflows = [{"name": "流程A"}, {"name": "流程B"}]
+        monkeypatch.setattr(wf, "load_workflows", lambda: workflows)
+        for name in wf.list_workflow_names():
+            assert wf.get_workflow_by_name(name, workflows) is not None
+
+
+class TestDescribeAvailableWorkflows:
+    def test_joins_names(self, monkeypatch):
+        import module.workflow as wf
+        monkeypatch.setattr(wf, "load_workflows", lambda: [{"name": "流程A"}, {"name": "流程B"}])
+        assert wf.describe_available_workflows() == "流程A、流程B"
+
+    def test_placeholder_when_empty(self, monkeypatch):
+        import module.workflow as wf
+        monkeypatch.setattr(wf, "load_workflows", lambda: [])
+        assert wf.describe_available_workflows() == "（无）"
+
+
+class TestWorkflowCliFlags:
+    """main.py 无法安全导入（模块级 parse_args/提权），用源码结构断言 CLI 参数存在。"""
+
+    def _main_source(self):
+        from pathlib import Path
+        return (Path(__file__).resolve().parents[2] / 'main.py').read_text(encoding='utf-8')
+
+    def test_list_workflows_flag_defined(self):
+        source = self._main_source()
+        assert '--list-workflows' in source
+        assert 'list_workflow_names' in source
+
+    def test_workflow_name_help_mentions_discovery(self):
+        assert '--list-workflows 查看可用名称' in self._main_source()
+
+
+class TestLoadWorkflowExecutionPayloadErrors:
+    """步骤路径类输入错误统一抛 ValueError（CLI 据此走友好报错而非异常通知）。"""
+
+    def _patch_workflow(self, monkeypatch):
+        import module.workflow as wf
+        workflow = {"name": "示例流程", "steps": [{"type": "wait", "title": "等待"}]}
+        monkeypatch.setattr(wf, "get_workflow_by_name", lambda name, workflows=None: workflow)
+        return wf
+
+    def test_out_of_range_step_path_raises_value_error(self, monkeypatch):
+        wf = self._patch_workflow(monkeypatch)
+        with pytest.raises(ValueError):
+            wf.load_workflow_execution_payload("示例流程", "9/9")
+
+    def test_non_digit_step_path_raises_value_error(self, monkeypatch):
+        wf = self._patch_workflow(monkeypatch)
+        with pytest.raises(ValueError):
+            wf.load_workflow_execution_payload("示例流程", "0/x")
+
+    def test_valid_step_path_returns_single_step_workflow(self, monkeypatch):
+        wf = self._patch_workflow(monkeypatch)
+        result = wf.load_workflow_execution_payload("示例流程", "0")
+        assert len(result["steps"]) == 1

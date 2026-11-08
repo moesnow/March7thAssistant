@@ -11,12 +11,18 @@ jobs:
   build:
     name: Build
     runs-on: windows-latest
+    outputs:
+      mirror_release_ready: ${{ steps.publish_release.outcome == 'success' }}
     env:
       PYTHONHASHSEED: 0
       SOURCE_DATE_EPOCH: 315532800
       MARCH7TH_LOG_LEVEL: DEBUG
       MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR: false
       PYTHONIOENCODING: utf-8
+      # 7-Zip ZS（含 Fast LZMA2）只作打包工具，缓存在 Actions 缓存里，不入库；
+      # 产物是标准 LZMA2 流，用户端 stock 7za 可正常解压。
+      ZS_VERSION: "26.02-v1.5.7-R2"
+      ZS_URL: "https://github.com/mcmilk/7-Zip-zstd/releases/download/v26.02-v1.5.7-R2/7z26.02-zstd-x64.exe"
 
     steps:
       # 签出代码
@@ -29,8 +35,8 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.15"
-          python-version: "3.14.5"
+          version: "0.13.0"
+          python-version: "3.14.8"
           enable-cache: true
           cache-python: true
           prune-cache: false
@@ -60,14 +66,54 @@ jobs:
           Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
           Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
           Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
+          # 根目录的 AGENTS.md：在安装目录中打开的 AI Agent 会自动读取，指向随包发布的使用说明（Skill）
+          Copy-Item -Path ".\assets\agent\AGENTS.md" -Destination ".\dist\March7thAssistant\" -Force
+
+      # 缓存 7-Zip ZS，避免每次发版重复下载二进制。
+      # 注意 GitHub 缓存按 ref 隔离：tag 触发的运行只能读默认分支（main）作用域的缓存，
+      # 不同 tag 之间也不共享，所以在 main 上手动 workflow_dispatch 跑一次本工作流预热缓存，
+      # 之后 tag 发版打包才会命中（本步骤不挂 tag 条件，就是为了能在 main 上预热）。
+      - name: Restore 7-Zip ZS cache
+        id: cache-7zzs
+        uses: actions/cache@v5
+        with:
+          path: temp/7zzs
+          key: 7zzs-${{ env.ZS_VERSION }}
+
+      # 仅在缓存未命中时下载 7-Zip ZS，并用仓库自带 stock 7za 解开安装包，不改动 assets/binary/7za.exe
+      # 注意：PowerShell 会把 -o.\temp\7zzs 拆成两个 token，报 Too short switch: -o，必须整体加引号
+      - name: Download 7-Zip ZS (cache miss)
+        if: steps.cache-7zzs.outputs.cache-hit != 'true'
+        run: |
+          New-Item -ItemType Directory -Force -Path .\temp\7zzs | Out-Null
+          curl.exe -sL -o .\temp\7zzs-setup.exe "$env:ZS_URL"
+          if ($LASTEXITCODE -ne 0) { Write-Host "download failed"; exit 1 }
+          $sz = (Get-Item .\temp\7zzs-setup.exe).Length
+          Write-Host "downloaded 7zzs-setup.exe: $sz bytes"
+          if ($sz -lt 1000000) { Write-Host "download too small, likely failed"; exit 1 }
+          .\assets\binary\7za.exe x -y ".\temp\7zzs-setup.exe" "-o.\temp\7zzs"
+          if ($LASTEXITCODE -ne 0) { Write-Host "extract failed"; exit 1 }
+          & .\temp\7zzs\7za.exe | Select-Object -First 2
 
       # 创建更新压缩包
+      # 压缩参数是 2026-09-28 实测标定值（9.test_build_optimization.yml 基准，run 36381841850）：
+      #   - update.7z（核心包）：flzma2 -mx=7 —— 快约 2.8 倍，体积 −1.55%
+      #   - full.7z（完整包）：flzma2 -mx=9 —— 快约 1.4 倍，体积 −0.83%
+      #     （flzma2 降 mx=7 体积反而 +8%，mx=9 才是完整包最小值）
+      #   - full.zip 保持 stock deflate 不变
+      # flzma2 档位曲线非单调，-mx=N 与 lzma2 -mx=N 不是同一套参数，不要自行调整，也不要加 -md 钉字典；
+      # 解压侧已实测：stock 7za 解 flzma2 归档与解 lzma2 归档速度、内容均无差异。
+      # 注意：不要把下面的压缩/下载步骤改成并行。7za 是 CPU 密集型，windows-latest 仅 4 核，
+      # 多进程压缩会互相抢核，实测反而更慢，不需要再尝试。
+      # 2026-09-23 实测（run 35881339484）：
+      #   - full.zip 与 full.7z 并行：309s → 363s（+54s）。zip 53s→127.5s，7z 256s→363.3s。
+      #   - update.7z 与 3rdparty 下载并行：零收益。zip 解压抢核抵消了等待时间（127s+25s ≈ 144s vs 143.9s）。
       - name: Create archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           # Compress-Archive -Path .\dist\March7thAssistant\ -DestinationPath .\dist\March7thAssistant.zip -Force
           Rename-Item -Path .\dist\March7thAssistant -NewName update
-          .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\update.7z .\dist\update\
+          .\temp\7zzs\7za.exe a -t7z -m0=flzma2 -ms=on -mx=7 .\dist\update.7z .\dist\update\
           Rename-Item -Path .\dist\update -NewName March7thAssistant
 
       # 获取第三方库最新发布版本
@@ -108,15 +154,17 @@ jobs:
           Rename-Item -Path .\dist\March7thAssistant -NewName March7thAssistant_full
 
       # 创建完整的压缩包
+      # full.zip 保持 stock deflate（仓库自带 7za）不变；full.7z 用 flzma2 -mx=9（完整包实测最优档位）
       - name: Create full zip archive
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           # Compress-Archive -Path .\dist\March7thAssistant_full\ -DestinationPath .\dist\March7thAssistant_full.zip -Force
           .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
-          .\assets\binary\7za.exe a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
+          .\temp\7zzs\7za.exe a -t7z -m0=flzma2 -ms=on -mx=9 .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
 
       # 创建GitHub发布
       - name: Create release
+        id: publish_release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v3
         with:
@@ -138,3 +186,80 @@ jobs:
           gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Release Note'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-mirror:
+    name: Refresh mirror metadata
+    needs: build
+    if: ${{ always() && !cancelled() && startsWith(github.ref, 'refs/tags/') && needs.build.outputs.mirror_release_ready == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment: mirror-release
+    permissions: {}
+    concurrency:
+      group: mirror-release-refresh
+      cancel-in-progress: false
+    steps:
+      # 凭据只提供给独立通知任务的这一步，不进入构建任务或公开产物。
+      - name: Refresh public release cache
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          MIRROR_SSH_HOST: ${{ secrets.MIRROR_SSH_HOST }}
+          MIRROR_SSH_PORT: ${{ secrets.MIRROR_SSH_PORT }}
+          MIRROR_SSH_USER: ${{ secrets.MIRROR_SSH_USER }}
+          MIRROR_SSH_PRIVATE_KEY: ${{ secrets.MIRROR_SSH_PRIVATE_KEY }}
+          MIRROR_SSH_KNOWN_HOSTS: ${{ secrets.MIRROR_SSH_KNOWN_HOSTS }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+          import tempfile
+          import time
+
+          def notify():
+              names = ("HOST", "PORT", "USER", "PRIVATE_KEY", "KNOWN_HOSTS")
+              values = {name: os.environ.get("MIRROR_SSH_" + name, "").strip() for name in names}
+              tag = os.environ.get("RELEASE_TAG", "")
+              if not all(values.values()) or not re.fullmatch(r"v\d{4}\.\d{1,2}\.\d{1,2}(?:-[A-Za-z0-9.]+)?", tag):
+                  return False
+              host, user, port = values["HOST"], values["USER"], int(values["PORT"])
+              if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9.:-]{0,252}", host) or not re.fullmatch(r"[a-z_][a-z0-9_-]{0,31}", user) or not 1 <= port <= 65535:
+                  return False
+              with tempfile.TemporaryDirectory(prefix="mirror-notify-") as directory:
+                  root = Path(directory)
+                  root.chmod(0o700)
+                  key, hosts = root / "key", root / "known_hosts"
+                  key.write_text(values["PRIVATE_KEY"] + "\n", encoding="utf-8")
+                  hosts.write_text(values["KNOWN_HOSTS"] + "\n", encoding="utf-8")
+                  key.chmod(0o600)
+                  hosts.chmod(0o600)
+                  command = [
+                      "ssh", "-F", os.devnull, "-T", "-i", str(key),
+                      "-o", "BatchMode=yes", "-o", "IdentitiesOnly=yes",
+                      "-o", "StrictHostKeyChecking=yes", "-o", f"UserKnownHostsFile={hosts}",
+                      "-o", "ConnectTimeout=10", "-o", "ConnectionAttempts=1",
+                      "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3",
+                      "-p", str(port), "-l", user, "--", host,
+                  ]
+                  for attempt in range(3):
+                      if attempt:
+                          time.sleep(60)
+                      try:
+                          result = subprocess.run(command, input=json.dumps({"tag": tag}) + "\n",
+                                                  text=True, capture_output=True, timeout=180)
+                          response = json.loads(result.stdout) if result.returncode == 0 else {}
+                          if isinstance(response, dict) and response.get("ok") is True and response.get("status") in {"refreshed", "already_refreshed"}:
+                              return True
+                      except (OSError, subprocess.TimeoutExpired, ValueError):
+                          pass
+              return False
+
+          try:
+              success = notify()
+          except Exception:
+              success = False
+          print("镜像缓存刷新成功" if success else "镜像缓存刷新失败，请检查凭据配置或服务端私有日志")
+          raise SystemExit(0 if success else 1)
+          PY

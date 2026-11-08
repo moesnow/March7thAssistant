@@ -10,10 +10,13 @@ log_retention_days: 30 # 日志保留天数，超过此天数的日志文件将�
 log_overlay_enable: true # 是否在游戏界面上显示实时日志浮窗（仅 Windows）。
 
 # 自动对话设置
+autoplot_remember_enable: false # 是否记住自动对话开关状态，开启后下次启动恢复，可能增加后台资源占用。
+autoplot_enable: false # 记住的自动对话开关状态，仅在 autoplot_remember_enable 开启时恢复。
 autoplot_skip_enable: true # 是否自动跳过对话（当出现跳过按钮时自动点击）。
 autoplot_click_enable: true # 是否自动选择对话选项。
 autoplot_battle_detect_enable: true # 是否自动战斗检测（检测到未自动战斗时按 V 开启）。
 autoplot_phone_detect_enable: true # 是否自动处理手机短信页面。
+autoplot_hero_chronicle_enable: false # 是否自动阅读如我所书中的翁法罗斯英雄纪。
 
 # 调试模式
 debug_mode_enable: false # 是否启用调试模式。开启后会在屏幕对应位置实时绘制检测范围框（透明悬浮窗），用于调试自动化识别。仅 Windows 生效。
@@ -28,6 +31,7 @@ pause_after_success: true # 是否在成功后暂停程序。true 若非循环�
 exit_after_failure: false # 是否在失败后直接退出。true 直接退出，false 暂停程序。
 
 # 任务完成后操作
+exit_app_after_success: false # GUI 中整条任务链全部成功后关闭助手；可与退出游戏组合，有按时任务或待执行完成后操作时保持运行。
 after_finish: None # 任务完成后的操作，可选值："None"（无操作）, "Exit"（退出程序）, "Loop"（循环执行）, "Shutdown"（关机）, "Sleep"（睡眠）, "Hibernate"（休眠）, "Restart"（重启）, "Logoff"（注销）, "TurnOffDisplay"（关闭显示器）, "RunScript"（运行脚本）。
 
 # 任务完成后是否播放提示音
@@ -46,8 +50,9 @@ pypi_mirror_urls:
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。
 game_path: C:\Program Files\Star Rail\Game\StarRail.exe # 游戏安装路径。
+game_launch_method: direct # 游戏启动方式：direct（直接启动）、epic（通过 Epic 启动）。路径仍指向 StarRail.exe。
 
-launcher_title_name: 米哈游启动器 # 米哈游启动器窗口标题。
+launcher_title_name: 米哈游启动器 # 启动器类型及窗口标题，可选 米哈游启动器、HoYoPlay。
 launcher_process_name: HYP # 米哈游启动器进程名。
 launcher_path: C:\Program Files\miHoYo Launcher\launcher.exe # 米哈游启动器安装路径。
 
@@ -115,7 +120,10 @@ build_target_ornament_weekly_count: 1 # 培养目标每周执行饰品提取的�
 build_target_use_user_instance_when_only_erosion_and_ornament: false # 当培养目标只识别到「侵蚀隧洞」和「饰品提取」时，是否改用用户手动配置的副本。
 
 # 分解设置
-break_down_level_four_relicset: false # 完成侵蚀隧洞、饰品提取、历战余响和模拟宇宙后是否自动分解四星及以下遗器。true 开启，false 关闭。
+break_down_level_four_relicset: false # 每周所选日期清理四星及以下遗器；可在展开项启用智能弃置。默认关闭。
+weekly_relic_smart_discard_enable: false # 每周清理时先智能弃置五星遗器，并一并分解已弃置遗器。默认关闭。
+weekly_relic_cleanup_day_of_week: 1 # 每周从周几开始清理遗器，1=周一，7=周日；在游戏刷新时间后执行。
+weekly_relic_cleanup_timestamp: 0 # 上次成功完成每周遗器清理的时间戳。
 
 # 队伍配置
 instance_team_enable: false # 是否在打副本时自动切换队伍。true 开启，false 关闭。
@@ -222,6 +230,7 @@ weekly_divergent_level: 5 # 执行差分宇宙时的难度等级，取值范围 
 weekly_divergent_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的时间戳，用于记录和控制运行频率。
 weekly_divergent_bonus_enable: false # 在领取积分奖励后自动执行饰品提取消耗沉浸器。true 开启，false 关闭。
 weekly_divergent_stable_mode: false # 是否启用差分宇宙低性能兼容模式，建议仅在低性能设备开启，可以提高事件和随意门交互的成功率（云游戏强制使用此模式）。true 开启，false 关闭。
+divergent_auto_save_enable: true # 探索成功后自动保存到第一个空存档位；没有空位时跳过。true 开启，false 关闭。
 
 # 差分宇宙站点优先级配置
 divergent_station_priority_enable: false # 是否启用自定义站点优先级。true 开启，false 关闭。关闭时使用默认优先级。
@@ -266,10 +275,12 @@ fight_team_enable: false # 是否在锄大地时自动切换队伍。true 开启
 fight_team_number: "7" # 自动切换到的队伍编号。
 fight_requirements: false # 是否已安装锄大地依赖。true 表示已安装，false 表示未安装或需要重新安装。
 fight_timestamp: 0 # 上次运行锄大地的时间戳，用于记录和控制运行频率。
-fight_allow_map_buy: 不配置 # 购买代币与过期邮包
-fight_allow_snack_buy: 不配置 # 购买秘技零食并合成零食
+fight_allow_map_buy: 不配置 # 每周获得特殊物品：购买代币与过期邮包
+fight_allow_snack_buy: 不配置 # 每日获得特殊物品：购买秘技零食并合成零食
+fight_allow_memory_token: 不配置 # 每周获得特殊物品：获得翁法罗斯记忆代币
+fight_reward_enable: false # 是否启用「特殊物品领取」。true 开启，false 关闭；关闭时不向锄大地写入上面三项。
 fight_main_map: "0" # 优先星球 {"空间站": "1", "雅利洛": "2", "仙舟": "3", "匹诺康尼": "4", "翁法罗斯": "5"}, "不配置": "0"
-fight_map_version: 不配置 # 地图版本，可选值：不配置、default（默认，疾跑）或 HuangQuan（黄泉专用）
+fight_map_version: 不配置 # 地图版本，可选值：不配置、default（默认，疾跑）、HuangQuan（黄泉专用）或 reward（获得特殊物品）
 
 # Genshin_StarRail_fps_unlocker 配置
 genshin_starRail_fps_unlocker_allow: false
@@ -277,8 +288,9 @@ genshin_starRail_fps_unlocker_path: .\3rdparty\Genshin_StarRail_fps_unlocker
 
 # 忘却之庭配置
 forgottenhall_enable: false # 是否启用混沌回忆功能。true 开启，false 关闭。
+forgottenhall_stellar_enable: false # 是否启用混沌回忆星启模式；默认使用常规模式。
 forgottenhall_level: # 混沌回忆关卡范围，设置允许尝试的关卡等级范围。
-  - 9
+  - 10
   - 12
 # 混沌回忆队伍配置，详细配置每个队伍成员及其秘技使用次数。
 # 数字代表秘技使用次数，其中 -1 代表最后一个放秘技和普攻的角色。
@@ -301,10 +313,14 @@ forgottenhall_team2: # 队伍2配置。
     - -1
   - - Qingque
     - 1
+forgottenhall_team3: # 星启模式第三队默认使用丹恒，可配置1至4名角色，不能留空。
+  - - DanHeng
+    - -1
 forgottenhall_timestamp: 0 # 上次运行混沌回忆的时间戳，用于记录和控制运行频率。
 
 # 虚构叙事配置
 purefiction_enable: false # 是否启用虚构叙事功能。true 开启，false 关闭。
+purefiction_stellar_enable: false # 是否启用虚构叙事星启模式；默认使用常规模式。
 purefiction_level: # 虚构叙事关卡范围，设置允许尝试的关卡等级范围。
   - 3
   - 4
@@ -329,10 +345,14 @@ purefiction_team2: # 队伍2配置。
     - -1
   - - Qingque
     - 1
+purefiction_team3: # 星启模式第三队默认使用丹恒，可配置1至4名角色，不能留空。
+  - - DanHeng
+    - -1
 purefiction_timestamp: 0 # 上次运行虚构叙事的时间戳，用于记录和控制运行频率。
 
 # 末日幻影配置
 apocalyptic_enable: false # 是否启用末日幻影功能。true 开启，false 关闭。
+apocalyptic_stellar_enable: false # 是否启用末日幻影星启模式；默认使用常规模式。
 apocalyptic_level: # 末日幻影关卡范围，设置允许尝试的关卡等级范围。
   - 3
   - 4
@@ -357,12 +377,16 @@ apocalyptic_team2: # 队伍2配置。
     - -1
   - - Qingque
     - 1
+apocalyptic_team3: # 星启模式第三队默认使用丹恒，可配置1至4名角色，不能留空。
+  - - DanHeng
+    - -1
 apocalyptic_timestamp: 0 # 上次运行末日幻影的时间戳，用于记录和控制运行频率。
 # 自动战斗和二倍速检测配置
 auto_battle_detect_enable: true # 是否启用自动战斗和二倍速检测。true 开启，false 关闭。
 
 # OCR 加速配置
-ocr_gpu_acceleration: auto # OCR 加速模式，可选值：auto（自动）, gpu（GPU）, onnx_dml（ONNXRuntime + DirectML）, cpu（CPU）, openvino_cpu（OpenVINO CPU）, onnx_cpu（ONNXRuntime CPU）。若 DML 模式过慢会自动切换到 cpu。
+ocr_gpu_acceleration: auto # OCR 加速模式，可选值：auto（自动）, gpu（GPU）, onnx_dml（ONNXRuntime + DirectML）, cpu（CPU）, openvino_cpu（OpenVINO CPU）, onnx_cpu（ONNXRuntime CPU）。若 DML 连续过慢会自动降级到 cpu。
+ocr_slow_threshold: 5.0 # DML 模式下单次 OCR 耗时超过此值（秒）计为一次"慢"，连续 2 次即降级到 cpu；仅在 ocr_gpu_acceleration 为 auto/gpu/onnx_dml 时生效；非法值回退默认，设为极大值可视为禁用自动降级。
 
 # 自动修改分辨率配置
 auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。true 开启，false 关闭。
@@ -370,14 +394,14 @@ auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。tru
 # 自动配置游戏路径
 auto_set_game_path_enable: true # 是否启用自动配置游戏路径。true 开启，false 关闭。
 
-# 循环模式
-loop_mode: scheduled # 可选值："power"（根据开拓力）, "scheduled"（定时任务）
+# 循环模式（保留用于旧配置兼容，仅支持定时运行）
+loop_mode: scheduled
 
-# 指定运行时间
+# 循环运行的指定时间（after_finish 为 Loop 时生效）
 scheduled_time: 4:00
 
-# 循环运行所需开拓力
-power_limit: 160 # 设置循环运行模式时所需的最低开拓力。
+# 启动运行设置
+no_run_immediately: false # 启动时先等待，等同于 --no-run-immediately。
 
 # 游戏刷新时间设置
 refresh_hour: 4 # 设置游戏每日刷新的时间（24小时制）。
@@ -393,6 +417,7 @@ hotkey_auto_battle: v # 设置自动战斗的按键。
 
 # 图形界面快捷键设置
 hotkey_stop_task: f10 # 设置停止任务的全局快捷键（支持后台）。
+hotkey_pause_task: f8 # 设置暂停/继续任务的全局快捷键（支持后台，仅内置任务有效）。
 hotkey_toggle_autoplot: f9 # 设置切换自动对话的全局快捷键（支持后台）。
 hotkey_toggle_autoplot_enable: false # 是否启用自动对话全局快捷键。启用后可通过快捷键快速切换自动对话的开/关状态。
 
@@ -409,6 +434,7 @@ scheduled_run_time: "04:00" # 旧配置：单一定时运行时间（仅用于�
 # - id: 唯一ID（自动生成）
 # - name: 任务显示名称
 # - time: 运行时间，HH:mm（24小时制）
+# - weekdays: 执行星期，1 表示周一，7 表示周日；省略时默认每天，例如 [1, 3, 5]
 # - program: 程序路径，填写 'self' 表示启动程序自身（即 March7th Assistant）
 # - args: 启动参数（可选），当 program 为 'self' 时填写任务ID（如 main/daily）
 # - timeout: 超时（秒），0 表示不启用
@@ -436,6 +462,16 @@ scheduled_tasks: [] # 示例：
 #     enabled: true
 
 use_background_screenshot: true # 是否优先使用后台截图
+local_control_mode: foreground # Windows 本地操作模式：foreground 前台；background 后台。下次启动任务生效。
+background_mouse_protection: false # 后台鼠标重试失败时，最多保护鼠标 2 秒；保留键盘和暂停热键。
+
+# 开机启动设置（在图形界面「设置 - 杂项」中通过「配置」按钮设置）
+# 由计划任务在登录后以最高权限静默启动，不会弹出 UAC 提示。
+autostart_open_gui: true # 登录 Windows 后是否打开图形界面；关闭时将以命令行窗口方式执行 autostart_headless_task（与手动运行命令行版一致）
+autostart_minimize: false # 打开图形界面后是否最小化到托盘（仅在打开图形界面时有效）
+autostart_gui_task: "" # 打开图形界面后自动执行的任务ID（如 main / daily），留空表示不执行
+autostart_headless_task: "main" # 不打开图形界面时执行的任务ID，必须填写（如 main / daily）
+
 home_cards:
 close_window_action: ask # 关闭窗口时的行为，可选值："ask"（询问）, "minimize"（最小化到托盘）, "close"（关闭程序）
 
@@ -534,7 +570,7 @@ notify_serverchan3_sendkey: "" # Server酱·3 版的 SendKey。
 notify_bark_enable: false # 是否启用 Bark 通知。true 开启，false 关闭。
 notify_bark_key: ""
 notify_bark_group: "March7thAssistant" # 可选参数，Bark 通知的分组名。
-notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/app/images/March7th.jpg" # 可选参数，Bark 通知的图标 URL。
+notify_bark_icon: "https://cdn.jsdelivr.net/gh/moesnow/March7thAssistant@main/assets/screenshot/March7th.png" # 可选参数，Bark 通知的图标 URL。
 notify_bark_isarchive: "1" # 可选参数，Bark 通知是否归档。
 notify_bark_sound: "" # 可选参数
 notify_bark_url: "" # 可选参数，通知点击后跳转的 URL。
@@ -556,6 +592,7 @@ notify_smtp_port: "" # SMTP 服务器端口，默认为 465。
 notify_smtp_ssl: true # 是否使用 SSL 连接 SMTP 服务器。默认为 True，可设置为 False 关闭。
 notify_smtp_starttls: false # 是否使用 SSL 连接 SMTP 服务器。默认为 False，可设置为 True 关闭。
 notify_smtp_ssl_unverified: false # 是否使用不经验证的 SSL 连接。默认为 False，可设置为 True 关闭。除非您使用自签名邮箱,否则不推荐启用。
+notify_smtp_plain_text: false # 是否以纯文本格式发送邮件。默认为 False（发送 HTML 格式）。true 开启后将以纯文本发送，适用于 Outlook 等将 HTML 邮件作为附件处理的邮箱。
 
 # OneBot 通知配置（QQ 机器人）
 # 已测试 NapCatQQ(https://github.com/NapNeko/NapCatQQ) 和 OpenShamrock(https://github.com/whitechi73/OpenShamrock) 可用
@@ -565,6 +602,16 @@ notify_onebot_endpoint: "" # OneBot 的服务端点 URL，例如 http://127.0.0.
 notify_onebot_token: "" # 可选参数，验证请求的 Access Token。
 notify_onebot_user_id: "" # 可选参数，私聊消息的接收用户 ID。
 notify_onebot_group_id: "" # 可选参数，群消息的接收群组 ID。
+
+# QQ 官方机器人通知配置（QQ 开放平台）
+# 仅需 AppID + AppSecret，无需部署 NapCat / Lagrange 等 OneBot 协议端，无封号风险
+# 支持发送截图（官方分片上传）
+# openid / group_openid 无法通过接口查询，可在软件内「自动绑定收件标识」，或从机器人收到的事件（如私聊、@ 机器人、机器人入群）中获取
+notify_qqbot_enable: false # 是否启用 QQ 官方机器人通知。true 开启，false 关闭。
+notify_qqbot_appid: "" # QQ 开放平台的机器人 AppID（纯数字时建议加引号填写）。
+notify_qqbot_client_secret: "" # QQ 开放平台的机器人 AppSecret（敏感凭证，请勿泄露；建议加引号填写）。
+notify_qqbot_openid: "" # 可选参数，单聊消息的接收用户 openid。
+notify_qqbot_group_openid: "" # 可选参数，群聊消息的接收群 group_openid。
 
 # Go-cqhttp 通知配置（已停止维护）
 # 支持发送截图
@@ -587,6 +634,12 @@ notify_pushplus_token: "" # Pushplus 的 Token。
 notify_pushplus_channel: "" # 可选参数，Pushplus 的通知渠道。
 notify_pushplus_webhook: "" # 可选参数，Pushplus 的 Webhook URL。
 notify_pushplus_callbackUrl: "" # 可选参数，Pushplus 的回调 URL。
+
+# Qmsg 通知配置
+notify_qmsg_enable: false # 是否启用 Qmsg 通知。true 开启，false 关闭。
+notify_qmsg_key: "" # Qmsg 酱的 Key。
+notify_qmsg_qq: "" # 可选参数，指定接收通知的 QQ 号，不填则发送到该 Key 绑定的默认 QQ。
+notify_qmsg_mode: "" # 可选参数，发送模式，例如 send（默认）或 group。
 
 # 企业微信应用通知配置
 # 支持发送截图
@@ -624,7 +677,7 @@ notify_pushdeer_url: "" # 可选参数，自定义 Pushdeer 服务的 URL。
 notify_lark_enable: false # 是否启用飞书通知。true 开启，false 关闭。
 notify_lark_webhook: "" # 飞书通知的 Webhook URL。
 notify_lark_content: "" # 飞书通知的内容。
-notify_lark_keyword: "" # 可选参数，如果设置了关键词安全设置，此处填写关键词， 如无关键词请设置为空，而非空字符串。（因onepush库bug）
+notify_lark_keyword: "" # 可选参数，如果设置了关键词安全设置，此处填写关键词，如无关键词请设置为空。
 notify_lark_sign: "" # 可选参数，如果设置了签名安全设置，此处填写签名。
 notify_lark_imageenable: false # 是否启用图片信息发送，true 开启，false 关闭，默认为关闭
 notify_lark_appid: "" # 如启用图片信息发送，则必填，需自建飞书应用获取，详见https://open.feishu.cn/document/server-docs/api-call-guide/terminology

@@ -2,7 +2,6 @@
 import copy
 import os
 import re
-import shlex
 import sys
 
 from PySide6.QtCore import Qt
@@ -37,21 +36,25 @@ from qfluentwidgets import (
     ScrollArea,
     SubtitleLabel,
     TreeWidget,
-    SpinBox,
-    DoubleSpinBox,
     CheckBox
 )
 
+from app.components.ascii_spin_box import AsciiSpinBox, AsciiDoubleSpinBox
+
 import tasks.tool as tool
+from module.config import cfg
 from module.localization import tr
 from module.game import get_game_controller
 from module.workflow import (
     CONDITION_TYPE_LABELS,
     STEP_TYPE_LABELS,
     WORKFLOW_USER_INFO_KEYS,
+    build_workflow_task,
     can_change_to_screen_from_main,
     duplicate_workflow_name,
     export_workflow_to_zip,
+    format_point_expression,
+    format_workflow_task_name,
     get_asset_directory,
     get_current_workflow_name,
     get_switchable_screen_name,
@@ -61,6 +64,7 @@ from module.workflow import (
     is_workflow_read_only,
     load_workflows,
     normalize_step,
+    parse_point_expression,
     save_workflows,
     set_current_workflow_name,
     summarize_step,
@@ -147,6 +151,7 @@ class StepEditDialog(QDialog):
         "click_image",
         "click_text",
         "click_crop",
+        "drag_mouse",
         "find_image",
         "find_text",
         "play_audio",
@@ -216,27 +221,27 @@ class StepEditDialog(QDialog):
         self.screenTargetCombo = ComboBox(self)
         self.cropEdit = LineEdit(self)
         self.cropEdit.setPlaceholderText(tr("留空表示全屏，例如 (100 / 1920, 200 / 1080, 300 / 1920, 120 / 1080)"))
-        self.thresholdSpin = DoubleSpinBox(self)
+        self.thresholdSpin = AsciiDoubleSpinBox(self)
         self.thresholdSpin.setRange(0.0, 1.0)
         self.thresholdSpin.setDecimals(2)
         self.thresholdSpin.setSingleStep(0.05)
-        self.maxRetriesSpin = SpinBox(self)
+        self.maxRetriesSpin = AsciiSpinBox(self)
         self.maxRetriesSpin.setRange(1, 99)
-        self.secondsSpin = DoubleSpinBox(self)
+        self.secondsSpin = AsciiDoubleSpinBox(self)
         self.secondsSpin.setRange(0.0, 3600.0)
         self.secondsSpin.setDecimals(1)
         self.secondsSpin.setSingleStep(0.5)
-        self.countSpin = SpinBox(self)
+        self.countSpin = AsciiSpinBox(self)
         self.countSpin.setRange(0, 9999)
         self.countSpin.setSpecialValueText(tr("无限"))
-        self.maxIterationsSpin = SpinBox(self)
+        self.maxIterationsSpin = AsciiSpinBox(self)
         self.maxIterationsSpin.setRange(0, 9999)
         self.maxIterationsSpin.setSpecialValueText(tr("无限"))
         self.includeCheck = CheckBox(tr("使用包含匹配"), self)
         self.withScreenshotCheck = CheckBox(tr("发送截图"), self)
         self.keyEdit = LineEdit(self)
         self.keyEdit.setPlaceholderText(tr("输入按键名，如 enter, space, a, b 等"))
-        self.keyDurationSpin = DoubleSpinBox(self)
+        self.keyDurationSpin = AsciiDoubleSpinBox(self)
         self.keyDurationSpin.setRange(0.0, 60.0)
         self.keyDurationSpin.setDecimals(2)
         self.keyDurationSpin.setSingleStep(0.1)
@@ -244,10 +249,18 @@ class StepEditDialog(QDialog):
         self.keyActionCombo.addItems([tr("点击"), tr("按下"), tr("松开")])
         self.clickActionCombo = ComboBox(self)
         self.clickActionCombo.addItems([tr("点击"), tr("按下"), tr("松开")])
-        self.pressDurationSpin = DoubleSpinBox(self)
+        self.pressDurationSpin = AsciiDoubleSpinBox(self)
         self.pressDurationSpin.setRange(0.0, 60.0)
         self.pressDurationSpin.setDecimals(2)
         self.pressDurationSpin.setSingleStep(0.1)
+        self.startPointEdit = LineEdit(self)
+        self.startPointEdit.setPlaceholderText(tr("例如 100 / 1920, 540 / 1080"))
+        self.endPointEdit = LineEdit(self)
+        self.endPointEdit.setPlaceholderText(tr("例如 900 / 1920, 540 / 1080"))
+        self.dragDurationSpin = AsciiDoubleSpinBox(self)
+        self.dragDurationSpin.setRange(0.0, 60.0)
+        self.dragDurationSpin.setDecimals(2)
+        self.dragDurationSpin.setSingleStep(0.1)
 
         self._add_row(tr("步骤类型"), self.typeCombo, key="type")
         self._add_row(tr("条件类型"), self.conditionTypeCombo, key="condition")
@@ -268,6 +281,9 @@ class StepEditDialog(QDialog):
         self._add_row(tr("按键动作"), self.keyActionCombo, key="key_action")
         self._add_row(tr("点击动作"), self.clickActionCombo, key="click_action")
         self._add_row(tr("按下时长"), self.pressDurationSpin, key="press_duration")
+        self._add_row(tr("滑动起点"), self.startPointEdit, key="start")
+        self._add_row(tr("滑动终点"), self.endPointEdit, key="end")
+        self._add_row(tr("滑动时长"), self.dragDurationSpin, key="drag_duration")
         self.formLayout.addStretch(1)
 
         button_layout = QHBoxLayout()
@@ -339,6 +355,9 @@ class StepEditDialog(QDialog):
         self.clickActionCombo.setCurrentIndex(click_action_map.get(click_action, 0))
 
         self.pressDurationSpin.setValue(self.original_step.get("press_duration", 0.1))
+        self.startPointEdit.setText(format_point_expression(self.original_step.get("start", "")))
+        self.endPointEdit.setText(format_point_expression(self.original_step.get("end", "")))
+        self.dragDurationSpin.setValue(self.original_step.get("drag_duration", 0.5))
 
     def _current_step_type(self) -> str:
         return self.STEP_TYPES[self.typeCombo.currentIndex()]
@@ -358,6 +377,8 @@ class StepEditDialog(QDialog):
             visible_rows.update({"text", "include", "crop", "retries", "click_action", "press_duration"})
         elif step_type == "click_crop":
             visible_rows.update({"crop", "click_action", "press_duration"})
+        elif step_type == "drag_mouse":
+            visible_rows.update({"start", "end", "drag_duration"})
         elif step_type == "find_image":
             visible_rows.update({"template", "threshold", "crop", "retries"})
         elif step_type == "find_text":
@@ -439,6 +460,17 @@ class StepEditDialog(QDialog):
         if step_type == "click_crop" and not self.cropEdit.text().strip():
             return False, tr("点击坐标需要填写检测区域")
 
+        if step_type == "drag_mouse":
+            if not self.startPointEdit.text().strip() or not self.endPointEdit.text().strip():
+                return False, tr("滑动鼠标需要填写起点和终点")
+            try:
+                start = parse_point_expression(self.startPointEdit.text())
+                end = parse_point_expression(self.endPointEdit.text())
+                if any(not 0.0 <= value <= 1.0 for value in (*start, *end)):
+                    return False, tr("滑动鼠标坐标必须在 0 到 1 之间")
+            except (TypeError, ValueError) as exc:
+                return False, str(exc)
+
         if step_type == "play_audio" and not self.audioPathEdit.text().strip():
             return False, tr("请输入音频文件路径")
 
@@ -509,6 +541,9 @@ class StepEditDialog(QDialog):
             "key_action": key_action,
             "click_action": click_action,
             "press_duration": self.pressDurationSpin.value(),
+            "start": self.startPointEdit.text().strip(),
+            "end": self.endPointEdit.text().strip(),
+            "drag_duration": self.dragDurationSpin.value(),
             "children": copy.deepcopy(self.original_step.get("children", [])) if step_type in self.CONTROL_STEP_TYPES else [],
         }
         return normalize_step(step)
@@ -564,7 +599,8 @@ class WorkflowInterface(ScrollArea):
         self.renameWorkflowButton = PushButton(FIF.EDIT, tr("重命名"), self.summaryCard)
         self.deleteWorkflowButton = PushButton(FIF.DELETE, tr("删除流程"), self.summaryCard)
         self.workflowInfoButton = PushButton(FIF.INFO, tr("流程信息"), self.summaryCard)
-        workflow_row.addWidget(QLabel(tr("当前流程"), self.summaryCard))
+        self.currentWorkflowLabel = QLabel(tr("当前流程"), self.summaryCard)
+        workflow_row.addWidget(self.currentWorkflowLabel)
         workflow_row.addWidget(self.workflowCombo, 1)
         workflow_row.addWidget(self.newWorkflowButton)
         workflow_row.addWidget(self.renameWorkflowButton)
@@ -636,6 +672,36 @@ class WorkflowInterface(ScrollArea):
         self.editorLayout.addLayout(editor_header)
         self.editorLayout.addLayout(button_row)
         self.editorLayout.addWidget(self.stepTree)
+
+    def retranslateUi(self):
+        """保留流程数据、选择、树节点及展开状态，不重新加载文件。"""
+        StyleSheet.WORKFLOW_INTERFACE.apply(self)
+        self.titleLabel.setText(tr('流程编排'))
+        self.titleLabel.adjustSize()
+        self.summaryTitle.setText(tr('像快捷指令一样拼流程') + ' ' + tr('【测试版】'))
+        self.currentWorkflowLabel.setText(tr('当前流程'))
+        self.newWorkflowButton.setText(tr('新建流程'))
+        self.renameWorkflowButton.setText(tr('重命名'))
+        self.deleteWorkflowButton.setText(tr('删除流程'))
+        self.workflowInfoButton.setText(tr('流程信息'))
+        self.runButton.setText(tr('运行流程'))
+        self.captureTemplateButton.setText(tr('采集图像模板'))
+        self.openTemplateDirButton.setText(tr('打开模板目录'))
+        self.importWorkflowButton.setText(tr('导入流程'))
+        self.exportWorkflowButton.setText(tr('导出流程'))
+        self.editorTitle.setText(tr('步骤树'))
+        self.editorHint.setText(tr('控制节点支持添加子步骤'))
+        self.addStepButton.setText(tr('添加步骤'))
+        self.addChildButton.setText(tr('添加子步骤'))
+        self.editStepButton.setText(tr('编辑步骤'))
+        self.deleteStepButton.setText(tr('删除步骤'))
+        self.moveUpButton.setText(tr('上移'))
+        self.moveDownButton.setText(tr('下移'))
+        self.stepTree.setHeaderLabels([tr('步骤'), tr('说明')])
+        for path, item in self.pathItemMap.items():
+            title, detail = summarize_step(self._step_for_path(path))
+            item.setText(0, title)
+            item.setText(1, detail or '')
 
     def _build_layout(self):
         self.titleLabel.move(36, 30)
@@ -1152,33 +1218,20 @@ class WorkflowInterface(ScrollArea):
         new_path = tuple(list(selected_path[:-1]) + [new_index])
         self._refresh_tree(new_path)
 
-    def _workflow_task_display_name(self, selected_path=None) -> str:
-        workflow_name = self._current_workflow()["name"]
-        if not selected_path:
-            return workflow_name
-        title, _ = summarize_step(self._step_for_path(selected_path))
-        return f"{workflow_name} - {title}"
-
     def _build_workflow_task(self, selected_path=None) -> dict:
-        args = ["--workflow-name", self._current_workflow()["name"]]
-        if selected_path:
-            path_text = "/".join(str(index) for index in selected_path)
-            args.extend(["--workflow-step-path", path_text])
-
-        if getattr(sys, 'frozen', False):
-            program = os.path.abspath("./March7th Assistant.exe")
-            task_args = shlex.join(args)
-        else:
-            program = sys.executable
-            main_script = os.path.abspath("main.py")
-            task_args = shlex.join([main_script, *args])
-
-        return {
-            "name": f"{tr('流程编排')} - {self._workflow_task_display_name(selected_path)}",
-            "program": program,
-            "args": task_args,
-            "timeout": 0,
+        # 统一产出 program='workflow' 标记形态，实际命令行由 startTask 的 workflow 改写处唯一解析
+        display = {
+            "workflow_name": self._current_workflow()["name"],
+            "step": copy.deepcopy(self._step_for_path(selected_path)) if selected_path else None,
         }
+        task = build_workflow_task(
+            display["workflow_name"],
+            step_path=selected_path,
+            name=format_workflow_task_name(display["workflow_name"], display["step"]),
+        )
+        # 仅自动生成的显示名携带来源；自定义任务名不能按文字或前缀猜测。
+        task["workflow_display"] = display
+        return task
 
     def _start_workflow_execution(self, selected_path=None):
         main_window = self._get_main_window()
@@ -1198,7 +1251,8 @@ class WorkflowInterface(ScrollArea):
                 main_window.switchTo(log_interface)
             return
 
-        if not game.is_game_running():
+        # 云游戏由任务进程连接并校验会话，不依赖桌面窗口或 GUI 进程里的 driver。
+        if not cfg.cloud_game_enable and not game.is_game_running():
             InfoBar.warning(
                 title=tr("启动游戏"),
                 content=tr("无法获取游戏窗口截图，请确认游戏窗口已打开"),
@@ -1210,7 +1264,7 @@ class WorkflowInterface(ScrollArea):
             )
             return
 
-        if not game.switch_to_game():
+        if not cfg.cloud_game_enable and not game.switch_to_game():
             InfoBar.warning(
                 title=tr("启动游戏"),
                 content=tr("无法获取游戏窗口截图，请确认游戏窗口已打开"),

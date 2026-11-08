@@ -61,14 +61,32 @@ def parse_args():
         action="store_true",
         help="不隐藏控制台窗口，显示命令行输出（仅 Windows）"
     )
+    optional.add_argument(
+        "--start-minimized-to-tray",
+        action="store_true",
+        help="启动后最小化到托盘"
+    )
+    optional.add_argument(
+        "--autostart",
+        action="store_true",
+        help="开机自启入口（由启动项自动传入，按配置决定是否打开图形界面及自动执行的任务）"
+    )
 
     args = parser.parse_args()
 
+    # 旧更新器可能传入只读角色；操作入口在加载配置前清除，查询入口保留。
+    if not args.list:
+        os.environ.pop("MARCH7TH_CONFIG_READONLY", None)
+
     # 处理 --list 参数
     if args.list:
+        from module.localization import load_language
+        from utils.tasks import task_display_names
+
+        load_language()
         print("\n可用的任务列表:")
         print("-" * 40)
-        for task_id, task_name in AVAILABLE_TASKS.items():
+        for task_id, task_name in task_display_names().items():
             print(f"  {task_id:<20} {task_name}")
         print("-" * 40)
         print("\n使用示例:")
@@ -88,16 +106,38 @@ if not args.no_silent:
     hide_console()
 
 if sys.platform == 'win32':
-    import pyuac
-    if not pyuac.isUserAdmin():
+    from utils.admin import is_user_admin, run_as_admin
+    if not is_user_admin():
         try:
-            pyuac.runAsAdmin(False)
+            run_as_admin()
             sys.exit(0)
         except Exception:
             sys.exit(1)
 
+
+# 控制台已隐藏，崩溃信息写入 logs/crash.log，否则闪退时什么都留不下
+from utils.crash_log import enable_crash_log, record_crash
+enable_crash_log()
+
+# 开机自启：按配置决定是否打开图形界面，以及启动后自动执行的任务
+_autostart_gui_task = None
+_autostart_minimized = False
+if args.autostart:
+    try:
+        from module.config import cfg as _autostart_cfg
+        if not _autostart_cfg.get_value("autostart_open_gui", True):
+            # 不打开图形界面：交由命令行版在命令行窗口中执行所选任务（与手动运行一致）
+            from utils.autostart import launch_headless_task
+            launch_headless_task(_autostart_cfg.get_value("autostart_headless_task") or "main")
+            sys.exit(0)
+        _autostart_gui_task = _autostart_cfg.get_value("autostart_gui_task") or None
+        _autostart_minimized = bool(_autostart_cfg.get_value("autostart_minimize", False))
+    except Exception:
+        pass
+
 from PySide6.QtCore import Qt, QLocale, qInstallMessageHandler, QtMsgType
 from PySide6.QtWidgets import QApplication
+from app.common.application import create_application
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 import json
 import hashlib
@@ -119,6 +159,7 @@ def qt_message_handler(mode, context, message):
         print(f"Qt Critical: {message}")
     elif mode == QtMsgType.QtFatalMsg:
         print(f"Qt Fatal: {message}")
+        record_crash(f"Qt Fatal: {message}")
 
 
 qInstallMessageHandler(qt_message_handler)
@@ -215,12 +256,14 @@ if __name__ == "__main__":
         for _qt_key in ('QT_PLUGIN_PATH', 'QT_QPA_PLATFORM_PLUGIN_PATH', 'QML2_IMPORT_PATH', 'QT_QPA_FONTDIR'):
             os.environ.pop(_qt_key, None)
 
-    app = QApplication(sys.argv)
+    app = create_application(sys.argv)
 
     # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server
     _key = _get_server_key()
+    # 开机自启时把配置的任务一并转发给已有实例，保证任务照常执行
+    _startup_task = args.task or _autostart_gui_task
     try:
-        payload = json.dumps({'action': 'activate', 'task': args.task, 'exit': args.exit}).encode('utf-8')
+        payload = json.dumps({'action': 'activate', 'task': _startup_task, 'exit': args.exit}).encode('utf-8')
     except Exception:
         payload = b'ACTIVATE'
 
@@ -239,6 +282,7 @@ if __name__ == "__main__":
     try:
         from module.config import cfg
         from module.localization import load_language, detect_lang
+        from app.common.translator import create_fluent_translator
         ui_language = cfg.get_value("ui_language", "zh_CN")
 
         if ui_language == "auto":
@@ -247,16 +291,7 @@ if __name__ == "__main__":
         cfg.ui_language_now = ui_language
 
         # 创建翻译器实例，生命周期必须和 app 相同
-        if ui_language == "zh_TW":
-            translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.Taiwan))
-        elif ui_language == "ja_JP":
-            translator = FluentTranslator(QLocale(QLocale.Language.Japanese, QLocale.Country.Japan))
-        elif ui_language == "ko_KR":
-            translator = FluentTranslator(QLocale(QLocale.Language.Korean, QLocale.Country.SouthKorea))
-        elif ui_language == "en_US":
-            translator = FluentTranslator(QLocale(QLocale.Language.English, QLocale.Country.UnitedStates))
-        else:  # 默认使用中文
-            translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
+        translator = create_fluent_translator(ui_language)
 
         load_language(ui_language)
     except Exception:
@@ -265,11 +300,30 @@ if __name__ == "__main__":
     if translator is None:
         translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
 
+    # 安装登记（含图形界面进程标识）：供 AI Agent / 脚本查找本机安装，并判断图形界面是否在运行
+    try:
+        from module.config import cfg
+        from utils.install_registry import register_install
+        register_install(cfg.version, gui_pid=os.getpid())
+    except Exception:
+        pass
+
+    # AI 助手里已安装的 Skill 副本跟随小助手更新（仅打包版）。更新后自动重启时就在这里完成，下次 AI 会话读到的已是新版
+    try:
+        from utils.agent_skill import sync_installed_skills
+        sync_installed_skills()
+    except Exception:
+        pass
+
     app.installTranslator(translator)
 
     # 传递任务参数给主窗口
     from app.main_window import MainWindow
-    w = MainWindow(task=args.task, exit_on_complete=args.exit)
+    w = MainWindow(
+        task=_startup_task,
+        exit_on_complete=args.exit,
+        start_minimized_to_tray=args.start_minimized_to_tray or _autostart_minimized,
+    )
 
     # 注册主窗口并处理启动期间收到的挂起消息
     _main_window = w

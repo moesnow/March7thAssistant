@@ -6,8 +6,7 @@ from PySide6.QtWidgets import QPushButton
 
 from module.config import cfg
 from module.localization import tr
-import os
-import sys
+from utils.desktop import open_log_folder
 from ..tools.check_update import checkUpdate
 from app.common.signal_bus import signalBus
 
@@ -84,29 +83,17 @@ class ComboBoxSettingCardLog(SettingCard):
         cfg.set_value(self.configname, self.comboBox.itemData(index))
 
     def _onClicked(self):
-        if sys.platform == 'win32':
-            os.startfile(os.path.abspath("./logs"))
-        elif sys.platform == 'darwin':
-            os.system(f'open "{os.path.abspath("./logs")}"')
-        else:
-            os.system(f'xdg-open "{os.path.abspath("./logs")}"')
+        open_log_folder()
 
 
 class ComboBoxSettingCardLanguage(ComboBoxSettingCard2):
     """Combo box setting card specialized for UI language changes.
 
-    Shows an InfoBar notifying that a restart is required when the language changes.
+    Requests an in-place language refresh after the popup has closed.
     """
 
     def _onCurrentIndexChanged(self, index: int):
-        old_val = cfg.get_value(self.configname)
         new_val = self.comboBox.itemData(index)
-        if old_val == new_val:
-            return
-        # set value (reuse base behavior)
-        cfg.set_value(self.configname, new_val)
-        # Emit a signal to notify top-level window to show restart InfoBar
-        try:
-            signalBus.uiLanguageChanged.emit(new_val)
-        except Exception:
-            pass
+        # 由主窗口在刷新事务中保存配置，失败时才能恢复原值（包括 auto）。
+        # 不与已保存值比较：等待期间选回原语言，也必须覆盖之前的请求。
+        signalBus.uiLanguageChanged.emit(new_val)

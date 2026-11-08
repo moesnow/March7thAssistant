@@ -1,0 +1,242 @@
+name: Test Build Optimization
+
+# 手动触发。CI 内临时下载 7-Zip ZS，与仓库自带的 7za 做压缩对比基准。
+# 不修改 assets/binary/7za.exe，不改 1.build_release.yml，不创建 Release、不触发 Mirror酱。
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Test Build
+    runs-on: windows-latest
+    env:
+      PYTHONHASHSEED: 0
+      SOURCE_DATE_EPOCH: 315532800
+      MARCH7TH_LOG_LEVEL: DEBUG
+      MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR: false
+      PYTHONIOENCODING: utf-8
+      # 7-Zip ZS（含 Fast LZMA2）仅下载到 CI 临时目录，不入库
+      ZS_VERSION: "26.02-v1.5.7-R2"
+      ZS_URL: "https://github.com/mcmilk/7-Zip-zstd/releases/download/v26.02-v1.5.7-R2/7z26.02-zstd-x64.exe"
+
+    steps:
+      # 签出代码
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          submodules: "false"
+
+      # 设置 uv 和 Python 环境
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.1.0
+        with:
+          version: "0.13.0"
+          python-version: "3.14.8"
+          enable-cache: true
+          cache-python: true
+          prune-cache: false
+
+      # 安装依赖
+      - name: Install dependencies
+        run: |
+          uv sync --group build
+          uv run python build.py --task ocr
+
+      # 并行生成程序（与正式流程一致）
+      - name: Generate program
+        run: |
+          $p1 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Assistant.spec" -y' -PassThru -NoNewWindow
+          $p2 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist" ".\March7th Launcher.spec" -y' -PassThru -NoNewWindow
+          $p3 = Start-Process -FilePath "uv" -ArgumentList 'run pyinstaller --distpath ".\dist\March7thAssistant" ".\March7th Updater.spec" -y' -PassThru -NoNewWindow
+          $p1.WaitForExit(); $p2.WaitForExit(); $p3.WaitForExit()
+          if ($p1.ExitCode -ne 0 -or $p2.ExitCode -ne 0 -or $p3.ExitCode -ne 0) {
+            Write-Host "Exit codes: Assistant=$($p1.ExitCode) Launcher=$($p2.ExitCode) Updater=$($p3.ExitCode)"
+            exit 1
+          }
+
+      # 移动资源到dist目录
+      - name: Move assets to dist directory
+        run: |
+          Copy-Item -Path ".\dist\March7th Assistant\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\dist\March7th Launcher\*" -Destination ".\dist\March7thAssistant\" -Recurse -Force
+          Copy-Item -Path ".\assets\" -Destination ".\dist\March7thAssistant\assets\" -Recurse -Force
+          Copy-Item -Path ".\README.md" -Destination ".\dist\March7thAssistant\" -Force
+          # 根目录的 AGENTS.md：在安装目录中打开的 AI Agent 会自动读取，指向随包发布的使用说明（Skill）
+          Copy-Item -Path ".\assets\agent\AGENTS.md" -Destination ".\dist\March7thAssistant\" -Force
+
+      # 仅在 CI 临时目录下载 7-Zip ZS，不改动仓库内 assets/binary/7za.exe
+      - name: Download 7-Zip ZS (CI only)
+        run: |
+          New-Item -ItemType Directory -Force -Path .\temp\7zzs | Out-Null
+          curl.exe -sL -o .\temp\7zzs-setup.exe "$env:ZS_URL"
+          if ($LASTEXITCODE -ne 0) { Write-Host "download failed"; exit 1 }
+          $sz = (Get-Item .\temp\7zzs-setup.exe).Length
+          Write-Host "downloaded 7zzs-setup.exe: $sz bytes"
+          if ($sz -lt 1000000) { Write-Host "download too small, likely failed"; exit 1 }
+          # 用仓库自带的 stock 7za 解开安装包
+          # 注意：PowerShell 会把 -o.\temp\7zzs 拆成两个 token，必须整体加引号
+          .\assets\binary\7za.exe x -y ".\temp\7zzs-setup.exe" "-o.\temp\7zzs"
+          if ($LASTEXITCODE -ne 0) { Write-Host "extract failed"; exit 1 }
+
+          Write-Host "=== stock 7za (bundled) ==="
+          & .\assets\binary\7za.exe | Select-Object -First 2
+          Write-Host "=== 7-Zip ZS (downloaded in CI) ==="
+          & .\temp\7zzs\7za.exe | Select-Object -First 2
+        id: tools
+
+      # 基准 1：核心包（update.7z 输入）stock vs flzma2
+      - name: Benchmark core package
+        run: |
+          $stock = ".\assets\binary\7za.exe"
+          $zs = ".\temp\7zzs\7za.exe"
+          $src = ".\dist\March7thAssistant\"
+          $srcSize = (Get-ChildItem -Path ".\dist\March7thAssistant" -Recurse -File | Measure-Object -Property Length -Sum)
+          Write-Host "=== Core input: $([math]::Round($srcSize.Sum / 1MB, 1)) MB, $($srcSize.Count) files ==="
+
+          $rows = @()
+
+          $t = [System.Diagnostics.Stopwatch]::StartNew()
+          & $stock a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\temp\core-stock.7z $src | Out-Null
+          $t.Stop()
+          if ($LASTEXITCODE -ne 0) { Write-Host "stock core compress failed"; exit 1 }
+          $rows += [PSCustomObject]@{ Method = "stock lzma2 -mx=9 -md=128m"; Sec = [math]::Round($t.Elapsed.TotalSeconds,1); Bytes = (Get-Item .\temp\core-stock.7z).Length }
+
+          $t = [System.Diagnostics.Stopwatch]::StartNew()
+          & $zs a -t7z -m0=flzma2 -ms=on -mx=9 .\temp\core-flzma2-mx9.7z $src | Out-Null
+          $t.Stop()
+          if ($LASTEXITCODE -ne 0) { Write-Host "flzma2 mx9 core compress failed"; exit 1 }
+          $rows += [PSCustomObject]@{ Method = "ZS    flzma2 -mx=9        "; Sec = [math]::Round($t.Elapsed.TotalSeconds,1); Bytes = (Get-Item .\temp\core-flzma2-mx9.7z).Length }
+
+          $t = [System.Diagnostics.Stopwatch]::StartNew()
+          & $zs a -t7z -m0=flzma2 -ms=on -mx=7 .\temp\core-flzma2-mx7.7z $src | Out-Null
+          $t.Stop()
+          if ($LASTEXITCODE -ne 0) { Write-Host "flzma2 mx7 core compress failed"; exit 1 }
+          $rows += [PSCustomObject]@{ Method = "ZS    flzma2 -mx=7        "; Sec = [math]::Round($t.Elapsed.TotalSeconds,1); Bytes = (Get-Item .\temp\core-flzma2-mx7.7z).Length }
+
+          $base = $rows[0]
+          Write-Host ""
+          Write-Host "=== Core benchmark results ==="
+          foreach ($r in $rows) {
+            $speed = if ($r.Sec -gt 0) { [math]::Round($base.Sec / $r.Sec, 2) } else { 0 }
+            $delta = [math]::Round(($r.Bytes - $base.Bytes) / $base.Bytes * 100, 2)
+            Write-Host ("{0}  {1,8:N1}s  {2,10:N0} B  ({3}x faster, {4:+0.00;-0.00;0.00}% size)" -f $r.Method, $r.Sec, $r.Bytes, $speed, $delta)
+          }
+
+      # 兼容性：stock 7za 解开 flzma2 核心包
+      - name: Compatibility check (core)
+        run: |
+          $stock = ".\assets\binary\7za.exe"
+          Write-Host "=== stock 7za reads flzma2 core archive ==="
+          & $stock l .\temp\core-flzma2-mx9.7z | Select-Object -Last 4
+          Write-Host "=== stock 7za CRC-tests flzma2 core archive ==="
+          & $stock t .\temp\core-flzma2-mx9.7z | Select-Object -Last 6
+          if ($LASTEXITCODE -ne 0) { Write-Host "COMPAT FAIL: stock cannot verify flzma2 archive"; exit 1 }
+
+          Write-Host "=== stock 7za extracts flzma2 core archive ==="
+          New-Item -ItemType Directory -Force -Path .\temp\core-verify | Out-Null
+          & $stock x -y ".\temp\core-flzma2-mx9.7z" "-o.\temp\core-verify" -aoa | Select-Object -Last 5
+          if ($LASTEXITCODE -ne 0) { Write-Host "COMPAT FAIL: stock cannot extract flzma2 archive"; exit 1 }
+
+          $a = Get-ChildItem -Path ".\dist\March7thAssistant" -Recurse -File | Measure-Object -Property Length -Sum
+          $b = Get-ChildItem -Path ".\temp\core-verify" -Recurse -File | Measure-Object -Property Length -Sum
+          Write-Host ("source  : {0} files, {1} bytes" -f $a.Count, $a.Sum)
+          Write-Host ("extracted: {0} files, {1} bytes" -f $b.Count, $b.Sum)
+          if ($a.Count -ne $b.Count -or $a.Sum -ne $b.Sum) {
+            Write-Host "COMPAT FAIL: content mismatch"
+            exit 1
+          }
+          Write-Host "COMPAT OK: stock 23.01 can extract flzma2 archive, content identical"
+
+      # 获取第三方库最新发布版本
+      - name: Get 3rdparty release tags
+        id: deps-tags
+        run: |
+          $asu = (gh api repos/moesnow/Auto_Simulated_Universe/releases/latest --jq '.tag_name' 2>$null)
+          $fhoe = (gh api repos/linruowuyin/Fhoe-Rail/releases/latest --jq '.tag_name' 2>$null)
+          $fps = (gh api repos/winTEuser/Genshin_StarRail_fps_unlocker/releases/latest --jq '.tag_name' 2>$null)
+          $buildHash = "${{ hashFiles('build.py', 'module/game/cloud.py') }}"
+          $hash = "${asu}-${fhoe}-${fps}-${buildHash}"
+          echo "hash=$hash" >> $env:GITHUB_OUTPUT
+          Write-Host "3rdparty cache key: $hash"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 缓存第三方库
+      - name: Restore 3rdparty cache
+        id: cache-3rdparty
+        uses: actions/cache@v5
+        with:
+          path: 3rdparty
+          key: 3rdparty-test-${{ steps.deps-tags.outputs.hash }}
+
+      # 下载第三方库（缓存未命中时）
+      - name: Download 3rdparty
+        if: steps.cache-3rdparty.outputs.cache-hit != 'true'
+        run: uv run python build.py --task all
+
+      # 组装完整包目录
+      - name: Assemble full package
+        run: |
+          Copy-Item -Path .\3rdparty\ -Destination ".\dist\March7thAssistant\3rdparty\" -Recurse -Force
+          $s = Get-ChildItem -Path ".\dist\March7thAssistant" -Recurse -File | Measure-Object -Property Length -Sum
+          Write-Host ("Full input: {0} MB, {1} files" -f [math]::Round($s.Sum / 1MB, 1), $s.Count)
+
+      # 基准 2：完整包 stock vs flzma2
+      - name: Benchmark full package
+        run: |
+          $stock = ".\assets\binary\7za.exe"
+          $zs = ".\temp\7zzs\7za.exe"
+          $src = ".\dist\March7thAssistant\"
+
+          $rows = @()
+
+          $t = [System.Diagnostics.Stopwatch]::StartNew()
+          & $stock a -t7z -m0=lzma2 -ms=on -mx=9 -md=128m .\temp\full-stock.7z $src | Out-Null
+          $t.Stop()
+          if ($LASTEXITCODE -ne 0) { Write-Host "stock full compress failed"; exit 1 }
+          $rows += [PSCustomObject]@{ Method = "stock lzma2 -mx=9 -md=128m"; Sec = [math]::Round($t.Elapsed.TotalSeconds,1); Bytes = (Get-Item .\temp\full-stock.7z).Length }
+
+          $t = [System.Diagnostics.Stopwatch]::StartNew()
+          & $zs a -t7z -m0=flzma2 -ms=on -mx=9 .\temp\full-flzma2-mx9.7z $src | Out-Null
+          $t.Stop()
+          if ($LASTEXITCODE -ne 0) { Write-Host "flzma2 mx9 full compress failed"; exit 1 }
+          $rows += [PSCustomObject]@{ Method = "ZS    flzma2 -mx=9        "; Sec = [math]::Round($t.Elapsed.TotalSeconds,1); Bytes = (Get-Item .\temp\full-flzma2-mx9.7z).Length }
+
+          $t = [System.Diagnostics.Stopwatch]::StartNew()
+          & $zs a -t7z -m0=flzma2 -ms=on -mx=7 .\temp\full-flzma2-mx7.7z $src | Out-Null
+          $t.Stop()
+          if ($LASTEXITCODE -ne 0) { Write-Host "flzma2 mx7 full compress failed"; exit 1 }
+          $rows += [PSCustomObject]@{ Method = "ZS    flzma2 -mx=7        "; Sec = [math]::Round($t.Elapsed.TotalSeconds,1); Bytes = (Get-Item .\temp\full-flzma2-mx7.7z).Length }
+
+          $base = $rows[0]
+          Write-Host ""
+          Write-Host "=== Full benchmark results ==="
+          foreach ($r in $rows) {
+            $speed = if ($r.Sec -gt 0) { [math]::Round($base.Sec / $r.Sec, 2) } else { 0 }
+            $delta = [math]::Round(($r.Bytes - $base.Bytes) / $base.Bytes * 100, 2)
+            Write-Host ("{0}  {1,8:N1}s  {2,10:N0} B  ({3}x faster, {4:+0.00;-0.00;0.00}% size)" -f $r.Method, $r.Sec, $r.Bytes, $speed, $delta)
+          }
+
+      # 兼容性：stock 7za 解开 flzma2 完整包（mx=9 与 mx=7 各验一次）
+      - name: Compatibility check (full)
+        run: |
+          $stock = ".\assets\binary\7za.exe"
+          foreach ($a in @(".\temp\full-flzma2-mx9.7z", ".\temp\full-flzma2-mx7.7z")) {
+            Write-Host "=== stock 7za CRC-tests $a ==="
+            & $stock t $a | Select-Object -Last 6
+            if ($LASTEXITCODE -ne 0) { Write-Host "COMPAT FAIL: stock cannot verify $a"; exit 1 }
+          }
+          Write-Host "COMPAT OK: stock verifies flzma2 full archives (mx=9 and mx=7)"
+
+      # 汇总
+      - name: Summary
+        run: |
+          Write-Host "=== Summary ==="
+          Write-Host "7-Zip ZS version: $env:ZS_VERSION"
+          Write-Host "bundled assets/binary/7za.exe NOT modified (test-only download)"
+          Write-Host ""
+          Write-Host "See benchmark tables above for speed/size."
+          Write-Host "If flzma2 holds on this 4-vCPU runner, production switch would be:"
+          Write-Host "  - CI downloads ZS, packs update.7z with -m0=flzma2 -mx=7"
+          Write-Host "  - full.7z with -m0=flzma2 (mx=7 vs mx=9 decided by the tables above)"
+          Write-Host "  - bundled 7za stays stock (still able to extract flzma2 => LZMA2 output)"

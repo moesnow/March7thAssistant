@@ -3,6 +3,7 @@ from module.logger import log
 from module.config import cfg
 import time
 from module.automation.screenshot import Screenshot
+from tasks.base.list_drag import drag_list
 
 
 class Character:
@@ -58,7 +59,10 @@ class Character:
             else:
                 # 若未找到角色，尝试滚动页面
                 if i < cfg.borrow_scroll_times - 1:
-                    Character.scroll_support_list()
+                    if not Character.scroll_support_list():
+                        if auto.find_element(["支援列表", "支援角色"], "text", crop=(157 / 1920, 22 / 1080, 300 / 1920, 81 / 1080)):
+                            Character.exit_support_list(type)
+                        return False
                 continue
 
             # 当队伍已满时点击编队界面的最后一个槽位，踢出最后一个角色
@@ -87,17 +91,24 @@ class Character:
         """查找支援角色并点击"""
         # crop = (40.0 / 1920, 152.0 / 1080, 531.0 / 1920, 809.0 / 1080)
         crop = (0 / 1920, 0 / 1080, 593.0 / 1920, 1005.0 / 1080)
-        matchs = auto.find_element("./assets/images/share/character/" + key + ".png", "image_with_multiple_targets", 0.8, max_retries=1, scale_range=0.9, crop=crop, relative=True)
-        for match in matchs:
-            top_right = (match[1][0] + width * crop[0], match[0][1] + height * crop[1])
-            crop_new = (top_right[0] / width, top_right[1] / height, 402.0 / 1920, 43.0 / 1080)
-            if value == "":
-                auto.click_element_with_pos(match, (left, top))
-                time.sleep(1)
-                return True
-            elif auto.click_element(value, "text", crop=crop_new, include=True):
-                time.sleep(1)
-                return True
+        image_path = "./assets/images/share/character/" + key + ".png"
+        # 已入队头像可能带有右上角角标；原匹配未选到目标时才遮罩该区域重试。
+        for mask_ratio in (None, 0.26):
+            matches = auto.find_element(
+                image_path, "image_with_multiple_targets", 0.8, max_retries=1,
+                scale_range=0.9, crop=crop, relative=True,
+                mask_top_right_ratio=mask_ratio,
+            ) or []
+            for match in matches:
+                top_right = (match[1][0] + width * crop[0], match[0][1] + height * crop[1])
+                crop_new = (top_right[0] / width, top_right[1] / height, 402.0 / 1920, 43.0 / 1080)
+                if value == "":
+                    auto.click_element_with_pos(match, (left, top))
+                    time.sleep(1)
+                    return True
+                elif auto.click_element(value, "text", crop=crop_new, include=True):
+                    time.sleep(1)
+                    return True
         return False
 
     @staticmethod
@@ -145,10 +156,11 @@ class Character:
 
     @staticmethod
     def scroll_support_list():
-        """滚动支援列表"""
-        auto.click_element("等级", "text", max_retries=1, crop=(40.0 / 1920, 152.0 / 1080, 531.0 / 1920, 809.0 / 1080), include=True, action="move")
-        auto.mouse_scroll(23, -1, False)
+        """拖动支援列表，失败时由调用方退出，不继续选择角色。"""
+        completed = drag_list(auto, (400 / 1920, 850 / 1080), (400 / 1920, 400 / 1080),
+                              crop=(40 / 1920, 152 / 1080, 531 / 1920, 809 / 1080), duration=1.0)
         time.sleep(0.5)
+        return completed
 
     @staticmethod
     def exit_support_list(type):

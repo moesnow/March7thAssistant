@@ -55,7 +55,7 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
 
     def setValue(self, isChecked: bool):
         """Set switch button state"""
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def getSwitchState(self) -> bool:
@@ -112,6 +112,28 @@ class ExpandableSwitchSettingCard(ExpandSettingCard):
         self.expandStateChanged.emit(False)
 
 
+class ExpandableWeeklyRelicSettingCard(ExpandableSwitchSettingCard):
+    """Weekly relic cleanup switch with a weekday in the header."""
+
+    def __init__(self, configname: str, day_configname: str,
+                 icon: Union[str, QIcon, FluentIconBase], title: str, parent=None):
+        super().__init__(configname, icon, title, parent=parent)
+        self.dayConfigname = day_configname
+        self.comboBox = ComboBox(self)
+        for day, text in enumerate((tr('周一'), tr('周二'), tr('周三'), tr('周四'),
+                                    tr('周五'), tr('周六'), tr('周日')), 1):
+            self.comboBox.addItem(text, userData=day)
+
+        day = self.cfg.get_value(day_configname, 1)
+        self.comboBox.setCurrentIndex(day - 1 if isinstance(day, int) and 1 <= day <= 7 else 0)
+        self.insertWidgetBeforeSwitch(self.comboBox)
+        self.comboBox.currentIndexChanged.connect(self._onDayChanged)
+
+    def _onDayChanged(self, index: int):
+        if index >= 0:
+            self.cfg.set_value(self.dayConfigname, self.comboBox.itemData(index))
+
+
 class ExpandableTimestampSwitchSettingCard(ExpandSettingCard):
     """带时间副标题和重置按钮的可展开开关设置卡片"""
 
@@ -150,7 +172,7 @@ class ExpandableTimestampSwitchSettingCard(ExpandSettingCard):
         self.switchChanged.emit(isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def refreshTimestampContent(self):
@@ -289,7 +311,7 @@ class ExpandableComboBoxSettingCard(ExpandSettingCard):
     currentIndexChanged = Signal(int)
 
     def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase],
-                 title: str, content: str = None, texts: dict = None, parent=None):
+                 title: str, content: str = None, texts: dict = None, parent=None, confirm=None):
         """
         参数:
         - configname: 配置项名称
@@ -298,9 +320,11 @@ class ExpandableComboBoxSettingCard(ExpandSettingCard):
         - content: 内容描述
         - texts: 下拉菜单选项 {'显示名': '值'}
         - parent: 父组件
+        - confirm: 可选的确认回调 confirm(新值) -> bool，在写入配置前调用；返回 False 时恢复原选项且不写入
         """
         super().__init__(icon, title, content, parent)
         self.configname = configname
+        self._confirm = confirm
 
         # ComboBox
         self.comboBox = ComboBox(self)
@@ -316,13 +340,25 @@ class ExpandableComboBoxSettingCard(ExpandSettingCard):
                 self.comboBox.addItem(key, userData=value)
                 if value == self.cfg.get_value(configname):
                     self.comboBox.setCurrentText(key)
+        self._acceptedIndex = self.comboBox.currentIndex()
 
         # Connect signals
         self.comboBox.currentIndexChanged.connect(self.__onComboBoxChanged)
 
     def __onComboBoxChanged(self, index: int):
         """ComboBox changed slot"""
-        self.cfg.set_value(self.configname, self.comboBox.itemData(index))
+        value = self.comboBox.itemData(index)
+        if (self._confirm is not None and value != self.comboBox.itemData(self._acceptedIndex)
+                and not self._confirm(value)):
+            # 先确认再写配置：取消时恢复原选项，配置从未变成未确认的值
+            self.comboBox.blockSignals(True)
+            try:
+                self.comboBox.setCurrentIndex(self._acceptedIndex)
+            finally:
+                self.comboBox.blockSignals(False)
+            return
+        self._acceptedIndex = index
+        self.cfg.set_value(self.configname, value)
         self.currentIndexChanged.emit(index)
 
     def setExpand(self, isExpand: bool):
@@ -635,7 +671,7 @@ class ExpandableSwitchSettingCardEchoofwar(ExpandSettingCard):
 
     def setValue(self, isChecked: bool):
         """设置开关状态"""
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _onCurrentIndexChanged(self, index: int):

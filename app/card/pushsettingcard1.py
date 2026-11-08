@@ -13,7 +13,7 @@ import re
 import sys
 from ..tools.check_update import checkUpdate
 from module.update.version_check import validate_mirrorchyan_cdk
-from module.localization import tr, get_character_names, instance_display_to_raw
+from module.localization import tr, tn, get_character_names, instance_display_to_raw
 
 
 def get_key_from_value(val, map):
@@ -55,6 +55,33 @@ class DualPushSettingCard(SettingCard):
         self.hBoxLayout.addSpacing(16)
 
         self.leftButton.clicked.connect(self.leftClicked.emit)
+        self.rightButton.clicked.connect(self.rightClicked.emit)
+
+
+class TriplePushSettingCard(SettingCard):
+    leftClicked = Signal()
+    middleClicked = Signal()
+    rightClicked = Signal()
+
+    def __init__(self, left_text, middle_text, right_text, icon: Union[str, QIcon, FluentIconBase], title, content=None, parent=None):
+        super().__init__(icon, title, content, parent)
+
+        self.leftButton = QPushButton(left_text, self)
+        self.middleButton = QPushButton(middle_text, self)
+        self.rightButton = QPushButton(right_text, self)
+
+        for button in (self.leftButton, self.middleButton, self.rightButton):
+            button.setObjectName('primaryButton')
+
+        self.hBoxLayout.addWidget(self.leftButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.hBoxLayout.addWidget(self.middleButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.hBoxLayout.addWidget(self.rightButton, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+        self.leftButton.clicked.connect(self.leftClicked.emit)
+        self.middleButton.clicked.connect(self.middleClicked.emit)
         self.rightButton.clicked.connect(self.rightClicked.emit)
 
 
@@ -125,6 +152,12 @@ class PushSettingCardMirrorchyan(SettingCard):
         self._validation_thread = None
         self.destroyed.connect(self._cleanup_validation_thread)
 
+        self.button4 = QPushButton(tr("查询天数"), self)
+        self.button4.setObjectName('primaryButton')
+        self.hBoxLayout.addWidget(self.button4, 0, Qt.AlignmentFlag.AlignRight)
+        self.hBoxLayout.addSpacing(10)
+        self.button4.clicked.connect(self.__onclicked4)
+
         self.button3 = QPushButton(tr("交流反馈"), self)
         self.button3.setObjectName('primaryButton')
         self.hBoxLayout.addWidget(self.button3, 0, Qt.AlignmentFlag.AlignRight)
@@ -172,6 +205,15 @@ class PushSettingCardMirrorchyan(SettingCard):
         thread.validationFinished.connect(self._on_cdk_validated)
         self._validation_thread = thread
         thread.start()
+        InfoBar.info(
+            title=tr("正在查询 CDK 剩余天数…"),
+            content="",
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=1500,
+            parent=self.window(),
+        )
 
     def _on_cdk_validated(self, success, result):
         if success:
@@ -181,7 +223,7 @@ class PushSettingCardMirrorchyan(SettingCard):
             remaining = expired_dt - now
             days = remaining.days
             if days > 0:
-                content = tr("剩余 {days} 天").format(days=days)
+                content = tn("剩余 {count} 天", days)
             else:
                 content = tr("今天到期")
             InfoBar.success(
@@ -214,6 +256,20 @@ class PushSettingCardMirrorchyan(SettingCard):
 
     def __onclicked3(self):
         QDesktopServices.openUrl(QUrl("https://pd.qq.com/g/MirrorChyan"))
+
+    def __onclicked4(self):
+        if not self.configvalue:
+            InfoBar.warning(
+                title=tr("尚未填写 CDK (╥╯﹏╰╥)"),
+                content=tr('请先点击“修改”填写 Mirror 酱 CDK'),
+                orient=Qt.Orientation.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self.window(),
+            )
+            return
+        self._start_cdk_validation(self.configvalue)
 
 
 class FetchLatestCodesWorker(QObject):
@@ -325,7 +381,7 @@ class PushSettingCardCode(CustomPushSettingCard):
             mb.textEdit.setText('\n'.join(codes))
             self._info_success(
                 tr('获取成功'),
-                tr('已获取 {} 个兑换码').format(len(codes)),
+                tn('已获取 {count} 个兑换码', len(codes)),
                 mb
             )
 
@@ -428,9 +484,10 @@ class PushSettingCardCode(CustomPushSettingCard):
         mb._fetch_thread = None
 
     def _info_warning(self, title, content, parent):
+        """title / content 由调用方负责翻译（这里只负责弹 InfoBar）。"""
         InfoBar.warning(
-            self.tr(title),
-            self.tr(content),
+            title,
+            content,
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
@@ -439,9 +496,10 @@ class PushSettingCardCode(CustomPushSettingCard):
         )
 
     def _info_success(self, title, content, parent):
+        """title / content 由调用方负责翻译（这里只负责弹 InfoBar）。"""
         InfoBar.success(
-            self.tr(title),
-            self.tr(content),
+            title,
+            content,
             orient=Qt.Horizontal,
             isClosable=True,
             position=InfoBarPosition.TOP,
@@ -516,7 +574,7 @@ class PushSettingCardKey(CustomPushSettingCard):
             if key_name:
                 cfg.set_value(self.configname, key_name)
                 self.contentLabel.setText(self._format_key_display(key_name))
-                self.button.setText(tr("已改为 {}").format(self._format_key_display(key_name)))
+                self.button.setText(tr("已改为 {key}").format(key=self._format_key_display(key_name)))
 
     @staticmethod
     def _format_key_display(key_name: str) -> str:
@@ -728,7 +786,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
     def _get_display_text(self):
         team1_text = self.translate_to_chinese(self.team1_value)
         team2_text = self.translate_to_chinese(self.team2_value)
-        return tr("队伍1: {}\n队伍2: {}").format(team1_text, team2_text)
+        return tr("队伍1: {team1}\n队伍2: {team2}").format(team1=team1_text, team2=team2_text)
 
     def _update_display(self):
         self.team1_value = cfg.get_value(self.configname_team1)
@@ -739,8 +797,7 @@ class PushSettingCardTeamWithSwap(SettingCard):
         # Swap team1 and team2 - get fresh values from config to avoid stale data
         temp_team1 = cfg.get_value(self.configname_team1)
         temp_team2 = cfg.get_value(self.configname_team2)
-        cfg.set_value(self.configname_team1, temp_team2)
-        cfg.set_value(self.configname_team2, temp_team1)
+        cfg.set_values({self.configname_team1: temp_team2, self.configname_team2: temp_team1})
         self._update_display()
 
         InfoBar.success(
@@ -784,7 +841,7 @@ class PushSettingCardPowerPlan(CustomPushSettingCard):
         """获取显示文本"""
         if not self.configvalue:
             return tr("暂无计划")
-        return tr("已配置 {} 项计划").format(len(self.configvalue))
+        return tn("已配置 {count} 项计划", len(self.configvalue))
 
     def __onclicked(self):
         message_box = MessageBoxPowerPlan(
@@ -796,8 +853,10 @@ class PushSettingCardPowerPlan(CustomPushSettingCard):
         if message_box.exec():
             plans = message_box.get_plans()
             self.configvalue = plans
-            cfg.set_value(self.configname, plans)
-            cfg.set_value("power_plan_keep", message_box.should_keep_plan())
+            cfg.set_values({
+                self.configname: plans,
+                "power_plan_keep": message_box.should_keep_plan(),
+            })
             self.contentLabel.setText(self._get_display_text())
 
 
@@ -830,7 +889,7 @@ class InstanceTeamSettingCard(SettingCard):
         cfg.set_value("instance_team_enable", isChecked)
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr("开") if isChecked else tr("关"))
 
     def _update_content_text(self):
@@ -838,7 +897,7 @@ class InstanceTeamSettingCard(SettingCard):
 
         teams = cfg.get_value("instance_teams")
         if teams:
-            self.contentLabel.setText(tr("已配置 {} 项规则").format(len(teams)))
+            self.contentLabel.setText(tn("已配置 {count} 项规则", len(teams)))
         else:
             self.contentLabel.setText(tr("为特定的副本配置队伍"))
 
@@ -851,9 +910,10 @@ class InstanceTeamSettingCard(SettingCard):
 
         if message_box.exec():
             new_default_team = message_box.get_default_team()
-            cfg.set_value("instance_team_number", str(new_default_team))
-
             new_teams = message_box.get_rules()
-            cfg.set_value("instance_teams", new_teams)
+            cfg.set_values({
+                "instance_team_number": str(new_default_team),
+                "instance_teams": new_teams,
+            })
 
             self._update_content_text()

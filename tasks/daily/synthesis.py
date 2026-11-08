@@ -4,6 +4,7 @@ from module.automation import auto
 from module.logger import log
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
+from tasks.base.list_drag import drag_list
 import time
 
 
@@ -64,6 +65,10 @@ class Synthesis:
                                     log.info("自塑尘脂已达上限，无需合成")
                                     cfg.save_timestamp("asset_self_molding_resin_timestamp")
                                     return True
+                                if auto.find_element("合成所需材料不足", "text",
+                                                     crop=(0.45, 0.72, 0.40, 0.16), include=True):
+                                    log.warning("自塑尘脂合成材料不足，保留本月任务，下次运行重试")
+                                    return False
                                 if auto.click_element("./assets/images/share/synthesis/plus.png", "image", 0.9, crop=(1520 / 1920, 832 / 1080, 86 / 1920, 69 / 1080)):
                                     time.sleep(2)
                                 if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
@@ -259,22 +264,22 @@ class Synthesis:
                                                 auto.press_key("esc", wait_time=3)
                                                 if not is_superimposed:
                                                     log.info("没有进行叠加")
-                                                    auto.click_element_with_pos(t)
-                                                    auto.mouse_scroll(
-                                                        5, direction=-1, pause=True
-                                                    )
+                                                    if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 650 / 1080),
+                                                                     crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
+                                                        return False
                                                 log.info("3星光锥叠加完成，继续查找")
                                                 break
                                         else:
                                             time.sleep(2)
                                             auto.press_key("esc", wait_time=3)
-                                            auto.click_element_with_pos(t)
-                                            auto.mouse_scroll(
-                                                5, direction=-1, pause=True
-                                            )
+                                            if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 650 / 1080),
+                                                             crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
+                                                return False
 
                         if not find_target:
-                            auto.mouse_scroll(25, direction=-1, pause=True)
+                            if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 410 / 1080),
+                                             crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
+                                return False
                             not_find_times += 1
                         else:
                             not_find_times = 0

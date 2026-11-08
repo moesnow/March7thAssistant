@@ -12,6 +12,7 @@ import time
 import os
 import re
 from tasks.power.power import Power
+from tasks.weekly.weekly_reward import wait_for_weekly_reward
 
 
 class DivergentUniverse:
@@ -21,6 +22,7 @@ class DivergentUniverse:
         self.current_stage: str = ""  # 当前关卡阶段
         self.process_stage: bool = False  # 是否正在处理关卡中
         self.end_loop: bool = False  # 是否结束主循环
+        self._save_attempted: bool = False  # 本轮是否尝试过存档
         self.stage_finish: bool = False  # 是否完成当前阶段
         self.unsupported_area: bool = False  # 是否遇到暂不支持区域
 
@@ -73,9 +75,9 @@ class DivergentUniverse:
             counts[cycle] = count
         return counts
 
-    def start(self) -> bool:
+    def start(self, universe_type: Optional[Literal["normal", "cycle"]] = None) -> bool:
         log.hr('准备差分宇宙', '0')
-        success = self.run()
+        success = self.run(universe_type)
         if success:
             Base.send_notification_with_screenshot("差分宇宙已完成", NotificationLevel.ALL, self.screenshot)
             self.screenshot = None
@@ -88,7 +90,7 @@ class DivergentUniverse:
         has_reward = self.get_reward()
         if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
             self.check_divergent_universe_score()
-        if has_reward and cfg.universe_bonus_enable:
+        if has_reward and cfg.weekly_divergent_bonus_enable:
             self.process_ornament()
         log.hr("完成", 2)
         return success
@@ -123,8 +125,10 @@ class DivergentUniverse:
             log.warning(f"无法解析差分宇宙积分: {score}")
         return False
 
-    def run(self) -> bool:
-        if self.start_war(cfg.weekly_divergent_type):
+    def run(self, universe_type: Optional[Literal["normal", "cycle"]] = None) -> bool:
+        if universe_type is None:
+            universe_type = cfg.weekly_divergent_type
+        if self.start_war(universe_type):
             return self.loop()
         return False
 
@@ -132,7 +136,7 @@ class DivergentUniverse:
         log.info("开始领取奖励")
         if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
             if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
-                if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
+                if wait_for_weekly_reward():
                     time.sleep(2)
                     Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'], NotificationLevel.ALL)
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
@@ -264,6 +268,7 @@ class DivergentUniverse:
         self.current_stage = ""  # 重置当前关卡阶段
         self.process_stage = False  # 重置关卡处理状态
         self.end_loop = False  # 重置结束循环标志
+        self._save_attempted = False  # 每轮探索最多尝试一次存档
         self.stage_finish = False  # 重置阶段完成标志
         self.unsupported_area = False  # 重置暂不支持区域标志
 
@@ -885,12 +890,37 @@ class DivergentUniverse:
                     screen.wait_for_screen_change('divergent_main')
                 screen.change_to("divergent_mode_select")
                 if auto.click_element("继续进度", "text", crop=(39 / 1920, 215 / 1080, 748 / 1920, 597 / 1080)):
-                    if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, max_retries=120, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                    if not self.wait_stage_after_continue():
                         raise RuntimeError("重新进入关卡失败")
                     return
                 else:
                     raise RuntimeError("未找到继续进度按钮")
         log.error("多次尝试重新进入关卡失败")
+
+    def wait_stage_after_continue(self, max_retries: int = 120) -> bool:
+        """等待“继续进度”后进入关卡界面，顺带处理跨周确认框（#1175）。
+
+        周期演算每周一 4:00 更新：循环运行跨过这个时间点时，上一次的存档已属于上一周，
+        点“继续进度”后游戏会先弹确认框“当前存档非本周演算进度，进度所在玩法已过期，
+        仍可获得拟合值和「模拟宇宙」积分，确定继续进度吗？”。
+        不处理它就会一直卡在弹窗上，把原本等待关卡界面的 120 次重试耗光，最后误报
+        “重新进入关卡失败”；弹窗说明继续进度仍会结算积分，所以这里点“确认”继续原进度。
+        """
+        # 弹窗在点击“继续进度”后立刻出现，只在开头几秒内探测，避免常态路径反复 OCR
+        prompt_deadline = time.monotonic() + 10
+        for attempt in range(max_retries):
+            if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                return True
+            # 关卡界面通常一两秒内就会出现，迟迟不出现时优先怀疑这个弹窗
+            if (attempt >= 3 and time.monotonic() < prompt_deadline
+                    and auto.find_element("当前存档非本周演算进度", "text", max_retries=1, include=True, threshold=0.7)):
+                log.info("检测到“当前存档非本周演算进度”提示，点击确认继续进度")
+                auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10,
+                                   crop=(1100 / 1920, 630 / 1080, 280 / 1920, 82 / 1080))
+                prompt_deadline = time.monotonic() + 10  # 点击没生效时还能再次识别
+                continue
+            time.sleep(1)
+        return False
 
     def detect_random_door(self):
         return auto.find_element(
@@ -1041,7 +1071,7 @@ class DivergentUniverse:
         检查当前界面标题，并根据不同标题执行对应的处理函数
         """
         title_crop = (96 / 1920, 63 / 1080, 142 / 1920, 34 / 1080)
-        if auto.find_element(("欢愉假面", "选择方程", "选择祝福", "选择奇物", "丢弃奇物", "愿力满盈", "选择下一站", "事件", "选择站点卡", "存档管理", "混沌药箱"), 'text', crop=title_crop, include=True):
+        if auto.find_element(("欢愉假面", "选择方程", "选择祝福", "选择奇物", "丢弃奇物", "奇物损毁", "愿力满盈", "选择下一站", "事件", "选择站点卡", "存档管理", "混沌药箱", "人才管理阶段"), 'text', crop=title_crop, include=True):
             log.info(f"检测到 “{auto.matched_text}” 界面")
             if auto.matched_text == "欢愉假面":
                 self.process_mask()
@@ -1053,6 +1083,8 @@ class DivergentUniverse:
                 self.process_relic_selection()
             elif auto.matched_text == "丢弃奇物":
                 self.process_relic_discard()
+            elif auto.matched_text == "奇物损毁":
+                self.process_relic_destroy()
             elif auto.matched_text == "愿力满盈":
                 self.process_wish()
             elif auto.matched_text == "选择下一站":
@@ -1065,6 +1097,8 @@ class DivergentUniverse:
                 self.process_save_management()
             elif auto.matched_text == "混沌药箱":
                 self.process_chaos_box()
+            elif auto.matched_text == "人才管理阶段":
+                self.process_talent_management()
             return True
         return False
 
@@ -1110,6 +1144,24 @@ class DivergentUniverse:
                 log.info("默认选择中间的面具")
                 auto.click_element(mask_positions[1], 'crop')
                 time.sleep(2)
+
+    def process_talent_management(self):
+        """
+        处理人才管理阶段界面：默认选择中间的区域卡片并确认
+        """
+        card_positions = [
+            (570 / 1920, 200 / 1080, 252 / 1920, 520 / 1080),
+            (835 / 1920, 200 / 1080, 251 / 1920, 520 / 1080),
+            (1097 / 1920, 200 / 1080, 252 / 1920, 520 / 1080),
+        ]
+        confirm_crop = (551 / 1920, 942 / 1080, 805 / 1920, 62 / 1080)
+
+        time.sleep(2)
+        log.info("默认选择中间的区域卡片")
+        auto.click_element(card_positions[1], 'crop')
+        time.sleep(1)
+        auto.click_element('确认', 'text', None, 10, crop=confirm_crop, include=True)
+        time.sleep(2)
 
     def process_equation(self):
         """
@@ -1261,6 +1313,50 @@ class DivergentUniverse:
         auto.click_element('丢弃', 'text', None, 10, crop=(1695 / 1920, 948 / 1080, 69 / 1920, 50 / 1080), include=True)
         time.sleep(2)
 
+    def process_relic_destroy(self):
+        """处理奇物损毁；只在标题、说明与按钮均符合时选择卡片。"""
+        title_crop = (96 / 1920, 63 / 1080, 142 / 1920, 34 / 1080)
+        prompt_crop = (520 / 1920, 118 / 1080, 880 / 1920, 65 / 1080)
+        button_crop = (1540 / 1920, 934 / 1080, 345 / 1920, 75 / 1080)
+        if not auto.find_element("奇物损毁", "text", crop=title_crop, include=False):
+            raise RuntimeError("奇物损毁标题已变化，停止点击")
+        if not auto.find_element("请选择要摧毁的奇物", "text", crop=prompt_crop, include=False):
+            raise RuntimeError("奇物损毁说明未识别，停止点击")
+        if not auto.find_element("摧毁", "text", crop=button_crop, include=False):
+            raise RuntimeError("奇物损毁按钮未识别，停止点击")
+
+        # 一张或三张卡片时选中间；两张时选左边。先识别卡名再点击，
+        # 不连续盲点多个位置，避免切换已选中的卡片。
+        name_crops = (
+            (777 / 1920, 482 / 1080, 370 / 1920, 70 / 1080),
+            (537 / 1920, 482 / 1080, 369 / 1920, 70 / 1080),
+        )
+        for crop in name_crops:
+            name = auto.get_single_line_text(crop=crop, max_retries=2)
+            if name and name.strip():
+                if not auto.click_element(crop, "crop"):
+                    raise RuntimeError("奇物损毁卡片点击失败")
+                log.info(f"奇物损毁：选择{name.strip()}")
+                break
+        else:
+            raise RuntimeError("奇物损毁卡片未识别，停止点击")
+
+        time.sleep(0.5)
+        if not auto.click_element("摧毁", "text", max_retries=3, crop=button_crop, include=False):
+            raise RuntimeError("奇物损毁：点击摧毁失败")
+        # 点击成功不等于处理成功。连续两次确认标题与说明消失，
+        # 若按钮未生效或出现未支持弹窗，则明确停止并由顶层保存截图。
+        absent_frames = 0
+        for _ in range(10):
+            time.sleep(1)
+            still_title = auto.find_element("奇物损毁", "text", crop=title_crop, include=False)
+            still_prompt = auto.find_element("请选择要摧毁的奇物", "text", crop=prompt_crop, include=False)
+            absent_frames = 0 if still_title or still_prompt else absent_frames + 1
+            if absent_frames >= 2:
+                log.info("奇物损毁处理完成，已离开选择界面")
+                return
+        raise RuntimeError("奇物损毁：点击后界面未退出，停止任务并保留现场")
+
     def process_wish(self):
         """
         处理愿力满盈界面：优先选择未收集的奇迹或建议选项
@@ -1396,8 +1492,53 @@ class DivergentUniverse:
         auto.click_element('确定', 'text', None, 10, crop=(561 / 1920, 937 / 1080, 794 / 1920, 60 / 1080), include=True)
         time.sleep(2)
 
+        # 4.5 版本新更新的 “贪吃面具” 会在此处弹窗 “本次为最后一次区域选择阶段，之后将无法再进入储蓄间，是否继续？”
+        if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9):
+            time.sleep(2)
+
+    @staticmethod
+    def reveal_event_confirm():
+        for attempt in range(7):
+            # 与后续点击使用相同的识别范围和包含匹配，兼容按钮位置变化及 OCR 合并文字。
+            if auto.find_element("确定", "text", max_retries=2, retry_delay=0.5, include=True):
+                return True
+            if attempt == 6:
+                break
+            # 事件背景和选中框有动画。松手前停顿消除惯性，再重新识别按钮，
+            # 避免把背景持续变化误判为列表还在移动。
+            if not auto.drag_mouse((1805 / 1920, 820 / 1080), (1805 / 1920, 320 / 1080),
+                                   duration=1.2, end_pause=0.25):
+                auto.take_screenshot()
+                raise RuntimeError("差分宇宙事件选项拖动中断，停止处理")
+            time.sleep(1)
+        return False
+
+    @staticmethod
+    def confirm_event_option():
+        # OCR 能识别灰色按钮，输入成功也不代表选项满足条件。
+        # 只比较右侧选项内容，排除左侧背景装饰字符的 OCR 波动。
+        options_left = auto.screenshot.width * 1320 / 1920
+        before = [text for box, (text, _) in auto.ocr_result if box[0][0] >= options_left]
+        if not auto.click_element("确定", "text", None, 4, include=True):
+            raise RuntimeError("差分宇宙事件确定按钮点击失败")
+        absent_frames = 0
+        for _ in range(4):
+            time.sleep(0.5)
+            if not auto.find_element("确定", "text", include=True):
+                absent_frames += 1
+                if absent_frames >= 2:
+                    return True
+            else:
+                absent_frames = 0
+                # 连续事件可能沿用相同布局，内容变化也表示已进入下一页。
+                after = [text for box, (text, _) in auto.ocr_result if box[0][0] >= options_left]
+                if after != before:
+                    return True
+        return False
+
     def process_event(self):
-        while True:
+        start_time = time.monotonic()
+        while time.monotonic() - start_time < 120:
             time.sleep(1)
             if auto.click_element("./assets/images/screen/divergent_universe/event_next.png", "image", 0.9):
                 continue
@@ -1406,19 +1547,36 @@ class DivergentUniverse:
             if auto.click_element("./assets/images/screen/divergent_universe/event_leave.png", "image", 0.9):
                 continue
 
-            has_confirm = False
             matchs = auto.find_element("./assets/images/screen/divergent_universe/event_option.png", "image_with_multiple_targets", 0.9)
-            for match in reversed(matchs):
-                auto.click_element_with_pos(match)
+            if not matchs:
+                return
+            # 重入时优先完成已有选择，避免再次点击选项而切换或取消选中态。
+            if auto.find_element("确定", "text", include=True) and self.confirm_event_option():
+                continue
+
+            has_confirm = False
+            for attempt in range(10):
+                # 展开选项、确认和拖动都会改变位置，每次选择前都重新定位。
+                matchs = auto.find_element("./assets/images/screen/divergent_universe/event_option.png", "image_with_multiple_targets", 0.9)
+                if not matchs:
+                    break
+                # 首次失败后的拖动可能露出新的末项，从当前末项重新向上尝试。
+                option_index = len(matchs) - max(1, attempt)
+                if option_index < 0:
+                    break
+                if not auto.click_element_with_pos(matchs[option_index]):
+                    raise RuntimeError("差分宇宙事件选项点击失败")
                 time.sleep(0.5)
-                auto.mouse_scroll(20, -1, False)
+                if not self.reveal_event_confirm():
+                    continue
                 time.sleep(0.5)
-                if auto.click_element('确定', 'text', None, 4, include=True):
+                if self.confirm_event_option():
                     has_confirm = True
                     break
             if has_confirm:
                 continue
-            break
+            raise RuntimeError("差分宇宙事件选项无法确认，停止处理")
+        raise RuntimeError("差分宇宙事件处理超时（120秒），停止处理")
 
     def process_station_card(self):
         if auto.find_element(("删除", "使其变为【空白】区域"), "text", crop=(110 / 1920, 136 / 1080, 1226 / 1920, 48 / 1080), include=True):
@@ -1426,8 +1584,137 @@ class DivergentUniverse:
         auto.click_element('确定', 'text', None, 10, crop=(1589 / 1920, 919 / 1080, 73 / 1920, 38 / 1080), include=True)
         time.sleep(2)
 
-    def process_save_management(self):
-        time.sleep(2)
+    def process_save_management(self, save_current_run: bool = False) -> bool:
+        # check_title 也会调用此函数；只有从探索成功结果页进入时才执行保存。
+        if not save_current_run:
+            time.sleep(2)
+            return False
+
+        slot_ys = (240, 372, 503, 634)
+        empty_icon = "./assets/images/screen/divergent_universe/empty_save_slot.png"
+
+        for index, y in enumerate(slot_ys):
+            slot_crop = (150 / 1920, (y - 20) / 1080, 70 / 1920, 40 / 1080)
+            if not auto.click_element(slot_crop, "crop"):
+                log.warning(f"无法点击第 {index + 1} 个存档位，跳过存档")
+                return False
+            time.sleep(0.7)
+
+            # 左侧被选中的槽位底色更亮。先确认切换成功，避免把前一槽位误判为空槽。
+            auto.take_screenshot()
+            image = auto.screenshot.convert("RGB")
+            sample_x = round(100 * image.width / 1920)
+            brightness = []
+            for slot_y in slot_ys:
+                sample_y = round(slot_y * image.height / 1080)
+                brightness.append(sum(image.getpixel((sample_x, sample_y))) / 3)
+            other_brightness = max(value for other_index, value in enumerate(brightness) if other_index != index)
+            if brightness[index] < other_brightness + 50:
+                log.warning(f"无法确认第 {index + 1} 个存档位已选中，跳过存档")
+                return False
+
+            if auto.find_element(
+                empty_icon,
+                "image",
+                0.9,
+                crop=(1000 / 1920, 420 / 1080, 230 / 1920, 160 / 1080),
+            ):
+                log.info(f"找到第 {index + 1} 个空存档位")
+                break
+        else:
+            log.info("四个存档位都未确认为空，跳过本轮存档")
+            return False
+
+        if not auto.click_element(
+            "保存本轮数据",
+            "text",
+            max_retries=3,
+            crop=(900 / 1920, 690 / 1080, 430 / 1920, 100 / 1080),
+            include=True,
+        ):
+            log.warning("未找到“保存本轮数据”按钮")
+            return False
+
+        if not auto.find_element(
+            "更改存档名",
+            "text",
+            max_retries=8,
+            crop=(850 / 1920, 380 / 1080, 220 / 1920, 80 / 1080),
+            include=True,
+        ):
+            log.warning("未出现更改存档名窗口")
+            return False
+
+        # 保留游戏给出的默认名称。
+        if not auto.click_element(
+            "确认",
+            "text",
+            max_retries=3,
+            crop=(985 / 1920, 630 / 1080, 380 / 1920, 90 / 1080),
+            include=False,
+        ):
+            log.warning("未找到存档确认按钮")
+            return False
+
+        if not auto.find_element(
+            ("本轮存档", "本局已存档"),
+            "text",
+            max_retries=8,
+            crop=(900 / 1920, 900 / 1080, 1000 / 1920, 140 / 1080),
+            include=True,
+        ):
+            log.warning("点击确认后，未能确认存档完成")
+            return False
+
+        log.info("本轮差分宇宙已存档")
+        return True
+
+    def _save_completed_run(self) -> bool:
+        opened_save_management = False
+        try:
+            if not auto.click_element(
+                "记录本次存档",
+                "text",
+                max_retries=3,
+                crop=(980 / 1920, 935 / 1080, 400 / 1920, 90 / 1080),
+                include=True,
+            ):
+                log.warning("未找到“记录本次存档”按钮")
+                return False
+            opened_save_management = True
+
+            if not auto.find_element(
+                "存档管理",
+                "text",
+                max_retries=10,
+                crop=(96 / 1920, 63 / 1080, 142 / 1920, 34 / 1080),
+                include=True,
+            ):
+                log.warning("点击记录存档后，未进入存档管理")
+                return False
+
+            return self.process_save_management(save_current_run=True)
+        except Exception as exc:
+            log.error(f"自动记录差分宇宙存档失败：{exc}")
+            return False
+        finally:
+            if opened_save_management:
+                for _ in range(3):
+                    if auto.find_element(
+                        "返回主界面",
+                        "text",
+                        crop=(573 / 1920, 947 / 1080, 792 / 1920, 85 / 1080),
+                        include=True,
+                    ):
+                        break
+                    if not (
+                        auto.find_element("存档管理", "text", crop=(96 / 1920, 63 / 1080, 142 / 1920, 34 / 1080), include=True)
+                        or auto.find_element("更改存档名", "text", crop=(850 / 1920, 380 / 1080, 220 / 1920, 80 / 1080), include=True)
+                    ):
+                        log.warning("无法确认当前界面，停止自动关闭存档管理")
+                        break
+                    auto.press_key("esc")
+                    time.sleep(1)
 
     def process_chaos_box(self):
         time.sleep(2)
@@ -1473,6 +1760,19 @@ class DivergentUniverse:
             elif auto.matched_text == "返回主界面":
                 log.info(f"检测到 “返回主界面” 的按钮，尝试点击")
                 self._check_battle_result()
+                if self.result is True and cfg.get_value("divergent_auto_save_enable", True) and not self._save_attempted:
+                    self._save_attempted = True
+                    self._save_completed_run()
+                    result = auto.find_element(
+                        "返回主界面",
+                        "text",
+                        max_retries=3,
+                        crop=(573 / 1920, 947 / 1080, 792 / 1920, 85 / 1080),
+                        include=True,
+                    )
+                    if not result:
+                        log.warning("存档流程后未找到“返回主界面”，等待下一轮界面识别")
+                        return True
                 time.sleep(2)
                 auto.click_element_with_pos(result)
                 if self.result is not None:

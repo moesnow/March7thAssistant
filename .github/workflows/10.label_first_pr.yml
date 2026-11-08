@@ -1,0 +1,50 @@
+name: Label First PR
+
+# 当一个 PR 成功合并时，如果这是该作者在本仓库第一个被合并的 PR，
+# 自动添加 "first PR / 首次贡献" 标签。
+on:
+  pull_request_target:
+    types:
+      - closed
+
+jobs:
+  label-first-pr:
+    runs-on: ubuntu-latest
+    # 仅在 PR 成功合并、且作者不是 bot（如 dependabot）时运行
+    if: "${{ github.event.pull_request.merged == true && github.event.pull_request.user.type != 'Bot' }}"
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Add first PR label
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
+            const login = pr.user.login;
+
+            // 搜索该作者在本仓库已合并的 PR。
+            // 搜索索引对刚合并的 PR 可能有延迟，
+            // 因此不比较数量，而是检查结果里是否出现“其它” PR：
+            // 只要能找到任意一个不是当前 PR 的已合并 PR，就说明不是首次合并。
+            const q = `repo:${owner}/${repo} is:pr is:merged author:${login}`;
+            const res = await github.request('GET /search/issues', {
+              q,
+              per_page: 30,
+            });
+            const hasOtherMergedPr = res.data.items.some(
+              (item) => item.number !== pr.number,
+            );
+            if (hasOtherMergedPr) {
+              core.info(`${login} 在本仓库已有合并记录，跳过打标签`);
+              return;
+            }
+
+            await github.rest.issues.addLabels({
+              owner,
+              repo,
+              issue_number: pr.number,
+              labels: ['first PR / 首次贡献'],
+            });
+            core.info(`已为 #${pr.number} 添加 first PR / 首次贡献 标签`);

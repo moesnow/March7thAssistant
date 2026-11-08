@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - "**/*.py"
+      - "assets/locales/**"
+      - "assets/docs/**"
       - "requirements.txt"
       - "pyproject.toml"
       - "uv.lock"
@@ -16,6 +18,8 @@ on:
       - main
     paths:
       - "**/*.py"
+      - "assets/locales/**"
+      - "assets/docs/**"
       - "requirements.txt"
       - "pyproject.toml"
       - "uv.lock"
@@ -31,19 +35,19 @@ jobs:
           - os: windows
             arch: x86
             runner: windows-latest
-            python-version: "3.14.5"
+            python-version: "3.14.8"
           - os: macos
             arch: arm64
             runner: macos-latest
-            python-version: "3.14.5"
+            python-version: "3.14.8"
           - os: linux
             arch: x86
             runner: ubuntu-latest
-            python-version: "3.14.5"
+            python-version: "3.14.8"
           - os: linux
             arch: arm64
             runner: ubuntu-24.04-arm
-            python-version: "3.14.5"
+            python-version: "3.14.8"
 
     steps:
       - name: Checkout code
@@ -58,7 +62,7 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.1.0
         with:
-          version: "0.11.15"
+          version: "0.13.0"
           python-version: ${{ matrix.python-version }}
           enable-cache: true
           cache-python: true
@@ -67,5 +71,15 @@ jobs:
       - name: Install dependencies
         run: uv sync --group dev
 
-      - name: Run tests
+      - name: Check translation catalogs
+        run: uv run python -m tools.i18n check
+
+      - name: Run tests (Linux, offscreen)
+        if: matrix.os == 'linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: uv run pytest tests/ -v --tb=short
+
+      - name: Run tests (Windows and macOS)
+        if: matrix.os != 'linux'
         run: uv run pytest tests/ -v --tb=short

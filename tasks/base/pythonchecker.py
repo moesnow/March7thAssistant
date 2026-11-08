@@ -3,7 +3,7 @@ from module.logger import log
 from module.config import cfg
 from utils.command import subprocess_with_stdout
 from module.game import get_game_controller
-from packaging.version import parse
+from utils.version import Version
 import subprocess
 import tempfile
 import sys
@@ -83,7 +83,7 @@ class PythonChecker:
         python_result = subprocess_with_stdout([path, '-V'])
         if python_result is not None and python_result[0:7] == "Python ":
             python_version = python_result.split(' ')[1]
-            if parse(python_version) < parse("3.7"):
+            if Version(python_version) < Version("3.7"):
                 log.error(f"Python 版本过低: {python_version} < 3.7")
                 return False
             else:

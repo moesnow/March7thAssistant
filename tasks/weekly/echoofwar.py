@@ -5,6 +5,7 @@ from module.logger import log
 from tasks.power.power import Power
 from tasks.power.instance import Instance
 from tasks.daily.buildtarget import BuildTarget
+from tasks.base.list_drag import drag_list
 import time
 
 
@@ -15,8 +16,9 @@ class Echoofwar:
             log.hr("准备历战余响", 0)
             screen.change_to('guide3')
             guide3_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
-            if auto.click_element("凝滞虚影", "text", max_retries=10, crop=guide3_crop):
-                auto.mouse_scroll(12, -1)
+            if auto.find_element("凝滞虚影", "text", max_retries=10, crop=guide3_crop):
+                if not drag_list(auto, (645 / 1920, 805 / 1080), (645 / 1920, 405 / 1080), crop=guide3_crop):
+                    return False
                 # 等待界面完全停止
                 time.sleep(1)
                 if auto.click_element("历战余响", "text", max_retries=10, crop=guide3_crop):

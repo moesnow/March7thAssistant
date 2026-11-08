@@ -5,17 +5,20 @@ from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBa
 from .card.pushsettingcard1 import PushSettingCardCode
 from .card.autoplot_setting_card import AutoPlotSettingCard
 from .common.style_sheet import StyleSheet
+from .common.icon import UiIcon
 import tasks.tool as tool
 import base64
 import subprocess
-import pyperclip
+from utils import clipboard
 from module.config import cfg
 from tasks.base.tasks import start_task
 import os
 import sys
+import traceback
 
 
 from module.localization import tr
+from module.logger import log
 
 
 class ToolsInterface(ScrollArea):
@@ -29,13 +32,13 @@ class ToolsInterface(ScrollArea):
 
         self.ToolsGroup = SettingCardGroup(tr('工具箱'), self.scrollWidget)
         self.automaticPlotCard = AutoPlotSettingCard(
-            FIF.IMAGE_EXPORT,
+            FIF.CHAT,
             tr("自动对话"),
             tr("进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道")
         )
         self.gameScreenshotCard = PushSettingCard(
             tr('捕获'),
-            FIF.CLIPPING_TOOL,
+            FIF.CAMERA,
             tr("游戏截图"),
             tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）")
         )
@@ -47,25 +50,63 @@ class ToolsInterface(ScrollArea):
         )
         self.redemptionCodeCard = PushSettingCardCode(
             tr('执行'),
-            FIF.BOOK_SHELF,
+            UiIcon.TICKET,
             tr("兑换码"),
             "redemption_code",
             self
         )
         self.cloudTouchCard = PushSettingCard(
             tr('启动'),
-            FIF.CLOUD,
+            UiIcon.TAP,
             tr("触屏模式"),
             tr("以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内")
         )
         self.screenTestCard = PushSettingCard(
             tr('测试'),
-            FIF.CHECKBOX,
+            UiIcon.BEAKER,
             tr("界面可切换性测试"),
             tr("以最短路径遍历所有可达界面，验证界面切换是否正常")
         )
+        self.characterExportCard = PushSettingCard(
+            tr('导出'),
+            FIF.PEOPLE,
+            tr("角色面板导出"),
+            tr("读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json")
+        )
 
         self.__initWidget()
+
+        if sys.platform == 'win32' and self.automaticPlotCard.getSwitchState():
+            self.__startAutoPlot()
+
+    def retranslateUi(self):
+        """保留自动对话开关及其运行状态，不再次启动后台工具。"""
+        StyleSheet.TOOLS_INTERFACE.apply(self)
+        self.toolsLabel.setText(tr('工具箱'))
+        self.toolsLabel.adjustSize()
+        self.ToolsGroup.titleLabel.setText(tr('工具箱'))
+        self.automaticPlotCard.card.setTitle(tr('自动对话'))
+        self.automaticPlotCard.card.setContent(tr('进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道'))
+        self.automaticPlotCard.retranslateUi()
+        self.gameScreenshotCard.setTitle(tr('游戏截图'))
+        self.gameScreenshotCard.setContent(tr('检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）'))
+        self.gameScreenshotCard.button.setText(tr('捕获'))
+        self.unlockfpsCard.setTitle(tr('解锁帧率'))
+        self.unlockfpsCard.setContent(tr('通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）'))
+        self.unlockfpsCard.button.setText(tr('解锁'))
+        self.redemptionCodeCard.setTitle(tr('兑换码'))
+        self.redemptionCodeCard.title = tr('兑换码')
+        self.redemptionCodeCard.setContent(tr('批量使用兑换码，每行一个，自动过滤空格等无效字符'))
+        self.redemptionCodeCard.button.setText(tr('执行'))
+        self.cloudTouchCard.setTitle(tr('触屏模式'))
+        self.cloudTouchCard.setContent(tr('以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内'))
+        self.cloudTouchCard.button.setText(tr('启动'))
+        self.screenTestCard.setTitle(tr('界面可切换性测试'))
+        self.screenTestCard.setContent(tr('以最短路径遍历所有可达界面，验证界面切换是否正常'))
+        self.screenTestCard.button.setText(tr('测试'))
+        self.characterExportCard.setTitle(tr('角色面板导出'))
+        self.characterExportCard.setContent(tr('读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json'))
+        self.characterExportCard.button.setText(tr('导出'))
 
     def __initWidget(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -98,6 +139,7 @@ class ToolsInterface(ScrollArea):
         self.ToolsGroup.addSettingCard(self.redemptionCodeCard)
         self.ToolsGroup.addSettingCard(self.cloudTouchCard)
         self.ToolsGroup.addSettingCard(self.screenTestCard)
+        self.ToolsGroup.addSettingCard(self.characterExportCard)
 
         if sys.platform != 'win32':
             self.automaticPlotCard.setDisabled(True)
@@ -117,7 +159,7 @@ class ToolsInterface(ScrollArea):
                 break
 
     def __onUnlockfpsCardClicked(self):
-        from utils.registry.star_rail_setting import get_game_fps, set_game_fps  # 延迟导入，避免非 Windows 平台报错
+        from utils.registry.star_rail_setting import get_game_fps, set_game_fps, MissingFPSSettingError  # 延迟导入，避免非 Windows 平台报错
         try:
             fps = get_game_fps()
             if fps == 120:
@@ -142,10 +184,19 @@ class ToolsInterface(ScrollArea):
                     duration=1000,
                     parent=self
                 )
-        except:
+        except Exception as e:
+            if isinstance(e, MissingFPSSettingError):
+                content = tr("请将游戏图像质量修改为自定义后重试")
+                log.warning("解锁帧率失败：请将游戏图像质量修改为自定义后重试")
+            else:
+                log.error(f"解锁帧率失败：{e}\n{traceback.format_exc()}")
+                error = f"{type(e).__name__}: {' '.join(str(e).split())}"
+                if len(error) > 80:
+                    error = error[:79] + "…"
+                content = tr("{error}（详情见日志）").format(error=error)
             InfoBar.warning(
                 title=tr('解锁失败'),
-                content=tr("请将游戏图像质量修改为自定义后重试"),
+                content=content,
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
@@ -183,7 +234,7 @@ class ToolsInterface(ScrollArea):
             if not game_path or not os.path.exists(game_path):
                 InfoBar.warning(
                     title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                    content=tr("请在“设置”-->“程序”中配置正确的游戏路径"),
+                    content=tr("请在“设置”→“程序”中配置正确的游戏路径"),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -220,7 +271,7 @@ class ToolsInterface(ScrollArea):
                     cp.write(f)
             args = ["-HKSR", "-EnableMobileUI"]
             subprocess.Popen([exe_path] + args, cwd=config_dir)
-            pyperclip.copy(f'cd "{config_dir}" && "{exe_path}" {" ".join(args)}')
+            clipboard.copy(f'cd "{config_dir}" && "{exe_path}" {" ".join(args)}')
             InfoBar.success(
                 title=tr('启动成功(＾∀＾●)'),
                 content=tr("已将命令复制到剪贴板"),
@@ -283,18 +334,19 @@ class ToolsInterface(ScrollArea):
         self.unlockfpsCard.clicked.connect(self.__onUnlockfpsCardClicked)
         self.cloudTouchCard.clicked.connect(self.__onCloudTouchCardClicked)
         self.screenTestCard.clicked.connect(self.__onScreenTestCardClicked)
+        self.characterExportCard.clicked.connect(self.__onCharacterExportCardClicked)
 
     def __onScreenTestCardClicked(self):
         start_task("screen_test")
 
+    def __onCharacterExportCardClicked(self):
+        start_task("character_export")
+
     def __onAutoPlotSwitchChanged(self, isChecked: bool):
         """Handle auto plot switch state change"""
+        cfg.set_value("autoplot_enable", isChecked and bool(cfg.get_value("autoplot_remember_enable", False)))
         if isChecked:
-            # Update options first
-            options = self.automaticPlotCard.getOptions()
-            tool.update_plot_options(options)
-            # Start auto plot
-            tool.start("plot")
+            self.__startAutoPlot()
             InfoBar.success(
                 title=tr('自动对话已启动'),
                 content="",
@@ -316,6 +368,10 @@ class ToolsInterface(ScrollArea):
                 duration=1000,
                 parent=self
             )
+
+    def __startAutoPlot(self):
+        tool.update_plot_options(self.automaticPlotCard.getOptions())
+        tool.start("plot")
 
     def __onAutoPlotOptionsChanged(self, options: dict):
         """Handle auto plot options change"""

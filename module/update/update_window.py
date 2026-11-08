@@ -295,7 +295,7 @@ class UpdaterWindow(MessageBoxBase):
         self.status_label.setText(tr("已请求取消更新，正在等待当前步骤结束"))
         self.detail_label.setText("")
         self._set_indeterminate(True)
-        self._append_log("warning", tr("已请求取消更新，正在等待当前步骤结束"))
+        self._append_log("warning", "已请求取消更新，正在等待当前步骤结束")
 
         if self.worker is not None:
             self.worker.cancel()
@@ -320,7 +320,7 @@ class UpdaterWindow(MessageBoxBase):
         self.detail_label.setText("")
         self._set_indeterminate(True)
         self.log_edit.clear()
-        self._append_log("info", tr("更新任务已启动"))
+        self._append_log("info", "更新任务已启动")
 
         self.worker = UpdatePrepareWorker(
             self.download_url,
@@ -372,9 +372,12 @@ class UpdaterWindow(MessageBoxBase):
 
         creationflags = getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
         command = [source_file, "--mode", "finalize", "--wait-pid", str(os.getpid())]
+        if self.main_window is not None and self.main_window.is_minimized_to_tray():
+            command.append("--start-minimized-to-tray")
         command.extend(["--file-name", file_name])
         if extract_folder_path:
             command.extend(["--extract-folder-path", extract_folder_path])
+        self._append_log("info", f"启动更新器: {' '.join(command)} (PID={os.getpid()})")
         subprocess.Popen(
             command,
             creationflags=creationflags,
@@ -404,7 +407,7 @@ class UpdaterWindow(MessageBoxBase):
         self.title_label.setText(tr("更新已准备完成"))
         self.status_label.setText(tr("更新包已下载并解压完成，点击“开始安装”后将关闭主程序并安装新版本"))
         self.detail_label.setText("")
-        self._append_log("info", tr("更新已准备完成，等待开始安装"))
+        self._append_log("info", "更新已准备完成，等待开始安装")
         if self.background_tooltip is not None:
             self.background_tooltip.setTitle(tr("更新已准备完成"))
             self.background_tooltip.setContent(
@@ -430,7 +433,8 @@ class UpdaterWindow(MessageBoxBase):
         self.retry_button.setEnabled(False)
         self.background_button.setEnabled(False)
         self.close_button.setEnabled(False)
-        self._append_log("info", tr("开始安装"))
+        self._append_log("info", "开始安装")
+        self._append_log("info", "200ms 后退出主程序（退出时会保存窗口状态并写配置，注意与更新器的并发窗口）")
         self.title_label.setText(tr("开始安装"))
         self.status_label.setText(tr("请勿关闭此窗口，更新完成后会自动启动新版本"))
         self.detail_label.setText("")
@@ -450,7 +454,7 @@ class UpdaterWindow(MessageBoxBase):
         self.title_label.setText(tr("取消"))
         self.status_label.setText(tr("更新已取消"))
         self.detail_label.setText("")
-        self._append_log("info", tr("更新已取消"))
+        self._append_log("info", "更新已取消")
 
     def _on_failed(self, message: str):
         self.restore_from_background()

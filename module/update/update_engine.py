@@ -5,12 +5,14 @@
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import shutil
 import subprocess
 import sys
 import threading
 import time
+import traceback
 from enum import Enum
 from typing import Callable
 
@@ -24,6 +26,19 @@ from module.update.version_check import UpdateInfo, check_for_update
 
 
 FILE_COMPARE_CHUNK_SIZE = 64 * 1024
+
+# 更新流程中需要重点盯防的用户数据文件（损坏/丢失即用户可感知的故障）
+USER_DATA_MARKERS = ("config.yaml", "config.yaml.bak", "settings", "config/workflows")
+
+
+def describe_path(path: str) -> str:
+    """返回文件的简要指纹（大小/sha256 前 12 位），用于更新前后对比用户数据文件"""
+    try:
+        with open(path, "rb") as f:
+            data = f.read()
+    except OSError as e:
+        return f"<读取失败: {e}>"
+    return f"size={len(data)} sha256={hashlib.sha256(data).hexdigest()[:12]}"
 
 
 def build_independent_process_env() -> dict[str, str]:
@@ -111,6 +126,7 @@ class UpdateEngine:
         self.process_names = [
             "March7th Assistant.exe",
             "March7th Launcher.exe",
+            "m7a.exe",
             "flet.exe",
             "gui.exe",
             "Fhoe-Rail.exe",
@@ -189,19 +205,19 @@ class UpdateEngine:
 
         返回下载 URL 如果有新版本；返回 None 如果已是最新。
         """
-        self._log("info", tr("开始检测更新"))
+        self._log("info", "开始检测更新")
         try:
             info = check_for_update(source, cdk, prerelease, full)
         except Exception as e:
-            self._log("error", f"{tr('检测更新失败')}: {e}")
+            self._log("error", f"检测更新失败: {e}")
             raise UpdateError(tr("检测更新失败")) from e
 
         if info is None:
-            self._log("info", tr("当前已是最新版本"))
+            self._log("info", "当前已是最新版本")
             return None
 
         self.set_update_info(info)
-        self._log("info", f"{tr('发现新版本')}: {info.version} ({info.source})")
+        self._log("info", f"发现新版本: {info.version} ({info.source})")
         return info.url
 
     # ── 进度与日志 ───────────────────────────────────────────────────
@@ -299,7 +315,7 @@ class UpdateEngine:
     def terminate_processes(self):
         """终止所有相关进程。"""
         self._emit_progress(UpdateStage.TERMINATE, tr("正在关闭相关进程..."), indeterminate=True)
-        self._log("info", tr("开始终止相关进程"))
+        self._log("info", "开始终止相关进程")
         count = 0
         for proc in psutil.process_iter(attrs=["pid", "name"]):
             self._check_cancelled()
@@ -312,6 +328,8 @@ class UpdateEngine:
                 except (psutil.NoSuchProcess, psutil.TimeoutExpired, psutil.AccessDenied):
                     pass
         self._log("info", f"终止完成，共 {count} 个进程")
+        # 被强杀的进程可能正在写配置，记录此刻的用户数据状态便于事后定责
+        self._log("info", f"[config-snapshot] 进程终止后用户数据: {self._describe_user_data()}")
 
     def wait_for_process_exit(
         self, pid: int | None, timeout: float = 30.0, poll_interval: float = 0.2
@@ -321,7 +339,7 @@ class UpdateEngine:
             return True
 
         self._emit_progress(UpdateStage.PREPARE, tr("正在等待主程序退出..."), indeterminate=True)
-        self._log("info", f"{tr('正在等待主程序退出...')} PID={pid}")
+        self._log("info", f"正在等待主程序退出... PID={pid}")
 
         try:
             process = psutil.Process(pid)
@@ -339,7 +357,7 @@ class UpdateEngine:
             except psutil.NoSuchProcess:
                 return True
 
-        self._log("warning", tr("等待主程序退出超时，尝试继续处理"))
+        self._log("warning", "等待主程序退出超时，尝试继续处理")
         return False
 
     # ── 覆盖安装 ─────────────────────────────────────────────────────
@@ -348,10 +366,12 @@ class UpdateEngine:
         """将解压后的文件覆盖到应用目录。"""
         self._check_cancelled()
         self._emit_progress(UpdateStage.COVER, tr("正在检测文件占用..."), indeterminate=True)
-        self._log("info", tr("开始覆盖安装"))
+        self._log("info", "开始覆盖安装")
+        self._log("info", f"[config-snapshot] 覆盖前用户数据: {self._describe_user_data()}")
 
         files = self._get_files_to_overwrite()
         self._log("debug", f"需要覆盖 {len(files)} 个文件")
+        self._warn_user_data_in_package(files)
 
         files = self._filter_changed_files(files)
 
@@ -364,7 +384,7 @@ class UpdateEngine:
             )
 
         if not files:
-            self._log("info", f"{tr('覆盖完成')}: {self.cover_folder_path}")
+            self._log("info", f"覆盖完成: {self.cover_folder_path}")
             return
 
         self._emit_progress(UpdateStage.COVER, tr("正在覆盖安装新版本..."), 0, len(files))
@@ -394,7 +414,8 @@ class UpdateEngine:
         # 再覆盖自身文件
         completed = self._overwrite_files(self_items, completed, len(files), created_dirs)
 
-        self._log("info", f"{tr('覆盖完成')}: {self.cover_folder_path}")
+        self._log("info", f"覆盖完成: {self.cover_folder_path}")
+        self._log("info", f"[config-snapshot] 覆盖后用户数据: {self._describe_user_data()}")
 
     # ── 清理 ─────────────────────────────────────────────────────────
 
@@ -410,26 +431,35 @@ class UpdateEngine:
             self._check_cancelled()
             self._remove_cleanup_tree(self.extract_folder_path)
 
-        self._log("info", tr("清理临时文件完成"))
+        self._log("info", "清理临时文件完成")
 
     # ── 启动应用 ─────────────────────────────────────────────────────
 
-    def launch_application(self):
+    def launch_application(self, start_minimized_to_tray: bool = False):
         """启动新版本的 March7th Launcher。"""
         self._check_cancelled()
         self._emit_progress(UpdateStage.LAUNCH, tr("正在启动新版本..."), indeterminate=True)
 
         launcher = os.path.abspath("./March7th Launcher.exe")
         env = build_independent_process_env()
+        # 主程序需要写配置，不能继承更新器的只读角色；仅修改子进程环境。
+        env.pop("MARCH7TH_CONFIG_READONLY", None)
+        command = [launcher]
+        if start_minimized_to_tray:
+            command.append("--start-minimized-to-tray")
+
+        self._log("info", f"[config-snapshot] 启动新版本前用户数据: {self._describe_user_data()}")
+        self._log("info", f"启动新版本: {command}")
         try:
             subprocess.Popen(
-                [launcher],
+                command,
                 creationflags=getattr(subprocess, "DETACHED_PROCESS", 0),
                 env=env,
                 close_fds=True,
             )
-        except Exception:
-            subprocess.Popen([launcher], env=env, close_fds=True)
+        except Exception as e:
+            self._log("warning", f"启动新版本失败，尝试备用方式: {e}")
+            subprocess.Popen(command, env=env, close_fds=True)
 
         self._cleanup_self_backup()
         self._emit_progress(UpdateStage.DONE, tr("更新完成"), 1, 1)
@@ -452,22 +482,25 @@ class UpdateEngine:
         self.extract_file()
         return True
 
-    def finalize_update(self, wait_pid: int | None = None):
+    def finalize_update(self, wait_pid: int | None = None, start_minimized_to_tray: bool = False):
         """最终安装：等待退出 → 终止进程 → 覆盖 → 清理 → 启动。"""
-        self._log("info", "开始最终化更新")
+        self._log("info", f"开始最终化更新 PID={os.getpid()} 等待退出PID={wait_pid} cwd={os.getcwd()}")
         self._require_package(require_download_url=False)
         self.wait_for_process_exit(wait_pid)
         self.terminate_processes()
         self.cover_folder()
         self.cleanup()
-        self.launch_application()
+        self.launch_application(start_minimized_to_tray=start_minimized_to_tray)
 
-    def run_full_update(self, wait_pid: int | None = None) -> bool:
+    def run_full_update(self, wait_pid: int | None = None, start_minimized_to_tray: bool = False) -> bool:
         """完整更新流程。"""
         self._log("info", "开始完整更新流程")
         if not self.prepare_update():
             return False
-        self.finalize_update(wait_pid=wait_pid)
+        self.finalize_update(
+            wait_pid=wait_pid,
+            start_minimized_to_tray=start_minimized_to_tray,
+        )
         return True
 
     # ── 内部辅助 ─────────────────────────────────────────────────────
@@ -493,6 +526,33 @@ class UpdateEngine:
                 dest = os.path.join(self.cover_folder_path, rel)
                 items.append((src, dest))
         return items
+
+    def _describe_user_data(self) -> str:
+        """描述当前用户数据文件（config.yaml 等）的状态，用于更新前后对比"""
+        parts = []
+        config_path = os.path.abspath("./config.yaml")
+        if os.path.exists(config_path):
+            parts.append(f"config.yaml[{describe_path(config_path)}]")
+        else:
+            parts.append("config.yaml[不存在]")
+        try:
+            leftovers = [
+                name for name in os.listdir(os.path.dirname(config_path))
+                if name.startswith("config.yaml.") or name.startswith("config.yaml.bak")
+            ]
+            if leftovers:
+                parts.append(f"残留文件={sorted(leftovers)}")
+        except OSError:
+            pass
+        return " ".join(parts)
+
+    def _warn_user_data_in_package(self, files: list[tuple[str, str]]):
+        """更新包中若携带用户数据文件（如 config.yaml），覆盖会直接抹掉用户配置，必须告警留痕"""
+        for _, dest in files:
+            rel = os.path.relpath(dest, self.cover_folder_path)
+            rel_norm = rel.replace("\\", "/")
+            if rel_norm == "config.yaml" or rel_norm.startswith(("settings/", "config/workflows/")):
+                self._log("warning", f"更新包包含用户数据文件，覆盖后会覆盖用户现有数据: {rel}")
 
     def _check_target_files_locked(self, files: list[tuple[str, str]]) -> list[str]:
         locked = []
@@ -580,8 +640,11 @@ class UpdateEngine:
             try:
                 os.replace(src, dest)
                 return
-            except OSError:
-                pass
+            except OSError as e:
+                # 目标被其他进程占用时 os.replace 会失败，退化为 copy2（非原子）。
+                # config.yaml 等用户文件若走到这里，写入中途被中断就会截断。
+                self._log("warning", f"覆盖文件 os.replace 失败（errno={getattr(e, 'winerror', None) or e.errno}），"
+                                     f"退化为复制（非原子）: {os.path.abspath(dest)}\n{traceback.format_exc()}")
         shutil.copy2(src, dest)
 
     def _is_same_drive(self, src: str, dest: str) -> bool:
@@ -652,14 +715,14 @@ class UpdateEngine:
             try:
                 os.remove(backup)
             except Exception:
-                self._log("error", f"{tr('无法删除旧的备份文件')}: {backup}")
+                self._log("error", f"无法删除旧的备份文件: {backup}")
                 return False
         try:
             os.replace(self_path, backup)
             self.self_backup_path = backup
             return True
         except Exception as e:
-            self._log("error", f"{tr('重命名自身失败')}: {e}")
+            self._log("error", f"重命名自身失败: {e}")
             return False
 
     def _cleanup_self_backup(self):

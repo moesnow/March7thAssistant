@@ -21,21 +21,36 @@ class SMTPNotifier(Notifier):
         ssl = self.params.get("ssl", True)
         starttls = self.params.get("starttls", False)
         ssl_unverified = self.params.get("ssl_unverified", False)
+        plain_text = self.params.get("plain_text", False)
 
+        if plain_text:
+            if image_io:
+                msg = MIMEMultipart("mixed")
+                msg.attach(MIMEText(content, "plain", "utf-8"))
+                img = MIMEImage(image_io.getvalue())
+                img.add_header("Content-Disposition", "attachment",
+                    filename=f"screenshot.{img.get_content_subtype()}")
+                msg.attach(img)
+            else:
+                msg = MIMEText(content, "plain", "utf-8")
 
-        msg = MIMEMultipart('related')
-        body = f'<p>{content}<br>'
-        if image_io:
-            body += '<img src="cid:image1">'
-        body += '</br></p>'
-        msg['Subject'] = Header(title, 'utf-8')
-        msg['From'] = From
-        msg['To'] = To
-        if image_io:
-            img = MIMEImage(image_io.getvalue())
-            img.add_header('Content-ID', '<image1>')
-            msg.attach(img)
-        msg.attach(MIMEText(body, "html", "utf-8"))
+            msg['Subject'] = Header(title, 'utf-8')
+            msg['From'] = From
+            msg['To'] = To
+        else:
+            msg = MIMEMultipart('related')
+            body = f'<p>{content}<br>'
+            if image_io:
+                body += '<img src="cid:image1">'
+            body += '</br></p>'
+            msg['Subject'] = Header(title, 'utf-8')
+            msg['From'] = From
+            msg['To'] = To
+            if image_io:
+                img = MIMEImage(image_io.getvalue())
+                img.add_header('Content-ID', '<image1>')
+                msg.attach(img)
+            msg.attach(MIMEText(body, "html", "utf-8"))
 
         if starttls:
             smtp = smtplib.SMTP(host, port)

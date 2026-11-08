@@ -7,7 +7,9 @@ from .screenshot import Screenshot
 from utils.logger.logger import Logger
 from typing import Optional
 from utils.image_utils import ImageUtils
+from utils.pause import pause_guard
 from module.game import get_game_controller
+from module.config import cfg
 from module.ocr import ocr
 
 
@@ -30,19 +32,26 @@ class LauncherAutomation():
     def _init_input(self):
         """
         初始化输入处理器，将输入操作如点击、移动等绑定至实例变量。
+
+        所有输入均包一层暂停卡点（`pause_guard`）：暂停期间任何键鼠输入都会停在发出之前。
         """
-        self.input_handler = get_game_controller().get_input_handler()
-        self.mouse_click = self.input_handler.mouse_click
-        self.mouse_down = self.input_handler.mouse_down
-        self.mouse_up = self.input_handler.mouse_up
-        self.mouse_move = self.input_handler.mouse_move
-        self.mouse_scroll = self.input_handler.mouse_scroll
-        self.press_key = self.input_handler.press_key
-        self.press_key_down = self.input_handler.press_key_down
-        self.press_key_up = self.input_handler.press_key_up
-        self.secretly_press_key = self.input_handler.secretly_press_key
-        self.press_mouse = self.input_handler.press_mouse
-        self.secretly_write = self.input_handler.secretly_write
+        if cfg.cloud_game_enable:
+            self.input_handler = get_game_controller().get_input_handler()
+        else:
+            # 启动器独立于游戏 HWND，继续使用原有前台输入。
+            from .local_input import LocalInput
+            self.input_handler = LocalInput(self.logger)
+        self.mouse_click = pause_guard(self.input_handler.mouse_click)
+        self.mouse_down = pause_guard(self.input_handler.mouse_down)
+        self.mouse_up = pause_guard(self.input_handler.mouse_up)
+        self.mouse_move = pause_guard(self.input_handler.mouse_move)
+        self.mouse_scroll = pause_guard(self.input_handler.mouse_scroll)
+        self.press_key = pause_guard(self.input_handler.press_key)
+        self.press_key_down = pause_guard(self.input_handler.press_key_down)
+        self.press_key_up = pause_guard(self.input_handler.press_key_up)
+        self.secretly_press_key = pause_guard(self.input_handler.secretly_press_key)
+        self.press_mouse = pause_guard(self.input_handler.press_mouse)
+        self.secretly_write = pause_guard(self.input_handler.secretly_write)
 
     def take_screenshot(self, crop=(0, 0, 1, 1)):
         """
@@ -445,7 +454,7 @@ class LauncherAutomation():
             for _ in range(cnt):
                 action_map[action](x, y)
         else:
-            raise ValueError(f"未知的动作类型: {action}")
+            raise ValueError(f"未知的动作类型： {action}")
 
         return True
 

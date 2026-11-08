@@ -3,13 +3,14 @@ from __future__ import annotations
 import argparse
 import ctypes
 import os
+import sys
 import threading
 import time
 from ctypes import wintypes
 from dataclasses import dataclass
 
 from module.logger import log
-from module.localization import load_language, tr
+from module.localization import load_language, tr, tn
 from module.update.downloader import format_size
 from module.update.update_engine import UpdateBlockedError, UpdateCancelledError, UpdateEngine, UpdateProgress, UpdateStage
 from module.update.version_check import check_for_update
@@ -192,6 +193,7 @@ class HelperOptions:
     wait_pid: int | None
     auto_mode: bool = False
     cleanup_backup_path: str | None = None
+    start_minimized_to_tray: bool = False
 
 
 @dataclass(slots=True)
@@ -363,7 +365,8 @@ class NativeUpdaterWindow:
 
     def _worker_main(self):
         try:
-            self._log("info", f"更新程序启动，模式={self.options.mode}")
+            self._log("info", f"更新程序启动，模式={self.options.mode} PID={os.getpid()} "
+                              f"cwd={os.getcwd()} argv={sys.argv if hasattr(sys, 'argv') else []}")
             engine = UpdateEngine(progress_callback=self._on_progress, log_callback=self._on_engine_log)
             self._engine = engine
             retry_context = self._retry_context
@@ -395,11 +398,16 @@ class NativeUpdaterWindow:
                 self._run_retry_from_stage(engine, retry_context.stage)
             elif self.options.mode == "finalize":
                 self._log("info", f"执行最终化模式，等待PID={self.options.wait_pid}")
-                engine.finalize_update(wait_pid=self.options.wait_pid)
+                engine.finalize_update(
+                    wait_pid=self.options.wait_pid,
+                    start_minimized_to_tray=self.options.start_minimized_to_tray,
+                )
             else:
                 # 未预设 URL 时，通过统一的版本检测获取更新信息
                 if not engine.download_url:
                     self._log("debug", "未预设URL，执行版本检测")
+                    # 版本检测没有进度回调，重试时要主动替换上一次的失败文案
+                    self._on_progress(UpdateProgress(UpdateStage.PREPARE, tr("正在检测更新"), indeterminate=True))
                     try:
                         from module.config import cfg
                         source = getattr(cfg, "update_source", "GitHub")
@@ -413,7 +421,10 @@ class NativeUpdaterWindow:
                         info = check_for_update(source, cdk, prerelease, full)
                     except Exception as e:
                         self._log("warning", f"版本检测失败: {e}")
-                        info = None
+                        # 检测中途无法中断，用户已请求取消时直接收尾，不再弹失败提示
+                        if self._cancel_requested:
+                            raise UpdateCancelledError(tr("更新已取消")) from e
+                        raise
 
                     if info is None:
                         self._log("info", "当前已是最新版本")
@@ -423,7 +434,10 @@ class NativeUpdaterWindow:
                     engine.set_update_info(info)
                     self._log("info", f"发现新版本: {info.version} ({info.source})")
 
-                if not engine.run_full_update(wait_pid=self.options.wait_pid):
+                if not engine.run_full_update(
+                    wait_pid=self.options.wait_pid,
+                    start_minimized_to_tray=self.options.start_minimized_to_tray,
+                ):
                     self._set_result("no-update", tr("当前已是最新版本"))
                     return
 
@@ -450,7 +464,7 @@ class NativeUpdaterWindow:
             self._log("error", f"更新被文件占用阻止：{str(e)}")
             self._set_result("blocked", str(e), e.locked_files)
         except Exception as e:
-            self._log("error", f"更新过程出错：{str(e) or tr('更新失败')}")
+            self._log("error", f"更新过程出错：{str(e) or '更新失败'}")
             with self._lock:
                 self._retry_context = None
             self._set_result("failed", str(e) or tr("更新失败"))
@@ -461,15 +475,22 @@ class NativeUpdaterWindow:
         if stage == UpdateStage.COVER:
             engine.cover_folder()
             engine.cleanup()
-            engine.launch_application()
+            engine.launch_application(
+                start_minimized_to_tray=self.options.start_minimized_to_tray,
+            )
             return
 
         if stage == UpdateStage.CLEANUP:
             engine.cleanup()
-            engine.launch_application()
+            engine.launch_application(
+                start_minimized_to_tray=self.options.start_minimized_to_tray,
+            )
             return
 
-        engine.finalize_update(wait_pid=self.options.wait_pid)
+        engine.finalize_update(
+            wait_pid=self.options.wait_pid,
+            start_minimized_to_tray=self.options.start_minimized_to_tray,
+        )
 
     def _build_retry_context(
         self,
@@ -624,7 +645,7 @@ class NativeUpdaterWindow:
                 if remaining <= 0:
                     user32.DestroyWindow(self.hwnd)
                 else:
-                    countdown_text = tr("{seconds} 秒后自动退出").format(seconds=int(remaining) + 1)
+                    countdown_text = tn("{count} 秒后自动退出", int(remaining) + 1)
                     with self._lock:
                         self._detail_text = countdown_text
             return
@@ -675,6 +696,7 @@ def parse_args(argv=None) -> HelperOptions:
     parser.add_argument("--sha256", default=None)
     parser.add_argument("--extract-folder-path", default=None)
     parser.add_argument("--cleanup-backup-path", default=None)
+    parser.add_argument("--start-minimized-to-tray", action="store_true")
     parser.add_argument("--auto", "-a", action="store_true", dest="auto_mode")
 
     args = parser.parse_args(normalized_argv)
@@ -700,6 +722,7 @@ def parse_args(argv=None) -> HelperOptions:
         wait_pid=args.wait_pid,
         auto_mode=args.auto_mode,
         cleanup_backup_path=args.cleanup_backup_path,
+        start_minimized_to_tray=args.start_minimized_to_tray,
     )
 
 
@@ -708,6 +731,7 @@ def run_cleanup_backup(options: HelperOptions) -> int:
     if not backup:
         return 0
 
+    log.info(f"备份清理程序启动 PID={os.getpid()} cwd={os.getcwd()} 备份={backup}")
     engine = UpdateEngine(logger=log)
     if options.wait_pid:
         if not engine.wait_for_process_exit(options.wait_pid, timeout=CLEANUP_BACKUP_WAIT_TIMEOUT):
@@ -732,6 +756,7 @@ def run_cleanup_backup(options: HelperOptions) -> int:
 
 
 def main(argv=None) -> int:
+    log.info(f"March7th Updater 进程入口 PID={os.getpid()} cwd={os.getcwd()} argv={argv}")
     load_language()
     options = parse_args(argv)
     if options.mode == "cleanup-backup":

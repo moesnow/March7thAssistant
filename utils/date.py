@@ -31,6 +31,23 @@ class Date:
         return current_time >= next_monday_x_am
 
     @staticmethod
+    def is_weekly_day_due(timestamp, day_of_week, hour=4):
+        """Whether the chosen day has arrived in the current game week and has not run yet."""
+        if not isinstance(day_of_week, int) or not 1 <= day_of_week <= 7:
+            return False
+
+        current_time = datetime.now()
+        week_start = (current_time - timedelta(days=current_time.weekday())).replace(
+            hour=hour, minute=0, second=0, microsecond=0
+        )
+        if current_time < week_start:
+            week_start -= timedelta(days=7)
+
+        scheduled_time = week_start + timedelta(days=day_of_week - 1)
+        last_run = datetime.fromtimestamp(timestamp)
+        return current_time >= scheduled_time and last_run < week_start
+
+    @staticmethod
     def is_next_month_x_am(timestamp, hour=4):
         dt_object = datetime.fromtimestamp(timestamp)
         current_time = datetime.now()
@@ -74,18 +91,6 @@ class Date:
         next_2weeks_monday_x_am = next_monday_x_am + timedelta(days=7)
 
         return current_time >= next_2weeks_monday_x_am
-
-    @staticmethod
-    def get_time_next_x_am(hour=4):
-        now = datetime.now()
-        next_x_am = now.replace(hour=hour, minute=0, second=0, microsecond=0)
-
-        if now >= next_x_am:
-            next_x_am += timedelta(days=1)
-
-        time_until_next_x_am = next_x_am - now
-
-        return int(time_until_next_x_am.total_seconds())
 
     @staticmethod
     def calculate_future_time(input_data):

@@ -66,7 +66,7 @@ class RewardManager:
             else:
                 log.info(f"未检测到{reward_name}奖励")
         else:
-            log.error(f"未知的奖励类型: {reward_type}")
+            log.error(f"未知的奖励类型： {reward_type}")
 
         log.hr("完成", 2)
         return result

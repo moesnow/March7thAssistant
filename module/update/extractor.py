@@ -156,7 +156,7 @@ def extract(
         except Exception as e:
             raise ExtractionError(f"shutil 解压失败: {e}") from e
 
-    _log("info", f"{tr('解压完成')}: {extract_to}")
+    _log("info", f"解压完成: {extract_to}")
     return extract_to
 
 

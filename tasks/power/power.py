@@ -4,12 +4,16 @@ from module.logger import log
 from module.config import cfg
 from tasks.power.instance import Instance
 from tasks.daily.buildtarget import BuildTarget
+from tasks.power.weekly_relic_cleanup import WeeklyRelicCleanup
+from utils.date import Date
 import time
 
 
 class Power:
     @staticmethod
-    def run():
+    def run(skip_weekly_cleanup=False):
+        if not skip_weekly_cleanup:
+            Power.run_weekly_relic_cleanup()
         Power.preprocess()
 
         # 优先执行体力计划
@@ -34,6 +38,18 @@ class Power:
         Power.process(instance_type, instance_name)
 
         log.hr("完成", 2)
+
+    @staticmethod
+    def run_weekly_relic_cleanup():
+        if (cfg.get_value("break_down_level_four_relicset", False)
+                and Date.is_weekly_day_due(
+                    cfg.get_value("weekly_relic_cleanup_timestamp", 0),
+                    cfg.get_value("weekly_relic_cleanup_day_of_week", 1),
+                    cfg.refresh_hour,
+                )):
+            if not WeeklyRelicCleanup.run():
+                raise RuntimeError("每周遗器清理未完成")
+            cfg.save_timestamp("weekly_relic_cleanup_timestamp")
 
     @staticmethod
     def execute_power_plan():
@@ -72,7 +88,7 @@ class Power:
                 updated_plan.append(plan)
                 continue
 
-            log.info(f"执行体力计划 [{i + 1}/{len(power_plan)}]: {instance_type} - {instance_name}, 计划次数: {count}")
+            log.info(f"执行体力计划 [{i + 1}/{len(power_plan)}]: {instance_type} - {instance_name}, 计划次数： {count}")
 
             try:
                 # 执行副本
@@ -84,7 +100,7 @@ class Power:
                     remaining_count = count - executed_count
                     if remaining_count > 0:
                         updated_plan.append([instance_type, instance_name, remaining_count])
-                        log.info(f"体力计划剩余: {instance_type} - {instance_name}, 剩余次数: {remaining_count}")
+                        log.info(f"体力计划剩余: {instance_type} - {instance_name}, 剩余次数： {remaining_count}")
                     else:
                         log.info(f"体力计划已完成: {instance_type} - {instance_name}")
                 else:
@@ -193,12 +209,12 @@ class Power:
             
             if planned_attempts - executed_attempts > 0:
                 attempts = min(attempts, planned_attempts - executed_attempts)
-                log.info(f"剩余计划挑战次数: {planned_attempts - executed_attempts}，实际可挑战次数调整为: {attempts}")
+                log.info(f"剩余计划挑战次数： {planned_attempts - executed_attempts}，实际可挑战次数调整为: {attempts}")
             elif planned_attempts > 0:
                     log.info(f"该计划挑战次数已完成")
                     break
             else:
-                log.info(f"未设置计划挑战次数，按照当前开拓力可挑战次数: {attempts}")
+                log.info(f"未设置计划挑战次数，按照当前开拓力可挑战次数： {attempts}")
 
             
             full_runs = attempts // attempts_per_run

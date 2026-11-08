@@ -118,6 +118,9 @@ Docker 部署时已预配置为**自动循环运行模式**，无需手动操作
 - 任务完成后**自动循环等待**下一个执行时间
 - 容器会持续运行，不会自动退出
 
+循环运行由 `after_finish: Loop` 启用，按 `scheduled_time` 指定的时间等待下一轮（默认 `4:00`）。
+`--no-run-immediately` 会先等待下一次指定时间再运行。旧体力循环配置会自动转为定时模式，保留已有的定时时间；正常清体力和体力计划不受影响。
+
 如需修改可通过编辑配置文件或环境变量进行调整（见下方环境变量配置）。
 
 ## 启动非完整运行任务
@@ -174,6 +177,7 @@ Docker 部署支持通过环境变量覆盖配置文件中的设置，环境变�
 | `MARCH7TH_BROWSER_DOWNLOAD_USE_MIRROR` | 使用镜像下载浏览器 | `false` |
 | `MARCH7TH_AFTER_FINISH` | 任务完成后操作 | `Loop` |
 | `MARCH7TH_LOG_LEVEL` | 日志等级 | - |
+| `MARCH7TH_NO_RUN_IMMEDIATELY` | 启动时禁用立即运行 | `false` |
 
 示例：
 

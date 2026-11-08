@@ -1,18 +1,24 @@
-from PySide6.QtCore import Qt, QUrl, QSize
-from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy
+from PySide6.QtCore import Qt, QUrl, QSize, Signal, Slot
+from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy, QWidget
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
                             BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
-                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, SpinBox, CheckBox, SimpleCardWidget,
+                            isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, CheckBox, SimpleCardWidget,
                             TextBrowser, setCustomStyleSheet)
+from app.components.ascii_spin_box import AsciiSpinBox
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
+from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
+                                      build_scroll_area)
 from module.config import cfg
 from module.localization import tr, get_raw_instance_names, get_instance_names, instance_display_to_raw
 import datetime
 import json
 import time
 import base64
+import html
+import markdown
+from module.update.changelog import VersionNote, changelog_url, clean_release_body
 
 
 def _cleanup_infobars(widget):
@@ -216,7 +222,9 @@ class MessageBoxHtml(MessageBox):
         QDesktopServices.openUrl(QUrl(url))
 
 
-class MessageBoxHtmlUpdate(MessageBox):
+class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
+    historyCancelled = Signal()
+
     def __init__(self, title: str, content: str, parent=None):
         super().__init__(title, content, parent)
 
@@ -224,6 +232,7 @@ class MessageBoxHtmlUpdate(MessageBox):
         self.buttonLayout.removeWidget(self.cancelButton)
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
+        self._scroll = None
 
         self.contentLabel = BodyLabel(content, parent)
         self.contentLabel.setObjectName("contentLabel")
@@ -231,11 +240,11 @@ class MessageBoxHtmlUpdate(MessageBox):
         self.contentLabel.linkActivated.connect(self.open_url)
         self.contentLabel.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.contentLabel.setMinimumWidth(500)
+        self.contentLabel.setWordWrap(True)
         FluentStyleSheet.DIALOG.apply(self.contentLabel)
 
         self.buttonLayout.addWidget(self.cancelButton, 1, Qt.AlignmentFlag.AlignVCenter)
         self.buttonLayout.addWidget(self.yesButton, 1, Qt.AlignmentFlag.AlignVCenter)
-        self.textLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignTop)
 
         self.githubUpdateCard = PrimaryPushSettingCard(
             tr('立即更新'),
@@ -250,10 +259,111 @@ class MessageBoxHtmlUpdate(MessageBox):
             tr('Mirror酱 服务 ⚡'),
             tr("Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）")
         )
+
+        # 仅更新日志放进限高滚动区：日志再长也只在内部滚动，
+        # 两张更新卡片固定在滚动区之外，始终可见可点。
+        # 弹窗必须装进父窗口（遮罩尺寸跟随父窗口而非屏幕），细节见 app.common.scroll_dialog。
+        content_container = QWidget(self)
+        content_layout = QVBoxLayout(content_container)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addWidget(self.contentLabel)
+        self._history_closed = False
+        self._history_sections = ()
+        self._history_limit = 10
+        self.historyStatusLabel = BodyLabel("", content_container)
+        self.historyStatusLabel.setWordWrap(True)
+        self.historyStatusLabel.hide()
+        self.moreHistoryButton = PushButton(tr("显示更早的更新记录"), content_container)
+        self.moreHistoryButton.hide()
+        self.moreHistoryButton.clicked.connect(self._showMoreHistory)
+        self.fullHistoryLabel = BodyLabel("", content_container)
+        self.fullHistoryLabel.setOpenExternalLinks(True)
+        self.fullHistoryLabel.hide()
+        content_layout.insertWidget(0, self.historyStatusLabel)
+        content_layout.addWidget(self.moreHistoryButton)
+        content_layout.addWidget(self.fullHistoryLabel)
+        content_layout.addStretch(1)
+
+        # 卡片先进布局并强制布局计算：PrimaryPushSettingCard 的 sizeHint 偏小
+        # （约 34px，实际 70px），必须取布局后的真实高度才能算准非滚动部分。
         self.textLayout.addWidget(self.githubUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
         self.textLayout.addWidget(self.mirrorchyanUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
+        self.textLayout.activate()
 
-        # self.githubUpdateCard.clicked.connect(self._githubupdate())
+        host_width, host_height = available_host_size(parent)
+        # 非滚动部分的高度：布局边距 + 标题 + 两张更新卡片 + 按钮区 + 间距 + 余量
+        chrome = (self.textLayout.contentsMargins().top()
+                  + self.textLayout.contentsMargins().bottom()
+                  + self.titleLabel.height()
+                  + self.githubUpdateCard.height()
+                  + self.mirrorchyanUpdateCard.height()
+                  + self.buttonGroup.height()
+                  + self.textLayout.spacing() * 4
+                  + 24)
+        self._scroll = build_scroll_area(content_container, host_width, host_height, chrome)
+        self.textLayout.insertWidget(1, self._scroll)
+
+    def prepareHistory(self, current: str, target: str, latest_note: str):
+        self._history_target = target
+        self._history_sections = (VersionNote(target, clean_release_body(latest_note)),)
+        self.historyStatusLabel.setText(tr("正在加载历史更新记录……"))
+        self.historyStatusLabel.show()
+        self.fullHistoryLabel.setText(
+            '<style>a {color: #f18cb9; font-weight: bold;}</style>'
+            '<a href="' + html.escape(changelog_url(target), quote=True) + '">'
+            + html.escape(tr("查看完整更新日志")) + '</a>')
+        self.fullHistoryLabel.show()
+        # 在打开前预留高度，补充历史记录时不移动更新卡片和底部按钮。
+        self._scroll.setFixedHeight(self._scroll.maximumHeight())
+        self._renderHistory()
+
+    @Slot(object)
+    def setHistory(self, result):
+        if self._history_closed or not result.sections:
+            return
+        if result.sections[0].version != getattr(self, "_history_target", None):
+            return
+        self._history_sections = result.sections
+        if result.partial:
+            text = tr("以下为已收录的更新记录，部分历史版本可能未收录")
+        elif len(result.sections) > 1:
+            text = tr("已加载 {count} 份版本更新记录").format(count=len(result.sections))
+        else:
+            text = ""
+        self.historyStatusLabel.setText(text)
+        self.historyStatusLabel.setVisible(bool(text))
+        self._renderHistory()
+
+    @Slot(str)
+    def setHistoryError(self, message):
+        if not self._history_closed:
+            self.historyStatusLabel.setText(message)
+            self.historyStatusLabel.show()
+
+    def _showMoreHistory(self):
+        self._history_limit += 10
+        self._renderHistory()
+
+    def _renderHistory(self):
+        scroll_position = self._scroll.verticalScrollBar().value()
+        body = "\n\n".join(
+            f"### {section.version}\n\n{section.markdown}"
+            for section in self._history_sections[:self._history_limit]
+        )
+        self.contentLabel.setText(
+            '<style>a {color: #f18cb9; font-weight: bold;}</style>' + markdown.markdown(body))
+        remaining = len(self._history_sections) - self._history_limit
+        if remaining > 0:
+            self.moreHistoryButton.setText(tr("继续显示更早的更新记录（还有 {count} 份）").format(count=remaining))
+        self.moreHistoryButton.setVisible(remaining > 0)
+        self.contentLabel.updateGeometry()
+        self._scroll.widget().layout().activate()
+        self._scroll.verticalScrollBar().setValue(scroll_position)
+
+    def done(self, code):
+        self._history_closed = True
+        self.historyCancelled.emit()
+        super().done(code)
 
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
@@ -599,7 +709,7 @@ class MessageBoxInstance(MessageBox):
             # 检查输入是否匹配任一有效选项
             if input_text not in valid_options:
                 InfoBar.error(
-                    title='输入错误',
+                    title=tr('输入错误'),
                     content=tr('"{type}"的输入"{input_text}"不在可选项中，请重新选择').format(type=type, input_text=input_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -771,7 +881,7 @@ class MessageBoxTeam(MessageBox):
             # 将 titleLabel 与两个下拉框放在同一行
             horizontalLayout = QHBoxLayout()
 
-            titleLabel = QLabel(tr("{}号位").format(i), parent)
+            titleLabel = QLabel(tr("{index}号位").format(index=i), parent)
             titleLabel.setFont(font)
             # titleLabel.setMinimumWidth(60)
             titleLabel.setAlignment(Qt.AlignmentFlag.AlignVCenter)
@@ -809,7 +919,7 @@ class MessageBoxTeam(MessageBox):
 
             if char_text not in valid_chars:
                 InfoBar.error(
-                    title='输入错误',
+                    title=tr('输入错误'),
                     content=tr('第{i}号位角色"{char_text}"不在可选项中，请重新选择').format(i=i, char_text=char_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -821,7 +931,7 @@ class MessageBoxTeam(MessageBox):
 
             if tech_text not in valid_techs:
                 InfoBar.error(
-                    title='输入错误',
+                    title=tr('输入错误'),
                     content=tr('第{i}号位秘技"{tech_text}"不在可选项中，请重新选择').format(i=i, tech_text=tech_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -900,7 +1010,7 @@ class MessageBoxFriends(MessageBox):
 
             if char_text not in valid_chars:
                 InfoBar.error(
-                    title='输入错误',
+                    title=tr('输入错误'),
                     content=tr('第{i}个好友角色"{char_text}"不在可选项中，请重新选择').format(i=i, char_text=char_text),
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -1046,7 +1156,7 @@ class MessageBoxPowerPlan(MessageBox):
         nameComboBox.setMinimumWidth(320)
 
         # 次数输入框
-        countSpinBox = SpinBox()
+        countSpinBox = AsciiSpinBox()
         countSpinBox.setMinimum(1)
         countSpinBox.setMaximum(999)
         countSpinBox.setValue(count if count else 1)
@@ -1113,11 +1223,11 @@ class MessageBoxPowerPlan(MessageBox):
         deleteButton.clicked.connect(delete_row)
 
         # 添加到布局
-        horizontalLayout.addWidget(QLabel(tr("类型:")))
+        horizontalLayout.addWidget(QLabel(tr("类型：")))
         horizontalLayout.addWidget(typeComboBox)
-        horizontalLayout.addWidget(QLabel(tr("名称:")))
+        horizontalLayout.addWidget(QLabel(tr("名称：")))
         horizontalLayout.addWidget(nameComboBox)
-        horizontalLayout.addWidget(QLabel(tr("次数:")))
+        horizontalLayout.addWidget(QLabel(tr("次数：")))
         horizontalLayout.addWidget(countSpinBox)
         horizontalLayout.addWidget(moveUpButton)
         horizontalLayout.addWidget(deleteButton)
@@ -1168,7 +1278,7 @@ class MessageBoxPowerPlan(MessageBox):
 
             if not instance_type or instance_type not in self.template:
                 InfoBar.error(
-                    title='输入错误',
+                    title=tr('输入错误'),
                     content=tr('第{i}个计划的副本类型无效').format(i=i),
                     orient=Qt.Horizontal,
                     isClosable=True,
@@ -1294,7 +1404,7 @@ class MessageBoxInstanceTeam(MessageBox):
 
     def _setup_top_section(self):
         """设置全局区域 - 默认队伍"""
-        self.defaultTeamSpinbox = SpinBox()
+        self.defaultTeamSpinbox = AsciiSpinBox()
         self.defaultTeamSpinbox.setMinimum(1)
         self.defaultTeamSpinbox.setMaximum(12)
         self.defaultTeamSpinbox.setValue(self.default_team)
@@ -1365,7 +1475,7 @@ class MessageBoxInstanceTeam(MessageBox):
         setup_completer(nameComboBox, [item.text for item in nameComboBox.items])
 
         # 队伍编号选择框
-        teamSpinBox = SpinBox()
+        teamSpinBox = AsciiSpinBox()
         teamSpinBox.setMinimum(1)
         teamSpinBox.setMaximum(12)
         teamSpinBox.setValue(team_number or 3)
@@ -1388,9 +1498,9 @@ class MessageBoxInstanceTeam(MessageBox):
         deleteButton.clicked.connect(delete_row)
 
         # 应用布局
-        horizontalLayout.addWidget(QLabel(tr("名称:")))
+        horizontalLayout.addWidget(QLabel(tr("名称：")))
         horizontalLayout.addWidget(nameComboBox)
-        horizontalLayout.addWidget(QLabel(tr("队伍:")))
+        horizontalLayout.addWidget(QLabel(tr("队伍：")))
         horizontalLayout.addWidget(teamSpinBox)
         horizontalLayout.addWidget(deleteButton)
 

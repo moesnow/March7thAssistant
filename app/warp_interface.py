@@ -4,13 +4,11 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFileDi
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton, MessageBox
 from .common.style_sheet import StyleSheet
+from .common.icon import UiIcon
 from .tools.warp_export import warpExport, WarpExport, detect_format, uigf_to_srgf_hkrpg, srgf_to_uigf_hkrpg
-import pyperclip
+from utils import clipboard
 import json
 import os
-from openpyxl.styles import Font
-from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
 from module.localization import tr
 import time
 import sys
@@ -25,10 +23,10 @@ class WarpInterface(ScrollArea):
 
         self.updateBtn = PrimaryPushButton(FIF.SYNC, tr("更新数据"), self)
         self.updateFullBtn = PushButton(FIF.SYNC, tr("更新完整数据"), self)
-        self.importBtn = PushButton(FIF.PENCIL_INK, tr("导入数据"), self)
-        self.exportBtn = PushButton(FIF.SAVE_COPY, tr("导出数据"), self)
-        self.exportExcelBtn = PushButton(FIF.SAVE_COPY, tr("导出Excel"), self)
-        self.copyLinkBtn = PushButton(FIF.SHARE, tr("复制链接"), self)
+        self.importBtn = PushButton(UiIcon.IMPORT, tr("导入数据"), self)
+        self.exportBtn = PushButton(UiIcon.EXPORT, tr("导出数据"), self)
+        self.exportExcelBtn = PushButton(UiIcon.EXPORT, tr("导出Excel"), self)
+        self.copyLinkBtn = PushButton(UiIcon.LINK, tr("复制链接"), self)
         self.clearBtn = PushButton(FIF.DELETE, tr("清空"), self)
         if sys.platform != 'win32':
             self.updateBtn.setEnabled(False)
@@ -47,6 +45,25 @@ class WarpInterface(ScrollArea):
 
         self.__initWidget()
         self.__connectSignalToSlot()
+
+    def retranslateUi(self):
+        StyleSheet.WARP_INTERFACE.apply(self)
+        self.titleLabel.setText(tr('抽卡记录'))
+        self.titleLabel.adjustSize()
+        self.updateBtn.setText(tr('更新数据'))
+        self.updateFullBtn.setText(tr('更新完整数据'))
+        self.importBtn.setText(tr('导入数据'))
+        self.exportBtn.setText(tr('导出数据'))
+        self.exportExcelBtn.setText(tr('导出Excel'))
+        self.copyLinkBtn.setText(tr('复制链接'))
+        self.clearBtn.setText(tr('清空'))
+        self.buttonWidget.adjustSize()
+        # 保留 warp_thread、链接与按钮的运行状态，只刷新统计内容。
+        buttons = self.buttonWidget.findChildren(PushButton)
+        states = [(button, button.isEnabled()) for button in buttons]
+        self.setContent()
+        for button, enabled in states:
+            button.setEnabled(enabled)
 
     def __initWidget(self):
         self.titleLabel.move(36, 30)
@@ -234,10 +251,12 @@ class WarpInterface(ScrollArea):
             if not path:
                 return
 
-            import pandas as pd
+            # 延迟导入，避免启动时加载 openpyxl
+            from openpyxl.styles import Font
+            from openpyxl import Workbook
+            from openpyxl.utils import get_column_letter
+
             records = config.get("list", [])
-            df = pd.DataFrame(records)
-            df = df[["time", "name", "item_type", "rank_type", "gacha_type"]]
             gacha_map = {
                 "11": tr("角色活动跃迁"),
                 "12": tr("光锥活动跃迁"),
@@ -246,30 +265,27 @@ class WarpInterface(ScrollArea):
                 "1": tr("常驻跃迁"),
                 "2": tr("新手跃迁"),
             }
-            df["gacha_type"] = df["gacha_type"].map(gacha_map).fillna(tr("未知"))
-            df.rename(columns={
-                "time": tr("时间"),
-                "name": tr("名称"),
-                "item_type": tr("类别"),
-                "rank_type": tr("星级"),
-                "gacha_type": tr("卡池"),
-            }, inplace=True)
-            df["总次数"] = range(1, len(df) + 1)
-            df["保底内"] = 0
+
+            wb = Workbook()
+            ws = wb.active
+            ws.append([tr("时间"), tr("名称"), tr("类别"), tr("星级"), tr("卡池"), tr("总次数"), tr("保底内")])
             pity_counters = {}
-            for idx, row in df.iterrows():
-                pool = row["卡池"]
-                star = row["星级"]
-                if pool not in pity_counters:
-                    pity_counters[pool] = 0
-                pity_counters[pool] += 1
-                df.at[idx, "保底内"] = pity_counters[pool]
+            for total, record in enumerate(records, start=1):
+                pool = gacha_map.get(record.get("gacha_type"), tr("未知"))
+                star = record.get("rank_type")
+                pity_counters[pool] = pity_counters.get(pool, 0) + 1
+                pity = pity_counters[pool]
                 if star == "5":
                     pity_counters[pool] = 0
-
-            df.to_excel(path, index=False)
-            wb = load_workbook(path)
-            ws = wb.active
+                ws.append([
+                    record.get("time"),
+                    record.get("name"),
+                    record.get("item_type"),
+                    star,
+                    pool,
+                    total,
+                    pity,
+                ])
             for row in range(2, ws.max_row + 1):
                 star_cell = ws[f"D{row}"]
                 try:
@@ -327,7 +343,7 @@ class WarpInterface(ScrollArea):
 
     def __onCopyLinkBtnClicked(self):
         try:
-            pyperclip.copy(self.warplink)
+            clipboard.copy(self.warplink)
             InfoBar.success(
                 title=tr('复制成功(＾∀＾●)'),
                 content="",

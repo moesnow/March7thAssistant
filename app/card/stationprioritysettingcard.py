@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
 from qfluentwidgets import (SettingCard, FluentIconBase, SwitchButton, IndicatorPosition,
                             MessageBox, PushButton, BodyLabel)
 from module.config import cfg
-from module.localization import tr
+from module.localization import tr, tn
 
 
 # 固定站点（优先级0），不允许用户操作
@@ -71,7 +71,7 @@ class StationRow(QFrame):
         layout.addSpacing(10)
 
         self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
-        self.switchButton.setChecked(enabled)
+        self.switchButton.setChecked(bool(enabled))
         self.switchButton.setText(tr('开') if enabled else tr('关'))
         self.switchButton.checkedChanged.connect(self._on_toggled)
         layout.addWidget(self.switchButton)
@@ -288,7 +288,7 @@ class StationPrioritySettingCard(SettingCard):
         self._update_content_text()
 
     def setValue(self, isChecked: bool):
-        self.switchButton.setChecked(isChecked)
+        self.switchButton.setChecked(bool(isChecked))
         self.switchButton.setText(tr('开') if isChecked else tr('关'))
 
     def _update_content_text(self):
@@ -296,7 +296,7 @@ class StationPrioritySettingCard(SettingCard):
         if cfg.get_value("divergent_station_priority_enable"):
             disabled = cfg.get_value("divergent_station_disabled")
             if disabled:
-                self.contentLabel.setText(tr("已启用自定义优先级，{} 个站点已禁用").format(len(disabled)))
+                self.contentLabel.setText(tn("已启用自定义优先级，{count} 个站点已禁用", len(disabled)))
             else:
                 self.contentLabel.setText(tr("已启用自定义优先级"))
         else:
@@ -310,6 +310,8 @@ class StationPrioritySettingCard(SettingCard):
         if dialog.exec():
             new_priority = dialog.get_station_priority()
             new_disabled = dialog.get_disabled_stations()
-            cfg.set_value("divergent_station_priority", new_priority)
-            cfg.set_value("divergent_station_disabled", new_disabled)
+            cfg.set_values({
+                "divergent_station_priority": new_priority,
+                "divergent_station_disabled": new_disabled,
+            })
             self._update_content_text()

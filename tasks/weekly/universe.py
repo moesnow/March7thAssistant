@@ -1,10 +1,10 @@
 from module.screen import screen
 from module.config import cfg
+from module.game import cloud_game
 from module.logger import log
 from module.automation import auto
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
-from tasks.power.relicset import Relicset
 from tasks.base.pythonchecker import PythonChecker
 from utils.command import subprocess_with_timeout
 import subprocess
@@ -14,6 +14,7 @@ import os
 from module.config import asu_config
 from utils.console import pause_on_error, pause_and_retry
 from tasks.power.power import Power
+from tasks.weekly.weekly_reward import wait_for_weekly_reward
 
 
 class Universe:
@@ -166,9 +167,6 @@ class Universe:
         screen.wait_for_screen_change('main')
         Universe.get_reward(category)
 
-        if category != "divergent" and cfg.universe_bonus_enable and cfg.break_down_level_four_relicset:
-            Relicset.run()
-
     @staticmethod
     def start_simulation(nums, save, category):
         """
@@ -205,7 +203,7 @@ class Universe:
             log.warning("模拟宇宙功能仅支持 Windows 平台")
             return False
 
-        if cfg.cloud_game_enable and cfg.browser_headless_enable:
+        if cfg.cloud_game_enable and cloud_game.is_headless():
             log.error("模拟宇宙不支持无界面模式运行")
             return False
 
@@ -253,7 +251,7 @@ class Universe:
         time.sleep(1)
         if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
             if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
-                if auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
+                if wait_for_weekly_reward():
                     time.sleep(2)
                     Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'], NotificationLevel.ALL)
                     auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)

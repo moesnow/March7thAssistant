@@ -63,9 +63,10 @@
 
 如果你希望为项目增加新的语言支持：
 
-* 新增 **独立的语言文件 / 文档**（如 `README_KR.md`、`i18n/ko_KR.json`）
+* 新增 **独立的语言文件 / 文档**（如 `README_KR.md`、`assets/locales/ko_KR/LC_MESSAGES/march7th.po`）
 * 不要修改或覆盖原有语言内容
 * 不要在代码中硬编码其他语言字符串
+* 完整的文案读写约定、目录工具与新增语言步骤**详见 [I18N.md](I18N.md)**
 
 ---
 
@@ -115,6 +116,10 @@
   * 项目可以正常启动
   * 新增功能能正常使用
   * 不引入明显性能回退或卡顿问题
+
+运行测试：`uv run pytest`。UI 测试默认不会在桌面弹出窗口，仍使用原生 Qt 后端执行布局、绘制和事件处理。
+
+需要目视检查界面或调试窗口焦点时，使用 `uv run pytest --show-ui`；也可指定文件，例如 `uv run pytest tests/test_app/test_update_dialog.py --show-ui`。
 
 ---
 

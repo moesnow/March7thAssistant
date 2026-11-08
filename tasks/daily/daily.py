@@ -28,6 +28,10 @@ class Daily:
         if cfg.reward_enable and cfg.reward_redemption_code_enable:
             Redemption.get()
 
+        # 兑换码处理后、每日实训检测前执行每周遗器清理。
+        if cfg.power_enable:
+            Power.run_weekly_relic_cleanup()
+
         # 获取培养目标（在活动前初始化，以便活动可以使用培养目标）
         if cfg.build_target_enable:
             BuildTarget.init_build_targets()
@@ -58,7 +62,7 @@ class Daily:
             else:
                 log.info("历战余响未开启")
 
-            Power.run()
+            Power.run(skip_weekly_cleanup=True)
         else:
             log.info("清体力未开启，跳过历战余响和清体力")
 
@@ -96,7 +100,7 @@ class Daily:
         log.info(f"差分宇宙固定次数进度（{cycle_label}）：{completed_count}/{target_count}，继续运行剩余 {remaining_runs} 次")
 
         for _ in range(remaining_runs):
-            if not divergent.start():
+            if not divergent.start(universe_type=cfg.divergent_type):
                 log.warning(f"差分宇宙本轮未完成，不计入固定次数，下次将从 {cycle_label} {completed_count}/{target_count} 继续")
                 return
 

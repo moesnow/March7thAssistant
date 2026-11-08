@@ -1,6 +1,8 @@
 import sys
 import time
 import math
+from contextlib import contextmanager
+from contextvars import ContextVar
 import cv2
 import numpy as np
 from PIL import Image
@@ -11,9 +13,23 @@ from utils.logger.logger import Logger
 from typing import Optional
 from utils.singleton import SingletonMeta
 from utils.image_utils import ImageUtils
+from utils.pause import pause_guard
 from module.game import get_game_controller
 from module.ocr import ocr
 from module.config import cfg
+
+
+_screenshot_retry_timeout = ContextVar("screenshot_retry_timeout", default=60.0)
+
+
+@contextmanager
+def screenshot_retry_timeout(timeout: float):
+    """临时调整当前执行上下文的截图重试时限，退出后恢复原值。"""
+    token = _screenshot_retry_timeout.set(max(0.0, float(timeout)))
+    try:
+        yield
+    finally:
+        _screenshot_retry_timeout.reset(token)
 
 
 class Automation(metaclass=SingletonMeta):
@@ -37,19 +53,28 @@ class Automation(metaclass=SingletonMeta):
     def _init_input(self):
         """
         初始化输入处理器，将输入操作如点击、移动等绑定至实例变量。
+
+        所有输入均包一层暂停卡点（`pause_guard`）：暂停期间任何键鼠输入都会停在发出之前。
         """
+        previous = getattr(self, 'input_handler', None)
+        if previous is not None and callable(getattr(previous, 'close', None)):
+            previous.close()
         self.input_handler = get_game_controller().get_input_handler()
-        self.mouse_click = self.input_handler.mouse_click
-        self.mouse_down = self.input_handler.mouse_down
-        self.mouse_up = self.input_handler.mouse_up
-        self.mouse_move = self.input_handler.mouse_move
-        self.mouse_scroll = self.input_handler.mouse_scroll
-        self.press_key = self.input_handler.press_key
-        self.press_key_down = self.input_handler.press_key_down
-        self.press_key_up = self.input_handler.press_key_up
-        self.secretly_press_key = self.input_handler.secretly_press_key
-        self.press_mouse = self.input_handler.press_mouse
-        self.secretly_write = self.input_handler.secretly_write
+        self.mouse_click = pause_guard(self.input_handler.mouse_click)
+        self.mouse_down = pause_guard(self.input_handler.mouse_down)
+        self.mouse_up = pause_guard(self.input_handler.mouse_up)
+        self.mouse_move = pause_guard(self.input_handler.mouse_move)
+        self.mouse_drag = pause_guard(self.input_handler.mouse_drag)
+        self.mouse_scroll = pause_guard(self.input_handler.mouse_scroll)
+        self.press_key = pause_guard(self.input_handler.press_key)
+        self.press_key_down = pause_guard(self.input_handler.press_key_down)
+        self.press_key_up = pause_guard(self.input_handler.press_key_up)
+        self.secretly_press_key = pause_guard(self.input_handler.secretly_press_key)
+        self.press_mouse = pause_guard(self.input_handler.press_mouse)
+        self.secretly_write = pause_guard(self.input_handler.secretly_write)
+
+    def close_input(self):
+        self.input_handler.close()
 
     def _is_debug_enabled(self):
         """检查调试模式是否启用。"""
@@ -153,6 +178,7 @@ class Automation(metaclass=SingletonMeta):
             (size[1]) / height,
         )
 
+    @pause_guard
     def take_screenshot(self, crop=(0, 0, 1, 1), use_background_screenshot=None, prefer_frame_screenshot=True):
         """
         捕获游戏窗口的截图。
@@ -160,13 +186,21 @@ class Automation(metaclass=SingletonMeta):
         :return: 成功时返回截图及其位置和缩放因子，失败时抛出异常。
         """
         start_time = time.monotonic()
+        timeout = _screenshot_retry_timeout.get()
         while True:
+            handler = getattr(self, 'input_handler', None)
+            background = getattr(handler, 'is_background', False) is True
+            if background:
+                # 窗口暂时不可用（最小化、重建等）时等待恢复，与前台截图找不到窗口时的重试时限一致；
+                # 游戏进程已退出或超时则抛出写明原因的异常。
+                handler.wait_for_window(max(0.0, timeout - (time.monotonic() - start_time)))
             try:
                 result = Screenshot.take_screenshot(
                     self.window_title,
                     crop=crop,
                     use_background_screenshot=use_background_screenshot,
                     prefer_frame_screenshot=prefer_frame_screenshot,
+                    require_background=background,
                 )
                 if result:
                     self.screenshot, self.screenshot_pos, self.screenshot_scale_factor = result
@@ -177,13 +211,16 @@ class Automation(metaclass=SingletonMeta):
                         if crop != (0, 0, 1, 1):
                             self._debug_draw_crop_region(crop)
                     return result
-                else:
-                    self.logger.error("截图失败：没有找到游戏窗口")
+                elif timeout > 0:
+                    self.logger.error("截图失败：未能获取游戏窗口画面" if background else "截图失败：没有找到游戏窗口")
             except Exception as e:
+                if timeout <= 0:
+                    raise RuntimeError(f"截图失败：{e}") from e
                 self.logger.error(f"截图失败：{e}")
-            time.sleep(1)
-            if time.monotonic() - start_time > 60:
+            remaining = timeout - (time.monotonic() - start_time)
+            if remaining <= 0:
                 raise RuntimeError("截图超时")
+            time.sleep(min(1, remaining))
 
     def calculate_positions(self, template, max_loc, relative):
         """
@@ -204,6 +241,7 @@ class Automation(metaclass=SingletonMeta):
         bottom_right = (top_left[0] + int(width / scale_factor), top_left[1] + int(height / scale_factor))
         return top_left, bottom_right
 
+    @pause_guard
     def find_image_element(self, target, threshold, scale_range, relative=False, cacheable=True):
         """
         查找图像元素。
@@ -296,13 +334,16 @@ class Automation(metaclass=SingletonMeta):
             self.logger.error(f"寻找图片并计数出错：{e}")
             return None
 
-    def find_image_with_multiple_targets(self, target, threshold, scale_range, relative=False):
+    @pause_guard
+    def find_image_with_multiple_targets(self, target, threshold, scale_range, relative=False, mask_top_right_ratio=None):
         try:
             template = ImageUtils.read_image(target, cv2.IMREAD_GRAYSCALE)
             if template is None:
                 raise ValueError(f"读取图片失败：{target}")
             screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
-            matches = ImageUtils.scale_and_match_template_with_multiple_targets(screenshot, template, threshold, scale_range)
+            matches = ImageUtils.scale_and_match_template_with_multiple_targets(
+                screenshot, template, threshold, scale_range, mask_top_right_ratio=mask_top_right_ratio
+            )
             if len(matches) == 0:
                 return []
             new_matches = []
@@ -384,6 +425,7 @@ class Automation(metaclass=SingletonMeta):
             self.logger.error(f"OCR识别失败：{e}")
             self.ocr_result = []  # 确保在异常情况下，ocr_result为列表类型
 
+    @pause_guard
     def find_text_element(self, target, include, need_ocr=True, relative=False):
         """
         查找文本元素。
@@ -465,6 +507,7 @@ class Automation(metaclass=SingletonMeta):
             return top_left
         return None
 
+    @pause_guard
     def find_min_distance_text_element(self, target, source, source_type, include, need_ocr=True, position='bottom_right'):
         """
         查找距离特定源最近的文本元素。
@@ -503,6 +546,7 @@ class Automation(metaclass=SingletonMeta):
         y = (top + bottom) // 2 + offset[1]
         return x, y
 
+    @pause_guard
     def find_hsv_element(self, target, relative=False):
         """
         通过HSV颜色范围查找最大连通区域的外接矩形。
@@ -655,6 +699,7 @@ class Automation(metaclass=SingletonMeta):
         bottom_right = (int(x2 / scale_factor) + offset_x, int(y2 / scale_factor) + offset_y)
         return top_left, bottom_right
 
+    @pause_guard
     def find_yolo_element(self, target, threshold=0.25, relative=False):
         """
         使用YOLO模型查找置信度最高的目标对象。
@@ -688,6 +733,7 @@ class Automation(metaclass=SingletonMeta):
             self.logger.error(f"YOLO查找出错：{e}")
             return None, None
 
+    @pause_guard
     def find_yolo_with_multiple_targets(self, target, threshold=0.25, relative=False):
         """
         使用YOLO模型查找所有匹配的目标对象。
@@ -723,7 +769,8 @@ class Automation(metaclass=SingletonMeta):
             self.logger.error(f"YOLO查找出错：{e}")
             return []
 
-    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0, use_background_screenshot=None, prefer_frame_screenshot=True):
+    @pause_guard
+    def find_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", retry_delay: float = 1.0, use_background_screenshot=None, prefer_frame_screenshot=True, mask_top_right_ratio=None):
         """
         查找元素，并根据指定的查找类型执行不同的查找策略。
         :param target: 查找目标，可以是图像路径或文字。
@@ -734,6 +781,7 @@ class Automation(metaclass=SingletonMeta):
         :param take_screenshot: 是否需要先截图。
         :param relative: 返回相对位置还是绝对位置。
         :param scale_range: 图像查找时的缩放范围。
+        :param mask_top_right_ratio: 多目标图像匹配时忽略模板右上角的比例。
         :param include: 文字查找时是否包含目标字符串。
         :param need_ocr: 是否需要执行OCR识别。
         :param source: 查找参照物，用于距离最小化查找。
@@ -786,7 +834,9 @@ class Automation(metaclass=SingletonMeta):
             elif find_type in ['image_count']:
                 return self.find_image_and_count(target, threshold, pixel_bgr)
             elif find_type in ['image_with_multiple_targets']:
-                matches = self.find_image_with_multiple_targets(target, threshold, scale_range, relative)
+                matches = self.find_image_with_multiple_targets(
+                    target, threshold, scale_range, relative, mask_top_right_ratio=mask_top_right_ratio
+                )
                 # 调试模式：绘制所有匹配结果
                 if self._is_debug_enabled() and matches:
                     color = self._get_debug_color(find_type)
@@ -830,29 +880,69 @@ class Automation(metaclass=SingletonMeta):
         """
         x, y = self.calculate_click_position(coordinates, offset)
         if action not in {"click", "down", "up", "move"}:
-            raise ValueError(f"未知的动作类型: {action}")
+            raise ValueError(f"未知的动作类型： {action}")
 
         normalized_press_duration = max(0.0, float(press_duration or 0.0))
 
         for _ in range(cnt):
             if action == "click":
                 if normalized_press_duration > 0:
-                    self.mouse_down(x, y)
+                    if self.mouse_down(x, y) is False:
+                        return False
                     time.sleep(normalized_press_duration)
-                    self.mouse_up()
+                    result = self.mouse_up()
                 else:
-                    self.mouse_click(x, y)
+                    result = self.mouse_click(x, y)
             elif action == "down":
-                self.mouse_down(x, y)
+                result = self.mouse_down(x, y)
+                if result is False:
+                    return False
                 if normalized_press_duration > 0:
                     time.sleep(normalized_press_duration)
             elif action == "up":
-                self.mouse_move(x, y)
-                self.mouse_up()
+                moved = self.mouse_move(x, y)
+                result = self.mouse_up()
+                if moved is False:
+                    return False
             elif action == "move":
-                self.mouse_move(x, y)
+                result = self.mouse_move(x, y)
+            if result is False:
+                return False
 
         return True
+
+    def drag_mouse(self, start, end, duration=0.5, end_pause=0.0, repeats=1):
+        """按归一化坐标连续拖动，只截图定位一次，仅最后一次可在终点停留。"""
+        duration = float(duration)
+        if not math.isfinite(duration) or not 0 <= duration <= 60:
+            raise ValueError("滑动时长必须在 0 到 60 秒之间")
+        end_pause = float(end_pause)
+        if not math.isfinite(end_pause) or not 0 <= end_pause <= 1:
+            raise ValueError("拖动末尾停留时长必须在 0 到 1 秒之间")
+        if isinstance(repeats, bool) or not isinstance(repeats, int) or not 1 <= repeats <= 10:
+            raise ValueError("连续拖动次数必须是 1 到 10 之间的整数")
+        if any(not 0 <= value <= 1 for value in (*start, *end)):
+            raise ValueError("坐标必须在 0 到 1 之间")
+        self.take_screenshot()
+        if self.screenshot is None or self.screenshot_pos is None:
+            raise RuntimeError("无法获取游戏窗口尺寸")
+
+        scale_factor = self.screenshot_scale_factor or 1
+        width = int(self.screenshot_pos[2] / scale_factor)
+        height = int(self.screenshot_pos[3] / scale_factor)
+        if width <= 0 or height <= 0:
+            raise RuntimeError("无法获取游戏窗口尺寸")
+        offset_x, offset_y = self.screenshot_pos[:2]
+        start_xy = (offset_x + min(int(start[0] * width), width - 1),
+                    offset_y + min(int(start[1] * height), height - 1))
+        end_xy = (offset_x + min(int(end[0] * width), width - 1),
+                  offset_y + min(int(end[1] * height), height - 1))
+
+        if repeats != 1:
+            return bool(self.mouse_drag(*start_xy, *end_xy, duration, end_pause, repeats))
+        if end_pause:
+            return bool(self.mouse_drag(*start_xy, *end_xy, duration, end_pause))
+        return bool(self.mouse_drag(*start_xy, *end_xy, duration))
 
     def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None, press_duration: float = 0.0, prefer_frame_screenshot=True):
         """
@@ -874,6 +964,7 @@ class Automation(metaclass=SingletonMeta):
             return self.click_element_with_pos(coordinates, offset, action, press_duration=press_duration)
         return False
 
+    @pause_guard
     def get_single_line_text(self, crop=(0, 0, 1, 1), blacklist=None, max_retries=3, retry_delay=0.0):
         """
         尝试多次获取屏幕截图中的单行文本。
@@ -897,6 +988,7 @@ class Automation(metaclass=SingletonMeta):
         self.logger.debug("OCR未识别到任何文字")
         return None
 
+    @pause_guard
     def is_rgb_ratio_above_threshold(self, crop, rgb, threshold, tolerance=0.0, take_screenshot=True):
         """判断指定 crop 区域内目标 RGB 像素占比是否超过阈值。
 
