@@ -16,7 +16,7 @@ def runner():
     source = Path(__file__).resolve().parents[2] / "main.py"
     tree = ast.parse(source.read_text(encoding="utf-8-sig"))
     functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)
-                 and node.name in {"run_main_actions", "run_sub_task", "main"}]
+                 and node.name in {"run_main_actions", "run_sub_task", "main", "_run_action"}]
     entrypoint = next(node for node in tree.body if isinstance(node, ast.If)
                       and isinstance(node.test, ast.Compare)
                       and isinstance(node.test.left, ast.Name)
@@ -24,7 +24,8 @@ def runner():
     names = ("game", "cfg", "cloud_game", "telemetry", "time", "Daily", "reward",
              "Power", "CurrencyWars", "DivergentUniverse", "Fight", "Universe",
              "screen_test", "character_export", "challenge", "Redemption",
-             "first_run", "pause_ctl", "ensure_exclusive_run", "version")
+             "first_run", "pause_ctl", "ensure_exclusive_run", "version",
+             "recover_temporary_graphics", "restore_temporary_graphics", "log")
     scope = {name: MagicMock() for name in names}
     scope["cfg"].cloud_game_enable = False
     scope["cfg"].after_finish = "None"
@@ -70,6 +71,7 @@ def test_failed_task_respects_cleanup_setting(runner, action, after_finish, clou
     runner.Universe.start.return_value = False
 
     assert runner.main(action=action) is False
+    runner.restore_temporary_graphics.assert_called_once_with(final=True)
 
     runner.game.start.assert_called_once_with(headless=False)
     runner.telemetry.track_task_complete.assert_called_once_with(action, False, 0)

@@ -2454,6 +2454,10 @@ class SettingInterface(ScrollArea):
             self.notifyEnableGroup.append(notifyEnableCard)
 
         self.MiscGroup = SettingCardGroup(tr("杂项"), self.scrollWidget)
+        self.gameOptimizationCard = ExpandableSwitchSettingCard(
+            "game_optimization_enable", FIF.GAME, tr("启用游戏优化"),
+            tr("展开配置自动战斗、分辨率与临时画质；关闭总开关不会清除各项设置")
+        )
         self.autoBattleDetectEnableCard = SwitchSettingCard1(
             FIF.ROBOT,
             tr('启用自动战斗和二倍速检测'),
@@ -2480,6 +2484,20 @@ class SettingInterface(ScrollArea):
             tr("通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）"),
             "auto_set_resolution_enable"
         )
+        self.autoLowerGraphicsCard = SwitchSettingCard1(
+            FIF.SPEED_HIGH,
+            tr("任务期间自动降低画质"),
+            tr("默认关闭，仅调整助手启动的 Windows 本地游戏；恢复的画质在重启游戏后生效"),
+            "auto_lower_graphics_enable",
+            confirm=self.__confirmLowerGraphics,
+        )
+        def refresh_game_optimization_options(*_args):
+            enabled = self.gameOptimizationCard.getSwitchState()
+            self.autoBattleDetectEnableCard.setEnabled(enabled)
+            self.autoSetResolutionEnableCard.setEnabled(enabled)
+            self.autoLowerGraphicsCard.setEnabled(enabled and sys.platform == 'win32')
+        self.gameOptimizationCard.switchChanged.connect(refresh_game_optimization_options)
+        refresh_game_optimization_options()
         self.autoSetGamePathEnableCard = SwitchSettingCard1(
             FIF.GAME,
             tr('启用自动配置游戏路径'),
@@ -2843,9 +2861,13 @@ class SettingInterface(ScrollArea):
         for value in self.notifyEnableGroup:
             self.NotifyGroup.addSettingCard(value)
 
-        self.MiscGroup.addSettingCard(self.autoBattleDetectEnableCard)
+        self.MiscGroup.addSettingCard(self.gameOptimizationCard)
+        self.gameOptimizationCard.addSettingCards([
+            self.autoBattleDetectEnableCard,
+            self.autoSetResolutionEnableCard,
+            self.autoLowerGraphicsCard,
+        ])
         self.MiscGroup.addSettingCard(self.ocrGpuAccelerationCard)
-        self.MiscGroup.addSettingCard(self.autoSetResolutionEnableCard)
         self.MiscGroup.addSettingCard(self.autoSetGamePathEnableCard)
         self.MiscGroup.addSettingCard(self.useBackgroundScreenshotCard)
         self.MiscGroup.addSettingCard(self.localControlModeCard)
@@ -3024,6 +3046,7 @@ class SettingInterface(ScrollArea):
         connect_expand_state(self.instanceTypeCard)
         connect_expand_state(self.weeklyRelicCleanupEnableCard)
         connect_expand_state(self.echoofwarEnableCard)
+        connect_expand_state(self.gameOptimizationCard)
         connect_expand_state(self.browserTypeCard)
         connect_expand_state(self.browserHeadlessCard)
         self.universeEnableCard.switchChanged.connect(self.__onUniverseEnableCardSwitchChanged)
@@ -3050,6 +3073,21 @@ class SettingInterface(ScrollArea):
 
         self._ignoreUniverseEnableCardSwitchChanged = True
         self.universeEnableCard.switchButton.setChecked(False)
+
+    def __confirmLowerGraphics(self, enabled):
+        if not enabled:
+            return True
+        confirm = MessageBox(
+            tr("启用临时降低画质前请确认"),
+            tr("此功能仅在执行任务时，由助手启动 Windows 本地游戏才生效；云游戏和已经运行的游戏不会调整。\n\n"
+               "目前仅支持已知版本的自定义画质，请先在游戏内将图像质量设为自定义并保存。不会降低帧率、渲染比例或修改抗锯齿。\n\n"
+               "任务结束会恢复原有配置，但运行中的游戏不会立即恢复画面，重启游戏后才会应用原画质。助手不会为此自动重启游戏。\n\n"
+               "异常退出的备份会在下次启动助手时尝试恢复；如果检测到其它来源修改了设置，将保留备份并提示，避免覆盖你的新配置。"),
+            self.window(),
+        )
+        confirm.yesButton.setText(tr("我已了解，继续开启"))
+        confirm.cancelButton.setText(tr("取消"))
+        return bool(confirm.exec())
 
     def __confirmLocalControlMode(self, value):
         """切换到后台模式前说明限制；确认后才写入配置，取消则保留原模式。"""

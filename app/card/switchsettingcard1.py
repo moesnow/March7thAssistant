@@ -36,9 +36,10 @@ class SwitchSettingCard1(SettingCard):
 
     checkedChanged = Signal(bool)
 
-    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, parent=None):
+    def __init__(self, icon: Union[str, QIcon, FluentIconBase], title, content=None, configname: str = None, parent=None, *, confirm=None):
         super().__init__(icon, title, content, parent)
         self.configname = configname
+        self._confirm = confirm
         self.switchButton = SwitchButton(tr('关'), self, IndicatorPosition.RIGHT)
 
         try:
@@ -46,6 +47,7 @@ class SwitchSettingCard1(SettingCard):
         except Exception:
             self.setValue(False)
 
+        self._acceptedValue = self.switchButton.isChecked()
         # add switch button to layout
         self.hBoxLayout.addWidget(self.switchButton, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
@@ -54,6 +56,16 @@ class SwitchSettingCard1(SettingCard):
 
     def __onCheckedChanged(self, isChecked: bool):
         """ switch button checked state changed slot """
+        if (isChecked != self._acceptedValue and self._confirm is not None
+                and not self._confirm(isChecked)):
+            # 确认前不保存；取消/关闭弹窗后恢复开关且不递归弹窗。
+            self.switchButton.blockSignals(True)
+            try:
+                self.setValue(self._acceptedValue)
+            finally:
+                self.switchButton.blockSignals(False)
+            return
+        self._acceptedValue = isChecked
         self.setValue(isChecked)
         cfg.set_value(self.configname, isChecked)
 

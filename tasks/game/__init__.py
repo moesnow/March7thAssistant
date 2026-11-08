@@ -1,3 +1,4 @@
+from utils.game_options import game_option_enabled
 import os
 import sys
 import time
@@ -25,6 +26,7 @@ from module.ocr import ocr
 from module.localization import tr
 from utils.console import is_gui_started
 from utils.runs import describe_run, idle_without_run_lock
+from utils.temporary_graphics import begin_temporary_graphics, restore_temporary_graphics
 
 
 class GameClientOutdatedError(RuntimeError):
@@ -41,9 +43,9 @@ def wait_until(condition, timeout, period=1):
     return False
 
 
-def start(headless=None):
+def start(headless=None, *, optimize_graphics=True):
     log.hr("开始运行", 0)
-    start_game(headless=headless)
+    start_game(headless=headless, optimize_graphics=optimize_graphics)
     log.hr("完成", 2)
 
 
@@ -83,7 +85,7 @@ def ensure_game_ready():
     return True
 
 
-def start_game(headless=None):
+def start_game(headless=None, *, optimize_graphics=True):
     MAX_RETRY = 3
 
     def check_and_click_enter():
@@ -181,12 +183,15 @@ def start_game(headless=None):
             auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
         if not starrail.switch_to_game():
             try:
-                if cfg.auto_set_resolution_enable:
+                if game_option_enabled(cfg, "auto_set_resolution_enable"):
                     starrail.change_resolution(1920, 1080)
                     starrail.change_auto_hdr("disable")
 
-                if cfg.auto_battle_detect_enable:
+                if game_option_enabled(cfg, "auto_battle_detect_enable"):
                     starrail.change_auto_battle(True)
+
+                if optimize_graphics and game_option_enabled(cfg, "auto_lower_graphics_enable"):
+                    begin_temporary_graphics(starrail.game_path, log)
 
                 if not starrail.start_game_process():
                     raise RuntimeError("启动游戏失败")
@@ -197,6 +202,9 @@ def start_game(headless=None):
 
                 time.sleep(10)
             finally:
+                # 游戏已读取临时值后尽早恢复持久配置，缩短强杀/断电的风险窗口。
+                # 备份保留到任务结束，届时再次检查可能的游戏写回。
+                restore_temporary_graphics()
                 starrail.restore_resolution()
                 starrail.restore_auto_hdr()
             # starrail.check_resolution_ratio(1920, 1080)
@@ -302,6 +310,7 @@ def stop(detect_loop=False):
         ocr.exit_ocr()
         if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             get_game_controller().shutdown(cfg.after_finish)
+        restore_temporary_graphics(final=True)
         log.hr("完成", 2)
         if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             pause_on_success()
@@ -310,6 +319,7 @@ def stop(detect_loop=False):
 
 def after_finish_is_loop():
     get_game_controller().stop_game()
+    restore_temporary_graphics(final=True)
     scheduled_time = cfg.scheduled_time
     wait_time = Date.time_to_seconds(scheduled_time)
     future_time = Date.calculate_future_time(scheduled_time)

@@ -329,6 +329,7 @@ from utils.console import pause_on_error, pause_on_success, pause_always, is_doc
 from utils.pause import pause_ctl, RunStopRequested, STOP_GRACE_SECONDS
 from module.automation import auto
 from utils.tasks import PAUSABLE_TASKS
+from utils.temporary_graphics import recover_temporary_graphics, restore_temporary_graphics
 
 telemetry.init(
     enabled=cfg.get_value("telemetry_enable", True),
@@ -354,6 +355,7 @@ def _force_stop():
     """收到停止指令后任务迟迟走不到卡点（例如长时间等待）：写入结果后强制结束进程。"""
     log.error(f"任务未能在 {STOP_GRACE_SECONDS} 秒内停在安全位置，强制结束进程")
     run_session.note(status=STATUS_STOPPED, error="已按停止指令强制结束")
+    restore_temporary_graphics(final=True, blocking=False)
     run_session.finish(EXIT_STOPPED)
     os._exit(EXIT_STOPPED)
 
@@ -549,6 +551,15 @@ def run_workflow_action(workflow_name: str, workflow_step_path=None):
 
 
 def main(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
+    # 包括正常返回、SystemExit、Ctrl+C、协作停止和异常，且先于外层错误暂停执行。
+    recover_temporary_graphics(log)
+    try:
+        return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
+    finally:
+        restore_temporary_graphics(final=True)
+
+
+def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
     first_run()
     # 启动暂停控制器（仅在 GUI 注入了 MARCH7TH_CONTROL_FILE 时生效，其余场景惰性关闭）
     pause_ctl.start()
@@ -577,7 +588,7 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
         run_sub_task_update(action)
 
     elif action == "game":
-        game.start()
+        game.start(optimize_graphics=False)
 
     elif action == "app_update":
         app_update_task.start()

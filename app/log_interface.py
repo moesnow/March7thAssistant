@@ -2081,6 +2081,10 @@ class LogInterface(ScrollArea):
             if process is not self.process or getattr(process, '_task_finalized', False):
                 return
             process._task_finalized = True
+        # taskkill/进程崩溃不会执行子进程 finally；只恢复已确认退出的备份。
+        from utils.temporary_graphics import recover_temporary_graphics
+        from module.logger import log
+        recover_temporary_graphics(log)
         # 终止并清理任何和当前任务绑定的超时定时器
         self._clearTaskTimeout()
         # 复位暂停状态并清理控制文件

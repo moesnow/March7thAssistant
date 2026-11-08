@@ -1,3 +1,4 @@
+from utils.game_options import game_option_enabled
 import atexit
 import os
 import json
@@ -484,7 +485,7 @@ class CloudGameController(GameControllerBase):
             self.driver.set_window_size(1920, 1120)
         if first_run or not self.cfg.browser_persistent_enable:
             self._load_initial_local_storage()
-        if self.cfg.auto_battle_detect_enable:
+        if game_option_enabled(self.cfg, "auto_battle_detect_enable"):
             self.change_auto_battle(True)
         if self.cfg.browser_dump_cookies_enable:
             self._load_cookies()
