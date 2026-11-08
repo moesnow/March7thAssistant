@@ -44,7 +44,6 @@ def ready(auto, leaves=True):
         return True
 
     auto.find_element.side_effect = find
-    auto.get_single_line_text.return_value = '换境桂冠'
     auto.click_element.return_value = True
 
 
@@ -81,19 +80,49 @@ def test_destroy_single_card_and_actual_button(task):
     ready(auto)
     obj.process_relic_destroy()
     calls = auto.click_element.call_args_list
-    assert len(calls) == 2
-    assert calls[0].args[1] == 'crop'
-    assert calls[1].args == ('摧毁', 'text')
+    assert len(calls) == 3
+    assert calls[0].args == ((517 / 1920, 242 / 1080, 409 / 1920, 610 / 1080), 'crop')
+    assert calls[1].args == ((757 / 1920, 242 / 1080, 410 / 1920, 610 / 1080), 'crop')
+    assert calls[2].args == ('摧毁', 'text')
     assert auto.find_element.call_count >= 7
 
 
-def test_two_card_layout_fallback(task):
+@pytest.mark.parametrize('card_count, expected_selected', [(1, 0), (2, 0), (3, 1)])
+def test_destroy_selects_card_in_each_layout(task, card_count, expected_selected):
     obj, auto = task
-    ready(auto)
-    auto.get_single_line_text.side_effect = [None, '另一件奇物']
+    # 沿用同文件奇物选择/丢弃页面的布局，不使用截图素材。
+    card_positions = {
+        1: [(757, 242, 410, 610)],
+        2: [(517, 242, 409, 610), (997, 241, 405, 609)],
+        3: [(281, 242, 407, 610), (757, 242, 410, 610), (1235, 242, 410, 610)],
+    }[card_count]
+    selected = None
+    destroyed = False
+
+    def find(target, *args, **kwargs):
+        return not destroyed
+
+    def click(target, find_type, **kwargs):
+        nonlocal selected, destroyed
+        if find_type == 'crop':
+            x = (target[0] + target[2] / 2) * 1920
+            y = (target[1] + target[3] / 2) * 1080
+            for i, (left, top, width, height) in enumerate(card_positions):
+                if left <= x <= left + width and top <= y <= top + height:
+                    selected = i
+                    break
+            # 点击空白也会返回成功，但不能选中卡片或取消已有选择。
+        elif target == '摧毁':
+            destroyed = selected is not None
+        return True
+
+    auto.find_element.side_effect = find
+    auto.click_element.side_effect = click
+    # 复现旧实现：中间 OCR 区域读到相邻卡名，不能据此认定中心可选。
+    auto.get_single_line_text.return_value = '相邻奇物的文字'
     obj.process_relic_destroy()
-    selected = auto.click_element.call_args_list[0].args[0]
-    assert selected[0] == 537 / 1920
+    assert selected == expected_selected
+    assert destroyed
 
 
 @pytest.mark.parametrize('missing', ['奇物损毁', '请选择要摧毁的奇物', '摧毁'])
@@ -105,13 +134,13 @@ def test_incomplete_context_never_clicks(task, missing):
     auto.click_element.assert_not_called()
 
 
-def test_unreadable_card_never_clicks(task):
+def test_unreadable_card_names_do_not_block_selection(task):
     obj, auto = task
     ready(auto)
     auto.get_single_line_text.return_value = None
-    with pytest.raises(RuntimeError, match='卡片未识别'):
-        obj.process_relic_destroy()
-    auto.click_element.assert_not_called()
+    obj.process_relic_destroy()
+    auto.get_single_line_text.assert_not_called()
+    assert auto.click_element.call_count == 3
 
 
 def test_stuck_after_click_stops(task):
@@ -151,10 +180,11 @@ def test_remaining_prompt_prevents_false_completion(task):
         obj.process_relic_destroy()
 
 
-@pytest.mark.parametrize('failed_click', [1, 2])
+@pytest.mark.parametrize('failed_click', [1, 2, 3])
 def test_failed_input_is_not_success(task, failed_click):
     obj, auto = task
     ready(auto)
-    auto.click_element.side_effect = [False] if failed_click == 1 else [True, False]
+    auto.click_element.side_effect = [True] * (failed_click - 1) + [False]
     with pytest.raises(RuntimeError):
         obj.process_relic_destroy()
+    assert auto.click_element.call_count == failed_click

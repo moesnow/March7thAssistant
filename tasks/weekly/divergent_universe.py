@@ -1325,21 +1325,16 @@ class DivergentUniverse:
         if not auto.find_element("摧毁", "text", crop=button_crop, include=False):
             raise RuntimeError("奇物损毁按钮未识别，停止点击")
 
-        # 一张或三张卡片时选中间；两张时选左边。先识别卡名再点击，
-        # 不连续盲点多个位置，避免切换已选中的卡片。
-        name_crops = (
-            (777 / 1920, 482 / 1080, 370 / 1920, 70 / 1080),
-            (537 / 1920, 482 / 1080, 369 / 1920, 70 / 1080),
+        # 沿用选择/丢弃奇物的方式，先点双选项左侧，再点单/三选项中间。
+        # 不用卡名 OCR 判断布局，避免读到相邻卡名后只点击中间空白。
+        relic_positions = (
+            (517 / 1920, 242 / 1080, 409 / 1920, 610 / 1080),
+            (757 / 1920, 242 / 1080, 410 / 1920, 610 / 1080),
         )
-        for crop in name_crops:
-            name = auto.get_single_line_text(crop=crop, max_retries=2)
-            if name and name.strip():
-                if not auto.click_element(crop, "crop"):
-                    raise RuntimeError("奇物损毁卡片点击失败")
-                log.info(f"奇物损毁：选择{name.strip()}")
-                break
-        else:
-            raise RuntimeError("奇物损毁卡片未识别，停止点击")
+        log.info("奇物损毁：尝试选择奇物")
+        for pos in relic_positions:
+            if not auto.click_element(pos, "crop"):
+                raise RuntimeError("奇物损毁卡片点击失败")
 
         time.sleep(0.5)
         if not auto.click_element("摧毁", "text", max_retries=3, crop=button_crop, include=False):
