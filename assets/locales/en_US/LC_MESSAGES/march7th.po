@@ -6825,3 +6825,229 @@ msgstr ""
 "The original settings are restored when the task ends, but the running game will not immediately change its appearance. Restart the game to apply the original graphics. The assistant will not restart it automatically.\n"
 "\n"
 "Recovery from an abnormal exit is attempted the next time the assistant starts. If another source has changed the settings, the backup is kept and a warning is shown to avoid overwriting your new settings."
+
+#: app/tools/desktop_twin.py:73
+msgid "桌面分身（实验）"
+msgstr "Desktop Twin (experimental)"
+
+#: app/tools/desktop_twin.py:76
+msgid "取消连接"
+msgstr "Cancel connection"
+
+#: app/tools/desktop_twin.py:97
+msgid "正在注销分身…"
+msgstr "Signing out of Desktop Twin…"
+
+#: app/tools/desktop_twin.py:101
+msgid "正在连接分身…"
+msgstr "Connecting to Desktop Twin…"
+
+#: app/tools/desktop_twin.py:105
+msgid "分身连接已断开"
+msgstr "Desktop Twin disconnected"
+
+#: app/tools/desktop_twin.py:103
+msgid "已连接"
+msgstr "Connected"
+
+#: app/tools/desktop_twin.py:107
+msgid "未连接"
+msgstr "Disconnected"
+
+#: app/tools/desktop_twin.py:136
+msgid "请以管理员身份运行小助手"
+msgstr "Run the assistant as an administrator"
+
+#: app/main_window.py:242
+msgid "桌面分身"
+msgstr "Desktop Twin"
+
+#: app/tools/desktop_twin.py:181
+msgid "分身连接失败（RDP {code}）"
+msgstr "Desktop Twin connection failed (RDP {code})"
+
+#: app/tools/desktop_twin.py:202
+msgid "连接分身超时"
+msgstr "Desktop Twin connection timed out"
+
+#: app/tools/desktop_twin.py:256
+msgid "等待分身注销超时"
+msgstr "Desktop Twin sign-out timed out"
+
+#: app/tools/desktop_twin.py:132
+msgid "会话身份已变化，请在 Windows 中检查分身"
+msgstr "The session identity changed. Check Desktop Twin in Windows."
+
+#: app/tools_interface.py:77
+msgid "打开"
+msgstr "Open"
+
+#: module/update/update_window.py:426
+msgid "请先关闭桌面分身再安装更新"
+msgstr "Close Desktop Twin before installing the update."
+
+#: app/tools/desktop_twin.py:78
+msgid "重新连接"
+msgstr "Reconnect"
+
+#: app/tools/desktop_twin.py:87
+msgid "隐藏"
+msgstr "Hide"
+
+#: app/main_window.py:527
+msgid "请先结束主桌面的任务再连接分身"
+msgstr ""
+"Finish the task on the main desktop before connecting to Desktop Twin."
+
+#: app/tools/desktop_twin.py:99
+msgid "正在启动小助手…"
+msgstr "Opening March7th Assistant…"
+
+#: app/tools/desktop_twin.py:268
+msgid "等待分身中的小助手启动超时"
+msgstr "March7th Assistant took too long to open in Desktop Twin."
+
+#: app/tools_interface.py:81
+msgid "在独立的 Windows 桌面中运行小助手和游戏"
+msgstr "Run March7th Assistant and the game on a separate Windows desktop."
+
+#: app/tools/desktop_twin.py:458
+msgid "实验性"
+msgstr "Experimental"
+
+#: app/tools/desktop_twin.py:459
+msgid "在独立的 Windows 桌面中运行游戏和小助手，执行任务时不占用你的鼠标和键盘。"
+msgstr ""
+"Run the game and March7th Assistant on a separate Windows desktop, so tasks "
+"don't take over your mouse and keyboard."
+
+#: app/tools/desktop_twin.py:461
+msgid "分身以当前 Windows 账户登录，首次使用需要允许系统开启本地子会话"
+msgstr ""
+"Desktop Twin signs in with your current Windows account. The first time, you"
+" need to let Windows turn on local child sessions."
+
+#: app/tools/desktop_twin.py:462
+msgid "游戏同一时间只能在一个桌面运行，连接前请先关闭主桌面中的游戏"
+msgstr ""
+"The game can run on only one desktop at a time. Close the game on your main "
+"desktop before connecting."
+
+#: app/tools/desktop_twin.py:463
+msgid "运行期间，任务、定时和设置交给分身内的小助手，主界面暂停操作"
+msgstr ""
+"While it runs, tasks, scheduled tasks and settings are handled by the "
+"assistant inside Desktop Twin, and the main window is paused."
+
+#: app/tools/desktop_twin.py:464
+msgid "注销分身会关闭其中的游戏和所有应用"
+msgstr "Signing out of Desktop Twin closes the game and all apps in it."
+
+#: app/tools/desktop_twin.py:468
+msgid "使用文档"
+msgstr "Docs"
+
+#: app/tools/desktop_twin.py:470
+msgid "在浏览器中打开桌面分身的使用文档"
+msgstr "Open the Desktop Twin documentation in your browser"
+
+#: app/tools/desktop_twin.py:478
+msgid "启动分身"
+msgstr "Start Desktop Twin"
+
+#: app/tools/desktop_twin.py:483
+msgid "创建或连接本机的分身桌面"
+msgstr "Create or connect to the twin desktop on this PC"
+
+#: app/tools/desktop_twin.py:484
+msgid "打开小助手"
+msgstr "Open March7th Assistant"
+
+#: app/tools/desktop_twin.py:485
+msgid "在分身中打开小助手，已打开时切换到它"
+msgstr ""
+"Open March7th Assistant in Desktop Twin, or switch to it if it's already "
+"open"
+
+#: app/tools/desktop_twin.py:489
+msgid "隐藏此窗口并静音分身，分身继续在后台运行。可从托盘菜单或工具箱重新打开"
+msgstr ""
+"Hide this window and mute Desktop Twin. It keeps running in the background; "
+"reopen it from the tray menu or the Toolbox."
+
+#: app/tools/desktop_twin.py:493
+msgid "退出分身中的小助手并注销分身，其中的游戏和应用都会关闭"
+msgstr ""
+"Quit the assistant in Desktop Twin and sign out. The game and all apps in it"
+" will close."
+
+#: app/tools/desktop_twin.py:588
+msgid "开启本地子会话"
+msgstr "Turn on local child sessions"
+
+#: app/tools/desktop_twin.py:589
+msgid "桌面分身依赖 Windows 的本地子会话功能。开启后这项系统设置会一直保留，关闭分身也不会自动还原。"
+msgstr ""
+"Desktop Twin relies on the local child session feature of Windows. Once "
+"turned on, this system setting stays on, even after you close Desktop Twin."
+
+#: app/tools/desktop_twin.py:590
+msgid "开启"
+msgstr "Turn on"
+
+#: app/tools/desktop_twin.py:755
+msgid "注销桌面分身？"
+msgstr "Sign out of Desktop Twin?"
+
+#: app/tools/desktop_twin.py:756
+msgid ""
+"分身中的小助手会先停止任务并退出，随后注销分身，其中打开的游戏和应用都会关闭。只是不想看到这个窗口的话，可以选择“隐藏窗口”，分身会在后台继续运行。"
+msgstr ""
+"The assistant in Desktop Twin stops its task and quits first, then Desktop "
+"Twin signs out and closes the game and any open apps. If you just want this "
+"window out of the way, choose Hide Window and Desktop Twin keeps running in "
+"the background."
+
+#: app/tools/desktop_twin.py:492
+msgid "注销分身"
+msgstr "Sign Out"
+
+#: app/tools/desktop_twin.py:759
+msgid "隐藏窗口"
+msgstr "Hide Window"
+
+#: app/main_window.py:275
+msgid "这是运行在桌面分身中的小助手。分身内固定使用前台模式，不调整画质和分辨率，也不执行任务完成后的关机等操作"
+msgstr ""
+"This assistant is running inside Desktop Twin. It always uses foreground "
+"mode here, doesn't change graphics or resolution, and skips after-task "
+"actions such as shutdown."
+
+#: app/main_window.py:631
+msgid "桌面分身（运行中）"
+msgstr "Desktop Twin (running)"
+
+#: app/main_window.py:638
+msgid "桌面分身运行中"
+msgstr "Desktop Twin is running"
+
+#: app/main_window.py:639
+msgid "任务、定时和设置已交给分身内的小助手。为避免冲突，主界面暂停操作，注销分身后自动恢复。"
+msgstr ""
+"Tasks, scheduled tasks and settings are now handled by the assistant inside "
+"Desktop Twin. To avoid conflicts, this window is paused until you sign out "
+"of Desktop Twin."
+
+#: app/main_window.py:525
+msgid "主界面暂停期间无法启动任务，请在分身内的小助手中运行"
+msgstr ""
+"Tasks can't start here while the main window is paused. Run them from the "
+"assistant inside Desktop Twin."
+
+#: app/main_window.py:640
+msgid "打开分身窗口"
+msgstr "Open Desktop Twin"
+
+#: app/tools_interface.py:126
+msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
+msgstr "Desktop Twin is running. Open its window to watch it or sign out."

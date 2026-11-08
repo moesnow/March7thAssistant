@@ -30,6 +30,7 @@ from utils.tasks import TASK_NAMES, PAUSABLE_TASKS
 from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP, STATE_PAUSING, STATE_PAUSED,
                          STATE_RUNNING, STATE_STOPPING, write_command, read_state, reset_files)
 from utils.desktop import open_log_folder
+from utils.desktop_twin import in_desktop_twin
 from .schedule_dialog import ScheduleManagerDialog
 from module.notification import notif
 from module.localization import tr
@@ -1015,6 +1016,8 @@ class LogInterface(ScrollArea):
         return bool(self.process and self.process.state() != QProcess.NotRunning) or self._external_task_active
 
     def runScheduledTask(self, task, tasks=None, manual=False) -> bool:
+        if getattr(self, "_desktop_twin_hosting", False):
+            return False
         task_dict = self._buildScheduledTaskPayload(task)
         chain = self._buildScheduledTaskChain(task, tasks)
 
@@ -1149,6 +1152,8 @@ class LogInterface(ScrollArea):
 
     def _checkScheduledTime(self, now=None):
         """检查是否到达任意已启用的定时任务时间并触发对应任务"""
+        if getattr(self, "_desktop_twin_hosting", False):
+            return
         # 任务暂停期间不触发定时任务，避免打断暂停或为启动新任务而强制停止当前任务
         if self._pause_state in (STATE_PAUSING, STATE_PAUSED):
             self._updateScheduleStatusLabel()
@@ -1224,6 +1229,9 @@ class LogInterface(ScrollArea):
         return timer is not None
 
     def _schedulePostAction(self, action):
+        if in_desktop_twin():
+            self.appendLog("桌面分身已跳过系统完成后操作\n")
+            return
         self._cancelPendingPostAction()
         label = self._post_action_label(action)
         self.appendLog(f"任务完成后操作： {label}（将在60秒后执行，可通过停止按钮取消）\n")
@@ -1247,6 +1255,9 @@ class LogInterface(ScrollArea):
 
     def startTask(self, command_or_task, *, _sequence=None):
         """启动任务"""
+        if getattr(self, "_desktop_twin_hosting", False):
+            self.appendLog("当前由分身内的小助手运行任务\n")
+            return
         # 如果有正在运行的任务，先停止
         if self.process and self.process.state() == QProcess.Running:
             self._suppress_chain_continuation_once = True
@@ -1747,7 +1758,8 @@ class LogInterface(ScrollArea):
 
     def _pauseControlPath(self):
         """暂停指令文件路径（CLI 通过环境变量 MARCH7TH_CONTROL_FILE 读取同一路径）。"""
-        return os.path.abspath(os.path.join('temp', 'pause.json'))
+        name = f'pause-{os.getpid()}.json' if in_desktop_twin() else 'pause.json'
+        return os.path.abspath(os.path.join('temp', name))
 
     def _injectPauseControlEnv(self, env):
         """向子进程注入暂停控制文件路径并清理陈旧状态。"""
@@ -2178,7 +2190,11 @@ class LogInterface(ScrollArea):
                         for proc_name in proc_list:
                             try:
                                 if os.name == 'nt':
-                                    sp.run(['taskkill', '/IM', proc_name, '/F'], capture_output=True, creationflags=sp.CREATE_NO_WINDOW)
+                                    command = ['taskkill', '/IM', proc_name, '/F']
+                                    if in_desktop_twin():
+                                        from utils.windows_session import process_session_id
+                                        command += ['/FI', f'SESSION eq {process_session_id()}']
+                                    sp.run(command, capture_output=True, creationflags=sp.CREATE_NO_WINDOW)
                                 else:
                                     sp.run(['pkill', '-f', proc_name], capture_output=True)
                                 self.appendLog(f"已终止进程: {proc_name}\n")
@@ -2334,6 +2350,9 @@ class LogInterface(ScrollArea):
 
     def autoCloseBlockReason(self, preserve_schedule=True):
         """自动关闭前再次检查运行状态；不取消任务、定时器或完成后操作。"""
+        twin_active = getattr(getattr(self.window(), "toolsInterface", None), "desktopTwinActive", None)
+        if twin_active and twin_active():
+            return "桌面分身仍在使用"
         if self._hasActiveStartedProcess() or self._active_task_chain or self._pending_start_task_after_stop:
             return "仍有运行中或排队的任务"
         if self._pending_post_action_timer or self._pending_post_action:
@@ -2343,6 +2362,12 @@ class LogInterface(ScrollArea):
             if any(task.get('enabled', True) and task_trigger_mode(task) == 'time' for task in tasks):
                 return "仍有已启用的按时任务"
         return None
+
+    def setDesktopTwinHosting(self, active):
+        self._desktop_twin_hosting = active
+        if not active:
+            # 交回定时时跳过当前分钟，避免和分身实例重复触发同一时间槽。
+            self._last_schedule_minute = QDateTime.currentDateTime().toSecsSinceEpoch() // 60
 
     def _onProcessError(self, error, process=None):
         """进程错误"""

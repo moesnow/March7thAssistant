@@ -1,8 +1,10 @@
 import os
+import sys
 import psutil
 import getpass
 import subprocess
 from utils import clipboard
+from utils.desktop_twin import in_desktop_twin
 from typing import Optional
 from module.config.config import Config
 from module.game.base import GameControllerBase
@@ -37,6 +39,11 @@ class LocalGameController(GameControllerBase):
             self.log_info("游戏已运行，复用现有游戏窗口")
             return True
 
+        if in_desktop_twin():
+            from utils.desktop_twin import check_game_config
+            from utils.windows_session import process_session_id
+            check_game_config(self._config, process_session_id())
+
         if not os.path.exists(self.game_path):
             self.log_error(f"游戏路径不存在：{self.game_path}")
             return False
@@ -64,18 +71,24 @@ class LocalGameController(GameControllerBase):
             return False
 
     @staticmethod
-    def terminate_named_process(target_process_name, termination_timeout=10):
+    def terminate_named_process(target_process_name, termination_timeout=10, *, executable=None):
         """
-        根据进程名终止属于当前用户的进程。
+        根据进程名终止属于当前用户和当前桌面会话的进程。
 
         参数:
         - target_process_name (str): 要终止的进程名。
         - termination_timeout (int, optional): 终止进程前等待的超时时间（秒）。
+        - executable (str, optional): 要求实际可执行文件路径相符。
 
         返回值:
         - bool: 如果成功终止进程则返回True，否则返回False。
         """
         current_user = getpass.getuser()
+        session_id = None
+        if sys.platform == "win32":
+            from utils.windows_session import process_session_id
+            session_id = process_session_id()
+        expected_path = os.path.normcase(os.path.abspath(executable)) if executable else None
         success = False
 
         for proc in psutil.process_iter(attrs=["pid", "name", "username"]):
@@ -86,20 +99,24 @@ class LocalGameController(GameControllerBase):
                 continue
 
             # 精准匹配进程名并属于当前用户
-            if target_process_name.lower() in name.lower() and user == current_user:
+            if name and target_process_name.lower() in name.lower() and user == current_user:
                 try:
-                    p = psutil.Process(proc.info["pid"])
-                    p.terminate()
+                    if session_id is not None and process_session_id(proc.pid) != session_id:
+                        continue
+                    if expected_path and os.path.normcase(proc.exe()) != expected_path:
+                        continue
+                    # psutil 会在 terminate / kill 前复核进程创建时间，避免 PID 复用。
+                    proc.terminate()
                     try:
-                        p.wait(timeout=termination_timeout)
+                        proc.wait(timeout=termination_timeout)
                     except psutil.TimeoutExpired:
                         # 超时直接kill
-                        p.kill()
-                        p.wait(timeout=3)
+                        proc.kill()
+                        proc.wait(timeout=3)
 
                     success = True
 
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.Error):
+                except Exception:
                     continue
 
         return success
@@ -125,8 +142,10 @@ class LocalGameController(GameControllerBase):
     def stop_game(self) -> bool:
         """终止游戏"""
         try:
-            # os.system(f'taskkill /f /im {self.process_name}')
-            self.terminate_named_process(self.process_name)
+            if in_desktop_twin():
+                self.terminate_named_process(self.process_name, executable=self.game_path)
+            else:
+                self.terminate_named_process(self.process_name)
             # 终止后、关机/睡眠等系统操作之前恢复，避免退出时写回临时设置。
             restore_temporary_graphics(final=True)
             self.log_info(f"游戏终止：{self.process_name}")

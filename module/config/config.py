@@ -128,6 +128,18 @@ _ENV_OVERRIDE_MAP = {
 # 反向映射：配置键 -> 环境变量名
 _CONFIG_KEY_TO_ENV = {v[0]: k for k, v in _ENV_OVERRIDE_MAP.items()}
 
+# 分身使用本地前台输入，避免改动同一账户共享的画质和启动器状态。
+_DESKTOP_TWIN_OVERRIDES = {
+    "cloud_game_enable": False,
+    "local_control_mode": "foreground",
+    "update_via_launcher": False,
+    "auto_lower_graphics_enable": False,
+    "auto_set_resolution_enable": False,
+    "auto_battle_detect_enable": False,
+    "auto_set_game_path_enable": False,
+    "after_finish": "None",
+}
+
 
 def _get_env_override(config_key):
     """
@@ -135,6 +147,8 @@ def _get_env_override(config_key):
     :param config_key: 配置键名
     :return: (has_override, value) 如果有覆盖返回 (True, 覆盖值)，否则返回 (False, None)
     """
+    if config_key in _DESKTOP_TWIN_OVERRIDES and os.environ.get("MARCH7TH_DESKTOP_TWIN"):
+        return True, _DESKTOP_TWIN_OVERRIDES[config_key]
     env_name = _CONFIG_KEY_TO_ENV.get(config_key)
     if env_name:
         env_value = os.environ.get(env_name)
@@ -155,6 +169,7 @@ class Config(metaclass=SingletonMeta):
     # 只读角色（更新器/清理器等旁观进程）：只读取配置、绝不写入。
     # 进程启动时通过环境变量 MARCH7TH_CONFIG_READONLY=1 声明。
     _readonly = False
+    writes_suspended = False
 
     def __init__(self, version_path, example_path, config_path):
         Config._readonly = os.environ.get("MARCH7TH_CONFIG_READONLY", "").lower() in ("1", "true")
@@ -395,7 +410,7 @@ class Config(metaclass=SingletonMeta):
 
     def save_config(self):
         """保存配置到文件（先写临时文件再原子替换；替换持续失败时先备份再降级为原地覆盖写入）"""
-        if Config._readonly:
+        if Config._readonly or self.writes_suspended:
             # 更新器/清理器等旁观进程不写配置：多进程并发写是配置损坏的根源之一
             _diag("info", f"save_config 跳过（当前进程为只读角色，不写配置文件）: {os.path.abspath(self.config_path)}")
             return

@@ -34,6 +34,7 @@ class StyleSheet(StyleSheetBase, Enum):
     WORKFLOW_INTERFACE = "workflow_interface"
     LOG_INTERFACE = "log_interface"
     PIVOT = "pivot"
+    DESKTOP_TWIN = "desktop_twin"
 
     def path(self, theme=Theme.AUTO):
         theme = qconfig.theme if theme == Theme.AUTO else theme

@@ -1,11 +1,12 @@
 from utils.game_options import game_option_enabled
+from utils.desktop_twin import in_desktop_twin
 from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker
 from PySide6.QtGui import QIcon, QAction
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout
 
 from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, Theme, themeColor, qconfig
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import InfoBar, InfoBarPosition, SystemTrayMenu
+from qfluentwidgets import InfoBar, InfoBarIcon, InfoBarPosition, PrimaryPushButton, SystemTrayMenu, ToolTipFilter, ToolTipPosition
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
 
 from .home_interface import HomeInterface
@@ -31,6 +32,20 @@ from module.localization import tr
 import base64
 import os
 import sys
+
+
+def fit_menu_width(menu):
+    """按当前菜单项文字重新计算 Fluent 菜单宽度。
+
+    qfluentwidgets 调整列表尺寸时用 setFixedSize 锁住了最小宽度，之后只会变宽：
+    菜单项文字改短（例如“桌面分身（运行中）”恢复为“桌面分身”）后要先放开再重算。
+    """
+    view = getattr(menu, 'view', None)
+    if view is None:
+        return
+    view.setMinimumWidth(0)
+    view.adjustSize()
+    menu.adjustSize()
 
 
 class ConfigWatcher(QObject):
@@ -99,6 +114,10 @@ class MainWindow(MSFluentWindow):
 
     def __init__(self, task=None, exit_on_complete=False, start_minimized_to_tray=False):
         super().__init__()
+        self._desktop_twin_hosting = False
+        self._desktop_twin_tray_action = None
+        self._desktop_twin_notice = None
+        self._desktop_twin_badge = None
         self._pending_ui_language = None
         self._navigation_animation_running = False
         self.stackedWidget.view.aniStart.connect(lambda: setattr(self, '_navigation_animation_running', True))
@@ -238,6 +257,23 @@ class MainWindow(MSFluentWindow):
     def _baseTitleBarText(self):
         return f"March7th Assistant {cfg.version}"
 
+    def _refreshDesktopTwinBadge(self):
+        """分身内的小助手在标题栏标出身份，透过分身画面也能和主桌面的小助手区分开。"""
+        if not in_desktop_twin() or not hasattr(getattr(self, 'titleBar', None), 'hBoxLayout'):
+            return
+        if self._desktop_twin_badge is None:
+            from .components.pill_label import PillLabel
+            badge = PillLabel(parent=self.titleBar)
+            badge.installEventFilter(ToolTipFilter(badge, 300, ToolTipPosition.BOTTOM))
+            layout = self.titleBar.hBoxLayout
+            index = layout.indexOf(self.titleBar.titleLabel) + 1
+            layout.insertWidget(index, badge, 0, Qt.AlignmentFlag.AlignVCenter)
+            layout.insertSpacing(index + 1, 8)
+            self._desktop_twin_badge = badge
+        self._desktop_twin_badge.setText(tr('桌面分身'))
+        self._desktop_twin_badge.setToolTip(
+            tr('这是运行在桌面分身中的小助手。分身内固定使用前台模式，不调整画质和分辨率，也不执行任务完成后的关机等操作'))
+
     def _ensureUpdateVersionBadge(self):
         if self.updateVersionBadge is not None:
             return self.updateVersionBadge
@@ -262,6 +298,8 @@ class MainWindow(MSFluentWindow):
             self.titleBar.setTitle(self._baseTitleBarText())
 
         badge = self._ensureUpdateVersionBadge()
+        # 更新徽章先插入，分身徽章再插到标题后面，两者依次排列
+        self._refreshDesktopTwinBadge()
         if badge is None:
             return
 
@@ -386,6 +424,11 @@ class MainWindow(MSFluentWindow):
         run_action.triggered.connect(self.startFullTask)
         tray_menu.addAction(run_action)
 
+        if sys.platform == "win32" and not in_desktop_twin():
+            self._desktop_twin_tray_action = QAction(tr("桌面分身"), self)
+            self._desktop_twin_tray_action.triggered.connect(self.toolsInterface.openDesktopTwin)
+            tray_menu.addAction(self._desktop_twin_tray_action)
+
         tray_menu.addSeparator()
 
         # 打开设置界面
@@ -475,6 +518,18 @@ class MainWindow(MSFluentWindow):
 
     def _onStartTask(self, command):
         """处理任务启动信号"""
+        if self._desktop_twin_hosting:
+            # 快捷方式或其他实例转来的任务请求不能静默丢弃
+            InfoBar.warning(
+                title=tr('桌面分身运行中'),
+                content=tr('主界面暂停期间无法启动任务，请在分身内的小助手中运行'),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.BOTTOM,
+                duration=5000,
+                parent=self
+            )
+            return
         # 检查是否有任务正在运行
         if self.logInterface.isTaskRunning():
             InfoBar.warning(
@@ -510,8 +565,79 @@ class MainWindow(MSFluentWindow):
 
     def _onAutoplotToggleRequested(self):
         """处理自动对话切换请求（全局热键触发）"""
-        if hasattr(self, 'toolsInterface'):
+        if not self._desktop_twin_hosting and hasattr(self, 'toolsInterface'):
             self.toolsInterface.toggleAutoPlot()
+
+    def checkDesktopTwinReady(self):
+        from utils.runs import read_active_run
+
+        game_launch = getattr(self, "game_launch_thread", None)
+        if (self.logInterface.autoCloseBlockReason(preserve_schedule=False) or read_active_run()
+                or (game_launch is not None and game_launch.isRunning())):
+            raise RuntimeError(tr("请先结束主桌面的任务再连接分身"))
+
+    def setDesktopTwinHosting(self, active):
+        """把定时和共享设置的写入权交给分身 GUI，注销后恢复主界面。"""
+        self._desktop_twin_hosting = active
+        cfg.writes_suspended = active
+        self._cancelTaskExit()
+        self.logInterface.setDesktopTwinHosting(active)
+        for page in (self.homeInterface, self.settingInterface, self.workflowInterface,
+                     self.warpInterface, self.logInterface):
+            page.setDisabled(active)
+        start_game = self.navigationInterface.widget('startGameButton')
+        if start_game is not None:
+            start_game.setDisabled(active)
+        for action in self._tray_actions[1:3]:
+            action.setDisabled(active)
+        # 页面整体变灰时要说明原因，并给出回到分身窗口的入口
+        notice = self._ensureDesktopTwinNotice() if active else self._desktop_twin_notice
+        if notice is not None:
+            notice.setVisible(active)
+        self._refreshDesktopTwinIndicators()
+        if not active and cfg.is_config_changed():
+            self._on_config_file_changed()
+        self.toolsInterface.setDesktopTwinHosting(active)
+
+    def _ensureDesktopTwinNotice(self):
+        """在页面区域上方插入提示条，挤开页面而不是盖住页面顶部的标题和标签页。"""
+        if self._desktop_twin_notice is not None:
+            return self._desktop_twin_notice
+        from .components.notice_bar import NoticeBar
+
+        notice = NoticeBar(InfoBarIcon.INFORMATION, self, accent=True)
+        notice.openButton = PrimaryPushButton(notice)
+        notice.openButton.clicked.connect(self.toolsInterface.openDesktopTwin)
+        notice.addWidget(notice.openButton)
+        notice.hide()
+        noticeRow = QHBoxLayout()
+        noticeRow.setContentsMargins(0, 0, 12, 10)
+        noticeRow.addWidget(notice)
+        column = QVBoxLayout()
+        column.setContentsMargins(0, 0, 0, 0)
+        column.setSpacing(0)
+        index = self.hBoxLayout.indexOf(self.stackedWidget)
+        self.hBoxLayout.removeWidget(self.stackedWidget)
+        column.addLayout(noticeRow)
+        column.addWidget(self.stackedWidget, 1)
+        self.hBoxLayout.insertLayout(index, column, 1)
+        self._desktop_twin_notice = notice
+        self._refreshDesktopTwinIndicators()
+        return notice
+
+    def _refreshDesktopTwinIndicators(self):
+        hosting = self._desktop_twin_hosting
+        if self._desktop_twin_tray_action is not None:
+            self._desktop_twin_tray_action.setText(tr("桌面分身（运行中）") if hosting else tr("桌面分身"))
+        if hasattr(self, 'tray_icon'):
+            self.tray_icon.setToolTip(
+                f"March7th Assistant\n{tr('桌面分身运行中')}" if hosting else 'March7th Assistant')
+            fit_menu_width(self.tray_icon.contextMenu())
+        notice = self._desktop_twin_notice
+        if notice is not None:
+            notice.setTitle(tr("桌面分身运行中"))
+            notice.setContent(tr("任务、定时和设置已交给分身内的小助手。为避免冲突，主界面暂停操作，注销分身后自动恢复。"))
+            notice.openButton.setText(tr("打开分身窗口"))
 
     def _on_ui_language_changed(self, lang_code: str):
         """合并连续选择；等下拉菜单退出回调后再刷新，不主动导航。"""
@@ -574,6 +700,7 @@ class MainWindow(MSFluentWindow):
             self.navigationInterface.widget(route).setText(text)
         for action, text in zip(self._tray_actions, [tr('显示主界面'), tr('完整运行'), tr('设置'), tr('退出')]):
             action.setText(text)
+        self._refreshDesktopTwinIndicators()
         self._refreshWindowTitleBar()
 
     def _reinstall_fluent_translator(self, lang_code: str):
@@ -716,6 +843,8 @@ class MainWindow(MSFluentWindow):
 
     def _on_config_file_changed(self):
         """重新加载配置文件并刷新界面"""
+        if self._desktop_twin_hosting:
+            return
         replacement = None
         try:
             if not self._can_replace_settings() or self._pending_ui_language is not None:
@@ -793,6 +922,11 @@ class MainWindow(MSFluentWindow):
         """执行退出前的清理并退出程序
         e: 可选的 QCloseEvent，用于调用 e.accept()
         """
+        close_twin = getattr(getattr(self, "toolsInterface", None), "closeDesktopTwin", None)
+        if close_twin and not close_twin():
+            if e is not None:
+                e.ignore()
+            return
         self._cancelTaskExit()
         # 保存窗口尺寸和最大化状态
         log.info(f"[config-save] 主程序退出，保存窗口状态 PID={os.getpid()}（更新期间此处会与更新器并发写配置）")
@@ -883,6 +1017,8 @@ class MainWindow(MSFluentWindow):
             )
 
     def startGame(self):
+        if self._desktop_twin_hosting:
+            return
         start_game_button = self.navigationInterface.widget('startGameButton')
         if start_game_button:
             start_game_button.setEnabled(False)

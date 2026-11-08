@@ -162,6 +162,10 @@ class UpdateThread(QThread):
 
 def checkUpdate(self, timeout: int = 5, flag: bool = False, silent: bool = False):
     """检查更新，并根据更新状态显示不同的信息或执行更新操作。"""
+    from utils.desktop_twin import in_desktop_twin
+
+    if in_desktop_twin() and (flag or silent):
+        return
 
     suppress_feedback = silent or (flag and not cfg.check_update)
 

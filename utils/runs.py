@@ -52,6 +52,7 @@ LOCK_ACQUIRED = "acquired"
 LOCK_FORCED = "forced"              # 已有任务在运行，按 --force 越过
 LOCK_BUSY = "busy"                  # 已有任务在运行（持有进程确认存活），本次不执行
 LOCK_UNAVAILABLE = "unavailable"    # 锁文件无法读写，无法判断是否已有任务在运行
+INVOKER_DESKTOP_TWIN = "desktop_twin"
 
 # 锁文件读写失败时的重试（Windows 上另一进程正在替换 / 删除同一文件等瞬时占用）
 _LOCK_ATTEMPTS = 5
@@ -252,9 +253,9 @@ def acquire_run_lock(info: dict, force: bool = False):
             alive = isinstance(holder, dict) and is_process_alive(holder.get("pid"), holder.get("pid_create_time"))
             if alive and holder.get("run_id") == info.get("run_id"):
                 return True, None
-            if alive and not force:
-                return False, holder
-            if alive and force:
+            if alive:
+                if not force or INVOKER_DESKTOP_TWIN in (info.get("invoker"), holder.get("invoker")):
+                    return False, holder
                 _atomic_write_json(path, info)
                 return True, holder
             # 陈旧锁（持有进程已退出）：确认仍是同一份陈旧内容后再移除，避免误删别人刚取得的锁

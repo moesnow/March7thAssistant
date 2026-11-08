@@ -135,7 +135,8 @@ def parse_args():
 
     # AI 助手里已安装的 Skill 副本跟随小助手更新（仅打包版；不输出内容，不影响下面查询类命令的结果）
     from utils.agent_skill import sync_installed_skills
-    sync_installed_skills()
+    if not os.environ.get("MARCH7TH_DESKTOP_TWIN"):
+        sync_installed_skills()
 
     # 查询类命令只读配置：可能由未提权的 m7a.exe 调用，安装目录不一定可写
     if args.list or args.list_workflows:
@@ -223,6 +224,20 @@ def parse_args():
 
 args = parse_args()
 
+desktop_twin_context = None
+if sys.platform == "win32" and os.environ.get("MARCH7TH_DESKTOP_TWIN"):
+    from utils.desktop_twin import SessionContext
+
+    try:
+        desktop_twin_context = SessionContext.from_environment()
+        desktop_twin_context.check()
+    except Exception as error:
+        print(f"桌面分身校验失败：{error}", flush=True)
+        sys.exit(1)
+    if args.force or args.task == "app_update":
+        print("请在主桌面执行程序更新或强制运行", flush=True)
+        sys.exit(2)
+
 # 仅本次运行生效的覆盖项：写入当前进程的环境变量，复用配置模块的环境变量覆盖机制，不改动 config.yaml
 if args.non_interactive:
     os.environ["MARCH7TH_NON_INTERACTIVE"] = "1"
@@ -252,11 +267,13 @@ from utils.cli_entry import read_version
 from utils.console import is_gui_started, is_docker_started, is_non_interactive
 from utils.runs import (RunSession, EXIT_OK, EXIT_FAILED, EXIT_FIRST_RUN_REQUIRED, EXIT_BUSY, EXIT_ELEVATION_FAILED,
                         EXIT_STOPPED, STATUS_INTERRUPTED, STATUS_STOPPED, LOCK_BUSY, LOCK_FORCED, LOCK_UNAVAILABLE,
-                        describe_run, exit_code_of)
+                        INVOKER_DESKTOP_TWIN, describe_run, exit_code_of)
 
 
 def _run_invoker():
     """本次运行的发起方（写入运行记录与匿名统计）。"""
+    if desktop_twin_context:
+        return INVOKER_DESKTOP_TWIN
     if is_gui_started():
         return "gui"
     if is_docker_started():
@@ -279,6 +296,9 @@ run_session = RunSession.begin(
     version=read_version(),
 )
 run_session.print_json = args.json
+if desktop_twin_context:
+    run_session.record["windows_session_id"] = desktop_twin_context.session.session_id
+    run_session.record["windows_session_logon_time"] = desktop_twin_context.session.logon_time
 
 if sys.platform == 'win32' and not is_user_admin():
     # 入口转交的管理员进程却没有管理员权限（例如免 UAC 运行的计划任务被改成了不以最高权限运行）：
@@ -371,6 +391,9 @@ def ensure_exclusive_run():
         pause_on_error()
         sys.exit(EXIT_BUSY)
     if result.status == LOCK_UNAVAILABLE:
+        if desktop_twin_context:
+            log.error(f"无法取得桌面分身运行锁：{result.error}")
+            sys.exit(EXIT_FAILED)
         # 锁文件读写失败只说明无法判断，不等于有任务在运行：照常执行（与引入运行锁之前一致），结果写入运行记录
         log.warning(f"运行锁不可用（{result.error}），无法确认是否已有其他任务在运行，本次照常执行")
     elif result.status == LOCK_FORCED:

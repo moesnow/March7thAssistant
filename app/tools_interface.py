@@ -10,6 +10,7 @@ import tasks.tool as tool
 import base64
 import subprocess
 from utils import clipboard
+from utils.desktop_twin import in_desktop_twin
 from module.config import cfg
 from tasks.base.tasks import start_task
 import os
@@ -73,6 +74,14 @@ class ToolsInterface(ScrollArea):
             tr("角色面板导出"),
             tr("读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json")
         )
+        self.desktopTwinCard = PushSettingCard(
+            tr("打开"),
+            FIF.APPLICATION,
+            tr("桌面分身"),
+            tr("在独立的 Windows 桌面中运行小助手和游戏")
+        )
+        self._desktop_twin = None
+        self._desktop_twin_hosting = False
 
         self.__initWidget()
 
@@ -107,6 +116,17 @@ class ToolsInterface(ScrollArea):
         self.characterExportCard.setTitle(tr('角色面板导出'))
         self.characterExportCard.setContent(tr('读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json'))
         self.characterExportCard.button.setText(tr('导出'))
+        self._refreshDesktopTwinCard()
+        if self._desktop_twin is not None:
+            self._desktop_twin.retranslateUi()
+
+    def _refreshDesktopTwinCard(self):
+        self.desktopTwinCard.setTitle(tr("桌面分身"))
+        if self._desktop_twin_hosting:
+            self.desktopTwinCard.setContent(tr("分身正在运行，打开窗口可查看分身画面或注销分身"))
+        else:
+            self.desktopTwinCard.setContent(tr("在独立的 Windows 桌面中运行小助手和游戏"))
+        self.desktopTwinCard.button.setText(tr("打开"))
 
     def __initWidget(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -138,13 +158,17 @@ class ToolsInterface(ScrollArea):
         self.ToolsGroup.addSettingCard(self.unlockfpsCard)
         self.ToolsGroup.addSettingCard(self.redemptionCodeCard)
         self.ToolsGroup.addSettingCard(self.cloudTouchCard)
-        self.ToolsGroup.addSettingCard(self.screenTestCard)
+        self.ToolsGroup.addSettingCard(self.desktopTwinCard)
         self.ToolsGroup.addSettingCard(self.characterExportCard)
+        self.ToolsGroup.addSettingCard(self.screenTestCard)
 
         if sys.platform != 'win32':
             self.automaticPlotCard.setDisabled(True)
             self.unlockfpsCard.setDisabled(True)
             self.cloudTouchCard.setDisabled(True)
+            self.desktopTwinCard.setDisabled(True)
+        elif in_desktop_twin():
+            self.desktopTwinCard.hide()
 
         self.ToolsGroup.titleLabel.setHidden(True)
 
@@ -335,6 +359,51 @@ class ToolsInterface(ScrollArea):
         self.cloudTouchCard.clicked.connect(self.__onCloudTouchCardClicked)
         self.screenTestCard.clicked.connect(self.__onScreenTestCardClicked)
         self.characterExportCard.clicked.connect(self.__onCharacterExportCardClicked)
+        self.desktopTwinCard.clicked.connect(self.openDesktopTwin)
+
+    def openDesktopTwin(self):
+        if sys.platform != "win32" or in_desktop_twin():
+            return
+        if self._desktop_twin is None:
+            from .tools.desktop_twin import DesktopTwinDialog
+
+            self._desktop_twin = DesktopTwinDialog(
+                self.window(), self.parent.logInterface, getattr(self.parent, "checkDesktopTwinReady", None),
+            )
+            hosting_changed = getattr(self.parent, "setDesktopTwinHosting", None)
+            if hosting_changed:
+                self._desktop_twin.hostingChanged.connect(hosting_changed)
+            self._desktop_twin.destroyed.connect(self._forgetDesktopTwin)
+        if self._desktop_twin.isMinimized():
+            self._desktop_twin.showNormal()
+        else:
+            self._desktop_twin.show()
+        self._desktop_twin.raise_()
+        self._desktop_twin.activateWindow()
+
+    def _forgetDesktopTwin(self):
+        self._desktop_twin = None
+
+    def desktopTwinActive(self):
+        return self._desktop_twin is not None and self._desktop_twin.active
+
+    def closeDesktopTwin(self):
+        if self.desktopTwinActive():
+            self.openDesktopTwin()
+        return self._desktop_twin is None or self._desktop_twin.close()
+
+    def setDesktopTwinHosting(self, active):
+        self._desktop_twin_hosting = active
+        self._refreshDesktopTwinCard()
+        for card in (
+            self.automaticPlotCard, self.gameScreenshotCard, self.unlockfpsCard, self.redemptionCodeCard,
+            self.cloudTouchCard, self.screenTestCard, self.characterExportCard,
+        ):
+            card.setDisabled(active)
+        if active:
+            tool.stop_plot()
+        elif self.automaticPlotCard.getSwitchState():
+            self.__startAutoPlot()
 
     def __onScreenTestCardClicked(self):
         start_task("screen_test")

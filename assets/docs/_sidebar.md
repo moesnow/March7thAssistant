@@ -6,6 +6,7 @@
   - [流程编排](/assets/docs/Workflow.md)
   - [AI 助手](/assets/docs/Agent.md)
   - [后台运行](/assets/docs/Background.md)
+  - [桌面分身](/assets/docs/DesktopTwin.md)
   - [Docker 部署](/assets/docs/Docker.md)
   - [Termux 安卓部署](/assets/docs/Termux.md)
 - **参与项目**

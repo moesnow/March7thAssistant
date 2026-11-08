@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QHBoxLayout
 from qfluentwidgets import BodyLabel, IndeterminateProgressBar, MessageBoxBase, PlainTextEdit, PrimaryPushButton, ProgressBar, PushButton, StateToolTip, SubtitleLabel
 
 from module.localization import tr
+from utils.desktop_twin import in_desktop_twin
 from module.update.downloader import format_size as _format_size
 from module.update.update_engine import (
     UpdateCancelledError,
@@ -420,6 +421,10 @@ class UpdaterWindow(MessageBoxBase):
         if not self._awaiting_install or not self._prepared_file_name:
             return
 
+        twin_active = getattr(getattr(self.main_window, "toolsInterface", None), "desktopTwinActive", None)
+        if in_desktop_twin() or (twin_active and twin_active()):
+            self.status_label.setText(tr("请先关闭桌面分身再安装更新"))
+            return
         try:
             self._launch_helper(
                 self._prepared_file_name,

@@ -1,0 +1,21 @@
+/* 桌面分身窗口：内容区与系统标题栏同色（见 app/tools/desktop_twin.py 的 _SURFACE_COLOR） */
+#desktopTwinDialog {
+    background-color: rgb(255, 255, 255);
+}
+
+#pointsCard {
+    background-color: rgb(249, 249, 249);
+    border: 1px solid rgb(234, 234, 234);
+    border-radius: 8px;
+}
+
+#screenFrame {
+    background-color: black;
+    border: 1px solid rgb(229, 229, 229);
+}
+
+#footerBar {
+    background-color: rgb(243, 243, 243);
+    border: none;
+    border-top: 1px solid rgb(229, 229, 229);
+}

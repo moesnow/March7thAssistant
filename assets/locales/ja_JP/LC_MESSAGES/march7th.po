@@ -6653,3 +6653,204 @@ msgstr ""
 "タスク終了時に元の設定を復元しますが、起動中のゲームの表示はすぐには戻りません。ゲームを再起動すると元の画質が適用されます。アシスタントが自動で再起動することはありません。\n"
 "\n"
 "異常終了時のバックアップは、次回のアシスタント起動時に復元を試みます。他から設定が変更されている場合は、新しい設定を上書きせず、バックアップを保持して警告します。"
+
+#: app/tools/desktop_twin.py:73
+msgid "桌面分身（实验）"
+msgstr "デスクトップ分身（試験機能）"
+
+#: app/tools/desktop_twin.py:76
+msgid "取消连接"
+msgstr "接続をキャンセル"
+
+#: app/tools/desktop_twin.py:97
+msgid "正在注销分身…"
+msgstr "デスクトップ分身からサインアウト中…"
+
+#: app/tools/desktop_twin.py:101
+msgid "正在连接分身…"
+msgstr "デスクトップ分身に接続中…"
+
+#: app/tools/desktop_twin.py:105
+msgid "分身连接已断开"
+msgstr "デスクトップ分身との接続が切断されました"
+
+#: app/tools/desktop_twin.py:103
+msgid "已连接"
+msgstr "接続済み"
+
+#: app/tools/desktop_twin.py:107
+msgid "未连接"
+msgstr "未接続"
+
+#: app/tools/desktop_twin.py:136
+msgid "请以管理员身份运行小助手"
+msgstr "アシスタントを管理者として実行してください"
+
+#: app/main_window.py:242
+msgid "桌面分身"
+msgstr "デスクトップ分身"
+
+#: app/tools/desktop_twin.py:181
+msgid "分身连接失败（RDP {code}）"
+msgstr "デスクトップ分身への接続に失敗しました（RDP {code}）"
+
+#: app/tools/desktop_twin.py:202
+msgid "连接分身超时"
+msgstr "デスクトップ分身への接続がタイムアウトしました"
+
+#: app/tools/desktop_twin.py:256
+msgid "等待分身注销超时"
+msgstr "デスクトップ分身からのサインアウトがタイムアウトしました"
+
+#: app/tools/desktop_twin.py:132
+msgid "会话身份已变化，请在 Windows 中检查分身"
+msgstr "セッションの識別情報が変わりました。Windows で分身を確認してください。"
+
+#: app/tools_interface.py:77
+msgid "打开"
+msgstr "開く"
+
+#: module/update/update_window.py:426
+msgid "请先关闭桌面分身再安装更新"
+msgstr "更新をインストールする前に、デスクトップ分身を閉じてください。"
+
+#: app/tools/desktop_twin.py:78
+msgid "重新连接"
+msgstr "再接続"
+
+#: app/tools/desktop_twin.py:87
+msgid "隐藏"
+msgstr "非表示"
+
+#: app/main_window.py:527
+msgid "请先结束主桌面的任务再连接分身"
+msgstr "メインデスクトップのタスクを終了してから分身に接続してください。"
+
+#: app/tools/desktop_twin.py:99
+msgid "正在启动小助手…"
+msgstr "アシスタントを起動中…"
+
+#: app/tools/desktop_twin.py:268
+msgid "等待分身中的小助手启动超时"
+msgstr "分身内のアシスタントの起動がタイムアウトしました。"
+
+#: app/tools_interface.py:81
+msgid "在独立的 Windows 桌面中运行小助手和游戏"
+msgstr "独立した Windows デスクトップでアシスタントとゲームを実行します"
+
+#: app/tools/desktop_twin.py:458
+msgid "实验性"
+msgstr "試験機能"
+
+#: app/tools/desktop_twin.py:459
+msgid "在独立的 Windows 桌面中运行游戏和小助手，执行任务时不占用你的鼠标和键盘。"
+msgstr "独立した Windows デスクトップでゲームとアシスタントを実行し、タスク中もマウスとキーボードを占有しません。"
+
+#: app/tools/desktop_twin.py:461
+msgid "分身以当前 Windows 账户登录，首次使用需要允许系统开启本地子会话"
+msgstr "分身は現在の Windows アカウントでサインインします。初回はローカルの子セッションを有効にする許可が必要です"
+
+#: app/tools/desktop_twin.py:462
+msgid "游戏同一时间只能在一个桌面运行，连接前请先关闭主桌面中的游戏"
+msgstr "ゲームは同時に 1 つのデスクトップでしか実行できません。接続前にメインデスクトップのゲームを閉じてください"
+
+#: app/tools/desktop_twin.py:463
+msgid "运行期间，任务、定时和设置交给分身内的小助手，主界面暂停操作"
+msgstr "実行中はタスク・定期タスク・設定を分身内のアシスタントが担当し、メイン画面は操作できなくなります"
+
+#: app/tools/desktop_twin.py:464
+msgid "注销分身会关闭其中的游戏和所有应用"
+msgstr "分身からサインアウトすると、中のゲームとすべてのアプリが閉じます"
+
+#: app/tools/desktop_twin.py:468
+msgid "使用文档"
+msgstr "ドキュメント"
+
+#: app/tools/desktop_twin.py:470
+msgid "在浏览器中打开桌面分身的使用文档"
+msgstr "デスクトップ分身のドキュメントをブラウザーで開きます"
+
+#: app/tools/desktop_twin.py:478
+msgid "启动分身"
+msgstr "分身を起動"
+
+#: app/tools/desktop_twin.py:483
+msgid "创建或连接本机的分身桌面"
+msgstr "この PC の分身デスクトップを作成して接続します"
+
+#: app/tools/desktop_twin.py:484
+msgid "打开小助手"
+msgstr "アシスタントを開く"
+
+#: app/tools/desktop_twin.py:485
+msgid "在分身中打开小助手，已打开时切换到它"
+msgstr "分身内でアシスタントを開きます。すでに開いている場合はそのウィンドウに切り替えます"
+
+#: app/tools/desktop_twin.py:489
+msgid "隐藏此窗口并静音分身，分身继续在后台运行。可从托盘菜单或工具箱重新打开"
+msgstr "このウィンドウを非表示にして分身をミュートします。分身はバックグラウンドで動き続け、トレイメニューまたはツールボックスから再び開けます"
+
+#: app/tools/desktop_twin.py:493
+msgid "退出分身中的小助手并注销分身，其中的游戏和应用都会关闭"
+msgstr "分身内のアシスタントを終了してサインアウトします。中のゲームとアプリはすべて閉じます"
+
+#: app/tools/desktop_twin.py:588
+msgid "开启本地子会话"
+msgstr "ローカルの子セッションを有効にする"
+
+#: app/tools/desktop_twin.py:589
+msgid "桌面分身依赖 Windows 的本地子会话功能。开启后这项系统设置会一直保留，关闭分身也不会自动还原。"
+msgstr ""
+"デスクトップ分身は Windows のローカル子セッション機能を利用します。有効にしたこのシステム設定は、分身を閉じても自動では元に戻りません。"
+
+#: app/tools/desktop_twin.py:590
+msgid "开启"
+msgstr "有効にする"
+
+#: app/tools/desktop_twin.py:755
+msgid "注销桌面分身？"
+msgstr "デスクトップ分身からサインアウトしますか？"
+
+#: app/tools/desktop_twin.py:756
+msgid ""
+"分身中的小助手会先停止任务并退出，随后注销分身，其中打开的游戏和应用都会关闭。只是不想看到这个窗口的话，可以选择“隐藏窗口”，分身会在后台继续运行。"
+msgstr ""
+"分身内のアシスタントがタスクを停止して終了した後、分身からサインアウトし、開いているゲームとアプリはすべて閉じます。このウィンドウを見えなくしたいだけなら「ウィンドウを隠す」を選んでください。分身はバックグラウンドで動き続けます。"
+
+#: app/tools/desktop_twin.py:492
+msgid "注销分身"
+msgstr "サインアウト"
+
+#: app/tools/desktop_twin.py:759
+msgid "隐藏窗口"
+msgstr "ウィンドウを隠す"
+
+#: app/main_window.py:275
+msgid "这是运行在桌面分身中的小助手。分身内固定使用前台模式，不调整画质和分辨率，也不执行任务完成后的关机等操作"
+msgstr ""
+"デスクトップ分身内で実行中のアシスタントです。分身内では常にフォアグラウンドモードを使い、画質や解像度を変更せず、タスク完了後のシャットダウンなども実行しません"
+
+#: app/main_window.py:631
+msgid "桌面分身（运行中）"
+msgstr "デスクトップ分身（実行中）"
+
+#: app/main_window.py:638
+msgid "桌面分身运行中"
+msgstr "デスクトップ分身を実行中"
+
+#: app/main_window.py:639
+msgid "任务、定时和设置已交给分身内的小助手。为避免冲突，主界面暂停操作，注销分身后自动恢复。"
+msgstr ""
+"タスク・定期タスク・設定は分身内のアシスタントに引き継がれました。競合を避けるためメイン画面は一時停止中で、分身からサインアウトすると自動で元に戻ります。"
+
+#: app/main_window.py:525
+msgid "主界面暂停期间无法启动任务，请在分身内的小助手中运行"
+msgstr "メイン画面の一時停止中はタスクを開始できません。分身内のアシスタントから実行してください"
+
+#: app/main_window.py:640
+msgid "打开分身窗口"
+msgstr "分身ウィンドウを開く"
+
+#: app/tools_interface.py:126
+msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
+msgstr "分身を実行中です。ウィンドウを開くと、画面の確認やサインアウトができます"

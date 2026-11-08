@@ -71,8 +71,11 @@ def parse_args():
         action="store_true",
         help="开机自启入口（由启动项自动传入，按配置决定是否打开图形界面及自动执行的任务）"
     )
+    optional.add_argument("--desktop-twin-session", nargs=4, help=argparse.SUPPRESS)
 
     args = parser.parse_args()
+    if args.desktop_twin_session and (sys.platform != "win32" or args.task or args.autostart):
+        parser.error("桌面分身入口只用于打开分身内的小助手界面")
 
     # 旧更新器可能传入只读角色；操作入口在加载配置前清除，查询入口保留。
     if not args.list:
@@ -101,6 +104,26 @@ def parse_args():
 # 解析命令行参数（在请求管理员权限之前）
 args = parse_args()
 
+_desktop_twin_context = None
+os.environ.pop("MARCH7TH_DESKTOP_TWIN", None)
+if args.desktop_twin_session:
+    from utils.desktop_twin import SESSION_ENV, SessionContext
+
+    try:
+        _desktop_twin_context = SessionContext.from_args(args.desktop_twin_session)
+        _desktop_twin_context.check()
+    except Exception as error:
+        print(f"桌面分身校验失败：{error}", flush=True)
+        sys.exit(1)
+    os.environ[SESSION_ENV] = " ".join(_desktop_twin_context.as_args())
+
+if args.autostart and sys.platform == "win32":
+    from utils.desktop_twin import connection_reserved
+
+    # 子会话登录也可能触发 Windows 登录任务，只保留已有主界面。
+    if connection_reserved():
+        sys.exit(0)
+
 # 如果不需要命令行输出，隐藏控制台窗口
 if not args.no_silent:
     hide_console()
@@ -108,6 +131,9 @@ if not args.no_silent:
 if sys.platform == 'win32':
     from utils.admin import is_user_admin, run_as_admin
     if not is_user_admin():
+        if _desktop_twin_context:
+            print("桌面分身中的小助手需要管理员权限", flush=True)
+            sys.exit(1)
         try:
             run_as_admin()
             sys.exit(0)
@@ -135,12 +161,12 @@ if args.autostart:
     except Exception:
         pass
 
-from PySide6.QtCore import Qt, QLocale, qInstallMessageHandler, QtMsgType
+from PySide6.QtCore import Qt, QLocale, QTimer, qInstallMessageHandler, QtMsgType
 from PySide6.QtWidgets import QApplication
 from app.common.application import create_application
-from PySide6.QtNetwork import QLocalServer, QLocalSocket
+from PySide6.QtNetwork import QLocalServer
+from app.common.local_instance import notify_existing_instance
 import json
-import hashlib
 from contextlib import redirect_stdout
 with redirect_stdout(None):
     from qfluentwidgets import FluentTranslator
@@ -169,28 +195,12 @@ _main_window = None
 _pending_messages = []
 
 
-def _get_server_key():
-    """根据程序路径生成唯一的本地 socket 名称，保证“相同路径”视为同一应用实例。"""
-    path = os.path.abspath(sys.executable) if getattr(sys, 'frozen', False) else os.path.abspath(__file__)
-    h = hashlib.sha1(path.encode('utf-8')).hexdigest()
-    return f"March7thAssistant_{h}"
-
-
-def notify_existing_instance(key, payload_bytes, timeout=500):
-    """尝试连接已有实例并发送 payload（bytes），成功返回 True，否则 False。"""
-    try:
-        sock = QLocalSocket()
-        sock.connectToServer(key)
-        if not sock.waitForConnected(timeout):
-            return False
-        sock.write(payload_bytes)
-        sock.flush()
-        sock.waitForBytesWritten(200)
-        sock.disconnectFromServer()
-        sock.close()
-        return True
-    except Exception:
-        return False
+def _handle_local_message(window, message):
+    if message.get("action") == "quit-desktop-twin":
+        if _desktop_twin_context:
+            QTimer.singleShot(0, window.quitApp)
+        return
+    window.handle_external_activate(task=message.get("task"), exit_on_complete=message.get("exit", False))
 
 
 def start_local_server(key):
@@ -223,7 +233,7 @@ def start_local_server(key):
                     # 如果主窗口已就绪，直接调用处理方法，否则缓存起来等待主窗口创建
                     if _main_window is not None:
                         try:
-                            _main_window.handle_external_activate(task=msg.get('task'), exit_on_complete=msg.get('exit', False))
+                            _handle_local_message(_main_window, msg)
                         except Exception:
                             pass
                     else:
@@ -236,6 +246,8 @@ def start_local_server(key):
 
             conn.readyRead.connect(_read)
             conn.disconnected.connect(conn.deleteLater)
+            if conn.bytesAvailable():
+                _read()
 
         server.newConnection.connect(_on_new_conn)
         return server
@@ -259,7 +271,14 @@ if __name__ == "__main__":
     app = create_application(sys.argv)
 
     # 单实例：尝试通知现有实例（若存在），若成功则退出；否则在本实例启动 server
-    _key = _get_server_key()
+    from utils.desktop_twin import connection_reserved, launcher_server_key
+    from utils.windows_session import process_session_id
+
+    _session_id = process_session_id() if sys.platform == "win32" else None
+    _managed_session = _desktop_twin_context is not None or (
+        _session_id is not None and connection_reserved(_session_id)
+    )
+    _key = launcher_server_key(_session_id if _managed_session else None)
     # 开机自启时把配置的任务一并转发给已有实例，保证任务照常执行
     _startup_task = args.task or _autostart_gui_task
     try:
@@ -270,7 +289,10 @@ if __name__ == "__main__":
     if notify_existing_instance(_key, payload):
         print("已有程序实例在运行，已将激活请求发送给它，退出当前实例。")
         sys.exit(0)
-    else:
+    if not _desktop_twin_context and _managed_session:
+        print("请从桌面分身窗口打开小助手。", flush=True)
+        sys.exit(1)
+    if not _desktop_twin_context:
         _server = start_local_server(_key)
 
     if sys.platform == 'darwin':
@@ -301,19 +323,20 @@ if __name__ == "__main__":
         translator = FluentTranslator(QLocale(QLocale.Language.Chinese, QLocale.Country.China))
 
     # 安装登记（含图形界面进程标识）：供 AI Agent / 脚本查找本机安装，并判断图形界面是否在运行
-    try:
-        from module.config import cfg
-        from utils.install_registry import register_install
-        register_install(cfg.version, gui_pid=os.getpid())
-    except Exception:
-        pass
+    if not _desktop_twin_context:
+        try:
+            from module.config import cfg
+            from utils.install_registry import register_install
+            register_install(cfg.version, gui_pid=os.getpid())
+        except Exception:
+            pass
 
-    # AI 助手里已安装的 Skill 副本跟随小助手更新（仅打包版）。更新后自动重启时就在这里完成，下次 AI 会话读到的已是新版
-    try:
-        from utils.agent_skill import sync_installed_skills
-        sync_installed_skills()
-    except Exception:
-        pass
+        # AI 助手里已安装的 Skill 副本跟随小助手更新（仅打包版）。
+        try:
+            from utils.agent_skill import sync_installed_skills
+            sync_installed_skills()
+        except Exception:
+            pass
 
     # 即使用户已关闭画质选项，也恢复上次崩溃留下的持久配置。
     from module.logger import log
@@ -335,9 +358,30 @@ if __name__ == "__main__":
     if _pending_messages:
         for msg in _pending_messages:
             try:
-                w.handle_external_activate(task=msg.get('task'), exit_on_complete=msg.get('exit', False))
+                _handle_local_message(w, msg)
             except Exception:
                 pass
         _pending_messages.clear()
+
+    if _desktop_twin_context:
+        # 宿主通过此端点判断分身界面已经初始化完成。
+        _server = start_local_server(_key)
+        if _server is None:
+            w.quitApp()
+            sys.exit(1)
+        _session_timer = QTimer(w, interval=1000)
+
+        def check_desktop_twin_host():
+            try:
+                info = _desktop_twin_context.check(require_active=False)
+            except Exception:
+                _session_timer.stop()
+                w.quitApp()
+            else:
+                if not info.active and w.logInterface.isTaskRunning():
+                    w.logInterface.stopTask(user_initiated=False)
+
+        _session_timer.timeout.connect(check_desktop_twin_host)
+        _session_timer.start()
 
     sys.exit(app.exec())

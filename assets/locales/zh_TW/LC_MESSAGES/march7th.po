@@ -6599,3 +6599,201 @@ msgstr ""
 "任務結束會還原原有設定，但執行中的遊戲不會立即還原畫面，重新啟動遊戲後才會套用原畫質。助手不會為此自動重新啟動遊戲。\n"
 "\n"
 "異常結束的備份會在下次啟動助手時嘗試還原；如果偵測到其他來源修改了設定，將保留備份並提示，避免覆蓋你的新設定。"
+
+#: app/tools/desktop_twin.py:73
+msgid "桌面分身（实验）"
+msgstr "桌面分身（實驗）"
+
+#: app/tools/desktop_twin.py:76
+msgid "取消连接"
+msgstr "取消連線"
+
+#: app/tools/desktop_twin.py:97
+msgid "正在注销分身…"
+msgstr "正在登出分身…"
+
+#: app/tools/desktop_twin.py:101
+msgid "正在连接分身…"
+msgstr "正在連線至分身…"
+
+#: app/tools/desktop_twin.py:105
+msgid "分身连接已断开"
+msgstr "分身連線已中斷"
+
+#: app/tools/desktop_twin.py:103
+msgid "已连接"
+msgstr "已連線"
+
+#: app/tools/desktop_twin.py:107
+msgid "未连接"
+msgstr "未連線"
+
+#: app/tools/desktop_twin.py:136
+msgid "请以管理员身份运行小助手"
+msgstr "請以系統管理員身分執行小助手"
+
+#: app/main_window.py:242
+msgid "桌面分身"
+msgstr "桌面分身"
+
+#: app/tools/desktop_twin.py:181
+msgid "分身连接失败（RDP {code}）"
+msgstr "分身連線失敗（RDP {code}）"
+
+#: app/tools/desktop_twin.py:202
+msgid "连接分身超时"
+msgstr "分身連線逾時"
+
+#: app/tools/desktop_twin.py:256
+msgid "等待分身注销超时"
+msgstr "等待分身登出逾時"
+
+#: app/tools/desktop_twin.py:132
+msgid "会话身份已变化，请在 Windows 中检查分身"
+msgstr "工作階段身分已變更，請在 Windows 中檢查分身"
+
+#: app/tools_interface.py:77
+msgid "打开"
+msgstr "開啟"
+
+#: module/update/update_window.py:426
+msgid "请先关闭桌面分身再安装更新"
+msgstr "請先關閉桌面分身再安裝更新"
+
+#: app/tools/desktop_twin.py:78
+msgid "重新连接"
+msgstr "重新連線"
+
+#: app/tools/desktop_twin.py:87
+msgid "隐藏"
+msgstr "隱藏"
+
+#: app/main_window.py:527
+msgid "请先结束主桌面的任务再连接分身"
+msgstr "請先結束主桌面的任務再連線至分身"
+
+#: app/tools/desktop_twin.py:99
+msgid "正在启动小助手…"
+msgstr "正在啟動小助手…"
+
+#: app/tools/desktop_twin.py:268
+msgid "等待分身中的小助手启动超时"
+msgstr "等待分身中的小助手啟動逾時"
+
+#: app/tools_interface.py:81
+msgid "在独立的 Windows 桌面中运行小助手和游戏"
+msgstr "在獨立的 Windows 桌面中執行小助手與遊戲"
+
+#: app/tools/desktop_twin.py:458
+msgid "实验性"
+msgstr "實驗性"
+
+#: app/tools/desktop_twin.py:459
+msgid "在独立的 Windows 桌面中运行游戏和小助手，执行任务时不占用你的鼠标和键盘。"
+msgstr "在獨立的 Windows 桌面中執行遊戲與小助手，執行任務時不會佔用你的滑鼠和鍵盤。"
+
+#: app/tools/desktop_twin.py:461
+msgid "分身以当前 Windows 账户登录，首次使用需要允许系统开启本地子会话"
+msgstr "分身以目前的 Windows 帳戶登入，首次使用需要允許系統開啟本機子工作階段"
+
+#: app/tools/desktop_twin.py:462
+msgid "游戏同一时间只能在一个桌面运行，连接前请先关闭主桌面中的游戏"
+msgstr "遊戲同一時間只能在一個桌面執行，連線前請先關閉主桌面中的遊戲"
+
+#: app/tools/desktop_twin.py:463
+msgid "运行期间，任务、定时和设置交给分身内的小助手，主界面暂停操作"
+msgstr "執行期間，任務、排程和設定交給分身內的小助手，主介面暫停操作"
+
+#: app/tools/desktop_twin.py:464
+msgid "注销分身会关闭其中的游戏和所有应用"
+msgstr "登出分身會關閉其中的遊戲和所有應用程式"
+
+#: app/tools/desktop_twin.py:468
+msgid "使用文档"
+msgstr "使用文件"
+
+#: app/tools/desktop_twin.py:470
+msgid "在浏览器中打开桌面分身的使用文档"
+msgstr "在瀏覽器中開啟桌面分身的使用文件"
+
+#: app/tools/desktop_twin.py:478
+msgid "启动分身"
+msgstr "啟動分身"
+
+#: app/tools/desktop_twin.py:483
+msgid "创建或连接本机的分身桌面"
+msgstr "建立或連線至本機的分身桌面"
+
+#: app/tools/desktop_twin.py:484
+msgid "打开小助手"
+msgstr "開啟小助手"
+
+#: app/tools/desktop_twin.py:485
+msgid "在分身中打开小助手，已打开时切换到它"
+msgstr "在分身中開啟小助手，已開啟時切換到它"
+
+#: app/tools/desktop_twin.py:489
+msgid "隐藏此窗口并静音分身，分身继续在后台运行。可从托盘菜单或工具箱重新打开"
+msgstr "隱藏此視窗並將分身靜音，分身會繼續在背景執行。可從系統匣選單或工具箱重新開啟"
+
+#: app/tools/desktop_twin.py:493
+msgid "退出分身中的小助手并注销分身，其中的游戏和应用都会关闭"
+msgstr "結束分身中的小助手並登出分身，其中的遊戲和應用程式都會關閉"
+
+#: app/tools/desktop_twin.py:588
+msgid "开启本地子会话"
+msgstr "開啟本機子工作階段"
+
+#: app/tools/desktop_twin.py:589
+msgid "桌面分身依赖 Windows 的本地子会话功能。开启后这项系统设置会一直保留，关闭分身也不会自动还原。"
+msgstr "桌面分身依賴 Windows 的本機子工作階段功能。開啟後這項系統設定會一直保留，關閉分身也不會自動還原。"
+
+#: app/tools/desktop_twin.py:590
+msgid "开启"
+msgstr "開啟"
+
+#: app/tools/desktop_twin.py:755
+msgid "注销桌面分身？"
+msgstr "登出桌面分身？"
+
+#: app/tools/desktop_twin.py:756
+msgid ""
+"分身中的小助手会先停止任务并退出，随后注销分身，其中打开的游戏和应用都会关闭。只是不想看到这个窗口的话，可以选择“隐藏窗口”，分身会在后台继续运行。"
+msgstr ""
+"分身中的小助手會先停止任務並結束，隨後登出分身，其中開啟的遊戲和應用程式都會關閉。只是不想看到這個視窗的話，可以選擇「隱藏視窗」，分身會在背景繼續執行。"
+
+#: app/tools/desktop_twin.py:492
+msgid "注销分身"
+msgstr "登出分身"
+
+#: app/tools/desktop_twin.py:759
+msgid "隐藏窗口"
+msgstr "隱藏視窗"
+
+#: app/main_window.py:275
+msgid "这是运行在桌面分身中的小助手。分身内固定使用前台模式，不调整画质和分辨率，也不执行任务完成后的关机等操作"
+msgstr "這是執行在桌面分身中的小助手。分身內固定使用前景模式，不調整畫質和解析度，也不執行任務完成後的關機等操作"
+
+#: app/main_window.py:631
+msgid "桌面分身（运行中）"
+msgstr "桌面分身（執行中）"
+
+#: app/main_window.py:638
+msgid "桌面分身运行中"
+msgstr "桌面分身執行中"
+
+#: app/main_window.py:639
+msgid "任务、定时和设置已交给分身内的小助手。为避免冲突，主界面暂停操作，注销分身后自动恢复。"
+msgstr "任務、排程和設定已交給分身內的小助手。為避免衝突，主介面暫停操作，登出分身後自動恢復。"
+
+#: app/main_window.py:525
+msgid "主界面暂停期间无法启动任务，请在分身内的小助手中运行"
+msgstr "主介面暫停期間無法啟動任務，請在分身內的小助手中執行"
+
+#: app/main_window.py:640
+msgid "打开分身窗口"
+msgstr "開啟分身視窗"
+
+#: app/tools_interface.py:126
+msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
+msgstr "分身正在執行，開啟視窗可查看分身畫面或登出分身"

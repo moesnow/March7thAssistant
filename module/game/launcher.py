@@ -1,11 +1,9 @@
 import os
-import psutil
-import getpass
 import subprocess
 import win32gui
 from typing import Optional
 from module.game.base import GameControllerBase
-from module.config.config import Config
+from module.game.local import LocalGameController
 from utils.logger.logger import Logger
 
 
@@ -50,46 +48,7 @@ class LauncherController(GameControllerBase):
                 self.log_error(f"启动启动器时发生错误：{e}")
             return False
 
-    @staticmethod
-    def terminate_named_process(target_process_name, termination_timeout=10):
-        """
-        根据进程名终止属于当前用户的进程。
-
-        参数:
-        - target_process_name (str): 要终止的进程名。
-        - termination_timeout (int, optional): 终止进程前等待的超时时间（秒）。
-
-        返回值:
-        - bool: 如果成功终止进程则返回True，否则返回False。
-        """
-        current_user = getpass.getuser()
-        success = False
-
-        for proc in psutil.process_iter(attrs=["pid", "name", "username"]):
-            try:
-                name = proc.info["name"]
-                user = (proc.info["username"] or "").split("\\")[-1]  # 兼容 DOMAIN\\User
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-
-            # 精准匹配进程名并属于当前用户
-            if target_process_name.lower() in name.lower() and user == current_user:
-                try:
-                    p = psutil.Process(proc.info["pid"])
-                    p.terminate()
-                    try:
-                        p.wait(timeout=termination_timeout)
-                    except psutil.TimeoutExpired:
-                        # 超时直接kill
-                        p.kill()
-                        p.wait(timeout=3)
-
-                    success = True
-
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.Error):
-                    continue
-
-        return success
+    terminate_named_process = staticmethod(LocalGameController.terminate_named_process)
 
     def stop_game(self) -> bool:
         """终止启动器"""
