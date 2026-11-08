@@ -465,25 +465,39 @@ def test_config_reload_failure_disposes_unused_settings(window, monkeypatch, fai
 
 
 @pytest.mark.parametrize('checked', [False, True])
-def test_switch_button_visible_text_refreshes_without_toggling(window, monkeypatch, checked):
+def test_switch_button_visible_text_refreshes_without_toggling(log_page, qtbot, monkeypatch, checked):
     from app import log_interface
     from app.card import autoplot_setting_card
+    from module.config import cfg
+    from qfluentwidgets import FluentIcon
+
+    # 这里只检验两种真实开关的重翻译，不必为此重复构造整个主窗口。
+    # 页面级语言切换、导航、布局和后台状态仍由其余 window 用例覆盖。
+    monkeypatch.setattr(cfg, 'config', deepcopy(cfg.config))
+    monkeypatch.setattr(cfg, 'set_value', Mock())
+    monkeypatch.setattr(cfg, 'set_values', Mock())
+    automatic = autoplot_setting_card.AutoPlotSettingCard(FluentIcon.CHAT, '自动对话')
+    qtbot.addWidget(automatic)
+    automatic.show()
+    log_page.show()
+    qtbot.wait(1)
     monkeypatch.setattr(log_interface, 'tr', lambda text: 'new:' + text)
     monkeypatch.setattr(autoplot_setting_card, 'tr', lambda text: 'new:' + text)
-    automatic = window.toolsInterface.automaticPlotCard
-    switches = [automatic.switchButton, window.logInterface.logOverlaySwitch]
+    switches = [automatic.switchButton, log_page.logOverlaySwitch]
     toggled = Mock()
     for switch in switches:
         switch.blockSignals(True)
         switch.setChecked(checked)
         switch.blockSignals(False)
         switch.checkedChanged.connect(toggled)
-    window.logInterface.retranslateUi()
+    log_page.retranslateUi()
     automatic.retranslateUi()
     for switch in switches:
         assert switch.isChecked() == checked
         assert switch.label.text() == 'new:' + ('开' if checked else '关')
     toggled.assert_not_called()
+    cfg.set_value.assert_not_called()
+    cfg.set_values.assert_not_called()
 
 
 @pytest.mark.parametrize('selected_path', [None, (0,), (1,), (2, 0)])

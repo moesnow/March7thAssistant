@@ -1,15 +1,24 @@
 """Exercise the real Qt task lifecycle without launching the game or system actions."""
 from copy import deepcopy
+from functools import partial
 import subprocess
 import sys
 from unittest.mock import Mock
 
 import pytest
 from PySide6.QtCore import QProcess
+from PySide6.QtWidgets import QWidget
+
+
+def _auxiliary_page(object_name, parent=None):
+    """退出规则不访问这些页面的内容，仍保留真实 QWidget 和导航结构。"""
+    page = QWidget(parent)
+    page.setObjectName(object_name)
+    return page
 
 
 @pytest.fixture
-def exit_window(qtbot, monkeypatch, tmp_path):
+def exit_window(qtbot, monkeypatch, tmp_path, request):
     from app import main_window as module
     from app import log_interface
     from module import localization
@@ -34,8 +43,24 @@ def exit_window(qtbot, monkeypatch, tmp_path):
     monkeypatch.setattr(module.LogInterface, "_initOverlayMonitor", lambda _: None)
     monkeypatch.setattr(log_interface.notif, "notify", Mock())
     localization.load_language("zh_CN")
+    if getattr(request, "param", "focused") != "full":
+        # 每个用例仍新建真实 MainWindow、LogInterface、QProcess 和 QTimer，
+        # 走原有初始化与信号连接；只省去与退出规则无关的六个完整页面。
+        # 设置开关和成功退出另用 full 参数覆盖完整窗口，避免状态共享。
+        for name, object_name in (
+            ("HomeInterface", "homeInterface"),
+            ("HelpInterface", "helpInterface"),
+            ("WarpInterface", "warpInterface"),
+            ("ToolsInterface", "toolsInterface"),
+            ("WorkflowInterface", "workflowInterface"),
+            ("SettingInterface", "settingInterface"),
+        ):
+            monkeypatch.setattr(module, name, partial(_auxiliary_page, object_name))
     page = module.MainWindow(start_minimized_to_tray=True)
     qtbot.addWidget(page)
+    if getattr(request, "param", "focused") == "full":
+        page.show()
+        qtbot.wait(1)
     page.quitApp = Mock()
     page.logInterface._perform_post_action = Mock()
     page.completed_sequences = []
@@ -90,6 +115,7 @@ def test_old_config_defaults_off_and_new_setting_persists_independently(tmp_path
     assert loaded.after_finish == "Exit"
 
 
+@pytest.mark.parametrize("exit_window", ["full"], indirect=True)
 def test_setting_switch_does_not_replace_exit_game(exit_window):
     from module.config import cfg
 
@@ -104,6 +130,7 @@ def test_setting_switch_does_not_replace_exit_game(exit_window):
     assert "启用按时任务" in card.contentLabel.text()
 
 
+@pytest.mark.parametrize("exit_window", ["focused", "full"], indirect=True)
 def test_single_success_uses_real_timer_and_existing_quit_path(exit_window, harmless_task, qtbot):
     from module.config import cfg
 
