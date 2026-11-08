@@ -74,6 +74,10 @@ def parse_args():
 
     args = parser.parse_args()
 
+    # 旧更新器可能传入只读角色；操作入口在加载配置前清除，查询入口保留。
+    if not args.list:
+        os.environ.pop("MARCH7TH_CONFIG_READONLY", None)
+
     # 处理 --list 参数
     if args.list:
         from module.localization import load_language
