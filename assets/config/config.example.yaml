@@ -381,6 +381,8 @@ apocalyptic_team3: # 星启模式第三队默认使用丹恒，可配置1至4名
   - - DanHeng
     - -1
 apocalyptic_timestamp: 0 # 上次运行末日幻影的时间戳，用于记录和控制运行频率。
+# 游戏优化总开关（默认开启以兼容旧版；关闭不清除下面三个独立选项）
+game_optimization_enable: true
 # 自动战斗和二倍速检测配置
 auto_battle_detect_enable: true # 是否启用自动战斗和二倍速检测。true 开启，false 关闭。
 
@@ -390,6 +392,10 @@ ocr_slow_threshold: 5.0 # DML 模式下单次 OCR 耗时超过此值（秒）计
 
 # 自动修改分辨率配置
 auto_set_resolution_enable: true # 是否启用自动修改分辨率功能。true 开启，false 关闭。
+
+# 任务期间自动降低画质（默认关闭，仅支持 Windows 本地游戏的已知自定义画质格式）
+# 不修改帧率、渲染比例与抗锯齿；任务结束恢复持久配置，运行中的画面需重启游戏后恢复。
+auto_lower_graphics_enable: false
 
 # 自动配置游戏路径
 auto_set_game_path_enable: true # 是否启用自动配置游戏路径。true 开启，false 关闭。

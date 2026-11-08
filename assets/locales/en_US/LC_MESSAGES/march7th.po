@@ -6783,3 +6783,45 @@ msgid ""
 msgstr ""
 "Close 5 seconds after all tasks succeed; game exit is independent.\n"
 "Stay open with enabled time-based schedules or pending post-task actions."
+
+#: app/setting_interface.py:2458
+msgid "启用游戏优化"
+msgstr "Enable game optimizations"
+
+#: app/setting_interface.py:2459
+msgid "展开配置自动战斗、分辨率与临时画质；关闭总开关不会清除各项设置"
+msgstr ""
+"Expand to configure auto-battle, resolution and temporary graphics; turning "
+"this off keeps individual settings"
+
+#: app/setting_interface.py:2489
+msgid "任务期间自动降低画质"
+msgstr "Temporarily lower graphics during tasks"
+
+#: app/setting_interface.py:2490
+msgid "默认关闭，仅调整助手启动的 Windows 本地游戏；恢复的画质在重启游戏后生效"
+msgstr ""
+"Off by default. Only affects local Windows games launched by the assistant; "
+"restored graphics take effect after restarting the game"
+
+#: app/setting_interface.py:3081
+msgid "启用临时降低画质前请确认"
+msgstr "Before enabling temporary graphics reduction"
+
+#: app/setting_interface.py:3082
+msgid ""
+"此功能仅在执行任务时，由助手启动 Windows 本地游戏才生效；云游戏和已经运行的游戏不会调整。\n"
+"\n"
+"目前仅支持已知版本的自定义画质，请先在游戏内将图像质量设为自定义并保存。不会降低帧率、渲染比例或修改抗锯齿。\n"
+"\n"
+"任务结束会恢复原有配置，但运行中的游戏不会立即恢复画面，重启游戏后才会应用原画质。助手不会为此自动重启游戏。\n"
+"\n"
+"异常退出的备份会在下次启动助手时尝试恢复；如果检测到其它来源修改了设置，将保留备份并提示，避免覆盖你的新配置。"
+msgstr ""
+"This only applies when the assistant launches a local Windows game for a task. Cloud games and games that are already running are not adjusted.\n"
+"\n"
+"Currently, only known versions of custom graphics settings are supported. First select Custom graphics quality in the game and save it. Frame rate, render scale and anti-aliasing are not reduced or changed.\n"
+"\n"
+"The original settings are restored when the task ends, but the running game will not immediately change its appearance. Restart the game to apply the original graphics. The assistant will not restart it automatically.\n"
+"\n"
+"Recovery from an abnormal exit is attempted the next time the assistant starts. If another source has changed the settings, the backup is kept and a warning is shown to avoid overwriting your new settings."

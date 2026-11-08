@@ -1,3 +1,4 @@
+from utils.game_options import game_option_enabled
 from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel
@@ -922,7 +923,7 @@ class MainWindow(MSFluentWindow):
         else:
             from tasks.game.starrailcontroller import StarRailController
             starrail = StarRailController(cfg=cfg, logger=log)
-            if cfg.auto_battle_detect_enable:
+            if game_option_enabled(cfg, "auto_battle_detect_enable"):
                 starrail.change_auto_battle(True)
 
         self.game_launch_thread = GameLaunchThread(game, cfg)

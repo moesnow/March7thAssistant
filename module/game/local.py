@@ -7,6 +7,7 @@ from typing import Optional
 from module.config.config import Config
 from module.game.base import GameControllerBase
 from utils.logger.logger import Logger
+from utils.temporary_graphics import recover_temporary_graphics, restore_temporary_graphics
 
 
 class LocalGameController(GameControllerBase):
@@ -29,6 +30,9 @@ class LocalGameController(GameControllerBase):
 
     def start_game_process(self) -> bool:
         """启动游戏"""
+        # 包括图形界面的“启动游戏”：先恢复已退出任务的备份，不给手动启动降画质。
+        if self.logger is not None:
+            recover_temporary_graphics(self.logger)
         if self.is_game_running():
             self.log_info("游戏已运行，复用现有游戏窗口")
             return True
@@ -123,6 +127,8 @@ class LocalGameController(GameControllerBase):
         try:
             # os.system(f'taskkill /f /im {self.process_name}')
             self.terminate_named_process(self.process_name)
+            # 终止后、关机/睡眠等系统操作之前恢复，避免退出时写回临时设置。
+            restore_temporary_graphics(final=True)
             self.log_info(f"游戏终止：{self.process_name}")
             return True
         except Exception as e:

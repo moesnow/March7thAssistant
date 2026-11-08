@@ -315,6 +315,11 @@ if __name__ == "__main__":
     except Exception:
         pass
 
+    # 即使用户已关闭画质选项，也恢复上次崩溃留下的持久配置。
+    from module.logger import log
+    from utils.temporary_graphics import recover_temporary_graphics
+    recover_temporary_graphics(log)
+
     app.installTranslator(translator)
 
     # 传递任务参数给主窗口
