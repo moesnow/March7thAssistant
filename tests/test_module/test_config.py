@@ -633,3 +633,32 @@ class TestPowerLoopMigration:
         assert config.loop_mode == "scheduled"
         assert config.scheduled_time == "8:00"
         assert path.read_text(encoding="utf-8") == original
+
+
+class TestMessageHotkeyConfig:
+    @pytest.mark.parametrize("saved_key, expected", [(None, "p"), ("k", "k"), ("f6", "f6")])
+    def test_load_preserves_custom_key_and_fills_old_config(
+        self, tmp_path, monkeypatch, saved_key, expected
+    ):
+        from pathlib import Path
+        from module.config.config import Config
+
+        root = Path(__file__).resolve().parents[2]
+        path = tmp_path / "config.yaml"
+        text = "hotkey_map: n\nreward_message_enable: true\n"
+        if saved_key is not None:
+            text += f"hotkey_message: {saved_key}\n"
+        path.write_text(text, encoding="utf-8")
+        monkeypatch.delenv("MARCH7TH_CONFIG_READONLY", raising=False)
+        monkeypatch.setattr(Config, "_readonly", False)
+        config = Config.__new__(Config)
+        config.__init__(str(root / "assets/config/version.txt"),
+                        str(root / "assets/config/config.example.yaml"), str(path))
+
+        assert config.get_value("hotkey_message") == expected
+        assert config.get_value("hotkey_map") == "n"
+        assert config.get_value("reward_message_enable") is True
+        saved = config.yaml.load(path.read_text(encoding="utf-8"))
+        assert saved["hotkey_message"] == expected
+        config._load_config()
+        assert config.get_value("hotkey_message") == expected
