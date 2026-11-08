@@ -55,7 +55,7 @@ def schedule_runtime(qtbot, monkeypatch):
     monkeypatch.setattr(log_interface.cfg, 'set_value', Mock())
     monkeypatch.setattr(log_interface.notif, 'notify', Mock())
 
-    def start_task(payload):
+    def start_task(payload, **kwargs):
         interface.process = SimpleNamespace(state=lambda: QProcess.Running)
 
     interface.startTask = Mock(side_effect=start_task)
@@ -176,11 +176,11 @@ def test_real_failed_process_start_continues_chain(schedule_runtime, tmp_path, q
     root = scheduled_task(program=str(failed_program), timeout=30)
     start_child = schedule_runtime.startTask.side_effect
 
-    def launch(payload):
+    def launch(payload, **kwargs):
         if payload['id'] == 'child':
             start_child(payload)
         else:
-            LogInterface.startTask(schedule_runtime, payload)
+            LogInterface.startTask(schedule_runtime, payload, **kwargs)
 
     schedule_runtime.startTask.side_effect = launch
     schedule_runtime.runScheduledTask(root, tasks=[root, child])

@@ -31,6 +31,7 @@ pause_after_success: true # 是否在成功后暂停程序。true 若非循环�
 exit_after_failure: false # 是否在失败后直接退出。true 直接退出，false 暂停程序。
 
 # 任务完成后操作
+exit_app_after_success: false # GUI 中整条任务链全部成功后关闭助手；可与退出游戏组合，有按时任务或待执行完成后操作时保持运行。
 after_finish: None # 任务完成后的操作，可选值："None"（无操作）, "Exit"（退出程序）, "Loop"（循环执行）, "Shutdown"（关机）, "Sleep"（睡眠）, "Hibernate"（休眠）, "Restart"（重启）, "Logoff"（注销）, "TurnOffDisplay"（关闭显示器）, "RunScript"（运行脚本）。
 
 # 任务完成后是否播放提示音

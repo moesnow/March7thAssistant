@@ -94,6 +94,8 @@ class ClickableLabel(QLabel):
 
 
 class MainWindow(MSFluentWindow):
+    TASK_EXIT_DELAY_MS = 5000
+
     def __init__(self, task=None, exit_on_complete=False, start_minimized_to_tray=False):
         super().__init__()
         self._pending_ui_language = None
@@ -107,7 +109,12 @@ class MainWindow(MSFluentWindow):
         self._config_reload_timer.setSingleShot(True)
         self._config_reload_timer.timeout.connect(self._on_config_file_changed)
         self.startup_task = task  # 保存启动时要执行的任务
-        self.exit_on_complete = exit_on_complete  # 任务完成后是否退出
+        self.exit_on_complete = exit_on_complete  # 命令行指定的单次退出请求
+        self._task_exit_pending = False
+        self._task_exit_requested_by_cli = False
+        self._task_exit_timer = QTimer(self)
+        self._task_exit_timer.setSingleShot(True)
+        self._task_exit_timer.timeout.connect(self._quitAfterTask)
         self.start_minimized_to_tray = start_minimized_to_tray
         self._defer_startup_checks = False  # 静默启动时推迟的启动检查（检查更新/公告）
         self.detected_update_version = None
@@ -297,7 +304,8 @@ class MainWindow(MSFluentWindow):
         # 连接 UI 语言改变信号
         signalBus.uiLanguageChanged.connect(self._on_ui_language_changed)
         # 连接任务完成信号
-        self.logInterface.taskFinished.connect(self._onTaskFinished)
+        self.logInterface.taskSequenceFinished.connect(self._onTaskFinished)
+        self.logInterface.taskStarted.connect(self._cancelTaskExit)
         # 连接自动对话切换信号
         self.logInterface.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
@@ -641,15 +649,42 @@ class MainWindow(MSFluentWindow):
                 replacement.deleteLater()
             QApplication.restoreOverrideCursor()
 
+    def _cancelTaskExit(self):
+        self._task_exit_timer.stop()
+        self._task_exit_pending = False
+        self._task_exit_requested_by_cli = False
+
     def _onTaskFinished(self, exit_code):
-        """处理任务完成信号"""
-        # 如果是启动任务且设置了完成后退出，则在任务成功完成时退出程序
-        if self.exit_on_complete and self.startup_task and exit_code == 0:
-            # 延迟一小段时间让用户看到完成状态
-            QTimer.singleShot(5000, self.quitApp)
-        else:
-            # 任务失败或未指定退出时，清除自动退出标记
-            self.exit_on_complete = False
+        """仅在整次运行全部成功、没有需要保留的后台工作时关闭助手。"""
+        self._cancelTaskExit()
+        requested_by_cli = bool(self.exit_on_complete and self.startup_task)
+        self.exit_on_complete = False
+        if exit_code != 0:
+            return
+        if not requested_by_cli and not cfg.get_value('exit_app_after_success', False):
+            return
+        reason = self.logInterface.autoCloseBlockReason(preserve_schedule=not requested_by_cli)
+        if reason:
+            self.logInterface.appendLog(f"本次不自动关闭助手：{reason}。\n")
+            return
+        self._task_exit_requested_by_cli = requested_by_cli
+        self._task_exit_pending = True
+        self.logInterface.appendLog("全部任务已成功完成，5 秒后关闭助手；启动新任务可取消。\n")
+        self._task_exit_timer.start(self.TASK_EXIT_DELAY_MS)
+
+    def _quitAfterTask(self):
+        # stop() 不能撤回已经排队的回调，因此还需检查请求是否仍有效。
+        if not self._task_exit_pending:
+            return
+        requested_by_cli = self._task_exit_requested_by_cli
+        self._cancelTaskExit()
+        if not requested_by_cli and not cfg.get_value('exit_app_after_success', False):
+            return
+        reason = self.logInterface.autoCloseBlockReason(preserve_schedule=not requested_by_cli)
+        if reason:
+            self.logInterface.appendLog(f"已取消自动关闭助手：{reason}。\n")
+            return
+        self.quitApp()
 
     def quitApp(self):
         """退出应用程序"""
@@ -757,6 +792,7 @@ class MainWindow(MSFluentWindow):
         """执行退出前的清理并退出程序
         e: 可选的 QCloseEvent，用于调用 e.accept()
         """
+        self._cancelTaskExit()
         # 保存窗口尺寸和最大化状态
         log.info(f"[config-save] 主程序退出，保存窗口状态 PID={os.getpid()}（更新期间此处会与更新器并发写配置）")
         self._saveWindowState()

@@ -6549,3 +6549,15 @@ msgstr "總次數"
 #: app/warp_interface.py:252
 msgid "保底内"
 msgstr "保底計數"
+
+#: app/setting_interface.py:1096
+msgid "任务全部成功后关闭助手"
+msgstr "任務全部成功後關閉助手"
+
+#: app/setting_interface.py:1097
+msgid ""
+"任务链全部成功后延迟 5 秒关闭，可与退出游戏组合。\n"
+"启用按时任务或等待完成后操作时保持运行。"
+msgstr ""
+"任務鏈全部成功後延遲 5 秒關閉，可與退出遊戲搭配。\n"
+"啟用按時任務或等待完成後操作時保持執行。"

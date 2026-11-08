@@ -1,6 +1,7 @@
 # coding:utf-8
 from collections import deque
 from copy import deepcopy
+from dataclasses import dataclass
 
 from PySide6.QtCore import Qt, QProcess, QProcessEnvironment, Signal, QTimer, QDateTime, QEvent, QMetaObject, Slot
 from PySide6.QtGui import QFont, QTextCursor
@@ -309,6 +310,12 @@ class GameLogOverlay(QWidget):
             self.hide()
 
 
+@dataclass
+class _TaskSequence:
+    succeeded: bool = True
+    finished: bool = False
+
+
 class LogInterface(ScrollArea):
     """日志界面"""
 
@@ -317,7 +324,9 @@ class LogInterface(ScrollArea):
     MAX_LOG_LINES = 5000
 
     # 信号：任务完成
-    taskFinished = Signal(int)  # exit_code
+    taskFinished = Signal(int)  # 单个任务的 exit_code，保留原有通知语义
+    taskSequenceFinished = Signal(int)  # 整条任务链结束，只有全部成功才为 0
+    taskStarted = Signal()
     # 信号：请求停止任务（用于从全局热键线程安全调用）
     stopTaskRequested = Signal()
     # 信号：请求切换任务暂停/继续（用于从全局热键线程安全调用）
@@ -331,6 +340,7 @@ class LogInterface(ScrollArea):
         super().__init__(parent=parent)
         self.process = None
         self.current_task = None
+        self._task_sequence = None
         # 保存语言无关的状态，而不是缓存暂停前的译文。
         self._task_status = 'waiting'
         self._task_display_name = None
@@ -1235,7 +1245,7 @@ class LogInterface(ScrollArea):
         self.stopButton.setEnabled(True)
         timer.start(60000)
 
-    def startTask(self, command_or_task):
+    def startTask(self, command_or_task, *, _sequence=None):
         """启动任务"""
         # 如果有正在运行的任务，先停止
         if self.process and self.process.state() == QProcess.Running:
@@ -1244,6 +1254,9 @@ class LogInterface(ScrollArea):
             # 等待进程结束
             self.process.waitForFinished(3000)
 
+        # 只有链内续跑复用结果；手动启动、定时触发及冲突替换均开始新的一次运行。
+        self._task_sequence = _sequence if _sequence is not None else _TaskSequence()
+        self.taskStarted.emit()
         if self._cancelPendingPostAction():
             self.appendLog("已取消完成后操作\n")
         self._clearTaskTimeout()
@@ -1349,6 +1362,8 @@ class LogInterface(ScrollArea):
             raise RuntimeError(tr('任务正在运行'))
 
         self._pending_task_meta = None
+        self._task_sequence = _TaskSequence()
+        self.taskStarted.emit()
         self._external_task_active = True
         self._external_task_name = str(task_name)
         self._external_task_stop_callback = stop_callback
@@ -1390,7 +1405,10 @@ class LogInterface(ScrollArea):
         self.current_task = None
         self._hideLogOverlay()
         self._updateFinishedStatus(effective_exit_code)
+        sequence = self._task_sequence
+        sequence.succeeded = effective_exit_code == 0
         self.taskFinished.emit(effective_exit_code)
+        self._finishTaskSequence(sequence)
 
     def _startTask(self, task, timeout=0):
         self.current_task = task
@@ -2093,7 +2111,14 @@ class LogInterface(ScrollArea):
                     pass
                 self.appendLog(f"任务异常结束，退出码: {exit_code}\n")
 
+        sequence = getattr(self, '_task_sequence', None)
+        if sequence is None or sequence.finished:
+            sequence = self._task_sequence = _TaskSequence()
         suppress_chain_continuation = bool(getattr(self, '_suppress_chain_continuation_once', False))
+        sequence.succeeded = sequence.succeeded and (
+            exit_status == QProcess.NormalExit and exit_code == 0 and
+            not user_stop and not self._stopped_abnormally and not suppress_chain_continuation
+        )
         self._suppress_chain_continuation_once = False
         next_chain_task = None
         try:
@@ -2123,6 +2148,7 @@ class LogInterface(ScrollArea):
                     if remaining:
                         self.appendLog('链式任务已中断，未继续执行: {}'.format(remaining) + "\n")
         except Exception:
+            sequence.succeeded = False
             next_chain_task = None
             self._active_task_chain = []
             try:
@@ -2238,7 +2264,7 @@ class LogInterface(ScrollArea):
             try:
                 next_meta, next_task_dict = next_chain_task
                 self._pending_task_meta = next_meta
-                self.startTask(next_task_dict)
+                self.startTask(next_task_dict, _sequence=sequence)
                 if self._hasActiveStartedProcess():
                     name = next_meta.get('name') or tr('未命名')
                     self.appendLog('链式启动下一任务: {}'.format(name) + "\n")
@@ -2248,10 +2274,12 @@ class LogInterface(ScrollArea):
                     return
                 self._pending_task_meta = None
                 self._active_task_chain = []
+                sequence.succeeded = False
                 self.appendLog('链式启动下一任务失败: {}'.format(next_meta.get('name') or '未命名') + "\n")
             except Exception as e:
                 self._pending_task_meta = None
                 self._active_task_chain = []
+                sequence.succeeded = False
                 self.appendLog(f"链式启动任务失败: {e}\n")
 
         # 如果有排队的延迟启动任务（由于冲突设置导致在停止当前任务后再启动），在进程结束处理完成后启动它
@@ -2288,6 +2316,29 @@ class LogInterface(ScrollArea):
                     self.appendLog(f"延迟启动任务失败: {e}\n")
         except Exception:
             pass
+
+        self._finishTaskSequence(sequence)
+
+    def _finishTaskSequence(self, sequence):
+        """收尾完成且没有后续任务时才通知主窗口，忽略嵌套启动失败造成的重复回调。"""
+        if sequence is not self._task_sequence or sequence.finished:
+            return
+        if self._hasActiveStartedProcess() or self._active_task_chain or self._pending_start_task_after_stop:
+            return
+        sequence.finished = True
+        self.taskSequenceFinished.emit(0 if sequence.succeeded else 1)
+
+    def autoCloseBlockReason(self, preserve_schedule=True):
+        """自动关闭前再次检查运行状态；不取消任务、定时器或完成后操作。"""
+        if self._hasActiveStartedProcess() or self._active_task_chain or self._pending_start_task_after_stop:
+            return "仍有运行中或排队的任务"
+        if self._pending_post_action_timer or self._pending_post_action:
+            return "仍有等待执行的完成后操作"
+        if preserve_schedule:
+            tasks = cfg.get_value('scheduled_tasks', []) or []
+            if any(task.get('enabled', True) and task_trigger_mode(task) == 'time' for task in tasks):
+                return "仍有已启用的按时任务"
+        return None
 
     def _onProcessError(self, error, process=None):
         """进程错误"""

@@ -6591,3 +6591,15 @@ msgstr "누적 워프 횟수"
 #: app/warp_interface.py:252
 msgid "保底内"
 msgstr "천장 카운트"
+
+#: app/setting_interface.py:1096
+msgid "任务全部成功后关闭助手"
+msgstr "모든 작업 성공 후 도우미 종료"
+
+#: app/setting_interface.py:1097
+msgid ""
+"任务链全部成功后延迟 5 秒关闭，可与退出游戏组合。\n"
+"启用按时任务或等待完成后操作时保持运行。"
+msgstr ""
+"전체 작업 성공 5초 후 종료하며, 게임 종료와 함께 사용할 수 있습니다.\n"
+"시간 예약 작업이 활성화되어 있거나 후속 동작 대기 중이면 종료하지 않습니다."
