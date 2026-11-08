@@ -982,6 +982,19 @@
         ]
     },
     {
+        "name": "虚构叙事-终止挑战",
+        "id": "purefiction_exit_confirm",
+        "image_path": "./assets/images/screen/purefiction/exit_confirm.png",
+        "actions": [
+            {
+                "target_screen": "purefiction",
+                "actions_list": [
+                    "auto.find_element('是否终止挑战，返回虚构叙事？', 'text', include=False) and auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, take_screenshot=False)"
+                ]
+            }
+        ]
+    },
+    {
         "name": "末日幻影",
         "id": "apocalyptic",
         "image_path": "./assets/images/screen/apocalyptic/apocalyptic.png",
@@ -990,6 +1003,19 @@
                 "target_screen": "main",
                 "actions_list": [
                     "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "末日幻影-终止挑战",
+        "id": "apocalyptic_exit_confirm",
+        "image_path": "./assets/images/screen/apocalyptic/exit_confirm.png",
+        "actions": [
+            {
+                "target_screen": "apocalyptic",
+                "actions_list": [
+                    "auto.find_element('是否终止挑战，返回末日幻影？', 'text', include=False) and auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, take_screenshot=False)"
                 ]
             }
         ]
@@ -1160,6 +1186,35 @@
                 "target_screen": "activity",
                 "actions_list": [
                     "auto.press_key('esc')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "二次元JUMP",
+        "id": "interplanar_jump",
+        "image_path": "./assets/images/screen/planarcadia/interplanar_jump.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')",
+                    "time.sleep(1)",
+                    "auto.click_element('离开二次元', 'text', max_retries=10, include=False)"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "浮脂记事",
+        "id": "floating_grease_chronicles",
+        "image_path": "./assets/images/screen/planarcadia/floating_grease_chronicles.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.press_key('esc')",
+                    "auto.find_element('是否离开「浮脂记事」的世界？', 'text', max_retries=6, include=False) and auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, take_screenshot=False)"
                 ]
             }
         ]
