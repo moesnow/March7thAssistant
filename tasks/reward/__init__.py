@@ -39,7 +39,8 @@ class RewardManager:
             "quest": ("./assets/images/share/menu/quest_reward.png", 2000000, self.crop),
             "srpass": ("./assets/images/share/menu/pass_reward.png", 2000000, self.crop),
             "achievement": ("./assets/images/share/menu/achievement_reward.png", 2000000, self.crop),
-            "message": ("./assets/images/share/menu/message_reward.png", 2000000, self.crop),
+            # 半透明的短信图标会随手机壁纸变色，需要留出匹配误差。
+            "message": ("./assets/images/share/menu/message_reward.png", 3000000, self.crop),
         }
 
     def check_and_collect_rewards(self):
