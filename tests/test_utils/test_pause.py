@@ -87,6 +87,21 @@ def test_checkpoint_passes_through_when_running(controller):
     assert time.monotonic() - start < 0.5
 
 
+def test_pause_and_resume_take_effect_before_receipt(controller, control_path, monkeypatch):
+    receipts = []
+    write_state = controller._write_state
+
+    def record_receipt(state):
+        write_state(state)
+        receipts.append((read_state(control_path), controller.is_paused()))
+
+    monkeypatch.setattr(controller, "_write_state", record_receipt)
+    controller.request_pause()
+    controller.request_resume()
+
+    assert receipts == [(STATE_PAUSING, True), (STATE_RUNNING, False)]
+
+
 def test_checkpoint_blocks_during_pause_and_announces_once(controller, log_stub):
     """暂停中卡点阻塞；暂停风险日志多线程也只播报一次。"""
     controller.request_pause()

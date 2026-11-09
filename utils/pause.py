@@ -177,6 +177,7 @@ class PauseController:
         # 置位 = 允许运行；复位 = 暂停中（任务线程在卡点处等待该事件）
         self._resume_event = threading.Event()
         self._resume_event.set()
+        # 暂停和恢复的回执需要与卡点的 paused 回执按顺序写入
         self._announce_lock = threading.Lock()
         self._announced_pause = False
         self._watcher = None
@@ -337,18 +338,19 @@ class PauseController:
             self._write_state(STATE_STOPPING)
             return
         if command == COMMAND_PAUSE:
-            self._announced_pause = False
-            self._write_state(STATE_PAUSING)
-            self._resume_event.clear()
+            with self._announce_lock:
+                self._announced_pause = False
+                self._resume_event.clear()
+                self._write_state(STATE_PAUSING)
             self._release_inputs()
         else:
-            was_paused = not self._resume_event.is_set()
-            if was_paused:
-                # 恢复日志先于动作输出（先播报，再放行）
-                log.warning(RESUME_LOG_MESSAGE)
-            self._write_state(STATE_RUNNING)
-            self._resume_event.set()
-            self._announced_pause = False
+            with self._announce_lock:
+                if not self._resume_event.is_set():
+                    # 恢复日志先于动作输出（先播报，再放行）
+                    log.warning(RESUME_LOG_MESSAGE)
+                self._announced_pause = False
+                self._resume_event.set()
+                self._write_state(STATE_RUNNING)
 
     def _arm_stop_timer(self):
         """任务长时间走不到卡点（例如等待体力恢复的长睡眠）时，宽限期满后交给兜底回调强制结束。"""
