@@ -4,6 +4,7 @@ import time
 import subprocess
 import ctypes
 from typing import Literal, Tuple, Optional
+from PIL.Image import Image
 from utils.logger.logger import Logger
 from utils.dpi import configure_dpi_awareness
 
@@ -11,6 +12,8 @@ from utils.dpi import configure_dpi_awareness
 # Keep a module-level fallback for non-standard entry points that import game control
 # classes directly without going through app.py or main.py.
 configure_dpi_awareness()
+
+type FrameCapture = tuple[Image, tuple[int, int, int, int], float] | Literal[False]
 
 
 class GameControllerBase:
@@ -57,6 +60,10 @@ class GameControllerBase:
     def get_input_handler(self):  # -> InputBase
         """获取用于模拟鼠标和键盘操作的类"""
         ...
+
+    def capture_frame(self, crop=(0, 0, 1, 1), *, prefer_frame=True) -> FrameCapture:
+        """非窗口后端取帧。返回图像、裁剪位置和缩放系数，暂时无帧时返回 False。"""
+        raise NotImplementedError
 
     @abstractmethod
     def copy(self, text: str) -> None:

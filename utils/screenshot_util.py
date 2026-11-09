@@ -16,7 +16,8 @@ def save_error_screenshot(logger):
 
         # 云游戏模式下，若浏览器已关闭则跳过截图
         from module.config import cfg
-        if cfg.cloud_game_enable:
+        from module.config.platform import get_control_backend
+        if get_control_backend(cfg) == 'cloud':
             from module.game import cloud_game
             if not cloud_game.driver:
                 logger.debug("云游戏浏览器未运行，跳过错误截图")

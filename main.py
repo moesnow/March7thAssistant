@@ -310,6 +310,7 @@ if sys.platform == 'win32' and not is_user_admin():
     sys.exit(EXIT_ELEVATION_FAILED)
 
 from module.config import cfg
+from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend
 from module.logger import log
 import logging
 logging.getLogger("March7thAssistant").addHandler(run_session.error_log_handler())
@@ -326,7 +327,7 @@ from module.workflow import WorkflowRunner, load_workflow_execution_payload, des
 from utils.screenshot_util import save_error_screenshot
 
 import tasks.game as game
-from module.game import cloud_game
+from module.game import AdbBackendUnavailableError, cloud_game
 from module.game.cloud import CloudGameZeroDurationError
 import tasks.reward as reward
 import tasks.challenge as challenge
@@ -442,7 +443,7 @@ def run_sub_task(action):
     if action not in ("currencywarstemp", "divergenttemp"):
         game.start(headless=False if action in visible_cloud_tasks else None)
     else:
-        if cfg.cloud_game_enable:
+        if get_control_backend(cfg) == "cloud":
             if not cloud_game.start_game_process():
                 raise ConnectionError("启动或连接浏览器失败")
         game.switch_to_game()
@@ -583,6 +584,10 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
 
 
 def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
+    if get_control_backend(cfg) == "adb" and (
+        workflow_name or (action or "main") in EXCLUSIVE_ACTIONS - {"app_update"}
+    ):
+        game.get_game_controller()
     first_run()
     # 启动暂停控制器（仅在 GUI 注入了 MARCH7TH_CONTROL_FILE 时生效，其余场景惰性关闭）
     pause_ctl.start()
@@ -636,7 +641,7 @@ def release_input(close=False):
     try:
         if close:
             auto.close_input()
-        else:
+        elif auto.input_handler is not None:
             auto.input_handler.release_all()
     except Exception as e:
         log.warning(f"输入清理失败: {e}")
@@ -694,6 +699,11 @@ if __name__ == "__main__":
             run_session.note(status=STATUS_STOPPED)
             log.warning("任务已按停止指令结束")
             sys.exit(EXIT_STOPPED)
+        except (AdbBackendUnavailableError, ProfileAssetNotFoundError, TouchProfileInputError) as e:
+            release_input()
+            run_session.note(error=str(e))
+            log.error(str(e))
+            sys.exit(EXIT_FAILED)
         except Exception as e:
             release_input()
             telemetry.track_error(type(e).__name__, str(e))

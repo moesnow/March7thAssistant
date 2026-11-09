@@ -1,18 +1,12 @@
-from io import BytesIO
 from PIL import Image
 from module.config import cfg
+from module.config.platform import get_control_backend, get_ui_profile
 
 
 class Screenshot:
     @staticmethod
-    def _decode_cloud_game_screenshot(screenshot_bytes):
-        screenshot = Image.open(BytesIO(screenshot_bytes))
-        screenshot.load()
-        return screenshot.copy()
-
-    @staticmethod
     def is_application_fullscreen(window):
-        if cfg.cloud_game_enable:
+        if get_control_backend(cfg) != "local":
             return True
         import pyautogui
         screen_width, screen_height = pyautogui.size()
@@ -20,16 +14,20 @@ class Screenshot:
 
     @staticmethod
     def get_window_real_resolution(window):
-        if cfg.cloud_game_enable:
+        backend = get_control_backend(cfg)
+        if backend == "cloud":
             return 1920, 1080
+        if backend != "local":
+            from module.game import get_game_controller
+            return get_game_controller(backend).get_resolution()
         import win32gui  # 延迟导入，避免非 Windows 平台报错
         left, top, right, bottom = win32gui.GetClientRect(window._hWnd)
         return right - left, bottom - top
 
     @staticmethod
     def get_window_region(window):
-        if cfg.cloud_game_enable:
-            return (0, 0, 1920, 1080)
+        if get_control_backend(cfg) != "local":
+            return (0, 0, *Screenshot.get_window_real_resolution(window))
         if Screenshot.is_application_fullscreen(window):
             return (window.left, window.top, window.width, window.height)
         else:
@@ -40,8 +38,8 @@ class Screenshot:
 
     @staticmethod
     def get_window(title):
-        if cfg.cloud_game_enable:
-            return False  # TODO
+        if get_control_backend(cfg) != "local":
+            return False
         import pyautogui
         windows = pyautogui.getWindowsWithTitle(title)
         if windows:
@@ -127,52 +125,10 @@ class Screenshot:
 
     @staticmethod
     def take_screenshot(title, crop=(0, 0, 1, 1), use_background_screenshot=None, prefer_frame_screenshot=True, require_background=None):
-        if cfg.cloud_game_enable:
-            from module.game import cloud_game
-            screenshot_result = cloud_game.take_screenshot(crop=crop, prefer_frame=prefer_frame_screenshot)
-            if not screenshot_result:
-                return False
-
-            source_width = None
-            source_height = None
-            screenshot_bytes = screenshot_result
-            if isinstance(screenshot_result, tuple):
-                screenshot_bytes, (source_width, source_height) = screenshot_result
-
-            try:
-                screenshot = Screenshot._decode_cloud_game_screenshot(screenshot_bytes)
-            except Exception as e:
-                cloud_game.log_debug(f"游戏画面截图解码失败，回退浏览器截图: {e}")
-                screenshot_result = cloud_game.take_screenshot(crop=crop, prefer_frame=False)
-                if not screenshot_result:
-                    return False
-
-                source_width = None
-                source_height = None
-                screenshot_bytes = screenshot_result
-                if isinstance(screenshot_result, tuple):
-                    screenshot_bytes, (source_width, source_height) = screenshot_result
-                screenshot = Screenshot._decode_cloud_game_screenshot(screenshot_bytes)
-
-            if source_width is None or source_height is None:
-                source_width, source_height = screenshot.size
-                left = int(source_width * crop[0])
-                top = int(source_height * crop[1])
-                crop_width = int(source_width * crop[2])
-                crop_height = int(source_height * crop[3])
-                screenshot = screenshot.crop((left, top, left + crop_width, top + crop_height))
-            else:
-                left = int(source_width * crop[0])
-                top = int(source_height * crop[1])
-                crop_width = screenshot.width
-                crop_height = screenshot.height
-
-            # Selenium 截图分辨率一般就是浏览器窗口实际像素，所以 scale_factor 默认为 1
-            screenshot_scale_factor = 1
-
-            screenshot_pos = (left, top, crop_width, crop_height)
-
-            return screenshot, screenshot_pos, screenshot_scale_factor
+        backend = get_control_backend(cfg)
+        if backend != "local":
+            from module.game import get_game_controller
+            return get_game_controller(backend).capture_frame(crop=crop, prefer_frame=prefer_frame_screenshot)
 
         window = Screenshot.get_window(title)
         if window:
@@ -232,7 +188,7 @@ class Screenshot:
                     return False
 
             real_width, _ = Screenshot.get_window_real_resolution(window)
-            if real_width > 1920:
+            if real_width > 1920 and (title != cfg.game_title_name or get_ui_profile(cfg).name == "pc_1080"):
                 screenshot_scale_factor = 1920 / real_width
                 screenshot = screenshot.resize((int(1920 * crop[2]), int(1080 * crop[3])))
             else:

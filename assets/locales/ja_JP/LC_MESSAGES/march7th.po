@@ -6854,3 +6854,31 @@ msgstr "分身ウィンドウを開く"
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr "分身を実行中です。ウィンドウを開くと、画面の確認やサインアウトができます"
+
+#: module/config/platform.py:18
+msgid "触屏模式不支持 {method}，请改用触摸操作"
+msgstr "タッチモードでは {method} は使えません。タッチ操作を使用してください。"
+
+#: module/config/platform.py:39
+msgid "触屏素材文件不存在：{path}"
+msgstr "タッチ用テンプレートファイルが見つかりません：{path}"
+
+#: module/config/platform.py:56
+msgid "无效的 control_backend：{value}，可选值为 local、cloud、adb"
+msgstr "control_backend の値 {value} は無効です。local、cloud、adb のいずれかを指定してください。"
+
+#: module/config/platform.py:66
+msgid "无效的 ui_profile：{value}，可选值为 pc_1080、touch_720"
+msgstr "ui_profile の値 {value} は無効です。pc_1080 または touch_720 を指定してください。"
+
+#: module/game/__init__.py:15
+msgid "ADB 后端尚未实现"
+msgstr "ADB バックエンドはまだ実装されていません。"
+
+#: module/screen/screen.py:57
+msgid "界面图文件不存在：{path}"
+msgstr "画面遷移グラフのファイルが見つかりません：{path}"
+
+#: tasks/game/__init__.py:99
+msgid "启动游戏失败"
+msgstr "ゲームを起動できませんでした。"

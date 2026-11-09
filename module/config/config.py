@@ -130,6 +130,7 @@ _CONFIG_KEY_TO_ENV = {v[0]: k for k, v in _ENV_OVERRIDE_MAP.items()}
 
 # 分身使用本地前台输入，避免改动同一账户共享的画质和启动器状态。
 _DESKTOP_TWIN_OVERRIDES = {
+    "control_backend": "local",
     "cloud_game_enable": False,
     "local_control_mode": "foreground",
     "update_via_launcher": False,
@@ -510,6 +511,11 @@ class Config(metaclass=SingletonMeta):
 
     def get_value(self, key, default=None):
         """获取配置项的值，环境变量优先，如果值是可变对象，则返回其拷贝"""
+        if key == "cloud_game_enable":
+            # 兼容仍读取旧开关的任务和 GUI，保留 YAML 中的原值。
+            backend = self.get_value("control_backend")
+            if backend is not None:
+                return backend == "cloud"
         # 先检查环境变量覆盖
         has_override, override_value = _get_env_override(key)
         if has_override:
@@ -553,12 +559,5 @@ class Config(metaclass=SingletonMeta):
     def __getattr__(self, attr):
         """允许通过属性访问配置项的值，环境变量优先"""
         if attr in self.config:
-            # 先检查环境变量覆盖
-            has_override, override_value = _get_env_override(attr)
-            if has_override:
-                return override_value
-            value = self.config[attr]
-            if isinstance(value, (list, dict, set)):
-                return copy.deepcopy(value)
-            return value
+            return self.get_value(attr)
         raise AttributeError(f"'{type(self).__name__}' 对象没有属性 '{attr}'")

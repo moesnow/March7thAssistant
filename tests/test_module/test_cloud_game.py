@@ -372,11 +372,11 @@ class TestCloudGameHeadlessOverride(unittest.TestCase):
         import tasks.game
 
         with patch("tasks.game.cloud_game") as mock_cloud_game, \
-             patch("tasks.game.cfg") as mock_cfg, \
+             patch("tasks.game.cfg", SimpleNamespace(cloud_game_enable=True)), \
+             patch("tasks.game.auto"), \
              patch("tasks.game.screen") as mock_screen, \
              patch("tasks.game.log"):
 
-            mock_cfg.cloud_game_enable = True
             mock_cloud_game.start_game_process.return_value = True
             mock_cloud_game.is_in_game.return_value = True
             mock_screen.get_current_screen.return_value = True
@@ -486,10 +486,10 @@ class TestCloudGameZeroDuration(unittest.TestCase):
         import tasks.game
 
         with patch("tasks.game.cloud_game") as mock_cloud_game, \
-             patch("tasks.game.cfg") as mock_cfg, \
+             patch("tasks.game.cfg", SimpleNamespace(cloud_game_enable=True)), \
+             patch("tasks.game.auto"), \
              patch("tasks.game.log"):
 
-            mock_cfg.cloud_game_enable = True
             mock_cloud_game.start_game_process.return_value = True
             mock_cloud_game.is_in_game.return_value = False
             mock_cloud_game.enter_cloud_game.side_effect = CloudGameZeroDurationError("云游戏剩余时长为 0，停止运行")

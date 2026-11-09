@@ -6797,3 +6797,31 @@ msgstr "開啟分身視窗"
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr "分身正在執行，開啟視窗可查看分身畫面或登出分身"
+
+#: module/config/platform.py:18
+msgid "触屏模式不支持 {method}，请改用触摸操作"
+msgstr "觸控模式不支援 {method}，請改用觸控操作。"
+
+#: module/config/platform.py:39
+msgid "触屏素材文件不存在：{path}"
+msgstr "觸控素材檔案不存在：{path}"
+
+#: module/config/platform.py:56
+msgid "无效的 control_backend：{value}，可选值为 local、cloud、adb"
+msgstr "無效的 control_backend：{value}，可選值為 local、cloud、adb。"
+
+#: module/config/platform.py:66
+msgid "无效的 ui_profile：{value}，可选值为 pc_1080、touch_720"
+msgstr "無效的 ui_profile：{value}，可選值為 pc_1080、touch_720。"
+
+#: module/game/__init__.py:15
+msgid "ADB 后端尚未实现"
+msgstr "ADB 後端尚未實作。"
+
+#: module/screen/screen.py:57
+msgid "界面图文件不存在：{path}"
+msgstr "介面圖檔案不存在：{path}"
+
+#: tasks/game/__init__.py:99
+msgid "启动游戏失败"
+msgstr "啟動遊戲失敗。"

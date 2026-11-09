@@ -1,7 +1,7 @@
 import ast
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -36,6 +36,57 @@ def test_launch_loads_low_quality_then_restores_persisted_settings(startup):
     game.start_game()
     assert [call[0] for call in events.mock_calls] == ["begin", "launch", "restore"]
     game.begin_temporary_graphics.assert_called_once_with(controller.game_path, game.log)
+
+
+@pytest.mark.parametrize(("profile", "resolution"), [
+    (None, (1920, 1080)),
+    ("touch_720", (1280, 720)),
+])
+@pytest.mark.parametrize("already_running", [False, True])
+def test_local_start_uses_profile_resolution(startup, profile, resolution, already_running):
+    game, controller, cfg = startup
+    cfg.ui_profile = profile
+    controller.switch_to_game.return_value = already_running
+
+    game.start_game()
+
+    if already_running:
+        controller.change_resolution.assert_not_called()
+        controller.check_resolution.assert_called_once_with(*resolution)
+    else:
+        controller.change_resolution.assert_called_once_with(*resolution)
+        assert controller.check_resolution.call_args_list == [call(*resolution), call(*resolution)]
+
+
+def test_explicit_cloud_start_skips_local_resolution(startup, monkeypatch):
+    game, controller, cfg = startup
+    cfg.control_backend = "cloud"
+    cfg.ui_profile = "touch_720"
+    cloud = Mock()
+    monkeypatch.setattr(game, "cloud_game", cloud)
+
+    game.start_game()
+
+    cloud.start_game_process.assert_called_once_with(headless=None)
+    game.StarRailController.assert_not_called()
+    controller.change_resolution.assert_not_called()
+    controller.check_resolution.assert_not_called()
+
+
+def test_adb_start_fails_before_retrying_or_touching_other_backends(startup, monkeypatch):
+    from module.game import AdbBackendUnavailableError
+
+    game, _, cfg = startup
+    cfg.control_backend = "adb"
+    cloud = Mock()
+    monkeypatch.setattr(game, "cloud_game", cloud)
+
+    with pytest.raises(AdbBackendUnavailableError, match="ADB"):
+        game.start_game()
+
+    game.StarRailController.assert_not_called()
+    cloud.start_game_process.assert_not_called()
+    game.wait_until.assert_not_called()
 
 
 @pytest.mark.parametrize("mode", ["master-off", "child-off", "already-running", "manual", "cloud"])

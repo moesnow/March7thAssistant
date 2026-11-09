@@ -19,6 +19,7 @@ from module.screen import screen
 from module.automation import auto
 from module.automation.background_input import WINDOW_WAIT_SECONDS, GameWindowLost, InputInterrupted
 from module.config import cfg
+from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.notification import notif
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
@@ -51,8 +52,11 @@ def start(headless=None, *, optimize_graphics=True):
 
 def switch_to_game():
     log.hr("切换到游戏窗口", 0)
-    starrail = StarRailController(cfg=cfg, logger=log)
-    starrail.switch_to_game(force=True)
+    if get_control_backend(cfg) == "adb":
+        get_game_controller().switch_to_game()
+    else:
+        starrail = StarRailController(cfg=cfg, logger=log)
+        starrail.switch_to_game(force=True)
     log.hr("完成", 2)
 
 
@@ -62,8 +66,9 @@ def ensure_game_ready():
     与流程编排启动语义一致：游戏未启动或切换失败时记录错误并返回 False，
     由调用方决定如何终止（本地与云游戏均经 controller 处理）。
     """
+    backend = get_control_backend(cfg)
     controller = get_game_controller()
-    if cfg.cloud_game_enable:
+    if backend == "cloud":
         if not controller.connect_to_running_game():
             log.error("云游戏会话未就绪，workflow 未执行")
             return False
@@ -71,6 +76,8 @@ def ensure_game_ready():
     if not controller.is_game_running():
         log.error("未检测到游戏窗口，workflow 未执行")
         return False
+    if backend != "local":
+        return True
     if getattr(auto.input_handler, 'is_background', False) is True:
         # 后台模式不切换前台：窗口暂时不可操作（例如被最小化）时等待还原，失败时写明原因
         try:
@@ -86,6 +93,12 @@ def ensure_game_ready():
 
 
 def start_game(headless=None, *, optimize_graphics=True):
+    backend = get_control_backend(cfg)
+    if backend == "adb":
+        if not get_game_controller(backend).start_game_process():
+            raise RuntimeError(tr("启动游戏失败"))
+        return
+
     MAX_RETRY = 3
 
     def check_and_click_enter():
@@ -177,6 +190,7 @@ def start_game(headless=None, *, optimize_graphics=True):
         return None
 
     def start_local_game(starrail):
+        resolution = get_ui_profile(cfg).resolution
         if getattr(auto.input_handler, 'is_background', False) is True and starrail.is_game_running():
             # 后台模式不还原、不激活已运行的游戏：窗口暂时不可操作（例如被最小化）时等待用户还原，
             # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
@@ -184,7 +198,7 @@ def start_game(headless=None, *, optimize_graphics=True):
         if not starrail.switch_to_game():
             try:
                 if game_option_enabled(cfg, "auto_set_resolution_enable"):
-                    starrail.change_resolution(1920, 1080)
+                    starrail.change_resolution(*resolution)
                     starrail.change_auto_hdr("disable")
 
                 if game_option_enabled(cfg, "auto_battle_detect_enable"):
@@ -207,21 +221,19 @@ def start_game(headless=None, *, optimize_graphics=True):
                 restore_temporary_graphics()
                 starrail.restore_resolution()
                 starrail.restore_auto_hdr()
-            # starrail.check_resolution_ratio(1920, 1080)
-            starrail.check_resolution(1920, 1080)
+            starrail.check_resolution(*resolution)
 
             if not wait_until(lambda: check_and_click_enter(), cfg.start_game_timeout * 60):
                 raise TimeoutError("查找并点击进入按钮超时")
 
             # 偶现加载慢时分辨率修改不成功，进入游戏前增加一次分辨率检查
-            starrail.check_resolution(1920, 1080)
+            starrail.check_resolution(*resolution)
 
             time.sleep(10)
             # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
             auto.press_mouse()
         else:
-            # starrail.check_resolution_ratio(1920, 1080)
-            starrail.check_resolution(1920, 1080)
+            starrail.check_resolution(*resolution)
             if cfg.auto_set_game_path_enable:
                 program_path = get_process_path(cfg.game_process_name)
                 if program_path is not None and program_path != cfg.game_path:
@@ -242,7 +254,7 @@ def start_game(headless=None, *, optimize_graphics=True):
 
     for retry in range(MAX_RETRY):
         try:
-            if cfg.cloud_game_enable:
+            if backend == "cloud":
                 start_cloud_game()
             else:
                 starrail = StarRailController(cfg=cfg, logger=log)
@@ -250,7 +262,7 @@ def start_game(headless=None, *, optimize_graphics=True):
             if not wait_until(lambda: screen.get_current_screen(), 6 * 60):
                 log.error("获取当前界面超时")
                 # 确保在重试前停止游戏
-                if cfg.cloud_game_enable:
+                if backend == "cloud":
                     cloud_game.stop_game()
                 else:
                     starrail.stop_game()
@@ -260,7 +272,7 @@ def start_game(headless=None, *, optimize_graphics=True):
             # 时长为 0 时重试也无法进入游戏：关闭浏览器后交给调用方，由主循环决定等待下次运行还是按错误退出
             cloud_game.stop_game()
             raise
-        except CloudGameLoginTimeoutError:
+        except (CloudGameLoginTimeoutError, TouchProfileInputError, ProfileAssetNotFoundError):
             raise
         except InputInterrupted:
             # 窗口持续最小化等需要用户处理的情况不能触发原有的“关闭游戏后重启”恢复路径；
@@ -268,13 +280,13 @@ def start_game(headless=None, *, optimize_graphics=True):
             raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")
-            if not cfg.cloud_game_enable and starrail.launch_method == "epic":
+            if backend == "local" and starrail.launch_method == "epic":
                 from module.game.epic import EpicLaunchError
                 if isinstance(e, EpicLaunchError):
                     # 渠道启动已给出具体阶段错误，不重放协议/点击，不关闭用户启动器。
                     raise
             # 确保在重试前停止游戏
-            if cfg.cloud_game_enable:
+            if backend == "cloud":
                 cloud_game.stop_game()
             else:
                 starrail.stop_game()

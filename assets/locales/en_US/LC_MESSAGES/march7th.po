@@ -7051,3 +7051,31 @@ msgstr "Open Desktop Twin"
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr "Desktop Twin is running. Open its window to watch it or sign out."
+
+#: module/config/platform.py:18
+msgid "触屏模式不支持 {method}，请改用触摸操作"
+msgstr "Touch mode does not support {method}. Use a touch action instead."
+
+#: module/config/platform.py:39
+msgid "触屏素材文件不存在：{path}"
+msgstr "Touch template file is missing: {path}"
+
+#: module/config/platform.py:56
+msgid "无效的 control_backend：{value}，可选值为 local、cloud、adb"
+msgstr "Invalid control_backend value {value}. Choose local, cloud, or adb."
+
+#: module/config/platform.py:66
+msgid "无效的 ui_profile：{value}，可选值为 pc_1080、touch_720"
+msgstr "Invalid ui_profile value {value}. Choose pc_1080 or touch_720."
+
+#: module/game/__init__.py:15
+msgid "ADB 后端尚未实现"
+msgstr "The ADB backend is not implemented yet."
+
+#: module/screen/screen.py:57
+msgid "界面图文件不存在：{path}"
+msgstr "Screen graph file is missing: {path}"
+
+#: tasks/game/__init__.py:99
+msgid "启动游戏失败"
+msgstr "Failed to start the game."

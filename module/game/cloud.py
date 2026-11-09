@@ -11,6 +11,7 @@ import time
 import io
 import ctypes
 import socket
+from PIL import Image
 from urllib3.exceptions import TimeoutError as TransportTimeoutError
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, SessionNotCreatedException, StaleElementReferenceException
@@ -28,7 +29,8 @@ from selenium.webdriver.remote.command import Command
 from selenium.common.exceptions import WebDriverException
 
 from module.config import Config
-from module.game.base import GameControllerBase
+from module.config.platform import get_control_backend
+from module.game.base import FrameCapture, GameControllerBase
 from module.logger import Logger
 # from utils.encryption import wdp_encrypt, wdp_decrypt
 
@@ -153,7 +155,8 @@ class CloudGameController(GameControllerBase):
         self._qr_notify_last_sent_ts = 0.0
         self._qr_notify_min_interval_sec = 60
 
-        atexit.register(self._clean_at_exit)
+        if get_control_backend(cfg) != "adb":
+            atexit.register(self._clean_at_exit)
 
     def _wait_game_page_loaded(self, timeout=30) -> None:
         """等待云崩铁网页加载出来，这里以背景图是否加载出来为准"""
@@ -1672,6 +1675,59 @@ class CloudGameController(GameControllerBase):
                 self.log_debug(f"游戏画面元素截图失败，回退浏览器截图: {e}")
 
         return self._take_browser_screenshot()
+
+    @staticmethod
+    def _decode_screenshot(screenshot_bytes):
+        screenshot = Image.open(io.BytesIO(screenshot_bytes))
+        screenshot.load()
+        return screenshot.copy()
+
+    def capture_frame(self, crop=(0, 0, 1, 1), *, prefer_frame=True) -> FrameCapture:
+        """将云游戏截图转换为共用层使用的帧和坐标。"""
+        screenshot_result = self.take_screenshot(crop=crop, prefer_frame=prefer_frame)
+        if not screenshot_result:
+            return False
+
+        source_width = None
+        source_height = None
+        screenshot_bytes = screenshot_result
+        if isinstance(screenshot_result, tuple):
+            screenshot_bytes, (source_width, source_height) = screenshot_result
+
+        try:
+            screenshot = self._decode_screenshot(screenshot_bytes)
+        except Exception as e:
+            self.log_debug(f"游戏画面截图解码失败，回退浏览器截图: {e}")
+            screenshot_result = self.take_screenshot(crop=crop, prefer_frame=False)
+            if not screenshot_result:
+                return False
+
+            source_width = None
+            source_height = None
+            screenshot_bytes = screenshot_result
+            if isinstance(screenshot_result, tuple):
+                screenshot_bytes, (source_width, source_height) = screenshot_result
+            screenshot = self._decode_screenshot(screenshot_bytes)
+
+        if source_width is None or source_height is None:
+            source_width, source_height = screenshot.size
+            left = int(source_width * crop[0])
+            top = int(source_height * crop[1])
+            crop_width = int(source_width * crop[2])
+            crop_height = int(source_height * crop[3])
+            screenshot = screenshot.crop((left, top, left + crop_width, top + crop_height))
+        else:
+            left = int(source_width * crop[0])
+            top = int(source_height * crop[1])
+            crop_width = screenshot.width
+            crop_height = screenshot.height
+
+        # Selenium 截图分辨率一般就是浏览器窗口实际像素，所以 scale_factor 默认为 1
+        screenshot_scale_factor = 1
+
+        screenshot_pos = (left, top, crop_width, crop_height)
+
+        return screenshot, screenshot_pos, screenshot_scale_factor
 
     def execute_cdp_cmd(self, cmd: str, cmd_args: dict):
         return self.driver.execute_cdp_cmd(cmd, cmd_args)
