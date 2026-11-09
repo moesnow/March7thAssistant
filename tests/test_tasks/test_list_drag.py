@@ -176,3 +176,44 @@ def test_memory_first_level_interruption_does_not_open_a_stage(monkeypatch):
     obj.start_challenge.assert_not_called()
     auto.drag_mouse.assert_called_once()
     auto.take_screenshot.assert_called_once()
+
+
+@pytest.mark.parametrize("target_on_last_page", [True, False])
+def test_quick_ornament_checks_page_after_final_drag(monkeypatch, target_on_last_page):
+    from tasks.weekly import currency_wars
+
+    drag = Mock(return_value=True)
+    auto = Mock()
+    auto.click_element.side_effect = lambda target, find_type, *args, **kwargs: (
+        find_type != "min_distance_text" or (target_on_last_page and drag.call_count == 5)
+    )
+    auto.find_element.return_value = ((0, 0), (1, 1))
+    monkeypatch.setattr(currency_wars, "auto", auto)
+    monkeypatch.setattr(currency_wars, "drag_list", drag)
+    monkeypatch.setattr(currency_wars, "screen", SimpleNamespace(change_to=Mock(), check_screen=Mock(return_value=True)))
+    monkeypatch.setattr(currency_wars, "time", SimpleNamespace(sleep=Mock()))
+    monkeypatch.setattr(currency_wars, "cfg", SimpleNamespace(
+        instance_names={"饰品提取": "坚城不倒"}, build_target_enable=False,
+    ))
+
+    task = object.__new__(currency_wars.CurrencyWars)
+    assert task.process_ornament() is target_on_last_page
+    assert drag.call_count == 5
+    assert sum(call.args[1] == "min_distance_text" for call in auto.click_element.call_args_list) == 6
+
+
+def test_message_checks_page_after_final_drag(monkeypatch):
+    from tasks.reward import message
+
+    drag = Mock(return_value=True)
+    auto = Mock()
+    pos = ((0, 0), (1, 1))
+    auto.find_element.side_effect = lambda *args, **kwargs: pos if drag.call_count == 4 else None
+    auto.click_element_with_pos.return_value = False
+    monkeypatch.setattr(message, "auto", auto)
+    monkeypatch.setattr(message, "drag_list", drag)
+
+    message.Message("短信", True, "incoming_message").run()
+
+    assert drag.call_count == 4
+    auto.click_element_with_pos.assert_called_once_with(pos)

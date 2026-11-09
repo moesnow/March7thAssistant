@@ -135,6 +135,9 @@ class Instance:
         else:
             def func(): return auto.click_element(("传送", "进入", "追踪"), "min_distance_text", crop=instance_name_crop, include=True, source=instance_name, source_type="text")
 
+        is_ornament = "饰品提取" in instance_type
+        # 固定横幅压缩了饰品提取列表的可见范围，缩短拖动并在松手前停留，让相邻两屏重叠。
+        drag_end_y = 490 if is_ornament else 410
         for i in range(10):
             if func():
                 if auto.matched_text == "追踪":
@@ -151,7 +154,8 @@ class Instance:
                     if instance_name in template.get(instance_type, {}):
                         instance_name = template[instance_type][instance_name]
                 break
-            if not drag_list(auto, (1125 / 1920, 810 / 1080), (1125 / 1920, 410 / 1080), crop=instance_name_crop):
+            if not drag_list(auto, (1125 / 1920, 810 / 1080), (1125 / 1920, drag_end_y / 1080),
+                             crop=instance_name_crop, end_pause=0.25 if is_ornament else 0.0):
                 return False
             # 等待界面完全停止
             time.sleep(1)
@@ -162,7 +166,7 @@ class Instance:
         timeout = 120
         start_time = time.monotonic()
         success = False
-        if "饰品提取" in instance_type:
+        if is_ornament:
             while time.monotonic() - start_time < timeout:
                 if auto.find_element(instance_name, "text", max_retries=1, include=True, crop=(591.0 / 1920, 98.0 / 1080, 594.0 / 1920, 393.0 / 1080)):
                     success = True

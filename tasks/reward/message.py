@@ -15,7 +15,7 @@ class Message(RewardTemplate):
     _UNREAD_MESSAGE_MARK = "./assets/images/share/base/RedExclamationMark.png"
     _UNREAD_MESSAGE_ICON = "./assets/images/share/reward/message/unread_incoming_message_icon.png"
 
-    _MAX_SCROLL_RETRIES = 4  # 滚动列表寻找未读消息的最大次数（列表到底时终止）
+    _MAX_SCROLL_RETRIES = 4  # 滚动列表寻找未读消息的最大次数
     _MAX_ERROR_RETRIES = 4  # 对话/领奖异常时的最大容错次数（连续失败时终止）
     _MAX_MSG_LIST_ROUNDS = 30  # 外层消息列表的最大尝试次数
     _MAX_DIALOG_ROUNDS = 30  # 单次对话的最大等待轮次
@@ -30,9 +30,6 @@ class Message(RewardTemplate):
         for attempt in range(self._MAX_MSG_LIST_ROUNDS):
 
             # 终止检查
-            if scroll_retries <= 0:
-                log.info("消息列表已滚动至底部，未发现更多未读消息，流程结束")
-                break
             if error_retries <= 0:
                 log.info(f"异常重试次数已耗尽（{attempt} 次），终止流程")
                 break
@@ -49,6 +46,9 @@ class Message(RewardTemplate):
                 self._UNREAD_MESSAGE_ICON, "image", 0.8, max_retries=2, crop=self._NOTIFY_LIST_CROP
             )
             if not unread_msg_pos:
+                if scroll_retries <= 0:
+                    log.info("已达到消息列表翻页次数上限，未发现更多未读消息，流程结束")
+                    break
                 log.info(f"未检测到未读消息，滚动列表继续查找（剩余 {scroll_retries} 次）")
                 if not drag_list(auto, (700 / 1920, 820 / 1080), (700 / 1920, 430 / 1080),
                                  crop=(300 / 1920, 265 / 1080, 435 / 1920, 600 / 1080), duration=1.0):
