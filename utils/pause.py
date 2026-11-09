@@ -24,6 +24,7 @@ import json
 import os
 import tempfile
 import threading
+import time
 import weakref
 
 
@@ -61,6 +62,10 @@ POLL_INTERVAL = 0.3
 # 收到停止指令后，任务迟迟走不到卡点（例如长时间等待中）时，兜底强制结束前的等待时间（秒）
 STOP_GRACE_SECONDS = 60
 
+# 替换重试：对方读取文件只持有毫秒级，参数与 module/config 的配置文件替换一致
+_REPLACE_RETRY_ATTEMPTS = 5
+_REPLACE_RETRY_BASE_DELAY = 0.03
+
 # 暂停/恢复时输出的日志（按仓库约定：日志固定中文原文，不走 tr()）
 PAUSE_LOG_MESSAGE = (
     "任务已暂停：脚本已停止一切操作，您可以手动控制游戏。"
@@ -80,6 +85,21 @@ class RunStopRequested(BaseException):
     """
 
 
+def _replace_with_retry(src, dst):
+    """Windows 上目标文件正被对方打开读取时，os.replace 报 PermissionError（WinError 5/32），稍等重试。
+
+    回执和指令都只写一次，替换失败就丢了：例如停止回执没写进去，图形界面只能等到超时。
+    """
+    for attempt in range(1, _REPLACE_RETRY_ATTEMPTS + 1):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if attempt == _REPLACE_RETRY_ATTEMPTS:
+                raise
+            time.sleep(_REPLACE_RETRY_BASE_DELAY * attempt)
+
+
 def _atomic_write_json(path, data):
     """原子写 JSON 文件（先写临时文件再替换，避免读到半截内容）。"""
     directory = os.path.dirname(os.path.abspath(path))
@@ -88,7 +108,7 @@ def _atomic_write_json(path, data):
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
-        os.replace(tmp_path, path)
+        _replace_with_retry(tmp_path, path)
     except Exception:
         try:
             os.remove(tmp_path)
