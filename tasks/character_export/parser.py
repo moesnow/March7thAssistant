@@ -249,12 +249,12 @@ def _cell_text(cells, y):
     return next((text or "" for row, text in (cells or {}).items() if abs(row - y) <= ROW_TOLERANCE), None)
 
 
-def parse_summary(lines):
+def parse_summary(lines, *, allow_missing_name=False):
     """解析详情页右侧的名字、命途、等级和六项总值。"""
     name = _NAME_DOT.sub("·", "".join(line.text for line in lines if line.y < 165).strip("☆★ "))
     path = next((match_path(line.text) for line in lines if 165 <= line.y < 215), None)
     level = _parse_level(" ".join(line.text for line in lines))
-    if not name or path is None or level is None:
+    if path is None or level is None or (not name and not allow_missing_name):
         raise ParseError(f"详情页读取失败：{[line.text for line in lines]}")
     labels = [line for line in lines if line.y >= 340 and line.x < 1700]
     values = [line for line in lines if line.y >= 340 and line.x >= 1700]
@@ -399,3 +399,14 @@ def summarize_relic_sets(pieces):
 
 def is_trailblazer(name, switchable):
     return switchable and name not in SWITCHABLE_CHARACTERS
+
+
+def is_trailblazer_intro(lines):
+    """从信息页的简介确认身份，保留 None 表示简介未读到。"""
+    title = next((i for i, line in enumerate(lines) if line.text == "角色简介"), None)
+    if title is None:
+        return None
+    text = "".join("".join(line.text for line in lines[title + 1:]).split())
+    if not text:
+        return None
+    return "登上星穹列车" in text and "星核带来的危机" in text

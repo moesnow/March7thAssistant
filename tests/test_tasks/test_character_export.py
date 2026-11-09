@@ -503,6 +503,13 @@ def test_trailblazer_detection(name, switchable, expected):
     assert parser.is_trailblazer(name, switchable) is expected
 
 
+@pytest.mark.parametrize("gender", ["少年", "少女"])
+def test_trailblazer_intro_accepts_both_protagonists_and_wrapped_lines(gender):
+    lines = [L("角色简介", 1538, 394), L(f"登上星穹列车的{gender}。", 1605, 430),
+             L("为了消除星核带来的", 1600, 463), L("危机，选择与星穹列车同行。", 1620, 495)]
+    assert parser.is_trailblazer_intro(lines) is True
+
+
 class Done:
     """已完成的 OCR 任务。"""
 
@@ -543,6 +550,9 @@ class FakeReader:
 
     def begin_summary(self):
         return Done(summary_lines(self.selected))
+
+    def finish_summary(self, pending):
+        return {**parser.parse_summary(pending.result()), "is_trailblazer": False}
 
     def open_tab(self, tab):
         self.tab = tab
@@ -759,25 +769,39 @@ def test_stopped_run_keeps_previous_output(export, tmp_path, monkeypatch):
     assert json.loads((tmp_path / "characters.partial.json").read_text(encoding="utf-8"))["complete"] is False
 
 
-class SectionReader:
+class SectionReader(reader_module.CharacterReader):
     """读取层的替身：每段读取都成功，finish 的行为由测试指定。"""
 
     def __init__(self):
         self.tab = "detail"
         self.calls = []
         self.first_summary = full_summary_lines()
+        self.avatar = None
         self.switchable = False
+        self.frame = None
+        self.intro_lines = []
 
     def grab(self):
         pass
 
     def begin_summary(self):
-        return Done(full_summary_lines())
+        return Done(full_summary_lines()), self.avatar
+
+    def _match_avatar(self, frame):
+        return frame
+
+    def has_path_switch(self, frame):
+        return self.switchable
+
+    def _submit(self, frame, box):
+        assert self.tab == "info" and box == reader_module.INTRO_BOX
+        self.calls.append(("intro",))
+        return Done(self.intro_lines)
 
     def begin_detail(self):
         self.calls.append(("detail",))
         self.tab = "detail"
-        return {"summary": Done(self.first_summary), "element": "火", "switchable": self.switchable, "stats": "stats"}
+        return {"summary": (Done(self.first_summary), self.avatar), "element": "火", "stats": "stats"}
 
     def read_eidolon(self):
         self.calls.append(("eidolon",))
@@ -873,8 +897,8 @@ def test_problems_that_survive_the_reread_become_warnings(tmp_path):
     assert character["warnings"] == ["攻击力 总值不符"]
 
 
-def full_summary_lines(name="火花", without=()):
-    lines = summary_lines(name)
+def full_summary_lines(name="火花", without=(), *, path="欢愉"):
+    lines = summary_lines(name, path)
     for index, (label, value) in enumerate(TOTALS.items()):
         if label not in without:
             y = 369 + index * 36
@@ -901,7 +925,7 @@ def test_missing_total_is_reread_without_reopening_the_popup(tmp_path):
 
 def test_missing_crit_total_needs_no_warning(tmp_path):
     reader = SectionReader()
-    reader.begin_summary = lambda: Done(full_summary_lines(without=("暴击率",)))
+    reader.begin_summary = lambda: (Done(full_summary_lines(without=("暴击率",))), None)
     job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
     reader.first_summary = full_summary_lines(without=("暴击率",))
     job.read_character()
@@ -910,7 +934,7 @@ def test_missing_crit_total_needs_no_warning(tmp_path):
 
 def test_total_that_cannot_be_read_is_reported(tmp_path):
     reader = SectionReader()
-    reader.begin_summary = lambda: Done(full_summary_lines(without=("防御力",)))
+    reader.begin_summary = lambda: (Done(full_summary_lines(without=("防御力",))), None)
     job = CharacterExport(reader, output=str(tmp_path / "out.json"), partial=str(tmp_path / "part.json"))
     reader.first_summary = full_summary_lines(without=("防御力",))
     job.read_character()
@@ -975,6 +999,110 @@ def test_trailblazer_keeps_ocr_name(tmp_path):
     assert character["name"] == "我起的名字"
     assert character["is_trailblazer"] is True
     assert character["path_switchable"] is True
+
+
+@pytest.mark.parametrize("avatar", ["CaelumPreservation", "StellePreservation"])
+def test_trailblazer_without_nickname_is_exported_and_deduplicated(tmp_path, avatar):
+    reader = SectionReader()
+    reader.avatar = Path(f"{avatar}.png")
+    reader.switchable = True
+    reader.first_summary = full_summary_lines("", path="存护")
+    reader.begin_summary = lambda: (Done(reader.first_summary), reader.avatar)
+    job = CharacterExport(reader, partial=str(tmp_path / "part.json"))
+
+    job.read_character()
+    character, = job.characters
+    assert character["name"] == "开拓者"
+    assert character["is_trailblazer"] and character["path_switchable"]
+    assert character["path"] == "存护"
+    assert character["warnings"] == ["未能识别开拓者昵称，使用默认名称「开拓者」"]
+
+    reader.first_summary = full_summary_lines("테스트", path="存护")
+    assert job._known(job._current_summary())
+    job.read_character()
+    assert job.characters == [character]
+
+    reader.avatar = Path("March7th.png")
+    reader.first_summary = full_summary_lines("三月七", path="存护")
+    job.read_character()
+    assert [item["name"] for item in job.characters] == ["开拓者", "三月七"]
+    assert job.characters[-1]["is_trailblazer"] is False
+
+
+def test_nickname_reread_replaces_fallback(tmp_path):
+    reader = SectionReader()
+    reader.avatar = Path("StelleElation.png")
+    reader.first_summary = full_summary_lines("")
+    reader.begin_summary = lambda: (Done(full_summary_lines("ひかり")), reader.avatar)
+    job = CharacterExport(reader, partial=str(tmp_path / "part.json"))
+    job.read_character()
+    character, = job.characters
+    assert character["name"] == "ひかり"
+    assert character["is_trailblazer"]
+    assert character["warnings"] == []
+
+
+@pytest.mark.parametrize("avatar", [None, Path("March7th.png")])
+def test_switch_button_alone_does_not_allow_missing_name(avatar):
+    reader = SectionReader()
+    reader.switchable = True
+    reader.avatar = avatar
+    reader.first_summary = full_summary_lines("", path="存护")
+    reader.begin_summary = lambda: (Done(reader.first_summary), reader.avatar)
+    reader.intro_lines = [L("角色简介", 1538, 394), L("精灵古怪的少女，来自星穹列车。", 1670, 430)]
+    with pytest.raises(parser.ParseError, match="未能识别角色名"):
+        CharacterExport(reader)._current_summary()
+
+
+def test_intro_identifies_trailblazer_without_an_avatar_asset(tmp_path):
+    reader = SectionReader()
+    reader.switchable = True
+    reader.first_summary = full_summary_lines("", path="同谐")
+    reader.begin_summary = lambda: (Done(reader.first_summary), reader.avatar)
+    reader.intro_lines = [L("角色简介", 1538, 394), L("登上星穹列车的少年。", 1605, 430),
+                          L("为了消除星核带来的危机，选择与星穹列车同行。", 1670, 463)]
+    job = CharacterExport(reader, partial=str(tmp_path / "part.json"))
+    job.read_character()
+    character, = job.characters
+    assert character["name"] == "开拓者"
+    assert character["path"] == "同谐"
+    assert character["is_trailblazer"]
+    assert reader.calls.count(("intro",)) == 1
+    assert reader.tab == "detail"
+
+    reader.first_summary = full_summary_lines("三月七", path="同谐")
+    assert job._known(job._current_summary())
+    job.read_character()
+    assert job.characters == [character]
+
+
+@pytest.mark.parametrize("prefix", ["Stelle", "Caelum"])
+def test_avatar_matching_uses_selected_slot_and_discovers_new_forms(tmp_path, monkeypatch, prefix):
+    assets = reader_module.AVATAR_ASSETS
+    new_form = tmp_path / f"{prefix}NewPath.png"
+    new_form.write_bytes((assets / f"{prefix}Preservation.png").read_bytes())
+    march = tmp_path / "March7th.png"
+    march.write_bytes((assets / march.name).read_bytes())
+    monkeypatch.setattr(reader_module, "AVATAR_ASSETS", tmp_path)
+
+    def frame(selected):
+        canvas = np.zeros((1080, 1920, 3), dtype=np.uint8)
+        for x, asset in ((600, new_form), (708, march)):
+            avatar = cv2.imread(str(asset))
+            avatar = cv2.resize(avatar, None, fx=0.6, fy=0.6, interpolation=cv2.INTER_AREA)
+            h, w = avatar.shape[:2]
+            left, top = x - w // 2, 65 - h // 2
+            canvas[top:top + h, left:left + w] = avatar
+            cv2.circle(canvas, (x, 65), 35, (200, 180, 120), 2)
+        cv2.circle(canvas, (selected, 65), 44, (245, 245, 245), 2)
+        return Image.fromarray(cv2.cvtColor(canvas, cv2.COLOR_BGR2RGB))
+
+    reader = reader_module.CharacterReader()
+    try:
+        assert reader._match_avatar(frame(600)) == new_form
+        assert reader._match_avatar(frame(708)) == march
+    finally:
+        reader.close()
 
 
 def test_avatar_slots_are_found_at_any_offset():

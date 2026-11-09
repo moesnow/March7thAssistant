@@ -17,6 +17,7 @@ SCHEMA_VERSION = 1
 MAX_PAGES = 40
 MAX_RESTARTS = 8
 MAX_BACK_DRAGS = 3
+TRAILBLAZER_NAME = "开拓者"
 # 同一个角色读取失败这么多次就跳过，不影响后面的角色
 MAX_ATTEMPTS = 2
 
@@ -38,6 +39,11 @@ def _finish(pending, finish, retry):
 
 def _public_piece(piece):
     return {key: value for key, value in piece.items() if key != "set_count"}
+
+
+def _character_key(summary):
+    # 开拓者的昵称可能时有时无，重试和翻页始终使用同一个身份。
+    return (None if summary["is_trailblazer"] else summary["name"], summary["path"])
 
 
 class CharacterExport:
@@ -73,7 +79,7 @@ class CharacterExport:
         while attempt < MAX_RESTARTS:
             progress = len(self.characters) + len(self.failed)
             try:
-                # 总是从手机重新进入：顶栏回到左端、页签回到详情，已读过的角色按名字跳过
+                # 总是从手机重新进入：顶栏回到左端、页签回到详情，已读过的角色按身份跳过
                 screen.change_to("menu")
                 screen.change_to("character")
                 self._walk()
@@ -126,33 +132,61 @@ class CharacterExport:
         raise PageError("顶栏无法定位到读过的角色")
 
     def _known(self, summary):
-        return (summary["name"], summary["path"]) in self.seen
+        return _character_key(summary) in self.seen
 
     def _give_up(self, summary):
         """中断后重新走到的第一个新角色，就是上次读到一半的角色。"""
-        key = (summary["name"], summary["path"])
+        key = _character_key(summary)
         if self.interrupted_character:
             self.attempts[key] += 1
             self.interrupted_character = False
         if self.attempts[key] < MAX_ATTEMPTS:
             return False
-        log.error(f"{summary['name']}（{summary['path']}）读取失败，已跳过")
+        name = summary["name"] or TRAILBLAZER_NAME
+        log.error(f"{name}（{summary['path']}）读取失败，已跳过")
         self.seen.add(key)
-        self.failed.append({"name": summary["name"], "path": summary["path"]})
+        self.failed.append({"name": name, "path": summary["path"]})
         return True
 
     def _current_summary(self):
         self.reader.open_tab("detail")
         return self._load_summary(self.reader.begin_summary())
 
-    def _load_summary(self, future):
+    def _load_summary(self, pending):
+        first = None
         try:
-            return parser.parse_summary(future.result())
+            first = self.reader.finish_summary(pending)
         except parser.ParseError as e:
             log.debug(f"重新读取：{e}")
-            self.reader.open_tab("detail")
-            self.reader.grab()
-            return parser.parse_summary(self.reader.begin_summary().result())
+        if first is not None:
+            if first["name"]:
+                return self._resolve_summary(first)
+            log.debug("未能识别角色名，重新读取详情页")
+        self.reader.open_tab("detail")
+        self.reader.grab()
+        try:
+            fresh = self.reader.finish_summary(self.reader.begin_summary())
+        except parser.ParseError:
+            if first is None:
+                raise
+        else:
+            if first is None:
+                first = fresh
+            elif first["path"] == fresh["path"] and (first["is_trailblazer"], fresh["is_trailblazer"]) != (True, False):
+                if fresh["is_trailblazer"] is None:
+                    fresh["is_trailblazer"] = first["is_trailblazer"]
+                first = fresh
+        return self._resolve_summary(first)
+
+    def _resolve_summary(self, summary):
+        if summary["is_trailblazer"] is None:
+            identified = self.reader.read_trailblazer_intro()
+            if identified is None and summary["name"]:
+                identified = parser.is_trailblazer(summary["name"], summary["switchable"])
+            summary["is_trailblazer"] = identified is True
+        if not summary["name"] and not summary["is_trailblazer"]:
+            raise parser.ParseError("详情页读取失败：未能识别角色名或确认开拓者身份")
+        return summary
 
     def read_character(self):
         """读取当前选中的角色。"""
@@ -169,7 +203,7 @@ class CharacterExport:
         pending = {name: steps[name]() for name in order}
 
         detail = pending["detail"]
-        element, switchable, stats = detail["element"], detail["switchable"], detail["stats"]
+        element, stats = detail["element"], detail["stats"]
         summary = self._load_summary(detail["summary"])
         if self._known(summary):
             return
@@ -180,6 +214,9 @@ class CharacterExport:
             totals = self._reread_totals(totals)
 
         warnings = []
+        name = summary["name"] or TRAILBLAZER_NAME
+        if not summary["name"]:
+            warnings.append("未能识别开拓者昵称，使用默认名称「开拓者」")
         if element is None:
             warnings.append("未能识别属性")
         # 暴击率和暴击伤害弹窗里就有，缺了不影响数据；基础属性的总值要由弹窗的两列相加得到
@@ -199,9 +236,9 @@ class CharacterExport:
         warnings += problems
 
         character = {
-            "name": summary["name"],
-            "is_trailblazer": parser.is_trailblazer(summary["name"], switchable),
-            "path_switchable": switchable,
+            "name": name,
+            "is_trailblazer": summary["is_trailblazer"],
+            "path_switchable": summary["switchable"],
             "path": summary["path"],
             "element": element,
             "level": summary["level"],
@@ -213,20 +250,20 @@ class CharacterExport:
             "relics": {"sets": relics["sets"], "pieces": [_public_piece(piece) for piece in relics["pieces"]]},
             "warnings": warnings,
         }
-        self.seen.add((summary["name"], summary["path"]))
+        self.seen.add(_character_key(summary))
         self.characters.append(character)
         self._save(self.partial, False)
-        log.info(f"[{len(self.characters)}] {summary['name']}（{summary['path']}/{element}）"
+        log.info(f"[{len(self.characters)}] {name}（{summary['path']}/{element}）"
                  f"{summary['level']} 级 {eidolon} 魂")
         for warning in warnings:
-            log.warning(f"{summary['name']}：{warning}")
+            log.warning(f"{name}：{warning}")
 
     def _reread_totals(self, totals):
         """重新识别详情页的总值。只需要一次 OCR，比重读属性详情快得多。"""
         self.reader.open_tab("detail")
         self.reader.grab()
         try:
-            return {**parser.parse_summary(self.reader.begin_summary().result())["totals"], **totals}
+            return {**self.reader.finish_summary(self.reader.begin_summary())["totals"], **totals}
         except parser.ParseError:
             return totals
 

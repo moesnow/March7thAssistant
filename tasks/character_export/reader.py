@@ -9,6 +9,7 @@
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -36,6 +37,11 @@ POPUP_STILL = 0.03
 AVATAR_Y = 65
 AVATAR_BAR = (440, 18, 1040, 100)
 AVATAR_LEFT, AVATAR_RIGHT = 470, 1440
+AVATAR_ASSETS = Path("./assets/images/share/character")
+TRAILBLAZER_PREFIXES = ("Caelum", "Stelle")
+# 队伍选择和角色顶栏使用相同头像，大小略有差异。只比较中央，避开角标和选中光圈。
+AVATAR_SCALES = (0.58, 0.60, 0.62, 0.64)
+AVATAR_THRESHOLD = 0.82
 # 拖慢一点并在终点停留才没有惯性，移动约 8 格，重叠 1 格；惯性会让顶栏跳过角色
 AVATAR_DRAG = ((1360, AVATAR_Y), (520, AVATAR_Y), 0.5, 0.3)
 AVATAR_BACK_DRAG = ((700, AVATAR_Y), (1000, AVATAR_Y), 0.5, 0.3)
@@ -43,8 +49,8 @@ AVATAR_BACK_DRAG = ((700, AVATAR_Y), (1000, AVATAR_Y), 0.5, 0.3)
 AVATAR_MOVED = 0.05
 
 TAB_X = 243
-TAB_Y = {"detail": 155, "light_cone": 248, "traces": 342, "relics": 434, "eidolons": 528}
-TAB_NAMES = {"detail": "详情", "light_cone": "光锥", "traces": "行迹", "relics": "遗器", "eidolons": "星魂"}
+TAB_Y = {"detail": 155, "light_cone": 248, "traces": 342, "relics": 434, "eidolons": 528, "info": 623}
+TAB_NAMES = {"detail": "详情", "light_cone": "光锥", "traces": "行迹", "relics": "遗器", "eidolons": "星魂", "info": "信息"}
 TAB_TITLE = (100, 35, 220, 25)
 RIGHT_PANEL = (1470, 110, 430, 480)
 # 左上角的“命途/名字”每个页签都有，切角色时立刻变化
@@ -58,6 +64,7 @@ ELEMENT_TEMPLATES = {label: f"./assets/images/share/character_panel/element_{key
 ELEMENT_THRESHOLD = 0.8
 PATH_SWITCH = "./assets/images/zh_CN/character_panel/path_switch.png"
 PATH_SWITCH_BOX = (1630, 950, 120, 80)
+INTRO_BOX = (1480, 370, 410, 155)
 
 STAT_BUTTON = (1774, 593)
 POPUP_TITLE = (420, 280, 200, 60)
@@ -199,14 +206,24 @@ def _recognize_numeric(image, origin):
     return lines
 
 
+def _avatar_circles(image, threshold, min_radius, max_radius):
+    gray = cv2.medianBlur(cv2.cvtColor(np.array(_crop(image, AVATAR_BAR)), cv2.COLOR_RGB2GRAY), 3)
+    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1.2, minDist=80, param1=120,
+                               param2=threshold, minRadius=min_radius, maxRadius=max_radius)
+    return () if circles is None else circles[0]
+
+
 def find_avatar_slots(image):
     """检测顶栏头像的横坐标。顶栏静止后有吸附和右对齐两种偏移，只能看图定位。"""
-    gray = cv2.medianBlur(cv2.cvtColor(np.array(_crop(image, AVATAR_BAR)), cv2.COLOR_RGB2GRAY), 3)
-    circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, dp=1.2, minDist=80, param1=120, param2=22, minRadius=28, maxRadius=46)
-    if circles is None:
-        return []
-    centers = (round(float(circle[0])) + AVATAR_BAR[0] for circle in circles[0])
+    centers = (round(float(x)) + AVATAR_BAR[0] for x, _, _ in _avatar_circles(image, 22, 28, 46))
     return sorted(x for x in centers if AVATAR_LEFT <= x <= AVATAR_RIGHT)
+
+
+def _selected_avatar(image):
+    # 选中时多一层半径约 44 像素的白色外圈，普通头像的圆框约 35 像素。
+    centers = [round(float(x)) + AVATAR_BAR[0] for x, y, _ in _avatar_circles(image, 30, 40, 50)
+               if AVATAR_LEFT <= x + AVATAR_BAR[0] <= AVATAR_RIGHT and abs(y + AVATAR_BAR[1] - AVATAR_Y) <= 5]
+    return centers[0] if len(centers) == 1 else None
 
 
 class CharacterReader:
@@ -214,6 +231,9 @@ class CharacterReader:
         # OCR 引擎不并发，全部排到这一个线程
         self.ocr_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="character-ocr")
         self.templates = {}
+        self.avatar_assets = sorted(path for path in AVATAR_ASSETS.glob("*.png")
+                                    if path.stem.startswith((*TRAILBLAZER_PREFIXES, "March7th")))
+        self.avatar_templates = {}
         self.known_relic_sets = load_relic_sets()
         self.frame = None
         self.tab = "detail"
@@ -357,14 +377,57 @@ class CharacterReader:
         return _difference(_gray(before, AVATAR_BAR), _gray(frame, AVATAR_BAR)) > AVATAR_MOVED
 
     def begin_summary(self):
-        return self._submit(self.frame, SUMMARY_BOX, blank=SUMMARY_ICONS)
+        frame = self.frame
+        return self._submit(frame, SUMMARY_BOX, blank=SUMMARY_ICONS), frame
+
+    def finish_summary(self, pending):
+        future, frame = pending
+        summary = parser.parse_summary(future.result(), allow_missing_name=True)
+        switchable = self.has_path_switch(frame)
+        avatar = self._match_avatar(frame)
+        if avatar is not None:
+            trailblazer = avatar.stem.startswith(TRAILBLAZER_PREFIXES)
+        else:
+            trailblazer = None if switchable or not summary["name"] else False
+        return {**summary, "switchable": switchable, "is_trailblazer": trailblazer}
+
+    def read_trailblazer_intro(self):
+        previous = self.tab
+        try:
+            self.open_tab("info")
+            pending = self._submit(self.frame, INTRO_BOX)
+        finally:
+            self.open_tab(previous)
+        return parser.is_trailblazer_intro(pending.result())
+
+    def _match_avatar(self, frame):
+        if not self.avatar_assets:
+            return None
+        x = _selected_avatar(frame)
+        if x is None:
+            return None
+        region = cv2.cvtColor(np.array(_crop(frame, (x - 36, AVATAR_Y - 34, 72, 68))), cv2.COLOR_RGB2BGR)
+        score, avatar = max((self._avatar_score(region, asset), asset) for asset in self.avatar_assets)
+        return avatar if score >= AVATAR_THRESHOLD else None
+
+    def _avatar_score(self, region, asset):
+        if asset not in self.avatar_templates:
+            image = ImageUtils.read_image(asset)
+            templates = ()
+            if image is not None:
+                height, width = image.shape[:2]
+                face = image[height // 4:3 * height // 4, width // 4:3 * width // 4]
+                templates = tuple(cv2.resize(face, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+                                  for scale in AVATAR_SCALES)
+            self.avatar_templates[asset] = templates
+        return max((float(cv2.matchTemplate(region, template, cv2.TM_CCOEFF_NORMED).max())
+                    for template in self.avatar_templates[asset]), default=0.0)
 
     def begin_detail(self):
         self.open_tab("detail")
         return {
             "summary": self.begin_summary(),
             "element": self.read_element(),
-            "switchable": self.has_path_switch(),
             "stats": self.begin_stats(),
         }
 
@@ -373,8 +436,8 @@ class CharacterReader:
         label = max(scores, key=scores.get)
         return label if scores[label] >= ELEMENT_THRESHOLD else None
 
-    def has_path_switch(self):
-        return self._score(self.frame, PATH_SWITCH, PATH_SWITCH_BOX) >= BUTTON_THRESHOLD
+    def has_path_switch(self, frame):
+        return self._score(frame, PATH_SWITCH, PATH_SWITCH_BOX) >= BUTTON_THRESHOLD
 
     def begin_stats(self, careful=False):
         """打开属性详情，边滚动边抓帧，OCR 不等。careful 时逐步拖动，列表比预期长也不会漏行。"""
