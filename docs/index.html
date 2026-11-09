@@ -76,9 +76,15 @@
     /* docsify 挂载前导航还是原始列表，先隐藏，避免主题样式到达前闪一下默认样式 */
     nav:not(.app-nav) { display: none; }
     nav.app-nav a { font-weight: 600; }
+    .markdown-section .table-scroll { margin: 1rem 0; overflow-x: auto; }
+    .markdown-section .table-scroll > table { display: table; margin: 0; }
     @media (max-width: 47.99em) {
       nav.app-nav { left: 64px; right: 16px; font-size: 14px; }
       nav.app-nav > ul > li { margin: 0 0 0 .9em; }
+      /* 按内容撑开列宽，同时限制长段落和命令的行宽 */
+      .markdown-section .table-scroll > table { width: max-content; }
+      .markdown-section .table-scroll :is(th, td) { max-width: 20em; overflow-wrap: anywhere; }
+      .markdown-section .table-scroll code:not([class*=lang-]):not([class*=language-]) { white-space: normal; }
     }
     /* 提示词等纯文本代码块自动换行，长链接不用横向滚动 */
     .markdown-section pre[data-lang=text] code { white-space: pre-wrap; word-break: break-all; }
@@ -119,6 +125,13 @@
       alias: { '.*/_sidebar.md': '/assets/docs/_sidebar.md' },
       subMaxLevel: 3,
       auto2top: true,
+      markdown: function (marked, renderer) {
+        var renderTable = renderer.table;
+        renderer.table = function (header, body) {
+          return '<div class="table-scroll">' + renderTable.call(this, header, body) + '</div>';
+        };
+        return marked.setOptions({ renderer: renderer });
+      },
       plugins: [
         function (hook, vm) {
           hook.beforeEach(function (md) {
