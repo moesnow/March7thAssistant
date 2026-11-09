@@ -433,7 +433,12 @@ def test_reopening_minimized_twin_keeps_it_maximized(qtbot, monkeypatch):
 
 
 class SizingLoop:
-    """按系统拖动边框的方式驱动 WM_SIZING：被拖动的边取鼠标位置，其余的边沿用上一次调整后的结果。"""
+    """按系统拖动边框的方式驱动 WM_SIZING：被拖动的边取鼠标位置，其余的边沿用上一次调整后的结果。
+
+    结果用 SetWindowPos 设给窗口。窗口超过屏幕允许的最大尺寸时，系统会保留左上角、截短宽高，
+    拖左边或上边时本应不动的对边就被挪动了，和真实拖动不同（CI 的屏幕只有 1024×768）。
+    所以拖动路径不要让窗口大于开始时的尺寸。
+    """
 
     def __init__(self, dialog, edge):
         import win32con
@@ -489,7 +494,8 @@ def test_corner_drag_follows_the_mouse_without_jumping(screen_dialog):
     slack = math.ceil(2 * screen_dialog.devicePixelRatioF())
     loop = SizingLoop(screen_dialog, win32con.WMSZ_BOTTOMRIGHT)
     x, y = loop.start[2], loop.start[3]
-    for dx, dy in [(6, 1)] * 30 + [(1, 6)] * 30 + [(-5, -2)] * 30:  # 横向为主、纵向为主、往回缩
+    # 横向为主往里收、纵向为主往里收、再往外拉。窗口始终不大于开始时的尺寸，见 SizingLoop
+    for dx, dy in [(-6, -1)] * 20 + [(-1, -6)] * 20 + [(5, 2)] * 20:
         x, y = x + dx, y + dy
         rect = loop.move(x, y)
         assert loop.move(x, y) == rect  # 鼠标不动，窗口也不动
@@ -508,8 +514,8 @@ def test_edge_drag_returns_to_start_without_drift(screen_dialog, edge):
     loop = SizingLoop(screen_dialog, getattr(win32con, f"WMSZ_{edge}"))
     left, top, right, bottom = loop.start
     x, y = (left, top) if edge in ("LEFT", "TOP") else (right, bottom)
-    sign = -1 if edge in ("LEFT", "TOP") else 1
-    for offset in list(range(7, 211, 7)) + list(range(203, 0, -7)):
+    sign = 1 if edge in ("LEFT", "TOP") else -1  # 先往里收再拉回，见 SizingLoop
+    for offset in list(range(7, 141, 7)) + list(range(133, 0, -7)):
         rect = loop.move(x + sign * offset, y + sign * offset)
         if edge in ("LEFT", "RIGHT"):
             assert abs((rect[1] + rect[3]) - (top + bottom)) <= 1  # 以开始拖动时的中线上下居中
