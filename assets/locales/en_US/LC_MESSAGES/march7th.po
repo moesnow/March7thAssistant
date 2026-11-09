@@ -7079,3 +7079,40 @@ msgstr "Screen graph file is missing: {path}"
 #: tasks/game/__init__.py:99
 msgid "启动游戏失败"
 msgstr "Failed to start the game."
+
+#: module/game/local.py:43
+msgid "请先在工具箱的触屏模式中完成第三方解锁器的风险确认"
+msgstr ""
+"Confirm the third-party unlocker warnings under Touch Mode in the toolbox "
+"first."
+
+#: module/game/local.py:60
+msgid "未找到触屏解锁器，请先运行 mobileui_update"
+msgstr "Touch mode unlocker was not found. Run mobileui_update first."
+
+#: module/game/local.py:64
+msgid "未找到原始游戏分辨率，请先在游戏内保存分辨率设置"
+msgstr ""
+"The original game resolution was not found. Save the resolution in the game "
+"first."
+
+#: module/game/local.py:90
+msgid "等待 1280×720 触屏游戏窗口超时"
+msgstr "Timed out waiting for the 1280×720 touch mode game window."
+
+#: module/game/local.py:93
+msgid "触屏解锁器启动失败，退出码为 {code}"
+msgstr "The touch mode unlocker failed with exit code {code}."
+
+#: tasks/game/__init__.py:114
+msgid "切换到游戏窗口失败"
+msgstr "Could not switch to the game window."
+
+#: tasks/game/__init__.py:116
+msgid "请退出当前游戏，再启动 1280×720 触屏模式"
+msgstr "Close the current game before launching 1280×720 touch mode."
+
+#: tasks/game/__init__.py:118
+msgid "未能进入触屏主界面，请检查游戏登录状态"
+msgstr ""
+"Could not reach the touch mode main screen. Check the game's sign-in status."

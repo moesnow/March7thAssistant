@@ -1,0 +1,28 @@
+[
+    {
+        "name": "主界面",
+        "id": "main",
+        "image_path": "./assets/touch_720/images/screen/main.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.click_element('./assets/touch_720/images/screen/main.png', 'image', 0.9, crop=(18 / 1920, 60 / 1080, 72 / 1920, 78 / 1080))"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "手机菜单",
+        "id": "menu",
+        "image_path": "./assets/touch_720/images/screen/menu.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.click_element((1827 / 1920, 31.5 / 1080, 57 / 1920, 54 / 1080), 'crop')"
+                ]
+            }
+        ]
+    }
+]

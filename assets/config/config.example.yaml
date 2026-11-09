@@ -61,7 +61,7 @@ start_game_timeout: 10 # 启动游戏超时时间（分）。
 update_game_timeout: 12 # 更新游戏超时时间（时）。
 
 # 平台设置（开发中，普通用户不要修改）
-ui_profile: pc_1080 # UI 形态：pc_1080、touch_720。
+ui_profile: pc_1080 # UI 形态：pc_1080、touch_720。本地触屏开发需先在工具箱完成触屏模式的风险确认。
 control_backend: null # 设备后端：local、cloud、adb。留空时沿用 cloud_game_enable（含环境变量覆盖），显式设置优先。桌面分身固定使用 local。
 
 # 云崩铁配置

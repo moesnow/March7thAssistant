@@ -144,6 +144,7 @@ class Screen(metaclass=SingletonMeta):
         """
         from concurrent.futures import ThreadPoolExecutor, as_completed
 
+        autotry = autotry and get_ui_profile(cfg).name != "touch_720"
         screen_map = self.screen_map
         found_event = threading.Event()
 

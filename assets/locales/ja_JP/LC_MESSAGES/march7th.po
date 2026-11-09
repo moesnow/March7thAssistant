@@ -6882,3 +6882,35 @@ msgstr "画面遷移グラフのファイルが見つかりません：{path}"
 #: tasks/game/__init__.py:99
 msgid "启动游戏失败"
 msgstr "ゲームを起動できませんでした。"
+
+#: module/game/local.py:43
+msgid "请先在工具箱的触屏模式中完成第三方解锁器的风险确认"
+msgstr "先にツールボックスのタッチモードで、サードパーティ製アンロッカーのリスクを確認してください。"
+
+#: module/game/local.py:60
+msgid "未找到触屏解锁器，请先运行 mobileui_update"
+msgstr "タッチモード用のアンロッカーが見つかりません。先に mobileui_update を実行してください。"
+
+#: module/game/local.py:64
+msgid "未找到原始游戏分辨率，请先在游戏内保存分辨率设置"
+msgstr "元のゲーム解像度が見つかりません。先にゲーム内で解像度設定を保存してください。"
+
+#: module/game/local.py:90
+msgid "等待 1280×720 触屏游戏窗口超时"
+msgstr "1280×720 のタッチモードのゲームウィンドウを待機中にタイムアウトしました。"
+
+#: module/game/local.py:93
+msgid "触屏解锁器启动失败，退出码为 {code}"
+msgstr "タッチモード用のアンロッカーの起動に失敗しました。終了コードは {code} です。"
+
+#: tasks/game/__init__.py:114
+msgid "切换到游戏窗口失败"
+msgstr "ゲームウィンドウに切り替えられませんでした。"
+
+#: tasks/game/__init__.py:116
+msgid "请退出当前游戏，再启动 1280×720 触屏模式"
+msgstr "現在のゲームを終了してから、1280×720 のタッチモードを起動してください。"
+
+#: tasks/game/__init__.py:118
+msgid "未能进入触屏主界面，请检查游戏登录状态"
+msgstr "タッチモードのメイン画面に入れませんでした。ゲームのログイン状態を確認してください。"

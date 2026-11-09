@@ -260,6 +260,72 @@ def test_touch_screen_graph_has_no_pc_fallback(monkeypatch, tmp_path):
     assert screen.get_name("main") == "Touch"
 
 
+@pytest.mark.parametrize("failure", [None, "spawn", "enter", "stop"])
+def test_touch_launch_restores_original_resolution(monkeypatch, tmp_path, failure):
+    from module.game import local
+    from utils.pause import RunStopRequested
+
+    game = tmp_path / "StarRail.exe"
+    game.touch()
+    unlocker = tmp_path / "unlocker.exe"
+    unlocker.touch()
+    registry = SimpleNamespace(
+        get_game_resolution=Mock(return_value=(1920, 1080, True)),
+        read_registry_value=Mock(return_value=b"original"),
+        set_game_resolution=Mock(), write_registry_value=Mock(),
+        registry_key_path="game", resolution_value_name="resolution",
+    )
+    monkeypatch.setitem(sys.modules, "winreg", SimpleNamespace(HKEY_CURRENT_USER=1, REG_BINARY=3))
+    monkeypatch.setitem(sys.modules, "utils.registry.star_rail_setting", registry)
+    monkeypatch.setattr(local.subprocess, "CREATE_NEW_CONSOLE", 16, raising=False)
+    spawn = Mock(side_effect=OSError("spawn") if failure == "spawn" else None)
+    monkeypatch.setattr(local.subprocess, "Popen", spawn)
+
+    config = SimpleNamespace(
+        game_path=str(game), game_process_name="StarRail", game_title_name="Star Rail",
+        script_path=None, genshin_starRail_fps_unlocker_path=str(tmp_path),
+        get_value=Mock(side_effect=lambda key, default=None: {
+            "genshin_starRail_fps_unlocker_allow": True,
+        }.get(key, default)),
+    )
+    controller = local.LocalGameController(config)
+    monkeypatch.setattr(controller, "is_game_running", lambda: False)
+    monkeypatch.setattr(controller, "get_resolution", lambda: None if failure == "stop" else (1280, 720))
+    if failure == "stop":
+        monkeypatch.setattr(local.pause_ctl, "checkpoint", Mock(side_effect=[None, RunStopRequested()]))
+
+    def launch():
+        with controller.launch_touch_game((1280, 720)):
+            registry.set_game_resolution.assert_called_once_with(1280, 720, False)
+            registry.write_registry_value.assert_not_called()
+            if failure == "enter":
+                raise OSError("enter")
+
+    if failure == "stop":
+        with pytest.raises(RunStopRequested):
+            launch()
+    elif failure:
+        with pytest.raises(OSError, match=failure):
+            launch()
+    else:
+        launch()
+    spawn.assert_called_once_with([str(unlocker), "-HKSR", "-EnableMobileUI"],
+                                  cwd=tmp_path, creationflags=16)
+    registry.write_registry_value.assert_called_once_with(1, "game", "resolution", b"original", 3)
+
+
+def test_touch_launch_requires_unlocker_confirmation():
+    from module.game import local
+
+    controller = object.__new__(local.LocalGameController)
+    controller._config = SimpleNamespace(get_value=lambda key: False)
+    controller.is_game_running = Mock()
+
+    with pytest.raises(PermissionError, match="风险确认"), controller.launch_touch_game((1280, 720)):
+        pytest.fail("未确认时不应启动触屏模式")
+    controller.is_game_running.assert_not_called()
+
+
 def test_touch_image_matching_uses_native_template_without_pc_fallback(monkeypatch, tmp_path):
     from module.automation import automation
 

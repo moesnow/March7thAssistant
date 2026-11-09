@@ -6875,3 +6875,35 @@ msgstr "화면 전환 그래프 파일이 없습니다: {path}"
 #: tasks/game/__init__.py:99
 msgid "启动游戏失败"
 msgstr "게임을 시작하지 못했습니다."
+
+#: module/game/local.py:43
+msgid "请先在工具箱的触屏模式中完成第三方解锁器的风险确认"
+msgstr "먼저 도구 상자의 터치 모드에서 타사 잠금 해제 도구의 위험 안내를 확인하세요."
+
+#: module/game/local.py:60
+msgid "未找到触屏解锁器，请先运行 mobileui_update"
+msgstr "터치 모드 잠금 해제 도구를 찾을 수 없습니다. 먼저 mobileui_update를 실행하세요."
+
+#: module/game/local.py:64
+msgid "未找到原始游戏分辨率，请先在游戏内保存分辨率设置"
+msgstr "기존 게임 해상도를 찾을 수 없습니다. 먼저 게임에서 해상도 설정을 저장하세요."
+
+#: module/game/local.py:90
+msgid "等待 1280×720 触屏游戏窗口超时"
+msgstr "1280×720 터치 모드 게임 창을 기다리는 시간이 초과되었습니다."
+
+#: module/game/local.py:93
+msgid "触屏解锁器启动失败，退出码为 {code}"
+msgstr "터치 모드 잠금 해제 도구를 시작하지 못했습니다. 종료 코드는 {code}입니다."
+
+#: tasks/game/__init__.py:114
+msgid "切换到游戏窗口失败"
+msgstr "게임 창으로 전환하지 못했습니다."
+
+#: tasks/game/__init__.py:116
+msgid "请退出当前游戏，再启动 1280×720 触屏模式"
+msgstr "현재 게임을 종료한 뒤 1280×720 터치 모드를 시작하세요."
+
+#: tasks/game/__init__.py:118
+msgid "未能进入触屏主界面，请检查游戏登录状态"
+msgstr "터치 모드 메인 화면에 들어가지 못했습니다. 게임 로그인 상태를 확인하세요."

@@ -1,14 +1,20 @@
+import configparser
 import os
 import sys
+import time
 import psutil
 import getpass
 import subprocess
+from contextlib import contextmanager
+from pathlib import Path
 from utils import clipboard
 from utils.desktop_twin import in_desktop_twin
 from typing import Optional
 from module.config.config import Config
 from module.game.base import GameControllerBase
+from module.localization import tr
 from utils.logger.logger import Logger
+from utils.pause import pause_ctl
 from utils.temporary_graphics import recover_temporary_graphics, restore_temporary_graphics
 
 
@@ -29,6 +35,68 @@ class LocalGameController(GameControllerBase):
         self.window_name = cfg.game_title_name
         self.launch_method = cfg.get_value("game_launch_method", "direct")
         self._config = cfg
+
+    @contextmanager
+    def launch_touch_game(self, resolution: tuple[int, int]):
+        """为本地触屏开发启动游戏，进入游戏后恢复持久分辨率。"""
+        if self._config.get_value("genshin_starRail_fps_unlocker_allow") is not True:
+            raise PermissionError(tr("请先在工具箱的触屏模式中完成第三方解锁器的风险确认"))
+        if self.is_game_running():
+            yield
+            return
+
+        from utils.registry.star_rail_setting import (
+            get_game_resolution, read_registry_value, registry_key_path,
+            resolution_value_name, set_game_resolution, write_registry_value,
+        )
+        import winreg
+
+        game_path = Path(self.game_path).resolve()
+        if not game_path.is_file():
+            raise FileNotFoundError(tr("请在“设置”→“程序”中配置正确的游戏路径"))
+        directory = Path(self._config.genshin_starRail_fps_unlocker_path).resolve()
+        unlocker = directory / "unlocker.exe"
+        if not unlocker.is_file():
+            raise FileNotFoundError(tr("未找到触屏解锁器，请先运行 mobileui_update"))
+
+        original = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name)
+        if original is None or get_game_resolution() is None:
+            raise RuntimeError(tr("未找到原始游戏分辨率，请先在游戏内保存分辨率设置"))
+
+        config_path = directory / "hoyofps_config.ini"
+        config = configparser.ConfigParser()
+        config.read(config_path, encoding="utf-16")
+        if not config.has_section("Setting"):
+            config.add_section("Setting")
+        setting = config["Setting"]
+        if setting.get("HKSRPath") != str(game_path) or setting.get("FPS") != "60":
+            setting.update({"HKSRPath": str(game_path), "FPS": "60"})
+            with config_path.open("w", encoding="utf-16") as stream:
+                config.write(stream)
+
+        pause_ctl.checkpoint()
+        try:
+            set_game_resolution(*resolution, False)
+            launcher = subprocess.Popen(
+                [str(unlocker), "-HKSR", "-EnableMobileUI"],
+                cwd=directory,
+                creationflags=subprocess.CREATE_NEW_CONSOLE,
+            )
+            self.log_info("正在启动触屏模式")
+            deadline = time.monotonic() + 90
+            while self.get_resolution() != resolution:
+                pause_ctl.checkpoint()
+                if time.monotonic() >= deadline:
+                    raise TimeoutError(tr("等待 1280×720 触屏游戏窗口超时"))
+                exit_code = launcher.poll()
+                if exit_code:
+                    raise RuntimeError(tr("触屏解锁器启动失败，退出码为 {code}").format(code=exit_code))
+                time.sleep(0.25)
+            # 首次出现 720p 窗口时游戏仍可能在读注册表，须等登录画面加载并进入场景。
+            yield
+        finally:
+            write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name,
+                                 original, winreg.REG_BINARY)
 
     def start_game_process(self) -> bool:
         """启动游戏"""

@@ -1,4 +1,5 @@
 import ast
+from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, call
@@ -38,14 +39,10 @@ def test_launch_loads_low_quality_then_restores_persisted_settings(startup):
     game.begin_temporary_graphics.assert_called_once_with(controller.game_path, game.log)
 
 
-@pytest.mark.parametrize(("profile", "resolution"), [
-    (None, (1920, 1080)),
-    ("touch_720", (1280, 720)),
-])
 @pytest.mark.parametrize("already_running", [False, True])
-def test_local_start_uses_profile_resolution(startup, profile, resolution, already_running):
+def test_pc_local_start_uses_profile_resolution(startup, already_running):
     game, controller, cfg = startup
-    cfg.ui_profile = profile
+    resolution = (1920, 1080)
     controller.switch_to_game.return_value = already_running
 
     game.start_game()
@@ -56,6 +53,36 @@ def test_local_start_uses_profile_resolution(startup, profile, resolution, alrea
     else:
         controller.change_resolution.assert_called_once_with(*resolution)
         assert controller.check_resolution.call_args_list == [call(*resolution), call(*resolution)]
+
+
+@pytest.mark.parametrize("background", [False, True])
+def test_touch_local_start_uses_clicks_and_native_resolution(startup, monkeypatch, background):
+    game, controller, cfg = startup
+    cfg.ui_profile = "touch_720"
+    controller.launch_touch_game.return_value = nullcontext()
+    controller.get_resolution.return_value = (1280, 720)
+    controller.switch_to_game.return_value = True
+    monkeypatch.setattr(game, "get_game_controller", Mock(return_value=controller))
+    monkeypatch.setattr(game, "screen", Mock())
+    game.screen.get_current_screen.side_effect = [False, True]
+    game.wait_until.side_effect = lambda condition, timeout: condition() or condition()
+    game.auto.input_handler = Mock(is_background=background)
+    game.auto.click_element = Mock()
+
+    game.start_game()
+
+    game.get_game_controller.assert_called_once_with("local")
+    controller.launch_touch_game.assert_called_once_with((1280, 720))
+    if background:
+        controller.switch_to_game.assert_not_called()
+        game.auto.input_handler.wait_for_window.assert_called_once_with(game.WINDOW_WAIT_SECONDS)
+    else:
+        controller.switch_to_game.assert_called_once_with()
+        game.auto.input_handler.wait_for_window.assert_not_called()
+    assert game.screen.get_current_screen.call_args_list == [call(autotry=False), call(autotry=False)]
+    assert game.auto.click_element.call_args.args[:3] == ("./assets/touch_720/images/screen/click_enter.png", "image", 0.9)
+    game.auto.press_mouse.assert_not_called()
+    game.StarRailController.assert_not_called()
 
 
 def test_explicit_cloud_start_skips_local_resolution(startup, monkeypatch):

@@ -26,6 +26,7 @@ from tasks.base.base import Base
 from module.ocr import ocr
 from module.localization import tr
 from utils.console import is_gui_started
+from utils.pause import pause_ctl
 from utils.runs import describe_run, idle_without_run_lock
 from utils.temporary_graphics import begin_temporary_graphics, restore_temporary_graphics
 
@@ -92,11 +93,39 @@ def ensure_game_ready():
     return True
 
 
+def _start_local_touch_game():
+    controller = get_game_controller("local")
+    profile = get_ui_profile(cfg)
+
+    def touch_game_ready():
+        pause_ctl.checkpoint()
+        if controller.get_resolution() != profile.resolution:
+            return False
+        if screen.get_current_screen(autotry=False):
+            return True
+        auto.click_element("./assets/touch_720/images/screen/click_enter.png", "image", 0.9,
+                           crop=(840 / 1920, 930 / 1080, 240 / 1920, 130 / 1080))
+        return False
+
+    with controller.launch_touch_game(profile.resolution):
+        if getattr(auto.input_handler, "is_background", False) is True:
+            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
+        elif not controller.switch_to_game():
+            raise RuntimeError(tr("切换到游戏窗口失败"))
+        if controller.get_resolution() != profile.resolution:
+            raise RuntimeError(tr("请退出当前游戏，再启动 1280×720 触屏模式"))
+        if not wait_until(touch_game_ready, min(cfg.start_game_timeout * 60, 180)):
+            raise TimeoutError(tr("未能进入触屏主界面，请检查游戏登录状态"))
+
+
 def start_game(headless=None, *, optimize_graphics=True):
     backend = get_control_backend(cfg)
     if backend == "adb":
         if not get_game_controller(backend).start_game_process():
             raise RuntimeError(tr("启动游戏失败"))
+        return
+    if backend == "local" and get_ui_profile(cfg).name == "touch_720":
+        _start_local_touch_game()
         return
 
     MAX_RETRY = 3
