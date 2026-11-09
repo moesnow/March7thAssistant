@@ -48,12 +48,13 @@ class LocalInput(InputBase):
             self.logger.error(f"鼠标移动出错：{e}")
 
     def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5, end_pause=0.0, repeats=1):
-        '''按住鼠标左键从起点拖动到终点'''
+        '''拖动界面元素，或在光标隐藏时移动镜头。'''
         try:
+            duration = max(0.0, float(duration or 0.0))
             # 探索时游戏隐藏并锁住光标，需要相对移动来转动镜头。
             # 菜单显示光标时继续使用原有左键拖动。
             if win32gui.GetCursorInfo()[0] == 0:
-                steps = max(1, round(float(duration or 0.0) * 60))
+                steps = max(1, round(duration * 60))
                 for index in range(repeats):
                     sent_x = sent_y = 0
                     for step in range(1, steps + 1):
@@ -63,7 +64,7 @@ class LocalInput(InputBase):
                         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE,
                                              next_x - sent_x, next_y - sent_y, 0, 0)
                         sent_x, sent_y = next_x, next_y
-                        time.sleep(float(duration or 0.0) / steps)
+                        time.sleep(duration / steps)
                     if end_pause and index == repeats - 1:
                         time.sleep(end_pause)
                 self.logger.debug(f"镜头相对移动 ({end_x - start_x}, {end_y - start_y})")
@@ -72,7 +73,7 @@ class LocalInput(InputBase):
                 pyautogui.moveTo(start_x, start_y)
                 try:
                     pyautogui.mouseDown()
-                    pyautogui.moveTo(end_x, end_y, duration=max(0.0, float(duration or 0.0)))
+                    pyautogui.moveTo(end_x, end_y, duration=duration)
                     if end_pause and index == repeats - 1:
                         time.sleep(end_pause)
                 finally:

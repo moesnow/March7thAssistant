@@ -59,6 +59,7 @@ def test_local_drag_group_releases_each_stroke_and_holds_only_last(monkeypatch, 
     from module.automation import local_input as module
 
     events = []
+    monkeypatch.setattr(module.win32gui, "GetCursorInfo", lambda: (1, None, (0, 0)))
     monkeypatch.setattr(module.pyautogui, "moveTo", lambda *args, **kwargs: None)
     monkeypatch.setattr(module.pyautogui, "mouseUp", lambda: events.append("up"))
 
@@ -127,6 +128,7 @@ def test_local_drag_holds_endpoint_before_release_and_cleans_on_interruption(mon
     from module.automation import local_input as module
 
     events = []
+    monkeypatch.setattr(module.win32gui, "GetCursorInfo", lambda: (1, None, (0, 0)))
     monkeypatch.setattr(module.pyautogui, "moveTo", lambda *args, **kwargs: events.append("move"))
     monkeypatch.setattr(module.pyautogui, "mouseDown", lambda: events.append("down"))
     monkeypatch.setattr(module.pyautogui, "mouseUp", lambda: events.append("up"))
@@ -199,11 +201,12 @@ def test_interrupted_mouse_down_does_not_sleep_or_claim_a_complete_long_press(mo
 @pytest.mark.skipif(sys.platform != "win32", reason="本地输入后端仅在 Windows 使用")
 @pytest.mark.parametrize("failure", ["press", "move"])
 def test_local_drag_releases_button_when_input_fails(monkeypatch, failure):
-    from module.automation.local_input import LocalInput
+    from module.automation import local_input as module
 
     events = []
     logger = SimpleNamespace(debug=lambda *_: None, error=lambda *_: None)
-    local_input = LocalInput(logger)
+    local_input = module.LocalInput(logger)
+    monkeypatch.setattr(module.win32gui, "GetCursorInfo", lambda: (1, None, (0, 0)))
 
     def move_to(x, y, duration=None):
         events.append(("move", x, y, duration))
