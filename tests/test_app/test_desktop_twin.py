@@ -261,6 +261,204 @@ def test_screen_keeps_16_9_and_native_frame_follows_theme(qtbot, monkeypatch):
     dialog.close()
 
 
+@pytest.fixture
+def screen_dialog(qtbot):
+    """切到分身画面的窗口，不连接分身。"""
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog._timer.stop()
+    dialog.show()
+    dialog._set_screen_visible(True)
+    qtbot.wait(10)
+    # 测试窗口不上屏，Qt 不会改原生窗口的尺寸，手动同步，拖动边框的模拟才从真实尺寸开始
+    import win32con
+    import win32gui
+
+    hwnd = int(dialog.winId())
+    left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+    _, _, client_width, client_height = win32gui.GetClientRect(hwnd)
+    scale = dialog.devicePixelRatioF()
+    win32gui.SetWindowPos(hwnd, 0, 0, 0, round(dialog.width() * scale) + right - left - client_width,
+                          round(dialog.height() * scale) + bottom - top - client_height,
+                          win32con.SWP_NOMOVE | win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
+    qtbot.wait(10)
+    yield dialog
+    dialog.close()
+
+
+def _assert_desktop_fits(dialog):
+    """画面保持 16:9，在画面区域内居中，并占满其中一个方向。"""
+    area = dialog._screen.rect().marginsRemoved(dialog._screen.layout().contentsMargins())
+    frame = dialog._screenFrame.geometry()
+    assert abs(dialog._rdp.width() - dialog._rdp.height() * 16 / 9) <= 2
+    assert abs((frame.left() - area.left()) - (area.right() - frame.right())) <= 1
+    assert abs((frame.top() - area.top()) - (area.bottom() - frame.bottom())) <= 1
+    assert frame.width() >= area.width() - 1 or frame.height() >= area.height() - 1
+
+
+def test_window_has_min_max_buttons_and_minimizes_to_taskbar(screen_dialog):
+    import win32con
+    import win32gui
+
+    # 按画面比例定的窗口尺寸，画面恰好铺满，不留白
+    _assert_desktop_fits(screen_dialog)
+    frame = screen_dialog._screenFrame.geometry()
+    assert frame.width() == screen_dialog._screen.width() - 24 and frame.height() == screen_dialog._screen.height() - 24
+
+    hwnd = int(screen_dialog.winId())
+    style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
+    assert style & win32con.WS_MINIMIZEBOX and style & win32con.WS_MAXIMIZEBOX
+    # 归属于主窗口的窗口没有任务栏按钮时，最小化只会缩到屏幕左下角
+    assert win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_APPWINDOW
+
+
+@pytest.mark.parametrize("size", [(1600, 700), (700, 1000), (1280, 760)])
+def test_desktop_keeps_ratio_when_window_shape_differs(qtbot, screen_dialog, size):
+    """最大化或贴靠到屏幕一侧时窗口比例由系统决定，画面居中留白而不是被拉伸。"""
+    from PySide6.QtCore import QSize
+
+    screen_dialog.resize(*size)
+    qtbot.waitUntil(lambda: screen_dialog.size() == QSize(*size))
+    _assert_desktop_fits(screen_dialog)
+
+
+def test_page_switch_while_maximized_resizes_after_restore(qtbot):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog._timer.stop()
+    dialog.show()
+    dialog.showMaximized()
+    size = dialog.size()
+
+    dialog._set_screen_visible(True)
+    assert dialog.isMaximized() and dialog.size() == size  # 不改尺寸，否则会打乱最大化状态
+    dialog.showNormal()
+    qtbot.waitUntil(lambda: dialog.height() == dialog._height_for_desktop(dialog.width()))
+    _assert_desktop_fits(dialog)
+
+    dialog.showMinimized()
+    dialog._set_screen_visible(False)
+    dialog.showNormal()
+    qtbot.waitUntil(lambda: dialog.width() == ui._INTRO_WIDTH)
+    dialog.close()
+
+
+def test_reopening_minimized_twin_keeps_it_maximized(qtbot, monkeypatch):
+    from PySide6.QtWidgets import QWidget
+    from app.tools_interface import ToolsInterface
+    from tasks import tool
+
+    monkeypatch.setattr(tool, "start", Mock())
+    parent = QWidget()
+    parent.logInterface = Mock()
+    qtbot.addWidget(parent)
+    page = ToolsInterface(parent)
+    page.desktopTwinCard.button.click()
+    dialog = page._desktop_twin
+    dialog.showMaximized()
+    dialog.showMinimized()
+
+    page.desktopTwinCard.button.click()
+    assert dialog.isMaximized() and not dialog.isMinimized()
+    assert page.closeDesktopTwin()
+
+
+class SizingLoop:
+    """按系统拖动边框的方式驱动 WM_SIZING：被拖动的边取鼠标位置，其余的边沿用上一次调整后的结果。"""
+
+    def __init__(self, dialog, edge):
+        import win32con
+        import win32gui
+
+        self.dialog = dialog
+        self.hwnd = int(dialog.winId())
+        self.edge = edge
+        self.start = win32gui.GetWindowRect(self.hwnd)
+        self._left = edge in (win32con.WMSZ_LEFT, win32con.WMSZ_TOPLEFT, win32con.WMSZ_BOTTOMLEFT)
+        self._right = edge in (win32con.WMSZ_RIGHT, win32con.WMSZ_TOPRIGHT, win32con.WMSZ_BOTTOMRIGHT)
+        self._top = edge in (win32con.WMSZ_TOP, win32con.WMSZ_TOPLEFT, win32con.WMSZ_TOPRIGHT)
+        self._bottom = edge in (win32con.WMSZ_BOTTOM, win32con.WMSZ_BOTTOMLEFT, win32con.WMSZ_BOTTOMRIGHT)
+        self._send(win32con.WM_ENTERSIZEMOVE)
+
+    def _send(self, message, wparam=0, lparam=0):
+        import ctypes
+        from ctypes import wintypes
+        from shiboken6 import VoidPtr
+
+        msg = wintypes.MSG(self.hwnd, message, wparam, lparam)
+        return self.dialog.nativeEvent(b"windows_generic_MSG", VoidPtr(ctypes.addressof(msg)))
+
+    def move(self, x, y):
+        """鼠标移到 (x, y)，返回窗口调整后的矩形。"""
+        import ctypes
+        from ctypes import wintypes
+        import win32con
+        import win32gui
+        from PySide6.QtWidgets import QApplication
+
+        left, top, right, bottom = win32gui.GetWindowRect(self.hwnd)
+        left, right = (x if self._left else left), (x if self._right else right)
+        top, bottom = (y if self._top else top), (y if self._bottom else bottom)
+        rect = wintypes.RECT(left, top, right, bottom)
+        assert self._send(win32con.WM_SIZING, self.edge, ctypes.addressof(rect)) == (True, 1)
+        win32gui.SetWindowPos(self.hwnd, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                              win32con.SWP_NOZORDER | win32con.SWP_NOACTIVATE)
+        QApplication.processEvents()
+        return rect.left, rect.top, rect.right, rect.bottom
+
+    def finish(self):
+        import win32con
+
+        self._send(win32con.WM_EXITSIZEMOVE)
+
+
+def test_corner_drag_follows_the_mouse_without_jumping(screen_dialog):
+    """拖角时宽高不能按与当前尺寸的差值轮流修正，否则鼠标不动窗口也会在两个尺寸之间来回跳。"""
+    import math
+    import win32con
+
+    slack = math.ceil(2 * screen_dialog.devicePixelRatioF())
+    loop = SizingLoop(screen_dialog, win32con.WMSZ_BOTTOMRIGHT)
+    x, y = loop.start[2], loop.start[3]
+    for dx, dy in [(6, 1)] * 30 + [(1, 6)] * 30 + [(-5, -2)] * 30:  # 横向为主、纵向为主、往回缩
+        x, y = x + dx, y + dy
+        rect = loop.move(x, y)
+        assert loop.move(x, y) == rect  # 鼠标不动，窗口也不动
+        assert rect[:2] == loop.start[:2]  # 对角不动
+        # 窗口刚好包住鼠标：一个方向贴着鼠标，另一个方向不小于鼠标位置
+        assert rect[2] >= x - slack and rect[3] >= y - slack
+        assert min(rect[2] - x, rect[3] - y) <= slack
+    loop.finish()
+    _assert_desktop_fits(screen_dialog)
+
+
+@pytest.mark.parametrize("edge", ["RIGHT", "BOTTOM", "LEFT", "TOP"])
+def test_edge_drag_returns_to_start_without_drift(screen_dialog, edge):
+    import win32con
+
+    loop = SizingLoop(screen_dialog, getattr(win32con, f"WMSZ_{edge}"))
+    left, top, right, bottom = loop.start
+    x, y = (left, top) if edge in ("LEFT", "TOP") else (right, bottom)
+    sign = -1 if edge in ("LEFT", "TOP") else 1
+    for offset in list(range(7, 211, 7)) + list(range(203, 0, -7)):
+        rect = loop.move(x + sign * offset, y + sign * offset)
+        if edge in ("LEFT", "RIGHT"):
+            assert abs((rect[1] + rect[3]) - (top + bottom)) <= 1  # 以开始拖动时的中线上下居中
+        else:
+            assert abs((rect[0] + rect[2]) - (left + right)) <= 1
+    # 拖回原处，窗口回到原来的位置和大小；按高度反推宽度时取整可能差 1 像素
+    assert all(abs(a - b) <= 1 for a, b in zip(loop.move(x, y), loop.start))
+    loop.finish()
+
+
 def test_reconnect_keeps_the_existing_gui(qtbot, monkeypatch):
     from PySide6.QtWidgets import QWidget
     from app.tools import desktop_twin as ui
@@ -395,6 +593,11 @@ def test_hidden_twin_is_muted_and_restored_when_shown(qtbot):
     assert audio.calls == ["mute", "mute"]
     dialog.show()
     assert not audio.muting and audio.calls[-1] == "restore"
+
+    dialog.showMinimized()  # 最小化同样看不见窗口
+    assert audio.muting
+    dialog.showNormal()
+    assert not audio.muting
 
     dialog.hide()
     dialog._session = None

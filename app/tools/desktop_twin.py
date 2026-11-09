@@ -7,9 +7,9 @@ from ctypes import wintypes
 
 import win32con
 import win32gui
-from PySide6.QtCore import QRectF, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QRect, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen
-from PySide6.QtWidgets import QDialog, QFrame, QHBoxLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBarIcon,
                             PrimaryPushButton, PushButton, SubtitleLabel, TextWrap, ToolTipFilter, ToolTipPosition,
                             isDarkTheme, qconfig)
@@ -44,6 +44,8 @@ _STATUS_COLORS = {
     "error": ("#c42b1c", "#ff99a4"),
 }
 _ALTERNATIVE = 2  # 确认窗口第三个按钮的返回值
+# 处于这些状态时窗口尺寸由系统决定，换页后等还原再调整
+_STATE_KEEPS_SIZE = Qt.WindowState.WindowMinimized | Qt.WindowState.WindowMaximized | Qt.WindowState.WindowFullScreen
 
 
 def docs_url():
@@ -132,6 +134,71 @@ class _StatusIndicator(QWidget):
         painter.drawEllipse(QRectF(4, 4, 8, 8))
 
 
+def _inset(widget):
+    """控件四周不属于内容的 (宽, 高)：样式表描边占用的内容边距，加上它的布局边距。"""
+    margins = widget.contentsMargins()
+    if widget.layout() is not None:
+        margins += widget.layout().contentsMargins()
+    return margins.left() + margins.right(), margins.top() + margins.bottom()
+
+
+class _AspectLayout(QLayout):
+    """按分身桌面的比例摆放唯一的控件，并在剩余空间中居中。
+
+    控件自身的描边和边距不计入比例。窗口比例与画面不一致时，例如最大化或贴靠到屏幕一侧，
+    两侧或上下留白，画面不会被拉伸。
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._item = None
+
+    def addItem(self, item):
+        self._item = item
+
+    def count(self):
+        return 0 if self._item is None else 1
+
+    def itemAt(self, index):
+        return self._item if index == 0 else None
+
+    def takeAt(self, index):
+        item = self.itemAt(index)
+        if item is not None:
+            self._item = None
+        return item
+
+    def minimumSize(self):
+        size = self._item.minimumSize() if self._item is not None else QSize(0, 0)
+        return size.grownBy(self.contentsMargins())
+
+    def sizeHint(self):
+        return self.minimumSize()
+
+    def setGeometry(self, rect):
+        super().setGeometry(rect)
+        if self._item is None:
+            return
+        area = rect.marginsRemoved(self.contentsMargins())
+        border = self._border()
+        width = area.width() - border.width()
+        height = area.height() - border.height()
+        # 相差 1 像素以内是缩放取整的误差，直接铺满
+        if width > round(height * _DESKTOP_ASPECT) + 1:
+            width = round(height * _DESKTOP_ASPECT)
+        elif height > round(width / _DESKTOP_ASPECT) + 1:
+            height = round(width / _DESKTOP_ASPECT)
+        size = (QSize(width, height) + border).expandedTo(self._item.minimumSize())
+        self._item.setGeometry(QRect(area.x() + (area.width() - size.width()) // 2,
+                                     area.y() + (area.height() - size.height()) // 2, size.width(), size.height()))
+
+    def _border(self):
+        widget = self._item.widget()
+        if widget is None:
+            return QSize(0, 0)
+        return QSize(*_inset(widget))
+
+
 class _StatusLabel(BodyLabel):
     """单行显示，放不下时省略，悬停查看全文。底栏高度固定，分身画面才能保持 16:9。"""
 
@@ -165,6 +232,7 @@ class DesktopTwinDialog(QDialog):
 
     def __init__(self, parent, log_page, check_ready=None):
         super().__init__(parent)
+        self.setWindowFlag(Qt.WindowType.WindowMinMaxButtonsHint)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setObjectName("desktopTwinDialog")
         self.setWindowIcon(QIcon("./assets/logo/March7th.ico"))
@@ -184,6 +252,8 @@ class DesktopTwinDialog(QDialog):
         self._audio = ProcessAudioMuter(marker=os.path.abspath(os.path.join("temp", "desktop_twin_muted")))
         self._audio_check_at = 0.0
         self._audio_error = ""
+        self._sizing_from = None  # 拖动边框开始时的窗口矩形
+        self._fit_on_restore = False
 
         self._intro = self._createIntro()
 
@@ -197,7 +267,7 @@ class DesktopTwinDialog(QDialog):
         frameLayout = QVBoxLayout(self._screenFrame)
         frameLayout.setContentsMargins(1, 1, 1, 1)
         frameLayout.addWidget(self._rdp)
-        screenLayout = QVBoxLayout(self._screen)
+        screenLayout = _AspectLayout(self._screen)
         screenLayout.setContentsMargins(12, 12, 12, 12)
         screenLayout.addWidget(self._screenFrame)
         self._screen.hide()
@@ -314,12 +384,11 @@ class DesktopTwinDialog(QDialog):
         return self._lease is not None
 
     def _screen_chrome(self):
-        """分身画面以外占用的 (宽, 高)：外边距、1px 描边和底栏。"""
+        """分身画面以外占用的 (宽, 高)：外边距、画面框的描边和边距、底栏。"""
         outer = self._screen.layout().contentsMargins()
-        border = self._screenFrame.layout().contentsMargins()
-        width = outer.left() + outer.right() + border.left() + border.right()
-        height = (outer.top() + outer.bottom() + border.top() + border.bottom()
-                  + self._footerBar.sizeHint().height())
+        border_width, border_height = _inset(self._screenFrame)
+        width = outer.left() + outer.right() + border_width
+        height = outer.top() + outer.bottom() + border_height + self._footerBar.sizeHint().height()
         return width, height
 
     def _height_for_desktop(self, width):
@@ -332,17 +401,29 @@ class DesktopTwinDialog(QDialog):
         self._intro.setVisible(not visible)
         self._screen.setVisible(visible)
         self._rdp.setVisible(visible)
-        if visible:
+        self._fit_page(center)
+
+    def _fit_page(self, center=None):
+        """按当前页设定窗口大小。最大化或最小化时只换页，还原后再调整。"""
+        if self.windowState() & _STATE_KEEPS_SIZE:
+            self._fit_on_restore = True
+            return
+        self._fit_on_restore = False
+        if self._rdp.isHidden():
+            self.resize(_INTRO_WIDTH, self._intro_height(_INTRO_WIDTH))
+        else:
             area = self.screen().availableGeometry()
             chrome_width, chrome_height = self._screen_chrome()
             caption = max(self.frameGeometry().height() - self.height(), 32)
             fit_width = int((area.height() - 48 - caption - chrome_height) * _DESKTOP_ASPECT) + chrome_width
             width = max(self.minimumSizeHint().width(), min(960, area.width() - 48, fit_width))
             self.resize(width, self._height_for_desktop(width))
-        else:
-            self.resize(_INTRO_WIDTH, self._intro_height(_INTRO_WIDTH))
         if center is not None:
             self._keep_center(center)
+
+    def _fit_restored(self):
+        if self._fit_on_restore and not self.windowState() & _STATE_KEEPS_SIZE:
+            self._fit_page(self.frameGeometry().center() if self.isVisible() else None)
 
     def _intro_height(self, width):
         layout = self.layout()
@@ -351,7 +432,10 @@ class DesktopTwinDialog(QDialog):
 
     def _fit_intro(self):
         if self._rdp.isHidden() and self.isVisible():
-            self.resize(self.width(), self._intro_height(self.width()))
+            if self.windowState() & _STATE_KEEPS_SIZE:
+                self._fit_on_restore = True
+            else:
+                self.resize(self.width(), self._intro_height(self.width()))
 
     def _keep_center(self, center):
         frame = self.frameGeometry()
@@ -364,31 +448,52 @@ class DesktopTwinDialog(QDialog):
     def nativeEvent(self, event_type, message):
         if bytes(event_type) == b"windows_generic_MSG":
             msg = wintypes.MSG.from_address(int(message))
-            if msg.message == win32con.WM_SIZING and not self._rdp.isHidden():
+            if msg.message == win32con.WM_ENTERSIZEMOVE:
+                self._sizing_from = win32gui.GetWindowRect(msg.hWnd)
+            elif msg.message == win32con.WM_EXITSIZEMOVE:
+                self._sizing_from = None
+            elif msg.message == win32con.WM_SIZING and not self._rdp.isHidden():
                 self._constrain_desktop_resize(msg)
                 return True, 1
         return super().nativeEvent(event_type, message)
 
     def _constrain_desktop_resize(self, msg):
-        # WM_SIZING 的矩形含系统边框，Qt 布局尺寸使用逻辑像素。
-        left, top, right, bottom = win32gui.GetWindowRect(msg.hWnd)
-        _, _, client_width, client_height = win32gui.GetClientRect(msg.hWnd)
+        """拖动边框时让分身画面保持桌面比例。
+
+        系统给出的矩形里，正在拖动的边取自鼠标位置，其余的边沿用上一次调整的结果。尺寸只按拖动的边计算，
+        结果就只取决于鼠标位置；若按与当前尺寸的差值计算，拖角时宽、高两个方向的修正互相拉扯，
+        窗口会在两个尺寸之间来回跳。
+        """
         rect = wintypes.RECT.from_address(msg.lParam)
         edge = msg.wParam
         horizontal_edge = edge in (win32con.WMSZ_LEFT, win32con.WMSZ_RIGHT)
         vertical_edge = edge in (win32con.WMSZ_TOP, win32con.WMSZ_BOTTOM)
-        width_change = (rect.right - rect.left) - (right - left)
-        width_from_height = ((rect.bottom - rect.top) - (bottom - top)) * _DESKTOP_ASPECT
-        if vertical_edge or (not horizontal_edge and abs(width_from_height) > abs(width_change)):
-            width_change = width_from_height
-
+        # WM_SIZING 的矩形含系统边框和标题栏，单位是物理像素；Qt 布局尺寸使用逻辑像素。
+        left, top, right, bottom = win32gui.GetWindowRect(msg.hWnd)
+        _, _, client_width, client_height = win32gui.GetClientRect(msg.hWnd)
+        extra_width = right - left - client_width
+        extra_height = bottom - top - client_height
         scale = self.devicePixelRatioF()
-        width = max(self.minimumWidth(), round((client_width + width_change) / scale))
-        frame_width = round(width * scale) + (right - left) - client_width
-        frame_height = round(self._height_for_desktop(width) * scale) + (bottom - top) - client_height
+        chrome_width, chrome_height = self._screen_chrome()
 
+        width_from_width = (rect.right - rect.left - extra_width) / scale
+        width_from_height = (((rect.bottom - rect.top - extra_height) / scale - chrome_height) * _DESKTOP_ASPECT
+                             + chrome_width)
+        if horizontal_edge:
+            width = width_from_width
+        elif vertical_edge:
+            width = width_from_height
+        else:
+            # 拖角时取刚好包住鼠标的尺寸：窗口的一条边贴着鼠标，另一条边按比例延伸
+            width = max(width_from_width, width_from_height)
+        width = max(self.minimumWidth(), round(width))
+        frame_width = round(width * scale) + extra_width
+        frame_height = round(self._height_for_desktop(width) * scale) + extra_height
+
+        # 拖角时对角不动；拖单边时对边不动，另一方向按开始拖动时的中线居中，来回拖也不会漂移
+        start_left, start_top, start_right, start_bottom = self._sizing_from or (left, top, right, bottom)
         if vertical_edge:
-            rect.left = (rect.left + rect.right - frame_width) // 2
+            rect.left = (start_left + start_right - frame_width) // 2
             rect.right = rect.left + frame_width
         elif edge in (win32con.WMSZ_LEFT, win32con.WMSZ_TOPLEFT, win32con.WMSZ_BOTTOMLEFT):
             rect.left = rect.right - frame_width
@@ -396,21 +501,42 @@ class DesktopTwinDialog(QDialog):
             rect.right = rect.left + frame_width
 
         if horizontal_edge:
-            rect.top = (rect.top + rect.bottom - frame_height) // 2
+            rect.top = (start_top + start_bottom - frame_height) // 2
             rect.bottom = rect.top + frame_height
         elif edge in (win32con.WMSZ_TOP, win32con.WMSZ_TOPLEFT, win32con.WMSZ_TOPRIGHT):
             rect.top = rect.bottom - frame_height
         else:
             rect.bottom = rect.top + frame_height
 
+    def changeEvent(self, e):
+        super().changeEvent(e)
+        if (e.type() == QEvent.Type.WindowStateChange and self._fit_on_restore
+                and not self.windowState() & _STATE_KEEPS_SIZE):
+            # 等系统完成还原，再按当前页调整窗口
+            QTimer.singleShot(0, self, self._fit_restored)
+
     def showEvent(self, e):
         super().showEvent(e)
+        self._show_in_taskbar()
         self._applyFrameTheme()
         self._restore_audio()
 
+    def _show_in_taskbar(self):
+        """分身窗口归属于主窗口，默认没有任务栏按钮，最小化后只会缩成屏幕左下角的小标题栏。
+
+        在窗口第一次显示前加上 WS_EX_APPWINDOW，让它和普通窗口一样最小化到任务栏。
+        """
+        try:
+            hwnd = int(self.winId())
+            style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+            if not style & win32con.WS_EX_APPWINDOW:
+                win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, style | win32con.WS_EX_APPWINDOW)
+        except Exception:
+            pass
+
     def hideEvent(self, e):
         super().hideEvent(e)
-        # 包括主窗口最小化时随之隐藏；连接中隐藏也要静音，避免连上后直接出声
+        # 包括窗口最小化，以及主窗口最小化时随之隐藏；连接中隐藏也要静音，避免连上后直接出声
         if self._session is not None or self._connect_until:
             self._mute_audio()
 

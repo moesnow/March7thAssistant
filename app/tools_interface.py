@@ -375,9 +375,9 @@ class ToolsInterface(ScrollArea):
                 self._desktop_twin.hostingChanged.connect(hosting_changed)
             self._desktop_twin.destroyed.connect(self._forgetDesktopTwin)
         if self._desktop_twin.isMinimized():
-            self._desktop_twin.showNormal()
-        else:
-            self._desktop_twin.show()
+            # 还原到最小化之前的状态，最大化的窗口仍然最大化
+            self._desktop_twin.setWindowState(self._desktop_twin.windowState() & ~Qt.WindowState.WindowMinimized)
+        self._desktop_twin.show()
         self._desktop_twin.raise_()
         self._desktop_twin.activateWindow()
 
