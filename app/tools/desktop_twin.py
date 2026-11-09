@@ -8,8 +8,9 @@ from ctypes import wintypes
 import win32con
 import win32gui
 from PySide6.QtCore import QEvent, QRect, QRectF, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QIcon, QPainter, QPen
-from PySide6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QTextLayout
+from PySide6.QtWidgets import (QApplication, QBoxLayout, QDialog, QFrame, QHBoxLayout, QLayout, QPushButton,
+                               QSizePolicy, QVBoxLayout, QWidget)
 from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBarIcon,
                             PrimaryPushButton, PushButton, SubtitleLabel, TextWrap, ToolTipFilter, ToolTipPosition,
                             isDarkTheme, qconfig)
@@ -46,6 +47,9 @@ _STATUS_COLORS = {
 _ALTERNATIVE = 2  # 确认窗口第三个按钮的返回值
 # 处于这些状态时窗口尺寸由系统决定，换页后等还原再调整
 _STATE_KEEPS_SIZE = Qt.WindowState.WindowMinimized | Qt.WindowState.WindowMaximized | Qt.WindowState.WindowFullScreen
+# 按钮栏的内边距 (左, 上, 右, 下)：False 为底栏，True 为右侧竖排的侧栏
+_BAR_MARGINS = {False: (16, 12, 16, 12), True: (12, 12, 12, 12)}
+_BAR_BORDER = 1  # 按钮栏与画面之间的描边，与 qss 中 #footerBar 的描边宽度一致
 
 
 def docs_url():
@@ -200,11 +204,16 @@ class _AspectLayout(QLayout):
 
 
 class _StatusLabel(BodyLabel):
-    """单行显示，放不下时省略，悬停查看全文。底栏高度固定，分身画面才能保持 16:9。"""
+    """底栏里单行显示，放不下时省略，悬停查看全文；底栏高度固定，分身画面才能保持 16:9。
+
+    侧栏里宽度有限、高度充足，按宽度换行显示全文。换行不用 QLabel 自带的 wordWrap：
+    它会让整个窗口的布局变成高度随宽度变化，Qt 会因此改写窗口的最小尺寸。
+    """
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self._fullText = ""
+        self._wrapping = False
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.setMinimumWidth(64)
         self.installEventFilter(ToolTipFilter(self, 300, ToolTipPosition.TOP))
@@ -214,17 +223,35 @@ class _StatusLabel(BodyLabel):
 
     def setFullText(self, text):
         self._fullText = text
-        self._elide()
+        self._refresh()
+
+    def setWrapping(self, wrapping):
+        self._wrapping = wrapping
+        self._refresh()
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
-        self._elide()
+        self._refresh()
 
-    def _elide(self):
-        shown = self.fontMetrics().elidedText(self._fullText, Qt.TextElideMode.ElideRight, self.width())
+    def _refresh(self):
+        if self._wrapping:
+            shown = "\n".join(self._wrappedLines())
+        else:
+            shown = self.fontMetrics().elidedText(self._fullText, Qt.TextElideMode.ElideRight, self.width())
         if shown != self.text():
             self.setText(shown)
-        self.setToolTip(self._fullText if shown != self._fullText else "")
+        self.setToolTip(self._fullText if not self._wrapping and shown != self._fullText else "")
+
+    def _wrappedLines(self):
+        layout = QTextLayout(self._fullText, self.font())
+        lines = []
+        layout.beginLayout()
+        while (line := layout.createLine()).isValid():
+            line.setLineWidth(self.width())
+            start = line.textStart()
+            lines.append(self._fullText[start:start + line.textLength()].rstrip())
+        layout.endLayout()
+        return lines
 
 
 class DesktopTwinDialog(QDialog):
@@ -282,26 +309,37 @@ class DesktopTwinDialog(QDialog):
         self._assistant_button = PushButton(QIcon("./assets/logo/March7th.ico"), "", self._footerBar)
         self._hide_button = PushButton(FIF.HIDE, "", self._footerBar)
         self._logoff_button = PushButton(FIF.POWER_BUTTON, "", self._footerBar)
-        for button in (self._docs_button, self._connect_button, self._assistant_button,
-                       self._hide_button, self._logoff_button):
+        self._bar_buttons = (self._docs_button, self._connect_button, self._assistant_button,
+                             self._hide_button, self._logoff_button)
+        for button in self._bar_buttons:
             button.installEventFilter(ToolTipFilter(button, 300, ToolTipPosition.TOP))
 
-        self._footer = QHBoxLayout(self._footerBar)
-        self._footer.setContentsMargins(16, 12, 16, 12)
+        # 底栏和侧栏共用这一套控件，切换时只改排列方向、拉伸和留白，见 _apply_bar_layout
+        self._statusRow = QHBoxLayout()
+        self._statusRow.setSpacing(8)
+        self._statusRow.addWidget(self._indicator)
+        self._statusRow.addWidget(self._status, 1)
+        self._footer = QBoxLayout(QBoxLayout.Direction.LeftToRight, self._footerBar)
         self._footer.setSpacing(8)
-        self._footer.addWidget(self._indicator, 0, Qt.AlignmentFlag.AlignVCenter)
-        self._footer.addWidget(self._status, 1)
+        self._footer.addLayout(self._statusRow)
+        self._footer.addStretch()
         self._footer.addWidget(self._docs_button)
         self._footer.addSpacing(4)
-        for button in (self._connect_button, self._assistant_button, self._hide_button, self._logoff_button):
+        for button in self._bar_buttons[1:]:
             self._footer.addWidget(button)
 
+        self._body = QBoxLayout(QBoxLayout.Direction.TopToBottom)
+        self._body.setSpacing(0)
+        self._body.addWidget(self._screen, 1)
+        self._body.addWidget(self._footerBar)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(self._intro, 1)
-        layout.addWidget(self._screen, 1)
-        layout.addWidget(self._footerBar)
+        layout.addLayout(self._body)
+        self._side_bar = None
+        self._arranging_bar = False
+        self._apply_bar_layout(False)
 
         self._connect_button.clicked.connect(self._toggle_connection)
         self._assistant_button.clicked.connect(self._open_assistant)
@@ -383,13 +421,78 @@ class DesktopTwinDialog(QDialog):
     def active(self):
         return self._lease is not None
 
-    def _screen_chrome(self):
-        """分身画面以外占用的 (宽, 高)：外边距、画面框的描边和边距、底栏。"""
+    def _picture_chrome(self):
+        """分身画面四周占用的 (宽, 高)：外边距、画面框的描边和边距。"""
         outer = self._screen.layout().contentsMargins()
         border_width, border_height = _inset(self._screenFrame)
-        width = outer.left() + outer.right() + border_width
-        height = outer.top() + outer.bottom() + border_height + self._footerBar.sizeHint().height()
-        return width, height
+        return outer.left() + outer.right() + border_width, outer.top() + outer.bottom() + border_height
+
+    def _screen_chrome(self):
+        """按钮放在底栏时，分身画面以外占用的 (宽, 高)。普通窗口始终按底栏定尺寸。"""
+        width, height = self._picture_chrome()
+        return width, height + self._bar_extent(False)
+
+    def _bar_extent(self, side):
+        """底栏的高度（side=False）或侧栏的宽度（side=True）。按控件尺寸计算，与当前的排法无关。"""
+        left, top, right, bottom = _BAR_MARGINS[side]
+        buttons = [button for button in self._bar_buttons if not button.isHidden()]
+        if side:
+            status = self._indicator.width() + self._statusRow.spacing() + self._status.minimumWidth()
+            return _BAR_BORDER + left + right + max([status] + [button.sizeHint().width() for button in buttons])
+        line = max(self._indicator.height(), self._status.fontMetrics().height())
+        return _BAR_BORDER + top + bottom + max([line] + [button.sizeHint().height() for button in buttons])
+
+    def _wants_side_bar(self, size):
+        """侧栏能让画面更大时改用侧栏，例如在 16:9 屏幕上最大化。说明页始终用底栏。"""
+        if self._rdp.isHidden():
+            return False
+        chrome_width, chrome_height = self._picture_chrome()
+
+        def picture_width(width, height):
+            return min(width - chrome_width, (height - chrome_height) * _DESKTOP_ASPECT)
+
+        bottom = picture_width(size.width(), size.height() - self._bar_extent(False))
+        side = picture_width(size.width() - self._bar_extent(True), size.height())
+        return side > bottom
+
+    def _update_bar_layout(self):
+        """按窗口尺寸选择底栏或侧栏，排法变了返回 True。"""
+        side = self._wants_side_bar(self.size())
+        if side == self._side_bar:
+            return False
+        self._apply_bar_layout(side)
+        return True
+
+    def _apply_bar_layout(self, side):
+        """在底栏和右侧竖排的侧栏之间切换：控件不变，只改排列方向、拉伸、留白和描边位置。"""
+        self._side_bar = side
+        horizontal, vertical = QBoxLayout.Direction.LeftToRight, QBoxLayout.Direction.TopToBottom
+        self._body.setDirection(horizontal if side else vertical)
+        self._footer.setDirection(vertical if side else horizontal)
+        self._footer.setContentsMargins(*_BAR_MARGINS[side])
+        # 底栏：状态文字占满按钮左侧；侧栏：状态在顶端，按钮靠底部，仍在窗口右下角附近
+        self._footer.setStretch(0, 0 if side else 1)
+        self._footer.setStretch(1, 1 if side else 0)
+        self._statusRow.setAlignment(self._indicator,
+                                     Qt.AlignmentFlag.AlignTop if side else Qt.AlignmentFlag.AlignVCenter)
+        self._status.setWrapping(side)
+        # 描边从顶边换到左边。重新套用样式表后，QFrame 要收到 StyleChange 才会按新描边更新内容边距
+        self._footerBar.setProperty("side", side)
+        self._footerBar.style().unpolish(self._footerBar)
+        self._footerBar.style().polish(self._footerBar)
+        QApplication.sendEvent(self._footerBar, QEvent(QEvent.Type.StyleChange))
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        if self._arranging_bar:
+            return
+        self._arranging_bar = True
+        try:
+            # 换了排法立即重排，不等下一轮事件，避免先按旧排法画出一帧
+            if self._update_bar_layout():
+                self.layout().activate()
+        finally:
+            self._arranging_bar = False
 
     def _height_for_desktop(self, width):
         chrome_width, chrome_height = self._screen_chrome()
@@ -401,6 +504,7 @@ class DesktopTwinDialog(QDialog):
         self._intro.setVisible(not visible)
         self._screen.setVisible(visible)
         self._rdp.setVisible(visible)
+        self._update_bar_layout()
         self._fit_page(center)
 
     def _fit_page(self, center=None):
@@ -649,6 +753,7 @@ class DesktopTwinDialog(QDialog):
         self._errorHolder.setVisible(show_error)
         if error_changed:
             self._fit_intro()
+        self._update_bar_layout()  # 显示哪些按钮、按钮文字都会影响侧栏宽度
 
     def _dismiss_error(self):
         self._error = ""

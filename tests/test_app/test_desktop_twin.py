@@ -326,6 +326,67 @@ def test_desktop_keeps_ratio_when_window_shape_differs(qtbot, screen_dialog, siz
     _assert_desktop_fits(screen_dialog)
 
 
+def test_wide_window_moves_buttons_to_side_bar(qtbot, screen_dialog):
+    """例如在 1920×1080 屏幕上最大化：按钮竖排到画面右侧，画面比按钮在底部时更大；变回普通尺寸恢复底栏。"""
+    from PySide6.QtCore import QSize
+
+    dialog = screen_dialog
+    dialog._connected = True
+    dialog.retranslateUi()
+    normal = dialog.size()
+    assert not dialog._side_bar
+    assert dialog._footerBar.height() == dialog._bar_extent(False)
+
+    dialog.resize(1920, 1009)
+    qtbot.waitUntil(lambda: dialog.size() == QSize(1920, 1009))
+    assert dialog._side_bar
+    bar, screen = dialog._footerBar.geometry(), dialog._screen.geometry()
+    assert bar.left() > screen.right() and bar.height() == dialog.height()
+    assert bar.width() == dialog._bar_extent(True)
+    _, chrome_height = dialog._picture_chrome()
+    assert dialog._rdp.height() > dialog.height() - dialog._bar_extent(False) - chrome_height
+    _assert_desktop_fits(dialog)
+
+    dialog.resize(normal)
+    qtbot.waitUntil(lambda: dialog.size() == normal)
+    assert not dialog._side_bar
+    assert dialog._footerBar.geometry().top() > dialog._screen.geometry().bottom()
+    assert dialog._footerBar.height() == dialog._bar_extent(False)
+    _assert_desktop_fits(dialog)
+
+
+def test_side_bar_wraps_status_instead_of_eliding(qtbot, screen_dialog):
+    from PySide6.QtCore import QSize
+
+    dialog = screen_dialog
+    message = "会话身份已变化，请在 Windows 中检查分身"
+    dialog._report(message)
+    dialog.resize(1920, 1009)
+    qtbot.waitUntil(lambda: dialog.size() == QSize(1920, 1009) and dialog._side_bar)
+    label = dialog._status
+    qtbot.waitUntil(lambda: "\n" in label.text())
+    lines = label.text().split("\n")
+    assert "".join(lines).replace(" ", "") == message.replace(" ", "")  # 换行显示全文，不省略
+    assert all(label.fontMetrics().horizontalAdvance(line) <= label.width() for line in lines)
+    assert label.toolTip() == ""
+    qtbot.waitUntil(lambda: label.height() >= label.sizeHint().height())  # 每一行都显示得下
+
+    dialog.resize(960, 609)
+    qtbot.waitUntil(lambda: not dialog._side_bar)
+    assert "\n" not in label.text()
+
+
+def test_intro_page_keeps_bottom_bar_in_wide_window(qtbot, screen_dialog):
+    from PySide6.QtCore import QSize
+
+    dialog = screen_dialog
+    dialog.resize(1920, 1009)
+    qtbot.waitUntil(lambda: dialog.size() == QSize(1920, 1009) and dialog._side_bar)
+    dialog.showMaximized()  # 最大化时换页不改窗口尺寸
+    dialog._set_screen_visible(False)
+    assert dialog.size() == QSize(1920, 1009) and not dialog._side_bar
+
+
 def test_page_switch_while_maximized_resizes_after_restore(qtbot):
     from PySide6.QtWidgets import QWidget
     from app.tools import desktop_twin as ui

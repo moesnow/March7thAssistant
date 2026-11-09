@@ -19,3 +19,9 @@
     border: none;
     border-top: 1px solid rgb(229, 229, 229);
 }
+
+/* 窗口够宽时按钮栏竖排在画面右侧 */
+#footerBar[side="true"] {
+    border-top: none;
+    border-left: 1px solid rgb(229, 229, 229);
+}
