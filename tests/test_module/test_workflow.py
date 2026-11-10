@@ -811,3 +811,37 @@ class TestLoadWorkflowExecutionPayloadErrors:
         wf = self._patch_workflow(monkeypatch)
         result = wf.load_workflow_execution_payload("示例流程", "0")
         assert len(result["steps"]) == 1
+
+
+
+@pytest.mark.parametrize("error_code", ["disconnected", "manual_action_required"])
+@pytest.mark.parametrize(("step", "operation"), [
+    ({"type": "click_crop", "crop": "0, 0, 1, 1"}, "click_element"),
+    ({"type": "drag_mouse", "start": "0, 0", "end": "1, 1"}, "drag_mouse"),
+    ({"type": "send_message", "text": "测试", "with_screenshot": True}, "take_screenshot"),
+])
+def test_review_adb_error_stops_nested_workflow(monkeypatch, error_code, step, operation):
+    from unittest.mock import Mock
+
+    from module.game.adb_transport import AdbError
+
+    error = AdbError(error_code, "ADB 任务中断")
+    action = Mock(side_effect=error)
+    monkeypatch.setattr(f"module.workflow.auto.{operation}", action)
+    notify = Mock()
+    monkeypatch.setattr("module.workflow.notif.notify", notify)
+    sleep = Mock()
+    messages = []
+    runner = WorkflowRunner(log_callback=messages.append, sleep_func=sleep, mirror_to_project_log=False)
+
+    with pytest.raises(AdbError) as raised:
+        runner.run({"name": "ADB 工作流", "steps": [
+            {"type": "for", "count": 2, "children": [step]},
+            {"type": "wait", "seconds": 1},
+        ]})
+
+    assert raised.value is error
+    action.assert_called_once()
+    sleep.assert_not_called()
+    notify.assert_not_called()
+    assert "流程执行完成" not in messages

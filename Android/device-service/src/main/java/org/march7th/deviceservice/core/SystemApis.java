@@ -149,6 +149,13 @@ final class SystemApis {
 
     // ---- 任务 ----
 
+    static int packageUidForCurrentUser(String packageName) throws ReflectiveOperationException {
+        int userId = (Integer) method("android.app.ActivityManager", "getCurrentUser").invoke(null);
+        String api = "android.content.pm.IPackageManager";
+        return (Integer) method(api, "getPackageUid", String.class, long.class, int.class)
+                .invoke(asInterface(api, "package"), packageName, 0L, userId);
+    }
+
     private static synchronized Object activityTaskManager() throws ReflectiveOperationException {
         if (activityTaskManager == null) {
             activityTaskManager = method("android.app.ActivityTaskManager", "getService").invoke(null);

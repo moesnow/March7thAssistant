@@ -244,6 +244,10 @@ final class Watchdog {
         return config.displayId >= 0 ? config.displayId : host.currentDisplayId();
     }
 
+    String primaryInputPackage(int displayId) {
+        return displayId == 0 && config.displayId == 0 ? config.packageName : null;
+    }
+
     void learnMainActivity(String component) {
         String prefix = config.packageName + "/";
         synchronized (stateLock) {

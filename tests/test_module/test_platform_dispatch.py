@@ -173,26 +173,30 @@ def test_cloud_capture_keeps_crop_and_decode_fallback(monkeypatch, browser_resul
     assert screenshot.get_window_region(False) == (0, 0, 1920, 1080)
 
 
-def test_adb_placeholder_reports_without_input_or_capture_retry(monkeypatch):
+def test_adb_registers_input_without_connecting_and_does_not_retry_failure(monkeypatch):
     from module import game
     from module.automation import automation, screenshot
+    from module.automation.adb_input import AdbInput
+    from module.game.adb_transport import AdbError
 
     config = SimpleNamespace(control_backend="adb", ui_profile="touch_720", cloud_game_enable=True)
     monkeypatch.setattr(game, "cfg", config)
     monkeypatch.setattr(automation, "cfg", config)
     monkeypatch.setattr(screenshot, "cfg", config)
-    with pytest.raises(game.AdbBackendUnavailableError, match="ADB"):
-        game.get_game_controller()
+    connect = Mock(side_effect=AssertionError("unexpected device access"))
+    monkeypatch.setattr(game.adb_game, "connect", connect)
+    assert game.get_game_controller() is game.adb_game
 
     auto = object.__new__(automation.Automation)
     auto.__init__("game", Mock())
-    assert auto.input_handler is None
+    assert isinstance(auto.input_handler, AdbInput)
     auto.close_input()
-    with pytest.raises(game.AdbBackendUnavailableError, match="ADB"):
+    with pytest.raises(AdbError, match="ADB"):
         auto.mouse_click(0, 0)
-    with pytest.raises(game.AdbBackendUnavailableError, match="ADB"):
+    with pytest.raises(AdbError, match="ADB"):
         auto.take_screenshot()
     auto.logger.error.assert_not_called()
+    connect.assert_not_called()
 
 
 def test_adb_does_not_register_cloud_browser_cleanup(monkeypatch):

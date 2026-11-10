@@ -13,8 +13,10 @@ from utils.logger.logger import Logger
 from typing import Optional
 from utils.singleton import SingletonMeta
 from utils.image_utils import ImageUtils
-from utils.pause import pause_guard
-from module.game import AdbBackendUnavailableError, get_game_controller
+from utils.pause import pause_ctl, pause_guard
+from module.game import get_game_controller
+from module.game.adb_transport import AdbError
+from module.localization import tr
 from module.ocr import ocr
 from module.config import cfg
 from module.config.platform import TouchProfileInputError, get_control_backend, get_ui_profile
@@ -31,10 +33,6 @@ def _reject_touch_input(name):
         raise TouchProfileInputError(name)
 
     return reject
-
-
-def _unavailable_input(*args, **kwargs):
-    raise AdbBackendUnavailableError()
 
 
 @contextmanager
@@ -74,19 +72,13 @@ class Automation(metaclass=SingletonMeta):
         previous = getattr(self, 'input_handler', None)
         if previous is not None and callable(getattr(previous, 'close', None)):
             previous.close()
-        try:
-            self.input_handler = get_game_controller().get_input_handler()
-        except AdbBackendUnavailableError:
-            # 全局 auto 在导入时创建。实际使用时再报错，避免绑定到本地输入。
-            self.input_handler = None
+        self.input_handler = get_game_controller().get_input_handler()
 
         touch = get_ui_profile(cfg).name == "touch_720"
         inputs = ("mouse_click", "mouse_down", "mouse_up", "mouse_move", "mouse_drag", "secretly_write")
         for name in inputs + _TOUCH_UNSUPPORTED_INPUTS:
             if touch and name in _TOUCH_UNSUPPORTED_INPUTS:
                 method = _reject_touch_input(name)
-            elif self.input_handler is None:
-                method = _unavailable_input
             else:
                 method = pause_guard(getattr(self.input_handler, name))
             setattr(self, name, method)
@@ -204,7 +196,10 @@ class Automation(metaclass=SingletonMeta):
         """
         start_time = time.monotonic()
         timeout = _screenshot_retry_timeout.get()
+        adb = get_control_backend(cfg) == "adb"
         while True:
+            if adb:
+                pause_ctl.checkpoint()
             handler = getattr(self, 'input_handler', None)
             background = getattr(handler, 'is_background', False) is True
             if background:
@@ -228,9 +223,9 @@ class Automation(metaclass=SingletonMeta):
                         if crop != (0, 0, 1, 1):
                             self._debug_draw_crop_region(crop)
                     return result
-                elif timeout > 0:
+                elif timeout > 0 and not adb:
                     self.logger.error("截图失败：未能获取游戏窗口画面" if background else "截图失败：没有找到游戏窗口")
-            except AdbBackendUnavailableError:
+            except AdbError:
                 raise
             except Exception as e:
                 if timeout <= 0:
@@ -238,6 +233,8 @@ class Automation(metaclass=SingletonMeta):
                 self.logger.error(f"截图失败：{e}")
             remaining = timeout - (time.monotonic() - start_time)
             if remaining <= 0:
+                if adb:
+                    raise AdbError("frame_timeout", tr("ADB 截图超时，未取得可用的游戏画面"))
                 raise RuntimeError("截图超时")
             time.sleep(min(1, remaining))
 

@@ -7116,3 +7116,266 @@ msgstr "Close the current game before launching 1280×720 touch mode."
 msgid "未能进入触屏主界面，请检查游戏登录状态"
 msgstr ""
 "Could not reach the touch mode main screen. Check the game's sign-in status."
+
+#: module/game/adb_transport.py:44
+msgid "ADB 设备或设备端服务已断开，请重新连接后再运行"
+msgstr ""
+"The ADB device or device service disconnected. Reconnect and run again."
+
+#: module/game/adb_transport.py:88
+msgid "未找到 adb，请配置 adb_path 或把 Android Platform-Tools 加入 PATH"
+msgstr ""
+"ADB was not found. Set adb_path or add Android Platform-Tools to PATH."
+
+#: module/game/adb_transport.py:168
+msgid "未找到指定的 ADB 设备，请检查连接和 adb_serial"
+msgstr ""
+"The requested ADB device was not found. Check the connection and adb_serial."
+
+#: module/game/adb_transport.py:181
+msgid "ADB 后端需要 Android 10 或更高版本"
+msgstr "The ADB backend requires Android 10 or later."
+
+#: module/game/adb_transport.py:186
+msgid "adb_device_type 必须为 auto、physical 或 emulator"
+msgstr "Set adb_device_type to auto, physical, or emulator."
+
+#: module/game/adb_transport.py:197
+msgid "无法读取 Android display 0 的分辨率"
+msgstr "Could not read the resolution of Android display 0."
+
+#: module/game/adb_transport.py:165
+msgid "检测到多个 ADB 设备，请设置 adb_serial"
+msgstr "Multiple ADB devices were detected. Set adb_serial."
+
+#: module/game/adb_transport.py:334
+msgid "ADB 端口转发未返回有效端口"
+msgstr "ADB forwarding did not return a valid port."
+
+#: module/game/adb_transport.py:339
+msgid "ADB 设备端协议版本不匹配"
+msgstr "The ADB device protocol version does not match."
+
+#: module/game/adb_transport.py:341
+msgid "ADB 设备端服务版本不匹配，请检查 JAR"
+msgstr "The ADB device service version does not match. Check the JAR."
+
+#: module/game/adb_transport.py:70
+msgid "配置的 adb_path 不存在：{path}"
+msgstr "The configured adb_path does not exist: {path}"
+
+#: module/game/adb_transport.py:170
+msgid "ADB 设备 {serial} 的状态为 {state}，请检查连接并在设备上授权 USB 调试"
+msgstr ""
+"ADB device {serial} is {state}. Check the connection and authorize USB "
+"debugging on the device."
+
+#: module/game/adb_transport.py:263
+msgid "ADB 设备端服务返回了无效的响应"
+msgstr "The ADB device service returned an invalid response."
+
+#: module/game/adb_transport.py:327
+msgid "设备端服务已被占用或仍在清理，请稍后重试"
+msgstr ""
+"The device service is in use or still shutting down. Try again shortly."
+
+#: module/game/adb_transport.py:329
+msgid "ADB 设备端服务启动超时"
+msgstr "The ADB device service did not start in time."
+
+#: module/game/adb_transport.py:115
+msgid "ADB 服务端被其他版本重启。请关闭模拟器自带的 adb，并固定使用 {path}"
+msgstr ""
+"Another ADB version restarted the server. Close the emulator's bundled adb "
+"and use {path} consistently."
+
+#: module/game/adb_transport.py:124
+msgid "ADB 命令失败：{command}（退出码 {code}）"
+msgstr "ADB command failed: {command} (exit code {code})"
+
+#: module/game/adb_transport.py:268
+msgid "ADB 设备端服务错误 {code}：{message}"
+msgstr "ADB device service error {code}: {message}"
+
+#: module/game/adb_transport.py:108
+msgid "ADB 命令超时：{command}"
+msgstr "ADB command timed out: {command}"
+
+#: module/game/adb_transport.py:110
+msgid "无法执行 adb：{path}"
+msgstr "Could not run adb: {path}"
+
+#: module/game/adb_transport.py:288
+msgid "无法读取设备端 JAR：{path}。请先构建 Android/device-service 或配置 adb_service_jar"
+msgstr ""
+"Could not read the device service JAR at {path}. Build Android/device-"
+"service or set adb_service_jar."
+
+#: module/game/adb.py:118
+msgid "ADB 会话尚未启动，请先启动游戏"
+msgstr "The ADB session is inactive. Start the game first."
+
+#: module/game/adb.py:363
+msgid "ADB 设备端服务返回了无效的帧"
+msgstr "The ADB device service returned an invalid frame."
+
+#: module/game/adb.py:368
+msgid "ADB 设备端服务返回了输入前的帧"
+msgstr "The ADB device service returned a frame from before the input."
+
+#: module/game/adb.py:100
+msgid "ADB 后端需要设置 ui_profile: touch_720"
+msgstr "The ADB backend requires ui_profile: touch_720."
+
+#: module/game/adb.py:103
+msgid "adb_tap_ms 必须是 1 到 10000 毫秒之间的整数"
+msgstr "adb_tap_ms must be a whole number from 1 to 10000 milliseconds."
+
+#: module/game/adb.py:212
+msgid "Android 设备未安装国服《崩坏：星穹铁道》"
+msgstr ""
+"The mainland China edition of Honkai: Star Rail is not installed on the "
+"Android device."
+
+#: module/game/adb.py:328 module/game/adb.py:291
+msgid "ADB 尚未准备游戏画面，请先启动游戏"
+msgstr "The ADB game display is not ready. Start the game first."
+
+#: module/game/adb.py:387
+msgid "无法解码模拟器 display 0 的截图"
+msgstr "Could not decode the emulator's display 0 screenshot."
+
+#: module/game/adb.py:308
+msgid "Android 拒绝触摸注入，请检查 USB 调试（安全设置）是否开启"
+msgstr ""
+"Android denied touch input. Check that USB debugging (Security settings) is "
+"enabled."
+
+#: module/game/adb.py:199
+msgid "模拟器 display 0 当前为 {width}×{height}。请在模拟器设置中选择 1280×720 横屏后重试"
+msgstr ""
+"Emulator display 0 is {width}×{height}. Set the emulator to 1280×720 "
+"landscape and try again."
+
+#: module/game/adb.py:150
+msgid "游戏需要手动登录，请在 Android 实体屏或模拟器中完成登录后重试"
+msgstr "Sign in on the Android device or emulator, then try again."
+
+#: module/game/adb.py:152
+msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"
+msgstr ""
+"The Android game exited. Check the game's background settings on the device "
+"and try again."
+
+#: module/game/adb.py:148
+msgid "游戏未能回到目标 Android 屏幕，请结束游戏后重试"
+msgstr ""
+"The game could not return to the Android virtual display. Close it and try "
+"again."
+
+#: module/automation/adb_input.py:46
+msgid "ADB 设备端服务不支持文本输入，请在设备上手动输入"
+msgstr ""
+"Enter text manually on the device. The ADB device service cannot enter text."
+
+#: tasks/game/adb_check.py:61
+msgid "ADB 启动超时，请检查 Android 游戏的登录和横屏状态"
+msgstr ""
+"ADB startup timed out. Check the Android game's sign-in and landscape "
+"orientation."
+
+#: tasks/game/adb_check.py:89
+msgid "ADB 自检未能在输入后的画面中确认手机菜单"
+msgstr "The ADB self-test could not confirm the phone menu after the tap."
+
+#: tasks/game/adb_check.py:81
+msgid "未能点开 Android 手机菜单，请检查游戏是否处于主界面"
+msgstr ""
+"Could not open the in-game phone menu. Check that the main screen is "
+"visible."
+
+#: tasks/game/adb_check.py:95
+msgid "ADB 路径：{path}"
+msgstr "ADB path: {path}"
+
+#: tasks/game/adb_check.py:108
+msgid "使用模拟器 display 0（1280×720 横屏）"
+msgstr "Using emulator display 0 (1280×720 landscape)"
+
+#: tasks/game/adb_check.py:121
+msgid "ADB 自检未取得游戏画面"
+msgstr "The ADB self-test received no frames."
+
+#: tasks/game/adb_check.py:129
+msgid "模拟器使用 display 0，无需回迁"
+msgstr "The emulator uses display 0. No display migration was needed."
+
+#: tasks/game/adb_check.py:29
+msgid "无法读取 ADB 启动所需的触屏素材：{path}"
+msgstr "Could not load the touch template required for ADB startup: {path}"
+
+#: tasks/game/adb_check.py:100
+msgid "ADB 设备：{serial} · {model} · Android {version}（API {sdk}）"
+msgstr "ADB device: {serial} · {model} · Android {version} (API {sdk})"
+
+#: tasks/game/adb_check.py:105
+msgid "ADB 设备端服务版本：{version}"
+msgstr "ADB device service version: {version}"
+
+#: tasks/game/adb_check.py:115
+msgid "已在 display {display} 启动游戏，等待进入主界面"
+msgstr "Launched the game on display {display}. Waiting for the main screen."
+
+#: tasks/game/adb_check.py:117
+msgid "游戏界面就绪，用时 {seconds:.1f} 秒"
+msgstr "Game ready after {seconds:.1f} seconds"
+
+#: tasks/game/adb_check.py:122
+msgid "取帧速率：{fps:.1f} FPS（{frames} 次取样 / {seconds:.1f} 秒，{updates} 次更新）"
+msgstr ""
+"Capture rate: {fps:.1f} FPS ({frames} samples in {seconds:.1f} seconds, "
+"{updates} updates)"
+
+#: tasks/game/adb_check.py:131
+msgid "本次启动未发生回迁"
+msgstr "The game did not move between displays on this launch."
+
+#: tasks/game/adb_check.py:141
+msgid "已确认手机菜单，截图：{path}"
+msgstr "Confirmed the phone menu. Screenshot: {path}"
+
+#: tasks/game/adb_check.py:110
+msgid "已创建 1280×720 虚拟屏，display {display}"
+msgstr "Created a 1280×720 virtual display (display {display})"
+
+#: tasks/game/adb_check.py:127
+msgid "已确认自动回迁 {count} 次"
+msgstr "Confirmed {count} automatic returns to the target display"
+
+#: main.py:600
+msgid "请在 Android 设备上更新游戏"
+msgstr "Update the game on the Android device."
+
+#: main.py:614
+msgid "ADB 自检需要设置 control_backend: adb"
+msgstr "The ADB self-test requires control_backend: adb."
+
+#: module/automation/automation.py:237
+msgid "ADB 截图超时，未取得可用的游戏画面"
+msgstr "ADB capture timed out while waiting for a usable game frame."
+
+#: utils/tasks.py:46
+msgid "ADB 自检"
+msgstr "ADB Self-Test"
+
+#: module/game/__init__.py:19
+msgid "ADB 模式不支持「{task}」，请使用本地或云游戏后端"
+msgstr ""
+"ADB mode does not support {task}. Switch to the local or cloud game backend."
+
+#: module/game/adb.py:200
+msgid ""
+"display 0 的触摸目标校验需要 Android 14 或更高版本，请设置 adb_device_type: physical 使用虚拟屏"
+msgstr ""
+"Touch targeting on display 0 requires Android 14 or later. Set "
+"adb_device_type: physical to use a virtual display."

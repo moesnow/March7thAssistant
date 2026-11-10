@@ -11,6 +11,7 @@ from datetime import datetime
 
 from module.automation import auto
 from module.config import cfg
+from module.game.adb_transport import AdbError
 from module.logger import log
 from module.localization import tr
 from module.notification import notif
@@ -1065,6 +1066,9 @@ class WorkflowRunner:
             self._log(f"{'  ' * depth}[{index}/{len(steps)}] {title}")
             try:
                 self.last_result, loop_control = self._execute_step(step, depth, in_loop)
+            except AdbError:
+                self.last_result = False
+                raise
             except Exception as exc:
                 self.last_result = False
                 loop_control = None
@@ -1272,6 +1276,8 @@ class WorkflowRunner:
 
         try:
             return bool(auto.drag_mouse(start, end, step.get("drag_duration", 0.5)))
+        except AdbError:
+            raise
         except Exception as exc:
             self._log(f"滑动鼠标失败：{exc}")
             return False
@@ -1339,6 +1345,8 @@ class WorkflowRunner:
                         screenshot, _, _ = result
                         image = screenshot
                     self._log("消息通知：包含截图")
+                except AdbError:
+                    raise
                 except Exception as e:
                     self._log(f"获取截图失败：{e}")
 
@@ -1349,6 +1357,8 @@ class WorkflowRunner:
             )
             self._log("消息推送完成")
             return True
+        except AdbError:
+            raise
         except Exception as e:
             self._log(f"消息推送失败：{e}")
             return False
@@ -1394,6 +1404,8 @@ class WorkflowRunner:
                 self._log(f"未知按键动作：{action}")
                 return False
             return True
+        except AdbError:
+            raise
         except Exception as e:
             self._log(f"按键操作失败：{e}")
             return False

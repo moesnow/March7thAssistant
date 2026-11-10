@@ -8,6 +8,7 @@ import psutil
 from app.tools.account_manager import load_acc_and_pwd
 from utils.registry.gameaccount import gamereg_uid
 from .starrailcontroller import StarRailController
+from .adb_check import wait_for_game as wait_for_adb_game
 
 from utils.date import Date
 from utils.console import pause_on_success
@@ -74,6 +75,9 @@ def ensure_game_ready():
             log.error("云游戏会话未就绪，workflow 未执行")
             return False
         return True
+    if backend == "adb":
+        start_game()
+        return True
     if not controller.is_game_running():
         log.error("未检测到游戏窗口，workflow 未执行")
         return False
@@ -121,8 +125,9 @@ def _start_local_touch_game():
 def start_game(headless=None, *, optimize_graphics=True):
     backend = get_control_backend(cfg)
     if backend == "adb":
-        if not get_game_controller(backend).start_game_process():
-            raise RuntimeError(tr("启动游戏失败"))
+        controller = get_game_controller(backend)
+        controller.start_game_process()
+        wait_for_adb_game(controller, min(cfg.start_game_timeout * 60, 180))
         return
     if backend == "local" and get_ui_profile(cfg).name == "touch_720":
         _start_local_touch_game()

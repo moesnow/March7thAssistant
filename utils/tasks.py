@@ -43,6 +43,8 @@ AVAILABLE_TASKS = {
     "character_export": "角色面板导出",
 }
 
+CLI_ONLY_TASKS = {"adb_check": "ADB 自检"}
+
 # 任务名称映射（兼容旧名称调用方）
 TASK_NAMES = AVAILABLE_TASKS
 
