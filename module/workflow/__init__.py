@@ -1074,7 +1074,7 @@ class WorkflowRunner:
                 return self.last_result, loop_control
             if self.stop_requested:
                 return False, None
-        return True, None
+        return self.last_result if steps else True, None
 
     def _execute_step(self, step: dict, depth: int, in_loop: bool = False) -> tuple[bool, str | None]:
         normalized = normalize_step(step)
