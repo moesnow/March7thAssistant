@@ -445,6 +445,12 @@ class RunSession:
         except Exception:
             pass
 
+    def update_record(self, **fields):
+        """登记本次运行的元数据，供其他进程立即读取。"""
+        if not self._finished:
+            self.record.update(fields)
+            self._save()
+
     def note(self, **fields):
         """登记收尾时要写入的字段（status / error / reason / screenshot），以 finish 时为准。"""
         self._pending.update({key: value for key, value in fields.items() if value is not None})

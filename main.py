@@ -583,21 +583,19 @@ def run_workflow_action(workflow_name: str, workflow_step_path=None):
 
 def main(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
     # 包括正常返回、SystemExit、Ctrl+C、协作停止和异常，且先于外层错误暂停执行。
-    adb = get_control_backend(cfg) == "adb"
-    controller = game.get_game_controller("adb") if adb else None
-    if not adb:
-        recover_temporary_graphics(log)
-    try:
-        if adb:
-            # 图形界面和任务不在同一个进程，运行状态经文件传给界面。
-            with publish_status(controller):
+    if get_control_backend(cfg) == "adb":
+        controller = game.get_game_controller("adb")
+        with publish_status(controller, run_session):
+            try:
                 return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
+            finally:
+                controller.close()
+
+    recover_temporary_graphics(log)
+    try:
         return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
     finally:
-        if adb:
-            controller.close()
-        else:
-            restore_temporary_graphics(final=True)
+        restore_temporary_graphics(final=True)
 
 
 def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):

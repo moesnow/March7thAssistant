@@ -69,6 +69,10 @@ jobs:
           # 根目录的 AGENTS.md：在安装目录中打开的 AI Agent 会自动读取，指向随包发布的使用说明（Skill）
           Copy-Item -Path ".\assets\agent\AGENTS.md" -Destination ".\dist\March7thAssistant\" -Force
 
+      - name: Build and stage ADB device service
+        shell: pwsh
+        run: ./.github/scripts/stage-adb-service.ps1 -PackageRoot ./dist/March7thAssistant
+
       # 缓存 7-Zip ZS，避免每次发版重复下载二进制。
       # 注意 GitHub 缓存按 ref 隔离：tag 触发的运行只能读默认分支（main）作用域的缓存，
       # 不同 tag 之间也不共享，所以在 main 上手动 workflow_dispatch 跑一次本工作流预热缓存，

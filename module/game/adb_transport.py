@@ -11,6 +11,7 @@ import shutil
 import socket
 import struct
 import subprocess
+import sys
 import time
 
 from module.config import cfg
@@ -22,7 +23,8 @@ GAME_PACKAGE = "com.miHoYo.hkrpg"
 RESOLUTION = (1280, 720)
 PROTOCOL = 1
 SERVICE_VERSION = "0.1.1"
-DEFAULT_JAR = Path("Android/device-service/build/outputs/m7a-device-service.jar")
+DEFAULT_JAR = Path("assets/binary/m7a-device-service.jar")
+_DEVELOPMENT_JAR = Path("Android/device-service/build/outputs/m7a-device-service.jar")
 _MAIN_CLASS = "org.march7th.deviceservice.Main"
 _REMOTE_DIR = "/data/local/tmp"
 _IDLE_SECONDS = 8
@@ -56,6 +58,14 @@ class AdbDevice:
 
 
 @dataclass(frozen=True)
+class AdbTouchInjectionStatus:
+    """allowed 为 None 时无法确认权限。MIUI 安全设置未知或不适用时，第二项为 None。"""
+
+    allowed: bool | None
+    usb_debugging_security_enabled: bool | None = None
+
+
+@dataclass(frozen=True)
 class AdbEnvironment:
     adb_path: Path | None
     device: AdbDevice
@@ -65,6 +75,28 @@ class AdbEnvironment:
     display_size: tuple[int, int]
     game_installed: bool
     virtual_auto_focus: bool = False
+
+    def check_touch_injection(self) -> AdbTouchInjectionStatus:
+        """读取当前设备的 shell 注入权限和 MIUI 安全设置。无法判断时 allowed 为 None。"""
+        if self.adb_path is None:
+            return AdbTouchInjectionStatus(None)
+        try:
+            output = Adb(self.adb_path, self.device.serial).shell(
+                'echo "miui=$(getprop ro.miui.ui.version.name)"; '
+                'echo "adbinput=$(getprop persist.security.adbinput)"; '
+                'dumpsys package com.android.shell | grep "android.permission.INJECT_EVENTS: granted" || true',
+                timeout=8,
+            )
+        except AdbError:
+            return AdbTouchInjectionStatus(None)
+
+        values = dict(line.split("=", 1) for line in output.splitlines() if line.startswith(("miui=", "adbinput=")))
+        security_enabled = values.get("adbinput") == "1" if values.get("miui") else None
+        if security_enabled is False:
+            return AdbTouchInjectionStatus(False, False)
+        grants = re.findall(r"INJECT_EVENTS: granted=(true|false)", output)
+        allowed = "true" in grants if grants else security_enabled
+        return AdbTouchInjectionStatus(allowed, security_enabled)
 
 
 def resolve_adb_path(adb_path=None) -> Path:
@@ -91,6 +123,17 @@ def resolve_adb_path(adb_path=None) -> Path:
                     if path.is_file():
                         return path.resolve()
     raise AdbError("adb_not_found", tr("未找到 adb，请配置 adb_path 或把 Android Platform-Tools 加入 PATH"))
+
+
+def resolve_adb_service_jar(configured_path: str | Path | None = None) -> Path:
+    """优先使用配置中的路径，其次使用随包 JAR 和源码构建产物。"""
+    if configured_path:
+        return Path(configured_path).expanduser().resolve()
+    for jar in (DEFAULT_JAR, _DEVELOPMENT_JAR):
+        if jar.is_file():
+            return jar.resolve()
+    # 两处都缺文件时，返回当前运行形态预期的路径，由服务启动报告错误。
+    return (DEFAULT_JAR if getattr(sys, "frozen", False) else _DEVELOPMENT_JAR).resolve()
 
 
 class Adb:

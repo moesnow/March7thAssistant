@@ -5,7 +5,7 @@ import pytest
 
 pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
 
-from module.game.adb_transport import AdbError  # noqa: E402
+from module.game.adb_transport import AdbError, AdbTouchInjectionStatus  # noqa: E402
 
 from .adb_fakes import EMULATOR, PHONE, UNAUTHORIZED, FakeAdb, FakeConfig, status  # noqa: E402
 
@@ -224,7 +224,7 @@ def test_environment_card_shows_each_result(qtbot, config, adb):
 def test_environment_card_explains_failures(qtbot, config, adb):
     from app.card.adb_setting_cards import AdbEnvironmentCard
     config.values["adb_serial"] = PHONE.serial
-    adb.injection = (False, True)
+    adb.injection = AdbTouchInjectionStatus(False, False)
     adb.errors["connect"] = AdbError("service_busy", "设备端服务已被占用或仍在清理，请稍后重试")
     card = AdbEnvironmentCard()
     qtbot.addWidget(card)
@@ -324,7 +324,7 @@ def test_status_on_emulator_display_zero():
 
 def test_status_error_comes_with_next_step():
     from app.tools import adb_service as service
-    data = status(running=False, phase="failed", connected=False, game_running=False, capture_fps=0.0,
+    data = status(phase="failed", connected=False, game_running=False, capture_fps=0.0,
                   error_code="disconnected", error_message="ADB 设备或设备端服务已断开，请重新连接后再运行")
     summary, texts, rows = rows_of(data)
     assert summary == "上次运行出错，请看“最近一次错误”"
@@ -344,7 +344,7 @@ def test_status_manual_login_does_not_promise_automatic_recovery():
     ("finished", "上次运行正常结束"), ("stopped", "上次运行已被停止"), ("aborted", "上次运行的进程已退出"),
 ])
 def test_status_summary_after_run(phase, summary):
-    data = status(running=False, phase=phase, connected=False, game_running=False, capture_fps=0.0)
+    data = status(phase=phase, connected=False, game_running=False, capture_fps=0.0)
     assert rows_of(data)[0] == summary
 
 
@@ -432,7 +432,7 @@ def settings_page(qtbot, tmp_path, monkeypatch, adb):
     for module in (settings, cards, service, switch_card):
         monkeypatch.setattr(module, "cfg", config)
     monkeypatch.setattr("module.config.cfg", config)
-    monkeypatch.setattr(cards, "read_status", lambda path=None: None)
+    monkeypatch.setattr(cards, "read_adb_run_status", lambda: None)
     interface = settings.SettingInterface()
     qtbot.addWidget(interface)
     interface.resize(1050, 800)

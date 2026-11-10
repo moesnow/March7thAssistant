@@ -30,7 +30,7 @@ def runner():
              "Power", "CurrencyWars", "DivergentUniverse", "Fight", "Universe",
              "screen_test", "character_export", "challenge", "Redemption", "adb_check",
              "first_run", "pause_ctl", "ensure_exclusive_run", "version",
-             "recover_temporary_graphics", "restore_temporary_graphics", "log", "publish_status")
+             "recover_temporary_graphics", "restore_temporary_graphics", "log", "publish_status", "run_session")
     scope = {name: MagicMock() for name in names}
     scope["cfg"].control_backend = None
     scope["cfg"].ui_profile = None
@@ -173,6 +173,7 @@ def test_touch_subtasks_run_without_pc_tasks(runner, monkeypatch, backend, actio
     runner.reward.start.assert_not_called()
     if backend == "adb":
         runner.game.get_game_controller.assert_called_once_with("adb")
+        runner.publish_status.assert_called_once_with(runner.game.get_game_controller.return_value, runner.run_session)
         runner.game.get_game_controller.return_value.close.assert_called_once_with()
 
 

@@ -230,6 +230,80 @@ def test_authentication_and_protocol(s1):
         client.close()
 
 
+@pytest.mark.parametrize("miui, switch, granted, expected", [
+    ("V125", "1", "true", (True, True)),
+    ("V125", "0", "true", (False, False)),
+    ("V125", "1", "false", (False, True)),
+    ("V125", "1", None, (True, True)),
+    ("", "", "true", (True, None)),
+    ("", "", "false", (False, None)),
+    ("", "", None, (None, None)),
+])
+def test_environment_checks_touch_injection(monkeypatch, miui, switch, granted, expected):
+    adb_path = Path("adb")
+    device = transport.AdbDevice("selected-serial", "device", None)
+    environment = transport.AdbEnvironment(adb_path, device, 32, "12", "physical", (720, 1280), True)
+
+    def shell(adb, command, *, timeout):
+        assert (adb.path, adb.serial) == (adb_path, device.serial)
+        assert "getprop persist.security.adbinput" in command
+        assert "dumpsys package com.android.shell" in command
+        assert timeout == 8
+        grant = f"\n      android.permission.INJECT_EVENTS: granted={granted}" if granted else ""
+        return f"miui={miui}\nadbinput={switch}{grant}"
+
+    monkeypatch.setattr(transport.Adb, "shell", shell)
+    assert environment.check_touch_injection() == transport.AdbTouchInjectionStatus(*expected)
+
+
+@pytest.mark.parametrize("adb_path", [None, Path("adb")])
+def test_environment_reports_unknown_if_permission_cannot_be_read(monkeypatch, adb_path):
+    def disconnected(*args, **kwargs):
+        raise transport.AdbError("disconnected", "设备已断开")
+
+    device = transport.AdbDevice("selected-serial", "device", None)
+    environment = transport.AdbEnvironment(adb_path, device, 32, "12", "physical", (720, 1280), True)
+    monkeypatch.setattr(transport.Adb, "shell", disconnected)
+    assert environment.check_touch_injection() == transport.AdbTouchInjectionStatus(None)
+
+
+@pytest.mark.parametrize("bundled, override, expected", [
+    (True, True, "service.jar"),
+    (True, False, "assets/binary/m7a-device-service.jar"),
+    (False, False, "Android/device-service/build/outputs/m7a-device-service.jar"),
+])
+def test_connect_selects_service_jar(adb, tmp_path, monkeypatch, bundled, override, expected):
+    controller, fake = adb
+    monkeypatch.chdir(tmp_path)
+    development = tmp_path / "Android/device-service/build/outputs/m7a-device-service.jar"
+    development.parent.mkdir(parents=True)
+    development.write_bytes(b"development")
+    if bundled:
+        installed = tmp_path / "assets/binary/m7a-device-service.jar"
+        installed.parent.mkdir(parents=True)
+        installed.write_bytes(b"bundled")
+    if not override:
+        controller.cfg.adb_service_jar = None
+
+    controller.connect()
+    assert [Path(args[1]) for args in fake.calls if args[0] == "push"] == [(tmp_path / expected).resolve()]
+
+
+def test_missing_configured_service_jar_does_not_fall_back(adb, tmp_path, monkeypatch):
+    controller, fake = adb
+    monkeypatch.chdir(tmp_path)
+    bundled = tmp_path / "assets/binary/m7a-device-service.jar"
+    bundled.parent.mkdir(parents=True)
+    bundled.write_bytes(b"bundled")
+    controller.cfg.adb_service_jar = "missing.jar"
+
+    with pytest.raises(transport.AdbError) as raised:
+        controller.connect()
+    assert raised.value.code == "jar_not_found"
+    assert str((tmp_path / "missing.jar").resolve()) in str(raised.value)
+    assert fake.pushes == 0
+
+
 def test_version_mismatch_repushes_and_reconnects(adb, s1):
     controller, fake = adb
     s1.hello_versions = ["0.1.0", "0.1.1"]

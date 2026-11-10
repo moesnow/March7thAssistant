@@ -3,7 +3,6 @@
 from collections import deque
 from dataclasses import dataclass
 from io import BytesIO
-from pathlib import Path
 from threading import RLock
 import time
 
@@ -11,8 +10,8 @@ from PIL import Image
 
 from module.config.platform import get_ui_profile
 from module.game.adb_transport import (
-    DEFAULT_JAR, GAME_PACKAGE, RESOLUTION, Adb, AdbEnvironment, AdbError, AdbService,
-    _probe_environment, resolve_adb_path,
+    GAME_PACKAGE, RESOLUTION, Adb, AdbEnvironment, AdbError, AdbService,
+    _probe_environment, resolve_adb_path, resolve_adb_service_jar,
 )
 from module.game.base import FrameCapture, GameControllerBase
 from module.localization import tr
@@ -122,8 +121,7 @@ class AdbGameController(GameControllerBase):
             adb = Adb(adb_path if adb_path is not None else resolve_adb_path(self.cfg.adb_path))
             environment = _probe_environment(adb, self.cfg)
             service = AdbService(adb)
-            jar = Path(self.cfg.adb_service_jar or DEFAULT_JAR).expanduser().resolve()
-            service.start(jar)
+            service.start(resolve_adb_service_jar(self.cfg.adb_service_jar))
             return self._attach(environment, service, tap_ms)
 
     def _call(self, cmd, **params):

@@ -13,7 +13,7 @@ from app.common.icon import UiIcon
 from app.components.ascii_spin_box import AsciiSpinBox
 from app.tools import adb_service
 from module.config import cfg
-from module.game.adb_status import read_status
+from module.game.adb_status import AdbRunStatus, read_adb_run_status
 from module.game.adb_transport import AdbError
 from module.localization import tr
 from utils.desktop_twin import in_desktop_twin
@@ -559,8 +559,8 @@ class AdbEnvironmentCard(_PanelCard):
         self.checkFinished.emit(not error and not failed)
 
 
-def describe_status(data, backend):
-    """把状态文件整理成界面上的六行文字。返回 (摘要, {行: (级别, 文字, 说明)})。"""
+def describe_status(data: AdbRunStatus | None, backend):
+    """把运行快照整理成界面上的六行文字。返回 (摘要, {行: (级别, 文字, 说明)})。"""
     idle = adb_service.SKIP
     rows = {key: (idle, "—", "") for key in ("device", "service", "display", "game", "fps", "error")}
     rows["error"] = (idle, tr("没有错误"), "")
@@ -572,17 +572,17 @@ def describe_status(data, backend):
         rows["game"] = (idle, tr("游戏未运行"), "")
         return summary, rows
 
-    running = bool(data.get("running"))
-    connected = bool(data.get("connected"))
-    serial = data.get("serial")
-    display_id = data.get("display_id")
-    game_display = data.get("game_display_id")
-    code = data.get("error_code")
+    runtime = data.runtime
+    running = data.running
+    connected = runtime.connected
+    display_id = runtime.display_id
+    game_display = runtime.game_display_id
+    code = runtime.error_code
 
     if connected:
-        rows["device"] = (adb_service.PASS, tr("已连接 {serial}").format(serial=serial or ""), "")
+        rows["device"] = (adb_service.PASS, tr("已连接 {serial}").format(serial=runtime.serial or ""), "")
         rows["service"] = (adb_service.PASS, tr("运行中，版本 {version}").format(
-            version=data.get("service_version") or "?"), "")
+            version=runtime.service_version or "?"), "")
     elif running and not code:
         rows["device"] = (adb_service.WARN, tr("正在连接…"), "")
         rows["service"] = (idle, tr("正在启动…"), "")
@@ -597,12 +597,11 @@ def describe_status(data, backend):
     else:
         rows["display"] = (adb_service.PASS, tr("1280×720，display {display}").format(display=display_id), "")
 
-    if not connected or not data.get("game_running"):
+    if not connected or not runtime.game_running:
         rows["game"] = (idle, tr("游戏未运行"), "")
     elif code == "manual_action_required":
         rows["game"] = (adb_service.FAIL, tr("停在登录界面，等待手动登录"), "")
-    elif data.get("sdk_window") or (game_display is not None and display_id is not None
-                                    and game_display != display_id):
+    elif runtime.sdk_window or (game_display is not None and display_id is not None and game_display != display_id):
         if display_id == 0:
             rows["game"] = (adb_service.WARN, tr("在模拟器的其他窗口，正在移回"), "")
         else:
@@ -614,16 +613,16 @@ def describe_status(data, backend):
     else:
         rows["game"] = (adb_service.PASS, tr("虚拟屏，手机屏幕可以照常使用"), "")
 
-    fps = data.get("capture_fps") or 0
+    fps = runtime.capture_fps
     if connected and fps > 0:
         rows["fps"] = (adb_service.PASS, tr("{fps:.1f} 帧/秒").format(fps=fps), "")
     elif connected:
         rows["fps"] = (idle, tr("暂时没有取帧"), "")
 
-    if code:
-        rows["error"] = (adb_service.FAIL, data.get("error_message") or code, adb_service.error_guide(code))
+    if code or runtime.error_message:
+        rows["error"] = (adb_service.FAIL, runtime.error_message or code, adb_service.error_guide(code))
 
-    phase = data.get("phase")
+    phase = data.phase
     if running:
         summary = tr("任务正在运行") if connected else tr("任务正在启动")
         if code:
@@ -640,11 +639,11 @@ def describe_status(data, backend):
 
 
 class AdbStatusCard(_PanelCard):
-    """显示任务进程写出的 ADB 运行状态。"""
+    """通过 A1 的运行状态接口显示当前任务。"""
 
     def __init__(self, parent=None, *, reader=None, backend=None):
         super().__init__(UiIcon.GAUGE, tr("运行状态"), "", parent)
-        self._reader = reader or read_status
+        self._reader = reader or read_adb_run_status
         self._backend = backend or adb_service.current_backend
         self._last = object()
         self.rows = {}
@@ -691,8 +690,7 @@ class AdbStatusCard(_PanelCard):
         except Exception:
             data = None
         backend = self._backend()
-        key = (backend, None if data is None else tuple(sorted(
-            (name, value) for name, value in data.items() if name != "updated")))
+        key = (backend, data)
         if key == self._last:
             return
         self._last = key

@@ -1,170 +1,185 @@
-"""ADB 运行状态通道：任务进程定期把控制器状态写入文件，图形界面读取后展示。
-
-任务进程和图形界面是两个进程，界面拿不到任务进程里的控制器。这里只调用
-`AdbGameController.get_runtime_status()`，不参与设备会话的任何决策。
-
-文件内容是一个 JSON 对象，临时文件加 `os.replace` 原子替换：
-
-- `running`：任务进程是否仍在运行。结束时写入最后一份快照，保留最近一次错误。
-- `pid`、`create_time`：写入方进程，读取方据此识别被强制结束后留下的旧文件。
-- `phase`：`starting`（尚未连上设备）、`running`、`finished`、`failed`、`stopped`。
-- 其余字段与 `AdbRuntimeStatus` 一一对应。
-"""
-from contextlib import contextmanager
-from dataclasses import asdict
+"""任务进程通过本机回环提供实时 ADB 状态。运行记录负责发现端点和查询历史结果。"""
+from contextlib import contextmanager, suppress
+from dataclasses import asdict, dataclass, replace
 import json
-import os
-import tempfile
+import secrets
+import socket
 import threading
-import time
+from typing import Literal
 
-from utils.runs import is_process_alive, process_create_time
-
-
-STATUS_FILE_ENV = "MARCH7TH_ADB_STATUS_FILE"
-DEFAULT_STATUS_FILE = os.path.join("logs", "adb_status.json")
-STATUS_SCHEMA = 1
-POLL_INTERVAL = 1.0
-
-_FIELDS = ("connected", "serial", "service_version", "display_id", "game_display_id",
-           "game_running", "sdk_window", "capture_fps", "error_code", "error_message")
+from module.game.adb import AdbGameController, AdbRuntimeStatus
+from utils.runs import (
+    STATUS_ABORTED, STATUS_INTERRUPTED, STATUS_RUNNING, STATUS_STOPPED, STATUS_SUCCESS,
+    RunSession, effective_status, is_valid_run_id, list_run_ids, load_run, read_active_run,
+)
 
 
-def status_file_path() -> str:
-    return os.environ.get(STATUS_FILE_ENV) or DEFAULT_STATUS_FILE
+_LOOPBACK = "127.0.0.1"
+_QUERY_TIMEOUT = 0.1
+_SAMPLE_INTERVAL = 1.0
+_ENDPOINT = "adb_status_endpoint"
+_IDLE = AdbRuntimeStatus(False, None, None, None, None, False, False, 0.0, None, None)
+_END_PHASES = {
+    STATUS_SUCCESS: "finished",
+    STATUS_STOPPED: "stopped",
+    STATUS_INTERRUPTED: "stopped",
+    STATUS_ABORTED: "aborted",
+}
 
 
-def _write(path, data):
-    directory = os.path.dirname(os.path.abspath(path))
-    os.makedirs(directory, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(prefix=os.path.basename(path) + ".", suffix=".tmp", dir=directory)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as file:
-            json.dump(data, file, ensure_ascii=False)
-        # 读取方只持有文件毫秒级，撞上时稍后重试；仍失败就放弃这一次，下一轮再写。
-        for attempt in range(3):
-            try:
-                os.replace(tmp_path, path)
-                return
-            except OSError:
-                time.sleep(0.03 * (attempt + 1))
-    finally:
-        try:
-            if os.path.exists(tmp_path):
-                os.remove(tmp_path)
-        except OSError:
-            pass
+@dataclass(frozen=True)
+class AdbRunStatus:
+    run_id: str
+    phase: Literal["starting", "running", "finished", "failed", "stopped", "aborted"]
+    runtime: AdbRuntimeStatus
+
+    @property
+    def running(self) -> bool:
+        return self.phase in ("starting", "running")
 
 
-class AdbStatusPublisher:
-    """后台线程按固定间隔写入状态。任何失败都只影响状态展示，不影响任务。"""
+def _encode(runtime):
+    return json.dumps(asdict(runtime), ensure_ascii=False).encode("utf-8")
 
-    def __init__(self, controller, path=None, interval=POLL_INTERVAL):
+
+class _StatusServer:
+    def __init__(self, controller, interval):
         self._controller = controller
-        self._path = path or status_file_path()
         self._interval = interval
-        self._stop = threading.Event()
-        self._thread = None
-        self._pid = os.getpid()
-        self._create_time = process_create_time(self._pid)
-        self._last = {}
-        self._write_lock = threading.Lock()
-
-    def _snapshot(self, phase, running=True, **extra):
-        data = {name: None for name in _FIELDS}
-        data.update(connected=False, game_running=False, sdk_window=False, capture_fps=0.0)
-        data.update(self._last)
-        data.update(extra)
-        data.update(schema=STATUS_SCHEMA, pid=self._pid, create_time=self._create_time,
-                    updated=time.time(), running=running, phase=phase)
-        return data
-
-    def _publish(self, data):
-        try:
-            with self._write_lock:
-                _write(self._path, data)
-        except Exception:
-            pass
-
-    def _poll(self):
-        try:
-            status = asdict(self._controller.get_runtime_status())
-        except Exception:
-            return False
-        self._last = {name: status.get(name) for name in _FIELDS}
-        return True
-
-    def _run(self):
-        while not self._stop.wait(self._interval):
-            if self._poll():
-                phase = "running" if self._last.get("connected") or self._last.get("error_code") else "starting"
-                self._publish(self._snapshot(phase))
+        self._stopped = threading.Event()
+        self._socket = None
+        self._key = secrets.token_hex(16)
+        self.last_error = None
+        self._packet = _encode(_IDLE)
 
     def start(self):
-        if self._thread is not None:
-            return
-        # 连接设备期间控制器持有锁，先写一份“正在启动”，界面不必等到连接结束。
-        self._publish(self._snapshot("starting"))
-        self._thread = threading.Thread(target=self._run, name="adb-status", daemon=True)
-        self._thread.start()
+        try:
+            self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self._socket.bind((_LOOPBACK, 0))
+            self._socket.settimeout(_QUERY_TIMEOUT)
+            port = self._socket.getsockname()[1]
+            threading.Thread(target=self._serve, name="adb-status", daemon=True).start()
+            threading.Thread(target=self._sample, name="adb-status-sample", daemon=True).start()
+        except (OSError, RuntimeError):
+            self.close()
+            return None
+        return {"port": port, "key": self._key}
 
-    def stop(self, phase="finished", error=None):
-        """写入最后一份快照。必须在控制器 close() 之前调用，否则读不到最后的状态。"""
-        self._stop.set()
-        if self._thread is not None:
-            self._thread.join(timeout=5)
-            self._thread = None
-        self._poll()
-        extra = {"connected": False, "game_running": False, "capture_fps": 0.0}
-        if error is not None:
-            extra.update(error_code=getattr(error, "code", None) or type(error).__name__,
-                         error_message=str(error))
-        self._publish(self._snapshot(phase, running=False, **extra))
+    def _serve(self):
+        key = self._key.encode("ascii")
+        while not self._stopped.is_set():
+            try:
+                query, address = self._socket.recvfrom(128)
+                if secrets.compare_digest(query, key):
+                    self._socket.sendto(self._packet, address)
+            except OSError:
+                # 超时或查询方已退出，下次仍可读取。
+                continue
+
+    def _sample(self):
+        # 设备连接及取帧会占用控制器锁，采样期间端点仍返回上一份快照。
+        while not self._stopped.wait(self._interval):
+            try:
+                runtime = self._controller.get_runtime_status()
+                packet = _encode(runtime)
+            except Exception:
+                continue
+            if runtime.error_code:
+                self.last_error = runtime
+            self._packet = packet
+
+    def close(self):
+        self._stopped.set()
+        if self._socket is not None:
+            with suppress(OSError):
+                self._socket.close()
 
 
 @contextmanager
-def publish_status(controller, path=None):
-    """在任务运行期间发布 ADB 状态，退出时记录结束方式和最近一次错误。"""
-    publisher = AdbStatusPublisher(controller, path)
+def publish_status(controller: AdbGameController, session: RunSession, *, interval=_SAMPLE_INTERVAL):
+    """发布本次任务的实时状态，结束时将错误交给既有运行记录。"""
+    server = _StatusServer(controller, interval)
+    failure = None
     try:
-        publisher.start()
-    except Exception:
-        publisher = None
-    try:
-        yield publisher
-    except SystemExit as exit_request:
-        if publisher is not None:
-            code = exit_request.code
-            publisher.stop("finished" if code in (None, 0) else "failed")
-        raise
+        session.update_record(adb_status_endpoint=server.start())
+        yield
     except Exception as error:
-        if publisher is not None:
-            publisher.stop("failed", error)
+        failure = error
         raise
-    except BaseException:
-        # Ctrl+C 和停止指令。
-        if publisher is not None:
-            publisher.stop("stopped")
-        raise
-    else:
-        if publisher is not None:
-            publisher.stop("finished")
+    finally:
+        try:
+            code, message = None, None
+            if failure is not None:
+                code, message = getattr(failure, "code", None) or type(failure).__name__, str(failure)
+            elif server.last_error is not None:
+                code, message = server.last_error.error_code, server.last_error.error_message
+            if code:
+                # CLI 出错后可能会等待用户关闭。将错误登记到运行记录，界面在此期间也能读取。
+                session.update_record(error_code=code, error=message)
+                session.note(error=message)
+        finally:
+            server.close()
 
 
-def read_status(path=None):
-    """读取状态文件。文件不存在或正在被替换时返回 None。
-
-    写入方进程已不存在却仍标记为运行中时，把 `running` 改为 False，`phase` 改为 `aborted`。
-    """
-    path = path or status_file_path()
+def _query(endpoint):
+    if not isinstance(endpoint, dict):
+        return None
+    port, key = endpoint.get("port"), endpoint.get("key")
+    if type(port) is not int or not 0 < port < 65536 or not isinstance(key, str):
+        return None
     try:
-        with open(path, "r", encoding="utf-8") as file:
-            data = json.load(file)
-    except (OSError, ValueError):
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client:
+            client.settimeout(_QUERY_TIMEOUT)
+            client.connect((_LOOPBACK, port))
+            client.send(key.encode("ascii"))
+            return AdbRuntimeStatus(**json.loads(client.recv(65507)))
+    except (OSError, TypeError, ValueError):
         return None
-    if not isinstance(data, dict) or data.get("schema") != STATUS_SCHEMA:
+
+
+def _is_adb_run(record):
+    return record is not None and _ENDPOINT in record and is_valid_run_id(record.get("run_id"))
+
+
+def _latest_adb_run():
+    active = read_active_run()
+    if active and _is_adb_run(record := load_run(active.get("run_id"))):
+        return record
+
+    latest = None
+    for run_id in reversed(list_run_ids()):
+        # 同一秒内生成的运行编号仅随机后缀不同，进程创建时间能区分这些运行。
+        if latest and run_id[:15] != latest["run_id"][:15]:
+            break
+        record = load_run(run_id)
+        if _is_adb_run(record) and (
+            latest is None or (record.get("pid_create_time") or 0) > (latest.get("pid_create_time") or 0)
+        ):
+            latest = record
+    return latest
+
+
+def read_adb_run_status(run_id: str | None = None) -> AdbRunStatus | None:
+    """读取指定任务，或优先读取当前持有运行锁的 ADB 任务，再回退到最近一次 ADB 运行。"""
+    record = _latest_adb_run() if run_id is None else load_run(run_id)
+    if not _is_adb_run(record):
         return None
-    if data.get("running"):
-        if not is_process_alive(data.get("pid"), data.get("create_time")):
-            data.update(running=False, phase="aborted", connected=False, game_running=False, capture_fps=0.0)
-    return data
+    run_id = record["run_id"]
+    outcome = effective_status(record)
+    if outcome == STATUS_RUNNING:
+        runtime = _query(record[_ENDPOINT])
+        if runtime is not None:
+            phase = "running" if runtime.connected or runtime.error_code else "starting"
+            return AdbRunStatus(run_id, phase, runtime)
+        # 查询期间任务可能刚结束，重读运行记录以区分收尾和暂时没有快照。
+        record = load_run(run_id) or record
+        outcome = effective_status(record)
+        if outcome == STATUS_RUNNING:
+            if code := record.get("error_code"):
+                return AdbRunStatus(run_id, "running", replace(_IDLE, error_code=code, error_message=record.get("error")))
+            return AdbRunStatus(run_id, "starting", _IDLE)
+
+    phase = _END_PHASES.get(outcome, "failed")
+    code = record.get("error_code")
+    message = record.get("error") if code or phase == "failed" else None
+    return AdbRunStatus(run_id, phase, replace(_IDLE, error_code=code, error_message=message))

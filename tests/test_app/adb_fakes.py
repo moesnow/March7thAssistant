@@ -2,7 +2,8 @@
 from pathlib import Path
 
 from module.game.adb import AdbRuntimeStatus
-from module.game.adb_transport import AdbDevice, AdbEnvironment, AdbError
+from module.game.adb_status import AdbRunStatus
+from module.game.adb_transport import AdbDevice, AdbEnvironment, AdbError, AdbTouchInjectionStatus
 
 ADB_PATH = Path("C:/platform-tools/adb.exe")
 PHONE = AdbDevice("4e6780d5", "device", "Redmi Note 7")
@@ -52,7 +53,7 @@ class FakeAdb:
                                              EMULATOR.serial: environment(EMULATOR, sdk=32, version="12",
                                                                           device_type="emulator", size=(720, 1280))}
         self.errors = dict(errors or {})
-        self.injection = (True, True)
+        self.injection = AdbTouchInjectionStatus(True, True)
         self.controllers = []
         self.connected = []
 
@@ -60,7 +61,7 @@ class FakeAdb:
         monkeypatch.setattr(service, "resolve_adb_path", self.resolve_adb_path)
         monkeypatch.setattr(service, "list_adb_devices", self.list_adb_devices)
         monkeypatch.setattr(service, "check_adb_environment", self.check_adb_environment)
-        monkeypatch.setattr(service, "_touch_injection", lambda path, serial: self.injection)
+        monkeypatch.setattr(AdbEnvironment, "check_touch_injection", lambda environment: self.injection)
         monkeypatch.setattr(service, "AdbGameController", self.controller)
         return self
 
@@ -128,10 +129,10 @@ class FakeController:
         self.closed = True
 
 
-def status(**values):
-    """一份任务进程写出的状态快照。"""
-    data = dict(schema=1, pid=1, running=True, phase="running", connected=True, serial=PHONE.serial,
-                service_version="0.1.1", display_id=44, game_display_id=44, game_running=True, sdk_window=False,
-                capture_fps=8.3, error_code=None, error_message=None, updated=0.0)
+def status(phase="running", **values):
+    """一份任务进程提供的状态快照。"""
+    data = dict(connected=True, serial=PHONE.serial, service_version="0.1.1", display_id=44,
+                game_display_id=44, game_running=True, sdk_window=False, capture_fps=8.3,
+                error_code=None, error_message=None)
     data.update(values)
-    return data
+    return AdbRunStatus("20261110-000000-0001", phase, AdbRuntimeStatus(**data))

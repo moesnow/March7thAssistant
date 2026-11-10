@@ -2,7 +2,7 @@
 import pytest
 
 from app.tools import adb_service as service
-from module.game.adb_transport import AdbError
+from module.game.adb_transport import AdbError, AdbTouchInjectionStatus
 
 from .adb_fakes import EMULATOR, PHONE, UNAUTHORIZED, FakeAdb, FakeConfig, environment
 
@@ -152,13 +152,19 @@ def test_old_android_fails_version_but_device_is_connected(adb):
 
 
 def test_miui_without_security_setting_fails_injection(adb):
-    adb.injection = (False, True)
+    adb.injection = AdbTouchInjectionStatus(False, False)
     result = run_checks(FakeConfig())["inject"]
     assert result.status == service.FAIL and "USB 调试（安全设置）" in result.guide
 
 
+def test_security_setting_enabled_but_injection_denied(adb):
+    adb.injection = AdbTouchInjectionStatus(False, True)
+    result = run_checks(FakeConfig())["inject"]
+    assert result.status == service.FAIL and "系统没有允许" in result.detail
+
+
 def test_unknown_injection_state_is_a_warning(adb):
-    adb.injection = (None, False)
+    adb.injection = AdbTouchInjectionStatus(None)
     assert run_checks(FakeConfig())["inject"].status == service.WARN
 
 
@@ -203,27 +209,6 @@ def test_emulator_resolution_mismatch_depends_on_display_path(adb):
     adb.environments[EMULATOR.serial] = environment(EMULATOR, sdk=34, version="14", device_type="emulator",
                                                     size=(1600, 900))
     assert run_checks(FakeConfig())["resolution"].status == service.FAIL
-
-
-def test_touch_injection_reads_miui_switch_and_permission(monkeypatch):
-    outputs = iter([
-        "miui=V125\nadbinput=1\n      android.permission.INJECT_EVENTS: granted=true",
-        "miui=V125\nadbinput=0\n      android.permission.INJECT_EVENTS: granted=true",
-        "miui=\nadbinput=\n      android.permission.INJECT_EVENTS: granted=true",
-        "miui=\nadbinput=\n      android.permission.INJECT_EVENTS: granted=false",
-        "miui=\nadbinput=",
-    ])
-
-    class Shell:
-        def __init__(self, path, serial):
-            pass
-
-        def shell(self, command, timeout=5):
-            return next(outputs)
-
-    monkeypatch.setattr(service, "Adb", Shell)
-    assert [service._touch_injection("adb", "serial") for _ in range(5)] == [
-        (True, True), (False, True), (True, False), (False, False), (None, False)]
 
 
 @pytest.mark.parametrize("code", [

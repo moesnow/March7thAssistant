@@ -10,7 +10,7 @@ from module.config import cfg
 from module.config.platform import get_control_backend
 from module.game.adb import AdbGameController
 from module.game.adb_transport import (
-    RESOLUTION, Adb, AdbError, check_adb_environment, list_adb_devices, resolve_adb_path,
+    RESOLUTION, AdbError, check_adb_environment, list_adb_devices, resolve_adb_path,
 )
 from module.localization import tr
 
@@ -201,36 +201,16 @@ def check_titles():
     }
 
 
-def _touch_injection(adb_path, serial):
-    """读取系统属性判断 shell 能否注入触摸。读不到时返回 None，交给运行时的错误提示兜底。"""
-    output = Adb(adb_path, serial).shell(
-        'echo "miui=$(getprop ro.miui.ui.version.name)"; '
-        'echo "adbinput=$(getprop persist.security.adbinput)"; '
-        'dumpsys package com.android.shell | grep "android.permission.INJECT_EVENTS: granted" || true',
-        timeout=8,
-    )
-    values = dict(line.split("=", 1) for line in output.splitlines() if line.startswith(("miui=", "adbinput=")))
-    grants = re.findall(r"INJECT_EVENTS: granted=(true|false)", output)
-    miui = bool(values.get("miui"))
-    if miui and values.get("adbinput") != "1":
-        return False, miui
-    if grants:
-        return "true" in grants, miui
-    return (True if miui else None), miui
-
-
 def _check_injection(environment):
-    try:
-        allowed, miui = _touch_injection(environment.adb_path, environment.device.serial)
-    except AdbError:
-        allowed, miui = None, False
-    if allowed is None:
+    injection = environment.check_touch_injection()
+    if injection.allowed is None:
         return CheckResult("inject", WARN, tr("没能读到系统的触摸注入权限"), tr(
             "可以先运行任务试试。如果提示“拒绝触摸注入”，请在开发者选项里打开“USB 调试（安全设置）”或名称相近的开关。"))
-    if allowed:
-        detail = tr("已开启“USB 调试（安全设置）”") if miui else tr("系统允许通过 USB 调试注入触摸")
+    if injection.allowed:
+        detail = (tr("已开启“USB 调试（安全设置）”") if injection.usb_debugging_security_enabled
+                  else tr("系统允许通过 USB 调试注入触摸"))
         return CheckResult("inject", PASS, detail)
-    if miui:
+    if injection.usb_debugging_security_enabled is False:
         return CheckResult("inject", FAIL, tr("没有开启“USB 调试（安全设置）”，小助手无法点击游戏"), tr(
             "打开“设置 → 更多设置 → 开发者选项”，开启“USB 调试（安全设置）”。"
             "系统会要求登录小米账号并插入 SIM 卡，开启后重新插拔数据线。"))
