@@ -15,6 +15,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +57,7 @@ final class InputInjector {
     private final Method injectMethod;
     private final Method setDisplayIdMethod;
     private final Map<Integer, Touches> displays = new HashMap<>();
+    private boolean closed;
 
     InputInjector() throws ReflectiveOperationException {
         inputManager = findInputManager();
@@ -102,21 +104,22 @@ final class InputInjector {
      * 按下、移动或抬起一个触点。
      *
      * @param action MotionEvent.ACTION_DOWN、ACTION_MOVE 或 ACTION_UP
-     * @return 事件是否派发到了窗口。按下失败会直接抛异常；移动和抬起失败只返回 false，触点状态照常更新。
+     * @return 事件是否派发到了窗口。移动或抬起失败时取消该屏上的手势。
      */
     boolean touch(int displayId, int action, int pointerId, float x, float y, int owner) throws CommandException {
         synchronized (this) {
+            requireOpen();
             Touches touches = displays.get(displayId);
-            if (touches == null) {
-                touches = new Touches();
-                displays.put(displayId, touches);
-            }
-            int index = touches.indexOf(pointerId);
+            int index = touches == null ? -1 : touches.indexOf(pointerId);
             long now = SystemClock.uptimeMillis();
             int eventAction;
             if (action == MotionEvent.ACTION_DOWN) {
                 if (index >= 0) {
                     throw new CommandException(Protocol.E_BAD_REQUEST, "pointer " + pointerId + " is already down");
+                }
+                if (touches == null) {
+                    touches = new Touches();
+                    displays.put(displayId, touches);
                 }
                 if (touches.pointers.size() >= MAX_POINTERS) {
                     throw new CommandException(Protocol.E_BAD_REQUEST, "too many pointers");
@@ -135,8 +138,8 @@ final class InputInjector {
                     eventAction = MotionEvent.ACTION_POINTER_DOWN | (index << MotionEvent.ACTION_POINTER_INDEX_SHIFT);
                 }
             } else {
-                if (index < 0) {
-                    throw new CommandException(Protocol.E_BAD_REQUEST, "pointer " + pointerId + " is not down");
+                if (index < 0 || touches.pointers.get(index).owner != owner) {
+                    throw new CommandException(Protocol.E_BAD_REQUEST, "pointer " + pointerId + " is not down in this session");
                 }
                 Pointer pointer = touches.pointers.get(index);
                 if (!Float.isNaN(x) && !Float.isNaN(y)) {
@@ -151,26 +154,46 @@ final class InputInjector {
                     eventAction = MotionEvent.ACTION_POINTER_UP | (index << MotionEvent.ACTION_POINTER_INDEX_SHIFT);
                 }
             }
-            MotionEvent event = buildEvent(touches, eventAction, index, now);
             boolean delivered;
             try {
-                delivered = inject(event, displayId);
-            } catch (CommandException e) {
-                if (action != MotionEvent.ACTION_MOVE) {
-                    touches.pointers.remove(index);
+                MotionEvent event = buildEvent(touches, eventAction, index, now);
+                try {
+                    delivered = inject(event, displayId);
+                } finally {
+                    event.recycle();
+                }
+            } catch (CommandException | RuntimeException e) {
+                if (action == MotionEvent.ACTION_DOWN) {
+                    removePointer(displayId, touches, index);
+                } else {
+                    cancelDisplay(displayId, touches);
                 }
                 throw e;
-            } finally {
-                event.recycle();
             }
-            if (action == MotionEvent.ACTION_UP) {
-                touches.pointers.remove(index);
-            } else if (action == MotionEvent.ACTION_DOWN && !delivered) {
-                touches.pointers.remove(index);
-                throw new CommandException(Protocol.E_INJECT_FAILED,
-                        "no window accepted the touch on display " + displayId);
+            if (!delivered) {
+                if (action == MotionEvent.ACTION_DOWN) {
+                    removePointer(displayId, touches, index);
+                    throw new CommandException(Protocol.E_INJECT_FAILED,
+                            "no window accepted the touch on display " + displayId);
+                }
+                cancelDisplay(displayId, touches);
+            } else if (action == MotionEvent.ACTION_UP) {
+                removePointer(displayId, touches, index);
             }
             return delivered;
+        }
+    }
+
+    private void removePointer(int displayId, Touches touches, int index) {
+        touches.pointers.remove(index);
+        if (touches.pointers.isEmpty()) {
+            displays.remove(displayId);
+        }
+    }
+
+    private void requireOpen() throws CommandException {
+        if (closed) {
+            throw new CommandException(Protocol.E_INTERNAL, "service is closing");
         }
     }
 
@@ -204,10 +227,10 @@ final class InputInjector {
                 Thread.sleep(durationMs);
             }
         } catch (InterruptedException e) {
-            liftQuietly(displayId, pointerId, x, y, owner);
+            cancelPointerGesture(displayId, pointerId, owner);
             throw e;
         }
-        return liftQuietly(displayId, pointerId, x, y, owner);
+        return touch(displayId, MotionEvent.ACTION_UP, pointerId, x, y, owner);
     }
 
     /** 滑动：在起点按下，沿折线匀速移动 durationMs，在终点抬起；两端可以各停留一段时间。 */
@@ -216,7 +239,6 @@ final class InputInjector {
         float[] start = path.at(0);
         float[] end = path.at(1);
         touch(displayId, MotionEvent.ACTION_DOWN, pointerId, start[0], start[1], owner);
-        float[] last = start;
         try {
             if (holdStartMs > 0) {
                 Thread.sleep(holdStartMs);
@@ -227,29 +249,48 @@ final class InputInjector {
                 if (elapsed >= durationMs) {
                     break;
                 }
-                last = path.at((double) elapsed / durationMs);
-                touch(displayId, MotionEvent.ACTION_MOVE, pointerId, last[0], last[1], owner);
+                float[] point = path.at((double) elapsed / durationMs);
+                if (!touch(displayId, MotionEvent.ACTION_MOVE, pointerId, point[0], point[1], owner)) {
+                    return false;
+                }
                 Thread.sleep(Math.max(1, Math.min(MOVE_INTERVAL_MS, durationMs - elapsed)));
             }
-            last = end;
-            touch(displayId, MotionEvent.ACTION_MOVE, pointerId, end[0], end[1], owner);
+            if (!touch(displayId, MotionEvent.ACTION_MOVE, pointerId, end[0], end[1], owner)) {
+                return false;
+            }
             if (holdEndMs > 0) {
                 Thread.sleep(holdEndMs);
             }
         } catch (CommandException | InterruptedException | RuntimeException e) {
-            liftQuietly(displayId, pointerId, last[0], last[1], owner);
+            cancelPointerGesture(displayId, pointerId, owner);
             throw e;
         }
-        return liftQuietly(displayId, pointerId, end[0], end[1], owner);
+        return touch(displayId, MotionEvent.ACTION_UP, pointerId, end[0], end[1], owner);
     }
 
-    /** 抬起触点。即使前面的步骤失败也要保证不留下按着的触点。 */
-    private boolean liftQuietly(int displayId, int pointerId, float x, float y, int owner) {
+    private synchronized void cancelPointerGesture(int displayId, int pointerId, int owner) {
+        Touches touches = displays.get(displayId);
+        int index = touches == null ? -1 : touches.indexOf(pointerId);
+        if (index >= 0 && touches.pointers.get(index).owner == owner) {
+            cancelDisplay(displayId, touches);
+        }
+    }
+
+    private void cancelDisplay(int displayId, Touches touches) {
+        displays.remove(displayId);
+        sendCancel(displayId, touches);
+    }
+
+    private void sendCancel(int displayId, Touches touches) {
         try {
-            return touch(displayId, MotionEvent.ACTION_UP, pointerId, x, y, owner);
-        } catch (CommandException e) {
-            Logger.w("cannot lift pointer " + pointerId + " on display " + displayId + ": " + e.getMessage());
-            return false;
+            MotionEvent cancel = buildEvent(touches, MotionEvent.ACTION_CANCEL, 0, SystemClock.uptimeMillis());
+            try {
+                inject(cancel, displayId);
+            } finally {
+                cancel.recycle();
+            }
+        } catch (CommandException | RuntimeException e) {
+            Logger.w("cannot cancel gesture on display " + displayId, e);
         }
     }
 
@@ -261,6 +302,7 @@ final class InputInjector {
      */
     boolean focus(int displayId, float x, float y) throws CommandException {
         synchronized (this) {
+            requireOpen();
             Touches touches = displays.get(displayId);
             if (touches != null && !touches.pointers.isEmpty()) {
                 return true;
@@ -285,7 +327,8 @@ final class InputInjector {
     }
 
     /** 按一下按键：按下后立即抬起。 */
-    boolean key(int displayId, int keyCode) throws CommandException {
+    synchronized boolean key(int displayId, int keyCode) throws CommandException {
+        requireOpen();
         long now = SystemClock.uptimeMillis();
         boolean delivered = true;
         for (int action : new int[] {KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP}) {
@@ -297,36 +340,29 @@ final class InputInjector {
     }
 
     /**
-     * 抬起还按着的触点。
+     * 取消整块屏上的手势。命中指定会话的任一个触点时，其余会话的触点也随同取消。
      *
      * @param owner     只处理这个会话按下的触点；-1 表示全部
      * @param displayId 只处理这块屏；-1 表示全部
      */
-    void releaseAll(int owner, int displayId) {
-        List<int[]> pending = new ArrayList<>();
-        List<float[]> positions = new ArrayList<>();
-        synchronized (this) {
-            for (Map.Entry<Integer, Touches> entry : displays.entrySet()) {
-                if (displayId >= 0 && entry.getKey() != displayId) {
-                    continue;
-                }
-                for (Pointer pointer : entry.getValue().pointers) {
-                    if (owner < 0 || pointer.owner == owner) {
-                        pending.add(new int[] {entry.getKey(), pointer.id, pointer.owner});
-                        positions.add(new float[] {pointer.x, pointer.y});
-                    }
-                }
+    synchronized void cancelAll(int owner, int displayId) {
+        Iterator<Map.Entry<Integer, Touches>> iterator = displays.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, Touches> entry = iterator.next();
+            int id = entry.getKey();
+            if (displayId >= 0 && id != displayId) {
+                continue;
             }
-        }
-        for (int i = 0; i < pending.size(); i++) {
-            int[] item = pending.get(i);
-            float[] position = positions.get(i);
-            liftQuietly(item[0], item[1], position[0], position[1], item[2]);
+            Touches touches = entry.getValue();
+            if (owner < 0 || touches.pointers.stream().anyMatch(pointer -> pointer.owner == owner)) {
+                iterator.remove();
+                sendCancel(id, touches);
+            }
         }
     }
 
-    /** 忘掉一块屏上的触点状态，屏被释放后调用。 */
-    synchronized void forgetDisplay(int displayId) {
-        displays.remove(displayId);
+    synchronized void close() {
+        closed = true;
+        cancelAll(-1, -1);
     }
 }

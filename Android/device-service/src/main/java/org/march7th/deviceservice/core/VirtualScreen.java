@@ -13,6 +13,7 @@ import org.march7th.deviceservice.protocol.FrameEncoder;
 import org.march7th.deviceservice.protocol.FrameSequencer;
 
 import java.lang.reflect.Constructor;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 一块独立的虚拟屏，加上从它取帧的 ImageReader。
@@ -34,15 +35,6 @@ final class VirtualScreen {
     /** 手里始终留着最新的一帧，新帧到来时会短暂同时持有两帧，再留两个空位给合成方周转。 */
     private static final int MAX_IMAGES = 4;
 
-    /** 拷出来的一帧。 */
-    static final class Captured {
-        long seq;
-        /** Image.getTimestamp()，只适合和同一块屏上的其他帧比较。 */
-        long imageNs;
-        /** 采集线程拿到这一帧时的 SystemClock.elapsedRealtime()。 */
-        long acquiredMs;
-    }
-
     final String name;
     final int width;
     final int height;
@@ -52,13 +44,11 @@ final class VirtualScreen {
     final int displayId;
 
     private final FrameSequencer sequencer;
+    private final long generation;
     private final ImageReader reader;
     private final VirtualDisplay display;
-    private final Object lock = new Object();
+    // 用 sequencer 的锁同时保护 Image 和帧元数据，等待结束后可以原子地选帧和复制。
     private Image latest;
-    private long latestSeq;
-    private long latestNs;
-    private long latestAcquiredMs;
     private boolean released;
     /** 已经收到通知但还没取走的帧数，只在采集线程上读写。 */
     private int pending;
@@ -73,24 +63,27 @@ final class VirtualScreen {
         this.sequencer = sequencer;
         this.flags = flagsFor(destroyContent);
         reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, MAX_IMAGES);
-        reader.setOnImageAvailableListener(this::onImageAvailable, captureHandler);
-        VirtualDisplay created = null;
-        try {
-            Constructor<DisplayManager> constructor = DisplayManager.class.getDeclaredConstructor(android.content.Context.class);
-            constructor.setAccessible(true);
-            DisplayManager manager = constructor.newInstance(ShellContext.get());
-            created = manager.createVirtualDisplay(name, width, height, dpi, reader.getSurface(), flags);
-            if (created == null) {
-                throw new IllegalStateException("createVirtualDisplay returned null");
+        synchronized (sequencer) {
+            reader.setOnImageAvailableListener(this::onImageAvailable, captureHandler);
+            VirtualDisplay created = null;
+            try {
+                Constructor<DisplayManager> constructor = DisplayManager.class.getDeclaredConstructor(android.content.Context.class);
+                constructor.setAccessible(true);
+                DisplayManager manager = constructor.newInstance(ShellContext.get());
+                created = manager.createVirtualDisplay(name, width, height, dpi, reader.getSurface(), flags);
+                if (created == null) {
+                    throw new IllegalStateException("createVirtualDisplay returned null");
+                }
+            } finally {
+                if (created == null) {
+                    released = true;
+                    reader.close();
+                }
             }
-        } finally {
-            if (created == null) {
-                reader.close();
-            }
+            display = created;
+            displayId = display.getDisplay().getDisplayId();
+            generation = sequencer.setActive(true);
         }
-        display = created;
-        displayId = display.getDisplay().getDisplayId();
-        sequencer.setActive(true);
     }
 
     /**
@@ -136,17 +129,17 @@ final class VirtualScreen {
                 return;
             }
             pending--;
+            long acquiredNs = System.nanoTime();
+            long acquiredMs = SystemClock.elapsedRealtime();
             Image previous;
-            synchronized (lock) {
+            synchronized (sequencer) {
                 if (released) {
                     image.close();
                     return;
                 }
                 previous = latest;
                 latest = image;
-                latestNs = image.getTimestamp();
-                latestAcquiredMs = SystemClock.elapsedRealtime();
-                latestSeq = sequencer.publish();
+                sequencer.publish(image.getTimestamp(), acquiredNs, acquiredMs);
             }
             if (previous != null) {
                 previous.close();
@@ -154,54 +147,44 @@ final class VirtualScreen {
         }
     }
 
-    /** 最新一帧距离现在多久，还没有帧时为 -1。 */
-    long frameAgeMs() {
-        synchronized (lock) {
-            return latest == null ? -1 : SystemClock.elapsedRealtime() - latestAcquiredMs;
+    FrameSequencer.Frame latestFrame() {
+        synchronized (sequencer) {
+            return released ? null : sequencer.current();
         }
     }
 
-    /**
-     * 把最新一帧的一块区域拷到 out。
-     *
-     * @return 这一帧的序号和时间；还没有帧或者屏已经释放时返回 null
-     */
-    Captured copyLatest(int x, int y, int w, int h, int channels, byte[] out) {
-        synchronized (lock) {
-            if (released || latest == null) {
-                return null;
-            }
-            Image.Plane plane = latest.getPlanes()[0];
-            if (plane.getPixelStride() != 4) {
-                throw new IllegalStateException("unexpected pixel stride " + plane.getPixelStride());
-            }
-            FrameEncoder.copyRegion(plane.getBuffer(), plane.getRowStride(), x, y, w, h, channels, out);
-            Captured captured = new Captured();
-            captured.seq = latestSeq;
-            captured.imageNs = latestNs;
-            captured.acquiredMs = latestAcquiredMs;
-            return captured;
+    FrameSequencer.Frame awaitFrame(long minSeq, Long afterNs, long timeoutMs)
+            throws InterruptedException, TimeoutException {
+        return sequencer.await(generation, minSeq, afterNs, timeoutMs);
+    }
+
+    /** 必须在选中帧的同一个 synchronized (sequencer) 内调用。 */
+    void copyLatest(int x, int y, int w, int h, int channels, byte[] out) {
+        Image.Plane plane = latest.getPlanes()[0];
+        if (plane.getPixelStride() != 4) {
+            throw new IllegalStateException("unexpected pixel stride " + plane.getPixelStride());
         }
+        FrameEncoder.copyRegion(plane.getBuffer(), plane.getRowStride(), x, y, w, h, channels, out);
     }
 
     void release() {
-        synchronized (lock) {
+        Image last;
+        synchronized (sequencer) {
             if (released) {
                 return;
             }
             released = true;
+            last = latest;
+            latest = null;
+            sequencer.setActive(false);
         }
-        sequencer.setActive(false);
         try {
             display.release();
         } catch (RuntimeException e) {
             Logger.w("virtual display release failed", e);
         }
-        synchronized (lock) {
-            if (latest != null) {
-                latest.close();
-                latest = null;
-            }
+        if (last != null) {
+            last.close();
         }
         reader.close();
     }

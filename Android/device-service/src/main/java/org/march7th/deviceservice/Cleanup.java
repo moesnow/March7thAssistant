@@ -20,11 +20,12 @@ import java.util.concurrent.TimeUnit;
  * 改动恢复掉然后退出。它不依赖服务进程里的任何状态。
  *
  * <pre>
- * panel 1               面板已关，需要恢复
+ * panel 1               面板即将关闭，需要恢复
  * panel 0               面板已恢复
- * mute 包名 原模式       已静音，需要恢复成原模式
+ * mute 包名 原模式       即将静音，需要恢复成原模式
  * unmute 包名           已恢复
  * </pre>
+ * 每条有效记录写入状态后回一行 M7A_CLEANUP_OK 和原记录。
  */
 public final class Cleanup {
     private Cleanup() {
@@ -37,12 +38,19 @@ public final class Cleanup {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.trim().split(" ");
-                if (parts.length == 2 && "panel".equals(parts[0])) {
+                if (parts.length == 2 && "panel".equals(parts[0]) && ("0".equals(parts[1]) || "1".equals(parts[1]))) {
                     panelOff = "1".equals(parts[1]);
                 } else if (parts.length == 3 && "mute".equals(parts[0])) {
                     muted.put(parts[1], parts[2]);
                 } else if (parts.length == 2 && "unmute".equals(parts[0])) {
                     muted.remove(parts[1]);
+                } else {
+                    System.out.println("M7A_CLEANUP_ERROR");
+                    continue;
+                }
+                System.out.println("M7A_CLEANUP_OK " + line);
+                if (System.out.checkError()) {
+                    break;
                 }
             }
         } catch (IOException e) {

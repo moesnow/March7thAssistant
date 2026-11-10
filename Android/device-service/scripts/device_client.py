@@ -9,6 +9,7 @@ import json
 import re
 import secrets
 import socket
+import statistics
 import struct
 import subprocess
 import time
@@ -127,6 +128,17 @@ class DeviceClient:
                                        timeout=timeout_ms / 1000 + 10, **params)
         return header, decode_frame(header, payload)
 
+    def frame_after(self, input_result: dict, *, min_seq: int = 0, **params) -> tuple[dict, bytes]:
+        """用输入回执的序号和生产时间划边界。需要降级时，由调用方另发只带 min_seq 的请求。"""
+        if "frame_after_ns" not in self.hello.get("features", ()) or "input_ns" not in input_result:
+            raise DeviceError("frame_clock_unavailable", "the service does not expose a timestamp boundary", {})
+        min_seq = max(min_seq, input_result["seq"] + 1)
+        after_ns = input_result["input_ns"]
+        header, pixels = self.frame(min_seq=min_seq, after_ns=after_ns, **params)
+        if not header["timestamp_comparable"] or header["image_ns"] <= after_ns or header["seq"] < min_seq:
+            raise ConnectionError("frame did not meet the input boundary")
+        return header, pixels
+
 
 def decode_frame(header: dict, payload: bytes) -> bytes:
     """把一帧的负载还原成 width × height × channels 的原始像素。"""
@@ -146,6 +158,63 @@ def decode_frame(header: dict, payload: bytes) -> bytes:
     pixels = np.frombuffer(data, dtype=np.uint8).reshape(header["height"], header["width"], header["channels"])
     axis = 1 if predictor == "left" else 0
     return np.cumsum(pixels, axis=axis, dtype=np.uint8).tobytes()
+
+
+def measure_frame_encoding(client: DeviceClient, seconds: float, options: dict) -> dict:
+    """分别测取最新帧（含解码）和连续新帧（端到端只计到收完负载）。"""
+    def sample(fresh: bool):
+        header, _ = client.frame(**options)
+        first_seq = last_seq = header["seq"]
+        samples = []
+        begin = time.perf_counter()
+        while time.perf_counter() - begin < seconds:
+            t0 = time.perf_counter()
+            try:
+                header, payload = client.request("frame", min_seq=last_seq + 1 if fresh else 0,
+                                                 timeout_ms=1000, **options)
+            except DeviceError as error:
+                if error.code != "timeout":
+                    raise
+                continue
+            received_ms = (time.perf_counter() - t0) * 1000
+            pixels = decode_frame(header, payload)
+            decoded_ms = (time.perf_counter() - t0) * 1000
+            if fresh and header["seq"] <= last_seq:
+                raise ConnectionError("fresh frame sequence did not increase")
+            if len(pixels) != header["width"] * header["height"] * header["channels"]:
+                raise ConnectionError("decoded size mismatch")
+            last_seq = header["seq"]
+            server_ms = header["copy_ms"] + header["encode_ms"]
+            samples.append({
+                "seq": last_seq, "cached": header["cached"], "size": header["size"],
+                "request_ms": decoded_ms, "received_ms": received_ms, "age_ms": header["age_ms"],
+                "copy_ms": header["copy_ms"], "encode_ms": header["encode_ms"], "wait_ms": header["wait_ms"],
+                "end_to_end_ms": header["age_ms"] + max(0.0, received_ms - server_ms - header["wait_ms"]),
+            })
+        elapsed = time.perf_counter() - begin
+        if not samples:
+            raise DeviceError("timeout", "no frame received during the benchmark", {})
+        return samples, elapsed, last_seq - first_seq
+
+    def percentiles(samples, field):
+        values = sorted(row[field] for row in samples)
+        return round(statistics.median(values), 1), round(values[min(len(values) - 1, int(len(values) * 0.95))], 1)
+
+    latest, _, _ = sample(fresh=False)
+    fresh, elapsed, source_frames = sample(fresh=True)
+    latest_p50, latest_p95 = percentiles(latest, "request_ms")
+    fresh_p50, fresh_p95 = percentiles(fresh, "request_ms")
+    e2e_p50, e2e_p95 = percentiles(fresh, "end_to_end_ms")
+    return {
+        "frames": len(fresh), "fps": round(len(fresh) / elapsed, 1), "source_fps": round(source_frames / elapsed, 1),
+        "size_kb": round(statistics.mean(row["size"] for row in fresh) / 1024),
+        "server_ms": round(statistics.median(row["copy_ms"] + row["encode_ms"] for row in fresh), 1),
+        "latest_request_ms_p50": latest_p50, "latest_request_ms_p95": latest_p95,
+        "latest_cached": sum(row["cached"] for row in latest), "latest_samples": len(latest),
+        "fresh_request_ms_p50": fresh_p50, "fresh_request_ms_p95": fresh_p95,
+        "end_to_end_ms_p50": e2e_p50, "end_to_end_ms_p95": e2e_p95,
+        "samples": {"latest": latest, "fresh": fresh},
+    }
 
 
 def write_png(path: Path, width: int, height: int, channels: int, pixels: bytes,

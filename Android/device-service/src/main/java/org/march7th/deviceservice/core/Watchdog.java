@@ -4,11 +4,12 @@ import android.os.SystemClock;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.march7th.deviceservice.protocol.FrameSequencer;
+import org.march7th.deviceservice.protocol.JsonIntegers;
 import org.march7th.deviceservice.protocol.Protocol;
 import org.march7th.deviceservice.protocol.StackEntry;
 
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 /**
  * 回迁看门狗。
@@ -34,7 +35,7 @@ final class Watchdog {
         /** 目标屏多久没有新帧算停止出帧；0 表示不检查。 */
         int stallMs = 10000;
         String inspector = TaskInspector.AUTO;
-        /** 回迁成功后、以及目标屏停止出帧时，是否自动把焦点切到目标屏。 */
+        /** 任务移回后、以及目标屏停止出帧时，是否自动把焦点切到目标屏。 */
         boolean autoFocus;
         /** 游戏进程退出后是否自动在目标屏重新启动。 */
         boolean relaunch;
@@ -52,7 +53,9 @@ final class Watchdog {
             if (config.mainActivity != null && config.mainActivity.startsWith(".")) {
                 config.mainActivity = config.packageName + config.mainActivity;
             }
-            config.displayId = request.optInt("display_id", -1);
+            if (request.has("display_id")) {
+                config.displayId = JsonIntegers.id(request.opt("display_id"), "display_id", Integer.MAX_VALUE);
+            }
             config.intervalMs = clamp(request.optInt("interval_ms", 500), 100, 60000);
             config.autoMoveBack = request.optBoolean("auto_move_back", true);
             config.settlePolls = clamp(request.optInt("settle_polls", 2), 1, 20);
@@ -85,12 +88,10 @@ final class Watchdog {
         /** 当前虚拟屏的 ID，没有时为 -1。 */
         int currentDisplayId();
 
-        /** 当前虚拟屏最新一帧距今的毫秒数，没有屏或没有帧时为 -1。 */
-        long frameAgeMs();
-
         long latestSeq();
 
-        long awaitSeq(long minSeq, long timeoutMs) throws InterruptedException, TimeoutException;
+        /** 只返回指定屏的最新帧；还没有帧或不是当前虚拟屏时为 null。 */
+        FrameSequencer.Frame latestFrame(int displayId);
 
         void launch(String component, int displayId) throws Exception;
 
@@ -98,9 +99,94 @@ final class Watchdog {
         boolean focusDisplay(int displayId) throws Exception;
     }
 
+    interface Platform {
+        long elapsedMs();
+        long nanoTime();
+        boolean interactive() throws Exception;
+        boolean keyguardLocked() throws Exception;
+        String processName(int pid);
+        int findProcess(String packageName);
+        String inspectorMode();
+        List<StackEntry> stacks() throws Exception;
+        void move(int stackId, int displayId) throws Exception;
+    }
+
+    private static final class AndroidPlatform implements Platform {
+        private final TaskInspector inspector;
+
+        AndroidPlatform(String mode) {
+            inspector = new TaskInspector(mode);
+        }
+
+        @Override
+        public long elapsedMs() {
+            return SystemClock.elapsedRealtime();
+        }
+
+        @Override
+        public long nanoTime() {
+            return System.nanoTime();
+        }
+
+        @Override
+        public boolean interactive() throws Exception {
+            return SystemApis.interactive();
+        }
+
+        @Override
+        public boolean keyguardLocked() throws Exception {
+            return SystemApis.keyguardLocked();
+        }
+
+        @Override
+        public String processName(int pid) {
+            return SystemApis.processName(pid);
+        }
+
+        @Override
+        public int findProcess(String packageName) {
+            return SystemApis.findProcess(packageName);
+        }
+
+        @Override
+        public String inspectorMode() {
+            return inspector.activeMode();
+        }
+
+        @Override
+        public List<StackEntry> stacks() throws Exception {
+            return inspector.stacks();
+        }
+
+        @Override
+        public void move(int stackId, int displayId) throws Exception {
+            inspector.move(stackId, displayId);
+        }
+    }
+
+    private static final class PendingFrame {
+        final StackEntry task;
+        final int attempt;
+        final long startedAt;
+        final long deadline;
+        long afterSeq;
+        long afterNs;
+        boolean waitingForMain;
+        boolean timedOut;
+
+        PendingFrame(StackEntry task, int attempt, long startedAt, long deadline, long afterSeq, long afterNs) {
+            this.task = task;
+            this.attempt = attempt;
+            this.startedAt = startedAt;
+            this.deadline = deadline;
+            this.afterSeq = afterSeq;
+            this.afterNs = afterNs;
+        }
+    }
+
     private final Config config;
     private final Host host;
-    private final TaskInspector inspector;
+    private final Platform platform;
     private final Thread thread;
     private volatile boolean running = true;
 
@@ -118,6 +204,8 @@ final class Watchdog {
     private int settled;
     private int moveAttempts;
     private boolean moveGaveUp;
+    private PendingFrame pendingFrame;
+    private long mainOnTargetSince = -1;
     private boolean stalled;
     private boolean everRunning;
     private int relaunches;
@@ -125,9 +213,13 @@ final class Watchdog {
     private long lastErrorAt;
 
     Watchdog(Config config, Host host) {
+        this(config, host, new AndroidPlatform(config.inspector));
+    }
+
+    Watchdog(Config config, Host host, Platform platform) {
         this.config = config;
         this.host = host;
-        this.inspector = new TaskInspector(config.inspector);
+        this.platform = platform;
         thread = new Thread(this::loop, "m7a-watchdog");
         thread.setDaemon(true);
     }
@@ -146,22 +238,23 @@ final class Watchdog {
         }
     }
 
-    String packageName() {
-        return config.packageName;
-    }
-
     private int targetDisplay() {
         return config.displayId >= 0 ? config.displayId : host.currentDisplayId();
     }
 
-    /** 游戏任务是否在目标屏上；还不知道时返回 null。 */
-    Boolean gameOnTarget() {
+    /** 普通客户端输入和自动切焦点都以最近一次观测到的任务栈顶为准。 */
+    void checkInput(int displayId, boolean ownDisplay) throws CommandException {
         synchronized (stateLock) {
             if (!primed) {
-                return null;
+                return;
             }
-            int target = targetDisplay();
-            return game != null && target >= 0 && game.displayId == target;
+            if (game != null && game.displayId == displayId && isSdkWindow(game)) {
+                throw new CommandException(Protocol.E_SDK_WINDOW_ACTIVE, "SDK activity is active: " + game.topActivity);
+            }
+            if (ownDisplay && (game == null || game.displayId != displayId)) {
+                throw new CommandException(Protocol.E_GAME_NOT_ON_DISPLAY,
+                        config.packageName + " is not on display " + displayId);
+            }
         }
     }
 
@@ -172,7 +265,7 @@ final class Watchdog {
             json.put("package", config.packageName);
             json.put("main_activity", config.mainActivity == null ? JSONObject.NULL : config.mainActivity);
             json.put("target_display_id", targetDisplay());
-            json.put("inspector", inspector.activeMode());
+            json.put("inspector", platform.inspectorMode());
             json.put("auto_focus", config.autoFocus);
             json.put("pid", pid);
             json.put("interactive", interactive);
@@ -204,7 +297,7 @@ final class Watchdog {
             } catch (InterruptedException e) {
                 break;
             } catch (Throwable error) {
-                long now = SystemClock.elapsedRealtime();
+                long now = platform.elapsedMs();
                 if (now - lastErrorAt > 10000) {
                     lastErrorAt = now;
                     Logger.w("watchdog poll failed", error);
@@ -212,7 +305,7 @@ final class Watchdog {
                 }
             }
             try {
-                int interval = TaskInspector.SHELL.equals(inspector.activeMode())
+                int interval = TaskInspector.SHELL.equals(platform.inspectorMode())
                         ? Math.max(config.intervalMs, 1000) : config.intervalMs;
                 Thread.sleep(interval);
             } catch (InterruptedException e) {
@@ -239,16 +332,16 @@ final class Watchdog {
     }
 
     private int trackProcess(boolean hasTask) {
-        if (pid > 0 && config.packageName.equals(SystemApis.processName(pid))) {
+        if (pid > 0 && config.packageName.equals(platform.processName(pid))) {
             return pid;
         }
         // 全量扫描 /proc 比较贵：有任务或者刚丢失进程时每次都扫，否则两秒扫一次
-        long now = SystemClock.elapsedRealtime();
+        long now = platform.elapsedMs();
         if (pid <= 0 && !hasTask && now - lastProcessScan < 2000) {
             return -1;
         }
         lastProcessScan = now;
-        return SystemApis.findProcess(config.packageName);
+        return platform.findProcess(config.packageName);
     }
 
     private boolean isMain(StackEntry entry) {
@@ -261,12 +354,17 @@ final class Watchdog {
         return config.mainActivity == null || config.mainActivity.equals(entry.topActivityClass());
     }
 
-    private void poll() throws Exception {
-        StackEntry current = findGame(inspector.stacks());
+    private boolean isSdkWindow(StackEntry entry) {
+        return entry != null && entry.topActivity != null && !isMain(entry);
+    }
+
+    void poll() throws Exception {
+        StackEntry current = findGame(platform.stacks());
         int currentPid = trackProcess(current != null);
-        boolean nowInteractive = SystemApis.interactive();
-        boolean nowKeyguard = SystemApis.keyguardLocked();
-        long now = SystemClock.elapsedRealtime();
+        boolean nowInteractive = platform.interactive();
+        boolean nowKeyguard = platform.keyguardLocked();
+        boolean usable = nowInteractive && !nowKeyguard;
+        long now = platform.elapsedMs();
         int target = targetDisplay();
 
         if (!primed) {
@@ -276,7 +374,7 @@ final class Watchdog {
                 interactive = nowInteractive;
                 keyguardLocked = nowKeyguard;
                 everRunning = currentPid > 0;
-                if (current != null && current.topActivity != null && !isMain(current)) {
+                if (isSdkWindow(current)) {
                     foreignActivity = current.topActivity;
                     foreignSince = now;
                 }
@@ -286,6 +384,11 @@ final class Watchdog {
             return;
         }
 
+        StackEntry previousGame;
+        synchronized (stateLock) {
+            previousGame = game;
+            game = current;
+        }
         if (nowInteractive != interactive || nowKeyguard != keyguardLocked) {
             synchronized (stateLock) {
                 interactive = nowInteractive;
@@ -309,12 +412,8 @@ final class Watchdog {
             }
         }
 
-        Integer previousDisplay = game == null ? null : game.displayId;
+        Integer previousDisplay = previousGame == null ? null : previousGame.displayId;
         Integer currentDisplay = current == null ? null : current.displayId;
-        StackEntry previousGame = game;
-        synchronized (stateLock) {
-            game = current;
-        }
         if (previousDisplay == null ? currentDisplay != null : !previousDisplay.equals(currentDisplay)) {
             StackEntry reference = current != null ? current : previousGame;
             emit("task_display_changed", fields(
@@ -328,7 +427,7 @@ final class Watchdog {
             settled = 0;
         }
 
-        String foreign = current != null && current.topActivity != null && !isMain(current) ? current.topActivity : null;
+        String foreign = isSdkWindow(current) ? current.topActivity : null;
         if (foreign == null ? foreignActivity != null : !foreign.equals(foreignActivity)) {
             if (foreignActivity != null) {
                 emit("sdk_window_gone", fields("activity", foreignActivity, "duration_ms", now - foreignSince));
@@ -348,13 +447,15 @@ final class Watchdog {
                     "waited_ms", now - foreignSince));
         }
 
+        checkMoveFrame(current, target, usable);
         boolean misplaced = current != null && target >= 0 && current.displayId != target;
         if (misplaced && config.autoMoveBack && !moveGaveUp) {
             if (foreign == null && isMain(current)) {
                 settled++;
                 if (settled >= config.settlePolls) {
                     settled = 0;
-                    moveBack(current, target);
+                    moveBack(current, target, usable);
+                    current = game;
                 }
             } else {
                 settled = 0;
@@ -363,22 +464,22 @@ final class Watchdog {
             settled = 0;
         }
 
-        checkStall(current, target, nowInteractive && !nowKeyguard);
+        checkStall(current, target, usable, platform.elapsedMs());
         checkRelaunch(current, currentPid, target);
     }
 
-    private void moveBack(StackEntry entry, int target) throws InterruptedException {
+    private void moveBack(StackEntry entry, int target, boolean usable) throws InterruptedException {
         moveAttempts++;
-        long startedAt = SystemClock.elapsedRealtime();
+        long startedAt = platform.elapsedMs();
         int attempt = moveAttempts;
         emit("move_back_started", fields("stack_id", entry.stackId, "from", entry.displayId, "to", target, "attempt", attempt));
         String failure = null;
         StackEntry moved = null;
         try {
-            inspector.move(entry.stackId, target);
+            platform.move(entry.stackId, target);
             long deadline = startedAt + config.moveTimeoutMs;
-            while (SystemClock.elapsedRealtime() < deadline) {
-                StackEntry now = findGame(inspector.stacks());
+            while (platform.elapsedMs() < deadline) {
+                StackEntry now = findGame(platform.stacks());
                 if (now != null && now.displayId == target) {
                     moved = now;
                     break;
@@ -393,63 +494,101 @@ final class Watchdog {
         } catch (Exception e) {
             failure = "move failed: " + Logger.describe(e);
         }
-        long frameSeq = -1;
-        if (failure == null) {
-            synchronized (stateLock) {
-                game = moved;
-            }
-            emit("task_display_changed", fields("from", entry.displayId, "to", target, "stack_id", moved.stackId,
-                    "task_id", moved.taskIdOf(config.packageName), "target_display_id", target));
-            if (target == host.currentDisplayId()) {
-                // 任务到位不等于已经出画：要等到移回之后才合成的帧
-                long seqAtArrival = host.latestSeq();
-                long remaining = Math.max(1000, startedAt + config.moveTimeoutMs - SystemClock.elapsedRealtime());
-                try {
-                    frameSeq = host.awaitSeq(seqAtArrival + 1, remaining);
-                } catch (TimeoutException | IllegalStateException e) {
-                    failure = "no frame after the move";
-                }
-            }
-        }
-        long elapsed = SystemClock.elapsedRealtime() - startedAt;
-        if (failure == null) {
-            moveAttempts = 0;
-            requestFocus(target, "move_back");
-            emit("move_back_succeeded", fields("stack_id", moved.stackId, "task_id", moved.taskIdOf(config.packageName),
-                    "display_id", target, "attempt", attempt, "elapsed_ms", elapsed, "first_frame_seq", frameSeq));
-        } else {
+        if (failure != null) {
             boolean last = attempt >= config.maxMoveAttempts;
             moveGaveUp = last;
-            emit("move_back_failed", fields("reason", failure, "attempt", attempt, "final", last, "elapsed_ms", elapsed));
+            emit("move_back_failed", fields("reason", failure, "attempt", attempt, "final", last,
+                    "elapsed_ms", platform.elapsedMs() - startedAt));
+            return;
+        }
+        synchronized (stateLock) {
+            game = moved;
+        }
+        long arrivalNs = platform.nanoTime();
+        long arrivalSeq = host.latestSeq();
+        long deadline = platform.elapsedMs() + config.moveTimeoutMs;
+        emit("task_display_changed", fields("from", entry.displayId, "to", target, "stack_id", moved.stackId,
+                "task_id", moved.taskIdOf(config.packageName), "target_display_id", target));
+        if (target == host.currentDisplayId()) {
+            pendingFrame = new PendingFrame(moved, attempt, startedAt, deadline, arrivalSeq, arrivalNs);
+            requestFocus(moved, target, "move_back", usable);
+            checkMoveFrame(moved, target, usable);
+        } else {
+            moveSucceeded(moved, attempt, startedAt, null, false);
         }
     }
 
-    private void checkStall(StackEntry current, int target, boolean usable) {
-        if (config.stallMs <= 0 || target < 0 || target != host.currentDisplayId()) {
+    private void checkMoveFrame(StackEntry current, int target, boolean usable) {
+        PendingFrame pending = pendingFrame;
+        if (pending == null) {
             return;
         }
-        boolean onTarget = current != null && current.displayId == target;
-        long age = host.frameAgeMs();
-        boolean nowStalled = onTarget && usable && age > config.stallMs;
+        if (target != pending.task.displayId || target != host.currentDisplayId()
+                || current == null || current.displayId != target || current.stackId != pending.task.stackId
+                || current.taskIdOf(config.packageName) != pending.task.taskIdOf(config.packageName)) {
+            pendingFrame = null;
+            return;
+        }
+        boolean main = isMain(current);
+        if (pending.waitingForMain || !main) {
+            // SDK 的画面不能充当主界面回迁成功的证据。
+            pending.afterNs = platform.nanoTime();
+            pending.afterSeq = host.latestSeq();
+            if (main) {
+                requestFocus(current, target, "move_back", usable);
+            }
+            pending.waitingForMain = !main;
+        }
+        FrameSequencer.Frame frame = host.latestFrame(target);
+        if (main && usable && frame != null && frame.seq > pending.afterSeq
+                && (!frame.timestampComparable || frame.isAfter(pending.afterNs))) {
+            pendingFrame = null;
+            moveSucceeded(current, pending.attempt, pending.startedAt, frame, pending.timedOut);
+        } else if (!pending.timedOut && platform.elapsedMs() >= pending.deadline) {
+            pending.timedOut = true;
+            emit("move_back_frame_timeout", fields("stack_id", current.stackId, "task_id", current.taskIdOf(config.packageName),
+                    "display_id", target, "attempt", pending.attempt, "elapsed_ms", platform.elapsedMs() - pending.startedAt));
+        }
+    }
+
+    private void moveSucceeded(StackEntry moved, int attempt, long startedAt, FrameSequencer.Frame frame, boolean late) {
+        moveAttempts = 0;
+        emit("move_back_succeeded", fields("stack_id", moved.stackId, "task_id", moved.taskIdOf(config.packageName),
+                "display_id", moved.displayId, "attempt", attempt, "elapsed_ms", platform.elapsedMs() - startedAt,
+                "first_frame_seq", frame == null ? -1 : frame.seq, "late_frame", late,
+                "frame_boundary", frame == null ? "none" : frame.timestampComparable ? "timestamp" : "sequence"));
+    }
+
+    private void checkStall(StackEntry current, int target, boolean usable, long now) {
+        if (config.stallMs <= 0 || target < 0 || target != host.currentDisplayId() || !usable
+                || current == null || current.displayId != target || !isMain(current)) {
+            mainOnTargetSince = -1;
+            synchronized (stateLock) {
+                stalled = false;
+            }
+            return;
+        }
+        if (mainOnTargetSince < 0) {
+            mainOnTargetSince = now;
+        }
+        FrameSequencer.Frame latest = host.latestFrame(target);
+        long age = latest == null ? -1 : Math.max(0, now - latest.acquiredMs);
+        boolean nowStalled = now - mainOnTargetSince >= config.stallMs && (latest == null || age >= config.stallMs);
         if (nowStalled != stalled) {
+            synchronized (stateLock) {
+                stalled = nowStalled;
+            }
+            emit(nowStalled ? "frames_stalled" : "frames_resumed", fields("age_ms", age, "display_id", target));
             if (nowStalled) {
-                synchronized (stateLock) {
-                    stalled = true;
-                }
-                emit("frames_stalled", fields("age_ms", age, "display_id", target));
-                requestFocus(target, "frames_stalled");
-            } else if (!onTarget || (age >= 0 && age <= config.stallMs)) {
-                synchronized (stateLock) {
-                    stalled = false;
-                }
-                emit("frames_resumed", fields("age_ms", age, "display_id", target));
+                requestFocus(current, target, "frames_stalled", true);
             }
         }
     }
 
     /** 有的系统上游戏在没有焦点的屏里不渲染（MuMu 的 Android 12 如此），按配置把焦点切过去。 */
-    private void requestFocus(int target, String reason) {
-        if (!config.autoFocus || target != host.currentDisplayId()) {
+    private void requestFocus(StackEntry current, int target, String reason, boolean usable) {
+        if (!running || !config.autoFocus || !usable || current.displayId != target
+                || !isMain(current) || target != host.currentDisplayId()) {
             return;
         }
         try {
@@ -480,7 +619,6 @@ final class Watchdog {
     }
 
     private void emit(String type, JSONObject fields) {
-        Logger.i("watchdog event " + type + " " + fields);
         host.emit(type, fields);
     }
 

@@ -277,6 +277,31 @@ final class SystemApis {
     }
 
     private static Class<?> loadDisplayControl() throws ReflectiveOperationException {
+        if (DisplayControlHolder.FAILURE != null) {
+            throw new ReflectiveOperationException("cannot initialize DisplayControl", DisplayControlHolder.FAILURE);
+        }
+        return DisplayControlHolder.TYPE;
+    }
+
+    /** Android 14+，未在实机验证。ART 不允许两个仍存活的类加载器加载同一个原生库。 */
+    private static final class DisplayControlHolder {
+        static final Class<?> TYPE;
+        static final Throwable FAILURE;
+
+        static {
+            Class<?> type = null;
+            Throwable failure = null;
+            try {
+                type = initializeDisplayControl();
+            } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+                failure = e;
+            }
+            TYPE = type;
+            FAILURE = failure;
+        }
+    }
+
+    private static Class<?> initializeDisplayControl() throws ReflectiveOperationException {
         Class<?> factory = Class.forName("com.android.internal.os.ClassLoaderFactory");
         Method create = factory.getDeclaredMethod("createClassLoader", String.class, String.class, String.class,
                 ClassLoader.class, int.class, boolean.class, String.class);

@@ -13,6 +13,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.march7th.deviceservice.protocol.FrameEncoder;
 import org.march7th.deviceservice.protocol.FrameSequencer;
+import org.march7th.deviceservice.protocol.JsonIntegers;
 import org.march7th.deviceservice.protocol.Message;
 import org.march7th.deviceservice.protocol.Protocol;
 import org.march7th.deviceservice.protocol.TouchPath;
@@ -70,7 +71,7 @@ public final class DeviceService implements Watchdog.Host {
     private final Handler captureHandler;
     private final FrameSequencer sequencer = new FrameSequencer();
     private final InputInjector injector;
-    private final SideEffects sideEffects = new SideEffects();
+    private final SideEffects sideEffects;
     private final Object displayLock = new Object();
     private final List<Session> sessions = new CopyOnWriteArrayList<>();
     private final AtomicInteger nextSessionId = new AtomicInteger(1);
@@ -84,10 +85,16 @@ public final class DeviceService implements Watchdog.Host {
     private ExecutorService encodePool;
 
     public DeviceService() throws ReflectiveOperationException {
+        this(null);
+    }
+
+    /** cleanupJarPath 是善后进程可读取的设备端 DEX jar 路径；null 时沿用 CLASSPATH。 */
+    public DeviceService(String cleanupJarPath) throws ReflectiveOperationException {
         ShellContext.get();
         captureThread.start();
         captureHandler = new Handler(captureThread.getLooper());
         injector = new InputInjector();
+        sideEffects = new SideEffects(cleanupJarPath);
     }
 
     public Session openSession(EventSink sink, boolean subscribe) {
@@ -97,10 +104,10 @@ public final class DeviceService implements Watchdog.Host {
         return session;
     }
 
-    /** 会话结束：抬起它还按着的触点。 */
+    /** 会话结束：取消包含它的触点的手势。 */
     public void closeSession(Session session) {
         sessions.remove(session);
-        injector.releaseAll(session.id, -1);
+        injector.cancelAll(session.id, -1);
     }
 
     public int sessionCount() {
@@ -125,7 +132,7 @@ public final class DeviceService implements Watchdog.Host {
         if (dog != null) {
             dog.stop();
         }
-        injector.releaseAll(-1, -1);
+        injector.close();
         releaseDisplay();
         sideEffects.restoreAll();
         captureThread.quitSafely();
@@ -231,7 +238,8 @@ public final class DeviceService implements Watchdog.Host {
         out.put("frame_seq", sequencer.latest());
         out.put("encodings", new JSONArray(java.util.Arrays.asList(
                 FrameEncoder.RGBA, FrameEncoder.RGB, FrameEncoder.RGB_ZLIB, FrameEncoder.RGBA_ZLIB)));
-        out.put("features", new JSONArray(java.util.Arrays.asList("screen_power", "mute", "stop_app", "events", "focus")));
+        out.put("features", new JSONArray(java.util.Arrays.asList(
+                "screen_power", "mute", "stop_app", "events", "focus", "frame_after_ns")));
         out.put("default_tap_ms", DEFAULT_TAP_MS);
         return out;
     }
@@ -271,7 +279,8 @@ public final class DeviceService implements Watchdog.Host {
         out.put("display", describeScreen(current));
         JSONObject frame = new JSONObject();
         frame.put("seq", sequencer.latest());
-        frame.put("age_ms", current == null ? -1 : current.frameAgeMs());
+        FrameSequencer.Frame latest = current == null ? null : current.latestFrame();
+        frame.put("age_ms", latest == null ? -1 : SystemClock.elapsedRealtime() - latest.acquiredMs);
         frame.put("capturing", sequencer.isActive());
         out.put("frame", frame);
         JSONObject power = new JSONObject();
@@ -349,10 +358,11 @@ public final class DeviceService implements Watchdog.Host {
             if (current == null) {
                 return;
             }
-            injector.releaseAll(-1, current.displayId);
-            screen = null;
-            current.release();
-            injector.forgetDisplay(current.displayId);
+            synchronized (injector) {
+                injector.cancelAll(-1, current.displayId);
+                screen = null;
+                current.release();
+            }
             Logger.i("virtual display " + current.displayId + " released");
         }
     }
@@ -366,13 +376,9 @@ public final class DeviceService implements Watchdog.Host {
     }
 
     /** 请求里显式给了 display_id 就用它（包括 0），否则用当前的虚拟屏。 */
-    private int targetDisplay(JSONObject request) throws CommandException, JSONException {
-        if (request.has("display_id") && !request.isNull("display_id")) {
-            int id = request.getInt("display_id");
-            if (id < 0) {
-                throw new CommandException(Protocol.E_BAD_REQUEST, "display_id must not be negative");
-            }
-            return id;
+    private int targetDisplay(JSONObject request) throws CommandException {
+        if (request.has("display_id")) {
+            return JsonIntegers.id(request.opt("display_id"), "display_id", Integer.MAX_VALUE);
         }
         return requireScreen().displayId;
     }
@@ -447,6 +453,7 @@ public final class DeviceService implements Watchdog.Host {
     private Message frame(Session session, JSONObject request) throws CommandException, JSONException, InterruptedException {
         VirtualScreen current = requireScreen();
         long minSeq = request.optLong("min_seq", 0);
+        Long afterNs = request.has("after_ns") ? JsonIntegers.integer(request.opt("after_ns"), "after_ns") : null;
         int timeout = clamp(request.optInt("timeout_ms", 2000), 0, 30000);
         boolean allowStale = request.optBoolean("allow_stale", false);
         FrameEncoder.Options options = new FrameEncoder.Options();
@@ -475,62 +482,84 @@ public final class DeviceService implements Watchdog.Host {
             }
         }
 
-        boolean stale = false;
-        try {
-            sequencer.await(minSeq, timeout);
-        } catch (TimeoutException e) {
-            long latest = sequencer.latest();
-            if (!allowStale || latest == 0) {
-                JSONObject details = new JSONObject();
-                details.put("latest_seq", latest);
-                throw new CommandException(Protocol.E_TIMEOUT,
-                        "no frame with seq >= " + Math.max(minSeq, 1) + " within " + timeout + " ms", details);
-            }
-            stale = true;
-        } catch (IllegalStateException e) {
-            throw new CommandException(Protocol.E_NO_DISPLAY, "the display was released");
-        }
-
         String key = current.displayId + "/" + x + "," + y + "," + width + "," + height + "/" + options.cacheKey();
-        if (key.equals(session.cacheKey) && session.cacheHeader != null && session.cacheSeq == sequencer.latest()) {
-            // 没有新帧：直接重发上一次的结果，不重新拷贝和编码
-            JSONObject header = new JSONObject(session.cacheHeader.toString());
-            if (request.has("id")) {
-                header.put("id", request.get("id"));
-            }
-            header.put("cached", true);
-            header.put("stale", stale);
-            header.put("age_ms", current.frameAgeMs());
-            header.put("copy_ms", 0);
-            header.put("encode_ms", 0);
-            return new Message(header, session.cachePayload, 0, session.cacheLength);
-        }
-
         int channels = options.channels();
-        int needed = width * height * channels;
-        if (session.pixels == null || session.pixels.length < needed) {
-            session.pixels = new byte[needed];
+        FrameSequencer.Frame captured;
+        boolean stale = false;
+        boolean cached;
+        double copyMs = 0;
+        long waitStart = System.nanoTime();
+        double waitMs;
+        synchronized (sequencer) {
+            try {
+                captured = current.awaitFrame(minSeq, afterNs, timeout);
+            } catch (TimeoutException e) {
+                captured = current.latestFrame();
+                if (afterNs != null || !allowStale || captured == null) {
+                    JSONObject details = new JSONObject().put("latest_seq", sequencer.latest());
+                    if (afterNs != null && captured != null && !captured.timestampComparable) {
+                        throw new CommandException(Protocol.E_FRAME_CLOCK_UNAVAILABLE,
+                                "the latest frame timestamp cannot be compared with after_ns", details);
+                    }
+                    throw new CommandException(Protocol.E_TIMEOUT, "no matching frame within " + timeout + " ms", details);
+                }
+                stale = true;
+            } catch (IllegalStateException e) {
+                throw new CommandException(Protocol.E_NO_DISPLAY, "the display was released");
+            }
+            waitMs = (System.nanoTime() - waitStart) / 1e6;
+            // 先选中满足边界的帧，再决定能否复用同一帧的编码结果。
+            cached = key.equals(session.cacheKey) && session.cacheSeq == captured.seq;
+            if (!cached) {
+                int needed = width * height * channels;
+                if (session.pixels == null || session.pixels.length < needed) {
+                    session.pixels = new byte[needed];
+                }
+                long copyStart = System.nanoTime();
+                current.copyLatest(x, y, width, height, channels, session.pixels);
+                copyMs = (System.nanoTime() - copyStart) / 1e6;
+            }
         }
-        long t0 = System.nanoTime();
-        VirtualScreen.Captured captured = current.copyLatest(x, y, width, height, channels, session.pixels);
-        if (captured == null) {
-            throw new CommandException(Protocol.E_NO_DISPLAY, "the display was released");
+        double encodeMs = 0;
+        if (!cached) {
+            long encodeStart = System.nanoTime();
+            FrameEncoder.Encoded encoded = FrameEncoder.encode(session.pixels, width, height, options, encodePool(options.chunks));
+            encodeMs = (System.nanoTime() - encodeStart) / 1e6;
+            session.cacheHeader = frameHeader(current, captured, x, y, width, height, options, encoded);
+            session.cacheKey = key;
+            session.cacheSeq = captured.seq;
+            session.cachePayload = encoded.data;
+            session.cacheLength = encoded.length;
         }
-        long t1 = System.nanoTime();
-        FrameEncoder.Encoded encoded = FrameEncoder.encode(session.pixels, width, height, options, encodePool(options.chunks));
-        long t2 = System.nanoTime();
+        JSONObject header = new JSONObject(session.cacheHeader.toString());
+        if (request.has("id")) {
+            header.put("id", request.get("id"));
+        }
+        header.put("cached", cached);
+        header.put("stale", stale);
+        header.put("age_ms", SystemClock.elapsedRealtime() - captured.acquiredMs);
+        header.put("wait_ms", waitMs);
+        header.put("copy_ms", copyMs);
+        header.put("encode_ms", encodeMs);
+        return new Message(header, session.cachePayload, 0, session.cacheLength);
+    }
 
+    private static JSONObject frameHeader(VirtualScreen current, FrameSequencer.Frame captured,
+                                          int x, int y, int width, int height,
+                                          FrameEncoder.Options options, FrameEncoder.Encoded encoded) throws JSONException {
         JSONObject header = new JSONObject();
         header.put("ok", true);
         header.put("seq", captured.seq);
         header.put("display_id", current.displayId);
         header.put("width", width);
         header.put("height", height);
-        header.put("channels", channels);
+        header.put("channels", options.channels());
         header.put("encoding", options.encoding);
         header.put("crop", new JSONArray().put(x).put(y).put(width).put(height));
         header.put("image_ns", captured.imageNs);
         header.put("captured_ms", captured.acquiredMs);
+        header.put("acquired_ns", captured.acquiredNs);
+        header.put("timestamp_comparable", captured.timestampComparable);
         header.put("size", encoded.length);
         if (options.compressed()) {
             header.put("level", options.level);
@@ -544,21 +573,7 @@ public final class DeviceService implements Watchdog.Host {
             header.put("chunks", lengths);
             header.put("chunk_rows", rows);
         }
-        session.cacheKey = key;
-        session.cacheSeq = captured.seq;
-        session.cacheHeader = new JSONObject(header.toString());
-        session.cachePayload = encoded.data;
-        session.cacheLength = encoded.length;
-
-        if (request.has("id")) {
-            header.put("id", request.get("id"));
-        }
-        header.put("cached", false);
-        header.put("stale", stale);
-        header.put("age_ms", SystemClock.elapsedRealtime() - captured.acquiredMs);
-        header.put("copy_ms", (t1 - t0) / 1e6);
-        header.put("encode_ms", (t2 - t1) / 1e6);
-        return new Message(header, encoded.data, 0, encoded.length);
+        return header;
     }
 
     private synchronized ExecutorService encodePool(int chunks) {
@@ -602,26 +617,21 @@ public final class DeviceService implements Watchdog.Host {
             Logger.w("cannot read power state before injecting", e);
         }
         Watchdog dog = watchdog;
-        if (dog != null && ownDisplay) {
-            Boolean onTarget = dog.gameOnTarget();
-            if (onTarget != null && !onTarget) {
-                throw new CommandException(Protocol.E_GAME_NOT_ON_DISPLAY,
-                        dog.packageName() + " is not on display " + displayId);
-            }
+        if (dog != null) {
+            dog.checkInput(displayId, ownDisplay);
         }
     }
 
-    private static int pointerId(JSONObject request) throws CommandException {
-        int id = request.optInt("pointer_id", 0);
-        if (id < 0 || id >= InputInjector.MAX_POINTERS) {
-            throw new CommandException(Protocol.E_BAD_REQUEST, "pointer_id must be 0.." + (InputInjector.MAX_POINTERS - 1));
-        }
-        return id;
+    private static int pointerId(JSONObject request) {
+        return request.has("pointer_id")
+                ? JsonIntegers.id(request.opt("pointer_id"), "pointer_id", InputInjector.MAX_POINTERS - 1) : 0;
     }
 
     private JSONObject inputResult(JSONObject request, int displayId, boolean delivered) throws JSONException {
+        long inputNs = System.nanoTime();
         JSONObject out = Message.ok(request);
         out.put("seq", sequencer.latest());
+        out.put("input_ns", inputNs);
         out.put("display_id", displayId);
         out.put("delivered", delivered);
         out.put("device_ms", SystemClock.elapsedRealtime());
@@ -813,6 +823,7 @@ public final class DeviceService implements Watchdog.Host {
 
     @Override
     public void emit(String type, JSONObject fields) {
+        Logger.i("watchdog event " + type + " " + fields);
         JSONObject event = new JSONObject();
         try {
             synchronized (eventLog) {
@@ -861,19 +872,14 @@ public final class DeviceService implements Watchdog.Host {
     }
 
     @Override
-    public long frameAgeMs() {
+    public FrameSequencer.Frame latestFrame(int displayId) {
         VirtualScreen current = screen;
-        return current == null ? -1 : current.frameAgeMs();
+        return current == null || current.displayId != displayId ? null : current.latestFrame();
     }
 
     @Override
     public long latestSeq() {
         return sequencer.latest();
-    }
-
-    @Override
-    public long awaitSeq(long minSeq, long timeoutMs) throws InterruptedException, TimeoutException {
-        return sequencer.await(minSeq, timeoutMs);
     }
 
     // ---- 面板与静音 ----

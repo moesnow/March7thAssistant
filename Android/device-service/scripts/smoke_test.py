@@ -10,7 +10,7 @@
     # 星铁：回迁后点两次“点击进入”进到车厢再测速，最后点开手机菜单
     python smoke_test.py --serial <序列号> --pre-tap 640,665:20 --pre-tap 640,665:45 --tap 35,67 --out out/phone
 
-只依赖标准库和 PATH 里的 adb（装了 numpy 会多测一种带预测的压缩）。
+只依赖标准库和 PATH 里的 adb（装了 numpy 会多测带预测的压缩）。
 会启动并在结束时停止游戏，运行前确认设备和账号归你使用。
 """
 
@@ -19,13 +19,12 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
-import statistics
 import sys
 import time
 from pathlib import Path
 
-from device_client import (DEFAULT_JAR, Adb, DeviceClient, DeviceError, ServiceHandle, changed_ratio, start_service,
-                           write_png)
+from device_client import (DEFAULT_JAR, Adb, DeviceClient, DeviceError, ServiceHandle, changed_ratio,
+                           measure_frame_encoding, start_service, write_png)
 
 GAME = "com.miHoYo.hkrpg/com.mihoyo.combosdk.ComboSDKActivity"
 
@@ -38,6 +37,9 @@ ENCODINGS = [
 ]
 if importlib.util.find_spec("numpy"):
     ENCODINGS.append({"encoding": "rgb-zlib", "level": 1, "chunks": 4, "predictor": "left"})
+    ENCODINGS.append({"encoding": "rgb-zlib", "level": 1, "chunks": 4, "predictor": "up"})
+ENCODINGS += [{"encoding": "rgba-zlib", "level": 1, "chunks": 4},
+              {"encoding": "rgb", "crop": [0, 0, 320, 180]}]
 
 results: dict = {"steps": []}
 started = time.monotonic()
@@ -55,12 +57,10 @@ def encoding_label(options: dict) -> str:
         label += f"×{options['chunks']}"
     if options.get("predictor"):
         label += f"+{options['predictor']}"
+    if "crop" in options:
+        _, _, width, height = options["crop"]
+        label += f" {width}×{height}"
     return label
-
-
-def percentile(values: list[float], fraction: float) -> float:
-    ordered = sorted(values)
-    return ordered[min(len(ordered) - 1, int(len(ordered) * fraction))]
 
 
 def display_ids(adb: Adb) -> list[int]:
@@ -98,76 +98,28 @@ def check_auth(handle: ServiceHandle) -> None:
 
 
 def measure_frames(client: DeviceClient, seconds: float) -> list[dict]:
-    """每种编码各跑一段：连续取“比上一帧新”的帧，统计帧率和延迟。"""
     table = []
     for options in ENCODINGS:
         label = encoding_label(options)
         try:
-            header, _ = client.frame(**options)
-        except DeviceError as error:
-            step(f"frame/{label}", False, error=error.code)
+            row = measure_frame_encoding(client, seconds, options)
+        except (DeviceError, ConnectionError) as error:
+            step(f"frame/{label}", False, error=str(error))
             continue
-        last_seq = header["seq"]
-        request_ms, server_ms, age_ms, sizes, seqs = [], [], [], [], []
-        begin = time.perf_counter()
-        while time.perf_counter() - begin < seconds:
-            t0 = time.perf_counter()
-            try:
-                header, pixels = client.frame(min_seq=last_seq + 1, timeout_ms=1000, **options)
-            except DeviceError as error:
-                if error.code != "timeout":
-                    raise
-                continue
-            t1 = time.perf_counter()
-            if header["seq"] <= last_seq:
-                step(f"frame/{label}", False, note=f"seq went from {last_seq} to {header['seq']}")
-                break
-            if len(pixels) != header["width"] * header["height"] * header["channels"]:
-                step(f"frame/{label}", False, note="decoded size mismatch")
-                break
-            last_seq = header["seq"]
-            seqs.append(last_seq)
-            request_ms.append((t1 - t0) * 1000)
-            server_ms.append(header["copy_ms"] + header["encode_ms"])
-            # 这一帧从被采集到客户端收完：服务端组响应时的帧龄，加上之后的传输时间
-            age_ms.append(header["age_ms"] + max(0.0, (t1 - t0) * 1000 - header["copy_ms"] - header["encode_ms"]))
-            sizes.append(header["size"])
-        elapsed = time.perf_counter() - begin
-        if not seqs:
-            step(f"frame/{label}", False, note="no new frame")
-            continue
-        row = {
-            "encoding": label,
-            "frames": len(seqs),
-            "fps": round(len(seqs) / elapsed, 1),
-            "source_frames": seqs[-1] - seqs[0] + 1,
-            "size_kb": round(statistics.mean(sizes) / 1024),
-            "server_ms": round(statistics.median(server_ms), 1),
-            "request_ms_p50": round(statistics.median(request_ms), 1),
-            "request_ms_p95": round(percentile(request_ms, 0.95), 1),
-            "end_to_end_ms_p50": round(statistics.median(age_ms), 1),
-            "end_to_end_ms_p95": round(percentile(age_ms, 0.95), 1),
-        }
-        table.append(row)
-        step(f"frame/{label}", True, **{k: v for k, v in row.items() if k != "encoding"})
+        table.append({"encoding": label, "options": options, **row})
+        step(f"frame/{label}", True, **{key: value for key, value in row.items() if key != "samples"})
     return table
 
 
-def frame_after(client: DeviceClient, seq: int, **options) -> tuple[dict, bytes]:
-    """输入之后只取更新的帧；画面静止导致超时的话退回最新帧。"""
-    return client.frame(min_seq=seq + 1, timeout_ms=2000, allow_stale=True, **options)
-
-
 def check_input(client: DeviceClient, args, out: Path | None) -> None:
-    """滑动、按住拖动、点按各做一次。每次都确认：输入之后拿到的帧序号比输入返回的序号大。"""
+    """滑动、按住拖动、点按各做一次，确认用的帧严格晚于输入完成。"""
     _, before = client.frame()
     x0, y0, x1, y1 = args.swipe
     response, _ = client.request("swipe", points=[[x0, y0], [x1, y1]], duration_ms=600, timeout=20)
-    header, _ = frame_after(client, response["seq"])
     time.sleep(args.settle)
-    after_header, after = client.frame()
-    step("input/swipe", response["delivered"] and header["seq"] > response["seq"],
-         input_seq=response["seq"], next_frame_seq=header["seq"],
+    after_header, after = client.frame_after(response)
+    step("input/swipe", response["delivered"], input_seq=response["seq"], next_frame_seq=after_header["seq"],
+         input_ns=response["input_ns"], image_ns=after_header["image_ns"],
          changed=round(changed_ratio(before, after, 3), 3))
     if out:
         write_png(out / "after-swipe.png", after_header["width"], after_header["height"], 3, after)
@@ -180,11 +132,11 @@ def check_input(client: DeviceClient, args, out: Path | None) -> None:
         time.sleep(0.02)
     time.sleep(0.3)
     up, _ = client.request("touch", action="up")
-    header, _ = frame_after(client, up["seq"])
     time.sleep(args.settle)
-    after_header, after = client.frame()
-    step("input/drag", down["delivered"] and up["delivered"] and header["seq"] > up["seq"],
-         down_seq=down["seq"], up_seq=up["seq"], next_frame_seq=header["seq"],
+    after_header, after = client.frame_after(up)
+    step("input/drag", down["delivered"] and up["delivered"],
+         down_seq=down["seq"], up_seq=up["seq"], next_frame_seq=after_header["seq"],
+         input_ns=up["input_ns"], image_ns=after_header["image_ns"],
          changed=round(changed_ratio(before, after, 3), 3))
     if out:
         write_png(out / "after-drag.png", after_header["width"], after_header["height"], 3, after)
@@ -192,11 +144,11 @@ def check_input(client: DeviceClient, args, out: Path | None) -> None:
     before = after
     x, y = args.tap
     response, _ = client.request("tap", x=x, y=y, duration_ms=args.tap_ms)
-    header, _ = frame_after(client, response["seq"])
     time.sleep(args.settle)
-    after_header, after = client.frame()
-    step("input/tap", response["delivered"] and header["seq"] > response["seq"], x=x, y=y,
-         input_seq=response["seq"], next_frame_seq=header["seq"],
+    after_header, after = client.frame_after(response)
+    step("input/tap", response["delivered"], x=x, y=y,
+         input_seq=response["seq"], next_frame_seq=after_header["seq"],
+         input_ns=response["input_ns"], image_ns=after_header["image_ns"],
          changed=round(changed_ratio(before, after, 3), 3))
     if out:
         write_png(out / "after-tap.png", after_header["width"], after_header["height"], 3, after)
@@ -234,7 +186,7 @@ def main() -> int:
                         help="滑动的起点和终点 x0,y0,x1,y1")
     parser.add_argument("--settle", type=float, default=1.5, help="每次输入后等画面变化的时间（秒）")
     parser.add_argument("--auto-focus", action="store_true",
-                        help="启动后把焦点切到虚拟屏，并让看门狗在回迁后、停帧时自动再切（MuMu 的 Android 12 需要）")
+                        help="由看门狗在任务移回和停帧时切焦点（MuMu 的 Android 12 需要）")
     parser.add_argument("--skip-input", action="store_true")
     parser.add_argument("--keep-app", action="store_true", help="结束时不停止应用")
     parser.add_argument("--out", type=Path, help="保存截图（已遮住 UID 区域）和 result.json 的目录")
@@ -288,18 +240,16 @@ def main() -> int:
         launch, _ = client.request("launch", component=args.component, timeout=60)
         step("launch", True, display_id=launch["display_id"], seconds=round(time.monotonic() - launched_at, 1))
 
-        first, _ = client.frame(min_seq=launch["seq"] + 1, timeout_ms=15000)
+        first, _ = client.frame(min_seq=launch["seq"] + 1, timeout_ms=20000)
         step("first_frame", True, seq=first["seq"], seconds=round(time.monotonic() - launched_at, 1))
-        if args.auto_focus:
-            focus, _ = client.request("focus")
-            step("focus", focus["delivered"], seq=focus["seq"])
 
         if args.migration_timeout > 0:
-            moved = client.wait_event(lambda e: e["event"] in ("move_back_succeeded", "move_back_failed",
-                                                               "manual_action_required", "game_exited"),
-                                      args.migration_timeout)
+            moved = client.wait_event(
+                lambda e: e["event"] in ("move_back_succeeded", "manual_action_required", "game_exited")
+                or (e["event"] == "move_back_failed" and e["final"]), args.migration_timeout)
             if moved is None:
-                step("migration", True, note=f"no migration within {args.migration_timeout:.0f} s")
+                attempted = any(e["event"] == "move_back_started" for e in client.events)
+                step("migration", not attempted, note=f"no completed migration within {args.migration_timeout:.0f} s")
             else:
                 shown = next((e for e in client.events if e["event"] == "sdk_window_shown"), None)
                 gone = next((e for e in client.events if e["event"] == "sdk_window_gone"), None)
@@ -348,8 +298,16 @@ def main() -> int:
         while handle.running() and time.monotonic() < deadline:
             time.sleep(0.3)
         step("shutdown", not handle.running())
+    except (DeviceError, OSError) as error:
+        step("service", False, error=str(error))
     finally:
         if client is not None:
+            results["events"] = list(client.events)
+            if not args.keep_app:
+                try:
+                    client.request("stop_app", package=package)
+                except (DeviceError, OSError):
+                    pass
             try:
                 client.request("shutdown")
             except (DeviceError, OSError):
@@ -372,10 +330,10 @@ def main() -> int:
     if out:
         (out / "result.json").write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
     if results.get("frames"):
-        print("\n编码           帧率   大小KB  服务端ms  请求p50  请求p95  端到端p50  端到端p95")
+        print("\n编码           帧率   大小KB  服务端ms  取最新帧请求 p50/p95    采集到收完 p50/p95")
         for row in results["frames"]:
             print(f"{row['encoding']:<14} {row['fps']:>5} {row['size_kb']:>7} {row['server_ms']:>9} "
-                  f"{row['request_ms_p50']:>8} {row['request_ms_p95']:>8} {row['end_to_end_ms_p50']:>10} "
+                  f"{row['latest_request_ms_p50']:>8} {row['latest_request_ms_p95']:>8} {row['end_to_end_ms_p50']:>10} "
                   f"{row['end_to_end_ms_p95']:>10}")
     print(f"\n{'全部通过' if not failed else '失败：' + ', '.join(failed)}")
     return 1 if failed else 0

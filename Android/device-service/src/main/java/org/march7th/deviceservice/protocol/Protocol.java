@@ -28,13 +28,16 @@ public final class Protocol {
     public static final String E_DISPLAY_FAILED = "display_failed";
     public static final String E_FORBIDDEN_DISPLAY = "forbidden_display";
     public static final String E_TIMEOUT = "timeout";
+    public static final String E_FRAME_CLOCK_UNAVAILABLE = "frame_clock_unavailable";
     public static final String E_INJECT_FAILED = "inject_failed";
     public static final String E_INJECT_DENIED = "inject_denied";
     public static final String E_DEVICE_ASLEEP = "device_asleep";
     public static final String E_KEYGUARD_LOCKED = "keyguard_locked";
     public static final String E_GAME_NOT_ON_DISPLAY = "game_not_on_display";
+    public static final String E_SDK_WINDOW_ACTIVE = "sdk_window_active";
     public static final String E_LAUNCH_FAILED = "launch_failed";
     public static final String E_UNSUPPORTED = "unsupported";
+    public static final String E_CLEANUP_UNAVAILABLE = "cleanup_unavailable";
     public static final String E_INTERNAL = "internal";
 
     private Protocol() {
