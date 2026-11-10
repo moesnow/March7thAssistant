@@ -26,6 +26,7 @@ DEFAULT_JAR = Path("Android/device-service/build/outputs/m7a-device-service.jar"
 _MAIN_CLASS = "org.march7th.deviceservice.Main"
 _REMOTE_DIR = "/data/local/tmp"
 _IDLE_SECONDS = 8
+_SHUTDOWN_TIMEOUT_SECONDS = 9
 _NETWORK_SERIAL = re.compile(r"(?:\[[^\]]+\]|[^:\s]+):\d{1,5}")
 _ADB_RESTART = re.compile(r"server version.*(?:doesn.t match|mismatch)|restart(?:ing|ed).*daemon", re.I)
 _ADB_DISCONNECT = re.compile(r"device (?:offline|disconnected|unauthorized|not found)|device .* not found|"
@@ -128,6 +129,17 @@ class Adb:
 
     def shell(self, command: str, *, timeout: float = 5) -> str:
         return self.run("shell", command, timeout=timeout)
+
+    def focused_window(self, display_id: int) -> str | None:
+        output = self.shell("dumpsys -t 2 window displays", timeout=3)
+        on_display = False
+        for line in output.splitlines():
+            if display := re.match(r"\s*Display: mDisplayId=(\d+)\b", line):
+                on_display = int(display[1]) == display_id
+            elif on_display and line.lstrip().startswith("mCurrentFocus="):
+                window = re.match(r"\s*mCurrentFocus=Window\{\S+\s+u\d+\s+([^\s}]+)\}", line)
+                return window[1] if window else None
+        return None
 
     def devices(self) -> list[AdbDevice]:
         devices = []
@@ -280,6 +292,7 @@ class AdbService:
         self.client = None
         self.log_path = None
         self.token = None
+        self.pid = None
 
     def start(self, jar: Path):
         try:
@@ -321,7 +334,8 @@ class AdbService:
         deadline = time.monotonic() + 10
         while True:
             output = self.adb.shell(f"cat {self.log_path} 2>/dev/null || true")
-            if re.search(rf"^M7A_DEVICE_SERVICE_READY .* socket={name} pid=\d+$", output, re.M):
+            if ready := re.search(rf"^M7A_DEVICE_SERVICE_READY .* socket={name} pid=([1-9]\d*)$", output, re.M):
+                self.pid = int(ready[1])
                 break
             if "another instance or its cleanup" in output:
                 raise AdbError("service_busy", tr("设备端服务已被占用或仍在清理，请稍后重试"))
@@ -343,14 +357,26 @@ class AdbService:
     def request(self, cmd, **params):
         return self.client.request(cmd, **params)
 
+    def _wait_for_exit(self, pid: int):
+        deadline = time.monotonic() + _SHUTDOWN_TIMEOUT_SECONDS
+        while (remaining := deadline - time.monotonic()) > 0:
+            stat = self.adb.shell(f"cat /proc/{pid}/stat 2>/dev/null || true", timeout=min(2, remaining))
+            state = stat.rpartition(") ")[2].partition(" ")[0]
+            if not stat or state in {"Z", "X"}:
+                return
+            time.sleep(min(0.1, max(0, deadline - time.monotonic())))
+        log.warning(f"ADB 设备端服务 {pid} 未在限时内退出")
+
     def close(self):
-        """正常发送 shutdown。线已断开时由 S1 在空闲超时后释放资源。"""
+        """收到 shutdown 应答后等待实例锁随进程释放。断线时由 S1 空闲超时清理。"""
         try:
             if self.port is not None:
                 try:
                     if self.client is None or self.client.closed:
                         self.client = ServiceClient(self.port, self.token)
                     self.request("shutdown", timeout=2)
+                    if self.pid is not None:
+                        self._wait_for_exit(self.pid)
                 except AdbError:
                     pass
         finally:
@@ -370,3 +396,4 @@ class AdbService:
                     pass
                 self.log_path = None
             self.token = None
+            self.pid = None

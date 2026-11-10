@@ -7367,3 +7367,8 @@ msgstr "ADB capture timed out while waiting for a usable game frame."
 #: utils/tasks.py:46
 msgid "ADB 自检"
 msgstr "ADB Self-Test"
+
+#: module/game/__init__.py:19
+msgid "ADB 模式不支持「{task}」，请使用本地或云游戏后端"
+msgstr ""
+"ADB mode does not support {task}. Switch to the local or cloud game backend."

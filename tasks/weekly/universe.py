@@ -1,6 +1,7 @@
 from module.screen import screen
 from module.config import cfg
-from module.game import cloud_game
+from module.game import cloud_game, require_desktop_task
+from module.localization import tr
 from module.logger import log
 from module.automation import auto
 from module.notification.notification import NotificationLevel
@@ -112,6 +113,7 @@ class Universe:
 
     @staticmethod
     def before_start():
+        require_desktop_task(cfg, tr("模拟宇宙"))
         Universe.check_path()
         if cfg.universe_operation_mode == "source":
             PythonChecker.run()

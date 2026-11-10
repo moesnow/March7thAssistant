@@ -26,6 +26,8 @@ class FakeS1(socketserver.ThreadingTCPServer):
         self.protocol = 1
         self.version = "0.1.0"
         self.display_id = 42
+        self.task_visible = True
+        self.top_activity = f"{transport.GAME_PACKAGE}/com.mihoyo.combosdk.ComboSDKActivity"
         self.launch_display_id = None
         self.sequence = 8
         self.image_ns = 400
@@ -59,7 +61,9 @@ class FakeS1(socketserver.ThreadingTCPServer):
         if cmd == "events":
             return dict(events=self.events[header["after"]:], event_seq=len(self.events)), b""
         if cmd == "status":
-            return dict(watchdog=dict(pid=12, task={"display_id": self.display_id})), b""
+            return dict(watchdog=dict(pid=12, task={
+                "display_id": self.display_id, "visible": self.task_visible, "top_activity": self.top_activity,
+            })), b""
         if cmd in ("tap", "swipe", "touch"):
             return dict(delivered=True, seq=self.sequence + 1, input_ns=500), b""
         if cmd == "frame":
@@ -94,10 +98,9 @@ class Handler(socketserver.BaseRequestHandler):
                 self.request.sendall(header + payload)
 
 
-class FakeAdb:
+class FakeAdb(transport.Adb):
     def __init__(self, service):
-        self.path = Path("adb")
-        self.serial = None
+        super().__init__(Path("adb"))
         self.service = service
         self.name = None
         self.pushes = 0
@@ -106,6 +109,13 @@ class FakeAdb:
         self.display_size = "1080x2340"
         self.calls = []
         self.image = None
+        self.focus_output = (
+            f"  Display: mDisplayId=0 rootTasks=1\n"
+            f"  mCurrentFocus=Window{{123abc u0 {service.top_activity}}}"
+        )
+        self.exit_probes = 0
+        self.exit_checks_remaining = 0
+        self.start_busy = False
 
     def devices(self):
         return self.devices_found
@@ -140,12 +150,24 @@ class FakeAdb:
             return f"package:{transport.GAME_PACKAGE}"
         if command.startswith(("if [ -f ", "mv ", "rm -f ", "pidof ")):
             return ""
+        if command == "dumpsys -t 2 window displays":
+            return self.focus_output
+        if command.startswith("cat /proc/"):
+            assert command == "cat /proc/128/stat 2>/dev/null || true"
+            self.exit_probes += 1
+            if self.exit_checks_remaining > 0:
+                self.exit_checks_remaining -= 1
+                return "128 (m7a-device-service) S 1 128 128"
+            return ""
         if command.startswith("CLASSPATH"):
+            self.start_busy = self.name is not None and self.exit_checks_remaining > 0
             self.service.token = re.search(r"--token ([\w-]+)", command)[1]
             self.name = re.search(r"--socket ([\w-]+)", command)[1]
             assert "--no-replace" in command
             return ""
         if command.startswith("cat "):
+            if self.start_busy:
+                return "another instance or its cleanup is still running"
             return f"M7A_DEVICE_SERVICE_READY protocol=1 version=0.1.0 socket={self.name} pid=128"
         raise AssertionError(command)
 
@@ -355,3 +377,82 @@ def test_adb_uses_selected_executable_and_reports_server_restart(monkeypatch, tm
         transport.list_adb_devices(executable)
     assert error.value.code == "adb_server_restarted"
     assert commands == [[str(executable), "devices", "-l"]]
+
+
+
+@pytest.mark.parametrize("condition", ["hidden", "sdk_activity", "other_app", "other_display", "unknown_focus"])
+def test_review_emulator_refuses_touch_without_game_foreground(adb, s1, condition):
+    controller, fake = adb
+    controller.cfg.adb_device_type = "emulator"
+    fake.display_size = "720x1280"
+    fake.image = Image.new("RGB", (1280, 720))
+    controller.start_game_process()
+    assert controller.capture_frame()
+    inputs = controller.get_input_handler()
+
+    if condition == "hidden":
+        s1.task_visible = False
+    elif condition == "sdk_activity":
+        s1.top_activity = f"{transport.GAME_PACKAGE}/com.miHoYo.sdk.platform.SdkActivity"
+    elif condition == "other_app":
+        fake.focus_output = ("Display: mDisplayId=0 rootTasks=3\n"
+                             "mCurrentFocus=Window{abcdef u0 com.mumu.launcher/.Launcher}")
+    elif condition == "other_display":
+        fake.focus_output = (f"Display: mDisplayId=8 rootTasks=1\n"
+                             f"mCurrentFocus=Window{{abcdef u0 {s1.top_activity}}}\n"
+                             "Display: mDisplayId=0 rootTasks=3\nmCurrentFocus=null")
+    else:
+        fake.focus_output = ""
+
+    assert inputs.mouse_click(38, 59) is False
+    assert inputs.mouse_down(38, 59) is False
+    assert inputs.mouse_drag(38, 59, 80, 110) is False
+    assert not {"tap", "touch", "swipe"}.intersection(request["cmd"] for request in s1.requests)
+
+
+def test_review_emulator_releases_held_touch_after_backgrounding(adb, s1):
+    controller, fake = adb
+    controller.cfg.adb_device_type = "emulator"
+    fake.display_size = "720x1280"
+    fake.image = Image.new("RGB", (1280, 720))
+    controller.start_game_process()
+    assert controller.capture_frame()
+    inputs = controller.get_input_handler()
+    assert inputs.mouse_down(38, 59)
+    s1.task_visible = False
+    assert inputs.mouse_move(100, 120) is False
+    assert inputs.mouse_up()
+    assert [request["action"] for request in s1.requests if request["cmd"] == "touch"] == ["down", "up"]
+
+
+def test_review_adb_close_waits_for_owned_instance_before_reopening(adb):
+    controller, fake = adb
+    controller.connect()
+    fake.exit_checks_remaining = 2
+
+    controller.close()
+    assert not fake.forwarding
+    controller.connect()
+    assert fake.exit_probes == 3
+    assert fake.forwarding
+
+
+
+@pytest.mark.parametrize("acknowledged", [True, False])
+def test_review_adb_close_clears_forward_when_exit_cannot_be_confirmed(adb, s1, monkeypatch, acknowledged):
+    from unittest.mock import Mock
+
+    controller, fake = adb
+    controller.connect()
+    fake.exit_checks_remaining = 10
+    if not acknowledged:
+        s1.drop_command = "shutdown"
+    monkeypatch.setattr(transport, "_SHUTDOWN_TIMEOUT_SECONDS", 0.05)
+    warning = Mock()
+    monkeypatch.setattr(transport.log, "warning", warning)
+
+    controller.close()
+
+    assert not fake.forwarding
+    assert bool(fake.exit_probes) is acknowledged
+    assert warning.called is acknowledged

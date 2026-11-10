@@ -7135,3 +7135,7 @@ msgstr "사용할 수 있는 게임 화면을 가져오기 전에 ADB 캡처 시
 #: utils/tasks.py:46
 msgid "ADB 自检"
 msgstr "ADB 자체 검사"
+
+#: module/game/__init__.py:19
+msgid "ADB 模式不支持「{task}」，请使用本地或云游戏后端"
+msgstr "ADB 모드에서는 '{task}' 작업을 실행할 수 없습니다. 로컬 또는 클라우드 게임 백엔드를 사용하세요."

@@ -331,7 +331,7 @@ from module.workflow import WorkflowRunner, load_workflow_execution_payload, des
 from utils.screenshot_util import save_error_screenshot
 
 import tasks.game as game
-from module.game import cloud_game
+from module.game import cloud_game, require_desktop_task
 from module.game.adb_transport import AdbError
 from tasks.game import adb_check
 from module.game.cloud import CloudGameZeroDurationError
@@ -598,6 +598,8 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
     backend = get_control_backend(cfg)
     if backend == "adb" and action in {"game_update", "game_pre_download"}:
         raise AdbError("update_unsupported", tr("请在 Android 设备上更新游戏"))
+    if backend == "adb" and not workflow_name and action in {"fight", "fight_gui", "universe", "universe_gui"}:
+        require_desktop_task(cfg, tr(AVAILABLE_TASKS[action]))
     first_run()
     # 启动暂停控制器（仅在 GUI 注入了 MARCH7TH_CONTROL_FILE 时生效，其余场景惰性关闭）
     pause_ctl.start()

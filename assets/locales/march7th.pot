@@ -6940,3 +6940,7 @@ msgstr ""
 #: utils/tasks.py:46
 msgid "ADB 自检"
 msgstr ""
+
+#: module/game/__init__.py:19
+msgid "ADB 模式不支持「{task}」，请使用本地或云游戏后端"
+msgstr ""

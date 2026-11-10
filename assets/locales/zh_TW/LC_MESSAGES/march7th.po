@@ -7081,3 +7081,7 @@ msgstr "ADB 截圖超時，未取得可用的遊戲畫面"
 #: utils/tasks.py:46
 msgid "ADB 自检"
 msgstr "ADB 自檢"
+
+#: module/game/__init__.py:19
+msgid "ADB 模式不支持「{task}」，请使用本地或云游戏后端"
+msgstr "ADB 模式不支援「{task}」，請使用本機或雲遊戲後端"

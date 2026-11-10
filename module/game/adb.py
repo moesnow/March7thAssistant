@@ -19,6 +19,7 @@ from module.localization import tr
 
 
 _GAME_ACTIVITY = "com.mihoyo.combosdk.ComboSDKActivity"
+_GAME_COMPONENT = f"{GAME_PACKAGE}/{_GAME_ACTIVITY}"
 _TEMPORARY_INPUT_ERRORS = {"game_not_on_display", "sdk_window_active"}
 
 
@@ -218,7 +219,7 @@ class AdbGameController(GameControllerBase):
             self._call("watchdog", package=GAME_PACKAGE, main_activity=_GAME_ACTIVITY, display_id=display_id,
                        subscribe=False)
             self._call("launch", timeout=17, timeout_ms=15000, display_id=display_id,
-                       component=f"{GAME_PACKAGE}/{_GAME_ACTIVITY}")
+                       component=_GAME_COMPONENT)
             self._watching = True
             self._poll_events(force=True)
             return True
@@ -279,6 +280,19 @@ class AdbGameController(GameControllerBase):
             self._watching and self._game_display_id != self._display_id
         ))
 
+    def _emulator_game_has_focus(self) -> bool:
+        status, _ = self._call("status")
+        task = status["watchdog"].get("task") or {}
+        if (task.get("display_id") != 0 or task.get("visible") is not True
+                or task.get("top_activity") != _GAME_COMPONENT):
+            return False
+        # 可见的游戏任务仍可能被其他窗口抢走焦点，触摸前检查 display 0 的实际窗口。
+        try:
+            return self._service.adb.focused_window(0) == _GAME_COMPONENT
+        except AdbError as error:
+            self._failure = error
+            raise
+
     def send_input(self, command, *, timeout=4, **params):
         with self._lock:
             action = params.get("action")
@@ -290,7 +304,9 @@ class AdbGameController(GameControllerBase):
                 if self._display_id is None:
                     raise AdbError("no_display", tr("ADB 尚未准备游戏画面，请先启动游戏"))
                 self._poll_events()
-                if not self._display_available() or (self._display_id == 0 and not self._landscape):
+                if not self._display_available():
+                    return False
+                if self._display_id == 0 and not (self._landscape and self._emulator_game_has_focus()):
                     return False
             if command == "tap":
                 params["duration_ms"] = self._tap_ms

@@ -1,6 +1,7 @@
 from module.screen import screen
 from module.config import cfg
-from module.game import cloud_game
+from module.game import cloud_game, require_desktop_task
+from module.localization import tr
 from module.logger import log
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
@@ -75,6 +76,7 @@ class Fight:
 
     @staticmethod
     def before_start():
+        require_desktop_task(cfg, tr("锄大地"))
         Fight.check_path()
         if cfg.fight_operation_mode == "source":
             PythonChecker.run()
