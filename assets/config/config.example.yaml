@@ -67,7 +67,7 @@ control_backend: null # 设备后端：local、cloud、adb。留空时沿用 clo
 # 桌面 ADB 后端仅支持 touch_720。路径留空时自动查找。
 adb_path: null # adb 可执行文件。查找顺序为此项、PATH、常见模拟器目录。
 adb_serial: null # 设备序列号或 IP:端口。只有一台设备时可留空。
-adb_device_type: auto # auto、physical（虚拟屏）、emulator（display 0）。
+adb_device_type: auto # auto（Android 14+ 模拟器用 display 0，其余用虚拟屏）、physical（虚拟屏）、emulator（强制 display 0）。
 adb_service_jar: null # 默认 Android/device-service/build/outputs/m7a-device-service.jar。
 adb_tap_ms: 50 # 单次触摸点按的毫秒数。
 

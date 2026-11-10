@@ -475,6 +475,31 @@ def test_review_adb_close_clears_forward_when_exit_cannot_be_confirmed(adb, s1, 
 
 
 
+@pytest.mark.parametrize(("sdk", "abis", "auto_focus"), [
+    (32, "x86_64,arm64-v8a", True),
+    (33, "x86_64", True),
+    (32, "arm64-v8a", False),
+])
+def test_auto_uses_virtual_display_on_older_android(adb, s1, sdk, abis, auto_focus):
+    controller, fake = adb
+    controller.cfg.adb_serial = "127.0.0.1:16384"
+    fake.sdk = sdk
+    fake.abis = abis
+    fake.display_size = "720x1280"
+
+    assert controller.connect().device_type == "emulator"
+    controller.start_game_process()
+
+    assert controller.cfg.adb_device_type == "auto"
+    assert controller.display_id == 42
+    watchdog = next(r for r in s1.requests if r["cmd"] == "watchdog")
+    assert watchdog["display_id"] == 42
+    assert watchdog["auto_focus"] is auto_focus
+    assert controller.capture_frame()
+    assert controller.get_input_handler().mouse_click(38, 59)
+    assert s1.requests[-1]["display_id"] == 42
+
+
 @pytest.mark.parametrize("sdk", [32, 33])
 def test_emulator_display_zero_requires_strict_android_dispatch(adb, s1, sdk):
     controller, fake = adb
