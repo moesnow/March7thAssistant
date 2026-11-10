@@ -55,6 +55,12 @@
                     "auto.click_element((1710 / 1920, 129 / 1080, 0, 0), 'crop')",
                     "auto.click_element('漫游签证', 'text', max_retries=5, retry_delay=0.3, crop=(1301 / 1920, 144 / 1080, 398 / 1920, 59 / 1080))"
                 ]
+            },
+            {
+                "target_screen": "incoming_message",
+                "actions_list": [
+                    "auto.click_element('短信', 'text', crop=(1121 / 1920, 376 / 1080, 156 / 1920, 646 / 1080), max_retries=3, retry_delay=0.3) or (auto.drag_mouse((1710 / 1920, 474 / 1080), (1710 / 1920, 975 / 1080), 0.6) and (time.sleep(0.7) or auto.click_element('短信', 'text', crop=(1121 / 1920, 376 / 1080, 156 / 1920, 646 / 1080), max_retries=3, retry_delay=0.3)))"
+                ]
             }
         ]
     },
@@ -242,6 +248,19 @@
                 "target_screen": "guide2",
                 "actions_list": [
                     "auto.click_element((960 / 1920, 854 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "短信",
+        "id": "incoming_message",
+        "image_path": "./assets/touch_720/images/screen/incoming_message.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')"
                 ]
             }
         ]

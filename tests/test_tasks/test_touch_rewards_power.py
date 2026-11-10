@@ -187,3 +187,16 @@ def test_mail_and_assist_without_alert_do_not_click(monkeypatch):
 
     assert screen.change_to.call_args_list == [call("menu", max_recursion=1)] * 2
     auto.click_element.assert_not_called()
+
+
+def test_sms_pending_thread_accepts_sticker_reply(monkeypatch):
+    sticker = ((609, 510), (632, 528))
+    auto = Mock()
+    auto.find_element.side_effect = [None, [], sticker, None, None, None]
+    monkeypatch.setattr(rewards, "auto", auto)
+    monkeypatch.setattr(rewards, "_message_pending", Mock(side_effect=[True, False, False, False]))
+    monkeypatch.setattr(rewards.time, "sleep", Mock())
+
+    rewards._finish_message()
+
+    auto.click_element_with_pos.assert_called_once_with(sticker, offset=(55, 62))
