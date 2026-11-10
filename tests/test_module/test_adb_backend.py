@@ -111,6 +111,7 @@ class FakeAdb(transport.Adb):
         self.devices_found = [transport.AdbDevice("usb-serial", "device", "Redmi Note 7")]
         self.display_size = "1080x2340"
         self.sdk = 29
+        self.abis = "arm64-v8a"
         self.calls = []
         self.image = None
         self.focus_output = (
@@ -149,7 +150,7 @@ class FakeAdb(transport.Adb):
     def shell(self, command, **kwargs):
         if command.startswith("echo "):
             return "\n".join((f"ro.build.version.sdk={self.sdk}", f"ro.build.version.release={self.sdk - 19}",
-                              "ro.product.cpu.abilist=arm64-v8a", "ro.kernel.qemu=", "ro.boot.qemu="))
+                              f"ro.product.cpu.abilist={self.abis}", "ro.kernel.qemu=", "ro.boot.qemu="))
         if command == "wm size":
             return f"Physical size: {self.display_size}"
         if command.startswith("pm list packages"):
@@ -569,3 +570,19 @@ def test_busy_retry_is_bounded_and_never_takes_over_active_service(adb, s1, monk
     assert fake.pushes == 1
     assert not fake.forwarding
     assert s1.requests == []
+
+
+
+@pytest.mark.parametrize(("abis", "auto_focus"), [("x86_64,arm64-v8a", True), ("arm64-v8a", False)])
+def test_virtual_display_focus_distinguishes_mumu_from_forwarded_phone(adb, s1, abis, auto_focus):
+    controller, fake = adb
+    controller.cfg.adb_serial = "127.0.0.1:16384"
+    controller.cfg.adb_device_type = "physical"
+    fake.sdk = 32
+    fake.abis = abis
+
+    controller.start_game_process()
+
+    watchdog = next(r for r in s1.requests if r["cmd"] == "watchdog")
+    assert watchdog["display_id"] == 42
+    assert watchdog["auto_focus"] is auto_focus

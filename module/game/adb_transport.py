@@ -64,6 +64,7 @@ class AdbEnvironment:
     device_type: str
     display_size: tuple[int, int]
     game_installed: bool
+    virtual_auto_focus: bool = False
 
 
 def resolve_adb_path(adb_path=None) -> Path:
@@ -199,13 +200,14 @@ def _probe_environment(adb: Adb, config) -> AdbEnvironment:
     device_type = config.adb_device_type or "auto"
     if device_type not in ("auto", "physical", "emulator"):
         raise AdbError("device_type", tr("adb_device_type 必须为 auto、physical 或 emulator"))
+    emulator_serial = device.serial.startswith("emulator-")
+    loopback = device.serial.startswith(("127.0.0.1:", "localhost:", "[::1]:"))
+    x86 = bool({"x86", "x86_64"}.intersection(values.get("ro.product.cpu.abilist", "").split(",")))
+    qemu = any(values.get(key) == "1" for key in ("ro.kernel.qemu", "ro.boot.qemu"))
     if device_type == "auto":
-        emulator = (
-            device.serial.startswith(("emulator-", "127.0.0.1:", "localhost:", "[::1]:"))
-            or bool({"x86", "x86_64"}.intersection(values.get("ro.product.cpu.abilist", "").split(",")))
-            or any(values.get(key) == "1" for key in ("ro.kernel.qemu", "ro.boot.qemu"))
-        )
-        device_type = "emulator" if emulator else "physical"
+        device_type = "emulator" if emulator_serial or loopback or x86 or qemu else "physical"
+    # 回环地址可能是转发过来的实体机。切焦点还需要 x86 架构或模拟器的系统标记。
+    virtual_auto_focus = emulator_serial or qemu or (loopback and x86)
 
     sizes = re.findall(r"(?:Physical|Override) size: (\d+)x(\d+)", adb.shell("wm size"))
     if not sizes:
@@ -214,7 +216,7 @@ def _probe_environment(adb: Adb, config) -> AdbEnvironment:
     # pm path 未安装时返回 1。列出匹配的包则在两种情况下都能读到状态。
     packages = adb.shell(f"pm list packages {GAME_PACKAGE}").splitlines()
     return AdbEnvironment(adb.path, device, int(sdk), values.get("ro.build.version.release", ""),
-                          device_type, (width, height), f"package:{GAME_PACKAGE}" in packages)
+                          device_type, (width, height), f"package:{GAME_PACKAGE}" in packages, virtual_auto_focus)
 
 
 class ServiceClient:
