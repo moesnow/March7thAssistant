@@ -552,21 +552,38 @@ class StepEditDialog(QDialog):
 class WorkflowInterface(ScrollArea):
     CONTROL_STEP_TYPES = {"if", "for", "while"}
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, deferred=False):
         super().__init__(parent=parent)
-        self.parent = parent
-        self.view = QWidget(self)
-        self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel(tr("流程编排"), self)
+        try:
+            self.parent = parent
+            self.view = QWidget(self)
+            self.vBoxLayout = QVBoxLayout(self.view)
+            self.titleLabel = QLabel(tr("流程编排"), self)
+            self.workflows = {}
+            self._build_complete = False
+            self.pathItemMap = {}
+            self.treeWorkflowName = None
+
+            if not deferred:
+                for _ in self.iter_build():
+                    pass
+        except Exception:
+            self.hide()
+            self.deleteLater()
+            raise
+
+    def iter_build(self):
+        if self._build_complete:
+            return
         self.workflows = load_workflows()
-        self.pathItemMap = {}
-        self.treeWorkflowName = None
-
-        self.__initWidget()
+        yield
+        yield from self._iterInitWidget()
         self._refresh_workflow_combo(get_current_workflow_name())
+        yield
         self._refresh_tree()
+        self._build_complete = True
 
-    def __initWidget(self):
+    def _iterInitWidget(self):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setViewportMargins(0, 80, 0, 20)
         self.setWidget(self.view)
@@ -577,101 +594,184 @@ class WorkflowInterface(ScrollArea):
         self.titleLabel.setObjectName("workflowLabel")
         StyleSheet.WORKFLOW_INTERFACE.apply(self)
 
-        self._build_cards()
+        yield from self._iterBuildCards()
         self._build_layout()
+        yield
         self._connect_signals()
 
     def _build_cards(self):
+        for _ in self._iterBuildCards():
+            pass
+
+    def _iterBuildCards(self):
         self.summaryCard = CardWidget(self.view)
+        yield
         self.summaryLayout = QVBoxLayout(self.summaryCard)
+        yield
         self.summaryLayout.setContentsMargins(20, 20, 20, 20)
+        yield
         self.summaryLayout.setSpacing(14)
+        yield
 
         self.summaryTitle = QLabel(tr("像快捷指令一样拼流程") + " " + tr("【测试版】"), self.summaryCard)
+        yield
         self.summaryTitle.setObjectName("workflowSummaryTitle")
+        yield
         # self.summaryText = BodyLabel(tr("当前版本先支持 if / for / while、图片点击、文字点击，以及 OCR 判断。通过树状步骤管理子流程，适合先做稳定的基础自动化。"))
         # self.summaryText.setWordWrap(True)
 
         workflow_row = QHBoxLayout()
+        yield
         workflow_row.setSpacing(8)
+        yield
         self.workflowCombo = ComboBox(self.summaryCard)
+        yield
         self.newWorkflowButton = PushButton(FIF.ADD, tr("新建流程"), self.summaryCard)
+        yield
         self.renameWorkflowButton = PushButton(FIF.EDIT, tr("重命名"), self.summaryCard)
+        yield
         self.deleteWorkflowButton = PushButton(FIF.DELETE, tr("删除流程"), self.summaryCard)
+        yield
         self.workflowInfoButton = PushButton(FIF.INFO, tr("流程信息"), self.summaryCard)
+        yield
         self.currentWorkflowLabel = QLabel(tr("当前流程"), self.summaryCard)
+        yield
         workflow_row.addWidget(self.currentWorkflowLabel)
+        yield
         workflow_row.addWidget(self.workflowCombo, 1)
+        yield
         workflow_row.addWidget(self.newWorkflowButton)
+        yield
         workflow_row.addWidget(self.renameWorkflowButton)
+        yield
         workflow_row.addWidget(self.deleteWorkflowButton)
+        yield
         workflow_row.addWidget(self.workflowInfoButton)
+        yield
 
         action_row = QHBoxLayout()
+        yield
         action_row.setSpacing(8)
+        yield
         self.runButton = PrimaryPushButton(FIF.PLAY, tr("运行流程"), self.summaryCard)
+        yield
         self.captureTemplateButton = PushButton(FIF.CAMERA, tr("采集图像模板"), self.summaryCard)
+        yield
         self.openTemplateDirButton = PushButton(FIF.FOLDER, tr("打开模板目录"), self.summaryCard)
+        yield
         self.importWorkflowButton = PushButton(FIF.DOWNLOAD, tr("导入流程"), self.summaryCard)
+        yield
         self.exportWorkflowButton = PushButton(FIF.SAVE_AS, tr("导出流程"), self.summaryCard)
+        yield
         action_row.addWidget(self.runButton)
+        yield
         action_row.addStretch(1)
+        yield
         action_row.addWidget(self.captureTemplateButton)
+        yield
         action_row.addWidget(self.openTemplateDirButton)
+        yield
         action_row.addWidget(self.importWorkflowButton)
+        yield
         action_row.addWidget(self.exportWorkflowButton)
+        yield
 
         self.summaryLayout.addWidget(self.summaryTitle)
+        yield
         # self.summaryLayout.addWidget(self.summaryText)
         self.summaryLayout.addLayout(workflow_row)
+        yield
         self.summaryLayout.addLayout(action_row)
+        yield
 
         self.editorCard = CardWidget(self.view)
+        yield
         self.editorLayout = QVBoxLayout(self.editorCard)
+        yield
         self.editorLayout.setContentsMargins(20, 20, 20, 20)
+        yield
         self.editorLayout.setSpacing(12)
+        yield
 
         editor_header = QHBoxLayout()
+        yield
         self.editorTitle = QLabel(tr("步骤树"), self.editorCard)
+        yield
         self.editorHint = BodyLabel(tr("控制节点支持添加子步骤"))
+        yield
         editor_header.addWidget(self.editorTitle)
+        yield
         editor_header.addSpacing(8)
+        yield
         editor_header.addWidget(self.editorHint)
+        yield
         editor_header.addStretch(1)
+        yield
 
         button_row = QHBoxLayout()
+        yield
         button_row.setSpacing(8)
+        yield
         self.addStepButton = PushButton(FIF.ADD, tr("添加步骤"), self.editorCard)
+        yield
         self.addChildButton = PushButton(FIF.ADD_TO, tr("添加子步骤"), self.editorCard)
+        yield
         self.editStepButton = PushButton(FIF.EDIT, tr("编辑步骤"), self.editorCard)
+        yield
         self.deleteStepButton = PushButton(FIF.DELETE, tr("删除步骤"), self.editorCard)
+        yield
         self.moveUpButton = PushButton(tr("上移"), self.editorCard)
+        yield
         self.moveDownButton = PushButton(tr("下移"), self.editorCard)
+        yield
         button_row.addWidget(self.addStepButton)
+        yield
         button_row.addWidget(self.addChildButton)
+        yield
         button_row.addWidget(self.editStepButton)
+        yield
         button_row.addWidget(self.deleteStepButton)
+        yield
         button_row.addStretch(1)
+        yield
         button_row.addWidget(self.moveUpButton)
+        yield
         button_row.addWidget(self.moveDownButton)
+        yield
 
         self.stepTree = TreeWidget(self.editorCard)
+        yield
         self.stepTree.setColumnCount(2)
+        yield
         self.stepTree.setHeaderLabels([tr("步骤"), tr("说明")])
+        yield
         self.stepTree.setAlternatingRowColors(False)
+        yield
         self.stepTree.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        yield
         self.stepTree.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        yield
         self.stepTree.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        yield
         self.stepTree.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        yield
         self.stepTree.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        yield
         self.stepTree.setExpandsOnDoubleClick(False)
+        yield
         self.stepTree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        yield
         self.stepTree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        yield
         self.stepTree.header().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        yield
 
         self.editorLayout.addLayout(editor_header)
+        yield
         self.editorLayout.addLayout(button_row)
+        yield
         self.editorLayout.addWidget(self.stepTree)
+        yield
 
     def retranslateUi(self):
         """保留流程数据、选择、树节点及展开状态，不重新加载文件。"""

@@ -139,7 +139,7 @@ def window(qtbot, monkeypatch, tmp_path):
     page = module.MainWindow(start_minimized_to_tray=True)
     qtbot.addWidget(page)
     page.show()
-    qtbot.wait(10)
+    qtbot.waitUntil(lambda: page._page_loader.is_idle, timeout=20000)
     yield page
     page._language_change_timer.stop()
     page.hide()

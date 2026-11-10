@@ -6797,3 +6797,11 @@ msgstr "開啟分身視窗"
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr "分身正在執行，開啟視窗可查看分身畫面或登出分身"
+
+#: app/common/page_loader.py:36
+msgid "正在加载..."
+msgstr "正在載入..."
+
+#: app/common/page_loader.py:36
+msgid "加载失败"
+msgstr "載入失敗"

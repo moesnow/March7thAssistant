@@ -17,34 +17,39 @@ import sys
 class WarpInterface(ScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.view = QWidget(self)
-        self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel(tr("抽卡记录"), self)
+        try:
+            self.view = QWidget(self)
+            self.vBoxLayout = QVBoxLayout(self.view)
+            self.titleLabel = QLabel(tr("抽卡记录"), self)
 
-        self.updateBtn = PrimaryPushButton(FIF.SYNC, tr("更新数据"), self)
-        self.updateFullBtn = PushButton(FIF.SYNC, tr("更新完整数据"), self)
-        self.importBtn = PushButton(UiIcon.IMPORT, tr("导入数据"), self)
-        self.exportBtn = PushButton(UiIcon.EXPORT, tr("导出数据"), self)
-        self.exportExcelBtn = PushButton(UiIcon.EXPORT, tr("导出Excel"), self)
-        self.copyLinkBtn = PushButton(UiIcon.LINK, tr("复制链接"), self)
-        self.clearBtn = PushButton(FIF.DELETE, tr("清空"), self)
-        if sys.platform != 'win32':
-            self.updateBtn.setEnabled(False)
-            self.updateFullBtn.setEnabled(False)
-            self.copyLinkBtn.setEnabled(False)
+            self.updateBtn = PrimaryPushButton(FIF.SYNC, tr("更新数据"), self)
+            self.updateFullBtn = PushButton(FIF.SYNC, tr("更新完整数据"), self)
+            self.importBtn = PushButton(UiIcon.IMPORT, tr("导入数据"), self)
+            self.exportBtn = PushButton(UiIcon.EXPORT, tr("导出数据"), self)
+            self.exportExcelBtn = PushButton(UiIcon.EXPORT, tr("导出Excel"), self)
+            self.copyLinkBtn = PushButton(UiIcon.LINK, tr("复制链接"), self)
+            self.clearBtn = PushButton(FIF.DELETE, tr("清空"), self)
+            if sys.platform != 'win32':
+                self.updateBtn.setEnabled(False)
+                self.updateFullBtn.setEnabled(False)
+                self.copyLinkBtn.setEnabled(False)
 
-        self.warplink = None
+            self.warplink = None
 
-        self.stateTooltip = None
+            self.stateTooltip = None
 
-        self.contentLabel = QLabel(parent)
+            self.contentLabel = QLabel(self.view)
 
-        qconfig.themeChanged.connect(self.setContent)
+            qconfig.themeChanged.connect(self.setContent)
 
-        self.setContent()
+            self.setContent()
 
-        self.__initWidget()
-        self.__connectSignalToSlot()
+            self.__initWidget()
+            self.__connectSignalToSlot()
+        except Exception:
+            self.hide()
+            self.deleteLater()
+            raise
 
     def retranslateUi(self):
         StyleSheet.WARP_INTERFACE.apply(self)

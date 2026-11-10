@@ -6656,3 +6656,11 @@ msgstr ""
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr ""
+
+#: app/common/page_loader.py:36
+msgid "正在加载..."
+msgstr ""
+
+#: app/common/page_loader.py:36
+msgid "加载失败"
+msgstr ""

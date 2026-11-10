@@ -587,7 +587,7 @@ def main_window(qtbot, monkeypatch, tmp_path):
         window = module.MainWindow(start_minimized_to_tray=True)
         qtbot.addWidget(window)
         window.show()
-        qtbot.wait(10)
+        qtbot.waitUntil(lambda: window._page_loader.is_idle, timeout=20000)
         return window
 
     yield build

@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 import markdown
 from PySide6.QtCore import Qt, QUrl
@@ -23,29 +22,43 @@ DOC_OF_TAB = {
 
 
 class HelpInterface(ScrollArea):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, deferred=False):
         super().__init__(parent)
-        self.scrollWidget = QWidget()
-        self.vBoxLayout = QVBoxLayout(self.scrollWidget)
+        try:
+            self.scrollWidget = QWidget()
+            self.vBoxLayout = QVBoxLayout(self.scrollWidget)
 
-        self.pivot = Pivot(self)
-        self.stackedWidget = QStackedWidget(self)
+            self.pivot = Pivot(self)
+            self.stackedWidget = QStackedWidget(self)
 
-        self.helpLabel = QLabel(tr("帮助"), self)
-        self.websiteButton = PushButton(FluentIcon.GLOBE, tr("在官网查看"), self)
-        self.tutorialLabel = TextBrowser(parent)
-        self.workflowLabel = TextBrowser(parent)
-        self.faqLabel = TextBrowser(parent)
-        self.backgroundLabel = TextBrowser(parent)
-        self.tasksLabel = TextBrowser(parent)
-        self.changelogLabel = TextBrowser(parent)
+            self.helpLabel = QLabel(tr("帮助"), self)
+            self.websiteButton = PushButton(FluentIcon.GLOBE, tr("在官网查看"), self)
+            self.tutorialLabel = TextBrowser(self.stackedWidget)
+            self.workflowLabel = TextBrowser(self.stackedWidget)
+            self.faqLabel = TextBrowser(self.stackedWidget)
+            self.backgroundLabel = TextBrowser(self.stackedWidget)
+            self.tasksLabel = TextBrowser(self.stackedWidget)
+            self.changelogLabel = TextBrowser(self.stackedWidget)
 
-        self.__initWidget()
-        self.__initCard()
-        self.__initLayout()
+            self.__initWidget()
+            self._build_complete = False
+            if not deferred:
+                for _ in self.iter_build():
+                    pass
+        except Exception:
+            self.hide()
+            self.deleteLater()
+            raise
+
+    def iter_build(self):
+        if self._build_complete:
+            return
+        yield from self._iterInitCard()
+        yield from self._iterInitLayout()
         for attr in DOC_OF_TAB:
             getattr(self, attr).anchorClicked.connect(self.open_url)
         qconfig.themeChanged.connect(self.__themeChanged)
+        self._build_complete = True
 
     def __initWidget(self):
         self.setWidget(self.scrollWidget)
@@ -69,6 +82,10 @@ class HelpInterface(ScrollArea):
         scroller.setScrollerProperties(scroller_props)
 
     def __initCard(self):
+        for _ in self._iterInitCard():
+            pass
+
+    def _iterInitCard(self):
         tutorial_style = """
 <style>
 a {
@@ -89,36 +106,52 @@ th, td {
 }
 </style>
 """
+        yield
         from module.config import cfg
+        yield
         tutorial_file = self._get_localized_doc_path("Tutorial")
+        yield
         try:
             with open(tutorial_file, 'r', encoding='utf-8') as file:
                 self.content = self._site_links(file.read())
                 self.content = '\n'.join(self.content.split('\n')[1:])
+            yield
         except FileNotFoundError:
-            sys.exit(1)
+            raise
+        yield
         self.tutorial_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
+        yield
 
         if qconfig.theme.name == "DARK":
             self.tutorialLabel.setText(self.tutorial_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+            yield
         else:
             self.tutorialLabel.setText(self.tutorial_content)
+        yield
         self.tutorialLabel.setOpenExternalLinks(True)
+        yield
 
         workflow_file = self._get_localized_doc_path("Workflow")
+        yield
         try:
             with open(workflow_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
                 self.content = '\n'.join(self.content.split('\n')[1:])
+            yield
         except FileNotFoundError:
-            sys.exit(1)
+            raise
+        yield
         self.workflow_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
+        yield
 
         if qconfig.theme.name == "DARK":
             self.workflowLabel.setText(self.workflow_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+            yield
         else:
             self.workflowLabel.setText(self.workflow_content)
+        yield
         self.workflowLabel.setOpenExternalLinks(True)
+        yield
 
         faq_style = """
 <style>
@@ -128,31 +161,45 @@ a {
 }
 </style>
 """
+        yield
         faq_file = self._get_localized_doc_path("FAQ")
+        yield
         try:
             with open(faq_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
                 self.content = '\n'.join(self.content.split('\n')[2:])
+            yield
         except FileNotFoundError:
-            sys.exit(1)
+            raise
+        yield
         faq_content = faq_style + markdown.markdown(self.content).replace('<h3>', '<br><h3>').replace('</h3>', '</h3><hr>').replace('<br>', '', 1) + '<br>'
+        yield
         self.faqLabel.setText(faq_content)
+        yield
         self.faqLabel.setOpenExternalLinks(True)
+        yield
 
         background_file = self._get_localized_doc_path("Background")
+        yield
         try:
             with open(background_file, 'r', encoding='utf-8') as file:
                 self.content = self._site_links(file.read())
                 self.content = '\n'.join(self.content.split('\n')[1:])
+            yield
         except FileNotFoundError:
-            sys.exit(1)
+            raise
+        yield
         self.background_content = tutorial_style + markdown.markdown(self.content, extensions=['tables', 'fenced_code']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
+        yield
 
         if qconfig.theme.name == "DARK":
             self.backgroundLabel.setText(self.background_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+            yield
         else:
             self.backgroundLabel.setText(self.background_content)
+        yield
         self.backgroundLabel.setOpenExternalLinks(True)
+        yield
 
         tasks_style = """
 <style>
@@ -169,20 +216,27 @@ th, td {
 }
 </style>
 """
+        yield
         # Daily training tasks table - 多语言文档（assets/docs/TasksTable*.md，缺失时回退中文）
         tasks_file = self._get_localized_doc_path("TasksTable")
+        yield
         try:
             with open(tasks_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
                 self.content = '\n'.join(self.content.split('\n')[1:])
+            yield
         except FileNotFoundError:
-            sys.exit(1)
+            raise
+        yield
         self.tasks_content = tasks_style + markdown.markdown(self.content, extensions=['tables'])
+        yield
 
         if qconfig.theme.name == "DARK":
             self.tasksLabel.setText(self.tasks_content.replace("border: 1px solid black;", "border: 1px solid white;"))
+            yield
         else:
             self.tasksLabel.setText(self.tasks_content)
+        yield
 
         changelog_style = """
 <style>
@@ -192,16 +246,23 @@ a {
 }
 </style>
 """
+        yield
         changelog_file = self._get_localized_doc_path("Changelog")
+        yield
         try:
             with open(changelog_file, 'r', encoding='utf-8') as file:
                 self.content = file.read()
                 self.content = '\n'.join(self.content.split('\n')[1:])
+            yield
         except FileNotFoundError:
-            sys.exit(1)
+            raise
+        yield
         changelog_content = changelog_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
+        yield
         self.changelogLabel.setText(changelog_content)
+        yield
         self.changelogLabel.setOpenExternalLinks(True)
+        yield
 
     def retranslateUi(self):
         StyleSheet.HELP_INTERFACE.apply(self)
@@ -223,23 +284,40 @@ a {
             getattr(self, attr).verticalScrollBar().setValue(position)
 
     def __initLayout(self):
+        for _ in self._iterInitLayout():
+            pass
+
+    def _iterInitLayout(self):
         self.helpLabel.move(36, 30)
+        yield
         self.pivot.move(40, 80)
+        yield
 
         self.stackedWidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        yield
         self.vBoxLayout.addWidget(self.stackedWidget, 1)
+        yield
         self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
+        yield
 
         # self.vBoxLayout.addWidget(self.tutorialLabel, 0, Qt.AlignTop)
         self.addSubInterface(self.tutorialLabel, 'tutorialLabel', tr('使用教程'))
+        yield
         self.addSubInterface(self.workflowLabel, 'workflowLabel', tr('流程编排'))
+        yield
         self.addSubInterface(self.faqLabel, 'faqLabel', tr('常见问题'))
+        yield
         self.addSubInterface(self.backgroundLabel, 'backgroundLabel', tr('后台运行'))
+        yield
         self.addSubInterface(self.tasksLabel, 'tasksLabel', tr('每日实训'))
+        yield
         self.addSubInterface(self.changelogLabel, 'changelogLabel', tr('更新日志'))
+        yield
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
+        yield
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())
+        yield
 
     def addSubInterface(self, widget: TextBrowser, objectName, text):
         widget.setObjectName(objectName)

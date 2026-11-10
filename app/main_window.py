@@ -1,6 +1,6 @@
 from utils.game_options import game_option_enabled
 from utils.desktop_twin import in_desktop_twin
-from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker
+from PySide6.QtCore import Qt, QEvent, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout
 
@@ -18,6 +18,7 @@ from .workflow_interface import WorkflowInterface
 from .setting_interface import SettingInterface
 from .log_interface import LogInterface
 from .common.signal_bus import signalBus
+from .common.page_loader import PageLoader, PendingPage
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
@@ -140,6 +141,10 @@ class MainWindow(MSFluentWindow):
         self.detected_update_version = None
         self.updateVersionBadge = None
         qconfig.themeChanged.connect(self._on_theme_changed)
+
+        self._page_loader = PageLoader(
+            self, self._publish_preloaded_page, self._can_preload_pages,
+            self._preload_context)
 
         self.initWindow()
 
@@ -328,13 +333,20 @@ class MainWindow(MSFluentWindow):
 
     def initInterface(self):
         self.homeInterface = HomeInterface(self)
-        self.helpInterface = HelpInterface(self)
-        # self.changelogInterface = ChangelogInterface(self)
-        self.warpInterface = WarpInterface(self)
+        # These two pages also own active services (auto-plot, tasks, schedules,
+        # hotkeys). Keep their initialization eager until the services are split out.
         self.toolsInterface = ToolsInterface(self)
-        self.workflowInterface = WorkflowInterface(self)
         self.logInterface = LogInterface(self)
-        self.settingInterface = SettingInterface(self)
+        for name, cls in (
+            ('settingInterface', SettingInterface), ('helpInterface', HelpInterface),
+            ('warpInterface', WarpInterface), ('workflowInterface', WorkflowInterface),
+        ):
+            page = PendingPage(name, self.stackedWidget.view)
+            setattr(self, name, page)
+            def factory(cls=cls):
+                return cls(self, deferred=True) if hasattr(cls, 'iter_build') else cls(self)
+            self._page_loader.add(name, factory, page)
+        self.homeInterface.installEventFilter(self)
 
         # 连接任务启动信号
         signalBus.startTaskSignal.connect(self._onStartTask)
@@ -348,13 +360,67 @@ class MainWindow(MSFluentWindow):
         # 连接自动对话切换信号
         self.logInterface.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
+    def _preload_context(self):
+        from module.localization import get_current_language
+        return cfg.config, get_current_language(), qconfig.theme.value
+
+    def _can_preload_pages(self):
+        return (not self._desktop_twin_hosting
+                and self._pending_ui_language is None
+                and not self._config_reload_timer.isActive()
+                and self._can_replace_settings())
+
+    def eventFilter(self, watched, event):
+        if (watched is getattr(self, 'homeInterface', None)
+                and event.type() == QEvent.Type.Paint
+                and not self.splashScreen.isVisible()):
+            # Start only after the homepage has had an opportunity to paint.
+            self._page_loader.start()
+        return super().eventFilter(watched, event)
+
+    def switchTo(self, interface):
+        if isinstance(interface, PendingPage):
+            self._page_loader.request(interface.objectName())
+        return super().switchTo(interface)
+
+    def _add_preloaded_interface(self, name, icon, text):
+        page = getattr(self, name)
+        page.setProperty('isStackedTransparent', False)
+        self.stackedWidget.addWidget(page)
+        # Resolve the current object, never capture the temporary placeholder.
+        self.navigationInterface.addItem(
+            routeKey=name, icon=icon, text=text,
+            onClick=lambda: self.switchTo(getattr(self, name)))
+        self._updateStackedBackground()
+
+    def _publish_preloaded_page(self, name, replacement):
+        old = getattr(self, name)
+        was_current = self.stackedWidget.currentWidget() is old
+        replacement.setProperty('isStackedTransparent', False)
+        replacement.resize(old.size())
+        replacement.setDisabled(self._desktop_twin_hosting)
+        animation_enabled = self.stackedWidget.isAnimationEnabled()
+        try:
+            with QSignalBlocker(self.stackedWidget):
+                self.stackedWidget.setAnimationEnabled(False)
+                self.stackedWidget.addWidget(replacement)
+                if was_current:
+                    self.stackedWidget.view.setCurrentWidget(replacement)
+                self.stackedWidget.removeWidget(old)
+                setattr(self, name, replacement)
+            self._updateStackedBackground()
+        finally:
+            self.stackedWidget.setAnimationEnabled(animation_enabled)
+        old.hide()
+        old.deleteLater()
+
     def initNavigation(self):
         self.addSubInterface(self.homeInterface, FIF.HOME, tr('主页'))
-        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
+        self._add_preloaded_interface('helpInterface', FIF.BOOK_SHELF, tr('帮助'))
         # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
-        self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
+        self._add_preloaded_interface('warpInterface', FIF.SHARE, tr('抽卡记录'))
         self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'))
-        self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'))
+        self._add_preloaded_interface('workflowInterface', FIF.CODE, tr('流程编排'))
 
         self.navigationInterface.addWidget(
             'startGameButton',
@@ -687,6 +753,9 @@ class MainWindow(MSFluentWindow):
     def _retranslate_persistent_interfaces(self):
         for interface in (self.homeInterface, self.helpInterface, self.warpInterface,
                           self.toolsInterface, self.workflowInterface, self.logInterface):
+            if isinstance(interface, PendingPage):
+                interface.retranslateUi()
+                continue
             position = interface.verticalScrollBar().value()
             interface.retranslateUi()
             interface.verticalScrollBar().setValue(position)
@@ -737,13 +806,17 @@ class MainWindow(MSFluentWindow):
             cfg.ui_language_now = actual_lang
             load_language(actual_lang)
             self._reinstall_fluent_translator(actual_lang)
-            state = self.settingInterface.captureViewState()
+            settings_pending = isinstance(self.settingInterface, PendingPage)
+            state = None if settings_pending else self.settingInterface.captureViewState()
+            self._page_loader.invalidate()
             # 不提前移除旧页，也不调用 processEvents：构造失败时旧页仍完整可用，
             # 任务/热键/配置回调不会在半替换状态下重入。
-            replacement = SettingInterface(self)
+            if not settings_pending:
+                replacement = SettingInterface(self)
             self._retranslate_persistent_interfaces()
-            self._replace_settings_interface(replacement, state)
-            replacement = None
+            if replacement is not None:
+                self._replace_settings_interface(replacement, state)
+                replacement = None
             InfoBar.success(
                 title=tr('更新成功'), content='', orient=Qt.Horizontal,
                 isClosable=True, position=InfoBarPosition.TOP, duration=1500, parent=self
@@ -759,9 +832,11 @@ class MainWindow(MSFluentWindow):
                     cfg.set_value('ui_language', previous_setting)
             except Exception:
                 log.error(f'还原界面语言配置失败\n{traceback.format_exc()}')
-            combo = self.settingInterface.languageCard.comboBox
-            with QSignalBlocker(combo):
-                combo.setCurrentIndex(combo.findData(previous_setting))
+            self._page_loader.invalidate()
+            if not isinstance(self.settingInterface, PendingPage):
+                combo = self.settingInterface.languageCard.comboBox
+                with QSignalBlocker(combo):
+                    combo.setCurrentIndex(combo.findData(previous_setting))
             try:
                 self._reinstall_fluent_translator(previous_lang)
                 self._retranslate_persistent_interfaces()
@@ -867,10 +942,12 @@ class MainWindow(MSFluentWindow):
             if hasattr(self, 'logInterface'):
                 self.logInterface.reloadConfigState()
 
-            state = self.settingInterface.captureViewState()
-            replacement = SettingInterface(self)
-            self._replace_settings_interface(replacement, state)
-            replacement = None
+            self._page_loader.invalidate()
+            if not isinstance(self.settingInterface, PendingPage):
+                state = self.settingInterface.captureViewState()
+                replacement = SettingInterface(self)
+                self._replace_settings_interface(replacement, state)
+                replacement = None
 
             # 只有在窗口可见时才显示提示
             if self.isVisible():
@@ -927,6 +1004,9 @@ class MainWindow(MSFluentWindow):
             if e is not None:
                 e.ignore()
             return
+        self._page_loader.stop()
+        self._language_change_timer.stop()
+        self._config_reload_timer.stop()
         self._cancelTaskExit()
         # 保存窗口尺寸和最大化状态
         log.info(f"[config-save] 主程序退出，保存窗口状态 PID={os.getpid()}（更新期间此处会与更新器并发写配置）")

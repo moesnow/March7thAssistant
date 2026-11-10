@@ -60,7 +60,7 @@ def exit_window(qtbot, monkeypatch, tmp_path, request):
     qtbot.addWidget(page)
     if getattr(request, "param", "focused") == "full":
         page.show()
-        qtbot.wait(1)
+        qtbot.waitUntil(lambda: page._page_loader.is_idle, timeout=20000)
     page.quitApp = Mock()
     page.logInterface._perform_post_action = Mock()
     page.completed_sequences = []
