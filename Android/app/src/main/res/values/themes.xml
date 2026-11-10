@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="window_background">#FFF8FA</color>
+    <color name="launcher_background">#FCF5FA</color>
+    <color name="notification_accent">#E0508F</color>
+
+    <style name="Theme.M7A" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorAccent">@color/notification_accent</item>
+        <!-- 应用自带深色主题，不让系统再做一次强制反色（MIUI 会把深色按钮文字改淡）。 -->
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

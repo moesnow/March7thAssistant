@@ -76,7 +76,7 @@ class TaskRunnerService : Service() {
 
     private fun notification(state: TaskState): Notification {
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        val view = PendingIntent.getActivity(this, 0, Intent(this, DebugActivity::class.java), flags)
+        val view = PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), flags)
         val stop = PendingIntent.getService(
             this, 0, Intent(this, TaskRunnerService::class.java).setAction(ACTION_STOP), flags
         )
@@ -87,7 +87,7 @@ class TaskRunnerService : Service() {
             else -> 0
         }
         return Notification.Builder(this, CHANNEL)
-            .setSmallIcon(android.R.drawable.ic_media_play)
+            .setSmallIcon(R.drawable.ic_stat_task)
             .setContentTitle(tr(when (state.task) {
                 TaskId.DAILY -> R.string.daily
                 TaskId.REWARDS -> R.string.rewards
