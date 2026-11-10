@@ -16,6 +16,7 @@ from module.ocr import ocr
 from module.screen import screen
 from tasks.base.list_drag import changed_ratio, drag_list
 from tasks.power.instance import Instance
+from tasks.touch.daily import REWARD_POPUP, REWARD_POPUP_CROP
 from utils.wait import wait_until
 
 
@@ -54,6 +55,8 @@ SUPPLEMENT_TITLE = (787 / 1920, 267 / 1080, 344 / 1920, 84 / 1080)
 SUPPLEMENT_DESCRIPTION = (791 / 1920, 598 / 1080, 335 / 1920, 51 / 1080)
 SUPPLEMENT_CANCEL = (474 / 1920, 740 / 1080, 450 / 1920, 79 / 1080)
 SUPPLEMENT_CONFIRM = (992 / 1920, 740 / 1080, 450 / 1920, 79 / 1080)
+RESERVE_AMOUNT_CONFIRM = (992 / 1920, 812 / 1080, 450 / 1920, 91 / 1080)
+FUEL_AMOUNT = (1222 / 1920, 598 / 1080, 60 / 1920, 51 / 1080)
 
 
 class PowerError(RuntimeError):
@@ -169,6 +172,31 @@ def _enter_instance(instance_type, name):
     raise PowerError(f"生存索引未找到 {name} 的进入按钮")
 
 
+def _finish_supplement(source):
+    # 数量弹窗与首屏「确认」的高度不同，兑换后还可能保留补充首屏。
+    time.sleep(0.8)
+    reward = auto.find_element(REWARD_POPUP, "image", 0.9, crop=REWARD_POPUP_CROP)
+    if not reward and not screen.check_screen("guide3"):
+        if not auto.find_element(source, "text", include=True, crop=DIALOG,
+                                 max_retries=4, retry_delay=0.3):
+            raise PowerError("未确认补充数量弹窗的资源类型")
+        if source == "燃料":
+            _read_number(FUEL_AMOUNT, lambda text: 1 if _normalize(text) == "1" else None,
+                         "未确认只使用 1 个燃料")
+        confirm = SUPPLEMENT_CONFIRM if source == "燃料" else RESERVE_AMOUNT_CONFIRM
+        if not _click_text("确认", confirm):
+            raise PowerError("无法确认补充数量")
+        reward = auto.find_element(REWARD_POPUP, "image", 0.9, crop=REWARD_POPUP_CROP,
+                                   max_retries=8, retry_delay=0.25)
+    if reward:
+        _tap(960, 854)
+        time.sleep(0.5)
+    if auto.find_element("开拓力补充", "text", crop=SUPPLEMENT_TITLE):
+        if not _click_text("取消", SUPPLEMENT_CANCEL):
+            raise PowerError("无法关闭补充完成后的开拓力弹窗")
+    screen.wait_for_screen_change("guide3", max_recursion=0)
+
+
 def _supplement(power):
     """只选已启用的后备开拓力或燃料，优先后备开拓力。"""
     if power >= 300 or not (cfg.use_reserved_trailblaze_power or cfg.use_fuel):
@@ -185,11 +213,12 @@ def _supplement(power):
     ):
         if not enabled:
             continue
-        if not auto.click_element(f"{IMAGES}/{image}.png", "image", 0.9, crop=crop):
-            raise PowerError("未确认开拓力补充方式")
-        if not auto.find_element(label, "text", crop=SUPPLEMENT_DESCRIPTION,
-                                 max_retries=5, retry_delay=0.3):
-            raise PowerError("开拓力补充方式与配置不符")
+        if not auto.find_element(label, "text", crop=SUPPLEMENT_DESCRIPTION):
+            if not auto.click_element(f"{IMAGES}/{image}.png", "image", 0.9, crop=crop):
+                raise PowerError("未确认开拓力补充方式")
+            if not auto.find_element(label, "text", crop=SUPPLEMENT_DESCRIPTION,
+                                     max_retries=5, retry_delay=0.3):
+                raise PowerError("开拓力补充方式与配置不符")
         stock_crop = (crop[0] + 17 / 1920, 545 / 1080, 121 / 1920, 39 / 1080)
         stock = _read_number(stock_crop, lambda text: int(text) if text.isdecimal() else None,
                              "未识别到补充资源的库存")
@@ -198,16 +227,7 @@ def _supplement(power):
         if not _click_text("确认", SUPPLEMENT_CONFIRM):
             raise PowerError("无法确认已选的开拓力补充方式")
 
-        # 若界面还要求选择数量，按已明确显示的资源类型确认默认数量。
-        time.sleep(0.8)
-        if not screen.check_screen("guide3"):
-            source = "后备开拓力" if image == "reserve" else "燃料"
-            if not auto.find_element(source, "text", include=True, crop=DIALOG,
-                                     max_retries=4, retry_delay=0.3):
-                raise PowerError("未确认补充数量弹窗的资源类型")
-            if not _click_text("确认", SUPPLEMENT_CONFIRM):
-                raise PowerError("无法确认补充数量")
-            screen.wait_for_screen_change("guide3", max_recursion=0)
+        _finish_supplement("后备开拓力" if image == "reserve" else "燃料")
         supplemented = read_power()
         if supplemented <= power:
             raise PowerError("确认补充后，开拓力未确认增加")
@@ -237,7 +257,7 @@ def _select_team(instance_type, name):
     raise PowerError(f"未找到队伍 {team}")
 
 
-def _start_challenge(instance_type, name, waves):
+def _start_challenge(instance_type, name, waves, *, borrow_for_daily=False):
     _, cost, limit = INSTANCES[instance_type]
     if not auto.find_element(f"{IMAGES}/quick_refill_off.png", "image", 0.90, crop=QUICK_REFILL):
         raise PowerError("请关闭副本界面的「快捷补充开拓力」")
@@ -259,6 +279,10 @@ def _start_challenge(instance_type, name, waves):
         raise PowerError("未进入副本编队页")
     if cfg.instance_team_enable:
         _select_team(instance_type, name)
+    if cfg.borrow_enable and (cfg.borrow_character_enable or borrow_for_daily):
+        from tasks.touch import support
+
+        support.borrow()
     time.sleep(0.6)
     if not _click_text("开始挑战", START_CHALLENGE):
         raise PowerError("无法开始挑战")
@@ -391,7 +415,7 @@ def _wait_battle(*, repeated=False, instance_screen="calyx"):
     raise PowerError("等待战斗结算超时，请检查游戏画面")
 
 
-def _run_instance(instance_type, name, planned):
+def _run_instance(instance_type, name, planned, *, borrow_for_daily=False):
     instance_screen, cost, limit = INSTANCES[instance_type]
     batch_limit = cfg.instance_names_challenge_count.get(instance_type, limit)
     if type(batch_limit) is not int or not 1 <= batch_limit <= limit:
@@ -422,7 +446,7 @@ def _run_instance(instance_type, name, planned):
                 if screen.current_screen != instance_screen:
                     _select_category(instance_type)
                     _enter_instance(instance_type, name)
-            _start_challenge(instance_type, name, waves)
+            _start_challenge(instance_type, name, waves, borrow_for_daily=borrow_for_daily)
         _wait_battle(repeated=repeated, instance_screen=instance_screen)
 
         completed = _read_waves(RESULT_COUNT, "上轮挑战波次")
@@ -435,18 +459,19 @@ def _run_instance(instance_type, name, planned):
         previous = waves
         log.info(f"本轮已结算 {completed} 次挑战，剩余开拓力 {power}/300")
         yield completed
+        borrow_for_daily = False
 
     _exit_result(instance_screen)
     screen.change_to("main", max_recursion=1)
     log.info("开拓力不足，已返回主界面" if power < cost else "已达到本次挑战次数，返回主界面")
 
 
-def _run():
+def _run(borrow_for_daily):
     names = get_raw_instance_names()
     plan = cfg.power_plan
     if not plan:
         instance_type = cfg.instance_type
-        if instance_type not in INSTANCES:
+        if not isinstance(instance_type, str) or instance_type not in INSTANCES:
             log.warning(f"触屏清体力暂不支持 {instance_type}")
             return False
         name = cfg.instance_names.get(instance_type)
@@ -455,7 +480,7 @@ def _run():
             return True
         if name not in names[instance_type]:
             raise PowerError(f"未配置有效的{instance_type}副本名称")
-        for _ in _run_instance(instance_type, name, None):
+        for _ in _run_instance(instance_type, name, None, borrow_for_daily=borrow_for_daily):
             pass
         return True
 
@@ -472,8 +497,9 @@ def _run():
             log.warning(f"体力计划第 {index + 1} 项不受触屏模式支持，已保留")
             continue
         ran = True
-        for completed in _run_instance(instance_type, name, count):
+        for completed in _run_instance(instance_type, name, count, borrow_for_daily=borrow_for_daily):
             count -= completed
+            borrow_for_daily = False
             if not cfg.power_plan_keep:
                 remaining[index] = [instance_type, name, count] if count else None
                 cfg.set_value("power_plan", [item for item in remaining if item is not None])
@@ -482,11 +508,11 @@ def _run():
     return ran
 
 
-def run():
+def run(*, borrow_for_daily=False):
     log.hr("开始触屏清体力", 0)
     with screenshot_retry_timeout(5):
         try:
-            return _run()
+            return _run(borrow_for_daily)
         except PowerError as error:
             log.error(f"触屏清体力：{error}")
             return False

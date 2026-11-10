@@ -29,6 +29,8 @@ REWARD_REPORT_CROP = (173 / 1920, 220 / 1080, 1580 / 1920, 717 / 1080)
 DRAG_LEFT = (405 / 1920, 590 / 1080)
 DRAG_RIGHT = (1410 / 1920, 590 / 1080)
 MAX_DRAGS = 6
+MATERIAL_TASK = "使用1次「万能合成机」"
+SUPPORT_TASK = "使用支援角色并获得战斗胜利1次"
 
 
 class DailyTrainingError(RuntimeError):
@@ -62,7 +64,7 @@ def read_activity(*, minimum=0):
 def scan_cards(activity, collect):
     """从左端逐页查询，领取后用积分增长确认游戏已响应。"""
     if activity == MAX_ACTIVITY:
-        return activity, False, 0
+        return activity, False, 0, {}
 
     tasks = Tasks("./assets/config/task_mappings.json")
     tasks.task_mappings["助燃券"] = "使用1次「助燃券」或「深度沉浸器」"
@@ -112,7 +114,7 @@ def scan_cards(activity, collect):
         raise DailyTrainingError("未识别到每日实训任务卡片的名称和进度")
     for name, pending in tasks.daily_tasks.items():
         log.info(f"{name}：{'待完成' if pending else '已完成'}")
-    return activity, available, claimed
+    return activity, available, claimed, tasks.daily_tasks
 
 
 def read_milestones(activity):
@@ -152,7 +154,18 @@ def log_milestones(activity, pending):
     log.info(f"档位奖励：{'，'.join(states)}")
 
 
-def run():
+def needs_support():
+    with screenshot_retry_timeout(5):
+        screen.change_to("guide2", max_recursion=1)
+        try:
+            _, _, _, tasks = scan_cards(read_activity(), collect=False)
+        except DailyTrainingError as error:
+            log.warning(f"未能查询支援实训：{error}")
+            return False
+    return tasks.get(SUPPORT_TASK, False)
+
+
+def run(*, complete_training=False):
     log.hr("开始触屏每日实训", 1)
     collect = cfg.reward_enable and cfg.reward_quest_enable
     with screenshot_retry_timeout(5):
@@ -160,7 +173,19 @@ def run():
         try:
             activity = read_activity()
             log.info(f"当前活跃度 {activity}/{MAX_ACTIVITY}")
-            activity, card_available, cards_claimed = scan_cards(activity, collect)
+            activity, card_available, cards_claimed, tasks = scan_cards(activity, collect)
+            if (complete_training and collect and cfg.daily_enable and cfg.daily_material_enable
+                    and tasks.get(MATERIAL_TASK)):
+                from tasks.touch import synthesis
+
+                synthesized = synthesis.material()
+                screen.change_to("guide2", max_recursion=1)
+                if synthesized:
+                    before = activity
+                    activity, card_available, extra_claims, _ = scan_cards(read_activity(), collect)
+                    cards_claimed += extra_claims
+                    if activity <= before:
+                        raise DailyTrainingError("材料已合成，实训活跃度未确认增加")
             pending = read_milestones(activity)
             log_milestones(activity, pending)
 

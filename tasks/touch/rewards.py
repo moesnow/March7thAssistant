@@ -210,7 +210,7 @@ def claim_messages():
     log.info(f"本次已处理 {completed} 个短信会话" if completed else "本次未发现待处理短信")
 
 
-def run():
+def run(*, complete_training=False):
     log.hr("开始触屏领奖", 0)
     with screenshot_retry_timeout(5):
         if cfg.reward_enable:
@@ -226,15 +226,18 @@ def run():
             except RewardError as error:
                 log.error(f"触屏领奖：{error}")
                 return False
-        return daily.run()
+        return daily.run(complete_training=complete_training)
 
 
 def routine():
     from tasks.touch import power
 
-    if cfg.power_enable and not power.run():
-        return False
-    if not run():
+    if cfg.power_enable:
+        support_pending = (cfg.daily_enable and cfg.borrow_enable and not cfg.borrow_character_enable
+                           and daily.needs_support())
+        if not power.run(borrow_for_daily=support_pending):
+            return False
+    if not run(complete_training=True):
         return False
     with screenshot_retry_timeout(5):
         screen.change_to("main", max_recursion=1)

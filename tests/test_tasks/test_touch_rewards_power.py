@@ -149,7 +149,7 @@ def test_repeat_stops_at_configured_count(monkeypatch):
     monkeypatch.setattr(power, "_exit_result", exit_result)
 
     assert list(power._run_instance(power.GOLDEN_CALYX, "回忆之蕾", 2)) == [1, 1]
-    start.assert_called_once_with(power.GOLDEN_CALYX, "回忆之蕾", 1)
+    start.assert_called_once_with(power.GOLDEN_CALYX, "回忆之蕾", 1, borrow_for_daily=False)
     assert wait.call_args_list == [call(repeated=False, instance_screen="calyx"), call(repeated=True, instance_screen="calyx")]
     click.assert_called_once_with("再来一次", power.REPEAT)
     exit_result.assert_called_once_with("calyx")
@@ -163,7 +163,7 @@ def test_power_plan_saves_only_confirmed_waves_before_failure(monkeypatch):
         power_plan_keep=False, instance_names_challenge_count={calyx: 2}, set_value=Mock(),
     )
 
-    def fail_after_first_batch(instance_type, name, count):
+    def fail_after_first_batch(instance_type, name, count, *, borrow_for_daily):
         assert (instance_type, name, count) == (calyx, "回忆之蕾", 3)
         yield 2
         raise power.PowerError("等待战斗超时")
@@ -200,3 +200,49 @@ def test_sms_pending_thread_accepts_sticker_reply(monkeypatch):
     rewards._finish_message()
 
     auto.click_element_with_pos.assert_called_once_with(sticker, offset=(55, 62))
+
+
+@pytest.mark.parametrize("reserved, second_confirm", [
+    (True, power.RESERVE_AMOUNT_CONFIRM),
+    (False, power.SUPPLEMENT_CONFIRM),
+])
+def test_supplement_uses_the_correct_quantity_dialog(monkeypatch, reserved, second_confirm):
+    monkeypatch.setattr(power, "cfg", SimpleNamespace(
+        use_reserved_trailblaze_power=reserved, use_fuel=not reserved,
+    ))
+    monkeypatch.setattr(power, "_tap", Mock())
+    read_number = Mock(side_effect=[32, 1])
+    monkeypatch.setattr(power, "_read_number", read_number)
+    monkeypatch.setattr(power, "read_power", Mock(return_value=262))
+    monkeypatch.setattr(power.time, "sleep", Mock())
+    auto = Mock()
+    auto.find_element.side_effect = [True, True, None, True, True, False]
+    monkeypatch.setattr(power, "auto", auto)
+    navigate = Mock()
+    navigate.check_screen.return_value = False
+    monkeypatch.setattr(power, "screen", navigate)
+    click = Mock(return_value=True)
+    monkeypatch.setattr(power, "_click_text", click)
+
+    assert power._supplement(202) == 262
+    assert click.call_args_list == [
+        call("确认", power.SUPPLEMENT_CONFIRM), call("确认", second_confirm),
+    ]
+    assert read_number.call_count == (1 if reserved else 2)
+
+
+def test_support_portrait_match_keeps_rows_separate():
+    import cv2
+    from tasks.touch.support import _portrait_rows
+
+    template = cv2.imread("assets/images/share/character/Cyrene.png")
+    portrait = cv2.resize(template, None, fx=0.76, fy=0.76)
+    pixels = np.zeros((500, 96, 3), dtype=np.uint8)
+    h, w = portrait.shape[:2]
+    for top in (40, 220):
+        pixels[top:top + h, 6:6 + w] = portrait
+
+    rows = sorted(_portrait_rows(pixels, template))
+
+    assert len(rows) == 2
+    assert abs((rows[1] - rows[0]) - 180) <= 2

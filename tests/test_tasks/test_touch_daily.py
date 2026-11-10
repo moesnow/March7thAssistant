@@ -85,7 +85,7 @@ def test_disabling_rewards_preserves_reading_and_prevents_claiming(monkeypatch, 
     monkeypatch.setattr(daily, "cfg", SimpleNamespace(reward_enable=reward_enable, reward_quest_enable=quest_enable))
     monkeypatch.setattr(daily, "screen", Mock())
     monkeypatch.setattr(daily, "read_activity", Mock(return_value=100))
-    cards = Mock(return_value=(100, True, 0))
+    cards = Mock(return_value=(100, True, 0, {}))
     milestones = Mock(return_value={100: ((10, 20), (30, 40))})
     click = Mock()
     monkeypatch.setattr(daily, "scan_cards", cards)
@@ -118,3 +118,38 @@ def test_claiming_multiple_milestones_from_one_popup_does_not_repeat_clicks(monk
 
     click.assert_called_once_with(100, button)
     notify.assert_called_once()
+
+
+def test_daily_synthesizes_only_when_the_card_is_pending(monkeypatch):
+    from tasks.touch import synthesis
+
+    monkeypatch.setattr(daily, "cfg", SimpleNamespace(
+        reward_enable=True, reward_quest_enable=True, daily_enable=True, daily_material_enable=True,
+    ))
+    monkeypatch.setattr(daily, "screen", Mock())
+    monkeypatch.setattr(daily, "read_activity", Mock(side_effect=[300, 400]))
+    scan = Mock(side_effect=[(300, False, 0, {daily.MATERIAL_TASK: True}), (400, False, 0, {})])
+    monkeypatch.setattr(daily, "scan_cards", scan)
+    monkeypatch.setattr(daily, "read_milestones", Mock(return_value={}))
+    synthesize = Mock(return_value=True)
+    monkeypatch.setattr(synthesis, "material", synthesize)
+
+    assert daily.run(complete_training=True)
+    synthesize.assert_called_once_with()
+    assert scan.call_count == 2
+
+
+def test_synthesis_rejects_unexpected_quantity_before_consuming_materials(monkeypatch):
+    from tasks.touch import synthesis
+
+    monkeypatch.setattr(synthesis, "screen", Mock())
+    monkeypatch.setattr(synthesis, "_filter_recipes", Mock())
+    monkeypatch.setattr(synthesis, "_read_text", Mock(return_value="合成数量：2"))
+    auto = Mock()
+    auto.find_element.side_effect = [None, True]
+    monkeypatch.setattr(synthesis, "auto", auto)
+
+    with pytest.raises(daily.DailyTrainingError, match="只合成 1 个"):
+        synthesis.material()
+
+    auto.click_element.assert_called_once_with(synthesis.CORE, "image", 0.89, crop=synthesis.RECIPES)

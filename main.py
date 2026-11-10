@@ -642,7 +642,11 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
         if touch and action in touch_tasks:
             from tasks.touch import power, rewards
 
-            touch_actions = {"daily": rewards.run, "power": power.run, "routine": rewards.routine}
+            touch_actions = {
+                "daily": lambda: rewards.run(complete_training=True),
+                "power": power.run,
+                "routine": rewards.routine,
+            }
             return run_sub_task(action, task_override=touch_actions[action])
         return run_sub_task(action)
 

@@ -61,6 +61,13 @@
                 "actions_list": [
                     "auto.click_element('短信', 'text', crop=(1121 / 1920, 376 / 1080, 156 / 1920, 646 / 1080), max_retries=3, retry_delay=0.3) or (auto.drag_mouse((1710 / 1920, 474 / 1080), (1710 / 1920, 975 / 1080), 0.6) and (time.sleep(0.7) or auto.click_element('短信', 'text', crop=(1121 / 1920, 376 / 1080, 156 / 1920, 646 / 1080), max_retries=3, retry_delay=0.3)))"
                 ]
+            },
+            {
+                "target_screen": "material",
+                "actions_list": [
+                    "auto.click_element('合成', 'text', crop=(1447 / 1920, 556 / 1080, 153 / 1920, 149 / 1080), max_retries=3, retry_delay=0.3)",
+                    "auto.find_element('合成', 'text', crop=(121 / 1920, 15 / 1080, 78 / 1920, 36 / 1080), max_retries=6, retry_delay=0.3) and auto.click_element((87 / 1920, 312 / 1080, 0, 0), 'crop')"
+                ]
             }
         ]
     },
@@ -256,6 +263,19 @@
         "name": "短信",
         "id": "incoming_message",
         "image_path": "./assets/touch_720/images/screen/incoming_message.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "材料合成",
+        "id": "material",
+        "image_path": "./assets/touch_720/images/screen/material.png",
         "actions": [
             {
                 "target_screen": "menu",

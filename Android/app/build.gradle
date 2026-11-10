@@ -90,7 +90,7 @@ def stage = tasks.register('stageProjectAssets', Zip) {
         include 'assets/config/config.example.yaml', 'assets/config/version.txt'
         include 'assets/config/ocr_replacements.json', 'assets/config/task_mappings.json'
         include 'assets/config/instance_names.json', 'assets/config/character_names.json'
-        include 'assets/locales/**/march7th.mo', 'assets/touch_720/**'
+        include 'assets/locales/**/march7th.mo', 'assets/touch_720/**', 'assets/images/share/character/*.png'
     }
 }
 tasks.named('preBuild') {

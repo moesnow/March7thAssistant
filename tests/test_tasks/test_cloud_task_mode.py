@@ -166,7 +166,10 @@ def test_touch_subtasks_run_without_pc_tasks(runner, monkeypatch, backend, actio
     assert runner.main(action=action) is True
 
     runner.game.start.assert_called_once_with(headless=None)
-    task.assert_called_once_with()
+    if action == "daily":
+        task.assert_called_once_with(complete_training=True)
+    else:
+        task.assert_called_once_with()
     runner.Daily.run.assert_not_called()
     runner.Daily.routine.assert_not_called()
     runner.Power.run.assert_not_called()
