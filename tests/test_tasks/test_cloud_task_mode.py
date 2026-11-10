@@ -152,17 +152,24 @@ def test_pc_daily_still_runs_daily_and_rewards(runner, backend):
 
 
 @pytest.mark.parametrize("backend", ["local", "adb"])
-def test_touch_daily_runs_without_pc_rewards(runner, monkeypatch, backend):
+@pytest.mark.parametrize(("action", "target"), [
+    ("daily", "tasks.touch.rewards.run"),
+    ("routine", "tasks.touch.rewards.routine"),
+    ("power", "tasks.touch.power.run"),
+])
+def test_touch_subtasks_run_without_pc_tasks(runner, monkeypatch, backend, action, target):
     runner.cfg.ui_profile = "touch_720"
     runner.cfg.control_backend = backend
     task = MagicMock(return_value=True)
-    monkeypatch.setattr("tasks.touch.daily.run", task)
+    monkeypatch.setattr(target, task)
 
-    assert runner.main(action="daily") is True
+    assert runner.main(action=action) is True
 
     runner.game.start.assert_called_once_with(headless=None)
     task.assert_called_once_with()
     runner.Daily.run.assert_not_called()
+    runner.Daily.routine.assert_not_called()
+    runner.Power.run.assert_not_called()
     runner.reward.start.assert_not_called()
     if backend == "adb":
         runner.game.get_game_controller.assert_called_once_with("adb")
@@ -171,11 +178,13 @@ def test_touch_daily_runs_without_pc_rewards(runner, monkeypatch, backend):
 
 @pytest.mark.parametrize("action, workflow, backend", [
     *[(action, None, "local") for action in sorted(
-        AVAILABLE_TASKS.keys() - {"daily", "game", "mobileui_update", "app_update", "notify"}
+        AVAILABLE_TASKS.keys() - {"daily", "routine", "power", "game", "mobileui_update", "app_update", "notify"}
     )],
     (None, None, "local"),
     (None, "测试流程", "local"),
     ("daily", None, "cloud"),
+    ("routine", None, "cloud"),
+    ("power", None, "cloud"),
     ("game", None, "cloud"),
 ])
 def test_touch_skips_unsupported_tasks_before_starting_game(runner, action, workflow, backend):

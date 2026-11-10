@@ -596,15 +596,16 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
 
 def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
     touch = get_ui_profile(cfg).name == "touch_720"
+    touch_tasks = {"routine", "daily", "power"}
     if touch and (
         workflow_name
-        or (action or "main") in AVAILABLE_TASKS.keys() - {"daily", "game", "mobileui_update", "app_update", "notify"}
+        or (action or "main") in AVAILABLE_TASKS.keys() - touch_tasks - {"game", "mobileui_update", "app_update", "notify"}
     ):
         log.warning(f"触屏模式暂不支持：{workflow_name or action or 'main'}，已跳过")
         return
 
     backend = get_control_backend(cfg)
-    if touch and backend == "cloud" and action in {"daily", "game"}:
+    if touch and backend == "cloud" and action in (touch_tasks | {"game"}):
         log.warning(f"触屏模式暂不支持云游戏：{action}，已跳过")
         return
 
@@ -634,10 +635,11 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
 
     # 子任务
     elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption", "screen_test", "character_export"]:
-        if touch and action == "daily":
-            from tasks.touch.daily import run as run_touch_daily
+        if touch and action in touch_tasks:
+            from tasks.touch import power, rewards
 
-            return run_sub_task(action, task_override=run_touch_daily)
+            touch_actions = {"daily": rewards.run, "power": power.run, "routine": rewards.routine}
+            return run_sub_task(action, task_override=touch_actions[action])
         return run_sub_task(action)
 
     # 子任务 原生图形界面
