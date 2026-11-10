@@ -32,15 +32,18 @@ final class Shell {
     private Shell() {
     }
 
+    /** timeoutMs 为 0 时等命令真正结束，用于不能和后续恢复并行的系统写入。 */
     static Result run(long timeoutMs, String... command) throws IOException, InterruptedException {
         Process process = new ProcessBuilder(command).start();
-        process.getOutputStream().close();
-        Collector out = new Collector(process.getInputStream());
-        Collector err = new Collector(process.getErrorStream());
-        out.start();
-        err.start();
         try {
-            if (!process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
+            process.getOutputStream().close();
+            Collector out = new Collector(process.getInputStream());
+            Collector err = new Collector(process.getErrorStream());
+            out.start();
+            err.start();
+            if (timeoutMs == 0) {
+                waitForExit(process);
+            } else if (!process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly();
                 throw new IOException("command timed out after " + timeoutMs + " ms: " + String.join(" ", command));
             }
@@ -48,8 +51,32 @@ final class Shell {
             err.join(1000);
             return new Result(process.exitValue(), out.text(), err.text());
         } catch (InterruptedException e) {
-            process.destroyForcibly();
+            if (timeoutMs != 0) {
+                process.destroyForcibly();
+            }
             throw e;
+        } finally {
+            if (timeoutMs == 0 && process.isAlive()) {
+                waitForExit(process);
+            }
+        }
+    }
+
+    private static void waitForExit(Process process) {
+        boolean interrupted = false;
+        try {
+            while (true) {
+                try {
+                    process.waitFor();
+                    return;
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                }
+            }
+        } finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 

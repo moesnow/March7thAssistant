@@ -129,10 +129,9 @@ class DeviceClient:
         return header, decode_frame(header, payload)
 
     def frame_after(self, input_result: dict, *, min_seq: int = 0, **params) -> tuple[dict, bytes]:
-        """用输入回执的序号和生产时间划边界。需要降级时，由调用方另发只带 min_seq 的请求。"""
+        """按输入完成时间取帧。min_seq 可由上一张已消费帧的序号加一得到。"""
         if "frame_after_ns" not in self.hello.get("features", ()) or "input_ns" not in input_result:
             raise DeviceError("frame_clock_unavailable", "the service does not expose a timestamp boundary", {})
-        min_seq = max(min_seq, input_result["seq"] + 1)
         after_ns = input_result["input_ns"]
         header, pixels = self.frame(min_seq=min_seq, after_ns=after_ns, **params)
         if not header["timestamp_comparable"] or header["image_ns"] <= after_ns or header["seq"] < min_seq:

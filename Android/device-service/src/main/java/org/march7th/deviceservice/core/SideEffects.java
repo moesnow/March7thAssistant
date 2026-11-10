@@ -17,8 +17,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * 会留在系统里的两处改动：实体面板的电源状态，以及游戏的 PLAY_AUDIO AppOps。
@@ -27,11 +25,9 @@ import java.util.regex.Pattern;
  * {@link Cleanup} 子进程，父进程一消失它就把记下来的改动恢复掉。
  */
 final class SideEffects {
-    private static final String OP = "PLAY_AUDIO";
-    private static final Pattern MODE = Pattern.compile(OP + ":\\s*(\\w+)");
-    private static final long COMMAND_TIMEOUT_MS = 5000;
     private static final long KEEP_AWAKE_INTERVAL_MS = 5000;
     private static final long CLEANUP_ACK_TIMEOUT_MS = 2000;
+    private static final long CLEANUP_MUTE_TIMEOUT_MS = 5000;
 
     private final String cleanupJarPath;
     private boolean panelOff;
@@ -43,6 +39,8 @@ final class SideEffects {
     private OutputStream cleanupInput;
     private BufferedReader cleanupOutput;
     private boolean cleanupUnavailable;
+    /** 写入结果未确认且子进程正在通过 EOF 回滚的包。 */
+    private String pendingMute;
     private boolean closed;
 
     SideEffects(String cleanupJarPath) {
@@ -54,7 +52,9 @@ final class SideEffects {
     }
 
     synchronized List<String> mutedPackages() {
-        return new ArrayList<>(muted.keySet());
+        List<String> packages = new ArrayList<>(muted.keySet());
+        packages.remove(pendingMute);
+        return packages;
     }
 
     /**
@@ -119,23 +119,6 @@ final class SideEffects {
         }
     }
 
-    /** 读某个包当前的 PLAY_AUDIO 模式，没有单独设置过时返回 default。 */
-    static String audioMode(String packageName) throws IOException, InterruptedException {
-        Shell.Result result = Shell.run(COMMAND_TIMEOUT_MS, "cmd", "appops", "get", packageName, OP);
-        if (!result.ok()) {
-            throw new IOException("appops get failed: " + result);
-        }
-        Matcher matcher = MODE.matcher(result.stdout);
-        return matcher.find() ? matcher.group(1) : "default";
-    }
-
-    static void setAudioMode(String packageName, String mode) throws IOException, InterruptedException {
-        Shell.Result result = Shell.run(COMMAND_TIMEOUT_MS, "cmd", "appops", "set", packageName, OP, mode);
-        if (!result.ok() || !result.stderr.trim().isEmpty()) {
-            throw new IOException("appops set failed: " + result);
-        }
-    }
-
     /**
      * 按包名静音或恢复。
      *
@@ -147,7 +130,7 @@ final class SideEffects {
             if (on) {
                 String original = muted.get(packageName);
                 if (original == null) {
-                    original = audioMode(packageName);
+                    original = AudioAppOps.mode(packageName);
                     if ("ignore".equals(original)) {
                         // 本来就是静音，不归我们恢复
                         return original;
@@ -156,15 +139,17 @@ final class SideEffects {
                 registerCleanup("mute " + packageName + " " + original);
                 muted.put(packageName, original);
                 try {
-                    setAudioMode(packageName, "ignore");
-                    String now = audioMode(packageName);
+                    if (!applyMute(packageName)) {
+                        throw new IOException("cleanup could not set PLAY_AUDIO to ignore");
+                    }
+                    String now = AudioAppOps.mode(packageName);
                     if (!"ignore".equals(now)) {
                         throw new IOException("PLAY_AUDIO stayed at " + now);
                     }
                 } catch (IOException | InterruptedException error) {
                     try {
                         restoreAudio(packageName);
-                    } catch (IOException | InterruptedException restoreError) {
+                    } catch (CommandException | IOException | InterruptedException restoreError) {
                         if (restoreError instanceof InterruptedException) {
                             Thread.currentThread().interrupt();
                         }
@@ -178,16 +163,36 @@ final class SideEffects {
             if (original != null) {
                 restoreAudio(packageName);
             }
-            return original == null ? audioMode(packageName) : original;
+            return original == null ? AudioAppOps.mode(packageName) : original;
         } catch (IOException e) {
             throw new CommandException(Protocol.E_UNSUPPORTED, e.getMessage());
         }
     }
 
-    private void restoreAudio(String packageName) throws IOException, InterruptedException {
+    private boolean applyMute(String packageName) throws CommandException {
+        try {
+            return exchangeCleanup("apply_mute " + packageName, CLEANUP_MUTE_TIMEOUT_MS);
+        } catch (IOException | RuntimeException e) {
+            pendingMute = packageName;
+            markCleanupUnavailable(e);
+            // 没收到写入完成的确认时，只有子进程能按顺序撤销这条写入。
+            closeCleanupInput();
+            restoreRegisteredEffects();
+            throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE,
+                    "cannot confirm the mute; cleanup will restore it after the command finishes");
+        }
+    }
+
+    private void restoreAudio(String packageName) throws CommandException, IOException, InterruptedException {
+        if (packageName.equals(pendingMute) && !cleanup.waitFor(CLEANUP_ACK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE, "the pending mute is still being restored");
+        }
         String original = muted.get(packageName);
-        setAudioMode(packageName, original);
+        AudioAppOps.setMode(packageName, original);
         muted.remove(packageName);
+        if (packageName.equals(pendingMute)) {
+            pendingMute = null;
+        }
         forgetCleanup("unmute " + packageName);
         Logger.i("PLAY_AUDIO of " + packageName + " restored to " + original);
     }
@@ -197,32 +202,43 @@ final class SideEffects {
         if (closed) {
             return;
         }
+        restoreRegisteredEffects();
+        closed = true;
+        // UserService 关闭核心后进程可能还活着，主动断管，让子进程兜底恢复失败的记录。
+        closeCleanupInput();
+        cleanupOutput = null;
+        cleanup = null;
+    }
+
+    private void restoreRegisteredEffects() {
         try {
             setPanel(true);
         } catch (CommandException e) {
             Logger.w("cannot restore the panel: " + e.getMessage());
         }
         for (String packageName : new ArrayList<>(muted.keySet())) {
+            if (packageName.equals(pendingMute) && cleanup.isAlive()) {
+                continue;
+            }
             try {
                 restoreAudio(packageName);
-            } catch (IOException e) {
+            } catch (CommandException | IOException e) {
                 Logger.w("cannot restore PLAY_AUDIO of " + packageName, e);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
         }
-        closed = true;
+    }
+
+    private void closeCleanupInput() {
         if (cleanupInput != null) {
-            // UserService 关闭核心后进程可能还活着，主动断管，让子进程兜底恢复失败的记录。
             try {
                 cleanupInput.close();
             } catch (IOException ignored) {
                 // 子进程已经退出
             }
             cleanupInput = null;
-            cleanupOutput = null;
-            cleanup = null;
         }
     }
 
@@ -234,7 +250,9 @@ final class SideEffects {
 
     private void registerCleanup(String line) throws CommandException {
         try {
-            exchangeCleanup(line);
+            if (!exchangeCleanup(line, CLEANUP_ACK_TIMEOUT_MS)) {
+                throw new IOException("cleanup refused the record");
+            }
         } catch (IOException | RuntimeException e) {
             markCleanupUnavailable(e);
             throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE, "cannot register cleanup: " + e.getMessage());
@@ -247,7 +265,9 @@ final class SideEffects {
             return;
         }
         try {
-            exchangeCleanup(line);
+            if (!exchangeCleanup(line, CLEANUP_ACK_TIMEOUT_MS)) {
+                throw new IOException("cleanup refused to remove the record");
+            }
         } catch (IOException | RuntimeException e) {
             markCleanupUnavailable(e);
         }
@@ -261,7 +281,7 @@ final class SideEffects {
         }
     }
 
-    private void exchangeCleanup(String line) throws IOException {
+    private boolean exchangeCleanup(String line, long timeoutMs) throws IOException {
         if (cleanupUnavailable) {
             throw new IOException("cleanup channel is unavailable");
         }
@@ -282,10 +302,16 @@ final class SideEffects {
         worker.setDaemon(true);
         worker.start();
         try {
-            String reply = exchange.get(CLEANUP_ACK_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-            if (!("M7A_CLEANUP_OK " + line).equals(reply) || !cleanup.isAlive()) {
-                throw new IOException("cleanup did not acknowledge the record");
+            String reply = exchange.get(timeoutMs, TimeUnit.MILLISECONDS);
+            if (cleanup.isAlive()) {
+                if (("M7A_CLEANUP_OK " + line).equals(reply)) {
+                    return true;
+                }
+                if (("M7A_CLEANUP_FAILED " + line).equals(reply)) {
+                    return false;
+                }
             }
+            throw new IOException("cleanup did not acknowledge the record");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException("cleanup acknowledgement interrupted", e);

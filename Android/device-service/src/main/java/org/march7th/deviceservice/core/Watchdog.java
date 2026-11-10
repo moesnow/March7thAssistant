@@ -21,8 +21,8 @@ import java.util.List;
 final class Watchdog {
     static final class Config {
         String packageName;
-        /** 游戏主 Activity 的完整类名。任务顶上是别的 Activity 时一律当作 SDK 窗口。 */
-        String mainActivity;
+        /** 游戏主 Activity 的完整类名，可由后续成功的同包 launch 补齐。 */
+        volatile String mainActivity;
         /** 目标屏；-1 表示跟随当前的虚拟屏。 */
         int displayId = -1;
         int intervalMs = 500;
@@ -49,9 +49,11 @@ final class Watchdog {
             if (config.packageName == null || !config.packageName.matches("[A-Za-z0-9_.]+")) {
                 throw new CommandException(Protocol.E_BAD_REQUEST, "package is required");
             }
-            config.mainActivity = request.optString("main_activity", null);
-            if (config.mainActivity != null && config.mainActivity.startsWith(".")) {
-                config.mainActivity = config.packageName + config.mainActivity;
+            if (!request.isNull("main_activity")) {
+                String activity = request.optString("main_activity", "").trim();
+                if (!activity.isEmpty()) {
+                    config.mainActivity = expandActivity(config.packageName, activity);
+                }
             }
             if (request.has("display_id")) {
                 config.displayId = JsonIntegers.id(request.opt("display_id"), "display_id", Integer.MAX_VALUE);
@@ -171,7 +173,7 @@ final class Watchdog {
         final long deadline;
         long afterSeq;
         long afterNs;
-        boolean waitingForMain;
+        boolean waitingForUsableMain;
         boolean timedOut;
 
         PendingFrame(StackEntry task, int attempt, long startedAt, long deadline, long afterSeq, long afterNs) {
@@ -242,16 +244,31 @@ final class Watchdog {
         return config.displayId >= 0 ? config.displayId : host.currentDisplayId();
     }
 
+    void learnMainActivity(String component) {
+        String prefix = config.packageName + "/";
+        synchronized (stateLock) {
+            if (config.mainActivity == null && component.startsWith(prefix)) {
+                config.mainActivity = expandActivity(config.packageName, component.substring(prefix.length()));
+            }
+        }
+    }
+
+    private static String expandActivity(String packageName, String activity) {
+        return activity.startsWith(".") ? packageName + activity : activity;
+    }
+
     /** 普通客户端输入和自动切焦点都以最近一次观测到的任务栈顶为准。 */
     void checkInput(int displayId, boolean ownDisplay) throws CommandException {
         synchronized (stateLock) {
-            if (!primed) {
-                return;
+            boolean gameHere = game != null && game.displayId == displayId;
+            if (config.mainActivity == null && (ownDisplay || gameHere || displayId == targetDisplay())) {
+                throw new CommandException(Protocol.E_MAIN_ACTIVITY_UNKNOWN,
+                        "set main_activity or launch a component of " + config.packageName + " first");
             }
-            if (game != null && game.displayId == displayId && isSdkWindow(game)) {
+            if (gameHere && isSdkWindow(game)) {
                 throw new CommandException(Protocol.E_SDK_WINDOW_ACTIVE, "SDK activity is active: " + game.topActivity);
             }
-            if (ownDisplay && (game == null || game.displayId != displayId)) {
+            if (ownDisplay && !gameHere) {
                 throw new CommandException(Protocol.E_GAME_NOT_ON_DISPLAY,
                         config.packageName + " is not on display " + displayId);
             }
@@ -345,17 +362,14 @@ final class Watchdog {
     }
 
     private boolean isMain(StackEntry entry) {
-        if (entry.topActivity == null) {
-            return false;
-        }
-        if (!entry.topActivity.startsWith(config.packageName + "/")) {
-            return false;
-        }
-        return config.mainActivity == null || config.mainActivity.equals(entry.topActivityClass());
+        String mainActivity = config.mainActivity;
+        return mainActivity != null && entry.topActivity != null
+                && entry.topActivity.startsWith(config.packageName + "/")
+                && mainActivity.equals(entry.topActivityClass());
     }
 
     private boolean isSdkWindow(StackEntry entry) {
-        return entry != null && entry.topActivity != null && !isMain(entry);
+        return config.mainActivity != null && entry != null && entry.topActivity != null && !isMain(entry);
     }
 
     void poll() throws Exception {
@@ -454,7 +468,7 @@ final class Watchdog {
                 settled++;
                 if (settled >= config.settlePolls) {
                     settled = 0;
-                    moveBack(current, target, usable);
+                    moveBack(current, target);
                     current = game;
                 }
             } else {
@@ -468,7 +482,7 @@ final class Watchdog {
         checkRelaunch(current, currentPid, target);
     }
 
-    private void moveBack(StackEntry entry, int target, boolean usable) throws InterruptedException {
+    private void moveBack(StackEntry entry, int target) throws Exception {
         moveAttempts++;
         long startedAt = platform.elapsedMs();
         int attempt = moveAttempts;
@@ -511,8 +525,8 @@ final class Watchdog {
                 "task_id", moved.taskIdOf(config.packageName), "target_display_id", target));
         if (target == host.currentDisplayId()) {
             pendingFrame = new PendingFrame(moved, attempt, startedAt, deadline, arrivalSeq, arrivalNs);
-            requestFocus(moved, target, "move_back", usable);
-            checkMoveFrame(moved, target, usable);
+            requestFocus(moved, target, "move_back");
+            checkMoveFrame(moved, target, platform.interactive() && !platform.keyguardLocked());
         } else {
             moveSucceeded(moved, attempt, startedAt, null, false);
         }
@@ -529,19 +543,17 @@ final class Watchdog {
             pendingFrame = null;
             return;
         }
-        boolean main = isMain(current);
-        if (pending.waitingForMain || !main) {
-            // SDK 的画面不能充当主界面回迁成功的证据。
+        boolean usableMain = usable && isMain(current);
+        if (usableMain && pending.waitingForUsableMain) {
+            // 以主 Activity 恢复可操作的时刻重新划边界，避开 SDK 和锁屏画面。
             pending.afterNs = platform.nanoTime();
             pending.afterSeq = host.latestSeq();
-            if (main) {
-                requestFocus(current, target, "move_back", usable);
-            }
-            pending.waitingForMain = !main;
+            requestFocus(current, target, "move_back");
         }
+        pending.waitingForUsableMain = !usableMain;
         FrameSequencer.Frame frame = host.latestFrame(target);
-        if (main && usable && frame != null && frame.seq > pending.afterSeq
-                && (!frame.timestampComparable || frame.isAfter(pending.afterNs))) {
+        if (usableMain && frame != null
+                && (frame.timestampComparable ? frame.isAfter(pending.afterNs) : frame.seq > pending.afterSeq)) {
             pendingFrame = null;
             moveSucceeded(current, pending.attempt, pending.startedAt, frame, pending.timedOut);
         } else if (!pending.timedOut && platform.elapsedMs() >= pending.deadline) {
@@ -580,18 +592,22 @@ final class Watchdog {
             }
             emit(nowStalled ? "frames_stalled" : "frames_resumed", fields("age_ms", age, "display_id", target));
             if (nowStalled) {
-                requestFocus(current, target, "frames_stalled", true);
+                requestFocus(current, target, "frames_stalled");
             }
         }
     }
 
     /** 有的系统上游戏在没有焦点的屏里不渲染（MuMu 的 Android 12 如此），按配置把焦点切过去。 */
-    private void requestFocus(StackEntry current, int target, String reason, boolean usable) {
-        if (!running || !config.autoFocus || !usable || current.displayId != target
+    private void requestFocus(StackEntry current, int target, String reason) {
+        if (!running || !config.autoFocus || current.displayId != target
                 || !isMain(current) || target != host.currentDisplayId()) {
             return;
         }
         try {
+            // 移动任务或发送事件期间可能锁屏，注入前重新读电源状态。
+            if (!platform.interactive() || platform.keyguardLocked()) {
+                return;
+            }
             boolean delivered = host.focusDisplay(target);
             emit("focus_requested", fields("display_id", target, "reason", reason, "delivered", delivered));
         } catch (Exception e) {

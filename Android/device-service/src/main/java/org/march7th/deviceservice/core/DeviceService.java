@@ -79,7 +79,7 @@ public final class DeviceService implements Watchdog.Host {
     private long eventSeq;
     private volatile VirtualScreen screen;
     private volatile Watchdog watchdog;
-    private volatile String lastLaunched;
+    private String lastLaunched; // displayLock
     private volatile boolean shutdownRequested;
     private volatile boolean closed;
     private ExecutorService encodePool;
@@ -395,7 +395,13 @@ public final class DeviceService implements Watchdog.Host {
         int timeout = clamp(request.optInt("timeout_ms", 30000), 1000, 120000);
         long startedMs = SystemClock.elapsedRealtime();
         String output = startActivity(component, displayId, wait, timeout);
-        lastLaunched = component;
+        synchronized (displayLock) {
+            lastLaunched = component;
+            Watchdog current = watchdog;
+            if (current != null) {
+                current.learnMainActivity(component);
+            }
+        }
         JSONObject out = Message.ok(request);
         out.put("display_id", displayId);
         out.put("output", output);
@@ -630,6 +636,7 @@ public final class DeviceService implements Watchdog.Host {
     private JSONObject inputResult(JSONObject request, int displayId, boolean delivered) throws JSONException {
         long inputNs = System.nanoTime();
         JSONObject out = Message.ok(request);
+        // 序号是发布进度，严格取帧使用 input_ns，避免跳过在组装回执期间发布的帧。
         out.put("seq", sequencer.latest());
         out.put("input_ns", inputNs);
         out.put("display_id", displayId);
@@ -763,25 +770,24 @@ public final class DeviceService implements Watchdog.Host {
         JSONObject out = Message.ok(request);
         Watchdog previous;
         Watchdog next = null;
-        if (request.optBoolean("enabled", true)) {
-            JSONObject effective = request;
-            String launched = lastLaunched;
-            if (!request.has("main_activity") && launched != null
-                    && launched.startsWith(request.optString("package", "") + "/")) {
-                // 没给主 Activity 时沿用上一次 launch 的组件
-                effective = new JSONObject(request.toString());
-                effective.put("main_activity", launched.substring(launched.indexOf('/') + 1));
-            }
-            Watchdog.Config config = Watchdog.Config.fromJson(effective);
-            try {
-                next = new Watchdog(config, this);
-            } catch (IllegalArgumentException e) {
-                throw new CommandException(Protocol.E_BAD_REQUEST, e.getMessage());
-            }
-        }
         synchronized (displayLock) {
             if (closed) {
                 throw new CommandException(Protocol.E_INTERNAL, "service is closing");
+            }
+            if (request.optBoolean("enabled", true)) {
+                JSONObject effective = request;
+                if (request.isNull("main_activity") && lastLaunched != null
+                        && lastLaunched.startsWith(request.optString("package", "") + "/")) {
+                    // 也接受配置看门狗之前成功启动的同包组件。
+                    effective = new JSONObject(request.toString());
+                    effective.put("main_activity", lastLaunched.substring(lastLaunched.indexOf('/') + 1));
+                }
+                Watchdog.Config config = Watchdog.Config.fromJson(effective);
+                try {
+                    next = new Watchdog(config, this);
+                } catch (IllegalArgumentException e) {
+                    throw new CommandException(Protocol.E_BAD_REQUEST, e.getMessage());
+                }
             }
             previous = watchdog;
             watchdog = next;

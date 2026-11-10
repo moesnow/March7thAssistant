@@ -75,6 +75,97 @@ public class WatchdogTest {
     }
 
     @Test
+    public void moveKeepsTheOnlyFramePublishedWhileReadingTheSequence() throws Exception {
+        Fixture platform = new Fixture();
+        platform.setTask(0, PACKAGE + "/.Main");
+        platform.publishWhileReadingSequence = true;
+        Watchdog.Config config = config();
+        config.autoFocus = false;
+        Watchdog dog = new Watchdog(config, platform, platform);
+        dog.poll();
+        dog.poll();
+
+        assertEquals(1, platform.details("move_back_succeeded").getLong("first_frame_seq"));
+    }
+
+    @Test
+    public void focusWaitsWhenPowerStateChangesDuringTheMove() throws Exception {
+        for (boolean locked : new boolean[] {true, false}) {
+            Fixture platform = new Fixture();
+            platform.setTask(0, PACKAGE + "/.Main");
+            platform.lockOnMove = locked;
+            platform.sleepOnMove = !locked;
+            platform.produceOnFocus = true;
+            Watchdog dog = new Watchdog(config(), platform, platform);
+            dog.poll();
+            dog.poll();
+
+            assertEquals(0, platform.focusCalls);
+            assertFalse(platform.events.contains("focus_requested"));
+            assertFalse(platform.events.contains("move_back_succeeded"));
+
+            platform.locked = false;
+            platform.awake = true;
+            dog.poll();
+            assertEquals(1, platform.focusCalls);
+            assertTrue(platform.events.contains("move_back_succeeded"));
+        }
+    }
+
+    @Test
+    public void waitsForMainActivityBeforeAllowingInputFocusOrMove() throws Exception {
+        Fixture platform = new Fixture();
+        platform.setTask(TARGET, SDK);
+        platform.produceOnFocus = true;
+        Watchdog.Config config = config();
+        config.mainActivity = null;
+        config.stallMs = 1000;
+        Watchdog dog = new Watchdog(config, platform, platform);
+        assertEquals(Protocol.E_MAIN_ACTIVITY_UNKNOWN,
+                assertThrows(CommandException.class, () -> dog.checkInput(TARGET, true)).code);
+
+        dog.poll();
+        dog.poll();
+        platform.now += config.manualTimeoutMs + 1;
+        dog.poll();
+        assertEquals(0, platform.focusCalls);
+        assertFalse(platform.events.contains("manual_action_required"));
+        assertEquals(Protocol.E_MAIN_ACTIVITY_UNKNOWN,
+                assertThrows(CommandException.class, () -> dog.checkInput(TARGET, true)).code);
+
+        platform.setTask(0, PACKAGE + "/.Main");
+        dog.learnMainActivity("another.app/.Main");
+        dog.poll();
+        assertEquals(0, platform.moveCalls);
+
+        dog.learnMainActivity(PACKAGE + "/.Main");
+        platform.setTask(TARGET, SDK);
+        dog.poll();
+        assertEquals(Protocol.E_SDK_WINDOW_ACTIVE,
+                assertThrows(CommandException.class, () -> dog.checkInput(TARGET, true)).code);
+        assertEquals(0, platform.focusCalls);
+
+        platform.setTask(0, PACKAGE + "/.Main");
+        dog.poll();
+        assertEquals(1, platform.moveCalls);
+        assertEquals(1, platform.focusCalls);
+        dog.checkInput(TARGET, true);
+    }
+
+    @Test
+    public void launchDoesNotReplaceConfiguredMainActivity() throws Exception {
+        Fixture platform = new Fixture();
+        platform.setTask(TARGET, SDK);
+        Watchdog dog = new Watchdog(config(), platform, platform);
+        dog.learnMainActivity(SDK);
+        dog.poll();
+
+        assertEquals(MAIN, dog.describe().getString("main_activity"));
+        assertEquals(Protocol.E_SDK_WINDOW_ACTIVE,
+                assertThrows(CommandException.class, () -> dog.checkInput(TARGET, true)).code);
+    }
+
+    @Test
     public void sdkOnTargetBlocksInputAndAutomaticFocusUntilItCloses() throws Exception {
         Fixture platform = new Fixture();
         platform.setTask(TARGET, SDK);
@@ -121,8 +212,14 @@ public class WatchdogTest {
         StackEntry task;
         long now = 2000;
         int focusCalls;
+        int moveCalls;
         boolean produceOnFocus;
         boolean rejectMove;
+        boolean publishWhileReadingSequence;
+        boolean lockOnMove;
+        boolean sleepOnMove;
+        boolean locked;
+        boolean awake = true;
 
         Fixture() {
             frames.setActive(true);
@@ -156,12 +253,12 @@ public class WatchdogTest {
 
         @Override
         public boolean interactive() {
-            return true;
+            return awake;
         }
 
         @Override
         public boolean keyguardLocked() {
-            return false;
+            return locked;
         }
 
         @Override
@@ -189,7 +286,10 @@ public class WatchdogTest {
             if (rejectMove) {
                 throw new IllegalStateException("move rejected");
             }
+            moveCalls++;
             setTask(displayId, PACKAGE + "/.Main");
+            locked = lockOnMove;
+            awake = !sleepOnMove;
         }
 
         @Override
@@ -205,6 +305,10 @@ public class WatchdogTest {
 
         @Override
         public long latestSeq() {
+            if (publishWhileReadingSequence) {
+                publishWhileReadingSequence = false;
+                publishFrame();
+            }
             return frames.latest();
         }
 

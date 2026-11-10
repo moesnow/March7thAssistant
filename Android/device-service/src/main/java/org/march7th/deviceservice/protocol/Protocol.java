@@ -34,6 +34,7 @@ public final class Protocol {
     public static final String E_DEVICE_ASLEEP = "device_asleep";
     public static final String E_KEYGUARD_LOCKED = "keyguard_locked";
     public static final String E_GAME_NOT_ON_DISPLAY = "game_not_on_display";
+    public static final String E_MAIN_ACTIVITY_UNKNOWN = "main_activity_unknown";
     public static final String E_SDK_WINDOW_ACTIVE = "sdk_window_active";
     public static final String E_LAUNCH_FAILED = "launch_failed";
     public static final String E_UNSUPPORTED = "unsupported";
