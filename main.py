@@ -310,7 +310,7 @@ if sys.platform == 'win32' and not is_user_admin():
     sys.exit(EXIT_ELEVATION_FAILED)
 
 from module.config import cfg
-from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend
+from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.logger import log
 import logging
 logging.getLogger("March7thAssistant").addHandler(run_session.error_log_handler())
@@ -436,7 +436,7 @@ def run_main_actions(no_run_immediately=False):
             raise
 
 
-def run_sub_task(action):
+def run_sub_task(action, task_override=None):
     # 不兼容无窗口模式的任务仅覆盖本次启动方式，不修改用户配置。
     visible_cloud_tasks = {"fight", "universe"}
     success = True
@@ -496,7 +496,7 @@ def run_sub_task(action):
         "apocalyptic": lambda: challenge.start("apocalyptic"),
         "redemption": Redemption.start
     }
-    task = sub_tasks.get(action)
+    task = task_override or sub_tasks.get(action)
     if task:
         if action in {"currencywarsloop", "divergentloop"}:
             task()
@@ -584,7 +584,20 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
 
 
 def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
-    if get_control_backend(cfg) == "adb" and (
+    touch = get_ui_profile(cfg).name == "touch_720"
+    if touch and (
+        workflow_name
+        or (action or "main") in AVAILABLE_TASKS.keys() - {"daily", "game", "mobileui_update", "app_update", "notify"}
+    ):
+        log.warning(f"触屏模式暂不支持：{workflow_name or action or 'main'}，已跳过")
+        return
+
+    backend = get_control_backend(cfg)
+    if touch and backend == "cloud" and action in {"daily", "game"}:
+        log.warning(f"触屏模式暂不支持云游戏：{action}，已跳过")
+        return
+
+    if backend == "adb" and (
         workflow_name or (action or "main") in EXCLUSIVE_ACTIONS - {"app_update"}
     ):
         game.get_game_controller()
@@ -605,6 +618,10 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
 
     # 子任务
     elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption", "screen_test", "character_export"]:
+        if touch and action == "daily":
+            from tasks.touch.daily import run as run_touch_daily
+
+            return run_sub_task(action, task_override=run_touch_daily)
         return run_sub_task(action)
 
     # 子任务 原生图形界面

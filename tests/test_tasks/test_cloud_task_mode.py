@@ -7,11 +7,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend
+from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.game import AdbBackendUnavailableError
 from utils.pause import RunStopRequested
 from utils.runs import EXIT_FAILED, EXIT_OK, exit_code_of
-from utils.tasks import PAUSABLE_TASKS
+from utils.tasks import AVAILABLE_TASKS, PAUSABLE_TASKS
 
 
 @pytest.fixture
@@ -31,16 +31,19 @@ def runner():
              "recover_temporary_graphics", "restore_temporary_graphics", "log")
     scope = {name: MagicMock() for name in names}
     scope["cfg"].control_backend = None
+    scope["cfg"].ui_profile = None
     scope["cfg"].cloud_game_enable = False
     scope["cfg"].after_finish = "None"
     scope["cfg"].browser_headless_enable = True
     scope["cfg"].notify_merge = False
     scope["CloudGameZeroDurationError"] = type("CloudGameZeroDurationError", (Exception,), {})
     scope.update(get_control_backend=get_control_backend,
+                 get_ui_profile=get_ui_profile,
                  AdbBackendUnavailableError=AdbBackendUnavailableError,
                  ProfileAssetNotFoundError=ProfileAssetNotFoundError,
                  TouchProfileInputError=TouchProfileInputError)
     scope["time"] = SimpleNamespace(time=lambda: 0)
+    scope["AVAILABLE_TASKS"] = AVAILABLE_TASKS
     scope["EXCLUSIVE_ACTIONS"] = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update"}
     # 仅加载入口函数，避免导入 CLI 时触发权限检查或游戏操作。
     exec(compile(ast.Module(body=functions, type_ignores=[]), str(source), "exec"), scope)
@@ -136,6 +139,52 @@ def test_legacy_task_without_return_value_still_succeeds(runner):
     assert runner.run_sub_task("power") is True
     runner.telemetry.track_task_complete.assert_called_once_with("power", True, 0)
     runner.game.stop.assert_called_once_with(False)
+
+
+@pytest.mark.parametrize("backend", ["local", "cloud"])
+def test_pc_daily_still_runs_daily_and_rewards(runner, backend):
+    runner.cfg.control_backend = backend
+
+    assert runner.main(action="daily") is True
+
+    runner.Daily.run.assert_called_once_with()
+    runner.reward.start.assert_called_once_with()
+
+
+def test_touch_daily_runs_without_pc_rewards(runner, monkeypatch):
+    runner.cfg.ui_profile = "touch_720"
+    task = MagicMock(return_value=True)
+    monkeypatch.setattr("tasks.touch.daily.run", task)
+
+    assert runner.main(action="daily") is True
+
+    runner.game.start.assert_called_once_with(headless=None)
+    task.assert_called_once_with()
+    runner.Daily.run.assert_not_called()
+    runner.reward.start.assert_not_called()
+
+
+@pytest.mark.parametrize("action, workflow, backend", [
+    *[(action, None, "local") for action in sorted(
+        AVAILABLE_TASKS.keys() - {"daily", "game", "mobileui_update", "app_update", "notify"}
+    )],
+    (None, None, "local"),
+    (None, "测试流程", "local"),
+    ("daily", None, "cloud"),
+    ("game", None, "cloud"),
+])
+def test_touch_skips_unsupported_tasks_before_starting_game(runner, action, workflow, backend):
+    runner.cfg.ui_profile = "touch_720"
+    runner.cfg.control_backend = backend
+
+    assert runner.main(action=action, workflow_name=workflow) is None
+
+    assert "触屏模式暂不支持" in runner.log.warning.call_args.args[0]
+    runner.ensure_exclusive_run.assert_not_called()
+    runner.game.start.assert_not_called()
+    runner.game.get_game_controller.assert_not_called()
+    runner.Daily.start.assert_not_called()
+    runner.reward.start.assert_not_called()
 
 
 @pytest.mark.parametrize("action", [None, "main"])

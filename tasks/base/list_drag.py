@@ -5,7 +5,7 @@ import re
 import numpy as np
 
 
-def _changed(before, after):
+def changed_ratio(before, after):
     first = np.asarray(before.convert("L"), dtype=np.int16)
     second = np.asarray(after.convert("L"), dtype=np.int16)
     if first.shape != second.shape:
@@ -30,7 +30,7 @@ def drag_list(auto, start, end, *, crop, duration=0.8, settle=1.0, tolerance=0.0
         time.sleep(poll_interval)
         current, _, _ = auto.take_screenshot(crop=crop)
         if text_pattern is None:
-            stable = _changed(previous, current) <= tolerance
+            stable = changed_ratio(previous, current) <= tolerance
         else:
             # 忘却之庭的水晶一直在动，只比较关卡数字的位置，避免把动画当成惯性。
             auto.perform_ocr()
@@ -55,7 +55,7 @@ def drag_to_edge(auto, start, end, *, crop, max_drags=8, **kwargs):
         before = before.copy()
         if not drag_list(auto, start, end, crop=crop, **kwargs):
             return False
-        unchanged = unchanged + 1 if _changed(before, auto.screenshot) <= 0.01 else 0
+        unchanged = unchanged + 1 if changed_ratio(before, auto.screenshot) <= 0.01 else 0
         if unchanged >= 2:
             return True
     return False

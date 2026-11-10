@@ -31,19 +31,24 @@ class Tasks:
 
     def detect(self):
         screenshot, _, _ = auto.take_screenshot(crop=self.crop)
-        result = ocr.recognize_multi_lines(screenshot)
+        return self.parse_ocr(ocr.recognize_multi_lines(screenshot))
+
+    def parse_ocr(self, result, *, x_gap=100, require_status=False):
         for coords, text_data in result:
             if "本日活跃度已满" in text_data[0]:
                 log.info("检测到本日活跃度已满提示，跳过后续任务检测")
                 return False
-        merged_texts = self._merge_ocr_blocks(result, x_gap=100)
+        merged_texts = self._merge_ocr_blocks(result, x_gap=x_gap)
         log.debug(f"每日实训分栏拼接的文本: {merged_texts}")
         progress_pattern = re.compile(r'(\d+)\s*[/／]\s*(\d+)')  # 用于匹配“X/Y”格式的正则表达式
         for text in merged_texts:
+            match = progress_pattern.search(text)
+            claimed = "已领取" in text
+            if require_status and not (match or claimed):
+                continue
             for keyword, task_name in self.task_mappings.items():
                 if keyword in text:
-                    match = progress_pattern.search(text)
-                    if (match and match.group(1) == match.group(2)) or "已领取" in text:
+                    if (match and match.group(1) == match.group(2)) or claimed:
                         self.daily_tasks[task_name] = False
                         log.debug(f"{task_name}:已完成")
                     else:

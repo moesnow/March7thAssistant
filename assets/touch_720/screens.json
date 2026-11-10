@@ -9,6 +9,12 @@
                 "actions_list": [
                     "auto.click_element('./assets/touch_720/images/screen/main.png', 'image', 0.9, crop=(18 / 1920, 60 / 1080, 72 / 1920, 78 / 1080))"
                 ]
+            },
+            {
+                "target_screen": "guide2",
+                "actions_list": [
+                    "auto.click_element((1521 / 1920, 59 / 1080, 0, 0), 'crop')"
+                ]
             }
         ]
     },
@@ -21,6 +27,116 @@
                 "target_screen": "main",
                 "actions_list": [
                     "auto.click_element((1827 / 1920, 31.5 / 1080, 57 / 1920, 54 / 1080), 'crop')"
+                ]
+            },
+            {
+                "target_screen": "guide2",
+                "actions_list": [
+                    "auto.click_element('指南', 'text', max_retries=3, retry_delay=0.3, crop=(1610 / 1920, 798 / 1080, 153 / 1920, 62 / 1080))"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "星际和平指南-每日实训",
+        "id": "guide2",
+        "image_path": "./assets/touch_720/images/screen/guide2.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')",
+                    "time.sleep(0.6)",
+                    "auto.find_element('./assets/touch_720/images/screen/menu.png', 'image', 0.88, max_retries=3, retry_delay=0.3) and auto.click_element((1827 / 1920, 31.5 / 1080, 57 / 1920, 54 / 1080), 'crop')"
+                ]
+            },
+            {
+                "target_screen": "guide3",
+                "actions_list": [
+                    "auto.click_element((419 / 1920, 169 / 1080, 0, 0), 'crop')"
+                ]
+            },
+            {
+                "target_screen": "guide5",
+                "actions_list": [
+                    "auto.click_element((553 / 1920, 169 / 1080, 0, 0), 'crop')"
+                ]
+            },
+            {
+                "target_screen": "guide4",
+                "actions_list": [
+                    "auto.click_element((688 / 1920, 169 / 1080, 0, 0), 'crop')"
+                ]
+            },
+            {
+                "target_screen": "guide6",
+                "actions_list": [
+                    "auto.click_element((822 / 1920, 169 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "星际和平指南-生存索引",
+        "id": "guide3",
+        "image_path": "./assets/touch_720/images/screen/guide3.png",
+        "actions": [
+            {
+                "target_screen": "guide2",
+                "actions_list": [
+                    "auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "星际和平指南-旷宇纷争",
+        "id": "guide5",
+        "image_path": "./assets/touch_720/images/screen/guide5.png",
+        "actions": [
+            {
+                "target_screen": "guide2",
+                "actions_list": [
+                    "auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "星际和平指南-逐光捡金",
+        "id": "guide4",
+        "image_path": "./assets/touch_720/images/screen/guide4.png",
+        "actions": [
+            {
+                "target_screen": "guide2",
+                "actions_list": [
+                    "auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "星际和平指南-开拓历程",
+        "id": "guide6",
+        "image_path": "./assets/touch_720/images/screen/guide6.png",
+        "actions": [
+            {
+                "target_screen": "guide2",
+                "actions_list": [
+                    "auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "获得物品",
+        "id": "item_reward",
+        "image_path": "./assets/touch_720/images/screen/item_reward.png",
+        "actions": [
+            {
+                "target_screen": "guide2",
+                "actions_list": [
+                    "auto.click_element((960 / 1920, 854 / 1080, 0, 0), 'crop')"
                 ]
             }
         ]
