@@ -1,4 +1,4 @@
-"""触屏 720p 拟造花萼（金）。"""
+"""触屏 720p 生存索引副本。"""
 import re
 import time
 import unicodedata
@@ -20,21 +20,31 @@ from utils.wait import wait_until
 
 
 GOLDEN_CALYX = "拟造花萼（金）"
-POWER_COST = 10
+CRIMSON_CALYX = "拟造花萼（赤）"
+STAGNANT_SHADOW = "凝滞虚影"
+CAVERN = "侵蚀隧洞"
 MAX_WAVES = 24
+# 界面、单次开拓力、单批挑战上限。
+INSTANCES = {
+    GOLDEN_CALYX: ("calyx", 10, MAX_WAVES),
+    CRIMSON_CALYX: ("calyx", 10, MAX_WAVES),
+    STAGNANT_SHADOW: ("stagnant_shadow", 30, 8),
+    CAVERN: ("cavern", 40, 6),
+}
 IMAGES = "./assets/touch_720/images/power"
 INDEX_CATEGORY = (177 / 1920, 255 / 1080, 449 / 1920, 680 / 1080)
 INDEX_ROWS = (658 / 1920, 256 / 1080, 1095 / 1920, 679 / 1080)
 POWER_VALUE = (1555 / 1920, 32 / 1080, 143 / 1920, 45 / 1080)
-CALYX_TITLE = (1204 / 1920, 105 / 1080, 645 / 1920, 68 / 1080)
+INSTANCE_TITLE = (1204 / 1920, 105 / 1080, 645 / 1920, 68 / 1080)
 QUICK_REFILL = (1777 / 1920, 754 / 1080, 94 / 1920, 52 / 1080)
 WAVE_COUNT = (1455 / 1920, 810 / 1080, 175 / 1920, 50 / 1080)
 CHALLENGE_COST = (1285 / 1920, 953 / 1080, 75 / 1920, 64 / 1080)
+CAVERN_CHALLENGE_COST = (1405 / 1920, 953 / 1080, 75 / 1920, 64 / 1080)
 CHALLENGE = (1392 / 1920, 950 / 1080, 461 / 1920, 76 / 1080)
 START_CHALLENGE = (1410 / 1920, 946 / 1080, 420 / 1920, 80 / 1080)
 TEAM_TABS = (531 / 1920, 14 / 1080, 861 / 1920, 86 / 1080)
 BATTLE_CONTROLS = (1665 / 1920, 30 / 1080, 210 / 1920, 63 / 1080)
-RESULT_TITLE = (754 / 1920, 109 / 1080, 411 / 1920, 117 / 1080)
+RESULT_TITLE = (754 / 1920, 109 / 1080, 411 / 1920, 167 / 1080)
 RESULT_COUNT = (1135 / 1920, 861 / 1080, 257 / 1920, 48 / 1080)
 REPEAT_COST = (1091 / 1920, 917 / 1080, 85 / 1920, 61 / 1080)
 REPEAT = (1180 / 1920, 911 / 1080, 290 / 1920, 74 / 1080)
@@ -103,23 +113,27 @@ def _click_text(text, crop, *, retries=8):
     return auto.click_element(text, "text", crop=crop, max_retries=retries, retry_delay=0.3)
 
 
-def _select_category():
+def _select_category(instance_type):
     screen.change_to("guide3", max_recursion=1)
-    if not _click_text(GOLDEN_CALYX, INDEX_CATEGORY, retries=3):
-        if not drag_list(auto, (535 / 1920, 389 / 1080), (535 / 1920, 834 / 1080), crop=INDEX_CATEGORY):
+    if not _click_text(instance_type, INDEX_CATEGORY, retries=3):
+        top = (535 / 1920, 389 / 1080)
+        bottom = (535 / 1920, 834 / 1080)
+        start, end = (bottom, top) if instance_type in (STAGNANT_SHADOW, CAVERN) else (top, bottom)
+        if not drag_list(auto, start, end, crop=INDEX_CATEGORY):
             raise PowerError("无法拖动生存索引分类")
-        if not _click_text(GOLDEN_CALYX, INDEX_CATEGORY):
-            raise PowerError("未找到生存索引里的拟造花萼（金）")
+        if not _click_text(instance_type, INDEX_CATEGORY):
+            raise PowerError(f"未找到生存索引里的{instance_type}")
     time.sleep(0.5)
 
 
-def find_calyx_entry(lines, name):
-    """选择与副本名同一行的按钮，防止列表边缘的截断行匹配到相邻副本。"""
+def find_instance_entry(lines, name):
+    """只选与副本名称（赤萼为地区）属于同一行的按钮。"""
+    name = _normalize(name)
     names = []
     buttons = []
     for box, (text, _) in lines:
         x, y = np.mean(box, axis=0)
-        if text == name and x < 330:
+        if x < 330 and _normalize(text) == name:
             names.append(y)
         elif text in ("进入", "追踪", "传送") and x > 560:
             buttons.append((y, box, text))
@@ -130,18 +144,20 @@ def find_calyx_entry(lines, name):
     return None
 
 
-def _enter_calyx(name):
+def _enter_instance(instance_type, name):
+    instance_screen, _, _ = INSTANCES[instance_type]
     for _ in range(12):
         before, _, _ = auto.take_screenshot(crop=INDEX_ROWS)
         auto.perform_ocr()
-        if entry := find_calyx_entry(auto.ocr_result, name):
+        if entry := find_instance_entry(auto.ocr_result, name):
             box, label = entry
             if label != "进入":
                 raise PowerError(f"{name} 当前显示「{label}」，无法直接进入")
             if not auto.click_element_with_pos(auto.calculate_text_position(box, False)):
                 raise PowerError(f"无法点击 {name} 的进入按钮")
-            screen.wait_for_screen_change("calyx", max_recursion=0)
-            if not auto.find_element(name, "text", include=True, crop=CALYX_TITLE,
+            screen.wait_for_screen_change(instance_screen, max_recursion=0)
+            title = get_raw_instance_names()[instance_type][name] if instance_type == CRIMSON_CALYX else name
+            if not auto.find_element(title, "text", include=True, crop=INSTANCE_TITLE,
                                      max_retries=6, retry_delay=0.3):
                 raise PowerError(f"未确认进入指定副本 {name}")
             return
@@ -204,8 +220,8 @@ def _supplement(power):
     return power
 
 
-def _select_team(name):
-    team = str(Instance.get_target_team(GOLDEN_CALYX, name)).zfill(2)
+def _select_team(instance_type, name):
+    team = str(Instance.get_target_team(instance_type, name)).zfill(2)
     if not re.fullmatch(r"0[1-9]|1[0-9]", team):
         raise PowerError(f"队伍编号 {team} 格式错误")
     start, end = (1220 / 1920, 60 / 1080), (678 / 1920, 60 / 1080)
@@ -221,10 +237,11 @@ def _select_team(name):
     raise PowerError(f"未找到队伍 {team}")
 
 
-def _start_challenge(name, waves):
+def _start_challenge(instance_type, name, waves):
+    _, cost, limit = INSTANCES[instance_type]
     if not auto.find_element(f"{IMAGES}/quick_refill_off.png", "image", 0.90, crop=QUICK_REFILL):
         raise PowerError("请关闭副本界面的「快捷补充开拓力」")
-    for _ in range(MAX_WAVES):
+    for _ in range(limit):
         selected = _read_waves(WAVE_COUNT, "挑战次数")
         if selected == waves:
             break
@@ -232,15 +249,16 @@ def _start_challenge(name, waves):
         time.sleep(0.22)
     else:
         raise PowerError(f"无法把挑战次数设为 {waves}")
-    if _read_cost(CHALLENGE_COST) != waves * POWER_COST or read_power() < waves * POWER_COST:
+    cost_crop = CAVERN_CHALLENGE_COST if instance_type == CAVERN else CHALLENGE_COST
+    if _read_cost(cost_crop) != waves * cost or read_power() < waves * cost:
         raise PowerError("挑战消耗与已确认的波次或开拓力不符")
     if not _click_text("挑战", CHALLENGE):
-        raise PowerError("未找到拟造花萼的挑战按钮")
+        raise PowerError("未找到副本的挑战按钮")
     if not auto.find_element("开始挑战", "text", crop=START_CHALLENGE, max_retries=18, retry_delay=0.4):
         _check_popup()
         raise PowerError("未进入副本编队页")
     if cfg.instance_team_enable:
-        _select_team(name)
+        _select_team(instance_type, name)
     time.sleep(0.6)
     if not _click_text("开始挑战", START_CHALLENGE):
         raise PowerError("无法开始挑战")
@@ -260,11 +278,11 @@ def _check_popup():
         raise PowerError("检测到阻止挑战的弹窗，请检查游戏画面")
 
 
-def _exit_result():
+def _exit_result(instance_screen):
     if not _click_text("退出关卡", EXIT):
         raise PowerError("未找到退出关卡按钮")
-    if not wait_until(lambda: screen.check_screen("calyx") or screen.check_screen("main"), 25, 0.5):
-        raise PowerError("退出关卡后未回到拟造花萼或主界面")
+    if not wait_until(lambda: any(screen.check_screen(target) for target in (instance_screen, "guide3", "main")), 25, 0.5):
+        raise PowerError("退出关卡后未回到副本、生存索引或主界面")
     time.sleep(0.5)
 
 
@@ -298,7 +316,7 @@ def _observe_battle(glyph, *, allow_team, check_popups):
     return None, None
 
 
-def _wait_battle(*, repeated=False):
+def _wait_battle(*, repeated=False, instance_screen="calyx"):
     with Image.open(f"{IMAGES}/auto_glyph.png") as image:
         glyph = np.asarray(image.convert("L")) > 0
     deadline = time.monotonic() + 600
@@ -339,9 +357,9 @@ def _wait_battle(*, repeated=False):
             return
         left_result = left_result or state != "victory"
         if state == "defeat":
-            _exit_result()
+            _exit_result(instance_screen)
             screen.change_to("main", max_recursion=0)
-            raise PowerError("拟造花萼挑战失败，已退出关卡")
+            raise PowerError("副本挑战失败，已退出关卡")
         if state == "battle":
             saw_battle = True
             if not confirmed_auto:
@@ -373,69 +391,71 @@ def _wait_battle(*, repeated=False):
     raise PowerError("等待战斗结算超时，请检查游戏画面")
 
 
-def _run_calyx(name, planned, batch_limit):
-    _select_category()
+def _run_instance(instance_type, name, planned):
+    instance_screen, cost, limit = INSTANCES[instance_type]
+    batch_limit = cfg.instance_names_challenge_count.get(instance_type, limit)
+    if type(batch_limit) is not int or not 1 <= batch_limit <= limit:
+        log.warning(f"{instance_type} 的连续挑战次数无效，使用 {limit}")
+        batch_limit = limit
+
+    _select_category(instance_type)
     power = _supplement(read_power())
-    remaining = min(planned, power // POWER_COST) if planned is not None else power // POWER_COST
-    log.info(f"{GOLDEN_CALYX} · {name}，开拓力 {power}/300，本次最多挑战 {remaining} 次")
+    remaining = min(planned, power // cost) if planned is not None else power // cost
+    log.info(f"{instance_type} · {name}，开拓力 {power}/300，本次最多挑战 {remaining} 次")
     if not remaining:
         log.info("开拓力不足，返回主界面")
         screen.change_to("main", max_recursion=1)
         return
 
-    _enter_calyx(name)
+    _enter_instance(instance_type, name)
     previous = 0
-    while remaining > 0:  # 每次成功结算后按确认的波次扣减，且初始开拓力限制总次数。
+    while remaining > 0:
         waves = min(remaining, batch_limit)
         repeated = waves == previous
         if repeated:
-            if _read_cost(REPEAT_COST) != waves * POWER_COST or not _click_text("再来一次", REPEAT):
+            if _read_cost(REPEAT_COST) != waves * cost or not _click_text("再来一次", REPEAT):
                 raise PowerError("未确认再来一次的开拓力消耗或按钮")
             log.info(f"再来一次，挑战 {waves} 次")
         else:
             if previous:
-                _exit_result()
-                if screen.current_screen != "calyx":
-                    _select_category()
-                    _enter_calyx(name)
-            _start_challenge(name, waves)
-        _wait_battle(repeated=repeated)
+                _exit_result(instance_screen)
+                if screen.current_screen != instance_screen:
+                    _select_category(instance_type)
+                    _enter_instance(instance_type, name)
+            _start_challenge(instance_type, name, waves)
+        _wait_battle(repeated=repeated, instance_screen=instance_screen)
 
         completed = _read_waves(RESULT_COUNT, "上轮挑战波次")
         available = read_power()
-        expected = power - waves * POWER_COST
+        expected = power - waves * cost
         if completed != waves or not expected <= available <= expected + 2:
             raise PowerError("结算波次或开拓力变化与预期不符，停止重试")
         power = available
-        remaining = min(remaining - completed, power // POWER_COST)
+        remaining = min(remaining - completed, power // cost)
         previous = waves
         log.info(f"本轮已结算 {completed} 次挑战，剩余开拓力 {power}/300")
         yield completed
 
-    _exit_result()
+    _exit_result(instance_screen)
     screen.change_to("main", max_recursion=1)
-    log.info("开拓力不足，已返回主界面" if power < POWER_COST else "已达到本次挑战次数，返回主界面")
+    log.info("开拓力不足，已返回主界面" if power < cost else "已达到本次挑战次数，返回主界面")
 
 
 def _run():
-    names = get_raw_instance_names()[GOLDEN_CALYX]
-    batch_limit = cfg.instance_names_challenge_count.get(GOLDEN_CALYX, MAX_WAVES)
-    if type(batch_limit) is not int or not 1 <= batch_limit <= MAX_WAVES:
-        log.warning(f"{GOLDEN_CALYX} 的连续挑战次数无效，使用 {MAX_WAVES}")
-        batch_limit = MAX_WAVES
-
+    names = get_raw_instance_names()
     plan = cfg.power_plan
     if not plan:
-        if cfg.instance_type != GOLDEN_CALYX:
-            log.warning(f"触屏清体力暂不支持 {cfg.instance_type}")
+        instance_type = cfg.instance_type
+        if instance_type not in INSTANCES:
+            log.warning(f"触屏清体力暂不支持 {instance_type}")
             return False
-        name = cfg.instance_names.get(GOLDEN_CALYX)
+        name = cfg.instance_names.get(instance_type)
         if name == "无":
-            log.info(f"{GOLDEN_CALYX}未开启")
+            log.info(f"{instance_type}未开启")
             return True
-        if name not in names:
-            raise PowerError(f"未配置有效的{GOLDEN_CALYX}副本名称")
-        for _ in _run_calyx(name, None, batch_limit):
+        if name not in names[instance_type]:
+            raise PowerError(f"未配置有效的{instance_type}副本名称")
+        for _ in _run_instance(instance_type, name, None):
             pass
         return True
 
@@ -446,12 +466,13 @@ def _run():
             log.warning(f"体力计划第 {index + 1} 项格式无效，已保留")
             continue
         instance_type, name, count = item
-        if (instance_type != GOLDEN_CALYX or not isinstance(name, str) or name not in names or name == "无"
+        if (not isinstance(instance_type, str) or instance_type not in INSTANCES
+                or not isinstance(name, str) or name not in names[instance_type] or name == "无"
                 or type(count) is not int or count <= 0):
             log.warning(f"体力计划第 {index + 1} 项不受触屏模式支持，已保留")
             continue
         ran = True
-        for completed in _run_calyx(name, count, batch_limit):
+        for completed in _run_instance(instance_type, name, count):
             count -= completed
             if not cfg.power_plan_keep:
                 remaining[index] = [instance_type, name, count] if count else None
