@@ -196,6 +196,10 @@ class AdbGameController(GameControllerBase):
             if self._display_id is not None:
                 return self._display_id
             if environment.device_type == "emulator":
+                if environment.sdk < 34:
+                    raise AdbError("emulator_input_unsupported", tr(
+                        "display 0 的触摸目标校验需要 Android 14 或更高版本，请设置 adb_device_type: physical 使用虚拟屏"
+                    ))
                 if sorted(environment.display_size) != sorted(RESOLUTION):
                     raise AdbError("emulator_resolution", tr(
                         "模拟器 display 0 当前为 {width}×{height}。请在模拟器设置中选择 1280×720 横屏后重试"

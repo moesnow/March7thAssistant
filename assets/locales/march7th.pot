@@ -6944,3 +6944,8 @@ msgstr ""
 #: module/game/__init__.py:19
 msgid "ADB 模式不支持「{task}」，请使用本地或云游戏后端"
 msgstr ""
+
+#: module/game/adb.py:200
+msgid ""
+"display 0 的触摸目标校验需要 Android 14 或更高版本，请设置 adb_device_type: physical 使用虚拟屏"
+msgstr ""

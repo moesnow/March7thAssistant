@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 在服务进程里直接注入触摸和按键，事件带目标 displayId。
@@ -41,7 +42,12 @@ final class InputInjector {
     /** 一块屏上当前按着的触点。 */
     private static final class Touches {
         final List<Pointer> pointers = new ArrayList<>();
+        final Integer targetUid;
         long downTime;
+
+        Touches(Integer targetUid) {
+            this.targetUid = targetUid;
+        }
 
         int indexOf(int id) {
             for (int i = 0; i < pointers.size(); i++) {
@@ -53,15 +59,13 @@ final class InputInjector {
         }
     }
 
-    private final Object inputManager;
-    private final Method injectMethod;
+    private final InputDispatch dispatch;
     private final Method setDisplayIdMethod;
     private final Map<Integer, Touches> displays = new HashMap<>();
     private boolean closed;
 
     InputInjector() throws ReflectiveOperationException {
-        inputManager = findInputManager();
-        injectMethod = inputManager.getClass().getMethod("injectInputEvent", InputEvent.class, int.class);
+        dispatch = new InputDispatch(findInputManager(), InputEvent.class, Build.VERSION.SDK_INT);
         setDisplayIdMethod = InputEvent.class.getMethod("setDisplayId", int.class);
     }
 
@@ -84,10 +88,14 @@ final class InputInjector {
         return Class.forName("android.hardware.input.InputManagerGlobal").getMethod("getInstance").invoke(null);
     }
 
-    private boolean inject(InputEvent event, int displayId) throws CommandException {
+    boolean supportsTargetUid() {
+        return dispatch.supportsTargetUid();
+    }
+
+    private boolean inject(InputEvent event, int displayId, Integer targetUid) throws CommandException {
         try {
             setDisplayIdMethod.invoke(event, displayId);
-            return (Boolean) injectMethod.invoke(inputManager, event, MODE_WAIT_FOR_RESULT);
+            return dispatch.inject(event, MODE_WAIT_FOR_RESULT, targetUid);
         } catch (InvocationTargetException e) {
             Throwable cause = e.getCause();
             if (cause instanceof SecurityException) {
@@ -104,9 +112,11 @@ final class InputInjector {
      * 按下、移动或抬起一个触点。
      *
      * @param action MotionEvent.ACTION_DOWN、ACTION_MOVE 或 ACTION_UP
+     * @param targetUid 按下时指定目标。移动、抬起和取消沿用手势开始时的 UID。
      * @return 事件是否派发到了窗口。移动或抬起失败时取消该屏上的手势。
      */
-    boolean touch(int displayId, int action, int pointerId, float x, float y, int owner) throws CommandException {
+    boolean touch(int displayId, int action, int pointerId, float x, float y, int owner, Integer targetUid)
+            throws CommandException {
         synchronized (this) {
             requireOpen();
             Touches touches = displays.get(displayId);
@@ -118,8 +128,10 @@ final class InputInjector {
                     throw new CommandException(Protocol.E_BAD_REQUEST, "pointer " + pointerId + " is already down");
                 }
                 if (touches == null) {
-                    touches = new Touches();
+                    touches = new Touches(targetUid);
                     displays.put(displayId, touches);
+                } else if (!Objects.equals(touches.targetUid, targetUid)) {
+                    throw new CommandException(Protocol.E_BAD_REQUEST, "the gesture already has a different target UID");
                 }
                 if (touches.pointers.size() >= MAX_POINTERS) {
                     throw new CommandException(Protocol.E_BAD_REQUEST, "too many pointers");
@@ -158,7 +170,7 @@ final class InputInjector {
             try {
                 MotionEvent event = buildEvent(touches, eventAction, index, now);
                 try {
-                    delivered = inject(event, displayId);
+                    delivered = inject(event, displayId, touches.targetUid);
                 } finally {
                     event.recycle();
                 }
@@ -219,9 +231,9 @@ final class InputInjector {
     }
 
     /** 点按：按下，保持 durationMs，抬起。 */
-    boolean tap(int displayId, int pointerId, float x, float y, long durationMs, int owner)
+    boolean tap(int displayId, int pointerId, float x, float y, long durationMs, int owner, Integer targetUid)
             throws CommandException, InterruptedException {
-        touch(displayId, MotionEvent.ACTION_DOWN, pointerId, x, y, owner);
+        touch(displayId, MotionEvent.ACTION_DOWN, pointerId, x, y, owner, targetUid);
         try {
             if (durationMs > 0) {
                 Thread.sleep(durationMs);
@@ -230,15 +242,15 @@ final class InputInjector {
             cancelPointerGesture(displayId, pointerId, owner);
             throw e;
         }
-        return touch(displayId, MotionEvent.ACTION_UP, pointerId, x, y, owner);
+        return touch(displayId, MotionEvent.ACTION_UP, pointerId, x, y, owner, null);
     }
 
     /** 滑动：在起点按下，沿折线匀速移动 durationMs，在终点抬起；两端可以各停留一段时间。 */
-    boolean swipe(int displayId, int pointerId, TouchPath path, long durationMs, long holdStartMs, long holdEndMs, int owner)
-            throws CommandException, InterruptedException {
+    boolean swipe(int displayId, int pointerId, TouchPath path, long durationMs, long holdStartMs, long holdEndMs,
+                  int owner, Integer targetUid) throws CommandException, InterruptedException {
         float[] start = path.at(0);
         float[] end = path.at(1);
-        touch(displayId, MotionEvent.ACTION_DOWN, pointerId, start[0], start[1], owner);
+        touch(displayId, MotionEvent.ACTION_DOWN, pointerId, start[0], start[1], owner, targetUid);
         try {
             if (holdStartMs > 0) {
                 Thread.sleep(holdStartMs);
@@ -250,12 +262,12 @@ final class InputInjector {
                     break;
                 }
                 float[] point = path.at((double) elapsed / durationMs);
-                if (!touch(displayId, MotionEvent.ACTION_MOVE, pointerId, point[0], point[1], owner)) {
+                if (!touch(displayId, MotionEvent.ACTION_MOVE, pointerId, point[0], point[1], owner, null)) {
                     return false;
                 }
                 Thread.sleep(Math.max(1, Math.min(MOVE_INTERVAL_MS, durationMs - elapsed)));
             }
-            if (!touch(displayId, MotionEvent.ACTION_MOVE, pointerId, end[0], end[1], owner)) {
+            if (!touch(displayId, MotionEvent.ACTION_MOVE, pointerId, end[0], end[1], owner, null)) {
                 return false;
             }
             if (holdEndMs > 0) {
@@ -265,7 +277,7 @@ final class InputInjector {
             cancelPointerGesture(displayId, pointerId, owner);
             throw e;
         }
-        return touch(displayId, MotionEvent.ACTION_UP, pointerId, end[0], end[1], owner);
+        return touch(displayId, MotionEvent.ACTION_UP, pointerId, end[0], end[1], owner, null);
     }
 
     private synchronized void cancelPointerGesture(int displayId, int pointerId, int owner) {
@@ -285,7 +297,7 @@ final class InputInjector {
         try {
             MotionEvent cancel = buildEvent(touches, MotionEvent.ACTION_CANCEL, 0, SystemClock.uptimeMillis());
             try {
-                inject(cancel, displayId);
+                inject(cancel, displayId, touches.targetUid);
             } finally {
                 cancel.recycle();
             }
@@ -300,14 +312,14 @@ final class InputInjector {
      * MuMu（Android 12）上，星铁在没有焦点的虚拟屏里不渲染，setFocusedTask 也切不动显示器焦点，只有触摸可以。
      * 这块屏上已经有触点按着时说明焦点已经在这里，直接返回。
      */
-    boolean focus(int displayId, float x, float y) throws CommandException {
+    boolean focus(int displayId, float x, float y, Integer targetUid) throws CommandException {
         synchronized (this) {
             requireOpen();
             Touches touches = displays.get(displayId);
             if (touches != null && !touches.pointers.isEmpty()) {
                 return true;
             }
-            Touches poke = new Touches();
+            Touches poke = new Touches(targetUid);
             Pointer pointer = new Pointer();
             pointer.x = x;
             pointer.y = y;
@@ -316,8 +328,8 @@ final class InputInjector {
             MotionEvent down = buildEvent(poke, MotionEvent.ACTION_DOWN, 0, poke.downTime);
             MotionEvent cancel = buildEvent(poke, MotionEvent.ACTION_CANCEL, 0, SystemClock.uptimeMillis());
             try {
-                boolean delivered = inject(down, displayId);
-                inject(cancel, displayId);
+                boolean delivered = inject(down, displayId, poke.targetUid);
+                inject(cancel, displayId, poke.targetUid);
                 return delivered;
             } finally {
                 down.recycle();
@@ -327,14 +339,14 @@ final class InputInjector {
     }
 
     /** 按一下按键：按下后立即抬起。 */
-    synchronized boolean key(int displayId, int keyCode) throws CommandException {
+    synchronized boolean key(int displayId, int keyCode, Integer targetUid) throws CommandException {
         requireOpen();
         long now = SystemClock.uptimeMillis();
         boolean delivered = true;
         for (int action : new int[] {KeyEvent.ACTION_DOWN, KeyEvent.ACTION_UP}) {
             KeyEvent event = new KeyEvent(now, SystemClock.uptimeMillis(), action, keyCode, 0, 0,
                     KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_KEYBOARD);
-            delivered &= inject(event, displayId);
+            delivered &= inject(event, displayId, targetUid);
         }
         return delivered;
     }

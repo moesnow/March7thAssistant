@@ -5,7 +5,7 @@ public final class Protocol {
     /** 协议版本。出现不兼容改动时加一，握手要求两端完全相等。 */
     public static final int VERSION = 1;
     /** 服务自身的版本，只用于判断设备上的 jar 是否需要重新推送。 */
-    public static final String SERVICE_VERSION = "0.1.0";
+    public static final String SERVICE_VERSION = "0.1.1";
 
     public static final String LOG_TAG = "M7ADevice";
     public static final String DEFAULT_SOCKET_NAME = "m7a-device-service";

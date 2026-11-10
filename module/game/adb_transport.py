@@ -21,12 +21,15 @@ from module.logger import log
 GAME_PACKAGE = "com.miHoYo.hkrpg"
 RESOLUTION = (1280, 720)
 PROTOCOL = 1
-SERVICE_VERSION = "0.1.0"
+SERVICE_VERSION = "0.1.1"
 DEFAULT_JAR = Path("Android/device-service/build/outputs/m7a-device-service.jar")
 _MAIN_CLASS = "org.march7th.deviceservice.Main"
 _REMOTE_DIR = "/data/local/tmp"
 _IDLE_SECONDS = 8
 _SHUTDOWN_TIMEOUT_SECONDS = 9
+_START_TIMEOUT_SECONDS = 10
+_BUSY_TIMEOUT_SECONDS = _IDLE_SECONDS + _SHUTDOWN_TIMEOUT_SECONDS
+_BUSY_RETRY_SECONDS = 0.4
 _NETWORK_SERIAL = re.compile(r"(?:\[[^\]]+\]|[^:\s]+):\d{1,5}")
 _ADB_RESTART = re.compile(r"server version.*(?:doesn.t match|mismatch)|restart(?:ing|ed).*daemon", re.I)
 _ADB_DISCONNECT = re.compile(r"device (?:offline|disconnected|unauthorized|not found)|device .* not found|"
@@ -326,22 +329,12 @@ class AdbService:
 
         self.token = secrets.token_urlsafe(32)
         self.log_path = f"{_REMOTE_DIR}/{name}.log"
-        self.adb.shell(
-            f"CLASSPATH={remote_jar} setsid nohup app_process / {_MAIN_CLASS} "
+        command = (
+            f": > {self.log_path}; CLASSPATH={remote_jar} setsid nohup app_process / {_MAIN_CLASS} "
             f"--token {self.token} --socket {name} --idle-timeout {_IDLE_SECONDS} --no-replace "
             f"> {self.log_path} 2>&1 < /dev/null &"
         )
-        deadline = time.monotonic() + 10
-        while True:
-            output = self.adb.shell(f"cat {self.log_path} 2>/dev/null || true")
-            if ready := re.search(rf"^M7A_DEVICE_SERVICE_READY .* socket={name} pid=([1-9]\d*)$", output, re.M):
-                self.pid = int(ready[1])
-                break
-            if "another instance or its cleanup" in output:
-                raise AdbError("service_busy", tr("设备端服务已被占用或仍在清理，请稍后重试"))
-            if time.monotonic() >= deadline:
-                raise AdbError("service_start", tr("ADB 设备端服务启动超时"))
-            time.sleep(0.15)
+        self.pid = self._launch_process(command, name)
 
         port = self.adb.run("forward", "tcp:0", f"localabstract:{name}")
         if not port.isdigit() or not 0 < int(port) <= 65535:
@@ -353,6 +346,26 @@ class AdbService:
             raise AdbError("protocol_mismatch", tr("ADB 设备端协议版本不匹配"))
         if hello.get("version") != SERVICE_VERSION or "frame_after_ns" not in hello.get("features", ()):
             raise AdbError("service_version", tr("ADB 设备端服务版本不匹配，请检查 JAR"))
+
+    def _launch_process(self, command: str, name: str) -> int:
+        started = time.monotonic()
+        deadline = started + _START_TIMEOUT_SECONDS
+        busy = False
+        while (remaining := deadline - time.monotonic()) > 0:
+            self.adb.shell(command, timeout=min(5, remaining))
+            while (remaining := deadline - time.monotonic()) > 0:
+                output = self.adb.shell(f"cat {self.log_path} 2>/dev/null || true", timeout=min(5, remaining))
+                if ready := re.search(rf"^M7A_DEVICE_SERVICE_READY .* socket={name} pid=([1-9]\d*)$", output, re.M):
+                    return int(ready[1])
+                if "another instance or its cleanup" in output:
+                    busy = True
+                    deadline = started + _BUSY_TIMEOUT_SECONDS
+                    time.sleep(min(_BUSY_RETRY_SECONDS, max(0, deadline - time.monotonic())))
+                    break
+                time.sleep(min(0.15, max(0, deadline - time.monotonic())))
+        if busy:
+            raise AdbError("service_busy", tr("设备端服务已被占用或仍在清理，请稍后重试"))
+        raise AdbError("service_start", tr("ADB 设备端服务启动超时"))
 
     def request(self, cmd, **params):
         return self.client.request(cmd, **params)

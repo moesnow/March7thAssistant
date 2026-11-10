@@ -24,9 +24,10 @@ class FakeS1(socketserver.ThreadingTCPServer):
         super().__init__(("127.0.0.1", 0), Handler)
         self.token = "test-token-for-device-service"
         self.protocol = 1
-        self.version = "0.1.0"
+        self.version = "0.1.1"
         self.display_id = 42
         self.task_visible = True
+        self.target_mismatch = False
         self.top_activity = f"{transport.GAME_PACKAGE}/com.mihoyo.combosdk.ComboSDKActivity"
         self.launch_display_id = None
         self.sequence = 8
@@ -65,6 +66,8 @@ class FakeS1(socketserver.ThreadingTCPServer):
                 "display_id": self.display_id, "visible": self.task_visible, "top_activity": self.top_activity,
             })), b""
         if cmd in ("tap", "swipe", "touch"):
+            if self.target_mismatch:
+                return {"error": {"code": "inject_failed", "message": "target UID mismatch"}}, b""
             return dict(delivered=True, seq=self.sequence + 1, input_ns=500), b""
         if cmd == "frame":
             x, y, width, height = header["crop"]
@@ -107,6 +110,7 @@ class FakeAdb(transport.Adb):
         self.forwarding = False
         self.devices_found = [transport.AdbDevice("usb-serial", "device", "Redmi Note 7")]
         self.display_size = "1080x2340"
+        self.sdk = 29
         self.calls = []
         self.image = None
         self.focus_output = (
@@ -116,6 +120,8 @@ class FakeAdb(transport.Adb):
         self.exit_probes = 0
         self.exit_checks_remaining = 0
         self.start_busy = False
+        self.busy_launches_remaining = 0
+        self.launch_attempts = 0
 
     def devices(self):
         return self.devices_found
@@ -142,7 +148,7 @@ class FakeAdb(transport.Adb):
 
     def shell(self, command, **kwargs):
         if command.startswith("echo "):
-            return "\n".join(("ro.build.version.sdk=29", "ro.build.version.release=10",
+            return "\n".join((f"ro.build.version.sdk={self.sdk}", f"ro.build.version.release={self.sdk - 19}",
                               "ro.product.cpu.abilist=arm64-v8a", "ro.kernel.qemu=", "ro.boot.qemu="))
         if command == "wm size":
             return f"Physical size: {self.display_size}"
@@ -159,8 +165,13 @@ class FakeAdb(transport.Adb):
                 self.exit_checks_remaining -= 1
                 return "128 (m7a-device-service) S 1 128 128"
             return ""
-        if command.startswith("CLASSPATH"):
-            self.start_busy = self.name is not None and self.exit_checks_remaining > 0
+        if command.startswith(": > ") and "CLASSPATH=" in command:
+            self.launch_attempts += 1
+            self.start_busy = self.busy_launches_remaining > 0 or (
+                self.name is not None and self.exit_checks_remaining > 0
+            )
+            if self.busy_launches_remaining > 0:
+                self.busy_launches_remaining -= 1
             self.service.token = re.search(r"--token ([\w-]+)", command)[1]
             self.name = re.search(r"--socket ([\w-]+)", command)[1]
             assert "--no-replace" in command
@@ -168,7 +179,7 @@ class FakeAdb(transport.Adb):
         if command.startswith("cat "):
             if self.start_busy:
                 return "another instance or its cleanup is still running"
-            return f"M7A_DEVICE_SERVICE_READY protocol=1 version=0.1.0 socket={self.name} pid=128"
+            return f"M7A_DEVICE_SERVICE_READY protocol=1 version={self.service.version} socket={self.name} pid=128"
         raise AssertionError(command)
 
 
@@ -220,7 +231,7 @@ def test_authentication_and_protocol(s1):
 
 def test_version_mismatch_repushes_and_reconnects(adb, s1):
     controller, fake = adb
-    s1.hello_versions = ["0.0.9", "0.1.0"]
+    s1.hello_versions = ["0.1.0", "0.1.1"]
     controller.connect()
     assert fake.pushes == 2
     tokens = [request["token"] for request in s1.requests if request["cmd"] == "hello"]
@@ -328,6 +339,7 @@ def test_watchdog_blocks_input_until_recovered_and_stops_on_manual_login(adb, s1
 def test_emulator_network_address_uses_display_zero_and_checks_actual_orientation(adb, s1):
     controller, fake = adb
     controller.cfg.adb_serial = "127.0.0.1:16384"
+    fake.sdk = 34
     fake.display_size = "720x1280"
     environment = controller.connect()
     assert environment.device_type == "emulator"
@@ -352,8 +364,9 @@ def test_emulator_network_address_uses_display_zero_and_checks_actual_orientatio
 
 
 def test_emulator_rejects_wrong_size_before_launch(adb, s1):
-    controller, _ = adb
+    controller, fake = adb
     controller.cfg.adb_device_type = "emulator"
+    fake.sdk = 34
     with pytest.raises(transport.AdbError) as error:
         controller.start_game_process()
     assert error.value.code == "emulator_resolution"
@@ -384,6 +397,7 @@ def test_adb_uses_selected_executable_and_reports_server_restart(monkeypatch, tm
 def test_review_emulator_refuses_touch_without_game_foreground(adb, s1, condition):
     controller, fake = adb
     controller.cfg.adb_device_type = "emulator"
+    fake.sdk = 34
     fake.display_size = "720x1280"
     fake.image = Image.new("RGB", (1280, 720))
     controller.start_game_process()
@@ -413,6 +427,7 @@ def test_review_emulator_refuses_touch_without_game_foreground(adb, s1, conditio
 def test_review_emulator_releases_held_touch_after_backgrounding(adb, s1):
     controller, fake = adb
     controller.cfg.adb_device_type = "emulator"
+    fake.sdk = 34
     fake.display_size = "720x1280"
     fake.image = Image.new("RGB", (1280, 720))
     controller.start_game_process()
@@ -456,3 +471,101 @@ def test_review_adb_close_clears_forward_when_exit_cannot_be_confirmed(adb, s1, 
     assert not fake.forwarding
     assert bool(fake.exit_probes) is acknowledged
     assert warning.called is acknowledged
+
+
+
+@pytest.mark.parametrize("sdk", [32, 33])
+def test_emulator_display_zero_requires_strict_android_dispatch(adb, s1, sdk):
+    controller, fake = adb
+    controller.cfg.adb_device_type = "emulator"
+    fake.display_size = "720x1280"
+    fake.sdk = sdk
+
+    with pytest.raises(transport.AdbError) as raised:
+        controller.start_game_process()
+
+    assert raised.value.code == "emulator_input_unsupported"
+    assert "adb_device_type: physical" in str(raised.value)
+    assert not {"watchdog", "launch", "tap"}.intersection(r["cmd"] for r in s1.requests)
+
+
+def test_older_s1_version_is_rejected_before_launch(adb, s1):
+    controller, fake = adb
+    controller.cfg.adb_device_type = "emulator"
+    fake.sdk = 34
+    fake.display_size = "720x1280"
+    s1.version = "0.1.0"
+
+    with pytest.raises(transport.AdbError) as raised:
+        controller.start_game_process()
+
+    assert raised.value.code == "service_version"
+    assert fake.pushes == 2
+    assert not fake.forwarding
+    assert "launch" not in [r["cmd"] for r in s1.requests]
+
+
+def test_target_mismatch_after_focus_check_does_not_replay_tap(adb, s1, monkeypatch):
+    controller, fake = adb
+    controller.cfg.adb_device_type = "emulator"
+    fake.sdk = 34
+    fake.display_size = "720x1280"
+    fake.image = Image.new("RGB", (1280, 720))
+    controller.start_game_process()
+    assert controller.capture_frame()
+
+    focused_window = fake.focused_window
+
+    def switch_after_read(display_id):
+        window = focused_window(display_id)
+        s1.target_mismatch = True
+        return window
+
+    monkeypatch.setattr(fake, "focused_window", switch_after_read)
+    with pytest.raises(transport.AdbError) as raised:
+        controller.get_input_handler().mouse_click(38, 59)
+
+    assert raised.value.code == "inject_failed"
+    assert sum(r["cmd"] == "tap" for r in s1.requests) == 1
+
+
+def test_fast_reconnect_retries_until_old_service_releases_lock(adb, s1, monkeypatch):
+    controller, fake = adb
+    controller.start_game_process()
+    s1.drop_command = "frame"
+    with pytest.raises(transport.AdbError) as raised:
+        controller.capture_frame()
+    assert raised.value.code == "disconnected"
+    s1.drop_command = "shutdown"
+    controller.close()
+    assert not fake.forwarding
+
+    s1.drop_command = None
+    fake.busy_launches_remaining = 2
+    monkeypatch.setattr(transport, "_BUSY_RETRY_SECONDS", 0.01)
+    controller.start_game_process()
+
+    assert fake.launch_attempts == 4
+    assert fake.forwarding
+    assert controller.capture_frame()
+
+
+def test_busy_retry_is_bounded_and_never_takes_over_active_service(adb, s1, monkeypatch):
+    controller, fake = adb
+    fake.busy_launches_remaining = 100
+    clock = SimpleNamespace(now=0.0)
+
+    def sleep(seconds):
+        clock.now += seconds
+
+    monkeypatch.setattr(transport, "time", SimpleNamespace(monotonic=lambda: clock.now, sleep=sleep))
+
+    with pytest.raises(transport.AdbError) as raised:
+        controller.connect()
+
+    assert raised.value.code == "service_busy"
+    assert clock.now == pytest.approx(transport._BUSY_TIMEOUT_SECONDS)
+    assert 1 < fake.launch_attempts < 100
+    assert fake.pushes == 1
+    assert not fake.forwarding
+    assert s1.requests == []

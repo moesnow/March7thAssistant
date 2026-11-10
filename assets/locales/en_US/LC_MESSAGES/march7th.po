@@ -7372,3 +7372,10 @@ msgstr "ADB Self-Test"
 msgid "ADB 模式不支持「{task}」，请使用本地或云游戏后端"
 msgstr ""
 "ADB mode does not support {task}. Switch to the local or cloud game backend."
+
+#: module/game/adb.py:200
+msgid ""
+"display 0 的触摸目标校验需要 Android 14 或更高版本，请设置 adb_device_type: physical 使用虚拟屏"
+msgstr ""
+"Touch targeting on display 0 requires Android 14 or later. Set "
+"adb_device_type: physical to use a virtual display."

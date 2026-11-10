@@ -7139,3 +7139,10 @@ msgstr "ADB 자체 검사"
 #: module/game/__init__.py:19
 msgid "ADB 模式不支持「{task}」，请使用本地或云游戏后端"
 msgstr "ADB 모드에서는 '{task}' 작업을 실행할 수 없습니다. 로컬 또는 클라우드 게임 백엔드를 사용하세요."
+
+#: module/game/adb.py:200
+msgid ""
+"display 0 的触摸目标校验需要 Android 14 或更高版本，请设置 adb_device_type: physical 使用虚拟屏"
+msgstr ""
+"display 0 터치 대상 확인에는 Android 14 이상이 필요합니다. 가상 디스플레이를 사용하려면 adb_device_type: "
+"physical로 설정하세요."

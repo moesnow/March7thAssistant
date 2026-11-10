@@ -628,6 +628,27 @@ public final class DeviceService implements Watchdog.Host {
         }
     }
 
+    /** 受管理的共享屏必须由 Android 在分发时检查接收窗口的 UID。 */
+    private Integer inputTargetUid(int displayId) throws CommandException {
+        Watchdog dog = watchdog;
+        String targetPackage = dog == null ? null : dog.primaryInputPackage(displayId);
+        if (targetPackage == null) {
+            return null;
+        }
+        if (!injector.supportsTargetUid()) {
+            throw new CommandException(Protocol.E_UNSUPPORTED, "display 0 requires strict target UID injection");
+        }
+        try {
+            int uid = SystemApis.packageUidForCurrentUser(targetPackage);
+            if (uid >= 0) {
+                return uid;
+            }
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            throw new CommandException(Protocol.E_INJECT_FAILED, "cannot resolve target UID: " + Logger.describe(e));
+        }
+        throw new CommandException(Protocol.E_INJECT_FAILED, "no UID for " + targetPackage + " in the current user");
+    }
+
     private static int pointerId(JSONObject request) {
         return request.has("pointer_id")
                 ? JsonIntegers.id(request.opt("pointer_id"), "pointer_id", InputInjector.MAX_POINTERS - 1) : 0;
@@ -653,7 +674,7 @@ public final class DeviceService implements Watchdog.Host {
         int pointer = pointerId(request);
         checkInjectable(request, displayId);
         long downSeq = sequencer.latest();
-        boolean delivered = injector.tap(displayId, pointer, x, y, duration, session.id);
+        boolean delivered = injector.tap(displayId, pointer, x, y, duration, session.id, inputTargetUid(displayId));
         JSONObject out = inputResult(request, displayId, delivered);
         out.put("down_seq", downSeq);
         return out;
@@ -678,7 +699,8 @@ public final class DeviceService implements Watchdog.Host {
         int pointer = pointerId(request);
         checkInjectable(request, displayId);
         long downSeq = sequencer.latest();
-        boolean delivered = injector.swipe(displayId, pointer, new TouchPath(xs, ys), duration, holdStart, holdEnd, session.id);
+        boolean delivered = injector.swipe(displayId, pointer, new TouchPath(xs, ys), duration, holdStart, holdEnd,
+                session.id, inputTargetUid(displayId));
         JSONObject out = inputResult(request, displayId, delivered);
         out.put("down_seq", downSeq);
         return out;
@@ -689,10 +711,12 @@ public final class DeviceService implements Watchdog.Host {
         String action = request.optString("action", "");
         int pointer = pointerId(request);
         int code;
+        Integer targetUid = null;
         switch (action) {
             case "down":
                 code = MotionEvent.ACTION_DOWN;
                 checkInjectable(request, displayId);
+                targetUid = inputTargetUid(displayId);
                 break;
             case "move":
                 code = MotionEvent.ACTION_MOVE;
@@ -713,7 +737,7 @@ public final class DeviceService implements Watchdog.Host {
             x = (float) request.getDouble("x");
             y = (float) request.getDouble("y");
         }
-        boolean delivered = injector.touch(displayId, code, pointer, x, y, session.id);
+        boolean delivered = injector.touch(displayId, code, pointer, x, y, session.id, targetUid);
         return inputResult(request, displayId, delivered);
     }
 
@@ -749,7 +773,7 @@ public final class DeviceService implements Watchdog.Host {
             throw new CommandException(Protocol.E_BAD_REQUEST, "keycode must be BACK, ENTER, ESCAPE or DEL");
         }
         checkInjectable(request, displayId);
-        boolean delivered = injector.key(displayId, code);
+        boolean delivered = injector.key(displayId, code, inputTargetUid(displayId));
         JSONObject out = inputResult(request, displayId, delivered);
         out.put("keycode", code);
         return out;
@@ -760,7 +784,7 @@ public final class DeviceService implements Watchdog.Host {
         float x = (float) request.optDouble("x", 1);
         float y = (float) request.optDouble("y", 1);
         checkInjectable(request, displayId);
-        boolean delivered = injector.focus(displayId, x, y);
+        boolean delivered = injector.focus(displayId, x, y, inputTargetUid(displayId));
         return inputResult(request, displayId, delivered);
     }
 
@@ -868,7 +892,7 @@ public final class DeviceService implements Watchdog.Host {
 
     @Override
     public boolean focusDisplay(int displayId) throws CommandException {
-        return injector.focus(displayId, 1, 1);
+        return injector.focus(displayId, 1, 1, inputTargetUid(displayId));
     }
 
     @Override
