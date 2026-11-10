@@ -624,7 +624,8 @@ class OCR:
 
         return prefer_engine, use_dml, resolve_mode_for_engine(prefer_engine, use_dml_flag=use_dml)
 
-    def instance_ocr(self, log_level: str = "error", force_cpu: bool = False, force_onnx: bool = False):
+    def instance_ocr(self, log_level: str = "error", force_cpu: bool = False, force_onnx: bool = False,
+                     *, runtime_params=None):
         """实例化OCR，若ocr实例未创建，则创建之"""
         if self.ocr is None:
             try:
@@ -677,6 +678,8 @@ class OCR:
                     "Cls.engine_type": prefer_engine,
                     "Rec.engine_type": prefer_engine,
                 }
+                if runtime_params:
+                    params.update(runtime_params)
 
                 # 891
                 machine = platform.machine().lower()

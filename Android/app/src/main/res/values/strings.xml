@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">三月七助手</string>
+    <string name="daily">每日实训</string>
+    <string name="rewards">领取奖励</string>
+    <string name="power">清体力</string>
+    <string name="start_daily">启动每日实训</string>
+    <string name="stop">停止</string>
+    <string name="export_log">导出日志</string>
+    <string name="use_root">使用 Root</string>
+    <string name="check_root">检查 Root</string>
+    <string name="panel_off">进入游戏后关闭实体面板</string>
+    <string name="permission_line">%1$s · %2$s</string>
+    <string name="permission_missing">未安装</string>
+    <string name="permission_inactive">未运行</string>
+    <string name="permission_denied">未授权</string>
+    <string name="permission_ready">已就绪</string>
+    <string name="get_shizuku">获取 Shizuku</string>
+    <string name="open_shizuku">打开 Shizuku</string>
+    <string name="authorize">授权</string>
+    <string name="shizuku_usb">Android 10 每次重启后用电脑启动一次 Shizuku，启动后可以断开数据线。</string>
+    <string name="shizuku_wireless">Android 11 及以上可在 Shizuku 里配对无线调试并启动服务。</string>
+    <string name="notification_channel">任务进度</string>
+    <string name="phase_idle">等待启动</string>
+    <string name="phase_preparing">正在准备运行环境</string>
+    <string name="phase_waiting">等待游戏进入虚拟屏</string>
+    <string name="phase_running">正在执行任务</string>
+    <string name="phase_stopping">正在停止</string>
+    <string name="phase_cleaning">正在释放虚拟屏</string>
+    <string name="phase_succeeded">任务已完成</string>
+    <string name="phase_stopped">已停止</string>
+    <string name="phase_failed">任务失败</string>
+    <string name="display_line">%1$s · 显示屏 %2$d</string>
+    <string name="error">任务失败（%1$s），详情见日志。</string>
+    <string name="game_missing">请先安装国服《崩坏：星穹铁道》。</string>
+    <string name="manual_login">请在实体屏完成游戏登录后重试。</string>
+    <string name="unlock">请解锁设备后重试。</string>
+    <string name="interrupted">上次运行意外中止。</string>
+    <string name="log_saved">已导出日志</string>
+    <string name="log_error">导出日志失败</string>
+</resources>

@@ -1,0 +1,89 @@
+plugins {
+    id 'com.android.application' version '9.4.0'
+    id 'com.chaquo.python' version '17.2.0'
+}
+
+def abi = providers.gradleProperty('m7a.abi').getOrElse('arm64-v8a')
+if (!(abi in ['arm64-v8a', 'x86_64'])) {
+    throw new GradleException('m7a.abi 必须是 arm64-v8a 或 x86_64')
+}
+def hostPython = providers.gradleProperty('m7a.hostPython')
+def wheelhouse = providers.gradleProperty('m7a.wheelhouse').getOrElse('build/wheelhouse')
+def repo = rootProject.file('..')
+layout.buildDirectory.set(layout.projectDirectory.dir("build/$abi"))
+def generatedAssets = layout.buildDirectory.dir('generated/project-assets')
+
+android {
+    namespace = 'org.march7th.assistant'
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 2
+        }
+    }
+    buildToolsVersion = providers.gradleProperty('m7a.buildTools').get()
+
+    defaultConfig {
+        applicationId = 'org.march7th.assistant'
+        minSdk = providers.gradleProperty('m7a.minApi').get().toInteger()
+        targetSdk = 37
+        versionCode = 1
+        versionName = repo.toPath().resolve('assets/config/version.txt').toFile().text.trim()
+        ndk {
+            abiFilters abi
+        }
+    }
+    buildFeatures {
+        aidl = true
+        buildConfig = true
+    }
+    sourceSets.main.assets.srcDir(generatedAssets.get().asFile)
+}
+
+chaquopy {
+    defaultConfig {
+        version = '3.14'
+        if (hostPython.isPresent()) {
+            buildPython(hostPython.get())
+        }
+        extractPackages('cv2', 'rapidocr')
+        pip {
+            options('--find-links', file(wheelhouse).absolutePath, '--only-binary=:all:')
+            install('-r', 'requirements.txt')
+        }
+    }
+}
+
+dependencies {
+    implementation project(':device-service')
+    implementation 'dev.rikka.shizuku:api:13.1.5'
+    implementation 'dev.rikka.shizuku:provider:13.1.5'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
+}
+
+def stage = tasks.register('stageProjectAssets', Zip) {
+    archiveFileName = 'project.zip'
+    destinationDirectory = generatedAssets
+    reproducibleFileOrder = true
+    preserveFileTimestamps = false
+    from(repo) {
+        include 'LICENSE', 'README.md'
+        include 'module/config/__init__.py', 'module/config/config.py', 'module/config/platform.py'
+        include 'module/game/__init__.py', 'module/game/adb*.py', 'module/game/base.py'
+        include 'module/automation/*.py'
+        exclude 'module/automation/cdp_input.py', 'module/automation/launcher_automation.py', 'module/automation/local_input.py'
+        include 'module/localization/*.py', 'module/logger/*.py', 'module/notification/*.py'
+        include 'module/ocr/*.py', 'module/screen/*.py'
+        include 'utils/color.py', 'utils/console.py', 'utils/dpi.py', 'utils/image_utils.py'
+        include 'utils/pause.py', 'utils/singleton.py', 'utils/logger/*.py', 'utils/game_options.py', 'utils/wait.py'
+        include 'tasks/base/base.py', 'tasks/base/list_drag.py', 'tasks/base/team.py'
+        include 'tasks/daily/__init__.py', 'tasks/daily/tasks.py', 'tasks/touch/*.py'
+        include 'tasks/power/instance.py', 'tasks/power/character.py', 'tasks/power/relicset.py'
+        include 'assets/config/config.example.yaml', 'assets/config/version.txt'
+        include 'assets/config/ocr_replacements.json', 'assets/config/task_mappings.json'
+        include 'assets/config/instance_names.json', 'assets/config/character_names.json'
+        include 'assets/locales/**/march7th.mo', 'assets/touch_720/**'
+    }
+}
+tasks.named('preBuild') {
+    dependsOn stage
+}

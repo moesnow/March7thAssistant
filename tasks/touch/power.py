@@ -15,8 +15,8 @@ from module.logger import log
 from module.ocr import ocr
 from module.screen import screen
 from tasks.base.list_drag import changed_ratio, drag_list
-from tasks.game import wait_until
 from tasks.power.instance import Instance
+from utils.wait import wait_until
 
 
 GOLDEN_CALYX = "拟造花萼（金）"

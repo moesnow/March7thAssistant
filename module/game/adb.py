@@ -1,5 +1,5 @@
 
-"""桌面 ADB 控制器。输入、取帧和看门狗共享同一次设备会话。"""
+"""Android 控制器。输入、取帧和看门狗共享同一次设备会话。"""
 from collections import deque
 from dataclasses import dataclass
 from io import BytesIO
@@ -90,6 +90,27 @@ class AdbGameController(GameControllerBase):
         with self._lock:
             return tuple(self._events)
 
+    def _validated_tap_ms(self):
+        if get_ui_profile(self.cfg).name != "touch_720":
+            raise AdbError("ui_profile", tr("ADB 后端需要设置 ui_profile: touch_720"))
+        tap_ms = self.cfg.adb_tap_ms
+        if tap_ms is not None and (type(tap_ms) is not int or not 1 <= tap_ms <= 10000):
+            raise AdbError("tap_duration", tr("adb_tap_ms 必须是 1 到 10000 毫秒之间的整数"))
+        return tap_ms
+
+    def _attach(self, environment, service, tap_ms):
+        self._service = service
+        self._environment = environment
+        self._tap_ms = tap_ms if tap_ms is not None else service.client.hello.get("default_tap_ms", 50)
+        return environment
+
+    def attach_virtual_session(self, environment: AdbEnvironment, service):
+        """接管 APK 进程已鉴权的虚拟屏传输，不运行 adb 命令。"""
+        with self._lock:
+            if self._service is not None or self._failure or environment.device_type != "physical":
+                raise RuntimeError("无法接管 Android 虚拟屏会话")
+            return self._attach(environment, service, self._validated_tap_ms())
+
     def connect(self, *, adb_path=None) -> AdbEnvironment:
         """启动并鉴权服务。当前运行断线后先 close，再显式发起下一次连接。"""
         with self._lock:
@@ -97,20 +118,13 @@ class AdbGameController(GameControllerBase):
                 raise self._failure
             if self._service is not None:
                 return self._environment
-            if get_ui_profile(self.cfg).name != "touch_720":
-                raise AdbError("ui_profile", tr("ADB 后端需要设置 ui_profile: touch_720"))
-            tap_ms = self.cfg.adb_tap_ms
-            if tap_ms is not None and (type(tap_ms) is not int or not 1 <= tap_ms <= 10000):
-                raise AdbError("tap_duration", tr("adb_tap_ms 必须是 1 到 10000 毫秒之间的整数"))
+            tap_ms = self._validated_tap_ms()
             adb = Adb(adb_path if adb_path is not None else resolve_adb_path(self.cfg.adb_path))
             environment = _probe_environment(adb, self.cfg)
             service = AdbService(adb)
             jar = Path(self.cfg.adb_service_jar or DEFAULT_JAR).expanduser().resolve()
             service.start(jar)
-            self._service = service
-            self._environment = environment
-            self._tap_ms = tap_ms if tap_ms is not None else service.client.hello.get("default_tap_ms", 50)
-            return environment
+            return self._attach(environment, service, tap_ms)
 
     def _call(self, cmd, **params):
         if self._failure:
@@ -239,7 +253,7 @@ class AdbGameController(GameControllerBase):
             if self._service is None:
                 return False
             try:
-                return bool(self._service.adb.shell(f"pidof {GAME_PACKAGE} || true"))
+                return self._service.is_game_running()
             except AdbError as error:
                 self._failure = error
                 raise

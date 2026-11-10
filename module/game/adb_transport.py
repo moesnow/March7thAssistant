@@ -57,7 +57,7 @@ class AdbDevice:
 
 @dataclass(frozen=True)
 class AdbEnvironment:
-    adb_path: Path
+    adb_path: Path | None
     device: AdbDevice
     sdk: int
     android_version: str
@@ -288,6 +288,13 @@ class ServiceClient:
         return header, payload
 
 
+def check_service_hello(hello):
+    if hello.get("protocol") != PROTOCOL:
+        raise AdbError("protocol_mismatch", tr("ADB 设备端协议版本不匹配"))
+    if hello.get("version") != SERVICE_VERSION or "frame_after_ns" not in hello.get("features", ()):
+        raise AdbError("service_version", tr("ADB 设备端服务版本不匹配，请检查 JAR"))
+
+
 class AdbService:
     """一份 JAR、一个设备和一个仅本次运行持有的端口转发。"""
 
@@ -343,11 +350,7 @@ class AdbService:
             raise AdbError("forward_failed", tr("ADB 端口转发未返回有效端口"))
         self.port = int(port)
         self.client = ServiceClient(self.port, self.token)
-        hello = self.client.hello
-        if hello.get("protocol") != PROTOCOL:
-            raise AdbError("protocol_mismatch", tr("ADB 设备端协议版本不匹配"))
-        if hello.get("version") != SERVICE_VERSION or "frame_after_ns" not in hello.get("features", ()):
-            raise AdbError("service_version", tr("ADB 设备端服务版本不匹配，请检查 JAR"))
+        check_service_hello(self.client.hello)
 
     def _launch_process(self, command: str, name: str) -> int:
         started = time.monotonic()
@@ -371,6 +374,9 @@ class AdbService:
 
     def request(self, cmd, **params):
         return self.client.request(cmd, **params)
+
+    def is_game_running(self):
+        return bool(self.adb.shell(f"pidof {GAME_PACKAGE} || true"))
 
     def _wait_for_exit(self, pid: int):
         deadline = time.monotonic() + _SHUTDOWN_TIMEOUT_SECONDS

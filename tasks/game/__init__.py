@@ -30,20 +30,11 @@ from utils.console import is_gui_started
 from utils.pause import pause_ctl
 from utils.runs import describe_run, idle_without_run_lock
 from utils.temporary_graphics import begin_temporary_graphics, restore_temporary_graphics
+from utils.wait import wait_until
 
 
 class GameClientOutdatedError(RuntimeError):
     """游戏客户端版本过低（供 except 类型判断，勿用文本匹配异常消息）。"""
-
-
-def wait_until(condition, timeout, period=1):
-    """等待直到条件满足或超时"""
-    end_time = time.monotonic() + timeout
-    while time.monotonic() < end_time:
-        if condition():
-            return True
-        time.sleep(period)
-    return False
 
 
 def start(headless=None, *, optimize_graphics=True):

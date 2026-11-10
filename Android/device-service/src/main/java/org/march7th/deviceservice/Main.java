@@ -210,7 +210,7 @@ public final class Main {
     /**
      * 实例锁阻止多个主进程并发工作。主进程退出后，还要等持有善后锁的子进程完成在途写入和恢复。
      */
-    private static boolean acquireInstanceLock(boolean replace) throws IOException, InterruptedException {
+    static boolean acquireInstanceLock(boolean replace) throws IOException, InterruptedException {
         RandomAccessFile handle = new RandomAccessFile(LOCK_FILE, "rw");
         boolean retained = false;
         try {
