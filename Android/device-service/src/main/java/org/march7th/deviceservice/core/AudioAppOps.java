@@ -13,13 +13,21 @@ public final class AudioAppOps {
     private AudioAppOps() {
     }
 
+    /**
+     * 当前模式。没有单独设置过的包按系统默认返回 allow。
+     * 返回 default 表示有一条显式的 default 记录：音频服务只放行 allow，这种状态下应用没有声音。
+     */
     static String mode(String packageName) throws IOException, InterruptedException {
         Shell.Result result = Shell.run(COMMAND_TIMEOUT_MS, "cmd", "appops", "get", packageName, OP);
         if (!result.ok()) {
             throw new IOException("appops get failed: " + result);
         }
-        Matcher matcher = MODE.matcher(result.stdout);
-        return matcher.find() ? matcher.group(1) : "default";
+        return parseMode(result.stdout);
+    }
+
+    static String parseMode(String output) {
+        Matcher matcher = MODE.matcher(output);
+        return matcher.find() ? matcher.group(1) : "allow";
     }
 
     /** 善后子进程等写入实际完成，随后才处理下一条命令或 EOF 恢复。 */

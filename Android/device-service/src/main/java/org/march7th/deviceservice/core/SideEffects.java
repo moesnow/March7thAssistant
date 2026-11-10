@@ -133,6 +133,10 @@ final class SideEffects {
                         // 本来就是静音，不归我们恢复
                         return original;
                     }
+                    if ("default".equals(original)) {
+                        // 旧版本恢复时留下的记录，实际效果是静音，结束后恢复为 allow
+                        original = "allow";
+                    }
                 }
                 registerCleanup("mute " + packageName + " " + original);
                 muted.put(packageName, original);
@@ -161,7 +165,16 @@ final class SideEffects {
             if (original != null) {
                 restoreAudio(packageName);
             }
-            return original == null ? AudioAppOps.mode(packageName) : original;
+            if (original != null) {
+                return original;
+            }
+            String current = AudioAppOps.mode(packageName);
+            if ("default".equals(current)) {
+                // 不静音时也顺带修复旧版本留下的记录
+                AudioAppOps.setModeAndWait(packageName, "allow");
+                return "allow";
+            }
+            return current;
         } catch (IOException e) {
             throw new CommandException(Protocol.E_UNSUPPORTED, e.getMessage());
         }
