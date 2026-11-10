@@ -6907,3 +6907,231 @@ msgstr "현재 게임을 종료한 뒤 1280×720 터치 모드를 시작하세�
 #: tasks/game/__init__.py:118
 msgid "未能进入触屏主界面，请检查游戏登录状态"
 msgstr "터치 모드 메인 화면에 들어가지 못했습니다. 게임 로그인 상태를 확인하세요."
+
+#: module/game/adb_transport.py:44
+msgid "ADB 设备或设备端服务已断开，请重新连接后再运行"
+msgstr "ADB 기기 또는 기기 서비스 연결이 끊겼습니다. 다시 연결한 뒤 실행하세요."
+
+#: module/game/adb_transport.py:88
+msgid "未找到 adb，请配置 adb_path 或把 Android Platform-Tools 加入 PATH"
+msgstr "adb를 찾을 수 없습니다. adb_path를 설정하거나 Android Platform-Tools를 PATH에 추가하세요."
+
+#: module/game/adb_transport.py:168
+msgid "未找到指定的 ADB 设备，请检查连接和 adb_serial"
+msgstr "지정한 ADB 기기를 찾을 수 없습니다. 연결과 adb_serial을 확인하세요."
+
+#: module/game/adb_transport.py:181
+msgid "ADB 后端需要 Android 10 或更高版本"
+msgstr "ADB 백엔드를 사용하려면 Android 10 이상이 필요합니다."
+
+#: module/game/adb_transport.py:186
+msgid "adb_device_type 必须为 auto、physical 或 emulator"
+msgstr "adb_device_type을 auto, physical, emulator 중 하나로 설정하세요."
+
+#: module/game/adb_transport.py:197
+msgid "无法读取 Android display 0 的分辨率"
+msgstr "Android display 0의 해상도를 읽을 수 없습니다."
+
+#: module/game/adb_transport.py:165
+msgid "检测到多个 ADB 设备，请设置 adb_serial"
+msgstr "ADB 기기가 여러 대 감지되었습니다. adb_serial을 설정하세요."
+
+#: module/game/adb_transport.py:334
+msgid "ADB 端口转发未返回有效端口"
+msgstr "ADB 포트 포워딩에서 유효한 포트 번호를 받지 못했습니다."
+
+#: module/game/adb_transport.py:339
+msgid "ADB 设备端协议版本不匹配"
+msgstr "ADB 기기 서비스의 프로토콜 버전이 일치하지 않습니다."
+
+#: module/game/adb_transport.py:341
+msgid "ADB 设备端服务版本不匹配，请检查 JAR"
+msgstr "ADB 기기 서비스 버전이 일치하지 않습니다. JAR을 확인하세요."
+
+#: module/game/adb_transport.py:70
+msgid "配置的 adb_path 不存在：{path}"
+msgstr "설정한 adb_path가 없습니다: {path}"
+
+#: module/game/adb_transport.py:170
+msgid "ADB 设备 {serial} 的状态为 {state}，请检查连接并在设备上授权 USB 调试"
+msgstr "ADB 기기 {serial}의 상태는 {state}입니다. 연결을 확인하고 기기에서 USB 디버깅을 허용하세요."
+
+#: module/game/adb_transport.py:263
+msgid "ADB 设备端服务返回了无效的响应"
+msgstr "ADB 기기 서비스가 잘못된 응답을 반환했습니다."
+
+#: module/game/adb_transport.py:327
+msgid "设备端服务已被占用或仍在清理，请稍后重试"
+msgstr "기기 서비스가 사용 중이거나 정리 중입니다. 잠시 후 다시 시도하세요."
+
+#: module/game/adb_transport.py:329
+msgid "ADB 设备端服务启动超时"
+msgstr "ADB 기기 서비스 시작 시간이 초과되었습니다."
+
+#: module/game/adb_transport.py:115
+msgid "ADB 服务端被其他版本重启。请关闭模拟器自带的 adb，并固定使用 {path}"
+msgstr "다른 ADB 버전이 서버를 재시작했습니다. 에뮬레이터에 포함된 adb를 종료하고 {path}만 사용하세요."
+
+#: module/game/adb_transport.py:124
+msgid "ADB 命令失败：{command}（退出码 {code}）"
+msgstr "ADB 명령 실패: {command} (종료 코드 {code})"
+
+#: module/game/adb_transport.py:268
+msgid "ADB 设备端服务错误 {code}：{message}"
+msgstr "ADB 기기 서비스 오류 {code}: {message}"
+
+#: module/game/adb_transport.py:108
+msgid "ADB 命令超时：{command}"
+msgstr "ADB 명령 시간이 초과되었습니다: {command}"
+
+#: module/game/adb_transport.py:110
+msgid "无法执行 adb：{path}"
+msgstr "adb를 실행할 수 없습니다: {path}"
+
+#: module/game/adb_transport.py:288
+msgid "无法读取设备端 JAR：{path}。请先构建 Android/device-service 或配置 adb_service_jar"
+msgstr ""
+"기기 서비스 JAR을 읽을 수 없습니다: {path}. Android/device-service를 빌드하거나 "
+"adb_service_jar를 설정하세요."
+
+#: module/game/adb.py:118
+msgid "ADB 会话尚未启动，请先启动游戏"
+msgstr "ADB 세션이 시작되지 않았습니다. 먼저 게임을 실행하세요."
+
+#: module/game/adb.py:363
+msgid "ADB 设备端服务返回了无效的帧"
+msgstr "ADB 기기 서비스가 잘못된 프레임을 반환했습니다."
+
+#: module/game/adb.py:368
+msgid "ADB 设备端服务返回了输入前的帧"
+msgstr "ADB 기기 서비스가 입력 이전의 프레임을 반환했습니다."
+
+#: module/game/adb.py:100
+msgid "ADB 后端需要设置 ui_profile: touch_720"
+msgstr "ADB 백엔드를 사용하려면 ui_profile: touch_720을 설정하세요."
+
+#: module/game/adb.py:103
+msgid "adb_tap_ms 必须是 1 到 10000 毫秒之间的整数"
+msgstr "adb_tap_ms는 1에서 10000밀리초 사이의 정수여야 합니다."
+
+#: module/game/adb.py:212
+msgid "Android 设备未安装国服《崩坏：星穹铁道》"
+msgstr "Android 기기에 중국 본토판 《붕괴: 스타레일》이 설치되어 있지 않습니다."
+
+#: module/game/adb.py:328 module/game/adb.py:291
+msgid "ADB 尚未准备游戏画面，请先启动游戏"
+msgstr "ADB 게임 화면이 준비되지 않았습니다. 먼저 게임을 실행하세요."
+
+#: module/game/adb.py:387
+msgid "无法解码模拟器 display 0 的截图"
+msgstr "에뮬레이터 display 0의 스크린샷을 디코딩할 수 없습니다."
+
+#: module/game/adb.py:308
+msgid "Android 拒绝触摸注入，请检查 USB 调试（安全设置）是否开启"
+msgstr "Android에서 터치 입력을 거부했습니다. USB 디버깅(보안 설정)이 켜져 있는지 확인하세요."
+
+#: module/game/adb.py:199
+msgid "模拟器 display 0 当前为 {width}×{height}。请在模拟器设置中选择 1280×720 横屏后重试"
+msgstr ""
+"에뮬레이터 display 0의 해상도는 {width}×{height}입니다. 설정에서 1280×720 가로 화면을 선택한 뒤 다시 "
+"시도하세요."
+
+#: module/game/adb.py:150
+msgid "游戏需要手动登录，请在 Android 实体屏或模拟器中完成登录后重试"
+msgstr "Android 기기 또는 에뮬레이터에서 게임에 로그인한 뒤 다시 시도하세요."
+
+#: module/game/adb.py:152
+msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"
+msgstr "Android 게임이 종료되었습니다. 기기에서 게임의 백그라운드 설정을 확인한 뒤 다시 시도하세요."
+
+#: module/game/adb.py:148
+msgid "游戏未能回到目标 Android 屏幕，请结束游戏后重试"
+msgstr "게임을 대상 Android 디스플레이로 되돌리지 못했습니다. 게임을 종료한 뒤 다시 시도하세요."
+
+#: module/automation/adb_input.py:46
+msgid "ADB 设备端服务不支持文本输入，请在设备上手动输入"
+msgstr "ADB 기기 서비스는 텍스트 입력을 지원하지 않습니다. 기기에서 직접 입력하세요."
+
+#: tasks/game/adb_check.py:61
+msgid "ADB 启动超时，请检查 Android 游戏的登录和横屏状态"
+msgstr "ADB 시작 시간이 초과되었습니다. Android 게임의 로그인 상태와 화면 방향을 확인하세요."
+
+#: tasks/game/adb_check.py:89
+msgid "ADB 自检未能在输入后的画面中确认手机菜单"
+msgstr "ADB 자체 검사에서 터치 후 휴대폰 메뉴를 확인하지 못했습니다."
+
+#: tasks/game/adb_check.py:81
+msgid "未能点开 Android 手机菜单，请检查游戏是否处于主界面"
+msgstr "게임 내 휴대폰 메뉴를 열 수 없습니다. 메인 화면이 표시되는지 확인하세요."
+
+#: tasks/game/adb_check.py:95
+msgid "ADB 路径：{path}"
+msgstr "ADB 경로: {path}"
+
+#: tasks/game/adb_check.py:108
+msgid "使用模拟器 display 0（1280×720 横屏）"
+msgstr "에뮬레이터 display 0 사용 중 (1280×720 가로 화면)"
+
+#: tasks/game/adb_check.py:121
+msgid "ADB 自检未取得游戏画面"
+msgstr "ADB 자체 검사에서 프레임을 가져오지 못했습니다."
+
+#: tasks/game/adb_check.py:129
+msgid "模拟器使用 display 0，无需回迁"
+msgstr "에뮬레이터에서 display 0을 사용하므로 게임 화면을 이동할 필요가 없습니다."
+
+#: tasks/game/adb_check.py:29
+msgid "无法读取 ADB 启动所需的触屏素材：{path}"
+msgstr "ADB 시작에 필요한 터치 화면 템플릿을 읽을 수 없습니다: {path}"
+
+#: tasks/game/adb_check.py:100
+msgid "ADB 设备：{serial} · {model} · Android {version}（API {sdk}）"
+msgstr "ADB 기기: {serial} · {model} · Android {version} (API {sdk})"
+
+#: tasks/game/adb_check.py:105
+msgid "ADB 设备端服务版本：{version}"
+msgstr "ADB 기기 서비스 버전: {version}"
+
+#: tasks/game/adb_check.py:115
+msgid "已在 display {display} 启动游戏，等待进入主界面"
+msgstr "display {display}에서 게임을 시작했습니다. 메인 화면을 기다리는 중입니다."
+
+#: tasks/game/adb_check.py:117
+msgid "游戏界面就绪，用时 {seconds:.1f} 秒"
+msgstr "게임 화면이 준비되었습니다 ({seconds:.1f}초)."
+
+#: tasks/game/adb_check.py:122
+msgid "取帧速率：{fps:.1f} FPS（{frames} 次取样 / {seconds:.1f} 秒，{updates} 次更新）"
+msgstr "캡처 속도: {fps:.1f} FPS ({seconds:.1f}초 동안 {frames}회 캡처, {updates}회 갱신)"
+
+#: tasks/game/adb_check.py:131
+msgid "本次启动未发生回迁"
+msgstr "이번 실행에서는 게임 화면 이동이 없었습니다."
+
+#: tasks/game/adb_check.py:141
+msgid "已确认手机菜单，截图：{path}"
+msgstr "휴대폰 메뉴를 확인했습니다. 스크린샷: {path}"
+
+#: tasks/game/adb_check.py:110
+msgid "已创建 1280×720 虚拟屏，display {display}"
+msgstr "1280×720 가상 디스플레이를 만들었습니다 (display {display})."
+
+#: tasks/game/adb_check.py:127
+msgid "已确认自动回迁 {count} 次"
+msgstr "대상 디스플레이로 자동 복귀한 것을 {count}회 확인했습니다."
+
+#: main.py:600
+msgid "请在 Android 设备上更新游戏"
+msgstr "Android 기기에서 게임을 업데이트하세요."
+
+#: main.py:614
+msgid "ADB 自检需要设置 control_backend: adb"
+msgstr "ADB 자체 검사를 실행하려면 control_backend: adb를 설정하세요."
+
+#: module/automation/automation.py:237
+msgid "ADB 截图超时，未取得可用的游戏画面"
+msgstr "사용할 수 있는 게임 화면을 가져오기 전에 ADB 캡처 시간이 초과되었습니다."
+
+#: utils/tasks.py:46
+msgid "ADB 自检"
+msgstr "ADB 자체 검사"

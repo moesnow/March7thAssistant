@@ -64,6 +64,13 @@ update_game_timeout: 12 # 更新游戏超时时间（时）。
 ui_profile: pc_1080 # UI 形态：pc_1080、touch_720。本地触屏开发需先在工具箱完成触屏模式的风险确认。
 control_backend: null # 设备后端：local、cloud、adb。留空时沿用 cloud_game_enable（含环境变量覆盖），显式设置优先。桌面分身固定使用 local。
 
+# 桌面 ADB 后端仅支持 touch_720。路径留空时自动查找。
+adb_path: null # adb 可执行文件。查找顺序为此项、PATH、常见模拟器目录。
+adb_serial: null # 设备序列号或 IP:端口。只有一台设备时可留空。
+adb_device_type: auto # auto、physical（虚拟屏）、emulator（display 0）。
+adb_service_jar: null # 默认 Android/device-service/build/outputs/m7a-device-service.jar。
+adb_tap_ms: 50 # 单次触摸点按的毫秒数。
+
 # 云崩铁配置
 cloud_game_enable: False # 是否启动云游戏
 cloud_game_fullscreen_enable: True # 云崩铁是否全屏运行

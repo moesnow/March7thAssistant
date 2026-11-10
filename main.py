@@ -11,7 +11,7 @@ from utils.console import ensure_utf8_output
 ensure_utf8_output()
 
 from utils.dpi import configure_dpi_awareness
-from utils.tasks import AVAILABLE_TASKS
+from utils.tasks import AVAILABLE_TASKS, CLI_ONLY_TASKS
 
 
 configure_dpi_awareness()
@@ -39,7 +39,7 @@ def parse_args():
     positional.add_argument(
         'task',
         nargs='?',
-        choices=list(AVAILABLE_TASKS.keys()),
+        choices=[*AVAILABLE_TASKS, *CLI_ONLY_TASKS],
         metavar='TASK',
         help='要执行的任务名称（可选，不指定则执行完整运行）'
     )
@@ -150,17 +150,18 @@ def parse_args():
 
     # 处理 --list 参数
     if args.list:
-        from module.localization import load_language
+        from module.localization import load_language, tr
         from utils.tasks import task_display_names
 
         load_language()
+        names = task_display_names() | {task_id: tr(name) for task_id, name in CLI_ONLY_TASKS.items()}
         if args.json:
             import json
-            print(json.dumps([{"id": task_id, "name": name} for task_id, name in task_display_names().items()], ensure_ascii=True))
+            print(json.dumps([{"id": task_id, "name": name} for task_id, name in names.items()], ensure_ascii=True))
             sys.exit(0)
         print("\n可用的任务列表:")
         print("-" * 40)
-        for task_id, task_name in task_display_names().items():
+        for task_id, task_name in names.items():
             print(f"  {task_id:<20} {task_name}")
         print("-" * 40)
         print("\n使用示例:")
@@ -249,10 +250,13 @@ import atexit
 import base64
 import time
 
+# ADB 自检通过设备端服务执行，无需 Windows 管理员权限。
+adb_check_only = args.task == "adb_check" and not args.workflow_name
+
 if sys.platform == 'win32':
     from utils.admin import is_user_admin
     # 带 --run-id 的是入口转交出来的管理员进程：即使没拿到管理员权限也不能再转交一次，否则会不断重复启动自己
-    if not is_user_admin() and not args.run_id:
+    if not adb_check_only and not is_user_admin() and not args.run_id:
         # 未提权（终端、脚本或 AI Agent 通过 m7a.exe 调用，或源码运行）：把任务交给管理员进程执行，
         # 同时在当前终端跟随输出，结束后返回任务的真实退出码
         from utils.cli_entry import run_task_elevated
@@ -300,7 +304,7 @@ if desktop_twin_context:
     run_session.record["windows_session_id"] = desktop_twin_context.session.session_id
     run_session.record["windows_session_logon_time"] = desktop_twin_context.session.logon_time
 
-if sys.platform == 'win32' and not is_user_admin():
+if sys.platform == 'win32' and not adb_check_only and not is_user_admin():
     # 入口转交的管理员进程却没有管理员权限（例如免 UAC 运行的计划任务被改成了不以最高权限运行）：
     # 不执行任务，把原因写进运行记录，入口会照常转告调用方
     _message = "没有获得管理员权限，任务未运行。如果开启了免 UAC 运行，请在图形界面「设置 → 杂项」中关闭后重新开启"
@@ -318,7 +322,7 @@ from module.notification import notif
 from module.telemetry import telemetry
 from module.notification.notification import NotificationLevel
 
-from module.localization import load_language
+from module.localization import load_language, tr
 
 # 初始化界面语言（CLI 界面输出与后续 tr() 使用；日志按约定固定中文原文）
 load_language()
@@ -327,7 +331,9 @@ from module.workflow import WorkflowRunner, load_workflow_execution_payload, des
 from utils.screenshot_util import save_error_screenshot
 
 import tasks.game as game
-from module.game import AdbBackendUnavailableError, cloud_game
+from module.game import cloud_game
+from module.game.adb_transport import AdbError
+from tasks.game import adb_check
 from module.game.cloud import CloudGameZeroDurationError
 import tasks.reward as reward
 import tasks.challenge as challenge
@@ -361,7 +367,7 @@ telemetry.init(
 telemetry.track_feature("run_invoker", run_session.record["invoker"])
 
 # 安装登记：供 AI Agent / 脚本查找本机的小助手安装位置
-if not is_docker_started():
+if not adb_check_only and not is_docker_started():
     try:
         from utils.install_registry import register_install
         register_install(cfg.version)
@@ -369,7 +375,7 @@ if not is_docker_started():
         pass
 
 # 会操控游戏或替换程序文件的任务：同一时间只允许一个在运行
-EXCLUSIVE_ACTIONS = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update"}
+EXCLUSIVE_ACTIONS = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update", "adb_check"}
 
 
 def _force_stop():
@@ -576,18 +582,22 @@ def run_workflow_action(workflow_name: str, workflow_step_path=None):
 
 def main(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
     # 包括正常返回、SystemExit、Ctrl+C、协作停止和异常，且先于外层错误暂停执行。
-    recover_temporary_graphics(log)
+    adb = get_control_backend(cfg) == "adb"
+    if not adb:
+        recover_temporary_graphics(log)
     try:
         return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
     finally:
-        restore_temporary_graphics(final=True)
+        if adb:
+            game.get_game_controller("adb").close()
+        else:
+            restore_temporary_graphics(final=True)
 
 
 def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
-    if get_control_backend(cfg) == "adb" and (
-        workflow_name or (action or "main") in EXCLUSIVE_ACTIONS - {"app_update"}
-    ):
-        game.get_game_controller()
+    backend = get_control_backend(cfg)
+    if backend == "adb" and action in {"game_update", "game_pre_download"}:
+        raise AdbError("update_unsupported", tr("请在 Android 设备上更新游戏"))
     first_run()
     # 启动暂停控制器（仅在 GUI 注入了 MARCH7TH_CONTROL_FILE 时生效，其余场景惰性关闭）
     pause_ctl.start()
@@ -598,6 +608,11 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
 
     if (action or "main") in EXCLUSIVE_ACTIONS:
         ensure_exclusive_run()
+
+    if action == "adb_check":
+        if backend != "adb":
+            raise AdbError("backend_required", tr("ADB 自检需要设置 control_backend: adb"))
+        return adb_check.run(game.get_game_controller("adb"))
 
     # 完整运行
     if action is None or action == "main":
@@ -699,7 +714,7 @@ if __name__ == "__main__":
             run_session.note(status=STATUS_STOPPED)
             log.warning("任务已按停止指令结束")
             sys.exit(EXIT_STOPPED)
-        except (AdbBackendUnavailableError, ProfileAssetNotFoundError, TouchProfileInputError) as e:
+        except (AdbError, ProfileAssetNotFoundError, TouchProfileInputError) as e:
             release_input()
             run_session.note(error=str(e))
             log.error(str(e))

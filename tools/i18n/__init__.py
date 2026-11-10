@@ -240,7 +240,7 @@ TABLE_SOURCES = [
     ("module/workflow/__init__.py", (("STEP_TYPE_LABELS", None), ("CONDITION_TYPE_LABELS", None))),
     ("module/update/version_check.py", (("_CDK_ERROR_MESSAGES", None),)),
     # 任务名与主页卡片文案：常量里存的是中文原文（msgid），显示时才 tr()
-    ("utils/tasks.py", (("AVAILABLE_TASKS", None),)),
+    ("utils/tasks.py", (("AVAILABLE_TASKS", None), ("CLI_ONLY_TASKS", None))),
     ("app/card/card_edit_dialog.py", (
         ("HOME_EXTRA_TASKS", None),
         ("DEFAULT_CARDS", ("title", "label", "menu_items")),

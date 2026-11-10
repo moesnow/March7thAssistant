@@ -9,6 +9,7 @@ from utils.singleton import SingletonMeta
 from utils.logger.logger import Logger
 from typing import Optional
 from module.automation import auto
+from module.game.adb_transport import AdbError
 from module.automation.background_input import GameWindowLost, InputInterrupted
 from module.config import cfg
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
@@ -313,7 +314,7 @@ class Screen(metaclass=SingletonMeta):
                 for p in image_path:
                     try:
                         r = auto.find_element(p, find_type, threshold, **kwargs)
-                    except (InputInterrupted, GameWindowLost, ProfileAssetNotFoundError):
+                    except (AdbError, InputInterrupted, GameWindowLost, ProfileAssetNotFoundError):
                         raise
                     except Exception as e:
                         self.logger.debug(f"查找图片 {p} 出错: {e}")
@@ -327,7 +328,7 @@ class Screen(metaclass=SingletonMeta):
                 return best
             else:
                 return auto.find_element(image_path, find_type, threshold, **kwargs)
-        except (InputInterrupted, GameWindowLost, ProfileAssetNotFoundError):
+        except (AdbError, InputInterrupted, GameWindowLost, ProfileAssetNotFoundError):
             # 窗口不可用或素材缺失应向上报告，不能当作未匹配反复重试。
             raise
         except Exception as e:
@@ -387,7 +388,7 @@ class Screen(metaclass=SingletonMeta):
                     },
                 )
                 self.logger.debug("执行了一个操作")
-            except (InputInterrupted, TouchProfileInputError, ProfileAssetNotFoundError):
+            except (AdbError, InputInterrupted, TouchProfileInputError, ProfileAssetNotFoundError):
                 # 用户需处理的输入中断、触屏不支持的操作和缺少素材都直接报告。
                 raise
             except Exception as e:

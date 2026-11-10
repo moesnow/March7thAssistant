@@ -100,17 +100,20 @@ def test_explicit_cloud_start_skips_local_resolution(startup, monkeypatch):
     controller.check_resolution.assert_not_called()
 
 
-def test_adb_start_fails_before_retrying_or_touching_other_backends(startup, monkeypatch):
-    from module.game import AdbBackendUnavailableError
-
+def test_adb_start_uses_adb_bootstrap(startup, monkeypatch):
     game, _, cfg = startup
     cfg.control_backend = "adb"
     cloud = Mock()
+    adb = Mock()
+    wait_for_game = Mock()
     monkeypatch.setattr(game, "cloud_game", cloud)
+    monkeypatch.setattr(game, "get_game_controller", Mock(return_value=adb))
+    monkeypatch.setattr(game, "wait_for_adb_game", wait_for_game)
 
-    with pytest.raises(AdbBackendUnavailableError, match="ADB"):
-        game.start_game()
+    game.start_game()
 
+    adb.start_game_process.assert_called_once_with()
+    wait_for_game.assert_called_once_with(adb, 60)
     game.StarRailController.assert_not_called()
     cloud.start_game_process.assert_not_called()
     game.wait_until.assert_not_called()
@@ -153,6 +156,7 @@ def test_main_finally_restores_before_outer_error_handling(failure):
     restore, recover = Mock(), Mock()
     namespace = {"_run_action": action, "restore_temporary_graphics": restore,
                  "recover_temporary_graphics": recover, "log": Mock()}
+    namespace.update(cfg=None, get_control_backend=lambda cfg: "local")
     exec(compile(ast.Module(body=[node], type_ignores=[]), "main.py", "exec"), namespace)
     with pytest.raises(type(failure)):
         namespace["main"](action="daily")
@@ -166,6 +170,7 @@ def test_main_normal_return_restores():
     restore = Mock()
     namespace = {"_run_action": Mock(return_value=True), "restore_temporary_graphics": restore,
                  "recover_temporary_graphics": Mock(), "log": Mock()}
+    namespace.update(cfg=None, get_control_backend=lambda cfg: "local")
     exec(compile(ast.Module(body=[node], type_ignores=[]), "main.py", "exec"), namespace)
     assert namespace["main"](action="daily") is True
     restore.assert_called_once_with(final=True)

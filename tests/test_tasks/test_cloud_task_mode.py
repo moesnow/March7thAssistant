@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend
-from module.game import AdbBackendUnavailableError
+from module.game.adb_transport import AdbError
 from utils.pause import RunStopRequested
 from utils.runs import EXIT_FAILED, EXIT_OK, exit_code_of
 from utils.tasks import PAUSABLE_TASKS
@@ -26,7 +26,7 @@ def runner():
                       and node.test.left.id == "__name__")
     names = ("game", "cfg", "cloud_game", "telemetry", "time", "Daily", "reward",
              "Power", "CurrencyWars", "DivergentUniverse", "Fight", "Universe",
-             "screen_test", "character_export", "challenge", "Redemption",
+             "screen_test", "character_export", "challenge", "Redemption", "adb_check",
              "first_run", "pause_ctl", "ensure_exclusive_run", "version",
              "recover_temporary_graphics", "restore_temporary_graphics", "log")
     scope = {name: MagicMock() for name in names}
@@ -37,7 +37,7 @@ def runner():
     scope["cfg"].notify_merge = False
     scope["CloudGameZeroDurationError"] = type("CloudGameZeroDurationError", (Exception,), {})
     scope.update(get_control_backend=get_control_backend,
-                 AdbBackendUnavailableError=AdbBackendUnavailableError,
+                 AdbError=AdbError,
                  ProfileAssetNotFoundError=ProfileAssetNotFoundError,
                  TouchProfileInputError=TouchProfileInputError)
     scope["time"] = SimpleNamespace(time=lambda: 0)
@@ -175,11 +175,11 @@ def test_browser_start_failure_never_runs_task(runner):
 
 def test_adb_cli_returns_failure_without_screenshot_or_pause(runner):
     runner.cfg.control_backend = "adb"
-    runner.game.get_game_controller.side_effect = AdbBackendUnavailableError()
+    runner.adb_check.run.side_effect = AdbError("disconnected", "ADB 设备断开")
     scope = runner.main.__globals__
     scope.update(
         __name__="__main__", sys=sys, atexit=MagicMock(), exit_handler=MagicMock(),
-        args=SimpleNamespace(task="main", workflow_name=None, no_run_immediately=True),
+        args=SimpleNamespace(task="adb_check", workflow_name=None, no_run_immediately=False),
         run_session=MagicMock(), RunStopRequested=RunStopRequested,
         EXIT_FAILED=EXIT_FAILED, EXIT_OK=EXIT_OK, exit_code_of=exit_code_of,
         release_input=MagicMock(), save_error_screenshot=MagicMock(), pause_on_error=MagicMock(),
@@ -189,7 +189,8 @@ def test_adb_cli_returns_failure_without_screenshot_or_pause(runner):
         exec(runner.entrypoint, scope)
 
     assert raised.value.code == EXIT_FAILED
-    scope["run_session"].note.assert_called_once_with(error=str(runner.game.get_game_controller.side_effect))
+    scope["run_session"].note.assert_called_once_with(error=str(runner.adb_check.run.side_effect))
+    runner.game.get_game_controller.return_value.close.assert_called_once_with()
     scope["run_session"].finish.assert_called_once_with(EXIT_FAILED)
     runner.game.start.assert_not_called()
     runner.version.start.assert_not_called()
