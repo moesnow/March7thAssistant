@@ -70,6 +70,26 @@ def test_battle_waits_for_comparable_frame_without_replaying_input(monkeypatch):
     tap.assert_not_called()
 
 
+def test_battle_retries_start_only_after_team_page_persists(monkeypatch):
+    now = 0.0
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    poll = Mock(side_effect=[("team", None)] * 10 + [("battle", True), ("victory", None)])
+    click = Mock(return_value=True)
+    monkeypatch.setattr(power, "_observe_battle", poll)
+    monkeypatch.setattr(power, "_click_text", click)
+    monkeypatch.setattr(power.time, "monotonic", lambda: now)
+    monkeypatch.setattr(power.time, "sleep", sleep)
+
+    power._wait_battle()
+
+    click.assert_called_once_with("开始挑战", power.START_CHALLENGE)
+    assert poll.call_args.kwargs["allow_team"] is False
+
+
 def test_support_gift_requires_box_and_ribbon():
     with Image.open(f"{rewards.IMAGE_ROOT}/gift_shape.png") as image:
         glyph = np.asarray(image)

@@ -241,6 +241,7 @@ def _start_challenge(name, waves):
         raise PowerError("未进入副本编队页")
     if cfg.instance_team_enable:
         _select_team(name)
+    time.sleep(0.6)
     if not _click_text("开始挑战", START_CHALLENGE):
         raise PowerError("无法开始挑战")
 
@@ -281,7 +282,7 @@ def classify_auto_button(pixels, glyph):
     return None
 
 
-def _observe_battle(glyph, *, repeated, check_popups):
+def _observe_battle(glyph, *, allow_team, check_popups):
     if auto.find_element(f"{IMAGES}/victory.png", "image", 0.88, crop=RESULT_TITLE):
         return "victory", None
     if check_popups:
@@ -292,7 +293,7 @@ def _observe_battle(glyph, *, repeated, check_popups):
         # 裁剪范围内原生 720p 图标的相对位置。
         pixels = np.asarray(auto.screenshot.convert("RGB"))[7:32, 18:59]
         return "battle", classify_auto_button(pixels, glyph)
-    if repeated and auto.find_element("开始挑战", "text", crop=START_CHALLENGE):
+    if allow_team and auto.find_element("开始挑战", "text", crop=START_CHALLENGE):
         return "team", None
     return None, None
 
@@ -307,13 +308,15 @@ def _wait_battle(*, repeated=False):
     confirmed_auto = False
     auto_clicks = 0
     off_frames = 0
+    team_retries = 0
+    next_team_click = time.monotonic() + 3
     next_auto_click = 0.0
     next_popup_check = 0.0
     clock_error_since = None
     while time.monotonic() < deadline:
         check_popups = time.monotonic() >= next_popup_check
         try:
-            state, status = _observe_battle(glyph, repeated=repeated, check_popups=check_popups)
+            state, status = _observe_battle(glyph, allow_team=not saw_battle, check_popups=check_popups)
         except AdbError as error:
             if error.code != "frame_clock_unavailable":
                 raise
@@ -356,10 +359,14 @@ def _wait_battle(*, repeated=False):
                     log.info("已点按触屏自动战斗按钮")
         else:
             off_frames = 0
-            if state == "team":
+            if state == "team" and time.monotonic() >= next_team_click:
+                if team_retries >= 2:
+                    raise PowerError("多次点按开始挑战后仍停在编队页")
                 if not _click_text("开始挑战", START_CHALLENGE):
-                    raise PowerError("再来一次后无法开始挑战")
-                repeated = False
+                    raise PowerError("编队页开始挑战按钮无法点击")
+                log.info("确认仍在编队页，点按开始挑战")
+                team_retries += 1
+                next_team_click = time.monotonic() + 3
         if not saw_battle and time.monotonic() >= start_deadline:
             raise PowerError("等待进入战斗超时，请检查游戏画面")
         time.sleep(0.45)
