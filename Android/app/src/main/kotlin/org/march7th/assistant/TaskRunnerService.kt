@@ -89,6 +89,7 @@ class TaskRunnerService : Service() {
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_task)
             .setContentTitle(tr(when (state.task) {
+                TaskId.ROUTINE -> R.string.routine
                 TaskId.DAILY -> R.string.daily
                 TaskId.REWARDS -> R.string.rewards
                 TaskId.POWER -> R.string.power

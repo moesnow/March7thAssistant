@@ -1,5 +1,5 @@
 """Chaquopy 入口。游戏任务、界面图、OCR 和 Android 控制器都来自仓库。"""
-from functools import lru_cache
+from functools import lru_cache, partial
 from hashlib import file_digest
 import logging
 import os
@@ -113,6 +113,7 @@ def run(workdir, token, sdk, version, model, is_emulator, task, config, language
     try:
         if bridge.isCancelled():
             raise RunStopRequested()
+        supports = [[str(key), ""] for key in config.supportKeys()]
         settings = {
             "control_backend": "adb",
             "ui_profile": "touch_720",
@@ -122,19 +123,29 @@ def run(workdir, token, sdk, version, model, is_emulator, task, config, language
             "reward_dispatch_enable": config.getDispatch(),
             "reward_mail_enable": config.getMail(),
             "reward_assist_enable": config.getAssist(),
+            "reward_message_enable": config.getMessage(),
+            "daily_enable": True,
+            "daily_material_enable": config.getSynthesis(),
+            "power_enable": True,
+            "instance_team_enable": False,
+            # 没选支援角色时不进支援列表，也不为支援实训多查一次任务卡。
+            "borrow_enable": bool(supports),
+            "borrow_character_enable": config.getBorrowAlways(),
+            "borrow_friends": supports,
         }
-        if task == "POWER":
+        if task in ("POWER", "ROUTINE"):
             settings.update(
-                power_plan=[["拟造花萼（金）", config.getCalyx().getInstanceName(), config.getWaves()]],
-                use_reserved_trailblaze_power=False,
-                use_fuel=False,
+                power_plan=[[config.getInstanceType().getTypeName(), config.getInstanceName(), config.getWaves()]],
+                use_reserved_trailblaze_power=config.getReserve(),
+                use_fuel=config.getFuel(),
             )
         cfg.set_values(settings)
         load_language(language)
 
         from module.game import get_game_controller
         from module.game.adb_ready import wait_for_game
-        from module.game.adb_transport import AdbDevice, AdbEnvironment, ServiceClient, check_service_hello
+        from module.game.adb_transport import (
+            GAME_PACKAGE, AdbDevice, AdbEnvironment, AdbError, ServiceClient, check_service_hello)
         from module.ocr import ocr
         from tasks.touch import daily, power, rewards
 
@@ -155,6 +166,16 @@ def run(workdir, token, sdk, version, model, is_emulator, task, config, language
         display_id = controller.prepare_display()
         bridge.displayReady(display_id)
         log.info(f"已创建 1280×720 虚拟屏，display {display_id}")
+        # 关闭时也发一次，让设备端修复旧版本留下的静音记录。静音失败不影响任务。
+        mute = config.getMuteGame()
+        try:
+            result, _ = session.request("mute", package=GAME_PACKAGE, on=mute)
+            if mute:
+                log.info("已静音游戏，任务结束后恢复")
+            elif result["original_mode"] == "ignore":
+                log.warning("系统设置里游戏的声音已被关闭，小助手不会改动它")
+        except AdbError as error:
+            log.warning(f"未能设置游戏静音：{error}")
         started = time.monotonic()
         controller.start_game_process()
         wait_for_game(controller, min(cfg.start_game_timeout * 60, 180))
@@ -164,7 +185,12 @@ def run(workdir, token, sdk, version, model, is_emulator, task, config, language
             result, _ = session.request("screen_power", on=False)
             bridge.panelChanged(result["panel_off"])
             log.info("已关闭实体面板，保持系统唤醒")
-        action = {"DAILY": daily.run, "REWARDS": rewards.run, "POWER": power.run}[task]
+        action = {
+            "DAILY": partial(daily.run, complete_training=True),
+            "REWARDS": partial(rewards.run, complete_training=True),
+            "POWER": power.run,
+            "ROUTINE": rewards.routine,
+        }[task]
         if action(on_summary=bridge.reportSummary):
             return "stopped" if bridge.isCancelled() else "success"
         return "stopped" if bridge.isCancelled() else "task_failed"

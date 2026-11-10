@@ -209,6 +209,16 @@ def test_rewards_reports_completion_with_the_daily_result(monkeypatch):
     summary.assert_called_once_with(tr("奖励检查完成，{daily_summary}").format(daily_summary=daily_summary))
 
 
+def test_routine_joins_the_power_and_reward_summaries(monkeypatch):
+    monkeypatch.setattr(rewards, "cfg", SimpleNamespace(power_enable=True, daily_enable=False))
+    monkeypatch.setattr(power, "run", lambda *, borrow_for_daily, on_summary: on_summary("power") or True)
+    monkeypatch.setattr(rewards, "run", lambda *, complete_training, on_summary: on_summary("rewards") or True)
+    monkeypatch.setattr(rewards.screen, "change_to", Mock())
+    summary = Mock()
+    assert rewards.routine(on_summary=summary)
+    summary.assert_called_once_with(tr("；").join(("power", "rewards")))
+
+
 def test_mail_and_assist_without_alert_do_not_click(monkeypatch):
     auto = Mock()
     screen = Mock()

@@ -4,17 +4,21 @@
     <string name="app_name">三月七小助手</string>
 
     <!-- 任务 -->
+    <string name="routine">日常</string>
     <string name="daily">每日实训</string>
     <string name="rewards">领取奖励</string>
     <string name="power">清体力</string>
+    <string name="task_routine_summary">先清体力，再领取奖励，最后完成并领取每日实训</string>
     <string name="task_daily_summary">查看活跃度，领取已达成的实训奖励</string>
-    <string name="task_rewards_summary">委托、邮件、支援奖励，最后做一遍每日实训</string>
-    <string name="task_power_summary">用开拓力刷拟造花萼（金）</string>
+    <string name="task_rewards_summary">委托、邮件、支援、短信奖励，最后做一遍每日实训</string>
+    <string name="task_power_summary">用开拓力刷拟造花萼、凝滞虚影或侵蚀隧洞</string>
 
     <!-- 通用操作 -->
     <string name="start_task">开始%1$s</string>
     <string name="stop">停止</string>
     <string name="back">返回</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
     <string name="go_authorize">去完成授权</string>
     <string name="open_guide">查看权限引导</string>
     <string name="open_app_settings">打开应用系统设置</string>
@@ -104,7 +108,10 @@
     <string name="tasks_title">任务</string>
     <string name="tasks_subtitle">选一项，回到首页一键开始</string>
     <string name="tasks_locked">任务运行期间不能更换任务或修改选项。</string>
-    <string name="tasks_scope_note">首个版本先支持这三项，其他任务请使用电脑版。</string>
+    <string name="tasks_scope_note">历战余响、饰品提取、兑换码、模拟宇宙等其他任务请使用电脑版。</string>
+    <string name="tasks_group_power">清体力</string>
+    <string name="tasks_group_rewards">领取奖励</string>
+    <string name="tasks_group_daily">每日实训</string>
     <string name="option_quest">领取实训奖励</string>
     <string name="option_quest_summary">领取任务活跃度和已达成的档位礼盒；关闭后只查看进度</string>
     <string name="option_dispatch">委托奖励</string>
@@ -113,16 +120,33 @@
     <string name="option_mail_summary">邮箱有奖励时全部领取</string>
     <string name="option_assist">支援奖励</string>
     <string name="option_assist_summary">领取漫游签证里的支援角色奖励</string>
-    <string name="option_calyx">副本</string>
-    <string name="calyx_credits">藏珍之蕾</string>
-    <string name="calyx_credits_reward">信用点</string>
-    <string name="calyx_exp">回忆之蕾</string>
-    <string name="calyx_exp_reward">角色经验材料</string>
-    <string name="calyx_materials">以太之蕾</string>
-    <string name="calyx_materials_reward">光锥经验材料</string>
+    <string name="option_message">短信奖励</string>
+    <string name="option_message_summary">回复未读短信并领取奖励，有多个回复时选第一个</string>
+    <string name="option_synthesis">合成材料完成实训</string>
+    <string name="option_synthesis_summary">实训有「万能合成机」任务待完成时，合成 1 个微光原核</string>
+    <string name="option_instance_type">副本类型</string>
+    <string name="option_instance">副本</string>
+    <string name="instance_golden_calyx">拟造花萼（金）</string>
+    <string name="instance_crimson_calyx">拟造花萼（赤）</string>
+    <string name="instance_stagnant_shadow">凝滞虚影</string>
+    <string name="instance_cavern">侵蚀隧洞</string>
+    <string name="instance_cost">每次挑战 %1$d 开拓力</string>
+    <string name="option_instance_summary">%1$s · %2$s</string>
     <string name="option_waves">挑战次数上限</string>
     <string name="option_waves_value">%1$d 次 · %2$d 开拓力</string>
-    <string name="option_power_note">每次挑战消耗 10 开拓力。开拓力不够时提前结束，不使用后备开拓力和燃料。</string>
+    <string name="option_power_note">开拓力不够时提前结束。副本界面的「快捷补充开拓力」需要保持关闭。</string>
+    <string name="option_reserve">使用后备开拓力</string>
+    <string name="option_reserve_summary">开拓力不满时，开始前取出一次后备开拓力</string>
+    <string name="option_fuel">使用燃料</string>
+    <string name="option_fuel_summary">开拓力不满时，开始前用 1 个燃料兑换 60 开拓力。两项都打开时先用后备开拓力，每轮只补充一次</string>
+    <string name="option_supports">支援角色</string>
+    <string name="option_supports_none">未选择，不借用支援角色</string>
+    <string name="option_supports_dialog">选择支援角色</string>
+    <string name="option_supports_count">已选 %1$d/%2$d，按选择的先后在支援列表里查找</string>
+    <string name="option_supports_search">搜索角色</string>
+    <string name="option_supports_separator">、</string>
+    <string name="option_borrow_always">每次挑战都借用</string>
+    <string name="option_borrow_always_summary">关闭时，只在「日常」里实训有支援任务待完成时借用</string>
 
     <!-- 权限引导 -->
     <string name="guide_title">权限引导</string>
@@ -164,7 +188,6 @@
     <string name="guide_happens_flash">每次启动游戏，登录界面都会把游戏带到手机屏幕上闪现几秒，随后自动移回后台。这几秒先别碰屏幕，以免点进游戏里。</string>
     <string name="guide_happens_login">如果游戏停在登录界面等你输入账号，任务会停下来。先在手机上登录好，再重新开始。</string>
     <string name="guide_happens_account">运行期间不要在别的设备登录同一个账号，否则会被挤下线。</string>
-    <string name="guide_happens_sound">虚拟屏不隔离声音，游戏音乐会照常播放，可以先调低媒体音量。</string>
     <string name="guide_stability">让任务跑得稳</string>
     <string name="guide_tip_miui">小米、Redmi 手机（MIUI / HyperOS）：在「开发者选项」里打开「USB 调试（安全设置）」，否则系统会拦截小助手的模拟点击。</string>
     <string name="guide_tip_lock">运行期间保持解锁，不要按电源键。锁屏或息屏后点按到不了游戏，任务会卡住。想关屏省电，请用设置里的「游戏就绪后关闭屏幕」。</string>
@@ -283,6 +306,8 @@
     <string name="settings_permission_summary">%1$s · %2$s</string>
     <string name="panel_off">游戏就绪后关闭屏幕</string>
     <string name="panel_off_summary">只关闭屏幕面板，系统保持唤醒，任务照常运行，结束后自动点亮。不要用电源键息屏。</string>
+    <string name="mute_game">运行时静音游戏</string>
+    <string name="mute_game_summary">只静音游戏，不影响其他应用，任务结束后自动恢复。</string>
     <string name="settings_appearance">外观</string>
     <string name="settings_theme">主题</string>
     <string name="theme_system">跟随系统</string>

@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import org.march7th.assistant.Catalog
 import org.march7th.assistant.LogCategory
 import org.march7th.assistant.LogEntry
 import org.march7th.assistant.Privilege
@@ -78,6 +79,7 @@ internal class Navigator(val openTab: (Tab) -> Unit, val open: (SubPage) -> Unit
 internal fun App(
     state: TaskState,
     logs: List<LogEntry>,
+    catalog: () -> Catalog,
     device: DeviceInfo,
     themeMode: ThemeMode,
     actions: AppActions,
@@ -133,7 +135,7 @@ internal fun App(
                     SubPage.STATUS -> StatusScreen(state, latestTaskLog, navigator)
                     null -> when (currentTab) {
                         Tab.HOME -> HomeScreen(state, latestTaskLog, actions, navigator)
-                        Tab.TASKS -> TasksScreen(state, actions)
+                        Tab.TASKS -> TasksScreen(state, catalog, actions)
                         Tab.LOGS -> LogsScreen(state, logs, actions)
                         Tab.SETTINGS -> SettingsScreen(state, device, themeMode, actions, navigator)
                     }

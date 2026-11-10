@@ -23,12 +23,20 @@
 -keepclassmembers class org.march7th.assistant.TaskConfig {
     public boolean getCollectRewards();
     public boolean getPanelOff();
+    public boolean getMuteGame();
     public boolean getDispatch();
     public boolean getMail();
     public boolean getAssist();
-    public org.march7th.assistant.Calyx getCalyx();
-    public int getWaves();
-}
--keepclassmembers class org.march7th.assistant.Calyx {
+    public boolean getMessage();
+    public boolean getSynthesis();
+    public org.march7th.assistant.InstanceType getInstanceType();
     public java.lang.String getInstanceName();
+    public int getWaves();
+    public boolean getReserve();
+    public boolean getFuel();
+    public java.lang.String[] supportKeys();
+    public boolean getBorrowAlways();
+}
+-keepclassmembers class org.march7th.assistant.InstanceType {
+    public java.lang.String getTypeName();
 }

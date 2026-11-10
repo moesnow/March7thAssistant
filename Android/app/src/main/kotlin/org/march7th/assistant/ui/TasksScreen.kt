@@ -23,25 +23,27 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import org.march7th.assistant.Calyx
+import org.march7th.assistant.Catalog
+import org.march7th.assistant.CatalogItem
+import org.march7th.assistant.InstanceType
 import org.march7th.assistant.R
 import org.march7th.assistant.TaskConfig
+import org.march7th.assistant.TaskController
 import org.march7th.assistant.TaskId
 import org.march7th.assistant.TaskState
 import kotlin.math.roundToInt
 
-/** 拟造花萼（金）每次挑战消耗的开拓力。 */
-private const val POWER_PER_WAVE = 10
-
 @Composable
-internal fun TasksScreen(state: TaskState, actions: AppActions) {
+internal fun TasksScreen(state: TaskState, catalog: () -> Catalog, actions: AppActions) {
     val enabled = !state.busy
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
@@ -52,14 +54,16 @@ internal fun TasksScreen(state: TaskState, actions: AppActions) {
             Notice(tr(R.string.tasks_locked), tone = Tone.WARNING)
         }
         for (task in TaskId.entries) {
-            TaskCard(task, state.task == task, enabled, state.config, actions)
+            TaskCard(task, state.task == task, enabled, state.config, catalog, actions)
         }
         Notice(tr(R.string.tasks_scope_note))
     }
 }
 
 @Composable
-private fun TaskCard(task: TaskId, selected: Boolean, enabled: Boolean, config: TaskConfig, actions: AppActions) {
+private fun TaskCard(
+    task: TaskId, selected: Boolean, enabled: Boolean, config: TaskConfig, catalog: () -> Catalog, actions: AppActions,
+) {
     val scheme = MaterialTheme.colorScheme
     Surface(
         Modifier.fillMaxWidth(),
@@ -89,26 +93,22 @@ private fun TaskCard(task: TaskId, selected: Boolean, enabled: Boolean, config: 
                 Column {
                     HorizontalDivider(color = scheme.outlineVariant)
                     when (task) {
-                        TaskId.DAILY -> QuestRewardSwitch(config, enabled, actions)
-                        TaskId.REWARDS -> {
-                            SwitchRow(
-                                tr(R.string.option_dispatch), config.dispatch,
-                                { actions.updateConfig(config.copy(dispatch = it)) },
-                                summary = tr(R.string.option_dispatch_summary), enabled = enabled,
-                            )
-                            SwitchRow(
-                                tr(R.string.option_mail), config.mail,
-                                { actions.updateConfig(config.copy(mail = it)) },
-                                summary = tr(R.string.option_mail_summary), enabled = enabled,
-                            )
-                            SwitchRow(
-                                tr(R.string.option_assist), config.assist,
-                                { actions.updateConfig(config.copy(assist = it)) },
-                                summary = tr(R.string.option_assist_summary), enabled = enabled,
-                            )
-                            QuestRewardSwitch(config, enabled, actions)
+                        TaskId.ROUTINE -> {
+                            GroupLabel(R.string.tasks_group_power)
+                            PowerOptions(config, enabled, catalog(), actions)
+                            HorizontalDivider(color = scheme.outlineVariant)
+                            GroupLabel(R.string.tasks_group_rewards)
+                            RewardSwitches(config, enabled, actions)
+                            HorizontalDivider(color = scheme.outlineVariant)
+                            GroupLabel(R.string.tasks_group_daily)
+                            DailySwitches(config, enabled, actions)
                         }
-                        TaskId.POWER -> PowerOptions(config, enabled, actions)
+                        TaskId.DAILY -> DailySwitches(config, enabled, actions)
+                        TaskId.REWARDS -> {
+                            RewardSwitches(config, enabled, actions)
+                            DailySwitches(config, enabled, actions)
+                        }
+                        TaskId.POWER -> PowerOptions(config, enabled, catalog(), actions)
                     }
                 }
             }
@@ -117,7 +117,20 @@ private fun TaskCard(task: TaskId, selected: Boolean, enabled: Boolean, config: 
 }
 
 @Composable
-private fun QuestRewardSwitch(config: TaskConfig, enabled: Boolean, actions: AppActions) {
+private fun GroupLabel(title: Int) {
+    Text(
+        tr(title), Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp),
+        style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
+    )
+}
+
+@Composable
+private fun DailySwitches(config: TaskConfig, enabled: Boolean, actions: AppActions) {
+    SwitchRow(
+        tr(R.string.option_synthesis), config.synthesis,
+        { actions.updateConfig(config.copy(synthesis = it)) },
+        summary = tr(R.string.option_synthesis_summary), enabled = enabled,
+    )
     SwitchRow(
         tr(R.string.option_quest), config.collectRewards,
         { actions.updateConfig(config.copy(collectRewards = it)) },
@@ -126,54 +139,143 @@ private fun QuestRewardSwitch(config: TaskConfig, enabled: Boolean, actions: App
 }
 
 @Composable
-private fun PowerOptions(config: TaskConfig, enabled: Boolean, actions: AppActions) {
+private fun RewardSwitches(config: TaskConfig, enabled: Boolean, actions: AppActions) {
+    SwitchRow(
+        tr(R.string.option_dispatch), config.dispatch,
+        { actions.updateConfig(config.copy(dispatch = it)) },
+        summary = tr(R.string.option_dispatch_summary), enabled = enabled,
+    )
+    SwitchRow(
+        tr(R.string.option_mail), config.mail,
+        { actions.updateConfig(config.copy(mail = it)) },
+        summary = tr(R.string.option_mail_summary), enabled = enabled,
+    )
+    SwitchRow(
+        tr(R.string.option_assist), config.assist,
+        { actions.updateConfig(config.copy(assist = it)) },
+        summary = tr(R.string.option_assist_summary), enabled = enabled,
+    )
+    SwitchRow(
+        tr(R.string.option_message), config.message,
+        { actions.updateConfig(config.copy(message = it)) },
+        summary = tr(R.string.option_message_summary), enabled = enabled,
+    )
+}
+
+private enum class Picker { TYPE, INSTANCE, SUPPORTS }
+
+@Composable
+private fun PowerOptions(config: TaskConfig, enabled: Boolean, catalog: Catalog, actions: AppActions) {
     val scheme = MaterialTheme.colorScheme
-    Column(Modifier.padding(top = 12.dp, bottom = 16.dp).alpha(if (enabled) 1f else 0.6f)) {
-        Text(
-            tr(R.string.option_calyx), Modifier.padding(horizontal = 16.dp),
-            style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant,
+    var picker by rememberSaveable { mutableStateOf<Picker?>(null) }
+    val instances = catalog.instances[config.instanceType].orEmpty()
+    val instance = instances.firstOrNull { it.id == config.instanceName }
+    Column {
+        SettingRow(
+            tr(R.string.option_instance_type),
+            summary = tr(config.instanceType.title), enabled = enabled, onClick = { picker = Picker.TYPE },
         )
-        for (calyx in Calyx.entries) {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .selectable(selected = config.calyx == calyx, enabled = enabled, role = Role.RadioButton) {
-                        actions.updateConfig(config.copy(calyx = calyx))
-                    }
-                    .heightIn(min = 56.dp)
-                    .padding(start = 4.dp, end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                RadioButton(config.calyx == calyx, null, Modifier.padding(12.dp), enabled = enabled)
-                Column {
-                    Text(tr(calyx.title), style = MaterialTheme.typography.bodyLarge)
-                    Text(tr(calyx.reward), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
-                }
-            }
-        }
-        Spacer(Modifier.heightIn(min = 8.dp))
+        SettingRow(
+            tr(R.string.option_instance),
+            summary = instance?.detail?.let { tr(R.string.option_instance_summary, instance.title, it) } ?: config.instanceName,
+            enabled = enabled, onClick = { picker = Picker.INSTANCE },
+        )
         // 拖动时只改本地值，松手后再写入配置。
         var dragging by remember(config.waves) { mutableFloatStateOf(config.waves.toFloat()) }
         val waves = dragging.roundToInt()
-        Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.Bottom) {
+        Row(
+            Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp).alpha(if (enabled) 1f else 0.6f),
+            verticalAlignment = Alignment.Bottom,
+        ) {
             Text(
                 tr(R.string.option_waves), Modifier.weight(1f),
                 style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant,
             )
-            Text(tr(R.string.option_waves_value, waves, waves * POWER_PER_WAVE), style = MaterialTheme.typography.titleMedium)
+            Text(
+                tr(R.string.option_waves_value, waves, waves * config.instanceType.cost),
+                style = MaterialTheme.typography.titleMedium,
+            )
         }
         Slider(
             value = dragging,
             onValueChange = { dragging = it },
             modifier = Modifier.padding(horizontal = 16.dp),
             enabled = enabled,
-            valueRange = 1f..24f,
-            steps = 22,
+            valueRange = 1f..TaskController.MAX_WAVES.toFloat(),
+            steps = TaskController.MAX_WAVES - 2,
             onValueChangeFinished = { actions.updateConfig(config.copy(waves = waves)) },
         )
         Text(
-            tr(R.string.option_power_note), Modifier.padding(horizontal = 16.dp),
+            tr(R.string.option_power_note),
+            Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp).alpha(if (enabled) 1f else 0.6f),
             style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant,
         )
+        SwitchRow(
+            tr(R.string.option_reserve), config.reserve,
+            { actions.updateConfig(config.copy(reserve = it)) },
+            summary = tr(R.string.option_reserve_summary), enabled = enabled,
+        )
+        SwitchRow(
+            tr(R.string.option_fuel), config.fuel,
+            { actions.updateConfig(config.copy(fuel = it)) },
+            summary = tr(R.string.option_fuel_summary), enabled = enabled,
+        )
+        val names = catalog.characters.associate { it.id to it.title }
+        SettingRow(
+            tr(R.string.option_supports),
+            summary = if (config.supports.isEmpty()) {
+                tr(R.string.option_supports_none)
+            } else {
+                config.supports.joinToString(tr(R.string.option_supports_separator)) { names[it] ?: it }
+            },
+            enabled = enabled, onClick = { picker = Picker.SUPPORTS },
+        )
+        if (config.supports.isNotEmpty()) {
+            SwitchRow(
+                tr(R.string.option_borrow_always), config.borrowAlways,
+                { actions.updateConfig(config.copy(borrowAlways = it)) },
+                summary = tr(R.string.option_borrow_always_summary), enabled = enabled,
+            )
+        }
+    }
+
+    when (picker.takeIf { enabled }) {
+        Picker.TYPE -> ChoiceDialog(
+            tr(R.string.option_instance_type),
+            InstanceType.entries.map { CatalogItem(it.name, tr(it.title), tr(R.string.instance_cost, it.cost)) },
+            config.instanceType.name,
+            onSelect = { name ->
+                val type = InstanceType.valueOf(name)
+                if (type != config.instanceType) {
+                    // 副本名称按类型区分，换类型时落到该类型的第一个副本。
+                    val first = catalog.instances[type].orEmpty().firstOrNull()?.id ?: config.instanceName
+                    actions.updateConfig(config.copy(instanceType = type, instanceName = first))
+                }
+                picker = null
+            },
+            onDismiss = { picker = null },
+        )
+        Picker.INSTANCE -> ChoiceDialog(
+            tr(config.instanceType.title),
+            instances,
+            config.instanceName,
+            onSelect = {
+                actions.updateConfig(config.copy(instanceName = it))
+                picker = null
+            },
+            onDismiss = { picker = null },
+        )
+        Picker.SUPPORTS -> MultiChoiceDialog(
+            tr(R.string.option_supports_dialog),
+            catalog.characters,
+            config.supports,
+            TaskController.MAX_SUPPORTS,
+            onConfirm = {
+                actions.updateConfig(config.copy(supports = it))
+                picker = null
+            },
+            onDismiss = { picker = null },
+        )
+        null -> {}
     }
 }

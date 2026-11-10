@@ -77,9 +77,9 @@ class MainActivity : ComponentActivity() {
             }
             M7ATheme(dark) {
                 if (demo != null) {
-                    App(demo.state, demo.logs, device, themeMode, actions, demo.tab, demo.page)
+                    App(demo.state, demo.logs, controller::catalog, device, themeMode, actions, demo.tab, demo.page)
                 } else {
-                    App(state, logs, device, themeMode, actions)
+                    App(state, logs, controller::catalog, device, themeMode, actions)
                 }
             }
         }

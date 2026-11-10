@@ -7740,3 +7740,7 @@ msgstr "奖励检查完成，{daily_summary}"
 #: tasks/touch/power.py:534
 msgid "已完成 {count} 次挑战，剩余开拓力 {power}/300"
 msgstr "已完成 {count} 次挑战，剩余开拓力 {power}/300"
+
+#: tasks/touch/rewards.py:251
+msgid "；"
+msgstr "；"

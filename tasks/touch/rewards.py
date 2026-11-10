@@ -233,16 +233,20 @@ def run(*, complete_training=False, on_summary=None):
         return daily.run(complete_training=complete_training, on_summary=report_daily if on_summary is not None else None)
 
 
-def routine():
+def routine(*, on_summary=None):
     from tasks.touch import power
 
+    summaries = []
+    collect_summary = summaries.append if on_summary is not None else None
     if cfg.power_enable:
         support_pending = (cfg.daily_enable and cfg.borrow_enable and not cfg.borrow_character_enable
                            and daily.needs_support())
-        if not power.run(borrow_for_daily=support_pending):
+        if not power.run(borrow_for_daily=support_pending, on_summary=collect_summary):
             return False
-    if not run(complete_training=True):
+    if not run(complete_training=True, on_summary=collect_summary):
         return False
     with screenshot_retry_timeout(5):
         screen.change_to("main", max_recursion=1)
+    if summaries:
+        on_summary(tr("；").join(summaries))
     return True

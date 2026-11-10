@@ -97,7 +97,6 @@ internal fun GuideScreen(state: TaskState, device: DeviceInfo, actions: AppActio
                 TipRow(M7Icons.Phone, tr(R.string.guide_happens_flash))
                 TipRow(M7Icons.Game, tr(R.string.guide_happens_login))
                 TipRow(M7Icons.Info, tr(R.string.guide_happens_account))
-                TipRow(M7Icons.Notifications, tr(R.string.guide_happens_sound))
             }
 
             SectionLabel(tr(R.string.guide_stability))

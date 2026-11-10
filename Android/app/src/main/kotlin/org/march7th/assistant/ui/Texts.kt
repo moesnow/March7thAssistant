@@ -5,8 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import org.march7th.assistant.Calyx
 import org.march7th.assistant.GameState
+import org.march7th.assistant.InstanceType
 import org.march7th.assistant.PermissionState
 import org.march7th.assistant.Privilege
 import org.march7th.assistant.R
@@ -20,6 +20,7 @@ internal fun tr(@StringRes id: Int, vararg args: Any): String = stringResource(i
 
 internal val TaskId.title: Int
     get() = when (this) {
+        TaskId.ROUTINE -> R.string.routine
         TaskId.DAILY -> R.string.daily
         TaskId.REWARDS -> R.string.rewards
         TaskId.POWER -> R.string.power
@@ -27,6 +28,7 @@ internal val TaskId.title: Int
 
 internal val TaskId.summary: Int
     get() = when (this) {
+        TaskId.ROUTINE -> R.string.task_routine_summary
         TaskId.DAILY -> R.string.task_daily_summary
         TaskId.REWARDS -> R.string.task_rewards_summary
         TaskId.POWER -> R.string.task_power_summary
@@ -34,6 +36,7 @@ internal val TaskId.summary: Int
 
 internal val TaskId.icon: ImageVector
     get() = when (this) {
+        TaskId.ROUTINE -> M7Icons.Tasks
         TaskId.DAILY -> M7Icons.Daily
         TaskId.REWARDS -> M7Icons.Gift
         TaskId.POWER -> M7Icons.Bolt
@@ -82,18 +85,12 @@ internal val GameState.label: Int
         GameState.MANUAL_LOGIN -> R.string.game_manual_login
     }
 
-internal val Calyx.title: Int
+internal val InstanceType.title: Int
     get() = when (this) {
-        Calyx.CREDITS -> R.string.calyx_credits
-        Calyx.EXP -> R.string.calyx_exp
-        Calyx.MATERIALS -> R.string.calyx_materials
-    }
-
-internal val Calyx.reward: Int
-    get() = when (this) {
-        Calyx.CREDITS -> R.string.calyx_credits_reward
-        Calyx.EXP -> R.string.calyx_exp_reward
-        Calyx.MATERIALS -> R.string.calyx_materials_reward
+        InstanceType.GOLDEN_CALYX -> R.string.instance_golden_calyx
+        InstanceType.CRIMSON_CALYX -> R.string.instance_crimson_calyx
+        InstanceType.STAGNANT_SHADOW -> R.string.instance_stagnant_shadow
+        InstanceType.CAVERN -> R.string.instance_cavern
     }
 
 /** 出错后界面能直接带用户去的地方。 */

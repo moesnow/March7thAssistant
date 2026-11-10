@@ -69,6 +69,15 @@ internal fun SettingsScreen(
                 enabled = !state.busy,
             )
             RowDivider()
+            SwitchRow(
+                tr(R.string.mute_game),
+                state.config.muteGame,
+                { actions.updateConfig(state.config.copy(muteGame = it)) },
+                icon = M7Icons.Mute,
+                summary = tr(R.string.mute_game_summary),
+                enabled = !state.busy,
+            )
+            RowDivider()
             SettingRow(
                 tr(R.string.status_title),
                 icon = M7Icons.Display,

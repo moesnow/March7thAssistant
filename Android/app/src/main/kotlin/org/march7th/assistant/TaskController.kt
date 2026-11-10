@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.json.JSONObject
 import rikka.shizuku.Shizuku
 import java.io.File
 import java.io.OutputStream
@@ -25,8 +26,15 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.ZipInputStream
 
-enum class TaskId { DAILY, REWARDS, POWER }
-enum class Calyx(val instanceName: String) { CREDITS("藏珍之蕾"), EXP("回忆之蕾"), MATERIALS("以太之蕾") }
+enum class TaskId { ROUTINE, DAILY, REWARDS, POWER }
+
+/** 触屏清体力支持的副本类型。typeName 是共享配置和 instance_names.json 里的键，cost 是单次挑战的开拓力。 */
+enum class InstanceType(val typeName: String, val cost: Int) {
+    GOLDEN_CALYX("拟造花萼（金）", 10),
+    CRIMSON_CALYX("拟造花萼（赤）", 10),
+    STAGNANT_SHADOW("凝滞虚影", 30),
+    CAVERN("侵蚀隧洞", 40),
+}
 enum class ServiceState { IDLE, RECOVERING, STARTING, CONNECTED, CLEANING }
 enum class GameState { OFF, STARTING, FLASHING, RETURNING, READY, MANUAL_LOGIN }
 enum class TaskPhase { IDLE, PREPARING, WAITING_FOR_GAME, RUNNING, STOPPING, CLEANING, SUCCEEDED, STOPPED, FAILED }
@@ -34,12 +42,30 @@ enum class TaskPhase { IDLE, PREPARING, WAITING_FOR_GAME, RUNNING, STOPPING, CLE
 data class TaskConfig(
     val collectRewards: Boolean = true,
     val panelOff: Boolean = false,
+    val muteGame: Boolean = true,
     val dispatch: Boolean = true,
     val mail: Boolean = true,
     val assist: Boolean = true,
-    val calyx: Calyx = Calyx.EXP,
-    val waves: Int = 1
-)
+    val message: Boolean = false,
+    val synthesis: Boolean = true,
+    val instanceType: InstanceType = InstanceType.GOLDEN_CALYX,
+    val instanceName: String = "回忆之蕾",
+    val waves: Int = 1,
+    val reserve: Boolean = false,
+    val fuel: Boolean = false,
+    /** 支援角色在 character_names.json 里的键，按查找的先后排列。为空时不借用。 */
+    val supports: List<String> = emptyList(),
+    val borrowAlways: Boolean = false,
+) {
+    /** 供 Python 读取。 */
+    fun supportKeys(): Array<String> = supports.toTypedArray()
+}
+
+/** 可选的副本或角色。id 写入配置，title 和 detail 用于显示。 */
+class CatalogItem(val id: String, val title: String, val detail: String? = null)
+
+/** 随 APK 打包的游戏数据里可选的副本和支援角色。 */
+class Catalog(val instances: Map<InstanceType, List<CatalogItem>>, val characters: List<CatalogItem>)
 
 data class TaskState(
     val privilege: Privilege = Privilege.SHIZUKU,
@@ -77,11 +103,23 @@ class TaskController private constructor(private val context: Context) {
             config = TaskConfig(
                 collectRewards = prefs.getBoolean("collect-rewards", true),
                 panelOff = prefs.getBoolean("panel-off", false),
+                muteGame = prefs.getBoolean("mute-game", true),
                 dispatch = prefs.getBoolean("dispatch", true),
                 mail = prefs.getBoolean("mail", true),
                 assist = prefs.getBoolean("assist", true),
-                calyx = Calyx.entries.firstOrNull { it.name == prefs.getString("calyx", null) } ?: Calyx.EXP,
-                waves = prefs.getInt("waves", 1)
+                message = prefs.getBoolean("message", false),
+                synthesis = prefs.getBoolean("synthesis", true),
+                instanceType = InstanceType.entries.firstOrNull { it.name == prefs.getString("instance-type", null) }
+                    ?: InstanceType.GOLDEN_CALYX,
+                // 旧版本只保存拟造花萼（金）的选择。
+                instanceName = prefs.getString("instance-name", null)
+                    ?: mapOf("CREDITS" to "藏珍之蕾", "MATERIALS" to "以太之蕾")[prefs.getString("calyx", null)]
+                    ?: "回忆之蕾",
+                waves = prefs.getInt("waves", 1),
+                reserve = prefs.getBoolean("reserve", false),
+                fuel = prefs.getBoolean("fuel", false),
+                supports = prefs.getString("supports", "")!!.split(',').filter { it.isNotEmpty() },
+                borrowAlways = prefs.getBoolean("borrow-always", false),
             )
         )
     )
@@ -92,6 +130,14 @@ class TaskController private constructor(private val context: Context) {
 
     val state: StateFlow<TaskState> = stateData.asStateFlow()
     val logs: StateFlow<List<LogEntry>> = logData.asStateFlow()
+
+    /** 首次读取时从 project.zip 解析，和任务实际使用的数据是同一份。 */
+    val catalog: Catalog by lazy {
+        runCatching { loadCatalog() }.getOrElse {
+            Log.w("M7ATask", "Cannot read catalog", it)
+            Catalog(emptyMap(), emptyList())
+        }
+    }
 
     init {
         refreshPermission()
@@ -144,15 +190,23 @@ class TaskController private constructor(private val context: Context) {
     }
 
     fun updateConfig(config: TaskConfig): Boolean {
-        if (state.value.busy || config.waves !in 1..24) return false
+        if (state.value.busy || config.waves !in 1..MAX_WAVES || config.supports.size > MAX_SUPPORTS) return false
         prefs.edit()
             .putBoolean("collect-rewards", config.collectRewards)
             .putBoolean("panel-off", config.panelOff)
+            .putBoolean("mute-game", config.muteGame)
             .putBoolean("dispatch", config.dispatch)
             .putBoolean("mail", config.mail)
             .putBoolean("assist", config.assist)
-            .putString("calyx", config.calyx.name)
+            .putBoolean("message", config.message)
+            .putBoolean("synthesis", config.synthesis)
+            .putString("instance-type", config.instanceType.name)
+            .putString("instance-name", config.instanceName)
             .putInt("waves", config.waves)
+            .putBoolean("reserve", config.reserve)
+            .putBoolean("fuel", config.fuel)
+            .putString("supports", config.supports.joinToString(","))
+            .putBoolean("borrow-always", config.borrowAlways)
             .apply()
         stateData.update { it.copy(config = config) }
         return true
@@ -414,6 +468,27 @@ class TaskController private constructor(private val context: Context) {
         }
     }
 
+    private fun loadCatalog(): Catalog {
+        val files = HashMap<String, JSONObject>()
+        ZipInputStream(context.assets.open("project.zip").buffered()).use { zip ->
+            while (files.size < 2) {
+                val entry = zip.nextEntry ?: break
+                if (entry.name == INSTANCE_NAMES || entry.name == CHARACTER_NAMES) {
+                    files[entry.name] = JSONObject(zip.readBytes().decodeToString())
+                }
+            }
+        }
+        val instances = files.getValue(INSTANCE_NAMES)
+        val characters = files.getValue(CHARACTER_NAMES)
+        return Catalog(
+            InstanceType.entries.associateWith { type ->
+                val names = instances.getJSONObject(type.typeName)
+                names.keys().asSequence().filter { it != "无" }.map { CatalogItem(it, it, names.getString(it)) }.toList()
+            },
+            characters.keys().asSequence().map { CatalogItem(it, characters.getString(it)) }.toList(),
+        )
+    }
+
     private fun prepareRuntime(): File {
         val workspace = File(context.filesDir, "project").apply { mkdirs() }
         if (!Python.isStarted()) {
@@ -440,7 +515,11 @@ class TaskController private constructor(private val context: Context) {
     }
 
     companion object {
+        const val MAX_WAVES = 24
+        const val MAX_SUPPORTS = 6
         private const val LOG_LINES = 200
+        private const val INSTANCE_NAMES = "assets/config/instance_names.json"
+        private const val CHARACTER_NAMES = "assets/config/character_names.json"
         @Volatile private var instance: TaskController? = null
 
         fun get(context: Context): TaskController = instance ?: synchronized(this) {
