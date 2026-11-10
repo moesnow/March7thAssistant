@@ -7146,3 +7146,666 @@ msgid ""
 msgstr ""
 "display 0 터치 대상 확인에는 Android 14 이상이 필요합니다. 가상 디스플레이를 사용하려면 adb_device_type: "
 "physical로 설정하세요."
+
+#: app/card/adb_setting_cards.py:71
+msgid "设备后端"
+msgstr "기기 백엔드"
+
+#: app/card/adb_setting_cards.py:72
+msgid "选择小助手操作哪里的游戏，对下一次运行的任务生效"
+msgstr "도우미가 조작할 게임 위치를 선택합니다. 다음에 실행하는 임무부터 적용됩니다"
+
+#: app/card/adb_setting_cards.py:77
+msgid "本地游戏"
+msgstr "로컬 게임"
+
+#: app/card/adb_setting_cards.py:78
+msgid "云·星穹铁道"
+msgstr "클라우드·붕괴: 스타레일"
+
+#: app/card/adb_setting_cards.py:79
+msgid "Android 设备（ADB）"
+msgstr "Android 기기(ADB)"
+
+#: app/card/adb_setting_cards.py:227
+msgid "实体机"
+msgstr "실제 기기"
+
+#: app/card/adb_setting_cards.py:227
+msgid "模拟器"
+msgstr "에뮬레이터"
+
+#: app/card/adb_setting_cards.py:232
+msgid "未授权 USB 调试"
+msgstr "USB 디버깅 미승인"
+
+#: app/card/adb_setting_cards.py:233
+msgid "离线"
+msgstr "오프라인"
+
+#: app/card/adb_setting_cards.py:234
+msgid "等待授权"
+msgstr "승인 대기 중"
+
+#: app/card/adb_setting_cards.py:235
+msgid "没有访问权限"
+msgstr "접근 권한 없음"
+
+#: app/card/adb_setting_cards.py:241
+msgid "序列号 {serial}"
+msgstr "일련번호 {serial}"
+
+#: app/card/adb_setting_cards.py:257
+msgid "Android 设备"
+msgstr "Android 기기"
+
+#: app/card/adb_setting_cards.py:257
+msgid "自动选择"
+msgstr "자동 선택"
+
+#: app/card/adb_setting_cards.py:261
+msgid "点“刷新”查找已连接的设备"
+msgstr "'새로고침'을 눌러 연결된 기기를 찾습니다"
+
+#: app/card/adb_setting_cards.py:275
+msgid "模拟器地址，例如 {address}"
+msgstr "에뮬레이터 주소(예: {address})"
+
+#: app/card/adb_setting_cards.py:278
+msgid "连接"
+msgstr "연결"
+
+#: app/card/adb_setting_cards.py:279
+msgid "手动连接"
+msgstr "수동 연결"
+
+#: app/card/adb_setting_cards.py:280
+msgid "模拟器和无线调试需要输入地址。MuMu 默认是 127.0.0.1:16384"
+msgstr "에뮬레이터와 무선 디버깅은 주소를 입력해야 합니다. MuMu의 기본값은 127.0.0.1:16384입니다"
+
+#: app/card/adb_setting_cards.py:327
+msgid "正在刷新…"
+msgstr "새로고침 중…"
+
+#: app/card/adb_setting_cards.py:337
+msgid "没有发现设备"
+msgstr "기기를 찾지 못했습니다"
+
+#: app/card/adb_setting_cards.py:352
+msgid "地址格式不对"
+msgstr "주소 형식이 올바르지 않습니다"
+
+#: app/card/adb_setting_cards.py:352
+msgid "请输入“IP:端口”，例如 {address}"
+msgstr "'IP:포트' 형식으로 입력하세요(예: {address})"
+
+#: app/card/adb_setting_cards.py:389
+msgid "自动选择：{name}"
+msgstr "자동 선택: {name}"
+
+#: app/card/adb_setting_cards.py:391
+msgid "自动选择（只连接了一台设备时可用）"
+msgstr "자동 선택(기기가 한 대만 연결된 경우에만 가능)"
+
+#: app/card/adb_setting_cards.py:395
+msgid "{serial}（未连接）"
+msgstr "{serial}(연결 안 됨)"
+
+#: app/card/adb_setting_cards.py:397
+msgid "{name}（{serial}）"
+msgstr "{name}({serial})"
+
+#: app/card/adb_setting_cards.py:426
+msgid "只连接了一台设备时直接使用它"
+msgstr "기기가 한 대만 연결되어 있으면 그 기기를 사용합니다"
+
+#: app/card/adb_setting_cards.py:440
+msgid "当前没有连接这台设备"
+msgstr "이 기기는 현재 연결되어 있지 않습니다"
+
+#: app/card/adb_setting_cards.py:472
+msgid "环境检查"
+msgstr "환경 점검"
+
+#: app/card/adb_setting_cards.py:473
+msgid "逐项检查电脑和设备能不能运行，不会启动游戏"
+msgstr "PC와 기기가 실행 가능한 상태인지 항목별로 점검합니다. 게임은 실행하지 않습니다"
+
+#: app/card/adb_setting_cards.py:478
+msgid "开始检查"
+msgstr "점검 시작"
+
+#: app/card/adb_setting_cards.py:489
+msgid "还没有检查"
+msgstr "아직 점검하지 않음"
+
+#: app/card/adb_setting_cards.py:507
+msgid "正在检查…"
+msgstr "점검 중…"
+
+#: app/card/adb_setting_cards.py:512
+msgid "正在检查，通常几秒钟就能完成"
+msgstr "점검 중입니다. 보통 몇 초면 끝납니다"
+
+#: app/card/adb_setting_cards.py:540
+msgid "重新检查"
+msgstr "다시 점검"
+
+#: app/card/adb_setting_cards.py:543
+msgid "这一项没有检查"
+msgstr "이 항목은 점검하지 않았습니다"
+
+#: app/card/adb_setting_cards.py:548
+msgid "检查中断：{error}"
+msgstr "점검이 중단되었습니다: {error}"
+
+#: app/card/adb_setting_cards.py:550
+msgid "有 {count} 项没有通过，请按提示处理后重新检查"
+msgstr "{count}개 항목이 통과하지 못했습니다. 안내에 따라 조치한 뒤 다시 점검하세요"
+
+#: app/card/adb_setting_cards.py:552
+msgid "可以运行，有 {count} 项需要留意"
+msgstr "실행할 수 있습니다. {count}개 항목에 주의가 필요합니다"
+
+#: app/card/adb_setting_cards.py:554
+msgid "全部通过，可以运行任务"
+msgstr "모두 통과했습니다. 임무를 실행할 수 있습니다"
+
+#: app/card/adb_setting_cards.py:563
+msgid "没有错误"
+msgstr "오류 없음"
+
+#: app/card/adb_setting_cards.py:565
+msgid "运行任务后，这里会显示设备的状态"
+msgstr "임무를 실행하면 여기에 기기 상태가 표시됩니다"
+
+#: app/card/adb_setting_cards.py:565
+msgid "没有使用 Android 设备后端"
+msgstr "Android 기기 백엔드를 사용하고 있지 않습니다"
+
+#: app/card/adb_setting_cards.py:567
+msgid "未启动"
+msgstr "시작되지 않음"
+
+#: app/card/adb_setting_cards.py:568
+msgid "未建立"
+msgstr "만들어지지 않음"
+
+#: app/card/adb_setting_cards.py:569
+msgid "游戏未运行"
+msgstr "게임이 실행되고 있지 않습니다"
+
+#: app/card/adb_setting_cards.py:580
+msgid "已连接 {serial}"
+msgstr "{serial}에 연결됨"
+
+#: app/card/adb_setting_cards.py:581
+msgid "运行中，版本 {version}"
+msgstr "실행 중, 버전 {version}"
+
+#: app/card/adb_setting_cards.py:584
+msgid "正在连接…"
+msgstr "연결 중…"
+
+#: app/card/adb_setting_cards.py:585
+msgid "正在启动…"
+msgstr "시작 중…"
+
+#: app/card/adb_setting_cards.py:593
+msgid "不使用虚拟屏，直接用模拟器画面"
+msgstr "가상 디스플레이 없이 에뮬레이터 화면을 직접 사용합니다"
+
+#: app/card/adb_setting_cards.py:595
+msgid "1280×720，display {display}"
+msgstr "1280×720 (display {display})"
+
+#: app/card/adb_setting_cards.py:600
+msgid "停在登录界面，等待手动登录"
+msgstr "로그인 화면에서 멈춤, 수동 로그인을 기다리는 중"
+
+#: app/card/adb_setting_cards.py:604
+msgid "在模拟器的其他窗口，正在移回"
+msgstr "에뮬레이터의 다른 창에 있어 되돌리는 중"
+
+#: app/card/adb_setting_cards.py:606
+msgid "被登录界面带回了实体屏"
+msgstr "로그인 화면 때문에 실제 화면으로 옮겨졌습니다"
+
+#: app/card/adb_setting_cards.py:606
+msgid "游戏启动时，登录界面会把游戏短暂带回手机屏幕，登录完成后小助手会自动把它移回虚拟屏。这段时间手机上出现游戏画面是正常现象，不需要操作。"
+msgstr ""
+"게임이 시작될 때 로그인 화면이 게임을 잠시 휴대폰 화면으로 옮깁니다. 로그인이 끝나면 도우미가 자동으로 가상 디스플레이로 되돌립니다. "
+"이 동안 휴대폰에 게임 화면이 보이는 것은 정상이며 조작할 필요가 없습니다."
+
+#: app/card/adb_setting_cards.py:610
+msgid "模拟器画面"
+msgstr "에뮬레이터 화면"
+
+#: app/card/adb_setting_cards.py:612
+msgid "虚拟屏，手机屏幕可以照常使用"
+msgstr "가상 디스플레이, 휴대폰 화면은 평소처럼 사용할 수 있습니다"
+
+#: app/card/adb_setting_cards.py:616
+msgid "{fps:.1f} 帧/秒"
+msgstr "초당 {fps:.1f}프레임"
+
+#: app/card/adb_setting_cards.py:618
+msgid "暂时没有取帧"
+msgstr "현재 프레임을 가져오지 않고 있습니다"
+
+#: app/card/adb_setting_cards.py:625
+msgid "任务正在启动"
+msgstr "임무 시작 중"
+
+#: app/card/adb_setting_cards.py:627
+msgid "任务遇到问题，请看“最近一次错误”"
+msgstr "임무에 문제가 발생했습니다. '최근 오류'를 확인하세요"
+
+#: app/card/adb_setting_cards.py:629
+msgid "上次运行出错，请看“最近一次错误”"
+msgstr "지난 실행에서 오류가 발생했습니다. '최근 오류'를 확인하세요"
+
+#: app/card/adb_setting_cards.py:631
+msgid "上次运行已被停止"
+msgstr "지난 실행은 중지되었습니다"
+
+#: app/card/adb_setting_cards.py:633
+msgid "上次运行的进程已退出"
+msgstr "지난 실행의 프로세스가 종료되었습니다"
+
+#: app/card/adb_setting_cards.py:635
+msgid "上次运行正常结束"
+msgstr "지난 실행은 정상적으로 끝났습니다"
+
+#: app/card/adb_setting_cards.py:643
+msgid "运行状态"
+msgstr "실행 상태"
+
+#: app/card/adb_setting_cards.py:649
+msgid "设备连接"
+msgstr "기기 연결"
+
+#: app/card/adb_setting_cards.py:650
+msgid "设备端服务"
+msgstr "기기 서비스"
+
+#: app/card/adb_setting_cards.py:651
+msgid "虚拟屏"
+msgstr "가상 디스플레이"
+
+#: app/card/adb_setting_cards.py:652
+msgid "游戏所在的显示器"
+msgstr "게임이 있는 화면"
+
+#: app/card/adb_setting_cards.py:653
+msgid "取帧速率"
+msgstr "캡처 속도"
+
+#: app/card/adb_setting_cards.py:654
+msgid "最近一次错误"
+msgstr "최근 오류"
+
+#: app/card/adb_setting_cards.py:714
+msgid "高级设置"
+msgstr "고급 설정"
+
+#: app/card/adb_setting_cards.py:714
+msgid "adb 路径、设备序列号、设备类型和点按时长，一般不需要修改"
+msgstr "adb 경로, 기기 일련번호, 기기 유형, 탭 시간. 보통은 바꿀 필요가 없습니다"
+
+#: app/card/adb_setting_cards.py:718
+msgid "adb 路径"
+msgstr "adb 경로"
+
+#: app/card/adb_setting_cards.py:719
+msgid "选择"
+msgstr "선택"
+
+#: app/card/adb_setting_cards.py:720
+msgid "自动查找"
+msgstr "자동 찾기"
+
+#: app/card/adb_setting_cards.py:725
+msgid "设备序列号"
+msgstr "기기 일련번호"
+
+#: app/card/adb_setting_cards.py:730
+msgid "设备类型"
+msgstr "기기 유형"
+
+#: app/card/adb_setting_cards.py:731
+msgid "自动判断适合绝大多数设备。实体机使用独立的虚拟屏，模拟器直接使用模拟器画面（需要 Android 14）"
+msgstr ""
+"대부분의 기기는 자동 판단이면 충분합니다. 실제 기기는 별도의 가상 디스플레이를 쓰고, 에뮬레이터는 에뮬레이터 화면을 직접 "
+"사용합니다(Android 14 필요)"
+
+#: app/card/adb_setting_cards.py:734
+msgid "自动判断"
+msgstr "자동 판단"
+
+#: app/card/adb_setting_cards.py:743
+msgid "点按时长（毫秒）"
+msgstr "탭 시간(밀리초)"
+
+#: app/card/adb_setting_cards.py:744
+msgid "每次点击按住屏幕的时间，默认 50。点击经常没有反应时可以适当调大"
+msgstr "탭할 때마다 화면을 누르고 있는 시간입니다. 기본값은 50이며, 탭이 자주 먹히지 않으면 조금 늘려 보세요"
+
+#: app/card/adb_setting_cards.py:768
+msgid "自动查找（先找 PATH，再找常见模拟器的安装目录）"
+msgstr "자동 찾기(PATH를 먼저, 그다음 주요 에뮬레이터 설치 폴더)"
+
+#: app/card/adb_setting_cards.py:780
+msgid "选择 adb"
+msgstr "adb 선택"
+
+#: app/card/adb_setting_cards.py:786
+msgid "留空表示自动选择"
+msgstr "비워 두면 자동으로 선택합니다"
+
+#: app/main_window.py:1026
+msgid "Android 设备不需要单独启动游戏"
+msgstr "Android 기기에서는 게임을 따로 실행할 필요가 없습니다"
+
+#: app/main_window.py:1027
+msgid "运行任务时会自动在设备上启动游戏"
+msgstr "임무를 실행하면 기기에서 게임이 자동으로 실행됩니다"
+
+#: app/setting_interface.py:1030
+msgid "Android 设备设置"
+msgstr "Android 기기 설정"
+
+#: app/setting_interface.py:2940
+msgid "安卓设备"
+msgstr "Android 기기"
+
+#: app/setting_interface.py:3091
+msgid "请先停止任务，再切换设备后端"
+msgstr "임무를 중지한 뒤 기기 백엔드를 전환하세요"
+
+#: app/setting_interface.py:3106
+msgid "环境检查会占用设备，请等任务结束后再检查"
+msgstr "환경 점검은 기기를 점유합니다. 임무가 끝난 뒤 점검하세요"
+
+#: app/tools/adb_service.py:142
+msgid ""
+"手机上会弹出“允许 USB 调试吗？”，勾选“一律允许”后点“确定”。没有弹窗时重新插拔数据线，或在开发者选项里点“撤销 USB 调试授权”后再连接。"
+msgstr ""
+"휴대폰에 'USB 디버깅을 허용하시겠습니까?' 창이 뜹니다. '항상 허용'을 체크하고 '확인'을 누르세요. 창이 뜨지 않으면 케이블을 "
+"다시 꽂거나, 개발자 옵션에서 'USB 디버깅 권한 승인 취소'를 누른 뒤 다시 연결하세요."
+
+#: app/tools/adb_service.py:145
+msgid ""
+"安装 Android Platform-Tools 并把它加入 PATH，或在“高级设置”里指定 adb 的位置。装有 MuMu "
+"等模拟器时会自动使用模拟器自带的 adb。"
+msgstr ""
+"Android Platform-Tools를 설치해 PATH에 추가하거나 '고급 설정'에서 adb 위치를 지정하세요. MuMu 같은 "
+"에뮬레이터가 설치되어 있으면 내장 adb를 자동으로 사용합니다."
+
+#: app/tools/adb_service.py:147
+msgid ""
+"电脑上还有另一个版本的 adb（常见于模拟器和手机助手）在抢占服务端。关闭这些程序，或在“高级设置”里把 adb 路径改成它们使用的那一个，然后重试。"
+msgstr ""
+"PC에 다른 버전의 adb(에뮬레이터나 휴대폰 관리 프로그램에 흔함)가 ADB 서버를 차지하려 하고 있습니다. 해당 프로그램을 닫거나 "
+"'고급 설정'의 adb 경로를 그 프로그램이 쓰는 것으로 바꾼 뒤 다시 시도하세요."
+
+#: app/tools/adb_service.py:149
+msgid "adb 没有响应。重新插拔数据线或重启模拟器后重试。"
+msgstr "adb가 응답하지 않습니다. 케이블을 다시 꽂거나 에뮬레이터를 재시작한 뒤 다시 시도하세요."
+
+#: app/tools/adb_service.py:150
+msgid "adb 命令执行失败。重新插拔数据线或重启模拟器后重试。"
+msgstr "adb 명령 실행에 실패했습니다. 케이블을 다시 꽂거나 에뮬레이터를 재시작한 뒤 다시 시도하세요."
+
+#: app/tools/adb_service.py:151
+msgid ""
+"用数据线连接手机，并在开发者选项里打开“USB 调试”。模拟器请在“Android 设备”里输入地址连接，MuMu 默认是 "
+"127.0.0.1:16384。"
+msgstr ""
+"케이블로 휴대폰을 연결하고 개발자 옵션에서 'USB 디버깅'을 켜세요. 에뮬레이터는 'Android 기기'에서 주소를 입력해 연결합니다."
+" MuMu의 기본값은 127.0.0.1:16384입니다."
+
+#: app/tools/adb_service.py:153
+msgid "检测到多台设备，请在“Android 设备”里选择要使用的那一台。"
+msgstr "기기가 여러 대 감지되었습니다. 'Android 기기'에서 사용할 기기를 선택하세요."
+
+#: app/tools/adb_service.py:154
+msgid "设备已连接但还不能使用。重新插拔数据线或重启模拟器，然后点“刷新”。"
+msgstr "기기가 연결되었지만 아직 사용할 수 없습니다. 케이블을 다시 꽂거나 에뮬레이터를 재시작한 뒤 '새로고침'을 누르세요."
+
+#: app/tools/adb_service.py:155
+msgid "ADB 模式需要 Android 10 或更高版本，请换一台设备，或改用模拟器。"
+msgstr "ADB 모드에는 Android 10 이상이 필요합니다. 다른 기기나 에뮬레이터를 사용하세요."
+
+#: app/tools/adb_service.py:156
+msgid "读不到设备的屏幕分辨率。解锁设备并保持亮屏后重试。"
+msgstr "기기의 화면 해상도를 읽을 수 없습니다. 기기 잠금을 풀고 화면을 켠 상태로 다시 시도하세요."
+
+#: app/tools/adb_service.py:157
+msgid "请在“高级设置”里重新选择设备类型。"
+msgstr "'고급 설정'에서 기기 유형을 다시 선택하세요."
+
+#: app/tools/adb_service.py:158
+msgid "在模拟器设置里把分辨率改成 1280×720（横屏、240 DPI），重启模拟器后重试。"
+msgstr "에뮬레이터 설정에서 해상도를 1280×720(가로, 240 DPI)으로 바꾸고 에뮬레이터를 재시작한 뒤 다시 시도하세요."
+
+#: app/tools/adb_service.py:159
+msgid "这台模拟器的 Android 版本低于 14，不能直接使用模拟器画面。请在“高级设置”里把设备类型改回“自动判断”。"
+msgstr ""
+"이 에뮬레이터의 Android 버전이 14보다 낮아 에뮬레이터 화면을 직접 사용할 수 없습니다. '고급 설정'에서 기기 유형을 '자동 "
+"판단'으로 되돌리세요."
+
+#: app/tools/adb_service.py:161
+msgid "在设备上安装国服《崩坏：星穹铁道》，并先手动登录一次账号。"
+msgstr "기기에 중국 본토판 《붕괴: 스타레일》을 설치하고 먼저 한 번 수동으로 로그인하세요."
+
+#: app/tools/adb_service.py:162
+msgid ""
+"缺少设备端服务文件。请重新解压完整的程序包；从源码运行时先在 Android 目录执行 gradlew :device-"
+"service:assemble。"
+msgstr ""
+"기기 서비스 파일이 없습니다. 전체 패키지를 다시 압축 해제하세요. 소스에서 실행한다면 먼저 Android 폴더에서 gradlew "
+":device-service:assemble을 실행하세요."
+
+#: app/tools/adb_service.py:164
+msgid "设备正被另一个任务占用，或上一次运行还在收尾。等十几秒后重试；有任务在运行时先等它结束。"
+msgstr ""
+"기기를 다른 임무가 사용 중이거나 지난 실행이 아직 정리 중입니다. 십여 초 뒤 다시 시도하세요. 임무가 실행 중이면 끝날 때까지 "
+"기다리세요."
+
+#: app/tools/adb_service.py:166
+msgid "设备端服务没能启动。重新插拔数据线后重试，仍然失败时重启设备。"
+msgstr "기기 서비스를 시작하지 못했습니다. 케이블을 다시 꽂고 다시 시도하세요. 그래도 실패하면 기기를 재시작하세요."
+
+#: app/tools/adb_service.py:167
+msgid "设备端服务和本程序的版本不一致，请把程序更新到最新版本后重试。"
+msgstr "기기 서비스와 이 프로그램의 버전이 일치하지 않습니다. 프로그램을 최신 버전으로 업데이트한 뒤 다시 시도하세요."
+
+#: app/tools/adb_service.py:169
+msgid "系统拒绝了触摸注入。小米、红米手机请在开发者选项里打开“USB 调试（安全设置）”，其他品牌请打开名称相近的开关，然后重新插拔数据线。"
+msgstr ""
+"시스템이 터치 입력을 거부했습니다. Xiaomi·Redmi 휴대폰은 개발자 옵션에서 'USB 디버깅(보안 설정)'을 켜세요. 다른 "
+"브랜드는 비슷한 이름의 스위치를 켠 뒤 케이블을 다시 꽂으세요."
+
+#: app/tools/adb_service.py:171
+msgid "在手机屏幕或模拟器窗口里完成登录，然后重新运行任务。登录界面这时留在手机屏幕上是正常现象。"
+msgstr ""
+"휴대폰 화면이나 에뮬레이터 창에서 로그인을 마친 뒤 임무를 다시 실행하세요. 이때 로그인 화면이 휴대폰 화면에 남아 있는 것은 "
+"정상입니다."
+
+#: app/tools/adb_service.py:173
+msgid "设备连接断开了。检查数据线，或确认模拟器还在运行，重新连接后再运行任务。"
+msgstr "기기 연결이 끊겼습니다. 케이블을 확인하거나 에뮬레이터가 실행 중인지 확인하고, 다시 연결한 뒤 임무를 실행하세요."
+
+#: app/tools/adb_service.py:174
+msgid "游戏进程被关闭了，可能是系统清理了后台。请把游戏加入自启动和省电白名单，不要在最近任务里一键清理，然后重新运行任务。"
+msgstr ""
+"게임 프로세스가 종료되었습니다. 시스템이 백그라운드를 정리했을 수 있습니다. 게임을 자동 실행과 절전 예외 목록에 추가하고, 최근 앱에서"
+" 한 번에 정리하지 않도록 한 뒤 임무를 다시 실행하세요."
+
+#: app/tools/adb_service.py:176
+msgid "游戏没能回到虚拟屏。请在设备上结束游戏，然后重新运行任务。"
+msgstr "게임이 가상 디스플레이로 돌아오지 못했습니다. 기기에서 게임을 종료한 뒤 임무를 다시 실행하세요."
+
+#: app/tools/adb_service.py:177
+msgid "游戏没有在限定时间内进入主界面。请确认账号已登录、网络正常，必要时先在设备上手动进入一次游戏。"
+msgstr ""
+"게임이 제한 시간 안에 메인 화면에 들어가지 못했습니다. 계정이 로그인되어 있고 네트워크가 정상인지 확인하고, 필요하면 기기에서 한 번 "
+"수동으로 게임에 들어가 보세요."
+
+#: app/tools/adb_service.py:179
+msgid "长时间取不到新的游戏画面。请确认设备没有锁屏，然后重新运行任务。"
+msgstr "오랫동안 새 게임 화면을 가져오지 못했습니다. 기기가 잠겨 있지 않은지 확인한 뒤 임무를 다시 실행하세요."
+
+#: app/tools/adb_service.py:180
+msgid "这个任务只能在本地或云游戏后端运行，请切换设备后端后再运行。"
+msgstr "이 임무는 로컬 또는 클라우드 게임 백엔드에서만 실행할 수 있습니다. 기기 백엔드를 전환한 뒤 실행하세요."
+
+#: app/tools/adb_service.py:181
+msgid "请在 Android 设备上通过游戏自带的更新流程更新游戏。"
+msgstr "Android 기기에서 게임 자체의 업데이트 절차로 게임을 업데이트하세요."
+
+#: app/tools/adb_service.py:182
+msgid "ADB 模式不能代替你输入文字，请在设备上手动输入。"
+msgstr "ADB 모드는 글자를 대신 입력할 수 없습니다. 기기에서 직접 입력하세요."
+
+#: app/tools/adb_service.py:183
+msgid "请在本页把设备后端重新选择为“Android 设备（ADB）”。"
+msgstr "이 페이지에서 기기 백엔드를 'Android 기기(ADB)'로 다시 선택하세요."
+
+#: app/tools/adb_service.py:184
+msgid "请在“高级设置”里把点按时长改为 1 到 10000 毫秒之间的整数。"
+msgstr "'고급 설정'에서 탭 시간을 1~10000밀리초 사이의 정수로 바꾸세요."
+
+#: app/tools/adb_service.py:186
+msgid "请按提示处理后重试。仍然失败时，把日志页的内容发给开发者。"
+msgstr "안내에 따라 조치한 뒤 다시 시도하세요. 그래도 실패하면 로그 페이지의 내용을 개발자에게 보내 주세요."
+
+#: app/tools/adb_service.py:193
+msgid "adb 工具"
+msgstr "adb 도구"
+
+#: app/tools/adb_service.py:194
+msgid "adb 服务端"
+msgstr "ADB 서버"
+
+#: app/tools/adb_service.py:195
+msgid "设备连接与 USB 调试授权"
+msgstr "기기 연결 및 USB 디버깅 승인"
+
+#: app/tools/adb_service.py:196
+msgid "Android 版本"
+msgstr "Android 버전"
+
+#: app/tools/adb_service.py:197
+msgid "触摸注入权限"
+msgstr "터치 입력 권한"
+
+#: app/tools/adb_service.py:200
+msgid "游戏安装"
+msgstr "게임 설치"
+
+#: app/tools/adb_service.py:201
+msgid "模拟器分辨率"
+msgstr "에뮬레이터 해상도"
+
+#: app/tools/adb_service.py:229
+msgid "没能读到系统的触摸注入权限"
+msgstr "시스템의 터치 입력 권한을 읽지 못했습니다"
+
+#: app/tools/adb_service.py:229
+msgid "可以先运行任务试试。如果提示“拒绝触摸注入”，请在开发者选项里打开“USB 调试（安全设置）”或名称相近的开关。"
+msgstr ""
+"먼저 임무를 실행해 보세요. '터치 입력 거부'가 표시되면 개발자 옵션에서 'USB 디버깅(보안 설정)' 또는 비슷한 이름의 스위치를 "
+"켜세요."
+
+#: app/tools/adb_service.py:232
+msgid "已开启“USB 调试（安全设置）”"
+msgstr "'USB 디버깅(보안 설정)'이 켜져 있습니다"
+
+#: app/tools/adb_service.py:232
+msgid "系统允许通过 USB 调试注入触摸"
+msgstr "시스템이 USB 디버깅을 통한 터치 입력을 허용합니다"
+
+#: app/tools/adb_service.py:235
+msgid "没有开启“USB 调试（安全设置）”，小助手无法点击游戏"
+msgstr "'USB 디버깅(보안 설정)'이 꺼져 있어 도우미가 게임을 탭할 수 없습니다"
+
+#: app/tools/adb_service.py:235
+msgid ""
+"打开“设置 → 更多设置 → 开发者选项”，开启“USB 调试（安全设置）”。系统会要求登录小米账号并插入 SIM 卡，开启后重新插拔数据线。"
+msgstr ""
+"'설정 → 추가 설정 → 개발자 옵션'을 열고 'USB 디버깅(보안 설정)'을 켜세요. 시스템이 Mi 계정 로그인과 SIM 카드 삽입을 "
+"요구합니다. 켠 뒤 케이블을 다시 꽂으세요."
+
+#: app/tools/adb_service.py:238
+msgid "系统没有允许通过 USB 调试注入触摸，小助手无法点击游戏"
+msgstr "시스템이 USB 디버깅을 통한 터치 입력을 허용하지 않아 도우미가 게임을 탭할 수 없습니다"
+
+#: app/tools/adb_service.py:238
+msgid "在开发者选项里打开“USB 调试（安全设置）”“禁止权限监控”或名称相近的开关，然后重新插拔数据线。"
+msgstr ""
+"개발자 옵션에서 'USB 디버깅(보안 설정)', '권한 모니터링 사용 안 함' 또는 비슷한 이름의 스위치를 켠 뒤 케이블을 다시 "
+"꽂으세요."
+
+#: app/tools/adb_service.py:245
+msgid "模拟器分辨率为 1280×720"
+msgstr "에뮬레이터 해상도는 1280×720입니다"
+
+#: app/tools/adb_service.py:246
+msgid "模拟器当前分辨率为 {width}×{height}"
+msgstr "에뮬레이터의 현재 해상도는 {width}×{height}입니다"
+
+#: app/tools/adb_service.py:249
+msgid "这台模拟器会改用独立的虚拟屏运行，当前分辨率不影响使用。想直接使用模拟器画面时，再把分辨率改成 1280×720 横屏。"
+msgstr ""
+"이 에뮬레이터는 별도의 가상 디스플레이에서 실행되므로 현재 해상도는 영향을 주지 않습니다. 에뮬레이터 화면을 직접 쓰고 싶을 때만 "
+"해상도를 1280×720 가로로 바꾸세요."
+
+#: app/tools/adb_service.py:276
+msgid "前面的检查没有通过，这一项还没检查"
+msgstr "앞의 점검이 통과하지 못해 이 항목은 아직 점검하지 않았습니다"
+
+#: app/tools/adb_service.py:291
+msgid "adb 服务端刚被重启，电脑上还有其他版本的 adb 在运行"
+msgstr "ADB 서버가 방금 재시작되었습니다. PC에서 다른 버전의 adb가 실행 중입니다"
+
+#: app/tools/adb_service.py:299
+msgid "没有其他版本的 adb 抢占服务端"
+msgstr "다른 버전의 adb가 서버를 차지하고 있지 않습니다"
+
+#: app/tools/adb_service.py:306
+msgid "{name} 已连接并授权"
+msgstr "{name}이(가) 연결되고 승인되었습니다"
+
+#: app/tools/adb_service.py:307
+msgid "设备"
+msgstr "기기"
+
+#: app/tools/adb_service.py:315
+msgid "{name}（{serial}）已连接并授权"
+msgstr "{name}({serial})이(가) 연결되고 승인되었습니다"
+
+#: app/tools/adb_service.py:317
+msgid "Android {version}（API {sdk}）"
+msgstr "Android {version}(API {sdk})"
+
+#: app/tools/adb_service.py:322
+msgid "已安装国服《崩坏：星穹铁道》"
+msgstr "중국 본토판 《붕괴: 스타레일》이 설치되어 있습니다"
+
+#: app/tools/adb_service.py:324
+msgid "设备上没有安装国服《崩坏：星穹铁道》"
+msgstr "기기에 중국 본토판 《붕괴: 스타레일》이 설치되어 있지 않습니다"
+
+#: app/tools/adb_service.py:336
+msgid "设备端服务已启动，版本 {version}"
+msgstr "기기 서비스가 시작되었습니다, 버전 {version}"
+
+#: app/tools/adb_service.py:343
+msgid "直接使用模拟器画面（display 0），不需要虚拟屏"
+msgstr "에뮬레이터 화면(display 0)을 직접 사용합니다. 가상 디스플레이는 필요 없습니다"
+
+#: app/tools/adb_service.py:345
+msgid "已建立 1280×720 虚拟屏（display {display}），检查结束后释放"
+msgstr "1280×720 가상 디스플레이를 만들었습니다(display {display}). 점검이 끝나면 해제합니다"

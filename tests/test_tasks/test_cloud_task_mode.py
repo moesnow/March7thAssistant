@@ -30,7 +30,7 @@ def runner():
              "Power", "CurrencyWars", "DivergentUniverse", "Fight", "Universe",
              "screen_test", "character_export", "challenge", "Redemption", "adb_check",
              "first_run", "pause_ctl", "ensure_exclusive_run", "version",
-             "recover_temporary_graphics", "restore_temporary_graphics", "log")
+             "recover_temporary_graphics", "restore_temporary_graphics", "log", "publish_status")
     scope = {name: MagicMock() for name in names}
     scope["cfg"].control_backend = None
     scope["cfg"].ui_profile = None

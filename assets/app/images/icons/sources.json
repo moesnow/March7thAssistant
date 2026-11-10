@@ -412,6 +412,13 @@
     ],
     "source": "fluent/person-24-regular"
   },
+  "ui/phone": {
+    "grid": [
+      24,
+      24
+    ],
+    "source": "fluent/phone-24-regular"
+  },
   "ui/pin": {
     "grid": [
       24,

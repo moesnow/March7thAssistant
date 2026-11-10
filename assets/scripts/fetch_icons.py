@@ -94,6 +94,7 @@ UI_ICONS = {
     "history": "history-24-regular",
     "link": "link-24-regular",
     "tap-single": "tap-single-24-regular",
+    "phone": "phone-24-regular",
     "person": "person-24-regular",
     "star": "star-24-regular",
     "arrow-import": "arrow-import-24-regular",

@@ -26,6 +26,7 @@ from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
 from module.config import cfg
+from module.config.platform import get_control_backend
 from module.logger import log
 from module.game import get_game_controller
 from module.localization import tr
@@ -1018,6 +1019,18 @@ class MainWindow(MSFluentWindow):
 
     def startGame(self):
         if self._desktop_twin_hosting:
+            return
+        if get_control_backend(cfg) == "adb":
+            # 设备会话属于任务进程，在界面进程里启动游戏会一直占着设备端服务。
+            InfoBar.info(
+                title=tr('Android 设备不需要单独启动游戏'),
+                content=tr('运行任务时会自动在设备上启动游戏'),
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=5000,
+                parent=self
+            )
             return
         start_game_button = self.navigationInterface.widget('startGameButton')
         if start_game_button:

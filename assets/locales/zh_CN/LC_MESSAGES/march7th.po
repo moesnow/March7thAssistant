@@ -7090,3 +7090,641 @@ msgid ""
 "display 0 的触摸目标校验需要 Android 14 或更高版本，请设置 adb_device_type: physical 使用虚拟屏"
 msgstr ""
 "display 0 的触摸目标校验需要 Android 14 或更高版本，请设置 adb_device_type: physical 使用虚拟屏"
+
+#: app/card/adb_setting_cards.py:71
+msgid "设备后端"
+msgstr "设备后端"
+
+#: app/card/adb_setting_cards.py:72
+msgid "选择小助手操作哪里的游戏，对下一次运行的任务生效"
+msgstr "选择小助手操作哪里的游戏，对下一次运行的任务生效"
+
+#: app/card/adb_setting_cards.py:77
+msgid "本地游戏"
+msgstr "本地游戏"
+
+#: app/card/adb_setting_cards.py:78
+msgid "云·星穹铁道"
+msgstr "云·星穹铁道"
+
+#: app/card/adb_setting_cards.py:79
+msgid "Android 设备（ADB）"
+msgstr "Android 设备（ADB）"
+
+#: app/card/adb_setting_cards.py:227
+msgid "实体机"
+msgstr "实体机"
+
+#: app/card/adb_setting_cards.py:227
+msgid "模拟器"
+msgstr "模拟器"
+
+#: app/card/adb_setting_cards.py:232
+msgid "未授权 USB 调试"
+msgstr "未授权 USB 调试"
+
+#: app/card/adb_setting_cards.py:233
+msgid "离线"
+msgstr "离线"
+
+#: app/card/adb_setting_cards.py:234
+msgid "等待授权"
+msgstr "等待授权"
+
+#: app/card/adb_setting_cards.py:235
+msgid "没有访问权限"
+msgstr "没有访问权限"
+
+#: app/card/adb_setting_cards.py:241
+msgid "序列号 {serial}"
+msgstr "序列号 {serial}"
+
+#: app/card/adb_setting_cards.py:257
+msgid "Android 设备"
+msgstr "Android 设备"
+
+#: app/card/adb_setting_cards.py:257
+msgid "自动选择"
+msgstr "自动选择"
+
+#: app/card/adb_setting_cards.py:261
+msgid "点“刷新”查找已连接的设备"
+msgstr "点“刷新”查找已连接的设备"
+
+#: app/card/adb_setting_cards.py:275
+msgid "模拟器地址，例如 {address}"
+msgstr "模拟器地址，例如 {address}"
+
+#: app/card/adb_setting_cards.py:278
+msgid "连接"
+msgstr "连接"
+
+#: app/card/adb_setting_cards.py:279
+msgid "手动连接"
+msgstr "手动连接"
+
+#: app/card/adb_setting_cards.py:280
+msgid "模拟器和无线调试需要输入地址。MuMu 默认是 127.0.0.1:16384"
+msgstr "模拟器和无线调试需要输入地址。MuMu 默认是 127.0.0.1:16384"
+
+#: app/card/adb_setting_cards.py:327
+msgid "正在刷新…"
+msgstr "正在刷新…"
+
+#: app/card/adb_setting_cards.py:337
+msgid "没有发现设备"
+msgstr "没有发现设备"
+
+#: app/card/adb_setting_cards.py:352
+msgid "地址格式不对"
+msgstr "地址格式不对"
+
+#: app/card/adb_setting_cards.py:352
+msgid "请输入“IP:端口”，例如 {address}"
+msgstr "请输入“IP:端口”，例如 {address}"
+
+#: app/card/adb_setting_cards.py:389
+msgid "自动选择：{name}"
+msgstr "自动选择：{name}"
+
+#: app/card/adb_setting_cards.py:391
+msgid "自动选择（只连接了一台设备时可用）"
+msgstr "自动选择（只连接了一台设备时可用）"
+
+#: app/card/adb_setting_cards.py:395
+msgid "{serial}（未连接）"
+msgstr "{serial}（未连接）"
+
+#: app/card/adb_setting_cards.py:397
+msgid "{name}（{serial}）"
+msgstr "{name}（{serial}）"
+
+#: app/card/adb_setting_cards.py:426
+msgid "只连接了一台设备时直接使用它"
+msgstr "只连接了一台设备时直接使用它"
+
+#: app/card/adb_setting_cards.py:440
+msgid "当前没有连接这台设备"
+msgstr "当前没有连接这台设备"
+
+#: app/card/adb_setting_cards.py:472
+msgid "环境检查"
+msgstr "环境检查"
+
+#: app/card/adb_setting_cards.py:473
+msgid "逐项检查电脑和设备能不能运行，不会启动游戏"
+msgstr "逐项检查电脑和设备能不能运行，不会启动游戏"
+
+#: app/card/adb_setting_cards.py:478
+msgid "开始检查"
+msgstr "开始检查"
+
+#: app/card/adb_setting_cards.py:489
+msgid "还没有检查"
+msgstr "还没有检查"
+
+#: app/card/adb_setting_cards.py:507
+msgid "正在检查…"
+msgstr "正在检查…"
+
+#: app/card/adb_setting_cards.py:512
+msgid "正在检查，通常几秒钟就能完成"
+msgstr "正在检查，通常几秒钟就能完成"
+
+#: app/card/adb_setting_cards.py:540
+msgid "重新检查"
+msgstr "重新检查"
+
+#: app/card/adb_setting_cards.py:543
+msgid "这一项没有检查"
+msgstr "这一项没有检查"
+
+#: app/card/adb_setting_cards.py:548
+msgid "检查中断：{error}"
+msgstr "检查中断：{error}"
+
+#: app/card/adb_setting_cards.py:550
+msgid "有 {count} 项没有通过，请按提示处理后重新检查"
+msgstr "有 {count} 项没有通过，请按提示处理后重新检查"
+
+#: app/card/adb_setting_cards.py:552
+msgid "可以运行，有 {count} 项需要留意"
+msgstr "可以运行，有 {count} 项需要留意"
+
+#: app/card/adb_setting_cards.py:554
+msgid "全部通过，可以运行任务"
+msgstr "全部通过，可以运行任务"
+
+#: app/card/adb_setting_cards.py:563
+msgid "没有错误"
+msgstr "没有错误"
+
+#: app/card/adb_setting_cards.py:565
+msgid "运行任务后，这里会显示设备的状态"
+msgstr "运行任务后，这里会显示设备的状态"
+
+#: app/card/adb_setting_cards.py:565
+msgid "没有使用 Android 设备后端"
+msgstr "没有使用 Android 设备后端"
+
+#: app/card/adb_setting_cards.py:567
+msgid "未启动"
+msgstr "未启动"
+
+#: app/card/adb_setting_cards.py:568
+msgid "未建立"
+msgstr "未建立"
+
+#: app/card/adb_setting_cards.py:569
+msgid "游戏未运行"
+msgstr "游戏未运行"
+
+#: app/card/adb_setting_cards.py:580
+msgid "已连接 {serial}"
+msgstr "已连接 {serial}"
+
+#: app/card/adb_setting_cards.py:581
+msgid "运行中，版本 {version}"
+msgstr "运行中，版本 {version}"
+
+#: app/card/adb_setting_cards.py:584
+msgid "正在连接…"
+msgstr "正在连接…"
+
+#: app/card/adb_setting_cards.py:585
+msgid "正在启动…"
+msgstr "正在启动…"
+
+#: app/card/adb_setting_cards.py:593
+msgid "不使用虚拟屏，直接用模拟器画面"
+msgstr "不使用虚拟屏，直接用模拟器画面"
+
+#: app/card/adb_setting_cards.py:595
+msgid "1280×720，display {display}"
+msgstr "1280×720，display {display}"
+
+#: app/card/adb_setting_cards.py:600
+msgid "停在登录界面，等待手动登录"
+msgstr "停在登录界面，等待手动登录"
+
+#: app/card/adb_setting_cards.py:604
+msgid "在模拟器的其他窗口，正在移回"
+msgstr "在模拟器的其他窗口，正在移回"
+
+#: app/card/adb_setting_cards.py:606
+msgid "被登录界面带回了实体屏"
+msgstr "被登录界面带回了实体屏"
+
+#: app/card/adb_setting_cards.py:606
+msgid "游戏启动时，登录界面会把游戏短暂带回手机屏幕，登录完成后小助手会自动把它移回虚拟屏。这段时间手机上出现游戏画面是正常现象，不需要操作。"
+msgstr "游戏启动时，登录界面会把游戏短暂带回手机屏幕，登录完成后小助手会自动把它移回虚拟屏。这段时间手机上出现游戏画面是正常现象，不需要操作。"
+
+#: app/card/adb_setting_cards.py:610
+msgid "模拟器画面"
+msgstr "模拟器画面"
+
+#: app/card/adb_setting_cards.py:612
+msgid "虚拟屏，手机屏幕可以照常使用"
+msgstr "虚拟屏，手机屏幕可以照常使用"
+
+#: app/card/adb_setting_cards.py:616
+msgid "{fps:.1f} 帧/秒"
+msgstr "{fps:.1f} 帧/秒"
+
+#: app/card/adb_setting_cards.py:618
+msgid "暂时没有取帧"
+msgstr "暂时没有取帧"
+
+#: app/card/adb_setting_cards.py:625
+msgid "任务正在启动"
+msgstr "任务正在启动"
+
+#: app/card/adb_setting_cards.py:627
+msgid "任务遇到问题，请看“最近一次错误”"
+msgstr "任务遇到问题，请看“最近一次错误”"
+
+#: app/card/adb_setting_cards.py:629
+msgid "上次运行出错，请看“最近一次错误”"
+msgstr "上次运行出错，请看“最近一次错误”"
+
+#: app/card/adb_setting_cards.py:631
+msgid "上次运行已被停止"
+msgstr "上次运行已被停止"
+
+#: app/card/adb_setting_cards.py:633
+msgid "上次运行的进程已退出"
+msgstr "上次运行的进程已退出"
+
+#: app/card/adb_setting_cards.py:635
+msgid "上次运行正常结束"
+msgstr "上次运行正常结束"
+
+#: app/card/adb_setting_cards.py:643
+msgid "运行状态"
+msgstr "运行状态"
+
+#: app/card/adb_setting_cards.py:649
+msgid "设备连接"
+msgstr "设备连接"
+
+#: app/card/adb_setting_cards.py:650
+msgid "设备端服务"
+msgstr "设备端服务"
+
+#: app/card/adb_setting_cards.py:651
+msgid "虚拟屏"
+msgstr "虚拟屏"
+
+#: app/card/adb_setting_cards.py:652
+msgid "游戏所在的显示器"
+msgstr "游戏所在的显示器"
+
+#: app/card/adb_setting_cards.py:653
+msgid "取帧速率"
+msgstr "取帧速率"
+
+#: app/card/adb_setting_cards.py:654
+msgid "最近一次错误"
+msgstr "最近一次错误"
+
+#: app/card/adb_setting_cards.py:714
+msgid "高级设置"
+msgstr "高级设置"
+
+#: app/card/adb_setting_cards.py:714
+msgid "adb 路径、设备序列号、设备类型和点按时长，一般不需要修改"
+msgstr "adb 路径、设备序列号、设备类型和点按时长，一般不需要修改"
+
+#: app/card/adb_setting_cards.py:718
+msgid "adb 路径"
+msgstr "adb 路径"
+
+#: app/card/adb_setting_cards.py:719
+msgid "选择"
+msgstr "选择"
+
+#: app/card/adb_setting_cards.py:720
+msgid "自动查找"
+msgstr "自动查找"
+
+#: app/card/adb_setting_cards.py:725
+msgid "设备序列号"
+msgstr "设备序列号"
+
+#: app/card/adb_setting_cards.py:730
+msgid "设备类型"
+msgstr "设备类型"
+
+#: app/card/adb_setting_cards.py:731
+msgid "自动判断适合绝大多数设备。实体机使用独立的虚拟屏，模拟器直接使用模拟器画面（需要 Android 14）"
+msgstr "自动判断适合绝大多数设备。实体机使用独立的虚拟屏，模拟器直接使用模拟器画面（需要 Android 14）"
+
+#: app/card/adb_setting_cards.py:734
+msgid "自动判断"
+msgstr "自动判断"
+
+#: app/card/adb_setting_cards.py:743
+msgid "点按时长（毫秒）"
+msgstr "点按时长（毫秒）"
+
+#: app/card/adb_setting_cards.py:744
+msgid "每次点击按住屏幕的时间，默认 50。点击经常没有反应时可以适当调大"
+msgstr "每次点击按住屏幕的时间，默认 50。点击经常没有反应时可以适当调大"
+
+#: app/card/adb_setting_cards.py:768
+msgid "自动查找（先找 PATH，再找常见模拟器的安装目录）"
+msgstr "自动查找（先找 PATH，再找常见模拟器的安装目录）"
+
+#: app/card/adb_setting_cards.py:780
+msgid "选择 adb"
+msgstr "选择 adb"
+
+#: app/card/adb_setting_cards.py:786
+msgid "留空表示自动选择"
+msgstr "留空表示自动选择"
+
+#: app/main_window.py:1026
+msgid "Android 设备不需要单独启动游戏"
+msgstr "Android 设备不需要单独启动游戏"
+
+#: app/main_window.py:1027
+msgid "运行任务时会自动在设备上启动游戏"
+msgstr "运行任务时会自动在设备上启动游戏"
+
+#: app/setting_interface.py:1030
+msgid "Android 设备设置"
+msgstr "Android 设备设置"
+
+#: app/setting_interface.py:2940
+msgid "安卓设备"
+msgstr "安卓设备"
+
+#: app/setting_interface.py:3091
+msgid "请先停止任务，再切换设备后端"
+msgstr "请先停止任务，再切换设备后端"
+
+#: app/setting_interface.py:3106
+msgid "环境检查会占用设备，请等任务结束后再检查"
+msgstr "环境检查会占用设备，请等任务结束后再检查"
+
+#: app/tools/adb_service.py:142
+msgid ""
+"手机上会弹出“允许 USB 调试吗？”，勾选“一律允许”后点“确定”。没有弹窗时重新插拔数据线，或在开发者选项里点“撤销 USB 调试授权”后再连接。"
+msgstr ""
+"手机上会弹出“允许 USB 调试吗？”，勾选“一律允许”后点“确定”。没有弹窗时重新插拔数据线，或在开发者选项里点“撤销 USB 调试授权”后再连接。"
+
+#: app/tools/adb_service.py:145
+msgid ""
+"安装 Android Platform-Tools 并把它加入 PATH，或在“高级设置”里指定 adb 的位置。装有 MuMu "
+"等模拟器时会自动使用模拟器自带的 adb。"
+msgstr ""
+"安装 Android Platform-Tools 并把它加入 PATH，或在“高级设置”里指定 adb 的位置。装有 MuMu "
+"等模拟器时会自动使用模拟器自带的 adb。"
+
+#: app/tools/adb_service.py:147
+msgid ""
+"电脑上还有另一个版本的 adb（常见于模拟器和手机助手）在抢占服务端。关闭这些程序，或在“高级设置”里把 adb 路径改成它们使用的那一个，然后重试。"
+msgstr ""
+"电脑上还有另一个版本的 adb（常见于模拟器和手机助手）在抢占服务端。关闭这些程序，或在“高级设置”里把 adb 路径改成它们使用的那一个，然后重试。"
+
+#: app/tools/adb_service.py:149
+msgid "adb 没有响应。重新插拔数据线或重启模拟器后重试。"
+msgstr "adb 没有响应。重新插拔数据线或重启模拟器后重试。"
+
+#: app/tools/adb_service.py:150
+msgid "adb 命令执行失败。重新插拔数据线或重启模拟器后重试。"
+msgstr "adb 命令执行失败。重新插拔数据线或重启模拟器后重试。"
+
+#: app/tools/adb_service.py:151
+msgid ""
+"用数据线连接手机，并在开发者选项里打开“USB 调试”。模拟器请在“Android 设备”里输入地址连接，MuMu 默认是 "
+"127.0.0.1:16384。"
+msgstr ""
+"用数据线连接手机，并在开发者选项里打开“USB 调试”。模拟器请在“Android 设备”里输入地址连接，MuMu 默认是 "
+"127.0.0.1:16384。"
+
+#: app/tools/adb_service.py:153
+msgid "检测到多台设备，请在“Android 设备”里选择要使用的那一台。"
+msgstr "检测到多台设备，请在“Android 设备”里选择要使用的那一台。"
+
+#: app/tools/adb_service.py:154
+msgid "设备已连接但还不能使用。重新插拔数据线或重启模拟器，然后点“刷新”。"
+msgstr "设备已连接但还不能使用。重新插拔数据线或重启模拟器，然后点“刷新”。"
+
+#: app/tools/adb_service.py:155
+msgid "ADB 模式需要 Android 10 或更高版本，请换一台设备，或改用模拟器。"
+msgstr "ADB 模式需要 Android 10 或更高版本，请换一台设备，或改用模拟器。"
+
+#: app/tools/adb_service.py:156
+msgid "读不到设备的屏幕分辨率。解锁设备并保持亮屏后重试。"
+msgstr "读不到设备的屏幕分辨率。解锁设备并保持亮屏后重试。"
+
+#: app/tools/adb_service.py:157
+msgid "请在“高级设置”里重新选择设备类型。"
+msgstr "请在“高级设置”里重新选择设备类型。"
+
+#: app/tools/adb_service.py:158
+msgid "在模拟器设置里把分辨率改成 1280×720（横屏、240 DPI），重启模拟器后重试。"
+msgstr "在模拟器设置里把分辨率改成 1280×720（横屏、240 DPI），重启模拟器后重试。"
+
+#: app/tools/adb_service.py:159
+msgid "这台模拟器的 Android 版本低于 14，不能直接使用模拟器画面。请在“高级设置”里把设备类型改回“自动判断”。"
+msgstr "这台模拟器的 Android 版本低于 14，不能直接使用模拟器画面。请在“高级设置”里把设备类型改回“自动判断”。"
+
+#: app/tools/adb_service.py:161
+msgid "在设备上安装国服《崩坏：星穹铁道》，并先手动登录一次账号。"
+msgstr "在设备上安装国服《崩坏：星穹铁道》，并先手动登录一次账号。"
+
+#: app/tools/adb_service.py:162
+msgid ""
+"缺少设备端服务文件。请重新解压完整的程序包；从源码运行时先在 Android 目录执行 gradlew :device-"
+"service:assemble。"
+msgstr ""
+"缺少设备端服务文件。请重新解压完整的程序包；从源码运行时先在 Android 目录执行 gradlew :device-"
+"service:assemble。"
+
+#: app/tools/adb_service.py:164
+msgid "设备正被另一个任务占用，或上一次运行还在收尾。等十几秒后重试；有任务在运行时先等它结束。"
+msgstr "设备正被另一个任务占用，或上一次运行还在收尾。等十几秒后重试；有任务在运行时先等它结束。"
+
+#: app/tools/adb_service.py:166
+msgid "设备端服务没能启动。重新插拔数据线后重试，仍然失败时重启设备。"
+msgstr "设备端服务没能启动。重新插拔数据线后重试，仍然失败时重启设备。"
+
+#: app/tools/adb_service.py:167
+msgid "设备端服务和本程序的版本不一致，请把程序更新到最新版本后重试。"
+msgstr "设备端服务和本程序的版本不一致，请把程序更新到最新版本后重试。"
+
+#: app/tools/adb_service.py:169
+msgid "系统拒绝了触摸注入。小米、红米手机请在开发者选项里打开“USB 调试（安全设置）”，其他品牌请打开名称相近的开关，然后重新插拔数据线。"
+msgstr "系统拒绝了触摸注入。小米、红米手机请在开发者选项里打开“USB 调试（安全设置）”，其他品牌请打开名称相近的开关，然后重新插拔数据线。"
+
+#: app/tools/adb_service.py:171
+msgid "在手机屏幕或模拟器窗口里完成登录，然后重新运行任务。登录界面这时留在手机屏幕上是正常现象。"
+msgstr "在手机屏幕或模拟器窗口里完成登录，然后重新运行任务。登录界面这时留在手机屏幕上是正常现象。"
+
+#: app/tools/adb_service.py:173
+msgid "设备连接断开了。检查数据线，或确认模拟器还在运行，重新连接后再运行任务。"
+msgstr "设备连接断开了。检查数据线，或确认模拟器还在运行，重新连接后再运行任务。"
+
+#: app/tools/adb_service.py:174
+msgid "游戏进程被关闭了，可能是系统清理了后台。请把游戏加入自启动和省电白名单，不要在最近任务里一键清理，然后重新运行任务。"
+msgstr "游戏进程被关闭了，可能是系统清理了后台。请把游戏加入自启动和省电白名单，不要在最近任务里一键清理，然后重新运行任务。"
+
+#: app/tools/adb_service.py:176
+msgid "游戏没能回到虚拟屏。请在设备上结束游戏，然后重新运行任务。"
+msgstr "游戏没能回到虚拟屏。请在设备上结束游戏，然后重新运行任务。"
+
+#: app/tools/adb_service.py:177
+msgid "游戏没有在限定时间内进入主界面。请确认账号已登录、网络正常，必要时先在设备上手动进入一次游戏。"
+msgstr "游戏没有在限定时间内进入主界面。请确认账号已登录、网络正常，必要时先在设备上手动进入一次游戏。"
+
+#: app/tools/adb_service.py:179
+msgid "长时间取不到新的游戏画面。请确认设备没有锁屏，然后重新运行任务。"
+msgstr "长时间取不到新的游戏画面。请确认设备没有锁屏，然后重新运行任务。"
+
+#: app/tools/adb_service.py:180
+msgid "这个任务只能在本地或云游戏后端运行，请切换设备后端后再运行。"
+msgstr "这个任务只能在本地或云游戏后端运行，请切换设备后端后再运行。"
+
+#: app/tools/adb_service.py:181
+msgid "请在 Android 设备上通过游戏自带的更新流程更新游戏。"
+msgstr "请在 Android 设备上通过游戏自带的更新流程更新游戏。"
+
+#: app/tools/adb_service.py:182
+msgid "ADB 模式不能代替你输入文字，请在设备上手动输入。"
+msgstr "ADB 模式不能代替你输入文字，请在设备上手动输入。"
+
+#: app/tools/adb_service.py:183
+msgid "请在本页把设备后端重新选择为“Android 设备（ADB）”。"
+msgstr "请在本页把设备后端重新选择为“Android 设备（ADB）”。"
+
+#: app/tools/adb_service.py:184
+msgid "请在“高级设置”里把点按时长改为 1 到 10000 毫秒之间的整数。"
+msgstr "请在“高级设置”里把点按时长改为 1 到 10000 毫秒之间的整数。"
+
+#: app/tools/adb_service.py:186
+msgid "请按提示处理后重试。仍然失败时，把日志页的内容发给开发者。"
+msgstr "请按提示处理后重试。仍然失败时，把日志页的内容发给开发者。"
+
+#: app/tools/adb_service.py:193
+msgid "adb 工具"
+msgstr "adb 工具"
+
+#: app/tools/adb_service.py:194
+msgid "adb 服务端"
+msgstr "adb 服务端"
+
+#: app/tools/adb_service.py:195
+msgid "设备连接与 USB 调试授权"
+msgstr "设备连接与 USB 调试授权"
+
+#: app/tools/adb_service.py:196
+msgid "Android 版本"
+msgstr "Android 版本"
+
+#: app/tools/adb_service.py:197
+msgid "触摸注入权限"
+msgstr "触摸注入权限"
+
+#: app/tools/adb_service.py:200
+msgid "游戏安装"
+msgstr "游戏安装"
+
+#: app/tools/adb_service.py:201
+msgid "模拟器分辨率"
+msgstr "模拟器分辨率"
+
+#: app/tools/adb_service.py:229
+msgid "没能读到系统的触摸注入权限"
+msgstr "没能读到系统的触摸注入权限"
+
+#: app/tools/adb_service.py:229
+msgid "可以先运行任务试试。如果提示“拒绝触摸注入”，请在开发者选项里打开“USB 调试（安全设置）”或名称相近的开关。"
+msgstr "可以先运行任务试试。如果提示“拒绝触摸注入”，请在开发者选项里打开“USB 调试（安全设置）”或名称相近的开关。"
+
+#: app/tools/adb_service.py:232
+msgid "已开启“USB 调试（安全设置）”"
+msgstr "已开启“USB 调试（安全设置）”"
+
+#: app/tools/adb_service.py:232
+msgid "系统允许通过 USB 调试注入触摸"
+msgstr "系统允许通过 USB 调试注入触摸"
+
+#: app/tools/adb_service.py:235
+msgid "没有开启“USB 调试（安全设置）”，小助手无法点击游戏"
+msgstr "没有开启“USB 调试（安全设置）”，小助手无法点击游戏"
+
+#: app/tools/adb_service.py:235
+msgid ""
+"打开“设置 → 更多设置 → 开发者选项”，开启“USB 调试（安全设置）”。系统会要求登录小米账号并插入 SIM 卡，开启后重新插拔数据线。"
+msgstr ""
+"打开“设置 → 更多设置 → 开发者选项”，开启“USB 调试（安全设置）”。系统会要求登录小米账号并插入 SIM 卡，开启后重新插拔数据线。"
+
+#: app/tools/adb_service.py:238
+msgid "系统没有允许通过 USB 调试注入触摸，小助手无法点击游戏"
+msgstr "系统没有允许通过 USB 调试注入触摸，小助手无法点击游戏"
+
+#: app/tools/adb_service.py:238
+msgid "在开发者选项里打开“USB 调试（安全设置）”“禁止权限监控”或名称相近的开关，然后重新插拔数据线。"
+msgstr "在开发者选项里打开“USB 调试（安全设置）”“禁止权限监控”或名称相近的开关，然后重新插拔数据线。"
+
+#: app/tools/adb_service.py:245
+msgid "模拟器分辨率为 1280×720"
+msgstr "模拟器分辨率为 1280×720"
+
+#: app/tools/adb_service.py:246
+msgid "模拟器当前分辨率为 {width}×{height}"
+msgstr "模拟器当前分辨率为 {width}×{height}"
+
+#: app/tools/adb_service.py:249
+msgid "这台模拟器会改用独立的虚拟屏运行，当前分辨率不影响使用。想直接使用模拟器画面时，再把分辨率改成 1280×720 横屏。"
+msgstr "这台模拟器会改用独立的虚拟屏运行，当前分辨率不影响使用。想直接使用模拟器画面时，再把分辨率改成 1280×720 横屏。"
+
+#: app/tools/adb_service.py:276
+msgid "前面的检查没有通过，这一项还没检查"
+msgstr "前面的检查没有通过，这一项还没检查"
+
+#: app/tools/adb_service.py:291
+msgid "adb 服务端刚被重启，电脑上还有其他版本的 adb 在运行"
+msgstr "adb 服务端刚被重启，电脑上还有其他版本的 adb 在运行"
+
+#: app/tools/adb_service.py:299
+msgid "没有其他版本的 adb 抢占服务端"
+msgstr "没有其他版本的 adb 抢占服务端"
+
+#: app/tools/adb_service.py:306
+msgid "{name} 已连接并授权"
+msgstr "{name} 已连接并授权"
+
+#: app/tools/adb_service.py:307
+msgid "设备"
+msgstr "设备"
+
+#: app/tools/adb_service.py:315
+msgid "{name}（{serial}）已连接并授权"
+msgstr "{name}（{serial}）已连接并授权"
+
+#: app/tools/adb_service.py:317
+msgid "Android {version}（API {sdk}）"
+msgstr "Android {version}（API {sdk}）"
+
+#: app/tools/adb_service.py:322
+msgid "已安装国服《崩坏：星穹铁道》"
+msgstr "已安装国服《崩坏：星穹铁道》"
+
+#: app/tools/adb_service.py:324
+msgid "设备上没有安装国服《崩坏：星穹铁道》"
+msgstr "设备上没有安装国服《崩坏：星穹铁道》"
+
+#: app/tools/adb_service.py:336
+msgid "设备端服务已启动，版本 {version}"
+msgstr "设备端服务已启动，版本 {version}"
+
+#: app/tools/adb_service.py:343
+msgid "直接使用模拟器画面（display 0），不需要虚拟屏"
+msgstr "直接使用模拟器画面（display 0），不需要虚拟屏"
+
+#: app/tools/adb_service.py:345
+msgid "已建立 1280×720 虚拟屏（display {display}），检查结束后释放"
+msgstr "已建立 1280×720 虚拟屏（display {display}），检查结束后释放"

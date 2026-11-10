@@ -13,6 +13,7 @@ from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAc
 from .card.autostart_setting_card import AutostartSettingCard
 from .card.uac_free_setting_card import UacFreeSettingCard
 from .card.game_path_setting_card import GamePathSettingCard
+from .card.adb_setting_cards import AdbBackendSettingCard, AdbDeviceCard, AdbEnvironmentCard, AdbStatusCard, AdbAdvancedCard
 from .card.rangesettingcard1 import RangeSettingCard1
 from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, TriplePushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
@@ -21,6 +22,8 @@ from .card.messagebox_custom import MessageBoxEdit
 from .challenge_config_dialog import ChallengeConfigCard
 from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
+from .tools import adb_service
+from utils.desktop_twin import in_desktop_twin
 from module.notification import init_notifiers
 from module.localization import tr, tn
 from module.localization.languages import AUTO_LANGUAGE, available_languages
@@ -1023,6 +1026,13 @@ class SettingInterface(ScrollArea):
         #     None,
         #     "browser_dump_cookies_enable"
         # )
+
+        self.AdbGroup = SettingCardGroup(tr("Android 设备设置"), self.scrollWidget)
+        self.adbBackendCard = AdbBackendSettingCard(blocker=self.__blockBackendChange)
+        self.adbDeviceCard = AdbDeviceCard()
+        self.adbEnvironmentCard = AdbEnvironmentCard(blocker=self.__blockAdbCheck)
+        self.adbStatusCard = AdbStatusCard()
+        self.adbAdvancedCard = AdbAdvancedCard()
 
         self.ProgramGroup = SettingCardGroup(tr('程序设置'), self.scrollWidget)
         self.logLevelCard = ComboBoxSettingCardLog(
@@ -2827,6 +2837,12 @@ class SettingInterface(ScrollArea):
         # self.CloudGameGroup.addSettingCard(self.browserScaleCard)
         # self.CloudGameGroup.addSettingCard(self.browserLaunchArgCard)
 
+        self.AdbGroup.addSettingCard(self.adbBackendCard)
+        self.AdbGroup.addSettingCard(self.adbDeviceCard)
+        self.AdbGroup.addSettingCard(self.adbEnvironmentCard)
+        self.AdbGroup.addSettingCard(self.adbStatusCard)
+        self.AdbGroup.addSettingCard(self.adbAdvancedCard)
+
         self.ProgramGroup.addSettingCard(self.logLevelCard)
         self.ProgramGroup.addSettingCard(self.gamePathCard)
         self.ProgramGroup.addSettingCard(self.updateViaLauncherEnableCard)
@@ -2921,6 +2937,7 @@ class SettingInterface(ScrollArea):
 
         self.addSubInterface(self.ProgramGroup, 'programInterface', tr('程序'))
         self.addSubInterface(self.CloudGameGroup, "cloudGameInterface", tr('云游戏'))
+        self.addSubInterface(self.AdbGroup, "adbInterface", tr('安卓设备'))
         self.addSubInterface(self.NotifyGroup, 'NotifyInterface', tr('推送'))
         self.addSubInterface(self.MiscGroup, 'KeybindingInterface', tr('杂项'))
         if sys.platform == 'win32':
@@ -3049,8 +3066,75 @@ class SettingInterface(ScrollArea):
         connect_expand_state(self.gameOptimizationCard)
         connect_expand_state(self.browserTypeCard)
         connect_expand_state(self.browserHeadlessCard)
+        for adb_card in (self.adbDeviceCard, self.adbEnvironmentCard, self.adbStatusCard, self.adbAdvancedCard):
+            connect_expand_state(adb_card)
+        self.adbBackendCard.backendChanged.connect(self.__onBackendChanged)
+        self.cloudGameEnableCard.switchButton.checkedChanged.connect(self.__onCloudGameSwitchChanged)
+        self.adbDeviceCard.serialChanged.connect(lambda _serial: self.adbAdvancedCard.refreshSerial())
+        self.adbAdvancedCard.serialChanged.connect(self.adbDeviceCard.setSelectedSerial)
         self.universeEnableCard.switchChanged.connect(self.__onUniverseEnableCardSwitchChanged)
         self.checkUpdateCard.switchButton.checkedChanged.connect(self.__onCheckUpdateCardSwitchChanged)
+
+    def __isTaskRunning(self):
+        log_interface = getattr(self.parent, 'logInterface', None)
+        try:
+            return bool(log_interface is not None and log_interface.isTaskRunning())
+        except Exception:
+            return False
+
+    def __blockBackendChange(self, _backend):
+        """任务进程会随时重读配置，运行中切换后端会让它中途换到另一台设备。"""
+        if not self.__isTaskRunning():
+            return False
+        InfoBar.warning(
+            title=tr('任务正在运行'),
+            content=tr('请先停止任务，再切换设备后端'),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=5000,
+            parent=self
+        )
+        return True
+
+    def __blockAdbCheck(self):
+        """环境检查要启动设备端服务，和正在运行的任务会互相抢占设备。"""
+        if not self.__isTaskRunning():
+            return False
+        InfoBar.warning(
+            title=tr('任务正在运行'),
+            content=tr('环境检查会占用设备，请等任务结束后再检查'),
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=5000,
+            parent=self
+        )
+        return True
+
+    def __onBackendChanged(self, backend):
+        # 旧开关读到的是推导值，这里只同步显示，不再写一次配置。
+        card = self.cloudGameEnableCard
+        card.switchButton.blockSignals(True)
+        try:
+            card.setValue(backend == "cloud")
+        finally:
+            card.switchButton.blockSignals(False)
+        card._acceptedValue = backend == "cloud"
+        self.adbStatusCard.refresh()
+        if backend == "adb":
+            self.adbDeviceCard.refreshIfNeeded()
+
+    def __onCloudGameSwitchChanged(self, isChecked: bool):
+        """旧开关在显式后端（ADB）生效时不起作用，这里清掉显式后端让它重新生效。"""
+        if in_desktop_twin():
+            return
+        backend = "cloud" if isChecked else "local"
+        changes = adb_service.backend_changes(backend)
+        if changes:
+            cfg.set_values(changes)
+        self.adbBackendCard.setBackend(adb_service.current_backend())
+        self.adbStatusCard.refresh()
 
     def __onUniverseEnableCardSwitchChanged(self, isChecked: bool):
         if self._ignoreUniverseEnableCardSwitchChanged:

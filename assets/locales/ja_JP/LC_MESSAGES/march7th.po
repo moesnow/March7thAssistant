@@ -7152,3 +7152,660 @@ msgid ""
 msgstr ""
 "display 0 のタッチ先の検証には Android 14 以降が必要です。仮想ディスプレイを使うには adb_device_type: "
 "physical を設定してください。"
+
+#: app/card/adb_setting_cards.py:71
+msgid "设备后端"
+msgstr "デバイスバックエンド"
+
+#: app/card/adb_setting_cards.py:72
+msgid "选择小助手操作哪里的游戏，对下一次运行的任务生效"
+msgstr "アシスタントが操作するゲームの場所を選びます。次に実行するタスクから反映されます"
+
+#: app/card/adb_setting_cards.py:77
+msgid "本地游戏"
+msgstr "ローカルゲーム"
+
+#: app/card/adb_setting_cards.py:78
+msgid "云·星穹铁道"
+msgstr "クラウド・崩壊：スターレイル"
+
+#: app/card/adb_setting_cards.py:79
+msgid "Android 设备（ADB）"
+msgstr "Android デバイス（ADB）"
+
+#: app/card/adb_setting_cards.py:227
+msgid "实体机"
+msgstr "実機"
+
+#: app/card/adb_setting_cards.py:227
+msgid "模拟器"
+msgstr "エミュレーター"
+
+#: app/card/adb_setting_cards.py:232
+msgid "未授权 USB 调试"
+msgstr "USB デバッグ未許可"
+
+#: app/card/adb_setting_cards.py:233
+msgid "离线"
+msgstr "オフライン"
+
+#: app/card/adb_setting_cards.py:234
+msgid "等待授权"
+msgstr "許可待ち"
+
+#: app/card/adb_setting_cards.py:235
+msgid "没有访问权限"
+msgstr "アクセス権限なし"
+
+#: app/card/adb_setting_cards.py:241
+msgid "序列号 {serial}"
+msgstr "シリアル番号 {serial}"
+
+#: app/card/adb_setting_cards.py:257
+msgid "Android 设备"
+msgstr "Android デバイス"
+
+#: app/card/adb_setting_cards.py:257
+msgid "自动选择"
+msgstr "自動選択"
+
+#: app/card/adb_setting_cards.py:261
+msgid "点“刷新”查找已连接的设备"
+msgstr "「更新」を押して接続中のデバイスを検索します"
+
+#: app/card/adb_setting_cards.py:275
+msgid "模拟器地址，例如 {address}"
+msgstr "エミュレーターのアドレス（例：{address}）"
+
+#: app/card/adb_setting_cards.py:278
+msgid "连接"
+msgstr "接続"
+
+#: app/card/adb_setting_cards.py:279
+msgid "手动连接"
+msgstr "手動接続"
+
+#: app/card/adb_setting_cards.py:280
+msgid "模拟器和无线调试需要输入地址。MuMu 默认是 127.0.0.1:16384"
+msgstr "エミュレーターとワイヤレスデバッグではアドレスの入力が必要です。MuMu の既定値は 127.0.0.1:16384 です"
+
+#: app/card/adb_setting_cards.py:327
+msgid "正在刷新…"
+msgstr "更新中…"
+
+#: app/card/adb_setting_cards.py:337
+msgid "没有发现设备"
+msgstr "デバイスが見つかりません"
+
+#: app/card/adb_setting_cards.py:352
+msgid "地址格式不对"
+msgstr "アドレスの形式が正しくありません"
+
+#: app/card/adb_setting_cards.py:352
+msgid "请输入“IP:端口”，例如 {address}"
+msgstr "「IP:ポート」の形式で入力してください（例：{address}）"
+
+#: app/card/adb_setting_cards.py:389
+msgid "自动选择：{name}"
+msgstr "自動選択：{name}"
+
+#: app/card/adb_setting_cards.py:391
+msgid "自动选择（只连接了一台设备时可用）"
+msgstr "自動選択（接続中のデバイスが 1 台のときのみ）"
+
+#: app/card/adb_setting_cards.py:395
+msgid "{serial}（未连接）"
+msgstr "{serial}（未接続）"
+
+#: app/card/adb_setting_cards.py:397
+msgid "{name}（{serial}）"
+msgstr "{name}（{serial}）"
+
+#: app/card/adb_setting_cards.py:426
+msgid "只连接了一台设备时直接使用它"
+msgstr "接続中のデバイスが 1 台だけのとき、そのデバイスを使います"
+
+#: app/card/adb_setting_cards.py:440
+msgid "当前没有连接这台设备"
+msgstr "このデバイスは現在接続されていません"
+
+#: app/card/adb_setting_cards.py:472
+msgid "环境检查"
+msgstr "環境チェック"
+
+#: app/card/adb_setting_cards.py:473
+msgid "逐项检查电脑和设备能不能运行，不会启动游戏"
+msgstr "PC とデバイスが実行できる状態かを項目ごとに確認します。ゲームは起動しません"
+
+#: app/card/adb_setting_cards.py:478
+msgid "开始检查"
+msgstr "チェック開始"
+
+#: app/card/adb_setting_cards.py:489
+msgid "还没有检查"
+msgstr "未チェック"
+
+#: app/card/adb_setting_cards.py:507
+msgid "正在检查…"
+msgstr "チェック中…"
+
+#: app/card/adb_setting_cards.py:512
+msgid "正在检查，通常几秒钟就能完成"
+msgstr "チェック中です。通常は数秒で終わります"
+
+#: app/card/adb_setting_cards.py:540
+msgid "重新检查"
+msgstr "再チェック"
+
+#: app/card/adb_setting_cards.py:543
+msgid "这一项没有检查"
+msgstr "この項目はチェックされませんでした"
+
+#: app/card/adb_setting_cards.py:548
+msgid "检查中断：{error}"
+msgstr "チェックが中断されました：{error}"
+
+#: app/card/adb_setting_cards.py:550
+msgid "有 {count} 项没有通过，请按提示处理后重新检查"
+msgstr "{count} 項目が不合格です。案内に従って対処してから再チェックしてください"
+
+#: app/card/adb_setting_cards.py:552
+msgid "可以运行，有 {count} 项需要留意"
+msgstr "実行できます。{count} 項目に注意が必要です"
+
+#: app/card/adb_setting_cards.py:554
+msgid "全部通过，可以运行任务"
+msgstr "すべて合格です。タスクを実行できます"
+
+#: app/card/adb_setting_cards.py:563
+msgid "没有错误"
+msgstr "エラーなし"
+
+#: app/card/adb_setting_cards.py:565
+msgid "运行任务后，这里会显示设备的状态"
+msgstr "タスクを実行すると、ここにデバイスの状態が表示されます"
+
+#: app/card/adb_setting_cards.py:565
+msgid "没有使用 Android 设备后端"
+msgstr "Android デバイスのバックエンドは使用していません"
+
+#: app/card/adb_setting_cards.py:567
+msgid "未启动"
+msgstr "未起動"
+
+#: app/card/adb_setting_cards.py:568
+msgid "未建立"
+msgstr "未作成"
+
+#: app/card/adb_setting_cards.py:569
+msgid "游戏未运行"
+msgstr "ゲームは起動していません"
+
+#: app/card/adb_setting_cards.py:580
+msgid "已连接 {serial}"
+msgstr "{serial} に接続済み"
+
+#: app/card/adb_setting_cards.py:581
+msgid "运行中，版本 {version}"
+msgstr "実行中（バージョン {version}）"
+
+#: app/card/adb_setting_cards.py:584
+msgid "正在连接…"
+msgstr "接続中…"
+
+#: app/card/adb_setting_cards.py:585
+msgid "正在启动…"
+msgstr "起動中…"
+
+#: app/card/adb_setting_cards.py:593
+msgid "不使用虚拟屏，直接用模拟器画面"
+msgstr "仮想ディスプレイは使わず、エミュレーターの画面を直接使います"
+
+#: app/card/adb_setting_cards.py:595
+msgid "1280×720，display {display}"
+msgstr "1280×720、display {display}"
+
+#: app/card/adb_setting_cards.py:600
+msgid "停在登录界面，等待手动登录"
+msgstr "ログイン画面で停止中。手動ログインを待っています"
+
+#: app/card/adb_setting_cards.py:604
+msgid "在模拟器的其他窗口，正在移回"
+msgstr "エミュレーターの別ウィンドウにあります。移動中です"
+
+#: app/card/adb_setting_cards.py:606
+msgid "被登录界面带回了实体屏"
+msgstr "ログイン画面によって実機の画面に移されました"
+
+#: app/card/adb_setting_cards.py:606
+msgid "游戏启动时，登录界面会把游戏短暂带回手机屏幕，登录完成后小助手会自动把它移回虚拟屏。这段时间手机上出现游戏画面是正常现象，不需要操作。"
+msgstr ""
+"ゲームの起動時、ログイン画面がゲームを一時的に端末の画面へ移します。ログインが終わると、アシスタントが自動で仮想ディスプレイに戻します。この間に端末にゲーム画面が表示されるのは正常で、操作は不要です。"
+
+#: app/card/adb_setting_cards.py:610
+msgid "模拟器画面"
+msgstr "エミュレーターの画面"
+
+#: app/card/adb_setting_cards.py:612
+msgid "虚拟屏，手机屏幕可以照常使用"
+msgstr "仮想ディスプレイ。端末の画面は普段どおり使えます"
+
+#: app/card/adb_setting_cards.py:616
+msgid "{fps:.1f} 帧/秒"
+msgstr "{fps:.1f} フレーム/秒"
+
+#: app/card/adb_setting_cards.py:618
+msgid "暂时没有取帧"
+msgstr "現在フレームを取得していません"
+
+#: app/card/adb_setting_cards.py:625
+msgid "任务正在启动"
+msgstr "タスクを起動中"
+
+#: app/card/adb_setting_cards.py:627
+msgid "任务遇到问题，请看“最近一次错误”"
+msgstr "タスクで問題が発生しました。「直近のエラー」を確認してください"
+
+#: app/card/adb_setting_cards.py:629
+msgid "上次运行出错，请看“最近一次错误”"
+msgstr "前回の実行でエラーが発生しました。「直近のエラー」を確認してください"
+
+#: app/card/adb_setting_cards.py:631
+msgid "上次运行已被停止"
+msgstr "前回の実行は停止されました"
+
+#: app/card/adb_setting_cards.py:633
+msgid "上次运行的进程已退出"
+msgstr "前回の実行のプロセスは終了しました"
+
+#: app/card/adb_setting_cards.py:635
+msgid "上次运行正常结束"
+msgstr "前回の実行は正常に終了しました"
+
+#: app/card/adb_setting_cards.py:643
+msgid "运行状态"
+msgstr "実行状態"
+
+#: app/card/adb_setting_cards.py:649
+msgid "设备连接"
+msgstr "デバイス接続"
+
+#: app/card/adb_setting_cards.py:650
+msgid "设备端服务"
+msgstr "デバイスサービス"
+
+#: app/card/adb_setting_cards.py:651
+msgid "虚拟屏"
+msgstr "仮想ディスプレイ"
+
+#: app/card/adb_setting_cards.py:652
+msgid "游戏所在的显示器"
+msgstr "ゲームのある画面"
+
+#: app/card/adb_setting_cards.py:653
+msgid "取帧速率"
+msgstr "取得速度"
+
+#: app/card/adb_setting_cards.py:654
+msgid "最近一次错误"
+msgstr "直近のエラー"
+
+#: app/card/adb_setting_cards.py:714
+msgid "高级设置"
+msgstr "詳細設定"
+
+#: app/card/adb_setting_cards.py:714
+msgid "adb 路径、设备序列号、设备类型和点按时长，一般不需要修改"
+msgstr "adb のパス、デバイスのシリアル番号、デバイスの種類、タップ時間。通常は変更不要です"
+
+#: app/card/adb_setting_cards.py:718
+msgid "adb 路径"
+msgstr "adb のパス"
+
+#: app/card/adb_setting_cards.py:719
+msgid "选择"
+msgstr "選択"
+
+#: app/card/adb_setting_cards.py:720
+msgid "自动查找"
+msgstr "自動検出"
+
+#: app/card/adb_setting_cards.py:725
+msgid "设备序列号"
+msgstr "デバイスのシリアル番号"
+
+#: app/card/adb_setting_cards.py:730
+msgid "设备类型"
+msgstr "デバイスの種類"
+
+#: app/card/adb_setting_cards.py:731
+msgid "自动判断适合绝大多数设备。实体机使用独立的虚拟屏，模拟器直接使用模拟器画面（需要 Android 14）"
+msgstr ""
+"ほとんどのデバイスは自動判定で問題ありません。実機は独立した仮想ディスプレイを使い、エミュレーターはエミュレーターの画面を直接使います（Android "
+"14 が必要）"
+
+#: app/card/adb_setting_cards.py:734
+msgid "自动判断"
+msgstr "自動判定"
+
+#: app/card/adb_setting_cards.py:743
+msgid "点按时长（毫秒）"
+msgstr "タップ時間（ミリ秒）"
+
+#: app/card/adb_setting_cards.py:744
+msgid "每次点击按住屏幕的时间，默认 50。点击经常没有反应时可以适当调大"
+msgstr "1 回のタップで画面を押し続ける時間です。既定値は 50。タップが効かないことが多い場合は大きくしてください"
+
+#: app/card/adb_setting_cards.py:768
+msgid "自动查找（先找 PATH，再找常见模拟器的安装目录）"
+msgstr "自動検出（まず PATH、次に主なエミュレーターのインストール先）"
+
+#: app/card/adb_setting_cards.py:780
+msgid "选择 adb"
+msgstr "adb を選択"
+
+#: app/card/adb_setting_cards.py:786
+msgid "留空表示自动选择"
+msgstr "空欄にすると自動選択になります"
+
+#: app/main_window.py:1026
+msgid "Android 设备不需要单独启动游戏"
+msgstr "Android デバイスではゲームを個別に起動する必要はありません"
+
+#: app/main_window.py:1027
+msgid "运行任务时会自动在设备上启动游戏"
+msgstr "タスクを実行すると、デバイス上でゲームが自動的に起動します"
+
+#: app/setting_interface.py:1030
+msgid "Android 设备设置"
+msgstr "Android デバイス設定"
+
+#: app/setting_interface.py:2940
+msgid "安卓设备"
+msgstr "Android デバイス"
+
+#: app/setting_interface.py:3091
+msgid "请先停止任务，再切换设备后端"
+msgstr "タスクを停止してからデバイスバックエンドを切り替えてください"
+
+#: app/setting_interface.py:3106
+msgid "环境检查会占用设备，请等任务结束后再检查"
+msgstr "環境チェックはデバイスを占有します。タスクの終了後に実行してください"
+
+#: app/tools/adb_service.py:142
+msgid ""
+"手机上会弹出“允许 USB 调试吗？”，勾选“一律允许”后点“确定”。没有弹窗时重新插拔数据线，或在开发者选项里点“撤销 USB 调试授权”后再连接。"
+msgstr ""
+"端末に「USB "
+"デバッグを許可しますか？」が表示されます。「常に許可する」にチェックを入れて「OK」を押してください。表示されない場合はケーブルを挿し直すか、開発者向けオプションで「USB"
+" デバッグの許可の取り消し」を押してから接続し直してください。"
+
+#: app/tools/adb_service.py:145
+msgid ""
+"安装 Android Platform-Tools 并把它加入 PATH，或在“高级设置”里指定 adb 的位置。装有 MuMu "
+"等模拟器时会自动使用模拟器自带的 adb。"
+msgstr ""
+"Android Platform-Tools をインストールして PATH に追加するか、「詳細設定」で adb の場所を指定してください。MuMu "
+"などのエミュレーターがインストールされている場合は、付属の adb が自動的に使われます。"
+
+#: app/tools/adb_service.py:147
+msgid ""
+"电脑上还有另一个版本的 adb（常见于模拟器和手机助手）在抢占服务端。关闭这些程序，或在“高级设置”里把 adb 路径改成它们使用的那一个，然后重试。"
+msgstr ""
+"この PC では別バージョンの adb（エミュレーターやスマホ管理ソフトに多い）が ADB "
+"サーバーを奪い合っています。それらのプログラムを終了するか、「詳細設定」の adb のパスをそれらが使うものに合わせてから再試行してください。"
+
+#: app/tools/adb_service.py:149
+msgid "adb 没有响应。重新插拔数据线或重启模拟器后重试。"
+msgstr "adb が応答しません。ケーブルを挿し直すかエミュレーターを再起動してから再試行してください。"
+
+#: app/tools/adb_service.py:150
+msgid "adb 命令执行失败。重新插拔数据线或重启模拟器后重试。"
+msgstr "adb コマンドの実行に失敗しました。ケーブルを挿し直すかエミュレーターを再起動してから再試行してください。"
+
+#: app/tools/adb_service.py:151
+msgid ""
+"用数据线连接手机，并在开发者选项里打开“USB 调试”。模拟器请在“Android 设备”里输入地址连接，MuMu 默认是 "
+"127.0.0.1:16384。"
+msgstr ""
+"ケーブルで端末を接続し、開発者向けオプションで「USB デバッグ」を有効にしてください。エミュレーターは「Android "
+"デバイス」でアドレスを入力して接続します。MuMu の既定値は 127.0.0.1:16384 です。"
+
+#: app/tools/adb_service.py:153
+msgid "检测到多台设备，请在“Android 设备”里选择要使用的那一台。"
+msgstr "複数のデバイスが見つかりました。「Android デバイス」で使用するデバイスを選んでください。"
+
+#: app/tools/adb_service.py:154
+msgid "设备已连接但还不能使用。重新插拔数据线或重启模拟器，然后点“刷新”。"
+msgstr "デバイスは接続されていますが、まだ使用できません。ケーブルを挿し直すかエミュレーターを再起動してから「更新」を押してください。"
+
+#: app/tools/adb_service.py:155
+msgid "ADB 模式需要 Android 10 或更高版本，请换一台设备，或改用模拟器。"
+msgstr "ADB モードには Android 10 以降が必要です。別のデバイスかエミュレーターを使用してください。"
+
+#: app/tools/adb_service.py:156
+msgid "读不到设备的屏幕分辨率。解锁设备并保持亮屏后重试。"
+msgstr "デバイスの画面解像度を読み取れません。ロックを解除して画面を点灯したまま再試行してください。"
+
+#: app/tools/adb_service.py:157
+msgid "请在“高级设置”里重新选择设备类型。"
+msgstr "「詳細設定」でデバイスの種類を選び直してください。"
+
+#: app/tools/adb_service.py:158
+msgid "在模拟器设置里把分辨率改成 1280×720（横屏、240 DPI），重启模拟器后重试。"
+msgstr "エミュレーターの設定で解像度を 1280×720（横向き、240 DPI）に変更し、エミュレーターを再起動してから再試行してください。"
+
+#: app/tools/adb_service.py:159
+msgid "这台模拟器的 Android 版本低于 14，不能直接使用模拟器画面。请在“高级设置”里把设备类型改回“自动判断”。"
+msgstr ""
+"このエミュレーターの Android は 14 "
+"未満のため、エミュレーターの画面を直接使用できません。「詳細設定」でデバイスの種類を「自動判定」に戻してください。"
+
+#: app/tools/adb_service.py:161
+msgid "在设备上安装国服《崩坏：星穹铁道》，并先手动登录一次账号。"
+msgstr "デバイスに中国本土版の『崩壊：スターレイル』をインストールし、一度手動でログインしてください。"
+
+#: app/tools/adb_service.py:162
+msgid ""
+"缺少设备端服务文件。请重新解压完整的程序包；从源码运行时先在 Android 目录执行 gradlew :device-"
+"service:assemble。"
+msgstr ""
+"デバイスサービスのファイルがありません。完全なパッケージを展開し直してください。ソースから実行する場合は、先に Android フォルダーで "
+"gradlew :device-service:assemble を実行してください。"
+
+#: app/tools/adb_service.py:164
+msgid "设备正被另一个任务占用，或上一次运行还在收尾。等十几秒后重试；有任务在运行时先等它结束。"
+msgstr "デバイスは別のタスクが使用中か、前回の実行の後処理中です。十数秒待って再試行してください。タスクが実行中の場合は終了を待ってください。"
+
+#: app/tools/adb_service.py:166
+msgid "设备端服务没能启动。重新插拔数据线后重试，仍然失败时重启设备。"
+msgstr "デバイスサービスを起動できませんでした。ケーブルを挿し直して再試行し、それでも失敗する場合はデバイスを再起動してください。"
+
+#: app/tools/adb_service.py:167
+msgid "设备端服务和本程序的版本不一致，请把程序更新到最新版本后重试。"
+msgstr "デバイスサービスと本アプリのバージョンが一致しません。アプリを最新バージョンに更新してから再試行してください。"
+
+#: app/tools/adb_service.py:169
+msgid "系统拒绝了触摸注入。小米、红米手机请在开发者选项里打开“USB 调试（安全设置）”，其他品牌请打开名称相近的开关，然后重新插拔数据线。"
+msgstr ""
+"システムがタッチ入力を拒否しました。Xiaomi・Redmi 端末は開発者向けオプションで「USB "
+"デバッグ（セキュリティ設定）」を有効にしてください。他のメーカーは似た名前のスイッチを有効にし、ケーブルを挿し直してください。"
+
+#: app/tools/adb_service.py:171
+msgid "在手机屏幕或模拟器窗口里完成登录，然后重新运行任务。登录界面这时留在手机屏幕上是正常现象。"
+msgstr ""
+"端末の画面またはエミュレーターのウィンドウでログインを済ませてから、タスクを再実行してください。このときログイン画面が端末の画面に残るのは正常です。"
+
+#: app/tools/adb_service.py:173
+msgid "设备连接断开了。检查数据线，或确认模拟器还在运行，重新连接后再运行任务。"
+msgstr "デバイスとの接続が切れました。ケーブルを確認するか、エミュレーターが起動しているか確認し、再接続してからタスクを実行してください。"
+
+#: app/tools/adb_service.py:174
+msgid "游戏进程被关闭了，可能是系统清理了后台。请把游戏加入自启动和省电白名单，不要在最近任务里一键清理，然后重新运行任务。"
+msgstr ""
+"ゲームのプロセスが終了しました。システムがバックグラウンドを整理した可能性があります。ゲームを自動起動と省電力の除外リストに追加し、最近のタスクで一括クリアをしないようにしてから、タスクを再実行してください。"
+
+#: app/tools/adb_service.py:176
+msgid "游戏没能回到虚拟屏。请在设备上结束游戏，然后重新运行任务。"
+msgstr "ゲームを仮想ディスプレイに戻せませんでした。デバイスでゲームを終了してから、タスクを再実行してください。"
+
+#: app/tools/adb_service.py:177
+msgid "游戏没有在限定时间内进入主界面。请确认账号已登录、网络正常，必要时先在设备上手动进入一次游戏。"
+msgstr ""
+"ゲームが制限時間内にメイン画面に入りませんでした。アカウントがログイン済みでネットワークが正常か確認し、必要であれば一度デバイスで手動でゲームに入ってください。"
+
+#: app/tools/adb_service.py:179
+msgid "长时间取不到新的游戏画面。请确认设备没有锁屏，然后重新运行任务。"
+msgstr "長時間、新しいゲーム画面を取得できません。デバイスがロックされていないことを確認してから、タスクを再実行してください。"
+
+#: app/tools/adb_service.py:180
+msgid "这个任务只能在本地或云游戏后端运行，请切换设备后端后再运行。"
+msgstr "このタスクはローカルまたはクラウドゲームのバックエンドでのみ実行できます。デバイスバックエンドを切り替えてから実行してください。"
+
+#: app/tools/adb_service.py:181
+msgid "请在 Android 设备上通过游戏自带的更新流程更新游戏。"
+msgstr "Android デバイス上で、ゲーム自体の更新手順でゲームを更新してください。"
+
+#: app/tools/adb_service.py:182
+msgid "ADB 模式不能代替你输入文字，请在设备上手动输入。"
+msgstr "ADB モードでは文字を代わりに入力できません。デバイス上で手動で入力してください。"
+
+#: app/tools/adb_service.py:183
+msgid "请在本页把设备后端重新选择为“Android 设备（ADB）”。"
+msgstr "このページでデバイスバックエンドを「Android デバイス（ADB）」に選び直してください。"
+
+#: app/tools/adb_service.py:184
+msgid "请在“高级设置”里把点按时长改为 1 到 10000 毫秒之间的整数。"
+msgstr "「詳細設定」でタップ時間を 1〜10000 ミリ秒の整数に変更してください。"
+
+#: app/tools/adb_service.py:186
+msgid "请按提示处理后重试。仍然失败时，把日志页的内容发给开发者。"
+msgstr "メッセージに従って対処してから再試行してください。それでも失敗する場合は、ログページの内容を開発者に送ってください。"
+
+#: app/tools/adb_service.py:193
+msgid "adb 工具"
+msgstr "adb ツール"
+
+#: app/tools/adb_service.py:194
+msgid "adb 服务端"
+msgstr "ADB サーバー"
+
+#: app/tools/adb_service.py:195
+msgid "设备连接与 USB 调试授权"
+msgstr "デバイス接続と USB デバッグの許可"
+
+#: app/tools/adb_service.py:196
+msgid "Android 版本"
+msgstr "Android バージョン"
+
+#: app/tools/adb_service.py:197
+msgid "触摸注入权限"
+msgstr "タッチ入力の権限"
+
+#: app/tools/adb_service.py:200
+msgid "游戏安装"
+msgstr "ゲームのインストール"
+
+#: app/tools/adb_service.py:201
+msgid "模拟器分辨率"
+msgstr "エミュレーターの解像度"
+
+#: app/tools/adb_service.py:229
+msgid "没能读到系统的触摸注入权限"
+msgstr "システムのタッチ入力権限を読み取れませんでした"
+
+#: app/tools/adb_service.py:229
+msgid "可以先运行任务试试。如果提示“拒绝触摸注入”，请在开发者选项里打开“USB 调试（安全设置）”或名称相近的开关。"
+msgstr ""
+"まずタスクを実行してみてください。「タッチ入力が拒否されました」と表示された場合は、開発者向けオプションで「USB "
+"デバッグ（セキュリティ設定）」または似た名前のスイッチを有効にしてください。"
+
+#: app/tools/adb_service.py:232
+msgid "已开启“USB 调试（安全设置）”"
+msgstr "「USB デバッグ（セキュリティ設定）」は有効です"
+
+#: app/tools/adb_service.py:232
+msgid "系统允许通过 USB 调试注入触摸"
+msgstr "システムは USB デバッグ経由のタッチ入力を許可しています"
+
+#: app/tools/adb_service.py:235
+msgid "没有开启“USB 调试（安全设置）”，小助手无法点击游戏"
+msgstr "「USB デバッグ（セキュリティ設定）」が無効のため、アシスタントはゲームをタップできません"
+
+#: app/tools/adb_service.py:235
+msgid ""
+"打开“设置 → 更多设置 → 开发者选项”，开启“USB 调试（安全设置）”。系统会要求登录小米账号并插入 SIM 卡，开启后重新插拔数据线。"
+msgstr ""
+"「設定 → 追加設定 → 開発者向けオプション」を開き、「USB デバッグ（セキュリティ設定）」を有効にしてください。Mi アカウントへのログインと "
+"SIM カードの挿入が求められます。有効にした後、ケーブルを挿し直してください。"
+
+#: app/tools/adb_service.py:238
+msgid "系统没有允许通过 USB 调试注入触摸，小助手无法点击游戏"
+msgstr "システムが USB デバッグ経由のタッチ入力を許可していないため、アシスタントはゲームをタップできません"
+
+#: app/tools/adb_service.py:238
+msgid "在开发者选项里打开“USB 调试（安全设置）”“禁止权限监控”或名称相近的开关，然后重新插拔数据线。"
+msgstr ""
+"開発者向けオプションで「USB デバッグ（セキュリティ設定）」「権限監視を無効にする」または似た名前のスイッチを有効にし、ケーブルを挿し直してください。"
+
+#: app/tools/adb_service.py:245
+msgid "模拟器分辨率为 1280×720"
+msgstr "エミュレーターの解像度は 1280×720 です"
+
+#: app/tools/adb_service.py:246
+msgid "模拟器当前分辨率为 {width}×{height}"
+msgstr "エミュレーターの現在の解像度は {width}×{height} です"
+
+#: app/tools/adb_service.py:249
+msgid "这台模拟器会改用独立的虚拟屏运行，当前分辨率不影响使用。想直接使用模拟器画面时，再把分辨率改成 1280×720 横屏。"
+msgstr ""
+"このエミュレーターは独立した仮想ディスプレイで実行されるため、現在の解像度は影響しません。エミュレーターの画面を直接使いたい場合のみ、解像度を "
+"1280×720 の横向きに変更してください。"
+
+#: app/tools/adb_service.py:276
+msgid "前面的检查没有通过，这一项还没检查"
+msgstr "前の項目が不合格のため、この項目はまだチェックしていません"
+
+#: app/tools/adb_service.py:291
+msgid "adb 服务端刚被重启，电脑上还有其他版本的 adb 在运行"
+msgstr "ADB サーバーが再起動されました。この PC では別バージョンの adb も動作しています"
+
+#: app/tools/adb_service.py:299
+msgid "没有其他版本的 adb 抢占服务端"
+msgstr "他のバージョンの adb によるサーバーの奪い合いはありません"
+
+#: app/tools/adb_service.py:306
+msgid "{name} 已连接并授权"
+msgstr "{name} は接続され、許可されています"
+
+#: app/tools/adb_service.py:307
+msgid "设备"
+msgstr "デバイス"
+
+#: app/tools/adb_service.py:315
+msgid "{name}（{serial}）已连接并授权"
+msgstr "{name}（{serial}）は接続され、許可されています"
+
+#: app/tools/adb_service.py:317
+msgid "Android {version}（API {sdk}）"
+msgstr "Android {version}（API {sdk}）"
+
+#: app/tools/adb_service.py:322
+msgid "已安装国服《崩坏：星穹铁道》"
+msgstr "中国本土版の『崩壊：スターレイル』がインストールされています"
+
+#: app/tools/adb_service.py:324
+msgid "设备上没有安装国服《崩坏：星穹铁道》"
+msgstr "デバイスに中国本土版の『崩壊：スターレイル』がインストールされていません"
+
+#: app/tools/adb_service.py:336
+msgid "设备端服务已启动，版本 {version}"
+msgstr "デバイスサービスを起動しました（バージョン {version}）"
+
+#: app/tools/adb_service.py:343
+msgid "直接使用模拟器画面（display 0），不需要虚拟屏"
+msgstr "エミュレーターの画面（display 0）を直接使います。仮想ディスプレイは不要です"
+
+#: app/tools/adb_service.py:345
+msgid "已建立 1280×720 虚拟屏（display {display}），检查结束后释放"
+msgstr "1280×720 の仮想ディスプレイを作成しました（display {display}）。チェック終了後に解放します"

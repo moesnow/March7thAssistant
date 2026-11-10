@@ -78,6 +78,7 @@ class UiIcon(FluentIconBase, Enum):
     HISTORY = "history"
     LINK = "link"
     TAP = "tap-single"
+    PHONE = "phone"
     PERSON = "person"
     STAR = "star"
     IMPORT = "arrow-import"
