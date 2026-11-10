@@ -26,11 +26,15 @@ import java.util.function.BiConsumer;
  * panel 0               面板已恢复
  * mute 包名 原模式       登记原模式
  * apply_mute 包名       串行执行静音，写入完成后应答
+ * restore_audio 包名 原模式  恢复并撤销登记，也可由独立的备用恢复进程执行
  * unmute 包名           已恢复，撤销登记
  * </pre>
  * 每条成功处理的命令回一行 M7A_CLEANUP_OK 和原记录。AppOps 写入失败回 M7A_CLEANUP_FAILED。
  */
 public final class Cleanup {
+    public static final String HANDOFF_VERSION = "cleanup-lock-v1";
+    public static final String READY = "M7A_CLEANUP_READY";
+
     interface AudioSetter {
         void setMode(String packageName, String mode) throws IOException, InterruptedException;
     }
@@ -39,12 +43,23 @@ public final class Cleanup {
     }
 
     public static void main(String[] args) {
-        BufferedReader commands = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
-        PrintWriter replies = new PrintWriter(System.out, true);
-        run(commands, replies, Cleanup::restorePanel, (packageName, mode) -> {
-            AudioAppOps.setModeAndWait(packageName, mode);
-            Log.i(Protocol.LOG_TAG, "cleanup: PLAY_AUDIO of " + packageName + " set to " + mode);
-        }, (message, error) -> Log.e(Protocol.LOG_TAG, message, error));
+        try {
+            CleanupHandoff.runWorker(CleanupHandoff.LOCK_PATH, () -> {
+                BufferedReader commands = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
+                PrintWriter replies = new PrintWriter(System.out, true);
+                replies.println(READY);
+                if (!replies.checkError()) {
+                    run(commands, replies, Cleanup::restorePanel, (packageName, mode) -> {
+                        AudioAppOps.setModeAndWait(packageName, mode);
+                        Log.i(Protocol.LOG_TAG, "cleanup: PLAY_AUDIO of " + packageName + " set to " + mode);
+                    }, (message, error) -> Log.e(Protocol.LOG_TAG, message, error));
+                }
+            });
+        } catch (IOException e) {
+            Log.e(Protocol.LOG_TAG, "cleanup: cannot hold handoff lock", e);
+            System.exit(1);
+            return;
+        }
         System.exit(0);
     }
 
@@ -62,10 +77,13 @@ public final class Cleanup {
                 } else if (parts.length == 3 && "mute".equals(parts[0])) {
                     muted.put(parts[1], parts[2]);
                 } else if (parts.length == 2 && "apply_mute".equals(parts[0]) && muted.containsKey(parts[1])) {
-                    try {
-                        audio.setMode(parts[1], "ignore");
-                    } catch (IOException | InterruptedException | RuntimeException error) {
-                        reportFailure.accept("cleanup: cannot mute " + parts[1], error);
+                    if (!writeAudio(audio, reportFailure, parts[1], "ignore")) {
+                        reply = "M7A_CLEANUP_FAILED " + line;
+                    }
+                } else if (parts.length == 3 && "restore_audio".equals(parts[0])) {
+                    if (writeAudio(audio, reportFailure, parts[1], parts[2])) {
+                        muted.remove(parts[1]);
+                    } else {
                         reply = "M7A_CLEANUP_FAILED " + line;
                     }
                 } else if (parts.length == 2 && "unmute".equals(parts[0])) {
@@ -85,12 +103,19 @@ public final class Cleanup {
                 restorePanel.run();
             }
             for (Map.Entry<String, String> entry : muted.entrySet()) {
-                try {
-                    audio.setMode(entry.getKey(), entry.getValue());
-                } catch (IOException | InterruptedException | RuntimeException error) {
-                    reportFailure.accept("cleanup: cannot restore PLAY_AUDIO of " + entry.getKey(), error);
-                }
+                writeAudio(audio, reportFailure, entry.getKey(), entry.getValue());
             }
+        }
+    }
+
+    private static boolean writeAudio(AudioSetter audio, BiConsumer<String, Exception> reportFailure,
+                                      String packageName, String mode) {
+        try {
+            audio.setMode(packageName, mode);
+            return true;
+        } catch (IOException | InterruptedException | RuntimeException error) {
+            reportFailure.accept("cleanup: cannot set PLAY_AUDIO of " + packageName + " to " + mode, error);
+            return false;
         }
     }
 

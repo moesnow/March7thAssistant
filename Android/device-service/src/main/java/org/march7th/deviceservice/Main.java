@@ -32,6 +32,7 @@ import java.util.Set;
 public final class Main {
     static final String PROCESS_NAME = "m7a-device-service";
     private static final String LOCK_FILE = "/data/local/tmp/m7a-device-service.lock";
+    private static final long HANDOFF_TIMEOUT_NS = 5_000_000_000L;
 
     private static final int EXIT_USAGE = 2;
     private static final int EXIT_ALREADY_RUNNING = 3;
@@ -75,9 +76,20 @@ public final class Main {
             Runtime.getRuntime().halt(1);
         });
 
-        if (!acquireInstanceLock(options.replace)) {
-            System.err.println("error: another instance is running");
+        try {
+            if (!acquireInstanceLock(options.replace)) {
+                System.err.println("error: another instance or its cleanup is still running");
+                System.exit(EXIT_ALREADY_RUNNING);
+                return;
+            }
+        } catch (IOException e) {
+            Logger.e("cannot verify instance handoff", e);
+            System.exit(EXIT_INIT_FAILED);
+            return;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             System.exit(EXIT_ALREADY_RUNNING);
+            return;
         }
 
         DeviceService service;
@@ -196,54 +208,102 @@ public final class Main {
     }
 
     /**
-     * 用文件锁保证同一时间只有一个实例。锁文件里记着持有者的 pid。
-     * 已有实例时默认把它结束掉再接手（它的虚拟屏随进程一起被系统回收）。
+     * 实例锁阻止多个主进程并发工作。主进程退出后，还要等持有善后锁的子进程完成在途写入和恢复。
      */
-    private static boolean acquireInstanceLock(boolean replace) {
+    private static boolean acquireInstanceLock(boolean replace) throws IOException, InterruptedException {
+        RandomAccessFile handle = new RandomAccessFile(LOCK_FILE, "rw");
+        boolean retained = false;
         try {
-            File file = new File(LOCK_FILE);
-            RandomAccessFile handle = new RandomAccessFile(file, "rw");
             FileLock lock = handle.getChannel().tryLock();
+            String[] owner = readOwner(handle);
+            boolean guarded = owner.length == 2 && Cleanup.HANDOFF_VERSION.equals(owner[1]);
             if (lock == null) {
-                int owner = readPid(file);
-                if (!replace || owner <= 0 || !PROCESS_NAME.equals(processName(owner))) {
-                    handle.close();
+                int pid = readPid(owner[0]);
+                if (!replace || pid <= 0 || !PROCESS_NAME.equals(processName(pid))) {
                     return false;
                 }
-                Logger.i("replacing running instance pid " + owner);
-                Process.killProcess(owner);
-                long deadline = System.nanoTime() + 5_000_000_000L;
-                while (lock == null && System.nanoTime() < deadline) {
-                    Thread.sleep(100);
+                if (!guarded) {
+                    Logger.w("previous instance does not support safe replacement; shut it down first");
+                    return false;
+                }
+                Logger.i("replacing running instance pid " + pid);
+                Process.killProcess(pid);
+                long deadline = System.nanoTime() + HANDOFF_TIMEOUT_NS;
+                while (lock == null && CleanupHandoff.pauseUntil(deadline)) {
                     lock = handle.getChannel().tryLock();
                 }
                 if (lock == null) {
-                    handle.close();
                     return false;
                 }
             }
+            long deadline = System.nanoTime() + (replace ? HANDOFF_TIMEOUT_NS : 0);
+            // 老版本退出后也可能留有善后进程。只有旧锁记录才需要检查这些没有持锁的进程。
+            if (!guarded && readPid(owner[0]) > 0) {
+                while (legacyCleanupRunning()) {
+                    if (!CleanupHandoff.pauseUntil(deadline)) {
+                        Logger.w("previous legacy cleanup is still running");
+                        return false;
+                    }
+                }
+            }
+            if (!CleanupHandoff.awaitIdle(CleanupHandoff.LOCK_PATH, deadline)) {
+                Logger.w("previous cleanup is still running");
+                return false;
+            }
             handle.setLength(0);
-            handle.write((Process.myPid() + "\n").getBytes(StandardCharsets.UTF_8));
+            handle.seek(0);
+            handle.write((Process.myPid() + "\n" + Cleanup.HANDOFF_VERSION + "\n").getBytes(StandardCharsets.UTF_8));
             instanceLock = lock;
+            retained = true;
             return true;
-        } catch (IOException e) {
-            // 锁文件不可写（比如上一次是 root 建的）时不拦着启动，套接字名本身也是互斥的
-            Logger.w("instance lock unavailable", e);
-            return true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
+        } finally {
+            if (!retained) {
+                handle.close();
+            }
         }
     }
 
-    private static int readPid(File file) {
-        try (FileInputStream in = new FileInputStream(file)) {
-            byte[] buffer = new byte[32];
-            int n = in.read(buffer);
-            return n <= 0 ? -1 : Integer.parseInt(new String(buffer, 0, n, StandardCharsets.UTF_8).trim());
-        } catch (IOException | NumberFormatException e) {
+    private static String[] readOwner(RandomAccessFile handle) throws IOException {
+        byte[] buffer = new byte[64];
+        handle.seek(0);
+        int n = handle.read(buffer);
+        return n <= 0 ? new String[] {""} : new String(buffer, 0, n, StandardCharsets.UTF_8).trim().split("\n");
+    }
+
+    private static int readPid(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    private static boolean legacyCleanupRunning() throws IOException {
+        File[] processes = new File("/proc").listFiles(file -> file.getName().matches("[0-9]+"));
+        if (processes == null) {
+            throw new IOException("cannot list processes to check legacy cleanup");
+        }
+        for (File process : processes) {
+            try (FileInputStream in = new FileInputStream(new File(process, "cmdline"))) {
+                byte[] buffer = new byte[1024];
+                int n = in.read(buffer);
+                if (n <= 0) {
+                    continue;
+                }
+                String[] arguments = new String(buffer, 0, n, StandardCharsets.UTF_8).split("\u0000");
+                for (int i = 1; i < arguments.length; i++) {
+                    if (Cleanup.class.getName().equals(arguments[i])) {
+                        if (i + 1 == arguments.length || !Cleanup.HANDOFF_VERSION.equals(arguments[i + 1])) {
+                            return true;
+                        }
+                        break;
+                    }
+                }
+            } catch (IOException ignored) {
+                // 进程可能已退出，也可能属于其他 uid。
+            }
+        }
+        return false;
     }
 
     private static String processName(int pid) {

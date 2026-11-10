@@ -35,9 +35,7 @@ final class SideEffects {
     private Thread keepAwake;
     /** 包名到静音前的 AppOps 模式。 */
     private final Map<String, String> muted = new LinkedHashMap<>();
-    private Process cleanup;
-    private OutputStream cleanupInput;
-    private BufferedReader cleanupOutput;
+    private CleanupChannel cleanup;
     private boolean cleanupUnavailable;
     /** 写入结果未确认且子进程正在通过 EOF 回滚的包。 */
     private String pendingMute;
@@ -184,16 +182,36 @@ final class SideEffects {
     }
 
     private void restoreAudio(String packageName) throws CommandException, IOException, InterruptedException {
-        if (packageName.equals(pendingMute) && !cleanup.waitFor(CLEANUP_ACK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+        if (packageName.equals(pendingMute) && !cleanup.process.waitFor(CLEANUP_ACK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
             throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE, "the pending mute is still being restored");
         }
         String original = muted.get(packageName);
-        AudioAppOps.setMode(packageName, original);
+        String command = "restore_audio " + packageName + " " + original;
+        boolean restored = false;
+        if (cleanup != null && !cleanupUnavailable) {
+            try {
+                restored = exchangeCleanup(command, CLEANUP_MUTE_TIMEOUT_MS);
+            } catch (IOException | RuntimeException e) {
+                markCleanupUnavailable(e);
+            }
+        }
+        if (!restored) {
+            // 备用恢复也在持有交接锁的子进程内完成，主进程被替换时不能留下未登记的 AppOps 写入。
+            try (CleanupChannel backup = startCleanup()) {
+                restored = backup.exchange(command, CLEANUP_MUTE_TIMEOUT_MS);
+            } catch (IOException | RuntimeException e) {
+                markCleanupUnavailable(e);
+                throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE, "cannot confirm audio restore: " + e.getMessage());
+            }
+            if (!restored) {
+                throw new IOException("cleanup could not restore PLAY_AUDIO to " + original);
+            }
+            forgetCleanup("unmute " + packageName);
+        }
         muted.remove(packageName);
         if (packageName.equals(pendingMute)) {
             pendingMute = null;
         }
-        forgetCleanup("unmute " + packageName);
         Logger.i("PLAY_AUDIO of " + packageName + " restored to " + original);
     }
 
@@ -206,7 +224,6 @@ final class SideEffects {
         closed = true;
         // UserService 关闭核心后进程可能还活着，主动断管，让子进程兜底恢复失败的记录。
         closeCleanupInput();
-        cleanupOutput = null;
         cleanup = null;
     }
 
@@ -217,7 +234,7 @@ final class SideEffects {
             Logger.w("cannot restore the panel: " + e.getMessage());
         }
         for (String packageName : new ArrayList<>(muted.keySet())) {
-            if (packageName.equals(pendingMute) && cleanup.isAlive()) {
+            if (packageName.equals(pendingMute) && cleanup.process.isAlive()) {
                 continue;
             }
             try {
@@ -232,13 +249,8 @@ final class SideEffects {
     }
 
     private void closeCleanupInput() {
-        if (cleanupInput != null) {
-            try {
-                cleanupInput.close();
-            } catch (IOException ignored) {
-                // 子进程已经退出
-            }
-            cleanupInput = null;
+        if (cleanup != null) {
+            cleanup.close();
         }
     }
 
@@ -274,7 +286,7 @@ final class SideEffects {
     }
 
     private void markCleanupUnavailable(Exception error) {
-        // 保留旧进程和管道。它可能仍持有已登记的记录，不能杀掉或另起进程覆盖它。
+        // 保留旧进程的恢复记录。备用进程只能恢复原值。
         if (!cleanupUnavailable) {
             Logger.w("cleanup process unavailable", error);
             cleanupUnavailable = true;
@@ -285,42 +297,13 @@ final class SideEffects {
         if (cleanupUnavailable) {
             throw new IOException("cleanup channel is unavailable");
         }
-        if (line.length() > 1024) {
-            throw new IOException("cleanup record is too long");
-        }
         if (cleanup == null) {
-            startCleanup();
+            cleanup = startCleanup();
         }
-        OutputStream input = cleanupInput;
-        BufferedReader output = cleanupOutput;
-        FutureTask<String> exchange = new FutureTask<>(() -> {
-            input.write((line + "\n").getBytes(StandardCharsets.UTF_8));
-            input.flush();
-            return output.readLine();
-        });
-        Thread worker = new Thread(exchange, "m7a-cleanup-ack");
-        worker.setDaemon(true);
-        worker.start();
-        try {
-            String reply = exchange.get(timeoutMs, TimeUnit.MILLISECONDS);
-            if (cleanup.isAlive()) {
-                if (("M7A_CLEANUP_OK " + line).equals(reply)) {
-                    return true;
-                }
-                if (("M7A_CLEANUP_FAILED " + line).equals(reply)) {
-                    return false;
-                }
-            }
-            throw new IOException("cleanup did not acknowledge the record");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("cleanup acknowledgement interrupted", e);
-        } catch (ExecutionException | TimeoutException e) {
-            throw new IOException("cleanup acknowledgement failed", e);
-        }
+        return cleanup.exchange(line, timeoutMs);
     }
 
-    private void startCleanup() throws IOException {
+    private CleanupChannel startCleanup() throws IOException {
         String classpath = cleanupJarPath == null ? System.getenv("CLASSPATH") : cleanupJarPath;
         if (classpath == null || classpath.trim().isEmpty()) {
             throw new IOException("no cleanup jar path");
@@ -333,11 +316,70 @@ final class SideEffects {
         command.add("app_process");
         command.add("/");
         command.add(Cleanup.class.getName());
+        command.add(Cleanup.HANDOFF_VERSION);
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.environment().put("CLASSPATH", classpath);
         builder.redirectError(new File("/dev/null"));
-        cleanup = builder.start();
-        cleanupInput = cleanup.getOutputStream();
-        cleanupOutput = new BufferedReader(new InputStreamReader(cleanup.getInputStream(), StandardCharsets.UTF_8));
+        return new CleanupChannel(builder.start());
+    }
+
+    private static final class CleanupChannel implements AutoCloseable {
+        private final Process process;
+        private final OutputStream input;
+        private final BufferedReader output;
+        private boolean ready;
+
+        CleanupChannel(Process process) {
+            this.process = process;
+            input = process.getOutputStream();
+            output = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+        }
+
+        boolean exchange(String line, long timeoutMs) throws IOException {
+            if (line.length() > 1024) {
+                throw new IOException("cleanup record is too long");
+            }
+            boolean waitForReady = !ready;
+            FutureTask<String> exchange = new FutureTask<>(() -> {
+                // 持锁前不发送任何恢复记录。迟启动的孤儿子进程只会读到 EOF。
+                if (waitForReady && !Cleanup.READY.equals(output.readLine())) {
+                    throw new IOException("cleanup did not acquire the handoff lock");
+                }
+                input.write((line + "\n").getBytes(StandardCharsets.UTF_8));
+                input.flush();
+                return output.readLine();
+            });
+            Thread worker = new Thread(exchange, "m7a-cleanup-ack");
+            worker.setDaemon(true);
+            worker.start();
+            try {
+                String reply = exchange.get(timeoutMs, TimeUnit.MILLISECONDS);
+                if (process.isAlive()) {
+                    if (("M7A_CLEANUP_OK " + line).equals(reply)) {
+                        ready = true;
+                        return true;
+                    }
+                    if (("M7A_CLEANUP_FAILED " + line).equals(reply)) {
+                        ready = true;
+                        return false;
+                    }
+                }
+                throw new IOException("cleanup did not acknowledge the record");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("cleanup acknowledgement interrupted", e);
+            } catch (ExecutionException | TimeoutException e) {
+                throw new IOException("cleanup acknowledgement failed", e);
+            }
+        }
+
+        @Override
+        public void close() {
+            try {
+                input.close();
+            } catch (IOException ignored) {
+                // 子进程已经退出
+            }
+        }
     }
 }
