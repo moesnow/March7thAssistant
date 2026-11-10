@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -57,51 +58,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.march7th.assistant.LogCategory
+import org.march7th.assistant.LogEntry
+import org.march7th.assistant.LogLevel
 import org.march7th.assistant.R
 import org.march7th.assistant.TaskState
-
-internal enum class LogLevel { INFO, WARNING, ERROR }
-
-internal class LogEntry(val time: String?, val level: LogLevel, val message: String, val heading: Boolean = false)
-
-// Python 任务日志的格式是「时:分:秒 | 级别 | 内容」，应用自己写的行没有前缀。
-private val LINE = Regex("""^(\d{2}:\d{2}:\d{2}) \| (\w+) \| (.*)$""", RegexOption.DOT_MATCHES_ALL)
-private val HEADING = Regex("""^=+ (.+?) =+$""")
-private val TRACEBACK = Regex("""^(\s|Traceback |[A-Za-z_][\w.]*(Error|Exception|Exit|Interrupt|Warning)\b).*""", RegexOption.DOT_MATCHES_ALL)
-
-internal fun parseLog(line: String): LogEntry {
-    val match = LINE.find(line) ?: return LogEntry(null, LogLevel.INFO, line)
-    val (time, name, text) = match.destructured
-    val level = when (name) {
-        "WARNING" -> LogLevel.WARNING
-        "ERROR", "CRITICAL" -> LogLevel.ERROR
-        else -> LogLevel.INFO
-    }
-    val heading = HEADING.find(text)
-    return if (heading != null) LogEntry(time, level, heading.groupValues[1], true) else LogEntry(time, level, text)
-}
-
-/** 应用重启后日志按行读回，报错堆栈会被拆开，这里把它们并回所属的那一条。 */
-internal fun parseLogs(lines: List<String>): List<LogEntry> {
-    val entries = ArrayList<LogEntry>(lines.size)
-    for (line in lines) {
-        val entry = parseLog(line)
-        val previous = entries.lastOrNull()
-        if (entry.time == null && previous != null && previous.time != null &&
-            previous.level != LogLevel.INFO && TRACEBACK.matches(line)
-        ) {
-            entries[entries.lastIndex] = LogEntry(previous.time, previous.level, previous.message + "\n" + line)
-        } else {
-            entries += entry
-        }
-    }
-    return entries
-}
 
 private enum class LogsSection { LOG, HELP }
 
 @Composable
-internal fun LogsScreen(state: TaskState, logs: List<String>, actions: AppActions) {
+internal fun LogsScreen(state: TaskState, logs: List<LogEntry>, actions: AppActions) {
     var section by rememberSaveable { mutableStateOf(LogsSection.LOG) }
     Column(Modifier.fillMaxSize().padding(start = 16.dp, end = 16.dp, top = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -126,13 +92,17 @@ internal fun LogsScreen(state: TaskState, logs: List<String>, actions: AppAction
 }
 
 @Composable
-private fun LogList(state: TaskState, logs: List<String>, onHelp: () -> Unit) {
+private fun LogList(state: TaskState, logs: List<LogEntry>, onHelp: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
-    val entries = remember(logs) { parseLogs(logs) }
+    var showDeviceEvents by rememberSaveable { mutableStateOf(false) }
     var level by rememberSaveable { mutableStateOf<LogLevel?>(null) }
     var query by rememberSaveable { mutableStateOf("") }
+    val entries = remember(logs, showDeviceEvents) {
+        if (showDeviceEvents) logs else logs.filter { it.category != LogCategory.DEVICE }
+    }
     val shown = remember(entries, level, query) {
-        entries.filter { (level == null || it.level == level) && (query.isBlank() || it.message.contains(query.trim(), ignoreCase = true)) }
+        val term = query.trim()
+        entries.filter { (level == null || it.level == level) && it.message.contains(term, ignoreCase = true) }
     }
     val error = errorInfo(state.errorCode).takeUnless { state.busy }
 
@@ -166,7 +136,14 @@ private fun LogList(state: TaskState, logs: List<String>, onHelp: () -> Unit) {
                 level = LogLevel.ERROR
             }
         }
-        SearchField(query, { query = it })
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SearchField(query, { query = it }, Modifier.weight(1f))
+            FilterChip(
+                selected = showDeviceEvents,
+                onClick = { showDeviceEvents = !showDeviceEvents },
+                label = { Text(tr(R.string.logs_filter_device)) },
+            )
+        }
 
         Surface(
             Modifier.fillMaxWidth().weight(1f).padding(bottom = 12.dp),
@@ -183,20 +160,20 @@ private fun LogList(state: TaskState, logs: List<String>, onHelp: () -> Unit) {
                     Image(painterResource(R.drawable.chibi_ok), null, Modifier.width(150.dp))
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        tr(if (entries.isEmpty()) R.string.logs_empty else R.string.logs_no_match),
+                        tr(if (logs.isEmpty()) R.string.logs_empty else R.string.logs_no_match),
                         style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center,
                     )
-                    BodyText(tr(if (entries.isEmpty()) R.string.logs_empty_detail else R.string.logs_no_match_detail))
+                    BodyText(tr(if (logs.isEmpty()) R.string.logs_empty_detail else R.string.logs_no_match_detail))
                 }
             } else {
-                LogLines(shown, logs)
+                LogLines(shown)
             }
         }
     }
 }
 
 @Composable
-private fun LogLines(shown: List<LogEntry>, source: List<String>) {
+private fun LogLines(shown: List<LogEntry>) {
     val scheme = MaterialTheme.colorScheme
     val list = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -209,7 +186,7 @@ private fun LogLines(shown: List<LogEntry>, source: List<String>) {
             if (scrolling) scrolled = true else if (scrolled) follow = !list.canScrollForward
         }
     }
-    LaunchedEffect(source, shown.size) {
+    LaunchedEffect(shown) {
         if (follow && shown.isNotEmpty()) list.scrollToItem(shown.lastIndex)
     }
     Box(Modifier.fillMaxSize()) {
@@ -299,11 +276,11 @@ private fun LevelChip(label: String, count: Int, selected: Boolean, tone: Tone, 
 }
 
 @Composable
-private fun SearchField(value: String, onChange: (String) -> Unit) {
+private fun SearchField(value: String, onChange: (String) -> Unit, modifier: Modifier) {
     val scheme = MaterialTheme.colorScheme
     BasicTextField(
         value, onChange,
-        Modifier.fillMaxWidth().clip(CircleShape).background(scheme.surfaceContainerHigh).heightIn(min = 44.dp),
+        modifier.clip(CircleShape).background(scheme.surfaceContainerHigh).heightIn(min = 44.dp),
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = scheme.onSurface),
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),

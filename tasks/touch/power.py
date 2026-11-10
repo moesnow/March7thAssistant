@@ -1,4 +1,5 @@
 """触屏 720p 生存索引副本。"""
+from functools import partial
 import re
 import time
 import unicodedata
@@ -10,7 +11,7 @@ from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
 from module.config import cfg
 from module.game.adb_transport import AdbError
-from module.localization import get_raw_instance_names
+from module.localization import get_raw_instance_names, tr
 from module.logger import log
 from module.ocr import ocr
 from module.screen import screen
@@ -415,7 +416,7 @@ def _wait_battle(*, repeated=False, instance_screen="calyx"):
     raise PowerError("等待战斗结算超时，请检查游戏画面")
 
 
-def _run_instance(instance_type, name, planned, *, borrow_for_daily=False):
+def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_settlement=None):
     instance_screen, cost, limit = INSTANCES[instance_type]
     batch_limit = cfg.instance_names_challenge_count.get(instance_type, limit)
     if type(batch_limit) is not int or not 1 <= batch_limit <= limit:
@@ -429,6 +430,8 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False):
     if not remaining:
         log.info("开拓力不足，返回主界面")
         screen.change_to("main", max_recursion=1)
+        if on_settlement is not None:
+            on_settlement(0, power)
         return
 
     _enter_instance(instance_type, name)
@@ -458,6 +461,8 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False):
         remaining = min(remaining - completed, power // cost)
         previous = waves
         log.info(f"本轮已结算 {completed} 次挑战，剩余开拓力 {power}/300")
+        if on_settlement is not None:
+            on_settlement(completed, power)
         yield completed
         borrow_for_daily = False
 
@@ -466,7 +471,8 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False):
     log.info("开拓力不足，已返回主界面" if power < cost else "已达到本次挑战次数，返回主界面")
 
 
-def _run(borrow_for_daily):
+def _run(borrow_for_daily, on_settlement=None):
+    run_instance = _run_instance if on_settlement is None else partial(_run_instance, on_settlement=on_settlement)
     names = get_raw_instance_names()
     plan = cfg.power_plan
     if not plan:
@@ -480,7 +486,7 @@ def _run(borrow_for_daily):
             return True
         if name not in names[instance_type]:
             raise PowerError(f"未配置有效的{instance_type}副本名称")
-        for _ in _run_instance(instance_type, name, None, borrow_for_daily=borrow_for_daily):
+        for _ in run_instance(instance_type, name, None, borrow_for_daily=borrow_for_daily):
             pass
         return True
 
@@ -497,7 +503,7 @@ def _run(borrow_for_daily):
             log.warning(f"体力计划第 {index + 1} 项不受触屏模式支持，已保留")
             continue
         ran = True
-        for completed in _run_instance(instance_type, name, count, borrow_for_daily=borrow_for_daily):
+        for completed in run_instance(instance_type, name, count, borrow_for_daily=borrow_for_daily):
             count -= completed
             borrow_for_daily = False
             if not cfg.power_plan_keep:
@@ -508,11 +514,22 @@ def _run(borrow_for_daily):
     return ran
 
 
-def run(*, borrow_for_daily=False):
+def run(*, borrow_for_daily=False, on_summary=None):
+    total = 0
+    remaining = None
+
+    def record_settlement(completed, power):
+        nonlocal total, remaining
+        total += completed
+        remaining = power
+
     log.hr("开始触屏清体力", 0)
     with screenshot_retry_timeout(5):
         try:
-            return _run(borrow_for_daily)
+            succeeded = _run(borrow_for_daily, record_settlement if on_summary is not None else None)
         except PowerError as error:
             log.error(f"触屏清体力：{error}")
             return False
+    if succeeded and on_summary is not None and remaining is not None:
+        on_summary(tr("已完成 {count} 次挑战，剩余开拓力 {power}/300").format(count=total, power=remaining))
+    return succeeded

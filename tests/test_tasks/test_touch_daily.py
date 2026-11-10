@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from PIL import Image
 import pytest
 
+from module.localization import tr
 from tasks.daily.tasks import Tasks
 from tasks.touch import daily
 
@@ -92,11 +93,13 @@ def test_disabling_rewards_preserves_reading_and_prevents_claiming(monkeypatch, 
     monkeypatch.setattr(daily, "read_milestones", milestones)
     monkeypatch.setattr(daily, "click_milestone", click)
 
-    assert daily.run()
+    summary = Mock()
+    assert daily.run(on_summary=summary)
 
     cards.assert_called_once_with(100, False)
     milestones.assert_called_once_with(100)
     click.assert_not_called()
+    summary.assert_called_once_with(tr("每日实训活跃度 {activity}/{maximum}").format(activity=100, maximum=500))
 
 
 def test_claiming_multiple_milestones_from_one_popup_does_not_repeat_clicks(monkeypatch):

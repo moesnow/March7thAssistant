@@ -6,6 +6,7 @@ from PIL import Image
 from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
 from module.config import cfg
+from module.localization import tr
 from module.logger import log
 from module.notification.notification import NotificationLevel
 from module.ocr import ocr
@@ -165,7 +166,7 @@ def needs_support():
     return tasks.get(SUPPORT_TASK, False)
 
 
-def run(*, complete_training=False):
+def run(*, complete_training=False, on_summary=None):
     log.hr("开始触屏每日实训", 1)
     collect = cfg.reward_enable and cfg.reward_quest_enable
     with screenshot_retry_timeout(5):
@@ -215,4 +216,6 @@ def run(*, complete_training=False):
             return False
 
     log.info(f"每日实训活跃度 {activity}/{MAX_ACTIVITY}")
+    if on_summary is not None:
+        on_summary(tr("每日实训活跃度 {activity}/{maximum}").format(activity=activity, maximum=MAX_ACTIVITY))
     return True

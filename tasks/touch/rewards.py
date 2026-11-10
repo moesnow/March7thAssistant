@@ -7,6 +7,7 @@ import numpy as np
 from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
 from module.config import cfg
+from module.localization import tr
 from module.logger import log
 from module.notification.notification import NotificationLevel
 from module.screen import screen
@@ -210,7 +211,10 @@ def claim_messages():
     log.info(f"本次已处理 {completed} 个短信会话" if completed else "本次未发现待处理短信")
 
 
-def run(*, complete_training=False):
+def run(*, complete_training=False, on_summary=None):
+    def report_daily(summary):
+        on_summary(tr("奖励检查完成，{daily_summary}").format(daily_summary=summary))
+
     log.hr("开始触屏领奖", 0)
     with screenshot_retry_timeout(5):
         if cfg.reward_enable:
@@ -226,7 +230,7 @@ def run(*, complete_training=False):
             except RewardError as error:
                 log.error(f"触屏领奖：{error}")
                 return False
-        return daily.run(complete_training=complete_training)
+        return daily.run(complete_training=complete_training, on_summary=report_daily if on_summary is not None else None)
 
 
 def routine():

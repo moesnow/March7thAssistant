@@ -122,7 +122,7 @@ internal fun StatusScreen(state: TaskState, lastLog: String?, navigator: Navigat
                     tr(R.string.home_permission),
                     icon = M7Icons.Shield,
                     iconTone = if (ready) Tone.SUCCESS else Tone.WARNING,
-                    summary = tr(state.privilege.title),
+                    summary = tr(rootPermissionHint(state.privilege, state.permission) ?: state.privilege.title),
                     onClick = { navigator.open(SubPage.GUIDE) },
                     trailing = {
                         StatusPill(tr(permissionLabel(state.privilege, state.permission)), if (ready) Tone.SUCCESS else Tone.WARNING)
@@ -136,7 +136,7 @@ internal fun StatusScreen(state: TaskState, lastLog: String?, navigator: Navigat
                         tr(R.string.home_latest_log),
                         icon = M7Icons.Logs,
                         iconTone = Tone.NEUTRAL,
-                        summary = parseLog(lastLog).message,
+                        summary = lastLog,
                         summaryMaxLines = 3,
                         onClick = { navigator.openTab(Tab.LOGS) },
                     )
@@ -171,12 +171,12 @@ private val GameState.tone: Tone
     get() = when (this) {
         GameState.OFF -> Tone.NEUTRAL
         GameState.READY -> Tone.SUCCESS
-        GameState.MANUAL_LOGIN -> Tone.WARNING
+        GameState.FLASHING, GameState.MANUAL_LOGIN -> Tone.WARNING
         else -> Tone.ACTIVE
     }
 
 private fun onVirtual(state: TaskState) = state.gameDisplayId != null && state.gameDisplayId == state.displayId
-private fun onPhysical(state: TaskState) = state.gameDisplayId != null && state.gameDisplayId != state.displayId
+private fun onPhysical(state: TaskState) = state.gameDisplayId == 0
 
 @Composable
 private fun gameLocation(state: TaskState): String {
@@ -191,7 +191,8 @@ private fun gameLocation(state: TaskState): String {
 
 private fun whereCaption(state: TaskState): Int = when {
     state.game == GameState.MANUAL_LOGIN -> R.string.status_where_login
-    onPhysical(state) -> R.string.status_where_physical
+    state.game == GameState.FLASHING -> R.string.game_flashing_detail
+    state.game == GameState.RETURNING -> R.string.home_returning_detail
     onVirtual(state) && state.panelOff -> R.string.status_where_virtual_panel_off
     onVirtual(state) -> R.string.status_where_virtual
     state.displayId != null -> R.string.status_where_waiting
@@ -305,8 +306,11 @@ private fun Timeline(state: TaskState) {
         else -> StepState.PENDING to tr(R.string.timeline_result)
     }
     StepItem(5, text, result, last = true) {
-        if (state.phase == TaskPhase.FAILED || state.phase == TaskPhase.STOPPED) {
-            BodyText(tr(if (state.phase == TaskPhase.FAILED) R.string.timeline_failed_detail else R.string.home_stopped_detail))
+        when (state.phase) {
+            TaskPhase.SUCCEEDED -> state.summary?.let { BodyText(it) }
+            TaskPhase.FAILED -> BodyText(tr(R.string.timeline_failed_detail))
+            TaskPhase.STOPPED -> BodyText(tr(R.string.home_stopped_detail))
+            else -> Unit
         }
     }
 }

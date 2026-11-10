@@ -17,7 +17,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 enum class Privilege { SHIZUKU, ROOT }
-enum class PermissionState { NOT_INSTALLED, NOT_RUNNING, NOT_AUTHORIZED, READY }
+enum class PermissionState { NOT_CHECKED, NOT_INSTALLED, NOT_RUNNING, NOT_AUTHORIZED, READY }
 
 internal class DeviceFailure(val code: String) : IOException(code)
 
@@ -39,7 +39,7 @@ internal interface DeviceLease : Closeable {
 
 internal class DeviceAccess(private val context: Context) {
     @Volatile
-    private var rootPermission = PermissionState.NOT_AUTHORIZED
+    private var rootPermission = PermissionState.NOT_CHECKED
 
     private val userService = Shizuku.UserServiceArgs(ComponentName(context, GameUserService::class.java))
         .daemon(false)

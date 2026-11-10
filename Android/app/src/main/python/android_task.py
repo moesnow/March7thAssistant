@@ -39,10 +39,17 @@ class _TaskLog(logging.Handler):
     def __init__(self, bridge):
         super().__init__(logging.INFO)
         self.bridge = bridge
-        self.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s", "%H:%M:%S"))
 
     def emit(self, record):
-        self.bridge.log(self.format(record))
+        title = getattr(record, "section_title", None)
+        if record.levelno >= logging.ERROR:
+            level = "ERROR"
+        elif record.levelno >= logging.WARNING:
+            level = "WARNING"
+        else:
+            level = "INFO"
+        self.bridge.log(int(record.created * 1000), level, "TASK",
+                        title if title is not None else self.format(record), title is not None)
 
 
 class _AppSession:
@@ -55,11 +62,25 @@ class _AppSession:
 
         if self.bridge.isCancelled() and params.get("action") != "up":
             raise RunStopRequested()
-        response, payload = self.client.request(command, **params)
-        if command == "events":
-            for event in response["events"]:
-                self.bridge.gameEvent(event["event"], event.get("to") if event.get("to") is not None else -1)
-        return response, payload
+        return self.client.request(command, **params)
+
+    def record_event(self, event):
+        name = event["event"]
+        if name in {"game_exited", "recovery_failed"} or (name == "move_back_failed" and event.get("final")):
+            level = "ERROR"
+        elif name in {"watchdog_error", "manual_action_required", "move_back_failed",
+                      "move_back_frame_timeout", "frames_stalled", "relaunch_failed"}:
+            level = "WARNING"
+        else:
+            level = "INFO"
+        self.bridge.log(int(time.time() * 1000), level, "DEVICE", f"ADB 看门狗 {name}：{event}", False)
+        if name == "watchdog_started":
+            display = (event.get("task") or {}).get("display_id")
+        elif name == "task_display_changed":
+            display = event.get("to")
+        else:
+            display = event.get("display_id")
+        self.bridge.gameEvent(name, display if display is not None else -1)
 
     def is_game_running(self):
         status, _ = self.request("status")
@@ -130,7 +151,7 @@ def run(workdir, token, sdk, version, model, is_emulator, task, config, language
         environment = AdbEnvironment(None, AdbDevice("android", "device", model), sdk, version,
                                      "physical", (0, 0), True, is_emulator)
         controller = get_game_controller("adb")
-        controller.attach_virtual_session(environment, session)
+        controller.attach_virtual_session(environment, session, on_event=session.record_event)
         display_id = controller.prepare_display()
         bridge.displayReady(display_id)
         log.info(f"已创建 1280×720 虚拟屏，display {display_id}")
@@ -144,7 +165,7 @@ def run(workdir, token, sdk, version, model, is_emulator, task, config, language
             bridge.panelChanged(result["panel_off"])
             log.info("已关闭实体面板，保持系统唤醒")
         action = {"DAILY": daily.run, "REWARDS": rewards.run, "POWER": power.run}[task]
-        if action():
+        if action(on_summary=bridge.reportSummary):
             return "stopped" if bridge.isCancelled() else "success"
         return "stopped" if bridge.isCancelled() else "task_failed"
     except RunStopRequested:

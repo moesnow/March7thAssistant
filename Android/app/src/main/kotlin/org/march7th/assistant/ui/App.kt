@@ -25,6 +25,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import org.march7th.assistant.LogCategory
+import org.march7th.assistant.LogEntry
 import org.march7th.assistant.Privilege
 import org.march7th.assistant.R
 import org.march7th.assistant.TaskConfig
@@ -68,14 +70,14 @@ internal enum class Tab(val label: Int, val icon: ImageVector) {
 internal enum class SubPage { GUIDE, STATUS }
 
 /** 调试构建用模拟数据预览界面时的输入，见 debug 源集的 demoFrom。 */
-internal class Demo(val state: TaskState, val logs: List<String>, val tab: Tab, val page: SubPage?, val theme: ThemeMode?)
+internal class Demo(val state: TaskState, val logs: List<LogEntry>, val tab: Tab, val page: SubPage?, val theme: ThemeMode?)
 
 internal class Navigator(val openTab: (Tab) -> Unit, val open: (SubPage) -> Unit, val back: () -> Unit)
 
 @Composable
 internal fun App(
     state: TaskState,
-    logs: List<String>,
+    logs: List<LogEntry>,
     device: DeviceInfo,
     themeMode: ThemeMode,
     actions: AppActions,
@@ -84,6 +86,7 @@ internal fun App(
 ) {
     var tab by rememberSaveable { mutableStateOf(initialTab) }
     var page by rememberSaveable { mutableStateOf(initialPage) }
+    val latestTaskLog = logs.lastOrNull { it.category == LogCategory.TASK }?.message
     val navigator = Navigator(
         openTab = {
             page = null
@@ -127,9 +130,9 @@ internal fun App(
             Box(Modifier.fillMaxSize().wrapContentWidth().widthIn(max = 640.dp)) {
                 when (currentPage) {
                     SubPage.GUIDE -> GuideScreen(state, device, actions, navigator)
-                    SubPage.STATUS -> StatusScreen(state, logs.lastOrNull(), navigator)
+                    SubPage.STATUS -> StatusScreen(state, latestTaskLog, navigator)
                     null -> when (currentTab) {
-                        Tab.HOME -> HomeScreen(state, logs.lastOrNull(), actions, navigator)
+                        Tab.HOME -> HomeScreen(state, latestTaskLog, actions, navigator)
                         Tab.TASKS -> TasksScreen(state, actions)
                         Tab.LOGS -> LogsScreen(state, logs, actions)
                         Tab.SETTINGS -> SettingsScreen(state, device, themeMode, actions, navigator)

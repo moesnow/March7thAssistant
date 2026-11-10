@@ -8112,3 +8112,15 @@ msgid "已建立 1280×720 虚拟屏（display {display}），检查结束后释
 msgstr ""
 "Created a 1280×720 virtual display (display {display}). It is released when "
 "the check ends."
+
+#: tasks/touch/daily.py:220
+msgid "每日实训活跃度 {activity}/{maximum}"
+msgstr "Daily training activity {activity}/{maximum}"
+
+#: tasks/touch/rewards.py:216
+msgid "奖励检查完成，{daily_summary}"
+msgstr "Reward check complete ({daily_summary})"
+
+#: tasks/touch/power.py:534
+msgid "已完成 {count} 次挑战，剩余开拓力 {power}/300"
+msgstr "Challenge clears total {count}, with {power}/300 Trailblaze Power remaining"

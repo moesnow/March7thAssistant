@@ -171,7 +171,7 @@ class Logger(metaclass=SingletonMeta):
                 formatted_title = '=' * half_separator_left + ' ' + title + ' ' + '=' * half_separator_right
             elif level == 2:
                 formatted_title = '-' * half_separator_left + ' ' + title + ' ' + '-' * half_separator_right
-            self._print_title(formatted_title, write)
+            self._print_title(formatted_title, write, title)
         except:
             pass
 
@@ -181,9 +181,9 @@ class Logger(metaclass=SingletonMeta):
         """
         return sum(2 if unicodedata.east_asian_width(c) in 'WF' else 1 for c in text)
 
-    def _print_title(self, title, write):
+    def _print_title(self, title, write, section_title):
         """打印标题."""
         if write:
-            self.logger_title.info(title)
+            self.logger_title.info(title, extra={"section_title": section_title})
         else:
             print(title)

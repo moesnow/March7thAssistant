@@ -59,6 +59,7 @@ private fun headline(state: TaskState): Headline {
             R.string.pill_running, Tone.ACTIVE, tr(R.string.home_launching),
             tr(
                 when (state.game) {
+                    GameState.FLASHING -> R.string.game_flashing_detail
                     GameState.RETURNING -> R.string.home_returning_detail
                     GameState.MANUAL_LOGIN -> R.string.home_manual_login_detail
                     else -> R.string.home_launching_detail
@@ -67,7 +68,9 @@ private fun headline(state: TaskState): Headline {
             R.drawable.chibi_typing,
         )
         state.phase == TaskPhase.RUNNING -> Headline(
-            R.string.pill_running, Tone.ACTIVE, tr(R.string.home_running, task), tr(R.string.home_running_detail), R.drawable.chibi_typing
+            R.string.pill_running, Tone.ACTIVE, tr(R.string.home_running, task),
+            tr(if (state.game == GameState.FLASHING) R.string.game_flashing_detail else R.string.home_running_detail),
+            R.drawable.chibi_typing,
         )
         state.phase == TaskPhase.STOPPING -> Headline(
             R.string.pill_working, Tone.WARNING, tr(R.string.phase_stopping), tr(R.string.home_stopping_detail), R.drawable.chibi_typing
@@ -79,10 +82,12 @@ private fun headline(state: TaskState): Headline {
             R.string.pill_failed, Tone.ERROR, tr(R.string.home_failed), tr(R.string.home_failed_detail), R.drawable.chibi_lost
         )
         state.permission != PermissionState.READY -> Headline(
-            R.string.pill_setup, Tone.WARNING, tr(R.string.home_setup), tr(R.string.home_setup_detail), R.drawable.chibi_full
+            R.string.pill_setup, Tone.WARNING, tr(R.string.home_setup),
+            tr(rootPermissionHint(state.privilege, state.permission) ?: R.string.home_setup_detail), R.drawable.chibi_full,
         )
         state.phase == TaskPhase.SUCCEEDED -> Headline(
-            R.string.pill_done, Tone.SUCCESS, tr(R.string.home_done, task), tr(R.string.home_done_detail), R.drawable.chibi_wave
+            R.string.pill_done, Tone.SUCCESS, tr(R.string.home_done, task),
+            state.summary ?: tr(R.string.home_done_detail), R.drawable.chibi_wave,
         )
         state.phase == TaskPhase.STOPPED -> Headline(
             R.string.pill_stopped, Tone.NEUTRAL, tr(R.string.phase_stopped), tr(R.string.home_stopped_detail), R.drawable.chibi_full
@@ -151,7 +156,7 @@ internal fun HomeScreen(state: TaskState, lastLog: String?, actions: AppActions,
                         tr(R.string.home_latest_log),
                         icon = M7Icons.Logs,
                         iconTone = Tone.NEUTRAL,
-                        summary = parseLog(lastLog).message,
+                        summary = lastLog,
                         summaryMaxLines = 2,
                         onClick = { navigator.openTab(Tab.LOGS) },
                     )

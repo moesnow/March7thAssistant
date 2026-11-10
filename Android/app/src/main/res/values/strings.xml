@@ -33,6 +33,7 @@
     <!-- 权限 -->
     <string name="method_shizuku">Shizuku</string>
     <string name="method_root">Root</string>
+    <string name="permission_unchecked">未检查</string>
     <string name="permission_missing">未安装</string>
     <string name="permission_no_root">未找到 Root</string>
     <string name="permission_inactive">未运行</string>
@@ -80,7 +81,7 @@
     <string name="home_preparing_detail">正在加载文字识别模型并启动设备端服务，通常只要几秒。</string>
     <string name="home_launching">正在启动游戏</string>
     <string name="home_launching_detail">大约需要一到两分钟。期间游戏画面会在屏幕上闪现几秒，这时先别碰屏幕，它会自动回到后台。</string>
-    <string name="home_returning_detail">登录界面把游戏带到了屏幕上，正在自动移回后台，不用操作。</string>
+    <string name="home_returning_detail">正在等待游戏回到虚拟屏并恢复画面。</string>
     <string name="home_manual_login_detail">游戏停在了登录界面，需要你在屏幕上完成登录。</string>
     <string name="home_manual_login_notice">游戏正在等待登录。请在手机屏幕上完成登录；登录不了就先点「停止」，手动打开游戏登录好再重新开始。</string>
     <string name="home_running">正在执行%1$s</string>
@@ -150,7 +151,8 @@
     <string name="guide_grant_detail">点下面的按钮，在弹出的窗口里选「始终允许」。</string>
     <string name="guide_grant_hint">没有弹窗？打开 Shizuku 的「已授权应用」，手动打开三月七小助手的开关。</string>
     <string name="guide_root_check_title">检查并授予 Root 权限</string>
-    <string name="guide_root_detail">需要 Magisk 这类能以 shell 身份运行命令的 Root 方案。点下面的按钮，在 Root 管理应用弹出的窗口里选择允许。</string>
+    <string name="guide_root_unchecked">点「检查 Root」确认设备是否已授权。</string>
+    <string name="guide_root_denied">在 Root 管理应用（如 Magisk）里允许小助手使用 Root，再检查一次。</string>
     <string name="guide_root_missing">没有找到 su 命令，这台设备可能没有 Root。没有 Root 请改用 Shizuku。</string>
     <string name="guide_root_done">已获得 Root 权限</string>
     <string name="guide_root_experimental">Root 方式还没有在真机上完整验证。遇到问题请改用 Shizuku。</string>
@@ -184,7 +186,6 @@
     <string name="status_where_waiting">虚拟屏已创建，正在等游戏启动。</string>
     <string name="status_where_virtual">游戏在后台虚拟屏里，手机屏幕可以照常使用。</string>
     <string name="status_where_virtual_panel_off">游戏在后台虚拟屏里。手机屏幕的面板已关闭，任务结束后自动点亮。</string>
-    <string name="status_where_physical">登录界面把游戏带到了手机屏幕上，正在自动移回虚拟屏，不需要操作。</string>
     <string name="status_where_login">游戏停在登录界面，需要你在手机屏幕上完成登录。</string>
     <string name="status_details">明细</string>
     <string name="status_service">设备端服务</string>
@@ -207,6 +208,8 @@
     <string name="game_off">未运行</string>
     <string name="game_starting">启动中</string>
     <string name="game_returning">移回虚拟屏中</string>
+    <string name="game_flashing">实体屏闪现中</string>
+    <string name="game_flashing_detail">游戏暂时出现在手机屏幕上，移回虚拟屏前请先别碰屏幕。</string>
     <string name="game_ready">已就绪</string>
     <string name="game_manual_login">等待登录</string>
     <string name="status_game_nowhere">还不知道游戏在哪块屏幕上</string>
@@ -233,6 +236,7 @@
     <string name="logs_filter_info">信息</string>
     <string name="logs_filter_warning">警告</string>
     <string name="logs_filter_error">错误</string>
+    <string name="logs_filter_device">设备事件</string>
     <string name="logs_search">搜索日志内容</string>
     <string name="logs_search_clear">清除</string>
     <string name="logs_app_line">应用</string>

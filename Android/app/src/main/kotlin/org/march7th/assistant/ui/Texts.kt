@@ -46,11 +46,21 @@ internal val Privilege.title: Int
     }
 
 internal fun permissionLabel(privilege: Privilege, permission: PermissionState): Int = when (permission) {
+    PermissionState.NOT_CHECKED -> R.string.permission_unchecked
     PermissionState.NOT_INSTALLED ->
         if (privilege == Privilege.ROOT) R.string.permission_no_root else R.string.permission_missing
     PermissionState.NOT_RUNNING -> R.string.permission_inactive
     PermissionState.NOT_AUTHORIZED -> R.string.permission_denied
     PermissionState.READY -> R.string.permission_ready
+}
+
+internal fun rootPermissionHint(privilege: Privilege, permission: PermissionState): Int? {
+    if (privilege != Privilege.ROOT) return null
+    return when (permission) {
+        PermissionState.NOT_CHECKED -> R.string.guide_root_unchecked
+        PermissionState.NOT_AUTHORIZED -> R.string.guide_root_denied
+        else -> null
+    }
 }
 
 internal val ServiceState.label: Int
@@ -66,6 +76,7 @@ internal val GameState.label: Int
     get() = when (this) {
         GameState.OFF -> R.string.game_off
         GameState.STARTING -> R.string.game_starting
+        GameState.FLASHING -> R.string.game_flashing
         GameState.RETURNING -> R.string.game_returning
         GameState.READY -> R.string.game_ready
         GameState.MANUAL_LOGIN -> R.string.game_manual_login

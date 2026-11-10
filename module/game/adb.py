@@ -59,6 +59,7 @@ class AdbGameController(GameControllerBase):
         self._reset_display()
 
     def _reset_display(self):
+        self._on_event = None
         self._display_id = None
         self._game_display_id = None
         self._watching = False
@@ -103,12 +104,14 @@ class AdbGameController(GameControllerBase):
         self._tap_ms = tap_ms if tap_ms is not None else service.client.hello.get("default_tap_ms", 50)
         return environment
 
-    def attach_virtual_session(self, environment: AdbEnvironment, service):
+    def attach_virtual_session(self, environment: AdbEnvironment, service, *, on_event=None):
         """接管 APK 进程已鉴权的虚拟屏传输，不运行 adb 命令。"""
         with self._lock:
             if self._service is not None or self._failure or environment.device_type != "physical":
                 raise RuntimeError("无法接管 Android 虚拟屏会话")
-            return self._attach(environment, service, self._validated_tap_ms())
+            attached = self._attach(environment, service, self._validated_tap_ms())
+            self._on_event = on_event
+            return attached
 
     def connect(self, *, adb_path=None) -> AdbEnvironment:
         """启动并鉴权服务。当前运行断线后先 close，再显式发起下一次连接。"""
@@ -139,7 +142,10 @@ class AdbGameController(GameControllerBase):
     def _record_event(self, event):
         name = event["event"]
         self._events.append(event)
-        self.log_info(f"ADB 看门狗 {name}：{event}")
+        if self._on_event is None:
+            self.log_info(f"ADB 看门狗 {name}：{event}")
+        else:
+            self._on_event(event)
         if name == "watchdog_started":
             self._game_display_id = (event.get("task") or {}).get("display_id")
             self._sdk_window = bool(event.get("sdk_window"))

@@ -125,7 +125,7 @@ private fun ShizukuSteps(permission: PermissionState, device: DeviceInfo, enable
     val position = when (permission) {
         PermissionState.NOT_INSTALLED -> 0
         PermissionState.NOT_RUNNING -> 1
-        PermissionState.NOT_AUTHORIZED -> 2
+        PermissionState.NOT_AUTHORIZED, PermissionState.NOT_CHECKED -> 2
         PermissionState.READY -> 3
     }
     fun stateOf(index: Int) = when {
@@ -190,8 +190,10 @@ private fun RootSteps(permission: PermissionState, enabled: Boolean, actions: Ap
         if (ready) {
             BodyText(tr(R.string.guide_root_done))
         } else {
-            BodyText(tr(R.string.guide_root_detail), Modifier.padding(top = 4.dp))
-            if (permission == PermissionState.NOT_INSTALLED) {
+            val hint = rootPermissionHint(Privilege.ROOT, permission)
+            if (hint != null) {
+                BodyText(tr(hint), Modifier.padding(top = 4.dp))
+            } else if (permission == PermissionState.NOT_INSTALLED) {
                 Notice(tr(R.string.guide_root_missing), Modifier.padding(top = 10.dp), tone = Tone.ERROR, icon = M7Icons.Error)
             }
             StepButton(tr(R.string.check_root), actions.requestPermission, enabled = enabled)

@@ -47,14 +47,16 @@ internal fun SettingsScreen(
         SectionLabel(tr(R.string.settings_run))
         PanelCard(padding = PaddingValues(0.dp)) {
             val ready = state.permission == PermissionState.READY
+            val permission = tr(
+                R.string.settings_permission_summary,
+                tr(state.privilege.title), tr(permissionLabel(state.privilege, state.permission)),
+            )
+            val hint = rootPermissionHint(state.privilege, state.permission)
             SettingRow(
                 tr(R.string.home_permission),
                 icon = M7Icons.Shield,
                 iconTone = if (ready) Tone.SUCCESS else Tone.WARNING,
-                summary = tr(
-                    R.string.settings_permission_summary,
-                    tr(state.privilege.title), tr(permissionLabel(state.privilege, state.permission)),
-                ),
+                summary = if (hint == null) permission else "$permission\n${tr(hint)}",
                 onClick = { navigator.open(SubPage.GUIDE) },
             )
             RowDivider()

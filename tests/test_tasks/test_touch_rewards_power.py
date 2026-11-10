@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 import pytest
 
+from module.localization import tr
 from tasks.touch import power, rewards
 
 
@@ -148,7 +149,9 @@ def test_repeat_stops_at_configured_count(monkeypatch):
     monkeypatch.setattr(power, "_click_text", click)
     monkeypatch.setattr(power, "_exit_result", exit_result)
 
-    assert list(power._run_instance(power.GOLDEN_CALYX, "回忆之蕾", 2)) == [1, 1]
+    settlements = Mock()
+    assert list(power._run_instance(power.GOLDEN_CALYX, "回忆之蕾", 2, on_settlement=settlements)) == [1, 1]
+    assert settlements.call_args_list == [call(1, 43), call(1, 33)]
     start.assert_called_once_with(power.GOLDEN_CALYX, "回忆之蕾", 1, borrow_for_daily=False)
     assert wait.call_args_list == [call(repeated=False, instance_screen="calyx"), call(repeated=True, instance_screen="calyx")]
     click.assert_called_once_with("再来一次", power.REPEAT)
@@ -173,6 +176,37 @@ def test_power_plan_saves_only_confirmed_waves_before_failure(monkeypatch):
 
     assert power.run() is False
     config.set_value.assert_called_once_with("power_plan", [[calyx, "回忆之蕾", 1], config.power_plan[1]])
+
+
+@pytest.mark.parametrize("succeeded", [True, False])
+def test_power_reports_only_a_successful_summary_from_confirmed_settlements(monkeypatch, succeeded):
+    def run(_borrow_for_daily, on_settlement):
+        on_settlement(1, 43)
+        on_settlement(2, 23)
+        return succeeded
+
+    monkeypatch.setattr(power, "_run", run)
+    summary = Mock()
+    assert power.run(on_summary=summary) is succeeded
+    if succeeded:
+        summary.assert_called_once_with(tr("已完成 {count} 次挑战，剩余开拓力 {power}/300").format(count=3, power=23))
+    else:
+        summary.assert_not_called()
+
+
+def test_rewards_reports_completion_with_the_daily_result(monkeypatch):
+    monkeypatch.setattr(rewards, "cfg", SimpleNamespace(reward_enable=False))
+    daily_summary = tr("每日实训活跃度 {activity}/{maximum}").format(activity=300, maximum=500)
+
+    def run_daily(*, complete_training, on_summary):
+        assert complete_training is False
+        on_summary(daily_summary)
+        return True
+
+    monkeypatch.setattr(rewards.daily, "run", run_daily)
+    summary = Mock()
+    assert rewards.run(on_summary=summary)
+    summary.assert_called_once_with(tr("奖励检查完成，{daily_summary}").format(daily_summary=daily_summary))
 
 
 def test_mail_and_assist_without_alert_do_not_click(monkeypatch):
