@@ -1,0 +1,89 @@
+plugins {
+    id 'java-library'
+}
+
+// 设备端服务不走 Android Gradle Plugin：它不是 APK，只是一份能被 app_process 加载的 DEX。
+// 用 android.jar 做编译期依赖，再用 Build-Tools 里的 D8 把 class 转成内含 classes.dex 的 jar。
+def sdkRoot = {
+    def local = rootProject.file('local.properties')
+    if (local.isFile()) {
+        def props = new Properties()
+        local.withInputStream { props.load(it) }
+        if (props.getProperty('sdk.dir')) {
+            return file(props.getProperty('sdk.dir'))
+        }
+    }
+    def env = System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT')
+    if (!env) {
+        throw new GradleException('找不到 Android SDK：请设置 ANDROID_HOME，或在 Android/local.properties 里写 sdk.dir')
+    }
+    return file(env)
+}()
+
+def androidPlatform = providers.gradleProperty('m7a.androidPlatform').get()
+def buildToolsVersion = providers.gradleProperty('m7a.buildTools').get()
+def minApi = providers.gradleProperty('m7a.minApi').get()
+def androidJar = new File(sdkRoot, "platforms/${androidPlatform}/android.jar")
+def d8Jar = new File(sdkRoot, "build-tools/${buildToolsVersion}/lib/d8.jar")
+
+[androidJar, d8Jar].each {
+    if (!it.isFile()) {
+        throw new GradleException("缺少 Android SDK 组件：${it}（见 gradle.properties 的 m7a.androidPlatform、m7a.buildTools）")
+    }
+}
+
+dependencies {
+    compileOnly files(androidJar)
+
+    // 协议层只用到 org.json 和 java.*，可以脱离设备在 JVM 上测试。
+    // 设备上的 org.json 由系统框架提供，这里只在测试时引入同名实现。
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 11
+    options.compilerArgs += ['-Xlint:all', '-Xlint:-options', '-Xlint:-classfile']
+}
+
+tasks.named('jar') {
+    archiveBaseName = 'device-service-classes'
+}
+
+tasks.named('test') {
+    useJUnit()
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat = 'full'
+    }
+}
+
+def dexJar = tasks.register('dexJar', JavaExec) {
+    group = 'build'
+    description = '生成内含 classes.dex、可由 app_process 加载的 jar'
+    def classesJar = tasks.named('jar').flatMap { it.archiveFile }
+    def output = layout.buildDirectory.file('outputs/m7a-device-service.jar')
+    inputs.file(classesJar)
+    inputs.file(androidJar)
+    inputs.property('minApi', minApi)
+    outputs.file(output)
+    classpath = files(d8Jar)
+    mainClass = 'com.android.tools.r8.D8'
+    argumentProviders.add({
+        [
+            '--release',
+            '--min-api', minApi,
+            '--lib', androidJar.absolutePath,
+            '--output', output.get().asFile.absolutePath,
+            classesJar.get().asFile.absolutePath,
+        ]
+    } as CommandLineArgumentProvider)
+    doFirst {
+        output.get().asFile.parentFile.mkdirs()
+    }
+}
+
+tasks.named('assemble') {
+    dependsOn dexJar
+}
