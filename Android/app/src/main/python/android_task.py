@@ -1,6 +1,8 @@
 """Chaquopy 入口。游戏任务、界面图、OCR 和 Android 控制器都来自仓库。"""
 from functools import lru_cache
 from hashlib import file_digest
+import importlib
+import json
 import logging
 import os
 from pathlib import Path
@@ -14,6 +16,47 @@ _MODELS = {
     "Rec": ("ch_PP-OCRv4_rec_infer.onnx", "48fc40f24f6d2a207a2b1091d3437eb3cc3eb6b676dc3ef9c37384005483683b"),
     "Cls": ("ch_ppocr_mobile_v2.0_cls_infer.onnx", "e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c"),
 }
+
+# 与 main.py 的 touch_actions 保持一致，tests/test_tasks/test_android_entry.py 会对照。
+TASK_TARGETS = {
+    "ROUTINE": ("tasks.touch.rewards", "routine"),
+    "DAILY": ("tasks.touch.rewards", "run_daily_training"),
+    "POWER": ("tasks.touch.power", "run_standalone"),
+}
+# 单任务入口的步骤名，与 routine 里的步骤名相同。
+SINGLE_STEPS = {"DAILY": "每日实训", "POWER": "清体力"}
+PROGRESS_KEYS = ("power_plan", "last_run_timestamp", "echo_of_war_timestamp")
+# 手机上固定的配置。game_optimization_enable 只用来放行自动战斗检测。
+FIXED_SETTINGS = {
+    "control_backend": "adb",
+    "ui_profile": "touch_720",
+    "notification_enable": False,
+    "game_optimization_enable": True,
+}
+# Kotlin 的 TaskConfig.toSettings() 每轮都写全这些键，界面契约里有对照表。
+SETTING_KEYS = frozenset({
+    "power_enable", "power_plan", "power_plan_keep", "power_plan_continue",
+    "instance_type", "instance_names", "use_reserved_trailblaze_power", "use_fuel",
+    "instance_team_enable", "instance_team_number", "instance_teams",
+    "borrow_enable", "borrow_character_enable", "borrow_friends", "borrow_scroll_times",
+    "echo_of_war_enable", "echo_of_war_start_day_of_week",
+    "tp_before_instance", "relic_bag_cleanup_enable", "instance_names_challenge_count", "auto_battle_detect_enable",
+    "reward_enable", "reward_dispatch_enable", "reward_mail_enable", "reward_assist_enable",
+    "reward_quest_enable", "reward_srpass_enable", "reward_message_enable",
+    "daily_enable", "daily_material_enable",
+})
+
+
+def build_settings(payload):
+    """校验 Kotlin 传来的设置，多键或少键都报错，再叠加固定配置。"""
+    values = json.loads(payload)
+    if not isinstance(values, dict):
+        raise ValueError("任务设置应为 JSON 对象")
+    missing = SETTING_KEYS - values.keys()
+    extra = values.keys() - SETTING_KEYS
+    if missing or extra:
+        raise ValueError(f"任务设置的键与约定不符：缺少 {sorted(missing)}，多出 {sorted(extra)}")
+    return {**values, **FIXED_SETTINGS}
 
 
 @lru_cache(maxsize=1)
@@ -36,20 +79,31 @@ def _ocr_parameters():
 
 
 class _TaskLog(logging.Handler):
+    """把任务日志转给 Kotlin，并记下当前步骤里最后一条错误，作为这一步失败的原因。"""
+
     def __init__(self, bridge):
         super().__init__(logging.INFO)
         self.bridge = bridge
+        self.step = None
+        self.last_error = None
+
+    def begin_step(self, name):
+        self.step = name
+        self.last_error = None
 
     def emit(self, record):
         title = getattr(record, "section_title", None)
+        message = title if title is not None else self.format(record)
         if record.levelno >= logging.ERROR:
             level = "ERROR"
+            # run_steps 补的「<步骤名>未完成」不含原因，保留它之前的那条。
+            if title is None and message != f"{self.step}未完成":
+                self.last_error = message
         elif record.levelno >= logging.WARNING:
             level = "WARNING"
         else:
             level = "INFO"
-        self.bridge.log(int(record.created * 1000), level, "TASK",
-                        title if title is not None else self.format(record), title is not None)
+        self.bridge.log(int(record.created * 1000), level, "TASK", message, title is not None)
 
 
 class _AppSession:
@@ -94,14 +148,14 @@ class _AppSession:
             self.client.close()
 
 
-def run(workdir, token, sdk, version, model, is_emulator, tasks, config, language, bridge):
+def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_off, mute_game, language, bridge):
     os.chdir(workdir)
     if workdir not in sys.path:
         sys.path.insert(0, workdir)
     os.environ["MARCH7TH_NON_INTERACTIVE"] = "1"
 
     from module.config import cfg
-    from module.localization import load_language, tr
+    from module.localization import load_language
     from module.logger import log
     from utils.pause import RunStopRequested
 
@@ -110,38 +164,32 @@ def run(workdir, token, sdk, version, model, is_emulator, tasks, config, languag
     for logger in loggers:
         logger.addHandler(handler)
     controller = session = ocr = None
+    configured = False
+
+    def report_progress():
+        try:
+            bridge.reportProgress(json.dumps({key: getattr(cfg, key) for key in PROGRESS_KEYS}, ensure_ascii=False))
+        except Exception as error:
+            log.warning(f"未能把任务进度交回 App：{error}")
+
     try:
         if bridge.isCancelled():
             raise RunStopRequested()
-        supports = [[str(key), ""] for key in config.supportKeys()]
-        settings = {
-            "control_backend": "adb",
-            "ui_profile": "touch_720",
-            "notification_enable": False,
-            "reward_enable": True,
-            "reward_quest_enable": config.getCollectRewards(),
-            "reward_dispatch_enable": config.getDispatch(),
-            "reward_mail_enable": config.getMail(),
-            "reward_assist_enable": config.getAssist(),
-            "reward_srpass_enable": config.getSrpass(),
-            "reward_message_enable": config.getMessage(),
-            "daily_enable": True,
-            "daily_material_enable": config.getSynthesis(),
-            "power_enable": True,
-            "instance_team_enable": False,
-            # 没选支援角色时不进支援列表，也不为支援实训多查一次任务卡。
-            "borrow_enable": bool(supports),
-            "borrow_character_enable": config.getBorrowAlways(),
-            "borrow_friends": supports,
-        }
-        selected = set(tasks.split(","))
-        if "POWER" in selected:
-            settings.update(
-                power_plan=[[config.getInstanceType().getTypeName(), config.getInstanceName(), config.getWaves()]],
-                use_reserved_trailblaze_power=config.getReserve(),
-                use_fuel=config.getFuel(),
-            )
-        cfg.set_values(settings)
+        module_name, entry = TASK_TARGETS[task]
+        cfg.set_values(build_settings(settings))
+
+        # 每批结算先写入配置，再交回 App，缩短任务进程被杀时的进度丢失窗口。
+        set_value = cfg.set_value
+        had_set_value_override = "set_value" in vars(cfg)
+
+        def set_value_and_report(key, value):
+            result = set_value(key, value)
+            if key in PROGRESS_KEYS:
+                report_progress()
+            return result
+
+        cfg.set_value = set_value_and_report
+        configured = True
         load_language(language)
 
         from module.game import get_game_controller
@@ -149,7 +197,7 @@ def run(workdir, token, sdk, version, model, is_emulator, tasks, config, languag
         from module.game.adb_transport import (
             GAME_PACKAGE, AdbDevice, AdbEnvironment, AdbError, ServiceClient, check_service_hello)
         from module.ocr import ocr
-        from tasks.touch import daily, power, rewards
+        target = getattr(importlib.import_module(module_name), entry)
 
         # 等 Python 模块可用再请 Kotlin 启动设备端服务，避免冷导入耗尽握手期限。
         started = time.monotonic()
@@ -168,11 +216,17 @@ def run(workdir, token, sdk, version, model, is_emulator, tasks, config, languag
         display_id = controller.prepare_display()
         bridge.displayReady(display_id)
         log.info(f"已创建 1280×720 虚拟屏，display {display_id}")
+        if "keep_awake" in session.client.hello.get("features", ()):
+            try:
+                session.request("keep_awake", on=True)
+            except AdbError as error:
+                log.warning(f"未能保持系统唤醒：{error}")
+        else:
+            log.warning("设备端服务不支持保持系统唤醒")
         # 关闭时也发一次，让设备端修复旧版本留下的静音记录。静音失败不影响任务。
-        mute = config.getMuteGame()
         try:
-            result, _ = session.request("mute", package=GAME_PACKAGE, on=mute)
-            if mute:
+            result, _ = session.request("mute", package=GAME_PACKAGE, on=mute_game)
+            if mute_game:
                 log.info("已静音游戏，任务结束后恢复")
             elif result["original_mode"] == "ignore":
                 log.warning("系统设置里游戏的声音已被关闭，小助手不会改动它")
@@ -183,27 +237,42 @@ def run(workdir, token, sdk, version, model, is_emulator, tasks, config, languag
         wait_for_game(controller, min(cfg.start_game_timeout * 60, 180))
         log.info(f"游戏画面就绪，用时 {time.monotonic() - started:.1f} 秒")
         bridge.gameReady()
-        if config.getPanelOff():
+        if panel_off:
             result, _ = session.request("screen_power", on=False)
             bridge.panelChanged(result["panel_off"])
             log.info("已关闭实体面板，保持系统唤醒")
-        # 顺序固定：先清体力，实训里消耗开拓力和支援的任务才能在最后一并领取。
-        summaries = []
-        succeeded = True
-        if "POWER" in selected:
-            support_pending = ("DAILY" in selected and cfg.borrow_enable and not cfg.borrow_character_enable
-                               and daily.needs_support())
-            succeeded = power.run(borrow_for_daily=support_pending, on_summary=summaries.append)
-        if succeeded and "REWARDS" in selected:
-            succeeded = rewards.claim()
-        if succeeded and "DAILY" in selected:
-            succeeded = daily.run(complete_training=True, on_summary=summaries.append)
+
+        summary = None
+
+        def keep_summary(text):
+            nonlocal summary
+            summary = text
+
+        def report_step(name, state, step_summary=None):
+            if state == "started":
+                handler.begin_step(name)
+                detail = None
+            elif state == "succeeded":
+                detail = step_summary
+            else:
+                detail = handler.last_error
+            bridge.reportStep(name, state, detail)
+
+        # 与 Windows 的触屏入口相同：返回值不是 False 就算成功。
+        if task == "ROUTINE":
+            succeeded = target(on_summary=keep_summary, on_step=report_step)
+        else:
+            # Windows 的单任务入口不经过 run_steps，这里只在前后各报一次。
+            step = SINGLE_STEPS[task]
+            report_step(step, "started")
+            succeeded = target(on_summary=keep_summary)
+            report_step(step, "failed" if succeeded is False else "succeeded", summary)
         if bridge.isCancelled():
             return "stopped"
-        if not succeeded:
+        if succeeded is False:
             return "task_failed"
-        if summaries:
-            bridge.reportSummary(tr("；").join(summaries))
+        if summary:
+            bridge.reportSummary(summary)
         return "success"
     except RunStopRequested:
         log.info("任务已停止")
@@ -214,6 +283,12 @@ def run(workdir, token, sdk, version, model, is_emulator, tasks, config, languag
         log.error(traceback.format_exc())
         return getattr(error, "code", "runtime_error")
     finally:
+        if configured:
+            if had_set_value_override:
+                cfg.set_value = set_value
+            else:
+                del cfg.set_value
+            report_progress()
         bridge.cleaning()
         try:
             if controller is not None:

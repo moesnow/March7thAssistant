@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
     private fun actions() = AppActions(
         start = ::start,
         stop = controller::stop,
-        setTaskEnabled = { task, enabled -> controller.setTaskEnabled(task, enabled) },
+        selectTask = { controller.selectTask(it) },
         updateConfig = { controller.updateConfig(it) },
         selectPrivilege = { controller.selectPrivilege(it) },
         requestPermission = controller::requestPermission,

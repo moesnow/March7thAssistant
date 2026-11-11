@@ -1,7 +1,9 @@
 package org.march7th.assistant.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,30 +19,50 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.march7th.assistant.R
+import org.march7th.assistant.StepResult
+import org.march7th.assistant.StepStatus
 
 internal enum class Tone { NEUTRAL, ACTIVE, SUCCESS, WARNING, ERROR }
 
@@ -111,13 +133,14 @@ internal fun IconBadge(icon: ImageVector, tone: Tone = Tone.ACTIVE, modifier: Mo
     }
 }
 
-/** 设置项和状态行：左侧图标，标题加说明，右侧可放开关、状态或箭头。 */
+/** 设置项和状态行：左侧图标，标题、当前取值加说明，右侧可放开关、状态或箭头。 */
 @Composable
 internal fun SettingRow(
     title: String,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     iconTone: Tone = Tone.ACTIVE,
+    value: String? = null,
     summary: String? = null,
     summaryMaxLines: Int = Int.MAX_VALUE,
     enabled: Boolean = true,
@@ -139,6 +162,15 @@ internal fun SettingRow(
         }
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
+            if (value != null) {
+                Text(
+                    value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
             if (summary != null) {
                 Text(
                     summary,
@@ -157,6 +189,166 @@ internal fun SettingRow(
         }
     }
 }
+
+/** 数字步进器：两侧加减，中间可以直接输入。输入只收数字，超出范围的值收进范围。 */
+@Composable
+internal fun Stepper(
+    value: Int,
+    range: IntRange,
+    onChange: (Int) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val focus = LocalFocusManager.current
+    val digits = range.last.toString().length
+    var text by remember(value) { mutableStateOf(value.toString()) }
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        IconButton({ onChange(value - 1) }, enabled = enabled && value > range.first) {
+            Icon(M7Icons.Remove, "${tr(R.string.stepper_minus)} $label")
+        }
+        BasicTextField(
+            value = text,
+            onValueChange = { input ->
+                text = input.filter(Char::isDigit).take(digits)
+                text.toIntOrNull()?.let { onChange(it.coerceIn(range)) }
+            },
+            modifier = Modifier
+                .width((digits * 12 + 28).dp)
+                .clip(MaterialTheme.shapes.small)
+                .border(1.dp, if (enabled) scheme.outline else scheme.outlineVariant, MaterialTheme.shapes.small)
+                .onFocusChanged { if (!it.isFocused) text = value.toString() }
+                .semantics { contentDescription = label }
+                .padding(vertical = 10.dp),
+            enabled = enabled,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.titleMedium.copy(
+                color = if (enabled) scheme.onSurface else scheme.onSurfaceVariant, textAlign = TextAlign.Center,
+            ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+            cursorBrush = SolidColor(scheme.primary),
+        )
+        IconButton({ onChange(value + 1) }, enabled = enabled && value < range.last) {
+            Icon(M7Icons.Add, "${tr(R.string.stepper_plus)} $label")
+        }
+    }
+}
+
+/** 标题、说明和可选范围在左，步进器在右。 */
+@Composable
+internal fun StepperRow(
+    title: String,
+    value: Int,
+    range: IntRange,
+    onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    enabled: Boolean = true,
+) {
+    Row(
+        modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f).alpha(if (enabled) 1f else 0.5f)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            val hint = tr(R.string.stepper_range, range.first, range.last)
+            Text(
+                if (summary == null) hint else "$summary\n$hint",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Stepper(value, range, onChange, title, enabled = enabled)
+    }
+}
+
+/** 可折叠的设置组：标题行显示图标、名称、一行摘要和展开箭头。 */
+@Composable
+internal fun ExpandableGroup(
+    title: String,
+    summary: String,
+    icon: ImageVector,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    PanelCard(modifier, padding = PaddingValues(0.dp)) {
+        val action = tr(if (expanded) R.string.task_collapse else R.string.task_expand)
+        val status = tr(if (expanded) R.string.state_expanded else R.string.state_collapsed)
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClickLabel = action, role = Role.Button, onClick = onToggle)
+                .semantics { stateDescription = status }
+                .heightIn(min = 72.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconBadge(icon)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    summary, style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Icon(M7Icons.ExpandMore, null, Modifier.rotate(if (expanded) 180f else 0f), tint = scheme.onSurfaceVariant)
+        }
+        AnimatedVisibility(expanded) {
+            Column {
+                HorizontalDivider(color = scheme.outlineVariant)
+                content()
+            }
+        }
+    }
+}
+
+/** 一个步骤的结果：状态图标、步骤名和说明。running 表示这一轮还在进行。 */
+@Composable
+internal fun StepResultRow(step: StepResult, modifier: Modifier = Modifier, running: Boolean = false) {
+    val scheme = MaterialTheme.colorScheme
+    val brand = LocalBrand.current
+    val (icon, tint) = when (step.status) {
+        StepStatus.DONE -> M7Icons.Check to brand.success
+        StepStatus.FAILED -> M7Icons.Close to scheme.error
+        StepStatus.STOPPED -> M7Icons.Stop to brand.warning
+        StepStatus.RUNNING -> M7Icons.Play to scheme.primary
+        StepStatus.PENDING, StepStatus.DISABLED -> M7Icons.Remove to scheme.outline
+    }
+    val muted = step.status == StepStatus.PENDING || step.status == StepStatus.DISABLED
+    val status = if (running && step.status == StepStatus.PENDING) R.string.step_waiting else step.status.label
+    Row(modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(vertical = 6.dp)) {
+        Icon(icon, tr(status), Modifier.padding(top = 1.dp).size(20.dp), tint = tint)
+        Spacer(Modifier.width(10.dp))
+        Text(
+            stepName(step), Modifier.widthIn(min = 72.dp),
+            style = MaterialTheme.typography.titleSmall,
+            color = if (muted) scheme.onSurfaceVariant else scheme.onSurface,
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            stepDetail(step, running), Modifier.weight(1f),
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (step.status == StepStatus.FAILED) scheme.error else scheme.onSurfaceVariant,
+        )
+    }
+}
+
+internal val StepStatus.label: Int
+    get() = when (this) {
+        StepStatus.PENDING -> R.string.step_pending
+        StepStatus.RUNNING -> R.string.step_running
+        StepStatus.DONE -> R.string.step_done
+        StepStatus.FAILED -> R.string.step_failed
+        StepStatus.STOPPED -> R.string.step_stopped
+        StepStatus.DISABLED -> R.string.step_disabled
+    }
 
 @Composable
 internal fun SwitchRow(

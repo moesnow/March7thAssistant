@@ -87,10 +87,17 @@ class TaskRunnerService : Service() {
             TaskPhase.CLEANING -> 3
             else -> 0
         }
+        val current = state.steps.progress()?.takeIf { state.phase == TaskPhase.RUNNING }
+        val text = if (current == null) {
+            tr(state.phase.label)
+        } else {
+            val name = current.step.step?.let { tr(it.title) } ?: current.step.name
+            tr(R.string.notification_step, name, current.number, current.total)
+        }
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_task)
-            .setContentTitle(state.tasks.sorted().joinToString(tr(R.string.list_separator)) { tr(it.title) })
-            .setContentText(tr(state.phase.label))
+            .setContentTitle(tr(state.task.title))
+            .setContentText(text)
             .setContentIntent(view)
             .setOnlyAlertOnce(true)
             .setOngoing(true)

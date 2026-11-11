@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -38,7 +39,7 @@ import org.march7th.assistant.TaskState
 internal class AppActions(
     val start: () -> Unit,
     val stop: () -> Unit,
-    val setTaskEnabled: (TaskId, Boolean) -> Unit,
+    val selectTask: (TaskId) -> Unit,
     val updateConfig: (TaskConfig) -> Unit,
     val selectPrivilege: (Privilege) -> Unit,
     val requestPermission: () -> Unit,
@@ -68,7 +69,7 @@ internal enum class Tab(val label: Int, val icon: ImageVector) {
     SETTINGS(R.string.tab_settings, M7Icons.Settings),
 }
 
-internal enum class SubPage { GUIDE, STATUS }
+internal enum class SubPage { GUIDE, STATUS, POWER_PLAN, TEAM_RULES }
 
 /** 调试构建用模拟数据预览界面时的输入，见 debug 源集的 demoFrom。 */
 internal class Demo(val state: TaskState, val logs: List<LogEntry>, val tab: Tab, val page: SubPage?, val theme: ThemeMode?)
@@ -88,6 +89,8 @@ internal fun App(
 ) {
     var tab by rememberSaveable { mutableStateOf(initialTab) }
     var page by rememberSaveable { mutableStateOf(initialPage) }
+    // 每个页面的折叠状态和滚动位置单独保存，进出子页面后保持原样。
+    val pages = rememberSaveableStateHolder()
     val latestTaskLog = logs.lastOrNull { it.category == LogCategory.TASK }?.message
     val navigator = Navigator(
         openTab = {
@@ -130,14 +133,18 @@ internal fun App(
         ) { (currentPage, currentTab) ->
             // 横屏和平板上内容居中，不随屏幕拉宽。
             Box(Modifier.fillMaxSize().wrapContentWidth().widthIn(max = 640.dp)) {
-                when (currentPage) {
-                    SubPage.GUIDE -> GuideScreen(state, device, actions, navigator)
-                    SubPage.STATUS -> StatusScreen(state, latestTaskLog, navigator)
-                    null -> when (currentTab) {
-                        Tab.HOME -> HomeScreen(state, latestTaskLog, actions, navigator)
-                        Tab.TASKS -> TasksScreen(state, catalog, actions)
-                        Tab.LOGS -> LogsScreen(state, logs, actions)
-                        Tab.SETTINGS -> SettingsScreen(state, device, themeMode, actions, navigator)
+                pages.SaveableStateProvider(currentPage?.name ?: currentTab.name) {
+                    when (currentPage) {
+                        SubPage.GUIDE -> GuideScreen(state, device, actions, navigator)
+                        SubPage.STATUS -> StatusScreen(state, latestTaskLog, navigator)
+                        SubPage.POWER_PLAN -> PowerPlanScreen(state, catalog, actions, navigator)
+                        SubPage.TEAM_RULES -> TeamRulesScreen(state, catalog, actions, navigator)
+                        null -> when (currentTab) {
+                            Tab.HOME -> HomeScreen(state, latestTaskLog, actions, navigator)
+                            Tab.TASKS -> TasksScreen(state, catalog, actions, navigator)
+                            Tab.LOGS -> LogsScreen(state, logs, actions)
+                            Tab.SETTINGS -> SettingsScreen(state, device, themeMode, actions, navigator)
+                        }
                     }
                 }
             }

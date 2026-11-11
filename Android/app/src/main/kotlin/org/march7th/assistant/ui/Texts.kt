@@ -4,14 +4,25 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import org.march7th.assistant.Catalog
 import org.march7th.assistant.GameState
 import org.march7th.assistant.InstanceType
 import org.march7th.assistant.PermissionState
+import org.march7th.assistant.PlanItem
 import org.march7th.assistant.Privilege
 import org.march7th.assistant.R
 import org.march7th.assistant.ServiceState
+import org.march7th.assistant.StepId
+import org.march7th.assistant.StepResult
+import org.march7th.assistant.StepStatus
 import org.march7th.assistant.TaskId
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /** 界面文案统一从资源读取，和 Context.tr 同名。 */
 @Composable
@@ -20,42 +31,83 @@ internal fun tr(@StringRes id: Int, vararg args: Any): String = stringResource(i
 
 internal val TaskId.title: Int
     get() = when (this) {
+        TaskId.ROUTINE -> R.string.routine
         TaskId.DAILY -> R.string.daily
-        TaskId.REWARDS -> R.string.rewards
         TaskId.POWER -> R.string.power
     }
 
 internal val TaskId.icon: ImageVector
     get() = when (this) {
+        TaskId.ROUTINE -> M7Icons.Routine
         TaskId.DAILY -> M7Icons.Daily
-        TaskId.REWARDS -> M7Icons.Gift
         TaskId.POWER -> M7Icons.Bolt
     }
 
-/** 一项任务用它自己的名字，多项时用统称，放进「开始%s」这类句子里。 */
-@Composable
-@ReadOnlyComposable
-internal fun tasksName(tasks: Set<TaskId>): String =
-    tr(tasks.singleOrNull()?.title ?: R.string.tasks_selected)
+internal val StepId.title: Int
+    get() = when (this) {
+        StepId.ECHO -> R.string.instance_echo
+        StepId.POWER -> R.string.power
+        StepId.REWARDS -> R.string.rewards
+        StepId.DAILY -> R.string.daily
+    }
 
-/** 按执行顺序列出所选任务。 */
+/** 表里的步骤用界面上的名字，其余步骤用 Python 报来的原名。 */
 @Composable
 @ReadOnlyComposable
-internal fun tasksList(tasks: Set<TaskId>): String {
-    if (tasks.isEmpty()) return tr(R.string.tasks_none)
-    val separator = tr(R.string.list_separator)
-    val names = ArrayList<String>()
-    for (task in tasks.sorted()) names += tr(task.title)
-    return names.joinToString(separator)
+internal fun stepName(step: StepResult): String = step.step?.let { tr(it.title) } ?: step.name
+
+/** 周一为 1。 */
+@Composable
+@ReadOnlyComposable
+internal fun weekday(day: Int): String = stringArrayResource(R.array.weekdays)[day - 1]
+
+/** 结果卡和步骤清单里每一行的说明。running 为真时还没轮到的步骤显示「等待执行」，结束后才是「没有执行」。 */
+@Composable
+@ReadOnlyComposable
+internal fun stepDetail(step: StepResult, running: Boolean = false): String = when (step.status) {
+    StepStatus.DONE -> step.detail ?: tr(R.string.step_done)
+    StepStatus.FAILED -> step.detail ?: tr(R.string.step_failed_detail)
+    StepStatus.STOPPED -> tr(R.string.step_stopped)
+    StepStatus.PENDING -> tr(if (running) R.string.step_waiting else R.string.step_pending)
+    StepStatus.RUNNING -> tr(R.string.step_running)
+    StepStatus.DISABLED -> step.startDay?.let { tr(R.string.step_starts_on, weekday(it)) } ?: tr(R.string.step_disabled)
 }
 
-/** 放在窄位置的写法：多项时只给数量。 */
+/** 赤萼在数据里用地区作名称，显示时带上花萼名。 */
 @Composable
 @ReadOnlyComposable
-internal fun tasksShort(tasks: Set<TaskId>): String =
-    if (tasks.size > 1) tr(R.string.tasks_count, tasks.size) else tasksList(tasks)
+internal fun instanceLabel(type: InstanceType, name: String, catalog: Catalog): String {
+    if (type != InstanceType.CRIMSON_CALYX) return name
+    val bud = catalog.instances[type].orEmpty().firstOrNull { it.id == name }?.detail ?: return name
+    return tr(R.string.option_instance_summary, name, bud)
+}
 
-internal fun tasksIcon(tasks: Set<TaskId>): ImageVector = tasks.singleOrNull()?.icon ?: M7Icons.Tasks
+/** 「N 项，共 M 次」。 */
+@Composable
+@ReadOnlyComposable
+internal fun planSize(plan: List<PlanItem>): String = tr(R.string.plan_size, plan.size, plan.sumOf { it.count })
+
+private val clock = DateTimeFormatter.ofPattern("HH:mm", Locale.ROOT)
+
+/** 「今天 21:47」「昨天 21:47」「11月9日 21:47」，不是今年的再带上年份。 */
+@Composable
+@ReadOnlyComposable
+internal fun recordTime(millis: Long?): String {
+    if (millis == null) return tr(R.string.time_none)
+    val zone = ZoneId.systemDefault()
+    val time = Instant.ofEpochMilli(millis).atZone(zone)
+    val today = LocalDate.now(zone)
+    val text = time.format(clock)
+    return when (val date = time.toLocalDate()) {
+        today -> tr(R.string.time_today, text)
+        today.minusDays(1) -> tr(R.string.time_yesterday, text)
+        else -> if (date.year == today.year) {
+            tr(R.string.time_date, date.monthValue, date.dayOfMonth, text)
+        } else {
+            tr(R.string.time_full_date, date.year, date.monthValue, date.dayOfMonth, text)
+        }
+    }
+}
 
 internal val Privilege.title: Int
     get() = when (this) {

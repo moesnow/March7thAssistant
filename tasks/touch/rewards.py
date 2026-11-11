@@ -333,16 +333,28 @@ def run(*, complete_training=False, on_summary=None):
         return daily.run(complete_training=complete_training, on_summary=report_daily if on_summary is not None else None)
 
 
-def run_daily_training():
-    return daily.run(complete_training=True)
+def run_daily_training(*, on_summary=None):
+    return daily.run(complete_training=True, on_summary=on_summary)
 
 
-def routine(*, on_summary=None, full_run=False):
+def routine(*, on_summary=None, full_run=False, on_step=None):
+    """on_step(name, state, summary) 转发 run_steps 的步骤事件，summary 是该步的一行摘要。"""
     from tasks.touch import power
     from tasks.power.policy import SupportDemand
 
     summaries = []
-    collect_summary = summaries.append if on_summary is not None else None
+    step_summaries = {}
+
+    def collector(name):
+        # 没人要摘要时保持 None，与不传回调时的调用完全一致。
+        if on_summary is None and on_step is None:
+            return None
+
+        def collect(text):
+            summaries.append(text)
+            step_summaries[name] = text
+        return collect
+
     steps = []
     demand = SupportDemand()
 
@@ -353,13 +365,18 @@ def routine(*, on_summary=None, full_run=False):
         steps.append(("查询支援实训", query_support))
         if cfg.echo_of_war_enable and (not full_run or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour)):
             steps.append(("历战余响", lambda: power.run_weekly_echo(borrow_for_daily=demand)))
-        steps.append(("清体力", lambda: power.run(borrow_for_daily=demand, on_summary=collect_summary)))
+        steps.append(("清体力", lambda: power.run(borrow_for_daily=demand, on_summary=collector("清体力"))))
     if cfg.reward_enable:
         steps.append(("日常领奖", claim))
-    steps.append(("每日实训", lambda: daily.run(complete_training=True, full_run=full_run, on_summary=collect_summary)))
+    steps.append(("每日实训", lambda: daily.run(complete_training=True, full_run=full_run,
+                                               on_summary=collector("每日实训"))))
+
+    def report(name, state):
+        on_step(name, state, step_summaries.get(name))
+
     with screenshot_retry_timeout(5):
-        result = run_steps(steps)
+        result = run_steps(steps, on_step=None if on_step is None else report)
         screen.change_to("main", max_recursion=1)
-    if summaries:
+    if summaries and on_summary is not None:
         on_summary(tr("；").join(summaries))
     return result

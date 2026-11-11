@@ -3,18 +3,17 @@
 <resources>
     <string name="app_name">三月七小助手</string>
 
-    <!-- 任务 -->
+    <!-- 任务和步骤。步骤名里的「领取奖励」对应 Python 的「日常领奖」。 -->
+    <string name="routine">日常</string>
     <string name="daily">每日实训</string>
     <string name="rewards">领取奖励</string>
     <string name="power">清体力</string>
-    <string name="tasks_selected">所选任务</string>
-    <string name="tasks_none">未选择任务</string>
-    <string name="tasks_count">%1$d 项任务</string>
     <string name="list_separator">、</string>
+    <string name="step_separator">" → "</string>
 
     <!-- 通用操作 -->
     <string name="start_task">开始%1$s</string>
-    <string name="choose_tasks">选择任务</string>
+    <string name="go_enable">去打开要做的事</string>
     <string name="stop">停止</string>
     <string name="back">返回</string>
     <string name="confirm">确定</string>
@@ -67,6 +66,20 @@
     <string name="step_game">启动游戏</string>
     <string name="step_task">执行任务</string>
     <string name="step_cleanup">收尾</string>
+    <string name="notification_step">正在执行：%1$s（%2$d/%3$d）</string>
+
+    <!-- 本轮各步骤的结果 -->
+    <string name="result_title">本轮结果</string>
+    <string name="step_running">进行中</string>
+    <string name="step_done">已完成</string>
+    <string name="step_failed">没有完成</string>
+    <string name="step_failed_detail">没有完成，详情见日志</string>
+    <string name="step_stopped">已停止</string>
+    <string name="step_pending">没有执行</string>
+    <string name="step_waiting">等待执行</string>
+    <string name="step_disabled">未启用</string>
+    <string name="step_starts_on">%1$s开始</string>
+    <string name="result_retry">可以直接再开始一次。反复出现时，到日志页导出日志反馈。</string>
 
     <!-- 首页 -->
     <string name="pill_ready">就绪</string>
@@ -89,6 +102,7 @@
     <string name="home_manual_login_detail">游戏停在了登录界面，需要你在屏幕上完成登录。</string>
     <string name="home_manual_login_notice">游戏正在等待登录。请在手机屏幕上完成登录；登录不了就先点「停止」，手动打开游戏登录好再重新开始。</string>
     <string name="home_running">正在执行%1$s</string>
+    <string name="home_running_step">正在%1$s（第 %2$d 步，共 %3$d 步）</string>
     <string name="home_running_detail">手机可以照常使用。请保持解锁，不要按电源键。</string>
     <string name="home_stopping_detail">手头这一步做完就会停下，然后释放虚拟屏。</string>
     <string name="home_cleaning_detail">正在关闭设备端会话，马上就好。</string>
@@ -97,6 +111,9 @@
     <string name="home_stopped_detail">虚拟屏已释放，可以随时重新开始。</string>
     <string name="home_failed">这次没有完成</string>
     <string name="home_failed_detail">原因和处理办法在下面，照着做完再重新开始。</string>
+    <string name="pill_partial">部分完成</string>
+    <string name="home_partial">有 %1$d 步没有完成</string>
+    <string name="home_partial_detail">其余步骤已照常执行，明细在下面。</string>
     <string name="home_permission">权限方式</string>
     <string name="home_task">当前任务</string>
     <string name="home_task_change">点按更换</string>
@@ -106,36 +123,46 @@
 
     <!-- 任务页 -->
     <string name="tasks_title">任务</string>
-    <string name="tasks_subtitle">勾选要执行的任务，回到首页一键开始</string>
+    <string name="tasks_subtitle">选一个任务，回到首页点「开始」</string>
     <string name="tasks_locked">任务运行期间不能更换任务或修改选项。</string>
-    <string name="tasks_order_note">勾选的任务按清体力、领取奖励、每日实训的顺序执行，前一项失败时不再继续。</string>
+    <string name="tasks_pick">要执行的任务</string>
+    <string name="task_recommended">推荐</string>
+    <string name="task_routine_brief">一次做完：%1$s</string>
+    <string name="task_step_disabled">%1$s（未启用）</string>
+    <string name="task_step_later">%1$s（%2$s）</string>
+    <string name="task_daily_both">补做还没完成的实训任务，领取活跃度和礼盒</string>
+    <string name="task_daily_complete_only">补做还没完成的实训任务，不领取奖励</string>
+    <string name="task_daily_collect_only">只领取已经完成的实训奖励</string>
+    <string name="task_daily_nothing">现在什么都不会做</string>
+    <string name="task_power_default">一直刷「%1$s」，直到开拓力不够再打一次</string>
+    <string name="task_power_plan_then_default">先打体力计划（%1$s），再刷「%2$s」到开拓力不够</string>
+    <string name="task_power_plan_only">只打体力计划（%1$s）</string>
+    <string name="task_power_uses_reserve">会使用后备开拓力</string>
+    <string name="task_power_uses_fuel">会使用燃料</string>
+    <string name="task_power_uses_both">会使用后备开拓力和燃料</string>
+    <string name="sentence_join">%1$s。%2$s</string>
+    <string name="tasks_idle_warning">所选任务现在什么都不会做。到下面的设置里打开要做的事，或者换一个任务。</string>
+    <string name="tasks_settings">设置</string>
+    <string name="tasks_settings_shared">三个任务共用，改一次就行</string>
+    <string name="tasks_order_note">「日常」按历战余响、清体力、领取奖励、每日实训的顺序执行。某一步没完成，后面的照常继续。</string>
     <string name="tasks_scope_note">兑换码、模拟宇宙等其他任务请使用电脑版。</string>
     <string name="task_expand">展开选项</string>
     <string name="task_collapse">收起选项</string>
-    <string name="task_power_brief">%1$s · 最多 %2$d 次</string>
-    <string name="task_rewards_none">没有打开任何奖励</string>
-    <string name="task_daily_view_only">只查看进度</string>
-    <string name="brief_dispatch">委托</string>
-    <string name="brief_mail">邮件</string>
-    <string name="brief_assist">支援</string>
-    <string name="brief_message">短信</string>
-    <string name="brief_synthesis">合成材料</string>
-    <string name="brief_quest">领取奖励</string>
-    <string name="option_quest">领取实训奖励</string>
-    <string name="option_quest_summary">领取任务活跃度和已达成的档位礼盒；关闭后只查看进度</string>
-    <string name="option_dispatch">委托奖励</string>
-    <string name="option_dispatch_summary">领取已完成的委托，原有委托继续派遣</string>
-    <string name="option_mail">邮件奖励</string>
-    <string name="option_mail_summary">邮箱有奖励时全部领取</string>
-    <string name="option_assist">支援奖励</string>
-    <string name="option_assist_summary">领取漫游签证里的支援角色奖励</string>
-    <string name="option_srpass">无名勋礼</string>
-    <string name="option_message">短信奖励</string>
-    <string name="option_message_summary">回复未读短信并领取奖励，有多个回复时选第一个</string>
-    <string name="option_synthesis">合成材料完成实训</string>
-    <string name="option_synthesis_summary">实训有「万能合成机」任务待完成时，合成 1 个微光原核</string>
+    <string name="state_expanded">已展开</string>
+    <string name="state_collapsed">已收起</string>
+    <string name="stepper_minus">减少</string>
+    <string name="stepper_plus">增加</string>
+    <string name="stepper_range">可选 %1$d–%2$d</string>
+
+    <!-- 清体力设置。名称沿用电脑版设置页。 -->
+    <string name="option_power_enable">启用清体力</string>
+    <string name="option_power_enable_summary">关闭后，「日常」会跳过历战余响和清体力。单独运行「清体力」不受影响。</string>
+    <string name="option_plan">体力计划</string>
+    <string name="option_plan_summary">想先打别的副本几次，就加到这里。</string>
+    <string name="plan_none">没有计划</string>
+    <string name="plan_size">%1$d 项，共 %2$d 次</string>
     <string name="option_instance_type">副本类型</string>
-    <string name="option_instance">副本</string>
+    <string name="option_instance">副本名称</string>
     <string name="instance_golden_calyx">拟造花萼（金）</string>
     <string name="instance_crimson_calyx">拟造花萼（赤）</string>
     <string name="instance_stagnant_shadow">凝滞虚影</string>
@@ -144,21 +171,128 @@
     <string name="instance_ornament">饰品提取</string>
     <string name="instance_cost">每次挑战 %1$d 开拓力</string>
     <string name="option_instance_summary">%1$s · %2$s</string>
-    <string name="option_waves">挑战次数上限</string>
-    <string name="option_waves_value">%1$d 次 · %2$d 开拓力</string>
-    <string name="option_waves_count">%1$d 次</string>
-    <string name="option_power_note">副本界面的「快捷补充开拓力」需要保持关闭。</string>
+    <string name="option_instance_note">开拓力会一直用在这个副本上，直到不够再打一次。</string>
+    <string name="instance_search">搜索副本</string>
     <string name="option_reserve">使用后备开拓力</string>
-    <string name="option_reserve_summary">开拓力不满时，开始前取出一次后备开拓力</string>
-    <string name="option_fuel">使用燃料</string>
-    <string name="option_fuel_summary">开拓力不满时，开始前用 1 个燃料兑换 60 开拓力。两项都打开时先用后备开拓力，每轮只补充一次</string>
-    <string name="option_supports">支援角色</string>
-    <string name="option_supports_none">未选择，不借用支援角色</string>
+    <string name="option_reserve_summary">每打一项副本前补一次，取出游戏弹窗允许的最大数量。</string>
+    <string name="option_team">自动切换队伍</string>
+    <string name="option_team_summary">进副本前换成指定的队伍。</string>
+    <string name="option_team_default">默认队伍</string>
+    <string name="option_team_default_summary">没有单独指定的副本都用这支队伍。</string>
+    <string name="option_team_rules">按副本指定队伍</string>
+    <string name="team_rules_none">没有指定</string>
+    <string name="team_rules_count">%1$d 条</string>
+    <string name="team_number">队伍 %1$d</string>
+    <string name="option_borrow">启用使用支援角色</string>
+    <string name="option_borrow_summary">挑战时从支援列表借一个角色。</string>
+    <string name="option_supports">支援列表</string>
+    <string name="option_supports_summary">按选择的先后在支援列表里查找，最多 %1$d 个。</string>
+    <string name="option_supports_empty">还没有选择角色，暂时不会借用。</string>
     <string name="option_supports_dialog">选择支援角色</string>
     <string name="option_supports_count">已选 %1$d/%2$d，按选择的先后在支援列表里查找</string>
     <string name="option_supports_search">搜索角色</string>
-    <string name="option_borrow_always">每次挑战都借用</string>
-    <string name="option_borrow_always_summary">关闭时，只在同时勾选了每日实训、且实训有支援任务待完成时借用</string>
+    <string name="support_any_owner">不限好友</string>
+    <string name="support_owner">好友：%1$s</string>
+    <string name="support_owner_title">%1$s 的好友</string>
+    <string name="support_owner_label">好友昵称</string>
+    <string name="support_owner_hint">填好友昵称的一部分即可，留空就不限好友。</string>
+    <string name="option_borrow_always">强制使用支援角色</string>
+    <string name="option_borrow_always_summary">每次挑战都借用。关闭时，只在每日实训有「使用支援角色」任务没完成时借用。</string>
+    <string name="option_echo">启用历战余响</string>
+    <string name="option_echo_summary">每周有 3 次奖励。打开后，「日常」会在清体力前先打历战余响。</string>
+    <string name="option_echo_instance">历战余响副本</string>
+    <string name="option_echo_day">从周几开始</string>
+    <string name="option_echo_day_summary">这天之前不打。</string>
+    <string name="option_echo_done">上次完成历战余响的时间</string>
+    <string name="option_more">更多设置</string>
+    <string name="option_fuel">使用燃料</string>
+    <string name="option_fuel_summary">后备开拓力没有库存时才用燃料，每次用掉游戏弹窗允许的最大数量。</string>
+    <string name="fuel_confirm_title">确定要使用燃料吗？</string>
+    <string name="fuel_confirm_body">打开后，清体力每打一项副本前都会补充一次开拓力，每次用掉游戏弹窗允许的最大数量，可能一次用掉很多燃料。用掉的燃料无法恢复。</string>
+    <string name="option_teleport">清体力前传送至任意锚点</string>
+    <string name="option_teleport_summary">先传送到锚点恢复队伍状态，再去打副本。</string>
+    <string name="option_relic_cleanup">满包时自动分解遗器</string>
+    <string name="option_relic_cleanup_summary">遗器背包满了没法挑战时，自动分解 4 星及以下的遗器。</string>
+    <string name="relic_confirm_title">确定要自动分解遗器吗？</string>
+    <string name="relic_confirm_body">遗器背包满了没法挑战时，小助手会分解 4 星及以下的遗器，腾出位置后继续。分解掉的遗器无法恢复。</string>
+    <string name="option_challenge_counts">副本最大连续挑战次数</string>
+    <string name="option_challenge_counts_summary">一次挑战连打几次，一般不用改。</string>
+    <string name="challenge_count_value">%1$d 次</string>
+    <string name="option_scroll">滚动查找次数</string>
+    <string name="option_scroll_summary">在支援列表里往下翻几页找角色。</string>
+    <string name="option_auto_battle">启用自动战斗和二倍速检测</string>
+    <string name="option_auto_battle_summary">战斗里没开自动战斗或二倍速时，自动帮你打开。</string>
+    <string name="done">完成</string>
+
+    <!-- 领取奖励设置 -->
+    <string name="option_reward_enable">启用奖励领取</string>
+    <string name="option_reward_enable_summary">关闭后不领下面这些奖励，每日实训的活跃度和礼盒也不会领。</string>
+    <string name="option_dispatch">委托</string>
+    <string name="option_dispatch_summary">领取已完成的委托，原有委托继续派遣</string>
+    <string name="option_mail">邮件</string>
+    <string name="option_mail_summary">邮箱有奖励时全部领取</string>
+    <string name="option_assist">支援</string>
+    <string name="option_assist_summary">领取漫游签证里的支援角色奖励</string>
+    <string name="option_quest">每日实训</string>
+    <string name="option_quest_summary">领取每日实训的活跃度和已达成的档位礼盒。</string>
+    <string name="option_srpass">无名勋礼</string>
+    <string name="option_srpass_summary">领取无名勋礼任务的经验。付费档还没解锁时，也领取等级奖励。</string>
+    <string name="option_message">短信</string>
+    <string name="option_message_summary">回复未读短信并领取奖励，有多个回复时选第一个</string>
+    <string name="rewards_off">不领取奖励</string>
+    <string name="rewards_none">没有打开任何奖励</string>
+
+    <!-- 每日实训设置 -->
+    <string name="option_daily_enable">启用每日实训</string>
+    <string name="option_daily_enable_summary">打开后会补做还没完成、能自动完成的实训任务。关闭后只领取已经完成的奖励。</string>
+    <string name="option_synthesis">通过「合成材料」完成任务</string>
+    <string name="option_synthesis_summary">实训有「万能合成机」任务待完成时，合成 1 个微光原核</string>
+    <string name="option_daily_done">上次检测到完成日常的时间</string>
+    <string name="daily_group_synthesis">补做实训任务，合成材料</string>
+    <string name="daily_group_complete">补做实训任务</string>
+    <string name="daily_group_off">不补做实训任务</string>
+
+    <!-- 时间 -->
+    <string name="time_none">还没有记录</string>
+    <string name="time_today">今天 %1$s</string>
+    <string name="time_yesterday">昨天 %1$s</string>
+    <string name="time_date">%1$d月%2$d日 %3$s</string>
+    <string name="time_full_date">%1$d年%2$d月%3$d日 %4$s</string>
+    <string-array name="weekdays">
+        <item>周一</item>
+        <item>周二</item>
+        <item>周三</item>
+        <item>周四</item>
+        <item>周五</item>
+        <item>周六</item>
+        <item>周日</item>
+    </string-array>
+
+    <!-- 体力计划页 -->
+    <string name="plan_intro">清体力时先按顺序打完这里的副本，再刷默认副本。想先打几次别的副本时用它。</string>
+    <string name="plan_empty">还没有计划。清体力会直接刷默认副本。</string>
+    <string name="plan_count">%1$d 次</string>
+    <string name="plan_cost">约 %1$d 开拓力</string>
+    <string name="plan_add">添加副本</string>
+    <string name="plan_limit">最多 %1$d 项</string>
+    <string name="plan_total">整份计划大约需要 %1$d 开拓力</string>
+    <string name="plan_total_partial">整份计划大约需要 %1$d 开拓力，历战余响和饰品提取另算</string>
+    <string name="plan_move_up">上移</string>
+    <string name="plan_delete">删除</string>
+    <string name="plan_edit">修改计划</string>
+    <string name="plan_times">次数</string>
+    <string name="plan_echo_note">每周只有 3 次有奖励，超出的次数没有奖励。</string>
+    <string name="plan_keep">保留体力计划</string>
+    <string name="plan_keep_summary">关闭时，打完的次数会从计划里扣掉，打完一项就删掉一项。打开后每次都按整份计划打。</string>
+    <string name="plan_continue">完成计划后继续清体力</string>
+    <string name="plan_continue_summary">计划打完后，剩下的开拓力继续刷默认副本。</string>
+
+    <!-- 按副本指定队伍页 -->
+    <string name="team_rules_intro">给个别副本单独指定队伍，没指定的用默认队伍。</string>
+    <string name="team_rules_empty">还没有单独指定，所有副本都用默认队伍。</string>
+    <string name="team_rules_add">添加</string>
+    <string name="team_rules_pick_type">选择副本类型</string>
+    <string name="team_rules_pick_team">选择队伍</string>
 
     <!-- 权限引导 -->
     <string name="guide_title">权限引导</string>
@@ -234,6 +368,8 @@
     <string name="service_starting_detail">正在用所选的权限方式启动</string>
     <string name="service_connected_detail">负责取游戏画面和模拟点按</string>
     <string name="service_cleaning_detail">正在关闭会话并释放虚拟屏</string>
+    <string name="log_wake_lock_renewal_failed">未能续期任务唤醒锁：%1$s</string>
+    <string name="log_task_progress_write_failed">任务进度未能保存到本机</string>
     <string name="status_display">虚拟屏</string>
     <string name="status_display_on">已创建</string>
     <string name="status_display_off">未创建</string>

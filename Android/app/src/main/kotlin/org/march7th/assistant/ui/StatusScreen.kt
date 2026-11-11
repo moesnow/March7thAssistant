@@ -35,6 +35,7 @@ import org.march7th.assistant.GameState
 import org.march7th.assistant.PermissionState
 import org.march7th.assistant.R
 import org.march7th.assistant.ServiceState
+import org.march7th.assistant.StepStatus
 import org.march7th.assistant.TaskPhase
 import org.march7th.assistant.TaskState
 import org.march7th.assistant.label
@@ -49,16 +50,23 @@ internal fun StatusScreen(state: TaskState, lastLog: String?, navigator: Navigat
         ) {
             PanelCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconBadge(tasksIcon(state.tasks))
+                    IconBadge(state.task.icon)
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
                             tr(R.string.status_current_task),
                             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Text(tasksList(state.tasks), style = MaterialTheme.typography.titleMedium)
+                        Text(tr(state.task.title), style = MaterialTheme.typography.titleMedium)
                     }
-                    StatusPill(tr(state.phase.label), state.phase.tone)
+                    // 有步骤失败但其余完成时，和首页一样标成部分完成。
+                    val partial = state.phase == TaskPhase.FAILED && state.errorCode == "task_failed" &&
+                        state.steps.any { it.status == StepStatus.DONE }
+                    if (partial) {
+                        StatusPill(tr(R.string.pill_partial), Tone.WARNING)
+                    } else {
+                        StatusPill(tr(state.phase.label), state.phase.tone)
+                    }
                 }
                 Spacer(Modifier.height(18.dp))
                 Timeline(state)
@@ -292,23 +300,36 @@ private fun Timeline(state: TaskState) {
             BodyText(
                 when {
                     index == 3 && state.phase == TaskPhase.STOPPING -> tr(R.string.home_stopping_detail)
-                    index == 2 -> tr(detail, tasksList(state.tasks))
+                    index == 2 -> tr(detail, tr(state.task.title))
                     else -> tr(detail)
                 }
             )
+            // 本轮各步骤及状态列在「执行任务」下面。
+            if (index == 2 && state.steps.isNotEmpty()) {
+                Column(Modifier.padding(top = 6.dp)) {
+                    for (item in state.steps) StepResultRow(item, running = state.busy)
+                }
+            }
         }
     }
     val error = errorInfo(state.errorCode)
+    val failedSteps = state.steps.count { it.status == StepStatus.FAILED }
+    val stepFailure = state.errorCode == "task_failed" && failedSteps > 0
     val (result, text) = when (state.phase) {
         TaskPhase.SUCCEEDED -> StepState.DONE to tr(R.string.phase_succeeded)
         TaskPhase.STOPPED -> StepState.DONE to tr(R.string.phase_stopped)
-        TaskPhase.FAILED -> StepState.FAILED to (error?.let { tr(it.title) } ?: tr(R.string.phase_failed))
+        TaskPhase.FAILED -> StepState.FAILED to when {
+            stepFailure && state.steps.any { it.status == StepStatus.DONE } -> tr(R.string.pill_partial)
+            else -> error?.let { tr(it.title) } ?: tr(R.string.phase_failed)
+        }
         else -> StepState.PENDING to tr(R.string.timeline_result)
     }
     StepItem(5, text, result, last = true) {
         when (state.phase) {
             TaskPhase.SUCCEEDED -> state.summary?.let { BodyText(it) }
-            TaskPhase.FAILED -> BodyText(tr(R.string.timeline_failed_detail))
+            TaskPhase.FAILED -> BodyText(
+                if (stepFailure) tr(R.string.home_partial, failedSteps) else tr(R.string.timeline_failed_detail)
+            )
             TaskPhase.STOPPED -> BodyText(tr(R.string.home_stopped_detail))
             else -> Unit
         }

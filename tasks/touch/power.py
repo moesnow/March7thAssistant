@@ -1,6 +1,5 @@
 """触屏 720p 生存索引副本。"""
 from datetime import date
-import sys
 import re
 import time
 
@@ -609,7 +608,7 @@ def _run(borrow_for_daily, on_settlement=None):
     plan = cfg.power_plan
     if plan:
         complete = run_plan(cfg, plan, run_instance)
-        if not complete or sys.platform == "android" or not getattr(cfg, "power_plan_continue", True):
+        if not complete or not getattr(cfg, "power_plan_continue", True):
             return True
 
     instance_type = cfg.instance_type
@@ -647,7 +646,7 @@ def run(*, borrow_for_daily=False, on_summary=None):
     return succeeded
 
 
-def run_standalone():
+def run_standalone(*, on_summary=None):
     from tasks.touch import daily
 
-    return run(borrow_for_daily=daily.support_demand())
+    return run(borrow_for_daily=daily.support_demand(), on_summary=on_summary)

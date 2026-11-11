@@ -39,14 +39,26 @@ import org.march7th.assistant.GameState
 import org.march7th.assistant.PermissionState
 import org.march7th.assistant.R
 import org.march7th.assistant.ServiceState
+import org.march7th.assistant.StepResult
+import org.march7th.assistant.StepStatus
 import org.march7th.assistant.TaskPhase
 import org.march7th.assistant.TaskState
+import org.march7th.assistant.idle
+import org.march7th.assistant.plannedSteps
+import org.march7th.assistant.progress
+import java.time.LocalDate
 
 private class Headline(val pill: Int, val tone: Tone, val title: String, val detail: String, val art: Int)
 
+/** 「有步骤失败」只在至少一步完成时算部分完成，全部失败沿用通用的失败标题。 */
+private fun partial(state: TaskState) =
+    state.errorCode == TASK_FAILED && state.steps.any { it.status == StepStatus.DONE }
+
+private const val TASK_FAILED = "task_failed"
+
 @Composable
 private fun headline(state: TaskState): Headline {
-    val task = tasksName(state.tasks)
+    val task = tr(state.task.title)
     val error = errorInfo(state.errorCode)
     return when {
         state.service == ServiceState.RECOVERING -> Headline(
@@ -67,16 +79,25 @@ private fun headline(state: TaskState): Headline {
             ),
             R.drawable.chibi_typing,
         )
-        state.phase == TaskPhase.RUNNING -> Headline(
-            R.string.pill_running, Tone.ACTIVE, tr(R.string.home_running, task),
-            tr(if (state.game == GameState.FLASHING) R.string.game_flashing_detail else R.string.home_running_detail),
-            R.drawable.chibi_typing,
-        )
+        state.phase == TaskPhase.RUNNING -> {
+            val detail = tr(if (state.game == GameState.FLASHING) R.string.game_flashing_detail else R.string.home_running_detail)
+            val current = state.steps.progress()
+            Headline(
+                R.string.pill_running, Tone.ACTIVE, tr(R.string.home_running, task),
+                if (current == null) detail else tr(R.string.home_running_step, stepName(current.step), current.number, current.total) + "\n" + detail,
+                R.drawable.chibi_typing,
+            )
+        }
         state.phase == TaskPhase.STOPPING -> Headline(
             R.string.pill_working, Tone.WARNING, tr(R.string.phase_stopping), tr(R.string.home_stopping_detail), R.drawable.chibi_typing
         )
         state.phase == TaskPhase.CLEANING -> Headline(
             R.string.pill_working, Tone.ACTIVE, tr(R.string.phase_cleaning), tr(R.string.home_cleaning_detail), R.drawable.chibi_typing
+        )
+        partial(state) -> Headline(
+            R.string.pill_partial, Tone.WARNING,
+            tr(R.string.home_partial, state.steps.count { it.status == StepStatus.FAILED }),
+            tr(R.string.home_partial_detail), R.drawable.chibi_full,
         )
         error != null -> Headline(
             R.string.pill_failed, Tone.ERROR, tr(R.string.home_failed), tr(R.string.home_failed_detail), R.drawable.chibi_lost
@@ -100,7 +121,13 @@ private fun headline(state: TaskState): Headline {
 
 @Composable
 internal fun HomeScreen(state: TaskState, lastLog: String?, actions: AppActions, navigator: Navigator) {
-    val error = errorInfo(state.errorCode).takeUnless { state.busy }
+    val finished = !state.busy && state.phase in setOf(TaskPhase.SUCCEEDED, TaskPhase.FAILED, TaskPhase.STOPPED)
+    val started = state.steps.any { it.status in setOf(StepStatus.DONE, StepStatus.FAILED, StepStatus.STOPPED) }
+    // 有步骤失败时结果卡已经说清了情况，不再显示通用的错误卡。
+    val stepFailure = state.errorCode == TASK_FAILED && state.steps.isNotEmpty()
+    val error = errorInfo(state.errorCode).takeUnless { state.busy || stepFailure }
+    val showResult = finished && state.steps.isNotEmpty() && (state.phase == TaskPhase.SUCCEEDED || stepFailure || started)
+    val idle = plannedSteps(state.task, state.config, LocalDate.now().dayOfWeek.value).idle
     Column(Modifier.fillMaxSize()) {
         Column(
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
@@ -121,6 +148,12 @@ internal fun HomeScreen(state: TaskState, lastLog: String?, actions: AppActions,
             if (error != null) {
                 ErrorCard(error, state.errorCode.orEmpty(), actions, navigator)
             }
+            if (showResult) {
+                ResultCard(state.steps, navigator)
+                if (stepFailure) {
+                    Notice(tr(R.string.result_retry))
+                }
+            }
             Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 val ready = state.permission == PermissionState.READY
                 Tile(
@@ -134,10 +167,10 @@ internal fun HomeScreen(state: TaskState, lastLog: String?, actions: AppActions,
                 )
                 Tile(
                     Modifier.weight(1f).fillMaxHeight(),
-                    icon = tasksIcon(state.tasks),
+                    icon = state.task.icon,
                     tone = Tone.ACTIVE,
                     label = tr(R.string.home_task),
-                    value = tasksShort(state.tasks),
+                    value = tr(state.task.title),
                     status = tr(if (state.busy) R.string.home_task_locked else R.string.home_task_change),
                     onClick = { navigator.openTab(Tab.TASKS) },
                 )
@@ -183,10 +216,10 @@ internal fun HomeScreen(state: TaskState, lastLog: String?, actions: AppActions,
                 state.permission != PermissionState.READY -> BigActionButton(
                     tr(R.string.go_authorize), { navigator.open(SubPage.GUIDE) }, icon = M7Icons.Shield, style = ActionStyle.PLAIN,
                 )
-                state.tasks.isEmpty() -> BigActionButton(
-                    tr(R.string.choose_tasks), { navigator.openTab(Tab.TASKS) }, icon = M7Icons.Tasks, style = ActionStyle.PLAIN,
+                idle -> BigActionButton(
+                    tr(R.string.go_enable), { navigator.openTab(Tab.TASKS) }, icon = M7Icons.Tasks, style = ActionStyle.PLAIN,
                 )
-                else -> BigActionButton(tr(R.string.start_task, tasksName(state.tasks)), actions.start, icon = M7Icons.Play)
+                else -> BigActionButton(tr(R.string.start_task, tr(state.task.title)), actions.start, icon = M7Icons.Play)
             }
         }
     }
@@ -293,6 +326,21 @@ private fun Tile(
             style = MaterialTheme.typography.bodySmall,
             color = if (tone == Tone.ACTIVE) MaterialTheme.colorScheme.onSurfaceVariant else tone.colors().accent,
         )
+    }
+}
+
+/** 一轮结束后各步骤的结果，未启用的步骤排在最后。 */
+@Composable
+private fun ResultCard(steps: List<StepResult>, navigator: Navigator) {
+    PanelCard(padding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 6.dp)) {
+        Text(tr(R.string.result_title), style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(6.dp))
+        for (step in steps.sortedBy { it.status == StepStatus.DISABLED }) {
+            StepResultRow(step)
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            TextButton({ navigator.openTab(Tab.LOGS) }) { Text(tr(R.string.view_logs)) }
+        }
     }
 }
 

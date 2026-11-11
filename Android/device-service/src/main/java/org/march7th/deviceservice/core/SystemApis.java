@@ -240,17 +240,17 @@ final class SystemApis {
     }
 
     /**
-     * 重置系统的息屏计时，效果等同于用户碰了一下屏幕。需要 DEVICE_POWER，shell 有。
+     * 重置系统的息屏计时，是否影响亮度由 flags 决定。需要 DEVICE_POWER，shell 有。
      *
      * Android 10、11 的签名是 userActivity(time, event, flags)；Android 12 起多了第一个参数 displayId（未在实机验证）。
      */
-    static void userActivity() throws ReflectiveOperationException {
+    static void userActivity(int flags) throws ReflectiveOperationException {
         Method poke = methodByName("android.os.IPowerManager", "userActivity");
         long now = SystemClock.uptimeMillis();
         if (poke.getParameterTypes().length == 3) {
-            poke.invoke(powerManager(), now, 0, 0);
+            poke.invoke(powerManager(), now, 0, flags);
         } else {
-            poke.invoke(powerManager(), 0, now, 0, 0);
+            poke.invoke(powerManager(), 0, now, 0, flags);
         }
     }
 

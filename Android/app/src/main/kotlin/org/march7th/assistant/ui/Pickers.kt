@@ -12,6 +12,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -43,36 +44,96 @@ private fun ChoiceText(choice: CatalogItem) {
     }
 }
 
-/** 单选列表，点选即生效。 */
+/** 单选列表，点选即生效。副本这类选项多于 8 个的列表带搜索框，按名称和说明筛选。 */
 @Composable
 internal fun ChoiceDialog(
     title: String,
     choices: List<CatalogItem>,
-    selected: String,
+    selected: String?,
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
+    searchable: Boolean = choices.size > 8,
 ) {
+    var query by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = onDismiss) { Text(tr(R.string.cancel)) } },
         title = { Text(title) },
         text = {
-            val start = choices.indexOfFirst { it.id == selected }.coerceAtLeast(0)
-            LazyColumn(state = rememberLazyListState(initialFirstVisibleItemIndex = start)) {
-                items(choices, key = { it.id }) { choice ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .selectable(selected = choice.id == selected, role = Role.RadioButton) { onSelect(choice.id) }
-                            .heightIn(min = 56.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(choice.id == selected, null, Modifier.padding(end = 16.dp))
-                        ChoiceText(choice)
+            Column {
+                if (searchable) {
+                    OutlinedTextField(
+                        query, { query = it }, Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                        placeholder = { Text(tr(R.string.instance_search)) },
+                        leadingIcon = { Icon(M7Icons.Search, null) },
+                        singleLine = true,
+                    )
+                }
+                val keyword = query.trim()
+                val visible = if (keyword.isEmpty()) choices else choices.filter {
+                    it.title.contains(keyword, ignoreCase = true) || it.detail?.contains(keyword, ignoreCase = true) == true
+                }
+                val start = visible.indexOfFirst { it.id == selected }.coerceAtLeast(0)
+                LazyColumn(state = rememberLazyListState(initialFirstVisibleItemIndex = start)) {
+                    items(visible, key = { it.id }) { choice ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .selectable(selected = choice.id == selected, role = Role.RadioButton) { onSelect(choice.id) }
+                                .heightIn(min = 56.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(choice.id == selected, null, Modifier.padding(end = 16.dp))
+                            ChoiceText(choice)
+                        }
                     }
                 }
             }
         },
+    )
+}
+
+/** 一行文字输入，确定后才写回。 */
+@Composable
+internal fun TextDialog(
+    title: String,
+    initial: String,
+    label: String,
+    hint: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var text by remember { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = { TextButton(onClick = { onConfirm(text.trim()) }) { Text(tr(R.string.confirm)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(tr(R.string.cancel)) } },
+        title = { Text(title) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    text, { text = it }, Modifier.fillMaxWidth(),
+                    label = { Text(label) }, singleLine = true,
+                )
+                Text(
+                    hint, Modifier.padding(top = 8.dp),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+    )
+}
+
+/** 打开有消耗或不可恢复的选项前确认一次。 */
+@Composable
+internal fun ConfirmDialog(title: String, body: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(M7Icons.Warning, null, tint = LocalBrand.current.warning) },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(tr(R.string.confirm)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(tr(R.string.cancel)) } },
+        title = { Text(title) },
+        text = { Text(body) },
     )
 }
 

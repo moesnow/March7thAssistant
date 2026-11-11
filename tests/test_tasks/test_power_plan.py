@@ -1,3 +1,4 @@
+import sys
 from types import SimpleNamespace
 from unittest.mock import Mock, call
 
@@ -46,6 +47,23 @@ def test_material_plan_before_default_relics(monkeypatch, backend, keep, continu
     assert cfg.set_value.call_args_list == ([] if keep else [
         call("power_plan", [[GOLDEN_CALYX, MATERIALS[1], 1]]), call("power_plan", []),
     ])
+
+
+@pytest.mark.parametrize("platform", ["win32", "android"])
+@pytest.mark.parametrize("continue_default", [False, True])
+def test_touch_plan_continuation_is_the_same_on_every_platform(monkeypatch, platform, continue_default):
+    monkeypatch.setattr(sys, "platform", platform)
+    monkeypatch.setattr(touch, "cfg", config(power_plan_continue=continue_default))
+    runs = []
+
+    def run_instance(kind, name, planned, **kwargs):
+        runs.append((kind, name, planned))
+        if planned is not None:
+            yield planned
+
+    monkeypatch.setattr(touch, "_run_instance", run_instance)
+    assert touch.run()
+    assert runs == [tuple(MATERIALS)] + ([(CAVERN, RELICS[1], None)] if continue_default else [])
 
 
 @pytest.mark.parametrize("backend", [desktop, touch], ids=["pc", "touch"])

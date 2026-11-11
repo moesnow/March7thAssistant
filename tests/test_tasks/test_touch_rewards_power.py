@@ -375,6 +375,78 @@ def test_routine_joins_the_power_and_reward_summaries(monkeypatch):
     summary.assert_called_once_with(tr("；").join(("power", "rewards")))
 
 
+def routine_steps(monkeypatch, *, claim=True):
+    monkeypatch.setattr(rewards, "cfg", SimpleNamespace(power_enable=True, daily_enable=True, echo_of_war_enable=False, reward_enable=True))
+    monkeypatch.setattr(rewards.daily, "support_demand", Mock(return_value=power.SupportDemand()))
+    monkeypatch.setattr(rewards, "claim", Mock(return_value=claim))
+    monkeypatch.setattr(rewards.screen, "change_to", Mock())
+    monkeypatch.setattr(rewards.log, "error", Mock())
+    received = []
+
+    def run_power(*, borrow_for_daily, on_summary):
+        received.append(on_summary)
+        return on_summary is None or on_summary("power") or True
+
+    def run_daily(*, complete_training, full_run, on_summary):
+        received.append(on_summary)
+        return on_summary is None or on_summary("daily") or True
+
+    monkeypatch.setattr(power, "run", run_power)
+    monkeypatch.setattr(rewards.daily, "run", run_daily)
+    return received
+
+
+def test_routine_reports_steps_with_their_own_summaries_and_continues_after_a_failure(monkeypatch):
+    routine_steps(monkeypatch, claim=False)
+    events = []
+    summary = Mock()
+
+    assert rewards.routine(on_summary=summary, on_step=lambda *event: events.append(event)) is False
+    assert events == [
+        ("查询支援实训", "started", None), ("查询支援实训", "succeeded", None),
+        ("清体力", "started", None), ("清体力", "succeeded", "power"),
+        ("日常领奖", "started", None), ("日常领奖", "failed", None),
+        ("每日实训", "started", None), ("每日实训", "succeeded", "daily"),
+    ]
+    summary.assert_called_once_with(tr("；").join(("power", "daily")))
+
+
+def test_routine_step_summaries_do_not_need_the_joined_summary(monkeypatch):
+    routine_steps(monkeypatch)
+    events = []
+
+    assert rewards.routine(on_step=lambda *event: events.append(event)) is True
+    assert ("清体力", "succeeded", "power") in events
+    assert ("每日实训", "succeeded", "daily") in events
+
+
+def test_routine_without_callbacks_asks_for_no_summaries(monkeypatch):
+    received = routine_steps(monkeypatch)
+
+    assert rewards.routine() is True
+    assert received == [None, None]
+
+
+def test_standalone_entries_pass_the_summary_callback_through(monkeypatch):
+    monkeypatch.setattr(rewards.daily, "support_demand", Mock(return_value="demand"))
+    run_power = Mock(return_value=True)
+    run_daily = Mock(return_value=True)
+    monkeypatch.setattr(power, "run", run_power)
+    monkeypatch.setattr(rewards.daily, "run", run_daily)
+    summary = Mock()
+
+    assert power.run_standalone(on_summary=summary) is True
+    assert rewards.run_daily_training(on_summary=summary) is True
+    assert power.run_standalone() is True
+    assert rewards.run_daily_training() is True
+    assert run_power.call_args_list == [
+        call(borrow_for_daily="demand", on_summary=summary), call(borrow_for_daily="demand", on_summary=None),
+    ]
+    assert run_daily.call_args_list == [
+        call(complete_training=True, on_summary=summary), call(complete_training=True, on_summary=None),
+    ]
+
+
 def test_mail_and_assist_without_alert_do_not_click(monkeypatch):
     auto = Mock()
     screen = Mock()

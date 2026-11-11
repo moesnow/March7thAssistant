@@ -26,12 +26,15 @@ import java.util.concurrent.TimeoutException;
  */
 final class SideEffects {
     private static final long KEEP_AWAKE_INTERVAL_MS = 5000;
+    // PowerManager.USER_ACTIVITY_FLAG_NO_CHANGE_LIGHTS 是隐藏常量。
+    private static final int USER_ACTIVITY_FLAG_NO_CHANGE_LIGHTS = 1;
     private static final long CLEANUP_ACK_TIMEOUT_MS = 2000;
     private static final long CLEANUP_MUTE_TIMEOUT_MS = 5000;
 
     private final String cleanupJarPath;
     private boolean panelOff;
     private boolean panelRestorePending;
+    private boolean keepAwakeRequested;
     private Thread keepAwake;
     /** 包名到静音前的 AppOps 模式。 */
     private final Map<String, String> muted = new LinkedHashMap<>();
@@ -83,30 +86,58 @@ final class SideEffects {
             throw new CommandException(Protocol.E_UNSUPPORTED, "cannot switch the panel: " + Logger.describe(e));
         }
         panelOff = !on;
-        if (panelOff) {
-            keepAwake = new Thread(this::keepAwakeLoop, "m7a-keep-awake");
-            keepAwake.setDaemon(true);
-            keepAwake.start();
-        } else {
+        if (on) {
             panelRestorePending = false;
             forgetCleanup("panel 0");
-            if (keepAwake != null) {
-                keepAwake.interrupt();
-                keepAwake = null;
-            }
         }
+        updateKeepAwake();
         Logger.i("panel power " + (on ? "restored" : "off, keeping the system awake"));
     }
 
+    synchronized void setKeepAwake(boolean on) throws CommandException {
+        requireOpen();
+        keepAwakeRequested = on;
+        updateKeepAwake();
+    }
+
+    private void updateKeepAwake() {
+        if (panelOff || keepAwakeRequested) {
+            if (keepAwake == null) {
+                keepAwake = new Thread(this::keepAwakeLoop, "m7a-keep-awake");
+                keepAwake.setDaemon(true);
+                keepAwake.start();
+            }
+        } else {
+            stopKeepAwake();
+        }
+    }
+
+    private void stopKeepAwake() {
+        if (keepAwake != null) {
+            keepAwake.interrupt();
+            keepAwake = null;
+        }
+    }
+
+    static int userActivityFlags(boolean panelOff) {
+        return panelOff ? 0 : USER_ACTIVITY_FLAG_NO_CHANGE_LIGHTS;
+    }
+
     private void keepAwakeLoop() {
+        Thread worker = Thread.currentThread();
         boolean warned = false;
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
-                SystemApis.userActivity();
-            } catch (ReflectiveOperationException | RuntimeException e) {
-                if (!warned) {
-                    warned = true;
-                    Logger.w("cannot reset the screen-off timer", e);
+        while (true) {
+            synchronized (this) {
+                if (worker != keepAwake) {
+                    return;
+                }
+                try {
+                    SystemApis.userActivity(userActivityFlags(panelOff));
+                } catch (ReflectiveOperationException | RuntimeException e) {
+                    if (!warned) {
+                        warned = true;
+                        Logger.w("cannot reset the screen-off timer", e);
+                    }
                 }
             }
             try {
@@ -233,11 +264,15 @@ final class SideEffects {
         if (closed) {
             return;
         }
-        restoreRegisteredEffects();
-        closed = true;
-        // UserService 关闭核心后进程可能还活着，主动断管，让子进程兜底恢复失败的记录。
-        closeCleanupInput();
-        cleanup = null;
+        try {
+            restoreRegisteredEffects();
+        } finally {
+            closed = true;
+            stopKeepAwake();
+            // UserService 关闭核心后进程可能还活着，主动断管，让子进程兜底恢复失败的记录。
+            closeCleanupInput();
+            cleanup = null;
+        }
     }
 
     private void restoreRegisteredEffects() {

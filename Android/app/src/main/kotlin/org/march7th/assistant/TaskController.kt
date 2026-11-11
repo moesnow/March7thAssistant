@@ -22,54 +22,14 @@ import org.json.JSONObject
 import rikka.shizuku.Shizuku
 import java.io.File
 import java.io.OutputStream
+import java.time.LocalDate
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.ZipInputStream
 
-/** 声明顺序就是一轮里的执行顺序。 */
-enum class TaskId { POWER, REWARDS, DAILY }
-
-/** typeName 对应共享配置的副本类型，cost 只用于展示固定的单次开拓力消耗。 */
-enum class InstanceType(val typeName: String, val cost: Int?) {
-    GOLDEN_CALYX("拟造花萼（金）", 10),
-    CRIMSON_CALYX("拟造花萼（赤）", 10),
-    STAGNANT_SHADOW("凝滞虚影", 30),
-    CAVERN("侵蚀隧洞", 40),
-    ECHO("历战余响", null),
-    ORNAMENT("饰品提取", null),
-}
 enum class ServiceState { IDLE, RECOVERING, STARTING, CONNECTED, CLEANING }
 enum class GameState { OFF, STARTING, FLASHING, RETURNING, READY, MANUAL_LOGIN }
 enum class TaskPhase { IDLE, PREPARING, WAITING_FOR_GAME, RUNNING, STOPPING, CLEANING, SUCCEEDED, STOPPED, FAILED }
-
-data class TaskConfig(
-    val collectRewards: Boolean = true,
-    val panelOff: Boolean = false,
-    val muteGame: Boolean = true,
-    val dispatch: Boolean = true,
-    val mail: Boolean = true,
-    val assist: Boolean = true,
-    val srpass: Boolean = true,
-    val message: Boolean = false,
-    val synthesis: Boolean = true,
-    val instanceType: InstanceType = InstanceType.GOLDEN_CALYX,
-    val instanceName: String = "回忆之蕾",
-    val waves: Int = 1,
-    val reserve: Boolean = false,
-    val fuel: Boolean = false,
-    /** 支援角色在 character_names.json 里的键，按查找的先后排列。为空时不借用。 */
-    val supports: List<String> = emptyList(),
-    val borrowAlways: Boolean = false,
-) {
-    /** 供 Python 读取。 */
-    fun supportKeys(): Array<String> = supports.toTypedArray()
-}
-
-/** 可选的副本或角色。id 写入配置，title 和 detail 用于显示。 */
-class CatalogItem(val id: String, val title: String, val detail: String? = null)
-
-/** 随 APK 打包的游戏数据里可选的副本和支援角色。 */
-class Catalog(val instances: Map<InstanceType, List<CatalogItem>>, val characters: List<CatalogItem>)
 
 data class TaskState(
     val privilege: Privilege = Privilege.SHIZUKU,
@@ -78,13 +38,18 @@ data class TaskState(
     val displayId: Int? = null,
     val gameDisplayId: Int? = null,
     val game: GameState = GameState.OFF,
-    /** 本轮要执行的任务，可以为空。 */
-    val tasks: Set<TaskId> = TaskId.entries.toSet(),
+    /** 所选任务，每轮只执行一个。 */
+    val task: TaskId = TaskId.ROUTINE,
     val phase: TaskPhase = TaskPhase.IDLE,
     val config: TaskConfig = TaskConfig(),
     val panelOff: Boolean = false,
     val errorCode: String? = null,
     val summary: String? = null,
+    /** 本轮各步骤的结果，开始时按设置生成，保留到下一轮开始。 */
+    val steps: List<StepResult> = emptyList(),
+    /** Python 记下的上次完成每日实训和历战余响的时间（毫秒），没有记录时为空。 */
+    val lastDailyDone: Long? = null,
+    val lastEchoDone: Long? = null,
 ) {
     val busy: Boolean
         get() = service == ServiceState.RECOVERING || phase in setOf(
@@ -101,34 +66,14 @@ class TaskController private constructor(private val context: Context) {
     private val marker = AtomicFile(File(context.filesDir, "active-task"))
     private val logFile = File(context.filesDir, "last-run.log")
     private val logLock = Any()
+    // 偏好键与早期版本不同名，旧键留在文件里也不会被读到。
     private val stateData = MutableStateFlow(
         TaskState(
             privilege = if (prefs.getBoolean("root", false)) Privilege.ROOT else Privilege.SHIZUKU,
-            tasks = prefs.getString("tasks", null)?.split(',')
-                ?.let { names -> TaskId.entries.filter { it.name in names }.toSet() }
-                ?: TaskId.entries.toSet(),
-            config = TaskConfig(
-                collectRewards = prefs.getBoolean("collect-rewards", true),
-                panelOff = prefs.getBoolean("panel-off", false),
-                muteGame = prefs.getBoolean("mute-game", true),
-                dispatch = prefs.getBoolean("dispatch", true),
-                mail = prefs.getBoolean("mail", true),
-                assist = prefs.getBoolean("assist", true),
-                srpass = prefs.getBoolean("srpass", true),
-                message = prefs.getBoolean("message", false),
-                synthesis = prefs.getBoolean("synthesis", true),
-                instanceType = InstanceType.entries.firstOrNull { it.name == prefs.getString("instance-type", null) }
-                    ?: InstanceType.GOLDEN_CALYX,
-                // 旧版本只保存拟造花萼（金）的选择。
-                instanceName = prefs.getString("instance-name", null)
-                    ?: mapOf("CREDITS" to "藏珍之蕾", "MATERIALS" to "以太之蕾")[prefs.getString("calyx", null)]
-                    ?: "回忆之蕾",
-                waves = prefs.getInt("waves", 1),
-                reserve = prefs.getBoolean("reserve", false),
-                fuel = prefs.getBoolean("fuel", false),
-                supports = prefs.getString("supports", "")!!.split(',').filter { it.isNotEmpty() },
-                borrowAlways = prefs.getBoolean("borrow-always", false),
-            )
+            task = TaskId.entries.firstOrNull { it.name == prefs.getString(KEY_TASK, null) } ?: TaskId.ROUTINE,
+            config = decodeTaskConfig(prefs.getString(KEY_CONFIG, null)),
+            lastDailyDone = prefs.getLong(KEY_DAILY_DONE, 0).takeIf { it > 0 },
+            lastEchoDone = prefs.getLong(KEY_ECHO_DONE, 0).takeIf { it > 0 },
         )
     )
     private val logData = MutableStateFlow(
@@ -190,34 +135,16 @@ class TaskController private constructor(private val context: Context) {
         }
     }
 
-    fun setTaskEnabled(task: TaskId, enabled: Boolean): Boolean {
+    fun selectTask(task: TaskId): Boolean {
         if (state.value.busy) return false
-        val tasks = if (enabled) state.value.tasks + task else state.value.tasks - task
-        prefs.edit().putString("tasks", tasks.joinToString(",") { it.name }).apply()
-        stateData.update { it.copy(tasks = tasks) }
+        prefs.edit().putString(KEY_TASK, task.name).apply()
+        stateData.update { it.copy(task = task) }
         return true
     }
 
     fun updateConfig(config: TaskConfig): Boolean {
-        if (state.value.busy || config.waves !in 1..MAX_WAVES || config.supports.size > MAX_SUPPORTS) return false
-        prefs.edit()
-            .putBoolean("collect-rewards", config.collectRewards)
-            .putBoolean("panel-off", config.panelOff)
-            .putBoolean("mute-game", config.muteGame)
-            .putBoolean("dispatch", config.dispatch)
-            .putBoolean("mail", config.mail)
-            .putBoolean("assist", config.assist)
-            .putBoolean("srpass", config.srpass)
-            .putBoolean("message", config.message)
-            .putBoolean("synthesis", config.synthesis)
-            .putString("instance-type", config.instanceType.name)
-            .putString("instance-name", config.instanceName)
-            .putInt("waves", config.waves)
-            .putBoolean("reserve", config.reserve)
-            .putBoolean("fuel", config.fuel)
-            .putString("supports", config.supports.joinToString(","))
-            .putBoolean("borrow-always", config.borrowAlways)
-            .apply()
+        if (state.value.busy || !config.isValid) return false
+        prefs.edit().putString(KEY_CONFIG, config.encode()).apply()
         stateData.update { it.copy(config = config) }
         return true
     }
@@ -226,13 +153,17 @@ class TaskController private constructor(private val context: Context) {
         refreshPermission()
         recover()
         val snapshot = state.value
-        if (snapshot.busy || snapshot.permission != PermissionState.READY || snapshot.tasks.isEmpty()) return false
+        if (snapshot.busy || snapshot.permission != PermissionState.READY) return false
+        val steps = plannedSteps(snapshot.task, snapshot.config, LocalDate.now().dayOfWeek.value)
+        if (steps.idle) return false
         if (!context.hasPackage(DeviceAccess.GAME_PACKAGE)) return failToStart("game_not_installed")
         if (context.getSystemService(KeyguardManager::class.java).isKeyguardLocked) {
             return failToStart("keyguard_locked")
         }
         active = TaskRun(snapshot)
-        stateData.update { it.copy(phase = TaskPhase.PREPARING, game = GameState.OFF, errorCode = null, summary = null) }
+        stateData.update {
+            it.copy(phase = TaskPhase.PREPARING, game = GameState.OFF, errorCode = null, summary = null, steps = steps)
+        }
         return try {
             context.startForegroundService(Intent(context, TaskRunnerService::class.java))
             true
@@ -279,6 +210,7 @@ class TaskController private constructor(private val context: Context) {
                         },
                         errorCode = result.takeUnless { it == "success" || it == "stopped" },
                         summary = run.summary.takeIf { result == "success" },
+                        steps = it.steps.finished(result),
                     )
                 }
                 onFinished()
@@ -288,7 +220,8 @@ class TaskController private constructor(private val context: Context) {
     }
 
     private fun failToStart(code: String): Boolean {
-        stateData.update { it.copy(phase = TaskPhase.FAILED, errorCode = code, summary = null) }
+        // 没开始的一轮不显示上一轮的步骤结果。
+        stateData.update { it.copy(phase = TaskPhase.FAILED, errorCode = code, summary = null, steps = emptyList()) }
         return false
     }
 
@@ -336,6 +269,19 @@ class TaskController private constructor(private val context: Context) {
         internal fun execute(): String {
             val wake = context.getSystemService(PowerManager::class.java)
                 .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "${context.packageName}:task")
+                .apply { setReferenceCounted(false) }
+            val renewal = WakeLockRenewal(
+                acquire = wake::acquire,
+                release = { if (wake.isHeld) wake.release() },
+                now = SystemClock::uptimeMillis,
+                postAtTime = { task, time -> main.postAtTime(task, time) },
+                removeCallbacks = main::removeCallbacks,
+                onRenewalError = { error ->
+                    appLog(LogLevel.WARNING, context.getString(
+                        R.string.log_wake_lock_renewal_failed, error.message ?: error.javaClass.simpleName,
+                    ))
+                },
+            )
             var result = "runtime_error"
             var cleanupConfirmed = true
             try {
@@ -351,21 +297,21 @@ class TaskController private constructor(private val context: Context) {
                     marker.failWrite(markerStream)
                     throw error
                 }
-                wake.acquire(20 * 60 * 1000L)
+                renewal.start()
                 result = if (isCancelled()) "stopped" else runPython()
             } catch (error: Exception) {
                 appLog(LogLevel.ERROR, "任务执行失败：${error.message}")
                 result = if (isCancelled()) "stopped" else "runtime_error"
             } finally {
-                cleaning()
                 try {
+                    cleaning()
                     device?.close()
                 } catch (error: Exception) {
                     cleanupConfirmed = false
                     result = "cleanup_pending"
                     appLog(LogLevel.ERROR, "设备端服务清理超时：${error.message}")
                 } finally {
-                    if (wake.isHeld) wake.release()
+                    renewal.close()
                     if (cleanupConfirmed) marker.delete()
                 }
                 val level = if (result == "success" || result == "stopped") LogLevel.INFO else LogLevel.ERROR
@@ -386,9 +332,12 @@ class TaskController private constructor(private val context: Context) {
                 "ko" -> "ko_KR"
                 else -> "en_US"
             }
+            val config = snapshot.config
+            val settings = Json.encode(config.toSettings(catalog))
             val result = module.callAttr(
                 "run", workspace.path, token, Build.VERSION.SDK_INT, Build.VERSION.RELEASE, Build.MODEL,
-                "x86_64" in Build.SUPPORTED_ABIS, snapshot.tasks.joinToString(",") { it.name }, snapshot.config, language, this
+                "x86_64" in Build.SUPPORTED_ABIS, snapshot.task.name, settings, config.panelOff, config.muteGame,
+                language, this
             ).toString()
             return if (result == "runtime_error") deviceError ?: result else result
         }
@@ -402,6 +351,37 @@ class TaskController private constructor(private val context: Context) {
 
         fun reportSummary(text: String) {
             summary = text
+        }
+
+        /** state 是 started、succeeded 或 failed。detail 是成功时的摘要或失败的原因，可能为空。 */
+        fun reportStep(name: String, state: String, detail: String?) {
+            stateData.update { it.copy(steps = it.steps.onStepEvent(name, state, detail)) }
+        }
+
+        /** 体力计划的剩余次数和完成时间。不回写的话，已经打掉的次数下一轮会被恢复。 */
+        fun reportProgress(json: String) {
+            val progress = parseProgress(json)
+            if (progress == null) {
+                appLog(LogLevel.WARNING, "任务进度无法解析，体力计划保持不变")
+                return
+            }
+            stateData.update {
+                it.copy(
+                    config = progress.plan?.let { plan -> it.config.copy(powerPlan = plan) } ?: it.config,
+                    lastDailyDone = progress.lastDailyDone,
+                    lastEchoDone = progress.lastEchoDone,
+                )
+            }
+            val saved = state.value
+            // 任务线程同步保存，确保已回报的进度在强杀后仍可读取。
+            val persisted = prefs.edit()
+                .putString(KEY_CONFIG, saved.config.encode())
+                .putLong(KEY_DAILY_DONE, saved.lastDailyDone ?: 0)
+                .putLong(KEY_ECHO_DONE, saved.lastEchoDone ?: 0)
+                .commit()
+            if (!persisted) {
+                appLog(LogLevel.WARNING, context.getString(R.string.log_task_progress_write_failed))
+            }
         }
 
         fun openDevice(): Int {
@@ -525,8 +505,11 @@ class TaskController private constructor(private val context: Context) {
     }
 
     companion object {
-        const val MAX_WAVES = 24
-        const val MAX_SUPPORTS = 6
+        // 更早的版本用过 task 和 tasks，这里换一个没用过的名字。
+        private const val KEY_TASK = "selected-task"
+        private const val KEY_CONFIG = "task-config"
+        private const val KEY_DAILY_DONE = "last-daily-done"
+        private const val KEY_ECHO_DONE = "last-echo-done"
         private const val LOG_LINES = 200
         private const val INSTANCE_NAMES = "assets/config/instance_names.json"
         private const val CHARACTER_NAMES = "assets/config/character_names.json"

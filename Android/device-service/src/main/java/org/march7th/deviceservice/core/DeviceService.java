@@ -183,6 +183,9 @@ public final class DeviceService implements Watchdog.Host {
                     return new Message(events(session, header));
                 case "screen_power":
                     return new Message(screenPower(header));
+                case "keep_awake":
+                    sideEffects.setKeepAwake(header.getBoolean("on"));
+                    return new Message(Message.ok(header));
                 case "mute":
                     return new Message(mute(header));
                 case "shutdown":
@@ -239,7 +242,7 @@ public final class DeviceService implements Watchdog.Host {
         out.put("encodings", new JSONArray(java.util.Arrays.asList(
                 FrameEncoder.RGBA, FrameEncoder.RGB, FrameEncoder.RGB_ZLIB, FrameEncoder.RGBA_ZLIB)));
         out.put("features", new JSONArray(java.util.Arrays.asList(
-                "screen_power", "mute", "stop_app", "events", "focus", "frame_after_ns")));
+                "screen_power", "mute", "stop_app", "events", "focus", "frame_after_ns", "keep_awake")));
         out.put("default_tap_ms", DEFAULT_TAP_MS);
         return out;
     }
