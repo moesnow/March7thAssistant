@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@color/launcher_background" />
-    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <foreground>
+        <!-- 图案原占 84 dp，居中缩到约 72 dp，让衣服贴到遮罩底边。 -->
+        <inset
+            android:drawable="@mipmap/ic_launcher_foreground"
+            android:inset="7%" />
+    </foreground>
 </adaptive-icon>
