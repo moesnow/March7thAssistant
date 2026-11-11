@@ -6656,3 +6656,23 @@ msgstr ""
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr ""
+
+#: assets/config/character_names.json
+msgid "星神★阿哈"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "戏剧中人"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "欢愉 / 亚空"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "贪欢的月亮"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "贪欢的神颅"
+msgstr ""
