@@ -49,14 +49,14 @@ internal fun StatusScreen(state: TaskState, lastLog: String?, navigator: Navigat
         ) {
             PanelCard {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconBadge(state.task.icon)
+                    IconBadge(tasksIcon(state.tasks))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Text(
                             tr(R.string.status_current_task),
                             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Text(tr(state.task.title), style = MaterialTheme.typography.titleMedium)
+                        Text(tasksList(state.tasks), style = MaterialTheme.typography.titleMedium)
                     }
                     StatusPill(tr(state.phase.label), state.phase.tone)
                 }
@@ -292,7 +292,7 @@ private fun Timeline(state: TaskState) {
             BodyText(
                 when {
                     index == 3 && state.phase == TaskPhase.STOPPING -> tr(R.string.home_stopping_detail)
-                    index == 2 -> tr(detail, tr(state.task.title))
+                    index == 2 -> tr(detail, tasksList(state.tasks))
                     else -> tr(detail)
                 }
             )

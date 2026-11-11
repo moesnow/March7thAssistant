@@ -2,7 +2,9 @@ package org.march7th.assistant.ui
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,13 +12,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,7 +34,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.march7th.assistant.Catalog
 import org.march7th.assistant.CatalogItem
@@ -54,61 +60,69 @@ internal fun TasksScreen(state: TaskState, catalog: () -> Catalog, actions: AppA
             Notice(tr(R.string.tasks_locked), tone = Tone.WARNING)
         }
         for (task in TaskId.entries) {
-            TaskCard(task, state.task == task, enabled, state.config, catalog, actions)
+            TaskCard(task, task in state.tasks, enabled, state.config, catalog, actions)
         }
+        Notice(tr(R.string.tasks_order_note))
         Notice(tr(R.string.tasks_scope_note))
     }
 }
 
+/** 勾选决定本轮跑不跑，展开只是查看和修改选项，两者互不影响。 */
 @Composable
 private fun TaskCard(
-    task: TaskId, selected: Boolean, enabled: Boolean, config: TaskConfig, catalog: () -> Catalog, actions: AppActions,
+    task: TaskId, checked: Boolean, enabled: Boolean, config: TaskConfig, catalog: () -> Catalog, actions: AppActions,
 ) {
     val scheme = MaterialTheme.colorScheme
+    var expanded by rememberSaveable(task) { mutableStateOf(false) }
     Surface(
         Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.large,
         color = LocalBrand.current.card,
-        border = if (selected) BorderStroke(2.dp, scheme.primary) else BorderStroke(1.dp, scheme.outlineVariant),
+        border = if (checked) BorderStroke(2.dp, scheme.primary) else BorderStroke(1.dp, scheme.outlineVariant),
     ) {
         Column {
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .selectable(selected = selected, enabled = enabled, role = Role.RadioButton) { actions.selectTask(task) }
-                    .heightIn(min = 76.dp)
-                    .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)
-                    .alpha(if (enabled) 1f else 0.6f),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconBadge(task.icon, if (selected) Tone.ACTIVE else Tone.NEUTRAL)
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(tr(task.title), style = MaterialTheme.typography.titleMedium)
-                    Text(tr(task.summary), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+            Row(Modifier.fillMaxWidth().heightIn(min = 76.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier
+                        .toggleable(value = checked, enabled = enabled, role = Role.Checkbox) {
+                            actions.setTaskEnabled(task, it)
+                        }
+                        .padding(start = 8.dp, top = 14.dp, bottom = 14.dp)
+                        .size(48.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Checkbox(checked, null, enabled = enabled)
                 }
-                RadioButton(selected, null, Modifier.padding(12.dp), enabled = enabled)
+                val toggle = tr(if (expanded) R.string.task_collapse else R.string.task_expand)
+                Row(
+                    Modifier
+                        .weight(1f)
+                        .clickable(onClickLabel = toggle, role = Role.Button) { expanded = !expanded }
+                        .padding(start = 4.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconBadge(task.icon, if (checked) Tone.ACTIVE else Tone.NEUTRAL)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(tr(task.title), style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            taskBrief(task, config, catalog), style = MaterialTheme.typography.bodySmall,
+                            color = scheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Icon(
+                        M7Icons.ExpandMore, null, Modifier.rotate(if (expanded) 180f else 0f),
+                        tint = scheme.onSurfaceVariant,
+                    )
+                }
             }
-            AnimatedVisibility(selected) {
+            AnimatedVisibility(expanded) {
                 Column {
                     HorizontalDivider(color = scheme.outlineVariant)
                     when (task) {
-                        TaskId.ROUTINE -> {
-                            GroupLabel(R.string.tasks_group_power)
-                            PowerOptions(config, enabled, catalog(), actions)
-                            HorizontalDivider(color = scheme.outlineVariant)
-                            GroupLabel(R.string.tasks_group_rewards)
-                            RewardSwitches(config, enabled, actions)
-                            HorizontalDivider(color = scheme.outlineVariant)
-                            GroupLabel(R.string.tasks_group_daily)
-                            DailySwitches(config, enabled, actions)
-                        }
-                        TaskId.DAILY -> DailySwitches(config, enabled, actions)
-                        TaskId.REWARDS -> {
-                            RewardSwitches(config, enabled, actions)
-                            DailySwitches(config, enabled, actions)
-                        }
                         TaskId.POWER -> PowerOptions(config, enabled, catalog(), actions)
+                        TaskId.REWARDS -> RewardSwitches(config, enabled, actions)
+                        TaskId.DAILY -> DailySwitches(config, enabled, actions)
                     }
                 }
             }
@@ -116,12 +130,32 @@ private fun TaskCard(
     }
 }
 
+/** 收起时也能看出这一项会做什么。 */
 @Composable
-private fun GroupLabel(title: Int) {
-    Text(
-        tr(title), Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp),
-        style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
-    )
+private fun taskBrief(task: TaskId, config: TaskConfig, catalog: () -> Catalog): String {
+    val separator = tr(R.string.list_separator)
+    return when (task) {
+        TaskId.POWER -> {
+            val name = if (config.instanceType == InstanceType.CRIMSON_CALYX) {
+                // 赤花萼用地区区分，名字本身是命途。
+                catalog().instances[config.instanceType].orEmpty().firstOrNull { it.id == config.instanceName }
+                    ?.detail?.let { tr(R.string.option_instance_summary, config.instanceName, it) }
+            } else {
+                null
+            }
+            tr(R.string.task_power_brief, name ?: config.instanceName, config.waves)
+        }
+        TaskId.REWARDS -> listOfNotNull(
+            tr(R.string.brief_dispatch).takeIf { config.dispatch },
+            tr(R.string.brief_mail).takeIf { config.mail },
+            tr(R.string.brief_assist).takeIf { config.assist },
+            tr(R.string.brief_message).takeIf { config.message },
+        ).ifEmpty { listOf(tr(R.string.task_rewards_none)) }.joinToString(separator)
+        TaskId.DAILY -> listOfNotNull(
+            tr(R.string.brief_synthesis).takeIf { config.synthesis },
+            tr(R.string.brief_quest).takeIf { config.collectRewards },
+        ).ifEmpty { listOf(tr(R.string.task_daily_view_only)) }.joinToString(separator)
+    }
 }
 
 @Composable
@@ -226,7 +260,7 @@ private fun PowerOptions(config: TaskConfig, enabled: Boolean, catalog: Catalog,
             summary = if (config.supports.isEmpty()) {
                 tr(R.string.option_supports_none)
             } else {
-                config.supports.joinToString(tr(R.string.option_supports_separator)) { names[it] ?: it }
+                config.supports.joinToString(tr(R.string.list_separator)) { names[it] ?: it }
             },
             enabled = enabled, onClick = { picker = Picker.SUPPORTS },
         )

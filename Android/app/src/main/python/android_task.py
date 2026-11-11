@@ -1,5 +1,5 @@
 """Chaquopy 入口。游戏任务、界面图、OCR 和 Android 控制器都来自仓库。"""
-from functools import lru_cache, partial
+from functools import lru_cache
 from hashlib import file_digest
 import logging
 import os
@@ -94,14 +94,14 @@ class _AppSession:
             self.client.close()
 
 
-def run(workdir, token, sdk, version, model, is_emulator, task, config, language, bridge):
+def run(workdir, token, sdk, version, model, is_emulator, tasks, config, language, bridge):
     os.chdir(workdir)
     if workdir not in sys.path:
         sys.path.insert(0, workdir)
     os.environ["MARCH7TH_NON_INTERACTIVE"] = "1"
 
     from module.config import cfg
-    from module.localization import load_language
+    from module.localization import load_language, tr
     from module.logger import log
     from utils.pause import RunStopRequested
 
@@ -133,7 +133,8 @@ def run(workdir, token, sdk, version, model, is_emulator, task, config, language
             "borrow_character_enable": config.getBorrowAlways(),
             "borrow_friends": supports,
         }
-        if task in ("POWER", "ROUTINE"):
+        selected = set(tasks.split(","))
+        if "POWER" in selected:
             settings.update(
                 power_plan=[[config.getInstanceType().getTypeName(), config.getInstanceName(), config.getWaves()]],
                 use_reserved_trailblaze_power=config.getReserve(),
@@ -185,15 +186,24 @@ def run(workdir, token, sdk, version, model, is_emulator, task, config, language
             result, _ = session.request("screen_power", on=False)
             bridge.panelChanged(result["panel_off"])
             log.info("已关闭实体面板，保持系统唤醒")
-        action = {
-            "DAILY": partial(daily.run, complete_training=True),
-            "REWARDS": partial(rewards.run, complete_training=True),
-            "POWER": power.run,
-            "ROUTINE": rewards.routine,
-        }[task]
-        if action(on_summary=bridge.reportSummary):
-            return "stopped" if bridge.isCancelled() else "success"
-        return "stopped" if bridge.isCancelled() else "task_failed"
+        # 顺序固定：先清体力，实训里消耗开拓力和支援的任务才能在最后一并领取。
+        summaries = []
+        succeeded = True
+        if "POWER" in selected:
+            support_pending = ("DAILY" in selected and cfg.borrow_enable and not cfg.borrow_character_enable
+                               and daily.needs_support())
+            succeeded = power.run(borrow_for_daily=support_pending, on_summary=summaries.append)
+        if succeeded and "REWARDS" in selected:
+            succeeded = rewards.claim()
+        if succeeded and "DAILY" in selected:
+            succeeded = daily.run(complete_training=True, on_summary=summaries.append)
+        if bridge.isCancelled():
+            return "stopped"
+        if not succeeded:
+            return "task_failed"
+        if summaries:
+            bridge.reportSummary(tr("；").join(summaries))
+        return "success"
     except RunStopRequested:
         log.info("任务已停止")
         return "stopped"

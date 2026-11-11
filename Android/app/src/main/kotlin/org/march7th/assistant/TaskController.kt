@@ -26,7 +26,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.ZipInputStream
 
-enum class TaskId { ROUTINE, DAILY, REWARDS, POWER }
+/** 声明顺序就是一轮里的执行顺序。 */
+enum class TaskId { POWER, REWARDS, DAILY }
 
 /** 触屏清体力支持的副本类型。typeName 是共享配置和 instance_names.json 里的键，cost 是单次挑战的开拓力。 */
 enum class InstanceType(val typeName: String, val cost: Int) {
@@ -74,7 +75,8 @@ data class TaskState(
     val displayId: Int? = null,
     val gameDisplayId: Int? = null,
     val game: GameState = GameState.OFF,
-    val task: TaskId = TaskId.DAILY,
+    /** 本轮要执行的任务，可以为空。 */
+    val tasks: Set<TaskId> = TaskId.entries.toSet(),
     val phase: TaskPhase = TaskPhase.IDLE,
     val config: TaskConfig = TaskConfig(),
     val panelOff: Boolean = false,
@@ -99,7 +101,9 @@ class TaskController private constructor(private val context: Context) {
     private val stateData = MutableStateFlow(
         TaskState(
             privilege = if (prefs.getBoolean("root", false)) Privilege.ROOT else Privilege.SHIZUKU,
-            task = TaskId.entries.firstOrNull { it.name == prefs.getString("task", null) } ?: TaskId.DAILY,
+            tasks = prefs.getString("tasks", null)?.split(',')
+                ?.let { names -> TaskId.entries.filter { it.name in names }.toSet() }
+                ?: TaskId.entries.toSet(),
             config = TaskConfig(
                 collectRewards = prefs.getBoolean("collect-rewards", true),
                 panelOff = prefs.getBoolean("panel-off", false),
@@ -182,10 +186,11 @@ class TaskController private constructor(private val context: Context) {
         }
     }
 
-    fun selectTask(task: TaskId): Boolean {
+    fun setTaskEnabled(task: TaskId, enabled: Boolean): Boolean {
         if (state.value.busy) return false
-        prefs.edit().putString("task", task.name).apply()
-        stateData.update { it.copy(task = task) }
+        val tasks = if (enabled) state.value.tasks + task else state.value.tasks - task
+        prefs.edit().putString("tasks", tasks.joinToString(",") { it.name }).apply()
+        stateData.update { it.copy(tasks = tasks) }
         return true
     }
 
@@ -216,7 +221,7 @@ class TaskController private constructor(private val context: Context) {
         refreshPermission()
         recover()
         val snapshot = state.value
-        if (snapshot.busy || snapshot.permission != PermissionState.READY) return false
+        if (snapshot.busy || snapshot.permission != PermissionState.READY || snapshot.tasks.isEmpty()) return false
         if (!context.hasPackage(DeviceAccess.GAME_PACKAGE)) return failToStart("game_not_installed")
         if (context.getSystemService(KeyguardManager::class.java).isKeyguardLocked) {
             return failToStart("keyguard_locked")
@@ -378,7 +383,7 @@ class TaskController private constructor(private val context: Context) {
             }
             val result = module.callAttr(
                 "run", workspace.path, token, Build.VERSION.SDK_INT, Build.VERSION.RELEASE, Build.MODEL,
-                "x86_64" in Build.SUPPORTED_ABIS, snapshot.task.name, snapshot.config, language, this
+                "x86_64" in Build.SUPPORTED_ABIS, snapshot.tasks.joinToString(",") { it.name }, snapshot.config, language, this
             ).toString()
             return if (result == "runtime_error") deviceError ?: result else result
         }

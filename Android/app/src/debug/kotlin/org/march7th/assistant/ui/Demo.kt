@@ -15,12 +15,12 @@ import org.march7th.assistant.TaskState
 /**
  * 调试构建里用模拟数据看各个状态下的界面，不启动任务：
  * adb shell am start -n org.march7th.assistant/.MainActivity --es demo running --es tab LOGS --es page STATUS
- * demo 取下面的场景名，其余值当作错误码；task 取 TaskId，tab 取 Tab，page 取 SubPage，theme 取 ThemeMode。
+ * demo 取下面的场景名，其余值当作错误码；task 取一个 TaskId，不给就是三项全选，tab 取 Tab，page 取 SubPage，theme 取 ThemeMode。
  */
 internal fun demoFrom(intent: Intent): Demo? {
     val name = intent.getStringExtra("demo") ?: return null
-    val task = TaskId.entries.firstOrNull { it.name == intent.getStringExtra("task") } ?: TaskId.DAILY
-    val ready = TaskState(permission = PermissionState.READY, task = task)
+    val task = TaskId.entries.firstOrNull { it.name == intent.getStringExtra("task") }
+    val ready = TaskState(permission = PermissionState.READY, tasks = task?.let(::setOf) ?: TaskId.entries.toSet())
     val live = ready.copy(service = ServiceState.CONNECTED, displayId = 65, gameDisplayId = 65, game = GameState.STARTING)
     val state = when (name) {
         "ready" -> ready
@@ -38,7 +38,7 @@ internal fun demoFrom(intent: Intent): Demo? {
         "panel" -> live.copy(phase = TaskPhase.RUNNING, game = GameState.READY, panelOff = true)
         "stopping" -> live.copy(phase = TaskPhase.STOPPING, game = GameState.READY)
         "cleaning" -> ready.copy(phase = TaskPhase.CLEANING, service = ServiceState.CLEANING)
-        "done" -> ready.copy(phase = TaskPhase.SUCCEEDED, summary = SAMPLE.last().message.takeIf { task == TaskId.DAILY })
+        "done" -> ready.copy(phase = TaskPhase.SUCCEEDED, summary = SAMPLE.last().message.takeIf { task != TaskId.REWARDS })
         "stopped" -> ready.copy(phase = TaskPhase.STOPPED)
         else -> ready.copy(phase = TaskPhase.FAILED, errorCode = name)
     }

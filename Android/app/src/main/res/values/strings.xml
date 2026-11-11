@@ -4,17 +4,17 @@
     <string name="app_name">三月七小助手</string>
 
     <!-- 任务 -->
-    <string name="routine">日常</string>
     <string name="daily">每日实训</string>
     <string name="rewards">领取奖励</string>
     <string name="power">清体力</string>
-    <string name="task_routine_summary">先清体力，再领取奖励，最后完成并领取每日实训</string>
-    <string name="task_daily_summary">查看活跃度，领取已达成的实训奖励</string>
-    <string name="task_rewards_summary">委托、邮件、支援、短信奖励，最后做一遍每日实训</string>
-    <string name="task_power_summary">用开拓力刷拟造花萼、凝滞虚影或侵蚀隧洞</string>
+    <string name="tasks_selected">所选任务</string>
+    <string name="tasks_none">未选择任务</string>
+    <string name="tasks_count">%1$d 项任务</string>
+    <string name="list_separator">、</string>
 
     <!-- 通用操作 -->
     <string name="start_task">开始%1$s</string>
+    <string name="choose_tasks">选择任务</string>
     <string name="stop">停止</string>
     <string name="back">返回</string>
     <string name="confirm">确定</string>
@@ -106,12 +106,21 @@
 
     <!-- 任务页 -->
     <string name="tasks_title">任务</string>
-    <string name="tasks_subtitle">选一项，回到首页一键开始</string>
+    <string name="tasks_subtitle">勾选要执行的任务，回到首页一键开始</string>
     <string name="tasks_locked">任务运行期间不能更换任务或修改选项。</string>
+    <string name="tasks_order_note">勾选的任务按清体力、领取奖励、每日实训的顺序执行，前一项失败时不再继续。</string>
     <string name="tasks_scope_note">历战余响、饰品提取、兑换码、模拟宇宙等其他任务请使用电脑版。</string>
-    <string name="tasks_group_power">清体力</string>
-    <string name="tasks_group_rewards">领取奖励</string>
-    <string name="tasks_group_daily">每日实训</string>
+    <string name="task_expand">展开选项</string>
+    <string name="task_collapse">收起选项</string>
+    <string name="task_power_brief">%1$s · 最多 %2$d 次</string>
+    <string name="task_rewards_none">没有打开任何奖励</string>
+    <string name="task_daily_view_only">只查看进度</string>
+    <string name="brief_dispatch">委托</string>
+    <string name="brief_mail">邮件</string>
+    <string name="brief_assist">支援</string>
+    <string name="brief_message">短信</string>
+    <string name="brief_synthesis">合成材料</string>
+    <string name="brief_quest">领取奖励</string>
     <string name="option_quest">领取实训奖励</string>
     <string name="option_quest_summary">领取任务活跃度和已达成的档位礼盒；关闭后只查看进度</string>
     <string name="option_dispatch">委托奖励</string>
@@ -144,9 +153,8 @@
     <string name="option_supports_dialog">选择支援角色</string>
     <string name="option_supports_count">已选 %1$d/%2$d，按选择的先后在支援列表里查找</string>
     <string name="option_supports_search">搜索角色</string>
-    <string name="option_supports_separator">、</string>
     <string name="option_borrow_always">每次挑战都借用</string>
-    <string name="option_borrow_always_summary">关闭时，只在「日常」里实训有支援任务待完成时借用</string>
+    <string name="option_borrow_always_summary">关闭时，只在同时勾选了每日实训、且实训有支援任务待完成时借用</string>
 
     <!-- 权限引导 -->
     <string name="guide_title">权限引导</string>

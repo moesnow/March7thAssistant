@@ -38,7 +38,7 @@ import org.march7th.assistant.TaskState
 internal class AppActions(
     val start: () -> Unit,
     val stop: () -> Unit,
-    val selectTask: (TaskId) -> Unit,
+    val setTaskEnabled: (TaskId, Boolean) -> Unit,
     val updateConfig: (TaskConfig) -> Unit,
     val selectPrivilege: (Privilege) -> Unit,
     val requestPermission: () -> Unit,

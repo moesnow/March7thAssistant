@@ -209,6 +209,19 @@ def test_rewards_reports_completion_with_the_daily_result(monkeypatch):
     summary.assert_called_once_with(tr("奖励检查完成，{daily_summary}").format(daily_summary=daily_summary))
 
 
+def test_claim_collects_rewards_without_opening_daily_training(monkeypatch):
+    monkeypatch.setattr(rewards, "cfg", SimpleNamespace(
+        reward_dispatch_enable=True, reward_mail_enable=False, reward_assist_enable=False, reward_message_enable=False))
+    dispatch = Mock()
+    monkeypatch.setattr(rewards, "claim_dispatch", dispatch)
+    monkeypatch.setattr(rewards.daily, "run", Mock(side_effect=AssertionError))
+    assert rewards.claim()
+    dispatch.assert_called_once_with()
+
+    dispatch.side_effect = rewards.RewardError("x")
+    assert not rewards.claim()
+
+
 def test_routine_joins_the_power_and_reward_summaries(monkeypatch):
     monkeypatch.setattr(rewards, "cfg", SimpleNamespace(power_enable=True, daily_enable=False))
     monkeypatch.setattr(power, "run", lambda *, borrow_for_daily, on_summary: on_summary("power") or True)

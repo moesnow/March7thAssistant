@@ -46,7 +46,7 @@ private class Headline(val pill: Int, val tone: Tone, val title: String, val det
 
 @Composable
 private fun headline(state: TaskState): Headline {
-    val task = tr(state.task.title)
+    val task = tasksName(state.tasks)
     val error = errorInfo(state.errorCode)
     return when {
         state.service == ServiceState.RECOVERING -> Headline(
@@ -134,10 +134,10 @@ internal fun HomeScreen(state: TaskState, lastLog: String?, actions: AppActions,
                 )
                 Tile(
                     Modifier.weight(1f).fillMaxHeight(),
-                    icon = state.task.icon,
+                    icon = tasksIcon(state.tasks),
                     tone = Tone.ACTIVE,
                     label = tr(R.string.home_task),
-                    value = tr(state.task.title),
+                    value = tasksShort(state.tasks),
                     status = tr(if (state.busy) R.string.home_task_locked else R.string.home_task_change),
                     onClick = { navigator.openTab(Tab.TASKS) },
                 )
@@ -183,7 +183,10 @@ internal fun HomeScreen(state: TaskState, lastLog: String?, actions: AppActions,
                 state.permission != PermissionState.READY -> BigActionButton(
                     tr(R.string.go_authorize), { navigator.open(SubPage.GUIDE) }, icon = M7Icons.Shield, style = ActionStyle.PLAIN,
                 )
-                else -> BigActionButton(tr(R.string.start_task, tr(state.task.title)), actions.start, icon = M7Icons.Play)
+                state.tasks.isEmpty() -> BigActionButton(
+                    tr(R.string.choose_tasks), { navigator.openTab(Tab.TASKS) }, icon = M7Icons.Tasks, style = ActionStyle.PLAIN,
+                )
+                else -> BigActionButton(tr(R.string.start_task, tasksName(state.tasks)), actions.start, icon = M7Icons.Play)
             }
         }
     }

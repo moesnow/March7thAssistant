@@ -20,27 +20,42 @@ internal fun tr(@StringRes id: Int, vararg args: Any): String = stringResource(i
 
 internal val TaskId.title: Int
     get() = when (this) {
-        TaskId.ROUTINE -> R.string.routine
         TaskId.DAILY -> R.string.daily
         TaskId.REWARDS -> R.string.rewards
         TaskId.POWER -> R.string.power
     }
 
-internal val TaskId.summary: Int
-    get() = when (this) {
-        TaskId.ROUTINE -> R.string.task_routine_summary
-        TaskId.DAILY -> R.string.task_daily_summary
-        TaskId.REWARDS -> R.string.task_rewards_summary
-        TaskId.POWER -> R.string.task_power_summary
-    }
-
 internal val TaskId.icon: ImageVector
     get() = when (this) {
-        TaskId.ROUTINE -> M7Icons.Tasks
         TaskId.DAILY -> M7Icons.Daily
         TaskId.REWARDS -> M7Icons.Gift
         TaskId.POWER -> M7Icons.Bolt
     }
+
+/** 一项任务用它自己的名字，多项时用统称，放进「开始%s」这类句子里。 */
+@Composable
+@ReadOnlyComposable
+internal fun tasksName(tasks: Set<TaskId>): String =
+    tr(tasks.singleOrNull()?.title ?: R.string.tasks_selected)
+
+/** 按执行顺序列出所选任务。 */
+@Composable
+@ReadOnlyComposable
+internal fun tasksList(tasks: Set<TaskId>): String {
+    if (tasks.isEmpty()) return tr(R.string.tasks_none)
+    val separator = tr(R.string.list_separator)
+    val names = ArrayList<String>()
+    for (task in tasks.sorted()) names += tr(task.title)
+    return names.joinToString(separator)
+}
+
+/** 放在窄位置的写法：多项时只给数量。 */
+@Composable
+@ReadOnlyComposable
+internal fun tasksShort(tasks: Set<TaskId>): String =
+    if (tasks.size > 1) tr(R.string.tasks_count, tasks.size) else tasksList(tasks)
+
+internal fun tasksIcon(tasks: Set<TaskId>): ImageVector = tasks.singleOrNull()?.icon ?: M7Icons.Tasks
 
 internal val Privilege.title: Int
     get() = when (this) {

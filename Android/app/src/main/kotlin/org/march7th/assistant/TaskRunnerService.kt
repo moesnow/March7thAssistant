@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import org.march7th.assistant.ui.title
 
 internal fun Context.tr(id: Int, vararg args: Any): String = getString(id, *args)
 
@@ -88,12 +89,7 @@ class TaskRunnerService : Service() {
         }
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_task)
-            .setContentTitle(tr(when (state.task) {
-                TaskId.ROUTINE -> R.string.routine
-                TaskId.DAILY -> R.string.daily
-                TaskId.REWARDS -> R.string.rewards
-                TaskId.POWER -> R.string.power
-            }))
+            .setContentTitle(state.tasks.sorted().joinToString(tr(R.string.list_separator)) { tr(it.title) })
             .setContentText(tr(state.phase.label))
             .setContentIntent(view)
             .setOnlyAlertOnce(true)

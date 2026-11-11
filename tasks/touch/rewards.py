@@ -211,25 +211,37 @@ def claim_messages():
     log.info(f"本次已处理 {completed} 个短信会话" if completed else "本次未发现待处理短信")
 
 
+def _claim():
+    try:
+        for enabled, collect in (
+            (cfg.reward_dispatch_enable, claim_dispatch),
+            (cfg.reward_mail_enable, claim_mail),
+            (cfg.reward_assist_enable, claim_assist),
+            (cfg.reward_message_enable, claim_messages),
+        ):
+            if enabled:
+                collect()
+    except RewardError as error:
+        log.error(f"触屏领奖：{error}")
+        return False
+    return True
+
+
+def claim():
+    """只领取委托、邮件、支援和短信奖励，不进每日实训。"""
+    log.hr("开始触屏领奖", 0)
+    with screenshot_retry_timeout(5):
+        return _claim()
+
+
 def run(*, complete_training=False, on_summary=None):
     def report_daily(summary):
         on_summary(tr("奖励检查完成，{daily_summary}").format(daily_summary=summary))
 
     log.hr("开始触屏领奖", 0)
     with screenshot_retry_timeout(5):
-        if cfg.reward_enable:
-            try:
-                for enabled, collect in (
-                    (cfg.reward_dispatch_enable, claim_dispatch),
-                    (cfg.reward_mail_enable, claim_mail),
-                    (cfg.reward_assist_enable, claim_assist),
-                    (cfg.reward_message_enable, claim_messages),
-                ):
-                    if enabled:
-                        collect()
-            except RewardError as error:
-                log.error(f"触屏领奖：{error}")
-                return False
+        if cfg.reward_enable and not _claim():
+            return False
         return daily.run(complete_training=complete_training, on_summary=report_daily if on_summary is not None else None)
 
 
