@@ -27,6 +27,7 @@
     public boolean getDispatch();
     public boolean getMail();
     public boolean getAssist();
+    public boolean getSrpass();
     public boolean getMessage();
     public boolean getSynthesis();
     public org.march7th.assistant.InstanceType getInstanceType();

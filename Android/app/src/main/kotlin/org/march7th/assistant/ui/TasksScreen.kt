@@ -149,6 +149,7 @@ private fun taskBrief(task: TaskId, config: TaskConfig, catalog: () -> Catalog):
             tr(R.string.brief_dispatch).takeIf { config.dispatch },
             tr(R.string.brief_mail).takeIf { config.mail },
             tr(R.string.brief_assist).takeIf { config.assist },
+            tr(R.string.option_srpass).takeIf { config.srpass },
             tr(R.string.brief_message).takeIf { config.message },
         ).ifEmpty { listOf(tr(R.string.task_rewards_none)) }.joinToString(separator)
         TaskId.DAILY -> listOfNotNull(
@@ -190,6 +191,10 @@ private fun RewardSwitches(config: TaskConfig, enabled: Boolean, actions: AppAct
         summary = tr(R.string.option_assist_summary), enabled = enabled,
     )
     SwitchRow(
+        tr(R.string.option_srpass), config.srpass,
+        { actions.updateConfig(config.copy(srpass = it)) }, enabled = enabled,
+    )
+    SwitchRow(
         tr(R.string.option_message), config.message,
         { actions.updateConfig(config.copy(message = it)) },
         summary = tr(R.string.option_message_summary), enabled = enabled,
@@ -226,7 +231,8 @@ private fun PowerOptions(config: TaskConfig, enabled: Boolean, catalog: Catalog,
                 style = MaterialTheme.typography.labelLarge, color = scheme.onSurfaceVariant,
             )
             Text(
-                tr(R.string.option_waves_value, waves, waves * config.instanceType.cost),
+                config.instanceType.cost?.let { tr(R.string.option_waves_value, waves, waves * it) }
+                    ?: tr(R.string.option_waves_count, waves),
                 style = MaterialTheme.typography.titleMedium,
             )
         }
@@ -276,7 +282,9 @@ private fun PowerOptions(config: TaskConfig, enabled: Boolean, catalog: Catalog,
     when (picker.takeIf { enabled }) {
         Picker.TYPE -> ChoiceDialog(
             tr(R.string.option_instance_type),
-            InstanceType.entries.map { CatalogItem(it.name, tr(it.title), tr(R.string.instance_cost, it.cost)) },
+            InstanceType.entries.map { type ->
+                CatalogItem(type.name, tr(type.title), type.cost?.let { tr(R.string.instance_cost, it) })
+            },
             config.instanceType.name,
             onSelect = { name ->
                 val type = InstanceType.valueOf(name)

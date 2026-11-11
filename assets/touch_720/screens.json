@@ -31,13 +31,6 @@
                 ]
             },
             {
-                "target_screen": "guide2",
-                "actions_list": [
-                    "auto.click_element('指南', 'text', max_retries=3, retry_delay=0.3, crop=(1610 / 1920, 798 / 1080, 153 / 1920, 62 / 1080))",
-                    "auto.find_element('星际和平指南', 'text', crop=(75 / 1920, 15 / 1080, 240 / 1920, 41 / 1080), max_retries=6, retry_delay=0.3) and auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
-                ]
-            },
-            {
                 "target_screen": "dispatch",
                 "actions_list": [
                     "auto.click_element('委托', 'text', max_retries=3, retry_delay=0.3, crop=(1600 / 1920, 474 / 1080, 157 / 1920, 61 / 1080))"
@@ -98,6 +91,44 @@
         ]
     },
     {
+        "name": "无名勋礼-奖励",
+        "id": "pass1",
+        "image_path": "./assets/touch_720/images/screen/pass1.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')"
+                ]
+            },
+            {
+                "target_screen": "pass2",
+                "actions_list": [
+                    "auto.click_element((87 / 1920, 317 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "无名勋礼-任务",
+        "id": "pass2",
+        "image_path": "./assets/touch_720/images/screen/pass2.png",
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')"
+                ]
+            },
+            {
+                "target_screen": "pass1",
+                "actions_list": [
+                    "auto.click_element((87 / 1920, 180 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
         "name": "漫游签证",
         "id": "visa",
         "image_path": "./assets/touch_720/images/screen/visa.png",
@@ -144,6 +175,36 @@
         "name": "侵蚀隧洞",
         "id": "cavern",
         "image_path": "./assets/touch_720/images/screen/cavern.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')",
+                    "time.sleep(0.6)",
+                    "auto.find_element('./assets/touch_720/images/screen/guide3.png', 'image', 0.88, max_retries=3, retry_delay=0.3) and auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "历战余响",
+        "id": "echo",
+        "image_path": "./assets/touch_720/images/screen/echo.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')",
+                    "time.sleep(0.6)",
+                    "auto.find_element('./assets/touch_720/images/screen/guide3.png', 'image', 0.88, max_retries=3, retry_delay=0.3) and auto.click_element((1848 / 1920, 55 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "位面饰品提取",
+        "id": "ornament",
+        "image_path": "./assets/touch_720/images/screen/ornament.png",
         "actions": [
             {
                 "target_screen": "main",

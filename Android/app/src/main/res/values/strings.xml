@@ -109,7 +109,7 @@
     <string name="tasks_subtitle">勾选要执行的任务，回到首页一键开始</string>
     <string name="tasks_locked">任务运行期间不能更换任务或修改选项。</string>
     <string name="tasks_order_note">勾选的任务按清体力、领取奖励、每日实训的顺序执行，前一项失败时不再继续。</string>
-    <string name="tasks_scope_note">历战余响、饰品提取、兑换码、模拟宇宙等其他任务请使用电脑版。</string>
+    <string name="tasks_scope_note">兑换码、模拟宇宙等其他任务请使用电脑版。</string>
     <string name="task_expand">展开选项</string>
     <string name="task_collapse">收起选项</string>
     <string name="task_power_brief">%1$s · 最多 %2$d 次</string>
@@ -129,6 +129,7 @@
     <string name="option_mail_summary">邮箱有奖励时全部领取</string>
     <string name="option_assist">支援奖励</string>
     <string name="option_assist_summary">领取漫游签证里的支援角色奖励</string>
+    <string name="option_srpass">无名勋礼</string>
     <string name="option_message">短信奖励</string>
     <string name="option_message_summary">回复未读短信并领取奖励，有多个回复时选第一个</string>
     <string name="option_synthesis">合成材料完成实训</string>
@@ -139,11 +140,14 @@
     <string name="instance_crimson_calyx">拟造花萼（赤）</string>
     <string name="instance_stagnant_shadow">凝滞虚影</string>
     <string name="instance_cavern">侵蚀隧洞</string>
+    <string name="instance_echo">历战余响</string>
+    <string name="instance_ornament">饰品提取</string>
     <string name="instance_cost">每次挑战 %1$d 开拓力</string>
     <string name="option_instance_summary">%1$s · %2$s</string>
     <string name="option_waves">挑战次数上限</string>
     <string name="option_waves_value">%1$d 次 · %2$d 开拓力</string>
-    <string name="option_power_note">开拓力不够时提前结束。副本界面的「快捷补充开拓力」需要保持关闭。</string>
+    <string name="option_waves_count">%1$d 次</string>
+    <string name="option_power_note">副本界面的「快捷补充开拓力」需要保持关闭。</string>
     <string name="option_reserve">使用后备开拓力</string>
     <string name="option_reserve_summary">开拓力不满时，开始前取出一次后备开拓力</string>
     <string name="option_fuel">使用燃料</string>

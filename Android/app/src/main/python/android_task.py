@@ -123,6 +123,7 @@ def run(workdir, token, sdk, version, model, is_emulator, tasks, config, languag
             "reward_dispatch_enable": config.getDispatch(),
             "reward_mail_enable": config.getMail(),
             "reward_assist_enable": config.getAssist(),
+            "reward_srpass_enable": config.getSrpass(),
             "reward_message_enable": config.getMessage(),
             "daily_enable": True,
             "daily_material_enable": config.getSynthesis(),

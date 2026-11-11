@@ -21,6 +21,11 @@ IMAGE_ROOT = "./assets/touch_720/images/reward"
 MAIL_ALERT_CROP = (1842 / 1920, 300 / 1080, 75 / 1920, 65 / 1080)
 ASSIST_ALERT_CROP = (1710 / 1920, 75 / 1080, 68 / 1920, 65 / 1080)
 MAIL_RECEIVE_CROP = (407 / 1920, 952 / 1080, 277 / 1920, 63 / 1080)
+SRPASS_MENU = (1117 / 1920, 385 / 1080, 650 / 1920, 645 / 1080)
+SRPASS_OPEN = (1357 / 1920, 793 / 1080, 321 / 1920, 99 / 1080)
+SRPASS_RECEIVE = (866 / 1920, 957 / 1080, 947 / 1920, 113 / 1080)
+SRPASS_CLOSE = (510 / 1920, 818 / 1080, 900 / 1920, 244 / 1080)
+SRPASS_TASK_GROUP = (223 / 1920, 375 / 1080, 233 / 1920, 415 / 1080)
 DISPATCH_RECEIVE_CROP = (1270 / 1920, 905 / 1080, 493 / 1920, 90 / 1080)
 DISPATCH_STATUS_CROP = (1228 / 1920, 482 / 1080, 571 / 1920, 132 / 1080)
 DISPATCH_RUNNING = ("委托正在进行中", "委托派遣中", "每小时可持续获得奖励")
@@ -76,11 +81,71 @@ def claim_mail():
         return
 
     screen.change_to("mail", max_recursion=1)
-    if not auto.click_element("全部领取", "text", crop=MAIL_RECEIVE_CROP,
-                              max_retries=5, retry_delay=0.3):
-        raise RewardError("邮箱有奖励标记，但未找到全部领取按钮")
+    button = auto.find_element("全部领取", "text", crop=MAIL_RECEIVE_CROP,
+                               max_retries=5, retry_delay=0.3)
+    if not button:
+        raise RewardError("邮箱有未读标记，但未找到全部领取按钮")
+    # 未读邮件也会显示红点。只有金色的「全部领取」按钮可领取附件。
+    red, green, blue = np.moveaxis(np.asarray(auto.screenshot.convert("RGB")), -1, 0)
+    if ((red > 180) & (green > 125) & (blue < 155)).mean() < 0.25:
+        log.info("邮箱暂无可领取附件")
+        return
+    if not auto.click_element_with_pos(button):
+        raise RewardError("无法点击邮箱的全部领取按钮")
     _close_item_reward("mail", notify="邮件奖励已领取")
     log.info("已领取邮件奖励")
+
+
+def _open_srpass():
+    """等待新赛季片头结束，按需开启免费勋礼。"""
+    opened = False
+    deadline = time.monotonic() + 25
+    while time.monotonic() < deadline:
+        if screen.check_screen("pass1") or screen.check_screen("pass2"):
+            return
+        if not opened:
+            opened = auto.click_element("开启无名勋礼", "text", crop=SRPASS_OPEN)
+        time.sleep(0.4)
+    raise RewardError("未进入无名勋礼")
+
+
+def _claim_srpass_tab(tab, label):
+    button = auto.find_element("一键领取", "text", crop=SRPASS_RECEIVE, max_retries=3, retry_delay=0.3)
+    if not button:
+        return
+    if not auto.click_element_with_pos(button):
+        raise RewardError("无法点击无名勋礼的一键领取")
+    time.sleep(3)
+    deadline = time.monotonic() + 16
+    while time.monotonic() < deadline:
+        if auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP):
+            _close_item_reward(tab)
+        elif auto.click_element(("点击空白处关闭", "点击任意处关闭"), "text", crop=SRPASS_CLOSE):
+            time.sleep(0.5)
+        elif screen.check_screen(tab) and not auto.find_element("一键领取", "text", crop=SRPASS_RECEIVE):
+            log.info(f"已领取无名勋礼{label}")
+            return
+        time.sleep(0.4)
+    raise RewardError("无名勋礼领取后未确认返回")
+
+
+def claim_srpass():
+    screen.change_to("menu", max_recursion=1)
+    if not auto.click_element("无名勋礼", "text", crop=SRPASS_MENU, max_retries=3, retry_delay=0.3):
+        auto.drag_mouse((1710 / 1920, 474 / 1080), (1710 / 1920, 975 / 1080), 0.6)
+        time.sleep(0.7)
+        if not auto.click_element("无名勋礼", "text", crop=SRPASS_MENU):
+            log.info("手机菜单暂无无名勋礼")
+            return
+    _open_srpass()
+    screen.change_to("pass2", max_recursion=1)
+    for group in ("本周任务", "本期任务"):
+        if not auto.click_element(group, "text", crop=SRPASS_TASK_GROUP, max_retries=4, retry_delay=0.3):
+            raise RewardError(f"未找到无名勋礼的{group}")
+        time.sleep(0.65)
+        _claim_srpass_tab("pass2", f"{group}经验")
+    screen.change_to("pass1", max_recursion=1)
+    _claim_srpass_tab("pass1", "等级奖励")
 
 
 def _find_support_gift():
@@ -217,6 +282,7 @@ def _claim():
             (cfg.reward_dispatch_enable, claim_dispatch),
             (cfg.reward_mail_enable, claim_mail),
             (cfg.reward_assist_enable, claim_assist),
+            (cfg.reward_srpass_enable, claim_srpass),
             (cfg.reward_message_enable, claim_messages),
         ):
             if enabled:
@@ -228,7 +294,7 @@ def _claim():
 
 
 def claim():
-    """只领取委托、邮件、支援和短信奖励，不进每日实训。"""
+    """领取启用的日常奖励。"""
     log.hr("开始触屏领奖", 0)
     with screenshot_retry_timeout(5):
         return _claim()
@@ -251,6 +317,8 @@ def routine(*, on_summary=None):
     summaries = []
     collect_summary = summaries.append if on_summary is not None else None
     if cfg.power_enable:
+        if cfg.echo_of_war_enable and not power.run_weekly_echo():
+            return False
         support_pending = (cfg.daily_enable and cfg.borrow_enable and not cfg.borrow_character_enable
                            and daily.needs_support())
         if not power.run(borrow_for_daily=support_pending, on_summary=collect_summary):

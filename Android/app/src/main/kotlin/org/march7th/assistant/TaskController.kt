@@ -29,12 +29,14 @@ import java.util.zip.ZipInputStream
 /** 声明顺序就是一轮里的执行顺序。 */
 enum class TaskId { POWER, REWARDS, DAILY }
 
-/** 触屏清体力支持的副本类型。typeName 是共享配置和 instance_names.json 里的键，cost 是单次挑战的开拓力。 */
-enum class InstanceType(val typeName: String, val cost: Int) {
+/** typeName 对应共享配置的副本类型，cost 只用于展示固定的单次开拓力消耗。 */
+enum class InstanceType(val typeName: String, val cost: Int?) {
     GOLDEN_CALYX("拟造花萼（金）", 10),
     CRIMSON_CALYX("拟造花萼（赤）", 10),
     STAGNANT_SHADOW("凝滞虚影", 30),
     CAVERN("侵蚀隧洞", 40),
+    ECHO("历战余响", null),
+    ORNAMENT("饰品提取", null),
 }
 enum class ServiceState { IDLE, RECOVERING, STARTING, CONNECTED, CLEANING }
 enum class GameState { OFF, STARTING, FLASHING, RETURNING, READY, MANUAL_LOGIN }
@@ -47,6 +49,7 @@ data class TaskConfig(
     val dispatch: Boolean = true,
     val mail: Boolean = true,
     val assist: Boolean = true,
+    val srpass: Boolean = true,
     val message: Boolean = false,
     val synthesis: Boolean = true,
     val instanceType: InstanceType = InstanceType.GOLDEN_CALYX,
@@ -111,6 +114,7 @@ class TaskController private constructor(private val context: Context) {
                 dispatch = prefs.getBoolean("dispatch", true),
                 mail = prefs.getBoolean("mail", true),
                 assist = prefs.getBoolean("assist", true),
+                srpass = prefs.getBoolean("srpass", true),
                 message = prefs.getBoolean("message", false),
                 synthesis = prefs.getBoolean("synthesis", true),
                 instanceType = InstanceType.entries.firstOrNull { it.name == prefs.getString("instance-type", null) }
@@ -203,6 +207,7 @@ class TaskController private constructor(private val context: Context) {
             .putBoolean("dispatch", config.dispatch)
             .putBoolean("mail", config.mail)
             .putBoolean("assist", config.assist)
+            .putBoolean("srpass", config.srpass)
             .putBoolean("message", config.message)
             .putBoolean("synthesis", config.synthesis)
             .putString("instance-type", config.instanceType.name)

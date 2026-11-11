@@ -1,4 +1,5 @@
 """触屏 720p 生存索引副本。"""
+from datetime import date
 from functools import partial
 import re
 import time
@@ -25,6 +26,8 @@ GOLDEN_CALYX = "拟造花萼（金）"
 CRIMSON_CALYX = "拟造花萼（赤）"
 STAGNANT_SHADOW = "凝滞虚影"
 CAVERN = "侵蚀隧洞"
+ECHO = "历战余响"
+ORNAMENT = "饰品提取"
 MAX_WAVES = 24
 # 界面、单次开拓力、单批挑战上限。
 INSTANCES = {
@@ -32,21 +35,28 @@ INSTANCES = {
     CRIMSON_CALYX: ("calyx", 10, MAX_WAVES),
     STAGNANT_SHADOW: ("stagnant_shadow", 30, 8),
     CAVERN: ("cavern", 40, 6),
+    ECHO: ("echo", 30, 3),
+    ORNAMENT: ("ornament", 40, 6),
 }
 IMAGES = "./assets/touch_720/images/power"
 INDEX_CATEGORY = (177 / 1920, 255 / 1080, 449 / 1920, 680 / 1080)
 INDEX_ROWS = (658 / 1920, 256 / 1080, 1095 / 1920, 679 / 1080)
+ECHO_REWARDS = (884 / 1920, 327 / 1080, 101 / 1920, 60 / 1080)
+ECHO_PRACTICE_NOTICE = (410 / 1920, 493 / 1080, 1100 / 1920, 69 / 1080)
+DIALOG_CONFIRM = (990 / 1920, 665 / 1080, 460 / 1920, 80 / 1080)
 POWER_VALUE = (1555 / 1920, 32 / 1080, 143 / 1920, 45 / 1080)
 INSTANCE_TITLE = (1204 / 1920, 105 / 1080, 645 / 1920, 68 / 1080)
+ORNAMENT_TITLE = (755 / 1920, 111 / 1080, 576 / 1920, 59 / 1080)
 QUICK_REFILL = (1777 / 1920, 754 / 1080, 94 / 1920, 52 / 1080)
 WAVE_COUNT = (1455 / 1920, 810 / 1080, 175 / 1920, 50 / 1080)
 CHALLENGE_COST = (1285 / 1920, 953 / 1080, 75 / 1920, 64 / 1080)
 CAVERN_CHALLENGE_COST = (1405 / 1920, 953 / 1080, 75 / 1920, 64 / 1080)
+ECHO_CHALLENGE_COST = (1349 / 1920, 953 / 1080, 144 / 1920, 64 / 1080)
 CHALLENGE = (1392 / 1920, 950 / 1080, 461 / 1920, 76 / 1080)
 START_CHALLENGE = (1410 / 1920, 946 / 1080, 420 / 1920, 80 / 1080)
 TEAM_TABS = (531 / 1920, 14 / 1080, 861 / 1920, 86 / 1080)
 BATTLE_CONTROLS = (1665 / 1920, 30 / 1080, 210 / 1920, 63 / 1080)
-RESULT_TITLE = (754 / 1920, 109 / 1080, 411 / 1920, 167 / 1080)
+RESULT_TITLE = (754 / 1920, 109 / 1080, 411 / 1920, 253 / 1080)
 RESULT_COUNT = (1135 / 1920, 861 / 1080, 257 / 1920, 48 / 1080)
 REPEAT_COST = (1091 / 1920, 917 / 1080, 85 / 1920, 61 / 1080)
 REPEAT = (1180 / 1920, 911 / 1080, 290 / 1920, 74 / 1080)
@@ -86,8 +96,16 @@ def _read_number(crop, parse, error):
     raise PowerError(error)
 
 
-def read_power():
-    return _read_number(POWER_VALUE, parse_power, "未能确认当前开拓力")
+def read_power(crop=POWER_VALUE):
+    return _read_number(crop, parse_power, "未能确认当前开拓力")
+
+
+def _read_echo_rewards():
+    def parse(text):
+        match = re.fullmatch(r"([0-3])/3", _normalize(text))
+        return int(match[1]) if match else None
+
+    return _read_number(ECHO_REWARDS, parse, "未能确认历战余响的剩余奖励次数")
 
 
 def _read_waves(crop, label):
@@ -122,7 +140,7 @@ def _select_category(instance_type):
     if not _click_text(instance_type, INDEX_CATEGORY, retries=3):
         top = (535 / 1920, 389 / 1080)
         bottom = (535 / 1920, 834 / 1080)
-        start, end = (bottom, top) if instance_type in (STAGNANT_SHADOW, CAVERN) else (top, bottom)
+        start, end = (bottom, top) if instance_type in (STAGNANT_SHADOW, CAVERN, ECHO) else (top, bottom)
         if not drag_list(auto, start, end, crop=INDEX_CATEGORY):
             raise PowerError("无法拖动生存索引分类")
         if not _click_text(instance_type, INDEX_CATEGORY):
@@ -130,7 +148,7 @@ def _select_category(instance_type):
     time.sleep(0.5)
 
 
-def find_instance_entry(lines, name):
+def find_instance_entry(lines, name, instance_type=None):
     """只选与副本名称（赤萼为地区）属于同一行的按钮。"""
     name = _normalize(name)
     names = []
@@ -141,36 +159,45 @@ def find_instance_entry(lines, name):
             names.append(y)
         elif text in ("进入", "追踪", "传送") and x > 560:
             buttons.append((y, box, text))
+    # 历战余响的进入按钮在掉落物一行，其余副本和标题同一行。
+    button_offset = 73 if instance_type == ECHO else 0
     for name_y in sorted(names):
-        matches = [button for button in buttons if abs(button[0] - name_y) <= 35]
+        matches = [button for button in buttons if abs(button[0] - name_y - button_offset) <= 35]
         if len(matches) == 1:
             return matches[0][1:]
     return None
 
 
-def _enter_instance(instance_type, name):
-    instance_screen, _, _ = INSTANCES[instance_type]
+def _click_instance_entry(instance_type, name):
+    # 历战余响和饰品提取列表顶部有固定横幅，缩短手势以保留相邻页面的重叠。
+    drag_end = 490 if instance_type in (ECHO, ORNAMENT) else 405
     for _ in range(12):
         before, _, _ = auto.take_screenshot(crop=INDEX_ROWS)
         auto.perform_ocr()
-        if entry := find_instance_entry(auto.ocr_result, name):
+        if entry := find_instance_entry(auto.ocr_result, name, instance_type):
             box, label = entry
             if label != "进入":
                 raise PowerError(f"{name} 当前显示「{label}」，无法直接进入")
             if not auto.click_element_with_pos(auto.calculate_text_position(box, False)):
                 raise PowerError(f"无法点击 {name} 的进入按钮")
-            screen.wait_for_screen_change(instance_screen, max_recursion=0)
-            title = get_raw_instance_names()[instance_type][name] if instance_type == CRIMSON_CALYX else name
-            if not auto.find_element(title, "text", include=True, crop=INSTANCE_TITLE,
-                                     max_retries=6, retry_delay=0.3):
-                raise PowerError(f"未确认进入指定副本 {name}")
             return
-        if not drag_list(auto, (1100 / 1920, 814 / 1080), (1100 / 1920, 405 / 1080),
+        if not drag_list(auto, (1100 / 1920, 814 / 1080), (1100 / 1920, drag_end / 1080),
                          crop=INDEX_ROWS, end_pause=0.2, settle=0.4):
             raise PowerError("生存索引列表未稳定")
         if changed_ratio(before, auto.screenshot) <= 0.01:
             break
     raise PowerError(f"生存索引未找到 {name} 的进入按钮")
+
+
+def _enter_instance(instance_type, name):
+    _click_instance_entry(instance_type, name)
+    instance_screen, _, _ = INSTANCES[instance_type]
+    screen.wait_for_screen_change(instance_screen, max_recursion=0)
+    title = get_raw_instance_names()[instance_type][name] if instance_type == CRIMSON_CALYX else name
+    crop = ORNAMENT_TITLE if instance_type == ORNAMENT else INSTANCE_TITLE
+    if not auto.find_element(title, "text", include=True, crop=crop,
+                             max_retries=6, retry_delay=0.3):
+        raise PowerError(f"未确认进入指定副本 {name}")
 
 
 def _finish_supplement(source):
@@ -198,12 +225,12 @@ def _finish_supplement(source):
     screen.wait_for_screen_change("guide3", max_recursion=0)
 
 
-def _supplement(power):
+def _supplement(power, *, plus=(1720, 55), power_crop=POWER_VALUE):
     """只选已启用的后备开拓力或燃料，优先后备开拓力。"""
     if power >= 300 or not (cfg.use_reserved_trailblaze_power or cfg.use_fuel):
         return power
 
-    _tap(1720, 55)
+    _tap(*plus)
     if not auto.find_element("开拓力补充", "text", crop=SUPPLEMENT_TITLE,
                              max_retries=8, retry_delay=0.3):
         raise PowerError("未找到开拓力补充弹窗")
@@ -229,7 +256,7 @@ def _supplement(power):
             raise PowerError("无法确认已选的开拓力补充方式")
 
         _finish_supplement("后备开拓力" if image == "reserve" else "燃料")
-        supplemented = read_power()
+        supplemented = read_power(power_crop)
         if supplemented <= power:
             raise PowerError("确认补充后，开拓力未确认增加")
         log.info(f"开拓力由 {power} 补充至 {supplemented}")
@@ -258,23 +285,42 @@ def _select_team(instance_type, name):
     raise PowerError(f"未找到队伍 {team}")
 
 
-def _start_challenge(instance_type, name, waves, *, borrow_for_daily=False):
-    _, cost, limit = INSTANCES[instance_type]
-    if not auto.find_element(f"{IMAGES}/quick_refill_off.png", "image", 0.90, crop=QUICK_REFILL):
-        raise PowerError("请关闭副本界面的「快捷补充开拓力」")
+def _set_challenge_waves(waves, limit, *, crop=WAVE_COUNT, minus=1270, y=866):
     for _ in range(limit):
-        selected = _read_waves(WAVE_COUNT, "挑战次数")
+        selected = _read_waves(crop, "挑战次数")
         if selected == waves:
-            break
-        _tap(1821 if selected < waves else 1270, 866)
+            return
+        _tap(1821 if selected < waves else minus, y)
         time.sleep(0.22)
-    else:
-        raise PowerError(f"无法把挑战次数设为 {waves}")
-    cost_crop = CAVERN_CHALLENGE_COST if instance_type == CAVERN else CHALLENGE_COST
-    if _read_cost(cost_crop) != waves * cost or read_power() < waves * cost:
-        raise PowerError("挑战消耗与已确认的波次或开拓力不符")
+    raise PowerError(f"无法把挑战次数设为 {waves}")
+
+
+def _confirm_echo_practice(*, required):
+    if not auto.find_element("次数已耗尽", "text", include=True, crop=ECHO_PRACTICE_NOTICE,
+                             max_retries=8, retry_delay=0.3):
+        if required:
+            raise PowerError("未确认历战余响的无奖励挑战提示")
+        return
+    if not _click_text("确认", DIALOG_CONFIRM):
+        raise PowerError("无法确认历战余响的无奖励挑战")
+    log.info("已确认本场历战余响无挑战奖励")
+
+
+def _start_challenge(instance_type, name, waves, *, borrow_for_daily=False, practice=False):
+    _, cost, limit = INSTANCES[instance_type]
+    if not practice:
+        has_wave_selector = instance_type != ECHO or auto.find_element("挑战次数", "text", include=True, crop=WAVE_COUNT)
+        if has_wave_selector:
+            if not auto.find_element(f"{IMAGES}/quick_refill_off.png", "image", 0.90, crop=QUICK_REFILL):
+                raise PowerError("请关闭副本界面的「快捷补充开拓力」")
+            _set_challenge_waves(waves, limit)
+        cost_crop = {CAVERN: CAVERN_CHALLENGE_COST, ECHO: ECHO_CHALLENGE_COST}.get(instance_type, CHALLENGE_COST)
+        if _read_cost(cost_crop) != waves * cost or read_power() < waves * cost:
+            raise PowerError("挑战消耗与已确认的波次或开拓力不符")
     if not _click_text("挑战", CHALLENGE):
         raise PowerError("未找到副本的挑战按钮")
+    if practice:
+        _confirm_echo_practice(required=True)
     if not auto.find_element("开始挑战", "text", crop=START_CHALLENGE, max_retries=18, retry_delay=0.4):
         _check_popup()
         raise PowerError("未进入副本编队页")
@@ -299,7 +345,8 @@ def _check_popup():
         if _click_text("取消", SUPPLEMENT_CANCEL):
             raise PowerError("已取消非预期的开拓力补充弹窗")
         raise PowerError("检测到非预期的开拓力补充弹窗")
-    if any(message in text for message in ("无法战斗状态", "持有数量已达上限", "长时间未操作", "是否切换")):
+    if any(message in text for message in ("无法战斗状态", "持有数量已达上限", "长时间未操作", "是否切换",
+                                           "当前不存在任何存档")):
         raise PowerError("检测到阻止挑战的弹窗，请检查游戏画面")
 
 
@@ -359,7 +406,8 @@ def _wait_battle(*, repeated=False, instance_screen="calyx"):
     while time.monotonic() < deadline:
         check_popups = time.monotonic() >= next_popup_check
         try:
-            state, status = _observe_battle(glyph, allow_team=not saw_battle, check_popups=check_popups)
+            state, status = _observe_battle(glyph, allow_team=not saw_battle and instance_screen != "ornament",
+                                            check_popups=check_popups)
         except AdbError as error:
             if error.code != "frame_clock_unavailable":
                 raise
@@ -423,12 +471,32 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
         log.warning(f"{instance_type} 的连续挑战次数无效，使用 {limit}")
         batch_limit = limit
 
+    if instance_type == ORNAMENT:
+        from tasks.touch import ornament
+
+        yield from ornament.run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement)
+        return
+
     _select_category(instance_type)
-    power = _supplement(read_power())
-    remaining = min(planned, power // cost) if planned is not None else power // cost
+    reward_count = _read_echo_rewards() if instance_type == ECHO else None
+    power = read_power()
+    if reward_count != 0:
+        power = _supplement(power)
+    if reward_count is not None:
+        log.info(f"历战余响本周剩余奖励次数：{reward_count}/3")
+    practice = reward_count == 0 and planned is not None
+    remaining = power // cost
+    if reward_count is not None:
+        remaining = min(remaining, reward_count)
+    if planned is not None:
+        remaining = planned if practice else min(planned, remaining)
     log.info(f"{instance_type} · {name}，开拓力 {power}/300，本次最多挑战 {remaining} 次")
     if not remaining:
-        log.info("开拓力不足，返回主界面")
+        if reward_count == 0:
+            cfg.save_timestamp("echo_of_war_timestamp")
+            log.info("历战余响本周奖励次数已用完")
+        else:
+            log.info("开拓力不足，返回主界面")
         screen.change_to("main", max_recursion=1)
         if on_settlement is not None:
             on_settlement(0, power)
@@ -437,11 +505,14 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
     _enter_instance(instance_type, name)
     previous = 0
     while remaining > 0:
-        waves = min(remaining, batch_limit)
+        # 每场单独核对历战余响的奖励次数和消耗，0/3 时游戏只允许单场挑战。
+        waves = 1 if instance_type == ECHO else min(remaining, batch_limit)
         repeated = waves == previous
         if repeated:
-            if _read_cost(REPEAT_COST) != waves * cost or not _click_text("再来一次", REPEAT):
+            if (not practice and _read_cost(REPEAT_COST) != waves * cost) or not _click_text("再来一次", REPEAT):
                 raise PowerError("未确认再来一次的开拓力消耗或按钮")
+            if practice:
+                _confirm_echo_practice(required=False)
             log.info(f"再来一次，挑战 {waves} 次")
         else:
             if previous:
@@ -449,16 +520,22 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
                 if screen.current_screen != instance_screen:
                     _select_category(instance_type)
                     _enter_instance(instance_type, name)
-            _start_challenge(instance_type, name, waves, borrow_for_daily=borrow_for_daily)
+            _start_challenge(instance_type, name, waves, borrow_for_daily=borrow_for_daily, practice=practice)
         _wait_battle(repeated=repeated, instance_screen=instance_screen)
 
-        completed = _read_waves(RESULT_COUNT, "上轮挑战波次")
+        completed = 1 if instance_type == ECHO else _read_waves(RESULT_COUNT, "上轮挑战波次")
         available = read_power()
-        expected = power - waves * cost
+        expected = power if practice else power - waves * cost
         if completed != waves or not expected <= available <= expected + 2:
             raise PowerError("结算波次或开拓力变化与预期不符，停止重试")
         power = available
-        remaining = min(remaining - completed, power // cost)
+        remaining -= completed
+        if not practice:
+            remaining = min(remaining, power // cost)
+            if reward_count is not None:
+                reward_count -= completed
+                if reward_count == 0:
+                    cfg.save_timestamp("echo_of_war_timestamp")
         previous = waves
         log.info(f"本轮已结算 {completed} 次挑战，剩余开拓力 {power}/300")
         if on_settlement is not None:
@@ -468,7 +545,26 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
 
     _exit_result(instance_screen)
     screen.change_to("main", max_recursion=1)
-    log.info("开拓力不足，已返回主界面" if power < cost else "已达到本次挑战次数，返回主界面")
+    log.info("开拓力不足，已返回主界面" if not practice and power < cost else "已达到本次挑战次数，返回主界面")
+
+
+def run_weekly_echo():
+    if date.today().isoweekday() < cfg.echo_of_war_start_day_of_week:
+        log.info(f"历战余响设为周{cfg.echo_of_war_start_day_of_week}开始，跳过本次")
+        return True
+    name = cfg.instance_names.get(ECHO)
+    if name == "无":
+        return True
+    with screenshot_retry_timeout(5):
+        try:
+            if name not in get_raw_instance_names()[ECHO]:
+                raise PowerError("未配置有效的历战余响副本名称")
+            for _ in _run_instance(ECHO, name, None):
+                pass
+        except PowerError as error:
+            log.error(f"触屏历战余响：{error}")
+            return False
+    return True
 
 
 def _run(borrow_for_daily, on_settlement=None):

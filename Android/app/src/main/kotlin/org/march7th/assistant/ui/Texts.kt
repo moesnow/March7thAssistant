@@ -106,6 +106,8 @@ internal val InstanceType.title: Int
         InstanceType.CRIMSON_CALYX -> R.string.instance_crimson_calyx
         InstanceType.STAGNANT_SHADOW -> R.string.instance_stagnant_shadow
         InstanceType.CAVERN -> R.string.instance_cavern
+        InstanceType.ECHO -> R.string.instance_echo
+        InstanceType.ORNAMENT -> R.string.instance_ornament
     }
 
 /** 出错后界面能直接带用户去的地方。 */
