@@ -9,6 +9,7 @@ import struct
 from subprocess import CompletedProcess
 from threading import Thread
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 from PIL import Image
 import pytest
@@ -25,6 +26,8 @@ class FakeS1(socketserver.ThreadingTCPServer):
         self.token = "test-token-for-device-service"
         self.protocol = 1
         self.version = "0.1.1"
+        self.features = ["frame_after_ns"]
+        self.keep_awake_error = None
         self.display_id = 42
         self.task_visible = True
         self.target_mismatch = False
@@ -49,7 +52,9 @@ class FakeS1(socketserver.ThreadingTCPServer):
             if header["protocol"] != self.protocol:
                 return {"error": {"code": "protocol_mismatch"}}, b""
             version = self.hello_versions.pop(0) if self.hello_versions else self.version
-            return dict(protocol=self.protocol, version=version, features=["frame_after_ns"], default_tap_ms=50), b""
+            return dict(protocol=self.protocol, version=version, features=self.features, default_tap_ms=50), b""
+        if cmd == "keep_awake":
+            return ({"error": self.keep_awake_error} if self.keep_awake_error else {}), b""
         if cmd == "create_display":
             return dict(display_id=self.display_id), b""
         if cmd == "watchdog":
@@ -314,6 +319,36 @@ def test_version_mismatch_repushes_and_reconnects(adb, s1):
     controller.close()
     assert not fake.forwarding
     assert [request["cmd"] for request in s1.requests].count("shutdown") == 2
+
+
+@pytest.mark.parametrize("scenario", ["supported", "old_jar", "rejected", "disconnected"])
+def test_connect_negotiates_keep_awake_before_launch(adb, s1, monkeypatch, scenario):
+    controller, fake = adb
+    log = Mock()
+    monkeypatch.setattr(transport, "log", log)
+    if scenario != "old_jar":
+        s1.features.append("keep_awake")
+    if scenario == "rejected":
+        s1.keep_awake_error = {"code": "unsupported", "message": "保活不可用"}
+    if scenario == "disconnected":
+        s1.drop_command = "keep_awake"
+        with pytest.raises(transport.AdbError) as error:
+            controller.start_game_process()
+        assert error.value.code == "disconnected"
+        assert not fake.forwarding
+        assert all(r["cmd"] != "create_display" for r in s1.requests)
+        log.warning.assert_not_called()
+        return
+
+    assert controller.start_game_process()
+    assert controller.start_game_process()
+    requests = [r["cmd"] for r in s1.requests]
+    assert requests[:2] == ["hello", "create_display" if scenario == "old_jar" else "keep_awake"]
+    assert requests.count("keep_awake") == (0 if scenario == "old_jar" else 1)
+    if scenario != "old_jar":
+        assert s1.requests[1]["on"] is True
+        assert requests.index("keep_awake") < requests.index("create_display") < requests.index("launch")
+    assert log.warning.call_count == (0 if scenario == "supported" else 1)
 
 
 def test_crop_and_strict_sequence_after_input(adb, s1):

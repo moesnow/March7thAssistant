@@ -370,6 +370,7 @@ from utils.pause import pause_ctl, RunStopRequested, STOP_GRACE_SECONDS
 from module.automation import auto
 from utils.tasks import PAUSABLE_TASKS
 from utils.temporary_graphics import recover_temporary_graphics, restore_temporary_graphics
+from utils.windows_power import task_power_request
 
 telemetry.init(
     enabled=cfg.get_value("telemetry_enable", True),
@@ -472,6 +473,7 @@ def run_sub_task(action, task_override=None):
     if action not in ("currencywarstemp", "divergenttemp"):
         game.start(headless=False if action in visible_cloud_tasks else None)
     else:
+        task_power_request.acquire(log)
         if get_control_backend(cfg) == "cloud":
             if not cloud_game.start_game_process():
                 raise ConnectionError("启动或连接浏览器失败")
@@ -592,6 +594,7 @@ def run_workflow_action(workflow_name: str, workflow_step_path=None):
         )
         sys.exit(1)
     ensure_exclusive_run()
+    task_power_request.acquire(log)
     # 与流程编排启动语义一致：游戏未启动或无法切换到游戏窗口时直接报错终止，
     # 避免按键/点击打进当前聚焦的其它窗口（定时任务、命令行直跑均在此收口）
     if not game.ensure_game_ready():
@@ -612,20 +615,23 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
         log.warning(message)
         return False
 
-    # 包括正常返回、SystemExit、Ctrl+C、协作停止和异常，且先于外层错误暂停执行。
-    if get_control_backend(cfg) == "adb" and task_id not in HOST_TASKS:
-        controller = game.get_game_controller("adb")
-        with publish_status(controller, run_session):
-            try:
-                return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
-            finally:
-                controller.close()
-
-    recover_temporary_graphics(log)
     try:
-        return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
+        # 包括正常返回、SystemExit、Ctrl+C、协作停止和异常，且先于外层错误暂停执行。
+        if get_control_backend(cfg) == "adb" and task_id not in HOST_TASKS:
+            controller = game.get_game_controller("adb")
+            with publish_status(controller, run_session):
+                try:
+                    return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
+                finally:
+                    controller.close()
+
+        recover_temporary_graphics(log)
+        try:
+            return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
+        finally:
+            restore_temporary_graphics(final=True)
     finally:
-        restore_temporary_graphics(final=True)
+        task_power_request.release(log)
 
 
 def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
@@ -646,6 +652,7 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
     if action == "adb_check":
         if backend != "adb":
             raise AdbError("backend_required", tr("ADB 自检需要设置 control_backend: adb"))
+        task_power_request.acquire(log)
         return adb_check.run(game.get_game_controller("adb"))
 
     # 完整运行

@@ -51,6 +51,7 @@ def loop(monkeypatch):
     monkeypatch.setattr(game, "notif", MagicMock())
     monkeypatch.setattr(game, "log", MagicMock())
     monkeypatch.setattr(game, "Power", MagicMock())
+    monkeypatch.setattr(game, "task_power_request", SimpleNamespace(release=lambda log: events.append("release_power")))
 
     class FrozenDatetime(datetime):
         @classmethod
@@ -65,7 +66,7 @@ def loop(monkeypatch):
 def test_wait_releases_lock_reloads_and_never_reads_power(loop):
     loop.game.after_finish_is_loop()
     assert loop.clock.sleeps == [60, 60]
-    assert loop.events == ["release", "reacquire", "reload"]
+    assert loop.events == ["release_power", "release", "reacquire", "reload"]
     loop.game.Power.get.assert_not_called()
     loop.game.get_game_controller().stop_game.assert_called_once_with()
     loop.game.ocr.exit_ocr.assert_called_once_with()
@@ -110,7 +111,7 @@ def test_main_loop_waits_then_starts_next_run(loop, trigger):
     with pytest.raises(EndRun):
         scope["run_main_actions"](no_run_immediately=trigger == "startup")
     assert starts == ([120] if trigger == "startup" else [0, 120])
-    assert loop.events == ["release", "reacquire", "reload"]
+    assert loop.events == ["release_power", "release", "reacquire", "reload"]
     game.Power.get.assert_not_called()
     if trigger == "finished":
         scope["Daily"].start.assert_called_once_with()

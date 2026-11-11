@@ -32,6 +32,7 @@ from utils.pause import pause_ctl
 from utils.runs import describe_run, idle_without_run_lock
 from utils.temporary_graphics import begin_temporary_graphics, restore_temporary_graphics
 from utils.wait import wait_until
+from utils.windows_power import task_power_request
 
 
 class GameClientOutdatedError(RuntimeError):
@@ -39,6 +40,7 @@ class GameClientOutdatedError(RuntimeError):
 
 
 def start(headless=None, *, optimize_graphics=True):
+    task_power_request.acquire(log)
     log.hr("开始运行", 0)
     start_game(headless=headless, optimize_graphics=optimize_graphics)
     log.hr("完成", 2)
@@ -337,6 +339,13 @@ def start_game(headless=None, *, optimize_graphics=True):
                 raise  # 如果是最后一次尝试，则重新抛出异常
 
 
+def _finish_game_run():
+    try:
+        restore_temporary_graphics(final=True)
+    finally:
+        task_power_request.release(log)
+
+
 def stop(detect_loop=False):
     log.hr("停止运行", 0)
 
@@ -361,9 +370,13 @@ def stop(detect_loop=False):
         # 在关闭游戏前优先退出 OCR 避免内存占用
         ocr.exit_ocr()
         if cfg.after_finish in ["Exit", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
-            if get_game_controller().shutdown(cfg.after_finish) is False:
+            if get_game_controller().shutdown(cfg.after_finish, on_stopped=_finish_game_run) is False:
                 raise RuntimeError(f"任务完成后的操作失败：{cfg.after_finish}")
-        restore_temporary_graphics(final=True)
+        else:
+            # 无完成后操作时也要在 CLI 等待回车前结束 ADB 会话。
+            if get_control_backend(cfg) == "adb":
+                get_game_controller("adb").close()
+            _finish_game_run()
         log.hr("完成", 2)
         if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             pause_on_success()
@@ -372,7 +385,7 @@ def stop(detect_loop=False):
 
 def after_finish_is_loop():
     get_game_controller().stop_game()
-    restore_temporary_graphics(final=True)
+    _finish_game_run()
     scheduled_time = cfg.scheduled_time
     wait_time = Date.time_to_seconds(scheduled_time)
     future_time = Date.calculate_future_time(scheduled_time)

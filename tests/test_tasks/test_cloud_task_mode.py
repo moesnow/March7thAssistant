@@ -29,7 +29,8 @@ def runner():
              "Power", "CurrencyWars", "DivergentUniverse", "Fight", "Universe",
              "screen_test", "character_export", "challenge", "Redemption", "adb_check",
              "first_run", "pause_ctl", "ensure_exclusive_run", "version",
-             "recover_temporary_graphics", "restore_temporary_graphics", "log", "publish_status", "run_session", "notif")
+             "recover_temporary_graphics", "restore_temporary_graphics", "log", "publish_status", "run_session", "notif",
+             "task_power_request")
     scope = {name: MagicMock() for name in names}
     scope["cfg"].control_backend = None
     scope["cfg"].ui_profile = None
@@ -256,6 +257,8 @@ def test_adb_cli_returns_failure_without_screenshot_or_pause(runner):
     assert raised.value.code == EXIT_FAILED
     scope["run_session"].note.assert_called_once_with(error=str(runner.adb_check.run.side_effect))
     runner.game.get_game_controller.return_value.close.assert_called_once_with()
+    runner.task_power_request.acquire.assert_called_once_with(runner.log)
+    runner.task_power_request.release.assert_called_once_with(runner.log)
     scope["run_session"].finish.assert_called_once_with(EXIT_FAILED)
     runner.game.start.assert_not_called()
     runner.version.start.assert_not_called()

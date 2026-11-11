@@ -106,19 +106,23 @@ class GameControllerBase:
             self.log_debug("游戏窗口未找到")
             return None
 
-    def shutdown(self, action: Literal['Exit', 'Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay', 'RunScript'], delay: int = 60) -> bool:
+    def shutdown(self, action: Literal['Exit', 'Loop', 'Shutdown', 'Sleep', 'Hibernate', 'Restart', 'Logoff', 'TurnOffDisplay', 'RunScript'],
+                 delay: int = 60, *, on_stopped=None) -> bool:
         """
         终止游戏并在指定的延迟后执行系统操作：关机、睡眠、休眠、重启、注销。
 
         参数:
             action: 要执行的系统操作。
             delay: 延迟时间，单位为秒，默认为60秒。
+            on_stopped: 游戏停止后、执行系统操作前的收尾回调。
 
         返回:
             操作成功执行返回True，否则返回False。
         """
         if self.stop_game() is False:
             return False
+        if on_stopped is not None:
+            on_stopped()
         if action not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             return True
 

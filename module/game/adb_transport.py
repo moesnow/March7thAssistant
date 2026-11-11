@@ -394,6 +394,17 @@ class AdbService:
         self.port = int(port)
         self.client = ServiceClient(self.port, self.token)
         check_service_hello(self.client.hello)
+        if "keep_awake" not in self.client.hello.get("features", ()):
+            log.warning("ADB 设备端 JAR 不支持运行保活，请更新或重新构建 JAR")
+            return
+        try:
+            self.request("keep_awake", on=True)
+        except AdbError as error:
+            if self.client.closed:
+                raise
+            log.warning(f"未能请求 Android 保持唤醒：{error}")
+        else:
+            log.info("已请求 Android 在 ADB 会话期间保持唤醒")
 
     def _launch_process(self, command: str, name: str) -> int:
         started = time.monotonic()
