@@ -9,11 +9,23 @@ import re  # 用于加载正则表达式
 from utils.console import pause_on_error
 
 
+_LARGE_TASK_POINTS = {
+    "完成1次「差分宇宙」或「货币战争」": 500,
+    "完成1次「差分宇宙」或「模拟宇宙」": 500,
+    "通关「模拟宇宙」（任意世界）的1个区域": 500,
+    "累计消耗120点开拓力": 200,
+    "使用支援角色并获得战斗胜利1次": 200,
+    "累计施放2次秘技": 200,
+    "累计击碎3个可破坏物": 200,
+}
+
+
 class Tasks:
     def __init__(self, config_example_path):
         self.crop = (243.0 / 1920, 377.0 / 1080, 1428.0 / 1920, 528.0 / 1080)
         self.task_mappings = self._load_config(config_example_path)
         self.daily_tasks = {}
+        self.claimable = {}
 
     def _load_config(self, config_example_path):
         try:
@@ -44,15 +56,25 @@ class Tasks:
         for text in merged_texts:
             match = progress_pattern.search(text)
             claimed = "已领取" in text
+            # “差分宇宙或货币战争”卡优先匹配货币战争，避免短关键词误分类。
+            if "货币战" in text:
+                text = text.replace("差分宇", "")
             if require_status and not (match or claimed):
                 continue
             for keyword, task_name in self.task_mappings.items():
                 if keyword in text:
-                    if (match and match.group(1) == match.group(2)) or claimed:
+                    complete = match and match.group(1) == match.group(2)
+                    if complete or claimed:
                         self.daily_tasks[task_name] = False
+                        if complete and not claimed:
+                            points = re.search(r"[+＋]\s*(100|200|300|400|500)", text)
+                            self.claimable[task_name] = int(points[1]) if points else _LARGE_TASK_POINTS.get(task_name, 100)
+                        else:
+                            self.claimable.pop(task_name, None)
                         log.debug(f"{task_name}:已完成")
                     else:
                         self.daily_tasks[task_name] = True
+                        self.claimable.pop(task_name, None)
                         log.debug(f"{task_name}:待完成")
                     break
         return True

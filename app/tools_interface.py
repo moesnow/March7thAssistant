@@ -12,7 +12,9 @@ import subprocess
 from utils import clipboard
 from utils.desktop_twin import in_desktop_twin
 from module.config import cfg
+from module.config.platform import get_control_backend
 from tasks.base.tasks import start_task
+from utils.tasks import task_is_supported
 import os
 import sys
 import traceback
@@ -84,8 +86,9 @@ class ToolsInterface(ScrollArea):
         self._desktop_twin_hosting = False
 
         self.__initWidget()
+        self.refreshBackendTasks()
 
-        if sys.platform == 'win32' and self.automaticPlotCard.getSwitchState():
+        if sys.platform == 'win32' and not self.automaticPlotCard.isHidden() and self.automaticPlotCard.getSwitchState():
             self.__startAutoPlot()
 
     def retranslateUi(self):
@@ -258,7 +261,7 @@ class ToolsInterface(ScrollArea):
             if not game_path or not os.path.exists(game_path):
                 InfoBar.warning(
                     title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                    content=tr("请在“设置”→“程序”中配置正确的游戏路径"),
+                    content=tr("请在“设置”→“游戏连接”中配置正确的游戏路径"),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
@@ -402,8 +405,21 @@ class ToolsInterface(ScrollArea):
             card.setDisabled(active)
         if active:
             tool.stop_plot()
-        elif self.automaticPlotCard.getSwitchState():
+        elif not self.automaticPlotCard.isHidden() and self.automaticPlotCard.getSwitchState():
             self.__startAutoPlot()
+
+    def refreshBackendTasks(self):
+        adb = get_control_backend(cfg) == "adb"
+        was_hidden = self.automaticPlotCard.isHidden()
+        for card in (self.automaticPlotCard, self.gameScreenshotCard, self.unlockfpsCard, self.cloudTouchCard):
+            card.setVisible(not adb)
+        if adb:
+            tool.stop_plot()
+        elif was_hidden and not self._desktop_twin_hosting and self.automaticPlotCard.getSwitchState():
+            self.__startAutoPlot()
+        self.redemptionCodeCard.setVisible(task_is_supported("redemption", cfg))
+        self.screenTestCard.setVisible(task_is_supported("screen_test", cfg))
+        self.characterExportCard.setVisible(task_is_supported("character_export", cfg))
 
     def __onScreenTestCardClicked(self):
         start_task("screen_test")

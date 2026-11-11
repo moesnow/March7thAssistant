@@ -1466,16 +1466,8 @@ msgstr ""
 msgid "使用后备开拓力"
 msgstr ""
 
-#: app/setting_interface.py:274
-msgid "单次上限300点，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
-msgstr ""
-
 #: app/setting_interface.py:279
 msgid "使用燃料"
-msgstr ""
-
-#: app/setting_interface.py:280
-msgid "单次上限5个，全部使用需要将“任务完成后”选项修改为“循环”，然后点击“完整运行”"
 msgstr ""
 
 #: app/setting_interface.py:287
@@ -1488,14 +1480,6 @@ msgstr ""
 
 #: app/setting_interface.py:292
 msgid "按不匹配推荐角色和副属性 0 次筛选，分解已弃置及四星以下遗器"
-msgstr ""
-
-#: app/setting_interface.py:297
-msgid "体力优先合成沉浸器（建议直接通过饰品提取获取位面饰品）"
-msgstr ""
-
-#: app/setting_interface.py:298
-msgid "达到指定上限后停止"
 msgstr ""
 
 #: app/setting_interface.py:304
@@ -2180,18 +2164,6 @@ msgstr ""
 
 #: app/setting_interface.py:911
 msgid "末日幻影配置"
-msgstr ""
-
-#: app/setting_interface.py:914
-msgid "云崩铁设置"
-msgstr ""
-
-#: app/setting_interface.py:919
-msgid "使用“云·星穹铁道”"
-msgstr ""
-
-#: app/setting_interface.py:920
-msgid "开启后，将改用云·星穹铁道来执行清体力等自动化任务。无需固定窗口，可在后台运行。（模拟宇宙和锄大地仍需保持窗口全屏）"
 msgstr ""
 
 #: app/setting_interface.py:925
@@ -3206,10 +3178,6 @@ msgstr ""
 msgid "启用自动战斗和二倍速检测"
 msgstr ""
 
-#: app/setting_interface.py:2448
-msgid "游戏启动前通过修改注册表或本地存储开启自动战斗和二倍速，并在清体力、货币战争和逐光捡金场景中检测并保持自动战斗状态"
-msgstr ""
-
 #: app/setting_interface.py:2454
 msgid "OCR 加速模式"
 msgstr ""
@@ -3440,10 +3408,6 @@ msgstr ""
 
 #: app/setting_interface.py:2876
 msgid "锄大地"
-msgstr ""
-
-#: app/setting_interface.py:2888
-msgid "云游戏"
 msgstr ""
 
 #: app/setting_interface.py:2889
@@ -6433,10 +6397,6 @@ msgstr ""
 msgid "启用游戏优化"
 msgstr ""
 
-#: app/setting_interface.py:2459
-msgid "展开配置自动战斗、分辨率与临时画质；关闭总开关不会清除各项设置"
-msgstr ""
-
 #: app/setting_interface.py:2489
 msgid "任务期间自动降低画质"
 msgstr ""
@@ -6673,16 +6633,8 @@ msgstr ""
 msgid "无效的 ui_profile：{value}，可选值为 pc_1080、touch_720"
 msgstr ""
 
-#: module/game/__init__.py:15
-msgid "ADB 后端尚未实现"
-msgstr ""
-
 #: module/screen/screen.py:57
 msgid "界面图文件不存在：{path}"
-msgstr ""
-
-#: tasks/game/__init__.py:99
-msgid "启动游戏失败"
 msgstr ""
 
 #: module/game/local.py:43
@@ -6857,10 +6809,6 @@ msgstr ""
 msgid "ADB 设备端服务不支持文本输入，请在设备上手动输入"
 msgstr ""
 
-#: tasks/game/adb_check.py:61
-msgid "ADB 启动超时，请检查 Android 游戏的登录和横屏状态"
-msgstr ""
-
 #: tasks/game/adb_check.py:89
 msgid "ADB 自检未能在输入后的画面中确认手机菜单"
 msgstr ""
@@ -6925,10 +6873,6 @@ msgstr ""
 msgid "已确认自动回迁 {count} 次"
 msgstr ""
 
-#: main.py:600
-msgid "请在 Android 设备上更新游戏"
-msgstr ""
-
 #: main.py:614
 msgid "ADB 自检需要设置 control_backend: adb"
 msgstr ""
@@ -6950,24 +6894,12 @@ msgid ""
 "display 0 的触摸目标校验需要 Android 14 或更高版本，请设置 adb_device_type: physical 使用虚拟屏"
 msgstr ""
 
-#: app/card/adb_setting_cards.py:71
-msgid "设备后端"
-msgstr ""
-
-#: app/card/adb_setting_cards.py:72
-msgid "选择小助手操作哪里的游戏，对下一次运行的任务生效"
-msgstr ""
-
 #: app/card/adb_setting_cards.py:77
 msgid "本地游戏"
 msgstr ""
 
 #: app/card/adb_setting_cards.py:78
 msgid "云·星穹铁道"
-msgstr ""
-
-#: app/card/adb_setting_cards.py:79
-msgid "Android 设备（ADB）"
 msgstr ""
 
 #: app/card/adb_setting_cards.py:227
@@ -7310,18 +7242,6 @@ msgstr ""
 msgid "运行任务时会自动在设备上启动游戏"
 msgstr ""
 
-#: app/setting_interface.py:1030
-msgid "Android 设备设置"
-msgstr ""
-
-#: app/setting_interface.py:2940
-msgid "安卓设备"
-msgstr ""
-
-#: app/setting_interface.py:3091
-msgid "请先停止任务，再切换设备后端"
-msgstr ""
-
 #: app/setting_interface.py:3106
 msgid "环境检查会占用设备，请等任务结束后再检查"
 msgstr ""
@@ -7593,4 +7513,64 @@ msgstr ""
 
 #: tasks/touch/rewards.py:251
 msgid "；"
+msgstr ""
+
+#: app/card/adb_setting_cards.py:71
+msgid "游戏运行位置"
+msgstr ""
+
+#: app/card/adb_setting_cards.py:78
+msgid "安卓设备（ADB）"
+msgstr ""
+
+#: app/setting_interface.py:284
+msgid "每个副本项最多补充一次，数量以游戏弹窗为准"
+msgstr ""
+
+#: app/setting_interface.py:290
+msgid "同时启用后备开拓力时，后备库存用完才使用燃料"
+msgstr ""
+
+#: app/setting_interface.py:306
+msgid "满包时自动分解遗器"
+msgstr ""
+
+#: app/setting_interface.py:306
+msgid "遇到遗器满包时分解四星及以下遗器"
+msgstr ""
+
+#: app/setting_interface.py:310
+msgid "完成计划后继续清体力"
+msgstr ""
+
+#: app/setting_interface.py:310
+msgid "用剩余资源刷默认副本"
+msgstr ""
+
+#: app/setting_interface.py:925
+msgid "游戏连接"
+msgstr ""
+
+#: app/setting_interface.py:2462
+msgid "控制自动战斗检测及本地游戏的分辨率与画质调整"
+msgstr ""
+
+#: app/setting_interface.py:2468
+msgid "战斗时检测并补开自动战斗和二倍速"
+msgstr ""
+
+#: app/setting_interface.py:3056
+msgid "请先停止任务，再切换游戏运行位置"
+msgstr ""
+
+#: app/tools_interface.py:264
+msgid "请在“设置”→“游戏连接”中配置正确的游戏路径"
+msgstr ""
+
+#: module/game/adb_ready.py:61
+msgid "ADB 启动超时，请在安卓设备上检查是否需要登录或更新游戏"
+msgstr ""
+
+#: utils/tasks.py:50
+msgid "当前后端不支持，未执行"
 msgstr ""

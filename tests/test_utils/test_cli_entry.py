@@ -363,8 +363,7 @@ class TestReadOnlyCommands:
         code = (
             "import runpy, sys; import module.localization as loc; import utils.tasks as tasks; "
             "load = loc.load_language; loc.load_language = lambda: load(sys.argv[1]); "
-            "names = tasks.task_display_names; "
-            "tasks.task_display_names = lambda: dict(names(), missing=loc.tr('测试缺失译文')); "
+            "tasks.AVAILABLE_TASKS['missing'] = '测试缺失译文'; "
             "sys.argv = ['main.py', '--list', '--json']; runpy.run_path('main.py', run_name='__main__')"
         )
         result = subprocess.run([sys.executable, "-c", code, lang], cwd=REPO,

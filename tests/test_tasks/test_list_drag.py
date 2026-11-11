@@ -213,7 +213,8 @@ def test_message_checks_page_after_final_drag(monkeypatch):
     monkeypatch.setattr(message, "auto", auto)
     monkeypatch.setattr(message, "drag_list", drag)
 
-    message.Message("短信", True, "incoming_message").run()
+    with pytest.raises(message.RewardError, match="未读会话无法打开"):
+        message.Message("短信", True, "incoming_message").run()
 
     assert drag.call_count == 4
     auto.click_element_with_pos.assert_called_once_with(pos)

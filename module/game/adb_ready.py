@@ -36,12 +36,13 @@ def _match(image, name, template):
     return x + left + width // 2, y + top + height // 2
 
 
-def wait_for_game(controller, timeout):
+def wait_for_game(controller, timeout, *, recover=None):
     """等游戏可操作。只有输入后的新画面仍是标题页才重试点按。"""
     templates = {name: _load_template(name) for name in _TEMPLATES}
     inputs = controller.get_input_handler()
     deadline = time.monotonic() + timeout
     next_enter = 0.0
+    next_recovery = 0.0
     while time.monotonic() < deadline:
         pause_ctl.checkpoint()
         if frame := controller.capture_frame():
@@ -53,5 +54,8 @@ def wait_for_game(controller, timeout):
                 if inputs.mouse_click(*point):
                     controller.log_info("ADB 已点按标题进入")
                     next_enter = time.monotonic() + 4
+            elif recover is not None and time.monotonic() >= max(next_enter, next_recovery):
+                recover()
+                next_recovery = time.monotonic() + 4
         time.sleep(0.35)
-    raise AdbError("game_start_timeout", tr("ADB 启动超时，请检查 Android 游戏的登录和横屏状态"))
+    raise AdbError("game_start_timeout", tr("ADB 启动超时，请在安卓设备上检查是否需要登录或更新游戏"))

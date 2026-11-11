@@ -63,7 +63,8 @@ def test_grouping_toggle_and_enable_dialog(qtbot, tmp_path, monkeypatch):
     master = interface.gameOptimizationCard
     children = [interface.autoBattleDetectEnableCard, interface.autoSetResolutionEnableCard,
                 interface.autoLowerGraphicsCard]
-    assert all(master.viewLayout.indexOf(child) >= 0 for child in children)
+    assert children[0].parentWidget() is interface.MiscGroup
+    assert all(child.parentWidget() is interface.GameConnectionGroup for child in children[1:])
     assert [child.switchButton.isChecked() for child in children] == [False, True, False]
     master.switchButton.setChecked(False)
     assert all(not child.isEnabled() for child in children)
@@ -86,12 +87,11 @@ def test_grouping_toggle_and_enable_dialog(qtbot, tmp_path, monkeypatch):
     from qfluentwidgets import MessageBox
     preview = QWidget()
     qtbot.addWidget(preview)
-    QVBoxLayout(preview).addWidget(master)
+    QVBoxLayout(preview).addWidget(interface.GameConnectionGroup)
     preview.resize(1120, 680)
     preview.show()
-    master.setExpand(True)
     qtbot.wait(350)
-    assert master.grab().save(str(tmp_path / "graphics-options.png"))
+    assert interface.GameConnectionGroup.grab().save(str(tmp_path / "graphics-options.png"))
     actual = MessageBox(factory.call_args.args[0], factory.call_args.args[1], preview)
     actual.yesButton.setText(dialog.yesButton.setText.call_args.args[0])
     actual.cancelButton.setText(dialog.cancelButton.setText.call_args.args[0])

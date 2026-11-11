@@ -275,6 +275,10 @@ class AdbGameController(GameControllerBase):
             finally:
                 self.close()
 
+    def run_script(self) -> bool:
+        self.script_path = self.cfg.script_path
+        return super().run_script()
+
     def close(self):
         with self._lock:
             try:

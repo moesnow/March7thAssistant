@@ -428,7 +428,6 @@ def settings_page(qtbot, tmp_path, monkeypatch, adb):
     config = Config.__new__(Config)
     Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
     import app.card.switchsettingcard1 as switch_card
-    # 旧的云游戏开关自己写配置，不替换就会写到运行目录下的真实配置。
     for module in (settings, cards, service, switch_card):
         monkeypatch.setattr(module, "cfg", config)
     monkeypatch.setattr("module.config.cfg", config)
@@ -437,7 +436,7 @@ def settings_page(qtbot, tmp_path, monkeypatch, adb):
     qtbot.addWidget(interface)
     interface.resize(1050, 800)
     interface.show()
-    interface.stackedWidget.setCurrentWidget(interface.AdbGroup)
+    interface.stackedWidget.setCurrentWidget(interface.GameConnectionGroup)
     qtbot.wait(100)
     return interface, config, path
 
@@ -447,15 +446,16 @@ def saved(path):
     return YAML().load(path.read_text(encoding="utf-8"))
 
 
-def test_settings_page_has_android_tab(settings_page):
+def test_settings_page_has_single_connection_tab(settings_page):
     interface, config, path = settings_page
-    assert interface.pivot.items["adbInterface"].text() == "安卓设备"
+    assert interface.pivot.items["gameConnectionInterface"].text() == "游戏连接"
+    assert "adbInterface" not in interface.pivot.items and "cloudGameInterface" not in interface.pivot.items
     for card in (interface.adbBackendCard, interface.adbDeviceCard, interface.adbEnvironmentCard,
                  interface.adbStatusCard, interface.adbAdvancedCard):
-        assert card.parentWidget() is interface.AdbGroup
+        assert card.parentWidget() is interface.GameConnectionGroup
     assert interface.adbBackendCard.comboBox.currentData() == "local"
     assert not interface.adbAdvancedCard.isExpand
-    assert interface.stackedWidget.height() >= interface.AdbGroup.sizeHint().height()
+    assert interface.stackedWidget.height() >= interface.GameConnectionGroup.sizeHint().height()
     # 打开页面不改动没用过 ADB 的配置。
     assert saved(path)["control_backend"] is None and saved(path)["ui_profile"] == "pc_1080"
     # 没有使用 ADB 后端时不主动调用 adb。
@@ -468,7 +468,8 @@ def test_settings_page_walks_through_adb_setup(settings_page, qtbot, adb):
     backend = interface.adbBackendCard
     backend.comboBox.setCurrentIndex(backend.comboBox.findData("adb"))
     assert (saved(path)["control_backend"], saved(path)["ui_profile"]) == ("adb", "touch_720")
-    assert not interface.cloudGameEnableCard.switchButton.isChecked()
+    assert not interface.adbDeviceCard.isHidden()
+    assert interface.gamePathCard.isHidden() and interface.browserTypeCard.isHidden()
 
     devices = interface.adbDeviceCard
     wait_idle(qtbot, devices)  # 切到 ADB 后自动查找设备
@@ -481,36 +482,40 @@ def test_settings_page_walks_through_adb_setup(settings_page, qtbot, adb):
     checks.start()
     wait_idle(qtbot, checks)
     assert checks.card.contentLabel.text() == "全部通过，可以运行任务"
-    assert interface.stackedWidget.height() >= interface.AdbGroup.sizeHint().height()
+    assert interface.stackedWidget.height() >= interface.GameConnectionGroup.sizeHint().height()
 
     interface.adbStatusCard._reader = lambda: status(sdk_window=True, game_display_id=0)
     interface.adbStatusCard.refresh()
     assert interface.adbStatusCard.rows["game"].value.text() == "被登录界面带回了实体屏"
 
 
-def test_cloud_switch_and_backend_card_stay_in_sync(settings_page):
+def test_connection_switch_preserves_legacy_cloud_config(settings_page, qtbot):
     interface, config, path = settings_page
-    backend = interface.adbBackendCard
-    switch = interface.cloudGameEnableCard.switchButton
+    combo = interface.adbBackendCard.comboBox
+    for mode in ("cloud", "adb", "local"):
+        combo.setCurrentIndex(combo.findData(mode))
+        for key, cards in interface._connectionCards.items():
+            assert all(card.isHidden() == (key != mode) for card in cards)
+        if mode == "cloud":
+            assert saved(path)["cloud_game_enable"] is True
+            assert saved(path)["control_backend"] is None
+        elif mode == "adb":
+            assert saved(path)["cloud_game_enable"] is True
+            wait_idle(qtbot, interface.adbDeviceCard)
+        else:
+            assert saved(path)["cloud_game_enable"] is False
+            assert saved(path)["ui_profile"] == "pc_1080"
 
-    # 旧开关照常工作：只写 cloud_game_enable。
-    switch.setChecked(True)
-    assert saved(path)["cloud_game_enable"] is True and saved(path)["control_backend"] is None
-    assert backend.comboBox.currentData() == "cloud"
 
-    backend.comboBox.setCurrentIndex(backend.comboBox.findData("adb"))
-    assert not switch.isChecked()
-    assert saved(path)["cloud_game_enable"] is True  # YAML 里的旧值保留
+def test_opening_old_echo_plan_does_not_change_instance_type(settings_page, qtbot):
+    from app.card.messagebox_custom import MessageBoxPowerPlan
 
-    # ADB 生效期间打开旧开关：清掉显式后端，旧开关重新生效。
-    switch.setChecked(True)
-    data = saved(path)
-    assert (data["control_backend"], data["cloud_game_enable"], data["ui_profile"]) == (None, True, "pc_1080")
-    assert backend.comboBox.currentData() == "cloud"
-
-    backend.comboBox.setCurrentIndex(backend.comboBox.findData("local"))
-    assert saved(path)["cloud_game_enable"] is False
-    assert not switch.isChecked()
+    interface, _, _ = settings_page
+    plan = [["历战余响", "毁灭的开端", 2]]
+    dialog = MessageBoxPowerPlan("体力计划", plan, interface)
+    qtbot.addWidget(dialog)
+    assert dialog.validate_inputs()
+    assert dialog.get_plans() == plan
 
 
 def test_backend_change_is_blocked_while_task_runs(settings_page):

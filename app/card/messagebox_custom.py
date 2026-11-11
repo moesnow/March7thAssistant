@@ -1042,7 +1042,7 @@ class MessageBoxFriends(MessageBox):
 class MessageBoxPowerPlan(MessageBox):
     """体力计划配置对话框"""
 
-    def __init__(self, title: str, content: list, parent=None, keep_plan: bool = False):
+    def __init__(self, title: str, content: list, parent=None, keep_plan: bool = False, *, continue_after_plan: bool = True):
         super().__init__(title, "", parent)
         self.content = content if content else []
 
@@ -1061,11 +1061,7 @@ class MessageBoxPowerPlan(MessageBox):
         self.template = get_instance_names()
 
         # 副本类型列表
-        blacklist_type = [tr("历战余响")]
         self.instance_types = list(self.template.keys())
-        for btype in blacklist_type:
-            if btype in self.instance_types:
-                self.instance_types.remove(btype)
 
         # 存储所有计划行的控件
         self.plan_rows = []
@@ -1075,10 +1071,16 @@ class MessageBoxPowerPlan(MessageBox):
         self.titleLabelInfo.setFont(font)
         self.textLayout.addWidget(self.titleLabelInfo, 0, Qt.AlignmentFlag.AlignTop)
 
-        # 是否在执行后保留整份计划，方便重复执行固定计划
+        optionsLayout = QHBoxLayout()
         self.keepPlanCheckBox = CheckBox(tr("保留体力计划"), self)
         self.keepPlanCheckBox.setChecked(keep_plan)
-        self.textLayout.addWidget(self.keepPlanCheckBox)
+        optionsLayout.addWidget(self.keepPlanCheckBox)
+
+        self.continueAfterPlanCheckBox = CheckBox(tr("完成计划后继续清体力"), self)
+        self.continueAfterPlanCheckBox.setChecked(bool(continue_after_plan))
+        optionsLayout.addWidget(self.continueAfterPlanCheckBox)
+        optionsLayout.addStretch(1)
+        self.textLayout.addLayout(optionsLayout)
 
         # 计划列表容器
         self.planLayout = QVBoxLayout()
@@ -1086,7 +1088,7 @@ class MessageBoxPowerPlan(MessageBox):
 
         # 根据已有内容添加计划行
         for plan in self.content:
-            if len(plan) == 3:
+            if isinstance(plan, (list, tuple)) and len(plan) == 3 and type(plan[2]) is int:
                 self.add_plan_row(tr(plan[0]), tr(plan[1]), plan[2])
 
         # 添加按钮
@@ -1267,6 +1269,9 @@ class MessageBoxPowerPlan(MessageBox):
     def should_keep_plan(self):
         """返回是否应在执行后保留整份体力计划。"""
         return self.keepPlanCheckBox.isChecked()
+
+    def should_continue_after_plan(self):
+        return self.continueAfterPlanCheckBox.isChecked()
 
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""

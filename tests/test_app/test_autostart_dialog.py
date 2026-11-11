@@ -78,7 +78,7 @@ class TestAutostartConfigDialog:
         dlg.headlessTaskCombo.setCurrentIndex(1)  # 第二个内置任务
         dlg.accept()
         assert fake_cfg["autostart_open_gui"] is False
-        assert fake_cfg["autostart_headless_task"] == dlg._task_ids[1]
+        assert fake_cfg["autostart_headless_task"] == dlg.headlessTaskCombo.itemData(1)
 
     def test_accept_persists_gui_task(self, qapp, fake_cfg):
         dlg, parent = _build_dialog(qapp, fake_cfg)
@@ -88,7 +88,7 @@ class TestAutostartConfigDialog:
         dlg.accept()
         assert fake_cfg["autostart_open_gui"] is True
         assert fake_cfg["autostart_minimize"] is True
-        assert fake_cfg["autostart_gui_task"] == dlg._task_ids[1]
+        assert fake_cfg["autostart_gui_task"] == dlg.guiTaskCombo.itemData(2)
 
 
 class TestAutostartSettingCard:

@@ -59,6 +59,8 @@ def get_control_backend(config=None) -> ControlBackend:
 def get_ui_profile(config=None) -> UIProfile:
     config = cfg if config is None else config
     name = getattr(config, "ui_profile", None)
+    if getattr(config, "control_backend", None) == "adb" and name in (None, "pc_1080"):
+        return _UI_PROFILES["touch_720"]
     if name is None:
         name = "pc_1080"
     if isinstance(name, str) and name in _UI_PROFILES:

@@ -56,10 +56,10 @@ def test_leaving_adb_restores_legacy_switch_and_pc_profile(backend, legacy):
     assert service.current_backend(config) == backend
 
 
-def test_touch_profile_of_local_developer_setup_is_kept():
+def test_switching_local_touch_developer_setup_to_cloud_uses_pc_profile():
     """本地触屏开发环境（touch_720 + local）切到云游戏不改 UI 形态。"""
     config = FakeConfig(ui_profile="touch_720")
-    assert service.backend_changes("cloud", config) == {"cloud_game_enable": True}
+    assert service.backend_changes("cloud", config) == {"cloud_game_enable": True, "ui_profile": "pc_1080"}
 
 
 # ---------- 设备发现 ----------

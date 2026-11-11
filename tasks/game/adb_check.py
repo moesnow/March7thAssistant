@@ -67,7 +67,7 @@ def run(controller):
         started = time.monotonic()
         controller.start_game_process()
         print(tr("已在 display {display} 启动游戏，等待进入主界面").format(display=display_id), flush=True)
-        name, point = wait_for_game(controller, timeout=min(controller.cfg.start_game_timeout * 60, 180))
+        name, point = wait_for_game(controller, timeout=controller.cfg.start_game_timeout * 60)
         print(tr("游戏界面就绪，用时 {seconds:.1f} 秒").format(seconds=time.monotonic() - started), flush=True)
 
         frames, updates, elapsed = _measure_frames(controller)

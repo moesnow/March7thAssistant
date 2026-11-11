@@ -106,6 +106,7 @@ browser_mirror_urls:
 power_enable: true # 是否启用清体力总开关。false 时完整运行和“日常”中的历战余响与清体力都会跳过，但单独执行“清体力”任务不受影响。
 power_plan: []
 power_plan_keep: false # 是否在执行后保留整份体力计划。true 保留，false 按剩余次数更新并删除已完成计划。
+power_plan_continue: true # 完成整份体力计划后，使用剩余资源刷默认副本。
 instance_type: 拟造花萼（金） # 设置副本类型，可选值：拟造花萼（金）、拟造花萼（赤）、凝滞虚影、侵蚀隧洞、饰品提取。
 calyx_golden_preference: Jarilo-VI # 设置拟造花萼（金）偏好地区，可选值："雅利洛-VI"（Jarilo-VI）、仙舟「罗浮」（XianzhouLuofu）、匹诺康尼（Penacony）。
 instance_names:
@@ -132,6 +133,7 @@ build_target_use_user_instance_when_only_erosion_and_ornament: false # 当培养
 
 # 分解设置
 break_down_level_four_relicset: false # 每周所选日期清理四星及以下遗器；可在展开项启用智能弃置。默认关闭。
+relic_bag_cleanup_enable: false # 副本遇到遗器满包时，自动分解可清理的低星遗器。
 weekly_relic_smart_discard_enable: false # 每周清理时先智能弃置五星遗器，并一并分解已弃置遗器。默认关闭。
 weekly_relic_cleanup_day_of_week: 1 # 每周从周几开始清理遗器，1=周一，7=周日；在游戏刷新时间后执行。
 weekly_relic_cleanup_timestamp: 0 # 上次成功完成每周遗器清理的时间戳。
@@ -142,10 +144,6 @@ instance_team_number: "6" # 自动切换的队伍编号。
 # instance_teams 可以为特定的副本配置队伍，当没有匹配项时则使用 instance_team_number 的设置
 # 格式: [{"instance_name": "副本名称", "team_number": 队伍编号}]
 instance_teams: []
-
-# 合成设置
-merge_immersifier: False # 是否优先合成沉浸器。true 开启，false 关闭。
-merge_immersifier_limit: "12" # 沉浸器上限。
 
 # 开拓力使用设置
 use_reserved_trailblaze_power: False # 是否使用后备开拓力。true 使用，false 不使用。

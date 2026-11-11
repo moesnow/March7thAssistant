@@ -5,10 +5,11 @@ from tasks.power.power import Power
 
 
 class DoubleActivity(ActivityTemplate):
-    def __init__(self, name, enabled, instance_type, instance_names):
+    def __init__(self, name, enabled, instance_type, instance_names, *, support=None):
         super().__init__(name, enabled)
         self.instance_type = instance_type
         self.instance_names = instance_names
+        self.support = support
         
     def _get_reward_count(self):
         auto.find_element("奖励剩余次数", "text", max_retries=10, crop=(960.0 / 1920, 125.0 / 1080, 940.0 / 1920, 846.0 / 1080), include=True)
@@ -29,7 +30,7 @@ class DoubleActivity(ActivityTemplate):
             self.instance_names[self.instance_type]
         )
         
-        processed_count = Power.process(instance_type, instance_name, planned_attempts=reward_count)
+        processed_count = Power.process(instance_type, instance_name, planned_attempts=reward_count, support=self.support)
         if isinstance(processed_count, int):
             if processed_count > 0:
                 return True

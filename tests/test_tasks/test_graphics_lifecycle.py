@@ -2,7 +2,7 @@ import ast
 from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock, call
+from unittest.mock import ANY, Mock, call
 
 import pytest
 
@@ -113,7 +113,7 @@ def test_adb_start_uses_adb_bootstrap(startup, monkeypatch):
     game.start_game()
 
     adb.start_game_process.assert_called_once_with()
-    wait_for_game.assert_called_once_with(adb, 60)
+    wait_for_game.assert_called_once_with(adb, 60, recover=ANY)
     game.StarRailController.assert_not_called()
     cloud.start_game_process.assert_not_called()
     game.wait_until.assert_not_called()
@@ -156,7 +156,7 @@ def test_main_finally_restores_before_outer_error_handling(failure):
     restore, recover = Mock(), Mock()
     namespace = {"_run_action": action, "restore_temporary_graphics": restore,
                  "recover_temporary_graphics": recover, "log": Mock()}
-    namespace.update(cfg=None, get_control_backend=lambda cfg: "local")
+    namespace.update(cfg=None, get_control_backend=lambda cfg: "local", task_is_supported=lambda action, cfg: True)
     exec(compile(ast.Module(body=[node], type_ignores=[]), "main.py", "exec"), namespace)
     with pytest.raises(type(failure)):
         namespace["main"](action="daily")
@@ -170,7 +170,7 @@ def test_main_normal_return_restores():
     restore = Mock()
     namespace = {"_run_action": Mock(return_value=True), "restore_temporary_graphics": restore,
                  "recover_temporary_graphics": Mock(), "log": Mock()}
-    namespace.update(cfg=None, get_control_backend=lambda cfg: "local")
+    namespace.update(cfg=None, get_control_backend=lambda cfg: "local", task_is_supported=lambda action, cfg: True)
     exec(compile(ast.Module(body=[node], type_ignores=[]), "main.py", "exec"), namespace)
     assert namespace["main"](action="daily") is True
     restore.assert_called_once_with(final=True)

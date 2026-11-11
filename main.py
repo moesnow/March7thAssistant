@@ -11,7 +11,7 @@ from utils.console import ensure_utf8_output
 ensure_utf8_output()
 
 from utils.dpi import configure_dpi_awareness
-from utils.tasks import AVAILABLE_TASKS, CLI_ONLY_TASKS
+from utils.tasks import AVAILABLE_TASKS, CLI_ONLY_TASKS, HOST_TASKS, UNSUPPORTED_TASK, task_is_supported
 
 
 configure_dpi_awareness()
@@ -150,11 +150,11 @@ def parse_args():
 
     # 处理 --list 参数
     if args.list:
-        from module.localization import load_language, tr
-        from utils.tasks import task_display_names
+        from module.localization import load_language
+        from utils.tasks import supported_tasks, task_display_names
 
         load_language()
-        names = task_display_names() | {task_id: tr(name) for task_id, name in CLI_ONLY_TASKS.items()}
+        names = task_display_names(supported_tasks(include_cli=True))
         if args.json:
             import json
             print(json.dumps([{"id": task_id, "name": name} for task_id, name in names.items()], ensure_ascii=True))
@@ -252,11 +252,23 @@ import time
 
 # ADB 自检通过设备端服务执行，无需 Windows 管理员权限。
 adb_check_only = args.task == "adb_check" and not args.workflow_name
+requires_admin = not adb_check_only
 
 if sys.platform == 'win32':
     from utils.admin import is_user_admin
+    if requires_admin and not is_user_admin():
+        from unittest.mock import patch
+
+        with patch.dict(os.environ, {"MARCH7TH_CONFIG_READONLY": "1"}):
+            from module.config import cfg
+            from module.config.platform import get_control_backend
+
+        requested = "workflow" if args.workflow_name else args.task or "main"
+        requires_admin = task_is_supported(requested, cfg) and not (
+            requested == "screen_test" and get_control_backend(cfg) == "adb"
+        )
     # 带 --run-id 的是入口转交出来的管理员进程：即使没拿到管理员权限也不能再转交一次，否则会不断重复启动自己
-    if not adb_check_only and not is_user_admin() and not args.run_id:
+    if requires_admin and not is_user_admin() and not args.run_id:
         # 未提权（终端、脚本或 AI Agent 通过 m7a.exe 调用，或源码运行）：把任务交给管理员进程执行，
         # 同时在当前终端跟随输出，结束后返回任务的真实退出码
         from utils.cli_entry import run_task_elevated
@@ -304,7 +316,7 @@ if desktop_twin_context:
     run_session.record["windows_session_id"] = desktop_twin_context.session.session_id
     run_session.record["windows_session_logon_time"] = desktop_twin_context.session.logon_time
 
-if sys.platform == 'win32' and not adb_check_only and not is_user_admin():
+if sys.platform == 'win32' and requires_admin and not is_user_admin():
     # 入口转交的管理员进程却没有管理员权限（例如免 UAC 运行的计划任务被改成了不以最高权限运行）：
     # 不执行任务，把原因写进运行记录，入口会照常转告调用方
     _message = "没有获得管理员权限，任务未运行。如果开启了免 UAC 运行，请在图形界面「设置 → 杂项」中关闭后重新开启"
@@ -331,7 +343,7 @@ from module.workflow import WorkflowRunner, load_workflow_execution_payload, des
 from utils.screenshot_util import save_error_screenshot
 
 import tasks.game as game
-from module.game import cloud_game, require_desktop_task
+from module.game import cloud_game
 from module.game.adb_transport import AdbError
 from module.game.adb_status import publish_status
 from tasks.game import adb_check
@@ -429,9 +441,18 @@ def run_main_actions(no_run_immediately=False):
         try:
             version.start()
             game.start()
-            Daily.start()
-            reward.start()
-            telemetry.track_task_complete("main", True, time.time() - main_start_time)
+            if get_ui_profile(cfg).name == "touch_720":
+                from tasks.touch import rewards
+
+                success = rewards.routine(full_run=True)
+            else:
+                success = Daily.start()
+            telemetry.track_task_complete("main", success is not False, time.time() - main_start_time)
+            if success is False:
+                notif.flush_batch()
+                if cfg.after_finish == "Exit":
+                    game.get_game_controller().stop_game()
+                return False
             game.stop(True)
         except CloudGameZeroDurationError as e:
             telemetry.track_task_complete("main", False, time.time() - main_start_time)
@@ -440,6 +461,7 @@ def run_main_actions(no_run_immediately=False):
                 raise
         except Exception:
             telemetry.track_task_complete("main", False, time.time() - main_start_time)
+            notif.flush_batch()
             raise
 
 
@@ -471,22 +493,22 @@ def run_sub_task(action, task_override=None):
         if mode == "loop":
             _run_loop_task_with_telemetry("currencywarsloop", war.start)
         elif mode == "temp":
-            war.loop()
+            return war.loop()
         else:
-            war.start()
+            return war.start()
 
     def divergent(mode=None):
         universe = DivergentUniverse()
         if mode == "loop":
             _run_loop_task_with_telemetry("divergentloop", universe.start)
         elif mode == "temp":
-            universe.loop()
+            return universe.loop()
         else:
-            universe.start()
+            return universe.start()
 
     sub_tasks = {
         "routine": Daily.routine,
-        "daily": lambda: (Daily.run(), reward.start()),
+        "daily": Daily.run,
         "power": Power.run,
         "currencywars": lambda: currencywars(),
         "currencywarsloop": lambda: currencywars("loop"),
@@ -582,8 +604,16 @@ def run_workflow_action(workflow_name: str, workflow_step_path=None):
 
 
 def main(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
+    task_id = "workflow" if workflow_name else action or "main"
+    if not task_is_supported(task_id, cfg):
+        title = workflow_name or tr((AVAILABLE_TASKS | CLI_ONLY_TASKS).get(task_id, task_id))
+        message = f"{tr(UNSUPPORTED_TASK)}（{title}）"
+        run_session.note(status="blocked", reason="unsupported_backend", error=message)
+        log.warning(message)
+        return False
+
     # 包括正常返回、SystemExit、Ctrl+C、协作停止和异常，且先于外层错误暂停执行。
-    if get_control_backend(cfg) == "adb":
+    if get_control_backend(cfg) == "adb" and task_id not in HOST_TASKS:
         controller = game.get_game_controller("adb")
         with publish_status(controller, run_session):
             try:
@@ -601,22 +631,7 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
 def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
     touch = get_ui_profile(cfg).name == "touch_720"
     touch_tasks = {"routine", "daily", "power"}
-    if touch and (
-        workflow_name
-        or (action or "main") in AVAILABLE_TASKS.keys() - touch_tasks - {"game", "mobileui_update", "app_update", "notify"}
-    ):
-        log.warning(f"触屏模式暂不支持：{workflow_name or action or 'main'}，已跳过")
-        return
-
     backend = get_control_backend(cfg)
-    if touch and backend == "cloud" and action in (touch_tasks | {"game"}):
-        log.warning(f"触屏模式暂不支持云游戏：{action}，已跳过")
-        return
-
-    if backend == "adb" and action in {"game_update", "game_pre_download"}:
-        raise AdbError("update_unsupported", tr("请在 Android 设备上更新游戏"))
-    if backend == "adb" and not workflow_name and action in {"fight", "fight_gui", "universe", "universe_gui"}:
-        require_desktop_task(cfg, tr(AVAILABLE_TASKS[action]))
     first_run()
     # 启动暂停控制器（仅在 GUI 注入了 MARCH7TH_CONTROL_FILE 时生效，其余场景惰性关闭）
     pause_ctl.start()
@@ -635,7 +650,7 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
 
     # 完整运行
     if action is None or action == "main":
-        run_main_actions(no_run_immediately)
+        return run_main_actions(no_run_immediately)
 
     # 子任务
     elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption", "screen_test", "character_export"]:
@@ -643,8 +658,8 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
             from tasks.touch import power, rewards
 
             touch_actions = {
-                "daily": lambda: rewards.run(complete_training=True),
-                "power": power.run,
+                "daily": rewards.run_daily_training,
+                "power": power.run_standalone,
                 "routine": rewards.routine,
             }
             return run_sub_task(action, task_override=touch_actions[action])

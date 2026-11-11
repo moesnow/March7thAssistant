@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import os
+import shutil
 import time
 import subprocess
 import ctypes
@@ -116,7 +117,8 @@ class GameControllerBase:
         返回:
             操作成功执行返回True，否则返回False。
         """
-        self.stop_game()
+        if self.stop_game() is False:
+            return False
         if action not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             return True
 
@@ -143,7 +145,8 @@ class GameControllerBase:
                 SC_MONITORPOWER = 0xF170
                 ctypes.windll.user32.SendMessageW(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 2)
             elif action == 'RunScript':
-                self.run_script()
+                if not self.run_script():
+                    return False
             self.log_info(f"执行系统操作：{action}")
             return True
         except Exception as e:
@@ -170,7 +173,8 @@ class GameControllerBase:
                 file_ext = os.path.splitext(self.script_path)[1].lower()
                 if file_ext == '.ps1':
                     # PowerShell脚本
-                    subprocess.Popen(["powershell", "-ExecutionPolicy", "Bypass", "-File", self.script_path],
+                    shell = shutil.which("pwsh.exe") or "powershell.exe"
+                    subprocess.Popen([shell, "-ExecutionPolicy", "Bypass", "-File", self.script_path],
                                      creationflags=subprocess.CREATE_NEW_CONSOLE)
                     self.log_info(f"已启动PowerShell脚本：{self.script_path}")
                 elif file_ext == '.bat':

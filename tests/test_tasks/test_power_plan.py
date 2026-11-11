@@ -1,164 +1,99 @@
-import importlib.util
-import sys
-import unittest
-from pathlib import Path
-from types import ModuleType
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, call
+
+import pytest
+
+from tasks.power import power as desktop
+from tasks.power.policy import CAVERN, GOLDEN_CALYX, PowerError, SupportDemand
+from tasks.touch import power as touch
 
 
-class FakeConfig:
-    def __init__(self, power_plan, keep_plan):
-        self.values = {
-            "power_plan": power_plan,
-            "power_plan_keep": keep_plan,
-        }
-        self.writes = []
-
-    def get_value(self, key, default=None):
-        return self.values.get(key, default)
-
-    def set_value(self, key, value):
-        self.values[key] = value
-        self.writes.append((key, value))
-
-    def save_timestamp(self, key):
-        self.writes.append((key, "now"))
+MATERIALS = [GOLDEN_CALYX, "回忆之蕾", 2]
+RELICS = [CAVERN, "睿治之径", 1]
 
 
-class FakeLog:
-    def hr(self, *args, **kwargs):
-        pass
-
-    def info(self, *args, **kwargs):
-        pass
-
-    def warning(self, *args, **kwargs):
-        pass
-
-    def error(self, *args, **kwargs):
-        pass
+def config(**overrides):
+    values = dict(power_plan=[MATERIALS], power_plan_keep=False, power_plan_continue=True,
+                  instance_type=CAVERN, instance_names={CAVERN: RELICS[1]}, build_target_enable=False,
+                  get_value=Mock(side_effect=lambda key, default=None: default), set_value=Mock(),
+                  save_timestamp=Mock(), refresh_hour=4)
+    values.update(overrides)
+    return SimpleNamespace(**values)
 
 
-def _stub_module(name, **attributes):
-    module = ModuleType(name)
-    for attribute, value in attributes.items():
-        setattr(module, attribute, value)
-    return module
+@pytest.mark.parametrize("backend", [desktop, touch], ids=["pc", "touch"])
+@pytest.mark.parametrize("keep", [False, True])
+@pytest.mark.parametrize("continue_default", [False, True])
+def test_material_plan_before_default_relics(monkeypatch, backend, keep, continue_default):
+    cfg = config(power_plan_keep=keep, power_plan_continue=continue_default)
+    monkeypatch.setattr(backend, "cfg", cfg)
+    runs = []
+
+    def run_instance(kind, name, planned, **kwargs):
+        runs.append((kind, name, planned))
+        if planned is not None:
+            yield 1
+            yield 1
+
+    if backend is desktop:
+        monkeypatch.setattr(desktop.Power, "_run_instance", run_instance)
+        assert desktop.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
+    else:
+        monkeypatch.setattr(touch, "_run_instance", run_instance)
+        assert touch.run()
+
+    assert runs == [tuple(MATERIALS)] + ([(CAVERN, RELICS[1], None)] if continue_default else [])
+    assert cfg.set_value.call_args_list == ([] if keep else [
+        call("power_plan", [[GOLDEN_CALYX, MATERIALS[1], 1]]), call("power_plan", []),
+    ])
 
 
-def _load_power_module(cfg):
-    class FakeInstance:
-        @staticmethod
-        def validate_instance(instance_type, instance_name):
-            return True
-
-    class FakeBuildTarget:
-        pass
-
-    class FakeWeeklyRelicCleanup:
-        @staticmethod
-        def run():
-            return True
-
-    stub_modules = {
-        "module.screen": _stub_module("module.screen", screen=object()),
-        "module.automation": _stub_module("module.automation", auto=object()),
-        "module.logger": _stub_module("module.logger", log=FakeLog()),
-        "module.config": _stub_module("module.config", cfg=cfg),
-        "tasks.power.instance": _stub_module("tasks.power.instance", Instance=FakeInstance),
-        "tasks.daily.buildtarget": _stub_module("tasks.daily.buildtarget", BuildTarget=FakeBuildTarget),
-        "tasks.power.weekly_relic_cleanup": _stub_module(
-            "tasks.power.weekly_relic_cleanup", WeeklyRelicCleanup=FakeWeeklyRelicCleanup
-        ),
-    }
-
-    power_path = Path(__file__).parents[2] / "tasks" / "power" / "power.py"
-    spec = importlib.util.spec_from_file_location("power_plan_under_test", power_path)
-    module = importlib.util.module_from_spec(spec)
-    with patch.dict(sys.modules, stub_modules):
-        spec.loader.exec_module(module)
-    return module
+@pytest.mark.parametrize("backend", [desktop, touch], ids=["pc", "touch"])
+def test_insufficient_power_preserves_current_and_later_plan(monkeypatch, backend):
+    cfg = config(power_plan=[MATERIALS, RELICS])
+    monkeypatch.setattr(backend, "cfg", cfg)
+    runs = Mock(side_effect=lambda *args, **kwargs: iter([1]))
+    if backend is desktop:
+        monkeypatch.setattr(desktop.Power, "_run_instance", runs)
+        assert desktop.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
+    else:
+        monkeypatch.setattr(touch, "_run_instance", runs)
+        assert touch.run()
+    assert runs.call_count == 1
+    assert runs.call_args.args == tuple(MATERIALS)
+    cfg.set_value.assert_called_once_with("power_plan", [[GOLDEN_CALYX, MATERIALS[1], 1], RELICS])
 
 
-class TestPowerPlanRetention(unittest.TestCase):
-    def test_weekly_cleanup_records_completion_before_power_work(self):
-        cfg = FakeConfig([], keep_plan=False)
-        cfg.values["break_down_level_four_relicset"] = True
-        cfg.refresh_hour = 4
-        module = _load_power_module(cfg)
+@pytest.mark.parametrize("failure", ["余额识别失败", "退出副本失败"])
+def test_pc_writes_confirmed_progress_before_later_failure(monkeypatch, failure):
+    cfg = config(power_plan=[["invalid"], MATERIALS, RELICS])
+    monkeypatch.setattr(desktop, "cfg", cfg)
 
-        cfg.values["weekly_relic_cleanup_day_of_week"] = 5
-        with patch.object(module.Date, "is_weekly_day_due", return_value=True) as due, patch.object(
-            module.WeeklyRelicCleanup, "run", return_value=True
-        ) as cleanup, patch.object(module.Power, "preprocess", side_effect=RuntimeError("stop")):
-            with self.assertRaisesRegex(RuntimeError, "stop"):
-                module.Power.run()
+    def settled(*args, **kwargs):
+        yield 1
+        raise PowerError(failure)
 
-        cleanup.assert_called_once_with()
-        due.assert_called_once_with(0, 5, 4)
-        self.assertEqual(cfg.writes, [("weekly_relic_cleanup_timestamp", "now")])
-
-    def test_weekly_cleanup_failure_keeps_timestamp_and_skips_power(self):
-        cfg = FakeConfig([], keep_plan=False)
-        cfg.values["break_down_level_four_relicset"] = True
-        cfg.refresh_hour = 4
-        module = _load_power_module(cfg)
-
-        with patch.object(module.Date, "is_weekly_day_due", return_value=True), patch.object(
-            module.WeeklyRelicCleanup, "run", return_value=False
-        ), patch.object(module.Power, "preprocess") as preprocess:
-            with self.assertRaisesRegex(RuntimeError, "每周遗器清理未完成"):
-                module.Power.run()
-
-        preprocess.assert_not_called()
-        self.assertEqual(cfg.writes, [])
-
-    def test_weekly_cleanup_is_skipped_after_this_weeks_run(self):
-        cfg = FakeConfig([], keep_plan=False)
-        cfg.values["break_down_level_four_relicset"] = True
-        cfg.refresh_hour = 4
-        module = _load_power_module(cfg)
-
-        with patch.object(module.Date, "is_weekly_day_due", return_value=False), patch.object(
-            module.WeeklyRelicCleanup, "run"
-        ) as cleanup, patch.object(module.Power, "preprocess", side_effect=RuntimeError("stop")):
-            with self.assertRaisesRegex(RuntimeError, "stop"):
-                module.Power.run()
-
-        cleanup.assert_not_called()
-        self.assertEqual(cfg.writes, [])
-
-    def test_daily_power_stage_does_not_repeat_weekly_check(self):
-        cfg = FakeConfig([], keep_plan=False)
-        module = _load_power_module(cfg)
-
-        with patch.object(module.Power, "run_weekly_relic_cleanup") as weekly, patch.object(
-            module.Power, "preprocess", side_effect=RuntimeError("stop")
-        ):
-            with self.assertRaisesRegex(RuntimeError, "stop"):
-                module.Power.run(skip_weekly_cleanup=True)
-
-        weekly.assert_not_called()
-
-    def test_completed_plan_is_deleted_by_default(self):
-        plan = [["侵蚀隧洞", "睿治之径", 2]]
-        cfg = FakeConfig(plan, keep_plan=False)
-        module = _load_power_module(cfg)
-
-        with patch.object(module.Power, "process", return_value=2):
-            self.assertTrue(module.Power.execute_power_plan())
-        self.assertEqual(cfg.writes, [("power_plan", [])])
-
-    def test_completed_plan_is_unchanged_when_keep_is_enabled(self):
-        plan = [["侵蚀隧洞", "睿治之径", 2]]
-        cfg = FakeConfig(plan, keep_plan=True)
-        module = _load_power_module(cfg)
-
-        with patch.object(module.Power, "process", return_value=2):
-            self.assertTrue(module.Power.execute_power_plan())
-        self.assertEqual(cfg.writes, [])
-        self.assertEqual(cfg.get_value("power_plan"), plan)
+    monkeypatch.setattr(desktop.Power, "_run_instance", settled)
+    with pytest.raises(PowerError, match=failure):
+        desktop.Power.execute_power_plan()
+    cfg.set_value.assert_called_once_with("power_plan", [["invalid"], [GOLDEN_CALYX, MATERIALS[1], 1], RELICS])
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize("due,cleanup_succeeds", [(False, True), (True, False), (True, True)])
+def test_weekly_cleanup_records_only_confirmed_completion(monkeypatch, due, cleanup_succeeds):
+    cfg = config(get_value=Mock(side_effect=lambda key, default: {
+        "break_down_level_four_relicset": True, "weekly_relic_cleanup_day_of_week": 5,
+    }.get(key, default)))
+    monkeypatch.setattr(desktop, "cfg", cfg)
+    is_due = Mock(return_value=due)
+    clean = Mock(return_value=cleanup_succeeds)
+    monkeypatch.setattr(desktop.Date, "is_weekly_day_due", is_due)
+    monkeypatch.setattr(desktop.WeeklyRelicCleanup, "run", clean)
+    if due and not cleanup_succeeds:
+        with pytest.raises(RuntimeError, match="每周遗器清理未完成"):
+            desktop.Power.run_weekly_relic_cleanup()
+    else:
+        desktop.Power.run_weekly_relic_cleanup()
+    is_due.assert_called_once_with(0, 5, 4)
+    assert clean.call_count == due
+    assert cfg.save_timestamp.call_args_list == ([call("weekly_relic_cleanup_timestamp")] if due and cleanup_succeeds else [])

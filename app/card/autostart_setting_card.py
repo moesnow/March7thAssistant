@@ -31,7 +31,7 @@ from qfluentwidgets import (
 from module.config import cfg
 from module.localization import tr
 from utils import autostart
-from utils.tasks import AVAILABLE_TASKS
+from utils.tasks import AVAILABLE_TASKS, supported_tasks, UNSUPPORTED_TASK
 
 
 class AutostartConfigDialog(MessageBoxBase):
@@ -40,10 +40,6 @@ class AutostartConfigDialog(MessageBoxBase):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.titleLabel = SubtitleLabel(tr("开机启动设置"), self.widget)
-
-        # 显示本地化任务名，保存时保留任务ID（AVAILABLE_TASKS 存的是中文原文）
-        self._task_ids = list(AVAILABLE_TASKS.keys())
-        self._task_labels = [tr(name) for name in AVAILABLE_TASKS.values()]
 
         # 启动后是否打开图形界面
         self.openGuiCheck = CheckBox(tr("登录后打开图形界面"), self.widget)
@@ -56,17 +52,13 @@ class AutostartConfigDialog(MessageBoxBase):
         # 打开图形界面后是否启动某一个任务（可不执行）
         self.guiTaskLabel = BodyLabel(tr("打开图形界面后自动执行的任务："), self.widget)
         self.guiTaskCombo = ComboBox(self.widget)
-        self.guiTaskCombo.addItem(tr("不执行"))
-        self.guiTaskCombo.addItems(self._task_labels)
-        gui_task = cfg.get_value("autostart_gui_task") or ""
-        self.guiTaskCombo.setCurrentIndex(self._task_ids.index(gui_task) + 1 if gui_task in self._task_ids else 0)
+        self.guiTaskCombo.addItem(tr("不执行"), userData="")
+        self._loadTasks(self.guiTaskCombo, cfg.get_value("autostart_gui_task") or "")
 
         # 不打开图形界面时必须选择一项任务
         self.headlessTaskLabel = BodyLabel(tr("不打开图形界面时执行的任务："), self.widget)
         self.headlessTaskCombo = ComboBox(self.widget)
-        self.headlessTaskCombo.addItems(self._task_labels)
-        headless_task = cfg.get_value("autostart_headless_task") or "main"
-        self.headlessTaskCombo.setCurrentIndex(self._task_ids.index(headless_task) if headless_task in self._task_ids else 0)
+        self._loadTasks(self.headlessTaskCombo, cfg.get_value("autostart_headless_task") or "main")
         self.headlessHintLabel = BodyLabel(
             tr("不打开图形界面时必须选择一项任务，将以命令行窗口执行，与手动运行命令行版一致"), self.widget)
 
@@ -91,6 +83,14 @@ class AutostartConfigDialog(MessageBoxBase):
         self.openGuiCheck.stateChanged.connect(self._updateModeVisibility)
         self._updateModeVisibility()
 
+    def _loadTasks(self, combo, current):
+        for task_id, name in supported_tasks(cfg).items():
+            combo.addItem(tr(name), userData=task_id)
+        if combo.findData(current) < 0:
+            name = tr(AVAILABLE_TASKS.get(current, current))
+            combo.addItem(f"{name}（{tr(UNSUPPORTED_TASK)}）", userData=current)
+        combo.setCurrentIndex(combo.findData(current))
+
     def _updateModeVisibility(self):
         """打开图形界面时配置最小化与自动任务，否则必须选择一项任务"""
         open_gui = self.openGuiCheck.isChecked()
@@ -111,17 +111,11 @@ class AutostartConfigDialog(MessageBoxBase):
         return True
 
     def accept(self):
-        gui_task = ""
-        if self.guiTaskCombo.currentIndex() > 0:
-            gui_task = self._task_ids[self.guiTaskCombo.currentIndex() - 1]
-        headless_task = "main"
-        if self.headlessTaskCombo.currentIndex() >= 0:
-            headless_task = self._task_ids[self.headlessTaskCombo.currentIndex()]
         cfg.set_values({
             "autostart_open_gui": self.openGuiCheck.isChecked(),
             "autostart_minimize": self.minimizeCheck.isChecked(),
-            "autostart_gui_task": gui_task,
-            "autostart_headless_task": headless_task,
+            "autostart_gui_task": self.guiTaskCombo.currentData() or "",
+            "autostart_headless_task": self.headlessTaskCombo.currentData() or "main",
         })
         super().accept()
 

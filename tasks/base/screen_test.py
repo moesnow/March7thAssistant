@@ -1,4 +1,5 @@
 from collections import deque
+from module.config.platform import get_ui_profile
 from module.screen import screen
 from module.logger import log
 
@@ -9,7 +10,8 @@ SKIP_SCREENS = {"incoming_message", "achievement"}
 def run():
     """界面可切换性测试：以最短路径遍历所有可达界面"""
     switchable = screen.get_switchable_screens("main", include_start=False)
-    target_ids = [sid for sid, _ in switchable if sid not in SKIP_SCREENS]
+    touch = get_ui_profile().name == "touch_720"
+    target_ids = [sid for sid, _ in switchable if touch or sid not in SKIP_SCREENS]
 
     log.info(f"共 {len(target_ids)} 个待测界面")
 
@@ -23,19 +25,21 @@ def run():
     log.info(f"测试顺序：{' -> '.join(screen.get_name(sid) for sid in order)}")
 
     # 逐个切换并验证
-    screen.current_screen = "main"
+    screen.change_to("main")
+    log.info("已验证起点：主界面")
     success_count = 0
     fail_count = 0
 
     for i, target in enumerate(order):
+        route = screen.find_shortest_path(screen.current_screen, target) or []
+        route_names = " → ".join(screen.get_name(node) for node in route)
+        name = screen.get_name(target)
         try:
             screen.change_to(target)
-            name = screen.get_name(target)
-            log.info(f"[{i + 1}/{len(order)}] 切换到 {name} 成功！")
+            log.info(f"[{i + 1}/{len(target_ids)}] {name} 成功（{route_names}）")
             success_count += 1
         except Exception as e:
-            name = screen.get_name(target)
-            log.error(f"[{i + 1}/{len(order)}] 切换到 {name} 失败：{e}")
+            log.error(f"[{i + 1}/{len(target_ids)}] {name} 失败（{route_names}）：{e}")
             fail_count += 1
             # 尝试回到 main 继续
             try:
@@ -44,7 +48,16 @@ def run():
                 log.error("无法回到主界面，测试终止")
                 break
 
-    log.info(f"测试完成！成功 {success_count} 个，失败 {fail_count} 个，共 {len(order)} 个界面")
+    if screen.current_screen != "main":
+        try:
+            screen.change_to("main")
+            log.info("已验证返回主界面")
+        except Exception as error:
+            log.error(f"测试结束后无法返回主界面：{error}")
+            return False
+    pending = len(target_ids) - success_count - fail_count
+    log.info(f"测试完成，成功 {success_count} 页，失败 {fail_count} 页，未测 {pending} 页")
+    return fail_count == 0 and pending == 0
 
 
 def _bfs_step_count(start):

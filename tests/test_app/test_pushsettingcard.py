@@ -4,6 +4,46 @@ import pytest
 from app.card.pushsettingcard1 import get_key_from_value, PushSettingCardKey
 
 
+@pytest.mark.parametrize("stored", [{}, {"power_plan_continue": False}])
+@pytest.mark.parametrize("accepted", [True, False])
+def test_power_plan_dialog_saves_continue_option_only_on_confirmation(qtbot, monkeypatch, stored, accepted):
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QWidget
+    from qfluentwidgets import FluentIcon
+
+    from app.card import pushsettingcard1 as cards
+
+    values = {"power_plan": [], "power_plan_keep": False, **stored}
+    save = Mock()
+    monkeypatch.setattr(cards, "cfg", SimpleNamespace(get_value=values.get, set_values=save))
+    initial = values.get("power_plan_continue", True)
+
+    class PlanDialog(cards.MessageBoxPowerPlan):
+        def exec(self):
+            assert self.continueAfterPlanCheckBox.isChecked() is initial
+            self.continueAfterPlanCheckBox.setChecked(not initial)
+            save.assert_not_called()
+            button = self.yesButton if accepted else self.cancelButton
+            QTimer.singleShot(0, button.click)
+            return super().exec()
+
+    monkeypatch.setattr(cards, "MessageBoxPowerPlan", PlanDialog)
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    card = cards.PushSettingCardPowerPlan("配置", FluentIcon.CALENDAR, "体力计划", "power_plan", parent)
+    card.button.click()
+
+    if accepted:
+        save.assert_called_once_with({
+            "power_plan": [], "power_plan_keep": False, "power_plan_continue": not initial,
+        })
+    else:
+        save.assert_not_called()
+
+
 class TestGetKeyValue:
     def test_found(self):
         m = {"a": 1, "b": 2, "c": 3}

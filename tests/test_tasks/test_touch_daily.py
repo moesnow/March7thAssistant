@@ -83,7 +83,7 @@ def test_missing_milestone_marker_fails_instead_of_guessing(monkeypatch):
 
 @pytest.mark.parametrize("reward_enable, quest_enable", [(False, True), (True, False)])
 def test_disabling_rewards_preserves_reading_and_prevents_claiming(monkeypatch, reward_enable, quest_enable):
-    monkeypatch.setattr(daily, "cfg", SimpleNamespace(reward_enable=reward_enable, reward_quest_enable=quest_enable))
+    monkeypatch.setattr(daily, "cfg", SimpleNamespace(reward_enable=reward_enable, reward_quest_enable=quest_enable, daily_enable=True, daily_material_enable=False))
     monkeypatch.setattr(daily, "screen", Mock())
     monkeypatch.setattr(daily, "read_activity", Mock(return_value=100))
     cards = Mock(return_value=(100, True, 0, {}))
@@ -94,10 +94,10 @@ def test_disabling_rewards_preserves_reading_and_prevents_claiming(monkeypatch, 
     monkeypatch.setattr(daily, "click_milestone", click)
 
     summary = Mock()
-    assert daily.run(on_summary=summary)
+    assert daily.run(complete_training=True, on_summary=summary)
 
     cards.assert_called_once_with(100, False)
-    milestones.assert_called_once_with(100)
+    milestones.assert_not_called()
     click.assert_not_called()
     summary.assert_called_once_with(tr("每日实训活跃度 {activity}/{maximum}").format(activity=100, maximum=500))
 
@@ -105,7 +105,7 @@ def test_disabling_rewards_preserves_reading_and_prevents_claiming(monkeypatch, 
 def test_claiming_multiple_milestones_from_one_popup_does_not_repeat_clicks(monkeypatch):
     button = ((10, 20), (30, 40))
     monkeypatch.setattr(daily, "cfg", SimpleNamespace(
-        reward_enable=True, reward_quest_enable=True, notify_template={"DailyPracticeCompleted": "每日实训已完成"},
+        reward_enable=True, reward_quest_enable=True, save_timestamp=Mock(), notify_template={"DailyPracticeCompleted": "每日实训已完成"},
     ))
     monkeypatch.setattr(daily, "screen", Mock())
     monkeypatch.setattr(daily, "read_activity", Mock(return_value=500))
@@ -140,6 +140,36 @@ def test_daily_synthesizes_only_when_the_card_is_pending(monkeypatch):
     assert daily.run(complete_training=True)
     synthesize.assert_called_once_with()
     assert scan.call_count == 2
+
+
+def test_completed_500_point_card_with_zero_badge_skips_support_and_synthesis(monkeypatch):
+    from tasks.touch import synthesis
+
+    card = Tasks("assets/config/task_mappings.json")
+    card.parse_ocr([ocr_line("进度 1/1 完成1次「差分宇宙」或「货币战争」 +500 领取")], require_status=True)
+    assert card.claimable == {"完成1次「差分宇宙」或「货币战争」": 500}
+    states = daily.TrainingCards({**card.daily_tasks, daily.MATERIAL_TASK: True, daily.SUPPORT_TASK: True}, 500)
+    cfg = SimpleNamespace(daily_enable=True, daily_material_enable=True, reward_enable=False, reward_quest_enable=True,
+                          save_timestamp=Mock())
+    monkeypatch.setattr(daily, "cfg", cfg)
+    monkeypatch.setattr(daily, "screen", Mock())
+    monkeypatch.setattr(daily, "read_activity", Mock(return_value=0))
+    monkeypatch.setattr(daily, "scan_cards", Mock(return_value=(0, True, 0, states)))
+    action = Mock()
+    monkeypatch.setattr(synthesis, "material", action)
+    assert not daily.needs_support()
+    assert daily.run(complete_training=True)
+    action.assert_not_called()
+    cfg.save_timestamp.assert_not_called()
+
+
+def test_disabling_both_training_options_skips_the_page(monkeypatch):
+    cfg = SimpleNamespace(daily_enable=False, reward_enable=True, reward_quest_enable=False)
+    monkeypatch.setattr(daily, "cfg", cfg)
+    navigate = Mock()
+    monkeypatch.setattr(daily, "screen", navigate)
+    assert daily.run(complete_training=True)
+    navigate.change_to.assert_not_called()
 
 
 def test_synthesis_rejects_unexpected_quantity_before_consuming_materials(monkeypatch):

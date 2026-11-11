@@ -1,43 +1,56 @@
-from module.screen import screen
 from module.automation import auto
-from module.logger import log
 from module.config import cfg
-from tasks.power.instance import Instance
+from module.localization import get_raw_instance_names
+from module.logger import log
+from module.screen import screen
 from tasks.daily.buildtarget import BuildTarget
+from tasks.power.instance import Instance, TeamPresetUnavailable
+from tasks.power.policy import (
+    ECHO, ORNAMENT, INSTANCE_LIMITS, BattleDefeat, RelicBagFull, PowerError, SupportDemand,
+    DEFEAT_RETRIES, batch_limit, check_balance, parse_power, run_plan,
+)
+from tasks.power.readout import read_number
+from tasks.power.supplement import supplement
 from tasks.power.weekly_relic_cleanup import WeeklyRelicCleanup
 from utils.date import Date
 import time
 
 
+MAP_POWER = (1588 / 1920, 35 / 1080, 198 / 1920, 56 / 1080)
+
+
 class Power:
     @staticmethod
-    def run(skip_weekly_cleanup=False):
+    def run(skip_weekly_cleanup=False, *, support=None):
         if not skip_weekly_cleanup:
             Power.run_weekly_relic_cleanup()
-        Power.preprocess()
+        if support is None:
+            from tasks.daily.daily import Daily
 
-        # 优先执行体力计划
-        Power.execute_power_plan()
+            support = Daily.support_demand()
 
         log.hr("开始清体力", 0)
+        plan = cfg.power_plan
+        if plan:
+            complete = Power.execute_power_plan(support=support)
+            if not complete or not cfg.power_plan_continue:
+                return True
 
         instance_type = cfg.instance_type
-        instance_name = cfg.instance_names[instance_type]
-
-        try:
-            if cfg.build_target_enable and (target := BuildTarget.get_target_instance()):
-                instance_type, instance_name = target
-                log.info(f"使用培养目标副本: {instance_type} - {instance_name}")
-        except Exception as e:
-            log.error(f"获取培养目标副本失败: {e}")
-
-        if not Instance.validate_instance(instance_type, instance_name):
-            log.hr("完成", 2)
-            return False
-
-        Power.process(instance_type, instance_name)
-
+        instance_name = cfg.instance_names.get(instance_type)
+        if cfg.build_target_enable:
+            try:
+                if target := BuildTarget.get_target_instance():
+                    instance_type, instance_name = target
+                    log.info(f"使用培养目标副本：{instance_type} · {instance_name}")
+            except Exception as error:
+                log.warning(f"获取培养目标副本失败，使用配置的副本：{error}")
+        if instance_name == "无":
+            log.info(f"{instance_type}未开启")
+            return True
+        Power.process(instance_type, instance_name, support=support)
         log.hr("完成", 2)
+        return True
 
     @staticmethod
     def run_weekly_relic_cleanup():
@@ -52,316 +65,174 @@ class Power:
             cfg.save_timestamp("weekly_relic_cleanup_timestamp")
 
     @staticmethod
-    def execute_power_plan():
-        """执行体力计划"""
-        power_plan = cfg.get_value("power_plan", [])
-        if not power_plan:
+    def execute_power_plan(*, support=None):
+        plan = cfg.power_plan
+        if not plan:
             return False
-        keep_power_plan = cfg.get_value("power_plan_keep", False)
-
-        log.hr("开始执行体力计划", 0)
-
-        # 副本体力消耗配置
-        instances_power = {
-            "拟造花萼（金）": 10,
-            "拟造花萼（赤）": 10,
-            "凝滞虚影": 30,
-            "侵蚀隧洞": 40,
-            "历战余响": 30,
-            "饰品提取": 40
-        }
-
-        # 执行计划
-        updated_plan = []
-        has_executed = False
-
-        for i, plan in enumerate(power_plan):
-            if len(plan) != 3:
-                log.warning(f"体力计划格式错误，跳过: {plan}")
-                continue
-
-            instance_type, instance_name, count = plan
-
-            # 验证副本
-            if not Instance.validate_instance(instance_type, instance_name):
-                log.warning(f"副本验证失败: {instance_type} - {instance_name}，保留该计划")
-                updated_plan.append(plan)
-                continue
-
-            log.info(f"执行体力计划 [{i + 1}/{len(power_plan)}]: {instance_type} - {instance_name}, 计划次数： {count}")
-
-            try:
-                # 执行副本
-                executed_count = Power.process(instance_type, instance_name, planned_attempts = count)
-
-                if executed_count > 0:
-                    has_executed = True
-                    # 更新剩余次数
-                    remaining_count = count - executed_count
-                    if remaining_count > 0:
-                        updated_plan.append([instance_type, instance_name, remaining_count])
-                        log.info(f"体力计划剩余: {instance_type} - {instance_name}, 剩余次数： {remaining_count}")
-                    else:
-                        log.info(f"体力计划已完成: {instance_type} - {instance_name}")
-                else:
-                    # 体力不足或执行失败，保留该计划及后续所有计划
-                    log.info(f"无法执行: {instance_type} - {instance_name}，保留该计划")
-                    for j in range(i, len(power_plan)):
-                        remaining_plan = power_plan[j]
-                        if len(remaining_plan) == 3:
-                            updated_plan.append(remaining_plan)
-                    break
-
-            except Exception as e:
-                log.error(f"执行体力计划时出错: {e}，保留该计划")
-                updated_plan.append(plan)
-
-        # 保留模式用于重复执行固定计划；关闭时维持原有的扣次数和删除逻辑
-        if keep_power_plan:
-            log.info(f"已启用保留体力计划，共 {len(power_plan)} 项")
-        else:
-            cfg.set_value("power_plan", updated_plan)
-
-        if has_executed:
-            if keep_power_plan:
-                log.info(f"体力计划执行完成（保留模式），计划数: {len(power_plan)}")
-            else:
-                log.info(f"体力计划执行完成，剩余计划数: {len(updated_plan)}")
-        else:
-            log.info("体力不足，无法执行任何体力计划")
-            log.hr("完成", 2)
-            return False
-
-        log.hr("完成", 2)
-        return True
+        return run_plan(cfg, plan, lambda kind, name, count: Power._run_instance(kind, name, count, support=support))
 
     @staticmethod
-    def preprocess():
-        # 优先合成沉浸器
-        if cfg.merge_immersifier:
-            Power.merge("immersifier")
-
-    @staticmethod
-    def process(instance_type: str, instance_name: str, planned_attempts: int = 0, immersifier_only: bool = False):
-        instances_power = {
-            "拟造花萼（金）": 10,
-            "拟造花萼（赤）": 10,
-            "凝滞虚影": 30,
-            "侵蚀隧洞": 40,
-            "饰品提取": 40,
-            "历战余响": 30
-        }
-        attempts_per_run_max = {
-            "拟造花萼（金）": 24,
-            "拟造花萼（赤）": 24,
-            "凝滞虚影": 8,
-            "侵蚀隧洞": 6,
-            "饰品提取": 6,
-            "历战余响": 3
-        }
-        instance_power_min = instances_power[instance_type]
-        attempts_per_run = cfg.instance_names_challenge_count[instance_type]
-        if not 0 < attempts_per_run <= attempts_per_run_max[instance_type]:
-            attempts_per_run = attempts_per_run_max[instance_type]
-            log.warning(f"{instance_type} 挑战次数设置错误，已自动调整为 {attempts_per_run}")
-        
-        
-        executed_attempts = 0
-        failed_runs = 0
-        FAILED_LIMIT = 3
-        while failed_runs < FAILED_LIMIT:
-            
-            
-            
-            if "饰品提取" in instance_type:
-                
-                # 进入“生存索引”界面后，（经个人测试）默认优先处于“培养目标”/“饰品提取”标签，都可获取沉浸器数量，无需切换。如果因此产生bug则取消此段注释
-                # screen.change_to('guide3')
-                # instance_type_crop = (262.0 / 1920, 289.0 / 1080, 422.0 / 1920, 624.0 / 1080)
-
-                # auto.click_element(instance_type, "text", crop=instance_type_crop)
-                # # 等待界面完全停止
-                # time.sleep(1)
-
-                # immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
-                # text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
-                # if "/12" not in text:
-                #     log.error("沉浸器数量识别失败")
-                #     return True
-
-                immersifier_count = Power.get_immersifier_count()
-                if immersifier_only:
-                    attempts = immersifier_count
-                    log.info(f"只使用沉浸器进行 {attempts} 次挑战")
-                else:
-                    power = Power.get()
-                    attempts = power // instance_power_min
-                    attempts += immersifier_count
-                    log.info(f"开拓力: {power} + 沉浸器: {immersifier_count} = {attempts} 次挑战")
-            else:
-                power = Power.get()
-                attempts = power // instance_power_min
-                log.info(f"开拓力: {power} = {attempts} 次挑战")
-                
-            if attempts == 0:
-                log.info(f"开拓力 < {instance_power_min}")
-                break
-            
-            if planned_attempts - executed_attempts > 0:
-                attempts = min(attempts, planned_attempts - executed_attempts)
-                log.info(f"剩余计划挑战次数： {planned_attempts - executed_attempts}，实际可挑战次数调整为: {attempts}")
-            elif planned_attempts > 0:
-                    log.info(f"该计划挑战次数已完成")
-                    break
-            else:
-                log.info(f"未设置计划挑战次数，按照当前开拓力可挑战次数： {attempts}")
-
-            
-            full_runs = attempts // attempts_per_run
-            if full_runs >= 1:
-                result = Instance.run(instance_type, instance_name, attempts_per_run, full_runs)
-                if result == True:
-                    executed_attempts += full_runs * attempts_per_run
-                else:
-                    failed_runs += 1
-                    log.error(f"检测到该次副本未正常运行，重试：{failed_runs}/{FAILED_LIMIT}")
-                    continue
-
-            remain_attempts = attempts % attempts_per_run
-            if remain_attempts >= 1:
-                result = Instance.run(instance_type, instance_name, remain_attempts, 1)
-                if result == True:
-                    executed_attempts += remain_attempts
-                else:
-                    failed_runs += 1
-                    log.error(f"检测到该次副本未正常运行，重试：{failed_runs}/{FAILED_LIMIT}")
-                    continue
-            break
-        return executed_attempts
-    
-    @staticmethod
-    def get_immersifier_count():
-        screen.change_to('guide3')
-        immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
-        text = auto.get_single_line_text(crop=immersifier_crop, blacklist=['+', '米'], max_retries=3)
-        if "/12" not in text:
-            log.error("沉浸器数量识别失败")
+    def process(instance_type, instance_name, planned_attempts=0, immersifier_only=False, *, support=None):
+        """供活动、周常和默认刷取使用，返回确认完成的挑战次数。"""
+        if instance_name == "无":
             return 0
+        return sum(Power._run_instance(
+            instance_type, instance_name, planned_attempts or None, support=support, immersifier_only=immersifier_only,
+        ))
 
-        immersifier_count = int(text.split("/")[0])
-        log.info(f"沉浸器: {immersifier_count}/12")
-        return immersifier_count
-    
-    
     @staticmethod
-    def get(use_supplement=True):
-        def get_power(crop, type="trailblaze_power"):
-            try:
-                if type == "trailblaze_power":
-                    result = auto.get_single_line_text(
-                        crop=crop, blacklist=['+', '米', '*'], max_retries=3)
-                    power = int(result.replace("1300", "/300").replace("?", "").split('/')[0])
-                    return power if 0 <= power <= 999 else 0
-                elif type == "reserved_trailblaze_power":
-                    result = auto.get_single_line_text(
-                        crop=crop, blacklist=['+', '米'], max_retries=3)
-                    power = int(result[0])
-                    return power if 0 <= power <= 2400 else 0
-            except Exception as e:
-                log.error(f"识别开拓力失败: {e}")
-                return 0
+    def _run_instance(instance_type, name, planned, *, support=None, immersifier_only=False):
+        if (instance_type not in INSTANCE_LIMITS
+                or not name or name not in get_raw_instance_names().get(instance_type, {}) or name == "无"):
+            raise PowerError(f"未配置有效的副本：{instance_type} · {name}")
 
-        def move_button_and_confirm():
-            if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                result = auto.find_element("./assets/images/share/power/trailblaze_power/button.png", "image", 0.9, max_retries=10)
-                if result:
-                    auto.click_element_with_pos(result, action="down")
-                    time.sleep(0.5)
-                    result = auto.find_element("./assets/images/share/power/trailblaze_power/plus.png", "image", 0.9)
-                    if result:
-                        auto.click_element_with_pos(result, action="move")
-                        time.sleep(0.5)
-                        auto.mouse_up()
-                        if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                            time.sleep(1)
-                            auto.press_key("esc")
-                            if screen.check_screen("map"):
-                                return True
-                    else:
-                        auto.mouse_up()
+        support = support if support is not None else SupportDemand()
+        cost_per_wave, _ = INSTANCE_LIMITS[instance_type]
+        limit = batch_limit(cfg, instance_type)
+        is_echo = instance_type == ECHO
+        is_ornament = instance_type == ORNAMENT
+        rewards = Instance.read_echo_rewards() if is_echo else None
+        if rewards == 0:
+            cfg.save_timestamp("echo_of_war_timestamp")
+            if planned is None:
+                log.info("历战余响本周奖励次数已用完")
+                return
+        practice = rewards == 0
+        balance = Power.get(use_supplement=not practice and not immersifier_only)
+        if not practice and not is_ornament and balance < cost_per_wave:
+            log.info("开拓力不足，结束本副本项")
+            return
+
+        world_team = False
+        if cfg.tp_before_instance:
+            # 锚点恢复作用于主世界出战队伍，沿用 PC 已有的先切队再恢复顺序。
+            if cfg.instance_team_enable and not is_ornament:
+                Instance.select_world_team(instance_type, name)
+                world_team = True
+            Instance.heal_teams()
+
+        def enter():
+            if not Instance.prepare_instance(instance_type, name):
+                raise PowerError(f"未能进入副本 {name}")
+
+        enter()
+        remaining = planned
+        previous = 0
+        borrowed = False
+        available = Instance.read_balance(instance_type)
+        retries = 0
+        cleaned = False
+        while remaining is None or remaining > 0:
+            practice = rewards == 0
+            requested = limit if remaining is None else min(limit, remaining)
+            if not is_ornament:
+                if not practice:
+                    requested = min(requested, available // cost_per_wave)
+                    if is_echo:
+                        requested = min(requested, rewards)
+                elif planned is None:
+                    break
                 else:
-                    auto.mouse_up()
-            return False
+                    requested = 1
+            if not requested:
+                log.info("开拓力不足，结束本副本项")
+                break
 
-        trailblaze_power_crop = (1588.0 / 1920, 35.0 / 1080, 198.0 / 1920, 56.0 / 1080)
+            started = time.monotonic()
+            repeated = False
+            try:
+                if previous == requested and (not support.pending or borrowed):
+                    payment = Instance.repeat_payment(instance_type, requested, practice)
+                    if payment is not None and payment <= available and (not immersifier_only or payment == 0):
+                        Instance.start_instance_again(practice)
+                        waves, cost = requested, payment
+                        repeated = True
 
-        if use_supplement and (cfg.use_reserved_trailblaze_power or cfg.use_fuel):
-            screen.change_to('map')
-            # 打开开拓力补充界面
-            if auto.click_element("./assets/images/share/power/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=trailblaze_power_crop):
-                # 等待界面加载
-                if auto.find_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                    # 开启使用后备开拓力
-                    if cfg.use_reserved_trailblaze_power and auto.click_element("./assets/images/share/power/trailblaze_power/reserved_trailblaze_power.png", "image", 0.9, scale_range=(0.95, 0.95)):
-                        move_button_and_confirm()
-                    # 开启使用燃料
-                    elif cfg.use_fuel and auto.click_element("./assets/images/share/power/trailblaze_power/fuel.png", "image", 0.9, scale_range=(0.95, 0.95)):
-                        move_button_and_confirm()
-                    # # 开启使用星琼
-                    # elif config.stellar_jade and auto.click_element("./assets/images/share/power/trailblaze_power/stellar_jade.png", "image", 0.9, scale_range=(0.95, 0.95)):
-                    #     pass
-                    else:
-                        auto.press_key("esc")
+                if not repeated:
+                    if previous:
+                        Instance.complete_run(instance_type)
+                        enter()
+                        previous = 0
+                        available = Instance.read_balance(instance_type)
+                    waves, cost = Instance.prepare_payment(
+                        instance_type, requested, available, practice=practice, immersifier_only=immersifier_only,
+                    )
+                    if not waves:
+                        break
+                    borrowed = Instance.start_instance(
+                        instance_type, name, support, practice=practice, world_team=world_team,
+                    )
+                if not Instance.wait_fight(repeated=repeated):
+                    Instance.exit_defeat()
+                    raise BattleDefeat("副本挑战失败")
+            except TeamPresetUnavailable:
+                log.info("改用主世界切换配置的队伍")
+                screen.change_to("main", max_recursion=1)
+                Instance.select_world_team(instance_type, name)
+                world_team = True
+                enter()
+                available = Instance.read_balance(instance_type)
+                continue
+            except BattleDefeat:
+                after = Power.get(use_supplement=False)
+                check_balance(available, after, 0, time.monotonic() - started)
+                if retries >= DEFEAT_RETRIES:
+                    raise
+                retries += 1
+                log.warning(f"已确认战败且未扣费，重试 {retries}/{DEFEAT_RETRIES}")
+                enter()
+                previous = 0
+                available = Instance.read_balance(instance_type)
+                continue
+            except RelicBagFull:
+                if cleaned or not Instance.clean_full_bag():
+                    raise
+                cleaned = True
+                enter()
+                previous = 0
+                available = Instance.read_balance(instance_type)
+                continue
 
-        screen.change_to('map')
-        trailblaze_power = get_power(trailblaze_power_crop)
+            completed = Instance.completed_waves(instance_type, waves)
+            support.won(borrowed)
+            yield completed
+            after = Instance.read_balance(instance_type, result=True)
+            if completed != waves:
+                raise PowerError(f"实际结算 {completed}/{waves} 次，已保留确认的进度")
+            check_balance(available, after, cost, time.monotonic() - started)
+            log.info(f"已结算 {completed} 次，剩余开拓力 {after}/300")
+            available, previous, retries = after, waves, 0
+            if remaining is not None:
+                remaining -= completed
+            if is_echo and not practice:
+                # 奖励额度读数取自游戏，不能仅凭胜场写入周常时间。
+                Instance.complete_run(instance_type)
+                previous = 0
+                rewards = Instance.read_echo_rewards()
+                if rewards == 0:
+                    cfg.save_timestamp("echo_of_war_timestamp")
+                    if planned is None:
+                        return
+                if remaining is None or remaining > 0:
+                    enter()
+                    available = Instance.read_balance(instance_type)
 
-        log.info(f"开拓力: {trailblaze_power}/300")
-        return trailblaze_power
+        if previous:
+            Instance.complete_run(instance_type)
+        else:
+            screen.change_to("main")
 
     @staticmethod
-    def merge(type, cnt=0):
-        if type == "immersifier":
-            log.hr("准备合成沉浸器", 2)
-            screen.change_to("menu")
+    def get(use_supplement=False):
+        screen.change_to("map")
 
-            if cnt == 0:
-                limit = int(cfg.merge_immersifier_limit)
-            else:
-                limit = cnt
+        def read():
+            return read_number(auto, MAP_POWER, parse_power, "未能确认当前开拓力")
 
-            screen.change_to("guide3")
-
-            immersifier_crop = (1623.0 / 1920, 40.0 / 1080, 162.0 / 1920, 52.0 / 1080)
-            text = auto.get_single_line_text(crop=immersifier_crop, blacklist=[
-                '+', '米'], max_retries=3)
-            if "/12" not in text:
-                log.error("沉浸器数量识别失败")
-                return
-
-            immersifier_count = int(text.split("/")[0])
-            log.info(f"沉浸器: {immersifier_count}/12")
-            if immersifier_count >= limit:
-                log.info("沉浸器已达到上限")
-                return
-
-            screen.change_to("guide3")
-            power = Power.get()
-
-            count = min(power // 40, limit - immersifier_count)
-            if count <= 0:
-                log.info("体力不足")
-                return
-
-            log.hr(f"准备合成 {count} 个沉浸器", 2)
-            screen.change_to("guide3")
-
-            if auto.click_element("./assets/images/share/power/immersifier/immersifier.png", "image", 0.9, crop=immersifier_crop):
-                time.sleep(1)
-                for i in range(count - 1):
-                    auto.click_element(
-                        "./assets/images/share/power/trailblaze_power/plus.png", "image", 0.9)
-                    time.sleep(0.5)
-                if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                    time.sleep(1)
-                    auto.press_key("esc")
+        balance = read()
+        if use_supplement:
+            balance = supplement(auto, screen, cfg, balance, lambda: auto.click_element(
+                "./assets/images/share/power/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=MAP_POWER,
+            ), read, return_screen="map")
+        log.info(f"开拓力：{balance}/300")
+        return balance

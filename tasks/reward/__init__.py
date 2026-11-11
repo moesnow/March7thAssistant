@@ -1,99 +1,73 @@
+from module.automation import auto
+from module.config import cfg
 from module.logger import log
 from module.screen import screen
-from module.config import cfg
-from module.automation import auto
-from .mail import Mail
+from tasks.base.task_steps import run_steps
+from .achievement import Achievement
 from .assist import Assist
 from .dispatch import Dispatch
+from .mail import Mail
+from .menu_alert import menu_alert
+from .message import Message
 from .quest import Quest
 from .srpass import SRPass
-from .achievement import Achievement
-from .message import Message
 
 
 class RewardManager:
     def __init__(self):
-        self.assist = Assist("支援", cfg.reward_assist_enable, "visa")
-        self.mail = Mail("邮件", cfg.reward_mail_enable, "mail")
-        self.dispatch = Dispatch("委托", cfg.reward_dispatch_enable, "dispatch")
-        self.quest = Quest("每日实训", cfg.reward_quest_enable, "guide2")
-        self.srpass = SRPass("无名勋礼", cfg.reward_srpass_enable, "pass2")
-        self.achievement = Achievement("成就", cfg.reward_achievement_enable, "achievement")
-        self.message = Message("短信", cfg.reward_message_enable, "incoming_message")
-        self.crop = (1263.0 / 1920, 52.0 / 1080, 642.0 / 1920, 982.0 / 1080)
-
         self.reward_instances = {
-            "mail": self.mail,
-            "assist": self.assist,
-            "dispatch": self.dispatch,
-            "quest": self.quest,
-            "srpass": self.srpass,
-            "achievement": self.achievement,
-            "message": self.message,
-        }
-
-        self.reward_mapping = {
-            "mail": ("./assets/images/share/base/RedExclamationMark.png", 0.9, (1823.0 / 1920, 224.0 / 1080, 91.0 / 1920, 92.0 / 1080)),
-            "assist": ("./assets/images/share/menu/assist_reward.png", 2000000, self.crop),
-            "dispatch": ("./assets/images/share/menu/dispatch.png", 2000000, self.crop),
-            "quest": ("./assets/images/share/menu/quest_reward.png", 2000000, self.crop),
-            "srpass": ("./assets/images/share/menu/pass_reward.png", 2000000, self.crop),
-            "achievement": ("./assets/images/share/menu/achievement_reward.png", 2000000, self.crop),
-            # 半透明的短信图标会随手机壁纸变色，需要留出匹配误差。
-            "message": ("./assets/images/share/menu/message_reward.png", 3000000, self.crop),
+            "dispatch": Dispatch("委托", cfg.reward_dispatch_enable, "dispatch"),
+            "mail": Mail("邮件", cfg.reward_mail_enable, "mail"),
+            "assist": Assist("支援礼盒", cfg.reward_assist_enable, "visa"),
+            "srpass": SRPass("无名勋礼", cfg.reward_srpass_enable, "pass2"),
+            "message": Message("短信", cfg.reward_message_enable, "incoming_message"),
+            "achievement": Achievement("成就", cfg.reward_achievement_enable, "achievement"),
+            "quest": Quest("每日实训", cfg.reward_quest_enable, "guide2"),
         }
 
     def check_and_collect_rewards(self):
         log.hr("开始领取奖励", 0)
 
-        for reward_type, (image_path, confidence, crop) in self.reward_mapping.items():
-            if self._find_reward(image_path, confidence, crop):
-                self.reward_instances[reward_type].start()
-            else:
-                reward_name = self._get_reward_name(reward_type)
-                log.info(f"未检测到{reward_name}奖励")
+        def collect(key):
+            # 领取结果的 False 表示页内确认暂无奖励；无法确认时由任务抛出异常。
+            self.check_and_collect_specific_reward(key)
 
-        log.hr("完成", 2)
+        return run_steps(
+            (self.reward_instances[key].name, lambda key=key: collect(key))
+            for key in ("dispatch", "mail", "assist", "srpass", "message", "achievement")
+            if self.reward_instances[key].enabled
+        )
 
     def check_and_collect_specific_reward(self, reward_type):
-        reward_name = self._get_reward_name(reward_type)
-        log.hr(f"开始领取{reward_name}奖励", 0)
-        result = False
-
-        if reward_type in self.reward_mapping:
-            image_path, confidence, crop = self.reward_mapping[reward_type]
-            if self._find_reward(image_path, confidence, crop):
-                result = self.reward_instances[reward_type].start()
-            else:
-                log.info(f"未检测到{reward_name}奖励")
-        else:
-            log.error(f"未知的奖励类型： {reward_type}")
-
-        log.hr("完成", 2)
-        return result
-
-    def _get_reward_name(self, reward_type):
         instance = self.reward_instances.get(reward_type)
-        return instance.name if instance else "未知"
-
-    def _find_reward(self, image_path, confidence, crop):
-        screen.change_to('menu')
-        return auto.find_element(image_path, "image", confidence, crop=crop)
+        if not instance or not instance.enabled:
+            return False
+        if reward_type == "mail":
+            screen.change_to("menu")
+            if menu_alert(auto, (0.925, 0.185, 0.075, 0.15), "./assets/images/share/menu/mail.png") is False:
+                log.info("已确认邮件图标无红点")
+                return False
+        elif reward_type == "assist":
+            screen.change_to("menu")
+            if menu_alert(auto, (0.87, 0.055, 0.13, 0.15), "./assets/images/share/menu/more.png") is False:
+                log.info("已确认更多菜单无红点")
+                return False
+        elif reward_type == "achievement":
+            screen.change_to("menu")
+            if not auto.find_element("./assets/images/share/menu/achievement_reward.png", "image", 2000000,
+                                     crop=(1263 / 1920, 52 / 1080, 642 / 1920, 982 / 1080)):
+                return False
+        return instance.start()
 
 
 def start():
     if not cfg.reward_enable:
         log.info("领取奖励未开启")
-        return
-
-    reward_manager = RewardManager()
-    reward_manager.check_and_collect_rewards()
+        return True
+    return RewardManager().check_and_collect_rewards()
 
 
 def start_specific(reward_type):
     if not cfg.reward_enable:
-        log.info("领取奖励未开启")
         return False
-
-    reward_manager = RewardManager()
-    return reward_manager.check_and_collect_specific_reward(reward_type)
+    return RewardManager().check_and_collect_specific_reward(reward_type)

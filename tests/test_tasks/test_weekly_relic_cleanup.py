@@ -60,7 +60,7 @@ def _load_power(cleanup_module):
         "module.config": _stub("module.config", cfg=cleanup_module.cfg),
         "module.logger": _stub("module.logger", log=cleanup_module.log),
         "module.screen": _stub("module.screen", screen=cleanup_module.screen),
-        "tasks.power.instance": _stub("tasks.power.instance", Instance=MagicMock()),
+        "tasks.power.instance": _stub("tasks.power.instance", Instance=MagicMock(), TeamPresetUnavailable=RuntimeError),
         "tasks.daily.buildtarget": _stub("tasks.daily.buildtarget", BuildTarget=MagicMock()),
         "tasks.power.weekly_relic_cleanup": cleanup_module,
     }
@@ -199,8 +199,8 @@ def test_weekly_cleanup_count_shortfall_never_records_completion(selected):
     power_module = _load_power(module)
 
     with patch.object(power_module.Date, "is_weekly_day_due", return_value=True) as due, patch.object(
-        power_module.Power, "preprocess", side_effect=AssertionError("遗器清理失败后不应继续清体力")
-    ) as preprocess, patch.object(cleanup, "_click"), patch.object(
+        power_module.Power, "process", side_effect=AssertionError("遗器清理失败后不应继续清体力")
+    ) as process, patch.object(cleanup, "_click"), patch.object(
         cleanup, "_visible", return_value=True
     ), patch.object(cleanup, "_count", side_effect=[0, selected]), patch.object(
         cleanup, "_mark_smart_discard", return_value=2
@@ -211,7 +211,7 @@ def test_weekly_cleanup_count_shortfall_never_records_completion(selected):
     due.assert_called_once_with(1234567890, 1, 4)
     relicset.start_break_down_relicset.assert_not_called()
     module.cfg.save_timestamp.assert_not_called()
-    preprocess.assert_not_called()
+    process.assert_not_called()
 
 
 def test_cleanup_only_decomposes_when_selected_and_returns_to_main():

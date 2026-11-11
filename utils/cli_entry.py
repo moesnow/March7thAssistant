@@ -21,6 +21,7 @@ from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP, STATE_PAUS
 from utils.runs import (EXIT_ELEVATION_FAILED, EXIT_FAILED, EXIT_OK, LOCK_UNAVAILABLE, STATUS_RUNNING,
                         effective_status, is_valid_run_id, list_run_ids, load_run, new_run_id, read_active_run,
                         recent_runs, run_file, runs_dir)
+from utils.tasks import UNSUPPORTED_TASK
 
 # 仅由非提权入口处理、不转交给管理员进程的参数
 FRONTEND_ONLY_FLAGS = ("--detach", "--json")
@@ -41,6 +42,7 @@ STATUS_LABELS = {
 REASON_LABELS = {
     "first_run_required": "首次使用需要先打开图形界面 March7th Launcher，由用户本人阅读并确认免责声明",
     "busy": "已有任务正在运行",
+    "unsupported_backend": UNSUPPORTED_TASK,
 }
 
 _SKILL_PATH = os.path.join("assets", "agent", "skills", "march7th-assistant", "SKILL.md")
@@ -126,6 +128,7 @@ def collect_status() -> dict:
 
     os.environ["MARCH7TH_CONFIG_READONLY"] = "1"
     from module.config import cfg
+    from module.config.platform import get_control_backend, get_ui_profile
     from utils import uac_free
     from utils.admin import is_user_admin
     from utils.agent_skill import last_sync_results
@@ -164,6 +167,11 @@ def collect_status() -> dict:
         "agent_skill": os.path.abspath(_SKILL_PATH) if os.path.exists(_SKILL_PATH) else None,
         "agent_skill_copies": last_sync_results(),
     }
+    try:
+        status["control_backend"] = get_control_backend(cfg)
+        status["ui_profile"] = get_ui_profile(cfg).name
+    except ValueError as error:
+        status["game_connection_error"] = str(error)
     return status
 
 

@@ -3,7 +3,7 @@ from module.screen import screen
 from module.automation import auto
 from module.ocr import ocr
 from module.config import cfg
-from utils.color import red
+from tasks.base.task_steps import run_steps
 from .checkInactivity import CheckInActivity
 from .doubleactivity import DoubleActivity
 from .journey_highlights_notification import send_journey_highlights_notification
@@ -11,16 +11,16 @@ import time
 
 
 class ActivityManager:
-    def __init__(self):
+    def __init__(self, *, support=None):
         self.giftofodyssey = CheckInActivity("巡星之礼", cfg.activity_dailycheckin_enable)
         self.giftofradiance = CheckInActivity("巡光之礼", cfg.activity_dailycheckin_enable)
         self.festivegifts = CheckInActivity("庆典祝礼", cfg.activity_dailycheckin_enable)
         
-        self.gardenofplenty = DoubleActivity("花藏繁生", cfg.activity_gardenofplenty_enable, cfg.activity_gardenofplenty_instance_type, cfg.instance_names)
-        self.realmofthestrange = DoubleActivity("异器盈界", cfg.activity_realmofthestrange_enable, "侵蚀隧洞", cfg.instance_names)
-        self.realmofthestrange3 = DoubleActivity("异器盈界300%", cfg.activity_realmofthestrange_enable, "侵蚀隧洞", cfg.instance_names)
-        self.planarfissure = DoubleActivity("位面分裂", cfg.activity_planarfissure_enable, "饰品提取", cfg.instance_names)
-        self.planarfissure3 = DoubleActivity("位面分裂300%", cfg.activity_planarfissure_enable, "饰品提取", cfg.instance_names)
+        self.gardenofplenty = DoubleActivity("花藏繁生", cfg.activity_gardenofplenty_enable, cfg.activity_gardenofplenty_instance_type, cfg.instance_names, support=support)
+        self.realmofthestrange = DoubleActivity("异器盈界", cfg.activity_realmofthestrange_enable, "侵蚀隧洞", cfg.instance_names, support=support)
+        self.realmofthestrange3 = DoubleActivity("异器盈界300%", cfg.activity_realmofthestrange_enable, "侵蚀隧洞", cfg.instance_names, support=support)
+        self.planarfissure = DoubleActivity("位面分裂", cfg.activity_planarfissure_enable, "饰品提取", cfg.instance_names, support=support)
+        self.planarfissure3 = DoubleActivity("位面分裂300%", cfg.activity_planarfissure_enable, "饰品提取", cfg.instance_names, support=support)
 
         self.activity_functions = {
             "巡星之礼": self.giftofodyssey.start,
@@ -41,18 +41,12 @@ class ActivityManager:
         if not activity_names:
             log.info("未检测到任何活动")
             self._finish()
-            return
+            return True
 
-        for activity_name in activity_names:
-            for func_name, func in self.activity_functions.items():
-                if func_name in activity_name:
-                    if func_name == "花藏繁生" or func_name == "异器盈界" or func_name == "异器盈界300%":
-                        while not func():
-                            pass
-                    else:
-                        func()
-
+        result = run_steps((name, action) for activity_name in activity_names
+                           for name, action in self.activity_functions.items() if name in activity_name)
         self._finish()
+        return result
 
     def _get_activity_names(self):
         screen.change_to('activity')
@@ -70,7 +64,7 @@ class ActivityManager:
         log.hr("完成", 2)
 
 
-def start():
+def start(*, support=None):
     if not cfg.activity_enable:
         log.info("活动未开启")
         return
@@ -78,8 +72,4 @@ def start():
     if cfg.activity_journey_highlights_notification_enable:
         send_journey_highlights_notification()
     
-    try:
-        activity_manager = ActivityManager()
-        activity_manager.check_and_run_activities()
-    except Exception as e:
-        log.error(f"活动处理过程中发生错误: {red(e)}")
+    return ActivityManager(support=support).check_and_run_activities()

@@ -8,10 +8,10 @@ from tasks.base.list_drag import drag_list
 
 class Character:
     @staticmethod
-    def borrow(type="standard"):
+    def borrow(type="standard", *, for_training=False):
         # 检测是否可以执行借助支援角色
-        if Character.is_borrow_disabled():
-            return True
+        if Character.is_borrow_disabled(for_training):
+            return False
 
         # 点击支援按钮并进入支援列表
         if not Character.click_support_button(type):
@@ -21,14 +21,11 @@ class Character:
         return Character.find_and_select_support(type)
 
     @staticmethod
-    def is_borrow_disabled():
+    def is_borrow_disabled(for_training=False):
         """检测是否需要使用支援角色"""
         if not cfg.borrow_enable:
             return True
-        if not (("使用支援角色并获得战斗胜利1次" in cfg.daily_tasks and cfg.daily_tasks["使用支援角色并获得战斗胜利1次"])
-                or cfg.borrow_character_enable):
-            return True
-        return False
+        return not (cfg.borrow_character_enable or for_training)
 
     @staticmethod
     def click_support_button(type):
@@ -122,15 +119,13 @@ class Character:
             result = auto.find_element(("解除支援", "取消"), "text", max_retries=10, include=True)
             return Character.process_support_selection_result(result)
         elif type == "ornament":
-            Character.complete_ornament_borrow()
-            return True
+            return Character.complete_ornament_borrow()
 
     @staticmethod
     def process_support_selection_result(result):
         """处理支援选择的结果"""
         if result:
             if auto.matched_text == "解除支援":
-                Character.complete_daily_task()
                 return True
             elif auto.matched_text == "取消":
                 auto.click_element_with_pos(result)
@@ -142,17 +137,9 @@ class Character:
     @staticmethod
     def complete_ornament_borrow():
         """完成饰品提取的后续操作"""
-        Character.complete_daily_task()
         auto.press_key("esc")
         time.sleep(1)
-        auto.find_element("解除支援", "text", max_retries=10, crop=(610 / 1920, 864 / 1080, 184 / 1920, 64 / 1080))
-
-    @staticmethod
-    def complete_daily_task():
-        """标记日常任务已完成"""
-        if "使用支援角色并获得战斗胜利1次" in cfg.daily_tasks:
-            cfg.daily_tasks["使用支援角色并获得战斗胜利1次"] = False
-            cfg.save_config()
+        return bool(auto.find_element("解除支援", "text", max_retries=10, crop=(610 / 1920, 864 / 1080, 184 / 1920, 64 / 1080)))
 
     @staticmethod
     def scroll_support_list():

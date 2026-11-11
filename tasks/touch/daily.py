@@ -14,10 +14,15 @@ from module.screen import screen
 from tasks.base.base import Base
 from tasks.base.list_drag import changed_ratio, drag_list, drag_to_edge
 from tasks.daily.tasks import Tasks
+from tasks.daily.training import (
+    TARGET_ACTIVITY, MATERIAL_TASK, SUPPORT_TASK, DailyTrainingError, TrainingCards,
+    can_collect, can_complete, needs_action, record_progress,
+)
+from tasks.power.policy import SupportDemand
 
 
 IMAGE_ROOT = "./assets/touch_720/images/daily"
-MAX_ACTIVITY = 500
+MAX_ACTIVITY = TARGET_ACTIVITY
 ACTIVITY_STEP = 100
 ACTIVITY_CROP = (213 / 1920, 311 / 1080, 90 / 1920, 50 / 1080)
 CARDS_CROP = (179 / 1920, 386 / 1080, 1573 / 1920, 549 / 1080)
@@ -30,12 +35,6 @@ REWARD_REPORT_CROP = (173 / 1920, 220 / 1080, 1580 / 1920, 717 / 1080)
 DRAG_LEFT = (405 / 1920, 590 / 1080)
 DRAG_RIGHT = (1410 / 1920, 590 / 1080)
 MAX_DRAGS = 6
-MATERIAL_TASK = "使用1次「万能合成机」"
-SUPPORT_TASK = "使用支援角色并获得战斗胜利1次"
-
-
-class DailyTrainingError(RuntimeError):
-    """每日实训页上的预期识别或交互失败。"""
 
 
 def parse_activity(lines):
@@ -115,7 +114,7 @@ def scan_cards(activity, collect):
         raise DailyTrainingError("未识别到每日实训任务卡片的名称和进度")
     for name, pending in tasks.daily_tasks.items():
         log.info(f"{name}：{'待完成' if pending else '已完成'}")
-    return activity, available, claimed, tasks.daily_tasks
+    return activity, available, claimed, TrainingCards(tasks.daily_tasks, sum(tasks.claimable.values()))
 
 
 def read_milestones(activity):
@@ -159,38 +158,47 @@ def needs_support():
     with screenshot_retry_timeout(5):
         screen.change_to("guide2", max_recursion=1)
         try:
-            _, _, _, tasks = scan_cards(read_activity(), collect=False)
+            activity, _, _, tasks = scan_cards(read_activity(), collect=False)
         except DailyTrainingError as error:
             log.warning(f"未能查询支援实训：{error}")
             return False
-    return tasks.get(SUPPORT_TASK, False)
+    return needs_action(activity, tasks) and tasks.get(SUPPORT_TASK, False)
 
 
-def run(*, complete_training=False, on_summary=None):
+def support_demand(*, full_run=False):
+    pending = (can_complete(cfg, full_run=full_run) and cfg.borrow_enable and not cfg.borrow_character_enable
+               and needs_support())
+    return SupportDemand(pending)
+
+
+def run(*, complete_training=False, on_summary=None, full_run=False):
+    collect = can_collect(cfg)
+    complete = complete_training and can_complete(cfg, full_run=full_run)
+    if not (collect or complete):
+        log.info("本轮无需补做或领取，跳过每日实训")
+        return True
     log.hr("开始触屏每日实训", 1)
-    collect = cfg.reward_enable and cfg.reward_quest_enable
     with screenshot_retry_timeout(5):
         screen.change_to("guide2", max_recursion=1)
         try:
             activity = read_activity()
             log.info(f"当前活跃度 {activity}/{MAX_ACTIVITY}")
             activity, card_available, cards_claimed, tasks = scan_cards(activity, collect)
-            if (complete_training and collect and cfg.daily_enable and cfg.daily_material_enable
-                    and tasks.get(MATERIAL_TASK)):
+            if complete and cfg.daily_material_enable and needs_action(activity, tasks) and tasks.get(MATERIAL_TASK):
                 from tasks.touch import synthesis
 
                 synthesized = synthesis.material()
                 screen.change_to("guide2", max_recursion=1)
                 if synthesized:
-                    before = activity
-                    activity, card_available, extra_claims, _ = scan_cards(read_activity(), collect)
+                    activity, card_available, extra_claims, tasks = scan_cards(read_activity(), collect)
                     cards_claimed += extra_claims
-                    if activity <= before:
-                        raise DailyTrainingError("材料已合成，实训活跃度未确认增加")
-            pending = read_milestones(activity)
-            log_milestones(activity, pending)
+                    if tasks.get(MATERIAL_TASK):
+                        raise DailyTrainingError("材料已合成，实训卡片未确认完成")
+            record_progress(cfg, activity)
 
             if collect:
+                pending = read_milestones(activity)
+                log_milestones(activity, pending)
                 available_milestones = tuple(pending)
                 for points in available_milestones:
                     if points not in pending:
@@ -205,17 +213,15 @@ def run(*, complete_training=False, on_summary=None):
                     log_milestones(activity, pending)
                 if cards_claimed or available_milestones:
                     completed = activity == MAX_ACTIVITY
-                    message = "DailyPracticeCompleted" if completed else "DailyPracticeNotCompleted"
-                    level = NotificationLevel.ALL if completed else NotificationLevel.ERROR
                     frame, _, _ = auto.take_screenshot(crop=REWARD_REPORT_CROP)
-                    Base.send_notification_with_screenshot(cfg.notify_template[message], level, screenshot=frame)
+                    message = cfg.notify_template["DailyPracticeCompleted"] if completed else f"已领取实训奖励，活跃度 {activity}/{MAX_ACTIVITY}"
+                    Base.send_notification_with_screenshot(message, NotificationLevel.ALL, screenshot=frame)
             else:
                 log.info(f"任务卡片：{'有可领取活跃度' if card_available else '无可领取活跃度'}，每日实训领奖未开启")
         except DailyTrainingError as error:
             log.error(f"每日实训页：{error}")
             return False
 
-    log.info(f"每日实训活跃度 {activity}/{MAX_ACTIVITY}")
     if on_summary is not None:
         on_summary(tr("每日实训活跃度 {activity}/{maximum}").format(activity=activity, maximum=MAX_ACTIVITY))
     return True

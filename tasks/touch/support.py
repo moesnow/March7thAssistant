@@ -116,14 +116,14 @@ def borrow(*, ornament=False):
                 targets.append((names[key], owner, template))
     if not targets:
         log.info("未配置可用的支援角色，跳过借用")
-        return
+        return False
     button, portraits = (ORNAMENT_BUTTON, ORNAMENT_PORTRAITS) if ornament else (BUTTON, PORTRAITS)
     if auto.find_element("解除支援", "text", crop=button):
         log.info("本次编队已有支援角色")
-        return
+        return True
     if not _click_text("支援", button, retries=3):
         log.info("当前编队没有支援入口，跳过借用")
-        return
+        return False
     label, header = ("支援列表", ORNAMENT_HEADER) if ornament else ("支援角色", HEADER)
     if not auto.find_element(label, "text", crop=header, max_retries=8, retry_delay=0.25):
         raise PowerError("未进入触屏支援列表")
@@ -136,9 +136,10 @@ def borrow(*, ornament=False):
         if not auto.find_element("解除支援", "text", crop=button, max_retries=8, retry_delay=0.25):
             raise PowerError("返回编队后未确认借到支援角色")
         log.info(f"已借到支援角色：{target[0]}")
-        return
+        return True
 
     _tap(1848, 55)
     if not auto.find_element("开始挑战", "text", crop=START_CHALLENGE, max_retries=6, retry_delay=0.25):
         raise PowerError("关闭支援列表后未回到编队")
     log.info("当前支援列表未找到已配置的角色，跳过借用")
+    return False

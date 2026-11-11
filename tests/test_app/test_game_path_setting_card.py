@@ -132,10 +132,10 @@ def test_settings_page_integrates_path_card(qtbot, config, monkeypatch):
     qtbot.addWidget(interface)
     interface.resize(1050, 800)
     interface.show()
-    interface.stackedWidget.setCurrentWidget(interface.ProgramGroup)
+    interface.stackedWidget.setCurrentWidget(interface.GameConnectionGroup)
     qtbot.wait(100)
     card = interface.gamePathCard
-    assert card.parentWidget() is interface.ProgramGroup
+    assert card.parentWidget() is interface.GameConnectionGroup
     assert card.launchMethodCard.parentWidget() is card.view
     initial = interface.stackedWidget.height()
     card.setExpand(True)
@@ -143,7 +143,7 @@ def test_settings_page_integrates_path_card(qtbot, config, monkeypatch):
     card.comboBox.setCurrentIndex(1)
     qtbot.wait(100)
     assert interface.stackedWidget.height() > initial
-    assert interface.stackedWidget.height() >= interface.ProgramGroup.sizeHint().height()
+    assert interface.stackedWidget.height() >= interface.GameConnectionGroup.sizeHint().height()
     card.setExpand(False)
     qtbot.wait(250)
     assert card.height() == card.card.height()

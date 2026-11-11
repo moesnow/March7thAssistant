@@ -13,19 +13,23 @@ from module.notification.notification import NotificationLevel
 from module.screen import screen
 from tasks.base.base import Base
 from tasks.base.list_drag import changed_ratio, drag_list
+from tasks.base.task_steps import run_steps
+from tasks.reward.menu_alert import menu_alert
+from tasks.reward.receipt import RewardError
 from tasks.touch import daily
+from utils.date import Date
 from utils.image_utils import ImageUtils
 
 
 IMAGE_ROOT = "./assets/touch_720/images/reward"
-MAIL_ALERT_CROP = (1842 / 1920, 300 / 1080, 75 / 1920, 65 / 1080)
-ASSIST_ALERT_CROP = (1710 / 1920, 75 / 1080, 68 / 1920, 65 / 1080)
+MAIL_ALERT_CROP = (0.924, 0.235, 0.076, 0.142)
+ASSIST_ALERT_CROP = (0.835, 0.06, 0.105, 0.10)
 MAIL_RECEIVE_CROP = (407 / 1920, 952 / 1080, 277 / 1920, 63 / 1080)
 SRPASS_MENU = (1117 / 1920, 385 / 1080, 650 / 1920, 645 / 1080)
 SRPASS_OPEN = (1357 / 1920, 793 / 1080, 321 / 1920, 99 / 1080)
 SRPASS_RECEIVE = (866 / 1920, 957 / 1080, 947 / 1920, 113 / 1080)
 SRPASS_CLOSE = (510 / 1920, 818 / 1080, 900 / 1920, 244 / 1080)
-SRPASS_TASK_GROUP = (223 / 1920, 375 / 1080, 233 / 1920, 415 / 1080)
+SRPASS_PAID_UNLOCK = (0.74, 0.88, 0.25, 0.10)
 DISPATCH_RECEIVE_CROP = (1270 / 1920, 905 / 1080, 493 / 1920, 90 / 1080)
 DISPATCH_STATUS_CROP = (1228 / 1920, 482 / 1080, 571 / 1920, 132 / 1080)
 DISPATCH_RUNNING = ("委托正在进行中", "委托派遣中", "每小时可持续获得奖励")
@@ -38,24 +42,21 @@ MESSAGE_REPLIES = (708 / 1920, 744 / 1080, 76 / 1920, 272 / 1080)
 MESSAGE_STICKERS = (872 / 1920, 749 / 1080, 796 / 1920, 62 / 1080)
 
 
-class RewardError(RuntimeError):
-    """奖励页面未达到预期状态。"""
-
-
-def _has_alert(crop):
-    return bool(auto.find_element(f"{IMAGE_ROOT}/alert.png", "image", 0.83, crop=crop))
+class MessageTimeout(RewardError):
+    """单个短信会话超时。"""
 
 
 def _close_item_reward(return_screen, *, notify=None):
     if not auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP,
                              max_retries=15, retry_delay=0.25):
-        raise RewardError("点击领取后未确认获得物品")
+        raise RewardError("领取结果未确认（未出现获得物品）")
     if notify:
         frame, _, _ = auto.take_screenshot(crop=daily.REWARD_REPORT_CROP)
         Base.send_notification_with_screenshot(notify, NotificationLevel.ALL, screenshot=frame)
     if not auto.click_element((960 / 1920, 854 / 1080, 0, 0), "crop"):
-        raise RewardError("无法关闭获得物品弹窗")
-    screen.wait_for_screen_change(return_screen, max_recursion=0)
+        log.warning("已确认到账，获得物品弹窗仍未关闭")
+        return False
+    return True
 
 
 def claim_dispatch():
@@ -68,23 +69,23 @@ def claim_dispatch():
         raise RewardError("未确认委托可领或派遣中的状态")
 
     _close_item_reward("dispatch")
-    if not auto.find_element(DISPATCH_RUNNING, "text", include=True,
-                             crop=DISPATCH_STATUS_CROP, max_retries=6, retry_delay=0.3):
-        raise RewardError("领取委托奖励后，未确认委托继续派遣")
-    log.info("已领取委托奖励，现有委托继续派遣")
+    log.info("已领取委托奖励")
 
 
 def claim_mail():
     screen.change_to("menu", max_recursion=1)
-    if not _has_alert(MAIL_ALERT_CROP):
-        log.info("邮箱没有奖励标记，跳过邮件")
+    if menu_alert(auto, MAIL_ALERT_CROP, "./assets/images/share/menu/mail.png", scales=(0.62, 0.9)) is False:
+        log.info("已确认邮件图标无红点")
         return
 
     screen.change_to("mail", max_recursion=1)
     button = auto.find_element("全部领取", "text", crop=MAIL_RECEIVE_CROP,
                                max_retries=5, retry_delay=0.3)
     if not button:
-        raise RewardError("邮箱有未读标记，但未找到全部领取按钮")
+        if auto.find_element(("暂无邮件", "没有邮件"), "text", include=True):
+            log.info("邮箱暂无可领取附件")
+            return
+        raise RewardError("未确认邮箱附件状态")
     # 未读邮件也会显示红点。只有金色的「全部领取」按钮可领取附件。
     red, green, blue = np.moveaxis(np.asarray(auto.screenshot.convert("RGB")), -1, 0)
     if ((red > 180) & (green > 125) & (blue < 155)).mean() < 0.25:
@@ -139,13 +140,12 @@ def claim_srpass():
             return
     _open_srpass()
     screen.change_to("pass2", max_recursion=1)
-    for group in ("本周任务", "本期任务"):
-        if not auto.click_element(group, "text", crop=SRPASS_TASK_GROUP, max_retries=4, retry_delay=0.3):
-            raise RewardError(f"未找到无名勋礼的{group}")
-        time.sleep(0.65)
-        _claim_srpass_tab("pass2", f"{group}经验")
+    _claim_srpass_tab("pass2", "本周及本期任务经验")
     screen.change_to("pass1", max_recursion=1)
-    _claim_srpass_tab("pass1", "等级奖励")
+    if auto.find_element("解锁无名客的荣勋", "text", crop=SRPASS_PAID_UNLOCK, max_retries=4, retry_delay=0.3):
+        _claim_srpass_tab("pass1", "等级奖励")
+    else:
+        log.info("未确认无名勋礼付费档仍锁定，跳过等级奖励")
 
 
 def _find_support_gift():
@@ -176,8 +176,8 @@ def find_support_gift(pixels, glyph):
 
 def claim_assist():
     screen.change_to("menu", max_recursion=1)
-    if not _has_alert(ASSIST_ALERT_CROP):
-        log.info("漫游签证没有奖励标记，跳过支援奖励")
+    if menu_alert(auto, ASSIST_ALERT_CROP, "./assets/touch_720/images/screen/menu.png") is False:
+        log.info("已确认更多菜单无红点")
         return
 
     screen.change_to("visa", max_recursion=1)
@@ -188,8 +188,11 @@ def claim_assist():
     if not auto.find_element("支援角色", "text", crop=SUPPORT_HEADER):
         raise RewardError("未确认漫游签证的支援角色栏")
     gift = _find_support_gift()
-    if not gift or not auto.click_element_with_pos(gift):
-        raise RewardError("漫游签证有奖励标记，但未能定位支援礼盒")
+    if not gift:
+        log.info("暂无支援礼盒")
+        return
+    if not auto.click_element_with_pos(gift):
+        raise RewardError("支援礼盒无法点击")
     _close_item_reward("visa")
     log.info("已领取支援奖励")
 
@@ -206,7 +209,7 @@ def _finish_message():
         if auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP):
             _close_item_reward("incoming_message")
             log.info("已领取短信奖励")
-            return
+            return True
         if _message_pending():
             finished_frames = 0
             replies = auto.find_element(f"{IMAGE_ROOT}/message_reply.png", "image_with_multiple_targets",
@@ -227,23 +230,32 @@ def _finish_message():
             finished_frames += 1
             if finished_frames == 3:
                 log.info("短信会话已结束，未出现奖励弹窗")
-                return
+                return False
         time.sleep(0.75)
-    raise RewardError("短信会话未在限时内结束")
+    raise MessageTimeout("短信会话未在限时内结束")
 
 
-def _open_unread_message():
+def _open_unread_message(avoid=()):
     thread_icon = f"{IMAGE_ROOT}/message_thread.png"
-    thread = auto.find_element(thread_icon, "image", 0.89, crop=MESSAGE_PENDING)
+
+    def find_thread():
+        if not avoid:
+            return auto.find_element(thread_icon, "image", 0.89, crop=MESSAGE_PENDING, max_retries=3, retry_delay=0.25)
+        candidates = auto.find_element(thread_icon, "image_with_multiple_targets", 0.89, crop=MESSAGE_PENDING) or []
+        return next((box for box in candidates if all(abs(box[0][1] - row) > 22 for row in avoid)), None)
+
+    thread = find_thread()
     if not thread:
         contact = auto.find_element(f"{IMAGE_ROOT}/message_alert.png", "image", 0.89, crop=MESSAGE_CONTACT_ALERT)
         if not contact:
             return False
         if not auto.click_element_with_pos(contact, offset=(18, 14)):
             raise RewardError("无法展开有未读短信的联系人")
-        thread = auto.find_element(thread_icon, "image", 0.89, crop=MESSAGE_PENDING,
-                                   max_retries=5, retry_delay=0.25)
+        time.sleep(0.4)
+        thread = find_thread()
         if not thread:
+            if avoid:
+                return False
             raise RewardError("联系人有红点，但未找到待处理会话")
     if not auto.click_element_with_pos(thread, offset=(24, 0)):
         raise RewardError("未读会话无法点击")
@@ -257,40 +269,50 @@ def claim_messages():
     # 打开过但未读完的短信，手机菜单的红点可能已消失。以短信页的标记为准。
     screen.change_to("incoming_message", max_recursion=1)
     completed = 0
+    received = 0
+    timed_out = 0
+    blocked_rows = set()
     drags = 0
-    for _ in range(30):
-        if _message_pending() or _open_unread_message():
-            _finish_message()
-            completed += 1
-            drags = 0
-            continue
-        if drags >= 4:
-            break
-        before, _, _ = auto.take_screenshot(crop=MESSAGE_LIST)
-        if not drag_list(auto, (478 / 1920, 834 / 1080), (478 / 1920, 328 / 1080),
-                         crop=MESSAGE_LIST, end_pause=0.2, settle=0.4):
-            raise RewardError("短信列表拖动后未稳定")
-        if changed_ratio(before, auto.screenshot) <= 0.01:
-            break
-        drags += 1
+    try:
+        for _ in range(30):
+            if (not timed_out and _message_pending()) or _open_unread_message(blocked_rows):
+                try:
+                    received += bool(_finish_message())
+                    completed += 1
+                except MessageTimeout as error:
+                    timed_out += 1
+                    if pending := _message_pending():
+                        blocked_rows.add(pending[0][1])
+                    log.warning(f"{error}，尝试返回列表继续其他会话")
+                    screen.change_to("menu", max_recursion=0)
+                    screen.change_to("incoming_message", max_recursion=0)
+                drags = 0
+                continue
+            if drags >= 4:
+                break
+            before, _, _ = auto.take_screenshot(crop=MESSAGE_LIST)
+            if not drag_list(auto, (478 / 1920, 834 / 1080), (478 / 1920, 328 / 1080),
+                             crop=MESSAGE_LIST, end_pause=0.2, settle=0.4):
+                raise RewardError("短信列表拖动后未稳定")
+            if changed_ratio(before, auto.screenshot) <= 0.01:
+                break
+            drags += 1
+    finally:
+        if received:
+            Base.send_notification_with_screenshot(f"处理了 {completed} 个短信会话，领取 {received} 次奖励", NotificationLevel.ALL)
     log.info(f"本次已处理 {completed} 个短信会话" if completed else "本次未发现待处理短信")
+    if timed_out:
+        raise RewardError(f"有 {timed_out} 个短信会话超时")
 
 
 def _claim():
-    try:
-        for enabled, collect in (
-            (cfg.reward_dispatch_enable, claim_dispatch),
-            (cfg.reward_mail_enable, claim_mail),
-            (cfg.reward_assist_enable, claim_assist),
-            (cfg.reward_srpass_enable, claim_srpass),
-            (cfg.reward_message_enable, claim_messages),
-        ):
-            if enabled:
-                collect()
-    except RewardError as error:
-        log.error(f"触屏领奖：{error}")
-        return False
-    return True
+    return run_steps((name, action) for enabled, name, action in (
+        (cfg.reward_dispatch_enable, "委托", claim_dispatch),
+        (cfg.reward_mail_enable, "邮件", claim_mail),
+        (cfg.reward_assist_enable, "支援礼盒", claim_assist),
+        (cfg.reward_srpass_enable, "无名勋礼", claim_srpass),
+        (cfg.reward_message_enable, "短信", claim_messages),
+    ) if enabled)
 
 
 def claim():
@@ -311,22 +333,33 @@ def run(*, complete_training=False, on_summary=None):
         return daily.run(complete_training=complete_training, on_summary=report_daily if on_summary is not None else None)
 
 
-def routine(*, on_summary=None):
+def run_daily_training():
+    return daily.run(complete_training=True)
+
+
+def routine(*, on_summary=None, full_run=False):
     from tasks.touch import power
+    from tasks.power.policy import SupportDemand
 
     summaries = []
     collect_summary = summaries.append if on_summary is not None else None
+    steps = []
+    demand = SupportDemand()
+
+    def query_support():
+        demand.pending = daily.support_demand(full_run=full_run).pending
+
     if cfg.power_enable:
-        if cfg.echo_of_war_enable and not power.run_weekly_echo():
-            return False
-        support_pending = (cfg.daily_enable and cfg.borrow_enable and not cfg.borrow_character_enable
-                           and daily.needs_support())
-        if not power.run(borrow_for_daily=support_pending, on_summary=collect_summary):
-            return False
-    if not run(complete_training=True, on_summary=collect_summary):
-        return False
+        steps.append(("查询支援实训", query_support))
+        if cfg.echo_of_war_enable and (not full_run or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour)):
+            steps.append(("历战余响", lambda: power.run_weekly_echo(borrow_for_daily=demand)))
+        steps.append(("清体力", lambda: power.run(borrow_for_daily=demand, on_summary=collect_summary)))
+    if cfg.reward_enable:
+        steps.append(("日常领奖", claim))
+    steps.append(("每日实训", lambda: daily.run(complete_training=True, full_run=full_run, on_summary=collect_summary)))
     with screenshot_retry_timeout(5):
+        result = run_steps(steps)
         screen.change_to("main", max_recursion=1)
     if summaries:
         on_summary(tr("；").join(summaries))
-    return True
+    return result

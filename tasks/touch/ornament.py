@@ -7,6 +7,7 @@ from module.logger import log
 from module.screen import screen
 from tasks.base.list_drag import drag_list
 from tasks.power.instance import Instance
+from tasks.power.policy import parse_ornament_payment as parse_payment
 from tasks.touch import power, support
 from utils.wait import wait_until
 
@@ -15,26 +16,14 @@ INDEX_POWER = (1350 / 1920, 32 / 1080, 144 / 1920, 45 / 1080)
 DETAIL_POWER = (1377 / 1920, 32 / 1080, 149 / 1920, 45 / 1080)
 WAVES = (1504 / 1920, 822 / 1080, 174 / 1920, 49 / 1080)
 PAYMENT = (1374 / 1920, 958 / 1080, 144 / 1920, 57 / 1080)
-QUICK_REFILL = (1779 / 1920, 762 / 1080, 97 / 1920, 60 / 1080)
+REPEAT_PAYMENT = (1040 / 1920, 907 / 1080, 240 / 1920, 84 / 1080)
 PRESETS = (448 / 1920, 61 / 1080, 166 / 1920, 49 / 1080)
 TEAM_NAMES = (47 / 1920, 140 / 1080, 169 / 1920, 862 / 1080)
 ARENA_TITLE = (60 / 1920, 7 / 1080, 131 / 1920, 51 / 1080)
 BOSS_NAME = (756 / 1920, 45 / 1080, 462 / 1920, 61 / 1080)
 
 
-def parse_payment(text, waves):
-    """游戏先列沉浸器，再列开拓力。校验两项总价等于所选波次。"""
-    amounts = power._normalize(text).lower().replace("×", "").replace("x", "").replace("米", "")
-    for immersifiers in range(waves + 1):
-        trailblaze_power = (waves - immersifiers) * 40
-        if amounts == f"{immersifiers or ''}{trailblaze_power or ''}":
-            return trailblaze_power, immersifiers
-    return None
-
-
 def _prepare_payment(waves, available):
-    if not auto.find_element(f"{power.IMAGES}/ornament_refill_off.png", "image", 0.9, crop=QUICK_REFILL):
-        raise power.PowerError("请关闭饰品提取的「快捷补充开拓力」")
     while waves > 0:
         power._set_challenge_waves(waves, 6, crop=WAVES, minus=1359, y=875)
         # 以开始挑战按钮的实际消耗为准。顶部沉浸器库存不参与调度或结算。
@@ -53,7 +42,14 @@ def _start_challenge():
                          max_retries=4, retry_delay=0.3):
         if not power._click_text("确认", power.DIALOG_CONFIRM):
             raise power.PowerError("无法确认饰品提取的空位提示")
+    if auto.find_element("当前不存在任何存档", "text", include=True, crop=power.DIALOG,
+                         max_retries=3, retry_delay=0.35):
+        if not power._click_text("确认", power.DIALOG_CONFIRM):
+            raise power.PowerError("无法确认无存档直接挑战")
+    if auto.find_element(("请配置出战队伍", "未上阵角色"), "text", include=True):
+        return False
     _engage_boss()
+    return True
 
 
 def _arena_visible():
@@ -79,8 +75,10 @@ def _engage_boss():
     raise power.PowerError("接近并攻击首领后仍未进入战斗")
 
 
-def _select_team(name):
-    team = str(Instance.get_target_team(power.ORNAMENT, name))
+def _select_team(name, team=None):
+    if team is None:
+        team = Instance.get_target_team(power.ORNAMENT, name)
+    team = str(team)
     if not team.isascii() or not team.isdecimal() or not 1 <= int(team) <= 19:
         raise power.PowerError(f"队伍编号 {team} 格式错误")
     label = f"队伍{int(team)}"
@@ -102,47 +100,103 @@ def _select_team(name):
 
 
 def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
-    instance_screen, _, _ = power.INSTANCES[power.ORNAMENT]
+    instance_screen = power.INSTANCES[power.ORNAMENT][0]
+    demand = (borrow_for_daily if isinstance(borrow_for_daily, power.SupportDemand)
+              else power.SupportDemand(borrow_for_daily))
+
+    def enter():
+        power._select_category(power.ORNAMENT)
+        power._enter_instance(power.ORNAMENT, name)
+        return power.read_power(DETAIL_POWER)
+
     power._select_category(power.ORNAMENT)
     power._supplement(power.read_power(INDEX_POWER), plus=(1510, 55), power_crop=INDEX_POWER)
     power._enter_instance(power.ORNAMENT, name)
+    available = power.read_power(DETAIL_POWER)
     remaining = planned
+    previous = 0
+    borrowed = False
+    retries = 0
+    cleaned = False
     while remaining is None or remaining > 0:
-        available = power.read_power(DETAIL_POWER)
         requested = batch_limit if remaining is None else min(batch_limit, remaining)
-        waves, cost, immersifiers = _prepare_payment(requested, available)
-        if not waves:
-            log.info("饰品提取资源不足，已返回主界面")
-            if on_settlement is not None:
-                on_settlement(0, available)
-            break
-        if cfg.instance_team_enable:
-            _select_team(name)
-        if cfg.borrow_enable and (cfg.borrow_character_enable or borrow_for_daily):
-            support.borrow(ornament=True)
-        log.info(f"饰品提取 · {name}，挑战 {waves} 次，使用沉浸器 {immersifiers} 个和开拓力 {cost} 点")
-        _start_challenge()
-        power._wait_battle(instance_screen=instance_screen)
-        # 单场结算只显示胜利和奖励，没有「上轮挑战波次」。
+        started = time.monotonic()
+        repeated = False
+        try:
+            if previous == requested and (not demand.pending or borrowed):
+                try:
+                    cost, immersifiers = power._read_number(
+                        REPEAT_PAYMENT, lambda text: parse_payment(text, requested), "未能确认再来一次费用",
+                    )
+                except power.PowerError:
+                    pass
+                else:
+                    if cost <= available:
+                        if not power._click_text("再来一次", power.REPEAT):
+                            power._check_popup()
+                            raise power.PowerError("无法点击饰品提取再来一次")
+                        waves = requested
+                        repeated = True
+
+            if not repeated:
+                if previous:
+                    power._exit_result(instance_screen)
+                    previous = 0
+                    if screen.current_screen == instance_screen:
+                        available = power.read_power(DETAIL_POWER)
+                    else:
+                        available = enter()
+                waves, cost, immersifiers = _prepare_payment(requested, available)
+                if not waves:
+                    log.info("饰品提取资源不足，结束本副本项")
+                    if on_settlement is not None:
+                        on_settlement(0, available)
+                    break
+                if cfg.instance_team_enable:
+                    _select_team(name)
+                borrowed = demand.should_borrow(cfg) and support.borrow(ornament=True)
+                if _start_challenge() is False:
+                    log.info("饰品提取未配置出战队伍，尝试队伍 1")
+                    _select_team(name, 1)
+                    borrowed = demand.should_borrow(cfg) and support.borrow(ornament=True)
+                    if _start_challenge() is False:
+                        raise power.PowerError("无法为饰品提取配置队伍 1")
+            log.info(f"饰品提取 · {name}，挑战 {waves} 次，使用沉浸器 {immersifiers} 个和开拓力 {cost} 点")
+            power._wait_battle(repeated=repeated, instance_screen=instance_screen)
+        except power.BattleDefeat:
+            power._select_category(power.ORNAMENT)
+            after = power.read_power(INDEX_POWER)
+            power.check_balance(available, after, 0, time.monotonic() - started)
+            if retries >= power.DEFEAT_RETRIES:
+                raise
+            retries += 1
+            log.warning(f"已确认饰品提取战败且未扣费，重试 {retries}/{power.DEFEAT_RETRIES}")
+            available, previous = enter(), 0
+            continue
+        except power.RelicBagFull:
+            if cleaned or not power._clean_full_bag():
+                raise
+            cleaned = True
+            available, previous = enter(), 0
+            continue
+
+        # 单场只有胜利及奖励，连续挑战还须核对结算波次。
         completed = 1 if waves == 1 else power._read_waves(power.RESULT_COUNT, "上轮挑战波次")
-        if completed != waves:
-            raise power.PowerError("饰品提取的结算波次与预期不符")
-        # 胜利和波次已确认，先更新计划，避免余额识别或退出失败时重复挑战。
+        if completed > waves:
+            raise power.PowerError("饰品提取实际结算次数超过已选波次")
+        demand.won(borrowed)
         yield completed
         after = power.read_power(INDEX_POWER)
-        expected = available - cost
-        if not expected <= after <= expected + 2:
-            raise power.PowerError("饰品提取的开拓力变化与预期不符")
+        if completed != waves:
+            raise power.PowerError(f"饰品提取实际结算 {completed}/{waves} 次，已保留确认的进度")
+        power.check_balance(available, after, cost, time.monotonic() - started)
         log.info(f"饰品提取已结算 {completed} 次，剩余开拓力 {after}/300")
         if on_settlement is not None:
             on_settlement(completed, after)
         if remaining is not None:
             remaining -= completed
-        borrow_for_daily = False
-        power._exit_result(instance_screen)
-        if remaining != 0 and screen.current_screen != instance_screen:
-            power._select_category(power.ORNAMENT)
-            power._enter_instance(power.ORNAMENT, name)
-            time.sleep(0.4)
+        available, previous, retries = after, waves, 0
 
+    if previous:
+        power._exit_result(instance_screen)
     screen.change_to("main", max_recursion=1)

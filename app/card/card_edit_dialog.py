@@ -11,7 +11,7 @@ from PySide6.QtGui import QPixmap
 from qfluentwidgets import (PushButton, PrimaryPushButton, LineEdit, ComboBox,
                             FluentIcon, InfoBar, InfoBarPosition, isDarkTheme)
 
-from utils.tasks import AVAILABLE_TASKS
+from utils.tasks import AVAILABLE_TASKS, supported_tasks, UNSUPPORTED_TASK
 from module.localization import tr
 from app.common.style_sheet import StyleSheet
 
@@ -27,6 +27,16 @@ HOME_EXTRA_TASKS = {
 
 # 合并所有可选任务（值为中文原文 msgid，显示时再 tr()）
 ALL_TASKS = {**AVAILABLE_TASKS, **HOME_EXTRA_TASKS}
+
+
+def home_task_choices(current=None):
+    tasks = supported_tasks()
+    if "fight" in tasks:
+        tasks.update(HOME_EXTRA_TASKS)
+    choices = {task_id: tr(name) for task_id, name in tasks.items()}
+    if current and current not in choices:
+        choices[current] = f"{tr(ALL_TASKS.get(current, current))}（{tr(UNSUPPORTED_TASK)}）"
+    return choices
 
 
 DEFAULT_CARDS = [
@@ -195,9 +205,10 @@ class MenuItemRow(QWidget):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(20, 2, 0, 2)
 
-        self._task_keys = list(ALL_TASKS.keys())
-        self._task_msgids = list(ALL_TASKS.values())
-        self._task_labels = [display_label(v) for v in self._task_msgids]
+        tasks = home_task_choices(task_id)
+        self._task_keys = list(tasks)
+        self._task_msgids = [ALL_TASKS.get(key, key) for key in tasks]
+        self._task_labels = list(tasks.values())
         # 标记：如果 label 为空，说明是新增的，需要自动填写
         self._auto_fill = not label
         # 该控件原本承载的中文原文（用户自定义文案为 None），保存时据此还原
@@ -235,7 +246,7 @@ class MenuItemRow(QWidget):
         idx = self.task_combo.currentIndex()
         if 0 <= idx < len(self._task_msgids):
             self._label_msgid = self._task_msgids[idx]
-            self.label_edit.setText(self._task_labels[idx])
+            self.label_edit.setText(display_label(self._label_msgid))
 
     def _on_task_changed(self, index):
         if self._auto_fill:
@@ -331,10 +342,11 @@ class CardEditorWidget(QFrame):
         self.single_task_label = QLabel(tr("任务："))
         action_layout.addWidget(self.single_task_label)
         self.task_combo = ComboBox()
-        self._task_keys = list(ALL_TASKS.keys())
-        self._task_labels = [tr(v) for v in ALL_TASKS.values()]
-        self.task_combo.addItems(self._task_labels)
         task_id = card_data.get("task_id", "")
+        tasks = home_task_choices(task_id)
+        self._task_keys = list(tasks)
+        self._task_labels = list(tasks.values())
+        self.task_combo.addItems(self._task_labels)
         if task_id in self._task_keys:
             self.task_combo.setCurrentIndex(self._task_keys.index(task_id))
         action_layout.addWidget(self.task_combo, 1)

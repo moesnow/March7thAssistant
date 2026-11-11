@@ -19,6 +19,9 @@ def loop(monkeypatch):
     from utils.date import Date
 
     cfg = MagicMock()
+    cfg.control_backend = None
+    cfg.ui_profile = None
+    cfg.cloud_game_enable = False
     cfg.after_finish = "Loop"
     cfg.play_audio = False
     cfg.notify_merge = False
@@ -101,7 +104,8 @@ def test_main_loop_waits_then_starts_next_run(loop, trigger):
                                      wait_after_cloud_zero_duration=game.wait_after_cloud_zero_duration),
                  cfg=loop.cfg, version=MagicMock(), Daily=MagicMock(), reward=MagicMock(),
                  notif=game.notif, telemetry=MagicMock(), time=game.time,
-                 CloudGameZeroDurationError=game.CloudGameZeroDurationError)
+                 CloudGameZeroDurationError=game.CloudGameZeroDurationError,
+                 get_ui_profile=lambda cfg: SimpleNamespace(name="pc_1080"))
     exec(compile(ast.Module(body=[run], type_ignores=[]), str(source), "exec"), scope)
     with pytest.raises(EndRun):
         scope["run_main_actions"](no_run_immediately=trigger == "startup")
@@ -110,4 +114,4 @@ def test_main_loop_waits_then_starts_next_run(loop, trigger):
     game.Power.get.assert_not_called()
     if trigger == "finished":
         scope["Daily"].start.assert_called_once_with()
-        scope["reward"].start.assert_called_once_with()
+        scope["reward"].start.assert_not_called()

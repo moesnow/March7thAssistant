@@ -14,6 +14,7 @@ from utils.date import Date
 from utils.console import pause_on_success
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
+from module.game.adb_transport import AdbError
 from module.game.cloud import CloudGameLoginTimeoutError, CloudGameZeroDurationError
 from module.logger import log
 from module.screen import screen
@@ -109,22 +110,40 @@ def _start_local_touch_game():
             raise RuntimeError(tr("切换到游戏窗口失败"))
         if controller.get_resolution() != profile.resolution:
             raise RuntimeError(tr("请退出当前游戏，再启动 1280×720 触屏模式"))
-        if not wait_until(touch_game_ready, min(cfg.start_game_timeout * 60, 180)):
+        if not wait_until(touch_game_ready, cfg.start_game_timeout * 60):
             raise TimeoutError(tr("未能进入触屏主界面，请检查游戏登录状态"))
 
 
 def start_game(headless=None, *, optimize_graphics=True):
     backend = get_control_backend(cfg)
+    timeout = getattr(cfg, "start_game_timeout", 10) * 60
     if backend == "adb":
         controller = get_game_controller(backend)
+
+        def recover():
+            try:
+                if auto.find_element(("消息获取失败", "网络连接失败"), "text", crop=(0.30, 0.40, 0.40, 0.18), include=True):
+                    if auto.click_element("确认", "text", crop=(0.35, 0.59, 0.30, 0.17)):
+                        log.info("已关闭 Android 启动时的网络提示，重新检查游戏画面")
+                    return
+                if screen.get_current_screen(autotry=False) and screen.can_change_from(screen.current_screen, "main"):
+                    screen.change_to("main", max_recursion=0)
+            except (AdbError, TouchProfileInputError):
+                raise
+            except RuntimeError as error:
+                log.debug(f"ADB 启动恢复：{error}")
+
         controller.start_game_process()
-        wait_for_adb_game(controller, min(cfg.start_game_timeout * 60, 180))
+        wait_for_adb_game(controller, timeout, recover=recover)
         return
     if backend == "local" and get_ui_profile(cfg).name == "touch_720":
         _start_local_touch_game()
         return
 
     MAX_RETRY = 3
+
+    def remaining_startup_time():
+        return max(0, deadline - time.monotonic())
 
     def check_and_click_enter():
         # 点击进入
@@ -236,7 +255,7 @@ def start_game(headless=None, *, optimize_graphics=True):
                     raise RuntimeError("启动游戏失败")
                 time.sleep(10)
 
-                if not wait_until(lambda: starrail.switch_to_game(), 360):
+                if not wait_until(lambda: starrail.switch_to_game(), remaining_startup_time()):
                     raise TimeoutError("切换到游戏超时")
 
                 time.sleep(10)
@@ -248,7 +267,7 @@ def start_game(headless=None, *, optimize_graphics=True):
                 starrail.restore_auto_hdr()
             starrail.check_resolution(*resolution)
 
-            if not wait_until(lambda: check_and_click_enter(), cfg.start_game_timeout * 60):
+            if not wait_until(check_and_click_enter, remaining_startup_time()):
                 raise TimeoutError("查找并点击进入按钮超时")
 
             # 偶现加载慢时分辨率修改不成功，进入游戏前增加一次分辨率检查
@@ -273,25 +292,21 @@ def start_game(headless=None, *, optimize_graphics=True):
             if not cloud_game.enter_cloud_game():
                 raise ConnectionError("进入云游戏失败")
             time.sleep(10)
-            if not wait_until(lambda: cloud_game_check_and_enter(), cfg.start_game_timeout * 60):
+            if not wait_until(cloud_game_check_and_enter, timeout):
                 raise TimeoutError("查找并点击进入按钮超时")
             time.sleep(10)
 
     for retry in range(MAX_RETRY):
+        deadline = time.monotonic() + timeout
         try:
             if backend == "cloud":
                 start_cloud_game()
             else:
                 starrail = StarRailController(cfg=cfg, logger=log)
                 start_local_game(starrail)
-            if not wait_until(lambda: screen.get_current_screen(), 6 * 60):
-                log.error("获取当前界面超时")
-                # 确保在重试前停止游戏
-                if backend == "cloud":
-                    cloud_game.stop_game()
-                else:
-                    starrail.stop_game()
-                continue
+            ready_timeout = timeout if backend == "cloud" else remaining_startup_time()
+            if not wait_until(lambda: screen.get_current_screen(max_retries=1), ready_timeout):
+                raise TimeoutError("获取当前界面超时")
             break
         except CloudGameZeroDurationError:
             # 时长为 0 时重试也无法进入游戏：关闭浏览器后交给调用方，由主循环决定等待下次运行还是按错误退出
@@ -345,8 +360,9 @@ def stop(detect_loop=False):
             play_audio()
         # 在关闭游戏前优先退出 OCR 避免内存占用
         ocr.exit_ocr()
-        if cfg.after_finish in ["Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
-            get_game_controller().shutdown(cfg.after_finish)
+        if cfg.after_finish in ["Exit", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
+            if get_game_controller().shutdown(cfg.after_finish) is False:
+                raise RuntimeError(f"任务完成后的操作失败：{cfg.after_finish}")
         restore_temporary_graphics(final=True)
         log.hr("完成", 2)
         if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
@@ -369,6 +385,8 @@ def after_finish_is_loop():
         log.hr("完成", 2)
         sys.exit(0)
 
+    connection = get_control_backend(cfg), get_ui_profile(cfg).name
+
     final_content = cfg.notify_template['ContinueTime'].format(time=future_time)
     log.info(final_content)
     notif.flush_batch(extra_content=final_content, level=NotificationLevel.ALL)
@@ -390,6 +408,8 @@ def after_finish_is_loop():
 
     # 启动前重新加载配置 #262
     cfg._load_config()
+    if connection != (get_control_backend(cfg), get_ui_profile(cfg).name):
+        raise RuntimeError("循环等待期间游戏连接已变更，请重新启动完整运行")
 
 
 def wait_after_cloud_zero_duration(error):
@@ -542,13 +562,21 @@ def pre_download_via_launcher(game=None):
 
 
 def notify_after_finish_not_loop():
+    if get_ui_profile(cfg).name == "touch_720":
+        notif.flush_batch()
+        return
 
     def get_wait_time(current_power):
         # 距离体力到达300上限剩余秒数
-        wait_time_power_full = (300 - current_power) * 6 * 60
+        wait_time_power_full = max(0, 300 - current_power) * 6 * 60
         return wait_time_power_full
 
-    current_power = Power.get(use_supplement=False)
+    try:
+        current_power = Power.get(use_supplement=False)
+    except Exception as error:
+        log.warning(f"未能确认开拓力恢复时间：{error}")
+        notif.flush_batch()
+        return
 
     wait_time = get_wait_time(current_power)
     future_time = Date.calculate_future_time(wait_time)

@@ -92,13 +92,18 @@ def stage = tasks.register('stageProjectAssets', Zip) {
         include 'module/ocr/*.py', 'module/screen/*.py'
         include 'utils/color.py', 'utils/console.py', 'utils/dpi.py', 'utils/image_utils.py'
         include 'utils/pause.py', 'utils/singleton.py', 'utils/logger/*.py', 'utils/game_options.py', 'utils/wait.py'
-        include 'tasks/base/base.py', 'tasks/base/list_drag.py', 'tasks/base/team.py'
-        include 'tasks/daily/__init__.py', 'tasks/daily/tasks.py', 'tasks/touch/*.py'
+        include 'utils/date.py'
+        include 'tasks/base/base.py', 'tasks/base/list_drag.py', 'tasks/base/team.py', 'tasks/base/task_steps.py'
+        include 'tasks/daily/__init__.py', 'tasks/daily/tasks.py', 'tasks/daily/training.py', 'tasks/touch/*.py'
         include 'tasks/power/instance.py', 'tasks/power/character.py', 'tasks/power/relicset.py'
+        include 'tasks/power/battle.py', 'tasks/power/policy.py', 'tasks/power/readout.py', 'tasks/power/supplement.py'
+        include 'tasks/reward/menu_alert.py', 'tasks/reward/receipt.py'
         include 'assets/config/config.example.yaml', 'assets/config/version.txt'
         include 'assets/config/ocr_replacements.json', 'assets/config/task_mappings.json'
         include 'assets/config/instance_names.json', 'assets/config/character_names.json'
         include 'assets/locales/**/march7th.mo', 'assets/touch_720/**', 'assets/images/share/character/*.png'
+        include 'assets/images/share/menu/mail.png', 'assets/images/purefiction/battle_speed.png'
+        include 'assets/images/share/power/space_anchor/*.png'
     }
 }
 tasks.named('preBuild') {

@@ -68,15 +68,14 @@ class AdbBackendSettingCard(SettingCard):
     backendChanged = Signal(str)
 
     def __init__(self, parent=None, *, blocker=None):
-        super().__init__(FIF.CONNECT, tr("设备后端"),
-                         tr("选择小助手操作哪里的游戏，对下一次运行的任务生效"), parent)
+        super().__init__(FIF.CONNECT, tr("游戏运行位置"), parent=parent)
         self._blocker = blocker
         self.comboBox = ComboBox(self)
         self.comboBox.setMinimumWidth(190)
         if sys.platform == "win32":
             self.comboBox.addItem(tr("本地游戏"), userData="local")
         self.comboBox.addItem(tr("云·星穹铁道"), userData="cloud")
-        self.comboBox.addItem(tr("Android 设备（ADB）"), userData="adb")
+        self.comboBox.addItem(tr("安卓设备（ADB）"), userData="adb")
         self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
@@ -110,8 +109,8 @@ class AdbBackendSettingCard(SettingCard):
         changes = adb_service.backend_changes(backend)
         if changes:
             cfg.set_values(changes)
-        self._backend = backend
-        self.backendChanged.emit(backend)
+        self.setBackend(adb_service.current_backend())
+        self.backendChanged.emit(self._backend)
 
 
 class _PanelCard(ExpandSettingCard):

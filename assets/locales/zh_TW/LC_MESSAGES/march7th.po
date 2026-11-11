@@ -7745,3 +7745,63 @@ msgstr "已完成 {count} 次挑戰，剩餘開拓力 {power}/300"
 #: tasks/touch/rewards.py:251
 msgid "；"
 msgstr "；"
+
+#: app/card/adb_setting_cards.py:71
+msgid "游戏运行位置"
+msgstr "遊戲執行位置"
+
+#: app/card/adb_setting_cards.py:78
+msgid "安卓设备（ADB）"
+msgstr "Android 裝置（ADB）"
+
+#: app/setting_interface.py:284
+msgid "每个副本项最多补充一次，数量以游戏弹窗为准"
+msgstr "每個副本項目最多補充一次，數量以遊戲視窗顯示為準"
+
+#: app/setting_interface.py:290
+msgid "同时启用后备开拓力时，后备库存用完才使用燃料"
+msgstr "同時啟用後備開拓力時，後備開拓力用完才使用燃料"
+
+#: app/setting_interface.py:306
+msgid "满包时自动分解遗器"
+msgstr "背包已滿時自動分解遺器"
+
+#: app/setting_interface.py:306
+msgid "遇到遗器满包时分解四星及以下遗器"
+msgstr "遺器背包已滿時，分解四星及以下遺器"
+
+#: app/setting_interface.py:310
+msgid "完成计划后继续清体力"
+msgstr "完成計畫後繼續清體力"
+
+#: app/setting_interface.py:310
+msgid "用剩余资源刷默认副本"
+msgstr "使用剩餘資源刷預設副本"
+
+#: app/setting_interface.py:925
+msgid "游戏连接"
+msgstr "遊戲連線"
+
+#: app/setting_interface.py:2462
+msgid "控制自动战斗检测及本地游戏的分辨率与画质调整"
+msgstr "控制自動戰鬥偵測與本機遊戲的解析度和畫質調整"
+
+#: app/setting_interface.py:2468
+msgid "战斗时检测并补开自动战斗和二倍速"
+msgstr "戰鬥時偵測並開啟自動戰鬥及二倍速"
+
+#: app/setting_interface.py:3056
+msgid "请先停止任务，再切换游戏运行位置"
+msgstr "請先停止任務，再切換遊戲執行位置"
+
+#: app/tools_interface.py:264
+msgid "请在“设置”→“游戏连接”中配置正确的游戏路径"
+msgstr "請在「設定」→「遊戲連線」中設定正確的遊戲路徑"
+
+#: module/game/adb_ready.py:61
+msgid "ADB 启动超时，请在安卓设备上检查是否需要登录或更新游戏"
+msgstr "ADB 啟動逾時，請在 Android 裝置上確認是否需要登入或更新遊戲"
+
+#: utils/tasks.py:50
+msgid "当前后端不支持，未执行"
+msgstr "目前的後端不支援，未執行"

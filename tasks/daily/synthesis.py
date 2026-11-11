@@ -5,6 +5,8 @@ from module.logger import log
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from tasks.base.list_drag import drag_list
+from tasks.power.policy import normalize
+import re
 import time
 
 
@@ -30,6 +32,8 @@ class Synthesis:
                                 auto.click_element("./assets/images/share/synthesis/nuclear.png", "image", 0.85, max_retries=10)
                                 time.sleep(2)
                                 if auto.find_element("./assets/images/share/synthesis/nuclear_selected.png", "image", 0.85, max_retries=10):
+                                    if not Synthesis._verify_training_recipe():
+                                        return False
                                     if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
                                         time.sleep(2)
                                         if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
@@ -43,6 +47,24 @@ class Synthesis:
             except Exception as e:
                 log.error(f"合成材料失败: {e}")
         return False
+
+    @staticmethod
+    def _verify_training_recipe():
+        if not auto.find_element("微光原核", "text", crop=(0.49, 0.08, 0.43, 0.16), max_retries=4, retry_delay=0.3):
+            log.error("未确认微光原核配方")
+            return False
+        auto.take_screenshot(crop=(0.51, 0.63, 0.41, 0.23))
+        auto.perform_ocr()
+        text = normalize(" ".join(line[1][0] for line in auto.ocr_result))
+        amount = re.search(r"合成数量[:：]?(\d+)", text)
+        materials = re.search(r"(\d+)/3(?!\d)", text)
+        if not amount or int(amount[1]) != 1 or not materials:
+            log.error("未确认合成数量为 1 且只消耗 3 个熄灭原核")
+            return False
+        if int(materials[1]) < 3:
+            log.info("熄灭原核库存不足，跳过实训合成")
+            return False
+        return True
 
     @staticmethod
     def self_molding_resin():

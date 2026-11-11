@@ -7825,3 +7825,63 @@ msgstr "도전 {count}회 완료, 남은 개척력 {power}/300"
 #: tasks/touch/rewards.py:251
 msgid "；"
 msgstr "; "
+
+#: app/card/adb_setting_cards.py:71
+msgid "游戏运行位置"
+msgstr "게임 실행 위치"
+
+#: app/card/adb_setting_cards.py:78
+msgid "安卓设备（ADB）"
+msgstr "Android 기기(ADB)"
+
+#: app/setting_interface.py:284
+msgid "每个副本项最多补充一次，数量以游戏弹窗为准"
+msgstr "던전 항목당 최대 한 번 충전하며, 수량은 게임에 표시된 값을 따릅니다."
+
+#: app/setting_interface.py:290
+msgid "同时启用后备开拓力时，后备库存用完才使用燃料"
+msgstr "예비 개척력도 활성화하면 예비 개척력을 모두 사용한 뒤 연료를 사용합니다."
+
+#: app/setting_interface.py:306
+msgid "满包时自动分解遗器"
+msgstr "가방이 가득 차면 유물 자동 분해"
+
+#: app/setting_interface.py:306
+msgid "遇到遗器满包时分解四星及以下遗器"
+msgstr "유물 가방이 가득 차면 4성 이하 유물을 분해합니다."
+
+#: app/setting_interface.py:310
+msgid "完成计划后继续清体力"
+msgstr "계획 완료 후에도 개척력 소모"
+
+#: app/setting_interface.py:310
+msgid "用剩余资源刷默认副本"
+msgstr "남은 자원을 기본 던전에 사용합니다."
+
+#: app/setting_interface.py:925
+msgid "游戏连接"
+msgstr "게임 연결"
+
+#: app/setting_interface.py:2462
+msgid "控制自动战斗检测及本地游戏的分辨率与画质调整"
+msgstr "자동 전투 감지와 로컬 게임의 해상도 및 그래픽 조정을 제어합니다."
+
+#: app/setting_interface.py:2468
+msgid "战斗时检测并补开自动战斗和二倍速"
+msgstr "전투 중 자동 전투와 2배속을 확인하고 필요하면 켭니다."
+
+#: app/setting_interface.py:3056
+msgid "请先停止任务，再切换游戏运行位置"
+msgstr "작업을 중지한 뒤 게임 실행 위치를 변경하세요."
+
+#: app/tools_interface.py:264
+msgid "请在“设置”→“游戏连接”中配置正确的游戏路径"
+msgstr "설정 → 게임 연결에서 올바른 게임 경로를 지정하세요."
+
+#: module/game/adb_ready.py:61
+msgid "ADB 启动超时，请在安卓设备上检查是否需要登录或更新游戏"
+msgstr "ADB 시작 시간이 초과되었습니다. Android 기기에서 로그인이나 게임 업데이트가 필요한지 확인하세요."
+
+#: utils/tasks.py:50
+msgid "当前后端不支持，未执行"
+msgstr "현재 백엔드에서 지원하지 않아 실행하지 않았습니다"

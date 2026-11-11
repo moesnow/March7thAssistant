@@ -45,6 +45,32 @@ AVAILABLE_TASKS = {
 
 CLI_ONLY_TASKS = {"adb_check": "ADB 自检"}
 
+TOUCH_ROUTINE_TASKS = frozenset({"main", "routine", "daily", "power", "screen_test", "game"})
+HOST_TASKS = frozenset({"app_update", "notify"})
+UNSUPPORTED_TASK = "当前后端不支持，未执行"
+
+
+def task_is_supported(task_id, config=None):
+    from module.config.platform import get_control_backend, get_ui_profile
+
+    backend = get_control_backend(config)
+    if task_id == "adb_check":
+        return backend == "adb"
+    if task_id in HOST_TASKS:
+        return True
+    if backend == "adb":
+        return task_id in TOUCH_ROUTINE_TASKS
+    if get_ui_profile(config).name == "touch_720":
+        if backend == "cloud":
+            return task_id == "mobileui_update"
+        return task_id in TOUCH_ROUTINE_TASKS or task_id == "mobileui_update"
+    return task_id in AVAILABLE_TASKS or task_id == "workflow"
+
+
+def supported_tasks(config=None, *, include_cli=False):
+    tasks = AVAILABLE_TASKS | CLI_ONLY_TASKS if include_cli else AVAILABLE_TASKS
+    return {task_id: name for task_id, name in tasks.items() if task_is_supported(task_id, config)}
+
 # 任务名称映射（兼容旧名称调用方）
 TASK_NAMES = AVAILABLE_TASKS
 
@@ -74,11 +100,11 @@ PAUSABLE_TASKS = frozenset({
 })
 
 
-def task_display_names() -> dict:
+def task_display_names(tasks=None) -> dict:
     """任务ID -> 当前语言显示名。
 
     供 `--list` 等界面输出使用（属界面文案，随 ui_language）；
     日志与配置仍按约定使用 AVAILABLE_TASKS 里的中文原文。
     """
     from module.localization import tr
-    return {task_id: tr(name) for task_id, name in AVAILABLE_TASKS.items()}
+    return {task_id: tr(name) for task_id, name in (AVAILABLE_TASKS if tasks is None else tasks).items()}

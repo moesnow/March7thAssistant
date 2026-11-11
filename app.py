@@ -83,13 +83,14 @@ def parse_args():
 
     # 处理 --list 参数
     if args.list:
+        os.environ["MARCH7TH_CONFIG_READONLY"] = "1"
         from module.localization import load_language
-        from utils.tasks import task_display_names
+        from utils.tasks import supported_tasks, task_display_names
 
         load_language()
         print("\n可用的任务列表:")
         print("-" * 40)
-        for task_id, task_name in task_display_names().items():
+        for task_id, task_name in task_display_names(supported_tasks()).items():
             print(f"  {task_id:<20} {task_name}")
         print("-" * 40)
         print("\n使用示例:")

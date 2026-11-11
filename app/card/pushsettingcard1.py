@@ -849,6 +849,7 @@ class PushSettingCardPowerPlan(CustomPushSettingCard):
             self.configvalue,
             self.window(),
             keep_plan=cfg.get_value("power_plan_keep", False),
+            continue_after_plan=cfg.get_value("power_plan_continue", True),
         )
         if message_box.exec():
             plans = message_box.get_plans()
@@ -856,6 +857,7 @@ class PushSettingCardPowerPlan(CustomPushSettingCard):
             cfg.set_values({
                 self.configname: plans,
                 "power_plan_keep": message_box.should_keep_plan(),
+                "power_plan_continue": message_box.should_continue_after_plan(),
             })
             self.contentLabel.setText(self._get_display_text())
 

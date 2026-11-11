@@ -10,6 +10,7 @@ from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton
 from .common.style_sheet import StyleSheet
 from .card.samplecardview1 import SampleCardView1
 from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog, display_label, migrate_home_cards
+from utils.tasks import supported_tasks
 from tasks.base.tasks import start_task
 
 from module.config import cfg
@@ -170,18 +171,7 @@ class HomeInterface(ScrollArea):
         self.editButton.clicked.connect(self._on_edit_cards)
         self.basicInputView.headerLayout.addWidget(self.editButton)
 
-        # 从配置加载卡片数据
-        cards_data = self._load_home_cards()
-
-        for card in cards_data:
-            action = self._build_card_action(card)
-            self.basicInputView.addSampleCard(
-                icon=card.get("icon", ""),
-                # 内置卡片存的是中文原文，这里按当前语言显示；用户自定义标题原样显示
-                title=display_label(card.get("title", "")),
-                action=action
-            )
-
+        self.refreshBackendTasks()
         self.vBoxLayout.addWidget(self.basicInputView)
 
     def retranslateUi(self):
@@ -196,7 +186,7 @@ class HomeInterface(ScrollArea):
             actions[1].setText(tr('恢复默认图片'))
         self.basicInputView.titleLabel.setText(tr('任务 >'))
         self.editButton.setText(tr('编辑'))
-        self._rebuild_cards()
+        self.refreshBackendTasks()
 
     def _build_card_action(self, card_data):
         """根据卡片配置数据构建动作"""
@@ -254,15 +244,25 @@ class HomeInterface(ScrollArea):
                 cfg.set_value("home_cards", None)
             else:
                 cfg.set_value("home_cards", dialog.result_cards)
-            self._rebuild_cards()
+            self.refreshBackendTasks()
 
-    def _rebuild_cards(self):
+    def refreshBackendTasks(self):
         """重建卡片视图"""
         self.basicInputView.clearCards()
 
-        cards_data = self._load_home_cards()
+        tasks = supported_tasks(cfg)
+        if "fight" in tasks:
+            tasks.update(HOME_EXTRA_TASKS)
 
-        for card in cards_data:
+        for card in self._load_home_cards():
+            if card.get("action_type") == "single":
+                if card.get("task_id", "main") not in tasks:
+                    continue
+            else:
+                items = [item for item in card.get("menu_items", []) if item.get("task_id") in tasks]
+                if not items:
+                    continue
+                card = {**card, "menu_items": items}
             action = self._build_card_action(card)
             self.basicInputView.addSampleCard(
                 icon=card.get("icon", ""),

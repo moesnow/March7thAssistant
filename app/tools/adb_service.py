@@ -88,7 +88,7 @@ def backend_changes(backend, config=None):
         changes.update(control_backend=None, cloud_game_enable=cloud)
     elif bool(config.get_value("cloud_game_enable")) != cloud:
         changes["cloud_game_enable"] = cloud
-    if current_backend(config) == "adb" and config.get_value("ui_profile") == "touch_720":
+    if (cloud or current_backend(config) == "adb") and config.get_value("ui_profile") == "touch_720":
         changes["ui_profile"] = "pc_1080"
     return changes
 

@@ -557,6 +557,10 @@ class MainWindow(MSFluentWindow):
         from tasks.base.tasks import start_task
         start_task("main")
 
+    def refreshBackendTasks(self):
+        self.homeInterface.refreshBackendTasks()
+        self.toolsInterface.refreshBackendTasks()
+
     def _onHotkeyChanged(self):
         """处理热键配置改变信号"""
         if hasattr(self, 'logInterface'):
@@ -745,6 +749,7 @@ class MainWindow(MSFluentWindow):
             self._retranslate_persistent_interfaces()
             self._replace_settings_interface(replacement, state)
             replacement = None
+            self.refreshBackendTasks()
             InfoBar.success(
                 title=tr('更新成功'), content='', orient=Qt.Horizontal,
                 isClosable=True, position=InfoBarPosition.TOP, duration=1500, parent=self
