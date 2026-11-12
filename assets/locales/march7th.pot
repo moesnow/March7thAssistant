@@ -6676,3 +6676,7 @@ msgstr ""
 #: assets/config/instance_names.json
 msgid "贪欢的神颅"
 msgstr ""
+
+#: assets/config/character_names.json
+msgid "星神★阿哈·群星乐透"
+msgstr ""
