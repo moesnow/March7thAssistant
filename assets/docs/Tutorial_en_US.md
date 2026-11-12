@@ -189,6 +189,8 @@ If you start the game before launching the assistant, the `Game Path` is usually
 
 do not accidentally choose the launcher `miHoYo Launcher\launcher.exe`. The actual game executable is `Star Rail Game\StarRail.exe`.
 
+For the Epic edition, select its `StarRail.exe`, expand `Game Path`, and set `Game launch method` to `Launch via Epic`. Before an unattended run, start the Epic Games Launcher as administrator and sign in to avoid a UAC prompt when HoYoPlay opens. If Epic is already running, exit it from the system tray first, then right-click its shortcut and select `Run as administrator`.
+
 If you want to update the game or pre-download through the HoYoverse launcher, you also need to configure the `HoYoverse Launcher Path`.
 
 #### After Task Completion

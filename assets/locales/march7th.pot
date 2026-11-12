@@ -270,7 +270,9 @@ msgid "通过 Epic 启动"
 msgstr ""
 
 #: app/card/game_path_setting_card.py:32
-msgid "请选择 Epic 渠道版 StarRail.exe，助手将通过 Epic 打开启动器并自动点击‘开始游戏’。需提前登录 Epic。"
+msgid ""
+"请选择 Epic 渠道版的 StarRail.exe，并提前登录 Epic。助手会打开 HoYoPlay "
+"并点击「开始游戏」。无人值守运行前，请以管理员身份启动 Epic Games 启动器，避免 HoYoPlay 弹出 UAC 确认。"
 msgstr ""
 
 #: app/card/messagebox_custom.py:188
