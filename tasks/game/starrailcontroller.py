@@ -4,6 +4,10 @@ from module.config.config import Config
 from module.game.local import LocalGameController
 import sys
 if sys.platform == 'win32':
+    import pywintypes
+    import win32api
+    import win32con
+    import win32gui
     from utils.registry.star_rail_setting import get_game_resolution, set_game_resolution, get_auto_battle_open_setting, get_is_save_battle_speed_setting, get_user_speed_up_open_setting, set_auto_battle_open_setting, set_is_save_battle_speed_setting, set_user_speed_up_open_setting
     from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
     from utils.registry.gameaccount import gamereg_uid
@@ -67,12 +71,45 @@ class StarRailController(LocalGameController):
         except Exception as e:
             self.log_debug(f"恢复游戏自动 HDR 设置时发生错误：{e}")
 
-    def check_resolution(self, target_width: int, target_height: int) -> None:
+    def resize_game_window(self, width: int, height: int) -> bool:
+        """在当前显示器的工作区内调整普通窗口的客户区尺寸。"""
+        try:
+            hwnd = self.get_window_handle()
+            if not hwnd:
+                return False
+            style = win32gui.GetWindowLong(hwnd, win32con.GWL_STYLE)
+            if style & (win32con.WS_MINIMIZE | win32con.WS_MAXIMIZE):
+                return False
+            if (style & win32con.WS_CAPTION) != win32con.WS_CAPTION:
+                return False
+
+            left, top, right, bottom = win32gui.GetWindowRect(hwnd)
+            _, _, client_width, client_height = win32gui.GetClientRect(hwnd)
+            # 使用当前窗口的边框尺寸，避免按主显示器的 DPI 计算。
+            outer_width = width + (right - left - client_width)
+            outer_height = height + (bottom - top - client_height)
+            monitor = win32api.MonitorFromWindow(hwnd, win32con.MONITOR_DEFAULTTONEAREST)
+            work_left, work_top, work_right, work_bottom = win32api.GetMonitorInfo(monitor)["Work"]
+            if outer_width > work_right - work_left or outer_height > work_bottom - work_top:
+                self.log_warning(f"游戏所在显示器的工作区无法容纳 {width}x{height} 的游戏窗口，请移动到更大的显示器或在游戏内切换全屏")
+                return False
+
+            x = min(max(left, work_left), work_right - outer_width)
+            y = min(max(top, work_top), work_bottom - outer_height)
+            flags = win32con.SWP_NOACTIVATE | win32con.SWP_NOZORDER | win32con.SWP_ASYNCWINDOWPOS
+            win32gui.SetWindowPos(hwnd, 0, x, y, outer_width, outer_height, flags)
+            self.log_info(f"已请求将游戏窗口调整为 {width}x{height}，正在重新检查")
+            return True
+        except pywintypes.error as e:
+            self.log_warning(f"调整游戏窗口失败：{e}")
+            return False
+
+    def check_resolution(self, target_width: int, target_height: int, *, auto_resize: bool = False) -> None:
         """
         检查游戏窗口的分辨率是否匹配目标分辨率。
 
         如果游戏窗口的分辨率与目标分辨率不匹配，则记录错误并抛出异常。
-        如果桌面分辨率小于目标分辨率，也会记录错误建议。
+        启用自动调整时，先尝试调整普通游戏窗口，再检查实际客户区尺寸。
 
         参数:
             target_width (int): 目标分辨率的宽度。
@@ -80,8 +117,6 @@ class StarRailController(LocalGameController):
         """
         max_checks = 5
         check_interval = 10
-        screen_width, screen_height = self.screen_resolution
-
         for attempt in range(1, max_checks + 1):
             resolution = self.get_resolution()
             if not resolution:
@@ -92,11 +127,13 @@ class StarRailController(LocalGameController):
                 self.log_debug(f"游戏分辨率: {window_width}x{window_height}")
                 return
 
+            if attempt == 1 and auto_resize and self.resize_game_window(target_width, target_height):
+                time.sleep(1)
+                continue
+
             self.log_error(
                 f"游戏分辨率: {window_width}x{window_height}，请在游戏设置内手动切换为 {target_width}x{target_height} 窗口（没有窗口再选择全屏幕）运行"
             )
-            if screen_width < target_width or screen_height < target_height:
-                self.log_error(f"桌面分辨率: {screen_width}x{screen_height}，你可能需要更大的显示器或使用 HDMI/VGA 显卡欺骗器（或尝试将显示器缩放修改为 100%）")
 
             if attempt < max_checks:
                 self.log_error(f"将在 {check_interval} 秒后重新检查分辨率（第 {attempt}/{max_checks} 次）")

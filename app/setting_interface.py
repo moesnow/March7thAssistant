@@ -2481,7 +2481,7 @@ class SettingInterface(ScrollArea):
         self.autoSetResolutionEnableCard = SwitchSettingCard1(
             FIF.FULL_SCREEN,
             tr('启用自动修改分辨率并关闭自动 HDR'),
-            tr("通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）"),
+            tr("运行任务时尝试将游戏窗口调整至 1920×1080。小助手为任务启动游戏时关闭自动 HDR。"),
             "auto_set_resolution_enable"
         )
         self.autoLowerGraphicsCard = SwitchSettingCard1(

@@ -316,7 +316,7 @@ Headless mode does not support Simulated Universe (not including Divergent Unive
 The `Miscellaneous` page mainly contains helper switches that improve stability and automation. Common ones include:
 
 - `Enable auto battle and 2x speed detection`: Try to enable auto battle and 2x speed before the game starts, and keep them active during built-in combat scenes such as Trailblaze Power farming and Currency Wars.
-- `Enable automatic resolution change and disable Auto HDR`: When launching the game through the assistant, automatically switch to 1920×1080 and disable Auto HDR. Recommended for local mode users.
+- `Enable automatic resolution change and disable Auto HDR`: For local tasks, the assistant tries to set the game window to 1920×1080. An already-running game is resized only if it is in a normal window that can fit the current display’s work area. The assistant disables Auto HDR when it launches the game for a task.
 - `Enable automatic game-path configuration`: Try to detect the path automatically from shortcuts, the official launcher, or a running game process.
 - `Prefer background screenshots`: Recommended by default. It can reduce interference from overlays and floating windows.
 - `Launch when user signs in`: Start through Windows Task Scheduler at sign-in. For truly unattended use, you usually also need to configure system auto-login yourself.

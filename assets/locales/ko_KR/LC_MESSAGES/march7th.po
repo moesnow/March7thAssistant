@@ -931,9 +931,9 @@ msgstr "ONNXRuntime (CPU)"
 msgid "启用自动修改分辨率并关闭自动 HDR"
 msgstr "자동 해상도 변경 및 자동 HDR 끄기 활성화"
 
-#: app/setting_interface.py:2468
-msgid "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）"
-msgstr "소프트웨어로 게임 시작 시 1920x1080 및 자동 HDR 끄기 적용. 수동 실행 시 영향 없음 (중국/글로벌 서버 지원)"
+#: app/setting_interface.py:2484
+msgid "运行任务时尝试将游戏窗口调整至 1920×1080。小助手为任务启动游戏时关闭自动 HDR。"
+msgstr "작업 실행 시 게임 창을 1920×1080으로 조정합니다. 어시스턴트가 게임을 시작할 때 자동 HDR을 끕니다."
 
 #: app/setting_interface.py:2473
 msgid "启用自动配置游戏路径"
