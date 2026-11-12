@@ -551,7 +551,7 @@ def test_reconnect_keeps_the_existing_gui(qtbot, monkeypatch):
 def test_host_leaves_manual_and_scheduled_tasks_to_child():
     from app.log_interface import LogInterface
 
-    host = SimpleNamespace(_desktop_twin_hosting=True, appendLog=Mock())
+    host = SimpleNamespace(_desktop_twin_hosting=True, _account_config_editing=False, appendLog=Mock())
     assert LogInterface.runScheduledTask(host, {"program": "self", "args": "daily"}) is False
     LogInterface._checkScheduledTime(host)
     LogInterface.startTask(host, "daily")

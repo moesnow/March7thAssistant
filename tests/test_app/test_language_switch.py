@@ -260,6 +260,7 @@ def test_account_tasks_are_edited_in_main_settings(window, qtbot, monkeypatch, t
         assert cfg.yaml.load(stream)['power_enable'] is False
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="账号管理页面仅在 Windows 平台显示")
 def test_account_help_link_opens_usage_tutorial_in_main_window(window, qtbot):
     window.helpInterface.stackedWidget.setCurrentWidget(window.helpInterface.faqLabel)
     window.switchTo(window.settingInterface)

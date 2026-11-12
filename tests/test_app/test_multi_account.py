@@ -1,6 +1,7 @@
 """多账号配置隔离、按当前账号起跑，以及最小 GUI。"""
 import ast
 import copy
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -15,6 +16,7 @@ def isolated_config(tmp_path, monkeypatch):
     from module.config import accounts
 
     monkeypatch.setattr(Config, "_readonly", False)
+    monkeypatch.setenv("MARCH7TH_CLOUD_GAME_ENABLE", "false")
     monkeypatch.setattr(cfg, "writes_suspended", False)
     monkeypatch.setattr(cfg, "config", copy.deepcopy(cfg._load_default_config("assets/config/config.example.yaml")))
     monkeypatch.setattr(cfg, "config_path", str(tmp_path / "config.yaml"))
@@ -373,6 +375,7 @@ def test_accounts_scroll_above_fixed_file_path_and_link_to_help(isolated_config,
     card.close()
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="账号管理页面仅在 Windows 平台显示")
 def test_account_page_expands_and_renders(isolated_config, qapp, tmp_path):
     from PySide6.QtTest import QTest
     from app.setting_interface import SettingInterface
