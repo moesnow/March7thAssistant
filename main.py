@@ -421,8 +421,17 @@ def run_main_actions(no_run_immediately=False):
         try:
             version.start()
             game.start()
-            Daily.start()
-            reward.start()
+            if cfg.get_value("multi_account_enable", False) is True and not cfg.cloud_game_enable:
+                from tasks.game.multi_account import run_accounts
+
+                def run_account_tasks():
+                    Daily.start()
+                    reward.start()
+
+                run_accounts(run_account_tasks)
+            else:
+                Daily.start()
+                reward.start()
             telemetry.track_task_complete("main", True, time.time() - main_start_time)
             game.stop(True)
         except CloudGameZeroDurationError as e:

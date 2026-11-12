@@ -1,4 +1,5 @@
 """Language refresh must not navigate, restart work, or discard runtime state."""
+import os
 import sys
 from copy import deepcopy
 from unittest.mock import Mock
@@ -157,6 +158,141 @@ def switch_language(qtbot, window, language):
     qtbot.waitUntil(lambda: window.settingInterface is not old_settings, timeout=15000)
     qtbot.wait(20)
     assert localization.get_current_language() == language
+
+
+@pytest.mark.skipif(sys.platform != 'win32', reason='账号管理使用 Windows 游戏客户端')
+@pytest.mark.parametrize('account_name', ['主号', ''])
+def test_account_tasks_are_edited_in_main_settings(window, qtbot, monkeypatch, tmp_path, account_name):
+    from module.config import cfg
+    from module.config.config import Config
+    from module.config import accounts
+
+    monkeypatch.setattr(Config, '_readonly', False)
+    monkeypatch.setattr(cfg, 'writes_suspended', False)
+    monkeypatch.setattr(cfg, 'set_value', type(cfg).set_value.__get__(cfg))
+    monkeypatch.setattr(cfg, 'set_values', type(cfg).set_values.__get__(cfg))
+    monkeypatch.setattr(accounts, 'PROFILE_ROOT', tmp_path / 'profiles')
+    cfg.save_config()
+    cfg.set_value('multi_account_enable', True)
+    window.stackedWidget.setAnimationEnabled(False)
+    window.switchTo(window.settingInterface)
+    original = window.settingInterface
+    group = next(original.stackedWidget.widget(i) for i in range(original.stackedWidget.count())
+                 if original.stackedWidget.widget(i).objectName() == 'AccountsInterface')
+    original.stackedWidget.setCurrentWidget(group)
+    card = group.multiAccountCard
+    card.setExpand(True)
+    card.expandAni.setCurrentTime(card.expandAni.duration())
+    card.accounts = []
+    card._populate()
+    card._save()
+    card.addButton.click()
+    editor = card.table.cellWidget(0, 1)
+    editor.setText(account_name)
+    editor.editingFinished.emit()
+    assert card.accounts[0]['name'] == account_name
+    assert editor.text() == account_name
+    display_name = account_name or '三月七'
+    profile = accounts.profile_path(card.accounts[0])
+    default_path = cfg.config_path
+    card.configureButton.click()
+
+    page = window.settingInterface
+    assert window._account_config_account['name'] == account_name
+    assert page is not original
+    assert window.stackedWidget.currentWidget() is page
+    notice = window._account_config_notice
+    from qfluentwidgets import InfoBarIcon
+    assert notice.icon == InfoBarIcon.INFORMATION
+    assert notice.contentLabel.text() == f'正在配置：{display_name}'
+    assert notice.duration == -1
+    assert notice.isVisible()
+    assert page.accountDoneButton.isVisible()
+    assert page.AboutGroup.isHidden()
+    assert page.ProgramGroup.isHidden()
+    assert cfg.config_path == str(profile)
+    assert not window.navigationInterface.isEnabled()
+    assert not window.homeInterface.isEnabled()
+    assert not window.toolsInterface.isEnabled()
+    assert page.isEnabled()
+    with monkeypatch.context() as locked:
+        from app import main_window as main_module
+        launch_game = Mock()
+        start_process = Mock()
+        warning = Mock()
+        locked.setattr(main_module, 'get_game_controller', launch_game)
+        locked.setattr(main_module.InfoBar, 'warning', warning)
+        locked.setattr(window.logInterface, '_startTask', start_process)
+        window.startGame()
+        window._onStartTask('daily')
+        window.logInterface.startTask('daily')
+        assert not window.logInterface.runScheduledTask({'id': 'test'})
+        with pytest.raises(RuntimeError, match='请先完成账号配置'):
+            window.logInterface.startExternalTask('test')
+        launch_game.assert_not_called()
+        start_process.assert_not_called()
+        warning.assert_called_once()
+    preview = os.environ.get('MULTI_ACCOUNT_EDITOR_PREVIEW')
+    if preview:
+        window.grab().save(preview)
+    page.stackedWidget.setCurrentWidget(page.DailyGroup)
+    assert notice.contentLabel.text() == f'正在配置：{display_name}'
+    assert notice.isVisible()
+    page.powerEnableCard.switchButton.setChecked(False)
+    page.accountDoneButton.click()
+
+    page = window.settingInterface
+    assert window._account_config_notice is None
+    assert cfg.config_path == default_path
+    assert cfg.power_enable is True
+    assert window.navigationInterface.isEnabled()
+    assert window.homeInterface.isEnabled()
+    assert window.toolsInterface.isEnabled()
+    assert not window.logInterface._account_config_editing
+    assert page.stackedWidget.currentWidget().objectName() == 'AccountsInterface'
+    assert str(profile.resolve()) in page.stackedWidget.currentWidget().multiAccountCard.pathLabel.text()
+    assert page.stackedWidget.currentWidget().multiAccountCard.pathLabel.isVisible()
+    qtbot.waitUntil(lambda: page.verticalScrollBar().value() > 0)
+    preview = os.environ.get('MULTI_ACCOUNT_PATH_PREVIEW')
+    if preview:
+        window.grab().save(preview)
+    with profile.open(encoding='utf-8') as stream:
+        assert cfg.yaml.load(stream)['power_enable'] is False
+
+
+def test_account_help_link_opens_usage_tutorial_in_main_window(window, qtbot):
+    window.helpInterface.stackedWidget.setCurrentWidget(window.helpInterface.faqLabel)
+    window.switchTo(window.settingInterface)
+    group = next(window.settingInterface.stackedWidget.widget(i)
+                 for i in range(window.settingInterface.stackedWidget.count())
+                 if window.settingInterface.stackedWidget.widget(i).objectName() == 'AccountsInterface')
+    window.settingInterface.stackedWidget.setCurrentWidget(group)
+    group.multiAccountCard.helpLink.linkActivated.emit('account-help')
+    qtbot.waitUntil(lambda: window.stackedWidget.currentWidget() is window.helpInterface)
+    qtbot.waitUntil(lambda: not window._navigation_animation_running)
+    qtbot.waitUntil(lambda: window.helpInterface.tutorialLabel.verticalScrollBar().value() > 0)
+    assert window.helpInterface.stackedWidget.currentWidget() is window.helpInterface.tutorialLabel
+
+
+@pytest.mark.parametrize('running', ['task', 'game_launch'])
+def test_running_task_keeps_account_configuration_closed(window, monkeypatch, running):
+    from app import main_window as module
+    from module.config import cfg
+
+    original_page = window.settingInterface
+    original_path = cfg.config_path
+    warning = Mock()
+    monkeypatch.setattr(module.InfoBar, 'warning', warning)
+    if running == 'task':
+        monkeypatch.setattr(window.logInterface, 'autoCloseBlockReason', lambda **_: 'running')
+    else:
+        monkeypatch.setattr(window, 'game_launch_thread', Mock(), raising=False)
+    window._open_account_configuration({'id': 'test', 'name': 'test', 'login_name': '', 'uid': ''})
+    assert window.settingInterface is original_page
+    assert cfg.config_path == original_path
+    assert window._account_config_context is None
+    assert window.navigationInterface.isEnabled()
+    warning.assert_called_once()
 
 
 def test_actual_language_combo_keeps_settings_tab_scroll_and_expansion(window, qtbot, monkeypatch):

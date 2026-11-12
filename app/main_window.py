@@ -139,6 +139,10 @@ class MainWindow(MSFluentWindow):
         self._defer_startup_checks = False  # 静默启动时推迟的启动检查（检查更新/公告）
         self.detected_update_version = None
         self.updateVersionBadge = None
+        self._account_config_context = None
+        self._account_config_account = None
+        self._account_config_view_state = None
+        self._account_config_notice = None
         qconfig.themeChanged.connect(self._on_theme_changed)
 
         self.initWindow()
@@ -335,6 +339,7 @@ class MainWindow(MSFluentWindow):
         self.workflowInterface = WorkflowInterface(self)
         self.logInterface = LogInterface(self)
         self.settingInterface = SettingInterface(self)
+        self._connect_settings_interface(self.settingInterface)
 
         # 连接任务启动信号
         signalBus.startTaskSignal.connect(self._onStartTask)
@@ -518,6 +523,12 @@ class MainWindow(MSFluentWindow):
 
     def _onStartTask(self, command):
         """处理任务启动信号"""
+        if self._account_config_context is not None:
+            InfoBar.warning(
+                title=tr('请先完成账号配置'), content='',
+                orient=Qt.Horizontal, isClosable=True,
+                position=InfoBarPosition.TOP, duration=3000, parent=self)
+            return
         if self._desktop_twin_hosting:
             # 快捷方式或其他实例转来的任务请求不能静默丢弃
             InfoBar.warning(
@@ -565,7 +576,8 @@ class MainWindow(MSFluentWindow):
 
     def _onAutoplotToggleRequested(self):
         """处理自动对话切换请求（全局热键触发）"""
-        if not self._desktop_twin_hosting and hasattr(self, 'toolsInterface'):
+        if (self._account_config_context is None
+                and not self._desktop_twin_hosting and hasattr(self, 'toolsInterface')):
             self.toolsInterface.toggleAutoPlot()
 
     def checkDesktopTwinReady(self):
@@ -678,11 +690,85 @@ class MainWindow(MSFluentWindow):
                     raise
                 self.stackedWidget.removeWidget(old)
                 self.settingInterface = replacement
+                self._connect_settings_interface(replacement)
             self._updateStackedBackground()
         finally:
             self.stackedWidget.setAnimationEnabled(animation_enabled)
         old.hide()
         old.deleteLater()
+
+    def _connect_settings_interface(self, interface):
+        interface.accountConfigurationRequested.connect(self._open_account_configuration)
+        interface.accountConfigurationFinished.connect(self._finish_account_configuration)
+        interface.accountHelpRequested.connect(self._open_account_help)
+
+    def _open_account_help(self):
+        self.switchTo(self.helpInterface)
+        QTimer.singleShot(0, self.helpInterface.showAccountTutorial)
+
+    def _open_account_configuration(self, account):
+        from module.config.accounts import account_config
+
+        launch = getattr(self, 'game_launch_thread', None)
+        if (self.logInterface.autoCloseBlockReason(preserve_schedule=False)
+                or (launch is not None and launch.isRunning())):
+            InfoBar.warning(
+                title=tr('请先结束当前任务后再配置账号'), content='',
+                orient=Qt.Horizontal, isClosable=True,
+                position=InfoBarPosition.TOP, duration=3000, parent=self)
+            return
+        state = self.settingInterface.captureViewState()
+        context = account_config(cfg, account)
+        context.__enter__()
+        try:
+            replacement = SettingInterface(self, task_only=True, account=account)
+            edit_state = dict(state, tab="PowerInterface", scroll=0, pivot_scroll=0)
+            self._replace_settings_interface(replacement, edit_state)
+        except Exception:
+            context.__exit__(*sys.exc_info())
+            raise
+        self._account_config_context = context
+        self._account_config_account = account
+        self._account_config_view_state = state
+        self._set_account_configuration_active(True)
+        name = (account.get('display_name') or account['name'] or account['login_name'] or account['uid']
+                or tr('账号 {id}').format(id=account['id'][:8]))
+        self._account_config_notice = InfoBar.info(
+            title='', content=tr('正在配置：{name}').format(name=name),
+            orient=Qt.Horizontal, isClosable=False, duration=-1,
+            position=InfoBarPosition.TOP, parent=self)
+
+    def _set_account_configuration_active(self, active):
+        self.navigationInterface.setDisabled(active)
+        for page in (self.homeInterface, self.helpInterface, self.warpInterface,
+                     self.toolsInterface, self.workflowInterface, self.logInterface):
+            page.setDisabled(active)
+        self._tray_actions[1].setDisabled(active)
+        self.logInterface._account_config_editing = active
+
+    def _finish_account_configuration(self):
+        account = self._account_config_account
+        state = self._account_config_view_state
+        self._account_config_notice.close()
+        self._account_config_notice = None
+        self._account_config_context.__exit__(None, None, None)
+        self._account_config_context = None
+        self._account_config_account = None
+        self._account_config_view_state = None
+        cfg._load_config(save=False)
+        replacement = SettingInterface(self)
+        self._replace_settings_interface(replacement, state)
+        self._set_account_configuration_active(False)
+        group = next(replacement.stackedWidget.widget(i) for i in range(replacement.stackedWidget.count())
+                     if replacement.stackedWidget.widget(i).objectName() == "AccountsInterface")
+        card = group.multiAccountCard
+        for row, item in enumerate(card.accounts):
+            if item["id"] == account["id"]:
+                card.table.selectRow(row)
+                break
+        card.sizeChanged.emit()
+        replacement.pivot.setCurrentItem('AccountsInterface')
+        QTimer.singleShot(0, lambda: replacement.ensureWidgetVisible(card.pathLabel, 0, 20))
 
     def _retranslate_persistent_interfaces(self):
         for interface in (self.homeInterface, self.helpInterface, self.warpInterface,
@@ -740,7 +826,8 @@ class MainWindow(MSFluentWindow):
             state = self.settingInterface.captureViewState()
             # 不提前移除旧页，也不调用 processEvents：构造失败时旧页仍完整可用，
             # 任务/热键/配置回调不会在半替换状态下重入。
-            replacement = SettingInterface(self)
+            replacement = SettingInterface(self, task_only=bool(self._account_config_account),
+                                           account=self._account_config_account)
             self._retranslate_persistent_interfaces()
             self._replace_settings_interface(replacement, state)
             replacement = None
@@ -843,6 +930,8 @@ class MainWindow(MSFluentWindow):
 
     def _on_config_file_changed(self):
         """重新加载配置文件并刷新界面"""
+        if self._account_config_context is not None:
+            return
         if self._desktop_twin_hosting:
             return
         replacement = None
@@ -927,6 +1016,10 @@ class MainWindow(MSFluentWindow):
             if e is not None:
                 e.ignore()
             return
+        if self._account_config_context is not None:
+            self._account_config_context.__exit__(None, None, None)
+            self._account_config_context = None
+            cfg._load_config(save=False)
         self._cancelTaskExit()
         # 保存窗口尺寸和最大化状态
         log.info(f"[config-save] 主程序退出，保存窗口状态 PID={os.getpid()}（更新期间此处会与更新器并发写配置）")
@@ -1017,7 +1110,7 @@ class MainWindow(MSFluentWindow):
             )
 
     def startGame(self):
-        if self._desktop_twin_hosting:
+        if self._account_config_context is not None or self._desktop_twin_hosting:
             return
         start_game_button = self.navigationInterface.widget('startGameButton')
         if start_game_button:

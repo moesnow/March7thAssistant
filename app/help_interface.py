@@ -91,6 +91,8 @@ th, td {
 """
         from module.config import cfg
         tutorial_file = self._get_localized_doc_path("Tutorial")
+        self.tutorialLabel.document().setBaseUrl(
+            QUrl.fromLocalFile(os.path.abspath(os.path.dirname(tutorial_file)) + os.sep))
         try:
             with open(tutorial_file, 'r', encoding='utf-8') as file:
                 self.content = self._site_links(file.read())
@@ -311,6 +313,11 @@ a {
 
     def open_url(self, url):
         QDesktopServices.openUrl(QUrl(url))
+
+    def showAccountTutorial(self):
+        self.stackedWidget.setCurrentWidget(self.tutorialLabel)
+        self.verticalScrollBar().setValue(0)
+        self.tutorialLabel.scrollToAnchor('multi-account')
 
     def openWebsite(self):
         doc = os.path.splitext(os.path.basename(

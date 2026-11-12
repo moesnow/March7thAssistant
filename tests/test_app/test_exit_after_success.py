@@ -14,6 +14,10 @@ def _auxiliary_page(object_name, parent=None):
     """退出规则不访问这些页面的内容，仍保留真实 QWidget 和导航结构。"""
     page = QWidget(parent)
     page.setObjectName(object_name)
+    if object_name == 'settingInterface':
+        page.accountConfigurationRequested = Mock()
+        page.accountConfigurationFinished = Mock()
+        page.accountHelpRequested = Mock()
     return page
 
 
