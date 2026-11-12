@@ -177,13 +177,14 @@ def start_game(headless=None, *, optimize_graphics=True):
         return None
 
     def start_local_game(starrail):
+        auto_set_resolution = game_option_enabled(cfg, "auto_set_resolution_enable")
         if getattr(auto.input_handler, 'is_background', False) is True and starrail.is_game_running():
             # 后台模式不还原、不激活已运行的游戏：窗口暂时不可操作（例如被最小化）时等待用户还原，
             # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
             auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
         if not starrail.switch_to_game():
             try:
-                if game_option_enabled(cfg, "auto_set_resolution_enable"):
+                if auto_set_resolution:
                     starrail.change_resolution(1920, 1080)
                     starrail.change_auto_hdr("disable")
 
@@ -207,21 +208,19 @@ def start_game(headless=None, *, optimize_graphics=True):
                 restore_temporary_graphics()
                 starrail.restore_resolution()
                 starrail.restore_auto_hdr()
-            # starrail.check_resolution_ratio(1920, 1080)
-            starrail.check_resolution(1920, 1080)
+            starrail.check_resolution(1920, 1080, auto_resize=auto_set_resolution)
 
             if not wait_until(lambda: check_and_click_enter(), cfg.start_game_timeout * 60):
                 raise TimeoutError("查找并点击进入按钮超时")
 
             # 偶现加载慢时分辨率修改不成功，进入游戏前增加一次分辨率检查
-            starrail.check_resolution(1920, 1080)
+            starrail.check_resolution(1920, 1080, auto_resize=auto_set_resolution)
 
             time.sleep(10)
             # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
             auto.press_mouse()
         else:
-            # starrail.check_resolution_ratio(1920, 1080)
-            starrail.check_resolution(1920, 1080)
+            starrail.check_resolution(1920, 1080, auto_resize=auto_set_resolution)
             if cfg.auto_set_game_path_enable:
                 program_path = get_process_path(cfg.game_process_name)
                 if program_path is not None and program_path != cfg.game_path:

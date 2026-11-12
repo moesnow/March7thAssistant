@@ -3246,8 +3246,8 @@ msgstr ""
 msgid "启用自动修改分辨率并关闭自动 HDR"
 msgstr ""
 
-#: app/setting_interface.py:2468
-msgid "通过软件启动游戏会自动修改 1920x1080 分辨率并关闭自动 HDR，不影响手动启动游戏（支持国服和国际服）"
+#: app/setting_interface.py:2484
+msgid "运行任务时尝试将游戏窗口调整至 1920×1080。小助手为任务启动游戏时关闭自动 HDR。"
 msgstr ""
 
 #: app/setting_interface.py:2473
