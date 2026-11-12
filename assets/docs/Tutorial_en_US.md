@@ -424,7 +424,9 @@ Each account has its own configuration. Click the configuration file path below 
 
 ##### 3. Start running
 
-Enable automatic multi-account runs, check the accounts to run, and click **“Full run”** on the home page.
+Enable automatic multi-account runs, check the accounts to run, and click **“Full run”** or **“Daily”** on the home page.
+
+“Daily” loads each account's own configuration and runs the usual daily routine. The completion action runs once after all checked accounts finish.
 
 The assistant starts with the currently logged-in account, then switches accounts until all checked accounts have finished.
 

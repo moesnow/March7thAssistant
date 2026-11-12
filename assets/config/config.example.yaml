@@ -47,7 +47,7 @@ pypi_mirror_urls:
   - https://pypi.org/simple/ # 设置 PyPI 镜像列表，用于加速 Python 包的下载。
 
 # 本地运行配置
-multi_account_enable: false # 完整运行时自动完成所有勾选账号的任务，仅支持 Windows 本地游戏。
+multi_account_enable: false # 完整运行或日常任务时，自动依次运行所有勾选账号，仅支持 Windows 本地游戏。
 multi_accounts: [] # 账号列表：id、enabled、name、login_name（登录列表显示名）、uid（首次运行自动记录）。
 game_title_name: 崩坏：星穹铁道 # 游戏窗口标题。
 game_process_name: StarRail # 游戏进程名。

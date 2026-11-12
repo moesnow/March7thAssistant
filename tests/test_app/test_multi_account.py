@@ -1,4 +1,5 @@
 """多账号配置隔离、按当前账号起跑，以及最小 GUI。"""
+import ast
 import copy
 from pathlib import Path
 from types import SimpleNamespace
@@ -84,6 +85,21 @@ def runner(isolated_config, monkeypatch):
                            original_switch=original_switch)
 
 
+@pytest.mark.parametrize("accounts", [[], [{"enabled": False}], [{"enabled": False}, {"enabled": False}]])
+def test_empty_enabled_queue_fails_before_game_operations(runner, monkeypatch, accounts):
+    runner.cfg.set_value("multi_accounts", accounts)
+    current_uid = Mock()
+    monkeypatch.setattr(runner.module, "current_uid", current_uid)
+    run = Mock()
+
+    with pytest.raises(ValueError, match="添加并启用至少一个账号"):
+        runner.module.run_accounts(run)
+
+    current_uid.assert_not_called()
+    runner.switch.assert_not_called()
+    run.assert_not_called()
+
+
 def test_current_account_first_and_new_batch_has_no_stale_completion(runner):
     from module.config.accounts import profile_path
     ran = []
@@ -106,6 +122,35 @@ def test_uid_is_bound_after_selecting_unknown_account(runner):
     assert runner.cfg.multi_accounts[0]["uid"] == "10001"
     assert seen == [0]
     runner.switch.assert_called_once()
+
+
+def test_routine_runs_each_profile_and_finishes_once(runner):
+    from module.config.accounts import account_config, profile_path
+
+    with account_config(runner.cfg, runner.two):
+        runner.cfg.set_value("power_enable", False)
+    runner.cfg.set_value("multi_account_enable", True)
+    source = Path("main.py")
+    tree = ast.parse(source.read_text(encoding="utf-8-sig"))
+    function = next(node for node in tree.body
+                    if isinstance(node, ast.FunctionDef) and node.name == "run_sub_task")
+    names = ("game", "cloud_game", "telemetry", "Daily", "reward", "Power", "Fight",
+             "screen_test", "character_export", "Universe", "challenge", "Redemption")
+    scope = {name: Mock() for name in names}
+    scope.update(cfg=runner.cfg, time=SimpleNamespace(time=lambda: 0))
+    seen = []
+    scope["Daily"].routine.side_effect = lambda: seen.append((runner.cfg.config_path, runner.cfg.power_enable))
+    exec(compile(ast.Module(body=[function], type_ignores=[]), str(source), "exec"), scope)
+    original_path = runner.cfg.config_path
+
+    assert scope["run_sub_task"]("routine") is True
+
+    assert seen == [(str(profile_path(runner.two)), False), (str(profile_path(runner.one)), True)]
+    assert runner.cfg.config_path == original_path
+    scope["Daily"].start.assert_not_called()
+    scope["game"].start.assert_called_once_with(headless=None)
+    scope["game"].stop.assert_called_once_with(False)
+    scope["telemetry"].track_task_complete.assert_called_once_with("routine", True, 0)
 
 
 def test_disabled_account_is_skipped_and_failure_does_not_continue(runner):
