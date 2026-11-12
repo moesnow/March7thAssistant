@@ -6854,3 +6854,95 @@ msgstr "分身ウィンドウを開く"
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr "分身を実行中です。ウィンドウを開くと、画面の確認やサインアウトができます"
+
+#: app/sub_interfaces/multi_account_card.py:23
+msgid "启用多账号自动运行"
+msgstr "複数アカウントの自動実行を有効にする"
+
+#: app/sub_interfaces/multi_account_card.py:33
+msgid "从当前登录账号开始完成所有勾选账号。UID 留空时首次运行自动记录。"
+msgstr "現在ログイン中のアカウントから、選択したすべてのアカウントを実行します。UID が空欄の場合は初回実行時に自動記録します。"
+
+#: app/sub_interfaces/multi_account_card.py:38
+msgid "备注"
+msgstr "メモ"
+
+#: app/sub_interfaces/multi_account_card.py:38
+msgid "登录列表显示名"
+msgstr "ログイン一覧の表示名"
+
+#: app/sub_interfaces/multi_account_card.py:48
+msgid "添加账号"
+msgstr "アカウントを追加"
+
+#: app/sub_interfaces/multi_account_card.py:51
+msgid "删除账号"
+msgstr "アカウントを削除"
+
+#: app/sub_interfaces/multi_account_card.py:53
+msgid "配置选中账号的任务"
+msgstr "選択したアカウントのタスクを設定"
+
+#: app/sub_interfaces/multi_account_card.py:119
+msgid "账号任务配置"
+msgstr "アカウントのタスク設定"
+
+#: app/sub_interfaces/multi_account_card.py:122
+msgid "正在编辑：{name}（UID：{uid}）"
+msgstr "編集中：{name}（UID：{uid}）"
+
+#: app/sub_interfaces/multi_account_card.py:126
+msgid "完成"
+msgstr "完了"
+
+msgid "正在配置：{name}"
+msgstr "設定中：{name}"
+
+msgid "完成配置"
+msgstr "設定完了"
+
+msgid "配置文件：{path}"
+msgstr "設定ファイル：{path}"
+
+msgid "账号 {id}"
+msgstr "アカウント {id}"
+
+msgid "请先完成账号配置"
+msgstr "先にアカウントの設定を完了してください"
+
+msgid "请先结束当前任务后再配置账号"
+msgstr "現在のタスクを終了してからアカウントを設定してください"
+
+msgid "账号{number}"
+msgstr "アカウント{number}"
+
+msgid "账号ID"
+msgstr "アカウントID"
+
+msgid "UID,可留空"
+msgstr "UID、空欄可"
+
+msgid ""
+"1. 先在游戏中登录各个账号，退出时选择“退出并保留登录记录”。\n"
+"2. 点击“＋”添加账号。账号ID填写游戏切换账号列表中显示的脱敏账号，例如147******79，按原样保留星号等符号。\n"
+"3. UID可留空，程序首次运行后自动记录。\n"
+"4. 左键选中账号，点击“配置选中账号的任务”，设置好后点击“完成配置”。\n"
+"5. 勾选需要运行的账号，在首页点击“完整运行”。"
+msgstr ""
+"1. ゲームで各アカウントにログインし、ログアウト時にログイン履歴を保持する項目を選択します。\n"
+"2. 「＋」でアカウントを追加します。アカウントIDには、ゲームの切り替え一覧に表示される伏せ字のアカウント（例：147******79）を、星印や記号も含めてそのまま入力します。\n"
+"3. UID は空欄にすると初回実行時に自動記録されます。\n"
+"4. アカウントを左クリックし、「選択したアカウントのタスクを設定」を押します。設定後に「設定完了」を押します。\n"
+"5. 実行するアカウントにチェックを入れ、ホームで「フル実行」を押します。"
+
+msgid "账号ID是什么?"
+msgstr "アカウントIDとは?"
+
+msgid "请原样输入,包括特殊符号:*"
+msgstr "特殊記号 * も含め、表示どおりに入力してください"
+
+msgid "查看账号管理教程"
+msgstr "アカウント管理の使い方を見る"
+
+msgid "账号ID(必填)"
+msgstr "アカウントID（必須）"

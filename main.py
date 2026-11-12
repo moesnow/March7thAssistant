@@ -419,10 +419,22 @@ def run_main_actions(no_run_immediately=False):
         telemetry.track_task_start("main")
         main_start_time = time.time()
         try:
+            multi_account_enabled = cfg.get_value("multi_account_enable", False) is True and not cfg.cloud_game_enable
+            if multi_account_enabled:
+                from tasks.game.multi_account import get_enabled_accounts, run_accounts
+
+                get_enabled_accounts()
             version.start()
             game.start()
-            Daily.start()
-            reward.start()
+            if multi_account_enabled:
+                def run_account_tasks():
+                    Daily.start()
+                    reward.start()
+
+                run_accounts(run_account_tasks)
+            else:
+                Daily.start()
+                reward.start()
             telemetry.track_task_complete("main", True, time.time() - main_start_time)
             game.stop(True)
         except CloudGameZeroDurationError as e:
@@ -439,6 +451,13 @@ def run_sub_task(action):
     # 不兼容无窗口模式的任务仅覆盖本次启动方式，不修改用户配置。
     visible_cloud_tasks = {"fight", "universe"}
     success = True
+    multi_account_enabled = (action == "routine"
+                             and cfg.get_value("multi_account_enable", False) is True
+                             and not cfg.cloud_game_enable)
+    if multi_account_enabled:
+        from tasks.game.multi_account import get_enabled_accounts, run_accounts
+
+        get_enabled_accounts()
     if action not in ("currencywarstemp", "divergenttemp"):
         game.start(headless=False if action in visible_cloud_tasks else None)
     else:
@@ -503,7 +522,7 @@ def run_sub_task(action):
             telemetry.track_task_start(action)
             task_start_time = time.time()
             try:
-                result = task()
+                result = run_accounts(task) if multi_account_enabled else task()
                 success = result is not False
                 telemetry.track_task_complete(action, success, time.time() - task_start_time)
             except Exception:

@@ -134,8 +134,14 @@ class _PivotScrollFilter(QObject):
 
 
 class SettingInterface(ScrollArea):
-    def __init__(self, parent=None):
+    accountConfigurationRequested = Signal(object)
+    accountConfigurationFinished = Signal()
+    accountHelpRequested = Signal()
+
+    def __init__(self, parent=None, *, task_only=False, account=None):
         super().__init__(parent)
+        self.task_only = task_only
+        self.account = account
         try:
             self.parent = parent
             self._ignoreUniverseEnableCardSwitchChanged = False
@@ -148,6 +154,9 @@ class SettingInterface(ScrollArea):
             self.stackedWidget = QStackedWidget(self)
 
             self.settingLabel = QLabel(tr("设置"), self)
+            if self.account:
+                self.accountDoneButton = PushButton(tr("完成配置"), self)
+                self.accountDoneButton.clicked.connect(self.accountConfigurationFinished.emit)
 
             self.__initWidget()
             self.__initCard()
@@ -2640,6 +2649,8 @@ class SettingInterface(ScrollArea):
 
     def __initLayout(self):
         self.settingLabel.move(36, 30)
+        if self.account:
+            self.accountDoneButton.move(max(self.width() - 140, 360), 30)
         # pivot 位于 pivotScrollArea 内；x=40 与标题对齐，y=80 与原位置一致
         # height=54：pivot ~46px + 8px 供 AsNeeded 滚动条偶尔占用，底边 y=134
         # setViewportMargins(0, 140, ...) 保留 6px 间距，不影响内容区域
@@ -2913,23 +2924,34 @@ class SettingInterface(ScrollArea):
             self.FightGroup.setHidden(True)
         self.addSubInterface(self.ImmortalGameGroup, 'ImmortalGameInterface', tr('逐光捡金'))
 
-        self.pivot.addItem(
-            routeKey='verticalBar',
-            text="|",
-            onClick=lambda: self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName()),
-        )
-
-        self.addSubInterface(self.ProgramGroup, 'programInterface', tr('程序'))
-        self.addSubInterface(self.CloudGameGroup, "cloudGameInterface", tr('云游戏'))
-        self.addSubInterface(self.NotifyGroup, 'NotifyInterface', tr('推送'))
-        self.addSubInterface(self.MiscGroup, 'KeybindingInterface', tr('杂项'))
-        if sys.platform == 'win32':
+        if not self.task_only:
+            self.pivot.addItem(
+                routeKey='verticalBar',
+                text="|",
+                onClick=lambda: self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName()),
+            )
+            self.addSubInterface(self.ProgramGroup, 'programInterface', tr('程序'))
+            self.addSubInterface(self.CloudGameGroup, "cloudGameInterface", tr('云游戏'))
+            self.addSubInterface(self.NotifyGroup, 'NotifyInterface', tr('推送'))
+            self.addSubInterface(self.MiscGroup, 'KeybindingInterface', tr('杂项'))
+        if sys.platform == 'win32' and not self.task_only:
+            account_group = accounts_interface(self.tr, self.scrollWidget)
+            self.multiAccountCard = account_group.multiAccountCard
             self.addSubInterface(
-                accounts_interface(self.tr, self.scrollWidget),
+                account_group,
                 'AccountsInterface',
                 tr('账号')
             )
-        self.addSubInterface(self.AboutGroup, 'AboutInterface', tr('关于'))
+            account_group.multiAccountCard.sizeChanged.connect(
+                lambda: self.stackedWidget.setFixedHeight(
+                    account_group.cardLayout.heightForWidth(account_group.width())))
+            account_group.multiAccountCard.configureRequested.connect(self.accountConfigurationRequested.emit)
+            account_group.multiAccountCard.accountHelpRequested.connect(self.accountHelpRequested.emit)
+        if not self.task_only:
+            self.addSubInterface(self.AboutGroup, 'AboutInterface', tr('关于'))
+        else:
+            for group in (self.ProgramGroup, self.CloudGameGroup, self.NotifyGroup, self.MiscGroup, self.AboutGroup):
+                group.hide()
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
         self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())
@@ -2950,6 +2972,8 @@ class SettingInterface(ScrollArea):
         # 随窗口宽度同步 pivot 滚动容器宽度（right margin = 40px 与布局对齐）
         if self.width() > 0:
             self.pivotScrollArea.setFixedWidth(max(self.width() - 40, 400))
+            if self.account:
+                self.accountDoneButton.move(max(self.width() - 140, 360), 30)
 
     def _expandableCards(self):
         # 使用稳定的 Python 属性名，不以译文或显示顺序标识卡片。

@@ -185,4 +185,7 @@ def accounts_interface(tr, scrollWidget) -> SettingCardGroup:
     accountsInterface.addSettingCard(AccountsCard(
         UiIcon.PERSON, title=tr(""),
     ))
+    from app.sub_interfaces.multi_account_card import MultiAccountCard
+    accountsInterface.multiAccountCard = MultiAccountCard(accountsInterface)
+    accountsInterface.addSettingCard(accountsInterface.multiAccountCard)
     return accountsInterface

@@ -400,6 +400,36 @@ This feature carries some risk and should only be used when you fully understand
 
 > Important: if you export an account before fully entering the game, the assistant may read the UID of the previous account, causing the saved file to mismatch the actual account.
 
+<a id="multi-account" name="multi-account"></a>
+
+#### Automatic multi-account runs
+
+##### 1. Add accounts
+
+Log in to each account in the game first. When logging out, select **“Log out and keep login records”**.
+
+In the assistant, open “Settings → Account”, expand “Enable automatic multi-account runs”, and click **“＋”** to add an account.
+
+- **Note** is a name that helps you identify the account.
+- **Account ID** must match the text displayed in the game's account-switching list, such as `*.`. Keep special characters, including asterisks and periods.
+- **UID** can be left blank and recorded automatically after the first run, or entered manually.
+
+<img src="../app/images/account_id_tutorial.png" alt="Account ID example" width="640" />
+
+##### 2. Configure tasks
+
+Left-click an account, click **“Configure selected account tasks”**, adjust its tasks in Settings, and click **“Finish configuration”**.
+
+Each account has its own configuration. Click the configuration file path below to open its folder.
+
+##### 3. Start running
+
+Enable automatic multi-account runs, check the accounts to run, and click **“Full run”** or **“Daily”** on the home page.
+
+“Daily” loads each account's own configuration and runs the usual daily routine. The completion action runs once after all checked accounts finish.
+
+The assistant starts with the currently logged-in account, then switches accounts until all checked accounts have finished.
+
 ## Update
 
 When a new version pop-up appears, click download. You can also click `Check for updates` at the bottom of the settings page, or manually double-click `March7th Updater.exe`.

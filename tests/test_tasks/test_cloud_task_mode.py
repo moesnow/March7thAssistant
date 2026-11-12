@@ -144,6 +144,73 @@ def test_full_run_keeps_default_browser_mode(runner, action):
     runner.cfg.set_value.assert_not_called()
 
 
+@pytest.mark.parametrize("accounts", [[], [{"enabled": False}]])
+@pytest.mark.parametrize("after_finish", ["Shutdown", "RunScript"])
+def test_multi_account_empty_queue_fails_before_start_and_success_cleanup(runner, monkeypatch, accounts, after_finish):
+    from tasks.game import multi_account
+
+    runner.cfg.after_finish = after_finish
+    values = {"multi_account_enable": True, "multi_accounts": accounts}
+    runner.cfg.get_value.side_effect = lambda key, default=None: values.get(key, default)
+    monkeypatch.setattr(multi_account, "cfg", runner.cfg)
+
+    with pytest.raises(ValueError, match="添加并启用至少一个账号"):
+        runner.run_main_actions()
+
+    runner.version.start.assert_not_called()
+    runner.game.start.assert_not_called()
+    runner.Daily.start.assert_not_called()
+    runner.reward.start.assert_not_called()
+    runner.game.stop.assert_not_called()
+    runner.telemetry.track_task_complete.assert_called_once_with("main", False, 0)
+
+
+@pytest.mark.parametrize("accounts", [[], [{"enabled": False}]])
+def test_routine_rejects_empty_account_queue_before_start(runner, monkeypatch, accounts):
+    from tasks.game import multi_account
+
+    values = {"multi_account_enable": True, "multi_accounts": accounts}
+    runner.cfg.get_value.side_effect = lambda key, default=None: values.get(key, default)
+    monkeypatch.setattr(multi_account, "cfg", runner.cfg)
+
+    with pytest.raises(ValueError, match="添加并启用至少一个账号"):
+        runner.run_sub_task("routine")
+
+    runner.game.start.assert_not_called()
+    runner.Daily.routine.assert_not_called()
+    runner.game.stop.assert_not_called()
+
+
+@pytest.mark.parametrize("enabled, cloud", [(False, False), (True, True)])
+def test_routine_without_local_multi_account_runs_once(runner, monkeypatch, enabled, cloud):
+    from tasks.game import multi_account
+
+    runner.cfg.get_value.return_value = enabled
+    runner.cfg.cloud_game_enable = cloud
+    run_accounts = MagicMock()
+    monkeypatch.setattr(multi_account, "run_accounts", run_accounts)
+
+    assert runner.run_sub_task("routine") is True
+
+    runner.Daily.routine.assert_called_once_with()
+    run_accounts.assert_not_called()
+    runner.game.stop.assert_called_once_with(False)
+
+
+def test_routine_account_failure_skips_success_cleanup(runner, monkeypatch):
+    from tasks.game import multi_account
+
+    runner.cfg.get_value.return_value = True
+    monkeypatch.setattr(multi_account, "get_enabled_accounts", lambda: [{"enabled": True}])
+    monkeypatch.setattr(multi_account, "run_accounts", MagicMock(side_effect=RuntimeError("task failed")))
+
+    with pytest.raises(RuntimeError, match="task failed"):
+        runner.run_sub_task("routine")
+
+    runner.game.stop.assert_not_called()
+    runner.telemetry.track_task_complete.assert_called_once_with("routine", False, 0)
+
+
 @pytest.mark.parametrize("action", ["screen_test", "character_export"])
 @pytest.mark.parametrize("result", [False, True])
 def test_cleanup_exceptions_remain_exempt(runner, action, result):

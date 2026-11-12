@@ -408,6 +408,7 @@ class LogInterface(ScrollArea):
         # 定时运行相关
         self._schedule_timer = None
         self._schedule_running = False
+        self._account_config_editing = False
         # 记录每个定时任务最后触发的“计划时间槽”时间戳（秒）
         self._last_triggered_ts = {}
         self._overlay_enabled = bool(cfg.get_value('log_overlay_enable', False)) if sys.platform == 'win32' else False
@@ -1016,7 +1017,7 @@ class LogInterface(ScrollArea):
         return bool(self.process and self.process.state() != QProcess.NotRunning) or self._external_task_active
 
     def runScheduledTask(self, task, tasks=None, manual=False) -> bool:
-        if getattr(self, "_desktop_twin_hosting", False):
+        if self._account_config_editing or getattr(self, "_desktop_twin_hosting", False):
             return False
         task_dict = self._buildScheduledTaskPayload(task)
         chain = self._buildScheduledTaskChain(task, tasks)
@@ -1152,7 +1153,7 @@ class LogInterface(ScrollArea):
 
     def _checkScheduledTime(self, now=None):
         """检查是否到达任意已启用的定时任务时间并触发对应任务"""
-        if getattr(self, "_desktop_twin_hosting", False):
+        if self._account_config_editing or getattr(self, "_desktop_twin_hosting", False):
             return
         # 任务暂停期间不触发定时任务，避免打断暂停或为启动新任务而强制停止当前任务
         if self._pause_state in (STATE_PAUSING, STATE_PAUSED):
@@ -1255,6 +1256,9 @@ class LogInterface(ScrollArea):
 
     def startTask(self, command_or_task, *, _sequence=None):
         """启动任务"""
+        if self._account_config_editing:
+            self.appendLog("请先完成账号配置\n")
+            return
         if getattr(self, "_desktop_twin_hosting", False):
             self.appendLog("当前由分身内的小助手运行任务\n")
             return
@@ -1369,6 +1373,8 @@ class LogInterface(ScrollArea):
 
     def startExternalTask(self, task_name, stop_callback=None):
         """注册当前 GUI 进程内运行的外部任务，复用现有日志界面。"""
+        if self._account_config_editing:
+            raise RuntimeError(tr('请先完成账号配置'))
         if self.isTaskRunning():
             raise RuntimeError(tr('任务正在运行'))
 

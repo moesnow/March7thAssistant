@@ -26,6 +26,7 @@ def schedule_runtime(qtbot, monkeypatch):
     interface._pause_state = 'running'
     interface._schedule_timer = None
     interface._schedule_running = False
+    interface._account_config_editing = False
     interface._last_triggered_ts = {}
     interface._pending_task_meta = None
     interface._active_task_chain = []
@@ -91,6 +92,19 @@ def test_chain_uses_enabled_contiguous_children(schedule_runtime):
              scheduled_task('unrelated', trigger_mode='chain')]
     assert schedule_runtime.runScheduledTask(root, tasks=tasks)
     assert [metadata['id'] for metadata, payload in schedule_runtime._active_task_chain] == ['child']
+
+
+def test_account_configuration_pauses_schedule_dispatch(schedule_runtime, schedule_clock):
+    task = scheduled_task()
+    schedule_runtime.settings['scheduled_tasks'] = [task]
+    schedule_runtime._account_config_editing = True
+    schedule_runtime._checkScheduledTime()
+    assert not schedule_runtime.runScheduledTask(task, manual=True)
+    assert schedule_runtime._last_triggered_ts == {}
+    schedule_runtime.startTask.assert_not_called()
+    schedule_runtime._account_config_editing = False
+    schedule_runtime._checkScheduledTime()
+    schedule_runtime.startTask.assert_called_once()
 
 
 def test_manual_run_in_trigger_window_is_not_repeated(schedule_runtime, schedule_clock):

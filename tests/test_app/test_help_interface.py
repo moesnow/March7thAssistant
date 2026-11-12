@@ -43,6 +43,35 @@ def test_site_links_cover_localized_docs_only():
         '[b](https://m7a.top/docs/#/assets/docs/Docker) [c](https://example.com/x.md)')
 
 
+def test_account_tutorial_anchor_and_image_load_for_each_language(qapp):
+    from PySide6.QtCore import QUrl
+    from PySide6.QtGui import QTextDocument
+    from app.help_interface import HelpInterface
+    from module import localization
+
+    original_language = localization.get_current_language()
+    page = HelpInterface()
+    page.resize(1100, 700)
+    page.show()
+    try:
+        for language in ('zh_CN', 'en_US', 'ja_JP', 'ko_KR', 'zh_TW'):
+            localization.load_language(language)
+            page.retranslateUi()
+            page.stackedWidget.setCurrentWidget(page.faqLabel)
+            page.showAccountTutorial()
+            qapp.processEvents()
+            assert page.stackedWidget.currentWidget() is page.tutorialLabel
+            assert page.tutorialLabel.verticalScrollBar().value() > 0
+            image = page.tutorialLabel.document().resource(
+                QTextDocument.ResourceType.ImageResource, QUrl('../app/images/account_id_tutorial.png'))
+            assert image is not None and not image.isNull()
+            assert 'name="multi-account"' in page.tutorialLabel.toHtml()
+    finally:
+        localization.load_language(original_language)
+        page.close()
+        page.deleteLater()
+
+
 def test_website_button_opens_current_tab_doc_and_stays_right_aligned(qapp):
     from app.help_interface import DOC_OF_TAB, HelpInterface
     from module.localization.languages import localized_doc_path

@@ -252,6 +252,7 @@ class TestPauseToggle:
         from app.log_interface import LogInterface
         from utils.pause import STATE_RUNNING
         iface = LogInterface.__new__(LogInterface)
+        iface._account_config_editing = False
         iface._pause_supported = True
         iface._pause_state = STATE_RUNNING
         iface._task_status = 'running'

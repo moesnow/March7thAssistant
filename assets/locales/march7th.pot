@@ -6656,3 +6656,90 @@ msgstr ""
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:23
+msgid "启用多账号自动运行"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:33
+msgid "从当前登录账号开始完成所有勾选账号。UID 留空时首次运行自动记录。"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:38
+msgid "备注"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:38
+msgid "登录列表显示名"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:48
+msgid "添加账号"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:51
+msgid "删除账号"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:53
+msgid "配置选中账号的任务"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:119
+msgid "账号任务配置"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:122
+msgid "正在编辑：{name}（UID：{uid}）"
+msgstr ""
+
+#: app/sub_interfaces/multi_account_card.py:126
+msgid "完成"
+msgstr ""
+
+msgid "正在配置：{name}"
+msgstr ""
+
+msgid "完成配置"
+msgstr ""
+
+msgid "配置文件：{path}"
+msgstr ""
+
+msgid "账号 {id}"
+msgstr ""
+
+msgid "请先完成账号配置"
+msgstr ""
+
+msgid "请先结束当前任务后再配置账号"
+msgstr ""
+
+msgid "账号{number}"
+msgstr ""
+
+msgid "账号ID"
+msgstr ""
+
+msgid "UID,可留空"
+msgstr ""
+
+msgid ""
+"1. 先在游戏中登录各个账号，退出时选择“退出并保留登录记录”。\n"
+"2. 点击“＋”添加账号。账号ID填写游戏切换账号列表中显示的脱敏账号，例如147******79，按原样保留星号等符号。\n"
+"3. UID可留空，程序首次运行后自动记录。\n"
+"4. 左键选中账号，点击“配置选中账号的任务”，设置好后点击“完成配置”。\n"
+"5. 勾选需要运行的账号，在首页点击“完整运行”。"
+msgstr ""
+
+msgid "账号ID是什么?"
+msgstr ""
+
+msgid "请原样输入,包括特殊符号:*"
+msgstr ""
+
+msgid "查看账号管理教程"
+msgstr ""
+
+msgid "账号ID(必填)"
+msgstr ""
