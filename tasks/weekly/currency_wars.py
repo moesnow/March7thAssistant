@@ -36,6 +36,7 @@ class CurrencyWars:
         self.need_restart: bool = False  # 是否重开
         self.resumed_saved_run: bool = False  # 本次是否从游戏存档恢复
         self._saved_war_type: Optional[str] = None
+        self._started_war_type: Optional[str] = None
         self._resume_state_pending: bool = False
         self._stage_unchanged_count: int = 0  # 连续未发生阶段变化计数
         self._unrecognized_stage_count: int = 0  # 连续未识别阶段计数
@@ -384,6 +385,7 @@ class CurrencyWars:
     def start_war(self, type: Literal["normal", "overclock"] = "normal") -> bool:
         self.resumed_saved_run = False
         self._saved_war_type = None
+        self._started_war_type = "normal" if type == "normal" else "overclock"
         self._resume_state_pending = False
         log.info("开始「货币战争」")
         screen.change_to("currency_wars_mode_select")
@@ -416,19 +418,10 @@ class CurrencyWars:
 
     def get_match_type(self) -> str:
         """续局使用存档实际模式，不改写用户下次新开对局的配置。"""
-        return self._saved_war_type or cfg.currencywars_type
+        return self._saved_war_type or self._started_war_type or cfg.currencywars_type
 
-    def resume_saved_run(self) -> bool:
-        """只恢复已确认存在的游戏存档；恢复失败绝不退回弃局/新开。"""
-        position = auto.find_element("继续进度", "text", include=False)
-        rows = list(auto.ocr_result)
-        texts = {text.strip() for _, (text, _) in rows}
-        if not position and "结束并结算" not in texts:
-            return False
-        if not position or "结束并结算" not in texts:
-            raise RuntimeError("检测到未结算对局，但未完整识别继续入口，已保留进度并停止")
-
-        # 只读取右侧存档卡标题；左侧同时可见的模式导航不是当前对局模式。
+    @staticmethod
+    def _card_modes(rows):
         modes = set()
         for box, (text, confidence) in rows:
             if text not in ("标准博弈", "超频博弈") or confidence < 0.8 or not box:
@@ -436,6 +429,39 @@ class CurrencyWars:
             x, y = min(point[0] for point in box), min(point[1] for point in box)
             if 500 <= x <= 1000 and 100 <= y <= 260:
                 modes.add("normal" if text == "标准博弈" else "overclock")
+        return modes
+
+    def resume_saved_run(self) -> bool:
+        """只恢复已确认存在的游戏存档；恢复失败绝不退回弃局/新开。"""
+        saved_seen = False
+        new_game_frames = 0
+        for attempt in range(4):
+            position = auto.find_element("继续进度", "text", include=False)
+            rows = list(auto.ocr_result)
+            texts = {text.strip() for _, (text, _) in rows}
+            saved_marker = bool(position) or bool({"继续进度", "结束并结算"} & texts)
+            saved_marker = saved_marker or any("当前进度" in text for text in texts)
+            if saved_marker:
+                saved_seen = True
+                new_game_frames = 0
+                if position and "结束并结算" in texts:
+                    break
+            else:
+                # 漏检不是“没有存档”。只有连续读到明确的新开卡片才允许新开。
+                modes = self._card_modes(rows)
+                labels = {text.strip() for _, (text, confidence) in rows if confidence >= 0.8}
+                entry = "进入标准博弈" if modes == {"normal"} else "进入超频博弈"
+                start_visible = "开始对局" in labels or entry in labels
+                new_game_frames = new_game_frames + 1 if start_visible and len(modes) == 1 else 0
+                if new_game_frames >= 2 and not saved_seen:
+                    return False
+            if attempt < 3:
+                time.sleep(1)
+        else:
+            raise RuntimeError("未完整确认存档或新开入口，已保留进度并停止")
+
+        # 只读取右侧存档卡标题；左侧同时可见的模式导航不是当前对局模式。
+        modes = self._card_modes(rows)
         if len(modes) != 1:
             raise RuntimeError("未确认存档的实际博弈模式，已保留进度并停止")
         self._saved_war_type = modes.pop()

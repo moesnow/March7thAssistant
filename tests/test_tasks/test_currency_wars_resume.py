@@ -60,12 +60,47 @@ class TestCurrencyWarsResume(unittest.TestCase):
 
     def test_enabled_without_saved_run_starts_normally(self):
         self.module.auto.find_element.return_value = None
-        self.module.auto.ocr_result = []
+        self.module.auto.ocr_result = saved_rows()[:-2] + [([], ('开始对局', .99))]
         self.assertTrue(self.war.start_war())
         self.assertFalse(self.war.resumed_saved_run)
         self.war.choose_level.assert_called_once_with(1)
         self.war.wait_for_war_start.assert_called_once()
         self.module.auto.click_element.assert_not_called()
+
+    def test_blank_ocr_is_unknown_not_permission_to_start_a_new_match(self):
+        self.module.auto.find_element.return_value = None
+        self.module.auto.ocr_result = []
+        with self.assertRaisesRegex(RuntimeError, '已保留进度'):
+            self.war.start_war()
+        self.war.choose_level.assert_not_called()
+        self.war.wait_for_war_start.assert_not_called()
+        self.module.auto.click_element.assert_not_called()
+
+    def test_clear_mode_entry_without_saved_run_can_start_normally(self):
+        self.module.auto.find_element.return_value=None
+        self.module.auto.ocr_result=saved_rows()[:-2]+[([],('进入标准博弈',.99))]
+        self.assertTrue(self.war.start_war())
+        self.war.choose_level.assert_called_once_with(1)
+
+    def test_transient_ocr_miss_retries_then_resumes_the_existing_match(self):
+        frames=iter([[],saved_rows()])
+        def find(*args,**kwargs):
+            self.module.auto.ocr_result=next(frames)
+            return (800,900,120,40) if self.module.auto.ocr_result else None
+        self.module.auto.find_element.side_effect=find
+        self.assertTrue(self.war.start_war())
+        self.assertTrue(self.war.resumed_saved_run)
+        self.war.choose_level.assert_not_called()
+
+    def test_partial_save_latches_even_if_later_frames_look_like_new_game(self):
+        frames=iter([saved_rows(),*( [saved_rows()[:-2]+[([],('开始对局',.99))]]*3 )])
+        def find(*args,**kwargs):
+            self.module.auto.ocr_result=next(frames)
+            return None
+        self.module.auto.find_element.side_effect=find
+        with self.assertRaisesRegex(RuntimeError,'已保留进度'):
+            self.war.start_war()
+        self.war.choose_level.assert_not_called()
 
     def test_partial_saved_run_detection_never_falls_back_to_abandon(self):
         self.module.auto.find_element.return_value = None
@@ -115,6 +150,17 @@ class TestCurrencyWarsResume(unittest.TestCase):
         self.war.start_war('overclock')
         self.assertFalse(self.war.resumed_saved_run)
         self.assertEqual(self.war.get_match_type(), 'overclock')
+
+    def test_explicit_new_game_mode_is_retained_when_config_differs_or_changes(self):
+        self.enabled=False
+        self.module.cfg.currencywars_type='normal'
+        self.assertTrue(self.war.start_war('overclock'))
+        self.assertEqual(self.war.get_match_type(),'overclock')
+        self.module.cfg.currencywars_type='normal'
+        self.assertEqual(self.war.get_match_type(),'overclock')
+        self.assertTrue(self.war.start_war('normal'))
+        self.assertEqual(self.war.get_match_type(),'normal')
+        self.module.cfg.set_value.assert_not_called()
 
     def test_experience_policy_uses_saved_standard_mode_not_overclock_preference(self):
         self.module.cfg.currencywars_type='overclock'

@@ -53,7 +53,8 @@ def _read_layout(war, auto):
     if not war.get_level() or type(war.current_level) is not int or not 3 <= war.current_level <= 10:
         raise RuntimeError("续跑状态恢复失败：未识别当前小队等级，保留对局")
     text = auto.get_single_line_text(crop=POPULATION_CROP, blacklist=["等级提升", "金币不足"])
-    match = re.fullmatch(r"\s*[iI:]?\s*(\d+)\s*/\s*(\d+)\s*", text or "")
+    # The native single-line OCR reads the population icon as "·" on S2.
+    match = re.fullmatch(r"\s*[iI:·]?\s*(\d+)\s*/\s*(\d+)\s*", text or "")
     if not match:
         raise RuntimeError("续跑状态恢复失败：未识别当前团队规模，保留对局")
     used, limit = map(int, match.groups())
@@ -88,6 +89,25 @@ def _core_positions(war, name):
     if len(bench) > 1:
         raise RuntimeError("续跑状态恢复失败：备战席核心重名且未上场，保留对局")
     return None
+
+
+def _verify_prepare_slots(war, auto):
+    """Native name=None can mean either an empty bench slot or failed OCR."""
+    if len(war.prepare_characters) != len(war.prepare_pos):
+        raise RuntimeError("续跑状态恢复失败：备战席工位与角色列表不一致，保留对局")
+    for index, (character, position) in enumerate(zip(war.prepare_characters, war.prepare_pos)):
+        if character.name:
+            continue
+        # Reuse the native empty-slot test. An unreadable occupied slot must
+        # not make a strategy core (or a tracked support) appear absent.
+        # The native API may return a NumPy boolean scalar, not the built-in
+        # True singleton; use its documented boolean value like native callers.
+        if bool(auto.is_rgb_ratio_above_threshold(position, (30, 31, 43), 0.8, tolerance=0.01)):
+            continue
+        character = war.check_character_info(position, use_rgb_check=False)
+        if not character.name:
+            raise RuntimeError(f"续跑状态恢复失败：备战席第{index + 1}槽无法确认空位或角色，保留对局")
+        war.prepare_characters[index] = character
 
 
 def _read_core(war, auto, name, allowed_gear):
@@ -131,6 +151,7 @@ def restore_resume_state(war, auto, cfg):
                          for character in getattr(war, zone + "_characters"))
     if deployed_count != used:
         raise RuntimeError("续跑状态恢复失败：已识别角色数与团队规模不符，保留对局")
+    _verify_prepare_slots(war, auto)
     war.reset_tracked_characters()
     for zone in ("forward", "backward", "prepare"):
         war.mark_tracked_characters(getattr(war, zone + "_characters"))
