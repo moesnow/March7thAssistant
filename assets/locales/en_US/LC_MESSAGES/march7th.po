@@ -7054,10 +7054,12 @@ msgstr "Desktop Twin is running. Open its window to watch it or sign out."
 
 #: app/setting_interface.py:603
 msgid "优先继续未结算对局"
-msgstr ""
+msgstr "Resume unfinished matches first"
 
 #: app/setting_interface.py:604
 msgid ""
 "启动时优先继续未结算对局；没有旧局则新开。\n"
 "恢复后沿用当前策略，其自动重开条件仍生效。"
 msgstr ""
+"Resume an unfinished match on startup; start a new one if none exists.\n"
+"The selected strategy and its automatic restart rules still apply."
