@@ -6854,3 +6854,13 @@ msgstr "分身ウィンドウを開く"
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr "分身を実行中です。ウィンドウを開くと、画面の確認やサインアウトができます"
+
+#: app/setting_interface.py:603
+msgid "优先继续未结算对局"
+msgstr ""
+
+#: app/setting_interface.py:604
+msgid ""
+"启动时优先继续未结算对局；没有旧局则新开。\n"
+"恢复后沿用当前策略，其自动重开条件仍生效。"
+msgstr ""
