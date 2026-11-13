@@ -215,6 +215,7 @@ asset_lc3_star_superimpose_enable: false # 是否启用「三星光锥自动叠�
 # 货币战争配置
 currencywars_enable: false # 是否启用「货币战争」积分奖励。true 开启，false 关闭。
 currencywars_type: overclock # 货币战争模式，可选值："normal"（标准博弈）或 "overclock"（超频博弈）。
+currencywars_resume_enable: false # 是否优先继续未结算对局；没有旧局时新开，恢复后沿用当前所选策略。false 保留原有新开流程。
 currencywars_rank_difficulty: lowest # 货币战争职级难度，可选值："current"（当前职级）、"lowest"（最低职级）或 "highest"（最高职级）。
 currencywars_timestamp: 0 # 上次检测到完成差分宇宙积分奖励的时间戳，用于记录和控制运行频率。
 currencywars_bonus_enable: false # 在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器。true 开启，false 关闭。

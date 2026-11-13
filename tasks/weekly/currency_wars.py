@@ -34,6 +34,10 @@ class CurrencyWars:
         self.result: Optional[bool] = None  # 对局结果
         self.need_exit: bool = False  # 是否需要退出
         self.need_restart: bool = False  # 是否重开
+        self.resumed_saved_run: bool = False  # 本次是否从游戏存档恢复
+        self._saved_war_type: Optional[str] = None
+        self._started_war_type: Optional[str] = None
+        self._resume_state_pending: bool = False
         self._stage_unchanged_count: int = 0  # 连续未发生阶段变化计数
         self._unrecognized_stage_count: int = 0  # 连续未识别阶段计数
         self.forward_characters: list[CurrencyWarsCharacter] = []  # 存储前台角色
@@ -379,10 +383,17 @@ class CurrencyWars:
         return False
 
     def start_war(self, type: Literal["normal", "overclock"] = "normal") -> bool:
+        self.resumed_saved_run = False
+        self._saved_war_type = None
+        self._started_war_type = "normal" if type == "normal" else "overclock"
+        self._resume_state_pending = False
         log.info("开始「货币战争」")
         screen.change_to("currency_wars_mode_select")
 
-        if auto.click_element("结束并结算", "text", crop=(1253 / 1920, 915 / 1080, 271 / 1920, 95 / 1080)):
+        if cfg.get_value("currencywars_resume_enable", False) is True:
+            if self.resume_saved_run():
+                return True
+        elif auto.click_element("结束并结算", "text", crop=(1253 / 1920, 915 / 1080, 271 / 1920, 95 / 1080)):
             log.warning("检测到未结算的对局，放弃并结算中")
             if auto.click_element("放弃并结算", "text", max_retries=10, crop=(761 / 1920, 697 / 1080, 399 / 1920, 90 / 1080)):
                 self.loop()
@@ -404,6 +415,87 @@ class CurrencyWars:
 
         log.info("开始对局")
         return True
+
+    def get_match_type(self) -> str:
+        """续局使用存档实际模式，不改写用户下次新开对局的配置。"""
+        return self._saved_war_type or self._started_war_type or cfg.currencywars_type
+
+    @staticmethod
+    def _card_modes(rows):
+        modes = set()
+        for box, (text, confidence) in rows:
+            if text not in ("标准博弈", "超频博弈") or confidence < 0.8 or not box:
+                continue
+            x, y = min(point[0] for point in box), min(point[1] for point in box)
+            if 500 <= x <= 1000 and 100 <= y <= 260:
+                modes.add("normal" if text == "标准博弈" else "overclock")
+        return modes
+
+    def resume_saved_run(self) -> bool:
+        """只恢复已确认存在的游戏存档；恢复失败绝不退回弃局/新开。"""
+        saved_seen = False
+        new_game_frames = 0
+        for attempt in range(4):
+            position = auto.find_element("继续进度", "text", include=False)
+            rows = list(auto.ocr_result)
+            texts = {text.strip() for _, (text, _) in rows}
+            saved_marker = bool(position) or bool({"继续进度", "结束并结算"} & texts)
+            saved_marker = saved_marker or any("当前进度" in text for text in texts)
+            if saved_marker:
+                saved_seen = True
+                new_game_frames = 0
+                if position and "结束并结算" in texts:
+                    break
+            else:
+                # 漏检不是“没有存档”。只有连续读到明确的新开卡片才允许新开。
+                modes = self._card_modes(rows)
+                labels = {text.strip() for _, (text, confidence) in rows if confidence >= 0.8}
+                entry = "进入标准博弈" if modes == {"normal"} else "进入超频博弈"
+                start_visible = "开始对局" in labels or entry in labels
+                new_game_frames = new_game_frames + 1 if start_visible and len(modes) == 1 else 0
+                if new_game_frames >= 2 and not saved_seen:
+                    return False
+            if attempt < 3:
+                time.sleep(1)
+        else:
+            raise RuntimeError("未完整确认存档或新开入口，已保留进度并停止")
+
+        # 只读取右侧存档卡标题；左侧同时可见的模式导航不是当前对局模式。
+        modes = self._card_modes(rows)
+        if len(modes) != 1:
+            raise RuntimeError("未确认存档的实际博弈模式，已保留进度并停止")
+        self._saved_war_type = modes.pop()
+        self.resumed_saved_run = True
+        if auto.click_element_with_pos(position) is False:
+            raise RuntimeError("继续进度点击失败，已保留对局，不重新开局")
+        log.info(f"继续未结算对局（{self._saved_war_type}），沿用当前策略：{cfg.currencywars_strategy}")
+        if not self.wait_for_saved_war_resume():
+            raise RuntimeError("继续进度后未确认进入对局，已停止，不放弃或重新开局")
+        return True
+
+    def wait_for_saved_war_resume(self) -> bool:
+        deadline = time.monotonic() + 60
+        overview_clicked = False
+        while time.monotonic() < deadline:
+            if auto.find_element(("继续进度", "结束并结算"), "text", include=False):
+                time.sleep(2)
+                continue
+            if auto.find_element("./assets/images/screen/currency_wars/exit.png", "image", 0.9,
+                                 crop=(3 / 1920, 37 / 1080, 104 / 1920, 57 / 1080)):
+                return True
+            if auto.find_element(("投资环境", "请选择投资策略", "遭遇节点", "补给阶段"), "text", include=False):
+                return True
+            if self.check_battle_keepalive():
+                return True
+            position = auto.find_element("点击空白处继续", "text", include=False)
+            if position and not overview_clicked:
+                texts = [text for _, (text, confidence) in auto.ocr_result if confidence >= 0.8]
+                if sum("位面" in text for text in texts) >= 3:
+                    if auto.click_element_with_pos(position) is False:
+                        return False
+                    overview_clicked = True
+            time.sleep(2)
+        return False
 
     def wait_for_war_start(self) -> bool:
         """有限重试开始按钮，并确认进入开局界面后才交给任务主循环。"""
@@ -476,6 +568,9 @@ class CurrencyWars:
         self.forward_characters = []  # 重置前台角色
         self.backward_characters = []  # 重置后台角色
         self.prepare_characters = []  # 重置备战席角色
+        if self.resumed_saved_run:
+            self.character_info_cache.clear()
+        self._resume_state_pending = self.resumed_saved_run
         self.reset_tracked_characters()
         self.has_aglaea_three_star = False  # 重置阿格莱雅三星标志
         self.allow_buy_experience = False  # 重置允许购买经验标志
@@ -505,6 +600,8 @@ class CurrencyWars:
             try:
                 active = self.check_main_screen() is True
             except Exception as e:
+                if self.resumed_saved_run:
+                    self.abort_run(f"恢复对局状态识别失败，保留当前进度并停止：{e}")
                 log.error(f"货币战争主循环出现异常：{e}，尝试退出")
 
                 # 保存调试截图
@@ -607,12 +704,18 @@ class CurrencyWars:
                 self.check_festival_star_popup()
                 self.identify_current_stage()
                 if self.need_exit:
+                    if self.resumed_saved_run and not self.need_restart:
+                        self.abort_run("恢复对局阶段识别异常，保留当前进度并停止")
                     self.give_up_and_settle()
                     self.need_exit = False
                     return
                 if self.collect_reward() is False:
                     # 已识别备战界面；留待下一轮重试，不能直接购买或出战。
                     return True
+                if self._resume_state_pending:
+                    from tasks.weekly.currency_wars_resume import restore_resume_state
+                    restore_resume_state(self, auto, cfg)
+                    self._resume_state_pending = False
                 self.check_box()
                 self.check_character_status()
                 log.info(f"当前关卡阶段: {self.current_stage}")
@@ -907,7 +1010,7 @@ class CurrencyWars:
             #     time.sleep(1)
             #     money -= 1
 
-            if ((cfg.currencywars_type == "normal" and self.current_stage != "3-7") or (cfg.currencywars_type == "overclock" and self.current_stage != "3-5")) and self.current_level < 9:
+            if ((self.get_match_type() == "normal" and self.current_stage != "3-7") or (self.get_match_type() == "overclock" and self.current_stage != "3-5")) and self.current_level < 9:
                 break
             else:
                 if money >= 7 and (not self.has_tracked_character("瓦尔特") or not self.has_tracked_character("昔涟")):
@@ -1470,9 +1573,9 @@ class CurrencyWars:
         装备武器
         """
         if cfg.currencywars_fast_mode:
-            if ((cfg.currencywars_type == "normal"
+            if ((self.get_match_type() == "normal"
                  and self.current_stage not in ("1-9", "2-7", "3-7"))
-                    or (cfg.currencywars_type == "overclock"
+                    or (self.get_match_type() == "overclock"
                         and self.current_stage not in ("1-6", "2-5", "3-5"))):
                 log.info("当前为速通模式且非首领节点，跳过装备武器步骤")
                 return
@@ -2196,7 +2299,7 @@ class CurrencyWars:
             money = self.check_money()
             if money >= 4:
                 required_buy_times = None
-                if cfg.currencywars_type == "normal":
+                if self.get_match_type() == "normal":
                     need_exp_crop = (235 / 1920, 930 / 1080, 124 / 1920, 38 / 1080)
                     need_exp_text = auto.get_single_line_text(crop=need_exp_crop)
                     if need_exp_text and re.match(r"^\d+/\d+$", need_exp_text):

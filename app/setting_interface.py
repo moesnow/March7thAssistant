@@ -598,6 +598,12 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('标准博弈'): 'normal', tr('超频博弈'): 'overclock'}
         )
+        self.currencywarsResumeEnableCard = SwitchSettingCard1(
+            UiIcon.REFRESH,
+            tr('优先继续未结算对局'),
+            tr('启动时优先继续未结算对局；没有旧局则新开。\n恢复后沿用当前策略，其自动重开条件仍生效。'),
+            "currencywars_resume_enable"
+        )
         self.currencywarsBonusEnableCard = SwitchSettingCard1(
             UiIcon.DIAMOND,
             tr('自动执行位面饰品快速提取'),
@@ -2739,6 +2745,7 @@ class SettingInterface(ScrollArea):
         self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsPresetCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsResumeEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategyCard)
