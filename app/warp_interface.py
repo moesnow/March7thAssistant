@@ -2,10 +2,11 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QScroller, QScrollerProperties
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton, MessageBox
+from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton, MessageBox, ComboBox
 from .common.style_sheet import StyleSheet
 from .common.icon import UiIcon
-from .tools.warp_export import warpExport, WarpExport, detect_format, uigf_to_srgf_hkrpg, srgf_to_uigf_hkrpg
+from .tools.warp_export import warpExport, WarpExport, srgf_to_uigf_hkrpg
+from .tools.warp_import import prepare_import, save_import
 from utils import clipboard
 import json
 import os
@@ -137,47 +138,74 @@ class WarpInterface(ScrollArea):
             if not path:
                 return
 
-            with open(path, 'r', encoding='utf-8') as file:
-                config = json.load(file)
-                fmt = detect_format(config)
-                if fmt == "uigf":
-                    config = uigf_to_srgf_hkrpg(config)
-                elif fmt == "neither":
-                    raise ValueError("Invalid format")
-            warp = WarpExport(config)
-            warp.info['export_timestamp'] = int(time.time())
-            warp.info['export_app'] = "March7thAssistant"
+            # Preview validates the single account first. With no existing records,
+            # there is nothing to merge or overwrite, so do not interrupt the import.
+            plan = prepare_import(path, mode='replace')
+            if plan.existing_count or plan.existing_unreadable:
+                mode_dialog = MessageBox(
+                    tr('选择导入方式'),
+                    tr('默认合并会保留现有记录。只有希望用文件内容覆盖现有记录时，才选择强制替换。'),
+                    self.window()
+                )
+                mode_box = ComboBox(mode_dialog.widget)
+                mode_box.addItems([tr('安全合并（推荐）'), tr('强制替换现有记录')])
+                mode_dialog.textLayout.addWidget(mode_box)
+                mode_dialog.widget.setFixedHeight(mode_dialog.widget.height() + mode_box.sizeHint().height() + 12)
+                mode_dialog.yesButton.setText(tr('下一步'))
+                mode_dialog.cancelButton.setText(tr('取消'))
+                if not mode_dialog.exec():
+                    return
+                mode = 'replace' if mode_box.currentIndex() == 1 else 'merge'
+                plan = prepare_import(path, mode=mode)
+                if mode == 'merge':
+                    message_box = MessageBox(
+                        tr("确认导入抽卡记录"),
+                        tr("账号 UID：{uid}\n导入方式：保留已有记录，补充新记录，自动跳过重复内容。\n\n现有记录：{existing} 条\n文件记录：{incoming} 条\n新增记录：{added} 条\n重复记录：{duplicates} 条\n合并后：{total} 条")
+                        .format(uid=plan.data['info']['uid'], existing=plan.existing_count,
+                                incoming=plan.incoming_count, added=plan.added_count,
+                                duplicates=plan.duplicate_count, total=len(plan.data['list'])),
+                        self.window()
+                    )
+                else:
+                    message_box = MessageBox(
+                        tr('警告：替换现有抽卡记录'),
+                        tr('当前账号：{existing_uid}\n导入账号：{uid}\n导入方式：替换现有记录。\n\n现有记录数量：{existing}\n替换后记录数量：{total}\n\n此操作会用导入文件中的记录替换目前保存的全部记录。原有记录不会保留在当前列表中。\n\n确定要替换吗？')
+                        .format(uid=plan.data['info']['uid'], existing_uid=plan.existing_uid or tr('无法读取'),
+                                existing=tr('无法统计') if plan.existing_unreadable else plan.existing_count,
+                                total=len(plan.data['list'])),
+                        self.window()
+                    )
+                message_box.yesButton.setText(tr('确认替换') if mode == 'replace' else tr('确认合并'))
+                message_box.cancelButton.setText(tr('取消'))
+                if mode == 'replace':
+                    message_box.cancelButton.setFocus()
+                if not message_box.exec():
+                    return
+            plan.data['info']['export_timestamp'] = int(time.time())
+            plan.data['info']['export_app'] = "March7thAssistant"
             try:
                 with open("./assets/config/version.txt", 'r', encoding='utf-8') as file:
-                    version = file.read()
-            except Exception:
-                version = ""
-            warp.info['export_app_version'] = version
-            config = warp.export_data()
-            with open("./warp.json", 'w', encoding='utf-8') as file:
-                json.dump(config, file, ensure_ascii=False, indent=4)
+                    plan.data['info']['export_app_version'] = file.read().strip()
+            except OSError:
+                plan.data['info']['export_app_version'] = ""
+            save_import(plan)
+        except Exception as exc:
+            message_box = MessageBox(tr('导入失败'), str(exc), self.window())
+            message_box.cancelButton.hide()
+            message_box.yesButton.setText(tr('确定'))
+            message_box.exec()
+            return
 
-            self.setContent()
-
-            InfoBar.success(
-                title=tr('导入成功(＾∀＾●)'),
-                content="",
-                orient=Qt.Orientation.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-        except Exception:
-            InfoBar.warning(
-                title=tr('导入失败(╥╯﹏╰╥)'),
-                content="",
-                orient=Qt.Orientation.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
+        self.setContent()
+        InfoBar.success(
+            title=tr('导入成功(＾∀＾●)'),
+            content="",
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=5000,
+            parent=self
+        )
 
     def __onExportBtnClicked(self):
         try:

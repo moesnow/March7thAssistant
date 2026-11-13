@@ -6847,3 +6847,154 @@ msgstr "분신 창 열기"
 #: app/tools_interface.py:126
 msgid "分身正在运行，打开窗口可查看分身画面或注销分身"
 msgstr "분신이 실행 중입니다. 창을 열어 화면을 보거나 로그아웃할 수 있습니다"
+
+#: app/tools/warp_import.py:20
+msgid "抽卡记录格式无效。"
+msgstr "워프 기록 형식이 올바르지 않습니다."
+
+#: app/tools/warp_import.py:25
+msgid "仅支持单账号导入，请导出只包含一个星铁账号的文件。"
+msgstr "단일 계정만 가져올 수 있습니다. 스타레일 계정 하나만 포함된 파일을 내보내 주세요."
+
+#: app/tools/warp_import.py:36
+msgid "文件缺少有效的账号 UID，无法安全导入。"
+msgstr "파일에 유효한 계정 UID가 없어 안전하게 가져올 수 없습니다."
+
+#: app/tools/warp_import.py:42
+msgid "抽卡记录时区无效，无法安全合并。"
+msgstr "워프 기록의 시간대가 올바르지 않아 안전하게 병합할 수 없습니다."
+
+#: app/tools/warp_import.py:50
+msgid "抽卡记录缺少有效 ID 或必要字段。"
+msgstr "워프 기록에 유효한 ID 또는 필수 항목이 없습니다."
+
+#: app/tools/warp_import.py:53
+msgid "抽卡记录包含不支持的卡池或星级。"
+msgstr "워프 기록에 지원되지 않는 워프 종류 또는 등급이 포함되어 있습니다."
+
+#: app/tools/warp_import.py:55
+msgid "记录中的账号与文件账号不一致，已停止导入。"
+msgstr "기록의 계정이 파일의 계정과 일치하지 않아 가져오기를 중단했습니다."
+
+#: app/tools/warp_import.py:61
+msgid "抽卡记录时间无效。"
+msgstr "워프 기록의 날짜와 시간이 올바르지 않습니다."
+
+#: app/tools/warp_import.py:73
+msgid "相同记录 ID 的内容不一致，已停止导入。"
+msgstr "같은 기록 ID의 내용이 일치하지 않아 가져오기를 중단했습니다."
+
+#: app/tools/warp_import.py:97
+msgid "账号不一致：现有 UID {existing}，导入 UID {incoming}。已停止导入，原记录未修改。"
+msgstr ""
+"계정이 일치하지 않습니다. 기존 UID: {existing}, 가져올 UID: {incoming}. 가져오기를 중단했으며 기존 기록은 "
+"변경되지 않았습니다."
+
+#: app/tools/warp_import.py:100
+msgid "文件的语言或时区与现有记录不同，请统一后再导入。原记录未修改。"
+msgstr "파일의 언어 또는 시간대가 기존 기록과 다릅니다. 설정을 맞춘 후 다시 가져와 주세요. 기존 기록은 변경되지 않았습니다."
+
+#: app/tools/warp_import.py:114
+msgid "确认期间本地记录发生变化，请重新导入。"
+msgstr "확인 중에 로컬 기록이 변경되었습니다. 다시 가져와 주세요."
+
+#: app/tools/warp_import.py:133
+msgid "临时文件校验失败，原记录未修改。"
+msgstr "임시 파일 검증에 실패했습니다. 기존 기록은 변경되지 않았습니다."
+
+#: app/tools/warp_import.py:142
+msgid "备份校验失败，原记录未修改。"
+msgstr "백업 검증에 실패했습니다. 기존 기록은 변경되지 않았습니다."
+
+#: app/warp_interface.py:143
+msgid "确认导入抽卡记录"
+msgstr "워프 기록 가져오기 확인"
+
+#: app/warp_interface.py:144
+msgid ""
+"账号 UID：{uid}\n"
+"导入方式：保留已有记录，补充新记录，自动跳过重复内容。\n"
+"\n"
+"现有记录：{existing} 条\n"
+"文件记录：{incoming} 条\n"
+"新增记录：{added} 条\n"
+"重复记录：{duplicates} 条\n"
+"合并后：{total} 条"
+msgstr ""
+"계정 UID: {uid}\n"
+"방식: 기존 기록을 유지하고 새 기록을 추가하며 중복은 건너뜁니다.\n"
+"\n"
+"기존 기록: {existing}개\n"
+"파일 내 기록: {incoming}개\n"
+"새 기록: {added}개\n"
+"중복 기록: {duplicates}개\n"
+"병합 후: {total}개"
+
+#: app/warp_interface.py:150
+msgid "确认合并"
+msgstr "병합 확인"
+
+
+#: app/warp_interface.py:142
+msgid "选择导入方式"
+msgstr "가져오기 방식 선택"
+
+#: app/warp_interface.py:143
+msgid "默认合并会保留现有记录。只有希望用文件内容覆盖现有记录时，才选择强制替换。"
+msgstr "기본 병합은 기존 기록을 유지합니다. 파일 내용으로 기존 기록을 덮어쓰려는 경우에만 강제 교체를 선택하세요."
+
+#: app/warp_interface.py:147
+msgid "安全合并（推荐）"
+msgstr "안전한 병합 (권장)"
+
+#: app/warp_interface.py:147
+msgid "强制替换现有记录"
+msgstr "기존 기록 강제 교체"
+
+#: app/warp_interface.py:150
+msgid "下一步"
+msgstr "다음"
+
+#: app/warp_interface.py:167
+msgid "警告：替换现有抽卡记录"
+msgstr "경고: 기존 워프 기록 교체"
+
+#: app/warp_interface.py:168
+msgid ""
+"当前账号：{existing_uid}\n"
+"导入账号：{uid}\n"
+"导入方式：替换现有记录。\n"
+"\n"
+"现有记录数量：{existing}\n"
+"替换后记录数量：{total}\n"
+"\n"
+"此操作会用导入文件中的记录替换目前保存的全部记录。原有记录不会保留在当前列表中。\n"
+"\n"
+"确定要替换吗？"
+msgstr ""
+"현재 계정: {existing_uid}\n"
+"가져올 계정: {uid}\n"
+"방식: 기존 기록을 교체합니다.\n"
+"\n"
+"기존 기록 수: {existing}\n"
+"교체 후 기록 수: {total}\n"
+"\n"
+"현재 저장된 모든 기록을 가져올 파일의 기록으로 교체합니다. 기존 기록은 현재 목록에 남지 않습니다.\n"
+"\n"
+"교체하시겠습니까?"
+
+#: app/warp_interface.py:173
+msgid "确认替换"
+msgstr "교체 확인"
+
+#: app/tools/warp_import.py:105
+msgid "现有记录无法读取，不能合并。请重新导入并选择替换现有记录。"
+msgstr "기존 기록을 읽을 수 없어 병합할 수 없습니다. 다시 가져와서 기존 기록 교체를 선택하세요."
+
+#: app/warp_interface.py:173
+msgid "无法读取"
+msgstr "읽을 수 없음"
+
+#: app/warp_interface.py:174
+msgid "无法统计"
+msgstr "알 수 없음"
