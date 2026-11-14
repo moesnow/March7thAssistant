@@ -86,6 +86,7 @@ class Unit:
     stars: int | None = None
     output: bool = False
     equipment: int | None = None
+    has_halo: bool = False
 
     @property
     def is_output(self) -> bool:
@@ -250,13 +251,13 @@ def _open_field_count(board: Board) -> int:
     return fixed + min(front + back - fixed, flexible)
 
 
-def can_move(board: Board, source: Slot, target: Slot) -> bool:
+def can_move(board: Board, source: Slot, target: Slot, *, replacing_same_name=False) -> bool:
     unit = source.unit
     if (not source.occupied or source.blocked or unit is None or unit.name in SPECIAL
             or target.occupied or target.blocked):
         return False
     if target.zone == "bench":
-        return source.zone != "bench"
+        return source.zone != "bench" and (not unit.has_halo or replacing_same_name)
     if not _can_use_zone(unit, target.zone, board.core):
         return False
     if source.zone == "bench":
@@ -272,24 +273,11 @@ def _empty(slot: Slot) -> Slot:
     return replace(slot, occupied=False, unit=None)
 
 
-def stronger_bench_core(board: Board, deployed: Unit) -> Slot | None:
-    if deployed.name != CORE or deployed.stars is None:
-        return None
-    return max(
-        (slot for slot in board.slots if slot.zone == "bench" and slot.occupied and not slot.blocked and slot.unit
-         and slot.unit.name == CORE and _can_use_zone(slot.unit, "front")
-         and slot.unit.stars is not None and slot.unit.stars > deployed.stars),
-        key=lambda slot: slot.unit.stars, default=None,
-    )
-
-
 def stronger_bench_copy(board: Board, deployed: Slot, *, preserve_gear=True) -> Slot | None:
     unit = deployed.unit
-    if unit is None or deployed.blocked or unit.name in SPECIAL:
+    if unit is None or deployed.blocked or unit.name in SPECIAL or unit.stars is None or unit.equipment is None:
         return None
-    if board.lineup is None:
-        return stronger_bench_core(board, unit) if deployed.zone == "front" else None
-    if unit.stars is None or unit.equipment is None:
+    if board.lineup is None and (deployed.zone != "front" or unit.name != board.core):
         return None
     return max(
         (slot for slot in board.slots if slot.zone == "bench" and slot.occupied and not slot.blocked and slot.unit
@@ -381,7 +369,7 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
         for deployed in sorted(board.field, key=lambda s: s.unit is not None and s.unit.name == board.core,
                                reverse=True):
             if incoming := stronger_bench_copy(board, deployed):
-                if can_move(board, deployed, spare):
+                if can_move(board, deployed, spare, replacing_same_name=True):
                     return ((deployed, spare), (incoming, _empty(deployed)))
     if not overflow and (positioning := _front_lead_moves(board, front, spare)):
         return positioning
@@ -456,7 +444,8 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
             empty = next((s for s in row if not s.occupied and not s.blocked), None)
             for victim in board.field:
                 unit = victim.unit
-                if unit is None or victim.blocked or unit.name in SPECIAL or unit.name in (board.core, BACK_LEAD):
+                if (unit is None or unit.name in (board.core, BACK_LEAD)
+                        or not can_move(board, victim, spare)):
                     continue
                 if empty is None and victim.zone != zone:
                     continue

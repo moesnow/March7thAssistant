@@ -782,7 +782,9 @@ class Frame:
     def card_stars(self, slot: Slot, *, separate_glow=False) -> int | None:
         x, y = slot.point
         radius = 39 if separate_glow else 34
-        img = self.crop((x - radius, y + 30, x + radius, y + 51)).astype(np.int16)
+        # 选中或刚移动的前台卡会上抬，保留星标的两种高度。
+        top = y + (18 if slot.zone == "front" else 30)
+        img = self.crop((x - radius, top, x + radius, y + 51)).astype(np.int16)
         r, g, b = img.transpose(2, 0, 1)
         # 只取星标的高亮核心，分离相邻星星的光晕。
         red_floor = 232 if separate_glow else 223
@@ -1000,7 +1002,9 @@ class Frame:
         return None
 
     def disassembly_tool(self) -> Point | None:
-        return self.match("screen/currency_wars/s2_wrench.png", (1540, 111, 1890, 206), 0.82)
+        area = (1540, 111, 1890, 206)
+        return (self.match("screen/currency_wars/s2_wrench.png", area, 0.82)
+                or self.match("screen/currency_wars/s2_precision_wrench.png", area, 0.82))
 
     def inventory_equipment(self) -> tuple[tuple[Point, str | None], ...]:
         result = []

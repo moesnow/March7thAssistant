@@ -172,6 +172,28 @@ def test_relic_bag_navigation_keeps_menu_entry_untouched(monkeypatch):
 
 
 
+@pytest.mark.parametrize("initial_screen", ["unknown", "guide3"])
+def test_navigation_disables_autotry_on_initial_recognition_and_retry(monkeypatch, initial_screen):
+    screen, game = _build_screen(monkeypatch, ["main", initial_screen])
+
+    if initial_screen == "guide3":
+        original = screen.perform_operations
+
+        def transition(operations):
+            original(operations)
+            game.stack.append("unknown")
+
+        monkeypatch.setattr(screen, "perform_operations", transition)
+        monkeypatch.setattr(screen, "get_timeout_operations", lambda *_: [])
+
+    with pytest.raises(RuntimeError, match="无法识别当前游戏界面"):
+        screen.change_to("bag_relicset", autotry=False)
+
+    assert game.state == "unknown"
+    # 从指南出发时，只有作为已识别路线的一次 Esc。
+    assert game.esc_transitions == ([("guide3", "main")] if initial_screen == "guide3" else [])
+
+
 def test_background_window_errors_are_not_swallowed_as_unmatched(monkeypatch):
     """后台模式下窗口持续不可用或游戏已退出：界面识别不能把它当作“未匹配”吞掉后反复重试。"""
     screen, _game = _build_screen(monkeypatch, MENU_ENTRY_STACK)

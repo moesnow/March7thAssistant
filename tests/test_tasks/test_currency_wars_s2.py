@@ -31,7 +31,7 @@ def slot(zone, index, unit=None, *, occupied=False):
                        occupied or unit is not None, unit)
 
 
-CORE = policy.Unit("那刻夏", True, False, 2)
+CORE = policy.Unit("那刻夏", True, False, 2, equipment=0)
 BAILU = policy.Unit("白露", False, True, 1)
 CER = policy.Unit("刻律德菈", False, True, 1)
 FILLER = policy.Unit("瓦尔特", True, True, 1)
@@ -174,7 +174,7 @@ def test_locked_employee_is_not_a_deployable_output_upgrade_or_bench_replacement
     only_locked = board(low, front, locked, spare, used=1, capacity=1, gold=30)
     assert not only_locked.core_upgraded
     assert not policy.should_buy_exp(only_locked, 4)
-    assert policy.stronger_bench_core(only_locked, low.unit) is None
+    assert policy.stronger_bench_copy(only_locked, low) is None
     assert not policy.can_move(only_locked, locked, front)
     assert policy.overflow_reserves(only_locked) == ()
     needs_damage = board(front, locked, damage, spare, used=0, capacity=1)
@@ -439,9 +439,9 @@ def ten_employee_board(front, back, bench, **kwargs):
     )
 
 
-def apply_deployment(board_before, move):
+def apply_deployment(board_before, move, *, replacing_same_name=False):
     source, target = move
-    assert policy.can_move(board_before, source, target)
+    assert policy.can_move(board_before, source, target, replacing_same_name=replacing_same_name)
     changed = tuple(
         replace(current, occupied=False, unit=None) if current == source
         else replace(current, occupied=True, unit=source.unit) if current == target
@@ -628,6 +628,29 @@ def test_same_name_core_swap_requires_a_known_upgrade_and_a_free_buffer(field_st
               used=2, capacity=2, level=4, exp=(0, 4))
     assert policy.deployment(b) == ()
     assert not policy.should_buy_exp(b, 4)
+
+
+@pytest.mark.parametrize(("equipment", "halo", "eligible"), [
+    (0, False, True), (1, False, False), (None, False, False), (0, True, True), (1, True, False),
+])
+def test_normal_core_replacement_requires_gear_and_allows_same_name_halo_inheritance(equipment, halo, eligible):
+    active = slot("front", 0, replace(CORE, stars=1, equipment=equipment, has_halo=halo))
+    incoming = slot("bench", 0, CORE)
+    spare = slot("bench", 1)
+    b = board(active, incoming, spare, used=1, capacity=1)
+    if eligible:
+        assert policy.deployment(b)[0] == (active, spare)
+    else:
+        assert policy.deployment(b) == ()
+
+
+def test_halo_holder_is_kept_even_if_a_different_employee_has_higher_priority():
+    active = slot("front", 0, replace(FILLER, has_halo=True))
+    incoming = slot("bench", 0, policy.Unit("花火", True, False, 2))
+    spare = slot("bench", 1)
+    b = board(active, incoming, spare, used=1, capacity=1)
+    assert policy.deployment(b) == ()
+    assert policy.deployment(replace(b, slots=(replace(active, unit=FILLER), incoming, spare)))
 
 
 def test_core_swap_rechecks_the_upgrade_before_removing_the_original(world):
@@ -1295,6 +1318,7 @@ def test_core_swap_rechecks_both_stars_and_never_duplicates_an_unconfirmed_move(
     before, after_first, after_second = map(image, (b, middle, final))
     changed = image(replace(b, slots=(active, replace(incoming, unit=active.unit), spare)))
     state = drive(monkeypatch, world, before)
+    world.war.deployment_moves = (first, second)
     if outcome == "stale":
         state.frame = changed
         with pytest.raises(task.CurrencyWarsActionUnready, match="已尝试 0 次"):
@@ -1315,6 +1339,65 @@ def test_core_swap_rechecks_both_stars_and_never_duplicates_an_unconfirmed_move(
             world.war._move(after_first, middle, *second)
         assert world.auto.drag_mouse.call_count == 4 and state.frame is after_first
         assert not state.clicks
+
+
+def test_same_name_move_rechecks_gear_and_halo_before_any_input(monkeypatch, world):
+    active = slot("front", 0, replace(CORE, stars=1))
+    incoming, spare = slot("bench", 0, CORE), slot("bench", 1)
+    b = board(active, incoming, spare, used=1, capacity=1)
+    frame = page(Page.BOARD, stage=b.stage, capacity=(1, 1))
+    monkeypatch.setattr(frame, "slot_occupied", lambda point: point in {active.point, incoming.point})
+    monkeypatch.setattr(frame, "card_stars", lambda slot: slot.unit.stars)
+    state = drive(monkeypatch, world, frame)
+    for halo, equipped in ((True, 0), (False, 1)):
+        world.war.deployment_moves = () if halo else policy.deployment(b)
+        monkeypatch.setattr(frame, "assigned_halo", lambda _: halo)
+        monkeypatch.setattr(frame, "card_equipment", lambda slot: equipped if slot == active else 0)
+        with pytest.raises(task.CurrencyWarsActionUnready):
+            world.war._move(frame, b, active, spare)
+    world.auto.drag_mouse.assert_not_called()
+    assert not state.clicks
+
+
+def test_same_name_replacement_confirms_halo_after_the_new_copy_lands(monkeypatch, world):
+    active = slot("front", 0, replace(CORE, stars=1, has_halo=True))
+    incoming, spare = slot("bench", 0, CORE), slot("bench", 1)
+    b = board(active, incoming, spare, used=1, capacity=1)
+    first, second = policy.deployment(b)
+    world.war.deployment_moves = (first, second)
+    world.war.held_deployment = first
+
+    def frame_of(team, *, halo=False):
+        frame = page(Page.BOARD, stage=team.stage, capacity=(team.used, team.capacity))
+        occupants = {s.point: s.unit.stars for s in team.slots if s.unit}
+        monkeypatch.setattr(frame, "slot_occupied", lambda point: point in occupants)
+        monkeypatch.setattr(frame, "card_stars", lambda s: occupants.get(s.point))
+        monkeypatch.setattr(frame, "assigned_halo", lambda point: halo and point == active.point)
+        monkeypatch.setattr(frame, "slot_portrait_matches", lambda *_: True)
+        return frame
+
+    middle = apply_deployment(b, first, replacing_same_name=True)
+    final = apply_deployment(middle, second)
+    before = frame_of(b, halo=True)
+    waiting = frame_of(final)
+    confirmed = frame_of(final, halo=True)
+    benched = frame_of(middle)
+
+    def next_observation(state):
+        if state.frame is waiting:
+            state.frame = confirmed if observed_missing else waiting
+            observed_missing.append(state.frame)
+        return state.frame
+
+    observed_missing = []
+    state = drive(monkeypatch, world, before, after_capture=next_observation)
+    world.auto.drag_mouse.side_effect = lambda *a, **k: setattr(state, "frame", benched) or True
+    assert world.war._move(before, b, *first) is benched
+    world.war.deployment_moves = (second,)
+    world.auto.drag_mouse.side_effect = lambda *a, **k: setattr(state, "frame", waiting) or True
+    assert world.war._move(benched, middle, *second) is confirmed
+    assert observed_missing == [waiting, confirmed]
+    assert world.auto.drag_mouse.call_count == 2
 
 
 @pytest.mark.parametrize("replaced", (False, True))
@@ -3567,17 +3650,45 @@ def test_high_halo_can_spend_a_verified_paid_reroll_below_low_rank_reserve(monke
     assert [point for _, point in state.clicks] == [refresh[1:], new[1:], confirm[1:]]
 
 
-def test_high_replacement_can_recover_gear_before_moving_without_touching_a_halo(monkeypatch, world, high_lineup):
-    world.war.lineup = high_lineup
-    source = slot("back", 0, replace(BAILU, equipment=1))
-    target = slot("bench", 0, replace(BAILU, stars=2, equipment=0))
-    b = board(slot("front", 0, CORE), source, target, slot("bench", 1), lineup=high_lineup, used=2, capacity=2)
+@pytest.mark.parametrize("lift", (0, 12))
+def test_front_card_star_recognizes_the_raised_position(lift):
+    image = CANVAS.copy()
+    card = slot("front", 0, CORE)
+    x, y = card.point
+    draw = ImageDraw.Draw(image)
+    for dx in (-8, 8):
+        center = x + dx, y + 39 - lift
+        draw.polygon([(center[0], center[1] - 6), (center[0] + 6, center[1]),
+                      (center[0], center[1] + 6), (center[0] - 6, center[1])], fill=(65, 224, 246))
+    frame = Frame(image, ())
+    assert frame.card_stars(card) == 2
+    assert frame.card_stars(card, separate_glow=True) == 2
+
+
+@pytest.mark.parametrize("icon", ("s2_wrench.png", "s2_precision_wrench.png"))
+def test_both_disassembly_wrenches_are_recognized(icon):
+    image = CANVAS.copy()
+    image.paste(Image.open(f"assets/images/screen/currency_wars/{icon}"), (1818, 138))
+    point = Frame(image, ()).disassembly_tool()
+    assert point and 1818 < point[0] < 1880 and 138 < point[1] < 190
+    assert Frame(CANVAS, ()).disassembly_tool() is None
+
+
+@pytest.mark.parametrize("high", [False, True])
+def test_same_name_replacement_can_recover_gear_even_with_a_halo(monkeypatch, world, high_lineup, high):
+    lineup = high_lineup if high else None
+    world.war.lineup = lineup
+    unit = BAILU if high else replace(CORE, stars=1)
+    source = slot("back" if high else "front", 0, replace(unit, equipment=1, has_halo=not high))
+    target = slot("bench", 0, replace(unit, stars=2, equipment=0))
+    other = slot("front", 0, CORE) if high else slot("back", 0, CER)
+    b = board(other, source, target, slot("bench", 1), lineup=lineup, used=2, capacity=2)
     old = page(Page.BOARD, stage=b.stage, capacity=(2, 2))
     new = page(Page.BOARD, stage=b.stage, capacity=(2, 2))
     for frame in (old, new):
         monkeypatch.setattr(frame, "disassembly_tool", lambda: (1844, 163))
         monkeypatch.setattr(frame, "slot_occupied", lambda _: True)
-        monkeypatch.setattr(frame, "assigned_halo", lambda _: False)
+        monkeypatch.setattr(frame, "assigned_halo", lambda _: not high)
         monkeypatch.setattr(frame, "slot_portrait_matches", lambda *_: True)
         monkeypatch.setattr(frame, "card_stars", lambda s, **_: s.unit.stars)
     monkeypatch.setattr(old, "inventory_items", lambda: ())
@@ -3590,8 +3701,8 @@ def test_high_replacement_can_recover_gear_before_moving_without_touching_a_halo
     world.auto.drag_mouse.assert_called_once()
     assert world.war._disassemble_for_upgrade(new, b) is None
     world.war.disassembly_attempted.clear()
-    monkeypatch.setattr(old, "assigned_halo", lambda _: True)
-    assert world.war._disassemble_for_upgrade(old, b) is None
+    without_copy = replace(b, slots=tuple(slot for slot in b.slots if slot != target))
+    assert world.war._disassemble_for_upgrade(old, without_copy) is None
     world.auto.drag_mouse.assert_called_once()
 
 

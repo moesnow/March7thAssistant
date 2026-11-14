@@ -573,9 +573,16 @@ class CurrencyWars:
                         stars = self._card_stars(frame, slot)
             else:
                 name = None
-            equipped = frame.card_equipment(slot) if name and self.lineup else None
-            unit = strategy.Unit(name, front, back, stars, output, equipped) if name else None
+            if not name:
+                scanned.append(slot)
+                continue
+            equipped = frame.card_equipment(slot) if self.lineup or name == strategy.CORE else None
+            unit = strategy.Unit(name, front, back, stars, output, equipment=equipped)
             scanned.append(replace(slot, unit=unit))
+        # 读详情会多次切换画面，统一从返回棋盘后的同一帧确认光环。
+        scanned = [replace(slot, unit=replace(slot.unit, has_halo=True))
+                   if slot.zone == "front" and slot.unit and frame.assigned_halo(slot.point) else slot
+                   for slot in scanned]
         hp = frame.squad_health if self.lineup else frame.number(ui.BOARD_HP, 150)
         board = strategy.Board(
             frame.stage, frame.gold, hp, occupied, capacity,
@@ -600,6 +607,12 @@ class CurrencyWars:
                               "未退出角色详情", seconds=7)
 
     def _move(self, frame, board, source, destination, *, restore=False):
+        sends_to_bench = destination.zone == "bench"
+        held = self.held_deployment
+        restores_halo = bool(held and source.zone == "bench" and destination.zone == "front"
+                             and held[0].unit.has_halo and held[0].unit.name == source.unit.name
+                             and held[0].point == destination.point)
+
         def source_ready(f):
             return (f.slot_occupied(source.point)
                     and (source.zone != "bench" or source.point not in f.locked_bench_slots))
@@ -609,22 +622,19 @@ class CurrencyWars:
                     and (destination.zone != "bench"
                          or destination.point not in f.black_hole_slots | f.locked_bench_slots))
 
+        upgrade = strategy.stronger_bench_copy(board, source) if sends_to_bench else None
+        next_move = self.deployment_moves[1:2]
+        replacing_same_name = bool(upgrade and next_move and next_move[0][0] == upgrade
+                                   and next_move[0][1].point == source.point)
         if (frame.stage != board.stage or frame.capacity != (board.used, board.capacity)
-                or not strategy.can_move(board, source, destination)
+                or not strategy.can_move(board, source, destination, replacing_same_name=replacing_same_name)
                 or not source_ready(frame) or not destination_free(frame)):
             raise CurrencyWarsActionUnready("角色移动前的卡位或部署人数已变化")
         wanted = board.used + int(source.zone == "bench") - int(destination.zone == "bench")
         portrait = frame.slot_mark(source.point)
         core = source.unit.name == board.core
-        upgrade = None
-        if destination.zone == "bench":
-            upgrade = strategy.stronger_bench_copy(board, source)
-            if core and upgrade is None:
-                raise CurrencyWarsActionUnready("移出核心前未确认备战席有可部署的高星同名角色")
-            if board.lineup and upgrade is not None:
-                planned = self.deployment_moves[1:2]
-                if not planned or planned[0][0] != upgrade:
-                    raise CurrencyWarsActionUnready("移出角色前未核对高星替换计划")
+        if sends_to_bench and (core or (board.lineup and upgrade is not None)) and not replacing_same_name:
+            raise CurrencyWarsActionUnready("移出角色前未核对高星同名替换计划")
         upgrade_portrait = frame.slot_mark(upgrade.point) if upgrade else None
         for employee, mark in ((source, portrait), (upgrade, upgrade_portrait)):
             if employee is None:
@@ -642,10 +652,13 @@ class CurrencyWars:
         overflow_deploy = frame.page == Page.BENCH_FULL and source.zone == "bench" and destination.zone != "bench"
 
         def available(f):
+            if (sends_to_bench and source.zone == "front" and not replacing_same_name
+                    and f.assigned_halo(source.point)):
+                return None
             if upgrade and (not f.slot_occupied(upgrade.point) or upgrade.point in f.locked_bench_slots
                             or self._card_stars(f, upgrade) != upgrade.unit.stars
-                            or board.lineup is not None and (f.card_equipment(upgrade) != upgrade.unit.equipment
-                                or f.card_equipment(source) != source.unit.equipment)
+                            or f.card_equipment(upgrade) != upgrade.unit.equipment
+                            or f.card_equipment(source) != source.unit.equipment
                             or cv2.absdiff(f.slot_mark(upgrade.point), upgrade_portrait).mean() > 20):
                 return None
             if (f.capacity == (board.used, board.capacity) and source_ready(f)
@@ -662,8 +675,10 @@ class CurrencyWars:
             if (not board_visible or f.stage != board.stage or f.capacity != (wanted, board.capacity)
                     or not f.slot_occupied(destination.point)):
                 return False
+            if restores_halo and not f.assigned_halo(destination.point):
+                return False
             if not f.slot_occupied(source.point):
-                return not restore or f.slot_portrait_matches(destination.point, portrait)
+                return not (restore or restores_halo) or f.slot_portrait_matches(destination.point, portrait)
             if source.zone != "bench" or cv2.absdiff(f.slot_mark(source.point), portrait).mean() <= 27:
                 return False
             # 原备战位可能马上被候补角色或占位图案填入。普通棋盘还要复核目标格的肖像。
@@ -1166,28 +1181,26 @@ class CurrencyWars:
         return frame
 
     def _disassemble_for_upgrade(self, frame, board):
-        if not board.lineup or not board.has_bench_space or not frame.disassembly_tool():
+        if not board.has_bench_space or not frame.disassembly_tool():
             return None
         for source in board.field:
             unit = source.unit
             if unit is None or not unit.equipment or (board.stage, unit.name) in self.disassembly_attempted:
                 continue
-            if frame.assigned_halo(source.point):
-                # 星级替换不会复制局内主角光环。
-                continue
+            # 正式服同名换卡可继承主角光环，装备仍需先卸回物品栏。
             target = strategy.stronger_bench_copy(board, source, preserve_gear=False)
             if target is None or target.unit.equipment >= unit.equipment:
                 continue
             source_face = frame.slot_mark(source.point)
             target_face = frame.slot_mark(target.point)
-            gear = len(frame.inventory_items())
+            items_before = frame.inventory_items()
             self.disassembly_attempted.add((board.stage, unit.name))
 
             def positions(f):
                 tool = f.disassembly_tool()
-                if (tool and f.capacity == (board.used, board.capacity) and not f.assigned_halo(source.point)
+                if (tool and f.capacity == (board.used, board.capacity)
                         and f.slot_occupied(source.point) and f.slot_occupied(target.point)
-                        and f.card_equipment(source) == unit.equipment
+                        and f.card_equipment(source) > target.unit.equipment
                         and self._card_stars(f, source) == unit.stars
                         and self._card_stars(f, target) == target.unit.stars
                         and f.slot_portrait_matches(source.point, source_face)
@@ -1199,7 +1212,8 @@ class CurrencyWars:
                 return f.page in PREP_OVERLAYS or (f.page == Page.BOARD and f.stage == board.stage
                         and f.slot_portrait_matches(source.point, source_face)
                         and f.card_equipment(source) == 0
-                        and len(f.inventory_items()) > gear)
+                        and (len(f.inventory_items()) > len(items_before)
+                             or self._equipment_inventory_changed(frame, f)))
 
             try:
                 updated = self._action(frame, positions, lambda f, a, b: self._drag(f, a, b), transferred,
@@ -1210,8 +1224,9 @@ class CurrencyWars:
                 if (current is None or current.page != Page.BOARD or current.stage != board.stage
                         or current.capacity != (board.used, board.capacity)
                         or not current.slot_portrait_matches(source.point, source_face)
-                        or current.card_equipment(source) != unit.equipment
-                        or len(current.inventory_items()) != gear):
+                        or not current.card_equipment(source)
+                        or current.inventory_items() != items_before
+                        or self._equipment_inventory_changed(frame, current)):
                     raise
                 log.warning(f"{unit.name}拆装未生效，保留原装备和阵容")
                 return current
@@ -1219,6 +1234,15 @@ class CurrencyWars:
                 log.info(f"{unit.name}低星版本的装备已返回物品栏，重新规划上阵")
             return updated
         return None
+
+    @staticmethod
+    def _equipment_inventory_changed(before, after):
+        # 装备放满后会向左扩列，右列格数可能不变。对比可见装备栏内的稳定图像。
+        area = (1650, 219, 1880, 682)
+        before_inventory, after_inventory = before.crop(area), after.crop(area)
+        if before_inventory.shape != after_inventory.shape:
+            return False
+        return cv2.absdiff(before_inventory, after_inventory).mean() > 1.8
 
     def _equip_team(self, frame, board):
         candidates = [slot for slot in board.field if slot.unit and slot.unit.name not in strategy.SPECIAL]
@@ -1619,7 +1643,7 @@ class CurrencyWars:
                 if not board.has_bench_space and move[0].zone == "bench":
                     shop_needed = True
                 continue
-            if board.lineup and (stage, "拆装") not in self.deferred_operations:
+            if (stage, "拆装") not in self.deferred_operations:
                 try:
                     disassembled = self._disassemble_for_upgrade(frame, board)
                 except CurrencyWarsRecoverable as error:
