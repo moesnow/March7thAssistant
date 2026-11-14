@@ -46,57 +46,41 @@ class TestStarRailSettingWriteRegistryValue:
 
 
 class TestStarRailSettingGetServer:
-    def test_cn_server(self):
-        from utils.registry.star_rail_setting import get_server_by_registry
-        mock_key = MagicMock()
-        with patch("utils.registry.star_rail_setting.winreg") as mock_winreg:
-            mock_winreg.HKEY_CURRENT_USER = 0
-            mock_winreg.OpenKey.return_value = mock_key
-            result = get_server_by_registry()
-            assert result == "cn"
-
-    def test_global_server(self):
-        from utils.registry.star_rail_setting import get_server_by_registry
-        with patch("utils.registry.star_rail_setting.winreg") as mock_winreg:
-            mock_winreg.HKEY_CURRENT_USER = 0
-            call_count = [0]
-            def open_key_side_effect(key, path):
-                call_count[0] += 1
-                if call_count[0] == 1:
-                    raise FileNotFoundError
-                return MagicMock()
-            mock_winreg.OpenKey.side_effect = open_key_side_effect
-            result = get_server_by_registry()
-            assert result == "global"
-
-    def test_no_server(self):
-        from utils.registry.star_rail_setting import get_server_by_registry
-        with patch("utils.registry.star_rail_setting.winreg") as mock_winreg:
-            mock_winreg.HKEY_CURRENT_USER = 0
-            mock_winreg.OpenKey.side_effect = FileNotFoundError
-            result = get_server_by_registry()
-            assert result is None
+    @pytest.mark.parametrize("path, expected", [
+        ("cn", "cn"), ("global", "global"), (None, None),
+    ])
+    def test_server_matches_selected_game(self, path, expected):
+        from utils.registry import star_rail_setting as registry
+        selected = {"cn": registry.registry_key_path_cn,
+                    "global": registry.registry_key_path_oversea, None: None}[path]
+        with patch.object(registry, "get_registry_key_path", return_value=selected):
+            assert registry.get_server_by_registry() == expected
 
 
 class TestStarRailSettingGetRegistryKeyPath:
-    def test_cn_path(self):
-        from utils.registry.star_rail_setting import get_registry_key_path
-        with patch("utils.registry.star_rail_setting.winreg") as mock_winreg:
-            mock_winreg.HKEY_CURRENT_USER = 0
-            mock_winreg.OpenKey.return_value = MagicMock()
-            result = get_registry_key_path()
-            assert "miHoYo" in result
-
-    def test_no_path(self):
-        from utils.registry.star_rail_setting import get_registry_key_path
-        with patch("utils.registry.star_rail_setting.winreg") as mock_winreg:
-            mock_winreg.HKEY_CURRENT_USER = 0
-            mock_winreg.OpenKey.side_effect = FileNotFoundError
-            result = get_registry_key_path()
-            assert result is None
+    @pytest.mark.parametrize("metadata, expected", [
+        (("miHoYo", "崩坏：星穹铁道"), "cn"),
+        (("Cognosphere", "Star Rail"), "global"),
+        (("unknown", "game"), None),
+    ])
+    def test_selected_game_metadata(self, tmp_path, metadata, expected):
+        from utils.registry import star_rail_setting as registry
+        exe = tmp_path / "StarRail.exe"
+        data = tmp_path / "StarRail_Data"
+        data.mkdir()
+        (data / "app.info").write_text("\n".join(metadata), encoding="utf-8")
+        assert registry.registry_path_for_game(str(exe)) == {
+            "cn": registry.registry_key_path_cn,
+            "global": registry.registry_key_path_oversea, None: None,
+        }[expected]
 
 
 class TestStarRailSettingResolution:
+    @pytest.fixture(autouse=True)
+    def registry_path(self):
+        with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="test-path"):
+            yield
+
     def test_get_resolution_valid(self):
         from utils.registry.star_rail_setting import get_game_resolution
         data = json.dumps({"width": 1920, "height": 1080, "isFullScreen": True}) + "\x00"
@@ -126,6 +110,11 @@ class TestStarRailSettingResolution:
 
 
 class TestStarRailSettingFps:
+    @pytest.fixture(autouse=True)
+    def registry_path(self):
+        with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="test-path"):
+            yield
+
     def test_set_fps_preserves_other_settings(self):
         from utils.registry.star_rail_setting import set_game_fps
         data = b'{"FPS": 60, "Quality": 3}\x00'
@@ -159,14 +148,14 @@ class TestStarRailSettingSetters:
     def test_set_auto_battle(self):
         from utils.registry.star_rail_setting import set_auto_battle_open_setting
         with patch("utils.registry.star_rail_setting.write_registry_value") as mock_write:
-            with patch("utils.registry.star_rail_setting.registry_key_path", "some\\path"):
+            with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="some\\path"):
                 set_auto_battle_open_setting(True)
                 mock_write.assert_called_once()
 
     def test_set_resolution(self):
         from utils.registry.star_rail_setting import set_game_resolution
         with patch("utils.registry.star_rail_setting.write_registry_value") as mock_write:
-            with patch("utils.registry.star_rail_setting.registry_key_path", "some\\path"):
+            with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="some\\path"):
                 set_game_resolution(1920, 1080, True)
                 mock_write.assert_called_once()
                 written_data = mock_write.call_args[0][3]
@@ -219,19 +208,7 @@ class TestGameAutoHdr:
 
 
 class TestGameAccount:
-    def test_get_reg_path_cn(self):
+    def test_get_reg_path_uses_selected_game(self):
         from utils.registry.gameaccount import get_reg_path
-        mock_key = MagicMock()
-        with patch("utils.registry.gameaccount.winreg") as mock_winreg:
-            mock_winreg.HKEY_CURRENT_USER = 0
-            mock_winreg.OpenKey.return_value = mock_key
-            result = get_reg_path()
-            assert "miHoYo" in result
-
-    def test_get_reg_path_none(self):
-        from utils.registry.gameaccount import get_reg_path
-        with patch("utils.registry.gameaccount.winreg") as mock_winreg:
-            mock_winreg.HKEY_CURRENT_USER = 0
-            mock_winreg.OpenKey.side_effect = FileNotFoundError
-            result = get_reg_path()
-            assert result is None
+        with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="selected-path"):
+            assert get_reg_path() == "selected-path"

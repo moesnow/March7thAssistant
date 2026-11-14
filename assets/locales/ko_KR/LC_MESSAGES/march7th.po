@@ -7961,3 +7961,23 @@ msgstr "탐환의 신의 머리"
 #: assets/config/character_names.json
 msgid "星神★阿哈·群星乐透"
 msgstr "에이언즈★아하•별무리 로또"
+
+#: app/sub_interfaces/accounts_interface.py:80
+msgid "账户导出失败，请确认已登录游戏后重试。"
+msgstr "계정을 내보내지 못했습니다. 게임에 로그인했는지 확인한 후 다시 시도해 주세요."
+
+#: app/sub_interfaces/accounts_interface.py:166
+msgid "账户导入失败，请重试。"
+msgstr "계정을 가져오지 못했습니다. 다시 시도해 주세요."
+
+#: app/sub_interfaces/accounts_interface.py:171
+msgid "这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"
+msgstr "이 게임의 로그인 정보와 그래픽 품질, 해상도 등의 설정이 지워집니다. 계속하시겠습니까?"
+
+#: app/sub_interfaces/accounts_interface.py:177
+msgid "清除失败，请重试。"
+msgstr "지우지 못했습니다. 다시 시도해 주세요."
+
+#: app/sub_interfaces/accounts_interface.py:179
+msgid "游戏登录信息和设置已清除"
+msgstr "게임 로그인 정보와 설정을 지웠습니다"

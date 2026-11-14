@@ -49,7 +49,7 @@ def dump_current_account():
     gamereg_uid_value = gamereg_uid()
     if gamereg_uid_value is None:
         log.warning("No account found (dump)")
-        return
+        raise ValueError("未找到已登录的游戏账号")
     account_reg_file = os.path.join(data_dir, f"{gamereg_uid_value}.reg")
     gamereg_export(account_reg_file)
     reload_all_account_from_files()

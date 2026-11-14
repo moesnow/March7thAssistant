@@ -2,6 +2,7 @@ from typing import Tuple, Optional
 import winreg
 import json
 import os
+from pathlib import Path
 
 # Registry key paths for different server regions
 registry_key_path_cn = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
@@ -17,72 +18,70 @@ class MissingFPSSettingError(ValueError):
     """游戏未使用自定义图像质量，没有可修改的帧率配置。"""
 
 
-def get_server_by_registry() -> Optional[str]:
-    """
-    Detect and return the server region based on the installed game server.
-
-    Returns:
-        "cn" for CN server, "oversea" for international server, or None if neither exists.
-    """
+def registry_path_for_game(game_path: str) -> Optional[str]:
+    """仅根据当前所选游戏的 Unity 元数据识别渠道，不猜测。"""
+    if not game_path or Path(game_path).name.lower() != "starrail.exe":
+        return None
     try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_cn):
-            return "cn"
-    except FileNotFoundError:
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_oversea):
-                return "global"
-        except FileNotFoundError:
-            return None
+        info = Path(game_path).parent / "StarRail_Data" / "app.info"
+        names = tuple(line.strip() for line in info.read_text(encoding="utf-8-sig").strip().splitlines())
+    except (OSError, UnicodeError):
+        return None
+    return {
+        ("miHoYo", "崩坏：星穹铁道"): registry_key_path_cn,
+        ("Cognosphere", "Star Rail"): registry_key_path_oversea,
+    }.get(names)
 
 
 def get_registry_key_path() -> Optional[str]:
-    """
-    Detect and return the registry key path based on the installed game server.
-
-    Returns:
-        The registry path for CN server if found, otherwise oversea server path, or None if neither exists.
-    """
+    """检测当前选中游戏的注册表路径，未知或尚不存在时返回 None。"""
+    # 延迟导入避免配置模块初始化时的循环依赖，并始终读取最新配置。
+    from module.config import cfg
+    path = registry_path_for_game(cfg.game_path)
+    if path is None:
+        return None
     try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_cn):
-            return registry_key_path_cn
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path):
+            return path
     except FileNotFoundError:
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_oversea):
-                return registry_key_path_oversea
-        except FileNotFoundError:
-            return None
+        return None
 
 
-# Detect the registry path at module load time
-registry_key_path = get_registry_key_path()
+def get_server_by_registry() -> Optional[str]:
+    path = get_registry_key_path()
+    if path == registry_key_path_cn:
+        return "cn"
+    if path == registry_key_path_oversea:
+        return "global"
+    return None
 
 
 def set_auto_battle_open_setting(value: bool) -> None:
-    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_AutoBattleOpen_h1164514826", value, winreg.REG_DWORD)
+    write_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), "OtherSettings_AutoBattleOpen_h1164514826", value, winreg.REG_DWORD)
 
 
 def set_is_save_battle_speed_setting(value: bool) -> None:
-    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_IsSaveBattleSpeed_h3606297293", value, winreg.REG_DWORD)
+    write_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), "OtherSettings_IsSaveBattleSpeed_h3606297293", value, winreg.REG_DWORD)
 
 
 def set_user_speed_up_open_setting(uid: str, value: bool) -> None:
-    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, f"User_{uid}_SpeedUpOpen_h3552997784", value, winreg.REG_DWORD)
+    write_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), f"User_{uid}_SpeedUpOpen_h3552997784", value, winreg.REG_DWORD)
 
 
 def get_auto_battle_open_setting() -> Optional[bytes]:
-    return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_AutoBattleOpen_h1164514826")
+    return read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), "OtherSettings_AutoBattleOpen_h1164514826")
 
 
 def get_is_save_battle_speed_setting() -> Optional[bytes]:
-    return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, "OtherSettings_IsSaveBattleSpeed_h3606297293")
+    return read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), "OtherSettings_IsSaveBattleSpeed_h3606297293")
 
 
 def get_user_speed_up_open_setting(uid: str) -> Optional[bytes]:
-    return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, f"User_{uid}_SpeedUpOpen_h3552997784")
+    return read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), f"User_{uid}_SpeedUpOpen_h3552997784")
 
 
 def get_graphics_setting() -> Optional[bytes]:
-    return read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name)
+    return read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), graphics_value_name)
 
 
 def get_game_path() -> Optional[str]:
@@ -160,7 +159,7 @@ def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
     - If the registry value exists and data is valid, it returns a tuple (width, height, isFullScreen) representing the game resolution.
     - If the registry value does not exist or data is invalid, it returns None or raises ValueError.
     """
-    value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name)
+    value = read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), resolution_value_name)
     if value:
         data_dict = json.loads(value.decode('utf-8').strip('\x00'))
         # Convert keys to lower case to ensure case-insensitivity
@@ -193,7 +192,7 @@ def set_game_resolution(width: int, height: int, is_fullscreen: bool) -> None:
         'isFullScreen': is_fullscreen
     }
     data = (json.dumps(data_dict) + '\x00').encode('utf-8')
-    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name, data, winreg.REG_BINARY)
+    write_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), resolution_value_name, data, winreg.REG_BINARY)
 
 
 def get_game_fps() -> Optional[int]:
@@ -202,7 +201,7 @@ def get_game_fps() -> Optional[int]:
 
     This function does not take any parameters.
     """
-    value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name)
+    value = read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), graphics_value_name)
     if value:
         data_dict = json.loads(value.decode('utf-8').strip('\x00'))
 
@@ -225,7 +224,7 @@ def set_game_fps(fps: int) -> None:
     Parameters:
     - fps
     """
-    value = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name)
+    value = read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), graphics_value_name)
     if not value:
         raise MissingFPSSettingError("请将游戏图像质量修改为自定义后重试")
     data_dict = json.loads(value.decode('utf-8').strip('\x00'))
@@ -233,7 +232,7 @@ def set_game_fps(fps: int) -> None:
         raise MissingFPSSettingError("请将游戏图像质量修改为自定义后重试")
     data_dict['FPS'] = fps
     data = (json.dumps(data_dict) + '\x00').encode('utf-8')
-    write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, graphics_value_name, data, winreg.REG_BINARY)
+    write_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), graphics_value_name, data, winreg.REG_BINARY)
 
 
 def read_registry_value(key, sub_key, value_name):
@@ -253,11 +252,11 @@ def read_registry_value(key, sub_key, value_name):
     try:
         # Open the specified registry key
         registry_key = winreg.OpenKey(key, sub_key)
-        # Read the content of the specified value in the registry
-        value, _ = winreg.QueryValueEx(registry_key, value_name)
-        # Close the registry key
-        winreg.CloseKey(registry_key)
-        return value
+        try:
+            value, _ = winreg.QueryValueEx(registry_key, value_name)
+            return value
+        finally:
+            winreg.CloseKey(registry_key)
     except FileNotFoundError:
         # raise FileNotFoundError(f"Specified registry key or value not found: {sub_key}\\{value_name}")
         return None
@@ -281,9 +280,9 @@ def write_registry_value(key, sub_key, value_name, data, mode) -> None:
     try:
         # Open or create the specified registry key
         registry_key = winreg.CreateKey(key, sub_key)
-        # Write data to the registry
-        winreg.SetValueEx(registry_key, value_name, 0, mode, data)
-        # Close the registry key
-        winreg.CloseKey(registry_key)
+        try:
+            winreg.SetValueEx(registry_key, value_name, 0, mode, data)
+        finally:
+            winreg.CloseKey(registry_key)
     except Exception as e:
         raise OSError(f"Error writing registry value: {e}")

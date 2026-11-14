@@ -8275,3 +8275,27 @@ msgstr "Divine Skull of Indulgence"
 #: assets/config/character_names.json
 msgid "星神★阿哈·群星乐透"
 msgstr "Aeon ★ Aha • Star Lotto"
+
+#: app/sub_interfaces/accounts_interface.py:80
+msgid "账户导出失败，请确认已登录游戏后重试。"
+msgstr ""
+"Could not export the account. Make sure you are logged in to the game and "
+"try again."
+
+#: app/sub_interfaces/accounts_interface.py:166
+msgid "账户导入失败，请重试。"
+msgstr "Could not import the account. Please try again."
+
+#: app/sub_interfaces/accounts_interface.py:171
+msgid "这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"
+msgstr ""
+"This will clear the game’s login information and settings such as graphics "
+"quality and resolution. Continue?"
+
+#: app/sub_interfaces/accounts_interface.py:177
+msgid "清除失败，请重试。"
+msgstr "Could not clear the game data. Please try again."
+
+#: app/sub_interfaces/accounts_interface.py:179
+msgid "游戏登录信息和设置已清除"
+msgstr "Game login information and settings cleared"

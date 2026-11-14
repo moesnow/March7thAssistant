@@ -139,19 +139,22 @@ class StarRailController(LocalGameController):
             self.log_debug(f"桌面分辨率: {screen_width}x{screen_height}")
 
     def change_auto_battle(self, status: bool) -> None:
-        auto_battle_status = get_auto_battle_open_setting()
-        if auto_battle_status is not None and auto_battle_status != status:
-            set_auto_battle_open_setting(status)
-            self.log_debug(f"修改自动战斗状态: {'开启' if auto_battle_status else '关闭'} --> {'开启' if status else '关闭'}")
-        save_battle_status = get_is_save_battle_speed_setting()
-        if save_battle_status is not None and save_battle_status != status:
-            set_is_save_battle_speed_setting(status)
-            self.log_debug(f"修改沿用自动战斗设置: {'启用' if save_battle_status else '禁用'} --> {'启用' if status else '禁用'}")
-        gamereg_uid_value = gamereg_uid()
-        if gamereg_uid_value:
-            user_speed_up_status = get_user_speed_up_open_setting(str(gamereg_uid_value))
-            if user_speed_up_status is not None and user_speed_up_status != status:
-                set_user_speed_up_open_setting(str(gamereg_uid_value), status)
-                self.log_debug(f"修改战斗二倍速状态: {'开启' if user_speed_up_status else '关闭'} --> {'开启' if status else '关闭'}")
-        else:
-            self.log_debug("未检测到 UID，跳过修改战斗二倍速设置")
+        try:
+            auto_battle_status = get_auto_battle_open_setting()
+            if auto_battle_status is not None and auto_battle_status != status:
+                set_auto_battle_open_setting(status)
+                self.log_debug(f"修改自动战斗状态: {'开启' if auto_battle_status else '关闭'} --> {'开启' if status else '关闭'}")
+            save_battle_status = get_is_save_battle_speed_setting()
+            if save_battle_status is not None and save_battle_status != status:
+                set_is_save_battle_speed_setting(status)
+                self.log_debug(f"修改沿用自动战斗设置: {'启用' if save_battle_status else '禁用'} --> {'启用' if status else '禁用'}")
+            gamereg_uid_value = gamereg_uid()
+            if gamereg_uid_value:
+                user_speed_up_status = get_user_speed_up_open_setting(str(gamereg_uid_value))
+                if user_speed_up_status is not None and user_speed_up_status != status:
+                    set_user_speed_up_open_setting(str(gamereg_uid_value), status)
+                    self.log_debug(f"修改战斗二倍速状态: {'开启' if user_speed_up_status else '关闭'} --> {'开启' if status else '关闭'}")
+            else:
+                self.log_debug("未检测到 UID，跳过修改战斗二倍速设置")
+        except OSError as e:
+            self.log_error(f"无法读取或修改游戏战斗设置，跳过自动战斗与二倍速检测：{e}")

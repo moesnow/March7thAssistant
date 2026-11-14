@@ -7961,3 +7961,23 @@ msgstr "貪悦の神首"
 #: assets/config/character_names.json
 msgid "星神★阿哈·群星乐透"
 msgstr "星神★アッハ・群星ロッタリー"
+
+#: app/sub_interfaces/accounts_interface.py:80
+msgid "账户导出失败，请确认已登录游戏后重试。"
+msgstr "アカウントをエクスポートできませんでした。ゲームにログインしていることを確認してから、もう一度お試しください。"
+
+#: app/sub_interfaces/accounts_interface.py:166
+msgid "账户导入失败，请重试。"
+msgstr "アカウントをインポートできませんでした。もう一度お試しください。"
+
+#: app/sub_interfaces/accounts_interface.py:171
+msgid "这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"
+msgstr "このゲームのログイン情報と、画質や解像度などの設定が削除されます。続行しますか？"
+
+#: app/sub_interfaces/accounts_interface.py:177
+msgid "清除失败，请重试。"
+msgstr "削除できませんでした。もう一度お試しください。"
+
+#: app/sub_interfaces/accounts_interface.py:179
+msgid "游戏登录信息和设置已清除"
+msgstr "ゲームのログイン情報と設定を削除しました"

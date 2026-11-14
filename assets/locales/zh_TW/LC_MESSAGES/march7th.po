@@ -7881,3 +7881,23 @@ msgstr "貪歡的神顱"
 #: assets/config/character_names.json
 msgid "星神★阿哈·群星乐透"
 msgstr "星神★阿哈·群星樂透"
+
+#: app/sub_interfaces/accounts_interface.py:80
+msgid "账户导出失败，请确认已登录游戏后重试。"
+msgstr "帳戶匯出失敗，請確認已登入遊戲後再試。"
+
+#: app/sub_interfaces/accounts_interface.py:166
+msgid "账户导入失败，请重试。"
+msgstr "帳戶匯入失敗，請再試一次。"
+
+#: app/sub_interfaces/accounts_interface.py:171
+msgid "这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"
+msgstr "這會清除該遊戲的登入資訊以及畫質、解析度等設定。確定要繼續嗎？"
+
+#: app/sub_interfaces/accounts_interface.py:177
+msgid "清除失败，请重试。"
+msgstr "清除失敗，請再試一次。"
+
+#: app/sub_interfaces/accounts_interface.py:179
+msgid "游戏登录信息和设置已清除"
+msgstr "已清除遊戲登入資訊和設定"

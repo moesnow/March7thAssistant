@@ -72,8 +72,13 @@ class AccountsCard(QFrame):
             QMessageBox.information(None, tr("刷新"), tr("账户列表刷新成功"))
 
         def addAccountButtonAction(self):
-            dump_current_account()
-            load_accounts()
+            try:
+                dump_current_account()
+                load_accounts()
+            except (OSError, ValueError) as e:
+                log.error(f"导出账户失败: {e}")
+                QMessageBox.warning(None, tr("导出"), tr("账户导出失败，请确认已登录游戏后重试。"))
+                return
             QMessageBox.information(None, tr("导出"), tr("账户导出成功"))
 
         def deleteAccountButtonAction(self):
@@ -154,14 +159,24 @@ class AccountsCard(QFrame):
                 return
             for item in items:
                 account_id = item.data(Qt.ItemDataRole.UserRole)
-                import_account(account_id)
+                try:
+                    import_account(account_id)
+                except (OSError, ValueError) as e:
+                    log.error(f"导入账户失败: {e}")
+                    QMessageBox.warning(None, tr("导入"), tr("账户导入失败，请重试。"))
+                    return
                 QMessageBox.information(None, tr("导入"), tr("账户导入成功"))
 
         def clearRegButtonAction(self):
-            if QMessageBox.question(None, tr("清除注册表"), tr("确定要清除注册表中的账户信息吗？"), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.No:
+            if QMessageBox.question(None, tr("清除注册表"), tr("这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.No:
                 return
-            clear_reg()
-            QMessageBox.information(None, tr("清除注册表"), tr("注册表中的账户信息已清除"))
+            try:
+                clear_reg()
+            except OSError as e:
+                log.error(f"清除游戏设置失败: {e}")
+                QMessageBox.warning(None, tr("清除注册表"), tr("清除失败，请重试。"))
+                return
+            QMessageBox.information(None, tr("清除注册表"), tr("游戏登录信息和设置已清除"))
 
         self.addAccountButton.clicked.connect(addAccountButtonAction)
         self.importAccountButton.clicked.connect(importAccountButtonAction)

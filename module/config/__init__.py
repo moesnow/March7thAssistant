@@ -68,7 +68,10 @@ if sys.platform == 'win32':
 
     def detect_from_hoyoplay():
         """从注册表检测游戏路径"""
-        game_path = get_game_path()
+        try:
+            game_path = get_game_path()
+        except OSError:
+            return False
         if game_path:
             cfg.set_value("game_path", os.path.abspath(game_path))
             return True
@@ -95,7 +98,10 @@ if sys.platform == 'win32':
         path = cfg.launcher_path
         if os.path.exists(path):
             return
-        launcher_path = get_launcher_path()
+        try:
+            launcher_path = get_launcher_path()
+        except OSError:
+            return False
         if launcher_path:
             cfg.set_value("launcher_path", os.path.abspath(launcher_path))
             return True
