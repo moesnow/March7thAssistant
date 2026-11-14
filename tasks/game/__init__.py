@@ -39,10 +39,10 @@ class GameClientOutdatedError(RuntimeError):
     """游戏客户端版本过低（供 except 类型判断，勿用文本匹配异常消息）。"""
 
 
-def start(headless=None, *, optimize_graphics=True):
+def start(headless=None, *, optimize_graphics=True, screen_ready=None):
     task_power_request.acquire(log)
     log.hr("开始运行", 0)
-    start_game(headless=headless, optimize_graphics=optimize_graphics)
+    start_game(headless=headless, optimize_graphics=optimize_graphics, screen_ready=screen_ready)
     log.hr("完成", 2)
 
 
@@ -116,7 +116,7 @@ def _start_local_touch_game():
             raise TimeoutError(tr("未能进入触屏主界面，请检查游戏登录状态"))
 
 
-def start_game(headless=None, *, optimize_graphics=True):
+def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
     backend = get_control_backend(cfg)
     timeout = getattr(cfg, "start_game_timeout", 10) * 60
     if backend == "adb":
@@ -298,6 +298,15 @@ def start_game(headless=None, *, optimize_graphics=True):
                 raise TimeoutError("查找并点击进入按钮超时")
             time.sleep(10)
 
+    def task_screen_ready():
+        try:
+            return screen_ready() or screen.get_current_screen(autotry=False, max_retries=1)
+        except (InputInterrupted, GameWindowLost):
+            raise
+        except RuntimeError as error:
+            log.debug(f"任务起始画面暂不可用：{error}")
+            return False
+
     for retry in range(MAX_RETRY):
         deadline = time.monotonic() + timeout
         try:
@@ -307,7 +316,11 @@ def start_game(headless=None, *, optimize_graphics=True):
                 starrail = StarRailController(cfg=cfg, logger=log)
                 start_local_game(starrail)
             ready_timeout = timeout if backend == "cloud" else remaining_startup_time()
-            if not wait_until(lambda: screen.get_current_screen(max_retries=1), ready_timeout):
+            if screen_ready is not None:
+                # 货币战争的职级和局内页面不都在通用状态机里，进入任务前不能用 Esc 探测。
+                if not wait_until(task_screen_ready, ready_timeout):
+                    raise InputInterrupted("未能识别货币战争或通用游戏页面，已保留游戏现场")
+            elif not wait_until(lambda: screen.get_current_screen(max_retries=1), ready_timeout):
                 raise TimeoutError("获取当前界面超时")
             break
         except CloudGameZeroDurationError:

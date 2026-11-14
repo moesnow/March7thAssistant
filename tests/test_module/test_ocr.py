@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from module.ocr.ocr import (
     OCR,
     OCR_MODE_CPU,
@@ -150,6 +153,15 @@ class TestOCRReplaceStrings:
         results = [{"txt": "hello", "score": 0.99}]
         replaced = ocr.replace_strings(results)
         assert replaced[0]["txt"] == "world"
+
+    def test_currency_wars_name_replacement_is_stable_with_a_shop_price(self):
+        ocr = self._create_ocr_with_mock_logger()
+        config = Path(__file__).resolve().parents[2] / "assets/config/ocr_replacements.json"
+        ocr.replacements = json.loads(config.read_text(encoding="utf-8"))
+        rows = [{"txt": name} for name in ("刻律德拉1", "刻律德1", "刻律德菈1", "刻律德拉", "刻律德菈")]
+        expected = ["刻律德菈1", "刻律德菈1", "刻律德菈1", "刻律德菈", "刻律德菈"]
+        assert [row["txt"] for row in ocr.replace_strings(rows)] == expected
+        assert [row["txt"] for row in ocr.replace_strings(rows)] == expected
 
 
 class TestDisableOpenVINOTelemetry:

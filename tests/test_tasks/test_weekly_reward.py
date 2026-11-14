@@ -197,9 +197,8 @@ class TestWeeklyRewardEntrypoints(unittest.TestCase):
             "numpy": {},
         }))
 
-    def test_all_three_entrypoints_wait_before_success_notification(self):
+    def test_universe_entrypoints_wait_before_success_notification(self):
         for filename, class_name in (
-            ("currency_wars.py", "CurrencyWars"),
             ("divergent_universe.py", "DivergentUniverse"),
             ("universe.py", "Universe"),
         ):

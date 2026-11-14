@@ -109,7 +109,7 @@ If you disable `Enable Spend Power` in Power Settings, both `Full Run` and `Dail
 
 ### Currency Wars
 
-The current version supports `Currency Wars: Zero-Sum Game`. The home-page entry offers both `Run Once` and `Loop Run`.
+The current version supports `Currency Wars: Voyage Into the Canvas`. The home-page entry offers `Run Once`, `Loop Run`, and `Currency War Mid-takeover`. Use the Simplified Chinese PC client.
 
 If you enabled `Currency Wars score rewards` in settings, the full workflow checks weekly score rewards automatically.
 
@@ -245,9 +245,10 @@ Common options include:
 - `Category`: Standard Match / Overclock Match
 - `Quick Preset`
 - `Rank Difficulty`
-- `Currency Wars Strategy`
-- `Restart when certain modifiers appear`
+- `Currency Wars Strategy` offers `Anaxa Combo (S2)` and `Anaxa Combo (High Difficulty)`.
 - `Enable Speedrun Mode`
+
+The defaults are Overclock Match and the lowest rank. Unlock Overclock Match in the game first. You can change old Aglaea or Seele settings manually. Starting Currency Wars with either old strategy automatically migrates it to `Anaxa Combo (High Difficulty)`.
 
 ### Divergent Universe / Simulated Universe Settings
 
@@ -315,7 +316,7 @@ Headless mode does not support Simulated Universe (not including Divergent Unive
 
 The `Miscellaneous` page mainly contains helper switches that improve stability and automation. Common ones include:
 
-- `Enable auto battle and 2x speed detection`: Try to enable auto battle and 2x speed before the game starts, and keep them active during built-in combat scenes such as Trailblaze Power farming and Currency Wars.
+- `Enable auto battle and 2x speed detection`: Try to enable auto battle and 2x speed before the game starts, and keep them active during built-in combat scenes such as Trailblaze Power farming.
 - `Enable automatic resolution change and disable Auto HDR`: When launching the game through the assistant, automatically switch to 1920×1080 and disable Auto HDR. Recommended for local mode users.
 - `Enable automatic game-path configuration`: Try to detect the path automatically from shortcuts, the official launcher, or a running game process.
 - `Prefer background screenshots`: Recommended by default. It can reduce interference from overlays and floating windows.

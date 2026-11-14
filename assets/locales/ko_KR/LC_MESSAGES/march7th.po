@@ -7885,3 +7885,31 @@ msgstr "ADB 시작 시간이 초과되었습니다. Android 기기에서 로그�
 #: utils/tasks.py:50
 msgid "当前后端不支持，未执行"
 msgstr "현재 백엔드에서 지원하지 않아 실행하지 않았습니다"
+
+#: app/setting_interface.py:614
+msgid "改用连击那刻夏（S2）"
+msgstr "아낙사 연격 조합(S2)으로 변경"
+
+#: app/setting_interface.py:616
+msgid "请更新货币战争策略"
+msgstr "화폐 전쟁 전략을 업데이트하세요"
+
+#: app/setting_interface.py:622
+msgid "仅在首领节点处理装备"
+msgstr "보스 노드에서만 장비를 착용합니다"
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "连击那刻夏（S2）"
+msgstr "연격 아낙사 (S2)"
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "连击那刻夏（高难）"
+msgstr "연격 아낙사 (고난도)"
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "寒鸦流萤（高难）"
+msgstr "한아·반디 (고난도)"
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "寒鸦希露瓦（高难）"
+msgstr "한아·서벌 (고난도)"

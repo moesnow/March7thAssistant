@@ -26,6 +26,7 @@ class LocalInput(InputBase):
             self.logger.debug(f"鼠标按下 ({x}, {y})")
         except Exception as e:
             self.logger.error(f"鼠标按下出错：{e}")
+            return False
 
     def mouse_up(self):
         '''释放鼠标按钮'''
@@ -34,6 +35,7 @@ class LocalInput(InputBase):
             self.logger.debug("鼠标释放")
         except Exception as e:
             self.logger.error(f"鼠标释放出错：{e}")
+            return False
 
     def mouse_move(self, x, y):
         '''将鼠标光标移动到屏幕上的（x，y）位置'''

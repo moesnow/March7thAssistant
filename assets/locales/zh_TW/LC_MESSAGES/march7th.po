@@ -7805,3 +7805,31 @@ msgstr "ADB 啟動逾時，請在 Android 裝置上確認是否需要登入或�
 #: utils/tasks.py:50
 msgid "当前后端不支持，未执行"
 msgstr "目前的後端不支援，未執行"
+
+#: app/setting_interface.py:614
+msgid "改用连击那刻夏（S2）"
+msgstr "改用連擊那刻夏（S2）"
+
+#: app/setting_interface.py:616
+msgid "请更新货币战争策略"
+msgstr "請更新貨幣戰爭策略"
+
+#: app/setting_interface.py:622
+msgid "仅在首领节点处理装备"
+msgstr "僅在首領節點處理裝備"
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "连击那刻夏（S2）"
+msgstr "連擊那刻夏（S2）"
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "连击那刻夏（高难）"
+msgstr "連擊那刻夏（高難）"
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "寒鸦流萤（高难）"
+msgstr "寒鴉流螢（高難）"
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "寒鸦希露瓦（高难）"
+msgstr "寒鴉希露瓦（高難）"

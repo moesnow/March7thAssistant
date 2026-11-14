@@ -914,8 +914,11 @@ class Automation(metaclass=SingletonMeta):
                 if normalized_press_duration > 0:
                     if self.mouse_down(x, y) is False:
                         return False
-                    time.sleep(normalized_press_duration)
-                    result = self.mouse_up()
+                    try:
+                        time.sleep(normalized_press_duration)
+                    finally:
+                        # 已按下的按钮必须释放，即使这时收到暂停或停止。
+                        result = self.input_handler.mouse_up()
                 else:
                     result = self.mouse_click(x, y)
             elif action == "down":

@@ -140,9 +140,7 @@ class Daily:
 
     @staticmethod
     def _run_currency_wars():
-        war = CurrencyWars()
-        screen.change_to("currency_wars_homepage")
-        return war.check_currency_wars_score() or war.start()
+        return CurrencyWars().start(weekly=True)
 
     @staticmethod
     def _run_weekly_divergent():

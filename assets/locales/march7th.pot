@@ -7574,3 +7574,31 @@ msgstr ""
 #: utils/tasks.py:50
 msgid "当前后端不支持，未执行"
 msgstr ""
+
+#: app/setting_interface.py:614
+msgid "改用连击那刻夏（S2）"
+msgstr ""
+
+#: app/setting_interface.py:616
+msgid "请更新货币战争策略"
+msgstr ""
+
+#: app/setting_interface.py:622
+msgid "仅在首领节点处理装备"
+msgstr ""
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "连击那刻夏（S2）"
+msgstr ""
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "连击那刻夏（高难）"
+msgstr ""
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "寒鸦流萤（高难）"
+msgstr ""
+
+#: tasks/weekly/currency_wars_strategy.py:62
+msgid "寒鸦希露瓦（高难）"
+msgstr ""

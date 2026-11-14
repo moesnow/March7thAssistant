@@ -65,7 +65,8 @@ DEFAULT_CARDS = [
         "task_id": "",
         "menu_items": [
             {"label": "运行一次", "task_id": "currencywars"},
-            {"label": "循环运行", "task_id": "currencywarsloop"}
+            {"label": "循环运行", "task_id": "currencywarsloop"},
+            {"label": "货币战争中途接管", "task_id": "currencywarstemp"},
         ]
     },
     {

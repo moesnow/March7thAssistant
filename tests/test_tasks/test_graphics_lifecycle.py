@@ -55,6 +55,48 @@ def test_pc_local_start_uses_profile_resolution(startup, already_running):
         assert controller.check_resolution.call_args_list == [call(*resolution), call(*resolution)]
 
 
+def test_start_recognizes_task_screen_before_generic_navigation(startup, monkeypatch):
+    game, controller, _ = startup
+    controller.switch_to_game.return_value = True
+    monkeypatch.setattr(game, "screen", Mock())
+    game.wait_until.side_effect = lambda condition, timeout: condition()
+    ready = Mock(return_value=True)
+
+    game.start_game(screen_ready=ready)
+
+    ready.assert_called_once_with()
+    game.screen.get_current_screen.assert_not_called()
+    controller.stop_game.assert_not_called()
+
+
+def test_task_readiness_fallback_uses_read_only_recognition_and_preserves_window(startup, monkeypatch):
+    game, controller, _ = startup
+    controller.switch_to_game.return_value = True
+    monkeypatch.setattr(game, "screen", Mock())
+    game.screen.get_current_screen.return_value = False
+    game.wait_until.side_effect = lambda condition, timeout: condition()
+
+    with pytest.raises(game.InputInterrupted, match="已保留游戏现场"):
+        game.start_game(screen_ready=lambda: False)
+
+    game.screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
+    controller.stop_game.assert_not_called()
+
+
+def test_task_readiness_waits_through_an_unavailable_frame(startup, monkeypatch):
+    game, controller, _ = startup
+    controller.switch_to_game.return_value = True
+    monkeypatch.setattr(game, "screen", Mock())
+    game.wait_until.side_effect = lambda condition, timeout: condition() or condition()
+    ready = Mock(side_effect=(RuntimeError("截图超时"), True))
+
+    game.start_game(screen_ready=ready)
+
+    assert ready.call_count == 2
+    game.screen.get_current_screen.assert_not_called()
+    controller.stop_game.assert_not_called()
+
+
 @pytest.mark.parametrize("background", [False, True])
 def test_touch_local_start_uses_clicks_and_native_resolution(startup, monkeypatch, background):
     game, controller, cfg = startup

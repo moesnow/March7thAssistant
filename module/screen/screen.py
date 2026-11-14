@@ -348,11 +348,11 @@ class Screen(metaclass=SingletonMeta):
             self.logger.error("使用云·星穹铁道请确保网络正常，浏览器能正常加载游戏画面")
         raise RuntimeError(error_message)
 
-    def ensure_current_screen_is_clean(self):
+    def ensure_current_screen_is_clean(self, *, autotry=True):
         """
         确保当前游戏界面可以被正确识别
         """
-        if not self.get_current_screen():
+        if not self.get_current_screen(autotry=autotry):
             self.log_and_raise("无法识别当前游戏界面", "无法识别当前游戏界面")
 
     def get_operations(self, current_screen, next_screen):
@@ -443,7 +443,7 @@ class Screen(metaclass=SingletonMeta):
             for i in range(count):
                 self._switch_screen(path[i], path[i + 1], max_recursion)
 
-    def change_to(self, target_screen, max_recursion=2):
+    def change_to(self, target_screen, max_recursion=2, *, autotry=True):
         """
         切换到目标界面，如果失败则退出进程
         :param target_screen: 目标界面

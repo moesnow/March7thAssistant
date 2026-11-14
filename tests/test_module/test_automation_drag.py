@@ -196,6 +196,21 @@ def test_interrupted_mouse_down_does_not_sleep_or_claim_a_complete_long_press(mo
     automation.mouse_up.assert_not_called()
 
 
+def test_timed_click_releases_even_if_interrupted_before_the_pause_checkpoint(monkeypatch):
+    import module.automation.automation as module
+
+    automation = object.__new__(Automation)
+    automation.calculate_click_position = lambda *_: (100, 200)
+    automation.mouse_down = Mock(return_value=True)
+    automation.mouse_up = Mock()
+    automation.input_handler = SimpleNamespace(mouse_up=Mock(return_value=True))
+    monkeypatch.setattr(module.time, "sleep", Mock(side_effect=KeyboardInterrupt))
+    with pytest.raises(KeyboardInterrupt):
+        automation.click_element_with_pos(((1, 2), (3, 4)), press_duration=0.2)
+    automation.input_handler.mouse_up.assert_called_once_with()
+    automation.mouse_up.assert_not_called()
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="本地输入后端仅在 Windows 使用")
 @pytest.mark.parametrize("failure", ["press", "move"])
 def test_local_drag_releases_button_when_input_fails(monkeypatch, failure):

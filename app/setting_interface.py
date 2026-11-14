@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint, QThread, Signal
+from PySide6.QtCore import Qt, QUrl, QObject, QEvent, QPoint, QThread, Signal, QSignalBlocker
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QFileDialog, QVBoxLayout, QStackedWidget, QSpacerItem, QScroller, QScrollerProperties, QScrollArea, QFrame, QApplication
 from qfluentwidgets import FluentIcon as FIF
@@ -27,6 +27,11 @@ from utils.runs import read_active_run
 from module.notification import init_notifiers
 from module.localization import tr, tn
 from module.localization.languages import AUTO_LANGUAGE, available_languages
+from tasks.weekly.currency_wars_strategy import (
+    HIGH_ANAXA,
+    STRATEGY_ID as CURRENCY_WARS_STRATEGY,
+    STRATEGY_NAMES,
+)
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
@@ -613,30 +618,31 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('最高职级'): 'highest', tr('当前职级'): 'current', tr('最低职级'): 'lowest'}
         )
-        self.currencywarsStrategyCard = ExpandableComboBoxSettingCard(
+        self.currencywarsStrategyCard = None
+        configured_strategy = cfg.get_value("currencywars_strategy")
+        visible_strategies = (CURRENCY_WARS_STRATEGY, HIGH_ANAXA)
+        self.currencywarsStrategySelectCard = ComboBoxSettingCard2(
             "currencywars_strategy",
             UiIcon.LIST,
-            tr('货币战争策略'),
-            tr('提升晋升等级，推荐在最低职级选择默认策略。提升职级等级，推荐在最高职级选择阿格莱雅或希儿策略。'),
-            {tr('默认'): 'default', tr('阿格莱雅'): 'aglaea', tr('希儿') + tr('【测试版】'): 'seele'}
+            tr("货币战争策略"),
+            "",
+            texts={tr(STRATEGY_NAMES[value]): value for value in visible_strategies}
         )
-        self.currencywarsRemembranceTrailblazerNameCard = PushSettingCardStr(
-            tr('修改'),
-            FIF.EDIT,
-            tr('「开拓者•记忆」名称'),
-            "currencywars_remembrance_trailblazer_name",
-            empty_content=tr('未配置时，阿格莱雅/希儿策略将跳过该角色，需要填入自己游戏名称')
-        )
-        self.currencywarsStrategyRestartOnSpecialTagsCard = SwitchSettingCard1(
-            UiIcon.REFRESH,
-            tr('遇到特定词条时接受重开'),
-            tr('根据所选策略，在遇到特定词条或词条组合时允许重开'),
-            "currencywars_strategy_restart_on_special_tags"
-        )
+        if configured_strategy in STRATEGY_NAMES and configured_strategy not in visible_strategies:
+            combo = self.currencywarsStrategySelectCard.comboBox
+            combo.setCurrentIndex(-1)
+            combo.setPlaceholderText(tr("实验性"))
+        elif configured_strategy not in (*visible_strategies, "default"):
+            self.currencywarsStrategyCard = PushSettingCard(
+                tr("改用连击那刻夏（S2）"),
+                UiIcon.LIST,
+                tr("请更新货币战争策略"),
+            )
+            self.currencywarsStrategyCard.clicked.connect(self.__applyCurrencywarsStrategy)
         self.currencywarsFastModeCard = SwitchSettingCard1(
             UiIcon.ROCKET,
             tr('启用速通模式'),
-            tr("开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"),
+            tr("仅在首领节点处理装备"),
             "currencywars_fast_mode"
         )
 
@@ -2741,12 +2747,12 @@ class SettingInterface(ScrollArea):
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
-        self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategyCard)
-        self.currencywarsStrategyCard.addSettingCards([
-            self.currencywarsRemembranceTrailblazerNameCard,
-            self.currencywarsStrategyRestartOnSpecialTagsCard,
-            self.currencywarsFastModeCard
-        ])
+        if self.currencywarsStrategyCard is not None:
+            self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategyCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategySelectCard)
+        if self.currencywarsStrategyCard is not None:
+            self.currencywarsStrategySelectCard.hide()
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsFastModeCard)
 
         self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentTypeCard)
@@ -3008,7 +3014,6 @@ class SettingInterface(ScrollArea):
         connect_expand_state(self.rewardEnableCard)
         connect_expand_state(self.assetEnableCard)
         connect_expand_state(self.currencywarsEnableCard)
-        connect_expand_state(self.currencywarsStrategyCard)
         connect_expand_state(self.fightEnableCard)
         connect_expand_state(self.fightRewardEnableCard)
         connect_expand_state(self.weeklyDivergentEnableCard)
@@ -3548,6 +3553,51 @@ class SettingInterface(ScrollArea):
         cfg.set_value("script_path", script_path)
         self.ScriptPathCard.setContent(script_path)
 
+    def __applyCurrencywarsStrategy(self):
+        cfg.set_value("currencywars_strategy", CURRENCY_WARS_STRATEGY)
+        self.currencywarsStrategyCard.hide()
+        self.currencywarsStrategySelectCard.show()
+
+    def __applyCurrencywarsPromotionPreset(self):
+        self.__applyCurrencywarsPreset(
+            "overclock", "lowest", CURRENCY_WARS_STRATEGY, fast=True,
+            message=tr('当前为“提升晋升等级”模式'),
+        )
+
+    def __applyCurrencywarsRankPreset(self):
+        self.__applyCurrencywarsPreset(
+            "normal", "highest", HIGH_ANAXA, fast=False,
+            message=tr('当前为“提升职级等级”模式'),
+        )
+
+    def __applyCurrencywarsPreset(self, mode, difficulty, strategy, *, fast, message):
+        choices = (
+            (self.currencywarsTypeCard, mode),
+            (self.currencywarsRankDifficultyCard, difficulty),
+            (self.currencywarsStrategySelectCard, strategy),
+        )
+        fast_card = self.currencywarsFastModeCard
+        values = {card.configname: value for card, value in choices}
+        values[fast_card.configname] = fast
+        cfg.set_values(values)
+        for card, value in choices:
+            with QSignalBlocker(card.comboBox):
+                card.comboBox.setCurrentIndex(card.comboBox.findData(value))
+        with QSignalBlocker(fast_card.switchButton):
+            fast_card.setValue(fast)
+        if self.currencywarsStrategyCard is not None:
+            self.currencywarsStrategyCard.hide()
+            self.currencywarsStrategySelectCard.show()
+        InfoBar.success(
+            title=tr('已应用快捷配置'),
+            content=message,
+            orient=Qt.Orientation.Horizontal,
+            isClosable=True,
+            position=InfoBarPosition.TOP,
+            duration=2000,
+            parent=self
+        )
+
     def __setComboBoxCardValue(self, card, value):
         for index in range(card.comboBox.count()):
             if card.comboBox.itemData(index) != value:
@@ -3593,36 +3643,6 @@ class SettingInterface(ScrollArea):
 
     def __applyFightRewardOnlyPreset(self):
         self.__applyFightPreset('reward', tr('仅获取特殊物品'))
-
-    def __applyCurrencywarsPromotionPreset(self):
-        self.__setComboBoxCardValue(self.currencywarsTypeCard, 'overclock')
-        self.__setComboBoxCardValue(self.currencywarsRankDifficultyCard, 'lowest')
-        self.__setComboBoxCardValue(self.currencywarsStrategyCard, 'default')
-        self.__setSwitchCardValue(self.currencywarsFastModeCard, True)
-        InfoBar.success(
-            title=tr('已应用快捷配置'),
-            content=tr('当前为“提升晋升等级”模式'),
-            orient=Qt.Orientation.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=2000,
-            parent=self
-        )
-
-    def __applyCurrencywarsRankPreset(self):
-        self.__setComboBoxCardValue(self.currencywarsTypeCard, 'normal')
-        self.__setComboBoxCardValue(self.currencywarsRankDifficultyCard, 'highest')
-        self.__setComboBoxCardValue(self.currencywarsStrategyCard, 'aglaea')
-        self.__setSwitchCardValue(self.currencywarsFastModeCard, False)
-        InfoBar.success(
-            title=tr('已应用快捷配置'),
-            content=tr('当前为“提升职级等级”模式'),
-            orient=Qt.Orientation.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=2000,
-            parent=self
-        )
 
     def __onExpandableCardStateChanged(self, is_expanding: bool):
         """可展开卡片状态改变时，调整 stackedWidget 高度以包含子卡片"""

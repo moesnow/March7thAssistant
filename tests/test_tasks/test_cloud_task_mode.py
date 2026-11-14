@@ -65,9 +65,27 @@ def test_direct_task_selects_browser_mode(runner, action, headless, configured_h
 
     runner.run_sub_task(action)
 
-    runner.game.start.assert_called_once_with(headless=headless)
+    if action == "currencywars":
+        runner.game.start.assert_called_once_with(headless=headless, screen_ready=runner.CurrencyWars.game_screen_ready)
+    else:
+        runner.game.start.assert_called_once_with(headless=headless)
     assert runner.cfg.browser_headless_enable is configured_headless
     runner.cfg.set_value.assert_not_called()
+
+
+@pytest.mark.parametrize("stop_error", (RunStopRequested, RuntimeError))
+def test_currency_wars_loop_continues_after_settled_matches_until_stopped(runner, stop_error):
+    war = runner.CurrencyWars.return_value
+    war.start.side_effect = [True, False, True, True, stop_error()]
+
+    with pytest.raises(stop_error):
+        runner.run_sub_task("currencywarsloop")
+
+    assert war.start.call_count == 5
+    assert [call.args for call in runner.telemetry.track_task_complete.call_args_list[:4]] == [
+        ("currencywarsloop", won, 0) for won in (True, False, True, True)
+    ]
+    runner.game.stop.assert_not_called()
 
 
 @pytest.mark.parametrize("cloud_game_enable", [False, True], ids=["local", "visible-cloud"])

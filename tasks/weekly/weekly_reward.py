@@ -22,7 +22,7 @@ def _fuel_ticket_limit_visible():
     return "背包内助燃券持有数量已达上限" in text
 
 
-def wait_for_weekly_reward():
+def wait_for_weekly_reward(*, allow_cleanup=True):
     """各阶段最多检测十次，最多清理一次、重新领取一次。"""
     cleaned = False
     retried = False
@@ -34,6 +34,9 @@ def wait_for_weekly_reward():
             return True
 
         if _fuel_ticket_limit_visible():
+            if not allow_cleanup:
+                reason = "助燃券已达上限，积分奖励仍待领取"
+                break
             if not cleaned:
                 log.info("助燃券持有数量已达上限，尝试清理后继续领取周期奖励")
                 if not auto.click_element("清理", "text", crop=CLEANUP_BUTTON_CROP, include=False):

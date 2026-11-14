@@ -470,7 +470,9 @@ def run_sub_task(action, task_override=None):
     # 不兼容无窗口模式的任务仅覆盖本次启动方式，不修改用户配置。
     visible_cloud_tasks = {"fight", "universe"}
     success = True
-    if action not in ("currencywarstemp", "divergenttemp"):
+    if action in ("currencywars", "currencywarsloop"):
+        game.start(headless=None, screen_ready=CurrencyWars.game_screen_ready)
+    elif action not in ("currencywarstemp", "divergenttemp"):
         game.start(headless=False if action in visible_cloud_tasks else None)
     else:
         task_power_request.acquire(log)
@@ -494,10 +496,8 @@ def run_sub_task(action, task_override=None):
         war = CurrencyWars()
         if mode == "loop":
             _run_loop_task_with_telemetry("currencywarsloop", war.start)
-        elif mode == "temp":
-            return war.loop()
         else:
-            return war.start()
+            return war.start(resume=mode == "temp")
 
     def divergent(mode=None):
         universe = DivergentUniverse()
@@ -529,7 +529,7 @@ def run_sub_task(action, task_override=None):
     }
     task = task_override or sub_tasks.get(action)
     if task:
-        if action in {"currencywarsloop", "divergentloop"}:
+        if action in ("currencywarsloop", "divergentloop"):
             task()
         else:
             telemetry.track_task_start(action)
