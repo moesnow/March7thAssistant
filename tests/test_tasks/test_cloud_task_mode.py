@@ -1,6 +1,8 @@
 """直接启动任务时的云游戏模式选择与失败状态回归。"""
 import ast
 import sys
+from collections import deque
+from importlib import import_module
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
@@ -71,6 +73,31 @@ def test_direct_task_selects_browser_mode(runner, action, headless, configured_h
         runner.game.start.assert_called_once_with(headless=headless)
     assert runner.cfg.browser_headless_enable is configured_headless
     runner.cfg.set_value.assert_not_called()
+
+
+@pytest.mark.parametrize(("explicit_backend", "legacy_cloud", "runtime"), [
+    (None, False, "local_game"),
+    (None, True, "cloud_game"),
+    ("adb", True, "adb_game"),
+])
+def test_startup_telemetry_uses_selected_backend(runner, monkeypatch, explicit_backend, legacy_cloud, runtime):
+    from module.telemetry import telemetry
+
+    telemetry_module = import_module("module.telemetry.telemetry")
+    monkeypatch.setattr(telemetry_module, "_collect_startup_configuration_snapshot", dict)
+    monkeypatch.setattr(telemetry_module, "_resolve_effective_ocr_mode", lambda: "cpu")
+    monkeypatch.setattr(telemetry_module, "_resolve_effective_language", lambda: "zh_CN")
+    monkeypatch.setattr(telemetry, "_enabled", True)
+    monkeypatch.setattr(telemetry, "_queue", deque())
+    runner.telemetry.track_startup.side_effect = telemetry.track_startup
+    runner.cfg.control_backend = explicit_backend
+    runner.cfg.cloud_game_enable = legacy_cloud
+
+    runner.main(action="game")
+
+    event, = telemetry._queue
+    assert event["event"] == "app_startup"
+    assert event["properties"]["game_runtime"] == runtime
 
 
 @pytest.mark.parametrize("stop_error", (RunStopRequested, RuntimeError))

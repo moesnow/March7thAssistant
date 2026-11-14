@@ -10,8 +10,7 @@ import requests
 
 from module.telemetry.events import (
     EventName,
-    GAME_RUNTIME_CLOUD,
-    GAME_RUNTIME_LOCAL,
+    GAME_RUNTIME_BY_BACKEND,
     NOTIFICATION_LEVEL_ALL,
     NOTIFICATION_LEVEL_ERROR,
     STARTUP_NOTIFICATION_CHANNEL_CODES,
@@ -132,22 +131,6 @@ def _resolve_effective_language() -> str:
         pass
 
     return configured_language if configured_language and configured_language != "auto" else "zh_CN"
-
-
-def _resolve_game_runtime() -> str:
-    try:
-        from module.config import cfg
-
-        if hasattr(cfg, "get_value"):
-            raw_value = cfg.get_value("cloud_game_enable", getattr(cfg, "cloud_game_enable", False))
-        else:
-            raw_value = getattr(cfg, "cloud_game_enable", False)
-
-        if isinstance(raw_value, str):
-            return GAME_RUNTIME_CLOUD if raw_value.strip().lower() in {"1", "true", "yes", "on"} else GAME_RUNTIME_LOCAL
-        return GAME_RUNTIME_CLOUD if bool(raw_value) else GAME_RUNTIME_LOCAL
-    except Exception:
-        return GAME_RUNTIME_LOCAL
 
 
 def _read_config_value(key: str, default: Any = None) -> Any:
@@ -393,10 +376,10 @@ class Telemetry(metaclass=SingletonMeta):
         except Exception:
             pass
 
-    def track_startup(self):
+    def track_startup(self, backend: str):
         props = dict(self._system_context)
         try:
-            props["game_runtime"] = _resolve_game_runtime()
+            props["game_runtime"] = GAME_RUNTIME_BY_BACKEND.get(backend)
             props.update(_collect_startup_configuration_snapshot())
             props["ocr_mode"] = _resolve_effective_ocr_mode()
             props["language"] = _resolve_effective_language()

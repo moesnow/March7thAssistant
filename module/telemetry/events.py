@@ -16,9 +16,12 @@ _NUMBER_TOKEN_RE = re.compile(r"\b\d{3,}\b")
 _WHITESPACE_RE = re.compile(r"\s+")
 _MAX_STRING_LEN = 80
 _MAX_ERROR_TEXT_LEN = 200
-GAME_RUNTIME_LOCAL = "local_game"
-GAME_RUNTIME_CLOUD = "cloud_game"
-_VALID_GAME_RUNTIMES = {GAME_RUNTIME_LOCAL, GAME_RUNTIME_CLOUD}
+GAME_RUNTIME_BY_BACKEND = {
+    "local": "local_game",
+    "cloud": "cloud_game",
+    "adb": "adb_game",
+}
+_VALID_GAME_RUNTIMES = set(GAME_RUNTIME_BY_BACKEND.values())
 STARTUP_FEATURE_CODES = (
     "cloud_game",
     "power",

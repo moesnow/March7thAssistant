@@ -641,7 +641,7 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
     first_run()
     # 启动暂停控制器（仅在 GUI 注入了 MARCH7TH_CONTROL_FILE 时生效，其余场景惰性关闭）
     pause_ctl.start()
-    telemetry.track_startup()
+    telemetry.track_startup(backend)
 
     if workflow_name:
         return run_workflow_action(workflow_name, workflow_step_path)
