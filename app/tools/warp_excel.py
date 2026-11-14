@@ -12,16 +12,15 @@ def export_excel(data, path):
     detail = wb.active
     detail.title = tr('原始明细')
     detail.append([tr('时间'), tr('名称'), tr('类别'), tr('星级'), tr('卡池'), tr('总次数'), tr('保底内（明细）')])
-    counters, seen = {}, set()
+    counters = {}
     names = pool_names()
     for total, record in enumerate(sorted(data['list'], key=lambda r: int(r['id'])), 1):
         pool = record['gacha_type']
         counters[pool] = counters.get(pool, 0) + 1
-        pity = counters[pool] if pool in seen else '≥' + str(counters[pool])
+        pity = counters[pool]
         detail.append([record['time'], record['name'], record['item_type'], record['rank_type'], names[pool], total, pity])
         if record['rank_type'] == '5':
             counters[pool] = 0
-            seen.add(pool)
         color = 'FFA500' if record['rank_type'] == '5' else '800080' if record['rank_type'] == '4' else '000000'
         for cell in detail[detail.max_row]:
             cell.font = Font(color=color)
@@ -30,7 +29,7 @@ def export_excel(data, path):
     history.append([tr('卡池'), tr('名称'), tr('时间'), tr('原始抽数'), tr('统计抽数'), tr('来源')])
     for row in gold_rows(data, include_orphans=True):
         record = row['record']
-        observed = None if row['orphan'] else ('≥' + str(row['observed']) if row['bounded'] else row['observed'])
+        observed = None if row['orphan'] else row['observed']
         source = tr('原记录已变化（未统计）') if row['orphan'] else tr('手填更正') if row['corrected'] else tr('原始明细')
         history.append([names[record['gacha_type']], record['name'], record['time'], observed,
                         row['pity'] if not row['orphan'] else None, source])
@@ -38,7 +37,7 @@ def export_excel(data, path):
         history.append([names[entry['pool']], entry['name'], entry['date'], None, entry['pity'], tr('手动补充')])
 
     summary = wb.create_sheet(tr('统计说明'))
-    summary.append([tr('统计基于已保存的明细；历史可能不完整。每池首个五星的原始抽数仅为下限，不计入平均值。')])
+    summary.append([tr('平均值按已保存的抽数计算，首个五星使用记录内计数；手动更正优先。包含未知抽数时，平均值留空。')])
     summary.append([tr('手填内容单独标注，不补造逐抽明细，也不计入明细总抽数和星级占比。找回明细后，请自行核对并删除重复的手填项。')])
     summary.append([tr('空白抽数或时间表示未知。Excel 用于查看，完整恢复请使用小助手备份。')])
     summary.append([tr('卡池'), tr('明细抽数'), tr('手填五星'), tr('已知抽数五星'), tr('抽数不明五星'), tr('五星平均出货次数为')])

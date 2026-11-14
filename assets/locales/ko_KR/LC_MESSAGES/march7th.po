@@ -8446,3 +8446,21 @@ msgstr "도우미 전체 백업 (*.m7backup.json);;UIGF 형식 (*.json);;SRGF �
 #: app/warp_interface.py:205
 msgid "手填和更正：现有 {existing} 项，文件 {incoming} 项，导入后 {total} 项。"
 msgstr "수동 입력 및 수정: 현재 {existing}개, 파일에 {incoming}개, 가져온 후 {total}개."
+
+#: app/warp_manual_dialog.py:50
+msgid "记不清的抽数或时间可以留为未知。"
+msgstr "기억나지 않는 횟수나 날짜는 알 수 없음으로 두세요."
+
+#: app/warp_manual_dialog.py:111
+msgid "有日期时按日期排序；无日期时按列表顺序排在已有明细之前。"
+msgstr "날짜가 있으면 날짜순으로, 없으면 목록 순서대로 기존 기록 앞에 표시합니다."
+
+#: app/tools/warp_export.py:195
+msgid "5星明细"
+msgstr "5성 상세 기록"
+
+#: app/tools/warp_excel.py:40
+msgid "平均值按已保存的抽数计算，首个五星使用记录内计数；手动更正优先。包含未知抽数时，平均值留空。"
+msgstr ""
+"평균은 첫 5성까지의 기록 내 횟수를 포함한 저장된 횟수로 계산하며 수동 수정값을 우선합니다. 알 수 없는 횟수가 있으면 평균은 비워 "
+"둡니다."

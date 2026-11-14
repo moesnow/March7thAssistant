@@ -14,7 +14,7 @@ import glob
 import re
 import os
 from module.localization import tr
-from .warp_manual import MANUAL_KEY, manual_count, pool_summary, gold_rows
+from .warp_manual import MANUAL_KEY, manual_count, pool_summary, display_history
 from .warp_import import read_snapshot, edit_plan, save_import
 
 
@@ -173,9 +173,7 @@ class WarpExport:
     def data_to_html(self, theme="light"):
         css = '<style>p {font-size: 15px; font-weight: 500;}</style>'
         config = self.export_data()
-        content = tr('统计基于已保存的明细；历史可能不完整。每池首个五星的原始抽数仅为下限，不计入平均值。') + "\n\n"
-        if self.manual and (self.manual['entries'] or self.manual['corrections']):
-            content += tr('手填内容单独标注，不补造逐抽明细，也不计入明细总抽数和星级占比。找回明细后，请自行核对并删除重复的手填项。') + "\n\n"
+        content = ""
         for pool in self.gacha_type:
             stats = pool_summary(config, pool)
             records, entries = stats['records'], stats['entries']
@@ -186,39 +184,25 @@ class WarpExport:
                 start = records[0]['time'][:10].replace('-', '/')
                 end = records[-1]['time'][:10].replace('-', '/')
                 content += f"{start}  -  {end}\n\n"
-                since = ('≥' if stats['since_bounded'] else '') + str(stats['since'])
-                content += tr('明细共 {total} 抽，已记录 {since} 抽未出五星。').format(
-                    total=self.__set_color(len(records), 'DeepSkyBlue'),
-                    since=self.__set_color(since, 'LimeGreen')) + "\n\n"
+                total = self.__set_color(len(records), 'DeepSkyBlue')
+                since = self.__set_color(stats['since'], 'LimeGreen')
+                if manual_count(config):
+                    content += tr('明细共 {total} 抽，已记录 {since} 抽未出五星。').format(total=total, since=since) + "\n\n"
+                else:
+                    content += f"{tr('一共')} {total} {tr('抽')} {tr('已累计')} {since} {tr('抽未出5星')}\n\n"
                 for star, color in [('5', 'Goldenrod'), ('4', 'darkorchid'), ('3', 'DodgerBlue')]:
                     count = sum(r['rank_type'] == star for r in records)
-                    content += self.__set_color(f"{star}{tr('星')}: {count} [{count / len(records) * 100:.2f}%]", color) + "\n\n"
-                history = []
-                for row in stats['golds']:
-                    pity = str(row['pity']) if row['pity'] is not None else tr('未知')
-                    if not row['corrected'] and row['bounded']:
-                        pity = '≥' + str(row['observed'])
-                    if row['corrected']:
-                        pity += ' · ' + tr('手填')
-                    history.append(self.__set_color(f"{_html_name(row['record']['name'])}[{pity}]", self.__get_random_color(theme)))
-                if history:
-                    content += tr('5星历史记录') + ': ' + ' '.join(history) + "\n\n"
-            if entries:
-                history = []
-                for entry in entries:
-                    pity = str(entry['pity']) if entry['pity'] is not None else tr('未知')
-                    day = entry['date'] or tr('时间未知')
-                    history.append(self.__set_color(f"{_html_name(entry['name'])}[{pity} · {tr('手填')} · {day}]", self.__get_random_color(theme)))
-                content += tr('手动补充') + ': ' + ' '.join(history) + "\n\n"
+                    label = tr('5星明细') if star == '5' and entries else f"{star}{tr('星')}"
+                    content += self.__set_color(f"{label}: {count} [{count / len(records) * 100:.2f}%]", color) + "\n\n"
             if stats['golds'] or entries:
-                average = f"{stats['average']:.2f}" if stats['average'] is not None else tr('未知')
+                history = []
+                for row in display_history(stats):
+                    pity = str(row['pity']) if row['pity'] is not None else '?'
+                    history.append(self.__set_color(f"{_html_name(row['name'])}[{pity}]", self.__get_random_color(theme)))
+                content += tr('5星历史记录') + ': ' + ' '.join(history) + "\n\n"
+                average = f"{stats['average']:.2f}" if stats['average'] is not None else '?'
                 content += tr('五星平均出货次数为') + ': ' + self.__set_color(average, 'green') + "\n\n"
-                content += tr('仅统计已知抽数：{known} 个五星；抽数不明：{unknown} 个。不是完整历史概率。').format(
-                    known=stats['known'], unknown=stats['unknown']) + "\n\n"
             content += '<hr>\n\n'
-        orphan_count = sum(row['orphan'] for row in gold_rows(config, include_orphans=True))
-        if orphan_count:
-            content += tr('有 {count} 项更正对应的原始记录已变化或缺失，未参与统计。请在“已有五星抽数”中核对。').format(count=orphan_count)
         return css + markdown.markdown(content)
 
     def detect_game_locale(self):

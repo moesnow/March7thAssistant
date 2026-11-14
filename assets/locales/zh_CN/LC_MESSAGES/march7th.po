@@ -8354,3 +8354,19 @@ msgstr "小助手完整备份 (*.m7backup.json);;UIGF 格式 (*.json);;SRGF 格�
 #: app/warp_interface.py:205
 msgid "手填和更正：现有 {existing} 项，文件 {incoming} 项，导入后 {total} 项。"
 msgstr "手填和更正：现有 {existing} 项，文件 {incoming} 项，导入后 {total} 项。"
+
+#: app/warp_manual_dialog.py:50
+msgid "记不清的抽数或时间可以留为未知。"
+msgstr "记不清的抽数或时间可以留为未知。"
+
+#: app/warp_manual_dialog.py:111
+msgid "有日期时按日期排序；无日期时按列表顺序排在已有明细之前。"
+msgstr "有日期时按日期排序；无日期时按列表顺序排在已有明细之前。"
+
+#: app/tools/warp_export.py:195
+msgid "5星明细"
+msgstr "5星明细"
+
+#: app/tools/warp_excel.py:40
+msgid "平均值按已保存的抽数计算，首个五星使用记录内计数；手动更正优先。包含未知抽数时，平均值留空。"
+msgstr "平均值按已保存的抽数计算，首个五星使用记录内计数；手动更正优先。包含未知抽数时，平均值留空。"

@@ -8812,3 +8812,24 @@ msgid "手填和更正：现有 {existing} 项，文件 {incoming} 项，导入�
 msgstr ""
 "Manual entries and corrections: {existing} existing, {incoming} in the file,"
 " {total} after import."
+
+#: app/warp_manual_dialog.py:50
+msgid "记不清的抽数或时间可以留为未知。"
+msgstr "Leave the count or date unknown if you do not remember it."
+
+#: app/warp_manual_dialog.py:111
+msgid "有日期时按日期排序；无日期时按列表顺序排在已有明细之前。"
+msgstr ""
+"Dated entries are sorted by date. Undated entries appear before existing "
+"records in list order."
+
+#: app/tools/warp_export.py:195
+msgid "5星明细"
+msgstr "5-star details"
+
+#: app/tools/warp_excel.py:40
+msgid "平均值按已保存的抽数计算，首个五星使用记录内计数；手动更正优先。包含未知抽数时，平均值留空。"
+msgstr ""
+"The average uses saved counts, including the first recorded interval. Manual"
+" corrections take precedence. If any count is unknown, the average is left "
+"blank."

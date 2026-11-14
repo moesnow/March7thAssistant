@@ -104,9 +104,9 @@ def merge_manual(existing, incoming):
 
 
 def gold_rows(data, include_orphans=False):
-    """Shared by HTML, correction editor and Excel. First observed span is a
-    lower bound, not an exact pity: imported/fetched history can be truncated.
-    Later spans are counts within the saved detail, not proof of completeness.
+    """Shared by HTML, correction editor and Excel. Without a user correction,
+    use the original app's count within the saved records, including the first
+    span. Keep boundary metadata for the editor without inventing missing pulls.
     """
     counters, seen, rows, matched = {}, set(), [], set()
     corrections = manual_data(data)['corrections']
@@ -120,7 +120,7 @@ def gold_rows(data, include_orphans=False):
         if active:
             matched.add(record['id'])
         rows.append({'record': record, 'observed': counters[pool], 'bounded': pool not in seen,
-                     'pity': correction['pity'] if active else (counters[pool] if pool in seen else None),
+                     'pity': correction['pity'] if active else counters[pool],
                      'corrected': active, 'orphan': False})
         counters[pool] = 0
         seen.add(pool)
@@ -142,9 +142,36 @@ def pool_summary(data, pool):
         if record['rank_type'] == '5':
             break
         since += 1
+    # Unknown is an explicit user choice, never an inferred missing first span.
+    # Do not present a partial-sample average as the average of the full history.
     return {'records': records, 'golds': golds, 'entries': entries, 'known': len(known),
-            'unknown': len(values) - len(known), 'average': sum(known) / len(known) if known else None,
+            'unknown': len(values) - len(known), 'average': sum(known) / len(known) if known and len(known) == len(values) else None,
             'since': since, 'since_bounded': not golds}
+
+
+def display_history(stats):
+    """One chronological display list, without inventing dates for summaries.
+
+    Undated manual history comes first in the user's saved order. Dated items
+    are inserted by calendar day, with manual order breaking same-day ties.
+    This is a display order only; no stored entry or real record is changed.
+    """
+    # Keep real-record ID order, including unusual imported timestamps. Manual
+    # dates choose an insertion slot; they never reorder authoritative records.
+    slots = [[] for _ in range(len(stats['golds']) + 1)]
+    for index, entry in enumerate(stats['entries']):
+        slot = 0
+        if entry['date']:
+            slot = next((i for i, row in enumerate(stats['golds'])
+                         if row['record']['time'][:10] >= entry['date']), len(stats['golds']))
+        slots[slot].append((entry['date'] or '', index,
+                            {'name': entry['name'], 'pity': entry['pity']}))
+    history = []
+    for index, row in enumerate(stats['golds']):
+        history.extend(item for _, _, item in sorted(slots[index], key=lambda item: item[:2]))
+        history.append({'name': row['record']['name'], 'pity': row['pity']})
+    history.extend(item for _, _, item in sorted(slots[-1], key=lambda item: item[:2]))
+    return history
 
 
 def standard_data(data):

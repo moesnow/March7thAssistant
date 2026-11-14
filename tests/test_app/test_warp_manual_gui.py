@@ -10,7 +10,7 @@ from qfluentwidgets import MessageBox, ComboBox
 from module.localization import load_language
 from app.warp_manual_dialog import WarpManualDialog
 from app.tools.warp_import import read_snapshot, edit_plan, save_import
-from app.tools.warp_manual import MANUAL_KEY, manual_data
+from app.tools.warp_manual import MANUAL_KEY, manual_data, empty_manual, new_entry
 from tests.test_app.test_warp_import_gui import page, run_import
 from tests.test_app.test_warp_import import data, put
 from tests.test_app.test_warp_manual import manual_sample
@@ -61,7 +61,8 @@ def test_empty_account_continuous_add_edit_reorder_delete(page, qtbot, tmp_path,
     entry = manual_data(read_snapshot()[1])['entries'][0]
     assert entry['pity'] == 65 and entry['date'] == '2023-05-18'
     assert read_snapshot()[1]['list'] == []
-    assert '手填' in page.contentLabel.text()
+    assert '手填' not in page.contentLabel.text()
+    assert '景元[65]' in page.contentLabel.text() and '希儿[78]' in page.contentLabel.text()
     editor.manualTable.selectRow(1)
     monkeypatch.setattr(MessageBox, 'exec', lambda _: False)
     editor.deleteBtn.click()
@@ -318,6 +319,7 @@ def test_wide_editor_and_menu_visuals(page, qtbot, tmp_path):
     page.setStyleSheet(page.styleSheet() + '#warpInterface { background-color: #fafafa; }')
     qtbot.wait(20)
     capture(page, '01-statistics')
+    capture(page.contentLabel, '01-statistics-content')
     editor = open_editor(page, qtbot)
     editor.manualTable.selectRow(0)
     qtbot.wait(20)
@@ -350,3 +352,38 @@ def test_theme_switch_keeps_pending_input(page, qtbot, tmp_path):
         capture(editor, '07-dark-editor')
     finally:
         setTheme(Theme.LIGHT, save=False)
+
+
+@pytest.mark.parametrize('case', ['no-manual', 'known-only', 'with-unknown'])
+def test_compact_statistics_common_scenarios(page, qtbot, tmp_path, case):
+    result = data(range(1, 171))
+    for index, record in enumerate(result['list'], 1):
+        record['rank_type'] = '4' if index % 10 == 0 else '3'
+        record['name'] = '三月七' if record['rank_type'] == '4' else '智库'
+    result['list'][74].update(name='布洛妮娅', rank_type='5')
+    result['list'][152].update(name='卡芙卡', rank_type='5')
+    if case != 'no-manual':
+        result[MANUAL_KEY] = dict(empty_manual(), entries=[new_entry('11', '希儿', 50)])
+    if case == 'with-unknown':
+        result[MANUAL_KEY]['entries'].append(new_entry('11', '景元'))
+    put(tmp_path / 'warp.json', result)
+    page.setContent()
+    page.setStyleSheet(page.styleSheet() + '#warpInterface { background-color: #fafafa; }')
+    qtbot.wait(20)
+    html = page.contentLabel.text()
+    assert '布洛妮娅[75]' in html and '卡芙卡[78]' in html
+    assert '[1.18%]' in html
+    if case == 'no-manual':
+        assert '5星: 2' in html and '76.50' in html
+        assert '一共' in html and '已累计' in html
+    else:
+        assert '5星明细: 2' in html and '希儿[50]' in html
+        if case == 'known-only':
+            assert '67.67' in html
+        else:
+            assert ">?</font>" in html
+    assert ('景元[?]' in html) == (case == 'with-unknown')
+    assert '手填' not in html and '时间未知' not in html and '<sup>*</sup>' not in html
+    assert '≥' not in html and '已知' not in html and '抽卡明细' not in html
+    capture(page, 'statistics-' + case)
+    capture(page.contentLabel, 'statistics-' + case + '-content')
