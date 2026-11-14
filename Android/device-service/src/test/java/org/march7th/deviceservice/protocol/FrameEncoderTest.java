@@ -86,6 +86,19 @@ public class FrameEncoderTest {
     }
 
     @Test
+    public void samplesThumbnailColorsFromPaddedRows() {
+        ByteBuffer source = paddedSource();
+        byte[] out = new byte[3 * 2 * 4];
+        FrameEncoder.copyThumbnail(source, STRIDE, WIDTH, HEIGHT, 3, 2, out);
+        assertArrayEquals(new byte[] {
+                1, 1, 2, (byte) 255, 3, 1, 4, (byte) 255, 5, 1, 6, (byte) 255,
+                1, 3, 4, (byte) 255, 3, 3, 6, (byte) 255, 5, 3, 8, (byte) 255,
+        }, out);
+        assertEquals(3, source.position());
+        assertEquals(10, source.limit());
+    }
+
+    @Test
     public void rejectsRegionsOutsideTheBuffer() {
         byte[] out = new byte[WIDTH * HEIGHT * 4];
         int[][] bad = {

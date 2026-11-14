@@ -2,20 +2,21 @@
 -keep class org.march7th.deviceservice.** { *; }
 
 # Shizuku 按组件名反射构造 UserService，双方经同一个 AIDL 接口通信。
--keep class org.march7th.assistant.GameUserService {
+-keep class top.m7a.GameUserService {
     public <init>(android.content.Context);
 }
--keep interface org.march7th.assistant.IDeviceBootstrap { *; }
--keep class org.march7th.assistant.IDeviceBootstrap$* { *; }
+-keep interface top.m7a.IDeviceBootstrap { *; }
+-keep class top.m7a.IDeviceBootstrap$* { *; }
 
 # Python 通过 Chaquopy 按成员名调用。
--keepclassmembers class org.march7th.assistant.TaskController$TaskRun {
+-keepclassmembers class top.m7a.TaskController$TaskRun {
     public boolean isCancelled();
     public void log(long, java.lang.String, java.lang.String, java.lang.String, boolean);
     public void reportSummary(java.lang.String);
     public void reportStep(java.lang.String, java.lang.String, java.lang.String);
     public void reportProgress(java.lang.String);
     public int openDevice();
+    public void previewReady(int);
     public void displayReady(int);
     public void gameEvent(java.lang.String, int);
     public void gameReady();

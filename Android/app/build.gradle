@@ -19,9 +19,10 @@ def wheelhouse = providers.gradleProperty('m7a.wheelhouse').getOrElse('build/whe
 def repo = rootProject.file('..')
 layout.buildDirectory.set(layout.projectDirectory.dir("build/$abi"))
 def generatedAssets = layout.buildDirectory.dir('generated/project-assets')
+def demoUpdateAssets = layout.buildDirectory.dir('generated/demo-update-assets')
 
 android {
-    namespace = 'org.march7th.assistant'
+    namespace = 'top.m7a'
     compileSdk {
         version = release(37) {
             minorApiLevel = 2
@@ -30,7 +31,7 @@ android {
     buildToolsVersion = providers.gradleProperty('m7a.buildTools').get()
 
     defaultConfig {
-        applicationId = 'org.march7th.assistant'
+        applicationId = 'top.m7a'
         minSdk = providers.gradleProperty('m7a.minApi').get().toInteger()
         targetSdk = 37
         versionCode = versionCodeValue
@@ -52,6 +53,7 @@ android {
         }
     }
     sourceSets.main.assets.srcDir(generatedAssets.get().asFile)
+    sourceSets.debug.assets.srcDir(demoUpdateAssets.get().asFile)
 }
 
 chaquopy {
@@ -113,4 +115,12 @@ def stage = tasks.register('stageProjectAssets', Zip) {
 }
 tasks.named('preBuild') {
     dependsOn stage
+}
+
+def stageDemoChangelog = tasks.register('stageDemoChangelog', Sync) {
+    from(new File(repo, 'assets/docs/Changelog.md'))
+    into(demoUpdateAssets)
+}
+tasks.configureEach {
+    if (name == 'mergeDebugAssets') dependsOn stageDemoChangelog
 }

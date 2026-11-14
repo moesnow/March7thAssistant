@@ -209,6 +209,9 @@ def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_
             raise RunStopRequested()
         session = _AppSession(ServiceClient(port, token), bridge)
         check_service_hello(session.client.hello)
+        preview_port = session.client.hello.get("preview_port")
+        if type(preview_port) is int and 0 < preview_port <= 65535:
+            bridge.previewReady(preview_port)
         environment = AdbEnvironment(None, AdbDevice("android", "device", model), sdk, version,
                                      "physical", (0, 0), True, is_emulator)
         controller = get_game_controller("adb")

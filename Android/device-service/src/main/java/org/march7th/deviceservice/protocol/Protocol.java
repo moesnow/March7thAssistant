@@ -18,6 +18,12 @@ public final class Protocol {
 
     public static final int HANDSHAKE_TIMEOUT_MS = 5000;
 
+    /** APK 内只读预览的上限。原尺寸截图仍使用自己的命令和缓冲。 */
+    public static final int PREVIEW_WIDTH = 320;
+    public static final int PREVIEW_HEIGHT = 180;
+    public static final int PREVIEW_INTERVAL_MS = 200;
+    public static final int PREVIEW_MAX_BYTES = PREVIEW_WIDTH * PREVIEW_HEIGHT * 4;
+
     // 错误码
     public static final String E_BAD_REQUEST = "bad_request";
     public static final String E_UNKNOWN_COMMAND = "unknown_command";

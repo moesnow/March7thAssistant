@@ -160,11 +160,22 @@ final class VirtualScreen {
 
     /** 必须在选中帧的同一个 synchronized (sequencer) 内调用。 */
     void copyLatest(int x, int y, int w, int h, int channels, byte[] out) {
+        Image.Plane plane = rgbaPlane();
+        FrameEncoder.copyRegion(plane.getBuffer(), plane.getRowStride(), x, y, w, h, channels, out);
+    }
+
+    /** 与任务截图共用已采集的 Image，调用方持有 sequencer 锁。 */
+    void copyThumbnail(int w, int h, byte[] out) {
+        Image.Plane plane = rgbaPlane();
+        FrameEncoder.copyThumbnail(plane.getBuffer(), plane.getRowStride(), width, height, w, h, out);
+    }
+
+    private Image.Plane rgbaPlane() {
         Image.Plane plane = latest.getPlanes()[0];
         if (plane.getPixelStride() != 4) {
             throw new IllegalStateException("unexpected pixel stride " + plane.getPixelStride());
         }
-        FrameEncoder.copyRegion(plane.getBuffer(), plane.getRowStride(), x, y, w, h, channels, out);
+        return plane;
     }
 
     void release() {

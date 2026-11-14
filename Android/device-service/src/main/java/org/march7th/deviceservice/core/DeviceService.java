@@ -459,6 +459,33 @@ public final class DeviceService implements Watchdog.Host {
 
     // ---- 取帧 ----
 
+    /** 只读预览走自己的连接，不等待新帧，也不占用任务截图的编码缓存。 */
+    public Message previewFrame(JSONObject request, byte[] pixels) throws JSONException {
+        JSONObject header = Message.ok(request);
+        int displayId = request.optInt("display_id", -1);
+        long afterSeq = request.optLong("after_seq", 0);
+        VirtualScreen current = screen;
+        if (current == null || current.displayId != displayId) {
+            return new Message(header);
+        }
+        double scale = Math.min(1, Math.min((double) Protocol.PREVIEW_WIDTH / current.width,
+                (double) Protocol.PREVIEW_HEIGHT / current.height));
+        int width = Math.max(1, (int) Math.round(current.width * scale));
+        int height = Math.max(1, (int) Math.round(current.height * scale));
+        FrameSequencer.Frame frame;
+        synchronized (sequencer) {
+            frame = current.latestFrame();
+            if (frame == null || frame.seq <= afterSeq) {
+                return new Message(header);
+            }
+            current.copyThumbnail(width, height, pixels);
+        }
+        header.put("seq", frame.seq);
+        header.put("width", width);
+        header.put("height", height);
+        return new Message(header, pixels, 0, width * height * 4);
+    }
+
     private Message frame(Session session, JSONObject request) throws CommandException, JSONException, InterruptedException {
         VirtualScreen current = requireScreen();
         long minSeq = request.optLong("min_seq", 0);

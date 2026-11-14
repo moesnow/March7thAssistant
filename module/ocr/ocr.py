@@ -646,7 +646,7 @@ class OCR:
                     self.logger.warning("强制使用 CPU 模式初始化 OCR")
                 if force_onnx:
                     self._openvino_fallback = True
-                    self.logger.warning("强制使用 ONNXRuntime(CPU) 初始化 OCR")
+                    self.logger.info("强制使用 ONNXRuntime(CPU) 初始化 OCR")
 
                 self._use_dml = use_dml
                 self.logger.debug(f"OCR 模式：配置={self._selected_mode}，生效={self._resolved_mode}")

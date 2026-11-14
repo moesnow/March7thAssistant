@@ -30,7 +30,7 @@ badging=$("$ANDROID_BUILD_TOOLS/aapt$build_tools_exe" dump badging "$apk" | tr -
 package=$(sed -n '/^package: /p' <<< "$badging")
 min_api=$(sed -n 's/^m7a\.minApi=//p' Android/gradle.properties | tr -d '\r')
 abis=$(sed -n 's/^native-code: //p' <<< "$badging" | tr -d "'" | xargs -n1 | sort | paste -sd' ')
-if [[ "$package" != "package: name='org.march7th.assistant' "* ||
+if [[ "$package" != "package: name='top.m7a' "* ||
       "$package" != *" versionName='$version' "* ||
       ( -n "$version_code" && "$package" != *" versionCode='$version_code' "* ) ||
       "$badging" != *"sdkVersion:'$min_api'"* || "$abis" != 'arm64-v8a x86_64' ]]; then

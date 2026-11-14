@@ -162,8 +162,16 @@ public final class AppServer {
         listener.close();
         socket.setSoTimeout(0);
         DeviceService.Session session = service.openSession(event -> { }, false);
-        try {
-            MessageCodec.write(out, service.handle(session, hello));
+        try (AppPreviewServer preview = AppPreviewServer.open(service, handshake)) {
+            Message response = service.handle(session, hello);
+            if (preview != null) {
+                try {
+                    response.header.put("preview_port", preview.port());
+                } catch (JSONException ignored) {
+                    // 预览不可用时仍继续运行任务。
+                }
+            }
+            MessageCodec.write(out, response);
             while (!stopping.get() && !service.shutdownRequested()) {
                 Message request = MessageCodec.read(in, Protocol.MAX_HEADER_BYTES, Protocol.MAX_REQUEST_PAYLOAD_BYTES);
                 if (request == null) {

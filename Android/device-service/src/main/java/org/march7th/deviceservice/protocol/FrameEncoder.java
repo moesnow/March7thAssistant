@@ -129,6 +129,27 @@ public final class FrameEncoder {
         }
     }
 
+    /** 直接从原帧采样缩略图，避免为预览先拷出一整张图。 */
+    public static void copyThumbnail(ByteBuffer source, int rowStride, int width, int height,
+                                     int targetWidth, int targetHeight, byte[] out) {
+        if (targetWidth <= 0 || targetHeight <= 0 || targetWidth > width || targetHeight > height
+                || rowStride < (long) width * 4
+                || (long) (height - 1) * rowStride + (long) width * 4 > source.capacity()
+                || (long) targetWidth * targetHeight * 4 > out.length) {
+            throw new IllegalArgumentException("invalid thumbnail dimensions");
+        }
+        ByteBuffer pixels = source.duplicate();
+        pixels.clear();
+        ByteBuffer thumbnail = ByteBuffer.wrap(out);
+        for (int y = 0; y < targetHeight; y++) {
+            int row = ((2 * y + 1) * height / (2 * targetHeight)) * rowStride;
+            for (int x = 0; x < targetWidth; x++) {
+                int column = (2 * x + 1) * width / (2 * targetWidth);
+                thumbnail.putInt(pixels.getInt(row + column * 4));
+            }
+        }
+    }
+
     /** 就地做预测。解码方按相反方向累加即可还原（对 256 取模）。 */
     public static void applyPredictor(byte[] data, int width, int height, int channels, String predictor) {
         int rowBytes = width * channels;
