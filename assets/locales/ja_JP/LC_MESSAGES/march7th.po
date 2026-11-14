@@ -8144,3 +8144,15 @@ msgstr "精算して新しい対局を始める"
 #: app/setting_interface.py:626
 msgid "继续进度"
 msgstr "途中から再開"
+
+#: app/setting_interface.py:658
+msgid "投资选项优先级"
+msgstr "投資オプションの優先順位"
+
+#: app/setting_interface.py:660
+msgid "策略优先"
+msgstr "戦略優先"
+
+#: app/setting_interface.py:660
+msgid "图鉴优先"
+msgstr "図鑑優先"

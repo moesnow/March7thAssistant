@@ -8061,3 +8061,15 @@ msgstr "结算后重新开局"
 #: app/setting_interface.py:626
 msgid "继续进度"
 msgstr "继续进度"
+
+#: app/setting_interface.py:658
+msgid "投资选项优先级"
+msgstr "投资选项优先级"
+
+#: app/setting_interface.py:660
+msgid "策略优先"
+msgstr "策略优先"
+
+#: app/setting_interface.py:660
+msgid "图鉴优先"
+msgstr "图鉴优先"

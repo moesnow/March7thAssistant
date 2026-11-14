@@ -1128,19 +1128,28 @@ class Frame:
 
     def selected_investment_column(self) -> int | None:
         selected = []
+        inner, outer = (158, 245) if self.choice == "投资环境" else (166, 224)
         for index, x in enumerate(INVESTMENT_CENTERS):
-            if self.card_outline((x - 224, 405, x - 166, 755), (x + 166, 405, x + 224, 755), floor=197):
+            if self.card_outline((x - outer, 405, x - inner, 755), (x + inner, 405, x + outer, 755), floor=197):
                 selected.append(index)
         return selected[0] if len(selected) == 1 else None
 
-    def investment_titles(self) -> tuple[str | None, ...]:
+    def investment_card_title(self, column: int) -> Label | None:
+        x = INVESTMENT_CENTERS[column]
         title_top, title_bottom, effect_top = (360, 420, 421) if self.choice == "投资环境" else (459, 516, 520)
-        titles = []
-        for x in INVESTMENT_CENTERS:
-            labels = self.texts((x - 195, title_top, x + 195, title_bottom))
-            effect = self.texts((x - 195, effect_top, x + 195, 829))
-            titles.append(labels[0].text if len(labels) == 1 and effect else None)
-        return tuple(titles)
+        labels = self.texts((x - 195, title_top, x + 195, title_bottom))
+        effect = self.texts((x - 195, effect_top, x + 195, 829))
+        return labels[0] if len(labels) == 1 and effect else None
+
+    def investment_titles(self) -> tuple[str | None, ...]:
+        return tuple(label.text if label else None
+                     for label in map(self.investment_card_title, range(len(INVESTMENT_CENTERS))))
+
+    @cached_property
+    def uncollected_investment_columns(self) -> frozenset[int]:
+        # 环境和策略的卡宽不同，书本标记都在各自卡片的右上角。
+        return frozenset(index for index, x in enumerate(INVESTMENT_CENTERS)
+                         if self.match("screen/currency_wars/new.png", (x + 125, 178, x + 265, 294)))
 
     def investment_layout_changed(self, before) -> bool:
         areas = ((x - 145, 177, x + 145, 375) for x in INVESTMENT_CENTERS)
@@ -1277,7 +1286,8 @@ class Frame:
             area = (x - 181, 273, x + 182, 795)
             return bool(cv2.absdiff(before.crop(area), self.crop(area)).mean() >= 5)
         center = min(INVESTMENT_CENTERS, key=lambda c: abs(x - c))
-        if self.choice in INVESTMENT_CHOICES and self.selected_investment_column() == INVESTMENT_CENTERS.index(center):
+        if (self.choice == "投资环境" or self.choice in INVESTMENT_CHOICES) and (
+                self.selected_investment_column() == INVESTMENT_CENTERS.index(center)):
             return True
         # 投资卡选中后可能只点亮两侧描边，卡面本身基本不变。
         if self.card_outline((center - 245, 410, center - 158, 752),

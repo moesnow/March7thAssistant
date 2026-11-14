@@ -628,7 +628,7 @@ class SettingInterface(ScrollArea):
         self.currencywarsStrategyCard = None
         configured_strategy = cfg.get_value("currencywars_strategy")
         visible_strategies = (CURRENCY_WARS_STRATEGY, HIGH_ANAXA)
-        self.currencywarsStrategySelectCard = ComboBoxSettingCard2(
+        self.currencywarsStrategySelectCard = ExpandableComboBoxSettingCard(
             "currencywars_strategy",
             UiIcon.LIST,
             tr("货币战争策略"),
@@ -651,6 +651,13 @@ class SettingInterface(ScrollArea):
             tr('启用速通模式'),
             tr("仅在首领节点处理装备"),
             "currencywars_fast_mode"
+        )
+        self.currencywarsInvestmentPriorityCard = ComboBoxSettingCard2(
+            "currencywars_investment_priority",
+            UiIcon.OPTIONS,
+            tr("投资选项优先级"),
+            "",
+            texts={tr("策略优先"): "strategy", tr("图鉴优先"): "catalog"},
         )
 
         self.UniverseGroup = SettingCardGroup(tr("差分宇宙"), self.scrollWidget)
@@ -2754,10 +2761,13 @@ class SettingInterface(ScrollArea):
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
-        self.CurrencywarsGroup.addSettingCard(self.currencywarsUnfinishedMatchCard)
         if self.currencywarsStrategyCard is not None:
             self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategyCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategySelectCard)
+        self.currencywarsStrategySelectCard.addSettingCards([
+            self.currencywarsInvestmentPriorityCard,
+            self.currencywarsUnfinishedMatchCard,
+        ])
         if self.currencywarsStrategyCard is not None:
             self.currencywarsStrategySelectCard.hide()
         self.CurrencywarsGroup.addSettingCard(self.currencywarsFastModeCard)
@@ -3022,6 +3032,7 @@ class SettingInterface(ScrollArea):
         connect_expand_state(self.rewardEnableCard)
         connect_expand_state(self.assetEnableCard)
         connect_expand_state(self.currencywarsEnableCard)
+        connect_expand_state(self.currencywarsStrategySelectCard)
         connect_expand_state(self.fightEnableCard)
         connect_expand_state(self.fightRewardEnableCard)
         connect_expand_state(self.weeklyDivergentEnableCard)

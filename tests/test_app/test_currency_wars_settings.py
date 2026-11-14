@@ -2,6 +2,7 @@ import sys
 from unittest.mock import Mock
 
 import pytest
+from PySide6.QtCore import Qt
 
 from module.config.config import Config
 from tasks.weekly.currency_wars_strategy import HIGH_ANAXA, HIGH_FIREFLY, HIGH_SERVAL, STRATEGY_ID
@@ -77,12 +78,46 @@ def test_currency_wars_unfinished_match_defaults_to_restart_and_saves_resume(qtb
     qtbot.addWidget(widget)
 
     card = widget.currencywarsUnfinishedMatchCard
-    assert card.parent() is widget.CurrencywarsGroup
+    assert card.parent() is widget.currencywarsStrategySelectCard.view
     combo = card.comboBox
     assert combo.currentData() == "restart"
     combo.setCurrentIndex(combo.findData("resume"))
     config._load_config(save=False)
     assert config.get_value("currencywars_unfinished_match") == "resume"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
+def test_currency_wars_investment_priority_defaults_to_strategy_and_saves_catalog(qtbot, tmp_path, monkeypatch):
+    import app.setting_interface as settings
+
+    path = tmp_path / "config.yaml"
+    path.write_text("currencywars_strategy: s2_anaxa\n", encoding="utf-8")
+    config = Config.__new__(Config)
+    Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
+    monkeypatch.setattr("module.config.cfg", config)
+    monkeypatch.setattr("app.card.comboboxsettingcard2.cfg", config)
+    monkeypatch.setattr(settings, "cfg", config)
+    widget = settings.SettingInterface()
+    qtbot.addWidget(widget)
+
+    card = widget.currencywarsInvestmentPriorityCard
+    strategy = widget.currencywarsStrategySelectCard
+    widget.resize(1050, 800)
+    widget.show()
+    widget.stackedWidget.setCurrentWidget(widget.CurrencywarsGroup)
+    assert card.parent() is strategy.view
+    assert not strategy.isExpand
+    collapsed_height = strategy.height()
+    with qtbot.waitSignal(strategy.expandAni.finished):
+        qtbot.mouseClick(strategy.card.expandButton, Qt.MouseButton.LeftButton)
+    assert strategy.isExpand and strategy.height() > collapsed_height
+    for child in (card, widget.currencywarsUnfinishedMatchCard):
+        assert not child.visibleRegion().isEmpty()
+    combo = card.comboBox
+    assert combo.currentData() == "strategy"
+    combo.setCurrentIndex(combo.findData("catalog"))
+    config._load_config(save=False)
+    assert config.get_value("currencywars_investment_priority") == "catalog"
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")

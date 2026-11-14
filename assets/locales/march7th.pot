@@ -7813,3 +7813,15 @@ msgstr ""
 #: app/setting_interface.py:626
 msgid "继续进度"
 msgstr ""
+
+#: app/setting_interface.py:658
+msgid "投资选项优先级"
+msgstr ""
+
+#: app/setting_interface.py:660
+msgid "策略优先"
+msgstr ""
+
+#: app/setting_interface.py:660
+msgid "图鉴优先"
+msgstr ""

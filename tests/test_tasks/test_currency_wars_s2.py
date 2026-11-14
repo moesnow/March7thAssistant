@@ -2551,6 +2551,68 @@ def test_investment_scores_speed_and_does_not_treat_consumables_as_a_charge(worl
     assert world.war._choice_option(frame).text == preferred
 
 
+@pytest.mark.parametrize(("title", "title_y", "effect_y", "marker_x", "preferred", "preferred_effect"), (
+    ("投资环境", 393, 433, 1160, "连击概念股", "开局时获得连击角色和初始简易装备"),
+    ("请选择投资策略", 490, 540, 1122, "全速推进", "速度增幅提高10%，并获得额外金币"),
+))
+@pytest.mark.parametrize(("catalog_effect", "picks_new"), (
+    ("获得一个奇遇伙伴。", True),
+    ("消耗5金币，获得一个奇遇伙伴。", False),
+    ("只有3个备战席位置，获得3件简易装备。", False),
+    ("交换你的小队生命值和金币。", False),
+    (None, False),
+))
+def test_investment_catalog_priority_selects_only_readable_safe_cards(
+        world, title, title_y, effect_y, marker_x, preferred, preferred_effect, catalog_effect, picks_new):
+    badge = Image.open("assets/images/screen/currency_wars/new.png").convert("RGB")
+    image = CANVAS.copy()
+    image.paste(badge, (marker_x, 221))
+    text = [(preferred, 460, title_y), (preferred_effect, 460, effect_y), ("新投资", 960, title_y)]
+    if catalog_effect:
+        text.append((catalog_effect, 960, effect_y))
+    frame = Frame(image, labels(*text))
+    frame.__dict__["choice"] = title
+
+    assert frame.uncollected_investment_columns == {1}
+    assert world.war._choice_option(frame).text == preferred
+    world.cfg.currencywars_investment_priority = "catalog"
+    assert world.war._choice_option(frame).text == ("新投资" if picks_new else preferred)
+
+
+def test_investment_catalog_falls_back_to_strategy_without_a_badge(world):
+    world.cfg.currencywars_investment_priority = "catalog"
+    frame = page(Page.CHOICE, ("有备无患", 460, 490), ("获得1件简易装备。", 460, 540),
+                 ("全速推进", 960, 490), ("速度增幅提高10%，并获得额外金币。", 960, 540),
+                 choice="请选择投资策略")
+    assert world.war._choice_option(frame).text == "全速推进"
+
+
+@pytest.mark.parametrize("preselected", (False, True))
+def test_catalog_investment_environment_uses_the_verified_selection(monkeypatch, world, preselected):
+    world.cfg.currencywars_investment_priority = "catalog"
+    badge = Image.open("assets/images/screen/currency_wars/new.png").convert("RGB")
+    image = CANVAS.copy()
+    image.paste(badge, (1150, 216))
+    text = labels(("投资环境", 960, 100), ("连击概念股", 460, 393), ("开局获得简易装备", 460, 433),
+                  ("新环境", 960, 393), ("获得一个奇遇伙伴", 960, 433), ("确认", 979, 984))
+    first = Frame(image, text)
+
+    selected_image = image.copy()
+    draw = ImageDraw.Draw(selected_image)
+    center = 460 if preselected else 960
+    for x in (center - 228, center + 228):
+        draw.rectangle((x, 406, x + 4, 755), fill=(225, 225, 225))
+    draw.rectangle((917, 972, 1040, 997), fill=(225, 225, 225))
+    selected = Frame(selected_image, text)
+    after = page(Page.BOARD)
+    state = drive(monkeypatch, world, selected if preselected else first, lambda s, pt: setattr(
+        s, "frame", selected if pt == (960, 393) else after))
+
+    assert world.war._choose(state.frame) is after
+    expected = [] if preselected else [(Page.CHOICE, (960, 393))]
+    assert state.clicks == [*expected, (Page.CHOICE, (979, 984))]
+
+
 def test_investment_recognizes_team_energy_with_an_amount_between_the_words(world):
     frame = page(Page.CHOICE, ("招财狗", 462, 490), ("获得一个佩佩。战斗胜利后，", 470, 534),
                  ("若未损失小队生命值，则每有", 470, 558), ("一个佩佩就会为你提供1金币。", 470, 582),

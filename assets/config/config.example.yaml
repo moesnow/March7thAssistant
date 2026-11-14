@@ -230,6 +230,7 @@ currencywars_timestamp: 0 # 上次检测到完成货币战争积分奖励的时�
 currencywars_bonus_enable: false # 在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器。true 开启，false 关闭。
 currencywars_fast_mode: false # 是否启用货币战争速通模式，仅在首领节点尝试装备武器。true 开启，false 关闭。
 currencywars_strategy: s2_anaxa # 货币战争策略，可选连击那刻夏（S2，s2_anaxa）或连击那刻夏（高难，s2_anaxa_high）。旧的 aglaea 和 seele 可在设置中手动改选，运行时自动迁移到高难版。
+currencywars_investment_priority: strategy # 投资环境和投资策略的选择优先级。"strategy" 按阵容策略选，"catalog" 优先未收录项，找不到合适选项时按阵容策略选。
 currencywars_remembrance_trailblazer_name: "" # 开拓者在游戏内的实际显示名字，由玩家自定义
 
 # 差分宇宙配置

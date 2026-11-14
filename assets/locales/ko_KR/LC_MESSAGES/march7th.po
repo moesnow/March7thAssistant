@@ -8144,3 +8144,15 @@ msgstr "정산 후 새 대국 시작"
 #: app/setting_interface.py:626
 msgid "继续进度"
 msgstr "진행 중인 대국 계속"
+
+#: app/setting_interface.py:658
+msgid "投资选项优先级"
+msgstr "투자 옵션 선택 우선순위"
+
+#: app/setting_interface.py:660
+msgid "策略优先"
+msgstr "전략 우선"
+
+#: app/setting_interface.py:660
+msgid "图鉴优先"
+msgstr "도감 우선"

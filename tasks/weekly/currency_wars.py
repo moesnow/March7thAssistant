@@ -49,6 +49,7 @@ SAFE_BENEFITS = ("免费刷新", "额外金币", "获得金币", "简易装备",
                  "伤害提高", "伤害增幅", "额外造成", "回复生命值", "经验", "治疗",
                  "前台强度", "后台强度", "速度增幅提高", "战利品晶矿")
 EVENT_RISKS = ("失去", "消耗", "出售", "替换", "变为", "无法上场", "随机移除", "敌人难度", "扣除", "损失")
+INVESTMENT_RESTRICTIONS = ("节省工位", "只有3个备战", "奋斗协议", "钻石商人", "长线空头", "无法合成")
 
 
 class CurrencyWarsError(RuntimeError):
@@ -1839,6 +1840,12 @@ class CurrencyWars:
         title = frame.choice
         labels = frame.texts((200, 220, 1735, 835))
         priorities = self.lineup.preferences if self.lineup else (strategy.CORE, *strategy.BACK, *strategy.FRONT[1:])
+        catalog_first = (title == "投资环境" or title in ui.INVESTMENT_CHOICES) and (
+            cfg.get_value("currencywars_investment_priority", "strategy") == "catalog"
+        )
+        uncollected = frame.uncollected_investment_columns if catalog_first else ()
+        environments = ()
+        preferred_environment = None
         if title == "补给阶段":
             selected = frame.supply_selection() == (1, 1)
             eligible = [card for card in frame.supply_cards if card[0].text not in strategy.SPECIAL
@@ -1856,8 +1863,10 @@ class CurrencyWars:
                 environments = ("连击概念股", "人才下沉", "青梅牛马", "银·金·彩", "头彩",
                                 "长线利好", "增发货币", "人身意外险")
             for name in environments:
-                if label := frame.find(name, area=(210, 360, 1720, 420)):
-                    return label
+                if preferred_environment := frame.find(name, area=(210, 360, 1720, 420)):
+                    if not uncollected:
+                        return preferred_environment
+                    break
         if title in ("请选择主角", "选择主角"):
             for name in (self.lineup.front if self.lineup else strategy.FRONT):
                 if label := frame.find(name, area=(350, 235, 1615, 795)):
@@ -1896,7 +1905,8 @@ class CurrencyWars:
         # 对可选说明逐栏检查；拿不到完整效果时等候可识别选项。
         # 主要匹配显式收益，排除涉及放弃、支付或替换角色的效果。
         scores = []
-        for left, right in ((195, 700), (700, 1225), (1225, 1740)):
+        catalog_scores = []
+        for index, (left, right) in enumerate(((195, 700), (700, 1225), (1225, 1740))):
             column = [label for label in labels if left <= label.point[0] < right]
             effect = "".join(label.text for label in column)
             cost_text = effect.replace("消耗品", "").replace("未损失小队生命值", "")
@@ -1905,8 +1915,8 @@ class CurrencyWars:
                 cost_text = cost_text.replace("敌人难度降低", "")
             if any(risk in cost_text for risk in EVENT_RISKS):
                 continue
-            if self.lineup and any(text in effect for text in ("节省工位", "只有3个备战", "奋斗协议", "钻石商人",
-                                                            "长线空头", "失去", "出售所有", "无法合成")):
+            restricted = any(text in effect for text in INVESTMENT_RESTRICTIONS)
+            if self.lineup and restricted:
                 continue
             score = sum(word in effect for word in SAFE_BENEFITS)
             if self.lineup:
@@ -1923,7 +1933,14 @@ class CurrencyWars:
             if score:
                 title_label = next((label for label in column if 353 <= label.point[1] <= 559), None)
                 scores.append((score, title_label or column[0]))
-        return max(scores, key=lambda option: option[0], default=(0, None))[1]
+            if index in uncollected and not restricted and not re.search(
+                    r"从商店中移除|交换[^。；]{0,24}(?:生命值|金币)|移除[^。；]{0,24}角色", effect):
+                if card := frame.investment_card_title(index):
+                    rank = len(environments) - environments.index(card.text) if card.text in environments else 0
+                    catalog_scores.append((rank, score, card))
+        if catalog_scores:
+            return max(catalog_scores, key=lambda option: option[:2])[2]
+        return preferred_environment or max(scores, key=lambda option: option[0], default=(0, None))[1]
 
     def _refresh_unusable_investments(self, frame):
         kind = frame.choice
@@ -2041,10 +2058,11 @@ class CurrencyWars:
             if chosen is None or not frame.supply_selected_at(chosen.point):
                 raise CurrencyWarsActionUnready("未确认补给页已选角色")
         elif not supply and frame.choice_confirm():
-            column = frame.selected_investment_column() if strategy_choice else None
+            column = frame.selected_investment_column() if investment else None
             if column is not None:
                 x = ui.INVESTMENT_CENTERS[column]
-                candidates = frame.texts((x - 170, 450, x + 170, 561))
+                top, bottom = (360, 420) if title == "投资环境" else (450, 561)
+                candidates = frame.texts((x - 170, top, x + 170, bottom))
                 if candidates:
                     # 标题在说明正文上方；动画结束后正文首行可能进入同一纵向范围。
                     chosen = min(candidates, key=lambda label: label.point[1])
