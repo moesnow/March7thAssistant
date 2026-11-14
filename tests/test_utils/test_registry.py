@@ -97,6 +97,11 @@ class TestStarRailSettingGetRegistryKeyPath:
 
 
 class TestStarRailSettingResolution:
+    @pytest.fixture(autouse=True)
+    def registry_path(self):
+        with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="test-path"):
+            yield
+
     def test_get_resolution_valid(self):
         from utils.registry.star_rail_setting import get_game_resolution
         data = json.dumps({"width": 1920, "height": 1080, "isFullScreen": True}) + "\x00"
@@ -126,6 +131,11 @@ class TestStarRailSettingResolution:
 
 
 class TestStarRailSettingFps:
+    @pytest.fixture(autouse=True)
+    def registry_path(self):
+        with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="test-path"):
+            yield
+
     def test_set_fps_preserves_other_settings(self):
         from utils.registry.star_rail_setting import set_game_fps
         data = b'{"FPS": 60, "Quality": 3}\x00'
@@ -159,14 +169,14 @@ class TestStarRailSettingSetters:
     def test_set_auto_battle(self):
         from utils.registry.star_rail_setting import set_auto_battle_open_setting
         with patch("utils.registry.star_rail_setting.write_registry_value") as mock_write:
-            with patch("utils.registry.star_rail_setting.registry_key_path", "some\\path"):
+            with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="some\\path"):
                 set_auto_battle_open_setting(True)
                 mock_write.assert_called_once()
 
     def test_set_resolution(self):
         from utils.registry.star_rail_setting import set_game_resolution
         with patch("utils.registry.star_rail_setting.write_registry_value") as mock_write:
-            with patch("utils.registry.star_rail_setting.registry_key_path", "some\\path"):
+            with patch("utils.registry.star_rail_setting.get_registry_key_path", return_value="some\\path"):
                 set_game_resolution(1920, 1080, True)
                 mock_write.assert_called_once()
                 written_data = mock_write.call_args[0][3]
