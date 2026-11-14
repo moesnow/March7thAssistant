@@ -1023,12 +1023,13 @@ class WorkflowRunner:
         self.last_result = False
         self.current_workflow = normalized
         self._log("开始执行流程：" + normalized['name'])
-        success, _ = self._execute_steps(normalized["steps"], 0)
+        self._execute_steps(normalized["steps"], 0)
         if self.stop_requested:
             self._log("流程已停止")
             return False
         self._log("流程执行完成")
-        return success
+        # 流程是否完成与用于条件判断的最后一步结果独立。
+        return True
 
     def _log(self, message: str):
         self.log_callback(message)
@@ -1078,7 +1079,7 @@ class WorkflowRunner:
                 return self.last_result, loop_control
             if self.stop_requested:
                 return False, None
-        return True, None
+        return self.last_result if steps else True, None
 
     def _execute_step(self, step: dict, depth: int, in_loop: bool = False) -> tuple[bool, str | None]:
         normalized = normalize_step(step)
