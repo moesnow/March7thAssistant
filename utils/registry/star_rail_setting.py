@@ -149,17 +149,8 @@ def get_launcher_path() -> Optional[str]:
     return None
 
 
-def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
-    """
-    Return the game resolution from the registry value.
-
-    This function does not take any parameters.
-
-    Returns:
-    - If the registry value exists and data is valid, it returns a tuple (width, height, isFullScreen) representing the game resolution.
-    - If the registry value does not exist or data is invalid, it returns None or raises ValueError.
-    """
-    value = read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), resolution_value_name)
+def parse_game_resolution(value: bytes | None) -> Optional[Tuple[int, int, bool]]:
+    """解析已读取的游戏分辨率注册表数据。"""
     if value:
         data_dict = json.loads(value.decode('utf-8').strip('\x00'))
         # Convert keys to lower case to ensure case-insensitivity
@@ -177,7 +168,13 @@ def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
     return None
 
 
-def set_game_resolution(width: int, height: int, is_fullscreen: bool) -> None:
+def get_game_resolution() -> Optional[Tuple[int, int, bool]]:
+    """读取当前选中游戏的分辨率和全屏设置。"""
+    value = read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), resolution_value_name)
+    return parse_game_resolution(value)
+
+
+def set_game_resolution(width: int, height: int, is_fullscreen: bool, *, registry_path: str | None = None) -> None:
     """
     Set the resolution of the game and whether it should run in fullscreen mode.
 
@@ -185,6 +182,7 @@ def set_game_resolution(width: int, height: int, is_fullscreen: bool) -> None:
     - width: The width of the game window.
     - height: The height of the game window.
     - is_fullscreen: Whether the game should run in fullscreen mode.
+    - registry_path: An already resolved game key. Defaults to the currently selected game.
     """
     data_dict = {
         'width': width,
@@ -192,7 +190,9 @@ def set_game_resolution(width: int, height: int, is_fullscreen: bool) -> None:
         'isFullScreen': is_fullscreen
     }
     data = (json.dumps(data_dict) + '\x00').encode('utf-8')
-    write_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), resolution_value_name, data, winreg.REG_BINARY)
+    if registry_path is None:
+        registry_path = get_registry_key_path()
+    write_registry_value(winreg.HKEY_CURRENT_USER, registry_path, resolution_value_name, data, winreg.REG_BINARY)
 
 
 def get_game_fps() -> Optional[int]:

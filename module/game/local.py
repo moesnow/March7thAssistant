@@ -46,7 +46,7 @@ class LocalGameController(GameControllerBase):
             return
 
         from utils.registry.star_rail_setting import (
-            get_game_resolution, read_registry_value, registry_key_path,
+            parse_game_resolution, read_registry_value, registry_path_for_game,
             resolution_value_name, set_game_resolution, write_registry_value,
         )
         import winreg
@@ -59,8 +59,11 @@ class LocalGameController(GameControllerBase):
         if not unlocker.is_file():
             raise FileNotFoundError(tr("未找到触屏解锁器，请先运行 mobileui_update"))
 
-        original = read_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name)
-        if original is None or get_game_resolution() is None:
+        registry_path = registry_path_for_game(str(game_path))
+        if registry_path is None:
+            raise RuntimeError(tr("请在“设置”→“游戏连接”中配置正确的游戏路径"))
+        original = read_registry_value(winreg.HKEY_CURRENT_USER, registry_path, resolution_value_name)
+        if parse_game_resolution(original) is None:
             raise RuntimeError(tr("未找到原始游戏分辨率，请先在游戏内保存分辨率设置"))
 
         config_path = directory / "hoyofps_config.ini"
@@ -76,7 +79,7 @@ class LocalGameController(GameControllerBase):
 
         pause_ctl.checkpoint()
         try:
-            set_game_resolution(*resolution, False)
+            set_game_resolution(*resolution, False, registry_path=registry_path)
             launcher = subprocess.Popen(
                 [str(unlocker), "-HKSR", "-EnableMobileUI"],
                 cwd=directory,
@@ -95,7 +98,7 @@ class LocalGameController(GameControllerBase):
             # 首次出现 720p 窗口时游戏仍可能在读注册表，须等登录画面加载并进入场景。
             yield
         finally:
-            write_registry_value(winreg.HKEY_CURRENT_USER, registry_key_path, resolution_value_name,
+            write_registry_value(winreg.HKEY_CURRENT_USER, registry_path, resolution_value_name,
                                  original, winreg.REG_BINARY)
 
     def start_game_process(self) -> bool:
