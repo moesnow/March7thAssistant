@@ -7626,3 +7626,27 @@ msgstr ""
 #: app/tools/adb_service.py:232
 msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。"
 msgstr ""
+
+#: assets/config/character_names.json
+msgid "星神★阿哈"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "戏剧中人"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "欢愉 / 亚空"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "贪欢的月亮"
+msgstr ""
+
+#: assets/config/instance_names.json
+msgid "贪欢的神颅"
+msgstr ""
+
+#: assets/config/character_names.json
+msgid "星神★阿哈·群星乐透"
+msgstr ""

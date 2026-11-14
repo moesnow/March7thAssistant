@@ -7856,3 +7856,27 @@ msgstr "安装 adb 失败"
 #: app/tools/adb_service.py:232
 msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。"
 msgstr "在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。"
+
+#: assets/config/character_names.json
+msgid "星神★阿哈"
+msgstr "星神★阿哈"
+
+#: assets/config/instance_names.json
+msgid "戏剧中人"
+msgstr "戏剧中人"
+
+#: assets/config/instance_names.json
+msgid "欢愉 / 亚空"
+msgstr "欢愉 / 亚空"
+
+#: assets/config/instance_names.json
+msgid "贪欢的月亮"
+msgstr "贪欢的月亮"
+
+#: assets/config/instance_names.json
+msgid "贪欢的神颅"
+msgstr "贪欢的神颅"
+
+#: assets/config/character_names.json
+msgid "星神★阿哈·群星乐透"
+msgstr "星神★阿哈·群星乐透"

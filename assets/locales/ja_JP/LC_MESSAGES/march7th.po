@@ -7937,3 +7937,27 @@ msgstr "adb をインストールできませんでした"
 #: app/tools/adb_service.py:232
 msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。"
 msgstr "「Android デバイス」で adb をダウンロードするか、「詳細設定」で既存の adb を選択してください。"
+
+#: assets/config/character_names.json
+msgid "星神★阿哈"
+msgstr "星神★アッハ"
+
+#: assets/config/instance_names.json
+msgid "戏剧中人"
+msgstr "劇中人物"
+
+#: assets/config/instance_names.json
+msgid "欢愉 / 亚空"
+msgstr "歓愉 / 亜空"
+
+#: assets/config/instance_names.json
+msgid "贪欢的月亮"
+msgstr "貪悦の月"
+
+#: assets/config/instance_names.json
+msgid "贪欢的神颅"
+msgstr "貪悦の神首"
+
+#: assets/config/character_names.json
+msgid "星神★阿哈·群星乐透"
+msgstr "星神★アッハ・群星ロッタリー"

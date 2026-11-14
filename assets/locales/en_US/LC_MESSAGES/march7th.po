@@ -8251,3 +8251,27 @@ msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择�
 msgstr ""
 "Download adb under Android devices or select an existing adb in Advanced "
 "settings."
+
+#: assets/config/character_names.json
+msgid "星神★阿哈"
+msgstr "Aeon ★ Aha"
+
+#: assets/config/instance_names.json
+msgid "戏剧中人"
+msgstr "Dramatis Personae"
+
+#: assets/config/instance_names.json
+msgid "欢愉 / 亚空"
+msgstr "Elation / Subspace"
+
+#: assets/config/instance_names.json
+msgid "贪欢的月亮"
+msgstr "Moon of Indulgence"
+
+#: assets/config/instance_names.json
+msgid "贪欢的神颅"
+msgstr "Divine Skull of Indulgence"
+
+#: assets/config/character_names.json
+msgid "星神★阿哈·群星乐透"
+msgstr "Aeon ★ Aha • Star Lotto"
