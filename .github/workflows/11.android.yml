@@ -1,0 +1,145 @@
+name: Android CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: &android_paths
+      - 'Android/**'
+      - 'module/**'
+      - 'tasks/**'
+      - 'utils/**'
+      - 'assets/config/**'
+      - 'assets/images/share/**'
+      - 'assets/images/purefiction/battle_speed.png'
+      - 'assets/locales/**'
+      - 'assets/touch_720/**'
+      - 'README.md'
+      - 'LICENSE'
+      - '.github/workflows/11.android.yml'
+      - '.github/scripts/verify-android-apk.sh'
+  pull_request:
+    branches: [main]
+    paths: *android_paths
+  workflow_call:
+    inputs:
+      version-code:
+        type: number
+        required: true
+    secrets:
+      ANDROID_RELEASE_KEYSTORE_BASE64:
+        required: true
+      ANDROID_RELEASE_KEYSTORE_PASSWORD:
+        required: true
+      ANDROID_RELEASE_KEY_ALIAS:
+        required: true
+      ANDROID_RELEASE_KEY_PASSWORD:
+        required: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: astral-sh/setup-uv@v8.1.0
+        with:
+          version: '0.13.0'
+
+      - name: Set up Android SDK
+        id: sdk
+        working-directory: Android
+        run: |
+          platform=$(sed -n 's/^m7a\.androidPlatform=//p' gradle.properties)
+          build_tools=$(sed -n 's/^m7a\.buildTools=//p' gradle.properties)
+          tools_dir="$ANDROID_HOME/build-tools/$build_tools"
+          if [[ ! -f "$ANDROID_HOME/platforms/$platform/android.jar" || ! -f "$tools_dir/lib/d8.jar" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;$platform" "build-tools;$build_tools"
+          fi
+          echo "tools=$tools_dir" >> "$GITHUB_OUTPUT"
+
+      - name: Test and build Android packages
+        working-directory: Android
+        env:
+          APK_VERSION_CODE: ${{ inputs.version-code || 0 }}
+        run: |
+          tasks=(:device-service:test :device-service:dexJar :app:testDebugUnitTest :app:assembleRelease)
+          if [[ "$APK_VERSION_CODE" == '0' ]]; then
+            APK_VERSION_CODE=1
+            tasks+=(:app:assembleDebug)
+          elif [[ "$GITHUB_REF_TYPE" != tag || "$GITHUB_REF_NAME" != "$(< ../assets/config/version.txt)" ||
+                  ! "$GITHUB_REF_NAME" =~ ^v[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}(-[a-z0-9]+([.-][a-z0-9]+)*)?$ ]]; then
+            echo '::error::Android 发版需使用与 assets/config/version.txt 一致的标签。'
+            exit 1
+          fi
+          uv python install 3.14.8
+          python=$(uv python find --no-project 3.14.8)
+          "$python" app/prepare_wheels.py app/build/wheelhouse
+          ./gradlew --no-daemon "${tasks[@]}" "-Pm7a.hostPython=$python" "-Pm7a.versionCode=$APK_VERSION_CODE"
+
+      - name: Upload CI packages
+        if: ${{ !inputs.version-code }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-ci
+          path: |
+            Android/app/build/universal/outputs/apk/debug/app-debug.apk
+            Android/app/build/universal/outputs/apk/release/app-release-unsigned.apk
+            Android/device-service/build/outputs/m7a-device-service.jar
+          compression-level: 0
+          if-no-files-found: error
+          overwrite: true
+
+      - name: Sign and verify release APK
+        if: inputs.version-code
+        env:
+          APK_VERSION_CODE: ${{ inputs.version-code }}
+          ANDROID_BUILD_TOOLS: ${{ steps.sdk.outputs.tools }}
+          ANDROID_RELEASE_CERT_SHA256: ${{ vars.ANDROID_RELEASE_CERT_SHA256 }}
+          ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+          ANDROID_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
+          ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          : "${ANDROID_RELEASE_KEYSTORE_BASE64:?缺少 Android release keystore}"
+          : "${ANDROID_RELEASE_KEYSTORE_PASSWORD:?缺少 keystore 密码}"
+          : "${ANDROID_RELEASE_KEY_ALIAS:?缺少签名密钥别名}"
+          : "${ANDROID_RELEASE_KEY_PASSWORD:?缺少签名密钥密码}"
+          : "${ANDROID_RELEASE_CERT_SHA256:?缺少签名证书 SHA-256}"
+
+          umask 077
+          keystore=$(mktemp "$RUNNER_TEMP/android-release-keystore.XXXXXXXX")
+          trap 'rm -f -- "$keystore"' EXIT
+          printf '%s' "$ANDROID_RELEASE_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          unsigned=Android/app/build/universal/outputs/apk/release/app-release-unsigned.apk
+          apk="$RUNNER_TEMP/March7thAssistant_full_android.apk"
+          java -jar "$ANDROID_BUILD_TOOLS/lib/apksigner.jar" sign \
+            --ks "$keystore" --ks-key-alias "$ANDROID_RELEASE_KEY_ALIAS" \
+            --ks-pass env:ANDROID_RELEASE_KEYSTORE_PASSWORD --key-pass env:ANDROID_RELEASE_KEY_PASSWORD \
+            --v4-signing-enabled false --out "$apk" "$unsigned"
+          bash .github/scripts/verify-android-apk.sh "$apk" "$GITHUB_REF_NAME" "$APK_VERSION_CODE"
+
+      - name: Upload signed release APK
+        if: inputs.version-code
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-release
+          path: ${{ runner.temp }}/March7thAssistant_full_android.apk
+          compression-level: 0
+          if-no-files-found: error
+          overwrite: true

@@ -1,0 +1,99 @@
+name: MirrorChyan Android Uploading
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 已发布的 GitHub Release 标签
+        type: string
+        required: true
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+    secrets:
+      MirrorChyanUploadToken:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  mirrorchyan:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    concurrency:
+      group: mirrorchyan-android-${{ inputs.tag }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Download and verify the published APK
+        id: apk
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          ANDROID_RELEASE_CERT_SHA256: ${{ vars.ANDROID_RELEASE_CERT_SHA256 }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}(-[a-z0-9]+([.-][a-z0-9]+)*)?$ ]]; then
+            echo '::error::请指定 Android 发版标签，例如 v2026.11.14-beta。'
+            exit 1
+          fi
+
+          apk=March7thAssistant_full_android.apk
+          release=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG")
+          digest=$(jq -er --arg apk "$apk" '
+            select(.draft == false) | .assets[] |
+            select(.name == $apk and .state == "uploaded") | .digest | select(test("^sha256:[0-9a-f]{64}$"))
+          ' <<< "$release")
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$apk" --dir "$RUNNER_TEMP"
+          printf '%s  %s\n' "${digest#sha256:}" "$RUNNER_TEMP/$apk" | sha256sum --check
+
+          build_tools=$(sed -n 's/^m7a\.buildTools=//p' Android/gradle.properties)
+          export ANDROID_BUILD_TOOLS="$ANDROID_HOME/build-tools/$build_tools"
+          if [[ ! -f "$ANDROID_BUILD_TOOLS/lib/apksigner.jar" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "build-tools;$build_tools"
+          fi
+          bash .github/scripts/verify-android-apk.sh "$RUNNER_TEMP/$apk" "$TAG"
+
+          channel=stable
+          if [[ "$TAG" == *-alpha* ]]; then
+            channel=alpha
+          elif [[ $(jq -r .prerelease <<< "$release") == true ]]; then
+            channel=beta
+          fi
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+
+      # 固定官方上传脚本，启用 HTTPS 证书验证并沿用 Release 文件名。
+      - name: Prepare MirrorChyan uploader
+        shell: bash
+        run: |
+          uploader="$RUNNER_TEMP/mirrorchyan_upload.py"
+          curl --fail --silent --show-error --location --retry 3 \
+            'https://raw.githubusercontent.com/MirrorChyan/uploading-action/cca679d5e75017ac9ae236b55406b27f6f24c7db/python/upload.py' \
+            --output "$uploader"
+          printf '%s  %s\n' eb43b49783f9a00f6925f70868f60582e07e904601ec0f2ed43954f66fe693ad "$uploader" | sha256sum --check
+          sed -i -e '/^[[:space:]]*verify=False,$/d' \
+            -e 's/^    download_name = .*/    download_name = ospkg.path.basename(file)/' "$uploader"
+          python3 -m venv "$RUNNER_TEMP/mirrorchyan-venv"
+          "$RUNNER_TEMP/mirrorchyan-venv/bin/python" -m pip install 'requests==2.34.2'
+
+      - name: Upload APK to MirrorChyan
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+          CHANNEL: ${{ steps.apk.outputs.channel }}
+          UPLOAD_TOKEN: ${{ secrets.MirrorChyanUploadToken }}
+        run: |
+          : "${UPLOAD_TOKEN:?缺少 MirrorChyanUploadToken}"
+          "$RUNNER_TEMP/mirrorchyan-venv/bin/python" "$RUNNER_TEMP/mirrorchyan_upload.py" \
+            March7thAssistant "$TAG" android '' "$CHANNEL" "$UPLOAD_TOKEN" "$RUNNER_TEMP/March7thAssistant_full_android.apk"

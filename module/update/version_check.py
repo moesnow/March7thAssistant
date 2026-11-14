@@ -12,6 +12,7 @@ import re
 import time
 import threading
 from dataclasses import dataclass
+from urllib.parse import urlsplit
 
 import requests
 
@@ -144,9 +145,10 @@ def pick_asset(assets: list[dict], full: bool = True) -> dict | None:
     """从 release assets 中挑选匹配的资源对象。"""
     for asset in assets:
         url = asset.get("browser_download_url", "")
-        if full and "full" in url:
-            return asset
-        if not full and "full" not in url:
+        if not url:
+            continue
+        filename = asset.get("name") or urlsplit(url).path.rsplit("/", 1)[-1]
+        if filename.lower().endswith((".7z", ".zip")) and ("full" in filename) == full:
             return asset
     return None
 

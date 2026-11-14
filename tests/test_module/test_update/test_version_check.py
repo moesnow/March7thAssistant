@@ -92,6 +92,21 @@ class TestPickAsset:
         ]
         assert pick_asset(assets, full=True) is None
 
+    @pytest.mark.parametrize("full, expected", [(False, "update.7z"), (True, "March7thAssistant_full.7z")])
+    def test_mixed_android_and_desktop_release(self, full, expected):
+        names = [
+            "March7thAssistant_full_android.apk",
+            "March7thAssistant-android.apk",
+            "March7thAssistant_full.7z",
+            "March7thAssistant_full.zip",
+            "update.7z",
+        ]
+        assets = [
+            {"name": name, "browser_download_url": f"https://example.com/download/v2026.11.14/{name}"}
+            for name in names
+        ]
+        assert pick_asset(assets, full=full)["name"] == expected
+
 
 @pytest.fixture
 def github_release():

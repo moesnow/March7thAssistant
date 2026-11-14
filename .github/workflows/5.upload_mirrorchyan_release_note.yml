@@ -2,6 +2,11 @@ name: MirrorChyan Release Note
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: GitHub Release 标签（留空时同步最新版本）
+        type: string
+        required: false
   release:
     types: [edited]
 
@@ -10,10 +15,19 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - name: Validate Release tag
+        if: inputs.tag != ''
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+(\.[0-9]+)+(-[a-zA-Z0-9.-]+)?$ ]]
+
       - id: uploading
         uses: MirrorChyan/release-note-action@v1
         with:
           mirrorchyan_rid: March7thAssistant
+          version_name: ${{ inputs.tag }}
 
           upload_token: ${{ secrets.MirrorChyanUploadToken }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

@@ -5,9 +5,14 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose' version '2.2.10'
 }
 
-def abi = providers.gradleProperty('m7a.abi').getOrElse('arm64-v8a')
-if (!(abi in ['arm64-v8a', 'x86_64'])) {
-    throw new GradleException('m7a.abi 必须是 arm64-v8a 或 x86_64')
+def abi = providers.gradleProperty('m7a.abi').getOrElse('universal')
+def supportedAbis = ['arm64-v8a', 'x86_64']
+if (abi != 'universal' && !(abi in supportedAbis)) {
+    throw new GradleException('m7a.abi 必须是 universal、arm64-v8a 或 x86_64')
+}
+def versionCodeValue = providers.gradleProperty('m7a.versionCode').getOrElse('1').toInteger()
+if (!(versionCodeValue in 1..2_100_000_000)) {
+    throw new GradleException('m7a.versionCode 必须在 1 到 2100000000 之间')
 }
 def hostPython = providers.gradleProperty('m7a.hostPython')
 def wheelhouse = providers.gradleProperty('m7a.wheelhouse').getOrElse('build/wheelhouse')
@@ -28,10 +33,10 @@ android {
         applicationId = 'org.march7th.assistant'
         minSdk = providers.gradleProperty('m7a.minApi').get().toInteger()
         targetSdk = 37
-        versionCode = 1
-        versionName = repo.toPath().resolve('assets/config/version.txt').toFile().text.trim()
+        versionCode = versionCodeValue
+        versionName = new File(repo, 'assets/config/version.txt').getText('UTF-8').trim()
         ndk {
-            abiFilters abi
+            abiFilters.addAll(abi == 'universal' ? supportedAbis : [abi])
         }
     }
     buildFeatures {

@@ -8,11 +8,33 @@ on:
       - "v*.*.*"
 
 jobs:
+  android:
+    name: Build Android release APK
+    if: ${{ startsWith(github.ref, 'refs/tags/') && vars.ANDROID_RELEASE_ENABLED == 'true' }}
+    uses: ./.github/workflows/11.android.yml
+    permissions:
+      contents: read
+    with:
+      version-code: ${{ fromJSON(github.run_number) }}
+    secrets:
+      ANDROID_RELEASE_KEYSTORE_BASE64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+      ANDROID_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
+      ANDROID_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+      ANDROID_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+
   build:
     name: Build
+    needs: android
+    if: ${{ !cancelled() && (needs.android.result == 'success' || needs.android.result == 'skipped') }}
     runs-on: windows-latest
+    permissions:
+      contents: write
+      actions: write
+    concurrency:
+      group: build-release-${{ github.ref }}
+      cancel-in-progress: false
     outputs:
-      mirror_release_ready: ${{ steps.publish_release.outcome == 'success' }}
+      mirror_release_ready: ${{ steps.publish_release.outcome == 'success' && (needs.android.result == 'skipped' || steps.publish_draft.outcome == 'success') }}
     env:
       PYTHONHASHSEED: 0
       SOURCE_DATE_EPOCH: 315532800
@@ -30,6 +52,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: "false"
+          persist-credentials: false
 
       # 设置 uv 和 Python 环境
       - name: Set up uv
@@ -166,7 +189,30 @@ jobs:
           .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
           .\temp\7zzs\7za.exe a -t7z -m0=flzma2 -ms=on -mx=9 .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
 
-      # 创建GitHub发布
+      - name: Download signed Android APK
+        if: needs.android.result == 'success'
+        uses: actions/download-artifact@v8
+        with:
+          name: android-release
+          path: dist
+
+      - name: Check Android release tag
+        if: needs.android.result == 'success'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if release=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$GITHUB_REF_NAME" 2>&1); then
+            if ! jq -e '.draft' <<< "$release" >/dev/null; then
+              echo '::error::该标签已公开发布。补传 Mirror 酱请使用 Android 镜像同步工作流。'
+              exit 1
+            fi
+          elif [[ "$release" != *'HTTP 404'* ]]; then
+            echo "$release" >&2
+            exit 1
+          fi
+
+      # 带 APK 的版本先上传到草稿，再核对旧桌面端的选包结果。
       - name: Create release
         id: publish_release
         if: startsWith(github.ref, 'refs/tags/')
@@ -179,17 +225,65 @@ jobs:
             ./dist/March7thAssistant_full.zip
             ./dist/March7thAssistant_full.7z
             ./dist/update.7z
-          prerelease: ${{ contains(github.ref_name, 'beta') }}
-          make_latest: true
+            ${{ needs.android.result == 'success' && './dist/March7thAssistant_full_android.apk' || '' }}
+          draft: ${{ needs.android.result == 'success' }}
+          fail_on_unmatched_files: true
+          overwrite_files: ${{ needs.android.result != 'success' }}
+          preserve_order: ${{ needs.android.result == 'success' }}
+          prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, '-alpha') || contains(github.ref_name, '-rc') }}
+          make_latest: ${{ !contains(github.ref_name, 'beta') && !contains(github.ref_name, '-alpha') && !contains(github.ref_name, '-rc') }}
+
+      - name: Check legacy desktop downloads and publish draft
+        id: publish_draft
+        if: needs.android.result == 'success'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_ID: ${{ steps.publish_release.outputs.id }}
+        run: |
+          release=$(gh api "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID")
+          apk_sha256=$(sha256sum dist/March7thAssistant_full_android.apk | cut -d' ' -f1)
+          if ! jq -e --arg apk_sha256 "$apk_sha256" '
+            def legacy_pick($full):
+              [.assets[] | select((.browser_download_url | contains("full")) == $full) | .name][0];
+            .draft and
+            (.tag_name == env.GITHUB_REF_NAME) and
+            ([.assets[] | select(.state == "uploaded") | .name] | contains([
+              "March7thAssistant_full.7z", "March7thAssistant_full.zip",
+              "update.7z", "March7thAssistant_full_android.apk"
+            ])) and
+            (legacy_pick(true) | . == "March7thAssistant_full.7z" or . == "March7thAssistant_full.zip") and
+            (legacy_pick(false) == "update.7z") and
+            ([.assets[] | select(.name == "March7thAssistant_full_android.apk") | .digest] == ["sha256:" + $apk_sha256])
+          ' <<< "$release" >/dev/null; then
+            echo '::error::请检查草稿附件、APK SHA-256 和旧版桌面端的选包结果。'
+            exit 1
+          fi
+          latest=$(jq -r '.prerelease | not' <<< "$release")
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" \
+            -f tag_name="$GITHUB_REF_NAME" -F draft=false -f make_latest="$latest" --jq '.html_url'
 
       # 强制触发 MirrorChyan 上传
       - name: Trigger MirrorChyanUploading
+        if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
-          gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Uploading'
-          gh workflow run --repo $GITHUB_REPOSITORY 'MirrorChyan Release Note'
+          gh workflow run --repo "$GITHUB_REPOSITORY" 'MirrorChyan Uploading' -f tag="$GITHUB_REF_NAME"
+          gh workflow run --repo "$GITHUB_REPOSITORY" 'MirrorChyan Release Note' -f tag="$GITHUB_REF_NAME"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  mirror-android:
+    name: Sync APK to MirrorChyan
+    needs: [android, build]
+    if: ${{ !cancelled() && needs.android.result == 'success' && needs.build.outputs.mirror_release_ready == 'true' }}
+    uses: ./.github/workflows/12.upload_mirrorchyan_android.yml
+    permissions:
+      contents: read
+    with:
+      tag: ${{ github.ref_name }}
+    secrets:
+      MirrorChyanUploadToken: ${{ secrets.MirrorChyanUploadToken }}
 
   notify-mirror:
     name: Refresh mirror metadata
