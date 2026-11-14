@@ -46,13 +46,16 @@ class Instance:
 
                 # 如果战斗失败则重新运行, 并记录成功运行次数
                 if not fight_result:
-                    if "拟造花萼" in instance_type or "凝滞虚影" in instance_type or "侵蚀隧洞" in instance_type:
+                    if "拟造花萼" in instance_type or "凝滞虚影" in instance_type or "侵蚀隧洞" in instance_type or "饰品提取" in instance_type:
                         auto.click_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9, max_retries=10)
                         return False
                     else:
                         auto.click_element("./assets/images/zh_CN/fight/fight_fail.png", "image", 0.9, max_retries=10)
+                        if from_failure:
+                            return False
                         time.sleep(2)
-                        Instance.run(instance_type, instance_name, attempts_per_run, runs, from_failure=True, runs_completed=i)
+                        if not Instance.run(instance_type, instance_name, attempts_per_run, runs, from_failure=True, runs_completed=i):
+                            return False
                         break
 
                 if i < runs - 1:
@@ -425,6 +428,7 @@ class Instance:
         time.sleep(5)
 
         start_time = time.monotonic()
+        reconnect_count = 0
         while time.monotonic() - start_time < timeout:
             if auto.find_element("./assets/images/zh_CN/fight/fight_again.png", "image", 0.88):
                 log.info("战斗完成")
@@ -448,6 +452,19 @@ class Instance:
                                                        "- 检查配队是否正确\n"
                                                        "- 尝试减少连续挑战次数", NotificationLevel.ERROR)
                 raise RuntimeError("云游戏不活跃超时")
+            elif auto.find_element("连接中断", "text", max_retries=1, include=True) and (
+                auto.find_element("尝试重连", "text", include=True, take_screenshot=False, need_ocr=False)
+                or auto.find_element("退出游戏", "text", include=True, take_screenshot=False, need_ocr=False)
+            ):
+                reconnect_count += 1
+                if reconnect_count > 3:
+                    log.error("战斗中游戏连接中断且多次重连失败")
+                    Base.send_notification_with_screenshot("检测到游戏连接中断且重连失败，已中止当前战斗。", NotificationLevel.ERROR)
+                    raise RuntimeError("游戏连接中断")
+                log.warning(f"战斗中检测到游戏连接中断，尝试重连 ({reconnect_count}/3)")
+                if not auto.click_element("尝试重连", "text", include=True, take_screenshot=False, need_ocr=False):
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+                time.sleep(5)
             # 检测遗器背包已满的提示
             # 每次战斗检测循环中进行多次快速检测
             for _ in range(3):
