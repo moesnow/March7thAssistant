@@ -190,7 +190,7 @@ class CurrencyWars:
         return auto.drag_mouse(src, dst, duration=0.5, end_pause=0.10)
 
     def _action(self, frame, locate, send, after, message, *, seconds, attempts, retry_after=2.2,
-                track_control=True):
+                track_control=True, same_view=None):
         """用新画面确认控件稳定，按实际回执推进；只有原操作仍可确认时才重发。"""
         context = frame.action_context
         deadline = time.monotonic() + seconds
@@ -205,7 +205,7 @@ class CurrencyWars:
                 raise CurrencyWarsReconnect(frame)
             if after(frame):
                 return frame
-            same_context = frame.action_context == context
+            same_context = same_view(frame) if same_view else frame.action_context == context
             if sent and not same_context and frame.page not in (Page.UNKNOWN, Page.CONFLICT):
                 left_context = True
             target = locate(frame) if same_context and not left_context else None
@@ -309,7 +309,7 @@ class CurrencyWars:
         if frame.page == Page.HOME:
             return frame
         if frame.page in ACTIVE_PAGES:
-            raise CurrencyWarsError("当前存在进行中的货币战争对局，请从入画奇航菜单选择中途接管")
+            raise CurrencyWarsError("当前存在进行中的货币战争对局，请使用「货币战争中途接管」继续")
         if not self._entry_screen_ready():
             raise CurrencyWarsError("无法确认当前界面可以进入「货币战争·入画奇航」")
         screen.change_to("currency_wars_homepage", max_recursion=0, autotry=False)
@@ -1847,10 +1847,8 @@ class CurrencyWars:
         environments = ()
         preferred_environment = None
         if title == "补给阶段":
-            selected = frame.supply_selection() == (1, 1)
             eligible = [card for card in frame.supply_cards if card[0].text not in strategy.SPECIAL
-                        and (card[1] or card[0].text in priorities)
-                        and (not selected or frame.supply_selected_at(card[0].point))]
+                        and (card[1] or card[0].text in priorities)]
             best = min(eligible, key=lambda card: (
                 priorities.index(card[0].text) if card[0].text in priorities else len(priorities),
                 SUPPLY_ITEMS.index(card[1]) if card[1] in SUPPLY_ITEMS else len(SUPPLY_ITEMS),
@@ -1883,7 +1881,7 @@ class CurrencyWars:
                 return min(levels, key=lambda option: (option[0], option[1].point))[1]
             return (frame.find("普通遭遇", "普通挑战", "稳妥迎战", area=area)
                     or frame.find("离开", "跳过", area=area))
-        if title and title == frame.priced_recruitment:
+        if title in ui.RECRUIT_CHOICES or title and title == frame.priced_recruitment:
             return min(frame.recruitment_cards, key=lambda label: (
                 label.text in strategy.SPECIAL,
                 priorities.index(label.text) if label.text in priorities else len(priorities),
@@ -1993,143 +1991,140 @@ class CurrencyWars:
                 log.info(f"已确认投资卡免费刷新：{titles[column]} → {frame.investment_titles()[column]}")
         return frame
 
-    @staticmethod
-    def _choice_box_slots(frame):
-        return tuple(slot.point for slot in frame.bench_slots() if frame.has(
-            "开启", area=(slot.point[0] - 52, 911, slot.point[0] + 52, 970)
-        ))
+    def _choose_single(self, frame, option, confirm, advanced, message, *, seconds=8, retry_after=2.2):
+        """同一单选页先点选，再尝试确认，以游戏转场为准。"""
+        page, stage, dialog = frame.action_context
+        attempts = 3
+        attempted = 0
 
-    def _choose(self, frame):
+        def same_view(f):
+            current_page, current_stage, current_dialog = f.action_context
+            return (current_page == page and current_dialog == dialog
+                    and (stage is None or current_stage is None or current_stage == stage))
+
+        def locate(f):
+            candidate = option(f, attempted) if attempted < attempts else None
+            return (candidate,) if candidate else None
+
+        def send(f, candidate):
+            nonlocal attempted
+            attempted += 1
+            log.info(f"{dialog or page.value}：选择「{candidate.text}」")
+            result = self._tap(f, candidate.point)
+            if confirm is None:
+                return result
+            current = self._observe()
+            if current.page == Page.RECONNECT:
+                raise CurrencyWarsReconnect(current)
+            if advanced(current):
+                return result
+            if not same_view(current):
+                current = self._wait(lambda latest: same_view(latest) or advanced(latest), 2)
+            if current is not None and same_view(current) and (point := confirm(current)) is not None:
+                return self._tap(current, point)
+            return result
+
+        return self._action(
+            frame, locate, send, advanced, message, seconds=seconds, attempts=attempts,
+            retry_after=retry_after, track_control=False, same_view=same_view,
+        )
+
+    def _choose_investment(self, frame):
         title = frame.choice
-        strategy_choice = title in ui.INVESTMENT_CHOICES
-        investment = strategy_choice or title == "投资环境"
-        if strategy_choice:
+        if title in ui.INVESTMENT_CHOICES:
             frame = self._refresh_unusable_investments(frame)
             if frame.page != Page.CHOICE or frame.choice != title:
                 return frame
-        supply = title == "补给阶段"
-        items = title in ui.ITEM_CHOICES
-        if items:
-            previous_stage = None
+        fallback = ui.Label("中间卡片", (960, 393) if title == "投资环境" else (960, 490))
+        submitted_frame = None
+        submitted_titles = ()
+        previous_titles = None
 
-            def item_cards_ready(f):
-                nonlocal previous_stage
-                stage = f.stage if f.page == Page.CHOICE and f.choice == title and f.item_cards() else None
-                ready = stage is not None and stage == previous_stage
-                previous_stage = stage
-                return ready
+        def option(f, _):
+            return self._choice_option(f) or fallback
 
-            # 武装箱先出现标题，后显示同一节点的卡片。稳定后再固定输入上下文。
-            frame = self._expect(item_cards_ready, 10, f"未确认「{title}」的备战节点和奖励卡片")
-        recruitment = frame.priced_recruitment is not None
-        if recruitment:
-            frame = self._expect(lambda f: f.page == Page.CHOICE and f.choice == title and f.stage,
-                                 8, "未确认聘用书所属的备战节点")
-        before = frame
-        bench = frame.bench_slots() if recruitment else ()
-        boxes = self._choice_box_slots(before) if items else ()
-        chosen = None
-        selected_before = None
+        def confirm(f):
+            nonlocal submitted_frame, submitted_titles
+            button = f.find("确认", area=ui.INVESTMENT_CONFIRM)
+            submitted_frame = f
+            submitted_titles = f.investment_titles()
+            # 此区域覆盖两种确认布局，避开左侧的环境刷新按钮。
+            return ui.point(button) or (960, 984)
 
-        def transitioned(f):
-            changed_page = f.page in PLAY_PAGES and (f.page != Page.CHOICE or f.choice != title)
-            if items and changed_page and f.page == Page.BOARD:
-                return f.stage == before.stage and chosen is not None and (
-                    f.inventory_items() != before.inventory_items() and len(f.inventory_items()) >= len(before.inventory_items())
-                    or any(not f.slot_occupied(point)
-                           or cv2.absdiff(f.slot_mark(point), before.slot_mark(point)).mean() > 22 for point in boxes)
-                )
-            if not changed_page or not recruitment or f.page in PREP_OVERLAYS:
-                return changed_page
-            return f.page == Page.BOARD and f.stage == before.stage and any(
-                f.slot_occupied(slot.point) != slot.occupied
-                or slot.occupied and cv2.absdiff(f.slot_mark(slot.point), before.slot_mark(slot.point)).mean() > 27
-                for slot in bench
-            )
-
-        def selected(f):
-            if chosen is None or not f.choice_confirm():
+        def advanced(f):
+            nonlocal previous_titles
+            if f.page not in PLAY_PAGES:
                 return False
-            return (f.supply_selected_at(chosen.point) if supply
-                    else f.choice_selected(selected_before, chosen.point))
-
-        if supply and frame.supply_selection() == (1, 1):
-            chosen = self._choice_option(frame)
-            if chosen is None or not frame.supply_selected_at(chosen.point):
-                raise CurrencyWarsActionUnready("未确认补给页已选角色")
-        elif not supply and frame.choice_confirm():
-            column = frame.selected_investment_column() if investment else None
-            if column is not None:
-                x = ui.INVESTMENT_CENTERS[column]
-                top, bottom = (360, 420) if title == "投资环境" else (450, 561)
-                candidates = frame.texts((x - 170, top, x + 170, bottom))
-                if candidates:
-                    # 标题在说明正文上方；动画结束后正文首行可能进入同一纵向范围。
-                    chosen = min(candidates, key=lambda label: label.point[1])
-            else:
-                chosen = self._choice_option(frame)
-            selected_before = frame
-            if not selected(frame):
-                raise CurrencyWarsActionUnready(f"「{title}」已有选择，但未确认所选卡片")
-        if chosen is None:
-            def locate(f):
-                if supply and f.supply_selection() != (0, 1) or f.choice_confirm():
-                    return None
-                # 选项逐张出现时按最新画面重新评分。发出选择之后只重试同一张卡。
-                current = self._choice_option(f)
-                if current and (chosen is None or current.text == chosen.text):
-                    return (current.point,)
-                return None
-
-            def send(f, target):
-                nonlocal chosen, selected_before
-                if chosen is None:
-                    chosen = self._choice_option(f)
-                    selected_before = f
-                    log.info(f"{title}：选择「{chosen.text}」")
-                return self._tap(f, target)
-
-            frame = self._action(
-                frame, locate, send, lambda f: transitioned(f) or f.page == Page.CHOICE and selected(f),
-                f"「{title}」未确认可选卡片或选中回执", seconds=14, attempts=3,
-            )
-            if transitioned(frame):
-                return frame
-        catalog_frame = frame
-        catalog = catalog_frame.investment_titles() if investment else ()
-        submitted = False
-        previous = None
-
-        def changed_columns(current):
-            return sum(bool(old and new and old != new) for old, new in zip(catalog, current))
-
-        def locate_confirm(f):
-            if not selected(f) or submitted and investment and changed_columns(f.investment_titles()):
-                return None
-            return (f.choice_confirm().point,)
-
-        def send_confirm(f, target):
-            nonlocal submitted
-            submitted = True
-            return self._tap(f, target)
-
-        def confirmed(f):
-            nonlocal previous
-            if transitioned(f):
+            if f.page != Page.CHOICE or f.choice != title:
                 return True
-            if submitted and investment and f.page == Page.CHOICE and f.choice == title and not f.choice_confirm():
-                current = f.investment_titles()
-                new_title = any(name is not None and name not in catalog for name in current)
-                if changed_columns(current) >= 2 or new_title and f.investment_layout_changed(catalog_frame):
-                    settled = current == previous
-                    previous = current
+            if submitted_frame is not None:
+                titles = f.investment_titles()
+                changed = sum(bool(old and new and old != new) for old, new in zip(submitted_titles, titles))
+                new_title = any(name is not None and name not in submitted_titles for name in titles)
+                if changed >= 2 or new_title and f.investment_layout_changed(submitted_frame):
+                    settled = titles == previous_titles
+                    previous_titles = titles
                     return settled
-            previous = None
+            previous_titles = None
             return False
 
-        return self._action(
-            frame, locate_confirm, send_confirm, confirmed, f"「{title}」确认后未转场", seconds=18, attempts=1,
+        return self._choose_single(
+            frame, option, confirm, advanced, f"「{title}」点选并确认后未转场", seconds=10, retry_after=4,
         )
+
+    def _choose(self, frame):
+        title = frame.choice
+        if title == "投资环境" or title in ui.INVESTMENT_CHOICES:
+            return self._choose_investment(frame)
+        reward_choice = title in REWARD_CHOICES or frame.priced_recruitment is not None
+        confirm_area, confirm_point = {
+            "补给阶段": (ui.SUPPLY_CONFIRM, (1692, 984)),
+            "遭遇节点": (ui.ENCOUNTER_CONFIRM, (1083, 900)),
+        }.get(title, (ui.CHOICE_CONFIRM, None))
+
+        def is_single_supply(f):
+            count = f.supply_selection() if title == "补给阶段" else None
+            return count is None or count[1] <= 1
+
+        def option(f, attempt):
+            if not is_single_supply(f):
+                return None
+            chosen = self._choice_option(f)
+            if chosen is not None:
+                return chosen
+            if title in ui.ITEM_CHOICES:
+                details = f.matching(("查看详情",), ui.ITEM_CARD_DETAILS)
+                if details:
+                    return ui.Label("详情上方的奖励", (min(details, key=lambda label: label.point[0]).point[0], 230))
+            if title == "补给阶段":
+                x = (960, 605, 1315)[attempt]
+                return ui.Label("补给卡片", (x, 566))
+            if title == "遭遇节点":
+                return ui.Label("左侧遭遇", (666, 390))
+            if reward_choice:
+                return ui.Label("奖励卡片", ((960, 1174, 746)[attempt], 230))
+            # 其它明确标明单选的弹窗，可用正文中的可见卡片位置。
+            if (f.has("请选择1个", "请选择一个", area=ui.ITEM_SELECTION)
+                    or f.has("确认", "确认选择", "选定", "选择", area=confirm_area)):
+                return next(iter(f.texts((350, 304, 1660, 740))), ui.Label("中间卡片", (960, 460)))
+            return None
+
+        def confirm(f):
+            if not is_single_supply(f):
+                return None
+            button = f.find("确认", "确认选择", "选定", "选择", area=confirm_area)
+            if button or reward_choice:
+                return ui.point(button)
+            if confirm_point is not None:
+                return confirm_point
+            if f.has("请选择1个", "请选择一个", area=ui.ITEM_SELECTION):
+                return (960, 984)
+
+        def advanced(f):
+            return f.page in ACTIVE_PAGES and (f.page != Page.CHOICE or f.choice != title)
+
+        auto_claim = title in ui.ITEM_CHOICES or frame.priced_recruitment is not None
+        return self._choose_single(frame, option, None if auto_claim else confirm, advanced, f"「{title}」选择后未转场")
 
     def _halo(self, frame):
         if not self.halo_candidate:
@@ -2175,17 +2170,12 @@ class CurrencyWars:
 
         def same_target(f):
             return portrait_matches(f) or (
-                verified_face is not None and f.halo_target_present()
+                verified_face is not None
                 and cv2.absdiff(f.crop(ui.HALO_TARGET_FACE), verified_face).mean() <= 20
             )
 
-        def ready_options(f):
-            return f.page == Page.HALO and (
-                f.halo_effect(allow_support=True)
-                or all(f.halo_effect_texts()) and (f.halo_refresh_status() or f.halo_skip())
-            )
-
-        frame = self._expect(ready_options, 9, "主角光环卡片或刷新按钮尚未显示")
+        if not any(frame.halo_effect_texts()):
+            frame = self._wait(lambda f: f.page == Page.HALO and any(f.halo_effect_texts()), 3) or frame
         stage = self.last_result_stage
         retry_refresh = (stage, "光环刷新") not in self.deferred_operations
         max_difficulty = 5 if (self.lineup is None and cfg.currencywars_rank_difficulty == "lowest"
@@ -2193,9 +2183,6 @@ class CurrencyWars:
         effect = frame.halo_effect()
         if self.lineup:
             effect = effect or frame.halo_effect(allow_support=True)
-        selected = frame.halo_effect(max_difficulty=max_difficulty)
-        if effect is None and selected and frame.halo_effect_selected(selected[1]):
-            effect = selected
         for attempt in range(10 if self.lineup else 6):
             index = attempt % 2
             if effect or not retry_refresh:
@@ -2216,8 +2203,7 @@ class CurrencyWars:
             except CurrencyWarsRecoverable as error:
                 self.deferred_operations.add((stage, "光环刷新"))
                 frame = self._expect(
-                    lambda f: f.page == Page.HALO and any(f.halo_effect_texts())
-                    or f.page in PLAY_PAGES - {Page.HALO, Page.HALO_DETAIL},
+                    lambda f: f.page in PLAY_PAGES - {Page.HALO_DETAIL},
                     7, "光环刷新后未确认当前页面",
                 )
                 log.warning(f"暂停光环刷新，读取实际卡片和现有前台：{error}")
@@ -2232,45 +2218,38 @@ class CurrencyWars:
         if effect is None and self.lineup:
             # 强制选择且预算已耗尽时，可以接受有明确增益的难度词条。自伤和手动条件仍排除。
             effect = frame.halo_effect(max_difficulty=5, allow_support=True)
-        if effect is None:
-            if skip := frame.halo_skip():
-                def current_skip(f):
-                    button = f.halo_skip()
-                    return button.point if button and button.text == skip.text else None
 
-                return self._click_to(
-                    frame, current_skip,
-                    lambda f: f.page in PLAY_PAGES - {Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE}
-                    and (f.page != Page.BOARD or not f.halo_preview()),
-                    "跳过主角光环后未确认转场", seconds=14, attempts=1,
-                )
-            # 正式服部分首领必须选光环。使用已确认的正向效果，保留奖励之外的游戏约束。
-            effect = frame.halo_effect(max_difficulty=5, allow_support=True)
-            if effect is None:
-                raise CurrencyWarsReadTimeout("未找到可核验的主角光环或跳过入口")
-        _, index, title = effect
+        def advanced(f):
+            return f.page in PLAY_PAGES - {Page.HALO} and (f.page != Page.BOARD or not f.halo_preview())
 
-        def effect_button(f):
-            current = f.halo_title_label(index)
-            return current.point if current and current.text == title.text else None
+        if effect is None and frame.halo_skip():
+            try:
+                frame = self._click_to(frame, lambda f: ui.point(f.halo_skip()), advanced,
+                                       "跳过主角光环后未确认转场", seconds=8, attempts=1)
+            except CurrencyWarsRecoverable as error:
+                frame = self._expect(lambda f: f.page == Page.HALO or advanced(f),
+                                     5, "跳过光环后未识别当前界面")
+                if frame.page == Page.HALO:
+                    log.warning(f"跳过光环未推进，尝试选择光环：{error}")
+            if frame.page != Page.HALO:
+                if frame.page != Page.HALO_REPLACE:
+                    self.halo_candidate = None
+                return frame
+        effect = effect or frame.halo_effect(max_difficulty=5, allow_support=True)
 
-        def selection_confirmed(f):
-            return (f.page == Page.HALO and effect_button(f) is not None
-                    and f.halo_effect_selected(index) and same_target(f))
+        def option(f, attempt):
+            if not same_target(f):
+                return None
+            if effect is not None:
+                _, index, title = effect
+                return f.halo_title_label(index) or ui.Label(title.text, ui.HALO_OPTION_POINTS[index])
+            choices = f.halo_fallbacks()
+            return choices[attempt % len(choices)]
 
-        if not selection_confirmed(frame):
-            frame = self._click_to(
-                frame, lambda f: effect_button(f)
-                if same_target(f) and not f.halo_effect_selected(index) else None,
-                selection_confirmed,
-                "主角光环效果选择未确认", seconds=8,
-            )
-        log.info(f"主角光环：{target.unit.name}，{title.text}")
-        updated = self._click_to(
-            frame, lambda f: ui.point(f.find("确认", area=ui.HALO_CONFIRM))
-            if selection_confirmed(f) else None,
-            lambda f: f.page in PLAY_PAGES - {Page.HALO}, "主角光环确认后未转场", seconds=16, attempts=1,
-        )
+        def confirm(f):
+            return ui.point(f.find("确认", area=ui.HALO_CONFIRM)) or (969, 954)
+
+        updated = self._choose_single(frame, option, confirm, advanced, "主角光环点选并确认后未转场")
         if updated.page != Page.HALO_REPLACE:
             self.halo_candidate = None
         return updated
@@ -2298,8 +2277,32 @@ class CurrencyWars:
 
     def _employee_event(self, frame):
         event = frame.page
-        target_count = 2 if event == Page.DANCE else 1
         preferences = self.lineup.preferences if self.lineup else (*strategy.FRONT, *strategy.BACK)
+
+        def priority(label):
+            return preferences.index(label.text) if label.text in preferences else len(preferences), label.point[0]
+
+        stage = frame.stage
+
+        def advanced(f):
+            return (f.page in PLAY_PAGES - {event}
+                    or f.page in (Page.DETAIL, Page.PARTNER_DETAIL) and f.stage == stage)
+
+        if event == Page.RANGER:
+            def option(f, attempt):
+                if f.employee_event_candidates:
+                    return min(f.employee_event_candidates, key=priority)
+                details = f.matching(("详情",), (440, 385, 1650, 436))
+                positions = sorted(label.point[0] for label in details) or [973, 1045, 927]
+                x = positions[attempt % len(positions)]
+                return ui.Label("候选角色", (x, 355))
+
+            def confirm(f):
+                return ui.point(f.find("确认选择", area=ui.EMPLOYEE_EVENT_CONFIRM)) or (1492, 598)
+
+            return self._choose_single(frame, option, confirm, advanced, "巡海游侠任命后未转场")
+
+        target_count = 2
 
         def candidate_ready(f):
             candidates = f.employee_event_candidates
@@ -2312,9 +2315,7 @@ class CurrencyWars:
             if len(selected) >= target_count:
                 break
             available = [label for label in frame.employee_event_candidates if label.text not in selected]
-            name = min(available, key=lambda label: (
-                preferences.index(label.text) if label.text in preferences else len(preferences), label.point[0]
-            )).text
+            name = min(available, key=priority).text
             frame = self._click_to(
                 frame, lambda f: next((label.point for label in f.employee_event_candidates if label.text == name), None)
                 if candidate_ready(f) and f.employee_event_selected == selected else None,
@@ -2324,11 +2325,9 @@ class CurrencyWars:
         selected = frame.employee_event_selected
         if len(selected) != target_count:
             raise CurrencyWarsError(f"未确认{event.value}恰好选中{target_count}名角色")
-        stage = frame.stage
         updated = self._click_to(
             frame, lambda f: ui.point(f.employee_event_confirm()) if f.employee_event_selected == selected else None,
-            lambda f: f.page in PLAY_PAGES - {event}
-            or f.page in (Page.DETAIL, Page.PARTNER_DETAIL) and f.stage == stage,
+            advanced,
             f"{event.value}确认后未转场", attempts=1,
         )
         log.info(f"{event.value}：{'、'.join(sorted(selected))}")
@@ -2339,9 +2338,8 @@ class CurrencyWars:
         stage = frame.stage
         priorities = ("降低敌人属性", "初始能量提升", "免费刷新", "行动提前", "幸运一击率提升", "幸运一击伤害提升",
                       *SAFE_BENEFITS, "获得更多", "获得额外")
-        attempted = set()
 
-        def options(f):
+        def option(f, attempt):
             offers = []
             for label, effect in f.board_effect_cards:
                 if any(risk in effect for risk in EVENT_RISKS) or re.search(
@@ -2351,89 +2349,21 @@ class CurrencyWars:
                 if score is None and re.search(
                         r"我方(?:小队|全体|前台|后台)[^，。！？]{1,20}(?:提升|提高|增加)\d", effect):
                     score = len(priorities)
-                if score is not None:
-                    offers.append((score, label.point[0], label.text))
-            return tuple(name for _, _, name in sorted(offers))
+                offers.append((score if score is not None else len(priorities) + 1, label.point[0], label))
+            if not offers:
+                return None
+            ranked = sorted(offers, key=lambda offer: offer[:2])
+            return ranked[attempt % len(ranked)][2]
 
         def advanced(f):
             return (f.page in PREP_OVERLAYS - {event}
-                    or f.page in (Page.BOARD, Page.DETAIL, Page.PARTNER_DETAIL) and f.stage == stage)
+                    or f.page in (Page.BOARD, Page.DETAIL, Page.PARTNER_DETAIL)
+                    and (stage is None or f.stage in (None, stage)))
 
-        def same_event(f):
-            return f.page == event and f.stage == stage
+        def confirm(f):
+            return ui.point(f.find("确认选择", area=ui.BOARD_EFFECT_CONFIRM)) or (1492, 599)
 
-        def existing_safe(f, safe):
-            if f.board_effect_confirm():
-                selected = f.board_effect_selected
-                if len(selected) == 1 and selected[0] in safe:
-                    return selected[0]
-            return None
-
-        def offers_ready(f):
-            if advanced(f):
-                return True
-            if not same_event(f):
-                return False
-            safe = options(f)
-            return bool(any(name not in attempted for name in safe) or existing_safe(f, safe))
-
-        # 最多尝试每列一次，最后再给已经发出的选择一个读取机会。
-        for _ in range(len(frame.board_effect_columns) + 1):
-            frame = self._expect(offers_ready, 8, f"{event.value}未识别到适用的选项")
-            if advanced(frame):
-                return frame
-            safe = options(frame)
-            existing = existing_safe(frame, safe)
-            name = existing or next(candidate for candidate in safe if candidate not in attempted)
-            was_unselected = False
-            pressed = False
-            observed = 0
-
-            def locate(f):
-                if not same_event(f) or name not in options(f):
-                    return None
-                return next(((label.point,) for label, _ in f.board_effect_cards if label.text == name), None)
-
-            def send(f, point):
-                nonlocal was_unselected, pressed
-                was_unselected = f.board_effect_confirm() is None
-                pressed = True
-                return self._tap(f, point)
-
-            def confirmation(f):
-                if not same_event(f) or name not in options(f):
-                    return None
-                button = f.board_effect_confirm()
-                if button and (was_unselected and pressed or f.board_effect_selected == (name,)):
-                    return button
-                return None
-
-            def selected_after(f):
-                nonlocal observed
-                if advanced(f):
-                    return True
-                observed = observed + 1 if confirmation(f) else 0
-                return observed >= 2
-
-            if not existing:
-                try:
-                    frame = self._action(
-                        frame, locate, send, selected_after,
-                        f"未确认{event.value}选中{name}", seconds=4, attempts=1,
-                    )
-                except CurrencyWarsRecoverable as error:
-                    attempted.add(name)
-                    log.warning(f"{event.value}暂未确认{name}，复核选中状态和其他安全选项：{error}")
-                    continue
-                if advanced(frame):
-                    return frame
-            updated = self._click_to(
-                frame, lambda f: ui.point(confirmation(f)), advanced,
-                f"{event.value}确认选择后未返回备战", seconds=12, attempts=1,
-            )
-            log.info(f"{event.value}：{name}")
-            return updated
-        raise CurrencyWarsError(f"{event.value}无法确认任何可选效果，保留当前页面")
+        return self._choose_single(frame, option, confirm, advanced, f"{event.value}点选并确认后未返回备战")
 
     def _refresh_halo(self, frame, refresh, index=0):
         cost, remaining = refresh
@@ -2488,15 +2418,14 @@ class CurrencyWars:
         )
 
     def _tea(self, frame):
-        if not frame.tea_button():
-            frame = self._expect(
-                lambda f: f.page in PLAY_PAGES and (f.page != Page.TEA or f.tea_button()),
-                12, "幕后茶歇未识别到可确认的对话或领奖选项",
-            )
-            if frame.page != Page.TEA:
-                return frame
-        before = frame.tea_signature()
         button = frame.tea_button()
+        if button is None:
+            return self._click_to(
+                frame, lambda f: (1534, 922) if f.page == Page.TEA and not f.tea_button() else None,
+                lambda f: f.page in PLAY_PAGES and (f.page != Page.TEA or f.tea_button()),
+                "幕后茶歇尝试继续后未推进", seconds=8, attempts=2, track_control=False,
+            )
+        before = frame.tea_signature()
         dragon = button.text.startswith("使出苍龙")
         meal = button.text == "美餐时间"
 
@@ -2515,71 +2444,27 @@ class CurrencyWars:
             return same_button(f) is None and (f.tea_button() is not None or f.tea_signature() != before)
 
         if button.text == "圆硬币咖啡" or dragon or meal:
-            hp = frame.tea_hp if meal else None
-            if meal and hp is None:
-                frame = self._expect(lambda f: f.page == Page.TEA and same_button(f) and f.tea_hp is not None,
-                                     7, "未读到茶歇回复前的生命值")
-                hp = frame.tea_hp
+            had_back = frame.has("返回", area=(1115, 546, 1860, 870))
+
+            def option(f, _):
+                target = same_button(f)
+                return ui.Label(button.text, target or button.point)
 
             def confirm(f):
-                target = same_button(f)
-                if target is None:
-                    return None
-                y = target[1]
-                return ui.point(f.find("确认", area=(1630, y + 30, 1858, y + 113)))
+                _, y = same_button(f) or button.point
+                label = f.find("确认", area=(1630, y + 30, 1858, y + 113))
+                return ui.point(label) or (1762, y + 72)
 
-            def effect_applied(f):
-                if not progressed(f):
-                    return False
-                if dragon:
-                    return True
-                if f.page not in (Page.TEA, Page.BOARD):
-                    return False
-                health = f.tea_hp if f.page == Page.TEA else f.squad_health
-                return health is not None and health >= max(hp, min(100, hp + 20))
-
-            if not confirm(frame):
-                frame = self._click_to(
-                    frame, same_button, lambda f: f.page == Page.TEA and confirm(f)
-                    or (dragon or meal) and effect_applied(f),
-                    "未确认选中茶歇选项", seconds=8,
-                )
-            if dragon or meal:
-                if effect_applied(frame):
-                    return frame
-                return self._confirm_tea(frame, confirm, effect_applied, "未确认茶歇效果生效")
-
-            gold = frame.number(ui.TEA_GOLD, 999, local=True)
-            if gold is None:
-                raise CurrencyWarsError("未读取到茶歇选项确认前的金币")
-            def coffee_credited(f):
-                if f.page not in (Page.TEA, Page.BOARD) or not progressed(f):
-                    return False
-                balance = f.number(ui.TEA_GOLD, 999, local=True) if f.page == Page.TEA else f.gold
-                return balance is not None and balance >= gold + 5
-
-            return self._confirm_tea(frame, confirm, coffee_credited, "未确认圆硬币咖啡到账")
-
-        return self._click_to(frame, same_button, progressed, "幕后茶歇对话未推进", seconds=12, attempts=2)
-
-    def _confirm_tea(self, frame, confirm, credited, message):
-        try:
-            return self._click_to(frame, confirm, credited, message, seconds=12, attempts=1)
-        except CurrencyWarsReceiptTimeout as error:
-            # 对话已转场时继续；补充收益可能被 OCR 漏读，不重复选择或确认。
-            before = frame.tea_signature()
-
-            def next_step(f):
+            def advanced(f):
                 if f.page != Page.TEA:
                     return f.page in PLAY_PAGES
-                return (f.tea_signature() != before and not confirm(f)
-                        and f.tea_button() is not None)
+                next_button = f.tea_button()
+                return (next_button is not None and same_button(f) is None
+                        and (next_button.text != "返回" or not had_back))
 
-            current = self._wait(next_step, 6)
-            if current is None:
-                raise
-            log.warning(f"茶歇已推进，稍后按实际账面继续：{error}")
-            return current
+            return self._choose_single(frame, option, confirm, advanced, "茶歇点选并确认后未推进")
+
+        return self._click_to(frame, same_button, progressed, "幕后茶歇对话未推进", seconds=12, attempts=2)
 
     def _record_match_result(self, frame):
         if frame.page != Page.MATCH_RESULT:
@@ -2913,7 +2798,7 @@ class CurrencyWars:
             return frame, None, False
 
     def start(self, *, weekly=False, resume=False):
-        """运行一局，或在同一个总时限内处理本周积分奖励。"""
+        """开始或接管一局，或在同一个总时限内处理本周积分奖励。"""
         configured = cfg.get_value("currencywars_strategy", strategy.STRATEGY_ID)
         try:
             selected = strategy.resolve_strategy(configured)
@@ -2945,9 +2830,10 @@ class CurrencyWars:
         try:
             with screenshot_retry_timeout(3):
                 frame = self._observe()
-                if frame.page == Page.RECONNECT and (weekly or not resume):
+                takeover = resume and not weekly and frame.page in (ACTIVE_PAGES | {Page.RECONNECT})
+                if frame.page == Page.RECONNECT and not takeover:
                     raise CurrencyWarsError("游戏显示重连提示，请使用货币战争中途接管")
-                if frame.page != Page.RECONNECT and (
+                if not takeover and (
                         weekly or frame.page not in (Page.MODES, Page.RANK, Page.END_MATCH_CONFIRM)):
                     frame = self._homepage(frame)
                 score = None
@@ -2957,9 +2843,11 @@ class CurrencyWars:
                     if weekly and (score is None or score[0] == score[1]):
                         break
                     matches += 1
-                    log.info(f"货币战争第 {matches} 局")
                     self.mode = mode
-                    if frame.page != Page.RECONNECT:
+                    if takeover:
+                        log.info(f"从「{frame.choice or frame.page.value}」接管当前货币战争对局")
+                    else:
+                        log.info(f"货币战争第 {matches} 局")
                         try:
                             frame = self._launch(frame, resume)
                         except CurrencyWarsReconnect as error:
