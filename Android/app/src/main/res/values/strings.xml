@@ -477,7 +477,9 @@
     <string name="settings_project">项目主页</string>
     <string name="settings_project_summary">github.com/moesnow/March7thAssistant</string>
     <string name="settings_manual_summary">安装、配对和启动的官方说明</string>
-    <string name="settings_free">三月七小助手是免费的开源软件。如果你是付费获得的，请立刻退款。</string>
+    <string name="settings_telemetry">匿名使用数据收集</string>
+    <string name="settings_telemetry_details">查看说明</string>
+    <string name="settings_telemetry_description">使用随机安装标识统计活跃度，上报 App 版本、Android 版本和 API 级别、厂商、机型及 CPU 架构。任务统计包含任务类型、权限方式、息屏设置、结果及耗时，故障仅记录固定的阶段、错误码和步骤。\n\n关闭后停止收集和发送，并清除待发送的数据。日志和截图由你主动反馈。</string>
 
     <!-- 应用更新 -->
     <string name="update_title">应用更新</string>

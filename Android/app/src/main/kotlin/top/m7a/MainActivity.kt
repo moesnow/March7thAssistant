@@ -46,8 +46,10 @@ class MainActivity : ComponentActivity() {
     private val controller by lazy { TaskController.get(this) }
     private val preferences by lazy { getSharedPreferences("ui", MODE_PRIVATE) }
     private val updatePreferences by lazy { UpdatePreferences(applicationContext) }
+    private val usage by lazy { UsageTelemetry.get(this) }
     private var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     private var notificationsAllowed by mutableStateOf(true)
+    private var telemetryEnabled by mutableStateOf(true)
 
     private val notificationRequest = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         refreshNotifications()
@@ -59,6 +61,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        telemetryEnabled = usage.enabled
         themeMode = ThemeMode.entries.firstOrNull { it.name == preferences.getString("theme", null) } ?: ThemeMode.SYSTEM
         val demo = demoFrom(intent)
         demo?.theme?.let { themeMode = it }
@@ -94,13 +97,13 @@ class MainActivity : ComponentActivity() {
                     val preview = rememberDemoUpdater(intent, updatePreferences)
                     App(
                         demo.state, demo.logs, controller::catalog, device, themeMode, actions, updatePreferences,
-                        initialTab = demo.tab, initialPage = demo.page, updater = preview,
+                        initialTab = demo.tab, initialPage = demo.page, updater = preview, telemetryEnabled = telemetryEnabled,
                     )
                 } else {
                     val gamePreview by controller.preview.collectAsStateWithLifecycle()
                     App(
                         state, logs, controller::catalog, device, themeMode, actions, updatePreferences,
-                        updater = liveUpdater, gamePreview = gamePreview,
+                        updater = liveUpdater, gamePreview = gamePreview, telemetryEnabled = telemetryEnabled,
                     )
                 }
             }
@@ -109,6 +112,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        usage.appOpened()
         controller.refreshPermission()
         refreshNotifications()
     }
@@ -137,6 +141,10 @@ class MainActivity : ComponentActivity() {
         setThemeMode = {
             themeMode = it
             preferences.edit().putString("theme", it.name).apply()
+        },
+        setTelemetryEnabled = {
+            usage.setEnabled(it)
+            telemetryEnabled = usage.enabled
         },
     )
 

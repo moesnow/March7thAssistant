@@ -62,6 +62,7 @@ class TaskController private constructor(private val context: Context) {
     private val main = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor()
     private val prefs = context.getSharedPreferences("task-options", Context.MODE_PRIVATE)
+    private val usage = UsageTelemetry.get(context)
     private val access = DeviceAccess(context)
     private val marker = AtomicFile(File(context.filesDir, "active-task"))
     private val logFile = File(context.filesDir, "last-run.log")
@@ -95,6 +96,7 @@ class TaskController private constructor(private val context: Context) {
     }
 
     init {
+        worker.execute(usage::recoverInterrupted)
         refreshPermission()
         if (marker.baseFile.exists()) {
             stateData.update { it.copy(phase = TaskPhase.FAILED, errorCode = "interrupted") }
@@ -155,7 +157,11 @@ class TaskController private constructor(private val context: Context) {
         refreshPermission()
         recover()
         val snapshot = state.value
-        if (snapshot.busy || snapshot.permission != PermissionState.READY) return false
+        if (snapshot.busy) return false
+        if (snapshot.permission != PermissionState.READY) {
+            usage.preflightError(snapshot.task, snapshot.privilege, "permission_unavailable")
+            return false
+        }
         val steps = plannedSteps(snapshot.task, snapshot.config, LocalDate.now().dayOfWeek.value)
         if (steps.idle) return false
         if (!context.hasPackage(DeviceAccess.GAME_PACKAGE)) return failToStart("game_not_installed")
@@ -222,6 +228,8 @@ class TaskController private constructor(private val context: Context) {
     }
 
     private fun failToStart(code: String): Boolean {
+        val current = state.value
+        usage.preflightError(current.task, current.privilege, code)
         // 没开始的一轮不显示上一轮的步骤结果。
         stateData.update { it.copy(phase = TaskPhase.FAILED, errorCode = code, summary = null, steps = emptyList()) }
         return false
@@ -264,6 +272,9 @@ class TaskController private constructor(private val context: Context) {
         private var device: DeviceLease? = null
         private var deviceError: String? = null
         private var movingBack = false
+        private var usageRun: UsageTelemetry.Run? = null
+        private var usageStage = UsageStage.PREPARING
+        private val timings = mutableMapOf<String, Long>()
         internal var summary: String? = null
             private set
         private val token = newToken()
@@ -287,6 +298,7 @@ class TaskController private constructor(private val context: Context) {
             var result = "runtime_error"
             var cleanupConfirmed = true
             try {
+                usageRun = usage.startTask(snapshot.task, snapshot.privilege, snapshot.config.panelOff)
                 synchronized(logLock) {
                     logFile.writeText("")
                     logData.value = emptyList()
@@ -314,6 +326,17 @@ class TaskController private constructor(private val context: Context) {
                     appLog(LogLevel.ERROR, "设备端服务清理超时：${error.message}")
                 } finally {
                     renewal.close()
+                    val steps = state.value.steps
+                    val outcome = when {
+                        result == "success" -> UsageOutcome.SUCCESS
+                        result == "stopped" -> UsageOutcome.STOPPED
+                        result == "task_failed" && steps.any { it.status == StepStatus.DONE } -> UsageOutcome.PARTIAL
+                        else -> UsageOutcome.FAILED
+                    }
+                    usage.finishTask(
+                        usageRun, outcome, if (cleanupConfirmed) usageStage else UsageStage.CLEANUP,
+                        result, steps.firstOrNull { it.status == StepStatus.FAILED }?.step, timings,
+                    )
                     if (cleanupConfirmed) marker.delete()
                 }
                 val level = if (result == "success" || result == "stopped") LogLevel.INFO else LogLevel.ERROR
@@ -346,6 +369,18 @@ class TaskController private constructor(private val context: Context) {
 
         // 以下方法由同一工作线程上的 Python 调用。
         fun isCancelled(): Boolean = cancelled.get()
+
+        private fun observeStage(stage: UsageStage) {
+            usageStage = stage
+            usage.taskStage(usageRun, stage, timings)
+        }
+
+        fun ocrStarting() = observeStage(UsageStage.OCR)
+
+        fun ocrReady(elapsedMs: Long) {
+            timings["ocr_init_seconds"] = elapsedMs
+            usage.taskStage(usageRun, usageStage, timings)
+        }
 
         fun log(timeMs: Long, level: String, category: String, message: String, heading: Boolean) {
             appendLog(logEntry(timeMs, LogLevel.valueOf(level), LogCategory.valueOf(category), message, heading))
@@ -387,12 +422,15 @@ class TaskController private constructor(private val context: Context) {
         }
 
         fun openDevice(): Int {
+            observeStage(UsageStage.DEVICE_SERVICE)
             stateData.update { it.copy(service = ServiceState.STARTING) }
             try {
                 val boot = SystemClock.elapsedRealtime()
                 val opened = access.open(snapshot.privilege, token)
                 device = opened
-                appLog(LogLevel.INFO, "设备端服务启动耗时 ${SystemClock.elapsedRealtime() - boot} ms")
+                val elapsed = SystemClock.elapsedRealtime() - boot
+                timings["device_service_seconds"] = elapsed
+                appLog(LogLevel.INFO, "设备端服务启动耗时 ${elapsed} ms")
                 return opened.port
             } catch (error: DeviceFailure) {
                 deviceError = error.code
@@ -405,6 +443,7 @@ class TaskController private constructor(private val context: Context) {
         }
 
         fun displayReady(id: Int) {
+            observeStage(UsageStage.GAME_START)
             stateData.update {
                 it.copy(
                     service = ServiceState.CONNECTED, displayId = id, game = GameState.STARTING,
@@ -446,7 +485,9 @@ class TaskController private constructor(private val context: Context) {
             },
         )
 
-        fun gameReady() {
+        fun gameReady(elapsedMs: Long) {
+            timings["game_ready_seconds"] = elapsedMs
+            observeStage(UsageStage.TASK)
             stateData.update {
                 it.copy(
                     game = GameState.READY, gameDisplayId = it.displayId,
@@ -460,6 +501,8 @@ class TaskController private constructor(private val context: Context) {
         }
 
         fun cleaning() {
+            // 保留任务产生错误时的阶段，并为清理期间的进程中断记录实际阶段。
+            if (state.value.service != ServiceState.CLEANING) usage.taskStage(usageRun, UsageStage.CLEANUP, timings)
             previewData.value = null
             stateData.update { it.copy(service = ServiceState.CLEANING, phase = TaskPhase.CLEANING) }
         }

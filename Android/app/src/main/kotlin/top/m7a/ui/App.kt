@@ -55,6 +55,7 @@ internal class AppActions(
     val openNotificationSettings: () -> Unit,
     val exportLog: () -> Unit,
     val setThemeMode: (ThemeMode) -> Unit,
+    val setTelemetryEnabled: (Boolean) -> Unit,
 )
 
 /** 不来自任务契约的界面状态。 */
@@ -100,6 +101,7 @@ internal fun App(
     initialPage: SubPage? = null,
     updater: AppUpdater,
     gamePreview: GamePreviewSource? = null,
+    telemetryEnabled: Boolean,
 ) {
     var tab by rememberSaveable { mutableStateOf(initialTab) }
     var page by rememberSaveable { mutableStateOf(initialPage) }
@@ -168,7 +170,7 @@ internal fun App(
                             )
                             Tab.TASKS -> TasksScreen(state, catalog, actions, navigator)
                             Tab.LOGS -> LogsScreen(state, logs, actions)
-                            Tab.SETTINGS -> SettingsScreen(state, device, themeMode, actions, navigator)
+                            Tab.SETTINGS -> SettingsScreen(state, device, themeMode, actions, navigator, telemetryEnabled)
                         }
                     }
                 }

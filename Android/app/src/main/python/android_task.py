@@ -200,9 +200,12 @@ def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_
         target = getattr(importlib.import_module(module_name), entry)
 
         # 等 Python 模块可用再请 Kotlin 启动设备端服务，避免冷导入耗尽握手期限。
+        bridge.ocrStarting()
         started = time.monotonic()
         ocr.instance_ocr(force_onnx=True, runtime_params=_ocr_parameters())
-        log.info(f"OCR 运行时就绪，用时 {time.monotonic() - started:.2f} 秒")
+        elapsed = time.monotonic() - started
+        bridge.ocrReady(round(elapsed * 1000))
+        log.info(f"OCR 运行时就绪，用时 {elapsed:.2f} 秒")
 
         port = bridge.openDevice()
         if bridge.isCancelled():
@@ -238,8 +241,9 @@ def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_
         started = time.monotonic()
         controller.start_game_process()
         wait_for_game(controller, min(cfg.start_game_timeout * 60, 180))
-        log.info(f"游戏画面就绪，用时 {time.monotonic() - started:.1f} 秒")
-        bridge.gameReady()
+        elapsed = time.monotonic() - started
+        log.info(f"游戏画面就绪，用时 {elapsed:.1f} 秒")
+        bridge.gameReady(round(elapsed * 1000))
         if panel_off:
             result, _ = session.request("screen_power", on=False)
             bridge.panelChanged(result["panel_off"])

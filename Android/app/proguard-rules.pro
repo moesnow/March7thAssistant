@@ -11,6 +11,8 @@
 # Python 通过 Chaquopy 按成员名调用。
 -keepclassmembers class top.m7a.TaskController$TaskRun {
     public boolean isCancelled();
+    public void ocrStarting();
+    public void ocrReady(long);
     public void log(long, java.lang.String, java.lang.String, java.lang.String, boolean);
     public void reportSummary(java.lang.String);
     public void reportStep(java.lang.String, java.lang.String, java.lang.String);
@@ -19,7 +21,7 @@
     public void previewReady(int);
     public void displayReady(int);
     public void gameEvent(java.lang.String, int);
-    public void gameReady();
+    public void gameReady(long);
     public void panelChanged(boolean);
     public void cleaning();
 }
