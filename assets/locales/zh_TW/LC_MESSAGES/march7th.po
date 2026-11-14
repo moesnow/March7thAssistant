@@ -7901,3 +7901,152 @@ msgstr "清除失敗，請再試一次。"
 #: app/sub_interfaces/accounts_interface.py:179
 msgid "游戏登录信息和设置已清除"
 msgstr "已清除遊戲登入資訊和設定"
+
+#: app/tools/warp_import.py:20
+msgid "抽卡记录格式无效。"
+msgstr "抽卡記錄格式無效。"
+
+#: app/tools/warp_import.py:25
+msgid "仅支持单账号导入，请导出只包含一个星铁账号的文件。"
+msgstr "僅支援單賬號匯入，請匯出只包含一個星鐵賬號的檔案。"
+
+#: app/tools/warp_import.py:36
+msgid "文件缺少有效的账号 UID，无法安全导入。"
+msgstr "檔案缺少有效的賬號 UID，無法安全匯入。"
+
+#: app/tools/warp_import.py:42
+msgid "抽卡记录时区无效，无法安全合并。"
+msgstr "抽卡記錄時區無效，無法安全合併。"
+
+#: app/tools/warp_import.py:50
+msgid "抽卡记录缺少有效 ID 或必要字段。"
+msgstr "抽卡記錄缺少有效 ID 或必要欄位。"
+
+#: app/tools/warp_import.py:53
+msgid "抽卡记录包含不支持的卡池或星级。"
+msgstr "抽卡記錄包含不支援的卡池或星級。"
+
+#: app/tools/warp_import.py:55
+msgid "记录中的账号与文件账号不一致，已停止导入。"
+msgstr "記錄中的賬號與檔案賬號不一致，已停止匯入。"
+
+#: app/tools/warp_import.py:61
+msgid "抽卡记录时间无效。"
+msgstr "抽卡記錄時間無效。"
+
+#: app/tools/warp_import.py:73
+msgid "相同记录 ID 的内容不一致，已停止导入。"
+msgstr "相同記錄 ID 的內容不一致，已停止匯入。"
+
+#: app/tools/warp_import.py:97
+msgid "账号不一致：现有 UID {existing}，导入 UID {incoming}。已停止导入，原记录未修改。"
+msgstr "賬號不一致：現有 UID {existing}，匯入 UID {incoming}。已停止匯入，原記錄未修改。"
+
+#: app/tools/warp_import.py:100
+msgid "文件的语言或时区与现有记录不同，请统一后再导入。原记录未修改。"
+msgstr "檔案的語言或時區與現有記錄不同，請統一後再匯入。原記錄未修改。"
+
+#: app/tools/warp_import.py:114
+msgid "确认期间本地记录发生变化，请重新导入。"
+msgstr "確認期間本地記錄發生變化，請重新匯入。"
+
+#: app/tools/warp_import.py:133
+msgid "临时文件校验失败，原记录未修改。"
+msgstr "臨時檔案校驗失敗，原記錄未修改。"
+
+#: app/tools/warp_import.py:142
+msgid "备份校验失败，原记录未修改。"
+msgstr "備份校驗失敗，原記錄未修改。"
+
+#: app/warp_interface.py:143
+msgid "确认导入抽卡记录"
+msgstr "確認匯入抽卡記錄"
+
+#: app/warp_interface.py:144
+msgid ""
+"账号 UID：{uid}\n"
+"导入方式：保留已有记录，补充新记录，自动跳过重复内容。\n"
+"\n"
+"现有记录：{existing} 条\n"
+"文件记录：{incoming} 条\n"
+"新增记录：{added} 条\n"
+"重复记录：{duplicates} 条\n"
+"合并后：{total} 条"
+msgstr ""
+"賬號 UID：{uid}\n"
+"匯入方式：保留已有記錄，補充新記錄，自動跳過重複內容。\n"
+"\n"
+"現有記錄：{existing} 條\n"
+"檔案記錄：{incoming} 條\n"
+"新增記錄：{added} 條\n"
+"重複記錄：{duplicates} 條\n"
+"合併後：{total} 條"
+
+#: app/warp_interface.py:150
+msgid "确认合并"
+msgstr "確認合併"
+
+
+#: app/warp_interface.py:142
+msgid "选择导入方式"
+msgstr "選擇匯入方式"
+
+#: app/warp_interface.py:143
+msgid "默认合并会保留现有记录。只有希望用文件内容覆盖现有记录时，才选择强制替换。"
+msgstr "預設合併會保留現有記錄。只有希望用檔案內容覆蓋現有記錄時，才選擇強制替換。"
+
+#: app/warp_interface.py:147
+msgid "安全合并（推荐）"
+msgstr "安全合併（推薦）"
+
+#: app/warp_interface.py:147
+msgid "强制替换现有记录"
+msgstr "強制替換現有記錄"
+
+#: app/warp_interface.py:150
+msgid "下一步"
+msgstr "下一步"
+
+#: app/warp_interface.py:167
+msgid "警告：替换现有抽卡记录"
+msgstr "警告：替換現有抽卡記錄"
+
+#: app/warp_interface.py:168
+msgid ""
+"当前账号：{existing_uid}\n"
+"导入账号：{uid}\n"
+"导入方式：替换现有记录。\n"
+"\n"
+"现有记录数量：{existing}\n"
+"替换后记录数量：{total}\n"
+"\n"
+"此操作会用导入文件中的记录替换目前保存的全部记录。原有记录不会保留在当前列表中。\n"
+"\n"
+"确定要替换吗？"
+msgstr ""
+"當前賬號：{existing_uid}\n"
+"匯入賬號：{uid}\n"
+"匯入方式：替換現有記錄。\n"
+"\n"
+"現有記錄數量：{existing}\n"
+"替換後記錄數量：{total}\n"
+"\n"
+"此操作會用匯入檔案中的記錄替換目前儲存的全部記錄。原有記錄不會保留在當前列表中。\n"
+"\n"
+"確定要替換嗎？"
+
+#: app/warp_interface.py:173
+msgid "确认替换"
+msgstr "確認替換"
+
+#: app/tools/warp_import.py:105
+msgid "现有记录无法读取，不能合并。请重新导入并选择替换现有记录。"
+msgstr "現有記錄無法讀取，不能合併。請重新匯入並選擇替換現有記錄。"
+
+#: app/warp_interface.py:173
+msgid "无法读取"
+msgstr "無法讀取"
+
+#: app/warp_interface.py:174
+msgid "无法统计"
+msgstr "無法統計"
