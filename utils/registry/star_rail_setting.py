@@ -2,6 +2,7 @@ from typing import Tuple, Optional
 import winreg
 import json
 import os
+from pathlib import Path
 
 # Registry key paths for different server regions
 registry_key_path_cn = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
@@ -17,40 +18,42 @@ class MissingFPSSettingError(ValueError):
     """游戏未使用自定义图像质量，没有可修改的帧率配置。"""
 
 
-def get_server_by_registry() -> Optional[str]:
-    """
-    Detect and return the server region based on the installed game server.
-
-    Returns:
-        "cn" for CN server, "oversea" for international server, or None if neither exists.
-    """
+def registry_path_for_game(game_path: str) -> Optional[str]:
+    """仅根据当前所选游戏的 Unity 元数据识别渠道，不猜测。"""
+    if not game_path or Path(game_path).name.lower() != "starrail.exe":
+        return None
     try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_cn):
-            return "cn"
-    except FileNotFoundError:
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_oversea):
-                return "global"
-        except FileNotFoundError:
-            return None
+        info = Path(game_path).parent / "StarRail_Data" / "app.info"
+        names = tuple(line.strip() for line in info.read_text(encoding="utf-8-sig").strip().splitlines())
+    except (OSError, UnicodeError):
+        return None
+    return {
+        ("miHoYo", "崩坏：星穹铁道"): registry_key_path_cn,
+        ("Cognosphere", "Star Rail"): registry_key_path_oversea,
+    }.get(names)
 
 
 def get_registry_key_path() -> Optional[str]:
-    """
-    Detect and return the registry key path based on the installed game server.
-
-    Returns:
-        The registry path for CN server if found, otherwise oversea server path, or None if neither exists.
-    """
+    """检测当前选中游戏的注册表路径，未知或尚不存在时返回 None。"""
+    # 延迟导入避免配置模块初始化时的循环依赖，并始终读取最新配置。
+    from module.config import cfg
+    path = registry_path_for_game(cfg.game_path)
+    if path is None:
+        return None
     try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_cn):
-            return registry_key_path_cn
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, path):
+            return path
     except FileNotFoundError:
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, registry_key_path_oversea):
-                return registry_key_path_oversea
-        except FileNotFoundError:
-            return None
+        return None
+
+
+def get_server_by_registry() -> Optional[str]:
+    path = get_registry_key_path()
+    if path == registry_key_path_cn:
+        return "cn"
+    if path == registry_key_path_oversea:
+        return "global"
+    return None
 
 
 def set_auto_battle_open_setting(value: bool) -> None:

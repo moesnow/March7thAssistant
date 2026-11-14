@@ -9,18 +9,11 @@ reg_path_oversea = "Software\\Cognosphere\\Star Rail"
 uid_key = "App_LastUserID_h2841727341"
 
 
-def get_reg_path() -> str:
-    try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path_cn):
-            return reg_path_cn
-    except FileNotFoundError:
-        try:
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, reg_path_oversea):
-                return reg_path_oversea
-        except FileNotFoundError:
-            return None
-
-
+def get_reg_path() -> str | None:
+    if sys.platform != "win32":
+        return None
+    from utils.registry.star_rail_setting import get_registry_key_path
+    return get_registry_key_path()
 
 
 def gamereg_uid() -> int | None:

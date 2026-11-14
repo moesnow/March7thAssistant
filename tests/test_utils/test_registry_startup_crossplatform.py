@@ -17,6 +17,7 @@ def registry(monkeypatch):
     winreg.HKEY_CURRENT_USER = 1
     winreg.REG_DWORD = 4
     monkeypatch.setitem(sys.modules, 'winreg', winreg)
+    monkeypatch.setitem(sys.modules, 'module.config', types.SimpleNamespace(cfg=types.SimpleNamespace(game_path='StarRail.exe')))
     spec = importlib.util.spec_from_file_location('test_starrail_registry', ROOT / 'utils/registry/star_rail_setting.py')
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -25,6 +26,7 @@ def registry(monkeypatch):
 
 def test_registry_created_after_module_import_is_detected(registry):
     module, reg = registry
+    module.registry_path_for_game = MagicMock(return_value=module.registry_key_path_cn)
     reg.OpenKey.side_effect = FileNotFoundError
     with pytest.raises(OSError, match='Registry key path not found'):
         module.get_auto_battle_open_setting()
@@ -36,6 +38,7 @@ def test_registry_created_after_module_import_is_detected(registry):
 
 def test_registry_path_permission_error_is_not_reported_as_missing(registry):
     module, reg = registry
+    module.registry_path_for_game = MagicMock(return_value=module.registry_key_path_cn)
     reg.OpenKey.side_effect = PermissionError('denied')
     with pytest.raises(PermissionError):
         module.get_registry_key_path()
@@ -104,3 +107,32 @@ def test_account_export_rechecks_path_and_errors_when_missing():
         with pytest.raises(FileNotFoundError):
             module.gamereg_export('test.reg')
         run.assert_not_called()
+
+
+def test_dual_server_selects_only_configured_game(registry, tmp_path):
+    module, reg = registry
+    data = tmp_path / 'StarRail_Data'
+    data.mkdir()
+    (data / 'app.info').write_text('Cognosphere\nStar Rail\n', encoding='utf-8')
+    sys.modules['module.config'].cfg.game_path = str(tmp_path / 'StarRail.exe')
+    reg.QueryValueEx.return_value = (1, 4)
+    assert module.get_auto_battle_open_setting() == 1
+    assert all(call.args[1] == module.registry_key_path_oversea for call in reg.OpenKey.call_args_list)
+    assert module.get_server_by_registry() == 'global'
+
+
+def test_unknown_game_never_guesses_registry(registry, tmp_path):
+    module, reg = registry
+    sys.modules['module.config'].cfg.game_path = str(tmp_path / 'StarRail.exe')
+    assert module.get_registry_key_path() is None
+    assert module.get_server_by_registry() is None
+    reg.OpenKey.assert_not_called()
+
+
+def test_game_metadata_bom_and_cn(registry, tmp_path):
+    module, reg = registry
+    data = tmp_path / 'StarRail_Data'
+    data.mkdir()
+    (data / 'app.info').write_text('miHoYo\n崩坏：星穹铁道\n', encoding='utf-8-sig')
+    assert module.registry_path_for_game(str(tmp_path / 'StarRail.exe')) == module.registry_key_path_cn
+    assert module.registry_path_for_game(str(tmp_path / 'other.exe')) is None
