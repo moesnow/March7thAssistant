@@ -4348,13 +4348,21 @@ msgstr "提升晉升等級，推薦在最低職級選擇默認策略。提升職
 msgid "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"
 msgstr "開啓後，僅在首領節點嘗試裝備武器，只推薦在最低職級時開啓"
 
-#: app/setting_interface.py:583
-msgid "提升晋升等级"
-msgstr "提升晉升等級"
+#: app/setting_interface.py:598
+msgid "刷周积分"
+msgstr "刷每週積分"
 
-#: app/setting_interface.py:584
-msgid "提升职级等级"
-msgstr "提升職級等級"
+#: app/setting_interface.py:599
+msgid "刷晋升点"
+msgstr "刷晉升點"
+
+#: app/setting_interface.py:600
+msgid "冲职级"
+msgstr "衝職級"
+
+#: app/setting_interface.py:626
+msgid "晋升点封顶档"
+msgstr "晉升點封頂檔"
 
 #: app/setting_interface.py:586
 msgid "快捷配置"
@@ -4363,14 +4371,6 @@ msgstr "快捷配置"
 #: app/setting_interface.py:3443
 msgid "已应用快捷配置"
 msgstr "已應用快捷配置"
-
-#: app/setting_interface.py:3468
-msgid "当前为“提升晋升等级”模式"
-msgstr "當前爲“提升晉升等級”模式"
-
-#: app/setting_interface.py:3483
-msgid "当前为“提升职级等级”模式"
-msgstr "當前爲“提升職級等級”模式"
 
 #: app/card/stationprioritysettingcard.py:112
 msgid "站点优先级配置"

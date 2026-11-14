@@ -1728,12 +1728,20 @@ msgstr ""
 msgid "上次检测到完成货币战争积分奖励的时间"
 msgstr ""
 
-#: app/setting_interface.py:583
-msgid "提升晋升等级"
+#: app/setting_interface.py:598
+msgid "刷周积分"
 msgstr ""
 
-#: app/setting_interface.py:584
-msgid "提升职级等级"
+#: app/setting_interface.py:599
+msgid "刷晋升点"
+msgstr ""
+
+#: app/setting_interface.py:600
+msgid "冲职级"
+msgstr ""
+
+#: app/setting_interface.py:626
+msgid "晋升点封顶档"
 msgstr ""
 
 #: app/setting_interface.py:586
@@ -3595,14 +3603,6 @@ msgstr ""
 
 #: app/setting_interface.py:3444
 msgid "当前为“{name}”模式"
-msgstr ""
-
-#: app/setting_interface.py:3468
-msgid "当前为“提升晋升等级”模式"
-msgstr ""
-
-#: app/setting_interface.py:3483
-msgid "当前为“提升职级等级”模式"
 msgstr ""
 
 #: app/sub_interfaces/accounts_interface.py:31

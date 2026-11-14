@@ -4364,13 +4364,21 @@ msgstr ""
 msgid "开启后，仅在首领节点尝试装备武器，只推荐在最低职级时开启"
 msgstr "활성화하면 두목 노드에서만 무기 장착을 시도합니다. 최저 직급에서만 활성화하는 것을 권장합니다."
 
-#: app/setting_interface.py:583
-msgid "提升晋升等级"
-msgstr "승급 등급 올리기"
+#: app/setting_interface.py:598
+msgid "刷周积分"
+msgstr "주간 점수"
 
-#: app/setting_interface.py:584
-msgid "提升职级等级"
-msgstr "직급 등급 올리기"
+#: app/setting_interface.py:599
+msgid "刷晋升点"
+msgstr "승급 포인트"
+
+#: app/setting_interface.py:600
+msgid "冲职级"
+msgstr "직급 올리기"
+
+#: app/setting_interface.py:626
+msgid "晋升点封顶档"
+msgstr "승급 포인트 상한"
 
 #: app/setting_interface.py:586
 msgid "快捷配置"
@@ -4379,14 +4387,6 @@ msgstr "빠른 설정"
 #: app/setting_interface.py:3443
 msgid "已应用快捷配置"
 msgstr "빠른 설정이 적용되었습니다"
-
-#: app/setting_interface.py:3468
-msgid "当前为“提升晋升等级”模式"
-msgstr "현재 '승급 등급 올리기' 모드입니다"
-
-#: app/setting_interface.py:3483
-msgid "当前为“提升职级等级”模式"
-msgstr "현재 '직급 등급 올리기' 모드입니다"
 
 #: app/card/stationprioritysettingcard.py:112
 msgid "站点优先级配置"

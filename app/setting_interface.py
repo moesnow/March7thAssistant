@@ -28,7 +28,9 @@ from module.notification import init_notifiers
 from module.localization import tr, tn
 from module.localization.languages import AUTO_LANGUAGE, available_languages
 from tasks.weekly.currency_wars_strategy import (
+    DEFAULT_STRATEGY as CURRENCY_WARS_DEFAULT,
     HIGH_ANAXA,
+    PROMOTION_CAP_DIFFICULTY,
     STRATEGY_ID as CURRENCY_WARS_STRATEGY,
     STRATEGY_NAMES,
 )
@@ -592,9 +594,10 @@ class SettingInterface(ScrollArea):
             "currencywars_timestamp",
             tr("上次检测到完成货币战争积分奖励的时间")
         )
-        self.currencywarsPresetCard = DualPushSettingCard(
-            tr('提升晋升等级'),
-            tr('提升职级等级'),
+        self.currencywarsPresetCard = TriplePushSettingCard(
+            tr('刷周积分'),
+            tr('刷晋升点'),
+            tr('冲职级'),
             UiIcon.WAND,
             tr('快捷配置')
         )
@@ -616,7 +619,12 @@ class SettingInterface(ScrollArea):
             UiIcon.GAUGE,
             tr('职级难度'),
             '',
-            texts={tr('最高职级'): 'highest', tr('当前职级'): 'current', tr('最低职级'): 'lowest'}
+            texts={
+                tr('最高职级'): 'highest',
+                tr('当前职级'): 'current',
+                tr('最低职级'): 'lowest',
+                tr('晋升点封顶档'): PROMOTION_CAP_DIFFICULTY,
+            }
         )
         self.currencywarsUnfinishedMatchCard = ComboBoxSettingCard2(
             "currencywars_unfinished_match",
@@ -627,7 +635,7 @@ class SettingInterface(ScrollArea):
         )
         self.currencywarsStrategyCard = None
         configured_strategy = cfg.get_value("currencywars_strategy")
-        visible_strategies = (CURRENCY_WARS_STRATEGY, HIGH_ANAXA)
+        visible_strategies = (CURRENCY_WARS_DEFAULT, CURRENCY_WARS_STRATEGY, HIGH_ANAXA)
         self.currencywarsStrategySelectCard = ExpandableComboBoxSettingCard(
             "currencywars_strategy",
             UiIcon.LIST,
@@ -639,7 +647,7 @@ class SettingInterface(ScrollArea):
             combo = self.currencywarsStrategySelectCard.comboBox
             combo.setCurrentIndex(-1)
             combo.setPlaceholderText(tr("实验性"))
-        elif configured_strategy not in (*visible_strategies, "default"):
+        elif configured_strategy not in visible_strategies:
             self.currencywarsStrategyCard = PushSettingCard(
                 tr("改用连击那刻夏（S2）"),
                 UiIcon.LIST,
@@ -3002,7 +3010,8 @@ class SettingInterface(ScrollArea):
         self.gamePathCard.clicked.connect(self.__onGamePathCardClicked)
         self.launcherPathCard.clicked.connect(self.__onLauncherPathCardClicked)
         self.ScriptPathCard.clicked.connect(self.__onScriptPathCardClicked)
-        self.currencywarsPresetCard.leftClicked.connect(self.__applyCurrencywarsPromotionPreset)
+        self.currencywarsPresetCard.leftClicked.connect(self.__applyCurrencywarsWeeklyPreset)
+        self.currencywarsPresetCard.middleClicked.connect(self.__applyCurrencywarsPromotionPreset)
         self.currencywarsPresetCard.rightClicked.connect(self.__applyCurrencywarsRankPreset)
         self.fightPresetCard.leftClicked.connect(self.__applyFightRangedPreset)
         self.fightPresetCard.middleClicked.connect(self.__applyFightAcheronPreset)
@@ -3574,19 +3583,28 @@ class SettingInterface(ScrollArea):
 
     def __applyCurrencywarsStrategy(self):
         cfg.set_value("currencywars_strategy", CURRENCY_WARS_STRATEGY)
+        combo = self.currencywarsStrategySelectCard.comboBox
+        with QSignalBlocker(combo):
+            combo.setCurrentIndex(combo.findData(CURRENCY_WARS_STRATEGY))
         self.currencywarsStrategyCard.hide()
         self.currencywarsStrategySelectCard.show()
 
+    def __applyCurrencywarsWeeklyPreset(self):
+        self.__applyCurrencywarsPreset(
+            "overclock", "lowest", CURRENCY_WARS_DEFAULT, fast=True,
+            message=self.currencywarsPresetCard.leftButton.text(),
+        )
+
     def __applyCurrencywarsPromotionPreset(self):
         self.__applyCurrencywarsPreset(
-            "overclock", "lowest", CURRENCY_WARS_STRATEGY, fast=True,
-            message=tr('当前为“提升晋升等级”模式'),
+            "overclock", PROMOTION_CAP_DIFFICULTY, CURRENCY_WARS_STRATEGY, fast=False,
+            message=self.currencywarsPresetCard.middleButton.text(),
         )
 
     def __applyCurrencywarsRankPreset(self):
         self.__applyCurrencywarsPreset(
             "normal", "highest", HIGH_ANAXA, fast=False,
-            message=tr('当前为“提升职级等级”模式'),
+            message=self.currencywarsPresetCard.rightButton.text(),
         )
 
     def __applyCurrencywarsPreset(self, mode, difficulty, strategy, *, fast, message):

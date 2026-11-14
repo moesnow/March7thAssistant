@@ -4455,13 +4455,21 @@ msgstr ""
 "When enabled, weapon equip is only attempted at boss nodes. Only recommended"
 " to enable at the lowest rank."
 
-#: app/setting_interface.py:583
-msgid "提升晋升等级"
-msgstr "Raise Promotion Tier"
+#: app/setting_interface.py:598
+msgid "刷周积分"
+msgstr "Weekly Score"
 
-#: app/setting_interface.py:584
-msgid "提升职级等级"
-msgstr "Raise Rank Level"
+#: app/setting_interface.py:599
+msgid "刷晋升点"
+msgstr "Promotion Points"
+
+#: app/setting_interface.py:600
+msgid "冲职级"
+msgstr "Rank Climb"
+
+#: app/setting_interface.py:626
+msgid "晋升点封顶档"
+msgstr "Promotion Cap"
 
 #: app/setting_interface.py:586
 msgid "快捷配置"
@@ -4470,14 +4478,6 @@ msgstr "Quick Preset"
 #: app/setting_interface.py:3443
 msgid "已应用快捷配置"
 msgstr "Quick Preset Applied"
-
-#: app/setting_interface.py:3468
-msgid "当前为“提升晋升等级”模式"
-msgstr "Now using 'Raise Promotion Tier' mode"
-
-#: app/setting_interface.py:3483
-msgid "当前为“提升职级等级”模式"
-msgstr "Now using 'Raise Rank Level' mode"
 
 #: app/card/stationprioritysettingcard.py:112
 msgid "站点优先级配置"

@@ -5,7 +5,9 @@ import pytest
 from PySide6.QtCore import Qt
 
 from module.config.config import Config
-from tasks.weekly.currency_wars_strategy import HIGH_ANAXA, HIGH_FIREFLY, HIGH_SERVAL, STRATEGY_ID
+from tasks.weekly.currency_wars_strategy import (
+    DEFAULT_STRATEGY, HIGH_ANAXA, HIGH_FIREFLY, HIGH_SERVAL, PROMOTION_CAP_DIFFICULTY, STRATEGY_ID,
+)
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
@@ -26,22 +28,24 @@ def test_currency_wars_old_config_requires_explicit_migration(qtbot, tmp_path, m
     widget.currencywarsStrategyCard.button.click()
     config._load_config()
     assert config.get_value("currencywars_strategy") == STRATEGY_ID
+    assert widget.currencywarsStrategySelectCard.comboBox.currentData() == STRATEGY_ID
     assert widget.currencywarsStrategyCard.isHidden()
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
 @pytest.mark.parametrize(("configured", "displayed"), [
-    ("default", STRATEGY_ID),
+    (None, DEFAULT_STRATEGY),
+    (DEFAULT_STRATEGY, DEFAULT_STRATEGY),
     (STRATEGY_ID, STRATEGY_ID),
     (HIGH_ANAXA, HIGH_ANAXA),
     (HIGH_FIREFLY, None),
     (HIGH_SERVAL, None),
 ])
-def test_currency_wars_settings_lists_only_anaxa(qtbot, tmp_path, monkeypatch, configured, displayed):
+def test_currency_wars_settings_lists_default_and_both_anaxa_strategies(qtbot, tmp_path, monkeypatch, configured, displayed):
     import app.setting_interface as settings
 
     path = tmp_path / "config.yaml"
-    path.write_text(f"currencywars_strategy: {configured}\n", encoding="utf-8")
+    path.write_text(f"currencywars_strategy: {configured}\n" if configured else "{}\n", encoding="utf-8")
     config = Config.__new__(Config)
     Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
     monkeypatch.setattr("module.config.cfg", config)
@@ -52,15 +56,15 @@ def test_currency_wars_settings_lists_only_anaxa(qtbot, tmp_path, monkeypatch, c
 
     assert widget.currencywarsStrategyCard is None
     combo = widget.currencywarsStrategySelectCard.comboBox
-    assert [combo.itemData(index) for index in range(combo.count())] == [STRATEGY_ID, HIGH_ANAXA]
+    assert [combo.itemData(index) for index in range(combo.count())] == [DEFAULT_STRATEGY, STRATEGY_ID, HIGH_ANAXA]
     assert combo.currentData() == displayed
     config._load_config()
-    assert config.get_value("currencywars_strategy") == configured
+    assert config.get_value("currencywars_strategy") == (configured or DEFAULT_STRATEGY)
     if displayed is None:
         assert combo.text() == settings.tr("实验性")
         combo.setCurrentIndex(0)
         config._load_config()
-        assert config.get_value("currencywars_strategy") == STRATEGY_ID
+        assert config.get_value("currencywars_strategy") == DEFAULT_STRATEGY
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
@@ -91,7 +95,7 @@ def test_currency_wars_investment_priority_defaults_to_strategy_and_saves_catalo
     import app.setting_interface as settings
 
     path = tmp_path / "config.yaml"
-    path.write_text("currencywars_strategy: s2_anaxa\n", encoding="utf-8")
+    path.write_text("currencywars_strategy: default\n", encoding="utf-8")
     config = Config.__new__(Config)
     Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
     monkeypatch.setattr("module.config.cfg", config)
@@ -126,7 +130,8 @@ def test_currency_wars_quick_presets(qtbot, tmp_path, monkeypatch):
 
     path = tmp_path / "config.yaml"
     path.write_text(
-        "currencywars_strategy: aglaea\ncurrencywars_enable: false\ncurrencywars_timestamp: 123\n",
+        "currencywars_strategy: aglaea\ncurrencywars_enable: false\ncurrencywars_timestamp: 123\n"
+        "currencywars_investment_priority: catalog\ncurrencywars_unfinished_match: resume\n",
         encoding="utf-8",
     )
     config = Config.__new__(Config)
@@ -143,7 +148,8 @@ def test_currency_wars_quick_presets(qtbot, tmp_path, monkeypatch):
     assert preset.parent() is widget.CurrencywarsGroup
     assert widget.currencywarsStrategySelectCard.isHidden()
     for button, expected in (
-        (preset.leftButton, ("overclock", "lowest", STRATEGY_ID, True)),
+        (preset.leftButton, ("overclock", "lowest", DEFAULT_STRATEGY, True)),
+        (preset.middleButton, ("overclock", PROMOTION_CAP_DIFFICULTY, STRATEGY_ID, False)),
         (preset.rightButton, ("normal", "highest", HIGH_ANAXA, False)),
     ):
         button.click()
@@ -164,3 +170,5 @@ def test_currency_wars_quick_presets(qtbot, tmp_path, monkeypatch):
         assert not widget.currencywarsStrategySelectCard.isHidden()
         assert config.get_value("currencywars_enable") is False
         assert config.get_value("currencywars_timestamp") == 123
+        assert config.get_value("currencywars_investment_priority") == "catalog"
+        assert config.get_value("currencywars_unfinished_match") == "resume"

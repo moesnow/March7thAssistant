@@ -224,13 +224,13 @@ asset_lc3_star_superimpose_enable: false # 是否启用「三星光锥自动叠�
 # 货币战争配置
 currencywars_enable: false # 是否启用「货币战争」积分奖励。true 开启，false 关闭。
 currencywars_type: overclock # 货币战争模式，可选值："normal"（标准博弈）或 "overclock"（超频博弈）。
-currencywars_rank_difficulty: lowest # 货币战争职级难度，可选值："current"（当前职级）、"lowest"（最低职级）或 "highest"（最高职级）。
+currencywars_rank_difficulty: lowest # 货币战争职级难度：current（当前）、lowest（最低）、highest（最高）、promotion_cap（晋升点封顶档 A4-6，未解锁时选已解锁最高）。
 currencywars_unfinished_match: restart # 遇到未完成对局时，"restart" 结算后重新开局，"resume" 按配置的策略继续进度。
 currencywars_timestamp: 0 # 上次检测到完成货币战争积分奖励的时间戳，用于记录和控制运行频率。
 currencywars_bonus_enable: false # 在领取积分奖励后自动执行位面饰品快速提取消耗深度沉浸器。true 开启，false 关闭。
 currencywars_fast_mode: false # 是否启用货币战争速通模式，仅在首领节点尝试装备武器。true 开启，false 关闭。
-currencywars_strategy: s2_anaxa # 货币战争策略，可选连击那刻夏（S2，s2_anaxa）或连击那刻夏（高难，s2_anaxa_high）。旧的 aglaea 和 seele 可在设置中手动改选，运行时自动迁移到高难版。
-currencywars_investment_priority: strategy # 投资环境和投资策略的选择优先级。"strategy" 按阵容策略选，"catalog" 优先未收录项，找不到合适选项时按阵容策略选。
+currencywars_strategy: default # 货币战争策略，可选默认（default，按费用和星级上阵，不购买角色）、连击那刻夏（S2，s2_anaxa）或连击那刻夏（高难，s2_anaxa_high）。旧的 aglaea 和 seele 可在设置中手动改选，运行时自动迁移到高难版。
+currencywars_investment_priority: strategy # 投资环境和投资策略的选择优先级。默认阵容固定图鉴优先。其余阵容的 "strategy" 按阵容策略选，"catalog" 优先未收录项。
 currencywars_remembrance_trailblazer_name: "" # 开拓者在游戏内的实际显示名字，由玩家自定义
 
 # 差分宇宙配置

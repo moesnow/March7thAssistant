@@ -3,6 +3,8 @@
 from dataclasses import dataclass, replace
 from typing import Literal
 
+DEFAULT_STRATEGY = "default"
+PROMOTION_CAP_DIFFICULTY = "promotion_cap"
 STRATEGY_ID = "s2_anaxa"
 LEGACY_STRATEGIES = ("aglaea", "seele")
 HIGH_ANAXA = "s2_anaxa_high"
@@ -61,6 +63,7 @@ LINEUPS = {
                        frozenset(("希露瓦", "海瑟音", "黑天鹅", "桑博", "椒丘", "卡芙卡"))),
 }
 STRATEGY_NAMES = {
+    DEFAULT_STRATEGY: "默认",
     STRATEGY_ID: "连击那刻夏（S2）",
     HIGH_ANAXA: "连击那刻夏（高难）",
     HIGH_FIREFLY: "寒鸦流萤（高难）",
@@ -69,13 +72,11 @@ STRATEGY_NAMES = {
 
 
 def resolve_strategy(value: str) -> str:
-    if value == "default":
-        return STRATEGY_ID
     if value in LEGACY_STRATEGIES:
         return HIGH_ANAXA
     if value in STRATEGY_NAMES:
         return value
-    raise ValueError("货币战争策略配置无效。请将 currencywars_strategy 设为 s2_anaxa。")
+    raise ValueError("货币战争策略配置无效。请将 currencywars_strategy 设为 default。")
 
 
 @dataclass(frozen=True)
@@ -87,6 +88,7 @@ class Unit:
     output: bool = False
     equipment: int | None = None
     has_halo: bool = False
+    cost: int | None = None
 
     @property
     def is_output(self) -> bool:
@@ -271,6 +273,75 @@ def can_move(board: Board, source: Slot, target: Slot, *, replacing_same_name=Fa
 
 def _empty(slot: Slot) -> Slot:
     return replace(slot, occupied=False, unit=None)
+
+
+def default_priority(slot: Slot) -> tuple[int, int]:
+    return slot.unit.cost or 1, slot.unit.stars or 1
+
+
+def default_bench(board: Board) -> tuple[Slot, ...]:
+    return tuple(sorted((slot for slot in board.slots if slot.zone == "bench" and not slot.blocked
+                         and slot.unit and (slot.unit.front or slot.unit.back)),
+                        key=default_priority, reverse=True))
+
+
+def _default_fits(source: Slot, zone: Zone) -> bool:
+    return zone == "front" and source.unit.front or zone == "back" and source.unit.back
+
+
+def default_deployment(board: Board, copies: dict[Slot, Slot], skipped: set[tuple[Point, Zone]],
+                       *, overflow=False) -> Move | None:
+    """先补空位，再按费用和星级换掉较弱且没有装备的角色。"""
+    candidates = default_bench(board)
+    empty = {zone: next((slot for slot in board.slots if slot.zone == zone and not slot.occupied
+                         and not slot.blocked), None) for zone in ("front", "back")}
+
+    def fits(source, target):
+        return (_default_fits(source, target.zone) and (source.point, target.zone) not in skipped
+                and (target.zone == "front" or board.front_count > 0))
+
+    if board.used < board.capacity:
+        deployable = [slot for slot in candidates if slot not in copies]
+        for source in deployable:
+            choices = [target for target in empty.values() if target is not None and fits(source, target)]
+            if choices:
+                # 双站位卡给单站位候补留一个可用的空位。
+                target = min(choices, key=lambda target: sum(
+                    _default_fits(other, target.zone) and not (other.unit.front and other.unit.back)
+                    for other in deployable if other != source
+                ))
+                return source, target
+    if overflow or board.used > board.capacity:
+        return None
+    if not board.front_count and empty["front"] is not None:
+        for source in sorted((slot for slot in board.field if slot.unit), key=default_priority, reverse=True):
+            if fits(source, empty["front"]):
+                return source, empty["front"]
+    weaker = sorted((slot for slot in board.field if slot.unit
+                     and slot.unit.equipment == 0 and not slot.unit.has_halo),
+                    key=default_priority)
+    for source in candidates:
+        for target in weaker:
+            copy = copies.get(source)
+            better = ((source.unit.stars or 1) > (target.unit.stars or 1) if copy == target
+                      else default_priority(source) > default_priority(target))
+            if better and (copy is None or copy == target) and fits(source, target):
+                return source, target
+    return None
+
+
+def default_surplus(board: Board, copies: dict[Slot, Slot], *, make_space=False) -> tuple[Slot, ...]:
+    open_zones = {slot.zone for slot in board.slots if slot.zone != "bench" and not slot.occupied and not slot.blocked}
+    can_expand = board.used < board.capacity or board.capacity < 10
+    saleable = tuple(sorted((slot for slot in default_bench(board) if slot.unit.equipment == 0), key=default_priority))
+
+    def surplus(slot):
+        if deployed := copies.get(slot):
+            return (slot.unit.stars or 1) <= (deployed.unit.stars or 1)
+        return not (can_expand and any(_default_fits(slot, zone) for zone in open_zones))
+
+    extras = tuple(slot for slot in saleable if surplus(slot))
+    return (*extras, *(slot for slot in saleable if slot not in extras)) if make_space else extras
 
 
 def stronger_bench_copy(board: Board, deployed: Slot, *, preserve_gear=True) -> Slot | None:

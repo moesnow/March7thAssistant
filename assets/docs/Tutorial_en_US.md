@@ -245,9 +245,9 @@ If you only want to automatically claim all weekly Currency Wars score rewards, 
 Common options include:
 
 - `Category`: Standard Match / Overclock Match
-- `Quick Preset`
+- `Quick Preset` offers `Weekly Score`, `Promotion Points`, and `Rank Climb`. The Promotion Points preset uses Overclock Match at A4-6 or the highest unlocked rank if A4-6 is locked.
 - `Rank Difficulty`
-- `Currency Wars Strategy` offers `Anaxa Combo (S2)` and `Anaxa Combo (High Difficulty)`.
+- `Currency Wars Strategy` offers `Default`, `Anaxa Combo (S2)`, and `Anaxa Combo (High Difficulty)`. The default strategy is for earning weekly points at the lowest rank. It deploys higher-cost characters first, breaks ties by star level, skips character purchases, and prioritizes uncollected investments.
 - `Enable Speedrun Mode`
 
 The defaults are Overclock Match and the lowest rank. Unlock Overclock Match in the game first. You can change old Aglaea or Seele settings manually. Starting Currency Wars with either old strategy automatically migrates it to `Anaxa Combo (High Difficulty)`.

@@ -747,6 +747,263 @@ def test_prepare_inspects_the_existing_shop_before_committing_experience(monkeyp
     assert operations == ["商店", "经验"]
 
 
+def test_default_deployment_prioritizes_cost_then_stars_and_keeps_one_legal_front():
+    front, back = slot("front", 0), slot("back", 0)
+    strongest = slot("bench", 0, replace(BAILU, cost=5, stars=1))
+    front_candidate = slot("bench", 1, replace(FILLER, cost=2, stars=2))
+    weaker = slot("bench", 2, replace(FILLER, name="其他角色", cost=2, stars=1))
+    current = board(front, back, weaker, front_candidate, strongest, used=0)
+    assert policy.default_deployment(current, {}, set()) == (front_candidate, front)
+    current = apply_deployment(current, (front_candidate, front))
+    assert policy.default_deployment(current, {}, set()) == (strongest, back)
+    assert policy.default_deployment(current, {}, {(strongest.point, "back")}) == (weaker, back)
+
+
+def test_default_deployment_uses_one_for_unreadable_cost_or_stars():
+    target = slot("front", 0)
+    missing = slot("bench", 0, replace(FILLER, stars=None))
+    missing_cost = slot("bench", 1, replace(FILLER, stars=3))
+    missing_stars = slot("bench", 2, replace(FILLER, cost=2, stars=None))
+    current = board(target, missing, missing_cost, missing_stars, used=0)
+    assert policy.default_deployment(current, {}, set()) == (missing_stars, target)
+    assert policy.default_deployment(current, {}, {(missing_stars.point, "front")}) == (missing_cost, target)
+    assert policy.default_priority(missing) == (1, 1)
+
+
+@pytest.mark.parametrize("zone,y", (("front", ui.FRONT_Y), ("back", ui.BACK_Y), ("bench", ui.BENCH_Y)))
+@pytest.mark.parametrize("lift", (0, 12))
+def test_board_card_cost_reads_both_ends_of_the_bottom_edge(zone, y, lift):
+    image = CANVAS.copy()
+    draw = ImageDraw.Draw(image)
+    colors = ((128, 131, 148), (44, 130, 121), (89, 112, 226), (143, 109, 248), (209, 170, 79))
+    for index, color in enumerate(colors):
+        x = 500 + index * 150
+        draw.rectangle((x - 41, y + 51 - lift, x + 41, y + 56 - lift), fill=color)
+        draw.rectangle((x - 11, y + 41 - lift, x + 11, y + 55 - lift), fill=(255, 227, 145))
+    frame = Frame(image, ())
+    assert [frame.card_cost(policy.Slot(zone, i, (500 + i * 150, y), True))
+            for i in range(len(colors))] == [1, 2, 3, 4, 5]
+    assert frame.card_cost(policy.Slot(zone, 5, (1250, y), True)) is None
+
+
+@pytest.mark.parametrize("used,limit", ((9, 8), (9, 9)))
+def test_halo_population_can_exceed_the_number_of_visible_cards(monkeypatch, used, limit):
+    image = CANVAS.copy()
+    if used > limit:
+        ImageDraw.Draw(image).rectangle((904, 233, 1030, 267), fill=(238, 68, 57))
+    frame = Frame(image, labels((f"{used}/{limit}", 960, 260)))
+    field = (slot("front", 0, CORE), *(slot("back", index, BAILU) for index in range(7)))
+    monkeypatch.setattr(frame, "assigned_halo", lambda point: point == field[0].point)
+    assert frame.capacity == (used, limit)
+    assert frame.field_count_matches(field)
+    assert not frame.field_count_matches(field[1:])
+
+
+def test_halo_population_disambiguates_a_double_digit_crop(monkeypatch):
+    frame = Frame(CANVAS, labels(("备战阶段", 470, 45), ("3-5", 470, 78), ("10/10", 960, 260)))
+    front = slot("front", 0, CORE)
+    field = (front, *(slot("back", index, BAILU) for index in range(8)))
+    monkeypatch.setattr(frame, "read_local", lambda area, **_: "0/10" if area == ui.BOARD_CAPACITY_DIGITS else "10/10")
+    monkeypatch.setattr(frame, "slots", lambda: field)
+    monkeypatch.setattr(frame, "assigned_halo", lambda point: point == front.point)
+    assert frame.capacity == (10, 10)
+    assert frame.field_count_matches(field)
+
+
+def test_extra_population_halo_can_be_excluded_from_default_selection():
+    frame = page(Page.HALO, ("天才医师", 420, 436), ("该角色获得40%治疗强度。", 450, 527),
+                 ("高傲巨人", 1480, 436), ("上阵该角色占用2团队规模。", 1480, 553),
+                 ("敌人难度+5", 1470, 723))
+    assert frame.halo_uses_extra_capacity(1)
+    assert not frame.halo_uses_extra_capacity(0)
+    assert frame.halo_effect(allow_support=True, allowed=(0,))[1] == 0
+
+
+def test_default_replaces_lower_stars_and_preserves_equipped_and_halo_slots():
+    locked_front = slot("front", 0, replace(FILLER, has_halo=True, equipment=0))
+    equipped_front = slot("front", 1, replace(FILLER, name="有装备的角色", equipment=1))
+    low = slot("front", 2, replace(CORE, stars=1, equipment=0))
+    high = slot("bench", 0, replace(CORE, stars=3, equipment=0))
+    extra = slot("bench", 1, replace(BAILU, equipment=0))
+    current = board(locked_front, equipped_front, low, high, extra, used=3)
+    assert policy.default_deployment(current, {high: low}, set()) == (high, low)
+    assert policy.default_deployment(current, {high: locked_front}, set()) is None
+    assert policy.default_surplus(current, {high: low}) == (extra,)
+
+
+def test_default_sells_surplus_but_keeps_a_candidate_for_the_next_level():
+    field = slot("front", 0, replace(CORE, stars=2))
+    copy = slot("bench", 0, replace(CORE, stars=1, equipment=0))
+    possible = slot("bench", 1, replace(BAILU, equipment=0))
+    spare = slot("back", 0)
+    current = board(field, spare, copy, possible, used=3, capacity=3)
+    assert policy.default_surplus(current, {copy: field}) == (copy,)
+    assert policy.default_surplus(current, {copy: field}, make_space=True) == (copy, possible)
+    assert policy.default_surplus(replace(current, used=10, capacity=10), {copy: field}) == (copy, possible)
+
+
+def test_default_dual_role_leaves_the_only_front_slot_for_the_front_only_card():
+    front = slot("front", 1)
+    back = slot("back", 0)
+    flex = slot("bench", 0, replace(FILLER, stars=3))
+    fixed = slot("bench", 1, CORE)
+    current = board(slot("front", 0, FILLER), front, back, flex, fixed, used=1)
+    assert policy.default_deployment(current, {}, set()) == (flex, back)
+
+
+def test_default_preparation_uses_only_visual_deployment_and_keeps_playing_on_sale_failure(monkeypatch, world):
+    world.war.default_strategy = True
+    first = slot("front", 0, FILLER)
+    target = slot("back", 0)
+    candidate = slot("bench", 0, replace(BAILU, stars=2, equipment=0))
+    surplus = slot("bench", 1, replace(FILLER, equipment=0))
+    current = board(first, target, candidate, surplus, used=1, stage="1-3")
+    prepared = apply_deployment(current, (candidate, target))
+    before = page(Page.BOARD, stage=current.stage)
+    after = page(Page.BOARD, ("出战", 1818, 748), stage=current.stage)
+    fighting = battle(True)
+    for f, b in ((before, current), (after, prepared)):
+        monkeypatch.setattr(f, "slots", lambda b=b: b.slots)
+        monkeypatch.setattr(f, "deployed_copy", lambda s, _: first if s is surplus else None)
+    monkeypatch.setattr(world.war, "_settle_board", lambda f: f)
+    monkeypatch.setattr(world.war, "_gather", lambda f: f)
+    monkeypatch.setattr(world.war, "_read_default_board", lambda f, **_: (f, current if f == before else prepared))
+    shop = Mock(side_effect=AssertionError("默认策略不应访问商店"))
+    detail_scan = Mock(side_effect=AssertionError("部署不应逐张读取详情"))
+    monkeypatch.setattr(world.war, "_shop", shop)
+    monkeypatch.setattr(world.war, "_read_board", detail_scan)
+    sale = Mock(side_effect=task.CurrencyWarsReceiptTimeout("出售未回执"))
+    monkeypatch.setattr(world.war, "_sell_default_reserve", sale)
+    state = drive(monkeypatch, world, before, lambda s, _: setattr(s, "frame", fighting))
+
+    def moved(f, b, source, destination):
+        assert f is before and b is current and (source, destination) == (candidate, target)
+        state.frame = world.war.frame = after
+        return after
+
+    monkeypatch.setattr(world.war, "_move", moved)
+    monkeypatch.setattr(after, "inventory_items", lambda: ())
+    assert world.war._prepare(before) is fighting
+    sale.assert_called_once_with(after, surplus)
+    assert state.clicks == [(Page.BOARD, (1818, 748))]
+    assert state.keys == []
+    shop.assert_not_called()
+    detail_scan.assert_not_called()
+
+
+def test_default_does_not_try_the_other_row_after_the_game_rejects_a_duplicate(monkeypatch, world):
+    world.war.default_strategy = True
+    front, back = slot("front", 1), slot("back", 0)
+    fielded = slot("front", 0, FILLER)
+    duplicate = slot("bench", 0, replace(FILLER, name="备战席第 1 格角色", stars=3))
+    candidate = slot("bench", 1, CORE)
+    current = board(fielded, front, back, duplicate, candidate, used=1)
+    before = page(Page.BOARD, stage=current.stage, capacity=(1, 3))
+    refused = page(Page.BOARD, ("无法上阵同名角色", 960, 328), stage=current.stage, capacity=(1, 3))
+    confirmed = page(Page.CHOICE)
+    for f in (before, refused):
+        monkeypatch.setattr(f, "slot_occupied", lambda p: p in {s.point for s in current.slots if s.occupied})
+        monkeypatch.setattr(f, "deployed_copy", lambda *_: None)
+        monkeypatch.setattr(f, "card_stars", lambda s, **kw: s.unit.stars if s.unit else None)
+    state = drive(monkeypatch, world, before)
+    world.auto.drag_mouse.side_effect = lambda *args, **kwargs: setattr(
+        state, "frame", refused if state.frame is before else confirmed) or True
+    monkeypatch.setattr(world.war, "_read_default_board", lambda f, **kw: (f, current))
+    assert world.war._prepare_default_team(before) is confirmed
+    assert world.auto.drag_mouse.call_count == 2
+    assert (current.stage, duplicate.point, "front") in world.war.default_deployment_skips
+    assert (current.stage, duplicate.point, "back") in world.war.default_deployment_skips
+
+
+def test_default_equipment_visits_each_card_once_by_cost_then_stars_across_both_rows(monkeypatch, world):
+    world.war.default_strategy = True
+    low = slot("front", 0, FILLER)
+    high = slot("back", 0, replace(BAILU, cost=4, stars=1))
+    mid = slot("front", 1, replace(CORE, cost=3, stars=3))
+    reserve = slot("bench", 0, replace(CER, stars=4))
+    full = slot("back", 1, replace(CER, stars=4, equipment=3))
+    current = board(low, mid, high, reserve, full)
+    screen = page(Page.BOARD, stage=current.stage)
+    monkeypatch.setattr(screen, "inventory_items", lambda: ((1844, 240),))
+    equip = Mock(return_value=(screen, True))
+    monkeypatch.setattr(world.war, "_equip_once", equip)
+    assert world.war._equip_board(screen, current) is screen
+    assert world.war._equip_board(screen, current) is screen
+    assert [call.args[1] for call in equip.call_args_list] == [high, mid, low]
+
+
+def test_default_opening_waits_for_free_supplies_and_never_clicks_fight_with_an_empty_front(monkeypatch, world):
+    world.war.default_strategy = True
+    stage = "1-1"
+    message = Frame(CANVAS, labels(("提示", 960, 410), ("前台区域无角色，无法出战", 960, 525), ("确认", 977, 672)))
+    initial = page(Page.BOARD, ("出战", 1818, 748), stage=stage, capacity=(0, 3), gold=3)
+    orbs = page(Page.BOARD, stage=stage, capacity=(0, 3), gold=3)
+    collected = page(Page.BOARD, stage=stage, capacity=(0, 3), gold=6)
+    monkeypatch.setattr(initial, "opening_orbs", lambda: ())
+    monkeypatch.setattr(orbs, "opening_orbs", lambda: ((1430, 481),))
+    for f in (initial, orbs, collected):
+        monkeypatch.setattr(f, "reward_orbs", lambda: ())
+        monkeypatch.setattr(f, "bench_slots", lambda: (slot("bench", 0),))
+    assert message.page == Page.EMPTY_FRONT
+    state = drive(monkeypatch, world, message, lambda s, _: setattr(s, "frame", initial))
+    assert world.war._play_step(message) is initial
+    with pytest.raises(task.CurrencyWarsActionUnready, match="前台角色"):
+        world.war._finish_preparation(initial, board(stage=stage, used=0))
+
+    def collect(f, find, receipt, *args, **kwargs):
+        assert f is orbs and find(f) == ((1344, 481), (1518, 481))
+        assert receipt(collected)
+        return collected
+
+    state.frame = orbs
+    monkeypatch.setattr(world.war, "_drag_to", collect)
+    assert world.war._gather(initial) is collected
+    assert state.clicks == [(Page.EMPTY_FRONT, (977, 672))]
+
+
+def test_default_sale_uses_slot_receipt_without_role_name_or_exact_refund(monkeypatch, world):
+    world.war.default_strategy = True
+    tile = slot("bench", 1, FILLER)
+    stage = "1-4"
+    before = page(Page.BOARD, stage=stage, gold=None)
+    detail = page(Page.DETAIL, ("出售", 1770, 917), stage=stage)
+    after = page(Page.BOARD, stage=stage, gold=42)
+    monkeypatch.setattr(before, "slot_occupied", lambda point: point == tile.point)
+    state = drive(monkeypatch, world, before, lambda s, p: setattr(s, "frame", detail if p == tile.point else after))
+    assert world.war._sell_default_reserve(before, tile) == (after, True)
+    assert state.clicks == [(Page.BOARD, tile.point), (Page.DETAIL, (1770, 917))]
+    assert world.war.preparation_progress == 1
+
+
+def test_default_exp_batches_do_not_repeat_after_an_intervening_choice(monkeypatch, world):
+    world.war.default_strategy = True
+    first = slot("front", 0, FILLER)
+    reserve = slot("bench", 1, BAILU)
+    current = board(first, reserve, slot("back", 0), used=3, gold=24, exp=(0, 16))
+    before = page(Page.BOARD, ("购买经验", 298, 863), stage=current.stage, gold=24, level=5,
+                  capacity=(3, 3), experience_cost=4, experience=(0, 16))
+    choice = page(Page.GARDEN, stage=current.stage)
+    monkeypatch.setattr(before, "deployed_copy", lambda *_: None)
+    monkeypatch.setattr(world.war, "_read_default_board", lambda f, **kw: (f, current))
+    bought = Mock(return_value=choice)
+    monkeypatch.setattr(world.war, "_buy_exp", bought)
+    assert world.war._prepare_default_team(before) is choice
+    assert world.war._prepare_default_team(before) is before
+    assert bought.call_count == 1
+
+
+def test_default_closes_shop_opened_by_the_game_without_waiting_for_fight(monkeypatch, world):
+    world.war.default_strategy = True
+    stage = "1-4"
+    ready = page(Page.BOARD, ("出战", 1818, 748), stage=stage)
+    opened = page(Page.SHOP, ("收起", 1624, 980), stage=stage)
+    fielded = slot("front", 0, CORE)
+    monkeypatch.setattr(ready, "slots", lambda: (fielded,))
+    state = drive(monkeypatch, world, ready, after_capture=lambda s: setattr(s, "frame", opened))
+    assert world.war._finish_preparation(ready, board(fielded, stage=stage)) is opened
+    assert state.clicks == []
+
+
 def test_shop_skips_paid_refresh_while_an_upgrade_can_add_a_legal_employee(monkeypatch, world):
     frame = page(Page.BOARD, stage="1-2")
     shop = page(Page.SHOP, ("刷新", 1620, 486), ("2", 1617, 535), stage="1-2", gold=12, offers=())
@@ -833,7 +1090,7 @@ def test_unknown_strategy_never_reads_or_changes_game_and_keeps_stored_value(wor
         world.war.start()
     assert world.cfg.currencywars_strategy == "unknown"
     assert world.auto.mock_calls == []
-    assert policy.resolve_strategy("default") == policy.STRATEGY_ID
+    assert policy.resolve_strategy("default") == policy.DEFAULT_STRATEGY
 
 
 def home():
@@ -1249,6 +1506,61 @@ def test_rank_current_keeps_selection_and_highest_uses_its_own_control(monkeypat
     target = highest if selection == "highest" else current
     assert world.war._select_rank(current, selection) is target
     assert state.clicks == ([(Page.RANK, back[1:])] if selection == "highest" else [])
+
+
+@pytest.mark.parametrize("initial,maximum", ((1, 67), (1, 19), (19, 19), (1, 28), (35, 67), (28, 67)))
+def test_promotion_preset_selects_a4_6_or_highest_unlocked_before_start(monkeypatch, world, initial, maximum):
+    world.cfg.currencywars_type = "overclock"
+    world.cfg.currencywars_rank_difficulty = policy.PROMOTION_CAP_DIFFICULTY
+    world.war.mode = "overclock"
+    start = (1692, 966)
+    to_top = (1386, 966)
+    # 正式服敌人难度不是每档递增 1。冰钛 5→6→7 分别为 27、28、29。
+    ranks = [n for n in range(1, maximum + 1) if n not in (3, 5, 14, 32, 33, 34, 36, 39, 41, 42)]
+    frames = {}
+    for level in ranks:
+        entries = [("超频博弈", 154, 884), ("开始对局", *start)]
+        if level != maximum:
+            entries.append(("返回最高职级", *to_top))
+        frames[level] = page(Page.RANK, *entries, enemy_rank=level)
+    arrived = page(Page.CHOICE)
+    target = min(maximum, 28)
+
+    def click(state, point):
+        level = state.frame.enemy_rank
+        if point == start:
+            assert level == target
+            state.frame = arrived
+        elif point == to_top:
+            state.frame = frames[maximum]
+        else:
+            index = ranks.index(level)
+            step = 1 if point == ui.RANK_STEP_UP else -1
+            assert point in (ui.RANK_STEP_UP, ui.RANK_STEP_DOWN)
+            state.frame = frames[ranks[max(0, min(index + step, len(ranks) - 1))]]
+
+    initial_frame = frames[initial]
+    state = drive(monkeypatch, world, initial_frame, click)
+    assert world.war._launch(initial_frame, False) is arrived
+    assert state.clicks.count((Page.RANK, start)) == 1
+    if maximum < 28 or initial == 28:
+        assert all(point in (to_top, start) for _, point in state.clicks)
+    assert not state.keys
+
+
+def test_promotion_preset_recovers_a_missed_return_button(monkeypatch, world):
+    world.war.mode = "overclock"
+    mode_label = ("超频博弈", 154, 884)
+    to_top = ("返回最高职级", 1386, 966)
+    unread = page(Page.RANK, mode_label, enemy_rank=1)
+    current = page(Page.RANK, mode_label, to_top, enemy_rank=1)
+    unlocked = page(Page.RANK, mode_label, enemy_rank=28)
+    state = drive(
+        monkeypatch, world, unread, lambda s, _: setattr(s, "frame", unlocked),
+        after_capture=lambda s: setattr(s, "frame", current) if s.frame is unread else None,
+    )
+    assert world.war._select_rank(unread, policy.PROMOTION_CAP_DIFFICULTY) is unlocked
+    assert state.clicks == [(Page.RANK, to_top[1:])]
 
 
 def test_moving_preview_button_is_relocated_then_retried(monkeypatch, world):
@@ -2597,6 +2909,25 @@ def test_investment_catalog_falls_back_to_strategy_without_a_badge(world):
                  ("全速推进", 960, 490), ("速度增幅提高10%，并获得额外金币。", 960, 540),
                  choice="请选择投资策略")
     assert world.war._choice_option(frame).text == "全速推进"
+
+
+@pytest.mark.parametrize("configured", ("strategy", "catalog"))
+@pytest.mark.parametrize("title,y", (("投资环境", 393), ("请选择投资策略", 490)))
+def test_default_always_selects_uncollected_investment_even_without_the_title(
+        monkeypatch, world, configured, title, y):
+    world.war.default_strategy = True
+    world.cfg.currencywars_investment_priority = configured
+    option = page(Page.CHOICE, ("连击概念股", 460, y), ("获得简易装备", 460, y + 50),
+                  ("确认", 960, 984), choice=title, uncollected_investment_columns={2})
+    after = page(Page.BOARD)
+    refresh = Mock(side_effect=AssertionError("默认策略不刷新投资"))
+    monkeypatch.setattr(world.war, "_refresh_unusable_investments", refresh)
+    state = drive(monkeypatch, world, option, lambda s, p: (
+        setattr(s, "frame", after) if p == (960, 984) else None
+    ))
+    assert world.war._choose(option) is after
+    assert state.clicks == [(Page.CHOICE, (1460, y)), (Page.CHOICE, (960, 984))]
+    refresh.assert_not_called()
 
 
 @pytest.mark.parametrize("preselected", (False, True))
