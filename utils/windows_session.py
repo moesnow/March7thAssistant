@@ -36,6 +36,10 @@ class _WtsInfo(ctypes.Structure):
     def active(self):
         return self.state == 0  # WTSActive
 
+    @property
+    def disconnected(self):
+        return self.state == 4  # WTSDisconnected
+
 
 @cache
 def _wts():

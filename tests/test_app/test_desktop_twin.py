@@ -41,6 +41,14 @@ def fake_audio(monkeypatch):
     return FakeMuter.instances
 
 
+@pytest.fixture(autouse=True)
+def no_existing_child_session(monkeypatch):
+    from app.tools import desktop_twin as ui
+
+    monkeypatch.setattr(ui, "connection_reserved", lambda session_id=None: False)
+    monkeypatch.setattr(ui, "disconnected_child_session", lambda: None)
+
+
 def test_tools_button_opens_one_desktop_twin_window(qtbot, monkeypatch):
     from PySide6.QtWidgets import QWidget
     from app.tools_interface import ToolsInterface
@@ -545,6 +553,170 @@ def test_reconnect_keeps_the_existing_gui(qtbot, monkeypatch):
     assert dialog._connected and dialog._session == identity
     dialog._open_assistant.assert_not_called()
     dialog._session = None
+    dialog.close()
+
+
+@pytest.mark.parametrize("session_matches", [True, False])
+def test_recover_disconnected_session_from_new_window(qtbot, monkeypatch, session_matches):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+    from utils.windows_session import SessionIdentity
+
+    identity = SessionIdentity(6, 200)
+    monkeypatch.setattr(ui, "disconnected_child_session", lambda: identity)
+    lease, child_lease = Mock(), Mock()
+    reserve_recovery = Mock(return_value=lease)
+    reserve_child = Mock(return_value=child_lease)
+    monkeypatch.setattr(ui, "reserve_disconnected_child", reserve_recovery)
+    monkeypatch.setattr(ui, "reserve_connection", reserve_child)
+    monkeypatch.setattr(ui, "child_sessions_enabled", lambda: True)
+    session_info = Mock(return_value=SimpleNamespace(active=False))
+    monkeypatch.setattr(ui, "owned_session_info", session_info)
+    logoff = Mock()
+    monkeypatch.setattr(ui, "logoff_owned_session", logoff)
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog._rdp.prepare = Mock()
+    dialog._rdp.connect_child = Mock()
+    dialog._rdp.dispose = Mock()
+    dialog._open_assistant = Mock()
+    dialog.show()
+    assert dialog._connect_button.text() == ui.tr("重新连接")
+    assert dialog._logoff_button.isVisible()
+
+    dialog._connect_button.click()
+    reserve_recovery.assert_called_once_with(identity)
+    dialog._rdp.connect_child.assert_called_once()
+    assert not dialog._logoff_button.isVisible()
+    dialog._rdp._events.logged_on = True
+    dialog._poll_connection(0)
+    assert dialog._connect_until and not dialog._connected
+    dialog._open_assistant.assert_not_called()
+    session_info.return_value = SimpleNamespace(active=True) if session_matches else None
+    dialog._poll_connection(0)
+
+    if session_matches:
+        assert dialog._connected and dialog._session == identity
+        assert dialog._replace_assistant
+        reserve_child.assert_called_once_with(identity.session_id)
+        dialog._open_assistant.assert_called_once_with()
+        lease.Close.assert_not_called()
+        dialog._session = None
+    else:
+        assert not dialog.active and not dialog._connected and dialog._session is None
+        assert dialog._recovery_session == identity and dialog._logoff_button.isVisible()
+        reserve_child.assert_not_called()
+        dialog._open_assistant.assert_not_called()
+        lease.Close.assert_called_once_with()
+    logoff.assert_not_called()
+    dialog.close()
+
+
+def test_open_recovery_window_updates_when_child_disconnects(qtbot, monkeypatch):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+    from utils.windows_session import SessionIdentity
+
+    candidate = Mock(return_value=None)
+    monkeypatch.setattr(ui, "disconnected_child_session", candidate)
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog.show()
+    assert dialog._connect_button.text() == ui.tr("启动分身")
+
+    candidate.return_value = SessionIdentity(6, 200)
+    dialog._poll()
+    assert dialog._connect_button.text() == ui.tr("重新连接")
+    assert dialog._logoff_button.isVisible()
+    assert not dialog.active
+    dialog.close()
+
+
+def test_recovery_waits_for_old_gui_before_starting_new_one(qtbot, monkeypatch):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+    from utils.windows_session import SessionIdentity
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog._session = SessionIdentity(6, 200)
+    dialog._connected = True
+    dialog._child_lease = Mock()
+    dialog._replace_assistant = True
+    dialog._contact_assistant = Mock(side_effect=[True, False, False])
+    launcher = Mock()
+    monkeypatch.setattr(ui, "ScheduledLauncher", lambda: launcher)
+
+    dialog._open_assistant()
+    dialog._contact_assistant.assert_called_once_with(b'{"action":"quit-desktop-twin"}')
+    launcher.start.assert_not_called()
+
+    dialog._poll()
+    launcher.start.assert_called_once_with(dialog._session)
+    assert not dialog._replace_assistant
+    dialog._session = None
+    dialog.close()
+
+
+@pytest.mark.parametrize("outcome", ["success", "timeout", "changed"])
+def test_logoff_from_recovery_window(qtbot, monkeypatch, outcome):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+    from utils.windows_session import SessionIdentity
+
+    identity = SessionIdentity(6, 200)
+    candidate = Mock(return_value=identity)
+    lease = Mock()
+    reserve = Mock(return_value=lease)
+    if outcome == "changed":
+        reserve.side_effect = RuntimeError("分身会话已变化")
+    monkeypatch.setattr(ui, "disconnected_child_session", candidate)
+    monkeypatch.setattr(ui, "reserve_disconnected_child", reserve)
+    logoff = Mock(return_value=True)
+    monkeypatch.setattr(ui, "logoff_owned_session", logoff)
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    check_ready = Mock(side_effect=RuntimeError("主桌面任务仍在运行"))
+    dialog = ui.DesktopTwinDialog(parent, Mock(), check_ready)
+    dialog._ask = Mock()
+    dialog._rdp.prepare = Mock()
+    dialog.show()
+
+    dialog._logoff_button.click()
+    reserve.assert_called_once_with(identity)
+    check_ready.assert_not_called()
+    dialog._rdp.prepare.assert_not_called()
+    dialog._ask.assert_not_called()
+    if outcome == "changed":
+        logoff.assert_not_called()
+        assert dialog._error == "分身会话已变化"
+    else:
+        logoff.assert_called_once_with(identity)
+        assert not dialog._connect_button.isEnabled()
+        assert not dialog.close()
+        assert dialog.isVisible()
+        dialog._poll()
+        lease.Close.assert_not_called()
+        if outcome == "success":
+            candidate.return_value = None
+            monkeypatch.setattr(ui, "session_exists", lambda _: False)
+        else:
+            dialog._logoff_until = 0.1
+        dialog._poll()
+        lease.Close.assert_called_once_with()
+        assert dialog.isVisible() and dialog._connect_button.isEnabled()
+        if outcome == "success":
+            assert dialog._connect_button.text() == ui.tr("启动分身")
+            assert not dialog._logoff_button.isVisible()
+        else:
+            assert dialog._logoff_button.isVisible()
+            assert dialog._error == ui.tr("等待分身注销超时")
     dialog.close()
 
 

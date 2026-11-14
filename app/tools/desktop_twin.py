@@ -26,8 +26,9 @@ from app.tools.rdp_control import DESKTOP_SIZE, RdpControl
 from module.localization import tr
 from utils.admin import is_user_admin
 from utils.desktop_twin import (
-    ScheduledLauncher, check_child_available, check_parent_session, claim_child_session,
-    launcher_server_key, logoff_owned_session, owned_session_info, reserve_connection, session_exists,
+    ScheduledLauncher, check_child_available, check_parent_session, claim_child_session, connection_reserved,
+    disconnected_child_session, launcher_server_key, logoff_owned_session, owned_session_info,
+    reserve_connection, reserve_disconnected_child, session_exists,
 )
 from utils.windows_session import child_sessions_enabled, enable_child_sessions, process_session_id, session_info
 
@@ -268,12 +269,16 @@ class DesktopTwinDialog(QDialog):
         self._lease = None
         self._child_lease = None
         self._session = None
+        self._recovery_session = None
+        self._recovery_check_at = 0.0
         self._connected = False
         self._connect_until = None
         self._launcher = None
         self._launch_until = None
+        self._replace_assistant = False
         self._quit_until = None
         self._logoff_until = None
+        self._logoff_lease = None
         self._error = ""
         # 分身的声音由本进程里的 RDP 控件播放，窗口看不见时静音
         self._audio = ProcessAudioMuter(marker=os.path.abspath(os.path.join("temp", "desktop_twin_muted")))
@@ -309,6 +314,7 @@ class DesktopTwinDialog(QDialog):
         self._assistant_button = PushButton(QIcon("./assets/logo/March7th.ico"), "", self._footerBar)
         self._hide_button = PushButton(FIF.HIDE, "", self._footerBar)
         self._logoff_button = PushButton(FIF.POWER_BUTTON, "", self._footerBar)
+        self._logoff_button.setAutoDefault(False)
         self._bar_buttons = (self._docs_button, self._connect_button, self._assistant_button,
                              self._hide_button, self._logoff_button)
         for button in self._bar_buttons:
@@ -344,7 +350,7 @@ class DesktopTwinDialog(QDialog):
         self._connect_button.clicked.connect(self._toggle_connection)
         self._assistant_button.clicked.connect(self._open_assistant)
         self._hide_button.clicked.connect(self.hide)
-        self._logoff_button.clicked.connect(self.close)
+        self._logoff_button.clicked.connect(self._request_logoff)
         StyleSheet.DESKTOP_TWIN.apply(self)
         qconfig.themeChanged.connect(self._applyFrameTheme)
         self._timer = QTimer(self, interval=250)
@@ -624,6 +630,7 @@ class DesktopTwinDialog(QDialog):
         self._show_in_taskbar()
         self._applyFrameTheme()
         self._restore_audio()
+        self._refresh_recovery_session()
 
     def _show_in_taskbar(self):
         """分身窗口归属于主窗口，默认没有任务栏按钮，最小化后只会缩成屏幕左下角的小标题栏。
@@ -700,9 +707,11 @@ class DesktopTwinDialog(QDialog):
         self._docs_button.setToolTip(tr("在浏览器中打开桌面分身的使用文档"))
 
         closing = self._quit_until is not None or self._logoff_until is not None
+        opening = self._launcher is not None or self._launch_until is not None
+        recovery_logoff = self._recovery_session is not None and not self._connect_until
         if self._connect_until:
             connect_text, connect_icon = tr("取消连接"), FIF.CLOSE
-        elif self._session:
+        elif self._session or self._recovery_session:
             connect_text, connect_icon = tr("重新连接"), FIF.SYNC
         else:
             connect_text, connect_icon = tr("启动分身"), FIF.PLAY
@@ -714,14 +723,17 @@ class DesktopTwinDialog(QDialog):
         self._assistant_button.setText(tr("打开小助手"))
         self._assistant_button.setToolTip(tr("在分身中打开小助手，已打开时切换到它"))
         self._assistant_button.setVisible(self._connected)
-        self._assistant_button.setEnabled(not closing and self._launcher is None)
+        self._assistant_button.setEnabled(not closing and not opening)
         self._hide_button.setText(tr("隐藏"))
         self._hide_button.setToolTip(tr("隐藏此窗口并静音分身，分身继续在后台运行。可从托盘菜单或工具箱重新打开"))
         self._hide_button.setVisible(self._connected)
         self._hide_button.setEnabled(not closing)
         self._logoff_button.setText(tr("注销分身"))
-        self._logoff_button.setToolTip(tr("退出分身中的小助手并注销分身，其中的游戏和应用都会关闭"))
-        self._logoff_button.setVisible(self._session is not None)
+        self._logoff_button.setToolTip(
+            tr("注销分身会关闭其中的游戏和所有应用")
+            if recovery_logoff else tr("退出分身中的小助手并注销分身，其中的游戏和应用都会关闭")
+        )
+        self._logoff_button.setVisible(self._session is not None or recovery_logoff)
         self._logoff_button.setEnabled(not closing)
 
         screen_visible = not self._rdp.isHidden()
@@ -729,13 +741,13 @@ class DesktopTwinDialog(QDialog):
             level, status = "error", self._error
         elif closing:
             level, status = "busy", tr("正在注销分身…")
-        elif self._launcher:
+        elif opening:
             level, status = "busy", tr("正在启动小助手…")
         elif self._connect_until:
             level, status = "busy", tr("正在连接分身…")
         elif self._connected:
             level, status = "ok", tr("已连接")
-        elif self._session:
+        elif self._session or self._recovery_session:
             level, status = "warn", tr("分身连接已断开")
         else:
             level, status = "idle", tr("未连接")
@@ -793,7 +805,25 @@ class DesktopTwinDialog(QDialog):
             return "accept"
         return "alternative" if result == _ALTERNATIVE else None
 
+    def _refresh_recovery_session(self):
+        if self._lease is not None or self._session is not None or self._connect_until or self._logoff_until:
+            return
+        candidate = None
+        try:
+            if not connection_reserved():
+                candidate = disconnected_child_session()
+                if candidate and connection_reserved(candidate.session_id):
+                    candidate = None
+        except Exception:
+            # 展示时尽力查询，启动按钮仍会执行常规检查并显示具体错误。
+            candidate = None
+        if candidate != self._recovery_session:
+            self._recovery_session = candidate
+            self.retranslateUi()
+
     def _toggle_connection(self):
+        if self._quit_until or self._logoff_until:
+            return
         self._error = ""
         if self._connect_until:
             if self._rdp.logged_on and self._rdp.error is None:
@@ -801,13 +831,21 @@ class DesktopTwinDialog(QDialog):
             else:
                 self._cancel_connection()
             return
+        if self._session is None and self._recovery_session is None:
+            self._refresh_recovery_session()
+            if self._recovery_session is not None:
+                # 窗口打开后才断开的分身，先把可用操作显示出来。
+                return
         try:
             if self._session is None:
                 if self._check_ready:
                     self._check_ready()
                 check_parent_session()
-                check_child_available()
-                self._lease = reserve_connection()
+                if self._recovery_session is not None:
+                    self._lease = reserve_disconnected_child(self._recovery_session)
+                else:
+                    check_child_available()
+                    self._lease = reserve_connection()
                 self.hostingChanged.emit(True)
             elif owned_session_info(self._session) is None:
                 raise RuntimeError(tr("会话身份已变化，请在 Windows 中检查分身"))
@@ -823,7 +861,7 @@ class DesktopTwinDialog(QDialog):
                     self._cancel_connection()
                     return
                 enable_child_sessions()
-            if self._session is None:
+            if self._session is None and self._recovery_session is None:
                 check_child_available()
                 self._login_started_at = session_info(process_session_id()).current_time
             self._set_screen_visible(True)
@@ -853,6 +891,7 @@ class DesktopTwinDialog(QDialog):
             self._restore_audio()
         self._set_screen_visible(False)
         self.retranslateUi()
+        self._refresh_recovery_session()
 
     def _poll_connection(self, now, *, auto_launch=True):
         if self._rdp.error is not None:
@@ -860,19 +899,28 @@ class DesktopTwinDialog(QDialog):
         elif self._rdp.logged_on:
             first_connection = self._session is None
             try:
-                if first_connection:
-                    self._session = claim_child_session(self._login_started_at)
-                    self._child_lease = reserve_connection(self._session.session_id)
+                identity = self._session or self._recovery_session
+                if identity is None:
+                    identity = claim_child_session(self._login_started_at)
                 else:
-                    info = owned_session_info(self._session)
-                    if info is None or not info.active:
+                    info = owned_session_info(identity)
+                    if info is None:
                         raise RuntimeError(tr("会话身份已变化，请在 Windows 中检查分身"))
+                    if not info.active:
+                        if now < self._connect_until:
+                            return
+                        raise RuntimeError(tr("连接分身超时"))
+                if first_connection:
+                    self._child_lease = reserve_connection(identity.session_id)
+                    self._session = identity
+                    self._replace_assistant = self._recovery_session is not None
+                    self._recovery_session = None
             except Exception as exc:
                 error = exc
             else:
                 self._connect_until = None
                 self._connected = True
-                if first_connection and auto_launch:
+                if auto_launch and (first_connection or self._replace_assistant):
                     self._open_assistant()
                 self.retranslateUi()
                 return
@@ -889,13 +937,17 @@ class DesktopTwinDialog(QDialog):
         return notify_existing_instance(launcher_server_key(self._session.session_id), payload, timeout=40)
 
     def _open_assistant(self):
-        if not self._connected or self._launcher or self._quit_until or self._logoff_until:
+        if not self._connected or self._launcher or self._launch_until or self._quit_until or self._logoff_until:
             return
         self._error = ""
         try:
             if self._child_lease is None:
                 self._child_lease = reserve_connection(self._session.session_id)
-            if not self._contact_assistant(b'{"action":"activate"}'):
+            if self._replace_assistant and self._contact_assistant(b'{"action":"quit-desktop-twin"}'):
+                # 强制结束宿主后，旧小助手可能还在退出。新实例必须绑定当前宿主。
+                self._launch_until = time.monotonic() + 12
+            elif self._replace_assistant or not self._contact_assistant(b'{"action":"activate"}'):
+                self._replace_assistant = False
                 self._launcher = ScheduledLauncher()
                 self._launcher.start(self._session)
                 self._launch_until = time.monotonic() + 45
@@ -903,6 +955,18 @@ class DesktopTwinDialog(QDialog):
             self._finish_launch()
             self._report(error)
         self.retranslateUi()
+
+    def _poll_assistant_launch(self, now):
+        ready = self._contact_assistant()
+        if self._launcher is not None and ready:
+            self._finish_launch()
+            self.retranslateUi()
+        elif self._launcher is None and not ready:
+            self._launch_until = None
+            self._open_assistant()
+        elif now >= self._launch_until:
+            self._finish_launch(cancel=True)
+            self._report(tr("等待分身中的小助手启动超时"))
 
     def _finish_launch(self, *, cancel=False):
         launcher = self._launcher
@@ -926,52 +990,89 @@ class DesktopTwinDialog(QDialog):
         self._check_audio(now)
         try:
             if self._logoff_until:
-                if not session_exists(self._session):
-                    self._session = None
-                    self._logoff_until = None
-                    self.close()
-                elif now >= self._logoff_until:
-                    self._logoff_until = None
-                    self._report(tr("等待分身注销超时"))
+                self._poll_logoff(now)
                 return
             if self._connect_until:
                 self._poll_connection(now)
             elif self._connected and self._rdp.error is not None:
                 self._cancel_connection()
-            if self._launcher:
-                if self._contact_assistant():
-                    self._finish_launch()
-                    self.retranslateUi()
-                elif now >= self._launch_until:
-                    self._finish_launch(cancel=True)
-                    self._report(tr("等待分身中的小助手启动超时"))
+            if self._launch_until and not self._quit_until:
+                self._poll_assistant_launch(now)
             if self._quit_until:
                 if now >= self._quit_until or not self._contact_assistant():
                     self._start_logoff()
             elif self._session and not self._connected and not self._connect_until and not session_exists(self._session):
                 self._finish_launch(cancel=True)
+                self._replace_assistant = False
                 self._session = None
                 self._cancel_connection()
+            elif self._session is None and self.isVisible() and now >= self._recovery_check_at:
+                self._recovery_check_at = now + 1.0
+                self._refresh_recovery_session()
         except Exception as error:
             if str(error) != self._error:
                 self._report(error)
+
+    def _request_logoff(self):
+        if self._session is not None:
+            self.close()
+        elif self._recovery_session is not None and not self._connect_until and not self._logoff_until:
+            try:
+                self._logoff_lease = reserve_disconnected_child(self._recovery_session)
+            except Exception as error:
+                self._refresh_recovery_session()
+                self._report(error)
+                return
+            self._start_logoff()
+
+    def _release_logoff_lease(self):
+        if self._logoff_lease is not None:
+            self._logoff_lease.Close()
+            self._logoff_lease = None
+            self._refresh_recovery_session()
 
     def _start_logoff(self):
         self._quit_until = None
         self._finish_launch(cancel=True)
         self._error = ""
         try:
-            if not logoff_owned_session(self._session) and session_exists(self._session):
+            identity = self._session or self._recovery_session
+            if not logoff_owned_session(identity) and session_exists(identity):
                 raise RuntimeError(tr("会话身份已变化，请在 Windows 中检查分身"))
             self._logoff_until = time.monotonic() + 20
         except Exception as error:
+            self._release_logoff_lease()
             self._report(error)
         self.retranslateUi()
+
+    def _poll_logoff(self, now):
+        try:
+            gone = not session_exists(self._session or self._recovery_session)
+        except Exception:
+            if now < self._logoff_until:
+                raise
+            gone = False
+        if not gone and now < self._logoff_until:
+            return
+        self._logoff_until = None
+        self._release_logoff_lease()
+        if not gone:
+            self._report(tr("等待分身注销超时"))
+            return
+        self._error = ""
+        if self._session is not None:
+            self._session = None
+            self.close()
+        else:
+            self.retranslateUi()
 
     def reject(self):
         self.close()
 
     def closeEvent(self, event):
+        if self._quit_until or self._logoff_until:
+            event.ignore()
+            return
         if self._connect_until and self._rdp.logged_on and self._rdp.error is None:
             self._poll_connection(time.monotonic(), auto_launch=False)
         if self._session is None:
@@ -980,8 +1081,6 @@ class DesktopTwinDialog(QDialog):
             event.accept()
             return
         event.ignore()
-        if self._quit_until or self._logoff_until:
-            return
         choice = self._ask(
             tr("注销桌面分身？"),
             tr("分身中的小助手会先停止任务并退出，随后注销分身，其中打开的游戏和应用都会关闭。"

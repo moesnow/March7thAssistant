@@ -82,14 +82,17 @@ def _session_account(session_id):
     return f"{domain}\\{user}"
 
 
-def check_parent_session():
+def _session_sid(session_id):
     import win32security
 
+    sid, _, _ = win32security.LookupAccountName(None, _session_account(session_id))
+    return win32security.ConvertSidToStringSid(sid)
+
+
+def check_parent_session():
     from utils.uac_free import current_user_sid
 
-    parent_id = process_session_id()
-    sid, _, _ = win32security.LookupAccountName(None, _session_account(parent_id))
-    if win32security.ConvertSidToStringSid(sid) != current_user_sid():
+    if _session_sid(process_session_id()) != current_user_sid():
         raise DesktopTwinError("请用当前桌面的登录账户启动小助手")
 
 
@@ -97,6 +100,37 @@ def check_child_available():
     existing = child_session_id()
     if existing is not None:
         raise DesktopTwinError(f"会话 {existing} 已占用桌面分身。请先注销该会话后重试")
+
+
+def disconnected_child_session():
+    """查询当前账户已断开但仍保留登录状态的本地子会话。"""
+    from utils.uac_free import current_user_sid
+
+    session_id = child_session_id()
+    parent_id = process_session_id()
+    if not session_id or session_id == parent_id:
+        return None
+    info = session_info(session_id)
+    if not info.disconnected or not info.logon_time:
+        return None
+    sid = current_user_sid()
+    if _session_sid(parent_id) == sid == _session_sid(session_id):
+        return info.identity
+    return None
+
+
+def reserve_disconnected_child(identity):
+    """持有连接锁时，重新确认用户所选的仍是同一个已断开的子会话。"""
+    lease = reserve_connection()
+    try:
+        if connection_reserved(identity.session_id):
+            raise DesktopTwinError("另一个小助手正在使用桌面分身")
+        if disconnected_child_session() != identity:
+            raise DesktopTwinError("会话身份已变化，请在 Windows 中检查分身")
+    except Exception:
+        lease.Close()
+        raise
+    return lease
 
 
 def claim_child_session(started_at):

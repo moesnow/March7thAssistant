@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from utils import desktop_twin, runs
+from utils import desktop_twin, runs, uac_free
 from utils.windows_session import SessionIdentity
 
 
@@ -20,6 +20,47 @@ def test_only_new_child_session_can_be_claimed(monkeypatch):
     with pytest.raises(desktop_twin.DesktopTwinError):
         desktop_twin.claim_child_session(101)
     assert desktop_twin.claim_child_session(99) == SessionIdentity(2, 100)
+
+
+@pytest.mark.parametrize(("child_id", "disconnected", "logon_time", "sid", "eligible"), [
+    (6, True, 200, "same", True),
+    (6, False, 200, "same", False),
+    (6, True, 0, "same", False),
+    (6, True, 200, "different", False),
+    (1, True, 200, "same", False),
+])
+def test_disconnected_child_must_be_current_accounts_logged_in_child(
+    monkeypatch, child_id, disconnected, logon_time, sid, eligible,
+):
+    identity = SessionIdentity(child_id, logon_time)
+    info = SimpleNamespace(disconnected=disconnected, logon_time=logon_time, identity=identity)
+    monkeypatch.setattr(desktop_twin, "child_session_id", lambda: child_id)
+    monkeypatch.setattr(desktop_twin, "process_session_id", lambda: 1)
+    monkeypatch.setattr(desktop_twin, "session_info", lambda _: info)
+    monkeypatch.setattr(uac_free, "current_user_sid", lambda: "same")
+    monkeypatch.setattr(desktop_twin, "_session_sid", lambda session_id: "same" if session_id == 1 else sid)
+
+    assert desktop_twin.disconnected_child_session() == (identity if eligible else None)
+
+
+@pytest.mark.parametrize("outcome", ["same", "taken", "reused"])
+def test_reserve_disconnected_child_rechecks_session_under_lock(monkeypatch, outcome):
+    identity = SessionIdentity(6, 200)
+    lease = Mock()
+    reserve = Mock(return_value=lease)
+    query = Mock(return_value=SessionIdentity(6, 202) if outcome == "reused" else identity)
+    monkeypatch.setattr(desktop_twin, "reserve_connection", reserve)
+    monkeypatch.setattr(desktop_twin, "connection_reserved", lambda _: outcome == "taken")
+    monkeypatch.setattr(desktop_twin, "disconnected_child_session", query)
+
+    if outcome == "same":
+        assert desktop_twin.reserve_disconnected_child(identity) is lease
+        lease.Close.assert_not_called()
+    else:
+        with pytest.raises(desktop_twin.DesktopTwinError):
+            desktop_twin.reserve_disconnected_child(identity)
+        lease.Close.assert_called_once_with()
+    reserve.assert_called_once_with()
 
 
 def test_logoff_refuses_reused_session_id(monkeypatch):
