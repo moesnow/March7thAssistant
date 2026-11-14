@@ -276,12 +276,19 @@ def acquire_run_lock(info: dict, force: bool = False):
 def release_run_lock(run_id: str):
     """释放运行锁（只释放自己持有的）。"""
     path = _lock_path()
-    holder = _read_json(path)
-    if isinstance(holder, dict) and holder.get("run_id") == run_id:
+    # Windows 上并发读取可能短暂阻止删除。重试前重新确认持有者。
+    for attempt in range(1, _LOCK_ATTEMPTS + 1):
+        holder = _read_json(path)
+        if not isinstance(holder, dict) or holder.get("run_id") != run_id:
+            return
         try:
             os.remove(path)
+            return
+        except PermissionError:
+            if attempt < _LOCK_ATTEMPTS:
+                time.sleep(_LOCK_RETRY_DELAY)
         except OSError:
-            pass
+            return
 
 
 # ---------- 输出捕获 ----------

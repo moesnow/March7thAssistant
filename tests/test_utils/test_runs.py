@@ -6,8 +6,8 @@ import logging
 import os
 import subprocess
 import sys
-import threading
 import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -249,6 +249,25 @@ class TestRunLockUnavailable:
         assert runs.acquire_run_lock(self._info("20261030-000001-aaaa")) == (True, None)
         assert len(failures) == 2
 
+    def test_release_retries_transient_sharing_violation(self, workdir, monkeypatch):
+        run_id = "20261030-000001-aaaa"
+        assert runs.acquire_run_lock(self._info(run_id)) == (True, None)
+        lock_path = os.path.join(runs.runs_dir(), "active.json")
+        remove = os.remove
+        failures = []
+
+        def temporarily_busy(path, *args, **kwargs):
+            if path == lock_path and not failures:
+                failures.append(path)
+                raise PermissionError(13, "共享冲突", path)
+            remove(path, *args, **kwargs)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(runs.os, "remove", temporarily_busy)
+            runs.release_run_lock(run_id)
+        assert failures == [lock_path]
+        assert runs.read_active_run() is None
+
     def test_unremovable_stale_lock_is_unavailable_not_busy(self, workdir, monkeypatch):
         """陈旧锁删不掉时不能报告成「已有任务在运行」：持有进程早已退出。"""
         pid, create_time = _dead_process()
@@ -304,25 +323,32 @@ class TestRunLockUnavailable:
 
     def test_idle_releases_and_reacquires(self, workdir):
         session = _begin()
-        session.acquire_lock()
-        with runs.idle_without_run_lock(poll_seconds=0.1):
+        assert session.acquire_lock().status == runs.LOCK_ACQUIRED
+        with runs.idle_without_run_lock():
             assert runs.read_active_run() is None
-            # 空闲期间别的运行可以取得锁
-            assert runs.acquire_run_lock(self._info("20261030-000002-bbbb"))[0]
-            threading.Timer(0.3, runs.release_run_lock, args=("20261030-000002-bbbb",)).start()
-        # 退出时锁被占用：等对方释放后重新取得
         assert runs.read_active_run()["run_id"] == session.run_id
         assert session.lock_held
         session.finish(0)
 
-    def test_idle_reports_waiting_holder(self, workdir):
+    def test_idle_reports_waiting_holder(self, workdir, monkeypatch):
         session = _begin()
-        session.acquire_lock()
+        assert session.acquire_lock().status == runs.LOCK_ACQUIRED
+        other_run_id = "20261030-000002-bbbb"
         waited = []
-        with runs.idle_without_run_lock(on_wait=waited.append, poll_seconds=0.1):
-            runs.acquire_run_lock(self._info("20261030-000002-bbbb"))
-            threading.Timer(0.3, runs.release_run_lock, args=("20261030-000002-bbbb",)).start()
-        assert [holder["run_id"] for holder in waited] == ["20261030-000002-bbbb"]
+
+        def finish_other_run(_seconds):
+            # 在第一次等待时释放锁，避免线程调度影响释放时机。
+            assert runs.read_active_run()["run_id"] == other_run_id
+            with monkeypatch.context() as release:
+                release.setattr(runs, "time", time)
+                runs.release_run_lock(other_run_id)
+            assert runs.read_active_run() is None
+
+        with runs.idle_without_run_lock(on_wait=waited.append):
+            assert runs.acquire_run_lock(self._info(other_run_id)) == (True, None)
+            monkeypatch.setattr(runs, "time", SimpleNamespace(sleep=finish_other_run))
+        assert [holder["run_id"] for holder in waited] == [other_run_id]
+        assert runs.read_active_run()["run_id"] == session.run_id
         session.finish(0)
 
     def test_idle_without_session_lock_is_noop(self, workdir):

@@ -168,6 +168,7 @@ runtime = AdbRuntimeStatus(True, "child", "0.1.1", 44, 0, True, True, 8.3, None,
 controller = SimpleNamespace(get_runtime_status=lambda: runtime)
 with publish_status(controller, session, interval=0.01):
     sys.stdin.read()
+    os._exit(1)  # 模拟任务进程被强制终止。
 """
     project = Path(__file__).resolve().parents[2]
     with subprocess.Popen([sys.executable, "-c", script, str(workdir)], cwd=project, stdin=subprocess.PIPE) as worker:
@@ -175,8 +176,14 @@ with publish_status(controller, session, interval=0.01):
             status = wait_for_running(timeout=15)
             assert (status.runtime.serial, status.runtime.game_display_id, status.runtime.capture_fps) == ("child", 0, 8.3)
         finally:
-            worker.kill()
-            worker.wait(timeout=5)
+            # 关闭 stdin 通知实际 Python 进程退出，Windows 的虚拟环境启动器会等它结束。
+            try:
+                worker.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                worker.kill()
+                worker.wait(timeout=5)
+                raise
+    assert worker.returncode == 1
     status = adb_status.read_adb_run_status()
     assert (status.running, status.phase, status.runtime.connected, status.runtime.capture_fps) == (
         False, "aborted", False, 0.0,
