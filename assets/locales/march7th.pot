@@ -7602,3 +7602,27 @@ msgstr ""
 #: tasks/weekly/currency_wars_strategy.py:62
 msgid "寒鸦希露瓦（高难）"
 msgstr ""
+
+#: module/game/adb_transport.py:155
+msgid "未找到 adb"
+msgstr ""
+
+#: app/card/adb_setting_cards.py:485
+msgid "下载 adb"
+msgstr ""
+
+#: app/card/adb_setting_cards.py:370
+msgid "正在下载 adb…"
+msgstr ""
+
+#: app/tools/adb_service.py:148
+msgid "下载 adb 失败"
+msgstr ""
+
+#: app/tools/adb_service.py:153
+msgid "安装 adb 失败"
+msgstr ""
+
+#: app/tools/adb_service.py:232
+msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。"
+msgstr ""

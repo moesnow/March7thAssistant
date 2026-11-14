@@ -1,22 +1,38 @@
-"""ADB 界面用到的设备发现、环境检查和错误指引。
-
-只调用 A1 提供的 Python 接口，不含 Qt 代码。所有函数都是同步调用，界面放在后台线程执行。
-"""
-from dataclasses import dataclass
+"""ADB 界面用到的工具准备、设备发现、环境检查和错误指引。"""
 import re
+import sys
+from dataclasses import dataclass
+from hashlib import sha256
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from time import monotonic
 from types import SimpleNamespace
+from zipfile import BadZipFile, ZipFile
+
+import requests
 
 from module.config import cfg
 from module.config.platform import get_control_backend
 from module.game.adb import AdbGameController
 from module.game.adb_transport import (
-    RESOLUTION, AdbError, check_adb_environment, list_adb_devices, resolve_adb_path,
+    RESOLUTION, Adb, AdbError, check_adb_environment, find_managed_adb, list_adb_devices,
+    managed_adb_directory, resolve_adb_path,
 )
 from module.localization import tr
+from module.logger import log
+from module.update.download_proxy import get_update_download_requests_proxies
 
 
 DEFAULT_NETWORK_PORT = 5555
 MUMU_ADDRESS = "127.0.0.1:16384"
+_PLATFORM_TOOLS_VERSION = "37.0.1"
+_PLATFORM_TOOLS_URL = f"https://dl.google.com/android/repository/platform-tools_r{_PLATFORM_TOOLS_VERSION}-win.zip"
+# 大小取自 Google SDK 索引，SHA-256 与 WinGet 清单核对。
+_PLATFORM_TOOLS_SIZE = 8_044_989
+_PLATFORM_TOOLS_SHA256 = "45f4d63113e895ebde0c90f194099a4676b6ac653bd28d54314a9e022bbc1a99"
+_PLATFORM_TOOLS_FILES = (
+    "adb.exe", "AdbWinApi.dll", "AdbWinUsbApi.dll", "libwinpthread-1.dll", "NOTICE.txt", "source.properties",
+)
 
 # 环境检查项的固定顺序。resolution 只对模拟器报告。
 CHECK_KEYS = ("adb", "server", "device", "android", "inject", "service", "display", "game", "resolution")
@@ -93,6 +109,81 @@ def backend_changes(backend, config=None):
     return changes
 
 
+# ---------- 工具准备 ----------
+
+def download_adb(adb_path, *, cancelled) -> Path | None:
+    """从 Google 安装 Windows adb，完整校验后才将目录提供给自动查找。"""
+    if cancelled():
+        return None
+    try:
+        return resolve_adb_path(adb_path)
+    except AdbError as error:
+        if error.code != "adb_not_found":
+            raise
+    root = managed_adb_directory()
+    try:
+        root.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(prefix=".download-", dir=root) as directory:
+            staging = Path(directory)
+            archive = staging / "platform-tools.zip"
+            if not _download_platform_tools(archive, cancelled) or cancelled():
+                return None
+            with ZipFile(archive) as package:
+                for name in _PLATFORM_TOOLS_FILES:
+                    package.extract(f"platform-tools/{name}", staging)
+            unpacked = staging / "platform-tools"
+            Adb(unpacked / "adb.exe").run("version")
+            if cancelled():
+                return None
+            if path := find_managed_adb():
+                return path
+            # 原子移动整个目录，任务进程只会看到安装完成的 adb。
+            suffix = staging.name.removeprefix(".download-")
+            installed = root / f"platform-tools-{_PLATFORM_TOOLS_VERSION}-{suffix}"
+            unpacked.rename(installed)
+            log.info(f"已安装 adb {_PLATFORM_TOOLS_VERSION}：{installed}")
+            return installed / "adb.exe"
+    except requests.RequestException as error:
+        log.warning(f"下载 adb 失败（{type(error).__name__}）")
+        raise AdbError("adb_download_failed", tr("下载 adb 失败")) from error
+    except AdbError as error:
+        if error.code == "adb_download_failed":
+            raise
+        log.warning(f"下载的 adb 无法运行：{error}")
+        raise AdbError("adb_install_failed", tr("安装 adb 失败")) from error
+    except (OSError, BadZipFile, KeyError) as error:
+        log.warning(f"安装 adb 失败：{error}")
+        raise AdbError("adb_install_failed", tr("安装 adb 失败")) from error
+
+
+def _download_platform_tools(path: Path, cancelled) -> bool:
+    # requests 的读取超时按单次读取计，另限制慢速下载的总耗时。
+    deadline = monotonic() + 45
+    digest = sha256()
+    size = 0
+    with requests.get(
+        _PLATFORM_TOOLS_URL, stream=True, timeout=(5, 10),
+        proxies=get_update_download_requests_proxies(), allow_redirects=False,
+    ) as response:
+        response.raise_for_status()
+        if response.status_code != 200:
+            raise requests.HTTPError(f"HTTP {response.status_code}")
+        with path.open("wb") as file:
+            for chunk in response.iter_content(chunk_size=256 * 1024):
+                if cancelled():
+                    return False
+                if monotonic() >= deadline:
+                    raise requests.Timeout()
+                size += len(chunk)
+                if size > _PLATFORM_TOOLS_SIZE:
+                    break
+                digest.update(chunk)
+                file.write(chunk)
+    if size != _PLATFORM_TOOLS_SIZE or digest.hexdigest() != _PLATFORM_TOOLS_SHA256:
+        raise AdbError("adb_download_failed", tr("下载文件校验失败"))
+    return True
+
+
 # ---------- 设备发现 ----------
 
 def normalize_address(text):
@@ -140,9 +231,13 @@ def error_guide(code, state=None):
     if code == "device_not_ready" and state == "unauthorized":
         return tr("手机上会弹出“允许 USB 调试吗？”，勾选“一律允许”后点“确定”。没有弹窗时重新插拔数据线，"
                   "或在开发者选项里点“撤销 USB 调试授权”后再连接。")
+    if code == "adb_not_found" and sys.platform == "win32":
+        return tr("在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。")
     guides = {
         "adb_not_found": tr("安装 Android Platform-Tools 并把它加入 PATH，或在“高级设置”里指定 adb 的位置。"
                             "装有 MuMu 等模拟器时会自动使用模拟器自带的 adb。"),
+        "adb_download_failed": tr("请检查网络连接是否正常"),
+        "adb_install_failed": tr("请检查日志后重试"),
         "adb_server_restarted": tr("电脑上还有另一个版本的 adb（常见于模拟器和手机助手）在抢占服务端。"
                                    "关闭这些程序，或在“高级设置”里把 adb 路径改成它们使用的那一个，然后重试。"),
         "adb_timeout": tr("adb 没有响应。重新插拔数据线或重启模拟器后重试。"),

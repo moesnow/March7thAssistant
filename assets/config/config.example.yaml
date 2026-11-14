@@ -65,7 +65,7 @@ ui_profile: pc_1080 # UI 形态：pc_1080、touch_720。本地触屏开发需先
 control_backend: null # 设备后端：local、cloud、adb。留空时沿用 cloud_game_enable（含环境变量覆盖），显式设置优先。桌面分身固定使用 local。
 
 # 桌面 ADB 后端仅支持 touch_720。路径留空时自动查找。
-adb_path: null # adb 可执行文件。查找顺序为此项、PATH、常见模拟器目录。
+adb_path: null # adb 可执行文件。自动查找优先用 PATH，Windows 还会查找常见模拟器、Android SDK 和小助手下载的 adb。
 adb_serial: null # 设备序列号或 IP:端口。只有一台设备时可留空。
 adb_device_type: auto # auto（Android 14+ 模拟器用 display 0，其余用虚拟屏）、physical（虚拟屏）、emulator（强制 display 0）。
 adb_service_jar: null # 默认查找 assets/binary/m7a-device-service.jar，其次查找 Android/device-service/build/outputs/m7a-device-service.jar。

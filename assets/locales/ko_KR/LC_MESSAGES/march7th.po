@@ -7913,3 +7913,27 @@ msgstr "한아·반디 (고난도)"
 #: tasks/weekly/currency_wars_strategy.py:62
 msgid "寒鸦希露瓦（高难）"
 msgstr "한아·서벌 (고난도)"
+
+#: module/game/adb_transport.py:155
+msgid "未找到 adb"
+msgstr "adb를 찾을 수 없습니다"
+
+#: app/card/adb_setting_cards.py:485
+msgid "下载 adb"
+msgstr "adb 다운로드"
+
+#: app/card/adb_setting_cards.py:370
+msgid "正在下载 adb…"
+msgstr "adb 다운로드 중…"
+
+#: app/tools/adb_service.py:148
+msgid "下载 adb 失败"
+msgstr "adb를 다운로드하지 못했습니다"
+
+#: app/tools/adb_service.py:153
+msgid "安装 adb 失败"
+msgstr "adb를 설치하지 못했습니다"
+
+#: app/tools/adb_service.py:232
+msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。"
+msgstr "‘Android 기기’에서 adb를 다운로드하거나 ‘고급 설정’에서 기존 adb를 선택하세요."

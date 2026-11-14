@@ -7,6 +7,7 @@ import re
 import socketserver
 import struct
 from subprocess import CompletedProcess
+import sys
 from threading import Thread
 from types import SimpleNamespace
 from unittest.mock import Mock
@@ -481,6 +482,37 @@ def test_emulator_rejects_wrong_size_before_launch(adb, s1):
         controller.start_game_process()
     assert error.value.code == "emulator_resolution"
     assert "launch" not in [request["cmd"] for request in s1.requests]
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows Platform-Tools 下载目录")
+def test_windows_adb_resolution_prefers_existing_tools(monkeypatch, tmp_path):
+    local_data = tmp_path / "Local"
+    monkeypatch.setenv("LOCALAPPDATA", str(local_data))
+    monkeypatch.delenv("ANDROID_HOME", raising=False)
+    monkeypatch.delenv("ANDROID_SDK_ROOT", raising=False)
+    monkeypatch.delenv("ProgramFiles", raising=False)
+    monkeypatch.delenv("ProgramFiles(x86)", raising=False)
+    monkeypatch.setattr(transport.shutil, "which", lambda _name: None)
+
+    cached = transport.managed_adb_directory() / "platform-tools-37.0.1-test" / "adb.exe"
+    pending = transport.managed_adb_directory() / ".download-test" / "platform-tools" / "adb.exe"
+    pending.parent.mkdir(parents=True)
+    pending.touch()
+    with pytest.raises(transport.AdbError, match="未找到 adb"):
+        transport.resolve_adb_path()
+
+    cached.parent.mkdir()
+    cached.touch()
+    assert transport.resolve_adb_path() == cached
+    assert transport.resolve_adb_path(tmp_path / "missing" / "adb.exe") == cached
+
+    sdk = local_data / "Android" / "Sdk" / "platform-tools" / "adb.exe"
+    sdk.parent.mkdir(parents=True)
+    sdk.touch()
+    assert transport.resolve_adb_path() == sdk
+    monkeypatch.setattr(transport.shutil, "which", lambda _name: str(tmp_path / "system" / "adb.exe"))
+    assert transport.resolve_adb_path() == tmp_path / "system" / "adb.exe"
+    assert transport.resolve_adb_path(cached) == cached
 
 
 def test_adb_uses_selected_executable_and_reports_server_restart(monkeypatch, tmp_path):

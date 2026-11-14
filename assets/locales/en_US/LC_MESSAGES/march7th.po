@@ -8225,3 +8225,29 @@ msgstr "Hanya and Firefly (High Difficulty)"
 #: tasks/weekly/currency_wars_strategy.py:62
 msgid "寒鸦希露瓦（高难）"
 msgstr "Hanya and Serval (High Difficulty)"
+
+#: module/game/adb_transport.py:155
+msgid "未找到 adb"
+msgstr "adb was not found"
+
+#: app/card/adb_setting_cards.py:485
+msgid "下载 adb"
+msgstr "Download adb"
+
+#: app/card/adb_setting_cards.py:370
+msgid "正在下载 adb…"
+msgstr "Downloading adb…"
+
+#: app/tools/adb_service.py:148
+msgid "下载 adb 失败"
+msgstr "Could not download adb"
+
+#: app/tools/adb_service.py:153
+msgid "安装 adb 失败"
+msgstr "Could not install adb"
+
+#: app/tools/adb_service.py:232
+msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。"
+msgstr ""
+"Download adb under Android devices or select an existing adb in Advanced "
+"settings."

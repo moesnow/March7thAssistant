@@ -3,7 +3,7 @@
 import os
 import sys
 
-from PySide6.QtCore import Qt, QThread, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, Qt, QThread, QTimer, Signal, Slot
 from PySide6.QtWidgets import QButtonGroup, QFileDialog, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 from qfluentwidgets import (BodyLabel, CaptionLabel, ComboBox, ExpandSettingCard, FluentIcon as FIF, IconWidget,
                             InfoBarIcon, LineEdit, PushButton, RadioButton, SettingCard)
@@ -46,7 +46,13 @@ class AdbWorker(QThread):
         except Exception as error:
             self.failed.emit("unknown", str(error))
         else:
-            self.succeeded.emit(result)
+            if not self.isInterruptionRequested():
+                self.succeeded.emit(result)
+
+    @Slot()
+    def cancelAndWait(self):
+        self.requestInterruption()
+        self.wait()
 
 
 def _caption(text="", parent=None):
@@ -251,7 +257,7 @@ def device_summary(device):
 
 
 class AdbDeviceCard(_PanelCard):
-    """列出 ADB 设备，支持刷新、选择和手动输入网络地址。"""
+    """列出 ADB 设备，支持下载 adb 和手动连接。"""
 
     serialChanged = Signal(object)
 
@@ -261,6 +267,7 @@ class AdbDeviceCard(_PanelCard):
         self._connect_device = connect_device or adb_service.connect_device
         self._devices = []
         self._message = (tr("点“刷新”查找已连接的设备"), "")
+        self._showDownload = False
         self._worker = None
         self._loaded = False
         self._group = QButtonGroup(self)
@@ -301,7 +308,7 @@ class AdbDeviceCard(_PanelCard):
         return str(serial).strip() if serial else None
 
     def isBusy(self):
-        return self._worker is not None and self._worker.isRunning()
+        return self._worker is not None
 
     def refreshIfNeeded(self):
         if not self._loaded and not self.isBusy():
@@ -318,21 +325,28 @@ class AdbDeviceCard(_PanelCard):
         worker = AdbWorker(function, self)
         worker.succeeded.connect(on_success)
         worker.failed.connect(on_failure)
-        worker.finished.connect(lambda: self._setBusy(False))
+        worker.finished.connect(self._onWorkerFinished)
         worker.finished.connect(worker.deleteLater)
+        QCoreApplication.instance().aboutToQuit.connect(worker.cancelAndWait)
         self._worker = worker
         worker.start()
 
-    def _setBusy(self, busy):
+    def _onWorkerFinished(self):
+        self._worker = None
+        self._setBusy(False)
+
+    def _setBusy(self, busy, *, downloading=False):
         self.refreshButton.setEnabled(not busy)
         self.connectButton.setEnabled(not busy)
-        self.refreshButton.setText(tr("正在刷新…") if busy else tr("刷新"))
-        if not busy:
-            self._worker = None
+        self.refreshButton.setText(tr("正在刷新…") if busy and not downloading else tr("刷新"))
+        if button := getattr(self.messageRow, "downloadButton", None):
+            button.setText(tr("正在下载 adb…") if downloading else tr("下载 adb"))
+            button.setEnabled(not busy)
 
     def _onDevicesListed(self, devices):
         self._loaded = True
         self._devices = list(devices)
+        self._showDownload = False
         if self._devices:
             self._message = None
         else:
@@ -342,8 +356,21 @@ class AdbDeviceCard(_PanelCard):
     def _onListFailed(self, code, message):
         self._loaded = True
         self._devices = []
-        self._message = (message, adb_service.error_guide(code))
-        self._rebuild()
+        self._onDeviceError(code, message)
+
+    def _onDownloadClicked(self):
+        if self.isBusy() or not self._showDownload:
+            return
+        adb_path = cfg.get_value("adb_path")
+
+        def download(_progress):
+            cancelled = QThread.currentThread().isInterruptionRequested
+            if adb_service.download_adb(adb_path, cancelled=cancelled) is not None and not cancelled():
+                return self._list_devices()
+            return None
+
+        self._setBusy(True, downloading=True)
+        self._start(download, self._onDevicesListed, self._onListFailed)
 
     # ---- 手动连接 ----
     def _onConnectClicked(self):
@@ -351,13 +378,14 @@ class AdbDeviceCard(_PanelCard):
             return
         address = adb_service.normalize_address(self.addressEdit.text())
         if address is None:
+            self._showDownload = False
             self._message = (tr("地址格式不对"), tr("请输入“IP:端口”，例如 {address}").format(
                 address=adb_service.MUMU_ADDRESS))
             self._rebuild()
             return
         self._setBusy(True)
         self._start(lambda _progress: (self._connect_device(address), self._list_devices()),
-                    self._onConnected, self._onConnectFailed)
+                    self._onConnected, self._onDeviceError)
 
     def _onConnected(self, result):
         device, devices = result
@@ -365,7 +393,10 @@ class AdbDeviceCard(_PanelCard):
         self._select(device.serial)
         self._onDevicesListed(devices)
 
-    def _onConnectFailed(self, code, message):
+    def _onDeviceError(self, code, message):
+        self._showDownload = sys.platform == "win32" and code in {
+            "adb_not_found", "adb_download_failed", "adb_install_failed",
+        }
         self._message = (message, adb_service.error_guide(code))
         self._rebuild()
 
@@ -448,6 +479,11 @@ class AdbDeviceCard(_PanelCard):
             row.message.setWordWrap(True)
             if self._message[1]:
                 row.guide = row.addText(_caption(self._message[1], row))
+            if self._showDownload:
+                row.downloadButton = PushButton(tr("下载 adb"), row)
+                row.downloadButton.setEnabled(not self.isBusy())
+                row.downloadButton.clicked.connect(self._onDownloadClicked)
+                row.hBoxLayout.addWidget(row.downloadButton, 0, Qt.AlignmentFlag.AlignVCenter)
             self._addRow(row)
             self.messageRow = row
         else:
@@ -765,7 +801,7 @@ class AdbAdvancedCard(ExpandSettingCard):
         card.hBoxLayout.addSpacing(16)
 
     def _pathText(self):
-        return cfg.get_value("adb_path") or tr("自动查找（先找 PATH，再找常见模拟器的安装目录）")
+        return cfg.get_value("adb_path") or tr("自动查找")
 
     def _serialText(self):
         return cfg.get_value("adb_serial") or tr("自动选择")

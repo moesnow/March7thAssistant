@@ -1,5 +1,6 @@
 """设置页的 ADB 卡片：选择后端 → 选择设备 → 环境检查 → 运行状态，全部使用模拟数据。"""
 import sys
+from threading import Event
 
 import pytest
 
@@ -172,6 +173,59 @@ def test_list_failure_shows_message_and_guide(qtbot, config, adb):
     wait_idle(qtbot, card)
     assert card.messageRow.message.text() == "未找到 adb"
     assert card.messageRow.guide.text() == service.error_guide("adb_not_found")
+    assert card.messageRow.downloadButton.isEnabled()
+
+
+def test_device_card_downloads_off_thread_and_refreshes(qtbot, config, adb, monkeypatch):
+    from app.card.adb_setting_cards import AdbDeviceCard
+    from app.tools import adb_service as service
+
+    adb.errors["list"] = AdbError("adb_not_found", "未找到 adb")
+    started, release = Event(), Event()
+
+    def download(adb_path, *, cancelled):
+        started.set()
+        assert release.wait(2)
+        del adb.errors["list"]
+        return adb.resolve_adb_path()
+
+    monkeypatch.setattr(service, "download_adb", download)
+    card = AdbDeviceCard()
+    qtbot.addWidget(card)
+    card.refresh()
+    wait_idle(qtbot, card)
+    try:
+        card.messageRow.downloadButton.click()
+        qtbot.waitUntil(started.is_set)
+        assert card.messageRow.downloadButton.text() == "正在下载 adb…"
+        assert not card.messageRow.downloadButton.isEnabled()
+        assert not card.connectButton.isEnabled()
+    finally:
+        release.set()
+    wait_idle(qtbot, card)
+    assert card.messageRow is None
+    assert card.deviceRows()[1].radio.property("serial") == PHONE.serial
+    assert config.writes == []
+
+
+def test_download_failure_can_retry(qtbot, config, adb, monkeypatch):
+    from app.card.adb_setting_cards import AdbDeviceCard
+    from app.tools import adb_service as service
+
+    adb.errors["list"] = AdbError("adb_not_found", "未找到 adb")
+
+    def download(adb_path, *, cancelled):
+        raise AdbError("adb_download_failed", "下载 adb 失败")
+
+    monkeypatch.setattr(service, "download_adb", download)
+    card = AdbDeviceCard()
+    qtbot.addWidget(card)
+    card.refresh()
+    wait_idle(qtbot, card)
+    card.messageRow.downloadButton.click()
+    wait_idle(qtbot, card)
+    assert card.messageRow.message.text() == "下载 adb 失败"
+    assert card.messageRow.downloadButton.isEnabled()
 
 
 def test_empty_list_tells_user_how_to_connect(qtbot, config, adb):
@@ -183,6 +237,7 @@ def test_empty_list_tells_user_how_to_connect(qtbot, config, adb):
     wait_idle(qtbot, card)
     assert card.messageRow.message.text() == "没有发现设备"
     assert "127.0.0.1:16384" in card.messageRow.guide.text()
+    assert not hasattr(card.messageRow, "downloadButton")
 
 
 def test_device_card_grows_with_its_rows(qtbot, config, adb):

@@ -99,12 +99,29 @@ class AdbEnvironment:
         return AdbTouchInjectionStatus(allowed, security_enabled)
 
 
-def resolve_adb_path(adb_path=None) -> Path:
-    if adb_path:
-        path = Path(adb_path).expanduser().resolve()
+def managed_adb_directory() -> Path:
+    base = os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local"
+    return Path(base) / "March7thAssistant" / "PlatformTools"
+
+
+def find_managed_adb() -> Path | None:
+    """查找校验后安装的 adb。临时下载目录不会被选中。"""
+    for directory in sorted(managed_adb_directory().glob("platform-tools-*"), reverse=True):
+        path = directory / "adb.exe"
         if path.is_file():
-            return path
-        raise AdbError("adb_not_found", tr("配置的 adb_path 不存在：{path}").format(path=path))
+            return path.resolve()
+    return None
+
+
+def resolve_adb_path(adb_path=None) -> Path:
+    configured = None
+    if adb_path:
+        configured = Path(adb_path).expanduser().resolve()
+        if configured.is_file():
+            return configured
+    # Windows 上手动路径失效时，可以继续使用本机的其他 adb。
+    if configured is not None and os.name != "nt":
+        raise AdbError("adb_not_found", tr("配置的 adb_path 不存在：{path}").format(path=configured))
     if executable := shutil.which("adb"):
         return Path(executable).resolve()
     if os.name == "nt":
@@ -122,7 +139,20 @@ def resolve_adb_path(adb_path=None) -> Path:
                     path = Path(root) / name
                     if path.is_file():
                         return path.resolve()
-    raise AdbError("adb_not_found", tr("未找到 adb，请配置 adb_path 或把 Android Platform-Tools 加入 PATH"))
+        sdk_roots = [
+            os.environ.get("ANDROID_HOME"),
+            os.environ.get("ANDROID_SDK_ROOT"),
+            managed_adb_directory().parent.parent / "Android" / "Sdk",
+        ]
+        for root in filter(None, sdk_roots):
+            path = Path(root) / "platform-tools" / "adb.exe"
+            if path.is_file():
+                return path.resolve()
+        if path := find_managed_adb():
+            return path
+    if configured is not None:
+        raise AdbError("adb_not_found", tr("配置的 adb_path 不存在：{path}").format(path=configured))
+    raise AdbError("adb_not_found", tr("未找到 adb"))
 
 
 def resolve_adb_service_jar(configured_path: str | Path | None = None) -> Path:
