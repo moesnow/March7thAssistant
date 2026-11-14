@@ -189,6 +189,8 @@ Microsoft 문서에 따르면 `Sudo for Windows`는 Windows 11 24H2 이상에서
 
 런처인 `miHoYo Launcher\launcher.exe`를 잘못 선택하지 않도록 주의하세요. 실제 게임 실행 파일은 `Star Rail Game\StarRail.exe`입니다.
 
+Epic 버전은 해당 `StarRail.exe`를 선택한 뒤 `게임 경로`를 펼쳐 `게임 실행 방식`을 `Epic을 통해 실행`으로 설정하세요. 무인 실행 전에 Epic Games 런처를 관리자 권한으로 실행하고 로그인하면 HoYoPlay가 열릴 때 UAC 확인 창을 피할 수 있습니다. Epic이 이미 실행 중이라면 시스템 트레이에서 먼저 종료한 뒤 바로 가기를 우클릭해 `관리자 권한으로 실행`을 선택하세요.
+
 HoYoverse 런처를 통해 게임 업데이트나 사전 다운로드를 하려면 `HoYoverse 런처 경로`도 추가로 설정해야 합니다.
 
 #### 작업 완료 후

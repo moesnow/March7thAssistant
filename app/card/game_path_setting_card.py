@@ -29,7 +29,10 @@ class GamePathSettingCard(ExpandSettingCard):
         self.launchMethodCard.hBoxLayout.addSpacing(16)
         self.viewLayout.addWidget(self.launchMethodCard)
 
-        self.epicDescription = CaptionLabel(tr("请选择 Epic 渠道版 StarRail.exe，助手将通过 Epic 打开启动器并自动点击‘开始游戏’。需提前登录 Epic。"), self.view)
+        self.epicDescription = CaptionLabel(tr(
+            "请选择 Epic 渠道版的 StarRail.exe，并提前登录 Epic。助手会打开 HoYoPlay 并点击「开始游戏」。"
+            "无人值守运行前，请以管理员身份启动 Epic Games 启动器，避免 HoYoPlay 弹出 UAC 确认。"
+        ), self.view)
         self.epicDescription.setWordWrap(True)
         self.epicDescription.setContentsMargins(48, 0, 24, 12)
         self.viewLayout.addWidget(self.epicDescription)

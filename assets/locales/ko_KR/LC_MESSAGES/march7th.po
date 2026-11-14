@@ -6431,10 +6431,12 @@ msgid "通过 Epic 启动"
 msgstr "Epic을 통해 실행"
 
 #: app/card/game_path_setting_card.py:32
-msgid "请选择 Epic 渠道版 StarRail.exe，助手将通过 Epic 打开启动器并自动点击‘开始游戏’。需提前登录 Epic。"
+msgid ""
+"请选择 Epic 渠道版的 StarRail.exe，并提前登录 Epic。助手会打开 HoYoPlay "
+"并点击「开始游戏」。无人值守运行前，请以管理员身份启动 Epic Games 启动器，避免 HoYoPlay 弹出 UAC 确认。"
 msgstr ""
-"Epic 버전의 StarRail.exe를 선택하세요. 도우미가 Epic을 통해 런처를 열고 '게임 시작'을 자동으로 클릭합니다. "
-"Epic에 미리 로그인해야 합니다."
+"Epic 버전의 StarRail.exe를 선택하고 미리 Epic에 로그인하세요. 도우미가 HoYoPlay를 열고 '게임 시작'을 "
+"클릭합니다. 무인 실행 전에 Epic Games 런처를 관리자 권한으로 실행하면 HoYoPlay의 UAC 확인 창을 피할 수 있습니다."
 
 #: app/challenge_config_dialog.py:158
 msgid "关卡范围的起始值不能大于结束值。"

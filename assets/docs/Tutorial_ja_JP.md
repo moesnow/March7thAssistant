@@ -187,6 +187,8 @@ March7th Launcher.exe main -e （タスクが正常終了したら自動で閉�
 
 ランチャーである `miHoYo Launcher\launcher.exe` を誤って選ばないよう注意してください。実際のゲーム本体は `Star Rail Game\StarRail.exe` です。
 
+Epic 版では、その `StarRail.exe` を選択し、`ゲームパス` を展開して `ゲームの起動方法` を `Epic 経由で起動` に設定してください。無人で実行する場合は、HoYoPlay の起動時に UAC の確認が表示されないよう、事前に Epic Games Launcher を管理者として起動してログインしてください。すでに起動している場合は、通知領域から終了し、ショートカットを右クリックして `管理者として実行` を選んでください。
+
 HoYoverse ランチャー経由で更新や事前ダウンロードを行いたい場合は、`HoYoPlay パス` も追加で設定してください。
 
 #### タスク完了後
