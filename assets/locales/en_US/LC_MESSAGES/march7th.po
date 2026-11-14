@@ -8251,3 +8251,15 @@ msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择�
 msgstr ""
 "Download adb under Android devices or select an existing adb in Advanced "
 "settings."
+
+#: app/setting_interface.py:624
+msgid "未完成对局"
+msgstr "Unfinished match"
+
+#: app/setting_interface.py:626
+msgid "结算后重新开局"
+msgstr "End and start a new match"
+
+#: app/setting_interface.py:626
+msgid "继续进度"
+msgstr "Resume saved match"

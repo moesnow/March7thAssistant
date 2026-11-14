@@ -7626,3 +7626,15 @@ msgstr ""
 #: app/tools/adb_service.py:232
 msgid "在“Android 设备”中下载 adb，或在“高级设置”里选择已有的 adb。"
 msgstr ""
+
+#: app/setting_interface.py:624
+msgid "未完成对局"
+msgstr ""
+
+#: app/setting_interface.py:626
+msgid "结算后重新开局"
+msgstr ""
+
+#: app/setting_interface.py:626
+msgid "继续进度"
+msgstr ""

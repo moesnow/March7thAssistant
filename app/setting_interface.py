@@ -618,6 +618,13 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('最高职级'): 'highest', tr('当前职级'): 'current', tr('最低职级'): 'lowest'}
         )
+        self.currencywarsUnfinishedMatchCard = ComboBoxSettingCard2(
+            "currencywars_unfinished_match",
+            UiIcon.OPTIONS,
+            tr("未完成对局"),
+            "",
+            texts={tr("结算后重新开局"): "restart", tr("继续进度"): "resume"},
+        )
         self.currencywarsStrategyCard = None
         configured_strategy = cfg.get_value("currencywars_strategy")
         visible_strategies = (CURRENCY_WARS_STRATEGY, HIGH_ANAXA)
@@ -2747,6 +2754,7 @@ class SettingInterface(ScrollArea):
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsUnfinishedMatchCard)
         if self.currencywarsStrategyCard is not None:
             self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategyCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsStrategySelectCard)

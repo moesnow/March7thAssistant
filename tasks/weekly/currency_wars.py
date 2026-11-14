@@ -36,6 +36,7 @@ PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLAC
                            Page.DANCE, Page.RANGER, Page.GARDEN, Page.HACK, Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO))
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
+ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
 BOSS_STAGES = {"normal": ("1-9", "2-7", "3-7"), "overclock": ("1-6", "2-5", "3-5")}
 RESULT_ACTIONS = ("下一页", "下一步", "前往结算", "继续挑战", "返回货币战争")
 NEUTRAL_ENVIRONMENTS = ("连击概念股", "增发货币", "能量概念股", "人身意外险", "蓝钻贵族")
@@ -287,8 +288,8 @@ class CurrencyWars:
         raise CurrencyWarsError(f"{stage} {operation}后无法退出当前备战子界面") from error
 
     def _go_back(self, frame, expected):
-        # 只有已确认的赛季菜单/积分窗口可用返回键。
-        if frame.page not in (Page.RANK, Page.MODES, Page.WEEKLY):
+        # 只有已确认的赛季菜单、积分窗口及旧局结算提示可用返回键。
+        if frame.page not in (Page.RANK, Page.MODES, Page.WEEKLY, Page.END_MATCH_CONFIRM):
             raise CurrencyWarsError("未识别可返回的货币战争菜单")
         return self._action(frame, lambda f: (), lambda f: auto.press_key("esc"),
                             lambda f: f.page == expected, "未确认返回货币战争菜单",
@@ -300,13 +301,13 @@ class CurrencyWars:
                 and screen.current_screen in {"main", "menu", "guide1", "guide2", "guide3", "guide4", "guide5"})
 
     def _homepage(self, frame):
-        if frame.page == Page.RANK:
+        if frame.page in (Page.RANK, Page.END_MATCH_CONFIRM):
             frame = self._go_back(frame, Page.MODES)
         if frame.page in (Page.MODES, Page.WEEKLY):
             frame = self._go_back(frame, Page.HOME)
         if frame.page == Page.HOME:
             return frame
-        if frame.page in PLAY_PAGES or frame.page in (Page.SHOP, Page.DETAIL, Page.EQUIPMENT):
+        if frame.page in ACTIVE_PAGES:
             raise CurrencyWarsError("当前存在进行中的货币战争对局，请从入画奇航菜单选择中途接管")
         if not self._entry_screen_ready():
             raise CurrencyWarsError("无法确认当前界面可以进入「货币战争·入画奇航」")
@@ -393,46 +394,97 @@ class CurrencyWars:
         )
 
     def _rank_page(self, frame):
+        """进入配置的职级页，或在存档出现时交回模式菜单。"""
         name = ui.MODE_NAMES[self.mode]
         if frame.page == Page.RANK:
             if frame.rank_mode != self.mode:
                 raise CurrencyWarsError("当前职级页和设置中的博弈模式不一致")
             return frame
-        if frame.has(*ui.END_MATCH, *ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT):
-            raise CurrencyWarsError("检测到未完成对局，已保留进度")
-        if not frame.find("进入" + name, area=ui.BOTTOM_RIGHT):
+        entry = "进入" + name
+        if not frame.unfinished_match and not frame.find(entry, area=ui.BOTTOM_RIGHT):
             frame = self._click_to(
-                frame, lambda f: ui.point(f.find(name, area=ui.MODE_CARDS)),
-                lambda f: f.page == Page.MODES and f.find("进入" + name, area=ui.BOTTOM_RIGHT),
+                frame, lambda f: ui.point(f.find(name, area=ui.MODE_CARDS)) if not f.unfinished_match else None,
+                lambda f: f.page == Page.MODES and (f.unfinished_match or f.find(entry, area=ui.BOTTOM_RIGHT)),
                 f"{name}尚未解锁或无法确认入口", seconds=5,
             )
-        # 切换标签后再次确认没有旧对局按钮。
-        if frame.has(*ui.END_MATCH, *ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT):
-            raise CurrencyWarsError("检测到未完成对局，已保留进度")
+        if frame.unfinished_match:
+            return frame
         return self._click_to(
-            frame, lambda f: ui.point(f.find("进入" + name, area=ui.BOTTOM_RIGHT)),
-            lambda f: f.page == Page.RANK and f.rank_mode == self.mode,
+            frame, lambda f: ui.point(f.find(entry, area=ui.BOTTOM_RIGHT)) if not f.unfinished_match else None,
+            lambda f: (f.page == Page.RANK and f.rank_mode == self.mode
+                       or f.page == Page.MODES and f.unfinished_match),
             f"未进入{name}职级页",
         )
 
+    def _resume_saved_match(self, frame, *, expected_mode=None):
+        def resume_button(f, mode):
+            if f.page == Page.MODES and f.menu_mode is not None and (mode is None or f.menu_mode == mode):
+                return f.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT)
+
+        if resume_button(frame, expected_mode) is None:
+            frame = self._expect(
+                lambda f: resume_button(f, expected_mode) is not None, 10,
+                "入画奇航模式菜单没有可确认的续局入口，保留对局",
+            )
+        self.mode = frame.menu_mode
+        log.info(f"继续{ui.MODE_NAMES[self.mode]}存档，使用当前配置的阵容策略")
+        return self._click_to(
+            frame, lambda f: ui.point(resume_button(f, self.mode)),
+            lambda f: f.page in ACTIVE_PAGES, "未确认恢复入画奇航对局", seconds=25,
+        )
+
+    def _settle_saved_match(self, frame):
+        log.info("检测到未完成对局，按设置结束并结算")
+
+        def menu_ready(f):
+            return (f.page == Page.MODES and not f.unfinished_match
+                    and f.find(*ui.MODE_ENTRIES, area=ui.BOTTOM_RIGHT) is not None)
+
+        try:
+            frame = self._click_to(
+                frame, lambda f: ui.point(f.end_match_button()),
+                lambda f: f.page == Page.END_MATCH_CONFIRM,
+                "未确认旧对局的结束提示", seconds=10, attempts=2,
+            )
+            frame = self._click_to(
+                frame, lambda f: ui.point(f.enabled_button(
+                    f.find("放弃并结算", area=ui.END_MATCH_CONFIRM_BUTTON))),
+                lambda f: f.page in (Page.MATCH_RESULT, Page.HOME) or menu_ready(f),
+                "未确认旧对局已结束", seconds=25, attempts=1,
+            )
+            for _ in range(6):
+                if frame.page != Page.MATCH_RESULT:
+                    break
+                frame = self._result_page(frame, ending_saved_match=True)
+            if frame.page == Page.HOME:
+                frame = self._mode_menu(frame)
+            if not menu_ready(frame):
+                frame = self._expect(menu_ready, 10, "未确认旧对局结算完成和新开局入口")
+        except CurrencyWarsReconnect as error:
+            raise CurrencyWarsError("结束旧对局时出现重连提示，未开始新对局") from error
+        log.info("旧对局结算已完成，准备按设置开新局")
+        return frame
+
     def _launch(self, frame, resume):
+        if frame.page == Page.END_MATCH_CONFIRM:
+            frame = self._go_back(frame, Page.MODES)
         if frame.page != Page.RANK:
             frame = self._mode_menu(frame)
-            ongoing = frame.has(*ui.END_MATCH, area=ui.BOTTOM_RIGHT)
-            continuing = frame.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT)
-            if ongoing or continuing:
-                if not resume or continuing is None:
-                    raise CurrencyWarsError("检测到未完成对局，已保留进度。请从入画奇航模式菜单使用中途接管")
-                if not frame.selected_mode(self.mode):
-                    raise CurrencyWarsError("续局模式和当前设置不一致，已保留对局")
-                return self._click_to(
-                    frame, lambda f: ui.point(f.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT))
-                    if f.selected_mode(self.mode) else None,
-                    lambda f: f.page in PLAY_PAGES, "未确认恢复入画奇航对局", seconds=25,
-                )
-        if resume:
+            if resume:
+                return self._resume_saved_match(frame)
+        elif resume:
             raise CurrencyWarsError("入画奇航模式菜单没有可确认的未完成对局")
-        frame = self._select_rank(self._rank_page(frame))
+        frame = self._rank_page(frame)
+        if frame.page == Page.MODES:
+            action = cfg.get_value("currencywars_unfinished_match", "restart")
+            if action == "resume":
+                return self._resume_saved_match(frame)
+            if action != "restart":
+                raise CurrencyWarsError("货币战争未完成对局设置无效，已保留进度")
+            frame = self._rank_page(self._settle_saved_match(frame))
+            if frame.page != Page.RANK:
+                raise CurrencyWarsError("再次检测到未完成对局，已保留进度")
+        frame = self._select_rank(frame)
         level = frame.enemy_rank
         return self._click_to(
             frame, lambda f: ui.point(f.find("开始对局", area=ui.BOTTOM_RIGHT))
@@ -449,14 +501,13 @@ class CurrencyWars:
             raise CurrencyWarsError("货币战争已达重连次数上限，保留当前现场")
         self.network_reconnects += 1
         log.warning(f"游戏同步失败，尝试重连（{self.network_reconnects}/{MAX_RECONNECTS}）")
-        active_pages = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
         lobby_pages = {Page.HOME, Page.MODES, Page.RANK}
         previous = None
 
         def recovered(f):
             nonlocal previous
             context = None
-            if f.page in active_pages | lobby_pages:
+            if f.page in ACTIVE_PAGES | lobby_pages:
                 context = f.action_context
             elif f.page == Page.UNKNOWN and self._entry_screen_ready():
                 context = screen.current_screen
@@ -468,14 +519,14 @@ class CurrencyWars:
             frame, lambda f: ui.point(f.reconnect_confirm()), recovered,
             "游戏重连后未确认恢复画面", seconds=35, attempts=2, retry_after=6,
         )
-        if frame.page not in active_pages:
+        if frame.page not in ACTIVE_PAGES:
             menu = frame if frame.page == Page.MODES else self._mode_menu(self._homepage(frame))
             menu = self._expect(
-                lambda f: f.page == Page.MODES and f.selected_mode(self.mode)
+                lambda f: f.page == Page.MODES and f.menu_mode == self.mode
                 and f.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT),
                 15, "游戏已重连，未找到同模式续局入口，保留当前现场",
             )
-            frame = self._launch(menu, resume=True)
+            frame = self._resume_saved_match(menu, expected_mode=self.mode)
         # 服务器可能回到最近保存点。由恢复后的画面重新规划，保留本次任务的开销和次数上限。
         self.slot_cache.clear()
         self.deployment_stage = None
@@ -2531,12 +2582,14 @@ class CurrencyWars:
             self.screenshot = frame.image
             self._on_match_result(frame)
 
-    def _result_page(self, frame):
+    def _result_page(self, frame, *, ending_saved_match=False):
         page = frame.page
         button_area = (520, 735, 1900, 1055) if page == Page.MATCH_RESULT else ui.RESULT_BUTTON
+        later = {Page.MATCH_RESULT, Page.HOME, Page.MODES} if ending_saved_match else PLAY_PAGES | {Page.HOME}
+        actions = (*RESULT_ACTIONS[:3], "返回货币战争") if ending_saved_match else RESULT_ACTIONS
 
         def result_button(f):
-            options = f.matching(RESULT_ACTIONS, button_area)
+            options = f.matching(actions, button_area)
             if len(options) == 1:
                 return options[0]
             # 结算界面可能同时有下一页和返回。先读完结算流水与晋升页。
@@ -2547,12 +2600,11 @@ class CurrencyWars:
             if f.page != page:
                 return False
             # 晋升赛在评价动画后会自动翻页，动画上的胜负仍是正式结果。
-            self._record_match_result(f)
+            if not ending_saved_match:
+                self._record_match_result(f)
             return result_button(f) is not None
 
         if not ready(frame):
-            later = PLAY_PAGES | {Page.HOME}
-
             def ready_or_advanced(f):
                 if f.page == page:
                     return ready(f)
@@ -2561,7 +2613,8 @@ class CurrencyWars:
                 if f.page == Page.MATCH_RESULT:
                     self._record_match_result(f)
                     return True
-                return page == Page.NODE_RESULT or f.page == Page.HOME and self.result is not None
+                return (ending_saved_match or page == Page.NODE_RESULT
+                        or f.page == Page.HOME and self.result is not None)
 
             frame = self._expect(ready_or_advanced, 15, "结算操作按钮未显示")
             if frame.page != page:
@@ -2569,7 +2622,7 @@ class CurrencyWars:
         before = frame
 
         def next_result(f):
-            if f.page not in PLAY_PAGES | {Page.HOME}:
+            if f.page not in later:
                 return False
             if f.page != before.page:
                 return True
@@ -2850,8 +2903,8 @@ class CurrencyWars:
             raise CurrencyWarsError(str(exc)) from exc
         if get_ui_profile(cfg).name != "pc_1080":
             raise CurrencyWarsError("货币战争 S2 目前需要简体中文 PC 游戏界面")
-        self.mode = cfg.currencywars_type
-        if self.mode not in ("normal", "overclock") or cfg.currencywars_rank_difficulty not in ("lowest", "current", "highest"):
+        mode = cfg.currencywars_type
+        if mode not in ("normal", "overclock") or cfg.currencywars_rank_difficulty not in ("lowest", "current", "highest"):
             raise CurrencyWarsError("货币战争模式或职级难度配置无效")
         if configured in strategy.LEGACY_STRATEGIES:
             label = strategy.STRATEGY_NAMES[selected]
@@ -2876,7 +2929,8 @@ class CurrencyWars:
                 frame = self._observe()
                 if frame.page == Page.RECONNECT and (weekly or not resume):
                     raise CurrencyWarsError("游戏显示重连提示，请使用货币战争中途接管")
-                if frame.page != Page.RECONNECT and (weekly or frame.page not in (Page.MODES, Page.RANK)):
+                if frame.page != Page.RECONNECT and (
+                        weekly or frame.page not in (Page.MODES, Page.RANK, Page.END_MATCH_CONFIRM)):
                     frame = self._homepage(frame)
                 score = None
                 if weekly:
@@ -2886,6 +2940,7 @@ class CurrencyWars:
                         break
                     matches += 1
                     log.info(f"货币战争第 {matches} 局")
+                    self.mode = mode
                     if frame.page != Page.RECONNECT:
                         try:
                             frame = self._launch(frame, resume)
