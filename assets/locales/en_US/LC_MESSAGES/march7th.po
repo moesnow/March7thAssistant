@@ -8460,3 +8460,15 @@ msgstr "Unreadable"
 #: app/warp_interface.py:174
 msgid "无法统计"
 msgstr "Unknown"
+
+#: app/setting_interface.py:624
+msgid "未完成对局"
+msgstr "Unfinished match"
+
+#: app/setting_interface.py:626
+msgid "结算后重新开局"
+msgstr "End and start a new match"
+
+#: app/setting_interface.py:626
+msgid "继续进度"
+msgstr "Resume saved match"

@@ -8132,3 +8132,15 @@ msgstr "읽을 수 없음"
 #: app/warp_interface.py:174
 msgid "无法统计"
 msgstr "알 수 없음"
+
+#: app/setting_interface.py:624
+msgid "未完成对局"
+msgstr "미완료 대국"
+
+#: app/setting_interface.py:626
+msgid "结算后重新开局"
+msgstr "정산 후 새 대국 시작"
+
+#: app/setting_interface.py:626
+msgid "继续进度"
+msgstr "진행 중인 대국 계속"

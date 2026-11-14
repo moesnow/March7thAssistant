@@ -980,20 +980,117 @@ def test_stop_during_reconnect_does_not_retry_the_dialog(monkeypatch, world):
     assert state.clicks == [(Page.RECONNECT, (1188, 672))]
 
 
-@pytest.mark.parametrize("resume", (False, True))
-def test_existing_run_only_uses_explicit_resume(monkeypatch, world, resume):
-    ongoing = mode(("结束并结算", 1340, 962), ("继续对局", 1640, 962), ("标准博弈", 646, 156))
-    board_frame = page(Page.BOARD)
+def end_match_dialog():
+    image = CANVAS.copy()
+    ImageDraw.Draw(image).rounded_rectangle((779, 715, 1140, 772), radius=28, fill=(224, 224, 224))
+    return Frame(image, labels(
+        ("提示", 778, 341), ("选择放弃并结算将直接结算并重置进度。", 958, 412),
+        ("确定结束进程吗？", 840, 440), ("放弃并结算", 980, 743),
+    ))
+
+
+@pytest.mark.parametrize("explicit_takeover", (False, True))
+def test_saved_match_resumes_in_its_own_mode_using_configured_strategy(monkeypatch, world, explicit_takeover):
+    world.cfg.currencywars_unfinished_match = "restart" if explicit_takeover else "resume"
+    world.cfg.currencywars_strategy = policy.HIGH_ANAXA
+    ongoing = mode(("结束并结算", 1397, 961), ("继续进度", 1692, 961), ("超频博弈", 670, 155))
+    ready = page(Page.BOARD, stage="3-1")
+    lobby = home()
+    initial = end_match_dialog() if explicit_takeover else ongoing
+    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", ready))
+
+    def press(key):
+        state.keys.append((state.frame.page, key))
+        state.frame = ongoing
+
+    world.auto.press_key.side_effect = press
+
+    def play(frame):
+        assert frame is ready
+        assert world.war.mode == "overclock"
+        assert world.war.lineup is policy.LINEUPS[policy.HIGH_ANAXA]
+        world.war.result = True
+        return lobby
+
+    monkeypatch.setattr(world.war, "_play", play)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    assert world.war.start(resume=explicit_takeover)
+    assert state.clicks == [(Page.MODES, (1692, 961))]
+    assert state.keys == ([(Page.END_MATCH_CONFIRM, "esc")] if explicit_takeover else [])
+
+
+def test_old_match_settles_before_weekly_run_starts_a_new_match(monkeypatch, world):
+    lobby = home()
+    ongoing = mode(("超频博弈", 670, 155), ("继续进度", 1692, 961),
+                   ("结束并", 1364, 960), ("结算", 1427, 960))
+    monkeypatch.setattr(ongoing, "read_local", lambda area: "结束并结算" if area == ui.MODE_END_BUTTON else None)
+    prompt = end_match_dialog()
+    assert prompt.page == Page.END_MATCH_CONFIRM
+    rating = page(Page.MATCH_RESULT, ("挑战失败", 959, 233), ("下一步", 962, 897))
+    details = page(Page.MATCH_RESULT, ("对局未完成", 1145, 215), ("下一页", 961, 900))
+    finish = page(Page.MATCH_RESULT, ("返回货币战争", 960, 899), ("继续挑战", 1200, 899))
+    fresh_menu = mode(("进入标准博弈", 1692, 961))
+    difficulty = rank()
+    ready = page(Page.CHOICE)
+    events = []
+    routes = {
+        (lobby, (1600, 972)): ongoing,
+        (ongoing, (1396, 960)): prompt,
+        (prompt, (980, 743)): rating,
+        (rating, (962, 897)): details,
+        (details, (961, 900)): finish,
+        (finish, (960, 899)): fresh_menu,
+        (fresh_menu, (1692, 961)): difficulty,
+        (difficulty, (1680, 965)): ready,
+    }
+    state = drive(monkeypatch, world, lobby, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+    on_match_result = Mock()
+    monkeypatch.setattr(world.war, "_on_match_result", on_match_result)
+
+    def play(frame):
+        assert frame is ready and world.war.mode == "normal"
+        assert world.war.result is None
+        events.append("played")
+        world.war.result = True
+        return lobby
+
+    def check_weekly_reward(frame):
+        assert frame is lobby
+        score = 18000 if events else 0
+        events.append("reward")
+        return frame, (score, 18000), False
+
+    monkeypatch.setattr(world.war, "_play", play)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", check_weekly_reward)
+    assert world.war.start(weekly=True)
+    assert events == ["reward", "played", "reward"]
+    assert state.clicks == [(f.page, pt) for f, pt in routes]
+    assert not state.keys
+    on_match_result.assert_not_called()
+
+
+def test_unconfirmed_end_match_is_not_repeated_and_does_not_start_a_new_match(monkeypatch, world):
+    ongoing = mode(("结束并结算", 1397, 961), ("继续进度", 1692, 961))
+    prompt = end_match_dialog()
+
     def click(state, point):
-        state.frame = {(1600, 972): ongoing, (1640, 962): board_frame}[point]
-    state = drive(monkeypatch, world, home(), click)
-    if resume:
-        assert world.war._launch(world.war.frame, True) == board_frame
-    else:
-        with pytest.raises(task.CurrencyWarsError, match="未完成对局"):
-            world.war._launch(world.war.frame, False)
-    assert (Page.MODES, (1340, 962)) not in state.clicks
-    assert ((Page.MODES, (1640, 962)) in state.clicks) == resume
+        if point == (1397, 961):
+            state.frame = prompt
+
+    state = drive(monkeypatch, world, ongoing, click)
+    with pytest.raises(task.CurrencyWarsReceiptTimeout, match="未确认旧对局已结束"):
+        world.war._launch(ongoing, False)
+    assert state.clicks == [(Page.MODES, (1397, 961)), (Page.END_MATCH_CONFIRM, (980, 743))]
+    assert not state.keys
+
+
+def test_missing_resume_button_does_not_end_or_start_a_match(monkeypatch, world):
+    world.cfg.currencywars_unfinished_match = "resume"
+    ongoing = mode(("结束并结算", 1397, 961), ("超频博弈", 670, 155))
+    state = drive(monkeypatch, world, ongoing)
+    with pytest.raises(task.CurrencyWarsReadTimeout, match="没有可确认的续局入口"):
+        world.war._launch(ongoing, False)
+    assert not state.clicks and not state.keys
 
 
 def test_locked_overclock_stops_without_starting_standard(monkeypatch, world):

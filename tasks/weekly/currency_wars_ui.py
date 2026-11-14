@@ -20,6 +20,9 @@ HOME_START = (1300, 905, 1895, 1030)
 HOME_POINTS = (30, 915, 430, 1025)
 MODE_CARDS = (50, 174, 510, 550)
 BOTTOM_RIGHT = (1200, 880, 1920, 1040)
+MODE_HEADER = (570, 123, 1110, 200)
+MODE_END_BUTTON = (1272, 924, 1520, 997)
+END_MATCH_CONFIRM_BUTTON = (743, 696, 1215, 789)
 RANK_MODE = (38, 840, 330, 925)
 RANK_PROMOTION_LABEL = (183, 374, 400, 487)
 RANK_NAMES = ("黑铁", "青铜", "翠钢", "钴银", "冰钛", "紫金", "投资大师", "资本帝王", "财富造物主")
@@ -121,6 +124,7 @@ AUTO_TOGGLE = (1764, 46)
 
 SEASON_TITLE = "入画奇航"
 MODE_NAMES = {"normal": "标准博弈", "overclock": "超频博弈"}
+MODE_ENTRIES = tuple("进入" + name for name in MODE_NAMES.values())
 CONTINUE_MATCH = ("继续进度", "继续对局", "继续博弈")
 END_MATCH = ("结束并结算", "放弃并结算")
 ITEM_CHOICES = ("武装箱", "简易武装箱", "完整武装箱", "进阶武装箱", "特权武装箱", "星徽秘典", "阿哈")
@@ -155,6 +159,7 @@ class Page(Enum):
     HOME = "入画奇航首页"
     MODES = "模式选择"
     RANK = "职级选择"
+    END_MATCH_CONFIRM = "结束旧对局确认"
     WEEKLY = "积分奖励"
     REWARD_RECEIPT = "奖励展示"
     REWARD_LIMIT = "助燃券容量提示"
@@ -482,6 +487,12 @@ class Frame:
         return None
 
     @cached_property
+    def end_match_dialog(self) -> bool:
+        message = "".join(label.text for label in self.texts((740, 377, 1490, 465)))
+        return (any(prompt in message for prompt in ("结算并重置进度", "确定结束进程"))
+                and self.has("提示", area=(714, 306, 884, 372)))
+
+    @cached_property
     def page(self) -> Page:
         if (self.find("连接中断") and self.find("退出游戏")) or (
                 self.find("加载失败", contains=True) and self.find("立即切换")):
@@ -508,6 +519,8 @@ class Frame:
             if self.season or self.find(*BOARD_ADVANCE, area=BOARD_FIGHT):
                 return Page.CONFLICT
             return Page.BATTLE
+        if self.end_match_dialog:
+            return Page.END_MATCH_CONFIRM
 
         if self.has("主角光环与奇遇详情", area=(420, 27, 1065, 104), contains=True) and (
                 self.has("前往重选", area=(640, 164, 1360, 260), contains=True)
@@ -549,8 +562,8 @@ class Frame:
                 return Page.HOME
             if self.rank_mode and self.find("开始对局", area=BOTTOM_RIGHT):
                 return Page.RANK
-            if self.find("标准博弈", area=MODE_CARDS) and (
-                    self.has("进入标准博弈", "进入超频博弈", *CONTINUE_MATCH, *END_MATCH, area=BOTTOM_RIGHT)
+            if self.has(*MODE_NAMES.values(), area=MODE_CARDS) and (
+                    self.unfinished_match or self.has(*MODE_ENTRIES, area=BOTTOM_RIGHT)
                     or self.find("周额外晋升点", area=(45, 115, 515, 173), contains=True)):
                 return Page.MODES
 
@@ -901,8 +914,26 @@ class Frame:
                     return int(match[1])
         return None
 
-    def selected_mode(self, mode: str) -> bool:
-        return bool(self.find(MODE_NAMES[mode], area=(570, 123, 1110, 200)))
+    @cached_property
+    def menu_mode(self) -> str | None:
+        label = self.find(*MODE_NAMES.values(), area=MODE_HEADER)
+        return next((mode for mode, title in MODE_NAMES.items() if label and label.text == title), None)
+
+    @cached_property
+    def unfinished_match(self) -> bool:
+        return (self.has(*END_MATCH, *CONTINUE_MATCH, area=BOTTOM_RIGHT)
+                or self.has("进行中", area=(52, 123, 520, 575))
+                or self.has("当前进度", area=(1430, 822, 1868, 906), contains=True))
+
+    def end_match_button(self) -> Label | None:
+        button = self.find(*END_MATCH, area=MODE_END_BUTTON)
+        if button is not None:
+            return button
+        # 全屏 OCR 可能把左侧按钮拆成两段。先确认有存档，再重读这块按钮。
+        if self.unfinished_match and (text := self.read_local(MODE_END_BUTTON)) in END_MATCH:
+            x1, y1, x2, y2 = MODE_END_BUTTON
+            return Label(text, ((x1 + x2) // 2, (y1 + y2) // 2))
+        return None
 
     @cached_property
     def rank_mode(self) -> str | None:

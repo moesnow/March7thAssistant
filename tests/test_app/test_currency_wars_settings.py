@@ -63,6 +63,29 @@ def test_currency_wars_settings_lists_only_anaxa(qtbot, tmp_path, monkeypatch, c
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
+def test_currency_wars_unfinished_match_defaults_to_restart_and_saves_resume(qtbot, tmp_path, monkeypatch):
+    import app.setting_interface as settings
+
+    path = tmp_path / "config.yaml"
+    path.write_text("currencywars_strategy: s2_anaxa\n", encoding="utf-8")
+    config = Config.__new__(Config)
+    Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
+    monkeypatch.setattr("module.config.cfg", config)
+    monkeypatch.setattr("app.card.comboboxsettingcard2.cfg", config)
+    monkeypatch.setattr(settings, "cfg", config)
+    widget = settings.SettingInterface()
+    qtbot.addWidget(widget)
+
+    card = widget.currencywarsUnfinishedMatchCard
+    assert card.parent() is widget.CurrencywarsGroup
+    combo = card.comboBox
+    assert combo.currentData() == "restart"
+    combo.setCurrentIndex(combo.findData("resume"))
+    config._load_config(save=False)
+    assert config.get_value("currencywars_unfinished_match") == "resume"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
 def test_currency_wars_quick_presets(qtbot, tmp_path, monkeypatch):
     import app.setting_interface as settings
 
