@@ -1,19 +1,27 @@
 from PySide6.QtCore import QThread, Signal
 from qfluentwidgets import InfoBar, InfoBarPosition, StateToolTip
 from urllib.parse import urlencode, urlparse, parse_qs
-from datetime import datetime
 from pathlib import Path
 from enum import Enum
+from copy import deepcopy
+from html import escape
 import markdown
 import requests
 import tempfile
 import random
 import time
 import glob
-import json
 import re
 import os
 from module.localization import tr
+from .warp_manual import MANUAL_KEY, manual_count, pool_summary, gold_rows
+from .warp_import import read_snapshot, edit_plan, save_import
+
+
+def _html_name(name):
+    # Names are data, including imported/manual names. Escape Markdown as well
+    # as HTML so a name cannot become a link or load a local/remote image.
+    return escape(name).translate(str.maketrans({char: f'&#{ord(char)};' for char in '\\[]*_`'}))
 
 
 def srgf_to_uigf_hkrpg(srgf: dict) -> dict:
@@ -130,14 +138,18 @@ class WarpExport:
             "export_app_version": "",
             "srgf_version": ""
         }
+        self.manual = None
+        self.manual_only = False
         self.gacha_data = {}
         for type in self.gacha_type:
             self.gacha_data[type] = []
         self.__init_data(config)
 
     def __init_data(self, config):
-        if config:
-            self.info = config.get("info")
+        if config and not config.get("march7th_cleared") and (config['list'] or manual_count(config)):
+            self.info = deepcopy(config.get("info"))
+            self.manual = deepcopy(config.get(MANUAL_KEY))
+            self.manual_only = not bool(config.get("list"))
             for item in config.get("list"):
                 type = item["gacha_type"]
                 self.gacha_data[type].append(item)
@@ -159,58 +171,54 @@ class WarpExport:
         return self.info.get("uid")
 
     def data_to_html(self, theme="light"):
-        css = '''
-        <style>
-        p {
-            font-size: 15px;
-            font-weight: 500;
-        }
-        </style>
-        '''
-        content = ""
-
-        def warp_analyze(value, content):
-            start_time = datetime.strptime(value[0]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y/%m/%d')
-            end_time = datetime.strptime(value[-1]["time"], "%Y-%m-%d %H:%M:%S").strftime('%Y/%m/%d')
-            content += f"{start_time}  -  {end_time}\n\n"
-            total = len(value)
-            rank_type = {
-                "5": 0,
-                "4": 0,
-                "3": 0
-            }
-            rank_5 = []
-            grand_total = 0
-            for item in value:
-                grand_total += 1
-                type = item["rank_type"]
-                name = item["name"]
-                rank_type[type] = rank_type.get(type, 0) + 1
-                if type == "5":
-                    rank_5.append([name, grand_total])
-                    grand_total = 0
-
-            content += f"{tr('一共')} {self.__set_color(total, 'DeepSkyBlue')} {tr('抽')} {tr('已累计')} {self.__set_color(grand_total, 'LimeGreen')} {tr('抽未出5星')}\n\n"
-            for star, count in rank_type.items():
-                percentage = count / total * 100
-                color = 'Goldenrod' if star == '5' else 'darkorchid' if star == '4' else 'DodgerBlue'
-                text = f"{star}{tr('星')}: {count:<4d} [{percentage:.2f}%]"
-                content += f"{self.__set_color(text, color)}\n\n"
-            if len(rank_5) > 0:
-                rank_5_str = ' '.join([f"{self.__set_color(f'{key}[{value}]', self.__get_random_color(theme))}" for key, value in rank_5])
-                rank_5_sum = sum(value for _, value in rank_5)
-                rank_5_avg = rank_5_sum / len(rank_5)
-                content += f"{tr('5星历史记录')}: {rank_5_str}\n\n"
-                content += f"{tr('五星平均出货次数为')}: {self.__set_color(f'{rank_5_avg:.2f}', 'green')}\n\n<hr>"
-            else:
-                content += "<hr>"
-
-            return content
-
-        for type, list in self.gacha_data.items():
-            if len(list) > 0:
-                content += f"## {self.__set_color(self.gacha_type[type], '#f18cb9')}\n\n"
-                content = warp_analyze(list, content)
+        css = '<style>p {font-size: 15px; font-weight: 500;}</style>'
+        config = self.export_data()
+        content = tr('统计基于已保存的明细；历史可能不完整。每池首个五星的原始抽数仅为下限，不计入平均值。') + "\n\n"
+        if self.manual and (self.manual['entries'] or self.manual['corrections']):
+            content += tr('手填内容单独标注，不补造逐抽明细，也不计入明细总抽数和星级占比。找回明细后，请自行核对并删除重复的手填项。') + "\n\n"
+        for pool in self.gacha_type:
+            stats = pool_summary(config, pool)
+            records, entries = stats['records'], stats['entries']
+            if not records and not entries:
+                continue
+            content += f"## {self.__set_color(escape(self.gacha_type[pool]), '#f18cb9')}\n\n"
+            if records:
+                start = records[0]['time'][:10].replace('-', '/')
+                end = records[-1]['time'][:10].replace('-', '/')
+                content += f"{start}  -  {end}\n\n"
+                since = ('≥' if stats['since_bounded'] else '') + str(stats['since'])
+                content += tr('明细共 {total} 抽，已记录 {since} 抽未出五星。').format(
+                    total=self.__set_color(len(records), 'DeepSkyBlue'),
+                    since=self.__set_color(since, 'LimeGreen')) + "\n\n"
+                for star, color in [('5', 'Goldenrod'), ('4', 'darkorchid'), ('3', 'DodgerBlue')]:
+                    count = sum(r['rank_type'] == star for r in records)
+                    content += self.__set_color(f"{star}{tr('星')}: {count} [{count / len(records) * 100:.2f}%]", color) + "\n\n"
+                history = []
+                for row in stats['golds']:
+                    pity = str(row['pity']) if row['pity'] is not None else tr('未知')
+                    if not row['corrected'] and row['bounded']:
+                        pity = '≥' + str(row['observed'])
+                    if row['corrected']:
+                        pity += ' · ' + tr('手填')
+                    history.append(self.__set_color(f"{_html_name(row['record']['name'])}[{pity}]", self.__get_random_color(theme)))
+                if history:
+                    content += tr('5星历史记录') + ': ' + ' '.join(history) + "\n\n"
+            if entries:
+                history = []
+                for entry in entries:
+                    pity = str(entry['pity']) if entry['pity'] is not None else tr('未知')
+                    day = entry['date'] or tr('时间未知')
+                    history.append(self.__set_color(f"{_html_name(entry['name'])}[{pity} · {tr('手填')} · {day}]", self.__get_random_color(theme)))
+                content += tr('手动补充') + ': ' + ' '.join(history) + "\n\n"
+            if stats['golds'] or entries:
+                average = f"{stats['average']:.2f}" if stats['average'] is not None else tr('未知')
+                content += tr('五星平均出货次数为') + ': ' + self.__set_color(average, 'green') + "\n\n"
+                content += tr('仅统计已知抽数：{known} 个五星；抽数不明：{unknown} 个。不是完整历史概率。').format(
+                    known=stats['known'], unknown=stats['unknown']) + "\n\n"
+            content += '<hr>\n\n'
+        orphan_count = sum(row['orphan'] for row in gold_rows(config, include_orphans=True))
+        if orphan_count:
+            content += tr('有 {count} 项更正对应的原始记录已变化或缺失，未参与统计。请在“已有五星抽数”中核对。').format(count=orphan_count)
         return css + markdown.markdown(content)
 
     def detect_game_locale(self):
@@ -338,6 +346,11 @@ class WarpExport:
             self.show_info_message(tr("UID与原始数据不一致"), tr("请求出错"))
             return False
 
+        if self.manual_only:
+            self.info['lang'] = ""
+            self.info['region_time_zone'] = None
+            self.manual_only = False
+
         if self.info['lang'] == "":
             self.info['lang'] = item['lang']
         elif self.info['lang'] != item['lang']:
@@ -437,6 +450,8 @@ class WarpExport:
             "info": self.info,
             "list": sorted_list
         }
+        if self.manual is not None:
+            config[MANUAL_KEY] = deepcopy(self.manual)
         return config
 
 
@@ -458,14 +473,8 @@ class WarpThread(QThread):
 
     def run(self):
         try:
-            with open("./warp.json", 'r', encoding='utf-8') as file:
-                config = json.load(file)
-                warp = WarpExport(config, self.parent, self.infoSignal)
-        except Exception:
-            warp = WarpExport(None, self.parent, self.infoSignal)
-
-        # self.parent.stateTooltip.setContent("测试测试(＾∀＾●)")
-        try:
+            original, config = read_snapshot()
+            warp = WarpExport(config, self.parent, self.infoSignal)
             url = warp.get_url()
             if not url:
                 # self.parent.stateTooltip.setTitle("未找到URL")
@@ -477,11 +486,9 @@ class WarpThread(QThread):
             api_domain, updated_query = warp.remove_query_params(url)
 
             if warp.fetch_data(api_domain, updated_query, self.type):
-                self.parent.warplink = warp.warplink
                 config = warp.export_data()
-
-                with open("./warp.json", 'w', encoding='utf-8') as file:
-                    json.dump(config, file, ensure_ascii=False, indent=4)
+                save_import(edit_plan(config, original))
+                self.parent.warplink = warp.warplink
 
                 # content = warp.data_to_html()
                 # self.parent.contentLabel.setText(markdown.markdown(content))
@@ -494,13 +501,13 @@ class WarpThread(QThread):
                 self.warpSignal.emit(WarpStatus.SUCCESS)
             else:
                 self.warpSignal.emit(WarpStatus.FAILURE)
-        except Exception:
-            # self.parent.stateTooltip.setContent("跃迁数据获取失败(´▔∀▔`)")
-            self.infoSignal.emit(tr("跃迁数据获取失败(´▔∀▔`)"))
+        except Exception as exc:
+            self.infoSignal.emit(tr("跃迁数据获取失败(´▔∀▔`)") + "\n" + str(exc), None)
             self.warpSignal.emit(WarpStatus.FAILURE)
 
 
 def warpExport(self, type="normal"):
+    last_info = [tr("跃迁数据获取失败(´▔∀▔`)")]
     self.stateTooltip = StateToolTip(tr("抽卡记录"), tr("正在获取跃迁数据..."), self.window())
     self.stateTooltip.closeButton.setVisible(False)
     self.stateTooltip.move(self.stateTooltip.getSuitablePos())
@@ -521,6 +528,8 @@ def warpExport(self, type="normal"):
             self.stateTooltip = None
             self.updateBtn.setEnabled(True)
             self.updateFullBtn.setEnabled(True)
+            InfoBar.warning(title=tr('抽卡记录'), content=last_info[0],
+                            position=InfoBarPosition.TOP, duration=8000, parent=self)
         elif status == WarpStatus.UPDATE:
             self.setContent()
         elif status == WarpStatus.COPY:
@@ -528,6 +537,7 @@ def warpExport(self, type="normal"):
 
     # 连接 infoSignal 到主线程 UI
     def handle_info(content, title=None):
+        last_info[0] = content
         self.stateTooltip.setContent(content)
         if title:
             self.stateTooltip.setTitle(title)

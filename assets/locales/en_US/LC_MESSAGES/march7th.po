@@ -1488,99 +1488,95 @@ msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "Configured {count} plan"
 msgstr[1] "Configured {count} plans"
 
-#: app/warp_interface.py:24
+#: app/warp_interface.py:28
 msgid "更新数据"
 msgstr "Update Data"
 
-#: app/warp_interface.py:25
+#: app/warp_interface.py:29
 msgid "更新完整数据"
 msgstr "Update Full Data"
 
-#: app/warp_interface.py:26
+#: app/warp_interface.py:35
 msgid "导入数据"
 msgstr "Import Data"
 
-#: app/warp_interface.py:27
+#: app/warp_interface.py:36
 msgid "导出数据"
 msgstr "Export Data"
 
-#: app/warp_interface.py:28
+#: app/warp_interface.py:37
 msgid "导出Excel"
 msgstr "Export Excel"
 
-#: app/warp_interface.py:29
+#: app/warp_interface.py:38
 msgid "复制链接"
 msgstr "Copy Link"
 
-#: app/warp_interface.py:30
+#: app/warp_interface.py:39
 msgid "清空"
 msgstr "Clear"
 
-#: app/warp_interface.py:117
+#: app/warp_interface.py:151
 msgid "导入抽卡记录"
 msgstr "Import Warp History"
 
-#: app/warp_interface.py:117
 msgid "UIGF / SRGF 格式 (*.json)"
 msgstr "UIGF / SRGF Format (*.json)"
 
-#: app/warp_interface.py:144
+#: app/warp_interface.py:220
 msgid "导入成功(＾∀＾●)"
 msgstr "Import Success (＾∀＾●)"
 
-#: app/warp_interface.py:154
 msgid "导入失败(╥╯﹏╰╥)"
 msgstr "Import Failed (╥╯﹏╰╥)"
 
-#: app/warp_interface.py:173
+#: app/warp_interface.py:237
 msgid "导出抽卡记录"
 msgstr "Export Warp History"
 
-#: app/warp_interface.py:175
 msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
 msgstr "UIGF Format (*.json);;SRGF Format (*.srgf.json)"
 
-#: app/warp_interface.py:182
 msgid "UIGF 格式 (*.json)"
 msgstr "UIGF Format (*.json)"
 
-#: app/warp_interface.py:201
+#: app/warp_interface.py:266
 msgid "导出成功(＾∀＾●)"
 msgstr "Export Success (＾∀＾●)"
 
-#: app/warp_interface.py:212
+#: app/warp_interface.py:277
 msgid "导出失败(╥╯﹏╰╥)"
 msgstr "Export Failed (╥╯﹏╰╥)"
 
-#: app/warp_interface.py:228
+#: app/warp_interface.py:293
 msgid "导出为 Excel 文件"
 msgstr "Export as Excel"
 
-#: app/warp_interface.py:230
+#: app/warp_interface.py:295
 msgid "Excel 文件 (*.xlsx)"
 msgstr "Excel File (*.xlsx)"
 
-#: app/tools/warp_export.py:117
+#: app/tools/warp_export.py:119
 msgid "角色活动跃迁"
 msgstr "Character Event Warp"
 
-#: app/tools/warp_export.py:118
+#: app/tools/warp_export.py:120
 msgid "光锥活动跃迁"
 msgstr "Light Cone Event Warp"
 
-#: app/tools/warp_export.py:121
+#: app/tools/warp_export.py:123
 msgid "常驻跃迁"
 msgstr "Standard Warp"
 
-#: app/tools/warp_export.py:122
+#: app/tools/warp_export.py:124
 msgid "新手跃迁"
 msgstr "Departure Warp"
 
-#: app/warp_interface.py:229
+#: app/tools/warp_export.py:192
 msgid "未知"
 msgstr "Unknown"
 
-#: app/warp_interface.py:252
+#: app/tools/warp_excel.py:14
 msgid "时间"
 msgstr "Time"
 
@@ -1588,11 +1584,11 @@ msgstr "Time"
 msgid "名称"
 msgstr "Name"
 
-#: app/warp_interface.py:252
+#: app/tools/warp_excel.py:14
 msgid "星级"
 msgstr "Rarity"
 
-#: app/warp_interface.py:252
+#: app/tools/warp_excel.py:14
 msgid "卡池"
 msgstr "Pool"
 
@@ -1604,23 +1600,21 @@ msgstr "Copy Success (＾∀＾●)"
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr "Copy Failed (╥╯﹏╰╥)"
 
-#: app/warp_interface.py:350
+#: app/warp_interface.py:357
 msgid "清空抽卡记录"
 msgstr "Clear Warp History"
 
-#: app/warp_interface.py:351
 msgid "确定要清空抽卡记录吗？此操作不可撤销。"
 msgstr "Are you sure? This is irreversible."
 
-#: app/warp_interface.py:361
+#: app/warp_interface.py:369
 msgid "清空完成(＾∀＾●)"
 msgstr "Clear Complete (＾∀＾●)"
 
-#: app/warp_interface.py:372
+#: app/warp_interface.py:380
 msgid "清空失败(╥╯﹏╰╥)"
 msgstr "Clear Failed (╥╯﹏╰╥)"
 
-#: app/warp_interface.py:403
 msgid ""
 "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n"
 "\n"
@@ -2182,63 +2176,60 @@ msgstr "Select HoYoPlay Path"
 msgid "脚本或程序路径"
 msgstr "Script/Program Path"
 
-#: app/tools/warp_export.py:193
 msgid "抽"
 msgstr "Pull"
 
-#: app/tools/warp_export.py:193
 msgid "已累计"
 msgstr "Total"
 
-#: app/tools/warp_export.py:193
 msgid "抽未出5星"
 msgstr "pulls without 5-star"
 
-#: app/tools/warp_export.py:197
+#: app/tools/warp_export.py:189
 msgid "星"
 msgstr "-Star"
 
-#: app/tools/warp_export.py:203
+#: app/tools/warp_export.py:199
 msgid "5星历史记录"
 msgstr "5-Star History"
 
-#: app/tools/warp_export.py:204
+#: app/tools/warp_excel.py:44
 msgid "五星平均出货次数为"
 msgstr "Average 5-star pity:"
 
-#: app/tools/warp_export.py:318
+#: app/tools/warp_export.py:320
 msgid "请重新打开游戏抽卡记录"
 msgstr "Please re-open in-game warp history"
 
-#: app/tools/warp_export.py:318
+#: app/tools/warp_export.py:320
 msgid "身份认证已过期"
 msgstr "Auth Expired"
 
-#: app/tools/warp_export.py:321
+#: app/tools/warp_export.py:323
 msgid "请求出错"
 msgstr "Request Error"
 
-#: app/tools/warp_export.py:324
+#: app/tools/warp_export.py:326
 msgid "正在获取{gacha_name}第{page}页"
 msgstr "Fetching {gacha_name} Page {page}"
 
-#: app/tools/warp_export.py:327
+#: app/tools/warp_export.py:329
 msgid "等待5秒后重试，剩余重试次数："
 msgstr "Retrying in 5s, remaining tries: "
 
-#: app/tools/warp_export.py:338
+#: app/tools/warp_export.py:340
 msgid "UID与原始数据不一致"
 msgstr "UID mismatch with original data"
 
-#: app/tools/warp_export.py:344
+#: app/tools/warp_export.py:351
 msgid "语言与原始数据不一致"
 msgstr "Language mismatch with original data"
 
-#: app/tools/warp_export.py:350
+#: app/tools/warp_export.py:357
 msgid "时区与原始数据不一致"
 msgstr "Timezone mismatch with original data"
 
-#: app/tools/warp_export.py:473
+#: app/tools/warp_export.py:476
 msgid "未找到URL"
 msgstr "URL not found"
 
@@ -2336,7 +2327,7 @@ msgstr "Apocalyptic Shadow"
 msgid "虚构叙事"
 msgstr "Pure Fiction"
 
-#: app/tools/warp_export.py:473
+#: app/tools/warp_export.py:476
 msgid "请确认是否已打开游戏抽卡记录"
 msgstr "Please confirm if Warp History is open"
 
@@ -3336,7 +3327,6 @@ msgstr "Yao Guang"
 msgid "火花"
 msgstr "Sparxie"
 
-#: app/tools/warp_export.py:193
 msgid "一共"
 msgstr "Total"
 
@@ -5469,11 +5459,11 @@ msgstr "Lord of Saṃvartasthāyi, Asat Pramad • \"Formation\""
 msgid "坏灭的喜剧"
 msgstr "The Comedy of Doom"
 
-#: app/tools/warp_export.py:119
+#: app/tools/warp_export.py:121
 msgid "Fate[UBW]角色联动跃迁"
 msgstr "Fate[UBW] Character Collab Warp"
 
-#: app/tools/warp_export.py:120
+#: app/tools/warp_export.py:122
 msgid "Fate[UBW]光锥联动跃迁"
 msgstr "Fate[UBW] Light Cone Collab Warp"
 
@@ -6767,11 +6757,10 @@ msgstr ""
 "Read all characters' stats, Light Cones, Eidolons, skills, and relics, and "
 "save them to characters.json in the program directory"
 
-#: app/warp_interface.py:252
+#: app/tools/warp_excel.py:14
 msgid "总次数"
 msgstr "Total Warps"
 
-#: app/warp_interface.py:252
 msgid "保底内"
 msgstr "Pity Count"
 
@@ -8303,75 +8292,74 @@ msgstr "Could not clear the game data. Please try again."
 msgid "游戏登录信息和设置已清除"
 msgstr "Game login information and settings cleared"
 
-#: app/tools/warp_import.py:20
+#: app/tools/warp_import.py:29
 msgid "抽卡记录格式无效。"
 msgstr "Invalid warp record format."
 
-#: app/tools/warp_import.py:25
+#: app/tools/warp_import.py:34
 msgid "仅支持单账号导入，请导出只包含一个星铁账号的文件。"
 msgstr ""
 "Only single-account imports are supported. Export a file containing exactly "
 "one Star Rail account."
 
-#: app/tools/warp_import.py:36
+#: app/tools/warp_import.py:45
 msgid "文件缺少有效的账号 UID，无法安全导入。"
 msgstr "The file has no valid account UID and cannot be safely imported."
 
-#: app/tools/warp_import.py:42
+#: app/tools/warp_import.py:51
 msgid "抽卡记录时区无效，无法安全合并。"
 msgstr "The record time zone is invalid. A safe merge is not possible."
 
-#: app/tools/warp_import.py:50
+#: app/tools/warp_import.py:59
 msgid "抽卡记录缺少有效 ID 或必要字段。"
 msgstr "A record is missing a valid ID or required fields."
 
-#: app/tools/warp_import.py:53
+#: app/tools/warp_import.py:62
 msgid "抽卡记录包含不支持的卡池或星级。"
 msgstr "A record contains an unsupported warp type or rarity."
 
-#: app/tools/warp_import.py:55
+#: app/tools/warp_import.py:64
 msgid "记录中的账号与文件账号不一致，已停止导入。"
 msgstr ""
 "A record belongs to a different account than the file. Import stopped."
 
-#: app/tools/warp_import.py:61
+#: app/tools/warp_import.py:70
 msgid "抽卡记录时间无效。"
 msgstr "A record has an invalid timestamp."
 
-#: app/tools/warp_import.py:73
+#: app/tools/warp_import.py:85
 msgid "相同记录 ID 的内容不一致，已停止导入。"
 msgstr "Records with the same ID have conflicting contents. Import stopped."
 
-#: app/tools/warp_import.py:97
+#: app/tools/warp_import.py:125
 msgid "账号不一致：现有 UID {existing}，导入 UID {incoming}。已停止导入，原记录未修改。"
 msgstr ""
 "Account mismatch: existing UID {existing}, imported UID {incoming}. Import "
 "stopped. Existing records are unchanged."
 
-#: app/tools/warp_import.py:100
+#: app/tools/warp_import.py:128
 msgid "文件的语言或时区与现有记录不同，请统一后再导入。原记录未修改。"
 msgstr ""
 "The language or time zone differs from the existing records. Use matching "
 "settings before importing. Existing records are unchanged."
 
-#: app/tools/warp_import.py:114
 msgid "确认期间本地记录发生变化，请重新导入。"
 msgstr ""
 "Local records changed while confirmation was pending. Please import again."
 
-#: app/tools/warp_import.py:133
+#: app/tools/warp_import.py:186
 msgid "临时文件校验失败，原记录未修改。"
 msgstr "Temporary file validation failed. Existing records are unchanged."
 
-#: app/tools/warp_import.py:142
+#: app/tools/warp_import.py:195
 msgid "备份校验失败，原记录未修改。"
 msgstr "Backup validation failed. Existing records are unchanged."
 
-#: app/warp_interface.py:143
+#: app/warp_interface.py:176
 msgid "确认导入抽卡记录"
 msgstr "Confirm warp record import"
 
-#: app/warp_interface.py:144
+#: app/warp_interface.py:177
 msgid ""
 "账号 UID：{uid}\n"
 "导入方式：保留已有记录，补充新记录，自动跳过重复内容。\n"
@@ -8391,38 +8379,37 @@ msgstr ""
 "Duplicates: {duplicates}\n"
 "After merge: {total}"
 
-#: app/warp_interface.py:150
+#: app/warp_interface.py:197
 msgid "确认合并"
 msgstr "Confirm merge"
 
-
-#: app/warp_interface.py:142
+#: app/warp_interface.py:160
 msgid "选择导入方式"
 msgstr "Choose import method"
 
-#: app/warp_interface.py:143
+#: app/warp_interface.py:161
 msgid "默认合并会保留现有记录。只有希望用文件内容覆盖现有记录时，才选择强制替换。"
 msgstr ""
 "Merge keeps existing records by default. Choose replacement only if you want"
 " to overwrite existing records with the file contents."
 
-#: app/warp_interface.py:147
+#: app/warp_interface.py:165
 msgid "安全合并（推荐）"
 msgstr "Safe merge (recommended)"
 
-#: app/warp_interface.py:147
+#: app/warp_interface.py:165
 msgid "强制替换现有记录"
 msgstr "Replace existing records"
 
-#: app/warp_interface.py:150
+#: app/warp_interface.py:168
 msgid "下一步"
 msgstr "Next"
 
-#: app/warp_interface.py:167
+#: app/warp_interface.py:185
 msgid "警告：替换现有抽卡记录"
 msgstr "Warning: Replace existing warp records"
 
-#: app/warp_interface.py:168
+#: app/warp_interface.py:186
 msgid ""
 "当前账号：{existing_uid}\n"
 "导入账号：{uid}\n"
@@ -8446,21 +8433,21 @@ msgstr ""
 "\n"
 "Continue with replacement?"
 
-#: app/warp_interface.py:173
+#: app/warp_interface.py:197
 msgid "确认替换"
 msgstr "Confirm replacement"
 
-#: app/tools/warp_import.py:105
+#: app/tools/warp_import.py:118
 msgid "现有记录无法读取，不能合并。请重新导入并选择替换现有记录。"
 msgstr ""
 "Existing records cannot be read or merged. Import again and choose "
 "replacement."
 
-#: app/warp_interface.py:173
+#: app/warp_interface.py:187
 msgid "无法读取"
 msgstr "Unreadable"
 
-#: app/warp_interface.py:174
+#: app/warp_interface.py:188
 msgid "无法统计"
 msgstr "Unknown"
 
@@ -8487,3 +8474,341 @@ msgstr "Strategy first"
 #: app/setting_interface.py:660
 msgid "图鉴优先"
 msgstr "Uncollected entries first"
+
+#: app/tools/warp_excel.py:13
+msgid "原始明细"
+msgstr "Original records"
+
+#: app/tools/warp_excel.py:14
+msgid "保底内（明细）"
+msgstr "Pity (recorded)"
+
+#: app/tools/warp_excel.py:29
+msgid "五星统计"
+msgstr "5-star statistics"
+
+#: app/tools/warp_excel.py:30
+msgid "原始抽数"
+msgstr "Recorded pulls"
+
+#: app/tools/warp_excel.py:30
+msgid "统计抽数"
+msgstr "Count used in statistics"
+
+#: app/tools/warp_excel.py:30
+msgid "来源"
+msgstr "Source"
+
+#: app/tools/warp_excel.py:34
+msgid "原记录已变化（未统计）"
+msgstr "Original changed (excluded)"
+
+#: app/tools/warp_excel.py:34
+msgid "手填更正"
+msgstr "Manual correction"
+
+#: app/tools/warp_excel.py:38
+msgid "手动补充"
+msgstr "Manual additions"
+
+#: app/tools/warp_excel.py:40
+msgid "统计说明"
+msgstr "Statistics notes"
+
+#: app/tools/warp_excel.py:41
+msgid "统计基于已保存的明细；历史可能不完整。每池首个五星的原始抽数仅为下限，不计入平均值。"
+msgstr ""
+"Statistics use saved records, which may be incomplete. The first recorded "
+"5-star in each pool has only a lower-bound pull count and is excluded from "
+"the average."
+
+#: app/tools/warp_excel.py:42
+msgid "手填内容单独标注，不补造逐抽明细，也不计入明细总抽数和星级占比。找回明细后，请自行核对并删除重复的手填项。"
+msgstr ""
+"Manual entries are labeled separately. They do not create individual records"
+" or affect recorded totals and rarity percentages. If you recover details, "
+"review and remove duplicate manual entries yourself."
+
+#: app/tools/warp_excel.py:43
+msgid "空白抽数或时间表示未知。Excel 用于查看，完整恢复请使用小助手备份。"
+msgstr ""
+"Blank counts or dates mean unknown. Excel is for viewing; use an Assistant "
+"backup for full restoration."
+
+#: app/tools/warp_excel.py:44
+msgid "明细抽数"
+msgstr "Recorded pulls"
+
+#: app/tools/warp_excel.py:44
+msgid "手填五星"
+msgstr "Manual 5-stars"
+
+#: app/tools/warp_excel.py:44
+msgid "已知抽数五星"
+msgstr "5-stars with known counts"
+
+#: app/tools/warp_excel.py:44
+msgid "抽数不明五星"
+msgstr "5-stars with unknown counts"
+
+#: app/tools/warp_export.py:184
+msgid "明细共 {total} 抽，已记录 {since} 抽未出五星。"
+msgstr "{total} recorded pulls; {since} recorded pulls without a 5-star."
+
+#: app/tools/warp_export.py:196
+msgid "手填"
+msgstr "Manual"
+
+#: app/tools/warp_export.py:204
+msgid "时间未知"
+msgstr "Date unknown"
+
+#: app/tools/warp_export.py:210
+msgid "仅统计已知抽数：{known} 个五星；抽数不明：{unknown} 个。不是完整历史概率。"
+msgstr ""
+"Known counts only: {known} 5-stars; unknown counts: {unknown}. This is not a"
+" full-history probability."
+
+#: app/tools/warp_export.py:215
+msgid "有 {count} 项更正对应的原始记录已变化或缺失，未参与统计。请在“已有五星抽数”中核对。"
+msgstr ""
+"{count} corrections were excluded because their original records changed or "
+"are missing. Review them under \"Existing 5-star counts\"."
+
+#: app/tools/warp_import.py:26
+msgid "手工数据格式无效或版本不受支持。"
+msgstr "Invalid manual data or unsupported version."
+
+#: app/tools/warp_import.py:151
+msgid "确认期间本地记录发生变化，请重新打开窗口后再试。"
+msgstr ""
+"Local records changed while this window was open. Reopen it and try again."
+
+#: app/tools/warp_import.py:163
+msgid "抽卡记录正在保存，请稍后再试。"
+msgstr "Warp records are being saved. Please try again shortly."
+
+#: app/tools/warp_manual.py:38
+msgid "抽数请填写正整数，或保留为未知。"
+msgstr "Enter a positive whole number of pulls, or leave it unknown."
+
+#: app/tools/warp_manual.py:56
+msgid "请选择卡池并填写五星物品名称。"
+msgstr "Select a warp pool and enter the 5-star item name."
+
+#: app/tools/warp_manual.py:63
+msgid "时间请填写 YYYY-MM-DD，或留空表示未知。"
+msgstr "Enter the date as YYYY-MM-DD, or leave it blank if unknown."
+
+#: app/tools/warp_manual.py:95
+msgid "手工数据存在不同版本，请选择替换或使用其他备份。"
+msgstr ""
+"Manual data has conflicting versions. Choose replacement or use another "
+"backup."
+
+#: app/warp_interface.py:33
+msgid "手动补充与更正"
+msgstr "Add / correct 5-stars"
+
+#: app/warp_interface.py:151
+msgid "UIGF / SRGF / 小助手备份 (*.json)"
+msgstr "UIGF / SRGF / Assistant backup (*.json)"
+
+#: app/warp_interface.py:193
+msgid "替换也会移除当前手填内容和更正，只保留导入文件中的内容。"
+msgstr ""
+"Replacement also removes current manual entries and corrections, keeping "
+"only the imported content."
+
+#: app/warp_interface.py:194
+msgid "现有手填内容和更正会保留。请自行核对新明细，避免重复统计。"
+msgstr ""
+"Existing manual entries and corrections are kept. Review the new details to "
+"avoid double-counting."
+
+#: app/warp_interface.py:237
+msgid "UIGF/SRGF 只能保存真实逐抽明细，不能保存手填摘要和更正。需要完整恢复时，请在保存窗口选择“小助手完整备份”。"
+msgstr ""
+"UIGF/SRGF can save only real individual records, not manual summaries or "
+"corrections. For full restoration, choose \"Complete Assistant backup\" in "
+"the save dialog."
+
+#: app/warp_interface.py:238
+msgid "继续"
+msgstr "Continue"
+
+#: app/warp_interface.py:246
+msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json);;小助手完整备份 (*.m7backup.json)"
+msgstr ""
+"UIGF (*.json);;SRGF (*.srgf.json);;Complete Assistant backup "
+"(*.m7backup.json)"
+
+#: app/warp_interface.py:358
+msgid "清空当前账号的全部明细、手填五星和抽数更正？如需以后恢复，请先导出“小助手完整备份”。清空不会删除已导出的文件。"
+msgstr ""
+"Clear all records, manual 5-stars and count corrections for this account? "
+"Export a \"Complete Assistant backup\" first if you may need to restore "
+"them. Exported files will not be deleted."
+
+#: app/warp_interface.py:400
+msgid "请另选导出文件名，不要覆盖小助手正在使用的抽卡记录。"
+msgstr ""
+"Choose a different export filename; do not overwrite the active warp data."
+
+#: app/warp_interface.py:418
+msgid ""
+"抽卡记录为空。可以打开游戏内抽卡记录后更新，或导入 UIGF/SRGF 文件。\n"
+"\n"
+"只记得以前的五星？点击“手动补充与更正”即可填写，不需要先导入记录。\n"
+"\n"
+"复制链接功能可用于小程序或其他软件。"
+msgstr ""
+"No warp records yet. Open the in-game history and update, or import a UIGF/SRGF file.\n"
+"\n"
+"Only remember your past 5-stars? Use \"Add / correct 5-stars\" without importing records first.\n"
+"\n"
+"Copy Link can be used with mini apps or other software."
+
+#: app/warp_interface.py:433
+msgid "无法读取抽卡记录"
+msgstr "Unable to read warp records"
+
+#: app/warp_manual_dialog.py:39
+msgid "账号 UID"
+msgstr "Account UID"
+
+#: app/warp_manual_dialog.py:42
+msgid "请输入游戏内 UID，避免混入其他账号"
+msgstr "Enter your in-game UID to keep accounts separate"
+
+#: app/warp_manual_dialog.py:48
+msgid "手填只记录五星摘要，不会生成虚构的抽卡明细。时间和抽数不记得可以留为未知。"
+msgstr ""
+"Manual entries store 5-star summaries, not fabricated individual records. "
+"Leave the date or count unknown if you do not remember."
+
+#: app/warp_manual_dialog.py:54
+msgid "每次保存立即生效；关闭窗口不会撤销已保存的内容。"
+msgstr ""
+"Each save takes effect immediately. Closing this window does not undo saved "
+"changes."
+
+#: app/warp_manual_dialog.py:101
+msgid "按旧到新排列手填五星；可用上移、下移调整顺序。找回完整明细后请核对，系统不会按同名自动删除。"
+msgstr ""
+"List manual 5-stars from oldest to newest; use Move Up/Down to reorder. "
+"Review them when details are recovered; matching names are never removed "
+"automatically."
+
+#: app/warp_manual_dialog.py:109
+msgid "填写五星角色或光锥名称"
+msgstr "Enter a 5-star character or Light Cone name"
+
+#: app/warp_manual_dialog.py:114
+msgid "YYYY-MM-DD，留空表示未知"
+msgstr "YYYY-MM-DD; leave blank if unknown"
+
+#: app/warp_manual_dialog.py:116
+msgid "五星物品"
+msgstr "5-star item"
+
+#: app/warp_manual_dialog.py:117
+msgid "出金抽数"
+msgstr "Pulls to 5-star"
+
+#: app/warp_manual_dialog.py:118
+msgid "时间（可不填）"
+msgstr "Date (optional)"
+
+#: app/warp_manual_dialog.py:121
+msgid "添加并继续"
+msgstr "Add and continue"
+
+#: app/warp_manual_dialog.py:122
+msgid "取消编辑"
+msgstr "Cancel edit"
+
+#: app/warp_manual_dialog.py:124
+msgid "顺序"
+msgstr "Order"
+
+#: app/warp_manual_dialog.py:143
+msgid "只更正已有五星的出金抽数，不修改或删除原始记录。首个五星的原始抽数可能只是历史截断后的下限。"
+msgstr ""
+"Correct counts for existing 5-stars without changing or deleting original "
+"records. The first recorded 5-star count may only be a lower bound due to "
+"truncated history."
+
+#: app/warp_manual_dialog.py:145
+msgid "更正后"
+msgstr "Corrected"
+
+#: app/warp_manual_dialog.py:158
+msgid "更正为"
+msgstr "Correct to"
+
+#: app/warp_manual_dialog.py:161
+msgid "保存更正"
+msgstr "Save correction"
+
+#: app/warp_manual_dialog.py:162
+msgid "撤销更正"
+msgstr "Undo correction"
+
+#: app/warp_manual_dialog.py:164
+msgid "已有五星抽数"
+msgstr "Existing 5-star counts"
+
+#: app/warp_manual_dialog.py:217
+msgid "原记录已变化"
+msgstr "Original changed"
+
+#: app/warp_manual_dialog.py:239
+msgid "原始记录已变化，此更正未参与统计。可撤销后重新核对。"
+msgstr ""
+"The original record changed; this correction is excluded. Undo it and review"
+" the record again."
+
+#: app/warp_manual_dialog.py:240
+msgid "选择一条五星记录后更正；没有明细时，仍可在“手动补充”中添加。"
+msgstr ""
+"Select a 5-star record to correct. With no details, you can still use "
+"\"Manual additions\"."
+
+#: app/warp_manual_dialog.py:248
+msgid "放弃未保存的填写内容？"
+msgstr "Discard unsaved input?"
+
+#: app/warp_manual_dialog.py:248
+msgid "已经保存的内容不会受影响。"
+msgstr "Saved changes will not be affected."
+
+#: app/warp_manual_dialog.py:280
+msgid "已保存。可继续添加，或关闭窗口查看统计。"
+msgstr "Saved. Add another entry, or close this window to view statistics."
+
+#: app/warp_manual_dialog.py:189
+msgid "保存修改"
+msgstr "Save changes"
+
+#: app/warp_manual_dialog.py:323
+msgid "删除手填五星？"
+msgstr "Delete this manual 5-star?"
+
+#: app/warp_manual_dialog.py:323
+msgid "仅删除“{name}”这条手填摘要，不影响原始记录。"
+msgstr ""
+"Only the manual summary for \"{name}\" will be deleted. Original records are"
+" unaffected."
+
+#: app/warp_interface.py:243
+msgid "小助手完整备份 (*.m7backup.json);;UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
+msgstr ""
+"Complete Assistant backup (*.m7backup.json);;UIGF (*.json);;SRGF "
+"(*.srgf.json)"
+
+#: app/warp_interface.py:205
+msgid "手填和更正：现有 {existing} 项，文件 {incoming} 项，导入后 {total} 项。"
+msgstr ""
+"Manual entries and corrections: {existing} existing, {incoming} in the file,"
+" {total} after import."

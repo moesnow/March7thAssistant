@@ -6,8 +6,13 @@ import json
 import os
 from pathlib import Path
 import tempfile
+from uuid import uuid4
+
+from PySide6.QtCore import QLockFile
 
 from module.localization import tr
+from .warp_manual import (BACKUP_FORMAT, MANUAL_KEY, manual_count, merge_manual,
+                          validate_manual)
 
 
 class WarpImportError(ValueError):
@@ -16,6 +21,10 @@ class WarpImportError(ValueError):
 
 def normalize(data):
     """Validate before touching disk; never silently select the first UIGF account."""
+    if isinstance(data, dict) and data.get('format') == BACKUP_FORMAT:
+        if type(data.get('version')) is not int or data['version'] != 1:
+            raise WarpImportError(tr('手工数据格式无效或版本不受支持。'))
+        data = data.get('data')
     if not isinstance(data, dict) or not isinstance(data.get('info'), dict):
         raise WarpImportError(tr('抽卡记录格式无效。'))
     data = deepcopy(data)
@@ -59,6 +68,9 @@ def normalize(data):
             datetime.strptime(record['time'], '%Y-%m-%d %H:%M:%S')
         except ValueError as exc:
             raise WarpImportError(tr('抽卡记录时间无效。')) from exc
+    validate_manual(data)
+    if data.get('march7th_cleared') and (records or manual_count(data)):
+        raise WarpImportError(tr('抽卡记录格式无效。'))
     return data
 
 
@@ -89,6 +101,8 @@ class ImportPlan:
     removed_count: int = 0
     existing_uid: str | None = None
     existing_unreadable: bool = False
+    existing_manual_count: int = 0
+    incoming_manual_count: int = 0
 
 
 def prepare_import(source, target='warp.json', mode='merge'):
@@ -105,31 +119,56 @@ def prepare_import(source, target='warp.json', mode='merge'):
             raise WarpImportError(tr('现有记录无法读取，不能合并。请重新导入并选择替换现有记录。')) from exc
         existing = None
         existing_unreadable = True
+    if existing and (existing.get('march7th_cleared') or (not existing['list'] and not manual_count(existing))):
+        existing = None
     if existing is not None:
         if mode == 'merge' and existing['info']['uid'] != incoming['info']['uid']:
             raise WarpImportError(tr('账号不一致：现有 UID {existing}，导入 UID {incoming}。已停止导入，原记录未修改。').format(
                 existing=existing['info']['uid'], incoming=incoming['info']['uid']))
-        if mode == 'merge' and any(existing['info'][key] != incoming['info'][key] for key in ('lang', 'region_time_zone')):
+        if mode == 'merge' and existing['list'] and incoming['list'] and any(existing['info'][key] != incoming['info'][key] for key in ('lang', 'region_time_zone')):
             raise WarpImportError(tr('文件的语言或时区与现有记录不同，请统一后再导入。原记录未修改。'))
     old = ({r['id']: r for r in existing['list']} if mode == 'replace' else _index(existing['list'])) if existing else {}
     new = _index(incoming['list'])
     merged = _index(list(old.values()) + list(new.values())) if mode == 'merge' else new
     data = deepcopy(existing if existing is not None and mode == 'merge' else incoming)
+    if existing is not None and mode == 'merge':
+        if MANUAL_KEY in existing or MANUAL_KEY in incoming:
+            data[MANUAL_KEY] = merge_manual(existing, incoming)
+        # A manual-only account has no game-language/timezone evidence yet.
+        if not existing['list'] and incoming['list']:
+            data['info'] = deepcopy(incoming['info'])
     data['list'] = sorted(merged.values(), key=lambda r: int(r['id']))
     added = len(new.keys() - old.keys())
     return ImportPlan(target, original, data, len(incoming['list']), len(old), added,
                       len(incoming['list']) - added, mode,
                       len(old.keys() - new.keys()) if mode == 'replace' else 0,
-                      existing['info']['uid'] if existing else None, existing_unreadable)
+                      existing['info']['uid'] if existing else None, existing_unreadable,
+                      manual_count(existing) if existing else 0, manual_count(incoming))
 
 
 def _unchanged(plan):
     current = plan.target.read_bytes() if plan.target.exists() else None
     if current != plan.original:
-        raise WarpImportError(tr('确认期间本地记录发生变化，请重新导入。'))
+        raise WarpImportError(tr('确认期间本地记录发生变化，请重新打开窗口后再试。'))
 
 
 def save_import(plan):
+    """All app writers use this lock, including updates, edits and clear.
+
+    A stale UI snapshot fails instead of overwriting newer edits. Qt's native
+    cross-process lock also serializes the final check + replace on Windows.
+    """
+    lock = QLockFile(str(plan.target) + '.lock')
+    lock.setStaleLockTime(0)
+    if not lock.tryLock(0):
+        raise WarpImportError(tr('抽卡记录正在保存，请稍后再试。'))
+    try:
+        return _save_locked(plan)
+    finally:
+        lock.unlock()
+
+
+def _save_locked(plan):
     """Validate a flushed temporary file, back up exact original bytes, then replace."""
     _unchanged(plan)
     normalize(plan.data)
@@ -159,6 +198,43 @@ def save_import(plan):
         os.replace(temporary, plan.target)
         temporary = None
         return backup
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def read_snapshot(target='warp.json'):
+    path = Path(target).resolve()
+    raw = path.read_bytes() if path.exists() else None
+    return raw, normalize(json.loads(raw)) if raw is not None else None
+
+
+def edit_plan(data, original, target='warp.json'):
+    return ImportPlan(Path(target).resolve(), original, normalize(data), 0, 0, 0, 0)
+
+
+def clear_plan(data, original, target='warp.json'):
+    # A tombstone prevents a fetch begun before Clear from resurrecting records,
+    # and detaches the account for the next import/update. Never delete backups.
+    cleared = {'info': deepcopy(data['info']), 'list': [], 'march7th_cleared': str(uuid4())}
+    return edit_plan(cleared, original, target)
+
+
+def save_export(data, destination):
+    """An interrupted export must not truncate a previously usable backup."""
+    path = Path(destination).resolve()
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent,
+                                         prefix='.warp-export-', suffix='.tmp', delete=False) as file:
+            temporary = Path(file.name)
+            json.dump(data, file, ensure_ascii=False, indent=4)
+            file.flush()
+            os.fsync(file.fileno())
+        if json.loads(temporary.read_bytes()) != data:
+            raise WarpImportError(tr('临时文件校验失败，原记录未修改。'))
+        os.replace(temporary, path)
+        temporary = None
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)

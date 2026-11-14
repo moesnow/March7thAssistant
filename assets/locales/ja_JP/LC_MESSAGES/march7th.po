@@ -1441,99 +1441,95 @@ msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "{count} 件のプランを設定済み"
 
-#: app/warp_interface.py:24
+#: app/warp_interface.py:28
 msgid "更新数据"
 msgstr "データ更新"
 
-#: app/warp_interface.py:25
+#: app/warp_interface.py:29
 msgid "更新完整数据"
 msgstr "完全データを更新"
 
-#: app/warp_interface.py:26
+#: app/warp_interface.py:35
 msgid "导入数据"
 msgstr "データをインポート"
 
-#: app/warp_interface.py:27
+#: app/warp_interface.py:36
 msgid "导出数据"
 msgstr "データをエクスポート"
 
-#: app/warp_interface.py:28
+#: app/warp_interface.py:37
 msgid "导出Excel"
 msgstr "Excel にエクスポート"
 
-#: app/warp_interface.py:29
+#: app/warp_interface.py:38
 msgid "复制链接"
 msgstr "リンクをコピー"
 
-#: app/warp_interface.py:30
+#: app/warp_interface.py:39
 msgid "清空"
 msgstr "クリア"
 
-#: app/warp_interface.py:117
+#: app/warp_interface.py:151
 msgid "导入抽卡记录"
 msgstr "ガチャ記録をインポート"
 
-#: app/warp_interface.py:117
 msgid "UIGF / SRGF 格式 (*.json)"
 msgstr "UIGF / SRGF 形式 (*.json)"
 
-#: app/warp_interface.py:144
+#: app/warp_interface.py:220
 msgid "导入成功(＾∀＾●)"
 msgstr "インポートに成功しました (＾∀＾●)"
 
-#: app/warp_interface.py:154
 msgid "导入失败(╥╯﹏╰╥)"
 msgstr "インポートに失敗しました (╥╯﹏╰╥)"
 
-#: app/warp_interface.py:173
+#: app/warp_interface.py:237
 msgid "导出抽卡记录"
 msgstr "ガチャ記録をエクスポート"
 
-#: app/warp_interface.py:175
 msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
 msgstr "UIGF 形式 (*.json);;SRGF 形式 (*.srgf.json)"
 
-#: app/warp_interface.py:182
 msgid "UIGF 格式 (*.json)"
 msgstr "UIGF 形式 (*.json)"
 
-#: app/warp_interface.py:201
+#: app/warp_interface.py:266
 msgid "导出成功(＾∀＾●)"
 msgstr "エクスポートに成功しました (＾∀＾●)"
 
-#: app/warp_interface.py:212
+#: app/warp_interface.py:277
 msgid "导出失败(╥╯﹏╰╥)"
 msgstr "エクスポートに失敗しました (╥╯﹏╰╥)"
 
-#: app/warp_interface.py:228
+#: app/warp_interface.py:293
 msgid "导出为 Excel 文件"
 msgstr "Excel ファイルとしてエクスポート"
 
-#: app/warp_interface.py:230
+#: app/warp_interface.py:295
 msgid "Excel 文件 (*.xlsx)"
 msgstr "Excel ファイル (*.xlsx)"
 
-#: app/tools/warp_export.py:117
+#: app/tools/warp_export.py:119
 msgid "角色活动跃迁"
 msgstr "キャラクターイベント跳躍"
 
-#: app/tools/warp_export.py:118
+#: app/tools/warp_export.py:120
 msgid "光锥活动跃迁"
 msgstr "光円錐イベント跳躍"
 
-#: app/tools/warp_export.py:121
+#: app/tools/warp_export.py:123
 msgid "常驻跃迁"
 msgstr "恒常跳躍"
 
-#: app/tools/warp_export.py:122
+#: app/tools/warp_export.py:124
 msgid "新手跃迁"
 msgstr "初心者跳躍"
 
-#: app/warp_interface.py:229
+#: app/tools/warp_export.py:192
 msgid "未知"
 msgstr "不明"
 
-#: app/warp_interface.py:252
+#: app/tools/warp_excel.py:14
 msgid "时间"
 msgstr "時間"
 
@@ -1541,11 +1537,11 @@ msgstr "時間"
 msgid "名称"
 msgstr "名称"
 
-#: app/warp_interface.py:252
+#: app/tools/warp_excel.py:14
 msgid "星级"
 msgstr "レア度"
 
-#: app/warp_interface.py:252
+#: app/tools/warp_excel.py:14
 msgid "卡池"
 msgstr "ガチャ"
 
@@ -1557,23 +1553,21 @@ msgstr "コピーに成功しました (＾∀＾●)"
 msgid "复制失败(╥╯﹏╰╥)"
 msgstr "コピーに失敗しました (╥╯﹏╰╥)"
 
-#: app/warp_interface.py:350
+#: app/warp_interface.py:357
 msgid "清空抽卡记录"
 msgstr "ガチャ記録を消去"
 
-#: app/warp_interface.py:351
 msgid "确定要清空抽卡记录吗？此操作不可撤销。"
 msgstr "ガチャ記録を消去しますか？この操作は取り消せません。"
 
-#: app/warp_interface.py:361
+#: app/warp_interface.py:369
 msgid "清空完成(＾∀＾●)"
 msgstr "クリア完了 (＾∀＾●)"
 
-#: app/warp_interface.py:372
+#: app/warp_interface.py:380
 msgid "清空失败(╥╯﹏╰╥)"
 msgstr "クリア失敗 (╥╯﹏╰╥)"
 
-#: app/warp_interface.py:403
 msgid ""
 "抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n"
 "\n"
@@ -2127,63 +2121,60 @@ msgstr "HoYoPlay パスを選択"
 msgid "脚本或程序路径"
 msgstr "スクリプトまたはプログラムのパス"
 
-#: app/tools/warp_export.py:193
 msgid "抽"
 msgstr "回"
 
-#: app/tools/warp_export.py:193
 msgid "已累计"
 msgstr "累計"
 
-#: app/tools/warp_export.py:193
 msgid "抽未出5星"
 msgstr "回で星5未排出"
 
-#: app/tools/warp_export.py:197
+#: app/tools/warp_export.py:189
 msgid "星"
 msgstr "星"
 
-#: app/tools/warp_export.py:203
+#: app/tools/warp_export.py:199
 msgid "5星历史记录"
 msgstr "星5履歴"
 
-#: app/tools/warp_export.py:204
+#: app/tools/warp_excel.py:44
 msgid "五星平均出货次数为"
 msgstr "星5の平均排出回数は"
 
-#: app/tools/warp_export.py:318
+#: app/tools/warp_export.py:320
 msgid "请重新打开游戏抽卡记录"
 msgstr "ゲーム内のガチャ記録を開き直してください"
 
-#: app/tools/warp_export.py:318
+#: app/tools/warp_export.py:320
 msgid "身份认证已过期"
 msgstr "認証期限が切れました"
 
-#: app/tools/warp_export.py:321
+#: app/tools/warp_export.py:323
 msgid "请求出错"
 msgstr "リクエストエラー"
 
-#: app/tools/warp_export.py:324
+#: app/tools/warp_export.py:326
 msgid "正在获取{gacha_name}第{page}页"
 msgstr "{gacha_name} の {page} ページ目を取得中"
 
-#: app/tools/warp_export.py:327
+#: app/tools/warp_export.py:329
 msgid "等待5秒后重试，剩余重试次数："
 msgstr "5 秒後に再試行します。残り試行回数:"
 
-#: app/tools/warp_export.py:338
+#: app/tools/warp_export.py:340
 msgid "UID与原始数据不一致"
 msgstr "UID が元データと一致しません"
 
-#: app/tools/warp_export.py:344
+#: app/tools/warp_export.py:351
 msgid "语言与原始数据不一致"
 msgstr "言語が元データと一致しません"
 
-#: app/tools/warp_export.py:350
+#: app/tools/warp_export.py:357
 msgid "时区与原始数据不一致"
 msgstr "タイムゾーンが元データと一致しません"
 
-#: app/tools/warp_export.py:473
+#: app/tools/warp_export.py:476
 msgid "未找到URL"
 msgstr "URL が見つかりません"
 
@@ -2281,7 +2272,7 @@ msgstr "末日の幻影"
 msgid "虚构叙事"
 msgstr "虚構叙事"
 
-#: app/tools/warp_export.py:473
+#: app/tools/warp_export.py:476
 msgid "请确认是否已打开游戏抽卡记录"
 msgstr "ゲーム内のガチャ記録を開いているか確認してください"
 
@@ -3288,7 +3279,6 @@ msgstr "爻光"
 msgid "火花"
 msgstr "火花"
 
-#: app/tools/warp_export.py:193
 msgid "一共"
 msgstr "合計"
 
@@ -5365,11 +5355,11 @@ msgstr "万色返空主、帰寂・「成」"
 msgid "坏灭的喜剧"
 msgstr "壊滅の喜劇"
 
-#: app/tools/warp_export.py:119
+#: app/tools/warp_export.py:121
 msgid "Fate[UBW]角色联动跃迁"
 msgstr "Fate[UBW]キャラクターコラボ跳躍"
 
-#: app/tools/warp_export.py:120
+#: app/tools/warp_export.py:122
 msgid "Fate[UBW]光锥联动跃迁"
 msgstr "Fate[UBW]光円錐コラボ跳躍"
 
@@ -6599,11 +6589,10 @@ msgid "读取全部角色的属性、光锥、星魂、技能和遗器，保存�
 msgstr ""
 "全キャラクターのステータス、光円錐、星魂、スキル、遺物を読み取り、プログラムのフォルダーに characters.json として保存します"
 
-#: app/warp_interface.py:252
+#: app/tools/warp_excel.py:14
 msgid "总次数"
 msgstr "累計回数"
 
-#: app/warp_interface.py:252
 msgid "保底内"
 msgstr "天井カウント"
 
@@ -7985,69 +7974,68 @@ msgstr "削除できませんでした。もう一度お試しください。"
 msgid "游戏登录信息和设置已清除"
 msgstr "ゲームのログイン情報と設定を削除しました"
 
-#: app/tools/warp_import.py:20
+#: app/tools/warp_import.py:29
 msgid "抽卡记录格式无效。"
 msgstr "跳躍履歴の形式が無効です。"
 
-#: app/tools/warp_import.py:25
+#: app/tools/warp_import.py:34
 msgid "仅支持单账号导入，请导出只包含一个星铁账号的文件。"
 msgstr "単一アカウントのみインポートできます。スターレイルのアカウントを１つだけ含むファイルをエクスポートしてください。"
 
-#: app/tools/warp_import.py:36
+#: app/tools/warp_import.py:45
 msgid "文件缺少有效的账号 UID，无法安全导入。"
 msgstr "ファイルに有効なアカウント UID がないため、安全にインポートできません。"
 
-#: app/tools/warp_import.py:42
+#: app/tools/warp_import.py:51
 msgid "抽卡记录时区无效，无法安全合并。"
 msgstr "跳躍履歴のタイムゾーンが無効なため、安全に統合できません。"
 
-#: app/tools/warp_import.py:50
+#: app/tools/warp_import.py:59
 msgid "抽卡记录缺少有效 ID 或必要字段。"
 msgstr "跳躍履歴に有効な ID または必須項目がありません。"
 
-#: app/tools/warp_import.py:53
+#: app/tools/warp_import.py:62
 msgid "抽卡记录包含不支持的卡池或星级。"
 msgstr "跳躍履歴に未対応の跳躍種別またはレアリティが含まれています。"
 
-#: app/tools/warp_import.py:55
+#: app/tools/warp_import.py:64
 msgid "记录中的账号与文件账号不一致，已停止导入。"
 msgstr "履歴のアカウントがファイルのアカウントと一致しないため、インポートを中止しました。"
 
-#: app/tools/warp_import.py:61
+#: app/tools/warp_import.py:70
 msgid "抽卡记录时间无效。"
 msgstr "跳躍履歴の日時が無効です。"
 
-#: app/tools/warp_import.py:73
+#: app/tools/warp_import.py:85
 msgid "相同记录 ID 的内容不一致，已停止导入。"
 msgstr "同じ履歴 ID の内容が一致しないため、インポートを中止しました。"
 
-#: app/tools/warp_import.py:97
+#: app/tools/warp_import.py:125
 msgid "账号不一致：现有 UID {existing}，导入 UID {incoming}。已停止导入，原记录未修改。"
 msgstr ""
 "アカウントが一致しません。既存 UID：{existing}、インポート "
 "UID：{incoming}。インポートを中止しました。元の履歴は変更されていません。"
 
-#: app/tools/warp_import.py:100
+#: app/tools/warp_import.py:128
 msgid "文件的语言或时区与现有记录不同，请统一后再导入。原记录未修改。"
 msgstr "ファイルの言語またはタイムゾーンが既存の履歴と異なります。設定を統一してから再度インポートしてください。元の履歴は変更されていません。"
 
-#: app/tools/warp_import.py:114
 msgid "确认期间本地记录发生变化，请重新导入。"
 msgstr "確認中にローカルの履歴が変更されました。再度インポートしてください。"
 
-#: app/tools/warp_import.py:133
+#: app/tools/warp_import.py:186
 msgid "临时文件校验失败，原记录未修改。"
 msgstr "一時ファイルの検証に失敗しました。元の履歴は変更されていません。"
 
-#: app/tools/warp_import.py:142
+#: app/tools/warp_import.py:195
 msgid "备份校验失败，原记录未修改。"
 msgstr "バックアップの検証に失敗しました。元の履歴は変更されていません。"
 
-#: app/warp_interface.py:143
+#: app/warp_interface.py:176
 msgid "确认导入抽卡记录"
 msgstr "跳躍履歴のインポート確認"
 
-#: app/warp_interface.py:144
+#: app/warp_interface.py:177
 msgid ""
 "账号 UID：{uid}\n"
 "导入方式：保留已有记录，补充新记录，自动跳过重复内容。\n"
@@ -8067,36 +8055,35 @@ msgstr ""
 "重複：{duplicates} 件\n"
 "統合後：{total} 件"
 
-#: app/warp_interface.py:150
+#: app/warp_interface.py:197
 msgid "确认合并"
 msgstr "統合する"
 
-
-#: app/warp_interface.py:142
+#: app/warp_interface.py:160
 msgid "选择导入方式"
 msgstr "インポート方法を選択"
 
-#: app/warp_interface.py:143
+#: app/warp_interface.py:161
 msgid "默认合并会保留现有记录。只有希望用文件内容覆盖现有记录时，才选择强制替换。"
 msgstr "既定の統合では既存の履歴を保持します。ファイルの内容で既存の履歴を上書きする場合のみ、強制置換を選択してください。"
 
-#: app/warp_interface.py:147
+#: app/warp_interface.py:165
 msgid "安全合并（推荐）"
 msgstr "安全に統合（推奨）"
 
-#: app/warp_interface.py:147
+#: app/warp_interface.py:165
 msgid "强制替换现有记录"
 msgstr "既存の履歴を強制置換"
 
-#: app/warp_interface.py:150
+#: app/warp_interface.py:168
 msgid "下一步"
 msgstr "次へ"
 
-#: app/warp_interface.py:167
+#: app/warp_interface.py:185
 msgid "警告：替换现有抽卡记录"
 msgstr "警告：既存の跳躍履歴を置換"
 
-#: app/warp_interface.py:168
+#: app/warp_interface.py:186
 msgid ""
 "当前账号：{existing_uid}\n"
 "导入账号：{uid}\n"
@@ -8120,19 +8107,19 @@ msgstr ""
 "\n"
 "置換しますか？"
 
-#: app/warp_interface.py:173
+#: app/warp_interface.py:197
 msgid "确认替换"
 msgstr "置換を確認"
 
-#: app/tools/warp_import.py:105
+#: app/tools/warp_import.py:118
 msgid "现有记录无法读取，不能合并。请重新导入并选择替换现有记录。"
 msgstr "既存の履歴を読み取れないため統合できません。再度インポートし、既存の履歴の置換を選択してください。"
 
-#: app/warp_interface.py:173
+#: app/warp_interface.py:187
 msgid "无法读取"
 msgstr "読み取り不可"
 
-#: app/warp_interface.py:174
+#: app/warp_interface.py:188
 msgid "无法统计"
 msgstr "不明"
 
@@ -8159,3 +8146,298 @@ msgstr "戦略優先"
 #: app/setting_interface.py:660
 msgid "图鉴优先"
 msgstr "図鑑優先"
+
+#: app/tools/warp_excel.py:13
+msgid "原始明细"
+msgstr "元の明細"
+
+#: app/tools/warp_excel.py:14
+msgid "保底内（明细）"
+msgstr "天井内（明細）"
+
+#: app/tools/warp_excel.py:29
+msgid "五星统计"
+msgstr "星5の集計"
+
+#: app/tools/warp_excel.py:30
+msgid "原始抽数"
+msgstr "記録上の回数"
+
+#: app/tools/warp_excel.py:30
+msgid "统计抽数"
+msgstr "集計に使う回数"
+
+#: app/tools/warp_excel.py:30
+msgid "来源"
+msgstr "出典"
+
+#: app/tools/warp_excel.py:34
+msgid "原记录已变化（未统计）"
+msgstr "元の記録が変更済み（集計対象外）"
+
+#: app/tools/warp_excel.py:34
+msgid "手填更正"
+msgstr "手入力による訂正"
+
+#: app/tools/warp_excel.py:38
+msgid "手动补充"
+msgstr "手動で追加"
+
+#: app/tools/warp_excel.py:40
+msgid "统计说明"
+msgstr "集計について"
+
+#: app/tools/warp_excel.py:41
+msgid "统计基于已保存的明细；历史可能不完整。每池首个五星的原始抽数仅为下限，不计入平均值。"
+msgstr "集計は保存済みの明細に基づき、履歴が不完全な場合があります。各跳躍の最初の星5の元の回数は下限値のため、平均には含めません。"
+
+#: app/tools/warp_excel.py:42
+msgid "手填内容单独标注，不补造逐抽明细，也不计入明细总抽数和星级占比。找回明细后，请自行核对并删除重复的手填项。"
+msgstr ""
+"手入力は別途表示し、架空の明細を作成せず、明細の合計回数やレアリティの割合にも含めません。明細を復元した後は、重複する手入力を確認して削除してください。"
+
+#: app/tools/warp_excel.py:43
+msgid "空白抽数或时间表示未知。Excel 用于查看，完整恢复请使用小助手备份。"
+msgstr "回数や日時の空欄は不明を意味します。Excelは閲覧用です。完全な復元にはアシスタントのバックアップを使用してください。"
+
+#: app/tools/warp_excel.py:44
+msgid "明细抽数"
+msgstr "明細の回数"
+
+#: app/tools/warp_excel.py:44
+msgid "手填五星"
+msgstr "手入力の星5"
+
+#: app/tools/warp_excel.py:44
+msgid "已知抽数五星"
+msgstr "回数が判明している星5"
+
+#: app/tools/warp_excel.py:44
+msgid "抽数不明五星"
+msgstr "回数不明の星5"
+
+#: app/tools/warp_export.py:184
+msgid "明细共 {total} 抽，已记录 {since} 抽未出五星。"
+msgstr "明細は計{total}回、星5未獲得の記録は{since}回です。"
+
+#: app/tools/warp_export.py:196
+msgid "手填"
+msgstr "手入力"
+
+#: app/tools/warp_export.py:204
+msgid "时间未知"
+msgstr "日時不明"
+
+#: app/tools/warp_export.py:210
+msgid "仅统计已知抽数：{known} 个五星；抽数不明：{unknown} 个。不是完整历史概率。"
+msgstr "回数が判明している星5は{known}件、回数不明は{unknown}件です。全履歴の確率ではありません。"
+
+#: app/tools/warp_export.py:215
+msgid "有 {count} 项更正对应的原始记录已变化或缺失，未参与统计。请在“已有五星抽数”中核对。"
+msgstr "{count}件の訂正は元の記録が変更または欠落しているため集計対象外です。「既存の星5の回数」で確認してください。"
+
+#: app/tools/warp_import.py:26
+msgid "手工数据格式无效或版本不受支持。"
+msgstr "手入力データの形式が無効か、バージョンが未対応です。"
+
+#: app/tools/warp_import.py:151
+msgid "确认期间本地记录发生变化，请重新打开窗口后再试。"
+msgstr "このウィンドウを開いている間にローカルの記録が変更されました。開き直して再試行してください。"
+
+#: app/tools/warp_import.py:163
+msgid "抽卡记录正在保存，请稍后再试。"
+msgstr "跳躍記録を保存中です。しばらくしてから再試行してください。"
+
+#: app/tools/warp_manual.py:38
+msgid "抽数请填写正整数，或保留为未知。"
+msgstr "回数は正の整数を入力するか、不明のままにしてください。"
+
+#: app/tools/warp_manual.py:56
+msgid "请选择卡池并填写五星物品名称。"
+msgstr "跳躍を選び、星5アイテムの名前を入力してください。"
+
+#: app/tools/warp_manual.py:63
+msgid "时间请填写 YYYY-MM-DD，或留空表示未知。"
+msgstr "日付はYYYY-MM-DD形式で入力し、不明な場合は空欄にしてください。"
+
+#: app/tools/warp_manual.py:95
+msgid "手工数据存在不同版本，请选择替换或使用其他备份。"
+msgstr "手入力データのバージョンが競合しています。置き換えを選ぶか、別のバックアップを使用してください。"
+
+#: app/warp_interface.py:33
+msgid "手动补充与更正"
+msgstr "手動追加・訂正"
+
+#: app/warp_interface.py:151
+msgid "UIGF / SRGF / 小助手备份 (*.json)"
+msgstr "UIGF / SRGF / アシスタントのバックアップ (*.json)"
+
+#: app/warp_interface.py:193
+msgid "替换也会移除当前手填内容和更正，只保留导入文件中的内容。"
+msgstr "置き換えると現在の手入力と訂正も削除され、インポートするファイルの内容だけが残ります。"
+
+#: app/warp_interface.py:194
+msgid "现有手填内容和更正会保留。请自行核对新明细，避免重复统计。"
+msgstr "既存の手入力と訂正は保持します。重複集計を防ぐため、新しい明細を確認してください。"
+
+#: app/warp_interface.py:237
+msgid "UIGF/SRGF 只能保存真实逐抽明细，不能保存手填摘要和更正。需要完整恢复时，请在保存窗口选择“小助手完整备份”。"
+msgstr ""
+"UIGF/SRGFは実際の個別明細のみ保存でき、手入力の概要や訂正は保存できません。完全に復元するには、保存画面で「アシスタントの完全バックアップ」を選んでください。"
+
+#: app/warp_interface.py:238
+msgid "继续"
+msgstr "続行"
+
+#: app/warp_interface.py:246
+msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json);;小助手完整备份 (*.m7backup.json)"
+msgstr ""
+"UIGF形式 (*.json);;SRGF形式 (*.srgf.json);;アシスタントの完全バックアップ (*.m7backup.json)"
+
+#: app/warp_interface.py:358
+msgid "清空当前账号的全部明细、手填五星和抽数更正？如需以后恢复，请先导出“小助手完整备份”。清空不会删除已导出的文件。"
+msgstr ""
+"このアカウントの明細、手入力の星5、回数の訂正をすべて消去しますか？後で復元する場合に備えて、先に「アシスタントの完全バックアップ」をエクスポートしてください。エクスポート済みのファイルは削除されません。"
+
+#: app/warp_interface.py:400
+msgid "请另选导出文件名，不要覆盖小助手正在使用的抽卡记录。"
+msgstr "使用中の跳躍記録を上書きしないよう、別のファイル名でエクスポートしてください。"
+
+#: app/warp_interface.py:418
+msgid ""
+"抽卡记录为空。可以打开游戏内抽卡记录后更新，或导入 UIGF/SRGF 文件。\n"
+"\n"
+"只记得以前的五星？点击“手动补充与更正”即可填写，不需要先导入记录。\n"
+"\n"
+"复制链接功能可用于小程序或其他软件。"
+msgstr ""
+"跳躍記録がありません。ゲーム内の跳躍履歴を開いて更新するか、UIGF/SRGFファイルをインポートしてください。\n"
+"\n"
+"過去の星5だけ覚えている場合は、「手動追加・訂正」から入力できます。先に記録をインポートする必要はありません。\n"
+"\n"
+"リンクのコピーはミニアプリや他のソフトウェアで利用できます。"
+
+#: app/warp_interface.py:433
+msgid "无法读取抽卡记录"
+msgstr "跳躍記録を読み込めません"
+
+#: app/warp_manual_dialog.py:39
+msgid "账号 UID"
+msgstr "アカウントUID"
+
+#: app/warp_manual_dialog.py:42
+msgid "请输入游戏内 UID，避免混入其他账号"
+msgstr "別アカウントと混同しないようゲーム内UIDを入力"
+
+#: app/warp_manual_dialog.py:48
+msgid "手填只记录五星摘要，不会生成虚构的抽卡明细。时间和抽数不记得可以留为未知。"
+msgstr "手入力は星5の概要のみを保存し、架空の明細は作成しません。日付や回数を覚えていない場合は不明にできます。"
+
+#: app/warp_manual_dialog.py:54
+msgid "每次保存立即生效；关闭窗口不会撤销已保存的内容。"
+msgstr "保存するたびに即時反映されます。ウィンドウを閉じても保存済みの内容は取り消されません。"
+
+#: app/warp_manual_dialog.py:101
+msgid "按旧到新排列手填五星；可用上移、下移调整顺序。找回完整明细后请核对，系统不会按同名自动删除。"
+msgstr "手入力の星5は古い順に並べ、「上へ」「下へ」で順序を調整できます。明細を復元したら確認してください。同名だけで自動削除はしません。"
+
+#: app/warp_manual_dialog.py:109
+msgid "填写五星角色或光锥名称"
+msgstr "星5キャラクターまたは光円錐の名前を入力"
+
+#: app/warp_manual_dialog.py:114
+msgid "YYYY-MM-DD，留空表示未知"
+msgstr "YYYY-MM-DD、不明なら空欄"
+
+#: app/warp_manual_dialog.py:116
+msgid "五星物品"
+msgstr "星5アイテム"
+
+#: app/warp_manual_dialog.py:117
+msgid "出金抽数"
+msgstr "星5までの回数"
+
+#: app/warp_manual_dialog.py:118
+msgid "时间（可不填）"
+msgstr "日付（任意）"
+
+#: app/warp_manual_dialog.py:121
+msgid "添加并继续"
+msgstr "追加して続ける"
+
+#: app/warp_manual_dialog.py:122
+msgid "取消编辑"
+msgstr "編集をキャンセル"
+
+#: app/warp_manual_dialog.py:124
+msgid "顺序"
+msgstr "順序"
+
+#: app/warp_manual_dialog.py:143
+msgid "只更正已有五星的出金抽数，不修改或删除原始记录。首个五星的原始抽数可能只是历史截断后的下限。"
+msgstr "既存の星5までの回数だけを訂正し、元の記録は変更・削除しません。最初の星5の元の回数は、履歴の欠落による下限値の場合があります。"
+
+#: app/warp_manual_dialog.py:145
+msgid "更正后"
+msgstr "訂正後"
+
+#: app/warp_manual_dialog.py:158
+msgid "更正为"
+msgstr "訂正する回数"
+
+#: app/warp_manual_dialog.py:161
+msgid "保存更正"
+msgstr "訂正を保存"
+
+#: app/warp_manual_dialog.py:162
+msgid "撤销更正"
+msgstr "訂正を取り消す"
+
+#: app/warp_manual_dialog.py:164
+msgid "已有五星抽数"
+msgstr "既存の星5の回数"
+
+#: app/warp_manual_dialog.py:217
+msgid "原记录已变化"
+msgstr "元の記録が変更済み"
+
+#: app/warp_manual_dialog.py:239
+msgid "原始记录已变化，此更正未参与统计。可撤销后重新核对。"
+msgstr "元の記録が変更されたため、この訂正は集計対象外です。取り消して再確認できます。"
+
+#: app/warp_manual_dialog.py:240
+msgid "选择一条五星记录后更正；没有明细时，仍可在“手动补充”中添加。"
+msgstr "星5の記録を選んで訂正してください。明細がなくても「手動で追加」から入力できます。"
+
+#: app/warp_manual_dialog.py:248
+msgid "放弃未保存的填写内容？"
+msgstr "未保存の入力内容を破棄しますか？"
+
+#: app/warp_manual_dialog.py:248
+msgid "已经保存的内容不会受影响。"
+msgstr "保存済みの内容には影響しません。"
+
+#: app/warp_manual_dialog.py:280
+msgid "已保存。可继续添加，或关闭窗口查看统计。"
+msgstr "保存しました。続けて追加するか、ウィンドウを閉じて集計を確認できます。"
+
+#: app/warp_manual_dialog.py:189
+msgid "保存修改"
+msgstr "変更を保存"
+
+#: app/warp_manual_dialog.py:323
+msgid "删除手填五星？"
+msgstr "手入力の星5を削除しますか？"
+
+#: app/warp_manual_dialog.py:323
+msgid "仅删除“{name}”这条手填摘要，不影响原始记录。"
+msgstr "「{name}」の手入力の概要だけを削除します。元の記録には影響しません。"
+
+#: app/warp_interface.py:243
+msgid "小助手完整备份 (*.m7backup.json);;UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
+msgstr ""
+"アシスタントの完全バックアップ (*.m7backup.json);;UIGF形式 (*.json);;SRGF形式 (*.srgf.json)"
+
+#: app/warp_interface.py:205
+msgid "手填和更正：现有 {existing} 项，文件 {incoming} 项，导入后 {total} 项。"
+msgstr "手入力と訂正：現在{existing}件、ファイル内{incoming}件、インポート後{total}件。"
