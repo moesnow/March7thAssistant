@@ -34,6 +34,7 @@ FIGHT_AGAIN = "./assets/images/zh_CN/fight/fight_again.png"
 FIGHT_FAIL = "./assets/images/zh_CN/fight/fight_fail.png"
 FIGHT_EXIT = "./assets/images/zh_CN/fight/fight_exit.png"
 PAUSE = "./assets/images/purefiction/battle_pause.png"
+MAX_RECONNECTS = 3
 
 
 class Instance:
@@ -281,12 +282,17 @@ class Instance:
             time.sleep(0.6)
 
     @staticmethod
-    def check_popup():
-        found = auto.find_element(("开拓力补充", "背包内遗器持有数量已达上限", "长时间未操作", "已处于无法战斗状态"),
-                                  "text", crop=DIALOG, include=True, threshold=0.75)
+    def check_popup(*, check_disconnect=False) -> bool:
+        labels = ("开拓力补充", "背包内遗器持有数量已达上限", "长时间未操作", "已处于无法战斗状态")
+        if check_disconnect:
+            labels += ("连接中断",)
+        found = auto.find_element(labels, "text", crop=DIALOG, include=True, threshold=0.75)
         if not found:
-            return
+            return False
         label = auto.matched_text
+        if label == "连接中断":
+            return bool(auto.find_element(("尝试重连", "退出游戏"), "text", include=True,
+                                          take_screenshot=False, need_ocr=False))
         if label == "开拓力补充":
             auto.click_element("取消", "text", crop=(0.25, 0.67, 0.24, 0.2), max_retries=4, retry_delay=0.25)
             raise PowerError("检测到非预期开拓力补充，已停止挑战")
@@ -294,7 +300,7 @@ class Instance:
             raise RelicBagFull("遗器背包已满")
         if label == "已处于无法战斗状态":
             auto.click_element(CONFIRM, "image", 0.9)
-            return
+            return False
         raise PowerError("检测到游戏超时弹窗")
 
     @staticmethod
@@ -348,6 +354,7 @@ class Instance:
         left_result = not repeated
         next_popup_check = 0.0
         next_controls = 0.0
+        reconnects = 0
         while time.monotonic() < deadline:
             victory = auto.find_element(FIGHT_AGAIN, "image", 0.88)
             if victory and left_result:
@@ -355,6 +362,18 @@ class Instance:
             if auto.find_element(FIGHT_FAIL, "image", 0.9, take_screenshot=False):
                 return False
             now = time.monotonic()
+            if now >= next_popup_check:
+                next_popup_check = now + 2
+                if Instance.check_popup(check_disconnect=True):
+                    if reconnects >= MAX_RECONNECTS:
+                        raise PowerError("游戏连接中断，重连失败，已中止当前战斗")
+                    reconnects += 1
+                    log.warning(f"战斗中检测到游戏连接中断，尝试重连（{reconnects}/{MAX_RECONNECTS}）")
+                    if not auto.click_element("尝试重连", "text", include=True,
+                                              take_screenshot=False, need_ocr=False):
+                        auto.click_element(CONFIRM, "image", 0.9, take_screenshot=False)
+                    time.sleep(5)
+                    continue
             if auto.find_element(PAUSE, "image", 0.88, crop=(0.95, 0, 0.05, 0.09), scale_range=(0.65, 1.05)):
                 left_result = True
                 if not in_battle:
@@ -367,9 +386,6 @@ class Instance:
                         auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
                     ensure_double_speed(auto)
                     next_controls = now + 3
-            elif now >= next_popup_check:
-                Instance.check_popup()
-                next_popup_check = now + 2
             time.sleep(0.55)
         raise PowerError("战斗结算超时" if in_battle else "等待进入战斗超时")
 
