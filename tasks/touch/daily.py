@@ -8,17 +8,17 @@ from module.automation.automation import screenshot_retry_timeout
 from module.config import cfg
 from module.localization import tr
 from module.logger import log
-from module.notification.notification import NotificationLevel
 from module.ocr import ocr
 from module.screen import screen
-from tasks.base.base import Base
 from tasks.base.list_drag import changed_ratio, drag_list, drag_to_edge
+from tasks.base.task_steps import FATAL_GAME_ERRORS
 from tasks.daily.tasks import Tasks
 from tasks.daily.training import (
     TARGET_ACTIVITY, MATERIAL_TASK, SUPPORT_TASK, DailyTrainingError, TrainingCards,
     can_collect, can_complete, needs_action, record_progress,
 )
 from tasks.power.policy import SupportDemand
+from tasks.reward.receipt import notify_reward
 
 
 IMAGE_ROOT = "./assets/touch_720/images/daily"
@@ -31,6 +31,7 @@ MILESTONE_X = (594, 871.5, 1147.5, 1425, 1701)
 MILESTONE_POINTS = range(ACTIVITY_STEP, MAX_ACTIVITY + 1, ACTIVITY_STEP)
 REWARD_POPUP = "./assets/touch_720/images/screen/item_reward.png"
 REWARD_POPUP_CROP = (895 / 1920, 75 / 1080, 130 / 1920, 132 / 1080)
+REWARD_CLOSE_CROP = (960 / 1920, 854 / 1080, 0, 0)
 REWARD_REPORT_CROP = (173 / 1920, 220 / 1080, 1580 / 1920, 717 / 1080)
 DRAG_LEFT = (405 / 1920, 590 / 1080)
 DRAG_RIGHT = (1410 / 1920, 590 / 1080)
@@ -61,13 +62,14 @@ def read_activity(*, minimum=0):
     raise DailyTrainingError("未识别到左上角徽标中的当前活跃度")
 
 
-def scan_cards(activity, collect):
+def scan_cards(activity, collect, *, read_tasks=True):
     """从左端逐页查询，领取后用积分增长确认游戏已响应。"""
     if activity == MAX_ACTIVITY:
         return activity, False, 0, {}
 
-    tasks = Tasks("./assets/config/task_mappings.json")
-    tasks.task_mappings["助燃券"] = "使用1次「助燃券」或「深度沉浸器」"
+    tasks = Tasks("./assets/config/task_mappings.json") if read_tasks else None
+    if tasks is not None:
+        tasks.task_mappings["助燃券"] = "使用1次「助燃券」或「深度沉浸器」"
     available = False
     claimed = 0
     drag_options = {"crop": CARDS_CROP, "duration": 0.5, "end_pause": 0.2, "settle": 0.5}
@@ -90,18 +92,19 @@ def scan_cards(activity, collect):
         if activity == MAX_ACTIVITY:
             break
 
-        for _ in range(3):
-            frame, _, _ = auto.take_screenshot(crop=CARDS_CROP)
-            lines = ocr.recognize_multi_lines(frame)
-            if lines:
-                break
-            time.sleep(0.25)
-        else:
-            raise DailyTrainingError("当前页未识别到任务卡片的文字")
-        # 视口边缘可能只有半张卡片，只有名称没有状态的碎片不能覆盖前一页的结果。
-        x_gap = round(100 * frame.width / (CARDS_CROP[2] * 1920))
-        if not tasks.parse_ocr(lines, x_gap=x_gap, require_status=True):
-            raise DailyTrainingError("任务区显示本日活跃度已满，但徽标积分未达到 500")
+        frame, _, _ = auto.take_screenshot(crop=CARDS_CROP)
+        if tasks is not None:
+            lines = ocr.recognize_multi_lines(frame) or []
+            for _ in range(2):
+                if lines:
+                    break
+                time.sleep(0.25)
+                frame, _, _ = auto.take_screenshot(crop=CARDS_CROP)
+                lines = ocr.recognize_multi_lines(frame) or []
+            # 视口边缘的半张卡片可能只有名称，保留前一页已读到的任务状态。
+            x_gap = round(100 * frame.width / (CARDS_CROP[2] * 1920))
+            if not tasks.parse_ocr(lines, x_gap=x_gap, require_status=True):
+                raise DailyTrainingError("任务区显示本日活跃度已满，但徽标积分未达到 500")
         if not drag_list(auto, DRAG_RIGHT, DRAG_LEFT, **drag_options):
             raise DailyTrainingError("拖动任务卡片列表后，列表未稳定")
         unchanged = unchanged + 1 if changed_ratio(frame, auto.screenshot) <= 0.01 else 0
@@ -110,6 +113,8 @@ def scan_cards(activity, collect):
     else:
         raise DailyTrainingError("多次拖动后未能确认任务卡片列表右端")
 
+    if tasks is None:
+        return activity, available, claimed, TrainingCards({})
     if activity < MAX_ACTIVITY and not tasks.daily_tasks:
         raise DailyTrainingError("未识别到每日实训任务卡片的名称和进度")
     for name, pending in tasks.daily_tasks.items():
@@ -117,22 +122,15 @@ def scan_cards(activity, collect):
     return activity, available, claimed, TrainingCards(tasks.daily_tasks, sum(tasks.claimable.values()))
 
 
-def read_milestones(activity):
-    """返回可领取的礼盒坐标，并核对其余礼盒是否与当前活跃度一致。"""
-    pending = {}
+def claimable_milestones(activity):
+    """只查下一档可领取图标。游戏可能在一次点击中领完多档。"""
     for points, x in zip(MILESTONE_POINTS, MILESTONE_X):
+        if points > activity:
+            break
         crop = ((x - 43) / 1920, 237 / 1080, 86 / 1920, 84 / 1080)
-        if points <= activity:
-            button = auto.find_element(f"{IMAGE_ROOT}/milestone_ready.png", "image", 0.9, crop=crop)
-            if button:
-                pending[points] = button
-                continue
-            matched = auto.find_element(f"{IMAGE_ROOT}/milestone_claimed.png", "image", 0.9, take_screenshot=False)
-        else:
-            matched = auto.find_element(f"{IMAGE_ROOT}/milestone_locked.png", "image", 0.9, crop=crop)
-        if not matched:
-            raise DailyTrainingError(f"未能确认 {points} 档礼盒的状态，当前活跃度 {activity}/{MAX_ACTIVITY}")
-    return pending
+        button = auto.find_element(f"{IMAGE_ROOT}/milestone_ready.png", "image", 0.9, crop=crop)
+        if button:
+            yield points, button
 
 
 def click_milestone(points, button):
@@ -140,18 +138,12 @@ def click_milestone(points, button):
         raise DailyTrainingError(f"{points} 档礼盒无法点击")
     if not auto.find_element(REWARD_POPUP, "image", 0.9, max_retries=8, retry_delay=0.3, crop=REWARD_POPUP_CROP):
         raise DailyTrainingError(f"点击 {points} 档礼盒后，未找到「获得物品」弹窗")
-    screen.change_to("guide2", max_recursion=0)
-
-
-def log_milestones(activity, pending):
-    states = []
-    for points in MILESTONE_POINTS:
-        if points > activity:
-            state = "未达成"
-        else:
-            state = "可领取" if points in pending else "已领取"
-        states.append(f"{points} 档{state}")
-    log.info(f"档位奖励：{'，'.join(states)}")
+    log.info(f"已领取 {points} 档礼盒")
+    if not auto.click_element(REWARD_CLOSE_CROP, "crop"):
+        log.warning("已确认实训档位奖励到账，获得物品弹窗仍未关闭")
+        return False
+    time.sleep(0.6)
+    return True
 
 
 def needs_support():
@@ -177,51 +169,68 @@ def run(*, complete_training=False, on_summary=None, full_run=False):
     if not (collect or complete):
         log.info("本轮无需补做或领取，跳过每日实训")
         return True
+    activity = None
+    received = 0
+    success = True
+    read_tasks = complete and cfg.daily_material_enable
     log.hr("开始触屏每日实训", 1)
     with screenshot_retry_timeout(5):
         screen.change_to("guide2", max_recursion=1)
         try:
             activity = read_activity()
             log.info(f"当前活跃度 {activity}/{MAX_ACTIVITY}")
-            activity, card_available, cards_claimed, tasks = scan_cards(activity, collect)
-            if complete and cfg.daily_material_enable and needs_action(activity, tasks) and tasks.get(MATERIAL_TASK):
+            activity, card_available, received, tasks = scan_cards(activity, collect, read_tasks=read_tasks)
+            if read_tasks and needs_action(activity, tasks) and tasks.get(MATERIAL_TASK):
                 from tasks.touch import synthesis
 
-                synthesized = synthesis.material()
+                try:
+                    synthesized = synthesis.material()
+                except DailyTrainingError as error:
+                    log.error(f"实训材料合成未确认：{error}")
+                    synthesized = False
+                    success = False
                 screen.change_to("guide2", max_recursion=1)
-                if synthesized:
-                    activity, card_available, extra_claims, tasks = scan_cards(read_activity(), collect)
-                    cards_claimed += extra_claims
-                    if tasks.get(MATERIAL_TASK):
-                        raise DailyTrainingError("材料已合成，实训卡片未确认完成")
+                if synthesized and collect:
+                    # 合成已经到账。这里继续查待领奖励，不再用卡片文字判定合成结果。
+                    activity, card_available, extra_claims, _ = scan_cards(read_activity(), collect, read_tasks=False)
+                    received += extra_claims
+        except DailyTrainingError as error:
+            log.error(f"实训任务卡片检查未完成：{error}")
+            success = False
+
+        if activity is not None:
             record_progress(cfg, activity)
 
-            if collect:
-                pending = read_milestones(activity)
-                log_milestones(activity, pending)
-                available_milestones = tuple(pending)
-                for points in available_milestones:
-                    if points not in pending:
-                        continue  # 一次可能领完多个档位。
-                    click_milestone(points, pending[points])
-                    time.sleep(0.6)
-                    pending = read_milestones(activity)
-                    if points in pending:
-                        raise DailyTrainingError(f"{points} 档礼盒点击后仍显示可领取")
-                    log.info(f"已领取 {points} 档礼盒")
-                if available_milestones:
-                    log_milestones(activity, pending)
-                if cards_claimed or available_milestones:
-                    completed = activity == MAX_ACTIVITY
-                    frame, _, _ = auto.take_screenshot(crop=REWARD_REPORT_CROP)
-                    message = cfg.notify_template["DailyPracticeCompleted"] if completed else f"已领取实训奖励，活跃度 {activity}/{MAX_ACTIVITY}"
-                    Base.send_notification_with_screenshot(message, NotificationLevel.ALL, screenshot=frame)
-            else:
-                log.info(f"任务卡片：{'有可领取活跃度' if card_available else '无可领取活跃度'}，每日实训领奖未开启")
-        except DailyTrainingError as error:
-            log.error(f"每日实训页：{error}")
-            return False
+        if collect:
+            last_threshold = activity if success else MAX_ACTIVITY
+            try:
+                for points, button in claimable_milestones(last_threshold):
+                    closed = click_milestone(points, button)
+                    received += 1
+                    if not closed:
+                        break
+                    if points < last_threshold:
+                        # 确认弹窗已退出，再看下一档，避免点击被遮挡的礼盒。
+                        try:
+                            screen.wait_for_screen_change("guide2", max_recursion=0)
+                        except FATAL_GAME_ERRORS:
+                            raise
+                        except RuntimeError as error:
+                            log.warning(f"已确认档位奖励到账，后续档位待检查：{error}")
+                            break
+            except DailyTrainingError as error:
+                log.error(f"实训档位奖励：{error}")
+                success = False
+            if received:
+                message = "已领取实训奖励"
+                if activity == MAX_ACTIVITY:
+                    message = cfg.notify_template["DailyPracticeCompleted"]
+                elif activity is not None:
+                    message = f"已领取实训奖励，活跃度 {activity}/{MAX_ACTIVITY}"
+                notify_reward(auto, message, crop=REWARD_REPORT_CROP)
+        elif success:
+            log.info(f"任务卡片：{'有可领取活跃度' if card_available else '无可领取活跃度'}，每日实训领奖未开启")
 
-    if on_summary is not None:
+    if on_summary is not None and activity is not None:
         on_summary(tr("每日实训活跃度 {activity}/{maximum}").format(activity=activity, maximum=MAX_ACTIVITY))
-    return True
+    return success

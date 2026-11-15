@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import cv2
 import numpy as np
@@ -1052,6 +1053,44 @@ def test_switch_button_alone_does_not_allow_missing_name(avatar):
     reader.intro_lines = [L("角色简介", 1538, 394), L("精灵古怪的少女，来自星穹列车。", 1670, 430)]
     with pytest.raises(parser.ParseError, match="未能识别角色名"):
         CharacterExport(reader)._current_summary()
+
+
+def test_named_switchable_trailblazer_is_exported_when_the_intro_page_fails(tmp_path, monkeypatch):
+    reader = SectionReader()
+    reader.switchable = True
+    intro = Mock(side_effect=reader_module.PageError("信息页未稳定"))
+    monkeypatch.setattr(reader, "read_trailblazer_intro", intro)
+
+    character = read_one(reader, tmp_path, name="星穹旅客")
+
+    assert character["name"] == "星穹旅客"
+    assert character["is_trailblazer"] and character["path_switchable"]
+    intro.assert_called_once()
+
+
+def test_intro_disambiguates_a_misread_switchable_character_name(tmp_path):
+    reader = SectionReader()
+    reader.switchable = True
+    reader.intro_lines = [L("角色简介", 1538, 394), L("精灵古怪的少女，来自星穹列车。", 1670, 430)]
+
+    character = read_one(reader, tmp_path, name="三月柒")
+
+    assert character["name"] == "三月柒"
+    assert not character["is_trailblazer"] and character["path_switchable"]
+
+
+def test_confirmed_trailblazer_is_exported_when_nickname_reread_cannot_open_details(tmp_path, monkeypatch):
+    reader = SectionReader()
+    reader.avatar = Path("StelleElation.png")
+    reader.switchable = True
+    open_details = Mock(side_effect=reader_module.PageError("详情页未稳定"))
+    monkeypatch.setattr(reader, "open_tab", open_details)
+
+    character = read_one(reader, tmp_path, name="")
+
+    assert character["name"] == "开拓者"
+    assert character["is_trailblazer"] and character["path_switchable"]
+    open_details.assert_called_once_with("detail")
 
 
 def test_intro_identifies_trailblazer_without_an_avatar_asset(tmp_path):

@@ -7825,6 +7825,10 @@ msgstr "デイリー訓練の活躍度 {activity}/{maximum}"
 msgid "奖励检查完成，{daily_summary}"
 msgstr "報酬の確認が完了しました（{daily_summary}）"
 
+#: tasks/touch/power.py:647
+msgid "已完成 {count} 次挑战"
+msgstr "挑戦を{count}回クリア"
+
 #: tasks/touch/power.py:534
 msgid "已完成 {count} 次挑战，剩余开拓力 {power}/300"
 msgstr "挑戦を{count}回クリア、残りの開拓力は{power}/300"

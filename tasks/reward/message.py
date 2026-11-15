@@ -2,11 +2,9 @@ import time
 
 from module.automation import auto
 from module.logger import log
-from module.notification.notification import NotificationLevel
 from module.screen import screen
-from tasks.base.base import Base
 from tasks.base.list_drag import drag_list
-from .receipt import ITEM_POPUP, RewardError, close_item_reward
+from .receipt import ITEM_POPUP, RewardError, close_item_reward, notify_reward
 from .rewardtemplate import RewardTemplate
 
 
@@ -92,7 +90,7 @@ class Message(RewardTemplate):
                 drags = 0
         finally:
             if received:
-                Base.send_notification_with_screenshot(f"处理了 {completed} 个短信会话，领取 {received} 次奖励", NotificationLevel.ALL)
+                notify_reward(auto, f"处理了 {completed} 个短信会话，领取 {received} 次奖励")
         log.info(f"本次已处理 {completed} 个短信会话" if completed else "本次未发现已完成会话")
         if timed_out_rows:
             raise RewardError(f"有 {len(timed_out_rows)} 个短信会话超时")

@@ -158,17 +158,21 @@ def test_pc_daily_claims_regular_rewards_before_training_and_recovers(monkeypatc
     assert [call[0] for call in calls.mock_calls] == expected
 
 
-def test_standalone_power_still_farms_after_recoverable_support_lookup_error(monkeypatch):
-    demand = Mock(side_effect=DailyTrainingError("未识别到实训任务卡片"))
-    monkeypatch.setattr(daily.Daily, "support_demand", demand)
+def test_standalone_power_still_succeeds_when_optional_support_cards_cannot_be_read(monkeypatch):
+    scan = Mock(side_effect=DailyTrainingError("未识别到实训任务卡片"))
+    monkeypatch.setattr(daily.Quest, "scan", scan)
+    monkeypatch.setattr(daily, "cfg", SimpleNamespace(daily_enable=True, borrow_enable=True, borrow_character_enable=False))
     monkeypatch.setattr(power, "cfg", SimpleNamespace(power_plan=[], instance_type=GOLDEN_CALYX,
                         instance_names={GOLDEN_CALYX: "回忆之蕾"}, build_target_enable=False))
     recover = Mock()
     monkeypatch.setattr(task_steps, "screen", SimpleNamespace(change_to=recover))
-    farm = Mock()
+    farm = Mock(return_value=4)
     monkeypatch.setattr(power.Power, "process", farm)
-    assert power.Power.run(skip_weekly_cleanup=True) is False
-    recover.assert_called_once_with("main", max_recursion=1)
+
+    assert power.Power.run(skip_weekly_cleanup=True) is True
+
+    scan.assert_called_once_with(collect=False)
+    recover.assert_not_called()
     farm.assert_called_once()
     assert farm.call_args.args == (GOLDEN_CALYX, "回忆之蕾")
     assert not farm.call_args.kwargs["support"].pending

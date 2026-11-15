@@ -52,9 +52,11 @@ class RewardManager:
             if menu_alert(auto, (0.87, 0.055, 0.13, 0.15), "./assets/images/share/menu/more.png") is False:
                 log.info("已确认更多菜单无红点")
                 return False
-        elif reward_type == "achievement":
+        elif reward_type in ("message", "achievement"):
             screen.change_to("menu")
-            if not auto.find_element("./assets/images/share/menu/achievement_reward.png", "image", 2000000,
+            # 短信图标随手机壁纸变色，沿用兼容不同壁纸的匹配阈值。
+            threshold = 3000000 if reward_type == "message" else 2000000
+            if not auto.find_element(f"./assets/images/share/menu/{reward_type}_reward.png", "image", threshold,
                                      crop=(1263 / 1920, 52 / 1080, 642 / 1920, 982 / 1080)):
                 return False
         return instance.start()

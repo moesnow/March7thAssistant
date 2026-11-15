@@ -110,7 +110,8 @@ def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
         return power.read_power(DETAIL_POWER)
 
     power._select_category(power.ORNAMENT)
-    power._supplement(power.read_power(INDEX_POWER), plus=(1510, 55), power_crop=INDEX_POWER)
+    if cfg.use_reserved_trailblaze_power or cfg.use_fuel:
+        power._supplement(power.read_power(INDEX_POWER), plus=(1510, 55), power_crop=INDEX_POWER)
     power._enter_instance(power.ORNAMENT, name)
     available = power.read_power(DETAIL_POWER)
     remaining = planned
@@ -182,15 +183,24 @@ def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
 
         demand.won(borrowed)
         yield waves
-        after = power.read_power(INDEX_POWER)
-        power.check_balance(available, after, cost, time.monotonic() - started)
-        log.info(f"饰品提取已结算 {waves} 次，剩余开拓力 {after}/300")
-        if on_settlement is not None:
-            on_settlement(waves, after)
+        log.info(f"饰品提取已结算 {waves} 次")
         if remaining is not None:
             remaining -= waves
-        available, previous, retries = after, waves, 0
+        previous, retries = waves, 0
+        after = None
+        if remaining != 0:
+            try:
+                after = power.read_power(INDEX_POWER)
+            except power.PowerError:
+                log.warning("饰品提取结算页开拓力未识别，返回副本核对后再挑战")
+                power._exit_result(instance_screen)
+                previous = 0
+                after = power.read_power(DETAIL_POWER) if screen.current_screen == instance_screen else enter()
+            power.check_balance(available, after, cost, time.monotonic() - started)
+            available = after
+        if on_settlement is not None:
+            on_settlement(waves, after)
 
-    if previous:
-        power._exit_result(instance_screen)
-    screen.change_to("main", max_recursion=1)
+    exit_screen = power._exit_result(instance_screen) if previous else None
+    if exit_screen != "main":
+        screen.change_to("main", max_recursion=1)

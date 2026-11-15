@@ -1,4 +1,5 @@
 from dataclasses import dataclass, replace
+from datetime import datetime
 import re
 import time
 
@@ -20,6 +21,7 @@ from tasks.weekly import currency_wars_strategy as strategy
 from tasks.weekly.currency_wars_equipment import EquipmentOption, equipment_order
 from tasks.weekly import currency_wars_ui as ui
 from tasks.weekly.currency_wars_ui import Page
+from utils.date import Date
 from utils.game_options import game_option_enabled
 from utils.pause import pause_ctl
 from utils.screenshot_util import save_error_screenshot
@@ -181,6 +183,7 @@ class CurrencyWars:
         self.battle_auto_retry_at = None
         self.deferred_operations = set()
         self.reward_claim_score = None
+        self.reward_claim_notified = False
         self.weekly_score = None
         self.weekly_reward_pending = False
         self._start_match_sent = False
@@ -3996,7 +3999,7 @@ class CurrencyWars:
         return self._expect(lambda f: f.page in recoverable, 20, f"货币战争页面未确认（{page.value}）")
 
     def get_reward(self, frame):
-        """返回首页、实际积分与本次是否领取到奖励。"""
+        """返回首页、奖励已处理时的积分与本次是否领取到奖励。"""
         if frame.page == Page.HOME:
             frame = self._click_to(
                 frame, lambda f: ui.point(f.find("积分", area=ui.HOME_POINTS)),
@@ -4015,6 +4018,7 @@ class CurrencyWars:
             return score is not None and available is not None
 
         frame = self._expect(read_status, 7, "积分或领奖状态未识别")
+        score_observed_at = datetime.now().timestamp()
         receipt = None
         if available:
             def credited(f):
@@ -4038,22 +4042,33 @@ class CurrencyWars:
             if frame.page == Page.REWARD_LIMIT:
                 raise CurrencyWarsReceiptTimeout("助燃券已达上限，货币战争积分奖励仍待领取")
             receipt = frame.image
-            if frame.page == Page.REWARD_RECEIPT:
-                frame = self._click_to(frame, lambda f: f.reward_close(), lambda f: f.page == Page.WEEKLY,
-                                       "领奖后未确认返回积分页", seconds=12)
-                frame = self._expect(credited, 8, "未确认所有可领档位已到账")
         elif self.reward_claim_score is not None and self.reward_claim_score == score:
             # 领取后的回执可能被重连提示挡住。积分一致且可领档位已清空时采用新画面确认。
             receipt = frame.image
 
-        frame = self._go_back(frame, Page.HOME)
-        if (home_score := frame.ratio(ui.HOME_POINTS)) is not None and score != home_score:
-            self.weekly_score = None
-            raise CurrencyWarsActionUnready("领奖页与首页的周积分不一致，请检查是否跨周重置")
-        self.reward_claim_score = None
         claimed = receipt is not None
-        if claimed:
+        if claimed and not self.reward_claim_notified:
+            self.reward_claim_score = score
+            self.reward_claim_notified = True
             self._notify("货币战争奖励已领取", NotificationLevel.ALL, receipt)
+
+        more_rewards_available = False
+        if frame.page == Page.REWARD_RECEIPT:
+            frame = self._click_to(frame, lambda f: f.reward_close(), lambda f: f.page in (Page.WEEKLY, Page.HOME),
+                                   "领奖后未确认返回积分页", seconds=12)
+            # 一键领取已确认到账。仅在画面明确显示还有奖励时保留本周待办。
+            more_rewards_available = frame.page == Page.WEEKLY and frame.claim_button_visible()
+        if frame.page != Page.HOME:
+            frame = self._go_back(frame, Page.HOME)
+        self.reward_claim_score = None
+        self.reward_claim_notified = False
+        if Date.is_next_mon_x_am(score_observed_at, cfg.refresh_hour):
+            self.weekly_score = None
+            raise CurrencyWarsActionUnready("货币战争积分处理期间跨周重置，请重新核对本周积分")
+        if more_rewards_available:
+            log.warning("货币战争已领取本次奖励，仍有可领取档位")
+            return frame, None, claimed
+
         reward_status = "已领取本次奖励" if claimed else "当前无待领奖励"
         log.info(f"货币战争积分 {score[0]}/{score[1]}，{reward_status}")
         if score[0] == score[1]:
@@ -4088,7 +4103,7 @@ class CurrencyWars:
             # 积分页暂不可用时，首页比分仍可用于决定是否需要开局。
             score = self.weekly_score
             source = frame if frame.page == Page.HOME or score is not None else entry
-            if source.page == Page.HOME:
+            if not claimed and source.page == Page.HOME:
                 try:
                     home_score = source.ratio(ui.HOME_POINTS)
                 except Exception as error:
@@ -4170,6 +4185,7 @@ class CurrencyWars:
         self.deadline = started + TASK_SECONDS
         self.network_reconnects = 0
         self.reward_claim_score = None
+        self.reward_claim_notified = False
         self.weekly_score = None
         self.weekly_reward_pending = False
         self.result = None

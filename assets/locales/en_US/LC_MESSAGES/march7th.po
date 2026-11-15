@@ -8128,6 +8128,10 @@ msgstr "Daily training activity {activity}/{maximum}"
 msgid "奖励检查完成，{daily_summary}"
 msgstr "Reward check complete ({daily_summary})"
 
+#: tasks/touch/power.py:647
+msgid "已完成 {count} 次挑战"
+msgstr "Completed {count} challenges"
+
 #: tasks/touch/power.py:534
 msgid "已完成 {count} 次挑战，剩余开拓力 {power}/300"
 msgstr ""

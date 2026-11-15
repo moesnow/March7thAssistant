@@ -3272,13 +3272,67 @@ def test_full_run_uses_existing_currency_wars_weekly_timestamp(monkeypatch, worl
     due.assert_called_once_with(cfg.currencywars_timestamp, cfg.refresh_hour)
 
 
-def test_cross_week_score_mismatch_does_not_save_completion(monkeypatch, world):
+@pytest.mark.parametrize("remaining_rewards", (False, True))
+def test_weekly_reward_keeps_receipt_when_score_and_tier_readback_fail(monkeypatch, world, remaining_rewards):
+    lobby = home()
+    pending = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: True)
+    receipt = page(Page.REWARD_RECEIPT, ("点击空白处关闭", 960, 910))
+    after = page(Page.WEEKLY)
+    for frame in (after, lobby):
+        monkeypatch.setattr(frame, "ratio", Mock(side_effect=OSError("积分 OCR 失败")))
+    monkeypatch.setattr(after, "claim_available", Mock(side_effect=OSError("已领奖档位识别失败")))
+    monkeypatch.setattr(after, "claim_button_visible", lambda: remaining_rewards, raising=False)
+    routes = {(lobby, (381, 961)): pending, (pending, (1640, 728)): receipt, (receipt, (960, 910)): after}
+    state = drive(monkeypatch, world, lobby, lambda s, point: setattr(s, "frame", routes[s.frame, point]))
+    world.auto.press_key.side_effect = lambda _: setattr(state, "frame", lobby)
+
+    assert world.war.start(weekly=True) is not remaining_rewards
+    assert state.clicks == [(f.page, point) for f, point in routes]
+    assert world.war.weekly_score == (18000, 18000)
+    assert world.war.weekly_reward_pending is remaining_rewards
+    task.Base.send_notification_with_screenshot.assert_called_once_with(
+        "货币战争奖励已领取", task.NotificationLevel.ALL, receipt.image,
+    )
+    assert world.cfg.save_timestamp.call_count == int(not remaining_rewards)
+    after.ratio.assert_not_called()
+    after.claim_available.assert_not_called()
+    lobby.ratio.assert_not_called()
+
+
+@pytest.mark.parametrize("still_available", (False, True))
+def test_weekly_reward_navigation_recovery_keeps_the_claim_interlock(monkeypatch, world, still_available):
+    lobby = home()
+    pending = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: True)
+    receipt = page(Page.REWARD_RECEIPT, ("点击空白处关闭", 960, 910))
+    after = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: still_available)
+    routes = {(lobby, (381, 961)): pending, (pending, (1640, 728)): receipt, (receipt, (960, 910)): after}
+    state = drive(monkeypatch, world, lobby, lambda s, point: setattr(s, "frame", routes[s.frame, point]))
+    world.auto.press_key.side_effect = lambda _: setattr(state, "frame", lobby)
+    go_back = world.war._go_back
+
+    def fail_first_return(frame, target):
+        monkeypatch.setattr(world.war, "_go_back", go_back)
+        raise task.CurrencyWarsReceiptTimeout("暂未返回")
+
+    monkeypatch.setattr(world.war, "_go_back", fail_first_return)
+    assert world.war.start(weekly=True) is not still_available
+    assert state.clicks == [(f.page, point) for f, point in routes]
+    task.Base.send_notification_with_screenshot.assert_called_once_with(
+        "货币战争奖励已领取", task.NotificationLevel.ALL, receipt.image,
+    )
+    assert world.cfg.save_timestamp.call_count == int(not still_available)
+
+
+def test_cross_week_reset_does_not_save_completion(monkeypatch, world):
     old = home()
     reset = page(Page.HOME, ("0/18000", 318, 1000))
     weekly = page(Page.WEEKLY, ("18000/18000", 273, 740))
     monkeypatch.setattr(weekly, "claim_available", lambda: False)
     state = drive(monkeypatch, world, old, lambda s, _: setattr(s, "frame", weekly))
     world.auto.press_key.side_effect = lambda _: setattr(state, "frame", reset)
+    from utils.date import Date
+
+    monkeypatch.setattr(Date, "is_next_mon_x_am", lambda *_: state.frame is reset)
     with pytest.raises(task.CurrencyWarsError, match="跨周重置"):
         world.war.get_reward(old)
     world.cfg.save_timestamp.assert_not_called()
