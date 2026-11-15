@@ -11,6 +11,7 @@ import time
 import io
 import ctypes
 import socket
+from subprocess import TimeoutExpired
 from PIL import Image
 from urllib3.exceptions import TimeoutError as TransportTimeoutError
 from selenium import webdriver
@@ -43,6 +44,10 @@ class CloudGameLoginTimeoutError(RuntimeError):
 
 class CloudGameZeroDurationError(RuntimeError):
     """云游戏剩余时长为 0。"""
+
+
+class CloudGamePaidTimeExhaustedError(SystemExit):
+    """对局中的付费时长已耗尽，由 CLI 记录为明确的结束原因。"""
 
 
 class CloudGameController(GameControllerBase):
@@ -145,6 +150,7 @@ class CloudGameController(GameControllerBase):
         self.cfg = cfg
         self.logger = logger
         self._headless_override = None
+        self._preserve_browser_on_exit = True
 
         self._last_interruption_check_time = 0.0
 
@@ -816,10 +822,13 @@ class CloudGameController(GameControllerBase):
                 level=NotificationLevel.ERROR,
             )
             self.stop_game()
-            raise SystemExit("云游戏付费时长已耗尽，游戏中断")
+            raise CloudGamePaidTimeExhaustedError("云游戏付费时长已耗尽，游戏中断")
 
     def _clean_at_exit(self) -> None:
-        """当脚本退出时，关闭所有 headless 浏览器"""
+        """关闭本次启动模式对应的后台浏览器，独立接管只释放驱动。"""
+        if self._preserve_browser_on_exit:
+            self._release_attached_driver()
+            return
         if self.close_all_m7a_browser(headless=True):
             self.log_info("已关闭所有后台浏览器")
 
@@ -1227,6 +1236,7 @@ class CloudGameController(GameControllerBase):
 
     def start_game_process(self, headless=None) -> bool:
         """启动浏览器进程"""
+        self._preserve_browser_on_exit = False
         try:
             self._headless_override = headless
             if headless is None:
@@ -1240,6 +1250,7 @@ class CloudGameController(GameControllerBase):
 
     def connect_to_running_game(self) -> bool:
         """为独立运行的流程连接已有云游戏会话，不启动游戏或重新排队。"""
+        self._preserve_browser_on_exit = True
         try:
             if self.driver is None:
                 self._connect_or_create_browser(connect_only=True)
@@ -1250,7 +1261,22 @@ class CloudGameController(GameControllerBase):
             return True
         except Exception as e:
             self.log_error(f"连接正在运行的云游戏失败: {e}")
+            self._release_attached_driver()
             return False
+
+    def _release_attached_driver(self):
+        driver, self.driver = self.driver, None
+        process = getattr(getattr(driver, "service", None), "process", None)
+        # WebDriver quit 会向已接管的会话发命令。只结束本进程启动的驱动服务。
+        try:
+            if process is not None and process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=1)
+                except TimeoutExpired:
+                    process.kill()
+        except OSError as error:
+            self.log_debug(f"释放云游戏连接驱动失败：{error}")
 
     def is_headless(self) -> bool:
         """返回本次启动选用的模式，未指定覆盖时遵循配置。"""

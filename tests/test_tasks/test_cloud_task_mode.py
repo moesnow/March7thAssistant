@@ -7,12 +7,15 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from PIL import Image
+from PIL import Image, ImageDraw
 import pytest
 
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.game.adb_transport import AdbError
+from module.game.cloud import CloudGameController, CloudGamePaidTimeExhaustedError
 from module.localization import tr
+from module.notification import notif
+from module.ocr import ocr
 from tasks.base import task_steps
 from tasks.daily import daily
 from tasks.weekly import currency_wars
@@ -54,7 +57,8 @@ def runner():
                  UNSUPPORTED_TASK=UNSUPPORTED_TASK, task_is_supported=task_is_supported, tr=tr, AdbError=AdbError,
                  ProfileAssetNotFoundError=ProfileAssetNotFoundError,
                  TouchProfileInputError=TouchProfileInputError,
-                 CurrencyWarsTerminalError=currency_wars.CurrencyWarsTerminalError)
+                 CurrencyWarsTerminalError=currency_wars.CurrencyWarsTerminalError,
+                 CloudGamePaidTimeExhaustedError=CloudGamePaidTimeExhaustedError)
     scope.update(sys=sys, time=SimpleNamespace(time=lambda: 0))
     scope["EXCLUSIVE_ACTIONS"] = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update", "adb_check"}
     # 仅加载入口函数，避免导入 CLI 时触发权限检查或游戏操作。
@@ -195,6 +199,14 @@ def currency_wars_game(runner, monkeypatch):
         current.__dict__.update(page=page, **properties)
         return current
 
+    reconnect_image = image.copy()
+    ImageDraw.Draw(reconnect_image).rectangle((1090, 649, 1278, 693), fill="white")
+    reconnect = Frame(reconnect_image, (
+        Label("提示", (959, 412)),
+        Label("失去网络连接，战斗结果同步失败，是否尝试重新连接？", (956, 526)),
+        Label("确认", (1188, 672)),
+    ))
+    disconnected = Frame(image, (Label("连接中断", (960, 480)), Label("退出游戏", (960, 600))))
     frames = {
         "home": frame(Page.HOME, ("开始货币战争", (1600, 972)), ("积分", (381, 961))),
         "mode": frame(Page.MODES, ("进入标准博弈", (1640, 961)), unfinished_match=False),
@@ -206,7 +218,9 @@ def currency_wars_game(runner, monkeypatch):
         "result": frame(Page.MATCH_RESULT, ("挑战成功", (960, 233)), ("返回货币战争", (960, 899))),
     }
     state = SimpleNamespace(page="home", now=0.0, completed=0, clicks=[], delayed_reads=0, battle_reads=0,
-                            fault=None, stop=False, delayed_until=None, later_steps=[], capture_failures=0)
+                            fault=None, stop=False, delayed_until=None, later_steps=[], capture_failures=0,
+                            reward_read_failures=0, reconnect_count=0, disconnect_reads=0,
+                            capture_board=lambda: frames["board"])
     clock = SimpleNamespace(monotonic=lambda: state.now,
                             sleep=lambda seconds: setattr(state, "now", state.now + seconds))
     auto = MagicMock()
@@ -217,15 +231,30 @@ def currency_wars_game(runner, monkeypatch):
             if state.fault == "unavailable":
                 state.capture_failures += 1
                 raise OSError("窗口持续不可用")
-            if state.fault is None and state.now >= state.delayed_until:
+            if state.fault == "disconnected" or (state.fault == "brief_disconnect" and state.delayed_reads == 1):
+                state.disconnect_reads += 1
+                return disconnected
+            resumed = state.fault == "brief_disconnect" and state.delayed_reads >= 3
+            if resumed or (state.fault not in ("timeout", "stopped") and state.now >= state.delayed_until):
                 state.page = "battle"
+        if state.page == "reconnect":
+            return reconnect
+        if state.page == "board":
+            return state.capture_board()
         if state.page == "battle":
             state.battle_reads += 1
             if state.battle_reads == 3:
                 state.page = "result"
         if state.page == "weekly":
             score = 18000 if state.completed else 0
-            return frame(Page.WEEKLY, (f"{score}/18000", (245, 748)), claim_available=lambda: False)
+
+            def claim_available():
+                if state.fault == "weekly_read" and state.completed and not state.reward_read_failures:
+                    state.reward_read_failures += 1
+                    raise OSError("暂时无法读取领奖区")
+                return False
+
+            return frame(Page.WEEKLY, (f"{score}/18000", (245, 748)), claim_available=claim_available)
         return frames[state.page]
 
     def click(point, *, press_duration):
@@ -235,6 +264,13 @@ def currency_wars_game(runner, monkeypatch):
             state.battle_reads = 0
             state.delayed_until = state.now + 28
             state.page = "battle" if state.completed else "delayed"
+        elif state.page == "reconnect":
+            assert point == (1188, 672)
+            state.reconnect_count += 1
+            state.page = "home"
+        elif (state.page == "home" and point == (381, 961) and state.fault == "weekly_reconnect"
+              and state.completed and not state.reconnect_count):
+            state.page = "reconnect"
         else:
             if state.page == "result":
                 state.completed += 1
@@ -257,7 +293,7 @@ def currency_wars_game(runner, monkeypatch):
     auto.press_key.side_effect = press
     cfg = SimpleNamespace(
         currencywars_strategy="default", currencywars_type="normal", currencywars_rank_difficulty="current",
-        currencywars_bonus_enable=False, currencywars_enable=True, currencywars_timestamp=1, refresh_hour=4,
+        currencywars_fast_mode=False, currencywars_bonus_enable=False, currencywars_enable=True, currencywars_timestamp=1, refresh_hour=4,
         asset_manager_enable=False, weekly_divergent_enable=False, fight_enable=False, universe_enable=False,
         forgottenhall_enable=False, purefiction_enable=False, apocalyptic_enable=False,
         forgottenhall_timestamp=1, purefiction_timestamp=1, apocalyptic_timestamp=1,
@@ -348,6 +384,7 @@ def test_currency_wars_entry_continues_after_the_fight_receipt_times_out(runner,
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
 @pytest.mark.parametrize(("fault", "status", "reason", "exit_code"), (
     ("unavailable", "failed", "currencywars_unavailable", EXIT_FAILED),
+    ("disconnected", "failed", "currencywars_unavailable", EXIT_FAILED),
     ("timeout", "failed", "currencywars_timeout", EXIT_FAILED),
     ("stopped", "stopped", None, EXIT_STOPPED),
 ))
@@ -380,6 +417,110 @@ def test_currency_wars_entry_records_clear_terminal_states(
         currency_wars.save_error_screenshot.assert_called_once()
     if fault == "unavailable":
         assert state.capture_failures == currency_wars.MAX_CAPTURE_ATTEMPTS
+    if fault == "disconnected":
+        assert state.disconnect_reads == currency_wars.MAX_CAPTURE_ATTEMPTS
+        assert "云游戏连接" in record["error"]
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+@pytest.mark.parametrize("fault", ("brief_disconnect", "local_capacity", "node_read", "weekly_read", "weekly_reconnect"))
+def test_currency_wars_entry_recovers_the_same_run(runner, currency_wars_game, monkeypatch, action, fault):
+    state = currency_wars_game
+    state.fault = fault
+    local_reads = MagicMock(side_effect=OSError("暂时无法识别部署人数裁片"))
+    if fault == "local_capacity":
+        image = Image.new("RGB", (1920, 1080), (35, 30, 74))
+        draw = ImageDraw.Draw(image)
+        for i in range(6):
+            x = round(960 + (i - 2.5) * 142)
+            draw.rectangle((x - 59, 598, x + 59, 731), outline=(78, 74, 113), width=2)
+        draw.rectangle((715, 382, 745, 423), fill=(220, 184, 147))
+        draw.rectangle((746, 382, 770, 423), fill=(93, 60, 11))
+        labels = (
+            Label("备战阶段", (470, 46)), Label("1-1", (470, 79)), Label("商店", (1624, 983)),
+            Label("出战", (1818, 750)), Label("前台区域", (973, 316)), Label("1/3", (960, 259)),
+        )
+        state.capture_board = lambda: Frame(image, labels)
+        monkeypatch.setattr(ocr, "recognize_multi_lines", local_reads)
+        monkeypatch.setattr(ocr, "recognize_single_line", lambda *_: None)
+    if fault == "node_read":
+        read_node = MagicMock(side_effect=OSError("暂时无法读取节点"))
+
+        class UnreadableNode(Frame):
+            @property
+            def stage(self):
+                return read_node()
+
+        normal_board = state.capture_board()
+        broken_board = UnreadableNode(normal_board.image, normal_board.labels)
+        broken_board.page = Page.BOARD
+        first_frame = iter((broken_board,))
+        state.capture_board = lambda: next(first_frame, normal_board)
+    if action == "currencywarstemp":
+        state.page = "board"
+    if action == "currencywarsloop":
+        def stop_after_two(task_id, success, duration):
+            assert task_id == "currencywarsloop" and success
+            if state.completed == 2:
+                state.stop = True
+
+        runner.telemetry.track_task_complete.side_effect = stop_after_two
+
+    record = run_currency_wars_cli(runner, action)
+
+    expected = 2 if action == "currencywarsloop" else 1
+    assert state.completed == expected
+    assert state.clicks.count(("board", (1818, 750))) == expected
+    assert state.clicks.count(("rank", (1680, 965))) == (0 if action == "currencywarstemp" else expected)
+    assert state.clicks.count(("home", (381, 961))) == expected + (action == "main") + (fault == "weekly_reconnect")
+    assert not any(point == (1640, 728) for _, point in state.clicks)
+    assert record["status"] == ("stopped" if action == "currencywarsloop" else "success")
+    assert record["error"] is None and record["reason"] is None
+    assert state.disconnect_reads == (fault == "brief_disconnect")
+    assert state.reward_read_failures == (fault == "weekly_read")
+    assert state.reconnect_count == (fault == "weekly_reconnect")
+    if fault == "local_capacity":
+        assert local_reads.call_count >= 2
+    if fault == "node_read":
+        read_node.assert_called_once()
+    if action == "main":
+        assert state.later_steps == ["日常领奖", "每日实训"]
+    state.factory.assert_called_once_with()
+    task_steps.screen.change_to.assert_not_called()
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+def test_currency_wars_records_cloud_paid_time_exhaustion(runner, currency_wars_game, monkeypatch, action):
+    state = currency_wars_game
+    if action == "currencywarstemp":
+        state.page = "board"
+    controller = object.__new__(CloudGameController)
+    controller.driver = MagicMock()
+    controller.driver.find_elements.return_value = [SimpleNamespace(text="星云币时长不足")]
+    controller.cfg = SimpleNamespace(cloud_game_use_paid_time=True)
+    controller._last_interruption_check_time = 0
+    controller.logger = None
+    controller.stop_game = MagicMock()
+    monkeypatch.setattr(notif, "notify", MagicMock())
+    normal_capture = currency_wars.CurrencyWars._capture
+
+    def capture():
+        if state.page == "delayed":
+            return controller.take_screenshot()
+        return normal_capture()
+
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture))
+    record = run_currency_wars_cli(runner, action)
+
+    assert (record["status"], record["reason"], record["exit_code"]) == (
+        "failed", "cloud_game_paid_time_exhausted", EXIT_FAILED)
+    assert "云游戏付费时长已耗尽" in record["error"]
+    assert state.completed == 0 and state.later_steps == []
+    assert state.clicks.count(("board", (1818, 750))) == 1
+    controller.stop_game.assert_called_once_with()
+    notif.notify.assert_called_once()
+    runner.notif.flush_batch.assert_called()
+    assert not runner.main.__globals__["pause_on_error"].called
 
 
 @pytest.mark.parametrize("cloud_game_enable", [False, True], ids=["local", "visible-cloud"])
@@ -639,3 +780,61 @@ def test_adb_workflow_reports_not_executed(runner):
     assert runner.main(workflow_name="测试流程") is False
     assert runner.run_session.note.call_args.kwargs["reason"] == "unsupported_backend"
     runner.game.get_game_controller.assert_not_called()
+
+
+@pytest.mark.parametrize(("fault", "expected_attempts", "exit_code", "reason"), (
+    ("transient", 2, EXIT_OK, None),
+    ("persistent", 3, EXIT_FAILED, "currencywars_unavailable"),
+    ("stopped", 1, EXIT_STOPPED, None),
+))
+def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
+        runner, fault, expected_attempts, exit_code, reason):
+    from module.game.cloud import CloudGameController
+
+    controller = object.__new__(CloudGameController)
+    controller.driver = None
+    controller.logger = MagicMock()
+    controller._confirm_viewport_resolution = MagicMock()
+    driver = MagicMock()
+    driver.find_elements.side_effect = lambda by, selector: [MagicMock()] if selector == ".game-player" else []
+    stopped = False
+
+    def connect_browser(*, connect_only):
+        nonlocal stopped
+        assert connect_only
+        if fault == "stopped":
+            stopped = True
+        if fault == "transient" and controller._connect_or_create_browser.call_count == 2:
+            controller.driver = driver
+            return
+        raise OSError("CDP 暂时无法连接")
+
+    def checkpoint():
+        if stopped:
+            raise RunStopRequested
+
+    controller._connect_or_create_browser = MagicMock(side_effect=connect_browser)
+    runner.cloud_game.connect_to_running_game.side_effect = controller.connect_to_running_game
+    runner.cfg.control_backend = "cloud"
+    runner.pause_ctl.checkpoint.side_effect = checkpoint
+    runner.time.sleep = MagicMock()
+    runner.main.__globals__["CurrencyWarsUnavailable"] = currency_wars.CurrencyWarsUnavailable
+    runner.CurrencyWars.return_value.start.return_value = True
+
+    record = run_currency_wars_cli(runner, "currencywarstemp")
+
+    assert (record["exit_code"], record["reason"]) == (exit_code, reason)
+    assert controller._connect_or_create_browser.call_count == expected_attempts
+    assert runner.time.sleep.call_count == expected_attempts - 1
+    runner.cloud_game.start_game_process.assert_not_called()
+    runner.game.start.assert_not_called()
+    runner.game.switch_to_game.assert_not_called()
+    if fault == "transient":
+        controller._confirm_viewport_resolution.assert_called_once_with()
+        runner.CurrencyWars.return_value.start.assert_called_once_with(resume=True)
+    else:
+        runner.CurrencyWars.assert_not_called()
+        if fault == "persistent":
+            assert "连续无法连接正在运行的云游戏" in record["error"]
+        else:
+            assert record["status"] == STATUS_STOPPED

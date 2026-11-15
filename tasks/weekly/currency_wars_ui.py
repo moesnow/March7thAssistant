@@ -10,6 +10,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from module.logger import log
 from tasks.weekly.currency_wars_equipment import Equipment, ITEMS, RECIPES
 from tasks.weekly.currency_wars_strategy import Offer, Point, Slot
 
@@ -285,15 +286,19 @@ class Frame:
     def read_local(self, area: Area, *, recognition_only=False) -> str | None:
         from module.ocr import ocr
 
-        crop = cv2.resize(self.crop(area), None, fx=2, fy=2)
-        if recognition_only:
-            rows = ocr.recognize_multi_lines(crop, recognition_only=True)
-            if len(rows) != 1:
-                return None
-            value, confidence = rows[0][1]
-            return normalized(value) if confidence >= 0.72 else None
-        result = ocr.recognize_single_line(crop)
-        return normalized(result[0]) if result and result[1] >= 0.55 else None
+        try:
+            crop = cv2.resize(self.crop(area), None, fx=2, fy=2)
+            if recognition_only:
+                rows = ocr.recognize_multi_lines(crop, recognition_only=True)
+                if not rows or len(rows) != 1:
+                    return None
+                value, confidence = rows[0][1]
+                return normalized(value) if confidence >= 0.72 else None
+            result = ocr.recognize_single_line(crop)
+            return normalized(result[0]) if result and result[1] >= 0.55 else None
+        except Exception as error:
+            log.debug(f"货币战争局部文字暂未识别（{area}）：{error}")
+            return None
 
     def number(self, area: Area, upper: int, *, local=False, badge=False) -> int | None:
         pattern = r"\d{1,7}"
@@ -356,11 +361,11 @@ class Frame:
         if candidate and candidate[1] >= 10:
             wide = parse(self.read_local((860, 215, 1085, 302), recognition_only=True))
             if wide and wide[1] == candidate[1] and wide != candidate:
-                if self._matches_field(wide[0], self.slots()):
+                if self._matches_field(wide[0], self.field_slots()):
                     return wide
         if digits is None or whole is None or whole[0] == digits[0]:
             return candidate
-        slots = self.slots()
+        slots = self.field_slots()
         if slots:
             return next((count for count in (digits, whole) if self._matches_field(count[0], slots)), None)
         return None
@@ -378,10 +383,16 @@ class Frame:
         visible = sum(slot.occupied for slot in slots if slot.zone != "bench")
         if visible == used:
             return True
+        if used < visible:
+            return False
         # 双人口光环的角色仍只占一个实体卡位。每名光环角色最多解释一个差额。
-        return 0 < used - visible <= sum(
-            slot.zone == "front" and slot.occupied and self.assigned_halo(slot.point) for slot in slots
-        )
+        try:
+            return used - visible <= sum(
+                slot.zone == "front" and slot.occupied and self.assigned_halo(slot.point) for slot in slots
+            )
+        except (OSError, cv2.error) as error:
+            log.debug(f"货币战争暂未核对部署人数中的光环加成：{error}")
+            return False
 
     @cached_property
     def squad_health(self) -> int | None:
@@ -534,8 +545,12 @@ class Frame:
         if "背包内助燃券持有数量已达上限" in "".join(
                 label.text for label in self.texts((385, 323, 1540, 650))):
             return Page.REWARD_LIMIT
-        if self.reward_close():
-            return Page.REWARD_RECEIPT
+        try:
+            if self.reward_close():
+                return Page.REWARD_RECEIPT
+        except (OSError, cv2.error) as error:
+            log.debug(f"货币战争奖励关闭按钮暂未识别：{error}")
+            return Page.UNKNOWN
         if self.find("积分奖励", area=WEEKLY_TITLE):
             return Page.WEEKLY
 
@@ -669,7 +684,7 @@ class Frame:
                 or self.has("前台区", area=(850, 327, 1100, 353), contains=True)
                 or self.has("备战席已满", area=(420, 266, 1510, 561), contains=True)):
             return False
-        slots = self.slots()
+        slots = self.field_slots()
         return bool(slots and self.field_count_matches(slots))
 
     @cached_property
@@ -813,7 +828,7 @@ class Frame:
             return ()
         return max(candidates)[2]
 
-    def slots(self) -> tuple[Slot, ...]:
+    def field_slots(self) -> tuple[Slot, ...]:
         xs = self.back_row()
         if not xs:
             return ()
@@ -822,7 +837,11 @@ class Frame:
                                  ("back", xs, BACK_Y)):
             for i, x in enumerate(centers):
                 result.append(Slot(zone, i, (x, y), self.slot_occupied((x, y))))
-        return tuple(result) + self.bench_slots()
+        return tuple(result)
+
+    def slots(self) -> tuple[Slot, ...]:
+        field = self.field_slots()
+        return field + self.bench_slots() if field else ()
 
     @cached_property
     def black_hole_slots(self) -> frozenset[Point]:

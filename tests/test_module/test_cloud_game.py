@@ -150,6 +150,55 @@ class TestCloudGameWorkflowConnection(unittest.TestCase):
         self.controller._refresh_page.assert_not_called()
         self.controller.enter_cloud_game.assert_not_called()
 
+    def test_failed_viewport_override_drops_driver_before_next_attach(self):
+        self.browser(False)
+        stale_driver, next_driver = self.driver(), self.driver()
+        stale_driver.service.process.poll.return_value = None
+        stale_driver.execute_cdp_cmd.side_effect = WebDriverException("viewport unavailable")
+
+        with patch("module.game.cloud.webdriver.Chrome", side_effect=[stale_driver, next_driver]) as connect:
+            self.assertFalse(self.controller.connect_to_running_game())
+            self.assertIsNone(self.controller.driver)
+            self.assertTrue(self.controller.connect_to_running_game())
+
+        self.assertEqual(connect.call_count, 2)
+        stale_driver.service.process.terminate.assert_called_once_with()
+        next_driver.execute_cdp_cmd.assert_called_once()
+        self.controller.close_all_m7a_browser.assert_not_called()
+
+    def test_failed_player_probe_drops_stale_driver_before_next_attach(self):
+        self.browser(False)
+        self.controller.driver = stale_driver = self.driver()
+        stale_driver.find_elements.side_effect = WebDriverException("invalid session")
+        stale_driver.service.process.poll.return_value = None
+
+        with patch("module.game.cloud.webdriver.Chrome", return_value=self.driver()) as connect:
+            self.assertFalse(self.controller.connect_to_running_game())
+            self.assertTrue(self.controller.connect_to_running_game())
+
+        connect.assert_called_once()
+        stale_driver.service.process.terminate.assert_called_once_with()
+        self.controller.close_all_m7a_browser.assert_not_called()
+
+    def test_connect_only_exit_preserves_browser_and_normal_start_restores_cleanup(self):
+        self.browser(True)
+        driver = self.driver()
+        driver.service.process.poll.return_value = None
+        with patch("module.game.cloud.webdriver.Chrome", return_value=driver):
+            self.assertTrue(self.controller.connect_to_running_game())
+        self.controller._clean_at_exit()
+
+        self.assertIsNone(self.controller.driver)
+        driver.service.process.terminate.assert_called_once_with()
+        driver.quit.assert_not_called()
+        self.controller.close_all_m7a_browser.assert_not_called()
+
+        with patch.object(self.controller, "_connect_or_create_browser"), patch.object(
+                self.controller, "_confirm_viewport_resolution"):
+            self.assertTrue(self.controller.start_game_process())
+        self.controller._clean_at_exit()
+        self.controller.close_all_m7a_browser.assert_called_once_with(headless=True)
+
     def test_connected_browser_without_game_does_not_enter_queue(self):
         self.browser(False)
         with patch("module.game.cloud.webdriver.Chrome", return_value=self.driver(in_game=False)):

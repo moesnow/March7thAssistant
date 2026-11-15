@@ -347,7 +347,7 @@ from module.game import cloud_game
 from module.game.adb_transport import AdbError
 from module.game.adb_status import publish_status
 from tasks.game import adb_check
-from module.game.cloud import CloudGameZeroDurationError
+from module.game.cloud import CloudGamePaidTimeExhaustedError, CloudGameZeroDurationError
 import tasks.reward as reward
 import tasks.challenge as challenge
 import tasks.version as version
@@ -358,7 +358,7 @@ from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
-from tasks.weekly.currency_wars import CurrencyWars, CurrencyWarsTerminalError
+from tasks.weekly.currency_wars import CurrencyWars, CurrencyWarsTerminalError, CurrencyWarsUnavailable
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 from tasks.base import screen_test
@@ -476,10 +476,25 @@ def run_sub_task(action, task_override=None):
         game.start(headless=False if action in visible_cloud_tasks else None)
     else:
         task_power_request.acquire(log)
-        if get_control_backend(cfg) == "cloud":
-            if not cloud_game.start_game_process():
+        backend = get_control_backend(cfg)
+        if backend == "cloud":
+            if action == "currencywarstemp":
+                attempts = 3
+                for attempt in range(1, attempts + 1):
+                    pause_ctl.checkpoint()
+                    connected = cloud_game.connect_to_running_game()
+                    pause_ctl.checkpoint()
+                    if connected:
+                        break
+                    if attempt < attempts:
+                        log.warning(f"货币战争中途接管暂未连接到云游戏，重新连接（{attempt}/{attempts}）")
+                        time.sleep(1)
+                else:
+                    raise CurrencyWarsUnavailable("连续无法连接正在运行的云游戏，请检查会话后继续货币战争")
+            elif not cloud_game.start_game_process():
                 raise ConnectionError("启动或连接浏览器失败")
-        game.switch_to_game()
+        if action != "currencywarstemp" or backend != "cloud":
+            game.switch_to_game()
 
     def _run_loop_task_with_telemetry(task_id, task_fn):
         while True:
@@ -764,6 +779,11 @@ if __name__ == "__main__":
             run_session.note(status=STATUS_STOPPED)
             log.warning("任务已按停止指令结束")
             sys.exit(EXIT_STOPPED)
+        except CloudGamePaidTimeExhaustedError as error:
+            release_input()
+            run_session.note(error=str(error), reason="cloud_game_paid_time_exhausted")
+            notif.flush_batch()
+            sys.exit(EXIT_FAILED)
         except (AdbError, ProfileAssetNotFoundError, TouchProfileInputError) as e:
             release_input()
             run_session.note(error=str(e))
