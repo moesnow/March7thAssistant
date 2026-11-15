@@ -186,7 +186,7 @@ def find_support_gift(pixels, glyph):
 
 def claim_assist():
     screen.change_to("menu", max_recursion=1)
-    if menu_alert(auto, ASSIST_ALERT_CROP, "./assets/touch_720/images/screen/menu.png") is False:
+    if menu_alert(auto, ASSIST_ALERT_CROP, "./assets/touch_720/images/screen/menu_alert.png") is False:
         log.info("已确认更多菜单无红点")
         return
 

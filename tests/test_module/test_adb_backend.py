@@ -12,11 +12,26 @@ from threading import Thread
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from PIL import Image
+from PIL import Image, ImageDraw
 import pytest
 
 from module.game import adb as backend
+from module.game import adb_ready
 from module.game import adb_transport as transport
+
+
+@pytest.mark.parametrize("badge", [(56, 9, 6), (55, 5, 10), (52, 9, 10)])
+def test_touch_menu_recognizes_the_button_with_a_notification_badge(badge):
+    with Image.open("assets/touch_720/images/screen/menu_alert.png") as image:
+        button = image.convert("RGB")
+    x, y, radius = badge
+    draw = ImageDraw.Draw(button)
+    draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=(244, 37, 63))
+    draw.ellipse((x - 1, y - 1, x + 1, y + 1), fill="white")
+    frame = Image.new("RGB", transport.RESOLUTION)
+    frame.paste(button, (1110, 55))
+
+    assert adb_ready._match(frame, "menu", adb_ready._load_template("menu")) == (1138, 73)
 
 
 class FakeS1(socketserver.ThreadingTCPServer):
