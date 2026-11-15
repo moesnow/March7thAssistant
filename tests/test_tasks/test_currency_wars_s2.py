@@ -3362,6 +3362,277 @@ def test_late_reveal_interrupts_shop_and_returns_control_to_state_machine(monkey
     assert not world.war.deferred_operations
 
 
+def svarog_modification(stage=None, *, read_controls=True, costs=(0, 0, 0)):
+    words = [("机心巧匠", 1046, 79), ("请选择1个强化效果", 1046, 141)]
+    if stage:
+        words.extend((("备战阶段", 287, 70), (stage, 287, 106), ("机心巧匠", 130, 331),
+                      ("商店", 1624, 982), ("出战", 1818, 751)))
+    if read_controls:
+        words.extend((("反击模组", 516, 376), ("导弹模组", 918, 376), ("响指模组", 1308, 376)))
+        words.append(("确认选择", 1492, 585))
+        words.extend((str(cost), x, 375) for cost, x in zip(costs, (815, 1212, 1609)))
+        words.extend(("详情", x, 426) for x in (650, 1046, 1444))
+    return Frame(CANVAS, labels(*words))
+
+
+def test_svarog_modification_is_identified_without_a_node_and_yields_to_reconnect():
+    pending = svarog_modification()
+    assert pending.page is Page.SVAROG_MODIFICATION
+    assert pending.stage is None
+    reconnect = reconnect_prompt()
+    assert Frame(reconnect.image, pending.labels + reconnect.labels).page is Page.RECONNECT
+
+
+def test_svarog_bond_in_sidebar_keeps_the_normal_preparation_page():
+    normal = Frame(CANVAS, labels(("机心巧匠", 130, 331), ("备战阶段", 287, 70), ("1-2", 287, 106),
+                                  ("前台区域", 974, 315), ("后台区域", 976, 575),
+                                  ("商店", 1624, 982), ("出战", 1818, 751)))
+    assert normal.page is Page.BOARD
+
+
+@pytest.mark.parametrize("strategy", (policy.DEFAULT_STRATEGY, policy.STRATEGY_ID))
+def test_svarog_modification_resumes_preparation_after_deployment_and_at_the_next_node(monkeypatch, world, strategy):
+    world.cfg.currencywars_strategy = strategy
+    world.cfg.currencywars_fast_mode = True
+    clara = policy.Unit("克拉拉", True, True, stars=1, output=True, cost=5)
+    reserve, target = slot("bench", 0, clara), slot("front", 0)
+    before = board(reserve, target, stage="1-2", used=0, gold=0)
+    deployed = apply_deployment(before, (reserve, target))
+
+    def preparation(team):
+        frame = page(Page.BOARD, ("出战", 1818, 751), stage=team.stage, gold=team.gold,
+                     capacity=(team.used, team.capacity), slots=lambda: team.slots)
+        occupied = {s.point for s in team.slots if s.occupied}
+        monkeypatch.setattr(frame, "slot_occupied", occupied.__contains__)
+        return frame
+
+    initial, ready = preparation(before), preparation(deployed)
+    after_node = replace(deployed, stage="1-3")
+    ready_next = preparation(after_node)
+    teams = {initial: before, ready: deployed, ready_next: after_node}
+    monkeypatch.setattr(world.war, "_read_default_board", lambda f, **_: (f, teams[f]))
+    monkeypatch.setattr(world.war, "_read_board", lambda f, **_: (f, teams[f]))
+    monkeypatch.setattr(world.war, "_card_stars", lambda *_: clara.stars)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    monkeypatch.setattr(task, "TASK_SECONDS", 40)
+
+    first, following = svarog_modification("1-2"), svarog_modification("1-3")
+    transient = Frame(CANVAS, ())
+    node_result = Frame(CANVAS, labels(("挑战成功", 960, 233), ("继续挑战", 960, 899)))
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = home()
+    state = SimpleNamespace(frame=initial, clicks=[], unreadable=0)
+
+    def capture():
+        if state.frame is transient:
+            state.unreadable += 1
+            if state.unreadable == 3:
+                state.frame = ready_next
+        return state.frame
+
+    def click(point, *, press_duration):
+        state.clicks.append((state.frame, point))
+        if state.frame in (first, following) and point[1] != 585:
+            assert any(abs(point[0] - x) < 188 for x in (650, 1046, 1444)) and 177 < point[1] < 397
+            return True
+        state.frame = {
+            (first, (1492, 585)): ready,
+            (ready, (1818, 751)): node_result,
+            (node_result, (960, 899)): following,
+            (following, (1492, 585)): transient,
+            (ready_next, (1818, 751)): result,
+            (result, (960, 899)): lobby,
+        }[state.frame, point]
+        # 确认回执暂未返回时，游戏可能已经进入下一页。
+        return state.frame is not transient
+
+    def deploy(source, destination, **kwargs):
+        assert state.frame is initial
+        assert source == (reserve.point[0] / 1920, reserve.point[1] / 1080)
+        assert destination == (target.point[0] / 1920, target.point[1] / 1080)
+        state.frame = first
+        return True
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    world.auto.click_element_with_pos.side_effect = click
+    world.auto.drag_mouse.side_effect = deploy
+
+    assert world.war.start(resume=True) is True
+    assert state.frame is lobby and state.unreadable == 3
+    assert [frame for frame, _ in state.clicks] == [first, first, ready, node_result, following, following,
+                                                   ready_next, result]
+    world.auto.drag_mouse.assert_called_once()
+    world.auto.press_key.assert_not_called()
+    task.save_error_screenshot.assert_not_called()
+
+
+def test_svarog_modification_chooses_a_free_offer_on_the_four_card_layout(monkeypatch, world):
+    current = Frame(CANVAS, labels(
+        ("机心巧匠", 1046, 79), ("请选择1个强化效果", 1046, 141), ("确认选择", 1492, 585),
+        ("反击强化Lv2", 528, 376), ("弹仓扩容", 809, 376), ("响指模组", 1108, 376), ("战备升级", 1405, 376),
+        ("2", 714, 375), ("1", 1014, 375), ("0", 1310, 375), ("0", 1609, 375),
+        *(("详情", x, 426) for x in (600, 898, 1194, 1492)),
+    ))
+    ready = page(Page.BOARD, stage="2-5")
+
+    def click(state, point):
+        if point == (1492, 585):
+            assert len(state.clicks) == 2
+            state.frame = ready
+        else:
+            assert 1060 < point[0] < 1625 and 177 < point[1] < 397
+
+    state = drive(monkeypatch, world, current, click)
+    assert world.war._play_step(current) is ready
+    assert len(state.clicks) == 2
+
+
+def test_svarog_modification_locates_four_prices_from_coin_icons_when_ocr_misses_the_columns(monkeypatch):
+    image = CANVAS.copy()
+    draw = ImageDraw.Draw(image)
+    for x in (687, 984, 1281, 1578):
+        draw.ellipse((x - 14, 363, x + 14, 390), fill=(224, 173, 70))
+    current = Frame(image, svarog_modification(read_controls=False).labels)
+    prices = {714: "0", 1014: "2", 1310: "0", 1609: "0"}
+
+    def read_price(area, *, recognition_only):
+        x1, y1, x2, y2 = area
+        assert recognition_only and y1 <= 375 < y2
+        return next((price for x, price in prices.items() if x1 <= x < x2), None)
+
+    monkeypatch.setattr(current, "read_local", read_price)
+    assert current.page is Page.SVAROG_MODIFICATION
+    assert [(card.point[0], price) for card, price in current.svarog_offers] == [
+        (600, 0), (897, 2), (1194, 0), (1491, 0),
+    ]
+
+
+def test_svarog_modification_uses_the_confirmed_layout_when_card_and_button_text_are_unreadable(monkeypatch, world):
+    current = svarog_modification(read_controls=False)
+    monkeypatch.setattr(current, "read_local", lambda *_, **__: None)
+    ready = page(Page.BOARD, stage="2-5")
+    routes = {(1444, 285): current, (1492, 585): ready}
+    state = drive(monkeypatch, world, current, lambda s, point: setattr(s, "frame", routes[point]))
+
+    assert world.war._play_step(current) is ready
+    assert state.clicks == [(Page.SVAROG_MODIFICATION, point) for point in routes]
+
+
+def test_svarog_modification_replans_if_the_clicked_card_is_later_found_to_cost_gold(monkeypatch, world):
+    unclear = svarog_modification(read_controls=False)
+    monkeypatch.setattr(unclear, "read_local", lambda *_, **__: None)
+    prices = svarog_modification(costs=(0, 2, 2))
+    ready = page(Page.BOARD)
+    routes = {(unclear, (1444, 285)): prices, (prices, (650, 285)): prices, (prices, (1492, 585)): ready}
+    state = drive(monkeypatch, world, unclear, lambda s, point: setattr(s, "frame", routes[s.frame, point]))
+
+    assert world.war._play_step(unclear) is ready
+    assert state.clicks == [(frame.page, point) for frame, point in routes]
+
+
+def test_svarog_takeover_never_confirms_an_old_paid_selection_after_a_lost_free_card_tap(monkeypatch, world):
+    catalogue = svarog_modification("2-5", costs=(0, 2, 1))
+
+    def selected(x):
+        image = CANVAS.copy()
+        draw = ImageDraw.Draw(image)
+        draw.line((x - 95, 396, x + 95, 396), fill="white", width=3)
+        draw.rectangle((1301, 556, 1684, 614), fill="white")
+        return Frame(image, catalogue.labels)
+
+    paid, free = selected(1046), selected(650)
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = home()
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    routes = {(free, (1492, 585)): result, (result, (960, 899)): lobby}
+
+    def click(state, point):
+        if state.frame is paid:
+            assert point == (650, 285)
+            if len(state.clicks) == 2:
+                state.frame = free
+            return True
+        state.frame = routes[state.frame, point]
+        return True
+
+    state = drive(monkeypatch, world, paid, click)
+
+    assert world.war.start(resume=True) is True
+    assert state.frame is lobby
+    assert state.clicks == [
+        (Page.SVAROG_MODIFICATION, (650, 285)),
+        (Page.SVAROG_MODIFICATION, (650, 285)),
+        (Page.SVAROG_MODIFICATION, (1492, 585)),
+        (Page.MATCH_RESULT, (960, 899)),
+    ]
+
+
+@pytest.mark.parametrize("fault", ("input", "prices", "stage"))
+def test_svarog_modification_recovers_from_local_faults_in_the_same_run(monkeypatch, world, fault):
+    current = svarog_modification("3-4")
+    alternate = svarog_modification("3-3") if fault == "stage" else svarog_modification("3-4", costs=(1, 2, 3))
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = home()
+    recovered = False
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    monkeypatch.setattr(task, "TASK_SECONDS", 12 if fault == "stage" else 60)
+
+    def capture(state):
+        if fault == "stage" and state.frame in (current, alternate):
+            state.frame = alternate if state.frame is current else current
+        if fault == "prices" and state.frame is alternate and world.now[0] >= 9:
+            state.frame = current
+
+    def click(state, point):
+        nonlocal recovered
+        if state.frame is result:
+            assert point == (960, 899)
+            state.frame = lobby
+        elif fault == "input" and world.now[0] < 6:
+            return False
+        elif point == (1492, 585):
+            assert recovered
+            state.frame = result
+        else:
+            recovered = True
+
+    state = drive(monkeypatch, world, alternate if fault == "prices" else current, click, capture)
+
+    assert world.war.start(resume=True) is True
+    assert recovered and state.frame is lobby
+    assert state.keys == []
+    task.save_error_screenshot.assert_not_called()
+
+
+@pytest.mark.parametrize("outcome", ("unavailable", "stopped", "timed_out"))
+def test_svarog_modification_has_a_bounded_end_and_checks_for_stop_before_confirm(monkeypatch, world, outcome):
+    current = svarog_modification()
+    state = drive(monkeypatch, world, current)
+
+    def checkpoint():
+        if outcome == "stopped" and state.clicks:
+            raise RunStopRequested
+
+    task.pause_ctl.checkpoint.side_effect = checkpoint
+    if outcome == "stopped":
+        with pytest.raises(RunStopRequested):
+            world.war._play_step(current)
+        assert len(state.clicks) == 1 and state.clicks[0][1] != (1492, 585)
+    elif outcome == "timed_out":
+        world.war.deadline = 10
+        with pytest.raises(task.CurrencyWarsBudgetExceeded, match="总时限"):
+            world.war._play_step(current)
+        assert len(state.clicks) == 6
+    else:
+        with pytest.raises(task.CurrencyWarsUnavailable, match="已保留当前现场"):
+            world.war._play_step(current)
+        assert len(state.clicks) == 12
+    assert state.frame is current
+
+
 @pytest.mark.parametrize("return_page", (Page.BOARD, Page.DETAIL))
 def test_dreamscape_dance_confirms_two_actual_selections_before_returning(monkeypatch, world, return_page):
     common = labels(("备战阶段", 287, 70), ("1-2", 287, 106), ("梦境交织", 1044, 77),

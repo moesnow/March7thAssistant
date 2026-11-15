@@ -46,8 +46,8 @@ RANK_CLICK_BATCH = 80
 RANK_CLICK_HOLD = 0.03
 PROMOTION_CAP_ENEMY_RANK = 28  # 入画奇航超频博弈 A4 冰钛 6
 PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLACK_MARKET, Page.REVEAL, Page.CHOICE,
-                           Page.DANCE, Page.RANGER, Page.GARDEN, Page.HACK, Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO,
-                           Page.EMPTY_FRONT))
+                           Page.DANCE, Page.RANGER, Page.SVAROG_MODIFICATION, Page.GARDEN, Page.HACK,
+                           Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO, Page.EMPTY_FRONT))
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
@@ -2864,7 +2864,8 @@ class CurrencyWars:
                 log.info(f"已确认投资卡免费刷新：{titles[column]} → {frame.investment_titles()[column]}")
         return frame
 
-    def _choose_single(self, frame, option, confirm, advanced, message, *, seconds=8, retry_after=2.2):
+    def _choose_single(self, frame, option, confirm, advanced, message, *, seconds=8, retry_after=2.2,
+                       can_confirm=None):
         """同一单选页先点选，再尝试确认，以游戏转场为准。"""
         page, stage, dialog = frame.action_context
         attempts = 3
@@ -2895,8 +2896,9 @@ class CurrencyWars:
                 return result
             if not same_view(current):
                 current = self._wait(lambda latest: same_view(latest) or advanced(latest), 2)
-            if current is not None and same_view(current) and (point := confirm(current)) is not None:
-                return self._tap(current, point)
+            if current is not None and same_view(current) and (can_confirm is None or can_confirm(current, candidate)):
+                if (point := confirm(current)) is not None:
+                    return self._tap(current, point)
             return result
 
         return self._action(
@@ -3411,6 +3413,48 @@ class CurrencyWars:
                 raise CurrencyWarsUnavailable("多次复核后仍未确认两个共舞卡位已选中及按钮可用，保留当前现场") from error
             raise
 
+    def _choose_special_event(self, frame):
+        event = frame.page
+
+        def advanced(f):
+            return f.page in ACTIVE_PAGES and f.page != event
+
+        def option(f, attempt):
+            free = tuple(card for card, price in f.svarog_offers if price == 0)
+            if free:
+                return free[attempt % len(free)]
+            last, price = f.svarog_offers[-1]
+            # 免费报价漏读时，用实拍三列和四列共用的末卡，下一帧仍要复核是否收费。
+            return ui.Label(last.text, ui.SVAROG_LAST_CARD) if price is None else None
+
+        def can_confirm(f, selected):
+            for card, price in f.svarog_offers:
+                intended = abs(card.point[0] - selected.point[0]) < 60
+                if intended and price not in (0, None):
+                    return False
+                # 点选可能尚未生效。先排除旧选中的可能付费卡，再按确认。
+                if not intended and price != 0 and f.svarog_card_outlined(card):
+                    return False
+            return True
+
+        def confirm(f):
+            return ui.point(f.find("确认选择", area=ui.EMPLOYEE_EVENT_CONFIRM)) or ui.SVAROG_CONFIRM_POINT
+
+        message = f"{event.value}点选并确认后未转场"
+        for retry in (False, True):
+            try:
+                return self._choose_single(frame, option, confirm, advanced, message, can_confirm=can_confirm)
+            except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout) as error:
+                if current := self._wait(advanced, 10):
+                    log.warning(f"操作回执延迟，已确认转到{current.page.value}：{error}")
+                    return current
+                frame = self.frame
+                if frame.page != event:
+                    raise
+                if retry:
+                    raise CurrencyWarsUnavailable(f"{message}，已保留当前现场") from error
+                log.warning(f"{event.value}仍在等待选择，复核后重试：{error}")
+
     def _choose_board_effect(self, frame):
         event = frame.page
         stage = frame.stage
@@ -3810,6 +3854,8 @@ class CurrencyWars:
             return self._choose(frame)
         if page in (Page.DANCE, Page.RANGER):
             return self._employee_event(frame)
+        if page == Page.SVAROG_MODIFICATION:
+            return self._choose_special_event(frame)
         if page in (Page.GARDEN, Page.HACK):
             return self._choose_board_effect(frame)
         if page == Page.HALO_TIP:
