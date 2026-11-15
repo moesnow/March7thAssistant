@@ -505,7 +505,9 @@ def run_sub_task(action, task_override=None):
                     raise CurrencyWarsUnavailable("连续无法连接正在运行的云游戏，请检查会话后继续货币战争")
             elif not cloud_game.start_game_process():
                 raise ConnectionError("启动或连接浏览器失败")
-        if action != "currencywarstemp" or backend != "cloud":
+        if action == "currencywarstemp" and backend == "local":
+            game.prepare_currency_wars_takeover()
+        elif action != "currencywarstemp" or backend != "cloud":
             game.switch_to_game()
 
     def _run_loop_task_with_telemetry(task_id, task_fn):

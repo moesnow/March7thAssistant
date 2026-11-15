@@ -23,6 +23,7 @@ from module.logger import log
 from module.screen import screen
 from module.automation import auto
 from module.automation.background_input import WINDOW_WAIT_SECONDS, GameWindowLost, InputInterrupted
+from module.automation.windows_input import WindowsInputApi
 from module.config import cfg
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.notification import notif
@@ -37,6 +38,7 @@ from utils.runs import describe_run, idle_without_run_lock
 from utils.temporary_graphics import begin_temporary_graphics, restore_temporary_graphics
 from utils.wait import wait_until
 from utils.windows_power import task_power_request
+from utils.windows_session import process_session_id
 
 
 class GameClientOutdatedError(RuntimeError):
@@ -65,6 +67,46 @@ def switch_to_game():
         starrail = StarRailController(cfg=cfg, logger=log)
         starrail.switch_to_game(force=True)
     log.hr("完成", 2)
+
+
+def _local_game_process_running(controller):
+    try:
+        if controller.is_game_running():
+            return True
+        return WindowsInputApi().process_running(controller.process_name, session_id=process_session_id())
+    except Exception as error:
+        log.debug(f"暂未确认本地游戏进程状态：{error}")
+        return None
+
+
+def _wait_for_local_foreground(controller, timeout):
+    def activate():
+        pause_ctl.checkpoint()
+        if controller.switch_to_game():
+            return True
+        if _local_game_process_running(controller) is False:
+            raise GameWindowLost("游戏进程已退出，无法激活游戏窗口")
+        return False
+
+    activated = wait_until(activate, min(WINDOW_WAIT_SECONDS, timeout))
+    pause_ctl.checkpoint()
+    if not activated:
+        raise GameStartupUnavailable("无法将本地游戏窗口切到前台，已保留游戏现场")
+
+
+def prepare_currency_wars_takeover():
+    """让已有本地游戏进入可操作状态，保留游戏进程与对局。"""
+    pause_ctl.checkpoint()
+    try:
+        if getattr(auto.input_handler, "is_background", False) is True:
+            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
+        else:
+            _wait_for_local_foreground(StarRailController(cfg=cfg, logger=log), WINDOW_WAIT_SECONDS)
+    except GameStartupUnavailable:
+        raise
+    except (GameWindowLost, InputInterrupted) as error:
+        raise GameStartupUnavailable(f"无法接管本地货币战争：{error}") from error
+    pause_ctl.checkpoint()
 
 
 def ensure_game_ready():
@@ -248,11 +290,17 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
 
     def start_local_game(starrail):
         resolution = get_ui_profile(cfg).resolution
-        if getattr(auto.input_handler, 'is_background', False) is True and starrail.is_game_running():
+        background = getattr(auto.input_handler, 'is_background', False) is True
+        if background and starrail.is_game_running():
             # 后台模式不还原、不激活已运行的游戏：窗口暂时不可操作（例如被最小化）时等待用户还原，
             # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
             auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
-        if not starrail.switch_to_game():
+        switched = starrail.switch_to_game()
+        if (not switched and screen_ready is not None and not background
+                and _local_game_process_running(starrail) is not False):
+            _wait_for_local_foreground(starrail, remaining_startup_time())
+            switched = True
+        if not switched:
             try:
                 if game_option_enabled(cfg, "auto_set_resolution_enable"):
                     starrail.change_resolution(*resolution)
@@ -269,6 +317,10 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 time.sleep(10)
 
                 if not wait_until(lambda: starrail.switch_to_game(), remaining_startup_time()):
+                    pause_ctl.checkpoint()
+                    if (screen_ready is not None and not background
+                            and _local_game_process_running(starrail) is not False):
+                        raise GameStartupUnavailable("无法将本地游戏窗口切到前台，已保留游戏现场")
                     raise TimeoutError("切换到游戏超时")
 
                 time.sleep(10)
@@ -351,9 +403,14 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 ready = screen_ready() or screen.get_current_screen(autotry=False, max_retries=1)
             else:
                 ready = screen.get_current_screen(max_retries=1)
-        except (GameRecoveryError, InputInterrupted, GameWindowLost, ProfileAssetNotFoundError, TouchProfileInputError):
+        except (InputInterrupted, GameWindowLost, ProfileAssetNotFoundError, TouchProfileInputError):
             raise
         except (RuntimeError, OSError) as error:
+            if (backend == "local" and screen_ready is not None
+                    and _local_game_process_running(starrail) is False):
+                raise GameWindowLost("游戏进程已在任务首帧前退出") from error
+            if isinstance(error, GameRecoveryError):
+                raise
             readiness_error = error
             log.debug(f"任务起始画面暂不可用：{error}")
             return False
@@ -406,6 +463,12 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                     raise GameStartupUnavailable(f"云游戏启动持续不可用，已保留游戏现场：{e}") from e
                 time.sleep(1)
                 continue
+            if backend == "local" and screen_ready is not None and isinstance(e, GameWindowLost):
+                if _local_game_process_running(starrail) is not False:
+                    raise GameStartupUnavailable(f"游戏窗口持续不可用，已保留游戏现场：{e}") from e
+                if retry == MAX_RETRY - 1:
+                    raise GameStartupUnavailable(f"游戏进程多次退出，无法完成启动：{e}") from e
+                continue
             if backend == "local" and starrail.launch_method == "epic":
                 from module.game.epic import EpicLaunchError
                 if isinstance(e, EpicLaunchError):
@@ -420,8 +483,6 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 if isinstance(e, GameClientOutdatedError) and cfg.update_via_launcher:
                     update_via_launcher()
             if retry == MAX_RETRY - 1:
-                if screen_ready is not None and isinstance(e, GameWindowLost):
-                    raise GameStartupUnavailable(f"游戏进程多次退出，无法完成启动：{e}") from e
                 raise  # 如果是最后一次尝试，则重新抛出异常
 
 

@@ -1,9 +1,10 @@
 import ast
 from contextlib import nullcontext
 from pathlib import Path
-from types import SimpleNamespace
+from types import MethodType, SimpleNamespace
 from unittest.mock import ANY, Mock, call
 
+from PIL import Image
 import pytest
 
 
@@ -86,6 +87,7 @@ def test_task_readiness_fallback_uses_read_only_recognition_and_preserves_window
 def test_task_readiness_waits_through_an_unavailable_frame(startup, monkeypatch):
     game, controller, _ = startup
     controller.switch_to_game.return_value = True
+    controller.is_game_running.return_value = True
     monkeypatch.setattr(game, "screen", Mock())
     game.wait_until.side_effect = lambda condition, timeout: condition() or condition()
     ready = Mock(side_effect=(RuntimeError("截图超时"), True))
@@ -97,38 +99,133 @@ def test_task_readiness_waits_through_an_unavailable_frame(startup, monkeypatch)
     controller.stop_game.assert_not_called()
 
 
-@pytest.mark.parametrize("recovers", (True, False))
-def test_currency_wars_startup_restarts_a_game_that_exits_before_its_first_frame(startup, monkeypatch, recovers):
-    from tasks.weekly.currency_wars import CurrencyWars, Page
+@pytest.mark.parametrize("outcome", ("recovers", "repeated_exit", "window_missing"))
+def test_currency_wars_startup_checks_the_process_after_its_first_frame_fails(startup, monkeypatch, outcome):
+    from module.automation import automation
+    from module.automation.screenshot import Screenshot
+    from tasks.weekly import currency_wars
+    from utils import wait
 
-    game, controller, _ = startup
-    controller.switch_to_game.side_effect = [True, False, False]
+    game, controller, cfg = startup
+    state = SimpleNamespace(running=True, window=True, now=0)
+    clock = SimpleNamespace(monotonic=lambda: state.now,
+                            sleep=lambda seconds: setattr(state, "now", state.now + seconds))
+    for module in (game, wait, automation, currency_wars):
+        monkeypatch.setattr(module, "time", clock)
+    monkeypatch.setattr(game, "wait_until", wait.wait_until)
+    monkeypatch.setattr(game, "WindowsInputApi", Mock())
+    game.WindowsInputApi.return_value.process_running.side_effect = lambda *_args, **_kwargs: state.running
+    monkeypatch.setattr(game, "process_session_id", lambda: 4)
+    monkeypatch.setattr(automation, "cfg", cfg)
     monkeypatch.setattr(game, "screen", Mock())
-    game.wait_until.side_effect = lambda condition, timeout: (
-        condition() if condition.__name__ == "task_screen_ready" else True
-    )
+    game.screen.get_current_screen.return_value = False
 
-    def capture():
-        if not recovers or not controller.stop_game.called:
-            raise game.GameWindowLost("游戏在任务首帧前退出")
-        return SimpleNamespace(page=Page.HOME)
+    def start_process():
+        state.running = state.window = True
+        return True
 
-    screenshot = Mock(side_effect=capture)
-    monkeypatch.setattr(CurrencyWars, "_capture", staticmethod(screenshot))
+    controller.switch_to_game.side_effect = lambda: state.window
+    controller.is_game_running.side_effect = lambda: state.window
+    controller.start_game_process.side_effect = start_process
 
-    if recovers:
-        game.start_game(screen_ready=CurrencyWars.game_screen_ready)
-        assert screenshot.call_count == 2
-        controller.stop_game.assert_called_once_with()
+    def window_disappears(_title):
+        state.window = False
+        state.running = outcome == "window_missing"
+        return None
+
+    actual_screenshot = Screenshot.take_screenshot
+    image = Image.new("RGB", (1920, 1080))
+
+    def screenshot(*args, **kwargs):
+        if outcome == "recovers" and controller.start_game_process.called:
+            return image, (0, 0, 1920, 1080), 1
+        return actual_screenshot(*args, **kwargs)
+
+    monkeypatch.setattr(Screenshot, "get_window", window_disappears)
+    monkeypatch.setattr(Screenshot, "take_screenshot", Mock(side_effect=screenshot))
+    board = (("备战阶段", 472, 46), ("1-1", 472, 78), ("1/1", 960, 259), ("商店", 1624, 982),
+             ("出战", 1818, 750), ("前台区域", 975, 315), ("后台区域", 963, 577))
+    auto = Mock(input_handler=game.auto.input_handler, window_title="星穹铁道",
+                ocr_result=[([(x, y)], (text, 1)) for text, x, y in board])
+    auto.take_screenshot = MethodType(automation.Automation.take_screenshot, auto)
+    auto._is_debug_enabled.return_value = False
+    monkeypatch.setattr(game, "auto", auto)
+    monkeypatch.setattr(currency_wars, "auto", auto)
+
+    if outcome == "recovers":
+        game.start_game(screen_ready=currency_wars.CurrencyWars.game_screen_ready)
         controller.start_game_process.assert_called_once_with()
-    else:
+        auto.perform_ocr.assert_called_once_with(raise_on_error=True)
+    elif outcome == "repeated_exit":
         with pytest.raises(game.GameStartupUnavailable, match="游戏进程多次退出") as error:
-            game.start_game(screen_ready=CurrencyWars.game_screen_ready)
+            game.start_game(screen_ready=currency_wars.CurrencyWars.game_screen_ready)
         assert error.value.reason == "game_startup_unavailable"
-        assert screenshot.call_count == 3
-        assert controller.stop_game.call_count == 3
         assert controller.start_game_process.call_count == 2
+        auto.perform_ocr.assert_not_called()
+    else:
+        with pytest.raises(currency_wars.CurrencyWarsUnavailable, match="截图超时"):
+            game.start_game(screen_ready=currency_wars.CurrencyWars.game_screen_ready)
+        controller.start_game_process.assert_not_called()
+        auto.perform_ocr.assert_not_called()
+    game.WindowsInputApi.return_value.process_running.assert_called_with(controller.process_name, session_id=4)
+    controller.stop_game.assert_not_called()
     game.screen.get_current_screen.assert_not_called()
+
+
+@pytest.mark.parametrize("takeover", (False, True))
+@pytest.mark.parametrize("outcome", ("recovers", "unavailable", "stopped"))
+def test_currency_wars_front_window_activation_preserves_the_existing_process(
+        startup, monkeypatch, takeover, outcome):
+    from module.game.base import GameControllerBase
+    from utils import wait
+    from utils.pause import RunStopRequested
+
+    game, controller, cfg = startup
+    cfg.start_game_timeout = .05
+    state = SimpleNamespace(now=0)
+    clock = SimpleNamespace(monotonic=lambda: state.now,
+                            sleep=lambda seconds: setattr(state, "now", state.now + seconds))
+    monkeypatch.setattr(game, "time", clock)
+    monkeypatch.setattr(wait, "time", clock)
+    monkeypatch.setattr(game, "wait_until", wait.wait_until)
+    controller.is_game_running.return_value = True
+    controller.get_window_handle.return_value = 12
+    controller.switch_to_game = MethodType(GameControllerBase.switch_to_game, controller)
+    activation_denied = RuntimeError("Failed to set window foreground after multiple attempts")
+    if outcome == "recovers":
+        controller.set_foreground_window_with_retry.side_effect = [activation_denied, None]
+    else:
+        controller.set_foreground_window_with_retry.side_effect = activation_denied
+
+    def checkpoint():
+        if outcome == "stopped" and controller.set_foreground_window_with_retry.called:
+            raise RunStopRequested
+
+    monkeypatch.setattr(game, "pause_ctl", SimpleNamespace(checkpoint=checkpoint, check_stop=checkpoint))
+    ready = Mock(return_value=True)
+
+    def start():
+        if takeover:
+            game.prepare_currency_wars_takeover()
+        else:
+            game.start_game(screen_ready=ready)
+
+    if outcome == "recovers":
+        start()
+        assert controller.set_foreground_window_with_retry.call_count == 2
+        assert ready.call_count == (0 if takeover else 1)
+    elif outcome == "stopped":
+        with pytest.raises(RunStopRequested):
+            start()
+        controller.set_foreground_window_with_retry.assert_called_once()
+        ready.assert_not_called()
+    else:
+        with pytest.raises(game.GameStartupUnavailable, match="无法将本地游戏窗口切到前台"):
+            start()
+        assert state.now == (game.WINDOW_WAIT_SECONDS if takeover else 3)
+        ready.assert_not_called()
+    controller.start_game_process.assert_not_called()
+    controller.stop_game.assert_not_called()
 
 
 def test_generic_readiness_keeps_startup_retries_when_the_frame_is_readable(startup, monkeypatch):

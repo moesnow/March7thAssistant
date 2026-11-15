@@ -183,7 +183,7 @@ class CurrencyWars:
         self.weekly_reward_pending = False
         self._start_match_sent = False
         self.supply_required = None
-        self.supply_attempted = set()
+        self.supply_attempted: dict[int, tuple[int, int] | None] = {}
         self.supply_stage = None
 
     def _check_budget(self):
@@ -662,12 +662,18 @@ class CurrencyWars:
                 lambda f: resume_button(f, expected_mode) is not None, 10,
                 "入画奇航模式菜单没有可确认的续局入口，保留对局",
             )
-        self.mode = frame.menu_mode
-        self.mode_confirmed = True
-        log.info(f"继续{ui.MODE_NAMES[self.mode]}存档，使用当前配置的阵容策略")
-        return self._click_to(
-            frame, lambda f: ui.point(resume_button(f, self.mode)),
-            lambda f: f.page in ACTIVE_PAGES, "未确认恢复入画奇航对局", seconds=25,
+        mode = frame.menu_mode
+
+        def continue_match(f, target):
+            self.mode = mode
+            self.mode_confirmed = True
+            log.info(f"继续{ui.MODE_NAMES[mode]}存档，使用当前配置的阵容策略")
+            return self._tap(f, target)
+
+        return self._action(
+            frame, lambda f: (button.point,) if (button := resume_button(f, mode)) else None,
+            continue_match,
+            lambda f: f.page in ACTIVE_PAGES, "未确认恢复入画奇航对局", seconds=25, attempts=3,
         )
 
     def _settle_saved_match(self, frame):
@@ -800,8 +806,9 @@ class CurrencyWars:
                     return frame
                 if self.result is not None:
                     return self._homepage(frame, keep_weekly=weekly_entry)
-                if self._start_match_sent and (frame.page != Page.RANK or frame.rank_mode != self.mode):
-                    # 开局请求可能已写入同模式进度。按续局核对，勿按旧存档设置结算。
+                if self.mode_confirmed and (
+                        not self._start_match_sent or frame.page != Page.RANK or frame.rank_mode != self.mode):
+                    # 开局或续局请求已发出，沿用已确认的模式核对存档。
                     menu = frame if frame.page == Page.MODES else self._mode_menu(self._homepage(frame))
                     return self._resume_saved_match(menu, expected_mode=self.mode)
                 if weekly_entry:
@@ -2838,7 +2845,7 @@ class CurrencyWars:
             attempted += 1
             log.info(f"{dialog or page.value}：选择「{candidate.text}」")
             if dialog == "补给阶段":
-                self.supply_attempted.add(candidate.point[0])
+                self.supply_attempted[candidate.point[0]] = f.supply_selection()
             result = self._tap(f, candidate.point)
             if confirm is None:
                 return result
@@ -2914,7 +2921,8 @@ class CurrencyWars:
             count = frame.supply_selection()
             if count is not None:
                 self.supply_required = count[1]
-            if self.supply_required is not None or self._supply_confirm(frame) is not None:
+            if (self.supply_required is not None or self._supply_confirm(frame) is not None
+                    or all(x in self.supply_attempted or frame.supply_card_selected(x) for x in ui.SUPPLY_CENTERS)):
                 return self._choose_supply(frame, count)
             supply_preferred = self._choice_option(frame)
             preferred_x = supply_preferred.point[0] if supply_preferred else 960
@@ -3007,17 +3015,54 @@ class CurrencyWars:
             if button := self._supply_confirm(f, required):
                 return (button.point,)
 
-        centers = ()
-        if not confirm(frame):
-            choice = self._choice_option(frame)
-            preferred_x = choice.point[0] if choice else 960
-            centers = sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x))
+        def verified_selection(f):
+            current = f.supply_selection()
+            if current is None or required not in (None, current[1]) or current[0] >= current[1]:
+                return None
+            selected = frozenset(x for x in ui.SUPPLY_CENTERS if f.supply_card_selected(x))
+            return (current, selected) if len(selected) == current[0] else None
 
-        for x in centers:
-            if confirm(frame):
-                break
-            if x in self.supply_attempted or frame.supply_card_selected(x):
-                continue
+        choice = self._choice_option(frame) if not confirm(frame) else None
+        preferred_x = choice.point[0] if choice else 960
+        centers = sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x))
+        fresh_centers = iter(centers)
+        rechecked = set()
+        selection = None
+
+        def retry_card(selected):
+            # 对未操作过或操作时漏读计数的卡，只按复核结果补点一次。
+            return next((x for x in centers if x not in selected and x not in rechecked
+                         and self.supply_attempted.get(x) is None), None)
+
+        def ready(f):
+            nonlocal selection
+            if advanced(f) or same_popup(f) and confirm(f):
+                return True
+            current = verified_selection(f) if same_popup(f) else None
+            stable = current is not None and current == selection and retry_card(current[1]) is not None
+            selection = current
+            return stable
+
+        while not confirm(frame):
+            x = next((x for x in fresh_centers if x not in self.supply_attempted
+                      and not frame.supply_card_selected(x)), None)
+            selection = None
+            if x is None:
+                fresh = self._wait(ready, 12)
+                if fresh is None:
+                    message = ("暂未读到补给已选张数或可用确认按钮" if count is None
+                               else f"补给已选择 {count[0]}/{required} 张，未达到确认要求")
+                    raise CurrencyWarsUnavailable(f"多次复核补给后仍无法继续，保留当前现场：{message}")
+                frame = fresh
+                if not same_popup(frame):
+                    return frame
+                if confirm(frame):
+                    break
+                count, selected = selection
+                self.supply_required = required = count[1]
+                x = retry_card(selected)
+                rechecked.add(x)
+
             sent = False
             sent_count = None
 
@@ -3033,6 +3078,8 @@ class CurrencyWars:
                 current = f.supply_selection()
                 if sent and (sent_count is None or current != sent_count):
                     return None
+                if selection is not None and verified_selection(f) != selection:
+                    return None
                 if (not confirm(f) and not f.supply_card_selected(x)
                         and (current is None or current == count and current[0] < required)):
                     return ((x, 566),)
@@ -3042,12 +3089,13 @@ class CurrencyWars:
                 self._check_budget()
                 sent = True
                 sent_count = f.supply_selection()
-                self.supply_attempted.add(x)
+                self.supply_attempted[x] = sent_count
                 return self._tap(f, point)
 
             try:
                 frame = self._action(frame, available, select, changed, "补给卡片选择数量未变化",
-                                     seconds=5, attempts=2, retry_after=4, same_view=same_popup)
+                                     seconds=5, attempts=1 if selection is not None else 2,
+                                     retry_after=4, same_view=same_popup)
             except CurrencyWarsRecoverable:
                 frame = self.frame
             if not same_popup(frame):
@@ -3055,7 +3103,7 @@ class CurrencyWars:
             current = frame.supply_selection()
             if current is not None and current[1] != required:
                 return frame
-            if count is not None and current is not None and current[0] < count[0]:
+            if sent and count is not None and current is not None and current[0] < count[0]:
                 # 接管时可能点到已选卡，只在计数核实减少后恢复这张卡。
                 frame = self._action(
                     frame, lambda f: ((x, 566),) if f.supply_selection() == current else None, self._tap,
@@ -3065,16 +3113,6 @@ class CurrencyWars:
                 if not same_popup(frame):
                     return frame
             count = frame.supply_selection()
-        if not confirm(frame):
-            message = ("暂未读到补给已选张数或可用确认按钮" if count is None
-                       else f"补给已选择 {count[0]}/{required} 张，未达到确认要求")
-            if not all(x in self.supply_attempted or frame.supply_card_selected(x) for x in centers):
-                raise CurrencyWarsReadTimeout(message)
-            frame = self._wait(lambda f: advanced(f) or same_popup(f) and confirm(f), 12)
-            if frame is None:
-                raise CurrencyWarsUnavailable(f"多次复核补给后仍无法继续，保留当前现场：{message}")
-            if not same_popup(frame):
-                return frame
 
         return self._action(
             frame, confirm, self._tap, advanced, "补给选足后确认未转场", seconds=6, attempts=2, retry_after=4,
@@ -3495,6 +3533,8 @@ class CurrencyWars:
                 return options[0]
             # 结算界面可能同时有下一页和返回。先读完结算流水与晋升页。
             forward = [option for option in options if option.text in RESULT_ACTIONS[:3]]
+            if not forward and page == Page.MATCH_RESULT:
+                return f.find("返回货币战争", area=button_area)
             return forward[0] if len(forward) == 1 else None
 
         def ready(f):

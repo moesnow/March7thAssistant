@@ -389,6 +389,21 @@ def test_currency_wars_entry_continues_after_the_fight_receipt_times_out(runner,
     task_steps.screen.change_to.assert_not_called()
 
 
+def test_currency_wars_local_takeover_does_not_enter_an_unavailable_window(runner):
+    runner.game.prepare_currency_wars_takeover.side_effect = GameStartupUnavailable(
+        "无法切换到货币战争游戏窗口，已保留游戏现场"
+    )
+
+    record = run_currency_wars_cli(runner, "currencywarstemp")
+
+    assert (record["status"], record["reason"], record["exit_code"]) == (
+        "failed", "game_startup_unavailable", EXIT_FAILED)
+    runner.game.prepare_currency_wars_takeover.assert_called_once_with()
+    runner.game.switch_to_game.assert_not_called()
+    runner.game.start.assert_not_called()
+    runner.CurrencyWars.assert_not_called()
+
+
 def test_currency_wars_loop_stops_after_repeated_unconfirmed_attempts(runner):
     war = runner.CurrencyWars.return_value
     war.result = None

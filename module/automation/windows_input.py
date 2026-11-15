@@ -269,11 +269,14 @@ class WindowsInputApi:
                 raise WindowGoneError('游戏窗口已关闭或重建') from error
             raise
 
-    def process_running(self, process_name):
+    def process_running(self, process_name, *, session_id=None):
+        from utils.windows_session import process_session_id
+
         stem = Path(process_name).stem.casefold()
         for process in self.psutil.process_iter(['name']):
             if Path(process.info.get('name') or '').stem.casefold() == stem:
-                return True
+                if session_id is None or process_session_id(process.pid) == session_id:
+                    return True
         return False
 
     def inspect(self, title, process_name):
