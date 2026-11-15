@@ -20,6 +20,7 @@ internal class RootAccess(
         private set
 
     fun probe() {
+        permission = PermissionState.NOT_AUTHORIZED
         val shell = try {
             startShell()
         } catch (error: DeviceFailure) {
@@ -47,7 +48,6 @@ internal class RootAccess(
         } finally {
             shell.process.destroy()
         }
-        permission = PermissionState.NOT_AUTHORIZED
     }
 
     fun open(apkPath: String, token: String): DeviceLease {

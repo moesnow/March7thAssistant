@@ -42,6 +42,7 @@
     <string name="permission_inactive">未运行</string>
     <string name="permission_denied">未授权</string>
     <string name="permission_ready">已就绪</string>
+    <string name="permission_checking_root">正在检查 Root 权限</string>
     <string name="get_shizuku">下载 Shizuku</string>
     <string name="open_shizuku">打开 Shizuku</string>
     <string name="authorize">授权</string>

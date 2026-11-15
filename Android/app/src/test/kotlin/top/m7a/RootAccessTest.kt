@@ -30,6 +30,24 @@ class RootAccessTest {
     }
 
     @Test
+    fun recheckDoesNotKeepAnEarlierReadyStateWhenTheProbeFails() {
+        var canStart = true
+        val access = RootAccess(startProcess = {
+            check(canStart)
+            FakeSu {
+                emit("2000")
+                exit(0)
+            }
+        }, warn = {})
+        access.probe()
+        assertEquals(PermissionState.READY, access.permission)
+
+        canStart = false
+        assertThrows(IllegalStateException::class.java) { access.probe() }
+        assertEquals(PermissionState.NOT_AUTHORIZED, access.permission)
+    }
+
+    @Test
     fun sendsTokenAfterAppServerTakesStdinAndClosesLeaseWithEof() {
         val process = FakeSu { line ->
             if (lines.size == 1) {

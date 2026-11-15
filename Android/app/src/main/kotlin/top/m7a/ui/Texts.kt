@@ -117,6 +117,7 @@ internal val Privilege.title: Int
 
 internal fun permissionLabel(privilege: Privilege, permission: PermissionState): Int = when (permission) {
     PermissionState.NOT_CHECKED -> R.string.permission_unchecked
+    PermissionState.CHECKING -> R.string.permission_checking_root
     PermissionState.NOT_INSTALLED ->
         if (privilege == Privilege.ROOT) R.string.permission_no_root else R.string.permission_missing
     PermissionState.NOT_RUNNING -> R.string.permission_inactive
