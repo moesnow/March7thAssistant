@@ -1530,6 +1530,26 @@ def test_start_never_clicks_loading_screen(monkeypatch, world):
     assert not state.keys
 
 
+@pytest.mark.parametrize("read_locally", (False, True))
+def test_overclock_starts_when_ocr_reads_the_enemy_rank_with_brackets(monkeypatch, world, read_locally):
+    world.war.mode = "overclock"
+    rank_labels = labels(("入画奇航", 151, 80), ("超频博弈", 155, 884),
+                         ("A8财富造物主", 168, 321), ("[4]", 674, 965), ("开始对局", 1692, 966))
+    if not read_locally:
+        rank_labels += labels(("[72]", 544, 965))
+    initial = Frame(CANVAS, rank_labels)
+    if read_locally:
+        monkeypatch.setattr(initial, "read_local", lambda area: "[72]" if area == ui.RANK_ENEMY else None)
+    ready = page(Page.BOARD)
+    state = drive(monkeypatch, world, initial, lambda s, _: setattr(s, "frame", ready))
+
+    assert initial.page == Page.RANK
+    assert (initial.rank_tier, initial.enemy_rank, initial.rank_affixes) == (8, 72, 4)
+    assert initial.number(ui.RANK_ENEMY, 999) is None
+    assert world.war._launch(initial, False) is ready
+    assert state.clicks == [(Page.RANK, (1692, 966))]
+
+
 def test_overclock_starts_on_its_rank_page_and_chooses_lowest(monkeypatch, world):
     world.cfg.currencywars_type = "overclock"
     world.cfg.currencywars_rank_difficulty = "lowest"
@@ -3344,6 +3364,22 @@ def test_tea_meal_continues_when_ocr_misses_the_card_name_and_health(monkeypatch
         s, "frame", selected if p == (1200, 409) else after))
     assert world.war._tea(initial) is after
     assert state.clicks == [(Page.TEA, (1200, 409)), (Page.TEA, (1760, 482))]
+
+
+def test_closing_shop_on_treasure_node_recognizes_the_board_and_advances(monkeypatch, world):
+    common = labels(("备战阶段", 469, 46), ("2-6", 468, 77), ("6/6", 959, 262),
+                    ("前台区域", 974, 315), ("后台区域", 976, 575), ("开启宝库", 1816, 752))
+    shop = Frame(CANVAS, common + labels(("收起", 1624, 982), ("刷新", 1617, 486)))
+    closed = Frame(CANVAS, common + labels(("商店", 1624, 982)))
+    reward = page(Page.CHOICE, stage="2-6")
+    routes = {(shop, (1624, 982)): closed, (closed, (1816, 752)): reward}
+    state = drive(monkeypatch, world, shop, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+
+    assert shop.page == Page.SHOP
+    assert closed.page == Page.BOARD
+    assert world.war._play_step(shop) is closed
+    assert world.war._finish_preparation(closed, board(stage="2-6", used=6, capacity=6)) is reward
+    assert state.clicks == [(Page.SHOP, (1624, 982)), (Page.BOARD, (1816, 752))]
 
 
 def test_shifted_board_during_shop_animation_is_not_ready():

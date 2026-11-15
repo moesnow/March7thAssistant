@@ -105,7 +105,7 @@ RAIL_LAUNCH = (937, 352, 1093, 409)
 RAIL_UNLOCK = (1470, 312, 1640, 354)
 RAIL_SPENT = (1480, 380, 1640, 434)
 RAIL_COLUMNS = (556, 806, 1056, 1306)
-BOARD_ADVANCE = ("出战", "跳过", "选择主角", "幕后茶歇", "开始茶歇", "前往茶歇", "前往补给")
+BOARD_ADVANCE = ("出战", "跳过", "选择主角", "开启宝库", "幕后茶歇", "开始茶歇", "前往茶歇", "前往补给")
 REVEAL_CONTINUE = (525, 650, 1780, 1065)
 PARTNER_REVEAL_TITLE = (680, 453, 902, 520)
 PARTNER_REVEAL_CONTINUE = (845, 682, 1080, 726)
@@ -295,13 +295,17 @@ class Frame:
         result = ocr.recognize_single_line(crop)
         return normalized(result[0]) if result and result[1] >= 0.55 else None
 
-    def number(self, area: Area, upper: int, *, local=False) -> int | None:
-        value = self.value(r"\d{1,7}", area)
+    def number(self, area: Area, upper: int, *, local=False, badge=False) -> int | None:
+        pattern = r"\d{1,7}"
+        if badge:
+            pattern = rf"(?:{pattern}|\[{pattern}\])"
+        value = self.value(pattern, area)
         if value is None and local:
             value = self.read_local(area)
-        if value and re.fullmatch(r"\d{1,7}", value) and int(value) <= upper:
-            return int(value)
-        return None
+        if not value or not re.fullmatch(pattern, value):
+            return None
+        number = int(value.strip("[]"))
+        return number if number <= upper else None
 
     def ratio(self, area: Area) -> tuple[int, int] | None:
         value = self.value(r"\d{1,7}/\d{1,7}", area)
@@ -1022,7 +1026,8 @@ class Frame:
 
     @cached_property
     def enemy_rank(self) -> int | None:
-        return self.number(RANK_ENEMY, 999, local=True)
+        # OCR 可能把数字徽章的边框和数字一起识别为 [72]。
+        return self.number(RANK_ENEMY, 999, local=True, badge=True)
 
     @cached_property
     def rank_tier(self) -> int | None:
@@ -1047,7 +1052,7 @@ class Frame:
 
     @cached_property
     def rank_affixes(self) -> int | None:
-        value = self.number(RANK_AFFIXES, 9, local=True)
+        value = self.number(RANK_AFFIXES, 9, local=True, badge=True)
         if value is None and self.rank_tier in (0, 1) and not self.has(
                 "词缀数量", area=(605, 989, 750, 1018)):
             return 0
