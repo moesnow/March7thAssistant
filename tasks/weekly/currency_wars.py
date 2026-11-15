@@ -187,9 +187,14 @@ class CurrencyWars:
         self.weekly_score = None
         self.weekly_reward_pending = False
         self._start_match_sent = False
-        self.supply_required = None
         self.supply_attempted: dict[int, tuple[int, int] | None] = {}
+        self._reset_supply()
+
+    def _reset_supply(self):
+        self.supply_required = None
+        self.supply_attempted.clear()
         self.supply_stage = None
+        self.supply_layout = None
 
     def _check_budget(self):
         pause_ctl.checkpoint()
@@ -2727,7 +2732,7 @@ class CurrencyWars:
         environments = ()
         preferred_environment = None
         if title == "补给阶段":
-            eligible = [card for card in frame.supply_cards if card[0].text not in strategy.SPECIAL
+            eligible = [card for card in frame.supply_cards(self.supply_layout) if card[0].text not in strategy.SPECIAL
                         and (self.default_strategy or card[1] or card[0].text in priorities)]
             if self.default_strategy and (self.last_board is None or not self.last_board.front_count):
                 eligible = [card for card in eligible if card[2]] or eligible
@@ -2971,25 +2976,25 @@ class CurrencyWars:
         title = frame.choice
         supply_preferred = None
         supply_centers = ()
+        supply_layout = ()
         if title == "补给阶段":
             if frame.stage is not None:
                 if self.supply_stage not in (None, frame.stage):
-                    self.supply_required = None
-                    self.supply_attempted.clear()
+                    self._reset_supply()
                 self.supply_stage = frame.stage
+            self.supply_layout = frame.supply_layout or self.supply_layout
+            supply_layout = self.supply_layout or ui.SUPPLY_CENTERS
             count = frame.supply_selection()
             if count is not None:
                 self.supply_required = count[1]
             if (self.supply_required is not None or self._supply_confirm(frame) is not None
-                    or all(x in self.supply_attempted or frame.supply_card_selected(x) for x in ui.SUPPLY_CENTERS)):
-                return self._choose_supply(frame, count)
+                    or all(x in self.supply_attempted or frame.supply_card_selected(x) for x in supply_layout)):
+                return self._choose_supply(frame, count, supply_layout)
             supply_preferred = self._choice_option(frame)
             preferred_x = supply_preferred.point[0] if supply_preferred else 960
-            supply_centers = tuple(sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x)))
+            supply_centers = tuple(sorted(supply_layout, key=lambda x: abs(x - preferred_x)))
         else:
-            self.supply_required = None
-            self.supply_attempted.clear()
-            self.supply_stage = None
+            self._reset_supply()
         if title == "投资环境" or title in ui.INVESTMENT_CHOICES:
             return self._choose_investment(frame)
         reward_choice = title in REWARD_CHOICES or frame.priced_recruitment is not None
@@ -3046,7 +3051,10 @@ class CurrencyWars:
                 return (960, 984)
 
         def advanced(f):
-            return f.page in ACTIVE_PAGES and (f.page != Page.CHOICE or f.choice != title)
+            return f.page in ACTIVE_PAGES and (
+                f.page != Page.CHOICE or f.choice != title
+                or title == "补给阶段" and f.supply_layout not in (None, supply_layout)
+            )
 
         auto_claim = title in ui.ITEM_CHOICES or frame.priced_recruitment is not None
         return self._choose_single(frame, option, None if auto_claim else confirm, advanced, f"「{title}」选择后未转场")
@@ -3060,11 +3068,12 @@ class CurrencyWars:
         selected, displayed = count
         return button if selected == displayed and required in (None, displayed) else None
 
-    def _choose_supply(self, frame, count):
+    def _choose_supply(self, frame, count, layout):
         required, stage = self.supply_required, self.supply_stage
 
         def same_popup(f):
             return (f.page == Page.CHOICE and f.choice == "补给阶段"
+                    and f.supply_layout in (None, layout)
                     and (not stage or not f.stage or f.stage == stage))
 
         def advanced(f):
@@ -3078,12 +3087,12 @@ class CurrencyWars:
             current = f.supply_selection()
             if current is None or required not in (None, current[1]) or current[0] >= current[1]:
                 return None
-            selected = frozenset(x for x in ui.SUPPLY_CENTERS if f.supply_card_selected(x))
+            selected = frozenset(x for x in layout if f.supply_card_selected(x))
             return (current, selected) if len(selected) == current[0] else None
 
         choice = self._choice_option(frame) if not confirm(frame) else None
         preferred_x = choice.point[0] if choice else 960
-        centers = sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x))
+        centers = sorted(layout, key=lambda x: abs(x - preferred_x))
         fresh_centers = iter(centers)
         rechecked = set()
         selection = None
@@ -3827,9 +3836,7 @@ class CurrencyWars:
         self.reserve_sales.clear()
         self.battle_auto_attempts = 0
         self.battle_auto_retry_at = None
-        self.supply_required = None
-        self.supply_attempted.clear()
-        self.supply_stage = None
+        self._reset_supply()
         self.deferred_operations.clear()
         self.halo_excluded.clear()
         self.halo_candidate = None
@@ -3850,9 +3857,7 @@ class CurrencyWars:
             before = frame
             try:
                 if frame.page not in (Page.CHOICE, Page.UNKNOWN, Page.CONFLICT, Page.RECONNECT):
-                    self.supply_required = None
-                    self.supply_attempted.clear()
-                    self.supply_stage = None
+                    self._reset_supply()
                 current_stage = frame.stage
                 if current_stage and current_stage != stage:
                     stage = current_stage

@@ -463,6 +463,89 @@ def test_currency_wars_entry_recovers_svarog_modification_before_preparation(
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+def test_currency_wars_entry_selects_two_of_four_supply_cards_after_lost_input(
+        runner, currency_wars_game, action):
+    state = currency_wars_game
+    preparation = state.capture_board
+    task_auto = currency_wars.auto
+    click_preparation = task_auto.click_element_with_pos.side_effect
+    centers = (428, 783, 1137, 1492)
+    confirm = (1692, 984)
+    image = Image.new("RGB", (1920, 1080), (153, 111, 56))
+    draw = ImageDraw.Draw(image)
+    for x in centers:
+        draw.rectangle((x - 164, 345, x + 164, 781), fill=(39, 39, 42))
+        draw.rectangle((x - 133, 293, x + 133, 595), fill=(18, 17, 19))
+        draw.rectangle((x - 126, 301, x + 126, 587), fill=(86, 93, 130))
+    selected = {}
+    lost_inputs = set()
+    confirmed = set()
+    supply_clicks = []
+    views = {}
+
+    def capture_board():
+        if state.completed in confirmed:
+            return preparation()
+        cards = frozenset(selected.setdefault(state.completed, set()))
+        if cards not in views:
+            view = image.copy()
+            border = ImageDraw.Draw(view)
+            for x in cards:
+                border.line((x - 129, 778, x + 129, 778), fill="white", width=3)
+            views[cards] = Frame(view, (
+                Label("补给阶段", (960, 155)), Label("1-1", (470, 76)),
+                Label(f"已选择{len(cards)}/2", (1692, 924)), Label("确认", confirm),
+            ))
+        return views[cards]
+
+    def click(point, *, press_duration):
+        match = state.completed
+        if state.page != "board" or match in confirmed:
+            return click_preparation(point, press_duration=press_duration)
+        supply_clicks.append((match, point))
+        cards = selected[match]
+        if point == confirm:
+            if len(cards) == 2:
+                confirmed.add(match)
+            return True
+        x = next((x for x in centers if abs(x - point[0]) < 125 and 320 <= point[1] <= 780), None)
+        if x is None:
+            return False
+        if len(cards) == 1 and match not in lost_inputs:
+            lost_inputs.add(match)
+            return False
+        cards.symmetric_difference_update((x,))
+        return True
+
+    state.capture_board = capture_board
+    task_auto.click_element_with_pos.side_effect = click
+    if action == "currencywarstemp":
+        state.page = "board"
+    if action == "currencywarsloop":
+        def stop_after_two(task_id, success, duration):
+            assert task_id == "currencywarsloop" and success
+            if state.completed == 2:
+                state.stop = True
+
+        runner.telemetry.track_task_complete.side_effect = stop_after_two
+
+    record = run_currency_wars_cli(runner, action)
+
+    expected = 2 if action == "currencywarsloop" else 1
+    assert state.completed == expected, record
+    state.factory.assert_called_once_with()
+    assert confirmed == lost_inputs == set(range(expected))
+    for match in range(expected):
+        first, second, retry, submitted = [point for n, point in supply_clicks if n == match]
+        assert first != second and retry == second and submitted == confirm
+        assert selected[match] == {first[0], second[0]}
+    assert state.clicks.count(("board", (1818, 750))) == expected
+    assert record["status"] == ("stopped" if action == "currencywarsloop" else "success")
+    if action == "main":
+        assert state.later_steps == ["日常领奖", "每日实训"]
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
 @pytest.mark.parametrize("restores_picture", (True, False))
 def test_currency_wars_entry_rechecks_unattempted_deployment_after_picture_recovers(
         runner, currency_wars_game, monkeypatch, action, restores_picture):

@@ -4437,7 +4437,7 @@ def test_supply_fallback_uses_a_verified_employee_equipment_column(monkeypatch, 
         return f
 
     ready, chosen, after = supply(selected), supply(1), page(Page.BOARD, stage=stage)
-    assert [equipment for _, equipment, _ in ready.supply_cards] == ["护盾装备", equipment, ""]
+    assert [equipment for _, equipment, _ in ready.supply_cards()] == ["护盾装备", equipment, ""]
     routes = {(ready, (x1, 566)): chosen, (chosen, (1710, 984)): after, (ready, (1710, 984)): after}
     state = drive(monkeypatch, world, ready, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
     assert world.war._choose(ready) is after
@@ -4534,6 +4534,53 @@ def test_supply_selects_the_displayed_number_of_cards(monkeypatch, world):
 
     assert world.war._choose(initial) is result
     assert state.clicks == [(Page.CHOICE, point) for point in routes]
+
+
+@pytest.mark.parametrize(("required", "late_layout"), ((1, False), (2, False), (2, True)))
+def test_four_card_supply_selects_the_displayed_count_without_card_ocr(monkeypatch, world, required, late_layout):
+    centers = (428, 783, 1137, 1492)
+    image = CANVAS.copy()
+    fill = ImageDraw.Draw(image)
+    for x in centers:
+        fill.rectangle((x - 135, 293, x + 135, 595), fill=(16, 16, 20))
+
+    def supply(selected=()):
+        current = image.copy()
+        draw = ImageDraw.Draw(current)
+        for x in selected:
+            draw.line((x - 129, 778, x + 129, 778), fill="white", width=3)
+        return Frame(current, labels(("补给阶段", 961, 162), (f"已选择{len(selected)}/{required}", 1683, 924)))
+
+    initial = supply()
+    result = page(Page.BOARD)
+    selected = set()
+
+    def click(state, point):
+        x, y = point
+        if point == (1692, 984) and len(selected) == required:
+            state.frame = result
+        elif x in centers and y == 566:
+            selected.symmetric_difference_update((x,))
+            state.frame = supply(selected)
+
+    state = drive(monkeypatch, world, initial, click)
+    if late_layout:
+        # 首帧只有标题和计数。新画面认出四列后，按新布局选卡。
+        loading = Frame(CANVAS, initial.labels)
+        assert world.war._choose(loading) is initial
+        assert state.clicks == []
+    assert world.war._choose(initial) is result
+    assert len(selected) == required
+    assert len(state.clicks) == required + 1
+    assert state.clicks[-1] == (Page.CHOICE, (1692, 984))
+
+
+@pytest.mark.parametrize("centers", ((428, 783, 1137, 1492), ui.SUPPLY_CENTERS))
+def test_supply_layout_can_use_equipment_text_when_card_edges_are_unreadable(centers):
+    x = centers[1]
+    f = Frame(CANVAS, labels(("补给阶段", 961, 162), ("那刻夏", x - 85, 566), ("轮滑鞋", x + 10, 698)))
+    assert f.supply_layout == centers
+    assert [card[0].point for card in f.supply_cards()] == [(x, 566)]
 
 
 def test_supply_with_incomplete_or_temporarily_unreadable_count_waits_to_confirm(monkeypatch, world):
