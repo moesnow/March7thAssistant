@@ -5,8 +5,55 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from urllib3.exceptions import ReadTimeoutError
 from selenium.common.exceptions import TimeoutException, WebDriverException
+import pytest
 
 from module.game.cloud import CloudGameController, CloudGameZeroDurationError
+from utils.pause import PauseController, RunStopRequested
+
+
+@pytest.mark.parametrize("stop_at", ("playtime", "enter_button", "paid_queue"))
+def test_enter_cloud_game_stops_before_the_next_browser_click(monkeypatch, stop_at):
+    from module.game import cloud as cloud_module
+
+    control = PauseController()
+    control._enabled = True
+    monkeypatch.setattr(cloud_module, "pause_ctl", control)
+    controller = object.__new__(CloudGameController)
+    controller.logger = MagicMock()
+    controller.cfg = SimpleNamespace(browser_dump_cookies_enable=False, cloud_game_max_queue_time=10,
+                                     cloud_game_use_paid_time=True)
+    controller._check_login = MagicMock(return_value=True)
+    controller.driver = driver = MagicMock()
+    driver.find_elements.return_value = []
+
+    def playtime():
+        if stop_at == "playtime":
+            control.request_stop()
+        return 10, 5
+
+    def find_button(*_):
+        if stop_at == "enter_button":
+            control.request_stop()
+        return SimpleNamespace(is_displayed=lambda: True)
+
+    clicks = []
+
+    def execute(script, *_):
+        if ".click();" in script:
+            clicks.append((script.strip(), control.stop_requested))
+        if 'return "select_queue"' in script:
+            if stop_at == "paid_queue":
+                control.request_stop()
+            return "select_queue"
+
+    controller._get_remaining_playtime = playtime
+    driver.find_element.side_effect = find_button
+    driver.execute_script.side_effect = execute
+
+    with pytest.raises(RunStopRequested):
+        controller.enter_cloud_game()
+
+    assert clicks == ([("arguments[0].click();", False)] if stop_at == "paid_queue" else [])
 
 
 class FakeDriver:

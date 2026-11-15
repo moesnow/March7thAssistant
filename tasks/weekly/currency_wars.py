@@ -31,6 +31,7 @@ MAX_ENTRY_ESCAPES = 3
 MAX_ENTRY_ATTEMPTS = 4
 MAX_CAPTURE_ATTEMPTS = 5
 CAPTURE_SECONDS = 3
+MATCH_UNIDENTIFIED_SECONDS = 60
 BATTLE_SECONDS = 10 * 60
 MAX_AUTO_ATTEMPTS = 2
 AUTO_RETRY_SECONDS = 12
@@ -48,7 +49,6 @@ PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLAC
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
-TAKEOVER_PAGES = ACTIVE_PAGES | {Page.RECONNECT}
 REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
 BOARD_PAGES = {Page.BOARD, Page.BENCH_FULL}
 ENTRY_SCREENS = ("guide5", "main", "menu", "guide1", "guide2", "guide3", "guide4")
@@ -145,6 +145,8 @@ class CurrencyWars:
     def __init__(self):
         self.deadline = None
         self.frame = None
+        self.in_match = False
+        self.unidentified_since = None
         self.mode = None
         self.screenshot = None
         self.result = None
@@ -176,7 +178,10 @@ class CurrencyWars:
         self.reward_claim_score = None
         self.weekly_score = None
         self.weekly_reward_pending = False
+        self._start_match_sent = False
         self.supply_required = None
+        self.supply_attempted = set()
+        self.supply_stage = None
 
     def _check_budget(self):
         pause_ctl.checkpoint()
@@ -194,9 +199,14 @@ class CurrencyWars:
         return ui.Frame.from_ocr(auto.screenshot, auto.ocr_result)
 
     @classmethod
-    def game_screen_ready(cls):
+    def game_screen_ready(cls, *, for_full_run=False):
         # 登录入口也需要知道已显示赛季内的断线提示，交给任务记录结束原因。
-        return cls()._observe(allow_disconnected=True).page not in (Page.UNKNOWN, Page.CONFLICT)
+        frame = cls()._observe(allow_disconnected=True)
+        if for_full_run:
+            return cls._can_take_over(frame, resume=False) or frame.page in (
+                Page.HOME, Page.MODES, Page.RANK, Page.END_MATCH_CONFIRM, Page.WEEKLY, Page.RECONNECT, Page.DISCONNECTED,
+            )
+        return frame.page not in (Page.UNKNOWN, Page.CONFLICT)
 
     def _observe(self, *, allow_disconnected=False):
         first_frame = self.frame is None
@@ -227,6 +237,14 @@ class CurrencyWars:
                         log.warning("云游戏暂时显示连接中断，等待新画面复核")
                 elif (page not in (Page.UNKNOWN, Page.CONFLICT)
                       or not confirming_disconnect and (not first_frame or attempts == MAX_CAPTURE_ATTEMPTS)):
+                    if self.in_match and page in (Page.UNKNOWN, Page.CONFLICT):
+                        now = time.monotonic()
+                        if self.unidentified_since is None:
+                            self.unidentified_since = now
+                        elif now - self.unidentified_since >= MATCH_UNIDENTIFIED_SECONDS:
+                            raise CurrencyWarsUnavailable("货币战争对局画面持续无法识别，已保留当前现场")
+                    else:
+                        self.unidentified_since = None
                     self.frame = frame
                     return frame
                 else:
@@ -733,16 +751,27 @@ class CurrencyWars:
             log.warning(f"职级调整未完成，使用已确认的敌人难度 {current.enemy_rank}：{error}")
             frame = current
         level = frame.enemy_rank
-        return self._click_to(
-            frame, lambda f: ui.point(f.find("开始对局", area=ui.BOTTOM_RIGHT))
-            if f.enemy_rank == level and f.rank_mode == self.mode else None,
+
+        def locate(f):
+            if f.enemy_rank == level and f.rank_mode == self.mode:
+                button = f.find("开始对局", area=ui.BOTTOM_RIGHT)
+                if button is not None:
+                    return (button.point,)
+            return None
+
+        def start_match(f, target):
+            self._start_match_sent = True
+            return self._tap(f, target)
+
+        return self._action(
+            frame, locate, start_match,
             lambda f: f.page in PLAY_PAGES - {Page.MATCH_RESULT, Page.NODE_RESULT, Page.BATTLE},
-            "未确认开局。请检查是否存在未完成对局", seconds=24, retry_after=5,
+            "未确认开局。请检查是否存在未完成对局", seconds=24, attempts=3, retry_after=5,
         )
 
     @staticmethod
     def _can_take_over(frame, *, resume):
-        if frame.page not in TAKEOVER_PAGES:
+        if frame.page not in ACTIVE_PAGES:
             return False
         if not resume and frame.page in (Page.BATTLE, Page.NODE_RESULT):
             # 通用战斗和结算画面也可能显示自动战斗或继续挑战。
@@ -750,10 +779,19 @@ class CurrencyWars:
         return True
 
     def _enter_with_recovery(self, frame, *, resume, homepage_only=False):
+        self._start_match_sent = False
         for attempt in range(MAX_ENTRY_ATTEMPTS):
-            if self._can_take_over(frame, resume=resume):
-                return frame
             try:
+                if frame.page == Page.RECONNECT:
+                    frame = self._recover_network(frame, resume_match=False, record_result=True)
+                if self._can_take_over(frame, resume=resume):
+                    return frame
+                if self.result is not None:
+                    return self._homepage(frame)
+                if self._start_match_sent and (frame.page != Page.RANK or frame.rank_mode != self.mode):
+                    # 开局请求可能已写入同模式进度。按续局核对，勿按旧存档设置结算。
+                    menu = frame if frame.page == Page.MODES else self._mode_menu(self._homepage(frame))
+                    return self._resume_saved_match(menu, expected_mode=self.mode)
                 if homepage_only or frame.page not in (Page.MODES, Page.RANK, Page.END_MATCH_CONFIRM):
                     frame = self._homepage(frame)
                 if homepage_only:
@@ -762,7 +800,7 @@ class CurrencyWars:
                     frame = self._go_back(frame, Page.MODES)
                 return self._launch(frame, resume)
             except CurrencyWarsReconnect as error:
-                return error.frame
+                frame = error.frame
             except CurrencyWarsTerminalError:
                 raise
             except Exception as error:
@@ -771,7 +809,7 @@ class CurrencyWars:
                 frame = self._observe()
         if self._can_take_over(frame, resume=resume):
             return frame
-        if frame.page in (Page.UNKNOWN, Page.CONFLICT):
+        if frame.page in (Page.UNKNOWN, Page.CONFLICT, Page.RECONNECT):
             raise CurrencyWarsUnavailable("多次复核后仍无法确认货币战争入口，保留当前现场")
         log.warning("暂未确认可进入的货币战争对局，保留当前游戏画面")
         self._save_failure()
@@ -780,7 +818,7 @@ class CurrencyWars:
     def _on_match_result(self, frame):
         """记录游戏整局胜败画面。"""
 
-    def _recover_network(self, frame, *, resume_match=True):
+    def _recover_network(self, frame, *, resume_match=True, record_result=False):
         if self.network_reconnects >= MAX_RECONNECTS:
             raise CurrencyWarsUnavailable("货币战争已达重连次数上限，保留当前现场")
         self.network_reconnects += 1
@@ -793,6 +831,8 @@ class CurrencyWars:
         def recovered(f):
             nonlocal previous
             context = None
+            if record_result:
+                self._record_match_result(f)
             if f.page in ACTIVE_PAGES | lobby_pages:
                 context = f.action_context
             elif f.page == Page.UNKNOWN and self._entry_screen_ready():
@@ -805,7 +845,7 @@ class CurrencyWars:
             frame, lambda f: ui.point(f.reconnect_confirm()), recovered,
             "游戏重连后未确认恢复画面", seconds=35, attempts=2, retry_after=6,
         )
-        if resume_match and frame.page not in ACTIVE_PAGES:
+        if resume_match and self.result is None and frame.page not in ACTIVE_PAGES:
             menu = frame if frame.page == Page.MODES else self._mode_menu(self._homepage(frame))
             menu = self._expect(
                 lambda f: f.page == Page.MODES and f.menu_mode == self.mode
@@ -1372,10 +1412,14 @@ class CurrencyWars:
         return self._click_to(frame, lambda f: (12, 12) if current_shop(f) else None,
                               lambda f: f.page in next_pages, "未从开拓商店返回备战", seconds=10)
 
-    def _refresh_shop(self, before, price):
+    def _refresh_shop(self, before, price, refreshes, stage):
         minimum_gold = before.gold - price
         previous = None
         pressed = False
+        confirmed = False
+
+        def current_shop(f):
+            return f.page == Page.SHOP and f.stage in (None, stage)
 
         def locate(f):
             if f.gold == before.gold and f.shop_refresh_price == price and not f.shop_catalog_changed(before):
@@ -1385,7 +1429,10 @@ class CurrencyWars:
 
         def send(f, point):
             nonlocal pressed
+            self._check_budget()
             pressed = True
+            # 先记下尝试，后续识别失败或断线也不能从旧的刷新次数继续花费。
+            self.stage_refreshes[stage] = refreshes + 1
             return self._tap(f, point)
 
         def refreshed(f):
@@ -1393,16 +1440,21 @@ class CurrencyWars:
             if f.page in PREP_OVERLAYS - {Page.SHOP}:
                 return True
             # 稳定的新商品确认刷新，余额下限限制扣费，返还和额外收益随局内效果变化。
-            changed = (pressed and f.page == Page.SHOP and f.stage == before.stage and f.gold is not None
+            changed = (pressed and current_shop(f) and f.gold is not None
                        and f.gold >= minimum_gold and f.shop_catalog_changed(before))
             settled = (changed and previous is not None and f.gold == previous.gold
                        and not f.shop_catalog_changed(previous))
             previous = f if changed else None
             return settled
 
-        frame = self._action(before, locate, send, refreshed, "商店刷新后未确认金币及商品变化",
-                             seconds=8, attempts=1)
-        if frame.page == Page.SHOP:
+        try:
+            frame = self._action(before, locate, send, refreshed, "商店刷新后未确认金币及商品变化",
+                                 seconds=8, attempts=1, same_view=current_shop)
+            confirmed = frame.page == Page.SHOP
+        finally:
+            if pressed and not confirmed:
+                self.deferred_operations.add((stage, "商店"))
+        if confirmed:
             log.info(f"商店已刷新，报价 {price} 金，金币 {before.gold} → {frame.gold}")
         return frame, pressed
 
@@ -1410,7 +1462,7 @@ class CurrencyWars:
         frame = self._open_shop(frame)
         while frame.page == Page.SHOP:
             frame = self._settle_shop(frame)
-            if frame.page != Page.SHOP:
+            if frame.page != Page.SHOP or frame.stage not in (None, board.stage):
                 break
             shop_board = replace(board, gold=frame.gold)
             if offer := strategy.shop_purchase(shop_board, frame.offers, experience_price=experience_price):
@@ -1457,7 +1509,7 @@ class CurrencyWars:
                 break
             if not board.lineup and price > 0 and strategy.should_buy_exp(shop_board, experience_price):
                 break
-            frame, pressed = self._refresh_shop(frame, price)
+            frame, pressed = self._refresh_shop(frame, price, refreshes, board.stage)
             refreshes += int(pressed)
         if frame.page == Page.SHOP:
             frame = self._close_shop(frame)
@@ -2426,7 +2478,6 @@ class CurrencyWars:
                 except CurrencyWarsRecoverable as error:
                     frame = self._recover_preparation(stage, "商店", error)
                     bought = False
-                self.stage_refreshes[board.stage] = refreshes
                 if frame.page != Page.BOARD or frame.stage != stage:
                     return frame
                 shop_needed = bought
@@ -2518,7 +2569,7 @@ class CurrencyWars:
     def _watch_battle(self, frame):
         started = time.monotonic()
         auto_enabled = game_option_enabled(cfg, "auto_battle_detect_enable")
-        off_frames = clear_frames = 0
+        off_frames = 0
         next_context = None
         # 游戏开着自动且战斗 HUD 始终存活时，仍有整局和单场的有界超时。
         while time.monotonic() - started < BATTLE_SECONDS:
@@ -2527,7 +2578,7 @@ class CurrencyWars:
             if frame.page in (Page.NODE_RESULT, Page.MATCH_RESULT):
                 break
             if frame.page != Page.BATTLE:
-                off_frames = clear_frames = 0
+                off_frames = 0
                 current = frame.action_context if frame.page in ACTIVE_PAGES | {Page.HOME} else None
                 if current is not None and current == next_context:
                     break
@@ -2535,7 +2586,6 @@ class CurrencyWars:
             elif frame.auto_off:
                 next_context = None
                 off_frames += 1
-                clear_frames = 0
                 retry_at = self.battle_auto_retry_at
                 if (off_frames >= 2 and auto_enabled and self.battle_auto_attempts < MAX_AUTO_ATTEMPTS
                         and (retry_at is None or time.monotonic() >= retry_at)):
@@ -2548,10 +2598,6 @@ class CurrencyWars:
             else:
                 next_context = None
                 off_frames = 0
-                clear_frames = clear_frames + 1 if frame.auto_off is False else 0
-                if self.battle_auto_retry_at is not None and clear_frames >= 2:
-                    self.battle_auto_retry_at = None
-                    log.info("开启自动战斗后左下角 C 已消失")
             time.sleep(1)
             frame = self._observe()
         else:
@@ -2768,6 +2814,8 @@ class CurrencyWars:
             nonlocal attempted
             attempted += 1
             log.info(f"{dialog or page.value}：选择「{candidate.text}」")
+            if dialog == "补给阶段":
+                self.supply_attempted.add(candidate.point[0])
             result = self._tap(f, candidate.point)
             if confirm is None:
                 return result
@@ -2835,6 +2883,11 @@ class CurrencyWars:
         supply_preferred = None
         supply_centers = ()
         if title == "补给阶段":
+            if frame.stage is not None:
+                if self.supply_stage not in (None, frame.stage):
+                    self.supply_required = None
+                    self.supply_attempted.clear()
+                self.supply_stage = frame.stage
             count = frame.supply_selection()
             if count is not None:
                 self.supply_required = count[1]
@@ -2845,6 +2898,8 @@ class CurrencyWars:
             supply_centers = tuple(sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x)))
         else:
             self.supply_required = None
+            self.supply_attempted.clear()
+            self.supply_stage = None
         if title == "投资环境" or title in ui.INVESTMENT_CHOICES:
             return self._choose_investment(frame)
         reward_choice = title in REWARD_CHOICES or frame.priced_recruitment is not None
@@ -2863,10 +2918,13 @@ class CurrencyWars:
             if not is_single_supply(f) or title == "补给阶段" and f.supply_selection() == (1, 1):
                 return None
             if title == "补给阶段":
-                # 计数漏读时用不同卡位推进，避免重复点优先卡而取消选择。
-                if attempt == 0 and supply_preferred is not None:
-                    return supply_preferred
-                return ui.Label("补给卡片", (supply_centers[attempt], 566))
+                for x in supply_centers:
+                    if x in self.supply_attempted or f.supply_card_selected(x):
+                        continue
+                    if supply_preferred is not None and x == supply_preferred.point[0]:
+                        return supply_preferred
+                    return ui.Label("补给卡片", (x, 566))
+                return None
             chosen = self._choice_option(f)
             if chosen is not None:
                 return chosen
@@ -2904,75 +2962,91 @@ class CurrencyWars:
         return self._choose_single(frame, option, None if auto_claim else confirm, advanced, f"「{title}」选择后未转场")
 
     def _choose_supply(self, frame, count):
+        required, stage = self.supply_required, self.supply_stage
+
+        def same_popup(f):
+            return (f.page == Page.CHOICE and f.choice == "补给阶段"
+                    and (not stage or not f.stage or f.stage == stage))
+
         def advanced(f):
-            return f.page in ACTIVE_PAGES and (f.page != Page.CHOICE or f.choice != "补给阶段")
+            return f.page in ACTIVE_PAGES and not same_popup(f)
 
-        def read_count():
-            return self._expect(
-                lambda f: advanced(f) or f.page == Page.CHOICE and f.choice == "补给阶段"
-                and f.supply_selection() is not None,
-                5, "暂未读到补给已选张数",
-            )
+        def confirm(f):
+            current = f.supply_selection()
+            button = f.find("确认", area=ui.SUPPLY_CONFIRM) or ui.Label("确认", (1692, 984))
+            if current == (required, required) or current is None and f.enabled_button(button):
+                return (button.point,)
 
-        if count is None:
-            frame = read_count()
-            if advanced(frame):
-                return frame
-            count = frame.supply_selection()
-        selected, required = count
-        self.supply_required = required
         choice = self._choice_option(frame)
         preferred_x = choice.point[0] if choice else 960
         centers = sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x))
 
         for x in centers:
-            if selected >= required:
+            if confirm(frame):
                 break
-            point = (x, 566)
+            if x in self.supply_attempted or frame.supply_card_selected(x):
+                continue
+            sent = False
+            sent_count = None
 
             def changed(f):
-                return advanced(f) or (
-                    f.page == Page.CHOICE and f.choice == "补给阶段"
-                    and (current := f.supply_selection()) and current[1] == required and current[0] != selected
-                )
+                if advanced(f):
+                    return True
+                if same_popup(f):
+                    current = f.supply_selection()
+                    return (current is not None and current != count
+                            or current is None and (confirm(f) or f.supply_card_selected(x)))
 
             def available(f):
-                return point if f.supply_selection() == (selected, required) else None
+                current = f.supply_selection()
+                if sent and (sent_count is None or current != sent_count):
+                    return None
+                if (not confirm(f) and not f.supply_card_selected(x)
+                        and (current is None or current == count and current[0] < required)):
+                    return ((x, 566),)
+
+            def select(f, point):
+                nonlocal sent, sent_count
+                self._check_budget()
+                sent = True
+                sent_count = f.supply_selection()
+                self.supply_attempted.add(x)
+                return self._tap(f, point)
 
             try:
-                frame = self._click_to(frame, available, changed, "补给卡片选择数量未变化", seconds=2, attempts=1)
+                frame = self._action(frame, available, select, changed, "补给卡片选择数量未变化",
+                                     seconds=5, attempts=2, retry_after=4, same_view=same_popup)
             except CurrencyWarsRecoverable:
                 frame = self.frame
-            if advanced(frame) or frame.page != Page.CHOICE or frame.choice != "补给阶段":
+            if not same_popup(frame):
                 return frame
             current = frame.supply_selection()
-            if current is None:
-                frame = read_count()
-                if advanced(frame):
-                    return frame
-                current = frame.supply_selection()
-            if current[1] != required:
+            if current is not None and current[1] != required:
                 return frame
-            if current[0] < selected:
-                # 接管时可能点到之前已选的卡，看到数量减少后恢复这一张。
-                frame = self._click_to(
-                    frame, lambda f: point if f.supply_selection() == current else None,
-                    lambda f: advanced(f) or f.supply_selection() == (selected, required),
-                    "补给已选卡未恢复", seconds=3, attempts=1,
+            if count is not None and current is not None and current[0] < count[0]:
+                # 接管时可能点到已选卡，只在计数核实减少后恢复这张卡。
+                frame = self._action(
+                    frame, lambda f: ((x, 566),) if f.supply_selection() == current else None, self._tap,
+                    lambda f: advanced(f) or same_popup(f) and f.supply_selection() == count,
+                    "补给已选卡未恢复", seconds=3, attempts=1, same_view=same_popup,
                 )
-                if advanced(frame):
+                if not same_popup(frame):
                     return frame
-            else:
-                selected = current[0]
-        if selected != required:
-            raise CurrencyWarsReadTimeout(f"补给已选择 {selected}/{required} 张，等待重新核对")
+            count = frame.supply_selection()
+        if not confirm(frame):
+            message = ("暂未读到补给已选张数或可用确认按钮" if count is None
+                       else f"补给已选择 {count[0]}/{required} 张，未达到确认要求")
+            if not all(x in self.supply_attempted or frame.supply_card_selected(x) for x in centers):
+                raise CurrencyWarsReadTimeout(message)
+            frame = self._wait(lambda f: advanced(f) or same_popup(f) and confirm(f), 12)
+            if frame is None:
+                raise CurrencyWarsUnavailable(f"多次复核补给后仍无法继续，保留当前现场：{message}")
+            if not same_popup(frame):
+                return frame
 
-        def confirm(f):
-            if f.supply_selection() == (required, required):
-                return ui.point(f.find("确认", area=ui.SUPPLY_CONFIRM)) or (1692, 984)
-
-        return self._click_to(
-            frame, confirm, advanced, "补给选足后确认未转场", seconds=6, attempts=1,
+        return self._action(
+            frame, confirm, self._tap, advanced, "补给选足后确认未转场", seconds=6, attempts=1,
+            same_view=same_popup,
         )
 
     def _halo(self, frame):
@@ -3417,6 +3491,8 @@ class CurrencyWars:
         before = frame
 
         def next_result(f):
+            if not ending_saved_match:
+                self._record_match_result(f)
             if f.page not in later:
                 return False
             if f.page != before.page:
@@ -3438,6 +3514,7 @@ class CurrencyWars:
             if f.page == Page.HOME:
                 return self.result is not None
             if f.page == Page.MATCH_RESULT:
+                self._record_match_result(f)
                 if before.page != Page.MATCH_RESULT:
                     return True
                 buttons = f.result_buttons(result_area)
@@ -3491,12 +3568,12 @@ class CurrencyWars:
         self.battle_auto_attempts = 0
         self.battle_auto_retry_at = None
         self.supply_required = None
+        self.supply_attempted.clear()
+        self.supply_stage = None
         self.deferred_operations.clear()
         self.halo_excluded.clear()
         self.halo_candidate = None
-        self.result = None
         self.last_board = None
-        self.screenshot = None
         stage = None
         self.last_result_stage = None
         same_stage = 0
@@ -3510,8 +3587,10 @@ class CurrencyWars:
             progress = self.preparation_progress
             before = frame
             try:
-                if frame.page not in (Page.CHOICE, Page.UNKNOWN, Page.CONFLICT):
+                if frame.page not in (Page.CHOICE, Page.UNKNOWN, Page.CONFLICT, Page.RECONNECT):
                     self.supply_required = None
+                    self.supply_attempted.clear()
+                    self.supply_stage = None
                 current_stage = frame.stage
                 if current_stage and current_stage != stage:
                     stage = current_stage
@@ -3552,7 +3631,7 @@ class CurrencyWars:
     def _play_step(self, frame):
         page = frame.page
         if page == Page.RECONNECT:
-            frame = self._recover_network(frame, resume_match=self.result is None)
+            frame = self._recover_network(frame, resume_match=self.result is None, record_result=True)
             if self.result is not None and frame.page not in ACTIVE_PAGES:
                 return self._homepage(frame)
             return frame
@@ -3715,6 +3794,7 @@ class CurrencyWars:
 
     def _check_weekly_reward(self, frame):
         """领奖故障与整局胜败分开。核对真实到账前不写完成时间。"""
+        entry = frame
         self.weekly_score = None
         self.weekly_reward_pending = True
         try:
@@ -3733,16 +3813,19 @@ class CurrencyWars:
             frame, score, claimed = self.frame or frame, None, False
         if score is not None:
             self.weekly_reward_pending = False
-        elif self.weekly_score is not None:
+        else:
+            # 积分页暂不可用时，首页比分仍可用于决定是否需要开局。
             score = self.weekly_score
-            if frame.page == Page.HOME:
+            source = frame if frame.page == Page.HOME or score is not None else entry
+            if source.page == Page.HOME:
                 try:
-                    home_score = frame.ratio(ui.HOME_POINTS)
+                    home_score = source.ratio(ui.HOME_POINTS)
                 except Exception as error:
                     log.debug(f"货币战争暂未识别首页积分：{error}")
                 else:
-                    if home_score is not None and home_score != score:
-                        score = None
+                    if home_score is not None:
+                        score = home_score
+            self.weekly_score = score
         return frame, score, claimed
 
     def _log_pending_reward(self, error):
@@ -3819,6 +3902,8 @@ class CurrencyWars:
         self.weekly_score = None
         self.weekly_reward_pending = False
         self.result = None
+        self.screenshot = None
+        self.mode = mode
         matches = 0
         claimed = False
         try:
@@ -3826,25 +3911,39 @@ class CurrencyWars:
                 frame = self._observe()
                 score = None
                 if weekly and not self._can_take_over(frame, resume=resume):
-                    frame = self._enter_with_recovery(frame, resume=False, homepage_only=True)
+                    frame = self._enter_with_recovery(frame, resume=resume, homepage_only=True)
                     if frame is None:
                         return False
-                    if frame.page == Page.HOME:
+                    if frame.page == Page.HOME and self.result is None:
                         frame, score, claimed = self._check_weekly_reward(frame)
                 while matches < (MAX_WEEKLY_MATCHES if weekly else 1):
                     if weekly:
                         if score is None and matches or score is not None and score[0] == score[1]:
                             break
-                    self.mode = mode
+                    previous_result = self.result, self.screenshot
+                    if matches:
+                        self.result = self.screenshot = None
+                        self.mode = mode
                     if self._can_take_over(frame, resume=resume):
                         log.info(f"从「{frame.choice or frame.page.value}」接管当前货币战争对局")
-                    else:
+                    elif self.result is None:
                         log.info(f"货币战争第 {matches + 1} 局")
-                        frame = self._enter_with_recovery(frame, resume=resume)
-                        if frame is None:
+                        entered = None
+                        try:
+                            entered = self._enter_with_recovery(frame, resume=resume)
+                        finally:
+                            if entered is None and self.result is None:
+                                self.result, self.screenshot = previous_result
+                        if entered is None:
                             break
+                        frame = entered
                     matches += 1
-                    frame = self._play(frame)
+                    self.in_match = True
+                    try:
+                        frame = self._play(frame)
+                    finally:
+                        self.in_match = False
+                        self.unidentified_since = None
                     if self.result is None:
                         log.warning("已离开对局，整局胜负仍待核对")
                     frame, latest_score, just_claimed = self._check_weekly_reward(frame)

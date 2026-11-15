@@ -18,6 +18,13 @@ def create_automation(events):
     return automation
 
 
+def fake_clock():
+    clock = SimpleNamespace(now=0.0)
+    clock.monotonic = lambda: clock.now
+    clock.sleep = lambda seconds: setattr(clock, "now", clock.now + seconds)
+    return clock
+
+
 def test_drag_mouse_converts_relative_coordinates():
     events = []
     automation = create_automation(events)
@@ -67,13 +74,9 @@ def test_local_drag_group_releases_each_stroke_and_holds_only_last(monkeypatch, 
         if interrupted and events.count("down") == 2:
             raise RuntimeError("interrupted")
 
-    def hold(seconds):
-        assert seconds == 0.25
-        assert events.count("down") == 3 and events.count("up") == 2
-        events.append("hold")
-
+    clock = fake_clock()
     monkeypatch.setattr(module.pyautogui, "mouseDown", down)
-    monkeypatch.setattr(module, "time", SimpleNamespace(sleep=hold))
+    monkeypatch.setattr(module, "time", clock)
     backend = module.LocalInput(SimpleNamespace(debug=lambda *_: None, error=lambda *_: None))
     if interrupted:
         with pytest.raises(RuntimeError):
@@ -81,7 +84,8 @@ def test_local_drag_group_releases_each_stroke_and_holds_only_last(monkeypatch, 
         assert events == ["down", "up", "down", "up"]
     else:
         assert backend.mouse_drag(1, 2, 3, 4, 0.4, 0.25, 3)
-        assert events == ["down", "up", "down", "up", "down", "hold", "up"]
+        assert events == ["down", "up", "down", "up", "down", "up"]
+        assert clock.now == pytest.approx(3 * 0.4 + 0.25)
 
 
 @pytest.mark.parametrize("interrupted", [False, True])
@@ -131,20 +135,75 @@ def test_local_drag_holds_endpoint_before_release_and_cleans_on_interruption(mon
     monkeypatch.setattr(module.pyautogui, "mouseDown", lambda: events.append("down"))
     monkeypatch.setattr(module.pyautogui, "mouseUp", lambda: events.append("up"))
 
+    clock = fake_clock()
+    advance = clock.sleep
+
     def hold(seconds):
-        assert seconds == 0.25 and events[-1] == "move"
-        events.append("hold")
+        if clock.now < 0.4:
+            advance(seconds)
+            return
+        if events[-1] != "hold":
+            assert events[-1] == "move"
+            events.append("hold")
         if interrupted:
             raise RuntimeError("interrupted")
+        advance(seconds)
 
-    monkeypatch.setattr(module, "time", SimpleNamespace(sleep=hold))
+    clock.sleep = hold
+    monkeypatch.setattr(module, "time", clock)
     backend = module.LocalInput(SimpleNamespace(debug=lambda *_: None, error=lambda *_: None))
     if interrupted:
         with pytest.raises(RuntimeError):
             backend.mouse_drag(1, 2, 3, 4, 0.4, 0.25)
     else:
         assert backend.mouse_drag(1, 2, 3, 4, 0.4, 0.25)
-    assert events == ["move", "down", "move", "hold", "up"]
+    assert events[:2] == ["move", "down"]
+    assert events[-3:] == ["move", "hold", "up"]
+    assert clock.now == pytest.approx(0.4 if interrupted else 0.65)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="本地输入后端仅在 Windows 使用")
+@pytest.mark.parametrize("stop_at", ["down", "move", "hold"])
+def test_local_drag_stops_at_the_current_position(monkeypatch, stop_at):
+    from module.automation import local_input as module
+    from utils.pause import PauseController, RunStopRequested
+
+    control = PauseController()
+    control._enabled = True
+    clock = fake_clock()
+    advance = clock.sleep
+    events = []
+
+    def move(x, y, **kwargs):
+        events.append(("move", x, y, control.stop_requested))
+        if stop_at == "move" and kwargs:
+            control.request_stop()
+
+    def down():
+        events.append(("down",))
+        if stop_at == "down":
+            control.request_stop()
+
+    def sleep(seconds):
+        advance(seconds)
+        if stop_at == "hold" and clock.now > 0.4:
+            control.request_stop()
+
+    clock.sleep = sleep
+    monkeypatch.setattr(module, "time", clock)
+    monkeypatch.setattr(module, "pause_ctl", control)
+    monkeypatch.setattr(module.pyautogui, "moveTo", move)
+    monkeypatch.setattr(module.pyautogui, "mouseDown", down)
+    monkeypatch.setattr(module.pyautogui, "mouseUp", lambda: events.append(("up", control.stop_requested)))
+    backend = module.LocalInput(Mock())
+
+    with pytest.raises(RunStopRequested):
+        backend.mouse_drag(10, 20, 300, 400, 0.4, 0.25, repeats=1 if stop_at == "hold" else 3)
+
+    assert events[:2] == [("move", 10, 20, False), ("down",)]
+    assert events[-1] == ("up", True)
+    assert all(not event[-1] for event in events if event[0] == "move")
+    assert sum(event[0] == "move" for event in events) == {"down": 1, "move": 2, "hold": 25}[stop_at]
 
 
 @pytest.mark.parametrize("interrupted", [False, True])
@@ -220,9 +279,9 @@ def test_local_drag_releases_button_when_input_fails(monkeypatch, failure):
     logger = SimpleNamespace(debug=lambda *_: None, error=lambda *_: None)
     local_input = LocalInput(logger)
 
-    def move_to(x, y, duration=None):
-        events.append(("move", x, y, duration))
-        if duration is not None and failure == "move":
+    def move_to(x, y, **kwargs):
+        events.append(("move", x, y))
+        if kwargs and failure == "move":
             raise RuntimeError("movement failed")
 
     def mouse_down():

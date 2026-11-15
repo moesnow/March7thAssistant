@@ -107,6 +107,7 @@ def test_main_loop_waits_then_starts_next_run(loop, trigger):
                  notif=game.notif, telemetry=MagicMock(), time=game.time,
                  CloudGameZeroDurationError=game.CloudGameZeroDurationError,
                  get_ui_profile=lambda cfg: SimpleNamespace(name="pc_1080"))
+    scope["Daily"].currency_wars_due.return_value = False
     exec(compile(ast.Module(body=[run], type_ignores=[]), str(source), "exec"), scope)
     with pytest.raises(EndRun):
         scope["run_main_actions"](no_run_immediately=trigger == "startup")

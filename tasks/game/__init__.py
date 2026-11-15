@@ -15,7 +15,9 @@ from utils.console import pause_on_success
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
 from module.game.adb_transport import AdbError
-from module.game.cloud import CloudGameDisconnectedError, CloudGameLoginTimeoutError, CloudGameZeroDurationError
+from module.game.cloud import (
+    CloudGameDisconnectedError, CloudGameLoginTimeoutError, CloudGameProbeUnready, CloudGameZeroDurationError,
+)
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
@@ -296,18 +298,18 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             time.sleep(1)
 
     def cloud_player_ready():
-        disconnected = False
+        session_uncertain = False
         last_error = None
         for attempt in range(MAX_RETRY):
             pause_ctl.checkpoint()
             try:
                 in_game = cloud_game.is_in_game()
-            except (CloudGameDisconnectedError, TimeoutError) as error:
+            except (CloudGameDisconnectedError, CloudGameProbeUnready, TimeoutError) as error:
                 in_game = None
-                disconnected = disconnected or isinstance(error, CloudGameDisconnectedError)
+                session_uncertain = session_uncertain or isinstance(error, (CloudGameDisconnectedError, CloudGameProbeUnready))
                 last_error = error
             pause_ctl.checkpoint()
-            if in_game is not None and (in_game or not disconnected):
+            if in_game is not None and (in_game or not session_uncertain):
                 return in_game
             if attempt + 1 < MAX_RETRY:
                 log.warning(f"暂未确认云游戏会话，等待复核：{last_error}")
@@ -315,10 +317,14 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         raise GameStartupUnavailable(f"云游戏连接持续不可用，已保留游戏现场：{last_error}") from last_error
 
     def start_cloud_game():
-        if not cloud_game.start_game_process(headless=headless):
+        started = cloud_game.start_game_process(headless=headless)
+        pause_ctl.checkpoint()
+        if not started:
             raise ConnectionError("启动或连接浏览器失败")
         if not cloud_player_ready():
-            if not cloud_game.enter_cloud_game():
+            entered = cloud_game.enter_cloud_game()
+            pause_ctl.checkpoint()
+            if not entered:
                 raise ConnectionError("进入云游戏失败")
             time.sleep(10)
             if not wait_until(cloud_game_check_and_enter, timeout):
@@ -346,6 +352,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
     for retry in range(MAX_RETRY):
         deadline = time.monotonic() + timeout
         try:
+            pause_ctl.checkpoint()
             if backend == "cloud":
                 start_cloud_game()
             else:
@@ -353,7 +360,9 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 start_local_game(starrail)
             ready_timeout = timeout if backend == "cloud" else remaining_startup_time()
             readiness_error = None
-            if not wait_until(task_screen_ready, ready_timeout):
+            ready = wait_until(task_screen_ready, ready_timeout)
+            pause_ctl.checkpoint()
+            if not ready:
                 if screen_ready is None and readiness_error is None and retry + 1 < MAX_RETRY:
                     raise TimeoutError("获取当前界面超时")
                 message = "未能确认游戏起始画面，已保留游戏现场"
@@ -374,6 +383,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 cloud_game.preserve_running_browser()
             raise
         except Exception as e:
+            pause_ctl.check_stop()
             log.error(f"尝试启动游戏时发生错误：{e}")
             if backend == "local" and starrail.launch_method == "epic":
                 from module.game.epic import EpicLaunchError

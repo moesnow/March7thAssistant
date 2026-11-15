@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 
 from PIL import Image, ImageDraw
 import pytest
+from selenium.common.exceptions import StaleElementReferenceException
 
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.game.adb_transport import AdbError
@@ -52,6 +53,7 @@ def runner():
     scope["cfg"].after_finish = "None"
     scope["cfg"].browser_headless_enable = True
     scope["cfg"].notify_merge = False
+    scope["Daily"].currency_wars_due.return_value = False
     scope["CloudGameZeroDurationError"] = type("CloudGameZeroDurationError", (Exception,), {})
     scope.update(get_control_backend=get_control_backend, get_ui_profile=get_ui_profile,
                  AVAILABLE_TASKS=AVAILABLE_TASKS, CLI_ONLY_TASKS=CLI_ONLY_TASKS, HOST_TASKS=HOST_TASKS,
@@ -238,7 +240,8 @@ def currency_wars_game(runner, monkeypatch):
                 state.disconnect_reads += 1
                 return disconnected
             resumed = state.fault == "brief_disconnect" and state.delayed_reads >= 3
-            if resumed or (state.fault not in ("timeout", "stopped") and state.now >= state.delayed_until):
+            if resumed or (state.fault not in ("timeout", "stopped", "unidentified")
+                           and state.now >= state.delayed_until):
                 state.page = "battle"
         if state.page == "reconnect":
             return reconnect
@@ -330,6 +333,7 @@ def currency_wars_game(runner, monkeypatch):
     monkeypatch.setattr(daily.Daily, "run", lambda **_: state.later_steps.append("每日实训"))
     monkeypatch.setattr(task_steps, "screen", MagicMock())
     runner.Daily.start.side_effect = daily.Daily.start
+    runner.Daily.currency_wars_due.side_effect = daily.Daily.currency_wars_due
     state.factory = factory
     return state
 
@@ -430,6 +434,7 @@ def test_currency_wars_entry_stops_when_clear_frames_remain_unidentified(
 @pytest.mark.parametrize(("fault", "status", "reason", "exit_code"), (
     ("unavailable", "failed", "currencywars_unavailable", EXIT_FAILED),
     ("disconnected", "failed", "currencywars_unavailable", EXIT_FAILED),
+    ("unidentified", "failed", "currencywars_unavailable", EXIT_FAILED),
     ("timeout", "failed", "currencywars_timeout", EXIT_FAILED),
     ("stopped", "stopped", None, EXIT_STOPPED),
 ))
@@ -441,6 +446,8 @@ def test_currency_wars_entry_records_clear_terminal_states(
         state.page = "board"
     if fault == "timeout":
         monkeypatch.setattr(currency_wars, "TASK_SECONDS", 34)
+    if fault == "unidentified":
+        monkeypatch.setattr(currency_wars, "MATCH_UNIDENTIFIED_SECONDS", 8)
     record = run_currency_wars_cli(runner, action)
 
     assert (record["status"], record["reason"], record["exit_code"]) == (status, reason, exit_code)
@@ -465,6 +472,9 @@ def test_currency_wars_entry_records_clear_terminal_states(
     if fault == "disconnected":
         assert state.disconnect_reads == currency_wars.MAX_CAPTURE_ATTEMPTS
         assert "云游戏连接" in record["error"]
+    if fault == "unidentified":
+        assert "对局画面持续无法识别" in record["error"]
+        assert state.now < currency_wars.TASK_SECONDS
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
@@ -619,6 +629,19 @@ def test_failed_task_exits_with_failure_code(runner, action):
     runner.telemetry.track_task_complete.assert_called_once_with(action, False, 0)
     runner.game.stop.assert_not_called()
     runner.game.get_game_controller.assert_not_called()
+
+
+def test_currency_wars_respects_explicit_exit_after_a_settled_loss(runner):
+    runner.cfg.control_backend = "cloud"
+    runner.cfg.after_finish = "Exit"
+    runner.CurrencyWars.return_value.result = False
+    runner.CurrencyWars.return_value.start.return_value = False
+
+    record = run_currency_wars_cli(runner, "currencywars")
+
+    assert (record["status"], record["exit_code"]) == ("failed", EXIT_FAILED)
+    runner.game.get_game_controller.return_value.stop_game.assert_called_once_with()
+    runner.cloud_game.preserve_running_browser.assert_not_called()
 
 
 @pytest.mark.parametrize("action", ["fight", "universe"])
@@ -887,7 +910,8 @@ def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
-@pytest.mark.parametrize("fault", ("transient_disconnect", "persistent_disconnect", "unavailable_frames"))
+@pytest.mark.parametrize("fault", ("transient_disconnect", "stale_dom", "persistent_disconnect", "unavailable_frames",
+                                   "existing_board", "runtime_unavailable", "runtime_timeout", "runtime_stopped"))
 def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_game, monkeypatch, action, fault):
     from tasks import game
     from utils import wait
@@ -899,6 +923,7 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=0.05))
     monkeypatch.setattr(game, "task_power_request", MagicMock())
     screen = MagicMock()
+    screen.get_current_screen.return_value = False
     monkeypatch.setattr(game, "screen", screen)
     runner.game.start.side_effect = game.start
     runner.cfg.control_backend = "cloud"
@@ -923,11 +948,15 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
 
     def elements(_by, selector):
         if "连接中断" in selector:
-            if fault == "transient_disconnect":
+            if fault in ("transient_disconnect", "stale_dom"):
                 probes.append(("disconnected", "loading", "player")[len(probes)])
             else:
                 probes.append("disconnected" if fault == "persistent_disconnect" else "player")
         disconnected = "连接中断" in selector or "退出游戏" in selector
+        if fault == "stale_dom" and len(probes) == 1:
+            stale_element = MagicMock()
+            stale_element.is_displayed.side_effect = StaleElementReferenceException("旧节点已销毁")
+            return [stale_element]
         if disconnected and probes[-1] == "disconnected" or selector == ".game-player" and probes[-1] == "player":
             return [visible]
         return []
@@ -935,11 +964,30 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     controller._connect_or_create_browser = MagicMock(side_effect=attach)
     driver.find_elements.side_effect = elements
     monkeypatch.setattr(game, "cloud_game", controller)
+    runner.main.__globals__["cloud_game"] = controller
+    if fault == "existing_board":
+        state.page = "board"
+        frame = Frame(Image.new("RGB", (1920, 1080)), tuple(Label(text, (x, y)) for text, x, y in (
+            ("备战阶段", 472, 46), ("1-1", 472, 78), ("1/1", 960, 259), ("商店", 1624, 982), ("出战", 1818, 750),
+            ("前台区域", 975, 315), ("后台区域", 963, 577),
+        )))
+        assert frame.page == Page.BOARD
+        frame.__dict__.update(slots=lambda: (Slot("front", 0, (745, 405), True),), inventory_items=lambda: ())
+        state.capture_board = lambda: frame
+
+        def prepare_daily():
+            assert state.completed == 1
+
+        monkeypatch.setattr(daily.Daily, "prepare_daily", prepare_daily)
+    if fault.startswith("runtime_"):
+        state.fault = fault.removeprefix("runtime_")
+        if state.fault == "timeout":
+            monkeypatch.setattr(currency_wars, "TASK_SECONDS", 34)
     if fault == "unavailable_frames":
         capture = MagicMock(side_effect=OSError("截图持续不可用"))
         monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture))
         screen.get_current_screen.side_effect = OSError("截图持续不可用")
-    if action == "currencywarsloop" and fault == "transient_disconnect":
+    if action == "currencywarsloop" and fault in ("transient_disconnect", "stale_dom", "existing_board"):
         runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(state, "stop", True)
 
     record = run_currency_wars_cli(runner, action)
@@ -948,24 +996,32 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     controller.enter_cloud_game.assert_not_called()
     controller.stop_game.assert_not_called()
     assert controller.driver is driver
-    if fault == "transient_disconnect":
-        assert probes == ["disconnected", "loading", "player"]
+    if fault in ("transient_disconnect", "stale_dom", "existing_board"):
+        assert probes == (["player"] if fault == "existing_board" else ["disconnected", "loading", "player"])
         assert state.completed == 1
         assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success")
     else:
-        reason = "currencywars_unavailable" if fault == "unavailable_frames" and action != "main" else "game_startup_unavailable"
-        assert (record["status"], record["reason"], record["exit_code"]) == ("failed", reason, EXIT_FAILED)
-        assert state.clicks == []
-        state.factory.assert_not_called()
+        expected = {
+            "persistent_disconnect": ("failed", "game_startup_unavailable", EXIT_FAILED),
+            "unavailable_frames": ("failed", "currencywars_unavailable", EXIT_FAILED),
+            "runtime_unavailable": ("failed", "currencywars_unavailable", EXIT_FAILED),
+            "runtime_timeout": ("failed", "currencywars_timeout", EXIT_FAILED),
+            "runtime_stopped": (STATUS_STOPPED, None, EXIT_STOPPED),
+        }
+        assert (record["status"], record["reason"], record["exit_code"]) == expected[fault]
+        if fault in ("persistent_disconnect", "unavailable_frames"):
+            assert state.clicks == []
+            state.factory.assert_not_called()
+        else:
+            assert state.clicks.count(("board", (1818, 750))) == 1
         if fault == "persistent_disconnect":
             assert probes == ["disconnected"] * 3
-        elif action == "main":
-            assert screen.get_current_screen.call_count == 3
-        else:
+        elif fault == "unavailable_frames":
             assert capture.call_count == currency_wars.MAX_CAPTURE_ATTEMPTS
         controller._clean_at_exit()
         controller.close_all_m7a_browser.assert_not_called()
         assert controller.driver is None
+    screen.get_current_screen.assert_not_called()
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))

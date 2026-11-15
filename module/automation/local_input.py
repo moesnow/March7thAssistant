@@ -1,7 +1,9 @@
 import pyautogui
 import time
+from math import ceil
 
 from module.automation.input_base import InputBase
+from utils.pause import pause_ctl
 
 
 class LocalInput(InputBase):
@@ -47,16 +49,39 @@ class LocalInput(InputBase):
 
     def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5, end_pause=0.0, repeats=1):
         '''按住鼠标左键从起点拖动到终点'''
+        duration = max(0.0, float(duration or 0.0))
+        steps = max(1, ceil(duration * 60))
         try:
             for index in range(repeats):
+                pause_ctl.check_stop()
                 pyautogui.moveTo(start_x, start_y)
+                pause_ctl.check_stop()
                 try:
                     pyautogui.mouseDown()
-                    pyautogui.moveTo(end_x, end_y, duration=max(0.0, float(duration or 0.0)))
+                    started = time.monotonic()
+                    for step in range(1, steps + 1):
+                        pause_ctl.check_stop()
+                        progress = step / steps
+                        remaining = started + duration * progress - time.monotonic()
+                        if remaining > 0:
+                            time.sleep(remaining)
+                        pause_ctl.check_stop()
+                        x = round(start_x + (end_x - start_x) * progress)
+                        y = round(start_y + (end_y - start_y) * progress)
+                        pyautogui.moveTo(x, y, _pause=False)
                     if end_pause and index == repeats - 1:
-                        time.sleep(end_pause)
+                        release_at = time.monotonic() + end_pause
+                        while (remaining := release_at - time.monotonic()) > 0:
+                            pause_ctl.check_stop()
+                            time.sleep(min(1 / 60, remaining))
                 finally:
-                    pyautogui.mouseUp()
+                    try:
+                        pyautogui.mouseUp()
+                    except Exception as error:
+                        self.logger.error(f"鼠标拖动结束时释放失败：{error}")
+                        pause_ctl.check_stop()
+                        raise
+                pause_ctl.check_stop()
             self.logger.debug(f"鼠标拖动 ({start_x}, {start_y}) -> ({end_x}, {end_y})")
             return True
         except Exception as e:

@@ -441,11 +441,23 @@ def run_main_actions(no_run_immediately=False):
         main_start_time = time.time()
         try:
             version.start()
-            game.start()
-            if get_ui_profile(cfg).name == "touch_720":
+            touch = get_ui_profile(cfg).name == "touch_720"
+            currency_wars_first = False
+            if not touch and Daily.currency_wars_due():
+                def current_currency_wars():
+                    nonlocal currency_wars_first
+                    currency_wars_first = CurrencyWars.game_screen_ready(for_full_run=True)
+                    return currency_wars_first
+
+                game.start(screen_ready=current_currency_wars)
+            else:
+                game.start()
+            if touch:
                 from tasks.touch import rewards
 
                 success = rewards.routine(full_run=True)
+            elif currency_wars_first:
+                success = Daily.start(currency_wars_first=True)
             else:
                 success = Daily.start()
             telemetry.track_task_complete("main", success is not False, time.time() - main_start_time)
@@ -785,6 +797,9 @@ if __name__ == "__main__":
             # 外部停止指令（图形界面停止按钮或 --control <运行编号> stop）：不再发出任何键鼠操作，
             # 也不按错误处理（不截图、不推送）
             release_input(close=True)
+            if (args.workflow_name is None and args.task in (None, "main", "currencywars", "currencywarsloop", "currencywarstemp")
+                    and get_control_backend(cfg) == "cloud"):
+                cloud_game.preserve_running_browser()
             try:
                 pause_ctl.stop()
             except Exception as e:
@@ -807,6 +822,8 @@ if __name__ == "__main__":
             telemetry.track_error(type(e).__name__, str(e))
             log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
             terminal = isinstance(e, (CurrencyWarsTerminalError, GameStartupUnavailable))
+            if terminal and get_control_backend(cfg) == "cloud":
+                cloud_game.preserve_running_browser()
             screenshot_path = e.screenshot if terminal else save_error_screenshot(log)
             run_session.note(error=str(e), screenshot=screenshot_path, reason=e.reason if terminal else None)
             # 合并模式下先发送已收集的通知

@@ -1330,6 +1330,10 @@ class Frame:
                 return selected, required
         return None
 
+    def supply_card_selected(self, x: int) -> bool:
+        border = self.crop((x - 129, 766, x + 129, 795))
+        return bool((border.min(axis=2) > 210).mean(axis=1).max() > 0.65)
+
     @cached_property
     def supply_cards(self) -> tuple[tuple[Label, str, bool], ...]:
         cards = []
