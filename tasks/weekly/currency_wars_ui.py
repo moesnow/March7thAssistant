@@ -113,6 +113,7 @@ GARDEN_COLUMNS = ((444, 832), (852, 1240), (1260, 1649))
 HACK_COLUMNS = ((563, 1017), (1070, 1534))
 BOARD_EFFECT_PROMPT = (1300, 515, 1680, 566)
 SUPPLY_CENTERS = (250, 605, 960, 1315, 1670)
+SUPPLY_FOUR_CENTERS = (428, 783, 1137, 1492)
 RAIL_TITLE = (655, 51, 1450, 108)
 RAIL_DETAILS = (430, 409, 1540, 480)
 RAIL_LAUNCH = (937, 352, 1093, 409)
@@ -1432,9 +1433,29 @@ class Frame:
         return bool((border.min(axis=2) > 210).mean(axis=1).max() > 0.65)
 
     @cached_property
-    def supply_cards(self) -> tuple[tuple[Label, str, bool], ...]:
+    def supply_layout(self) -> tuple[int, ...] | None:
+        layouts = (SUPPLY_FOUR_CENTERS, SUPPLY_CENTERS)
+
+        def has_top_edge(x):
+            # 取肖像框中央。另一种布局的卡间缝隙无法形成同样长的边。
+            strip = self.crop((x - 96, 280, x + 96, 310)).mean(axis=2)
+            edges = np.abs(np.diff(strip, axis=0)) > 12
+            return edges.mean(axis=1).max() >= 0.75
+
+        visible = [centers for centers in layouts if all(has_top_edge(x) for x in centers)]
+        if len(visible) == 1:
+            return visible[0]
+        # 装备文字靠近卡片中心，角色名左对齐。漏读一张卡不会改变布局。
+        equipment = [label.point[0] for label in self.texts((100, 674, 1830, 724))
+                     if re.fullmatch(EMPLOYEE_NAME, label.text)]
+        matches = [centers for centers in layouts if any(
+            abs(x - center) <= 65 for x in equipment for center in centers
+        )]
+        return matches[0] if len(matches) == 1 else None
+
+    def supply_cards(self, centers=None) -> tuple[tuple[Label, str, bool], ...]:
         cards = []
-        for x in SUPPLY_CENTERS:
+        for x in centers or self.supply_layout or SUPPLY_CENTERS:
             names = [label.text for label in self.texts((x - 129, 545, x + 129, 586))
                      if re.fullmatch(EMPLOYEE_NAME, label.text)]
             equipment = [label.text for label in self.texts((x - 137, 674, x + 137, 724))
