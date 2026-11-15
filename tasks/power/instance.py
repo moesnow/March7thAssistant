@@ -29,11 +29,14 @@ REPEAT_COST = (1011 / 1920, 923 / 1080, 174 / 1920, 78 / 1080)
 CHALLENGE = (1392 / 1920, 946 / 1080, 487 / 1920, 83 / 1080)
 TEAM_TABS = (311 / 1920, 12 / 1080, 1376 / 1920, 105 / 1080)
 DIALOG = (245 / 1920, 200 / 1080, 1430 / 1920, 645 / 1080)
+INSTANCE_POPUPS = ("开拓力补充", "背包内遗器持有数量已达上限", "长时间未操作", "已处于无法战斗状态")
+ORNAMENT_START_POPUPS = ("仍有角色位空缺", "当前不存在任何存档，是否直接开始战斗")
 CONFIRM = "./assets/images/zh_CN/base/confirm.png"
 FIGHT_AGAIN = "./assets/images/zh_CN/fight/fight_again.png"
 FIGHT_FAIL = "./assets/images/zh_CN/fight/fight_fail.png"
 FIGHT_EXIT = "./assets/images/zh_CN/fight/fight_exit.png"
 PAUSE = "./assets/images/purefiction/battle_pause.png"
+MAX_START_CLICKS = 5
 MAX_RECONNECTS = 3
 
 
@@ -258,18 +261,37 @@ class Instance:
                     raise TeamPresetUnavailable("编队页未找到配置的预设队伍")
 
         borrowed = support.should_borrow(cfg) and Character.borrow("ornament" if ornament else "standard", for_training=support.pending)
-        if not auto.click_element("开始挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35):
-            Instance.check_popup()
-            raise PowerError("无法开始挑战")
+        Instance._click_start_challenge(ornament=ornament)
         if ornament:
             Instance._engage_ornament_boss()
         return borrowed
 
     @staticmethod
+    def _click_start_challenge(*, ornament):
+        button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35)
+        if not button:
+            Instance.check_popup()
+            raise PowerError("无法开始挑战")
+
+        popups = INSTANCE_POPUPS + ("连接中断",)
+        if ornament:
+            popups += ORNAMENT_START_POPUPS
+        for _ in range(MAX_START_CLICKS):
+            auto.click_element_with_pos(button)
+            time.sleep(0.5)
+            # 弹窗交给后续流程处理，补点前以最后一帧的按钮位置为准。
+            if auto.find_element(popups, "text", crop=DIALOG, include=True):
+                return
+            button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=2, retry_delay=0.25)
+            if not button:
+                return
+        log.warning(f"已尝试点击开始挑战 {MAX_START_CLICKS} 次，按钮仍可见，等待游戏转场")
+
+    @staticmethod
     def _engage_ornament_boss():
         def ready():
             Instance.check_popup()
-            if auto.find_element(("仍有角色位空缺", "当前不存在任何存档，是否直接开始战斗"), "text", crop=DIALOG, include=True):
+            if auto.find_element(ORNAMENT_START_POPUPS, "text", crop=DIALOG, include=True):
                 auto.click_element(CONFIRM, "image", 0.9)
             return auto.find_element("./assets/images/purefiction/prepare_fight.png", "image", 200000,
                                      crop=(0, 0, 300 / 1920, 300 / 1080))
@@ -283,7 +305,7 @@ class Instance:
 
     @staticmethod
     def check_popup(*, check_disconnect=False) -> bool:
-        labels = ("开拓力补充", "背包内遗器持有数量已达上限", "长时间未操作", "已处于无法战斗状态")
+        labels = INSTANCE_POPUPS
         if check_disconnect:
             labels += ("连接中断",)
         found = auto.find_element(labels, "text", crop=DIALOG, include=True, threshold=0.75)

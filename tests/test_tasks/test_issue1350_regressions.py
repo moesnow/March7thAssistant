@@ -270,20 +270,31 @@ def test_missing_anchors_do_not_abort_when_navigation_is_ready(monkeypatch):
     assert screen.change_to.call_args_list == [call("map"), call("universe_main"), call("map"), call("main")]
 
 
-@pytest.mark.parametrize("challenge_screen_ready", [True, False])
-def test_ornament_missing_optional_preset_resumes_only_on_challenge_screen(monkeypatch, challenge_screen_ready):
+@pytest.mark.parametrize("challenge_screen_ready, start_popup", [(True, False), (True, True), (False, False)])
+def test_ornament_missing_optional_preset_resumes_only_on_challenge_screen(monkeypatch, challenge_screen_ready, start_popup):
     auto = Mock()
+    start_button = ((1720, 985), (1800, 1005))
 
-    def click(target, kind, **kwargs):
+    def find(target, kind, *args, **kwargs):
+        if kind == "image_count":
+            return 0
         if target == "开始挑战":
-            assert auto.press_key.called
-            return True
-        return target != "队伍6"
+            if challenge_screen_ready and (start_popup or not auto.click_element_with_pos.called):
+                return start_button
+            return None
+        return start_popup and "仍有角色位空缺" in target
 
-    auto.click_element.side_effect = click
-    auto.find_element.side_effect = lambda _target, kind, *args, **kwargs: 0 if kind == "image_count" else challenge_screen_ready
+    def click_start(coordinates):
+        auto.press_key.assert_called_once_with("esc")
+        assert coordinates == start_button
+        return True
+
+    auto.click_element.side_effect = lambda target, *_args, **_kwargs: target != "队伍6"
+    auto.click_element_with_pos.side_effect = click_start
+    auto.find_element.side_effect = find
     monkeypatch.setattr(instance, "auto", auto)
     monkeypatch.setattr(instance, "cfg", SimpleNamespace(instance_team_enable=True, borrow_enable=False))
+    monkeypatch.setattr(instance, "time", SimpleNamespace(sleep=Mock()))
     monkeypatch.setattr(instance.Instance, "get_target_team", Mock(return_value=6))
     monkeypatch.setattr(instance, "drag_list", Mock(return_value=False))
     engage = Mock()
@@ -294,10 +305,11 @@ def test_ornament_missing_optional_preset_resumes_only_on_challenge_screen(monke
 
     if challenge_screen_ready:
         assert start() is False
+        auto.click_element_with_pos.assert_called_once_with(start_button)
         engage.assert_called_once()
     else:
         with pytest.raises(PowerError, match="未能返回饰品提取挑战页"):
             start()
         engage.assert_not_called()
-        assert all(click.args[0] != "开始挑战" for click in auto.click_element.call_args_list)
+        auto.click_element_with_pos.assert_not_called()
     auto.press_key.assert_called_once_with("esc")
