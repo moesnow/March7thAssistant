@@ -31,7 +31,7 @@ def test_insufficient_resin_materials_preserves_monthly_task():
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
     with patch.object(module.time, 'sleep'):
-        assert module.Synthesis.self_molding_resin() is False
+        assert module.Synthesis.self_molding_resin() is None
     cfg.save_timestamp.assert_not_called()
     log.warning.assert_called_once()
     log.error.assert_not_called()

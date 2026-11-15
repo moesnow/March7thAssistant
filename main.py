@@ -510,7 +510,7 @@ def run_sub_task(action, task_override=None):
 
     sub_tasks = {
         "routine": Daily.routine,
-        "daily": Daily.run,
+        "daily": Daily.run_standalone,
         "power": Power.run,
         "currencywars": lambda: currencywars(),
         "currencywarsloop": lambda: currencywars("loop"),

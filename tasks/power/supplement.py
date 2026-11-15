@@ -2,8 +2,9 @@
 import time
 
 from module.logger import log
-from tasks.power.policy import PowerError, normalize
+from tasks.power.policy import PowerError
 from tasks.power.readout import read_number
+from tasks.reward.receipt import ITEM_POPUP
 
 
 TITLE = (0.40, 0.25, 0.20, 0.065)
@@ -18,7 +19,7 @@ QUANTITIES = {
 
 
 def _number(text):
-    text = normalize(text)
+    text = text.strip()
     return int(text) if text.isdecimal() else None
 
 
@@ -75,7 +76,7 @@ def supplement(auto, screen, config, balance, open_dialog, read_balance, *, retu
         raise
 
     if expected is not None:
-        if auto.find_element("获得物品", "text", crop=(0.40, 0.07, 0.20, 0.13), max_retries=5, retry_delay=0.3):
+        if auto.find_element("获得物品", "text", crop=ITEM_POPUP, max_retries=5, retry_delay=0.3):
             auto.click_element(_crop((640, 569, 0, 0)), "crop")
             time.sleep(0.4)
     if auto.find_element("开拓力补充", "text", crop=TITLE) and not click_label("取消", CANCEL):

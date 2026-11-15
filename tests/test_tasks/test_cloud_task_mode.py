@@ -28,7 +28,8 @@ def runner():
     source = Path(__file__).resolve().parents[2] / "main.py"
     tree = ast.parse(source.read_text(encoding="utf-8-sig"))
     functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)
-                 and node.name in {"run_main_actions", "run_sub_task", "run_workflow_action", "main", "_run_action"}]
+                 and node.name in {"run_main_actions", "run_sub_task", "run_sub_task_gui", "run_sub_task_update",
+                                   "run_notify_action", "run_workflow_action", "main", "_run_action"}]
     entrypoint = next(node for node in tree.body if isinstance(node, ast.If)
                       and isinstance(node.test, ast.Compare)
                       and isinstance(node.test.left, ast.Name)
@@ -38,7 +39,8 @@ def runner():
              "screen_test", "character_export", "challenge", "Redemption", "adb_check",
              "first_run", "pause_ctl", "ensure_exclusive_run", "version",
              "recover_temporary_graphics", "restore_temporary_graphics", "log", "publish_status", "run_session", "notif",
-             "task_power_request")
+             "task_power_request", "app_update_task", "Genshin_StarRail_fps_unlocker",
+             "NotificationLevel", "pause_always")
     scope = {name: MagicMock() for name in names}
     scope["cfg"].control_backend = None
     scope["cfg"].ui_profile = None
@@ -53,7 +55,7 @@ def runner():
                  ProfileAssetNotFoundError=ProfileAssetNotFoundError,
                  TouchProfileInputError=TouchProfileInputError,
                  CurrencyWarsTerminalError=currency_wars.CurrencyWarsTerminalError)
-    scope["time"] = SimpleNamespace(time=lambda: 0)
+    scope.update(sys=sys, time=SimpleNamespace(time=lambda: 0))
     scope["EXCLUSIVE_ACTIONS"] = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update", "adb_check"}
     # 仅加载入口函数，避免导入 CLI 时触发权限检查或游戏操作。
     exec(compile(ast.Module(body=functions, type_ignores=[]), str(source), "exec"), scope)
@@ -61,6 +63,68 @@ def runner():
         **scope,
         entrypoint=compile(ast.Module(body=[entrypoint], type_ignores=[]), str(source), "exec"),
     )
+
+
+# PC 内置任务的入口及其处理函数。
+PC_TASK_HANDLERS = {
+    "main": "Daily.start",
+    "routine": "Daily.routine",
+    "daily": "Daily.run_standalone",
+    "power": "Power.run",
+    "game_update": "game.update_via_launcher",
+    "game_pre_download": "game.pre_download_via_launcher",
+    "app_update": "app_update_task.start",
+    "currencywars": "CurrencyWars.return_value.start",
+    "divergent": "DivergentUniverse.return_value.start",
+    "fight": "Fight.start",
+    "universe": "Universe.start",
+    "forgottenhall": "challenge.start",
+    "purefiction": "challenge.start",
+    "apocalyptic": "challenge.start",
+    "currencywarsloop": "CurrencyWars.return_value.start",
+    "currencywarstemp": "CurrencyWars.return_value.start",
+    "divergentloop": "DivergentUniverse.return_value.start",
+    "divergenttemp": "DivergentUniverse.return_value.loop",
+    "universe_gui": "Universe.gui",
+    "fight_gui": "Fight.gui",
+    "universe_update": "Universe.update",
+    "fight_update": "Fight.update",
+    "mobileui_update": "Genshin_StarRail_fps_unlocker.update",
+    "game": "game.start",
+    "notify": "notif.notify",
+    "redemption": "Redemption.start",
+    "screen_test": "screen_test.run",
+    "character_export": "character_export.run",
+}
+
+
+@pytest.mark.parametrize("action", AVAILABLE_TASKS)
+def test_pc_command_dispatches_to_expected_handler(runner, action):
+    handler = runner
+    for attribute in PC_TASK_HANDLERS[action].split("."):
+        handler = getattr(handler, attribute)
+    handler.return_value = True
+
+    if action in ("currencywarsloop", "divergentloop"):
+        handler.side_effect = RunStopRequested
+        with pytest.raises(RunStopRequested):
+            runner.main(action=action)
+    elif action in ("main", "universe_gui", "fight_gui", "universe_update", "fight_update", "mobileui_update", "notify"):
+        runner.game.stop.side_effect = SystemExit(EXIT_OK)
+        with pytest.raises(SystemExit) as completed:
+            runner.main(action=action)
+        assert completed.value.code == EXIT_OK
+    else:
+        assert runner.main(action=action) is not False
+
+    handler.assert_called_once()
+    if action in ("forgottenhall", "purefiction", "apocalyptic"):
+        handler.assert_called_once_with("memoryofchaos" if action == "forgottenhall" else action)
+    if action == "universe":
+        handler.assert_called_once_with(category="universe")
+    if action == "currencywarstemp":
+        handler.assert_called_once_with(resume=True)
+    runner.publish_status.assert_not_called()
 
 
 @pytest.mark.parametrize("configured_headless", [False, True])
@@ -391,13 +455,12 @@ def test_legacy_task_without_return_value_still_succeeds(runner):
 
 
 @pytest.mark.parametrize("backend", ["local", "cloud"])
-def test_pc_daily_only_runs_training(runner, backend):
+def test_pc_daily_uses_desktop_daily_entry(runner, backend):
     runner.cfg.control_backend = backend
 
     assert runner.main(action="daily") is True
 
-    runner.Daily.run.assert_called_once_with()
-    runner.reward.start.assert_not_called()
+    runner.Daily.run_standalone.assert_called_once_with()
 
 
 @pytest.mark.parametrize("backend", ["local", "adb"])
@@ -417,6 +480,7 @@ def test_touch_subtasks_run_without_pc_tasks(runner, monkeypatch, backend, actio
     runner.game.start.assert_called_once_with(headless=None)
     task.assert_called_once_with()
     runner.Daily.run.assert_not_called()
+    runner.Daily.run_standalone.assert_not_called()
     runner.Daily.routine.assert_not_called()
     runner.Power.run.assert_not_called()
     runner.reward.start.assert_not_called()

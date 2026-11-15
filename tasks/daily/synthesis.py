@@ -55,9 +55,9 @@ class Synthesis:
             return False
         auto.take_screenshot(crop=(0.51, 0.63, 0.41, 0.23))
         auto.perform_ocr()
-        text = normalize(" ".join(line[1][0] for line in auto.ocr_result))
-        amount = re.search(r"合成数量[:：]?(\d+)", text)
-        materials = re.search(r"(\d+)/3(?!\d)", text)
+        text = "\n".join(normalize(value) for _, (value, _) in auto.ocr_result)
+        amount = re.search(r"^合成数量:?\s*(\d+)$", text, re.MULTILINE)
+        materials = re.search(r"^(\d+)/3$", text, re.MULTILINE)
         if not amount or int(amount[1]) != 1 or not materials:
             log.error("未确认合成数量为 1 且只消耗 3 个熄灭原核")
             return False
@@ -90,7 +90,7 @@ class Synthesis:
                                 if auto.find_element("合成所需材料不足", "text",
                                                      crop=(0.45, 0.72, 0.40, 0.16), include=True):
                                     log.warning("自塑尘脂合成材料不足，保留本月任务，下次运行重试")
-                                    return False
+                                    return None
                                 if auto.click_element("./assets/images/share/synthesis/plus.png", "image", 0.9, crop=(1520 / 1920, 832 / 1080, 86 / 1920, 69 / 1080)):
                                     time.sleep(2)
                                 if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):

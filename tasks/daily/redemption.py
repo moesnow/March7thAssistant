@@ -150,7 +150,7 @@ class Redemption:
             codes = valid_codes_for_server(server)
         except Exception as e:
             log.warning(f"获取兑换码失败: {e}")
-            codes = []
+            return False
 
         # 判断哪些兑换码是未使用过的
         try:
@@ -164,11 +164,14 @@ class Redemption:
         if not codes:
             log.info("没有找到有效的兑换码")
             log.hr("完成", 2)
-            return False
+            return True
 
         log.info(f"当前服务器类型为{"国服" if server == "cn" else "国际服"}，找到{len(codes)}个有效兑换码，开始尝试兑换")
         log.hr("完成", 2)
-        return Redemption.start(codes=codes, send_notification=True)
+        Redemption.start(codes=codes, send_notification=True)
+        # 已使用、已过期等明确结果也会记录在已处理列表。超时或无法操作的兑换码留待下次。
+        handled = set(getattr(cfg, "already_used_codes", None) or ())
+        return handled.issuperset(codes)
 
     @staticmethod
     def start(codes: Optional[List[str]] = None, send_notification: bool = False) -> bool:

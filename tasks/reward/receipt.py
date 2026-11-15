@@ -8,7 +8,8 @@ class RewardError(RuntimeError):
     """未能确认领取或奖励页面状态。"""
 
 
-ITEM_POPUP = (0.38, 0.055, 0.24, 0.14)
+# 标题位于物品图标下方，委托到账画面中占到高度的约 22%。
+ITEM_POPUP = (0.38, 0.055, 0.24, 0.205)
 
 
 def confirm_item_reward(message, *, notify=False):

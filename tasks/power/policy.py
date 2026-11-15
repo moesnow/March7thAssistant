@@ -19,6 +19,7 @@ INSTANCE_LIMITS = {
 ENTRY_TIMEOUT = 90
 BATTLE_TIMEOUT = 30 * 60
 DEFEAT_RETRIES = 2
+_POWER_METER = re.compile(r"\+*\s*(?:满\s*)?(\d{1,4})\s*/\s*300\s*[+十]*")
 
 
 class PowerError(RuntimeError):
@@ -50,8 +51,31 @@ def normalize(text):
 
 
 def parse_power(text):
-    value = unicodedata.normalize("NFKC", text or "").strip().strip("+").strip()
-    match = re.fullmatch(r"(\d{1,4})\s*/\s*300", value)
+    value = unicodedata.normalize("NFKC", text or "").strip()
+    if match := _POWER_METER.fullmatch(value):
+        return int(match[1])
+    readings = {int(match[1]) for box in value.splitlines() if (match := _POWER_METER.fullmatch(box.strip()))}
+    return readings.pop() if len(readings) == 1 else None
+
+
+def parse_wave_count(text, label, limit):
+    value = unicodedata.normalize("NFKC", text)
+    match = re.search(rf"{re.escape(label)}\s*:?\s*(\d{{1,2}})(?!\d)", value)
+    if match and 1 <= (count := int(match[1])) <= limit:
+        return count
+    return None
+
+
+def parse_echo_rewards(text):
+    value = unicodedata.normalize("NFKC", text)
+    quotas = {int(match[1]) for match in re.finditer(r"(?<![\d/])([0-3])\s*/\s*3(?!\d)", value)}
+    return quotas.pop() if len(quotas) == 1 else None
+
+
+def parse_challenge_cost(text):
+    value = unicodedata.normalize("NFKC", text).strip()
+    # 开拓力图标会被 OCR 识别为「米」；金额与独立数字仍需分开。
+    match = re.fullmatch(r"(?:米\s*)?[×xX]?\s*(\d{1,3})", value)
     return int(match[1]) if match else None
 
 
