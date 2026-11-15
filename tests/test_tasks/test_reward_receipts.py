@@ -1,17 +1,54 @@
 from time import monotonic
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 from PIL import Image
 import pytest
 
 from module.game.adb_transport import AdbError
 from module.notification.notification import NotificationLevel
-from tasks.reward import assist, quest, receipt
+from tasks import reward
+from tasks.base import task_steps
+from tasks.reward import assist, quest, receipt, rewardtemplate
 from tasks.touch import daily, rewards, synthesis
 
 
 BUTTON = ((10, 20), (30, 40))
+
+
+@pytest.mark.parametrize("has_red_dot", [False, True])
+def test_pc_sms_opens_only_with_a_menu_red_dot(monkeypatch, has_red_dot):
+    config = SimpleNamespace(
+        reward_enable=True, reward_message_enable=True, reward_dispatch_enable=False, reward_mail_enable=False,
+        reward_assist_enable=False, reward_srpass_enable=False, reward_achievement_enable=False, reward_quest_enable=False,
+    )
+    auto = Mock(find_element=Mock(return_value=BUTTON if has_red_dot else None))
+
+    def change_screen(target, **_kwargs):
+        if target == "incoming_message" and not has_red_dot:
+            raise RuntimeError("没有待处理短信时，快捷键无法打开短信界面")
+
+    screen = Mock(change_to=Mock(side_effect=change_screen))
+    read_messages = Mock()
+    monkeypatch.setattr(reward, "cfg", config)
+    monkeypatch.setattr(reward, "auto", auto)
+    monkeypatch.setattr(reward, "screen", screen)
+    monkeypatch.setattr(rewardtemplate, "screen", screen)
+    monkeypatch.setattr(task_steps, "screen", screen)
+    monkeypatch.setattr(reward.Message, "run", read_messages)
+
+    assert reward.start()
+
+    auto.find_element.assert_called_once_with(
+        "./assets/images/share/menu/message_reward.png", "image", 3000000,
+        crop=(1263 / 1920, 52 / 1080, 642 / 1920, 982 / 1080),
+    )
+    if has_red_dot:
+        assert screen.change_to.call_args_list == [call("menu"), call("incoming_message")]
+        read_messages.assert_called_once_with()
+    else:
+        screen.change_to.assert_called_once_with("menu")
+        read_messages.assert_not_called()
 
 
 def test_touch_srpass_keeps_the_claim_when_the_popup_is_only_read_once(monkeypatch):
