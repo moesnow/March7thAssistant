@@ -20,6 +20,14 @@ from module.localization import tr
 _GAME_ACTIVITY = "com.mihoyo.combosdk.ComboSDKActivity"
 _GAME_COMPONENT = f"{GAME_PACKAGE}/{_GAME_ACTIVITY}"
 _TEMPORARY_INPUT_ERRORS = {"game_not_on_display", "sdk_window_active"}
+_STARTUP_TASK_MISSING_MS = 1000
+
+
+@dataclass
+class _GameStartup:
+    saw_task: bool = False
+    missing_since_ms: int | None = None
+    relaunched: bool = False
 
 
 @dataclass(frozen=True)
@@ -60,6 +68,7 @@ class AdbGameController(GameControllerBase):
 
     def _reset_display(self):
         self._on_event = None
+        self._startup = None
         self._display_id = None
         self._game_display_id = None
         self._watching = False
@@ -167,8 +176,12 @@ class AdbGameController(GameControllerBase):
                 self._failure = AdbError("move_back_failed", tr("游戏未能回到目标 Android 屏幕，请结束游戏后重试"))
         elif name == "manual_action_required":
             self._failure = AdbError(name, tr("游戏需要手动登录，请在 Android 实体屏或模拟器中完成登录后重试"))
-        elif name == "game_exited":
+        elif name == "game_exited" and (self._startup is None or not self._startup.saw_task):
             self._failure = AdbError(name, tr("Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"))
+        if (self._startup is not None and name in {"watchdog_started", "task_display_changed"}
+                and self._game_display_id is not None):
+            self._startup.saw_task = True
+            self._startup.missing_since_ms = None
 
     def _poll_events(self, *, force=False):
         if not self._watching or (not force and time.monotonic() - self._last_event_poll < 0.35):
@@ -232,7 +245,7 @@ class AdbGameController(GameControllerBase):
                 self._display_id = response["display_id"]
             return self._display_id
 
-    def start_game_process(self) -> bool:
+    def start_game_process(self, *, recover_startup=False) -> bool:
         with self._lock:
             display_id = self.prepare_display()
             if not self._environment.game_installed:
@@ -240,6 +253,8 @@ class AdbGameController(GameControllerBase):
             if self._watching:
                 self._poll_events(force=True)
                 return True
+            if recover_startup:
+                self._startup = _GameStartup()
 
             # MuMu 的独立应用窗口可能把显式指定到 display 0 的启动重定向到外接屏。
             self._call("watchdog", package=GAME_PACKAGE, main_activity=_GAME_ACTIVITY, display_id=display_id,
@@ -249,6 +264,47 @@ class AdbGameController(GameControllerBase):
             self._watching = True
             self._poll_events(force=True)
             return True
+
+    def recover_game_start(self, deadline):
+        """启动期确认窗口持续消失后，在原虚拟屏补一次启动。"""
+        with self._lock:
+            startup = self._startup
+            if startup is None or not startup.saw_task or self._game_display_id is not None:
+                return
+            remaining = deadline - time.monotonic()
+            if remaining < 1:
+                return
+            response, _ = self._call("status", timeout=min(4, remaining))
+            watchdog = response["watchdog"]
+            if watchdog.get("task") is not None or not watchdog.get("interactive") or watchdog.get("keyguard_locked"):
+                startup.missing_since_ms = None
+                return
+            checked = watchdog.get("task_checked_ms")
+            if type(checked) is not int or checked <= 0:
+                return
+            if startup.missing_since_ms is None:
+                startup.missing_since_ms = checked
+            if checked - startup.missing_since_ms < _STARTUP_TASK_MISSING_MS:
+                return
+            if startup.relaunched:
+                raise AdbError("game_exited", tr("重新启动后，Android 游戏窗口再次消失"))
+            remaining = deadline - time.monotonic()
+            if remaining < 1:
+                return
+            result, _ = self._call(
+                "launch_if_missing", timeout=min(4, remaining), timeout_ms=min(3000, int(remaining * 1000)),
+                display_id=self._display_id, component=_GAME_COMPONENT, wait=False,
+            )
+            startup.missing_since_ms = None
+            if result["launched"]:
+                startup.relaunched = True
+                startup.saw_task = False
+                self._min_seq = max(self._min_seq, result["seq"] + 1)
+                self.log_warning("Android 游戏窗口已消失，已在原虚拟屏重新启动星铁")
+
+    def finish_game_startup(self):
+        with self._lock:
+            self._startup = None
 
     def is_game_running(self) -> bool:
         with self._lock:

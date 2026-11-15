@@ -434,6 +434,8 @@
     <string name="error_root_advice">1. 在 Root 管理应用（如 Magisk）里允许三月七小助手使用超级用户权限。\n2. 到权限引导点「检查 Root」。\n3. 没有 Root 的设备请改用 Shizuku。</string>
     <string name="error_game_title">没有找到游戏</string>
     <string name="error_game_advice">请先安装国服《崩坏：星穹铁道》，手动打开一次，完成登录和资源下载后再开始。</string>
+    <string name="error_game_exited_title">游戏已退出</string>
+    <string name="error_game_exited_advice">可以直接从小助手重新启动游戏。若反复退出，请导出日志反馈。</string>
     <string name="error_login_title">需要你先登录游戏</string>
     <string name="error_login_advice">1. 在手机上打开游戏，完成登录，进到能操作角色的界面。\n2. 回到小助手重新开始。</string>
     <string name="error_locked_title">手机处于锁屏状态</string>

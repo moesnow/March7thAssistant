@@ -162,7 +162,9 @@ public final class DeviceService implements Watchdog.Host {
                     releaseDisplay();
                     return new Message(Message.ok(header));
                 case "launch":
-                    return new Message(launch(header));
+                    return new Message(launch(header, false));
+                case "launch_if_missing":
+                    return new Message(launch(header, true));
                 case "stop_app":
                     return new Message(stopApp(header));
                 case "frame":
@@ -388,7 +390,7 @@ public final class DeviceService implements Watchdog.Host {
 
     // ---- 启动与停止应用 ----
 
-    private JSONObject launch(JSONObject request) throws CommandException, JSONException, InterruptedException {
+    private JSONObject launch(JSONObject request, boolean onlyIfMissing) throws Exception {
         String component = request.optString("component", "");
         if (!COMPONENT.matcher(component).matches()) {
             throw new CommandException(Protocol.E_BAD_REQUEST, "component must look like package/class");
@@ -397,6 +399,19 @@ public final class DeviceService implements Watchdog.Host {
         boolean wait = request.optBoolean("wait", true);
         int timeout = clamp(request.optInt("timeout_ms", 30000), 1000, 120000);
         long startedMs = SystemClock.elapsedRealtime();
+        JSONObject out = Message.ok(request);
+        out.put("display_id", displayId);
+        out.put("seq", sequencer.latest());
+        out.put("device_ms", startedMs);
+        if (onlyIfMissing) {
+            Watchdog current = watchdog;
+            if (current == null) {
+                throw new CommandException(Protocol.E_BAD_REQUEST, "launch_if_missing needs a watchdog");
+            }
+            if (current.hasGameTask(component, displayId) || !SystemApis.interactive() || SystemApis.keyguardLocked()) {
+                return out.put("launched", false);
+            }
+        }
         String output = startActivity(component, displayId, wait, timeout);
         synchronized (displayLock) {
             lastLaunched = component;
@@ -405,11 +420,9 @@ public final class DeviceService implements Watchdog.Host {
                 current.learnMainActivity(component);
             }
         }
-        JSONObject out = Message.ok(request);
-        out.put("display_id", displayId);
         out.put("output", output);
         out.put("seq", sequencer.latest());
-        out.put("device_ms", startedMs);
+        out.put("launched", true);
         return out;
     }
 

@@ -239,8 +239,12 @@ def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_
         except AdbError as error:
             log.warning(f"未能设置游戏静音：{error}")
         started = time.monotonic()
-        controller.start_game_process()
-        wait_for_game(controller, min(cfg.start_game_timeout * 60, 180))
+        startup_deadline = started + min(cfg.start_game_timeout * 60, 180)
+        controller.start_game_process(recover_startup=True)
+        wait_for_game(controller, startup_deadline - time.monotonic(), recover_without_frame=controller.recover_game_start)
+        controller.finish_game_startup()
+        if bridge.isCancelled():
+            raise RunStopRequested()
         elapsed = time.monotonic() - started
         log.info(f"游戏画面就绪，用时 {elapsed:.1f} 秒")
         bridge.gameReady(round(elapsed * 1000))
