@@ -1219,6 +1219,7 @@ def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
     "runtime_unavailable", "runtime_timeout", "runtime_stopped",
 ))
 def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_game, monkeypatch, action, fault):
+    from module import screen as screen_module
     from tasks import game
     from utils import wait
 
@@ -1234,6 +1235,7 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     screen = MagicMock()
     screen.get_current_screen.return_value = False
     monkeypatch.setattr(game, "screen", screen)
+    monkeypatch.setattr(screen_module, "screen", screen)
     runner.game.start.side_effect = game.start
     runner.cfg.control_backend = "cloud"
 
@@ -1380,7 +1382,10 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
         controller._clean_at_exit()
         controller.close_all_m7a_browser.assert_not_called()
         assert controller.driver is None
-    screen.get_current_screen.assert_not_called()
+    if fault == "unavailable_frames" and action == "main":
+        screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
+    else:
+        screen.get_current_screen.assert_not_called()
 
 
 @pytest.mark.parametrize("scenario, started, entries, attachments, queue_choice", (
@@ -1854,6 +1859,7 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
         windows = MagicMock()
         windows.return_value.process_running.return_value = False
         monkeypatch.setattr(game, "WindowsInputApi", windows)
+        monkeypatch.setattr(game, "process_session_id", lambda: 4)
         monkeypatch.setattr(game, "game_option_enabled", lambda *_: False)
         monkeypatch.setattr(game, "restore_temporary_graphics", MagicMock())
 
@@ -1899,9 +1905,14 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
             assert "未找到保存的登录凭据" in record["error"]
 
 
-@pytest.mark.parametrize("ready_screen", ("main", "menu", None))
+@pytest.mark.parametrize(("recognized", "current_screen", "can_continue"), (
+    (True, "main", True),
+    (True, "menu", True),
+    (True, "currency_wars_homepage", False),
+    (False, "main", False),
+))
 def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_read(
-        runner, currency_wars_game, monkeypatch, ready_screen):
+        runner, currency_wars_game, monkeypatch, recognized, current_screen, can_continue):
     from module import screen as screen_module
     from tasks import game
     from utils import wait
@@ -1913,7 +1924,8 @@ def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_r
     monkeypatch.setattr(game, "task_power_request", MagicMock())
     monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=0.08))
     screen = MagicMock()
-    screen.get_current_screen.return_value = ready_screen
+    screen.get_current_screen.return_value = recognized
+    screen.current_screen = current_screen
     monkeypatch.setattr(game, "screen", screen)
     monkeypatch.setattr(screen_module, "screen", screen)
     runner.cfg.control_backend = "cloud"
@@ -1927,7 +1939,7 @@ def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_r
 
     record = run_currency_wars_cli(runner, "main")
 
-    if ready_screen:
+    if can_continue:
         assert record["status"] == "success"
         screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
         runner.Daily.start.assert_called_once_with()

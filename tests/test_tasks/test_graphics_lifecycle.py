@@ -103,7 +103,7 @@ def test_task_readiness_waits_through_an_unavailable_frame(startup, monkeypatch)
 
 @pytest.mark.parametrize("outcome", ("recovers", "repeated_exit", "window_missing"))
 def test_currency_wars_startup_checks_the_process_after_its_first_frame_fails(startup, monkeypatch, outcome):
-    from module.automation import automation
+    from module.automation import automation, screenshot as screenshot_module
     from module.automation.screenshot import Screenshot
     from tasks.weekly import currency_wars
     from utils import wait
@@ -119,6 +119,7 @@ def test_currency_wars_startup_checks_the_process_after_its_first_frame_fails(st
     game.WindowsInputApi.return_value.process_running.side_effect = lambda *_args, **_kwargs: state.running
     monkeypatch.setattr(game, "process_session_id", lambda: 4)
     monkeypatch.setattr(automation, "cfg", cfg)
+    monkeypatch.setattr(screenshot_module, "cfg", cfg)
     monkeypatch.setattr(game, "screen", Mock())
     game.screen.get_current_screen.return_value = False
 
