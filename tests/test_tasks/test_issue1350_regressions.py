@@ -93,22 +93,6 @@ def test_map_uses_same_meter_with_plus_read_as_cross(monkeypatch, meter_ocr):
     assert power.Power.get() == 127
 
 
-@pytest.mark.parametrize("texts,expected", [
-    (["上轮挑战波次：6", "14", "72", "3"], 6),
-    (["上轮挑战波次：24", "60", "180"], 24),
-    (["上轮挑战波次：", "6", "14"], 6),
-])
-def test_settled_waves_ignores_nearby_numbers(meter_ocr, texts, expected):
-    meter_ocr.return_value = ocr_lines(texts)
-    assert instance.Instance.completed_waves(GOLDEN_CALYX, 24) == expected
-
-
-def test_settled_waves_rejects_count_above_requested(meter_ocr):
-    meter_ocr.return_value = ocr_lines(["上轮挑战波次：26"])
-    with pytest.raises(PowerError):
-        instance.Instance.completed_waves(GOLDEN_CALYX, 24)
-
-
 def test_pc_echo_quota_ignores_neighboring_numbers(monkeypatch, meter_ocr):
     meter_ocr.return_value = ocr_lines(["本周剩余奖励次数", "2/3", "14"])
     monkeypatch.setattr(instance.Instance, "select_category", Mock())

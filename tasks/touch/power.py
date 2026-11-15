@@ -54,7 +54,6 @@ START_CHALLENGE = (1410 / 1920, 946 / 1080, 420 / 1920, 80 / 1080)
 TEAM_TABS = (531 / 1920, 14 / 1080, 861 / 1920, 86 / 1080)
 BATTLE_CONTROLS = (1665 / 1920, 30 / 1080, 210 / 1920, 63 / 1080)
 RESULT_TITLE = (754 / 1920, 109 / 1080, 411 / 1920, 253 / 1080)
-RESULT_COUNT = (1135 / 1920, 861 / 1080, 257 / 1920, 48 / 1080)
 REPEAT_COST = (1091 / 1920, 917 / 1080, 85 / 1920, 61 / 1080)
 REPEAT = (1180 / 1920, 911 / 1080, 290 / 1920, 74 / 1080)
 EXIT = (414 / 1920, 906 / 1080, 1075 / 1920, 87 / 1080)
@@ -534,21 +533,16 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             _enter_instance(instance_type, name)
             continue
 
-        completed = 1 if waves == 1 else _read_waves(RESULT_COUNT, "上轮挑战波次")
-        if completed > waves:
-            raise PowerError("实际结算次数超过已选波次")
         demand.won(borrowed)
-        yield completed
+        yield waves
         after = read_power()
-        if completed != waves:
-            raise PowerError(f"实际结算 {completed}/{waves} 次，已保留确认的进度")
         check_balance(power, after, 0 if practice else waves * cost, time.monotonic() - started)
         power, previous, retries = after, waves, 0
         if remaining is not None:
-            remaining -= completed
+            remaining -= waves
         if on_settlement is not None:
-            on_settlement(completed, power)
-        log.info(f"已结算 {completed} 次，剩余开拓力 {power}/300")
+            on_settlement(waves, power)
+        log.info(f"已结算 {waves} 次，剩余开拓力 {power}/300")
 
         if is_echo and not practice:
             _exit_result(instance_screen)

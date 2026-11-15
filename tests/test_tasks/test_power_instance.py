@@ -4,7 +4,7 @@ from unittest.mock import Mock, call
 import pytest
 
 from tasks.power import instance, power
-from tasks.power.policy import ECHO, ORNAMENT, BattleDefeat, PowerError
+from tasks.power.policy import ECHO, GOLDEN_CALYX, ORNAMENT, BattleDefeat, PowerError, SupportDemand
 
 
 @pytest.mark.parametrize(
@@ -71,5 +71,33 @@ def test_defeat_retries_stop_without_recording_completion(monkeypatch, instance_
     with pytest.raises(BattleDefeat):
         next(run)
     assert battle.start_instance.call_count == battle.exit_defeat.call_count == 3
-    battle.completed_waves.assert_not_called()
     assert balance.call_args_list == [call(use_supplement=True)] + [call(use_supplement=False)] * 3
+
+
+@pytest.mark.parametrize("after", [46, PowerError("余额读数失败")], ids=["balance-readable", "balance-ocr-failure"])
+def test_pc_power_plan_records_the_selected_batch_on_victory(monkeypatch, after):
+    name = "回忆之蕾"
+    cfg = SimpleNamespace(
+        power_plan=[[GOLDEN_CALYX, name, 4]], power_plan_keep=False, power_plan_continue=False,
+        instance_names_challenge_count={}, tp_before_instance=False, set_value=Mock(),
+    )
+    unreadable_result = Mock(side_effect=PowerError("未能确认已结算的挑战次数"))
+    monkeypatch.setattr(instance, "read_number", unreadable_result)
+    monkeypatch.setattr(power, "cfg", cfg)
+    monkeypatch.setattr(power.Power, "get", Mock(return_value=86))
+    monkeypatch.setattr(instance.Instance, "prepare_instance", Mock(return_value=True))
+    monkeypatch.setattr(instance.Instance, "prepare_payment", Mock(return_value=(4, 40)))
+    monkeypatch.setattr(instance.Instance, "read_balance", Mock(side_effect=[86, after]))
+    monkeypatch.setattr(instance.Instance, "start_instance", Mock(return_value=False))
+    monkeypatch.setattr(instance.Instance, "wait_fight", Mock(return_value=True))
+    monkeypatch.setattr(instance.Instance, "complete_run", Mock())
+
+    if isinstance(after, PowerError):
+        with pytest.raises(PowerError, match="余额读数失败"):
+            power.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
+    else:
+        assert power.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
+
+    cfg.set_value.assert_called_once_with("power_plan", [])
+    instance.Instance.start_instance.assert_called_once()
+    unreadable_result.assert_not_called()

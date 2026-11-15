@@ -30,7 +30,6 @@ CHALLENGE = (1392 / 1920, 946 / 1080, 487 / 1920, 83 / 1080)
 TEAM_TABS = (311 / 1920, 12 / 1080, 1376 / 1920, 105 / 1080)
 DIALOG = (245 / 1920, 200 / 1080, 1430 / 1920, 645 / 1080)
 CONFIRM = "./assets/images/zh_CN/base/confirm.png"
-RESULT_WAVES = (1130 / 1920, 860 / 1080, 285 / 1920, 48 / 1080)
 FIGHT_AGAIN = "./assets/images/zh_CN/fight/fight_again.png"
 FIGHT_FAIL = "./assets/images/zh_CN/fight/fight_fail.png"
 FIGHT_EXIT = "./assets/images/zh_CN/fight/fight_exit.png"
@@ -336,16 +335,6 @@ class Instance:
                 raise PowerError("已战败，未能退出关卡")
         time.sleep(1.5)
         screen.change_to("main", max_recursion=1)
-
-    @staticmethod
-    def completed_waves(instance_type, waves):
-        if waves == 1:
-            return 1
-
-        def parse(text):
-            return parse_wave_count(text, "上轮挑战波次", waves)
-
-        return read_number(auto, RESULT_WAVES, parse, "未能确认已结算的挑战次数")
 
     @staticmethod
     def wait_fight(*, repeated=False):

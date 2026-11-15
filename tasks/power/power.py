@@ -200,17 +200,14 @@ class Power:
                 available = Instance.read_balance(instance_type)
                 continue
 
-            completed = Instance.completed_waves(instance_type, waves)
             support.won(borrowed)
-            yield completed
+            yield waves
             after = Instance.read_balance(instance_type, result=True)
-            if completed != waves:
-                raise PowerError(f"实际结算 {completed}/{waves} 次，已保留确认的进度")
             check_balance(available, after, cost, time.monotonic() - started)
-            log.info(f"已结算 {completed} 次，剩余开拓力 {after}/300")
+            log.info(f"已结算 {waves} 次，剩余开拓力 {after}/300")
             available, previous, retries = after, waves, 0
             if remaining is not None:
-                remaining -= completed
+                remaining -= waves
             if is_echo and not practice:
                 # 奖励额度读数取自游戏，不能仅凭胜场写入周常时间。
                 Instance.complete_run(instance_type)

@@ -180,21 +180,15 @@ def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
             available, previous = enter(), 0
             continue
 
-        # 单场只有胜利及奖励，连续挑战还须核对结算波次。
-        completed = 1 if waves == 1 else power._read_waves(power.RESULT_COUNT, "上轮挑战波次")
-        if completed > waves:
-            raise power.PowerError("饰品提取实际结算次数超过已选波次")
         demand.won(borrowed)
-        yield completed
+        yield waves
         after = power.read_power(INDEX_POWER)
-        if completed != waves:
-            raise power.PowerError(f"饰品提取实际结算 {completed}/{waves} 次，已保留确认的进度")
         power.check_balance(available, after, cost, time.monotonic() - started)
-        log.info(f"饰品提取已结算 {completed} 次，剩余开拓力 {after}/300")
+        log.info(f"饰品提取已结算 {waves} 次，剩余开拓力 {after}/300")
         if on_settlement is not None:
-            on_settlement(completed, after)
+            on_settlement(waves, after)
         if remaining is not None:
-            remaining -= completed
+            remaining -= waves
         available, previous, retries = after, waves, 0
 
     if previous:

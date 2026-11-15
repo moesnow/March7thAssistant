@@ -101,13 +101,13 @@ def test_ornament_confirms_known_no_save_prompt(monkeypatch):
 
 
 @pytest.mark.parametrize("waves", [1, 3])
-def test_ornament_reports_completed_waves_before_rechecking_the_balance(monkeypatch, waves):
+def test_ornament_records_selected_waves_before_rechecking_the_balance(monkeypatch, waves):
     monkeypatch.setattr(ornament, "cfg", SimpleNamespace(borrow_enable=False, instance_team_enable=False))
     monkeypatch.setattr(power, "_select_category", Mock())
     monkeypatch.setattr(power, "_supplement", Mock())
     monkeypatch.setattr(power, "_enter_instance", Mock())
     monkeypatch.setattr(power, "_wait_battle", Mock())
-    read_waves = Mock(return_value=3)
+    read_waves = Mock(side_effect=power.PowerError("结算波次 OCR 不可用"))
     monkeypatch.setattr(power, "_read_waves", read_waves)
     monkeypatch.setattr(ornament, "_start_challenge", Mock())
     monkeypatch.setattr(ornament, "_prepare_payment", Mock(return_value=(waves, 40, waves - 1)))
@@ -116,14 +116,35 @@ def test_ornament_reports_completed_waves_before_rechecking_the_balance(monkeypa
 
     run = ornament.run_instance("浴火钢心", waves, 3, False, None)
     assert next(run) == waves
-    if waves == 1:
-        read_waves.assert_not_called()
-    else:
-        read_waves.assert_called_once_with(power.RESULT_COUNT, "上轮挑战波次")
+    read_waves.assert_not_called()
     assert balance.call_count == 2
     with pytest.raises(power.PowerError, match="读数失败"):
         next(run)
     balance.assert_called_with(ornament.INDEX_POWER)
+
+
+def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch):
+    cfg = SimpleNamespace(
+        power_plan=[[power.GOLDEN_CALYX, "回忆之蕾", 4]], power_plan_keep=False,
+        power_plan_continue=False, instance_names_challenge_count={}, set_value=Mock(),
+    )
+    read_waves = Mock(side_effect=power.PowerError("结算波次 OCR 不可用"))
+    start = Mock(return_value=False)
+    monkeypatch.setattr(power, "cfg", cfg)
+    monkeypatch.setattr(power, "screen", Mock())
+    monkeypatch.setattr(power, "_select_category", Mock())
+    monkeypatch.setattr(power, "_supplement", lambda balance: balance)
+    monkeypatch.setattr(power, "_enter_instance", Mock())
+    monkeypatch.setattr(power, "_start_challenge", start)
+    monkeypatch.setattr(power, "_wait_battle", Mock())
+    monkeypatch.setattr(power, "_exit_result", Mock())
+    monkeypatch.setattr(power, "_read_waves", read_waves)
+    monkeypatch.setattr(power, "read_power", Mock(side_effect=[86, 46]))
+
+    assert power.run()
+    cfg.set_value.assert_called_once_with("power_plan", [])
+    start.assert_called_once()
+    read_waves.assert_not_called()
 
 
 @pytest.mark.parametrize(("foreground", "background", "expected"), [
