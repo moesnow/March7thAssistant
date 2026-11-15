@@ -18,6 +18,8 @@ import module.game.adb_transport
 import module.localization
 import module.ocr
 from module.config import cfg
+from module.game.adb import AdbGameController
+from module.game.adb_ready import wait_for_game as wait_for_game_frames
 from module.logger import log
 from tasks.touch import power, rewards
 
@@ -221,7 +223,8 @@ def test_keep_awake_is_requested_before_launch_only_if_supported(entry, device, 
 
     client.request.side_effect = respond
 
-    def check_before_launch():
+    def check_before_launch(*, recover_startup):
+        assert recover_startup
         calls = [call for call in request.call_args_list if call.args == ("keep_awake",)]
         assert [call.kwargs for call in calls] == ([] if support == "missing" else [{"on": True}])
 
@@ -230,13 +233,102 @@ def test_keep_awake_is_requested_before_launch_only_if_supported(entry, device, 
     bridge = Bridge()
 
     assert start(entry, "DAILY", bridge) == "success"
-    controller.start_game_process.assert_called_once_with()
+    controller.start_game_process.assert_called_once_with(recover_startup=True)
     warnings = [call[2] for call in bridge.calls if call[:2] == ("log", "WARNING")]
     assert warnings == {
         "supported": [],
         "missing": ["设备端服务不支持保持系统唤醒"],
         "failed": ["未能保持系统唤醒：无法保持唤醒"],
     }[support]
+
+
+@pytest.mark.parametrize(("scenario", "outcome", "retry_requests"), [
+    ("recovers", "success", 1),
+    ("task_reappears", "success", 1),
+    ("dies_again", "game_exited", 1),
+    ("stale_observation", "game_start_timeout", 0),
+    ("stopped", "stopped", 0),
+    ("cold", "success", 0),
+])
+def test_app_startup_recovers_only_after_confirmed_task_loss(entry, device, monkeypatch, scenario, outcome, retry_requests):
+    from module.game import adb as adb_backend
+    from module.game import adb_ready
+
+    now = 200.0
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep)
+    monkeypatch.setattr(adb_backend, "time", clock)
+    monkeypatch.setattr(adb_ready, "time", clock)
+    monkeypatch.setattr(entry, "time", SimpleNamespace(monotonic=clock.monotonic, time=lambda: now))
+    monkeypatch.setattr(adb_ready, "wait_for_game", wait_for_game_frames)
+    monkeypatch.setattr(adb_ready, "_load_template", lambda name: name)
+    monkeypatch.setattr(adb_ready, "_match", lambda image, name, template: (1, 1) if name == "main" else None)
+    controller = AdbGameController(SimpleNamespace(ui_profile="touch_720", adb_tap_ms=None), logger=log)
+    monkeypatch.setattr(controller, "_capture_virtual", lambda pixels, fresh: (9, object()))
+    monkeypatch.setattr(module.game, "get_game_controller", lambda backend: controller)
+
+    bridge = Bridge()
+    client = module.game.adb_transport.ServiceClient.return_value
+    client.closed = False
+    client.close.side_effect = lambda: setattr(client, "closed", True)
+    events = []
+    missing_since = None
+
+    def event(name, **fields):
+        events.append(dict(event=name, event_seq=len(events) + 1, **fields))
+
+    def respond(command, **params):
+        nonlocal missing_since
+        if command == "create_display":
+            return {"display_id": 65}, None
+        if command == "watchdog":
+            event("watchdog_started", task=None if scenario == "cold" else {"display_id": 0})
+        if command == "launch":
+            sleep(2)
+            if scenario == "cold":
+                event("task_display_changed", to=65)
+            else:
+                if scenario == "dies_again":
+                    event("game_exited", pid=17)
+                event("task_display_changed", to=None)
+        if command == "status":
+            if missing_since is None:
+                missing_since = now
+            if scenario == "stopped" and now - missing_since >= 1:
+                bridge.cancelled = True
+            checked = 200000 if scenario == "stale_observation" else round(now * 1000)
+            return {"watchdog": {"task": None, "task_checked_ms": checked,
+                                 "interactive": True, "keyguard_locked": False}}, None
+        if command == "launch_if_missing":
+            assert now - missing_since >= 1
+            assert params["display_id"] == 65 and not params["wait"]
+            event("task_display_changed", to=65)
+            if scenario == "dies_again":
+                missing_since = None
+                event("task_display_changed", to=None)
+            return {"launched": scenario != "task_reappears", "seq": 8}, None
+        if command == "events":
+            return {"events": events[params["after"]:], "event_seq": len(events)}, None
+        return {"original_mode": "allowed"}, None
+
+    client.request.side_effect = respond
+    task = Mock(return_value=True)
+    monkeypatch.setattr(rewards, "run_daily_training", task)
+    assert start(entry, "DAILY", bridge) == outcome
+    commands = [call.args[0] for call in client.request.call_args_list]
+    assert commands.count("launch") == 1
+    assert commands.count("launch_if_missing") == retry_requests
+    assert commands[-1] == "shutdown" and commands.count("shutdown") == 1
+    assert task.call_count == (outcome == "success")
+    assert ("cleaning",) in bridge.calls
+    if scenario == "stale_observation":
+        assert 380 <= now < 381
+    elif scenario == "dies_again":
+        assert now < 210
 
 
 @pytest.mark.parametrize("instance_override", [False, True])

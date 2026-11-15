@@ -21,6 +21,24 @@ public class WatchdogTest {
     private static final int TARGET = 42;
 
     @Test
+    public void launchGuardReadsLiveTaskEvenWhenTheLastPollSawNone() throws Exception {
+        Fixture platform = new Fixture();
+        Watchdog.Config config = config();
+        config.displayId = TARGET;
+        Watchdog dog = new Watchdog(config, platform, platform);
+        dog.poll();
+        assertEquals(platform.now, dog.describe().getLong("task_checked_ms"));
+
+        platform.setTask(0, PACKAGE + "/.Main");
+        assertTrue(dog.hasGameTask(PACKAGE + "/.Main", TARGET));
+        assertTrue(dog.describe().isNull("task"));
+        assertThrows(CommandException.class, () -> dog.hasGameTask(PACKAGE + "/.Main", 0));
+
+        platform.task = null;
+        assertFalse(dog.hasGameTask(PACKAGE + "/.Main", TARGET));
+    }
+
+    @Test
     public void moveRequestsFocusBeforeWaitingForTheFrame() throws Exception {
         Fixture platform = new Fixture();
         platform.setTask(0, PACKAGE + "/.Main");
@@ -278,7 +296,7 @@ public class WatchdogTest {
 
         @Override
         public List<StackEntry> stacks() {
-            return List.of(task);
+            return task == null ? List.of() : List.of(task);
         }
 
         @Override

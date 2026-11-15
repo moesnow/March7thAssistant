@@ -198,6 +198,7 @@ final class Watchdog {
     private int pid = -1;
     private long lastProcessScan;
     private StackEntry game;
+    private long taskCheckedMs;
     private boolean interactive = true;
     private boolean keyguardLocked;
     private String foreignActivity;
@@ -291,6 +292,7 @@ final class Watchdog {
             json.put("pid", pid);
             json.put("interactive", interactive);
             json.put("keyguard_locked", keyguardLocked);
+            json.put("task_checked_ms", taskCheckedMs);
             if (game == null) {
                 json.put("task", JSONObject.NULL);
             } else {
@@ -334,6 +336,13 @@ final class Watchdog {
             }
         }
         Logger.i("watchdog stopped");
+    }
+
+    boolean hasGameTask(String component, int displayId) throws Exception {
+        if (!component.startsWith(config.packageName + "/") || displayId != targetDisplay()) {
+            throw new CommandException(Protocol.E_BAD_REQUEST, "launch_if_missing needs a matching watchdog");
+        }
+        return findGame(platform.stacks()) != null;
     }
 
     private StackEntry findGame(List<StackEntry> stacks) {
@@ -388,6 +397,7 @@ final class Watchdog {
         if (!primed) {
             synchronized (stateLock) {
                 game = current;
+                taskCheckedMs = now;
                 pid = currentPid;
                 interactive = nowInteractive;
                 keyguardLocked = nowKeyguard;
@@ -406,6 +416,7 @@ final class Watchdog {
         synchronized (stateLock) {
             previousGame = game;
             game = current;
+            taskCheckedMs = now;
         }
         if (nowInteractive != interactive || nowKeyguard != keyguardLocked) {
             synchronized (stateLock) {
