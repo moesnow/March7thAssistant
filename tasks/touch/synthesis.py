@@ -5,7 +5,7 @@ import time
 from module.automation import auto
 from module.logger import log
 from module.screen import screen
-from tasks.touch.daily import DailyTrainingError, REWARD_POPUP, REWARD_POPUP_CROP
+from tasks.touch.daily import DailyTrainingError, REWARD_CLOSE_CROP, REWARD_POPUP, REWARD_POPUP_CROP
 
 
 FILTER_TITLE = (244 / 1920, 158 / 1080, 247 / 1920, 84 / 1080)
@@ -69,8 +69,7 @@ def material():
         if not auto.find_element(REWARD_POPUP, "image", 0.9, crop=REWARD_POPUP_CROP,
                                  max_retries=10, retry_delay=0.3):
             raise DailyTrainingError("确认合成后未出现获得物品")
-    if not auto.click_element((960 / 1920, 854 / 1080, 0, 0), "crop"):
-        raise DailyTrainingError("无法关闭合成获得物品弹窗")
-    screen.wait_for_screen_change("material", max_recursion=0)
     log.info("已合成 1 个微光原核")
+    if not auto.click_element(REWARD_CLOSE_CROP, "crop"):
+        log.warning("已确认合成到账，获得物品弹窗仍未关闭")
     return True

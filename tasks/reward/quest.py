@@ -3,17 +3,15 @@ import time
 from module.automation import auto
 from module.config import cfg
 from module.logger import log
-from module.notification.notification import NotificationLevel
 from module.ocr import ocr
 from module.screen import screen
-from tasks.base.base import Base
 from tasks.base.list_drag import changed_ratio, drag_list, drag_to_edge
 from tasks.daily.tasks import Tasks
 from tasks.daily.training import (
     TARGET_ACTIVITY, DailyTrainingError, TrainingCards, can_collect, needs_action, record_progress,
 )
 from tasks.power.readout import read_number
-from tasks.reward.receipt import close_item_reward, confirm_item_reward
+from tasks.reward.receipt import close_item_reward, confirm_item_reward, notify_reward
 from .rewardtemplate import RewardTemplate
 
 
@@ -40,13 +38,13 @@ class Quest(RewardTemplate):
             raise DailyTrainingError(str(error)) from error
 
     @staticmethod
-    def scan(collect):
+    def scan(collect, *, read_tasks=True):
         screen.change_to("guide2")
         activity = Quest.activity()
         if activity == TARGET_ACTIVITY:
             return activity, TrainingCards({}), 0
 
-        tasks = Tasks("./assets/config/task_mappings.json")
+        tasks = Tasks("./assets/config/task_mappings.json") if read_tasks else None
         claimed = 0
         options = {"crop": CARDS, "duration": 0.6, "end_pause": 0.2, "settle": 0.45}
         if not drag_to_edge(auto, LEFT, RIGHT, max_drags=6, **options):
@@ -64,9 +62,10 @@ class Quest(RewardTemplate):
                 break
 
             frame, _, _ = auto.take_screenshot(crop=CARDS)
-            lines = ocr.recognize_multi_lines(frame) or []
-            gap = round(100 * frame.width / (CARDS[2] * 1920))
-            tasks.parse_ocr(lines, x_gap=gap, require_status=True)
+            if tasks is not None:
+                lines = ocr.recognize_multi_lines(frame) or []
+                gap = round(100 * frame.width / (CARDS[2] * 1920))
+                tasks.parse_ocr(lines, x_gap=gap, require_status=True)
             if not drag_list(auto, RIGHT, LEFT, **options):
                 raise DailyTrainingError("实训任务卡片列表未稳定")
             if changed_ratio(frame, auto.screenshot) <= 0.01:
@@ -74,6 +73,8 @@ class Quest(RewardTemplate):
         else:
             raise DailyTrainingError("未能确认实训任务卡片列表右端")
 
+        if tasks is None:
+            return activity, TrainingCards({}), claimed
         if activity < TARGET_ACTIVITY and not tasks.daily_tasks:
             raise DailyTrainingError("未识别到实训任务卡片的进度")
         return activity, TrainingCards(tasks.daily_tasks, sum(tasks.claimable.values())), claimed
@@ -85,17 +86,25 @@ class Quest(RewardTemplate):
             log.info("本轮无需补做或领取，跳过每日实训")
             return True
 
-        activity, tasks, received = Quest.scan(collect)
-        for name, action in actions:
-            if not complete or not needs_action(activity, tasks):
-                break
-            if tasks.get(name):
-                if action():
-                    activity, tasks, claimed = Quest.scan(collect)
-                    received += claimed
-                else:
-                    log.info(f"实训未完成：{name}")
-        record_progress(cfg, activity)
+        activity = None
+        received = 0
+        success = True
+        try:
+            activity, tasks, received = Quest.scan(collect, read_tasks=complete and bool(actions))
+            for name, action in actions:
+                if not complete or not needs_action(activity, tasks):
+                    break
+                if tasks.get(name):
+                    if action():
+                        activity, tasks, claimed = Quest.scan(collect)
+                        received += claimed
+                    else:
+                        log.info(f"实训未完成：{name}")
+        except DailyTrainingError as error:
+            log.warning(f"实训任务卡片检查未完成：{error}")
+            success = False
+        if activity is not None:
+            record_progress(cfg, activity)
 
         if collect:
             for _ in range(5):
@@ -107,10 +116,13 @@ class Quest(RewardTemplate):
                     break
                 time.sleep(0.5)
             if received:
-                message = (cfg.notify_template["DailyPracticeCompleted"] if activity == TARGET_ACTIVITY
-                           else f"已领取实训奖励，活跃度 {activity}/{TARGET_ACTIVITY}")
-                Base.send_notification_with_screenshot(message, NotificationLevel.ALL)
-        return True
+                message = "已领取实训奖励"
+                if activity == TARGET_ACTIVITY:
+                    message = cfg.notify_template["DailyPracticeCompleted"]
+                elif activity is not None:
+                    message = f"已领取实训奖励，活跃度 {activity}/{TARGET_ACTIVITY}"
+                notify_reward(auto, message)
+        return success
 
     def run(self):
         return Quest.settle()

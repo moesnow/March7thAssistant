@@ -446,7 +446,15 @@ def run_main_actions(no_run_immediately=False):
             if not touch and Daily.currency_wars_due():
                 def current_currency_wars():
                     nonlocal currency_wars_first
-                    currency_wars_first = CurrencyWars.game_screen_ready(for_full_run=True)
+                    try:
+                        currency_wars_first = CurrencyWars.game_screen_ready(for_full_run=True)
+                    except CurrencyWarsUnavailable as error:
+                        from module.screen import screen
+
+                        if screen.get_current_screen(autotry=False, max_retries=1) not in ("main", "menu"):
+                            raise
+                        log.warning(f"已确认游戏可操作，按正常顺序继续完整运行：{error}")
+                        return True
                     return currency_wars_first
 
                 game.start(screen_ready=current_currency_wars)

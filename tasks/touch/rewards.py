@@ -9,13 +9,11 @@ from module.automation.automation import screenshot_retry_timeout
 from module.config import cfg
 from module.localization import tr
 from module.logger import log
-from module.notification.notification import NotificationLevel
 from module.screen import screen
-from tasks.base.base import Base
 from tasks.base.list_drag import changed_ratio, drag_list
 from tasks.base.task_steps import run_steps
 from tasks.reward.menu_alert import menu_alert
-from tasks.reward.receipt import RewardError
+from tasks.reward.receipt import RewardError, notify_reward
 from tasks.touch import daily
 from utils.date import Date
 from utils.image_utils import ImageUtils
@@ -46,14 +44,16 @@ class MessageTimeout(RewardError):
     """单个短信会话超时。"""
 
 
-def _close_item_reward(return_screen, *, notify=None):
+def _confirm_item_reward():
     if not auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP,
                              max_retries=15, retry_delay=0.25):
         raise RewardError("领取结果未确认（未出现获得物品）")
+
+
+def _close_item_reward(*, notify=None):
     if notify:
-        frame, _, _ = auto.take_screenshot(crop=daily.REWARD_REPORT_CROP)
-        Base.send_notification_with_screenshot(notify, NotificationLevel.ALL, screenshot=frame)
-    if not auto.click_element((960 / 1920, 854 / 1080, 0, 0), "crop"):
+        notify_reward(auto, notify, crop=daily.REWARD_REPORT_CROP)
+    if not auto.click_element(daily.REWARD_CLOSE_CROP, "crop"):
         log.warning("已确认到账，获得物品弹窗仍未关闭")
         return False
     return True
@@ -68,7 +68,8 @@ def claim_dispatch():
             return
         raise RewardError("未确认委托可领或派遣中的状态")
 
-    _close_item_reward("dispatch")
+    _confirm_item_reward()
+    _close_item_reward()
     log.info("已领取委托奖励")
 
 
@@ -93,7 +94,8 @@ def claim_mail():
         return
     if not auto.click_element_with_pos(button):
         raise RewardError("无法点击邮箱的全部领取按钮")
-    _close_item_reward("mail", notify="邮件奖励已领取")
+    _confirm_item_reward()
+    _close_item_reward(notify="邮件奖励已领取")
     log.info("已领取邮件奖励")
 
 
@@ -118,15 +120,23 @@ def _claim_srpass_tab(tab, label):
         raise RewardError("无法点击无名勋礼的一键领取")
     time.sleep(3)
     deadline = time.monotonic() + 16
+    confirmed = False
     while time.monotonic() < deadline:
         if auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP):
-            _close_item_reward(tab)
+            if not confirmed:
+                log.info(f"已领取无名勋礼{label}")
+                confirmed = True
+            _close_item_reward()
         elif auto.click_element(("点击空白处关闭", "点击任意处关闭"), "text", crop=SRPASS_CLOSE):
             time.sleep(0.5)
-        elif screen.check_screen(tab) and not auto.find_element("一键领取", "text", crop=SRPASS_RECEIVE):
-            log.info(f"已领取无名勋礼{label}")
+        elif screen.check_screen(tab) and (confirmed or not auto.find_element("一键领取", "text", crop=SRPASS_RECEIVE)):
+            if not confirmed:
+                log.info(f"已领取无名勋礼{label}")
             return
         time.sleep(0.4)
+    if confirmed:
+        log.warning("已确认无名勋礼到账，领取后未确认返回")
+        return
     raise RewardError("无名勋礼领取后未确认返回")
 
 
@@ -181,19 +191,21 @@ def claim_assist():
         return
 
     screen.change_to("visa", max_recursion=1)
-    if not auto.find_element("支援角色", "text", crop=SUPPORT_HEADER):
+    gift = _find_support_gift()
+    if not gift and not auto.find_element("支援角色", "text", crop=SUPPORT_HEADER):
         if not auto.click_element("角色展示", "text", crop=(802 / 1920, 54 / 1080, 286 / 1920, 70 / 1080)):
             raise RewardError("无法切换到漫游签证的角色展示")
         time.sleep(0.5)
-    if not auto.find_element("支援角色", "text", crop=SUPPORT_HEADER):
-        raise RewardError("未确认漫游签证的支援角色栏")
-    gift = _find_support_gift()
+        gift = _find_support_gift()
+        if not gift and not auto.find_element("支援角色", "text", crop=SUPPORT_HEADER):
+            raise RewardError("未确认漫游签证的支援角色栏")
     if not gift:
         log.info("暂无支援礼盒")
         return
     if not auto.click_element_with_pos(gift):
         raise RewardError("支援礼盒无法点击")
-    _close_item_reward("visa")
+    _confirm_item_reward()
+    _close_item_reward()
     log.info("已领取支援奖励")
 
 
@@ -207,8 +219,8 @@ def _finish_message():
     finished_frames = 0
     while time.monotonic() < deadline:
         if auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP):
-            _close_item_reward("incoming_message")
             log.info("已领取短信奖励")
+            _close_item_reward()
             return True
         if _message_pending():
             finished_frames = 0
@@ -299,7 +311,7 @@ def claim_messages():
             drags += 1
     finally:
         if received:
-            Base.send_notification_with_screenshot(f"处理了 {completed} 个短信会话，领取 {received} 次奖励", NotificationLevel.ALL)
+            notify_reward(auto, f"处理了 {completed} 个短信会话，领取 {received} 次奖励")
     log.info(f"本次已处理 {completed} 个短信会话" if completed else "本次未发现待处理短信")
     if timed_out:
         raise RewardError(f"有 {timed_out} 个短信会话超时")

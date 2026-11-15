@@ -324,8 +324,9 @@ class Instance:
         if not auto.click_element(FIGHT_EXIT, "image", 0.9, max_retries=6, retry_delay=0.35):
             raise PowerError("未找到退出关卡按钮")
         time.sleep(2)
-        if not screen.check_screen("main"):
-            auto.press_key("esc")
+        if screen.check_screen("main"):
+            return
+        auto.press_key("esc")
         screen.change_to("main", max_recursion=1)
 
     @staticmethod

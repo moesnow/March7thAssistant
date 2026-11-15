@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 from PIL import Image
 import pytest
@@ -53,32 +53,18 @@ def test_reuses_pc_card_parser_at_720p_without_overwriting_progress_with_clipped
     assert not tasks.parse_ocr([ocr_line("本日活跃度已满")])
 
 
-@pytest.mark.parametrize("activity, states, pending", [
-    (0, ("locked",) * 5, set()),
-    (100, ("ready", "locked", "locked", "locked", "locked"), {100}),
-    (100, ("claimed", "locked", "locked", "locked", "locked"), set()),
-    (500, ("claimed", "claimed", "claimed", "claimed", "ready"), {500}),
+@pytest.mark.parametrize("activity, ready, pending", [
+    (0, (), set()),
+    (100, (True,), {100}),
+    (100, (False,), set()),
+    (500, (False, False, False, False, True), {500}),
 ])
-def test_reads_milestone_states_for_each_threshold(monkeypatch, activity, states, pending):
-    slots = iter(states)
-    state = None
-
-    def find_element(path, _kind, _threshold, *, take_screenshot=True, **_kwargs):
-        nonlocal state
-        if take_screenshot:
-            state = next(slots)
-        if path.endswith(f"milestone_{state}.png"):
-            return ((10, 20), (30, 40))
-        return None
-
+def test_checks_only_unsettled_eligible_milestone_buttons(monkeypatch, activity, ready, pending):
+    find_element = Mock(side_effect=[((10, 20), (30, 40)) if visible else None for visible in ready])
     monkeypatch.setattr(daily, "auto", SimpleNamespace(find_element=find_element))
-    assert daily.read_milestones(activity).keys() == pending
-
-
-def test_missing_milestone_marker_fails_instead_of_guessing(monkeypatch):
-    monkeypatch.setattr(daily, "auto", SimpleNamespace(find_element=Mock(return_value=None)))
-    with pytest.raises(daily.DailyTrainingError, match="100 档礼盒"):
-        daily.read_milestones(100)
+    assert dict(daily.claimable_milestones(activity)).keys() == pending
+    assert find_element.call_count == len(ready)
+    assert all(entry.args[0].endswith("milestone_ready.png") for entry in find_element.call_args_list)
 
 
 @pytest.mark.parametrize("reward_enable, quest_enable", [(False, True), (True, False)])
@@ -90,13 +76,13 @@ def test_disabling_rewards_preserves_reading_and_prevents_claiming(monkeypatch, 
     milestones = Mock(return_value={100: ((10, 20), (30, 40))})
     click = Mock()
     monkeypatch.setattr(daily, "scan_cards", cards)
-    monkeypatch.setattr(daily, "read_milestones", milestones)
+    monkeypatch.setattr(daily, "claimable_milestones", milestones)
     monkeypatch.setattr(daily, "click_milestone", click)
 
     summary = Mock()
     assert daily.run(complete_training=True, on_summary=summary)
 
-    cards.assert_called_once_with(100, False)
+    cards.assert_called_once_with(100, False, read_tasks=False)
     milestones.assert_not_called()
     click.assert_not_called()
     summary.assert_called_once_with(tr("每日实训活跃度 {activity}/{maximum}").format(activity=100, maximum=500))
@@ -108,18 +94,23 @@ def test_claiming_multiple_milestones_from_one_popup_does_not_repeat_clicks(monk
         reward_enable=True, reward_quest_enable=True, save_timestamp=Mock(), notify_template={"DailyPracticeCompleted": "每日实训已完成"},
     ))
     monkeypatch.setattr(daily, "screen", Mock())
-    monkeypatch.setattr(daily, "read_activity", Mock(return_value=500))
-    monkeypatch.setattr(daily, "read_milestones", Mock(side_effect=[{100: button, 200: button}, {}]))
-    click = Mock()
-    monkeypatch.setattr(daily, "click_milestone", click)
+    monkeypatch.setattr(daily, "read_activity", Mock(return_value=200))
+    monkeypatch.setattr(daily, "scan_cards", Mock(return_value=(200, False, 0, {})))
     monkeypatch.setattr(daily, "time", SimpleNamespace(sleep=Mock()))
-    monkeypatch.setattr(daily, "auto", SimpleNamespace(take_screenshot=Mock(return_value=(None, None, 1))))
+    auto = Mock()
+    auto.find_element.side_effect = [button, button, None]
+    auto.take_screenshot.return_value = (None, None, 1)
+    monkeypatch.setattr(daily, "auto", auto)
     notify = Mock()
-    monkeypatch.setattr(daily.Base, "send_notification_with_screenshot", notify)
+    monkeypatch.setattr(daily, "notify_reward", notify)
 
     assert daily.run()
 
-    click.assert_called_once_with(100, button)
+    auto.click_element_with_pos.assert_called_once_with(button)
+    auto.click_element.assert_called_once_with(daily.REWARD_CLOSE_CROP, "crop")
+    assert [entry.args[0].rsplit("/", 1)[-1] for entry in auto.find_element.call_args_list] == [
+        "milestone_ready.png", "item_reward.png", "milestone_ready.png",
+    ]
     notify.assert_called_once()
 
 
@@ -133,13 +124,13 @@ def test_daily_synthesizes_only_when_the_card_is_pending(monkeypatch):
     monkeypatch.setattr(daily, "read_activity", Mock(side_effect=[300, 400]))
     scan = Mock(side_effect=[(300, False, 0, {daily.MATERIAL_TASK: True}), (400, False, 0, {})])
     monkeypatch.setattr(daily, "scan_cards", scan)
-    monkeypatch.setattr(daily, "read_milestones", Mock(return_value={}))
+    monkeypatch.setattr(daily, "claimable_milestones", Mock(return_value=()))
     synthesize = Mock(return_value=True)
     monkeypatch.setattr(synthesis, "material", synthesize)
 
     assert daily.run(complete_training=True)
     synthesize.assert_called_once_with()
-    assert scan.call_count == 2
+    assert scan.call_args_list == [call(300, True, read_tasks=True), call(400, True, read_tasks=False)]
 
 
 def test_completed_500_point_card_with_zero_badge_skips_support_and_synthesis(monkeypatch):

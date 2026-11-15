@@ -1136,11 +1136,14 @@ class Frame:
     def duplicate_deployment(self) -> bool:
         return self.has("无法上阵同名角色", "同名角色无法上阵", area=(580, 215, 1345, 455), contains=True)
 
-    def claim_available(self) -> bool | None:
+    def claim_button_visible(self) -> bool:
         text = "".join(label.text for label in sorted(self.texts(WEEKLY_CLAIM), key=lambda item: item.point[0]))
         patch = self.crop(WEEKLY_CLAIM)
         yellow = (patch[:, :, 0] > 204) & (patch[:, :, 1] > 141) & (patch[:, :, 2] < 140)
-        if "键领取" in text and float(yellow.mean()) > 0.18:
+        return "键领取" in text and float(yellow.mean()) > 0.18
+
+    def claim_available(self) -> bool | None:
+        if self.claim_button_visible():
             return True
 
         # 全部可领取奖励到账后，正式服会隐藏按钮。以积分档位与已领标志为证据。

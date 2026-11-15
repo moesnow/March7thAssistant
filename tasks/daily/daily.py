@@ -14,7 +14,7 @@ from tasks.daily.synthesis import Synthesis
 import tasks.challenge as challenge
 from tasks.power.power import Power
 from tasks.power.policy import SupportDemand
-from tasks.daily.training import SUPPORT_TASK, MATERIAL_TASK, can_complete, needs_action
+from tasks.daily.training import SUPPORT_TASK, MATERIAL_TASK, DailyTrainingError, can_complete, needs_action
 from tasks.reward.quest import Quest
 from tasks.daily.himekotry import HimekoTry
 from tasks.weekly.echoofwar import Echoofwar
@@ -28,7 +28,11 @@ class Daily:
     def support_demand(*, full_run=False):
         if not can_complete(cfg, full_run=full_run) or not cfg.borrow_enable or cfg.borrow_character_enable:
             return SupportDemand()
-        activity, tasks, _ = Quest.scan(collect=False)
+        try:
+            activity, tasks, _ = Quest.scan(collect=False)
+        except DailyTrainingError as error:
+            log.warning(f"未能查询支援实训，本轮继续处理副本：{error}")
+            return SupportDemand()
         return SupportDemand(needs_action(activity, tasks) and tasks.get(SUPPORT_TASK, False))
 
     @staticmethod

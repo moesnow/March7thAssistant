@@ -1,7 +1,11 @@
 from module.automation import auto
+from module.automation.automation import screenshot_retry_timeout
+from module.game.adb_transport import AdbError
 from module.logger import log
+from module.notification import notif
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
+from tasks.base.task_steps import FATAL_GAME_ERRORS
 
 
 class RewardError(RuntimeError):
@@ -17,7 +21,24 @@ def confirm_item_reward(message, *, notify=False):
         raise RewardError(f"{message}领取结果未确认（未出现获得物品）")
     log.info(f"已领取{message}")
     if notify:
-        Base.send_notification_with_screenshot(f"{message}已领取", NotificationLevel.ALL)
+        notify_reward(auto, f"{message}已领取")
+
+
+def notify_reward(automation, message, *, crop=(0, 0, 1, 1)):
+    """到账已确认，通知图片只做一次尽力截取。"""
+    try:
+        with screenshot_retry_timeout(0):
+            screenshot, _, _ = automation.take_screenshot(crop=crop)
+    except Exception as error:
+        if isinstance(error, FATAL_GAME_ERRORS) and not (isinstance(error, AdbError) and error.code == "frame_timeout"):
+            raise
+        log.warning(f"已确认奖励到账，通知截图失败：{error}")
+        screenshot = None
+    if screenshot is not None:
+        Base.send_notification_with_screenshot(message, NotificationLevel.ALL, screenshot=screenshot)
+    else:
+        log.info(message)
+        notif.notify(content=message, level=NotificationLevel.ALL)
 
 
 def close_item_reward():

@@ -88,6 +88,19 @@ class Power:
         ))
 
     @staticmethod
+    def process_immersifier_only():
+        name = cfg.instance_names[ORNAMENT]
+        try:
+            if cfg.build_target_enable:
+                for target_type, target_name in BuildTarget.get_target_instances():
+                    if target_type == ORNAMENT:
+                        name = target_name
+                        break
+        except Exception as error:
+            log.warning(f"获取培养目标副本失败，使用配置的副本：{error}")
+        return Power.process(ORNAMENT, name, immersifier_only=True)
+
+    @staticmethod
     def _run_instance(instance_type, name, planned, *, support=None, immersifier_only=False):
         if (instance_type not in INSTANCE_LIMITS
                 or not name or name not in get_raw_instance_names().get(instance_type, {}) or name == "无"):
@@ -98,17 +111,19 @@ class Power:
         limit = batch_limit(cfg, instance_type)
         is_echo = instance_type == ECHO
         is_ornament = instance_type == ORNAMENT
+        only_immersifiers = is_ornament and immersifier_only
         rewards = Instance.read_echo_rewards() if is_echo else None
         if rewards == 0:
             cfg.save_timestamp("echo_of_war_timestamp")
             if planned is None:
                 log.info("历战余响本周奖励次数已用完")
                 return
-        practice = rewards == 0
-        balance = Power.get(use_supplement=not practice and not immersifier_only)
-        if not practice and not is_ornament and balance < cost_per_wave:
-            log.info("开拓力不足，结束本副本项")
-            return
+        if rewards != 0 and not only_immersifiers:
+            if not is_ornament or cfg.use_reserved_trailblaze_power or cfg.use_fuel:
+                balance = Power.get(use_supplement=not immersifier_only)
+                if not is_ornament and balance < cost_per_wave:
+                    log.info("开拓力不足，结束本副本项")
+                    return
 
         world_team = False
         if cfg.tp_before_instance:
@@ -121,12 +136,12 @@ class Power:
         def enter():
             if not Instance.prepare_instance(instance_type, name):
                 raise PowerError(f"未能进入副本 {name}")
+            return 0 if rewards == 0 or only_immersifiers else Instance.read_balance(instance_type)
 
-        enter()
         remaining = planned
         previous = 0
         borrowed = False
-        available = Instance.read_balance(instance_type)
+        available = enter()
         retries = 0
         cleaned = False
         while remaining is None or remaining > 0:
@@ -158,9 +173,8 @@ class Power:
                 if not repeated:
                     if previous:
                         Instance.complete_run(instance_type)
-                        enter()
+                        available = enter()
                         previous = 0
-                        available = Instance.read_balance(instance_type)
                     waves, cost = Instance.prepare_payment(
                         instance_type, requested, available, practice=practice, immersifier_only=immersifier_only,
                     )
@@ -177,35 +191,31 @@ class Power:
                 screen.change_to("main", max_recursion=1)
                 Instance.select_world_team(instance_type, name)
                 world_team = True
-                enter()
-                available = Instance.read_balance(instance_type)
+                available = enter()
                 continue
             except BattleDefeat:
-                after = Power.get(use_supplement=False)
-                check_balance(available, after, 0, time.monotonic() - started)
+                if not (practice or only_immersifiers):
+                    after = Power.get(use_supplement=False)
+                    check_balance(available, after, 0, time.monotonic() - started)
                 if retries >= DEFEAT_RETRIES:
                     raise
                 retries += 1
-                log.warning(f"已确认战败且未扣费，重试 {retries}/{DEFEAT_RETRIES}")
-                enter()
+                log.warning(f"已确认战败，重试 {retries}/{DEFEAT_RETRIES}")
+                available = enter()
                 previous = 0
-                available = Instance.read_balance(instance_type)
                 continue
             except RelicBagFull:
                 if cleaned or not Instance.clean_full_bag():
                     raise
                 cleaned = True
-                enter()
+                available = enter()
                 previous = 0
-                available = Instance.read_balance(instance_type)
                 continue
 
             support.won(borrowed)
             yield waves
-            after = Instance.read_balance(instance_type, result=True)
-            check_balance(available, after, cost, time.monotonic() - started)
-            log.info(f"已结算 {waves} 次，剩余开拓力 {after}/300")
-            available, previous, retries = after, waves, 0
+            log.info(f"已结算 {waves} 次")
+            previous, retries = waves, 0
             if remaining is not None:
                 remaining -= waves
             if is_echo and not practice:
@@ -217,9 +227,21 @@ class Power:
                     cfg.save_timestamp("echo_of_war_timestamp")
                     if planned is None:
                         return
-                if remaining is None or remaining > 0:
-                    enter()
-                    available = Instance.read_balance(instance_type)
+                if remaining != 0:
+                    after = enter()
+                    if rewards:
+                        check_balance(available, after, cost, time.monotonic() - started)
+                    available = after
+            elif remaining != 0 and not (practice or only_immersifiers):
+                try:
+                    after = Instance.read_balance(instance_type, result=True)
+                except PowerError:
+                    log.warning("结算页开拓力未识别，重新进入副本核对后再挑战")
+                    Instance.complete_run(instance_type)
+                    after = enter()
+                    previous = 0
+                check_balance(available, after, cost, time.monotonic() - started)
+                available = after
 
         if previous:
             Instance.complete_run(instance_type)

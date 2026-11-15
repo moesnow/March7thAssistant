@@ -162,10 +162,14 @@ class CharacterExport:
             if first["name"]:
                 return self._resolve_summary(first)
             log.debug("未能识别角色名，重新读取详情页")
-        self.reader.open_tab("detail")
-        self.reader.grab()
         try:
+            self.reader.open_tab("detail")
+            self.reader.grab()
             fresh = self.reader.finish_summary(self.reader.begin_summary())
+        except PageError as error:
+            if first is None or first["is_trailblazer"] is not True:
+                raise
+            log.debug(f"已确认开拓者身份，昵称重读失败：{error}")
         except parser.ParseError:
             if first is None:
                 raise
@@ -180,9 +184,16 @@ class CharacterExport:
 
     def _resolve_summary(self, summary):
         if summary["is_trailblazer"] is None:
-            identified = self.reader.read_trailblazer_intro()
-            if identified is None and summary["name"]:
-                identified = parser.is_trailblazer(summary["name"], summary["switchable"])
+            name = summary["name"]
+            try:
+                identified = self.reader.read_trailblazer_intro()
+            except PageError as error:
+                if not name:
+                    raise
+                log.debug(f"已读到角色名，简介页读取失败：{error}")
+                identified = None
+            if identified is None and name:
+                identified = parser.is_trailblazer(name, summary["switchable"])
             summary["is_trailblazer"] = identified is True
         if not summary["name"] and not summary["is_trailblazer"]:
             raise parser.ParseError("详情页读取失败：未能识别角色名或确认开拓者身份")

@@ -327,6 +327,7 @@ def _exit_result(instance_screen):
     if not wait_until(lambda: any(screen.check_screen(target) for target in (instance_screen, "guide3", "main")), 25, 0.5):
         raise PowerError("退出关卡后未回到副本、生存索引或主界面")
     time.sleep(0.5)
+    return screen.current_screen
 
 
 def classify_auto_button(pixels, glyph):
@@ -459,9 +460,9 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
         if planned is None:
             screen.change_to("main", max_recursion=1)
             return
-    power = read_power()
+    power = 0
     if quota != 0:
-        power = _supplement(power)
+        power = _supplement(read_power())
         if power < cost:
             log.info("开拓力不足，结束本副本项")
             screen.change_to("main", max_recursion=1)
@@ -515,13 +516,15 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             _wait_battle(repeated=repeated, instance_screen=instance_screen)
         except BattleDefeat:
             _select_category(instance_type)
-            after = read_power()
-            check_balance(power, after, 0, time.monotonic() - started)
+            if not practice:
+                after = read_power()
+                check_balance(power, after, 0, time.monotonic() - started)
+                power = after
             if retries >= DEFEAT_RETRIES:
                 raise
             retries += 1
-            log.warning(f"已确认战败且未扣费，重试 {retries}/{DEFEAT_RETRIES}")
-            power, previous = after, 0
+            log.warning(f"已确认战败，重试 {retries}/{DEFEAT_RETRIES}")
+            previous = 0
             _enter_instance(instance_type, name)
             continue
         except RelicBagFull:
@@ -529,21 +532,19 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
                 raise
             cleaned = True
             _select_category(instance_type)
-            power, previous = read_power(), 0
+            power, previous = (0 if practice else read_power()), 0
             _enter_instance(instance_type, name)
             continue
 
         demand.won(borrowed)
         yield waves
-        after = read_power()
-        check_balance(power, after, 0 if practice else waves * cost, time.monotonic() - started)
-        power, previous, retries = after, waves, 0
+        log.info(f"已结算 {waves} 次")
+        previous, retries = waves, 0
         if remaining is not None:
             remaining -= waves
-        if on_settlement is not None:
-            on_settlement(waves, power)
-        log.info(f"已结算 {waves} 次，剩余开拓力 {power}/300")
 
+        after = None
+        needs_entry = False
         if is_echo and not practice:
             _exit_result(instance_screen)
             previous = 0
@@ -551,14 +552,33 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             quota = _read_echo_rewards()
             if quota == 0:
                 cfg.save_timestamp("echo_of_war_timestamp")
-                if planned is None:
-                    break
-            if remaining is None or remaining > 0:
-                _enter_instance(instance_type, name)
+            needs_entry = remaining != 0 and (quota > 0 or planned is not None)
+            if needs_entry and quota > 0:
+                after = read_power()
+        elif remaining != 0 and not practice:
+            try:
+                after = read_power()
+            except PowerError:
+                log.warning("结算页开拓力未识别，回到生存索引核对后再挑战")
+                _exit_result(instance_screen)
+                previous = 0
+                _select_category(instance_type)
+                after = read_power()
+                needs_entry = True
+        if after is not None:
+            check_balance(power, after, waves * cost, time.monotonic() - started)
+            power = after
+        if needs_entry and (quota == 0 or power >= cost):
+            _enter_instance(instance_type, name)
+        if on_settlement is not None:
+            on_settlement(waves, after)
 
-    if previous:
-        _exit_result(instance_screen)
-    screen.change_to("main", max_recursion=1)
+        if is_echo and quota == 0 and planned is None:
+            break
+
+    exit_screen = _exit_result(instance_screen) if previous else None
+    if exit_screen != "main":
+        screen.change_to("main", max_recursion=1)
 
 
 def run_weekly_echo(*, borrow_for_daily=False):
@@ -622,8 +642,11 @@ def run(*, borrow_for_daily=False, on_summary=None):
         except PowerError as error:
             log.error(f"触屏清体力：{error}")
             return False
-    if succeeded and on_summary is not None and remaining is not None:
-        on_summary(tr("已完成 {count} 次挑战，剩余开拓力 {power}/300").format(count=total, power=remaining))
+    if succeeded and on_summary is not None:
+        if remaining is not None:
+            on_summary(tr("已完成 {count} 次挑战，剩余开拓力 {power}/300").format(count=total, power=remaining))
+        elif total:
+            on_summary(tr("已完成 {count} 次挑战").format(count=total))
     return succeeded
 
 

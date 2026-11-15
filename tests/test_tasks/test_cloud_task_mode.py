@@ -328,7 +328,7 @@ def currency_wars_game(runner, monkeypatch):
     runner.game.stop.side_effect = lambda detect_loop: sys.exit(EXIT_OK) if detect_loop else None
     monkeypatch.setattr(daily, "cfg", cfg)
     monkeypatch.setattr(daily, "CurrencyWars", factory)
-    monkeypatch.setattr(daily.Date, "is_next_mon_x_am", lambda *_: True)
+    monkeypatch.setattr(daily, "Date", MagicMock(wraps=daily.Date, is_next_mon_x_am=lambda *_: True))
     monkeypatch.setattr(daily.Daily, "prepare_daily", lambda: True)
     monkeypatch.setattr(daily.reward, "start", lambda: state.later_steps.append("日常领奖"))
     monkeypatch.setattr(daily.Daily, "run", lambda **_: state.later_steps.append("每日实训"))
@@ -1683,6 +1683,44 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
         else:
             game.load_acc_and_pwd.assert_called_once_with(1)
             assert "未找到保存的登录凭据" in record["error"]
+
+
+@pytest.mark.parametrize("ready_screen", ("main", "menu", None))
+def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_read(
+        runner, currency_wars_game, monkeypatch, ready_screen):
+    from module import screen as screen_module
+    from tasks import game
+    from utils import wait
+
+    state = currency_wars_game
+    clock = SimpleNamespace(monotonic=lambda: state.now, sleep=lambda n: setattr(state, "now", state.now + n))
+    monkeypatch.setattr(game, "time", clock)
+    monkeypatch.setattr(wait, "time", clock)
+    monkeypatch.setattr(game, "task_power_request", MagicMock())
+    monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=0.08))
+    screen = MagicMock()
+    screen.get_current_screen.return_value = ready_screen
+    monkeypatch.setattr(game, "screen", screen)
+    monkeypatch.setattr(screen_module, "screen", screen)
+    runner.cfg.control_backend = "cloud"
+    runner.game.start.side_effect = game.start
+    runner.cloud_game.start_game_process.return_value = True
+    runner.cloud_game.is_in_game.return_value = True
+    monkeypatch.setattr(game, "cloud_game", runner.cloud_game)
+    state.factory.game_screen_ready = MagicMock(side_effect=currency_wars.CurrencyWarsUnavailable("专用画面 OCR 暂不可用"))
+    runner.Daily.start.side_effect = None
+    runner.Daily.start.return_value = True
+
+    record = run_currency_wars_cli(runner, "main")
+
+    if ready_screen:
+        assert record["status"] == "success"
+        screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
+        runner.Daily.start.assert_called_once_with()
+    else:
+        assert record["reason"] == "currencywars_unavailable"
+        runner.Daily.start.assert_not_called()
+    runner.cloud_game.stop_game.assert_not_called()
 
 
 @pytest.mark.parametrize("dialog", ("reward_limit", "weekly_receipt", "generic_receipt"))

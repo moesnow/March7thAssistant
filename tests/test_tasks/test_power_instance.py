@@ -53,6 +53,21 @@ def test_wait_fight_limits_reconnects_to_confirmed_dialogs(monkeypatch, button, 
     assert [entry.args[0] for entry in auto.click_element.call_args_list] == clicks
 
 
+def test_exit_after_victory_reuses_the_confirmed_main_screen(monkeypatch):
+    auto = Mock()
+    screen = Mock()
+    screen.change_to.side_effect = RuntimeError("重复截图失败")
+    monkeypatch.setattr(instance, "auto", auto)
+    monkeypatch.setattr(instance, "screen", screen)
+    monkeypatch.setattr(instance, "time", Mock())
+
+    instance.Instance.complete_run(GOLDEN_CALYX)
+
+    screen.check_screen.assert_called_once_with("main")
+    screen.change_to.assert_not_called()
+    auto.press_key.assert_not_called()
+
+
 @pytest.mark.parametrize("instance_type", [ORNAMENT, ECHO])
 def test_defeat_retries_stop_without_recording_completion(monkeypatch, instance_type):
     name = "测试副本"
@@ -65,7 +80,9 @@ def test_defeat_retries_stop_without_recording_completion(monkeypatch, instance_
     monkeypatch.setattr(power, "Instance", battle)
     monkeypatch.setattr(power.Power, "get", balance)
     monkeypatch.setattr(power, "get_raw_instance_names", lambda: {instance_type: {name: name}})
-    monkeypatch.setattr(power, "cfg", SimpleNamespace(instance_names_challenge_count={}, tp_before_instance=False))
+    monkeypatch.setattr(power, "cfg", SimpleNamespace(
+        instance_names_challenge_count={}, tp_before_instance=False, use_reserved_trailblaze_power=True,
+    ))
 
     run = power.Power._run_instance(instance_type, name, 1)
     with pytest.raises(BattleDefeat):
@@ -74,11 +91,15 @@ def test_defeat_retries_stop_without_recording_completion(monkeypatch, instance_
     assert balance.call_args_list == [call(use_supplement=True)] + [call(use_supplement=False)] * 3
 
 
-@pytest.mark.parametrize("after", [46, PowerError("余额读数失败")], ids=["balance-readable", "balance-ocr-failure"])
-def test_pc_power_plan_records_the_selected_batch_on_victory(monkeypatch, after):
+@pytest.mark.parametrize(
+    "next_balance", [None, 46, PowerError("副本余额读数失败"), 30],
+    ids=["last-batch", "recovered", "unavailable", "mismatch"],
+)
+def test_pc_power_plan_reads_result_balance_only_before_further_payment(monkeypatch, next_balance):
     name = "回忆之蕾"
+    planned = 4 if next_balance is None else 5
     cfg = SimpleNamespace(
-        power_plan=[[GOLDEN_CALYX, name, 4]], power_plan_keep=False, power_plan_continue=False,
+        power_plan=[[GOLDEN_CALYX, name, planned]], power_plan_keep=False, power_plan_continue=False,
         instance_names_challenge_count={}, tp_before_instance=False, set_value=Mock(),
     )
     unreadable_result = Mock(side_effect=PowerError("未能确认已结算的挑战次数"))
@@ -86,18 +107,110 @@ def test_pc_power_plan_records_the_selected_batch_on_victory(monkeypatch, after)
     monkeypatch.setattr(power, "cfg", cfg)
     monkeypatch.setattr(power.Power, "get", Mock(return_value=86))
     monkeypatch.setattr(instance.Instance, "prepare_instance", Mock(return_value=True))
-    monkeypatch.setattr(instance.Instance, "prepare_payment", Mock(return_value=(4, 40)))
-    monkeypatch.setattr(instance.Instance, "read_balance", Mock(side_effect=[86, after]))
+    monkeypatch.setattr(instance.Instance, "prepare_payment", Mock(side_effect=[(4, 40), (1, 10)]))
+    read_balance = Mock(side_effect=[86, PowerError("结算页余额读数失败"), next_balance])
+    monkeypatch.setattr(instance.Instance, "read_balance", read_balance)
     monkeypatch.setattr(instance.Instance, "start_instance", Mock(return_value=False))
     monkeypatch.setattr(instance.Instance, "wait_fight", Mock(return_value=True))
     monkeypatch.setattr(instance.Instance, "complete_run", Mock())
 
-    if isinstance(after, PowerError):
-        with pytest.raises(PowerError, match="余额读数失败"):
+    if next_balance == 46:
+        assert power.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
+        cfg.set_value.assert_has_calls([call("power_plan", [[GOLDEN_CALYX, name, 1]]), call("power_plan", [])])
+        assert instance.Instance.start_instance.call_count == 2
+        assert instance.Instance.complete_run.call_count == 2
+    elif next_balance is not None:
+        with pytest.raises(PowerError, match="副本余额读数失败|结算开拓力与预期不符"):
             power.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
+        cfg.set_value.assert_called_once_with("power_plan", [[GOLDEN_CALYX, name, 1]])
+        instance.Instance.start_instance.assert_called_once()
+        instance.Instance.complete_run.assert_called_once_with(GOLDEN_CALYX)
     else:
         assert power.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
-
-    cfg.set_value.assert_called_once_with("power_plan", [])
-    instance.Instance.start_instance.assert_called_once()
+        instance.Instance.complete_run.assert_called_once_with(GOLDEN_CALYX)
+        cfg.set_value.assert_called_once_with("power_plan", [])
+        instance.Instance.start_instance.assert_called_once()
+    assert read_balance.call_args_list == (
+        [call(GOLDEN_CALYX)] if next_balance is None
+        else [call(GOLDEN_CALYX), call(GOLDEN_CALYX, result=True), call(GOLDEN_CALYX)]
+    )
     unreadable_result.assert_not_called()
+
+
+@pytest.mark.parametrize("quota", [1, 0], ids=["rewarded-echo", "practice"])
+def test_pc_echo_finishes_without_reading_the_result_meter(monkeypatch, quota):
+    battle = Mock()
+    battle.read_echo_rewards.side_effect = [quota, 0]
+    battle.read_balance.side_effect = ([90] if quota else []) + [PowerError("余额读数失败")]
+    battle.prepare_payment.return_value = (1, 30 if quota else 0)
+    map_balance = Mock(return_value=90) if quota else Mock(side_effect=PowerError("地图余额读数失败"))
+    config = SimpleNamespace(instance_names_challenge_count={}, tp_before_instance=False, save_timestamp=Mock())
+    monkeypatch.setattr(power, "Instance", battle)
+    monkeypatch.setattr(power.Power, "get", map_balance)
+    monkeypatch.setattr(power, "cfg", config)
+    monkeypatch.setattr(power, "screen", Mock())
+
+    assert power.Power.process(ECHO, "毁灭的开端", planned_attempts=1) == 1
+    assert battle.read_echo_rewards.call_count == (2 if quota else 1)
+    assert battle.read_balance.call_count == (1 if quota else 0)
+    battle.complete_run.assert_called_once_with(ECHO)
+    config.save_timestamp.assert_called_once_with("echo_of_war_timestamp")
+
+
+def test_pc_immersifier_only_uses_button_payment_without_reading_power(monkeypatch):
+    name = "浴火钢心"
+    config = SimpleNamespace(instance_names_challenge_count={ORNAMENT: 1}, tp_before_instance=False)
+    monkeypatch.setattr(power, "cfg", config)
+    monkeypatch.setattr(power.Power, "get", Mock(side_effect=PowerError("地图余额读数失败")))
+    monkeypatch.setattr(instance.Instance, "read_balance", Mock(side_effect=PowerError("副本余额读数失败")))
+    monkeypatch.setattr(instance.Instance, "prepare_instance", Mock(return_value=True))
+    monkeypatch.setattr(instance.Instance, "complete_run", Mock())
+    monkeypatch.setattr(instance.Instance, "_select_waves", Mock(return_value=1))
+    monkeypatch.setattr(instance.Instance, "_read_payment", Mock(side_effect=[0, 40, 40]))
+    monkeypatch.setattr(instance.Instance, "start_instance", Mock(return_value=False))
+    monkeypatch.setattr(instance.Instance, "start_instance_again", Mock())
+    monkeypatch.setattr(instance.Instance, "wait_fight", Mock(return_value=True))
+    monkeypatch.setattr(power, "screen", Mock())
+
+    assert power.Power.process(ORNAMENT, name, immersifier_only=True) == 1
+    instance.Instance.start_instance.assert_called_once()
+    instance.Instance.start_instance_again.assert_not_called()
+    power.Power.get.assert_not_called()
+    instance.Instance.read_balance.assert_not_called()
+
+
+@pytest.mark.parametrize("entry", ["divergent", "universe"])
+def test_universe_bonus_uses_shared_payment_without_reading_immersifier_stock(monkeypatch, entry):
+    from tasks.weekly import divergent_universe as divergent
+    from tasks.weekly import universe
+
+    module = divergent if entry == "divergent" else universe
+    config = SimpleNamespace(
+        weekly_divergent_timestamp=1, refresh_hour=4, weekly_divergent_bonus_enable=True,
+        universe_bonus_enable=True, instance_names={ORNAMENT: "浴火钢心"}, build_target_enable=False,
+        notify_template={"SimulatedUniverseRewardClaimed": "已领取积分奖励", "SimulatedUniverseCompleted": "已完成"},
+    )
+    monkeypatch.setattr(power, "cfg", config)
+    monkeypatch.setattr(module, "cfg", config)
+    monkeypatch.setattr(module.Base, "send_notification_with_screenshot", Mock())
+    monkeypatch.setattr(module, "screen", Mock())
+    auto = Mock()
+    auto.find_element.return_value = False
+    auto.click_element.return_value = True
+    auto.get_single_line_text.return_value = ""
+    monkeypatch.setattr(module, "auto", auto)
+    monkeypatch.setattr(power.Power, "process", Mock(return_value=1))
+
+    if entry == "divergent":
+        task = divergent.DivergentUniverse()
+        monkeypatch.setattr(task, "run", Mock(return_value=True))
+        monkeypatch.setattr(task, "get_reward", Mock(return_value=True))
+        monkeypatch.setattr(divergent.Date, "is_next_mon_x_am", Mock(return_value=False))
+        assert task.start()
+    else:
+        monkeypatch.setattr(universe, "wait_for_weekly_reward", Mock(return_value=True))
+        monkeypatch.setattr(universe, "time", SimpleNamespace(sleep=Mock()))
+        universe.Universe.get_reward("divergent")
+
+    power.Power.process.assert_called_once_with(ORNAMENT, "浴火钢心", immersifier_only=True)
+    auto.get_single_line_text.assert_not_called()
