@@ -98,6 +98,14 @@ EMPLOYEE_EVENT_DETAILS = (440, 385, 1650, 436)
 EMPLOYEE_EVENT_CONFIRM = (1280, 541, 1700, 626)
 DANCE_CONFIRM_POINT = (1487, 576)
 DANCE_MIN_CARD_GAP = 136
+SVAROG_TITLE = (900, 51, 1190, 107)
+SVAROG_SUBTITLE = (880, 114, 1210, 160)
+SVAROG_COLUMNS = (
+    ((463, 837), (859, 1234), (1257, 1631)),
+    ((463, 738), (760, 1035), (1057, 1332), (1354, 1629)),
+)
+SVAROG_LAST_CARD = (1444, 285)  # 三列和四列布局的末卡都覆盖此处。
+SVAROG_CONFIRM_POINT = (1492, 585)
 GARDEN_TITLE = (920, 49, 1175, 111)
 GARDEN_SUBTITLE = (908, 113, 1190, 153)
 BOARD_EFFECT_CONFIRM = (1310, 566, 1667, 633)
@@ -191,6 +199,7 @@ class Page(Enum):
     CHOICE = "节点选择"
     DANCE = "梦境交织共舞"
     RANGER = "巡海游侠任命"
+    SVAROG_MODIFICATION = "机心巧匠改装"
     GARDEN = "奇兽花园"
     HACK = "骇入效果"
     HALO = "主角光环"
@@ -254,7 +263,8 @@ class Frame:
     @cached_property
     def action_context(self):
         """输入必须始终属于同一节点和同一层界面。"""
-        if self.page == Page.RECONNECT:
+        # 独立弹层的操作只依赖弹层本身。背景节点号漏读或跳变不代表弹层已关闭。
+        if self.page in (Page.RECONNECT, Page.SVAROG_MODIFICATION):
             return self.page, None, None
         dialog = {Page.CHOICE: "choice", Page.REVEAL: "reveal_kind"}.get(self.page)
         return self.page, self.stage, getattr(self, dialog) if dialog else None
@@ -588,6 +598,8 @@ class Frame:
             return Page.END_MATCH_CONFIRM
         if self.empty_front_confirm():
             return Page.EMPTY_FRONT
+        if self.svarog_modification:
+            return Page.SVAROG_MODIFICATION
 
         if self.has("主角光环与奇遇详情", area=(420, 27, 1065, 104), contains=True) and (
                 self.has("前往重选", area=(640, 164, 1360, 260), contains=True)
@@ -1282,6 +1294,47 @@ class Frame:
     def employee_event_candidates(self) -> tuple[Label, ...]:
         return tuple(label for label in self.texts((440, 325, 1650, 390))
                      if re.fullmatch(EMPLOYEE_NAME, label.text) and label.text not in ("详情", "查看详情"))
+
+    @cached_property
+    def svarog_modification(self) -> bool:
+        title = self.has("机心巧匠", area=SVAROG_TITLE)
+        prompt = self.has("请选择1个强化效果", "请选择一个强化效果", area=SVAROG_SUBTITLE)
+        confirm = self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM)
+        return (title and (prompt or confirm)
+                or prompt and confirm and len(self.employee_event_details) >= 2)
+
+    @cached_property
+    def svarog_offers(self) -> tuple[tuple[Label, int | None], ...]:
+        layouts = []
+        for columns in SVAROG_COLUMNS:
+            offers = []
+            evidence = 0
+            for left, right in columns:
+                x = (left + right) // 2
+                price_area = (right - 33, 359, right - 7, 394)
+                price = self.number(price_area, 99)
+                details = self.has("详情", area=(x - 18, 404, x + 38, 441))
+                # 详情和报价一起漏读时，金币图标仍能区分三列和四列。
+                r, g, b = self.crop((right - 68, 363, right - 33, 391)).astype(np.int16).transpose(2, 0, 1)
+                coin = ((r > 130) & (g > 85) & (g - b > 25) & (r - b > 55)).mean() > 0.25
+                evidence += int(price is not None or details or coin)
+                name = self.value(EMPLOYEE_NAME, (left, 350, right - 74, 397))
+                offers.append((Label(name or "强化模组", (x, 285)), price, price_area))
+            layouts.append((evidence, offers))
+        _, offers = max(layouts, key=lambda layout: layout[0])
+        # 整屏 OCR 常漏掉金币图标旁的单字报价，按已确认的列布局单独读取数字。
+        priced_offers = []
+        for card, price, area in offers:
+            if price is None:
+                value = self.read_local(area, recognition_only=True)
+                price = int(value) if re.fullmatch(r"\d{1,2}", value or "") else None
+            priced_offers.append((card, price))
+        return tuple(priced_offers)
+
+    def svarog_card_outlined(self, card: Label) -> bool:
+        x, _ = card.point
+        edge = self.crop((x - 65, 393, x + 65, 401))
+        return (edge.min(axis=2) > 155).mean(axis=1).max() >= 0.8
 
     @cached_property
     def dance_cards(self) -> tuple[tuple[Label, int], ...]:

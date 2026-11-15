@@ -396,6 +396,72 @@ def test_currency_wars_entry_continues_after_the_fight_receipt_times_out(
     task_steps.screen.change_to.assert_not_called()
 
 
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+def test_currency_wars_entry_recovers_svarog_modification_before_preparation(
+        runner, currency_wars_game, monkeypatch, action):
+    state = currency_wars_game
+    monkeypatch.setattr(currency_wars, "screen", MagicMock())
+    preparation = state.capture_board
+    episode = Frame(preparation().image, (
+        Label("机心巧匠", (1046, 79)), Label("请选择1个强化效果", (1046, 141)),
+        Label("反击模组", (516, 376)), Label("导弹模组", (918, 376)), Label("响指模组", (1308, 376)),
+        *(Label("0", (x, 375)) for x in (815, 1212, 1609)),
+        *(Label("详情", (x, 426)) for x in (650, 1046, 1444)),
+        Label("确认选择", (1492, 585)),
+    ))
+    wrong_prices = Frame(episode.image, tuple(
+        Label("1", label.point) if label.text == "0" else label for label in episode.labels
+    ))
+    task_auto = currency_wars.auto
+    click_preparation = task_auto.click_element_with_pos.side_effect
+    card_clicks = []
+    confirmed = []
+    opened_at = {}
+
+    def capture_board():
+        if state.completed in confirmed:
+            return preparation()
+        shown = opened_at.setdefault(state.completed, state.now)
+        # 报价在首轮操作窗口过后才恢复，仍需在当前运行里完成改装。
+        return wrong_prices if state.now - shown < 9 else episode
+
+    def click(point, *, press_duration):
+        if state.page != "board" or state.completed in confirmed:
+            return click_preparation(point, press_duration=press_duration)
+        assert state.now - opened_at[state.completed] >= 9
+        if point == (1492, 585):
+            assert state.completed in card_clicks
+            confirmed.append(state.completed)
+        else:
+            assert any(abs(point[0] - x) < 188 for x in (650, 1046, 1444)) and 177 < point[1] < 397
+            card_clicks.append(state.completed)
+        return True
+
+    state.capture_board = capture_board
+    task_auto.click_element_with_pos.side_effect = click
+    if action == "currencywarstemp":
+        state.page = "board"
+    if action == "currencywarsloop":
+        def stop_after_two(task_id, success, duration):
+            assert task_id == "currencywarsloop" and success
+            if state.completed == 2:
+                state.stop = True
+
+        runner.telemetry.track_task_complete.side_effect = stop_after_two
+
+    record = run_currency_wars_cli(runner, action)
+
+    expected = 2 if action == "currencywarsloop" else 1
+    assert state.completed == expected
+    assert card_clicks == confirmed == list(range(expected))
+    assert state.clicks.count(("board", (1818, 750))) == expected
+    assert state.clicks.count(("rank", (1680, 965))) == (0 if action == "currencywarstemp" else expected)
+    assert record["status"] == ("stopped" if action == "currencywarsloop" else "success")
+    currency_wars.screen.change_to.assert_not_called()
+    if action == "main":
+        assert state.later_steps == ["日常领奖", "每日实训"]
+
+
 def test_currency_wars_local_takeover_does_not_enter_an_unavailable_window(runner):
     runner.game.prepare_currency_wars_takeover.side_effect = GameStartupUnavailable(
         "无法切换到货币战争游戏窗口，已保留游戏现场"
