@@ -51,7 +51,7 @@ def normalize(text):
 
 def parse_power(text):
     value = unicodedata.normalize("NFKC", text or "").strip().strip("+").strip()
-    match = re.fullmatch(r"(\d{1,4})\s*/\s*300", value)
+    match = re.fullmatch(r"(?:满\s*)?(\d{1,4})\s*/\s*300(?:\s*[+十])?", value)
     return int(match[1]) if match else None
 
 

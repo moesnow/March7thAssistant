@@ -11,9 +11,9 @@ from tasks.base.team import Team
 from tasks.power.battle import ensure_double_speed
 from tasks.power.policy import (
     BATTLE_TIMEOUT, ENTRY_TIMEOUT, CRIMSON_CALYX, ECHO, INSTANCE_LIMITS, ORNAMENT,
-    PowerError, RelicBagFull, normalize, parse_ornament_payment, parse_power,
+    PowerError, RelicBagFull, normalize, parse_ornament_payment,
 )
-from tasks.power.readout import read_number
+from tasks.power.readout import read_number, read_power
 from tasks.power.character import Character
 from tasks.power.relicset import Relicset
 from utils.game_options import game_option_enabled
@@ -113,7 +113,7 @@ class Instance:
                 crop = (1481 / 1920, 35 / 1080, 127 / 1920, 55 / 1080)
         else:
             crop = (1550 / 1920, 22 / 1080, 187 / 1920, 60 / 1080)
-        return read_number(auto, crop, parse_power, "未能确认副本界面的开拓力余额")
+        return read_power(auto, crop, "未能确认副本界面的开拓力余额")
 
     @staticmethod
     def _select_waves(instance_type, requested):
@@ -342,10 +342,14 @@ class Instance:
             return 1
 
         def parse(text):
-            match = re.search(r"上轮挑战波次[:：]?(\d{1,2})(?!\d)", normalize(text))
-            return int(match[1]) if match and 1 <= int(match[1]) <= waves else None
+            # 逐行匹配“上轮挑战波次”，避免右侧/下方奖励数量或消耗数字（如 14/72/3）拼接到波次后面。
+            for line in text.splitlines():
+                match = re.search(r"上轮挑战波次[:：]?(\d{1,2})(?!\d)", normalize(line))
+                if match and 1 <= int(match[1]) <= waves:
+                    return int(match[1])
+            return None
 
-        return read_number(auto, RESULT_WAVES, parse, "未能确认已结算的挑战次数")
+        return read_number(auto, RESULT_WAVES, parse, "未能确认已结算的挑战次数", sep="\n")
 
     @staticmethod
     def wait_fight(*, repeated=False):

@@ -22,7 +22,7 @@ from tasks.power.policy import (
     INSTANCE_LIMITS, ORNAMENT, STAGNANT_SHADOW, BattleDefeat, PowerError, RelicBagFull,
     SupportDemand, batch_limit, check_balance, normalize as _normalize, parse_power, run_plan,
 )
-from tasks.power.readout import read_number
+from tasks.power.readout import parse_power_lines, read_number
 from tasks.power.supplement import supplement
 from utils.game_options import game_option_enabled
 from utils.image_utils import ImageUtils
@@ -62,11 +62,11 @@ SUPPLEMENT_CANCEL = (474 / 1920, 740 / 1080, 450 / 1920, 79 / 1080)
 
 
 def _read_number(crop, parse, error):
-    return read_number(auto, crop, parse, error)
+    return read_number(auto, crop, parse, error, sep="\n")
 
 
 def read_power(crop=POWER_VALUE):
-    return _read_number(crop, parse_power, "未能确认当前开拓力")
+    return _read_number(crop, parse_power_lines, "未能确认当前开拓力")
 
 
 def _read_echo_rewards():

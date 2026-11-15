@@ -7,9 +7,9 @@ from tasks.daily.buildtarget import BuildTarget
 from tasks.power.instance import Instance, TeamPresetUnavailable
 from tasks.power.policy import (
     ECHO, ORNAMENT, INSTANCE_LIMITS, BattleDefeat, RelicBagFull, PowerError, SupportDemand,
-    DEFEAT_RETRIES, batch_limit, check_balance, parse_power, run_plan,
+    DEFEAT_RETRIES, batch_limit, check_balance, run_plan,
 )
-from tasks.power.readout import read_number
+from tasks.power.readout import read_power
 from tasks.power.supplement import supplement
 from tasks.power.weekly_relic_cleanup import WeeklyRelicCleanup
 from utils.date import Date
@@ -227,7 +227,7 @@ class Power:
         screen.change_to("map")
 
         def read():
-            return read_number(auto, MAP_POWER, parse_power, "未能确认当前开拓力")
+            return read_power(auto, MAP_POWER, "未能确认当前开拓力")
 
         balance = read()
         if use_supplement:

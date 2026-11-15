@@ -164,14 +164,14 @@ class Redemption:
         if not codes:
             log.info("没有找到有效的兑换码")
             log.hr("完成", 2)
-            return False
+            return True
 
         log.info(f"当前服务器类型为{"国服" if server == "cn" else "国际服"}，找到{len(codes)}个有效兑换码，开始尝试兑换")
         log.hr("完成", 2)
-        return Redemption.start(codes=codes, send_notification=True)
+        return Redemption.start(codes=codes, send_notification=True, require_redeemed=False)
 
     @staticmethod
-    def start(codes: Optional[List[str]] = None, send_notification: bool = False) -> bool:
+    def start(codes: Optional[List[str]] = None, send_notification: bool = False, require_redeemed: bool = True) -> bool:
         """使用给定的兑换码列表（若为 None，则使用配置中的 `cfg.redemption_code`）。"""
         log.hr("准备使用兑换码", 0)
 
@@ -190,6 +190,7 @@ class Redemption:
             used = []
 
         successful_codes = []
+        had_error = False
 
         for idx, code in enumerate(codes_to_use, start=1):
             log.info(f"开始使用兑换码: {green(code)} ({idx}/{len(codes_to_use)})")
@@ -230,16 +231,19 @@ class Redemption:
                         auto.press_key("esc")
                     else:
                         log.warning(f"兑换结果检测超时: {yellow(code)} ({idx}/{len(codes_to_use)})")
+                        had_error = True
                         auto.press_key("esc")
                     screen.wait_for_screen_change('menu')
                     time.sleep(3)
                 else:
                     log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
+                    had_error = True
                     auto.press_key("esc")
                     screen.wait_for_screen_change('menu')
                     time.sleep(3)
             else:
                 log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
+                had_error = True
 
         if successful_codes:
             msg = f"成功使用了{len(successful_codes)}个兑换码: \n{'\n'.join(successful_codes)}"
@@ -256,4 +260,4 @@ class Redemption:
         else:
             log.info("没有成功使用任何兑换码")
             log.hr("完成", 2)
-            return False
+            return False if require_redeemed else not had_error

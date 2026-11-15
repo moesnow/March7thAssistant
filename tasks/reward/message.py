@@ -25,17 +25,18 @@ class Message(RewardTemplate):
     @staticmethod
     def _reply():
         frame, _, _ = auto.take_screenshot(crop=Message._REPLY_CROP)
-        pixels = cv2.cvtColor(np.asarray(frame.convert("RGB")), cv2.COLOR_RGB2BGR)
+        pixels = cv2.cvtColor(np.asarray(frame.convert("RGB")), cv2.COLOR_RGB2GRAY)
         for name, offset in (("message_reply", (0, 0)), ("message_sticker", (83, 93))):
-            template = ImageUtils.read_image(f"{Message._REPLY_ASSETS}/{name}.png")
+            template = ImageUtils.read_image(f"{Message._REPLY_ASSETS}/{name}.png", cv2.IMREAD_GRAYSCALE)
             if template is None:
                 continue
+            height, width = template.shape[:2]
             for scale in (1.0, 1.2, 1.5):
                 matches = ImageUtils.scale_and_match_template_with_multiple_targets(pixels, template, 0.92, scale)
                 if matches:
                     # 文字从上到下，表情从左到右，只点识别到的第一个。
-                    pos = min(matches, key=lambda box: (box[0][1], box[0][0]) if name == "message_reply" else box[0][0])
-                    (x, y), (right, bottom) = pos
+                    x, y = min(matches, key=lambda loc: (loc[1], loc[0]) if name == "message_reply" else loc[0])
+                    right, bottom = x + round(width * scale), y + round(height * scale)
                     box = ((x, y), (right, y), (right, bottom), (x, bottom))
                     return auto.click_element_with_pos(auto.calculate_text_position(box, False), offset=offset)
         return False

@@ -55,8 +55,10 @@ class Synthesis:
             return False
         auto.take_screenshot(crop=(0.51, 0.63, 0.41, 0.23))
         auto.perform_ocr()
-        text = normalize(" ".join(line[1][0] for line in auto.ocr_result))
-        amount = re.search(r"合成数量[:：]?(\d+)", text)
+        # 逐框归一化并以换行分隔，避免“合成数量：1”与右侧可合成上限（如 84）拼接成“184”。
+        lines = [normalize(line[1][0]) for line in (auto.ocr_result or ()) if line and line[1] and line[1][0]]
+        text = "\n".join(lines)
+        amount = re.search(r"合成数量[:：]?\s*(\d+)(?!\d)", text)
         materials = re.search(r"(\d+)/3(?!\d)", text)
         if not amount or int(amount[1]) != 1 or not materials:
             log.error("未确认合成数量为 1 且只消耗 3 个熄灭原核")
