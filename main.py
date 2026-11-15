@@ -449,9 +449,18 @@ def run_main_actions(no_run_immediately=False):
                     try:
                         currency_wars_first = CurrencyWars.game_screen_ready(for_full_run=True)
                     except CurrencyWarsUnavailable as error:
+                        from module.automation.automation import screenshot_retry_timeout
+                        from module.automation.background_input import GameWindowLost, InputInterrupted
                         from module.screen import screen
 
-                        if screen.get_current_screen(autotry=False, max_retries=1) not in ("main", "menu"):
+                        try:
+                            with screenshot_retry_timeout(0):
+                                ready = screen.get_current_screen(autotry=False, max_retries=1)
+                        except (GameWindowLost, InputInterrupted, ProfileAssetNotFoundError, TouchProfileInputError):
+                            raise
+                        except (OSError, RuntimeError) as fallback_error:
+                            raise error from fallback_error
+                        if not ready or screen.current_screen not in ("main", "menu"):
                             raise
                         log.warning(f"已确认游戏可操作，按正常顺序继续完整运行：{error}")
                         return True
