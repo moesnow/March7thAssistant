@@ -16,7 +16,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 enum class Privilege { SHIZUKU, ROOT }
-enum class PermissionState { NOT_CHECKED, NOT_INSTALLED, NOT_RUNNING, NOT_AUTHORIZED, READY }
+enum class PermissionState { NOT_CHECKED, CHECKING, NOT_INSTALLED, NOT_RUNNING, NOT_AUTHORIZED, READY }
 
 internal class DeviceFailure(val code: String, detail: String? = null) :
     IOException(if (detail == null) code else "$code ($detail)")

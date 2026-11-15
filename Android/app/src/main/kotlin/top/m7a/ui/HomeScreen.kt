@@ -117,6 +117,9 @@ private fun headline(state: TaskState): Headline {
         error != null -> Headline(
             R.string.pill_failed, Tone.ERROR, tr(R.string.home_failed), tr(R.string.home_failed_detail), R.drawable.chibi_lost
         )
+        state.permission == PermissionState.CHECKING -> Headline(
+            R.string.pill_working, Tone.ACTIVE, tr(R.string.permission_checking_root), "", R.drawable.chibi_typing
+        )
         state.permission != PermissionState.READY -> Headline(
             R.string.pill_setup, Tone.WARNING, tr(R.string.home_setup),
             tr(rootPermissionHint(state.privilege, state.permission) ?: R.string.home_setup_detail), R.drawable.chibi_full,
@@ -267,6 +270,10 @@ internal fun HomeScreen(
                     ),
                     actions.stop, icon = M7Icons.Stop, style = ActionStyle.STOP, enabled = !winding, loading = winding,
                 )
+                state.permission == PermissionState.CHECKING -> BigActionButton(
+                    tr(R.string.start_task, tr(state.task.title)), actions.start, icon = M7Icons.Play,
+                    enabled = false, loading = true,
+                )
                 state.permission != PermissionState.READY -> BigActionButton(
                     tr(R.string.go_authorize), { navigator.open(SubPage.GUIDE) }, icon = M7Icons.Shield, style = ActionStyle.PLAIN,
                 )
@@ -305,8 +312,10 @@ private fun Hero(state: TaskState) {
                 StatusPill(tr(head.pill), head.tone, container = brand.card.copy(alpha = 0.72f))
                 Spacer(Modifier.height(12.dp))
                 Text(head.title, style = MaterialTheme.typography.headlineSmall)
-                Spacer(Modifier.height(6.dp))
-                Text(head.detail, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (head.detail.isNotEmpty()) {
+                    Spacer(Modifier.height(6.dp))
+                    Text(head.detail, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
             HeroArt(head.art)
         }
