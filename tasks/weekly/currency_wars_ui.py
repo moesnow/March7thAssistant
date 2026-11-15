@@ -1602,6 +1602,23 @@ class Frame:
     def tea_signature(self):
         return tuple(label.text for label in self.texts((1120, 175, 1850, 855)))
 
+    @cached_property
+    def tea_shake_layout(self) -> bool:
+        return (self.has("幕后茶歇", area=(840, 128, 1080, 191))
+                and self.has("享用茶歇", area=(1340, 608, 1740, 700)))
+
+    @cached_property
+    def tea_menu_actions(self) -> tuple[Label, ...]:
+        chat = self.find("聊一聊", area=(180, 785, 574, 880))
+        heal = self.find("摇一摇", area=(1350, 785, 1780, 880))
+        if heal and self.has("回复20小队生命值", area=(1340, 735, 1790, 808), contains=True):
+            return (heal, chat) if chat else (heal,)
+        if chat or heal:
+            return tuple(label for label in (chat, heal) if label)
+        if self.tea_shake_layout:
+            return (Label("摇一摇", (1534, 837)),)
+        return ()
+
     def tea_button(self):
         tutorial = self.find("欢迎来到幕后茶歇", "离开幕后茶歇前", area=(615, 161, 1400, 293), contains=True)
         if tutorial:
@@ -1626,13 +1643,4 @@ class Frame:
         back = self.find("返回", area=(1115, 546, 1860, 870))
         if back:
             return back
-        chat = self.find("聊一聊", area=(180, 785, 574, 880))
-        heal = self.find("摇一摇", area=(1350, 785, 1780, 880))
-        if heal and self.has("回复20小队生命值", area=(1340, 735, 1790, 808), contains=True):
-            return heal
-        if chat or heal:
-            return chat or heal
-        if (self.has("幕后茶歇", area=(840, 128, 1080, 191))
-                and self.has("享用茶歇", area=(1340, 608, 1740, 700))):
-            return Label("摇一摇", (1534, 837))
-        return None
+        return next(iter(self.tea_menu_actions), None)
