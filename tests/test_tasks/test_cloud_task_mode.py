@@ -1101,6 +1101,11 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     ("already_selecting_free", True, 0, 1, 1),
     ("already_selecting_paid", True, 0, 1, 0),
     ("already_selecting_unknown_balance", True, 0, 1, 1),
+    ("disconnect_into_queue", True, 0, 1, None),
+    ("disconnect_then_lobby", False, 0, 1, None),
+    ("disconnect_then_queue_selection", False, 0, 1, None),
+    ("disconnect_queue_returns_to_lobby", False, 0, 2, None),
+    ("disconnect_queue_returns_to_selection", False, 0, 2, None),
     ("lobby", True, 1, 1, None),
     ("probe_failed_after_enter", True, 1, 2, None),
     ("queued_while_locating_enter", True, 0, 1, None),
@@ -1120,6 +1125,10 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
         "already_selecting_free": "select_queue",
         "already_selecting_paid": "select_queue",
         "already_selecting_unknown_balance": "select_queue",
+        "disconnect_into_queue": "in_queue",
+        "disconnect_then_queue_selection": "select_queue",
+        "disconnect_queue_returns_to_lobby": "in_queue",
+        "disconnect_queue_returns_to_selection": "in_queue",
         "player_loading": None,
         "player_unidentified": None,
         "queue_timeout": "in_queue",
@@ -1144,6 +1153,9 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
 
     def find_elements(_by, selector):
         current = current_state()
+        if (scenario.startswith("disconnect") and state.time == 0
+                and ("连接中断" in selector or "退出游戏" in selector)):
+            return [visible]
         if selector == ".game-player" and current == "game_running":
             return [visible]
         if "div.user-aid.wel-card__aid" in selector and current == "lobby":
@@ -1164,6 +1176,8 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
             if injected_fault and not state.failed:
                 state.failed = True
                 raise WebDriverException("排队状态读取暂时失败")
+            if current == "in_queue" and scenario.startswith("disconnect_queue_returns_to"):
+                state.entry = "lobby" if scenario.endswith("lobby") else "select_queue"
             return current
         if script == "arguments[0].click();":
             assert current == "lobby"
@@ -1212,8 +1226,12 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
         game.start_game(screen_ready=ready)
         ready.assert_called_once_with()
     else:
-        message = ("排队已达到等待时限" if scenario.startswith("queue_timeout")
-                   else "暂未确认云游戏播放器")
+        if scenario.startswith("queue_timeout"):
+            message = "排队已达到等待时限"
+        elif scenario.startswith("disconnect"):
+            message = "云游戏断开后暂未确认播放器或原排队状态"
+        else:
+            message = "暂未确认云游戏播放器"
         with pytest.raises(GameStartupUnavailable, match=message):
             game.start_game(screen_ready=ready)
         ready.assert_not_called()
@@ -1228,6 +1246,161 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
     assert click.call_count == (1 if started and scenario != "player_loading" else 0)
     controller.stop_game.assert_not_called()
     controller._restart_browser.assert_not_called()
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop"))
+@pytest.mark.parametrize("title_page", ("start_game", "click_enter"))
+def test_currency_wars_enters_from_an_existing_game_title(
+        runner, currency_wars_game, monkeypatch, action, title_page):
+    from tasks import game
+    from utils import wait
+
+    state = currency_wars_game
+    state.page = title_page
+    clock = currency_wars.time
+    screen_module = import_module("module.screen.screen")
+    auto = currency_wars.auto
+    navigator = object.__new__(screen_module.Screen)
+    screen_module.Screen.__init__(navigator, Path("assets/config/screens.json"), MagicMock())
+    navigator.current_screen = title_page
+    navigator._handle_autotry = MagicMock()
+    capture = currency_wars.CurrencyWars._capture
+    unknown = Frame(Image.new("RGB", (1920, 1080)), ())
+
+    def capture_title():
+        if state.page in (title_page, "click_enter", "main", "menu", "guide5"):
+            return unknown
+        return capture()
+
+    def find_image(path, *_args, **_kwargs):
+        screen_id = "currency_wars_homepage" if state.page == "home" else state.page
+        asset = navigator.screen_map.get(screen_id, {}).get("image_path")
+        return 1.0 if path == asset else None
+
+    title_inputs = []
+    transitions = {
+        ("start_game", "./assets/images/screen/start_game.png"): "click_enter",
+        ("click_enter", "./assets/images/screen/click_enter.png"): "main",
+        ("main", "esc"): "menu",
+        ("menu", "./assets/images/share/menu/guide.png"): "menu",
+        ("menu", "./assets/images/screen/guide/enter_guide5.png"): "guide5",
+        ("guide5", "货币战争"): "guide5",
+        ("guide5", "前往参与"): "home",
+    }
+
+    def navigate(target, *_args, **_kwargs):
+        title_inputs.append((state.page, target))
+        state.page = transitions[state.page, target]
+        return True
+
+    press = auto.press_key.side_effect
+    auto.press_key.side_effect = lambda key: navigate(key) if state.page == "main" else press(key)
+    auto.click_element.side_effect = navigate
+    monkeypatch.setattr(navigator, "_find_image", find_image)
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture_title))
+    monkeypatch.setattr(currency_wars, "screen", navigator)
+    monkeypatch.setattr(game, "screen", navigator)
+    monkeypatch.setattr(screen_module, "auto", auto)
+    for module in (game, screen_module, wait):
+        monkeypatch.setattr(module, "time", clock)
+    monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="local", start_game_timeout=1,
+                                                      auto_set_game_path_enable=False))
+    monkeypatch.setattr(game, "task_power_request", MagicMock())
+    monkeypatch.setattr(game, "auto", auto)
+    controller = MagicMock(launch_method="direct")
+    controller.switch_to_game.return_value = True
+    monkeypatch.setattr(game, "StarRailController", MagicMock(return_value=controller))
+    runner.game.start.side_effect = game.start
+    if action == "currencywarsloop":
+        runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(state, "stop", True)
+
+    record = run_currency_wars_cli(runner, action)
+
+    assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success")
+    assert state.completed == 1
+    assert [page for page, _ in title_inputs] == (
+        ["start_game"] * (title_page == "start_game") + ["click_enter", "main", "menu", "menu", "guide5", "guide5"]
+    )
+    assert title_inputs[0][1].endswith(f"/{title_page}.png")
+    navigator._handle_autotry.assert_not_called()
+    controller.start_game_process.assert_not_called()
+    controller.stop_game.assert_not_called()
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+@pytest.mark.parametrize("outcome", ("recovers", "unavailable", "stopped"))
+def test_currency_wars_background_waits_for_the_existing_game_window(
+        runner, currency_wars_game, monkeypatch, action, outcome):
+    from module.automation import background_input
+    from tasks import game
+    from utils import wait
+
+    state = currency_wars_game
+    state.page = "board"
+    clock = currency_wars.time
+    for module in (game, background_input, wait):
+        monkeypatch.setattr(module, "time", clock)
+    controller = MagicMock(launch_method="direct", process_name="StarRail.exe")
+    windows = MagicMock()
+    windows.return_value.process_running.return_value = True
+
+    def window_ready():
+        return outcome == "recovers" and state.now >= 2
+
+    controller.is_game_running.side_effect = window_ready
+    controller.switch_to_game.side_effect = window_ready
+    monkeypatch.setattr(game, "StarRailController", MagicMock(return_value=controller))
+    monkeypatch.setattr(game, "WindowsInputApi", windows)
+    monkeypatch.setattr(game, "process_session_id", lambda: 4)
+    monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="local", start_game_timeout=.1,
+                                                      auto_set_game_path_enable=False))
+    monkeypatch.setattr(game, "task_power_request", MagicMock())
+
+    def checkpoint():
+        if outcome == "stopped" and state.now >= .5:
+            state.stop = True
+        currency_wars.pause_ctl.checkpoint()
+
+    control = SimpleNamespace(checkpoint=checkpoint, check_stop=checkpoint)
+    monkeypatch.setattr(game, "pause_ctl", control)
+    handler = object.__new__(background_input.BackgroundInput)
+    handler.logger = MagicMock()
+    handler._window_wait_expired = False
+    handler._release_quietly = MagicMock()
+    handler._pause = control
+    handler.window_problem = lambda: None if window_ready() else background_input.WINDOW_MISSING
+    handler.wait_for_window = MagicMock(wraps=handler.wait_for_window)
+    auto = currency_wars.auto
+    auto.input_handler = handler
+    monkeypatch.setattr(game, "auto", auto)
+    runner.game.start.side_effect = game.start
+    runner.game.prepare_currency_wars_takeover.side_effect = game.prepare_currency_wars_takeover
+    if action == "currencywarsloop" and outcome == "recovers":
+        runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(state, "stop", True)
+    if action == "main":
+        monkeypatch.setattr(daily.Daily, "prepare_daily", lambda: state.completed == 1)
+
+    record = run_currency_wars_cli(runner, action)
+
+    handler.wait_for_window.assert_called_once_with(
+        game.WINDOW_WAIT_SECONDS if action == "currencywarstemp" else 6
+    )
+    if outcome == "recovers":
+        assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
+        assert state.completed == 1
+        assert ("rank", (1680, 965)) not in state.clicks
+    else:
+        assert (record["status"], record["reason"]) == (
+            (STATUS_STOPPED, None) if outcome == "stopped" else ("failed", "game_startup_unavailable")
+        )
+        assert state.clicks == []
+        state.factory.assert_not_called()
+    if action != "currencywarstemp":
+        windows.return_value.process_running.assert_called_with("StarRail.exe", session_id=4)
+    controller.start_game_process.assert_not_called()
+    controller.stop_game.assert_not_called()
+    auto.click_element.assert_not_called()
+    auto.press_mouse.assert_not_called()
 
 
 @pytest.mark.parametrize("dialog", ("reward_limit", "weekly_receipt", "generic_receipt"))

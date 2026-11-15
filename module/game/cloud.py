@@ -701,8 +701,10 @@ class CloudGameController(GameControllerBase):
         finally:
             client_config.timeout = previous_timeout
 
-    def has_startup_entry(self) -> bool:
+    def has_startup_entry(self, *, queue_only=False) -> bool:
         # 新启动的浏览器已确认大厅加载。已附着的浏览器则可能正在恢复播放器。
+        if queue_only:
+            return self._read_entry_state() == "in_queue"
         return (not self._preserve_browser_on_exit
                 or self._read_entry_state() in ("in_queue", "select_queue", "login", "lobby"))
 
@@ -771,15 +773,17 @@ class CloudGameController(GameControllerBase):
         self._queue_deadline = None
         self._paid_time = 0
 
-    def _wait_in_queue(self, timeout=600) -> bool:
+    def _wait_in_queue(self, timeout=600, *, resume_queue=False) -> bool:
         """排队等待进入"""
         if self._queue_deadline is None:
             self._queue_deadline = time.monotonic() + timeout
 
+        queue_states = ("in_queue", "game_running") if resume_queue else self.QUEUE_STATES
+
         def queue_status(_):
             pause_ctl.checkpoint()
             state = self._read_entry_state()
-            return state if state in self.QUEUE_STATES else None
+            return state if state in queue_states else None
 
         try:
             # 检查是否需要排队
@@ -1401,9 +1405,11 @@ class CloudGameController(GameControllerBase):
         finally:
             client_config.timeout = previous_timeout
 
-    def enter_cloud_game(self) -> bool:
+    def enter_cloud_game(self, *, resume_queue=False) -> bool:
         """进入云游戏"""
         try:
+            if resume_queue:
+                return self._finish_cloud_entry(resume_queue=True)
             entry = self._read_entry_state()
             if entry == "select_queue" and self.cfg.cloud_game_use_paid_time:
                 paid, _ = self._get_remaining_playtime()
@@ -1488,8 +1494,8 @@ class CloudGameController(GameControllerBase):
             self.log_error(f"进入云游戏失败: {e}")
             return False
 
-    def _finish_cloud_entry(self) -> bool:
-        if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60):
+    def _finish_cloud_entry(self, *, resume_queue=False) -> bool:
+        if not self._wait_in_queue(int(self.cfg.cloud_game_max_queue_time) * 60, resume_queue=resume_queue):
             return False
         pause_ctl.checkpoint()
         self._queue_deadline = None

@@ -1271,17 +1271,53 @@ def test_reconnect_replans_from_recovered_state_without_repeating_the_pending_in
     assert world.war.network_reconnects == 1
 
 
-@pytest.mark.parametrize("wrong_mode", (False, True))
-def test_reconnect_stops_at_mode_menu_without_the_original_match(monkeypatch, world, wrong_mode):
+@pytest.mark.parametrize("restored", ("missing", "wrong_mode", "late_saved", "late_result"))
+def test_in_match_reconnect_waits_for_the_original_match_or_preserves_the_menu(monkeypatch, world, restored):
+    world.cfg.currencywars_unfinished_match = "resume"
+    saved = mode(("继续对局", 1640, 962), ("标准博弈", 646, 156))
+    fighting = battle(True)
     modal = reconnect_prompt()
-    menu = mode(("继续对局", 1640, 962), ("超频博弈", 646, 156)) if wrong_mode else mode(
+    menu = mode(("继续对局", 1640, 962), ("超频博弈", 646, 156)) if restored == "wrong_mode" else mode(
         ("进入标准博弈", 1638, 960))
-    world.war.mode_confirmed = True
-    state = drive(monkeypatch, world, modal, lambda s, _: setattr(s, "frame", menu))
-    with pytest.raises(task.CurrencyWarsError, match="未找到同模式续局入口"):
-        world.war._recover_network(modal)
-    assert state.clicks == [(Page.RECONNECT, (1188, 672))]
-    assert world.war.frame is menu
+    continued = mode(("继续对局", 1640, 962), ("标准博弈", 646, 156))
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = home()
+    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
+    routes = {(saved, (1640, 962)): fighting, (modal, (1188, 672)): menu,
+              (continued, (1640, 962)): result, (result, (960, 899)): lobby, (lobby, (381, 961)): points}
+    battle_reads = menu_reads = 0
+
+    def capture(state):
+        nonlocal battle_reads, menu_reads
+        if state.frame is fighting:
+            battle_reads += 1
+            if battle_reads == 2:
+                state.frame = modal
+        elif state.frame is menu:
+            menu_reads += 1
+            if menu_reads == 3 and restored in ("late_saved", "late_result"):
+                state.frame = continued if restored == "late_saved" else result
+
+    state = drive(monkeypatch, world, saved, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
+    world.auto.press_key.side_effect = lambda key: (
+        state.keys.append((state.frame.page, key)), setattr(state, "frame", lobby)
+    )
+    expected = [(Page.MODES, (1640, 962)), (Page.RECONNECT, (1188, 672))]
+    if restored in ("missing", "wrong_mode"):
+        with pytest.raises(task.CurrencyWarsUnavailable, match="未找到同模式续局入口"):
+            world.war.start()
+        assert state.frame is menu and world.war.result is None
+        assert not state.keys
+        world.cfg.save_timestamp.assert_not_called()
+    else:
+        assert world.war.start() is True
+        assert world.war.mode == "normal" and world.war.result is True
+        if restored == "late_saved":
+            expected.append((Page.MODES, (1640, 962)))
+        expected += [(Page.MATCH_RESULT, (960, 899)), (Page.HOME, (381, 961))]
+        assert state.keys == [(Page.WEEKLY, "esc")]
+        world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
+    assert state.clicks == expected
 
 
 def test_reconnect_uses_the_task_budget_and_a_bounded_native_retry(monkeypatch, world):
@@ -3282,6 +3318,58 @@ def test_dreamscape_dance_uses_card_locations_when_names_and_badges_are_unreadab
 
     assert world.war._play_step(initial) is ready
     assert state.clicks == [(Page.DANCE, point) for point in routes]
+
+
+@pytest.mark.parametrize("receipt", ("complete", "missing_badge", "disabled_button"))
+def test_dreamscape_dance_rechecks_selection_and_button_when_confirm_text_is_unreadable(monkeypatch, world, receipt):
+    common = labels(("备战阶段", 287, 70), ("1-2", 287, 106), ("梦境交织", 1044, 77),
+                    ("选择2个角色进行共舞", 1044, 136), ("黑天鹅", 928, 357), ("花火", 1165, 357),
+                    ("详情", 938, 412), ("详情", 1176, 412))
+    confirm = (1487, 576)
+    confirm_text = labels(("确认选择", *confirm))
+    first_badge = labels(("已选择", 1118, 192))
+    second_badge = labels(("已选择", 879, 192))
+    image = CANVAS.copy()
+    if receipt != "disabled_button":
+        ImageDraw.Draw(image).rectangle((1428, 561, 1550, 592), fill=(235, 235, 235))
+    initial = Frame(CANVAS, common + confirm_text)
+    first = Frame(CANVAS, common + confirm_text + first_badge)
+    picked = Frame(image, common + first_badge + (second_badge if receipt != "missing_badge" else ()))
+    ambiguous = Frame(image, common + first_badge)
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    routes = {(1165, 357): first, (928, 357): picked, confirm: won, (960, 899): home()}
+    state = SimpleNamespace(frame=initial, clicks=[])
+    picked_reads = 0
+
+    def capture():
+        nonlocal picked_reads
+        if receipt == "complete" and state.frame is picked:
+            picked_reads += 1
+            if picked_reads == 2:
+                return ambiguous
+        return state.frame
+
+    def click(point, *, press_duration):
+        if point == confirm:
+            assert picked_reads >= 4
+        state.clicks.append(point)
+        state.frame = routes[point]
+        return True
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    monkeypatch.setattr(task, "TASK_SECONDS", 22)
+    world.auto.click_element_with_pos.side_effect = click
+
+    assert picked.page == Page.DANCE
+    if receipt == "complete":
+        assert world.war.start(resume=True) is True
+        assert state.clicks == list(routes)
+    else:
+        with pytest.raises(task.CurrencyWarsUnavailable, match="未确认两个共舞卡位已选中及按钮可用"):
+            world.war.start(resume=True)
+        assert state.clicks == [(1165, 357), (928, 357)]
 
 
 @pytest.mark.parametrize("read_card_names", (True, False))

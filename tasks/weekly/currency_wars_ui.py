@@ -94,7 +94,10 @@ INVESTMENT_CENTERS = (460, 960, 1460)
 INVESTMENT_REFRESH = ((389, 856), (888, 856), (1388, 856))
 EMPLOYEE_EVENT_TITLE = (600, 43, 1465, 102)
 EMPLOYEE_EVENT_SUBTITLE = (636, 103, 1485, 161)
+EMPLOYEE_EVENT_DETAILS = (440, 385, 1650, 436)
 EMPLOYEE_EVENT_CONFIRM = (1280, 541, 1700, 626)
+DANCE_CONFIRM_POINT = (1487, 576)
+DANCE_MIN_CARD_GAP = 136
 GARDEN_TITLE = (920, 49, 1175, 111)
 GARDEN_SUBTITLE = (908, 113, 1190, 153)
 BOARD_EFFECT_CONFIRM = (1310, 566, 1667, 633)
@@ -598,11 +601,13 @@ class Frame:
             if bright.mean(axis=1).max() >= 0.66:
                 return Page.HALO_TIP
 
-        if (self.stage and self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM)
-                and self.has("梦境交织", area=EMPLOYEE_EVENT_TITLE)
+        if (self.stage and self.has("梦境交织", area=EMPLOYEE_EVENT_TITLE)
                 and self.has("选择2个角色进行共舞", "选择2名角色进行共舞",
                              area=EMPLOYEE_EVENT_SUBTITLE, contains=True)):
-            return Page.DANCE
+            columns = sorted(detail.point[0] for detail in self.employee_event_details)
+            if (self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM)
+                    or columns and columns[-1] - columns[0] > DANCE_MIN_CARD_GAP):
+                return Page.DANCE
         if (self.has("巡海游侠", area=EMPLOYEE_EVENT_TITLE)
                 and (self.has("任命1名角色", "任命一名角色", area=EMPLOYEE_EVENT_SUBTITLE, contains=True)
                      or self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM))):
@@ -1272,6 +1277,10 @@ class Frame:
                          "查看详情", area=(label.point[0] - 95, 354, label.point[0] + 95, 410)))
 
     @cached_property
+    def employee_event_details(self) -> tuple[Label, ...]:
+        return self.matching(("详情",), EMPLOYEE_EVENT_DETAILS)
+
+    @cached_property
     def employee_event_candidates(self) -> tuple[Label, ...]:
         return tuple(label for label in self.texts((440, 325, 1650, 390))
                      if re.fullmatch(EMPLOYEE_NAME, label.text) and (self.page == Page.RANGER or self.has(
@@ -1289,8 +1298,24 @@ class Frame:
             ((r > 186) & (g > 138) & (r - b > 45)).mean() > 0.35
         )
 
+    @cached_property
+    def unlabeled_dance_confirm(self) -> Label | None:
+        if self.page == Page.DANCE and not self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM):
+            return self.enabled_button(Label("确认选择", DANCE_CONFIRM_POINT))
+        return None
+
+    @cached_property
+    def dance_pair_selected(self) -> bool:
+        selected = [detail.point[0] for detail in self.employee_event_details
+                    if self.employee_event_card_selected(detail.point[0])]
+        return len(selected) == 2 and abs(selected[0] - selected[1]) > DANCE_MIN_CARD_GAP
+
     def employee_event_confirm(self) -> Label | None:
-        return self.enabled_button(self.find("确认选择", area=EMPLOYEE_EVENT_CONFIRM))
+        if button := self.find("确认选择", area=EMPLOYEE_EVENT_CONFIRM):
+            return self.enabled_button(button)
+        if self.unlabeled_dance_confirm and self.dance_pair_selected:
+            return self.unlabeled_dance_confirm
+        return None
 
     @cached_property
     def board_effect_cards(self) -> tuple[tuple[Label, str], ...]:

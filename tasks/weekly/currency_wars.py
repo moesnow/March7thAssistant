@@ -53,7 +53,7 @@ PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MA
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
 REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
 BOARD_PAGES = {Page.BOARD, Page.BENCH_FULL}
-ENTRY_SCREENS = ("guide5", "main", "menu", "guide1", "guide2", "guide3", "guide4")
+ENTRY_SCREENS = ("guide5", "main", "menu", "guide1", "guide2", "guide3", "guide4", "start_game", "click_enter")
 BOSS_STAGES = {"normal": ("1-9", "2-7", "3-7"), "overclock": ("1-6", "2-5", "3-5")}
 RESULT_ACTIONS = ("下一页", "下一步", "前往结算", "继续挑战", "返回货币战争")
 NEUTRAL_ENVIRONMENTS = ("连击概念股", "增发货币", "能量概念股", "人身意外险", "蓝钻贵族")
@@ -867,13 +867,22 @@ class CurrencyWars:
         if resume_match and self.result is None and frame.page not in ACTIVE_PAGES:
             menu = frame if frame.page == Page.MODES else self._mode_menu(self._homepage(frame))
             expected_mode = self.mode if self.mode_confirmed else None
-            menu = self._expect(
-                lambda f: f.page == Page.MODES and f.menu_mode is not None
-                and (expected_mode is None or f.menu_mode == expected_mode)
-                and f.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT),
-                15, "游戏已重连，未找到同模式续局入口，保留当前现场",
-            )
-            frame = self._resume_saved_match(menu, expected_mode=expected_mode)
+
+            def match_available(f):
+                if record_result:
+                    self._record_match_result(f)
+                return f.page in ACTIVE_PAGES or (
+                    f.page == Page.MODES and f.menu_mode is not None
+                    and (expected_mode is None or f.menu_mode == expected_mode)
+                    and f.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT) is not None
+                )
+
+            frame = menu if match_available(menu) else self._wait(match_available, 15)
+            if frame is None:
+                self._check_budget()
+                raise CurrencyWarsUnavailable("游戏已重连，未找到同模式续局入口，保留当前现场")
+            if frame.page == Page.MODES:
+                frame = self._resume_saved_match(frame, expected_mode=expected_mode)
         # 服务器可能回到最近保存点。由恢复后的画面重新规划，保留本次任务的开销和次数上限。
         self.slot_cache.clear()
         self.deployment_stage = None
@@ -3329,11 +3338,10 @@ class CurrencyWars:
 
         def cards(f):
             candidates = f.employee_event_candidates
-            details = f.matching(("详情",), (440, 385, 1650, 436))
             return sorted((
                 next((label for label in candidates if abs(label.point[0] - detail.point[0]) <= 68),
                      ui.Label("候选角色", (detail.point[0], 355)))
-                for detail in details
+                for detail in f.employee_event_details
             ), key=priority)
 
         if not frame.employee_event_confirm() and len(cards(frame)) < 2:
@@ -3345,15 +3353,16 @@ class CurrencyWars:
             return frame
         for card in cards(frame):
             x = card.point[0]
-            if frame.employee_event_confirm():
+            if frame.employee_event_confirm() or frame.unlabeled_dance_confirm:
                 break
             if frame.employee_event_card_selected(x):
                 continue
             try:
                 frame = self._click_to(
-                    frame, lambda f: card.point if not f.employee_event_card_selected(x) else None,
+                    frame, lambda f: card.point
+                    if not f.unlabeled_dance_confirm and not f.employee_event_card_selected(x) else None,
                     lambda f: advanced(f) or f.page == event and (
-                        f.employee_event_confirm() or f.employee_event_card_selected(x)),
+                        f.employee_event_confirm() or f.unlabeled_dance_confirm or f.employee_event_card_selected(x)),
                     f"未确认{card.text}进入{event.value}选择", seconds=2, attempts=1,
                 )
             except CurrencyWarsRecoverable:
@@ -3361,10 +3370,20 @@ class CurrencyWars:
                 frame = self.frame
             if frame.page != event or frame.stage != stage:
                 return frame
-        return self._click_to(
-            frame, lambda f: ui.point(f.employee_event_confirm()), advanced,
-            f"{event.value}确认后未转场", attempts=1,
-        )
+        try:
+            return self._click_to(
+                frame, lambda f: ui.point(f.employee_event_confirm()), advanced,
+                f"{event.value}确认后未转场", attempts=1,
+            )
+        except CurrencyWarsActionUnready as error:
+            current = self.frame
+            if (current.action_context == frame.action_context
+                    and not current.has("确认选择", area=ui.EMPLOYEE_EVENT_CONFIRM)
+                    and (current.unlabeled_dance_confirm or current.dance_pair_selected)
+                    and current.employee_event_confirm() is None):
+                self._check_budget()
+                raise CurrencyWarsUnavailable("多次复核后仍未确认两个共舞卡位已选中及按钮可用，保留当前现场") from error
+            raise
 
     def _choose_board_effect(self, frame):
         event = frame.page

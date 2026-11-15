@@ -291,11 +291,21 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
     def start_local_game(starrail):
         resolution = get_ui_profile(cfg).resolution
         background = getattr(auto.input_handler, 'is_background', False) is True
-        if background and starrail.is_game_running():
+        waiting_for_window = background and (
+            starrail.is_game_running() if screen_ready is None else _local_game_process_running(starrail) is not False
+        )
+        if waiting_for_window:
             # 后台模式不还原、不激活已运行的游戏：窗口暂时不可操作（例如被最小化）时等待用户还原，
             # 不能当作游戏未运行而重复启动；超时抛出 InputInterrupted，不走关闭游戏后重启的恢复流程。
-            auto.input_handler.wait_for_window(WINDOW_WAIT_SECONDS)
-        switched = starrail.switch_to_game()
+            wait_time = WINDOW_WAIT_SECONDS if screen_ready is None else min(WINDOW_WAIT_SECONDS, remaining_startup_time())
+            try:
+                auto.input_handler.wait_for_window(wait_time)
+            except InputInterrupted as error:
+                if screen_ready is None:
+                    raise
+                raise GameStartupUnavailable(f"游戏窗口持续不可用，已保留游戏现场：{error}") from error
+            pause_ctl.checkpoint()
+        switched = (waiting_for_window and screen_ready is not None) or starrail.switch_to_game()
         if (not switched and screen_ready is not None and not background
                 and _local_game_process_running(starrail) is not False):
             _wait_for_local_foreground(starrail, remaining_startup_time())
@@ -350,9 +360,11 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                     log.info(f"游戏路径更新成功：{program_path}")
             time.sleep(1)
 
+    cloud_disconnected = False
+
     def cloud_player_ready():
+        nonlocal cloud_disconnected
         last_error = None
-        disconnected = False
         for attempt in range(MAX_RETRY):
             pause_ctl.checkpoint()
             try:
@@ -360,15 +372,17 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 pause_ctl.checkpoint()
                 if in_game:
                     return True
-                if screen_ready is not None and not disconnected:
-                    if cloud_game.has_startup_entry():
+                if screen_ready is not None:
+                    if cloud_game.has_startup_entry(queue_only=cloud_disconnected):
                         pause_ctl.checkpoint()
                         return False
+                    if cloud_disconnected:
+                        raise CloudGameProbeUnready("云游戏断开后暂未确认播放器或原排队状态")
                     raise CloudGameProbeUnready("暂未确认云游戏播放器、大厅或排队状态")
                 if last_error is None:
                     return False
             except (CloudGameDisconnectedError, CloudGameProbeUnready, TimeoutError) as error:
-                disconnected |= isinstance(error, CloudGameDisconnectedError)
+                cloud_disconnected |= isinstance(error, CloudGameDisconnectedError)
                 last_error = error
             pause_ctl.checkpoint()
             if attempt + 1 < MAX_RETRY:
@@ -385,7 +399,10 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         if not started:
             raise ConnectionError("启动或连接浏览器失败")
         if not cloud_player_ready():
-            entered = cloud_game.enter_cloud_game()
+            if screen_ready is not None and cloud_disconnected:
+                entered = cloud_game.enter_cloud_game(resume_queue=True)
+            else:
+                entered = cloud_game.enter_cloud_game()
             pause_ctl.checkpoint()
             if not entered:
                 raise ConnectionError("进入云游戏失败")
