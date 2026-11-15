@@ -23,7 +23,7 @@ from tasks.daily import daily
 from tasks.game import GameStartupUnavailable
 from tasks.weekly import currency_wars
 from tasks.weekly.currency_wars_strategy import Slot
-from tasks.weekly.currency_wars_ui import Frame, Label, Page
+from tasks.weekly.currency_wars_ui import BENCH_POINTS, FRONT_Y, Frame, Label, Page
 from utils.pause import RunStopRequested
 from utils.runs import EXIT_FAILED, EXIT_OK, EXIT_STOPPED, STATUS_STOPPED, RunSession, exit_code_of
 from utils.tasks import AVAILABLE_TASKS, CLI_ONLY_TASKS, HOST_TASKS, PAUSABLE_TASKS, UNSUPPORTED_TASK, task_is_supported
@@ -460,6 +460,220 @@ def test_currency_wars_entry_recovers_svarog_modification_before_preparation(
     currency_wars.screen.change_to.assert_not_called()
     if action == "main":
         assert state.later_steps == ["日常领奖", "每日实训"]
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+@pytest.mark.parametrize("restores_picture", (True, False))
+def test_currency_wars_entry_rechecks_unattempted_deployment_after_picture_recovers(
+        runner, currency_wars_game, monkeypatch, action, restores_picture):
+    state = currency_wars_game
+    task_auto = currency_wars.auto
+    game_click = task_auto.click_element_with_pos.side_effect
+    bench = BENCH_POINTS[0]
+    front = (745, FRONT_Y)
+    labels = (
+        Label("备战阶段", (470, 46)), Label("1-1", (470, 79)), Label("商店", (1624, 983)),
+        Label("出战", (1818, 750)), Label("前台区域", (973, 316)), Label("后台区域", (976, 575)),
+        Label("0", (1640, 923)),
+    )
+    monkeypatch.setattr(currency_wars.cfg, "currencywars_strategy", "s2_anaxa")
+    monkeypatch.setattr(Frame, "read_local", lambda *args, **kwargs: None)
+
+    def preparation(*, deployed=False, flashing=False):
+        image = Image.new("RGB", (1920, 1080), (35, 30, 74))
+        draw = ImageDraw.Draw(image)
+        for i in range(6):
+            x = round(960 + (i - 2.5) * 142)
+            draw.rectangle((x - 59, 598, x + 59, 731), outline=(78, 74, 113), width=2)
+        x, y = front if deployed else bench
+        draw.rectangle((x - 24, y - 23, x, y + 17), fill=(222, 180, 155))
+        draw.rectangle((x + 1, y - 23, x + 24, y + 17), fill=(98, 58, 21))
+        role_x = x + (44 if deployed else 36)
+        draw.rectangle((role_x - 3, y - 54, role_x + 3, y - 48), fill="white")
+        if flashing:
+            x, y = front
+            # 只在目标空格中心注入闪动。人数、来源肖像和卡框持续可辨认。
+            draw.rectangle((x - 19, y - 9, x + 19, y + 9), fill=(70, 65, 109))
+        return Frame(image, (*labels, Label("1/3" if deployed else "0/3", (960, 259))))
+
+    before = preparation()
+    flashing = preparation(flashing=True)
+    after = preparation(deployed=True)
+    detail = Frame(before.image, (*labels, Label("那刻夏", (1641, 228)), Label("前台", (1578, 278)),
+                                  Label("输出", (1825, 274)), Label("能量", (1490, 364))))
+    assert before.page == flashing.page == after.page == Page.BOARD and detail.page == Page.DETAIL
+    assert before.slot_occupied(bench) and not before.slot_occupied(front) and not flashing.slot_occupied(front)
+    assert not flashing.same_control(front, before, front)
+    assert after.slot_occupied(front) and not after.slot_occupied(bench)
+    capture_count = 0
+    detail_open = False
+    recovered = set()
+    unattempted = set()
+    deployed = []
+    recover_default_board = currency_wars.CurrencyWars._recover_default_board
+
+    def recover_board(war, stage, operation, error):
+        if operation == "上阵" and isinstance(error, currency_wars.CurrencyWarsActionUnready):
+            assert "已尝试 0 次" in str(error)
+            unattempted.add(state.completed)
+            if restores_picture:
+                recovered.add(state.completed)
+        return recover_default_board(war, stage, operation, error)
+
+    def capture_board():
+        nonlocal capture_count
+        capture_count += 1
+        if detail_open:
+            return detail
+        if state.completed in deployed:
+            return after
+        return before if state.completed in recovered or capture_count % 2 else flashing
+
+    def click(point, *, press_duration):
+        nonlocal detail_open
+        if state.page == "board" and point in (bench, front, (12, 12)):
+            assert detail_open == (point == (12, 12))
+            detail_open = not detail_open
+            return True
+        if state.page == "board":
+            assert point == (1818, 750) and state.completed in deployed
+        return game_click(point, press_duration=press_duration)
+
+    def drag(start, end, **kwargs):
+        start_x, start_y = start
+        end_x, end_y = end
+        assert (round(start_x * 1920), round(start_y * 1080)) == bench
+        assert (round(end_x * 1920), round(end_y * 1080)) == front
+        assert state.completed in recovered and state.completed not in deployed
+        deployed.append(state.completed)
+        return True
+
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_recover_default_board", recover_board)
+    monkeypatch.setattr(currency_wars, "TASK_SECONDS", 150)
+    state.capture_board = capture_board
+    task_auto.click_element_with_pos.side_effect = click
+    task_auto.drag_mouse.side_effect = drag
+    if action == "currencywarstemp":
+        state.page = "board"
+    if action == "currencywarsloop" and restores_picture:
+        def stop_after_two(task_id, success, duration):
+            assert task_id == "currencywarsloop" and success
+            if state.completed == 2:
+                state.stop = True
+
+        runner.telemetry.track_task_complete.side_effect = stop_after_two
+
+    record = run_currency_wars_cli(runner, action)
+
+    state.factory.assert_called_once_with()
+    if restores_picture:
+        expected = 2 if action == "currencywarsloop" else 1
+        assert state.completed == expected
+        assert deployed == list(range(expected)) and recovered == unattempted == set(deployed)
+        assert task_auto.drag_mouse.call_count == expected
+        assert state.clicks.count(("board", (1818, 750))) == expected
+        assert (record["status"], record["reason"], record["exit_code"]) == (
+            ("stopped", None, EXIT_STOPPED) if action == "currencywarsloop" else ("success", None, EXIT_OK))
+        if action == "main":
+            assert state.later_steps == ["日常领奖", "每日实训"]
+    else:
+        assert unattempted == {0} and not deployed and not recovered
+        task_auto.drag_mouse.assert_not_called()
+        assert state.completed == 0 and state.later_steps == []
+        assert ("board", (1818, 750)) not in state.clicks
+        assert (record["status"], record["reason"], record["exit_code"]) == (
+            "failed", "currencywars_unavailable", EXIT_FAILED)
+        assert "备战" in record["error"] and state.now < currency_wars.TASK_SECONDS
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+@pytest.mark.parametrize("outcome", ("recovered", "unavailable", "timeout", "stopped"))
+def test_currency_wars_entry_switches_from_shaking_tea_to_chat(
+        runner, currency_wars_game, monkeypatch, action, outcome):
+    state = currency_wars_game
+    board = state.capture_board
+    image = board().image
+    shake = (1534, 838)
+    chat = (386, 837)
+    open_reward = (960, 981)
+    tea = Frame(image, (
+        Label("1-8", (905, 63)), Label("返回备战界面", (1790, 65)), Label("幕后茶歇", (960, 162)),
+        Label("聊一聊", chat), Label("享用茶歇", (1534, 647)),
+        Label("回复20小队生命值", (1534, 782)), Label("摇一摇", shake),
+    ))
+    reward = Frame(image, (Label("领取茶歇奖励", (960, 195)), Label("开启", open_reward)))
+    task_auto = currency_wars.auto
+    game_click = task_auto.click_element_with_pos.side_effect
+    tea_clicks = []
+    chats_finished = set()
+    rewards_opened = set()
+
+    def capture_board():
+        if state.completed in rewards_opened:
+            return board()
+        return reward if state.completed in chats_finished else tea
+
+    def click(point, *, press_duration):
+        if state.page != "board" or state.completed in rewards_opened:
+            return game_click(point, press_duration=press_duration)
+        tea_clicks.append((state.completed, point))
+        if point == shake:
+            if outcome == "timeout":
+                state.now += currency_wars.TASK_SECONDS
+            elif outcome == "stopped":
+                state.stop = True
+        elif point == chat and outcome == "recovered":
+            chats_finished.add(state.completed)
+        elif point == open_reward:
+            assert state.completed in chats_finished
+            rewards_opened.add(state.completed)
+        else:
+            assert point == chat
+        return True
+
+    assert tea.page == reward.page == Page.TEA
+    state.capture_board = capture_board
+    task_auto.click_element_with_pos.side_effect = click
+    monkeypatch.setattr(currency_wars, "TASK_SECONDS", 150)
+    if action == "currencywarstemp":
+        state.page = "board"
+    if action == "currencywarsloop" and outcome == "recovered":
+        def stop_after_two(task_id, success, duration):
+            assert task_id == "currencywarsloop" and success
+            if state.completed == 2:
+                state.stop = True
+
+        runner.telemetry.track_task_complete.side_effect = stop_after_two
+
+    record = run_currency_wars_cli(runner, action)
+
+    state.factory.assert_called_once_with()
+    if outcome == "recovered":
+        expected = 2 if action == "currencywarsloop" else 1
+        assert state.completed == expected
+        assert rewards_opened == chats_finished == set(range(expected))
+        for number in range(expected):
+            clicks = [point for match, point in tea_clicks if match == number]
+            assert clicks[-2:] == [chat, open_reward]
+            assert len(clicks) >= 4 and set(clicks[:-2]) == {shake}
+        assert state.clicks.count(("board", (1818, 750))) == expected
+        assert (record["status"], record["reason"], record["exit_code"]) == (
+            ("stopped", None, EXIT_STOPPED) if action == "currencywarsloop" else ("success", None, EXIT_OK))
+        if action == "main":
+            assert state.later_steps == ["日常领奖", "每日实训"]
+        return
+
+    assert state.completed == 0 and state.later_steps == []
+    assert ("board", (1818, 750)) not in state.clicks
+    if outcome == "unavailable":
+        assert (0, shake) in tea_clicks and (0, chat) in tea_clicks
+        assert (record["status"], record["reason"], record["exit_code"]) == (
+            "failed", "currencywars_unavailable", EXIT_FAILED)
+        assert "茶歇" in record["error"] and state.now < currency_wars.TASK_SECONDS
+    else:
+        assert tea_clicks == [(0, shake)]
+        assert (record["status"], record["reason"], record["exit_code"]) == (
+            ("stopped", None, EXIT_STOPPED) if outcome == "stopped" else ("failed", "currencywars_timeout", EXIT_FAILED))
 
 
 def test_currency_wars_local_takeover_does_not_enter_an_unavailable_window(runner):

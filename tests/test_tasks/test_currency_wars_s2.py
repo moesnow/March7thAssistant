@@ -4,6 +4,7 @@ from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import numpy as np
 from PIL import Image, ImageDraw
 import pytest
 
@@ -915,6 +916,94 @@ def test_default_does_not_try_the_other_row_after_the_game_rejects_a_duplicate(m
     assert world.auto.drag_mouse.call_count == 2
     assert (current.stage, duplicate.point, "front") in world.war.default_deployment_skips
     assert (current.stage, duplicate.point, "back") in world.war.default_deployment_skips
+
+
+def test_default_deployment_keeps_a_skip_when_input_was_sent_without_receipt(monkeypatch, world):
+    world.war.default_strategy = True
+    source, target = slot("bench", 0, CORE), slot("front", 0)
+    team = board(source, target, stage="1-1", used=0)
+    before = page(Page.BOARD, stage=team.stage, capacity=(team.used, team.capacity))
+    monkeypatch.setattr(before, "slot_occupied", lambda p: p == source.point)
+    monkeypatch.setattr(before, "deployed_copy", lambda *_: None)
+    monkeypatch.setattr(before, "card_stars", lambda s, **_: s.unit.stars if s.unit else None)
+    monkeypatch.setattr(world.war, "_read_default_board", lambda f, **_: (f, team))
+    drive(monkeypatch, world, before)
+    world.auto.drag_mouse.return_value = True
+
+    assert world.war._prepare_default_team(before, deploy_only=True) is before
+    attempts = world.auto.drag_mouse.call_count
+    assert attempts > 0
+    assert (team.stage, source.point, target.zone) in world.war.default_deployment_skips
+    assert world.war._prepare_default_team(before, deploy_only=True) is before
+    assert world.auto.drag_mouse.call_count == attempts
+
+
+@pytest.mark.parametrize("restore_sent", (False, True))
+def test_default_replacement_rechecks_a_parked_front_after_zero_input_restore(monkeypatch, world, restore_sent):
+    world.war.default_strategy = True
+    outgoing = slot("front", 0, replace(FILLER, back=False, equipment=0))
+    incoming = slot("bench", 0, replace(CORE, cost=4))
+    spare = slot("bench", 1)
+    original = board(outgoing, incoming, spare, stage="1-1", used=1, capacity=1)
+    parked = apply_deployment(original, (outgoing, spare))
+    stored = replace(spare, occupied=True, unit=outgoing.unit)
+    restorable = replace(parked, slots=(replace(outgoing, occupied=False, unit=None),
+                                        replace(incoming, blocked=True), stored))
+    restored = apply_deployment(restorable, (stored, restorable.slots[0]))
+
+    def frame_of(team, *, unstable=False):
+        image = CANVAS.copy()
+        visible = next(s for s in team.slots if s.unit is outgoing.unit)
+        x, y = visible.point
+        draw = ImageDraw.Draw(image)
+        draw.rectangle((x - 20, y - 25, x + 12, y + 18), fill=(190, 155, 50))
+        draw.rectangle((x - 15, y - 10, x + 21, y + 8), fill=(65, 179, 147))
+        frame = Frame(image, ())
+        frame.__dict__.update(page=Page.BOARD, stage=team.stage, capacity=(team.used, team.capacity), gold=0)
+        monkeypatch.setattr(frame, "slot_occupied", lambda p: any(s.point == p and s.occupied for s in team.slots))
+        monkeypatch.setattr(frame, "deployed_copy", lambda *_: None)
+        monkeypatch.setattr(frame, "card_equipment", lambda s: s.unit.equipment)
+        monkeypatch.setattr(frame, "card_stars", lambda s, **_: (
+            4 if unstable and (s.point == incoming.point or not restore_sent) else s.unit.stars))
+        return frame
+
+    before = frame_of(original)
+    middle = frame_of(parked, unstable=True)
+    ready, after = frame_of(restorable), frame_of(restored)
+    teams = {before: original, middle: parked, ready: restorable, after: restored}
+    monkeypatch.setattr(world.war, "_read_default_board", lambda f, **_: (f, teams[f]))
+    state = drive(monkeypatch, world, before)
+    drags = []
+
+    def drag(start, end, **_):
+        src = tuple(round(value * scale) for value, scale in zip(start, (1920, 1080)))
+        dst = tuple(round(value * scale) for value, scale in zip(end, (1920, 1080)))
+        drags.append((src, dst))
+        if state.frame is before:
+            assert (src, dst) == (outgoing.point, spare.point)
+            state.frame = middle
+        else:
+            assert (src, dst) == (spare.point, outgoing.point)
+            if state.frame is ready:
+                state.frame = after
+            else:
+                assert restore_sent and state.frame is middle
+        return True
+
+    world.auto.drag_mouse.side_effect = drag
+    assert world.war._prepare_default_team(before) is middle
+    assert drags[0] == (outgoing.point, spare.point)
+    assert ((original.stage, spare.point, "front") in world.war.default_deployment_skips) is restore_sent
+
+    state.frame = ready
+    attempts = len(drags)
+    if restore_sent:
+        assert world.war._prepare_default_team(world.war._observe(), deploy_only=True) is ready
+        assert len(drags) == attempts
+    else:
+        assert attempts == 1
+        assert world.war._prepare_default_team(world.war._observe(), deploy_only=True) is after
+        assert drags == [(outgoing.point, spare.point), (spare.point, outgoing.point)]
 
 
 def test_default_equipment_visits_each_card_once_by_cost_then_stars_across_both_rows(monkeypatch, world):
@@ -2235,6 +2324,54 @@ def test_move_waits_a_bounded_time_if_the_destination_changes_before_input(monke
     assert 8 <= world.now[0] < 9
 
 
+def test_deployment_reidentifies_the_changed_portrait_before_replanning(monkeypatch, world):
+    old, support = slot("bench", 0, FILLER), slot("bench", 1, BAILU)
+    target = slot("front", 0)
+    team = board(old, support, target, stage="1-1", used=0)
+    updated = replace(old, unit=CORE)
+    current = replace(team, slots=(updated, support, target))
+    deployed = apply_deployment(current, (updated, target))
+    image = CANVAS.copy()
+    x, y = old.point
+    ImageDraw.Draw(image).rectangle((x - 31, y - 31, x + 31, y + 31), fill=(95, 90, 134))
+
+    def preparation(team):
+        frame = Frame(image, ())
+        frame.__dict__.update(page=Page.BOARD, stage=team.stage, capacity=(team.used, team.capacity), gold=0)
+        units = {s.point: s.unit for s in team.slots if s.unit}
+        monkeypatch.setattr(frame, "slots", lambda: team.slots)
+        monkeypatch.setattr(frame, "slot_occupied", lambda point: point in units)
+        monkeypatch.setattr(frame, "card_role", lambda slot: (units[slot.point].front, units[slot.point].back))
+        monkeypatch.setattr(frame, "card_stars", lambda slot: units[slot.point].stars)
+        return frame
+
+    changed, landed = preparation(current), preparation(deployed)
+    detail = page(Page.DETAIL, (CORE.name, 1610, 228), ("前台", 1575, 279), stage=team.stage)
+    support_detail = page(Page.DETAIL, (BAILU.name, 1610, 228), ("后台", 1575, 279), stage=team.stage)
+    monkeypatch.setattr(detail, "employee_output", lambda **_: True)
+    monkeypatch.setattr(support_detail, "employee_output", lambda **_: False)
+    routes = {(changed, old.point): detail, (detail, (12, 12)): changed,
+              (changed, support.point): support_detail, (support_detail, (12, 12)): changed}
+    state = drive(monkeypatch, world, changed, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+    for candidate in (old, support):
+        portrait = np.broadcast_to(CANVAS.getpixel(candidate.point), (12, 12, 3)).astype(np.int16)
+        world.war.slot_cache[(candidate.zone, candidate.index)] = (portrait, candidate.unit.name, False)
+
+    with pytest.raises(task.CurrencyWarsActionUnready, match="瓦尔特.*卡位肖像已变化") as error:
+        world.war._move(changed, team, old, target)
+    world.auto.drag_mouse.assert_not_called()
+    assert not state.clicks
+
+    recovered = world.war._recover_deployment(team, error.value)
+    frame, board_now = world.war._read_board(recovered)
+    source, destination = world.war._next_deployment(board_now)
+    assert (source.unit.name, destination.point) == (CORE.name, target.point)
+    world.auto.drag_mouse.side_effect = lambda *_, **__: setattr(state, "frame", landed) or True
+    assert world.war._move(frame, board_now, source, destination) is landed
+    assert state.clicks == [(Page.BOARD, old.point), (Page.DETAIL, (12, 12))]
+    world.auto.drag_mouse.assert_called_once()
+
+
 @pytest.mark.parametrize("outcome", ("swap", "stale", "no_receipt"))
 def test_core_swap_rechecks_both_stars_and_never_duplicates_an_unconfirmed_move(monkeypatch, world, outcome):
     active = slot("front", 0, replace(CORE, stars=1))
@@ -2905,6 +3042,83 @@ def test_takeover_bounds_unplayable_preparation_and_keeps_the_board(monkeypatch,
     assert world.now[0] < task.TASK_SECONDS
     assert state.frame is initial and not state.clicks and not state.keys
     world.auto.drag_mouse.assert_not_called()
+
+
+@pytest.mark.parametrize("recovers", (True, False))
+def test_takeover_rechecks_zero_input_deployment_after_the_first_fallback(monkeypatch, world, recovers):
+    stage = "1-1"
+    fight = (1818, 751)
+    source, target, rear = slot("bench", 0, CORE), slot("front", 0), slot("back", 0)
+    team = board(target, rear, source, stage=stage, gold=0, used=0)
+    deployed = apply_deployment(team, (source, target))
+
+    def preparation(current, flicker=False):
+        image = CANVAS.copy()
+        if flicker:
+            x, y = target.point
+            ImageDraw.Draw(image).rectangle((x - 19, y - 9, x + 19, y + 9), fill=(70, 65, 109))
+        frame = Frame(image, labels(("出战", *fight)))
+        frame.__dict__.update(page=Page.BOARD, stage=stage, gold=0, capacity=(current.used, current.capacity))
+        monkeypatch.setattr(frame, "field_slots", lambda: current.slots[:2])
+        monkeypatch.setattr(frame, "slots", lambda: current.slots)
+        monkeypatch.setattr(frame, "slot_occupied", lambda p: any(s.point == p and s.occupied for s in current.slots))
+        monkeypatch.setattr(frame, "deployed_copy", lambda *_: None)
+        return frame
+
+    still, flickering = preparation(team), preparation(team, flicker=True)
+    ready, fighting, lobby = preparation(deployed), battle(True), home()
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    recovered = False
+    misses = []
+    recover = world.war._recover_default_board
+
+    def recover_board(stage, operation, error):
+        nonlocal recovered
+        if operation == "上阵":
+            assert isinstance(error, task.CurrencyWarsActionUnready)
+            assert "已尝试 0 次" in str(error)
+            misses.append(error)
+            recovered = recovers
+        return recover(stage, operation, error)
+
+    def read_team(frame, **_):
+        return frame, deployed if frame is ready else team
+
+    def capture(state):
+        if state.frame in (still, flickering):
+            state.frame = still if recovered or state.frame is flickering else flickering
+        elif state.frame is fighting:
+            state.frame = won
+
+    monkeypatch.setattr(world.war, "_read_board", read_team)
+    monkeypatch.setattr(world.war, "_read_default_board", read_team)
+    monkeypatch.setattr(world.war, "_collect_preparation_rewards", lambda f: (f, True))
+    monkeypatch.setattr(world.war, "_equip", lambda f, _: f)
+    monkeypatch.setattr(world.war, "_recover_default_board", recover_board)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(task, "TASK_SECONDS", 90)
+    routes = {(ready, fight): fighting, (won, (960, 899)): lobby}
+    state = drive(monkeypatch, world, still, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
+
+    def drag(start, end, **_):
+        assert recovered and state.frame is still
+        assert start == (source.point[0] / 1920, source.point[1] / 1080)
+        assert end == (target.point[0] / 1920, target.point[1] / 1080)
+        state.frame = ready
+        return True
+
+    world.auto.drag_mouse.side_effect = drag
+    if recovers:
+        assert world.war.start(resume=True) is True
+        assert len(misses) == 1
+        world.auto.drag_mouse.assert_called_once()
+        assert state.clicks.count((Page.BOARD, fight)) == 1
+    else:
+        with pytest.raises(task.CurrencyWarsUnavailable, match="1-1.*仍无法完成备战并推进"):
+            world.war.start(resume=True)
+        assert misses and not state.clicks
+        world.auto.drag_mouse.assert_not_called()
+    assert world.now[0] < task.TASK_SECONDS
 
 
 def test_visible_fight_remains_usable_when_only_the_deployment_count_raises(monkeypatch, world):
@@ -4571,6 +4785,138 @@ def test_tea_meal_continues_when_ocr_misses_the_card_name_and_health(monkeypatch
         s, "frame", selected if p == (1200, 409) else after))
     assert world.war._tea(initial) is after
     assert state.clicks == [(Page.TEA, (1200, 409)), (Page.TEA, (1760, 482))]
+
+
+@pytest.fixture
+def tea_menu():
+    return Frame(CANVAS, labels(("M1-8", 895, 62), ("幕后茶歇", 960, 164), ("返回备战界面", 1741, 63),
+                                ("享用茶歇", 1535, 647), ("回复20小队生命值", 1535, 783),
+                                ("聊一聊", 386, 837), ("摇一摇", 1534, 838)))
+
+
+def test_tea_after_two_missed_shakes_opens_chat_and_continues_match(monkeypatch, world, tea_menu):
+    reward = Frame(CANVAS, labels(("领取茶歇奖励", 960, 196), ("开启", 960, 981)))
+    next_board = page(Page.BOARD, stage="1-9")
+    routes = {(386, 837): reward, (960, 981): next_board}
+    state = drive(monkeypatch, world, tea_menu,
+                  lambda s, point: setattr(s, "frame", routes.get(point, tea_menu)))
+
+    assert world.war._tea(tea_menu) is reward
+    assert world.war._tea(reward) is next_board
+    assert state.clicks == [(Page.TEA, point) for point in ((1534, 838), (1534, 838), (386, 837), (960, 981))]
+
+
+def test_tea_waits_for_late_receipt_when_shake_temporarily_disappears_from_ocr(monkeypatch, world, tea_menu):
+    missing = Frame(CANVAS, tuple(label for label in tea_menu.labels if label.text != "摇一摇"))
+    dialogue = Frame(CANVAS, labels(("M1-8", 895, 62), ("返回备战界面", 1741, 63),
+                                    ("点击空白处继续", 1534, 922)))
+
+    def capture(state):
+        if state.clicks:
+            state.frame = dialogue if world.now[0] >= 18 else missing
+
+    state = drive(monkeypatch, world, tea_menu, after_capture=capture)
+    assert world.war._tea(tea_menu) is dialogue
+    assert state.clicks == [(Page.TEA, (1534, 838))]
+
+
+@pytest.mark.parametrize("unchanged", (False, True))
+def test_tea_requires_visual_confirmation_to_try_chat_when_shake_ocr_is_missing(monkeypatch, world, tea_menu, unchanged):
+    image = CANVAS.copy()
+    if not unchanged:
+        image.paste((218, 218, 218), (1515, 829, 1554, 848))
+    missing = Frame(image, tuple(label for label in tea_menu.labels if label.text != "摇一摇"))
+    reward = Frame(CANVAS, labels(("领取茶歇奖励", 960, 196), ("开启", 960, 981)))
+    state = drive(monkeypatch, world, tea_menu, lambda s, point: setattr(
+        s, "frame", missing if point == (1534, 838) else reward))
+    world.war.deadline = 60
+
+    if unchanged:
+        assert world.war._tea(tea_menu) is reward
+        assert state.clicks == [(Page.TEA, (1534, 838)), (Page.TEA, (386, 837))]
+    else:
+        with pytest.raises(task.CurrencyWarsUnavailable, match="幕后茶歇多次复核后仍无法推进"):
+            world.war._tea(tea_menu)
+        assert state.clicks == [(Page.TEA, (1534, 838))]
+
+
+def test_tea_recognizes_the_existing_shake_fallback_without_ocr_labels(monkeypatch, world, tea_menu):
+    unreadable = Frame(CANVAS, tuple(label for label in tea_menu.labels if label.text not in ("摇一摇", "聊一聊")))
+    reward = Frame(CANVAS, labels(("领取茶歇奖励", 960, 196), ("开启", 960, 981)))
+    state = drive(monkeypatch, world, unreadable, lambda s, point: setattr(s, "frame", reward))
+
+    assert world.war._tea(unreadable) is reward
+    assert state.clicks == [(Page.TEA, (1534, 837))]
+
+
+def test_tea_opening_does_not_depend_on_the_background_stage_ocr(monkeypatch, world, tea_menu):
+    misread = Frame(CANVAS, tea_menu.labels)
+    corrected = Frame(CANVAS, tea_menu.labels)
+    misread.__dict__["stage"] = "1-7"
+    corrected.__dict__["stage"] = "1-8"
+    reward = Frame(CANVAS, labels(("领取茶歇奖励", 960, 196), ("开启", 960, 981)))
+    state = drive(monkeypatch, world, corrected, lambda s, point: setattr(s, "frame", reward))
+
+    assert world.war._tea(misread) is reward
+    assert state.clicks == [(Page.TEA, (1534, 838))]
+
+
+def test_tea_retries_shake_when_its_control_recovers_without_any_previous_input(monkeypatch, world, tea_menu):
+    shake_only = Frame(CANVAS, tuple(label for label in tea_menu.labels if label.text not in ("聊一聊", "享用茶歇")))
+    unreadable = Frame(CANVAS, tuple(label for label in shake_only.labels if label.text != "摇一摇"))
+    reward = Frame(CANVAS, labels(("领取茶歇奖励", 960, 196), ("开启", 960, 981)))
+
+    def capture(state):
+        if not state.clicks:
+            state.frame = shake_only if world.now[0] >= 13 else unreadable
+
+    state = drive(monkeypatch, world, shake_only, lambda s, point: setattr(s, "frame", reward), after_capture=capture)
+    assert world.war._tea(shake_only) is reward
+    assert state.clicks == [(Page.TEA, (1534, 838))]
+
+
+def test_tea_unavailable_is_reported_when_shake_and_chat_both_leave_the_same_menu(monkeypatch, world, tea_menu):
+    state = drive(monkeypatch, world, tea_menu)
+    world.war.deadline = 60
+
+    with pytest.raises(task.CurrencyWarsUnavailable, match="幕后茶歇多次复核后仍无法推进"):
+        world.war._play(tea_menu)
+    assert state.clicks == [(Page.TEA, point) for point in ((1534, 838), (1534, 838), (386, 837), (386, 837))]
+
+
+def test_tea_does_not_reopen_the_same_chat_after_returning_from_costly_choices(monkeypatch, world, tea_menu):
+    coffee_menu = Frame(CANVAS, labels(("M1-8", 895, 62), ("返回备战界面", 1741, 63),
+                                     ("亮晶晶咖啡", 1210, 450), ("获得随机星徽，失去8生命值", 1300, 520),
+                                     ("返回", 1175, 809)))
+    routes = {(386, 837): coffee_menu, (1175, 809): tea_menu}
+    state = drive(monkeypatch, world, tea_menu,
+                  lambda s, point: setattr(s, "frame", routes.get(point, tea_menu)))
+    world.war.deadline = 60
+
+    with pytest.raises(task.CurrencyWarsUnavailable, match="幕后茶歇返回菜单后仍无法继续"):
+        world.war._play(tea_menu)
+    assert state.clicks == [(Page.TEA, point) for point in (
+        (1534, 838), (1534, 838), (386, 837), (1175, 809), (1534, 838), (1534, 838),
+    )]
+
+
+@pytest.mark.parametrize("recovers", (False, True))
+def test_tea_bounds_the_wait_for_unreadable_controls(monkeypatch, world, recovers):
+    unreadable = Frame(CANVAS, labels(("M1-8", 895, 62), ("返回备战界面", 1741, 63)))
+    reward = Frame(CANVAS, labels(("领取茶歇奖励", 960, 196), ("开启", 960, 981)))
+
+    def capture(state):
+        if recovers and world.now[0] >= 20:
+            state.frame = reward
+
+    state = drive(monkeypatch, world, unreadable, after_capture=capture)
+    world.war.deadline = 60
+    if recovers:
+        assert world.war._tea(unreadable) is reward
+    else:
+        with pytest.raises(task.CurrencyWarsUnavailable, match="幕后茶歇持续未识别到可继续的控件"):
+            world.war._play(unreadable)
+    assert state.clicks == [(Page.TEA, (1534, 922))] * 2
 
 
 def test_closing_shop_on_treasure_node_recognizes_the_board_and_advances(monkeypatch, world):

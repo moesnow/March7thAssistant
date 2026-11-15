@@ -160,6 +160,7 @@ class CurrencyWars:
         self.last_result_stage = None
         self.slot_cache = {}
         self.halo_candidate = None
+        self.tea_menu_fallback = None
         self.halo_excluded = set()
         self.stage_refreshes = {}
         self.deployment_stage = None
@@ -409,10 +410,11 @@ class CurrencyWars:
 
         return self._expect(ready, 7, f"{stage} {operation}后无法核对可继续的备战界面")
 
-    def _recover_preparation(self, stage, operation, error):
+    def _recover_preparation(self, stage, operation, error, *, keep_slot_cache=False):
         """复核备战并退出已知的子页面。恢复期间不会重发原操作。"""
         self.deferred_operations.add((stage, operation))
-        self.slot_cache.clear()
+        if not keep_slot_cache:
+            self.slot_cache.clear()
         self.deployment_moves = ()
         for attempt in range(3):
             frame = self._stable_preparation(stage, operation)
@@ -2137,7 +2139,11 @@ class CurrencyWars:
     def _recover_deployment(self, board, error):
         # 在重新识别前保存暂存角色。它可能已经移动，失败回执不能作为仍在原位的依据。
         held = self.held_deployment
-        frame = self._recover_preparation(board.stage, "部署", error)
+        # 尚未输入时，只重读肖像发生变化的角色。其余缓存仍要逐格核对新画面。
+        frame = self._recover_preparation(
+            board.stage, "部署", error,
+            keep_slot_cache=held is None and isinstance(error, CurrencyWarsActionUnready),
+        )
         if frame.page != Page.BOARD or frame.stage != board.stage:
             return frame
         if held is None:
@@ -2273,10 +2279,19 @@ class CurrencyWars:
             return price
         return None
 
+    def _defer_default_move(self, stage, source, zone, error, deferred_moves):
+        if isinstance(error, CurrencyWarsActionUnready):
+            # 尚未输入，只在本轮让出该卡位。下一轮用新棋盘重新决定能否部署。
+            deferred_moves.add((source.point, zone))
+        else:
+            zones = ("front", "back") if isinstance(error, CurrencyWarsDuplicateUnit) else (zone,)
+            self.default_deployment_skips.update((stage, source.point, skipped_zone) for skipped_zone in zones)
+
     def _prepare_default_team(self, frame, *, make_space=False, deploy_only=False):
         stage = frame.stage
         board_page = frame.page
         overflow = board_page == Page.BENCH_FULL
+        deferred_moves = set()
         for _ in range(DEFAULT_PREPARE_LIMIT):
             layout = frame.slots() if overflow else ()
             bench_only = overflow and (not layout or not frame.capacity
@@ -2288,7 +2303,9 @@ class CurrencyWars:
                 return frame
             copies = {slot: copy for slot in strategy.default_bench(board)
                       if (copy := frame.deployed_copy(slot, board.field)) and copy.unit is not None}
-            skipped = {(point, zone) for saved_stage, point, zone in self.default_deployment_skips if saved_stage == stage}
+            skipped = deferred_moves | {
+                (point, zone) for saved_stage, point, zone in self.default_deployment_skips if saved_stage == stage
+            }
             move = strategy.default_deployment(board, copies, skipped, overflow=make_space)
             if deploy_only and move is None and not board.front_count and board.used < board.capacity:
                 target = next((s for s in board.slots if s.zone == "front" and not s.occupied and not s.blocked), None)
@@ -2303,14 +2320,13 @@ class CurrencyWars:
                 try:
                     frame = self._move(frame, board, source, target)
                 except CurrencyWarsRecoverable as error:
-                    zones = ("front", "back") if isinstance(error, CurrencyWarsDuplicateUnit) else (target.zone,)
-                    self.default_deployment_skips.update((stage, source.point, zone) for zone in zones)
+                    self._defer_default_move(stage, source, target.zone, error, deferred_moves)
                     frame = self._recover_default_board(stage, "上阵", error)
                 if frame.page != board_page or frame.stage != stage:
                     return frame
                 continue
             if not deploy_only and not make_space and move and move[1].occupied and board.has_bench_space:
-                frame = self._replace_default_unit(frame, board, *move)
+                frame = self._replace_default_unit(frame, board, *move, deferred_moves=deferred_moves)
                 if frame.page != board_page or frame.stage != stage:
                     return frame
                 continue
@@ -2337,7 +2353,7 @@ class CurrencyWars:
                     try:
                         frame = self._move(frame, board, retreat, board.empty_bench[0])
                     except CurrencyWarsRecoverable as error:
-                        self.default_deployment_skips.add((stage, retreat.point, "bench"))
+                        self._defer_default_move(stage, retreat, "bench", error, deferred_moves)
                         frame = self._recover_default_board(stage, "超额退场", error)
                     if frame.page != board_page or frame.stage != stage:
                         return frame
@@ -2385,7 +2401,7 @@ class CurrencyWars:
             return current
         return self._recover_preparation(stage, operation, error)
 
-    def _replace_default_unit(self, frame, board, incoming, outgoing):
+    def _replace_default_unit(self, frame, board, incoming, outgoing, *, deferred_moves):
         spare = board.empty_bench[0]
         portrait = frame.slot_mark(outgoing.point)
         incoming_portrait = frame.slot_mark(incoming.point)
@@ -2394,7 +2410,7 @@ class CurrencyWars:
             if frame.page != Page.BOARD or frame.stage != board.stage:
                 return frame
             frame, actual = self._read_default_board(frame)
-            if actual is None:
+            if actual is None or frame.stage != board.stage:
                 return frame
             slots = {slot.point: slot for slot in actual.slots}
             source, target = slots.get(incoming.point), slots.get(outgoing.point)
@@ -2403,24 +2419,23 @@ class CurrencyWars:
                 raise CurrencyWarsActionUnready("补位前候补角色已变化")
             return self._move(frame, actual, source, target)
         except CurrencyWarsRecoverable as error:
-            zones = ("front", "back") if isinstance(error, CurrencyWarsDuplicateUnit) else (outgoing.zone,)
-            self.default_deployment_skips.update((board.stage, incoming.point, zone) for zone in zones)
+            self._defer_default_move(board.stage, incoming, outgoing.zone, error, deferred_moves)
             frame = self._recover_default_board(board.stage, "换位", error)
         if frame.page != Page.BOARD or frame.stage != board.stage:
             return frame
-        if frame.slot_occupied(outgoing.point) or not frame.slot_portrait_matches(spare.point, portrait):
+        if frame.slot_occupied(outgoing.point):
             return frame
         frame, actual = self._read_default_board(frame)
-        if actual is None:
+        if actual is None or frame.stage != board.stage:
             return frame
         slots = {slot.point: slot for slot in actual.slots}
         source, target = slots.get(spare.point), slots.get(outgoing.point)
-        if source is None or target is None:
+        if source is None or target is None or not frame.slot_portrait_matches(spare.point, portrait):
             return frame
         try:
             return self._move(frame, actual, source, target)
         except CurrencyWarsRecoverable as error:
-            self.default_deployment_skips.add((board.stage, spare.point, outgoing.zone))
+            self._defer_default_move(board.stage, source, outgoing.zone, error, deferred_moves)
             return self._recover_default_board(board.stage, "复位", error)
 
     def _collect_preparation_rewards(self, frame):
@@ -3541,14 +3556,87 @@ class CurrencyWars:
             lambda f: f.page == Page.HALO, "未取消主角光环替换提示", seconds=10,
         )
 
+    def _open_tea_dialogue(self, frame, button):
+        reference = frame
+        preferred = button.text
+        alternate = "聊一聊" if preferred == "摇一摇" else "摇一摇"
+        if preferred == self.tea_menu_fallback:
+            preferred, alternate = alternate, preferred
+
+        def advanced(f):
+            if f.page != Page.TEA:
+                return f.page in ACTIVE_PAGES or f.page in (Page.HOME, Page.WEEKLY)
+            current = f.tea_button()
+            return current is not None and current not in f.tea_menu_actions
+
+        def original_control_remains(f, name):
+            if any(option.text == name for option in f.tea_menu_actions):
+                return True
+            # 「摇一摇」文字漏读时，两个菜单标题与原按钮图像仍需同时吻合。
+            original = next((option for option in reference.tea_menu_actions if option.text == name), None)
+            return (name == "摇一摇" and original and reference.tea_shake_layout and f.tea_shake_layout
+                    and f.same_control(original.point, reference, original.point))
+
+        def choose(current, name, *, require=None):
+            def locate(f):
+                actions = f.tea_menu_actions
+                if f.tea_button() not in actions or (require and not original_control_remains(f, require)):
+                    return None
+                return next(((option.point,) for option in actions if option.text == name), None)
+
+            def send(f, point):
+                nonlocal reference
+                if name == preferred:
+                    reference = f
+                return self._tap(f, point)
+
+            return self._action(current, locate, send, advanced, f"幕后茶歇「{name}」未推进",
+                                seconds=12, attempts=2, same_view=lambda f: f.page == Page.TEA)
+
+        try:
+            try:
+                return choose(frame, preferred)
+            except CurrencyWarsActionUnready:
+                # 第一次没有发送输入，给恢复稳定的原控件一次完整机会。
+                return choose(self.frame, preferred)
+        except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout) as error:
+            self._check_budget()
+            if alternate == self.tea_menu_fallback:
+                # 备选对话已打开过，返回原菜单后不能反复打开同一个对话。
+                raise CurrencyWarsUnavailable("幕后茶歇返回菜单后仍无法继续，已保留当前现场") from error
+            if (isinstance(error, CurrencyWarsReceiptTimeout)
+                    and not any(option.text == preferred for option in self.frame.tea_menu_actions)
+                    and (updated := self._wait(advanced, 4)) is not None):
+                return updated
+            log.warning(f"{error}，重新核对茶歇菜单后尝试「{alternate}」")
+        try:
+            updated = choose(self.frame, alternate, require=preferred)
+        except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout) as error:
+            self._check_budget()
+            raise CurrencyWarsUnavailable("幕后茶歇多次复核后仍无法推进，已保留当前现场") from error
+        self.tea_menu_fallback = alternate
+        return updated
+
     def _tea(self, frame):
         button = frame.tea_button()
         if button is None:
-            return self._click_to(
-                frame, lambda f: (1534, 922) if f.page == Page.TEA and not f.tea_button() else None,
-                lambda f: f.page in PLAY_PAGES and (f.page != Page.TEA or f.tea_button()),
-                "幕后茶歇尝试继续后未推进", seconds=8, attempts=2, track_control=False,
-            )
+            def ready(f):
+                if f.page == Page.TEA:
+                    return f.tea_button() is not None
+                return f.page in ACTIVE_PAGES or f.page in (Page.HOME, Page.WEEKLY)
+
+            try:
+                return self._click_to(
+                    frame, lambda f: (1534, 922) if f.page == Page.TEA and not f.tea_button() else None,
+                    ready, "幕后茶歇尝试继续后未推进", seconds=8, attempts=2, track_control=False,
+                )
+            except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout) as error:
+                if (updated := self._wait(ready, 8)) is not None:
+                    return updated
+                self._check_budget()
+                raise CurrencyWarsUnavailable("幕后茶歇持续未识别到可继续的控件，已保留当前现场") from error
+        if button in frame.tea_menu_actions:
+            return self._open_tea_dialogue(frame, button)
         before = frame.tea_signature()
         dragon = button.text.startswith("使出苍龙")
         meal = button.text == "美餐时间"
@@ -3742,6 +3830,7 @@ class CurrencyWars:
         self.deferred_operations.clear()
         self.halo_excluded.clear()
         self.halo_candidate = None
+        self.tea_menu_fallback = None
         self.last_board = None
         stage = None
         self.last_result_stage = None
@@ -3806,6 +3895,8 @@ class CurrencyWars:
 
     def _play_step(self, frame):
         page = frame.page
+        if page != Page.TEA and page in ACTIVE_PAGES:
+            self.tea_menu_fallback = None
         if page == Page.RECONNECT:
             frame = self._recover_network(frame, resume_match=self.result is None, record_result=True)
             if self.result is not None and frame.page not in ACTIVE_PAGES:
