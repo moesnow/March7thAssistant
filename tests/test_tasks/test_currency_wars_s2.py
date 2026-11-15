@@ -1511,6 +1511,47 @@ def test_entry_reconnect_preserves_mode_after_the_first_continue_input(monkeypat
     assert state.clicks == expected and not state.keys
 
 
+@pytest.mark.parametrize("entry", ("saved", "takeover", "new"))
+@pytest.mark.parametrize("won", (False, True))
+def test_entry_reconnect_preserves_a_result_while_opening_modes(monkeypatch, world, entry, won):
+    world.cfg.currencywars_unfinished_match = "restart" if entry == "takeover" else "resume"
+    if entry == "new":
+        initial, entry_point = rank(), (1680, 965)
+    else:
+        initial = mode(("继续对局", 1640, 962), ("标准博弈", 646, 156))
+        entry_point = (1640, 962)
+    reconnect = reconnect_prompt()
+    lobby = home()
+    result = Frame(CANVAS, labels(("对局胜利" if won else "对局失败", 960, 233)))
+    detail = Frame(CANVAS, labels(("返回货币战争", 960, 899)))
+    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
+    routes = {(initial, entry_point): reconnect, (reconnect, (1188, 672)): lobby,
+              (lobby, (1600, 972)): result, (detail, (960, 899)): lobby,
+              (lobby, (381, 961)): points}
+    result_seen = False
+
+    def capture(state):
+        nonlocal result_seen
+        if state.frame is result:
+            if result_seen:
+                state.frame = detail
+            result_seen = True
+
+    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
+    world.auto.press_key.side_effect = lambda key: (
+        state.keys.append((state.frame.page, key)), setattr(state, "frame", lobby)
+    )
+    record = Mock()
+    monkeypatch.setattr(world.war, "_on_match_result", record)
+
+    assert world.war.start(resume=entry == "takeover") is won
+    assert world.war.result is won
+    assert state.clicks == [(f.page, point) for f, point in routes]
+    assert state.keys == [(Page.WEEKLY, "esc")]
+    record.assert_called_once_with(result)
+    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
+
+
 @pytest.mark.parametrize("start_in_battle", (False, True))
 def test_takeover_plays_the_current_match_without_visiting_the_menu(monkeypatch, world, start_in_battle):
     world.cfg.currencywars_type = "overclock"
@@ -2634,6 +2675,7 @@ def test_full_bench_experience_batch_uses_f_without_ocr_between_inputs(monkeypat
     assert state.keys == [(Page.BOARD, "f")] * 2 and not state.clicks
     assert 1 not in observations and observations.count(2) >= 2
     assert world.war.preparation_progress == 1
+    assert (stage, "经验") not in world.war.deferred_operations
 
 
 def test_full_bench_does_not_repeat_an_experience_batch_after_reconnect(monkeypatch, world, high_lineup):
@@ -3317,6 +3359,7 @@ def test_late_reveal_interrupts_shop_and_returns_control_to_state_machine(monkey
     state = drive(monkeypatch, world, ready, lambda s, _: setattr(s, "frame", reveal))
     assert world.war._shop(ready, board(slot("bench", 0)), 0) == (reveal, 0, False)
     assert state.clicks == [(Page.BOARD, (1624, 983))]
+    assert not world.war.deferred_operations
 
 
 @pytest.mark.parametrize("return_page", (Page.BOARD, Page.DETAIL))
@@ -5592,6 +5635,43 @@ def test_buy_timeout_reconciles_actual_shop_and_finishes_without_a_second_purcha
     assert ((stage, "商店") in world.war.deferred_operations) == (not late_receipt)
 
 
+def test_shop_purchase_interrupted_by_supply_is_not_repeated_after_return(monkeypatch, world):
+    stage = "1-2"
+    shop_button, offer_point, supply_button, fight_button, return_button = (
+        (1624, 983), (470, 192), (1692, 984), (1818, 751), (960, 899)
+    )
+    offer = policy.Offer("那刻夏", 1, offer_point, 0)
+    units = (slot("front", 0, FILLER), slot("bench", 0))
+    initial = page(Page.BOARD, ("商店", *shop_button), ("出战", *fight_button), stage=stage, gold=9,
+                   capacity=(1, 3))
+    shop = page(Page.SHOP, ("收起", *shop_button), stage=stage, gold=9, offers=(offer,))
+    supply = Frame(CANVAS, labels(("补给阶段", 961, 162), ("已选择1/1", 1683, 924), (stage, 470, 76)))
+    result = page(Page.MATCH_RESULT, ("挑战成功", 960, 233), ("返回货币战争", *return_button))
+    team = board(*units, stage=stage, used=1, gold=9)
+    lobby = home()
+    state = SimpleNamespace(frame=initial, clicks=[])
+    routes = {(initial, shop_button): shop, (shop, offer_point): supply, (supply, supply_button): initial,
+              (initial, fight_button): result, (result, return_button): lobby}
+
+    def click(point, *, press_duration):
+        action = state.frame, point
+        state.clicks.append(action)
+        state.frame = routes[action]
+        return True
+
+    monkeypatch.setattr(initial, "slots", lambda: units)
+    monkeypatch.setattr(world.war, "_read_board", lambda f: (f, team))
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    monkeypatch.setattr(task, "TASK_SECONDS", 25)
+    world.auto.click_element_with_pos.side_effect = click
+
+    assert world.war.start(resume=True) is True
+    assert state.clicks == list(routes)
+    assert (stage, "商店") in world.war.deferred_operations
+
+
 def test_uncertain_experience_is_deferred_after_actual_board_read_with_no_second_f(monkeypatch, world):
     stage = "2-1"
     units = (slot("front", 0, CORE),)
@@ -5612,6 +5692,46 @@ def test_uncertain_experience_is_deferred_after_actual_board_read_with_no_second
     )
     assert world.war._prepare(initial) is entered
     assert state.keys == [(Page.BOARD, "f")] and state.clicks == [(Page.BOARD, (1818, 751))]
+    assert (stage, "经验") in world.war.deferred_operations
+
+
+def test_high_experience_interrupted_by_supply_is_not_repeated_after_return(monkeypatch, world):
+    stage = "2-6"
+    world.cfg.currencywars_strategy = policy.HIGH_ANAXA
+    units = (slot("front", 0, CORE), slot("back", 0, BAILU), slot("back", 1), slot("bench", 0, CER))
+    initial = page(Page.BOARD, ("购买经验", 298, 864), ("出战", 1818, 751), stage=stage, gold=60,
+                   capacity=(2, 2), level=4, experience=(0, 4), experience_cost=4)
+    team = board(*units, stage=stage, gold=60, used=2, capacity=2, level=4, exp=(0, 4),
+                 lineup=policy.LINEUPS[policy.HIGH_ANAXA])
+    supply = Frame(CANVAS, labels(("补给阶段", 961, 162), ("已选择1/1", 1683, 924), (stage, 470, 76)))
+    result = page(Page.MATCH_RESULT, ("挑战成功", 960, 233), ("返回货币战争", 960, 899))
+    lobby = home()
+    state = SimpleNamespace(frame=initial, keys=[], clicks=[])
+    routes = {(supply, (1692, 984)): initial, (initial, (1818, 751)): result, (result, (960, 899)): lobby}
+
+    def press(key):
+        state.keys.append((state.frame, key))
+        state.frame = supply
+        return True
+
+    def click(point, *, press_duration):
+        action = state.frame, point
+        state.clicks.append(action)
+        state.frame = routes[action]
+        return True
+
+    monkeypatch.setattr(initial, "slots", lambda: units)
+    monkeypatch.setattr(world.war, "_read_board", lambda f: (f, team))
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    monkeypatch.setattr(task, "TASK_SECONDS", 25)
+    world.auto.press_key.side_effect = press
+    world.auto.click_element_with_pos.side_effect = click
+
+    assert world.war.start(resume=True) is True
+    assert state.keys == [(initial, "f")]
+    assert state.clicks == list(routes)
     assert (stage, "经验") in world.war.deferred_operations
 
 
@@ -5850,6 +5970,19 @@ def test_capture_retries_a_transient_screenshot_timeout_without_input(monkeypatc
     assert capture.call_count == 2
     world.auto.click_element_with_pos.assert_not_called()
     world.auto.press_key.assert_not_called()
+
+
+@pytest.mark.parametrize("current_match", ("playing", "entry_sent", None))
+def test_observation_preserves_the_first_result_only_for_the_current_match(monkeypatch, world, current_match):
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233)))
+    detail = Frame(CANVAS, labels(("返回货币战争", 960, 899)))
+    monkeypatch.setattr(world.war, "_capture", Mock(side_effect=(result, detail)))
+    world.war.in_match = current_match == "playing"
+    world.war.mode_confirmed = current_match == "entry_sent"
+
+    assert world.war._observe() is result
+    assert world.war._observe() is detail
+    assert world.war.result is (True if current_match else None)
 
 
 @pytest.mark.parametrize("readiness", (False, True))

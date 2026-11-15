@@ -1482,12 +1482,17 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
-@pytest.mark.parametrize("prompt", ("account_and_password", "os", "missing_credentials", "password_only", "cold_login_pending"))
+@pytest.mark.parametrize("prompt", (
+    "account_and_password", "os", "missing_credentials", "password_only", "cold_login_pending",
+    "opening_capture_error", "os_opening_capture_error", "opening_capture_unavailable",
+    "after_account_capture_error", "stopped_before_credentials",
+))
 def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_prompt(
         runner, currency_wars_game, monkeypatch, action, prompt):
     state = currency_wars_game
     state.page = "native_login"
     game, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
+    game.cfg.start_game_timeout = .5
     auto = currency_wars.auto
     clock = currency_wars.time
     screen_module = import_module("module.screen.screen")
@@ -1507,8 +1512,16 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
         "missing_credentials": {"account_and_password"},
         "password_only": {"password_field"},
         "cold_login_pending": {"account_and_password"},
+        "opening_capture_error": {"account_and_password"},
+        "os_opening_capture_error": {"account_field_os", "password_field"},
+        "opening_capture_unavailable": {"account_and_password"},
+        "after_account_capture_error": {"account_and_password"},
+        "stopped_before_credentials": {"account_and_password"},
     }[prompt]
     find_point = auto.find_element.side_effect
+    opening_attempts = []
+    verified_prompts = []
+    verified_frames = []
 
     def find(target, *args, **kwargs):
         if not isinstance(target, str):
@@ -1516,11 +1529,25 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
         asset = Path(target).stem
         if asset == "welcome":
             return state.page == "home"
-        return state.page == "native_login" and asset in templates
+        matched = state.page == "native_login" and asset in templates
+        if matched and asset in ("account_and_password", "account_field_os"):
+            verified_prompts.append(asset)
+            verified_frames.append(auto.take_screenshot.call_count)
+        return matched
 
     def click_login(target, *args, **kwargs):
         assert state.page == "native_login"
         asset = Path(target).stem
+        if asset in ("account_and_password", "account_field_os"):
+            opening_attempts.append(asset)
+            if prompt == "stopped_before_credentials":
+                state.stop = True
+                raise RuntimeError("登录截图超时")
+            if (prompt == "opening_capture_unavailable" or
+                    prompt in ("opening_capture_error", "os_opening_capture_error") and len(opening_attempts) == 1):
+                raise RuntimeError("登录截图超时")
+        if prompt == "after_account_capture_error" and asset == "password_field":
+            raise RuntimeError("登录截图超时")
         if asset == "enter_game" and prompt != "cold_login_pending":
             state.page = "home"
         return asset in ("account_and_password", "account_field", "account_field_os", "password_field",
@@ -1545,17 +1572,34 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
 
     record = run_currency_wars_cli(runner, action)
 
+    assert all(previous < current for previous, current in zip(verified_frames, verified_frames[1:]))
     navigator._handle_autotry.assert_not_called()
     controller.stop_game.assert_not_called()
     assert controller.start_game_process.call_count == (1 if prompt == "cold_login_pending" else 0)
-    if prompt in ("account_and_password", "os"):
+    if prompt in ("account_and_password", "os", "opening_capture_error", "os_opening_capture_error"):
         assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
         assert state.completed == 1
         assert [call.args[0] for call in auto.secretly_write.call_args_list] == list(credentials)
+        assert verified_prompts == opening_attempts
+        assert len(opening_attempts) == (2 if prompt.endswith("capture_error") else 1)
     elif prompt == "cold_login_pending":
         assert record["reason"] == "game_startup_unavailable"
         assert "尝试自动登录失败" in record["error"]
         assert [call.args[0] for call in auto.secretly_write.call_args_list] == list(credentials)
+        assert opening_attempts == ["account_and_password"]
+    elif prompt in ("opening_capture_unavailable", "after_account_capture_error", "stopped_before_credentials"):
+        assert verified_prompts == opening_attempts
+        assert len(opening_attempts) == (3 if prompt == "opening_capture_unavailable" else 1)
+        assert state.clicks == []
+        if prompt == "stopped_before_credentials":
+            assert (record["status"], record["exit_code"]) == (STATUS_STOPPED, EXIT_STOPPED)
+        else:
+            assert record["reason"] == "game_startup_unavailable"
+            assert "登录截图超时" in record["error"]
+        if prompt == "after_account_capture_error":
+            auto.secretly_write.assert_called_once_with(credentials[0], interval=0.1)
+        else:
+            auto.secretly_write.assert_not_called()
     else:
         assert record["reason"] == "game_startup_unavailable"
         assert state.clicks == []

@@ -229,24 +229,23 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         return
 
     MAX_RETRY = 3
-    login_attempted = False
+    login_attempts = 0
+    credentials_started = False
     login_error = None
 
     def remaining_startup_time():
         return max(0, deadline - time.monotonic())
 
-    def login_with_saved_credentials(login):
-        nonlocal login_attempted, login_error
+    def mark_credentials_started():
+        nonlocal credentials_started
+        pause_ctl.checkpoint()
+        credentials_started = True
+
+    def login_with_saved_credentials(login, *, before_credentials=None):
         if load_acc_and_pwd(gamereg_uid()) == (None, None):
             return False
-        if screen_ready is not None:
-            login_attempted = True
         log.info("检测到登录过期，尝试自动登录")
-        try:
-            login()
-        except (OSError, RuntimeError) as error:
-            login_error = error
-            raise
+        login(before_credentials=before_credentials)
         return True
 
     def detect_local_login():
@@ -257,10 +256,34 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             return auto_login_os
         return None
 
+    def try_task_local_login():
+        nonlocal login_attempts, login_error
+        if credentials_started or login_attempts >= MAX_RETRY:
+            return False
+        login = detect_local_login()
+        if login is None:
+            return False
+        login_attempts += 1
+        try:
+            found_credentials = login_with_saved_credentials(login, before_credentials=mark_credentials_started)
+        except (InputInterrupted, GameWindowLost, GameRecoveryError, ProfileAssetNotFoundError, TouchProfileInputError):
+            raise
+        except (OSError, RuntimeError) as error:
+            pause_ctl.checkpoint()
+            login_error = error
+            # 凭据输入前失败时复核原登录页，再决定是否重试。
+            return True
+        if not found_credentials:
+            raise GameStartupUnavailable("本地游戏账号登录过期，未找到保存的登录凭据，已保留游戏现场")
+        login_error = None
+        return True
+
     def check_and_click_enter():
         # 点击进入
         if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
             return True
+        if screen_ready is not None and try_task_local_login():
+            return False
         # 游戏热更新，需要确认重启
         auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
         # 网络异常等问题，需要重新启动
@@ -272,11 +295,12 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         # 适配用户协议和隐私政策更新提示，需要点击“同意”
         auto.click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
         # 登录过期
-        if not login_attempted and auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
-            if not login_with_saved_credentials(auto_login):
-                raise PermissionError("账号登录过期")
-        if not login_attempted and auto.find_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
-            login_with_saved_credentials(auto_login_os)
+        if screen_ready is None:
+            if auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
+                if not login_with_saved_credentials(auto_login):
+                    raise PermissionError("账号登录过期")
+            if auto.find_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
+                login_with_saved_credentials(auto_login_os)
         # 游戏已有新版本，请前往启动器下载最新客户端，完成本次更新后登录游戏即可获
         # 得300星琼奖励。
         if auto.find_element("前往启动器下载最新客户端", "text", take_screenshot=False, include=True):
@@ -406,6 +430,9 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             check_resolution()
 
             if not wait_until(check_and_click_enter, remaining_startup_time()):
+                pause_ctl.checkpoint()
+                if login_error is not None:
+                    raise GameStartupUnavailable(f"未能完成本地游戏登录，已保留游戏现场：{login_error}") from login_error
                 raise TimeoutError("查找并点击进入按钮超时")
 
             # 偶现加载慢时分辨率修改不成功，进入游戏前增加一次分辨率检查
@@ -481,16 +508,9 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             if screen_ready is not None:
                 # 货币战争的职级和局内页面不都在通用状态机里，不能用 Esc 探测。
                 ready = screen_ready() or screen.get_current_screen(autotry=False, max_retries=1)
-                if backend == "local" and not ready and not login_attempted:
+                if backend == "local" and not ready:
                     # 通用识别已取新画面。只在确认登录提示后使用现有的登录操作。
-                    login = detect_local_login()
-                    if login is not None:
-                        try:
-                            if not login_with_saved_credentials(login):
-                                raise GameStartupUnavailable("本地游戏账号登录过期，未找到保存的登录凭据，已保留游戏现场")
-                        except PermissionError:
-                            # 登录请求可能已发出，继续看新画面，不重复填写凭据。
-                            pass
+                    try_task_local_login()
             else:
                 ready = screen.get_current_screen(max_retries=1)
         except (InputInterrupted, GameWindowLost, ProfileAssetNotFoundError, TouchProfileInputError):
@@ -861,9 +881,11 @@ def ensure_IME_lang_en():
     return result == 0
 
 
-def auto_login():
+def auto_login(*, before_credentials=None):
     def auto_type(text):
         ensure_IME_lang_en()
+        if before_credentials is not None:
+            before_credentials()
         auto.secretly_write(text, interval=0.1)
 
     account, password = load_acc_and_pwd(gamereg_uid())
@@ -880,10 +902,12 @@ def auto_login():
     raise PermissionError("尝试自动登录失败")
 
 
-def auto_login_os():
+def auto_login_os(*, before_credentials=None):
     def auto_type(text):
         ensure_IME_lang_en()
         time.sleep(1)
+        if before_credentials is not None:
+            before_credentials()
         auto.secretly_write(text, interval=0.1)
 
     account, password = load_acc_and_pwd(gamereg_uid())
