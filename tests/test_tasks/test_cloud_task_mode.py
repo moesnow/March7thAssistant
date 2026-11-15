@@ -1081,6 +1081,140 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     screen.get_current_screen.assert_not_called()
 
 
+@pytest.mark.parametrize("scenario, started, entries, attachments, queue_choice", (
+    ("already_queued", True, 0, 1, None),
+    ("already_selecting_free", True, 0, 1, 1),
+    ("already_selecting_paid", True, 0, 1, 0),
+    ("already_selecting_unknown_balance", True, 0, 1, 1),
+    ("lobby", True, 1, 1, None),
+    ("probe_failed_after_enter", True, 1, 2, None),
+    ("queued_while_locating_enter", True, 0, 1, None),
+    ("player_loading", True, 0, 1, None),
+    ("player_unidentified", False, 0, 1, None),
+    ("queue_timeout", False, 0, 1, None),
+    ("queue_timeout_after_probe_failure", False, 0, 2, None),
+))
+def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
+        monkeypatch, scenario, started, entries, attachments, queue_choice):
+    from selenium.webdriver.support import wait as selenium_wait
+    from tasks import game
+    from utils import wait
+
+    initial = {
+        "already_queued": "in_queue",
+        "already_selecting_free": "select_queue",
+        "already_selecting_paid": "select_queue",
+        "already_selecting_unknown_balance": "select_queue",
+        "player_loading": None,
+        "player_unidentified": None,
+        "queue_timeout": "in_queue",
+        "queue_timeout_after_probe_failure": "in_queue",
+    }
+    state = SimpleNamespace(time=0, entry=initial.get(scenario, "lobby"), entries=0, failed=False, choice=None)
+    clock = SimpleNamespace(monotonic=lambda: state.time, sleep=lambda seconds: setattr(state, "time", state.time + seconds))
+    for module in (game, cloud, wait, selenium_wait):
+        monkeypatch.setattr(module, "time", clock)
+
+    def current_state():
+        if scenario.startswith("queue_timeout"):
+            return state.entry
+        if (scenario == "player_loading" and state.time >= 1
+                or state.entry == "in_queue" and state.time >= 45):
+            return "game_running"
+        return state.entry
+
+    driver = MagicMock()
+    driver.command_executor._client_config.timeout = 120
+    visible = SimpleNamespace(is_displayed=lambda: True)
+
+    def find_elements(_by, selector):
+        current = current_state()
+        if selector == ".game-player" and current == "game_running":
+            return [visible]
+        if "div.user-aid.wel-card__aid" in selector and current == "lobby":
+            return [visible]
+        return []
+
+    def find_enter_button(_by, selector):
+        assert selector == "div.wel-card__content--start" and current_state() == "lobby"
+        if scenario == "queued_while_locating_enter":
+            state.entry = "in_queue"
+        return visible
+
+    def execute(script, *args):
+        current = current_state()
+        if 'return "select_queue"' in script:
+            injected_fault = (scenario == "probe_failed_after_enter" and state.entry == "in_queue"
+                              or scenario == "queue_timeout_after_probe_failure" and state.time >= 55)
+            if injected_fault and not state.failed:
+                state.failed = True
+                raise WebDriverException("排队状态读取暂时失败")
+            return current
+        if script == "arguments[0].click();":
+            assert current == "lobby"
+            state.entries += 1
+            state.entry = "in_queue"
+        elif "coin-prior-choose-item-include-info" in script:
+            assert current == "select_queue"
+            state.choice, = args
+            state.entry = "in_queue"
+        elif "game-player__video" in script:
+            return current == "game_running"
+
+    driver.find_elements.side_effect = find_elements
+    driver.find_element.side_effect = find_enter_button
+    driver.execute_script.side_effect = execute
+    driver.service.process.poll.return_value = 0
+
+    controller = object.__new__(CloudGameController)
+    controller.driver = None
+    controller.logger = MagicMock()
+    controller.cfg = SimpleNamespace(
+        browser_headless_enable=True, browser_headless_restart_on_not_logged_in=True, browser_dump_cookies_enable=False,
+        cloud_game_max_queue_time=1,
+        cloud_game_use_paid_time=scenario in ("already_selecting_paid", "already_selecting_unknown_balance"),
+    )
+    controller._get_remaining_playtime = MagicMock(
+        return_value=(None, None) if scenario == "already_selecting_unknown_balance" else (10, 50)
+    )
+    controller._confirm_viewport_resolution = MagicMock()
+    controller._restart_browser = MagicMock()
+    controller.stop_game = MagicMock()
+    controller.try_dump_page = MagicMock()
+
+    def connect_browser(**_):
+        controller.driver = driver
+        return True
+
+    controller._connect_or_create_browser = MagicMock(side_effect=connect_browser)
+    monkeypatch.setattr(game, "cloud_game", controller)
+    monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=1))
+    click = MagicMock(return_value=True)
+    monkeypatch.setattr(game, "auto", SimpleNamespace(click_element=click))
+    ready = MagicMock(return_value=True)
+
+    if started:
+        game.start_game(screen_ready=ready)
+        ready.assert_called_once_with()
+    else:
+        message = ("排队已达到等待时限" if scenario.startswith("queue_timeout")
+                   else "暂未确认云游戏播放器")
+        with pytest.raises(GameStartupUnavailable, match=message):
+            game.start_game(screen_ready=ready)
+        ready.assert_not_called()
+        if scenario.startswith("queue_timeout"):
+            assert state.time == 60
+
+    assert controller._connect_or_create_browser.call_count == attachments
+    assert all(call.kwargs == {"headless": True, "preserve_existing": True}
+               for call in controller._connect_or_create_browser.call_args_list)
+    assert state.entries == entries
+    assert state.choice == queue_choice
+    assert click.call_count == (1 if started and scenario != "player_loading" else 0)
+    controller.stop_game.assert_not_called()
+    controller._restart_browser.assert_not_called()
+
+
 @pytest.mark.parametrize("dialog", ("reward_limit", "weekly_receipt", "generic_receipt"))
 def test_full_run_checks_the_context_of_existing_reward_dialog(runner, currency_wars_game, monkeypatch, dialog):
     from tasks import game

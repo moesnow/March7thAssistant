@@ -24,6 +24,7 @@ def test_enter_cloud_game_stops_before_the_next_browser_click(monkeypatch, stop_
                                      cloud_game_use_paid_time=True)
     controller._check_login = MagicMock(return_value=True)
     controller.driver = driver = MagicMock()
+    driver.command_executor._client_config.timeout = 120
     driver.find_elements.return_value = []
 
     def playtime():
@@ -42,6 +43,8 @@ def test_enter_cloud_game_stops_before_the_next_browser_click(monkeypatch, stop_
         if ".click();" in script:
             clicks.append((script.strip(), control.stop_requested))
         if 'return "select_queue"' in script:
+            if not clicks:
+                return "lobby"
             if stop_at == "paid_queue":
                 control.request_stop()
             return "select_queue"
@@ -471,6 +474,7 @@ class TestCloudGameHeadlessOverride(unittest.TestCase):
 
     def test_visible_override_stays_visible_after_login(self):
         controller = self.create_controller()
+        controller.driver = None
         controller._connect_or_create_browser = MagicMock()
         controller._confirm_viewport_resolution = MagicMock()
         controller.logger = MagicMock()
@@ -591,6 +595,7 @@ class TestCloudGameZeroDuration(unittest.TestCase):
     def test_enter_cloud_game_raises_zero_duration_error(self):
         controller = object.__new__(CloudGameController)
         controller.driver = MagicMock()
+        controller.driver.command_executor._client_config.timeout = 120
         controller.cfg = MagicMock()
         controller.cfg.browser_headless_enable = False
         controller.cfg.browser_dump_cookies_enable = False

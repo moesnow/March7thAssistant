@@ -97,6 +97,40 @@ def test_task_readiness_waits_through_an_unavailable_frame(startup, monkeypatch)
     controller.stop_game.assert_not_called()
 
 
+@pytest.mark.parametrize("recovers", (True, False))
+def test_currency_wars_startup_restarts_a_game_that_exits_before_its_first_frame(startup, monkeypatch, recovers):
+    from tasks.weekly.currency_wars import CurrencyWars, Page
+
+    game, controller, _ = startup
+    controller.switch_to_game.side_effect = [True, False, False]
+    monkeypatch.setattr(game, "screen", Mock())
+    game.wait_until.side_effect = lambda condition, timeout: (
+        condition() if condition.__name__ == "task_screen_ready" else True
+    )
+
+    def capture():
+        if not recovers or not controller.stop_game.called:
+            raise game.GameWindowLost("游戏在任务首帧前退出")
+        return SimpleNamespace(page=Page.HOME)
+
+    screenshot = Mock(side_effect=capture)
+    monkeypatch.setattr(CurrencyWars, "_capture", staticmethod(screenshot))
+
+    if recovers:
+        game.start_game(screen_ready=CurrencyWars.game_screen_ready)
+        assert screenshot.call_count == 2
+        controller.stop_game.assert_called_once_with()
+        controller.start_game_process.assert_called_once_with()
+    else:
+        with pytest.raises(game.GameStartupUnavailable, match="游戏进程多次退出") as error:
+            game.start_game(screen_ready=CurrencyWars.game_screen_ready)
+        assert error.value.reason == "game_startup_unavailable"
+        assert screenshot.call_count == 3
+        assert controller.stop_game.call_count == 3
+        assert controller.start_game_process.call_count == 2
+    game.screen.get_current_screen.assert_not_called()
+
+
 def test_generic_readiness_keeps_startup_retries_when_the_frame_is_readable(startup, monkeypatch):
     game, controller, _ = startup
     controller.switch_to_game.return_value = True

@@ -7,6 +7,7 @@ import numpy as np
 
 from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
+from module.automation.background_input import GameWindowLost
 from module.config import cfg
 from module.config.platform import get_ui_profile
 from module.logger import log
@@ -149,6 +150,7 @@ class CurrencyWars:
         self.in_match = False
         self.unidentified_since = None
         self.mode = None
+        self.mode_confirmed = False
         self.screenshot = None
         self.result = None
         self.default_strategy = False
@@ -202,7 +204,7 @@ class CurrencyWars:
     @classmethod
     def game_screen_ready(cls, *, for_full_run=False):
         # 登录入口也需要知道已显示赛季内的断线提示，交给任务记录结束原因。
-        frame = cls()._observe(allow_disconnected=True)
+        frame = cls()._observe(startup=True)
         if not for_full_run:
             return frame.page not in (Page.UNKNOWN, Page.CONFLICT)
         if frame.page == Page.REWARD_RECEIPT:
@@ -212,7 +214,7 @@ class CurrencyWars:
             Page.RECONNECT, Page.DISCONNECTED,
         )
 
-    def _observe(self, *, allow_disconnected=False):
+    def _observe(self, *, startup=False):
         first_frame = self.frame is None
         confirming_disconnect = False
         attempts = 0
@@ -228,12 +230,14 @@ class CurrencyWars:
                 raise
             except Exception as error:
                 self._check_budget()
+                if startup and isinstance(error, GameWindowLost):
+                    raise
                 if attempts == MAX_CAPTURE_ATTEMPTS:
                     raise CurrencyWarsUnavailable(f"连续无法获取或识别游戏画面：{error}") from error
                 log.warning(f"货币战争截图或识别暂时失败，重新获取：{error}")
             else:
                 self._check_budget()
-                if page == Page.DISCONNECTED and not allow_disconnected:
+                if page == Page.DISCONNECTED and not startup:
                     if not confirming_disconnect:
                         confirming_disconnect = True
                         # 即使断开提示出现在首帧重试的最后一次，也留出复核时间。
@@ -659,6 +663,7 @@ class CurrencyWars:
                 "入画奇航模式菜单没有可确认的续局入口，保留对局",
             )
         self.mode = frame.menu_mode
+        self.mode_confirmed = True
         log.info(f"继续{ui.MODE_NAMES[self.mode]}存档，使用当前配置的阵容策略")
         return self._click_to(
             frame, lambda f: ui.point(resume_button(f, self.mode)),
@@ -767,6 +772,7 @@ class CurrencyWars:
 
         def start_match(f, target):
             self._start_match_sent = True
+            self.mode_confirmed = True
             return self._tap(f, target)
 
         return self._action(
@@ -853,12 +859,14 @@ class CurrencyWars:
         )
         if resume_match and self.result is None and frame.page not in ACTIVE_PAGES:
             menu = frame if frame.page == Page.MODES else self._mode_menu(self._homepage(frame))
+            expected_mode = self.mode if self.mode_confirmed else None
             menu = self._expect(
-                lambda f: f.page == Page.MODES and f.menu_mode == self.mode
+                lambda f: f.page == Page.MODES and f.menu_mode is not None
+                and (expected_mode is None or f.menu_mode == expected_mode)
                 and f.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT),
                 15, "游戏已重连，未找到同模式续局入口，保留当前现场",
             )
-            frame = self._resume_saved_match(menu, expected_mode=self.mode)
+            frame = self._resume_saved_match(menu, expected_mode=expected_mode)
         # 服务器可能回到最近保存点。由恢复后的画面重新规划，保留本次任务的开销和次数上限。
         self.slot_cache.clear()
         self.deployment_stage = None
@@ -2575,7 +2583,8 @@ class CurrencyWars:
                 return self._prepare(frame)
             return frame
         if fight.text == "选择主角" or frame.halo_preview():
-            frame, board = self._read_default_board(frame)
+            frame, board = (self._read_default_board(frame) if self.default_strategy
+                            else self._read_board(frame, front_only=True))
             return self._enter_halo(frame, board) if board is not None else frame
         # 可见的出战按钮由游戏校验前台与人数，识别不全时仍可尝试推进。
         return self._advance_board(frame, fight)
@@ -2905,7 +2914,7 @@ class CurrencyWars:
             count = frame.supply_selection()
             if count is not None:
                 self.supply_required = count[1]
-            if self.supply_required is not None:
+            if self.supply_required is not None or self._supply_confirm(frame) is not None:
                 return self._choose_supply(frame, count)
             supply_preferred = self._choice_option(frame)
             preferred_x = supply_preferred.point[0] if supply_preferred else 960
@@ -2975,6 +2984,15 @@ class CurrencyWars:
         auto_claim = title in ui.ITEM_CHOICES or frame.priced_recruitment is not None
         return self._choose_single(frame, option, None if auto_claim else confirm, advanced, f"「{title}」选择后未转场")
 
+    @staticmethod
+    def _supply_confirm(frame, required=None):
+        count = frame.supply_selection()
+        button = frame.find("确认", area=ui.SUPPLY_CONFIRM) or ui.Label("确认", (1692, 984))
+        if count is None:
+            return frame.enabled_button(button)
+        selected, displayed = count
+        return button if selected == displayed and required in (None, displayed) else None
+
     def _choose_supply(self, frame, count):
         required, stage = self.supply_required, self.supply_stage
 
@@ -2986,14 +3004,14 @@ class CurrencyWars:
             return f.page in ACTIVE_PAGES and not same_popup(f)
 
         def confirm(f):
-            current = f.supply_selection()
-            button = f.find("确认", area=ui.SUPPLY_CONFIRM) or ui.Label("确认", (1692, 984))
-            if current == (required, required) or current is None and f.enabled_button(button):
+            if button := self._supply_confirm(f, required):
                 return (button.point,)
 
-        choice = self._choice_option(frame)
-        preferred_x = choice.point[0] if choice else 960
-        centers = sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x))
+        centers = ()
+        if not confirm(frame):
+            choice = self._choice_option(frame)
+            preferred_x = choice.point[0] if choice else 960
+            centers = sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x))
 
         for x in centers:
             if confirm(frame):
@@ -3059,7 +3077,7 @@ class CurrencyWars:
                 return frame
 
         return self._action(
-            frame, confirm, self._tap, advanced, "补给选足后确认未转场", seconds=6, attempts=1,
+            frame, confirm, self._tap, advanced, "补给选足后确认未转场", seconds=6, attempts=2, retry_after=4,
             same_view=same_popup,
         )
 
@@ -3657,8 +3675,10 @@ class CurrencyWars:
                 return self._homepage(frame)
             return frame
         if page == Page.MODES:
-            if frame.unfinished_match and frame.menu_mode == self.mode:
-                return self._resume_saved_match(frame, expected_mode=self.mode)
+            expected_mode = self.mode if self.mode_confirmed else None
+            if (frame.unfinished_match and frame.menu_mode is not None
+                    and (expected_mode is None or frame.menu_mode == expected_mode)):
+                return self._resume_saved_match(frame, expected_mode=expected_mode)
             return self._go_back(frame, Page.HOME)
         if page in (Page.RANK, Page.END_MATCH_CONFIRM):
             return self._go_back(frame, Page.MODES)
@@ -3925,6 +3945,8 @@ class CurrencyWars:
         self.result = None
         self.screenshot = None
         self.mode = mode
+        # 直接接管局内页面时先用配置读棋盘，续局菜单显示的才是该局模式。
+        self.mode_confirmed = False
         matches = 0
         claimed = False
         try:
@@ -3945,6 +3967,7 @@ class CurrencyWars:
                     if matches:
                         self.result = self.screenshot = None
                         self.mode = mode
+                        self.mode_confirmed = False
                     if self._can_take_over(frame, resume=resume):
                         log.info(f"从「{frame.choice or frame.page.value}」接管当前货币战争对局")
                     elif self.result is None:

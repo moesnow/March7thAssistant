@@ -1022,8 +1022,9 @@ class Frame:
 
     @cached_property
     def menu_mode(self) -> str | None:
-        label = self.find(*MODE_NAMES.values(), area=MODE_HEADER)
-        return next((mode for mode, title in MODE_NAMES.items() if label and label.text == title), None)
+        titles = {label.text for label in self.texts(MODE_HEADER)}
+        modes = [mode for mode, title in MODE_NAMES.items() if title in titles]
+        return modes[0] if len(modes) == 1 else None
 
     @cached_property
     def unfinished_match(self) -> bool:

@@ -16,7 +16,8 @@ from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
 from module.game.adb_transport import AdbError
 from module.game.cloud import (
-    CloudGameDisconnectedError, CloudGameLoginTimeoutError, CloudGameProbeUnready, CloudGameZeroDurationError,
+    CloudGameDisconnectedError, CloudGameLoginTimeoutError, CloudGameProbeUnready, CloudGameQueueTimeoutError,
+    CloudGameZeroDurationError,
 )
 from module.logger import log
 from module.screen import screen
@@ -299,16 +300,25 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
 
     def cloud_player_ready():
         last_error = None
+        disconnected = False
         for attempt in range(MAX_RETRY):
             pause_ctl.checkpoint()
             try:
                 in_game = cloud_game.is_in_game()
+                pause_ctl.checkpoint()
+                if in_game:
+                    return True
+                if screen_ready is not None and not disconnected:
+                    if cloud_game.has_startup_entry():
+                        pause_ctl.checkpoint()
+                        return False
+                    raise CloudGameProbeUnready("暂未确认云游戏播放器、大厅或排队状态")
+                if last_error is None:
+                    return False
             except (CloudGameDisconnectedError, CloudGameProbeUnready, TimeoutError) as error:
-                in_game = None
+                disconnected |= isinstance(error, CloudGameDisconnectedError)
                 last_error = error
             pause_ctl.checkpoint()
-            if in_game is not None and (in_game or last_error is None):
-                return in_game
             if attempt + 1 < MAX_RETRY:
                 log.warning(f"暂未确认云游戏会话，等待复核：{last_error}")
                 time.sleep(1)
@@ -350,6 +360,8 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         readiness_error = None
         return ready
 
+    if backend == "cloud":
+        cloud_game.reset_queue_wait()
     for retry in range(MAX_RETRY):
         deadline = time.monotonic() + timeout
         try:
@@ -388,6 +400,8 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             log.error(f"尝试启动游戏时发生错误：{e}")
             if backend == "cloud" and screen_ready is not None:
                 cloud_game.preserve_running_browser()
+                if isinstance(e, CloudGameQueueTimeoutError):
+                    raise GameStartupUnavailable(f"{e}，已保留云游戏队列") from e
                 if retry == MAX_RETRY - 1:
                     raise GameStartupUnavailable(f"云游戏启动持续不可用，已保留游戏现场：{e}") from e
                 time.sleep(1)
@@ -406,6 +420,8 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 if isinstance(e, GameClientOutdatedError) and cfg.update_via_launcher:
                     update_via_launcher()
             if retry == MAX_RETRY - 1:
+                if screen_ready is not None and isinstance(e, GameWindowLost):
+                    raise GameStartupUnavailable(f"游戏进程多次退出，无法完成启动：{e}") from e
                 raise  # 如果是最后一次尝试，则重新抛出异常
 
 
