@@ -1,4 +1,5 @@
 from module.automation.input_base import InputBase
+from utils.pause import pause_ctl
 import time
 
 
@@ -128,15 +129,19 @@ class CdpInput(InputBase):
             })
 
         for index in range(repeats):
+            pause_ctl.check_stop()
             self.last_x, self.last_y = start_x, start_y
             dispatch("mouseMoved", 0)
+            pause_ctl.check_stop()
             try:
                 dispatch("mousePressed", 1)
                 started = time.monotonic()
                 while True:
+                    pause_ctl.check_stop()
                     elapsed = time.monotonic() - started
                     if elapsed < duration:
                         time.sleep(min(1 / 60, duration - elapsed))
+                        pause_ctl.check_stop()
                     progress = min(1.0, (time.monotonic() - started) / duration) if duration else 1.0
                     x = round(start_x + (end_x - start_x) * progress)
                     y = round(start_y + (end_y - start_y) * progress)
@@ -145,12 +150,19 @@ class CdpInput(InputBase):
                     if progress >= 1:
                         break
                 if end_pause and index == repeats - 1:
+                    pause_ctl.check_stop()
                     time.sleep(end_pause)
             except Exception as e:
                 self.logger.error(f"鼠标拖动出错：{e}")
                 raise
             finally:
-                dispatch("mouseReleased", 0)
+                try:
+                    dispatch("mouseReleased", 0)
+                except Exception as error:
+                    self.logger.error(f"鼠标拖动结束时释放失败：{error}")
+                    pause_ctl.check_stop()
+                    raise
+            pause_ctl.check_stop()
         return True
 
     def mouse_down(self, x, y):

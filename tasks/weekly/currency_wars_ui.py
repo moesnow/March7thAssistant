@@ -77,8 +77,10 @@ PARTNER_DETAIL_ROLE = (1500, 546, 1680, 585)
 PARTNER_DETAIL_TEXT = (1395, 612, 1865, 658)
 RESULT_TITLE = (410, 135, 1350, 410)
 RESULT_BUTTON = (650, 785, 1270, 1020)
-MATCH_WINS = ("挑战成功", "对局胜利", "晋升成功", "触发晋升赛")
-MATCH_LOSSES = ("挑战失败", "对局失败", "对局未完成", "晋升失败")
+MATCH_WIN_TITLES = ("对局胜利", "晋升成功")
+MATCH_LOSS_TITLES = ("对局失败", "对局未完成", "晋升失败")
+MATCH_WINS = ("挑战成功", *MATCH_WIN_TITLES, "触发晋升赛")
+MATCH_LOSSES = ("挑战失败", *MATCH_LOSS_TITLES)
 RECONNECT_TEXT = (620, 486, 1310, 568)
 RECONNECT_CONFIRM = (1050, 631, 1310, 711)
 CHOICE_TITLE = (555, 38, 1370, 215)
@@ -495,18 +497,30 @@ class Frame:
 
     @cached_property
     def combat_buttons(self) -> bool:
+        if self.combat_progress or self.find("敌方行动中", "我方行动中", area=(1580, 945, 1920, 1050)):
+            return True
         # 自动战斗关闭时右上按钮没有高亮边框，使用关卡 HUD 和左下提示识别该画面。
-        manual_battle = self.auto_off and any(
-            re.search(r"[1-3]-[1-9](?:\d{1,3}%)?$", label.text) for label in self.texts(BATTLE_HUD)
-        )
-        return bool(self.combat_progress or manual_battle
-                    or self.match("screen/currency_wars/s2_auto_button.png", BATTLE_AUTO_CONTROL, 0.87)
-                    or self.match("forgottenhall/pause.png", AUTO_CONTROLS, 0.86)
-                    or self.find("敌方行动中", "我方行动中", area=(1580, 945, 1920, 1050)))
+        if any(re.search(r"[1-3]-[1-9](?:\d{1,3}%)?$", label.text)
+               for label in self.texts(BATTLE_HUD)) and self.auto_off:
+            return True
+        for path, area, threshold in (
+            ("screen/currency_wars/s2_auto_button.png", BATTLE_AUTO_CONTROL, 0.87),
+            ("forgottenhall/pause.png", AUTO_CONTROLS, 0.86),
+        ):
+            try:
+                if self.match(path, area, threshold):
+                    return True
+            except (OSError, cv2.error) as error:
+                log.debug(f"货币战争战斗控件暂未识别（{path}）：{error}")
+        return False
 
     @cached_property
-    def auto_off(self) -> bool:
-        return bool(self.match("share/base/not_auto.png", AUTO_HINT, 0.9))
+    def auto_off(self) -> bool | None:
+        try:
+            return bool(self.match("share/base/not_auto.png", AUTO_HINT, 0.9))
+        except (OSError, cv2.error) as error:
+            log.debug(f"货币战争暂未识别自动战斗状态：{error}")
+            return None
 
     @cached_property
     def bench_overflow(self) -> bool:
@@ -555,9 +569,10 @@ class Frame:
             return Page.WEEKLY
 
         node_title = self.find("挑战成功", "挑战失败", "挑战结束", area=RESULT_TITLE)
+        match_title = self.has(*MATCH_WIN_TITLES, *MATCH_LOSS_TITLES, area=RESULT_TITLE)
         if self.promoted_rank is not None or self.has("返回货币战争", area=(500, 735, 1900, 1055)) or (
-                node_title and self.find("对局评价", area=RESULT_TITLE)) or (
-                self.has(*(MATCH_WINS[1:] + MATCH_LOSSES[1:]), area=RESULT_TITLE)
+                node_title and self.find("对局评价", area=RESULT_TITLE)) or match_title or (
+                self.has("触发晋升赛", area=RESULT_TITLE)
                 and self.find("下一页", "下一步", "前往结算", area=RESULT_BUTTON)):
             return Page.CONFLICT if self.combat_buttons else Page.MATCH_RESULT
         if node_title and self.find("继续挑战", "前往结算", area=RESULT_BUTTON):

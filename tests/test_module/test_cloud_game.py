@@ -32,6 +32,7 @@ class TestCloudGameSessionState(unittest.TestCase):
     def setUp(self):
         self.controller = object.__new__(CloudGameController)
         self.controller.driver = MagicMock()
+        self.controller.driver.command_executor._client_config.timeout = 120
         self.visible = MagicMock()
         self.visible.is_displayed.return_value = True
         self.hidden = MagicMock()
@@ -62,6 +63,18 @@ class TestCloudGameSessionState(unittest.TestCase):
         self.controller.driver = None
         self.assertFalse(self.controller.is_in_game())
 
+    def test_player_probe_bounds_webdriver_timeout_and_restores_previous_value(self):
+        config = self.controller.driver.command_executor._client_config
+
+        def find(*_):
+            self.assertEqual(config.timeout, 3)
+            raise ReadTimeoutError(None, None, "read timeout")
+
+        self.controller.driver.find_elements.side_effect = find
+        with self.assertRaisesRegex(TimeoutError, "读取云游戏会话状态超时"):
+            self.controller.is_in_game()
+        self.assertEqual(config.timeout, 120)
+
 
 class TestCloudGameWorkflowConnection(unittest.TestCase):
     def setUp(self):
@@ -91,6 +104,7 @@ class TestCloudGameWorkflowConnection(unittest.TestCase):
     @staticmethod
     def driver(in_game=True):
         driver = MagicMock()
+        driver.command_executor._client_config.timeout = 120
         player = MagicMock()
         player.is_displayed.return_value = in_game
         driver.find_elements.side_effect = lambda by, selector: [player] if selector == ".game-player" else []
@@ -178,6 +192,20 @@ class TestCloudGameWorkflowConnection(unittest.TestCase):
 
         connect.assert_called_once()
         stale_driver.service.process.terminate.assert_called_once_with()
+        self.controller.close_all_m7a_browser.assert_not_called()
+
+    def test_transient_disconnect_reuses_the_same_driver(self):
+        self.controller.driver = driver = self.driver()
+        in_game = driver.find_elements.side_effect
+        visible = SimpleNamespace(is_displayed=lambda: True)
+        driver.find_elements.side_effect = lambda *_: [visible]
+
+        self.assertFalse(self.controller.connect_to_running_game())
+        self.assertIs(self.controller.driver, driver)
+
+        driver.find_elements.side_effect = in_game
+        self.assertTrue(self.controller.connect_to_running_game())
+        self.assertIs(self.controller.driver, driver)
         self.controller.close_all_m7a_browser.assert_not_called()
 
     def test_connect_only_exit_preserves_browser_and_normal_start_restores_cleanup(self):

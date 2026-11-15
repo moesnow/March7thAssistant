@@ -346,7 +346,7 @@ import tasks.game as game
 from module.game import cloud_game
 from module.game.adb_transport import AdbError
 from module.game.adb_status import publish_status
-from tasks.game import adb_check
+from tasks.game import GameStartupUnavailable, adb_check
 from module.game.cloud import CloudGamePaidTimeExhaustedError, CloudGameZeroDurationError
 import tasks.reward as reward
 import tasks.challenge as challenge
@@ -510,7 +510,20 @@ def run_sub_task(action, task_override=None):
     def currencywars(mode=None):
         war = CurrencyWars()
         if mode == "loop":
-            _run_loop_task_with_telemetry("currencywarsloop", war.start)
+            attempts_without_result = 0
+
+            def play_next():
+                nonlocal attempts_without_result
+                won = war.start()
+                if won or war.result is not None:
+                    attempts_without_result = 0
+                else:
+                    attempts_without_result += 1
+                    if attempts_without_result >= 3:
+                        raise CurrencyWarsUnavailable("货币战争循环连续三次未确认对局结果，已保留当前现场")
+                return won
+
+            _run_loop_task_with_telemetry("currencywarsloop", play_next)
         else:
             return war.start(resume=mode == "temp")
 
@@ -793,7 +806,7 @@ if __name__ == "__main__":
             release_input()
             telemetry.track_error(type(e).__name__, str(e))
             log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
-            terminal = isinstance(e, CurrencyWarsTerminalError)
+            terminal = isinstance(e, (CurrencyWarsTerminalError, GameStartupUnavailable))
             screenshot_path = e.screenshot if terminal else save_error_screenshot(log)
             run_session.note(error=str(e), screenshot=screenshot_path, reason=e.reason if terminal else None)
             # 合并模式下先发送已收集的通知

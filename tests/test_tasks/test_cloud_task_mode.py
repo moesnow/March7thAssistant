@@ -18,6 +18,7 @@ from module.notification import notif
 from module.ocr import ocr
 from tasks.base import task_steps
 from tasks.daily import daily
+from tasks.game import GameStartupUnavailable
 from tasks.weekly import currency_wars
 from tasks.weekly.currency_wars_strategy import Slot
 from tasks.weekly.currency_wars_ui import Frame, Label, Page
@@ -58,6 +59,8 @@ def runner():
                  ProfileAssetNotFoundError=ProfileAssetNotFoundError,
                  TouchProfileInputError=TouchProfileInputError,
                  CurrencyWarsTerminalError=currency_wars.CurrencyWarsTerminalError,
+                 CurrencyWarsUnavailable=currency_wars.CurrencyWarsUnavailable,
+                 GameStartupUnavailable=GameStartupUnavailable,
                  CloudGamePaidTimeExhaustedError=CloudGamePaidTimeExhaustedError)
     scope.update(sys=sys, time=SimpleNamespace(time=lambda: 0))
     scope["EXCLUSIVE_ACTIONS"] = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update", "adb_check"}
@@ -378,6 +381,48 @@ def test_currency_wars_entry_continues_after_the_fight_receipt_times_out(runner,
     assert record["status"] == ("stopped" if action == "currencywarsloop" else "success")
     if action == "main":
         assert state.later_steps == ["日常领奖", "每日实训"]
+    task_steps.screen.change_to.assert_not_called()
+
+
+def test_currency_wars_loop_stops_after_repeated_unconfirmed_attempts(runner):
+    war = runner.CurrencyWars.return_value
+    war.result = None
+    war.start.side_effect = [False, False, False, RunStopRequested]
+    runner.main.__globals__["CurrencyWarsUnavailable"] = currency_wars.CurrencyWarsUnavailable
+
+    record = run_currency_wars_cli(runner, "currencywarsloop")
+
+    assert (record["status"], record["reason"], record["exit_code"]) == (
+        "failed", "currencywars_unavailable", EXIT_FAILED)
+    assert war.start.call_count == 3
+    assert runner.telemetry.track_task_complete.call_count == 3
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+def test_currency_wars_entry_stops_when_clear_frames_remain_unidentified(
+        runner, currency_wars_game, monkeypatch, action):
+    state = currency_wars_game
+    unknown = Frame(Image.new("RGB", (1920, 1080)), ())
+    capture = MagicMock(return_value=unknown)
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture))
+    navigation = MagicMock()
+    navigation.get_current_screen.return_value = False
+    monkeypatch.setattr(currency_wars, "screen", navigation)
+    # 旧循环需要在一次实际运行内触发显式终止，回归时用有限时钟防止测试自身无限等待。
+    normal_checkpoint = currency_wars.pause_ctl.checkpoint
+
+    def checkpoint():
+        if capture.call_count >= 32:
+            raise RunStopRequested
+        normal_checkpoint()
+
+    monkeypatch.setattr(currency_wars.pause_ctl, "checkpoint", checkpoint)
+    record = run_currency_wars_cli(runner, action)
+
+    assert (record["status"], record["reason"], record["exit_code"]) == (
+        "failed", "currencywars_unavailable", EXIT_FAILED)
+    assert state.clicks == [] and state.completed == 0 and state.later_steps == []
+    assert capture.call_count < 32
     task_steps.screen.change_to.assert_not_called()
 
 
@@ -796,6 +841,7 @@ def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
     controller.logger = MagicMock()
     controller._confirm_viewport_resolution = MagicMock()
     driver = MagicMock()
+    driver.command_executor._client_config.timeout = 120
     driver.find_elements.side_effect = lambda by, selector: [MagicMock()] if selector == ".game-player" else []
     stopped = False
 
@@ -838,3 +884,128 @@ def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
             assert "连续无法连接正在运行的云游戏" in record["error"]
         else:
             assert record["status"] == STATUS_STOPPED
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
+@pytest.mark.parametrize("fault", ("transient_disconnect", "persistent_disconnect", "unavailable_frames"))
+def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_game, monkeypatch, action, fault):
+    from tasks import game
+    from utils import wait
+
+    state = currency_wars_game
+    clock = SimpleNamespace(monotonic=lambda: state.now, sleep=lambda seconds: setattr(state, "now", state.now + seconds))
+    monkeypatch.setattr(game, "time", clock)
+    monkeypatch.setattr(wait, "time", clock)
+    monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=0.05))
+    monkeypatch.setattr(game, "task_power_request", MagicMock())
+    screen = MagicMock()
+    monkeypatch.setattr(game, "screen", screen)
+    runner.game.start.side_effect = game.start
+    runner.cfg.control_backend = "cloud"
+
+    controller = object.__new__(CloudGameController)
+    controller.driver = None
+    controller.logger = MagicMock()
+    controller.cfg = SimpleNamespace(browser_headless_enable=True)
+    controller._confirm_viewport_resolution = MagicMock()
+    controller.enter_cloud_game = MagicMock()
+    controller.stop_game = MagicMock()
+    controller.close_all_m7a_browser = MagicMock()
+    driver = MagicMock()
+    driver.command_executor._client_config.timeout = 120
+    driver.service.process.poll.return_value = 0
+    visible = SimpleNamespace(is_displayed=lambda: True)
+    probes = []
+
+    def attach(headless):
+        assert headless
+        controller.driver = driver
+
+    def elements(_by, selector):
+        if "连接中断" in selector:
+            if fault == "transient_disconnect":
+                probes.append(("disconnected", "loading", "player")[len(probes)])
+            else:
+                probes.append("disconnected" if fault == "persistent_disconnect" else "player")
+        disconnected = "连接中断" in selector or "退出游戏" in selector
+        if disconnected and probes[-1] == "disconnected" or selector == ".game-player" and probes[-1] == "player":
+            return [visible]
+        return []
+
+    controller._connect_or_create_browser = MagicMock(side_effect=attach)
+    driver.find_elements.side_effect = elements
+    monkeypatch.setattr(game, "cloud_game", controller)
+    if fault == "unavailable_frames":
+        capture = MagicMock(side_effect=OSError("截图持续不可用"))
+        monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture))
+        screen.get_current_screen.side_effect = OSError("截图持续不可用")
+    if action == "currencywarsloop" and fault == "transient_disconnect":
+        runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(state, "stop", True)
+
+    record = run_currency_wars_cli(runner, action)
+
+    controller._connect_or_create_browser.assert_called_once_with(headless=True)
+    controller.enter_cloud_game.assert_not_called()
+    controller.stop_game.assert_not_called()
+    assert controller.driver is driver
+    if fault == "transient_disconnect":
+        assert probes == ["disconnected", "loading", "player"]
+        assert state.completed == 1
+        assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success")
+    else:
+        reason = "currencywars_unavailable" if fault == "unavailable_frames" and action != "main" else "game_startup_unavailable"
+        assert (record["status"], record["reason"], record["exit_code"]) == ("failed", reason, EXIT_FAILED)
+        assert state.clicks == []
+        state.factory.assert_not_called()
+        if fault == "persistent_disconnect":
+            assert probes == ["disconnected"] * 3
+        elif action == "main":
+            assert screen.get_current_screen.call_count == 3
+        else:
+            assert capture.call_count == currency_wars.MAX_CAPTURE_ATTEMPTS
+        controller._clean_at_exit()
+        controller.close_all_m7a_browser.assert_not_called()
+        assert controller.driver is None
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+def test_currency_wars_stop_during_cdp_drag_releases_at_the_current_position(
+        runner, currency_wars_game, monkeypatch, action):
+    from module.automation import cdp_input
+    from module.automation.automation import Automation
+    from utils import pause
+
+    state = currency_wars_game
+    runner.cfg.control_backend = "cloud"
+    stop_control = pause.PauseController()
+    stop_control._enabled = True
+    stop_control._resume_event.set()
+    monkeypatch.setattr(currency_wars, "pause_ctl", stop_control)
+    monkeypatch.setattr(cdp_input, "pause_ctl", stop_control)
+    if action == "currencywarstemp":
+        state.page = "board"
+        runner.cloud_game.connect_to_running_game.return_value = True
+
+    dispatched = []
+
+    def send(_command, event):
+        dispatched.append((event["type"], event["x"], event["y"], stop_control.stop_requested))
+        if event["type"] == "mousePressed":
+            stop_control.request_stop()
+
+    backend = cdp_input.CdpInput(SimpleNamespace(execute_cdp_cmd=send), MagicMock())
+    automation = object.__new__(Automation)
+    automation.screenshot = Image.new("RGB", (1920, 1080))
+    automation.screenshot_pos = (0, 0, 1920, 1080)
+    automation.screenshot_scale_factor = 1
+    automation.take_screenshot = MagicMock(return_value=True)
+    automation.mouse_drag = backend.mouse_drag
+    currency_wars.auto.drag_mouse.side_effect = automation.drag_mouse
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_prepare", lambda self, frame: self._drag(frame, (750, 400), (900, 400)))
+
+    record = run_currency_wars_cli(runner, action)
+
+    assert (record["status"], record["reason"], record["exit_code"]) == (STATUS_STOPPED, None, EXIT_STOPPED)
+    assert dispatched == [("mouseMoved", 750, 400, False), ("mousePressed", 750, 400, False),
+                          ("mouseReleased", 750, 400, True)]
+    assert state.completed == 0 and state.later_steps == []
