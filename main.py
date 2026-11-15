@@ -528,7 +528,7 @@ def run_sub_task(action, task_override=None):
 
             def play_next():
                 nonlocal attempts_without_result
-                won = war.start()
+                won = war.start(loop=True)
                 if won or war.result is not None:
                     attempts_without_result = 0
                 else:

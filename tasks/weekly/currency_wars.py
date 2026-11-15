@@ -153,6 +153,7 @@ class CurrencyWars:
         self.mode_confirmed = False
         self.screenshot = None
         self.result = None
+        self._loop_matches = 0
         self.default_strategy = False
         self.lineup = None
         self.last_board = None
@@ -4004,8 +4005,8 @@ class CurrencyWars:
         self._log_pending_reward(error)
         return frame, None, False
 
-    def start(self, *, weekly=False, resume=False):
-        """开始或接管一局，或在同一个总时限内处理本周积分奖励。"""
+    def start(self, *, weekly=False, resume=False, loop=False):
+        """开始或接管一局，或在同一个总时限内处理本周积分奖励。循环入口跨调用保留局号。"""
         configured = cfg.get_value("currencywars_strategy", strategy.DEFAULT_STRATEGY)
         try:
             selected = strategy.resolve_strategy(configured)
@@ -4063,7 +4064,8 @@ class CurrencyWars:
                     if self._can_take_over(frame, resume=resume):
                         log.info(f"从「{frame.choice or frame.page.value}」接管当前货币战争对局")
                     elif self.result is None:
-                        log.info(f"货币战争第 {matches + 1} 局")
+                        match_number = (self._loop_matches if loop else matches) + 1
+                        log.info(f"货币战争第 {match_number} 局")
                         entered = None
                         try:
                             entered = self._enter_with_recovery(frame, resume=resume)
@@ -4074,6 +4076,8 @@ class CurrencyWars:
                             break
                         frame = entered
                     matches += 1
+                    if loop:
+                        self._loop_matches += 1
                     self.in_match = True
                     try:
                         frame = self._play(frame)
