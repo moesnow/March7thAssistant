@@ -98,11 +98,28 @@
 | 会话 N 已占用桌面分身。请先注销该会话后重试 | 小助手无法确认该会话可重新连接。先在原来的控制窗口注销分身。如果原窗口已退出，可在任务管理器的「用户」页核对会话 ID，确认是分身后再注销 |
 | 请用当前桌面的登录账户启动小助手 | 小助手是用其他账户启动的（例如“以其他用户身份运行”）。请用当前登录 Windows 的账户启动 |
 | 分身与主桌面的登录账户不同 | 登录分身时用了其他账户，请使用当前账户登录 |
-| 分身连接失败（RDP 加一串数字） | 远程桌面连接被拒绝或中断，数字是 Windows 给出的错误码，反馈时请一并附上。常见原因有密码不正确、系统组件被精简、第三方安全软件拦截、打过多用户远程桌面补丁。先重启小助手再试，仍然失败就重启电脑后再试 |
+| 分身连接失败（RDP 516） | [排查本机子会话的连接](#rdp-516) |
+| 分身连接失败（其他 RDP 错误码） | 数字是 Windows 给出的错误码，反馈时请一并附上。先重开小助手，仍然失败就重启电脑后再试。若已出现登录框并提示凭据错误，参照下文的「输入密码后提示不正确」 |
 | 连接分身超时 | 90 秒内没有完成登录。第一次登录较慢，可以再试一次；如果弹出了输入密码的窗口，看看它是不是被其他窗口挡住了 |
 | 等待分身中的小助手启动超时 | 点「打开小助手」再试一次 |
 | 会话身份已变化，请在 Windows 中检查分身 | 分身已在别处被注销或替换（例如在任务管理器中注销）。关闭分身窗口后重新启动 |
 | 等待分身注销超时 | Windows 没能在 20 秒内注销分身。再点一次「注销分身」，或者在任务管理器的「用户」页注销 |
+
+### RDP 516
+
+516（0x204）表示 Windows 无法建立到本机子会话的 RDP 连接。先完全退出小助手并重新打开，仍然失败时重启 Windows 再试一次。详见 [微软的 RDP 错误码说明](https://learn.microsoft.com/en-us/windows/win32/termserv/imstscaxevents-ondisconnected)。
+
+在 PowerShell 中运行以下命令，查看远程桌面服务状态及其加载的 DLL。
+
+```powershell
+Get-Service TermService | Select-Object Status, StartType
+Get-ItemPropertyValue 'HKLM:\SYSTEM\CurrentControlSet\Services\TermService\Parameters' ServiceDll
+```
+
+- 如果 `ServiceDll` 指向第三方 DLL，或系统装过 SuperRDP、RDP Wrapper 等多用户远程桌面补丁，优先排查补丁冲突。可以通过原工具的卸载或恢复功能还原 Windows 原生远程桌面服务，重启后再试。参见 [BetterGI 的 SuperRDP 复现记录](https://github.com/babalae/better-genshin-impact/issues/3409#issuecomment-5220177847)。
+- 如果找不到 `TermService`，或启动类型是 `Disabled`，检查系统精简或优化工具是否移除或停用了「远程桌面服务」，尝试恢复该工具修改前的系统配置。
+
+仍然报错时，请反馈小助手版本、`winver` 显示的 Windows 版本和内部版本号、上述命令的输出，以及是否装过多用户远程桌面补丁。可以同时附上事件查看器「应用程序和服务日志 → Microsoft → Windows → TerminalServices-RDPClient → Operational」中报错时间附近的事件 226 和 1026。
 
 ### 运行任务时的提示
 

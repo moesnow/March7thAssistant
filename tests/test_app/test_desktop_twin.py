@@ -190,7 +190,7 @@ def test_confirm_prompt_is_a_separate_window_with_three_choices(qtbot, monkeypat
     dialog.close()
 
 
-def test_intro_offers_docs_and_reports_errors_inline(qtbot, monkeypatch):
+def test_intro_offers_docs_and_reports_errors_inline(qtbot):
     from PySide6.QtWidgets import QWidget
     from app.tools import desktop_twin as ui
 
@@ -207,9 +207,40 @@ def test_intro_offers_docs_and_reports_errors_inline(qtbot, monkeypatch):
     dialog._report("会话 3 已占用桌面分身")
     assert dialog._errorBar.isVisible()
     assert dialog._errorBar.content() == "会话 3 已占用桌面分身"
+    assert dialog._docs_button.text() == ui.tr("常见问题")
+    assert dialog._docs_button.getUrl().toString().endswith("?id=常见问题")
     assert dialog.height() > height
     dialog._errorBar.closeButton.click()
     assert dialog._error == "" and not dialog._errorHolder.isVisible()
+    assert dialog._docs_button.text() == ui.tr("使用文档")
+    assert dialog._docs_button.getUrl().toString() == "https://m7a.top/docs/#/assets/docs/DesktopTwin"
+    dialog.close()
+
+
+@pytest.mark.parametrize(("rdp_code", "section"), [(516, "rdp-516"), (2055, "常见问题")])
+def test_connection_error_opens_matching_docs(qtbot, monkeypatch, rdp_code, section):
+    from PySide6.QtGui import QDesktopServices
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog._timer.stop()
+    dialog.show()
+    dialog._connect_until = float("inf")
+    dialog._set_screen_visible(True)
+    dialog._rdp._events.OnDisconnected(rdp_code)
+    dialog._poll()
+
+    assert dialog._errorBar.isVisible()
+    assert dialog._errorBar.content() == ui.tr("分身连接失败（RDP {code}）").format(code=rdp_code)
+    assert dialog._docs_button.isVisible()
+    open_url = Mock()
+    monkeypatch.setattr(QDesktopServices, "openUrl", open_url)
+    dialog._docs_button.click()
+    open_url.assert_called_once()
+    assert open_url.call_args.args[0].toString() == f"https://m7a.top/docs/#/assets/docs/DesktopTwin?id={section}"
     dialog.close()
 
 
