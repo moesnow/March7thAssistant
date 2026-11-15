@@ -9,9 +9,10 @@ from unittest.mock import MagicMock
 
 from PIL import Image, ImageDraw
 import pytest
-from selenium.common.exceptions import StaleElementReferenceException
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, WebDriverException
 
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
+from module.game import cloud
 from module.game.adb_transport import AdbError
 from module.game.cloud import CloudGameController, CloudGamePaidTimeExhaustedError
 from module.localization import tr
@@ -910,8 +911,11 @@ def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
-@pytest.mark.parametrize("fault", ("transient_disconnect", "stale_dom", "persistent_disconnect", "unavailable_frames",
-                                   "existing_board", "runtime_unavailable", "runtime_timeout", "runtime_stopped"))
+@pytest.mark.parametrize("fault", (
+    "transient_disconnect", "stale_dom", "probe_timeout", "probe_timeout_no_player", "persistent_disconnect", "unavailable_frames",
+    "existing_board", "different_window_mode", "transient_attach", "persistent_attach", "attach_stopped", "cold_start",
+    "runtime_unavailable", "runtime_timeout", "runtime_stopped",
+))
 def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_game, monkeypatch, action, fault):
     from tasks import game
     from utils import wait
@@ -922,6 +926,9 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     monkeypatch.setattr(wait, "time", clock)
     monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=0.05))
     monkeypatch.setattr(game, "task_power_request", MagicMock())
+    stop_control = SimpleNamespace(checkpoint=currency_wars.pause_ctl.checkpoint, check_stop=currency_wars.pause_ctl.checkpoint)
+    monkeypatch.setattr(game, "pause_ctl", stop_control)
+    monkeypatch.setattr(cloud, "pause_ctl", stop_control)
     screen = MagicMock()
     screen.get_current_screen.return_value = False
     monkeypatch.setattr(game, "screen", screen)
@@ -931,25 +938,52 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     controller = object.__new__(CloudGameController)
     controller.driver = None
     controller.logger = MagicMock()
-    controller.cfg = SimpleNamespace(browser_headless_enable=True)
+    controller.cfg = SimpleNamespace(
+        browser_headless_enable=True, browser_type="chrome", browser_debug_port=9222,
+        cloud_game_fullscreen_enable=False, browser_persistent_enable=True, browser_dump_cookies_enable=False,
+        game_optimization_enable=False,
+    )
+    controller.user_profile_path = str(Path.cwd())
+    controller._prepare_browser_and_driver = MagicMock(return_value=("chrome.exe", "chromedriver.exe"))
+    controller._configure_pointer_lock = MagicMock()
     controller._confirm_viewport_resolution = MagicMock()
+    controller._get_port_bind_error = MagicMock(return_value=None)
+    controller._get_browser_arguments = MagicMock(return_value=[])
+    controller._refresh_page = MagicMock()
     controller.enter_cloud_game = MagicMock()
     controller.stop_game = MagicMock()
     controller.close_all_m7a_browser = MagicMock()
+    browser = MagicMock()
+    browser_args = ["chrome.exe", "--remote-debugging-port=9225"]
+    if fault != "different_window_mode":
+        browser_args.append("--headless=new")
+    browser.cmdline.return_value = browser_args
+    controller.get_m7a_browsers = MagicMock(return_value=[] if fault == "cold_start" else [browser])
     driver = MagicMock()
     driver.command_executor._client_config.timeout = 120
     driver.service.process.poll.return_value = 0
     visible = SimpleNamespace(is_displayed=lambda: True)
     probes = []
 
-    def attach(headless):
-        assert headless
-        controller.driver = driver
+    attach = MagicMock(return_value=driver)
+    if fault == "transient_attach":
+        attach.side_effect = (WebDriverException("DevTools 暂时无法连接"), driver)
+    elif fault == "persistent_attach":
+        attach.side_effect = WebDriverException("DevTools 持续无法连接")
+    elif fault == "attach_stopped":
+        def stop_after_attaching(**_):
+            state.stop = True
+            return driver
+
+        attach.side_effect = stop_after_attaching
+    monkeypatch.setattr(cloud.webdriver, "Chrome", attach)
 
     def elements(_by, selector):
         if "连接中断" in selector:
-            if fault in ("transient_disconnect", "stale_dom"):
+            if fault in ("transient_disconnect", "stale_dom", "probe_timeout"):
                 probes.append(("disconnected", "loading", "player")[len(probes)])
+            elif fault == "probe_timeout_no_player":
+                probes.append("loading")
             else:
                 probes.append("disconnected" if fault == "persistent_disconnect" else "player")
         disconnected = "连接中断" in selector or "退出游戏" in selector
@@ -957,15 +991,17 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
             stale_element = MagicMock()
             stale_element.is_displayed.side_effect = StaleElementReferenceException("旧节点已销毁")
             return [stale_element]
+        if fault in ("probe_timeout", "probe_timeout_no_player") and len(probes) == 1:
+            raise TimeoutException("播放器读取暂时超时")
         if disconnected and probes[-1] == "disconnected" or selector == ".game-player" and probes[-1] == "player":
             return [visible]
         return []
 
-    controller._connect_or_create_browser = MagicMock(side_effect=attach)
     driver.find_elements.side_effect = elements
     monkeypatch.setattr(game, "cloud_game", controller)
     runner.main.__globals__["cloud_game"] = controller
-    if fault == "existing_board":
+    existing_board_faults = ("existing_board", "different_window_mode", "transient_attach")
+    if fault in existing_board_faults:
         state.page = "board"
         frame = Frame(Image.new("RGB", (1920, 1080)), tuple(Label(text, (x, y)) for text, x, y in (
             ("备战阶段", 472, 46), ("1-1", 472, 78), ("1/1", 960, 259), ("商店", 1624, 982), ("出战", 1818, 750),
@@ -987,41 +1023,123 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
         capture = MagicMock(side_effect=OSError("截图持续不可用"))
         monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture))
         screen.get_current_screen.side_effect = OSError("截图持续不可用")
-    if action == "currencywarsloop" and fault in ("transient_disconnect", "stale_dom", "existing_board"):
+    recovered = (*existing_board_faults, "transient_disconnect", "stale_dom", "probe_timeout", "cold_start")
+    if action == "currencywarsloop" and fault in recovered:
         runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(state, "stop", True)
 
     record = run_currency_wars_cli(runner, action)
 
-    controller._connect_or_create_browser.assert_called_once_with(headless=True)
+    assert attach.call_count == {"transient_attach": 2, "persistent_attach": 3}.get(fault, 1)
+    if fault == "cold_start":
+        assert not attach.call_args.kwargs["options"].debugger_address
+        assert "--remote-debugging-port=9222" in attach.call_args.kwargs["options"].arguments
+        controller._refresh_page.assert_called_once_with()
+    else:
+        assert all(call.kwargs["options"].debugger_address == "127.0.0.1:9225" for call in attach.call_args_list)
+        controller._refresh_page.assert_not_called()
+    assert controller.is_headless() == (fault != "different_window_mode")
     controller.enter_cloud_game.assert_not_called()
     controller.stop_game.assert_not_called()
-    assert controller.driver is driver
-    if fault in ("transient_disconnect", "stale_dom", "existing_board"):
-        assert probes == (["player"] if fault == "existing_board" else ["disconnected", "loading", "player"])
+    controller.close_all_m7a_browser.assert_not_called()
+    assert controller.driver is (None if fault == "persistent_attach" else driver)
+    if fault in recovered:
+        assert probes == (["player"] if fault in (*existing_board_faults, "cold_start") else ["disconnected", "loading", "player"])
+        if fault in existing_board_faults:
+            assert ("rank", (1680, 965)) not in state.clicks
         assert state.completed == 1
         assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success")
     else:
         expected = {
             "persistent_disconnect": ("failed", "game_startup_unavailable", EXIT_FAILED),
+            "probe_timeout_no_player": ("failed", "game_startup_unavailable", EXIT_FAILED),
+            "persistent_attach": ("failed", "game_startup_unavailable", EXIT_FAILED),
+            "attach_stopped": (STATUS_STOPPED, None, EXIT_STOPPED),
             "unavailable_frames": ("failed", "currencywars_unavailable", EXIT_FAILED),
             "runtime_unavailable": ("failed", "currencywars_unavailable", EXIT_FAILED),
             "runtime_timeout": ("failed", "currencywars_timeout", EXIT_FAILED),
             "runtime_stopped": (STATUS_STOPPED, None, EXIT_STOPPED),
         }
         assert (record["status"], record["reason"], record["exit_code"]) == expected[fault]
-        if fault in ("persistent_disconnect", "unavailable_frames"):
+        if fault in ("persistent_disconnect", "probe_timeout_no_player", "unavailable_frames", "persistent_attach", "attach_stopped"):
             assert state.clicks == []
             state.factory.assert_not_called()
         else:
             assert state.clicks.count(("board", (1818, 750))) == 1
         if fault == "persistent_disconnect":
             assert probes == ["disconnected"] * 3
+        elif fault == "probe_timeout_no_player":
+            assert probes == ["loading"] * 3
         elif fault == "unavailable_frames":
             assert capture.call_count == currency_wars.MAX_CAPTURE_ATTEMPTS
+        elif fault == "attach_stopped":
+            assert probes == []
+            controller._configure_pointer_lock.assert_not_called()
+            controller._confirm_viewport_resolution.assert_not_called()
         controller._clean_at_exit()
         controller.close_all_m7a_browser.assert_not_called()
         assert controller.driver is None
     screen.get_current_screen.assert_not_called()
+
+
+@pytest.mark.parametrize("dialog", ("reward_limit", "weekly_receipt", "generic_receipt"))
+def test_full_run_checks_the_context_of_existing_reward_dialog(runner, currency_wars_game, monkeypatch, dialog):
+    from tasks import game
+    from utils import wait
+
+    state = currency_wars_game
+    clock = SimpleNamespace(monotonic=lambda: state.now, sleep=lambda n: setattr(state, "now", state.now + n))
+    monkeypatch.setattr(game, "time", clock)
+    monkeypatch.setattr(wait, "time", clock)
+    monkeypatch.setattr(game, "task_power_request", MagicMock())
+    monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=0.08))
+    screen = MagicMock()
+    screen.get_current_screen.return_value = False
+    monkeypatch.setattr(game, "screen", screen)
+    runner.cfg.control_backend = "cloud"
+    runner.game.start.side_effect = game.start
+    runner.cloud_game.start_game_process.return_value = True
+    runner.cloud_game.is_in_game.return_value = True
+    monkeypatch.setattr(game, "cloud_game", runner.cloud_game)
+
+    image = Image.new("RGB", (1920, 1080))
+    if dialog == "reward_limit":
+        ImageDraw.Draw(image).rectangle((823, 694, 1097, 754), fill="white")
+        point = (960, 724)
+        frame = Frame(image, (Label("背包内助燃券持有数量已达上限", (960, 486)), Label("确认", point)))
+        assert frame.page == Page.REWARD_LIMIT
+    else:
+        point = (964, 851)
+        labels = [Label("获得奖励", (960, 281)), Label("点击空白处关闭", point)]
+        if dialog == "weekly_receipt":
+            labels.append(Label("积分奖励", (151, 338)))
+        frame = Frame(image, tuple(labels))
+        assert frame.page == Page.REWARD_RECEIPT
+    capture = currency_wars.CurrencyWars._capture
+    click = currency_wars.auto.click_element_with_pos.side_effect
+    pressed = []
+
+    def click_or_close(target, *, press_duration):
+        if pressed:
+            return click(target, press_duration=press_duration)
+        assert target == point
+        pressed.append(target)
+
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(lambda: capture() if pressed else frame))
+    currency_wars.auto.click_element_with_pos.side_effect = click_or_close
+    record = run_currency_wars_cli(runner, "main")
+
+    runner.cloud_game.enter_cloud_game.assert_not_called()
+    runner.cloud_game.stop_game.assert_not_called()
+    if dialog == "generic_receipt":
+        assert record["reason"] == "game_startup_unavailable"
+        assert pressed == []
+        state.factory.assert_not_called()
+        assert all(call.kwargs == {"autotry": False, "max_retries": 1} for call in screen.get_current_screen.call_args_list)
+    else:
+        assert record["status"] == "success"
+        assert pressed == [point]
+        assert state.completed == 1
+        screen.get_current_screen.assert_not_called()
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))

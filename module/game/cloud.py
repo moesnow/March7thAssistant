@@ -177,20 +177,22 @@ class CloudGameController(GameControllerBase):
         """等待云崩铁网页加载出来，这里以背景图是否加载出来为准"""
         if not self.driver:
             return
+
+        def background_loaded(driver):
+            pause_ctl.checkpoint()
+            return driver.execute_script("""
+                const img = document.querySelector('#app > div.home-wrapper > picture > img');
+                if (!img) return false;
+                return img && img.complete && img.naturalWidth > 0;
+            """)
+
         for retry in range(self.MAX_RETRIES + 1):
+            pause_ctl.checkpoint()
             if retry > 0:
                 self.log_warning(f"页面加载超时，正在刷新重试... ({retry}/{self.MAX_RETRIES})")
                 self.driver.refresh()
             try:
-                WebDriverWait(self.driver, timeout).until(
-                    lambda d: d.execute_script(
-                        """
-                        const img = document.querySelector('#app > div.home-wrapper > picture > img');
-                        if (!img) return false;
-                        return img && img.complete && img.naturalWidth > 0;
-                        """
-                    )
-                )
+                WebDriverWait(self.driver, timeout).until(background_loaded)
                 return
             except TimeoutException:
                 pass
@@ -367,20 +369,24 @@ class CloudGameController(GameControllerBase):
         args.extend(self.cfg.browser_launch_argument)  # 用户自定义参数
         return args
 
-    def _connect_or_create_browser(self, headless=False, *, connect_only=False) -> None:
-        """连接小助手的浏览器；connect_only 时不启动、关闭或重建浏览器。"""
-        if connect_only:
-            existing = self.get_m7a_browsers()
-            if not existing:
-                raise ConnectionError("未检测到正在运行的云游戏浏览器，请先启动游戏")
-            # “启动游戏”可以临时使用有窗口模式，连接时应遵循实际进程而非配置。
-            headless = "--headless=new" in existing[0].cmdline()
-            self._headless_override = headless
+    def _connect_or_create_browser(self, headless=False, *, connect_only=False, preserve_existing=False) -> bool:
+        """连接或创建小助手的浏览器，返回是否连接了已有浏览器。"""
+        keep_existing = connect_only or preserve_existing
+        existing = self.get_m7a_browsers() if connect_only else []
+        if connect_only and not existing:
+            raise ConnectionError("未检测到正在运行的云游戏浏览器，请先启动游戏")
 
         browser_type = "chrome" if self.cfg.browser_type in ["integrated", "chrome"] else "edge" if self.cfg.browser_type == "edge" else "chromium"
         integrated = self.cfg.browser_type == "integrated"
         first_run = False
         browser_path, driver_path = self._prepare_browser_and_driver(browser_type, integrated)
+        pause_ctl.checkpoint()
+        if preserve_existing:
+            existing = self.get_m7a_browsers()
+        if existing:
+            # 当前浏览器可能使用了临时窗口模式，连接时遵循实际进程。
+            headless = "--headless=new" in existing[0].cmdline()
+            self._headless_override = headless
 
         # 端口可用性检测：若配置端口被占，递增找一个空闲端口
         try:
@@ -390,7 +396,7 @@ class CloudGameController(GameControllerBase):
         if not 1 <= configured_port <= 65535:
             raise RuntimeError(f"browser_debug_port 超出有效范围: {configured_port}")
         actual_port = configured_port
-        bind_error = None if connect_only else self._get_port_bind_error(configured_port)
+        bind_error = None if existing else self._get_port_bind_error(configured_port)
         if bind_error is not None:
             self.log_warning(
                 f"端口 {configured_port} 无法绑定（{bind_error}），正在查找可用端口..."
@@ -423,7 +429,7 @@ class CloudGameController(GameControllerBase):
             self._driver_pid = None
 
         # 关掉 headless 不匹配的浏览器，防止端口冲突
-        if not connect_only:
+        if not keep_existing:
             if self.close_all_m7a_browser(headless=not headless):
                 self.log_info(f"已关闭正在运行的{'前台' if headless else '后台'}浏览器")
             existing = self.get_m7a_browsers(headless=headless)
@@ -432,12 +438,14 @@ class CloudGameController(GameControllerBase):
             reconnect_port = self._get_debug_port_from_cmdline(existing[0]) or configured_port
             try:
                 options.debugger_address = f"127.0.0.1:{reconnect_port}"
+                pause_ctl.checkpoint()
                 self.driver = webdriver_type(service=service, options=options)
+                pause_ctl.checkpoint()
                 self._configure_pointer_lock(headless)
                 self.log_info("已连接到现有浏览器")
-                return
+                return True
             except Exception:
-                if connect_only:
+                if keep_existing:
                     raise
                 self.log_info("连接现有浏览器失败")
                 self.close_all_m7a_browser()
@@ -476,6 +484,7 @@ class CloudGameController(GameControllerBase):
 
         try:
             self.log_debug("启动浏览器中...")
+            pause_ctl.checkpoint()
             self.driver = webdriver_type(service=service, options=options)
             self.log_debug("浏览器启动成功")
         except SessionNotCreatedException as e:
@@ -498,6 +507,7 @@ class CloudGameController(GameControllerBase):
             self.log_error(f"浏览器启动失败: {e}")
             raise RuntimeError("浏览器启动失败")
 
+        pause_ctl.checkpoint()
         self._configure_pointer_lock(headless)
         if not self.cfg.cloud_game_fullscreen_enable:
             self.driver.set_window_size(1920, 1120)
@@ -507,7 +517,9 @@ class CloudGameController(GameControllerBase):
             self.change_auto_battle(True)
         if self.cfg.browser_dump_cookies_enable:
             self._load_cookies()
+        pause_ctl.checkpoint()
         self._refresh_page()
+        return False
 
     def _restart_browser(self, headless=False) -> None:
         """重启浏览器"""
@@ -1255,19 +1267,27 @@ class CloudGameController(GameControllerBase):
             except Exception as switch_err:
                 self.log_warning(f"切回主文档失败: {switch_err}")
 
-    def start_game_process(self, headless=None) -> bool:
+    def start_game_process(self, headless=None, *, preserve_existing=False) -> bool:
         """启动浏览器进程"""
         pause_ctl.checkpoint()
-        self._preserve_browser_on_exit = False
+        self._preserve_browser_on_exit = preserve_existing
         try:
             self._headless_override = headless
             if headless is None:
                 headless = self.cfg.browser_headless_enable
-            self._connect_or_create_browser(headless=headless)
+            if preserve_existing:
+                self._release_attached_driver()
+                attached = self._connect_or_create_browser(headless=headless, preserve_existing=True)
+            else:
+                attached = self._connect_or_create_browser(headless=headless)
             pause_ctl.checkpoint()
             self._confirm_viewport_resolution()
+            self._preserve_browser_on_exit = preserve_existing and attached
             return True
         except Exception as e:
+            if preserve_existing:
+                self._release_attached_driver()
+                raise
             self.log_error(f"启动或连接浏览器失败 {e}")
             return False
 

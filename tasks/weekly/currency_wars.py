@@ -35,6 +35,7 @@ MATCH_UNIDENTIFIED_SECONDS = 60
 BATTLE_SECONDS = 10 * 60
 MAX_AUTO_ATTEMPTS = 2
 AUTO_RETRY_SECONDS = 12
+MAX_PREPARATION_FALLBACKS = 3
 DEFAULT_PREPARE_LIMIT = 30
 DEFAULT_HALO_REFRESHES = 2
 ACTION_POLL = 0.22
@@ -202,11 +203,14 @@ class CurrencyWars:
     def game_screen_ready(cls, *, for_full_run=False):
         # 登录入口也需要知道已显示赛季内的断线提示，交给任务记录结束原因。
         frame = cls()._observe(allow_disconnected=True)
-        if for_full_run:
-            return cls._can_take_over(frame, resume=False) or frame.page in (
-                Page.HOME, Page.MODES, Page.RANK, Page.END_MATCH_CONFIRM, Page.WEEKLY, Page.RECONNECT, Page.DISCONNECTED,
-            )
-        return frame.page not in (Page.UNKNOWN, Page.CONFLICT)
+        if not for_full_run:
+            return frame.page not in (Page.UNKNOWN, Page.CONFLICT)
+        if frame.page == Page.REWARD_RECEIPT:
+            return frame.season or frame.has("积分奖励", area=ui.WEEKLY_TITLE)
+        return cls._can_take_over(frame, resume=False) or frame.page in (
+            Page.HOME, Page.MODES, Page.RANK, Page.END_MATCH_CONFIRM, Page.WEEKLY, Page.REWARD_LIMIT,
+            Page.RECONNECT, Page.DISCONNECTED,
+        )
 
     def _observe(self, *, allow_disconnected=False):
         first_frame = self.frame is None
@@ -299,7 +303,7 @@ class CurrencyWars:
             raise CurrencyWarsError("未确认备战棋盘，取消拖动")
         src = start[0] / 1920, start[1] / 1080
         dst = end[0] / 1920, end[1] / 1080
-        return auto.drag_mouse(src, dst, duration=0.5, end_pause=0.10)
+        return auto.drag_mouse(src, dst, duration=0.5, end_pause=0.10, take_screenshot=False)
 
     def _action(self, frame, locate, send, after, message, *, seconds, attempts, retry_after=2.2,
                 track_control=True, same_view=None):
@@ -466,7 +470,7 @@ class CurrencyWars:
             return frame.page == Page.HOME
         return False
 
-    def _homepage(self, frame):
+    def _homepage(self, frame, *, keep_weekly=False):
         if frame.page == Page.REWARD_RECEIPT:
             frame = self._click_to(
                 frame, lambda f: f.reward_close(), lambda f: f.page in (Page.WEEKLY, Page.HOME),
@@ -479,6 +483,8 @@ class CurrencyWars:
             )
         if frame.page in (Page.RANK, Page.END_MATCH_CONFIRM):
             frame = self._go_back(frame, Page.MODES)
+        if keep_weekly and frame.page == Page.WEEKLY:
+            return frame
         if frame.page in (Page.MODES, Page.WEEKLY):
             frame = self._go_back(frame, Page.HOME)
         if frame.page == Page.HOME:
@@ -778,7 +784,7 @@ class CurrencyWars:
             return frame.combat_progress
         return True
 
-    def _enter_with_recovery(self, frame, *, resume, homepage_only=False):
+    def _enter_with_recovery(self, frame, *, resume, weekly_entry=False):
         self._start_match_sent = False
         for attempt in range(MAX_ENTRY_ATTEMPTS):
             try:
@@ -787,15 +793,15 @@ class CurrencyWars:
                 if self._can_take_over(frame, resume=resume):
                     return frame
                 if self.result is not None:
-                    return self._homepage(frame)
+                    return self._homepage(frame, keep_weekly=weekly_entry)
                 if self._start_match_sent and (frame.page != Page.RANK or frame.rank_mode != self.mode):
                     # 开局请求可能已写入同模式进度。按续局核对，勿按旧存档设置结算。
                     menu = frame if frame.page == Page.MODES else self._mode_menu(self._homepage(frame))
                     return self._resume_saved_match(menu, expected_mode=self.mode)
-                if homepage_only or frame.page not in (Page.MODES, Page.RANK, Page.END_MATCH_CONFIRM):
+                if weekly_entry:
+                    return self._homepage(frame, keep_weekly=True)
+                if frame.page not in (Page.MODES, Page.RANK, Page.END_MATCH_CONFIRM):
                     frame = self._homepage(frame)
-                if homepage_only:
-                    return frame
                 if frame.page == Page.RANK and (resume or frame.rank_mode not in (None, self.mode)):
                     frame = self._go_back(frame, Page.MODES)
                 return self._launch(frame, resume)
@@ -2516,7 +2522,7 @@ class CurrencyWars:
         fight = frame.find(*ui.BOARD_ADVANCE, area=ui.BOARD_FIGHT)
         if fight is None or (fight.text == "出战" and not board.front_count):
             raise CurrencyWarsActionUnready("备战结束时未确认可推进按钮或前台角色")
-        if self.default_strategy and fight.text == "出战" and board.used > board.capacity:
+        if fight.text == "出战" and board.used > board.capacity:
             raise CurrencyWarsActionUnready("部署人数仍超过上限")
         if fight.text == "选择主角":
             return self._enter_halo(frame, board)
@@ -2537,15 +2543,8 @@ class CurrencyWars:
             f"点击{fight.text}后未确认离开当前备战节点", seconds=22, attempts=2,
         )
 
-    def _advance_existing_team(self):
-        frame = self._observe()
-        if frame.page != Page.BOARD:
-            return frame
-        if frame.shop_open:
-            return self._close_shop(frame)
-        fight = frame.find(*ui.BOARD_ADVANCE, area=ui.BOARD_FIGHT)
-        if fight is None:
-            return self._prepare(frame)
+    @staticmethod
+    def _deployment_blocks_fight(frame):
         try:
             slots = frame.field_slots()
         except Exception as error:
@@ -2556,10 +2555,25 @@ class CurrencyWars:
         except Exception as error:
             log.debug(f"出战前暂未识别部署人数：{error}")
             capacity = None
-        needs_front = slots and not any(s.occupied for s in slots if s.zone == "front")
-        overcrowded = capacity and capacity[0] > capacity[1]
-        if capacity and (needs_front or overcrowded):
-            return self._prepare_default_team(frame, deploy_only=True)
+        return (bool(slots) and not any(s.occupied for s in slots if s.zone == "front")
+                or capacity is not None and capacity[0] > capacity[1])
+
+    def _advance_existing_team(self):
+        frame = self._observe()
+        if frame.page != Page.BOARD:
+            return frame
+        if frame.shop_open:
+            return self._close_shop(frame)
+        fight = frame.find(*ui.BOARD_ADVANCE, area=ui.BOARD_FIGHT)
+        if fight is None:
+            return self._prepare(frame)
+        if fight.text == "出战" and self._deployment_blocks_fight(frame):
+            stage = frame.stage
+            frame = self._prepare_default_team(frame, deploy_only=True)
+            if frame.page == Page.BOARD and frame.stage == stage and self._deployment_blocks_fight(frame):
+                # 现有角色仍无法出战，回到正常备战收集奖励或补充角色。
+                return self._prepare(frame)
+            return frame
         if fight.text == "选择主角" or frame.halo_preview():
             frame, board = self._read_default_board(frame)
             return self._enter_halo(frame, board) if board is not None else frame
@@ -3578,10 +3592,11 @@ class CurrencyWars:
         self.last_result_stage = None
         same_stage = 0
         prepare_failures = 0
+        preparation_fallbacks = 0
         while True:
-            if frame.page == Page.HOME:
+            if frame.page in (Page.HOME, Page.WEEKLY):
                 outcome = {True: "胜利", False: "失败", None: "未知"}[self.result]
-                log.info(f"已返回货币战争首页，整局结果：{outcome}")
+                log.info(f"已离开货币战争对局，整局结果：{outcome}")
                 return frame
             self._check_budget()
             progress = self.preparation_progress
@@ -3597,6 +3612,7 @@ class CurrencyWars:
                     self.last_result_stage = stage
                     same_stage = 0
                     prepare_failures = 0
+                    preparation_fallbacks = 0
                     if frame.page in BOARD_PAGES:
                         self.battle_auto_attempts = 0
                         self.battle_auto_retry_at = None
@@ -3609,6 +3625,9 @@ class CurrencyWars:
                     if same_stage == 17:
                         log.warning(f"节点 {stage or '开局'} 转场较慢，优先推进现有阵容")
                 if frame.page == Page.BOARD and (same_stage > 16 or prepare_failures >= 2):
+                    if preparation_fallbacks >= MAX_PREPARATION_FALLBACKS:
+                        raise CurrencyWarsUnavailable(f"节点 {stage or '开局'} 多次复核后仍无法完成备战并推进，已保留当前现场")
+                    preparation_fallbacks += 1
                     frame = self._advance_existing_team()
                 else:
                     frame = self._play_step(frame)
@@ -3626,6 +3645,8 @@ class CurrencyWars:
             if self.preparation_progress != progress:
                 # 连续待安放时可留在同一页。只用已确认的经验到账、出队部署或腾位回执重置停滞计数。
                 same_stage = 0
+                prepare_failures = 0
+                preparation_fallbacks = 0
             time.sleep(ACTION_POLL)
 
     def _play_step(self, frame):
@@ -3641,7 +3662,7 @@ class CurrencyWars:
             return self._go_back(frame, Page.HOME)
         if page in (Page.RANK, Page.END_MATCH_CONFIRM):
             return self._go_back(frame, Page.MODES)
-        if page in (Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT):
+        if page in (Page.REWARD_RECEIPT, Page.REWARD_LIMIT):
             return self._homepage(frame)
         if page == Page.BOARD:
             return self._prepare(frame)
@@ -3911,10 +3932,10 @@ class CurrencyWars:
                 frame = self._observe()
                 score = None
                 if weekly and not self._can_take_over(frame, resume=resume):
-                    frame = self._enter_with_recovery(frame, resume=resume, homepage_only=True)
+                    frame = self._enter_with_recovery(frame, resume=resume, weekly_entry=True)
                     if frame is None:
                         return False
-                    if frame.page == Page.HOME and self.result is None:
+                    if frame.page in (Page.HOME, Page.WEEKLY) and self.result is None:
                         frame, score, claimed = self._check_weekly_reward(frame)
                 while matches < (MAX_WEEKLY_MATCHES if weekly else 1):
                     if weekly:

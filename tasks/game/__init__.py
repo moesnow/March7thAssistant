@@ -298,7 +298,6 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             time.sleep(1)
 
     def cloud_player_ready():
-        session_uncertain = False
         last_error = None
         for attempt in range(MAX_RETRY):
             pause_ctl.checkpoint()
@@ -306,10 +305,9 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 in_game = cloud_game.is_in_game()
             except (CloudGameDisconnectedError, CloudGameProbeUnready, TimeoutError) as error:
                 in_game = None
-                session_uncertain = session_uncertain or isinstance(error, (CloudGameDisconnectedError, CloudGameProbeUnready))
                 last_error = error
             pause_ctl.checkpoint()
-            if in_game is not None and (in_game or not session_uncertain):
+            if in_game is not None and (in_game or last_error is None):
                 return in_game
             if attempt + 1 < MAX_RETRY:
                 log.warning(f"暂未确认云游戏会话，等待复核：{last_error}")
@@ -317,7 +315,10 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         raise GameStartupUnavailable(f"云游戏连接持续不可用，已保留游戏现场：{last_error}") from last_error
 
     def start_cloud_game():
-        started = cloud_game.start_game_process(headless=headless)
+        if screen_ready is not None:
+            started = cloud_game.start_game_process(headless=headless, preserve_existing=True)
+        else:
+            started = cloud_game.start_game_process(headless=headless)
         pause_ctl.checkpoint()
         if not started:
             raise ConnectionError("启动或连接浏览器失败")
@@ -385,6 +386,12 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         except Exception as e:
             pause_ctl.check_stop()
             log.error(f"尝试启动游戏时发生错误：{e}")
+            if backend == "cloud" and screen_ready is not None:
+                cloud_game.preserve_running_browser()
+                if retry == MAX_RETRY - 1:
+                    raise GameStartupUnavailable(f"云游戏启动持续不可用，已保留游戏现场：{e}") from e
+                time.sleep(1)
+                continue
             if backend == "local" and starrail.launch_method == "epic":
                 from module.game.epic import EpicLaunchError
                 if isinstance(e, EpicLaunchError):

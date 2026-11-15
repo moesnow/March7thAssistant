@@ -941,8 +941,8 @@ class Automation(metaclass=SingletonMeta):
 
         return True
 
-    def drag_mouse(self, start, end, duration=0.5, end_pause=0.0, repeats=1):
-        """按归一化坐标连续拖动，只截图定位一次，仅最后一次可在终点停留。"""
+    def drag_mouse(self, start, end, duration=0.5, end_pause=0.0, repeats=1, *, take_screenshot=True):
+        """按归一化坐标连续拖动。调用方已核对画面时可复用它的截图定位。"""
         duration = float(duration)
         if not math.isfinite(duration) or not 0 <= duration <= 60:
             raise ValueError("滑动时长必须在 0 到 60 秒之间")
@@ -953,7 +953,10 @@ class Automation(metaclass=SingletonMeta):
             raise ValueError("连续拖动次数必须是 1 到 10 之间的整数")
         if any(not 0 <= value <= 1 for value in (*start, *end)):
             raise ValueError("坐标必须在 0 到 1 之间")
-        self.take_screenshot()
+        if take_screenshot:
+            self.take_screenshot()
+        else:
+            pause_ctl.checkpoint()
         if self.screenshot is None or self.screenshot_pos is None:
             raise RuntimeError("无法获取游戏窗口尺寸")
 
