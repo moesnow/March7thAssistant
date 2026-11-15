@@ -358,7 +358,7 @@ from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
-from tasks.weekly.currency_wars import CurrencyWars
+from tasks.weekly.currency_wars import CurrencyWars, CurrencyWarsTerminalError
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 from tasks.base import screen_test
@@ -773,9 +773,9 @@ if __name__ == "__main__":
             release_input()
             telemetry.track_error(type(e).__name__, str(e))
             log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
-            # 保存错误截图
-            screenshot_path = save_error_screenshot(log)
-            run_session.note(error=str(e), screenshot=screenshot_path)
+            terminal = isinstance(e, CurrencyWarsTerminalError)
+            screenshot_path = e.screenshot if terminal else save_error_screenshot(log)
+            run_session.note(error=str(e), screenshot=screenshot_path, reason=e.reason if terminal else None)
             # 合并模式下先发送已收集的通知
             notif.flush_batch()
             # 发送通知，如果有截图则附带截图
@@ -786,8 +786,9 @@ if __name__ == "__main__":
             if screenshot_path:
                 notify_kwargs['image'] = screenshot_path
             notif.notify(**notify_kwargs)
-            pause_on_error()
-            sys.exit(1)
+            if not terminal:
+                pause_on_error()
+            sys.exit(EXIT_FAILED)
     except SystemExit as e:
         run_session.finish(exit_code_of(e))
         raise

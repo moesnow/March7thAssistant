@@ -439,16 +439,18 @@ class Automation(metaclass=SingletonMeta):
         self.logger.debug(f"目标文字：{', '.join(targets)} 未找到匹配文字")
         return None, None
 
-    def perform_ocr(self):
-        """执行OCR识别，并更新OCR结果列表。如果未识别到文字，保留ocr_result为一个空列表。"""
+    def perform_ocr(self, *, raise_on_error=False):
+        """刷新 OCR 结果。调用方需要重试时，可以接收识别异常。"""
         try:
             self.ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
             if not self.ocr_result:
                 self.logger.debug(f"未识别出任何文字")
                 self.ocr_result = []
         except Exception as e:
-            self.logger.error(f"OCR识别失败：{e}")
             self.ocr_result = []  # 确保在异常情况下，ocr_result为列表类型
+            if raise_on_error:
+                raise
+            self.logger.error(f"OCR识别失败：{e}")
 
     @pause_guard
     def find_text_element(self, target, include, need_ocr=True, relative=False):

@@ -7,13 +7,19 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+from PIL import Image
 import pytest
 
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.game.adb_transport import AdbError
 from module.localization import tr
+from tasks.base import task_steps
+from tasks.daily import daily
+from tasks.weekly import currency_wars
+from tasks.weekly.currency_wars_strategy import Slot
+from tasks.weekly.currency_wars_ui import Frame, Label, Page
 from utils.pause import RunStopRequested
-from utils.runs import EXIT_FAILED, EXIT_OK, exit_code_of
+from utils.runs import EXIT_FAILED, EXIT_OK, EXIT_STOPPED, STATUS_STOPPED, RunSession, exit_code_of
 from utils.tasks import AVAILABLE_TASKS, CLI_ONLY_TASKS, HOST_TASKS, PAUSABLE_TASKS, UNSUPPORTED_TASK, task_is_supported
 
 
@@ -45,7 +51,8 @@ def runner():
                  AVAILABLE_TASKS=AVAILABLE_TASKS, CLI_ONLY_TASKS=CLI_ONLY_TASKS, HOST_TASKS=HOST_TASKS,
                  UNSUPPORTED_TASK=UNSUPPORTED_TASK, task_is_supported=task_is_supported, tr=tr, AdbError=AdbError,
                  ProfileAssetNotFoundError=ProfileAssetNotFoundError,
-                 TouchProfileInputError=TouchProfileInputError)
+                 TouchProfileInputError=TouchProfileInputError,
+                 CurrencyWarsTerminalError=currency_wars.CurrencyWarsTerminalError)
     scope["time"] = SimpleNamespace(time=lambda: 0)
     scope["EXCLUSIVE_ACTIONS"] = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update", "adb_check"}
     # 仅加载入口函数，避免导入 CLI 时触发权限检查或游戏操作。
@@ -113,6 +120,202 @@ def test_currency_wars_loop_continues_after_settled_matches_until_stopped(runner
         ("currencywarsloop", won, 0) for won in (True, False, True, True)
     ]
     runner.game.stop.assert_not_called()
+
+
+@pytest.fixture
+def currency_wars_game(runner, monkeypatch):
+    image = Image.new("RGB", (1920, 1080))
+
+    def frame(page, *labels, **properties):
+        current = Frame(image, tuple(Label(text, point) for text, point in labels))
+        current.__dict__.update(page=page, **properties)
+        return current
+
+    frames = {
+        "home": frame(Page.HOME, ("开始货币战争", (1600, 972)), ("积分", (381, 961))),
+        "mode": frame(Page.MODES, ("进入标准博弈", (1640, 961)), unfinished_match=False),
+        "rank": frame(Page.RANK, ("开始对局", (1680, 965)), rank_mode="normal", enemy_rank=1),
+        "board": frame(Page.BOARD, ("出战", (1818, 750)), stage="1-1", capacity=(1, 1),
+                       slots=lambda: (Slot("front", 0, (745, 405), True),), inventory_items=lambda: ()),
+        "delayed": frame(Page.UNKNOWN),
+        "battle": frame(Page.BATTLE, auto_off=False),
+        "result": frame(Page.MATCH_RESULT, ("挑战成功", (960, 233)), ("返回货币战争", (960, 899))),
+    }
+    state = SimpleNamespace(page="home", now=0.0, completed=0, clicks=[], delayed_reads=0, battle_reads=0,
+                            fault=None, stop=False, delayed_until=None, later_steps=[], capture_failures=0)
+    clock = SimpleNamespace(monotonic=lambda: state.now,
+                            sleep=lambda seconds: setattr(state, "now", state.now + seconds))
+    auto = MagicMock()
+
+    def capture():
+        if state.page == "delayed":
+            state.delayed_reads += 1
+            if state.fault == "unavailable":
+                state.capture_failures += 1
+                raise OSError("窗口持续不可用")
+            if state.fault is None and state.now >= state.delayed_until:
+                state.page = "battle"
+        if state.page == "battle":
+            state.battle_reads += 1
+            if state.battle_reads == 3:
+                state.page = "result"
+        if state.page == "weekly":
+            score = 18000 if state.completed else 0
+            return frame(Page.WEEKLY, (f"{score}/18000", (245, 748)), claim_available=lambda: False)
+        return frames[state.page]
+
+    def click(point, *, press_duration):
+        state.clicks.append((state.page, point))
+        if state.page == "board":
+            assert point == (1818, 750)
+            state.battle_reads = 0
+            state.delayed_until = state.now + 28
+            state.page = "battle" if state.completed else "delayed"
+        else:
+            if state.page == "result":
+                state.completed += 1
+            state.page = {
+                ("home", (1600, 972)): "mode", ("home", (381, 961)): "weekly",
+                ("mode", (1640, 961)): "rank", ("rank", (1680, 965)): "board",
+                ("result", (960, 899)): "home",
+            }[state.page, point]
+
+    def press(key):
+        assert key == "esc" and state.page == "weekly"
+        state.page = "home"
+
+    def checkpoint():
+        if state.stop or (state.page == "delayed" and state.fault == "stopped"):
+            raise RunStopRequested
+
+    auto.find_element.side_effect = lambda pos, *args, **kwargs: (round(pos[0] * 1920), round(pos[1] * 1080))
+    auto.click_element_with_pos.side_effect = click
+    auto.press_key.side_effect = press
+    cfg = SimpleNamespace(
+        currencywars_strategy="default", currencywars_type="normal", currencywars_rank_difficulty="current",
+        currencywars_bonus_enable=False, currencywars_enable=True, currencywars_timestamp=1, refresh_hour=4,
+        asset_manager_enable=False, weekly_divergent_enable=False, fight_enable=False, universe_enable=False,
+        forgottenhall_enable=False, purefiction_enable=False, apocalyptic_enable=False,
+        forgottenhall_timestamp=1, purefiction_timestamp=1, apocalyptic_timestamp=1,
+        save_timestamp=MagicMock(),
+    )
+    cfg.get_value = lambda key, default=None: getattr(cfg, key, default)
+    monkeypatch.setattr(currency_wars, "cfg", cfg)
+    monkeypatch.setattr(currency_wars, "auto", auto)
+    monkeypatch.setattr(currency_wars, "time", clock)
+    monkeypatch.setattr(currency_wars, "pause_ctl", SimpleNamespace(checkpoint=checkpoint))
+    monkeypatch.setattr(currency_wars, "get_ui_profile", lambda _: SimpleNamespace(name="pc_1080"))
+    monkeypatch.setattr(currency_wars, "Base", MagicMock())
+    monkeypatch.setattr(currency_wars, "save_error_screenshot", MagicMock(return_value="currencywars.png"))
+    monkeypatch.setattr(currency_wars, "TASK_SECONDS", 90)
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture))
+    def create_task():
+        war = currency_wars.CurrencyWars()
+        war._recover_transit = MagicMock(wraps=war._recover_transit)
+        state.recover_transit = war._recover_transit
+        return war
+
+    factory = MagicMock(side_effect=create_task)
+    factory.game_screen_ready = currency_wars.CurrencyWars.game_screen_ready
+    runner.main.__globals__["CurrencyWars"] = factory
+    runner.game.stop.side_effect = lambda detect_loop: sys.exit(EXIT_OK) if detect_loop else None
+    monkeypatch.setattr(daily, "cfg", cfg)
+    monkeypatch.setattr(daily, "CurrencyWars", factory)
+    monkeypatch.setattr(daily.Date, "is_next_mon_x_am", lambda *_: True)
+    monkeypatch.setattr(daily.Daily, "prepare_daily", lambda: True)
+    monkeypatch.setattr(daily.reward, "start", lambda: state.later_steps.append("日常领奖"))
+    monkeypatch.setattr(daily.Daily, "run", lambda **_: state.later_steps.append("每日实训"))
+    monkeypatch.setattr(task_steps, "screen", MagicMock())
+    runner.Daily.start.side_effect = daily.Daily.start
+    state.factory = factory
+    return state
+
+
+def run_currency_wars_cli(runner, action):
+    session = RunSession({"run_id": "20261115-120000-abcd"})
+    session._save = MagicMock()
+    session.release_lock = MagicMock()
+    runner.cfg.get_value.return_value = False
+    runner.cfg.notify_template = {"ErrorOccurred": "发生错误：{error}"}
+    scope = runner.main.__globals__
+    scope.update(
+        __name__="__main__", sys=sys, atexit=MagicMock(), exit_handler=MagicMock(),
+        args=SimpleNamespace(task=action, workflow_name=None, no_run_immediately=False),
+        run_session=session, RunStopRequested=RunStopRequested, STATUS_STOPPED=STATUS_STOPPED,
+        EXIT_FAILED=EXIT_FAILED, EXIT_OK=EXIT_OK, EXIT_STOPPED=EXIT_STOPPED, exit_code_of=exit_code_of,
+        release_input=MagicMock(), pause_on_error=MagicMock(), save_error_screenshot=MagicMock(),
+        NotificationLevel=currency_wars.NotificationLevel,
+    )
+    try:
+        exec(runner.entrypoint, scope)
+    except SystemExit as error:
+        assert error.code == session.record["exit_code"]
+    session.release_lock.assert_called_once()
+    return session.record
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+def test_currency_wars_entry_continues_after_the_fight_receipt_times_out(runner, currency_wars_game, action):
+    state = currency_wars_game
+    if action == "currencywarstemp":
+        state.page = "board"
+    if action == "currencywarsloop":
+        def stop_after_two(task_id, success, duration):
+            assert task_id == "currencywarsloop" and success
+            if state.completed == 2:
+                state.stop = True
+
+        runner.telemetry.track_task_complete.side_effect = stop_after_two
+
+    record = run_currency_wars_cli(runner, action)
+    expected = 2 if action == "currencywarsloop" else 1
+    assert state.completed == expected
+    state.recover_transit.assert_called_once()
+    assert isinstance(state.recover_transit.call_args.args[1], currency_wars.CurrencyWarsReceiptTimeout)
+    assert state.clicks.count(("board", (1818, 750))) == expected
+    assert state.clicks.count(("rank", (1680, 965))) == (0 if action == "currencywarstemp" else expected)
+    state.factory.assert_called_once_with()
+    assert record["status"] == ("stopped" if action == "currencywarsloop" else "success")
+    if action == "main":
+        assert state.later_steps == ["日常领奖", "每日实训"]
+    task_steps.screen.change_to.assert_not_called()
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
+@pytest.mark.parametrize(("fault", "status", "reason", "exit_code"), (
+    ("unavailable", "failed", "currencywars_unavailable", EXIT_FAILED),
+    ("timeout", "failed", "currencywars_timeout", EXIT_FAILED),
+    ("stopped", "stopped", None, EXIT_STOPPED),
+))
+def test_currency_wars_entry_records_clear_terminal_states(
+        runner, currency_wars_game, monkeypatch, action, fault, status, reason, exit_code):
+    state = currency_wars_game
+    state.fault = fault
+    if action == "currencywarstemp":
+        state.page = "board"
+    if fault == "timeout":
+        monkeypatch.setattr(currency_wars, "TASK_SECONDS", 34)
+    record = run_currency_wars_cli(runner, action)
+
+    assert (record["status"], record["reason"], record["exit_code"]) == (status, reason, exit_code)
+    assert state.completed == 0 and state.later_steps == []
+    assert state.clicks.count(("board", (1818, 750))) == 1
+    state.factory.assert_called_once_with()
+    task_steps.screen.change_to.assert_not_called()
+    scope = runner.main.__globals__
+    scope["save_error_screenshot"].assert_not_called()
+    scope["pause_on_error"].assert_not_called()
+    if fault == "stopped":
+        scope["release_input"].assert_called_once_with(close=True)
+        assert record["error"] is None and record["screenshot"] is None
+        currency_wars.save_error_screenshot.assert_not_called()
+        runner.notif.notify.assert_not_called()
+    else:
+        scope["release_input"].assert_called_once_with()
+        assert record["error"] and record["screenshot"] == "currencywars.png"
+        currency_wars.save_error_screenshot.assert_called_once()
+    if fault == "unavailable":
+        assert state.capture_failures == currency_wars.MAX_CAPTURE_ATTEMPTS
 
 
 @pytest.mark.parametrize("cloud_game_enable", [False, True], ids=["local", "visible-cloud"])

@@ -649,8 +649,7 @@ class Frame:
                 return Page.BENCH_FULL
             if self.shop_open:
                 return Page.SHOP
-            if (self.capacity and self.find("商店", area=BOARD_SHOP)
-                    and self.find(*BOARD_ADVANCE, area=BOARD_FIGHT)
+            if (self.find("商店", area=BOARD_SHOP) and self.find(*BOARD_ADVANCE, area=BOARD_FIGHT)
                     and self._board_rows_visible()):
                 return Page.BOARD
         return Page.UNKNOWN
@@ -1240,15 +1239,15 @@ class Frame:
 
     @cached_property
     def employee_event_selected(self) -> frozenset[str]:
-        selected = set()
-        for label in self.employee_event_candidates:
-            x, _ = label.point
-            badge = self.crop((x - 75, 184, x - 29, 207)).astype(np.int16)
-            r, g, b = badge.transpose(2, 0, 1)
-            if self.has("已选择", area=(x - 102, 174, x + 15, 220), contains=True) or (
-                    ((r > 186) & (g > 138) & (r - b > 45)).mean() > 0.35):
-                selected.add(label.text)
-        return frozenset(selected)
+        return frozenset(label.text for label in self.employee_event_candidates
+                         if self.employee_event_card_selected(label.point[0]))
+
+    def employee_event_card_selected(self, x: int) -> bool:
+        badge = self.crop((x - 75, 184, x - 29, 207)).astype(np.int16)
+        r, g, b = badge.transpose(2, 0, 1)
+        return self.has("已选择", area=(x - 102, 174, x + 15, 220), contains=True) or (
+            ((r > 186) & (g > 138) & (r - b > 45)).mean() > 0.35
+        )
 
     def employee_event_confirm(self) -> Label | None:
         return self.enabled_button(self.find("确认选择", area=EMPLOYEE_EVENT_CONFIRM))
@@ -1287,7 +1286,9 @@ class Frame:
     def supply_selection(self) -> tuple[int, int] | None:
         count = self.value(r"已选择\d/\d", (1510, 882, 1820, 951))
         if count:
-            return tuple(map(int, count.removeprefix("已选择").split("/")))
+            selected, required = map(int, count.removeprefix("已选择").split("/"))
+            if 0 < required <= len(SUPPLY_CENTERS) and 0 <= selected <= required:
+                return selected, required
         return None
 
     @cached_property
