@@ -416,6 +416,38 @@ def test_single_tasks_report_one_step_around_the_windows_entry(entry, device, mo
     assert bridge.summary == (detail if result else None)
 
 
+def test_android_entry_exports_debug_and_traceback_and_restores_log_levels(entry, device, monkeypatch):
+    from PIL import Image
+    from module.game import adb_ready
+    from module.ocr.ocr import OCR
+    from tasks.base.task_steps import GameRecoveryError
+
+    original_level = log.logger.level
+    original_handlers = tuple(log.logger.handlers)
+    handler_levels = [handler.level for handler in original_handlers]
+
+    monkeypatch.setattr(adb_ready.ImageUtils, "scale_and_match_template", lambda *_: (0.45, (0, 0)))
+
+    def fail(*, on_summary):
+        adb_ready._match(Image.new("RGB", (1280, 720)), "menu", None)
+        OCR.log_results(SimpleNamespace(logger=log), [{"txt": "委托"}])
+        raise GameRecoveryError("委托失败后无法回到可操作界面")
+
+    monkeypatch.setattr(rewards, "run_daily_training", fail)
+    bridge = Bridge()
+
+    assert start(entry, "DAILY", bridge) == "runtime_error"
+    diagnostics = [call[2] for call in bridge.calls if call[:2] == ("log", "DEBUG")]
+    assert len(diagnostics) == 1
+    assert "ADB 启动模板 menu" in diagnostics[0] and "相似度=0.450 阈值=0.90" in diagnostics[0]
+    assert "OCR识别结果: ['委托']" in diagnostics[0]
+    assert any(call[:2] == ("log", "ERROR") and "Traceback (most recent call last):" in call[2]
+               for call in bridge.calls)
+    assert log.logger.level == original_level
+    assert tuple(log.logger.handlers) == original_handlers
+    assert [handler.level for handler in log.logger.handlers] == handler_levels
+
+
 def test_settings_that_do_not_match_report_no_progress(entry, device):
     bridge = Bridge()
     assert entry.run(str(ROOT), "token", 29, "10", "Redmi", False, "DAILY", "{}", False, True, "zh_CN", bridge) == "runtime_error"

@@ -7,6 +7,7 @@ import numpy as np
 
 from module.game.adb_transport import AdbError
 from module.localization import tr
+from module.logger import log
 from utils.image_utils import ImageUtils
 from utils.pause import pause_ctl
 
@@ -30,6 +31,7 @@ def _match(image, name, template):
     x, y, right, bottom = _TEMPLATES[name]
     crop = cv2.cvtColor(np.asarray(image.crop((x, y, right, bottom))), cv2.COLOR_RGB2BGR)
     score, (left, top) = ImageUtils.scale_and_match_template(crop, template)
+    log.debug(f"ADB 启动模板 {name} 区域={_TEMPLATES[name]} 相似度={score:.3f} 阈值=0.90")
     if score < 0.90:
         return None
     height, width = template.shape[:2]

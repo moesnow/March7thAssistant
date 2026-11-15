@@ -66,6 +66,8 @@ class TaskController private constructor(private val context: Context) {
     private val access = DeviceAccess(context)
     private val marker = AtomicFile(File(context.filesDir, "active-task"))
     private val logFile = File(context.filesDir, "last-run.log")
+    private val diagnostics = RunDiagnostics(context.filesDir)
+    private val tracebackFallback = context.getString(R.string.logs_traceback_summary)
     private val logLock = Any()
     // 偏好键与早期版本不同名，旧键留在文件里也不会被读到。
     private val stateData = MutableStateFlow(
@@ -78,7 +80,7 @@ class TaskController private constructor(private val context: Context) {
         )
     )
     private val logData = MutableStateFlow(
-        runCatching { logFile.readRunLog(LOG_LINES) }.getOrDefault(emptyList())
+        runCatching { logFile.readRunLog(LOG_LINES).map { it.forDisplay(tracebackFallback) } }.getOrDefault(emptyList())
     )
     private val previewData = MutableStateFlow<GamePreviewSource?>(null)
     private var active: TaskRun? = null
@@ -191,7 +193,10 @@ class TaskController private constructor(private val context: Context) {
 
     /** 在 I/O 线程调用，复制当前一轮的 UTF-8 日志。流由调用者关闭。 */
     fun exportLog(output: OutputStream) {
-        synchronized(logLock) { logFile.inputStream().use { it.copyTo(output) } }
+        synchronized(logLock) {
+            logFile.inputStream().use { it.copyTo(output) }
+            diagnostics.exportTo(output)
+        }
     }
 
     internal fun begin(onFinished: () -> Unit): Boolean {
@@ -258,10 +263,15 @@ class TaskController private constructor(private val context: Context) {
 
     private fun appendLog(entry: LogEntry) {
         synchronized(logLock) {
-            runCatching { logFile.appendText(entry.toLogText(), Charsets.UTF_8) }.onFailure {
+            runCatching {
+                if (entry.level == LogLevel.DEBUG) diagnostics.append(entry)
+                else logFile.appendText(entry.toLogText(), Charsets.UTF_8)
+            }.onFailure {
                 Log.w("M7ATask", "Cannot write task log", it)
             }
-            logData.update { (it + entry).takeLast(LOG_LINES) }
+            if (entry.level != LogLevel.DEBUG) {
+                logData.update { (it + entry.forDisplay(tracebackFallback)).takeLast(LOG_LINES) }
+            }
         }
     }
 
@@ -301,6 +311,7 @@ class TaskController private constructor(private val context: Context) {
                 usageRun = usage.startTask(snapshot.task, snapshot.privilege, snapshot.config.panelOff)
                 synchronized(logLock) {
                     logFile.writeText("")
+                    diagnostics.clear()
                     logData.value = emptyList()
                 }
                 val markerStream = marker.startWrite()

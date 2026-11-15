@@ -212,7 +212,7 @@ private fun LogLines(shown: List<LogEntry>) {
                 } else {
                     val open = expanded[entry] == true
                     val tint = when (entry.level) {
-                        LogLevel.INFO -> scheme.onSurface
+                        LogLevel.INFO, LogLevel.DEBUG -> scheme.onSurface
                         LogLevel.WARNING -> LocalBrand.current.warning
                         LogLevel.ERROR -> scheme.error
                     }

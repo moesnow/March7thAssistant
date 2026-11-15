@@ -420,7 +420,8 @@
     <string name="logs_empty_detail">开始一次任务后，这里会实时显示每一步。</string>
     <string name="logs_no_match">没有符合条件的日志</string>
     <string name="logs_no_match_detail">换一个级别，或清除搜索词。</string>
-    <string name="logs_footer">这里显示本轮最近 200 条，导出的文件包含本轮全部日志</string>
+    <string name="logs_footer">这里显示本轮最近 200 条运行日志，导出文件还包含诊断详情</string>
+    <string name="logs_traceback_summary">任务执行出错，可导出日志查看详情。</string>
     <string name="logs_see_fix">处理办法</string>
     <string name="logs_to_bottom">回到最新</string>
     <string name="help_intro">点开对应的问题，按步骤处理后重新开始。仍然不行的话，导出日志到项目主页反馈。</string>
@@ -436,6 +437,8 @@
     <string name="error_game_advice">请先安装国服《崩坏：星穹铁道》，手动打开一次，完成登录和资源下载后再开始。</string>
     <string name="error_game_exited_title">游戏已退出</string>
     <string name="error_game_exited_advice">可以直接从小助手重新启动游戏。若反复退出，请导出日志反馈。</string>
+    <string name="error_game_start_timeout_title">等待游戏就绪超时</string>
+    <string name="error_game_start_timeout_advice">打开游戏确认是否需要登录或更新，然后重新开始任务。反复超时可导出日志反馈。</string>
     <string name="error_login_title">需要你先登录游戏</string>
     <string name="error_login_advice">1. 在手机上打开游戏，完成登录，进到能操作角色的界面。\n2. 回到小助手重新开始。</string>
     <string name="error_locked_title">手机处于锁屏状态</string>

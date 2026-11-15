@@ -175,6 +175,7 @@ internal fun errorInfo(code: String?): ErrorInfo? = when (code) {
     "root_unavailable" -> ErrorInfo(R.string.error_root_title, R.string.error_root_advice, ErrorFix.GUIDE)
     "game_not_installed" -> ErrorInfo(R.string.error_game_title, R.string.error_game_advice, ErrorFix.NONE)
     "game_exited" -> ErrorInfo(R.string.error_game_exited_title, R.string.error_game_exited_advice, ErrorFix.LOGS)
+    "game_start_timeout" -> ErrorInfo(R.string.error_game_start_timeout_title, R.string.error_game_start_timeout_advice, ErrorFix.LOGS)
     "manual_action_required" -> ErrorInfo(R.string.error_login_title, R.string.error_login_advice, ErrorFix.NONE)
     "keyguard_locked" -> ErrorInfo(R.string.error_locked_title, R.string.error_locked_advice, ErrorFix.NONE)
     "device_asleep" -> ErrorInfo(R.string.error_asleep_title, R.string.error_asleep_advice, ErrorFix.NONE)

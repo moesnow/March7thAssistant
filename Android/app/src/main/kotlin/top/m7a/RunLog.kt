@@ -1,12 +1,15 @@
 package top.m7a
 
 import java.io.File
+import java.io.OutputStream
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-enum class LogLevel { INFO, WARNING, ERROR }
+enum class LogLevel { DEBUG, INFO, WARNING, ERROR }
 enum class LogCategory { TASK, DEVICE, APP }
 
 data class LogEntry(
@@ -18,6 +21,18 @@ data class LogEntry(
 )
 
 private val clockFormat = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.ROOT)
+private const val tracebackHeader = "Traceback (most recent call last):"
+private val readableErrors = setOf("AdbError", "GameRecoveryError", "PowerError", "TouchProfileInputError")
+
+internal fun LogEntry.forDisplay(fallback: String): LogEntry {
+    if (level != LogLevel.ERROR || message.substringBefore('\n') != tracebackHeader) return this
+    val lastHeader = message.lastIndexOf("\n$tracebackHeader\n")
+    val exception = message.substring(lastHeader + 1).lineSequence().drop(1)
+        .firstOrNull { it.isNotBlank() && !it.first().isWhitespace() }
+    val name = exception?.substringBefore(':')?.substringAfterLast('.')
+    val reason = exception?.substringAfter(':', "")?.trim()?.takeIf { it.isNotEmpty() }
+    return copy(message = if (name != null && name in readableErrors && reason != null) reason.take(240) else fallback)
+}
 
 internal fun logEntry(
     timeMs: Long, level: LogLevel, category: LogCategory, message: String, heading: Boolean = false,
@@ -73,4 +88,32 @@ internal fun File.readRunLog(limit: Int): List<LogEntry> = useLines { lines ->
     }
     flush()
     tail.toList()
+}
+
+/** 保留近期调试记录，和本轮原始运行日志一起导出。调用方与运行日志共用一把锁。 */
+internal class RunDiagnostics(directory: File, private val chunkBytes: Long = 512L * 1024) {
+    private val current = File(directory, "last-run-diagnostics.log")
+    private val previous = File(directory, "last-run-diagnostics.previous.log")
+
+    fun clear() {
+        Files.deleteIfExists(previous.toPath())
+        Files.deleteIfExists(current.toPath())
+    }
+
+    fun append(entry: LogEntry) {
+        val bytes = entry.toLogText().toByteArray(Charsets.UTF_8)
+        if (current.length() > 0 && current.length() + bytes.size > chunkBytes) {
+            Files.move(current.toPath(), previous.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
+        current.appendBytes(bytes)
+    }
+
+    fun exportTo(output: OutputStream) {
+        val files = listOf(previous, current).filter { it.length() > 0 }
+        if (files.isEmpty()) return
+        output.write("\n近期诊断（模板匹配、OCR 等）\n".toByteArray(Charsets.UTF_8))
+        for (file in files) {
+            file.inputStream().use { it.copyTo(output) }
+        }
+    }
 }
