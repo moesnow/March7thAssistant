@@ -143,20 +143,16 @@ jobs:
           .\temp\7zzs\7za.exe a -t7z -m0=flzma2 -ms=on -mx=7 .\dist\update.7z .\dist\update\
           Rename-Item -Path .\dist\update -NewName March7thAssistant
 
-      # 获取第三方库最新发布版本
-      - name: Get 3rdparty release tags
+      # 从 GitHub 官方 API 获取附件，并用同一份清单下载和生成缓存键。
+      - name: Resolve Windows release dependencies
         if: startsWith(github.ref, 'refs/tags/')
         id: deps-tags
         run: |
-          $asu = (gh api repos/moesnow/Auto_Simulated_Universe/releases/latest --jq '.tag_name' 2>$null)
-          $fhoe = (gh api repos/linruowuyin/Fhoe-Rail/releases/latest --jq '.tag_name' 2>$null)
-          $fps = (gh api repos/winTEuser/Genshin_StarRail_fps_unlocker/releases/latest --jq '.tag_name' 2>$null)
-          $buildHash = "${{ hashFiles('build.py', 'module/game/cloud.py') }}"
-          $hash = "${asu}-${fhoe}-${fps}-${buildHash}"
-          echo "hash=$hash" >> $env:GITHUB_OUTPUT
-          Write-Host "3rdparty cache key: $hash"
+          $manifestHash = uv run --no-sync python .github/scripts/windows_release_dependencies.py resolve "$env:RUNNER_TEMP/windows-release-dependencies.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "hash=$manifestHash" >> $env:GITHUB_OUTPUT
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
 
       # 缓存第三方库
       - name: Restore 3rdparty cache
@@ -165,12 +161,18 @@ jobs:
         uses: actions/cache@v5
         with:
           path: 3rdparty
-          key: 3rdparty-${{ steps.deps-tags.outputs.hash }}
+          key: windows-release-deps-${{ steps.deps-tags.outputs.hash }}-${{ hashFiles('.github/scripts/windows_release_dependencies.py', 'build.py', 'module/game/cloud.py') }}
 
       # 下载第三方库（缓存未命中时）
       - name: Download 3rdparty
         if: startsWith(github.ref, 'refs/tags/') && steps.cache-3rdparty.outputs.cache-hit != 'true'
-        run: uv run python build.py --task all
+        run: uv run --no-sync python .github/scripts/windows_release_dependencies.py stage "$env:RUNNER_TEMP/windows-release-dependencies.json"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Download integrated browser
+        if: startsWith(github.ref, 'refs/tags/') && steps.cache-3rdparty.outputs.cache-hit != 'true'
+        run: uv run --no-sync python build.py --task browser
 
       # 生成日志并移动第三方库到dist目录
       - name: Move 3rdparty to dist directory
@@ -187,7 +189,12 @@ jobs:
         run: |
           # Compress-Archive -Path .\dist\March7thAssistant_full\ -DestinationPath .\dist\March7thAssistant_full.zip -Force
           .\assets\binary\7za.exe a -tzip .\dist\March7thAssistant_full.zip .\dist\March7thAssistant_full\
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\temp\7zzs\7za.exe a -t7z -m0=flzma2 -ms=on -mx=9 .\dist\March7thAssistant_full.7z .\dist\March7thAssistant_full\
+
+      - name: Verify Windows full archives
+        if: startsWith(github.ref, 'refs/tags/')
+        run: uv run --no-sync python .github/scripts/windows_release_dependencies.py verify ./dist/March7thAssistant_full
 
       - name: Download signed Android APK
         if: needs.android.result == 'success'
