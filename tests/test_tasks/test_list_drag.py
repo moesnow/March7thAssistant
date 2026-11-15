@@ -202,6 +202,46 @@ def test_quick_ornament_checks_page_after_final_drag(monkeypatch, target_on_last
     assert sum(call.args[1] == "min_distance_text" for call in auto.click_element.call_args_list) == 6
 
 
+def test_quick_ornament_releases_a_held_button_on_stop(monkeypatch):
+    from types import MethodType
+
+    from module.automation.automation import Automation
+    from tasks.weekly import currency_wars
+    from utils.pause import PauseController, RunStopRequested
+
+    controller = PauseController()
+    controller._enabled = True
+    controller._resume_event.set()
+    auto = Mock()
+    auto.calculate_click_position.return_value = (100, 200)
+    auto.click_element_with_pos = MethodType(Automation.click_element_with_pos, auto)
+    auto.input_handler = SimpleNamespace(mouse_up=Mock())
+    auto.find_element.side_effect = lambda *_args, **_kwargs: (
+        controller.check_stop() or ((95, 195), (105, 205))
+    )
+
+    def down(_x, _y):
+        controller.request_stop()
+        return True
+
+    auto.mouse_down.side_effect = down
+    monkeypatch.setattr(currency_wars, "auto", auto)
+    monkeypatch.setattr(currency_wars, "screen", Mock())
+    monkeypatch.setattr(currency_wars, "time", SimpleNamespace(sleep=Mock()))
+    monkeypatch.setattr(currency_wars, "cfg", SimpleNamespace(
+        instance_names={"饰品提取": "坚城不倒"}, build_target_enable=False,
+    ))
+
+    with pytest.raises(RunStopRequested):
+        currency_wars.CurrencyWars().process_ornament()
+
+    auto.mouse_down.assert_called_once_with(100, 200)
+    auto.input_handler.mouse_up.assert_called_once_with()
+    auto.mouse_move.assert_not_called()
+    auto.press_key.assert_not_called()
+    assert auto.click_element.call_count == 3
+
+
 def test_message_checks_page_after_final_drag(monkeypatch):
     from tasks.reward import message
 

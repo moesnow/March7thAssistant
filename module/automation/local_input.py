@@ -144,7 +144,10 @@ class LocalInput(InputBase):
     def secretly_write(self, text, interval=0.1):
         '''模拟键盘输入字符串，可以指定字符输入间隔'''
         try:
-            pyautogui.write(text, interval=interval)
+            for character in text:
+                pause_ctl.check_stop()
+                pyautogui.write(character, interval=interval, _pause=False)
+            pause_ctl.check_stop()
             self.logger.debug("键盘输入 ***")
         except Exception as e:
             self.logger.error(f"键盘输入 *** 出错：{e}")

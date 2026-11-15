@@ -1320,6 +1320,42 @@ def test_in_match_reconnect_waits_for_the_original_match_or_preserves_the_menu(m
     assert state.clicks == expected
 
 
+def test_in_match_reconnect_preserves_the_result_while_opening_modes(monkeypatch, world):
+    world.cfg.currencywars_unfinished_match = "resume"
+    saved = mode(("继续对局", 1640, 962), ("标准博弈", 646, 156))
+    fighting = battle(True)
+    reconnect = reconnect_prompt()
+    lobby = home()
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233)))
+    detail = Frame(CANVAS, labels(("返回货币战争", 960, 899)))
+    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
+    routes = {(saved, (1640, 962)): fighting, (reconnect, (1188, 672)): lobby,
+              (lobby, (1600, 972)): result, (detail, (960, 899)): lobby, (lobby, (381, 961)): points}
+    battle_reads = result_reads = 0
+
+    def capture(state):
+        nonlocal battle_reads, result_reads
+        if state.frame is fighting:
+            battle_reads += 1
+            if battle_reads == 2:
+                state.frame = reconnect
+        elif state.frame is result:
+            result_reads += 1
+            if result_reads == 2:
+                state.frame = detail
+
+    state = drive(monkeypatch, world, saved, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
+    world.auto.press_key.side_effect = lambda key: setattr(state, "frame", lobby)
+    record = Mock()
+    monkeypatch.setattr(world.war, "_on_match_result", record)
+
+    assert world.war.start()
+    assert world.war.result is True
+    assert state.clicks == [(f.page, point) for f, point in routes]
+    record.assert_called_once_with(result)
+    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
+
+
 def test_reconnect_uses_the_task_budget_and_a_bounded_native_retry(monkeypatch, world):
     modal = reconnect_prompt()
     state = drive(monkeypatch, world, modal)
@@ -3320,6 +3356,52 @@ def test_dreamscape_dance_uses_card_locations_when_names_and_badges_are_unreadab
     assert state.clicks == [(Page.DANCE, point) for point in routes]
 
 
+@pytest.mark.parametrize("details", ((938,), ()), ids=("one-missing", "both-missing"))
+def test_dreamscape_dance_uses_distinct_names_when_details_are_unreadable(monkeypatch, world, details):
+    common = labels(("备战阶段", 287, 70), ("1-2", 287, 106), ("梦境交织", 1044, 77),
+                    ("选择2个角色进行共舞", 1044, 136), ("黑天鹅", 928, 357), ("花火", 1165, 357),
+                    *(("详情", x, 412) for x in details))
+    confirm = (1487, 576)
+    confirm_text = labels(("确认选择", *confirm))
+    first_badge = labels(("已选择", 1118, 192))
+    image = CANVAS.copy()
+    ImageDraw.Draw(image).rectangle((1428, 561, 1550, 592), fill=(235, 235, 235))
+    initial = Frame(CANVAS, common + confirm_text)
+    first = Frame(CANVAS, common + confirm_text + first_badge)
+    both = Frame(image, common + first_badge + labels(("已选择", 879, 192)))
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    state = SimpleNamespace(frame=initial, clicks=[])
+    routes = {(1165, 357): first, (928, 357): both, confirm: won, (960, 899): home()}
+
+    def click(point, *, press_duration):
+        state.clicks.append(point)
+        state.frame = routes[point]
+        return True
+
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    monkeypatch.setattr(task, "TASK_SECONDS", 22)
+    world.auto.click_element_with_pos.side_effect = click
+
+    assert world.war.start(resume=True) is True
+    assert state.clicks == list(routes)
+
+
+def test_dreamscape_dance_does_not_treat_duplicate_labels_as_two_card_slots(monkeypatch, world):
+    initial = Frame(CANVAS, labels(
+        ("备战阶段", 287, 70), ("1-2", 287, 106), ("梦境交织", 1044, 77), ("选择2个角色进行共舞", 1044, 136),
+        ("黑天鹅", 928, 357), ("天鹅", 962, 359), ("详情", 938, 412), ("详情", 944, 413), ("确认选择", 1487, 576),
+    ))
+    monkeypatch.setattr(world.war, "_capture", lambda: initial)
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    monkeypatch.setattr(task, "TASK_SECONDS", 22)
+
+    with pytest.raises(task.CurrencyWarsUnavailable, match="未确认两个共舞候选卡位"):
+        world.war.start(resume=True)
+    world.auto.click_element_with_pos.assert_not_called()
+
+
 @pytest.mark.parametrize("receipt", ("complete", "missing_badge", "disabled_button"))
 def test_dreamscape_dance_rechecks_selection_and_button_when_confirm_text_is_unreadable(monkeypatch, world, receipt):
     common = labels(("备战阶段", 287, 70), ("1-2", 287, 106), ("梦境交织", 1044, 77),
@@ -5049,6 +5131,50 @@ def test_match_result_with_continue_button_returns_home_and_checks_rewards(monke
     assert world.war.result is True
     assert state.clicks == [(f.page, p) for f, p in routes if has_next_page or f is not rating]
     world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
+
+
+@pytest.mark.parametrize("return_recovers", (False, True))
+def test_match_result_ignores_continue_when_return_button_is_unreadable(monkeypatch, world, return_recovers):
+    title = ("对局胜利", 960, 233)
+    continue_challenge = ("继续挑战", 1200, 899)
+    unreadable = Frame(CANVAS, labels(title, continue_challenge))
+    readable = Frame(CANVAS, labels(title, continue_challenge, ("返回货币战争", 960, 899)))
+    lobby = home()
+    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
+    routes = {(readable, (960, 899)): lobby, (lobby, (381, 961)): points}
+
+    def capture(state):
+        if return_recovers and state.frame is unreadable and world.now[0] >= 0.6:
+            state.frame = readable
+
+    state = drive(monkeypatch, world, unreadable, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
+    world.auto.press_key.side_effect = lambda key: setattr(state, "frame", lobby)
+    if return_recovers:
+        assert world.war.start(weekly=True)
+        assert state.clicks == [(f.page, point) for f, point in routes]
+        world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
+    else:
+        with pytest.raises(task.CurrencyWarsUnavailable, match="已确认整局胜利，未识别结算操作，周奖励待核对"):
+            world.war.start(weekly=True)
+        assert state.frame is unreadable and not state.clicks and not state.keys
+        assert world.war.weekly_reward_pending
+        world.cfg.save_timestamp.assert_not_called()
+    assert world.war.result is True
+
+
+def test_node_result_still_uses_continue_challenge(monkeypatch, world):
+    node = Frame(CANVAS, labels(("挑战结束", 960, 233), ("继续挑战", 960, 899)))
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = home()
+    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
+    routes = {(node, (960, 899)): result, (result, (960, 899)): lobby, (lobby, (381, 961)): points}
+    state = drive(monkeypatch, world, node, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+    world.auto.press_key.side_effect = lambda key: setattr(state, "frame", lobby)
+
+    assert node.page == Page.NODE_RESULT
+    assert world.war.start(resume=True)
+    assert world.war.result is True
+    assert state.clicks == [(f.page, point) for f, point in routes]
 
 
 def test_promotion_result_keeps_victory_when_rating_automatically_advances(monkeypatch, world):

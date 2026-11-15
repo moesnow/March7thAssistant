@@ -1309,6 +1309,7 @@ def test_currency_wars_enters_from_an_existing_game_title(
     monkeypatch.setattr(game, "auto", auto)
     controller = MagicMock(launch_method="direct")
     controller.switch_to_game.return_value = True
+    controller.get_resolution.return_value = (1920, 1080)
     monkeypatch.setattr(game, "StarRailController", MagicMock(return_value=controller))
     runner.game.start.side_effect = game.start
     if action == "currencywarsloop":
@@ -1341,6 +1342,7 @@ def test_currency_wars_background_waits_for_the_existing_game_window(
     for module in (game, background_input, wait):
         monkeypatch.setattr(module, "time", clock)
     controller = MagicMock(launch_method="direct", process_name="StarRail.exe")
+    controller.get_resolution.return_value = (1920, 1080)
     windows = MagicMock()
     windows.return_value.process_running.return_value = True
 
@@ -1401,6 +1403,169 @@ def test_currency_wars_background_waits_for_the_existing_game_window(
     controller.stop_game.assert_not_called()
     auto.click_element.assert_not_called()
     auto.press_mouse.assert_not_called()
+
+
+def bind_currency_wars_local_startup(runner, state, monkeypatch, action):
+    from tasks import game
+    from utils import wait
+
+    clock = currency_wars.time
+    monkeypatch.setattr(game, "time", clock)
+    monkeypatch.setattr(wait, "time", clock)
+    monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="local", start_game_timeout=.2,
+                                                      auto_set_game_path_enable=False))
+    monkeypatch.setattr(game, "task_power_request", MagicMock())
+    checkpoint = currency_wars.pause_ctl.checkpoint
+    monkeypatch.setattr(game, "pause_ctl", SimpleNamespace(checkpoint=checkpoint, check_stop=checkpoint))
+    monkeypatch.setattr(game, "auto", currency_wars.auto)
+    controller = MagicMock(launch_method="direct")
+    controller.is_game_running.return_value = True
+    controller.switch_to_game.return_value = True
+    controller.get_resolution.return_value = (1920, 1080)
+    monkeypatch.setattr(game, "StarRailController", MagicMock(return_value=controller))
+    runner.game.start.side_effect = game.start
+    if action == "currencywarsloop":
+        runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(state, "stop", True)
+    if action == "main":
+        monkeypatch.setattr(daily.Daily, "prepare_daily", lambda: state.completed == 1)
+    return game, controller
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
+@pytest.mark.parametrize("outcome", ("missing_once", "read_error_once", "bad_size", "unavailable", "stopped"))
+def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
+        runner, currency_wars_game, monkeypatch, action, outcome):
+    from module.game.base import GameControllerBase
+
+    state = currency_wars_game
+    state.page = "board"
+    _, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
+    controller.get_window_handle.return_value = 12
+    if outcome == "missing_once":
+        controller.get_window_handle.side_effect = [0, 12]
+    get_rect = MagicMock(return_value=(0, 0, 1920, 1080))
+    if outcome == "read_error_once":
+        get_rect.side_effect = [OSError("窗口尺寸读取失败"), (0, 0, 1920, 1080)]
+    elif outcome == "bad_size":
+        get_rect.return_value = (0, 0, 1600, 900)
+    elif outcome == "unavailable":
+        get_rect.side_effect = OSError("窗口尺寸读取失败")
+    elif outcome == "stopped":
+        def stop_during_read(_):
+            state.stop = True
+            return 0, 0, 0, 0
+
+        get_rect.side_effect = stop_during_read
+    monkeypatch.setitem(sys.modules, "win32gui", SimpleNamespace(GetClientRect=get_rect))
+    controller.get_resolution.side_effect = lambda: GameControllerBase.get_resolution(controller)
+
+    record = run_currency_wars_cli(runner, action)
+
+    controller.start_game_process.assert_not_called()
+    controller.stop_game.assert_not_called()
+    if outcome in ("missing_once", "read_error_once"):
+        assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
+        assert state.completed == 1
+        assert state.clicks[0] == ("board", (1818, 750))
+        assert controller.get_resolution.call_count == 2
+    else:
+        assert state.clicks == []
+        state.factory.assert_not_called()
+        if outcome == "stopped":
+            assert (record["status"], record["exit_code"]) == (STATUS_STOPPED, EXIT_STOPPED)
+            assert controller.get_resolution.call_count == 1
+        else:
+            assert record["reason"] == "game_startup_unavailable"
+            assert "已保留游戏现场" in record["error"]
+            assert ("1600x900" if outcome == "bad_size" else "持续无法读取游戏窗口分辨率") in record["error"]
+            assert controller.get_resolution.call_count > 1
+
+
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
+@pytest.mark.parametrize("prompt", ("account_and_password", "os", "missing_credentials", "password_only", "cold_login_pending"))
+def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_prompt(
+        runner, currency_wars_game, monkeypatch, action, prompt):
+    state = currency_wars_game
+    state.page = "native_login"
+    game, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
+    auto = currency_wars.auto
+    clock = currency_wars.time
+    screen_module = import_module("module.screen.screen")
+    monkeypatch.setattr(screen_module, "auto", auto)
+    monkeypatch.setattr(screen_module, "time", clock)
+    navigator = object.__new__(screen_module.Screen)
+    screen_module.Screen.__init__(navigator, Path("assets/config/screens.json"), MagicMock())
+    monkeypatch.setattr(game, "screen", navigator)
+    original_capture = currency_wars.CurrencyWars._capture
+    unrecognized_page = Frame(Image.new("RGB", (1920, 1080)), ())
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(
+        lambda: unrecognized_page if state.page == "native_login" else original_capture()
+    ))
+    templates = {
+        "account_and_password": {"account_and_password"},
+        "os": {"account_field_os", "password_field"},
+        "missing_credentials": {"account_and_password"},
+        "password_only": {"password_field"},
+        "cold_login_pending": {"account_and_password"},
+    }[prompt]
+    find_point = auto.find_element.side_effect
+
+    def find(target, *args, **kwargs):
+        if not isinstance(target, str):
+            return find_point(target, *args, **kwargs)
+        asset = Path(target).stem
+        if asset == "welcome":
+            return state.page == "home"
+        return state.page == "native_login" and asset in templates
+
+    def click_login(target, *args, **kwargs):
+        assert state.page == "native_login"
+        asset = Path(target).stem
+        if asset == "enter_game" and prompt != "cold_login_pending":
+            state.page = "home"
+        return asset in ("account_and_password", "account_field", "account_field_os", "password_field",
+                         "agree_conditions", "enter_game")
+
+    auto.find_element.side_effect = find
+    auto.click_element.side_effect = click_login
+    credentials = (None, None) if prompt == "missing_credentials" else ("local_test", "mock_password")
+    monkeypatch.setattr(game, "load_acc_and_pwd", MagicMock(return_value=credentials))
+    monkeypatch.setattr(game, "gamereg_uid", lambda: 1)
+    monkeypatch.setattr(game, "ensure_IME_lang_en", MagicMock())
+    monkeypatch.setattr(navigator, "_handle_autotry", MagicMock())
+    if prompt == "cold_login_pending":
+        game.cfg.start_game_timeout = 1.5
+        controller.is_game_running.side_effect = lambda: controller.start_game_process.called
+        controller.switch_to_game.side_effect = [False, True, True]
+        windows = MagicMock()
+        windows.return_value.process_running.return_value = False
+        monkeypatch.setattr(game, "WindowsInputApi", windows)
+        monkeypatch.setattr(game, "game_option_enabled", lambda *_: False)
+        monkeypatch.setattr(game, "restore_temporary_graphics", MagicMock())
+
+    record = run_currency_wars_cli(runner, action)
+
+    navigator._handle_autotry.assert_not_called()
+    controller.stop_game.assert_not_called()
+    assert controller.start_game_process.call_count == (1 if prompt == "cold_login_pending" else 0)
+    if prompt in ("account_and_password", "os"):
+        assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
+        assert state.completed == 1
+        assert [call.args[0] for call in auto.secretly_write.call_args_list] == list(credentials)
+    elif prompt == "cold_login_pending":
+        assert record["reason"] == "game_startup_unavailable"
+        assert "尝试自动登录失败" in record["error"]
+        assert [call.args[0] for call in auto.secretly_write.call_args_list] == list(credentials)
+    else:
+        assert record["reason"] == "game_startup_unavailable"
+        assert state.clicks == []
+        auto.click_element.assert_not_called()
+        auto.secretly_write.assert_not_called()
+        if prompt == "password_only":
+            game.load_acc_and_pwd.assert_not_called()
+        else:
+            game.load_acc_and_pwd.assert_called_once_with(1)
+            assert "未找到保存的登录凭据" in record["error"]
 
 
 @pytest.mark.parametrize("dialog", ("reward_limit", "weekly_receipt", "generic_receipt"))

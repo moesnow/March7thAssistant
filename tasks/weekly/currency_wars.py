@@ -55,7 +55,7 @@ REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
 BOARD_PAGES = {Page.BOARD, Page.BENCH_FULL}
 ENTRY_SCREENS = ("guide5", "main", "menu", "guide1", "guide2", "guide3", "guide4", "start_game", "click_enter")
 BOSS_STAGES = {"normal": ("1-9", "2-7", "3-7"), "overclock": ("1-6", "2-5", "3-5")}
-RESULT_ACTIONS = ("下一页", "下一步", "前往结算", "继续挑战", "返回货币战争")
+RESULT_ACTIONS = ("下一页", "下一步", "前往结算", "返回货币战争")
 NEUTRAL_ENVIRONMENTS = ("连击概念股", "增发货币", "能量概念股", "人身意外险", "蓝钻贵族")
 SUPPLY_ITEMS = ("火力风暴潮", "反螺旋舞步", "永动机", "电磁弹射器", "轮滑鞋", "折叠小刀",
                 "生命之花", "和平手枪", "幸运星", "光能电池", "以太钻头", "量产型装甲",
@@ -621,12 +621,13 @@ class CurrencyWars:
             return frame
         raise CurrencyWarsReadTimeout("达到超频职级调整上限，未确认晋升点封顶档")
 
-    def _mode_menu(self, frame):
+    def _mode_menu(self, frame, *, recovered_match=None):
         if frame.page == Page.MODES:
             return frame
         return self._click_to(
             frame, lambda f: ui.point(f.find("开始货币战争", area=ui.HOME_START, contains=True)),
-            lambda f: f.page == Page.MODES, "未进入入画奇航模式菜单", attempts=2,
+            lambda f: f.page == Page.MODES or (recovered_match is not None and recovered_match(f)),
+            "未进入入画奇航模式菜单", attempts=2,
         )
 
     def _rank_page(self, frame):
@@ -865,19 +866,23 @@ class CurrencyWars:
             "游戏重连后未确认恢复画面", seconds=35, attempts=2, retry_after=6,
         )
         if resume_match and self.result is None and frame.page not in ACTIVE_PAGES:
-            menu = frame if frame.page == Page.MODES else self._mode_menu(self._homepage(frame))
             expected_mode = self.mode if self.mode_confirmed else None
 
-            def match_available(f):
+            def returned_to_match(f):
                 if record_result:
                     self._record_match_result(f)
-                return f.page in ACTIVE_PAGES or (
+                return f.page in ACTIVE_PAGES
+
+            def match_available(f):
+                return returned_to_match(f) or (
                     f.page == Page.MODES and f.menu_mode is not None
                     and (expected_mode is None or f.menu_mode == expected_mode)
                     and f.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT) is not None
                 )
 
-            frame = menu if match_available(menu) else self._wait(match_available, 15)
+            if frame.page != Page.MODES:
+                frame = self._mode_menu(self._homepage(frame), recovered_match=returned_to_match)
+            frame = frame if match_available(frame) else self._wait(match_available, 15)
             if frame is None:
                 self._check_budget()
                 raise CurrencyWarsUnavailable("游戏已重连，未找到同模式续局入口，保留当前现场")
@@ -3336,23 +3341,19 @@ class CurrencyWars:
 
             return self._choose_single(frame, option, confirm, advanced, "巡海游侠任命后未转场")
 
-        def cards(f):
-            candidates = f.employee_event_candidates
-            return sorted((
-                next((label for label in candidates if abs(label.point[0] - detail.point[0]) <= 68),
-                     ui.Label("候选角色", (detail.point[0], 355)))
-                for detail in f.employee_event_details
-            ), key=priority)
-
-        if not frame.employee_event_confirm() and len(cards(frame)) < 2:
-            frame = self._expect(
-                lambda f: advanced(f) or f.page == event and (f.employee_event_confirm() or len(cards(f)) >= 2),
-                8, f"未确认{event.value}的候选角色",
+        if not frame.employee_event_confirm() and len(frame.dance_cards) < 2:
+            fresh = self._wait(
+                lambda f: advanced(f) or f.page == event and (
+                    f.stage != stage or f.employee_event_confirm() or len(f.dance_cards) >= 2), 8,
             )
-        if frame.page != event:
+            if fresh is None:
+                if self.frame.page == event and self.frame.stage == stage:
+                    raise CurrencyWarsUnavailable("多次复核后仍未确认两个共舞候选卡位，保留当前现场")
+                raise CurrencyWarsReadTimeout(f"未确认{event.value}的候选角色")
+            frame = fresh
+        if frame.page != event or frame.stage != stage:
             return frame
-        for card in cards(frame):
-            x = card.point[0]
+        for card, x in sorted(frame.dance_cards, key=lambda entry: priority(entry[0])):
             if frame.employee_event_confirm() or frame.unlabeled_dance_confirm:
                 break
             if frame.employee_event_card_selected(x):
@@ -3544,7 +3545,7 @@ class CurrencyWars:
         page = frame.page
         button_area = (520, 735, 1900, 1055) if page == Page.MATCH_RESULT else ui.RESULT_BUTTON
         later = {Page.MATCH_RESULT, Page.HOME, Page.MODES} if ending_saved_match else PLAY_PAGES | {Page.HOME}
-        actions = (*RESULT_ACTIONS[:3], "返回货币战争") if ending_saved_match else RESULT_ACTIONS
+        actions = RESULT_ACTIONS if page == Page.MATCH_RESULT else (*RESULT_ACTIONS, "继续挑战")
 
         def result_button(f):
             options = f.matching(actions, button_area)
@@ -3576,10 +3577,18 @@ class CurrencyWars:
                 return (ending_saved_match or page == Page.NODE_RESULT
                         or f.page == Page.HOME and self.result is not None)
 
-            frame = self._expect(ready_or_advanced, 15, "结算操作按钮未显示")
+            frame = self._wait(ready_or_advanced, 15)
+            if frame is None:
+                self._check_budget()
+                if page == Page.MATCH_RESULT and not ending_saved_match and self.result is not None:
+                    outcome = "胜利" if self.result else "战败"
+                    self.weekly_reward_pending = True
+                    raise CurrencyWarsUnavailable(f"货币战争已确认整局{outcome}，未识别结算操作，周奖励待核对，保留当前现场")
+                raise CurrencyWarsReadTimeout("结算操作按钮未显示")
             if frame.page != page:
                 return frame
         before = frame
+        before_buttons = tuple(button for button in before.result_buttons(button_area) if button in actions)
 
         def next_result(f):
             if not ending_saved_match:
@@ -3588,8 +3597,8 @@ class CurrencyWars:
                 return False
             if f.page != before.page:
                 return True
-            buttons = f.result_buttons(button_area)
-            if buttons and buttons != before.result_buttons(button_area):
+            buttons = tuple(button for button in f.result_buttons(button_area) if button in actions)
+            if buttons and buttons != before_buttons:
                 return True
             return (f.page == Page.MATCH_RESULT and result_button(f) is not None
                     and f.result_heading and f.result_heading != before.result_heading)
@@ -4153,26 +4162,29 @@ class CurrencyWars:
             return False
 
         result = auto.find_element("./assets/images/share/power/trailblaze_power/button.png", "image", 0.9, max_retries=10)
-        if result:
-            auto.click_element_with_pos(result, action="down")
-            time.sleep(0.5)
-            result = auto.find_element("./assets/images/share/power/trailblaze_power/plus.png", "image", 0.9)
-            if result:
-                auto.click_element_with_pos(result, action="move")
+        if result and auto.click_element_with_pos(result, action="down"):
+            try:
                 time.sleep(0.5)
-                auto.mouse_up()
-                if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                    log.info("饰品提取完成，返回主界面")
-                    time.sleep(1)
-                    auto.press_key("esc")
-                    time.sleep(1)
-                    auto.press_key("esc")
-                    if screen.check_screen("guide3"):
-                        return True
-            else:
-                auto.mouse_up()
-        else:
-            auto.mouse_up()
+                target = auto.find_element("./assets/images/share/power/trailblaze_power/plus.png", "image", 0.9)
+                moved = bool(target and auto.click_element_with_pos(target, action="move"))
+                if moved:
+                    time.sleep(0.5)
+            finally:
+                # 清理已按下的按钮，不经过会因停止指令抛出的输入卡点。
+                try:
+                    released = auto.input_handler.mouse_up() is not False
+                except Exception as error:
+                    log.warning(f"饰品提取滑块释放失败：{error}")
+                    released = False
+            if moved and released and auto.click_element(
+                    "./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
+                log.info("饰品提取完成，返回主界面")
+                time.sleep(1)
+                auto.press_key("esc")
+                time.sleep(1)
+                auto.press_key("esc")
+                if screen.check_screen("guide3"):
+                    return True
 
         log.info("饰品提取失败，返回主界面")
         time.sleep(1)

@@ -1,14 +1,16 @@
 # coding:utf-8
 """module/automation 卡点插桩测试：暂停期间停止发出输入、读取入口停在卡点。"""
+import sys
 import threading
 import time
 from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 
 from module.automation.automation import Automation
 from utils import pause as pause_mod
-from utils.pause import PauseController
+from utils.pause import PauseController, RunStopRequested
 
 
 class _Boom(Exception):
@@ -99,6 +101,34 @@ def test_all_input_aliases_go_through_checkpoint(automation, blocking_controller
     t.join(timeout=5)
     assert events == [("mouse_click", 1, 2), ("mouse_drag", 0, 0, 5, 5, 0.1)]
     assert blocking_controller.checkpoint_calls >= 2
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="本地输入后端仅在 Windows 使用")
+def test_local_secret_typing_releases_the_current_key_and_stops_before_the_next(monkeypatch):
+    from module.automation import local_input
+
+    controller = PauseController()
+    controller._enabled = True
+    controller._resume_event.set()
+    monkeypatch.setattr(local_input, "pause_ctl", controller)
+    events = []
+
+    def down(key):
+        events.append(("down", key))
+        controller.request_stop()
+
+    def up(key):
+        events.append(("up", key))
+
+    platform = local_input.pyautogui.platformModule
+    monkeypatch.setattr(platform, "_keyDown", down)
+    monkeypatch.setattr(platform, "_keyUp", up)
+    backend = local_input.LocalInput(Mock())
+
+    with pytest.raises(RunStopRequested):
+        backend.secretly_write("abcdef", interval=0)
+
+    assert events == [("down", "a"), ("up", "a")]
 
 
 GUARDED_METHODS = [

@@ -19,9 +19,11 @@ def startup(monkeypatch):
     controller.switch_to_game.return_value = False
     controller.start_game_process.return_value = True
     controller.is_game_running.return_value = False
+    controller.get_resolution.return_value = (1920, 1080)
     monkeypatch.setattr(game, "cfg", cfg)
     monkeypatch.setattr(game, "StarRailController", Mock(return_value=controller))
-    monkeypatch.setattr(game, "auto", SimpleNamespace(input_handler=SimpleNamespace(is_background=False), press_mouse=Mock()))
+    monkeypatch.setattr(game, "auto", SimpleNamespace(input_handler=SimpleNamespace(is_background=False),
+                                                      press_mouse=Mock(), find_element=Mock(return_value=None)))
     monkeypatch.setattr(game, "wait_until", Mock(return_value=True))
     monkeypatch.setattr(game.time, "sleep", Mock())
     monkeypatch.setattr(game, "begin_temporary_graphics", Mock())

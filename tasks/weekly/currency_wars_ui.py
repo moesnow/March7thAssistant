@@ -604,9 +604,7 @@ class Frame:
         if (self.stage and self.has("梦境交织", area=EMPLOYEE_EVENT_TITLE)
                 and self.has("选择2个角色进行共舞", "选择2名角色进行共舞",
                              area=EMPLOYEE_EVENT_SUBTITLE, contains=True)):
-            columns = sorted(detail.point[0] for detail in self.employee_event_details)
-            if (self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM)
-                    or columns and columns[-1] - columns[0] > DANCE_MIN_CARD_GAP):
+            if self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM) or len(self.dance_cards) >= 2:
                 return Page.DANCE
         if (self.has("巡海游侠", area=EMPLOYEE_EVENT_TITLE)
                 and (self.has("任命1名角色", "任命一名角色", area=EMPLOYEE_EVENT_SUBTITLE, contains=True)
@@ -1283,8 +1281,27 @@ class Frame:
     @cached_property
     def employee_event_candidates(self) -> tuple[Label, ...]:
         return tuple(label for label in self.texts((440, 325, 1650, 390))
-                     if re.fullmatch(EMPLOYEE_NAME, label.text) and (self.page == Page.RANGER or self.has(
-                         "详情", area=(label.point[0] - 68, 385, label.point[0] + 69, 436))))
+                     if re.fullmatch(EMPLOYEE_NAME, label.text) and label.text not in ("详情", "查看详情"))
+
+    @cached_property
+    def dance_cards(self) -> tuple[tuple[Label, int], ...]:
+        """返回可点选的共舞卡片及用于核对选中标记的横坐标。"""
+        cards = []
+        names = self.employee_event_candidates
+        for detail in self.employee_event_details:
+            x = detail.point[0]
+            if any(abs(x - column) <= DANCE_MIN_CARD_GAP for _, column in cards):
+                continue
+            name = min((label for label in names if abs(label.point[0] - x) <= 68),
+                       key=lambda label: abs(label.point[0] - x), default=None)
+            cards.append((name or Label("候选角色", (x, 355)), x))
+        # 详情漏读时，只有与已知卡位横向分开的姓名才能补出一列。
+        for name in sorted(names, key=lambda label: label.confidence, reverse=True):
+            x = name.point[0]
+            if all(abs(x - column) > DANCE_MIN_CARD_GAP and abs(x - card.point[0]) > DANCE_MIN_CARD_GAP
+                   for card, column in cards):
+                cards.append((name, x))
+        return tuple(cards)
 
     @cached_property
     def employee_event_selected(self) -> frozenset[str]:
@@ -1306,9 +1323,7 @@ class Frame:
 
     @cached_property
     def dance_pair_selected(self) -> bool:
-        selected = [detail.point[0] for detail in self.employee_event_details
-                    if self.employee_event_card_selected(detail.point[0])]
-        return len(selected) == 2 and abs(selected[0] - selected[1]) > DANCE_MIN_CARD_GAP
+        return sum(self.employee_event_card_selected(x) for _, x in self.dance_cards) == 2
 
     def employee_event_confirm(self) -> Label | None:
         if button := self.find("确认选择", area=EMPLOYEE_EVENT_CONFIRM):

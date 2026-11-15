@@ -94,6 +94,39 @@ def _wait_for_local_foreground(controller, timeout):
         raise GameStartupUnavailable("无法将本地游戏窗口切到前台，已保留游戏现场")
 
 
+def _wait_for_local_resolution(controller, target, timeout):
+    resolution = None
+    read_error = None
+
+    def matches():
+        nonlocal resolution, read_error
+        pause_ctl.checkpoint()
+        try:
+            resolution = controller.get_resolution()
+            read_error = None
+        except Exception as error:
+            resolution = None
+            read_error = error
+        if resolution == target:
+            log.debug(f"游戏分辨率: {target[0]}x{target[1]}")
+            return True
+        if _local_game_process_running(controller) is False:
+            raise GameWindowLost("检查窗口分辨率时游戏进程已退出")
+        return False
+
+    ready = wait_until(matches, min(WINDOW_WAIT_SECONDS, timeout))
+    pause_ctl.checkpoint()
+    if ready:
+        return
+    if resolution and all(value > 0 for value in resolution):
+        message = f"游戏窗口分辨率为 {resolution[0]}x{resolution[1]}，请在游戏设置内调整为 {target[0]}x{target[1]}"
+    else:
+        message = "持续无法读取游戏窗口分辨率"
+        if read_error is not None:
+            message += f"：{read_error}"
+    raise GameStartupUnavailable(f"{message}，已保留游戏现场") from read_error
+
+
 def prepare_currency_wars_takeover():
     """让已有本地游戏进入可操作状态，保留游戏进程与对局。"""
     pause_ctl.checkpoint()
@@ -196,9 +229,33 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         return
 
     MAX_RETRY = 3
+    login_attempted = False
+    login_error = None
 
     def remaining_startup_time():
         return max(0, deadline - time.monotonic())
+
+    def login_with_saved_credentials(login):
+        nonlocal login_attempted, login_error
+        if load_acc_and_pwd(gamereg_uid()) == (None, None):
+            return False
+        if screen_ready is not None:
+            login_attempted = True
+        log.info("检测到登录过期，尝试自动登录")
+        try:
+            login()
+        except (OSError, RuntimeError) as error:
+            login_error = error
+            raise
+        return True
+
+    def detect_local_login():
+        if auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
+            return auto_login
+        if (auto.find_element("./assets/images/screen/account_field_os.png", "image", 0.9, take_screenshot=False)
+                and auto.find_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False)):
+            return auto_login_os
+        return None
 
     def check_and_click_enter():
         # 点击进入
@@ -215,16 +272,11 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         # 适配用户协议和隐私政策更新提示，需要点击“同意”
         auto.click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
         # 登录过期
-        if auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
-            if load_acc_and_pwd(gamereg_uid()) != (None, None):
-                log.info("检测到登录过期，尝试自动登录")
-                auto_login()
-            else:
+        if not login_attempted and auto.find_element("./assets/images/screen/account_and_password.png", "image", 0.9, take_screenshot=False):
+            if not login_with_saved_credentials(auto_login):
                 raise PermissionError("账号登录过期")
-        if auto.find_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
-            if load_acc_and_pwd(gamereg_uid()) != (None, None):
-                log.info("检测到登录过期，尝试自动登录")
-                auto_login_os()
+        if not login_attempted and auto.find_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
+            login_with_saved_credentials(auto_login_os)
         # 游戏已有新版本，请前往启动器下载最新客户端，完成本次更新后登录游戏即可获
         # 得300星琼奖励。
         if auto.find_element("前往启动器下载最新客户端", "text", take_screenshot=False, include=True):
@@ -290,6 +342,17 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
 
     def start_local_game(starrail):
         resolution = get_ui_profile(cfg).resolution
+
+        def switch_to_window():
+            pause_ctl.checkpoint()
+            return starrail.switch_to_game()
+
+        def check_resolution():
+            if screen_ready is None:
+                starrail.check_resolution(*resolution)
+            else:
+                _wait_for_local_resolution(starrail, resolution, remaining_startup_time())
+
         background = getattr(auto.input_handler, 'is_background', False) is True
         waiting_for_window = background and (
             starrail.is_game_running() if screen_ready is None else _local_game_process_running(starrail) is not False
@@ -305,7 +368,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                     raise
                 raise GameStartupUnavailable(f"游戏窗口持续不可用，已保留游戏现场：{error}") from error
             pause_ctl.checkpoint()
-        switched = (waiting_for_window and screen_ready is not None) or starrail.switch_to_game()
+        switched = (waiting_for_window and screen_ready is not None) or switch_to_window()
         if (not switched and screen_ready is not None and not background
                 and _local_game_process_running(starrail) is not False):
             _wait_for_local_foreground(starrail, remaining_startup_time())
@@ -326,7 +389,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                     raise RuntimeError("启动游戏失败")
                 time.sleep(10)
 
-                if not wait_until(lambda: starrail.switch_to_game(), remaining_startup_time()):
+                if not wait_until(switch_to_window, remaining_startup_time()):
                     pause_ctl.checkpoint()
                     if (screen_ready is not None and not background
                             and _local_game_process_running(starrail) is not False):
@@ -340,19 +403,19 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 restore_temporary_graphics()
                 starrail.restore_resolution()
                 starrail.restore_auto_hdr()
-            starrail.check_resolution(*resolution)
+            check_resolution()
 
             if not wait_until(check_and_click_enter, remaining_startup_time()):
                 raise TimeoutError("查找并点击进入按钮超时")
 
             # 偶现加载慢时分辨率修改不成功，进入游戏前增加一次分辨率检查
-            starrail.check_resolution(*resolution)
+            check_resolution()
 
             time.sleep(10)
             # 修复B服问题 https://github.com/moesnow/March7thAssistant/discussions/321#discussioncomment-10565807
             auto.press_mouse()
         else:
-            starrail.check_resolution(*resolution)
+            check_resolution()
             if cfg.auto_set_game_path_enable:
                 program_path = get_process_path(cfg.game_process_name)
                 if program_path is not None and program_path != cfg.game_path:
@@ -418,6 +481,16 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             if screen_ready is not None:
                 # 货币战争的职级和局内页面不都在通用状态机里，不能用 Esc 探测。
                 ready = screen_ready() or screen.get_current_screen(autotry=False, max_retries=1)
+                if backend == "local" and not ready and not login_attempted:
+                    # 通用识别已取新画面。只在确认登录提示后使用现有的登录操作。
+                    login = detect_local_login()
+                    if login is not None:
+                        try:
+                            if not login_with_saved_credentials(login):
+                                raise GameStartupUnavailable("本地游戏账号登录过期，未找到保存的登录凭据，已保留游戏现场")
+                        except PermissionError:
+                            # 登录请求可能已发出，继续看新画面，不重复填写凭据。
+                            pass
             else:
                 ready = screen.get_current_screen(max_retries=1)
         except (InputInterrupted, GameWindowLost, ProfileAssetNotFoundError, TouchProfileInputError):
@@ -431,13 +504,14 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             readiness_error = error
             log.debug(f"任务起始画面暂不可用：{error}")
             return False
-        readiness_error = None
+        readiness_error = login_error
         return ready
 
     if backend == "cloud":
         cloud_game.reset_queue_wait()
     for retry in range(MAX_RETRY):
         deadline = time.monotonic() + timeout
+        starrail = None
         try:
             pause_ctl.checkpoint()
             if backend == "cloud":
@@ -486,15 +560,21 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 if retry == MAX_RETRY - 1:
                     raise GameStartupUnavailable(f"游戏进程多次退出，无法完成启动：{e}") from e
                 continue
-            if backend == "local" and starrail.launch_method == "epic":
+            if backend == "local" and starrail is not None and starrail.launch_method == "epic":
                 from module.game.epic import EpicLaunchError
                 if isinstance(e, EpicLaunchError):
                     # 渠道启动已给出具体阶段错误，不重放协议/点击，不关闭用户启动器。
                     raise
+            if backend == "local" and screen_ready is not None and not isinstance(e, GameClientOutdatedError):
+                # 启动预检故障可能发生在原有对局上，保留进程并重新观察。
+                if retry == MAX_RETRY - 1:
+                    raise GameStartupUnavailable(f"本地游戏启动持续不可用，已保留游戏现场：{e}") from e
+                time.sleep(1)
+                continue
             # 确保在重试前停止游戏
             if backend == "cloud":
                 cloud_game.stop_game()
-            else:
+            elif starrail is not None:
                 starrail.stop_game()
                 # 非云游戏模式下，若检测到是版本过低则尝试通过启动器更新
                 if isinstance(e, GameClientOutdatedError) and cfg.update_via_launcher:
@@ -768,6 +848,7 @@ def ensure_IME_lang_en():
 
     分两种情况，若系统有英语语言，则切换至英语语言，若没有，则切换输入法语言为英文
     """
+    pause_ctl.checkpoint()
     from module.automation.input_base import background_enabled
     if background_enabled(cfg):
         return True  # 后台文本使用 Unicode 消息，不改变用户前台窗口的输入法。
