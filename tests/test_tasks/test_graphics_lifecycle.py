@@ -181,6 +181,17 @@ def test_no_quality_change_for_excluded_launches(startup, monkeypatch, mode):
         controller.change_auto_battle.assert_not_called()
 
 
+def test_desktop_twin_skips_battle_setting_write(startup, monkeypatch):
+    game, controller, cfg = startup
+    monkeypatch.setattr(game, "in_desktop_twin", lambda: True)
+
+    game.start_game()
+
+    # 分身与主桌面共用游戏设置，启动前不改写；战斗中检测到未开启会按 V 补开。
+    controller.change_auto_battle.assert_not_called()
+    controller.start_game_process.assert_called_once_with()
+
+
 def test_failed_launch_restores_each_attempt(startup):
     game, controller, cfg = startup
     controller.start_game_process.return_value = False

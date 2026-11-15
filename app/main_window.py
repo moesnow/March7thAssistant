@@ -1077,7 +1077,8 @@ class MainWindow(MSFluentWindow):
         else:
             from tasks.game.starrailcontroller import StarRailController
             starrail = StarRailController(cfg=cfg, logger=log)
-            if game_option_enabled(cfg, "auto_battle_detect_enable"):
+            # 桌面分身与主桌面共用游戏设置，手动启动游戏也不改写自动战斗和二倍速。
+            if not in_desktop_twin() and game_option_enabled(cfg, "auto_battle_detect_enable"):
                 starrail.change_auto_battle(True)
 
         self.game_launch_thread = GameLaunchThread(game, cfg)

@@ -129,6 +129,8 @@ _ENV_OVERRIDE_MAP = {
 _CONFIG_KEY_TO_ENV = {v[0]: k for k, v in _ENV_OVERRIDE_MAP.items()}
 
 # 分身使用本地前台输入，避免改动同一账户共享的画质和启动器状态。
+# 这里只覆盖会写入共用游戏设置或系统状态的开关；战斗中的自动战斗检测只按 V 和
+# 战斗界面按钮操作，不改动共用设置，因此保留用户自己的配置，见 tasks/game。
 _DESKTOP_TWIN_OVERRIDES = {
     "control_backend": "local",
     "cloud_game_enable": False,
@@ -136,7 +138,6 @@ _DESKTOP_TWIN_OVERRIDES = {
     "update_via_launcher": False,
     "auto_lower_graphics_enable": False,
     "auto_set_resolution_enable": False,
-    "auto_battle_detect_enable": False,
     "auto_set_game_path_enable": False,
     "after_finish": "None",
 }

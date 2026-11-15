@@ -1,4 +1,6 @@
+import ast
 import sys
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -41,6 +43,17 @@ def test_confirmed_switch_does_not_save_before_acceptance(qtbot, monkeypatch):
     card.switchButton.setChecked(True)
     assert card.switchButton.isChecked()
     cfg.set_value.assert_called_once_with("auto_lower_graphics_enable", True)
+
+
+def test_desktop_twin_manual_launch_skips_battle_setting_write():
+    # 界面里的“启动游戏”同样不改写共用的自动战斗和二倍速设置。
+    tree = ast.parse(Path("app/main_window.py").read_text(encoding="utf-8"))
+    method = next(node for node in ast.walk(tree)
+                  if isinstance(node, ast.FunctionDef) and node.name == "startGame")
+    assert any(isinstance(node, ast.If)
+               and "in_desktop_twin" in ast.unparse(node.test)
+               and "change_auto_battle" in ast.unparse(node)
+               for node in ast.walk(method))
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")

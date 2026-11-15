@@ -12,6 +12,7 @@ from .adb_check import wait_for_game as wait_for_adb_game
 
 from utils.date import Date
 from utils.console import pause_on_success
+from utils.desktop_twin import in_desktop_twin
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
 from module.game.adb_transport import AdbError
@@ -248,7 +249,11 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                     starrail.change_auto_hdr("disable")
 
                 if game_option_enabled(cfg, "auto_battle_detect_enable"):
-                    starrail.change_auto_battle(True)
+                    if in_desktop_twin():
+                        # 分身与主桌面共用游戏设置，启动前不改写；战斗中检测到未开启会自动补开。
+                        log.debug("桌面分身内跳过启动前改写自动战斗和二倍速")
+                    else:
+                        starrail.change_auto_battle(True)
 
                 if optimize_graphics and game_option_enabled(cfg, "auto_lower_graphics_enable"):
                     begin_temporary_graphics(starrail.game_path, log)

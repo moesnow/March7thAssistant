@@ -19,6 +19,7 @@ from module.config.platform import (
     get_control_backend,
     get_ui_profile,
 )
+from utils.game_options import game_option_enabled
 
 
 @pytest.mark.parametrize(("legacy", "env", "explicit", "expected"), [
@@ -62,6 +63,26 @@ def test_desktop_twin_keeps_local_backend(monkeypatch):
 
     assert get_control_backend(config) == "local"
     assert not config.cloud_game_enable
+
+
+def test_desktop_twin_keeps_battle_detection_for_user(monkeypatch):
+    config = object.__new__(Config)
+    config.config = {
+        "auto_battle_detect_enable": True,
+        "auto_set_resolution_enable": True,
+        "auto_lower_graphics_enable": True,
+        "auto_set_game_path_enable": True,
+        "local_control_mode": "background",
+    }
+    monkeypatch.setenv("MARCH7TH_DESKTOP_TWIN", "1")
+
+    # 战斗中的检测只按 V 和战斗界面按钮操作，不改动共用设置，沿用用户配置。
+    assert game_option_enabled(config, "auto_battle_detect_enable") is True
+    # 会改动共用游戏设置或系统状态的开关仍然在分身里关闭。
+    assert config.get_value("auto_set_resolution_enable") is False
+    assert config.get_value("auto_lower_graphics_enable") is False
+    assert config.get_value("auto_set_game_path_enable") is False
+    assert config.get_value("local_control_mode") == "foreground"
 
 
 @pytest.mark.parametrize(("profile_name", "resolution", "screens", "images"), [
