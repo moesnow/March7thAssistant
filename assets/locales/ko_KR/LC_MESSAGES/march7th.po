@@ -7046,6 +7046,10 @@ msgstr "Android 기기 또는 에뮬레이터에서 게임에 로그인한 뒤 �
 msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"
 msgstr "Android 게임이 종료되었습니다. 기기에서 게임의 백그라운드 설정을 확인한 뒤 다시 시도하세요."
 
+#: module/game/adb.py:290
+msgid "重新启动后，Android 游戏窗口再次消失"
+msgstr "재시작 후 Android 게임 창이 다시 사라졌습니다."
+
 #: module/game/adb.py:148
 msgid "游戏未能回到目标 Android 屏幕，请结束游戏后重试"
 msgstr "게임을 대상 Android 디스플레이로 되돌리지 못했습니다. 게임을 종료한 뒤 다시 시도하세요."

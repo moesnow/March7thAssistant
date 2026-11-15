@@ -6993,6 +6993,10 @@ msgstr "游戏需要手动登录，请在 Android 实体屏或模拟器中完成
 msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"
 msgstr "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"
 
+#: module/game/adb.py:290
+msgid "重新启动后，Android 游戏窗口再次消失"
+msgstr "重新启动后，Android 游戏窗口再次消失"
+
 #: module/game/adb.py:148
 msgid "游戏未能回到目标 Android 屏幕，请结束游戏后重试"
 msgstr "游戏未能回到目标 Android 屏幕，请结束游戏后重试"

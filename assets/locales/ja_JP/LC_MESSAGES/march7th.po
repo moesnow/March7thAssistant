@@ -7053,6 +7053,10 @@ msgstr "Android の実機またはエミュレーターでゲームにログイ�
 msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"
 msgstr "Android のゲームプロセスが終了しました。端末のバックグラウンド動作の設定を確認して再試行してください。"
 
+#: module/game/adb.py:290
+msgid "重新启动后，Android 游戏窗口再次消失"
+msgstr "再起動後、Android のゲームウィンドウが再び消えました。"
+
 #: module/game/adb.py:148
 msgid "游戏未能回到目标 Android 屏幕，请结束游戏后重试"
 msgstr "ゲームを対象の Android ディスプレイに戻せませんでした。ゲームを終了して再試行してください。"

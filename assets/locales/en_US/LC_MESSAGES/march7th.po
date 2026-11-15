@@ -7270,6 +7270,10 @@ msgstr ""
 "The Android game exited. Check the game's background settings on the device "
 "and try again."
 
+#: module/game/adb.py:290
+msgid "重新启动后，Android 游戏窗口再次消失"
+msgstr "The Android game window disappeared again after the game restarted."
+
 #: module/game/adb.py:148
 msgid "游戏未能回到目标 Android 屏幕，请结束游戏后重试"
 msgstr ""

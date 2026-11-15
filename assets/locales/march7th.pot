@@ -6803,6 +6803,10 @@ msgstr ""
 msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"
 msgstr ""
 
+#: module/game/adb.py:290
+msgid "重新启动后，Android 游戏窗口再次消失"
+msgstr ""
+
 #: module/game/adb.py:148
 msgid "游戏未能回到目标 Android 屏幕，请结束游戏后重试"
 msgstr ""
