@@ -198,7 +198,7 @@ private fun RootSteps(permission: PermissionState, enabled: Boolean, actions: Ap
             StepButton(tr(R.string.check_root), actions.requestPermission, enabled = enabled)
         }
     }
-    Notice(tr(R.string.guide_root_experimental), Modifier.padding(top = 14.dp), tone = Tone.WARNING, icon = M7Icons.Warning)
+    Notice(tr(R.string.guide_root_fallback), Modifier.padding(top = 14.dp), tone = Tone.WARNING, icon = M7Icons.Warning)
 }
 
 @Composable

@@ -330,7 +330,7 @@
     <string name="guide_root_denied">在 Root 管理应用（如 Magisk）里允许小助手使用 Root，再检查一次。</string>
     <string name="guide_root_missing">没有找到 su 命令，这台设备可能没有 Root。没有 Root 请改用 Shizuku。</string>
     <string name="guide_root_done">已获得 Root 权限</string>
-    <string name="guide_root_experimental">Root 方式还没有在真机上完整验证。遇到问题请改用 Shizuku。</string>
+    <string name="guide_root_fallback">遇到问题请改用 Shizuku。</string>
     <string name="guide_ready_title">权限已就绪</string>
     <string name="guide_ready_detail">可以回到首页开始任务了。</string>
     <string name="guide_back_home">回到首页</string>

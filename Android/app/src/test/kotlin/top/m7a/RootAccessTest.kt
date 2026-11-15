@@ -1,0 +1,166 @@
+package top.m7a
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.march7th.deviceservice.AppServer
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
+class RootAccessTest {
+    @Test
+    fun probeRequiresShellUid() {
+        for (uid in listOf(2000, 0)) {
+            val process = FakeSu { line ->
+                assertEquals("exec /system/bin/id -u", line)
+                emit("$uid")
+                exit(0)
+            }
+            val access = rootAccess(process)
+            access.probe()
+            val expected = if (uid == 2000) PermissionState.READY else PermissionState.NOT_AUTHORIZED
+            assertEquals(expected, access.permission)
+        }
+    }
+
+    @Test
+    fun sendsTokenAfterAppServerTakesStdinAndClosesLeaseWithEof() {
+        val process = FakeSu { line ->
+            if (lines.size == 1) {
+                val quoted = "'/data/app/it'\\''s here/base.apk'"
+                assertEquals(
+                    "CLASSPATH=$quoted exec /system/bin/app_process /system/bin " +
+                        "--nice-name=m7a-apk-root org.march7th.deviceservice.AppServer $quoted",
+                    line,
+                )
+                emit("M7A_APP_PORT 1111", AppServer.ROOT_STDIN_READY)
+            } else {
+                assertEquals(TOKEN, line)
+                emit("M7A_APP_PORT 4321")
+            }
+        }
+        rootAccess(process).open("/data/app/it's here/base.apk", TOKEN).use { lease ->
+            assertEquals(4321, lease.port)
+            assertEquals(2, process.lines.size)
+            assertFalse(process.stdinClosed)
+        }
+        assertTrue(process.stdinClosed)
+        assertEquals(0, process.exitValue())
+    }
+
+    @Test
+    fun wrongUidExitPreservesDiagnosticsWithoutWritingToken() {
+        val process = FakeSu {
+            emit("invalid Root service entry: uid=0, argc=1")
+            exit(2)
+        }
+        val access = rootAccess(process)
+        val error = assertThrows(DeviceFailure::class.java) { access.open(APK, TOKEN) }
+        assertEquals("root_unavailable", error.code)
+        assertEquals(PermissionState.NOT_AUTHORIZED, access.permission)
+        assertTrue(error.message.orEmpty().contains("exit=2"))
+        assertTrue(error.message.orEmpty().contains("uid=0"))
+        assertEquals(1, process.lines.size)
+        assertFalse(process.lines.single().contains(TOKEN))
+        assertTrue(process.stdinClosed)
+    }
+
+    @Test
+    fun startupFailureRedactsTokenInOutput() {
+        val process = FakeSu {
+            if (lines.size == 1) {
+                emit(AppServer.ROOT_STDIN_READY)
+            } else {
+                emit("error reading session $TOKEN")
+                exit(3)
+            }
+        }
+        val error = assertThrows(DeviceFailure::class.java) { rootAccess(process).open(APK, TOKEN) }
+        assertEquals("service_start", error.code)
+        assertTrue(error.message.orEmpty().contains("exit=3"))
+        assertTrue(error.message.orEmpty().contains("error reading session [已脱敏]"))
+        assertFalse(error.message.orEmpty().contains(TOKEN))
+        assertTrue(process.stdinClosed)
+    }
+
+    @Test
+    fun busyResponseKeepsItsErrorCode() {
+        val process = FakeSu {
+            if (lines.size == 1) {
+                emit(AppServer.ROOT_STDIN_READY)
+            } else {
+                emit("M7A_APP_BUSY")
+                exit(3)
+            }
+        }
+        val error = assertThrows(DeviceFailure::class.java) { rootAccess(process).open(APK, TOKEN) }
+        assertEquals(AppServer.BUSY, error.code)
+        assertTrue(error.message.orEmpty().contains("exit=3"))
+        assertTrue(process.stdinClosed)
+    }
+
+    private fun rootAccess(process: FakeSu) = RootAccess(startProcess = { argv ->
+        assertEquals(listOf("su", "2000"), argv)
+        process
+    }, warn = {})
+
+    private class FakeSu(private val onInput: FakeSu.(String) -> Unit) : Process() {
+        val lines = mutableListOf<String>()
+        var stdinClosed = false
+            private set
+        private val output = PipedOutputStream()
+        private val fromSu = PipedInputStream(output)
+        private val exited = CountDownLatch(1)
+        private var code = 0
+        private val toSu = object : ByteArrayOutputStream() {
+            override fun flush() {
+                val line = toString(Charsets.UTF_8).removeSuffix("\n")
+                reset()
+                lines.add(line)
+                onInput(line)
+            }
+
+            override fun close() {
+                stdinClosed = true
+                exit(0)
+            }
+        }
+
+        fun emit(vararg lines: String) {
+            output.write(lines.joinToString("\n", postfix = "\n").toByteArray(Charsets.UTF_8))
+            output.flush()
+        }
+
+        fun exit(status: Int) {
+            if (exited.count == 0L) return
+            code = status
+            output.close()
+            exited.countDown()
+        }
+
+        override fun getInputStream() = fromSu
+        override fun getOutputStream() = toSu
+        override fun getErrorStream(): InputStream = InputStream.nullInputStream()
+        override fun waitFor(): Int {
+            exited.await()
+            return code
+        }
+        override fun waitFor(timeout: Long, unit: TimeUnit) = exited.await(timeout, unit)
+        override fun exitValue(): Int {
+            if (exited.count != 0L) throw IllegalThreadStateException()
+            return code
+        }
+        override fun destroy() = exit(143)
+    }
+
+    private companion object {
+        const val APK = "/data/app/base.apk"
+        const val TOKEN = "test-token-for-stdin-only"
+    }
+}

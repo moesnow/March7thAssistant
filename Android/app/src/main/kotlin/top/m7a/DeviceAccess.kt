@@ -6,7 +6,6 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.IBinder
-import android.os.Process
 import android.util.Base64
 import org.march7th.deviceservice.AppServer
 import rikka.shizuku.Shizuku
@@ -19,7 +18,8 @@ import java.util.concurrent.TimeUnit
 enum class Privilege { SHIZUKU, ROOT }
 enum class PermissionState { NOT_CHECKED, NOT_INSTALLED, NOT_RUNNING, NOT_AUTHORIZED, READY }
 
-internal class DeviceFailure(val code: String) : IOException(code)
+internal class DeviceFailure(val code: String, detail: String? = null) :
+    IOException(if (detail == null) code else "$code ($detail)")
 
 internal fun newToken(): String = Base64.encodeToString(
     ByteArray(32).also(SecureRandom()::nextBytes),
@@ -38,8 +38,7 @@ internal interface DeviceLease : Closeable {
 }
 
 internal class DeviceAccess(private val context: Context) {
-    @Volatile
-    private var rootPermission = PermissionState.NOT_CHECKED
+    private val root = RootAccess()
 
     private val userService = Shizuku.UserServiceArgs(ComponentName(context, GameUserService::class.java))
         .daemon(false)
@@ -48,7 +47,7 @@ internal class DeviceAccess(private val context: Context) {
         .version(BuildConfig.VERSION_CODE)
 
     fun state(privilege: Privilege): PermissionState {
-        if (privilege == Privilege.ROOT) return rootPermission
+        if (privilege == Privilege.ROOT) return root.permission
         if (!context.hasPackage(SHIZUKU_PACKAGE)) return PermissionState.NOT_INSTALLED
         if (!Shizuku.pingBinder()) return PermissionState.NOT_RUNNING
         return runCatching {
@@ -66,25 +65,11 @@ internal class DeviceAccess(private val context: Context) {
         }
     }
 
-    fun probeRoot() {
-        val process = try {
-            ProcessBuilder("su", "-c", "id -u").redirectErrorStream(true).start()
-        } catch (_: IOException) {
-            rootPermission = PermissionState.NOT_INSTALLED
-            return
-        }
-        try {
-            val granted = process.waitFor(15, TimeUnit.SECONDS) && process.exitValue() == 0 &&
-                process.inputStream.bufferedReader().readText().trim() == "0"
-            rootPermission = if (granted) PermissionState.READY else PermissionState.NOT_AUTHORIZED
-        } finally {
-            process.destroy()
-        }
-    }
+    fun probeRoot() = root.probe()
 
     fun open(privilege: Privilege, token: String): DeviceLease = when (privilege) {
         Privilege.SHIZUKU -> openUserService(token)
-        Privilege.ROOT -> openRoot(token)
+        Privilege.ROOT -> root.open(context.applicationInfo.sourceDir, token)
     }
 
     /** 只尝试回收本应用同一 tag 的残留 UserService。 */
@@ -151,65 +136,6 @@ internal class DeviceAccess(private val context: Context) {
             } finally {
                 runCatching { Shizuku.unbindUserService(userService, this, true) }
             }
-        }
-    }
-
-    private fun openRoot(token: String): DeviceLease {
-        val path = "'" + context.applicationInfo.sourceDir.replace("'", "'\\''") + "'"
-        val command = "CLASSPATH=$path exec /system/bin/app_process /system/bin " +
-            "--nice-name=m7a-apk-root org.march7th.deviceservice.AppServer $path"
-        val process = try {
-            ProcessBuilder("su", "-c", command, Process.SHELL_UID.toString()).redirectErrorStream(true).start()
-        } catch (_: IOException) {
-            rootPermission = PermissionState.NOT_INSTALLED
-            throw DeviceFailure("root_unavailable")
-        }
-        val ready = CountDownLatch(1)
-        var port = 0
-        var busy = false
-        Thread({
-            try {
-                process.inputStream.bufferedReader().useLines { lines ->
-                    for (line in lines) {
-                        if (line.startsWith("M7A_APP_PORT ")) {
-                            port = line.substringAfter(' ').toIntOrNull() ?: 0
-                            ready.countDown()
-                        } else if (line == "M7A_APP_BUSY") {
-                            busy = true
-                            ready.countDown()
-                        }
-                    }
-                }
-            } catch (_: IOException) {
-                // 进程已关闭管道。
-            } finally {
-                ready.countDown()
-            }
-        }, "m7a-root-output").apply { isDaemon = true }.start()
-        try {
-            process.outputStream.write((token + "\n").toByteArray(Charsets.US_ASCII))
-            process.outputStream.flush()
-            if (!ready.await(15, TimeUnit.SECONDS)) throw DeviceFailure("service_start")
-            if (busy) throw DeviceFailure(AppServer.BUSY)
-            if (port !in 1..65535) {
-                rootPermission = PermissionState.NOT_AUTHORIZED
-                throw DeviceFailure("root_unavailable")
-            }
-            return object : DeviceLease {
-                override val port = port
-                override fun close() = closeRoot(process)
-            }
-        } catch (error: Exception) {
-            closeRoot(process)
-            throw error
-        }
-    }
-
-    private fun closeRoot(process: java.lang.Process) {
-        runCatching { process.outputStream.close() }
-        if (!process.waitFor(9, TimeUnit.SECONDS)) {
-            process.destroy()
-            throw DeviceFailure("cleanup_pending")
         }
     }
 
