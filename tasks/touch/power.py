@@ -20,7 +20,8 @@ from tasks.power.battle import ensure_double_speed
 from tasks.power.policy import (
     BATTLE_TIMEOUT, ENTRY_TIMEOUT, DEFEAT_RETRIES, CAVERN, CRIMSON_CALYX, ECHO, GOLDEN_CALYX,
     INSTANCE_LIMITS, ORNAMENT, STAGNANT_SHADOW, BattleDefeat, PowerError, RelicBagFull,
-    SupportDemand, batch_limit, check_balance, normalize as _normalize, parse_power, run_plan,
+    SupportDemand, batch_limit, check_balance, normalize as _normalize, parse_challenge_cost,
+    parse_echo_rewards, parse_power, parse_wave_count, run_plan,
 )
 from tasks.power.readout import read_number
 from tasks.power.supplement import supplement
@@ -70,29 +71,15 @@ def read_power(crop=POWER_VALUE):
 
 
 def _read_echo_rewards():
-    def parse(text):
-        match = re.fullmatch(r"([0-3])/3", _normalize(text))
-        return int(match[1]) if match else None
-
-    return _read_number(ECHO_REWARDS, parse, "未能确认历战余响的剩余奖励次数")
+    return _read_number(ECHO_REWARDS, parse_echo_rewards, "未能确认历战余响的剩余奖励次数")
 
 
 def _read_waves(crop, label):
-    def parse(text):
-        match = re.fullmatch(rf"{label}:?(\d{{1,2}})", _normalize(text))
-        if match and 1 <= int(match[1]) <= MAX_WAVES:
-            return int(match[1])
-        return None
-
-    return _read_number(crop, parse, f"未能确认{label}")
+    return _read_number(crop, lambda text: parse_wave_count(text, label, MAX_WAVES), f"未能确认{label}")
 
 
 def _read_cost(crop):
-    def parse(text):
-        match = re.fullmatch(r"[xX×]?(\d{1,3})", _normalize(text))
-        return int(match[1]) if match else None
-
-    return _read_number(crop, parse, "未能确认挑战按钮上的开拓力消耗")
+    return _read_number(crop, parse_challenge_cost, "未能确认挑战按钮上的开拓力消耗")
 
 
 def _tap(x, y):

@@ -67,6 +67,13 @@ class Daily:
         ))
 
     @staticmethod
+    def run_standalone():
+        return run_steps((
+            ("日常领奖", reward.start),
+            ("每日实训", Daily.run),
+        ))
+
+    @staticmethod
     def _run_scheduled_divergent_universe(divergent: DivergentUniverse):
         target_count = int(cfg.universe_count)
         cycle = "weekly" if cfg.universe_frequency == "weekly" else "daily"
@@ -149,8 +156,8 @@ class Daily:
         for _ in range(3):
             if divergent.check_divergent_universe_score():
                 return True
-            if divergent.start() is False:
-                return False
+            # 未完成对局也可能结算本周积分。按周奖励状态判断是否继续补打。
+            divergent.start()
             if not Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
                 return True
         log.warning("尝试运行了多轮差分宇宙，但积分奖励仍未完成")

@@ -71,14 +71,14 @@ class EmberExchange:
 
         if enabled_count == 0:
             log.info("余烬兑换每月自动购买未开启")
-            return False
+            return True
 
         if not pending_items:
             log.info("余烬兑换每月自动购买尚未刷新")
             return True
 
         log.hr("准备进行余烬兑换每月购买", 2)
-        has_success = False
+        completed_count = 0
         unresolved_items = []
 
         try:
@@ -97,7 +97,7 @@ class EmberExchange:
                     continue
 
                 cfg.save_timestamp(item.timestamp_key)
-                has_success = True
+                completed_count += 1
 
             if unresolved_items:
                 unresolved_names = "、".join(item.display_name for item in unresolved_items)
@@ -110,13 +110,14 @@ class EmberExchange:
                             continue
 
                         cfg.save_timestamp(item.timestamp_key)
-                        has_success = True
+                        completed_count += 1
         except Exception as e:
             log.error(f"余烬兑换每月自动购买失败: {e}")
+            return False
         finally:
             cls._restore_main_screen()
 
-        return has_success
+        return completed_count == len(pending_items)
 
     @classmethod
     def _navigate_to_ember_exchange(cls):
@@ -254,8 +255,8 @@ class EmberExchange:
             return None
 
         if remaining_count <= 0:
-            log.info(f"「{item.display_name}」当前可兑换数量为 0，跳过")
-            return None
+            log.info(f"「{item.display_name}」当前可兑换数量为 0，本月视为已处理")
+            return {"status": cls.RESULT_SOLD_OUT}
 
         return {
             "status": cls.RESULT_SUCCESS,

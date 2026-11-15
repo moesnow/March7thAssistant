@@ -3,6 +3,7 @@ from module.config import cfg
 from module.localization import get_raw_instance_names
 from module.logger import log
 from module.screen import screen
+from tasks.base.task_steps import run_steps
 from tasks.daily.buildtarget import BuildTarget
 from tasks.power.instance import Instance, TeamPresetUnavailable
 from tasks.power.policy import (
@@ -24,17 +25,23 @@ class Power:
     def run(skip_weekly_cleanup=False, *, support=None):
         if not skip_weekly_cleanup:
             Power.run_weekly_relic_cleanup()
+        lookup_ok = True
         if support is None:
             from tasks.daily.daily import Daily
 
-            support = Daily.support_demand()
+            support = SupportDemand()
+
+            def query_support():
+                support.pending = Daily.support_demand().pending
+
+            lookup_ok = run_steps((("查询支援实训", query_support),))
 
         log.hr("开始清体力", 0)
         plan = cfg.power_plan
         if plan:
             complete = Power.execute_power_plan(support=support)
             if not complete or not cfg.power_plan_continue:
-                return True
+                return lookup_ok
 
         instance_type = cfg.instance_type
         instance_name = cfg.instance_names.get(instance_type)
@@ -47,10 +54,10 @@ class Power:
                 log.warning(f"获取培养目标副本失败，使用配置的副本：{error}")
         if instance_name == "无":
             log.info(f"{instance_type}未开启")
-            return True
+            return lookup_ok
         Power.process(instance_type, instance_name, support=support)
         log.hr("完成", 2)
-        return True
+        return lookup_ok
 
     @staticmethod
     def run_weekly_relic_cleanup():

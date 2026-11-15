@@ -11,7 +11,8 @@ from tasks.base.team import Team
 from tasks.power.battle import ensure_double_speed
 from tasks.power.policy import (
     BATTLE_TIMEOUT, ENTRY_TIMEOUT, CRIMSON_CALYX, ECHO, INSTANCE_LIMITS, ORNAMENT,
-    PowerError, RelicBagFull, normalize, parse_ornament_payment, parse_power,
+    PowerError, RelicBagFull, parse_challenge_cost, parse_echo_rewards, parse_ornament_payment,
+    parse_power, parse_wave_count,
 )
 from tasks.power.readout import read_number
 from tasks.power.character import Character
@@ -24,12 +25,12 @@ CATEGORY = (262 / 1920, 289 / 1080, 422 / 1920, 624 / 1080)
 ENTRY_ROWS = (686 / 1920, 287 / 1080, 980 / 1920, 650 / 1080)
 WAVE_SELECTOR = (1160 / 1920, 828 / 1080, 755 / 1920, 104 / 1080)
 CHALLENGE_COST = (1210 / 1920, 947 / 1080, 262 / 1920, 78 / 1080)
-REPEAT_COST = (1072 / 1920, 915 / 1080, 173 / 1920, 66 / 1080)
+REPEAT_COST = (1011 / 1920, 923 / 1080, 174 / 1920, 78 / 1080)
 CHALLENGE = (1392 / 1920, 946 / 1080, 487 / 1920, 83 / 1080)
 TEAM_TABS = (311 / 1920, 12 / 1080, 1376 / 1920, 105 / 1080)
 DIALOG = (245 / 1920, 200 / 1080, 1430 / 1920, 645 / 1080)
 CONFIRM = "./assets/images/zh_CN/base/confirm.png"
-RESULT_WAVES = (1120 / 1920, 850 / 1080, 315 / 1920, 75 / 1080)
+RESULT_WAVES = (1130 / 1920, 860 / 1080, 285 / 1920, 48 / 1080)
 FIGHT_AGAIN = "./assets/images/zh_CN/fight/fight_again.png"
 FIGHT_FAIL = "./assets/images/zh_CN/fight/fight_fail.png"
 FIGHT_EXIT = "./assets/images/zh_CN/fight/fight_exit.png"
@@ -96,11 +97,7 @@ class Instance:
     def read_echo_rewards():
         Instance.select_category(ECHO)
 
-        def parse(text):
-            match = re.search(r"([0-3])/3(?!\d)", normalize(text))
-            return int(match[1]) if match else None
-
-        quota = read_number(auto, (682 / 1920, 275 / 1080, 1002 / 1920, 184 / 1080), parse,
+        quota = read_number(auto, (682 / 1920, 275 / 1080, 1002 / 1920, 184 / 1080), parse_echo_rewards,
                             "未能确认历战余响奖励次数")
         log.info(f"历战余响本周剩余奖励次数：{quota}/3")
         return quota
@@ -112,16 +109,16 @@ class Instance:
             if result:
                 crop = (1481 / 1920, 35 / 1080, 127 / 1920, 55 / 1080)
         else:
-            crop = (1550 / 1920, 22 / 1080, 187 / 1920, 60 / 1080)
+            crop = (1588 / 1920, 22 / 1080, 198 / 1920, 60 / 1080)
         return read_number(auto, crop, parse_power, "未能确认副本界面的开拓力余额")
 
     @staticmethod
     def _select_waves(instance_type, requested):
         count_crop = ((1490 / 1920, 819 / 1080, 240 / 1920, 65 / 1080) if instance_type == ORNAMENT
                       else (1476 / 1920, 837 / 1080, 156 / 1920, 43 / 1080))
+
         def parse(text):
-            match = re.search(r"挑战次数[:：]?(\d{1,2})(?!\d)", normalize(text))
-            return int(match[1]) if match and 1 <= int(match[1]) <= 24 else None
+            return parse_wave_count(text, "挑战次数", INSTANCE_LIMITS[instance_type][1])
 
         if not auto.find_element("挑战次数", "text", crop=count_crop, include=True, max_retries=3, retry_delay=0.3):
             if instance_type == ECHO:
@@ -146,17 +143,12 @@ class Instance:
     @staticmethod
     def _read_payment(instance_type, waves, *, repeat=False):
         if instance_type == ORNAMENT:
-            crop = ((1050 / 1920, 909 / 1080, 233 / 1920, 80 / 1080) if repeat
-                    else (1350 / 1920, 944 / 1080, 226 / 1920, 76 / 1080))
+            crop = REPEAT_COST if repeat else (1350 / 1920, 944 / 1080, 226 / 1920, 76 / 1080)
             return read_number(auto, crop, lambda text: parse_ornament_payment(text, waves),
                                "未能确认饰品提取按钮的费用", retries=3)[0]
         crop = REPEAT_COST if repeat else CHALLENGE_COST
 
-        def parse(text):
-            match = re.search(r"[×xX]?(\d{1,3})", normalize(text))
-            return int(match[1]) if match else None
-
-        return read_number(auto, crop, parse, "未能确认挑战按钮的开拓力费用", retries=3)
+        return read_number(auto, crop, parse_challenge_cost, "未能确认挑战按钮的开拓力费用", retries=3)
 
     @staticmethod
     def prepare_payment(instance_type, requested, available, *, practice, immersifier_only):
@@ -211,20 +203,27 @@ class Instance:
     @staticmethod
     def _select_ornament_team(team):
         if not re.fullmatch(r"0?[1-9]|1[0-9]", str(team)):
-            raise PowerError(f"队伍编号 {team} 格式错误")
+            return False
         presets = (6 / 1920, 8 / 1080, 578 / 1920, 168 / 1080)
         team_names = (6 / 1920, 116 / 1080, 300 / 1920, 900 / 1080)
         if not auto.click_element((619 / 1920, 780 / 1080, 77 / 1920, 75 / 1080), "crop"):
-            raise PowerError("无法打开饰品提取编队")
-        if not auto.click_element("预设编队", "text", crop=presets, max_retries=4, retry_delay=0.3):
-            raise PowerError("未找到饰品提取的预设编队")
-        for _ in range(8):
-            if auto.click_element(f"队伍{int(team)}", "text", crop=team_names, max_retries=3, retry_delay=0.3):
-                auto.press_key("esc")
-                return
-            if not drag_list(auto, (430 / 1920, 850 / 1080), (430 / 1920, 350 / 1080), crop=team_names):
-                break
-        raise PowerError(f"未找到饰品提取预设队伍 {team}")
+            return False
+
+        selected = False
+        if auto.click_element("预设编队", "text", crop=presets, max_retries=4, retry_delay=0.3):
+            for _ in range(8):
+                if auto.click_element(f"队伍{int(team)}", "text", crop=team_names, max_retries=3, retry_delay=0.3):
+                    selected = True
+                    break
+                if not drag_list(auto, (430 / 1920, 850 / 1080), (430 / 1920, 350 / 1080), crop=team_names):
+                    break
+            auto.press_key("esc")
+        elif not auto.find_element("开始挑战", "text", crop=CHALLENGE):
+            auto.press_key("esc")
+
+        if not auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=8, retry_delay=0.3):
+            raise PowerError("退出编队后未能返回饰品提取挑战页")
+        return selected
 
     @staticmethod
     def _confirm_practice():
@@ -238,11 +237,13 @@ class Instance:
         ornament = instance_type == ORNAMENT
         if ornament:
             if cfg.instance_team_enable:
-                Instance._select_ornament_team(Instance.get_target_team(instance_type, name))
+                team = Instance.get_target_team(instance_type, name)
+                if not Instance._select_ornament_team(team):
+                    log.warning(f"未选中饰品提取预设队伍 {team}，保留当前编队")
             empty = auto.find_element("./assets/images/share/universe/empty_character_slot.png", "image_count", 0.8,
                                       crop=(624 / 1920, 772 / 1080, 267 / 1920, 91 / 1080), pixel_bgr=[233, 233, 233])
-            if empty and empty >= 3:
-                Instance._select_ornament_team(1)
+            if empty and empty >= 3 and not Instance._select_ornament_team(1):
+                raise PowerError("饰品提取没有可用编队，未能选中队伍 1")
         else:
             if not auto.click_element("挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35):
                 Instance.check_popup()
@@ -342,8 +343,7 @@ class Instance:
             return 1
 
         def parse(text):
-            match = re.search(r"上轮挑战波次[:：]?(\d{1,2})(?!\d)", normalize(text))
-            return int(match[1]) if match and 1 <= int(match[1]) <= waves else None
+            return parse_wave_count(text, "上轮挑战波次", waves)
 
         return read_number(auto, RESULT_WAVES, parse, "未能确认已结算的挑战次数")
 
@@ -398,7 +398,7 @@ class Instance:
             screen.change_to("universe_main")
             screen.change_to("map")
             if not Instance._detect_space_anchor():
-                raise PowerError("未能确认可传送的恢复锚点")
+                log.warning("未找到可传送的恢复锚点，继续准备副本")
         screen.change_to("main")
 
     @staticmethod

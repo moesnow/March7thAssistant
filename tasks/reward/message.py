@@ -1,15 +1,11 @@
 import time
 
-import cv2
-import numpy as np
-
 from module.automation import auto
 from module.logger import log
 from module.notification.notification import NotificationLevel
 from module.screen import screen
 from tasks.base.base import Base
 from tasks.base.list_drag import drag_list
-from utils.image_utils import ImageUtils
 from .receipt import ITEM_POPUP, RewardError, close_item_reward
 from .rewardtemplate import RewardTemplate
 
@@ -24,20 +20,17 @@ class Message(RewardTemplate):
 
     @staticmethod
     def _reply():
-        frame, _, _ = auto.take_screenshot(crop=Message._REPLY_CROP)
-        pixels = cv2.cvtColor(np.asarray(frame.convert("RGB")), cv2.COLOR_RGB2BGR)
-        for name, offset in (("message_reply", (0, 0)), ("message_sticker", (83, 93))):
-            template = ImageUtils.read_image(f"{Message._REPLY_ASSETS}/{name}.png")
-            if template is None:
-                continue
+        auto.take_screenshot(crop=Message._REPLY_CROP)
+        for name, offset, axis in (("message_reply", (0, 0), 1), ("message_sticker", (83, 93), 0)):
             for scale in (1.0, 1.2, 1.5):
-                matches = ImageUtils.scale_and_match_template_with_multiple_targets(pixels, template, 0.92, scale)
+                matches = auto.find_element(
+                    f"{Message._REPLY_ASSETS}/{name}.png", "image_with_multiple_targets", 0.92,
+                    take_screenshot=False, scale_range=scale,
+                )
                 if matches:
                     # 文字从上到下，表情从左到右，只点识别到的第一个。
-                    pos = min(matches, key=lambda box: (box[0][1], box[0][0]) if name == "message_reply" else box[0][0])
-                    (x, y), (right, bottom) = pos
-                    box = ((x, y), (right, y), (right, bottom), (x, bottom))
-                    return auto.click_element_with_pos(auto.calculate_text_position(box, False), offset=offset)
+                    first = min(matches, key=lambda box: (box[0][axis], box[0][1 - axis]))
+                    return auto.click_element_with_pos(first, offset=offset)
         return False
 
     def _finish(self, pending_crop):
