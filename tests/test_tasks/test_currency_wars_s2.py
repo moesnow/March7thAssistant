@@ -7,6 +7,7 @@ from unittest.mock import Mock
 from PIL import Image, ImageDraw
 import pytest
 
+from module.screen.screen import Screen
 from tasks.weekly import currency_wars as task
 from tasks.weekly import currency_wars_strategy as policy
 from tasks.weekly import currency_wars_ui as ui
@@ -1107,6 +1108,82 @@ def rank():
 
 def battle(auto_on):
     return page(Page.BATTLE, auto_off=not auto_on)
+
+
+@pytest.mark.parametrize(("screens", "keys", "entries", "succeeds"), [
+    (("currency_wars_homepage",), ["esc"], 1, True),
+    (("interaction",), ["esc", "f"], 1, True),
+    (("homepage_ocr",), ["esc", "f"], 1, True),
+    (("popup", "currency_wars_homepage"), ["esc", "f", "esc"], 1, True),
+    (("popup", "guide5"), ["esc", "f", "esc"], 2, True),
+    (("popup", "popup", "currency_wars_homepage"), ["esc", "f", "esc", "esc"], 1, True),
+    (("popup", "popup", "popup", "guide5"), ["esc", "f", "esc", "esc", "esc"], 2, True),
+    (("popup", "reward_limit", "currency_wars_homepage"), ["esc", "f", "esc", "esc"], 1, True),
+    (("popup", "guide5", "popup", "guide5", "popup", "currency_wars_homepage"),
+     ["esc", "f", "esc", "f", "esc", "f", "esc"], 3, True),
+    (("popup",), ["esc", "f", "esc", "esc", "esc"], 1, False),
+    (("popup", "battle"), ["esc", "f", "esc"], 1, False),
+    (("battle",), ["esc", "f"], 1, False),
+    (("main",), ["esc"], 0, False),
+])
+def test_homepage_entry_recovers_after_the_interaction_timeout(monkeypatch, world, screens, keys, entries, succeeds):
+    target = "currency_wars_homepage"
+    destinations = iter(screens)
+    current_screen = "main"
+    attempted_entries = 0
+    sent_keys = []
+    unknown = page(Page.UNKNOWN)
+    lobby = home()
+    frames = {target: lobby, "homepage_ocr": lobby, "battle": battle(auto_on=True),
+              "reward_limit": page(Page.REWARD_LIMIT)}
+
+    def press_key(key):
+        nonlocal current_screen
+        sent_keys.append(key)
+        if current_screen == "main" and key == "esc" and screens[0] != "main":
+            current_screen = "menu"
+        elif current_screen == "interaction" and key == "f":
+            current_screen = target
+        elif current_screen in ("popup", "reward_limit") and key == "esc":
+            current_screen = next(destinations, current_screen)
+
+    def click_element(label, *_args, **_kwargs):
+        nonlocal current_screen, attempted_entries
+        if current_screen == "menu" and label.endswith("/enter_guide5.png"):
+            current_screen = "guide5"
+        elif current_screen == "guide5" and label == "前往参与":
+            attempted_entries += 1
+            current_screen = next(destinations, target)
+        return True
+
+    def find_element(image_path, *_args, **_kwargs):
+        definition = navigation.screen_map.get(current_screen)
+        return definition is not None and definition["image_path"] == image_path
+
+    def get_current_screen(*, autotry, **_kwargs):
+        assert autotry is False
+        return current_screen in navigation.screen_map and navigation.check_screen(current_screen)
+
+    navigation = object.__new__(Screen)
+    navigation.__init__(config_path="assets/config/screens.json", logger=Mock())
+    monkeypatch.setattr(navigation, "get_current_screen", get_current_screen)
+    monkeypatch.setitem(Screen.perform_operations.__globals__, "auto", world.auto)
+    monkeypatch.setitem(Screen.perform_operations.__globals__, "time", task.time)
+    monkeypatch.setattr(task, "screen", navigation)
+    monkeypatch.setattr(world.war, "_observe", lambda: frames.get(current_screen, unknown))
+    world.auto.find_element.side_effect = find_element
+    world.auto.press_key.side_effect = press_key
+    world.auto.click_element.side_effect = click_element
+
+    if succeeds:
+        assert world.war._homepage(unknown) is lobby
+        assert navigation.current_screen == target
+        navigation.logger.error.assert_not_called()
+    else:
+        with pytest.raises(RuntimeError, match="无法切换到指定游戏界面"):
+            world.war._homepage(unknown)
+    assert sent_keys == keys
+    assert attempted_entries == entries
 
 
 def reconnect_prompt(*, split=False, enabled=True):

@@ -26,6 +26,7 @@ from utils.screenshot_util import save_error_screenshot
 TASK_SECONDS = 120 * 60
 MAX_WEEKLY_MATCHES = 3
 MAX_RECONNECTS = 2
+MAX_ENTRY_ESCAPES = 3
 BATTLE_SECONDS = 10 * 60
 DEFAULT_PREPARE_LIMIT = 30
 DEFAULT_HALO_REFRESHES = 2
@@ -41,6 +42,7 @@ PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLAC
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
+ENTRY_SCREENS = ("guide5", "main", "menu", "guide1", "guide2", "guide3", "guide4")
 BOSS_STAGES = {"normal": ("1-9", "2-7", "3-7"), "overclock": ("1-6", "2-5", "3-5")}
 RESULT_ACTIONS = ("下一页", "下一步", "前往结算", "继续挑战", "返回货币战争")
 NEUTRAL_ENVIRONMENTS = ("连击概念股", "增发货币", "能量概念股", "人身意外险", "蓝钻贵族")
@@ -311,7 +313,42 @@ class CurrencyWars:
     @staticmethod
     def _entry_screen_ready():
         return (screen.get_current_screen(autotry=False, max_retries=1)
-                and screen.current_screen in {"main", "menu", "guide1", "guide2", "guide3", "guide4", "guide5"})
+                and screen.current_screen in ENTRY_SCREENS)
+
+    def _recover_homepage_entry(self, attempts=MAX_ENTRY_ESCAPES):
+        target = "currency_wars_homepage"
+
+        def entry_settled(frame):
+            if frame.page != Page.UNKNOWN:
+                return frame.page != Page.REWARD_LIMIT
+            return any(
+                screen.check_screen(name, take_screenshot=False)
+                for name in (target, *ENTRY_SCREENS)
+                if name in screen.screen_map
+            )
+
+        for remaining in range(attempts, -1, -1):
+            frame = self._observe()
+            if frame.page == Page.HOME or (
+                    frame.page == Page.UNKNOWN and screen.check_screen(target, take_screenshot=False)):
+                return True
+            if not remaining or frame.page not in (Page.UNKNOWN, Page.REWARD_LIMIT):
+                break
+
+            attempt = MAX_ENTRY_ESCAPES - remaining + 1
+            log.warning(f"货币战争入口超时，按 ESC 尝试关闭弹窗（{attempt}/{MAX_ENTRY_ESCAPES}）")
+            auto.press_key("esc")
+            frame = self._wait(entry_settled, 6)
+            if frame is None:
+                continue
+            if frame.page == Page.UNKNOWN:
+                if screen.current_screen != target:
+                    # 重走入口时沿用剩余次数，避免同一个弹窗反复触发。
+                    screen.change_to(target, max_recursion=0, autotry=False,
+                                     on_timeout=lambda: self._recover_homepage_entry(remaining - 1))
+                return True
+            return frame.page == Page.HOME
+        return False
 
     def _homepage(self, frame):
         if frame.page in (Page.RANK, Page.END_MATCH_CONFIRM):
@@ -324,7 +361,8 @@ class CurrencyWars:
             raise CurrencyWarsError("当前存在进行中的货币战争对局，请使用「货币战争中途接管」继续")
         if not self._entry_screen_ready():
             raise CurrencyWarsError("无法确认当前界面可以进入「货币战争·入画奇航」")
-        screen.change_to("currency_wars_homepage", max_recursion=0, autotry=False)
+        screen.change_to("currency_wars_homepage", max_recursion=0, autotry=False,
+                         on_timeout=self._recover_homepage_entry)
         return self._expect(lambda f: f.page == Page.HOME, 10, "未识别到「货币战争·入画奇航」首页")
 
     def _select_rank(self, frame, difficulty=None):

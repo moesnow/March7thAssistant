@@ -287,14 +287,16 @@ class Screen(metaclass=SingletonMeta):
         """
         return self.screen_map[id]["name"]
 
-    def check_screen(self, target_screen):
+    def check_screen(self, target_screen, *, take_screenshot=True):
         """
         检查当前界面是否是指定的目标界面。
 
         :param target_screen: 目标界面的标识符。
+        :param take_screenshot: 是否重新截图。
         :return: 如果当前界面是目标界面，则返回True；否则返回False。
         """
-        if self._find_image(self.screen_map[target_screen]['image_path'], "image", self.SCREEN_MATCH_THRESHOLD):
+        if self._find_image(self.screen_map[target_screen]['image_path'], "image", self.SCREEN_MATCH_THRESHOLD,
+                            take_screenshot=take_screenshot):
             # 如果找到了目标界面的图像，则更新当前界面状态为目标界面
             self.current_screen = target_screen
             return True
@@ -394,10 +396,12 @@ class Screen(metaclass=SingletonMeta):
             except Exception as e:
                 self.logger.debug(f"未知的操作: {e}")
 
-    def wait_for_screen_change(self, next_screen, max_recursion=2, timeout_operations=None, *, autotry=True):
+    def wait_for_screen_change(self, next_screen, max_recursion=2, timeout_operations=None, *,
+                               autotry=True, on_timeout=None):
         """
         等待界面切换，如果未成功则根据重试次数决定是否重试
         :param timeout_operations: 超时后执行的可选操作列表，执行后会再次检测界面
+        :param on_timeout: 超时操作和重试均未到达目标时调用，恢复到目标后返回 True
         """
         for _ in range(20):
             self.logger.debug(f"等待：{self.get_name(next_screen)}")
@@ -420,20 +424,27 @@ class Screen(metaclass=SingletonMeta):
             self.wait_screen_change_time = 1
             if max_recursion > 0:
                 self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，准备重试")
-                self.change_to(next_screen, max_recursion=max_recursion - 1, autotry=autotry)
+                self.change_to(next_screen, max_recursion=max_recursion - 1, autotry=autotry,
+                               on_timeout=on_timeout)
+            elif on_timeout is not None and on_timeout():
+                if self.current_screen != next_screen:
+                    self.current_screen = next_screen
+                    self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
+                    time.sleep(self.wait_screen_change_time)
             else:
                 self.log_and_raise(f"无法切换到 {self.get_name(next_screen)}", "无法切换到指定游戏界面")
 
-    def _switch_screen(self, current_screen, next_screen, max_recursion, *, autotry):
+    def _switch_screen(self, current_screen, next_screen, max_recursion, *, autotry, on_timeout):
         """
         执行从当前界面到下一个界面的切换操作，并处理重试逻辑
         """
         operations = self.get_operations(current_screen, next_screen)
         timeout_operations = self.get_timeout_operations(current_screen, next_screen)
         self.perform_operations(operations)
-        self.wait_for_screen_change(next_screen, max_recursion, timeout_operations or None, autotry=autotry)
+        self.wait_for_screen_change(next_screen, max_recursion, timeout_operations or None,
+                                    autotry=autotry, on_timeout=on_timeout)
 
-    def _navigate_through_path(self, path, max_recursion, *, autotry):
+    def _navigate_through_path(self, path, max_recursion, *, autotry, on_timeout):
         """
         沿着找到的路径导航，执行切换操作
         """
@@ -441,14 +452,16 @@ class Screen(metaclass=SingletonMeta):
         if count:
             self.logger.info(f"当前界面：{green(self.get_name(self.current_screen))}")
             for i in range(count):
-                self._switch_screen(path[i], path[i + 1], max_recursion, autotry=autotry)
+                self._switch_screen(path[i], path[i + 1], max_recursion, autotry=autotry,
+                                    on_timeout=on_timeout if i == count - 1 else None)
 
-    def change_to(self, target_screen, max_recursion=2, *, autotry=True):
+    def change_to(self, target_screen, max_recursion=2, *, autotry=True, on_timeout=None):
         """
         切换到目标界面，如果失败则退出进程
         :param target_screen: 目标界面
         :param max_recursion: 重试次数
         :param autotry: 未识别界面时是否执行自动恢复动作
+        :param on_timeout: 仅在等待最终目标超时时尝试恢复
         """
 
         self.ensure_current_screen_is_clean(autotry=autotry)
@@ -457,5 +470,5 @@ class Screen(metaclass=SingletonMeta):
         if not path:
             self.log_and_raise(f"无法从 {self.get_name(self.current_screen)} 切换到 {self.get_name(target_screen)}", "无法切换到指定游戏界面")
 
-        self._navigate_through_path(path, max_recursion, autotry=autotry)
+        self._navigate_through_path(path, max_recursion, autotry=autotry, on_timeout=on_timeout)
         self.current_screen = target_screen
