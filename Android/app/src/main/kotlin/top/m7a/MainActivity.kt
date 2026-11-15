@@ -26,6 +26,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -38,8 +39,10 @@ import top.m7a.ui.M7ATheme
 import top.m7a.ui.ThemeMode
 import top.m7a.ui.UpdateCheckController
 import top.m7a.ui.UpdateApkStore
+import top.m7a.ui.apkInstallIntent
 import top.m7a.ui.demoFrom
 import top.m7a.ui.rememberDemoUpdater
+import top.m7a.ui.unknownApkSourcesIntent
 
 /** 正式界面的宿主。任务状态和操作都走 TaskController，这里只处理系统权限、文件选择和外部跳转。 */
 class MainActivity : ComponentActivity() {
@@ -50,6 +53,7 @@ class MainActivity : ComponentActivity() {
     private var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     private var notificationsAllowed by mutableStateOf(true)
     private var telemetryEnabled by mutableStateOf(true)
+    private var preparingShizukuInstall = false
 
     private val notificationRequest = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         refreshNotifications()
@@ -127,6 +131,7 @@ class MainActivity : ComponentActivity() {
         openShizuku = {
             open(packageManager.getLaunchIntentForPackage(DeviceAccess.SHIZUKU_PACKAGE) ?: view(SHIZUKU_RELEASES))
         },
+        installShizuku = ::installShizuku,
         downloadShizuku = { open(view(SHIZUKU_RELEASES)) },
         openShizukuManual = { open(view(tr(R.string.url_shizuku_manual))) },
         openProjectPage = { open(view(PROJECT_PAGE)) },
@@ -163,6 +168,41 @@ class MainActivity : ComponentActivity() {
     private fun refreshNotifications() {
         notificationsAllowed = Build.VERSION.SDK_INT < 33 ||
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun installShizuku() {
+        if (controller.state.value.busy || preparingShizukuInstall) return
+        if (hasPackage(DeviceAccess.SHIZUKU_PACKAGE)) {
+            controller.refreshPermission()
+            return
+        }
+        try {
+            if (!packageManager.canRequestPackageInstalls()) {
+                startActivity(unknownApkSourcesIntent(this))
+                toast(R.string.update_install_permission)
+                return
+            }
+        } catch (_: Exception) {
+            toast(R.string.update_install_failed)
+            return
+        }
+        preparingShizukuInstall = true
+        lifecycleScope.launch {
+            try {
+                val apk = withContext(Dispatchers.IO) { prepareBundledShizuku(this@MainActivity) }
+                if (hasPackage(DeviceAccess.SHIZUKU_PACKAGE)) {
+                    controller.refreshPermission()
+                } else if (!controller.state.value.busy) {
+                    startActivity(apkInstallIntent(this@MainActivity, apk))
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (_: Exception) {
+                toast(R.string.shizuku_install_failed)
+            } finally {
+                preparingShizukuInstall = false
+            }
+        }
     }
 
     private fun export(target: Uri) {

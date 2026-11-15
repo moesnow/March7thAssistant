@@ -43,7 +43,9 @@
     <string name="permission_denied">未授权</string>
     <string name="permission_ready">已就绪</string>
     <string name="permission_checking_root">正在检查 Root 权限</string>
-    <string name="get_shizuku">下载 Shizuku</string>
+    <string name="install_shizuku_offline">离线安装</string>
+    <string name="shizuku_releases">官方发布页</string>
+    <string name="shizuku_install_failed">无法准备 Shizuku 安装包，请重试。</string>
     <string name="open_shizuku">打开 Shizuku</string>
     <string name="authorize">授权</string>
     <string name="check_root">检查 Root</string>
@@ -309,7 +311,7 @@
     <string name="guide_root_heading">通过 Root 授权</string>
     <string name="guide_root_about">设备已经 Root 时可以用，不需要 Shizuku。</string>
     <string name="guide_install_title">安装 Shizuku</string>
-    <string name="guide_install_detail">Shizuku 是开源的授权工具。到它的官方发布页下载最新版 APK 并安装，装好后回到这里。</string>
+    <string name="guide_install_detail">使用内置安装包。若系统要求授权，允许小助手安装未知应用，返回后再点安装。</string>
     <string name="guide_install_done">已安装</string>
     <string name="guide_start_title">启动 Shizuku 服务</string>
     <string name="guide_start_pending">安装后再启动服务</string>

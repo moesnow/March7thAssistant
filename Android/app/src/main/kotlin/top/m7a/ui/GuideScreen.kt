@@ -136,7 +136,10 @@ private fun ShizukuSteps(permission: PermissionState, device: DeviceInfo, enable
     StepItem(1, tr(R.string.guide_install_title), stateOf(0)) {
         if (position == 0) {
             BodyText(tr(R.string.guide_install_detail), Modifier.padding(top = 4.dp))
-            StepButton(tr(R.string.get_shizuku), actions.downloadShizuku, icon = true)
+            StepButton(tr(R.string.install_shizuku_offline), actions.installShizuku, enabled = enabled)
+            TextButton(actions.downloadShizuku, enabled = enabled) {
+                Text(tr(R.string.shizuku_releases))
+            }
         } else {
             BodyText(tr(R.string.guide_install_done))
         }
@@ -204,13 +207,9 @@ private fun RootSteps(permission: PermissionState, enabled: Boolean, actions: Ap
 }
 
 @Composable
-private fun StepButton(text: String, onClick: () -> Unit, enabled: Boolean = true, icon: Boolean = false) {
+private fun StepButton(text: String, onClick: () -> Unit, enabled: Boolean = true) {
     Button(onClick, Modifier.padding(top = 12.dp).fillMaxWidth().heightIn(min = 48.dp), enabled = enabled) {
         Text(text)
-        if (icon) {
-            Spacer(Modifier.width(6.dp))
-            Icon(M7Icons.OpenInNew, null, Modifier.size(16.dp))
-        }
     }
 }
 

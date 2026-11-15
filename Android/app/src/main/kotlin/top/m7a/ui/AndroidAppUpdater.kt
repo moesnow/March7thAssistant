@@ -15,10 +15,23 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import top.m7a.TaskController
+import java.io.File
 import java.net.URI
 import javax.net.ssl.HttpsURLConnection
 
 class UpdateApkProvider : FileProvider()
+
+internal fun apkInstallIntent(context: Context, apk: File): Intent {
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.update-apk", apk)
+    return Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/vnd.android.package-archive")
+        clipData = ClipData.newRawUri(apk.name, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+}
+
+internal fun unknownApkSourcesIntent(context: Context) =
+    Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", context.packageName, null))
 
 internal class AndroidAppUpdater(
     private val scope: CoroutineScope,
@@ -80,7 +93,7 @@ internal class AndroidAppUpdater(
         val manager = context.packageManager
         try {
             if (!manager.canRequestPackageInstalls()) {
-                context.startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", context.packageName, null)))
+                context.startActivity(unknownApkSourcesIntent(context))
                 checker.updatePackageState(UpdatePackageState.Ready(InstallStatus.PERMISSION_REQUIRED))
                 return
             }
@@ -104,12 +117,7 @@ internal class AndroidAppUpdater(
                 return@launch
             }
             val status = try {
-                val uri = FileProvider.getUriForFile(context, "${context.packageName}.update-apk", apk)
-                context.startActivity(Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(uri, "application/vnd.android.package-archive")
-                    clipData = ClipData.newRawUri(apk.name, uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                })
+                context.startActivity(apkInstallIntent(context, apk))
                 InstallStatus.OPENED
             } catch (_: Exception) {
                 InstallStatus.FAILED

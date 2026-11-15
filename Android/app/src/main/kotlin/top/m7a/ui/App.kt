@@ -47,6 +47,7 @@ internal class AppActions(
     val selectPrivilege: (Privilege) -> Unit,
     val requestPermission: () -> Unit,
     val openShizuku: () -> Unit,
+    val installShizuku: () -> Unit,
     val downloadShizuku: () -> Unit,
     val openShizukuManual: () -> Unit,
     val openProjectPage: () -> Unit,

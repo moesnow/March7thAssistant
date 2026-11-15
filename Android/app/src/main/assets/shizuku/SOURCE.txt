@@ -1,0 +1,13 @@
+Shizuku v13.6.0.r1086.2650830c by RikkaApps
+Apache License 2.0 (see LICENSE.txt).
+
+Bundled as the original, unmodified APK from the official release.
+https://github.com/RikkaApps/Shizuku/releases/tag/v13.6.0
+https://github.com/RikkaApps/Shizuku/tree/v13.6.0
+https://github.com/RikkaApps/Shizuku/blob/v13.6.0/README.md#license
+
+APK SHA-256
+6e273ab0e991c4e79bc8b1bbb9b9dd739ccac1a8712a541a214078886b7b790f
+
+APK signing certificate SHA-256
+268b5590e868fb08bae7e0ac413564cd1ff88f5ccff74af9dbd0dc918e30db30
