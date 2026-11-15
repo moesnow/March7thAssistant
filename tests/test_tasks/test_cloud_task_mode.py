@@ -363,7 +363,10 @@ def run_currency_wars_cli(runner, action):
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
-def test_currency_wars_entry_continues_after_the_fight_receipt_times_out(runner, currency_wars_game, action):
+def test_currency_wars_entry_continues_after_the_fight_receipt_times_out(
+        runner, currency_wars_game, monkeypatch, action):
+    logger = MagicMock()
+    monkeypatch.setattr(currency_wars, "log", logger)
     state = currency_wars_game
     if action == "currencywarstemp":
         state.page = "board"
@@ -378,6 +381,10 @@ def test_currency_wars_entry_continues_after_the_fight_receipt_times_out(runner,
     record = run_currency_wars_cli(runner, action)
     expected = 2 if action == "currencywarsloop" else 1
     assert state.completed == expected
+    round_messages = [call.args[0] for call in logger.info.call_args_list
+                      if str(call.args[0]).startswith("货币战争第 ")]
+    numbered_matches = 0 if action == "currencywarstemp" else expected
+    assert round_messages == [f"货币战争第 {number} 局" for number in range(1, numbered_matches + 1)]
     state.recover_transit.assert_called_once()
     assert isinstance(state.recover_transit.call_args.args[1], currency_wars.CurrencyWarsReceiptTimeout)
     assert state.clicks.count(("board", (1818, 750))) == expected
